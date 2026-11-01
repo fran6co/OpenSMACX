@@ -20,6 +20,8 @@ HARNESS = r"""
 
 typedef uint32_t DWORD;
 class BaseButton;
+struct ButtonGroup {};
+static ButtonGroup *configured_group;
 static BaseButton *WinPointerOwner3;
 static BaseButton *WinPointerOwner4;
 static BaseButton *button_under_test;
@@ -86,10 +88,11 @@ void Sleep(DWORD duration) {
 
 struct BaseButton {
     Win *win_parent_;
+    ButtonGroup *group_;
     DWORD field_AA0_, field_AA4_;
     uint32_t field_A9C_, field_A78_;
     TimeProbe time2_;
-    BaseButton() : win_parent_(0), field_AA0_(0), field_AA4_(0),
+    BaseButton() : win_parent_(0), group_(0), field_AA0_(0), field_AA4_(0),
                    field_A9C_(0), field_A78_(0) {}
     void on_lose_mouse_capture() { ++lose_capture_calls; events += 'c'; }
     void redraw() { ++redraw_calls; events += 'r'; }
@@ -108,6 +111,7 @@ static void reset_case(BaseButton &button) {
     clock_calls = sleep_calls = sleep_duration = timer_stop_calls = 0;
     redraw_calls = lose_capture_calls = 0;
     button.win_parent_ = 0;
+    button.group_ = configured_group;
     button.field_AA0_ = button.field_AA4_ = 0;
     button.field_A9C_ = button.field_A78_ = 0;
 }
@@ -214,14 +218,18 @@ static int test_null_sound_still_notifies_and_redraws() {
 }
 
 int main() {
-    int result = test_initial_null_and_capture_release();
-    if (result != 0) return result;
-    result = test_sound_pointer_is_captured_but_notification_reloads_parent();
-    if (result != 0) return result;
-    result = test_sleep_reloads_parent_and_skips_playing_sound();
-    if (result != 0) return result;
-    result = test_null_sound_still_notifies_and_redraws();
-    if (result != 0) return result;
+    ButtonGroup group;
+    for (int grouped = 0; grouped != 2; ++grouped) {
+        configured_group = grouped ? &group : 0;
+        int result = test_initial_null_and_capture_release();
+        if (result != 0) return result;
+        result = test_sound_pointer_is_captured_but_notification_reloads_parent();
+        if (result != 0) return result;
+        result = test_sleep_reloads_parent_and_skips_playing_sound();
+        if (result != 0) return result;
+        result = test_null_sound_still_notifies_and_redraws();
+        if (result != 0) return result;
+    }
     return 0;
 }
 """
@@ -238,20 +246,20 @@ def old_cached_parent_mutant(body):
     mutant = body.replace(signature, signature + "\n    Win *const parent = win_parent_;", 1)
     assert mutant.count("if (win_parent_ == 0)") == 1
     mutant = mutant.replace("if (win_parent_ == 0)", "if (parent == 0)", 1)
-    assert mutant.count("Sound *const owner = win_parent_->legacy_sound_29();") == 1
+    assert mutant.count("Win *const sound_parent = win_parent_;") == 1
     mutant = mutant.replace(
-        "Sound *const owner = win_parent_->legacy_sound_29();",
-        "Sound *const owner = parent->legacy_sound_29();", 1)
-    assert mutant.count("win_parent_->vslot_42") == 1
-    return mutant.replace("win_parent_->vslot_42", "parent->vslot_42", 1)
+        "Win *const sound_parent = win_parent_;",
+        "Win *const sound_parent = parent;", 1)
+    assert mutant.count("win_parent_->vslot_42") == 2
+    return mutant.replace("win_parent_->vslot_42", "parent->vslot_42")
 
 
 def omitted_notification_reload_mutant(body):
     signature = "void BaseButton::on_left_up(int, int) {"
     assert body.count(signature) == 1
     mutant = body.replace(signature, signature + "\n    Win *const parent = win_parent_;", 1)
-    assert mutant.count("win_parent_->vslot_42") == 1
-    return mutant.replace("win_parent_->vslot_42", "parent->vslot_42", 1)
+    assert mutant.count("win_parent_->vslot_42") == 2
+    return mutant.replace("win_parent_->vslot_42", "parent->vslot_42")
 
 
 def compile_and_run(tmp_path, compiler, body):
@@ -275,8 +283,8 @@ def test_actual_release_parent_reload_prefix(tmp_path, compiler_name):
     if compiler is None:
         pytest.skip(f"{compiler_name} required")
     body = actual_body()
-    assert body.count("win_parent_->legacy_sound_29()") == 1
-    assert body.count("win_parent_->vslot_42") == 1
+    assert body.count("sound_parent->legacy_sound_29()") == 1
+    assert body.count("win_parent_->vslot_42") == 2
     run = compile_and_run(tmp_path, compiler, body)
     assert run.returncode == 0, run.stdout + run.stderr
 

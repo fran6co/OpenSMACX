@@ -29,6 +29,14 @@
 extern char SocialWinColonSpaceText[];
 extern char SocialWinCommaSpaceText[];
 
+// Recovery names for two distinct writable star strings. The original calls
+// in say_weapon and say_armor address separate two-byte strings; this does
+// not establish their original allocation bounds or translation-unit home.
+// RECOVERY_OBJECT: v2 0x0068FAE8 0x0068FAEA ?SayWeaponModeStarText@@3PADA 0x005905C0
+char SayWeaponModeStarText[] = "*";
+// RECOVERY_OBJECT: v2 0x0068FAEC 0x0068FAEE ?SayArmorModeStarText@@3PADA 0x005906F0
+char SayArmorModeStarText[] = "*";
+
 // Keep these application formatters separate from Strings::get's definition so
 // VC6's same-TU /Ob2 inliner cannot absorb the original get calls. Their shared
 // storage and Strings implementation remain owned by strings.cpp.
@@ -86,31 +94,33 @@ void __cdecl say_reactor(char *text, int reactor_id, int with_detail) {
 // RECOVERY_BINDING: v1 {"evidence": ["original:0x005905C0-0x005906EC;seed:src/recovered/units/005905c0.cpp;source:src/strings.h:StringTable;source:src/alpha.h:Labels"], "reason": "This free formatter uses the established Weapon records and shared Strings and Labels objects with the original name, call ABI, and bounded body."}
 // symbol    ?say_weapon@@YAXPADHH@Z
 void __cdecl say_weapon(char *text, int weapon_id, int with_detail) {
-    const RulesWeapon &weapon = Weapon[weapon_id];
-    strcat(text, StringTable.get(weapon.name));
+    char *output = text;
+    Strings *strings = &StringTable;
+    LPSTR name = Weapon[weapon_id].name;
+    strcat(output, strings->get(name));
     if (with_detail != 0) {
-        strcat(text, BufferJoinSpace);
-        strcat(text, "(");
-        if (weapon.offense_rating == 0) {
-            strcat(text, StringTable.get(
-                Labels.strings_ptr[0x284 / 4]));
-        } else {
-            strcat(text, StringTable.get(
-                Labels.strings_ptr[0x204 / 4]));
-            strcat(text, ": ");
-            if (weapon.offense_rating < 0) {
-                strcat(text, StringTable.get(
-                    Labels.strings_ptr[0x310 / 4]));
+        strcat(output, BufferJoinSpace);
+        strcat(output, "(");
+        if (Weapon[weapon_id].offense_rating != 0) {
+            LPSTR label = Labels.strings_ptr[0x204 / 4];
+            strcat(output, strings->get(label));
+            strcat(output, SocialWinColonSpaceText);
+            if (Weapon[weapon_id].offense_rating < 0) {
+                label = Labels.strings_ptr[0x310 / 4];
+                strcat(output, strings->get(label));
             } else {
                 char number[80];
-                _itoa(weapon.offense_rating, number, 10);
-                strcat(text, number);
+                _itoa(Weapon[weapon_id].offense_rating, number, 10);
+                strcat(output, number);
             }
-            for (int i = 0; i < weapon.mode; ++i) {
-                strcat(text, "*");
+            for (int i = 0; i < Weapon[weapon_id].mode; ++i) {
+                strcat(output, SayWeaponModeStarText);
             }
+        } else {
+            LPSTR label = Labels.strings_ptr[0x284 / 4];
+            strcat(output, strings->get(label));
         }
-        strcat(text, ")");
+        strcat(output, ")");
     }
 }
 
@@ -119,26 +129,29 @@ void __cdecl say_weapon(char *text, int weapon_id, int with_detail) {
 // RECOVERY_BINDING: v1 {"evidence": ["original:0x005906F0-0x005907F5;seed:src/recovered/units/005906f0.cpp;source:src/strings.h:StringTable;source:src/alpha.h:Labels"], "reason": "This free formatter uses the established Armor records and shared Strings and Labels objects with the original name, call ABI, and bounded body."}
 // symbol    ?say_armor@@YAXPADHH@Z
 void __cdecl say_armor(char *text, int armor_id, int with_detail) {
-    const RulesArmor &armor = Armor[armor_id];
-    strcat(text, StringTable.get(armor.name));
+    char *output = text;
+    Strings *strings = &StringTable;
+    LPSTR name = Armor[armor_id].name;
+    strcat(output, strings->get(name));
     if (with_detail != 0) {
-        strcat(text, BufferJoinSpace);
-        strcat(text, "(");
-        strcat(StringTemp, StringTable.get(
-            Labels.strings_ptr[0x154 / 4]));
-        strcat(text, ": ");
-        if (armor.defense_rating < 0) {
-            strcat(text, StringTable.get(
-                Labels.strings_ptr[0x310 / 4]));
+        strcat(output, BufferJoinSpace);
+        strcat(output, "(");
+        LPSTR label = Labels.strings_ptr[0x154 / 4];
+        LPSTR detail = strings->get(label);
+        strcat(StringTemp, detail);
+        strcat(output, SocialWinColonSpaceText);
+        if (Armor[armor_id].defense_rating < 0) {
+            LPSTR negative_label = Labels.strings_ptr[0x310 / 4];
+            strcat(output, strings->get(negative_label));
         } else {
             char number[80];
-            _itoa(armor.defense_rating, number, 10);
-            strcat(text, number);
+            _itoa(Armor[armor_id].defense_rating, number, 10);
+            strcat(output, number);
         }
-        for (int i = 0; i < armor.mode; ++i) {
-            strcat(text, "*");
+        for (int i = 0; i < Armor[armor_id].mode; ++i) {
+            strcat(output, SayArmorModeStarText);
         }
-        strcat(text, ")");
+        strcat(output, ")");
     }
 }
 
@@ -147,23 +160,34 @@ void __cdecl say_armor(char *text, int armor_id, int with_detail) {
 // symbol    ?say_chassis@@YAXPADHH@Z
 // kind      game
 void __cdecl say_chassis(char *text, int chassis_id, int with_detail) {
-    const RulesChassis &chassis = Chassis[chassis_id];
-    strcat(text, StringTable.get(chassis.offsv_1_name));
+    Strings *strings = &StringTable;
+    LPSTR name = Chassis[chassis_id].offsv_1_name;
+    strcat(text, strings->get(name));
     if (with_detail != 0) {
         strcat(text, BufferJoinSpace);
         strcat(text, "(");
-        strcat(StringTemp, StringTable.get(
-            Labels.strings_ptr[0x140 / 4]));
-        strcat(text, ": ");
+        LPSTR label = Labels.strings_ptr[0x140 / 4];
+        LPSTR detail = strings->get(label);
+        strcat(StringTemp, detail);
+        strcat(text, SocialWinColonSpaceText);
         char number[80];
-        _itoa(chassis.speed, number, 10);
+        _itoa(Chassis[chassis_id].speed, number, 10);
         strcat(text, number);
-        if (chassis.triad == 1 || chassis.triad == 2) {
+        LPSTR triad_label;
+        switch (Chassis[chassis_id].triad) {
+        case 1:
             strcat(text, BufferJoinSpace);
-            const int offset = chassis.triad == 1 ? 0x28C : 0x288;
-            strcat(text, StringTable.get(
-                Labels.strings_ptr[offset / 4]));
+            triad_label = Labels.strings_ptr[0x28C / 4];
+            break;
+        case 2:
+            strcat(text, BufferJoinSpace);
+            triad_label = Labels.strings_ptr[0x288 / 4];
+            break;
+        default:
+            goto close_detail;
         }
+        strcat(text, StringTable.get(triad_label));
+close_detail:
         strcat(text, ")");
     }
 }

@@ -230,31 +230,48 @@ int main() {
 
 def projected_program(source: str, mutation: str | None = None) -> str:
     bodies = {address: extract_body(source, signature) for address, signature in TARGETS}
+
+    def replace_once(address: int, old: str, new: str) -> None:
+        assert bodies[address].count(old) == 1, (mutation, old)
+        assert old != new
+        bodies[address] = bodies[address].replace(old, new, 1)
+
+    before = dict(bodies)
     if mutation == "reactor_number_offset":
-        bodies[0x00590510] = bodies[0x00590510].replace("reactor_id + 1", "reactor_id", 1)
+        replace_once(0x00590510, "reactor_id + 1", "reactor_id")
     elif mutation == "clear_scratch_first":
         signature = TARGETS[0][1]
-        bodies[0x00590510] = bodies[0x00590510].replace(signature + " {", signature + " {\n    StringTemp[0] = 0;", 1)
+        replace_once(0x00590510, signature + " {", signature + " {\n    StringTemp[0] = 0;")
     elif mutation == "wrong_scratch_destination":
-        bodies[0x005906F0] = bodies[0x005906F0].replace(
-            "strcat(StringTemp, StringTable.get(", "strcat(text, StringTable.get(", 1)
+        replace_once(0x005906F0, "strcat(StringTemp, detail);", "strcat(output, detail);")
     elif mutation == "zero_weapon_gets_stars":
-        bodies[0x005905C0] = bodies[0x005905C0].replace(
-            "if (weapon.offense_rating == 0)", "if (weapon.offense_rating != 0)", 1)
+        replace_once(0x005905C0,
+                     "if (Weapon[weapon_id].offense_rating != 0)",
+                     "if (Weapon[weapon_id].offense_rating == 0)")
     elif mutation == "swap_chassis_triad_labels":
-        bodies[0x00590800] = bodies[0x00590800].replace(
-            "chassis.triad == 1 ? 0x28C : 0x288",
-            "chassis.triad == 1 ? 0x288 : 0x28C", 1)
+        first = "case 1:\n            strcat(text, BufferJoinSpace);\n            triad_label = Labels.strings_ptr[0x28C / 4];"
+        second = "case 2:\n            strcat(text, BufferJoinSpace);\n            triad_label = Labels.strings_ptr[0x288 / 4];"
+        replace_once(0x00590800, first, first.replace("0x28C", "0x288"))
+        replace_once(0x00590800, second, second.replace("0x288", "0x28C"))
     elif mutation == "wrong_ability_label_index":
-        bodies[0x00590AA0] = bodies[0x00590AA0].replace(
-            "LPSTR label = label_table[0xA4];",
-            "LPSTR label = label_table[0xA3];", 1)
+        replace_once(0x00590AA0, "LPSTR label = label_table[0xA4];",
+                     "LPSTR label = label_table[0xA3];")
     elif mutation is not None:
         raise AssertionError(f"unknown mutation: {mutation}")
+    if mutation is not None:
+        assert bodies != before, f"mutation did not change actual source: {mutation}"
     owner = (ROOT / "src/socialwin.cpp").read_text()
-    separator = next(line for line in owner.splitlines()
-                     if line.startswith("char SocialWinColonSpaceText[] ="))
-    return PRELUDE + separator + "\n" + "\n".join(
+    declarations = []
+    for actual_source, name in (
+        (owner, "SocialWinColonSpaceText"),
+        (source, "SayWeaponModeStarText"),
+        (source, "SayArmorModeStarText"),
+    ):
+        matches = [line for line in actual_source.splitlines()
+                   if line.startswith(f"char {name}[] =")]
+        assert len(matches) == 1, name
+        declarations.append(matches[0])
+    return PRELUDE + "\n".join(declarations) + "\n" + "\n".join(
         bodies[address] for address, _ in TARGETS) + MAIN
 
 

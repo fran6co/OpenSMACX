@@ -66,7 +66,8 @@ void ReplayWin::init() {
     const int zoom = zoom_x < zoom_y ? zoom_x : zoom_y;
 
     year_label_[0] = 0;
-    strcat(year_label_, Language != 0 ? ReplayLocalizedTitle : "Replay: ");
+    // The initial title is "Replay"; the timer later prefixes the year with "Replay: ".
+    strcat(year_label_, Language != 0 ? ReplayLocalizedTitle : "Replay");
 
     rect.left += 3;
     rect.bottom -= 0x17;
@@ -170,7 +171,10 @@ void ReplayWin::on_redraw() {
     title.bottom -= 3;
     Buffer::set_font(MainInterfaceGlobal.primary_font(), 0, 0, 0);
     Buffer::set_text_color(TextColourTable[180], TextColourTable[181], 1, 1);
-    Buffer::write_cent_l(year_label_, &title, strlen(year_label_));
+    char *const title_text = year_label_;
+    if (title_text) {
+        Buffer::write_cent_l(title_text, &title, strlen(title_text));
+    }
 
     make_bases();
     map_win_.on_redraw();
@@ -196,9 +200,8 @@ void ReplayWin::add_base_site(int x, int y, int faction_id) {
 // symbol    ?update_base_site@ReplayWin@@QAEHHHH@Z
 int ReplayWin::update_base_site(int x, int y, int faction_id) {
     for (int index = 0; index < 512; ++index) {
-        ReplayBaseSite &site = base_sites_[index];
-        if (site.x == x && site.y == y) {
-            site.faction_id = faction_id;
+        if (base_sites_[index].x == x && base_sites_[index].y == y) {
+            base_sites_[index].faction_id = faction_id;
             return index * 3;
         }
     }
@@ -223,6 +226,7 @@ void ReplayWin::remove_base_site(int x, int y, int) {
 // Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x005AD9E0 ?timer_callback@ReplayWin@@QAEXXZ 0x005AD9E0-0x005ADBCC
 // RECOVERY_BINDING: v1 {"evidence": ["git:7f24e1c4:src/recovered/units/005ad9e0.cpp", "image:0x005AD9E0-0x005ADBCC", "src/replaywin.h replay_turn_, event_offset_, year_label_ and base_sites_", "src/win.h release_modal slot58 and redraw slot62"], "reason": "Consume typed replay events and update the ReplayWin-owned site table; replace the original-image forwarder without raw self-offsets or vtable shims. The retained seed remains a restoration input, not a product body."}
+#pragma function(memcpy)
 void ReplayWin::timer_callback() {
     if (replay_turn_ >= GameDataStateStorage.fields_.turn_current_num_) {
         if (replay_turn_ >= GameDataStateStorage.fields_.turn_current_num_ + 50) {
@@ -233,15 +237,15 @@ void ReplayWin::timer_callback() {
 
     int next_turn = replay_turn_ + 1;
     while (event_offset_ < ReplayEventBytes) {
-        const ReplayEventRecord event =
-            ReplayEvents[event_offset_ / sizeof(ReplayEventRecord)];
+        ReplayEventRecord event;
+        memcpy(&event, reinterpret_cast<char *>(ReplayEvents) + event_offset_, sizeof(event));
         if (event.turn > replay_turn_) {
             next_turn = event.turn;
             break;
         }
         event_offset_ += sizeof(ReplayEventRecord);
         if (event.turn == replay_turn_) {
-            switch (event.type) {
+            switch (static_cast<int8_t>(event.type)) {
             case 0:
                 add_base_site(event.x, event.y,
                               static_cast<int8_t>(event.faction_id));
@@ -258,7 +262,8 @@ void ReplayWin::timer_callback() {
     }
 
     year_label_[0] = 0;
-    strcat(year_label_, Language != 0 ? ReplayLocalizedPrefix : "Replay: ");
+// RECOVERY_LITERAL: v1 0x006913FC 0x00691405 ??_C@_08HKHJ@Replay?3?5?$AA@ 0x005AD9E0
+    strcat(year_label_, Language == 0 ? "Replay: " : ReplayLocalizedPrefix);
     char year[80];
     _itoa_s(game_year(replay_turn_), year, sizeof(year), 10);
     strcat(year_label_, year);
@@ -272,36 +277,42 @@ void ReplayWin::timer_callback() {
 // ORIGINAL: 0x005ADE80 ?replay_base@@YAXHHHH@Z 0x005ADE80-0x005ADF03
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned original 0x005ADE80-0x005ADF03 logs Replay Base and Replay Base Info, packs four arguments and TurnCurrentNum into eight bytes at 0x00950324 plus the byte counter at 0x009469F8, then adds eight", "git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/005b3920.cpp clears 0x800 dwords of that buffer; ReplayWin timer_callback reads the same eight-byte records"], "reason": "Own replay-event storage and byte-length accounting in the replay subsystem, replacing fixed-address writes with a typed event record."}
 void __cdecl replay_base(int type, int x, int y, int faction_id) {
+// RECOVERY_LITERAL: v1 0x00691444 0x00691450 ??_C@_0M@EHHJ@Replay?5Base?$AA@ 0x005ADE80
     log_say("Replay Base", x, y, faction_id);
+// RECOVERY_LITERAL: v1 0x00691450 0x00691461 ??_C@_0BB@LGOB@Replay?5Base?5Info?$AA@ 0x005ADE80
     log_say("Replay Base Info", GameDataStateStorage.fields_.turn_current_num_, type, ReplayEventBytes);
     ReplayEventRecord event;
-    event.type = static_cast<uint8_t>(type);
-    event.faction_id = static_cast<uint8_t>(faction_id);
     event.turn = static_cast<int16_t>(GameDataStateStorage.fields_.turn_current_num_);
+    event.type = static_cast<uint8_t>(type);
     event.x = static_cast<int16_t>(x);
     event.y = static_cast<int16_t>(y);
-    ReplayEvents[ReplayEventBytes / sizeof(ReplayEventRecord)] = event;
+    event.faction_id = static_cast<uint8_t>(faction_id);
+    memcpy(reinterpret_cast<char *>(ReplayEvents) + ReplayEventBytes, &event, sizeof(event));
     ReplayEventBytes += sizeof(ReplayEventRecord);
 }
+#pragma intrinsic(memcpy)
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x005AD560 ?make_bases@ReplayWin@@QAEXXZ 0x005AD560-0x005AD607
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned original 0x005AD560-0x005AD607 clears Map::bit bit zero over MapArea, then walks 512 twelve-byte records at ReplayWin+0xA20", "The original writes Bases with 0x134 stride, storing x/y/faction/population before bit_set, owner_set and reset_territory; src/unrecovered/005ad560.cpp preserves the seed"], "reason": "Rebuild bases from typed replay-owned records into the real Base array and map, without self-offset arithmetic or fixed executable addresses."}
 void ReplayWin::make_bases() {
     GameDataStateStorage.fields_.base_current_count_ = 0;
-    for (int tile = 0; tile < MapArea; ++tile) {
-        map_tiles()[tile].bit &= ~1u;
+    Map *tile = map_tiles();
+    for (int tile_id = 0; tile_id < MapArea; ++tile_id, ++tile) {
+        tile->bit &= ~1u;
     }
+    // The original advances this cursor independently of the global count.
+    Base *next_base = Bases;
     for (int site_id = 0; site_id < 512; ++site_id) {
         const ReplayBaseSite &site = base_sites_[site_id];
         if (site.x < 0) continue;
-        Base &base = Bases[GameDataStateStorage.fields_.base_current_count_];
-        base.x = static_cast<int16_t>(site.x);
-        base.y = static_cast<int16_t>(site.y);
-        base.population_size = 1;
-        base.faction_id_current = static_cast<uint8_t>(site.faction_id);
-        bit_set(base.x, base.y, 1, 1);
-        owner_set(base.x, base.y, base.faction_id_current);
+        next_base->x = static_cast<int16_t>(site.x);
+        next_base->y = static_cast<int16_t>(site.y);
+        next_base->population_size = 1;
+        next_base->faction_id_current = static_cast<uint8_t>(site.faction_id);
+        bit_set(next_base->x, next_base->y, 1, 1);
+        owner_set(next_base->x, next_base->y, next_base->faction_id_current);
+        ++next_base;
         ++GameDataStateStorage.fields_.base_current_count_;
     }
     reset_territory();

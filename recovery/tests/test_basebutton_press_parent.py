@@ -17,6 +17,8 @@ HARNESS = r"""
 
 typedef uint32_t DWORD;
 class BaseButton;
+struct ButtonGroup {};
+static ButtonGroup *configured_group;
 static BaseButton *WinPointerOwner3;
 static BaseButton *WinPointerOwner4;
 static BaseButton *button_under_test;
@@ -103,10 +105,11 @@ struct TimeProbe {
 typedef void (*WinNotificationCallback)(int);
 struct BaseButton {
     Win *win_parent_;
+    ButtonGroup *group_;
     uint32_t field_A9C_, field_A78_, field_A44_, field_AA4_, field_AAC_;
     WinNotificationCallback field_AB4_;
     TimeProbe time2_;
-    BaseButton() : win_parent_(0), field_A9C_(0), field_A78_(0),
+    BaseButton() : win_parent_(0), group_(0), field_A9C_(0), field_A78_(0),
                    field_A44_(0xFFFFFFFFU), field_AA4_(0), field_AAC_(0),
                    field_AB4_(0) {}
     void redraw() { ++redraw_calls; events += 'r'; }
@@ -157,6 +160,7 @@ static void reset_case(BaseButton &button) {
     pulse_delay = pulse_argument = 0;
     notification_id = -1;
     button.win_parent_ = 0;
+    button.group_ = configured_group;
     button.field_A9C_ = button.field_A78_ = button.field_AA4_ = 0;
     button.field_A44_ = 0xFFFFFFFFU;
     button.field_AAC_ = 0;
@@ -239,9 +243,15 @@ static int test_repeat_press_reloads_parent_at_notification_boundaries() {
 }
 
 int main() {
-    int result = test_initial_press_reloads_parent_after_sound_callbacks();
-    if (result != 0) return result;
-    return test_repeat_press_reloads_parent_at_notification_boundaries();
+    ButtonGroup group;
+    for (int grouped = 0; grouped != 2; ++grouped) {
+        configured_group = grouped ? &group : 0;
+        int result = test_initial_press_reloads_parent_after_sound_callbacks();
+        if (result != 0) return result;
+        result = test_repeat_press_reloads_parent_at_notification_boundaries();
+        if (result != 0) return result;
+    }
+    return 0;
 }
 """
 
@@ -254,21 +264,21 @@ def actual_body():
 def cached_parent_mutant(body):
     signature = "void BaseButton::on_left_down(int, int) {"
     assert body.count(signature) == 1
-    if "Win *const parent = win_parent_;" in body:
-        return body
+    assert "Win *const parent = win_parent_;" not in body
     mutant = body.replace(signature, signature + "\n    Win *const parent = win_parent_;", 1)
     anchors = (
-        ("Sound *const owner = win_parent_->legacy_sound_30();",
-         "Sound *const owner = parent->legacy_sound_30();"),
-        ("win_parent_->vslot_43", "parent->vslot_43"),
-        ("WinCallbackWindow = win_parent_;", "WinCallbackWindow = parent;"),
+        ("Win *const sound_parent = win_parent_;",
+         "Win *const sound_parent = parent;", 1),
+        ("win_parent_->vslot_43", "parent->vslot_43", 2),
+        ("WinCallbackWindow = win_parent_;", "WinCallbackWindow = parent;", 1),
         ("Sound *const owner = win_parent_->legacy_sound_28();",
-         "Sound *const owner = parent->legacy_sound_28();"),
-        ("win_parent_->on_button_pressed", "parent->on_button_pressed"),
+         "Sound *const owner = parent->legacy_sound_28();", 1),
+        ("win_parent_->on_button_pressed", "parent->on_button_pressed", 2),
     )
-    for old, new in anchors:
-        assert mutant.count(old) == 1, old
-        mutant = mutant.replace(old, new, 1)
+    for old, new, count in anchors:
+        assert mutant.count(old) == count, old
+        mutant = mutant.replace(old, new)
+    assert mutant != body
     return mutant
 
 

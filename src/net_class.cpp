@@ -127,6 +127,9 @@ static const GUID NetLobbyAppGuid = {
 // Superseded seed deleted; seed paths below are historical Git provenance.
 
 
+// RECOVERY_OBJECT: v2 0x009BE4E8 0x009BE4EC ?SessionEnumTarget@@3PAVAlphaNetLedger@@A 0x00630C30
+// Pinned630C3E reads the DWORD published/cleared at62E4B8/62E4CB.
+// This binding covers that observed four-byte pointer cell only.
 AlphaNetLedger *SessionEnumTarget;
 BOOL __stdcall enumerate_session_callback(LPCDPSESSIONDESC2, LPDWORD, DWORD, LPVOID);
 namespace {
@@ -2905,12 +2908,11 @@ Return Value: the DirectPlay GetPlayerData failure or SetPlayerData result; 0 wh
 Status: Complete
 */
 int Net::set_player_host_flag(int is_host) {
-    int result = 0;
+    int result = reinterpret_cast<int>(NetDirectPlay);
     if (NetDirectPlay != 0) {
-        const DPID player = local_player_id_;
         unsigned char data;
         DWORD size = 1;
-        result = NetDirectPlay->GetPlayerData(player, &data, &size, 0);
+        result = NetDirectPlay->GetPlayerData(local_player_id_, &data, &size, 0);
         if (result == 0) {
             if (is_host != 0) {
                 data = static_cast<unsigned char>(data | 2);
@@ -3616,19 +3618,17 @@ Status: Coverage transcription - unclaimed body
 int NetUnk72C::on_insert(Payload *payload) {
     payload->field_8_ = 0;
     if (source_text_ != 0) {
-        char *copy;
-        if (allocator_ == 0) {
-            copy = static_cast<char *>(mem_get(strlen(source_text_) + 1));
-        } else {
+        if (allocator_ != 0) {
             size_t const length = strlen(source_text_) + 1;
             // Native 5D4C73 reloads allocator_ AFTER the strlen call.
-            copy = static_cast<char *>(allocator_->get(length));
+            payload->text = static_cast<char *>(allocator_->get(length));
+        } else {
+            payload->text = static_cast<char *>(mem_get(strlen(source_text_) + 1));
         }
-        payload->text = copy;
-        if (copy == 0) {
+        if (payload->text == 0) {
             return 4;
         }
-        *copy = 0;
+        *payload->text = 0;
         strcat(payload->text, source_text_);
     }
     // Null source does NOT clear payload->text; no unseen payload tail is named.
@@ -3942,10 +3942,10 @@ BOOL __stdcall enumerate_session_callback(LPCDPSESSIONDESC2 descriptor,
     // Native captures these descriptor inputs before publishing any into the
     // borrowed ledger, then calls insertion and ignores its status entirely.
     const char *password = descriptor->lpszPasswordA;
-    const DWORD flags = descriptor->dwFlags;
-    const char *name = descriptor->lpszSessionNameA;
     const DWORD current = descriptor->dwCurrentPlayers;
+    const char *name = descriptor->lpszSessionNameA;
     const DWORD maximum = descriptor->dwMaxPlayers;
+    const DWORD flags = descriptor->dwFlags;
     AlphaNetLedger *ledger = SessionEnumTarget;
     ledger->session_name_ = name;
     ledger->instance_guid_ = &descriptor->guidInstance;

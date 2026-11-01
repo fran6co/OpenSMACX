@@ -370,27 +370,35 @@ void AlphaSave::on_selected(int) {
 // diverged early in VC6 register scheduling; this typed body is not exact.
 char *AlphaSave::save() {
     RECT caption = *buffer_working_rect();
+    LONG &left = caption.left;
+    LONG &top = caption.top;
+    LONG &right = caption.right;
     if (ConsoleGlobal.is_visible()) {
-        caption.left += 0x17;
-        caption.right -= 0x37;
+        left += 0x17;
+        right -= 0x37;
     } else {
-        caption.left += 9;
-        caption.top += 9;
-        caption.right -= 9;
+        left += 9;
+        right -= 9;
+        top += 9;
     }
-    caption.left += 6;
-    caption.top += 6;
-    caption.right -= 6;
-    caption.bottom = caption.top + 0x14;
+    left += 3;
+    top += 3;
+    right -= 3;
+    left += 3;
+    top += 3;
+    right -= 3;
+    caption.bottom = top + 0x14;
 
-    Buffer *canvas = this;
-    canvas->box_sprite(&caption, &InterfaceBoxStyles[6]);
-    canvas->set_text_color(0xA0, -1, 1, 1);
-    canvas->set_font(find_font(0xE, 1), 0, 0, 0);
+    Buffer::box_sprite(&caption, &InterfaceBoxStyles[6]);
+    Buffer::set_text_color(0xA0, -1, 1, 1);
+    Buffer::set_font(find_font(0xE, 1), 0, 0, 0);
     StringTemp[0] = 0;
     strcat(StringTemp, label_get(674));
     CharUpperA(StringTemp);
-    canvas->write_cent_l(StringTemp, &caption, strlen(StringTemp));
+    char *text = StringTemp;
+    if (text != 0) {
+        Buffer::write_cent_l(text, &caption, strlen(text));
+    }
 
     ActiveAlphaSave = this;
     NetDaemonNet.voice_hotkey_48_ = 0;
@@ -407,27 +415,35 @@ char *AlphaSave::save() {
 // frame, but its call order and owner identities are retained here.
 char *AlphaSave::load() {
     RECT caption = *buffer_working_rect();
+    LONG &left = caption.left;
+    LONG &top = caption.top;
+    LONG &right = caption.right;
     if (ConsoleGlobal.is_visible()) {
-        caption.left += 0x17;
-        caption.right -= 0x37;
+        left += 0x17;
+        right -= 0x37;
     } else {
-        caption.left += 9;
-        caption.top += 9;
-        caption.right -= 9;
+        left += 9;
+        right -= 9;
+        top += 9;
     }
-    caption.left += 6;
-    caption.top += 6;
-    caption.right -= 6;
-    caption.bottom = caption.top + 0x14;
+    left += 3;
+    top += 3;
+    right -= 3;
+    left += 3;
+    top += 3;
+    right -= 3;
+    caption.bottom = top + 0x14;
 
-    Buffer *canvas = this;
-    canvas->box_sprite(&caption, &InterfaceBoxStyles[6]);
-    canvas->set_text_color(0xA0, -1, 1, 1);
-    canvas->set_font(find_font(0xE, 1), 0, 0, 0);
+    Buffer::box_sprite(&caption, &InterfaceBoxStyles[6]);
+    Buffer::set_text_color(0xA0, -1, 1, 1);
+    Buffer::set_font(find_font(0xE, 1), 0, 0, 0);
     StringTemp[0] = 0;
     strcat(StringTemp, label_get(673));
     CharUpperA(StringTemp);
-    canvas->write_cent_l(StringTemp, &caption, strlen(StringTemp));
+    char *text = StringTemp;
+    if (text != 0) {
+        Buffer::write_cent_l(text, &caption, strlen(text));
+    }
 
     ActiveAlphaSave = this;
     NetDaemonNet.voice_hotkey_48_ = 0;

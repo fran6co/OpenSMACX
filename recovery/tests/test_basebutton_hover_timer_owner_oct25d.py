@@ -31,13 +31,14 @@ struct Buffer { static RECT rect2_; };
 RECT Buffer::rect2_ = {4, 5, 24, 25};
 struct Win;
 struct BaseButton;
+struct ButtonGroup {};
 static Win *WinPointerOwner1;
 static Win *WinPointerOwner2;
 static int WinSizingFlag;
 static int configured_inside;
 static int configured_lbutton;
 static int updates, redraws;
-static int base_moves;
+static int forwarded_presses;
 static int v42_calls, v43_calls;
 static int sound29_gets, sound30_gets;
 static int sound29_plays, sound30_plays;
@@ -58,7 +59,7 @@ struct Win {
     Sound *legacy_sound_30() { ++sound30_gets; return &Sound30; }
     void vslot_42(int id) { assert(id == 23); ++v42_calls; }
     void vslot_43(int id) { assert(id == 23); ++v43_calls; }
-    void on_mouse_move(int, int, int, int) { ++base_moves; }
+    virtual void on_left_down(int x, int y) { assert(x == 10 && y == 11); ++forwarded_presses; }
 };
 
 struct TimeProbe {
@@ -79,9 +80,10 @@ struct TimeProbe {
 
 struct BaseButton : Win {
     Win *win_parent_;
+    ButtonGroup *group_;
     uint32_t field_A9C_, field_A44_, field_A78_;
     TimeProbe time1_, time2_;
-    BaseButton() : win_parent_(0), field_A9C_(0), field_A44_(17), field_A78_(23),
+    BaseButton() : win_parent_(0), group_(0), field_A9C_(0), field_A44_(17), field_A78_(23),
                    time1_(&time1_starts, &time1_stops),
                    time2_(&time2_starts, &time2_stops) {}
     int in_box(int x, int y, RECT *area) {
@@ -101,75 +103,79 @@ ACTUAL_BODY
 static void reset() {
     WinPointerOwner1 = WinPointerOwner2 = 0;
     WinSizingFlag = configured_inside = configured_lbutton = 0;
-    updates = redraws = base_moves = v42_calls = v43_calls = 0;
+    updates = redraws = forwarded_presses = v42_calls = v43_calls = 0;
     sound29_gets = sound30_gets = sound29_plays = sound30_plays = 0;
     time1_starts = time1_stops = time2_starts = time2_stops = 0;
     callback_arguments = callback_contexts = callback_delays = callback_resolutions = 0;
 }
 
 int main() {
-    BaseButton button;
-    Win parent;
-    button.win_parent_ = &parent;
+    ButtonGroup group;
+    for (int grouped = 0; grouped != 2; ++grouped) {
+        BaseButton button;
+        Win parent;
+        button.win_parent_ = &parent;
+        button.group_ = grouped ? &group : 0;
 
-    // Ownership/sizing gates short-circuit before hit testing or timer effects.
-    reset();
-    WinPointerOwner1 = 0;
-    WinSizingFlag = 1;
-    configured_inside = 1;
-    button.on_mouse_move(10, 11);
-    assert(time1_starts == 0 && time2_starts == 0 && updates == 0);
-    WinPointerOwner1 = &button;
-    WinSizingFlag = 0;
-    button.on_mouse_move(10, 11);
-    assert(time1_starts == 0 && time2_starts == 0 && updates == 0);
+        // Ownership/sizing gates short-circuit before hit testing or timer effects.
+        reset();
+        WinPointerOwner1 = 0;
+        WinSizingFlag = 1;
+        configured_inside = 1;
+        button.on_mouse_move(10, 11);
+        assert(time1_starts == 0 && time2_starts == 0 && updates == 0);
+        WinPointerOwner1 = &button;
+        WinSizingFlag = 0;
+        button.on_mouse_move(10, 11);
+        assert(time1_starts == 0 && time2_starts == 0 && updates == 0);
 
-    // Leaving an active hover stops the pinned second timer member before the
-    // release sound, parent notification, and update.
-    reset();
-    WinPointerOwner1 = &button;
-    WinSizingFlag = 1;
-    configured_inside = 0;
-    button.field_A9C_ = 1;
-    button.on_mouse_move(10, 11);
-    assert(time2_stops == 1 && time1_stops == 0);
-    assert(button.field_A9C_ == 0 && sound29_gets == 1 && sound29_plays == 1);
-    assert(v42_calls == 1 && redraws == 1 && updates == 0);
+        // Leaving an active hover stops the pinned second timer member before the
+        // release sound, parent notification, and update.
+        reset();
+        WinPointerOwner1 = &button;
+        WinSizingFlag = 1;
+        configured_inside = 0;
+        button.field_A9C_ = 1;
+        button.on_mouse_move(10, 11);
+        assert(time2_stops == 1 && time1_stops == 0);
+        assert(button.field_A9C_ == 0 && sound29_gets == 1 && sound29_plays == 1);
+        assert(v42_calls == 1 && redraws == 1 && updates == 0);
 
-    // Entering a hover uses that same second member and keeps timer parameters.
-    reset();
-    WinPointerOwner1 = &button;
-    WinSizingFlag = 1;
-    configured_inside = 1;
-    button.field_A9C_ = 0;
-    button.field_A44_ = 17;
-    button.on_mouse_move(10, 11);
-    assert(time2_starts == 1 && time1_starts == 0);
-    assert(callback_arguments == 1 && callback_contexts == 1 &&
-           callback_delays == 17 && callback_resolutions == 5);
-    assert(button.field_A9C_ == 1 && sound30_gets == 1 && sound30_plays == 1);
-    assert(v43_calls == 1 && redraws == 1 && updates == 0);
+        // Entering a hover uses that same second member and keeps timer parameters.
+        reset();
+        WinPointerOwner1 = &button;
+        WinSizingFlag = 1;
+        configured_inside = 1;
+        button.field_A9C_ = 0;
+        button.field_A44_ = 17;
+        button.on_mouse_move(10, 11);
+        assert(time2_starts == 1 && time1_starts == 0);
+        assert(callback_arguments == 1 && callback_contexts == 1 &&
+               callback_delays == 17 && callback_resolutions == 5);
+        assert(button.field_A9C_ == 1 && sound30_gets == 1 && sound30_plays == 1);
+        assert(v43_calls == 1 && redraws == 1 && updates == 0);
 
-    // The sentinel suppresses only timer start; the rest of entry still runs.
-    reset();
-    WinPointerOwner1 = &button;
-    WinSizingFlag = 1;
-    configured_inside = 1;
-    button.field_A9C_ = 0;
-    button.field_A44_ = 0xFFFFFFFFU;
-    button.on_mouse_move(10, 11);
-    assert(time1_starts == 0 && time2_starts == 0);
-    assert(button.field_A9C_ == 1 && sound30_gets == 1 && v43_calls == 1 &&
-           redraws == 1 && updates == 0);
+        // The sentinel suppresses only timer start; the rest of entry still runs.
+        reset();
+        WinPointerOwner1 = &button;
+        WinSizingFlag = 1;
+        configured_inside = 1;
+        button.field_A9C_ = 0;
+        button.field_A44_ = 0xFFFFFFFFU;
+        button.on_mouse_move(10, 11);
+        assert(time1_starts == 0 && time2_starts == 0);
+        assert(button.field_A9C_ == 1 && sound30_gets == 1 && v43_calls == 1 &&
+               redraws == 1 && updates == 0);
 
-    // Existing held-button forwarding stays on the base Win path.
-    reset();
-    WinPointerOwner1 = &button;
-    WinSizingFlag = 1;
-    configured_inside = configured_lbutton = 1;
-    button.field_A9C_ = 1;
-    button.on_mouse_move(10, 11);
-    assert(base_moves == 1 && time1_stops == 0 && time2_stops == 0);
+        // A held button forwards the press through the inherited Win method.
+        reset();
+        WinPointerOwner1 = &button;
+        WinSizingFlag = 1;
+        configured_inside = configured_lbutton = 1;
+        button.field_A9C_ = 1;
+        button.on_mouse_move(10, 11);
+        assert(forwarded_presses == 1 && time1_stops == 0 && time2_stops == 0);
+    }
 }
 '''
 

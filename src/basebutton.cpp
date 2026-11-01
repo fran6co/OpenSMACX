@@ -682,8 +682,11 @@ int BaseButton::init(LPCSTR name, int id, int x, int y, int width, int height,
 int BaseButton::UNK1(Font *font, char *name, int id, int x, int y,
                      int width, Win *parent, int style_flag) {
     if (font == 0) return 3;
-    const int height = font->height_ * 7 / 4;
-    const int result = init(name, id, x, y, width, height, parent, style_flag);
+    // The product wraps to 32 bits before the signed division by four.
+    const uint32_t font_height = static_cast<uint32_t>(font->height_);
+    const int result = init(name, id, x, y, width,
+        static_cast<int32_t>(font_height * 7u) / 4,
+        parent, style_flag);
     if (result != 0) return result;
     set_font(font, 0, 0, 0);
     redraw();
@@ -741,10 +744,16 @@ void BaseButton::on_left_down(int, int) {
     Win::clear_bubble_text();
 
     if (field_A9C_ == 0) {
+        Win *const sound_parent = win_parent_;
         field_A9C_ = 1;
-        Sound *const owner = win_parent_->legacy_sound_30();
+        Sound *const owner = sound_parent->legacy_sound_30();
         if (owner != 0 && owner->is_playing() == 0) owner->play();
-        win_parent_->vslot_43(static_cast<int>(field_A78_));
+        // Both group paths notify the parent in the original.
+        if (group_) {
+            win_parent_->vslot_43(static_cast<int>(field_A78_));
+        } else {
+            win_parent_->vslot_43(static_cast<int>(field_A78_));
+        }
         redraw();
         if (field_A44_ != 0xFFFFFFFFU) {
             time2_.pulse(base_button_timer_callback, 1, this, field_A44_, 5);
@@ -759,9 +768,16 @@ void BaseButton::on_left_down(int, int) {
         if (owner != 0 && owner->is_playing() == 0) {
             owner->play();
         }
-        const int accepted = win_parent_->on_button_pressed(static_cast<int>(field_A78_));
-        if (accepted != 0 && field_A44_ != 0xFFFFFFFFU) {
-            time2_.pulse(base_button_timer_callback, 1, this, field_A44_, 5);
+        if (group_) {
+            if (win_parent_->on_button_pressed(static_cast<int>(field_A78_)) != 0 &&
+                field_A44_ != 0xFFFFFFFFU) {
+                time2_.pulse(base_button_timer_callback, 1, this, field_A44_, 5);
+            }
+        } else {
+            if (win_parent_->on_button_pressed(static_cast<int>(field_A78_)) != 0 &&
+                field_A44_ != 0xFFFFFFFFU) {
+                time2_.pulse(base_button_timer_callback, 1, this, field_A44_, 5);
+            }
         }
     }
     if (field_AB4_ != 0) {
@@ -799,12 +815,17 @@ void BaseButton::on_left_up(int, int) {
         Sleep(field_AA0_ - elapsed);
     }
     if (field_A9C_ == 1) {
+        Win *const sound_parent = win_parent_;
         field_A9C_ = 0;
-        Sound *const owner = win_parent_->legacy_sound_29();
+        Sound *const owner = sound_parent->legacy_sound_29();
         if (owner != 0 && owner->is_playing() == 0) {
             owner->play();
         }
-        win_parent_->vslot_42(static_cast<int>(field_A78_));
+        if (group_) {
+            win_parent_->vslot_42(static_cast<int>(field_A78_));
+        } else {
+            win_parent_->vslot_42(static_cast<int>(field_A78_));
+        }
         redraw();
     }
 }
@@ -859,10 +880,12 @@ void BaseButton::on_left_click(int, int) {
 // symbol    ?on_mouse_move@BaseButton@@UAEXHH@Z
 void BaseButton::on_mouse_move(int x, int y) {
     RECT area = Buffer::rect2_;
-    area.right -= area.left;
-    area.bottom -= area.top;
-    area.left = 0;
-    area.top = 0;
+    const uint32_t dy = 0u - static_cast<uint32_t>(area.top);
+    const uint32_t dx = 0u - static_cast<uint32_t>(area.left);
+    area.left = static_cast<int32_t>(static_cast<uint32_t>(area.left) + dx);
+    area.right = static_cast<int32_t>(static_cast<uint32_t>(area.right) + dx);
+    area.top = static_cast<int32_t>(static_cast<uint32_t>(area.top) + dy);
+    area.bottom = static_cast<int32_t>(static_cast<uint32_t>(area.bottom) + dy);
 
     Win *active = WinPointerOwner1;
     if (active == 0) {
@@ -872,28 +895,39 @@ void BaseButton::on_mouse_move(int x, int y) {
         return;
     }
 
-    const int inside = in_box(x, y, &area);
-    if (inside == 0 && field_A9C_ == 1) {
+    if (in_box(x, y, &area) == 0 && field_A9C_ == 1) {
         time2_.stop();
+        Win *const sound_parent = win_parent_;
         field_A9C_ = 0;
-        Sound *const owner = win_parent_->legacy_sound_29();
+        Sound *const owner = sound_parent->legacy_sound_29();
         if (owner != 0 && owner->is_playing() == 0) owner->play();
-        win_parent_->vslot_42(static_cast<int>(field_A78_));
+        if (group_) {
+            win_parent_->vslot_42(static_cast<int>(field_A78_));
+        } else {
+            win_parent_->vslot_42(static_cast<int>(field_A78_));
+        }
         redraw();
         return;
     }
-    if (inside != 0) {
-        if (field_A9C_ == 0) {
+    if (in_box(x, y, &area) != 0) {
+        if (field_A9C_ != 0) {
+            if (get_lbutton_state() != 0) {
+                on_left_down(x, y); // Original0x607970: live vtable offset0x50.
+            }
+        } else {
             if (field_A44_ != 0xFFFFFFFFU) {
                 time2_.start(base_button_timer_callback, 1, this, field_A44_, 5);
             }
+            Win *const sound_parent = win_parent_;
             field_A9C_ = 1;
-            Sound *const owner = win_parent_->legacy_sound_30();
+            Sound *const owner = sound_parent->legacy_sound_30();
             if (owner != 0 && owner->is_playing() == 0) owner->play();
-            win_parent_->vslot_43(static_cast<int>(field_A78_));
+            if (group_) {
+                win_parent_->vslot_43(static_cast<int>(field_A78_));
+            } else {
+                win_parent_->vslot_43(static_cast<int>(field_A78_));
+            }
             redraw();
-        } else if (get_lbutton_state() != 0) {
-            on_left_down(x, y); // Original0x607970: live vtable offset0x50.
         }
     }
 }
@@ -930,14 +964,15 @@ void BaseButton::timer_callback(int stage) {
         if (bubble_text_ != 0) {
             RECT area = outer_rect_;
             int x = 0;
-            int y = 0;
-            client_to_screen(&x, &y);
-            const int width = area.right - area.left;
-            const int height = area.bottom - area.top;
-            area.left = x;
-            area.top = y;
-            area.right = x + width;
-            area.bottom = y + height;
+            // This arm reuses the now-dead stage argument for the Y coordinate.
+            stage = 0;
+            client_to_screen(&x, &stage);
+            const uint32_t dy = static_cast<uint32_t>(stage) - static_cast<uint32_t>(area.top);
+            const uint32_t dx = static_cast<uint32_t>(x) - static_cast<uint32_t>(area.left);
+            area.left = static_cast<int32_t>(static_cast<uint32_t>(area.left) + dx);
+            area.right = static_cast<int32_t>(static_cast<uint32_t>(area.right) + dx);
+            area.top = static_cast<int32_t>(static_cast<uint32_t>(area.top) + dy);
+            area.bottom = static_cast<int32_t>(static_cast<uint32_t>(area.bottom) + dy);
             Win::set_bubble_text(bubble_text_, &area);
         }
     } else if (stage == 1) {
