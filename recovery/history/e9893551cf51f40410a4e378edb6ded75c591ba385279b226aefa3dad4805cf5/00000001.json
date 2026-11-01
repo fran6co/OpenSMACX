@@ -1,0 +1,22 @@
+{
+  "event_id": "0e79dde07d1a6a3dcf32fd7f57a08ab95935c2d0da200fb3e7d4d36777d3ae95",
+  "payload": {
+    "affects": [
+      "entity-68ee4eca7e4576b8acaa0266d526f4421c4819377c1a0144075ad1fd4f5c6608",
+      "entity-f5fce7274b7028c39af7c3f53c50e0772b83910dd3a603bb232f39af351465ab"
+    ],
+    "author": "coordinator",
+    "discovery_id": "ordinary-inline-canonical-body-nov01cx",
+    "evidence": [
+      "One authorized native header-only overlay changed solely MEASURED removal, preserving body, source home, full original48Bidentity, compiler flags and allactualgenuineuses.",
+      "Original has0EATentries and0observedincomingdirect/address references; that absence never authorized deleting its real48Bbody or withdrawing its historicalclaim."
+    ],
+    "hypothesis": "The existing row helper might retain a natural original canonical body after removing the artificial export in its new47-use context.",
+    "kind": "discovery"
+  },
+  "previous_event": null,
+  "request_id": "ordinary-inline-canonical-body-nov01cx",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:row-helper-emission-nov01cx"
+}

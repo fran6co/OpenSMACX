@@ -1,0 +1,19 @@
+{
+  "event_id": "1ca1c86ee460df71ce2a5dc6c5722ab44db2a3aac2aded4f99d993dbb42c11b6",
+  "payload": {
+    "author": "coordinator",
+    "discovery_id": "ordinary-inline-canonical-body-nov01cx",
+    "disposition": "rejected",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "Native one-shot control REFUSED: canonical58512048Bdefinition disappears fromalphaCOFF. Baseline29rows21exact8miss becomes20exact8miss1unresolved; parser remains922instructions/38rangeCALLs and gains no match.",
+      "src/text.h and src/alpha.cpp remain unchanged in the real source tree; the historical claim and allmappings preserved. No fullbuild/collection or artifactretention workaround is authorized. Probe source/object/result archived underignored recovery/row-helper-emission-nov01cx; the new47-use context was actuallytested, not confused with oldzero-useaudits.",
+      "Coordinator closes this single-control task. Future genuine source-owner/TU/compiler-policy work needs separate concreteevidence/scope; no repeat removal, newanchor/export/copywrapper/flagchanges or demotion to force green."
+    ]
+  },
+  "previous_event": "0e79dde07d1a6a3dcf32fd7f57a08ab95935c2d0da200fb3e7d4d36777d3ae95",
+  "request_id": "reject-missing-canonical-body-nov01cx",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:row-helper-emission-nov01cx"
+}
