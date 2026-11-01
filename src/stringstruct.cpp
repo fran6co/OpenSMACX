@@ -851,8 +851,8 @@ extern "C" void __cdecl tech_wizard_unk1(Popup *first_popup,
 /*
 Purpose: Wait out the other factions' turns in a network game, skipping
          forward through absent players.
-// ORIGINAL: 0x00529E70 ?net_not_my_turn@@YAXXZ 0x00529E70-0x00529F2C FILE
-// RECOVERY_BINDING: v1 {"evidence": ["Original529E70..529F2C; retired seed git:117282ee:src/unrecovered/00529e70.cpp records the same identity and spans with its scheduling TRIED note kept below.", "The turn block is console.h's own ConsoleGlobal (0x009156B0, set_view), game.h's MultiWindow (0x007FD648, the hypothesis layout's draw), netdaemon.h's NetDaemonNet (0x0093CD90, net_tasks) and game.h's ExitTurnLoop (0x009B2068); the waiting latch at 0x0093E8EC takes this faction's bit and 0x00939294/0x00939298 are the two turn-handover flags.", "game.cpp binds 0x0093A950 as NextTurnReady and 0x0093E8C0 as TurnsAssigned; 0x009A6820 is game.cpp's NetTurnFaction and the skip tests are lock.h's LockEnableMask bytes at 0x009A64E8/0x009A64E9.", "next_player_turn (game.cpp's 0x0052DBF0) has no header declaration yet, so the declaration travels with this body."], "reason": "Coverage transcription of the network turn wait on the tree's own named objects."}
+// ORIGINAL: 0x00529E70 ?net_not_my_turn@@YAXXZ 0x00529E70-0x00529F2C FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Original529E70..529F2C; retired seed git:117282ee:src/unrecovered/00529e70.cpp records the same identity and spans with its scheduling TRIED note kept below.", "The turn block is console.h's own ConsoleGlobal (0x009156B0, set_view), game.h's MultiWindow (0x007FD648, the hypothesis layout's draw), netdaemon.h's NetDaemonNet (0x0093CD90, net_tasks) and game.h's ExitTurnLoop (0x009B2068); the waiting latch at 0x0093E8EC takes this faction's bit and 0x00939294/0x00939298 are the two turn-handover flags.", "game.cpp binds 0x0093A950 as NextTurnReady and 0x0093E8C0 as TurnsAssigned; 0x009A6820 is game.cpp's NetTurnFaction and the skip tests are lock.h's LockEnableMask bytes at 0x009A64E8/0x009A64E9.", "next_player_turn (game.cpp's 0x0052DBF0) has no header declaration yet, so the declaration travels with this body.", "Pinned 0x00529EA4 and 0x00529EFF use direct 32-bit SHL by CL. The first shifts the local faction into the waiting set; the guarded active-turn test retains a full-width bit while testing the human/alive bytes. Do not add source count masks or narrow the second shift temporary."], "reason": "Coverage transcription of the network turn wait on the tree's own named objects."}
 // TRIED (seed): byte-exact to 94.5% mnemonic similarity; the remaining
 //         divergence is the arg-0 push order for set_view against the two
 //         independent global stores.
@@ -864,7 +864,7 @@ void __cdecl net_not_my_turn() {
     ConsoleGlobal.set_view(0);
     MultiWindow.draw(0);
     NetDaemonNet.factions_waiting_mask() |=
-        (1u << (ConsoleGlobal.faction_id_ & 31));
+        (1u << ConsoleGlobal.faction_id_);
     while (ExitTurnLoop == 0 && NextTurnReady == 0
            && GameDataStateStorage.fields_.net_turn_faction_ != ConsoleGlobal.faction_id_) {
         ConsoleGlobal.field_23BE4_ = 1;
@@ -874,7 +874,7 @@ void __cdecl net_not_my_turn() {
             if (level <= 0) {
                 next_player_turn();
             } else {
-                const unsigned char bit = static_cast<unsigned char>(1u << (level & 31));
+                const uint32_t bit = 1u << level;
                 const GameDataLockMaskBytes *const lock_bytes =
                     &GameDataStateStorage.fields_.lock_masks_.bytes_;
                 if ((lock_bytes->human_mask_ & bit) == 0) {

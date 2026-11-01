@@ -2040,8 +2040,8 @@ int __cdecl boom(int x, int y, int flags) {
 // RECOVERY_OBJECT: v2 0x00687AE8 0x00687AF4 ?VehInfantryOffset@@3UVOX_Vect@@A 0x004C3800
 VOX_Vect VehInfantryOffset = {{-400.0f, 200.0f, 0.0f}};
 
-// ORIGINAL: 0x004C2030 ?vehdraw_construct_abil@@YAHHPAUCaviar@@H@Z 0x004C2030-0x004C2360
-// RECOVERY_BINDING: v1 {"evidence": ["Original type15 bonus loop calls the technology predicate with signed short prerequisite, reloads bonus value after that call, masks the shift count to five bits, and reloads loop count on continuation. Bonus additions and the subsequent ordinary ability additions are not deduplicated.", "Original faction alien flag selects human or alien colony/terraforming attachments; remaining masks select independently loaded model owners. Mapped callers discard the catalogued integer result."], "reason": "Recover ordered ability model additions from actual faction bonuses and rule records, retaining repeated selections."}
+// ORIGINAL: 0x004C2030 ?vehdraw_construct_abil@@YAHHPAUCaviar@@H@Z 0x004C2030-0x004C2360 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Original type15 bonus loop calls the technology predicate with signed short prerequisite, reloads bonus value after that call, uses the direct 32-bit variable shift whose count masking is implicit in the selected x86 instruction, and reloads loop count on continuation. Bonus additions and the subsequent ordinary ability additions are not deduplicated.", "Original faction alien flag selects human or alien colony/terraforming attachments; remaining masks select independently loaded model owners. Mapped callers discard the catalogued integer result.", "Pinned 0x004C20A7 shifts the reloaded ability bonus id directly; an explicit source &31 adds a non-original instruction. Keep the preceding Ability lookup, has_tech call, subsequent bonus-id reload and repeated model additions intact."], "reason": "Recover ordered ability model additions from actual faction bonuses and rule records, retaining repeated selections."}
 // symbol    ?vehdraw_construct_abil@@YAXIPAVCaviar@@H@Z
 void __cdecl vehdraw_construct_abil(uint32_t abilities, Caviar *renderer, int faction_id) {
     for (int i = 0; i < Players[faction_id].faction_bonus_count; ++i) {
@@ -2050,7 +2050,7 @@ void __cdecl vehdraw_construct_abil(uint32_t abilities, Caviar *renderer, int fa
             continue;
         // has_tech precedes the second read of the bonus index in the image.
         const uint32_t bonus = abilities &
-            (1u << (Players[faction_id].faction_bonus_val1[i] & 31));
+            (1u << (Players[faction_id].faction_bonus_val1[i]));
         if (bonus & 0x1000000u) renderer->add_object(&g_SP_SOPORIFIC_CAVIARDATA, 0);
         if (bonus & 0x2000000u) renderer->add_object(&g_SP_DISSWAVE_CAVIARDATA, 0);
         if (bonus & 0x8000000u) renderer->add_object(&g_SP_NANOO_CAVIARDATA, 0);
