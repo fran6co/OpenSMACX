@@ -33,6 +33,26 @@ from .shared_source import (read_shared_bindings, referenced_shared_units,
                             resolve_shared_contexts, validate_shared_bindings)
 from .shared_binary import check_shared
 from .selected_evidence import select_evidence
+from .function_contexts import (ContextFunctionTarget, qualify_context_targets,
+                                referenced_context_units)
+
+
+def validated_context_units(root, snapshot, settings):
+    """Re-evaluate explicit source contexts; invalid names remain refused.
+
+    The mapping gate reports detailed invalid-context findings independently.
+    This set authorizes no provider search or linked-provider inference.
+    """
+    from .source_selection import configured_compilation_context
+
+    units = set()
+    for name in sorted({row.get("context_path", "") for row in snapshot["records"]} - {""}):
+        try:
+            path = configured_compilation_context(root, name, settings)
+        except (OSError, ValueError):
+            continue
+        units.add(path.relative_to(root).as_posix())
+    return frozenset(units)
 
 
 def _has_unbound_candidate(entity: dict) -> bool:
@@ -74,7 +94,8 @@ def _local_function_symbols(view: dict, component_targets: dict | None) -> set[s
     return local_symbols
 
 
-def select_bindings(view: dict, selected: frozenset[str], component_targets: dict | None = None) -> tuple[list, list, dict]:
+def select_bindings(view: dict, selected: frozenset[str], component_targets: dict | None = None,
+                    *, context_units: frozenset[str] | None = None) -> tuple[list, list, dict]:
     """Require a single product definition; archived interpretations remain seeds.
 
     Freshly verified toolchain components may publish relocation targets for
@@ -82,6 +103,18 @@ def select_bindings(view: dict, selected: frozenset[str], component_targets: dic
     product conflict keeps refusing resolution.
     """
     bindings, refused, targets = [], [], defaultdict(set)
+    context_targets = {}
+    context_units = frozenset(context_units or ())
+    # Context/fragment composition has no supported independent body boundary.
+    # Quarantine the parent before constructing external targets: the later
+    # fragment pass may refuse a parent body but cannot withdraw a published
+    # target from callers or data initializers.
+    fragment_parents = {
+        (relation["parent_address"], relation["parent_symbol"])
+        for group in view["groups"] for entity in group["entities"]
+        for item in entity["candidates"] if not item["seed"]
+        if (relation := item.get("function_fragment")) is not None
+    }
     local_symbols = _local_function_symbols(view, component_targets)
     ambiguous = set()
     product_conflicts = set()
@@ -98,6 +131,11 @@ def select_bindings(view: dict, selected: frozenset[str], component_targets: dic
                 unbound_addresses.add(entity["origin"]["address"])
             candidate = (candidates[0] if len(candidates) == 1
                          and not entity["conflicts"] and not unbound else None)
+            context_supported = (candidate is not None and candidate["component"] is None
+                                 and candidate.get("function_fragment") is None
+                                 and (entity["origin"]["address"], candidate["symbol"]) not in fragment_parents
+                                 and bool(candidate.get("context_path"))
+                                 and candidate["context_path"] in context_units)
             # Size-free entry aliases in one dependency companion do not
             # compete with product definitions. They remain reserved below;
             # only freshly verified component targets can resolve them.
@@ -112,7 +150,8 @@ def select_bindings(view: dict, selected: frozenset[str], component_targets: dic
                 ambiguous.update(item["symbol"] for item in candidates)
                 if not dependency_aliases:
                     product_conflicts.update(item["symbol"] for item in candidates)
-            elif candidate.get("context_path") or candidate.get("function_fragment") is not None:
+            elif (candidate.get("context_path") and not context_supported
+                  or candidate.get("function_fragment") is not None):
                 # These interpretations cannot safely publish a cross-TU
                 # external address for a same-named ordinary candidate.
                 ambiguous.add(candidate["symbol"])
@@ -125,13 +164,17 @@ def select_bindings(view: dict, selected: frozenset[str], component_targets: dic
                 if item["component"] is not None:
                     reserved[item["symbol"]].add(entity["origin"]["address"])
             if (candidate is not None and candidate["component"] is None
-                    and not candidate.get("context_path")
+                    and (not candidate.get("context_path") or context_supported)
                     and candidate.get("function_fragment") is None
                     and candidate["symbol"] not in local_symbols):
                 # Exact source spelling only. Ambiguous external names are
                 # removed below; static definitions never become external COFF
                 # symbols and so cannot borrow this table during resolution.
                 targets[candidate["symbol"]].add(entity["origin"]["address"])
+                if context_supported:
+                    context_targets[candidate["symbol"]] = ContextFunctionTarget(
+                        Origin(**entity["origin"]), candidate["symbol"],
+                        candidate["context_path"], candidate["path"])
             if key not in selected:
                 continue
             if candidate is not None and candidate.get("function_fragment") is not None:
@@ -147,14 +190,16 @@ def select_bindings(view: dict, selected: frozenset[str], component_targets: dic
                 reason = "requires one unambiguous product definition; seeds are not production source"
             elif candidate["component"] is not None:
                 reason = "dependency binding: use component verification, not application recovery"
-            elif candidate.get("context_path"):
-                reason = "strict application measurement does not yet support compile_context mappings"
+            elif candidate.get("context_path") and not context_supported:
+                reason = "compile_context requires a validated configured product translation unit"
             if reason is None:
                 try:
                     bindings.append(FunctionBinding(Origin(**entity["origin"]),
                                                      tuple(Span(**span) for span in candidate["spans"]),
-                                                     candidate["symbol"], candidate["path"],
-                                                     local_only=candidate["symbol"] in local_symbols))
+                                                     candidate["symbol"],
+                                                     candidate["context_path"] if context_supported else candidate["path"],
+                                                     local_only=candidate["symbol"] in local_symbols,
+                                                     source_unit=candidate["path"] if context_supported else ""))
                 except ValueError as error:
                     reason = str(error)
             if reason is not None:
@@ -177,6 +222,10 @@ def select_bindings(view: dict, selected: frozenset[str], component_targets: dic
             accepted.append(binding)
     externals = {symbol: next(iter(addresses)) for symbol, addresses in targets.items()
                  if symbol not in ambiguous and symbol not in local_symbols}
+    # These declarations are not addresses yet. Only the exact fresh context
+    # object may qualify them at the compiled-evidence boundary.
+    externals.update({symbol: target for symbol, target in context_targets.items()
+                      if symbol in externals})
     if component_targets:
         for symbol, address in component_targets.items():
             if address in unbound_addresses:
@@ -431,6 +480,8 @@ def _compiled_evidence(bindings, object_bindings, generated_bindings, objects, i
                        associated_bindings=(), selected_object_targets=None,
                        selected_object_contents=None):
     """Resolve targets from product objects, never from a retention probe."""
+    declared_functions = set(externals) | {item.symbol for item in bindings}
+    externals, context_checks = qualify_context_targets(externals, objects)
     target_bindings = (object_bindings if selected_object_targets is None
                        else selected_object_targets)
     content_bindings = (object_bindings if selected_object_contents is None
@@ -441,10 +492,10 @@ def _compiled_evidence(bindings, object_bindings, generated_bindings, objects, i
                      if row["definition"] == "pass"}
     checked_objects = [local_reports.get((row["unit"], row["symbol"]), row) for row in checked_objects]
     object_symbols = set(require_disjoint_object_symbols(
-        object_bindings, set(externals) | {item.symbol for item in bindings},
+        object_bindings, declared_functions,
         {item.symbol for item in generated_bindings}, {item.symbol for item in import_bindings},
         {item.symbol for item in shared_bindings}))
-    namespaces = [set(externals) | {item.symbol for item in bindings}, object_symbols,
+    namespaces = [declared_functions, object_symbols,
                   {item.symbol for item in generated_bindings}, {item.symbol for item in import_bindings},
                   {item.symbol for item in shared_bindings}]
     if any(group & other for index, group in enumerate(namespaces) for other in namespaces[:index]):
@@ -472,6 +523,14 @@ def _compiled_evidence(bindings, object_bindings, generated_bindings, objects, i
                          local_data_targets=local_data_targets,
                          import_targets=imports, literal_targets=literal_targets, errors=errors,
                          fragments=fragments, associated_bindings=associated_bindings)
+    if context_checks:
+        for row in rows:
+            names = {item["symbol"] for item in row.get("diagnostic", {}).get("emitted_references", ())}
+            if row.get("source_unit"):
+                names.add(row["symbol"])
+            relevant = [item for item in context_checks if item["symbol"] in names]
+            if relevant:
+                row["context_target_checks"] = relevant
     return (rows, checked_objects, checked_generated, checked_imports, checked_shared, checked_literals), targets, imports
 
 
@@ -528,7 +587,9 @@ def _verify_selection(root: Path, selected: frozenset[str], image_path: Path, *,
         dependency_targets, component_reports = component_targets(root, snapshot, image_data)
     except ValueError as error:
         raise ValueError(f"component dependency verification refused: {error}") from error
-    bindings, refused, externals = select_bindings(view, selected, component_targets=dependency_targets)
+    context_units = validated_context_units(root, snapshot, settings)
+    bindings, refused, externals = select_bindings(
+        view, selected, component_targets=dependency_targets, context_units=context_units)
     bindings, fragment_bindings, support_entities, fragment_refused = select_fragment_bindings(
         view, selected, bindings)
     refused.extend(fragment_refused)
@@ -548,7 +609,8 @@ def _verify_selection(root: Path, selected: frozenset[str], image_path: Path, *,
     # identities available to callers; this is not a binding withdrawal.
     placeholders = {(row["entity_id"], row["path"]) for row in snapshot["records"]
                     if row["candidate_kind"] == "source" and row["legacy_state"] == "placeholder"}
-    unfinished = [item for item in bindings if (item.origin.entity_id, item.unit) in placeholders]
+    unfinished = [item for item in bindings
+                  if (item.origin.entity_id, item.source_unit or item.unit) in placeholders]
     refused.extend({"entity_id": item.origin.entity_id, "result": Result.UNKNOWN, "symbol": item.symbol,
                     "reason": "unfinished source placeholder; implement its body before task acceptance"}
                    for item in unfinished)
@@ -577,7 +639,8 @@ def _verify_selection(root: Path, selected: frozenset[str], image_path: Path, *,
     initial_evidence = (select_evidence(bindings, selected, {}, object_bindings,
                                         generated_bindings, import_bindings,
                                         shared_bindings, literal_bindings,
-                                        unit_extensions=settings.unit_extensions)
+                                        unit_extensions=settings.unit_extensions,
+                                        context_targets=externals)
                        if record_evidence else None)
     if record_evidence:
         units = sorted(initial_evidence.units)
@@ -656,7 +719,8 @@ def _verify_selection(root: Path, selected: frozenset[str], image_path: Path, *,
             evidence = select_evidence(bindings, selected, objects, object_bindings,
                                        generated_bindings, import_bindings,
                                        shared_bindings, literal_bindings,
-                                       unit_extensions=settings.unit_extensions)
+                                       unit_extensions=settings.unit_extensions,
+                                       context_targets=externals)
             while pending := evidence.units - objects.keys() - errors.keys():
                 dependency_units.update(pending)
                 for unit in sorted(pending):
@@ -693,12 +757,14 @@ def _verify_selection(root: Path, selected: frozenset[str], image_path: Path, *,
                 evidence = select_evidence(bindings, selected, objects, object_bindings,
                                            generated_bindings, import_bindings,
                                            shared_bindings, literal_bindings,
-                                           unit_extensions=settings.unit_extensions)
+                                           unit_extensions=settings.unit_extensions,
+                                           context_targets=externals)
         else:
             # Full task-scoped behavior: follow every declared object/shared
             # relocation in the selected application object graph.
             while pending := (referenced_object_units(object_bindings, objects)
-                              | referenced_shared_units(shared_bindings, objects)) - objects.keys() - errors.keys():
+                              | referenced_shared_units(shared_bindings, objects)
+                              | referenced_context_units(externals, objects)) - objects.keys() - errors.keys():
                 dependency_units.update(pending)
                 for unit in sorted(pending):
                     try:
@@ -856,7 +922,9 @@ def _verify_selection(root: Path, selected: frozenset[str], image_path: Path, *,
         # trial that might match, and two partial trials cannot be combined.
         result = (Result.PASS if Result.PASS in results else Result.UNKNOWN
                   if Result.UNKNOWN in results else Result.FAIL)
-        rows.append({**{name: candidates[0][name] for name in ("entity_id", "address", "symbol", "unit")},
+        rows.append({**{name: candidates[0][name] for name in
+                        ("entity_id", "address", "symbol", "unit", "source_unit", "compilation_context")
+                        if name in candidates[0]},
                      "result": result, "variants": candidates})
     if (settings.snapshot(root, measurement_options) != before or image_path.read_bytes() != image_data):
         raise ValueError("source, build inputs or image changed during measurement; retry")

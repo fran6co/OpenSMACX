@@ -1534,7 +1534,9 @@ Sprite g_SCROLL_BAR_SMALL_FILLER_ICON_SPRITE;  // 0x007796B0
 // Original 0x44FC50/0x44FC80 construct/destroy 2 elements at stride 0x2C.
 // RECOVERY_OBJECT: v2 0x007AC040 0x007AC098 ?g_IFACE_LOCK_SPRITES@@3PAVSprite@@A 0x00453A70
 Sprite g_IFACE_LOCK_SPRITES[2];
-// RECOVERY_OBJECT: v1 0x007A7940 ?g_UNUSED_SPRITES_VAR01@@3PAVSprite@@A
+// Original init 0x0044FCA0 and teardown 0x0044FCD0 both name
+// this constructed array run: 8 elements, stride 0x2C; names remain provisional.
+// RECOVERY_OBJECT: v2 0x007A7940 0x007A7AA0 ?g_UNUSED_SPRITES_VAR01@@3PAVSprite@@A 0x0044FCA0
 Sprite g_UNUSED_SPRITES_VAR01[8];  // 0x007A7940, 0x2c stride
 // RECOVERY_OBJECT: v1 0x0078DD50 ?g_IFACE_GENERAL_WINDOWS_TOP_LEFT_SPRITE@@3VSprite@@A
 Sprite g_IFACE_GENERAL_WINDOWS_TOP_LEFT_SPRITE;  // 0x0078DD50
@@ -1665,23 +1667,41 @@ Sprite g_UNUSED_SPRITE_VAR72;  // 0x007763F0
 Sprite g_UNUSED_SPRITE_VAR73;  // 0x007ACD30
 // RECOVERY_OBJECT: v1 0x007ABF90 ?g_UNUSED_SPRITE_VAR74@@3VSprite@@A
 Sprite g_UNUSED_SPRITE_VAR74;  // 0x007ABF90
-// RECOVERY_OBJECT: v1 0x007A68F0 ?g_UNUSED_SPRITES_VAR02@@3PAVSprite@@A
+// Original init 0x00450910 and teardown 0x00450940 both name
+// this constructed array run: 3 elements, stride 0x2C; names remain provisional.
+// RECOVERY_OBJECT: v2 0x007A68F0 0x007A6974 ?g_UNUSED_SPRITES_VAR02@@3PAVSprite@@A 0x00450910
 Sprite g_UNUSED_SPRITES_VAR02[3];  // 0x007A68F0, 0x2c stride
-// RECOVERY_OBJECT: v1 0x00789A90 ?g_UNUSED_SPRITES_VAR03@@3PAVSprite@@A
+// Original init 0x00450960 and teardown 0x00450990 both name
+// this constructed array run: 3 elements, stride 0x2C; names remain provisional.
+// RECOVERY_OBJECT: v2 0x00789A90 0x00789B14 ?g_UNUSED_SPRITES_VAR03@@3PAVSprite@@A 0x00450960
 Sprite g_UNUSED_SPRITES_VAR03[3];  // 0x00789A90, 0x2c stride
-// RECOVERY_OBJECT: v1 0x00792160 ?g_UNUSED_SPRITES_VAR04@@3PAVSprite@@A
+// Original init 0x004509B0 and teardown 0x004509E0 both name
+// this constructed array run: 3 elements, stride 0x2C; names remain provisional.
+// RECOVERY_OBJECT: v2 0x00792160 0x007921E4 ?g_UNUSED_SPRITES_VAR04@@3PAVSprite@@A 0x004509B0
 Sprite g_UNUSED_SPRITES_VAR04[3];  // 0x00792160, 0x2c stride
-// RECOVERY_OBJECT: v1 0x0075B0C8 ?g_UNUSED_SPRITES_VAR05@@3PAVSprite@@A
+// Original init 0x00450A00 and teardown 0x00450A30 both name
+// this constructed array run: 3 elements, stride 0x2C; names remain provisional.
+// RECOVERY_OBJECT: v2 0x0075B0C8 0x0075B14C ?g_UNUSED_SPRITES_VAR05@@3PAVSprite@@A 0x00450A00
 Sprite g_UNUSED_SPRITES_VAR05[3];  // 0x0075B0C8, 0x2c stride
-// RECOVERY_OBJECT: v1 0x0075B8C8 ?g_UNUSED_SPRITES_VAR06@@3PAVSprite@@A
+// Original init 0x00450A50 and teardown 0x00450A80 both name
+// this constructed array run: 3 elements, stride 0x2C; names remain provisional.
+// RECOVERY_OBJECT: v2 0x0075B8C8 0x0075B94C ?g_UNUSED_SPRITES_VAR06@@3PAVSprite@@A 0x00450A50
 Sprite g_UNUSED_SPRITES_VAR06[3];  // 0x0075B8C8, 0x2c stride
-// RECOVERY_OBJECT: v1 0x00787ED0 ?g_UNUSED_SPRITES_VAR07@@3PAVSprite@@A
+// Original init 0x00450AA0 and teardown 0x00450AD0 both name
+// this constructed array run: 3 elements, stride 0x2C; names remain provisional.
+// RECOVERY_OBJECT: v2 0x00787ED0 0x00787F54 ?g_UNUSED_SPRITES_VAR07@@3PAVSprite@@A 0x00450AA0
 Sprite g_UNUSED_SPRITES_VAR07[3];  // 0x00787ED0, 0x2c stride
-// RECOVERY_OBJECT: v1 0x007ACE80 ?g_UNUSED_SPRITES_VAR08@@3PAVSprite@@A
+// Original init 0x00450AF0 and teardown 0x00450B20 both name
+// this constructed array run: 3 elements, stride 0x2C; names remain provisional.
+// RECOVERY_OBJECT: v2 0x007ACE80 0x007ACF04 ?g_UNUSED_SPRITES_VAR08@@3PAVSprite@@A 0x00450AF0
 Sprite g_UNUSED_SPRITES_VAR08[3];  // 0x007ACE80, 0x2c stride
-// RECOVERY_OBJECT: v1 0x007920A8 ?g_UNUSED_SPRITES_VAR09@@3PAVSprite@@A
+// Original init 0x00450B40 and teardown 0x00450B70 both name
+// this constructed array run: 3 elements, stride 0x2C; names remain provisional.
+// RECOVERY_OBJECT: v2 0x007920A8 0x0079212C ?g_UNUSED_SPRITES_VAR09@@3PAVSprite@@A 0x00450B40
 Sprite g_UNUSED_SPRITES_VAR09[3];  // 0x007920A8, 0x2c stride
-// RECOVERY_OBJECT: v1 0x007ACF08 ?g_UNUSED_SPRITES_VAR10@@3PAVSprite@@A
+// Original init 0x00450B90 and teardown 0x00450BC0 both name
+// this constructed array run: 3 elements, stride 0x2C; names remain provisional.
+// RECOVERY_OBJECT: v2 0x007ACF08 0x007ACF8C ?g_UNUSED_SPRITES_VAR10@@3PAVSprite@@A 0x00450B90
 Sprite g_UNUSED_SPRITES_VAR10[3];  // 0x007ACF08, 0x2c stride
 // RECOVERY_OBJECT: v1 0x007794A8 ?g_UNUSED_SPRITE_VAR75@@3VSprite@@A
 Sprite g_UNUSED_SPRITE_VAR75;  // 0x007794A8
@@ -1701,7 +1721,9 @@ Sprite g_UNUSED_SPRITE_VAR81;  // 0x00779618
 Sprite g_UNUSED_SPRITE_VAR82;  // 0x007ACB58
 // RECOVERY_OBJECT: v1 0x007ACC20 ?g_UNUSED_SPRITE_VAR83@@3VSprite@@A
 Sprite g_UNUSED_SPRITE_VAR83;  // 0x007ACC20
-// RECOVERY_OBJECT: v1 0x0077A5C8 ?g_BASEWIN_SPRITES@@3PAVSprite@@A
+// Original init 0x00450D90 and teardown 0x00450DC0 both name
+// this constructed array run: 27 elements, stride 0x2C; names remain provisional.
+// RECOVERY_OBJECT: v2 0x0077A5C8 0x0077AA6C ?g_BASEWIN_SPRITES@@3PAVSprite@@A 0x00450D90
 Sprite g_BASEWIN_SPRITES[27];  // 0x0077A5C8, 0x2c stride
 // Original 0x471350/0x471380 use a one-element vector at stride 0x2C.
 // RECOVERY_OBJECT: v2 0x007F67C8 0x007F67F4 ?g_IFACE_GREEN_RIGHT_ARROW_SPRITE@@3PAVSprite@@A 0x00453A70

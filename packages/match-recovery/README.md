@@ -438,9 +438,17 @@ remain in another canonical source host. Selection and `--in` continue to use
 that marker host; measure, record and match checks compile the context TU with
 its configured flags. Context must be an existing canonical product TU with a
 compilation-database recipe. It is source metadata only and provides no claim,
-linked-selection or acceptance evidence. Strict task/restoration application
-verification refuses context mappings rather than score them under the
-marker-host recipe. Native preservation conservatively refuses a context
+linked-selection or acceptance evidence. Strict object-level task/restoration
+checks use the declared TU and its configured profile. A target is available
+only when that exact object defines a unique external function in an independent
+code COMDAT with supported, bounded relocations. Missing, malformed, static or
+ambiguous definitions remain unknown; another object's copy cannot qualify them.
+Reports retain both the marker host and emitting TU. This establishes neither
+linked provider selection nor equivalence between COMDAT copies. Context/fragment
+composition and variant editing of a definition hosted outside its emitting TU
+remain unsupported. Ordinary variant targets may resolve their explicitly
+declared context dependencies under the same object checks.
+Native preservation conservatively refuses a context
 mapping in any selected marker host (including fragment closure), while
 unchanged mappings in unrelated hosts remain outside-protected and edits to
 those mappings fail the outside-binding check. Selected-host support still

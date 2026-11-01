@@ -3,7 +3,8 @@
 from collections import Counter
 from pathlib import Path
 
-from .application_binary import select_bindings
+from .application_binary import select_bindings, validated_context_units
+from .function_contexts import qualify_context_targets, referenced_context_units
 from .compiler import Compiler
 from .generated_binary import check_generated
 from .generated_source import read_generated
@@ -46,7 +47,8 @@ def check_data(root: Path, image_path: Path, *, symbols=None, compiler=None):
     generated, imports = read_generated(root, pin), read_imports(root)
     shared = resolve_shared_contexts(root, read_shared_bindings(root, pin), settings=settings)
     validate_shared_bindings(shared, view)
-    _, _, functions = select_bindings(view, frozenset())
+    _, _, functions = select_bindings(
+        view, frozenset(), context_units=validated_context_units(root, snapshot, settings))
     object_symbols = require_disjoint_object_symbols(
         bindings, set(functions), {b.symbol for b in generated}, {b.symbol for b in imports},
         {b.symbol for b in shared})
@@ -95,8 +97,10 @@ def check_data(root: Path, image_path: Path, *, symbols=None, compiler=None):
                     errors[unit] = str(error)
             pending = (referenced_initial_object_units(selected, bindings, objects)
                        | referenced_shared_units(shared, objects)
+                       | referenced_context_units(functions, objects)
                        | referenced_object_units(bindings, {item.object_unit: objects[item.object_unit]
                            for item in shared if item.object_unit in objects})) - objects.keys() - errors.keys()
+        resolved_functions, _context_checks = qualify_context_targets(functions, objects)
         targets, _ = object_targets(bindings, objects)
         active_literals = [b for b in literals if b.unit in objects or b.unit in errors]
         local_targets, checked_literals = check_literals(active_literals, objects, image, errors=errors)
@@ -104,15 +108,15 @@ def check_data(root: Path, image_path: Path, *, symbols=None, compiler=None):
         literal_rows.extend({**row, "flags": list(effective(row["unit"], flags)), "graph_flags": list(flags)}
                             for row in checked_literals if row["interpretation_id"] in wanted_literals)
         imported, _ = import_targets(imports, objects, image)
-        tables, _ = check_generated(generated, objects, image, {**functions, **targets})
+        tables, _ = check_generated(generated, objects, image, {**resolved_functions, **targets})
         active_shared = [item for item in shared if item.object_unit in objects
                          or item.object_unit in errors or item.context_error is not None]
         shared_targets, checked_shared = check_shared(active_shared, objects, image,
-            {**functions, **targets, **tables}, import_targets=imported, literal_targets=local_targets, errors=errors)
+            {**resolved_functions, **targets, **tables}, import_targets=imported, literal_targets=local_targets, errors=errors)
         shared_checks.extend({**row, "flags": list(effective(row["unit"], flags)), "graph_flags": list(flags)}
                              for row in checked_shared)
         measured = check_initial_data(selected, objects, image,
-            {**functions, **targets, **imported, **tables, **shared_targets},
+            {**resolved_functions, **targets, **imported, **tables, **shared_targets},
             literal_targets=local_targets, errors=errors)
         rows.extend({**row, "flags": list(effective(row["unit"], flags)), "graph_flags": list(flags)}
                     for row in measured)

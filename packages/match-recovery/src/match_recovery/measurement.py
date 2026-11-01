@@ -167,6 +167,12 @@ class Measurement:
 
     def snapshot(self, root: Path, metadata: dict):
         paths = {"recovery/project.json", self.source.image_pin, *self.inputs}
+        # Explicit emission contexts depend on the configured compilation
+        # database. Recipe changes must invalidate an active measurement too.
+        mappings = read_json(root / "recovery/project.json").get("mappings", {})
+        database = mappings.get("compile_commands") if isinstance(mappings, dict) else None
+        if isinstance(database, str) and self.source.path(root, database).is_file():
+            paths.add(database)
         root_name = os.fspath(root)
         # Root inventories are re-enumerated, so new/shadowing headers invalidate
         # a check too. No dependency narrowing or persistent verdict cache here.
