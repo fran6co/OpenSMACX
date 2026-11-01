@@ -1,0 +1,22 @@
+{
+  "event_id": "0a6aa3d83d8b97d9200412e3dad5e0987c42206dea9b0603a2d835cb98144a7d",
+  "payload": {
+    "affects": [
+      "entity-f5fce7274b7028c39af7c3f53c50e0772b83910dd3a603bb232f39af351465ab"
+    ],
+    "author": "coordinator",
+    "discovery_id": "original-rules-row-helper-boundary-nov01cv",
+    "evidence": [
+      "Original complete585170..585E26 code-only census independently maps47CALLs to range422F00, each after text_get5FD570 and numeric5FD740 and before its exact Rules field store. PSI ATK is one such site; same-row numeric second values and suffix from technology fields onward are not rewritten.",
+      "Coordinator authorizes exactlyONE additional structural-row composition candidate, separate from the exhaustedtwo PSIloop candidates, based on the newly completed47-site originalcall/field map. Replace46 remaining directrowcompositions by the unchanged existinghelper; no new helper, forcedcallee/inline attribute, compilerflags, data layout or source identity changes.",
+      "Initial147b candidate build/sourcegates and two overlays are complete and source snapshots released. Preserve their historicalartifacts as priorcontext, never relabel them as current source evidence after this edit. Fresh actual-source tests, independent semantics review, nativecode evidence and finalcohort build/preservation required beforeintegration."
+    ],
+    "hypothesis": "Original47 early Rules row advances/numeric/clamp calls correspond to the existing genuine text_get_number helper, whereas trailingRules and WorldBuilder clamps are directly expanded. Recover that source composition boundary; the old all83manual expansion was measured under a retired parser-source wrapper context.",
+    "kind": "discovery"
+  },
+  "previous_event": null,
+  "request_id": "original-rules-row-helper-boundary-nov01cv",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:rules-parser-loops-nov01cv"
+}
