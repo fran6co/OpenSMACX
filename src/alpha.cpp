@@ -491,15 +491,10 @@ BOOL __cdecl read_basic_rules() {
     Rules.extra_pct_cost_proto_sea = range(text_item_number(), 0, 500);
     text_get();
     Rules.extra_pct_cost_proto_air = range(text_item_number(), 0, 500);
-    text_get();
-    Rules.psi_combat_ratio_atk[TRIAD_LAND] = range(text_item_number(), 1, 1000);
-    Rules.psi_combat_ratio_def[TRIAD_LAND] = range(text_item_number(), 1, 1000);
-    text_get();
-    Rules.psi_combat_ratio_atk[TRIAD_SEA] = range(text_item_number(), 1, 1000);
-    Rules.psi_combat_ratio_def[TRIAD_SEA] = range(text_item_number(), 1, 1000);
-    text_get();
-    Rules.psi_combat_ratio_atk[TRIAD_AIR] = range(text_item_number(), 1, 1000);
-    Rules.psi_combat_ratio_def[TRIAD_AIR] = range(text_item_number(), 1, 1000);
+    for (int triad = 0; triad < MaxTriadNum; triad++) {
+        Rules.psi_combat_ratio_atk[triad] = text_get_number(1, 1000);
+        Rules.psi_combat_ratio_def[triad] = range(text_item_number(), 1, 1000);
+    }
     text_get();
     Rules.player_start_energy_reserve = range(text_item_number(), 0, 1000);
     text_get();

@@ -25,15 +25,23 @@ def product_source():
         block(header, "struct " + name + " {", "\n};")
         for name in ("RulesBasic", "RulesWorldbuilder")
     )
+    triad_count = block(
+        (ROOT / "src/veh.h").read_text(),
+        "static const int MaxTriadNum =", ";",
+    )
     clamp = block(
         (ROOT / "src/general.h").read_text(),
         "MEASURED inline int __cdecl range(", "\n}",
+    )
+    parser_number = block(
+        (ROOT / "src/text.h").read_text(),
+        "MEASURED inline int __cdecl text_get_number(", "\n}",
     )
     loader = block(
         (ROOT / "src/alpha.cpp").read_text(),
         "BOOL __cdecl read_basic_rules() {", "\n}",
     )
-    return declarations + "\n" + clamp + "\n" + loader
+    return declarations + "\n" + triad_count + "\n" + clamp + "\n" + parser_number + "\n" + loader
 
 
 PRELUDE = r"""
