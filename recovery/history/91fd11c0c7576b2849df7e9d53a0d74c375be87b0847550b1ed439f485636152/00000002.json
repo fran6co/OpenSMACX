@@ -1,0 +1,19 @@
+{
+  "event_id": "f9c80ef7981a270000c805bb92fa3d4bfe406f1c9c301bad030bc15f7cb9bcf3",
+  "payload": {
+    "author": "coordinator",
+    "discovery_id": "original-first-rejection-edge",
+    "disposition": "rejected",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "One actual application compile:53/54SHAPE_EXACT baseline becomes16/54MISMATCH; compiled54instructions becomes50 and strictboundary FAIL128vs133original bytes.",
+      "Trial adds label no_artillery at first guard returnfalse and replaces AIR returnfalse with goto. Independently reviewed as equivalent, but worsens matching. It is not an evidence-backed structural migration; no source adoption or further variant.",
+      "Complete candidate source, baseline/current COFF, native raw reports, originalcode, source/tool/recipe/input finalguards and independentreview preserved under ignored .opensmacx/recovery/artillery-shared-rejection-nov01dl. Master source remains original baseline; no new claim."
+    ]
+  },
+  "previous_event": "c80e6f236e20b6d74ec8dc48a8ac90b4c79f5e89262e32239e481f04a9911990",
+  "request_id": "reject-original-first-rejection-edge",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:artillery-shared-rejection-nov01dl"
+}
