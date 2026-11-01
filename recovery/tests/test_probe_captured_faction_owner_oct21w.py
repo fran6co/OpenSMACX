@@ -187,11 +187,19 @@ struct Buffer {
     }
 };
 
+struct InfoWin {
+    int redraw_phase_;
+    InfoWin() : redraw_phase_(7) {}
+    void set_redraw_phase(int phase) { redraw_phase_ = phase; }
+} ConsoleInfoWin;
 struct Console {
     int faction_id_;
     int updates;
     Console() : faction_id_(3), updates(0) {}
-    void update_data(int) { ++updates; }
+    void update_data(int) {
+        assert(ConsoleInfoWin.redraw_phase_ == 0);
+        ++updates;
+    }
 } ConsoleGlobal;
 struct Vehicle { int home_base_id; } Vehs[8];
 struct PlayerData {
@@ -204,7 +212,6 @@ struct PlayerData {
 struct StateFields { uint32_t game_rules_; };
 struct GameState { StateFields fields_; } GameDataStateStorage;
 const int MaxTechnologyNum = 8;
-int ProbeNativeUnknown7AD330 = 1;
 int veh_kill_calls = 0;
 int setup_calls = 0;
 int net_calls = 0;
@@ -290,6 +297,7 @@ MAIN = r'''int main() {
     const int negative = probe_native_commit_monument_choice(
         negative_popup, 1, 2, 0, -1, 0, 0);
     assert(negative == -1 && setup_calls == 0 && net_calls == 0);
+    assert(ConsoleInfoWin.redraw_phase_ == 7 && ConsoleGlobal.updates == 0);
     assert(diplomacy_calls == 0 && pop_calls == 0);
     assert(std::memcmp(before, faction.records_, sizeof(before)) == 0);
 
@@ -311,6 +319,7 @@ MAIN = r'''int main() {
     const int selected = probe_native_commit_monument_choice(
         negative_popup, 1, 2, 0, 3, 0, 0);
     assert(selected == 3 && parser_count == 3);
+    assert(ConsoleInfoWin.redraw_phase_ == 0 && ConsoleGlobal.updates == 1);
     assert(parser_slot[0] == 0 && std::strcmp(parser_text[0], "title3") == 0);
     assert(parser_slot[1] == 1 && std::strcmp(parser_text[1], "name3") == 0);
     assert(parser_slot[2] == 2 && std::strcmp(parser_text[2], "noun3") == 0);
@@ -387,6 +396,7 @@ def test_actual_probe_choice_helpers_and_compiling_damage_controls(tmp_path: Pat
     assert result.returncode == 0, result.stdout + result.stderr
 
     mutations = (
+        ("commit", "ConsoleInfoWin.set_redraw_phase(0);", "(void)0;"),
         ("list", "for (int record = 15; record < 21; ++record)",
          "for (int record = 0; record < 6; ++record)"),
         ("list", "if (entry.achieved_ == 0) continue;",

@@ -597,12 +597,6 @@ static void probe_native_clear_monument_choice_word(
     }
 }
 
-// Provisional project owner for the single native store at 0x007AD330. The
-// pinned code writes this DWORD to zero in the selector-8 release path. No
-// original symbol, enclosing object, capacity or lifetime is established;
-// retain the unknown identity rather than assigning it to a nearby global.
-uint32_t ProbeNativeUnknown7AD330 = 0;
-
 static void probe_native_set_monument_selection_lock_bit(int selected_faction_id) {
     // Native SHL is performed on DL, so the count is modulo 32 and the
     // one-bit result is truncated to one byte before writing [0x9A64E9].
@@ -707,7 +701,9 @@ static int probe_native_commit_monument_choice(Popup &popup,
         }
     }
 
-    ProbeNativeUnknown7AD330 = 0;
+    // 0x005A3D9F writes the same InfoWin +0x90 member consumed by redraw;
+    // ConsoleInfoWin's original startup fixes its receiver at 0x007AD2A0.
+    ConsoleInfoWin.set_redraw_phase(0);
     ConsoleGlobal.update_data(0);
     PlayersData[actor_faction_id].diplo_friction[selected_faction_id] = 0;
     net_treaty_off(selected_faction_id, actor_faction_id, 0x20, 1);

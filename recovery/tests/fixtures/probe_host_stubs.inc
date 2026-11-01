@@ -115,6 +115,10 @@ struct Console {
     void focus(int, int, int) {}
     void update_data(int) {}
 };
+struct InfoWin {
+    int redraw_phase_;
+    void set_redraw_phase(int phase) { redraw_phase_ = phase; }
+} ConsoleInfoWin;
 struct DialogList { int item(const char *, int) { return 0; } };
 struct Sprite { int init(const char *, int, int) { return 0; } };
 static int ProbeHostPopupConstructs = 0;
