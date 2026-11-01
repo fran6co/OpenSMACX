@@ -80,11 +80,16 @@ struct Win {
     Win *mutate_parent;
     ListBox *mutate_list;
     int mutate_count;
+    ListBox *mutate_copy_origin_child;
+    int mutate_copy_x, mutate_copy_y, mutate_copy_rect;
     int dialog_focus_, focus_checks;
     Win() : parent_(0), iFlags_(0), slot_calls(0), slot_window(0),
             slot_index(0), slot_state(0), slot_rect(0), slot_result(0),
             mutate_child(0), mutate_parent(0), mutate_list(0), mutate_count(0),
-            dialog_focus_(0), focus_checks(0) {}
+            dialog_focus_(0), focus_checks(0) {
+        mutate_copy_origin_child=0; mutate_copy_x=mutate_copy_y=0;
+        mutate_copy_rect=0;
+    }
     Win *parent_window() { return parent_; }
     int is_dialog_focus() { ++focus_checks; return dialog_focus_; }
     bool has_listbox_backfill_flag() const { return (iFlags_ & 0x80000u) != 0; }
@@ -113,6 +118,7 @@ struct GraphicWin : Win, Buffer {
 struct Dialog {
     StringList item_list_;
     int selected_position_;
+    int window_x_, window_y_;
     int field_4C_, field_64_, field_44_, field_68_;
     int row_count_;
     int field_38_, field_40_;
@@ -122,7 +128,7 @@ struct Dialog {
     uint32_t text_color_2a_, text_color_2b_, text_color_2c_, text_color_2d_;
     uint32_t text_color_3a_, text_color_3b_, text_color_3c_, text_color_3d_;
     void *font1_, *font2_, *font3_;
-    Dialog() : selected_position_(0), field_4C_(0), field_64_(8),
+    Dialog() : selected_position_(0), window_x_(0), window_y_(0), field_4C_(0), field_64_(8),
         field_44_(1), field_68_(6), row_count_(2), field_38_(0), field_40_(0), field_6C_(9),
         field_F0_(~0u), field_B4_(1), field_AC_(3), field_B0_(4), field_34_(0),
         text_color_a_(1), text_color_b_(2), text_color_c_(3), text_color_d_(4),
@@ -162,6 +168,11 @@ int Win::on_dialog_item_back_draw(GraphicWin *window, int index, int state, RECT
     slot_rect=rect;
     if (mutate_child != 0) mutate_child->parent_ = mutate_parent;
     if (mutate_list != 0) mutate_list->item_list_.entry_count_ = mutate_count;
+    if (mutate_copy_origin_child != 0) {
+        mutate_copy_origin_child->window_x_=mutate_copy_x;
+        mutate_copy_origin_child->window_y_=mutate_copy_y;
+    }
+    if (mutate_copy_rect) { rect->left=211; rect->top=223; }
     return slot_result;
 }
 
@@ -254,23 +265,26 @@ static void check_signed_payload_span_text_dispatch() {
         {0xffffffffu, false}, {0x80000000u, false},
         {0u, false}, {1u, false}, {2u, true}, {0x7fffffffu, true}
     };
-    for (unsigned int k=0; k<sizeof(cases)/sizeof(cases[0]); ++k) {
-        for (int separator=0; separator!=2; ++separator) {
-            StringStructEntry row[1];
-            unsigned int spans[1] = {cases[k].bits};
-            link_rows(row, 1, spans);
-            char text[32];
-            std::strcpy(text, separator ? "left|right" : "left");
-            row[0].payload.text=text;
-            ListBox box;
-            box.Dialog::field_4C_=0;
-            box.Dialog::row_count_=1;
-            box.item_list_.head_=box.item_list_.current_=&row[0];
-            box.item_list_.entry_count_=1;
-            box.draw_item(0);
-            assert(box.wraps==(cases[k].wraps ? 1 : 0));
-            assert(box.writes==((cases[k].wraps ? 0 : 1) + separator));
-            assert(std::strcmp(text, separator ? "left|right" : "left")==0);
+    for (int selected=0; selected<2; ++selected) {
+        for (unsigned int k=0; k<sizeof(cases)/sizeof(cases[0]); ++k) {
+            for (int separator=0; separator!=2; ++separator) {
+                StringStructEntry row[1];
+                unsigned int spans[1] = {cases[k].bits};
+                link_rows(row, 1, spans);
+                char text[32];
+                std::strcpy(text, separator ? "left|right" : "left");
+                row[0].payload.text=text;
+                ListBox box;
+                box.Dialog::field_4C_=0;
+                box.Dialog::row_count_=1;
+                box.selected_position_=selected ? 0 : -1;
+                box.item_list_.head_=box.item_list_.current_=&row[0];
+                box.item_list_.entry_count_=1;
+                box.draw_item(0);
+                assert(box.wraps==(cases[k].wraps ? 1 : 0));
+                assert(box.writes==((cases[k].wraps ? 0 : 1) + separator));
+                assert(std::strcmp(text, separator ? "left|right" : "left")==0);
+            }
         }
     }
 }
@@ -448,13 +462,27 @@ int main() {
     child.parent_=&first_parent; first_parent.slot_calls=0; first_parent.copies=0;
     first_parent.mutate_child=&child; first_parent.mutate_parent=&replacement_parent;
     child.iFlags_=0x80000u; child.fills=0; replacement_parent.copies=0;
+    child.window_x_=17; child.window_y_=23;
+    child.field_40_=7; child.field_38_=3;
+    child.field_64_=31; child.field_68_=11;
+    // New invocation changes geometry: start a fresh clip observation.
+    child.clips=0; child.first_clip_set=0;
+    first_parent.mutate_copy_origin_child=&child;
+    first_parent.mutate_copy_x=71; first_parent.mutate_copy_y=83;
+    first_parent.mutate_copy_rect=1;
     fill_target=&child; child.draw_item(0);
     assert(first_parent.slot_calls==1 && replacement_parent.copies==1);
     assert(replacement_parent.copy_destination==static_cast<Buffer *>(static_cast<GraphicWin *>(&child)));
-    assert(replacement_parent.sx==fill_rect.left && replacement_parent.sy==fill_rect.top);
+    // Original60BBA7/AA read Dialog+28/+24 AFTER parent callback.
+    // RowRECT is independently mutated to211/223, storedposition to71/83.
+    assert(fill_rect.left==7 && fill_rect.top==3);
+    assert(replacement_parent.sx==71 && replacement_parent.sy==83);
+    assert(child.window_x_==71 && child.window_y_==83);
     assert(replacement_parent.dx==0 && replacement_parent.dy==0);
     assert(replacement_parent.width==37 && replacement_parent.height==19);
     assert(child.fills==0);
+    first_parent.mutate_copy_origin_child=0;
+    first_parent.mutate_copy_rect=0;
 
     // The frame callback can shrink the live list. The original checks the
     // new count before re-seeking; when index is now out of range, the

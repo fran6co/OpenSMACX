@@ -1,0 +1,18 @@
+{
+  "event_id": "0f5473fe65643451b95b849b669b7194064ffc9bac4489c3521a83d2a2ed6802",
+  "payload": {
+    "author": "coordinator",
+    "discovery_id": "live-dialog-copy-origin-nov01di",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "src/listbox.cpp now passes live Dialog window_x_/window_y_ to parent Buffer::copy after parent callbacks, rather than mutable row coordinates. Original +24/+28 loads and actual overlay +61D/+615 operands establish correspondence.",
+      "Both host compiler controls pass, including independent stored17/23, live71/83 and callback RECT211/223 values; separate x/y/stale-origin mutants fail. No new bounds/defaults/ABI/type changes."
+    ]
+  },
+  "previous_event": "fb378eb1de383f40dcfcf28dddb4563daf436bf169bae5c8eab196d805482fea",
+  "request_id": "incorporate-live-dialog-copy-origin-nov01di",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:listbox-original-arms-nov01di"
+}

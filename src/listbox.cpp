@@ -866,41 +866,40 @@ after_scroll_position:
             static_cast<int>(field_18_) + ListBoxDrawOffset, &row);
     }
 
-    canvas->set_text_color(dialog.text_color_a_, dialog.text_color_b_,
-                           dialog.text_color_c_, dialog.text_color_d_);
-    canvas->set_text_color2(dialog.text_color_2a_, dialog.text_color_2b_,
-                            dialog.text_color_2c_, dialog.text_color_2d_);
-    canvas->set_text_color3(dialog.text_color_3a_, dialog.text_color_3b_,
-                            dialog.text_color_3c_, dialog.text_color_3d_);
-    canvas->set_font(dialog.font1_, dialog.font2_, dialog.font3_, 0);
+    Buffer::set_text_color(Dialog::text_color_a_, Dialog::text_color_b_,
+                           Dialog::text_color_c_, Dialog::text_color_d_);
+    Buffer::set_text_color2(Dialog::text_color_2a_, Dialog::text_color_2b_,
+                            Dialog::text_color_2c_, Dialog::text_color_2d_);
+    Buffer::set_text_color3(Dialog::text_color_3a_, Dialog::text_color_3b_,
+                            Dialog::text_color_3c_, Dialog::text_color_3d_);
+    Buffer::set_font(Dialog::font1_, Dialog::font2_, Dialog::font3_, 0);
 
-    int color3_a;
-    int color3_b = static_cast<int>(dialog.text_color_3b_);
-    int color3_c = static_cast<int>(dialog.text_color_3c_);
-    int color3_d = static_cast<int>(dialog.text_color_3d_);
     if (selected == 0) {
-        // The pinned body repeats these two state setters on the unselected
-        // branch before installing the reversed fourth color tuple.
-        canvas->set_text_color(dialog.text_color_a_, dialog.text_color_b_,
-                               dialog.text_color_c_, dialog.text_color_d_);
-        canvas->set_text_color2(dialog.text_color_2a_, dialog.text_color_2b_,
-                                dialog.text_color_2c_, dialog.text_color_2d_);
-        color3_a = static_cast<int>(dialog.text_color_3a_);
-        color3_b = static_cast<int>(dialog.text_color_3b_);
-        color3_c = static_cast<int>(dialog.text_color_3c_);
-        color3_d = static_cast<int>(dialog.text_color_3d_);
+        Buffer::set_text_color(Dialog::text_color_a_, Dialog::text_color_b_,
+                               Dialog::text_color_c_, Dialog::text_color_d_);
+        Buffer::set_text_color2(Dialog::text_color_2a_, Dialog::text_color_2b_,
+                                Dialog::text_color_2c_, Dialog::text_color_2d_);
+        Buffer::set_text_color3(Dialog::text_color_3a_, Dialog::text_color_3b_,
+                                Dialog::text_color_3c_, Dialog::text_color_3d_);
     } else {
-        canvas->set_clip(&row);
-        const int emphasis = field_10_ == static_cast<uint32_t>(-1)
-            ? static_cast<int>(dialog.field_6C_)
-            : static_cast<int>(field_10_);
-        canvas->set_text_color(emphasis, dialog.text_color_b_,
-                               dialog.text_color_c_, dialog.text_color_d_);
-        canvas->set_text_color2(emphasis, dialog.text_color_2b_,
-                                dialog.text_color_2c_, dialog.text_color_2d_);
-        color3_a = emphasis;
+        Buffer::set_clip(&row);
+        // 60B9C7..60BAEB keeps the explicit/default emphasis arms distinct.
+        if (field_10_ != static_cast<uint32_t>(-1)) {
+            Buffer::set_text_color(static_cast<int>(field_10_), Dialog::text_color_b_,
+                                   Dialog::text_color_c_, Dialog::text_color_d_);
+            Buffer::set_text_color2(static_cast<int>(field_10_), Dialog::text_color_2b_,
+                                    Dialog::text_color_2c_, Dialog::text_color_2d_);
+            Buffer::set_text_color3(static_cast<int>(field_10_), Dialog::text_color_3b_,
+                                    Dialog::text_color_3c_, Dialog::text_color_3d_);
+        } else {
+            Buffer::set_text_color(static_cast<int>(Dialog::field_6C_), Dialog::text_color_b_,
+                                   Dialog::text_color_c_, Dialog::text_color_d_);
+            Buffer::set_text_color2(static_cast<int>(Dialog::field_6C_), Dialog::text_color_2b_,
+                                    Dialog::text_color_2c_, Dialog::text_color_2d_);
+            Buffer::set_text_color3(static_cast<int>(Dialog::field_6C_), Dialog::text_color_3b_,
+                                    Dialog::text_color_3c_, Dialog::text_color_3d_);
+        }
     }
-    canvas->set_text_color3(color3_a, color3_b, color3_c, color3_d);
 
     // 60BAFC resolves the row ID before parent callbacks and retains it.
     const int item_id = dialog.pos_to_id(index);
@@ -919,7 +918,7 @@ after_scroll_position:
                     if (live_parent != 0) {
                         Buffer *const parent_canvas =
                             static_cast<Buffer *>(live_parent);
-                        parent_canvas->copy(canvas, row.left, row.top, 0, 0,
+                        parent_canvas->copy(canvas, dialog.window_x_, dialog.window_y_, 0, 0,
                                             canvas->pixel_width(),
                                             canvas->pixel_height());
                     } else {
@@ -974,70 +973,124 @@ after_scroll_position:
         }
     }
 
-    if (selected != 0 && callback_result == 0
-        && window->is_dialog_focus() != 0) {
-        canvas->set_clip(&row);
-        if (field_14_ != static_cast<uint32_t>(-1)) {
-            window->fill(&row, static_cast<int>(field_14_));
-        }
-    }
+    // 60BD3B splits two exclusive complete text paths. The unselected
+    // path returns at 60BF3B; the selected path continues to its border.
+    if (selected == 0) {
+        row.right = row.right - (static_cast<int>(field_2C_) + 1);
+        row.left = row.left + static_cast<int>(Dialog::field_34_)
+            + static_cast<int>(field_2C_) + 1;
+        Buffer::set_clip(&row);
 
-    row.right = row.right - (static_cast<int>(field_2C_) + 1);
-    row.left = row.left + static_cast<int>(dialog.field_34_)
-        + static_cast<int>(field_2C_) + 1;
-    canvas->set_clip(&row);
-
-    char *text = items.head_ == 0
-        ? 0 : items.current_->string_payload()->text;
-    char *separator = strchr(text, '|');
-    if (separator == 0) {
-        if (items.head_ == 0) {
-            text = 0;
-        } else if (static_cast<int32_t>(items.current_->string_payload()->field_C_) > 1) {
-            canvas->wrap(items.current_->string_payload()->text, &row);
-            goto text_tail;
-        } else {
-            text = items.current_->string_payload()->text;
-        }
-        if (text != 0) {
-            canvas->write_l(text, &row, static_cast<int>(strlen(text)));
-        }
-        goto text_tail;
-    }
-
-    *separator = 0;
-    if (items.head_ != 0) {
-        if (static_cast<int32_t>(items.current_->string_payload()->field_C_) < 2) {
-            char *left_text = items.current_->string_payload()->text;
-            if (left_text != 0) {
-                canvas->write_l(left_text, &row,
-                                static_cast<int>(strlen(left_text)));
+        char *text = items.head_ == 0
+            ? 0 : items.current_->string_payload()->text;
+        char *separator = strchr(text, '|');
+        if (separator == 0) {
+            if (items.head_ == 0) {
+                text = 0;
+            } else if (static_cast<int32_t>(items.current_->string_payload()->field_C_) > 1) {
+                Buffer::wrap(items.current_->string_payload()->text, &row);
+                goto unselected_text_tail;
+            } else {
+                text = items.current_->string_payload()->text;
             }
-        } else {
-            canvas->wrap(items.current_->string_payload()->text, &row);
+            if (text != 0) {
+                Buffer::write_l(text, &row, static_cast<int>(strlen(text)));
+            }
+            goto unselected_text_tail;
         }
-    }
-    *separator = '|';
-    ++separator;
-    if (separator != 0) {
-        canvas->write_right_l(separator, &row,
-                              static_cast<int>(strlen(separator)));
-    }
 
-text_tail:
-    // Both original text arms restore the inset before the final clip.
-    row.left -= static_cast<int>(field_2C_) + 1;
-    row.right += static_cast<int>(field_2C_) + 1;
-    row.left -= static_cast<int>(dialog.field_34_);
-    canvas->set_clip(&row);
-    if (callback_result == 0 && selected != 0 && field_2C_ > 0) {
-        for (int edge = 0; edge < static_cast<int>(field_2C_); ++edge) {
-            canvas->box(&row, static_cast<int>(field_24_),
-                        static_cast<int>(field_28_));
-            ++row.left;
-            --row.right;
-            ++row.top;
-            --row.bottom;
+        *separator = 0;
+        if (items.head_ != 0) {
+            if (static_cast<int32_t>(items.current_->string_payload()->field_C_) < 2) {
+                char *left_text = items.current_->string_payload()->text;
+                if (left_text != 0) {
+                    Buffer::write_l(left_text, &row,
+                                    static_cast<int>(strlen(left_text)));
+                }
+            } else {
+                Buffer::wrap(items.current_->string_payload()->text, &row);
+            }
+        }
+        *separator = '|';
+        ++separator;
+        if (separator != 0) {
+            Buffer::write_right_l(separator, &row,
+                                  static_cast<int>(strlen(separator)));
+        }
+
+    unselected_text_tail:
+        // Both original text arms restore the inset before the final clip.
+        row.left -= static_cast<int>(field_2C_) + 1;
+        row.right += static_cast<int>(field_2C_) + 1;
+        row.left -= static_cast<int>(Dialog::field_34_);
+        Buffer::set_clip(&row);
+        return;
+    } else {
+        if (callback_result == 0
+            && window->is_dialog_focus() != 0) {
+            Buffer::set_clip(&row);
+            if (field_14_ != static_cast<uint32_t>(-1)) {
+                window->fill(&row, static_cast<int>(field_14_));
+            }
+        }
+
+        row.right = row.right - (static_cast<int>(field_2C_) + 1);
+        row.left = row.left + static_cast<int>(Dialog::field_34_)
+            + static_cast<int>(field_2C_) + 1;
+        Buffer::set_clip(&row);
+
+        char *text = items.head_ == 0
+            ? 0 : items.current_->string_payload()->text;
+        char *separator = strchr(text, '|');
+        if (separator == 0) {
+            if (items.head_ == 0) {
+                text = 0;
+            } else if (static_cast<int32_t>(items.current_->string_payload()->field_C_) > 1) {
+                Buffer::wrap(items.current_->string_payload()->text, &row);
+                goto selected_text_tail;
+            } else {
+                text = items.current_->string_payload()->text;
+            }
+            if (text != 0) {
+                Buffer::write_l(text, &row, static_cast<int>(strlen(text)));
+            }
+            goto selected_text_tail;
+        }
+
+        *separator = 0;
+        if (items.head_ != 0) {
+            if (static_cast<int32_t>(items.current_->string_payload()->field_C_) < 2) {
+                char *left_text = items.current_->string_payload()->text;
+                if (left_text != 0) {
+                    Buffer::write_l(left_text, &row,
+                                    static_cast<int>(strlen(left_text)));
+                }
+            } else {
+                Buffer::wrap(items.current_->string_payload()->text, &row);
+            }
+        }
+        *separator = '|';
+        ++separator;
+        if (separator != 0) {
+            Buffer::write_right_l(separator, &row,
+                                  static_cast<int>(strlen(separator)));
+        }
+
+    selected_text_tail:
+        // Both original text arms restore the inset before the final clip.
+        row.left -= static_cast<int>(field_2C_) + 1;
+        row.right += static_cast<int>(field_2C_) + 1;
+        row.left -= static_cast<int>(Dialog::field_34_);
+        Buffer::set_clip(&row);
+        if (callback_result == 0 && field_2C_ > 0) {
+            for (int edge = 0; edge < static_cast<int>(field_2C_); ++edge) {
+                Buffer::box(&row, static_cast<int>(field_24_),
+                            static_cast<int>(field_28_));
+                ++row.left;
+                --row.right;
+                ++row.top;
+                --row.bottom;
+            }
         }
     }
 }

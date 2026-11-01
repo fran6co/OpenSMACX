@@ -1,0 +1,19 @@
+{
+  "event_id": "fb9a7c901716a9f2a727c4ad6863c9a8a8226b280dd71e5ce5798d3d8afa7b0a",
+  "payload": {
+    "author": "coordinator",
+    "discovery_id": "exclusive-text-arm-source-form-nov01di",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "One source form compiled under native guarded application interaction; no second form. Original exclusive text arms and explicit/default emphasis branches are now represented directly with genuine inherited Buffer/Dialog APIs. All DG callback/getter/signed-span/rectangle behavior remains.",
+      "Native ordinary all46 unchanged33exact11mismatch2refused; target positional instruction matches9to21, target remainsMISMATCH and strictFAIL. All51direct/indirecttarget multiset entries match original; six static-order differences are mutually exclusive wrap/write block layouts, independently CFG-checked.",
+      "Raw candidate frame0x34 versus original0x28 and69LEAs versus89 remain matching debt, not a claim of source-type/lifetime defect. All old exacts protected. Full build/link,47-record scope and215physical preservation plus destination checks remain required before manual integration; no claim granted/demoted."
+    ]
+  },
+  "previous_event": "0f5473fe65643451b95b849b669b7194064ffc9bac4489c3521a83d2a2ed6802",
+  "request_id": "incorporate-exclusive-text-arm-source-form-nov01di",
+  "schema_version": 1,
+  "sequence": 4,
+  "stream": "task:listbox-original-arms-nov01di"
+}

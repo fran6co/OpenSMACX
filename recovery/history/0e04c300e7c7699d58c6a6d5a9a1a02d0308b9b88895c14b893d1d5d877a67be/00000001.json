@@ -1,0 +1,21 @@
+{
+  "event_id": "a3f778b1f61bdaca75b3f71f560eb42d6b1dbadfd4571ed3c37e84fda7a57277",
+  "payload": {
+    "affects": [
+      "entity-9fd9d54a0ce9e1f29f1adae3fb2d967df511079373dba76422415f2756914c60"
+    ],
+    "author": "coordinator",
+    "discovery_id": "live-dialog-copy-origin-nov01di",
+    "evidence": [
+      "Independent original Buffer5DFF00 ABI and pointer/argument def-use audit confirms parent source, child destination, Dialog+24/+28 source coordinates and child width/negated-height.",
+      "Dialog init/attach producers support current window_x_/window_y_ names; no header/type or owner migration required."
+    ],
+    "hypothesis": "Use live Dialog window placement rather than mutable row RECT for parent-to-child fallback Buffer copy.",
+    "kind": "discovery"
+  },
+  "previous_event": null,
+  "request_id": "live-dialog-copy-origin-nov01di",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:listbox-original-arms-nov01di"
+}

@@ -118,6 +118,32 @@ def test_extracted_listbox_scroll_render_and_dialog_bridges(tmp_path, compiler_n
         assert bodies.count(draw_body) == 1
         return bodies.replace(draw_body, mutated, 1)
 
+    # Pinned fallbackcopy reads stored Dialogposition after callback; RECT
+    # left/top and a precallback snapshot are independent wrong origins.
+    for name, good, bad in (
+        ("copy_row_x", "dialog.window_x_", "row.left"),
+        ("copy_row_y", "dialog.window_y_", "row.top"),
+    ):
+        assert draw_body.count(good) == 1
+        mutant = draw_body.replace(good, bad, 1)
+        binary = compile_control(tmp_path / name, replace_draw(mutant))
+        result = subprocess.run([str(binary)], check=False, timeout=30,
+                                stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        assert result.returncode != 0, name + " escaped stored copy-origin oracle"
+
+    snapshot = draw_body.replace(
+        "const int item_id = dialog.pos_to_id(index);",
+        "const int copy_x_snapshot = dialog.window_x_;\n"
+        "    const int copy_y_snapshot = dialog.window_y_;\n"
+        "    const int item_id = dialog.pos_to_id(index);", 1)
+    snapshot = snapshot.replace("copy(canvas, dialog.window_x_, dialog.window_y_,",
+                                "copy(canvas, copy_x_snapshot, copy_y_snapshot,", 1)
+    assert snapshot != draw_body
+    binary = compile_control(tmp_path / "copy_stale_origin", replace_draw(snapshot))
+    result = subprocess.run([str(binary)], check=False, timeout=30,
+                            stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    assert result.returncode != 0, "precallback copy-origin snapshot escaped mutation oracle"
+
     # Distinct IDs and the genuine getter expose cursor and snapshot errors.
     for name, good, bad in (
         ("fill_raw_position", "fill_callback_(window, dialog.pos_to_id(index),",
@@ -137,29 +163,37 @@ def test_extracted_listbox_scroll_render_and_dialog_bridges(tmp_path, compiler_n
                                 stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         assert result.returncode != 0, name + " escaped the callback contract oracle"
 
-    wrong_restore = draw_body.replace(
-        "row.left -= static_cast<int>(field_2C_) + 1;",
-        "row.left += static_cast<int>(field_2C_) + 1;", 1)
-    assert wrong_restore != draw_body
-    binary = compile_control(tmp_path / "wrong_text_restore", replace_draw(wrong_restore))
-    result = subprocess.run([str(binary)], check=False, timeout=30,
-                            stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    assert result.returncode != 0, "text inset restoration damage escaped asymmetric clips"
+    def replace_arm_occurrence(old: str, new: str, arm: int) -> str:
+        offsets = [m.start() for m in re.finditer(re.escape(old), draw_body)]
+        assert len(offsets) == 2
+        at = offsets[arm]
+        return draw_body[:at] + new + draw_body[at + len(old):]
 
-    # Independently restore each unsigned predicate: each must compile and fail
-    # the high-bit row-span truth table in the existing actual-source fixture.
+    # Each original exclusive text tail must restore its own inset.
+    for arm in range(2):
+        wrong_restore = replace_arm_occurrence(
+            "row.left -= static_cast<int>(field_2C_) + 1;",
+            "row.left += static_cast<int>(field_2C_) + 1;", arm)
+        binary = compile_control(tmp_path / f"wrong_text_restore_{arm}",
+                                 replace_draw(wrong_restore))
+        result = subprocess.run([str(binary)], check=False, timeout=30,
+                                stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        assert result.returncode != 0, "text-arm restoration escaped asymmetric clips"
+
+    # Restore just ONE unsigned predicate in ONE selected/unselected arm.
+    # The six-value oracle exercises both arms and both separator paths.
     for name, signed, unsigned in (
         ("unsigned_span_plain", "static_cast<int32_t>(items.current_->string_payload()->field_C_) > 1",
          "items.current_->string_payload()->field_C_ > 1"),
         ("unsigned_span_separator", "static_cast<int32_t>(items.current_->string_payload()->field_C_) < 2",
          "items.current_->string_payload()->field_C_ < 2"),
     ):
-        assert draw_body.count(signed) == 1
-        mutant = draw_body.replace(signed, unsigned, 1)
-        binary = compile_control(tmp_path / name, replace_draw(mutant))
-        result = subprocess.run([str(binary)], check=False, timeout=30,
-                                stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        assert result.returncode != 0, name + " survived the pinned signed-span oracle"
+        for arm in range(2):
+            mutant = replace_arm_occurrence(signed, unsigned, arm)
+            binary = compile_control(tmp_path / f"{name}_{arm}", replace_draw(mutant))
+            result = subprocess.run([str(binary)], check=False, timeout=30,
+                                    stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            assert result.returncode != 0, name + " text-arm signed-span damage survived"
 
     # Each negative control changes one original-supported rendering rule;
     # every mutant must compile before its behavioral assertion can fail.

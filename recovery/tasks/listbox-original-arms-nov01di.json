@@ -1,0 +1,25 @@
+{
+  "author": "coordinator",
+  "base_revision": "96dac9ae7cae05c06f77e2fda8b7f1f92349eb68",
+  "editable_files": [
+    "src/listbox.cpp",
+    "recovery/tests/listbox_rendering_host_control.cpp.in",
+    "recovery/tests/test_listbox_rendering_actual_source.py"
+  ],
+  "evidence": [
+    "Original60BBA7/60BBAA load Dialog window_y_+28/window_x_+24 after parent callbacks; current row RECT arguments are wrong. Parent is Buffer source and child is destination; recover this independently proven semantic discrepancy regardless of matching score.",
+    "Original60BD3B selects exclusive text arms; unselected returns60BF3B while selected reaches border. Original60B9C7..60BAEB has distinct explicit/default emphasis calls. Current factoring and cached-base uses differ; one original-shaped form only, not a new semantic-defect claim from instruction counts.",
+    "Coordinator permits exactly one candidate compile under isolated native resources, no flags/attributes/asm/volatile/register forcing or additional spelling forms. Preserve DG getters/IDs/cursor timing/signed spans/rectangle restoration, all claims and unsafe paths; retain copy correction if source-form experiment misses."
+  ],
+  "intent": "Recover live Dialog copy coordinates and measure one original-shaped exclusive-text-arm/source-base-conversion form.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 6337840,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "listbox-original-arms-nov01di"
+}
