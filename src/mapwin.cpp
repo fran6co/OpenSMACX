@@ -70,6 +70,7 @@
 #include "stdafx.h"
 #include "interface_fonts.h"
 #include "popup_fonts.h"
+#include "terraforming.h"
 
 // MapWin constructor-installed Win branch: capture4, resize13, mouse17, update63.
 // Table start is observed in the original constructor; full extent remains unknown.
@@ -419,45 +420,14 @@ int MapEditorPaintId;
 // RECOVERY_OBJECT: v2 0x00945AE4 0x00945AE8 ?MapEditorBrushId@@3HA 0x0046B510
 int MapEditorBrushId;
 
-struct EditorTerrainRule { uint32_t paint; uint32_t erase_first; };
-static const uint32_t remove_mine_or_solar = BIT_SENSOR_ARRAY |
-    BIT_THERMAL_BORE | BIT_ECH_MIRROR | BIT_CONDENSER | BIT_FOREST |
-    BIT_SOLAR_TIDAL | BIT_MINE;
-// Tools 6..25: source-level terrain rules corresponding to the first two
-// words of each original 0x20-byte UI descriptor. The remaining descriptor
-// words are presentation data, not read by either recovered caller.
-static const EditorTerrainRule EditorTerrainRules[20] = {
-    {BIT_FARM, BIT_FOREST},
-    {BIT_SOIL_ENRICHER, BIT_FOREST},
-    {BIT_MINE, remove_mine_or_solar},
-    {BIT_SOLAR_TIDAL, remove_mine_or_solar},
-    {BIT_FOREST, BIT_THERMAL_BORE | BIT_ECH_MIRROR | BIT_CONDENSER |
-                 BIT_FOREST | BIT_SOIL_ENRICHER | BIT_FARM |
-                 BIT_SOLAR_TIDAL | BIT_FUNGUS | BIT_MINE},
-    {BIT_ROAD, 0},
-    {BIT_MAGTUBE, 0},
-    {BIT_BUNKER, BIT_AIRBASE},
-    {BIT_AIRBASE, BIT_BUNKER},
-    {BIT_SENSOR_ARRAY, BIT_THERMAL_BORE | BIT_ECH_MIRROR | BIT_CONDENSER |
-                       BIT_SOLAR_TIDAL | BIT_MINE},
-    {0, BIT_FUNGUS},
-    {BIT_FUNGUS, BIT_FOREST | BIT_SOIL_ENRICHER | BIT_FARM |
-                 BIT_SOLAR_TIDAL | BIT_MINE},
-    {BIT_CONDENSER, remove_mine_or_solar},
-    {BIT_ECH_MIRROR, remove_mine_or_solar},
-    {BIT_THERMAL_BORE, remove_mine_or_solar | BIT_FARM},
-    {0, 0}, {0, 0}, {0, 0}, {0, 0},
-    {BIT_MONOLITH, BIT_SUPPLY_POD | BIT_NUTRIENT_RSC | BIT_RSC_BONUS},
-};
-
 uint32_t map_editor_paint_mask(int tool_id) {
     return tool_id >= 6 && tool_id < 26
-        ? EditorTerrainRules[tool_id - 6].paint : 0;
+        ? Terraforming[tool_id - 6].bit : 0;
 }
 
 uint32_t map_editor_erase_mask(int tool_id) {
     return tool_id >= 6 && tool_id < 26
-        ? EditorTerrainRules[tool_id - 6].erase_first : 0;
+        ? Terraforming[tool_id - 6].bit_incompatible : 0;
 }
 
 // Original46B510's retained seed supplies the control flow and tool cases.
@@ -465,7 +435,7 @@ uint32_t map_editor_erase_mask(int tool_id) {
 // RECOVERY_ASSOCIATED: v1 switch_targets 0x0046B510 0x0046BFD0 0x0046BFFC 0x0046B663
 // RECOVERY_ASSOCIATED: v1 switch_selector 0x0046B510 0x0046BFFC 0x0046C01A 0x0046B65D
 // ORIGINAL: 0x0046B510 ?editor@MapWin@@QAEXHHH@Z 0x0046B510-0x0046BFCF
-// RECOVERY_BINDING: v1 {"evidence": ["Original46F000 calls46B510; git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/0046b510.cpp retains the complete seed and original bounds.", "Map tile, MapWin receiver, radius, faction and base uses resolve through typed source declarations; original 0x00691888 tool descriptor words 0/1 are modeled as named terrain rules shared with Console."], "reason": "Implement the original map-editing paths and shared editor selection in source-owned C++ while retaining the seed and original identity; this is coverage work, not a measured matching claim."}
+// RECOVERY_BINDING: v1 {"evidence": ["Original46F000 calls46B510; git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/0046b510.cpp retains the complete seed and original bounds.", "Pinned46B510 normalizes tools 6..25 to a row index, multiplies by 0x20, and reads the paint and erase words at 0x00691888 and 0x0069188C.", "src/terraforming.h: RulesTerraforming is 0x20 bytes, with bit at +0x10 and bit_incompatible at +0x14; src/alpha.cpp owns Terraforming at 0x00691878, so both original operands resolve through the genuine mutable array.", "Map tile, MapWin receiver, radius, faction and base uses resolve through typed source declarations."], "reason": "Implement the original map-editing paths and shared editor selection in source-owned C++, reading both original masks from the genuine Terraforming rows while retaining the seed and original identity."}
 // TRIED: `mov edx,edx` prologue zeroing (used explicit `bool`/int locals instead of a single xor'd register reused for 0); divergence is in the prologue register setup (push vs xor at insn #4), not in the switch body, which was cross-checked field-for-field against src/map.h's Map struct and the 11-entry jump table.
 void MapWin::editor(int tile_x, int tile_y, int erase) {
     if (field_1DD8C_ != 0) {

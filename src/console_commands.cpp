@@ -2228,8 +2228,8 @@ void Console::editor_fast() {
     ::draw_map(1);
 }
 
-// ORIGINAL: 0x004E0A50 ?editor_paints@Console@@QAEXH@Z 0x004E0A50-0x004E0ACF FILE
-// RECOVERY_BINDING: v1 {"evidence": ["The historical 0x004E0A50 recovery is recorded by the ORIGINAL marker and TRIED notes below.", "src/mapwin.cpp:EditorTerrainRules", "image:0x00691888-0x00691B08 first descriptor words select paint availability", "Pinned MainInterface constructor 0x0045EF10 constructs four ButtonGroups at +0x1E878 with stride 0x94; group 2 starts at 0x007CD1C0 and its field_84_ is 0x007CD244.", "MainInterface::init populates button_group_[2] with the 25 paint ids 1011..1035; ButtonGroup::set stores the selected id in field_84_.", "MainInterface exposes button_group(int) as the public accessor for its private button_group_ array; Console::editor_set_brush uses that accessor for group 3."], "reason": "Use MainInterfaceGlobal's public button_group(2) accessor to the constructed paint ButtonGroup for both selected-id comparison and notification, preserving the original conditional set call."}
+// ORIGINAL: 0x004E0A50 ?editor_paints@Console@@QAEXH@Z 0x004E0A50-0x004E0ACF FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned 0x004E0A50 scans rule rows from 19 down to 0 and reads each mutable Terraforming row's bit at base 0x00691878 + 0x10 + row*0x20.", "src/terraforming.h: RulesTerraforming is 0x20 bytes and declares bit at +0x10; src/alpha.cpp maps the constructed Terraforming array at 0x00691878.", "Pinned MainInterface constructor 0x0045EF10 constructs four ButtonGroups at +0x1E878 with stride 0x94; group 2 starts at 0x007CD1C0 and its field_84_ is 0x007CD244.", "MainInterface::init populates button_group_[2] with the 25 paint ids 1011..1035; ButtonGroup::set stores the selected id in field_84_.", "MainInterface exposes button_group(int) as the public accessor for its private button_group_ array; Console::editor_set_brush uses that accessor for group 3."], "reason": "Read paint availability from the source-owned Terraforming objects at the original row stride, and use MainInterfaceGlobal's public button_group(2) accessor for selected-id comparison and notification, preserving the original conditional set call."}
 // TRIED: `a1 > 5` (jl/jle flip at #12, fixed by `a1 >= 6`); `counter = a1 - 6` as one expression (lea vs sub at #15, tried splitting into `counter=a1; counter-=6;`, no change). Same size as original (127/127), mismatch only at #15.
 // size      127 bytes
 // prototype void (__thiscall ?editor_paints@Console@@QAEXH@Z)(Console* this, int)
@@ -2262,13 +2262,13 @@ void Console::editor_paints(int paint_id) {
     MainInterfaceGlobal.draw_edit_pane();
     int result = paint_id + 0x3f3;
     if (paint_id >= 6 && paint_id < 0x1a) {
-        int counter = paint_id - 6;
+        paint_id -= 6;
         for (int limit = 19; limit >= 0; --limit) {
-            if (map_editor_paint_mask(limit + 6) == 0 && limit <= counter) {
-                --counter;
-            }
+            if (Terraforming[limit].bit != 0) continue;
+            if (paint_id < limit) continue;
+            --paint_id;
         }
-        result = counter + 0x3f9;
+        result = paint_id + 0x3f9;
     }
     if (static_cast<int>(MainInterfaceGlobal.button_group(2).field_84_) != result) {
         MainInterfaceGlobal.button_group(2).set(result, 1);
