@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "task_id": "info-pane-guard-nov01dc",
+  "target": "opensmacx",
+  "author": "coordinator",
+  "base_revision": "08cfcffb275f7556a629b44dcba54b1a81af7075",
+  "intent": "Restore the original member-address guard on InfoWin refresh counter resets, without inventing nullable state or changing its actual arrays.",
+  "editable_files": [
+    "src/infowin.cpp"
+  ],
+  "subjects": [
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 4556976
+    }
+  ],
+  "evidence": [
+    "Pinned4588CF LEAECX,[ESI+88],4588D5TEST,4588D7JE4588E7 guards only two zero stores at+9C8/+9CC. Existing actualpane_states_ member at+88 is an array, not an optional pointer or state-value predicate. set_state/right_menu retain this same ordinary source guard.",
+    "Current24original/21compiled gap is exactly this omitted guard; originalhistoricalclaim retained. Coordinator authorizes ONE plainC++if(pane_states_!=0) candidate, no casts/volatile/attributes/framepadding/flags/newwrapper/source-order changes. No valid-objectbehaviorfix asserted, and invalid-thiswrap effects remain unproved.",
+    "Preserve box_sprite receiver/RECT/style, setup_text then freshactivepane draw, alloriginalidentities/spans/claims. If compilerfolds guard or no exactgain, stop this candidate search; no forced3ops. Nativeallinfowin bodies/strictrefs, build/link andoutsideowner checks beforemanualintegration."
+  ]
+}

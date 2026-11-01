@@ -888,8 +888,10 @@ void InfoWin::draw_text(int pane) {
 void InfoWin::UNK2() {
     MainInterfaceGlobal.box_sprite(&pane_rects_[active_pane_],
                                    &InterfaceBoxStyles[18]);
-    visible_characters_[0] = 0;
-    visible_characters_[1] = 0;
+    if (pane_states_ != 0) {
+        visible_characters_[0] = 0;
+        visible_characters_[1] = 0;
+    }
     setup_text();
     draw_text(active_pane_);
 }
