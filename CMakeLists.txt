@@ -179,7 +179,6 @@ set(OPENSMACX_SOURCES
     src/crt_random.cpp
     src/graphicwin.cpp
     src/graphicwin_events.cpp
-    src/heap.cpp
     src/log.cpp
     src/maininterface.cpp
     src/map.cpp

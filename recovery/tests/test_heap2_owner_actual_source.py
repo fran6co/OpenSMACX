@@ -27,7 +27,7 @@ EXPECTED_STORE_ORDER = ["err_flags_", "current_", "base_", "free_size_", "base_s
 def _root() -> Path:
     for parent in Path(__file__).resolve().parents:
         if ((parent / "CMakeLists.txt").is_file()
-                and (parent / "src/heap.cpp").is_file()):
+                and (parent / "src/jackal/heap.cpp").is_file()):
             return parent
     raise AssertionError("could not locate OpenSMACX source root")
 
@@ -112,8 +112,8 @@ int main() {
 
 def test_heap2_mapping_moves_with_history_and_binding_to_real_owner():
     root = _root()
-    heap_cpp_path = root / "src/heap.cpp"
-    heap_header_path = root / "src/heap.h"
+    heap_cpp_path = root / "src/jackal/heap.cpp"
+    heap_header_path = root / "src/jackal/heap.h"
     unbound_path = root / "src/unbound_functions.h"
     heap_cpp = heap_cpp_path.read_text()
     heap_header = heap_header_path.read_text()
@@ -136,7 +136,7 @@ def test_heap2_mapping_moves_with_history_and_binding_to_real_owner():
     binding = parse_bindings(heap_cpp, read(heap_cpp_path))[record.line]
     assert "member ownership only" in binding["reason"]
     assert "constructor" in binding["reason"] and "lifetime" in binding["reason"]
-    assert any("src/heap.h" in evidence for evidence in binding["evidence"])
+    assert any("src/jackal/heap.h" in evidence for evidence in binding["evidence"])
     assert any("0x005D4560" in evidence for evidence in binding["evidence"])
 
     for required_catalog_fact in (
@@ -156,13 +156,13 @@ def test_heap2_mapping_moves_with_history_and_binding_to_real_owner():
 
 def test_actual_heap2_member_preserves_values_store_order_and_bounds():
     root = _root()
-    method = _method((root / "src/heap.cpp").read_text())
+    method = _method((root / "src/jackal/heap.cpp").read_text())
     assert _assignments(method) == EXPECTED_STORE_ORDER
     _compile_run(method, True)
 
 
 def test_mutation_controls_reject_wrong_order_missing_store_bits_and_outside_write():
-    method = _method((_root() / "src/heap.cpp").read_text())
+    method = _method((_root() / "src/jackal/heap.cpp").read_text())
 
     reordered = method.replace(
         "free_size_ = 0;\n    base_size_ = 0;",

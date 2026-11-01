@@ -20,6 +20,9 @@
 #include "general.h"
 #include "strings.h"  // StringTemp, say_num() - Heap::get()'s error message idiom
 
+// This current source home places the generic allocator beside reconstructed
+// Jackal code. It does not independently prove original archive membership.
+
 /*
 // ORIGINAL: 0x005D4560 ??0Heap@@QAE@XZ 0x005D4560-0x005D4573 BYTE_EXACT
 // size      19 bytes
@@ -52,7 +55,7 @@ Purpose: Set 5 field(s) to constants.
          stack.
 // HISTORICAL RECOVERY_ROLE (seed): SCAFFOLD Untyped raw-field or constant adapter; real method ownership and named member relationships remain recovery obligations.
 // ORIGINAL: 0x005D4540 Heap::Heap2 0x005D4540-0x005D4551 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["source:src/field_accessors.cpp original Heap::Heap2 mapping, complete span, and retained BYTE_EXACT claim", "source:src/heap.h named Heap fields at offsets 0x00, 0x04, 0x08, 0x0C, and 0x10; sizeof(Heap) == 0x14", "source:src/heap.cpp distinct Heap::Heap() identity at 0x005D4560"], "reason": "Attach the existing Heap::Heap2 operation to Heap because its original catalog identity names Heap and its body initializes all five declared Heap fields at their established offsets. Keep the distinct Heap::Heap identity at 0x005D4560. This establishes member ownership only; it does not assign constructor, caller, or lifetime semantics."}
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/field_accessors.cpp original Heap::Heap2 mapping, complete span, and retained BYTE_EXACT claim", "source:src/jackal/heap.h named Heap fields at offsets 0x00, 0x04, 0x08, 0x0C, and 0x10; sizeof(Heap) == 0x14", "source:src/jackal/heap.cpp distinct Heap::Heap() identity at 0x005D4560"], "reason": "Attach the existing Heap::Heap2 operation to Heap because its original catalog identity names Heap and its body initializes all five declared Heap fields at their established offsets. Keep the distinct Heap::Heap identity at 0x005D4560. This establishes member ownership only; it does not assign constructor, caller, or lifetime semantics."}
 // symbol    ?Heap2@Heap@@QAEXXZ
 // historical scaffold emitted-symbol fact (not the current member symbol): ?field_accessor_005d4540_redirect@@YIXPAX0@Z
 // size      17 bytes

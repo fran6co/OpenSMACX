@@ -51,12 +51,12 @@ def test_close_inlines_list_removal_before_reset_without_ending_member_lifetimes
 def test_close_resets_live_members_in_order_and_can_be_reused(tmp_path, monkeypatch):
     run_recovered_harness(tmp_path, monkeypatch, "dialog_close_harness.cpp", [
         ("// LIVE_DIALOG_CLOSE", "src/dialog.cpp", 0x608F50),
-        ("// LIVE_HEAP_CONSTRUCTOR", "src/heap.cpp", 0x5D4560),
-        ("// LIVE_HEAP_DESTRUCTOR", "src/heap.cpp", 0x5D45B0)], declarations=[
+        ("// LIVE_HEAP_CONSTRUCTOR", "src/jackal/heap.cpp", 0x5D4560),
+        ("// LIVE_HEAP_DESTRUCTOR", "src/jackal/heap.cpp", 0x5D45B0)], declarations=[
         ("// LIVE_DIALOG_DEFAULTS_HEADER", "src/dialog_defaults.h",
          "// The pinned image has an observed 148-byte", None),
-        ("// LIVE_HEAP_DECLARATION", "src/heap.h", "class Heap {", "#if defined(_M_IX86)"),
-        ("// LIVE_HEAP_RESET", "src/heap.cpp", "void Heap::reset() {", "/*\nPurpose: Shutdown"),
+        ("// LIVE_HEAP_DECLARATION", "src/jackal/heap.h", "class Heap {", "#if defined(_M_IX86)"),
+        ("// LIVE_HEAP_RESET", "src/jackal/heap.cpp", "void Heap::reset() {", "/*\nPurpose: Shutdown"),
         ("// LIVE_DIALOG_DECLARATION", "src/dialog.h", "class Dialog {", "static_assert(sizeof(Dialog)")])
 
 

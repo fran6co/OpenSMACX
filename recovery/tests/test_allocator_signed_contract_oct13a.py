@@ -34,9 +34,9 @@ def body(source: str, signature: str) -> str:
 def source_parts():
     general_h = (ROOT / "src/general.h").read_text(encoding="utf-8")
     text_h = (ROOT / "src/text.h").read_text(encoding="utf-8")
-    heap_h = (ROOT / "src/heap.h").read_text(encoding="utf-8")
+    heap_h = (ROOT / "src/jackal/heap.h").read_text(encoding="utf-8")
     general_cpp = (ROOT / "src/general.cpp").read_text(encoding="utf-8")
-    heap_cpp = (ROOT / "src/heap.cpp").read_text(encoding="utf-8")
+    heap_cpp = (ROOT / "src/jackal/heap.cpp").read_text(encoding="utf-8")
     compat_h = (ROOT / "src/vc6_compat.h").read_text(encoding="utf-8")
     assert "#define nullptr 0" in compat_h
     assert re.search(r"LPVOID\s+__cdecl\s+mem_get\s*\(\s*int\s+size\s*\)\s*;", general_h)
@@ -45,7 +45,7 @@ def source_parts():
     assert re.search(r"\bLPVOID\s+get\s*\(\s*int\s+req_size\s*\)\s*;", heap_h)
     init_match = re.search(r"(?m)^(?:bool|BOOL) Heap::init\(int req_size\)", heap_cpp)
     assert init_match, "signed Heap::init implementation is missing"
-    for relative in ("general.h", "general.cpp", "text.h", "heap.h", "heap.cpp", "basebutton.cpp"):
+    for relative in ("general.h", "general.cpp", "text.h", "jackal/heap.h", "jackal/heap.cpp", "basebutton.cpp"):
         text = (ROOT / "src" / relative).read_text(encoding="utf-8")
         code = re.sub(r"(?s)/\*.*?\*/|//[^\n]*", "", text)
         assert "mem_get_old" not in code, relative
@@ -62,7 +62,7 @@ def test_signed_contract_declarations_and_canonical_basebutton_callers():
     source_parts()
     general_h = (ROOT / "src/general.h").read_text(encoding="utf-8")
     text_h = (ROOT / "src/text.h").read_text(encoding="utf-8")
-    heap_h = (ROOT / "src/heap.h").read_text(encoding="utf-8")
+    heap_h = (ROOT / "src/jackal/heap.h").read_text(encoding="utf-8")
     button = (ROOT / "src/basebutton.cpp").read_text(encoding="utf-8")
     assert "LPVOID __cdecl mem_get(int size);" in general_h
     assert "LPVOID __cdecl mem_get(int size);" in text_h

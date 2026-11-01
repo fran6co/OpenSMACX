@@ -99,6 +99,6 @@ def test_actual_original_complete_ranges_end_with_their_own_returns():
     assert "mov eax, 0x14" in lines and "mov eax, 0xc" in lines
     # Neither catalog coalescence nor five bytes of padding justify extending
     # Heap over the independently owned ServiceList::on_insert.
-    heap = next(r for r in read_text((ROOT / "src/heap.cpp").read_text(), ROOT / "src/heap.cpp")
+    heap = next(r for r in read_text((ROOT / "src/jackal/heap.cpp").read_text(), ROOT / "src/jackal/heap.cpp")
                 if r.address == 0x5D4680)
     assert heap.image_spans == ((0x5D4680, 0x5D47CB),)

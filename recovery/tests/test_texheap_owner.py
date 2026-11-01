@@ -13,7 +13,7 @@ def test_texheap_actual_source_and_damage(tmp_path, compiler_name):
         pytest.skip(compiler_name + " unavailable")
     header = (ROOT / "src/sprite.h").read_text()
     texheap = header[header.index("struct TexHeap {"):header.index("static_assert(sizeof(TexHeap)")]
-    heap_header = (ROOT / "src/heap.h").read_text()
+    heap_header = (ROOT / "src/jackal/heap.h").read_text()
     heap = heap_header[heap_header.index("class Heap {"):heap_header.index("#if defined(_M_IX86)")]
     source = (ROOT / "src/sprite.cpp").read_text()
     patterns = [r"TexHeap::TexHeap\(\)", r"TexHeap \*TexHeap::initialize\([^)]*\)",

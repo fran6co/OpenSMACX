@@ -17,7 +17,7 @@ from recovery.tests.test_pact_ascent import _closing_brace, definition
 
 
 ROOT = next(parent for parent in Path(__file__).resolve().parents
-            if (parent / "src/heap.cpp").is_file())
+            if (parent / "src/jackal/heap.cpp").is_file())
 
 FIXTURE = r'''#include <assert.h>
 #include <stddef.h>
@@ -313,7 +313,7 @@ def _class_definition(source: str, prefix: str) -> str:
 
 
 def _actual_sources():
-    heap_cpp = (ROOT / "src/heap.cpp").read_text()
+    heap_cpp = (ROOT / "src/jackal/heap.cpp").read_text()
     strings_h = (ROOT / "src/strings.h").read_text()
     strings_cpp = (ROOT / "src/strings.cpp").read_text()
     textindex_h = (ROOT / "src/textindex.h").read_text()
@@ -371,7 +371,7 @@ def _actual_sources():
 
 
 def _program(sources):
-    result = FIXTURE.replace("@@HEAP_HEADER@@", str(ROOT / "src/heap.h"))
+    result = FIXTURE.replace("@@HEAP_HEADER@@", str(ROOT / "src/jackal/heap.h"))
     for key, token in (
         ("strings_class", "// @@STRINGS_CLASS@@"),
         ("textindex_class", "// @@TEXTINDEX_CLASS@@"),

@@ -109,8 +109,8 @@ def production_parts():
     basepop_h = (ROOT / "src/basepop.h").read_text(encoding="utf-8")
     basepop_defaults_h = (ROOT / "src/basepop_defaults.h").read_text(encoding="utf-8")
     basepop_cpp = (ROOT / "src/basepop.cpp").read_text(encoding="utf-8")
-    heap_h = (ROOT / "src/heap.h").read_text(encoding="utf-8")
-    heap_cpp = (ROOT / "src/heap.cpp").read_text(encoding="utf-8")
+    heap_h = (ROOT / "src/jackal/heap.h").read_text(encoding="utf-8")
+    heap_cpp = (ROOT / "src/jackal/heap.cpp").read_text(encoding="utf-8")
     dialog_h = (ROOT / "src/dialog.h").read_text(encoding="utf-8")
 
     basepop_class = class_source(basepop_h, "BasePop")

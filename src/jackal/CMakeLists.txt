@@ -3,7 +3,7 @@
 # from application instances and interface initialization. Other generic
 # collaborators retain their current homes until their boundaries are recovered.
 add_library(jackal STATIC
-    jackal.cpp palette.cpp font.cpp graphics_language.cpp
+    jackal.cpp palette.cpp font.cpp graphics_language.cpp heap.cpp
     time.cpp time_lifecycle.cpp
     checkbutton.cpp radiobutton.cpp checkbox.cpp filewin.cpp)
 target_include_directories(jackal PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}")
