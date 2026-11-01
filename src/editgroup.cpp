@@ -575,14 +575,9 @@ int EditGroup::attach(GraphicWin *parent, int x, int y, int flags) {
             if ((Dialog::field_20_ & 0x1000) != 0) {
                 boxes_[index]->field_B3C_ |= 2;
             }
-            Buffer *const edit_buffer = static_cast<Buffer *>(boxes_[index]);
-            edit_buffer->set_text_color(Dialog::text_color_a_, Dialog::text_color_b_,
-                                        Dialog::text_color_c_, Dialog::text_color_d_);
-            edit_buffer->set_text_color2(Dialog::text_color_2a_, Dialog::text_color_2b_,
-                                         Dialog::text_color_2c_, Dialog::text_color_2d_);
-            edit_buffer->set_text_color3(Dialog::text_color_3a_, Dialog::text_color_3b_,
-                                         Dialog::text_color_3c_, Dialog::text_color_3d_);
-            edit_buffer->set_font(Dialog::font1_, Dialog::font2_, Dialog::font3_, 0);
+            boxes_[index]->set_text_color(Dialog::text_color_a_, Dialog::text_color_b_,
+                                          Dialog::text_color_c_, Dialog::text_color_d_);
+            boxes_[index]->set_font(Dialog::font1_, Dialog::font2_, Dialog::font3_, 0);
             boxes_[index]->field_B14_ = limits_[index];
             boxes_[index]->set_text(text_buffers_[index]);
             boxes_[index]->field_B1C_ = Dialog::field_6C_;

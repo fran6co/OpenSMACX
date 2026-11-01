@@ -870,36 +870,35 @@ void SocialWin::draw_social(int a1) {
 // RECOVERY_OBJECT: v1 0x00682EA0 _PercentText
 static const char PercentText[] = "%";
 
+static inline RECT *social_expand_rect(RECT *rect, int horizontal, int vertical) {
+    rect->left -= horizontal;
+    rect->right += horizontal;
+    rect->top -= vertical;
+    rect->bottom += vertical;
+    return rect;
+}
+
 typedef void (__cdecl *SoundHookFn)(char *);
 
-// ORIGINAL: 0x004B19A0 ?on_redraw@SocialWin@@QAEXXZ 0x004B19A0-0x004B1B19
+// ORIGINAL: 0x004B19A0 ?on_redraw@SocialWin@@QAEXXZ 0x004B19A0-0x004B1B19 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:seed:src/recovered/units/004b19a0.cpp; source:src/socialwin.h:tooltipEconomy_,tooltipLabs_,tooltipPsych_,tutRect11_,tutRect12_,tutRect13_,flatButtons_; source:src/graphicwin.h:GraphicWin Buffer base; image:0x004B19A0-0x004B1B19"], "reason": "Recover SocialWin repaint orchestration through its real category/allocation rectangles, inherited GraphicWin Buffer and typed FlatButton child controls; retain the established panel ordering and child redraw sequence."}
 // symbol    ?on_redraw@SocialWin@@UAEXXZ
 void SocialWin::on_redraw() {
-    Buffer *interface_buffer = static_cast<Buffer *>(&MainInterfaceGlobal);
-    interface_buffer->restore_clip();
+    MainInterfaceGlobal.Buffer::restore_clip();
 
-    Buffer *window_buffer = static_cast<Buffer *>(static_cast<GraphicWin *>(this));
-    window_buffer->restore_clip();
+    Buffer::restore_clip();
     MainInterfaceGlobal.restore_back(1);
 
-    RECT allocation_panel;
-    UnionRect(&allocation_panel, &tooltipLabs_, &tooltipPsych_);
-    UnionRect(&allocation_panel, &allocation_panel, &tooltipEconomy_);
-    allocation_panel.right += 3;
-    allocation_panel.left -= 3;
-    allocation_panel.bottom += 3;
-    allocation_panel.top -= 3;
-    interface_buffer->box_sprite(&allocation_panel, &InterfaceBoxStyles[3]);
+    RECT panel;
+    UnionRect(&panel, &tooltipLabs_, &tooltipPsych_);
+    UnionRect(&panel, &panel, &tooltipEconomy_);
+    social_expand_rect(&panel, 3, 3);
+    MainInterfaceGlobal.Buffer::box_sprite(&panel, &InterfaceBoxStyles[3]);
 
-    RECT tutorial_panel;
-    UnionRect(&tutorial_panel, &tutRect11_, &tutRect13_);
-    UnionRect(&tutorial_panel, &tutorial_panel, &tutRect12_);
-    tutorial_panel.left -= 3;
-    tutorial_panel.right += 3;
-    tutorial_panel.bottom += 3;
-    tutorial_panel.top -= 3;
-    window_buffer->box_sprite(&tutorial_panel, &InterfaceBoxStyles[3]);
+    UnionRect(&panel, &tutRect11_, &tutRect13_);
+    UnionRect(&panel, &panel, &tutRect12_);
+    social_expand_rect(&panel, 3, 3);
+    Buffer::box_sprite(&panel, &InterfaceBoxStyles[3]);
 
     draw_presets();
     for (int category = 0; category < MaxSocialCatNum; ++category) {
@@ -913,8 +912,12 @@ void SocialWin::on_redraw() {
     draw_psych_alloc();
     draw_mouseover();
 
-    for (int button = 17; button < 27; ++button) {
-        flatButtons_[button].redraw();
+    for (int slot = 0; slot < 11; ++slot) {
+        if (slot != 3) {
+            int button = slot;
+            if (slot >= 3) --button;
+            flatButtons_[17 + button].redraw();
+        }
     }
 }
 
@@ -1290,9 +1293,8 @@ void SocialWin::allocate_energy(int a1, int a2) {
 // RECOVERY_BINDING: v1 {"evidence": ["git:seed:src/recovered/units/004af1e0.cpp; source:src/socialwin.h:tutRect1_,font1_; source:src/alpha.h:label_get; source:src/strings.h:StringTemp; source:src/game.cpp:InterfaceBoxStyles"], "reason": "Home the presets panel painter on SocialWin with its typed RECT, Buffer base, font and source-owned strings."}
 void SocialWin::draw_presets() {
     RECT panel = tutRect1_;
-    Buffer *buffer = static_cast<Buffer *>(static_cast<GraphicWin *>(this));
-    buffer->set_clip(&panel);
-    buffer->box_sprite(&panel, &InterfaceBoxStyles[3]);
+    Buffer::set_clip(&panel);
+    Buffer::box_sprite(&panel, &InterfaceBoxStyles[3]);
 
     panel.left += 3;
     panel.top += 3;
@@ -1300,15 +1302,15 @@ void SocialWin::draw_presets() {
     panel.bottom -= 3;
 
     RECT title = {panel.left, panel.top, panel.right, panel.top + 0x14};
-    buffer->box_sprite(&title, &InterfaceBoxStyles[6]);
+    Buffer::box_sprite(&title, &InterfaceBoxStyles[6]);
 
     StringTemp[0] = '\0';
     strcat(StringTemp, label_get(69));
     CharUpperA(StringTemp);
 
-    buffer->set_font(&font1_, 0, 0, 0);
-    buffer->set_text_color(0x9f, -1, 1, 1);
-    buffer->write_cent_l(StringTemp, &title, strlen(StringTemp));
+    Buffer::set_font(&font1_, 0, 0, 0);
+    Buffer::set_text_color(0x9f, -1, 1, 1);
+    Buffer::write_cent_l(StringTemp, &title, strlen(StringTemp));
 
     soft_update(&tutRect1_);
     do_sound();

@@ -16,6 +16,7 @@ import pytest
 SCRIPT = Path(__file__).resolve()
 ROOT = Path(os.environ["OPENSMACX_ROOT"]).resolve() if os.environ.get("OPENSMACX_ROOT") else Path(__file__).resolve().parents[2]
 SOURCE = ROOT / "src" / "faction.cpp"
+DIPLOMACY_SOURCE = ROOT / "src" / "faction_diplomacy.cpp"
 HARNESS = Path(__file__).with_name("diplomacy-owner-harness.cpp").read_text()
 
 
@@ -42,7 +43,8 @@ def definition(source: str, name: str) -> str:
 def actual_bodies():
     assert SOURCE.is_file(), "actual source file is missing: " + str(SOURCE)
     text = SOURCE.read_text()
-    return {name: definition(text, name) for name in ("trade_maps", "do_withdrawal")}
+    return {"trade_maps": definition(text, "trade_maps"),
+            "do_withdrawal": definition(DIPLOMACY_SOURCE.read_text(), "do_withdrawal")}
 
 
 def compilers():
@@ -114,3 +116,25 @@ def test_cached_vehicle_count_is_rejected(tmp_path, actual_bodies, compiler):
     run_env["ASAN_OPTIONS"] = "detect_leaks=0"
     result = subprocess.run([str(binary), "withdraw"], text=True, capture_output=True, env=run_env)
     assert result.returncode != 0, "damage control failed to reject cached vehicle count"
+
+
+@pytest.mark.parametrize("compiler", compilers())
+@pytest.mark.parametrize("cached", ("table", "width"))
+def test_cached_map_view_is_rejected(tmp_path, actual_bodies, compiler, cached):
+    body = actual_bodies["do_withdrawal"]
+    anchor = "Map &dest = MapTiles[MapLongitude * dest_y + (dest_x >> 1)];"
+    live = "Map &live_dest = MapTiles[MapLongitude * dest_y + (dest_x >> 1)];"
+    assert body.count(anchor) == body.count(live) == 1
+    if cached == "table":
+        body = body.replace(anchor, "Map *const cached_table = MapTiles;\n                " + anchor, 1)
+        body = body.replace(live, live.replace("MapTiles", "cached_table"), 1)
+    else:
+        body = body.replace(anchor, "const uint32_t cached_width = MapLongitude;\n                " + anchor, 1)
+        body = body.replace(live, live.replace("MapLongitude", "cached_width"), 1)
+    bodies = dict(actual_bodies)
+    bodies["do_withdrawal"] = body
+    binary = executable(tmp_path, bodies, compiler)
+    run_env = dict(os.environ)
+    run_env["ASAN_OPTIONS"] = "detect_leaks=0"
+    result = subprocess.run([str(binary), "withdraw"], text=True, capture_output=True, env=run_env)
+    assert result.returncode != 0, "damage control failed to reject cached map " + cached

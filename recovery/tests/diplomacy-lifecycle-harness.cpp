@@ -103,17 +103,21 @@ typedef char Veh_terraform_offset_must_match[(offsetof(Veh, terraforming_turns) 
 
 Player Players[MaxPlayerNum];
 PlayerData PlayersData[MaxPlayerNum];
-uint32_t LockEnableMask;
+// Test-only subset of the current source-owned game-state field API.
+struct GameDataLockMask { uint32_t enable_mask_; };
+struct GameDataStateFields {
+    GameDataLockMask lock_masks_;
+    int turn_current_num_, vehicle_current_count_, base_current_count_;
+};
+struct GameDataState { GameDataStateFields fields_; };
+GameDataState GameDataStateStorage;
 int GenderDefault;
 BOOL PluralityDefault;
-int TurnCurrentNum;
 Console ConsoleGlobal;
 Veh Vehs[16];
-int VehCurrentCount;
 VehPrototype VehPrototypes[16];
 RulesChassis Chassis[16];
 Base Bases[16];
-int BaseCurrentCount;
 uint32_t MapLongitude;
 int MapLongitudeBounds;
 BOOL MapIsFlat;
@@ -141,6 +145,7 @@ int lift_arg, lift_calls;
 int drop_arg, drop_x, drop_y, drop_calls;
 int mutate_base_on_lift, mutate_base_id, mutate_base_x, mutate_base_y;
 int failures;
+int mutate_name_gender, grammar_candidate, grammar_actor;
 
 int __cdecl parse_says(int id, const char *input, int gender, int plural) {
     if (parse_count >= 64) abort();
@@ -149,6 +154,8 @@ int __cdecl parse_says(int id, const char *input, int gender, int plural) {
     parse_events[parse_count].gender = GenderDefault;
     parse_events[parse_count].plural = PluralityDefault;
     ++parse_count;
+    if (mutate_name_gender && id == 2) Players[grammar_candidate].is_leader_female = 41;
+    if (mutate_name_gender && id == 4) Players[grammar_actor].is_leader_female = 42;
     (void)gender; (void)plural;
     return 0;
 }
@@ -209,6 +216,7 @@ static void reset_events() {
     sea_base = sea_region = lift_arg = drop_arg = drop_x = drop_y = 0;
     mutate_base_on_lift = 0; mutate_base_id = -1;
     mutate_base_x = mutate_base_y = 0;
+    mutate_name_gender = 0;
     ConsoleGlobal.move_updates = 0;
 }
 static void reset_world() {
@@ -219,10 +227,10 @@ static void reset_world() {
     memset(Chassis, 0, sizeof(Chassis));
     memset(Bases, 0, sizeof(Bases));
     memset(&TestTile, 0, sizeof(TestTile));
-    LockEnableMask = 0; GenderDefault = 0; PluralityDefault = 0;
-    TurnCurrentNum = 42; ConsoleGlobal.faction_id_ = -1;
+    GameDataStateStorage.fields_.lock_masks_.enable_mask_ = 0; GenderDefault = 0; PluralityDefault = 0;
+    GameDataStateStorage.fields_.turn_current_num_ = 42; ConsoleGlobal.faction_id_ = -1;
     ConsoleGlobal.cursor_active_ = 0; ConsoleGlobal.selected_vehicle_ = -1;
-    VehCurrentCount = 0; BaseCurrentCount = 0;
+    GameDataStateStorage.fields_.vehicle_current_count_ = 0; GameDataStateStorage.fields_.base_current_count_ = 0;
     MapLongitude = 64; MapLongitudeBounds = 128; MapIsFlat = 1;
     base_find_result = -1; territory_result = -1;
     coast_result = 1; sea_result = 1; lift_result = 0;
@@ -253,7 +261,7 @@ static void test_intervention_masks_slots_and_effects() {
     PlayersData[candidate].diplo_treaties[target] = 1;
     PlayersData[candidate].diplo_treaties[actor] = 0;
     // Alive is byte 1; the separate low byte marks the actor human.
-    LockEnableMask = (1u << (candidate + 8)) | (1u << actor);
+    GameDataStateStorage.fields_.lock_masks_.enable_mask_ = (1u << (candidate + 8)) | (1u << actor);
     ConsoleGlobal.faction_id_ = actor;
 
     intervention(target, actor);
@@ -272,12 +280,12 @@ static void test_intervention_masks_slots_and_effects() {
             parse_events[2].gender == 1 && parse_events[2].plural == 0,
             "slot 2 candidate leader title grammar");
     require(strcmp(parse_events[3].text, "candidate-name") == 0 &&
-            parse_events[3].gender == 0 && parse_events[3].plural == 0,
-            "slot 3 candidate leader name defaults");
+            parse_events[3].gender == 1 && parse_events[3].plural == 0,
+            "slot 3 candidate leader name uses its current gender");
     require(strcmp(parse_events[4].text, "actor-title") == 0 &&
             parse_events[4].gender == 1, "slot 4 actor leader title");
     require(strcmp(parse_events[5].text, "actor-name") == 0 &&
-            parse_events[5].gender == 0, "slot 5 actor leader name");
+            parse_events[5].gender == 1, "slot 5 actor leader name");
     require(strcmp(parse_events[6].text, "actor-noun") == 0 &&
             parse_events[6].gender == 22 && parse_events[6].plural == 0,
             "slot 6 actor noun grammar");
@@ -288,14 +296,23 @@ static void test_intervention_masks_slots_and_effects() {
     require(set_treaty_count == 1 && set_treaty_events[0].first == candidate &&
             set_treaty_events[0].second == actor && set_treaty_events[0].value == 0x40 &&
             set_treaty_events[0].extra == TRUE, "intervention treaty set");
-    require(PlayersData[actor].diplo_spoke[candidate] == TurnCurrentNum,
+    require(PlayersData[actor].diplo_spoke[candidate] == GameDataStateStorage.fields_.turn_current_num_,
             "contact timestamp is actor row, candidate column");
     require(strcmp(popup_label, "AIDSTHEM") == 0 && popup_count == 1,
             "actor-local notification uses AIDSTHEM");
 
     reset_events();
+    mutate_name_gender = 1; grammar_candidate = candidate; grammar_actor = actor;
+    intervention(target, actor);
+    require(parse_count == 7 && parse_events[3].gender == 41 &&
+            parse_events[5].gender == 42,
+            "leader names reload gender after each title parser callback");
+    Players[candidate].is_leader_female = 1;
+    Players[actor].is_leader_female = 1;
+
+    reset_events();
     PlayersData[actor].diplo_spoke[candidate] = -9;
-    LockEnableMask = (1u << (candidate + 8)) | (1u << target);
+    GameDataStateStorage.fields_.lock_masks_.enable_mask_ = (1u << (candidate + 8)) | (1u << target);
     ConsoleGlobal.faction_id_ = target;
     intervention(target, actor);
     require(strcmp(popup_label, "AIDSUS") == 0 && popup_count == 1,
@@ -307,7 +324,7 @@ static void test_intervention_masks_slots_and_effects() {
     // while treaty writes and contact bookkeeping are gated off.
     reset_events();
     PlayersData[actor].diplo_spoke[candidate] = -9;
-    LockEnableMask = (1u << (candidate + 8));
+    GameDataStateStorage.fields_.lock_masks_.enable_mask_ = (1u << (candidate + 8));
     intervention(target, actor);
     require(parse_count == 7, "alive candidate still builds parser state");
     require(treaty_count == 0 && set_treaty_count == 0,
@@ -317,13 +334,13 @@ static void test_intervention_masks_slots_and_effects() {
 
     // A human bit without candidate alive must not enter the candidate body.
     reset_events();
-    LockEnableMask = (1u << actor);
+    GameDataStateStorage.fields_.lock_masks_.enable_mask_ = (1u << actor);
     intervention(target, actor);
     require(parse_count == 0, "candidate alive mask is the high byte");
 }
 
 static void setup_one_vehicle() {
-    VehCurrentCount = 1; BaseCurrentCount = 3;
+    GameDataStateStorage.fields_.vehicle_current_count_ = 1; GameDataStateStorage.fields_.base_current_count_ = 3;
     Vehs[0].x = 20; Vehs[0].y = 30; Vehs[0].faction_id = 1;
     Vehs[0].proto_id = 0; Vehs[0].order = 7; Vehs[0].state = 0xFFFFFFFFu;
     Vehs[0].morale = 5;
@@ -366,7 +383,7 @@ static void test_pact_withdraw_zero_result_and_tie_lift_return() {
 }
 static void test_pact_withdraw_sea_rules_preserve_coastal_quirk() {
     reset_world(); setup_one_vehicle();
-    BaseCurrentCount = 2;
+    GameDataStateStorage.fields_.base_current_count_ = 2;
     Chassis[0].triad = TRIAD_SEA;
     // The native uses candidate Base[1].x (=0) as another Bases[] index,
     // then passes candidate Base[1].y (=7) as is_coast's boolean argument.

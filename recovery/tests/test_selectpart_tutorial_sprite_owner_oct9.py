@@ -88,7 +88,7 @@ def test_selectpart_sprite_calls_use_the_existing_typed_member(tmp_path: Path) -
     exec_call = _statement(exec_body, "TutWinBaseWindow.sprite6_.draw(")
     tile_call = _statement(
         draw_body,
-        "static_cast<Buffer *>(this)\n            ->tile(&TutWinBaseWindow.sprite6_",
+        "Buffer::tile(&TutWinBaseWindow.sprite6_",
     )
 
     compiler = shutil.which("g++") or shutil.which("clang++")

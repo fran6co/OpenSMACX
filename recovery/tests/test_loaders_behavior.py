@@ -276,7 +276,7 @@ void __cdecl load_palette();
 
 static std::string decimal(int value) { char b[32]; std::sprintf(b,"%d",value); return b; }
 static std::string expected_tech(int i) {
-  char b[32]; std::sprintf(b,"techs\\tech%02d",i); return b;
+  char b[32]; std::sprintf(b,"techs\\tech%03d",i); return b;
 }
 static std::string expected_project(int i) {
   char b[32]; std::sprintf(b,"projs\\proj%03d",i); return b;
@@ -402,6 +402,7 @@ def test_loader_source_host_controls(tmp_path, compiler_name):
         (0x00454D10, "index < 89", "index < 88"),
         (0x00454D10, "index < 70", "index < 69"),
         (0x00454D10, "index < 64", "index < 63"),
+        (0x00454D10, '"techs\\\\tech0"', '"techs\\\\tech"'),
         (0x00454D10, '"projs\\\\proj0"', '"projs\\\\proj1"'),
         (0x00454D10, 'g_TECH_ICON_SPRITES[index].iHeight_ = 0xD7;', 'g_TECH_ICON_SPRITES[index].iHeight_ = 0xD6;'),
         (0x00454D10, "index >= 34 && index <= 64", "index >= 34 && index <= 63"),

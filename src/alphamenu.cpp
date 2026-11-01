@@ -705,7 +705,7 @@ void AlphaMenu::on_redraw() {
 }
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x00403680 ?show@AlphaMenu@@QAEXXZ 0x00403680-0x0040382F FILE
+// ORIGINAL: 0x00403680 ?show@AlphaMenu@@QAEXXZ 0x00403680-0x0040382F FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Retained seeds src/unrecovered/00402f40.cpp,004032a0.cpp,00403af0.cpp and src/recovered/units/00403340.cpp,00403680.cpp,00403830.cpp; pinned original callback style27/29, positive hide height, branch-only clip restoration and actual caller dispatch audited by coordinator."], "reason": "Recover AlphaMenu owner behavior through existing Menu/GraphicWin/Buffer inheritance and owned Sprite lifetimes; historical seed identity and extents remain obligations, not measurement claims."}
 void AlphaMenu::show() {
   if (is_visible()) return;
@@ -724,7 +724,7 @@ void AlphaMenu::show() {
     WinFlipClipped = 1;
     for (int frame = 0; frame != 6; ++frame) {
       const DWORD started = timeGetTime();
-      static_cast<Buffer *>(this)->draw(&ScreenBufferOwner.buffer(), 9,
+      Buffer::draw(&ScreenBufferOwner.buffer(), 9,
                                         frame_x, y, 1, 1);
       flip(&screen_rect);
       y -= step;

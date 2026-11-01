@@ -70,9 +70,9 @@ void Interlude::on_redraw() {
     Buffer *canvas = static_cast<Buffer *>(this);
     const int width = art_.dib_.bmiHeader.biWidth;
     const int height = art_.dib_.bmiHeader.biHeight;
-    art_.copy(canvas, 0, 0, (canvas->dib_.bmiHeader.biWidth - width) / 2,
-              (height - canvas->dib_.bmiHeader.biHeight) / 2, width, -height);
-    canvas->write_strings(&captions_, text_rect_.left, text_rect_.top,
+    art_.copy(canvas, 0, 0, (dib_.bmiHeader.biWidth - width) / 2,
+              (height - dib_.bmiHeader.biHeight) / 2, width, -height);
+    Buffer::write_strings(&captions_, text_rect_.left, text_rect_.top,
                            text_rect_.right - text_rect_.left, 0);
 }
 

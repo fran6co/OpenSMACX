@@ -17,8 +17,8 @@ SOURCE = ROOT / "src/socialwin.cpp"
 SIGNATURE = "void SocialWin::on_redraw()"
 
 
-def extract_function(source: str) -> str:
-    start = source.index(SIGNATURE)
+def extract_function(source: str, signature: str = SIGNATURE) -> str:
+    start = source.index(signature)
     opening = source.index("{", start)
     depth = 0
     for end in range(opening, len(source)):
@@ -50,6 +50,8 @@ bool same_rect(const RECT &a, const RECT &b) {
 struct UnionRecord { RECT first, second, result; };
 std::vector<UnionRecord> unions;
 std::vector<RECT> boxed_rects;
+std::vector<const RECT *> union_outputs;
+std::vector<const RECT *> box_inputs;
 
 int UnionRect(RECT *out, const RECT *first, const RECT *second) {
     const RECT first_copy = *first;
@@ -59,6 +61,7 @@ int UnionRect(RECT *out, const RECT *first, const RECT *second) {
     out->right = std::max(first_copy.right, second_copy.right);
     out->bottom = std::max(first_copy.bottom, second_copy.bottom);
     unions.push_back(UnionRecord{first_copy, second_copy, *out});
+    union_outputs.push_back(out);
     events.push_back(Event{3, static_cast<int>(unions.size()) - 1});
     return 1;
 }
@@ -70,6 +73,7 @@ struct Buffer {
     void restore_back(int value) { events.push_back(Event{2, value}); }
     void box_sprite(RECT *area, int *) {
         boxed_rects.push_back(*area);
+        box_inputs.push_back(area);
         events.push_back(Event{4, identity});
     }
 };
@@ -110,11 +114,13 @@ struct SocialWin : GraphicWin {
     void draw_mouseover() { events.push_back(Event{7, 6}); }
     void on_redraw();
 };
+RECT_OPERATION
 BODY
 
 int main() {
     next_button_identity = 0;
     events.clear(); unions.clear(); boxed_rects.clear();
+    union_outputs.clear(); box_inputs.clear();
     SocialWin window;
     window.on_redraw();
 
@@ -138,6 +144,8 @@ int main() {
     assert((same_rect(unions[3].first, RECT{100,110,160,170})));
     assert((same_rect(unions[3].second, RECT{120,140,155,165})));
     assert(boxed_rects.size() == 2);
+    for (const RECT *area : union_outputs) assert(area == union_outputs[0]);
+    for (const RECT *area : box_inputs) assert(area == union_outputs[0]);
     assert((same_rect(boxed_rects[0], RECT{2,12,73,83})));
     assert((same_rect(boxed_rects[1], RECT{97,107,163,173})));
 
@@ -153,7 +161,9 @@ int main() {
 def compile_and_run(tmp_path, compiler: str, body: str, stem: str):
     source = tmp_path / f"{stem}.cpp"
     executable = tmp_path / stem
-    source.write_text(FIXTURE.replace("BODY", body))
+    operation = extract_function(SOURCE.read_text(encoding="utf-8"),
+                                 "static inline RECT *social_expand_rect(")
+    source.write_text(FIXTURE.replace("RECT_OPERATION", operation).replace("BODY", body))
     compiled = subprocess.run(
         [compiler, "-std=c++17", "-Wall", "-Wextra", "-Werror",
          str(source), "-o", str(executable)],
@@ -176,8 +186,12 @@ def test_actual_socialwin_redraw_receivers_and_old_loop_mutant(
     result = compile_and_run(tmp_path, compiler, body, "socialwin-redraw-actual")
     assert result.returncode == 0, result.stderr
 
-    correct_loop = """    for (int button = 17; button < 27; ++button) {
-        flatButtons_[button].redraw();
+    correct_loop = """    for (int slot = 0; slot < 11; ++slot) {
+        if (slot != 3) {
+            int button = slot;
+            if (slot >= 3) --button;
+            flatButtons_[17 + button].redraw();
+        }
     }"""
     old_loop = """    for (int button = 0; button < 11; ++button) {
         if (button != 3) {
@@ -187,4 +201,20 @@ def test_actual_socialwin_redraw_receivers_and_old_loop_mutant(
     mutant = body.replace(correct_loop, old_loop, 1)
     assert mutant != body
     result = compile_and_run(tmp_path, compiler, mutant, "socialwin-redraw-old-loop")
+    assert result.returncode != 0
+
+    mutant = body.replace("if (slot >= 3) --button;", "", 1)
+    assert mutant != body
+    result = compile_and_run(tmp_path, compiler, mutant,
+                             "socialwin-redraw-uncompressed-slot")
+    assert result.returncode != 0
+
+    marker = "    UnionRect(&panel, &tutRect11_, &tutRect13_);"
+    assert body.count(marker) == 1
+    start = body.index(marker)
+    end = body.index("    draw_presets();", start)
+    separate = "    RECT second_panel;\n" + body[start:end].replace("panel", "second_panel")
+    mutant = body[:start] + separate + body[end:]
+    result = compile_and_run(tmp_path, compiler, mutant,
+                             "socialwin-redraw-separate-rect")
     assert result.returncode != 0

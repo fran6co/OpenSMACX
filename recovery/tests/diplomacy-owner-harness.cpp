@@ -71,7 +71,8 @@ struct GraphicWin { int redraw_count; void redraw() { ++redraw_count; } };
 struct WorldWindow : GraphicWin {};
 
 static PlayerData PlayersData[8];
-static Map MapTiles[512];
+static Map PrimaryMapTiles[512], ReplacementMapTiles[512];
+static Map *MapTiles = PrimaryMapTiles;
 static Base Bases[32];
 static Veh Vehs[32];
 static VehPrototype VehPrototypes[32];
@@ -110,6 +111,7 @@ static int last_agenda[4], last_treaty[4];
 static int last_tile_fixup[4];
 static int destination_x, destination_y;
 static int stack_check_calls;
+static int replace_map_on_stack_check;
 
 void __cdecl spot_base(int base_id, int faction_id) {
     if (spot_calls < 32) {
@@ -131,7 +133,13 @@ int __cdecl stack_fix(int id) { return id; }
 int __cdecl stack_check(int, int, int faction, int, int) {
     ++stack_check_calls;
     if (faction != expected_stack_faction) return 0;
-    return last_veh_at_x == destination_x && last_veh_at_y == destination_y;
+    const int matched = last_veh_at_x == destination_x && last_veh_at_y == destination_y;
+    if (matched && replace_map_on_stack_check) {
+        MapLongitude = 16;
+        MapTiles = ReplacementMapTiles;
+        replace_map_on_stack_check = 0;
+    }
+    return matched;
 }
 int __cdecl veh_lift(int id) { return id + 2; }
 int __cdecl veh_drop(int id, int x, int y) {
@@ -169,7 +177,9 @@ void __cdecl set_treaty(int faction, int other, int flags, int set) {
 
 static void reset_all() {
     memset(PlayersData, 0, sizeof(PlayersData));
-    memset(MapTiles, 0, sizeof(MapTiles));
+    memset(PrimaryMapTiles, 0, sizeof(PrimaryMapTiles));
+    memset(ReplacementMapTiles, 0, sizeof(ReplacementMapTiles));
+    MapTiles = PrimaryMapTiles;
     memset(Bases, 0, sizeof(Bases));
     memset(Vehs, 0, sizeof(Vehs));
     memset(VehPrototypes, 0, sizeof(VehPrototypes));
@@ -192,6 +202,7 @@ static void reset_all() {
     proto_after_drop = -1;
     last_ability_proto = -1;
     base_find_result = -1;
+    replace_map_on_stack_check = 0;
 }
 
 static void control_trade_direction_and_visibility() {
@@ -343,6 +354,28 @@ static void control_withdrawal_base_callback_reads() {
     assert(agenda_calls == 1 && treaty_calls == 1);
 }
 
+static void control_withdrawal_reloads_map_after_stack_callback() {
+    reset_all();
+    MapLongitude = 8; MapLongitudeBounds = 16; MapLatitudeBounds = 6;
+    GameDataStateStorage.fields_.vehicle_current_count_ = 1;
+    Vehs[0].x = 4; Vehs[0].y = 2;
+    Vehs[0].faction_id = 2; Vehs[0].proto_id = 0;
+    VehPrototypes[0].armor_id = 0; VehPrototypes[0].chassis_id = 0;
+    Chassis[0].triad = TRIAD_LAND;
+    MapTiles[18].climate = 0x80; MapTiles[18].territory = 1;
+    destination_x = 5; destination_y = 1;
+    MapTiles[10].climate = 0x20;
+    // The callback changes both table and row width. Only the new table's
+    // newly indexed destination rejects this faction; either stale value permits it.
+    ReplacementMapTiles[18].bit = 1;
+    ReplacementMapTiles[18].val2 = 3;
+    expected_stack_faction = 2;
+    replace_map_on_stack_check = 1;
+    assert(do_withdrawal(1, 2) == 0);
+    assert(MapTiles == ReplacementMapTiles && MapLongitude == 16);
+    assert(drop_calls == 0 && agenda_calls == 0 && treaty_calls == 0);
+}
+
 int main(int argc, char **argv) {
     if (argc != 2) return 2;
     if (strcmp(argv[1], "trade") == 0) {
@@ -352,6 +385,7 @@ int main(int argc, char **argv) {
     if (strcmp(argv[1], "withdraw") == 0) {
         control_withdrawal_moves_cleans_and_updates_treaty();
         control_withdrawal_base_callback_reads();
+        control_withdrawal_reloads_map_after_stack_callback();
         return 0;
     }
     return 2;

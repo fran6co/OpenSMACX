@@ -158,6 +158,7 @@ set(OPENSMACX_SOURCES
     src/dialog.cpp
     src/dialogs.cpp
     src/faction.cpp
+    src/faction_diplomacy.cpp
     src/faction_dialogue.cpp
     src/faction_network.cpp
     src/famewin.cpp
@@ -437,6 +438,7 @@ set_source_files_properties(
     src/territory.cpp
     src/world.cpp
     src/faction.cpp
+    src/faction_diplomacy.cpp
     src/faction_dialogue.cpp
     src/faction_network.cpp
     src/veh.cpp
@@ -598,6 +600,7 @@ set_property(SOURCE
     src/console_commands.cpp
     src/net_class.cpp
     src/world.cpp
+    src/win.cpp
     APPEND PROPERTY COMPILE_OPTIONS "/Z7")
 # Keep these measured frame-based helper owners on their explicit source profile.
 set_source_files_properties(

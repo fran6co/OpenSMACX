@@ -6,6 +6,11 @@ font calls, EditBox initialization and callbacks. It tests observable source
 behavior, not VC6 layout, EH tables, or the original virtual-base ABI. Its
 controlled null allocation is a host branch control and does not prove VC6
 throw behavior, SEH cleanup, or unwind equivalence.
+
+The child-style observer changes the installed child between the two opaque
+calls to distinguish a fresh receiver read from a cached pointer. This is a
+source observation-order control, not a claim that Buffer setters reenter the
+game. The independently pinned call census supplies the original authority.
 """
 from pathlib import Path
 import shutil
@@ -60,13 +65,15 @@ static int old_child_deleted;
 static void (*show_callback)(int);
 static void fail(const char *name) { fprintf(stderr, "EDITGROUP_ATTACH:%s\n", name); exit(98); }
 static void check(bool value, const char *name) { if (!value) fail(name); }
+struct Buffer;
+static void (*color_observer)(Buffer *);
 struct Buffer {
-  int color_call;
-  Buffer() : color_call(0) {}
-  void set_text_color(int a,int b,int c,int d) { check(a==11&&b==12&&c==13&&d==14,"color1-values"); events.push_back(20); ++color_call; }
-  void set_text_color2(int a,int b,int c,int d) { check(a==21&&b==22&&c==23&&d==24,"color2-values"); events.push_back(21); ++color_call; }
-  void set_text_color3(int a,int b,int c,int d) { check(a==31&&b==32&&c==33&&d==34,"color3-values"); events.push_back(22); ++color_call; }
-  void set_font(Font *a,Font *b,Font *c,int d) { check(a&&a->id==1&&b&&b->id==2&&c&&c->id==3&&d==0,"font-values"); events.push_back(23); }
+  int color_call, color2_calls, color3_calls, font_calls;
+  Buffer() : color_call(0),color2_calls(0),color3_calls(0),font_calls(0) {}
+  void set_text_color(int a,int b,int c,int d) { check(a==11&&b==12&&c==13&&d==14,"color1-values"); events.push_back(20); ++color_call; if(color_observer)color_observer(this); }
+  void set_text_color2(int a,int b,int c,int d) { check(a==21&&b==22&&c==23&&d==24,"color2-values"); events.push_back(21); ++color2_calls; }
+  void set_text_color3(int a,int b,int c,int d) { check(a==31&&b==32&&c==33&&d==34,"color3-values"); events.push_back(22); ++color3_calls; }
+  void set_font(Font *a,Font *b,Font *c,int d) { check(a&&a->id==1&&b&&b->id==2&&c&&c->id==3&&d==0,"font-values"); events.push_back(23); ++font_calls; }
 };
 struct Win { uint32_t iFlags_; Win() : iFlags_(0) {} };
 struct GraphicWin : Win, Buffer {
@@ -128,6 +135,13 @@ class EditGroup : public virtual GraphicWin, public virtual Dialog {
   int attach(GraphicWin *parent,int x,int y,int flags);
 };
 static EditGroup *callback_group;
+static EditBox *replaced_child, *replacement_child;
+static void replace_child_after_color(Buffer *receiver) {
+  if(receiver!=static_cast<Buffer *>(callback_group->boxes_[0]))return;
+  replaced_child=callback_group->boxes_[0];
+  callback_group->boxes_[0]=replacement_child;
+  color_observer=0;
+}
 static void mutate_geometry_from_show(int id) {
   if(id==0){callback_group->Dialog::column_count_=3;callback_group->Dialog::row_count_=3;callback_group->Dialog::field_64_=47;callback_group->Dialog::field_68_=19;}
   if(id==1)callback_group->Dialog::field_68_=23;
@@ -136,11 +150,11 @@ static void mutate_geometry_from_show(int id) {
 }
 @BODY@
 static void init_group(EditGroup &g) {
-  next_child_id=0;callback_count=0;child_fail_index=-1;fail_child_allocation=false;show_callback=0;callback_group=0;
+  next_child_id=0;callback_count=0;child_fail_index=-1;fail_child_allocation=false;show_callback=0;callback_group=0;color_observer=0;
   dimensions_columns=2;dimensions_rows=3;dimensions_cell_width=31;dimensions_cell_height=15;
   dimension_result=0;parent_init_result=0;
   static Font f1={1},f2={2},f3={3}; g.Dialog::font1_=&f1;g.Dialog::font2_=&f2;g.Dialog::font3_=&f3;
-  g.Dialog::field_20_=0x100000; g.Dialog::field_44_=6; g.Dialog::column_count_=2;g.Dialog::row_count_=3;
+  g.Dialog::field_20_=0x1000; g.Dialog::field_44_=6; g.Dialog::column_count_=2;g.Dialog::row_count_=3;
   for(int i=0;i<10;++i){g.limits_[i]=70+i;g.text_buffers_[i]=(i%2)?(char*)"seed":0;}
 }
 static void cases() {
@@ -153,6 +167,7 @@ static void cases() {
     check(g.Dialog::window_x_==101&&g.Dialog::window_y_==202,"stored-position");
     check(g.GraphicWin::init_x==101&&g.GraphicWin::init_y==202&&g.GraphicWin::init_width==211&&g.GraphicWin::init_height==127&&g.GraphicWin::init_flags==0x40,"parent-init-xywh-flags");
     check(g.GraphicWin::init_parent==&p,"parent-init-parent");
+    check(g.Buffer::color_call==1&&g.Buffer::color2_calls==1&&g.Buffer::color3_calls==1&&g.Buffer::font_calls==1,"parent-four-style-calls");
     check(g.boxes_[0]&&g.boxes_[1]&&g.boxes_[2]&&g.boxes_[3]&&g.boxes_[4]&&g.boxes_[5],"row-column-count");
     check(next_child_id==6,"row-column-count");
     check(g.boxes_[6]==0,"row-column-overflow");
@@ -163,11 +178,14 @@ static void cases() {
       check(b->field_B14_==70u+(unsigned)i&&b->field_B1C_==61&&b->field_B28_==51&&b->field_B2C_==52&&b->field_B30_==53&&b->field_B34_==41,"child-state-copy");
       check(b->field_B40_==0&&b->field_B44_==strlen(b->text_),"child-caret-text-length");
       check((b->field_B3C_&2)!=0,"child-checkbox-flag");
+      check(b->color_call==1&&b->font_calls==1,"child-two-style-calls");
+      check(b->color2_calls==0,"child-extra-color2");
+      check(b->color3_calls==0,"child-extra-color3");
     }
     check(g.boxes_[0]->text_[0]==0&&strcmp(g.boxes_[1]->text_,"seed")==0,"child-text-values");
     check(g.boxes_[0]->init_x!=g.boxes_[0]->init_y,"child-axis-distinction");
     vector<int> expected; expected.push_back(1);expected.push_back(10);expected.push_back(20);expected.push_back(21);expected.push_back(22);expected.push_back(23);
-    for(int i=0;i<6;++i){expected.push_back(30);expected.push_back(40+i);expected.push_back(20);expected.push_back(21);expected.push_back(22);expected.push_back(23);expected.push_back(60+i);expected.push_back(80+i);expected.push_back(100+i);}
+    for(int i=0;i<6;++i){expected.push_back(30);expected.push_back(40+i);expected.push_back(20);expected.push_back(23);expected.push_back(60+i);expected.push_back(80+i);expected.push_back(100+i);}
     check(events==expected,"parent-child-callback-order");check(callback_count==13,"callback-count");
   }
   { events.clear();EditGroup g;GraphicWin p;init_group(g);p.iFlags_=0x1000;
@@ -183,6 +201,9 @@ static void cases() {
   { events.clear(); EditGroup g;GraphicWin p;init_group(g); parent_init_result=0;p.iFlags_=0;g.Dialog::field_20_=0;
     check(g.attach(&p,1,2,0x40)==0,"flag-case-result");check(g.GraphicWin::init_flags==0x100040,"checkbox-parent-flag");
     check((g.boxes_[0]->field_B3C_&2)==0,"checkbox-bit-absent"); }
+  { events.clear(); EditGroup g;GraphicWin p;init_group(g);p.iFlags_=0x1000;g.Dialog::field_20_=0x100000;
+    check(g.attach(&p,1,2,0)==0,"different-bit-result");
+    check((g.boxes_[0]->field_B3C_&2)==0,"checkbox-different-bit-absent"); }
   { events.clear(); EditGroup g;GraphicWin p;init_group(g);p.iFlags_=0x1000;parent_init_result=0;child_fail_index=2;
     check(g.attach(&p,1,2,0)==7,"child-init-failure-propagation");
     check(g.boxes_[2]!=0&&g.boxes_[2]->redraw_calls==0&&g.boxes_[2]->show_calls==0,"failed-child-remains-installed");
@@ -195,6 +216,15 @@ static void cases() {
     check(g.attach(&p,1,2,0)==0,"replace-old-child-result");
     check(g.boxes_[0]!=0&&g.boxes_[0]->id!=9&&old_child_deleted==1,"old-child-deleted-new-child-installed");
     check(events.size()>8&&events[0]==30&&events[1]==1&&events[2]==10&&events[3]==20&&events[4]==21&&events[5]==22&&events[6]==23&&events[7]==31&&events[8]==30,"delete-before-new-constructor"); }
+  { events.clear(); EditGroup g;GraphicWin p;init_group(g);p.iFlags_=0x1000;
+    dimensions_columns=dimensions_rows=1;callback_group=&g;
+    replacement_child=new EditBox;replaced_child=0;color_observer=replace_child_after_color;
+    check(g.attach(&p,1,2,0)==0,"style-replacement-result");color_observer=0;
+    check(replaced_child&&g.boxes_[0]==replacement_child,"style-child-replaced");
+    check(replaced_child->color_call==1&&replaced_child->font_calls==0&&replacement_child->color_call==0&&replacement_child->font_calls==1,"child-font-reloads-receiver");
+    check(replacement_child->field_B14_==70&&replacement_child->redraw_calls==1&&replacement_child->show_calls==1,"style-followup-reloads-receiver");
+    delete replaced_child;delete replacement_child;
+  }
 }
 int main(){cases();return 0;}
 '''
@@ -202,12 +232,14 @@ int main(){cases();return 0;}
 
 def compile_run(compiler, body, mutation=None):
     if mutation:
+        original = body
         if callable(mutation):
             body = mutation(body)
         else:
             old, new = mutation
             assert old in body, f"mutation anchor missing: {old}"
             body = body.replace(old, new, 1)
+        assert body != original, "mutation did not change the actual source"
     code = HARNESS.replace("@BODY@", body)
     with tempfile.TemporaryDirectory(prefix="editgroup-attach-host-") as td:
         cpp, exe = Path(td) / "attach.cpp", Path(td) / "attach"
@@ -238,6 +270,17 @@ def test_compiling_mutants_fail_at_named_runtime_controls():
         ("omit-show", ("boxes_[index]->show(0);", "/* mutant omitted show */"), "child-lifecycle"),
         ("omit-text", ("boxes_[index]->set_text(text_buffers_[index]);",
                         "/* mutant omitted set_text */"), "child-text-values"),
+        ("extra-child-color2", ("            boxes_[index]->set_font(",
+            "            boxes_[index]->set_text_color2(Dialog::text_color_2a_, Dialog::text_color_2b_, Dialog::text_color_2c_, Dialog::text_color_2d_);\n            boxes_[index]->set_font("), "child-extra-color2"),
+        ("extra-child-color3", ("            boxes_[index]->set_font(",
+            "            boxes_[index]->set_text_color3(Dialog::text_color_3a_, Dialog::text_color_3b_, Dialog::text_color_3c_, Dialog::text_color_3d_);\n            boxes_[index]->set_font("), "child-extra-color3"),
+        ("omit-parent-color2", ("    buffer->set_text_color2(Dialog::text_color_2a_, Dialog::text_color_2b_,\n                            Dialog::text_color_2c_, Dialog::text_color_2d_);",
+            "    /* mutant omitted parent color2 */"), "parent-four-style-calls"),
+        ("cached-child", lambda source: source.replace(
+            "            boxes_[index]->set_text_color(",
+            "            EditBox *const style_child = boxes_[index];\n            style_child->set_text_color(", 1).replace(
+            "            boxes_[index]->set_font(", "            style_child->set_font(", 1),
+            "child-font-reloads-receiver"),
     )
     for compiler_name in ("g++", "clang++"):
         compiler = shutil.which(compiler_name)
@@ -267,3 +310,28 @@ def test_cumulative_column_geometry_mutant_is_caught_by_live_callbacks():
         result = compile_run(compiler, body, cumulative_columns)
         assert result.returncode == 98, result.stdout + result.stderr
         assert "EDITGROUP_ATTACH:callback-grid-fresh-fields-and-reset" in result.stderr
+
+
+def test_pinned_parent_and_child_style_call_census():
+    import hashlib
+    import os
+    from capstone import Cs, CS_ARCH_X86, CS_MODE_32
+    from match_recovery.pe_coff import PeImage
+    from match_recovery.model import Span
+    path = Path(os.environ.get('OPENSMACX_IMAGE', ROOT / '.opensmacx/game/terranx_original.exe'))
+    raw = path.read_bytes()
+    pin = '01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf'
+    assert hashlib.sha256(raw).hexdigest() == pin
+    image = PeImage(raw, pin)
+    ops = list(Cs(CS_ARCH_X86, CS_MODE_32).disasm(image.read(Span(0x611AF0, 0x611F79)), 0x611AF0))
+    style_targets = {'0x5dacb0', '0x5dace0', '0x5dad10', '0x5dac70'}
+    assert [(i.address, i.op_str) for i in ops if i.mnemonic == 'call' and i.op_str in style_targets] == [
+        (0x611BCF, '0x5dacb0'), (0x611C02, '0x5dace0'),
+        (0x611C35, '0x5dad10'), (0x611C63, '0x5dac70'),
+        (0x611E0C, '0x5dacb0'), (0x611E39, '0x5dac70'),
+    ]
+    instructions = {i.address: (i.mnemonic, i.op_str) for i in ops}
+    for address in (0x611E03, 0x611E30):
+        assert instructions[address] == ('mov', 'ecx, dword ptr [esi]')
+    for address in (0x611E06, 0x611E33):
+        assert instructions[address] == ('add', 'ecx, 0x444')

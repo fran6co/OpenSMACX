@@ -27,6 +27,7 @@
 // symbol    _$E6
 #include "stdafx.h"
 #include <math.h>
+#include <stddef.h>
 #include "random.h"
 #include "basewin.h"
 #include "infowin.h"
@@ -56,6 +57,11 @@
 #include "general.h"
 #include "council.h"
 #include "text.h"
+
+static_assert(offsetof(ReportWin, field_F934_) == 0xF934,
+              "ReportWin explosion frame offset");
+static_assert(sizeof(((ReportWin *)0)->field_F934_) == 4,
+              "ReportWin explosion frame width");
 
 // Shared dependencies identified by the original animation calls. The daemon
 // implementations live in reportwin.cpp; action_sat_attack is implemented in
@@ -2368,7 +2374,7 @@ void ReportWin::sat_anim() {
     soft_update(&satellite_rect_);
 }
 
-// ORIGINAL: 0x0049FFD0 ?start_attack@ReportWin@@QAEXHHHH@Z 0x0049FFD0-0x004A00F1
+// ORIGINAL: 0x0049FFD0 ?start_attack@ReportWin@@QAEXHHHH@Z 0x0049FFD0-0x004A00F1 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:a538e0a3:src/recovered/units/0049ffd0.cpp", "source:src/reportwin.h", "source:src/reportif.h", "image:original ReportWin instructions, callbacks and lifecycle evidence"], "reason": "Recover this report-window operation in its genuine owner using typed members, natural subobject lifetimes and shared source-owned state; retained catalogue identity and spans remain distinct from current emitted symbols."}
 void ReportWin::start_attack(int attacker, int target, int type, int base_id) {
     field_F924_ = attacker;
@@ -2383,12 +2389,14 @@ void ReportWin::start_attack(int attacker, int target, int type, int base_id) {
         const int index = counter % 16;
         if (counter < 16) satellite_live_[index] = 0;
         sat_anim();
-        explosion_rect_.top = static_cast<int>(satellite_y_[index]) + field_E2AC_ - 23;
-        explosion_rect_.left = static_cast<int>(satellite_x_[index]) + field_E2A8_ - 21;
-        explosion_rect_.right = explosion_rect_.left + 43;
-        explosion_rect_.bottom = explosion_rect_.top + 47;
+        const int top = static_cast<int>(satellite_y_[index]) + field_E2AC_ - 23;
+        const int left = static_cast<int>(satellite_x_[index]) + field_E2A8_ - 21;
+        explosion_rect_.top = top;
+        explosion_rect_.left = left;
+        explosion_rect_.right = left + 43;
+        explosion_rect_.bottom = top + 47;
         buffer1_.init(43, 47, 0, 0);
-        static_cast<Buffer *>(this)->copy(&buffer1_, explosion_rect_.left,
+        Buffer::copy(&buffer1_, explosion_rect_.left,
             explosion_rect_.top, 0, 0, 43, 47);
         time3_.init(sat_expl_daemon,
                     reinterpret_cast<int>(&ReportWinGlobal), 50, 5);
@@ -2399,27 +2407,29 @@ void ReportWin::start_attack(int attacker, int target, int type, int base_id) {
 // ORIGINAL: 0x004A0100 ?exp_anim@ReportWin@@QAEXXZ 0x004A0100-0x004A0248
 // RECOVERY_BINDING: v1 {"evidence": ["git:a538e0a3:src/recovered/units/004a0100.cpp", "source:src/reportwin.h", "source:src/reportif.h", "image:original ReportWin instructions, callbacks and lifecycle evidence"], "reason": "Recover this report-window operation in its genuine owner using typed members, natural subobject lifetimes and shared source-owned state; retained catalogue identity and spans remain distinct from current emitted symbols."}
 void ReportWin::exp_anim() {
-    Buffer *canvas = static_cast<Buffer *>(this);
-    canvas->set_clip(&satellite_rect_);
+    Buffer::set_clip(&satellite_rect_);
     if (field_F91C_ != 0) {
         time3_.stop();
         if (field_F920_ == 0) {
             field_F920_ = 1;
-            buffer1_.draw(canvas, 9, explosion_rect_.left, explosion_rect_.top);
+            buffer1_.draw(static_cast<Buffer *>(this), 9,
+                          explosion_rect_.left, explosion_rect_.top);
             update(&explosion_rect_, 0);
             action_sat_attack(field_F924_, field_F928_, field_F92C_, field_F930_);
-            canvas->set_clip(const_cast<RECT *>(&canvas->clip_rect()));
+            Buffer::restore_clip();
             return;
         }
     } else {
-        buffer1_.draw(canvas, 9, explosion_rect_.left, explosion_rect_.top);
+        buffer1_.draw(static_cast<Buffer *>(this), 9,
+                      explosion_rect_.left, explosion_rect_.top);
         Sprite &frame = g_XI_BOOM_VEH_SPRITES[48 + field_F934_];
-        frame.draw_multi_table_dest(canvas, frame.transparent_index(),
+        frame.draw_multi_table_dest(static_cast<Buffer *>(this),
+            frame.transparent_index(),
             explosion_rect_.left, explosion_rect_.top, ExplosionColorTables[1]);
         if (++field_F934_ >= 16) field_F91C_ = 1;
         update(&explosion_rect_, 0);
     }
-    canvas->set_clip(const_cast<RECT *>(&canvas->clip_rect()));
+    Buffer::restore_clip();
 }
 
 // RECOVERY_ASSOCIATED: v1 switch_targets 0x004989F0 0x00498B08 0x00498B2C 0x00498A3F

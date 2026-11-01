@@ -774,14 +774,13 @@ void SpriteBox::close() {
 
     spots_.shutdown();
     field_8_ = SpriteBoxDefaultField8;
-    Buffer *const buffer = static_cast<Buffer *>(static_cast<GraphicWin *>(this));
-    buffer->set_text_color(DialogDefaults[24], DialogDefaults[27],
+    Buffer::set_text_color(DialogDefaults[24], DialogDefaults[27],
                            DialogDefaults[30], DialogDefaults[33]);
-    buffer->set_text_color2(DialogDefaults[25], DialogDefaults[28],
+    Buffer::set_text_color2(DialogDefaults[25], DialogDefaults[28],
                             DialogDefaults[31], DialogDefaults[34]);
-    buffer->set_text_color3(DialogDefaults[26], DialogDefaults[29],
+    Buffer::set_text_color3(DialogDefaults[26], DialogDefaults[29],
                             DialogDefaults[32], DialogDefaults[35]);
-    buffer->set_font(DialogDefaultFonts[0], DialogDefaultFonts[1],
+    Buffer::set_font(DialogDefaultFonts[0], DialogDefaultFonts[1],
                      DialogDefaultFonts[2], 0);
 }
 

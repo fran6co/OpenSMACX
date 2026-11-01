@@ -32,7 +32,11 @@ def test_socialwin_canvas_uses_real_main_interface_buffer_and_restores_clip():
                  "draw_labs_alloc", "draw_overview", "draw_mouseover",
                  "draw_info"):
         body = braced_statement(SOURCE, f"SocialWin::{name}(")
-        assert "static_cast<Buffer *>(&MainInterfaceGlobal)" in body
+        if name == "on_redraw":
+            assert "MainInterfaceGlobal.Buffer::restore_clip()" in body
+            assert "MainInterfaceGlobal.Buffer::box_sprite(" in body
+        else:
+            assert "static_cast<Buffer *>(&MainInterfaceGlobal)" in body
     for name in ("on_redraw", "draw_psych_alloc", "draw_economy_alloc",
                  "draw_labs_alloc", "draw_overview", "draw_mouseover"):
         body = braced_statement(SOURCE, f"SocialWin::{name}(")

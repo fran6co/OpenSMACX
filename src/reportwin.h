@@ -219,7 +219,7 @@ class ReportWin : public GraphicWin {
   uint32_t field_F928_;  // 0xF928
   uint32_t field_F92C_;  // 0xF92C
   uint32_t field_F930_;  // 0xF930
-  uint32_t field_F934_;  // 0xF934
+  int field_F934_;  // 0xF934; signed explosion frame
   float satellite_x_[16];  // 0xF938
   float satellite_y_[16];  // 0xF978
   float satellite_dx_[16];  // 0xF9B8

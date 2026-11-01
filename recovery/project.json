@@ -594,13 +594,16 @@
       },
       "src/sprite_assets.cpp": {
         "flags": [
-          "/c",
-          "/O2",
-          "/Gy",
-          "/GR-",
+          "/nologo",
+          "/TP",
+          "/Zm200",
           "/GX",
+          "/O2",
+          "/Ob2",
+          "-MT",
+          "/W4",
           "/Oy-",
-          "/Ob2"
+          "-c"
         ]
       },
       "src/jackal/time.cpp": {
@@ -1095,6 +1098,7 @@
           "/Ob2",
           "-MT",
           "/W4",
+          "/Z7",
           "-c"
         ]
       },
@@ -1482,6 +1486,61 @@
         ]
       },
       "src/picktech.cpp": {
+        "flags": [
+          "/nologo",
+          "/TP",
+          "/Zm200",
+          "/GX",
+          "/O2",
+          "/Ob2",
+          "-MT",
+          "/W4",
+          "/Oy-",
+          "-c"
+        ]
+      },
+      "src/alphamenu.cpp": {
+        "flags": [
+          "/nologo",
+          "/TP",
+          "/Zm200",
+          "/GX",
+          "/O2",
+          "/Ob2",
+          "-MT",
+          "/W4",
+          "/Oy-",
+          "-c"
+        ]
+      },
+      "src/interlude.cpp": {
+        "flags": [
+          "/nologo",
+          "/TP",
+          "/Zm200",
+          "/GX",
+          "/O2",
+          "/Ob2",
+          "-MT",
+          "/W4",
+          "/Oy-",
+          "-c"
+        ]
+      },
+      "src/menu.cpp": {
+        "flags": [
+          "/nologo",
+          "/TP",
+          "/Zm200",
+          "/GX",
+          "/O2",
+          "/Ob2",
+          "-MT",
+          "/W4",
+          "-c"
+        ]
+      },
+      "src/faction_diplomacy.cpp": {
         "flags": [
           "/nologo",
           "/TP",

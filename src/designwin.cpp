@@ -606,9 +606,9 @@ int SelectPartWin::draw_part(int a1, int a2) {
             rect.bottom = y1;
 
             Buffer *const buf = static_cast<Buffer *>(this);
-            buf->set_clip(&rect);
+            Buffer::set_clip(&rect);
 
-            buf->box_sprite(
+            Buffer::box_sprite(
                 &rect, &InterfaceBoxStyles[2 * (a2 != 0 ? 1 : 0)]);
 
             rect.left += 3;
@@ -635,15 +635,14 @@ int SelectPartWin::draw_part(int a1, int a2) {
                                                         a2);
                     break;
                 default:
-                    buf->restore_clip();
+                    Buffer::restore_clip();
                     return reinterpret_cast<int>(buf);
             }
-            buf->restore_clip();
+            Buffer::restore_clip();
             return result;
         }
 
-        static_cast<Buffer *>(this)
-            ->tile(&TutWinBaseWindow.sprite6_, x0, y0, x0,
+        Buffer::tile(&TutWinBaseWindow.sprite6_, x0, y0, x0,
                    y0, 0x69, 0x5B);
     }
     return 1;

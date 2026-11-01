@@ -264,7 +264,7 @@ void __cdecl load_misc() {
 
     for (index = 0; index < 89; ++index) {
         StringTemp[0] = '\0';
-        strcat(StringTemp, "techs\\tech");
+        strcat(StringTemp, "techs\\tech0");
         if (index < 10) {
             strcat(StringTemp, "0");
         }

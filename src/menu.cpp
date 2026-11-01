@@ -96,7 +96,7 @@ int Menu::init(Win *owner) {
         height, 0, 0x8020, owner, 0, 0);
     if (result != 0) return result;
 
-    static_cast<Buffer *>(this)->set_markup_enabled(0);
+    Buffer::set_markup_enabled(0);
     adjust();
     show(0);
     return 0;
