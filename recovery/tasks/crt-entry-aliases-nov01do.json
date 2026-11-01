@@ -1,0 +1,32 @@
+{
+  "author": "coordinator",
+  "base_revision": "165ada5c4981348b9a444b7aeaebcc622819c5f5",
+  "editable_files": [
+    "packages/match-recovery/src/match_recovery/components.py",
+    "packages/match-recovery/src/match_recovery/component_source.py",
+    "packages/match-recovery/tests/test_toolchain_public_entries.py",
+    "src/vendor/vc6-runtime.recovery.h"
+  ],
+  "evidence": [
+    "Fresh whole-source reference audit identifies unresolved __chkstk and __stricmp callers; matching boundary/other bytes independently locate originals at 0x645550 and 0x64fd20. Existing pinned LIBCMT contribution mappings already cover these addresses.",
+    "Actual pinned archive has __alloca_probe/__chkstk at offset zero in chkstk.obj and __strcmpi/__stricmp at offset zero in stricmp.obj. Existing anchor offset uniqueness prevents expressing those real aliases.",
+    "Permit same-offset names only within one declared contribution; retain complete exact external-function inventory, actual offset/type/storage, archive pin and parent boundary/byte/reference qualification. Cross-component/contribution collisions still refuse. stricmp parent references currently remain UNKNOWN; aliases must not publish through that unknown.",
+    "No C++ behavior, original spans or function byte claims change. Verify package damage controls, build/link continuity and full fresh native before/after observations; only newly proven scoped targets may resolve."
+  ],
+  "intent": "Recover real same-address runtime entry aliases using complete physical COFF inventory and unchanged contribution proof.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 6575440,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6618400,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "crt-entry-aliases-nov01do"
+}

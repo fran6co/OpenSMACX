@@ -1,0 +1,19 @@
+{
+  "event_id": "d526d32cbf6a869fba74598a4fb1705a01c8b6d3ed0ab5a18e4a6b2d1219f276",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "packages/match-recovery/README.md"
+    ],
+    "evidence": [
+      "Document the new same-address alias domain and unchanged actual inventory/parent qualification requirements alongside existing public code-entry API instructions."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "2200ed1efe65d905199bfdf802edd0c494b1b17b872a723350dd993d3a964067",
+  "request_id": "document-physical-entry-alias-contract",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:crt-entry-aliases-nov01do"
+}

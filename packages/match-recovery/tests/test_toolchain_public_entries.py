@@ -11,6 +11,7 @@ import pytest
 from match_recovery.component_binary import verify_toolchain
 from match_recovery.component_source import parse_component, parse_component_entries, render_component
 from match_recovery.component_targets import component_targets
+from match_recovery.application_binary import select_bindings
 from match_recovery.components import (CodeEntryAnchor, ToolchainCodeSectionBinding,
                                        ToolchainBinding, ToolchainManifest)
 from match_recovery.model import Component, Delivery, Origin, Ownership, Span, canonical
@@ -89,7 +90,8 @@ def test_verified_entries_are_separate_from_parent_and_function_counts():
         assert row["link_target"] is False and row["function_extent"] == "unknown"
 
 
-def test_unknown_parent_reference_never_promotes_preflight_entry_anchor():
+@pytest.mark.parametrize("alias", [False, True])
+def test_unknown_parent_reference_never_promotes_preflight_entry_anchor(alias):
     original = b"\xe8\xfb\xff\xff\xff\xc3"
     code = b"\xe8\0\0\0\0\xc3"
     image = bytearray(pe_fixture(original))
@@ -98,15 +100,20 @@ def test_unknown_parent_reference_never_promotes_preflight_entry_anchor():
     relocation = struct.pack("<IIH", 1, 1, 20)
     symbols = (b"_entry\0\0" + struct.pack("<IhHBB", 0, 1, 0x20, 2, 0)
                + b"_missing" + struct.pack("<IhHBB", 0, 0, 0x20, 2, 0))
+    if alias:
+        symbols += b"_alias\0\0" + struct.pack("<IhHBB", 0, 1, 0x20, 2, 0)
     symbols_at = 60 + len(code) + len(relocation)
-    header = struct.pack("<HHIIIHH", 0x14C, 1, 0, symbols_at, 2, 0, 0)
+    header = struct.pack("<HHIIIHH", 0x14C, 1, 0, symbols_at, 2 + int(alias), 0, 0)
     section_header = (b".text\0\0\0" + struct.pack("<IIIIIIHHI", 0, 0, len(code), 60,
                       66, 0, 1, 0, 0x60500020))
     obj = header + section_header + code + relocation + symbols + struct.pack("<I", 4)
     raw = archive([(UNIT + "/", obj)])
     pin = hashlib.sha256(image).hexdigest()
+    anchors = (CodeEntryAnchor("_entry", 0, "symbol"),)
+    if alias:
+        anchors += (CodeEntryAnchor("_alias", 0, "physical alias"),)
     binding = ToolchainCodeSectionBinding(UNIT, 1, ".text", Origin(pin, "pe:va", 0x401000),
-        Span(0x401000, 0x401006), "whole contribution", (CodeEntryAnchor("_entry", 0, "symbol"),))
+        Span(0x401000, 0x401006), "whole contribution", anchors)
     manifest = ToolchainManifest(Component("runtime", Ownership.RUNTIME, Delivery.TOOLCHAIN,
         ("synthetic test runtime",), "test"), hashlib.sha256(raw).hexdigest(),
         "synthetic archive provenance", code_sections=(binding,))
@@ -114,9 +121,8 @@ def test_unknown_parent_reference_never_promotes_preflight_entry_anchor():
     assert row["entry_inventory"] == "pass"
     assert row["boundary"] == "pass" and row["nonrelocation_bytes"] == "pass"
     assert row["references"] == row["result"] == "unknown"
-    assert row["entries"][0]["result"] == "unknown"
-    assert row["entries"][0]["address"] is None
-    assert row["entries"][0]["scoped_reference_target"] is False
+    assert all(entry["result"] == "unknown" and entry["address"] is None
+               and not entry["scoped_reference_target"] for entry in row["entries"])
 
 
 @pytest.mark.parametrize("symbols", [
@@ -152,11 +158,67 @@ def test_anchor_rejects_out_of_range_offset_at_section_boundary():
         case(anchors=(CodeEntryAnchor("_x", 2, "test"),))
 
 
-def test_anchor_name_and_offsets_are_unique_within_section():
+def test_anchor_names_are_unique_within_section():
     with pytest.raises(ValueError, match="names must be unique"):
         case(anchors=(CodeEntryAnchor("_x", 0, "a"), CodeEntryAnchor("_x", 1, "b")))
-    with pytest.raises(ValueError, match="offsets must be unique"):
-        case(anchors=(CodeEntryAnchor("_x", 0, "a"), CodeEntryAnchor("_y", 0, "b")))
+
+
+def test_actual_same_address_aliases_qualify_only_as_scoped_entries(tmp_path):
+    anchors = (CodeEntryAnchor("_strcpy", 0, "first public name"),
+               CodeEntryAnchor("_strcat", 0, "same-address public alias"))
+    manifest, image, raw = case(symbols=(('_strcpy', 0, 0x20, 2),
+                                         ('_strcat', 0, 0x20, 2)), anchors=anchors)
+    encoded = render_component(manifest)
+    assert parse_component_entries({"src/runtime.recovery.h": encoded})[0][1] == manifest
+    report = verify_toolchain(manifest, image, raw)
+    parent = report["code_sections"][0]
+    assert report["result"] == parent["entry_inventory"] == "pass"
+    assert report["functions"] == []
+    assert {row["address"] for row in parent["entries"]} == {0x401000}
+    assert all(row["callable"] and row["scoped_reference_target"]
+               and not row["link_target"] and row["function_extent"] == "unknown"
+               for row in parent["entries"])
+    archive_path = tmp_path / "runtime.lib"
+    archive_path.write_bytes(raw)
+    snapshot = _project(tmp_path, manifest, archive_path, image)
+    targets, _ = component_targets(tmp_path, snapshot, image)
+    assert targets == {"_strcpy": 0x401000, "_strcat": 0x401000}
+    (tmp_path / "src/IMAGE_PIN").write_text("sha256 " + manifest.code_sections[0].origin.image_sha256 + "\n")
+    view, _ = ownership_source.project_view(tmp_path, allow_empty=True)
+    selected = frozenset(entity["entity_id"] for group in view["groups"] for entity in group["entities"])
+    bindings, refused, unverified = select_bindings(view, selected)
+    assert not bindings and not unverified
+    assert len(refused) == 1 and "dependency binding" in refused[0]["reason"]
+    bindings, refused, resolved = select_bindings(view, selected, component_targets=targets)
+    assert not bindings and len(refused) == 1
+    assert resolved == targets
+
+
+@pytest.mark.parametrize("actual,declared", [
+    ((('_strcpy', 0, 0x20, 2), ('_strcat', 0, 0x20, 2)), (('_strcpy', 0),)),
+    ((('_strcpy', 0, 0x20, 2),), (('_strcpy', 0), ('_strcat', 0))),
+    ((('_strcpy', 0, 0x20, 2), ('_strcat', 1, 0x20, 2)), (('_strcpy', 0), ('_strcat', 0))),
+])
+def test_missing_invented_or_displaced_alias_never_exports_targets(tmp_path, actual, declared):
+    manifest, image, raw = case(symbols=actual,
+        anchors=tuple(CodeEntryAnchor(name, offset, "claimed alias") for name, offset in declared))
+    archive_path = tmp_path / "runtime.lib"
+    archive_path.write_bytes(raw)
+    snapshot = _project(tmp_path, manifest, archive_path, image)
+    targets, reports = component_targets(tmp_path, snapshot, image)
+    assert targets == {}
+    parent = reports[0]["code_sections"][0]
+    assert parent["entry_inventory"] == "fail"
+    assert all(row["address"] is None and not row["callable"] for row in parent["entries"])
+
+
+def test_alias_address_cannot_be_owned_by_another_contribution():
+    manifest, _, _ = case()
+    second = replace(manifest.code_sections[0], unit="../other.obj",
+        origin=Origin(manifest.code_sections[0].origin.image_sha256, "pe:va", 0x401001),
+        span=Span(0x401001, 0x401003), entries=(CodeEntryAnchor("_other", 0, "overlapping entry"),))
+    with pytest.raises(ValueError, match="spans overlap"):
+        replace(manifest, code_sections=manifest.code_sections + (second,))
 
 
 def test_component_source_rejects_cross_component_entry_name_and_origin_conflicts():

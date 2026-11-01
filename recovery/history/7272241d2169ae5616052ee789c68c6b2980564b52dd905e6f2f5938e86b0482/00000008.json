@@ -1,0 +1,18 @@
+{
+  "event_id": "b1a403e8d71bfff677f1155db6cbc1324ca3b8b6af5fc7b623028a6adcc3942b",
+  "payload": {
+    "author": "coordinator",
+    "discovery_id": "original-palette-scale-storage",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "Added one source-owned TU-private object-start binding for existing 0.01 constant at 0x66EB38. Current unique ordinary static COFF definition has exactly the same eight-byte operand payload as the pin. Original create_table FMUL and DIR32 position identify this correspondence.",
+      "Only an annotation was added; no expression, original span or historical byte token changed. Native definition and relocation pass. The other seven constants stay unbound; allocation extent, original nominal variable name and linked selection are not inferred."
+    ]
+  },
+  "previous_event": "f190aa2f1672f4d5b83fd002781d53bfb6c008041757144d3e3b8cdb0f8ecfce",
+  "request_id": "incorporate-palette-scale-start",
+  "schema_version": 1,
+  "sequence": 8,
+  "stream": "task:crt-entry-aliases-nov01do"
+}

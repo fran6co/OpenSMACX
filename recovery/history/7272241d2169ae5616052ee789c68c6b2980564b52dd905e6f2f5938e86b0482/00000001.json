@@ -1,0 +1,24 @@
+{
+  "event_id": "2200ed1efe65d905199bfdf802edd0c494b1b17b872a723350dd993d3a964067",
+  "payload": {
+    "affects": [
+      "entity-1a04c73f4289bec632081f182cdb9a536761823e1562046916f87ef8b38084af",
+      "entity-af97a321c8cf2c697d0292195be9c37c6afafd10b7099e2ac4dd31b350d3c5f6"
+    ],
+    "author": "coordinator",
+    "discovery_id": "physical-runtime-entry-aliases",
+    "evidence": [
+      "Fresh whole-source reference audit identifies unresolved __chkstk and __stricmp callers; matching boundary/other bytes independently locate originals at 0x645550 and 0x64fd20. Existing pinned LIBCMT contribution mappings already cover these addresses.",
+      "Actual pinned archive has __alloca_probe/__chkstk at offset zero in chkstk.obj and __strcmpi/__stricmp at offset zero in stricmp.obj. Existing anchor offset uniqueness prevents expressing those real aliases.",
+      "Permit same-offset names only within one declared contribution; retain complete exact external-function inventory, actual offset/type/storage, archive pin and parent boundary/byte/reference qualification. Cross-component/contribution collisions still refuse. stricmp parent references currently remain UNKNOWN; aliases must not publish through that unknown.",
+      "No C++ behavior, original spans or function byte claims change. Verify package damage controls, build/link continuity and full fresh native before/after observations; only newly proven scoped targets may resolve."
+    ],
+    "hypothesis": "Two real runtime alias pairs can be represented without weakening physical inventory or target publication prerequisites.",
+    "kind": "discovery"
+  },
+  "previous_event": null,
+  "request_id": "physical-runtime-entry-aliases",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:crt-entry-aliases-nov01do"
+}
