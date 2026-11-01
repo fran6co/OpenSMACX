@@ -409,8 +409,21 @@ def main(argv: list) -> int:
         if tool != "cl" or frontends != [OPTION] or link_diagnostics is not None:
             print("unsupported or repeated explicit compiler frontend", file=sys.stderr)
             return 3
-        return intrinsic_compile([word for word in arguments if word != OPTION],
-                                 compile_diagnostics, dep_target, dep_file)
+        ordinary = [word for word in arguments if word != OPTION]
+        from wine_repro import preprocessing_probe
+        try:
+            probe = preprocessing_probe(tool, ordinary)
+            if probe is not None and compile_diagnostics:
+                raise ValueError("preprocessing probe cannot publish object evidence")
+        except (OSError, ValueError) as error:
+            print(str(error), file=sys.stderr)
+            return 3
+        if probe is None:
+            return intrinsic_compile(ordinary, compile_diagnostics, dep_target, dep_file)
+        # CMake advertises VC6/MSVC, so IDE compiler-information sources use
+        # its macro-probe dialect. The per-source intrinsic override applies
+        # to object compilation, not this advertised compiler identity.
+        arguments = ordinary
     reproducible = None
     probe_only = False
     if any(word.startswith("--repro-root=") for word in arguments):

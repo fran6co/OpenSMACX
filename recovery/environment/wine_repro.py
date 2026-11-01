@@ -20,14 +20,16 @@ _LINE = re.compile(rb'^[ \t]*#line[ \t]+[0-9]+[ \t]+"((?:[^"\\]|\\[\\"])*)"[ \t]
 
 _INLINE_OVERRIDE_WARNING = (
     b"Command line warning D4025 : overriding '/Ob2' with '/Ob1'\r\n")
+_DEBUG_INLINE_OVERRIDE_WARNING = (
+    b"Command line warning D4025 : overriding '/Ob0' with '/Ob1'\r\n")
 _SEPARATE_VALUE_OPTIONS = frozenset(
     option.lower() for option in (
         *_PATH_OPTIONS, "/D", "/U", "/Tc", "/Tp", "/Fp", "/Fi",
         "/Fr", "/FR", "/F", "/wd", "/we", "/wo", "/Zm"))
 
 
-def _has_explicit_inline_override(arguments):
-    """Recognize only the two unconsumed argv options observed with D4025."""
+def _explicit_inline_override_warning(arguments):
+    """Bind each observed D4025 diagnostic to its exact ordered argv pair."""
     inline = []
     iterator = iter(arguments)
     for raw in iterator:
@@ -37,12 +39,13 @@ def _has_explicit_inline_override(arguments):
             continue
         if word.lower().startswith("/ob"):
             inline.append(word)
-    return inline == ["/Ob2", "/Ob1"]
+    return {("/Ob2", "/Ob1"): _INLINE_OVERRIDE_WARNING,
+            ("/Ob0", "/Ob1"): _DEBUG_INLINE_OVERRIDE_WARNING}.get(tuple(inline))
 
 
 def preprocessing_stderr_is_expected(stderr: bytes, source_name: str,
                                      arguments) -> bool:
-    """Allow empty/filename-only stderr and the one measured D4025 override.
+    """Allow empty/filename-only stderr and measured, option-bound overrides.
 
     Compiler diagnostics are machine output: accepted forms are byte-exact and
     deliberately do not normalize line endings or whitespace.
@@ -53,10 +56,10 @@ def preprocessing_stderr_is_expected(stderr: bytes, source_name: str,
     echo = filename + b"\r\n"
     if stderr in (echo, filename + b"\n"):
         return True
-    if not _has_explicit_inline_override(arguments):
+    warning = _explicit_inline_override_warning(arguments)
+    if warning is None:
         return False
-    return stderr in (_INLINE_OVERRIDE_WARNING,
-                      _INLINE_OVERRIDE_WARNING + echo)
+    return stderr in (warning, warning + echo)
 
 
 def _path(value, cwd):

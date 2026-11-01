@@ -43,6 +43,66 @@ def test_application_recipe_retains_explicit_frontend(tmp_path):
     assert invocation(row) == [str(tmp_path / "vc6-cl"), "/nologo", OPTION, "/MT"]
 
 
+@pytest.mark.parametrize("option", ["/Be", "/Bd", "/E", "/EP"])
+def test_ide_options_do_not_enter_intrinsic_object_compilation(option):
+    with pytest.raises(ValueError, match="unsupported explicit"):
+        explicit_arguments(["/c", option])
+
+
+def test_intrinsic_ide_response_probe_accepts_external_extensionless_source(tmp_path):
+    from recovery.environment.wine import VC6_ROOT
+    if not (VC6_ROOT / "BIN/CL.EXE").is_file():
+        pytest.skip("VC6 is required for its advertised IDE identity")
+    project = tmp_path / "project"
+    project.mkdir()
+    header = project / "forced.h"
+    header.write_text("#define PROBE_FORCED_HEADER 1\n")
+    source = tmp_path / "compiler-file"
+    source.write_text(
+        "#if defined(__clang__) || _MSC_VER != 1200 || !defined(_WIN32)\n"
+        "#error wrong advertised compiler identity\n#endif\n"
+        "__cidr_defines_start__\n"
+        "#ifdef __has_include\n__cidr_define___has_include __has_include\n#endif\n"
+        "#ifdef __has_include_next\n__cidr_define___has_include_next __has_include_next\n#endif\n"
+        "#ifdef __has_cpp_attribute\n__cidr_define___has_cpp_attribute __has_cpp_attribute\n#endif\n"
+        "__cidr_define__MSC_VER _MSC_VER\n__cidr_defines_end__\n"
+        "const char *file = __FILE__;\nint forced_header = PROBE_FORCED_HEADER;\n"
+        "int pointer_width[sizeof(void *) == 4 ? 1 : -1];\n")
+    options = ["/TP", "/DBUILD_DEBUG", "/DWIN32", "/D_WINDOWS", "/Zm200", "/GX",
+               "/Z7", "/Ob0", "/Od", "/Oy-", "/GZ", "-MT", "/FI" + str(header),
+               "--repro-root=" + str(project), "/W4", OPTION,
+               "/Be", "/Bd", "/E", "/w", "/wd4067"]
+    response = tmp_path / "probe.rsp"
+    response.write_text("\n".join('"' + option + '"' for option in options))
+    command = [sys.executable, str(ROOT / "recovery/environment/wine.py"), "--tool=cl"]
+    result = subprocess.run([*command, "@" + str(response), str(source)],
+                            cwd=tmp_path, capture_output=True, text=True, timeout=60)
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert "int forced_header = 1;" in result.stdout
+    assert "__cidr_define__MSC_VER 1200" in result.stdout
+    assert "__cidr_define___has_include " not in result.stdout
+    ordinary = subprocess.run([*command, *(word for word in options if word != OPTION), str(source)],
+                              cwd=tmp_path, capture_output=True, text=True, timeout=60)
+    assert ordinary.returncode == 0, ordinary.stdout + ordinary.stderr
+    assert result.stdout == ordinary.stdout
+    assert source.name in result.stdout
+    assert not list(tmp_path.rglob("*.obj"))
+    assert not list(tmp_path.rglob("*.compile.json"))
+    rejected = subprocess.run([*command, "@" + str(response), "/Fo" + str(tmp_path / "bad.obj"),
+                               str(source)], cwd=tmp_path, capture_output=True, timeout=60)
+    assert rejected.returncode == 3
+    assert b"unsupported preprocessing probe" in rejected.stderr
+    assert not (tmp_path / "bad.obj").exists()
+    for extra in (["--compile-diagnostics=" + str(tmp_path / "bad.compile.json")],
+                  ["--depfile=" + str(tmp_path / "bad.d"), "--deptarget=bad.obj"]):
+        rejected = subprocess.run([*command, "@" + str(response), *extra, str(source)],
+                                  cwd=tmp_path, capture_output=True, timeout=60)
+        assert rejected.returncode == 3
+        assert b"preprocessing probe cannot publish" in rejected.stderr
+    assert not (tmp_path / "bad.compile.json").exists()
+    assert not (tmp_path / "bad.d").exists()
+
+
 @pytest.fixture
 def intrinsic_compile(tmp_path, monkeypatch):
     if shutil.which("clang-cl") is None:

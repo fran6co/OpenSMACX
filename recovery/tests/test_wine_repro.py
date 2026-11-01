@@ -338,7 +338,8 @@ def test_real_vc6_header_damage_survives_long_preprocessed_output(invocation, op
 
 
 @pytest.mark.parametrize("damage", ["none", "header", "source"])
-def test_real_vc6_explicit_inline_override_positive_and_damage_controls(tmp_path, damage):
+@pytest.mark.parametrize("initial", ["/Ob2", "/Ob0"])
+def test_real_vc6_explicit_inline_override_positive_and_damage_controls(tmp_path, damage, initial):
     if not (wine.VC6_ROOT / "BIN/CL.EXE").is_file():
         pytest.skip("VC6 is not installed")
     root = tmp_path.resolve()
@@ -360,7 +361,7 @@ def test_real_vc6_explicit_inline_override_positive_and_damage_controls(tmp_path
     wrapper = [sys.executable, str(Path(wine.__file__)), "--tool=cl"]
     result = subprocess.run(
         [*wrapper, "--repro-root=" + str(root), "/nologo", "/c", "/O2",
-         "/Ob2", "/Ob1", "/Fo" + str(output), str(source)],
+         initial, "/Ob1", "/Fo" + str(output), str(source)],
         cwd=build_dir, capture_output=True, text=True, timeout=60)
     if damage == "none":
         assert result.returncode == 0, result.stdout + result.stderr
