@@ -12,6 +12,7 @@
 // symbol    ??_GPullDown@@UAEPAXI@Z
 // kind      game
 #include "stdafx.h"
+#include "font_metrics.h"
 #include "general.h"
 #include "win.h"
 #include "pulldown.h"
@@ -153,7 +154,8 @@ int PullDown::on_key_click(int key_input, int key) {
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned5F9590..5F9631; prior mapping in src/stringstruct.cpp; seed git:117282ee:src/unrecovered/005f9590.cpp", "Items at+A18, flags+0C, count+F20, selected+F28; Font line advance and border drive visible row scan. Verbatim FILE wrapper becomes BODY mapping on the actual member, with identical original spans and no claim change.", "recovery/tasks/interface-contract-report-closure.json four-method ownership closure; src/pulldown.cpp pulldown_update replaces original-address call"], "reason": "Rehome the complete hover tracker into its genuine PullDown owner, replacing raw receiver offsets and the fixed executable callee with members and the recovered pulldown_update. Preserve original identity and seed provenance; no current matching or runtime claim."}
 void PullDown::mouse_move(int, int y) {
   const int old_selected = selected_;
-  const int row = (y - PullDownBorderPadding) / PullDownDefaultFont->line_advance();
+  const int relative_y = y - PullDownBorderPadding;
+  const int row = relative_y / font_line_advance(*PullDownDefaultFont);
   selected_ = row;
 
   int found;
@@ -1370,10 +1372,11 @@ void PullDown::on_left_up(int x, int y) {
     const RECT rect = *buffer_working_rect();
     const POINT pt = {x, y};
     if (PtInRect(&rect, pt) != 0) {
+        const int relative_y = y - PullDownBorderPadding;
         Font *const font = PullDownDefaultFont;
-        const int line_height = font->line_advance();
+        const int line_height = font_line_advance(*font);
         const int count = item_count_;
-        selected_ = (y - PullDownBorderPadding) / line_height;
+        selected_ = relative_y / line_height;
         int index = 0;
         if (count > 0) {
             int enabled = -1;

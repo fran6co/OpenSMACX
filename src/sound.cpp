@@ -1528,6 +1528,7 @@ int VideoSoundState::frame_status() {
 #pragma function(memset, strcpy)
 #endif
 
+// RECOVERY_LITERAL: v1 0x00687B24 0x00687B2D ??_C@_08BBLG@Voice?5Rx?$AA@ 0x004C8960
 // ORIGINAL: 0x004C8960 ??0VoiceRx@@QAE@XZ 0x004C8960-0x004C8A43;0x00659F8A-0x00659FA4 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned original 4C8960/4C8CC0 constructors, 4C8A50/4C8DB0 destructors and 66E82C/66E8C4 tables; native VC6 emits Sound base at0, Rx extent54, Tx extent58 and own flag54.", "631A60 consumes record18/20 and returns the same record; soundx.dll kind7 slots34/35 allocate MMIOINFO48 and enforce pointer identity. Shared cleanup/EH spans remain historical obligations."], "reason": "Voice Rx and Tx genuinely derive from Sound; natural lifecycle stages and typed DLL device contracts replace raw wrappers. Tx returns and consumes the exact borrowed SDK MMIOINFO pointer, not an integer handle."}
 // symbol    ??0VoiceRx@@QAE@XZ
@@ -1725,6 +1726,7 @@ int VoiceRx::get_nbuffers() {
     return 0;
 }
 
+// RECOVERY_LITERAL: v1 0x00687B30 0x00687B39 ??_C@_08GGEJ@Voice?5Tx?$AA@ 0x004C8CC0
 /*
 Purpose: Build a VoiceTx: full volume, centred pan, cleared regions, a
          1000ms default fade, the "Voice Tx" name on the CRT heap, and

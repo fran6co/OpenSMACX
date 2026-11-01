@@ -42,8 +42,11 @@ int MapWinCaptionScale=0,MapWinCaptionDivisor=1;
 int SpriteScaleNumerator=1,SpriteScaleDenominator=1;
 uint32_t GameRules=0,GamePreferences=0,LockEnableMask=0;
 int TurnCurrentNum=20,TechAchievedGate=0,IsMultiplayerNet=0,ConsoleControlTurnActive=0;
-struct Font { int height=12; void init(const char *,int h,int){height=h;}
-  int line_advance()const{return height;} };
+struct Font { int unk_1_=0,height_=12,line_height_=12;
+  void init(const char *,int h,int){height_=line_height_=h;}
+  /* ACTUAL_FONT_ACCESSORS */
+  int line_advance()const{return pixel_height();} };
+/* ACTUAL_FONT_HELPER */
 struct Heap{};
 Heap *StringAllocationHeap=0;
 struct StringList { Heap *saved;
@@ -55,6 +58,8 @@ struct StringList { Heap *saved;
  int load(char *,char *,int,int){current_position_=17;return list_load_result;}
  void remove_all(){++list_remove_calls;} };
 struct Style{}; Style InterfaceBoxStyles[10];
+static int (*caption_wrap_probe)(char *,int) = nullptr;
+static void (*caption_center_probe)(char *,int,int,int) = nullptr;
 struct Buffer {
  RECT working={0,0,700,500};
  void set_font(Font*,Font*,Font*,int){}
@@ -63,8 +68,8 @@ struct Buffer {
  void set_clip(RECT*){} void restore_clip(){} void box_sprite(RECT*,Style*){}
  const RECT &clip_rect() const {return working;}
  int text_width(const char *s){return int(strlen(s))*6;}
- int wrap_height(char*,int){return 12;}
- int wrap_cent(char *s,int,int y,int){displayed.push_back(s);return y+12;}
+ int wrap_height(char *s,int w){return caption_wrap_probe?caption_wrap_probe(s,w):12;}
+ int wrap_cent(char *s,int x,int y,int w){if(caption_center_probe)caption_center_probe(s,x,y,w);displayed.push_back(s);return y+12;}
  int write_strings(StringList*,int,int y,int,int){return y+12;}
  int write_cent_l(char*,RECT*,int){return 0;}
 };
@@ -164,6 +169,7 @@ int Win::set_modal(int flag,int(*)(),Win*) {
     return 0;
 }
 static void reset_state() {
+    caption_wrap_probe=nullptr;caption_center_probe=nullptr;
     string_get_calls=label_get_calls=0;
     lookup_events.clear();
     memset(owned,0,sizeof owned);memset(available,0,sizeof available);
@@ -200,7 +206,39 @@ static void initialize_draw(PickTech &p) {
     p.item_count_=1;p.cell_width_=240;p.cell_height_=300;p.row_pitch_=10;
     p.faction_id_=1;p.column_count_=1;p.row_count_=1;
 }
+static PickTech *caption_owner;
+static char caption_text[]="caption";
+static int caption_wrap_calls,caption_center_calls;
+static int mutate_caption_after_height(char *text,int width) {
+    assert(text==caption_text&&width==98);
+    assert(caption_owner->page_bottom_==100);
+    ++caption_wrap_calls;
+    caption_owner->page_bottom_=200;
+    caption_owner->page_width_=80;
+    caption_owner->page_x_=30;
+    caption_owner->page_pen_y_=999;
+    return 12;
+}
+static void observe_caption_center(char *text,int x,int y,int width) {
+    assert(text==caption_text&&x==31&&y==188&&width==78);
+    assert(caption_owner->page_bottom_==188);
+    ++caption_center_calls;
+    caption_owner->page_bottom_=300;
+}
 int main() {
+    for(int state=0;state<2;++state) {
+        reset_state();PickTech p;caption_owner=&p;
+        p.page_state_=state;p.page_bottom_=100;p.page_pen_y_=80;
+        p.page_width_=100;p.page_x_=7;
+        p.header_font_.unk_1_=4;p.header_font_.height_=9;
+        p.title_font_.unk_1_=-1;p.title_font_.line_height_=17;
+        caption_wrap_calls=caption_center_calls=0;
+        caption_wrap_probe=mutate_caption_after_height;
+        caption_center_probe=observe_caption_center;
+        p.UNK1(caption_text);
+        assert(p.page_state_==1&&p.page_bottom_==300);
+        assert(caption_wrap_calls==1&&caption_center_calls==1);
+    }
     reset_state();
     TextColourTable[162]=101; TextColourTable[164]=-1;
     TextColourTable[166]=303; TextColourTable[168]=-404;

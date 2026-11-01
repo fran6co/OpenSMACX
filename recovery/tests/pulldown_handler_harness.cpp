@@ -18,7 +18,11 @@ static class PullDown *callback_owner;
 static class Menu *replacement_menu;
 static bool replace_menu_during_tasks;
 
-struct Font { int advance; int line_advance() const { return advance; } };
+struct Font {
+    int height_, unk_1_ = 0, line_height_ = 0;
+    // ACTUAL_FONT_ACCESSORS
+};
+// ACTUAL_FONT_HELPER
 static Font *PullDownDefaultFont;
 static int PullDownBorderPadding;
 

@@ -16,6 +16,10 @@ def product():
     owner = (ROOT / 'src/jackal/font.cpp').read_text()
     signature = 'int Font::line_advance() const'
     getter = extract_function(header if signature in header else owner, signature)
+    helper = extract_function((ROOT / 'src/jackal/font_metrics.h').read_text(), 'inline int font_line_advance(')
+    accessors = '\n'.join(extract_function(header, signature) for signature in
+                          ('int pixel_height() const', 'int line_height() const'))
+    getter = helper + '\n' + getter
     status = extract_function((ROOT / 'src/statuswin.cpp').read_text(),
                               'void StatusWin::draw_active(int vehicle_id, int base_id, int add_spot)')
     entry = re.search(r'const int row_pitch = font1_\.line_advance\(\);', status)
@@ -33,7 +37,7 @@ def product():
                                 'void BaseWin::draw_commerce(int update_mode)')
     detail = re.search(r'const int detail_y = static_cast<int32_t>\(\s*static_cast<uint32_t>\(row_y\) \+\s*static_cast<uint32_t>\(font.pixel_height\(\)\) \+ 1U\);', commerce)
     assert detail
-    return getter, entry.group(), advances, call.group(), detail.group()
+    return getter, accessors, entry.group(), advances, call.group(), detail.group()
 
 
 HARNESS = r'''
@@ -52,7 +56,7 @@ struct Font {
  ReadWord unk_1_,height_,line_height_;
  Font(int a,int h,int l):unk_1_(a,0),height_(h,1),line_height_(l,2){}
  int line_advance() const;
- int pixel_height() const { return height_; }
+ ACCESSORS
 };
 GETTER
 struct Buffer {
@@ -98,7 +102,7 @@ int main() {
 def test_actual_font_and_client_contracts(tmp_path, compiler, damage):
     compiler = shutil.which(compiler)
     assert compiler, 'required host compiler unavailable'
-    getter, entry, advances, cargo, detail = product()
+    getter, accessors, entry, advances, cargo, detail = product()
     if damage == 'late_metric':
         advances = [x.replace('row_pitch', 'font1_.line_advance()') for x in advances]
     elif damage == 'wrong_commerce_metric':
@@ -106,8 +110,9 @@ def test_actual_font_and_client_contracts(tmp_path, compiler, damage):
     elif damage == 'cargo_wrap':
         cargo = 'line_y = screen->wrap(StringTemp, content_x, line_y, 100);'
     elif damage == 'eager_metric_read':
-        getter = getter.replace('{', '{ const int eager = height_; (void)eager;', 1)
-    generated = HARNESS.replace('GETTER', getter).replace('ENTRY', entry)
+        getter = getter.replace('int Font::line_advance() const {',
+                                'int Font::line_advance() const { const int eager = height_; (void)eager;', 1)
+    generated = HARNESS.replace('GETTER', getter).replace('ACCESSORS', accessors).replace('ENTRY', entry)
     generated = generated.replace('CARGO', cargo).replace('DETAIL', detail)
     for index, advance in enumerate(advances):
         generated = generated.replace('ADVANCE' + str(index), advance)

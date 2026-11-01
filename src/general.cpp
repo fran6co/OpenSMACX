@@ -271,6 +271,8 @@ MEASURED void __cdecl swap(uint8_t *var1, uint8_t *var2) {
     *var2 ^= *var1;
     *var1 ^= *var2;
 }
+// RECOVERY_LITERAL: v1 0x00696A38 0x00696A44 ??_C@_0M@MFAG@FATAL?5ERROR?$AA@ 0x005D4510
+// RECOVERY_LITERAL: v1 0x00696A44 0x00696B14 ??_C@_0NA@POMN@Windows?5has?5run?5out?5of?5virtual?5m@ 0x005D4510
 /*
 Purpose: Allocate memory with error checking.
 // ORIGINAL: 0x005D4510 ?mem_get@@YAPAXH@Z 0x005D4510-0x005D453C BYTE_EXACT

@@ -6984,6 +6984,18 @@ int __cdecl sub_61f790(EdgeScan *edge) {
     return 1;
 }
 
+static unsigned int texture_keyed_shift_product(int slope, int pixel_offset) {
+    const int scaled_offset = static_cast<int>(
+        static_cast<unsigned int>(pixel_offset) << 16);
+    const int64_t product = static_cast<int64_t>(slope) *
+                            static_cast<int64_t>(scaled_offset);
+    return static_cast<unsigned int>(static_cast<uint64_t>(product) >> 16);
+}
+
+static int texture_keyed_wrap_add(int value, unsigned int delta) {
+    return static_cast<int>(static_cast<unsigned int>(value) + delta);
+}
+
 // ORIGINAL: 0x0061F800 sub_61f800 0x0061F800-0x0061FA24 FILE
 // symbol    ?sub_61f800@@YAXPAUEdgeScan@@0@Z
 // TRIED: the catalogued 1158-byte span is really TWO machine-code functions back to back, each with its OWN complete "push ebp; mov ebp,esp; sub esp,0x24; push ebx/esi/edi" prologue and its own "ret" - a single C++ function cannot emit two prologues, so only the FIRST (0x61F800-0x61FA23, plain per-pixel copy, no colour key) is reproduced; the second (0x61FA30 on, adds a *blit_light_threshold colour-key skip and writes *blit_slot_51c) is a distinct unnamed function the catalogue's size measurement folded into this one.
@@ -7075,9 +7087,9 @@ void __cdecl sub_61f800(EdgeScan *left, EdgeScan *right) {
 
     int start_row = p1_1c;
     if (p1_1c < TextureRasterClipLeft) {
-        int pre = TextureRasterClipLeft - p1_1c;
-        acc_y += dc_step_raw * pre;
-        acc_x += d10_step_raw * pre;
+        int pre = texture_difference(TextureRasterClipLeft, p1_1c);
+        acc_y = texture_keyed_wrap_add(acc_y, texture_keyed_shift_product(dc_step_raw, pre));
+        acc_x = texture_keyed_wrap_add(acc_x, texture_keyed_shift_product(d10_step_raw, pre));
         start_row = TextureRasterClipLeft;
     }
 
@@ -7167,18 +7179,6 @@ struct TextureKeyedEdgeSpanState {
     int *packed_step_slot;
     int *colour_step_slot;
 };
-
-static unsigned int texture_keyed_shift_product(int slope, int pixel_offset) {
-    const int scaled_offset = static_cast<int>(
-        static_cast<unsigned int>(pixel_offset) << 16);
-    const int64_t product = static_cast<int64_t>(slope) *
-                            static_cast<int64_t>(scaled_offset);
-    return static_cast<unsigned int>(static_cast<uint64_t>(product) >> 16);
-}
-
-static int texture_keyed_wrap_add(int value, unsigned int delta) {
-    return static_cast<int>(static_cast<unsigned int>(value) + delta);
-}
 
 // The original shifts the signed pixel span left before IDIV. Keep its
 // 32-bit wrap instead of dividing by the unshifted width.
@@ -7851,13 +7851,12 @@ void __cdecl sub_61fe70(EdgeScan *left, EdgeScan *right) {
 
         int start_row = p1_0x1c;
         if (start_row < TextureRasterClipLeft) {
-            int skipCount = TextureRasterClipLeft - start_row;
-            __int64 wide = (__int64)dxRatio * ((__int64)skipCount << 16);
-            xAccum = xAccum + (int)(wide >> 16);
-            wide = (__int64)dyRatio * ((__int64)skipCount << 16);
-            yAccum = yAccum + (int)(wide >> 16);
-            wide = (__int64)(unsigned short)TextureRasterLightPackA.low_word * ((__int64)skipCount << 16);
-            TextureRasterLightAccumB.dword = TextureRasterLightAccumB.dword + (int)(wide >> 16);
+            int skipCount = texture_difference(TextureRasterClipLeft, start_row);
+            xAccum = texture_keyed_wrap_add(xAccum, texture_keyed_shift_product(dxRatio, skipCount));
+            yAccum = texture_keyed_wrap_add(yAccum, texture_keyed_shift_product(dyRatio, skipCount));
+            TextureRasterLightAccumB.dword = texture_keyed_wrap_add(
+                TextureRasterLightAccumB.dword,
+                texture_keyed_shift_product((unsigned short)TextureRasterLightPackA.low_word, skipCount));
             start_row = TextureRasterClipLeft;
         }
 

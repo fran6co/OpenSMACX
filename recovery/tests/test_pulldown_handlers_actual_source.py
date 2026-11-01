@@ -49,6 +49,12 @@ def test_actual_pulldown_mouse_handlers(tmp_path):
         import pytest
         pytest.skip("host GCC or Clang required")
     harness = HARNESS.read_text()
+    font = (ROOT / 'src/jackal/font.h').read_text()
+    accessors = '\n'.join(definition(font, marker) for marker in
+                          ('int pixel_height() const', 'int line_height() const'))
+    harness = harness.replace('// ACTUAL_FONT_ACCESSORS', accessors)
+    harness = harness.replace('// ACTUAL_FONT_HELPER',
+                              definition((ROOT / 'src/jackal/font_metrics.h').read_text(), 'inline int font_line_advance('))
     assert harness.count("// ACTUAL_PULLDOWN_LEFT_DOWN") == 1
     assert harness.count("// ACTUAL_PULLDOWN_LEFT_UP") == 1
     down, up = actual_bodies()

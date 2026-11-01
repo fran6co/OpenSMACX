@@ -48,6 +48,7 @@ METHODS = (
 DAMAGES = (
     "unsigned_speed", "weapon_label", "reactor_label", "caption_setter",
     "eager_annotation", "lookup_order", "close_fields",
+    "caption_cached_bottom", "caption_cached_width", "caption_cached_x", "caption_late_store",
 )
 
 
@@ -77,6 +78,26 @@ def replace_once(source: str, old: str, new: str) -> str:
 
 
 def damage_statements(methods: str, damage: str) -> str:
+    if damage.startswith("caption_"):
+        call = "        page_bottom_ -= Buffer::wrap_height(text, page_width_ - 2);"
+        center = "        Buffer::wrap_cent(text, page_x_ + 1, page_bottom_, page_width_ - 2);"
+        if damage == "caption_cached_bottom":
+            return replace_once(methods, call,
+                                "        const int cached_bottom = page_bottom_;\n"
+                                "        const int wrapped = Buffer::wrap_height(text, page_width_ - 2);\n"
+                                "        page_bottom_ = cached_bottom - wrapped;")
+        if damage == "caption_cached_width":
+            methods = replace_once(methods, call, "        const int cached_width = page_width_;\n" + call)
+            return replace_once(methods, center, center.replace("page_width_ - 2", "cached_width - 2"))
+        if damage == "caption_cached_x":
+            methods = replace_once(methods, call, "        const int cached_x = page_x_;\n" + call)
+            return replace_once(methods, center, center.replace("page_x_ + 1", "cached_x + 1"))
+        if damage == "caption_late_store":
+            return replace_once(methods, call + "\n" + center,
+                "        const int wrapped = Buffer::wrap_height(text, page_width_ - 2);\n"
+                "        const int y = page_bottom_ - wrapped;\n"
+                "        Buffer::wrap_cent(text, page_x_ + 1, y, page_width_ - 2);\n"
+                "        page_bottom_ = y;")
     if damage == "unsigned_speed":
         return replace_once(methods, "static_cast<int>(rule.speed)",
                             "static_cast<int>(static_cast<int8_t>(rule.speed))")
@@ -148,6 +169,12 @@ def projected_unit(damage=None) -> str:
     if damage is not None:
         methods = damage_statements(methods, damage)
     fixture = FIXTURE.read_text()
+    font = (ROOT / 'src/jackal/font.h').read_text()
+    accessors = '\n'.join(extract_braced(font, '  ' + marker) for marker in
+                          ('int pixel_height() const', 'int line_height() const'))
+    fixture = fixture.replace('/* ACTUAL_FONT_ACCESSORS */', accessors)
+    fixture = fixture.replace('/* ACTUAL_FONT_HELPER */',
+                              extract_braced((ROOT / 'src/jackal/font_metrics.h').read_text(), 'inline int font_line_advance('))
     fixture = replace_once(
         fixture, "int mandate_color(int category){return category;}",
         extract_braced(MAP_SOURCE.read_text(), "int __cdecl mandate_color("),

@@ -1318,6 +1318,8 @@ static int tech_research_mul(int left, int right) {
 }
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
+// RECOVERY_LITERAL: v1 0x00691828 0x00691845 ??_C@_0BN@EAGD@Saving?5Earned?5Tech?5for?5Later?$AA@ 0x005BE530
+// RECOVERY_LITERAL: v1 0x00691818 0x00691827 ??_C@_0P@HDIK@Earning?5a?5Tech?$AA@ 0x005BE530
 /*
 Purpose: Finish one faction's research turn: log the tech being researched,
          or when the faction finishes (no PBEM/human gate applies) commit

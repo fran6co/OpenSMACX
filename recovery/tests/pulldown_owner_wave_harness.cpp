@@ -87,9 +87,12 @@ struct Sprite {
   int draw(Buffer *, int, int x, int y, int, int);
 };
 struct Font {
+  int unk_1_ = 0, height_ = 10, line_height_ = 10;
+  // ACTUAL_FONT_ACCESSORS
   int internal_leading() const { calls.push_back("font-leading"); return 1; }
   int line_advance() const { return 10; }
 };
+// ACTUAL_FONT_HELPER
 struct PullDownItem { char *text; char *right_text; int id; uint32_t flags; char *mnemonic; };
 typedef int (__cdecl *PullDownFillCallback)(GraphicWin *, int, RECT *);
 typedef int (__cdecl *PullDownPoll)();

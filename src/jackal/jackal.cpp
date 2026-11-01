@@ -41,6 +41,9 @@
 void __cdecl teardown_0060fd60();
 void __cdecl teardown_0060e5d0();
 
+// RECOVERY_LITERAL: v1 0x00697478 0x0069747E ??_C@_05DFGP@10?410?$AA@ 0x0062D570
+// RECOVERY_LITERAL: v1 0x00697480 0x006974AD ??_C@_0CN@KKLN@Oh?0?5such?5serious?5danger?0?5William@ 0x0062D570
+// RECOVERY_LITERAL: v1 0x006974B0 0x00697547 ??_C@_0JH@MIEE@The?5version?5of?5the?5JACKAL?5librar@ 0x0062D570
 /*
 Purpose: Checks to see if the JACKAL library version is up to date. Pretty pointless but might add
          an OpenSMACX check in the future.

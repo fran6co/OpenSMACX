@@ -148,9 +148,45 @@ static void assert_records_unchanged(const EdgeScan &left,
     assert(memcmp(right_bytes, &right, sizeof(right)) == 0);
 }
 
+static void run_wrapped_preclip(unsigned char *arena, int skip) {
+    EdgeScan *left, *right;
+    unsigned char *source, *destination;
+    for (int gouraud = 0; gouraud != 2; ++gouraud) {
+        setup_case(arena, &left, &right, &source, &destination);
+        right->accumC = skip + 1;
+        const int span_word = static_cast<int16_t>(right->accumC);
+        right->accumA = left->accumA + span_word;
+        right->accumB = left->accumB + span_word;
+        left->accumD = 0;
+        right->accumD = span_word * 256; // original light step is one
+        TextureRasterClipLeft = skip;
+        TextureRasterClipRight = skip + 1;
+        source[4] = 0x42;
+        source[9] = 0x55;
+        source[14] = 0x68;
+        destination[skip] = destination[skip + 1] = 0x77;
+        const unsigned char pixel = skip == 32768 ? source[4] : source[9];
+        const uint32_t delta = static_cast<uint32_t>(static_cast<int16_t>(skip));
+        if (gouraud) {
+            TextureRasterRowOffset = static_cast<int>(reinterpret_cast<uintptr_t>(destination));
+            sub_61fe70(left, right);
+            assert(destination[skip] == static_cast<unsigned char>(pixel + (delta >> 8)));
+            const uint32_t after = (delta & 0xffff0000u) |
+                                   static_cast<uint16_t>(delta + 1);
+            assert(static_cast<uint32_t>(TextureRasterLightAccumB.dword) == after);
+        } else {
+            sub_61f800(left, right);
+            assert(destination[skip] == pixel);
+        }
+        assert(destination[skip + 1] == 0x77);
+    }
+}
+
 int main() {
 #if defined(MAP_32BIT)
-    unsigned char *arena = low_arena(0x10000);
+    unsigned char *arena = low_arena(0x20000);
+    run_wrapped_preclip(arena, 32768);
+    run_wrapped_preclip(arena, 65536);
     EdgeScan *left, *right;
     unsigned char *source, *destination;
     unsigned char left_bytes[sizeof(EdgeScan)];
@@ -342,6 +378,12 @@ def _extract_edgescan(source):
 
 def _definitions(source):
     definitions = [
+        _extract_definition(source, signature) for signature in (
+            "static int texture_difference(int a, int b)",
+            "static unsigned int texture_keyed_shift_product(int slope, int pixel_offset)",
+            "static int texture_keyed_wrap_add(int value, unsigned int delta)",
+        )
+    ] + [
         _extract_definition(source, signature) for signature, _ in FUNCTIONS
     ]
     return definitions
@@ -412,6 +454,49 @@ def test_four_actual_edge_raster_bodies_use_typed_fields(compiler, tmp_path):
                     else ("accumA", "accumB", "accumC", "accumD")))
     ran = _compile_and_run(source, compiler_path, tmp_path, f"actual_{compiler}")
     assert ran.returncode == 0, ran.stdout + ran.stderr
+
+
+@pytest.mark.parametrize("compiler", ("g++", "clang++"))
+@pytest.mark.parametrize("entry,slope,offset", (
+    ("sub_61f800", "dc_step_raw", "pre"),
+    ("sub_61f800", "d10_step_raw", "pre"),
+    ("sub_61fe70", "dxRatio", "skipCount"),
+    ("sub_61fe70", "dyRatio", "skipCount"),
+    ("sub_61fe70", "(unsigned short)TextureRasterLightPackA.low_word", "skipCount"),
+))
+def test_individual_widened_preclip_component_fails(compiler, entry, slope, offset,
+                                                  tmp_path):
+    _require_low_address_host()
+    compiler_path = shutil.which(compiler)
+    if compiler_path is None:
+        pytest.skip(f"{compiler} is unavailable")
+    source = TEXTURE.read_text(encoding="utf-8")
+    body = _extract_definition(source, f"void __cdecl {entry}(")
+    before = f"texture_keyed_shift_product({slope}, {offset})"
+    after = f"static_cast<unsigned int>(static_cast<int64_t>({slope}) * {offset})"
+    assert body.count(before) == 1
+    mutated = source.replace(body, body.replace(before, after, 1), 1)
+    ran = _compile_and_run(mutated, compiler_path, tmp_path,
+                           f"mutant_preclip_component_{compiler}")
+    assert ran.returncode != 0, "widened preclip component unexpectedly passed"
+
+
+@pytest.mark.parametrize("compiler", ("g++", "clang++"))
+def test_preclip_widen_before_shift_mutant_fails_actual_pixels(compiler, tmp_path):
+    _require_low_address_host()
+    compiler_path = shutil.which(compiler)
+    if compiler_path is None:
+        pytest.skip(f"{compiler} is unavailable")
+    source = TEXTURE.read_text(encoding="utf-8")
+    body = _extract_definition(source, "static unsigned int texture_keyed_shift_product(")
+    mutant = """static unsigned int texture_keyed_shift_product(int slope, int pixel_offset) {
+        const int64_t product = static_cast<int64_t>(slope) *
+                                (static_cast<int64_t>(pixel_offset) * 0x10000);
+        return static_cast<unsigned int>(static_cast<uint64_t>(product) >> 16);
+    }"""
+    ran = _compile_and_run(source.replace(body, mutant, 1), compiler_path, tmp_path,
+                           f"mutant_widened_preclip_{compiler}")
+    assert ran.returncode != 0, "widened preclip mutant unexpectedly passed"
 
 
 @pytest.mark.parametrize("compiler", ("g++", "clang++"))

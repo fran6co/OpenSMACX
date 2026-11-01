@@ -26,6 +26,7 @@
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned CRT dispatcher 0x00644DEC-0x00644DFB supplies [0x00682000,0x006826CC) to 0x00644ED8, which calls each non-null dword. Slot 0x00682070 selects init 0x00428750, which registers exit callback 0x00428770.", "Original init span 0x00428750-0x00428766 and exit span 0x00428770-0x0042877A are independently disassembled; both identify receiver 0x00703E30 and Wave constructor/destructor 0x004C66E0/0x004C67C0.", "Current credits.cpp physical COFF selects local STATIC init _$E21 via .CRT$XCU, relocating to g_CREDITS_WAVE, Wave construction, paired local fini _$E19 and atexit; fini relocates to the same object and Wave destruction. Native comparator can select these physical local function symbols.", "Independent pin/COFF/source review supports individual lifetime ownership. These mappings do not establish complete global initialization order, linked retained selection, full data layout, original debug names or runtime acceptance."], "reason": "Bind the original exit operation to the genuine compiler-emitted lifetime of source-owned g_CREDITS_WAVE. The local symbol identifies current emitted code, not an original debug name; no callback body is authored."}
 // symbol    _$E6
 #include "stdafx.h"
+#include "font_metrics.h"
 #include "wave.h"
 #include "credits.h"
 #include "text.h"
@@ -139,7 +140,7 @@ void Credits::exec() {
 
   frame_count_ = 0;
   font_.init("Alpha Centauri", 14, 1);
-  line_height_ = font_.line_advance();
+  line_height_ = font_line_advance(font_);
   load();
   static_cast<Buffer *>(&graphicWin2_)->set_font(&font_, 0, 0, 0);
   static_cast<Buffer *>(this)->set_font(&font_, 0, 0, 0);

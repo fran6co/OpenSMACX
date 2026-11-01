@@ -7,6 +7,7 @@
 // symbol    ??_GPickTech@@UAEPAXI@Z
 // kind      game
 #include "stdafx.h"
+#include "font_metrics.h"
 #include "interface_fonts.h"
 #include "picktech.h"
 #include "palette.h"
@@ -148,26 +149,23 @@ int PickTech::draw_item(int item, int selected) {
 // This is the owned member counterpart of the current stringstruct.cpp
 // receiver-offset transcription. All five addresses are established by the
 // seed accesses; Buffer is GraphicWin's real secondary base, not a byte view.
-// ORIGINAL: 0x00484B80 ?UNK1@PickTech@@QAEXPAD@Z 0x00484B80-0x00484C5D
+// ORIGINAL: 0x00484B80 ?UNK1@PickTech@@QAEXPAD@Z 0x00484B80-0x00484C5D BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["image:0x00484B80; source:src/leaf_recoveries.cpp; constructor484AC0/destructor488690 establish native C5C ownership.", "image:66CFCC callbackslots17/19/22/25; native rule-bank and UI call sites retain owner and evaluation order.", "source:src/stringstruct.cpp historical484B80 transcription; the canonical caption owns Font line-advance and Buffer wrap semantics."], "reason": "Genuine GraphicWin-derived PickTech owner with four automatic Font members, source-owned rule/global references, real callback dispatch and lexical popup/list lifetimes."}
 // symbol    ?UNK1@PickTech@@QAEXPAD@Z
 void PickTech::UNK1(char *text) {
-    Buffer *const canvas = static_cast<Buffer *>(this);
     int line_height;
     if (page_state_ == 0) {
-        canvas->set_font(&header_font_, &header_font_, &header_font_, 0);
-        line_height = header_font_.line_advance();
+        Buffer::set_font(&header_font_, &header_font_, &header_font_, 0);
+        line_height = font_line_advance(header_font_);
         page_state_ = 1;
     } else {
-        canvas->set_font(&title_font_, &body_font_primary_,
+        Buffer::set_font(&title_font_, &body_font_primary_,
                          &body_font_secondary_, 0);
-        line_height = title_font_.line_advance();
+        line_height = font_line_advance(title_font_);
     }
     if (page_bottom_ - line_height >= page_pen_y_) {
-        const int wrapped_height = canvas->wrap_height(text, page_width_ - 2);
-        const int y = page_bottom_ - wrapped_height;
-        page_bottom_ = y;
-        canvas->wrap_cent(text, page_x_ + 1, y, page_width_ - 2);
+        page_bottom_ -= Buffer::wrap_height(text, page_width_ - 2);
+        Buffer::wrap_cent(text, page_x_ + 1, page_bottom_, page_width_ - 2);
     }
 }
 

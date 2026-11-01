@@ -1178,6 +1178,14 @@ granularity of exploration, not recording or integration requirements. Header,
 inlining and shared-layout changes require investigation of collateral output;
 an unchanged neighboring function count is not preservation evidence.
 
+For every batch, qualify the ordered compiler options against the retained
+application's actual compilation receipts before the first candidate capture.
+Agreement with another checkout's `Measurement.flags_for` is insufficient:
+both configurations can retain the same obsolete recipe. Preserve per-TU
+options and their ordering, including later overrides. Align stale scoped
+measurement recipes with production before opening the measurement epoch;
+do not change production flags to make a diagnostic pass.
+
 Before attributing a missing call or inline-body mismatch to source order,
 replay the actual retained application command, including its `/Ob` and `/Oy`
 options, and require whole-object replay/unchanged-overlay and target-damage

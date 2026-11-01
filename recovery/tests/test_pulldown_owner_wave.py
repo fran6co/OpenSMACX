@@ -55,6 +55,12 @@ def compile_and_run(tmp_path: Path, bodies: dict[str, str]):
     if not compiler:
         pytest.skip("host C++ compiler required")
     fixture = FIXTURE.read_text()
+    font = (ROOT / 'src/jackal/font.h').read_text()
+    accessors = '\n'.join(braced(font, marker) for marker in
+                          ('int pixel_height() const', 'int line_height() const'))
+    fixture = fixture.replace('// ACTUAL_FONT_ACCESSORS', accessors)
+    fixture = fixture.replace('// ACTUAL_FONT_HELPER',
+                              braced((ROOT / 'src/jackal/font_metrics.h').read_text(), 'inline int font_line_advance('))
     marker = "// __ACTUAL_BODIES_SLOT__"
     assert fixture.count(marker) == 1
     injected = "\n\n".join(bodies[key] for key in METHODS)

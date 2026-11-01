@@ -664,9 +664,19 @@
           "/Z7"
         ]
       },
-      "src/jackal/jackal.cpp": [
-        0
-      ],
+      "src/jackal/jackal.cpp": {
+        "flags": [
+          "/nologo",
+          "/TP",
+          "/Zm200",
+          "/GX",
+          "/O2",
+          "/Ob2",
+          "-MT",
+          "/W4",
+          "-c"
+        ]
+      },
       "src/jackal/palette.cpp": {
         "flags": [
           "/nologo",
@@ -683,9 +693,21 @@
       "src/jackal/font.cpp": [
         0
       ],
-      "src/interface_palette.cpp": [
-        1
-      ],
+      "src/interface_palette.cpp": {
+        "flags": [
+          "/nologo",
+          "/TP",
+          "/Zm200",
+          "/GX",
+          "/O2",
+          "/Ob2",
+          "-MT",
+          "/W4",
+          "/Oy-",
+          "/Z7",
+          "-c"
+        ]
+      },
       "src/interface_fonts.cpp": {
         "flags": [
           "/nologo",
@@ -1415,6 +1437,61 @@
           "-MT",
           "/W4",
           "/Z7",
+          "-c"
+        ]
+      },
+      "src/general.cpp": {
+        "flags": [
+          "/nologo",
+          "/TP",
+          "/Zm200",
+          "/GX",
+          "/O2",
+          "/Ob2",
+          "-MT",
+          "/W4",
+          "-c"
+        ]
+      },
+      "src/multidebug.cpp": {
+        "flags": [
+          "/nologo",
+          "/TP",
+          "/Zm200",
+          "/GX",
+          "/O2",
+          "/Ob2",
+          "-MT",
+          "/W4",
+          "/Oy-",
+          "-c"
+        ]
+      },
+      "src/tutwin.cpp": {
+        "flags": [
+          "/nologo",
+          "/TP",
+          "/Zm200",
+          "/GX",
+          "/O2",
+          "/Ob2",
+          "-MT",
+          "/W4",
+          "/Oy-",
+          "-c"
+        ]
+      },
+      "src/picktech.cpp": {
+        "flags": [
+          "/nologo",
+          "/TP",
+          "/Zm200",
+          "/GX",
+          "/O2",
+          "/Ob2",
+          "-MT",
+          "/W4",
+          "/Oy-",
           "-c"
         ]
       }

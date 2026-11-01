@@ -16,6 +16,7 @@
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
 #include "stdafx.h"
+#include "font_metrics.h"
 #include "buffer.h"
 #include "font.h"
 #include "general.h"
@@ -67,13 +68,7 @@ Status: Complete
 */
 
 int Font::line_advance() const {
-    const int adjustment = unk_1_;
-    if (adjustment >= 0) {
-        const int height = height_;
-        return static_cast<int32_t>(static_cast<uint32_t>(height) +
-                                    static_cast<uint32_t>(adjustment));
-    }
-    return line_height_;
+    return font_line_advance(*this);
 }
 
 
