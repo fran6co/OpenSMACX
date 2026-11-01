@@ -16,6 +16,7 @@ struct StringStructPayload {
 };
 
 struct StringStructEntry {
+    int id;
     StringStructEntry *next;
     StringStructEntry *previous;
     StringStructPayload payload;
@@ -128,7 +129,7 @@ struct Dialog {
         text_color_2a_(5), text_color_2b_(6), text_color_2c_(7), text_color_2d_(8),
         text_color_3a_(9), text_color_3b_(10), text_color_3c_(11), text_color_3d_(12),
         font1_(0), font2_(0), font3_(0) {}
-    int pos_to_id(int position) { return 1000 + position; }
+    int pos_to_id(int position);
 };
 
 using DrawCallback = void (*)(GraphicWin *, int, int, int, int, int);
@@ -178,11 +179,13 @@ static StringStructEntry *fill_cursor;
 static int fill_result;
 static ListBox *fill_target;
 static int fill_draw_position;
+static int fill_item_id;
 static int same_rect(const RECT &a, const RECT &b) {
     return a.left == b.left && a.top == b.top
         && a.right == b.right && a.bottom == b.bottom;
 }
-static int fill(GraphicWin *window, int, int draw_position, RECT *rect) {
+static int fill(GraphicWin *window, int item_id, int draw_position, RECT *rect) {
+    fill_item_id=item_id;
     ++fill_calls; fill_rect=*rect;
     fill_draw_position=draw_position;
     assert(window == static_cast<GraphicWin *>(fill_target));
@@ -190,6 +193,30 @@ static int fill(GraphicWin *window, int, int draw_position, RECT *rect) {
     fill_cursor_position = fill_target->item_list_.current_position_;
     fill_cursor = fill_target->item_list_.current_;
     return fill_result;
+}
+
+static int callback_contract_parent_calls;
+static int callback_contract_parent_id;
+static int callback_contract_write_id;
+static int callback_contract_draw_id;
+struct ContractParent : GraphicWin {
+    ListBox *child;
+    StringStructEntry *replacement_cursor;
+    int on_dialog_item_back_draw(GraphicWin *, int item_id, int, RECT *) override {
+        ++callback_contract_parent_calls;
+        callback_contract_parent_id=item_id;
+        child->item_list_.entry_count_=1;
+        child->item_list_.current_=replacement_cursor;
+        child->item_list_.current_position_=2;
+        return 1;
+    }
+};
+static void contract_draw(GraphicWin *, int item_id, int, int, int, int) {
+    callback_contract_draw_id=item_id;
+}
+static int contract_write(GraphicWin *, int item_id, int, RECT *, char *) {
+    callback_contract_write_id=item_id;
+    return 1;
 }
 
 static int bridge_draw_calls;
@@ -209,6 +236,7 @@ static void bridge_draw_with_id(GraphicWin *window, int item_id, int, int, int, 
 
 static void link_rows(StringStructEntry *rows, int count, unsigned int *spans) {
     for (int i=0; i<count; ++i) {
+        rows[i].id=1000+i;
         rows[i].next=&rows[(i+1)%count];
         rows[i].previous=&rows[(i+count-1)%count];
         rows[i].payload.field_C_=spans[i];
@@ -301,13 +329,13 @@ int main() {
     box.item_list_.current_=&rows[0]; box.item_list_.current_position_=0;
     box.fill_callback_=&fill;
     box.field_4C_=1; // variable-height rows: exercise circular cursor path
-    box.field_4_=0;  // selection comes from Dialog, so callback observes layout cursor
+    box.field_4_=0;  // fill resolves the row ID and seeks after layout geometry
     box.field_18_=0; box.selected_position_=7;
     box.field_38_=3; box.field_40_=7; // asymmetric top and left inset
     box.field_64_=31; box.field_68_=11; box.field_44_=2;
     fill_target=&box; fill_calls=0; box.draw_item(1);
     assert(fill_calls==1);
-    assert(fill_cursor==&rows[1] && fill_cursor_position==1);
+    assert(fill_cursor==&rows[1] && fill_cursor_position==1 && fill_item_id==1001);
     assert(fill_draw_position==0);
     assert(fill_rect.left==7 && fill_rect.top==29);
     assert(fill_rect.right==24 && fill_rect.bottom==66);
@@ -324,7 +352,7 @@ int main() {
     grid.field_38_=3; grid.field_40_=7;
     grid.field_64_=31; grid.field_68_=11; grid.field_44_=2;
     fill_target=&grid; fill_calls=0; grid.draw_item(5); // 5 / 3 = 1, 5 % 3 = 2
-    assert(fill_calls==1 && fill_cursor==&rows[0]);
+    assert(fill_calls==1 && fill_cursor==&rows[5] && fill_item_id==1005);
     assert(fill_rect.left==40 && fill_rect.top==29);
     assert(fill_rect.right==57 && fill_rect.bottom==40);
     assert(grid.first_clip_set && same_rect(grid.first_clip, fill_rect));
@@ -386,7 +414,8 @@ int main() {
     stale_cursor.field_38_=3; stale_cursor.field_40_=7;
     stale_cursor.field_64_=31; stale_cursor.field_68_=11; stale_cursor.field_44_=2;
     fill_target=&stale_cursor; fill_calls=0; stale_cursor.draw_item(2);
-    assert(fill_calls==1 && fill_cursor==&rows[5] && fill_cursor_position==2);
+    assert(fill_calls==1 && fill_cursor==&rows[2] && fill_cursor_position==2
+           && fill_item_id==1002);
     assert(fill_rect.left==7 && fill_rect.top==3);
     assert(fill_rect.right==24 && fill_rect.bottom==92);
 
@@ -446,7 +475,7 @@ int main() {
     shrinking_list.draw_item(1);
     assert(shrinking_list.item_list_.entry_count_==1);
     assert(bridge_draw_calls==1);
-    assert(draw_cursor==&rows[5] && draw_cursor_position==5);
+    assert(draw_cursor==&rows[1] && draw_cursor_position==1);
     draw_target=0;
     bridge_draw_calls=0;
 
@@ -464,6 +493,57 @@ int main() {
     assert(draw_cursor==&rows[1] && draw_cursor_position==1);
     draw_target=0;
     bridge_draw_calls=0;
+
+    // Both original text branches undo the text inset: the final clip is
+    // the asymmetric original row, including nonzero padding and margin.
+    for (int selected=0; selected<2; ++selected) {
+        for (int split=0; split<2; ++split) {
+            StringStructEntry one[1]; unsigned int spans[1]={1};
+            link_rows(one,1,spans);
+            char ordinary[]="left"; char separated[]="left|right";
+            one[0].payload.text=split ? separated : ordinary;
+            ListBox restored;
+            restored.item_list_.head_=one;
+            restored.item_list_.entry_count_=1;
+            restored.item_list_.current_=one;
+            restored.item_list_.current_position_=0;
+            restored.selected_position_=selected ? 0 : -1;
+            restored.field_38_=3;restored.field_40_=7;
+            restored.field_64_=31;restored.field_68_=11;
+            restored.row_count_=1;restored.field_34_=4;
+            restored.field_2C_=2;restored.field_B4_=0;
+            restored.draw_item(0);
+            const RECT original_row={7,3,24,14};
+            assert(same_rect(restored.last_clip,original_row));
+            if(split) assert(std::strcmp(separated,"left|right")==0);
+        }
+    }
+
+    // Original 60BAFC seeks before the parent callback and caches that ID
+    // for parent and draw. The callback shrinks the count and moves current;
+    // 60BD26 write obtains a fresh ID without forcibly restoring invalid row1.
+    ContractParent contract_parent;
+    ListBox contract_child;
+    contract_child.item_list_.entry_count_=3;
+    contract_child.item_list_.head_=&rows[0];
+    contract_child.item_list_.current_=&rows[5];
+    contract_child.item_list_.current_position_=5;
+    contract_child.parent_=&contract_parent;
+    contract_child.draw_callback_=&contract_draw;
+    contract_child.write_callback_=&contract_write;
+    contract_parent.child=&contract_child;
+    contract_parent.replacement_cursor=&rows[2];
+    callback_contract_parent_calls=0;
+    callback_contract_parent_id=-1;
+    callback_contract_draw_id=-1;
+    callback_contract_write_id=-1;
+    contract_child.draw_item(1);
+    assert(callback_contract_parent_calls==1);
+    assert(callback_contract_parent_id==1001);
+    assert(callback_contract_draw_id==1001);
+    assert(callback_contract_write_id==1002);
+    assert(contract_child.item_list_.current_==&rows[2]
+           && contract_child.item_list_.current_position_==2);
 
     // Complete-object Dialogs receivers reach their first declared ListBox
     // base; callbacks see its compiler-converted GraphicWin virtual base.
