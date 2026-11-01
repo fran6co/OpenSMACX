@@ -93,45 +93,44 @@ int AiResearchBatchActive = 0;
 // separate absolute table. A remote human's title/name are announced once
 // while the network loop waits for their choice. tech_pick owns its real local
 // window in picktech.cpp; NetMsg::pop retains its separate recovery obligations.
-// ORIGINAL: 0x005BE380 ?tech_selection@@YAHH@Z 0x005BE380-0x005BE52A
-// RECOVERY_BINDING: v1 {"evidence": ["retired seed git:0c8bccd8:src/unrecovered/005be380.cpp records the two network wait paths and pop-up order", "PlayersData[faction].tech_id_researching is the seed's 0x0096CDAC+faction*0x20CC slot; Player title/name and general.h's default noun globals cover its 0x00946A50-based records", "ConsoleGlobal.faction_id_ owns the 0x00939284 local-faction slot"], "reason": "Home the typed faction research selection and network wait in the technology owner, retaining the picker and popup owner's separate unfinished obligations."}
+// ORIGINAL: 0x005BE380 ?tech_selection@@YAHH@Z 0x005BE380-0x005BE52A BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["retired seed git:0c8bccd8:src/unrecovered/005be380.cpp records the two network wait paths and pop-up order", "PlayersData[faction].tech_id_researching is the seed's 0x0096CDAC+faction*0x20CC slot; Player title/name and general.h's default noun globals cover its 0x00946A50-based records", "ConsoleGlobal.faction_id_ owns the 0x00939284 local-faction slot", "Pinned5BE38A uses a full-width announcement latch;5BE39F/5BE4E2 shift directly without explicit count masks. Network/human guards and research-slot reads occur separately before the first wait and after tech_pick; preserve those live reads across callbacks."], "reason": "Home the typed faction research selection and network wait in the technology owner, retaining the picker and popup owner's separate unfinished obligations."}
 int __cdecl tech_selection(int faction) {
-    int &selected = PlayersData[faction].tech_id_researching;
-    const unsigned int faction_bit = 1u << (faction & 31);
-    const bool network_human =
-        IsMultiplayerNet != 0 &&
-        (GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & faction_bit) != 0;
-
-    if (network_human && faction != ConsoleGlobal.faction_id_) {
-        bool announced = false;
-        while (ExitTurnLoop == 0 && selected < 0) {
-            NetDaemonNet.net_tasks();
-            if (!announced) {
-                announced = true;
-                PluralityDefault = 0;
-                GenderDefault = Players[faction].is_leader_female;
-                parse_says(0, Players[faction].title_leader, -1, -1);
-                GenderDefault = Players[faction].is_leader_female;
-                PluralityDefault = 0;
-                parse_says(1, Players[faction].name_leader, -1, -1);
-                NetMsgPrimary.pop("PICKINGTECH", 0, 0, 0);
+    int announced = false;
+    if (IsMultiplayerNet != 0) {
+        const unsigned int faction_bit = 1u << faction;
+        if ((GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & faction_bit) != 0
+            && faction != ConsoleGlobal.faction_id_) {
+            while (ExitTurnLoop == 0 && PlayersData[faction].tech_id_researching < 0) {
+                NetDaemonNet.net_tasks();
+                if (!announced) {
+                    announced = true;
+                    PluralityDefault = 0;
+                    GenderDefault = Players[faction].is_leader_female;
+                    parse_says(0, Players[faction].title_leader, -1, -1);
+                    GenderDefault = Players[faction].is_leader_female;
+                    PluralityDefault = 0;
+                    parse_says(1, Players[faction].name_leader, -1, -1);
+                    NetMsgPrimary.pop("PICKINGTECH", 0, 0, 0);
+                }
             }
+            NetMsgPrimary.close();
+            return PlayersData[faction].tech_id_researching;
         }
-        NetMsgPrimary.close();
-        return selected;
     }
-
+    // RECOVERY_LITERAL: v1 0x0069180C 0x00691818 ??_C@_0M@JCB@PICKINGTECH?$AA@ 0x005BE380
     const int result = tech_pick(faction, 0, -1, 0);
-    const bool network_game = IsMultiplayerNet != 0;
-    selected = result;
-    if (network_game &&
-        (GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & faction_bit) != 0) {
-        synch_researching(faction);
-        int stop = ExitTurnLoop;
-        selected = -1;
-        while (stop == 0 && selected < 0) {
-            NetDaemonNet.net_tasks();
-            stop = ExitTurnLoop;
+    PlayersData[faction].tech_id_researching = result;
+    if (IsMultiplayerNet != 0) {
+        const unsigned int faction_bit = 1u << faction;
+        if ((GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & faction_bit) != 0) {
+            synch_researching(faction);
+            int stop = ExitTurnLoop;
+            PlayersData[faction].tech_id_researching = -1;
+            while (stop == 0 && PlayersData[faction].tech_id_researching < 0) {
+                NetDaemonNet.net_tasks();
+                stop = ExitTurnLoop;
+            }
         }
     }
     return result;
