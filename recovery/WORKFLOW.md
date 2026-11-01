@@ -130,6 +130,16 @@ Git checkpoint of the faithful source before implementing fixes or improvements.
 
 ## Evidence-led recovery queue and bounded matching pass
 
+The active user priority is to reduce the measured application-function
+`FAIL` count to zero. Start with the current mismatch audit, using small
+evidence-backed packets and shared structural causes to obtain `FAIL` to
+`PASS` transitions. Keep `UNKNOWN` and unbound identities separate; moving a
+failure into either category does not reduce the recovery debt. Preserve
+existing matches and historical obligations. Cleanup, new table-start mappings
+and framework work take priority only when they unblock a measured mismatch.
+Do not weaken comparison, change exclusions, remove identities or sweep flags
+to improve the count.
+
 For Caviar/CVR work, read [CAVIAR_EVIDENCE.md](CAVIAR_EVIDENCE.md) first.
 It correlates external research with loader ownership and records known
 format-table contradictions before they turn into source layout assumptions.
