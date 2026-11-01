@@ -1,0 +1,23 @@
+{
+  "author": "coordinator",
+  "base_revision": "0432787f6525ab2487b2680f4f7505358a5026f1",
+  "editable_files": [
+    "src/listbox.cpp",
+    "recovery/tests/test_listbox_rendering_actual_source.py"
+  ],
+  "evidence": [
+    "Pinned 60BE72 and 60C0B1 use signed JLE with wrap fallthrough; current mutually exclusive write-first layout changes six static call positions.",
+    "One source-form budget: invert two signed conditions and arms, no flags/types/padding changes; preserve original unsafe paths and source identity."
+  ],
+  "intent": "Test one original separator branch layout without changing recovered object references or callback phases.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 6337840,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "listbox-separator-layout-nov01dk"
+}

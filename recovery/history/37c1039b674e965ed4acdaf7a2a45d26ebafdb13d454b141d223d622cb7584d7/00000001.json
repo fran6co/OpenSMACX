@@ -1,0 +1,21 @@
+{
+  "event_id": "864cc09c120c8a75e8d3e4a719a5f29568c3485ef79f25a5b720e516aab680ca",
+  "payload": {
+    "affects": [
+      "entity-9fd9d54a0ce9e1f29f1adae3fb2d967df511079373dba76422415f2756914c60"
+    ],
+    "author": "coordinator",
+    "discovery_id": "original-separator-layout",
+    "evidence": [
+      "Pinned 60BE72 and 60C0B1 use signed JLE with wrap fallthrough; current mutually exclusive write-first layout changes six static call positions.",
+      "One source-form budget: invert two signed conditions and arms, no flags/types/padding changes; preserve original unsafe paths and source identity."
+    ],
+    "hypothesis": "Wrap-first signed separator arms may restore original emitted call order without semantic change.",
+    "kind": "discovery"
+  },
+  "previous_event": null,
+  "request_id": "original-separator-layout",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:listbox-separator-layout-nov01dk"
+}
