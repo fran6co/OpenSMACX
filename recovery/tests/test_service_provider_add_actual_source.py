@@ -72,6 +72,7 @@ def extract_definition(source, signature):
 
 def product_bodies():
     source = (repo_root() / "src/net_class.cpp").read_text()
+    allocation_source = (repo_root() / "src/alphanet_inline.h").read_text()
     signatures = (
         "void *allocate_net_node(size_t size, Heap *owner)",
         "void cleanup_failed_net_construction(void *memory)",
@@ -90,7 +91,10 @@ def product_bodies():
         "void ServiceProviderList::on_remove(ServiceStruct *)",
         "int ServiceProviderList::add(int id)",
     )
-    return "\n\n".join(extract_definition(source, signature) for signature in signatures)
+    return "\n\n".join(
+        extract_definition(allocation_source if signature.startswith(
+            "void *allocate_net_node(") else source, signature)
+        for signature in signatures)
 
 
 FIXTURE = r'''#include <cassert>

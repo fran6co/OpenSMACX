@@ -2632,25 +2632,19 @@ int Caviar::add_object(CaviarData *definition, VOX_Vect *offset, int step) {
         return 7;
     }
     int count = record->part_count_;
-    int remainder = step % record->step_count_;
-    if (count > 0) {
-        int index = 0;
-        do {
-            if (field_13CC_ == 200) {
-                return 1;
-            }
-            VoxInstance &instance = slots_[field_13CC_];
-            CvrPart &part = definition->record_->parts_[index];
-            *instance.instance_colour_ = part.colours_[remainder];
-            vector_add(part.vectors_[remainder].values, offset->values,
-                       instance.instance_vector_->values);
-            *instance.instance_matrix_ = part.matrices_[remainder];
+    step %= record->step_count_;
+    for (int index = 0; index < count; ++index) {
+        if (field_13CC_ == 200) {
+            return 1;
+        }
+        *slots_[field_13CC_].instance_colour_ = definition->record_->parts_[index].colours_[step];
+        vector_add(definition->record_->parts_[index].vectors_[step].values, offset->values,
+                   slots_[field_13CC_].instance_vector_->values);
+        *slots_[field_13CC_].instance_matrix_ = definition->record_->parts_[index].matrices_[step];
 
-            instance_palettes_[field_13CC_] = definition->record_->palette_ + 0x302;
-            instance_steps_[field_13CC_] = definition->record_->steps_[index];
-            ++index;
-            ++field_13CC_;
-        } while (index < count);
+        instance_palettes_[field_13CC_] = definition->record_->palette_ + 0x302;
+        instance_steps_[field_13CC_] = definition->record_->steps_[index];
+        ++field_13CC_;
     }
     return 0;
 }
@@ -2684,21 +2678,16 @@ int Caviar::add_object(CaviarData *definition, CaviarData *geometry,
         return 7;
     }
     int count = definition->record_->part_count_;
-    int remainder = step % geometry->record_->step_count_;
-    if (count > 0) {
-        int index = 0;
-        do {
-            if (field_13CC_ == 200) {
-                return 1;
-            }
-            VoxInstance &instance = slots_[field_13CC_];
-            vector_add(geometry->record_->parts_[index].vectors_[remainder].values,
-                       offset->values, instance.instance_vector_->values);
-            instance_palettes_[field_13CC_] = definition->record_->palette_ + 0x302;
-            instance_steps_[field_13CC_] = definition->record_->steps_[index];
-            ++index;
-            ++field_13CC_;
-        } while (index < count);
+    step %= geometry->record_->step_count_;
+    for (int index = 0; index < count; ++index) {
+        if (field_13CC_ == 200) {
+            return 1;
+        }
+        vector_add(geometry->record_->parts_[index].vectors_[step].values,
+                   offset->values, slots_[field_13CC_].instance_vector_->values);
+        instance_palettes_[field_13CC_] = definition->record_->palette_ + 0x302;
+        instance_steps_[field_13CC_] = definition->record_->steps_[index];
+        ++field_13CC_;
     }
     return 0;
 }
@@ -2735,21 +2724,16 @@ int Caviar::add_object(CaviarData *definition, uint8_t *object,
         return 7;
     }
     int count = definition->record_->part_count_;
-    int remainder = step % geometry->record_->step_count_;
-    if (count > 0) {
-        int index = 0;
-        do {
-            if (field_13CC_ == 200) {
-                return 1;
-            }
-            VoxInstance &instance = slots_[field_13CC_];
-            vector_add(geometry->record_->parts_[index].vectors_[remainder].values,
-                       offset->values, instance.instance_vector_->values);
-            instance_palettes_[field_13CC_] = object;
-            instance_steps_[field_13CC_] = definition->record_->steps_[index];
-            ++index;
-            ++field_13CC_;
-        } while (index < count);
+    step %= geometry->record_->step_count_;
+    for (int index = 0; index < count; ++index) {
+        if (field_13CC_ == 200) {
+            return 1;
+        }
+        vector_add(geometry->record_->parts_[index].vectors_[step].values,
+                   offset->values, slots_[field_13CC_].instance_vector_->values);
+        instance_palettes_[field_13CC_] = object;
+        instance_steps_[field_13CC_] = definition->record_->steps_[index];
+        ++field_13CC_;
     }
     return 0;
 }
@@ -2786,7 +2770,7 @@ Status: Complete
 */
 int Caviar::add_object(CaviarData *definition, uint8_t *object,
                        VOX_Vect *offset, int step) {
-    if (definition == 0 || object == 0 || offset == 0) {
+    if (definition == 0 || offset == 0 || object == 0) {
         return 0x10;
     }
     CvrRecord *record = definition->record_;
@@ -2794,24 +2778,18 @@ int Caviar::add_object(CaviarData *definition, uint8_t *object,
         return 7;
     }
     int count = record->part_count_;
-    int remainder = step % record->step_count_;
-    if (count > 0) {
-        int index = 0;
-        do {
-            if (field_13CC_ == 200) {
-                return 1;
-            }
-            VoxInstance &instance = slots_[field_13CC_];
-            CvrPart &part = record->parts_[index];
-            *instance.instance_colour_ = part.colours_[remainder];
-            vector_add(part.vectors_[remainder].values, offset->values,
-                       instance.instance_vector_->values);
-            *instance.instance_matrix_ = part.matrices_[remainder];
-            instance_palettes_[field_13CC_] = object;
-            instance_steps_[field_13CC_] = record->steps_[index];
-            ++index;
-            ++field_13CC_;
-        } while (index < count);
+    step %= record->step_count_;
+    for (int index = 0; index < count; ++index) {
+        if (field_13CC_ == 200) {
+            return 1;
+        }
+        *slots_[field_13CC_].instance_colour_ = definition->record_->parts_[index].colours_[step];
+        vector_add(definition->record_->parts_[index].vectors_[step].values, offset->values,
+                   slots_[field_13CC_].instance_vector_->values);
+        *slots_[field_13CC_].instance_matrix_ = definition->record_->parts_[index].matrices_[step];
+        instance_palettes_[field_13CC_] = object;
+        instance_steps_[field_13CC_] = definition->record_->steps_[index];
+        ++field_13CC_;
     }
     return 0;
 }
@@ -2843,23 +2821,17 @@ int Caviar::add_object(CaviarData *definition, CaviarData *geometry, int step) {
         return 7;
     }
     int count = definition->record_->part_count_;
-    int remainder = step % geometry->record_->step_count_;
-    if (count > 0) {
-        int index = 0;
-        do {
-            if (field_13CC_ == 200) {
-                return 1;
-            }
-            VoxInstance &instance = slots_[field_13CC_];
-            CvrPart &part = geometry->record_->parts_[index];
-            *instance.instance_colour_ = part.colours_[remainder];
-            *instance.instance_vector_ = part.vectors_[remainder];
-            *instance.instance_matrix_ = part.matrices_[remainder];
-            instance_palettes_[field_13CC_] = definition->record_->palette_ + 0x302;
-            instance_steps_[field_13CC_] = definition->record_->steps_[index];
-            ++index;
-            ++field_13CC_;
-        } while (index < count);
+    step %= geometry->record_->step_count_;
+    for (int index = 0; index < count; ++index) {
+        if (field_13CC_ == 200) {
+            return 1;
+        }
+        *slots_[field_13CC_].instance_colour_ = geometry->record_->parts_[index].colours_[step];
+        *slots_[field_13CC_].instance_vector_ = geometry->record_->parts_[index].vectors_[step];
+        *slots_[field_13CC_].instance_matrix_ = geometry->record_->parts_[index].matrices_[step];
+        instance_palettes_[field_13CC_] = definition->record_->palette_ + 0x302;
+        instance_steps_[field_13CC_] = definition->record_->steps_[index];
+        ++field_13CC_;
     }
     return 0;
 }
@@ -2893,23 +2865,17 @@ int Caviar::add_object(CaviarData *definition, uint8_t *object,
         return 7;
     }
     int count = definition->record_->part_count_;
-    int remainder = step % geometry->record_->step_count_;
-    if (count > 0) {
-        int index = 0;
-        do {
-            if (field_13CC_ == 200) {
-                return 1;
-            }
-            VoxInstance &instance = slots_[field_13CC_];
-            CvrPart &part = geometry->record_->parts_[index];
-            *instance.instance_colour_ = part.colours_[remainder];
-            *instance.instance_vector_ = part.vectors_[remainder];
-            *instance.instance_matrix_ = part.matrices_[remainder];
-            instance_palettes_[field_13CC_] = object;
-            instance_steps_[field_13CC_] = definition->record_->steps_[index];
-            ++index;
-            ++field_13CC_;
-        } while (index < count);
+    step %= geometry->record_->step_count_;
+    for (int index = 0; index < count; ++index) {
+        if (field_13CC_ == 200) {
+            return 1;
+        }
+        *slots_[field_13CC_].instance_colour_ = geometry->record_->parts_[index].colours_[step];
+        *slots_[field_13CC_].instance_vector_ = geometry->record_->parts_[index].vectors_[step];
+        *slots_[field_13CC_].instance_matrix_ = geometry->record_->parts_[index].matrices_[step];
+        instance_palettes_[field_13CC_] = object;
+        instance_steps_[field_13CC_] = definition->record_->steps_[index];
+        ++field_13CC_;
     }
     return 0;
 }
@@ -2938,23 +2904,17 @@ int Caviar::add_object(CaviarData *definition, int step) {
         return 7;
     }
     int count = record->part_count_;
-    int remainder = step % record->step_count_;
-    if (count > 0) {
-        int index = 0;
-        do {
-            if (field_13CC_ == 200) {
-                return 1;
-            }
-            VoxInstance &instance = slots_[field_13CC_];
-            CvrPart &part = record->parts_[index];
-            *instance.instance_colour_ = part.colours_[remainder];
-            *instance.instance_vector_ = part.vectors_[remainder];
-            *instance.instance_matrix_ = part.matrices_[remainder];
-            instance_palettes_[field_13CC_] = record->palette_ + 0x302;
-            instance_steps_[field_13CC_] = record->steps_[index];
-            ++index;
-            ++field_13CC_;
-        } while (index < count);
+    step %= record->step_count_;
+    for (int index = 0; index < count; ++index) {
+        if (field_13CC_ == 200) {
+            return 1;
+        }
+        *slots_[field_13CC_].instance_colour_ = definition->record_->parts_[index].colours_[step];
+        *slots_[field_13CC_].instance_vector_ = definition->record_->parts_[index].vectors_[step];
+        *slots_[field_13CC_].instance_matrix_ = definition->record_->parts_[index].matrices_[step];
+        instance_palettes_[field_13CC_] = definition->record_->palette_ + 0x302;
+        instance_steps_[field_13CC_] = definition->record_->steps_[index];
+        ++field_13CC_;
     }
     return 0;
 }
@@ -2984,23 +2944,17 @@ int Caviar::add_object(CaviarData *definition, uint8_t *object, int step) {
         return 7;
     }
     int count = record->part_count_;
-    int remainder = step % record->step_count_;
-    if (count > 0) {
-        int index = 0;
-        do {
-            if (field_13CC_ == 200) {
-                return 1;
-            }
-            VoxInstance &instance = slots_[field_13CC_];
-            CvrPart &part = record->parts_[index];
-            *instance.instance_colour_ = part.colours_[remainder];
-            *instance.instance_vector_ = part.vectors_[remainder];
-            *instance.instance_matrix_ = part.matrices_[remainder];
-            instance_palettes_[field_13CC_] = object;
-            instance_steps_[field_13CC_] = record->steps_[index];
-            ++index;
-            ++field_13CC_;
-        } while (index < count);
+    step %= record->step_count_;
+    for (int index = 0; index < count; ++index) {
+        if (field_13CC_ == 200) {
+            return 1;
+        }
+        *slots_[field_13CC_].instance_colour_ = definition->record_->parts_[index].colours_[step];
+        *slots_[field_13CC_].instance_vector_ = definition->record_->parts_[index].vectors_[step];
+        *slots_[field_13CC_].instance_matrix_ = definition->record_->parts_[index].matrices_[step];
+        instance_palettes_[field_13CC_] = object;
+        instance_steps_[field_13CC_] = definition->record_->steps_[index];
+        ++field_13CC_;
     }
     return 0;
 }

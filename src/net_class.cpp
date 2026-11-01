@@ -90,6 +90,7 @@
 #include <cstring>
 #include "net_class.h"
 #include "alphanet.h"
+#include "alphanet_inline.h"
 #include "popup.h"    // pop_caption / pop_caption_value_title, drop_player's asks
 #include "stringstruct.h"
 #include "wave.h"
@@ -3482,19 +3483,13 @@ Purpose: Construct the node's list block through its real C++ owner.
          this constructor clears the five list words.
 // ORIGINAL: 0x00401B80 sub_401b80 0x00401B80-0x00401BD8 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:2f89503ec251ffc8b9ff894998c01944c173a4fb:src/recovered/units/00401b80.cpp"], "reason": "Retain the genuine source constructor, including natural inherited and virtual-base lifetime; superseded assembly scaffold is historical evidence, not another implementation."}
+// compile_context src/alphanet_records.cpp
+// body src/alphanet_inline.h
 // symbol    ??0NetTextListBase@@QAE@XZ
 // size      88 bytes
 Constructor implemented through the declared C++ base/member lifecycle; matching remains independently measurable.
 */
-#pragma optimize("y", off)
-NetTextListBase::NetTextListBase() {
-    head_ = 0;
-    current_ = 0;
-    entry_count_ = 0;
-    current_position_ = 0;
-    allocator_ = 0;
-}
-#pragma optimize("", on)
+
 
 
 
@@ -3551,13 +3546,7 @@ NetTextListBase::~NetTextListBase() {
 
 
 
-#pragma optimize("y", off)
-NetAllocationNode::NetAllocationNode() {
-    // No scalar field stores exist in either inline original construction.
-    // Its own allocation base captures the pending Heap BEFORE entries_'s
-    // independent virtual base consumes the now-cleared handoff.
-}
-#pragma optimize("", on)
+
 
 
 
@@ -3805,14 +3794,8 @@ int Net::join_session(NetAllocationNode *session, char *player_name,
     return static_cast<int>(local_player_id_);
 }
 
-void *NetAllocationNode::operator new(size_t size, Heap *owner) throw() {
-    return allocate_net_node(size, owner);
-}
-void *NetAllocationNode::operator new(size_t size, AlphaNetStringStruct *list) throw() {
-    // Native receiver-context overload is the fallback ONLY, selected after
-    // the caller has found allocator_==0. Do not re-read allocator_ here.
-    return allocate_net_node(size, list->allocation_owner_);
-}
+
+
 void NetAllocationNode::operator delete(void *memory, Heap *) {
     cleanup_failed_net_construction(memory);
 }
@@ -3963,19 +3946,19 @@ Purpose: Construct the derived node list through its real base lifecycle.
          source-text and field_20_ words remain uninitialized.
 // ORIGINAL: 0x00402D10 sub_402d10 0x00402D10-0x00402D7C FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:2f89503ec251ffc8b9ff894998c01944c173a4fb:src/recovered/units/00402d10.cpp"], "reason": "Retain the genuine source constructor, including natural inherited and virtual-base lifetime; superseded assembly scaffold is historical evidence, not another implementation."}
+// compile_context src/alphanet_records.cpp
+// body src/alphanet_inline.h
 // symbol    ??0NetUnk72C@@QAE@XZ
 // size      108 bytes
 Constructor implemented through the declared C++ base/member lifecycle; matching remains independently measurable.
 */
-#pragma optimize("y", off)
-NetUnk72C::NetUnk72C() {
-    // Source text and field_20_ remain uninitialized, as in 402D10.
-}
-#pragma optimize("", on)
 
 
+
+// RECOVERY_SHARED: v1 0x00404250 0x00404255 ?on_insert@NetTextListBase@@UAEHPAVNetTextPayload@@@Z 0x00401B80
 int NetTextListBase::on_insert(Payload *) { return 0; }
 
+// RECOVERY_SHARED: v1 0x00404270 0x00404273 ?on_remove@NetTextListBase@@UAEXPAVNetTextPayload@@@Z 0x00401B80
 void NetTextListBase::on_remove(Payload *) { }
 
 void NetUnk72C::on_remove(Payload *payload) {
@@ -4065,21 +4048,7 @@ NetAllocationNode::~NetAllocationNode() {
 #pragma optimize("", on)
 
 
-void *allocate_net_node(size_t size, Heap *owner) {
-    void *memory;
-    if (owner != 0) {
-        memory = owner->get(size);
-        if (memory == 0) {
-            MessageBoxA(0, "out of heap space in new function", "Aborting", MB_OK);
-            exit(3);
-        }
-    } else {
-        memory = mem_get(size);
-        if (memory == 0) return 0;
-    }
-    StringAllocationHeap = owner;
-    return memory;
-}
+
 
 /*
 // ORIGINAL: 0x00402320 sub_402320 0x00402320-0x00402349 FILE BYTE_EXACT
@@ -4709,3 +4678,7 @@ int Net::send(void *data, int data_size, unsigned long target, int flags) {
 // RECOVERY_GENERATED: v1 vbtable 0x006693DC 0x006693E4 ??_8ServiceProviderList@@7B@ 0x00401660
 // RECOVERY_GENERATED: v1 vbtable 0x006693FC 0x00669404 ??_8NetTextListBase@@7B@ 0x00401B80
 // RECOVERY_GENERATED: v1 vbtable 0x00669424 0x0066942C ??_8NetUnk72C@@7B@ 0x00402D10
+// RECOVERY_GENERATED: v1 vtable 0x006693F0 ? ??_7NetTextListBase@@6BStringAllocationBase@@@ 0x00401B80
+// RECOVERY_GENERATED: v1 vtable 0x006693F4 ? ??_7NetTextListBase@@6B0@@ 0x00401B80
+// RECOVERY_GENERATED: v1 vtable 0x00669418 ? ??_7NetUnk72C@@6BStringAllocationBase@@@ 0x00402D10
+// RECOVERY_GENERATED: v1 vtable 0x0066941C ? ??_7NetUnk72C@@6BNetTextListBase@@@ 0x00402D10

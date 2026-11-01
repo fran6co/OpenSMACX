@@ -24,25 +24,33 @@ def test_real_text_accessor_guards_head_not_current(tmp_path, compiler_name):
     compiler = shutil.which(compiler_name)
     if compiler is None:
         pytest.skip(f"{compiler_name} unavailable")
-    body = definition((ROOT / "src/stringstruct.cpp").read_text(),
-                      "char *StringList::current_text()")
+    source = (ROOT / "src/stringstruct.cpp").read_text()
+    body = definition(source, "char *StringList::current_text()")
+    current_entry = definition(source,
+                               "StringStructPayload *StringStruct::current_entry()")
     fixture = r"""
 #include <cassert>
-struct Payload { char *text; };
-struct Entry {
-    Payload *payload;
-    Payload *string_payload() { return payload; }
+struct StringStructPayload { char *text; };
+struct StringStructEntry {
+    StringStructPayload *payload;
+    StringStructPayload *string_payload() { return payload; }
 };
-struct StringList {
-    Entry *head_, *current_;
+struct StringStruct {
+    StringStructEntry *head_, *current_;
+    StringStructPayload *current_entry();
+};
+struct StringList : StringStruct {
     char *current_text();
 };
+CURRENT_ENTRY
 BODY
 int main() {
     char first[] = "first", second[] = "second";
-    Payload p = {first}, q = {second};
-    Entry a = {&p}, b = {&q};
-    StringList list = {0, &a};
+    StringStructPayload p = {first}, q = {second};
+    StringStructEntry a = {&p}, b = {&q};
+    StringList list;
+    list.head_ = 0;
+    list.current_ = &a;
     assert(list.current_text() == 0);
     list.head_ = &a;
     list.current_ = &b;
@@ -56,7 +64,7 @@ int main() {
 
     def run(candidate, name):
         source, executable = tmp_path / (name + ".cpp"), tmp_path / name
-        source.write_text(fixture.replace("BODY", candidate))
+        source.write_text(fixture.replace("CURRENT_ENTRY", current_entry).replace("BODY", candidate))
         subprocess.run([compiler, "-std=c++98", "-Wall", "-Wextra", "-Werror",
                         str(source), "-o", str(executable)], check=True,
                        capture_output=True, timeout=30)

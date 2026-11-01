@@ -91,7 +91,7 @@ class PlanWin : public MapWin {
   // mismatch. Zero callers for either spelling in this tree, so the
   // conversion cannot break a call site.
   PlanWin();
-  ~PlanWin();
+  // Member and base teardown is supplied by the implicit virtual destructor.
   void init(char *caption);
   void find_view(int x1, int y1, int x2, int y2,
                  int x3, int y3, int x4, int y4);

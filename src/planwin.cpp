@@ -121,7 +121,8 @@ PlanWin::PlanWin() {
 
 /*
 Purpose: Destroy the complete PlanWin through C++ member and base lifetimes.
-// ORIGINAL: 0x0048BD80 ??1PlanWin@@QAE@XZ 0x0048BD80-0x0048BED6;0x00658210-0x006582DE
+// ORIGINAL: 0x0048BD80 ??1PlanWin@@QAE@XZ 0x0048BD80-0x0048BED6;0x00658210-0x006582DE FILE
+// compile_context src/planwin.cpp
 // symbol    ??1PlanWin@@UAE@XZ
 // size      548 bytes
 // prototype void (__thiscall ??1PlanWin@@QAE@XZ)(PlanWin* this)
@@ -140,11 +141,8 @@ complete PlanWindow above owns the lifetime; its generated destructor now
 performs the member, MapWin and virtual GraphicWin stages once. This changes
 the unclaimed body shape while preserving the original object relationship.
 */
-PlanWin::~PlanWin() {
-    // The declared Buffer, MapWin base and virtual GraphicWin base own their
-    // destruction in reverse construction order. The old hand teardown
-    // invoked those same destructors a second time before this epilogue.
-}
+// The implicit destructor retains the declared Buffer, MapWin and virtual
+// GraphicWin lifetimes without a separate cleanup body.
 
 // Initialize the plan display using its inherited MapWin and virtual
 // GraphicWin state. The image does not read the caption argument.

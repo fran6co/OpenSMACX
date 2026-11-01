@@ -14,6 +14,7 @@
 #include "general.h"
 #include <cstdlib>
 #include <cstring>
+#include "alphanet_inline.h"
 
 // Source-owned records and lifecycle mappings; this TU retains default /O2.
 // Superseded seed deleted; seed paths below are historical Git provenance.

@@ -446,7 +446,7 @@ Return Value: mutable text, or null when head_ is null
 Status: Complete
 */
 char *StringList::current_text() {
-    return head_ != 0 ? current_->string_payload()->text : 0;
+    return head_ != 0 ? current_entry()->text : 0;
 }
 
 // current_text is a provisional descriptive name, not a recovered original
