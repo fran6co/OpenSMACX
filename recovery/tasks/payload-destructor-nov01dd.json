@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "task_id": "payload-destructor-nov01dd",
+  "target": "opensmacx",
+  "author": "coordinator",
+  "base_revision": "08cfcffb275f7556a629b44dcba54b1a81af7075",
+  "intent": "Investigate explicit ordinary empty payload destructor visibility while preserving genuine virtual-base lifetime and deleting ownership.",
+  "editable_files": [
+    "src/stringstruct.h"
+  ],
+  "subjects": [
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 4205680
+    }
+  ],
+  "evidence": [
+    "Original scalar deleting body is leaf23instructions; current27instructions includesCALL to actual emptyRET implicit ??1StringStructPayload. Nativereceiver/bit0/owner publication/free/clear match; no hierarchy,type,member or guard correction justified.",
+    "Historyverified actualretainedheader/COFFtrials changedbase allocation destructor/guards, neverthisspecificpayloadexplicitdestructor. Coordinator authorizes ONEheaderoverlay addingonly ordinary ~StringStructPayload() {} in existingclass. No attributes/newfields/manualbasecalls/ListPayloadBasechanges/newwrappers/flags.",
+    "Measure payloadbody+allstringstructownerrecords and actualstrictrefs/layout; hardstopifno newexactgain or knownexact/ownership regression. No claimgrant or sourceedit justbecausecandidatewasproposed. Positivecandidate requires currentmergedInfoWinguard rebase/context validation beforefinalwholeheaderclosure build/link/preservation."
+  ]
+}
