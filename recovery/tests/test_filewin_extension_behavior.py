@@ -176,7 +176,7 @@ def test_actual_filewin_method_and_alphasave_forwarder_with_mutation_controls(co
         pytest.skip(f"{compiler} unavailable")
 
     filewin = (PROJECT_ROOT / "src/jackal/filewin.cpp").read_text()
-    alphasave = (PROJECT_ROOT / "src/alphasave.cpp").read_text()
+    alphasave = (PROJECT_ROOT / "src/alphasave.h").read_text()
     body = extract_definition(filewin, "int FileWin::add_def_ext(")
     wrapper = extract_definition(alphasave, "int AlphaSave::add_default_extension(")
 

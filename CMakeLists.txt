@@ -150,6 +150,7 @@ set(OPENSMACX_SOURCES
     src/caviar.cpp
     src/caviar_record.cpp
     src/caviar_io.cpp
+    src/caviar_error.cpp
     src/caviar_geometry.cpp
     src/caviar_data.cpp
     src/caviar_cpu.cpp
@@ -621,6 +622,8 @@ set_source_files_properties(src/header_io.cpp src/crt_random.cpp
 # The remaining General helpers retain their existing source recipe.
 set_source_files_properties(src/application_math.cpp src/application_text.cpp
     PROPERTIES COMPILE_OPTIONS "/Oy-")
+# Terraforming's three pinned functions retain EBP-based argument frames.
+set_property(SOURCE src/terraforming.cpp APPEND PROPERTY COMPILE_OPTIONS "/Oy-")
 # Only the CPU register probe uses the explicitly registered intrinsic frontend.
 # The rest of Caviar and the application continue to use their VC6 recipes.
 set_source_files_properties(src/caviar_cpu.cpp

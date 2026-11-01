@@ -25,12 +25,14 @@
 #include "basepop.h"
 #include "win.h"
 #include <math.h>
+#include <stddef.h>
 
 // These pinned sites call the ordinary CRT pow entry with double arguments.
 #ifdef _MSC_VER
 #pragma function(pow)
 #endif
 
+// RECOVERY_LITERAL: v1 0x0066FA68 0x0066FA70 __real@8@4006ebfd70a3d70a4000 0x005C959C
 namespace {
 const double GammaPositionScale = 0.01;
 // Original 5C955F reads this scalar as a qword. Bind only its observed start;
@@ -169,7 +171,8 @@ double Gamma::exec(Palette *target, float initial_gamma, int apply_only) {
 // symbol    ?adjust_palette@Gamma@@QAEXXZ
 void Gamma::adjust_palette() {
     gamma_ = static_cast<double>(scroll_.position()) * GammaPositionScale;
-    PALETTEENTRY *entry = &palette_.entries_[10];
+    unsigned char *green = reinterpret_cast<unsigned char *>(&palette_.entries_) +
+        10 * sizeof(PALETTEENTRY) + offsetof(PALETTEENTRY, peGreen);
     int i = 0;
     do {
         double value = pow(static_cast<double>(i) * GammaComponentScale,
@@ -178,9 +181,11 @@ void Gamma::adjust_palette() {
         else if (value > 1.0) value = 1.0;
         const unsigned char shade = static_cast<unsigned char>(
             static_cast<int>(value * 235.99));
-        entry->peBlue = entry->peGreen = entry->peRed = shade;
+        green[-1] = shade;
+        green[0] = shade;
+        green[1] = shade;
         ++i;
-        ++entry;
+        green += sizeof(PALETTEENTRY);
     } while (i < 236);
     palette_.reseed();
     palette_.set();

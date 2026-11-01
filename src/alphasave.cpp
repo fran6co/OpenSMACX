@@ -456,13 +456,6 @@ char *AlphaSave::load() {
     return selected;
 }
 
-int AlphaSave::add_default_extension(char *extension) {
-    return file_win_.add_def_ext(extension);
-}
-
-int AlphaSave::set_default_filename(char *name) {
-    return file_win_.set_def_name(name);
-}
 
 // Negative load-success prompt retries explicitly close these two owners.
 void AlphaSave::close_for_load_retry() {

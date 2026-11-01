@@ -55,6 +55,14 @@ class AlphaSave : public GraphicWin {
   Sprite sprite7_;               // 0x602C
 };
 
+inline int AlphaSave::add_default_extension(char *extension) {
+    return file_win_.add_def_ext(extension);
+}
+
+inline int AlphaSave::set_default_filename(char *name) {
+    return file_win_.set_def_name(name);
+}
+
 // The file-box draw/show/hide/save/load paths share this process-wide active
 // owner pointer. Its image slot is 0x006A7524; it is not a FileWin member.
 extern AlphaSave *ActiveAlphaSave;

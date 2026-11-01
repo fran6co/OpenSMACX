@@ -89,7 +89,7 @@ int __cdecl terraform_cost(int x, int y, int faction_id) {
     cost += 2;
     cost *= cost;
     if (tile->bit & BIT_FUNGUS
-        && static_cast<int>(climate & 0xE0) >= ALT_BIT_OCEAN_SHELF) {
+        && static_cast<int>(climate & ~0x1Fu) >= ALT_BIT_OCEAN_SHELF) {
         cost *= 3;
     }
     cost *= 2;
@@ -107,12 +107,21 @@ int __cdecl terraform_cost(int x, int y, int faction_id) {
     // call the image makes - `call_diff` reports FEWER.
     int base_id_prox = base_find(x, y, -1, -1, faction_id, -1);
     if (base_id >= 0) {
-        int cursor_distance = cursor_dist(x, y, Bases[base_id].x, Bases[base_id].y);
+        const int base_y = Bases[base_id].y;
+        const int base_x = Bases[base_id].x;
+        int cursor_distance = (x_dist(x, base_x) + abs(y - base_y)) >> 1;
         cost *= range(cursor_distance, 1, 100);
-        if (base_id_prox >= 0 
-            && !has_treaty(faction_id, Bases[base_id_prox].faction_id_current, DTREATY_PACT)) {
-            int num_prox = (cursor_distance * (Bases[base_id_prox].population_size + 2)) / 3;
-            int denom_prox = (cursor_dist(x, y, Bases[base_id_prox].x, Bases[base_id_prox].y)
+        if (base_id_prox >= 0
+            && (PlayersData[faction_id].diplo_treaties[
+                    Bases[base_id_prox].faction_id_current] & DTREATY_PACT) == 0) {
+            const int numerator_y = Bases[base_id].y;
+            const int numerator_x = Bases[base_id].x;
+            const int numerator_distance =
+                (x_dist(x, numerator_x) + abs(y - numerator_y)) >> 1;
+            int num_prox = (numerator_distance * (Bases[base_id_prox].population_size + 2)) / 3;
+            const int denominator_y = Bases[base_id_prox].y;
+            const int denominator_x = Bases[base_id_prox].x;
+            int denom_prox = (((x_dist(x, denominator_x) + abs(y - denominator_y)) >> 1)
                 * (Bases[base_id].population_size + 2)) / 3;
             if (denom_prox && num_prox && denom_prox < num_prox) {
                 cost = (cost * num_prox) / denom_prox; // increase cost based on proximity ratio
@@ -152,14 +161,12 @@ Status: Complete
 int __cdecl contribution(int veh_id, int terraform_id) {
     // CACHED, NOT RE-READ: the image loads Vehs[veh_id].faction_id ONCE,
     // alongside proto_id, and reuses it for both has_project() calls below.
-    uint8_t faction_id = Vehs[veh_id].faction_id;
-    int rate;
+    const int faction_id = Vehs[veh_id].faction_id;
+    int rate = 2;
     // AN IF, NOT A TERNARY: the image branches to two separate `mov edi, N`
     // stores rather than computing 2/4 branchlessly.
     if (has_abil(Vehs[veh_id].proto_id, ABL_SUPER_TERRAFORMER)) {
         rate = 4;
-    } else {
-        rate = 2;
     }
     if (terraform_id == (ORDER_REMOVE_FUNGUS - 4) || terraform_id == (ORDER_PLANT_FUNGUS - 4)) {
         if (has_project(SP_XENOEMPATYH_DOME, faction_id)) {
@@ -317,7 +324,8 @@ int __cdecl can_terraform(int faction_id, int x, int y, int force_improve, int b
     uint32_t bit = tile->bit;
     // Fungus in deep water does not count: the altitude is the tile's own.
     BOOL has_fungus = (bit & BIT_FUNGUS)
-        && (tile->climate & 0xE0) >= ALT_BIT_OCEAN_SHELF;
+        && static_cast<int>(static_cast<uint32_t>(tile->climate) & ~0x1Fu)
+            >= ALT_BIT_OCEAN_SHELF;
     uint32_t has_mine = bit & BIT_MINE;
     uint32_t has_solar = bit & BIT_SOLAR_TIDAL;
     uint32_t has_farm = bit & BIT_FARM;

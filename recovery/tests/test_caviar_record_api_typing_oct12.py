@@ -16,7 +16,7 @@ import pytest
 
 from match_recovery.includes import COMMENTS_OR_STRINGS
 from match_recovery.binding_source import parse as parse_binding_evidence
-from match_recovery.source import read, read_text
+from match_recovery.source import Mode, read, read_text
 from test_caviar_descriptor_ramps_overlay_oct9 import extract
 from test_function_span_tails_oct11 import expected_extended_record
 from test_verified_tail_claims_oct11 import expected_recorded_tail
@@ -156,7 +156,12 @@ def assert_caviar_record_continuity(before, current):
     assert current.address == before.address
     assert current.name == before.name
     assert current.image_spans == before.image_spans
-    assert current.mode == before.mode
+    if (before.address == 0x639390 and before.mode is Mode.BODY
+            and current.mode is Mode.FILE):
+        assert current.path == ROOT / "src/caviar_error.cpp"
+        assert current.context == "src/caviar_error.cpp"
+    else:
+        assert current.mode == before.mode
     assert current.kind == before.kind
     assert current.exclusion == before.exclusion
     assert current.source_role == before.source_role

@@ -1180,6 +1180,10 @@ static Callback vox_load_callback(size_t offset) {
 typedef char (__cdecl *vox_user_chunk_fn)(int, CvrRecord *, CvrChunkHeader *);
 // RECOVERY_OBJECT: v2 0x009C0834 0x009C0838 ?vox_user_chunk@@3P6ADHPAUCvrRecord@@PAUCvrChunkHeader@@@ZA 0x006381F0
 vox_user_chunk_fn vox_user_chunk = 0; // 0x009C0834, zeroed on accepted CPU report
+// Pinned 63934C writes one DWORD at9C0B78 on accepted CPU setup.
+// This source scalar owns the corresponding storage; its complete original
+// allocation extent and an original descriptive name remain unproved.
+// RECOVERY_OBJECT: v1 0x009C0B78 ?vox_unk_9c0b78@@3IA
 uint32_t vox_unk_9c0b78 = 0;    // 0x009C0B78, zeroed on accepted CPU report
 // caviar_cpu.cpp owns the original0x009C0B70 vendor byte: 0 unknown,
 // 1 GenuineIntel, 2 AuthenticAMD.
@@ -1705,57 +1709,7 @@ void __cdecl sub_63ae20(VoxRenderRecord *record) {
     typed->shadow_clipped_ = &caviar_original_666a80;
 }
 
-/*
-Purpose: Stage the engine's ERROR MESSAGE: copy the caller's string into
-         the shared buffer vox_message_buffer (0x9C0D60). Named
-         vox_stage_error 2026-08-30 from the buffer's readers - the engine
-         clears it to NUL before each use (0x0063830E), strlen-tests it and
-         stages a default when empty (0x006383F1, "Error reading user data
-         chunk"), and copies a staged default out of it wholesale
-         (0x0063FA61) - every vox_* error path stages through here first.
-         The
-         catalogued nullary-int contract is wrong on both counts - the body
-         reads a real stack argument, and `return 0;` would insert an
-         `xor eax,eax` ahead of the expansion's `and ecx,3`.
-// ORIGINAL: 0x00639390 sub_639390 0x00639390-0x006393B9 BYTE_EXACT
-// symbol    _vox_stage_error
-// size      41 bytes
-// callers   12   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-//
-// LEVER: stdafx.h's `#pragma function(strcpy)` makes every strcpy a call,
-//        but the image INLINES this one (`repne scasb` + `rep movsd/movsb`
-//        is VC6's /Oi expansion). A TU-local `#pragma intrinsic(strcpy)`
-//        just above the body restores the expansion at exactly this one
-//        site - destination as a literal `(char *)0x009C0D60` so the
-//        immediate folds - and BYTE_EXACT fell out first try. The pragma
-//        sits below every other body in this file, none of which calls
-//        strcpy, so nothing else can move.
-//
-// PROMOTED from src/recovered/00639390.cpp.
-Return Value: n/a
-*/
-// The image INLINES this one strcpy - the `repne scasb` + `rep movsd/movsb`
-// tail is VC6's own /Oi expansion, and calling strcpy while discarding the
-// result is what reproduces it. Every other string op in the shipped image
-// is an out-of-line call, which is why stdafx.h turns the four string
-// routines into calls tree-wide - so this one TU-local pragma restores the
-// expansion exactly where the image has it. Placed below every other body
-// in this file, none of which calls strcpy, so nothing else can move.
-#if defined(_MSC_VER) && _MSC_VER <= 1200
-#pragma intrinsic(strcpy)
-#endif
-// The engine's staged-message slot, 0x009C0D60 in the image - real storage
-// now. Every error arm writes it via vox_stage_error; the engine clears it,
-// strlen-tests it and reads it back (0x0063830E/0x006383F1/0x0063FA61 - the
-// last copies 27 bytes, so the slot holds at least that; the image's extent
-// is unpinned, 0x100 is comfortable).
 
-extern "C" void __cdecl vox_stage_error(const char *message) {
-    strcpy(CaviarOutputMessageWindow.message_, message);
-}
 
 /*
 Purpose: Fill a render record's pixel-size dispatch slots for CPU ranks 1, 2
@@ -5224,103 +5178,7 @@ void Caviar::fill_clip_rect(uint32_t *destination) {
     }
 }
 
-/*
-Purpose: Install a shadow table into the created render record: the record's
-         own 0x54 slot names the 0x100-byte block, and the caller's bytes are
-         copied over it. 7 means no record, 0x10 means the record has no
-         shadow table.
-// ORIGINAL: 0x00618430 ?set_shadow_table@Caviar@@QAEHPAE@Z 0x00618430-0x00618468 BYTE_EXACT
-// symbol    ?set_shadow_table@Caviar@@QAEHPAE@Z
-// size      55 bytes
-// prototype int (__thiscall ?set_shadow_table@Caviar@@QAEHPAE@Z)(Caviar* this, unsigned char*)
-// callers   1   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// indirect  0x0061845B
-//
-// CLAIMED BYTE_EXACT, homed from src/recovered/units/00618430.cpp 2026-09-04
-// and re-measured here. Its binding g_009bb478 is CaviarScene.created_ here,
-// and 0x54 is the record's shadow_table_ slot (caviar.h's VoxRenderRecord).
-// The copy is a real out-of-line call in the image (0x645930), so it is
-// spelled plain `memcpy` - the intrinsic expansion would rep movsd it.
-Return Value: 0 on success, 7 without a record, 0x10 without a shadow table.
-*/
-// TRIED: 17 of 17 instructions agree positionally; the body carries one
-//        instruction the image's listing does not - its own closing
-//        `ret 4`, which falls one byte past the catalogued span - the ret
-//        sits at 0x00618465 and ends at 0x00618468, the span at 0x00618467.
-//        The
-//        intrinsic spelling, this pragma spelling and the scaffold's
-//        `_memcpy` indirection all land identically, so the claim is
-//        demoted rather than carried.
-// TRIED: the image CALLS memcpy here (0x645930) rather than letting it expand, so
-// this one pragma turns the intrinsic back into a call for the rest of the
-// file - which is this body alone, every earlier one being above it. The
-// mirror of vox_stage_error's `#pragma intrinsic(strcpy)` at the foot, which
-// works the other way round.
-#if defined(_MSC_VER) && _MSC_VER <= 1200
-#pragma function(memcpy)
-#endif
-int Caviar::set_shadow_table(unsigned char *table) {
-    if (CaviarScene.created_ == 0) {
-        return 7;
-    }
-    if (CaviarScene.created_->shadow_table_ == 0) {
-        return 0x10;
-    }
-    memcpy(CaviarScene.created_->shadow_table_, table, 0x100);
-    return 0;
-}
 
-/*
-Purpose: The engine's per-object callback. Fills 0x1800 bytes of the handle's
-         colour table from wherever field_4_'s bits say the next draw reads:
-         the shared monochrome source when bit 3 is on, the table the caller
-         of render_with_colour_table handed over when bit 4 is on, otherwise
-         this renderer's own entry for the instance the engine names.
-// ORIGINAL: 0x00618DA0 ?object_start@Caviar@@QAAXPAUVOX_ScnRenderHnd@@JPAUVOX_Vect@@PAUVOX_Matrix@@PAUVOX_Rect@@PAUVOX_Vect@@@Z 0x00618DA0-0x00618E06 BYTE_EXACT
-// symbol    ?object_start@Caviar@@SAXPAUVoxRenderRecord@@JPAUVOX_Vect@@PAUVOX_Matrix@@PAH1@Z
-//           (VC6 back-references the sixth argument - the same VOX_Vect as
-//           the third - to `1`; the catalogued name spells it out in full.)
-// size      102 bytes
-// prototype void (__thiscall ?object_start@Caviar@@QAAXPAUVOX_ScnRenderHnd@@JPAUVOX_Vect@@PAUVOX_Matrix@@PAUVOX_Rect@@PAUVOX_Vect@@@Z)(Caviar* this, VOX_ScnRenderHnd*, long, VOX_Vect*, VOX_Matrix*, VOX_Rect*, VOX_Vect*)
-// callers   0   call targets   1
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     0x00645930
-//
-// The original mapping and recovered prototype are retained above. The
-// current callback takes int32_t* for bounds because the draw passes the
-// six-int values_ member at view + 0x48. It is static so its address has the
-// plain six-argument __cdecl type; the body reads only the handle and index.
-//
-// PLACED AFTER set_shadow_table so this file's `#pragma function(memcpy)`
-// reaches it: the image CALLS memcpy here (0x00645930), and /Oi would expand
-// a 0x1800-byte copy inline.
-//
-// NAMED 2026-09-05: the four unread arguments take the roles their types
-// carry in the engine's per-object packet; none of them reaches the table.
-//
-// UNK1 note: the residual on 0x00617080 is register naming only - the image
-// saves esi for `this` and edi for its zero register, this tree saves ebp and
-// esi, so the same 86 instructions disagree on operand spellings throughout
-// and `osmx semantic` refuses at instruction 2 (`mov` against `push`). No
-// source spelling moved it: dropping the record local changed nothing.
-Return Value: n/a
-Status: Complete
-*/
-void __cdecl Caviar::object_start(VOX_ScnRenderHnd *handle, long instance,
-                                  VOX_Vect *position, VOX_Matrix *orientation,
-                                  int32_t *bounds, VOX_Vect *direction) {
-    Caviar &self = *CaviarScene.renderer_;
-    if (self.field_4_ & 8) {
-        memcpy(handle->colour_table_, CaviarColourSource, 0x1800);
-    } else if (self.field_4_ & 0x10) {
-        memcpy(handle->colour_table_, CaviarScene.render_argument_, 0x1800);
-    } else {
-        memcpy(handle->colour_table_, self.instance_palettes_[instance], 0x1800);
-    }
-}
 
 /*
 Purpose: Point the renderer at a Buffer and reset the six channel bounds to
@@ -6381,5 +6239,103 @@ extern "C" void __cdecl sub_63b241(unsigned char *destination_base,
             carried_y = (carried_y + source_y_step) & 0xffff;
             --height;
         } while (height != 0);
+    }
+}
+
+/*
+Purpose: Install a shadow table into the created render record: the record's
+         own 0x54 slot names the 0x100-byte block, and the caller's bytes are
+         copied over it. 7 means no record, 0x10 means the record has no
+         shadow table.
+// ORIGINAL: 0x00618430 ?set_shadow_table@Caviar@@QAEHPAE@Z 0x00618430-0x00618468 BYTE_EXACT
+// symbol    ?set_shadow_table@Caviar@@QAEHPAE@Z
+// size      55 bytes
+// prototype int (__thiscall ?set_shadow_table@Caviar@@QAEHPAE@Z)(Caviar* this, unsigned char*)
+// callers   1   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// indirect  0x0061845B
+//
+// CLAIMED BYTE_EXACT, homed from src/recovered/units/00618430.cpp 2026-09-04
+// and re-measured here. Its binding g_009bb478 is CaviarScene.created_ here,
+// and 0x54 is the record's shadow_table_ slot (caviar.h's VoxRenderRecord).
+// The copy is a real out-of-line call in the image (0x645930), so it is
+// spelled plain `memcpy` - the intrinsic expansion would rep movsd it.
+Return Value: 0 on success, 7 without a record, 0x10 without a shadow table.
+*/
+// TRIED: 17 of 17 instructions agree positionally; the body carries one
+//        instruction the image's listing does not - its own closing
+//        `ret 4`, which falls one byte past the catalogued span - the ret
+//        sits at 0x00618465 and ends at 0x00618468, the span at 0x00618467.
+//        The
+//        intrinsic spelling, this pragma spelling and the scaffold's
+//        `_memcpy` indirection all land identically, so the claim is
+//        demoted rather than carried.
+// TRIED: the image CALLS memcpy here (0x645930) rather than letting it expand, so
+// this one pragma turns the intrinsic back into a call for the rest of the
+// file - which is this body alone, every earlier one being above it. The
+// mirror of vox_stage_error's `#pragma intrinsic(strcpy)` at the foot, which
+// works the other way round.
+#if defined(_MSC_VER) && _MSC_VER <= 1200
+#pragma function(memcpy)
+#endif
+int Caviar::set_shadow_table(unsigned char *table) {
+    if (CaviarScene.created_ == 0) {
+        return 7;
+    }
+    if (CaviarScene.created_->shadow_table_ == 0) {
+        return 0x10;
+    }
+    memcpy(CaviarScene.created_->shadow_table_, table, 0x100);
+    return 0;
+}
+
+/*
+Purpose: The engine's per-object callback. Fills 0x1800 bytes of the handle's
+         colour table from wherever field_4_'s bits say the next draw reads:
+         the shared monochrome source when bit 3 is on, the table the caller
+         of render_with_colour_table handed over when bit 4 is on, otherwise
+         this renderer's own entry for the instance the engine names.
+// ORIGINAL: 0x00618DA0 ?object_start@Caviar@@QAAXPAUVOX_ScnRenderHnd@@JPAUVOX_Vect@@PAUVOX_Matrix@@PAUVOX_Rect@@PAUVOX_Vect@@@Z 0x00618DA0-0x00618E06 BYTE_EXACT
+// symbol    ?object_start@Caviar@@SAXPAUVoxRenderRecord@@JPAUVOX_Vect@@PAUVOX_Matrix@@PAH1@Z
+//           (VC6 back-references the sixth argument - the same VOX_Vect as
+//           the third - to `1`; the catalogued name spells it out in full.)
+// size      102 bytes
+// prototype void (__thiscall ?object_start@Caviar@@QAAXPAUVOX_ScnRenderHnd@@JPAUVOX_Vect@@PAUVOX_Matrix@@PAUVOX_Rect@@PAUVOX_Vect@@@Z)(Caviar* this, VOX_ScnRenderHnd*, long, VOX_Vect*, VOX_Matrix*, VOX_Rect*, VOX_Vect*)
+// callers   0   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00645930
+//
+// The original mapping and recovered prototype are retained above. The
+// current callback takes int32_t* for bounds because the draw passes the
+// six-int values_ member at view + 0x48. It is static so its address has the
+// plain six-argument __cdecl type; the body reads only the handle and index.
+//
+// PLACED AFTER set_shadow_table so this file's `#pragma function(memcpy)`
+// reaches it: the image CALLS memcpy here (0x00645930), and /Oi would expand
+// a 0x1800-byte copy inline.
+//
+// NAMED 2026-09-05: the four unread arguments take the roles their types
+// carry in the engine's per-object packet; none of them reaches the table.
+//
+// UNK1 note: the residual on 0x00617080 is register naming only - the image
+// saves esi for `this` and edi for its zero register, this tree saves ebp and
+// esi, so the same 86 instructions disagree on operand spellings throughout
+// and `osmx semantic` refuses at instruction 2 (`mov` against `push`). No
+// source spelling moved it: dropping the record local changed nothing.
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl Caviar::object_start(VOX_ScnRenderHnd *handle, long instance,
+                                  VOX_Vect *position, VOX_Matrix *orientation,
+                                  int32_t *bounds, VOX_Vect *direction) {
+    Caviar &self = *CaviarScene.renderer_;
+    if (self.field_4_ & 8) {
+        memcpy(handle->colour_table_, CaviarColourSource, 0x1800);
+    } else if (self.field_4_ & 0x10) {
+        memcpy(handle->colour_table_, CaviarScene.render_argument_, 0x1800);
+    } else {
+        memcpy(handle->colour_table_, self.instance_palettes_[instance], 0x1800);
     }
 }
