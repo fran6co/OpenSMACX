@@ -223,7 +223,8 @@ void __cdecl main_interface_timer_callback(int, void *);
 // RECOVERY_BINDING: v1 {"evidence": ["src/maininterface.h", "git:b4601390:recovery/tasks/maininterface-owner-coverage.json", "git:f7bbce35:src/unrecovered/00459680.cpp"], "reason": "Original owner calls, secondary interface receiver and ordinary embedded-member lifecycle identify this MainInterface operation; compatible historical seed spans are retained, without a matching claim."}
 int MainInterface::init(int) {
     Buffer assets;
-    const bool compact_view = WinScreenWidth == 800;
+    const int screen_height_on_entry = WinScreenHeight;
+    const int screen_width_on_entry = WinScreenWidth;
     field_1EAC8_ = 0;
     memset(InterfaceRegistry, 0, sizeof(InterfaceRegistry));
     memset(IfaceIdToSlotStorage, 0, sizeof(IfaceIdToSlotStorage));
@@ -234,7 +235,7 @@ int MainInterface::init(int) {
     spot_.init(1);
     field_D7C_ = 213;
     SetRect(&rect4_, 4, 56, 245, 252);
-    if (compact_view) {
+    if (WinScreenWidth == 800) {
         SetRect(&right_frame_rect_, 555, 57, 796, 253);
         SetRect(&info_panel_frame_, 261, 66, 540, 172);
         SetRect(&lower_frame_rect_, 244, 188, 544, 252);
@@ -249,8 +250,9 @@ int MainInterface::init(int) {
         SetRect(&right_frame_rect_, 779, 56, 1020, 252);
         SetRect(&info_panel_frame_, 262, 66, 763, 172);
         SetRect(&lower_frame_rect_, 244, 188, 768, 252);
-        const int x = (WinScreenWidth - 1024) / 2;
-        SetRect(&window_bounds_, x, WinScreenHeight - 257, x + 1024, WinScreenHeight);
+        const int x = (screen_width_on_entry - 1024) / 2;
+        SetRect(&window_bounds_, x, screen_height_on_entry - 257,
+                x + 1024, screen_height_on_entry);
         SetRect(&menu_button_rect_, 11, 20, 117, 34);
         SetRect(&multiplayer_button_rect_, 908, 22, 1014, 36);
         SetRect(&menu_animation_bounds_, 118, 0, 282, 60);
@@ -296,7 +298,8 @@ int MainInterface::init(int) {
     font1_.init(DefaultFontFace, 14, 1);
     font2_.init(DefaultFontFace, 12, 0);
     font3_.init(DefaultFontFace, 12, 1);
-    if (assets.load_pcx(compact_view ? "console_A.pcx" : "console2_A.pcx", 0, 10, 236)) return 1;
+    if (assets.load_pcx(WinScreenWidth == 800 ? "console_A.pcx" : "console2_A.pcx",
+                        0, 10, 236)) return 1;
     spot_.add(5, 0, &end_turn_rect_);
     GraphicWin::init(window_bounds_.left, window_bounds_.top,
                     window_bounds_.right - window_bounds_.left, height,
@@ -304,38 +307,52 @@ int MainInterface::init(int) {
     Buffer &canvas = *static_cast<Buffer *>(this);
     assets.copy(&canvas, 0, 0, assets.pixel_width(), assets.pixel_height(),
                 0, 0, canvas.pixel_width(), canvas.pixel_height());
-    sprites13_[0].init(compact_view ? "iface_up_A.pcx" : "iface_up2_A.pcx", 0, 0);
-    sprites13_[1].init(compact_view ? "iface_down_A.pcx" : "iface_down2_A.pcx", 0, 0);
+    if (WinScreenWidth == 800) {
+        sprites13_[0].init("iface_up_A.pcx", 0, 0);
+        sprites13_[1].init("iface_down_A.pcx", 0, 0);
+    } else {
+        sprites13_[0].init("iface_up2_A.pcx", 0, 0);
+        sprites13_[1].init("iface_down2_A.pcx", 0, 0);
+    }
     sprites13_[0].iWidth_ = sprites13_[1].iWidth_ = 535;
     sprites13_[0].iHeight_ = sprites13_[1].iHeight_ = 96;
     flic2_.init(&canvas, "turn.flc", end_turn_rect_.left, end_turn_rect_.top, 1);
-    assets.load_pcx(compact_view ? "console_x_A.pcx" : "console_x2_A.pcx", 0, 10, 236);
+    assets.load_pcx(WinScreenWidth == 800 ? "console_x_A.pcx" : "console_x2_A.pcx",
+                    0, 10, 236);
     int i, frame;
     for (i = 0; i < 10; ++i)
         sprites6_[i].extract(&assets, WinFillColour, 1 + (i / 5) * 191,
                             1 + (i % 5) * 27, 190, 26, 0);
-    sprites4_[0].extract(&assets, WinFillColour, 194, 136, compact_view ? 131 : 164, compact_view ? 51 : 60, 0);
-    sprites4_[1].extract(&assets, WinFillColour, 194, compact_view ? 188 : 197,
-                        compact_view ? 166 : 164, compact_view ? 48 : 64, 0);
-    sprites3_[0].extract(&assets, WinFillColour, 194, compact_view ? 237 : 262,
-                        compact_view ? 131 : 164, compact_view ? 51 : 60, 0);
-    sprites3_[1].extract(&assets, WinFillColour, 194, compact_view ? 289 : 323,
-                        compact_view ? 166 : 164, compact_view ? 48 : 64, 0);
-    for (i = 0; i < 5; ++i) {
-        sprites5_[2*i].extract(&assets, WinFillColour, 384, 1 + i * (compact_view ? 52 : 61),
-                              compact_view ? 131 : 164, compact_view ? 51 : 60, 0);
-    }
-    for (i = 0; i < 5; ++i) {
-        sprites5_[2*i+1].extract(&assets, WinFillColour, compact_view ? 516 : 549,
-                                1 + i * (compact_view ? 49 : 65), compact_view ? 166 : 164,
-                                compact_view ? 48 : 64, 0);
+    if (WinScreenWidth == 800) {
+        sprites4_[0].extract(&assets, WinFillColour, 194, 136, 131, 51, 0);
+        sprites4_[1].extract(&assets, WinFillColour, 194, 188, 166, 48, 0);
+        sprites3_[0].extract(&assets, WinFillColour, 194, 237, 131, 51, 0);
+        sprites3_[1].extract(&assets, WinFillColour, 194, 289, 166, 48, 0);
+        for (i = 0; i < 5; ++i)
+            sprites5_[2*i].extract(&assets, WinFillColour, 384, 1 + i * 52,
+                                  131, 51, 0);
+        for (i = 0; i < 5; ++i)
+            sprites5_[2*i+1].extract(&assets, WinFillColour, 516,
+                                    1 + i * 49, 166, 48, 0);
+    } else {
+        sprites4_[0].extract(&assets, WinFillColour, 194, 136, 164, 60, 0);
+        sprites4_[1].extract(&assets, WinFillColour, 194, 197, 164, 64, 0);
+        sprites3_[0].extract(&assets, WinFillColour, 194, 262, 164, 60, 0);
+        sprites3_[1].extract(&assets, WinFillColour, 194, 323, 164, 64, 0);
+        for (i = 0; i < 5; ++i)
+            sprites5_[2*i].extract(&assets, WinFillColour, 384, 1 + i * 61,
+                                  164, 60, 0);
+        for (i = 0; i < 5; ++i)
+            sprites5_[2*i+1].extract(&assets, WinFillColour, 549,
+                                    1 + i * 65, 164, 64, 0);
     }
     for (i = 0; i < 3; ++i)
         sprites8_[i].extract(&assets, WinFillColour, 1, 217 + i*15, 106, 14, 0);
     const int columns[4] = {683, 699, 708, 717};
     const int widths[4] = {15, 8, 8, 15};
+    const int column_offset = WinScreenWidth == 800 ? 0 : 30;
     for (i = 0; i < 4; ++i)
-        sprites2_[i].extract(&assets, WinFillColour, columns[i] + (compact_view ? 0 : 30),
+        sprites2_[i].extract(&assets, WinFillColour, columns[i] + column_offset,
                             1, widths[i], 529, 0);
     const int rows[4] = {279, 306, 341, 367};
     const int heights[4] = {26, 34, 25, 34};
@@ -474,7 +491,7 @@ int MainInterface::init(int) {
     InflateRect(&editor_panel_rect_, 3, 3);
     button_group_[2].set(1011, 1);
     editor_tools_rect_.left = editor_tools_rect_.right = 0;
-    if (!compact_view) {
+    if (WinScreenWidth != 800) {
         for (i = 0; i < 6; ++i) {
             RECT &r = brush_button_rects_[i];
             UnionRect(&editor_tools_rect_, &editor_tools_rect_, &r);

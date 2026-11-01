@@ -1511,7 +1511,7 @@ void Scroll::on_mouse_move(int x, int y) {
         } else {
             int offset = y - extent;
             if (border_color_ != -1) {
-                ++offset;
+                --offset;
             }
             field_A3C_ = offset;
             next_position = (offset - (extent >> 1))

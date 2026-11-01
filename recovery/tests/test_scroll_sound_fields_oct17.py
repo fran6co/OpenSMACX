@@ -50,6 +50,10 @@ def mouse_move_source(damage=None):
         )
         assert body.count(old) == 1
         body = body.replace(old, new, 1)
+    elif damage == "vertical_border_increment":
+        old = "int offset = y - extent;\n            if (border_color_ != -1) {\n                --offset;"
+        assert body.count(old) == 1
+        body = body.replace(old, old.replace("--offset", "++offset"), 1)
     elif damage is not None:
         raise AssertionError(f"unknown damage: {damage}")
     return body
@@ -149,6 +153,25 @@ static void setup(Scroll &scroll, Win &entry, Win &middle, Win &last,
 }
 
 int main(){
+    // Pin 605ED6..605ED9 decrements the bordered vertical pointer offset.
+    // Use a range equal to the usable track length so rounding cannot hide
+    // the old +1 translation error; unbordered dragging stays unchanged.
+    for (int bordered=0; bordered!=2; ++bordered) {
+        Scroll scroll; Win entry;
+        scroll.win_parent_=&entry;
+        scroll.dib_.bmiHeader.biWidth=10;
+        scroll.dib_.bmiHeader.biHeight=-100;
+        scroll.range_maximum_=bordered ? 68 : 70;
+        scroll.border_color_=bordered ? 0 : -1;
+        active=&scroll; WinPointerOwner1=&scroll; WinPointerOwner2=nullptr;
+        WinSizingFlag=1; mutate_parent=false; mutate_callback=false;
+        scroll.on_mouse_move(4,50);
+        assert(scroll.field_A3C_==static_cast<unsigned>(bordered ? 39 : 40));
+        assert(scroll.position_==(bordered ? 34 : 35));
+        assert(entry.calls==1 && entry.position==scroll.position_);
+        assert(scroll.redraws==1);
+    }
+    callback_calls=callback_id=callback_position=0;
     // Equal saved/current position bypasses both notifications and sound.
     {
         Scroll scroll; Win entry; Sound sound; entry.sound=&sound;
@@ -217,7 +240,7 @@ def source_for_control(damage=None):
 
 
 @pytest.mark.parametrize("compiler", ("g++", "clang++"))
-@pytest.mark.parametrize("damage", (None, "stale_parent", "retest_reversal", "unconditional_sound"))
+@pytest.mark.parametrize("damage", (None, "stale_parent", "retest_reversal", "unconditional_sound", "vertical_border_increment"))
 def test_actual_mouse_move_tail_and_damage_controls(tmp_path, compiler, damage):
     compiler_path = shutil.which(compiler)
     if compiler_path is None:
