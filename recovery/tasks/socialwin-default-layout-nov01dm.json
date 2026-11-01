@@ -1,0 +1,22 @@
+{
+  "author": "coordinator",
+  "base_revision": "dd5a093cc96f1eb90b6071e6c2c0e3df651868bd",
+  "editable_files": [
+    "src/socialwin.cpp"
+  ],
+  "evidence": [
+    "Pinned out-of-rangeJA selects4B1E38 no-op epilogue before reset-only case; currentJA targets4B1E44 after it.",
+    "One source-form budget: explicit default:return beforecase27. Preserve TutorialWindow.reset and switch actions, tables and identities. Associated-table verification is mandatory; primary-body equality alone cannot bank or prove tables."
+  ],
+  "intent": "Test one explicit no-op default placement corresponding to original switch exit layout.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 4922880,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "socialwin-default-layout-nov01dm"
+}
