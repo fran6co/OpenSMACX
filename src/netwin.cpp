@@ -894,8 +894,8 @@ void NetWin::on_redraw() {
     RECT banner = setup_rects_[0];
     Buffer::box_sprite(&banner, &InterfaceBoxStyles[3]);
     banner.left += 3;
-    banner.top += 3;
     banner.right -= 3;
+    banner.top += 3;
     banner.bottom -= 3;
     Buffer::box_sprite(&banner, &InterfaceBoxStyles[6]);
 
