@@ -34,10 +34,6 @@ class Dialog {
   friend class ListBox;
   friend class NetSessionPickerWin;
  public:
-  friend class CheckBox;
-  friend class RadioButton;
-  friend class SpriteBox;
-  friend class EditGroup;
   // Dialog's destructor, attach and on_redraw are virtual; item is not.
   // The corresponding overrides produce the original virtual-base vtordisps.
   // The evidence is independent of this file: filewin.h pins
@@ -222,7 +218,9 @@ class Dialog {
   Font *font1_;
   Font *font2_;
   Font *font3_;
- private:
+ protected:
+  // Derived controls read this state through their real virtual Dialog base.
+  // Original access visibility is unknown; no separate friend is required.
   uint32_t text_color_a_;
   uint32_t text_color_2a_;
   uint32_t text_color_3a_;
@@ -241,7 +239,7 @@ class Dialog {
   // See the note at selected_position_ below: ListBox re-arms this from
   // close() through its virtual Dialog base.
   uint32_t field_B4_;
- private:
+ protected:
   uint32_t field_B8_;
  public:
   // PUBLIC like selected_position_ below, and for the same reason: CheckBox's

@@ -545,9 +545,6 @@ void draw_dest_unk1(Buffer *, int, int, int, int, unsigned char *);
  protected:
   // The free GraphicWin caption painter passes this live clip back to set_clip.
   friend int __cdecl def_caption_draw(GraphicWin *, char *, Buffer *);
-  friend class CheckBox;
-  // EditBox's redraw uses the Buffer text foreground at original +0x53C.
-  friend class EditBox;
   // `Win::flip` clips the screen buffer back to its own extent and reads
   // the DIB's dimensions for the final BitBlt.
   friend class Win;
@@ -737,6 +734,9 @@ void draw_dest_unk1(Buffer *, int, int, int, int, unsigned char *);
   uint32_t markup_enabled_;
   uint32_t field_524_;
   uint32_t field_528_;
+ protected:
+  // Derived controls use their inherited font and text-style state directly.
+  // This does not establish the original access labels.
   // RECOVERY_MEMBER: v1 Buffer fonts_ 0x52C 0x005DC917
   Font *fonts_[4];
   // Four contiguous rows of four 32-bit parameters at 0x53C..0x578. The
@@ -745,6 +745,7 @@ void draw_dest_unk1(Buffer *, int, int, int, int, unsigned char *);
   // shadow y. The original declaration and member names are unproven.
   // RECOVERY_MEMBER: v1 Buffer text_parameters_ 0x53C 0x005DBE04
   uint32_t text_parameters_[4][4];
+ private:
   /*
    * 0x57C. A PALETTE HAS BEEN ATTACHED. Set to 1 at all eight sites that
    * publish one - `sync_to_palette`, both halves of `copy`, `copy_to_window`,

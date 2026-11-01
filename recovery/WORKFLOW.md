@@ -671,6 +671,16 @@ become a pointer merely because a byte view was used; justified API/serializatio
 boundary casts remain possible. Cosmetic cast removal and local byte equality
 are not structural proof, and a cast census is not function coverage.
 
+Treat class friendship as a reconstruction warning too. Before adding it to
+make a private-field access compile, investigate the receiver, existing base
+chain, containing object and member owner. Use inherited protected state for
+same-object derived access; do not invent inheritance for separate objects.
+Check for an existing public operation or an evidence-supported misplaced
+method before granting broad cross-object access. Original access labels are
+usually unknown: a compiling friend declaration does not recover them. Remove
+redundant friendships and retain unresolved relationships as structural debt,
+without changing object layout, call order or original behavior to hide it.
+
 Recover bases, embedded versus pointed-to objects, construction/destruction,
 virtual slot evidence, globals and caller relationships before optimizing body
 spellings. Ordinary declarations express the structure. Source annotations hold

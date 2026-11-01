@@ -84,14 +84,8 @@ struct GraphicWinFrameDefaults {
 // indistinguishable here.
 typedef void(__cdecl func_graphic_win_paint_hook)();
 typedef int (__cdecl *GraphicWinCaptionDraw)(GraphicWin *, char *, Buffer *);
-// The base is spelled `public` deliberately. Win grants `friend class
-// BaseButton;` / `friend class Scroll;` so those classes may touch
-// win_parent_, but VC6 does not implement the friend clause of
-// [class.access.base]/5: a friend of the derived class still cannot see
-// through a PRIVATE base, and reaching win_parent_ from BaseButton or Scroll
-// gave C2248/C2247 while the base stayed private. Access to the member itself
-// is unchanged - win_parent_ is still private in Win - and a base's
-// accessibility affects no offset, so the layout is untouched.
+// These public bases let derived controls use their inherited Win and Buffer
+// state. Their access labels do not establish the original source visibility.
 class GraphicWin : public Win, public Buffer {
  public:
   int probe_image_file(const char *, Palette *, int, int);
@@ -117,11 +111,8 @@ class GraphicWin : public Win, public Buffer {
   static void __cdecl set_def_nc_sprites(NCSprites *sprites);
   void load_nc_sprites_from_defs();
   static void load_all_nc_sprites_from_defs();
-  friend class Scroll;
   // The caption callback uses the selected frame sprites' own text offsets.
   friend int __cdecl def_caption_draw(GraphicWin *, char *, Buffer *);
-  // BaseButton's colour setters drive this buffer directly.
-  friend class BaseButton;
 
  public:
   void on_mouse_move(int x, int y, unsigned int keys, int from_parent);

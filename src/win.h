@@ -290,14 +290,11 @@ class Win : public AutoSound {
   void dispatch_23(int x, int y, int alternate);
   void dispatch_24(int x, int y, int alternate);
 
-  friend class Scroll;
   // Control attachment reads the parent window's original flag word.
   friend class RadioButton;
   friend class CheckBox;
   friend class SpriteBox;
   friend class EditGroup;
-  // BaseButton's colour setters test the parent link before drawing.
-  friend class BaseButton;
   // EditBox::pass_dialog_focus resets its parent's child-list iterator.
   friend class EditBox;
   // GraphicWin's paint clips to a parent's client/outer rectangle.

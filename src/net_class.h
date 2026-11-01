@@ -228,7 +228,6 @@ class NetUnk72C : public NetTextListBase {
 // named session fields and a genuine nested-list destructor; unseen nested
 // payload factory/nominal identity and complete lifetime proof remain open.
 class NetAllocationNode : public virtual StringAllocationBase {
-  friend class Net;
   // Consumer access to the measured nested entry list; no parallel storage.
   friend class NetSessionPickerWin;
  public:
@@ -373,7 +372,6 @@ class AlphaNetLedger;
 class Net {
   // Original multiplayer startup changes this owner's existing voice flags.
   friend int __cdecl multiplayer_init(int);
-  friend class NetSessionPickerWin;
   friend class AlphaNet;
   friend int __cdecl internal_receive(NetThreadInfo *);
   // Original MultiDebug paint 0x005C9920 displays these session/player fields.

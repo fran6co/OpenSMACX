@@ -117,7 +117,6 @@ class Midi : public Sound {
   virtual int set_patch(unsigned int, unsigned int);          // 74
   int set_fname(const char *fname);
   int set_mode(int mode);
-  friend class Ambience;
  protected:
   uint8_t field_54_; // Original clears exactly one byte, leaving55..57 alone.
 };

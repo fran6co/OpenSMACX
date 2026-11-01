@@ -23,8 +23,11 @@
   */
 class Heap {
  public:
-  // TexHeap constructs separate descriptors over borrowed regions. The pin
-  // does not establish the original C++ access visibility.
+  // Source-only lifetime helper for TexHeap's separately allocated descriptors.
+  // Pinned TexHeap::configure (0x00635050) initializes these fields inline:
+  // first block at 0x0063518F..0x006351CF, loop at 0x006351F2..0x00635225.
+  // No separate original constructor entry, overload or access visibility is
+  // established. These stores belong to configure's mapping, not a new function.
   Heap(void *region, size_t size) {
     err_flags_ = 1;
     base_ = region;
@@ -36,7 +39,9 @@ class Heap {
   // opens `push esi; mov esi, ecx; call ?0Heap`, a real call to the base.
   // Defined in-class the compiler inlines it and the caller never matches.
   Heap();   // 005D4560
-  // Distinct original operation; invocation/lifetime role unknown.
+  // Provisional name for zeroing at 0x005D4540; not a second C++ constructor.
+  // It leaves EAX zero, unlike 0x005D4560's returned receiver. Caller and
+  // lifecycle role remain unknown; similar field stores alone do not prove them.
   void Heap2();
   // OUT OF LINE, like the constructor above - and for the same reason plus
   // one: an in-class destructor is EXPANDED at every implicit base/member

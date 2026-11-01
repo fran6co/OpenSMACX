@@ -40,6 +40,7 @@ Heap::Heap() {
 }
 
 /*
+Historical seed description (the adapter has been removed):
 Purpose: Set 5 field(s) to constants.
          Emitted by tools/generate_field_accessors.py from
 
@@ -290,11 +291,3 @@ LPVOID Heap::get(int req_size) {
     current_ = LPVOID(size_t(current_) + req_size);
     return free_mem_addr;
 }
-
-
-// ---------------------------------------------------------------------------
-// NO HEADER BODIES LEFT IN THIS UNIT. `~Heap` was the one, and it moved
-// above on 2026-09-03: an in-class destructor is expanded at every implicit
-// base/member teardown site, which cost `~Strings` and `~TextIndex` their
-// own claims. Nothing in heap.h is defined in-class any more.
-// ---------------------------------------------------------------------------
