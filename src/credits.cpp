@@ -71,32 +71,44 @@ void Credits::unload() {
   g_CREDITS_WAVE.unload();
 }
 
+// Distinct source-owned text objects selected by the original calls. These
+// names describe their roles; the original source spellings are unknown.
+// RECOVERY_OBJECT: v2 0x0068328C 0x006832A0 _CreditsOpeningMenuWavePath 0x00428880
+const char CreditsOpeningMenuWavePath[] = "fx\\opening menu.wav";
+// RECOVERY_OBJECT: v2 0x006832A0 0x006832A8 _CreditsSectionLabel 0x00428880
+const char CreditsSectionLabel[] = "CREDITS";
+// RECOVERY_OBJECT: v2 0x006832A8 0x006832B0 _CreditsFileLabel 0x00428880
+const char CreditsFileLabel[] = "CREDITS";
+
 // The credits text section owns up to 512 heap-allocated lines. The source
 // fields and the Text buffer pointer replace the retained seed's raw offsets
 // and fixed executable addresses; its original error paths are preserved.
-// ORIGINAL: 0x00428880 ?load@Credits@@QAEXXZ 0x00428880-0x004289BA FILE
-// RECOVERY_BINDING: v1 {"evidence": ["retired seed git:9957b40d:src/recovered/units/00428880.cpp preserves the original call order and field offsets", "Credits::unload and Credits::draw_credits establish the owned 512-line array and font usage"], "reason": "Home the credits text loader on its real Credits owner with typed members and project globals."}
+// ORIGINAL: 0x00428880 ?load@Credits@@QAEXXZ 0x00428880-0x004289BA FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["retired seed git:9957b40d:src/recovered/units/00428880.cpp preserves the original call order and field offsets", "Credits::unload and Credits::draw_credits establish the owned 512-line array and font usage", "Pinned428892 writes receiver+A18 line_count tozero before the512-entry release loop;4288C0 writes itzero again after. Standalone unload428830..42887D correctly has only the post-loop count/frame resets.", "Pinned428957/42896C reload current count and lines[count-1] after strcpy;428983/42898B reload them again after the first Font::width call.42895D caches previous maximum before width;428998 always stores the selected maximum. Calls428976 and428993 both target Font::width619280.", "Pinned42892B stores allocation into lines[current count];428932 reloads current count and428938 reloads that slot intoECX before the null gate42893F andstrcpy428952.", "Pinned4288D4 pushes WAV path68328C (20bytesincludingNUL);4288E2 pushes section6832A0 and4288E7 pushes filename6832A8 for text_open(filename,section). Both CREDITS objects are8bytesincludingNUL and distinct. Fullrawbytes and adjacent starts were independently verified; object names and original nominal constness remain unproved."], "reason": "Home the credits text loader on its real Credits owner with typed members and project globals. Clear the visible line count before releasing previous lines, while retaining unload's independent post-release count resets. After copying, reload the last installed line for each width call, cache the previous maximum before the first call, and publish the selected maximum on either branch. Publish the allocation through the current owner slot, then read that slot for the null gate and copy. Preserve the separately addressed filename and section text objects, instead of assigning one pooled literal to both identities."}
+#pragma optimize("y", off)
 void Credits::load() {
+  line_count_ = 0;
   unload();
-  g_CREDITS_WAVE.load(const_cast<char *>("fx\\opening menu.wav"), 2);
+  g_CREDITS_WAVE.load(const_cast<char *>(CreditsOpeningMenuWavePath), 2);
 
-  if (text_open("CREDITS", "CREDITS") == 0) {
+  if (text_open(CreditsFileLabel, CreditsSectionLabel) == 0) {
     field_1230_ = 0;
     while (*text_get() != '#') {
-      char *stored = static_cast<char *>(mem_get(strlen(TextBufferGetPtr) + 1));
-      lines_[line_count_] = stored;
+      lines_[line_count_] = static_cast<char *>(mem_get(strlen(TextBufferGetPtr) + 1));
+      char *stored = lines_[line_count_];
       if (stored != 0) {
         ++line_count_;
         strcpy(stored, TextBufferGetPtr);
-        // The original calls width again when publishing a new maximum.
-        if (static_cast<int>(field_1230_) <= font_.width(stored)) {
-          field_1230_ = font_.width(stored);
-        }
+        const int maximum = static_cast<int>(field_1230_);
+        const int measured = font_.width(lines_[line_count_ - 1]);
+        field_1230_ = maximum > measured
+            ? maximum : font_.width(lines_[line_count_ - 1]);
       }
     }
     text_close();
   }
 }
+#pragma optimize("", on)
 
 // Close the owned timer and graphics window, then the embedded button.
 // ORIGINAL: 0x004289C0 ?close@Credits@@QAEXXZ 0x004289C0-0x004289E9 BYTE_EXACT

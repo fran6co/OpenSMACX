@@ -507,7 +507,7 @@ set_source_files_properties(
     src/council.cpp
     PROPERTIES COMPILE_OPTIONS "/Oy-")
 # Preserve measured frame-based accesses in the remaining owner cohort.
-# Credits retains its measured default source recipe.
+# Credits retains its default TU optimization/frame policy.
 set_source_files_properties(
     src/prefwin.cpp
     src/fx.cpp
@@ -581,6 +581,7 @@ set_property(SOURCE
     src/alpha.cpp
     src/buffer.cpp
     src/caviar.cpp
+    src/credits.cpp
     src/game.cpp
     src/faction_monuments.cpp
     src/interface_palette.cpp
