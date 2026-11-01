@@ -1,0 +1,21 @@
+{
+  "event_id": "98529f79cf56f746e0dc6f6b4ca7fa3b65fceea5c0e82cf7f442117e37e3e16f",
+  "payload": {
+    "affects": [
+      "entity-9fd9d54a0ce9e1f29f1adae3fb2d967df511079373dba76422415f2756914c60"
+    ],
+    "author": "coordinator",
+    "discovery_id": "natural-prefix-receivers-nov01dj",
+    "evidence": [
+      "Pinned prefix and callback def-use evidence compared with current actual DI object; scope distinct from the exhausted DI text/emphasis form.",
+      "No claim of behavior defect from legal pointer caching and no forced machine-code substitute; stop after one candidate without new evidence."
+    ],
+    "hypothesis": "Natural inherited member accesses may reproduce the original repeated virtual-base conversions and frame without persistent source view pointers.",
+    "kind": "discovery"
+  },
+  "previous_event": null,
+  "request_id": "natural-prefix-receivers-nov01dj",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:listbox-prefix-receivers-nov01dj"
+}

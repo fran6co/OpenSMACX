@@ -121,8 +121,8 @@ def test_extracted_listbox_scroll_render_and_dialog_bridges(tmp_path, compiler_n
     # Pinned fallbackcopy reads stored Dialogposition after callback; RECT
     # left/top and a precallback snapshot are independent wrong origins.
     for name, good, bad in (
-        ("copy_row_x", "dialog.window_x_", "row.left"),
-        ("copy_row_y", "dialog.window_y_", "row.top"),
+        ("copy_row_x", "Dialog::window_x_", "row.left"),
+        ("copy_row_y", "Dialog::window_y_", "row.top"),
     ):
         assert draw_body.count(good) == 1
         mutant = draw_body.replace(good, bad, 1)
@@ -132,12 +132,12 @@ def test_extracted_listbox_scroll_render_and_dialog_bridges(tmp_path, compiler_n
         assert result.returncode != 0, name + " escaped stored copy-origin oracle"
 
     snapshot = draw_body.replace(
-        "const int item_id = dialog.pos_to_id(index);",
-        "const int copy_x_snapshot = dialog.window_x_;\n"
-        "    const int copy_y_snapshot = dialog.window_y_;\n"
-        "    const int item_id = dialog.pos_to_id(index);", 1)
-    snapshot = snapshot.replace("copy(canvas, dialog.window_x_, dialog.window_y_,",
-                                "copy(canvas, copy_x_snapshot, copy_y_snapshot,", 1)
+        "const int item_id = Dialog::pos_to_id(index);",
+        "const int copy_x_snapshot = Dialog::window_x_;\n"
+        "    const int copy_y_snapshot = Dialog::window_y_;\n"
+        "    const int item_id = Dialog::pos_to_id(index);", 1)
+    snapshot = snapshot.replace("copy(this, Dialog::window_x_, Dialog::window_y_,",
+                                "copy(this, copy_x_snapshot, copy_y_snapshot,", 1)
     assert snapshot != draw_body
     binary = compile_control(tmp_path / "copy_stale_origin", replace_draw(snapshot))
     result = subprocess.run([str(binary)], check=False, timeout=30,
@@ -146,14 +146,14 @@ def test_extracted_listbox_scroll_render_and_dialog_bridges(tmp_path, compiler_n
 
     # Distinct IDs and the genuine getter expose cursor and snapshot errors.
     for name, good, bad in (
-        ("fill_raw_position", "fill_callback_(window, dialog.pos_to_id(index),",
-         "fill_callback_(window, index,"),
-        ("parent_raw_position", "on_dialog_item_back_draw(window, item_id,",
-         "on_dialog_item_back_draw(window, index,"),
-        ("draw_late_getter", "draw_callback_(window, item_id,",
-         "draw_callback_(window, dialog.pos_to_id(index),"),
-        ("write_stale_id", "write_callback_(window, dialog.pos_to_id(index),",
-         "write_callback_(window, item_id,"),
+        ("fill_raw_position", "fill_callback_(this, Dialog::pos_to_id(index),",
+         "fill_callback_(this, index,"),
+        ("parent_raw_position", "on_dialog_item_back_draw(this, item_id,",
+         "on_dialog_item_back_draw(this, index,"),
+        ("draw_late_getter", "draw_callback_(this, item_id,",
+         "draw_callback_(this, Dialog::pos_to_id(index),"),
+        ("write_stale_id", "write_callback_(this, Dialog::pos_to_id(index),",
+         "write_callback_(this, item_id,"),
     ):
         assert draw_body.count(good) == 1
         mutant = draw_body.replace(good, bad, 1)
@@ -183,10 +183,10 @@ def test_extracted_listbox_scroll_render_and_dialog_bridges(tmp_path, compiler_n
     # Restore just ONE unsigned predicate in ONE selected/unselected arm.
     # The six-value oracle exercises both arms and both separator paths.
     for name, signed, unsigned in (
-        ("unsigned_span_plain", "static_cast<int32_t>(items.current_->string_payload()->field_C_) > 1",
-         "items.current_->string_payload()->field_C_ > 1"),
-        ("unsigned_span_separator", "static_cast<int32_t>(items.current_->string_payload()->field_C_) < 2",
-         "items.current_->string_payload()->field_C_ < 2"),
+        ("unsigned_span_plain", "static_cast<int32_t>(Dialog::item_list_.current_->string_payload()->field_C_) > 1",
+         "Dialog::item_list_.current_->string_payload()->field_C_ > 1"),
+        ("unsigned_span_separator", "static_cast<int32_t>(Dialog::item_list_.current_->string_payload()->field_C_) < 2",
+         "Dialog::item_list_.current_->string_payload()->field_C_ < 2"),
     ):
         for arm in range(2):
             mutant = replace_arm_occurrence(signed, unsigned, arm)
@@ -222,8 +222,8 @@ def test_extracted_listbox_scroll_render_and_dialog_bridges(tmp_path, compiler_n
         assert result.returncode != 0, f"{name} mutant survived the asymmetric source control"
 
     wrong_focus = draw_body.replace(
-        "window->is_dialog_focus() != 0",
-        "window->is_dialog_focus() == 0", 1)
+        "Win::is_dialog_focus() != 0",
+        "Win::is_dialog_focus() == 0", 1)
     assert wrong_focus != draw_body
     binary = compile_control(tmp_path / "wrong_focus", replace_draw(wrong_focus))
     result = subprocess.run([str(binary)], check=False, timeout=30,
@@ -231,8 +231,8 @@ def test_extracted_listbox_scroll_render_and_dialog_bridges(tmp_path, compiler_n
     assert result.returncode != 0, "wrong selected-row focus mutant survived"
 
     wrong_fill_owner = draw_body.replace(
-        "window->fill(&row, static_cast<int>(field_14_));",
-        "canvas->fill(&row, static_cast<int>(field_14_));", 1)
+        "GraphicWin::fill(&row, static_cast<int>(field_14_));",
+        "Buffer::fill(&row, static_cast<int>(field_14_));", 1)
     assert wrong_fill_owner != draw_body
     binary = compile_control(tmp_path / "wrong_fill_owner",
                              replace_draw(wrong_fill_owner))
@@ -241,8 +241,8 @@ def test_extracted_listbox_scroll_render_and_dialog_bridges(tmp_path, compiler_n
     assert result.returncode != 0, "Buffer fill receiver mutant survived"
 
     missing_live_guard = draw_body.replace(
-        "index <= items.entry_count_ - 1",
-        "index <= items.entry_count_ - 1 || items.entry_count_ <= index", 1)
+        "index <= Dialog::item_list_.entry_count_ - 1",
+        "index <= Dialog::item_list_.entry_count_ - 1 || Dialog::item_list_.entry_count_ <= index", 1)
     assert missing_live_guard != draw_body
     binary = compile_control(tmp_path / "missing_live_guard",
                              replace_draw(missing_live_guard))
