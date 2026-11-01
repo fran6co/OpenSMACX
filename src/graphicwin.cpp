@@ -350,7 +350,7 @@ void GraphicWin::fill(int color) {
     // still subtracts one: its remap omits the final row and column.
     width = static_cast<int>(dib_.bmiHeader.biWidth);
     height = static_cast<int>(dib_.bmiHeader.biHeight);
-    surface->map_colors(0, 0, width - 1, -1 - height, table);
+    Buffer::map_colors(0, 0, width - 1, -1 - height, table);
     } else {
         Buffer::fill(color);
     }
