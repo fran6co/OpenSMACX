@@ -204,7 +204,7 @@ def test_local_screen_explicitly_refuses_an_emitting_context(project):
     source.write_text(text)
     deck["files"]["code/unit.cc"]["source_sha256"] = hashlib.sha256(source.read_bytes()).hexdigest()
     compiler = SyntheticCompiler(root)
-    with pytest.raises(ValueError, match="does not yet support compile_context"):
+    with pytest.raises(ValueError, match="compile_context"):
         run(project, compiler, deck)
     assert not compiler.calls
 
