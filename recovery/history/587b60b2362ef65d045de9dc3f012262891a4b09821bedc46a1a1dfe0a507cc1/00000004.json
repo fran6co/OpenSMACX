@@ -1,0 +1,34 @@
+{
+  "event_id": "3ca303fd4f4d4ff47b917e3dc8f160ae47e3045f92f46cd88a98266e58a18454",
+  "payload": {
+    "affects": [
+      "entity-0c52193b48e10abac11892f1abe11c689fb08f8c86971c11e263403241b4cdd9",
+      "entity-22bd5510ec1b2aa259c5377187d41ced6267e52444dc66c0b608c7b3f610252d",
+      "entity-289d8a3e77d5df1da28675c3c3a9ecb9f81a267c5bd1f3c09f0d1dd78c0e9a04",
+      "entity-45c90ee4a4402458da77bcb4f215f81eb90641c6f1b9fd2deeb434444616db01",
+      "entity-4ed00ab10065116024e1fbe3a1d305ed7a1e04dad36147f66a4536f0172a6edf",
+      "entity-6d55a401ea8a44f56fe21afbcdc6c1fec5baf83de165bb469bc148b83f30ccfb",
+      "entity-757a43dfd92972cda742baf07b185698434aee3539c151abb54227dbebd7652f",
+      "entity-8627c602414fe9f0e25abe7c59a4e32a5c7030fcb217209f0bed21d70f895346",
+      "entity-ad0319604574b5153e5f22898d92f6b13483b57270f832422a4c48c97d0382f0",
+      "entity-df5cc0c46d4b3a9e31b3da27b826c004e751e112cf36c4aee67494ec736e4b25",
+      "entity-e3a9485dbe527950ad24b585ce62f1c44a084f5d7e20f922fbd995724c2f153c"
+    ],
+    "author": "coordinator",
+    "discovery_id": "distinct-original-string-storage",
+    "evidence": [
+      "Direct original operands distinguish two TECHNOLOGY instances68F2F0/68F30C, two Laptop instances690110/690118, profile default zero6900FC versus binary digit zero690204, and two Video phase-entry messages698870/698894. Current pooled COMDAT aliases cannot represent these identities.",
+      "Authorize a narrow exception to the initial annotation-only plan: ordinary distinct TU-private const character arrays and only independently correlated callsite substitutions, preserving each byte string, known sharing and every original behavior/claim. No compiler policy, attributes, alignment, retention mechanism or fixed-address source access. Current constness and role names are representations, not original qualifiers/names/complete allocation assertions.",
+      "Original prefs_get string overload pushes6900FC at59D9A9 and690100 at59D9AE; reuse the same profile default-zero storage as prefs_fac_load. Original do_video pushes698870/69887C at636351/636356, and698894/6988A0 at636388/63638D; reuse the same Video phase objects as standalone helpers and process.",
+      "Reuse the existing source-owned BufferJoinSpace682820 through its proper buffer.h declaration, rather than adding an overlapping Alpha literal identity.",
+      "Independent design review found the distinct storage representation justified by original data/call identities; any exact helper/inlining/TU ancestry remains unproved. Partial readonly compiler control observed pooling; unsupported /GF- was refused. No project compiler settings changed."
+    ],
+    "hypothesis": "Restore independently observed original character-object identities and sharing that current pooled literals collapse.",
+    "kind": "discovery"
+  },
+  "previous_event": "611e322d4b828b37d76d1dda0cbe8971b8d43f500b9ba20f1f5c0d326e6735ee",
+  "request_id": "distinct-original-string-storage",
+  "schema_version": 1,
+  "sequence": 4,
+  "stream": "task:literal-reference-batch-nov01ds"
+}

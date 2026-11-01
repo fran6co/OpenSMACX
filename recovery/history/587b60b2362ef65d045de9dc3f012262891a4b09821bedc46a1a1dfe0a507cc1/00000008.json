@@ -1,0 +1,19 @@
+{
+  "event_id": "47982f0ed4bbd31d45513f117f19bd3d4be2cad6a39cf55e982723a8ec100472",
+  "payload": {
+    "author": "coordinator",
+    "discovery_id": "distinct-original-string-storage",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "src/alpha.cpp and src/video.cpp own11 ordinary distinct character objects with matching original payload windows, source-owned start mappings and proven sharing. Reuse BufferJoinSpace; five independent literal windows retain corresponding original operands and complete COMDAT payloads. No flags, attributes, source-address forwarding or machine-code stand-ins.",
+      "Current qualifiers/names and complete original allocations remain explicitly unproved. All historical function identities/spans/claims and compiler lessons retained. Scoped guarded native observation yields10 new PASS with no old PASS lost in66 rows; this is not whole-project or linked/runtime acceptance.",
+      "Independent actual-source/data design review SHA256 33fa3f120a856766c72c48d99ae81122ada18858226e14b8f03676dcacc6d4cd. Relevant tests33pass2skip with one stale VideoSound migration test reproducing on unchanged master; sound.cpp unchanged."
+    ]
+  },
+  "previous_event": "206d40efc3e60ae6c833037083d390b1a5df2fe7601b9334dab7cb5224c54efe",
+  "request_id": "recover-distinct-string-instances",
+  "schema_version": 1,
+  "sequence": 8,
+  "stream": "task:literal-reference-batch-nov01ds"
+}

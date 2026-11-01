@@ -1,0 +1,46 @@
+{
+  "event_id": "63ef2785313e8b97b5eda7e0d7223de3e6202b4d604f7b776c46e5253fcf010a",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "src/alpha.cpp"
+    ],
+    "evidence": [
+      "Original profile getter/faction loader/prefs_load inline copies share6900FC default zero and690100 format key. prefs_save uses a distinct690208 format key. Original faction builder uses690120, while prefs_load/prefs_save use other Faction copies. Binary writer/prefs_save inline copies share690200 one and690204 zero; the read-side binary builder has four other one/zero pairs.",
+      "Source may add the three necessary distinct ordinary key/prefix/digit objects and preserve proven helper sharing. Leave uninspected read-side binary identities unresolved, not forced to a writer value. This updates caller closure, not matching-attempt allowance or compiler policy."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 6881536,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6881568,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6881792,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5889264,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5891536,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "3ca303fd4f4d4ff47b917e3dc8f160ae47e3045f92f46cd88a98266e58a18454",
+  "request_id": "profile-string-sharing-closure",
+  "schema_version": 1,
+  "sequence": 5,
+  "stream": "task:literal-reference-batch-nov01ds"
+}

@@ -2,6 +2,17 @@
 #include "wave.h"
 #include "general.h"
 #include <stdio.h>
+
+// Each phase has its own original entry-message object. The process methods
+// and registry pump share these with the corresponding standalone helper.
+// The names and constness are current representations; full original bounds
+// and original source declarations remain unproved.
+namespace {
+// RECOVERY_OBJECT: v1 0x00698870 _video_decode_phase_entering
+const char video_decode_phase_entering[] = "Entering";
+// RECOVERY_OBJECT: v1 0x00698894 _video_read_phase_entering
+const char video_read_phase_entering[] = "Entering";
+}
 // RECOVERY_IMPORT: v1 __imp__ICClose@4 MSVFW32.dll name:ICClose
 // RECOVERY_IMPORT: v1 __imp__ICOpen@12 MSVFW32.dll name:ICOpen
 // RECOVERY_IMPORT: v1 __imp__mmioDescend@16 WINMM.dll name:mmioDescend
@@ -147,6 +158,8 @@ void Video::close() {
   output_buffer_.close();
 }
 
+// RECOVERY_LITERAL: v1 0x0069887C 0x00698891 ??_C@_0BF@GKCP@decode_frame_process?$AA@ 0x00636FC0
+// RECOVERY_LITERAL: v1 0x006988A0 0x006988B3 ??_C@_0BD@MDIC@read_frame_process?$AA@ 0x00636FC0
 // ORIGINAL: 0x00636FC0 ?process@Video@@QAEXXZ 0x00636FC0-0x0063706F FILE BYTE_EXACT
 // symbol    ?process@Video@@QAEXXZ
 // LEVER: one 32-bit `flags` load reused for the first `& 0x8000`/`& 0x10` pair (matches the original's single `mov eax` feeding both `test ah,0x80` and `test al,0x10`), fresh byte reloads for every later `& 0x10` check (matches the repeated `mov al, [esi+0x4ac]` after each intervening call), and `while (r != 0 && (r = decode_frame(0)) != 0) r = play_frame();` for the tail loop. First try, byte exact.
@@ -155,14 +168,14 @@ void Video::process() {
   if ((flags & 0x8000) != 0) {
     if ((flags & 0x10) == 0) {
       if (play_frame() != 0) return;
-      log_say("decode_frame_process", "Entering",
+      log_say("decode_frame_process", video_decode_phase_entering,
               static_cast<int>(timeGetTime()), 0, 0);
       if ((static_cast<unsigned char>(flags_) & 0x10) == 0) {
         play_frame();
         if (decode_frame(0) != 0) return;
       }
     }
-    log_say("read_frame_process", "Entering",
+    log_say("read_frame_process", video_read_phase_entering,
             static_cast<int>(timeGetTime()), 0, 0);
     if ((static_cast<unsigned char>(flags_) & 0x10) == 0) {
       int result = play_frame();
@@ -199,7 +212,7 @@ int Video::play() {
 // ORIGINAL: 0x00637870 ?decode_frame_process@Video@@QAEXXZ 0x00637870-0x006378B0 FILE BYTE_EXACT
 // symbol    ?decode_frame_process@Video@@QAEHXZ
 int Video::decode_frame_process() {
-  log_say("decode_frame_process", "Entering",
+  log_say("decode_frame_process", video_decode_phase_entering,
           static_cast<int>(timeGetTime()), 0, 0);
   if ((static_cast<unsigned char>(flags_) & 0x10) != 0) return 0;
   play_frame();
@@ -209,7 +222,7 @@ int Video::decode_frame_process() {
 // ORIGINAL: 0x006378B0 ?read_frame_process@Video@@QAEXXZ 0x006378B0-0x00637906 FILE BYTE_EXACT
 // symbol    ?read_frame_process@Video@@QAEXXZ
 void Video::read_frame_process() {
-  log_say("read_frame_process", "Entering",
+  log_say("read_frame_process", video_read_phase_entering,
           static_cast<int>(timeGetTime()), 0, 0);
   if ((static_cast<unsigned char>(flags_) & 0x10) == 0) {
     int result = play_frame();
@@ -402,6 +415,7 @@ int Video::decode_frame(int destination_index) {
   return 1;
 }
 
+// RECOVERY_LITERAL: v1 0x00698978 0x00698981 ??_C@_08IBPL@Entering?$AA@ 0x00637D70
 // ORIGINAL: 0x00637D70 ?play_frame@Video@@QAEHXZ 0x00637D70-0x0063808D FILE
 // symbol    ?play_frame@Video@@QAEHXZ
 // TRIED: prologue register order (large 797-byte function, many branches); landed as a structural transcription rather than chasing every register-allocation choice. Div-by-1000 modelled as plain unsigned int/1000 (VC6's own reciprocal-multiply idiom), not the 64-bit division Ghidra's decompile implied.
@@ -644,14 +658,14 @@ void __cdecl do_video() {
     if ((video->flags_ & 0x8000) == 0) continue;
     if ((video->flags_ & 0x10) == 0) {
       if (video->play_frame() != 0) continue;
-      log_say("decode_frame_process", "Entering",
+      log_say("decode_frame_process", video_decode_phase_entering,
               static_cast<int>(timeGetTime()), 0, 0);
       if ((video->flags_ & 0x10) == 0) {
         video->play_frame();
         if (video->decode_frame(0) != 0) continue;
       }
     }
-    log_say("read_frame_process", "Entering",
+    log_say("read_frame_process", video_read_phase_entering,
             static_cast<int>(timeGetTime()), 0, 0);
     if ((video->flags_ & 0x10) == 0) {
       int result = video->play_frame();

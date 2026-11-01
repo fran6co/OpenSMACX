@@ -20,6 +20,7 @@
 #include "xpops.h"  // X_pop
 #include "alpha.h"
 #include "base.h"
+#include "buffer.h"  // BufferJoinSpace, shared by the original preference builder
 #include "council.h"
 #include "game.h"
 #include "halloffame.h"
@@ -33,6 +34,30 @@
 #include "text.h"
 #include "textindex.h"
 #include "veh.h"
+
+// Equal text does not imply one original object: the pinned operands below
+// identify separate instances. These role names and const arrays describe the
+// reconstruction; original declarations, qualifiers and full bounds are unknown.
+namespace {
+// RECOVERY_OBJECT: v1 0x0068F2F0 _alpha_tech_identifiers_section
+const char alpha_tech_identifiers_section[] = "TECHNOLOGY";
+// RECOVERY_OBJECT: v1 0x0068F30C _alpha_tech_values_section
+const char alpha_tech_values_section[] = "TECHNOLOGY";
+// RECOVERY_OBJECT: v1 0x00690110 _alpha_primary_laptop_key
+const char alpha_primary_laptop_key[] = "Laptop";
+// RECOVERY_OBJECT: v1 0x00690118 _alpha_secondary_laptop_key
+const char alpha_secondary_laptop_key[] = "Laptop";
+// RECOVERY_OBJECT: v1 0x006900FC _alpha_profile_default_zero
+const char alpha_profile_default_zero[] = "0";
+// RECOVERY_OBJECT: v1 0x00690204 _alpha_binary_output_zero
+const char alpha_binary_output_zero[] = "0";
+// RECOVERY_OBJECT: v1 0x00690200 _alpha_binary_output_one
+const char alpha_binary_output_one[] = "1";
+// RECOVERY_OBJECT: v1 0x00690100 _alpha_profile_format_key
+const char alpha_profile_format_key[] = "Prefs Format";
+// RECOVERY_OBJECT: v1 0x00690120 _alpha_faction_prefix
+const char alpha_faction_prefix[] = "Faction";
+}
 
 // The profile APIs are SDK imports, not recovered bodies: prefs_get (both
 // overloads), prefs_fac_load, prefs_load and both prefs_put overloads reach
@@ -610,6 +635,7 @@ BOOL __cdecl read_basic_rules() {
     return false;
 }
 
+// RECOVERY_LITERAL: v1 0x0068F2FC 0x0068F30A ??_C@_0O@OGGN@DUPLICATETECH?$AA@ 0x00585E30
 /*
 Purpose: Parse the #TECHNOLOGY section inside the alpha(x).txt with a duplicate entry check.
 // ORIGINAL: 0x00585E30 ?read_tech@@YAHXZ 0x00585E30-0x00585FDB BYTE_EXACT
@@ -628,7 +654,7 @@ Return Value: Was there an error? true/false
 Status: Complete
 */
 BOOL __cdecl read_tech() {
-    if (text_open(AlphaxFileID, "TECHNOLOGY")) {
+    if (text_open(AlphaxFileID, alpha_tech_identifiers_section)) {
         return true;
     }
     for (int i = 0; i < MaxTechnologyNum; i++) {
@@ -648,7 +674,7 @@ BOOL __cdecl read_tech() {
             }
         }
     }
-    if (text_open(AlphaxFileID, "TECHNOLOGY")) {
+    if (text_open(AlphaxFileID, alpha_tech_values_section)) {
         return true;
     }
     TechValidCount = 0;
@@ -1804,7 +1830,7 @@ Status: Complete
 */
 inline LPSTR __cdecl prefs_get(LPCSTR key_name, LPCSTR default_value, BOOL use_default) {
     if (use_default ||
-        (GetPrivateProfileStringA(PrefsSection, "Prefs Format", "0", TextBufferGetPtr, 256,
+        (GetPrivateProfileStringA(PrefsSection, alpha_profile_format_key, alpha_profile_default_zero, TextBufferGetPtr, 256,
             PrefsFile), atoi(TextBufferGetPtr) != 12)) {
         strcpy(TextBufferGetPtr, default_value);
     } else {
@@ -1848,7 +1874,7 @@ uint32_t __cdecl default_prefs() {
         | PREF_AV_SOUND_EFFECTS | PREF_MAP_SHOW_GRID | PREF_UNK_10
         | PREF_BSC_DONT_QUICK_MOVE_ENEMY_VEH | PREF_BSC_AUTOSAVE_EACH_TURN
         | PREF_AUTO_WAKE_VEH_TRANS_REACH_LAND;
-    return prefs_get("Laptop", 0, false) ? base_prefs : base_prefs  // 0xA3E1DD16 : 0xBBE1DD96
+    return prefs_get(alpha_primary_laptop_key, 0, false) ? base_prefs : base_prefs  // 0xA3E1DD16 : 0xBBE1DD96
         | PREF_AV_SECRET_PROJECT_MOVIES | PREF_AV_SLIDING_WINDOWS | PREF_AV_MAP_ANIMATIONS;
 }
 
@@ -1872,7 +1898,7 @@ uint32_t __cdecl default_prefs2() {
         | MPREF_MAP_SHOW_BASE_NAMES | MPREF_MAP_SHOW_PROD_WITH_BASE_NAMES
         | MPREF_ADV_RIGHT_CLICK_POPS_UP_MENU | MPREF_ADV_QUICK_MOVE_VEH_ORDERS
         | MPREF_AUTO_FORMER_BUILD_SENSORS | MPREF_AUTO_FORMER_REMOVE_FUNGUS; // 0x327168 : 0x3A7168
-    return prefs_get("Laptop", 0, false) ? base_prefs2 : base_prefs2 | MPREF_AV_SLIDING_SCROLLBARS;
+    return prefs_get(alpha_secondary_laptop_key, 0, false) ? base_prefs2 : base_prefs2 | MPREF_AV_SLIDING_SCROLLBARS;
 }
 
 /*
@@ -1994,10 +2020,10 @@ void __cdecl prefs_fac_load() {
             continue;
         }
         StringTemp[0] = 0;
-        strcat(StringTemp, "Faction");
-        strcat(StringTemp, " ");
+        strcat(StringTemp, alpha_faction_prefix);
+        strcat(StringTemp, BufferJoinSpace);
         say_num(i);
-        GetPrivateProfileStringA(PrefsSection, "Prefs Format", "0", TextBufferGetPtr, 256,
+        GetPrivateProfileStringA(PrefsSection, alpha_profile_format_key, alpha_profile_default_zero, TextBufferGetPtr, 256,
             PrefsFile);
         if (atoi(TextBufferGetPtr) != 12) {
             // NOT `strcpy(Players[i].filename, ...)`: the image pushes ebx
@@ -2169,9 +2195,9 @@ void __cdecl prefs_put(LPCSTR key_name, int value, BOOL tgl_binary) {
         for (int non_pad = 0, shift = 31; shift >= 0; shift--) {
             if ((1 << shift) & value) {
                 non_pad = 1;
-                strcat(StringTemp, "1");
+                strcat(StringTemp, alpha_binary_output_one);
             } else if (non_pad || shift < 8) {
-                strcat(StringTemp, "0");
+                strcat(StringTemp, alpha_binary_output_zero);
             }
         }
     } else {
@@ -2182,6 +2208,7 @@ void __cdecl prefs_put(LPCSTR key_name, int value, BOOL tgl_binary) {
     WritePrivateProfileStringA(PrefsSection, key_name, StringTemp, PrefsFile);
 }
 
+// RECOVERY_LITERAL: v1 0x00690208 0x00690215 ??_C@_0N@LGF@Prefs?5Format?$AA@ 0x0059E5D0
 /*
 Purpose: Save the most common preferences from memory to the game's ini. 
 // ORIGINAL: 0x0059E5D0 ?prefs_save@@YAXH@Z 0x0059E5D0-0x0059E946

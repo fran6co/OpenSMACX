@@ -1,0 +1,90 @@
+{
+  "author": "coordinator",
+  "base_revision": "fea34ad5f08b475946ad2bdb525d3140b8a05dab",
+  "editable_files": [
+    "src/alpha.cpp",
+    "src/video.cpp",
+    "src/random.cpp"
+  ],
+  "evidence": [
+    "Fresh qualified application build at baselinefea34ad5f: manifest SHA88f7b93339f81f7356c0f85c35c63c19ae97bc60c58f9ee8659925831e9f2208. Current native observations expose unresolved literal/constant operands in these14 scoped functions; no source-spelling or compiler-policy experiment is authorized.",
+    "Bindings require original operand/callflow correlation, complete physical candidate literal or object definition, matching pinned payload and independent review. No content-search-only original identity or first-NUL extent inference. Existing literal/object namespace collisions remain refusal conditions.",
+    "Only source annotations and essential interpretation prose may change. C++ behavior/expressions, original function markers, claims, object identities, compiler settings and dependencies remain protected; scope expansion requires explicit coordinator decision."
+  ],
+  "intent": "Recover explicitly evidenced literal/constant identities used by otherwise matching Alpha/Video/Random functions, preserving full original body and data obligations.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 5786976,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5787200,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5787456,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5787696,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5791280,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5888544,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5888672,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5888976,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5891376,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6516672,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6518896,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6518960,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6444976,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6445136,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "literal-reference-batch-nov01ds"
+}
