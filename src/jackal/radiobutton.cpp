@@ -949,3 +949,12 @@ Purpose: Adjust the receiver from RadioButton's thunk1 subobject to the one
 Return Value: n/a
 Status: Complete
 */
+
+// The constructor at 0x0060D0E0 installs this compiler-owned vbtable
+// at 0x0060D111; its two virtual-base entries locate GraphicWin at
+// +0x18 and Dialog at +0xA30. The next original storage starts the
+// CheckBox Dialog-view vftable at 0x0067059C, whose relocated code-pointer
+// cells are distinct from these three signed displacement DWORDs. This
+// records the table boundary, not a complete enclosing allocation or a
+// recovered historical C++ class name.
+// RECOVERY_GENERATED: v1 vbtable 0x00670590 0x0067059C ??_8RadioButton@@7B@ 0x0060D0E0
