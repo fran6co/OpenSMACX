@@ -25,15 +25,23 @@ def product_source():
         block(header, "struct " + name + " {", "\n};")
         for name in ("RulesBasic", "RulesWorldbuilder")
     )
+    triad_count = block(
+        (ROOT / "src/veh.h").read_text(),
+        "static const int MaxTriadNum =", ";",
+    )
     clamp = block(
         (ROOT / "src/general.h").read_text(),
         "MEASURED inline int __cdecl range(", "\n}",
+    )
+    parser_number = block(
+        (ROOT / "src/text.h").read_text(),
+        "MEASURED inline int __cdecl text_get_number(", "\n}",
     )
     loader = block(
         (ROOT / "src/alpha.cpp").read_text(),
         "BOOL __cdecl read_basic_rules() {", "\n}",
     )
-    return declarations + "\n" + clamp + "\n" + loader
+    return declarations + "\n" + triad_count + "\n" + clamp + "\n" + parser_number + "\n" + loader
 
 
 PRELUDE = r"""
@@ -105,8 +113,17 @@ def test_complete_loader_preserves_original_signed_bounds(tmp_path):
 ])
 def test_controls_reject_each_superseded_fix(tmp_path, field, old, new, value):
     product = product_source()
-    anchor = f"Rules.{field} = range(text_item_number(), {old});"
+    forms = [
+        (f"Rules.{field} = range(text_item_number(), {old});",
+         f"Rules.{field} = range(text_item_number(), {new});"),
+        (f"Rules.{field} = text_get_number({old});",
+         f"Rules.{field} = text_get_number({new});"),
+    ]
+    matches = [(anchor, replacement) for anchor, replacement in forms
+               if anchor in product]
+    assert len(matches) == 1, f"missing or ambiguous bounds anchor: {field}"
+    anchor, replacement = matches[0]
     assert product.count(anchor) == 1
-    mutated = product.replace(anchor, f"Rules.{field} = range(text_item_number(), {new});", 1)
+    mutated = product.replace(anchor, replacement, 1)
     binary = compile_control(tmp_path, mutated)
     assert subprocess.run([str(binary), str(value)], check=False).returncode != 0

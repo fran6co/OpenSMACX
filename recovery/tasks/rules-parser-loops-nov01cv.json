@@ -1,0 +1,26 @@
+{
+  "schema_version": 1,
+  "task_id": "rules-parser-loops-nov01cv",
+  "author": "coordinator",
+  "target": "opensmacx",
+  "base_revision": "62196832d89b68d93a0ac44d1451f608a8caf6d5",
+  "intent": "Recover the original three-row psi-combat ratio parser loop in the existing separate attack/defense arrays, without changing storage or clamp/error semantics.",
+  "subjects": [
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 5788016
+    }
+  ],
+  "editable_files": [
+    "src/alpha.cpp",
+    "recovery/tests/test_basic_rules_original_bounds.py",
+    "recovery/tests/test_rules_psi_ratio_rows.py"
+  ],
+  "evidence": [
+    "Original5853AB sets ESI9497A8(def0), loop5853B0 text_get, reads/clamps1..1000/storesATK atESI-C, thenreads/clamps/storesDEF atESI, stride4 andexclusiveend9497B4. Existing splitarrays arecorrect; sourceunrolled3rows loses actualiteration structure. Restorefortriad0..<MaxTriadNum(3) withorderedrowreads.",
+    "No header/type/compiler changes or unrolled trailingtechnology-field rewrites. Historicalclaims/spans/identities and allclamps/failurepaths retained. Focused actualsource signednonuniformrow tests must reject wrongread/order/clamp/loopbounds. Fresh build/link, complete outside-owner physical comparison and native body/reference preservation plus independent review before manualintegration.",
+    "Coordinator ownsGit/resources/preparation. No byteclaim/demotion granted; structuralgain is not a complete parser match or gameacceptance.",
+    "Two bounded actualcompiler candidates authorized in frozen source context: direct3rowloop and existing text_get_number(1,1000) for ATK with DEF range(text_item_number(),1,1000). Original ATK additionally callsrange422F00 whileDEFclamp inline. Currenttext_get_number is now genuine text_get+range(text_item_number), unlike the old parse-source expansion rejected historically. No new wrapper, inlineattribute, forcedrangecall or compilerflag allowed; compare actualcode/targets and bank only faithful source."
+  ]
+}
