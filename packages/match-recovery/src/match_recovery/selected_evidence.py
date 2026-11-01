@@ -109,7 +109,8 @@ def _closure_object_group(binding, all_objects):
 
 
 def select_evidence(functions, selected, objects, object_bindings, generated_bindings,
-                    import_bindings, shared_bindings, literal_bindings, *, unit_extensions=None):
+                    import_bindings, shared_bindings, literal_bindings, *, unit_extensions=None,
+                    context_targets=None):
     """Return the typed evidence closure visible from selected current functions.
 
     The closure is recomputed within each actual flag trial from its COFF
@@ -302,6 +303,10 @@ def select_evidence(functions, selected, objects, object_bindings, generated_bin
     units.update(unit for unit, _symbol in literals)
     # Include target support units for a selected member/parent layout group.
     units.update(item.unit for item in target_objects.values())
+    from .function_contexts import ContextFunctionTarget
+    units.update(target.unit for _unit, symbol, storage in refs
+                 if storage == 2
+                 and isinstance(target := (context_targets or {}).get(symbol), ContextFunctionTarget))
     for unit in units:
         relative_path(unit)
     return EvidenceSelection(

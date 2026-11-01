@@ -18,7 +18,11 @@ def compilation_context(root, record, settings):
         raise ValueError("UNBOUND mapping has no emitted source or compilation context")
     if not record.context:
         return record.path
-    name = record.context
+    return configured_compilation_context(root, record.context, settings)
+
+
+def configured_compilation_context(root, name, settings):
+    """Validate one explicit emitting TU without choosing or searching for one."""
     relative_path(name)
     path = settings.source.path(root, name)
     if (not any(Path(name).is_relative_to(source_root) for source_root in settings.source.roots)

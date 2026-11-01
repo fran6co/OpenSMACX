@@ -58,12 +58,20 @@ class FunctionBinding:
     unit: str
     source_spans: tuple[Span, ...] = ()
     local_only: bool = False
+    source_unit: str = ""
 
     def __post_init__(self):
         require_text(self.symbol, "emitted symbol")
         require_text(self.unit, "function binding unit")
         if type(self.local_only) is not bool:
             raise ValueError("local-only function binding must be boolean")
+        if not isinstance(self.source_unit, str):
+            raise ValueError("function source owner must be a relative path")
+        if self.source_unit:
+            relative_path(self.source_unit)
+            relative_path(self.unit)
+            if self.local_only:
+                raise ValueError("a declared compilation context cannot bind a TU-local function")
         if not self.spans or self.spans[0].start != self.origin.address:
             raise ValueError("function requires an independently mapped entry span")
         if self.source_spans and (not self.source_spans
@@ -208,7 +216,18 @@ def check_objects(bindings: Sequence[FunctionBinding], objects: Mapping[str, Cof
         if obj is None:
             continue
         try:
+            if binding.source_unit:
+                # Do not re-export a rejected context definition before its
+                # selected body comparison reports the missing evidence.
+                from .function_contexts import ContextFunctionTarget, qualify_context_targets
+                resolved, evidence = qualify_context_targets(
+                    {binding.symbol: ContextFunctionTarget(binding.origin, binding.symbol,
+                                                          binding.unit, binding.source_unit)}, objects)
+                if binding.symbol not in resolved:
+                    raise ValueError(evidence[0]["reason"])
             symbol = obj.function(binding.symbol, comdat=not member_functions)
+            if binding.source_unit and symbol.storage != 2:
+                raise ValueError("declared compilation context requires an external COFF function definition")
             if binding.local_only and symbol.storage != 3:
                 raise ValueError("TU-local function binding requires an actual COFF static function definition")
             if (binding.origin.entity_id in fragment_parent_ids
@@ -243,6 +262,9 @@ def check_objects(bindings: Sequence[FunctionBinding], objects: Mapping[str, Cof
     for binding in bindings:
         row = {"entity_id": binding.origin.entity_id, "address": f"0x{binding.origin.address:08X}",
                "symbol": binding.symbol, "unit": binding.unit}
+        if binding.source_unit:
+            row["source_unit"] = binding.source_unit
+            row["compilation_context"] = binding.unit
         if binding.local_only:
             row["local_only"] = True
         if binding.source_spans and binding.source_spans != binding.spans:

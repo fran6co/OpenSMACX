@@ -6,7 +6,8 @@ import hashlib
 from pathlib import Path
 from threading import Lock
 
-from .application_binary import check_compiled, select_bindings
+from .application_binary import check_compiled, select_bindings, validated_context_units
+from .function_contexts import referenced_context_units
 from .coff_replica import function_signature, object_signature
 from .compiler import Compiler
 from .components import local_path, relative_path
@@ -189,7 +190,8 @@ def _deck(value, root, editable, selected, settings):
     return originals, controls, replacements
 
 
-def _trial_bindings(view, originals, contents, selected, settings, pin, *, control=False):
+def _trial_bindings(view, originals, contents, selected, settings, pin, *, control=False,
+                    context_units=None):
     """Rebind proposed function symbols without borrowing baseline correlations.
 
     Original identities/obligations and non-function interpretations belong to
@@ -197,7 +199,7 @@ def _trial_bindings(view, originals, contents, selected, settings, pin, *, contr
     function symbol for a task subject; it never publishes that decision.
     Only edited files are reparsed, and the ordinary selector handles ambiguity.
     """
-    protected = ("address", "name", "image_spans", "mode", "body", "kind",
+    protected = ("address", "name", "image_spans", "mode", "body", "context", "kind",
                  "exclusion", "byte_exact", "semantic")
     updates, changes = {}, []
     for path, original in originals.items():
@@ -257,7 +259,8 @@ def _trial_bindings(view, originals, contents, selected, settings, pin, *, contr
                                             context_path=row.get("context_path", ""),
                                             unbound=row.get("unbound", False)))
     selected_all = frozenset(entity["entity_id"] for group in view["groups"] for entity in group["entities"])
-    bindings, refused, externals = select_bindings(partition(candidates), selected_all)
+    bindings, refused, externals = select_bindings(
+        partition(candidates), selected_all, context_units=context_units)
     return bindings, refused, externals, changes
 
 
@@ -298,8 +301,12 @@ def measure_variants(root: Path, task_name: str, image_path: Path, deck: dict, *
     for contents in candidates.values():
         _require_associated_unchanged(originals, contents, pin, settings.source.address_space)
     all_entities = frozenset(entity["entity_id"] for group in view["groups"] for entity in group["entities"])
-    bindings, all_refused, externals = select_bindings(view, all_entities)
+    context_units = validated_context_units(root, snapshot, settings)
+    bindings, all_refused, externals = select_bindings(view, all_entities, context_units=context_units)
     refused = [row for row in all_refused if row["entity_id"] in selected]
+    if any(item.origin.entity_id == deck["entity_id"] and item.source_unit
+           and item.source_unit != item.unit for item in bindings):
+        raise ValueError("variant editing of a definition outside its explicit compile context is unsupported")
     target = next((item for item in bindings if item.origin.entity_id == deck["entity_id"] and item.unit == deck["source"]), None)
     if target is None:
         raise ValueError("candidate target requires one unambiguous mapped product definition with image spans")
@@ -338,9 +345,11 @@ def measure_variants(root: Path, task_name: str, image_path: Path, deck: dict, *
         raise ValueError("conflicting function/object/generated symbol bindings")
     candidate_bindings = {}
     for path, (_, contents) in damage_controls.items():
-        _trial_bindings(view, originals, {**originals, path: contents}, selected, settings, pin, control=True)
+        _trial_bindings(view, originals, {**originals, path: contents}, selected, settings, pin,
+                        control=True, context_units=context_units)
     for name, contents in candidates.items():
-        resolved = _trial_bindings(view, originals, contents, selected, settings, pin)
+        resolved = _trial_bindings(view, originals, contents, selected, settings, pin,
+                                   context_units=context_units)
         proposed, _, targets, _ = resolved
         if {item.origin.entity_id for item in proposed} != {item.origin.entity_id for item in bindings}:
             raise ValueError("candidate symbol changes create or resolve ambiguous bindings; checkpoint decisions first")
@@ -400,7 +409,8 @@ def measure_variants(root: Path, task_name: str, image_path: Path, deck: dict, *
         trial_shared = (shared if contents is None else resolve_shared_contexts(
             root, read_shared_bindings(root, pin, contents=contents), settings=settings, contents=contents))
         while pending := (referenced_object_units(data_bindings, objects)
-                          | referenced_shared_units(trial_shared, objects)) - objects.keys() - errors.keys():
+                          | referenced_shared_units(trial_shared, objects)
+                          | referenced_context_units(trial_externals, objects)) - objects.keys() - errors.keys():
             for unit in sorted(pending):
                 control = {"unit": unit, "flags": list(effective(unit, flags)), "graph_flags": list(flags),
                            "result": Result.UNKNOWN}
