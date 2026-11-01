@@ -1232,8 +1232,8 @@ Status: Coverage transcription - unclaimed body
 */
 int Dialog::init(int left, int top, int right, int bottom, Heap *heap) {
     close();
-    window_y_ = top;
     window_x_ = left;
+    window_y_ = top;
     field_20_ |= 3;
     field_2C_ = right;
     field_30_ = bottom;
