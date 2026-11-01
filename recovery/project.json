@@ -1356,6 +1356,20 @@
           "/Oy-",
           "/GX"
         ]
+      },
+      "src/deletionlist.cpp": {
+        "flags": [
+          "/nologo",
+          "/TP",
+          "/Zm200",
+          "/GX",
+          "/O2",
+          "/Ob2",
+          "-MT",
+          "/W4",
+          "/Oy-",
+          "-c"
+        ]
       }
     },
     "flag_sets": [

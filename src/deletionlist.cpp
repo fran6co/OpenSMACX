@@ -108,7 +108,7 @@ int DeletionList::find_owner_slot(int owner) {
 Purpose: Mark a faction's acknowledgement for an owner's pending deletions;
          free the record once every active faction has acknowledged it.
 // Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x0052DD50 ?ack@DeletionList@@QAEXHH@Z 0x0052DD50-0x0052DDB5 FILE
+// ORIGINAL: 0x0052DD50 ?ack@DeletionList@@QAEXHH@Z 0x0052DD50-0x0052DDB5 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"reason":"The owner/mask search and flag update in the seed are one acknowledgement operation over the typed deletion records.","evidence":["Original 0x0052DD50-0x0052DDB5 scans 24 records, compares owner at +4, sets a faction bit in byte zero and writes 0xFF when active bits are complete.","src/recovered/units/0052dd50.cpp preserves the earlier candidate; src/lock.cpp owns the active-faction mask at 0x009A64E8."]}
 */
 void DeletionList::ack(int owner, int faction) {
@@ -117,11 +117,11 @@ void DeletionList::ack(int owner, int faction) {
         return;
     }
     DeletionRecord &record = records_[slot];
-    const unsigned char bit = static_cast<unsigned char>(1u << (faction & 31));
-    const unsigned char acknowledgements = record.acknowledgements_ | bit;
-    record.acknowledgements_ = acknowledgements;
+    // Preserve the pinned VC6 byte shift by CL, including its original count behavior.
+    // The selected compiler output, rather than portable out-of-range C++ shifts, is the evidence.
+    record.acknowledgements_ |= static_cast<unsigned char>(1u << faction);
     const unsigned char mask = static_cast<unsigned char>(GameDataStateStorage.fields_.lock_masks_.enable_mask_);
-    if ((acknowledgements & mask) == mask) {
+    if ((record.acknowledgements_ & mask) == mask) {
         record.acknowledgements_ = 0xFF;
     }
 }
