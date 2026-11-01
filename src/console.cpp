@@ -1472,8 +1472,15 @@ void Console::toggle_dest() {
 char ConsoleStrMenuSimple[] = "MENUSIMPLE";  // 0x0068A9CC
 // RECOVERY_OBJECT: v2 0x0068A9C0 0x0068A9CB ?ConsoleStrMenuDetail@@3PADA 0x00516930
 char ConsoleStrMenuDetail[] = "MENUDETAIL";  // 0x0068A9C0
+// The caption/label popup passes this separate body-key object at 0x0068AA0C.
+// RECOVERY_OBJECT: v1 0x0068AA0C _StrScenarioObjectivesPopup
 static const char StrScenarioObjectivesPopup[] = "OBJECTIVES";
+// Its title argument uses this distinct writable object at 0x0068AA18.
+// RECOVERY_OBJECT: v1 0x0068AA18 _StrScenarioObjectivesTitle
 static char StrScenarioObjectivesTitle[] = "SCENARIO";
+// One Console-owned confirmation string is shared by the original quit/new/menu/key callers.
+// RECOVERY_OBJECT: v1 0x0068A7D4 _ConsoleReallyWimpOut
+static const char ConsoleReallyWimpOut[] = "REALLYWIMPOUT";
 // RECOVERY_OBJECT: v2 0x0068A8E0 0x0068A8ED ?ConsoleStrTerraSurvey2@@3PADA 0x00515530
 char ConsoleStrTerraSurvey2[] = "TERRASURVEY2";  // 0x0068A8E0
 // RECOVERY_OBJECT: v2 0x0068A8D4 0x0068A8DF ?ConsoleStrTechChange@@3PADA 0x00515010
@@ -3511,7 +3518,7 @@ inline void console_close_network(unsigned int final_channel_mask) {
 void Console::quit_game() {
     const char *prompt;
     if ((IsMultiplayerNet || IsMultiplayerPBEM) &&
-        bit_count(GameDataStateStorage.fields_.lock_masks_.enable_mask_ & 255) > 1) prompt = "REALLYWIMPOUT";
+        bit_count(GameDataStateStorage.fields_.lock_masks_.enable_mask_ & 255) > 1) prompt = ConsoleReallyWimpOut;
 // RECOVERY_LITERAL: v1 0x0068A7E4 0x0068A7EF ??_C@_0L@GOAC@REALLYQUIT?$AA@ 0x00514990
     else prompt = "REALLYQUIT";
     if (!X_pop(prompt, nullptr)) return;
@@ -3536,7 +3543,7 @@ void Console::new_game() {
     if (IsMultiplayerNet) return;
     const char *prompt;
     if (IsMultiplayerPBEM && bit_count(GameDataStateStorage.fields_.lock_masks_.enable_mask_ & 255) > 1)
-        prompt = "REALLYWIMPOUT";
+        prompt = ConsoleReallyWimpOut;
     else prompt = "REALLYQUIT";
     if (X_pop(prompt, nullptr)) {
         if (IsMultiplayerPBEM) {
@@ -3701,6 +3708,9 @@ void __cdecl action_gate(int vehicle_id, int base_id);
 // ORIGINAL: 0x00514B30 ?retire_game@Console@@QAEXXZ 0x00514B30-0x00514D2B BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned original 00514B30; retained seed src/recovered/units/00514b30.cpp", "Native514B55..64 passes the low-byte greater-than-one boolean into bit_count. Native514D10 writes closed-network==0 to93A948 GameRestartQueued,514D16 sets9B2068 ExitTurnLoop. Existing typed close-network helper reproduces lock clear/transport close; scenario, PBEM, ironman and replay branches remain distinct.", "recovery/tasks/console-scenario-owner-wave.json; native scope decisions preserve the original baseline"], "reason": "Recover the complete Console command in its genuine owner, retaining original spans and seed evidence. Typed state and lifecycle/network APIs replace seed address arithmetic; this source binding is not byte, reference, structure or runtime acceptance."}
 void Console::retire_game() { // 0x00514B30
+    // This function owns a separate static string for the distinct retirement pointer.
+// RECOVERY_OBJECT: v1 0x0068A818 _?retire_wimpout@?1??retire_game@Console@@QAEXXZ@4QBDB
+    static const char retire_wimpout[] = "REALLYWIMPOUT";
     int closed_network = 0;
     if (GameDataStateStorage.fields_.game_rules_ & RULES_IRONMAN) {
         auto_save();
@@ -3709,7 +3719,7 @@ void Console::retire_game() { // 0x00514B30
     const bool multiple_players =
         (IsMultiplayerNet || IsMultiplayerPBEM) &&
         bit_count(static_cast<uint8_t>(GameDataStateStorage.fields_.lock_masks_.enable_mask_) > 1) != 0;
-    const char *const prompt = multiple_players ? "REALLYWIMPOUT" :
+    const char *const prompt = multiple_players ? retire_wimpout :
 // RECOVERY_LITERAL: v1 0x0068A828 0x0068A836 ??_C@_0O@JMAD@REALLYRETIRE2?$AA@ 0x00514B30
 // RECOVERY_LITERAL: v1 0x0068A838 0x0068A845 ??_C@_0N@LNNN@REALLYRETIRE?$AA@ 0x00514B30
         (GameDataStateStorage.fields_.game_rules_ & RULES_IRONMAN) ? "REALLYRETIRE2" : "REALLYRETIRE";
@@ -3742,7 +3752,8 @@ void Console::retire_game() { // 0x00514B30
     }
     GameRestartQueued = !closed_network;
     ExitTurnLoop = 1;
-    log_say("Retire***", 0, 0, 0);
+// RECOVERY_LITERAL: v1 0x0068A848 0x0068A86C ??_C@_0CE@JOCE@Retire?$CK?$CK?$CK?$CK?$CK?$CK?$CK?$CK?$CK?$CK?$CK?$CK?$CK?$CK?$CK?$CK?$CK?$CK?$CK?$CK?$CK?$CK?$CK?$CK?$CK?$CK@ 0x00514B30
+    log_say("Retire*****************************", 0, 0, 0);
 }
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
@@ -5526,7 +5537,7 @@ void Console::menu_proc(int command) {
                 IsMultiplayerNet == 0 && IsMultiplayerPBEM == 0
                     ? "REALLYQUIT"
                     : (bit_count(static_cast<unsigned char>(GameDataStateStorage.fields_.lock_masks_.enable_mask_)) > 1
-                        ? "REALLYWIMPOUT"
+                        ? ConsoleReallyWimpOut
                         : "REALLYQUIT");
             if (X_pop(confirmation, 0) != 0) {
                 if (IsMultiplayerPBEM != 0) {
@@ -7520,7 +7531,7 @@ case 0x1B: // Escape
         const char *confirmation = "REALLYQUIT";
         if ((IsMultiplayerNet != 0 || IsMultiplayerPBEM != 0) &&
             bit_count(static_cast<int>(GameDataStateStorage.fields_.lock_masks_.enable_mask_ & 0xFFu)) > 1) {
-            confirmation = "REALLYWIMPOUT";
+            confirmation = ConsoleReallyWimpOut;
         }
         if (X_pop(confirmation, 0) != 0) {
             if (IsMultiplayerPBEM != 0) {
@@ -7670,7 +7681,7 @@ native_retirement_confirmation:
     const char *quit_confirmation = "REALLYQUIT";
     if ((IsMultiplayerNet != 0 || IsMultiplayerPBEM != 0) &&
         bit_count(static_cast<int>(GameDataStateStorage.fields_.lock_masks_.enable_mask_ & 0xFFu)) > 1) {
-        quit_confirmation = "REALLYWIMPOUT";
+        quit_confirmation = ConsoleReallyWimpOut;
     }
     if (X_pop(quit_confirmation, 0) != 0) {
         if (IsMultiplayerPBEM != 0) {
@@ -7810,7 +7821,7 @@ case 0x30051:
             const char *confirmation = "REALLYQUIT";
             if (IsMultiplayerPBEM != 0 &&
                 bit_count(static_cast<int>(GameDataStateStorage.fields_.lock_masks_.enable_mask_ & 0xFFu)) > 1) {
-                confirmation = "REALLYWIMPOUT";
+                confirmation = ConsoleReallyWimpOut;
             }
             if (X_pop(confirmation, 0) != 0) {
                 if (IsMultiplayerPBEM != 0) {
