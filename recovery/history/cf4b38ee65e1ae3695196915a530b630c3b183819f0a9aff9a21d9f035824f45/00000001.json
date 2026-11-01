@@ -1,0 +1,22 @@
+{
+  "event_id": "72f02a857990920efca842b9a9ba9ca33ee9c3aa92c836b795bd6d98164bf46c",
+  "payload": {
+    "affects": [
+      "entity-9c9f37f28b9f108bb5126e621c1d5e8d26cb863f4dbb54f09ac7ed5a1a4cd403"
+    ],
+    "author": "coordinator",
+    "discovery_id": "kill-landmark-expanded-operation-nov01cq",
+    "evidence": [
+      "Two authorized Sub width overlays both show find_landmark still exact63instructions while kill_landmark emits1helpercall and35instructions versus original0calls/86instructions. The sole existing Map exact regression is the kill body; historical claim is retained, never demoted.",
+      "Pinned kill contains the same radius1 traversal and first-landmark selection directly before the per-element40byte shift-down/decrement. A complete ordinary C++ search-and-remove body represents that proven operation without a wrapper, forced inlining, compiler flags or illegal cross-TU inline definition.",
+      "Coordinator authorizes one new kill-operation candidate/overlay, separate from the exhausted2Sub spelling budget; source and both exact obligations remain preserved. Independent semantics review, actual-source controls and full affected-context verification required before integration. No more Sub trials or arbitrary source-order tricks."
+    ],
+    "hypothesis": "The ordinary provider restores proper external visibility but the existing kill_landmark call is not expanded by VC6; recover the original self-contained lookup-and-removal operation directly in its owning function.",
+    "kind": "discovery"
+  },
+  "previous_event": null,
+  "request_id": "kill-landmark-expanded-operation-nov01cq",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:map-provider-matching-nov01cq"
+}

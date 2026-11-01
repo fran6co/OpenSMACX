@@ -771,23 +771,8 @@ MEASURED inline void __cdecl lock_set(int x, int y, int faction_id) {
     tile->val3 |= (faction_id & 7) << 3;
 }
 
-// MEASURED inline: kill_landmark (0x005926F0), the only source-level caller,
-// call_diff'd MORE by exactly one call on this.
-MEASURED inline int __cdecl find_landmark(int x, int y, int radius_range_offset) {
-    int radius = RadiusRange[radius_range_offset];
-    for (int i = 0; i < radius; i++) {
-        int x_radius = xrange(x + RadiusOffsetX[i]);
-        int y_radius = y + RadiusOffsetY[i];
-        if (on_map(x_radius, y_radius)) {
-            for (int lm = 0; lm < MapLandmarkCount; lm++) {
-                if (x_radius == MapLandmark[lm].x && y_radius == MapLandmark[lm].y) {
-                    return lm;
-                }
-            }
-        }
-    }
-    return -1;
-}
+// Map owns this lookup and its same-unit landmark removal consumer.
+int __cdecl find_landmark(int x, int y, int radius_range_offset);
 
 // map_init and map_read expand this storage cleanup in the image. The mapped
 // map_shutdown entry remains out-of-line for callers whose original code calls it.

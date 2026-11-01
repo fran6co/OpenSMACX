@@ -1,0 +1,19 @@
+{
+  "event_id": "2f01774ba3f5cf9e0a73ad0ceded8454e389bda2dd485818fb3aad3f16c50041",
+  "payload": {
+    "author": "coordinator",
+    "discovery_id": "kill-landmark-expanded-operation-nov01cq",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "src/map.cpp kill_landmark now directly performs the original radius1 search and per-element landmark removal, retaining first-neighbor/first-index selection, singlewrap/bounds and failure no-op behavior.",
+      "The one authorized native overlay restores kill86/86instructions BYTE_EXACT withzerohelpercalls and keepscanonicalfind63/63exact; all63 Mapbaselineexact bodies preserved. The2Subwidthtrials were notadopted. Historicalclaims remainunchanged, no compiler flags/attributes/wrappers added.",
+      "Independent pinned source/CFG review and8actual-source hostcontrols passed. Fullapplication and entireheader-dependent preservation/reference verification remain required before integration; this source resolution is not global/linked/game acceptance."
+    ]
+  },
+  "previous_event": "72f02a857990920efca842b9a9ba9ca33ee9c3aa92c836b795bd6d98164bf46c",
+  "request_id": "kill-landmark-expanded-incorporated-nov01cq",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:map-provider-matching-nov01cq"
+}
