@@ -1,0 +1,25 @@
+{
+  "event_id": "f278d45a1e4c756893b7fc42eca56060efa2dccd7caac9bffbcf9250d7f228c3",
+  "payload": {
+    "affects": [
+      "entity-03f78957092c7ac00fe3f1e9934eeff3c9dbd8401d1ce239870a18160df81c8b",
+      "entity-0bff6211a69cf384ce4ea5fcb77bed785e82411ed7578a5c22a0291b3ad6853a"
+    ],
+    "author": "coordinator",
+    "discovery_id": "original-hsv-evaluation-contract",
+    "evidence": [
+      "Full pinned CFG 5FF630..5FF92C has two mutually exclusive stride-one loops:0..255 or10..245 with used[] skips;16static trig calls are duplicate evaluation within each candidate, not unrolling or peeling.",
+      "Within each eligible distance, original calls sine(query),sine(candidate), repeats that pair, then cosine(query),cosine(candidate), repeats that pair. It multiplies independently evaluated differences for each square; the previous cached helper removes observable calls.",
+      "Original stores value difference early, accumulates sine/cosine squared terms first and adds value square last. Original saved winning index is written only after a successful comparison; preserve its uninitialized no-winner path and existing unsafe range behavior.",
+      "Original direct FMUL coefficient is qword storage0x670280. Existing ordinary TU-private constant has the same8-byte payload; a local start witness may be added after independent correspondence review, with no allocation/nominal-name/linked-selection claim.",
+      "This is semantic recovery founded on new CFG evidence, not another iteration of the exhausted DP operand-only spelling trial. One complete faithful implementation followed by bounded matching and full affected-owner preservation/build checks."
+    ],
+    "hypothesis": "Replace the cached four-call distance helper and normalized index with the original repeated eight-call expression and local lifetime.",
+    "kind": "discovery"
+  },
+  "previous_event": null,
+  "request_id": "original-hsv-evaluation-contract",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:palette-hsv-evaluation-nov01dq"
+}

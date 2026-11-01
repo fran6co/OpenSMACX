@@ -1,0 +1,22 @@
+{
+  "event_id": "dbb24f3e793220076ed2125a1615ae8e07dfb694ede0f827feb5e5b6ddfeb3aa",
+  "payload": {
+    "affects": [
+      "entity-0bff6211a69cf384ce4ea5fcb77bed785e82411ed7578a5c22a0291b3ad6853a"
+    ],
+    "author": "coordinator",
+    "discovery_id": "direct-original-hue-coefficient",
+    "evidence": [
+      "Original 0x5FF630 search repeatedly multiplies hue directly by qword storage 0x670280. Actual baseline COFF instead stages hsv_deg_to_rad into a stack double via the helper k parameter.",
+      "One source-form budget: remove the artificial k helper parameter and caller local, retaining the same constant/arithmetic/call order and both original search arms. Do not change flags, force attributes, loops, unsafe paths, old claims or unrelated Palette methods.",
+      "Read-only report .opensmacx/recovery/palette-x87-frontier-nov01dp/report.md records source/COFF/image provenance and distinguishes this operand staging from previously tried stack/register forms. Candidate is unmeasured; existing degree constant remains unbound."
+    ],
+    "hypothesis": "Removing scalar staging may restore original direct x87 coefficient operands without changing arithmetic.",
+    "kind": "discovery"
+  },
+  "previous_event": null,
+  "request_id": "direct-original-hue-coefficient",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:palette-direct-angle-nov01dp"
+}
