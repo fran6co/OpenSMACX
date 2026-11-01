@@ -7661,6 +7661,7 @@ int __cdecl crop_yield(int faction_id, int base_id, int x, int y,
     BOOL has_base_in_tile = yield_tile_owner(tile) >= 0;
     // Bonus id 1 is the nutrient bonus.
     BOOL has_nutrient_bonus = bonus_at(x, y, 0) == 1;
+    tile = yield_tile(x, y);
     // Nutrient landmarks: Jungle counts on land, Freshwater Sea on ocean. Not
     // cached to a local: bit2 is read once here (reused via register across
     // both disjuncts within this one expression), and both arms re-test
@@ -7859,6 +7860,7 @@ int __cdecl mine_yield(int faction_id, int base_id, int x, int y,
     uint32_t bit = tile->bit;
     // Bonus id 2 is the mineral bonus.
     BOOL has_mineral_bonus = bonus_at(x, y, 0) == 2;
+    tile = yield_tile(x, y);
     BOOL landmark_bonus =
         (((tile->bit2 & (BIT2_UNK_80000000 | BIT2_VOLCANO)) == BIT2_VOLCANO)
             && code < 9)
@@ -8039,6 +8041,7 @@ int __cdecl energy_yield(int faction_id, int base_id, int x, int y,
     BOOL has_base_in_tile = yield_tile_owner(tile) >= 0;
     // Bonus id 3 is the energy bonus.
     BOOL has_energy_bonus = bonus_at(x, y, 0) == 3;
+    tile = yield_tile(x, y);
     BOOL landmark_bonus =
         (((tile->bit2 & (BIT2_UNK_80000000 | BIT2_VOLCANO)) == BIT2_VOLCANO)
             && code < 9)
