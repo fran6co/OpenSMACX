@@ -134,7 +134,11 @@ void __cdecl config_popups() {
 // *)0x0093FC58` binding - the array is the binding's storage, so the object
 // now carries the public name and find_font's `FontTable + N` indexes it
 // directly. See interface_fonts.h.
-// RECOVERY_OBJECT: v1 0x0093FC58 ?FontTable@@3PAVFont@@A
+// Original startup 0x005882A0 and teardown 0x005882D0 both pass this
+// storage, count 48 and stride 0x28 to the Font vector lifetime helpers.
+// That constructed array run establishes [0x0093FC58, 0x009403D8),
+// independently of the next global or this reconstruction's sizeof.
+// RECOVERY_OBJECT: v2 0x0093FC58 0x009403D8 ?FontTable@@3PAVFont@@A 0x005882A0
 Font FontTable[48];  // 0x0093FC58, 0x28 stride
 
 // 0x0068F220, twelve point sizes find_font matches against. The values are
