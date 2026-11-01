@@ -1,0 +1,20 @@
+{
+  "event_id": "0c7bb666bf81277a12b4711d5567b3b5a035d32fbbaab47cf288162f886db54e",
+  "payload": {
+    "author": "coordinator",
+    "discovery_id": "natural-prefix-receivers-nov01dj",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "One actual-source trial completed with all source/tool/recipe/provider guards. Four persistent base aliases are removed through genuine inherited member access and implicit pointer conversions; no header/layout/flags/forced machinery. Both host compiler controls and all existing runtime/mutant oracles pass.",
+      "Original frame0x28 now reproduced; LEAs69to85 versus89original, all51target/slot multiset preserved with same six exclusive-block layout differences. Matching remains MISMATCH/strictFAIL; direct positional matches21to20, no stronger byte claim inferred from counts.",
+      "All33oldexact bodies and all non-function native observations retained:1801object,628generated,96import,155shared,85literal rows;17061generated diagnostic slots are not106sourcebindings. No concrete semantic regression found in independent receiver/callback/copy def-use review.",
+      "Source representation incorporated as bounded original-access-shape recovery. One-form budget exhausted. Full build/link,47-record regression/215physical and destination verification required before manual integration; no full linked/allocation/runtime/game acceptance or claim grant/demotion."
+    ]
+  },
+  "previous_event": "98529f79cf56f746e0dc6f6b4ca7fa3b65fceea5c0e82cf7f442117e37e3e16f",
+  "request_id": "incorporate-natural-prefix-receivers-nov01dj",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:listbox-prefix-receivers-nov01dj"
+}

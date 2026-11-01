@@ -1,0 +1,24 @@
+{
+  "author": "coordinator",
+  "base_revision": "9b7137bafcb41ee6210ac864190198d8116877e2",
+  "editable_files": [
+    "src/listbox.cpp",
+    "recovery/tests/test_listbox_rendering_actual_source.py"
+  ],
+  "evidence": [
+    "After DI source recovery, original frame0x28/89LEAs versus actual0x34/69LEAs and persistent Dialog/StringList/GraphicWin/Buffer views motivate a separate prefix-receiver hypothesis. Counts alone prove no semantic defect.",
+    "One candidate removes those four persistent aliases and uses genuine inherited member APIs/implicit pointer conversions at existing phases. No header/type/hierarchy changes, hand offsets, null guards, flags, padding, volatile, attributes or register forcing.",
+    "Preserve all DG/DI callback-ID timing and actual getter effects, signed spans, rectangle restores, live Dialog copy coordinates, old claims and current two-arm/branch layouts. One source-form budget; independent host, native and outside-scope checks required."
+  ],
+  "intent": "Measure one original-shaped inherited-member receiver form while preserving all recovered ListBox behavior.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 6337840,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "listbox-prefix-receivers-nov01dj"
+}
