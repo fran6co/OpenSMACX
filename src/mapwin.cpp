@@ -325,28 +325,48 @@ void MapWin::init(int mode, int update) {
 // symbol    ?init@MapWin@@QAEXPAUtagRECT@@PADH@Z
 void MapWin::init(RECT *bounds, char *caption, int flags) {
     clear(map_view_index_);
-    init_dummy();
+    field_1DD6C_ = 0x19;
+    if (owned_ != 0) {
+        free(owned_);
+        owned_ = 0;
+    }
+    owned_ = static_cast<TerrainCacheEntry *>(mem_get(MapArea * sizeof(*owned_)));
+    int count = MapArea;
+    if (count > 0) {
+        int tile = 0;
+        do {
+            int sample;
+            for (sample = 0; sample < 4; ++sample) {
+                owned_[tile].brightness[sample] = 0xFF;
+            }
+            for (sample = 0; sample < 5; ++sample) {
+                reinterpret_cast<unsigned char *>(owned_[tile].altitude)[sample] = 0xFF;
+            }
+            owned_[tile].terrain_bits = 0;
+            owned_[tile].terrain_bits |= map_tiles()[0].climate & 0xD0;
+            ++tile;
+        } while (tile < MapArea);
+    }
     view_active_ = 1;
 
-    if ((field_1DD70_ & 0x1000000U) != 0 || this == MapWinTable[0]) {
+    if ((field_1DD70_ & 0x1000000U) != 0 ||
+        this == static_cast<MapWin *>(&ConsoleGlobal)) {
         return;
     }
     if (this == static_cast<MapWin *>(&PlanWindow)) {
-        // Both original visibility paths pass the same parent and style;
-        // the first returns directly and the second joins the common tail.
-        DiplomacyPopup.is_visible();
+        if (DiplomacyPopup.is_visible() != 0) {
+            GraphicWin::init(bounds, caption, flags, &MainInterfaceGlobal, 0, 0);
+            return;
+        }
         GraphicWin::init(bounds, caption, flags, &MainInterfaceGlobal, 0, 0);
-        return;
-    }
-    if (this == MapWinTable[1]) {
+    } else if (this == MapWinTable[1]) {
         GraphicWin::init(bounds, 0, 0x20, &MainInterfaceGlobal, 0, 0);
-        return;
-    }
-    if (this == &WorldClimateWorldWin.mapWin_) {
+    } else if (this == &WorldClimateWorldWin.mapWin_) {
         GraphicWin::init(bounds, 0, 0, 0, 0, 0);
         return;
+    } else {
+        GraphicWin::init(bounds, caption, flags | 0x30000000, 0, 0, 0);
     }
-    GraphicWin::init(bounds, caption, flags | 0x30000000, 0, 0, 0);
 }
 
 // 0x006874C4: draw_my_dest publishes a vehicle index after validation;
@@ -6364,7 +6384,7 @@ void MapWin::click(int pixel_x, int pixel_y, int button) {
                 const bool primary = this == MapWinTable[0];
                 if (primary) field_21A44_ = 1;
                 set_center(tile_x, tile_y, 1);
-                if (primary) field_21A44_ = 0;
+                field_21A44_ = 0;
             } else {
                 right_menu(tile_x, tile_y, pixel_x, pixel_y);
             }
@@ -6412,7 +6432,7 @@ void MapWin::click(int pixel_x, int pixel_y, int button) {
     const bool primary = this == MapWinTable[0];
     if (primary) field_21A44_ = 1;
     set_center(tile_x, tile_y, 1);
-    if (primary) field_21A44_ = 0;
+    field_21A44_ = 0;
     const int vehicle_id = veh_at(tile_x, tile_y);
     if (map_view_index_ != 1 && vehicle_id >= 0 &&
         Vehs[vehicle_id].faction_id == local_faction && button == 0 &&

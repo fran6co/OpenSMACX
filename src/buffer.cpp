@@ -3610,11 +3610,14 @@ int Buffer::write_l(LPSTR text, int x_coord, int y_coord, int len) {
         return 3;
     }
     if ((static_cast<int>(strlen(text)) < len ? static_cast<int>(strlen(text)) : len) < 0) {
+        goto no_text;
+    }
+    len = static_cast<int>(strlen(text)) < len ? static_cast<int>(strlen(text)) : len;
+    if (len == 0) {
+    no_text:
         return x_coord;
     }
-    return write_multi_font_raw_l(
-        text, x_coord, y_coord,
-        static_cast<int>(strlen(text)) < len ? static_cast<int>(strlen(text)) : len);
+    return write_multi_font_raw_l(text, x_coord, y_coord, len);
 }
 
 
@@ -5728,19 +5731,10 @@ int Buffer::wrap_height(char * text, int max_width) {
     do {
         int len = strlen(str);
         int lineWidth = width;
-        str = find_line_break_l(str, &lineWidth, len);
+        char *next = find_line_break_l(str, &lineWidth, len);
         BufferStrHeight = 0;
-        if (fonts_[0] == 0) {
-            fonts_[0] = FontDefault;
-        }
-        Font *font = fonts_[0];
-        int lineHeight;
-        if (font->unk_1_ >= 0) {
-            lineHeight = font->height_ + font->unk_1_;
-        } else {
-            lineHeight = font->line_height_;
-        }
-        total += lineHeight;
+        total += text_line_height();
+        str = next;
         field_18_ = field_18_ + 1;
         if (field_14_ != 0) {
             width -= field_14_;
@@ -5833,6 +5827,69 @@ int Buffer::wrap_height_flying(char *input_text) {
     return BufferFlyingY;
 }
 
+// ORIGINAL: 0x005E3690 sub_5e3690 0x005E3690-0x005E372A FILE
+// symbol    ?write_multi_font_raw@Buffer@@QAEHPADHH@Z
+// TRIED: naked strlen() got inlined to repne scasb (0.36 mnemonic sim); an untyped `_strlen` nullary alias + StrlenFn cast keeps the CALL and lifted similarity to 0.88. Buffer_5e3690 : public Buffer gives a real __thiscall receiver since explicit __thiscall is C4234.
+// working copy - scaffold materialised by --work
+// size      154 bytes
+// prototype int (__stdcall sub_5E3690)(LPCSTR lpString, int x, int y)
+// callers   1   call targets   2
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005DCAE0 0x006453E0
+// GENERATED SKELETON - tools/emit_translation_unit.py
+// subject: sub_5e3690  at 0x005E3690  (154 bytes)
+//
+// A VERIFICATION ARTIFACT, not product source: classes are opaque and
+// globals are bound to fixed addresses, because both are byte-visible
+// and both differ from the style src/ is written in.
+//
+// The VC6 dialect limits and the source-form rules used to live here.
+// They are knowledge, not scaffolding, so they now live in the agent
+// system prompt (mizuchi.yaml, plugins.claude-runner.systemPrompt),
+// where they can be edited without regenerating anything and are in
+// context from the first token rather than behind a file read. This
+// emitter computes declarations; it does not carry lessons.
+// `char`, NOT `signed char`. They are distinct MSVC types and mangle
+// differently - D against C - and the catalogue's `int8` means the first:
+// counted over every catalogued mangled name, `PAD` appears 508 times and
+// `PAC` once. Spelling it `signed char` made 150 derived prototypes emit a
+// symbol no target object holds. `int8_t` keeps its C meaning below; neither
+// catalogue ever uses it.
+// ---- callees, declared and never defined (a definition would be inlined) ----
+// `strlen` above is the fast intrinsic MSVC recognises by name and inlines
+// under /O2; the original calls out to it. Reach the real symbol through an
+// untyped nullary alias and a function-pointer cast.
+
+int Buffer::write_multi_font_raw(char *text, int x, int y) {
+    if (text == 0) {
+        return x;
+    }
+    return write_l(text, x, y, static_cast<int>(strlen(text)));
+}
+
+// Superseded seed deleted; seed paths below are historical Git provenance.
+// ORIGINAL: 0x005E3730 sub_5e3730 0x005E3730-0x005E376B BYTE_EXACT
+// symbol    ?write_cent@Buffer@@QAEHPADHHH@Z
+// size      59 bytes
+// prototype int (__stdcall sub_5E3730)(LPCSTR lpString, int, int y, int)
+// callers   1   call targets   2
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005DD020 0x006453E0
+// 0x005E3730  sub_5e3730  ->  _sub_5e3730
+//
+// The retained seed's BufferProxy receiver is now the genuine Buffer owner.
+
+int Buffer::write_cent(char *text, int x, int y, int width) {
+    if (text == 0) {
+        return x;
+    }
+    int length = static_cast<int>(strlen(text));
+    return write_cent_l(text, x, y, width, length);
+}
+
+
 // ORIGINAL: 0x005DE1D0 ?wrap_flying_flush@Buffer@@QAEHXZ 0x005DE1D0-0x005DE2DE
 // TRIED: the `_strlen` no-arg-extern lever (0x006141C0) moved the divergence from instruction 0 to instruction 5. The original reads `FlyingTextX`/`FlyingTextY` into ebx/ebp up front, before the text/font-metric checks that guard the call using them; this source form evaluates them only at the call site, which is a hoisting choice VC6 made differently. Not chased further.
 // size      270 bytes
@@ -5846,29 +5903,8 @@ int Buffer::wrap_height_flying(char *input_text) {
 int Buffer::wrap_flying_flush() {
     const char *const text = (const char *)BufferFlyingText;
     if (text[0] != '\0') {
-        unsigned int len1 = strlen(text);
-        if (fonts_[0] != 0 && fonts_[0]->font_obj_ != 0) {
-            unsigned int len2 = strlen(text);
-            unsigned int chosen = len1;
-            if ((int)len2 < (int)len1) {
-                chosen = strlen(text);
-            }
-            if ((int)chosen >= 0) {
-                unsigned int len3 = strlen(text);
-                unsigned int finalLen = len1;
-                if ((int)len3 < (int)len1) {
-                    finalLen = strlen(text);
-                }
-                if (finalLen != 0) {
-                    write_multi_font_raw_l(const_cast<char *>(text), BufferFlyingX, BufferFlyingY, finalLen);
-                }
-            }
-        }
-        if (fonts_[0] == 0) {
-            fonts_[0] = FontDefault;
-        }
-        Font *fnt = fonts_[0];
-        int lineAdvance = (fnt->unk_1_ < 0) ? fnt->line_height_ : fnt->height_ + fnt->unk_1_;
+        write_multi_font_raw(const_cast<char *>(text), BufferFlyingX, BufferFlyingY);
+        int lineAdvance = text_line_height();
         BufferFlyingY = BufferFlyingY + lineAdvance;
         field_18_ = field_18_ + 1;
     }
@@ -9666,11 +9702,7 @@ int Buffer::wrap_cent_flying(char *text, int x, int y, int width) {
 
 int Buffer::wrap_cent_flying_flush() {
     if (BufferFlyingText[0] != 0) {
-        int x = BufferFlyingX;
-        int y = BufferFlyingY;
-        int width = BufferFlyingWidth;
-        int length = static_cast<int>(strlen(BufferFlyingText));
-        write_cent_l(BufferFlyingText, x, y, width, length);
+        write_cent(BufferFlyingText, BufferFlyingX, BufferFlyingY, BufferFlyingWidth);
         ++field_18_;
     }
     BufferFlyingText[0] = 0;
@@ -9679,94 +9711,7 @@ int Buffer::wrap_cent_flying_flush() {
     font_slot_ = 0;
     field_514_ = 0;
     markup_pending_ = 0;
-    if (fonts_[0] == 0) {
-        fonts_[0] = FontDefault;
-    }
-    Font *font = fonts_[0];
-    if (font->unk_1_ < 0) {
-        return BufferFlyingY + font->line_height_;
-    }
-    return font->height_ + font->unk_1_ + BufferFlyingY;
-}
-
-// ORIGINAL: 0x005E3690 sub_5e3690 0x005E3690-0x005E372A FILE
-// symbol    ?write_multi_font_raw@Buffer@@QAEHPADHH@Z
-// TRIED: naked strlen() got inlined to repne scasb (0.36 mnemonic sim); an untyped `_strlen` nullary alias + StrlenFn cast keeps the CALL and lifted similarity to 0.88. Buffer_5e3690 : public Buffer gives a real __thiscall receiver since explicit __thiscall is C4234.
-// working copy - scaffold materialised by --work
-// size      154 bytes
-// prototype int (__stdcall sub_5E3690)(LPCSTR lpString, int x, int y)
-// callers   1   call targets   2
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     0x005DCAE0 0x006453E0
-// GENERATED SKELETON - tools/emit_translation_unit.py
-// subject: sub_5e3690  at 0x005E3690  (154 bytes)
-//
-// A VERIFICATION ARTIFACT, not product source: classes are opaque and
-// globals are bound to fixed addresses, because both are byte-visible
-// and both differ from the style src/ is written in.
-//
-// The VC6 dialect limits and the source-form rules used to live here.
-// They are knowledge, not scaffolding, so they now live in the agent
-// system prompt (mizuchi.yaml, plugins.claude-runner.systemPrompt),
-// where they can be edited without regenerating anything and are in
-// context from the first token rather than behind a file read. This
-// emitter computes declarations; it does not carry lessons.
-// `char`, NOT `signed char`. They are distinct MSVC types and mangle
-// differently - D against C - and the catalogue's `int8` means the first:
-// counted over every catalogued mangled name, `PAD` appears 508 times and
-// `PAC` once. Spelling it `signed char` made 150 derived prototypes emit a
-// symbol no target object holds. `int8_t` keeps its C meaning below; neither
-// catalogue ever uses it.
-// ---- callees, declared and never defined (a definition would be inlined) ----
-// `strlen` above is the fast intrinsic MSVC recognises by name and inlines
-// under /O2; the original calls out to it. Reach the real symbol through an
-// untyped nullary alias and a function-pointer cast.
-
-int Buffer::write_multi_font_raw(char *text, int x, int y) {
-    if (text == 0) {
-        return x;
-    }
-    int length = static_cast<int>(strlen(text));
-    if (fonts_[0] != 0 && fonts_[0]->is_initialized()) {
-        int check_length = static_cast<int>(strlen(text));
-        int candidate_length = length;
-        if (check_length < length) {
-            candidate_length = static_cast<int>(strlen(text));
-        }
-        if (candidate_length >= 0) {
-            check_length = static_cast<int>(strlen(text));
-            if (check_length < length) {
-                length = static_cast<int>(strlen(text));
-            }
-            if (length != 0) {
-                return write_multi_font_raw_l(text, x, y, length);
-            }
-        }
-        return x;
-    }
-    return 3;
-}
-
-// Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x005E3730 sub_5e3730 0x005E3730-0x005E376B BYTE_EXACT
-// symbol    ?write_cent@Buffer@@QAEHPADHHH@Z
-// size      59 bytes
-// prototype int (__stdcall sub_5E3730)(LPCSTR lpString, int, int y, int)
-// callers   1   call targets   2
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     0x005DD020 0x006453E0
-// 0x005E3730  sub_5e3730  ->  _sub_5e3730
-//
-// The retained seed's BufferProxy receiver is now the genuine Buffer owner.
-
-int Buffer::write_cent(char *text, int x, int y, int width) {
-    if (text == 0) {
-        return x;
-    }
-    int length = static_cast<int>(strlen(text));
-    return write_cent_l(text, x, y, width, length);
+    return BufferFlyingY + text_line_height();
 }
 
 // ORIGINAL: 0x005E3770 sub_5e3770 0x005E3770-0x005E37A9 FILE BYTE_EXACT

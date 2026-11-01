@@ -20,6 +20,7 @@ import pytest
 ROOT = Path(__file__).resolve().parents[2]
 VEH = ROOT / "src" / "veh.cpp"
 MAP = ROOT / "src" / "map.cpp"
+MAP_HEADER = ROOT / "src" / "map.h"
 
 
 def extract_function(source: str) -> str:
@@ -28,7 +29,16 @@ def extract_function(source: str) -> str:
     ))
     matches = [m for m in candidates if m.group(1).count(",") == 4]
     assert len(matches) == 1, "expected exactly one five-argument definition"
-    match = matches[0]
+    return extract_definition(source, matches[0])
+
+
+def extract_xrange(source: str) -> str:
+    match = re.search(r"MEASURED inline int __cdecl xrange\(int x\)\s*\{", source)
+    assert match, "missing actual xrange helper"
+    return extract_definition(source, match)
+
+
+def extract_definition(source: str, match: re.Match) -> str:
     opening = source.find("{", match.start(), match.end())
     depth = 0
     state = "code"
@@ -113,6 +123,7 @@ def product_fixture(body: str | None = None) -> str:
 #include <cassert>
 #include <cstdio>
 #define __cdecl
+#define MEASURED
 struct Veh { int x; int y; };
 Veh Vehs[64];
 int MapIsFlat=1, MapLongitudeBounds=16;
@@ -128,7 +139,8 @@ int __cdecl battle_fight(int veh_id, int dir, int x, int y, int mode,
 }
 '''
     owner_anchor = "\nint fixture_owner_table_anchor() { return RadiusOffsetX[0] + RadiusOffsetY[0] + VehMoveDeltaX[8] + VehMoveDeltaY[8]; }\n"
-    return prefix + arrays + owner_anchor + "\n" + body + "\n"
+    return (prefix + arrays + "\n" + extract_xrange(MAP_HEADER.read_text())
+            + owner_anchor + "\n" + body + "\n")
 
 
 def compile_and_run(body: str | None, main: str, compiler: str) -> int:

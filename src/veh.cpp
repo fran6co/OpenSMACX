@@ -9746,16 +9746,7 @@ int __cdecl battle_fight(int veh_id, int dir, int mode, int allow_interceptor,
     } else {
         x = VehMoveDeltaX[dir];
     }
-    int val_x = Vehs[veh_id].x + x;
-
-    if (!(MapIsFlat & 1)) {
-        const int mod = MapLongitudeBounds;
-        if (val_x < 0) {
-            val_x += mod;
-        } else if (val_x >= mod) {
-            val_x -= mod;
-        }
-    }
+    const int val_x = xrange(Vehs[veh_id].x + x);
 
     const int y = mode != 0 ? RadiusOffsetY[dir] : VehMoveDeltaY[dir];
     const int val_y = Vehs[veh_id].y + y;

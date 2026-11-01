@@ -518,8 +518,8 @@ Texture::Texture() {
 
 /*
 Purpose: Destroy the texture. Unlike close, which resets the descriptor fields
-         and borrowed flag, the destructor only settles the pixel pointer:
-         free it when owned, then clear it whenever it was nonnull. Descriptor
+         and borrowed flag, the destructor only settles an owned pixel pointer:
+         free it and clear it; borrowed pixels remain unchanged. Descriptor
          fields and the borrowed flag keep whatever they held.
 // ORIGINAL: 0x00619660 ??1Texture@@QAE@XZ 0x00619660-0x00619685
 // size      37 bytes
@@ -532,14 +532,9 @@ Return Value: n/a
 Status: Complete
 */
 Texture::~Texture() {
-    if (pixels_) {
-        if (!borrowed_) {
-            free(pixels_);
-        }
-        // Preserve the original post-free null write. This volatile view is
-        // a matching workaround, not evidence that pixels_ was volatile;
-        // restoring an ordinary store here remains a separate obligation.
-        *static_cast<unsigned char *volatile *>(&pixels_) = nullptr;
+    if (pixels_ && !borrowed_) {
+        free(pixels_);
+        pixels_ = nullptr;
     }
 }
 
@@ -603,56 +598,41 @@ int Texture::extract(Buffer *buffer, int x, int y, int width, int height,
         return 0x10;
     }
 
-    if (pixels_ != 0 && borrowed_ == 0) {
-        if (pixels_ != 0) {
-            free(pixels_);
+    close();
+
+    if (x + width <= static_cast<int>(buffer->dib_.bmiHeader.biWidth) &&
+        y + height <= -static_cast<int>(buffer->dib_.bmiHeader.biHeight)) {
+        iHeight_ = height;
+        iWidth_ = width;
+
+        unsigned char *srcData = buffer->get_data(x, y);
+        if (srcData == 0) {
+            return 7;
         }
+
+        int stride = buffer->stride_;
         pixels_ = 0;
-    }
-    iWidth_ = 0;
-    iHeight_ = 0;
-    borrowed_ = 0;
-
-    if (x + width > static_cast<int>(buffer->dib_.bmiHeader.biWidth)) {
-        return 3;
-    }
-    if (y + height > -static_cast<int>(buffer->dib_.bmiHeader.biHeight)) {
-        return 3;
-    }
-
-    iHeight_ = height;
-    iWidth_ = width;
-
-    unsigned char *srcData = buffer->get_data(x, y);
-    if (srcData == 0) {
-        return 7;
-    }
-
-    int stride = buffer->stride_;
-    pixels_ = 0;
-    if (heap != 0) {
-        pixels_ = static_cast<unsigned char *>(heap->get_tex_mem(iHeight_ << 8));
-        if (pixels_ != 0) {
-            borrowed_ = 1;
+        if (heap != 0) {
+            pixels_ = static_cast<unsigned char *>(heap->get_tex_mem(iHeight_ << 8));
+            if (pixels_ != 0) {
+                borrowed_ = 1;
+            }
         }
-    }
-    if (pixels_ == 0) {
-        pixels_ = static_cast<unsigned char *>(mem_get(iHeight_ * iWidth_));
         if (pixels_ == 0) {
-            iWidth_ = 0;
-            iHeight_ = 0;
+            pixels_ = static_cast<unsigned char *>(mem_get(iHeight_ * iWidth_));
+            if (pixels_ == 0) {
+                iWidth_ = 0;
+                iHeight_ = 0;
+                borrowed_ = 0;
+                buffer->free_data(1);
+                return 4;
+            }
             borrowed_ = 0;
-            buffer->free_data(1);
-            return 4;
         }
-        borrowed_ = 0;
-    }
 
-    unsigned char *dest = pixels_;
-    const unsigned char *src = srcData;
-    if (height != 0) {
-        int count = height;
-        do {
+        unsigned char *dest = pixels_;
+        const unsigned char *src = srcData;
+        while (height--) {
             memcpy(dest, src, iWidth_);
             if (borrowed_ == 0) {
                 dest += iWidth_;
@@ -660,41 +640,42 @@ int Texture::extract(Buffer *buffer, int x, int y, int width, int height,
                 dest += 0x100;
             }
             src += stride;
-            --count;
-        } while (count != 0);
+        }
+
+        buffer->free_data(1);
+
+        int widthMinus1 = iWidth_ - 1;
+        int heightMinus1 = iHeight_ - 1;
+        int widthHalfMinus1 = static_cast<int>(iWidth_) / 2 - 1;
+        int heightHalfMinus1 = static_cast<int>(iHeight_) / 2 - 1;
+        corners_[0].x = 0;
+        corners_[0].y = 0;
+        corners_[1].x = widthMinus1;
+        corners_[2].x = widthMinus1;
+        cornersAndMids_[1].x = widthHalfMinus1;
+        cornersAndMids_[2].x = widthMinus1;
+        cornersAndMids_[3].x = widthMinus1;
+        cornersAndMids_[4].x = widthMinus1;
+        corners_[2].y = heightMinus1;
+        corners_[3].y = heightMinus1;
+        cornersAndMids_[4].y = heightMinus1;
+        cornersAndMids_[5].y = heightMinus1;
+        cornersAndMids_[6].y = heightMinus1;
+        corners_[1].y = 0;
+        corners_[3].x = 0;
+        cornersAndMids_[0].x = 0;
+        cornersAndMids_[0].y = 0;
+        cornersAndMids_[1].y = 0;
+        cornersAndMids_[2].y = 0;
+        cornersAndMids_[3].y = heightHalfMinus1;
+        cornersAndMids_[5].x = widthHalfMinus1;
+        cornersAndMids_[6].x = 0;
+        cornersAndMids_[7].x = 0;
+        cornersAndMids_[7].y = heightHalfMinus1;
+        return 0;
     }
 
-    buffer->free_data(1);
-
-    int widthMinus1 = iWidth_ - 1;
-    int heightMinus1 = iHeight_ - 1;
-    int widthHalfMinus1 = static_cast<int>(iWidth_) / 2 - 1;
-    int heightHalfMinus1 = static_cast<int>(iHeight_) / 2 - 1;
-    corners_[0].x = 0;
-    corners_[0].y = 0;
-    corners_[1].x = widthMinus1;
-    corners_[1].y = 0;
-    corners_[2].x = widthMinus1;
-    corners_[2].y = heightMinus1;
-    corners_[3].x = 0;
-    corners_[3].y = heightMinus1;
-    cornersAndMids_[0].x = 0;
-    cornersAndMids_[0].y = 0;
-    cornersAndMids_[1].x = widthHalfMinus1;
-    cornersAndMids_[1].y = 0;
-    cornersAndMids_[2].x = widthMinus1;
-    cornersAndMids_[2].y = 0;
-    cornersAndMids_[3].x = widthMinus1;
-    cornersAndMids_[3].y = heightHalfMinus1;
-    cornersAndMids_[4].x = widthMinus1;
-    cornersAndMids_[4].y = heightMinus1;
-    cornersAndMids_[5].x = widthHalfMinus1;
-    cornersAndMids_[5].y = heightMinus1;
-    cornersAndMids_[6].x = 0;
-    cornersAndMids_[6].y = heightMinus1;
-    cornersAndMids_[7].x = 0;
-    cornersAndMids_[7].y = heightHalfMinus1;
-    return 0;
+    return 3;
 }
 #if defined(_MSC_VER) && _MSC_VER == 1200
 #pragma intrinsic(memcpy)

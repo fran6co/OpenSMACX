@@ -10449,18 +10449,21 @@ int __cdecl upgrade_cost(int faction_id, int proto_id_init, int proto_id_upg) {
         int scaled = cost + half;
         cost = (scaled + 1) * scaled;
     }
-    int weapon_diff = Weapon[VehPrototypes[upg_slot].weapon_id].cost
-                      - Weapon[VehPrototypes[init_slot].weapon_id].cost;
+    // Native 004EFDC7/004EFDF9/004EFE36 uses positive second-minus-third
+    // component costs. Callers pass the new prototype second and old third;
+    // the retained init/upg parameter names above are historical.
+    int weapon_diff = Weapon[VehPrototypes[init_slot].weapon_id].cost
+                      - Weapon[VehPrototypes[upg_slot].weapon_id].cost;
     if (weapon_diff < 0) {
         weapon_diff = 0;
     }
-    int armor_diff = Armor[VehPrototypes[upg_slot].armor_id].cost
-                     - Armor[VehPrototypes[init_slot].armor_id].cost;
+    int armor_diff = Armor[VehPrototypes[init_slot].armor_id].cost
+                     - Armor[VehPrototypes[upg_slot].armor_id].cost;
     if (armor_diff < 0) {
         armor_diff = 0;
     }
-    int chassis_diff = Chassis[VehPrototypes[upg_slot].chassis_id].speed
-                       - Chassis[VehPrototypes[init_slot].chassis_id].speed;
+    int chassis_diff = Chassis[VehPrototypes[init_slot].chassis_id].speed
+                       - Chassis[VehPrototypes[upg_slot].chassis_id].speed;
     if (chassis_diff < 0) {
         chassis_diff = 0;
     }

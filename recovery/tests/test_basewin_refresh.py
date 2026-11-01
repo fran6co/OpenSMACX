@@ -7,7 +7,8 @@ virtual receiver redraw, qualified main-interface GraphicWin redraw. The
 independent distance formula is max(dx,dy)-floor((abs(dx-dy)+2)/4), with the
 original single horizontal wrap and absolute value applied first.
 
-Only window storage is projected; Base uses its complete real declaration.
+Only window storage is projected; Base and map metadata use their complete
+real declarations. The map aliases and distance helpers also come from source.
 Recomputation and painting are explicit service doubles. In particular this
 does not exercise unfinished base_energy, BaseWin's pending contents painter,
 native vtable offsets, constructors, or real GUI/Win32 callbacks. Valid base
@@ -50,6 +51,7 @@ def actual():
     interface = (ROOT / 'src/maininterface.h').read_text()
     base = (ROOT / 'src/base.h').read_text()
     map_h = (ROOT / 'src/map.h').read_text()
+    map_cpp = (ROOT / 'src/map.cpp').read_text()
     cpp = (ROOT / 'src/basewin.cpp').read_text()
     declarations = '\n'.join((
         braced(base, 'struct Base {') + ';',
@@ -57,9 +59,15 @@ def actual():
         one(base, r'^extern Base Bases\[MaxBaseNum\];'),
         one(base, r'^extern int BaseIDCurrentSelected;'),
         one(base, r'^void __cdecl base_compute\(int force\);'),
-        one(map_h, r'^extern int MapLongitudeBounds;'),
+        braced(map_h, 'struct Landmark {') + ';',
+        one(map_h, r'^static const int MaxLandmarkNum = \d+;'),
+        braced(map_h, 'struct MapMetadataFields {') + ';',
+        'struct Map;',
+        braced(map_h, 'struct MapStorageWindow {') + ';',
+        one(map_h, r'^extern MapStorageWindow MapStorage;'),
+        one(map_h, r'^#define MapLongitudeBounds .+$'),
+        one(map_h, r'^#define MapIsFlat .+$'),
         one(map_h, r'^extern int MapLongitude;'),
-        one(map_h, r'^extern BOOL MapIsFlat;'),
         'struct Win { public:',
         one(win, r'\buint32_t iSomeFlag_;'),
         one(win, r'\bWin \*win_parent_;'),
@@ -85,7 +93,7 @@ def actual():
     methods = {
         'visible': braced(visible_source.read_text(), 'int Win::is_visible()'),
         'x_dist': braced(map_h, 'MEASURED inline int __cdecl x_dist('),
-        'distance': braced(map_h, 'MEASURED inline int __cdecl vector_dist(int x_distance,'),
+        'distance': braced(map_cpp, 'int __cdecl vector_dist(int x_distance,'),
         'check_base': braced(cpp, 'void BaseWin::check_base('),
         'check_loc': braced(cpp, 'void BaseWin::check_loc('),
     }
@@ -112,9 +120,8 @@ static_assert(std::is_same<decltype(Base::y),int16_t>::value,"signed y");
 static_assert(offsetof(Base,x)==0&&offsetof(Base,y)==2,"actual coordinate fields");
 Base Bases[MaxBaseNum];
 int BaseIDCurrentSelected=3;
-int MapLongitudeBounds=100;
+MapStorageWindow MapStorage;
 int MapLongitude=50;
-BOOL MapIsFlat=0;
 MainInterface MainInterfaceGlobal;
 std::vector<char> events;
 std::function<void(char)> callback;
@@ -183,6 +190,9 @@ int main(){
     const int distance=expected_distance(x,y,b.x,b.y,(flat&1)!=0);
     for(int radius : {-1,distance-1,distance,distance+1}){
       start();MapIsFlat=flat;Bases[2].x=static_cast<int16_t>(b.x);Bases[2].y=static_cast<int16_t>(b.y);
+      // The refresh now expands the metric locally. Exercise the separately
+      // emitted actual helper too, retaining its independent damage control.
+      require(vector_dist(x_dist(x,b.x),std::abs(y-b.y))==distance);
       window.check_loc(x,y,radius);outcome(distance<=radius);
       require(window.focusedBaseID_==2&&BaseIDCurrentSelected==3);
     }
@@ -262,7 +272,8 @@ def test_refresh_dispatch_damage_is_observed(tmp_path, method, damage):
     ('check_loc','Bases[focusedBaseID_].y','static_cast<uint16_t>(Bases[focusedBaseID_].y)'),
     ('check_loc','<= radius','< radius'),
     ('check_loc','const int dy = abs(y - base_y);','const int dy = abs(x - base_y);'),
-    ('check_loc','vector_dist(dx, dy)','dx + dy'),
+    ('check_loc','const int distance = largest -\n            ((((distance_x + distance_y) >> 1) - smallest + 1) >> 1);',
+     'const int distance = dx + dy;'),
     ('x_dist','!(MapIsFlat & 1)','!MapIsFlat'),
     ('x_dist','MapLongitudeBounds - dist','dist'),
     ('x_dist','dist > (int)MapLongitude','dist < (int)MapLongitude'),
