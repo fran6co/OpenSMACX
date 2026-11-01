@@ -1,0 +1,19 @@
+{
+  "event_id": "01f0db7ca5d61b966b70a89f40579868fbfdd532542c617537415c80253fbdd9",
+  "payload": {
+    "author": "coordinator",
+    "discovery_id": "original-noop-default-block",
+    "disposition": "rejected",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "One actual candidate compile of explicit default:return beforecase27 yields no primary matching gain: baseline/candidate24of25SHAPE_EXACT, strictFAILunchanged. Independently reviewed as semantically equivalent, not a behavior correction.",
+      "Initial comparison wrapper stopped after actual capture when automatic associated verification requested another provider; no compiler retry. Separate fresh read-only native observation reuses capturedactualCOFF and preserves its epoch limitations; no original compile-epoch replay, banking or acceptance claim.",
+      "All native nonfunction dimensions unchanged. Complete candidate source/COFF and baseline, source/tool/recipe/provider guards, both wrapper logs and independent review remain ignored under .opensmacx/recovery/socialwin-default-layout-nov01dm. Original C++ restored after preserved rejection; one-form cap exhausted."
+    ]
+  },
+  "previous_event": "e3385156afe3f0673e3ff5b6b8b2164a3ea27713f1aaa9a8654787ff94526019",
+  "request_id": "reject-original-noop-default-block",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:socialwin-default-layout-nov01dm"
+}

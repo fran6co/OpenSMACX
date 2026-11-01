@@ -1,0 +1,21 @@
+{
+  "event_id": "e3385156afe3f0673e3ff5b6b8b2164a3ea27713f1aaa9a8654787ff94526019",
+  "payload": {
+    "affects": [
+      "entity-4b45052d0fe041debcbfe9a19ed4413a5b0341a86bf5f92542e48e4e80ce3e03"
+    ],
+    "author": "coordinator",
+    "discovery_id": "original-noop-default-block",
+    "evidence": [
+      "Pinned out-of-rangeJA selects4B1E38 no-op epilogue before reset-only case; currentJA targets4B1E44 after it.",
+      "One source-form budget: explicit default:return beforecase27. Preserve TutorialWindow.reset and switch actions, tables and identities. Associated-table verification is mandatory; primary-body equality alone cannot bank or prove tables."
+    ],
+    "hypothesis": "Explicit no-op default beforecase27 may restore original exit placement.",
+    "kind": "discovery"
+  },
+  "previous_event": null,
+  "request_id": "original-noop-default-block",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:socialwin-default-layout-nov01dm"
+}
