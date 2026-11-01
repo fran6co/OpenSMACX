@@ -252,6 +252,16 @@ the new evidence, the prior hypothesis it changes, and the concrete source
 correction before continuing; preserve earlier attempts and their accounting.
 A new task name, equivalent spelling, higher similarity or arbitrary register
 permutation alone is not new evidence and does not reopen an exhausted search.
+A conventional, behavior-preserving local helper is a valid matching candidate
+when the original instruction effects and an already-matched compiler pattern
+support it. The original helper name or exact source spelling need not be known.
+For example, an inlined checked release can retain a second null guard that an
+identical condition in the caller loses. Distinguish a tested source-emission
+hypothesis from a claim about historical names or ownership. Do not invent
+classes, layouts, executable addresses or side effects to force a match. When
+one such change succeeds, check other owners for that specific pattern before
+returning to unrelated spelling trials.
+
 Candidate compile failures count toward repeated attempts on that hypothesis;
 unchanged baseline, object-replica and deliberate damage controls are reported
 separately. Use fewer attempts when no evidence-backed, ordinary C++ candidate

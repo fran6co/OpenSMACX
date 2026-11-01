@@ -516,6 +516,14 @@ Texture::Texture() {
     borrowed_ = 0;
 }
 
+namespace {
+inline void release_texture_pixels(unsigned char *pixels) {
+    if (pixels != 0) {
+        free(pixels);
+    }
+}
+}
+
 /*
 Purpose: Destroy the texture. Unlike close, which resets the descriptor fields
          and borrowed flag, the destructor only settles an owned pixel pointer:
@@ -533,7 +541,7 @@ Status: Complete
 */
 Texture::~Texture() {
     if (pixels_ && !borrowed_) {
-        free(pixels_);
+        release_texture_pixels(pixels_);
         pixels_ = nullptr;
     }
 }
@@ -556,7 +564,7 @@ Status: Complete
 */
 void Texture::close() {
     if (pixels_ && !borrowed_) {
-        free(pixels_);
+        release_texture_pixels(pixels_);
         pixels_ = nullptr;
     }
     iWidth_ = 0;

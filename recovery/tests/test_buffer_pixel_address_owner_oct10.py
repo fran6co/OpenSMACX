@@ -90,6 +90,7 @@ def test_actual_coordinate_acquisition(tmp_path, compiler, damage):
 
 def texture_lifecycle_control(damage):
     source = (ROOT / "src/texture.cpp").read_text()
+    release_pixels = extract(source, "inline void release_texture_pixels(unsigned char *pixels)")
     constructor = extract(source, "Texture::Texture()")
     destructor = extract(source, "Texture::~Texture()")
     close = extract(source, "void Texture::close()")
@@ -100,10 +101,11 @@ def texture_lifecycle_control(damage):
     elif damage == "destructor-null":
         destructor = destructor.replace("pixels_ = nullptr;", ";", 1)
     elif damage == "borrowed-pointer-clearing":
+        assert destructor.count("if (pixels_ && !borrowed_) {\n        release_texture_pixels(pixels_);") == 1
         destructor = destructor.replace(
-            "if (pixels_ && !borrowed_) {\n        free(pixels_);",
-            "if (pixels_) {\n        if (!borrowed_) free(pixels_);", 1)
-    bodies = "\n".join((constructor, destructor, close))
+            "if (pixels_ && !borrowed_) {\n        release_texture_pixels(pixels_);",
+            "if (pixels_) {\n        if (!borrowed_) release_texture_pixels(pixels_);", 1)
+    bodies = "\n".join((release_pixels, constructor, destructor, close))
     return r'''
 #include <cassert>
 #include <cstdint>
@@ -174,6 +176,8 @@ def test_actual_texture_pixel_lifecycle(tmp_path, compiler, damage):
 
 def texture_control(damage):
     assert "unsigned char *pixels_;" in (ROOT / "src/texture.h").read_text()
+    release_pixels = extract((ROOT / "src/texture.cpp").read_text(),
+                             "inline void release_texture_pixels(unsigned char *pixels)")
     body = extract((ROOT / "src/texture.cpp").read_text(),
                    "int Texture::extract(Buffer *buffer, int x, int y, int width, int height,\n                     TexHeap *heap)")
     assert "const unsigned char *src = srcData;" in body
@@ -235,7 +239,7 @@ int main(){
     assert(texture.extract(&buffer,1,2,3,2,nullptr)==7);
     assert(buffer.acquires==4 && buffer.releases==3 && texture.iWidth_==3 && texture.iHeight_==2);
 }
-'''.replace("BODY", body + "\n" + close)
+'''.replace("BODY", release_pixels + "\n" + body + "\n" + close)
 
 
 @pytest.mark.parametrize("compiler", ("g++", "clang++"))
