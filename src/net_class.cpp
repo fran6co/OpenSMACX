@@ -4703,3 +4703,6 @@ int Net::send(void *data, int data_size, unsigned long target, int flags) {
 // RECOVERY_BINDING: v1 {"evidence": ["pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf:0x004E3710..0x004E372A adjusts ECX by +0x58, calls 0x00402DD0, restores vptr 0x006693AC, republishes saved owner to 0x009B3374, and returns", "pinned Net, AlphaNet, and NetDaemon cleanup continuations pass the embedded complete NetAllocationNode receiver to 0x004E3710; helper reads no caller-frame state", "src/net_class.h declares NetAllocationNode virtually derives from StringAllocationBase, with vbtable 0x00669430 and base at +0x58; the captured allocator owner is at +4"], "reason": "Bind the pinned generated NetAllocationNode virtual-base cleanup entry to its genuine StringAllocationBase subobject and allocator-owner stage."}
 // kind game
 // symbol    ??_DNetAllocationNode@@QAEXXZ
+// RECOVERY_GENERATED: v1 vbtable 0x006693DC 0x006693E4 ??_8ServiceProviderList@@7B@ 0x00401660
+// RECOVERY_GENERATED: v1 vbtable 0x006693FC 0x00669404 ??_8NetTextListBase@@7B@ 0x00401B80
+// RECOVERY_GENERATED: v1 vbtable 0x00669424 0x0066942C ??_8NetUnk72C@@7B@ 0x00402D10

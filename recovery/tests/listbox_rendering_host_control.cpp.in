@@ -217,7 +217,38 @@ static void link_rows(StringStructEntry *rows, int count, unsigned int *spans) {
     }
 }
 
+
+// Original 60C019/60C01C and 60C0AE/60C0B1 compare payload+C signed.
+// Grid positioning keeps high-bit test metadata out of row-height arithmetic.
+static void check_signed_payload_span_text_dispatch() {
+    struct Case { unsigned int bits; bool wraps; };
+    const Case cases[] = {
+        {0xffffffffu, false}, {0x80000000u, false},
+        {0u, false}, {1u, false}, {2u, true}, {0x7fffffffu, true}
+    };
+    for (unsigned int k=0; k<sizeof(cases)/sizeof(cases[0]); ++k) {
+        for (int separator=0; separator!=2; ++separator) {
+            StringStructEntry row[1];
+            unsigned int spans[1] = {cases[k].bits};
+            link_rows(row, 1, spans);
+            char text[32];
+            std::strcpy(text, separator ? "left|right" : "left");
+            row[0].payload.text=text;
+            ListBox box;
+            box.Dialog::field_4C_=0;
+            box.Dialog::row_count_=1;
+            box.item_list_.head_=box.item_list_.current_=&row[0];
+            box.item_list_.entry_count_=1;
+            box.draw_item(0);
+            assert(box.wraps==(cases[k].wraps ? 1 : 0));
+            assert(box.writes==((cases[k].wraps ? 0 : 1) + separator));
+            assert(std::strcmp(text, separator ? "left|right" : "left")==0);
+        }
+    }
+}
+
 int main() {
+    check_signed_payload_span_text_dispatch();
     StringStructEntry rows[8];
     unsigned int spans[8] = {2, 3, 4, 5, 6, 7, 8, 9};
     link_rows(rows, 8, spans);
