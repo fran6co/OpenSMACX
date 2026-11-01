@@ -1,0 +1,25 @@
+{
+  "event_id": "63f3a75e128dc076fb293f672ff3a23d997318cca3e3a36c25f4afa79c2ab3e3",
+  "payload": {
+    "affects": [
+      "entity-90c9b686c7fad0a96d1fb2061a0e7067890a74d50e3b246b5f16cb2ae48027ed",
+      "entity-90e6ee7255a2a9de4262ff15559f954e3ef4ba9da8d92972d33f16000d92b7e8",
+      "entity-97b3ed9df240c122c569bdf62942098bc970b053f192ae388fa9eabcdea05a14",
+      "entity-b94254001c9f6ac2f88041ff509dfee2af0a13319f090c231f525f131b21755e"
+    ],
+    "author": "coordinator",
+    "discovery_id": "palette-constant-start-correspondences",
+    "evidence": [
+      "Pinned RGB_to_HSV direct qword operands at628DE6/DF7/E05 consume670C50,628E5C/71/7A and628F06 consume66FA70,628F15 consumes670C30. Fresh DO qualified COFF confirms unique TU-private symbols and equal payloads.",
+      "Expand same Palette arithmetic owner only for three unbounded constant starts and caller reference checking; no original allocation bound, nominal original name, new body claim or linked-selection proof.",
+      "Independent read-only report SHA256 c16b40fbc0c1ff8f8a10bb4f0c5310f0642fb2e4274fefe38e572e3fdbef3855"
+    ],
+    "hypothesis": "Bind three existing private Palette constants to their independently observed original qword operands, leaving exclusive extents unknown.",
+    "kind": "discovery"
+  },
+  "previous_event": "741be5e6ecda57b93cc812b8ea358cf1a517b1d1ed089bf027a12d412e6eca78",
+  "request_id": "palette-constant-start-correspondences",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:palette-hsv-evaluation-nov01dq"
+}

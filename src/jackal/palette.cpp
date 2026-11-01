@@ -39,6 +39,8 @@ int PaletteSeedCache;                   // 0x009B8184
 // RECOVERY_OBJECT: v1 0x009BC4A0 ?DirectDrawPalette@@3PAUIDirectDrawPalette@@A
 IDirectDrawPalette *DirectDrawPalette;  // 0x009BC4A0
 
+// Direct qword operands establish the mapped constant starts below.
+// Their exclusive original allocations are not established by read width.
 // The HSV colour math's constants, values READ OUT OF THE IMAGE'S .DATA at
 // the addresses noted, named from the arithmetic that uses them. cl emits
 // its own .rdata copies and the relocation mask makes the addressing match
@@ -47,13 +49,17 @@ IDirectDrawPalette *DirectDrawPalette;  // 0x009BC4A0
 namespace {
 // RECOVERY_OBJECT: v1 0x0066EB38 _hsv_percent_scale
 const double hsv_percent_scale = 0.01;              // 0x0066EB38
+// RECOVERY_OBJECT: v1 0x00670280 _hsv_deg_to_rad
 const double hsv_deg_to_rad = 0.017453292519444445; // pi/180, 0x00670280
+// RECOVERY_OBJECT: v1 0x0066FA70 _hsv_zero
 const double hsv_zero = 0.0;                        // 0x0066FA70
 const double hsv_sector_offset_b_minus_r = 2.0;     // 0x00670C48
 const double hsv_sector_offset_r_minus_g = 4.0;     // 0x0066FDC8
+// RECOVERY_OBJECT: v1 0x00670C30 _hsv_hue_wrap_degrees
 const double hsv_hue_wrap_degrees = 360.0;          // 0x00670C30
 const double hsv_degrees_per_sector = 60.0;         // 0x00670C40
-const double hsv_value_byte_scale = 0.00390625;     // 1/255, 0x00670C50
+// RECOVERY_OBJECT: v1 0x00670C50 _hsv_value_byte_scale
+const double hsv_value_byte_scale = 0.00390625;     // 1/256, 0x00670C50
 }
 
 // 0x0067022C - see palette.h. Blue, green, red, reserved, per RGBQUAD.
@@ -1788,11 +1794,15 @@ void __cdecl RGB_to_HSV(const PALETTEENTRY *entry, HSV *out) {
 }
 
 // ORIGINAL: 0x005FF630 ?get_nearest_palette_index@Palette@@QAEHPAUHSV@@0H@Z 0x005FF630-0x005FF92D FILE
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned CFG 5FF67E..5FF789 and5FF7F7..5FF91A are mutually exclusive stride-one scans, not unrolled loops. Each eligible distance evaluates sine(query),sine(candidate) twice, then cosine(query),cosine(candidate) twice.", "Pinned5FF756..5FF766 accumulates sine/cosine squares before the squared value difference;5FF773..5FF777 and5FF8F9..5FF8FD save the winner only after a successful comparison. No winner-slot initialization precedes either loop.", "Original hue products repeatedly read qword0x670280; current source uses its matching TU-private double. The const-HSV array interpretation is corroborated by create_table passing its real HSV[256]."], "reason": "Recover the original per-expression trig evaluation, floating-point accumulation order and winning-index lifetime, preserving the unsafe no-winner path."}
+// symbol    ?get_nearest_palette_index@Palette@@QAEHPBUHSV@@0H@Z
+// Historical compiler observations follow. The old loop-unrolling
+// explanation is superseded by the pinned CFG and binding evidence above;
+// its inlining and failed-attempt observations are retained as history.
 // TRIED: 2026-09-03, the /G6 flag sets added to the ladder after the 2026-08-24 pass TIE the plain
 //   /c /O2 /Gy /GR- /GX set on instruction count (both 7/224) and beat it on similarity, 0.462 vs
 //   0.378 - the only body in this file where /G6 is the better set outright. Re-measured over all
 //   26 flag sets; the best figure is still a long way off.
-// symbol    ?get_nearest_palette_index@Palette@@QAEHPBUHSV@@0H@Z
 // TRIED: MISMATCH #5 push/mov - and/sub-esp frame differs because the helper hsv_sq_distance() is a separate function call rather than inlined FPU code sharing one scratch stack slot per the original's single sub-esp-8 staging area reused across both sin/cos call sites in each loop body.
 // LEVER: `static __forceinline` on `hsv_sq_distance` makes VC6 actually inline
 //   it - confirmed by objdump on the compiled object: the `call` sites now
@@ -1807,7 +1817,9 @@ void __cdecl RGB_to_HSV(const PALETTEENTRY *entry, HSV *out) {
 //   unrolling is a compiler heuristic this tree has no source-level lever
 //   for. Kept anyway: the call graph now matches the image's (no call the
 //   image does not make), which is worth more than the tied score.
-// working copy - scaffold materialised by --work
+// End historical observations. Current pinned interpretation:
+// Both search arms advance one HSV record per iteration. Repeated trig
+// evaluations belong to each distance expression, not loop unrolling.
 // size      765 bytes
 // prototype int (__thiscall ?get_nearest_palette_index@Palette@@QAEHPAUHSV@@0H@Z)(Palette* this, HSV*, HSV*, int)
 // callers   1   call targets   2
@@ -1815,81 +1827,62 @@ void __cdecl RGB_to_HSV(const PALETTEENTRY *entry, HSV *out) {
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     0x006463E4 0x00646494
 
-static __forceinline double hsv_sq_distance(const HSV *a, const HSV *b, double k) {
+static __forceinline double hsv_sq_distance(const HSV *a, const HSV *b) {
     double dv = a->v - b->v;
-    double sin_a = ((double(__cdecl *)(double))sin)(a->h * k) * a->s;
-    double sin_b = ((double(__cdecl *)(double))sin)(b->h * k) * b->s;
-    double cos_a = ((double(__cdecl *)(double))cos)(a->h * k) * a->s;
-    double cos_b = ((double(__cdecl *)(double))cos)(b->h * k) * b->s;
-    double ds = sin_a - sin_b;
-    double dc = cos_a - cos_b;
-    return dv * dv + ds * ds + dc * dc;
+    double chroma_square = (((double(__cdecl *)(double))sin)(a->h * hsv_deg_to_rad) * a->s - ((double(__cdecl *)(double))sin)(b->h * hsv_deg_to_rad) * b->s) * (((double(__cdecl *)(double))sin)(a->h * hsv_deg_to_rad) * a->s - ((double(__cdecl *)(double))sin)(b->h * hsv_deg_to_rad) * b->s)
+        + (((double(__cdecl *)(double))cos)(a->h * hsv_deg_to_rad) * a->s - ((double(__cdecl *)(double))cos)(b->h * hsv_deg_to_rad) * b->s) * (((double(__cdecl *)(double))cos)(a->h * hsv_deg_to_rad) * a->s - ((double(__cdecl *)(double))cos)(b->h * hsv_deg_to_rad) * b->s);
+    return chroma_square + dv * dv;
 }
 
-// CORRECTED from a transcription that read the table at an 8-byte skew
-// ((char*)+8 and (char*)+0xf8): the caller refutes it. create_table -
-// transcribed at 0.96 similarity - passes &hsv[0] of a real HSV[256], and
-// hsv_sq_distance compares LIKE fields, which a skewed base cannot feed.
-// The skew was frame arithmetic misread out of a body whose own TRIED note
-// says it diverges at instruction #5. Branch A starts at entry 10, exactly
-// where its used[10..0xf5] skip logic operates; branch B at the base.
+// The original saves a winning index only after a successful comparison.
+// If no eligible distance beats the sentinel, its return slot is uninitialized.
 int Palette::get_nearest_palette_index(const HSV *query, const HSV *hsv_block,
                                        int skip_animated) {
-    double k = hsv_deg_to_rad;
     double best = 200000.0;
-    int best_index = 0;
+    int best_index;
     int i;
-
     if (PaletteInitialized == nullptr) {
         return 7;
     }
-
-    if (skip_animated != 0) {
-        int used[256];
-        for (i = 0; i < 0x100; i++) {
-            used[i] = 0;
-        }
-
-        for (i = 0; i < 5; i++) {
-            if (internal_[i].key != 0xffffffff) {
-                unsigned int start = internal_[i].first;
-                unsigned int len = internal_[i].count;
-                unsigned int end = start + len;
-                if (start < end) {
-                    unsigned int j;
-                    for (j = start; j < end; j++) {
-                        used[j] = 1;
-                    }
-                }
-            }
-        }
-
-        {
-            const HSV *arr = hsv_block + 10;
-            for (i = 10; i < 0xf6; i++) {
-                if (used[i] == 0) {
-                    double d = hsv_sq_distance(query, arr, k);
-                    if (d < best) {
-                        best = d;
-                        best_index = i;
-                    }
-                }
-                arr++;
-            }
-        }
-        return best_index;
-    }
-
-    {
+    if (skip_animated == 0) {
         const HSV *arr = hsv_block;
         for (i = 0; i < 0x100; i++) {
-            double d = hsv_sq_distance(query, arr, k);
+            double d = hsv_sq_distance(query, arr);
             if (d < best) {
                 best = d;
                 best_index = i;
             }
             arr++;
         }
+        return best_index;
+    }
+    int used[256];
+    for (i = 0; i < 0x100; i++) {
+        used[i] = 0;
+    }
+    for (i = 0; i < 5; i++) {
+        if (internal_[i].key != 0xffffffff) {
+            unsigned int start = internal_[i].first;
+            unsigned int len = internal_[i].count;
+            unsigned int end = start + len;
+            if (start < end) {
+                unsigned int j;
+                for (j = start; j < end; j++) {
+                    used[j] = 1;
+                }
+            }
+        }
+    }
+    const HSV *arr = hsv_block + 10;
+    for (i = 10; i < 0xf6; i++) {
+        if (used[i] == 0) {
+            double d = hsv_sq_distance(query, arr);
+            if (d < best) {
+                best = d;
+                best_index = i;
+            }
+        }
+        arr++;
     }
     return best_index;
 }

@@ -1,0 +1,42 @@
+{
+  "event_id": "741be5e6ecda57b93cc812b8ea358cf1a517b1d1ed089bf027a12d412e6eca78",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "src/jackal/palette.cpp"
+    ],
+    "evidence": [
+      "Pinned RGB_to_HSV direct qword operands at628DE6/DF7/E05 consume670C50,628E5C/71/7A and628F06 consume66FA70,628F15 consumes670C30. Fresh DO qualified COFF confirms unique TU-private symbols and equal payloads.",
+      "Expand same Palette arithmetic owner only for three unbounded constant starts and caller reference checking; no original allocation bound, nominal original name, new body claim or linked-selection proof.",
+      "Independent read-only report SHA256 c16b40fbc0c1ff8f8a10bb4f0c5310f0642fb2e4274fefe38e572e3fdbef3855"
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 6458800,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6753360,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6748784,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6753328,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "f278d45a1e4c756893b7fc42eca56060efa2dccd7caac9bffbcf9250d7f228c3",
+  "request_id": "palette-constant-reference-scope",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:palette-hsv-evaluation-nov01dq"
+}
