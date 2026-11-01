@@ -1727,7 +1727,6 @@ void __cdecl fungus_radius(int x, int y) {
 /*
 Purpose: Search for the first landmark found within the radius range of the specified tile.
 // ORIGINAL: 0x00592550 ?find_landmark@@YAHHHH@Z 0x00592550-0x005925F8 BYTE_EXACT
-// body      src/map.h
 // size      168 bytes
 // prototype 
 // callers   5   call targets   0
@@ -1739,10 +1738,24 @@ Purpose: Search for the first landmark found within the radius range of the spec
 Return Value: Landmark offset or -1 if none found
 Status: Complete
 */
-// BODY IN map.h, as `MEASURED inline`: the image writes it out at
-// some call sites and calls it at others, and a .cpp definition is only ever
-// one of those. The marker stays here because that is where the catalogue
-// reads it.
+// The landmark query is owned here. Its definition remains visible to the
+// same-unit removal operation; external clients use the header declaration.
+
+int __cdecl find_landmark(int x, int y, int radius_range_offset) {
+    int radius = RadiusRange[radius_range_offset];
+    for (int i = 0; i < radius; i++) {
+        int x_radius = xrange(x + RadiusOffsetX[i]);
+        int y_radius = y + RadiusOffsetY[i];
+        if (on_map(x_radius, y_radius)) {
+            for (int lm = 0; lm < MapLandmarkCount; lm++) {
+                if (x_radius == MapLandmark[lm].x && y_radius == MapLandmark[lm].y) {
+                    return lm;
+                }
+            }
+        }
+    }
+    return -1;
+}
 
 /*
 Purpose: Set up a new landmark with the provided name at the specified tile.
@@ -1824,7 +1837,23 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl kill_landmark(int x, int y) {
-    int landmark_to_kill = find_landmark(x, y, 1);
+    int landmark_to_kill = -1;
+    int radius = RadiusRange[1];
+    for (int i = 0; i < radius; i++) {
+        int x_radius = xrange(x + RadiusOffsetX[i]);
+        int y_radius = y + RadiusOffsetY[i];
+        if (on_map(x_radius, y_radius)) {
+            for (int lm = 0; lm < MapLandmarkCount; lm++) {
+                if (x_radius == MapLandmark[lm].x && y_radius == MapLandmark[lm].y) {
+                    landmark_to_kill = lm;
+                    goto remove_landmark;
+                }
+            }
+        }
+    }
+    return;
+
+remove_landmark:
     if (landmark_to_kill >= 0) {
         for (int i = landmark_to_kill; i < MapLandmarkCount - 1; i++) {
             MapLandmark[i] = MapLandmark[i + 1];
