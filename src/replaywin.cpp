@@ -182,11 +182,10 @@ void ReplayWin::on_redraw() {
 // symbol    ?add_base_site@ReplayWin@@QAEXHHH@Z
 void ReplayWin::add_base_site(int x, int y, int faction_id) {
     for (int index = 0; index < 512; ++index) {
-        ReplayBaseSite &site = base_sites_[index];
-        if (site.x < 0) {
-            site.x = x;
-            site.y = y;
-            site.faction_id = faction_id;
+        if (base_sites_[index].x < 0) {
+            base_sites_[index].x = x;
+            base_sites_[index].y = y;
+            base_sites_[index].faction_id = faction_id;
             return;
         }
     }
@@ -212,11 +211,10 @@ int ReplayWin::update_base_site(int x, int y, int faction_id) {
 // symbol    ?remove_base_site@ReplayWin@@QAEXHHH@Z
 void ReplayWin::remove_base_site(int x, int y, int) {
     for (int index = 0; index < 512; ++index) {
-        ReplayBaseSite &site = base_sites_[index];
-        if (site.x == x && site.y == y) {
-            site.faction_id = -1;
-            site.y = -1;
-            site.x = -1;
+        if (base_sites_[index].x == x && base_sites_[index].y == y) {
+            base_sites_[index].faction_id = -1;
+            base_sites_[index].y = -1;
+            base_sites_[index].x = -1;
             return;
         }
     }

@@ -2176,11 +2176,12 @@ int Net::add_to_group(long group, unsigned long member) {
 // interface, otherwise the DeletePlayerFromGroup HRESULT unchanged.
 int __stdcall sub_62ee00(int first, int second) {
   IDirectPlay2 *const direct_play = NetDirectPlay;
-  if (direct_play == 0) {
-    return 0;
+  int result = reinterpret_cast<int>(direct_play);
+  if (direct_play != 0) {
+    result = static_cast<int>(direct_play->DeletePlayerFromGroup(
+        static_cast<DPID>(first), static_cast<DPID>(second)));
   }
-  return static_cast<int>(direct_play->DeletePlayerFromGroup(
-      static_cast<DPID>(first), static_cast<DPID>(second)));
+  return result;
 }
 
 // ORIGINAL: 0x0062DF70 ?start_voice@Net@@QAEHJ@Z 0x0062DF70-0x0062DFBE BYTE_EXACT
