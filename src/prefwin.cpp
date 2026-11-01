@@ -517,6 +517,12 @@ void PrefWin::display(int page) {
 // Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x0048FDD0 ?destroy@PrefWin@@QAEXXZ 0x0048FDD0-0x0048FF51 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/0048fdd0.cpp", "recovery/tasks/prefwin-owner-coverage-wave.json", "Original control parent 8578D8; ctor/destructor member order, 800-pixel branch, checkbox text-context and callback order independently reviewed."], "reason": "Recover the complete PrefWin ownership group through a genuine GraphicWin base and compiler-owned embedded control lifetimes; preserve seed identity, original spans and unresolved discoveries without granting byte claims."}
+// Pinned arguments identify these NUL-terminated keys in the original;
+// the literal spans cover their text and terminators, not surrounding storage.
+// RECOVERY_LITERAL: v1 0x00686D38 0x00686D44 ??_C@_0M@PJJL@Main?5Volume?$AA@ 0x0048FDD0
+// RECOVERY_LITERAL: v1 0x00686D44 0x00686D51 ??_C@_0N@MEMM@Voice?5Volume?$AA@ 0x0048FDD0
+// RECOVERY_LITERAL: v1 0x00686D54 0x00686D61 ??_C@_0N@FBBG@Music?5Volume?$AA@ 0x0048FDD0
+// RECOVERY_LITERAL: v1 0x00686D64 0x00686D6F ??_C@_0L@HGCM@SFX?5Volume?$AA@ 0x0048FDD0
 void PrefWin::destroy() {
   if (field_A5C_) {
     set_preferences();

@@ -148,6 +148,10 @@ extern int ConsoleControlTurnActive;
 
 // ORIGINAL: 0x00530D50 ?lock_base@NetDaemon@@QAEHHHHH@Z 0x00530D50-0x00530E48 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["image:0x00530D50-0x00530E48"], "reason": "Recover the base-menu network guard through real Base records, shared turn state and NetDaemon lock-state members; original calls establish argument forwarding and log strings."}
+// Pinned arguments identify these NUL-terminated keys in the original;
+// the literal spans cover their text and terminators, not surrounding storage.
+// RECOVERY_LITERAL: v1 0x0068C2F4 0x0068C2FD ??_C@_08HMKG@LockBase?$AA@ 0x00530D50
+// RECOVERY_LITERAL: v1 0x0068C300 0x0068C314 ??_C@_0BE@EDOO@LockBase?5Needs?5Lock?$AA@ 0x00530D50
 int NetDaemon::lock_base(int base_id, int target, int payload_1C, int payload_20) {
     log_say("LockBase", UnkGlobal0093A934, ConsoleControlTurnActive,
             BaseIDCurrentSelected);
@@ -2386,6 +2390,9 @@ int NetDaemon::send_message(char *message, unsigned long length, int target) {
 // `movsx reg, word ptr [id*0x34 + 0x952828/0x95282a]` the image emits, and
 // it took this body from 33 agreeing instructions to BYTE_EXACT 68/68
 // (2026-09-04).
+// Pinned arguments identify these NUL-terminated keys in the original;
+// the literal spans cover their text and terminators, not surrounding storage.
+// RECOVERY_LITERAL: v1 0x0068C340 0x0068C34C ??_C@_0M@BBBC@ALREADYDONE?$AA@ 0x00531020
 int NetDaemon::lock_veh(int *veh_id, int target, int payload_1C,
                         int payload_20, int payload_18) {
     if (IsMultiplayerNet == 0) {

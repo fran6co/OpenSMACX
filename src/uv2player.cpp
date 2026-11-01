@@ -206,6 +206,10 @@ void UV2Player::close() {
         direct_draw2_->Release();
         direct_draw2_ = nullptr;
 
+        // Pinned 4BF43D passes the NUL-terminated preference key at 687AC8
+        // to prefs_get. Its eleven literal bytes match the independent COFF
+        // literal; this does not describe the surrounding allocation.
+        // RECOVERY_LITERAL: v1 0x00687AC8 0x00687AD3 ??_C@_0L@DHIO@DirectDraw?$AA@ 0x004BF400
         if (prefs_get("DirectDraw", 1, 0) != 0) {
             if (WinScreenWidth >= 0x400) {
                 Win::set_display_mode(0x400, 0x300, 8, 0);
