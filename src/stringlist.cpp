@@ -100,29 +100,38 @@ Purpose: Sort the circular list by payload text, keeping each ID with its
 Return Value: n/a
 Status: Product behavior; historical seed remains an unclaimed measurement.
 */
+// The native selection pass retains the winning index and text, not its
+// node pointer. It reacquires both entries and tests each seek before swapping
+// their raw ID/payload words; a failed seek must leave those words untouched.
 void StringList::sort(int) {
     for (int position = 0; position < entry_count_ - 1; ++position) {
         seek_pos(position);
-        StringStructEntry *const first = current_;
-        StringStructEntry *smallest = first;
+        char *smallest_text = current_->string_payload()->text;
+        int smallest_position = position;
 
         for (int candidate = position + 1; candidate < entry_count_;
              ++candidate) {
             next_entry();
-            if (strcmp(current_->string_payload()->text,
-                       smallest->string_payload()->text) < 0) {
-                smallest = current_;
+            char *const candidate_text = current_->string_payload()->text;
+            if (strcmp(candidate_text, smallest_text) < 0) {
+                smallest_text = candidate_text;
+                smallest_position = candidate;
             }
         }
 
-        if (smallest != first) {
-            seek_pos(position);
-            const int id = first->id;
-            StringStructPayload *const payload = first->string_payload();
-            first->id = smallest->id;
-            first->payload = smallest->string_payload();
-            smallest->id = id;
-            smallest->payload = payload;
+        if (smallest_position != position) {
+            if (seek_pos(smallest_position) != 0) {
+                StringStructEntry *const selected = current_;
+                if (seek_pos(position) != 0) {
+                    StringStructEntry *const selected_position = current_;
+                    const int id = selected_position->id;
+                    ListPayloadBase *const payload = selected_position->payload;
+                    selected_position->id = selected->id;
+                    selected_position->payload = selected->payload;
+                    selected->id = id;
+                    selected->payload = payload;
+                }
+            }
         }
     }
 }
@@ -135,8 +144,11 @@ void StringList::sort(int) {
 // symbol    ?load@StringList@@QAEHPAD0HP6AX0@Z@Z
 int StringList::load(LPSTR file_name, LPSTR section_id, int clear_existing,
                      void (__cdecl *)(LPSTR)) {
+    // The pinned loader stores and tests both state values as 32-bit locals,
+    // initializing them before constructing its Text local.
+    int has_more = 1;
+    int saw_non_hash = 0;
     Text text(0x200);
-    bool saw_non_hash = false;
 
     if (clear_existing != 0 && head_ != nullptr) {
         remove_all();
@@ -149,7 +161,6 @@ int StringList::load(LPSTR file_name, LPSTR section_id, int clear_existing,
         return 1;
     }
 
-    bool has_more = true;
     // The native parser output has a 0x100-byte window before its Text
     // local. Historical array spelling/padding and overflow layout are unknown.
     char parse_buffer[256];

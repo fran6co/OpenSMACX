@@ -46,7 +46,10 @@ struct StringList {
     StringStructEntry *current_ = nullptr;
     int entry_count_ = 0;
     int current_position_ = 0;
+    int seek_calls_ = 0;
+    int failed_seek_ = 0;
     int seek_pos(int position) {
+        if (++seek_calls_ == failed_seek_) return 0;
         if (position >= entry_count_) return 0;
         current_ = head_;
         for (int i = 0; i < position; ++i) current_ = current_->next;
@@ -99,6 +102,26 @@ int main() {
     one.entry_count_ = 1;
     one.sort(0);
     assert(one.current_ == &entries[0] && one.current_position_ == 0);
+
+    // Original seek failure branches skip the swap and retain the cursor.
+    // Exercise failure while reacquiring either the winning or outer entry.
+    for (int failed_seek = 2; failed_seek <= 3; ++failed_seek) {
+        StringStructEntry pair[2] = {};
+        pair[0].id = 20; pair[0].payload = &payloads[0];
+        pair[1].id = 21; pair[1].payload = &payloads[1];
+        pair[0].next = pair[0].previous = &pair[1];
+        pair[1].next = pair[1].previous = &pair[0];
+        StringList interrupted;
+        interrupted.head_ = interrupted.current_ = pair;
+        interrupted.entry_count_ = 2;
+        interrupted.failed_seek_ = failed_seek;
+        interrupted.sort(0);
+        assert(interrupted.seek_calls_ == failed_seek);
+        assert(pair[0].id == 20 && pair[0].payload == &payloads[0]);
+        assert(pair[1].id == 21 && pair[1].payload == &payloads[1]);
+        assert(interrupted.current_ == &pair[1]);
+        assert(interrupted.current_position_ == 1);
+    }
 }
 """
     source = tmp_path / "sort.cpp"

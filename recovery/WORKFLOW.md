@@ -155,6 +155,20 @@ Workers may compile only under their assigned resource lease, never on another
 worker's prefix or the reserved integration prefix. Child compiler commands
 inherit the lease and must not allocate it again.
 
+Before a production comparison, the coordinator verifies the worker's flags
+against the fresh application compilation receipt for that TU. Preserve option
+order, including later overrides such as `/Ob2` followed by `/Ob1`.
+`Measurement.flags_for()` returns configured matching profiles, which can still
+be historical defaults; it does not establish production recipe parity.
+`application_command()` retains parse/runtime options and deliberately strips
+optimization/debug options, so using it alone is not a production compile either.
+Set the worker's explicit `unit_flag_sets` recipe as `{"flags": [...]}` and
+validate it with `Measurement.read()` before launching. This aligns an isolated
+worker with the existing build; it does not authorize changing production flags.
+If untouched methods regress, check recipe parity and an unchanged-source
+control before attributing the loss to the recovery. Retain wrong-profile
+diagnostics without presenting them as production preservation evidence.
+
 Keep up to eight disjoint ownership groups active and reserve one compiler slot
 for integration. Split each owner's queue into packets of at most24 functions.
 After the initial five-minute screen, measure one concrete, faithful source

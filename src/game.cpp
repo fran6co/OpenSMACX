@@ -4249,6 +4249,9 @@ void __cdecl say_special(char *output, char *text, int faction_id) {
 //         image returns the POINTER stored there (`mov eax, [0x9b7d00]`), so
 //         the binding is a real global, not a buffer.
 char *__cdecl get_phrase(int faction_id, int phrase_id) {
+    // X_pop's PLAYERFILE label has a distinct original start in this function.
+    // RECOVERY_OBJECT: v1 0x0068FAD0 _?PlayerFileSectionKey@?1??get_phrase@@YAPADHH@Z@4QBDB
+    static const char PlayerFileSectionKey[] = "PLAYERFILE";
     char *search_key = Players[faction_id].search_key;
     char *filename = Players[faction_id].filename;
     int ok = text_open(filename, search_key);
@@ -4257,7 +4260,7 @@ char *__cdecl get_phrase(int faction_id, int phrase_id) {
         if (ok != 0) {
             parse_says(0, search_key, -1, -1);
             parse_says(1, filename, -1, -1);
-            X_pop("PLAYERFILE", 0);
+            X_pop(PlayerFileSectionKey, 0);
             return StringTable.get(0);
         }
     }
@@ -4290,6 +4293,9 @@ char *__cdecl get_phrase(int faction_id, int phrase_id) {
 //         purpose - caching one local would delete the second
 //         `mov eax, [0x9b7d00]`.
 char *__cdecl get_noun_phrase(int faction_id, int phrase_id) {
+    // Keep this API label in a separate original storage identity.
+    // RECOVERY_OBJECT: v1 0x0068FADC _?PlayerFileSectionKey@?1??get_noun_phrase@@YAPADHH@Z@4QBDB
+    static const char PlayerFileSectionKey[] = "PLAYERFILE";
     char buffer[256];
     char *search_key = Players[faction_id].search_key;
     char *filename = Players[faction_id].filename;
@@ -4298,7 +4304,7 @@ char *__cdecl get_noun_phrase(int faction_id, int phrase_id) {
         && (text_open(filename, filename) != 0)) {
         parse_says(0, search_key, -1, -1);
         parse_says(1, filename, -1, -1);
-        X_pop("PLAYERFILE", 0);
+        X_pop(PlayerFileSectionKey, 0);
         return StringTable.get(0);
     }
 
