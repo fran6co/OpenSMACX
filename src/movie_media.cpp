@@ -96,6 +96,7 @@ static int media_rounded_high_word(int value, int multiplier);
 // Minimum source table read by native builders 5CC940 and 5CD2D0. Their
 // indexed accesses cover 64 DWORDs at 0x691F4C..0x69204B; this does not claim
 // an extent for surrounding original data.
+// RECOVERY_OBJECT: v1 0x00691F4C _media_block_transform_weights
 static const DWORD media_block_transform_weights[64] = {
     8192, 5906, 6270, 6967, 8192, 10426, 15137, 29692,
     5906, 4258, 4520, 5023, 5906, 7517, 10913, 21407,
@@ -487,6 +488,7 @@ void MediaPixelFormat::sub_5cc450() {
 // The first native 5CC940 case-3 reads and all native 5CD2D0 reads touch
 // these exact 64 DWORD entries. These indexed values are a neutral source
 // table, not a claim that adjacent original words share the same owner.
+// RECOVERY_OBJECT: v1 0x0069204C _media_block_quant_order
 static const DWORD media_block_quant_order[64] = {
     8, 16, 19, 22, 26, 27, 29, 34, 16, 16, 22, 24, 27, 29, 34, 37,
     19, 22, 26, 27, 29, 34, 34, 38, 22, 22, 26, 27, 29, 34, 37, 40,
@@ -497,25 +499,39 @@ static const DWORD media_block_quant_order[64] = {
 // 64-word output table consumed by 5CC940 case 3. The three scalar literals
 // below are read from the pinned initial image with their float/double widths.
 // ORIGINAL: 0x005CD2D0 sub_5cd2d0 0x005CD2D0-0x005CD3A2
+// RECOVERY_BINDING: v1 {"reason":"Preserve the original eight-by-eight coefficient walk and signed fixed-point rounding; retain the observed first-coefficient result under the existing integer ABI without asserting an original nominal return type.","evidence":["Pinned 5CD306/5CD367/5CD38E use signed IMUL into EDX:EAX; SHL EDX,16 and SHR EAX,16 combine product bits 16..47, and ADC EAX,EDX adds the carry from original product bit 15 before the DWORD store.","Pinned 5CD2E2 homes the quality-100 path's eight-row latch in the dead quality argument; the non-100 arm advances its coefficient cursor by 0x20 after eight elements until 0x100 bytes are consumed.","Pinned 5CD39A stores the final fixed-point result into destination[0], and the epilogue retains that value in EAX through RET; the mapped caller at 5CC940 does not consume it. The old fabricated zero return is not the observed register result."]}
 // symbol    _sub_5cd2d0
 // kind      game
 // TRIED: homed into general.cpp (its real TU) 2026-09-03 and reverted for one reason:
 // TRIED: `long long` (VC6 has none, use __int64); flat 64-iter loop instead of nested 8x8 do/while counted down
 extern "C" int __cdecl sub_5cd2d0(DWORD *destination, int quality) {
   if (quality == 100) {
-    for (int i = 0; i != 64; ++i)
-      destination[i] = media_block_transform_weights[i] * 8;
+    quality = 8;
+    DWORD *output = destination;
+    const DWORD *weights = media_block_transform_weights;
+    do {
+      for (int column = 0; column != 8; ++column)
+      {
+        const __int64 product = (__int64)(int)*weights++ * 0x80000;
+        *output++ = (DWORD)((product >> 16) + ((product >> 15) & 1));
+      }
+    } while (--quality);
   } else {
     const float scale = (107.0f - (float)quality) * 0.0625f;
-    for (int i = 0; i != 64; ++i) {
-      const int quantized = (int)((double)media_block_quant_order[i] *
-                                  (double)scale * 65536.0);
-      destination[i] = (DWORD)(((__int64)media_block_transform_weights[i] *
-                                quantized) >> 16);
+    for (int row = 0; row != 8; ++row) {
+      for (int column = 0; column != 8; ++column) {
+        const int index = row * 8 + column;
+        const int quantized = (int)((double)media_block_quant_order[index] *
+                                    (double)scale * 65536.0);
+        const __int64 product = (__int64)(int)media_block_transform_weights[index] *
+                                quantized;
+        destination[index] = (DWORD)((product >> 16) + ((product >> 15) & 1));
+      }
     }
   }
-  destination[0] = media_block_transform_weights[0] * 8;
-  return 0;
+  const __int64 product = (__int64)(int)media_block_transform_weights[0] * 0x80000;
+  destination[0] = (DWORD)((product >> 16) + ((product >> 15) & 1));
+  return (int)destination[0];
 }
 
 // ECX is IDirectDraw2*, EDX is the caller's surface output slot; the three

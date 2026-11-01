@@ -33,6 +33,9 @@
 
 namespace {
 const double GammaPositionScale = 0.01;
+// Original 5C955F reads this scalar as a qword. Bind only its observed start;
+// the enclosing original allocation and typed initializer extent are unproved.
+// RECOVERY_OBJECT: v1 0x0066FA78 _GammaComponentScale
 const double GammaComponentScale = 1.0 / 235.0;
 const float GammaSliderScale = 100.0f;
 }

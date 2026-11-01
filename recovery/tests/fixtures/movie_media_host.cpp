@@ -345,20 +345,28 @@ static void test_5cc860_failure_ownership() {
 static void test_5cd2d0_tables() {
   DWORD destination[64];
   memset(destination, 0, sizeof(destination));
-  assert(sub_5cd2d0(destination, 100) == 0);
+  assert(sub_5cd2d0(destination, 100) == 65536);
   for (int i = 0; i != 64; ++i)
     assert(destination[i] == media_block_transform_weights[i] * 8);
 
-  memset(destination, 0, sizeof(destination));
-  assert(sub_5cd2d0(destination, 87) == 0);
-  assert(destination[0] == media_block_transform_weights[0] * 8);
-  for (int i = 1; i != 64; ++i) {
-    const float scale = (107.0f - 87.0f) * 0.0625f;
-    const int q = (int)((double)media_block_quant_order[i] *
-                        (double)scale * 65536.0);
-    const DWORD expected = (DWORD)(((__int64)media_block_transform_weights[i] *
-                                    q) >> 16);
-    assert(destination[i] == expected);
+  const int qualities[] = {0, 87, 98, 101, 107, 108, 255};
+  for (unsigned index = 0; index != sizeof(qualities) / sizeof(qualities[0]); ++index) {
+    const int quality = qualities[index];
+    memset(destination, 0, sizeof(destination));
+    assert(sub_5cd2d0(destination, quality) == 65536);
+    assert(destination[0] == 65536);
+    for (int i = 1; i != 64; ++i) {
+      // For byte-sized quality, the original float scale is the exact binary
+      // fraction (107-quality)/16. Its integer conversion is exact after
+      // multiplying by 65536. The signed IMUL/SHR/ADC then rounds this
+      // rational result to nearest, with half ties toward positive infinity.
+      const __int64 numerator = (__int64)(int)media_block_transform_weights[i] *
+          (int)media_block_quant_order[i] * (107 - quality);
+      const __int64 rounded = numerator >= 0
+          ? (numerator + 8) / 16 : -((-numerator + 7) / 16);
+      assert(destination[i] == (DWORD)rounded);
+    }
+    if (quality == 98) assert(destination[2] == 67011);
   }
 }
 
