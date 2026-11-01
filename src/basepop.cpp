@@ -1522,6 +1522,7 @@ Purpose: Destroy the popup infrastructure: close the window, then the
          slab at +0x21d0, unit_ids_ and item_ids_, sprite_, the two
          FlatButtons, heap_ - and finally the GraphicWin base.
 // ORIGINAL: 0x004064D0 ??1BasePop@@QAE@XZ 0x004064D0-0x0040666F;0x006508D0-0x00650978
+// compile_context src/alphanet.cpp
 // body      src/basepop.h
 // symbol    ??1BasePop@@UAE@XZ
 //           (the class's deleting destructor ??_GBasePop@@UAEPAXI@Z and its
@@ -2352,17 +2353,21 @@ int BasePop::string(char *text) {
     if (text == 0) {
         return 3;
     }
-    char *str = text;
     if (*text == '^') {
-        if (text[1] == 0) {
-            count = 3;
-            str = text + 1;
-        } else if (text[1] == '^') {
-            count = 2;
-            str = (text[2] == '^') ? (text + 3) : (text + 2);
+        if (text[1] != 0) {
+            if (text[1] != '^') {
+                count = 1;
+                ++text;
+            } else if (text[2] == '^') {
+                count = 2;
+                text += 3;
+            } else {
+                count = 2;
+                text += 2;
+            }
         } else {
-            count = 1;
-            str = text + 1;
+            count = 3;
+            ++text;
         }
     }
     // TRIED: advancing the parameter in place (`text += 1` / `text += n`)
@@ -2377,7 +2382,7 @@ int BasePop::string(char *text) {
     //         earn that shared increment - 3 of 38, the shared increment goes
     //         with the separate variable.
     StringList *list = &unit_ids_;
-    list->pending_text_ = str;
+    list->pending_text_ = text;
     list->field_20_ = count;
     list->field_24_ = 0;
     return list->add(0) != 0;
@@ -4184,3 +4189,5 @@ int BasePop::item(char *text, int index) {
     return dialogs_.Dialogs::item(text, index);
 }
 #pragma optimize("", on)
+// RECOVERY_GENERATED: v1 vtable 0x006698D4 ? ??_7BasePop@@6BWin@@@ 0x00600860
+// RECOVERY_GENERATED: v1 vtable 0x006698CC ? ??_7BasePop@@6BBuffer@@@ 0x00600860

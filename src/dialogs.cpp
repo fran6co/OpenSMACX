@@ -36,6 +36,7 @@ Purpose: Construct the dialog manager: the five vbtable pointers, the two
          virtual-base constructions, and the five base constructors.
 // ORIGINAL: 0x00612830 ??0Dialogs@@QAE@H@Z 0x00612830-0x0061295F;0x00663060-0x006630D3
 // RECOVERY_BINDING: v1 {"evidence": ["pinned:prolog 0x612832 registers handler 0x6630C9; FuncInfo 0x67FD68 and unwind map 0x67FD88 contain six HIGHLOW-backed actions in the completely decoded cold region 0x663060..0x6630D3."], "reason": "The constructor owns its partial-construction unwind actions and handler through the original exception metadata; retain their complete generated-lifetime matching obligation."}
+// body src/dialogs.cpp
 // symbol    ??0Dialogs@@QAE@XZ
 // size      303 bytes (primary constructor); cold EH region 115 bytes
 // prototype void (__thiscall ??0Dialogs@@QAE@H@Z)(Dialogs* this, int)
@@ -52,17 +53,11 @@ The following NOP, close at 0x00612960 and attach at 0x00612970 are not
 constructor instructions. The separately mapped cold EH region is unchanged;
 its complete compiler correspondence remains unqualified.
 */
-// Keep framed lifetime emission local to these real definitions; the
-// remaining Dialogs callbacks retain their command-line optimization.
-#pragma optimize("y", off)
-Dialogs::Dialogs() { }
-#pragma optimize("", on)
 
 // ORIGINAL: 0x00612960 ?close@Dialogs@@QAEXXZ 0x00612960-0x00612961 BYTE_EXACT
+// body src/dialogs.cpp
 // kind      game
 // symbol    ?close@Dialogs@@QAEXXZ
-void Dialogs::close() {
-}
 
 // ORIGINAL: 0x00613320 ?init@Dialogs@@QAEHHHHHH@Z 0x00613320-0x006133F2 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence":["Retained 0x00613320 seed records the five-integer Dialogs initializer's direct call order: RadioButton::close, shared Dialog initialization, ListBox::close, shared Dialog initialization, CheckBox::close, shared Dialog initialization, SpriteBox initialization, EditGroup::close, then shared Dialog initialization.","The pinned image's callee 0x00609300 is Dialog::init(int,int,int,int,int); the corresponding typed overload is declared and defined in dialog.h/dialog.cpp."],"reason":"Home the five-integer Dialogs initializer through its real widget base subobjects and shared virtual Dialog."}
@@ -543,7 +538,10 @@ Dialogs::~Dialogs() {
 }
 #pragma optimize("", on)
 
+Dialogs::Dialogs() { }
 
+void Dialogs::close() {
+}
 
 /*
 Purpose: Route mouse move by the owned kind_ through qualified widget bases.
@@ -613,14 +611,8 @@ Status: Complete
 */
 Scroll *Dialogs::on_scroll_delete(Scroll *scroll) {
     switch (kind_) {
-    case 2: {
-        if (iFlags_ & 0x40) {
-            Win *parent = win_parent_;
-            if (parent != 0) {
-                return parent->on_listbox_scroll_delete(scroll);
-            }
-        }
-    }
+    case 2:
+        return ListBox::on_scroll_delete(scroll);
     }
     return scroll;
 }
@@ -865,11 +857,11 @@ void Dialogs::pass_dialog_focus() {
 // RECOVERY_BINDING: v1 {"reason":"Recover the complete body in its genuine C++ owner, with real embedded members, shared virtual bases, lifecycle and parent operations. Compiler-generated overrides/adjustors replace executable-address or vbtable stand-ins; no current matching claim is granted.","evidence":["git:de91fffe:src/recovered/units/00613220.cpp","image:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf","recovery/tasks/ui-eight-owner-coverage.json","Original entry 0x00613220; physical VC6 COFF emitted symbol ?on_scroll_create@Dialogs@@QAEHXZ."]}
 // symbol    ?on_scroll_create@Dialogs@@UAEPAVScroll@@XZ
 Scroll *Dialogs::on_scroll_create() {
-    unsigned int kind = static_cast<unsigned int>(kind_);
-    if (kind - 2u != 0) return 0;
-    if ((iFlags_ & 0x40) == 0) return 0;
-    if (win_parent_ == 0) return 0;
-    return win_parent_->on_listbox_scroll_create();
+    switch (kind_) {
+    case 2:
+        return ListBox::on_scroll_create();
+    }
+    return 0;
 }
 
 // RECOVERY_ASSOCIATED: v1 switch_targets 0x006132A0 0x006132F8 0x00613310 0x006132B4
@@ -1464,3 +1456,14 @@ Purpose: Compiler-generated deleting adjustor through RadioButton virtual
 // flags     hidden;sp_ready;purged_ok
 // calls     (none)
 */
+
+// The constructor stores these table address points through the five direct
+// bases and the shared Win, Buffer and Dialog views. Bounds remain unclaimed.
+// RECOVERY_GENERATED: v1 vbtable 0x00670A78 ? ??_8Dialogs@@7BListBox@@@ 0x00612830
+// RECOVERY_GENERATED: v1 vbtable 0x00670A6C ? ??_8Dialogs@@7BRadioButton@@@ 0x00612830
+// RECOVERY_GENERATED: v1 vbtable 0x00670A60 ? ??_8Dialogs@@7BCheckBox@@@ 0x00612830
+// RECOVERY_GENERATED: v1 vbtable 0x00670A54 ? ??_8Dialogs@@7BSpriteBox@@@ 0x00612830
+// RECOVERY_GENERATED: v1 vbtable 0x00670A48 ? ??_8Dialogs@@7BEditGroup@@@ 0x00612830
+// RECOVERY_GENERATED: v1 vtable 0x00669BE8 ? ??_7Dialogs@@6BWin@@@ 0x00612830
+// RECOVERY_GENERATED: v1 vtable 0x00669BE0 ? ??_7Dialogs@@6BBuffer@@@ 0x00612830
+// RECOVERY_GENERATED: v1 vtable 0x00669BD4 ? ??_7Dialogs@@6B@ 0x00612830

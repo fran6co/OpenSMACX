@@ -360,16 +360,13 @@ Purpose: Return the Win parent's slot-8 value when the original Win flag and
 */
 // ORIGINAL: 0x0060CED0 sub_60ced0 0x0060CED0-0x0060CED8 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["pinned image SHA-256 01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "ListBox constructor at 0x00609DB0 installs Win-view table address point 0x0067041C; slots 6/7 at +0x18/+0x1C select 0x0060CED0/0x0060CF10", "the adjustor thunk resolves the GraphicWin virtual base via vbtable {0,0x48,0xA60}; the callback then reads Win-relative +0x98 (iFlags_) and +0xC4 (win_parent_), testing bit 0x40 before the parent and calling its slot 8", "original 0x005EB640 close body pushes scroll_vert_ before the slot-7 call and pushes scroll_horz_ before the matching horizontal call; both return paths are ret 4", "Boundary refinement retains the historical catalogue envelope 0x0060CED0-0x0060CF01 (49 bytes) as a thunk/padding/primary cluster, not one current function.", "Pinned 0x0060CED0-0x0060CED8 is the two-instruction vtordisp thunk; 0x0060CED8-0x0060CEE0 is exactly eight INT3 alignment bytes; 0x0060CEE0-0x0060CF01 is its separate ordinary primary body.", "Original origin, catalogue name, emitted thunk symbol, prior binding evidence and historical claims are retained."], "reason": "Move the pinned ListBox Win-view callback into a genuine owner method; retain the original Win-member guard order and delegated slot behavior. Compiler-generated receiver adjustment and exact COFF target still require fresh native verification."}
+// body src/listbox.h
 // symbol    ?on_scroll_create@ListBox@@$4PPPPPPPM@A@AEPAVScroll@@XZ
 // ORIGINAL: 0x0060CEE0 sub_60CEE0 0x0060CEE0-0x0060CF01 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned direct JMP at 0x0060CED3 targets 0x0060CEE0.", "Pinned primary span 0x0060CEE0-0x0060CF01 corresponds to ordinary emitted C++ member ?on_scroll_create@ListBox@@UAEPAVScroll@@XZ, independently callable from its preceding vtordisp thunk."], "reason": "Bind the separately callable primary ListBox scroll body, not its preceding vtordisp thunk."}
+// body src/listbox.h
 // symbol    ?on_scroll_create@ListBox@@UAEPAVScroll@@XZ
-Scroll *ListBox::on_scroll_create() {
-    if ((iFlags_ & 0x40) != 0 && win_parent_ != 0) {
-        return win_parent_->on_listbox_scroll_create();
-    }
-    return 0;
-}
+
 
 /*
 Purpose: Forward the exact Scroll being removed through recipient slot 9
@@ -377,16 +374,13 @@ Purpose: Forward the exact Scroll being removed through recipient slot 9
 */
 // ORIGINAL: 0x0060CF10 sub_60cf10 0x0060CF10-0x0060CF18 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["pinned image SHA-256 01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "ListBox constructor at 0x00609DB0 installs Win-view table address point 0x0067041C; slots 6/7 at +0x18/+0x1C select 0x0060CED0/0x0060CF10", "the adjustor thunk resolves the GraphicWin virtual base via vbtable {0,0x48,0xA60}; the callback then reads Win-relative +0x98 (iFlags_) and +0xC4 (win_parent_), testing bit 0x40 before the parent and calling its slot 9 with the Scroll argument", "original 0x005EB640 close body pushes scroll_vert_ before the slot-7 call and pushes scroll_horz_ before the matching horizontal call; both return paths are ret 4", "Boundary refinement retains the historical catalogue envelope 0x0060CF10-0x0060CF4D (61 bytes) as a thunk/padding/primary cluster, not one current function.", "Pinned 0x0060CF10-0x0060CF18 is the two-instruction vtordisp thunk; 0x0060CF18-0x0060CF20 is exactly eight INT3 alignment bytes; 0x0060CF20-0x0060CF4D is its separate ordinary primary body.", "Original origin, catalogue name, emitted thunk symbol, prior binding evidence and historical claims are retained."], "reason": "Move the pinned ListBox Win-view callback into a genuine owner method; retain the original Win-member guard order and delegated slot behavior. Compiler-generated receiver adjustment and exact COFF target still require fresh native verification."}
+// body src/listbox.h
 // symbol    ?on_scroll_delete@ListBox@@$4PPPPPPPM@A@AEPAVScroll@@PAV2@@Z
 // ORIGINAL: 0x0060CF20 sub_60CF20 0x0060CF20-0x0060CF4D BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned direct JMP at 0x0060CF13 targets 0x0060CF20.", "Pinned primary span 0x0060CF20-0x0060CF4D corresponds to ordinary emitted C++ member ?on_scroll_delete@ListBox@@UAEPAVScroll@@PAV2@@Z, independently callable from its preceding vtordisp thunk."], "reason": "Bind the separately callable primary ListBox scroll body, not its preceding vtordisp thunk."}
+// body src/listbox.h
 // symbol    ?on_scroll_delete@ListBox@@UAEPAVScroll@@PAV2@@Z
-Scroll *ListBox::on_scroll_delete(Scroll *scroll) {
-    if ((iFlags_ & 0x40) != 0 && win_parent_ != 0) {
-        return win_parent_->on_listbox_scroll_delete(scroll);
-    }
-    return scroll;
-}
+
 
 // Pinned 0x00609DB0 stores 0x0067041C/14/08 at 0x00609E08/14/24; matching COFF relocations at +0x5B/6B/77 identify these starts.
 // RECOVERY_GENERATED: v1 vtable 0x0067041C ? ??_7ListBox@@6BWin@@@ 0x00609DB0

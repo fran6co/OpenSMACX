@@ -5,6 +5,8 @@ import subprocess
 
 import pytest
 
+from test_listbox_scroll_interface_actual_source import actual_listbox_methods, actual_sources
+
 
 ROOT = next(parent for parent in Path(__file__).resolve().parents
             if (parent / "src/IMAGE_PIN").is_file())
@@ -32,20 +34,26 @@ HARNESS = r'''#include <cassert>
 struct Scroll {};
 struct Win {
     Scroll *result;
-    int calls;
-    Win() : result(0), calls(0) {}
-    Scroll *on_listbox_scroll_create() { ++calls; return result; }
+    int scroll_calls;
+    uint32_t iFlags_;
+    Win *win_parent_;
+    Win() : result(0), scroll_calls(0), iFlags_(0), win_parent_(0) {}
+    virtual Scroll *on_listbox_scroll_create() { ++scroll_calls; return result; }
+    virtual Scroll *on_listbox_scroll_delete(Scroll *scroll) { return scroll; }
 };
-struct SpriteBox {
+struct GraphicWin : virtual Win {};
+struct Dialog : virtual Win {};
+struct ListBox : virtual GraphicWin, virtual Dialog {
+    ACTUAL_LISTBOX_SCROLL_METHODS
+};
+struct SpriteBox : virtual GraphicWin, virtual Dialog {
     int calls, x, y;
     SpriteBox() : calls(0), x(0), y(0) {}
     void on_left_click(int a, int b) { ++calls; x = a; y = b; }
 };
-struct DialogsMock : SpriteBox {
+struct DialogsMock : ListBox, SpriteBox {
     int kind_;
-    uint32_t iFlags_;
-    Win *win_parent_;
-    DialogsMock() : kind_(0), iFlags_(0), win_parent_(0) {}
+    DialogsMock() : kind_(0) {}
     void on_left_click(int a, int b);
     Scroll *on_scroll_create();
 };
@@ -76,15 +84,15 @@ int main() {
     for (int kind = -2; kind <= 5; ++kind) {
         dialog.kind_ = kind;
         dialog.iFlags_ = 0x40;
-        parent.calls = 0;
+        parent.scroll_calls = 0;
         Scroll *actual = dialog.on_scroll_create();
         assert(actual == (kind == 2 ? &expected : 0));
-        assert(parent.calls == (kind == 2 ? 1 : 0));
+        assert(parent.scroll_calls == (kind == 2 ? 1 : 0));
     }
     dialog.kind_ = 2;
     dialog.iFlags_ = 0;
-    parent.calls = 0;
-    assert(dialog.on_scroll_create() == 0 && parent.calls == 0);
+    parent.scroll_calls = 0;
+    assert(dialog.on_scroll_create() == 0 && parent.scroll_calls == 0);
     dialog.iFlags_ = 0x40;
     dialog.win_parent_ = 0;
     assert(dialog.on_scroll_create() == 0);
@@ -99,12 +107,13 @@ def compile_source(compiler: str, tmp_path: Path, click: str, scroll: str,
         pytest.skip(f"{compiler} is not installed")
     body = (click.replace("Dialogs::", "DialogsMock::")
             + "\n" + scroll.replace("Dialogs::", "DialogsMock::"))
-    source = HARNESS.replace("CLICK_BODY\nSCROLL_BODY", body)
+    source = HARNESS.replace("ACTUAL_LISTBOX_SCROLL_METHODS", actual_listbox_methods(actual_sources()))
+    source = source.replace("CLICK_BODY\nSCROLL_BODY", body)
     cpp, binary = tmp_path / f"{name}.cpp", tmp_path / name
     cpp.write_text(source)
     subprocess.run([executable, "-std=c++11", "-Wall", "-Wextra", "-Werror",
                     str(cpp), "-o", str(binary)], check=True, timeout=30)
-    return subprocess.run([str(binary)], timeout=30)
+    return subprocess.run([str(binary)], capture_output=True, text=True, timeout=30)
 
 
 @pytest.mark.parametrize("compiler", ["g++", "clang++"])
@@ -113,10 +122,11 @@ def test_dialogs_actual_source_dispatch_and_damage_controls(compiler, tmp_path):
 
     wrong_click = CLICK.replace("if (kind_ == 8)", "if (kind_ == 7)", 1)
     assert wrong_click != CLICK
-    assert compile_source(compiler, tmp_path, wrong_click, SCROLL,
-                          "wrong_click").returncode != 0
+    result = compile_source(compiler, tmp_path, wrong_click, SCROLL, "wrong_click")
+    assert result.returncode != 0 and "Assertion" in result.stderr, result.stderr
 
-    wrong_scroll = SCROLL.replace("kind - 2u != 0", "kind - 3u != 0", 1)
+    assert SCROLL.count("case 2:") == 1
+    wrong_scroll = SCROLL.replace("case 2:", "case 3:", 1)
     assert wrong_scroll != SCROLL
-    assert compile_source(compiler, tmp_path, CLICK, wrong_scroll,
-                          "wrong_scroll").returncode != 0
+    result = compile_source(compiler, tmp_path, CLICK, wrong_scroll, "wrong_scroll")
+    assert result.returncode != 0 and "Assertion" in result.stderr, result.stderr

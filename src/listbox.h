@@ -254,8 +254,20 @@ class ListBox : public virtual GraphicWin, public virtual Dialog {
   // own vbase/vtordisp staging instead. Defined in listbox.cpp.
   ~ListBox();
   // Win-view scroll callbacks: slots 6 and 7 in ListBox's real interface.
-  virtual Scroll *on_scroll_create();
-  virtual Scroll *on_scroll_delete(Scroll *scroll);
+  // Dialogs delegates its kind-2 branches through these same base operations;
+  // keep the shared virtual-base conversion with the ListBox definitions.
+  virtual Scroll *on_scroll_create() {
+    if ((iFlags_ & 0x40) != 0 && win_parent_ != 0) {
+      return win_parent_->on_listbox_scroll_create();
+    }
+    return 0;
+  }
+  virtual Scroll *on_scroll_delete(Scroll *scroll) {
+    if ((iFlags_ & 0x40) != 0 && win_parent_ != 0) {
+      return win_parent_->on_listbox_scroll_delete(scroll);
+    }
+    return scroll;
+  }
   void close();
 
   // Inlined widget initialization closes this control before initializing

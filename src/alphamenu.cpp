@@ -57,11 +57,12 @@ void wait_for_animation_frame(DWORD started) {
 // The compiler destroys sprites_[2..0], sprite1_, buffer_, then the Menu
 // base in the order observed at 0x0051DC10. Keep this as C++ ownership,
 // not a manual walk over the object bytes.
-// ORIGINAL: 0x0051DC10 ??1AlphaMenu@@QAE@XZ 0x0051DC10-0x0051DC86;0x0065D220-0x0065D24E
+// ORIGINAL: 0x0051DC10 ??1AlphaMenu@@QAE@XZ 0x0051DC10-0x0051DC86;0x0065D220-0x0065D24E FILE
 // RECOVERY_BINDING: v1 {"evidence": ["git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/0051dc10.cpp"], "reason": "C++ AlphaMenu owns Menu, Buffer and Sprite members whose reverse lifetime order follows the original destructor and exception-unwind trace."}
+// compile_context src/console.cpp
 // TRIED: computed that AlphaMenu : public Menu (Menu ends at exactly 0xB64, where Buffer buffer_ starts, which ends at exactly 0x10EC, where Sprite sprite_ starts, ending at 0x1118 where Sprite sprites_[3] starts) - a real member layout that would let the SEH prologue emerge automatically, but AlphaMenu is the fixed scaffold class and cannot carry real members here. Explicit dtor calls at the right offsets/order compile and are structurally faithful; the SEH frame (push -1/handler, unwind funclets) is not reproduced - same open item as 0x00629D60 (Flic::Flic) and 0047acf0.cpp.
 // symbol    ??1AlphaMenu@@UAE@XZ
-AlphaMenu::~AlphaMenu() {}
+// kind game
 
 // ORIGINAL: 0x00460DD0 ?check@MainMenu@@QAEXH@Z 0x00460DD0-0x0046207E
 // RECOVERY_BINDING: v1 {"evidence": ["historical retired seed src/unrecovered/00460dd0.cpp", "recovery/tasks/alphamenu-check-owner-oct5.json", "Console embedded member +22A2C, actual constructor and by-name callers", "complete pinned 460DD0..46207E CFG and fresh native current owner symbol; actual-source bounded trace/mutant controls"], "reason": "Recover complete menu policy in the actual Console::alpha_menu_ subobject. Preserve historical MainMenu catalogue identity separately from the observed current AlphaMenu symbol; genuine source ownership corrects the old seed hypothesis. No current byte or runtime acceptance claim."}
@@ -651,9 +652,10 @@ int __cdecl AlphaMenu::fill_func(GraphicWin *target, int mode, RECT *clip) {
   draw_clip.left = 1;
   draw_clip.right = target->buffer_working_rect()->right - 1;
   target->Buffer::set_clip(&draw_clip);
+  BoxSpriteParams *styles = &InterfaceBoxStyles[27];
   target->Buffer::box_sprite(target->buffer_working_rect(),
-                    &InterfaceBoxStyles[mode != 0 ? 29 : 27]);
-  target->Buffer::set_clip(target->buffer_working_rect());
+                             styles + (mode != 0 ? 2 : 0));
+  target->Buffer::restore_clip();
   return 1;
 }
 
@@ -1124,10 +1126,12 @@ int AlphaMenu::menu_init() {
 
 // ORIGINAL: 0x0051DC90 ??_GAlphaMenu@@UAEPAXI@Z 0x0051DC90-0x0051DCB1 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["historical source:src/deleting_thunks.cpp; preserved full original span 0x0051DC90-0x0051DCB1 and BYTE_EXACT obligation.", "pinned Console constructor 0x0050F52F stores primary AlphaMenu table 0x0066ED88 at alpha_menu_+0; pinned table slot 0 is 0x0051DC90.", "pinned scalar body calls AlphaMenu::~AlphaMenu at 0x0051DC10, tests flags bit 0, conditionally calls 0x0064557F, returns saved this with ret 4.", "the prior retained src/alphamenu.cpp.obj/PE snapshot emitted ??_GAlphaMenu@@UAEPAXI@Z with class-destructor and scalar-delete relocations; its AlphaMenu Win table selected that address. This is historical evidence only, not qualification of the current source.", "the AlphaMenu source owner has typed Menu/Buffer/Sprite members and a C++ destructor; this transfers only the generated scalar identity, not the class's unfinished behavioral claims.", "the byte-exact claim is historical and remains a restoration obligation; no current equality or whole-application acceptance is asserted."], "reason": "Bind AlphaMenu's original primary scalar deleting identity to its compiler-generated virtual-destructor operation in the real AlphaMenu owner TU; this FILE mapping is generated-owner provenance, not a copied body."}
+// compile_context src/console.cpp
 // symbol    ??_GAlphaMenu@@UAEPAXI@Z
 // kind game
 
 // ORIGINAL: 0x0051DF70 ??_GAlphaMenu@@WEEE@AEPAXI@Z 0x0051DF70-0x0051DF7B FILE
 // RECOVERY_BINDING: v1 {"evidence": ["historical source:src/deleting_thunks.cpp; preserved full original span 0x0051DF70-0x0051DF7B and its original scalar-adjustor identity.", "pinned Console constructor 0x0050F535 stores AlphaMenu Buffer-view table 0x0066ED80 at alpha_menu_+0x444; table slot 0 is exactly 0x0051DF70. Primary view at +0 stores table 0x0066ED88 with slot 0 = 0x0051DC90.", "pinned 0x0051DF70 subtracts 0x444 from ECX and jumps to scalar ??_GAlphaMenu at 0x0051DC90 without changing the flags argument.", "the prior retained AlphaMenu COFF showed its table relocation selecting ??_EAlphaMenu@@WEEE@AEPAXI@Z; that thunk subtracts 0x444 and jumps to weak primary E, whose mode-2 fallback is exactly ??_GAlphaMenu@@UAEPAXI@Z. The prior linked Buffer-view slot 0 selected that thunk; this is historical evidence, not current qualification or a new vector-deleting original identity.", "the source class's GraphicWin/Buffer secondary view and pinned +0x444 store explain this receiver adjustment; do not generalize the E/G alias to other classes without their own relocation and table proof.", "the byte-exact claim is historical and remains a restoration obligation; no current equality or whole-application acceptance is asserted."], "reason": "Bind AlphaMenu's original Buffer-view scalar deleting adjustor to the compiler-emitted secondary E thunk because the pinned view relationship and prior physical snapshot show its mode-2 weak fallback resolving to the generated scalar primary G body; fresh current-build qualification remains pending."}
+// compile_context src/console.cpp
 // symbol    ??_EAlphaMenu@@WEEE@AEPAXI@Z
 // kind game

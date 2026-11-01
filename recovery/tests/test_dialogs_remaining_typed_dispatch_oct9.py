@@ -4,6 +4,8 @@ import subprocess
 
 import pytest
 
+from test_listbox_scroll_interface_actual_source import actual_listbox_methods, actual_sources
+
 
 ROOT = Path(__file__).resolve().parents[2]
 METHODS = (
@@ -55,6 +57,7 @@ protected:
     Win *win_parent_;
 public:
     Win() : iFlags_(0), win_parent_(0) {}
+    virtual Scroll *on_listbox_scroll_create() { return 0; }
     virtual Scroll *on_listbox_scroll_delete(Scroll *value) {
         ++events.slot_calls; events.slot_receiver=this; events.slot_arg=value;
         return events.slot_result;
@@ -75,6 +78,7 @@ struct Dialog : virtual Win {
     }
 };
 struct ListBox : virtual GraphicWin, virtual Dialog {
+    ACTUAL_LISTBOX_SCROLL_METHODS
     int item(char *, int index) {
         ++events.item_calls; events.item_kind=2; events.item_index=index;
         events.item_receiver=this; return 202;
@@ -104,7 +108,7 @@ struct Dialogs : ListBox, RadioButton, CheckBox, SpriteBox, EditGroup {
     Scroll *on_scroll_delete(Scroll *);
     void on_left_click(int,int);
 };
-''' + "\n".join(bodies) + r'''
+'''.replace("ACTUAL_LISTBOX_SCROLL_METHODS", actual_listbox_methods(actual_sources())) + "\n".join(bodies) + r'''
 int main() {
     Dialogs d; d.kind_=2;
     char text[]="x";

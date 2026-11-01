@@ -78,6 +78,8 @@ struct CheckBox : Dialog {
  assert(b.item_list_.current_==e && b.item_list_.current_position_==0);
  b.item_list_={e,e,4,0};b.selected_position_=1u;b.field_4_=0;
  b.field_64_=8;b.field_44_=2;b.field_68_=8;b.window_y_=100;b.field_4C_=1;b.row_count_=4;
+ // A distinct initialized wrong-height field makes the geometry damage deterministic.
+ b.field_48_=18;
  b.key_notification_callback_=key_callback;b.double_click_callback_=wrong_callback;callback_list=0;
  callback_order=0;b.draw_count=0;b.on_left_down(0,10);
  assert((b.selected_position_&(1u<<1)) && callback_order==1);
@@ -118,16 +120,39 @@ struct CheckBox : Dialog {
     subprocess.run([compiler,"-std=c++11","-Wall","-Wextra","-Werror","-Wno-unused-variable",str(cpp),"-o",str(exe)],check=True,capture_output=True,text=True,timeout=30)
     subprocess.run([str(exe)],check=True,capture_output=True,text=True,timeout=10)
     # Product-source mutants must fail the behavior controls above.
-    mutants = [
-        methods.replace("Dialog::field_68_ + Dialog::field_44_", "Dialog::field_48_ + Dialog::field_44_",1),
-        methods.replace("key_notification_callback_", "double_click_callback_",1),
-        methods.replace("Dialog::pos_to_id(previous) != id", "previous != static_cast<int>(Dialog::id_to_pos(id))",1),
-        methods.replace("field_4_ == static_cast<uint32_t>(position)", "Dialog::field_F0_ == static_cast<uint32_t>(position)",1),
-        methods.replace("const int state_after_callback =\n        static_cast<int>(Dialog::selected_position_ & current_mask);\n    const int position_after_callback = Dialog::id_to_pos(id);", "const int position_after_callback = Dialog::id_to_pos(id);\n    const int state_after_callback =\n        static_cast<int>(Dialog::selected_position_ & current_mask);",1),
+    mutations = [
+        ("wrong height member",
+         "Dialog::field_68_ + Dialog::field_44_", "Dialog::field_48_ + Dialog::field_44_",
+         "callback_order==1"),
+        ("wrong callback cell",
+         "key_notification_callback_", "double_click_callback_",
+         "callback_order==1"),
+        ("compare positions instead of IDs",
+         "Dialog::pos_to_id(field_4_) != id", "static_cast<int>(field_4_) != Dialog::id_to_pos(id)",
+         "b.draw_count==1&&b.draws[0]==1&&b.field_4_==2"),
+        ("wrong focus member",
+         "field_4_ == static_cast<uint32_t>(position)",
+         "Dialog::field_F0_ == static_cast<uint32_t>(position)",
+         "b.focus[3]==1"),
+        ("read state after position lookup",
+         "    const int current_position = box->item_list_.current_position_;\n"
+         "    draw_item(Dialog::id_to_pos(id),\n"
+         "              static_cast<int>((1u << static_cast<uint32_t>(current_position)) & box->selected_position_), 1);",
+         "    const int current_position = box->item_list_.current_position_;\n"
+         "    const int position_after_callback = Dialog::id_to_pos(id);\n"
+         "    const int state_after_callback =\n"
+         "        static_cast<int>((1u << static_cast<uint32_t>(current_position)) & box->selected_position_);\n"
+         "    draw_item(position_after_callback, state_after_callback, 1);",
+         "b.states[1]==4"),
     ]
-    for n, mutant in enumerate(mutants):
+    for n, (label, before, after, expected_assertion) in enumerate(mutations):
+        assert methods.count(before) == 1, (label, before)
+        mutant = methods.replace(before, after, 1)
+        assert mutant != methods, f"mutation did not change actual source: {label}"
         test_cpp=tmp_path/f"mutant{n}.cpp"; test_exe=tmp_path/f"mutant{n}"
         test_cpp.write_text(prefix+mutant+main)
         subprocess.run([compiler,"-std=c++11","-Wall","-Wextra","-Werror","-Wno-unused-variable",str(test_cpp),"-o",str(test_exe)],check=True,capture_output=True,text=True,timeout=30)
         result=subprocess.run([str(test_exe)],capture_output=True,text=True,timeout=10)
-        assert result.returncode != 0, f"mutant {n} escaped"
+        assert result.returncode != 0, f"mutant {n} escaped: {label}"
+        assert "Assertion" in result.stderr, result.stderr
+        assert expected_assertion in result.stderr, (label, result.stderr)

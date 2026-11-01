@@ -38,7 +38,6 @@ class AlphaMenu : public Menu {
   AlphaMenu() { ; }
   // Member destruction follows the original 0x0051DC10 reverse-lifetime
   // trace: three Sprites, the leading Sprite, Buffer, then Menu.
-  ~AlphaMenu();
   int init(Win *parent) override;
   void adjust() override;
   // Win slot 2 and slot 12, respectively.

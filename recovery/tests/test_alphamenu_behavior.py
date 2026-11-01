@@ -183,6 +183,8 @@ class Buffer {
  public:
   void set_clip(const RECT *r) { if (clip_calls == 0) first_clip = *r; clip = *r; ++clip_calls; }
   void box_sprite(const RECT *r, const BoxSpriteParams *p) { box = *r; style = p->tag; }
+  void restore_clip() { set_clip(&working); }
+  RECT working = {0, 0, 100, 80};
   RECT clip = {-1, -1, -1, -1}, first_clip = {-1, -1, -1, -1};
   RECT box = {-1, -1, -1, -1};
   int style = -1, clip_calls = 0;
@@ -190,7 +192,6 @@ class Buffer {
 class GraphicWin : public Buffer {
  public:
   RECT *buffer_working_rect() { return &working; }
-  RECT working = {0, 0, 100, 80};
 };
 class AlphaMenu { public: static int __cdecl fill_func(GraphicWin *, int, RECT *); };
 """ + fill + r"""

@@ -63,10 +63,10 @@ def extract_function(text, signature):
 
 
 def actual_listbox_methods(sources):
-    source = sources["src/listbox.cpp"]
+    source = sources["src/listbox.h"]
     methods = [
-        extract_function(source, "Scroll *ListBox::on_scroll_create()"),
-        extract_function(source, "Scroll *ListBox::on_scroll_delete(Scroll *scroll)"),
+        extract_function(source, "virtual Scroll *on_scroll_create()"),
+        extract_function(source, "virtual Scroll *on_scroll_delete(Scroll *scroll)"),
     ]
     return "\n\n".join(methods)
 
@@ -83,22 +83,45 @@ def close_contract_error(source):
     return None
 
 
-def test_actual_source_retains_both_original_identities_and_spans():
-    list_cpp = actual_sources()["src/listbox.cpp"]
+def test_actual_source_retains_thunk_and_primary_identities_and_header_bindings():
+    sources = actual_sources()
+    list_cpp = sources["src/listbox.cpp"]
     constructor_marker = list_cpp.index("// ORIGINAL: 0x00609DB0")
-    assert constructor_marker > list_cpp.index("Scroll *ListBox::on_scroll_delete(Scroll *scroll)")
+    assert constructor_marker > list_cpp.index("// ORIGINAL: 0x0060CF20")
     constructor_prefix = list_cpp[constructor_marker:list_cpp.index("ListBox::ListBox() {")]
     assert "// symbol    ??0ListBox@@QAE@XZ" in constructor_prefix
     assert "// ORIGINAL: 0x0060CED0" not in constructor_prefix
     assert "// ORIGINAL: 0x0060CF10" not in constructor_prefix
-    records = {record.address: record for record in read_text(list_cpp, "src/listbox.cpp")
-               if record.address in (0x60CED0, 0x60CF10)}
-    assert records[0x60CED0].image_spans == ((0x60CED0, 0x60CF01),)
-    assert records[0x60CF10].image_spans == ((0x60CF10, 0x60CF4D),)
+    specs = {
+        0x60CED0: (0x60CED8, "sub_60ced0", "file",
+                   "?on_scroll_create@ListBox@@$4PPPPPPPM@A@AEPAVScroll@@XZ"),
+        0x60CEE0: (0x60CF01, "sub_60CEE0", "body",
+                   "?on_scroll_create@ListBox@@UAEPAVScroll@@XZ"),
+        0x60CF10: (0x60CF18, "sub_60cf10", "file",
+                   "?on_scroll_delete@ListBox@@$4PPPPPPPM@A@AEPAVScroll@@PAV2@@Z"),
+        0x60CF20: (0x60CF4D, "sub_60CF20", "body",
+                   "?on_scroll_delete@ListBox@@UAEPAVScroll@@PAV2@@Z"),
+    }
+    rows = [record for record in read_text(list_cpp, "src/listbox.cpp")
+            if record.address in specs]
+    assert len(rows) == len(specs)
+    records = {record.address: record for record in rows}
+    for address, (end, name, mode, symbol) in specs.items():
+        row = records[address]
+        assert (row.name, row.image_spans, row.mode.value, row.symbol) == (
+            name, ((address, end),), mode, symbol)
+        assert row.byte_exact and row.body == "src/listbox.h"
     assert records[0x60CED0].recipe.value == "verbatim"
     assert records[0x60CF10].recipe.value == "verbatim"
-    assert "0x0060CED0 sub_60ced0" in list_cpp
-    assert "0x0060CF10 sub_60cf10" in list_cpp
+    # Keep the old catalogue extents as historical envelopes: the refined
+    # mapping separates each 8-byte thunk, 8-byte INT3 gap, and primary body.
+    assert "0x0060CED0-0x0060CF01 (49 bytes)" in list_cpp
+    assert "0x0060CF10-0x0060CF4D (61 bytes)" in list_cpp
+    assert "0x0060CED8-0x0060CEE0 is exactly eight INT3" in list_cpp
+    assert "0x0060CF18-0x0060CF20 is exactly eight INT3" in list_cpp
+    assert "ListBox::on_scroll_create()" not in list_cpp
+    assert "ListBox::on_scroll_delete(Scroll *scroll)" not in list_cpp
+    assert actual_listbox_methods(sources)
 
 
 def test_slot_bindings_and_argument_order():
@@ -119,16 +142,20 @@ def test_slot_bindings_and_argument_order():
     assert "this->buffer3_ = reinterpret_cast<Buffer *>(this->on_scroll_create())" not in win_cpp
     assert "this->buffer4_ = reinterpret_cast<Buffer *>(this->on_scroll_create())" not in win_cpp
     assert "this->vslot_07();" not in win_cpp
-    assert "virtual Scroll *on_scroll_create();" in list_h
-    assert "virtual Scroll *on_scroll_delete(Scroll *scroll);" in list_h
-    assert "(iFlags_ & 0x40) != 0 && win_parent_ != 0" in list_cpp
-    assert "win_parent_->on_listbox_scroll_create()" in list_cpp
-    assert "win_parent_->on_listbox_scroll_delete(scroll)" in list_cpp
+    methods = actual_listbox_methods(sources)
+    assert "virtual Scroll *on_scroll_create() {" in list_h
+    assert "virtual Scroll *on_scroll_delete(Scroll *scroll) {" in list_h
+    assert methods.count("(iFlags_ & 0x40) != 0 && win_parent_ != 0") == 2
+    assert "win_parent_->on_listbox_scroll_create()" in methods
+    assert "win_parent_->on_listbox_scroll_delete(scroll)" in methods
     assert "val_20_" not in list_cpp and "val_31_" not in list_cpp
     assert "virtual Scroll *on_scroll_delete(Scroll *scroll);" in dialogs_h
     assert "virtual Scroll *on_scroll_create();" in dialogs_h
     assert "Scroll *Dialogs::on_scroll_delete(Scroll *scroll)" in dialogs_cpp
-    assert "kind - 2u != 0" in dialogs_cpp
+    delete = extract_function(dialogs_cpp, "Scroll *Dialogs::on_scroll_delete(Scroll *scroll)")
+    create = extract_function(dialogs_cpp, "Scroll *Dialogs::on_scroll_create()")
+    assert "case 2:" in delete and "return ListBox::on_scroll_delete(scroll);" in delete
+    assert "case 2:" in create and "return ListBox::on_scroll_create();" in create
 
     assert "0x005EB73E" in win_cpp and "scroll_vert_" in win_cpp
     assert "0x005EB774" in win_cpp and "scroll_horz_" in win_cpp
@@ -160,10 +187,8 @@ struct Recipient : Win {
   }
 };
 struct ListBox : virtual GraphicWin, virtual Dialog {
-  Scroll *on_scroll_create() override;
-  Scroll *on_scroll_delete(Scroll *scroll) override;
+  /* ACTUAL_LISTBOX_METHODS */
 };
-/* ACTUAL_LISTBOX_METHODS */
 int main() {
   ListBox list; Recipient recipient; Scroll vertical, horizontal, created, replacement;
   Sound decoy; list.val_20_=&decoy; list.val_31_=&decoy;
@@ -233,6 +258,7 @@ def test_listbox_mutations_are_exercised_against_extracted_bodies(tmp_path):
         ran = subprocess.run([str(binary)], stdout=subprocess.PIPE, stderr=subprocess.PIPE,
                              text=True)
         assert ran.returncode != 0, f"mutant {index} unexpectedly passed"
+        assert "Assertion" in ran.stderr, ran.stderr
 
 
 def test_win_close_argument_and_result_stores_come_from_actual_source():

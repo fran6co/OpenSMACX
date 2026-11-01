@@ -539,49 +539,41 @@ void CheckBox::on_redraw() {
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/0060f700.cpp retained original identity, full spans and prior recovery evidence", "recovery/tasks/dialog-control-coverage-wave.json authorized coupled control ownership", "pinned 0x60F700 geometry: field_64_+field_44_ width and field_68_+field_44_ height; 0x60F760/0x60F78A retain separate ID searches on the clear branch, while set branch calls set_state_id", "pinned 0x60F78D..0x60F80C compares pos_to_id(previous) with clicked ID, redraws old ordinal mask only on inequality, updates field_4_ only on that branch, and dispatches key_notification_callback_ at CheckBox front+8", "pinned post-callback walk re-finds ID; final draw uses fresh id_to_pos and current row mask", "actual-source host control covers duplicate IDs, callback list/state mutation, geometry and callback-cell mutants"], "reason": "Restore the original CheckBox receiver/member access and event order, including its repeated search, ID-based old-row decision, +8 callback and post-callback re-find. This is behavioral recovery of the caller path, not a change to class layout or a claim of byte identity."}
 // symbol    ?on_left_down@CheckBox@@UAEXHH@Z
 void CheckBox::on_left_down(int x, int y) {
+    CheckBox *const box = this;
     WinCallbackWindow = win_parent_;
     const int rows = Dialog::row_count_;
     const int cell_width = Dialog::field_64_ + Dialog::field_44_;
     const int cell_height = Dialog::field_68_ + Dialog::field_44_;
     const int position = (x / cell_width) * rows + y / cell_height;
     const int id = Dialog::pos_to_id(position);
-    StringStruct &items = Dialog::item_list_;
-    items.seek_id(id);
-    const uint32_t clicked_mask = 1u << (static_cast<uint32_t>(items.current_position_) & 31u);
-    if ((Dialog::selected_position_ & clicked_mask) != 0) {
-        items.seek_id(id);
-        const uint32_t clear_mask = 1u << (static_cast<uint32_t>(items.current_position_) & 31u);
-        Dialog::selected_position_ &= ~clear_mask;
+    box->item_list_.seek_id(id);
+    if ((box->selected_position_ & (1u << static_cast<uint32_t>(box->item_list_.current_position_))) != 0) {
+        box->item_list_.seek_id(id);
+        box->selected_position_ &= ~(1u << static_cast<uint32_t>(box->item_list_.current_position_));
     } else {
         set_state_id(id, 1);
     }
-
-    const int previous = static_cast<int>(field_4_);
-    if (Dialog::pos_to_id(previous) != id) {
-        const uint32_t old_mask = 1u << (static_cast<uint32_t>(previous) & 31u);
-        draw_item(previous, static_cast<int>(Dialog::selected_position_ & old_mask), 0);
+    if (Dialog::pos_to_id(field_4_) != id) {
+        draw_item(field_4_, static_cast<int>((1u << static_cast<uint32_t>(field_4_)) & box->selected_position_), 0);
         field_4_ = Dialog::id_to_pos(id);
     }
-
-    const int selected = Dialog::selected_position_;
-    if (key_notification_callback_ != 0) key_notification_callback_(selected);
-    // The original leaves the list cursor on the matching entry after the
-    // callback, since callbacks may mutate the list and the cursor must be
-    // re-found against its current contents.
-    if (Dialog::item_list_.head_ != 0) {
-        Dialog::item_list_.current_ = Dialog::item_list_.head_;
-        Dialog::item_list_.current_position_ = 0;
-        for (int index = 0; index < Dialog::item_list_.entry_count_; ++index) {
-            if (Dialog::item_list_.current_->id == id) break;
-            Dialog::item_list_.current_ = Dialog::item_list_.current_->next;
-            ++Dialog::item_list_.current_position_;
+    WinNotificationCallback callback = key_notification_callback_;
+    if (callback != 0) callback(box->selected_position_);
+    {
+        StringStruct &items = box->item_list_;
+        if (items.head_ != 0) {
+            items.current_position_ = 0;
+            items.current_ = items.head_;
+            for (int traversed = 0; traversed < items.entry_count_; ++traversed) {
+                if (items.current_->id == id) break;
+                ++items.current_position_;
+                items.current_ = items.current_->next;
+            }
         }
     }
-    const uint32_t current_mask = 1u << (static_cast<uint32_t>(items.current_position_) & 31u);
-    const int state_after_callback =
-        static_cast<int>(Dialog::selected_position_ & current_mask);
-    const int position_after_callback = Dialog::id_to_pos(id);
-    draw_item(position_after_callback, state_after_callback, 1);
+    const int current_position = box->item_list_.current_position_;
+    draw_item(Dialog::id_to_pos(id),
+              static_cast<int>((1u << static_cast<uint32_t>(current_position)) & box->selected_position_), 1);
     soft_update();
 }
 
