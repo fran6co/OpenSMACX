@@ -1,0 +1,22 @@
+{
+  "event_id": "0862f4221910eb2a56d2ef555e0bc07c035e44d2c3cca8ccda9b9fd37d887a65",
+  "payload": {
+    "affects": [
+      "entity-76f73deac9384d706d810d676c064978a6fb895a1fd8b581c792b66e9e49f15b"
+    ],
+    "author": "coordinator",
+    "discovery_id": "original-palette-scale-storage",
+    "evidence": [
+      "Fresh original operand evidence in palette-constant-caller-evidence.json: create_table 0x5FED40 has a verified independent boundary and no differing non-relocation bytes; the corresponding original operand is 0x66EB38.",
+      "Qualified COFF has one ordinary non-COMDAT static data definition _hsv_percent_scale; its eight-byte operand payload equals original 0.01. This is a local start witness, not a nominal original variable name, allocation extent or linked selection.",
+      "Other seven matching payloads do not yet have the same caller evidence and remain unbound; no guessed bulk mapping."
+    ],
+    "hypothesis": "Bind the existing TU-private 0.01 constant to its independently observed original operand storage.",
+    "kind": "discovery"
+  },
+  "previous_event": "0777c0933d3dcd9e88d0047335889c3e303602dc769a7b8db7569cf466a98124",
+  "request_id": "original-palette-scale-storage",
+  "schema_version": 1,
+  "sequence": 4,
+  "stream": "task:crt-entry-aliases-nov01do"
+}

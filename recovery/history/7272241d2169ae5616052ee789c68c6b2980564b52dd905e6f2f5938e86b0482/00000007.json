@@ -1,0 +1,18 @@
+{
+  "event_id": "f190aa2f1672f4d5b83fd002781d53bfb6c008041757144d3e3b8cdb0f8ecfce",
+  "payload": {
+    "author": "coordinator",
+    "discovery_id": "physical-runtime-entry-aliases",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "Physical pinned archive inventory and original callers corroborate both same-address alias pairs. Generic verifier still requires exact complete external function names, offsets/type/storage, archive pin and full parent qualification; cross-owner conflicts refuse.",
+      "Fresh runtime comparison exports only __alloca_probe/__chkstk at 0x645550. The stricmp parent remains unknown and neither alias publishes. Independent code and archive reviews plus targeted117 tests pass; no runtime body extents or linked-selection proof are granted."
+    ]
+  },
+  "previous_event": "6d79ac9028929d373138c92b0c96a95c49ae461f5d3a51733d29e01f4eeb540a",
+  "request_id": "incorporate-runtime-entry-aliases",
+  "schema_version": 1,
+  "sequence": 7,
+  "stream": "task:crt-entry-aliases-nov01do"
+}

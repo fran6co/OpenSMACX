@@ -3440,7 +3440,12 @@ An optional section `entries` array records explicit public entry anchors by
 size. The verifier requires the exact unique inventory of defined external
 function symbols and matching offsets, then qualifies an entry only after the
 whole parent contribution, its references, and archive pin pass. Passing entries
-are callable scoped-reference targets, but do not prove original/current linker
+may share an offset when the actual member defines those distinct names at that
+same location. Every alias must be declared: missing, invented or displaced
+symbols refuse qualification. Same-address entries cannot cross contributions
+or components, and an unresolved parent never publishes its aliases.
+Alias names do not add original function identities or independent bodies.
+Passing entries are callable scoped-reference targets, but do not prove original/current linker
 selection (`link_target` remains false), independent function extent, or
 application coverage. They do not participate in the COMDAT-only linked
 verifier and this version does not resolve cycles among new entries within a

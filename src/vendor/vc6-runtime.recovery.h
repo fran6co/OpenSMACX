@@ -69,6 +69,18 @@
 //       "unit": "build/intel/mt_obj/exsup.obj"
 //     },
 //     {
+//       "entries": [
+//         {
+//           "evidence": "The pinned archive member defines exactly the two named external function symbols at section offset zero. The independently bounded whole contribution and complete physical symbol inventory must verify before these same-address aliases can resolve scoped references; no separate function extent or linked selection is inferred.",
+//           "name": "__alloca_probe",
+//           "offset": 0
+//         },
+//         {
+//           "evidence": "The pinned archive member defines exactly the two named external function symbols at section offset zero. The independently bounded whole contribution and complete physical symbol inventory must verify before these same-address aliases can resolve scoped references; no separate function extent or linked selection is inferred.",
+//           "name": "__chkstk",
+//           "offset": 0
+//         }
+//       ],
 //       "evidence": "Pinned VC6-era multithreaded LIBCMT contribution: the whole ordinary code section corresponds to this original image range outside relocation operands. Section membership is dependency provenance only, not a callable identity, original body boundary, or per-symbol extent. Original archive-member selection, complete relocation-target closure, final-link retention/allocation, original runtime version, and runtime equivalence remain unproved.",
 //       "origin": {
 //         "address": 6575440,
@@ -354,6 +366,18 @@
 //       "unit": "../build/intel/mt_obj/adj_fdiv.obj"
 //     },
 //     {
+//       "entries": [
+//         {
+//           "evidence": "The pinned archive member defines exactly the two named external function symbols at section offset zero. The independently bounded whole contribution and complete physical symbol inventory must verify before these same-address aliases can resolve scoped references; no separate function extent or linked selection is inferred.",
+//           "name": "__strcmpi",
+//           "offset": 0
+//         },
+//         {
+//           "evidence": "The pinned archive member defines exactly the two named external function symbols at section offset zero. The independently bounded whole contribution and complete physical symbol inventory must verify before these same-address aliases can resolve scoped references; no separate function extent or linked selection is inferred.",
+//           "name": "__stricmp",
+//           "offset": 0
+//         }
+//       ],
 //       "evidence": "Pinned VC6-era multithreaded LIBCMT contribution: the whole ordinary code section corresponds to this original image range outside relocation operands. Section membership is dependency provenance only, not a callable identity, original body boundary, or per-symbol extent. Original archive-member selection, complete relocation-target closure, final-link retention/allocation, original runtime version, and runtime equivalence remain unproved.",
 //       "origin": {
 //         "address": 6618400,

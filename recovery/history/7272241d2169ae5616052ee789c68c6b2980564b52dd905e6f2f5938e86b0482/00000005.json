@@ -1,0 +1,20 @@
+{
+  "event_id": "e6680de74d78f9192fc357eb0541133df03f37281f09c4abe93a87d151d35341",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "packages/match-recovery/src/match_recovery/application_binary.py",
+      "packages/match-recovery/tests/test_component_targets.py"
+    ],
+    "evidence": [
+      "The fresh component verifier exports the proven chkstk aliases, but select_bindings mistakes their two dependency-only view candidates for an ambiguous product definition and suppresses the verified targets. Address this actual integration blocker while keeping mixed/unbound/conflicting product interpretations closed."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "0862f4221910eb2a56d2ef555e0bc07c035e44d2c3cca8ccda9b9fd37d887a65",
+  "request_id": "route-verified-dependency-aliases",
+  "schema_version": 1,
+  "sequence": 5,
+  "stream": "task:crt-entry-aliases-nov01do"
+}

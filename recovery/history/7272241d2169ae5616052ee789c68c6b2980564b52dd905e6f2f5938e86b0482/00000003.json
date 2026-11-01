@@ -1,0 +1,25 @@
+{
+  "event_id": "0777c0933d3dcd9e88d0047335889c3e303602dc769a7b8db7569cf466a98124",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "src/jackal/palette.cpp"
+    ],
+    "evidence": [
+      "The same Palette create_table caller also has one unresolved TU-private constant. Original boundary and all other bytes agree; its original DIR32 operand points to 0x66EB38 and the eight-byte original value equals current 0.01. A source-owned local data-start binding completes this independent reference without claiming allocation bounds."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 6744888,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "d526d32cbf6a869fba74598a4fb1705a01c8b6d3ed0ab5a18e4a6b2d1219f276",
+  "request_id": "palette-private-scale-reference",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:crt-entry-aliases-nov01do"
+}

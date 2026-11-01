@@ -1,0 +1,19 @@
+{
+  "event_id": "0bf37ac3240ca3dc3248eef58d0ff146dda4646469e108c0640cf1f81cd4aa32",
+  "payload": {
+    "author": "coordinator",
+    "discovery_id": "dependency-only-alias-routing",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "Source selector now separates size-free, distinct-name, same-component/same-companion dependency aliases from genuine product ambiguity. Names remain reserved and only freshly verified matching per-name origins resolve; mixed/product/unbound/context/fragment/sized/cross-owner and duplicate-name cases remain closed.",
+      "Actual-source-view synthetic archive test covers the complete component-to-selector route. Independent fresh retained-COFF verification gives boundary/bytes/references PASS for create_table5FED40 and base_rank4EB490; wider scoped result remains UNKNOWN from separate object evidence.",
+      "Full initial package run has12229 passed,5 failed,1 skipped; all five failing test nodes also fail unchanged baseline. Final selector-focused regression tests and fresh candidate/destination build, source checks and all-source observations remain required; no full acceptance is claimed."
+    ]
+  },
+  "previous_event": "b1a403e8d71bfff677f1155db6cbc1324ca3b8b6af5fc7b623028a6adcc3942b",
+  "request_id": "incorporate-verified-alias-routing",
+  "schema_version": 1,
+  "sequence": 9,
+  "stream": "task:crt-entry-aliases-nov01do"
+}

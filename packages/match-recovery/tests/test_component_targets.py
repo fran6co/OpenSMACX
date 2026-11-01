@@ -44,6 +44,53 @@ def test_disagreeing_product_binding_stays_unresolved():
     assert "_fread" not in externals
 
 
+def alias_view():
+    first = entity(0x646178, "_first", component="runtime")
+    second = dict(first["candidates"][0], symbol="_alias")
+    first["candidates"].append(second)
+    return {"groups": [{"entities": [first]}]}
+
+
+def test_dependency_alias_does_not_borrow_unverified_sibling_or_wrong_origin():
+    view = alias_view()
+    _, _, unresolved = select_bindings(view, frozenset())
+    assert unresolved == {}
+    _, _, partial = select_bindings(view, frozenset(), component_targets={"_first": 0x646178})
+    assert partial == {"_first": 0x646178}
+    _, _, wrong = select_bindings(view, frozenset(), component_targets={"_first": 0x646180})
+    assert wrong == {}
+
+
+@pytest.mark.parametrize("damage", [
+    "product", "component", "path", "spans", "context", "fragment", "unbound", "conflicts", "name",
+])
+def test_alias_shape_never_hides_a_competing_or_unsupported_interpretation(damage):
+    view = alias_view()
+    owner = view["groups"][0]["entities"][0]
+    candidate = owner["candidates"][1]
+    if damage == "product":
+        candidate["component"] = None
+    elif damage == "component":
+        candidate["component"] = "different-runtime"
+    elif damage == "path":
+        candidate["path"] = "src/other.recovery.h"
+    elif damage == "spans":
+        candidate["spans"] = [{"start": 0x646178, "end": 0x646179}]
+    elif damage == "context":
+        candidate["context_path"] = "src/provider.cpp"
+    elif damage == "fragment":
+        candidate["function_fragment"] = {"unsupported": True}
+    elif damage == "unbound":
+        candidate["unbound"] = True
+    elif damage == "conflicts":
+        owner["conflicts"] = True
+    elif damage == "name":
+        candidate["symbol"] = "_first"
+    declared = {item["symbol"]: 0x646178 for item in owner["candidates"]}
+    _, _, targets = select_bindings(view, frozenset(), component_targets=declared)
+    assert targets == {}
+
+
 def _project(tmp_path, manifest, archive_path, image):
     (tmp_path / "recovery").mkdir()
     header = render_component(manifest)

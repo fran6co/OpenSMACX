@@ -84,6 +84,7 @@ def select_bindings(view: dict, selected: frozenset[str], component_targets: dic
     bindings, refused, targets = [], [], defaultdict(set)
     local_symbols = _local_function_symbols(view, component_targets)
     ambiguous = set()
+    product_conflicts = set()
     reserved = defaultdict(set)
     found = set()
     unbound_addresses = set()
@@ -97,12 +98,25 @@ def select_bindings(view: dict, selected: frozenset[str], component_targets: dic
                 unbound_addresses.add(entity["origin"]["address"])
             candidate = (candidates[0] if len(candidates) == 1
                          and not entity["conflicts"] and not unbound else None)
+            # Size-free entry aliases in one dependency companion do not
+            # compete with product definitions. They remain reserved below;
+            # only freshly verified component targets can resolve them.
+            dependency_aliases = (
+                len(candidates) > 1 and not entity["conflicts"] and not unbound
+                and len({item["symbol"] for item in candidates}) == len(candidates)
+                and all(item["component"] is not None and not item.get("spans")
+                        and not item.get("context_path") and item.get("function_fragment") is None
+                        for item in candidates)
+                and len({(item["component"], item["path"]) for item in candidates}) == 1)
             if candidate is None:
                 ambiguous.update(item["symbol"] for item in candidates)
+                if not dependency_aliases:
+                    product_conflicts.update(item["symbol"] for item in candidates)
             elif candidate.get("context_path") or candidate.get("function_fragment") is not None:
                 # These interpretations cannot safely publish a cross-TU
                 # external address for a same-named ordinary candidate.
                 ambiguous.add(candidate["symbol"])
+                product_conflicts.add(candidate["symbol"])
             # A dependency annotation identifies work to verify; it is not
             # evidence that the current build uses the specified library code.
             # Reserve these names against product aliases too. Admission needs
@@ -127,6 +141,8 @@ def select_bindings(view: dict, selected: frozenset[str], component_targets: dic
             reason = None
             if unbound:
                 reason = "unbound original identity has no current C++ implementation; review and bind a genuine owner"
+            elif dependency_aliases:
+                reason = "dependency binding: use component verification, not application recovery"
             elif candidate is None:
                 reason = "requires one unambiguous product definition; seeds are not production source"
             elif candidate["component"] is not None:
@@ -146,8 +162,9 @@ def select_bindings(view: dict, selected: frozenset[str], component_targets: dic
                                 "result": Result.UNKNOWN, "reason": reason})
     refused.extend({"entity_id": key, "result": Result.UNKNOWN, "reason": "source mapping is missing"}
                    for key in sorted(selected - found))
-    ambiguous.update(symbol for symbol, addresses in targets.items() if len(addresses) != 1)
-    product_ambiguous = set(ambiguous) | local_symbols
+    conflicting_targets = {symbol for symbol, addresses in targets.items() if len(addresses) != 1}
+    ambiguous.update(conflicting_targets)
+    product_ambiguous = product_conflicts | conflicting_targets | local_symbols
     ambiguous.update(reserved)
     accepted = []
     for binding in bindings:

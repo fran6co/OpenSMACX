@@ -45,6 +45,7 @@ IDirectDrawPalette *DirectDrawPalette;  // 0x009BC4A0
 // the image's absolute references - verified by measure on all three
 // bodies, which is why there is no pointer indirection left here.
 namespace {
+// RECOVERY_OBJECT: v1 0x0066EB38 _hsv_percent_scale
 const double hsv_percent_scale = 0.01;              // 0x0066EB38
 const double hsv_deg_to_rad = 0.017453292519444445; // pi/180, 0x00670280
 const double hsv_zero = 0.0;                        // 0x0066FA70

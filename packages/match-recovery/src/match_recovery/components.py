@@ -656,8 +656,10 @@ class ToolchainCodeSectionBinding:
             raise ValueError("code-section entries must be an immutable tuple of typed anchors")
         if len({item.name for item in self.entries}) != len(self.entries):
             raise ValueError("code-entry names must be unique within a contribution")
-        if len({item.offset for item in self.entries}) != len(self.entries):
-            raise ValueError("code-entry offsets must be unique within a contribution")
+        # Distinct public names may alias one physical entry. Qualification
+        # still requires the complete actual COFF function inventory, exact
+        # offsets and verified parent bytes/references; an anchor alone does
+        # not establish an alias or a callable target.
         if any(item.offset >= self.span.end - self.span.start for item in self.entries):
             raise ValueError("code-entry offset is outside the contribution span")
 

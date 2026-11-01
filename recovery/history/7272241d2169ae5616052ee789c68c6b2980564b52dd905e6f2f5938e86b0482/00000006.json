@@ -1,0 +1,22 @@
+{
+  "event_id": "6d79ac9028929d373138c92b0c96a95c49ae461f5d3a51733d29e01f4eeb540a",
+  "payload": {
+    "affects": [
+      "entity-1a04c73f4289bec632081f182cdb9a536761823e1562046916f87ef8b38084af",
+      "entity-af97a321c8cf2c697d0292195be9c37c6afafd10b7099e2ac4dd31b350d3c5f6"
+    ],
+    "author": "coordinator",
+    "discovery_id": "dependency-only-alias-routing",
+    "evidence": [
+      "Independent real-data component reports publish exactly __alloca_probe/__chkstk at 0x645550, yet native caller verification still marks __chkstk unknown. Source project_view shows two size-free candidates from the same runtime companion/component at that original entry.",
+      "Current select_bindings includes every multi-candidate dependency alias in product_ambiguous. A narrow classification can keep those names reserved until fresh target verification, while refusing genuine product conflicts, unbound identities, cross-owner candidates, sized function mappings and unsupported contexts."
+    ],
+    "hypothesis": "Same-component same-source size-free code-entry aliases need separate ambiguity classification before fresh verified dependency targets can resolve callers.",
+    "kind": "discovery"
+  },
+  "previous_event": "e6680de74d78f9192fc357eb0541133df03f37281f09c4abe93a87d151d35341",
+  "request_id": "dependency-only-alias-routing",
+  "schema_version": 1,
+  "sequence": 6,
+  "stream": "task:crt-entry-aliases-nov01do"
+}

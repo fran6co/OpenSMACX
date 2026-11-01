@@ -130,9 +130,12 @@ def parse_component_entries(sources: dict[str, str]) -> list[tuple[str, Componen
                    section.span.start + anchor.offset)
                   for manifest in manifests if isinstance(manifest, ToolchainManifest)
                   for section in manifest.code_sections for anchor in section.entries]
-    if len({(section.origin.image_sha256, section.origin.address_space, address)
-            for _, manifest, section, _anchor, address in entry_rows}) != len(entry_rows):
-        raise ValueError("duplicate original code-entry identity")
+    entry_origins = {}
+    for component_id, _manifest, section, _anchor, address in entry_rows:
+        origin = (section.origin.image_sha256, section.origin.address_space, address)
+        owner = (component_id, section.unit, section.section)
+        if entry_origins.setdefault(origin, owner) != owner:
+            raise ValueError("duplicate original code-entry identity")
     target_owners = {}
     for manifest in manifests:
         names = [binding.symbol for binding in manifest.bindings]
