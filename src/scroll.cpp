@@ -1942,6 +1942,7 @@ Purpose: Destroy a Scroll: run close, destroy the embedded right then left
          FlatButtons, and finish with the GraphicWin base teardown through
          ordinary C++ destruction, including exception cleanup.
 // ORIGINAL: 0x00406E60 ??1Scroll@@QAE@XZ 0x00406E60-0x00406F1A;0x00650BB0-0x00650BEE FILE BYTE_EXACT
+// compile_context src/alphasave.cpp
 // symbol    ??1Scroll@@UAE@XZ
 // size      248 bytes
 // prototype void (__thiscall ??1Scroll@@QAE@XZ)(Scroll* this)

@@ -2,6 +2,8 @@
 from pathlib import Path
 import re
 
+from test_caviar_draw_callbacks_actual_source import extract
+
 
 ROOT = Path(__file__).resolve().parents[2]
 CPP = ROOT / "src/netwin.cpp"
@@ -48,7 +50,6 @@ def test_real_check_box_member_and_netwin_raii_own_cleanup():
     assert "void NetWin::UNK4()" not in source
     assert "??_DCheckBox@@QAEXXZ" in source
     assert "not a handwritten NetWin method" in source
-    destructor = source[source.index("NetWin::~NetWin()"):
-                        source.index("\nvoid NetWin::close()", source.index("NetWin::~NetWin()"))]
+    destructor = extract(source, "NetWin::~NetWin()")
     assert "checkBox_.close();" in destructor
     assert "compiler-owned teardown" in source

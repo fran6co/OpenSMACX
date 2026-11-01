@@ -517,7 +517,7 @@ void Time::set_modal() {
 /*
 Purpose: Clear the modal timer.
 // ORIGINAL: 0x00616870 ?release_modal@Time@@QAAXXZ 0x00616870-0x0061687B BYTE_EXACT
-// symbol    ?release_modal@Time@@QAEXXZ
+// symbol    ?release_modal@Time@@SAXXZ
 // size      11 bytes
 // prototype void (__thiscall ?release_modal@Time@@QAAXXZ)(Time* this)
 // kind      game
@@ -528,6 +528,10 @@ Purpose: Clear the modal timer.
 Return Value: n/a
 Status: Complete
 */
+// Pinned 0x00616870 reads no receiver and only clears TimeModal. Credits and
+// Replay call it after virtual set_modal; both DesignWin paths call it after
+// stop, which may clobber ECX. The static owner API models that observed ABI;
+// original static spelling versus an optimized unused receiver remains unknown.
 void Time::release_modal() {
     TimeModal = nullptr;
 }

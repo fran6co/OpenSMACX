@@ -1,7 +1,19 @@
-"""Actual-source CheckBox selected-state behavior, not original layout proof."""
+"""CheckBox state controls on x86 hosts, with separate shift-sanitizer controls.
+
+The actual-source run preserves negative and >=32 shift counts. At -O0 on the
+explicit x86 host domain, we observe the emitted hardware count wrapping with
+only shift instrumentation disabled; all address/other undefined sanitizers
+remain enabled. This is neither portable C++ proof nor VC6 target evidence.
+Strict native function byte/reference checks supply the latter separately.
+
+A clearly labeled host-only masked projection retains the shift-sanitizer damage
+control: removing its explicit mask must diagnose the raw out-of-range shift.
+The projection never substitutes for executing the actual product bodies.
+"""
 
 from pathlib import Path
 import os
+import platform
 import shutil
 import subprocess
 
@@ -152,7 +164,7 @@ int main() {
     assert(items.current_ == 0);
 
     // A null head preserves the stale cursor, even with a positive count;
-    // hardware SHL count wrapping is a defined low-five-bit mask here.
+    // the x86 host run observes SHL count wrapping, not defined portable C++.
     items.head_ = 0;
     items.entry_count_ = 1;
     items.current_ = &short_entries[2];
@@ -189,13 +201,16 @@ int main() {
 '''
 
 
-def compile_and_run(tmp_path, compiler, methods, stem):
+def compile_and_run(tmp_path, compiler, methods, stem, *, check_shifts=False):
     source = tmp_path / (stem + ".cpp")
     executable = tmp_path / stem
     source.write_text(FIXTURE.replace("BODIES", methods))
+    flags = ["-O0", "-fsanitize=address,undefined", "-fno-sanitize-recover=all"]
+    if not check_shifts:
+        # Intentional original x86 effect; do not suppress other UBSan checks.
+        flags.append("-fno-sanitize=shift")
     compiled = subprocess.run(
-        [compiler, "-std=c++03", "-Wall", "-Wextra", "-Werror",
-         "-fsanitize=address,undefined", "-fno-sanitize-recover=all",
+        [compiler, "-std=c++03", "-Wall", "-Wextra", "-Werror", *flags,
          str(source), "-o", str(executable)],
         capture_output=True, text=True,
     )
@@ -209,6 +224,8 @@ def compile_and_run(tmp_path, compiler, methods, stem):
 
 @pytest.mark.parametrize("compiler_name", ["g++", "clang++"])
 def test_actual_checkbox_selected_state_and_compiled_damage(tmp_path, compiler_name):
+    if platform.machine().lower() not in ("i386", "i486", "i586", "i686", "x86", "x86_64", "amd64"):
+        pytest.skip("raw out-of-range shift observation requires an x86 host")
     compiler = shutil.which(compiler_name)
     if compiler is None:
         pytest.skip(compiler_name + " unavailable")
@@ -226,11 +243,30 @@ def test_actual_checkbox_selected_state_and_compiled_damage(tmp_path, compiler_n
                              "checkbox-wrong-member")
     assert result.returncode != 0, "wrong-member mutant escaped the behavior control"
 
-    undefined_shift = methods.replace(
-        "1U << (static_cast<uint32_t>(items.current_position_) & 31U)",
-        "1U << static_cast<uint32_t>(items.current_position_)", 1,
+    assert "Assertion" in result.stderr or "Assertion" in result.stdout, result.stderr
+
+    raw_shift = "1U << static_cast<uint32_t>(Dialog::item_list_.current_position_)"
+    assert methods.count(raw_shift) == 1
+    guarded_shift = methods.replace(
+        raw_shift,
+        "(Dialog::item_list_.current_position_ >= 0 && "
+        "Dialog::item_list_.current_position_ < 32 ? " + raw_shift + " : 0U)", 1,
     )
-    assert undefined_shift != methods
+    result = compile_and_run(tmp_path, compiler, guarded_shift, "checkbox-guarded-shift")
+    assert result.returncode != 0, "rejecting wrapped ordinals escaped boundary assertions"
+    assert "Assertion" in result.stderr or "Assertion" in result.stdout, result.stderr
+
+    # Portable host-only control. The product still uses the raw expression;
+    # this projection establishes that the separate shift detector is live.
+    masked_shift = "1U << (static_cast<uint32_t>(Dialog::item_list_.current_position_) & 31U)"
+    masked_projection = methods.replace(raw_shift, masked_shift, 1)
+    assert masked_projection != methods
+    result = compile_and_run(tmp_path, compiler, masked_projection,
+                             "checkbox-masked-projection", check_shifts=True)
+    assert result.returncode == 0, result.stdout + result.stderr
+    undefined_shift = masked_projection.replace(masked_shift, raw_shift, 1)
+    assert undefined_shift != masked_projection
     result = compile_and_run(tmp_path, compiler, undefined_shift,
-                             "checkbox-undefined-shift")
+                             "checkbox-undefined-shift", check_shifts=True)
     assert result.returncode != 0, "unmasked out-of-range shift escaped UBSan"
+    assert "shift exponent" in result.stderr, result.stderr

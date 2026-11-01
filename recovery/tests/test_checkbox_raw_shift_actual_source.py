@@ -109,39 +109,47 @@ static int *state_seen_by_add;
 static int expected_state_at_add;
 static char *expected_text_at_add;
 
+class StringList;
 class StringStruct {
 public:
     ItemNode *head_;
     ItemNode *current_;
     int current_position_;
     int entry_count_;
-    char *pending_text_;
-    int field_20_;
-    int field_24_;
     int add_result;
     int add_calls;
     int added_id;
 
     StringStruct()
         : head_(0), current_(0), current_position_(0), entry_count_(0),
-          pending_text_(0), field_20_(7), field_24_(9), add_result(0),
-          add_calls(0), added_id(-1) {}
-
-    int add(int id) {
-        ++add_calls;
-        events.push_back(10);
-        assert(state_seen_by_add != 0);
-        assert(*state_seen_by_add == expected_state_at_add);
-        assert(pending_text_ == expected_text_at_add);
-        assert(field_20_ == 0 && field_24_ == 0);
-        added_id = id;
-        return add_result;
-    }
+          add_result(0), add_calls(0), added_id(-1) {}
+    int add(int id);
 };
+
+// Match the production inheritance and metadata owner, without claiming ABI.
+class StringList : public StringStruct {
+public:
+    char *pending_text_;
+    int field_20_;
+    int field_24_;
+    StringList() : pending_text_(0), field_20_(7), field_24_(9) {}
+};
+
+int StringStruct::add(int id) {
+    ++add_calls;
+    events.push_back(10);
+    assert(state_seen_by_add != 0);
+    assert(*state_seen_by_add == expected_state_at_add);
+    StringList &items = *static_cast<StringList *>(this);
+    assert(items.pending_text_ == expected_text_at_add);
+    assert(items.field_20_ == 0 && items.field_24_ == 0);
+    added_id = id;
+    return add_result;
+}
 
 class Dialog {
 public:
-    StringStruct item_list_;
+    StringList item_list_;
     int selected_position_;
     int field_44_;
     int field_64_;
@@ -228,7 +236,7 @@ static void test_getter_traversal(CheckBox &box) {
 static void test_item_publication(CheckBox &box) {
     char label_fail[] = "failed-insert";
     char label_ok[] = "successful-insert";
-    StringStruct &items = box.item_list_;
+    StringList &items = box.item_list_;
     items.entry_count_ = 4;
     items.add_calls = 0;
     items.field_20_ = 8;
@@ -338,15 +346,15 @@ MUTATIONS = (
      "return static_cast<int>(selected_position_ & mask);",
      "return (selected_position_ & mask) != 0;"),
     ("publish text after append",
-     "    item_list_.pending_text_ = text;\n"
-     "    item_list_.field_20_ = 0;\n"
-     "    item_list_.field_24_ = 0;\n"
-     "    return -((item_list_.add(id) != 0) ? 1 : 0) & 4;",
-     "    item_list_.field_20_ = 0;\n"
-     "    item_list_.field_24_ = 0;\n"
-     "    const int added = item_list_.add(id);\n"
-     "    item_list_.pending_text_ = text;\n"
-     "    return -((added != 0) ? 1 : 0) & 4;"),
+     "    items.pending_text_ = text;\n"
+     "    items.field_20_ = 0;\n"
+     "    items.field_24_ = 0;\n"
+     "    return items.add(id) != 0 ? 4 : 0;",
+     "    items.field_20_ = 0;\n"
+     "    items.field_24_ = 0;\n"
+     "    const int added = items.add(id);\n"
+     "    items.pending_text_ = text;\n"
+     "    return added != 0 ? 4 : 0;"),
     ("skip hover redraw",
      "    redraw();", "    /* redraw omitted */"),
 )
@@ -365,3 +373,4 @@ def test_compiling_behavior_mutations_are_rejected(tmp_path, compiler,
     methods[owner] = methods[owner].replace(before, after, 1)
     result = _compile_and_run(tmp_path, compiler, methods)
     assert result.returncode != 0, f"compiled mutation escaped: {label}"
+    assert "Assertion" in result.stderr, result.stderr

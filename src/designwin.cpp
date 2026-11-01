@@ -3631,6 +3631,11 @@ void DesignWin::shut_that_badboy_down() {
     DesignTutorState = 0;
 }
 
+// Later pinned caller/callee review: stop at 0x00616730 overwrites ECX on
+// active-timer paths and can tail-call flush_timer. The following historical
+// same-TU hypothesis does not establish a Time receiver requirement for release:
+// 0x00616870 only clears shared TimeModal. The current receiver-free class API
+// preserves all four callers; the original static C++ spelling remains unknown.
 // MISMATCH, ruled out (mnemonic_similarity 0.875, 65 vs 61 bytes):
 // divergence #8, original 'lea' vs rebuilt 'add'+'mov', plus one inserted
 // 'mov' before the second call. The original computes `this + 0x12774` ONCE

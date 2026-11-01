@@ -184,7 +184,9 @@ class CheckBox : public virtual GraphicWin, public virtual Dialog {
 
  private:
   // The vbtable pointer is EMITTED by the compiler now.
-  uint32_t field_4_;  // 0x0004
+  // Signed row cursor: original 0x60F90C..0x60F941 clamps decrement and
+  // increment with signed comparisons; 0x60F980..0x60F993 repairs negatives.
+  int field_4_;  // 0x0004
   // Key handling loads and invokes this cell at original 0x0060F9BD/0x0060F9D1.
   // Registration/producer remains unknown; the selected-position word is passed.
   // RECOVERY_MEMBER: v1 CheckBox key_notification_callback_ 0x8 0x0060F8B0

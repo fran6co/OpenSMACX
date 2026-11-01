@@ -114,6 +114,54 @@ CheckBox::CheckBox() {
 // (The old CheckBox(int a1) spelling: `if (a1 != 0) { new (GraphicWin*)
 // GraphicWin(); Dialog::construct(); }` - both hand construction seams.)
 
+
+
+/*
+Purpose: Reset the check box to its defaults, then close its dialog and
+         graphic base. Both calls resolve through the vbtable, so they reach
+         the Dialog and the virtual base rather than the object itself.
+// ORIGINAL: 0x0060E7C0 ?close@CheckBox@@QAEIXZ 0x0060E7C0-0x0060E7F9 BYTE_EXACT
+// symbol    ?close@CheckBox@@QAEXXZ
+// TRIED: the reconstructed signature `?close@CheckBox@@QAEXXZ`. The census
+//   names are RECONSTRUCTIONS - the image is stripped - and this one had the
+//   same method carrying two signatures across one hierarchy: Dialog::close and
+//   four derived close() returning void, GraphicWin::close and ListBox::close
+//   returning uint32_t. The original cannot have had that. Unified on
+//   `uint32_t` and on `virtual`, based on the assumed EAX residue and a
+//   mistaken vtable interpretation. That hypothesis is superseded: this member is nonvirtual;
+//   physical caller audit found all 19 direct callers discard EAX. The source
+//   lifecycle contract is void; retain the original reset and close order.
+// LEVER: the vbtable is RE-READ for the second call, exactly as the destructor above it does. One cached `vbtable` local has to survive the first `close()`, so VC6 spends a callee-saved register and a `push edi` the image never makes: 5 of 20. Reading `[esi]` again for the GraphicWin call is 20 of 20. Reading it inline at BOTH sites scores the same 20 of 20, so the first read may stay a named local.
+// size      57 bytes
+// prototype (historical reconstructed) uint32_t (__thiscall ?close@CheckBox@@QAEIXZ)(CheckBox* this)
+// source contract void; physical direct callers discard EAX
+// callers   13   call targets   2
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005D4E40 0x00608F50
+Return Value: n/a
+Status: Complete
+*/
+void CheckBox::close() {
+    // The base offsets come from the object's own vbtable, read at run time,
+    // not from where they sit in a most-derived CheckBox. When one is
+    // embedded in a larger class - Dialogs holds a RadioButton at 0x44 - that
+    // object's vbtable names different offsets, and hardcoding this class's
+    // own sends both calls to the wrong subobject. Doing exactly that passed
+    // every unit test here and crashed the game on a null vtable pointer.
+    // The base calls go through the runtime vbtable either way - the
+    // compiler's dispatch for a virtual-base member call reads it at run
+    // time exactly as the old hand walk did, so the embedded case still
+    // reaches the right subobjects.
+    field_4_ = 0;
+    key_notification_callback_ = 0;
+    double_click_callback_ = 0;
+    checked_sprite_ = CheckBoxDefault2;
+    unchecked_sprite_ = CheckBoxDefault1;
+    Dialog::close();
+    GraphicWin::close();
+}
+
 /*
 Purpose: Tear down a CheckBox: reinstall the base subobjects' own
          vtable/vtordisp values, reset the state fields, and close the
@@ -162,60 +210,7 @@ CheckBox::~CheckBox() {
     // gone, same as the constructor's. The two base closes are qualified
     // calls - the compiler's virtual-base dispatch.
 
-    field_4_ = 0;
-    key_notification_callback_ = 0;
-    double_click_callback_ = 0;
-    checked_sprite_ = CheckBoxDefault2;
-    unchecked_sprite_ = CheckBoxDefault1;
-
-    Dialog::close();
-    GraphicWin::close();
-}
-
-/*
-Purpose: Reset the check box to its defaults, then close its dialog and
-         graphic base. Both calls resolve through the vbtable, so they reach
-         the Dialog and the virtual base rather than the object itself.
-// ORIGINAL: 0x0060E7C0 ?close@CheckBox@@QAEIXZ 0x0060E7C0-0x0060E7F9 BYTE_EXACT
-// symbol    ?close@CheckBox@@QAEXXZ
-// TRIED: the reconstructed signature `?close@CheckBox@@QAEXXZ`. The census
-//   names are RECONSTRUCTIONS - the image is stripped - and this one had the
-//   same method carrying two signatures across one hierarchy: Dialog::close and
-//   four derived close() returning void, GraphicWin::close and ListBox::close
-//   returning uint32_t. The original cannot have had that. Unified on
-//   `uint32_t` and on `virtual`, based on the assumed EAX residue and a
-//   mistaken vtable interpretation. That hypothesis is superseded: this member is nonvirtual;
-//   physical caller audit found all 19 direct callers discard EAX. The source
-//   lifecycle contract is void; retain the original reset and close order.
-// LEVER: the vbtable is RE-READ for the second call, exactly as the destructor above it does. One cached `vbtable` local has to survive the first `close()`, so VC6 spends a callee-saved register and a `push edi` the image never makes: 5 of 20. Reading `[esi]` again for the GraphicWin call is 20 of 20. Reading it inline at BOTH sites scores the same 20 of 20, so the first read may stay a named local.
-// size      57 bytes
-// prototype (historical reconstructed) uint32_t (__thiscall ?close@CheckBox@@QAEIXZ)(CheckBox* this)
-// source contract void; physical direct callers discard EAX
-// callers   13   call targets   2
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     0x005D4E40 0x00608F50
-Return Value: n/a
-Status: Complete
-*/
-void CheckBox::close() {
-    // The base offsets come from the object's own vbtable, read at run time,
-    // not from where they sit in a most-derived CheckBox. When one is
-    // embedded in a larger class - Dialogs holds a RadioButton at 0x44 - that
-    // object's vbtable names different offsets, and hardcoding this class's
-    // own sends both calls to the wrong subobject. Doing exactly that passed
-    // every unit test here and crashed the game on a null vtable pointer.
-    // The base calls go through the runtime vbtable either way - the
-    // compiler's dispatch for a virtual-base member call reads it at run
-    // time exactly as the old hand walk did, so the embedded case still
-    // reaches the right subobjects.
-    field_4_ = 0;
-    key_notification_callback_ = 0;
-    double_click_callback_ = 0;
-    checked_sprite_ = CheckBoxDefault2;
-    unchecked_sprite_ = CheckBoxDefault1;
-    Dialog::close();
-    GraphicWin::close();
+    close();
 }
 
 // Seed identity: ?draw_item@CheckBox@@QAEXHHH@Z at 0x0060F030.
@@ -531,10 +526,10 @@ void CheckBox::on_redraw() {
             static_cast<int>(dib_.bmiHeader.biWidth),
             -static_cast<int>(dib_.bmiHeader.biHeight));
     }
+    CheckBox *const box = this;
     for (int position = 0; position < Dialog::item_list_.entry_count_; ++position) {
-        const uint32_t mask = 1u << (static_cast<uint32_t>(position) & 31u);
-        const int state = static_cast<int>(Dialog::selected_position_ & mask);
-        draw_item(position, state,
+        draw_item(position,
+                  static_cast<int>(box->selected_position_ & (1u << static_cast<uint32_t>(position))),
                   field_4_ == static_cast<uint32_t>(position));
     }
 }
@@ -847,18 +842,17 @@ void CheckBox::set_state_id(int id, int value) {
             items.current_ = items.current_->next;
         }
     }
-    const uint32_t mask =
-        1U << (static_cast<uint32_t>(items.current_position_) & 31U);
     if (value != 0) {
-        Dialog::selected_position_ |= mask;
+        Dialog::selected_position_ |= 1U << static_cast<uint32_t>(Dialog::item_list_.current_position_);
     } else {
-        Dialog::selected_position_ &= ~mask;
+        Dialog::selected_position_ &= ~(1U << static_cast<uint32_t>(Dialog::item_list_.current_position_));
     }
 }
 
 // ORIGINAL: 0x0060EA10 ?flip_state_id@CheckBox@@QAEXH@Z 0x0060EA10-0x0060EB48
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned 0x0060EA10 performs one head-gated ID search, tests the selected bit at that resulting cursor, then performs a second head-gated search in each branch before clearing or setting the bit at the second resulting cursor. src/dialog.h exposes the actual item_list_ and selected_position_; src/stringstruct.h exposes typed list cursor/node members."], "reason": "Recover the original two-pass CheckBox toggle through genuine Dialog and StringStruct members, retaining its branch-specific repeated traversal and cursor effects rather than collapsing it to XOR."}
 void CheckBox::flip_state_id(int id) {
+    {
     StringStruct &items = Dialog::item_list_;
     if (items.head_ != 0) {
         items.current_position_ = 0;
@@ -869,10 +863,12 @@ void CheckBox::flip_state_id(int id) {
             items.current_ = items.current_->next;
         }
     }
+    }
 
     const uint32_t first_mask =
-        1U << (static_cast<uint32_t>(items.current_position_) & 31U);
+        1U << static_cast<uint32_t>(Dialog::item_list_.current_position_);
     if ((Dialog::selected_position_ & first_mask) != 0) {
+        StringStruct &items = Dialog::item_list_;
         if (items.head_ != 0) {
             items.current_position_ = 0;
             items.current_ = items.head_;
@@ -883,9 +879,10 @@ void CheckBox::flip_state_id(int id) {
             }
         }
         const uint32_t mask =
-            1U << (static_cast<uint32_t>(items.current_position_) & 31U);
+            1U << static_cast<uint32_t>(Dialog::item_list_.current_position_);
         Dialog::selected_position_ &= ~mask;
     } else {
+        StringStruct &items = Dialog::item_list_;
         if (items.head_ != 0) {
             items.current_position_ = 0;
             items.current_ = items.head_;
@@ -896,7 +893,7 @@ void CheckBox::flip_state_id(int id) {
             }
         }
         const uint32_t mask =
-            1U << (static_cast<uint32_t>(items.current_position_) & 31U);
+            1U << static_cast<uint32_t>(Dialog::item_list_.current_position_);
         Dialog::selected_position_ |= mask;
     }
 }
@@ -929,7 +926,7 @@ int CheckBox::get_state_id(int id) {
         }
     }
     const uint32_t mask =
-        1U << (static_cast<uint32_t>(items.current_position_) & 31U);
+        1U << static_cast<uint32_t>(Dialog::item_list_.current_position_);
     return static_cast<int>(Dialog::selected_position_ & mask);
 }
 
@@ -1011,20 +1008,18 @@ Purpose: Add one item to a check box: reject a null label, set or clear this
 Status: Source-owned member body; behavior retained, exactness not measured
 */
 int CheckBox::item(char *text, int id, int state) {
-    if (text == 0) {
-        return 3;
-    }
-    const uint32_t mask = 1u << static_cast<uint32_t>(
-                                     item_list_.entry_count_);
-    if (state == 0) {
-        selected_position_ &= ~mask;
+    if (text == 0) return 3;
+    const int position = item_list_.entry_count_;
+    if (state != 0) {
+        selected_position_ |= 1u << static_cast<uint32_t>(position);
     } else {
-        selected_position_ |= mask;
+        selected_position_ &= ~(1u << static_cast<uint32_t>(position));
     }
-    item_list_.pending_text_ = text;
-    item_list_.field_20_ = 0;
-    item_list_.field_24_ = 0;
-    return -((item_list_.add(id) != 0) ? 1 : 0) & 4;
+    StringList &items = item_list_;
+    items.pending_text_ = text;
+    items.field_20_ = 0;
+    items.field_24_ = 0;
+    return items.add(id) != 0 ? 4 : 0;
 }
 
 // RECOVERY_ASSOCIATED: v1 switch_targets 0x0060F8B0 0x0060FA18 0x0060FA30 0x0060F905
@@ -1058,72 +1053,52 @@ Purpose: A check box key press: publish the parent window as the callback
 Status: Source-owned member body; behavior retained, exactness not measured
 */
 int CheckBox::on_key_down(int key) {
+    CheckBox *const box = this;
     WinCallbackWindow = win_parent_;
     draw_item(static_cast<int>(field_4_),
-              static_cast<int>((1u << (field_4_ & 31u)) & selected_position_),
+              static_cast<int>((1u << field_4_) & box->selected_position_),
               0);
 
     switch (key) {
-    case 0x20: {
-        const uint32_t mask = 1u << (field_4_ & 31u);
-        if ((mask & selected_position_) != 0) {
-            selected_position_ &= ~mask;
-        } else {
-            selected_position_ |= mask;
-        }
+    case 0x26:
+    case 0x68:
+        --field_4_;
+        field_4_ = field_4_ > 0 ? field_4_ : 0;
+        break;
+    case 0x28:
+    case 0x62: {
+        ++field_4_;
+        field_4_ = field_4_ < Dialog::item_list_.entry_count_ - 1
+            ? field_4_ : Dialog::item_list_.entry_count_ - 1;
         break;
     }
     case 0x25:
-    case 0x64: {
-        int position = static_cast<int>(field_4_) +
-                       Dialog::row_count_;
-        field_4_ = static_cast<uint32_t>(position);
-        if (position >= Dialog::item_list_.entry_count_) {
-            position -= Dialog::row_count_;
-            field_4_ = static_cast<uint32_t>(position);
+    case 0x64:
+        field_4_ += Dialog::row_count_;
+        if (field_4_ >= Dialog::item_list_.entry_count_) {
+            field_4_ -= Dialog::row_count_;
         }
         break;
-    }
-    case 0x26:
-    case 0x68: {
-        int position = static_cast<int>(field_4_) - 1;
-        if (position <= 0) {
-            position = 0;
-        }
-        field_4_ = static_cast<uint32_t>(position);
-        break;
-    }
     case 0x27:
-    case 0x66: {
-        int position = static_cast<int>(field_4_) -
-                       Dialog::row_count_;
-        field_4_ = static_cast<uint32_t>(position);
-        if (position < 0) {
-            position += Dialog::row_count_;
-            field_4_ = static_cast<uint32_t>(position);
+    case 0x66:
+        field_4_ -= Dialog::row_count_;
+        if (field_4_ < 0) {
+            field_4_ += Dialog::row_count_;
         }
         break;
-    }
-    case 0x28:
-    case 0x62: {
-        int position = static_cast<int>(field_4_) + 1;
-        const int last = Dialog::item_list_.entry_count_ - 1;
-        if (position >= last) {
-            position = last;
-        }
-        field_4_ = static_cast<uint32_t>(position);
+    case 0x20:
+        UNK1(field_4_);
         break;
-    }
     default:
         return 0;
     }
 
     WinNotificationCallback callback = key_notification_callback_;
     if (callback != 0) {
-        callback(static_cast<int>(selected_position_));
+        callback(static_cast<int>(box->selected_position_));
     }
     draw_item(static_cast<int>(field_4_),
-              static_cast<int>((1u << (field_4_ & 31u)) & selected_position_),
+              static_cast<int>((1u << field_4_) & box->selected_position_),
               1);
     soft_update();
     return 1;
@@ -1183,3 +1158,14 @@ void CheckBox::on_mouse_move(int x_coord, int y_coord) {
 // records the table boundary, not a complete enclosing allocation or a
 // recovered historical C++ class name.
 // RECOVERY_GENERATED: v1 vbtable 0x00670718 0x00670724 ??_8CheckBox@@7B@ 0x0060E670
+
+// The constructor stores these distinct generated tables at 0x60E6C8,
+// 0x60E6D4 and 0x60E6E4; the destructor repeats them at 0x60E74A,
+// 0x60E757 and 0x60E767. Their receiver views are respectively Win,
+// Buffer at GraphicWin+0x444, and the virtual Dialog base. Original
+// primary slots select the deleting adjustor, attach adjustor and redraw
+// adjustor; Win slots +0x30/+0x44/+0x50/+0x68 select this owner's
+// redraw/move/left-down/key-down adjustors. Extents remain unclaimed.
+// RECOVERY_GENERATED: v1 vtable 0x0067059C ? ??_7CheckBox@@6B@ 0x0060E670
+// RECOVERY_GENERATED: v1 vtable 0x006705A8 ? ??_7CheckBox@@6BBuffer@@@ 0x0060E670
+// RECOVERY_GENERATED: v1 vtable 0x006705B0 ? ??_7CheckBox@@6BWin@@@ 0x0060E670

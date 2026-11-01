@@ -37,33 +37,30 @@ int VideoFrameQueue::allocate(unsigned char **payload_out, int byte_count,
     *payload_out = 0;
     if (count_ == limit_) return 0x14;
 
-    VideoFrameNode *node;
     if (head_ == 0) {
-        node = static_cast<VideoFrameNode *>(mem_get(sizeof(VideoFrameNode)));
-        head_ = node;
-        if (node == 0) return 4;
+        head_ = static_cast<VideoFrameNode *>(mem_get(sizeof(VideoFrameNode)));
+        if (head_ == 0) return 4;
+        tail_ = head_;
     } else {
-        VideoFrameNode *const appended = static_cast<VideoFrameNode *>(mem_get(sizeof(VideoFrameNode)));
-        tail_->next = appended;
-        node = tail_->next;
-        if (node == 0) return 4;
+        tail_->next = static_cast<VideoFrameNode *>(mem_get(sizeof(VideoFrameNode)));
+        if (tail_->next == 0) return 4;
+        tail_ = tail_->next;
     }
-    tail_ = node;
-    node->next = 0;
-    node->frame_flags = frame_flags;
-    node->frame_id = frame_id;
+    tail_->next = 0;
+    tail_->frame_flags = frame_flags;
+    tail_->frame_id = frame_id;
     // Native zero-byte branch leaves bytes/byte_count untouched.
     // Optional initialization is NOT authorized; malloc state may be invalid.
     if (byte_count != 0) {
-        node->bytes = static_cast<unsigned char *>(mem_get(byte_count));
-        if (node->bytes == 0) {
+        tail_->bytes = static_cast<unsigned char *>(mem_get(byte_count));
+        if (tail_->bytes == 0) {
             discard_head();
             return 4;
         }
-        node->byte_count = static_cast<unsigned int>(byte_count);
+        tail_->byte_count = static_cast<unsigned int>(byte_count);
     }
     ++count_;
-    *payload_out = node->bytes;
+    *payload_out = tail_->bytes;
     return 0;
 }
 
@@ -76,28 +73,26 @@ int VideoFrameQueue::allocate(unsigned char **payload_out, int byte_count,
 int VideoFrameQueue::append(const unsigned char *source, int byte_count,
                             int frame_id, unsigned int frame_flags) {
     if (count_ == limit_) return 0x14;
-    VideoFrameNode *node;
     if (head_ == 0) {
-        node = static_cast<VideoFrameNode *>(mem_get(sizeof(VideoFrameNode)));
-        head_ = node;
-        if (node == 0) return 4;
+        head_ = static_cast<VideoFrameNode *>(mem_get(sizeof(VideoFrameNode)));
+        if (head_ == 0) return 4;
+        tail_ = head_;
     } else {
         tail_->next = static_cast<VideoFrameNode *>(mem_get(sizeof(VideoFrameNode)));
-        node = tail_->next;
-        if (node == 0) return 4;
+        if (tail_->next == 0) return 4;
+        tail_ = tail_->next;
     }
-    tail_ = node;
-    node->next = 0;
-    node->frame_flags = frame_flags;
-    node->frame_id = frame_id;
+    tail_->next = 0;
+    tail_->frame_flags = frame_flags;
+    tail_->frame_id = frame_id;
     if (byte_count != 0) {
-        node->bytes = static_cast<unsigned char *>(mem_get(byte_count));
-        if (node->bytes == 0) {
+        tail_->bytes = static_cast<unsigned char *>(mem_get(byte_count));
+        if (tail_->bytes == 0) {
             discard_head();
             return 4;
         }
-        if (source != 0) memcpy(node->bytes, source, byte_count);
-        node->byte_count = static_cast<unsigned int>(byte_count);
+        if (source != 0) memcpy(tail_->bytes, source, byte_count);
+        tail_->byte_count = static_cast<unsigned int>(byte_count);
     }
     ++count_;
     return 0;
@@ -120,8 +115,8 @@ unsigned char *VideoFrameQueue::peek(int *next_frame_id,
 // ORIGINAL: 0x0063E820 sub_63e820 0x0063E820-0x0063E85B FILE
 // symbol    ?discard_head@VideoFrameQueue@@QAEXXZ
 void VideoFrameQueue::discard_head() {
-    VideoFrameNode *const node = head_;
-    if (node != 0) {
+    if (head_ != 0) {
+        VideoFrameNode *const node = head_;
         if (node->bytes != 0) {
             free(node->bytes);
             node->bytes = 0;

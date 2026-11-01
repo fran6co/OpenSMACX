@@ -120,7 +120,7 @@ def _source_fixture(mutation: str | None = None) -> str:
         assert needle in methods[key]
         methods[key] = methods[key].replace(
             needle,
-            "    node->bytes = 0;\n    node->byte_count = 0;\n" + needle,
+            "    tail_->bytes = 0;\n    tail_->byte_count = 0;\n" + needle,
             1,
         )
     elif mutation == "peek_ignores_optional_output":

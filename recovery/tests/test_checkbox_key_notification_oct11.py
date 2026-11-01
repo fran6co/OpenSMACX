@@ -11,7 +11,9 @@ from match_recovery.source import read_text
 from test_caviar_draw_callbacks_actual_source import extract
 
 ROOT = Path(__file__).resolve().parents[2]
-BASE = "04ed99ab1a48ca7f91a87c828bb1da1f140e0941"
+# This committed owner already retains the formerly separate shared cleanup
+# identity at 0x0060FD90. It predates the current function-matching edits.
+BASE = "7833cadff0e259ded81e36bca7e2692b26e22894"
 PIN = "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
 
 
@@ -25,8 +27,8 @@ def _checkbox_records(source, path):
 def _assert_checkbox_identity_continuity(before, after, path):
     prior = _checkbox_records(before, path)
     current = _checkbox_records(after, path)
-    assert len(prior) == 39
-    assert prior.keys() == current.keys(), "all 39 historical identities must remain"
+    assert len(prior) == 40
+    assert prior.keys() == current.keys(), "all 40 historical identities must remain"
     for address, old in prior.items():
         new = current[address]
         assert (new.name, new.image_spans, new.mode) == (
@@ -73,21 +75,25 @@ def test_focused_checkbox_member_lifecycle_and_historical_obligations():
     constructor = extract(current, "CheckBox::CheckBox()")
     destructor = extract(current, "CheckBox::~CheckBox()")
     close = extract(current, "void CheckBox::close()")
-    for body in (constructor, destructor, close):
+    # Destruction delegates the identical reset/base-close sequence to close.
+    assert destructor.count("close();") == 1
+    assert "Dialog::close();" not in destructor
+    assert "GraphicWin::close();" not in destructor
+    for body in (constructor, close):
         assert body.count("key_notification_callback_ = 0;") == 1
         assert body.count("field_8_ = 0;") == 0
-    for body in (destructor, close):
+    for body in (close,):
         assert body.index("key_notification_callback_ = 0;") < body.index("Dialog::close();")
         assert body.index("Dialog::close();") < body.index("GraphicWin::close();")
 
     key_body = extract(current, "int CheckBox::on_key_down(")
     assert key_body.count("WinNotificationCallback callback = key_notification_callback_;") == 1
     assert key_body.index("if (callback != 0)") < key_body.index(
-        "callback(static_cast<int>(selected_position_));")
-    assert key_body.index("callback(static_cast<int>(selected_position_));") < key_body.index(
+        "callback(static_cast<int>(box->selected_position_));")
+    assert key_body.index("callback(static_cast<int>(box->selected_position_));") < key_body.index(
         "draw_item(static_cast<int>(field_4_),", key_body.index("callback(static_cast<int>"))
     assert key_body.index("soft_update();") > key_body.index(
-        "callback(static_cast<int>(selected_position_));")
+        "callback(static_cast<int>(box->selected_position_));")
 
 
 def test_identity_guard_rejects_missing_span_change_and_claim_demotion():
@@ -98,7 +104,7 @@ def test_identity_guard_rejects_missing_span_change_and_claim_demotion():
 
     identity = "0x0060F8B0 ?on_key_down@CheckBox@@QAEHH@Z 0x0060F8B0-0x0060FA18"
     assert current.count(identity) == 1
-    with pytest.raises(AssertionError, match="39 historical identities"):
+    with pytest.raises(AssertionError, match="40 historical identities"):
         _assert_checkbox_identity_continuity(baseline, current.replace(identity, "", 1), path)
     changed_span = current.replace(identity, identity.replace("0x0060FA18", "0x0060FA17"), 1)
     with pytest.raises(AssertionError, match="identity/name/span/mode changed"):
@@ -138,9 +144,11 @@ def test_actual_key_body_notification_order_and_post_callback_reads(compiler, da
     binary = shutil.which(compiler)
     if binary is None:
         pytest.skip("host compiler unavailable")
-    body = extract((ROOT / "src/jackal/checkbox.cpp").read_text(), "int CheckBox::on_key_down(")
+    actual = (ROOT / "src/jackal/checkbox.cpp").read_text()
+    body = extract(actual, "int CheckBox::on_key_down(")
+    toggle = extract(actual, "void CheckBox::UNK1(int pos)")
     if damage == "wrong_argument":
-        old = "callback(static_cast<int>(selected_position_));"
+        old = "callback(static_cast<int>(box->selected_position_));"
         assert body.count(old) == 1
         body = body.replace(old, "callback(static_cast<int>(field_4_));", 1)
     elif damage == "lost_callback":
@@ -160,9 +168,10 @@ static std::vector<int> events;
 static int WinCallbackWindow;
 struct Dialog { struct { int entry_count_; } item_list_; int row_count_; };
 struct CheckBox : Dialog {
-    uint32_t field_4_, selected_position_; int win_parent_;
+    int field_4_, selected_position_, win_parent_;
     DECLARATION
     int on_key_down(int);
+    void UNK1(int);
     void draw_item(int index,int state,int phase) {
         events.push_back(phase);
         if (phase==1) { assert(index==1); assert(state==0); }
@@ -176,6 +185,7 @@ static void notify(int value) {
     events.push_back(2); active->field_4_=1;
     active->key_notification_callback_=0;
 }
+TOGGLE
 BODY
 int main() {
     CheckBox box={}; active=&box; box.win_parent_=77;
@@ -189,7 +199,7 @@ int main() {
     events.clear(); assert(box.on_key_down(0x20)==1);
     assert((events==std::vector<int>{0,1,3}));
 }
-'''.replace("CALLBACK_TYPE", callback_type).replace("DECLARATION", declaration).replace("BODY", body)
+'''.replace("CALLBACK_TYPE", callback_type).replace("DECLARATION", declaration).replace("TOGGLE", toggle).replace("BODY", body)
     # Null-callback second invocation toggles bit one; relax only that draw's
     # state expectation, while retaining the first callback-modified draw check.
     unit = unit.replace("assert(state==0);", "assert(state==(events.size()==3?0:2));")

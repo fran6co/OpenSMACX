@@ -139,6 +139,7 @@ void FlatButton::close() {
 Purpose: Destroy a FlatButton by installing its two virtual tables, closing
          the derived stage, then running the complete BaseButton destructor.
 // ORIGINAL: 0x00406880 ??1FlatButton@@QAE@XZ 0x00406880-0x004068D8;0x006509A0-0x006509B2 FILE BYTE_EXACT
+// compile_context src/alphasave.cpp
 // LEVER: unlike FlatButton::FlatButton() (the CONSTRUCTOR, capped by the SEH-frame ceiling below), the image's DESTRUCTOR genuinely HAS the SEH frame (`push -1 / push handler / mov eax,fs:[0] / push eax / mov fs:[0],esp`). A real `FlatButton::~FlatButton()` (not the `destroy()` plain-method spelling this marker used to point at via a `// symbol` fact) reproduces it: 0/24 -> 13/24. `destroy()` stays as its own separate method - external call sites (reportif.cpp, scroll.cpp) reach FlatButton objects through it by name, outside this pass's file list, so left alone.
 // symbol    ??1FlatButton@@UAE@XZ
 // size      106 bytes
@@ -332,13 +333,13 @@ void FlatButton::on_mouse_move(int x, int y) {
         BaseButton::on_mouse_move(x, y);
         return;
     }
-    // Hit testing uses Buffer's working rect2_; rect1_ is the clip rectangle.
-    const RECT &buffer_rect = this->Buffer::rect2_;
-    const RECT hit_rect = {
-        0, 0,
-        buffer_rect.right - buffer_rect.left,
-        buffer_rect.bottom - buffer_rect.top
-    };
+    RECT hit_rect = this->Buffer::rect2_;
+    const uint32_t dy = 0u - static_cast<uint32_t>(hit_rect.top);
+    const uint32_t dx = 0u - static_cast<uint32_t>(hit_rect.left);
+    hit_rect.left = static_cast<int32_t>(static_cast<uint32_t>(hit_rect.left) + dx);
+    hit_rect.right = static_cast<int32_t>(static_cast<uint32_t>(hit_rect.right) + dx);
+    hit_rect.top = static_cast<int32_t>(static_cast<uint32_t>(hit_rect.top) + dy);
+    hit_rect.bottom = static_cast<int32_t>(static_cast<uint32_t>(hit_rect.bottom) + dy);
     if (in_box(x, y, &hit_rect) == 0) {
         if (field_A74_ == 1) {
             time1_.stop();

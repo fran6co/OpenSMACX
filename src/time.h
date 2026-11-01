@@ -72,7 +72,9 @@ class Time {
   MEASURED void stop(); // 00616730
   void close(); // 00616780; implementation owned by time_lifecycle.cpp
   void set_modal();     // 00616860
-  void release_modal(); // 00616870
+  // Clear shared modal ownership without an instance receiver. All four pinned
+  // callers omit Time receiver setup; original static spelling remains unknown.
+  static void __cdecl release_modal(); // 00616870
 
   // eventually make atomic for thread safety
   static Time *TimeModal;
