@@ -1,0 +1,26 @@
+{
+  "event_id": "c0ed5dc2f8fbd7c02a67a45e3da27ebb6becd83fc670879b0e5d1728cb71410a",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "src/random.cpp"
+    ],
+    "evidence": [
+      "Pinned original Random::get instruction6257D2 consumes qword66D8D8 with binary64 one bits000000000000f03f. Qualified existing __real@8@3fff8000000000000000 COMDAT payloads in9contexts agree; native in-memory strict comparison passes Random::get with this independently reviewed start binding.",
+      "Native source/object/literal/import/generated namespace scan found no existing symbol/start/bounded-overlap conflict. Detailed proposal SHA256 53150a7a1364333fea97d6d7bf2a92e9b63d175e63b767a39a2db96a89e907c5. Preserve exclusive allocation and final retained-selection uncertainty."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 6740184,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": null,
+  "request_id": "random-generated-constant-scope",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:literal-reference-batch-nov01ds"
+}

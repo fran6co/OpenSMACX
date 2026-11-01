@@ -1,0 +1,52 @@
+{
+  "event_id": "1d6bdc80c8fdd7e273d556a2e711e05e3ca1000f7e8473ce75ae6673e40a1e3a",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "src/alpha.cpp",
+      "src/video.cpp"
+    ],
+    "evidence": [
+      "After the independently addressed read/helper objects are represented separately, the remaining Prefs Format COMDAT has its write-side690208 reference in prefs_save; the remaining Entering COMDAT is the play_frame instance698978. Preserve both as separate TU-local literal windows; complete original enclosing allocations are not established.",
+      "DUPLICATETECH68F2FC and the two shared Video helper labels69887C/6988A0 have direct original call operands and complete independently defined literal COMDAT payload matches. No first-NUL or content-search-only source identity was used."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 6877948,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6881800,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6916220,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6916256,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6916472,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6520176,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "63ef2785313e8b97b5eda7e0d7223de3e6202b4d604f7b776c46e5253fcf010a",
+  "request_id": "literal-windows-and-third-video-phase",
+  "schema_version": 1,
+  "sequence": 6,
+  "stream": "task:literal-reference-batch-nov01ds"
+}

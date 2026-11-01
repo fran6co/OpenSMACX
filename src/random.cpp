@@ -57,6 +57,9 @@ Status: Complete
 */
 // body src/random.h
 
+// Binary64 one emitted by the double-valued expressions below; the original
+// Random::get at 0x006257D2 reads this qword. This binds its start only.
+// RECOVERY_OBJECT: v1 0x0066D8D8 __real@8@3fff8000000000000000
 /*
 Purpose: Get a random double value.
 // ORIGINAL: 0x006257B0 ?get@Random@@QAENXZ 0x006257B0-0x006257DA BYTE_EXACT

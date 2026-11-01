@@ -1,0 +1,23 @@
+{
+  "event_id": "ca24928a4024e4f818ce919a07bbb819e9c03c978f206999b660a6105f7df406",
+  "payload": {
+    "affects": [
+      "entity-6004960f39cae695b255a18249de80e5c61e3d86dbfa85c0ce5e65504d17b868",
+      "entity-9292e0a3b4cf4ff9103d9bdfa107fc6fc50c4c7d0b6a59f8085ec9762f22efe6",
+      "entity-e9113ca6f6602df9ceb83ef3b074a8df4ff19b5e7f920d068174b5b92f4076a0"
+    ],
+    "author": "coordinator",
+    "discovery_id": "random-generated-one-correspondence",
+    "evidence": [
+      "Pinned original Random::get instruction6257D2 consumes qword66D8D8 with binary64 one bits000000000000f03f. Qualified existing __real@8@3fff8000000000000000 COMDAT payloads in9contexts agree; native in-memory strict comparison passes Random::get with this independently reviewed start binding.",
+      "Native source/object/literal/import/generated namespace scan found no existing symbol/start/bounded-overlap conflict. Detailed proposal SHA256 53150a7a1364333fea97d6d7bf2a92e9b63d175e63b767a39a2db96a89e907c5. Preserve exclusive allocation and final retained-selection uncertainty."
+    ],
+    "hypothesis": "Bind the existing compiler-generated binary64 one object to its original direct operand, resolving Random references without adding C++ storage or changing behavior.",
+    "kind": "discovery"
+  },
+  "previous_event": "c0ed5dc2f8fbd7c02a67a45e3da27ebb6becd83fc670879b0e5d1728cb71410a",
+  "request_id": "random-generated-one-correspondence",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:literal-reference-batch-nov01ds"
+}

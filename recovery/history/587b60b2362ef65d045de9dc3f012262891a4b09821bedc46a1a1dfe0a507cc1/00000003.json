@@ -1,0 +1,80 @@
+{
+  "event_id": "611e322d4b828b37d76d1dda0cbe8971b8d43f500b9ba20f1f5c0d326e6735ee",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "src/alpha.cpp",
+      "src/video.cpp"
+    ],
+    "evidence": [
+      "Direct original operands distinguish two TECHNOLOGY instances68F2F0/68F30C, two Laptop instances690110/690118, profile default zero6900FC versus binary digit zero690204, and two Video phase-entry messages698870/698894. Current pooled COMDAT aliases cannot represent these identities.",
+      "Authorize a narrow exception to the initial annotation-only plan: ordinary distinct TU-private const character arrays and only independently correlated callsite substitutions, preserving each byte string, known sharing and every original behavior/claim. No compiler policy, attributes, alignment, retention mechanism or fixed-address source access. Current constness and role names are representations, not original qualifiers/names/complete allocation assertions.",
+      "Original prefs_get string overload pushes6900FC at59D9A9 and690100 at59D9AE; reuse the same profile default-zero storage as prefs_fac_load. Original do_video pushes698870/69887C at636351/636356, and698894/6988A0 at636388/63638D; reuse the same Video phase objects as standalone helpers and process.",
+      "Reuse the existing source-owned BufferJoinSpace682820 through its proper buffer.h declaration, rather than adding an overlapping Alpha literal identity.",
+      "Independent design review found the distinct storage representation justified by original data/call identities; any exact helper/inlining/TU ancestry remains unproved. Partial readonly compiler control observed pooling; unsupported /GF- was refused. No project compiler settings changed."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 6877936,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6877964,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6881552,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6881560,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6881532,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6881796,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6916208,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6916244,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6826016,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5888384,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6513408,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "ca24928a4024e4f818ce919a07bbb819e9c03c978f206999b660a6105f7df406",
+  "request_id": "distinct-storage-recovery-scope",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:literal-reference-batch-nov01ds"
+}
