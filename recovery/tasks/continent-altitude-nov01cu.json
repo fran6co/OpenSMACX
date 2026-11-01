@@ -1,0 +1,35 @@
+{
+  "schema_version": 1,
+  "task_id": "continent-altitude-nov01cu",
+  "target": "opensmacx",
+  "author": "coordinator",
+  "base_revision": "d523dc9e70d7b02cadac4f6c87155e3321985d7b",
+  "intent": "Recover the world-builder ratio array/parser loop and original object start, together with faithful continent altitude selection and retry semantics.",
+  "editable_files": [
+    "src/world.cpp",
+    "recovery/tests/test_continent_altitude_domain.py",
+    "src/alpha.h",
+    "src/alpha.cpp",
+    "recovery/tests/base_build_host_fixture.cpp",
+    "recovery/tests/test_worldbuilder_ratio_array.py"
+  ],
+  "subjects": [
+    {
+      "address": 6039792,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5788016,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "evidence": [
+    "Pinned5C29EF climate load,5C29F2maskE0,5C29F5CMP60/JGE retries;5C2A18load,5C2A1BmaskE0,5C2A1DCMP60/JGE skips painting. Current source compares decodedalt_at0..7 toencodedALT_BIT_SHORE_LINE96; nativeVC6 emits impossible CMPC00 at both sites.",
+    "Use existing altitude_at helper (encoded climate highbits) at both sites. Independent review additionally proves original5C2900 initializescount0 and5C29CC/CF/D0/D6 increments before signed comparison100. Correct old postincrement guard to ++count<100; persistentland permits100coordinatepairs,99retryaltitudereads+onefreshfinalread. Preserve coordinate normalization, signed radius arithmetic, callback behavior and unsafe paths; no bugfix or helper/compiler policy change.",
+    "Only this original body and focused actual-source controls may change. Preserve every source identity/span/claim. Build/link, actual original code/reference measurements, outside-owner preservation and independent review precede authorized manual integration.",
+    "Coordinator authorizes the evidence-backed retry-count correction within the same original function, following independent review. The original rejection finding remains cached; the source task records the corrected original contract rather than treating the old implementation as the oracle.",
+    "Coordinator expands scope before the first compile: original585DDD..585DF2 traverses five signed DWORDs95030C..950320 with one shared parser call. Recover int cont_size_ratio[5], ordered five-value loop, six indexed source consumers; preserve mixed types, offsets64/78 and total7C. Bind unique actual WorldBuilder definition to original9502A8; opcode82 size/base dispatch independently proves7C accessed domain, not complete allocation/lifetime. Update dependent actual-source fixtures, protect all other functions and objects."
+  ]
+}
