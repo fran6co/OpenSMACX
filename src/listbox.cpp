@@ -862,7 +862,7 @@ after_scroll_position:
     canvas->set_clip(&row);
     int callback_result = 0;
     if (fill_callback_ != 0) {
-        callback_result = fill_callback_(window, index,
+        callback_result = fill_callback_(window, dialog.pos_to_id(index),
             static_cast<int>(field_18_) + ListBoxDrawOffset, &row);
     }
 
@@ -902,6 +902,8 @@ after_scroll_position:
     }
     canvas->set_text_color3(color3_a, color3_b, color3_c, color3_d);
 
+    // 60BAFC resolves the row ID before parent callbacks and retains it.
+    const int item_id = dialog.pos_to_id(index);
     if (callback_result == 0) {
         Win *const parent = window->parent_window();
         if (parent != 0) {
@@ -909,7 +911,7 @@ after_scroll_position:
             if (selected == 0) {
                 state = dialog.field_F0_ == static_cast<uint32_t>(index) ? 1 : 0;
             }
-            callback_result = parent->on_dialog_item_back_draw(window, index, state, &row);
+            callback_result = parent->on_dialog_item_back_draw(window, item_id, state, &row);
             if (callback_result == 0) {
                 if (window->has_listbox_backfill_flag()) {
                     GraphicWin *const live_parent =
@@ -957,7 +959,7 @@ after_scroll_position:
 
     if (draw_callback_ != 0) {
         CurrentListBoxDraw = this;
-        draw_callback_(window, dialog.pos_to_id(index),
+        draw_callback_(window, item_id,
                        static_cast<int>(field_18_) + ListBoxDrawOffset,
                        row.left, row.top, row.bottom - row.top);
     }
@@ -1023,9 +1025,10 @@ after_scroll_position:
     }
 
 text_tail:
-    row.left += static_cast<int>(field_2C_) + 1;
-    row.right = (row.right - (static_cast<int>(field_2C_) + 1))
-        - static_cast<int>(dialog.field_34_);
+    // Both original text arms restore the inset before the final clip.
+    row.left -= static_cast<int>(field_2C_) + 1;
+    row.right += static_cast<int>(field_2C_) + 1;
+    row.left -= static_cast<int>(dialog.field_34_);
     canvas->set_clip(&row);
     if (callback_result == 0 && selected != 0 && field_2C_ > 0) {
         for (int edge = 0; edge < static_cast<int>(field_2C_); ++edge) {

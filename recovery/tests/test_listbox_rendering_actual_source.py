@@ -13,6 +13,8 @@ from match_recovery.source import Mode, read_text
 ROOT = next(parent for parent in Path(__file__).resolve().parents
             if (parent / "src/listbox.cpp").is_file())
 SOURCE_SIGNATURES = (
+    ("src/dialog.cpp", "int Dialog::pos_to_id(int position)", 0x609B50,
+     (0x609B50, 0x609BEA)),
     ("src/listbox.cpp", "void ListBox::on_scrolling(int a, int b)", 0x60C5D0,
      (0x60C5D0, 0x60C691)),
     ("src/listbox.cpp", "void ListBox::draw_item(int index)", 0x60B530,
@@ -115,6 +117,34 @@ def test_extracted_listbox_scroll_render_and_dialog_bridges(tmp_path, compiler_n
     def replace_draw(mutated: str) -> str:
         assert bodies.count(draw_body) == 1
         return bodies.replace(draw_body, mutated, 1)
+
+    # Distinct IDs and the genuine getter expose cursor and snapshot errors.
+    for name, good, bad in (
+        ("fill_raw_position", "fill_callback_(window, dialog.pos_to_id(index),",
+         "fill_callback_(window, index,"),
+        ("parent_raw_position", "on_dialog_item_back_draw(window, item_id,",
+         "on_dialog_item_back_draw(window, index,"),
+        ("draw_late_getter", "draw_callback_(window, item_id,",
+         "draw_callback_(window, dialog.pos_to_id(index),"),
+        ("write_stale_id", "write_callback_(window, dialog.pos_to_id(index),",
+         "write_callback_(window, item_id,"),
+    ):
+        assert draw_body.count(good) == 1
+        mutant = draw_body.replace(good, bad, 1)
+        assert mutant != draw_body
+        binary = compile_control(tmp_path / name, replace_draw(mutant))
+        result = subprocess.run([str(binary)], check=False, timeout=30,
+                                stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        assert result.returncode != 0, name + " escaped the callback contract oracle"
+
+    wrong_restore = draw_body.replace(
+        "row.left -= static_cast<int>(field_2C_) + 1;",
+        "row.left += static_cast<int>(field_2C_) + 1;", 1)
+    assert wrong_restore != draw_body
+    binary = compile_control(tmp_path / "wrong_text_restore", replace_draw(wrong_restore))
+    result = subprocess.run([str(binary)], check=False, timeout=30,
+                            stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    assert result.returncode != 0, "text inset restoration damage escaped asymmetric clips"
 
     # Independently restore each unsigned predicate: each must compile and fail
     # the high-bit row-span truth table in the existing actual-source fixture.
