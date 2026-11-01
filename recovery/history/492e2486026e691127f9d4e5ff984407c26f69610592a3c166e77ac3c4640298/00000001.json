@@ -1,0 +1,21 @@
+{
+  "event_id": "c381bf259eb4a13f3bc32d747a7889f0eb5472211004c551a0484c4e3f45eac9",
+  "payload": {
+    "affects": [
+      "entity-81fbff20fb84eb4891ec4fdcd2f391405da911eddcd1a6514c1ce2416d4cf305"
+    ],
+    "author": "coordinator",
+    "discovery_id": "hit-after-miss-source-flow-nov01dh",
+    "evidence": [
+      "Ignored overlay reuses all actual source bytes except set_selected_id body; native application compiler interaction and isolated worker33 lease.",
+      "One candidate only, no source tree edits, all original identities and historical claims protected."
+    ],
+    "hypothesis": "Place the hit after the explicit miss return and reload the genuine Dialog current position to reproduce the original branch layout without changing list behavior.",
+    "kind": "discovery"
+  },
+  "previous_event": null,
+  "request_id": "hit-after-miss-source-flow-nov01dh",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:listbox-select-id-nov01dh"
+}
