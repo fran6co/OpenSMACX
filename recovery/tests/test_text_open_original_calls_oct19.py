@@ -46,6 +46,40 @@ def text_search_body(source: str) -> str:
     raise AssertionError("text_search_index body is incomplete")
 
 
+
+def text_open_storage() -> str:
+    source = SOURCE.read_text()
+    declarations = []
+    for name, literal in (
+        ("TextFileExtension", '".txt"'),
+        ("text_open_named_mode", '"rt"'),
+        ("text_open_reopen_mode", '"rt"'),
+        ("text_open_section_prefix", '"#"'),
+        ("text_open_seek_log_key", '"Seeking to"'),
+    ):
+        declaration = "char " + name + "[] = " + literal + ";"
+        assert source.count(declaration) == 1
+        declarations.append(declaration)
+    return "\n".join(declarations) + "\n"
+
+
+def original_copy_operands(body: str) -> str:
+    # Validate the actual storage, then project only its five operands for the
+    # unchanged original-operation/order assertions below. Compiled controls
+    # consume the actual named arrays and method without this projection.
+    text_open_storage()
+    for name, literal in (
+        ("TextFileExtension", '".txt"'),
+        ("text_open_named_mode", '"rt"'),
+        ("text_open_reopen_mode", '"rt"'),
+        ("text_open_section_prefix", '"#"'),
+        ("text_open_seek_log_key", '"Seeking to"'),
+    ):
+        assert body.count(name) == 1
+        body = body.replace(name, literal, 1)
+    return body
+
+
 def fixture(body: str, helper: str) -> str:
     return textwrap.dedent(r"""
         #include <cassert>
@@ -157,7 +191,7 @@ def fixture(body: str, helper: str) -> str:
         #define fgets host_fgets
         #define fseek host_fseek
         #define rewind host_rewind
-        """).replace("HELPER_BODY", helper) + body + textwrap.dedent(r"""
+        """).replace("HELPER_BODY", helper) + text_open_storage() + body + textwrap.dedent(r"""
         #undef feof
         #undef fgets
         #undef fseek
@@ -352,7 +386,7 @@ def fixture(body: str, helper: str) -> str:
 
 
 def test_text_open_uses_original_copy_append_operations_and_order() -> None:
-    body = text_open_body(SOURCE.read_text())
+    body = original_copy_operands(text_open_body(SOURCE.read_text()))
     assert "strcpy(file_name_, src_file_id);" in body
     assert 'strcat(file_name_, ".txt");' in body
     assert body.count("strcpy(file_path_, FilefindPath.last_path);") == 2

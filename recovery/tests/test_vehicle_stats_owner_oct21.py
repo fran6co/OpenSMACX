@@ -62,6 +62,11 @@ def production_bodies() -> dict[int, str]:
         ]
         assert len(matches) == 1, f"expected one live owner for {signature}, got {len(matches)}"
         result[address] = extract_function(matches[0][1], signature)
+    declarations = re.findall(
+        r'^static char (?:Defense|Stats3)[A-Za-z0-9_]+Text\[\] = "[^"\n]*";$',
+        owner_text[ROOT / "src/vehicle_stats.cpp"], re.M)
+    if declarations:
+        result[0x57D6D0] = "\n".join(declarations) + "\n" + result[0x57D6D0]
     return result
 
 
@@ -304,9 +309,9 @@ def make_fixture(bodies: dict[int, str], mutant: str | None = None) -> str:
         changed[address] = changed[address].replace(old, "", 1)
     elif mutant == "defense_pulse_suffix":
         address = 0x57D6D0
-        old = '        strcat(stat, "p");'
+        old = '        strcat(stat, DefensePulseText);'
         assert changed[address].count(old) == 1
-        changed[address] = changed[address].replace(old, '        strcat(stat, "");', 1)
+        changed[address] = changed[address].replace(old, '        strcat(stat, DefensePulseText + 1);', 1)
     elif mutant == "unsigned_speed_division":
         total = sum(body.count("(int)Rules.move_rate_roads") for body in changed.values())
         assert total == 3

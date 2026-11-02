@@ -273,6 +273,18 @@ char ConsoleStrEditorWhoListTitle[] = "EDITORWHO";  // 0x00688F6C
 // RECOVERY_OBJECT: v2 0x00689000 0x0068900C ?ConsoleStrCustomNames@@3PADA 0x004DD1B0
 char ConsoleStrCustomNames[] = "CUSTOMNAMES";  // 0x00689000
 
+// The two disband dialog arms select distinct writable text objects. Equal
+// text used by other commands has a separate original identity. The NUL bytes
+// are known; full original allocation bounds and lifetime remain unproved.
+// RECOVERY_OBJECT: v1 0x00688908 _console_disband_alien_picture
+static char console_disband_alien_picture[] = "al_col_sm.pcx";
+// RECOVERY_OBJECT: v1 0x00688918 _console_disband_alien_caption
+static char console_disband_alien_caption[] = "DISBAND";
+// RECOVERY_OBJECT: v1 0x00688920 _console_disband_human_picture
+static char console_disband_human_picture[] = "colfoun_sm.pcx";
+// RECOVERY_OBJECT: v1 0x00688930 _console_disband_human_caption
+static char console_disband_human_caption[] = "DISBAND";
+
 // RECOVERY_OBJECT: v1 0x0068834C ?GoToLastSelection@@3HA
 int GoToLastSelection = -1;
 
@@ -301,9 +313,9 @@ void Console::disband(int x_coord, int y_coord) {
     if (base < 0) return;
     parse_says(0, Bases[base].name_string, -1, -1);
     if (Players[Bases[base].faction_id_current].rule_flags & 0x80) {
-        if (!popp(ScriptPopupFile, "DISBAND", 0, "al_col_sm.pcx", nullptr)) return;
+        if (!popp(ScriptPopupFile, console_disband_alien_caption, 0, console_disband_alien_picture, nullptr)) return;
     } else {
-        if (!popp(ScriptPopupFile, "DISBAND", 0, "colfoun_sm.pcx", nullptr)) return;
+        if (!popp(ScriptPopupFile, console_disband_human_caption, 0, console_disband_human_picture, nullptr)) return;
     }
     const int faction = Bases[base].faction_id_current;
     base_kill(base);

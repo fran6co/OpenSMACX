@@ -65,7 +65,7 @@ void TextIndex::make_index(LPCSTR source_txt) {
     section_count_ = 0;
     strcpy(file_name_, source_txt);
     if (!strchr(file_name_, '.')) {
-        strcat(file_name_, ".txt"); // append extension if missing
+        strcat(file_name_, TextFileExtension); // append extension if missing
     }
     LPVOID txt_addr_base = txt_file_map.open_read(file_name_, false);
     if (txt_addr_base) {
@@ -115,7 +115,7 @@ int TextIndex::search_index(LPCSTR source_txt, LPCSTR section_txt) {
     char file_name_check[512];
     strcpy(file_name_check, source_txt);
     if (!strchr(file_name_check, '.')) {
-        strcat(file_name_check, ".txt"); // append extension if missing
+        strcat(file_name_check, TextFileExtension); // append extension if missing
     }
     if (!_stricmp(file_name_check, file_name_)) {
         if (section_txt[0] == '#') {

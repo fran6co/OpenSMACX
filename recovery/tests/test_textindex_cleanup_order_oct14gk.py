@@ -162,7 +162,10 @@ int main() {
 
 
 def _run(tmp_path: Path, body: str, compiler: str) -> subprocess.CompletedProcess:
-    source = HARNESS.replace("ACTUAL_BODY", body)
+    extension, = re.findall(
+        r'(?m)^char TextFileExtension\[\] = "[^"\n]*";$',
+        (ROOT / "src/text.cpp").read_text())
+    source = HARNESS.replace("ACTUAL_BODY", extension + "\n" + body)
     cpp = tmp_path / "textindex_cleanup.cpp"
     exe = tmp_path / "textindex_cleanup"
     cpp.write_text(source)

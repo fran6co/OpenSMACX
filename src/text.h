@@ -20,6 +20,9 @@
 #include "general.h"
 #include "strings.h"
 
+// Shared by Text::open and both TextIndex filename operations.
+extern char TextFileExtension[];
+
  /*
   * Text class: Handles basic text operations.
   */

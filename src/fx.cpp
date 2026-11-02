@@ -99,6 +99,17 @@ Status: Complete
 #include "veh.h"
 #include "faction.h"
 
+// Separate writable path arguments identified by original relocated operands.
+// Names describe their roles; original names and complete allocation bounds are unknown.
+// RECOVERY_OBJECT: v1 0x00683CA4 _EffectFxPathPrefix
+static char EffectFxPathPrefix[] = "fx\\";
+// RECOVERY_OBJECT: v1 0x00683CA8 _EffectFxPathWaveSuffix
+static char EffectFxPathWaveSuffix[] = ".wav";
+// RECOVERY_OBJECT: v1 0x00683CB0 _EffectBinaryReadMode
+static char EffectBinaryReadMode[] = "rb";
+// RECOVERY_OBJECT: v1 0x00683CB4 _EffectFallbackWaveSuffix
+static char EffectFallbackWaveSuffix[] = ".wav";
+
 // The implicit Effect constructor at 0x004482D0 installs the derived table;
 // its Wave tail includes FX::init's virtual pitch target at slot 38.
 // RECOVERY_GENERATED: v1 vtable 0x0066B7A4 ? ??_7Effect@@6B@ 0x004482D0
@@ -614,23 +625,21 @@ void Effect::init(char *fname, long flags) {
     }
     char path[0x100];
     path[0] = '\0';
-    // The literals the image pushes are its own data at 0x00683CA4 ("fx\\"),
-    // 0x00683CA8 and 0x00683CB4 (".wav" each) and 0x00683CB0 (the "rb" mode).
-    // A string literal pushes a relocated address on both sides, so the bytes
-    // agree with the image's fixed copies.
-    strcat(path, "fx\\");
+    // Original path arguments use four distinct writable objects.
+    // Equal .wav contents do not identify one shared original object.
+    strcat(path, EffectFxPathPrefix);
     strcat(path, fname);
     if (!strchr(path, '.')) {
-        strcat(path, ".wav");
+        strcat(path, EffectFxPathWaveSuffix);
     }
-    FILE *const file = fopen(path, "rb");
+    FILE *const file = fopen(path, EffectBinaryReadMode);
     if (!file) {
         // No such file under fx\\: rebuild the path from the raw argument,
         // extension pass included, and let Wave::init report what it finds.
         path[0] = '\0';
         strcat(path, fname);
         if (!strchr(path, '.')) {
-            strcat(path, ".wav");
+            strcat(path, EffectFallbackWaveSuffix);
         }
     } else {
         fclose(file);

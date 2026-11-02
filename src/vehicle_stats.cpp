@@ -17,6 +17,33 @@
  */
 
 #include "stdafx.h"
+
+// Writable formatter strings at distinct pinned operand addresses.
+// These names describe their uses; original allocation bounds remain unknown.
+// RECOVERY_OBJECT: v1 0x0068F118 _DefenseAAAOpenText
+static char DefenseAAAOpenText[] = "<";
+// RECOVERY_OBJECT: v1 0x0068F11C _DefenseCommJammerText
+static char DefenseCommJammerText[] = "+";
+// RECOVERY_OBJECT: v1 0x0068F120 _DefenseTranceText
+static char DefenseTranceText[] = "t";
+// RECOVERY_OBJECT: v1 0x0068F124 _DefenseAAACloseText
+static char DefenseAAACloseText[] = ">";
+// RECOVERY_OBJECT: v1 0x0068F128 _DefensePulseText
+static char DefensePulseText[] = "p";
+// RECOVERY_OBJECT: v1 0x0068F12C _DefenseResonanceText
+static char DefenseResonanceText[] = "r";
+// RECOVERY_OBJECT: v1 0x0068F130 _Stats3OffenseUnknownText
+static char Stats3OffenseUnknownText[] = "?";
+// RECOVERY_OBJECT: v1 0x0068F134 _Stats3OffenseExtremeText
+static char Stats3OffenseExtremeText[] = "*";
+// RECOVERY_OBJECT: v1 0x0068F138 _Stats3OffenseDefenseSeparatorText
+static char Stats3OffenseDefenseSeparatorText[] = "-";
+// RECOVERY_OBJECT: v1 0x0068F13C _Stats3DefenseUnknownText
+static char Stats3DefenseUnknownText[] = "?";
+// RECOVERY_OBJECT: v1 0x0068F140 _Stats3DefenseSpeedSeparatorText
+static char Stats3DefenseSpeedSeparatorText[] = "-";
+// RECOVERY_OBJECT: v1 0x0068F144 _Stats3ReactorPrefixText
+static char Stats3ReactorPrefixText[] = "*";
 #include "general.h"
 #include "veh.h"
 #include "alpha.h"
@@ -88,27 +115,27 @@ Status: Complete
 void __cdecl say_defense(LPSTR stat, int proto_id) {
     char num_buf[80];
     if (has_abil(proto_id, ABL_AAA)) {
-        strcat(stat, "<");
+        strcat(stat, DefenseAAAOpenText);
     }
     int def_rating = armor_proto(proto_id, -1, 0);
     _itoa(def_rating, num_buf, 10);
     strcat(stat, num_buf);
     if (has_abil(proto_id, ABL_COMM_JAMMER)) {
-        strcat(stat, "+");
+        strcat(stat, DefenseCommJammerText);
     }
     if (has_abil(proto_id, ABL_TRANCE)) {
-        strcat(stat, "t");
+        strcat(stat, DefenseTranceText);
     }
     if (has_abil(proto_id, ABL_AAA)) {
-        strcat(stat, ">");
+        strcat(stat, DefenseAAACloseText);
     }
     if (VehPrototypes[proto_id].armor_id == ARM_PULSE_3_ARMOR
         || VehPrototypes[proto_id].armor_id == ARM_PULSE_8_ARMOR) {
-        strcat(stat, "p");
+        strcat(stat, DefensePulseText);
     }
     if (VehPrototypes[proto_id].armor_id == ARM_RESONANCE_3_ARMOR
         || VehPrototypes[proto_id].armor_id == ARM_RESONANCE_8_ARMOR) {
-        strcat(stat, "r");
+        strcat(stat, DefenseResonanceText);
     }
 }
 /*
@@ -140,24 +167,24 @@ void __cdecl say_stats_3(LPSTR stat, int proto_id) {
     char num_buf[80];
     int8_t off_rating = get_proto_offense_rating(proto_id);
     if (off_rating < 0) {
-        strcat(stat, "?"); // PSI
+        strcat(stat, Stats3OffenseUnknownText); // PSI
     } else if (off_rating >= 99) {
-        strcat(stat, "*");
+        strcat(stat, Stats3OffenseExtremeText);
     } else {
         say_offense(stat, proto_id);
     }
-    strcat(stat, "-");
+    strcat(stat, Stats3OffenseDefenseSeparatorText);
     if (get_proto_defense_rating(proto_id) < 0) {
-        strcat(stat, "?");
+        strcat(stat, Stats3DefenseUnknownText);
     } else {
         say_defense(stat, proto_id);
     }
-    strcat(stat, "-");
+    strcat(stat, Stats3DefenseSpeedSeparatorText);
     int speed = speed_proto(proto_id) / (int)Rules.move_rate_roads;
     _itoa(speed, num_buf, 10);
     strcat(stat, num_buf);
     if (VehPrototypes[proto_id].reactor_id > RECT_FISSION) {
-        strcat(stat, "*");
+        strcat(stat, Stats3ReactorPrefixText);
         _itoa(VehPrototypes[proto_id].reactor_id, num_buf, 10);
         strcat(stat, num_buf);
     }

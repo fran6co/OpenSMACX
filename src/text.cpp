@@ -27,6 +27,21 @@
 #include "faction.h"
 #include "console.h"
 
+// Pinned operands share one extension object and identify two distinct modes.
+// These reconstruction names and array bounds do not establish original declarations.
+// RECOVERY_OBJECT: v1 0x00696E68 ?TextFileExtension@@3PADA
+char TextFileExtension[] = ".txt";
+namespace {
+// RECOVERY_OBJECT: v1 0x00696E7C ?text_open_named_mode@?%src/text.cpp@@3PADA
+char text_open_named_mode[] = "rt";
+// RECOVERY_OBJECT: v1 0x00696E80 ?text_open_reopen_mode@?%src/text.cpp@@3PADA
+char text_open_reopen_mode[] = "rt";
+// RECOVERY_OBJECT: v1 0x00696E84 ?text_open_section_prefix@?%src/text.cpp@@3PADA
+char text_open_section_prefix[] = "#";
+// RECOVERY_OBJECT: v1 0x00696E88 ?text_open_seek_log_key@?%src/text.cpp@@3PADA
+char text_open_seek_log_key[] = "Seeking to";
+}
+
 /*
 Purpose: Initialize the class instance.
 // ORIGINAL: 0x005FD8D0 ?init@Text@@QAEHH@Z 0x005FD8D0-0x005FD969 BYTE_EXACT
@@ -93,7 +108,7 @@ void Text::close() {
 
 /*
 Purpose: Open the specified text file and copy the section into the buffer for parsing.
-// ORIGINAL: 0x005FDA00 ?open@Text@@QAEHPADPAD@Z 0x005FDA00-0x005FDC04
+// ORIGINAL: 0x005FDA00 ?open@Text@@QAEHPADPAD@Z 0x005FDA00-0x005FDC04 BYTE_EXACT
 // symbol    ?open@Text@@QAEHPBD0@Z
 // size      516 bytes
 // prototype int (__thiscall ?open@Text@@QAEHPADPAD@Z)(_Text* this, int8* srcFileID, int8* sectionID)
@@ -125,10 +140,10 @@ BOOL Text::open(LPCSTR src_file_id, LPCSTR section_id) {
     if (src_file_id) {
         strcpy(file_name_, src_file_id);
         if (!strchr(file_name_, '.')) {
-            strcat(file_name_, ".txt");
+            strcat(file_name_, TextFileExtension);
         }
         close();
-        text_file_ = env_open(file_name_, "rt");
+        text_file_ = env_open(file_name_, text_open_named_mode);
         if (!text_file_) {
             return true;
         }
@@ -136,7 +151,7 @@ BOOL Text::open(LPCSTR src_file_id, LPCSTR section_id) {
     } else if (text_file_) {
         is_file_open = true;
     } else {
-        text_file_ = env_open(file_name_, "rt");
+        text_file_ = env_open(file_name_, text_open_reopen_mode);
         if (!text_file_) {
             return true;
         }
@@ -149,11 +164,11 @@ BOOL Text::open(LPCSTR src_file_id, LPCSTR section_id) {
     // std::string's constructor/destructor pull in an SEH frame (`mov eax,
     // fs:[0]` in the prologue) the image's `sub esp, 0x54` does not have.
     char sect_header[80];
-    strcpy(sect_header, "#");
+    strcpy(sect_header, text_open_section_prefix);
     strcat(sect_header, section_id);
     int seek_addr = text_search_index(file_name_, section_id);
     if (seek_addr >= 0) {
-        log_say("Seeking to", section_id, seek_addr, 0, 0);
+        log_say(text_open_seek_log_key, section_id, seek_addr, 0, 0);
         fseek(text_file_, seek_addr, SEEK_SET);
         is_file_open = true;
     }
