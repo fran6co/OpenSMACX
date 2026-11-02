@@ -4,11 +4,25 @@
 // Pinned soundx.dll SHA-256:
 // ac272e244b3f1339d9ce63bc2e7acf76605c6ac2695bba3230e72ea59039a3f5
 // The game and pinned DLL establish operations at byte offsets 0x0C, 0x10,
-// 0x54, 0x58, 0x5C, 0x60 and 0x64. Earlier/later slots, provider hierarchy
+// 0x54, 0x58, 0x5C, 0x60 and 0x64. Unconsumed slots, provider hierarchy
 // and complete extent remain unknown. DLL factories and paired delete exports
 // own allocation/destruction.
 namespace SoundXDeviceAbi {
 namespace Detail {
+
+// Borrowed init prefix, never instantiated or used to own a provider.
+// Pinned ordinal 7's factory installs table 0x10064234; ordinal 9's
+// factory installs 0x10064590. Both prefixes have zero-status RET 4 / RET
+// entries, then a no-argument field clear, then init with RET 8 at 0x0C.
+// Reserved names retain only those observed call frames, not SDK semantics.
+// This view asserts neither a shared provider base nor game-wrapper layout.
+class InitProviderCallView {
+public:
+    virtual int reserved_00(unsigned long) = 0;
+    virtual int reserved_04() = 0;
+    virtual void reserved_08() = 0;
+    virtual int init(void *, unsigned long) = 0;
+};
 
 // Used only to encode the observed argument-bearing member-pointer calls.
 // This incomplete type conveys no provider hierarchy or virtual declarations.
@@ -31,9 +45,7 @@ __forceinline int query(void *device, unsigned long offset) {
 
 __forceinline int init_device(void *device, void *window,
                               unsigned long backends) {
-    typedef int (Detail::CallReceiver::*InitMethod)(void *, unsigned long);
-    return (reinterpret_cast<Detail::CallReceiver *>(device)->*
-            Detail::slot_reference<InitMethod>(device, 0x0C))(window, backends);
+    return static_cast<Detail::InitProviderCallView *>(device)->init(window, backends);
 }
 
 __forceinline void release_device(void *device) {

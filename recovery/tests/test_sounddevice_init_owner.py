@@ -62,6 +62,10 @@ def test_init_owner_bodies_are_extracted_from_installed_source(tmp_path):
         pytest.skip("host C++ compiler unavailable; actual-source assertions passed")
     harness = r'''
 #include <cassert>
+#define __forceinline inline
+#define __single_inheritance
+#define __fastcall
+#include "soundx_device_abi.h"
 struct SoundDeviceBase {
   void *device_14_ = 0;
   virtual int create_device(unsigned long) = 0;
@@ -74,18 +78,16 @@ struct Midi_Device : SoundDeviceBase {
 struct Wave_In_Device : SoundDeviceBase {
   int init(void *window, unsigned long backends) override;
 };
-struct FakeBackend {
+struct FakeBackend : SoundXDeviceAbi::Detail::InitProviderCallView {
   int result;
   void *window = 0;
   unsigned long backends = 0;
   explicit FakeBackend(int r) : result(r) {}
-  int init(void *w, unsigned long b) { window = w; backends = b; return result; }
+  int reserved_00(unsigned long) override { assert(false); return 0; }
+  int reserved_04() override { assert(false); return 0; }
+  void reserved_08() override { assert(false); }
+  int init(void *w, unsigned long b) override { window = w; backends = b; return result; }
 };
-namespace SoundXDeviceAbi {
-int init_device(void *device, void *window, unsigned long backends) {
-  return static_cast<FakeBackend *>(device)->init(window, backends);
-}
-}
 struct MidiProbe : Midi_Device {
   int make_result = 0, delete_result = 0;
   int creates = 0, deletes = 0;
@@ -138,8 +140,26 @@ int main() {
     ))
     cpp = tmp_path / "sounddevice_init_actual_source.cpp"
     cpp.write_text(source)
+    # Compile the actual helper, rather than a forwarding stub. These host
+    # calls check argument/status behavior; the VC6 object checks byte slots.
+    abi = (ROOT / "src/soundx_device_abi.h").read_text()
+    call = "->init(window, backends)"
+    assert abi.count(call) == 1
+    variants = [("owner", abi, True)] + [
+        (name, abi.replace(call, replacement, 1), False)
+        for name, replacement in (
+            ("wrong-window", "->init((static_cast<void>(window), static_cast<void *>(0)), backends)"),
+            ("wrong-backends", "->init(window, (static_cast<void>(backends), 0UL))"),
+            ("wrong-slot", "->reserved_00((static_cast<void>(window), backends))"),
+        )
+    ]
     for index, command in enumerate(compilers):
-        exe = tmp_path / f"sounddevice_init_actual_source_{index}"
-        subprocess.run([*command, "-std=c++11", "-Wall", "-Wextra", "-Werror",
-                        str(cpp), "-o", str(exe)], check=True)
-        subprocess.run([str(exe)], check=True)
+        for label, header, should_pass in variants:
+            (tmp_path / "soundx_device_abi.h").write_text(header)
+            exe = tmp_path / f"sounddevice_init_actual_source_{index}_{label}"
+            subprocess.run([*command, "-std=c++11", "-Wall", "-Wextra", "-Werror",
+                            "-I", str(tmp_path), str(cpp), "-o", str(exe)], check=True)
+            result = subprocess.run([str(exe)], capture_output=True)
+            assert (result.returncode == 0) == should_pass, result.stderr
+            if not should_pass:
+                assert b"assert" in result.stderr.lower(), result.stderr

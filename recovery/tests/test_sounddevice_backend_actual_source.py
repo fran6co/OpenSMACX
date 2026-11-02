@@ -1,7 +1,6 @@
 """Observed Wave-In extension calls, without a fabricated provider class."""
 from pathlib import Path
 import shutil
-import re
 import subprocess
 
 import pytest
@@ -42,15 +41,15 @@ def test_extension_records_keep_partial_external_contract_obligations():
         assert not record.semantic
 
 
-def test_external_boundary_has_only_observed_operations_not_prefix_methods():
+def test_unrecovered_provider_operations_keep_partial_contracts():
     abi = (ROOT / "src/soundx_device_abi.h").read_text()
-    for expression in ("Detail::slot_reference<InitMethod>(device, 0x0C)",
-                       "Detail::slot_reference<ReleaseMethod>(device, 0x10)",
+    # The init prefix now has independent DLL evidence and actual-helper
+    # behavior controls. The later operations still have partial contracts.
+    for expression in ("Detail::slot_reference<ReleaseMethod>(device, 0x10)",
                        "Detail::slot_reference<CodecMethod>(device, 0x60)",
                        "Detail::slot_reference<KeyMethod>(device, 0x64)"):
         assert expression in abi
     code = COMMENTS_OR_STRINGS.sub("", abi)
-    assert not re.search(r"\bvirtual\b", code) and "ordinal_placeholder" not in code
     for helper, offset in (("enable_device", "0x54"), ("disable_device", "0x58"),
                            ("is_disabled", "0x5C"), ("start_recording", "0x58"),
                            ("stop_recording", "0x5C")):
