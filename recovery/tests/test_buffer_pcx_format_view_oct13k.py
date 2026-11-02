@@ -74,7 +74,7 @@ class Buffer {
   BitmapInfo dib_;
   int stride_;
   void *locked_bits_;
-  int get_data() { return 1; }
+  int acquire_pixels() { return 1; }
   void free_data(int) {}
   int write_pcx(char *filename);
 };
@@ -227,7 +227,7 @@ class Buffer {
   BitmapInfo dib_;
   int stride_;
   void *locked_bits_;
-  int get_data() { return 1; }
+  int acquire_pixels() { return 1; }
   void free_data(int) { ++free_calls; }
   int write_bmp(char *);
 };
@@ -340,7 +340,7 @@ class Buffer {
     if (mutate_stride_on_init) mutated_header_view->bytes_per_line = 4;
     return 0;
   }
-  void *get_data() { ++data_calls; return pixel_storage; }
+  void *acquire_pixels() { ++data_calls; return pixel_storage; }
   void free_data(int) { ++free_calls; }
 };
 // @@PCX_MEMORY_BODY@@

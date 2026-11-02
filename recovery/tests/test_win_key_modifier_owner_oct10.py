@@ -14,6 +14,7 @@ ROOT = Path(__file__).resolve().parents[2]
 HARNESS = r'''
 #include <cassert>
 #include <vector>
+typedef short SHORT;
 struct MsgT {};
 struct Win;
 typedef int (*WinKeyHookFn)(int);

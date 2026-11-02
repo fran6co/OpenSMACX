@@ -84,7 +84,7 @@ struct Buffer {
     void line(int, int, int, int, int);
     void hline(int, int, int, int);
     void vline(int, int, int, int);
-    void *get_data() {
+    void *acquire_pixels() {
         events += 'G';
         if (!surface_) {
             locked_bits_ = dib_bits_;
@@ -370,14 +370,14 @@ def test_line_damage_is_observed(tmp_path, kind, mode):
         change('y2 > clip.bottom))) {\n            break;',
                'y2 > clip.bottom))) {\n            return;')
     elif kind == 'failed_acquire_release':
-        change('if (get_data() == 0) {\n        return;',
-               'if (get_data() == 0) {\n        free_data(1);\n        return;')
+        change('if (acquire_pixels() == 0) {\n        return;',
+               'if (acquire_pixels() == 0) {\n        free_data(1);\n        return;')
     elif kind in ('early_clip_snapshot', 'early_pitch_snapshot'):
         declaration = ('const RECT clip = rect1_;' if kind == 'early_clip_snapshot'
                        else 'const int pitch = static_cast<int>(stride_);')
         change('    ' + declaration, '')
-        change('    if (get_data() == 0)',
-               '    ' + declaration + '\n    if (get_data() == 0)')
+        change('    if (acquire_pixels() == 0)',
+               '    ' + declaration + '\n    if (acquire_pixels() == 0)')
     elif kind == 'vertical_dispatch':
         change('vline(x1, y1, y2, color);', 'hline(x1, y1, y2, color);')
     elif kind == 'horizontal_arguments':

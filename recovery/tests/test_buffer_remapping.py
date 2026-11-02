@@ -80,7 +80,7 @@ int IntersectRect(RECT *out,const RECT *a,const RECT *b){
 }
 struct Buffer {
     ACTUAL_FIELDS
-    void *get_data();void free_data(int);
+    void *acquire_pixels();void free_data(int);
     int map_colors(int,int,int,int,unsigned char *);
     int map_colors(RECT *,unsigned char *);
     int fill(RECT *,int);
@@ -93,7 +93,7 @@ int lock_calls,lock_status,lock_pitch;void *lock_bits;
 bool publish_pitch;
 unsigned char *published_pixels;
 RECT blt_rect;int blt_color;
-void *Buffer::get_data(){
+void *Buffer::acquire_pixels(){
     require(this==&buffer);++get_calls;
     if(mode==2)return nullptr; // acquisition refused: no publication/count change
     if(publish_pitch)stride_=published_pitch;
@@ -369,8 +369,8 @@ def test_actual_buffer_rectangle_fill(tmp_path):
        "static_cast<uintptr_t>(row_gap + width)","remap"),
     (0,"clipped.left >= dib_.bmiHeader.biWidth","clipped.left > dib_.bmiHeader.biWidth","remap"),
     (0,"clipped.top >= -dib_.bmiHeader.biHeight","clipped.top > -dib_.bmiHeader.biHeight","remap"),
-    (0,"if (get_data() == 0) {\n        return 7;",
-       "if (get_data() == 0) {\n        free_data(1); return 7;","remap"),
+    (0,"if (acquire_pixels() == 0) {\n        return 7;",
+       "if (acquire_pixels() == 0) {\n        free_data(1); return 7;","remap"),
     (0,"free_data(1);","free_data(2);","remap"),
     (0,"free_data(1);","/* omitted release */","remap"),
     (0,"if (address == 0)","if (false)","remap"),

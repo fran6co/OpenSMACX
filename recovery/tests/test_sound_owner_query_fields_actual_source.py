@@ -44,11 +44,11 @@ def namespace_helpers(source: str, marker: str) -> str:
     return source[start:close]
 
 
-def product_host_program(sound_cpp: str, wave_cpp: str) -> str:
+def product_host_program(sound_cpp: str, wave_cpp: str, sound_h: str) -> str:
     sound_helpers = namespace_helpers(sound_cpp, "__forceinline Sound *sound_device(Sound *device)")
-    sound_methods = "\n".join(
+    sound_methods = extract_definition(sound_h, "inline int Sound::is_playing()") + "\n" + "\n".join(
         extract_definition(sound_cpp, signature)
-        for signature in ("int Sound::is_playing()", "int Sound::is_looping()", "int Sound::get_time()"))
+        for signature in ("int Sound::is_looping()", "int Sound::get_time()"))
     wave_methods = "\n".join(extract_definition(wave_cpp, signature)
                                  for signature, _ in WAVE_METHODS)
     declarations = "\n".join("    " + decl for _, decl in WAVE_METHODS)
@@ -194,7 +194,7 @@ def test_actual_owner_field_input_and_external_dispatch_behavior(
     sound_h = (ROOT / "src/sound.h").read_text()
     device_h = (ROOT / "src/sounddevice.h").read_text()
     assert "Sound *device_;" in sound_h and "void *device_14_;" in device_h
-    assert "sound_device(device_)->is_playing()" in sound_cpp
+    assert "return device_->is_playing();" in extract_definition(sound_h, "inline int Sound::is_playing()")
     assert "sound_device(device_)->is_looping()" in sound_cpp
     assert "sound_device(device_)->get_time()" in sound_cpp
     assert "static_cast<WaveDeviceProviderCallView *>(device_14_)->enable()" in wave_cpp
@@ -202,7 +202,7 @@ def test_actual_owner_field_input_and_external_dispatch_behavior(
     cpp = tmp_path / "sound_lifecycle_actual_owner_fields.cpp"
     exe = tmp_path / "sound_lifecycle_actual_owner_fields"
     (tmp_path / "soundx_wave_device_abi.h").write_text((ROOT / "src/soundx_wave_device_abi.h").read_text())
-    cpp.write_text(product_host_program(sound_cpp, wave_cpp))
+    cpp.write_text(product_host_program(sound_cpp, wave_cpp, sound_h))
     built = subprocess.run(
         [compiler, "-std=c++11", "-Wall", "-Wextra", "-Werror", str(cpp), "-o", str(exe)],
         capture_output=True, text=True, timeout=30)

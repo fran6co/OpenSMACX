@@ -320,3 +320,35 @@ void Win::on_char(char param2, int param3) {
         key_click_event((int)param2, WinKeyModifiers);
     }
 }
+
+/*
+Purpose: Drain every pending WM_CHAR, pumping video and net between polls.
+         HOMED from src/recovered/005fcfe0.cpp on 2026-08-25. Its three
+         USER32 entry points came from tools/iat_names.py - the PE import
+         table names them exactly - and 0x009B7B9C is temp.cpp's MsgStatus.
+*/
+// ORIGINAL: 0x005FCFE0 ?do_all_chars@@YAXXZ 0x005FCFE0-0x005FD04B BYTE_EXACT
+// symbol    ?do_all_chars@@YAXXZ
+// size      108 bytes
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+void __cdecl do_all_chars() {
+    MSG msg;  // the artifact spelled this `int msg[7]`; MSG is those 28 bytes
+
+    MsgStatus = 4;
+
+
+    int has_message;
+    do {
+        do_video();
+        check_net();
+        has_message = PeekMessageA(&msg, 0, 0x102, 0x102, 1);
+        if (has_message) {
+            TranslateMessage(&msg);
+            DispatchMessageA(&msg);
+        }
+    } while (has_message);
+
+    MsgStatus = 0;
+    do_net();
+}

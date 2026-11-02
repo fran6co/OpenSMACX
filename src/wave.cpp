@@ -98,6 +98,10 @@ inline WavePlaybackDeviceInterface *wave_playback_device(
     Sound *device) {
     return static_cast<WavePlaybackDeviceInterface *>(device);
 }
+
+inline uint32_t wave_streaming_mode(unsigned long flags) {
+    return flags & 4;
+}
 }
 
 // The Windows multimedia clock is a system import, not storage in this build.
@@ -413,25 +417,22 @@ Return Value: nonzero while playing, 0 once finished or when not started
 Status: Complete
 */
 int Wave::is_playing() {
-    // This is an external virtual call through the Sound prefix's slot 23.
-    if (device_) {
-        return wave_playback_device(device_)->is_playing();
-    }
+    Sound *const device = device_;
     // `mov eax, dword ptr [esi+0x54]` then `shr eax, 4` / `test al, 1` at
     // 0x004C6B1A: a dword read of the whole flag field, testing bit 4.
-    if (!(flags_54_ & 0x10)) {
-        // The original merges here into a `test ecx, ecx` that can only fall
-        // through, because ecx is the null device it already tested. Nothing
-        // reachable follows it.
-        return 0;
+    unsigned char release_flags;
+    if (device == 0 && ((release_flags = flags_54_ >> 4) & 1)) {
+        if (start_time_ == 0) {
+            return 0;
+        }
+        const uint32_t elapsed = timeGetTime() - start_time_;
+        // `cmp ecx, eax` / `jbe`: the length is compared unsigned, so a negative
+        // stored length reads as a very long one rather than as already finished.
+        if (static_cast<uint32_t>(ms_length_) <= elapsed) return 0;
+        return 1;
     }
-    if (start_time_ == 0) {
-        return 0;
-    }
-    const uint32_t elapsed = timeGetTime() - start_time_;
-    // `cmp ecx, eax` / `jbe`: the length is compared unsigned, so a negative
-    // stored length reads as a very long one rather than as already finished.
-    return static_cast<uint32_t>(ms_length_) > elapsed ? 1 : 0;
+    // This is an external virtual call through the Sound prefix's slot 23.
+    return Sound::is_playing();
 }
 
 
@@ -1365,7 +1366,7 @@ Purpose: Initialise the wave from a filename and a mode mask. Streaming waves
          as in set_attrib
          (bit 4 suppressed for streaming waves, bit 8 unsuppressed here), and
          bit 1 of the mode runs the wave's own vtable slot 0x48 with 1.
-// ORIGINAL: 0x004C69B0 ?init@Wave@@QAEXPADK@Z 0x004C69B0-0x004C6AD5
+// ORIGINAL: 0x004C69B0 ?init@Wave@@QAEXPADK@Z 0x004C69B0-0x004C6AD5 BYTE_EXACT
 // symbol    ?init@Wave@@UAEXPADK@Z
 // TRIED: best flag set /c /O2 /Oi- /Gy /GR- /Oy- /GX reaches 13/122
 //   (0.975 similar); `listing_diff` at those flags shows the structure and
@@ -1398,10 +1399,10 @@ Status: Complete
 #endif
 void Wave::init(char *group_id, unsigned long flags) {
     const uint32_t streaming = flags & 4;
-    if (streaming && (flags & 0x10)) {
+    if (wave_streaming_mode(flags) && (flags & 0x10)) {
         return;
     }
-    if (streaming && (flags & 0x80)) {
+    if (wave_streaming_mode(flags) && (flags & 0x80)) {
         return;
     }
     char *const resolved = filefind_get(group_id);

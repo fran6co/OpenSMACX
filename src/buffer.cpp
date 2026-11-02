@@ -556,66 +556,6 @@ int Buffer::draw_pie(RECT *area, int first_color, int second_color,
     return 0;
 }
 
-/*
-Purpose: Acquire the buffer's pixel data, locking the DirectDraw surface on the
-         first reference and counting every acquisition.
-// ORIGINAL: 0x005E3373 ?get_data@Buffer@@QAEHXZ 0x005E3373-0x005E33EA BYTE_EXACT
-// body      src/buffer.cpp
-// symbol    ?get_data@Buffer@@QAEPAXXZ
-// size      119 bytes
-// prototype int (__thiscall ?get_data@Buffer@@QAEHXZ)(Buffer* this)
-// callers   48   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-// indirect  0x005E33BF
-// notes     Runtime redirect installed by DllMain after byte-signature validation
-Status: Complete
-*/
-
-// The original copy/draw_pie paths call this member; later drawing methods
-// can see its definition here. Other translation units see only the header
-// declaration, rather than needing member-pointer calls to hide an inline body.
-void *Buffer::get_data() {   // 005E3373
-      // ONE `return 0` FOR EVERY FAILURE, at the end: the image's `je` at
-      // 0x005E3388 jumps the whole length of the body to 0x005E33E5, where the
-      // Lock failure lands too. Written as an early `return 0` inside the first
-      // arm, VC6 emits a second epilogue there and the tail moves.
-      if (surface_ == nullptr) {
-          // Without a surface the buffer publishes its own storage, and the
-          // store happens whether or not that storage exists. IT RETURNS THAT
-          // STORAGE EITHER WAY - the null path is not a `return 0`, which is
-          // why the epilogue it jumps to at 0x005E33E5 has no `xor eax, eax`:
-          // eax already holds `dib_bits_`, and that IS the zero.
-          locked_bits_ = dib_bits_;
-          if (dib_bits_ != nullptr) {
-              ++surface_lock_count_;
-          }
-          return dib_bits_;
-      }
-      if (locked_bits_ != nullptr) {
-          ++surface_lock_count_;
-          return locked_bits_;
-      }
-      {
-          // THE DESCRIPTOR IS UNINITIALISED APART FROM ITS SIZE, which is what
-          // the image does and what DirectDraw asks for: `Lock` fills the rest.
-          DDSURFACEDESC description;
-          description.dwSize = sizeof(description);
-          // THIS failure returns zero where it stands - the image's
-          // `xor eax, eax` at 0x005E33C6 is inline - while the `dib_bits_`
-          // case above jumps the length of the body to the other zero at the
-          // end. Two of them, and which is which is not interchangeable.
-          if (surface_->Lock(nullptr, &description, DDLOCK_WAIT, nullptr) != 0) {
-              return 0;
-          }
-          ++surface_lock_count_;
-          stride_ = description.lPitch;
-          locked_bits_ = description.lpSurface;
-          return description.lpSurface;
-      }
-      return 0;
-  }
 
 // Patterned line rendering is still unfinished. This owning-TU body keeps
 // the non-cover route-preview branch linkable without an executable-address
@@ -655,7 +595,7 @@ void Buffer::line(int x1, int y1, int x2, int y2, int first_color,
         saved = pattern_on; pattern_on = pattern_off; pattern_off = saved;
         phase = pattern_on - phase + pattern_off;
     }
-    if (get_data() == 0) return; // Native does not release failed acquisition.
+    if (acquire_pixels() == 0) return; // Native does not release failed acquisition.
     const RECT clip = rect1_;
     // Original performs modulo before trivial reject, even for both -1
     // colors. Sum zero and overflowing arithmetic retain their native invalid
@@ -785,7 +725,7 @@ Purpose: Return the address of the pixel at (x, y) in the buffer, locking the
 // calls     (none)
 Status: Promoted 2026-08-29 from src/unrecovered/005e33f3.cpp, which proved the
 claim against the opaque scaffold. The body is the two-coordinate sibling of
-the no-argument `get_data()` above and reads the same members the same way:
+the no-argument `get_data()` in buffer_mask.cpp and reads the same members:
 `dib_.bmiHeader.biWidth` is the x bound, the NEGATIVE top-down `biHeight` is
 the negated y bound, and the lock path stores `stride_` before
 `locked_bits_`. `Sprite::extract` calls it by name five times.
@@ -1325,7 +1265,7 @@ int Buffer::load_pcx(BYTE *data, DWORD size, Palette *palette,
         return 3;
     }
 
-    uint8_t *pixels = static_cast<uint8_t *>(get_data());
+    uint8_t *pixels = static_cast<uint8_t *>(acquire_pixels());
     if (pixels == nullptr) {
         return 7;
     }
@@ -1756,7 +1696,7 @@ int Buffer::fill(int color) {
     // is `get_data` INLINED, not a local of its own - and four dwords above
     // them, one of which is a spill of `this` at ebp-0xc. Declaring the
     // descriptor here as well folds the two onto one slot and the prologue
-    // changes shape, so it is not declared: `get_data()` brings its own.
+    // changes shape, so it is not declared: acquire_pixels brings its own.
     DDBLTFX effects;
     if (surface_ != nullptr) {
         effects.dwSize = sizeof(DDBLTFX);
@@ -1773,10 +1713,10 @@ int Buffer::fill(int color) {
         return fill(&rect1_, color);
     }
 
-    // `get_data` BY NAME, with its definition visible earlier in this TU.
+    // The shared acquisition operation is visible through buffer.h.
     // The protocol was written out here, which is the same instructions in a
     // different order and its own DDSURFACEDESC in a different slot.
-    void *const pixels = get_data();
+    void *const pixels = acquire_pixels();
 
     // The colour in all four bytes, one dword per pixel-quad, rows of
     // `(width + 3) / 4` dwords.
@@ -3030,7 +2970,7 @@ void Buffer::line(int x1, int y1, int x2, int y2, int color) {
         y1 = y2;
         y2 = swap;
     }
-    if (get_data() == 0) {
+    if (acquire_pixels() == 0) {
         return;
     }
 
@@ -3217,7 +3157,7 @@ void Buffer::hline(int x1, int x2, int y, int color) {
     if (y >= -dib_.bmiHeader.biHeight) {
         return;
     }
-    if (get_data() == 0) {
+    if (acquire_pixels() == 0) {
         return;
     }
     // TWO NULL CHECKS, NOT ONE. The image tests the acquired pointer at
@@ -3315,7 +3255,7 @@ void Buffer::vline(int x, int y1, int y2, int color) {
     if (y1 >= -dib_.bmiHeader.biHeight) {
         return;
     }
-    if (get_data() == 0) {
+    if (acquire_pixels() == 0) {
         return;
     }
     const int pitch = static_cast<int>(stride_);
@@ -5119,7 +5059,7 @@ void Buffer::dotted_hline(int x1, int x2, int y, int color) {
     if (y >= -dib_.bmiHeader.biHeight) {
         return;
     }
-    if (get_data() == 0) {
+    if (acquire_pixels() == 0) {
         return;
     }
     // EVERY OTHER BYTE, left to right: the run length is halved and the
@@ -5183,7 +5123,7 @@ void Buffer::dotted_vline(int x, int y1, int y2, int color) {
     if (y1 >= -dib_.bmiHeader.biHeight) {
         return;
     }
-    if (get_data() == 0) {
+    if (acquire_pixels() == 0) {
         return;
     }
     char *dest = stride_ * y1 + x + static_cast<char *>(locked_bits_);
@@ -7408,7 +7348,7 @@ int Buffer::map_colors(int left, int top, int right, int bottom,
         || clipped.top >= -dib_.bmiHeader.biHeight) {
         return 7;
     }
-    if (get_data() == 0) {
+    if (acquire_pixels() == 0) {
         return 7;
     }
     uintptr_t address = reinterpret_cast<uintptr_t>(locked_bits_)
@@ -8312,7 +8252,7 @@ int Buffer::change_color(RECT *area, int find_color, int replace_color) {
           && clipped.top < -dib_.bmiHeader.biHeight)) {
         return 7;
     }
-    if (get_data() == 0) {
+    if (acquire_pixels() == 0) {
         return 7;
     }
 
@@ -8365,7 +8305,7 @@ int Buffer::write_pcx(char *filename) {
         strcat(name, ".pcx");
     }
 
-    if (get_data() == 0) {
+    if (acquire_pixels() == 0) {
         return 3;
     }
 
@@ -8486,7 +8426,7 @@ int Buffer::write_bmp(char *filename) {
         return 1;
     }
 
-    if (get_data() == 0) {
+    if (acquire_pixels() == 0) {
         fclose(file);
         return 3;
     }
@@ -8596,7 +8536,7 @@ void Buffer::hline(int x1, int x2, int y, int first_color, int second_color,
     if (y >= -dib_.bmiHeader.biHeight) {
         return;
     }
-    if (get_data() == 0) {
+    if (acquire_pixels() == 0) {
         return;
     }
 
@@ -8879,7 +8819,7 @@ void Buffer::vline(int x, int y1, int y2, int first_color, int second_color,
     if (y1 >= -dib_.bmiHeader.biHeight) {
         return;
     }
-    if (get_data() == 0) {
+    if (acquire_pixels() == 0) {
         return;
     }
 
@@ -10251,7 +10191,7 @@ int __cdecl setup_buffer_gouraud_edge(EdgeScan *edge, int vertex) {
 int Buffer::gouraud(Vert *vertices, int *lights, int count, int mode,
                      unsigned char alpha) {
     if (vertices == 0) return 16; // Native does not validate lights.
-    BufferGouraudPixels = get_data() != 0
+    BufferGouraudPixels = acquire_pixels() != 0
         ? static_cast<unsigned char *>(locked_bits_) : 0;
     if (BufferGouraudPixels != 0) {
         buffer_gouraud_reset_fpu();

@@ -320,9 +320,9 @@ void draw_dest_unk1(Buffer *, int, int, int, int, unsigned char *);
   static int init_class();
   void close_class();
   int sync_to_palette(Palette *palette);
-  // The definition is in buffer.cpp, before its inline-consuming drawing
-  // primitives but after copy/draw_pie. Other translation units see only
-  // this declaration and make the direct calls observed in the image.
+  // The canonical definition is in buffer_mask.cpp. Original direct-call
+  // consumers see this declaration; drawing methods whose original contains
+  // inline acquisition share the private acquire_pixels operation below.
   // Pointer-valued source contract: original 5E3380/5E3396/5E33DE returns
   // dib_bits_, locked_bits_, or DirectDraw lpSurface. The stripped image
   // does not establish the original declared return type; void* preserves
@@ -333,7 +333,7 @@ void draw_dest_unk1(Buffer *, int, int, int, int, unsigned char *);
   // rather than folding it, so an in-class definition - which VC6 inlines
   // everywhere it can - costs every caller the whole body: render_multi_table_dest
   // and render_mono in caviar.cpp were +20 instructions each from it. The
-  // definition lives beside its marker in buffer.cpp, like get_data's.
+  // definition lives beside its marker in buffer.cpp.
   void free_data(int count);
   // 0x005E33F3. The two-coordinate form over the no-argument one above: the
   // pixel row at (x, y), bounds-checked against `dib_.bmiHeader.biWidth` and
@@ -667,6 +667,8 @@ void draw_dest_unk1(Buffer *, int, int, int, int, unsigned char *);
   Dib dib_;
 
  private:
+  inline void *acquire_pixels();
+
   /*
    * 0x4A4. THE PALETTE GENERATION WHOSE COLOURS ARE IN `dib_.bmiColors`,
    * and it sits immediately after the table it guards.
@@ -888,3 +890,44 @@ extern int BufferLastWrapWriteResult;  // 0x009B39D8, shared line endpoint/fallb
 extern const char BufferJoinSpace[],BufferMeasureSpace[],BufferWriteSpace[],BufferCenteredSpace[];
 char *__cdecl get_special(char *, int *);
 char *__cdecl get_special_link(char *, int *);
+
+inline void *Buffer::acquire_pixels() {   // 005E3373
+      // ONE `return 0` FOR EVERY FAILURE, at the end: the image's `je` at
+      // 0x005E3388 jumps the whole length of the body to 0x005E33E5, where the
+      // Lock failure lands too. Written as an early `return 0` inside the first
+      // arm, VC6 emits a second epilogue there and the tail moves.
+      if (surface_ == nullptr) {
+          // Without a surface the buffer publishes its own storage, and the
+          // store happens whether or not that storage exists. IT RETURNS THAT
+          // STORAGE EITHER WAY - the null path is not a `return 0`, which is
+          // why the epilogue it jumps to at 0x005E33E5 has no `xor eax, eax`:
+          // eax already holds `dib_bits_`, and that IS the zero.
+          locked_bits_ = dib_bits_;
+          if (dib_bits_ != nullptr) {
+              ++surface_lock_count_;
+          }
+          return dib_bits_;
+      }
+      if (locked_bits_ != nullptr) {
+          ++surface_lock_count_;
+          return locked_bits_;
+      }
+      {
+          // THE DESCRIPTOR IS UNINITIALISED APART FROM ITS SIZE, which is what
+          // the image does and what DirectDraw asks for: `Lock` fills the rest.
+          DDSURFACEDESC description;
+          description.dwSize = sizeof(description);
+          // THIS failure returns zero where it stands - the image's
+          // `xor eax, eax` at 0x005E33C6 is inline - while the `dib_bits_`
+          // case above jumps the length of the body to the other zero at the
+          // end. Two of them, and which is which is not interchangeable.
+          if (surface_->Lock(nullptr, &description, DDLOCK_WAIT, nullptr) != 0) {
+              return 0;
+          }
+          ++surface_lock_count_;
+          stride_ = description.lPitch;
+          locked_bits_ = description.lpSurface;
+          return description.lpSurface;
+      }
+      return 0;
+  }

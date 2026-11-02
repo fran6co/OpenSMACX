@@ -287,3 +287,10 @@ inline Sound::~Sound() {
         flags_40_ &= ~2u;
     }
 }
+
+inline int Sound::is_playing() {
+    if (device_) {
+        return device_->is_playing();
+    }
+    return 0;
+}

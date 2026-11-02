@@ -160,7 +160,8 @@ def test_sound_calls_use_named_prefix_methods_and_keep_null_paths():
         "int Sound::get_time()": ("if (device_)", "->get_time()", "return 0;"),
     }
     for signature, fragments in checks.items():
-        body = function_body(code, signature)
+        owner = (ROOT / "src/sound.h").read_text() if signature == "int Sound::is_playing()" else code
+        body = function_body(owner, signature)
         positions = [body.index(fragment) for fragment in fragments]
         assert positions == sorted(positions), signature
 

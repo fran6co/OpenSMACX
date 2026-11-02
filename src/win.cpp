@@ -4175,37 +4175,7 @@ void __cdecl do_all_tasks() {
     }
 }
 
-/*
-Purpose: Drain every pending WM_CHAR, pumping video and net between polls.
-         HOMED from src/recovered/005fcfe0.cpp on 2026-08-25. Its three
-         USER32 entry points came from tools/iat_names.py - the PE import
-         table names them exactly - and 0x009B7B9C is temp.cpp's MsgStatus.
-*/
-// ORIGINAL: 0x005FCFE0 ?do_all_chars@@YAXXZ 0x005FCFE0-0x005FD04B BYTE_EXACT
-// symbol    ?do_all_chars@@YAXXZ
-// size      108 bytes
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-void __cdecl do_all_chars() {
-    MSG msg;  // the artifact spelled this `int msg[7]`; MSG is those 28 bytes
-
-    MsgStatus = 4;
-
-
-    int has_message;
-    do {
-        do_video();
-        check_net();
-        has_message = PeekMessageA(&msg, 0, 0x102, 0x102, 1);
-        if (has_message) {
-            TranslateMessage(&msg);
-            DispatchMessageA(&msg);
-        }
-    } while (has_message);
-
-    MsgStatus = 0;
-    do_net();
-}
+void __cdecl do_all_chars();
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x005FCF90 ?do_char@@YAXXZ 0x005FCF90-0x005FCFDD BYTE_EXACT
@@ -5888,7 +5858,7 @@ void Win::on_l_button_down(long double_click, int x, int y, unsigned int, int fr
     if (double_click != 0 &&
         (iFlags_ & 0x200200) == 0 &&
         (iSomeFlag_ & 8) == 0) {
-        Sound *related;
+
         if (from_parent == 0) {
             WinCallbackWindow = this;
             WinMouseEventCallback callback = field_40C_;
@@ -5896,13 +5866,16 @@ void Win::on_l_button_down(long double_click, int x, int y, unsigned int, int fr
                 callback(x, y);
             }
             this->on_left_double_click(x, y);
-            related = val_17_;
+            Sound *const sound = val_17_;
+            if (sound != 0 && sound->is_playing() == 0) {
+                sound->play();
+            }
         } else {
             this->vslot_38(x, y);
-            related = val_26_;
-        }
-        if (related != 0 && related->is_playing() == 0) {
-            related->play();
+            Sound *const sound = val_26_;
+            if (sound != 0 && sound->is_playing() == 0) {
+                sound->play();
+            }
         }
     }
 
@@ -6984,9 +6957,12 @@ void Win::on_r_button_up(int x, int y, unsigned int keys, int dbl) {
         offset_rect(&testRect, -fa, -fb);
 
         if (in_box(x, y, &testRect)) {
-            if ((iFlags_ & 0x200000) == 0) {
+            if ((iFlags_ & 0x200000) != 0) {
+                return;
+            }
+            {
                 if ((iSomeFlag_ & 8) == 0) {
-                    Sound *related;
+
                     if (dbl == 0) {
                         WinCallbackWindow = this;
                         WinMouseEventCallback callback = field_420_;
@@ -6994,13 +6970,16 @@ void Win::on_r_button_up(int x, int y, unsigned int keys, int dbl) {
                             callback(x, y);
                         }
                         this->on_right_click(x, y);
-                        related = val_11_;
+                        Sound *const sound = val_11_;
+            if (sound != 0 && sound->is_playing() == 0) {
+                sound->play();
+            }
                     } else {
                         this->vslot_35(x, y);
-                        related = val_23_;
-                    }
-                    if (related != 0 && related->is_playing() == 0) {
-                        related->play();
+                        Sound *const sound = val_23_;
+            if (sound != 0 && sound->is_playing() == 0) {
+                sound->play();
+            }
                     }
                 }
             }
@@ -7009,7 +6988,7 @@ void Win::on_r_button_up(int x, int y, unsigned int keys, int dbl) {
 
     if ((iFlags_ & 0x200000) == 0 &&
         (iSomeFlag_ & 8) == 0) {
-    Sound *related2;
+
         if (dbl == 0) {
             WinCallbackWindow = this;
             WinMouseEventCallback callback = field_428_;
@@ -7017,13 +6996,16 @@ void Win::on_r_button_up(int x, int y, unsigned int keys, int dbl) {
                 callback(x, y);
             }
             this->on_right_up(x, y);
-            related2 = val_13_;
+            Sound *const sound = val_13_;
+            if (sound != 0 && sound->is_playing() == 0) {
+                sound->play();
+            }
         } else {
             this->vslot_37(x, y);
-            related2 = val_25_;
-        }
-        if (related2 != 0 && related2->is_playing() == 0) {
-            related2->play();
+            Sound *const sound = val_25_;
+            if (sound != 0 && sound->is_playing() == 0) {
+                sound->play();
+            }
         }
     }
 }
@@ -9356,8 +9338,9 @@ void Win::on_key(unsigned int key, long flags, int repeat, unsigned int scan) {
     (void)repeat;
     (void)scan;
 
+    const SHORT shift_state = GetKeyState(0x10);
     unsigned int with_modifiers = key;
-    if (GetKeyState(0x10) & 0x8000) with_modifiers |= 0x10000;
+    if (shift_state & 0x8000) with_modifiers |= 0x10000;
     if (GetKeyState(0x11) & 0x8000) with_modifiers |= 0x20000;
     if (GetKeyState(0x12) & 0x8000) with_modifiers |= 0x40000;
 
@@ -9365,10 +9348,10 @@ void Win::on_key(unsigned int key, long flags, int repeat, unsigned int scan) {
     if (net != 0) {
         MsgT msg;
         if (with_modifiers == net->voice_hotkey_48_) {
-            if (flags == 0) {
-                net->stop_voice();
-            } else {
+            if (flags != 0) {
                 net->start_voice(net->voice_target_50_);
+            } else {
+                net->stop_voice();
             }
             if (!PeekMessageA(&msg, HandleMain, 0x102, 0x102, 1)) {
                 return;
@@ -9378,10 +9361,10 @@ void Win::on_key(unsigned int key, long flags, int repeat, unsigned int scan) {
             return;
         }
         if (with_modifiers == net->voice_hotkey_4c_) {
-            if (flags == 0) {
-                net->stop_voice();
-            } else {
+            if (flags != 0) {
                 net->start_voice(static_cast<long>(net->field_54_));
+            } else {
+                net->stop_voice();
             }
             if (!PeekMessageA(&msg, HandleMain, 0x102, 0x102, 1)) {
                 return;
@@ -11756,12 +11739,12 @@ void __cdecl win_window_moved(HWND hwnd, int x, int y) {
 // kind      game
 // TRIED: zero-arg contract (disasm reads one stack arg -> HWND); reusing the auto-generated nullary `VCall::slot074` (own `PaintVCall` class instead, real signature). Register allocation in the prologue still MISMATCHes.
 int __cdecl win_window_nc_paint(HWND hwnd) {
-  int result = 0;
-  Win *const owner = reinterpret_cast<Win *>(
-      GetWindowLongA(hwnd, GWL_USERDATA));
+  LONG result = GetWindowLongA(hwnd, GWL_USERDATA);
+  Win *const owner = reinterpret_cast<Win *>(result);
   if (owner != 0) {
     PAINTSTRUCT paint;
-    if (BeginPaint(hwnd, &paint) != 0) {
+    result = reinterpret_cast<LONG>(BeginPaint(hwnd, &paint));
+    if (result != 0) {
       RECT painted = paint.rcPaint;
       owner->on_nc_paint(&painted, -1);
       result = EndPaint(hwnd, &paint);

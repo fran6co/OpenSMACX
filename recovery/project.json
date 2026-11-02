@@ -561,13 +561,16 @@
       },
       "src/wave.cpp": {
         "flags": [
-          "/c",
-          "/O2",
-          "/Gy",
-          "/GR-",
-          "/Oy-",
+          "/nologo",
+          "/TP",
+          "/Zm200",
           "/GX",
-          "/Ob2"
+          "/O2",
+          "/Ob2",
+          "-MT",
+          "/W4",
+          "/Oy-",
+          "-c"
         ]
       },
       "src/texture_objects.cpp": {
@@ -1672,6 +1675,32 @@
           "/W4",
           "/Oy-",
           "/Z7",
+          "-c"
+        ]
+      },
+      "src/buffer_mask.cpp": {
+        "flags": [
+          "/nologo",
+          "/TP",
+          "/Zm200",
+          "/GX",
+          "/O2",
+          "/Ob2",
+          "-MT",
+          "/W4",
+          "-c"
+        ]
+      },
+      "src/win_input.cpp": {
+        "flags": [
+          "/nologo",
+          "/TP",
+          "/Zm200",
+          "/GX",
+          "/O2",
+          "/Ob2",
+          "-MT",
+          "/W4",
           "-c"
         ]
       }

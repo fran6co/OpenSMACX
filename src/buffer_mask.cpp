@@ -191,3 +191,25 @@ int Buffer::copy_mask(Buffer *dest, int src_x, int src_y, int x, int y, int w,
     return 0;
 }
 
+/*
+Purpose: Acquire the buffer's pixel data, locking the DirectDraw surface on the
+         first reference and counting every acquisition.
+// ORIGINAL: 0x005E3373 ?get_data@Buffer@@QAEHXZ 0x005E3373-0x005E33EA BYTE_EXACT
+// body      src/buffer_mask.cpp
+// symbol    ?get_data@Buffer@@QAEPAXXZ
+// size      119 bytes
+// prototype int (__thiscall ?get_data@Buffer@@QAEHXZ)(Buffer* this)
+// callers   48   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+// indirect  0x005E33BF
+// notes     Runtime redirect installed by DllMain after byte-signature validation
+Status: Complete
+*/
+
+// Canonical pixel acquisition keeps the original direct-call boundary.
+// Drawing methods with original inline acquisition share acquire_pixels().
+void *Buffer::get_data() {
+    return acquire_pixels();
+}

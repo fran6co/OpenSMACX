@@ -485,7 +485,9 @@ __forceinline Sound *sound_device(Sound *device) {
 
 /*
 Purpose: Ask the wrapped device whether it is playing, through vtable slot 0x5C.
-// ORIGINAL: 0x004C64C0 ?is_playing@Sound@@QAEHXZ 0x004C64C0-0x004C64CF BYTE_EXACT
+// ORIGINAL: 0x004C64C0 ?is_playing@Sound@@QAEHXZ 0x004C64C0-0x004C64CF FILE BYTE_EXACT
+// compile_context src/sound.cpp
+// body src/sound.h
 // symbol    ?is_playing@Sound@@UAEHXZ
 // size      15 bytes
 // prototype int (__thiscall ?is_playing@Sound@@QAEHXZ)(Sound* this)
@@ -496,12 +498,6 @@ Purpose: Ask the wrapped device whether it is playing, through vtable slot 0x5C.
 Return Value: the device's answer, or 0 when none is wrapped
 Status: Complete
 */
-int Sound::is_playing() {
-    if (device_) {
-        return sound_device(device_)->is_playing();
-    }
-    return 0;
-}
 
 /*
 Purpose: Ask the wrapped device whether it is looping, through vtable slot 0x58.

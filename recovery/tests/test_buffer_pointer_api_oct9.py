@@ -12,7 +12,8 @@ from match_recovery.includes import COMMENTS_OR_STRINGS
 
 
 ROOT = Path(__file__).resolve().parents[2]
-CPP = ROOT / "src/buffer.cpp"
+CPP = ROOT / "src/buffer_mask.cpp"
+HEADER = ROOT / "src/buffer.h"
 
 HARNESS = r'''#include <cassert>
 #include <cstdint>
@@ -50,6 +51,8 @@ class Buffer {
   int surface_lock_count_;
   unsigned int stride_;
   void *get_data();
+ private:
+  inline void *acquire_pixels();
 };
 
 ACTUAL_GET_DATA
@@ -97,13 +100,12 @@ int main() {
 '''
 
 
-def _actual_method() -> str:
-    source = CPP.read_text(encoding="utf-8")
+def _actual_definition(path: Path, signature: str) -> str:
+    source = path.read_text(encoding="utf-8")
     masked = COMMENTS_OR_STRINGS.sub(
         lambda match: "".join("\n" if char == "\n" else " "
                                for char in match[0]), source
     )
-    signature = "void *Buffer::get_data()"
     start = masked.index(signature)
     opening = masked.index("{", start + len(signature))
     depth = 0
@@ -114,7 +116,12 @@ def _actual_method() -> str:
             depth -= 1
             if depth == 0:
                 return source[start:end + 1]
-    raise AssertionError("unterminated Buffer::get_data body")
+    raise AssertionError("unterminated product body: " + signature)
+
+
+def _actual_method() -> str:
+    return (_actual_definition(HEADER, "inline void *Buffer::acquire_pixels()") + "\n" +
+            _actual_definition(CPP, "void *Buffer::get_data()"))
 
 
 def _run(method: str, compiler: str, directory: Path, name: str) -> int:

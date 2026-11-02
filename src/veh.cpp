@@ -7440,16 +7440,8 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl veh_promote(int veh_id) {
-    // veh_top(), hand-inlined - matching stack_fix's precedent (see its own
-    // comment): the image does not call it here.
-    int veh_id_top = veh_id;
-    if (veh_id >= 0) {
-        for (int i = Vehs[veh_id_top].prev_veh_id_stack; i >= 0; i = Vehs[i].prev_veh_id_stack) {
-            veh_id_top = i;
-        }
-    } else {
-        veh_id_top = -1;
-    }
+    // The image expands veh_top's signed-word climb here.
+    int veh_id_top = veh_top(veh_id);
     // BUG IN THE ORIGINAL: no `veh_id_top >= 0` guard here - if veh_id is
     // itself negative, veh_id_top becomes -1 and this still proceeds to
     // index Vehs[-1] below, as long as veh_id != -1 exactly.
@@ -7738,26 +7730,28 @@ Return Value: Prototype's speed on roads
 Status: Complete
 */
 int __cdecl speed_proto(int proto_id) {
+    int chas_id = VehPrototypes[proto_id].chassis_id;
+    int speed_val = Chassis[chas_id].speed;
     if (proto_id == BSC_FUNGAL_TOWER) {
         return 0; // cannot move
     }
-    int chas_id = VehPrototypes[proto_id].chassis_id;
-    int speed_val = Chassis[chas_id].speed;
-    uint8_t triad = Chassis[chas_id].triad;
-    uint32_t weap_id = VehPrototypes[proto_id].weapon_id;
-    if (triad == TRIAD_AIR) {
+    if (Chassis[VehPrototypes[proto_id].chassis_id].triad == TRIAD_AIR) {
         speed_val += VehPrototypes[proto_id].reactor_id * 2;
     }
-    if (Weapon[weap_id].mode == WPN_MODE_TRANSPORT) {
+    if (Weapon[VehPrototypes[proto_id].weapon_id].mode == WPN_MODE_TRANSPORT) {
         speed_val--;
     }
     if (has_abil(proto_id, ABL_SLOW)) {
         speed_val--;
     }
     if (has_abil(proto_id, ABL_ANTIGRAV_STRUTS)) {
-        speed_val += (triad == TRIAD_AIR) ? VehPrototypes[proto_id].reactor_id * 2 : 1;
+        if (Chassis[VehPrototypes[proto_id].chassis_id].triad == TRIAD_AIR) {
+            speed_val += VehPrototypes[proto_id].reactor_id * 2;
+        } else {
+            speed_val++;
+        }
     }
-    if (triad == TRIAD_AIR) {
+    if (Chassis[VehPrototypes[proto_id].chassis_id].triad == TRIAD_AIR) {
         if (has_abil(proto_id, ABL_FUEL_NANOCELLS)) {
             speed_val += 2;
         }
@@ -7768,7 +7762,7 @@ int __cdecl speed_proto(int proto_id) {
             // generally -20% to -25%, in some cases higher due to lossy division rounding
             speed_val = (speed_val * 4) / 5;
         }
-        if (Weapon[weap_id].mode == WPN_MODE_TRANSPORT) {
+        if (Weapon[VehPrototypes[proto_id].weapon_id].mode == WPN_MODE_TRANSPORT) {
             speed_val /= 2; // 2nd penalty for air transports: -50%
         }
     }
