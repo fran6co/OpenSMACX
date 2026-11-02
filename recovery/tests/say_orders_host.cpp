@@ -41,6 +41,7 @@ struct Base { char name_string[25]; };
 struct Map { uint8_t climate; };
 struct TestStrings {
     LPSTR get(int id) { return const_cast<LPSTR>(texts[id]); }
+    LPSTR get(LPSTR id) { return get(static_cast<int>(reinterpret_cast<intptr_t>(id))); }
     const char *texts[2048];
 } StringTable;
 
@@ -55,6 +56,11 @@ static Map TileStorage[4096];
 static Map *MapTiles = TileStorage;
 static unsigned int MapLongitude = 8;
 static int TestBaseId = -1;
+enum LocationMutation { NoLocationMutation, ClearPatrolState, AdvancePatrolPoint,
+                        EnablePatrolState, ShrinkWaypointCount };
+static LocationMutation location_mutation;
+static int callback_vehicle, location_calls, location_modes[8];
+static uint32_t state_after_parse;
 
 enum VehOrders { ORDER_NONE=0, ORDER_CONVOY=3, ORDER_MOVE=25,
     ORDER_MOVE_TO=24, ORDER_ROAD_TO=27, ORDER_MAGTUBE_TO=28 };
@@ -71,15 +77,26 @@ static void parse_says(int, LPCSTR input, int, int) { parsed_source = input; }
 static int parse_string(LPSTR input, LPSTR output) {
     strcpy(output, input);
     strcat(output, parsed_source);
+    if (state_after_parse != 0) Vehs[callback_vehicle].state = state_after_parse;
     return 0;
 }
 static int base_at(int, int) { return TestBaseId; }
 static void say_base(char *output, int) { strcat(output, "HOME"); }
 static int resource_yield(int, int, int, int, int) { return 17; }
-static void say_loc(char *output, int x, int y, int, int, int) {
+static void say_loc(char *output, int x, int y, int, int mode, int) {
+    assert(location_calls < 8);
+    location_modes[location_calls++] = mode;
     char point[40];
     sprintf(point, "[%d,%d]", x, y);
     strcat(output, point);
+    if (location_calls == 1) {
+        Veh &vehicle = Vehs[callback_vehicle];
+        if (location_mutation == ClearPatrolState) vehicle.state = 0;
+        if (location_mutation == AdvancePatrolPoint)
+            vehicle.patrol_current_point = vehicle.waypoint_count;
+        if (location_mutation == EnablePatrolState) vehicle.state = 0x02000200;
+        if (location_mutation == ShrinkWaypointCount) vehicle.waypoint_count = 0;
+    }
 }
 static char *_itoa(int value, char *output, int radix) {
     if (radix != 10) abort();
@@ -100,6 +117,30 @@ static void reset_case() {
     memset(Resource, 0, sizeof(Resource));
     memset(StringTable.texts, 0, sizeof(StringTable.texts));
     TestBaseId = -1;
+    location_mutation = NoLocationMutation;
+    callback_vehicle = location_calls = 0;
+    state_after_parse = 0;
+    memset(location_modes, 0, sizeof(location_modes));
+}
+
+static void prepare_route_callback_case(uint32_t state, LocationMutation mutation) {
+    reset_case();
+    callback_vehicle = 9;
+    Veh &vehicle = Vehs[callback_vehicle];
+    vehicle.state = state;
+    vehicle.order = ORDER_MOVE_TO;
+    vehicle.waypoint_count = 2;
+    for (int index = 0; index < 3; ++index) {
+        vehicle.waypoint_x[index] = 2 + index * 2;
+        vehicle.waypoint_y[index] = 3 + index * 2;
+    }
+    Order[ORDER_MOVE_TO].order = encoded_id(70);
+    Order[ORDER_MOVE_TO].order_sea = encoded_id(70);
+    set_text(70, "go");
+    set_label(0x664, 71); set_text(71, "then");
+    set_label(0x65C, 72); set_text(72, "Waypoint");
+    set_label(0x660, 71);
+    location_mutation = mutation;
 }
 
 int main() {
@@ -186,5 +227,36 @@ int main() {
     text[0] = '\0';
     say_orders(text, 8);
     assert(strcmp(text, "Convoy minerals at HOME") == 0);
+
+    prepare_route_callback_case(0x02000200, ClearPatrolState);
+    text[0] = '\0'; say_orders(text, callback_vehicle);
+    assert(strcmp(text, "go [2,3]") == 0);
+    assert(location_calls == 1 && location_modes[0] == 2);
+
+    prepare_route_callback_case(0x02000200, AdvancePatrolPoint);
+    text[0] = '\0'; say_orders(text, callback_vehicle);
+    assert(strcmp(text, "go [2,3]") == 0);
+    assert(location_calls == 1 && location_modes[0] == 2);
+
+    prepare_route_callback_case(0, EnablePatrolState);
+    text[0] = '\0'; say_orders(text, callback_vehicle);
+    assert(strcmp(text, "go [2,3] then [4,5] then [6,7]") == 0);
+    assert(location_calls == 3 && location_modes[0] == 1 &&
+           location_modes[1] == 2 && location_modes[2] == 2);
+
+    prepare_route_callback_case(0x01000200, ShrinkWaypointCount);
+    text[0] = '\0'; say_orders(text, callback_vehicle);
+    assert(strcmp(text, "Waypoint: [2,3]") == 0 && location_calls == 1);
+
+    reset_case();
+    callback_vehicle = 4; state_after_parse = 0x4000;
+    Vehs[4].state = 0x200; Vehs[4].order_auto_type = 10;
+    TestBaseId = 2; strcpy(Bases[2].name_string, "Gaia");
+    set_label(0x6F0, 73); set_text(73, "Route ");
+    Order[26].order = encoded_id(74); set_text(74, "Unavailable");
+    Order[ORDER_NONE].order = encoded_id(75);
+    Order[ORDER_NONE].order_sea = encoded_id(75); set_text(75, "idle");
+    text[0] = '\0'; say_orders(text, callback_vehicle);
+    assert(strcmp(text, "(Route Gaia) Unavailable") == 0);
     return 0;
 }

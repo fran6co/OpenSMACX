@@ -1697,6 +1697,7 @@ int __cdecl trig_init() {
 }
 
 // ORIGINAL: 0x005D271D sub_5d271d 0x005D271D-0x005D2761 FILE
+// symbol    _sub_5d271d
 // size      68 bytes
 // prototype 
 // callers   1   call targets   0

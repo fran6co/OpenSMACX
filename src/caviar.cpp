@@ -5777,6 +5777,7 @@ Purpose: The isometric view-matrix builder: take the caller's nine source
 // 63F00C. Native x87 exceptional conversion behavior and complete executable
 // caller/reference qualification remain explicit fidelity obligations.
 // ORIGINAL: 0x0063FA80 sub_63fa80 0x0063FA80-0x0063FC92
+// symbol    _sub_63fa80
 // size      530 bytes
 // Deleted seed provenance: git:1ed59304110fc2098fb1dd11457fa5b0074169bd:src/unrecovered/0063fa80.cpp
 Status: Coverage transcription of the retained seed (src/unrecovered/0063fa80.cpp,

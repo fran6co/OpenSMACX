@@ -26,17 +26,17 @@ def definition(text, signature):
 def product_bodies():
     source = (ROOT / 'src/statuswin.cpp').read_text()
     bodies = '\n'.join(definition(source, signature) for signature in (
-        'static const char *vehicle_order_text_id(int id)',
         'static const char *vehicle_order_rule_text(LPSTR encoded_id)',
         'void __cdecl say_orders(char *text, int veh_id)',
     ))
-    compass = definition((ROOT / 'src/alpha.cpp').read_text(),
+    compass = definition((ROOT / 'src/alpha.h').read_text(),
                          'LPSTR __cdecl compass_name(int direction)')
     return bodies, compass
 
 
 @pytest.mark.parametrize('compiler_name', ['g++', 'clang++'])
-@pytest.mark.parametrize('mutation', ['none', 'prefix', 'base_name', 'blocked'])
+@pytest.mark.parametrize('mutation', ['none', 'prefix', 'base_name', 'blocked',
+                                    'state_snapshot', 'patrol_snapshot', 'waypoint_snapshot'])
 def test_actual_complete_order_text_and_mutants(tmp_path, compiler_name, mutation):
     compiler = shutil.which(compiler_name)
     if not compiler:
@@ -48,6 +48,17 @@ def test_actual_complete_order_text_and_mutants(tmp_path, compiler_name, mutatio
         'base_name': ('Bases[base_id].name_string', '&Bases[base_id].name_string[7]'),
         'blocked': ('::strcat(text, vehicle_order_rule_text(Order[26].order));\n        return;',
                     '::strcat(text, vehicle_order_rule_text(Order[26].order));'),
+        'state_snapshot': ('const uint32_t state_after_prefix = vehicle.state;',
+                           'const uint32_t state_after_prefix = state;'),
+        'patrol_snapshot': (
+            'if ((vehicle.state & 0x02000200u) == 0x02000200u &&\n'
+            '            vehicle.patrol_current_point < vehicle.waypoint_count &&\n'
+            '            vehicle.waypoint_count != 0) {',
+            'if (has_patrol_route && vehicle.waypoint_count != 0) {'),
+        'waypoint_snapshot': (
+            'for (int index = 0; index < vehicle.waypoint_count + 1; ++index) {',
+            'const int count = vehicle.waypoint_count + 1;\n'
+            '        for (int index = 0; index < count; ++index) {'),
     }
     if mutation != 'none':
         old, new = replacements[mutation]
@@ -65,6 +76,13 @@ def test_actual_complete_order_text_and_mutants(tmp_path, compiler_name, mutatio
                     str(cpp), '-o', str(binary)], check=True, timeout=30)
     result = subprocess.run([str(binary)], capture_output=True, timeout=30)
     assert (result.returncode == 0) == (mutation == 'none'), result.stderr
+    diagnostics = {
+        'state_snapshot': b'(Route Gaia) Unavailable',
+        'patrol_snapshot': b'go [2,3]',
+        'waypoint_snapshot': b'Waypoint: [2,3]',
+    }
+    if mutation in diagnostics:
+        assert diagnostics[mutation] in result.stderr, result.stderr
 
 
 def test_real_caller_and_seed_identity_continuity():

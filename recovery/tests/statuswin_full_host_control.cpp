@@ -11,13 +11,22 @@ struct BoxSpriteParams {};
 static BoxSpriteParams InterfaceBoxStyles[51];
 static int TextColourTable[195];
 static char StringTemp[1032];
+static char LastWrappedText[256];
+static char EmptyTerrainId[] = "empty-terrain-id";
+static char SecondTerrainId[] = "second-terrain-id";
 static const char BufferJoinSpace[] = " ";
 static int rockiness_label_calls;
 static const char *label_get(int id) {
     if (id >= 89 && id <= 92) ++rockiness_label_calls;
     return "label";
 }
-struct Strings { LPSTR get(LPSTR) { return const_cast<LPSTR>("name"); } };
+struct Strings {
+    LPSTR get(LPSTR id) {
+        if (id == EmptyTerrainId) return const_cast<LPSTR>("");
+        if (id == SecondTerrainId) return const_cast<LPSTR>("second");
+        return const_cast<LPSTR>("name");
+    }
+};
 static Strings StringTable;
 
 struct Font {
@@ -89,7 +98,11 @@ struct Buffer {
     int write_right_l(char *s, int x, int y, int length) {
         record_write(s,x,y,length); return 8;
     }
-    int wrap(char *, RECT *r) { ++wraps; wrap_rect=*r; return 40; }
+    int wrap(char *text, RECT *r) {
+        ++wraps; wrap_rect=*r;
+        copy_text(LastWrappedText, text, static_cast<int>(std::strlen(text)));
+        return 40;
+    }
 };
 struct FlatButton { int hides, shows; void hide() { ++hides; } void show(int) { ++shows; } };
 struct MainInterface : Buffer {
@@ -332,6 +345,22 @@ int main() {
     win.draw_status(-1,-1,-1,-1,0);
     assert(MainInterfaceGlobal.wraps==1);
     assert(MainInterfaceGlobal.wrap_rect.top>6);
+
+    // A label lookup may yield an empty string. The original measures the
+    // actual accumulated text before each comma, rather than counting rows.
+    Terraforming[1].name=Terraforming[1].name_sea=EmptyTerrainId;
+    Terraforming[2].bit=2;
+    Terraforming[2].name=Terraforming[2].name_sea=SecondTerrainId;
+    MapTiles[selected_tile].bit=3;
+    LastWrappedText[0]='\0';
+    win.draw_status(-1,-1,-1,-1,0);
+    assert(std::strcmp(LastWrappedText,"second")==0);
+    MapTiles[selected_tile].bit=1|BIT_MONOLITH;
+    LastWrappedText[0]='\0';
+    win.draw_status(-1,-1,-1,-1,0);
+    assert(std::strcmp(LastWrappedText,"label")==0);
+    Terraforming[1].name=Terraforming[1].name_sea=0;
+    Terraforming[2].bit=0;
 
     // Debug output uses the signed region byte and original "x , y" punctuation.
     GameDataStateStorage.fields_.game_state_=STATE_SCENARIO_EDITOR|STATE_DEBUG_MODE;

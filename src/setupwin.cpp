@@ -242,7 +242,9 @@ int SetupWin::do_menu_rightside(char *filename, int flags) {
 
     int result = 0;
     {
-        char token[512];
+        // This is the maximum caption extent in the original live Flic/Wave
+        // frame window; the original declared capacity remains unverified.
+        char token[256];
         RECT title_rect;
 
         field_FE0_.remove_all();

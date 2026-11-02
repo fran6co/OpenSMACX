@@ -447,7 +447,7 @@ map_menu_configure:
 }
 
 
-static void top_menu_present_opening(const char *filename) {
+static inline void top_menu_present_opening(const char *filename) {
     if (opening_window() == 0) {
         GraphicWin *const window = new GraphicWin();
         opening_window() = window;

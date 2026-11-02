@@ -48,7 +48,10 @@ def constant_block(start_marker, end_marker):
 
 def top_menu_bundle():
     text = SOURCE.read_text()
-    start = text.index("static void top_menu_present_opening(")
+    declaration = re.search(
+        r"^static (?:inline )?void top_menu_present_opening\(", text, re.MULTILINE)
+    assert declaration is not None, "missing actual opening helper"
+    start = declaration.start()
     end = text.index("// ORIGINAL: 0x0058E360", start)
     helper = text[start:end]
     return helper + product_function(0x58E360, "int __cdecl top_menu(int mode)")

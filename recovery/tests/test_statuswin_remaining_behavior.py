@@ -85,10 +85,21 @@ def extract_definition(source, name):
     raise AssertionError("unterminated StatusWin method: " + name)
 
 
-def extracted_source_pair(*, wrong_axis_damage=False):
+def extracted_source_pair(*, wrong_axis_damage=False, cached_terrain_damage=False):
     source_path = project_root() / "src" / "statuswin.cpp"
     source = source_path.read_text(encoding="utf-8")
     bodies = {name: extract_definition(source, name) for name in METHOD_NAMES}
+    if cached_terrain_damage:
+        body = bodies["draw_status"]
+        declaration = "        for (int terrain = 0; terrain < 0x13; ++terrain) {"
+        guard = 'if (strlen(StringTemp) != 0) strcat(StringTemp, ", ");'
+        append = "strcat(StringTemp,\n                   StringTable.get(label));"
+        assert body.count(declaration) == body.count(append) == 1
+        assert body.count(guard) == 2
+        body = body.replace(declaration, "        bool has_terraforming_label = false;\n" + declaration, 1)
+        body = body.replace(guard, 'if (has_terraforming_label) strcat(StringTemp, ", ");')
+        body = body.replace(append, append + "\n            has_terraforming_label = true;", 1)
+        bodies["draw_status"] = body
     if wrong_axis_damage:
         corrected = """    camera_angles_.values[1] = 0.0f;
     camera_angles_.values[2] = 0.785f;
@@ -160,3 +171,24 @@ def test_statuswin_wrong_axis_damage_control_compiles_then_fails(compiler, tmp_p
         [str(binary)], capture_output=True, text=True, timeout=30, check=False,
     )
     assert ran.returncode != 0, ran.stdout + ran.stderr
+
+
+@pytest.mark.parametrize("compiler", ["g++", "clang++"])
+def test_statuswin_cached_terrain_flag_damage_control(compiler, tmp_path):
+    executable = shutil.which(compiler)
+    if executable is None:
+        pytest.skip("host C++ compiler is unavailable: " + compiler)
+    _, hud_source = extracted_source_pair(cached_terrain_damage=True)
+    cpp = tmp_path / "statuswin-hud-cached-flag.cpp"
+    binary = tmp_path / "statuswin-hud-cached-flag"
+    cpp.write_text(hud_source, encoding="utf-8")
+    built = subprocess.run(
+        [executable, "-std=c++98", "-Wno-unused-variable", "-Wno-unused-parameter",
+         "-I", str(HERE), str(cpp), "-o", str(binary)],
+        capture_output=True, text=True, timeout=60, check=False,
+    )
+    assert built.returncode == 0, built.stdout + built.stderr
+    ran = subprocess.run([str(binary)], capture_output=True, text=True,
+                         timeout=30, check=False)
+    assert ran.returncode != 0, ran.stdout + ran.stderr
+    assert 'LastWrappedText' in ran.stderr and '"second"' in ran.stderr, ran.stderr

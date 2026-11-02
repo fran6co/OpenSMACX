@@ -4,6 +4,7 @@ These host controls compile the actual top_menu implementation with bounded
 window doubles; they are not a full runtime or native ABI proof.
 """
 from pathlib import Path
+import re
 import shutil
 import subprocess
 
@@ -48,7 +49,10 @@ def test_snapshot_uses_fresh_opening_window_not_cached_basepop(tmp_path):
     if executable is None:
         pytest.skip("g++ unavailable")
     source = projected("top_menu")
-    helper_start = source.index("static void top_menu_present_opening(")
+    declaration = re.search(
+        r"^static (?:inline )?void top_menu_present_opening\(", source, re.MULTILINE)
+    assert declaration is not None, "missing actual opening helper"
+    helper_start = declaration.start()
     helper_end = source.index("int __cdecl top_menu(int mode)", helper_start)
     helper = source[helper_start:helper_end]
     assert "BasePopDefaultField322C = opening_window();" in helper

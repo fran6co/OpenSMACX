@@ -86,15 +86,9 @@ const char *PrefsSection = "Alpha Centauri";       // 0x006900D0
 // RECOVERY_OBJECT: v1 0x00691AFC ?AlphaxFileID@@3PBDB
 LPCSTR AlphaxFileID = "ALPHAX";
 LPCSTR ScriptTxtID = "SCRIPT";
-// `const` + static: nothing outside this file names them, so internal
-// linkage folds the address into every subscript.
-static LPSTR Compass[MaxCompassNum];      // 0x00945D48
-
-// Typed view over Compass's existing #COMPASS parsing and eight-entry
-// lifetime. Each parsed LPSTR is passed directly to the table range check.
-LPSTR __cdecl compass_name(int direction) {
-    return StringTable.get(Compass[direction]);
-}
+// Alpha owns the parsed #COMPASS pointer IDs populated by read_rules.
+// RECOVERY_OBJECT: v1 0x00945D48 ?Compass@@3PAPADA
+LPSTR Compass[MaxCompassNum];      // 0x00945D48
 
 LPSTR Difficulty[MaxDiffNum];      // 0x0096C85C
 

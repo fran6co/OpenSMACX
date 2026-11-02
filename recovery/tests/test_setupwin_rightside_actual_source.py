@@ -119,7 +119,7 @@ def test_order_and_lifetime_mutants_fail_with_specific_semantics(
 
 def test_reintroduced_standalone_palette_is_rejected(tmp_path):
     body = actual_body()
-    anchor = "        char token[512];"
+    anchor = "        char token[256];"
     assert body.count(anchor) == 1
     mutant = body.replace(anchor, "        Palette spurious;\n" + anchor, 1)
     result = run_host(tmp_path, mutant)

@@ -816,7 +816,6 @@ resolve_panel_selection:
         }
 
         StringTemp[0] = '\0';
-        bool has_terraforming_label = false;
         for (int terrain = 0; terrain < 0x13; ++terrain) {
             const uint32_t terrain_bit = Terraforming[terrain].bit;
             if (terrain_bit == 0 || (tile.bit & terrain_bit) == 0 ||
@@ -824,15 +823,14 @@ resolve_panel_selection:
                 terrain == TERRA_PLANT_FUNGUS) continue;
             if (terrain == 0 && (tile.bit & 0x80000)) continue;
             if (terrain == 5 && (tile.bit & 0x8)) continue;
-            if (has_terraforming_label) strcat(StringTemp, ", ");
+            if (strlen(StringTemp) != 0) strcat(StringTemp, ", ");
             const LPSTR label = (tile.climate & 0xe0) < 0x60
                 ? Terraforming[terrain].name_sea : Terraforming[terrain].name;
             strcat(StringTemp,
                    StringTable.get(label));
-            has_terraforming_label = true;
         }
         if ((tile.bit & BIT_MONOLITH) != 0) {
-            if (has_terraforming_label) strcat(StringTemp, ", ");
+            if (strlen(StringTemp) != 0) strcat(StringTemp, ", ");
             strcat(StringTemp, label_get(0x238 / 4));
         }
         if (StringTemp[0] != '\0') {
@@ -1534,6 +1532,9 @@ static const char *vehicle_order_rule_text(LPSTR encoded_id) {
 // Historical seed observation: complete scaffold measured MISMATCH at3;
 // its obsolete tool instructions are retired, not a current body claim.
 void __cdecl say_orders(char *text, int veh_id) {
+    char number[80];
+    char suffix[80];
+    char prefix[80];
     Veh &vehicle = Vehs[veh_id];
     const uint32_t state = vehicle.state;
 
@@ -1543,14 +1544,12 @@ void __cdecl say_orders(char *text, int veh_id) {
         && ((state & 0x02000200u) != 0x02000200u || prefix_state)) {
         ::strcat(text, "(");
         if (vehicle.order_auto_type == 10) {
-            char prefix[80];
             prefix[0] = '\0';
             ::strcat(prefix, label_get(0x6F0 / 4));
             const int base_id = base_at(vehicle.waypoint_x[1],
                                         vehicle.waypoint_y[1]);
             if (base_id >= 0) {
                 parse_says(0, Bases[base_id].name_string, -1, -1);
-                char suffix[80];
                 parse_string(prefix, suffix);
                 ::strcat(text, suffix);
             }
@@ -1563,19 +1562,20 @@ void __cdecl say_orders(char *text, int veh_id) {
         } else {
             ::strcat(text, label_get(0x62C / 4));
         }
-        ::strcat(text, ") ");
+        ::strcat(text, ")");
+        ::strcat(text, " ");
     }
 
-    if ((state & 0x00004000u) != 0) {
+    const uint32_t state_after_prefix = vehicle.state;
+    if ((state_after_prefix & 0x00004000u) != 0) {
         ::strcat(text, vehicle_order_rule_text(Order[26].order));
         return;
     }
 
-    if ((state & 0x01000200u) == 0x01000200u) {
+    if ((state_after_prefix & 0x01000200u) == 0x01000200u) {
         ::strcat(text, label_get(0x65C / 4));
         ::strcat(text, ": ");
-        const int count = vehicle.waypoint_count + 1;
-        for (int index = 0; index < count; ++index) {
+        for (int index = 0; index < vehicle.waypoint_count + 1; ++index) {
             say_loc(text, vehicle.waypoint_x[index],
                     vehicle.waypoint_y[index], 0, 2, 0);
             if (index < vehicle.waypoint_count) {
@@ -1612,23 +1612,25 @@ void __cdecl say_orders(char *text, int veh_id) {
             const int yield = resource_yield(
                 vehicle.order_auto_type, vehicle.faction_id,
                 vehicle.home_base_id, vehicle.x, vehicle.y);
-            char number[80];
             _itoa(yield, number, 10);
             ::strcat(text, number);
             ::strcat(text, label_get(0x5EC / 4));
-            ::strcat(text, ") ");
+            ::strcat(text, ")");
+            ::strcat(text, " ");
         }
     }
 
     if ((static_cast<unsigned char>(vehicle.order) & 0x3F) == ORDER_MOVE_TO) {
         ::strcat(text, " ");
         const bool has_patrol_route =
-            (state & 0x02000200u) == 0x02000200u
+            (vehicle.state & 0x02000200u) == 0x02000200u
             && vehicle.patrol_current_point < vehicle.waypoint_count;
         const int location_mode = has_patrol_route ? 2 : 1;
         say_loc(text, vehicle.waypoint_x[0], vehicle.waypoint_y[0],
                 0, location_mode, 0);
-        if (has_patrol_route && vehicle.waypoint_count != 0) {
+        if ((vehicle.state & 0x02000200u) == 0x02000200u &&
+            vehicle.patrol_current_point < vehicle.waypoint_count &&
+            vehicle.waypoint_count != 0) {
             for (int index = 0; index < vehicle.waypoint_count; ++index) {
                 ::strcat(text, " ");
                 ::strcat(text, label_get(0x664 / 4));

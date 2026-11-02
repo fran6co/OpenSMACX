@@ -634,6 +634,7 @@ Purpose: Draw one tech-wizard facility sprite at the isometric position its
          record's footprint implies.
 // ORIGINAL: 0x005BE2A0 tech_wizard_unk2 0x005BE2A0-0x005BE378 FILE
 // RECOVERY_BINDING: v1 {"evidence": ["Original5BE2A0..5BE378; retired seed git:117282ee:src/unrecovered/005be2a0.cpp records the same identity and spans with its register-save TRIED note kept below.", "The scale pair is sprite.h's own SpriteScaleNumerator/Denominator (0x00696D18/0x00696D1C), the size/divisor pair is mapwin.h's MapWinCaptionScale/MapWinCaptionDivisor (0x00691E6C/0x00691E70), and the facility tables are sprite.cpp's g_TECH_ICON_SPRITES (0x00759E28, whose 0x2C stride is the seed's 0x11-int entry) with the transparency bytes at 0x00759E30 - all read exactly as the seed measures them.", "The sprite draw is sprite.h's own Sprite::draw(Buffer *, int, int, int)."], "reason": "Coverage transcription of the facility sprite painter with the record-table arithmetic kept at the seed's measured strides."}
+// symbol    _tech_wizard_unk2
 // TRIED (seed): 6-param __cdecl void, if/else matching Ghidra's arithmetic
 //         structure reaches 0.84 mnemonic similarity; the original saves
 //         ebx/esi before the al&1 test while the scaffold defers it.
