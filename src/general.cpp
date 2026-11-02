@@ -16,6 +16,12 @@
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
 #include "stdafx.h"
+
+// Distinct writable string cells observed at the original call sites.
+// These role names do not claim original source names or allocation bounds.
+// RECOVERY_OBJECT: v1 0x00690F64 _InitialAutoSaveDeletePath
+static char InitialAutoSaveDeletePath[] = "saves\\auto\\Alpha Centauri Autosave 1.SAV";
+
 // Original mem_get at 0x005D4510 reports failure through this USER32 export; no function alias.
 // RECOVERY_IMPORT: v1 __imp__MessageBoxA@16 USER32.dll name:MessageBoxA
 #include "council.h"
@@ -1400,7 +1406,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl kill_auto_save() {
-    remove("saves\\auto\\Alpha Centauri Autosave 1.SAV");
+    remove(InitialAutoSaveDeletePath);
 }
 
 /*

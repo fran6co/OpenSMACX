@@ -38,6 +38,9 @@ def live_source():
              "ExplosionColorTables", "SpotlightColorTable", "ConstantColorTables",
              "ArmorTintColorTables", "BodyTintColorTables")
     definitions = []
+    for name in ("PaletteCompareOpenPath", "PaletteCompareCreatePath"):
+        definition, = re.findall(r"static char " + name + r"\[\] = [^;]+;", text)
+        definitions.append(definition)
     for name in names:
         definition, = re.findall(r"unsigned char " + name + r"(?:\[\d+\])+;",text)
         definitions.append(definition)

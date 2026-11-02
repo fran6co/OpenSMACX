@@ -22,6 +22,18 @@
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned CRT slot0x682550 selects original initializer0x477e10..0x477e26, registering fini0x477e30..0x477e3a; complete independent decode establishes exclusive boundaries.", "Source-owned object?MultiWindow@@3VMultiWin@@A identifies original storage0x7fd648. Startup arguments/calls: call 0x47a590; push 0x477e30. Cleanup receiver/calls: mov ecx, 0x7fd648; jmp 0x47a430. Constructor/destructor targets retain their existing class-owned source mappings.", "Fresh physical src/game.cpp COFF selects _$E26 through .CRT$XCU and registers _$E24, both referencing the genuine source global. Original NetMsg argument triples and implicit PlanWin/Console most-derived flags are preserved by the existing declarations; complete virtual-base teardown is compiler-owned, not authored offsets.", "Current local helper symbols interpret present emission, not original debug names or historical TU boundaries. Object starts do not prove allocation extents. This binding establishes neither cross-TU global order, masked-reference correctness, strict linked preservation, dependency-provider equivalence nor runtime/game acceptance; excluded guarded sprite cleanup remains separate."], "reason": "Bind original exit identity to the genuine compiler-generated lifetime of ?MultiWindow@@3VMultiWin@@A in its actual source owner; no manual lifecycle callback is authored."}
 // symbol    _$E11
 #include "stdafx.h"
+
+// Distinct writable string cells observed at the original call sites.
+// These role names do not claim original source names or allocation bounds.
+// RECOVERY_OBJECT: v1 0x00682ECC _PaletteCompareOpenPath
+static char PaletteCompareOpenPath[] = "palcheck.tmp";
+// RECOVERY_OBJECT: v1 0x00682EDC _PaletteCompareCreatePath
+static char PaletteCompareCreatePath[] = "palcheck.tmp";
+// RECOVERY_OBJECT: v1 0x00685150 _CyclingConfigFile
+static char CyclingConfigFile[] = "system";
+// RECOVERY_OBJECT: v1 0x00685168 _OceanOffsetsConfigFile
+static char OceanOffsetsConfigFile[] = "system";
+
 // Original read_tamper/set_tamper at 0x0051E000/0x0051E090 use these registry exports through the SDK.
 // RECOVERY_IMPORT: v1 __imp__RegCloseKey@4 ADVAPI32.dll name:RegCloseKey
 // RECOVERY_IMPORT: v1 __imp__RegCreateKeyExA@36 ADVAPI32.dll name:RegCreateKeyExA
@@ -1012,14 +1024,14 @@ void __cdecl load_faction_art(int faction_id) {
 #endif
 int __cdecl compare_palettes() {
     Filemap file;
-    void *cache = file.open("palcheck.tmp", 1);
+    void *cache = file.open(PaletteCompareOpenPath, 1);
     if (cache) {
         if (memcmp(cache, g_PALETTE1.entries(), 256 * sizeof(PALETTEENTRY)) == 0) {
             return 0;
         }
         memcpy(cache, g_PALETTE1.entries(), 256 * sizeof(PALETTEENTRY));
     } else {
-        cache = file.create("palcheck.tmp", 256 * sizeof(PALETTEENTRY), 1);
+        cache = file.create(PaletteCompareCreatePath, 256 * sizeof(PALETTEENTRY), 1);
         if (cache) {
             memcpy(cache, g_PALETTE1.entries(), 256 * sizeof(PALETTEENTRY));
         }
@@ -3093,7 +3105,7 @@ int __cdecl game_init(int mode, int reload) {
 // RECOVERY_BINDING: v1 {"evidence": ["45540F guards both sections; 455432..45546B read three cycle arguments and call Palette init/start in order; 45547C..4554B9 accept ASCII-digit-led ocean lines with an eighty-entry bound and one trailing read. The retained seed and exact startup table remain available."], "reason": "The original ordered configuration loader owns palette cycle setup and writes the shared eighty-entry ocean shade table consumed by terrain generation."}
 // TRIED: nothing ruled out; landed at MISMATCH #50 (deep, near the second text_open/do-while), for-loop + do-while over text_get/text_item_number, Palette::init_cycle/start_cycle on the fixed g_0094c590 object
 void __cdecl load_cycling() {
-    if (text_open("system", "cycling") != 0) {
+    if (text_open(CyclingConfigFile, "cycling") != 0) {
         return;
     }
     text_get();
@@ -3108,7 +3120,7 @@ void __cdecl load_cycling() {
         g_PALETTE1.init_cycle(cycle, palette_first, colors, interval);
         g_PALETTE1.start_cycle(cycle);
     }
-    if (text_open("system", "oceanoffsets") != 0) {
+    if (text_open(OceanOffsetsConfigFile, "oceanoffsets") != 0) {
         return;
     }
     int offset = 0;

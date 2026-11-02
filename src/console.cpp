@@ -40,6 +40,12 @@
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned CRT slot 0x682624 selects startup 0x50e980..0x50e996 and registers cleanup 0x50e9a0..0x50e9aa. Complete root decode proves the exclusive RET/JMP endpoints.", "The source-owned object ?ConsoleTimer@@3VTime@@A is selected by physical COFF constructor/destructor relocations; current emitted finalizer is identified by the adjacent symbol fact. Original receiver 0x939e88 belongs to this real global; preserve its class lifetime and registration.", "Buffer relative declaration order is PCX, interface array, middle, vehicle, special-text owner, Sprite, shared Buffer. Generated helpers are compiler output, not hand-authored address callbacks. Selected same-owner order does not establish full CRT order, dependency provider, linked preservation or runtime/game acceptance. Guarded cleanup is a separate unfinished obligation."], "reason": "Bind original fini operation to the genuine C++ lifetime of ?ConsoleTimer@@3VTime@@A; retain original behavior and remaining matching obligations."}
 // symbol    _$E11
 #include "stdafx.h"
+
+// Distinct writable string cells observed at the original call sites.
+// These role names do not claim original source names or allocation bounds.
+// RECOVERY_OBJECT: v1 0x0068A9A4 _EraseLandmarkDeniedKey
+static char EraseLandmarkDeniedKey[] = "LANDMARKNO";
+
 // Original auto_play_callback at 0x0050E890 uses this named USER32 export; PE imports supply its slot.
 // RECOVERY_IMPORT: v1 __imp__SetCursorPos@8 USER32.dll name:SetCursorPos
 #include "prefwin.h"  // Console owns preference-window calls.
@@ -1612,7 +1618,7 @@ void Console::erase_landmark(int x_coord, int y_coord) {
     }
     if ((GameDataStateStorage.fields_.game_state_ & 0x80) == 0 &&
         valid_landmark(x_coord, y_coord, ConsoleGlobal.faction_id_) == 0) {
-        NetMsgPrimary.pop("LANDMARKNO", 5000, 0, nullptr);
+        NetMsgPrimary.pop(EraseLandmarkDeniedKey, 5000, 0, nullptr);
         return;
     }
 

@@ -23,6 +23,9 @@ def actual_source():
     source = (ROOT / "src/game.cpp").read_text()
     initializer, = re.findall(
         r"\bint\s+OceanDetailShade\s*\[80\]\s*=\s*\{[^}]*\}\s*;", source)
+    for name in ("CyclingConfigFile", "OceanOffsetsConfigFile"):
+        declaration, = re.findall(r"static char " + name + r"\[\] = [^;]+;", source)
+        initializer += "\n" + declaration
     start = source.index("void __cdecl load_cycling() {")
     opening = source.index("{", start)
     depth = 0
@@ -183,7 +186,7 @@ def test_actual_palette_cycling_loader(tmp_path):
 
 
 @pytest.mark.parametrize("before,after", [
-    ('text_open("system", "cycling") != 0', 'text_open("system", "cycling") == 0'),
+    ('text_open(CyclingConfigFile, "cycling") != 0', 'text_open(CyclingConfigFile, "cycling") == 0'),
     ('const int count = text_item_number();',
      'const int count = text_item_number(); if (count <= 0) return;'),
     ('cycle < count', 'cycle <= count'),
@@ -195,7 +198,7 @@ def test_actual_palette_cycling_loader(tmp_path):
     ('g_PALETTE1.init_cycle(cycle, palette_first, colors, interval);',
      'if (g_PALETTE1.init_cycle(cycle, palette_first, colors, interval) != 0) continue;'),
     ('g_PALETTE1.start_cycle(cycle);', ';'),
-    ('text_open("system", "oceanoffsets") != 0', 'text_open("system", "oceanoffsets") == 0'),
+    ('text_open(OceanOffsetsConfigFile, "oceanoffsets") != 0', 'text_open(OceanOffsetsConfigFile, "oceanoffsets") == 0'),
     ("*line >= '0'", "*line > '0'"),
     ("*line <= '9'", "*line < '9'"),
     ("*line >= '0' && *line <= '9'", "(*line >= '0' && *line <= '9') || *line == '+'"),
@@ -208,6 +211,8 @@ def test_actual_palette_cycling_loader(tmp_path):
 def test_palette_loader_damage_is_observed(tmp_path, before, after):
     initializer, body = actual_source()
     assert before in body
+    original = body
     body = body.replace(before, after)
+    assert body != original
     result = run_host(tmp_path, initializer, body)
     assert result.returncode == 73, result.stderr

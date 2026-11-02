@@ -56,6 +56,12 @@
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned complete exclusive span and selected CRT startup pair: NewTech483880..4838A4/4838B0..4838D8, sharedSprite5D71D0..5D71E6/5D71F0..5D720F, WinBuffer5EB350..5EB366/5EB370..5EB38F. These are process-start lifetimes, not lazy statics or authored callback substitutes.", "NewTech has six actual stride2C Sprite elements at822610 with separate guard822604 mask1. Shared Buffer Sprite9B3A50 uses mask2 of existing special-text guard9B37CC; Win drawing Buffer9B6F08 uses separate guard9B6E30 mask1. Guard is published before actual reverse/direct teardown, upper bits retained and constructors do not reset it.", "Fresh complete build-4esa2of5 COFF proves owner ?BufferSpriteOwner@@3UBufferSpriteLifetime@@A with generated fini symbol _$E44. Constructor/registration closures and direct cleanup guard/receiver references are physically verified; aggregate uses real compiler vector construction/destruction. Selected same-owner CRT order stays unchanged. GCC/Clang actual source controls cover prefix unwind, reverse order, shared masks and guarded reentry.", "Chosen owner types are implementation, not recovered original names or enclosing allocation proof. Exact initializer/unwind spelling, original data layout, linked retained selection and runtime/full-game fidelity remain obligations; no measurement claim is granted. Preserve prior claims and historical discoveries."], "reason": "Bind original buffer guarded global fini to its genuine source-owned lifetime and actual compiler-generated closure."}
 // symbol    _$E31
 #include "stdafx.h"
+
+// Distinct writable string cells observed at the original call sites.
+// These role names do not claim original source names or allocation bounds.
+// RECOVERY_OBJECT: v1 0x00696C88 _BufferPcxLoadSuffix
+static char BufferPcxLoadSuffix[] = ".pcx";
+
 #include "buffer.h"
 #include "graphicwin.h"
 #include "filemap.h"
@@ -2081,7 +2087,7 @@ int Buffer::load_pcx(const char *filename, Palette *palette, int tgl, int height
         --scan;
     }
     if (scan == path) {
-        strcat(path, ".pcx");
+        strcat(path, BufferPcxLoadSuffix);
     }
 
     if (map.open_read(path, TRUE) == nullptr) {
