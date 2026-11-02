@@ -37,8 +37,9 @@ def without_comments(source: str) -> str:
 
 def actual_bodies():
     cpp = (ROOT / "src/game.cpp").read_text()
+    calendar = (ROOT / "src/game_calendar.cpp").read_text()
     return (
-        extract_definition(cpp, "MEASURED uint32_t __cdecl game_year(int turn)"),
+        extract_definition(calendar, "MEASURED uint32_t __cdecl game_year(int turn)"),
         extract_definition(cpp, "MEASURED int __cdecl energy_limit(int)"),
     )
 
@@ -64,7 +65,9 @@ def test_helpers_have_one_out_of_line_definition_and_header_declarations():
         r"\bMEASURED\s+int\s+__cdecl\s+energy_limit\s*\([^;{}]*\)\s*\{",
         header,
     )
-    assert cpp.count("MEASURED uint32_t __cdecl game_year(int turn)") == 1
+    calendar = (ROOT / "src/game_calendar.cpp").read_text()
+    assert cpp.count("MEASURED uint32_t __cdecl game_year(int turn)") == 0
+    assert calendar.count("MEASURED uint32_t __cdecl game_year(int turn)") == 1
     assert cpp.count("MEASURED int __cdecl energy_limit(int)") == 1
     assert "return ScenarioSave.starting_mission_year + turn;" in actual_bodies()[0]
     assert "return 10;" in actual_bodies()[1]

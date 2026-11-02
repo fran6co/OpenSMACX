@@ -440,21 +440,7 @@ int Net::enumerate_sessions(AlphaNetLedger *ledger, const char *password) {
     ledger->sort_sessions();
     if (result != 0) return 1;
 
-    const int position = -1;
-    if (position <= ledger->entry_count_ - 1) {
-        ledger->current_ = ledger->head_;
-        if (position < 0) {
-            const int entry_count = ledger->entry_count_;
-            if (abs(position) <= entry_count) {
-                int remaining = abs(position);
-                while (remaining > 0) {
-                    --remaining;
-                    ledger->current_ = ledger->current_->previous_;
-                }
-                ledger->current_position_ = ledger->entry_count_ + position;
-            }
-        }
-    }
+    ledger->seek_pos(-1);
     return 0;
 }
 
