@@ -507,32 +507,32 @@ NetDaemon::NetDaemon() : AlphaNet(), deletion_list_(DeletionList::Uninitialized(
     primary_state_.trailing_words_[6] = 0;
     channels_[0].leading_words_[1] = 0;
     channels_[0].leading_words_[0] = 0;
-    channels_[0].payload_.vehicle_selection_follow = 0;
+    channels_[0].trailing_words_[0] = 0;
     channels_[1].leading_words_[1] = 0;
     channels_[0].trailing_words_[9] = 0;
     channels_[1].leading_words_[0] = 0;
+    channels_[1].trailing_words_[5] = 0;
     channels_[1].trailing_words_[4] = 0;
-    channels_[1].trailing_words_[3] = 0;
     primary_state_.trailing_words_[3] = 0;
     primary_state_.trailing_words_[4] = 0;
     primary_state_.trailing_words_[5] = 0;
-    channels_[1].trailing_words_[1] = 0;
-    channels_[1].trailing_words_[0] = 0;
+    channels_[1].trailing_words_[3] = 0;
+    channels_[1].trailing_words_[2] = 0;
     channels_[1].leading_words_[3] = 0;
     channels_[1].leading_words_[2] = 0;
     channels_[1].payload_.flags = 0;
     primary_state_.session_phase_ = 0;
     primary_state_.trailing_words_[0] = 0;
+    channels_[1].trailing_words_[8] = 0;
     channels_[1].trailing_words_[7] = 0;
-    channels_[1].trailing_words_[6] = 0;
     primary_state_.trailing_words_[1] = 0;
     primary_state_.trailing_words_[2] = 0;
-    channels_[0].leading_words_[3] = 0;
+    channels_[0].payload_.vehicle_selection_follow = 0;
 
     // 0x1BD0 is lock_state_[2]'s eleventh dword - the ctor sets it to 0xFF.
     channels_[1].trailing_words_[6] = 0xFF;
     for (int32_t i = 0; i < 8; i++) {
-        channels_[0].trailing_words_[i] = 0;
+        channels_[0].trailing_words_[i + 1] = 0;
     }
 
     locks_.clear();
@@ -951,7 +951,7 @@ L145:
 }
 
 
-// ORIGINAL: 0x0052E900 ?send_game@NetDaemon@@QAEXXZ 0x0052E900-0x0052ED33 FILE
+// ORIGINAL: 0x0052E900 ?send_game@NetDaemon@@QAEXXZ 0x0052E900-0x0052ED33 FILE BYTE_EXACT
 // size      1075 bytes
 // prototype void (__thiscall ?send_game@NetDaemon@@QAEXXZ)(NetDaemon* this)
 // callers   1   call targets   3
@@ -1027,61 +1027,35 @@ L145:
 
 
 void NetDaemon::send_game() {
-    unsigned long a, b;
-    unsigned long c, d;
-    unsigned long e, f;
-    void *id;
-
     synch(0, 0, 0, 0, 0, 1, 0x2101);
-    for (;;) {
-        id = NetDaemonNet.Net::get(&a, &b);
-        if (id == 0) break;
-        process_message(static_cast<char *>(id), b, a);
+    while (receive()) {
     }
 
     synch(2, 0, 0, 0, 0, 1, 0x2101);
-    for (;;) {
-        id = NetDaemonNet.Net::get(&a, &b);
-        if (id == 0) break;
-        process_message(static_cast<char *>(id), b, a);
+    while (receive()) {
     }
 
     synch(4, 0, 0, 0, 0, 1, 0x2101);
-    for (;;) {
-        id = NetDaemonNet.Net::get(&a, &b);
-        if (id == 0) break;
-        process_message(static_cast<char *>(id), b, a);
+    while (receive()) {
     }
 
     synch(5, 0, 0, 0, 0, 1, 0x2101);
-    for (;;) {
-        id = NetDaemonNet.Net::get(&a, &b);
-        if (id == 0) break;
-        process_message(static_cast<char *>(id), b, a);
+    while (receive()) {
     }
 
     int i = 0;
     int off = 0;
     do {
         synch(6, i, 0, 0, 0, 1, 0x2101);
-        for (;;) {
-            id = NetDaemonNet.Net::get(&c, &d);
-            if (id == 0) break;
-            process_message(static_cast<char *>(id), d, c);
+        while (receive()) {
         }
 
         synch(7, i, 0, 0, 0, 1, 0x2101);
-        for (;;) {
-            id = NetDaemonNet.Net::get(&e, &f);
-            if (id == 0) break;
-            process_message(static_cast<char *>(id), f, e);
+        while (receive()) {
         }
 
         synch(0xf, off, 0x40, 0, 0, 1, 0x2101);
-        for (;;) {
-            id = NetDaemonNet.Net::get(&e, &f);
-            if (id == 0) break;
-            process_message(static_cast<char *>(id), f, e);
+        while (receive()) {
         }
 
         off += 0x40;
@@ -1089,74 +1063,47 @@ void NetDaemon::send_game() {
     } while (off < 0x200);
 
     synch(0x29, 0, 0, 0, 0, 1, 0x2101);
-    for (;;) {
-        id = NetDaemonNet.Net::get(&e, &f);
-        if (id == 0) break;
-        process_message(static_cast<char *>(id), f, e);
+    while (receive()) {
     }
 
     synch(0x12, 0, 0, 0, 0, 1, 0x2101);
-    for (;;) {
-        id = NetDaemonNet.Net::get(&e, &f);
-        if (id == 0) break;
-        process_message(static_cast<char *>(id), f, e);
+    while (receive()) {
     }
 
     synch(0x14, 0, 0, 0, 0, 1, 0x2101);
-    for (;;) {
-        id = NetDaemonNet.Net::get(&e, &f);
-        if (id == 0) break;
-        process_message(static_cast<char *>(id), f, e);
+    while (receive()) {
     }
 
     synch(0x19, 0, 0, 0, 0, 1, 0x2101);
-    for (;;) {
-        id = NetDaemonNet.Net::get(&e, &f);
-        if (id == 0) break;
-        process_message(static_cast<char *>(id), f, e);
+    while (receive()) {
     }
 
     if (GameDataStateStorage.fields_.turn_current_num_ != 0) {
         synch(0x20, 0, 0, 0, 0, 1, 0x2101);
-        for (;;) {
-            id = NetDaemonNet.Net::get(&e, &f);
-            if (id == 0) break;
-            process_message(static_cast<char *>(id), f, e);
+        while (receive()) {
         }
     }
 
     synch(0x21, 0, 0, 0, 0, 1, 0x2101);
-    for (;;) {
-        id = NetDaemonNet.Net::get(&e, &f);
-        if (id == 0) break;
-        process_message(static_cast<char *>(id), f, e);
+    while (receive()) {
     }
 
     if (ReplayEventBytes != 0) {
         synch(0x22, 0, 0, 0, 0, 1, 0x2101);
-        for (;;) {
-            id = NetDaemonNet.Net::get(&e, &f);
-            if (id == 0) break;
-            process_message(static_cast<char *>(id), f, e);
+        while (receive()) {
         }
     }
 
     synch(0x24, 0, 0, 0, 0, 1, 0x2101);
-    for (;;) {
-        id = NetDaemonNet.Net::get(&e, &f);
-        if (id == 0) break;
-        process_message(static_cast<char *>(id), f, e);
+    while (receive()) {
     }
 
     synch(0x15, 0, 0, 0, 0, 1, 0x2101);
-    for (;;) {
-        id = NetDaemonNet.Net::get(&e, &f);
-        if (id == 0) break;
-        process_message(static_cast<char *>(id), f, e);
+    while (receive()) {
     }
 }
 
-// ORIGINAL: 0x0052F520 ?send_rules@NetDaemon@@QAEXXZ 0x0052F520-0x0052F8D6 FILE
+// ORIGINAL: 0x0052F520 ?send_rules@NetDaemon@@QAEXXZ 0x0052F520-0x0052F8D6 FILE BYTE_EXACT
 // size      950 bytes
 // prototype void (__thiscall ?send_rules@NetDaemon@@QAEXXZ)(NetDaemon* this)
 // callers   1   call targets   3
@@ -1197,76 +1144,60 @@ void NetDaemon::send_game() {
 // emitter computes declarations; it does not carry lessons.
 
 void NetDaemon::send_rules() {
-    unsigned long v4, v8;
-
     synch(0x80, 0, 0, 0, 0, 1, 0x2101);
-    while (void *result = NetDaemonNet.Net::get(&v4, &v8)) {
-        process_message(static_cast<char *>(result), v8, v4);
+    while (receive()) {
     }
 
     synch(0x81, 0, 0, 0, 0, 1, 0x2101);
-    while (void *result = NetDaemonNet.Net::get(&v4, &v8)) {
-        process_message(static_cast<char *>(result), v8, v4);
+    while (receive()) {
     }
 
     synch(0x82, 0, 0, 0, 0, 1, 0x2101);
-    while (void *result = NetDaemonNet.Net::get(&v4, &v8)) {
-        process_message(static_cast<char *>(result), v8, v4);
+    while (receive()) {
     }
 
     synch(0x83, 0, 0, 0, 0, 1, 0x2101);
-    while (void *result = NetDaemonNet.Net::get(&v4, &v8)) {
-        process_message(static_cast<char *>(result), v8, v4);
+    while (receive()) {
     }
 
     synch(0x84, 0, 0, 0, 0, 1, 0x2101);
-    while (void *result = NetDaemonNet.Net::get(&v4, &v8)) {
-        process_message(static_cast<char *>(result), v8, v4);
+    while (receive()) {
     }
 
     synch(0x85, 0, 0, 0, 0, 1, 0x2101);
-    while (void *result = NetDaemonNet.Net::get(&v4, &v8)) {
-        process_message(static_cast<char *>(result), v8, v4);
+    while (receive()) {
     }
 
     synch(0x86, 0, 0, 0, 0, 1, 0x2101);
-    while (void *result = NetDaemonNet.Net::get(&v4, &v8)) {
-        process_message(static_cast<char *>(result), v8, v4);
+    while (receive()) {
     }
 
     synch(0x87, 0, 0, 0, 0, 1, 0x2101);
-    while (void *result = NetDaemonNet.Net::get(&v4, &v8)) {
-        process_message(static_cast<char *>(result), v8, v4);
+    while (receive()) {
     }
 
     synch(0x88, 0, 0, 0, 0, 1, 0x2101);
-    while (void *result = NetDaemonNet.Net::get(&v4, &v8)) {
-        process_message(static_cast<char *>(result), v8, v4);
+    while (receive()) {
     }
 
     synch(0x89, 0, 0, 0, 0, 1, 0x2101);
-    while (void *result = NetDaemonNet.Net::get(&v4, &v8)) {
-        process_message(static_cast<char *>(result), v8, v4);
+    while (receive()) {
     }
 
     synch(0x8a, 0, 0, 0, 0, 1, 0x2101);
-    while (void *result = NetDaemonNet.Net::get(&v4, &v8)) {
-        process_message(static_cast<char *>(result), v8, v4);
+    while (receive()) {
     }
 
     synch(0x8b, 0, 0, 0, 0, 1, 0x2101);
-    while (void *result = NetDaemonNet.Net::get(&v4, &v8)) {
-        process_message(static_cast<char *>(result), v8, v4);
+    while (receive()) {
     }
 
     synch(0x8c, 0, 0, 0, 0, 1, 0x2101);
-    while (void *result = NetDaemonNet.Net::get(&v4, &v8)) {
-        process_message(static_cast<char *>(result), v8, v4);
+    while (receive()) {
     }
 
     synch(0x8d, 0, 0, 0, 0, 1, 0x2101);
-    while (void *result = NetDaemonNet.Net::get(&v4, &v8)) {
-        process_message(static_cast<char *>(result), v8, v4);
+    while (receive()) {
     }
 }
 
@@ -3284,8 +3215,8 @@ void NetDaemon::await_diplo(int opcode) {
     if (IsMultiplayerNet != 0) {
         channels_[1].leading_words_[1] = opcode;
         log_say("Awaiting DIPLO event", ConsoleGlobal.faction_id_, 0, 0);
-        (NetBusyCount)++;
         int32_t saved = NetDaemonNet.channels_[0].leading_words_[3];
+        (NetBusyCount)++;
         unsigned int start_time = timeGetTime();
         int timed_out = 0;
         if (channels_[1].leading_words_[1] == opcode) {

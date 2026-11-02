@@ -11,6 +11,7 @@ from match_recovery.includes import COMMENTS_OR_STRINGS
 
 ROOT = Path(__file__).resolve().parents[2]
 MAP_SOURCE = ROOT / "src/map.cpp"
+WORLD_SOURCE = ROOT / "src/world.cpp"
 LOCK_SOURCE = ROOT / "src/lock.cpp"
 
 
@@ -47,6 +48,7 @@ static int MapArea;
 static Map alternate_storage[1];
 static Map *alternate_map = alternate_storage;
 static int terrain_clear_calls, map_draw_calls;
+static Map *random_map_replacement;
 static int change_bounds_on_callback;
 static int MapSeaLevel;
 static uint32_t AltNatural[11];
@@ -73,7 +75,11 @@ static void bit_set(int x, int y, uint32_t bits, int on) {
     assert(x == 0 && y == 0 && on == 1); events[event_count++] = 4;
     MapTiles[0].bit |= bits;
 }
-static int rand() { ++random_calls; events[event_count++] = 3; return random_result; }
+static int rand() {
+    ++random_calls; events[event_count++] = 3;
+    if (random_map_replacement) MapTiles = random_map_replacement;
+    return random_result;
+}
 static void do_all_non_input() {
     events[event_count++] = 5;
     if (change_bounds_on_callback) {
@@ -300,10 +306,11 @@ int main() {
 
 def actual_tu(mutant: str = "") -> str:
     map_text = MAP_SOURCE.read_text(encoding="utf-8")
+    world_text = WORLD_SOURCE.read_text(encoding="utf-8")
     lock_text = LOCK_SOURCE.read_text(encoding="utf-8")
     replacements = {
-        "// ACTUAL_WORLD_ROCKY": definition(map_text, "void __cdecl world_rocky()"),
-        "// ACTUAL_WORLD_SHORELINES": definition(map_text, "void __cdecl world_shorelines()"),
+        "// ACTUAL_WORLD_ROCKY": definition(world_text, "void __cdecl world_rocky()"),
+        "// ACTUAL_WORLD_SHORELINES": definition(world_text, "void __cdecl world_shorelines()"),
         "// ACTUAL_CLEAR_DIRTY": definition(map_text, "void __cdecl clear_dirty()"),
         "// ACTUAL_LOCK_RESET": definition(lock_text, "void Lock::reset_map()"),
         "// ACTUAL_LOCK_CLEAR": definition(lock_text, "void Lock::clear()"),
@@ -353,9 +360,9 @@ def test_actual_typed_map_and_lock_bodies(compiler, tmp_path):
 
 
 def test_typed_member_and_original_order_source_controls():
-    rocky = definition(MAP_SOURCE.read_text(encoding="utf-8"),
+    rocky = definition(WORLD_SOURCE.read_text(encoding="utf-8"),
                        "void __cdecl world_rocky()")
-    shore = definition(MAP_SOURCE.read_text(encoding="utf-8"),
+    shore = definition(WORLD_SOURCE.read_text(encoding="utf-8"),
                        "void __cdecl world_shorelines()")
     dirty = definition(MAP_SOURCE.read_text(encoding="utf-8"),
                        "void __cdecl clear_dirty()")
@@ -391,3 +398,146 @@ def test_actual_source_mutants_fail_member_and_mask_controls(compiler, mutant, t
     ran = subprocess.run([str(binary)], check=False, capture_output=True,
                          text=True, timeout=15)
     assert ran.returncode != 0
+
+
+def _run_boundary_control(tmp_path, compiler, source):
+    tool = shutil.which(compiler)
+    if tool is None:
+        pytest.skip(f"{compiler} unavailable")
+    cpp = tmp_path / "boundary.cpp"
+    binary = tmp_path / "boundary"
+    cpp.write_text(source, encoding="utf-8")
+    built = subprocess.run([tool, "-std=c++11", "-Wall", "-Wextra", str(cpp),
+                            "-o", str(binary)], capture_output=True, text=True,
+                           timeout=45)
+    assert built.returncode == 0, built.stdout + built.stderr
+    return subprocess.run([str(binary)], capture_output=True, text=True, timeout=15)
+
+
+@pytest.mark.parametrize("compiler", ("g++", "clang++"))
+@pytest.mark.parametrize("mutant", ("", "cached_climate", "wrong_parity"))
+def test_rocky_reads_after_external_random_boundary(compiler, mutant, tmp_path):
+    # Poison the external-call boundary to expose the original reload. This
+    # does not claim that the real CRT rand implementation changes MapTiles.
+    source = actual_tu()
+    cases = r"""
+    Map random_target[1] = {};
+    const int random_cases[] = {0, 1, -1, (-2147483647 - 1), 2147483647, -2};
+    for (unsigned i = 0; i < sizeof random_cases / sizeof random_cases[0]; ++i) {
+        MapTiles = first;
+        MapLatitudeBounds = MapLongitudeBounds = MapLongitude = 1;
+        first[0].bit2 = 0;
+        rocky_after_flags = 4;
+        rocky_after_climate = 0xA0;
+        random_target[0].climate = 0x60;
+        random_target[0].bit = 0x12345678;
+        random_map_replacement = random_target;
+        random_result = random_cases[i];
+        event_count = random_calls = 0;
+        world_rocky();
+        assert(random_calls == 1 && MapTiles == random_target);
+        const bool even = (random_cases[i] % 2 == 0);
+        assert(random_target[0].bit == (even ? 0x12355678u : 0x12345678u));
+        assert(event_count == (even ? 5 : 4));
+        assert(events[0] == 1 && events[1] == 2 && events[2] == 3);
+        assert(events[event_count - 1] == 5);
+    }
+    random_map_replacement = 0;
+"""
+    assert source.count("    Map shoreline[1] = {};") == 1
+    source = source.replace("    Map shoreline[1] = {};", cases + "\n    Map shoreline[1] = {};", 1)
+    if mutant == "cached_climate":
+        before = "int climate = map_tiles()[MapLongitude * y + half_x].climate;"
+        assert source.count(before) == 1
+        source = source.replace(before, "int climate = tile->climate;", 1)
+    elif mutant == "wrong_parity":
+        assert source.count("rand() % 2 == 0") == 1
+        source = source.replace("rand() % 2 == 0", "rand() % 2 != 0", 1)
+    ran = _run_boundary_control(tmp_path, compiler, source)
+    assert (ran.returncode == 0) == (mutant == ""), ran.stdout + ran.stderr
+
+
+def _analysis_boundary_source():
+    header = (ROOT / "src/map.h").read_text(encoding="utf-8")
+    declarations = definition(header, "struct Map {") + ";\n"
+    declarations += definition(header, "struct Continent {") + ";\n"
+    names = ("ALT_BIT_OCEAN_SHELF", "ALT_BIT_SHORE_LINE", "RAINFALL_ARID",
+             "RAINFALL_MOIST", "RAINFALL_RAINY", "TERRAIN_BIT_ROCKY",
+             "BIT_FUNGUS", "BIT_UNK_4000", "BIT_UNK_40000000")
+    values = []
+    for name in names:
+        value = re.search(r"^\s*" + name + r"\s*=\s*([^,\n]+),", header, re.M)
+        assert value is not None
+        values.append(name + " = " + value[1])
+    declarations += "enum { " + ", ".join(values) + " };\n"
+    for name in ("MaxContinentNum", "MaxRegionLandNum"):
+        value = re.search(r"static const int " + name + r" = \d+;", header)
+        assert value is not None
+        declarations += value[0] + "\n"
+    helpers = "\n".join(definition(header, signature) for signature in (
+        "inline Map *__cdecl map_loc(int x, int y)",
+        "MEASURED inline BOOL __cdecl on_map(int x, int y)",
+        "MEASURED inline int __cdecl xrange(int x)",
+        "MEASURED inline int __cdecl region_at(int x, int y)",
+        "MEASURED inline int __cdecl bit_at(int x, int y)",
+        "inline uint32_t __cdecl climate_at(uint32_t x, uint32_t y)",
+        "inline int __cdecl altitude_at(uint32_t x, uint32_t y)",
+        "inline uint32_t __cdecl rocky_at(uint32_t x, uint32_t y)",
+        "MEASURED inline BOOL __cdecl is_ocean(int x, int y)",
+    ))
+    body = definition(WORLD_SOURCE.read_text(encoding="utf-8"),
+                      "void __cdecl world_analysis()")
+    return r"""
+#include <cassert>
+#include <cstdint>
+#define __cdecl
+#define MEASURED
+typedef int BOOL;
+""" + declarations + r"""
+Map entry_tiles[2], live_tiles[2];
+Map *MapTiles;
+Map *map_tiles() { return MapTiles; }
+int MapLongitude = 1, MapLongitudeBounds = 2, MapLatitudeBounds = 2;
+int MapIsFlat = 1, MapArea = 0, callbacks;
+Continent Continents[MaxContinentNum];
+const int RadiusOffsetX[25] = {}, RadiusOffsetY[25] = {};
+void do_all_non_input() {
+    if (callbacks++ == 0) MapTiles = live_tiles;
+}
+""" + helpers + "\n" + body + r"""
+int main() {
+    static_assert(sizeof(Map) == 0x2C, "actual Map stride");
+    MapTiles = entry_tiles;
+    for (int i = 0; i < 2; ++i) {
+        entry_tiles[i].bit = 0x40004000;
+        live_tiles[i].bit = 0x40004000;
+        entry_tiles[i].climate = 0;
+    }
+    live_tiles[1].region = 7;
+    live_tiles[1].climate = 0x68;
+    // 5C55E1 captures the flag cursor, 5C5861 advances it, and the row
+    // callback at 5C5872 precedes the next live coordinate/region queries.
+    world_analysis();
+    assert(callbacks == 2 && MapTiles == live_tiles);
+    assert(entry_tiles[0].bit == 0 && entry_tiles[1].bit == 0);
+    assert(live_tiles[0].bit == 0x40004000 && live_tiles[1].bit == 0x40004000);
+    assert(Continents[7].open_terrain == 1);
+}
+"""
+
+
+@pytest.mark.parametrize("compiler", ("g++", "clang++"))
+@pytest.mark.parametrize("mutant", ("", "reacquired_flag_cursor", "cached_query"))
+def test_analysis_retains_flag_cursor_but_reloads_queries(compiler, mutant, tmp_path):
+    source = _analysis_boundary_source()
+    if mutant == "reacquired_flag_cursor":
+        before = "uint32_t *const tile_bit = &flag_tile->bit;"
+        assert source.count(before) == 1
+        source = source.replace(before, "uint32_t *const tile_bit = &map_loc(x, y)->bit;", 1)
+    elif mutant == "cached_query":
+        before = "is_ocean(x, y)"
+        assert source.count(before) == 2
+        source = source.replace(before,
+                                "((flag_tile->climate & ~0x1F) < ALT_BIT_SHORE_LINE)")
+    ran = _run_boundary_control(tmp_path, compiler, source)
+    assert (ran.returncode == 0) == (mutant == ""), ran.stdout + ran.stderr

@@ -33,7 +33,7 @@
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00402350.cpp: retained original spans and historical seed interpretation", "Pinned original receiver/table/call sequence reviewed in the Alpha ownership binding decision.", "Current C++ class/lifetime source owns the separately observed emitted symbol; this binding is unclaimed and preserves the independent historical exact seed."], "reason": "Receiver-24, calls4023A0, publishes owner, tests deletion bit1 and conditionally frees complete receiver."}
 // symbol    ??_GNetUnk72C@@UAEPAXI@Z
 // Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x004023A0 sub_4023a0 0x004023A0-0x004024F8;0x00650580-0x00650595 FILE
+// ORIGINAL: 0x004023A0 sub_4023a0 0x004023A0-0x004024F8;0x00650580-0x00650595 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/004023a0.cpp: retained original spans and historical seed interpretation", "Pinned original receiver/table/call sequence reviewed in the Alpha ownership binding decision.", "Current C++ class/lifetime source owns the separately observed emitted symbol; this binding is unclaimed and preserves the independent historical exact seed."], "reason": "Receiver-24, stages nested-derived66941C/669418, runs removal walk then base6693F4/6693F0; primary plus650580 EH span."}
 // symbol    ??1NetUnk72C@@UAE@XZ
 // Superseded seed deleted; seed paths below are historical Git provenance.
@@ -59,7 +59,7 @@
 // ORIGINAL: 0x004E38E0 sub_4e38e0 0x004E38E0-0x004E38FB FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["pinned:terranx_original.exe:0x004E38E0-0x004E38FB is a complete 27-byte entry ending in RET; it adjusts to the ServiceList virtual base, calls the mapped destructor, and restores the saved allocation owner", "pinned:0x006634FF and 0x0065C630 caller-specific EH paths tail-jump to 0x004E38E0; normal paths call 0x004E3730 and restore the owner's saved virtual-base field", "COFF:src/net_class.cpp.obj and src/alphanet.cpp.obj both emit ??_DServiceList@@QAEXXZ with destructor, StringAllocationBase vftable and StringAllocationHeap relocations", "source:src/net_class.h:ServiceList/ServiceProviderList virtual StringAllocationBase hierarchy; original name remains address-derived sub_4e38e0"], "reason": "Map the complete original ServiceList cleanup entry to the actual generated COFF helper while keeping each caller's distinct EH cleanup in its parent mapping."}
 // symbol    ??_DServiceList@@QAEXXZ
-// ORIGINAL: 0x004E3730 sub_4e3730 0x004E3730-0x004E3888;0x0065C880-0x0065C895 FILE
+// ORIGINAL: 0x004E3730 sub_4e3730 0x004E3730-0x004E3888;0x0065C880-0x0065C895 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:293937ab6f3be75999e0c0a4c9c110c02930624c:src/unrecovered/004e3730.cpp: retained original spans and historical seed interpretation", "Pinned original receiver/table/call sequence reviewed in the Alpha ownership binding decision.", "Current C++ class/lifetime source owns the separately observed emitted symbol; this binding is unclaimed and preserves the transferred historical seed findings and complete original spans.", "git:293937ab6f3be75999e0c0a4c9c110c02930624c:src/unrecovered/004e3730.cpp", "Historical seed spelling sub_4e3730; current source mapping sub_4e3730; emitted symbol ??1ServiceList@@UAE@XZ."], "reason": "Receiver-24 stages provider-derived66EB20/66EB1C, walk then provider base; retained65C880 EH span. Superseded seed retired after owner review; original spans, existing claims and useful seed findings remain in source. This cleanup grants no new match or acceptance claim."}
 // TRIED: same shape as 0x004E3350's `ClassX::sub_4e3350` (own-stage list teardown at vtable 0x66eb20/0x66eb1c, then the same 0x6693d4/0x6693d0 pair the real `?close@ServiceStruct@@QAEXXZ` (0x004016c0, referenced from this function's unwind funclet at 0x0065C880) uses, on the member at `this-0x24`) - no SEH frame modelled, same precedent as 0x004C86D0/0x00538D10 and this function's sibling at 0x004E3350. 0.496 mnemonic similarity, first divergence at #2 (dropped SEH prologue).
 // symbol    ??1ServiceList@@UAE@XZ
@@ -134,6 +134,49 @@ static const GUID NetLobbyAppGuid = {
 AlphaNetLedger *SessionEnumTarget;
 BOOL __stdcall enumerate_session_callback(LPCDPSESSIONDESC2, LPDWORD, DWORD, LPVOID);
 namespace {
+// Complete destructor cleanup, including the unconditional position reset.
+// These overloads use the actual list types and link members; the compiler
+// retains each destructor's normal vptr staging and base destruction.
+inline void destroy_owned_list_entries(ServiceProviderList *list) {
+    if (list->head_ != 0) {
+        for (int removed = 0; removed < list->entry_count_; ++removed) {
+            list->current_ = list->head_->next_;
+            ServiceStruct *payload = list->head_->payload_;
+            list->on_remove(payload);
+            delete payload;
+            list->head_->payload_ = 0;
+            delete list->head_;
+            list->head_ = list->current_;
+        }
+        list->head_ = 0;
+        list->current_position_ = 0;
+        list->entry_count_ = 0;
+    }
+    list->current_position_ = 0;
+}
+
+inline void destroy_owned_list_entries(NetTextListBase *list) {
+    if (list->head_ != 0) {
+        int index = 0;
+        if (list->entry_count_ > 0) {
+            do {
+                list->current_ = list->head_->next;
+                NetTextPayload *const payload = list->head_->payload;
+                list->on_remove(payload);
+                delete payload;
+                list->head_->payload = 0;
+                delete list->head_;
+                list->head_ = list->current_;
+                ++index;
+            } while (index < list->entry_count_);
+        }
+        list->head_ = 0;
+        list->current_position_ = 0;
+        list->entry_count_ = 0;
+    }
+    list->current_position_ = 0;
+}
+
 // Source-only typed algorithms shared by genuine list owners. They own no
 // executable identity. Each instantiated body/reference requires measurement;
 // sharing source does not prove the original compiler folded any particular pair.
@@ -2779,9 +2822,9 @@ void Net::receive_directplay_messages(int player_id) {
             working_id = static_cast<DPID>(player_id);
             DPID counterpart = local_player_id_;
             DWORD size = field_6E4_;
-            const DWORD flags = (player_id != 0) ? 6 : 3;
             result = NetDirectPlay->Receive(
-                &working_id, &counterpart, flags, NetGetScratch, &size);
+                &working_id, &counterpart, (player_id != 0) ? 6 : 3,
+                NetGetScratch, &size);
         } while (result == 0);
     }
 }
@@ -2830,7 +2873,7 @@ void Net::broadcast_player_table() {
                     entry->name_[0] = 0;
                     player->name_and_tail_[0x1F] = 0;
                     strcat(entry->name_, player->name_and_tail_);
-                    const unsigned char flags = player->flags_14_;
+                    const unsigned int flags = player->flags_14_;
                     ++player;
                     entry->flags_ = flags;
                     ++entry;
@@ -3292,20 +3335,22 @@ static void __cdecl net_receive_thread(void *argument) {
     events[1] = thread_info->events_[3];
     DWORD wait_result = WaitForMultipleObjects(2, events, FALSE, INFINITE);
     if (wait_result == WAIT_OBJECT_0) {
-        for (;;) {
+        do {
             EnterCriticalSection(&thread_info->receive_lock_);
             if (thread_info->direct_play_ == 0) {
                 LeaveCriticalSection(&thread_info->receive_lock_);
-                break;
+                goto end_thread;
             }
             while (internal_receive(thread_info) != 0) {
             }
             LeaveCriticalSection(&thread_info->receive_lock_);
             wait_result =
                 WaitForMultipleObjects(2, events, FALSE, INFINITE);
-            if (wait_result != WAIT_OBJECT_0) break;
-        }
+        } while (wait_result == WAIT_OBJECT_0);
+        _endthread();
+        return;
     }
+end_thread:
     _endthread();
 }
 
@@ -3455,7 +3500,7 @@ Constructor implemented through the declared C++ base/member lifecycle; matching
 
 
 /*
-// ORIGINAL: 0x00401BE0 sub_401be0 0x00401BE0-0x00401C79
+// ORIGINAL: 0x00401BE0 sub_401be0 0x00401BE0-0x00401C79 BYTE_EXACT
 // symbol    ??1NetTextListBase@@UAE@XZ
 // size      153 bytes
 // prototype
@@ -3500,8 +3545,7 @@ class SubBase401be0 { public:
 
 #pragma optimize("y", off)
 NetTextListBase::~NetTextListBase() {
-    remove_all();
-    current_position_ = 0; // also when empty; current_ is NOT cleared
+    destroy_owned_list_entries(this); // also when empty; current_ is NOT cleared
 }
 #pragma optimize("", on)
 
@@ -3513,8 +3557,7 @@ NetTextListBase::~NetTextListBase() {
 
 #pragma optimize("y", off)
 NetUnk72C::~NetUnk72C() {
-    remove_all();
-    current_position_ = 0;
+    destroy_owned_list_entries(this);
     // Natural base destruction supplies the distinct second list stage.
 }
 #pragma optimize("", on)
@@ -3875,8 +3918,7 @@ int ServiceProviderList::add(int id) {
 
 #pragma optimize("y", off)
 ServiceProviderList::~ServiceProviderList() {
-    remove_all();
-    current_position_ = 0;
+    destroy_owned_list_entries(this);
 }
 #pragma optimize("", on)
 
@@ -3890,8 +3932,7 @@ void ServiceList::on_remove(ServiceStruct *payload) {
 
 #pragma optimize("y", off)
 ServiceList::~ServiceList() {
-    remove_all();
-    current_position_ = 0;
+    destroy_owned_list_entries(this);
 }
 #pragma optimize("", on)
 
@@ -4661,3 +4702,5 @@ int Net::send(void *data, int data_size, unsigned long target, int flags) {
 // RECOVERY_GENERATED: v1 vtable 0x0066941C ? ??_7NetUnk72C@@6BNetTextListBase@@@ 0x00402D10
 // RECOVERY_GENERATED: v1 vtable 0x006693D4 ? ??_7ServiceProviderList@@6B0@@ 0x00401660
 // RECOVERY_GENERATED: v1 vtable 0x006693D0 ? ??_7ServiceProviderList@@6BStringAllocationBase@@@ 0x00401660
+// RECOVERY_GENERATED: v1 vtable 0x0066EB20 ? ??_7ServiceList@@6BServiceProviderList@@@ 0x004E3730
+// RECOVERY_GENERATED: v1 vtable 0x0066EB1C ? ??_7ServiceList@@6BStringAllocationBase@@@ 0x004E3730

@@ -139,13 +139,19 @@ struct Sprite {
 };
 static int InterfaceBoxStyles[64];
 static Sprite g_IFACE_LOCK_SPRITES[2], g_IFACE_MP_COMBO_ARROW_SPRITES[1];
-static char *Difficulty[8] = {const_cast<char *>("D0"),const_cast<char *>("D1"),
+// The physical backing covers both the original signed-byte index and the
+// wrong unsigned interpretation. It adds no product table bounds or clamp.
+static char *DifficultyBacking[384];
+static char **Difficulty = DifficultyBacking + 128;
+static char *DifficultyNames[8] = {const_cast<char *>("D0"),const_cast<char *>("D1"),
     const_cast<char *>("D2"),const_cast<char *>("D3"),const_cast<char *>("D4"),
     const_cast<char *>("D5"),const_cast<char *>("D6"),const_cast<char *>("D7")};
+static std::vector<char *> difficulty_inputs;
 static char StringStorage[1024];
 static char *StringTemp=StringStorage;
 struct Strings {
     char *get(char *s) {
+        difficulty_inputs.push_back(s);
         if (s == Difficulty[6]) write_indices.push_back(700);
         return s;
     }
@@ -187,7 +193,14 @@ BODY_DIFFS
 BODY_FACTIONS
 
 static void fail(const char *message) { std::fprintf(stderr,"FAIL: %s\n",message); std::exit(1); }
-static void reset() { box_indices.clear(); spot_indices.clear(); write_indices.clear(); clipped_rects.clear(); spot_rects.clear(); arrow_x.clear(); arrow_y.clear(); callbacks=0; label_get_calls=0; vary_label_lookup=false; callback_mode=0; callback_records=nullptr; callback_rect=nullptr; callback_stride=1; rect_to_mutate_during_pid=nullptr; mutate_rect_on_pid=false; forced_pid_index=99; }
+static void reset() { box_indices.clear(); spot_indices.clear(); write_indices.clear(); clipped_rects.clear(); spot_rects.clear(); arrow_x.clear(); arrow_y.clear(); callbacks=0; label_get_calls=0; vary_label_lookup=false; callback_mode=0; callback_records=nullptr; callback_rect=nullptr; callback_stride=1; rect_to_mutate_during_pid=nullptr; mutate_rect_on_pid=false; forced_pid_index=99;
+    difficulty_inputs.clear();
+    std::fill(DifficultyBacking, DifficultyBacking + 384,
+              const_cast<char *>("unsigned-index-backing"));
+    for (int i=0;i!=8;++i) Difficulty[i]=DifficultyNames[i];
+    Difficulty[-128]=const_cast<char *>("signed-minus128");
+    Difficulty[-2]=const_cast<char *>("signed-minus2");
+}
 static void init_rows() {
     std::memset(NetWinLobbyRows,0,sizeof(NetWinLobbyRows));
     for (int i=1;i<=7;++i) {
@@ -310,6 +323,17 @@ int main() {
     win.draw_factions();
     if (label_get_calls!=2 || std::strcmp(StringTemp, "Lobby")!=0)
         fail("draw_factions did not reacquire fallback label for strcmp");
+
+    for (int raw : {0x80, 0xFE}) {
+        reset(); init_rows(); win.faction_records_=records;
+        records[0].record_type_=1; NetWinSessionData.mode_=3;
+        NetWinLobbyRows[1].field_2_=static_cast<uint8_t>(raw);
+        callback_rect=&win.setup_rects_[20];
+        win.draw_diffs();
+        char *expected=Difficulty[raw == 0x80 ? -128 : -2];
+        if (difficulty_inputs.size()!=1 || difficulty_inputs[0]!=expected)
+            fail("draw_diffs must sign-extend the difficulty byte");
+    }
     return 0;
 }
 '''
@@ -325,6 +349,22 @@ def test_extracted_painters_execute_seven_rows_and_live_controls(
     run = _compile_and_run(_host_source(_painter_bodies()), compiler, tmp_path,
                            "netwin-counted-painters")
     assert run.returncode == 0, run.stderr
+
+
+@pytest.mark.parametrize("compiler_name", ("g++", "clang++"))
+def test_unsigned_difficulty_index_mutant_rejected(compiler_name, tmp_path):
+    compiler = shutil.which(compiler_name)
+    if compiler is None:
+        pytest.skip(f"{compiler_name} unavailable")
+    bodies = _painter_bodies()
+    before = "Difficulty[static_cast<int8_t>(row->field_2_)]"
+    assert bodies["BODY_DIFFS"].count(before) == 1
+    bodies["BODY_DIFFS"] = bodies["BODY_DIFFS"].replace(
+        before, "Difficulty[row->field_2_]", 1)
+    run = _compile_and_run(_host_source(bodies), compiler, tmp_path,
+                           "netwin-unsigned-difficulty-mutant")
+    assert run.returncode == 1
+    assert "draw_diffs must sign-extend the difficulty byte" in run.stderr
 
 
 @pytest.mark.parametrize("compiler_name", ("g++", "clang++"))

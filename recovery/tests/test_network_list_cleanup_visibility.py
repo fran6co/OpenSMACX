@@ -1,6 +1,7 @@
 """Source-linked behavioral controls for the two typed network-list walks."""
 
 from pathlib import Path
+import re
 import shutil
 import subprocess
 
@@ -281,6 +282,29 @@ def compile_and_run(tmp_path: Path, source: str, compiler: str) -> subprocess.Co
     return subprocess.run([str(binary_path)], capture_output=True, text=True, timeout=10)
 
 
+
+def assert_destructor_operation(source, method, list_type, payload_type, owners):
+    # Compare the actual typed operation with the complete existing public walk
+    # followed by the destructor's unconditional reset. In particular, the
+    # reset stays outside the head guard, so an empty list still resets it.
+    operation = function_body(
+        source, f"inline void destroy_owned_list_entries({list_type} *list)")
+    operation_body = braced(operation, 0)
+    public_body = braced(method, 0)
+
+    def tokens(body):
+        body = re.sub(r"//[^\n]*|/\*.*?\*/", "", body, flags=re.S)
+        return re.findall(r"\w+|[^\s]", body)
+
+    projected = operation_body.replace("list->", "")
+    projected = re.sub(r"\b" + payload_type + r"\b", "Payload", projected)
+    assert tokens(projected) == tokens(public_body + "current_position_ = 0;")
+    for owner in owners:
+        destructor = function_body(source, f"{owner}::~{owner}()")
+        assert tokens(braced(destructor, 0)) == tokens(
+            "destroy_owned_list_entries(this);")
+
+
 def source_methods():
     net_header = (ROOT / "src/net_class.h").read_text()
     alpha_header = (ROOT / "src/alphanet.h").read_text()
@@ -316,7 +340,14 @@ def source_methods():
     assert "while (index < entry_count_)" in net_method
     assert "for (int removed = 0; removed < entry_count_; ++removed)" in alpha_method
     assert "NetTextListBase::remove_all" not in net_source
-    destructors = [function_body(net_source, "NetTextListBase::~NetTextListBase()")]
+    assert_destructor_operation(
+        net_source, net_method, "NetTextListBase", "NetTextPayload",
+        ("NetTextListBase", "NetUnk72C"))
+    service_method = function_body(net_source, "void ServiceProviderList::remove_all()")
+    assert_destructor_operation(
+        net_source, service_method, "ServiceProviderList", "ServiceStruct",
+        ("ServiceProviderList", "ServiceList"))
+    destructors = []
     for name in ("AlphaNetStringStruct", "AlphaNetLedger"):
         assert f"{name}::~{name}()" not in alpha_source
         destructors.append(class_method(alpha_header, name, f"~{name}()"))

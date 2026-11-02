@@ -25,8 +25,6 @@
   */
 class SquareLock {
  public:
-  SquareLock() { ; }
-  ~SquareLock() { ; }
   void clear();
   void unlock(int factionID);
   int lock(int factionID, int flags, int x, int y);

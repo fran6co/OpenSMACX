@@ -48,53 +48,80 @@
 #include "interlude.h"
 #include "worldwin.h"
 
+namespace {
+// Separate writable objects preserve the original popup operands at each use.
+// RECOVERY_OBJECT: v1 0x00687C84 ?staple_fail_alien_picture@?%src/base.cpp@@3PADA
+char staple_fail_alien_picture[] = "ALdrone_sm.pcx";
+// RECOVERY_OBJECT: v1 0x00687C94 ?staple_fail_alien_label@?%src/base.cpp@@3PADA
+char staple_fail_alien_label[] = "NERVESTAPLEFAIL";
+// RECOVERY_OBJECT: v1 0x00687CA4 ?staple_fail_human_picture@?%src/base.cpp@@3PADA
+char staple_fail_human_picture[] = "drone_sm.pcx";
+// RECOVERY_OBJECT: v1 0x00687CB4 ?staple_fail_human_label@?%src/base.cpp@@3PADA
+char staple_fail_human_label[] = "NERVESTAPLEFAIL";
+// RECOVERY_OBJECT: v1 0x00687CC4 ?staple_done_alien_picture@?%src/base.cpp@@3PADA
+char staple_done_alien_picture[] = "ALdrone_sm.pcx";
+// RECOVERY_OBJECT: v1 0x00687CD4 ?staple_done_alien_label@?%src/base.cpp@@3PADA
+char staple_done_alien_label[] = "NERVESTAPLEDONE";
+// RECOVERY_OBJECT: v1 0x00687CE4 ?staple_done_human_picture@?%src/base.cpp@@3PADA
+char staple_done_human_picture[] = "drone_sm.pcx";
+// RECOVERY_OBJECT: v1 0x00687CF4 ?staple_done_human_label@?%src/base.cpp@@3PADA
+char staple_done_human_label[] = "NERVESTAPLEDONE";
+// RECOVERY_OBJECT: v1 0x00687D04 ?staple_foreign_label@?%src/base.cpp@@3PADA
+char staple_foreign_label[] = "NERVESTAPLETHEM";
+}
+
 // Current code uses PlayerData::proto_id_active for the byte table historically
 // viewed as veh.cpp's FactionProtoSeenCount; the original LEVER annotations below
 // retain their task-base wording as provenance.
 
 // The UI, network and AI callers share the same base-domain operation.
-// ORIGINAL: 0x004CA7F0 ?action_staple@@YAXH@Z 0x004CA7F0-0x004CAA4B
+// ORIGINAL: 0x004CA7F0 ?action_staple@@YAXH@Z 0x004CA7F0-0x004CAA4B BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:bca75cb0:src/recovered/units/004ca7f0.cpp", "image:original complete function instructions", "source:src/base.cpp"], "reason": "Home the original behavioral dependency in its base/audio domain using typed state and existing named callees; retained seed provenance and original spans remain restoration evidence, not runtime acceptance."}
 void __cdecl action_staple(int base_id) {
-    Base &base = Bases[base_id];
-    const int attempts = ++base.nerve_staple_count;
-    const unsigned int faction = base.faction_id_current;
+    const int attempts = ++Bases[base_id].nerve_staple_count;
+    const unsigned int faction = Bases[base_id].faction_id_current;
     bool success = false;
     if (attempts <= 2) {
         success = true;
     } else if (attempts <= 8 && rand() % 2 != 0) {
         success = true;
     }
-    if (success) {
-        base.state &= ~BSTATE_DRONE_RIOTS_ACTIVE;
-        base.nerve_staple_turns_left += 10;
-        draw_tile(base.x, base.y, 2);
-        if (base.faction_id_current == ConsoleGlobal.faction_id_) {
-            parse_says(0, base.name_string, -1, -1);
+    if (!success) {
+        if (Bases[base_id].faction_id_current == ConsoleGlobal.faction_id_) {
+            parse_says(0, Bases[base_id].name_string, -1, -1);
+            if ((Players[faction].rule_flags & RFLAG_ALIEN) != 0) {
+                popp(ScriptPopupFile, staple_fail_alien_label, 0, staple_fail_alien_picture, 0);
+            } else {
+                popp(ScriptPopupFile, staple_fail_human_label, 0, staple_fail_human_picture, 0);
+            }
+        }
+    } else {
+        Bases[base_id].state &= ~BSTATE_DRONE_RIOTS_ACTIVE;
+        Bases[base_id].nerve_staple_turns_left += 10;
+        draw_tile(Bases[base_id].x, Bases[base_id].y, 2);
+        if (Bases[base_id].faction_id_current == ConsoleGlobal.faction_id_) {
+            parse_says(0, Bases[base_id].name_string, -1, -1);
             // The original retains this faction across draw_tile and does
             // not add an ExpansionEnabled test to the alien rule check.
-            popp(ScriptPopupFile, "NERVESTAPLEDONE", 0,
-                 (Players[faction].rule_flags & RFLAG_ALIEN)
-                     ? "ALdrone_sm.pcx" : "drone_sm.pcx", 0);
+            if ((Players[faction].rule_flags & RFLAG_ALIEN) != 0) {
+                popp(ScriptPopupFile, staple_done_alien_label, 0, staple_done_alien_picture, 0);
+            } else {
+                popp(ScriptPopupFile, staple_done_human_label, 0, staple_done_human_picture, 0);
+            }
         } else {
-            parse_says(0, base.name_string, -1, -1);
+            parse_says(0, Bases[base_id].name_string, -1, -1);
             PluralityDefault = 0;
-            GenderDefault = Players[base.faction_id_current].is_leader_female;
-            parse_says(1, Players[base.faction_id_current].title_leader, -1, -1);
+            GenderDefault = Players[Bases[base_id].faction_id_current].is_leader_female;
+            parse_says(1, Players[Bases[base_id].faction_id_current].title_leader, -1, -1);
             PluralityDefault = 0;
-            GenderDefault = Players[base.faction_id_current].is_leader_female;
-            parse_says(2, Players[base.faction_id_current].name_leader, -1, -1);
-            NetMsgPrimary.pop("NERVESTAPLETHEM", 5000, 0, 0);
+            GenderDefault = Players[Bases[base_id].faction_id_current].is_leader_female;
+            parse_says(2, Players[Bases[base_id].faction_id_current].name_leader, -1, -1);
+            NetMsgPrimary.pop(staple_foreign_label, 5000, 0, 0);
         }
-    } else if (base.faction_id_current == ConsoleGlobal.faction_id_) {
-        parse_says(0, base.name_string, -1, -1);
-        popp(ScriptPopupFile, "NERVESTAPLEFAIL", 0,
-             (Players[faction].rule_flags & RFLAG_ALIEN)
-                 ? "ALdrone_sm.pcx" : "drone_sm.pcx", 0);
     }
     // Failed attempts and foreign bases still report the atrocity.
-    atrocity(base.faction_id_current, base.faction_id_former,
-             base.faction_id_former != base.faction_id_current, 1);
+    atrocity(Bases[base_id].faction_id_current, Bases[base_id].faction_id_former,
+             Bases[base_id].faction_id_former != Bases[base_id].faction_id_current, 1);
 }
 
 // The base-caption renderer retains the font selected from its shared queue.
@@ -7467,7 +7494,7 @@ Return Value: Morale bonus modifier
 Status: Complete
 */
 int __cdecl morale_mod(int base_id, int faction_id, int triad) {
-    uint32_t morale_modifier = 0;
+    int morale_modifier = 0;
     if (triad == TRIAD_LAND) {
         if (has_fac_built(FAC_COMMAND_CENTER, base_id)
             || has_project(SP_COMMAND_NEXUS, faction_id)) {

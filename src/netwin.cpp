@@ -467,33 +467,34 @@ int NetWin::get_player_color(int faction) {
         return 0xFF;
     }
     int taken = 1;
-    if (faction > 1) {
+    {
         const NetWinLobbyRow *row = &NetWinLobbyRows[1];
-        do {
+        while (taken < faction) {
             if (row->faction_or_color_ == color) {
                 break;
             }
             taken++;
             ++row;
-        } while (taken < faction);
+        }
     }
-    int index = 0;
+    // The native unique-colour path retains this signed record index.
+    int index = color;
     if (taken != faction) {
         index = 0;
         int record_count = records[0].record_count_;
-        if (record_count != 0) {
+        if (record_count > 0) {
             int bound = NetDaemonNet.player_count_ + 1;
             for (;;) {
                 int found = 1;
-                if (bound > 1) {
+                {
                     const NetWinLobbyRow *row = &NetWinLobbyRows[1];
-                    do {
+                    while (found < bound) {
                         if (row->faction_or_color_ == index) {
                             break;
                         }
                         found++;
                         ++row;
-                    } while (found < bound);
+                    }
                 }
                 if (found == bound) {
                     break;
@@ -1019,7 +1020,7 @@ void NetWin::draw_session_info() {
     strcat(StringTemp, "}");
     strcat(StringTemp, " ");
     {
-        int difficulty = NetWinSessionOptions.difficulty_;
+        int difficulty = static_cast<int8_t>(NetWinSessionOptions.difficulty_);
         if (difficulty < 0) {
             difficulty = 0;
         } else if (6 < difficulty) {
@@ -1646,7 +1647,8 @@ void NetWin::draw_diffs() {
         field.left += 4;
         field.right -= 4;
         Buffer::set_clip(&field);
-        char *name = StringTable.get(Difficulty[row->field_2_]);
+        char *name = StringTable.get(
+            Difficulty[static_cast<int8_t>(row->field_2_)]);
         if (name != 0) {
             Buffer::write_l(name, &field, strlen(name));
         }
@@ -1710,23 +1712,23 @@ void NetWin::draw_factions() {
         Buffer::set_clip(&field);
 
         StringTemp[0] = 0;
+        int names_differ;
         if (mode != -1) {
             strcat(StringTemp, faction_records_[mode].noun_faction_);
-            if (strcmp(faction_records_[mode].noun_faction_,
-                       row->noun_faction_) != 0) {
-                strcat(StringTemp, ": ");
-                strcat(StringTemp, " ");
-                strcat(StringTemp, row->noun_faction_);
-            }
+            names_differ = strcmp(faction_records_[mode].noun_faction_,
+                                  row->noun_faction_);
         } else {
             strcat(StringTemp, label_get(0xFE4 / 4));
-            if (strcmp(label_get(0xFE4 / 4), row->noun_faction_) != 0) {
-                strcat(StringTemp, ": ");
-                strcat(StringTemp, " ");
-                strcat(StringTemp, row->noun_faction_);
-            }
+            names_differ = strcmp(label_get(0xFE4 / 4), row->noun_faction_);
         }
-        Buffer::write_l(StringTemp, &field, strlen(StringTemp));
+        if (names_differ != 0) {
+            strcat(StringTemp, ": ");
+            strcat(StringTemp, " ");
+            strcat(StringTemp, row->noun_faction_);
+        }
+        if (StringTemp != nullptr) {
+            Buffer::write_l(StringTemp, &field, strlen(StringTemp));
+        }
         Buffer::restore_clip();
         spot_.add(index, 3, rect->left, rect->top,
                   rect->right - rect->left, rect->bottom - rect->top);

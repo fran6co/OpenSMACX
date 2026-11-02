@@ -3664,7 +3664,7 @@ void DesignWin::shut_that_badboy_down() {
 
 // ==== coverage batch: 004345d0 / 00439960 / 00439a20 / 0043d490 ============
 
-// ORIGINAL: 0x004345D0 ?UNK2@DesignWin@@QAEHH@Z 0x004345D0-0x00434649 FILE
+// ORIGINAL: 0x004345D0 ?UNK2@DesignWin@@QAEHH@Z 0x004345D0-0x00434649 FILE BYTE_EXACT
 // size      121 bytes
 // prototype int (__thiscall ?UNK2@DesignWin@@QAEHH@Z)(DesignWin* this, int protoID)
 // callers   0   call targets   0
@@ -3677,12 +3677,11 @@ void DesignWin::shut_that_badboy_down() {
 // VehPrototypes shifted past veh_name: 0x9AB888 is [0].ability_flags and
 // 0x9AB88C..[.F] the chassis/weapon/armor/reactor bytes.
 int DesignWin::UNK2(int proto_id) {
-    const VehPrototype &proto = VehPrototypes[proto_id];
-    return protoChassisType_ == proto.chassis_id
-        && protoWeaponType_ == proto.weapon_id
-        && protoArmorType_ == proto.armor_id
-        && protoReactorType_ == proto.reactor_id
-        && protoAbilityFlags_ == proto.ability_flags;
+    return protoChassisType_ == VehPrototypes[proto_id].chassis_id
+        && protoWeaponType_ == VehPrototypes[proto_id].weapon_id
+        && protoArmorType_ == VehPrototypes[proto_id].armor_id
+        && protoReactorType_ == VehPrototypes[proto_id].reactor_id
+        && protoAbilityFlags_ == VehPrototypes[proto_id].ability_flags;
 }
 
 // RECOVERY_ASSOCIATED: v1 switch_targets 0x00439960 0x004399FC 0x00439A14 0x0043999B

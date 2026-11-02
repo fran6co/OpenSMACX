@@ -1116,21 +1116,34 @@ void BaseWin::staple_the_bastards() {
     if (Bases[focusedBaseID_].faction_id_current != ConsoleGlobal.faction_id_
         && !(GameDataStateStorage.fields_.game_state_ & STATE_OMNISCIENT_VIEW)) return;
     const int faction = BaseCurrent->faction_id_current;
-    const bool alien = (Players[faction].rule_flags & 0x80) != 0;
     parse_says(0, BaseCurrent->name_string, -1, -1);
     const int police = PlayersData[faction].soc_effect_active.values_[SocialEffect::POLICE]
         + has_fac(0x23, BaseIDCurrentSelected, 0) * 2;
-    const char *caption = ScriptPopupFile;
+    // Each original popup arm reads the rule flag and script after the
+    // preceding service calls, including the final multiplayer lock.
     if (police < 0) {
-        popp(caption, "NERVESTAPLEHELLNO", 0, alien ? "Alopdir.pcx" : "talent_sm.pcx", nullptr);
+        if (Players[faction].rule_flags & 0x80) {
+            popp(ScriptPopupFile, "NERVESTAPLEHELLNO", 0, "Alopdir.pcx", nullptr);
+        } else {
+            popp(ScriptPopupFile, "NERVESTAPLEHELLNO", 0, "talent_sm.pcx", nullptr);
+        }
         return;
     }
     if (BaseCurrent->nerve_staple_turns_left) {
-        popp(caption, "NERVESTAPLED", 0, alien ? "ALdrone_sm.pcx" : "drone_sm.pcx", nullptr);
+        if (Players[faction].rule_flags & 0x80) {
+            popp(ScriptPopupFile, "NERVESTAPLED", 0, "ALdrone_sm.pcx", nullptr);
+        } else {
+            popp(ScriptPopupFile, "NERVESTAPLED", 0, "drone_sm.pcx", nullptr);
+        }
         return;
     }
     if (NetDaemonNet.lock_base(BaseIDCurrentSelected, 0, -1, -1)) return;
-    if (!popp(caption, "NERVESTAPLE", 0, alien ? "ALdrone_sm.pcx" : "drone_sm.pcx", nullptr)) {
+    if (Players[faction].rule_flags & 0x80) {
+        if (!popp(ScriptPopupFile, "NERVESTAPLE", 0, "ALdrone_sm.pcx", nullptr)) {
+            NetDaemonNet.unlock_base(BaseIDCurrentSelected);
+            return;
+        }
+    } else if (!popp(ScriptPopupFile, "NERVESTAPLE", 0, "drone_sm.pcx", nullptr)) {
         NetDaemonNet.unlock_base(BaseIDCurrentSelected);
         return;
     }
@@ -3105,7 +3118,7 @@ void BaseWin::UNK3(int base_id) {
     }
 }
 
-// ORIGINAL: 0x0041A8B0 ?check_veh@BaseWin@@QAEXH@Z 0x0041A8B0-0x0041A91D
+// ORIGINAL: 0x0041A8B0 ?check_veh@BaseWin@@QAEXH@Z 0x0041A8B0-0x0041A91D BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["image:0x0041A8B0-0x0041A91D multiplies the vehicle index by 0x34 and focusedBaseID_ by 0x134 before reading coordinates/home_base_id.", "source:src/veh.h", "source:src/base.h", "source:src/basewin.h", "source:src/graphicwin.h"], "reason": "Refresh the visible base when a vehicle is physically at the focused base or lists it as home, using the established Veh/Base records and virtual GraphicWin redraw."}
 // The recovered seed's `int *` indexed expressions accidentally scaled those
 // byte strides by four. Direct typed array indexing preserves the disassembly's
@@ -3116,10 +3129,9 @@ void BaseWin::check_veh(int veh_id) {
     }
 
     const uint32_t base_id = focusedBaseID_;
-    const Veh &vehicle = Vehs[veh_id];
-    const Base &base = Bases[base_id];
-    if ((vehicle.x == base.x && vehicle.y == base.y) ||
-        vehicle.home_base_id == base_id) {
+    if ((Vehs[veh_id].x == Bases[base_id].x &&
+         Vehs[veh_id].y == Bases[base_id].y) ||
+        Vehs[veh_id].home_base_id == base_id) {
         base_compute(1);
         redraw();
     }

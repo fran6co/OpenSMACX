@@ -216,3 +216,130 @@ def test_original_wait_retains_message_and_channel_branches_are_unsigned_then_si
     }
     for address,instruction in expected.items():
         assert instructions[address]==instruction
+
+
+# These typed callback controls qualify the actual polling/source operation,
+# not the DirectPlay provider, the x86 ABI, or full-game protocol acceptance.
+@pytest.mark.parametrize("damage", ["none", "wrong_transport", "swapped_outputs",
+                                    "dropped_message", "single_poll",
+                                    "wrong_opcode", "wrong_dispatch_owner", "cached_gates"])
+def test_actual_receive_reuse_and_live_send_phases(tmp_path, damage):
+    source_text = SOURCE.read_text()
+    body = "\n".join(extract(source_text, signature) for signature in
+                     ("int NetDaemon::receive()", "void NetDaemon::send_game()",
+                      "void NetDaemon::send_rules()"))
+    edits = {
+        "wrong_transport": ("NetDaemonNet.Net::get(&first, &second)", "Net::get(&first, &second)"),
+        "swapped_outputs": ("NetDaemonNet.Net::get(&first, &second)", "NetDaemonNet.Net::get(&second, &first)"),
+        "dropped_message": ("    process_message(static_cast<char *>(result), second, static_cast<int>(first));", ""),
+        "single_poll": ("while (receive())", "if (receive())"),
+        "wrong_opcode": ("synch(0x80,", "synch(0x81,"),
+        "wrong_dispatch_owner": ("    process_message(static_cast<char *>(result), second, static_cast<int>(first));",
+                                 "    NetDaemonNet.process_message(static_cast<char *>(result), second, static_cast<int>(first));"),
+    }
+    if damage in edits:
+        old, new = edits[damage]
+        assert body.count(old)==(30 if damage=="single_poll" else 1)
+        body = body.replace(old,new)
+    elif damage=="cached_gates":
+        old="void NetDaemon::send_game() {"
+        assert body.count(old)==1
+        body=body.replace(old,old+"\n const int cached_turn=GameDataStateStorage.fields_.turn_current_num_; const int cached_replay=ReplayEventBytes;",1)
+        body=body.replace("if (GameDataStateStorage.fields_.turn_current_num_ != 0)","if (cached_turn != 0)")
+        body=body.replace("if (ReplayEventBytes != 0)","if (cached_replay != 0)")
+    program = r'''
+#include <cstdint>
+#include <cstdio>
+#include <cstdlib>
+#include <vector>
+#define CHECK(x) do { if (!(x)) { std::fprintf(stderr,"polling: %s\n",#x); std::exit(9); } } while(0)
+struct Net { void *get(unsigned long *,unsigned long *); };
+struct NetDaemon:Net {
+    int receive(); void send_game(); void send_rules();
+    void process_message(char *,unsigned long,int);
+    void synch(int16_t,int,int,int,char *,int,int16_t);
+};
+NetDaemon NetDaemonNet;
+static NetDaemon *owner;
+struct { struct { int turn_current_num_; } fields_; } GameDataStateStorage;
+static int ReplayEventBytes;
+struct Phase { int code, a, b; Phase(int c,int x=0,int y=0):code(c),a(x),b(y) {} };
+static std::vector<Phase> expected;
+static unsigned phase;
+static int queue_count, received, dispatched, total_received, total_dispatched;
+static bool ended, pending, late_gates;
+static char packets[3][8];
+void NetDaemon::synch(int16_t code,int a,int b,int c,char *text,int d,int16_t flags) {
+    CHECK(this==owner && ended && !pending && phase<expected.size());
+    CHECK(code==expected[phase].code && a==expected[phase].a && b==expected[phase].b);
+    CHECK(c==0 && text==0 && d==1 && flags==0x2101);
+    ++phase; received=dispatched=0; ended=false;
+}
+void *Net::get(unsigned long *sender,unsigned long *length) {
+    CHECK(this==static_cast<Net*>(&NetDaemonNet) && phase>0 && !ended && !pending);
+    if(received==queue_count) {
+        ended=true;
+        // The original gates are sampled after preceding network callbacks.
+        if(expected[phase-1].code==0x19) GameDataStateStorage.fields_.turn_current_num_=late_gates?1:0;
+        if(expected[phase-1].code==0x21) ReplayEventBytes=late_gates?1:0;
+        return 0; // No output words are published on this path.
+    }
+    *sender=0x10203040ul+phase*0x101ul+received;
+    *length=37ul+received;
+    pending=true; ++total_received;
+    return packets[received++];
+}
+void NetDaemon::process_message(char *message,unsigned long length,int sender) {
+    CHECK(this==owner && pending && dispatched<queue_count);
+    CHECK(message==packets[dispatched] && length==37ul+dispatched);
+    CHECK(sender==static_cast<int>(0x10203040ul+phase*0x101ul+dispatched));
+    pending=false; ++dispatched; ++total_dispatched;
+}
+BODY
+static void begin(int count,bool late) {
+    queue_count=count; late_gates=late; phase=0; ended=true; pending=false;
+    total_received=total_dispatched=0;
+    GameDataStateStorage.fields_.turn_current_num_=late?0:1;
+    ReplayEventBytes=late?0:1; expected.clear();
+}
+static void done() {
+    CHECK(phase==expected.size() && ended && !pending);
+    CHECK(total_received==static_cast<int>(expected.size())*queue_count);
+    CHECK(total_dispatched==total_received);
+}
+int main() {
+    NetDaemon daemon; owner=&daemon;
+    for(int count=0;count<=3;++count) {
+        if(count==2) continue;
+        for(int late=0;late<=1;++late) {
+            begin(count,late!=0);
+            expected.push_back(Phase(0)); expected.push_back(Phase(2));
+            expected.push_back(Phase(4)); expected.push_back(Phase(5));
+            for(int i=0;i<8;++i) {
+                expected.push_back(Phase(6,i)); expected.push_back(Phase(7,i));
+                expected.push_back(Phase(15,i*64,64));
+            }
+            expected.push_back(Phase(0x29)); expected.push_back(Phase(0x12));
+            expected.push_back(Phase(0x14)); expected.push_back(Phase(0x19));
+            if(late) expected.push_back(Phase(0x20));
+            expected.push_back(Phase(0x21));
+            if(late) expected.push_back(Phase(0x22));
+            expected.push_back(Phase(0x24)); expected.push_back(Phase(0x15));
+            daemon.send_game(); done();
+            begin(count,late!=0);
+            for(int code=0x80;code<=0x8D;++code) expected.push_back(Phase(code));
+            daemon.send_rules(); done();
+        }
+    }
+}
+'''.replace("BODY",body)
+    compiler=shutil.which("g++") or shutil.which("clang++")
+    assert compiler, "host C++ compiler is required for the polling control"
+    cpp,exe=tmp_path/"polling.cpp",tmp_path/"polling"
+    cpp.write_text(program)
+    build=subprocess.run([compiler,"-std=c++11","-O2","-DNDEBUG",str(cpp),"-o",str(exe)],
+                         capture_output=True,text=True,timeout=60)
+    assert build.returncode==0,build.stdout+build.stderr
+    run=subprocess.run([str(exe)],capture_output=True,text=True,timeout=10)
+    assert run.returncode==(0 if damage=="none" else 9),run.stdout+run.stderr
+    if damage!="none": assert "polling:" in run.stderr

@@ -16,7 +16,7 @@ def valid_receive_contract(body: str) -> bool:
     return all((
         "DPID working_id;" in body,
         "working_id = static_cast<DPID>(player_id);" in body,
-        "NetDirectPlay->Receive(\n                &working_id, &counterpart, flags, NetGetScratch, &size);" in body,
+        "NetDirectPlay->Receive(\n                &working_id, &counterpart, (player_id != 0) ? 6 : 3,\n                NetGetScratch, &size);" in body,
         "reinterpret_cast<LPDPID>(&working_id)" not in body,
     ))
 

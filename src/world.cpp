@@ -942,18 +942,18 @@ void __cdecl world_analysis() {
     for (uint32_t i = 0; i < MaxContinentNum; i++) {
         Continents[i].open_terrain = 0;
     }
+    Map *flag_tile = map_tiles();
     for (int y = 0; y < MapLatitudeBounds; y++) {
-        for (int x = y & 1; x < MapLongitudeBounds; x += 2) {
+        for (int x = y & 1; x < MapLongitudeBounds; x += 2, ++flag_tile) {
             uint32_t region = region_at(x, y);
-            BOOL is_ocean_tile = is_ocean(x, y);
-            if (!is_ocean_tile && climate_at(x, y) != RAINFALL_ARID 
+            if (!is_ocean(x, y) && climate_at(x, y) != RAINFALL_ARID
                 && rocky_at(x, y) < TERRAIN_BIT_ROCKY
                 && (!(bit_at(x, y) & BIT_FUNGUS || altitude_at(x, y) < ALT_BIT_OCEAN_SHELF))) {
                 Continents[region].open_terrain++;
             }
-            uint32_t *const tile_bit = &map_loc(x, y)->bit; // bit_set, inlined: the image writes
+            uint32_t *const tile_bit = &flag_tile->bit; // bit_set, inlined: the image writes
             *tile_bit &= ~(BIT_UNK_40000000 | BIT_UNK_4000); // it out here, not a call
-            if (!is_ocean_tile) {                                  // correctly for all bit_*
+            if (!is_ocean(x, y)) {                                 // correctly for all bit_*
                 int search_val = -1;
                 uint32_t count_val1 = 0;
                 uint32_t count_val2 = 0;
@@ -2873,23 +2873,11 @@ void __cdecl world_rocky() {
             if ((tile->climate & ~0x1F) < 0x60) {
                 bitval = 0x10000;
             } else {
-                bool useRandomFlat = false;
-                if ((flags & 0x80000004) == 4) {
-                    unsigned int r = rand();
-                    r &= 0x80000001;
-                    bool zero;
-                    if (static_cast<int>(r) < 0) {
-                        zero = ((r - 1) | 0xfffffffe) == 0xffffffff;
-                    } else {
-                        zero = (r == 0);
-                    }
-                    useRandomFlat = zero;
-                }
-                if (useRandomFlat) {
+                if ((flags & 0x80000004) == 4 && rand() % 2 == 0) {
                     bitval = 0x10000;
                 } else {
-                    unsigned char b = tile->climate;
-                    if ((b & 0xe0) < 0x81 && (b & 0x18) < 9) {
+                    int climate = map_tiles()[MapLongitude * y + half_x].climate;
+                    if ((climate & ~0x1F) <= 0x80 && (climate & 0x18) <= 8) {
                         continue;
                     }
                     bitval = 0x20000;

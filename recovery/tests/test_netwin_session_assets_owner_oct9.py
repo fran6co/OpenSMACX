@@ -77,7 +77,7 @@ def test_ready_styles_and_difficulty_names_use_existing_arrays():
     assert "&InterfaceBoxStyles[48 + ready]" in names
     assert "NetWinReadyPanels" not in names
     assert "NetWinDifficultyNames" not in SOURCE
-    assert "Difficulty[row->field_2_]" in _body("void NetWin::draw_diffs()")
+    assert "Difficulty[static_cast<int8_t>(row->field_2_)]" in _body("void NetWin::draw_diffs()")
     assert "Difficulty[index]" in _body("void NetWin::pick_diff(int slot)")
 
 

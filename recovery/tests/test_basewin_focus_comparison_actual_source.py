@@ -23,9 +23,9 @@ def test_product_focus_comparison(compiler_name, narrow_focus, tmp_path):
     lo, hi = _function_body_bytes(source.decode(), "BaseWin::check_veh")
     body = source[lo:hi].decode()
     if narrow_focus:
-        anchor = "vehicle.home_base_id == base_id"
+        anchor = "Vehs[veh_id].home_base_id == base_id"
         assert body.count(anchor) == 1
-        body = body.replace(anchor, "vehicle.home_base_id == static_cast<int16_t>(base_id)")
+        body = body.replace(anchor, "Vehs[veh_id].home_base_id == static_cast<int16_t>(base_id)")
     program = r'''
 #include <stdint.h>
 #include <assert.h>

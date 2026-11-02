@@ -32,8 +32,6 @@
   */
 class Lock {
  public:
-  Lock() { ; }
-  ~Lock() { ; }
   void reset_map();
   void clear();
   int any_locks();

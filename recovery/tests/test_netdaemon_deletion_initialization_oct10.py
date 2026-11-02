@@ -131,3 +131,97 @@ int main() {
                             str(cpp), "-o", str(binary)], check=True, timeout=30)
             result = subprocess.run([str(binary)], timeout=30)
             assert result.returncode == (0 if name == "real" else 1)
+
+
+# The host checks actual named-field effects and declaration traits. Native
+# VC6/COFF evidence separately qualifies the x86 offsets; host pointers can be8B.
+def _jc_actual_lock_declarations_and_state_tail():
+    from test_netdaemon_transfer_modal import extract
+    headers = "\n".join(
+        extract((ROOT / ("src/" + name.lower() + ".h")).read_text(),
+                "class " + name + " {") + ";"
+        for name in ("SquareLock", "PlayerLock", "Lock")
+    )
+    owner_header = (ROOT / "src/netdaemon.h").read_text()
+    states = "\n".join(extract(owner_header, "struct " + name + " {") + ";"
+                       for name in ("PrimaryLockStateTail", "LockStateEntry"))
+    ctor = extract((ROOT / "src/netdaemon.cpp").read_text(),
+                   "NetDaemon::NetDaemon()")
+    start = ctor.index("    primary_state_.leading_words_[0] = 0;")
+    end = ctor.rindex("    locks_.clear();")
+    return headers, states, ctor[start:end]
+
+
+@pytest.mark.parametrize("damage", ["none", "old_mask_start", "omit_last_word",
+                                    "clobber_unwritten", "wrong_channel_word",
+                                    "explicit_empty_lifetime"])
+def test_actual_constructor_state_domain_and_trivial_lock_lifetimes(tmp_path, damage):
+    headers, states, tail = _jc_actual_lock_declarations_and_state_tail()
+    edits = {
+        "old_mask_start": ("trailing_words_[i + 1]", "trailing_words_[i]"),
+        "omit_last_word": ("    channels_[1].trailing_words_[8] = 0;", ""),
+        "clobber_unwritten": ("    primary_state_.leading_words_[0] = 0;",
+                               "    channels_[0].leading_words_[3] = 0;\n    primary_state_.leading_words_[0] = 0;"),
+        "wrong_channel_word": ("channels_[1].trailing_words_[5] = 0;",
+                               "channels_[1].trailing_words_[3] = 0;"),
+    }
+    if damage in edits:
+        old, new = edits[damage]
+        assert tail.count(old) == 1
+        tail = tail.replace(old, new, 1)
+    elif damage == "explicit_empty_lifetime":
+        old = "class SquareLock {\n public:"
+        assert headers.count(old) == 1
+        headers = headers.replace(old, old + "\n SquareLock() {} ~SquareLock() {}", 1)
+    program = r'''
+#include <cstdint>
+#include <cstring>
+#include <type_traits>
+#include <cstdio>
+#define CHECK(x) do { if (!(x)) { std::fprintf(stderr,"constructor: %s\n",#x); return 7; } } while(0)
+HEADERS
+STATES
+struct StateFixture {
+    PrimaryLockStateTail primary_state_;
+    LockStateEntry channels_[2];
+    void initialize() { TAIL }
+};
+int main() {
+    CHECK(std::is_trivially_default_constructible<SquareLock>::value);
+    CHECK(std::is_trivially_destructible<SquareLock>::value);
+    CHECK(std::is_trivially_default_constructible<PlayerLock>::value);
+    CHECK(std::is_trivially_destructible<PlayerLock>::value);
+    CHECK(std::is_trivially_default_constructible<Lock>::value);
+    CHECK(std::is_trivially_destructible<Lock>::value);
+    CHECK(sizeof(SquareLock)==12 && sizeof(PlayerLock)==28 && sizeof(Lock)==236);
+    StateFixture f;
+    std::memset(&f,0xA5,sizeof(f));
+    f.initialize();
+    const uint32_t poison=0xA5A5A5A5u;
+    for(int i=0;i<3;++i) CHECK(f.primary_state_.leading_words_[i]==0);
+    CHECK(f.primary_state_.flags_==0 && f.primary_state_.session_phase_==0);
+    for(int i=0;i<8;++i) CHECK(f.primary_state_.trailing_words_[i]==0);
+    CHECK(f.primary_state_.trailing_words_[8]==poison);
+    CHECK(f.channels_[0].leading_words_[0]==0 && f.channels_[0].leading_words_[1]==0);
+    CHECK(f.channels_[0].leading_words_[2]==poison && f.channels_[0].leading_words_[3]==poison);
+    CHECK(f.channels_[0].payload_.vehicle_selection_follow==0);
+    for(int i=0;i<10;++i) CHECK(f.channels_[0].trailing_words_[i]==0);
+    for(int i=0;i<4;++i) CHECK(f.channels_[1].leading_words_[i]==0);
+    CHECK(f.channels_[1].payload_.flags==0);
+    CHECK(f.channels_[1].trailing_words_[0]==poison && f.channels_[1].trailing_words_[1]==poison);
+    for(int i=2;i<6;++i) CHECK(f.channels_[1].trailing_words_[i]==0);
+    CHECK(f.channels_[1].trailing_words_[6]==255);
+    CHECK(f.channels_[1].trailing_words_[7]==0 && f.channels_[1].trailing_words_[8]==0);
+    CHECK(f.channels_[1].trailing_words_[9]==poison);
+}
+'''.replace("HEADERS",headers).replace("STATES",states).replace("TAIL",tail)
+    compiler = shutil.which("g++") or shutil.which("clang++")
+    assert compiler, "host C++ compiler is required for the constructor control"
+    cpp, exe = tmp_path / "constructor.cpp", tmp_path / "constructor"
+    cpp.write_text(program)
+    build = subprocess.run([compiler,"-std=c++11","-O2","-DNDEBUG",str(cpp),"-o",str(exe)],
+                           capture_output=True,text=True,timeout=60)
+    assert build.returncode==0, build.stdout+build.stderr
+    run = subprocess.run([str(exe)],capture_output=True,text=True,timeout=10)
+    assert run.returncode==(0 if damage=="none" else 7), run.stdout+run.stderr
+    if damage!="none": assert "constructor:" in run.stderr
