@@ -520,6 +520,47 @@
 //       "unit": "../build/intel/mt_obj/intrncvt.obj"
 //     }
 //   ],
+//   "data_starts": [
+//     {
+//       "evidence": "Current pinned archive actual provider and all-member external definition inventory are unique; separately source-bounded original CRT instruction witnesses identify this original data START without using scored STRICMP operands.",
+//       "kind": "bss",
+//       "offset": 0,
+//       "origin": {
+//         "address": 10225012,
+//         "address_space": "pe:va",
+//         "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+//       },
+//       "section": 1,
+//       "section_name": ".bss",
+//       "section_size": 32,
+//       "symbol": "___lc_handle",
+//       "unit": "build/intel/mt_obj/nlsdata2.obj"
+//     },
+//     {
+//       "common_size": 4,
+//       "evidence": "Current pinned archive actual provider and all-member external definition inventory are unique; separately source-bounded original CRT instruction witnesses identify this original data START without using scored STRICMP operands.",
+//       "kind": "common",
+//       "origin": {
+//         "address": 10228132,
+//         "address_space": "pe:va",
+//         "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+//       },
+//       "symbol": "___setlc_active",
+//       "unit": "build/intel/mt_obj/setlocal.obj"
+//     },
+//     {
+//       "common_size": 4,
+//       "evidence": "Current pinned archive actual provider and all-member external definition inventory are unique; separately source-bounded original CRT instruction witnesses identify this original data START without using scored STRICMP operands.",
+//       "kind": "common",
+//       "origin": {
+//         "address": 10228136,
+//         "address_space": "pe:va",
+//         "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+//       },
+//       "symbol": "___unguarded_readlc_active",
+//       "unit": "build/intel/mt_obj/setlocal.obj"
+//     }
+//   ],
 //   "kind": "toolchain_component",
 //   "license_evidence": "Proprietary Microsoft runtime supplied by the local compiler distribution. The archive stays external and is not redistributed here; redistribution rights have not been established.",
 //   "schema_version": 1,

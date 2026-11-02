@@ -31,6 +31,7 @@ def render_component(manifest: ComponentManifest) -> str:
     bindings = data.pop("bindings")
     origin_rows = ([binding["origin"] for binding in bindings]
                    + [item["origin"] for item in data.get("data_sections", [])]
+                   + [item["origin"] for item in data.get("data_starts", [])]
                    + [item["origin"] for item in data.get("code_sections", [])])
     origins = {(origin["image_sha256"], origin["address_space"]) for origin in origin_rows}
     if len(origins) != 1:
@@ -79,7 +80,8 @@ def parse_component(text: str) -> ComponentManifest:
         raise ValueError("component annotation needs one pinned image/address space")
     if not isinstance(data.get("bindings"), list):
         raise ValueError("component annotation bindings must be an array")
-    if not data["bindings"] and not (data.get("code_sections") or data.get("data_sections")):
+    if not data["bindings"] and not (data.get("code_sections") or data.get("data_sections")
+                                     or data.get("data_starts")):
         raise ValueError("component annotation needs an original function or section binding")
     for binding in data["bindings"]:
         if not isinstance(binding, dict) or "origin" not in binding or not isinstance(binding.get("spans"), list):
@@ -124,6 +126,8 @@ def parse_component_entries(sources: dict[str, str]) -> list[tuple[str, Componen
     if len(ids) != len(set(ids)):
         raise ValueError("duplicate component ids")
     entities = [binding.origin.entity_id for manifest in manifests for binding in manifest.bindings]
+    entities.extend(item.origin.entity_id for manifest in manifests if isinstance(manifest, ToolchainManifest)
+                    for item in manifest.data_starts)
     if len(entities) != len(set(entities)):
         raise ValueError("original binding owned by multiple components")
     entry_rows = [(manifest.component.component_id, manifest, section, anchor,
@@ -141,11 +145,22 @@ def parse_component_entries(sources: dict[str, str]) -> list[tuple[str, Componen
         names = [binding.symbol for binding in manifest.bindings]
         if isinstance(manifest, ToolchainManifest):
             names.extend(item.symbol for item in manifest.absolute_symbols)
+            names.extend(item.symbol for item in manifest.data_starts)
             names.extend(anchor.name for section in manifest.code_sections for anchor in section.entries)
         for name in names:
             previous = target_owners.setdefault(name, manifest.component.component_id)
             if previous != manifest.component.component_id:
                 raise ValueError("component target symbol is declared by multiple components")
+    for manifest in manifests:
+        if not isinstance(manifest, ToolchainManifest):
+            continue
+        for start in manifest.data_starts:
+            for other in manifests:
+                spans = [span for binding in other.bindings for span in binding.spans]
+                if isinstance(other, ToolchainManifest):
+                    spans.extend(item.span for item in other.data_sections + other.code_sections)
+                if any(span.start <= start.origin.address < span.end for span in spans):
+                    raise ValueError("component data start overlaps a function or section")
     entry_names = {}
     for component_id, manifest, section, anchor, address in entry_rows:
         owner = (component_id, manifest, section, anchor, address)

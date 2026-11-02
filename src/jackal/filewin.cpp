@@ -377,7 +377,7 @@ char *FileWin::save() {
     return field_638_ == 0x12C ? 0 : selected_path_;
 }
 
-// ORIGINAL: 0x00613F60 ?load@FileWin@@QAEXXZ 0x00613F60-0x00614133
+// ORIGINAL: 0x00613F60 ?load@FileWin@@QAEXXZ 0x00613F60-0x00614133 BYTE_EXACT
 // symbol    ?load@FileWin@@QAEPADXZ
 char *FileWin::load() {
     if (modal_window_ == 0) {

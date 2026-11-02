@@ -3428,6 +3428,14 @@ load-bearing fields:
 - Optional `data_sections`: complete initialized non-COMDAT COFF contributions,
   with exact member/section identity, original full span, static symbol offsets
   and independent evidence. These anchors assert no per-symbol extent or type.
+- Optional `data_starts`: independently evidenced ordinary external BSS or
+  COMMON **start points**, with no original span. A `kind: "bss"` row has
+  `unit`, `symbol`, `origin`, `section`, `section_name`, `offset`, `section_size`
+  and `evidence`; `section_size` describes only the physical current COFF
+  section. A `kind: "common"` row instead has `unit`, `symbol`, `origin`,
+  `common_size` and `evidence`; `common_size` is only the physical COFF request.
+  The typed APIs are `ToolchainBssDataStart` and `ToolchainCommonDataStart`.
+  An empty `data_starts` field is omitted, preserving legacy serialization.
 - Optional `code_sections`: complete ordinary executable, non-COMDAT COFF
   contributions, each with `unit`, positive `section` ordinal, `section_name`,
   `origin`, full `span` and independent `evidence`. A section is not a function:
@@ -3443,6 +3451,31 @@ flags, exact symbol inventory and relocation-free COFF/PE storage agree. Only
 passing contributions supply section bases for function-reference verification;
 unsupported or damaged contributions cannot resolve those references. This does
 not establish linked allocation, selection, object lifetimes or application coverage.
+
+Data starts require the pinned archive's complete physical symbol inventory,
+including ordinary machine-zero metadata and short imports. An unsupported
+member prevents uniqueness proof. Exactly one ordinary external, type-zero
+provider in the declared exact i386 member must match its BSS section/offset/size
+or positive COMMON request. Duplicate strong/COMMON providers, weak aliases,
+imports and conflicting declarations refuse; this does not implement COMMON
+coalescing or maximum-size selection. BSS must be ordinary writable uninitialized
+storage, without bytes, relocations, TLS or COMDAT. The original point must lie
+uniquely in writable nonexecuting virtual-zero storage; no section/request-sized
+original content or allocation is inferred from that point.
+
+Qualified points resolve only ordinary absolute data references in whole code
+contributions, through their exact owning record or an ordinary undefined
+external in another member. They never place sibling symbols or a whole section,
+resolve weak/function/import records, supply function-row targets, or export data
+targets through `component_targets`. Reports expose `start_identity: "pass"` and
+`scoped_reference_target: true` separately while the data row's overall `result`,
+original extent/content, allocation, selection and lifetime remain `unknown`.
+Consequently a component can have a fully passing code contribution and callable
+entries with outstanding data obligations and an overall `unknown` result.
+Existing code entries still publish only after the entire original contribution,
+all references, exact entry inventory and archive pin pass. Neither data points
+nor parsing status establish linked preservation, complete data recovery or game
+acceptance. Full initialized-section qualification above is unchanged.
 
 Code contributions require exact complete-section bounds, ordinary executable
 flags, executable image backing, nonrelocation bytes and original HIGHLOW

@@ -380,6 +380,7 @@ class ToolchainManifest:
     absolute_symbols: tuple[AbsoluteSymbolBinding, ...] = ()
     data_sections: tuple[ToolchainDataSectionBinding, ...] = ()
     code_sections: tuple[ToolchainCodeSectionBinding, ...] = ()
+    data_starts: tuple[ToolchainBssDataStart | ToolchainCommonDataStart, ...] = ()
 
     def __post_init__(self):
         if (self.component.delivery != Delivery.TOOLCHAIN
@@ -390,8 +391,12 @@ class ToolchainManifest:
         identities = {item.origin.entity_id for item in self.bindings}
         if len(identities) != len(self.bindings):
             raise ValueError("toolchain original bindings must be unique")
-        if not (self.bindings or self.data_sections or self.code_sections):
+        if not (self.bindings or self.data_sections or self.code_sections or self.data_starts):
             raise ValueError("toolchain manifest needs an original function or section binding")
+        if (not isinstance(self.data_starts, tuple) or any(
+                type(item) not in (ToolchainBssDataStart, ToolchainCommonDataStart)
+                for item in self.data_starts)):
+            raise ValueError("data starts must be an immutable tuple of typed bindings")
         if len({item.symbol for item in self.bindings}) != len(self.bindings):
             raise ValueError("toolchain symbol bindings must be unique")
         if len({item.symbol for item in self.absolute_symbols}) != len(self.absolute_symbols):
@@ -442,6 +447,7 @@ class ToolchainManifest:
                         or overlap_bindings[identity][1] != section):
                     raise ValueError("one original identity cannot be both a function and a section")
         origins = [item.origin for item in self.bindings] + [item.origin for item in section_rows]
+        origins.extend(item.origin for item in self.data_starts)
         if any(origin.address_space != "pe:va" for origin in origins):
             raise ValueError("toolchain bindings require PE virtual addresses")
         if len({origin.image_sha256 for origin in origins}) != 1:
@@ -469,9 +475,26 @@ class ToolchainManifest:
                                and right.end <= section.span.end)
                 if not allowed:
                     raise ValueError("toolchain function/data-section spans overlap")
+        occupied_names = ({item.symbol for item in self.bindings}
+                          | {item.symbol for item in self.absolute_symbols}
+                          | set(entry_symbols)
+                          | {anchor.name for item in self.data_sections for anchor in item.symbols})
+        start_names = [item.symbol for item in self.data_starts]
+        if len(set(start_names)) != len(start_names) or set(start_names) & occupied_names:
+            raise ValueError("toolchain data-start symbols conflict with another binding")
+        if len({item.origin.entity_id for item in self.data_starts}) != len(self.data_starts):
+            raise ValueError("toolchain data-start identities must be unique; aliases are unsupported")
+        for item in self.data_starts:
+            if any(span.start <= item.origin.address < span.end for span, *_ in spans):
+                raise ValueError("toolchain data start overlaps a declared function or section")
 
     def to_dict(self) -> dict:
         data = asdict(self)
+        if not self.data_starts:
+            data.pop("data_starts")
+        else:
+            for row, item in zip(data["data_starts"], self.data_starts, strict=True):
+                row["kind"] = "bss" if isinstance(item, ToolchainBssDataStart) else "common"
         if not self.code_sections:
             data.pop("code_sections")
         else:
@@ -485,8 +508,8 @@ class ToolchainManifest:
     @classmethod
     def from_dict(cls, value: dict) -> ToolchainManifest:
         allowed = {"schema_version", "kind", "component", "archive_sha256",
-                   "license_evidence", "bindings", "absolute_symbols", "data_sections", "code_sections"}
-        required = allowed - {"data_sections", "code_sections"}
+                   "license_evidence", "bindings", "absolute_symbols", "data_sections", "code_sections", "data_starts"}
+        required = allowed - {"data_sections", "code_sections", "data_starts"}
         if not isinstance(value, dict) or not required <= set(value) or set(value) - allowed:
             raise ValueError(f"invalid toolchain manifest fields; expected required {sorted(required)}")
         if type(value["schema_version"]) is not int or value["schema_version"] != 1:
@@ -542,8 +565,23 @@ class ToolchainManifest:
             code_sections.append(ToolchainCodeSectionBinding(item["unit"], item["section"],
                                 item["section_name"], origin, span, item["evidence"], entries,
                                 item.get("comdat_selection")))
+        data_starts = []
+        for item in _list(value.get("data_starts", []), "data_starts"):
+            kind = item.get("kind") if isinstance(item, dict) else None
+            common = {"kind", "unit", "symbol", "origin", "evidence"}
+            if kind == "bss":
+                _fields(item, common | {"section", "section_name", "offset", "section_size"}, "BSS data start")
+                cls_ = ToolchainBssDataStart
+            elif kind == "common":
+                _fields(item, common | {"common_size"}, "COMMON data start")
+                cls_ = ToolchainCommonDataStart
+            else:
+                raise ValueError("unsupported toolchain data-start kind")
+            args = {key: val for key, val in item.items() if key != "kind"}
+            args["origin"] = Origin(**_fields(item["origin"], {"image_sha256", "address_space", "address"}, "origin"))
+            data_starts.append(cls_(**args))
         return cls(owner, value["archive_sha256"], value["license_evidence"], tuple(bindings),
-                   tuple(absolutes), tuple(data_sections), tuple(code_sections))
+                   tuple(absolutes), tuple(data_sections), tuple(code_sections), tuple(data_starts))
 
 
 ComponentManifest = VendorManifest | ToolchainManifest | SystemImportManifest
@@ -609,6 +647,51 @@ class ToolchainDataSectionBinding:
             raise ValueError("data-section binding needs unique symbol anchors")
         if any(item.offset >= self.span.end - self.span.start for item in self.symbols):
             raise ValueError("data-section symbol anchor is outside the section span")
+
+
+def _data_start(unit, symbol, origin, evidence):
+    archive_member_identity(unit)
+    require_text(symbol, "data-start symbol")
+    require_text(evidence, "independent data-start evidence")
+    if origin.address_space != "pe:va":
+        raise ValueError("toolchain data starts require PE virtual addresses")
+
+
+@dataclass(frozen=True)
+class ToolchainBssDataStart:
+    """One external start. Section size describes current COFF, never original extent."""
+    unit: str
+    symbol: str
+    origin: Origin
+    section: int
+    section_name: str
+    offset: int
+    section_size: int
+    evidence: str
+
+    def __post_init__(self):
+        _data_start(self.unit, self.symbol, self.origin, self.evidence)
+        if type(self.section) is not int or self.section < 1:
+            raise ValueError("BSS data-start section ordinal must be positive")
+        require_text(self.section_name, "BSS section name")
+        if (type(self.section_size) is not int or not 0 < self.section_size < 2**32
+                or type(self.offset) is not int or not 0 <= self.offset < self.section_size):
+            raise ValueError("BSS start requires an offset within its physical COFF section size")
+
+
+@dataclass(frozen=True)
+class ToolchainCommonDataStart:
+    """One external COMMON start; common_size is a COFF request, not a selected extent."""
+    unit: str
+    symbol: str
+    origin: Origin
+    common_size: int
+    evidence: str
+
+    def __post_init__(self):
+        _data_start(self.unit, self.symbol, self.origin, self.evidence)
+        if type(self.common_size) is not int or not 0 < self.common_size < 2**32:
+            raise ValueError("COMMON data-start request size must be a positive 32-bit integer")
 
 
 @dataclass(frozen=True)

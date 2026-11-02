@@ -211,7 +211,11 @@ def _source_function_bases(manifest, objects, function_rows):
     return bases
 
 
-def _code_section_targets(manifest, objects, section_bases, function_rows, import_rows, absolute_rows):
+def _code_section_targets(manifest, objects, section_bases, function_rows, import_rows, absolute_rows,
+                         data_start_rows=()):
+    data_starts = {row["symbol"]: row for row in data_start_rows
+                   if row.get("start_identity") == Result.PASS
+                   and row.get("scoped_reference_target") is True}
     function_addresses = {}
     for row in function_rows:
         if (row.get("result") != Result.FAIL and row.get("boundary") == Result.PASS
@@ -232,6 +236,20 @@ def _code_section_targets(manifest, objects, section_bases, function_rows, impor
     for unit, obj in objects.items():
         targets = {}
         for index, symbol in obj.symbols.items():
+            point = data_starts.get(symbol.name)
+            if point is not None:
+                # These are data points, never callees, weak aliases, imports,
+                # inferred section bases or COMMON allocation extents. Only
+                # the exact owning record or an ordinary undefined EXTERNAL
+                # may use the already qualified source start.
+                ordinary = (symbol.storage == 2 and symbol.type == 0 and index not in obj.auxiliary)
+                owner = unit == point["unit"]
+                undefined = symbol.section == 0 and symbol.value == 0
+                data_references = all(kind == 6 for section in obj.sections if section.flags & 0x20
+                                      for _, target, kind in section.relocations if target == index)
+                if ordinary and (owner or undefined) and data_references:
+                    targets[str(index)] = int(point["address"], 16)
+                continue
             if symbol.section > 0:
                 base = section_bases.get((unit, symbol.section))
                 section = obj.sections[symbol.section - 1]
@@ -252,9 +270,9 @@ def _code_section_targets(manifest, objects, section_bases, function_rows, impor
 
 
 def _verify_code_section_references(manifest, objects, image, rows, bases, function_rows,
-                                    import_rows, absolute_rows, archive_result):
+                                    import_rows, absolute_rows, archive_result, data_start_rows=()):
     targets_by_member = _code_section_targets(manifest, objects, bases, function_rows,
-                                              import_rows, absolute_rows)
+                                              import_rows, absolute_rows, data_start_rows)
     for item, row in zip(manifest.code_sections, rows, strict=True):
         obj = objects.get(item.unit)
         if obj is None or row.get("boundary") != Result.PASS or row.get("bytes") == Result.FAIL:
@@ -340,12 +358,16 @@ def verify_toolchain(manifest: ToolchainManifest, image_data: bytes, archive_dat
     """
     import hashlib
     from .coff_archive import CoffArchive
+    if {item.symbol for item in manifest.data_starts} & {item.symbol for item in import_bindings}:
+        raise ValueError("component symbol is bound as both data start and import")
     pins = {binding.origin.image_sha256 for binding in manifest.bindings}
     pins.update(item.origin.image_sha256 for item in manifest.data_sections)
     pins.update(item.origin.image_sha256 for item in manifest.code_sections)
+    pins.update(item.origin.image_sha256 for item in manifest.data_starts)
     spaces = {binding.origin.address_space for binding in manifest.bindings}
     spaces.update(item.origin.address_space for item in manifest.data_sections)
     spaces.update(item.origin.address_space for item in manifest.code_sections)
+    spaces.update(item.origin.address_space for item in manifest.data_starts)
     if len(pins) != 1 or spaces != {"pe:va"}:
         raise ValueError("i386 toolchain verification requires one PE virtual-address image")
     image = PeImage(image_data, pins.pop())
@@ -355,6 +377,7 @@ def verify_toolchain(manifest: ToolchainManifest, image_data: bytes, archive_dat
     members = sorted({binding.unit for binding in manifest.bindings}
                      | {item.unit for item in manifest.absolute_symbols}
                      | {item.unit for item in manifest.data_sections}
+                     | {item.unit for item in manifest.data_starts}
                      | {item.unit for item in manifest.code_sections})
     data_rows, section_bases = [], {}
     code_rows = []
@@ -369,6 +392,9 @@ def verify_toolchain(manifest: ToolchainManifest, image_data: bytes, archive_dat
         section_bases = {key: base for key, base in section_bases.items()
                          if next(row for row in data_rows
                                  if (row["unit"], row["section"]) == key)["result"] == Result.PASS}
+    from .component_data_starts import verify_data_starts
+    start_rows, start_inventory = verify_data_starts(
+        manifest, objects, image, archive_data if archive_result == Result.PASS else None, errors)
     code_rows, code_bases, _ = _code_section_preflight(manifest, objects, image, errors)
     if archive_result == Result.PASS:
         rows, checked_imports = _check_functions(manifest, objects, image, errors, import_bindings,
@@ -400,15 +426,16 @@ def verify_toolchain(manifest: ToolchainManifest, image_data: bytes, archive_dat
         qualified_bases[key] = base
     code_rows = _verify_code_section_references(manifest, objects, image, code_rows,
                                                 qualified_bases, rows, checked_imports,
-                                                absolute_rows, archive_result)
+                                                absolute_rows, archive_result, start_rows)
     outcomes = ({row["result"] for row in rows} | {archive_result}
                 | {row["result"] for row in absolute_rows} | {row["result"] for row in data_rows}
                 | {row["result"] for row in code_rows}
+                | {row["result"] for row in start_rows}
                 | {entry["result"] for row in code_rows for entry in row.get("entries", [])})
     required_rows = bool(rows or data_rows or code_rows)
     overall = (Result.FAIL if Result.FAIL in outcomes else Result.UNKNOWN
                if Result.UNKNOWN in outcomes or not required_rows else Result.PASS)
-    return {"component_id": manifest.component.component_id, "check": "toolchain_binary_references",
+    report = {"component_id": manifest.component.component_id, "check": "toolchain_binary_references",
             "result": overall, "archive": {"result": archive_result, "sha256": actual},
             "functions": rows, "absolute_symbols": absolute_rows, "data_sections": data_rows,
             "code_sections": code_rows,
@@ -432,3 +459,9 @@ def verify_toolchain(manifest: ToolchainManifest, image_data: bytes, archive_dat
                             "import identities use explicit source DLL/export declarations, not original operands or candidate link selection",
                             "unbound external functions, static data and undeclared imports remain unresolved",
                             "this report does not publish targets into application acceptance"]}
+    if manifest.data_starts:
+        report.update(data_starts=start_rows, data_start_inventory=start_inventory,
+                      data_start_counts=dict(sorted(Counter(row["result"] for row in start_rows).items())))
+        report["limitations"].append(
+            "data starts resolve only ordinary internal code-section data references; original extent, content, allocation, selection and lifetime remain unknown")
+    return report

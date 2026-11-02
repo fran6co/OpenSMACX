@@ -63,6 +63,8 @@ def component_targets(root: Path, snapshot: dict, image_data: bytes) -> tuple[di
     for _, manifest in component_entries(snapshot):
         if not isinstance(manifest, ToolchainManifest):
             continue
+        if {item.symbol for item in manifest.data_starts} & imported_names:
+            raise ValueError("component symbol is bound as both data start and import")
         path = archives.get(manifest.component.component_id)
         if path is None:
             continue
