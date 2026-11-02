@@ -204,6 +204,25 @@ context is only a history hint, not permission to suppress a fresh investigation
 Use the package's measurement and candidate-deck APIs/CLI; do not introduce a
 project CLI or a second claim ledger.
 
+For supported body-only trials, use `recover tasks variants ... --local` or the
+existing `match_recovery.source.asm.compare_unit` diagnostic before repeating
+whole-owner native verification. A qualified captured object may be reused only
+after verifying its source, dependencies, compiler recipe and object hashes;
+count that reuse separately from physical compiler calls. This masked comparison
+is a search aid: it cannot establish reference correctness, preserve other
+functions, bank claims or qualify a change. Missing symbols, shared/associated
+span refusals and unmeasurable results are unresolved evidence, not failed source
+hypotheses. Retain the source and objects for every trial, including negatives.
+
+Run a native unchanged-owner control before the packet, then strict target and
+complete affected-owner verification for every source proposal selected for
+handoff, including useful nonexact structural changes. Header and ownership
+changes still require their full affected closure at integration. Do not spend
+another complete-owner verification on each transient spelling already rejected
+by an inspected ordinary-instruction mismatch. A promising masked result always
+goes through the strict comparator; diagnostic scores never enter the progress
+count or replace any publication check.
+
 The coordinator collects disjoint ready changes into a multi-TU integration
 checkpoint while workers continue the next packet in their own checkouts. Run
 full build/link and the relevant preservation checks for the combined checkpoint,
