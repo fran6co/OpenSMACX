@@ -136,3 +136,22 @@ int __cdecl veh_selectable(int veh_id) {
     }
     return veh_jail(veh_id) == 0;
 }
+
+/*
+Purpose: Sets all moves for the specified unit as expended.
+// ORIGINAL: 0x005C1D20 ?veh_skip@@YAXH@Z 0x005C1D20-0x005C1D42 BYTE_EXACT
+// size      34 bytes
+// prototype void (__cdecl ?veh_skip@@YAXH@Z)(int vehID)
+// callers   19   call targets   1
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x005C1540
+Return Value: n/a
+Status: Complete
+*/
+// The order service owns this command; callers retain its external boundary.
+// The historical object-file and translation-unit assignment remains unproved.
+void __cdecl veh_skip(int veh_id) {
+    // The original truncates speeds above 255 into the movement byte.
+    Vehs[veh_id].moves_expended = (uint8_t)speed(veh_id, false);
+}

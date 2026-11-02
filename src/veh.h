@@ -854,11 +854,7 @@ MEASURED inline void __cdecl go_to(int veh_id, char type, int x, int y) {
     }
 }
 
-MEASURED inline void __cdecl veh_skip(int veh_id) {
-    // TODO Bug: Due to size of moves_expended, speeds over 255 will be incorrect. The speed()
-    //           function can return a value from 1-999. Eventually increase size to 16 bits.
-    Vehs[veh_id].moves_expended = (uint8_t)speed(veh_id, false);
-}
+void __cdecl veh_skip(int veh_id);
 
 int __cdecl veh_fake(int proto_id, int faction_id);
 

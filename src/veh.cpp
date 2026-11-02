@@ -7990,23 +7990,7 @@ BOOL __cdecl veh_jail(int veh_id) {
     return false;
 }
 
-/*
-Purpose: Sets all moves for the specified unit as expended.
-// ORIGINAL: 0x005C1D20 ?veh_skip@@YAXH@Z 0x005C1D20-0x005C1D42 BYTE_EXACT
-// body      src/veh.h
-// size      34 bytes
-// prototype void (__cdecl ?veh_skip@@YAXH@Z)(int vehID)
-// callers   19   call targets   1
-// kind      game
-// flags     frame;sp_ready;purged_ok
-// calls     0x005C1540
-Return Value: n/a
-Status: Complete
-*/
-// BODY IN veh.h, as `MEASURED inline`: the image writes it out at
-// some call sites and calls it at others, and a .cpp definition is only ever
-// one of those. The marker stays here because that is where the catalogue
-// reads it.
+
 
 
 /*
