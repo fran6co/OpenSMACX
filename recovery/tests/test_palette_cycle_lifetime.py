@@ -292,3 +292,150 @@ def test_palette_cycle_lifetime_damage_is_observed(tmp_path, before, after):
     assert before in body
     result = run_host(tmp_path, fields, body.replace(before, after))
     assert result.returncode == 79, result.stderr
+
+
+REMOVE_HARNESS = r'''
+#include <cstdint>
+#include <cstddef>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
+#define __cdecl
+namespace removal_fixture {
+void check(bool ok,int line) {
+    if(!ok) {std::fprintf(stderr,"assertion line %d\n",line);std::exit(79);}
+}
+#define require(x) check((x),__LINE__)
+int destructions,colour_frees,colour_copies;
+struct Time { ~Time(){++destructions;} };
+struct PALETTEENTRY {uint8_t red,green,blue,flags;};
+struct Palette {
+    ACTUAL_FIELDS
+    uint32_t seed_;
+    int set();
+    void remove_animation(int);
+} palette;
+Palette::PaletteInternal *target;
+void *owned_colours;
+void *PaletteInitialized=nullptr,*BufferDirectDraw=nullptr;
+Palette *PaletteActive=nullptr;
+int PaletteUsesSystemColours=0;
+uint32_t PaletteSeedCache=0;
+struct DirectPalette {
+    void SetEntries(int,int,int,PALETTEENTRY*) {require(false);}
+} *DirectDrawPalette=nullptr;
+struct Buffer {void sync_to_palette(Palette*) {require(false);}};
+struct ScreenOwner {Buffer value;Buffer &buffer(){return value;}} ScreenBufferOwner;
+void AnimatePalette(void*,int,int,PALETTEENTRY*) {require(false);}
+void *memcpy(void *destination,const void *source,std::size_t bytes) {
+    require(target->time==nullptr && source==owned_colours && bytes==8);
+    require(destination==&palette.entries_[target->first]);
+    ++colour_copies;return std::memcpy(destination,source,bytes);
+}
+void free(void *p) {
+    require(target->time==nullptr && p==owned_colours && target->colours==p);
+    ++colour_frees;std::free(p);owned_colours=nullptr;
+}
+ACTUAL_REMOVE_BODY
+void same_fields(const Palette::PaletteInternal &actual,
+                 const Palette::PaletteInternal &expected) {
+    require(actual.key==expected.key && actual.time==expected.time);
+    require(actual.first==expected.first && actual.count==expected.count);
+    require(actual.colours==expected.colours);
+}
+int run() {
+    Time timers[5];PALETTEENTRY saved[5][2];
+    const int removed_slots[]={0,1,3,4};
+    for(unsigned c=0;c<sizeof(removed_slots)/sizeof(removed_slots[0]);++c) {
+        const int removed=removed_slots[c];
+        for(int i=0;i<5;++i) {
+            auto &row=palette.internal_[i];
+            row.key=100+i;row.time=&timers[i];row.first=10+3*i;row.count=2;
+            row.field_A=0xA0+i;row.field_B=0xB0+i;row.colours=saved[i];
+        }
+        for(int i=0;i<256;++i)palette.entries_[i]={1,2,3,4};
+        PALETTEENTRY original_entries[256];
+        std::memcpy(original_entries,palette.entries_,sizeof(original_entries));
+        target=&palette.internal_[removed];target->time=new Time;
+        const PALETTEENTRY backup[2]={{11,22,33,44},{55,66,77,88}};
+        owned_colours=std::malloc(sizeof(backup));require(owned_colours);
+        std::memcpy(owned_colours,backup,sizeof(backup));
+        target->colours=static_cast<PALETTEENTRY*>(owned_colours);
+        Palette::PaletteInternal before[5];
+        std::memcpy(before,palette.internal_,sizeof(before));
+        destructions=colour_frees=colour_copies=0;
+        palette.remove_animation(100+removed);
+        require(destructions==1 && colour_frees==1 && colour_copies==1);
+        for(int i=0;i<5;++i) {
+            if(i==removed && removed<4) {
+                same_fields(palette.internal_[i],before[i+1]);
+                // Native copies fields individually, leaving both unknown bytes.
+                require(palette.internal_[i].field_A==before[i].field_A);
+                require(palette.internal_[i].field_B==before[i].field_B);
+            } else if(i==removed) {
+                auto expected=before[i];expected.time=nullptr;expected.colours=nullptr;
+                same_fields(palette.internal_[i],expected);
+            } else {
+                same_fields(palette.internal_[i],before[i]);
+                require(palette.internal_[i].field_A==before[i].field_A);
+                require(palette.internal_[i].field_B==before[i].field_B);
+            }
+        }
+        for(int i=0;i<256;++i) {
+            const int relative=i-before[removed].first;
+            const auto &expected=(relative>=0 && relative<2)
+                ? backup[relative] : original_entries[i];
+            require(std::memcmp(&palette.entries_[i],&expected,sizeof(expected))==0);
+        }
+        if(removed<4) {
+            // The original leaves duplicate owner pointers in the two rows.
+            require(palette.internal_[removed].time==before[removed+1].time);
+            require(palette.internal_[removed].colours==before[removed+1].colours);
+        }
+        // No owning teardown is invented for the now-aliased successor rows.
+    }
+    return 0;
+}
+}
+int main(){return removal_fixture::run();}
+'''
+
+
+def run_remove_host(tmp_path, advancing=False):
+    fields, _ = actual_source()
+    body = braced((ROOT / "src/jackal/palette.cpp").read_text(),
+                  "void Palette::remove_animation(int key)")
+    publication = braced((ROOT / "src/jackal/palette.cpp").read_text(), "int Palette::set()")
+    if advancing:
+        loop = body.index("if (index < 4) {")
+        prefix, tail = body[:loop], body[loop:]
+        assert tail.count("internal_[index + 1]") == 5
+        assert tail.count("internal_[index]") == 5
+        # Restore the old advancing-row algorithm in the actual product body.
+        tail = tail.replace("internal_[index + 1]", "internal_[5 - remaining]")
+        tail = tail.replace("internal_[index]", "internal_[4 - remaining]")
+        body = prefix + tail
+    compiler = shutil.which("clang++") or shutil.which("g++")
+    if compiler is None:
+        pytest.skip("host C++ compiler required")
+    source = tmp_path / "remove.cpp"
+    source.write_text(REMOVE_HARNESS.replace("ACTUAL_FIELDS", fields)
+                      .replace("ACTUAL_REMOVE_BODY", publication + "\n" + body))
+    binary = tmp_path / "remove"
+    compiled = subprocess.run(
+        [compiler, "-std=c++11", "-O1", "-fsanitize=address,undefined",
+         "-fno-sanitize-recover=all", str(source), "-o", str(binary)],
+        capture_output=True, text=True, timeout=30)
+    assert compiled.returncode == 0, compiled.stderr
+    return subprocess.run([str(binary)], capture_output=True, text=True, timeout=10,
+                          env=dict(os.environ, ASAN_OPTIONS="detect_leaks=0"))
+
+
+def test_actual_palette_removal_repeats_fixed_slot_copy(tmp_path):
+    result = run_remove_host(tmp_path)
+    assert result.returncode == 0, result.stderr
+
+
+def test_palette_removal_rejects_advancing_compaction(tmp_path):
+    result = run_remove_host(tmp_path, advancing=True)
+    assert result.returncode == 79, result.stderr

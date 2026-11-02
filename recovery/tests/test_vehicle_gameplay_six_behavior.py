@@ -88,7 +88,7 @@ def test_current_product_bodies(tmp_path, compiler, case):
     ("fauna", "Continents[region].tile_count >= 0x32", "Continents[region].open_terrain >= 0x32"),
     ("fauna", "3u - MapNativeLifeForms", "3u - static_cast<uint32_t>(GameDataStateStorage.fields_.diff_level_current_)"),
     ("passengers", "unk_77[region] & 0x0800", "unk_77[region] & 0x0400"),
-    ("passengers", "mode < 3", "mode < 4"),
+    ("passengers", "mode <= 2", "mode <= 3"),
 ])
 def test_behavior_damage_controls(tmp_path, compiler, case, before, after):
     body = actual(case)

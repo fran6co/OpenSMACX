@@ -4115,41 +4115,7 @@ int Buffer::draw(Buffer *destination, int index, int x, int y,
         // The original returns the scale denominator, not either COM result.
         return denominator;
     }
-    // Original0x5D83E6/0x5D856B normalizes only the Sprite metadata colour.
-    // Sprite::draw still receives the unchanged index, including -1.
-    int sprite_colour = index;
-    if (sprite_colour == -1) {
-        sprite_colour = WinFillColour;
-    }
-    LPVOID bits = dib_bits_;
-    locked_bits_ = bits;
-    if (bits != nullptr) {
-        ++surface_lock_count_;
-    }
-    BufferSpriteOwner.sprite().pcBits_ = static_cast<unsigned char *>(bits);
-    BufferSpriteOwner.sprite().iSpriteWidth2_ = stride_;
-    BufferSpriteOwner.sprite().iSpriteWidth_ = dib_.bmiHeader.biWidth;
-    BufferSpriteOwner.sprite().iSpriteHeight_ = -dib_.bmiHeader.biHeight;
-    BufferSpriteOwner.sprite().iWidth_ = dib_.bmiHeader.biWidth;
-    BufferSpriteOwner.sprite().iHeight_ = -dib_.bmiHeader.biHeight;
-    BufferSpriteOwner.sprite().iLeftOffset_ = 0;
-    BufferSpriteOwner.sprite().iTopOffset_ = 0;
-    BufferSpriteOwner.sprite().cTransparentIndex_ = static_cast<uint8_t>(sprite_colour);
-    BufferSpriteOwner.sprite().fObj1Exists_ = 0;
-    if (surface_ == nullptr) {
-        const int count = --surface_lock_count_;
-        if (count <= 0) {
-            locked_bits_ = nullptr;
-            surface_lock_count_ = 0;
-        }
-    } else {
-        const int count = --surface_lock_count_;
-        if (locked_bits_ != nullptr && count <= 0) {
-            surface_->Unlock(locked_bits_);
-            locked_bits_ = nullptr;
-            surface_lock_count_ = 0;
-        }
-    }
+    prepare_shared_sprite(index);
     int result = BufferSpriteOwner.sprite().draw(destination, index, x, y, numerator, denominator);
     BufferSpriteOwner.sprite().pcBits_ = 0;
     return result;
@@ -4224,41 +4190,7 @@ int Buffer::draw(Buffer *destination, int index, int x, int y) {
         destination->surface_->Blt(0, surface_, 0, DDBLT_WAIT | DDBLT_KEYSRC, 0);
         return index;
     }
-    // Original0x5D83E6/0x5D856B normalizes only the Sprite metadata colour.
-    // Sprite::draw still receives the unchanged index, including -1.
-    int sprite_colour = index;
-    if (sprite_colour == -1) {
-        sprite_colour = WinFillColour;
-    }
-    LPVOID bits = dib_bits_;
-    locked_bits_ = bits;
-    if (bits != nullptr) {
-        ++surface_lock_count_;
-    }
-    BufferSpriteOwner.sprite().pcBits_ = static_cast<unsigned char *>(bits);
-    BufferSpriteOwner.sprite().iSpriteWidth2_ = stride_;
-    BufferSpriteOwner.sprite().iSpriteWidth_ = dib_.bmiHeader.biWidth;
-    BufferSpriteOwner.sprite().iSpriteHeight_ = -dib_.bmiHeader.biHeight;
-    BufferSpriteOwner.sprite().iWidth_ = dib_.bmiHeader.biWidth;
-    BufferSpriteOwner.sprite().iHeight_ = -dib_.bmiHeader.biHeight;
-    BufferSpriteOwner.sprite().iLeftOffset_ = 0;
-    BufferSpriteOwner.sprite().iTopOffset_ = 0;
-    BufferSpriteOwner.sprite().cTransparentIndex_ = static_cast<uint8_t>(sprite_colour);
-    BufferSpriteOwner.sprite().fObj1Exists_ = 0;
-    if (surface_ == nullptr) {
-        const int count = --surface_lock_count_;
-        if (count <= 0) {
-            locked_bits_ = nullptr;
-            surface_lock_count_ = 0;
-        }
-    } else {
-        const int count = --surface_lock_count_;
-        if (locked_bits_ != nullptr && count <= 0) {
-            surface_->Unlock(locked_bits_);
-            locked_bits_ = nullptr;
-            surface_lock_count_ = 0;
-        }
-    }
+    prepare_shared_sprite(index);
     int result = BufferSpriteOwner.sprite().draw(destination, index, x, y);
     release_buff_sprite();
     return result;

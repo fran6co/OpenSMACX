@@ -269,29 +269,22 @@ void Palette::remove_animation(int key) {
     // animates looked like before it started.
     memcpy(&entries_[slot.first], slot.colours,
            slot.count * sizeof(PALETTEENTRY));
-    if (BufferDirectDraw == nullptr) {
-        if (PaletteInitialized) {
-            PaletteActive = this;
-            ScreenBufferOwner.buffer().sync_to_palette(this);
-            if (PaletteUsesSystemColours == 0 && PaletteSeedCache != seed_) {
-                AnimatePalette(PaletteInitialized, 10, 236, &entries_[10]);
-                PaletteSeedCache = seed_;
-            }
-        }
-    } else if (DirectDrawPalette) {
-        DirectDrawPalette->SetEntries(0, 0, 256, entries_);
-    }
+    set();
     if (slot.colours) {
         free(slot.colours);
         slot.colours = nullptr;
     }
-    // PACK THE TABLE: every later slot moves down one.
-    for (int later = index; later < 4; ++later) {
-        internal_[later].key = internal_[later + 1].key;
-        internal_[later].first = internal_[later + 1].first;
-        internal_[later].count = internal_[later + 1].count;
-        internal_[later].time = internal_[later + 1].time;
-        internal_[later].colours = internal_[later + 1].colours;
+    // The original repeatedly copies the same next slot into this slot.
+    // Neither row advances; preserve this table-compaction bug.
+    if (index < 4) {
+        int remaining = 4 - index;
+        do {
+            internal_[index].key = internal_[index + 1].key;
+            internal_[index].first = internal_[index + 1].first;
+            internal_[index].count = internal_[index + 1].count;
+            internal_[index].time = internal_[index + 1].time;
+            internal_[index].colours = internal_[index + 1].colours;
+        } while (--remaining);
     }
 }
 #if defined(_MSC_VER) && _MSC_VER == 1200

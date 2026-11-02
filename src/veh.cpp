@@ -3854,8 +3854,7 @@ void __cdecl assemble_passengers(int base_id, int mode, int priority) {
         }
 
         if (disconnected_factions < requested_colonies) {
-            const int vehicle_id = veh_at(x, y);
-            const int stack_result = stack_check(vehicle_id, 2,
+            const int stack_result = stack_check(veh_at(x, y), 2,
                                                  AI_GOAL_COLONIZE,
                                                  faction_id, -1);
             const int colonize_priority = (stack_result == 0) ? priority : 1;
@@ -3863,17 +3862,15 @@ void __cdecl assemble_passengers(int base_id, int mode, int priority) {
                      x, y, -1);
         }
 
-        if (mode < 3) {
-            if (mode == 7) {
-                add_goal(faction_id, AI_GOAL_SCOUT, 1, x, y, -1);
-            }
-            return;
+        if (mode <= 2) {
+            goto scout_goal;
         }
     }
 
     add_goal(faction_id, AI_GOAL_DEFEND, priority, x, y, -1);
     add_goal(faction_id, AI_GOAL_ATTACK, priority, x, y, -1);
     add_goal(faction_id, AI_GOAL_UNK_3, priority, x, y, -1);
+scout_goal:
     if (mode == 7) {
         add_goal(faction_id, AI_GOAL_SCOUT, 1, x, y, -1);
     }

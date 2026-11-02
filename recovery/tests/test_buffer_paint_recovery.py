@@ -77,10 +77,41 @@ def test_draw_uses_one_real_sprite_and_correct_six_argument_entry(paint_objects)
 def test_actual_buffer_draw_routes_surfaces_and_borrowed_software_storage(tmp_path, monkeypatch):
     run_recovered_harness(tmp_path, monkeypatch, "buffer_draw_harness.cpp", [
         ("// LIVE_DRAW", "src/buffer.cpp", 0x5D84C0),
+        ("// LIVE_FOUR_ARGUMENT_DRAW", "src/buffer.cpp", 0x5D8370),
         ("// LIVE_RELEASE", "src/buffer.cpp", 0x5D8360)], declarations=[
         ("// LIVE_SPRITE", "src/sprite.h", "class Sprite {", "static_assert(sizeof(Sprite)"),
+        ("// LIVE_COLOR_TABLE", "src/jackal/color_table.h", "typedef unsigned char ColorTable[256];", None),
+        ("// LIVE_PREPARE", "src/buffer.cpp", "inline void Buffer::prepare_shared_sprite(int colour) {",
+         "__DEFINITION__"),
         ("// LIVE_SETUP", "src/buffer.cpp", "void Buffer::setup_buff_sprite(int colour) {",
-         "/*\nPurpose: Release the shared Sprite descriptor")])
+         "__DEFINITION__")])
+
+
+@pytest.mark.parametrize("first_overload", [6, 4])
+def test_actual_buffer_draw_rejects_unconditional_shared_sprite_setup(
+        tmp_path, monkeypatch, first_overload):
+    build = harness_support.recovered_harness_source
+
+    def damaged(*args, **kwargs):
+        source = build(*args, **kwargs)
+        guard = ("inline void Buffer::prepare_shared_sprite(int colour) {\n"
+                 "    if (surface_ != nullptr) {\n"
+                 "        return;\n"
+                 "    }\n")
+        assert source.count(guard) == 1
+        source = source.replace(guard, "inline void Buffer::prepare_shared_sprite(int colour) {\n", 1)
+        if first_overload == 4:
+            order = "static const bool four_argument_first = false;"
+            assert source.count(order) == 1
+            source = source.replace(order, "static const bool four_argument_first = true;", 1)
+        return source
+
+    monkeypatch.setattr(harness_support, "recovered_harness_source", damaged)
+    with pytest.raises(AssertionError, match="Assertion failed") as rejected:
+        test_actual_buffer_draw_routes_surfaces_and_borrowed_software_storage(tmp_path, monkeypatch)
+    assert "CONTROL_OVERLOAD=" + str(first_overload) in str(rejected.value)
+    assert "CONTROL_OVERLOAD=" + str(10 - first_overload) not in str(rejected.value)
+    assert "pcBits_ == expected_bits && cTransparentIndex_ == expected_colour" in str(rejected.value)
 
 
 def test_actual_graphicwin_paint_clipping_routing_and_restoration(tmp_path, monkeypatch):
