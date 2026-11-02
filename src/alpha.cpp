@@ -17,6 +17,33 @@
  */
 #include "stdafx.h"
 
+// Separate writable comparison strings identified by the pinned operand sites.
+// These descriptive names do not claim original names or allocation bounds.
+// RECOVERY_OBJECT: v1 0x0068F268 _TechNameNoneText
+static char TechNameNoneText[] = "None";
+// RECOVERY_OBJECT: v1 0x0068F270 _TechNameDisableText
+static char TechNameDisableText[] = "Disable";
+// RECOVERY_OBJECT: v1 0x0068F284 _ChassisNameNoneText
+static char ChassisNameNoneText[] = "None";
+// RECOVERY_OBJECT: v1 0x0068F28C _ChassisNameDisableText
+static char ChassisNameDisableText[] = "Disable";
+// RECOVERY_OBJECT: v1 0x0068F2A0 _WeaponNameNoneText
+static char WeaponNameNoneText[] = "None";
+// RECOVERY_OBJECT: v1 0x0068F2A8 _WeaponNameDisableText
+static char WeaponNameDisableText[] = "Disable";
+// RECOVERY_OBJECT: v1 0x0068F2BC _ArmorNameNoneText
+static char ArmorNameNoneText[] = "None";
+// RECOVERY_OBJECT: v1 0x0068F2C4 _ArmorNameDisableText
+static char ArmorNameDisableText[] = "Disable";
+// RECOVERY_OBJECT: v1 0x0068F278 _TechNameBadKey
+static char TechNameBadKey[] = "BADTECHKEY";
+// RECOVERY_OBJECT: v1 0x0068F294 _ChassisNameBadKey
+static char ChassisNameBadKey[] = "BADCHASKEY";
+// RECOVERY_OBJECT: v1 0x0068F2B0 _WeaponNameBadKey
+static char WeaponNameBadKey[] = "BADWEAPKEY";
+// RECOVERY_OBJECT: v1 0x0068F2CC _ArmorNameBadKey
+static char ArmorNameBadKey[] = "BADARMKEY";
+
 #include "xpops.h"  // X_pop
 #include "alpha.h"
 #include "base.h"
@@ -251,10 +278,10 @@ int __cdecl tech_name(LPSTR name) {
         }
         name[strlen(name) - 1] = 0;
     }
-    if (!_stricmp(name, "None")) {
+    if (!_stricmp(name, TechNameNoneText)) {
         return NoneValue;
     }
-    if (!_stricmp(name, "Disable")) {
+    if (!_stricmp(name, TechNameDisableText)) {
         return DisabledValue;
     }
     for (int tech_id = 0; tech_id < MaxTechnologyNum; tech_id++) {
@@ -265,7 +292,7 @@ int __cdecl tech_name(LPSTR name) {
     parse_says(0, Txt.get_file_path(), -1, -1);
     parse_says(1, name, -1, -1);
     parse_says(2, TextBufferGetPtr, -1, -1);
-    X_pop("BADTECHKEY", NULL); // TODO: Fix crash bug if BADTECHKEY is triggered.
+    X_pop(TechNameBadKey, NULL); // TODO: Fix crash bug if BADTECHKEY is triggered.
     return DisabledValue;
 }
 
@@ -306,10 +333,10 @@ int __cdecl chas_name(LPSTR name) {
         }
         name[strlen(name) - 1] = 0;
     }
-    if (!_stricmp(name, "None")) {
+    if (!_stricmp(name, ChassisNameNoneText)) {
         return NoneValue;
     }
-    if (!_stricmp(name, "Disable")) {
+    if (!_stricmp(name, ChassisNameDisableText)) {
         return DisabledValue;
     }
     for (int chas_id = 0; chas_id < MaxChassisNum; chas_id++) {
@@ -324,7 +351,7 @@ int __cdecl chas_name(LPSTR name) {
     parse_says(0, Txt.get_file_path(), -1, -1);
     parse_says(1, name, -1, -1);
     parse_says(2, TextBufferGetPtr, -1, -1);
-    X_pop("BADCHASKEY", NULL); // TODO: Fix crash bug if BADTECHKEY is triggered.
+    X_pop(ChassisNameBadKey, NULL); // TODO: Fix crash bug if BADTECHKEY is triggered.
     return 0;
 }
 
@@ -355,10 +382,10 @@ int __cdecl weap_name(LPSTR name) {
         }
         name[strlen(name) - 1] = 0;
     }
-    if (!_stricmp(name, "None")) {
+    if (!_stricmp(name, WeaponNameNoneText)) {
         return NoneValue;
     }
-    if (!_stricmp(name, "Disable")) {
+    if (!_stricmp(name, WeaponNameDisableText)) {
         return DisabledValue;
     }
     for (int weap_id = 0; weap_id < MaxWeaponNum; weap_id++) {
@@ -370,7 +397,7 @@ int __cdecl weap_name(LPSTR name) {
     parse_says(0, Txt.get_file_path(), -1, -1);
     parse_says(1, name, -1, -1);
     parse_says(2, TextBufferGetPtr, -1, -1);
-    X_pop("BADWEAPKEY", NULL); // TODO: Fix crash bug if BADTECHKEY is triggered.
+    X_pop(WeaponNameBadKey, NULL); // TODO: Fix crash bug if BADTECHKEY is triggered.
     return 0;
 }
 
@@ -405,10 +432,10 @@ int __cdecl arm_name(LPSTR name) {
         }
         name[strlen(name) - 1] = 0;
     }
-    if (!_stricmp(name, "None")) {
+    if (!_stricmp(name, ArmorNameNoneText)) {
         return NoneValue;
     }
-    if (!_stricmp(name, "Disable")) {
+    if (!_stricmp(name, ArmorNameDisableText)) {
         return DisabledValue;
     }
     for (int arm_id = 0; arm_id < MaxArmorNum; arm_id++) {
@@ -420,7 +447,7 @@ int __cdecl arm_name(LPSTR name) {
     parse_says(0, Txt.get_file_path(), -1, -1);
     parse_says(1, name, -1, -1);
     parse_says(2, TextBufferGetPtr, -1, -1);
-    X_pop("BADARMKEY", NULL); // TODO: Fix crash bug if BADTECHKEY is triggered.
+    X_pop(ArmorNameBadKey, NULL); // TODO: Fix crash bug if BADTECHKEY is triggered.
     return 0;
 }
 
