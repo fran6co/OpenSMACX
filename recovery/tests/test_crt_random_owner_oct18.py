@@ -59,7 +59,7 @@ def bodies(source_text: str, mutant: str | None = None) -> str:
         "bounded": definition(bounded_source, bounded_signature),
     }
     if "return bounded_crt_random(bounds);" in extracted["bounded"]:
-        primitive_source = (ROOT / "src/crt_random.h").read_text(encoding="utf-8")
+        primitive_source = (ROOT / "src/crt_random_inline.h").read_text(encoding="utf-8")
         line = function_line(primitive_source, "bounded_crt_random")
         signature = primitive_source.splitlines()[line - 1].split("{", 1)[0].rstrip()
         extracted["bounded"] = (definition(primitive_source, signature) + "\n" +

@@ -24,6 +24,7 @@
 #include "stdafx.h"
 #include "worldwin.h"
 #include "general.h"
+#include "crt_random_inline.h"
 
 #include "time.h"
 #include "win.h"

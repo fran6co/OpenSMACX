@@ -17,6 +17,7 @@
  */
 #include "stdafx.h"
 #include "crt_random.h"
+#include "crt_random_inline.h"
 #include "log.h"
 
 /*

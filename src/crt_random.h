@@ -17,15 +17,6 @@
  */
 #pragma once
 
-#include <stdlib.h>
-
 // These wrappers use the CRT stream, not the separate Random/Rand LCG.
 void __cdecl my_srand(int reseed);
 unsigned int __cdecl rnd(int bounds, char *input);
-
-inline unsigned int __cdecl bounded_crt_random(int bounds) {
-    if (bounds - 1 <= 0) {
-        return 0;
-    }
-    return rand() % bounds;
-}

@@ -23,6 +23,7 @@
 #include "base.h"
 #include "game.h"
 #include "general.h"
+#include "crt_random_inline.h"
 #include "map.h"
 #include "random.h"
 #include "strings.h"

@@ -31,7 +31,7 @@ def definition(text, name):
 
 def actual_program(damage):
     body = definition((ROOT / "src/technology.cpp").read_text(), "tech_ai")
-    primitive = definition((ROOT / "src/crt_random.h").read_text(), "bounded_crt_random")
+    primitive = definition((ROOT / "src/crt_random_inline.h").read_text(), "bounded_crt_random")
     human = definition((ROOT / "src/faction.h").read_text(), "is_human")
     maximum, = re.findall(r"static const int MaxTechnologyNum = \d+;",
                            (ROOT / "src/technology.h").read_text())

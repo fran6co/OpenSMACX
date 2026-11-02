@@ -234,7 +234,7 @@ int main() {
     return 0;
 }
 '''
-    primitive = function_body((ROOT / "src/crt_random.h").read_text(),
+    primitive = function_body((ROOT / "src/crt_random_inline.h").read_text(),
                               "inline unsigned int __cdecl bounded_crt_random(")
     rng_context = ("\nstatic int fixture_rand() { return 0; }\n"
                    "#define rand fixture_rand\n" + primitive + "\n#undef rand\n")

@@ -19,6 +19,7 @@
 #include "stdafx.h"
 #include "popup.h"
 #include "general.h"
+#include "crt_random_inline.h"
 #include "win.h"
 #include "map.h"
 #include "map_coordinates.h"
