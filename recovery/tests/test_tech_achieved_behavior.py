@@ -764,13 +764,30 @@ def run_host(tmp_path, body, *, compiler="g++", control=None):
           LockEnableMask = 1u << 1;
           ConsoleGlobal.faction_id_ = 1;
           mutate_local_after_design = 1;
+          const uint16_t before63 = VehPrototypes[63].flags;
+          const uint16_t before64 = VehPrototypes[64].flags;
+          const uint16_t before127 = VehPrototypes[127].flags;
+          const uint16_t before128 = VehPrototypes[128].flags;
+          VehPrototypes[63].flags = 0xB6C3;
+          VehPrototypes[64].flags = 0xA5C3;
           VehPrototypes[68].flags = 0xC3;
+          VehPrototypes[127].flags = 0xA5C3;
+          VehPrototypes[128].flags = 0xC7C3;
           VehPrototypes[4].flags = PROTO_ACTIVE;
           VehPrototypes[4].preq_tech = 2;
           tech_achieved(1, 2, 0, 0);
           if (VehPrototypes[68].flags != 3 ||
+              VehPrototypes[64].flags != 0xA503 ||
+              VehPrototypes[127].flags != 0xA503 ||
+              VehPrototypes[63].flags != 0xB6C3 ||
+              VehPrototypes[128].flags != 0xC7C3 ||
               considered_design_faction != 1 ||
               FirstProposedPrototype != -1) return 13;
+          // Isolate these sentinels from the later reactor-upgrade scenarios.
+          VehPrototypes[63].flags = before63;
+          VehPrototypes[64].flags = before64;
+          VehPrototypes[127].flags = before127;
+          VehPrototypes[128].flags = before128;
           mutate_local_after_design = 0;
           ConsoleGlobal.faction_id_ = 1;
           tech_achieved(1, 2, 0, 0);
@@ -1052,6 +1069,8 @@ def test_actual_body_early_return_transfer_treaty_prototype_and_discovery_paths(
 
 
 @pytest.mark.parametrize("before,after", [
+    ("*reinterpret_cast<unsigned char *>(&VehPrototypes[proto_id].flags) &= 0x3F;",
+     "VehPrototypes[proto_id].flags &= 0x3F;"),
     ("prototype.reactor_id >= reactor_level", "prototype.reactor_id < reactor_level"),
     ("(base.visibility & (1u << faction_id_with)) != 0 ||",
      "(base.visibility & (1u << faction_id_with)) == 0 &&"),

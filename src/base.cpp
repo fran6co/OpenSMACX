@@ -10810,7 +10810,8 @@ void __cdecl do_upgrade(int faction_id, int proto_id_new, int proto_id_old) {
         VehPrototypes[proto_id_new].flags |= 4;
     }
     if (proto_id_old > 0x3f) {
-        VehPrototypes[proto_id_old].flags &= 0xfe;
+        unsigned char *flags_bytes = reinterpret_cast<unsigned char *>(&VehPrototypes[proto_id_old].flags);
+        flags_bytes[0] &= 0xFE;
     }
 
     if ((GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & (1 << faction_id)) != 0) {

@@ -355,3 +355,105 @@ def test_pinned_original_has_exact_low_and_high_byte_flag_operands() -> None:
     high = _decode_exact(image, 0x004F0460, 0x004F064F)
     _assert_byte_and(high[0x004F047B], base=x86_const.X86_REG_EDX,
                      displacement=0x009AB899, immediate=0xFE)
+
+
+# do_upgrade's original low-byte clear preserves all eight upper flag bits.
+# The real complete product body runs here; service records below deliberately
+# model only called APIs/fields, not original Base/Vehicle/Console ABI layouts.
+def _do_upgrade_definition() -> str:
+    return _definition(BASE_SOURCE,
+                       "void __cdecl do_upgrade(int faction_id, int proto_id_new, int proto_id_old)")
+
+
+def _do_upgrade_program(definition: str) -> str:
+    return DECLARATIONS + _actual_prototype_type() + r'''
+static_assert(sizeof(VehPrototype) == 0x34, "prototype stride");
+static_assert(offsetof(VehPrototype, flags) == 0x30, "flags offset");
+static_assert(offsetof(VehPrototype, preq_tech) == 0x32, "neighbor offset");
+VehPrototype VehPrototypes[512];
+struct PlayerService { int energy_reserves; uint8_t proto_id_active[512]; };
+PlayerService PlayersData[8];
+struct VehicleService { uint8_t faction_id; int16_t proto_id; int8_t morale; };
+VehicleService Vehs[1];
+struct Base { int faction_id_current; int queue_size; int queue_production_id[10]; };
+Base Bases[1];
+struct LockBytes { uint8_t human_mask_; };
+struct LockMasks { LockBytes bytes_; };
+struct GameFields { int vehicle_current_count_, base_current_count_; LockMasks lock_masks_; };
+struct GameState { GameFields fields_; } GameDataStateStorage;
+struct ConsoleService {
+    int faction_id_;
+    int updates;
+    void update_data(int mode) { assert(mode == 0); ++updates; }
+} ConsoleGlobal;
+const int ABL_TRAINED = 1;
+int upgrade_cost(int, int, int) { return 3; }
+int has_abil(int, int) { return 0; }
+int draws;
+void draw_map(int mode) { assert(mode == 1); ++draws; }
+''' + definition + r'''
+int main() {
+    std::memset(VehPrototypes, 0xA5, sizeof(VehPrototypes));
+    std::memset(PlayersData, 0, sizeof(PlayersData));
+    ConsoleGlobal.faction_id_ = -1;
+    unsigned char before[512][sizeof(VehPrototype)];
+    std::memcpy(before, VehPrototypes, sizeof(before));
+    for (unsigned value = 0; value < 65536; ++value) {
+        VehPrototypes[64].flags = static_cast<uint16_t>(value);
+        unsigned char expected[sizeof(VehPrototype)];
+        std::memcpy(expected, &VehPrototypes[64], sizeof(expected));
+        expected[offsetof(VehPrototype, flags)] &= 0xFE;
+        do_upgrade(2, 65, 64);
+        assert(VehPrototypes[64].flags == (value & 0xFFFEu));
+        assert(std::memcmp(expected, &VehPrototypes[64], sizeof(expected)) == 0);
+    }
+    for (int i = 0; i < 512; ++i) {
+        if (i != 64) assert(std::memcmp(before[i], &VehPrototypes[i], sizeof(VehPrototype)) == 0);
+    }
+    // Original old-id cutoff is exclusive: row63 remains completely unchanged.
+    VehPrototypes[63].flags = 0xABFF;
+    unsigned char fixed_row[sizeof(VehPrototype)];
+    std::memcpy(fixed_row, &VehPrototypes[63], sizeof(fixed_row));
+    do_upgrade(2, 65, 63);
+    assert(std::memcmp(fixed_row, &VehPrototypes[63], sizeof(fixed_row)) == 0);
+    // Nonzero paid upgrade sets only bit2 on the new row before the old clear.
+    VehPrototypes[64].flags = 0xABFF;
+    VehPrototypes[65].flags = 0xABF0;
+    PlayersData[2].proto_id_active[64] = 1;
+    PlayersData[2].energy_reserves = 100;
+    GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ = 1u << 2;
+    ConsoleGlobal.faction_id_ = 2;
+    do_upgrade(2, 65, 64);
+    assert(VehPrototypes[64].flags == 0xABFE);
+    assert(VehPrototypes[65].flags == 0xABF4);
+    assert(VehPrototypes[64].preq_tech == static_cast<int16_t>(0xA5A5));
+    assert(VehPrototypes[65].preq_tech == static_cast<int16_t>(0xA5A5));
+    assert(PlayersData[2].energy_reserves == 70);
+    assert(draws == 1 && ConsoleGlobal.updates == 1);
+}
+'''
+
+
+@pytest.mark.parametrize("compiler", ["g++", "clang++"])
+@pytest.mark.parametrize("optimization", ["-O0", "-O2"])
+def test_actual_do_upgrade_low_clear_preserves_every_word_value_and_neighbors(
+        compiler, optimization, tmp_path):
+    _require_success(compiler, _do_upgrade_program(_do_upgrade_definition()),
+                     tmp_path, optimization)
+
+
+@pytest.mark.parametrize("compiler", ["g++", "clang++"])
+@pytest.mark.parametrize("optimization", ["-O0", "-O2"])
+def test_do_upgrade_old_word_mask_loses_poisoned_upper_bits(
+        compiler, optimization, tmp_path):
+    definition = _do_upgrade_definition()
+    pattern = re.compile(r"^.*VehPrototypes\[proto_id_old\]\.flags.*&=.*;$", re.MULTILINE)
+    if "flags_bytes[0]" in definition:
+        mutant = _replace_byte_access(
+            definition, 0, "VehPrototypes[proto_id_old].flags &= 0xFE;")
+    else:
+        mutant, count = pattern.subn("        VehPrototypes[proto_id_old].flags &= 0xFE;",
+                                     definition)
+        assert count == 1
+    _require_mutant_rejected(compiler, _do_upgrade_program(mutant), tmp_path,
+                            optimization)

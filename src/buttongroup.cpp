@@ -177,7 +177,7 @@ int ButtonGroup::button_click(int clicked_id) {
         }
     }
 
-    const unsigned char flags = static_cast<unsigned char>(field_88_);
+    const uint32_t flags = field_88_;
     if ((flags & 2) != 0) {
         if (static_cast<int>(field_84_) == clicked_id) {
             field_84_ = 0xFFFFFFFFu;
@@ -185,7 +185,7 @@ int ButtonGroup::button_click(int clicked_id) {
         }
     }
 
-    if (static_cast<int>(field_84_) != clicked_id || (flags & 1) == 0) {
+    if (static_cast<int>(field_84_) != clicked_id || (flags & 1) != 0) {
         if (found_active != 0) {
             buttons_[active_index]->set(0);
             buttons_[active_index]->redraw();

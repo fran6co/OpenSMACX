@@ -119,6 +119,7 @@ def test_only_three_complete_bodies_change_and_all_obligations_survive():
     baseline = subprocess.check_output(
         ["git", "show", task["base_revision"] + ":src/buffer.cpp"], cwd=ROOT).decode()
     current = (ROOT / "src/buffer.cpp").read_text()
+    current += "\n" + (ROOT / "src/buffer_string_writers.cpp").read_text()
     restored = current
     for address, end, signature, baseline_signature in SPECS:
         current_body = body(current, signature)
@@ -519,7 +520,9 @@ def actual_source():
             ("int", "internal_leading_"), ("int", "ascent_"), ("int", "descent_"),
             ("int", "pad_"), ("LPSTR", "fot_file_name_"))),
         "FONT_APIS": '\n'.join(one(fh, p) for p in
-            (r'^  (LPSTR find_line_break_l\([^\n]+;)', r'^  (int line_advance\(\) const;)')),
+            (r'^  (LPSTR find_line_break_l\([^\n]+;)', r'^  (int line_advance\(\) const;)',
+             r'^  (int pixel_height\(\) const \{[^\n]*\})',
+             r'^  (int line_height\(\) const \{[^\n]*\})')),
         "CALLBACK": one(bh, r'^(typedef void \(__cdecl \*BufferWriteStringsCallback\)\(int, int\);)'),
         "BUFFER_FIELDS": '\n'.join(one(bh, r'^  (' + typ + r'\s*' + name + r';)')
             for typ, name in (("BufferWriteStringsCallback", "field_C_"),
@@ -536,10 +539,15 @@ def actual_source():
             r'^  (int wrap_height\(char \*text, int max_width\);)',
             r'^  (int text_line_height\(\);)')) + '\n' + one(bh,
             r'^  (int write_cent_l\(LPSTR text, int x_coord, int y_coord, int width, int len\);)'),
-        "ADVANCE": body((ROOT / "src/jackal/font.cpp").read_text(), "int Font::line_advance() const"),
+        "ADVANCE": body((ROOT / "src/jackal/font_metrics.h").read_text(),
+                        "inline int font_line_advance(") + "\n" +
+            body((ROOT / "src/jackal/font.cpp").read_text(), "int Font::line_advance() const"),
         "SEARCH": search,
         "TOKEN": one(product, r'^(char BufferMarkupLinkToken\[\] = [^\n]+;)'),
-        "BODIES": '\n'.join(body(product, signature) for _, _, signature, _ in SPECS),
+        "BODIES": '\n'.join(body(
+            (ROOT / "src/buffer_string_writers.cpp").read_text()
+            if address == 0x5DAD70 else product, signature)
+            for address, _, signature, _ in SPECS),
     }
     result = PRELUDE
     for key, value in parts.items():

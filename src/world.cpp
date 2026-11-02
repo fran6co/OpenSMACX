@@ -2187,8 +2187,8 @@ void __cdecl world_borehole(int x, int y) {
     if (!on_map(x, y)) {
         do {
             do {
-                y = rnd(MapLatitudeBounds - 16, NULL) + 8;
-                int x_seed = rnd(MapLongitudeBounds, NULL);
+                y = bounded_crt_random(MapLatitudeBounds - 16) + 8;
+                int x_seed = bounded_crt_random(MapLongitudeBounds);
                 x = ((x_seed ^ y) & 1) ^ x_seed;
                 if (++loc_attempts >= 1000) {
                     return;
@@ -2199,11 +2199,12 @@ void __cdecl world_borehole(int x, int y) {
             return;
         }
     }
-    uint32_t seed = timeGetTime();
+    int seed = static_cast<int>(timeGetTime());
+    const int phase = seed & 7;
     int val1 = 8;
-    int val2 = ((seed % 8) / 3) + 5;
-    int val3 = 3 - ((seed % 8) % 3);
-    uint32_t val4 = (seed / 8) % 4;
+    int val2 = (phase / 3) + 5;
+    int val3 = 3 - (phase % 3);
+    int val4 = (seed >> 3) & 3;
     if (val4 & 2) {
         val2--;
         val3--;
@@ -2507,12 +2508,12 @@ Status: Complete - testing
 // Historical implementation note: ALT4/ALT3 and BIT2/code were rolled into one loop; the
 // pinned function performs the altitude pass first and a separate mask/code pass afterward.
 void __cdecl world_canyon(int x, int y) {
-    uint32_t loc_attempts = 0;
+    int loc_attempts = 0;
     if (!on_map(x, y)) {
         do {
             do {
-                y = rnd(MapLatitudeBounds - 16, NULL) + 8;
-                int x_seed = rnd(MapLongitudeBounds, NULL);
+                y = bounded_crt_random(MapLatitudeBounds - 16) + 8;
+                int x_seed = bounded_crt_random(MapLongitudeBounds);
                 x = ((x_seed ^ y) & 1) ^ x_seed;
                 if (++loc_attempts >= 1000) {
                     return;

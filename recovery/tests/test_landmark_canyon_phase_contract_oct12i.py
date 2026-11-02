@@ -177,7 +177,7 @@ static int xrange(int x) { return x; }
 static int on_map(int x, int y) { (void)x; (void)y; return 1; }
 static int is_ocean(int x, int y) { (void)x; (void)y; return 0; }
 static int near_landmark(int x, int y) { (void)x; (void)y; return 0; }
-static int rnd(int bound, void *unused) { (void)bound; (void)unused; return 0; }
+inline int rnd(int bound, void *unused) { (void)bound; (void)unused; return 0; }
 static void world_alt_set(int x, int y, int altitude, BOOL set) {
     assert(set);
     record(altitude == ALT_1_LEVEL_ABOVE_SEA ? 'H' : 'S', x, y, altitude);
@@ -234,7 +234,12 @@ int main() {
     return 0;
 }
 '''
-    return (PRELUDE.replace("@ENUMS@", enum_text) + expected + table + "\n" + body + main)
+    primitive = function_body((ROOT / "src/crt_random.h").read_text(),
+                              "inline unsigned int __cdecl bounded_crt_random(")
+    rng_context = ("\nstatic int fixture_rand() { return 0; }\n"
+                   "#define rand fixture_rand\n" + primitive + "\n#undef rand\n")
+    return (PRELUDE.replace("@ENUMS@", enum_text) + rng_context +
+            expected + table + "\n" + body + main)
 
 
 def compile_run(program, compiler, tmp_path):
@@ -318,3 +323,60 @@ def test_vc6_x86_actual_canyon_behavior_and_fused_damage_control(tmp_path):
                 assert result.returncode == 0, (profile, result.returncode, output)
             else:
                 assert result.returncode != 0, (profile, "fused old-body damage survived", output)
+
+
+@pytest.mark.parametrize("compiler_name", ["g++", "clang++"])
+@pytest.mark.parametrize("damage", [None, "signed_remainder", "wrong_orientation", "extra_capture"])
+def test_actual_borehole_tick_phase_low_bits(tmp_path, compiler_name, damage):
+    """Typed source phase, including high-bit ticks; not full borehole behavior."""
+    compiler = shutil.which(compiler_name)
+    if not compiler:
+        pytest.skip(compiler_name + " unavailable")
+    body = function_body(SOURCE.read_text(), "void __cdecl world_borehole(")
+    start = body.index("    int seed = static_cast<int>(timeGetTime());")
+    stop = body.index("    if (val4 & 2)", start)
+    phase = body[start:stop]
+    if damage == "signed_remainder":
+        assert phase.count("seed & 7") == 1
+        phase = phase.replace("seed & 7", "seed % 8", 1)
+    elif damage == "wrong_orientation":
+        assert phase.count("seed >> 3") == 1
+        phase = phase.replace("seed >> 3", "seed >> 2", 1)
+    elif damage == "extra_capture":
+        assert phase.count("timeGetTime()") == 1
+        phase = phase.replace("timeGetTime()", "(timeGetTime(), timeGetTime())", 1)
+    else:
+        assert damage is None
+    program = r'''
+#include <cassert>
+unsigned int tick;
+int captures;
+unsigned int timeGetTime() { ++captures; return tick; }
+void observe(int expected_phase, int expected_orientation) {
+    static const int expected_quotient[8] = {5,5,5,6,6,6,7,7};
+    static const int expected_remainder[8] = {3,2,1,3,2,1,3,2};
+    ACTUAL_PHASE
+    assert(captures == 1 && val1 == 8);
+    assert(val2 == expected_quotient[expected_phase]);
+    assert(val3 == expected_remainder[expected_phase]);
+    assert(val4 == expected_orientation);
+}
+int main() {
+    const unsigned int high_bits[3] = {0u, 0x80000000u, 0xffffffe0u};
+    for (int high=0; high<3; ++high)
+        for (int orientation=0; orientation<4; ++orientation)
+            for (int phase=0; phase<8; ++phase) {
+                tick = high_bits[high] | static_cast<unsigned int>(orientation*8+phase);
+                captures = 0;
+                observe(phase, orientation);
+            }
+}
+'''.replace("ACTUAL_PHASE", phase)
+    source = tmp_path / "borehole_tick.cpp"
+    executable = tmp_path / "borehole_tick"
+    source.write_text(program)
+    built = subprocess.run([compiler, "-std=c++17", "-O2", "-Wall", "-Wextra", "-Werror",
+                            str(source), "-o", str(executable)], capture_output=True, text=True)
+    assert built.returncode == 0, built.stderr
+    result = subprocess.run([str(executable)], cwd=tmp_path, capture_output=True, text=True)
+    assert (result.returncode == 0) == (damage is None), (compiler_name, damage, result.stderr)

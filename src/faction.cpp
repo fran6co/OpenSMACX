@@ -2810,7 +2810,7 @@ void __cdecl rankings(int apply_ranks) {
         }
         urge *= weight;
         int bound = (vendetta_count - PlayersData[faction_id].ai_fight + 2) * 256;
-        if ((int)rnd(bound, NULL) < urge) {
+        if ((int)bounded_crt_random(bound) < urge) {
             set_treaty(faction_id, target_id, DTREATY_SHALL_BETRAY, true);
         }
     }

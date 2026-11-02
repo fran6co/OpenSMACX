@@ -62,9 +62,6 @@ Return Value: Bounded random value
 Status: Complete
 */
 uint32_t __cdecl rnd(int bounds, LPSTR UNUSED(input)) {
-    if (bounds - 1 <= 0) {
-        return 0;
-    }
-    return rand() % bounds;
+    return bounded_crt_random(bounds);
 }
 

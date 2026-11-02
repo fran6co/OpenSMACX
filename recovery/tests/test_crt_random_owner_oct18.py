@@ -44,8 +44,26 @@ def definition(text: str, signature: str) -> str:
 
 
 def bodies(source_text: str, mutant: str | None = None) -> str:
-    extracted = {name: definition(source_text, signature)
-                 for name, signature in SIGNATURES.items()}
+    from match_recovery.source import function_line, read_text
+
+    bounded_record, = (record for record in read_text(source_text, SOURCE)
+                       if record.address == 0x00579770)
+    bounded_source = source_text
+    bounded_signature = SIGNATURES["bounded"]
+    if bounded_record.body:
+        bounded_source = (ROOT / bounded_record.body).read_text(encoding="utf-8")
+        line = function_line(bounded_source, "rnd")
+        bounded_signature = bounded_source.splitlines()[line - 1].split("{", 1)[0].rstrip()
+    extracted = {
+        "seed": definition(source_text, SIGNATURES["seed"]),
+        "bounded": definition(bounded_source, bounded_signature),
+    }
+    if "return bounded_crt_random(bounds);" in extracted["bounded"]:
+        primitive_source = (ROOT / "src/crt_random.h").read_text(encoding="utf-8")
+        line = function_line(primitive_source, "bounded_crt_random")
+        signature = primitive_source.splitlines()[line - 1].split("{", 1)[0].rstrip()
+        extracted["bounded"] = (definition(primitive_source, signature) + "\n" +
+                                extracted["bounded"])
     if mutant == "duplicate_srand":
         old = "    srand(reseed);"
         assert extracted["seed"].count(old) == 1

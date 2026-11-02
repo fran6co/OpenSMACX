@@ -5641,7 +5641,7 @@ int DesignWin::design_it() {
 settled:
     make_proto(protoID_, protoChassisType_, protoWeaponType_, protoArmorType_,
                protoAbilityFlags_, protoReactorType_);
-    VehPrototypes[protoID_].flags &= 0x3F;
+    reinterpret_cast<unsigned char &>(VehPrototypes[protoID_].flags) &= 0x3F;
     if (strlen(name) == 0) {
         // No name typed: generate one straight into the name buffer and trim
         // it to the field's 31 characters.
@@ -5652,7 +5652,7 @@ settled:
                    static_cast<int>(protoAbilityFlags_),
                    static_cast<int>(protoReactorType_));
         name[0x1F] = '\0';
-        VehPrototypes[protoID_].flags &= 0xFD;
+        reinterpret_cast<unsigned char &>(VehPrototypes[protoID_].flags) &= 0xFD;
     } else {
         char generated[256];
         name_proto(generated, static_cast<int>(protoID_),

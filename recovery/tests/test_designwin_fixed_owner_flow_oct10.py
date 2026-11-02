@@ -442,3 +442,65 @@ def test_source_owner_mutants_are_rejected_before_running_unsafe_reads() -> None
     assert "offsetof(Player, faction_bonus_val1)" in special
     assert "Pinned 0x0043AF9E exits this scan on its first match" in special
     assert "break;" in parts["scan_loop"]
+
+
+def test_actual_design_flag_updates_preserve_upper_byte_and_other_storage(tmp_path: Path) -> None:
+    body = definition(DESIGN.read_text(encoding="utf-8"), "int DesignWin::design_it()")
+    updates = [line.strip() for line in body.splitlines()
+               if "VehPrototypes[protoID_].flags" in line and "&=" in line]
+    assert len(updates) == 2
+    prototype = struct_definition((ROOT / "src/veh.h").read_text(), "struct VehPrototype {")
+    template = r'''
+#include <cassert>
+#include <cstdint>
+#include <cstddef>
+#include <cstring>
+PROTOTYPE
+static_assert(sizeof(VehPrototype) == 0x34, "actual record stride");
+static_assert(offsetof(VehPrototype, flags) == 0x30, "pinned flags offset");
+VehPrototype VehPrototypes[4];
+uint32_t protoID_ = 2;
+void first_update() { FIRST_UPDATE }
+void second_update() { SECOND_UPDATE }
+int main() {
+    std::memset(VehPrototypes, 0x5A, sizeof(VehPrototypes));
+    VehPrototypes[2].flags = 0xABFF;
+    VehPrototype expected[4];
+    std::memcpy(expected, VehPrototypes, sizeof(expected));
+    first_update();
+    // Pinned43836C AND BYTE flags,3F changes the low byte only.
+    assert(VehPrototypes[2].flags == 0xAB3F);
+    expected[2].flags = 0xAB3F;
+    assert(std::memcmp(VehPrototypes, expected, sizeof(expected)) == 0);
+    second_update();
+    // Pinned4383CD AND BYTE flags,FD preserves the first update and high byte.
+    assert(VehPrototypes[2].flags == 0xAB3D);
+    expected[2].flags = 0xAB3D;
+    assert(std::memcmp(VehPrototypes, expected, sizeof(expected)) == 0);
+    assert(protoID_ == 2);
+}
+'''
+    compilers = [path for name in ("g++", "clang++") if (path := shutil.which(name))]
+    assert compilers, "a host C++ compiler is required for the actual flag updates"
+    for compiler_index, compiler in enumerate(compilers):
+        for damage in ("", "old_first_mask", "old_second_mask"):
+            first, second = updates
+            if damage == "old_first_mask":
+                first = "VehPrototypes[protoID_].flags &= 0x3F;"
+            elif damage == "old_second_mask":
+                second = "VehPrototypes[protoID_].flags &= 0xFD;"
+            source = (template.replace("PROTOTYPE", prototype)
+                      .replace("FIRST_UPDATE", first).replace("SECOND_UPDATE", second))
+            stem = f"design-flags-{compiler_index}-{damage or 'actual'}"
+            unit = tmp_path / (stem + ".cpp")
+            binary = tmp_path / stem
+            unit.write_text(source)
+            built = subprocess.run([compiler, "-std=c++17", "-Wall", "-Wextra", "-Werror",
+                                    str(unit), "-o", str(binary)], text=True, capture_output=True)
+            assert built.returncode == 0, built.stderr
+            ran = subprocess.run([str(binary)], text=True, capture_output=True)
+            if damage:
+                expected_value = "0xAB3F" if damage == "old_first_mask" else "0xAB3D"
+                assert ran.returncode < 0 and expected_value in ran.stderr, ran.stderr
+            else:
+                assert ran.returncode == 0, ran.stderr

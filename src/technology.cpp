@@ -540,24 +540,23 @@ Return Value: techID or -1
 Status: Complete
 */
 int __cdecl tech_ai(int faction_id) {
-    int tech_id = -1;
     int search = -999;
-    BOOL is_human_player = is_human(faction_id);
+    int tech_id = -1;
     for (int i = 0; i < MaxTechnologyNum; i++) {
         if (tech_avail(i, faction_id)) {
             int tech_value = tech_val(i, faction_id, false);
             int compare;
             if (GameDataStateStorage.fields_.game_rules_ & RULES_BLIND_RESEARCH) {
-                if (is_human_player && (PlayersData[faction_id].ai_growth
+                if (is_human(faction_id) && (PlayersData[faction_id].ai_growth
                     || PlayersData[faction_id].ai_wealth)
                     && i == VehPrototypes[BSC_FORMERS].preq_tech) {
                     return i; // Direct human player research toward gaining Formers
                 }
                 int preq = tech_recurse(i, 0);
-                tech_value = preq ? (tech_value << 8) / preq : 0;
+                tech_value = (tech_value << 8) / preq;
             }
-            compare = is_human_player ? random(0, tech_value + 1) // unsure why humans get random()
-                : rnd(tech_value + 1, NULL); // vs AI rnd() ?
+            compare = is_human(faction_id) ? random(0, tech_value + 1) // unsure why humans get random()
+                : bounded_crt_random(tech_value + 1); // vs AI rnd() ?
             if (compare > search) {
                 search = compare;
                 tech_id = i;
@@ -944,7 +943,7 @@ void __cdecl tech_achieved(int faction_id, int tech_id, int faction_id_with,
             const int first_proto = faction_id * MaxVehProtoFactionNum;
             for (int proto_id = first_proto;
                  proto_id < first_proto + MaxVehProtoFactionNum; ++proto_id) {
-                VehPrototypes[proto_id].flags &= 0x3F;
+                *reinterpret_cast<unsigned char *>(&VehPrototypes[proto_id].flags) &= 0x3F;
             }
             consider_designs(faction_id);
             if (faction_id == ConsoleGlobal.faction_id_) {

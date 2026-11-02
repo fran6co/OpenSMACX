@@ -143,6 +143,7 @@ set(OPENSMACX_SOURCES
     src/basebutton.cpp
     src/basepop.cpp
     src/buffer.cpp
+    src/buffer_string_writers.cpp
     src/buffer_mask.cpp
     src/polygon.cpp
     src/buttongroup.cpp
@@ -563,7 +564,7 @@ set_source_files_properties(
 # Buffer's original hline5E1B94 and init5D77C3 call the CRT memset.
 # Keep memory-call selection at TU scope; this is an evidence-led build policy,
 # not proof of the original command line. Source byte loops retain inline fills.
-set_property(SOURCE src/buffer.cpp APPEND PROPERTY COMPILE_OPTIONS "/Oi-")
+set_property(SOURCE src/buffer.cpp src/buffer_string_writers.cpp APPEND PROPERTY COMPILE_OPTIONS "/Oi-")
 # Preserve original out-of-line close/bit-helper calls in these owners.
 # Append so DipEdit keeps its independently measured frame-based context.
 # Video and MCI use separate implementation units under default app inlining.
@@ -587,6 +588,7 @@ set_source_files_properties(src/scenario_undo.cpp PROPERTIES COMPILE_OPTIONS "/O
 set_property(SOURCE
     src/alpha.cpp
     src/buffer.cpp
+    src/buffer_string_writers.cpp
     src/caviar.cpp
     src/credits.cpp
     src/game.cpp

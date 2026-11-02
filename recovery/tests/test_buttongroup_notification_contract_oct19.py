@@ -66,6 +66,18 @@ def test_pinned_notification_arguments_and_post_callback_parent_reload():
         ("call", "dword ptr [edi + 0xb8]")]
 
 
+def test_pinned_flags_width_and_same_id_repeat_gate():
+    data = find_pinned_image().read_bytes()
+    assert hashlib.sha256(data).hexdigest() == PINNED_SHA256
+    image = PeImage(data, PINNED_SHA256)
+    assert instruction_facts(image, 0x0062B900, 0x0062B906) == [
+        ("mov", "eax, dword ptr [esi + 0x88]")]
+    assert instruction_facts(image, 0x0062B926, 0x0062B936) == [
+        ("cmp", "dword ptr [esi + 0x84], edi"),
+        ("jne", "0x62b936"), ("test", "al, 1"),
+        ("je", "0x62ba2f")]
+
+
 def extract_body() -> str:
     source = (ROOT / "src/buttongroup.cpp").read_text(encoding="utf-8")
     masked = COMMENTS_OR_STRINGS.sub(
@@ -280,6 +292,53 @@ static int run_protocol_cases() {
     empty.button_click(7);
     check(unused_owner.two_calls == 0 && unused_owner.three_calls == 0,
           "initial zero count suppresses both notifications");
+
+    // Independent table for same/different IDs and the two original flag bits.
+    // High flag bits must neither alter the gate nor be overwritten.
+    const int callbacks[2][4] = {{0, 1, 1, 1}, {1, 1, 1, 1}};
+    const int selected[2][4] = {{10, 10, -1, -1}, {20, 20, 20, 20}};
+    const int first_state[2][4] = {{-1, 1, 0, 0}, {0, 0, 0, 0}};
+    const int second_state[2][4] = {{-1, -1, -1, -1}, {1, 1, 1, 1}};
+    const uint32_t high_bits[] = {0u, 0xA5001000u};
+    for (int different = 0; different != 2; ++different) {
+        for (int mode = 0; mode != 4; ++mode) {
+            for (unsigned high = 0; high != 2; ++high) {
+                event_count = 0;
+                ProbeWin owner;
+                BaseButton a(10, &owner), b(20, &owner);
+                ButtonGroup repeated;
+                repeated.buttons_[0] = &a;
+                repeated.buttons_[1] = &b;
+                repeated.count_ = 2;
+                repeated.field_84_ = 10;
+                repeated.field_88_ = high_bits[high] | uint32_t(mode);
+                repeated.field_8C_ = 55;
+                b.field_A74_ = 1;
+                repeated.button_click(different ? 20 : 10);
+                check(owner.two_calls == callbacks[different][mode] &&
+                      owner.three_calls == callbacks[different][mode],
+                      "same/different-ID repeat gate truth table");
+                check(repeated.field_84_ == uint32_t(selected[different][mode]),
+                      "toggle and repeat selected ID");
+                check(a.state == first_state[different][mode] &&
+                      b.state == second_state[different][mode],
+                      "toggle and repeat button state transitions");
+                check(repeated.field_88_ == (high_bits[high] | uint32_t(mode)),
+                      "full flag word remains unchanged");
+                if (callbacks[different][mode]) {
+                    check(owner.two_active == 10 &&
+                          owner.two_clicked == selected[different][mode] &&
+                          owner.three_group == 55 && owner.three_active == 10 &&
+                          owner.three_clicked == selected[different][mode],
+                          "repeat callbacks retain prior clicked and context order");
+                }
+                check(b.field_A74_ == 0 && event_count > 0 &&
+                      events[event_count - 1].kind == 2 &&
+                      events[event_count - 1].id == 20,
+                      "dirty tail follows either repeat gate path");
+            }
+        }
+    }
     return failures == 0 ? 0 : 1;
 }
 
@@ -327,3 +386,13 @@ def test_actual_source_controls_reject_each_old_defect_independently(
     assert result.returncode != 0, (
         f"actual-source controls failed to detect {damage}\n"
         + result.stdout + result.stderr)
+
+
+def test_actual_source_controls_reject_reversed_repeat_gate(tmp_path: Path):
+    body = extract_body()
+    needle = "(flags & 1) != 0"
+    assert body.count(needle) == 1
+    damaged = body.replace(needle, "(flags & 1) == 0", 1)
+    result = compile_and_run(tmp_path, damaged, "damaged_repeat_gate")
+    assert result.returncode != 0, "reversed repeat gate escaped controls"
+    assert "same/different-ID repeat gate truth table" in result.stdout
