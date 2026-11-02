@@ -7414,12 +7414,14 @@ void __cdecl base_first(int base_id) {
         if (veh_avail(i, Bases[base_id].faction_id_current, base_id)) {
             if (i < MaxVehProtoFactionNum || VehPrototypes[i].flags & PROTO_TYPED_COMPLETE) {
                 int compare = get_proto_defense_rating(i) * 32;
-                uint32_t plan = VehPrototypes[i].plan;
+                uint8_t plan = VehPrototypes[i].plan;
                 if (plan == PLAN_DEFENSIVE) {
                     compare *= 4;
-                } else if (plan == PLAN_COMBAT) {
+                }
+                if (plan == PLAN_COMBAT) {
                     compare *= 3;
-                } else if (plan == PLAN_RECONNAISANCE) {
+                }
+                if (plan == PLAN_RECONNAISANCE) {
                     compare *= 2;
                 }
                 if (get_proto_triad(i) != TRIAD_LAND) {
@@ -9226,7 +9228,7 @@ BOOL __cdecl base_queue(int base_id) {
         queue_prod_id = base->queue_production_id[0];
         if((queue_prod_id >= 0) ? veh_avail(queue_prod_id, faction_id, base_id)
             : facility_avail(-queue_prod_id, faction_id, base_id, 0)) {
-            if (queue_prod_id <= -FacilitySPStart) {
+            if (base->queue_production_id[0] <= -FacilitySPStart) {
                 wave_it(36); // CPU project initiated
             }
             draw_radius(base->x, base->y, 2, 2);

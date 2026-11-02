@@ -191,12 +191,15 @@ const int FacilitySPStart = 64;
 int vehicle_script[4], facility_script[4];
 int vehicle_calls, facility_calls, radius_calls, wave_calls;
 int vehicle_ids[4], facility_ids[4];
+int callback_mutates_queue, callback_queue_value;
 int veh_avail(int id, unsigned int, int) {
     vehicle_ids[vehicle_calls] = id;
+    if (callback_mutates_queue) Bases[0].queue_production_id.values[0] = callback_queue_value;
     return vehicle_script[vehicle_calls++];
 }
 int facility_avail(int id, unsigned int, int, int) {
     facility_ids[facility_calls] = id;
+    if (callback_mutates_queue) Bases[0].queue_production_id.values[0] = callback_queue_value;
     return facility_script[facility_calls++];
 }
 void wave_it(int) { ++wave_calls; }
@@ -250,6 +253,20 @@ int main(int argc, char **argv) {
         if (Bases[0].queue_size != -2) return 13;
         if (Bases[0].queue_production_id.values[0] != -69 || Bases[0].queue_production_id.writes[0] != 0) return 14;
         if (Bases[0].queue_production_id.reads[1] != 0 || facility_calls != 1 || facility_ids[0] != 69) return 15;
+        return 0;
+    }
+    if (!strcmp(scenario, "callback_to_project") || !strcmp(scenario, "callback_to_vehicle")) {
+        const bool to_project = !strcmp(scenario, "callback_to_project");
+        Bases[0].queue_size = 1;
+        Bases[0].queue_production_id[0] = 5;
+        Bases[0].queue_production_id[1] = to_project ? 6 : -FacilitySPStart;
+        vehicle_script[0] = facility_script[0] = 1;
+        callback_mutates_queue = 1;
+        callback_queue_value = to_project ? -FacilitySPStart : 6;
+        if (!base_queue(0)) return 16;
+        if (radius_calls != 1 || Bases[0].queue_production_id.values[0] != callback_queue_value) return 17;
+        if (wave_calls != (to_project ? 1 : 0)) return 18;
+        if (vehicle_calls != (to_project ? 1 : 0) || facility_calls != (to_project ? 0 : 1)) return 19;
         return 0;
     }
     return 81;
@@ -395,6 +412,19 @@ def test_actual_base_queue_body_signed_member_and_loop(tmp_path: Path, compiler_
     assert "for (int i = 0; i < base->queue_size; i++)" in body
     result = _compile_run(tmp_path, _compiler(compiler_name), _queue_fixture(body), scenario)
     assert result.returncode == 0, result.stdout + result.stderr
+
+
+@pytest.mark.parametrize("compiler_name", ["g++", "clang++"])
+@pytest.mark.parametrize("scenario", ["callback_to_project", "callback_to_vehicle"])
+def test_actual_base_queue_reloads_head_after_availability(tmp_path, compiler_name, scenario):
+    body = _base_queue_body()
+    result = _compile_run(tmp_path / "actual", _compiler(compiler_name), _queue_fixture(body), scenario)
+    assert result.returncode == 0, result.stdout + result.stderr
+    cached = body.replace("base->queue_production_id[0] <= -FacilitySPStart",
+                          "queue_prod_id <= -FacilitySPStart", 1)
+    assert cached != body
+    damaged = _compile_run(tmp_path / "cached", _compiler(compiler_name), _queue_fixture(cached), scenario)
+    assert damaged.returncode == 18, damaged.stdout + damaged.stderr
 
 
 @pytest.mark.parametrize("compiler_name", ["g++", "clang++"])
