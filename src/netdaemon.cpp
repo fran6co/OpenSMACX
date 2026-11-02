@@ -183,8 +183,8 @@ int NetDaemon::lock_base(int base_id, int target, int payload_1C, int payload_20
 // ORIGINAL: 0x0052E160 ?on_player_added@NetDaemon@@UAEXPADK@Z 0x0052E160-0x0052E364
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned52E160..52E364 and52E370..52E8FD; retained recovered seeds are hints, not mandatory C++.", "The not-found delete tail still runs and decrements count. Slot8 identity/status bytes belong to the real ledger; lobby prefix/name writes are byte views wholly inside the existing168-byte session object. Keep both session object lifetimes and their original bindings.", "PlayerLock::active return controls notification; process identity offsets are not doubled. Two label_get calls remain independent, and prefix writes depend on live phase below2.", "Source-owned NextTurnReady, NetUpkeepPhase and NetHostChangeSlot replace private address aliases. Upkeep producer remains unfinished; ledger-derived lock index domain remains unproven.", "recovery/tasks/netdaemon-player-lifecycle-recovery.json; actual-source host damage controls and native compilation required", "git:293937ab6f3be75999e0c0a4c9c110c02930624c:src/recovered/units/0052e160.cpp", "Historical seed spelling ?on_player_added@NetDaemon@@QAEXPADK@Z; current source mapping ?on_player_added@NetDaemon@@UAEXPADK@Z; emitted symbol ?on_player_added@NetDaemon@@UAEXPADK@Z."], "reason": "Recover the complete derived network player lifecycle callback through actual AlphaNet records, PlayerLock behavior, NetWin storage and shared turn state. Preserve its original identity and useful seed findings; no exact, runtime or full acceptance claim is implied. Superseded seed retired after owner review; original spans, existing claims and useful seed findings remain in source. This cleanup grants no new match or acceptance claim."}
 void NetDaemon::on_player_added(char *name, unsigned long id) {
-    const bool same_host = (local_player_id() == host_player_id());
-    primary_state_.leading_words_[0] = same_host ? 1 : 0;
+    const int same_host = (local_player_id() == host_player_id());
+    primary_state_.leading_words_[0] = same_host;
 
     if (player_count_ < 7 && primary_state_.session_phase_ < 2) {
         ++player_count_;
@@ -197,13 +197,18 @@ void NetDaemon::on_player_added(char *name, unsigned long id) {
         NetWinLobbyRows[player_count_].prefix_ = static_cast<uint8_t>(player_count_);
         process_slots_[player_count_].identity_ = static_cast<int8_t>(player_count_);
 
-        if (player_count_ > 1) {
-            bool duplicate_host = false;
-            for (int prior = 1; prior < player_count_; ++prior) {
-                if (process_slots_[prior].pid_ == local_player_id()) {
-                    duplicate_host = true;
+        int duplicate_host = 0;
+        const int count = player_count_;
+        if (count > 1) {
+            const unsigned long local_id = local_player_id();
+            const AlphaNetProcessSlot *prior = process_slots_ + 1;
+            int remaining = count - 1;
+            do {
+                if (prior->pid_ == local_id) {
+                    duplicate_host = 1;
                 }
-            }
+                ++prior;
+            } while (--remaining != 0);
             if (duplicate_host) {
                 parse_says(0, name, -1, -1);
                 NetMsgPrimary.pop("ADDED", 3000, 0, nullptr);
@@ -221,9 +226,10 @@ void NetDaemon::on_player_added(char *name, unsigned long id) {
             row.faction_or_color_ = -1;
             row.field_4_ = 2;
 
+            const uint8_t difficulty = NetWinSessionOptions.difficulty_;
             row.faction_or_color_ = -1;
-            row.prefix_ = static_cast<uint8_t>(slot);
-            row.field_2_ = NetWinSessionOptions.difficulty_;
+            row.prefix_ = static_cast<uint8_t>(player_count_);
+            row.field_2_ = difficulty;
             row.ready_or_occupied_ = 0;
 
             send_all_player_packets(-1);
@@ -238,7 +244,7 @@ void NetDaemon::on_player_added(char *name, unsigned long id) {
     } else if (same_host) {
         uint16_t packet[16];
         packet[0] = 0x1F01;
-        Net::send(packet, 0x20, id, 1);
+        NetDaemonNet.Net::send(packet, 0x20, id, 1);
     }
 }
 

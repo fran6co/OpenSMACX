@@ -34,7 +34,7 @@ def test_actual_name_table_and_damage(tmp_path, compiler_name):
         "wrong_basename": ("slash + 1 : name", "slash : name"),
         "wrong_directory_separator": ("dir_buf[length] = '\\\\';", "dir_buf[length] = '/';"),
         "wrong_reversed_low": ("clone->low_index_ = high;", "clone->low_index_ = low;"),
-        "changed_original_skip": ("slot_index = record->high_index_ + 1;", "slot_index = record->high_index_;"),
+        "changed_original_skip": ("slot_index = remove_range(record);", "slot_index = remove_range(record) - 1;"),
         "omitted_owned_string_free": ("::operator delete(name_);\n        name_ = 0;", "name_ = 0;"),
     }
     for name in ("actual", *mutations):

@@ -11,13 +11,15 @@ HARNESS=r'''
 struct AlphaNetProcessSlot { uint32_t pid_; char name_[32]; int8_t identity_; };
 struct NetWinLobbyRow { int owner_,prefix_,ready_or_occupied_,field_2_,faction_or_color_,field_4_; } NetWinLobbyRows[16];
 struct { int difficulty_; } NetWinSessionOptions;
-struct Net { void send(void*p,int n,unsigned long id,int f){assert(*(uint16_t*)p==0x1f01&&n==32&&id==99&&f==1);} };
+struct Net { void send(void*p,int n,unsigned long id,int f); };
 struct NetDaemon:Net {
  struct {int leading_words_[1],session_phase_;} primary_state_;
  int player_count_; AlphaNetProcessSlot process_slots_[16];
  unsigned long local_player_id(){return 17;} unsigned long host_player_id(){return 17;}
  char*get_player_name(unsigned long); void on_player_added(char*,unsigned long);
 } *active;
+NetDaemon NetDaemonNet;
+void Net::send(void*p,int n,unsigned long id,int f){assert(this==static_cast<Net*>(&NetDaemonNet));assert(*(uint16_t*)p==0x1f01&&n==32&&id==99&&f==1);}
 char*NetDaemon::get_player_name(unsigned long id){assert(id==99);player_count_=3;static char s[]="name";return s;}
 char*observed_copy(char*d,const char*s){assert(d==active->process_slots_[3].name_);char*r=std::strcpy(d,s);active->player_count_=4;return r;}
 void parse_says(int,char*,int,int){}
@@ -41,6 +43,8 @@ def test_live_slots():
  assert run(extract((ROOT/'src/netdaemon.cpp').read_text(),'void NetDaemon::on_player_added('))==0
 def test_packet_snapshot_damage():
  b=extract((ROOT/'src/netdaemon.cpp').read_text(),'void NetDaemon::on_player_added(');bad=b.replace('send_session_packet(slot, -1)','send_session_packet(player_count_, -1)');assert b!=bad and run(bad)!=0
+def test_refusal_packet_receiver_damage():
+ b=extract((ROOT/'src/netdaemon.cpp').read_text(),'void NetDaemon::on_player_added(');bad=b.replace('NetDaemonNet.Net::send(packet, 0x20, id, 1)','Net::send(packet, 0x20, id, 1)');assert b!=bad and run(bad)!=0
 
 def test_pinned_original_call_and_global_boundaries():
  from hashlib import sha256
@@ -51,7 +55,7 @@ def test_pinned_original_call_and_global_boundaries():
  records={r.address:r for r in read_file(ROOT/'src/netdaemon.cpp')}
  add='\n'.join(map(str,original_asm(records[0x52e160],image).lines))
  delete='\n'.join(map(str,original_asm(records[0x52e370],image).lines))
- for witness in ('0x0052E1C3','call 0x631a20','0x0052E1C8','0x0052E1E9','0x0052E29E','0x0052E304'):
+ for witness in ('0x0052E1C3','call 0x631a20','0x0052E1C8','0x0052E1E9','0x0052E29E','0x0052E2D8','0x0052E2E5','mov cl, byte ptr [esi + 0x768]','0x0052E304','0x0052E34C','mov ecx, 0x93cd90','0x0052E357','call 0x630080'):
   assert witness in add
  for witness in ('0x0052E460','[esi + 0x1bbc]','0x0052E46A','0x0052E3AC','[0x93e96c]','0x0052E42B','[0x93e8d0]','0x0052E479','[0x93e8c0]','0x0052E55E','jne 0x52e57e','0x0052E4FA','0x0052E5B5'):
   assert witness in delete

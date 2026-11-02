@@ -81,11 +81,12 @@ void NameTable::clear() {
 // symbol    ?install@NameTable@@QAEXPBUNameTableEntry@@@Z
 // TRIED: this is a __thiscall member whose `this` (ecx) is a raw `int *` array (indexed `param_1[uVar6]`, no fixed-offset fields), and param_2 is `Entry*` (3 uints + a 0x104-byte name buffer = 0x110 bytes, matching the `operator new(0x110)` allocation size exactly - `local_8` and `param_2` share this same layout). operator new/delete (mangled ??2@.../??3@...) reached via differently-named externs `op_new`/`op_delete` with the real signatures, since the scaffold's fn_0064557f/fn_0064558a are nullary and the call targets are masked from comparison anyway. strcpy is called UNCONDITIONALLY on `local_8->name` even on the `operator new` failure path (ghidra confirms this, not an artifact) - preserved as-is rather than "fixed".
 void NameTable::install(const NameTableEntry *entry) {
-    const unsigned int high = entry->high_index_;
     const unsigned int low = entry->low_index_;
-    NameTableEntry *clone = new NameTableEntry;
-    if (clone != 0) {
-        clone->initialize();
+    const unsigned int high = entry->high_index_;
+    NameTableEntry *allocation = new NameTableEntry;
+    NameTableEntry *clone = 0;
+    if (allocation != 0) {
+        clone = allocation->initialize();
     }
 
     // Deliberately unconditional, including the original allocation-failure
@@ -107,22 +108,12 @@ void NameTable::install(const NameTableEntry *entry) {
         do {
             NameTableEntry *record = slots_[slot_index];
             if (record != 0) {
-                const unsigned int freed_low = record->low_index_;
-                slot_index = record->high_index_ + 1;
-                delete slots_[freed_low];
-                if (freed_low < slot_index) {
-                    NameTableEntry **slot = slots_ + freed_low;
-                    unsigned int count = slot_index - freed_low;
-                    while (count != 0) {
-                        *slot = 0;
-                        ++slot;
-                        --count;
-                    }
-                }
+                slot_index = remove_range(record);
             }
             ++slot_index;
         } while (slot_index <= high);
-
+    }
+    if (low <= high) {
         NameTableEntry **slot = slots_ + low;
         unsigned int count = high - low + 1;
         while (count != 0) {
