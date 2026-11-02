@@ -873,6 +873,29 @@ void Scroll::on_redraw() {
 }
 
 /*
+Purpose: Expand a rectangle horizontally and vertically.
+// ORIGINAL: 0x00606F00 sub_606f00 0x00606F00-0x00606F2B BYTE_EXACT
+// LEVER: the long_from_bits/uint32_t round trip on plain LONG subtraction was dead weight the image never does (no overflow-defined behavior needed for these fields); direct `RECT` member arithmetic on the `volatile RECT*` matches the mnemonics exactly (2/16 -> 11/16).
+// LEVER: the `volatile RECT *ordered_rect` alias was itself the remaining wall, not a fix for anything read twice - every field here is written once and read once. Reading `rect->field` directly (compound `-=`/`+=`, no volatile handle) let VC6 fold the param-then-field load order the image has instead of forcing a `mov edx, [eax]` ahead of the `ecx` load through the alias. 11/16 -> BYTE_EXACT 16/16.
+// symbol    ?expand_rect@@YAPAUtagRECT@@PAU1@HH@Z
+// size      43 bytes
+// prototype 
+// callers   1   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+// notes     Runtime redirect installed by DllMain after byte-signature validation
+Status: Complete
+*/
+RECT *__cdecl expand_rect(RECT *rect, int horizontal, int vertical) {
+    rect->left -= horizontal;
+    rect->right += horizontal;
+    rect->top -= vertical;
+    rect->bottom += vertical;
+    return rect;
+}
+
+/*
 Purpose: Set the scrollbar thickness and reset its thumb rectangle.
 // ORIGINAL: 0x00605B80 ?set_bar_thickness@Scroll@@QAEXH@Z 0x00605B80-0x00605BE0
 // TRIED: dropping the `volatile` casts on `bar_thickness_`, `border_color_`
@@ -943,13 +966,7 @@ void Scroll::set_bar_thickness(int thickness) {
     thumb_rect_.right = long_from_bits(static_cast<uint32_t>(thickness));
     thumb_rect_.bottom = long_from_bits(static_cast<uint32_t>(thickness));
     if (border_color_ != -1) {
-        const uint32_t right = static_cast<uint32_t>(thumb_rect_.right) - 1U;
-        thumb_rect_.left = 1;
-        const uint32_t top = static_cast<uint32_t>(thumb_rect_.top) + 1U;
-        thumb_rect_.right = long_from_bits(right);
-        const uint32_t bottom = static_cast<uint32_t>(thumb_rect_.bottom) - 1U;
-        thumb_rect_.top = long_from_bits(top);
-        thumb_rect_.bottom = long_from_bits(bottom);
+        expand_rect(&thumb_rect_, -1, -1);
     }
 }
 
@@ -1006,38 +1023,10 @@ void Scroll::set_border_color(int color) {
     thumb_rect_.right = long_from_bits(thickness);
     thumb_rect_.bottom = long_from_bits(thickness);
     if (border_color_ != -1) {
-        const uint32_t right = static_cast<uint32_t>(thumb_rect_.right) - 1U;
-        thumb_rect_.left = 1;
-        const uint32_t top = static_cast<uint32_t>(thumb_rect_.top) + 1U;
-        thumb_rect_.right = long_from_bits(right);
-        const uint32_t bottom = static_cast<uint32_t>(thumb_rect_.bottom) - 1U;
-        thumb_rect_.top = long_from_bits(top);
-        thumb_rect_.bottom = long_from_bits(bottom);
+        expand_rect(&thumb_rect_, -1, -1);
     }
 }
 
-/*
-Purpose: Expand a rectangle horizontally and vertically.
-// ORIGINAL: 0x00606F00 sub_606f00 0x00606F00-0x00606F2B BYTE_EXACT
-// LEVER: the long_from_bits/uint32_t round trip on plain LONG subtraction was dead weight the image never does (no overflow-defined behavior needed for these fields); direct `RECT` member arithmetic on the `volatile RECT*` matches the mnemonics exactly (2/16 -> 11/16).
-// LEVER: the `volatile RECT *ordered_rect` alias was itself the remaining wall, not a fix for anything read twice - every field here is written once and read once. Reading `rect->field` directly (compound `-=`/`+=`, no volatile handle) let VC6 fold the param-then-field load order the image has instead of forcing a `mov edx, [eax]` ahead of the `ecx` load through the alias. 11/16 -> BYTE_EXACT 16/16.
-// symbol    ?expand_rect@@YAPAUtagRECT@@PAU1@HH@Z
-// size      43 bytes
-// prototype 
-// callers   1   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-// notes     Runtime redirect installed by DllMain after byte-signature validation
-Status: Complete
-*/
-RECT *__cdecl expand_rect(RECT *rect, int horizontal, int vertical) {
-    rect->left -= horizontal;
-    rect->right += horizontal;
-    rect->top -= vertical;
-    rect->bottom += vertical;
-    return rect;
-}
 
 /*
 Purpose: Set the left scrollbar sprites and horizontal button sprites.
@@ -1430,13 +1419,7 @@ void Scroll::set_thumb_rect() {
     thumb_rect_.right = long_from_bits(thickness);
     thumb_rect_.bottom = long_from_bits(thickness);
     if (border_color_ != -1) {
-        const uint32_t right = static_cast<uint32_t>(thumb_rect_.right) - 1U;
-        thumb_rect_.left = 1;
-        const uint32_t top = static_cast<uint32_t>(thumb_rect_.top) + 1U;
-        thumb_rect_.right = long_from_bits(right);
-        const uint32_t bottom = static_cast<uint32_t>(thumb_rect_.bottom) - 1U;
-        thumb_rect_.top = long_from_bits(top);
-        thumb_rect_.bottom = long_from_bits(bottom);
+        expand_rect(&thumb_rect_, -1, -1);
     }
 }
 

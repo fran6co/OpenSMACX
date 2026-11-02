@@ -2712,21 +2712,9 @@ int Sprite::load(const char *filename) {
 // Here the same recovered constructors run through this build's own
 // startup, and the matching destructors close them at exit.
 
-// ORIGINAL: 0x00634FE0 ?shutdown@TexHeap@@QAEXXZ 0x00634FE0-0x00635046 BYTE_EXACT
-// size      102 bytes
-// prototype void (__thiscall ?shutdown@TexHeap@@QAEXXZ)(TexHeap* this)
-// callers   0   call targets   1
-// kind      game
-// flags     sp_ready;purged_ok
-// calls     0x00644EF2
-// 0x00634FE0  ?shutdown@TexHeap@@QAEXXZ  ->  ?shutdown@TexHeap@@QAEXXZ
-//
-// Purpose: cut the whole sheet heap down - the base block, then the block
-// TABLE (count_ + 1 Heap entries, each released before the table itself),
-// then the three counters.
-
-
-void TexHeap::shutdown() {
+// Heap metadata borrows the arena. Freeing its storage ends that lifetime;
+// invoking Heap::~Heap here would incorrectly free each interior region.
+inline void TexHeap::release_allocations() {
     if (base_ != 0) {
         free(base_);
         base_ = 0;
@@ -2748,6 +2736,24 @@ void TexHeap::shutdown() {
         blocks_ = 0;
     }
 
+}
+
+// ORIGINAL: 0x00634FE0 ?shutdown@TexHeap@@QAEXXZ 0x00634FE0-0x00635046 BYTE_EXACT
+// size      102 bytes
+// prototype void (__thiscall ?shutdown@TexHeap@@QAEXXZ)(TexHeap* this)
+// callers   0   call targets   1
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     0x00644EF2
+// 0x00634FE0  ?shutdown@TexHeap@@QAEXXZ  ->  ?shutdown@TexHeap@@QAEXXZ
+//
+// Purpose: cut the whole sheet heap down - the base block, then the block
+// TABLE (count_ + 1 Heap entries, each released before the table itself),
+// then the three counters.
+
+
+void TexHeap::shutdown() {
+    release_allocations();
     count_ = 0;
     capacity_ = 0;
 }
@@ -3342,31 +3348,7 @@ int Sprite::init(char *filename, int width, int height) {
     return 0;
 }
 
-// Heap metadata borrows the arena. Freeing its storage ends that lifetime;
-// invoking Heap::~Heap here would incorrectly free each interior region.
-void TexHeap::release_allocations() {
-    if (base_ != 0) {
-        free(base_);
-        base_ = 0;
-    }
 
-    if (blocks_ != 0) {
-        // The image re-reads count_ for the loop test at every iteration, so
-        // the bound stays an expression over the field rather than a local.
-        for (int index = 0; index < static_cast<int>(count_ + 1u); ++index) {
-            Heap *block = blocks_[index];
-            if (block != 0) {
-                free(block);
-                blocks_[index] = 0;
-            }
-        }
-        if (blocks_ != 0) {
-            free(blocks_);
-        }
-        blocks_ = 0;
-    }
-
-}
 
 // ORIGINAL: 0x00634FB0 ??0TexHeap@@QAE@XZ 0x00634FB0-0x00634FC0 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["task:texheap-owner", "Native634FB0fourwordinitialization;634FC0ignores635050statusandreturnsthis;635050arena/table/20byteHeapallocations;635370/6353C0/634FE0sharedmemberconsumers.", "historical source:src/field_accessors.cpp"], "reason": "Recover source-owned typed arena and Heap-pointer table, genuine constructor and borrowed-region Heap lifetimes; initializer returns the native receiver. Preserve allocation order and native omissions, without invented global ownership."}
@@ -3411,7 +3393,9 @@ int TexHeap::configure(int count) {
     void *storage = mem_get(sizeof(Heap));
     blocks_[0] = static_cast<Heap *>(storage);
     if (storage == 0) {
-        shutdown();
+        release_allocations();
+        count_ = 0;
+        capacity_ = 0;
         return 4;
     }
     // Actual address alignment, not an executable address or self offset.
@@ -3425,7 +3409,9 @@ int TexHeap::configure(int count) {
             storage = mem_get(sizeof(Heap));
             blocks_[index] = static_cast<Heap *>(storage);
             if (storage == 0) {
-                shutdown();
+                release_allocations();
+                count_ = 0;
+                capacity_ = 0;
                 return 4;
             }
             blocks_[index] = new (storage) Heap(
@@ -3438,7 +3424,9 @@ int TexHeap::configure(int count) {
     storage = mem_get(sizeof(Heap));
     blocks_[count_] = static_cast<Heap *>(storage);
     if (storage == 0) {
-        shutdown();
+        release_allocations();
+        count_ = 0;
+        capacity_ = 0;
         return 4;
     }
     // With count==0 the original overwrites (and leaks) descriptor zero.

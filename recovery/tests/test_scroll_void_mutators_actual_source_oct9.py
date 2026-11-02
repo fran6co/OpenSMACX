@@ -266,12 +266,13 @@ def test_actual_scroll_bodies_with_return_warnings_as_errors(compiler: str) -> N
     bodies = "\n\n".join(extract_body(source, signature)
                             for _, signature in FUNCTIONS.values())
     bits_helper = extract_body(source, "inline LONG long_from_bits(uint32_t bits)")
+    expand_body = extract_body(source, "RECT *__cdecl expand_rect(RECT *rect, int horizontal, int vertical)")
     swap_body = extract_body(GENERAL_CPP.read_text(), SWAP_SIGNATURE)
     with tempfile.TemporaryDirectory(prefix="opensmacx-scroll-mutators-") as directory:
         root = Path(directory)
         cpp = root / "scroll.cpp"
         binary = root / "scroll"
-        cpp.write_text(FIXTURE + swap_body + "\n" + bits_helper + "\n" + bodies + SUFFIX)
+        cpp.write_text(FIXTURE + swap_body + "\n" + bits_helper + "\n" + expand_body + "\n" + bodies + SUFFIX)
         result = subprocess.run(
             [executable, "-std=c++17", "-Wall", "-Wextra", "-Werror=return-type",
              str(cpp), "-o", str(binary)],
@@ -307,18 +308,21 @@ def test_geometry_mutants_compile_but_fail_runtime(compiler: str, mutation: str)
         assert target in bodies["set_bar_thickness"]
         bodies["set_bar_thickness"] = bodies["set_bar_thickness"].replace(target, "", 1)
     else:
-        target = "static_cast<uint32_t>(thumb_rect_.right) - 1U"
-        assert target in bodies["set_thumb_rect"]
+        target = "expand_rect(&thumb_rect_, -1, -1);"
+        original_body = bodies["set_thumb_rect"]
+        assert original_body.count(target) == 1
         bodies["set_thumb_rect"] = bodies["set_thumb_rect"].replace(
-            target, "static_cast<uint32_t>(thumb_rect_.right) + 1U", 1)
+            target, "expand_rect(&thumb_rect_, 1, -1);", 1)
+        assert bodies["set_thumb_rect"] != original_body
 
     ordered_bodies = "\n\n".join(bodies[name] for name in FUNCTIONS)
     bits_helper = extract_body(source, "inline LONG long_from_bits(uint32_t bits)")
+    expand_body = extract_body(source, "RECT *__cdecl expand_rect(RECT *rect, int horizontal, int vertical)")
     swap_body = extract_body(GENERAL_CPP.read_text(), SWAP_SIGNATURE)
     with tempfile.TemporaryDirectory(prefix="opensmacx-scroll-mutant-") as directory:
         root = Path(directory)
         cpp, binary = root / "scroll.cpp", root / "scroll"
-        cpp.write_text(FIXTURE + swap_body + "\n" + bits_helper + "\n" +
+        cpp.write_text(FIXTURE + swap_body + "\n" + bits_helper + "\n" + expand_body + "\n" +
                        ordered_bodies + SUFFIX)
         build = subprocess.run(
             [executable, "-std=c++17", "-Wall", "-Wextra", "-Werror=return-type",
