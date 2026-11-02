@@ -21,6 +21,13 @@ struct Allocation { void *raw; size_t size; };
 static std::map<void *, Allocation> live;
 static int calls, fail_at, arena_offset;
 static std::vector<size_t> sizes;
+// Controlled external allocator-boundary effects exercise the pinned read
+// phases. They do not assert a callback in the shipped malloc implementation.
+static TexHeap *boundary_receiver;
+static int boundary_call, boundary_count;
+static size_t boundary_base_adjustment;
+static uint32_t boundary_capacity_adjustment;
+static unsigned char *boundary_original_base;
 
 static void *mem_get(size_t size) {
     sizes.push_back(size);
@@ -35,6 +42,14 @@ static void *mem_get(size_t size) {
     std::memset(result, 0xa5, size);
     Allocation record = {raw, size};
     live[result] = record;
+    if (boundary_receiver != 0 && calls == boundary_call) {
+        boundary_original_base = boundary_receiver->base_;
+        if (boundary_count >= 0) {
+            boundary_receiver->count_ = static_cast<uint32_t>(boundary_count);
+        }
+        boundary_receiver->base_ += boundary_base_adjustment;
+        boundary_receiver->capacity_ += boundary_capacity_adjustment;
+    }
     return result;
 }
 static void release(void *pointer) {
@@ -58,6 +73,9 @@ LPVOID Heap::get(int requested) {
 static void begin(int offset, int failure = -1) {
     assert(live.empty());
     calls = 0; sizes.clear(); fail_at = failure; arena_offset = offset;
+    boundary_receiver = 0; boundary_call = -1; boundary_count = -1;
+    boundary_base_adjustment = 0; boundary_capacity_adjustment = 0;
+    boundary_original_base = 0;
 }
 static void check_descriptor(Heap *block, unsigned char *base, size_t size) {
     assert(block->err_flags_ == 1);
@@ -96,6 +114,46 @@ int main() {
             assert(!heap.base_ && !heap.blocks_ && !heap.count_ && !heap.capacity_);
         }
     }
+    // The terminal slot uses the incoming count, even if that receiver field
+    // changes at the final allocation boundary. Restore it before teardown;
+    // this control does not normalize the original live cleanup loop bound.
+    begin(32);
+    TexHeap changed_count;
+    boundary_receiver = &changed_count;
+    boundary_call = 6;
+    boundary_count = 0;
+    assert(changed_count.configure(3) == 0);
+    assert(changed_count.count_ == 0 && boundary_original_base != 0);
+    check_descriptor(changed_count.blocks_[0], boundary_original_base, 65504);
+    assert(live.count(changed_count.blocks_[3]) == 1);
+    changed_count.count_ = 3;
+    changed_count.shutdown();
+    assert(live.empty());
+
+    // The terminal extent uses the post-allocation arena base and capacity.
+    // The fixture allocation has physical slack for these bounded changes.
+    begin(32);
+    TexHeap changed_extent;
+    boundary_receiver = &changed_extent;
+    boundary_call = 6;
+    boundary_base_adjustment = 32;
+    boundary_capacity_adjustment = 64;
+    assert(changed_extent.configure(3) == 0);
+    assert(boundary_original_base != 0);
+    assert(changed_extent.base_ == boundary_original_base + 32);
+    assert(changed_extent.capacity_ == 4u * 65536u + 64u);
+    const uintptr_t terminal =
+        (reinterpret_cast<uintptr_t>(boundary_original_base) & ~uintptr_t(0xffff))
+        + 3u * 65536u;
+    check_descriptor(changed_extent.blocks_[3],
+                     reinterpret_cast<unsigned char *>(terminal),
+                     reinterpret_cast<uintptr_t>(changed_extent.base_)
+                         + changed_extent.capacity_ - terminal);
+    changed_extent.base_ = boundary_original_base;
+    changed_extent.capacity_ = 4u * 65536u;
+    changed_extent.shutdown();
+    assert(live.empty());
+
     // Native zero count overwrites the first descriptor, leaving one leak.
     begin(32);
     TexHeap zero;

@@ -3401,7 +3401,7 @@ int TexHeap::configure(int count) {
     // Actual address alignment, not an executable address or self offset.
     const uintptr_t arena = reinterpret_cast<uintptr_t>(base_);
     uintptr_t cursor = (arena & ~static_cast<uintptr_t>(0xffff)) + 0x10000;
-    blocks_[0] = new (storage) Heap(base_, static_cast<size_t>(cursor - arena));
+    new (storage) Heap(base_, static_cast<size_t>(cursor - arena));
 
     int index = 1;
     if (count > 1) {
@@ -3414,7 +3414,7 @@ int TexHeap::configure(int count) {
                 capacity_ = 0;
                 return 4;
             }
-            blocks_[index] = new (storage) Heap(
+            new (storage) Heap(
                 reinterpret_cast<unsigned char *>(cursor), 0xffff);
             cursor += 0x10000;
             ++index;
@@ -3422,7 +3422,7 @@ int TexHeap::configure(int count) {
     }
 
     storage = mem_get(sizeof(Heap));
-    blocks_[count_] = static_cast<Heap *>(storage);
+    blocks_[count] = static_cast<Heap *>(storage);
     if (storage == 0) {
         release_allocations();
         count_ = 0;
@@ -3431,8 +3431,8 @@ int TexHeap::configure(int count) {
     }
     // With count==0 the original overwrites (and leaks) descriptor zero.
     // Preserve that omission; the normal caller domain is not yet proved.
-    blocks_[count_] = new (storage) Heap(
+    new (storage) Heap(
         reinterpret_cast<unsigned char *>(cursor),
-        static_cast<size_t>(arena + capacity_ - cursor));
+        static_cast<size_t>(reinterpret_cast<uintptr_t>(base_) + capacity_ - cursor));
     return 0;
 }
