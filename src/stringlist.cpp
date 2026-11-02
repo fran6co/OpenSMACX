@@ -106,16 +106,21 @@ Status: Product behavior; historical seed remains an unclaimed measurement.
 void StringList::sort(int) {
     for (int position = 0; position < entry_count_ - 1; ++position) {
         seek_pos(position);
-        char *smallest_text = current_->string_payload()->text;
+        char *smallest_text = head_ ? current_->string_payload()->text : 0;
         int smallest_position = position;
 
         for (int candidate = position + 1; candidate < entry_count_;
              ++candidate) {
             next_entry();
-            char *const candidate_text = current_->string_payload()->text;
+            char *candidate_text = 0;
+            if (current_) {
+                StringStructPayload *const candidate_payload =
+                    head_ ? current_->string_payload() : 0;
+                candidate_text = candidate_payload->text;
+            }
             if (strcmp(candidate_text, smallest_text) < 0) {
-                smallest_text = candidate_text;
-                smallest_position = candidate;
+                smallest_text = head_ ? current_->string_payload()->text : 0;
+                smallest_position = current_position_;
             }
         }
 
@@ -124,12 +129,12 @@ void StringList::sort(int) {
                 StringStructEntry *const selected = current_;
                 if (seek_pos(position) != 0) {
                     StringStructEntry *const selected_position = current_;
-                    const int id = selected_position->id;
-                    ListPayloadBase *const payload = selected_position->payload;
-                    selected_position->id = selected->id;
-                    selected_position->payload = selected->payload;
-                    selected->id = id;
-                    selected->payload = payload;
+                    selected->id ^= selected_position->id;
+                    selected_position->id ^= selected->id;
+                    selected->id ^= selected_position->id;
+                    ListPayloadBase *const payload = selected->payload;
+                    selected->payload = selected_position->payload;
+                    selected_position->payload = payload;
                 }
             }
         }

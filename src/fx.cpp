@@ -427,7 +427,7 @@ void FX::play(int effect) {
 }
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x00446960 ?play@FX@@QAEXHHH@Z 0x00446960-0x004469F9 FILE
+// ORIGINAL: 0x00446960 ?play@FX@@QAEXHHH@Z 0x00446960-0x004469F9 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:f7bbce35:src/unrecovered/00446960.cpp", "src/ambience.h", "src/midi.h", "src/fx.h"], "reason": "Original constructor staging, actual event tables and compiler-call contracts identify the genuine audio owner operation; compatible historical seed spans and claims remain available for restoration, not an acceptance verdict."}
 void FX::play(int effect, int, int) {
     if (!(GameDataStateStorage.fields_.game_preferences_ & 0x400)) return;
@@ -437,10 +437,15 @@ void FX::play(int effect, int, int) {
         if (effect == 0) {
             // Original receiver is effects_[0], not a polymorphic FX.
             const int playing = effects_[0].is_playing();
-            effects_[0].set_pitch(playing ? effects_[0].pitch_ + 100 : 0);
+            if (playing) {
+                effects_[0].set_pitch(effects_[0].pitch_ + 100);
+            } else {
+                effects_[0].set_pitch(0);
+            }
         }
     }
-    if (effects_[effect].flags_54_ & 0x10) effects_[effect].load();
+    const unsigned char release_flags = effects_[effect].flags_54_ >> 4;
+    if (release_flags & 1) effects_[effect].load();
     effects_[effect].play();
 }
 

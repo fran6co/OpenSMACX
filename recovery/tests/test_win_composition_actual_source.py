@@ -104,6 +104,7 @@ struct CopyCall {
 static std::vector<std::string> events;
 static std::vector<CopyCall> copies;
 static HBRUSH brush_result = reinterpret_cast<HBRUSH>(0x44);
+static void (*intersect_callback)();
 static RECT last_fill;
 static COLORREF last_color;
 static RECT window_rect = {0, 0, 640, 480};
@@ -127,6 +128,7 @@ static int IntersectRect(RECT *out, const RECT *a, const RECT *b) {
   r.right = a->right < b->right ? a->right : b->right;
   r.bottom = a->bottom < b->bottom ? a->bottom : b->bottom;
   *out = r;
+  if (intersect_callback) intersect_callback();
   return !IsRectEmpty(out);
 }
 static int GetWindowRect(HWND, RECT *r) { *r = window_rect; return 1; }
@@ -313,7 +315,7 @@ int main() {
          copies[0].destination == &target);
 
   copies.clear();
-  Win destination;
+  GraphicWin destination;
   destination.iSomeFlag_ = 2; destination.iFlags_ = 0x10000000;
   destination.client_rect_ = RECT{10, 20, 110, 120};
   destination.buffer1_ = &top; destination.buffer2_ = &left;
@@ -335,6 +337,7 @@ int main() {
   GraphicWin target_graphic; Buffer owned_screen;
   set_buffer(owned_screen, 0, 0, 640, 480, 640, 480);
   target_graphic.owned_ = &owned_screen;
+  destination.owned_ = &owned_screen;
   destination.graphic_ = &target_graphic;
   destination.iFlags_ |= 0x40000000;
   GraphicWin current_graphic;
@@ -436,8 +439,9 @@ int main() {
 int main() {
   Buffer src, dst, owned; GraphicWin target_graphic;
   target_graphic.owned_ = &owned;
-  Win target; target.iSomeFlag_ = 2;
+  GraphicWin target; target.iSomeFlag_ = 2;
   target.iFlags_ = 0x10000000 | 0x40000000;
+  target.owned_ = &owned;
   target.client_rect_ = RECT{0,0,20,5}; target.buffer1_ = &dst;
   target.buffer2_ = target.buffer3_ = target.buffer4_ = &dst;
   target.graphic_ = &target_graphic;
@@ -486,8 +490,9 @@ int main() {
   Buffer target_bottom, target_right, owned;
   GraphicWin target_graphic, current, other;
   target_graphic.owned_ = &owned;
-  Win target; target.iSomeFlag_ = 2;
+  GraphicWin target; target.iSomeFlag_ = 2;
   target.iFlags_ = 0x10000000 | 0x40000000;
+  target.owned_ = &owned;
   target.client_rect_ = RECT{10,20,110,120};
   target.buffer1_ = &target_top; target.buffer2_ = &target_left;
   target.buffer3_ = &target_bottom; target.buffer4_ = &target_right;
@@ -539,3 +544,106 @@ int main() {
         "FillRect(hdc, &rect, brush);",
     )
     _compile_and_run(stale_hdc, main, expect_success=False)
+
+
+def test_copy_receivers_reload_after_intersection():
+    """Pinned border-copy calls reload owners after intersection; geometry stays saved."""
+    bodies = _product_bodies()
+    main = r'''
+static Win *replaced_owner;
+static Buffer *replacement_edge;
+static void replace_top_edge() {
+  intersect_callback = 0;
+  replaced_owner->buffer1_ = replacement_edge;
+}
+static void setup(Win &owner, Buffer &edge) {
+  owner.iSomeFlag_ = 2; owner.iFlags_ = 0x10000000;
+  owner.client_rect_ = RECT{0,0,20,20};
+  owner.buffer1_ = owner.buffer2_ = owner.buffer3_ = owner.buffer4_ = &edge;
+}
+int main() {
+  Buffer original, replacement, target;
+  original.rect2_ = RECT{0,0,20,5};
+  replacement.rect2_ = RECT{101,102,103,104};
+  target.dib_.bmiHeader.biWidth = 20;
+  target.dib_.bmiHeader.biHeight = -20;
+  Win owner; setup(owner, original);
+  replaced_owner = &owner; replacement_edge = &replacement;
+  intersect_callback = replace_top_edge;
+  owner.copy_edges_to_buffer(&target,0,0);
+  assert(!copies.empty() && copies[0].source == &replacement);
+  assert(copies[0].sx == 0 && copies[0].sy == 0);
+  assert(copies[0].width == 20 && copies[0].height == 5);
+
+  Win destination; setup(destination,target);
+  setup(owner,original); copies.clear();
+  intersect_callback = replace_top_edge;
+  owner.copy_border_buffers_to_window(&destination,0,0);
+  assert(!copies.empty() && copies[0].source == &replacement);
+  assert(copies[0].sx == 0 && copies[0].sy == 0);
+  assert(copies[0].width == 20 && copies[0].height == 5);
+}
+'''
+    _compile_and_run(bodies, main)
+    cached_edge = dict(bodies)
+    cached_edge[0x5F37C0] = _mutate_once(
+        cached_edge[0x5F37C0], "buffer1_->copy(target,", "edge->copy(target,")
+    _compile_and_run(cached_edge, main, expect_success=False)
+    cached_border = dict(bodies)
+    cached_border[0x5F3B80] = _mutate_once(
+        cached_border[0x5F3B80],
+        "void Win::copy_border_buffers_to_window(Win *target, RECT *clip, int mode) {",
+        "void Win::copy_border_buffers_to_window(Win *target, RECT *clip, int mode) {\n"
+        "    Buffer *cached_top = buffer1_;")
+    cached_border[0x5F3B80] = _mutate_once(
+        cached_border[0x5F3B80], "COPY_EDGE_TO_TARGET(buffer1_, edge_rect);",
+        "COPY_EDGE_TO_TARGET(cached_top, edge_rect);")
+    _compile_and_run(cached_border, main, expect_success=False)
+
+
+def test_border_target_identity_and_original_admission_phase():
+    """5F3D1C tests getter;5F3D41 saves target;5F4002 reads its owned buffer."""
+    bodies = _product_bodies()
+    main = r'''
+static GraphicWin *admitted_target;
+static void clear_screen_flag() {
+  intersect_callback = 0;
+  admitted_target->iFlags_ &= ~0x40000000u;
+}
+int main() {
+  Buffer edge, owned, foreign_owned;
+  edge.rect2_ = RECT{0,0,20,5};
+  GraphicWin target, unrelated_getter;
+  target.iSomeFlag_ = 2; target.iFlags_ = 0x10000000 | 0x40000000;
+  target.client_rect_ = RECT{0,0,20,20};
+  target.buffer1_ = target.buffer2_ = target.buffer3_ = target.buffer4_ = &edge;
+  target.owned_ = &owned;
+  unrelated_getter.owned_ = &foreign_owned;
+  target.graphic_ = &unrelated_getter;
+  Win source; source.iSomeFlag_ = 2;
+  source.client_rect_ = RECT{0,0,20,20};
+  source.buffer1_ = source.buffer2_ = source.buffer3_ = source.buffer4_ = &edge;
+  admitted_target = &target;
+  intersect_callback = clear_screen_flag;
+  source.copy_border_buffers_to_window(&target,0,-1);
+  bool used_owned = false;
+  for (std::size_t i = 0; i < copies.size(); ++i) {
+    assert(copies[i].destination != &foreign_owned);
+    if (copies[i].destination == &owned) used_owned = true;
+  }
+  assert(used_owned);
+}
+'''
+    _compile_and_run(bodies, main)
+    wrong_target = dict(bodies)
+    wrong_target[0x5F3B80] = _mutate_once(
+        wrong_target[0x5F3B80],
+        "target_graphic = static_cast<GraphicWin *>(target);",
+        "target_graphic = target->get_graphic_win();")
+    _compile_and_run(wrong_target, main, expect_success=False)
+    fresh_flag = dict(bodies)
+    fresh_flag[0x5F3B80] = _mutate_once(
+        fresh_flag[0x5F3B80],
+        "if (target_graphic != 0 && mode == -1 &&",
+        "if (target_graphic != 0 && mode == -1 && (target->iFlags_ & 0x40000000) != 0 &&")
+    _compile_and_run(fresh_flag, main, expect_success=False)

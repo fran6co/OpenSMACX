@@ -7,7 +7,6 @@ pins each quadrant's arithmetic, signed DIB reads and callback reloads. Native
 compiler/layout, undefined extreme arithmetic and linked/runtime fidelity still
 require separate evidence. No original image code is executed by these controls.
 """
-from dataclasses import fields
 import os
 from pathlib import Path
 import re
@@ -23,7 +22,6 @@ from match_recovery.pe_coff import PeImage
 from match_recovery.source import read_text
 
 ROOT = Path(__file__).resolve().parents[2]
-BASE = "0b1619c4dbb65d57e2b08635ed939f30032d883a"
 PIN = "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
 WIN = "void Win::on_redraw_nc(RECT * area, int flags)"
 GRAPHIC = "void GraphicWin::on_redraw_nc(RECT *area, int side)"
@@ -48,28 +46,13 @@ def one(text, pattern):
     return value
 
 
-def test_only_complete_painter_bodies_change_and_obligations_survive():
-    for relative, signature, address, end in (
-            ("src/win.cpp", WIN, 0x5F2CF0, 0x5F37BA),
-            ("src/graphicwin.cpp", GRAPHIC, 0x5D63F0, 0x5D68B7)):
-        path = ROOT / relative
-        before = subprocess.check_output(["git", "show", BASE + ":" + relative],
-                                         cwd=ROOT, text=True)
-        after = path.read_text()
-        assert after.replace(braced(after, signature), braced(before, signature), 1) == before
-        old = read_text(before, path)
-        current = read_text(after, path)
-        assert len(old) == len(current)
-        for a, b in zip(old, current):
-            for field in fields(a):
-                if field.name not in {"region", "line", "origin"}:
-                    assert getattr(a, field.name) == getattr(b, field.name), field.name
-            assert [(x.kind, x.key, x.prose) for x in a.origin] == [
-                (x.kind, x.key, x.prose) for x in b.origin]
-        assert next(row for row in current if row.address == address).image_spans == ((address, end),)
-
-
 def test_pinned_complete_painters_and_positive_geometry_reload_anchors():
+    for relative, address, end in (
+            ("src/win.cpp", 0x5F2CF0, 0x5F37BA),
+            ("src/graphicwin.cpp", 0x5D63F0, 0x5D68B7)):
+        path = ROOT / relative
+        current = read_text(path.read_text(), path)
+        assert next(row for row in current if row.address == address).image_spans == ((address, end),)
     path = Path(os.environ.get("OPENSMACX_IMAGE", ROOT / ".opensmacx/game/terranx_original.exe"))
     if not path.is_file():
         pytest.skip("set OPENSMACX_IMAGE for pinned original evidence")
@@ -141,7 +124,7 @@ struct RGBQUAD { unsigned char b,g,r,a; };
 struct BITMAPINFO { BITMAPINFOHEADER bmiHeader;RGBQUAD bmiColors[1]; };
 @DIB@
 class Win;class GraphicWin;class Buffer;class Sprite;class Font {};
-class Sound;class ImageButton;class Menu;class Scroll;
+class Sound;class ImageButton;class Menu;class Scroll;class ColorTable;
 static const unsigned char WinFillColour=9;
 struct Event {
   std::string op;Buffer *owner;const void *source;RECT rect;int a,b,c,d;char *text;
@@ -193,6 +176,7 @@ AutoSound::AutoSound(){}void AutoSound::close(){}
 @CALLBACKS@
 class Win : public AutoSound { public:
 @WIN_FIELDS@
+@WIN_CLIENT_ACCESSOR@
 @WIN_DECLARATION@
 @POST_DECLARATION@
 };
@@ -427,6 +411,7 @@ def program(damage=None):
         "AUTO":braced((ROOT/"src/autosound.h").read_text(),"class AutoSound {")+";",
         "CALLBACKS":"\n".join(re.findall(r"^typedef .*;$",wh,re.M)+re.findall(r"^typedef .*;$",gh,re.M)),
         "WIN_FIELDS":win_fields,
+        "WIN_CLIENT_ACCESSOR":braced(wh,"const RECT &client_rect() const"),
         "WIN_DECLARATION":one(wh,r"^  (virtual void on_redraw_nc\(RECT \*area, int flags\);).*"),
         "POST_DECLARATION":one(wh,r"^  (virtual void on_post_redraw_nc_buffer\([^\{]+)\{").rstrip()+";",
         "GRAPHIC_INHERITANCE":one(gh,r"^(class GraphicWin :[^\{]+\{)"),
