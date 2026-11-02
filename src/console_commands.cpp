@@ -1151,41 +1151,46 @@ void Console::automate(int veh_id, int order) {
 // the original sets the already-owned NetDaemon channel action word to 3.
 // Keep this write ahead of the panel's callback-capable work.
 // Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x004D8FA0 ?convoy@Console@@QAEXH@Z 0x004D8FA0-0x004D916D
+// ORIGINAL: 0x004D8FA0 ?convoy@Console@@QAEXH@Z 0x004D8FA0-0x004D916D BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/004d8fa0.cpp", "source:src/alpha.h", "pinned:0x004D8FF4 dword value 3 store before supply_options at 0x004D8FFE", "source:src/netdaemon.h:channels_ at 0x1B68 and LockStateEntry::leading_words_[3] at 0xC", "source:src/console.cpp:supply_options reads the same source-owned action flags"], "reason": "Seed 004d8fa0 identifies the Console convoy order and lock lifecycle; typed Veh, Base and RulesResource records replace receiver and table offsets. The resource label run at 0x0094615C is Resource[0].name_plural, with the singular member selected for a yield of one. The original pre-panel dword value 3 write at 0x004D8FF4 targets the already-owned NetDaemonNet.channels_[0].leading_words_[3], whose singleton-relative offset 0x1B74 identifies 0x0093E904. Preserve that write before supply_options without adding duplicate storage or claiming full matching/acceptance."}
+// Original convoy pushes at 004D9057/004D911D select distinct writable strings.
+// Current NUL-terminated literals have separate complete COMDATs, not lifetime proof.
+// RECOVERY_LITERAL: v1 0x00688ED4 0x00688EDF ??_C@_0L@OHNN@CANTCONVOY?$AA@ 0x004D8FA0
+// RECOVERY_LITERAL: v1 0x00688EE0 0x00688EEE ??_C@_0O@EAKA@SUPPLYEXTRACT?$AA@ 0x004D8FA0
 void Console::convoy(int veh_id) {
     if (NetDaemonNet.lock_veh(&veh_id, 0, -1, -1, 0) != 0) {
         return;
     }
-    Veh &vehicle = Vehs[veh_id];
-    const int base_id = base_at(vehicle.x, vehicle.y);
+    const int base_id = base_at(Vehs[veh_id].x, Vehs[veh_id].y);
     if (base_id >= 0) {
         NetDaemonNet.channels_[0].leading_words_[3] = 3;
         supply_options(veh_id, base_id);
         NetDaemonNet.unlock_veh();
         return;
     }
-    if (vehicle.home_base_id >= 0) {
-        if (can_convoy(vehicle.x, vehicle.y) == 0) {
+    const int home_base_id = Vehs[veh_id].home_base_id;
+    if (home_base_id >= 0) {
+        if (can_convoy(Vehs[veh_id].x, Vehs[veh_id].y) == 0) {
             NetMsgPrimary.pop("CANTCONVOY", 5000, 0, 0);
             NetDaemonNet.unlock_veh();
             return;
         }
+        int amounts[3];
         for (int resource = 0; resource < 3; ++resource) {
-            const int amount = resource_yield(resource, faction_id_,
-                                              vehicle.home_base_id,
-                                              vehicle.x, vehicle.y);
-            parse_num(resource, amount);
-            LPSTR name = amount == 1
+            amounts[resource] = resource_yield(resource, faction_id_,
+                                               Vehs[veh_id].home_base_id,
+                                               Vehs[veh_id].x, Vehs[veh_id].y);
+            parse_num(resource, amounts[resource]);
+            LPSTR name = amounts[resource] == 1
                 ? Resource[resource].name_singular
                 : Resource[resource].name_plural;
             parse_say(resource, name, -1, -1);
         }
-        parse_says(3, Bases[vehicle.home_base_id].name_string, -1, -1);
+        parse_says(3, Bases[home_base_id].name_string, -1, -1);
         const int choice = x_pop_short("SUPPLYEXTRACT", 0x40, 0);
         if (choice >= 0) {
-            vehicle.order = 3;
-            vehicle.order_auto_type = static_cast<uint8_t>(choice);
+            Vehs[veh_id].order = 3;
+            Vehs[veh_id].order_auto_type = static_cast<uint8_t>(choice);
             synch_veh(veh_id);
             NetDaemonNet.await_synch();
         }

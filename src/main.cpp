@@ -118,6 +118,7 @@ Font g_JACKAL_FONT;
  */
 
 char CommandLineText[0x108];  // 0x007D3970
+// RECOVERY_OBJECT: v1 0x009469FC ?PopupModalActive@@3HA
 int PopupModalActive;  // 0x009469FC
 
 /*

@@ -129,6 +129,9 @@ LPSTR Difficulty[MaxDiffNum];      // 0x0096C85C
 RulesResourceinfo ResourceInfo[MaxResourceInfoNum]; // 0x00945F50
 // RECOVERY_OBJECT: v1 0x0094F1B8 ?TimeControl@@3PAURulesTimeControl@@A
 RulesTimeControl TimeControl[MaxTimeControlNum];    // 0x0094F1B8
+// Convoy 004D907E/004D90EF and the rules parser independently identify this
+// existing resource-table start; original allocation extent and lifetime remain open.
+// RECOVERY_OBJECT: v1 0x00946158 ?Resource@@3PAURulesResource@@A
 RulesResource Resource[MaxResourceNum];             // 0x00946158
 RulesEnergy Energy[MaxEnergyNum];                   // 0x0094A318
 // RECOVERY_OBJECT: v3 0x00949738 ?Rules@@3URulesBasic@@A member ?RulesStorage@@3URulesStorageWindow@@A rules_

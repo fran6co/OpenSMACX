@@ -1688,6 +1688,8 @@ Return Value: n/a
 Status: Complete
 */
 int __cdecl trig_init() {
+// RECOVERY_LITERAL: v1 0x00671028 0x00671030 __real@8@400effff000000000000 0x0063B940
+// RECOVERY_LITERAL: v1 0x00671030 0x00671038 __real@8@3ff7c9d9b456e9139000 0x0063B940
     for (int sample = 0; sample < 256; sample++) {
         SinTable[sample] = static_cast<int>(
             sin(static_cast<double>(sample) * 0.006159985596078431) * 65535.0);

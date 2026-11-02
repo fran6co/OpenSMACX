@@ -372,8 +372,11 @@ int PopupModalState;  // 0x006A721C
 // of the three strings carry text this packed build does not ship, so ours
 // initialise empty: the link branch compares against "" and opens nothing
 // until something writes them.
+// RECOVERY_OBJECT: v1 0x006827B8 ?PopupLinkMatchText@@3PADA
 char PopupLinkMatchText[64] = "homelink";              // 0x006827B8
+// RECOVERY_OBJECT: v1 0x006827DC ?PopupLinkOpenVerb@@3PADA
 char PopupLinkOpenVerb[16] = "open";                    // 0x006827DC
+// RECOVERY_OBJECT: v1 0x006827C4 ?PopupLinkTarget@@3PADA
 char PopupLinkTarget[128] = "http:\\\\www.firaxis.com"; // 0x006827C4
 // Native4050A0 publishes this buffer and44CBD0 consumes it. The existing
 // 256-byte source capacity is retained; original allocation bounds unverified.

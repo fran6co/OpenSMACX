@@ -108,6 +108,7 @@ static const DWORD media_block_transform_weights[64] = {
     29692, 21407, 22725, 25251, 29692, 37791, 54864, 107619,
 };
 
+// RECOVERY_OBJECT: v1 0x00694E28 _media_hresult_texts
 static const MediaHResultText media_hresult_texts[] = {
     {0x88760005L, "DDERR_ALREADYINITIALIZED"},
     {0x8876000AL, "DDERR_CANNOTATTACHSURFACE"},
@@ -203,6 +204,7 @@ static const MediaHResultText media_hresult_texts[] = {
     {0x8876024EL, "DDERR_UNSUPPORTEDMODE"},
 };
 
+// RECOVERY_OBJECT: v1 0x00695B34 _media_hresult_unknown
 static const char media_hresult_unknown[] = "Uknown Error Code";
 
 // ORIGINAL: 0x005CF120 sub_5cf120 0x005CF120-0x005CF144 BYTE_EXACT

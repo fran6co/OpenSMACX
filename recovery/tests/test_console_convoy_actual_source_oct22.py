@@ -63,9 +63,11 @@ struct NetDaemonDouble {
     int lock_result;
     int locked_id;
     int unlock_count;
+    int *locked_argument;
     int lock_veh(int *id, int mode, int x, int y, int flags) {
         mark("lock");
         assert(mode == 0 && x == -1 && y == -1 && flags == 0);
+        locked_argument = id;
         if (lock_result == 0) *id = locked_id;
         return lock_result;
     }
@@ -101,6 +103,8 @@ static int parse_num_calls;
 static int parse_say_calls;
 static int parse_says_calls;
 static int synch_calls;
+static bool poison_home;
+static bool poison_popup_index;
 
 static int base_at(int x, int y) {
     mark("base_at"); assert(x == 31 && y == 47); return configured_base;
@@ -122,7 +126,12 @@ static NetMessage NetMsgPrimary;
 static int resource_yield(int resource, int faction, int home, int x, int y) {
     mark("yield");
     assert(resource == resource_yield_calls && resource < 3);
-    assert(faction == 6 && home == 4 && x == 31 && y == 47);
+    if (poison_home) {
+        assert(faction == 6 && home == (resource == 0 ? 4 : 5) && x == 31 && y == 47);
+    } else {
+        assert(faction == 6 && home == 4 && x == 31 && y == 47);
+    }
+    if (poison_home && resource == 0) Vehs[2].home_base_id = 5;
     ++resource_yield_calls; return resource == 1 ? 1 : resource + 2;
 }
 static void parse_num(int resource, int amount) {
@@ -140,11 +149,17 @@ static void parse_says(int slot, const char *name, int a, int b) {
 }
 static int x_pop_short(const char *label, int flags, int extra) {
     mark("popup"); assert(std::string(label) == "SUPPLYEXTRACT");
-    assert(flags == 0x40 && extra == 0); return popup_choice;
+    assert(flags == 0x40 && extra == 0);
+    if (poison_popup_index) *NetDaemonNet.locked_argument = 3;
+    return popup_choice;
 }
 static void synch_veh(int id) {
     mark("synch");
-    assert(id == 2 && Vehs[id].order == 3 && Vehs[id].order_auto_type == popup_choice);
+    if (poison_popup_index) {
+        assert(id == 3 && Vehs[id].order == 3 && Vehs[id].order_auto_type == popup_choice);
+    } else {
+        assert(id == 2 && Vehs[id].order == 3 && Vehs[id].order_auto_type == popup_choice);
+    }
     ++synch_calls;
 }
 
@@ -164,8 +179,10 @@ static void reset() {
     supply_seen_vehicle = supply_seen_base = -999;
     resource_yield_calls = parse_num_calls = parse_say_calls = parse_says_calls = 0;
     synch_calls = 0;
+    poison_home = poison_popup_index = false;
     Vehs[2] = Veh{31, 47, 4, 22, 9}; Vehs[3] = Veh{5, 6, 7, 8, 9};
     Bases[4].name_string = "base-four";
+    Bases[5].name_string = "base-five";
     for (int i = 0; i < 3; ++i) Resource[i] = ResourceName{singular[i], plural[i]};
 }
 
@@ -237,10 +254,24 @@ static void extraction_accept_sets_order_then_synchs() {
     check_only_convoy_word(static_cast<int>(0x510000u + 3u * 7u));
     assert(NetDaemonNet.unlock_count == 1);
 }
+static void extraction_keeps_initial_home_caption() {
+    reset(); Console c = {6}; poison_home = true;
+    c.convoy(1);
+    assert(resource_yield_calls == 3 && parse_says_calls == 1 && synch_calls == 0);
+    assert(Vehs[2].home_base_id == 5 && NetDaemonNet.unlock_count == 1);
+}
+static void extraction_reloads_index_after_popup() {
+    reset(); Console c = {6}; poison_popup_index = true; popup_choice = 2;
+    c.convoy(1);
+    assert(Vehs[3].order == 3 && Vehs[3].order_auto_type == 2);
+    assert(Vehs[2].order == 22 && Vehs[2].order_auto_type == 9);
+    assert(synch_calls == 1 && NetDaemonNet.unlock_count == 1);
+}
 int main() {
     lock_rejection(); base_supply_callback_order(); no_home_has_no_action_write();
     cannot_convoy_has_no_action_write(); extraction_cancel_preserves_order_and_unlocks();
     extraction_accept_sets_order_then_synchs();
+    extraction_keeps_initial_home_caption(); extraction_reloads_index_after_popup();
 }
 '''
 
@@ -283,11 +314,20 @@ def test_actual_convoy_body_and_semantic_controls(compiler: str, tmp_path: Path)
         "unconditional-before-base-branch": body.replace(
             "    if (base_id >= 0) {",
             f"    {WRITE}\n    if (base_id >= 0) {{", 1),
-        "stale-pre-lock-receiver": body.replace("Veh &vehicle = Vehs[veh_id];",
-                                                   "Veh &vehicle = Vehs[1];", 1),
+        "stale-pre-lock-receiver": body.replace(
+            "base_at(Vehs[veh_id].x, Vehs[veh_id].y)",
+            "base_at(Vehs[1].x, Vehs[1].y)", 1),
         "missing-base-unlock": body.replace(
             "        NetDaemonNet.unlock_veh();\n        return;",
             "        return;", 1),
+        "live-home-caption": body.replace(
+            "Bases[home_base_id].name_string",
+            "Bases[Vehs[veh_id].home_base_id].name_string", 1),
+        "stale-post-popup-receiver": body.replace(
+            "Vehs[veh_id].order = 3;", "Vehs[2].order = 3;", 1).replace(
+            "Vehs[veh_id].order_auto_type =", "Vehs[2].order_auto_type =", 1),
+        "stale-yield-home": body.replace(
+            "Vehs[veh_id].home_base_id,", "home_base_id,", 1),
     }
     for name, mutant in damage.items():
         assert mutant != body, name

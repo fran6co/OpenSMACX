@@ -5584,10 +5584,13 @@ static const char PathDot[] = ".";
 
 static const char MapSaveHeaderText[] = "TERRANMAP";
 
+// RECOVERY_OBJECT: v1 0x00690F50 _MapFileFilterPattern
 static const char MapFileFilterPattern[] = "*.";
 
+// RECOVERY_OBJECT: v1 0x00690F54 _EmptyMapName
 static const char EmptyMapName[] = "?";
 
+// RECOVERY_OBJECT: v1 0x00690F58 _LatestMapPreference
 static const char LatestMapPreference[] = "Latest Map";
 
 // The original 0x691B34 pointer cell refers to the separate text at
@@ -5614,13 +5617,19 @@ char GameSaveMultiplayerMarker[] = "multi";  // native string starts at 0x00690D
 // uses distinct storage starts for the read/write key, value names, and dialog
 // label. The registry class strings are one-byte zero-filled views only; no
 // larger capacity or independent writer is inferred here.
+// RECOVERY_OBJECT: v1 0x0068AD88 _TamperReadApplicationKey
 static char TamperReadApplicationKey[] =
     "SOFTWARE\\Microsoft\\DirectPlay\\Applications\\Sid Meier's Alpha Centauri";
+// RECOVERY_OBJECT: v1 0x0068ADD8 _TamperWriteApplicationKey
 static char TamperWriteApplicationKey[] =
     "SOFTWARE\\Microsoft\\DirectPlay\\Applications\\Sid Meier's Alpha Centauri";
+// RECOVERY_OBJECT: v1 0x0068ADD0 _TamperReadValueMVM
 static char TamperReadValueMVM[] = "MVM";
+// RECOVERY_OBJECT: v1 0x0068ADD4 _TamperReadValueMVB
 static char TamperReadValueMVB[] = "MVB";
+// RECOVERY_OBJECT: v1 0x0068AE20 _TamperWriteValueMVM
 static char TamperWriteValueMVM[] = "MVM";
+// RECOVERY_OBJECT: v1 0x0068AE24 _TamperWriteValueMVB
 static char TamperWriteValueMVB[] = "MVB";
 static char TamperDialogLabel[] = "HOTNOTAMPER";
 // RECOVERY_OBJECT: v1 0x0093A9FC _TamperReadClass

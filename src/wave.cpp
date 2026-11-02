@@ -939,6 +939,7 @@ void Wave::set_volume(int volume) {
         // emit the `fild`+`fmul`-by-constant PAIR the image has instead of
         // folding volume's conversion into a single `fimul` at the end. 13/33 ->
         // 26/33 MISMATCH.
+// RECOVERY_LITERAL: v1 0x0066E530 0x0066E538 __real@8@3ff88102040810204000 0x004C7130
         const double reciprocal = 1.0 / 127.0;
         double scaled = static_cast<double>(volume);
         scaled *= reciprocal;
