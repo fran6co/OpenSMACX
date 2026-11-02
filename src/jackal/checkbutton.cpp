@@ -103,7 +103,7 @@ void CheckButton::close() {
 /*
 Purpose: Copy the button's surface into its parent and draw the selected
          checked or unchecked sprite onto that surface.
-// ORIGINAL: 0x00633850 ?on_redraw@CheckButton@@QAEXXZ 0x00633850-0x00633912 FILE
+// ORIGINAL: 0x00633850 ?on_redraw@CheckButton@@QAEXXZ 0x00633850-0x00633912 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence":["source:src/unrecovered/00633850.cpp","original:0x0066DC40","source:src/jackal/checkbutton.h:CheckButton","source:src/buffer.h:Buffer"],"reason":"Use the confirmed virtual override, inherited GraphicWin/Buffer hierarchy, typed parent and sprite members rather than seed vtable arithmetic."}
 // symbol    ?on_redraw@CheckButton@@UAEXXZ
 */
@@ -113,15 +113,19 @@ void CheckButton::on_redraw() {
     }
 
     GraphicWin *const parent = static_cast<GraphicWin *>(win_parent_);
+    const RECT rectangle = client_rect();
     parent->copy(this,
-                      client_rect_.left - rect2_.left,
-                      client_rect_.top - rect2_.top,
+                      rectangle.left - rect2_.left,
+                      rectangle.top - rect2_.top,
                       0, 0,
                       dib_.bmiHeader.biWidth,
                       -dib_.bmiHeader.biHeight);
 
-    Sprite *const sprite = checked_ != 0 ? checked_sprite_ : unchecked_sprite_;
-    sprite->draw(this, sprite->transparent_index(), 0, 0);
+    if (checked_ == 0) {
+        unchecked_sprite_->draw(this, unchecked_sprite_->transparent_index(), 0, 0);
+    } else {
+        checked_sprite_->draw(this, checked_sprite_->transparent_index(), 0, 0);
+    }
 }
 
 /*

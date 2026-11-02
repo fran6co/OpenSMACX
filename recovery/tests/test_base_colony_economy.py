@@ -231,6 +231,8 @@ BASE_RESEARCH = r"""
 #ifndef __cdecl
 #define __cdecl
 #endif
+#define MEASURED
+enum { FAC_PUNISHMENT_SPHERE = 23 };
 const unsigned int RULES_SCN_NO_TECH_ADVANCES = 0x04000000u;
 // @@MASK_TYPES@@
 struct HostGameDataFields { GameDataLockMaskView lock_masks_; uint32_t game_rules_; int turn_current_num_; };
@@ -246,6 +248,7 @@ struct SocialEffect {
 struct PlayerData { int diff_level; SocialEffect soc_effect_pending; int labs_total, net_random_event; };
 Base *BaseCurrent = 0;
 Base Bases[8] = {};
+int BaseIDCurrentSelected = 5;
 PlayerData PlayersData[8] = {};
 int last_research_faction = -1, last_research_points = -1, research_calls = 0;
 
@@ -262,7 +265,7 @@ HELPERS
 BODY
 
 int main() {
-    Base base = {};
+    Base &base = Bases[BaseIDCurrentSelected];
     base.faction_id_current = 3;
     base.labs_total = 25;
     BaseCurrent = &base;
@@ -270,10 +273,20 @@ int main() {
     player.diff_level = 3;
     player.soc_effect_pending.values_[SocialEffect::RESEARCH] = 0;
 
-    Bases[3].facilities_built[2] = 0x80;
+    // Pin 4F4EA2 selects the base separately from the faction in EBX.
+    Bases[5].facilities_built[2] = 0x80;
     base_research();
     assert(player.labs_total == 12 && last_research_points == 12);
     assert(research_calls == 1 && last_research_faction == 3);
+
+    Bases[5].facilities_built[2] = 0;
+    Bases[3].facilities_built[2] = 0x80;
+    player.labs_total = 0;
+    player.net_random_event = 0;
+    TurnCurrentNum = 10;
+    base_research();
+    assert(player.labs_total == 25 && last_research_points == 25);
+    assert(player.net_random_event == 0);
 
     Bases[3].facilities_built[2] = 0;
     player.labs_total = 0;
@@ -321,6 +334,15 @@ int main() {
     TurnCurrentNum = -1;
     base_research();
     assert(player.labs_total == 42 && last_research_points == 12);
+    assert(player.net_random_event == 50);
+
+    // Pin 4F4F42..4F4F50 bounds the working research value at +5.
+    player.labs_total = 0;
+    player.net_random_event = 0;
+    player.soc_effect_pending.values_[SocialEffect::RESEARCH] = 9;
+    TurnCurrentNum = 100;
+    base_research();
+    assert(player.labs_total == 25 && last_research_points == 37);
     assert(player.net_random_event == 50);
 }
 
@@ -765,6 +787,20 @@ def helper(source, name):
                 return source[start:end+1]
     raise AssertionError("unterminated helper " + name)
 
+
+def research_helpers():
+    header = (ROOT / "src/base.h").read_text()
+    owner = (ROOT / "src/base.cpp").read_text()
+    selected_base_helper = owner.index("int __cdecl has_fac_built(int facility_id) {")
+    rep_start = re.search(r"static const int FacilityRepStart = \d+;", header)
+    assert rep_start
+    return "\n".join([
+        rep_start.group(0),
+        helper(header, "has_fac_built"),
+        helper(owner[selected_base_helper:], "has_fac_built"),
+        helper((ROOT / "src/general.h").read_text(), "range"),
+    ])
+
 @pytest.mark.parametrize("compiler", ["g++", "clang++"])
 @pytest.mark.parametrize("unit,address,harness,prefix", [
     ("base.cpp", 0x4F3FE0, HURRY, "base_yield"),
@@ -784,6 +820,8 @@ def test_actual_colony_support_research(compiler, unit, address, harness, prefix
     assert "PENDING_BODY" not in records[0].region
     operations = ("signed_bits", "add", "sub", "mul") if prefix == "base_yield" else ("signed_bits", "add", "mul")
     helpers = "\n".join(helper(source, prefix + "_" + name) for name in operations)
+    if address == 0x4F4E80:
+        helpers += "\n" + research_helpers()
     control = harness.replace("// @@MASK_TYPES@@", mask_type_declarations()).replace(
         "HELPERS", helpers).replace("BODY", records[0].region)
     control_path = tmp_path / "control.cpp"
@@ -794,3 +832,37 @@ def test_actual_colony_support_research(compiler, unit, address, harness, prefix
     run = subprocess.run([str(binary)], capture_output=True, text=True)
     assert run.returncode == 0, run.stdout + run.stderr
     assert not run.stderr, run.stderr
+
+
+@pytest.mark.parametrize("compiler", ["g++", "clang++"])
+@pytest.mark.parametrize("damage", ["faction-index", "upper-bound"])
+def test_base_research_selected_base_and_clamp_damage(compiler, damage, tmp_path):
+    executable = shutil.which(compiler)
+    if executable is None:
+        pytest.skip(compiler + " unavailable")
+    path = ROOT / "src/base.cpp"
+    source = path.read_text()
+    record = next(r for r in read_file(path) if r.address == 0x4F4E80)
+    if damage == "faction-index":
+        anchor = "has_fac_built(FAC_PUNISHMENT_SPHERE)"
+        replacement = "has_fac_built(FAC_PUNISHMENT_SPHERE, faction_id)"
+    else:
+        anchor = "player.soc_effect_pending.values_[SocialEffect::RESEARCH], -5, 5)"
+        replacement = "player.soc_effect_pending.values_[SocialEffect::RESEARCH], -5, 6)"
+    assert record.region.count(anchor) == 1
+    damaged = record.region.replace(anchor, replacement)
+    helpers = "\n".join(helper(source, "base_yield_" + name)
+                        for name in ("signed_bits", "add", "sub", "mul"))
+    control = BASE_RESEARCH.replace("// @@MASK_TYPES@@", mask_type_declarations()).replace(
+        "HELPERS", helpers + "\n" + research_helpers()).replace("BODY", damaged)
+    control_path = tmp_path / "control.cpp"
+    control_path.write_text(control)
+    binary = tmp_path / "control"
+    compiled = subprocess.run([executable, "-std=c++14", "-O2", "-Wall", "-Wextra", "-Werror",
+                               "-fsanitize=undefined", str(control_path), "-o", str(binary)],
+                              capture_output=True, text=True)
+    assert compiled.returncode == 0, compiled.stderr
+    run = subprocess.run([str(binary)], capture_output=True, text=True)
+    assert run.returncode != 0
+    assert "Assertion" in run.stderr or "assertion" in run.stderr, run.stderr
+    assert "runtime error:" not in run.stderr, run.stderr

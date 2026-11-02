@@ -7259,7 +7259,7 @@ void __cdecl base_check_support() {
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x004F4E80 ?base_research@@YAXXZ 0x004F4E80-0x004F4FAB
-// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/004f4e80.cpp", "recovery/tasks/base-colony-economy-coverage-wave.json", "recovery/tests/test_base_colony_economy.py", "Pinned original 01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf; complete original extent reviewed against native instructions and measured VC6 owner layouts.", "Original4F4E80..4F4FAB reads Base.labs_total(+108), PlayerData.soc_effect_pending.research and net_random_event; faction-indexed Base bitset and signed remainder are intentional retained behavior."], "reason": "Recover the complete base laboratory contribution, scenario/early-turn gates and signed fractional research dispatch with native 32-bit wrap. Preserve original Bases[faction_id] facility lookup rather than silently correcting its behavior. Seed retained; no matching or game claim."}
+// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/004f4e80.cpp", "recovery/tasks/base-colony-economy-coverage-wave.json", "recovery/tests/test_base_colony_economy.py", "Pinned original 01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf; complete original extent reviewed against native instructions and measured VC6 owner layouts.", "Superseded interpretation, retained verbatim: Original4F4E80..4F4FAB reads Base.labs_total(+108), PlayerData.soc_effect_pending.research and net_random_event; faction-indexed Base bitset and signed remainder are intentional retained behavior.", "Superseded reason, retained verbatim: Recover the complete base laboratory contribution, scenario/early-turn gates and signed fractional research dispatch with native 32-bit wrap. Preserve original Bases[faction_id] facility lookup rather than silently correcting its behavior. Seed retained; no matching or game claim.", "Pinned 4F4E9F loads the faction into EBX; 4F4EA2 independently loads selected base index 689370 into ESI, used by 4F4EBE..4F4ED7 for Bases facilities. set_base 4E39D0..4E39F3 stores its base_id at 689370 and publishes Bases[base_id] as BaseCurrent. The prior faction-index interpretation is disproved.", "Pinned 4F4ED9..4F4EDF materializes the has_fac_built boolean before halving labs; 4F4F3D..4F4F55 uses the existing signed range operation with bounds -5 and 5."], "reason": "Recover the complete base laboratory contribution, scenario/early-turn gates and signed fractional research dispatch with native 32-bit wrap. The facility test uses BaseIDCurrentSelected, independently of the faction used for PlayerData; retain the existing facility boolean operation and signed range clamp. No game acceptance claim."}
 // symbol    ?base_research@@YAXXZ
 void __cdecl base_research() {
     if ((GameDataStateStorage.fields_.game_rules_ & RULES_SCN_NO_TECH_ADVANCES) != 0) {
@@ -7269,12 +7269,8 @@ void __cdecl base_research() {
     Base *base = BaseCurrent;
     const int faction_id = base->faction_id_current;
     const int research_bonus = base->labs_total;
-    int mask_offset;
-    int mask;
     int points = research_bonus;
-    bitmask(0x17, &mask_offset, &mask);
-
-    if ((Bases[faction_id].facilities_built[mask_offset] & mask) != 0) {
+    if (has_fac_built(FAC_PUNISHMENT_SPHERE)) {
         points = research_bonus / 2;
     }
     PlayerData &player = PlayersData[faction_id];
@@ -7287,18 +7283,14 @@ void __cdecl base_research() {
 
     player.labs_total = base_yield_add(player.labs_total, points);
 
-    int research_rate = player.soc_effect_pending.values_[SocialEffect::RESEARCH];
-    if (research_rate < -5) {
-        research_rate = -5;
-    } else if (research_rate > 5) {
-        research_rate = 5;
-    }
+    const int research_rate = range(
+        player.soc_effect_pending.values_[SocialEffect::RESEARCH], -5, 5);
 
     int scaled = base_yield_mul(
         base_yield_mul(base_yield_add(research_rate, 10), points), 10);
     const int remainder = base_yield_add(player.net_random_event, scaled % 100);
     player.net_random_event = remainder;
-    if (remainder > 99) {
+    if (remainder >= 100) {
         scaled = base_yield_add(scaled, 100);
         player.net_random_event = base_yield_sub(remainder, 100);
     }
