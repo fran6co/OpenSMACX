@@ -5389,6 +5389,7 @@ void __cdecl base_compute(int force) {
  * "yes to all" (popup result > 1); 0x00583E30, 0x005BB000, 0x005290A0 and
  * 0x00438460 clear it at the top of their own upgrade passes.
  */
+// RECOVERY_OBJECT: v1 0x0090EA3C ?UpgradePromptAnswered@@3IA
 uint32_t UpgradePromptAnswered;  // 0x0090EA3C
 
 int BaseCurrentGrowthRate;  // 0x0090E918
@@ -10476,7 +10477,7 @@ int __cdecl upgrade_cost(int faction_id, int proto_id_init, int proto_id_upg) {
     return cost;
 }
 
-// ORIGINAL: 0x004F0650 ?upgrade_any_prototypes@@YAXH@Z 0x004F0650-0x004F06D3 FILE
+// ORIGINAL: 0x004F0650 ?upgrade_any_prototypes@@YAXH@Z 0x004F0650-0x004F06D3 FILE BYTE_EXACT
 // LEVER: the four carried bindings are all modelled names - 0x0090EA3C is the
 //        upgrade-confirmation flag (see UpgradePromptAnswered below),
 //        0x009A6494 game.h's GameMorePreferences, 0x009A64E8 lock.h's
@@ -10511,8 +10512,11 @@ void __cdecl upgrade_any_prototypes(int faction_id) {
                 proto_id = proto_id % 0x40 + faction_id * 0x40;
             }
             uint16_t flags = VehPrototypes[proto_id].flags;
-            if ((flags & 1) != 0 && (flags & 4) != 0 && (flags & 0x100) != 0) {
-                upgrade_prototypes(faction_id, proto_id);
+            if ((flags & 1) != 0 && (flags & 4) != 0) {
+                const int16_t obsolete = static_cast<int16_t>(flags & 0x100);
+                if (obsolete != 0) {
+                    upgrade_prototypes(faction_id, proto_id);
+                }
             }
             ++i;
         } while (i < 0x80);

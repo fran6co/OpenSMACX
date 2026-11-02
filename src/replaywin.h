@@ -96,7 +96,7 @@ class ReplayWin : public GraphicWin {
   void on_left_up(int, int);
   void on_redraw();
   void add_base_site(int x, int y, int faction_id);
-  int update_base_site(int x, int y, int faction_id);
+  void update_base_site(int x, int y, int faction_id);
   void remove_base_site(int x, int y, int unused);
   void make_bases();
   void reset_base_sites();

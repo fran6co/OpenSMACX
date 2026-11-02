@@ -195,17 +195,16 @@ void ReplayWin::add_base_site(int x, int y, int faction_id) {
     }
 }
 
-// ORIGINAL: 0x005AD4C0 sub_5ad4c0 0x005AD4C0-0x005AD500
-// RECOVERY_BINDING: v1 {"evidence": ["git:7ba7935c:src/leaf_recoveries.cpp", "src/replaywin.h ReplayWin base_sites_ at 0xA20"], "reason": "Recover keyed site update on the ReplayWin owner; the original returns three times the slot index on a hit, and 512 on a miss."}
-// symbol    ?update_base_site@ReplayWin@@QAEHHHH@Z
-int ReplayWin::update_base_site(int x, int y, int faction_id) {
+// ORIGINAL: 0x005AD4C0 sub_5ad4c0 0x005AD4C0-0x005AD500 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["git:7ba7935c:src/leaf_recoveries.cpp", "src/replaywin.h ReplayWin base_sites_ at 0xA20", "Superseded interpretation retained for history: prior binding treated standalone EAX scan/address residue as a three-times-slot result and512 miss sentinel. No observed consumer establishes that result contract.", "Pinned5ADACF..5ADB03 inlines the update operation: EAX scans512 sites, ECX becomes3*slot only for the faction-store address, and5ADB47 overwritesEAX with event_offset before any result use. Source timer_callback is the sole current caller and discards the operation result.", "Pinned standalone5AD4C0..5AD500 returns with residual scan/addressEAX and performs the same first-match mutation/no-match no-op. Use a genuine void member operation; original nominal return type is unproved."], "reason": "Recover the keyed site update as a void ReplayWin operation; preserve the observed first-match mutation and no-match no-op without manufacturing an independently consumed result from address/index residue. Retain original identity/spans/claims and the superseded result interpretation as history."}
+// symbol    ?update_base_site@ReplayWin@@QAEXHHH@Z
+void ReplayWin::update_base_site(int x, int y, int faction_id) {
     for (int index = 0; index < 512; ++index) {
         if (base_sites_[index].x == x && base_sites_[index].y == y) {
             base_sites_[index].faction_id = faction_id;
-            return index * 3;
+            return;
         }
     }
-    return 512;
 }
 
 // ORIGINAL: 0x005AD500 sub_5ad500 0x005AD500-0x005AD560 BYTE_EXACT

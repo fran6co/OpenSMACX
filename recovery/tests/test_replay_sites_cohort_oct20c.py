@@ -18,7 +18,7 @@ ROOT = next(path for path in Path(__file__).resolve().parents
 SOURCE = ROOT / "src" / "replaywin.cpp"
 METHODS = {
     0x005AD470: r"void\s+ReplayWin::add_base_site\s*\(\s*int\s+x\s*,\s*int\s+y\s*,\s*int\s+faction_id\s*\)\s*\{",
-    0x005AD4C0: r"int\s+ReplayWin::update_base_site\s*\(\s*int\s+x\s*,\s*int\s+y\s*,\s*int\s+faction_id\s*\)\s*\{",
+    0x005AD4C0: r"void\s+ReplayWin::update_base_site\s*\(\s*int\s+x\s*,\s*int\s+y\s*,\s*int\s+faction_id\s*\)\s*\{",
     0x005AD500: r"void\s+ReplayWin::remove_base_site\s*\(\s*int\s+x\s*,\s*int\s+y\s*,\s*int\s*\)\s*\{",
 }
 
@@ -28,7 +28,7 @@ struct ReplayBaseSite { int x, y, faction_id; };
 struct ReplayWin {
     ReplayBaseSite base_sites_[512];
     void add_base_site(int x, int y, int faction_id);
-    int update_base_site(int x, int y, int faction_id);
+    void update_base_site(int x, int y, int faction_id);
     void remove_base_site(int x, int y, int unused);
 };
 METHODS
@@ -50,14 +50,13 @@ int main() {
     win.add_base_site(81, 82, 83);
     assert(win.base_sites_[510].x == 510 && win.base_sites_[511].x == 71);
 
-    // Duplicate keys update only the first match and preserve the legacy 3x
-    // index return; a miss retains the sentinel 512.
+    // Duplicate keys update only the first match; a miss performs no update.
     win.base_sites_[7].x = 42; win.base_sites_[7].y = 43;
     win.base_sites_[19].x = 42; win.base_sites_[19].y = 43;
-    assert(win.update_base_site(42, 43, 99) == 21);
+    win.update_base_site(42, 43, 99);
     assert(win.base_sites_[7].faction_id == 99);
     assert(win.base_sites_[19].faction_id == 2019);
-    assert(win.update_base_site(-8, -9, 1) == 512);
+    win.update_base_site(-8, -9, 1);
 
     // Removal also stops at the first duplicate and clears all three fields
     // in the original order's final state, leaving the later record intact.
@@ -113,7 +112,7 @@ def _program(methods: dict[int, str], damage: str | None = None) -> str:
         rendered[address] = rendered[address].replace(before, after, 1)
     elif damage == "skip_first_duplicate":
         address = 0x005AD4C0
-        before, after = "return index * 3;", "index += 1;"
+        before, after = "return;", "index += 1;"
         assert rendered[address].count(before) == 1
         rendered[address] = rendered[address].replace(before, after, 1)
     elif damage is not None:
