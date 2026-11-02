@@ -216,6 +216,22 @@ struct { Font *field_1E1AC_, *field_1E1B0_, *field_1E1A8_, *field_1E1B8_; } Repo
 struct { int faction_id_; } ConsoleGlobal;
 struct { int unk_107; } PlayersData[8];
 struct Player { int is_leader_female; char title_leader[32]; char name_leader[32]; } Players[8];
+int chapter_append_calls;
+// Host append-seam probe: perturb gender between title and name to expose
+// hoisted reads. This does not claim the native CRT mutates Player records.
+char *observe_chapter_strcat(char *destination, const char *text) {
+  const bool title = text == Players[3].title_leader;
+  const bool name = text == Players[3].name_leader;
+  if (!title && !name) return std::strcat(destination, text);
+  assert(GenderDefault == Players[3].is_leader_female && PluralityDefault == 0);
+  ++chapter_append_calls;
+  char *result = std::strcat(destination, text);
+  if (title) {
+    Players[3].is_leader_female = -0x10003;
+    GenderDefault = -77; PluralityDefault = -97;
+  }
+  return result;
+}
 std::vector<std::string> sections, speech_inputs, list_items, events, wrapped_texts;
 std::vector<int> speech_ids, speech_gender, speech_plural;
 std::vector<int> spot_pages, spot_tops, wrap_fonts, wrapped_pages;
@@ -298,9 +314,12 @@ struct QuayleWin : Buffer {
   Buffer buffer1_, buffer2_;
   void on_redraw();
 };
+#define strcat observe_chapter_strcat
 BODY_REDRAW
+#undef strcat
 
 void reset_observations() {
+  chapter_append_calls = 0;
   sections.clear(); speech_inputs.clear(); list_items.clear(); events.clear(); wrapped_texts.clear();
   speech_ids.clear(); speech_gender.clear(); speech_plural.clear(); spot_pages.clear();
   spot_tops.clear(); wrap_fonts.clear(); wrapped_pages.clear(); parse_file_count = 0;
@@ -365,7 +384,12 @@ void test_multilingual_list() {
   assert(rating_book == 3 && rating_score == 91 && win.field_2144_ == -1);
 }
 void test_chapter(int chapter, Font *expected_font, RECT expected, int expected_color, bool wrap) {
-  QuayleWin win; initialize(win, chapter, 0); win.on_redraw();
+  QuayleWin win; initialize(win, chapter, 0);
+  Players[3].is_leader_female = 0x10003;
+  GenderDefault = -77; PluralityDefault = -97;
+  win.on_redraw();
+  assert(chapter_append_calls == 2);
+  assert(GenderDefault == -0x10003 && PluralityDefault == 0);
   assert_heap_restored();
   assert((sections == std::vector<std::string>{"BOOKTITLE", "BOOKINTRO"}));
   assert(art_filename == std::string("artbox") + std::to_string(chapter) + ".pcx");
@@ -420,17 +444,45 @@ int main() {
 """
 
 
-def test_quayle_redraw_production_branches_and_observable_effects(tmp_path):
+def run_redraw_host(tmp_path, body, should_pass=True):
     compiler = shutil.which("g++")
     if not compiler:
         pytest.skip("host C++ compiler unavailable")
-    body = extract_function(SOURCE.read_text(), "void QuayleWin::on_redraw()")
     harness = REDRAW_HARNESS.replace("BODY_REDRAW", body)
     executable = tmp_path / "quaylewin-redraw-host-control"
+    (tmp_path / "quaylewin-redraw-host-control.cpp").write_text(harness)
     built = subprocess.run(
         [compiler, "-std=c++17", "-Wall", "-Wextra", "-x", "c++", "-", "-o", str(executable)],
         input=harness, text=True, capture_output=True,
     )
     assert built.returncode == 0, built.stderr
     result = subprocess.run([str(executable)], capture_output=True)
-    assert result.returncode == 0, result.stderr.decode()
+    assert (result.returncode == 0) is should_pass, result.stderr.decode()
+    return result
+
+
+def test_quayle_redraw_production_branches_and_observable_effects(tmp_path):
+    body = extract_function(SOURCE.read_text(), "void QuayleWin::on_redraw()")
+    run_redraw_host(tmp_path, body)
+
+
+@pytest.mark.parametrize("chapter, phase", [(1, "title"), (1, "name"),
+    (2, "title"), (2, "name"), (8, "title"), (8, "name"), (8, "width")])
+def test_quayle_chapter_append_grammar_damage_is_detected(tmp_path, chapter, phase):
+    body = extract_function(SOURCE.read_text(), "void QuayleWin::on_redraw()")
+    start = body.index(f"if (chapter == {chapter}) {{")
+    end = body.index("      canvas->set_font", start)
+    section = body[start:end]
+    field = "title_leader" if phase == "title" else "name_leader"
+    gender = "      GenderDefault = Players[book].is_leader_female;"
+    plural = "      PluralityDefault = 0;"
+    stores = [gender, plural] if phase == "title" and chapter != 8 else [plural, gender]
+    needle = "\n".join(stores + [f"      strcat(StringTemp, Players[book].{field});"])
+    assert section.count(needle) == 1
+    replacement = (needle.replace("= Players[book]", "= !!Players[book]")
+                   if phase == "width" else needle.splitlines()[-1])
+    changed_section = section.replace(needle, replacement, 1)
+    changed = body[:start] + changed_section + body[end:]
+    assert changed != body
+    result = run_redraw_host(tmp_path, changed, should_pass=False)
+    assert b"Assertion" in result.stderr

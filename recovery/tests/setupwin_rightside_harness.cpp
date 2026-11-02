@@ -30,6 +30,16 @@ static int spot_add_calls;
 static int spot_init_rows;
 static bool throw_from_modal;
 static int text_open_result;
+static std::vector<std::string> script_lines;
+static size_t script_line_index;
+static std::vector<std::string> parsed_rows;
+static std::vector<int> parsed_positions;
+enum CaptionMutation { NoCaptionMutation, ClearCaptionAtModal,
+                       ClearCaptionAfterFirstOutro, RestoreCaptionAtOutro };
+static CaptionMutation caption_mutation;
+static char *published_caption;
+static char published_caption_first;
+static int outro_decodes;
 struct RECT { int left, top, right, bottom; };
 struct Header { int biHeight, biWidth; };
 struct Dib { Header bmiHeader; };
@@ -44,9 +54,14 @@ struct Buffer {
     void set_text_color(int, int, int, int) { note("text-color"); }
     void set_font(void *, void *, void *, void *) { note("font"); }
     void copy(Buffer *, int, int, int, int, int, int) { note("copy"); }
-    void write_cent_l(const char *text, RECT *, int) {
+    void write_cent_l(char *text, RECT *, int) {
         ++title_calls;
         last_title = text;
+        // The product passes this mutable pointer while its local token lives.
+        // Retention here models a callback using that published pointer; it
+        // does not claim the production writer retains it or inspect the stack.
+        published_caption = text;
+        published_caption_first = text[0];
         note("title");
     }
 };
@@ -69,7 +84,16 @@ struct Flic {
     ~Flic() { note("flic-dtor"); close(); }
     void close() { note("flic-close"); }
     int init(Buffer *, char *, int, int, int) { note("flic-init"); return 0; }
-    void decode_stored_frame() { note("decode"); }
+    void decode_stored_frame() {
+        note("decode");
+        if (published_caption != nullptr) {
+            ++outro_decodes;
+            if (caption_mutation == ClearCaptionAfterFirstOutro && outro_decodes == 2)
+                published_caption[0] = '\0';
+            if (caption_mutation == RestoreCaptionAtOutro && outro_decodes == 1)
+                published_caption[0] = published_caption_first;
+        }
+    }
 };
 struct StringList {
     int current_position_, field_20_, field_24_, entry_count_;
@@ -77,7 +101,12 @@ struct StringList {
     StringList() : current_position_(0), field_20_(0), field_24_(0),
                    entry_count_(0), pending_text_(0) {}
     void remove_all() { entry_count_ = 0; note("remove-all"); }
-    void add(int) { ++entry_count_; note("list-add"); }
+    void add(int position) {
+        ++entry_count_;
+        parsed_positions.push_back(position);
+        parsed_rows.push_back(pending_text_);
+        note("list-add");
+    }
 };
 struct Spot {
     int check(int, int, int *out, int) { *out = 0; return -1; }
@@ -130,7 +159,13 @@ struct SetupWin : GraphicWin {
     void fill(int, int, int, int, int) { ++caption_fill_calls; note("fill"); }
     void on_update() { note("update"); }
     void soft_update() { note("soft-update"); }
-    void set_modal(int, void *, void *) { note("modal"); if (throw_from_modal) throw 41; }
+    void set_modal(int, void *, void *) {
+        note("modal");
+        if (published_caption != nullptr &&
+            (caption_mutation == ClearCaptionAtModal || caption_mutation == RestoreCaptionAtOutro))
+            published_caption[0] = '\0';
+        if (throw_from_modal) throw 41;
+    }
     void draw_item(int, int) { ++draw_item_calls; note("draw-item"); }
 };
 
@@ -142,6 +177,14 @@ static void reset_observations() {
     graphic_init_calls = title_calls = caption_fill_calls = 0;
     draw_item_calls = spot_add_calls = spot_init_rows = 0;
     last_title.clear();
+    script_lines.clear();
+    script_line_index = 0;
+    parsed_rows.clear();
+    parsed_positions.clear();
+    caption_mutation = NoCaptionMutation;
+    published_caption = nullptr;
+    published_caption_first = '\0';
+    outro_decodes = 0;
 }
 
 static void check_popup_caption(const char *caption, int rows, bool has_title) {
@@ -192,7 +235,12 @@ static int clock_tick = 0;
 static uint32_t timeGetTime() { return static_cast<uint32_t>(clock_tick++); }
 static int X_text_open(char *, const char *) { note("text-open"); return text_open_result; }
 [[maybe_unused]] static void text_close() { note("text-close"); }
-static char *text_get() { static char empty[] = ""; return empty; }
+static char *text_get() {
+    if (script_line_index < script_lines.size())
+        return script_lines[script_line_index++].data();
+    static char empty[] = "";
+    return empty;
+}
 static void purge_spaces(char *) {}
 static void purge_leading(char *) {}
 static int _strnicmp(const char *, const char *, size_t) { return 1; }
@@ -218,6 +266,41 @@ static void check_flic_lifetime(const char *close_message) {
           index_of("flic-close") < index_of("palette-dtor") &&
           index_of("palette-dtor") < index_of("wave-dtor"),
           "Flic body closes once before embedded Palette then outer Wave destruction");
+}
+
+static void check_parser_state() {
+    SetupWin win;
+    GraphicWin parent;
+    char filename[] = "menu";
+    win.opening_window_snapshot_ = &parent;
+    reset_observations();
+    script_lines = {"", "#ignored", "alpha", "beta", "", "unread"};
+    check(win.do_menu_rightside(filename, 0) == 0,
+          "script parser keeps the original selected-row result");
+    check(script_line_index == 5 && parsed_rows == std::vector<std::string>({"alpha", "beta"}) &&
+          parsed_positions == std::vector<int>({0, 1}),
+          "parser preserves leading blank and stops after populated rows");
+    check(win.row_count_ == 2 && spot_init_rows == 4 && spot_add_calls == 2 && draw_item_calls == 2,
+          "parsed rows reach menu geometry and item publication");
+}
+
+static void check_caption_callbacks(CaptionMutation mutation, uint32_t rows, int fills,
+                                    const char *diagnostic) {
+    SetupWin win;
+    GraphicWin parent;
+    Popup popup;
+    win.opening_window_snapshot_ = &parent;
+    win.menu_popup_ = &popup;
+    popup.caption_ = "A title";
+    reset_observations();
+    caption_mutation = mutation;
+    check(win.do_menu_rightside(nullptr, 0) == 41,
+          "caption callbacks keep the selected dialog result");
+    check(title_calls == 1 && last_title == "A title" && outro_decodes == 6,
+          "caption callbacks use only the pointer passed to the title writer");
+    check(win.row_count_ == rows && caption_fill_calls == fills, diagnostic);
+    check(draw_item_calls == 3 && spot_add_calls == 3,
+          "caption callbacks preserve the pre-modal item geometry");
 }
 
 int main() {
@@ -294,4 +377,11 @@ int main() {
     check_popup_caption("", 3, false);
     check_popup_caption("A title", 0, true);
     check_popup_caption("A title", 3, true);
+    check_parser_state();
+    check_caption_callbacks(ClearCaptionAtModal, 3, 6,
+                           "modal caption clear changes live row and fill decisions");
+    check_caption_callbacks(ClearCaptionAfterFirstOutro, 4, 7,
+                           "outro caption callbacks use live byte after each decode");
+    check_caption_callbacks(RestoreCaptionAtOutro, 3, 12,
+                           "outro caption restoration preserves the original row-count phase");
 }

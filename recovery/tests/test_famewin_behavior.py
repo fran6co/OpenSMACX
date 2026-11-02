@@ -393,7 +393,34 @@ struct HallOfFameRecord {
   uint8_t unknown_6A[0x22];
 };
 HallOfFameRecord HallOfFameRecords[35];
-struct Player { char title_leader[32], name_leader[32], noun_faction[32]; } Players[8];
+struct Player {
+  char title_leader[32], name_leader[32], noun_faction[32];
+  int is_leader_female, noun_gender, is_noun_plural;
+} Players[8];
+int GenderDefault = -71, PluralityDefault = -91, leader_append_calls;
+// Observe the real append boundary and perturb its inputs to detect hoisted
+// reads. This host probe does not claim the native CRT mutates Player records.
+char *observe_leader_strcat(char *destination, const char *text) {
+  for (int faction = 1; faction < MaxPlayerNum; ++faction) {
+    Player &player = Players[faction];
+    const bool title = text == player.title_leader;
+    const bool name = text == player.name_leader;
+    const bool noun = text == player.noun_faction;
+    if (!title && !name && !noun) continue;
+    assert(GenderDefault == (noun ? player.noun_gender : player.is_leader_female));
+    assert(PluralityDefault == (noun ? player.is_noun_plural : 0));
+    ++leader_append_calls;
+    char *result = std::strcat(destination, text);
+    if (title) player.is_leader_female = -0x10000 - faction;
+    if (name) {
+      player.noun_gender = -0x20000 - faction;
+      player.is_noun_plural = 0x30000 + faction;
+    }
+    if (!noun) { GenderDefault = -71; PluralityDefault = -91; }
+    return result;
+  }
+  return std::strcat(destination, text);
+}
 struct Art { Sprite report_logo[2], diplomacy_landscape; } FactionsArt[8];
 struct FacilityEntry { uint32_t name; } Facility[1];
 uint32_t Difficulty[MaxDiffNum];
@@ -426,7 +453,9 @@ static void famewin_append_number(int value) { char number[32]; std::sprintf(num
 static void famewin_write_left(Buffer *b,int x,int y) { int n=std::strlen(StringTemp); if(n) b->write_l(StringTemp,x,y,n); }
 static void famewin_write_right(Buffer *b,int x,int y,int w) { int n=std::strlen(StringTemp); if(n) b->write_right_l(StringTemp,x,y,w,n); }
 static void famewin_write_wrapped(Buffer *b,int x,int y,int w) { b->wrap_cent(StringTemp,x,y,w); }
+#define strcat observe_leader_strcat
 BODY_INIT
+#undef strcat
 BODY_REDRAW
 """
 
@@ -442,8 +471,15 @@ def run_painter_host(tmp_path, bodies, *, should_pass: bool, absent=False) -> No
         harness = harness.replace("int main() {", "#define ABSENT_RECORD_FIXTURE 1\nint main() {")
     harness += r"""
 int main() {
+  for (int faction = 1; faction < MaxPlayerNum; ++faction) {
+    Players[faction].is_leader_female = 0x10000 + faction;
+    Players[faction].noun_gender = -0x20000;
+    Players[faction].is_noun_plural = 0x30000;
+  }
   FameWin win;
   assert(win.init() == 0);
+  assert(leader_append_calls == 21);
+  assert(GenderDefault == -0x20000 - 7 && PluralityDefault == 0x30000 + 7);
   assert(init_x == 0 && init_y == 0 && init_w == 0x400 && init_h == 0x300);
   assert(sprite_extracts == 12 && button_inits == 14);
   win.buttonGroup_.field_84_ = 1;
@@ -501,6 +537,7 @@ int main() {
 }
 """
     executable = tmp_path / "famewin-painter-host-control"
+    (tmp_path / "famewin-painter-host-control.cpp").write_text(harness)
     built = subprocess.run(
         [compiler, "-std=c++17", "-x", "c++", "-", "-o", str(executable)],
         input=harness,
@@ -510,6 +547,7 @@ int main() {
     assert built.returncode == 0, built.stderr
     result = subprocess.run([str(executable)], capture_output=True)
     assert (result.returncode == 0) is should_pass, result.stderr.decode()
+    return result
 
 
 def test_famewin_actual_initializer_and_painter_paths(tmp_path):
@@ -605,3 +643,27 @@ def test_famewin_damage_control_detects_blank_row_hit_targets(tmp_path):
     mutant = redraw.replace(guarded_add,
                             "      spot_.add(rank, 0, row.left, row.top, width, row.bottom - row.top);", 1)
     run_painter_host(tmp_path, (init, mutant), should_pass=False)
+
+
+@pytest.mark.parametrize("damage", ("title", "name", "noun", "gender_width"))
+def test_famewin_leader_append_state_damage_is_detected(tmp_path, damage):
+    init = source_body(INIT)
+    phases = {
+        "title": "        GenderDefault = Players[faction].is_leader_female;\n        PluralityDefault = 0;\n        strcat(StringTemp, Players[faction].title_leader);",
+        "name": "        PluralityDefault = 0;\n        GenderDefault = Players[faction].is_leader_female;\n        strcat(StringTemp, Players[faction].name_leader);",
+        "noun": "        GenderDefault = Players[faction].noun_gender;\n        PluralityDefault = Players[faction].is_noun_plural;\n        strcat(StringTemp, Players[faction].noun_faction);",
+    }
+    if damage == "gender_width":
+        needle = "GenderDefault = Players[faction].is_leader_female;"
+        assert init.count(needle) == 2
+        changed = init.replace(needle, "GenderDefault = !!Players[faction].is_leader_female;", 1)
+    else:
+        needle = phases[damage]
+        assert init.count(needle) == 1
+        changed = init.replace(needle, needle.splitlines()[-1], 1)
+    assert changed != init
+    redraw = source_body(REDRAW).replace(
+        "reinterpret_cast<int>(Facility[FAC_ASCENT_TO_TRANSCENDENCE].name)", "0"
+    ).replace("reinterpret_cast<int>(Difficulty[record->field_20])", "0")
+    result = run_painter_host(tmp_path, (changed, redraw), should_pass=False)
+    assert b"Assertion" in result.stderr

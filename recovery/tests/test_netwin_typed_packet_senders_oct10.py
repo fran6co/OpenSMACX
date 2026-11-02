@@ -212,3 +212,45 @@ def test_actual_senders_and_behavioral_damage_controls(tmp_path: Path, compiler_
         result = compile_and_run(compiler, prefix + "\n".join(changed) + MAIN,
                                  tmp_path, "damage-" + str(index))
         assert result.returncode != 0, (compiler_name, subject, old)
+
+
+@pytest.mark.parametrize("compiler_name", ("g++", "clang++"))
+def test_actual_header_opcode_preserves_all_other_bytes(tmp_path: Path, compiler_name):
+    compiler = shutil.which(compiler_name)
+    if compiler is None:
+        pytest.skip("host compiler unavailable: " + compiler_name)
+    declaration = installed_packet_declarations(("NetWinLobbyPacketHeader",))
+    control = r"""
+#include <type_traits>
+static_assert(std::is_pod<NetWinLobbyPacketHeader>::value, "passive wire header");
+static_assert(sizeof(NetWinLobbyPacketHeader) == 16, "wire header extent");
+int main() {
+  const uint16_t opcodes[] = {0, 0x0F04, 0x2F04, 0x80FF, 0xFFFF};
+  for (unsigned i = 0; i != sizeof(opcodes) / sizeof(opcodes[0]); ++i) {
+    NetWinLobbyPacketHeader header;
+    unsigned char before[sizeof(header)];
+    std::memset(&header, 0xA5, sizeof(header));
+    std::memcpy(before, &header, sizeof(header));
+    header.set_opcode(opcodes[i]);
+    uint16_t observed;
+    std::memcpy(&observed, &header, sizeof(observed));
+    assert(observed == opcodes[i]);
+    const unsigned char *bytes = reinterpret_cast<const unsigned char *>(&header);
+    assert(std::memcmp(bytes + 2, before + 2, sizeof(header) - 2) == 0);
+  }
+}
+"""
+    positive = compile_and_run(compiler, PRELUDE + declaration + control,
+                               tmp_path, "header-opcode")
+    assert positive.returncode == 0, positive.stderr
+    operation = "std::memcpy(this, &value, sizeof(value));"
+    assert declaration.count(operation) == 1
+    for name, changed in (
+        ("wide", "uint32_t wide = value; std::memcpy(this, &wide, sizeof(wide));"),
+        ("clear", "std::memset(this, 0, sizeof(*this)); " + operation),
+    ):
+        damaged = declaration.replace(operation, changed, 1)
+        result = compile_and_run(compiler, PRELUDE + damaged + control,
+                                 tmp_path, "header-opcode-" + name)
+        assert result.returncode != 0, (compiler_name, name)
+        assert "std::memcmp(bytes + 2, before + 2, sizeof(header) - 2) == 0" in result.stderr

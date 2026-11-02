@@ -367,12 +367,18 @@ int FameWin::init() {
 
       for (int faction = 1; faction < MaxPlayerNum; ++faction) {
         StringTemp[0] = '\0';
+        GenderDefault = Players[faction].is_leader_female;
+        PluralityDefault = 0;
         strcat(StringTemp, Players[faction].title_leader);
         strcat(StringTemp, " ");
+        PluralityDefault = 0;
+        GenderDefault = Players[faction].is_leader_female;
         strcat(StringTemp, Players[faction].name_leader);
         strcat(StringTemp, " ");
         strcat(StringTemp, label_get(180));
         strcat(StringTemp, " ");
+        GenderDefault = Players[faction].noun_gender;
+        PluralityDefault = Players[faction].is_noun_plural;
         strcat(StringTemp, Players[faction].noun_faction);
 
         const int index = faction - 1;

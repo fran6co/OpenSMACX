@@ -3132,7 +3132,7 @@ static inline int terrain_window_signed_byte(size_t offset) {
         reinterpret_cast<const unsigned char *>(
             &TerrainLandmarkStorageWindowData);
     const unsigned char value = bytes[offset];
-    return value < 0x80 ? value : static_cast<int>(value) - 0x100;
+    return static_cast<signed char>(value);
 }
 
 // OceanDetailShade is the shared load_cycling-owned table in game.cpp.

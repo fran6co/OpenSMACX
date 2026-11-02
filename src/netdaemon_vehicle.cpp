@@ -105,13 +105,13 @@ int NetDaemon::veh_drop(int veh_id, int x, int y) {
                 ++NetBusyCount;
                 const int saved_action_mode = NetDaemonNet.channels_[0].leading_words_[3];
                 const DWORD start_time = timeGetTime();
-                bool showed_wait_popup = false;
+                int showed_wait_popup = 0;
                 if (channels_[1].leading_words_[3] == 1) {
                     do {
                         if (ExitTurnLoop != 0) break;
                         if (!showed_wait_popup &&
                             timeGetTime() - start_time > 2000) {
-                            showed_wait_popup = true;
+                            showed_wait_popup = 1;
                             NetMsgPrimary.pop("AWAITEXEC", 0, 2, nullptr);
                         }
                         wait_task();
@@ -285,7 +285,7 @@ int NetDaemon::order_veh(int veh_id, int direction, int mode) {
     const int faction = Vehs[veh_id].faction_id;
     const int y = Vehs[veh_id].y + VehMoveDeltaY[direction];
     const int base_id = base_at(x, y);
-    bool good_base = false;
+    int good_base = 0;
     Vehs[veh_id].probe_action = 0;
 
     if (base_id >= 0) {
@@ -295,26 +295,21 @@ int NetDaemon::order_veh(int veh_id, int direction, int mode) {
             const Map &tile = MapTiles[MapLongitude * y + (x >> 1)];
             if ((tile.bit & 2U) == 0 || (tile.val2 & 0x0F) > 7 ||
                 Bases[base_id].population_size < 2) {
-                good_base = true;
+                good_base = 1;
             }
         }
     }
 
-    bool do_order;
-    if (planet_buster(veh_id) == 0) {
-        do_order = good_base;
-    } else {
+    if (planet_buster(veh_id) != 0) {
         const int fixed_vehicle = stack_fix(veh_at(x, y));
-        if (fixed_vehicle < 0 || Vehs[fixed_vehicle].faction_id == faction ||
+        if (fixed_vehicle >= 0 && Vehs[fixed_vehicle].faction_id != faction &&
             (PlayersData[faction]
-                 .diplo_treaties[Vehs[fixed_vehicle].faction_id] & 1U) != 0) {
-            do_order = good_base;
-        } else {
-            do_order = true;
+                 .diplo_treaties[Vehs[fixed_vehicle].faction_id] & 1U) == 0) {
+            good_base = 1;
         }
     }
 
-    if (do_order && add_global() != 0) {
+    if (good_base && add_global() != 0) {
         if (channels_[1].trailing_words_[3] != 0) {
             Vehs[veh_id].order = 0;
             Vehs[veh_id].state &= 0xFCFFBDFFU;
@@ -386,7 +381,7 @@ send_move:
             *flag = 0;
         }
 
-        bool have_other_vehicle = false;
+        int have_other_vehicle = 0;
         int other_faction_found = 0;
         for (int byte_offset = 0; byte_offset <= 0x53; byte_offset += 4) {
             int adjacent_x = RadiusOffsetX[byte_offset / 4] + x;
@@ -411,7 +406,7 @@ send_move:
                                     Vehs[other_vehicle].moves_expended;
                                 if (remaining >= 0 &&
                                     (remaining > 999 || remaining != 0)) {
-                                    have_other_vehicle = true;
+                                    have_other_vehicle = 1;
                                     other_faction_found = other_faction;
                                 }
                             }

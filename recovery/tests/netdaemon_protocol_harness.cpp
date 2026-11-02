@@ -348,6 +348,27 @@ static void test_order_planet_buster_uses_own_row() {
     assert(add_global_calls == 1 && move_packets == 0);
 }
 
+static void test_planet_buster_eligibility_survives_global_callback() {
+    NetDaemon subject; reset_fixture(&subject);
+    Vehs[7].x = 40; Vehs[7].y = 20; Vehs[7].faction_id = 2;
+    Vehs[7].state = 0x80000U;
+    Vehs[7].proto_id = 4; VehPrototypes[4].plan = PLAN_INFO_WARFARE;
+    Vehs[7].moves_expended = 1; speed_values[7] = 2;
+    Bases[1].faction_id_current = 3; Bases[1].population_size = 3;
+    base_at_result = 1; free_order_result = 1; stack_check_result = 0;
+    PlayersData[2].diplo_treaties[3] = 1; // base alone does not set eligibility
+    Vehs[1].faction_id = 4;
+    PlayersData[2].diplo_treaties[4] = 0; // planetary enemy sets the same flag
+    planet_buster_result = 1; vehicle_at_result = 1; stack_fix_result = 1;
+    // The original retains the planetary write after this first zero result.
+    // A second call would return nonzero and incorrectly enter GLOBALFAILED.
+    int responses[] = {0, 1};
+    add_global_results = responses; add_global_result_count = 2;
+    assert(subject.order_veh(7, 0, 1) == 1);
+    assert(add_global_calls == 1 && move_packets == 1);
+    assert(NetMsgPrimary.popups.empty());
+}
+
 static void test_globalfailed_wait_and_popup() {
     NetDaemon subject; reset_fixture(&subject);
     Vehs[7].order = 6; Vehs[7].state = 0x80200U;
@@ -417,6 +438,8 @@ int main(int argc, char **argv) {
         test_order_asymmetric_treaty_and_radius_loop();
     if (argc == 1 || strcmp(argv[1], "direction") == 0)
         test_order_planet_buster_uses_own_row();
+    if (argc == 1 || strcmp(argv[1], "planetary_state") == 0)
+        test_planet_buster_eligibility_survives_global_callback();
     if (argc == 1 || strcmp(argv[1], "globalfailed") == 0)
         test_globalfailed_wait_and_popup();
     if (argc == 1 || strcmp(argv[1], "mode0wait") == 0)

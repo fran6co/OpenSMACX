@@ -125,3 +125,33 @@ def test_reintroduced_standalone_palette_is_rejected(tmp_path):
     result = run_host(tmp_path, mutant)
     assert result.returncode == 97, result.stdout + result.stderr
     assert "only the embedded Flic Palette lifetime exists" in result.stderr
+
+
+@pytest.mark.parametrize("damage,diagnostic", [
+    ("cached-caption", "modal caption clear changes live row and fill decisions"),
+    ("cached-outro-caption", "outro caption callbacks use live byte after each decode"),
+    ("forget-populated-row", "parser preserves leading blank and stops after populated rows"),
+])
+def test_parser_and_callback_damage_reaches_specific_oracles(tmp_path, damage, diagnostic):
+    body = actual_body()
+    predicate = "token[0] != '\\0'"
+    if damage == "cached-caption":
+        assert body.count(predicate) == 5
+        mutant = body.replace(predicate, "cached_caption")
+        anchor = "        spot_.init("
+        assert mutant.count(anchor) == 1
+        mutant = mutant.replace(anchor, "        const bool cached_caption = " + predicate + ";\n" + anchor, 1)
+    elif damage == "cached-outro-caption":
+        anchor = "        for (int frame_outro = 0;"
+        target = "copy_row_outro == 0 && " + predicate
+        assert body.count(anchor) == body.count(target) == 1
+        mutant = body.replace(target, "copy_row_outro == 0 && cached_outro_caption", 1)
+        mutant = mutant.replace(anchor, "        const bool cached_outro_caption = " + predicate + ";\n" + anchor, 1)
+    else:
+        anchor = "                    seen_blank = 1;\n                    ++row_count_;"
+        assert body.count(anchor) == 1
+        mutant = body.replace(anchor, "                    seen_blank = 0;\n                    ++row_count_;", 1)
+    assert mutant != body
+    result = run_host(tmp_path, mutant)
+    assert result.returncode == 97, result.stdout + result.stderr
+    assert ("SEMANTIC97: " + diagnostic) in result.stderr

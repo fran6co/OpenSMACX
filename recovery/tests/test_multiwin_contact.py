@@ -2,6 +2,7 @@
 from pathlib import Path
 import re
 import shutil
+import signal
 import subprocess
 import tempfile
 import pytest
@@ -515,3 +516,94 @@ def test_five_actual_owners_and_native_dispatch_damage(compiler_name):
             run = subprocess.run([str(binary)], capture_output=True, text=True, timeout=15)
             assert (run.returncode == 0) == (variant_index == 0), (
                 compiler_name, variant_index, run.returncode, run.stdout, run.stderr)
+
+
+# Original 47820C/478232 prepares singular leader grammar before the title
+# append; 47824F/478275 repeats it with a fresh leader DWORD before the name.
+# Observe the external string-call boundaries rather than final parser state.
+GRAMMAR_PHASE_OBSERVER = r'''
+static int grammar_phase_active, grammar_title_calls, grammar_name_calls;
+static char *grammar_phase_strcat(char *destination, const char *source) {
+    if (grammar_phase_active && destination == StringTemp) {
+        if (source == Players[2].title_leader) {
+            if (PluralityDefault != 0 || GenderDefault != 17)
+                std::fprintf(stderr, "grammar_phase=title gender=%d plurality=%d\n",
+                             GenderDefault, PluralityDefault);
+            assert(PluralityDefault == 0 && GenderDefault == 17);
+            ++grammar_title_calls;
+            // External calls separate the native two player/grammar reads.
+            Players[2].is_leader_female = 23;
+            GenderDefault = 43;
+            PluralityDefault = 41;
+        } else if (source == Players[2].name_leader) {
+            if (PluralityDefault != 0 || GenderDefault != 23)
+                std::fprintf(stderr, "grammar_phase=name gender=%d plurality=%d\n",
+                             GenderDefault, PluralityDefault);
+            assert(PluralityDefault == 0 && GenderDefault == 23);
+            ++grammar_name_calls;
+        }
+    }
+    return std::strcat(destination, source);
+}
+#define strcat grammar_phase_strcat
+'''
+
+GRAMMAR_PHASE_CASE = r'''
+    reset_all();
+    win.spot_.rc = 0; win.spot_.faction = 2; win.spot_.kind = 1;
+    Players[2].is_leader_female = 17;
+    std::strcpy(Players[2].title_leader, "Title");
+    std::strcpy(Players[2].name_leader, "Name");
+    GenderDefault = -7; PluralityDefault = 9;
+    GameDataStateStorage.fields_.game_state_ = 0x800;
+    grammar_title_calls = grammar_name_calls = 0;
+    grammar_phase_active = 1;
+    win.on_right_click(3, 4);
+    grammar_phase_active = 0;
+    assert(grammar_title_calls == 1 && grammar_name_calls == 1);
+    assert(PluralityDefault == 0 && GenderDefault == 23);
+'''
+
+
+@pytest.mark.parametrize("compiler_name", ["g++", "clang++"])
+@pytest.mark.parametrize("variant", ["actual", "old-missing-stores", "cached-gender"])
+def test_actual_right_click_grammar_phases(compiler_name, variant, tmp_path):
+    compiler = shutil.which(compiler_name)
+    if not compiler:
+        pytest.skip("host compiler unavailable")
+    actual = _actual_bodies()
+    block = ("    PluralityDefault = 0;\n"
+             "    GenderDefault = Players[faction].is_leader_female;\n")
+    assert actual[1].count(block) == 2
+    if variant == "old-missing-stores":
+        actual[1] = actual[1].replace(block, "")
+    elif variant == "cached-gender":
+        actual[1] = _replace_once(
+            actual[1], "    StringTemp[0] = 0;",
+            "    const int cached_title_gender = Players[faction].is_leader_female;\n"
+            "    StringTemp[0] = 0;")
+        actual[1] = actual[1].replace(
+            block, "    PluralityDefault = 0;\n"
+                   "    GenderDefault = cached_title_gender;\n")
+    text = _replace_once(FIXTURE, "#include <cstring>",
+                         "#include <cstring>\n#include <cstdio>")
+    text = text.replace("// @@LOCK_MASK_TYPES@@", _lock_mask_declarations())
+    text = _replace_once(text, "// @@ACTUAL_OWNER_0@@",
+                         GRAMMAR_PHASE_OBSERVER + "\n// @@ACTUAL_OWNER_0@@")
+    text = _replace_once(text, "    assert(win.panel_open()==1);",
+                         "    assert(win.panel_open()==1);\n" + GRAMMAR_PHASE_CASE)
+    for index, body in enumerate(actual):
+        text = _replace_once(text, "// @@ACTUAL_OWNER_" + str(index) + "@@", body)
+    source, binary = tmp_path / "grammar.cpp", tmp_path / "grammar"
+    source.write_text(text)
+    built = subprocess.run([compiler, "-std=c++98", "-Wall", "-Wextra",
+                            "-Werror", "-pedantic", str(source), "-o", str(binary)],
+                           capture_output=True, text=True, timeout=45)
+    assert built.returncode == 0, built.stdout + built.stderr
+    run = subprocess.run([str(binary)], capture_output=True, text=True, timeout=15)
+    if variant == "actual":
+        assert run.returncode == 0, run.stdout + run.stderr
+    else:
+        assert run.returncode == -signal.SIGABRT, run.stdout + run.stderr
+        phase = "title" if variant == "old-missing-stores" else "name"
+        assert "grammar_phase=" + phase in run.stderr

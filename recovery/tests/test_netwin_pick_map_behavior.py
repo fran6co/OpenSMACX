@@ -23,6 +23,7 @@ MARKER = "/* NETWIN_PICK_MAP_BODY_INSERTION */"
 RECORD_MARKER = "/* NETWIN_FACTION_RECORD_INSERTION */"
 SESSION_BLOCK_MARKER = "/* NETWIN_SESSION_BLOCK_INSERTION */"
 SESSION_PACKET_MARKER = "/* NETWIN_SESSION_PACKET_INSERTION */"
+PACKET_HEADER_MARKER = "/* NETWIN_PACKET_HEADER_INSERTION */"
 
 
 def extract_function(source: str, signature: str) -> str:
@@ -96,6 +97,10 @@ def test_netwin_pick_map_actual_body(compiler_name, tmp_path):
     session_packet = extract_function(
         HEADER_FILE.read_text(), "struct NetWinSessionLobbyPacket"
     ) + ";"
+    packet_header = extract_function(
+        HEADER_FILE.read_text(), "struct NetWinLobbyPacketHeader"
+    ) + ";"
+    assert fixture.count(PACKET_HEADER_MARKER) == 1
     lock_header = (SOURCE_ROOT / "src" / "game_data_state_window.h").read_text()
     lock_bytes = extract_function(
         lock_header, "struct GameDataLockMaskBytes"
@@ -116,6 +121,7 @@ def test_netwin_pick_map_actual_body(compiler_name, tmp_path):
                 .replace(RECORD_MARKER, record)
                  .replace(SESSION_BLOCK_MARKER, session_block)
                  .replace(SESSION_PACKET_MARKER, session_packet)
+                 .replace(PACKET_HEADER_MARKER, packet_header)
                  .replace(MARKER, candidate_body))
 
     generated = generate(body)

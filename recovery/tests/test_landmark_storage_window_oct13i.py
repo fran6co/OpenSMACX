@@ -153,7 +153,7 @@ def validate_source_contract(sources):
     assert "reinterpret_cast<const unsigned char *>(" in signed_byte
     assert "&TerrainLandmarkStorageWindowData" in signed_byte
     assert "bytes[offset]" in signed_byte
-    assert "value < 0x80 ? value : static_cast<int>(value) - 0x100" in signed_byte
+    assert "return static_cast<signed char>(value);" in signed_byte
     assert "&TerrainLandmarkStorageWindowData.mount_planet" not in signed_byte
     assert body.count("terrain_window_signed_byte(") >= 9
 
@@ -294,7 +294,7 @@ def _extract_parent_cpp(mapwin_text, tmp_path, *, signed_decode_damage=False,
         snippet = snippet.replace("gap_mount_mesa[2]", "gap_mount_mesa[3]", 1)
     if signed_decode_damage:
         snippet = snippet.replace(
-            "return value < 0x80 ? value : static_cast<int>(value) - 0x100;",
+            "return static_cast<signed char>(value);",
             "return static_cast<int>(value);", 1)
     if subobject_damage:
         snippet = snippet.replace(

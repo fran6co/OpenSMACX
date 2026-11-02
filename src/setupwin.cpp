@@ -243,7 +243,6 @@ int SetupWin::do_menu_rightside(char *filename, int flags) {
     int result = 0;
     {
         char token[512];
-        bool has_token = false;
         RECT title_rect;
 
         field_FE0_.remove_all();
@@ -256,7 +255,7 @@ int SetupWin::do_menu_rightside(char *filename, int flags) {
         token[0] = '\0';
 
         if (menu_popup_ == nullptr) {
-            bool seen_blank = false;
+            int seen_blank = 0;
             row_count_ = 0;
             for (;;) {
                 char *line = text_get();
@@ -280,14 +279,15 @@ int SetupWin::do_menu_rightside(char *filename, int flags) {
                     if (seen_blank) {
                         break;
                     }
-                    seen_blank = true;
+                    seen_blank = 1;
                 } else {
-                    const int position = static_cast<int>(row_count_++);
+                    const int position = static_cast<int>(row_count_);
+                    seen_blank = 1;
+                    ++row_count_;
                     field_FE0_.pending_text_ = line;
                     field_FE0_.field_20_ = 0;
                     field_FE0_.field_24_ = 0;
                     field_FE0_.add(position);
-                    seen_blank = true;
                 }
             }
             item_texts_ = &field_FE0_;
@@ -305,7 +305,6 @@ int SetupWin::do_menu_rightside(char *filename, int flags) {
             }
         }
 
-        has_token = token[0] != '\0';
         spot_.init(static_cast<int>(row_count_) + 2);
         buffer2_.init(0x162, 0x4B, 0, nullptr);
         flic.init(&buffer2_, const_cast<char *>("openitem.flc"), 0, 0, 0);
@@ -316,7 +315,7 @@ int SetupWin::do_menu_rightside(char *filename, int flags) {
         const int menu_width = static_cast<int>(buffer2_.dib_.bmiHeader.biWidth);
         const int menu_rows = static_cast<int>(row_count_);
         int menu_height = -(line_stride * menu_rows);
-        if (has_token) {
+        if (token[0] != '\0') {
             menu_height += 0x14 - line_stride;
             ++row_count_;
         }
@@ -344,7 +343,7 @@ int SetupWin::do_menu_rightside(char *filename, int flags) {
                 buffer2_.copy(static_cast<Buffer *>(this), 0, 0, 0, y,
                               width, -height);
                 y -= height;
-                if (copy_row_intro == 0 && has_token) {
+                if (copy_row_intro == 0 && token[0] != '\0') {
                     fill(0, y, width, 0x14, 9);
                     y += 0x14;
                 }
@@ -358,7 +357,7 @@ int SetupWin::do_menu_rightside(char *filename, int flags) {
         title_rect.top = 0;
         title_rect.right = 0x12C;
         title_rect.bottom = -line_stride;
-        if (has_token) {
+        if (token[0] != '\0') {
             static_cast<Buffer *>(this)->set_text_color(0x42, -1, 1, 1);
             const int top = title_rect.top + 0x1F;
             const int left = title_rect.left + 4;
@@ -395,7 +394,7 @@ int SetupWin::do_menu_rightside(char *filename, int flags) {
         }
         soft_update();
         set_modal(0, nullptr, nullptr);
-        if (has_token) {
+        if (token[0] != '\0') {
             ++row_count_;
         }
         for (int frame_outro = 0; frame_outro != 6; ++frame_outro) {
@@ -408,7 +407,7 @@ int SetupWin::do_menu_rightside(char *filename, int flags) {
                 buffer2_.copy(static_cast<Buffer *>(this), 0, 0, 0, y,
                               width, -height);
                 y -= height;
-                if (copy_row_outro == 0 && has_token) {
+                if (copy_row_outro == 0 && token[0] != '\0') {
                     fill(0, y, width, 0x14, 9);
                     y += 0x14;
                 }

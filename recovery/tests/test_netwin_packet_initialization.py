@@ -41,8 +41,7 @@ def test_native_explicit_zero_store_is_not_lost_with_blanket_clear(signature, co
 def test_password_reuses_word_opcode_packet_without_widened_store():
     body = extract_function((ROOT / "src/netwin.cpp").read_text(), "int NetWin::pick_pass(int")
     assert "NetWinLobbySinglePacket packet;" in body
-    assert "packet.header_.opcode_ = 0x04;" in body
-    assert "packet.header_.flags_ = 0x2F;" in body
+    assert "packet.header_.set_opcode(0x2F04);" in body
     assert "packet.header_.field_8_ = 0;" in body
     assert "packet.header_.field_2_ =" not in body
     assert "packet.header_.field_C_ =" not in body

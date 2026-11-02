@@ -103,6 +103,9 @@ static_assert(sizeof(NetWinLobbyRowView) == sizeof(void *),
 // The first 16 bytes are common to lobby button/picker packets. Session-block
 // senders with only an opcode and reserved tail keep their distinct schema.
 struct NetWinLobbyPacketHeader {
+  void set_opcode(uint16_t value) {
+    std::memcpy(this, &value, sizeof(value));
+  }
   uint8_t opcode_;
   uint8_t flags_;
   uint16_t field_2_;

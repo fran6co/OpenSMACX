@@ -1176,6 +1176,8 @@ void CouncWin::on_button_clicked(int button_id) {
                         (GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_ &
                          (1u << (faction & 0x1f))) != 0 && eligible(faction) != 0) {
                         StringTemp[0] = '\0';
+                        GenderDefault = Players[faction].is_leader_female;
+                        PluralityDefault = 0;
                         strcat(StringTemp, Players[faction].name_leader);
                         options.item(StringTemp, faction);
                     }

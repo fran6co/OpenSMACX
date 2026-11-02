@@ -363,8 +363,12 @@ void QuayleWin::on_redraw() {
       facts.right = window_rect_.left + 0x2E2; facts.bottom = window_rect_.top + 0x21C;
       canvas->set_clip(&illustration_rect_);
       StringTemp[0] = 0;
+      GenderDefault = Players[book].is_leader_female;
+      PluralityDefault = 0;
       strcat(StringTemp, Players[book].title_leader);
       strcat(StringTemp, " ");
+      PluralityDefault = 0;
+      GenderDefault = Players[book].is_leader_female;
       strcat(StringTemp, Players[book].name_leader);
       canvas->set_font(ReportIfGlobal.field_1E1AC_, 0, 0, 0);
       canvas->set_text_color(0x45, -1, 1, 1);
@@ -376,8 +380,12 @@ void QuayleWin::on_redraw() {
       facts.right = window_rect_.left + 0x301; facts.bottom = window_rect_.top + 0x1D7;
       canvas->set_clip(&illustration_rect_);
       StringTemp[0] = 0;
+      GenderDefault = Players[book].is_leader_female;
+      PluralityDefault = 0;
       strcat(StringTemp, Players[book].title_leader);
       strcat(StringTemp, " ");
+      PluralityDefault = 0;
+      GenderDefault = Players[book].is_leader_female;
       strcat(StringTemp, Players[book].name_leader);
       canvas->set_font(ReportIfGlobal.field_1E1B8_, 0, 0, 0);
       canvas->set_text_color(0x45, -1, 1, 1);
@@ -389,8 +397,12 @@ void QuayleWin::on_redraw() {
       facts.right = window_rect_.left + 0x2FD; facts.bottom = window_rect_.top + 0x233;
       canvas->set_clip(&illustration_rect_);
       StringTemp[0] = 0;
+      PluralityDefault = 0;
+      GenderDefault = Players[book].is_leader_female;
       strcat(StringTemp, Players[book].title_leader);
       strcat(StringTemp, " ");
+      PluralityDefault = 0;
+      GenderDefault = Players[book].is_leader_female;
       strcat(StringTemp, Players[book].name_leader);
       canvas->set_font(ReportIfGlobal.field_1E1B8_, 0, 0, 0);
       canvas->set_text_color(0x5E, -1, 1, 1);

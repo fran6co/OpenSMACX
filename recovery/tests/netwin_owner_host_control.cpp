@@ -352,6 +352,7 @@ int main() {
 
 #elif NETWIN_OWNER_CONTROL_KIND == 3
 #include <assert.h>
+#include <cstring>
 #include <stdint.h>
 #include <string.h>
 #include <string>

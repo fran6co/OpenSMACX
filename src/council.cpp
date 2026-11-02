@@ -809,7 +809,7 @@ int __cdecl wants_prop(int faction, int proposal, int option) {
             return -9;
         }
 
-        bool score_flag = false;
+        int score_flag = 0;
         bool bypass_governor_tail = false;
         int factions_above_actor = 0;
         for (int actor_peer = 1; actor_peer < MaxPlayerNum; ++actor_peer) {
@@ -887,7 +887,7 @@ int __cdecl wants_prop(int faction, int proposal, int option) {
                                 ++score;
                             } else {
                                 --score;
-                                score_flag = true;
+                                score_flag = 1;
                             }
                         }
                     }
@@ -898,7 +898,7 @@ int __cdecl wants_prop(int faction, int proposal, int option) {
                         if (model != 0 &&
                             model == Players[faction].soc_anti_ideology_model) {
                             --score;
-                            score_flag = true;
+                            score_flag = 1;
                         }
                     }
                     if (Players[faction].soc_ideology_category ==
@@ -906,7 +906,7 @@ int __cdecl wants_prop(int faction, int proposal, int option) {
                         Players[faction].soc_ideology_model ==
                             Players[option].soc_anti_ideology_model) {
                         score -= 2;
-                        score_flag = true;
+                        score_flag = 2;
                     }
                     if ((PlayersData[faction].diplo_treaties[option] & 2u) != 0 &&
                         wants_to_attack(faction, option, 0) == 0 &&
@@ -1533,7 +1533,7 @@ void __cdecl council_action(int proposal, int faction_id) {
         int local_faction = ConsoleGlobal.faction_id_;
         if (faction_id == local_faction) {
             if (!IsMultiplayerNet) {
-                bool candidate_found = false;
+                int candidate_found = 0;
                 for (int candidate = 1; candidate < MaxPlayerNum; ++candidate) {
                     if (candidate == faction_id || !is_alive(candidate)
                         || !(GameDataStateStorage.fields_.game_rules_ & RULES_VICTORY_CONQUEST)) {
@@ -1552,7 +1552,7 @@ void __cdecl council_action(int proposal, int faction_id) {
                         continue;
                     }
 
-                    candidate_found = true;
+                    candidate_found = 1;
                     council_parse_leader(candidate);
                     popp(ScriptPopupFile, "DEFIES", 0, "dipvic_sm.pcx", 0);
                     treaty_on(candidate, faction_id, DTREATY_VENDETTA);

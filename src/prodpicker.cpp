@@ -550,7 +550,7 @@ void __cdecl ProdPicker::UNK2(int, ProdPicker *picker) {
 // RECOVERY_BINDING: v1 {"evidence": ["git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/00492fa0.cpp", "Pinned original coordinator review: actual label-pointer dereference, camera word3F48F5C3, static cdecl callback ABI, row-end clamps and modal-parent/button suppression order."], "reason": "Recover ProdPicker owner behavior through existing window bases, owned StringLists/controls and typed Base/Caviar camera state; preserve historical seed identity and extents as restoration obligations, not current match claims."}
 // TRIED: void return confirmed (0,1,2,3 are switch-derived flag bits; 9999/999999 are itoa() display clamps, not status codes - the single `ret` has no `mov eax,K` before it, eax at exit is whatever Font::init() last returned). Structural transcription via named ProdPicker::field_XXXX_ members instead of raw pointer casts didn't close the divergence; prologue shape differs (#0 push vs sub) from local layout, not a wrong op.
 void ProdPicker::calculate() {
-    bool anyTech = false;
+    int anyTech = 0;
     const int savedFaction = BaseIDCurrentSelected;
     char nameBuf[256];
     char statsBuf[256];
@@ -584,17 +584,17 @@ void ProdPicker::calculate() {
     for (int weaponIndex = 0; weaponIndex < MaxWeaponNum && !anyTech; ++weaponIndex) {
         if (Weapon[weaponIndex].offense_rating > 1
             && has_tech(Weapon[weaponIndex].preq_tech, faction))
-            anyTech = true;
+            anyTech = 1;
     }
     for (int armorIndex = 0; armorIndex < MaxArmorNum && !anyTech; ++armorIndex) {
         if (Armor[armorIndex].defense_rating > 1
             && has_tech(Armor[armorIndex].preq_tech, faction))
-            anyTech = true;
+            anyTech = 1;
     }
     for (int chassisIndex = 0; chassisIndex < MaxChassisNum && !anyTech; ++chassisIndex) {
         if (Chassis[chassisIndex].speed > 1
             && has_tech(Chassis[chassisIndex].preq_tech, faction))
-            anyTech = true;
+            anyTech = 1;
     }
 
     for (int prototypeIndex = 0; prototypeIndex < 128; ++prototypeIndex) {

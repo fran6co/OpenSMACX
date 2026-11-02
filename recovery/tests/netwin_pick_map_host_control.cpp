@@ -10,12 +10,7 @@ struct NetWinSessionOptionsState {
     uint8_t erosion_, native_life_, cloud_cover_, reserved_B_;
     uint32_t rule_bits_a_, rule_bits_b_, rule_bits_c_;
 };
-struct NetWinLobbyPacketHeader {
-    uint8_t opcode_, flags_;
-    uint16_t field_2_;
-    int32_t slot_, field_8_;
-    uint32_t field_C_;
-};
+/* NETWIN_PACKET_HEADER_INSERTION */
 struct NetWinLobbyRow {
     uint8_t prefix_, ready_or_occupied_, field_2_;
     int8_t faction_or_color_;

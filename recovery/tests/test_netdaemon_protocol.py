@@ -113,7 +113,8 @@ def test_extractor_requires_actual_netdaemon_owner_methods() -> None:
 
 
 @pytest.mark.parametrize("mode", ["action", "timing", "order_speed", "radius", "direction",
-                                   "globalfailed", "mode0wait", "earlyreject", "syncgate"])
+                                   "globalfailed", "mode0wait", "earlyreject", "syncgate",
+                                   "planetary_state"])
 def test_actual_owner_host_controls(mode: str) -> None:
     action_body, order_body = _actual_methods()
     run = _run_control(mode, action_body, order_body)
@@ -156,3 +157,23 @@ def test_protocol_mutants_are_detected(mode: str, needle: str,
         order_body = changed
     run = _run_control(mode, action_body, order_body)
     assert run.returncode != 0, f"protocol mutation escaped: {description}"
+
+
+def test_planetary_eligibility_rejects_old_separate_state() -> None:
+    action_body, order_body = _actual_methods()
+    declaration = "    if (planet_buster(veh_id) != 0) {"
+    planetary_write = "            good_base = 1;"
+    gate = "    if (good_base && add_global() != 0) {"
+    start = order_body.index(declaration)
+    end = order_body.index(gate, start)
+    branch = order_body[start:end]
+    assert branch.count(planetary_write) == 1
+    # Restore the old independent eligibility flag while keeping the actual
+    # planetary/treaty branch and first service call otherwise unchanged.
+    separate_branch = branch.replace(planetary_write, "            do_order = 1;", 1)
+    mutated = (order_body[:start] + "    int do_order = good_base;\n" +
+               separate_branch + order_body[end:])
+    assert mutated.count(gate) == 1
+    mutated = mutated.replace(gate, "    if (do_order && add_global() != 0) {", 1)
+    run = _run_control("planetary_state", action_body, mutated)
+    assert run.returncode != 0, "old separate state lost the planetary write after add_global"

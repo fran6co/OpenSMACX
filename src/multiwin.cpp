@@ -892,8 +892,12 @@ void MultiWin::on_right_click(int x, int y) {
     StringTemp[0] = 0;
     strcat(StringTemp, label_get(0x9F0 / 4));
     strcat(StringTemp, " ");
+    PluralityDefault = 0;
+    GenderDefault = Players[faction].is_leader_female;
     strcat(StringTemp, Players[faction].title_leader);
     strcat(StringTemp, " ");
+    PluralityDefault = 0;
+    GenderDefault = Players[faction].is_leader_female;
     strcat(StringTemp, Players[faction].name_leader);
     menu.add_item(1, StringTemp);
     menu.add_item(2, label_get(0x9F4 / 4));

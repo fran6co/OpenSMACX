@@ -945,8 +945,21 @@ int result_from_popup = -1, last_message = 0, last_payload = 0;
 int sprite_init_result = 0;
 bool expect_council_picture = true;
 char StringTemp[1032];
-struct Player { int rule_flags = 0; char name_leader[24]{}; } Players[8];
-int eligible(int faction) { return faction == 1 || faction == 2; }
+struct Player { int rule_flags = 0; char name_leader[24]{}; int is_leader_female = 0; } Players[8];
+int GenderDefault = -73, PluralityDefault = -93, council_name_items = 0;
+int eligible(int faction) {
+  if (faction != 1 && faction != 2) return 0;
+  Players[faction].is_leader_female = 0x10000 + faction;
+  GenderDefault = -73; PluralityDefault = -93;
+  return 1;
+}
+void observe_council_item(char *text, int id) {
+  if (id > 0) {
+    assert(GenderDefault == Players[id].is_leader_female && PluralityDefault == 0);
+    ++council_name_items;
+  }
+  events.push_back(std::string("item:") + text + ":" + std::to_string(id));
+}
 int council_get_vote(int faction, int, int) { events.push_back("vote:" + std::to_string(faction)); return -2; }
 void council_action(int, int) { events.push_back("action"); }
 uint32_t message_data(int opcode, int, int, int payload, int, int) {
@@ -1008,6 +1021,8 @@ int main() {
   sprite_init_result = 0;
   expect_council_picture = true;
   win.on_button_clicked(4);
+  assert(council_name_items == 1);
+  assert(GenderDefault == 0x10001 && PluralityDefault == 0);
   assert(events[1] == "popup-start" && events[2] == "dimensions" &&
          events[3] == "sprite" && events[4] == "select-picture" &&
          events[5] == "item:OPTIONS:0");
@@ -1018,6 +1033,7 @@ int main() {
   sprite_init_result = 1;
   expect_council_picture = false;
   win.on_button_clicked(4);
+  assert(council_name_items == 2);
   assert(events[2] == "dimensions" && events[3] == "sprite" &&
          events[4] == "item:OPTIONS:0");
   assert(events[4] != "select-picture");
@@ -1029,18 +1045,17 @@ int main() {
 """
 
 
-def test_on_button_clicked_uses_typed_popup_vote_and_key_dispatch(tmp_path):
+def run_button_host(tmp_path, body, should_pass=True):
     compiler = shutil.which("g++")
     if not compiler:
         pytest.skip("host C++ compiler unavailable")
-    body = adapt_body(extract_function(SOURCE.read_text(), "void CouncWin::on_button_clicked(int button_id)"))
     fixture = BUTTON_HARNESS.replace(
         "NetMsg *NetMsgPopup = &net_message;",
         "NetMsg *NetMsgPopup = &net_message; NetMsg NetMsgPrimary;",
     )
     fixture = fixture.replace(
         "struct Popup {",
-        "struct Dialogs { void item(char *text, int id) { events.push_back(std::string(\"item:\") + text + \":\" + std::to_string(id)); } };\n"
+        "struct Dialogs { void item(char *text, int id) { observe_council_item(text, id); } };\n"
         "struct Popup { Dialogs dialogs_; Dialogs &dialogs() { return dialogs_; }",
     )
     fixture = fixture.replace(
@@ -1054,6 +1069,7 @@ def test_on_button_clicked_uses_typed_popup_vote_and_key_dispatch(tmp_path):
     )
     harness = adapt_harness(fixture.replace("BODY", body))
     executable = tmp_path / "councwin-button-click"
+    (tmp_path / "councwin-button-click.cpp").write_text(harness)
     built = subprocess.run(
         [compiler, "-std=c++17", "-Wall", "-Wextra", "-Werror", "-x", "c++", "-", "-o", str(executable)],
         input=harness,
@@ -1062,7 +1078,27 @@ def test_on_button_clicked_uses_typed_popup_vote_and_key_dispatch(tmp_path):
     )
     assert built.returncode == 0, built.stderr
     run = subprocess.run([str(executable)], capture_output=True, text=True)
-    assert run.returncode == 0, run.stderr
+    assert (run.returncode == 0) is should_pass, run.stderr
+    return run
+
+def test_on_button_clicked_uses_typed_popup_vote_and_key_dispatch(tmp_path):
+    body = adapt_body(extract_function(SOURCE.read_text(), "void CouncWin::on_button_clicked(int button_id)"))
+    run_button_host(tmp_path, body)
+
+
+@pytest.mark.parametrize("damage", ("gender", "plurality", "gender_width"))
+def test_button_leader_grammar_damage_is_detected(tmp_path, damage):
+    body = extract_function(SOURCE.read_text(), "void CouncWin::on_button_clicked(int button_id)")
+    needle = ("PluralityDefault = 0;" if damage == "plurality" else
+              "GenderDefault = Players[faction].is_leader_female;")
+    assert body.count(needle) == 1
+    replacement = ("GenderDefault = !!Players[faction].is_leader_female;"
+                   if damage == "gender_width" else "/* omitted grammar store */")
+    changed = body.replace(needle, replacement, 1)
+    assert changed != body
+    result = run_button_host(tmp_path, adapt_body(changed), should_pass=False)
+    assert "Assertion" in result.stderr
+
 
 
 LEFT_CLICK_HARNESS = r"""
