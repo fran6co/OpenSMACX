@@ -6,18 +6,20 @@ neither a first terminator nor the instruction being checked chooses a bound.
 """
 
 import hashlib
+import re
 
 from .binary import BoundedTarget, compare_bound_code
-from .coff_comdat import comdat_key
+from .coff_comdat import comdat_key, comdat_selection
 from .literal_source import validate_literals
 from .model import Result
 
 
 MAX_LITERAL_BYTES = 1024 * 1024
+_VC6_REAL8 = re.compile(r"__real@8@[0-9a-f]{20}", re.ASCII)
 
 
 def literal_storage(obj, name):
-    """Observe a whole independently defined MSVC string-literal section.
+    """Observe a whole independent MSVC string or VC6 double literal.
 
     Names select the declared candidate; they do not establish original
     identity. Static/ordinary/associative or multi-entry storage needs another
@@ -27,7 +29,9 @@ def literal_storage(obj, name):
     if len(definitions) != 1:
         raise ValueError("literal requires one unambiguous same-TU symbol")
     symbol = definitions[0]
-    if (not name.startswith("??_C@") or symbol.section <= 0 or symbol.storage != 2
+    numeric = _VC6_REAL8.fullmatch(name) is not None
+    if (not (name.startswith("??_C@") or numeric)
+            or symbol.section <= 0 or symbol.storage != 2
             or symbol.type or symbol.value):
         raise ValueError("unsupported independent COFF literal definition")
     section = obj.sections[symbol.section - 1]
@@ -42,6 +46,9 @@ def literal_storage(obj, name):
     if not 0 < size <= MAX_LITERAL_BYTES:
         raise ValueError("literal exceeds bounded storage limit or is empty")
     storage = section.flags & (0x40 | 0x80)
+    if numeric and (size != 8 or storage != 0x40 or section.flags & 0x80000000
+                    or comdat_selection(obj, symbol.section) != 2):
+        raise ValueError("VC6 double literal requires eight initialized read-only bytes in a selection-2 COMDAT")
     if storage == 0x80 and not section.data:
         contents = bytes(size)
     elif storage == 0x40 and len(section.data) == size:
@@ -75,15 +82,22 @@ def check_literals(bindings, objects, image, *, errors=None):
                 raise ValueError((errors or {}).get(binding.unit, "literal owner was not compiled"))
             contents, storage = literal_storage(objects[binding.unit], binding.symbol)
             row.update(definition=Result.PASS, compiler_storage=storage)
+            numeric = _VC6_REAL8.fullmatch(binding.symbol) is not None
             sections = [flags for (span, _, _), flags in zip(image.sections, image.section_flags)
                         if span.start <= binding.span.start < binding.span.end <= span.end]
             if (len(sections) != 1 or not sections[0] & 0x40000000
                     or sections[0] & (0x20 | 0x20000000)
                     or not sections[0] & (0x40 | 0x80)):
                 raise ValueError("original literal requires one readable non-executable data section")
+            if (numeric
+                    and (binding.span.end - binding.span.start != 8
+                         or sections[0] & 0x80000000
+                         or sections[0] & (0x40 | 0x80) != 0x40)):
+                raise ValueError("original VC6 double literal requires eight initialized read-only bytes")
             if binding.span.end - binding.span.start > MAX_LITERAL_BYTES:
                 raise ValueError("original literal exceeds bounded storage limit")
-            proof = compare_bound_code(binding.span, image.read_initial(binding.span), contents, (), {},
+            original = image.read(binding.span) if numeric else image.read_initial(binding.span)
+            proof = compare_bound_code(binding.span, original, contents, (), {},
                                        original_absolute_sites=image.absolute_sites(binding.span))
             row.update(content=proof["result"], proof=proof)
             if proof["result"] == Result.PASS:
