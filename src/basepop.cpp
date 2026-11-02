@@ -1307,6 +1307,12 @@ BasePop *BasePop::basepop_alloc() {
 // The image's .data initial value is the generic BasePop allocator address.
 // WinMain preserves its explicit startup registration, then installs Popup's
 // application-specific allocator over this default.
+// RECOVERY_OBJECT: v1 0x00697008 _BasePopInitialCancelCaption
+static char BasePopInitialCancelCaption[] = "Cancel";
+// RECOVERY_OBJECT: v1 0x00697010 _BasePopInitialOkCaption
+static char BasePopInitialOkCaption[] = "OK";
+
+// RECOVERY_OBJECT: v1 0x00696ECC ?PopupAllocHook@@3P6APAVBasePop@@XZA
 func_popup_alloc *PopupAllocHook = &BasePop::basepop_alloc;
 
 // AN ARRAY, NOT A POINTER. 0x009B8AA8 is in .bss - zero-filled, in no
@@ -1506,8 +1512,8 @@ int __cdecl BasePop::init_class() {
     BasePopDefaultStringFonts[0] = FontDefault;
     BasePopDefaultButtonFonts[0] = FontDefault;
 
-    set_def_cancel_text("Cancel");
-    set_def_ok_text("OK");
+    set_def_cancel_text(BasePopInitialCancelCaption);
+    set_def_ok_text(BasePopInitialOkCaption);
 
     PopupInstanceSlotA = PopupAllocHook();
     if (PopupInstanceSlotA == 0) {

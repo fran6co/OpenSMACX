@@ -72,9 +72,13 @@ class SpriteListBase : public virtual StringAllocationBase {
  public:
   virtual int on_insert(void *) { return 0; }
   virtual void on_remove(void *) {}
-  SpriteListBase()
-      : head_(0), current_(0), entry_count_(0), current_position_(0),
-        allocator_(0) {}
+  SpriteListBase() {
+    head_ = 0;
+    current_ = 0;
+    entry_count_ = 0;
+    current_position_ = 0;
+    allocator_ = 0;
+  }
   virtual ~SpriteListBase() {
     remove_all();
     current_position_ = 0;

@@ -333,3 +333,125 @@ def test_actual_seven_bodies_compile_and_control(tmp_path: Path) -> None:
     assert built.returncode == 0, built.stdout + built.stderr
     ran = subprocess.run([str(exe)], cwd=tmp_path, capture_output=True, text=True)
     assert ran.returncode == 0, ran.stdout + ran.stderr
+
+
+def _dont_withdrawal_program(old_waypoint: bool) -> str:
+    """Original 548EE0/548EE4 read slot zero from the saved proto pointer.
+
+    Veh is the real scalar layout. Other records/services model only consumed
+    fields and calls; this host control does not claim their original ABI.
+    """
+    header = (ROOT / "src/veh.h").read_text()
+    begin = header.index("struct Veh {")
+    end = header.index("\n};", begin) + 3
+    veh = header[begin:end]
+    order, = re.findall(r"\bORDER_MOVE_TO\s*=\s*(\d+)", header)
+    body = _definition((ROOT / "src/faction.cpp").read_text(),
+                       "int __cdecl dont_withdrawal(")
+    if old_waypoint:
+        for axis in ("x", "y"):
+            old = "veh.waypoint_" + axis + "[0]"
+            assert body.count(old) == 1
+            body = body.replace(old, "veh.waypoint_" + axis + "[1]", 1)
+    return r'''
+#include <cassert>
+#include <cstddef>
+#include <cstdint>
+#include <cstring>
+#include <vector>
+#define __cdecl
+ACTUAL_VEH
+static_assert(sizeof(Veh) == 0x34, "real vehicle stride");
+static_assert(offsetof(Veh, proto_id) == 0xA, "original saved receiver");
+static_assert(offsetof(Veh, waypoint_x) == 0x14, "original first x");
+static_assert(offsetof(Veh, waypoint_y) == 0x1C, "original first y");
+const int ORDER_MOVE_TO = ACTUAL_ORDER;
+Veh Vehs[1];
+struct PrototypeService { uint8_t plan; } VehPrototypes[1];
+struct PlayerService { uint32_t diplo_treaties[8]; } PlayersData[8];
+struct BaseService { int16_t x, y; uint8_t faction_id_current; } Bases[3];
+struct MapService { uint8_t climate; } tiles[64];
+typedef MapService Map;
+struct GameFields { int vehicle_current_count_; };
+struct GameState { GameFields fields_; } GameDataStateStorage;
+int MapLongitude = 8;
+int PopupDialogFactionID;
+int DiplomacyProposalGateCount = 1;
+bool slot_zero_absent;
+int observed_x, observed_y, base_at_calls;
+std::vector<int> abs_arguments;
+Map *map_tiles() { return tiles; }
+int base_find(int x, int y, int faction) {
+    assert(x == 2 && y == 2 && faction == 1);
+    return 0;
+}
+int whose_territory(int faction, int x, int y, int a, int b) {
+    assert(faction == 1 && x == 2 && y == 2 && a == 0 && b == 0);
+    return 2;
+}
+int base_at(int x, int y) {
+    observed_x = x; observed_y = y; ++base_at_calls;
+    if (x == 14 && y == 8) return slot_zero_absent ? -1 : 1;
+    if (x == 20 && y == 10) return 2;
+    assert(false && "unexpected waypoint coordinates");
+    return -1;
+}
+int fixture_abs(int value) {
+    abs_arguments.push_back(value);
+    return value < 0 ? -value : value;
+}
+#define abs fixture_abs
+ACTUAL_BODY
+#undef abs
+void reset(bool missing) {
+    std::memset(Vehs, 0, sizeof(Vehs));
+    std::memset(PlayersData, 0, sizeof(PlayersData));
+    Vehs[0].x = 2; Vehs[0].y = 2;
+    Vehs[0].faction_id = 2;
+    Vehs[0].order = ORDER_MOVE_TO;
+    Vehs[0].waypoint_x[0] = 14; Vehs[0].waypoint_y[0] = 8;
+    Vehs[0].waypoint_x[1] = 20; Vehs[0].waypoint_y[1] = 10;
+    Bases[0].x = 4; Bases[0].y = 4;
+    Bases[1].faction_id_current = 3;
+    Bases[2].faction_id_current = 4;
+    PlayersData[1].diplo_treaties[2] = 0x800000;
+    PlayersData[2].diplo_treaties[3] = 0x10;
+    PlayersData[2].diplo_treaties[4] = 0x10;
+    PlayersData[1].diplo_treaties[3] = 1;
+    PlayersData[1].diplo_treaties[4] = 1;
+    for (int i = 0; i < 64; ++i) tiles[i].climate = 0x60;
+    GameDataStateStorage.fields_.vehicle_current_count_ = 1;
+    slot_zero_absent = missing;
+    observed_x = observed_y = -1; base_at_calls = 0;
+    abs_arguments.clear();
+}
+int main() {
+    reset(false);
+    int result = dont_withdrawal(1, 2);
+    assert(observed_x == 14 && observed_y == 8 && base_at_calls == 1);
+    assert(result == 3 && PopupDialogFactionID == 2);
+    assert(abs_arguments.size() == 2 && abs_arguments[0] == 2 && abs_arguments[1] == 2);
+    reset(true);
+    result = dont_withdrawal(1, 2);
+    assert(observed_x == 14 && observed_y == 8 && base_at_calls == 1);
+    assert(result == 0); // Original failed-base lookup skips the vehicle.
+}
+'''.replace("ACTUAL_VEH", veh).replace("ACTUAL_ORDER", order).replace("ACTUAL_BODY", body)
+
+
+@pytest.mark.parametrize("compiler_name", ["g++", "clang++"])
+@pytest.mark.parametrize("old_waypoint", [False, True])
+def test_actual_dont_withdrawal_reads_original_first_waypoint(
+        tmp_path: Path, compiler_name: str, old_waypoint: bool) -> None:
+    host_compiler = shutil.which(compiler_name)
+    if host_compiler is None:
+        pytest.skip(compiler_name + " unavailable")
+    source = tmp_path / "actual_dont_withdrawal.cpp"
+    executable = tmp_path / "actual_dont_withdrawal"
+    source.write_text(_dont_withdrawal_program(old_waypoint))
+    built = subprocess.run(
+        [host_compiler, "-std=c++11", "-O2", "-Wall", "-Wextra", "-Werror",
+         str(source), "-o", str(executable)], capture_output=True, text=True)
+    assert built.returncode == 0, built.stdout + built.stderr
+    ran = subprocess.run([str(executable)], cwd=tmp_path, capture_output=True, text=True)
+    assert (ran.returncode == 0) == (not old_waypoint), ran.stdout + ran.stderr

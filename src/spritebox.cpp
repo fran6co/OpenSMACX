@@ -67,7 +67,7 @@ Purpose: Construct the GraphicWin and Dialog virtual bases when most-derived,
          this control's state and buffer defaults. VC6 supplies table setup,
          exception cleanup and the hidden most-derived flag; the catalogue's
          int parameter is not a source parameter.
-// ORIGINAL: 0x0060FF00 ??0SpriteBox@@QAE@H@Z 0x0060FF00-0x0061011B;0x00662FA0-0x00662FFA
+// ORIGINAL: 0x0060FF00 ??0SpriteBox@@QAE@H@Z 0x0060FF00-0x0061011B;0x00662FA0-0x00662FFA BYTE_EXACT
 // symbol    ??0SpriteBox@@QAE@XZ
 // size      656 bytes
 // prototype void (__thiscall ??0SpriteBox@@QAE@H@Z)(SpriteBox* this, int)
@@ -1488,3 +1488,12 @@ void SpriteBox::on_left_double_click(int x_coord, int y_coord) {
 // RECOVERY_BINDING: v1 {"evidence": ["pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf:0x006116C0..0x006116DA receives SpriteList in ECX, adjusts to its +0x28 virtual base, calls 0x00611730, restores vptr 0x006693AC and allocator owner 0x009B3374, then returns; trailing NOP at 0x006116DB is outside the mapped span", "pinned cleanup actions at 0x00662FE5 and 0x00663005 load the SpriteList member receiver into ECX and tail-jump to 0x006116C0; helper body does not read the caller frame", "src/spritebox.h declares SpriteBox::list_ as SpriteList at +0x24; SpriteList derives from SpriteListBase, which virtually derives from StringAllocationBase, whose base stage is at +0x28"], "reason": "Bind the pinned generated SpriteList virtual-base cleanup entry to the real SpriteList member and StringAllocationBase stage."}
 // kind game
 // symbol    ??_DSpriteList@@QAEXXZ
+// RECOVERY_GENERATED: v1 vbtable 0x006708B4 ? ??_8SpriteBox@@7B@ 0x0060FF00
+// RECOVERY_GENERATED: v1 vbtable 0x006708AC ? ??_8SpriteList@@7B@ 0x0060FF00
+// RECOVERY_GENERATED: v1 vtable 0x0066943C ? ??_7SpriteListBase@@6B0@@ 0x0060FF00
+// RECOVERY_GENERATED: v1 vtable 0x00669438 ? ??_7SpriteListBase@@6BStringAllocationBase@@@ 0x0060FF00
+// RECOVERY_GENERATED: v1 vtable 0x006708A4 ? ??_7SpriteList@@6BSpriteListBase@@@ 0x0060FF00
+// RECOVERY_GENERATED: v1 vtable 0x006708A0 ? ??_7SpriteList@@6BStringAllocationBase@@@ 0x0060FF00
+// RECOVERY_GENERATED: v1 vtable 0x00670738 ? ??_7SpriteBox@@6BWin@@@ 0x0060FF00
+// RECOVERY_GENERATED: v1 vtable 0x00670730 ? ??_7SpriteBox@@6BBuffer@@@ 0x0060FF00
+// RECOVERY_GENERATED: v1 vtable 0x00670724 ? ??_7SpriteBox@@6B@ 0x0060FF00

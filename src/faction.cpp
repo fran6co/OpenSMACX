@@ -13772,11 +13772,13 @@ int __cdecl dont_withdrawal(int faction_id, int against_id) {
         if (veh.order != ORDER_MOVE_TO) {
             continue;
         }
-        const int base2 = base_at(veh.waypoint_x[1], veh.waypoint_y[1]);
+        const int waypoint_x = veh.waypoint_x[0];
+        const int waypoint_y = veh.waypoint_y[0];
+        const int base2 = base_at(waypoint_x, waypoint_y);
         if (base2 < 0) {
             continue;
         }
-        const uint8_t owner = Bases[base2].faction_id_current;
+        const int owner = Bases[base2].faction_id_current;
         if (owner == faction_id || owner == against_id || owner == 0) {
             continue;
         }
