@@ -5792,10 +5792,9 @@ void __cdecl diplomacy_ends(int faction_id, int faction_id_with) {
 // ORIGINAL: 0x005399A0 ?diplomacy_caption@@YAXHH@Z 0x005399A0-0x00539B6B
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned5399A0..539B6B; existing inactive diplomacy-presentation task evidence retained; counterpart Player noun fields and PlayerData20CC treaty strides independently decoded; literal68D594 is the bounded separator. Host source-body controls cover mood thresholds, bidirectional pact/surrender and post-parse visibility."], "reason": "Recover complete diplomacy caption in its faction owner with genuine treaty/noun/mood/scratch data and the actual visible-popup draw operation. Preserve native friction clamp, label predicate, parse defaults and redraw ordering."}
 void __cdecl diplomacy_caption(int faction_id, int faction_id_with) {
-    uint32_t incoming_treaty =
-        PlayersData[faction_id].diplo_treaties[faction_id_with];
     int mood = 0;
-    if ((incoming_treaty & DTREATY_VENDETTA) != 0 &&
+    if ((PlayersData[faction_id].diplo_treaties[faction_id_with] &
+         DTREATY_VENDETTA) != 0 &&
         DiploFriction < 15) {
         DiploFriction = 15;
         mood = 5;
@@ -5819,24 +5818,23 @@ void __cdecl diplomacy_caption(int faction_id, int faction_id_with) {
 
     char caption[256];
     caption[0] = '\0';
-    const Player &counterpart = Players[faction_id_with];
-    GenderDefault = counterpart.noun_gender;
-    PluralityDefault = counterpart.is_noun_plural;
-    strcat(caption, counterpart.noun_faction);
+    GenderDefault = Players[faction_id_with].noun_gender;
+    PluralityDefault = Players[faction_id_with].is_noun_plural;
+    strcat(caption, Players[faction_id_with].noun_faction);
     strcat(caption, " - ");
 
-    const uint32_t reverse_treaty =
-        PlayersData[faction_id_with].diplo_treaties[faction_id];
     const bool use_special_label =
         (mood == 0 && DiploScratchFA98 != 0 &&
-         (incoming_treaty & DTREATY_PACT) == 0) ||
-        ((reverse_treaty & (DTREATY_PACT | DTREATY_HAVE_SURRENDERED)) ==
-         (DTREATY_PACT | DTREATY_HAVE_SURRENDERED));
+         (PlayersData[faction_id].diplo_treaties[faction_id_with] &
+          DTREATY_PACT) == 0) ||
+        ((PlayersData[faction_id_with].diplo_treaties[faction_id] &
+          DTREATY_PACT) != 0 &&
+         (PlayersData[faction_id_with].diplo_treaties[faction_id] &
+          DTREATY_HAVE_SURRENDERED) != 0);
     if (use_special_label) {
         strcat(caption, label_get(0x1E8));
     } else {
-        char *mood_label = StringTable.get(Mood[mood]);
-        say_fac_special(caption, mood_label, faction_id_with);
+        say_fac_special(caption, StringTable.get(Mood[mood]), faction_id_with);
     }
 
     parse_says(7, caption, -1, -1);
@@ -6093,12 +6091,13 @@ int DiplomacyProposalMode;
 void __cdecl trade_maps(int faction_id, int other_faction_id) {
     DiplomacyMapTransferChanged = 0;
 
-    int &trade_a = PlayersData[faction_id].traded_maps;
-    int &trade_b = PlayersData[other_faction_id].traded_maps;
-    const uint32_t combined = static_cast<uint32_t>(trade_a) |
-        (1u << (other_faction_id & 31)) | trade_b;
-    trade_a = static_cast<int>(combined);
-    trade_b = static_cast<int>(static_cast<uint32_t>(trade_b) |
+    const uint32_t combined =
+        static_cast<uint32_t>(PlayersData[faction_id].traded_maps) |
+        (1u << (other_faction_id & 31)) |
+        PlayersData[other_faction_id].traded_maps;
+    PlayersData[faction_id].traded_maps = static_cast<int>(combined);
+    PlayersData[other_faction_id].traded_maps = static_cast<int>(
+        static_cast<uint32_t>(PlayersData[other_faction_id].traded_maps) |
         (1u << (faction_id & 31)) | combined);
 
     const uint8_t mask_a = static_cast<uint8_t>(1u << (faction_id & 31));
@@ -13847,7 +13846,7 @@ Purpose: Break a treaty between two factions and play the consequence:
          BREAKINGTRUCE warning pop when the pact, treaty or truce bit (and
          not its already-broken shadow) is set in the spy-status flags.
 
-// ORIGINAL: 0x0055F770 ?break_treaty@@YAHHHH@Z 0x0055F770-0x0055F923
+// ORIGINAL: 0x0055F770 ?break_treaty@@YAHHHH@Z 0x0055F770-0x0055F923 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["pinned 0x55F770..0x55F923 and callers in Console, vehicle actions and ReportWin", "source:src/faction.h owns the existing diplomacy globals and player records used by this body", "source:src/console.cpp's former BreakTreaty pointer was an absolute call to this identity and is changed to the declaration below"], "reason": "source-owned faction treaty consequence operation"}
 // TRIED: byte-record table (stride 0x59c) plus extern uint32 flags array for the a2+a1*0x833 index; reaches #23 before a push/mov split in the parse_says argument staging
 // size      435 bytes
@@ -13868,23 +13867,20 @@ int __cdecl break_treaty(int faction_id, int target_faction_id,
                          int treaty_bits) {
     uint32_t flags = PlayersData[faction_id].diplo_treaties[target_faction_id];
     if ((flags & 0x10) == 0 && (treaty_bits & flags) != 0) {
-        const Player &player = Players[target_faction_id];
-
         PluralityDefault = 0;
-        GenderDefault = player.is_leader_female;
-        parse_says(0, player.title_leader, -1, -1);
+        GenderDefault = Players[target_faction_id].is_leader_female;
+        parse_says(0, Players[target_faction_id].title_leader, -1, -1);
 
-        GenderDefault = player.is_leader_female;
+        GenderDefault = Players[target_faction_id].is_leader_female;
         PluralityDefault = 0;
-        parse_says(1, player.name_leader, -1, -1);
+        parse_says(1, Players[target_faction_id].name_leader, -1, -1);
 
-        GenderDefault = player.noun_gender;
-        PluralityDefault = player.is_noun_plural;
-        parse_says(2, player.noun_faction, -1, -1);
+        GenderDefault = Players[target_faction_id].noun_gender;
+        PluralityDefault = Players[target_faction_id].is_noun_plural;
+        parse_says(2, Players[target_faction_id].noun_faction, -1, -1);
 
-        char *hood = get_pact_hood(faction_id, target_faction_id);
-        parse_says(3, hood, -1, -1);
-        parse_says(4, player.adj_name_faction, -1, -1);
+        parse_says(3, get_pact_hood(faction_id, target_faction_id), -1, -1);
+        parse_says(4, Players[target_faction_id].adj_name_faction, -1, -1);
 
         flags = PlayersData[faction_id].diplo_treaties[target_faction_id];
         if ((flags & 1) != 0) {
