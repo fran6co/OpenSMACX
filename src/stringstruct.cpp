@@ -655,20 +655,22 @@ extern "C" void __cdecl tech_wizard_unk2(GraphicWin *canvas, int index, int odd,
         const int size = MapWinCaptionScale;
         const int divisor = MapWinCaptionDivisor;
         int x_offset;
-        if ((odd & 1) == 0) {
-            x_offset = 0;
-        } else if (size <= 0) {
-            x_offset = 0x6C;
+        if ((odd & 1) != 0) {
+            if (size > 0) {
+                x_offset = (size * 0xD9) / divisor;
+            } else {
+                x_offset = 0x6C;
+            }
         } else {
-            x_offset = (size * 0xD9) / divisor;
+            x_offset = 0;
         }
         const int x = base_x + x_offset;
 
         int y_offset;
-        if (size <= 0) {
-            y_offset = 0x6B;
-        } else {
+        if (size > 0) {
             y_offset = (size * 0xD7) / divisor;
+        } else {
+            y_offset = 0x6B;
         }
         const int dy = base_bottom - y_offset;
         const int y = base_y + (dy / 2);
@@ -685,12 +687,10 @@ extern "C" void __cdecl tech_wizard_unk2(GraphicWin *canvas, int index, int odd,
             ? static_cast<Buffer *>(canvas)
             : 0;
 
-        const int entry = index * 11;
-        const int sprite_index = (entry * 4) / 0x2C;
         // Pinned 5BE34F reads array base759E28 + element stride2C + member8.
         const unsigned char transparency =
-            g_TECH_ICON_SPRITES[sprite_index].transparent_index();
-        g_TECH_ICON_SPRITES[sprite_index].draw(target, transparency, x, y);
+            g_TECH_ICON_SPRITES[index].transparent_index();
+        g_TECH_ICON_SPRITES[index].draw(target, transparency, x, y);
 
         SpriteScaleNumerator = 1;
         SpriteScaleDenominator = 1;

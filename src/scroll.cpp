@@ -1870,17 +1870,18 @@ int Scroll::on_button_pressed(int button_id) {
 
     WinCallbackWindow = win_parent_;
     if (old_position != position_) {
-        int notified_position = position_;
-        if (range_reversed_ != 0U) {
-            notified_position = (range_minimum_ - position_) + range_maximum_;
-        }
-        win_parent_->on_scrolling(field_A18_, notified_position);
-        int callback_position = position_;
-        if (range_reversed_ != 0U) {
-            callback_position = (range_minimum_ - position_) + range_maximum_;
-        }
-        if (field_2148_ != nullptr) {
-            field_2148_(field_A18_, callback_position);
+        if (range_reversed_ == 0U) {
+            win_parent_->on_scrolling(field_A18_, position_);
+            if (field_2148_ != nullptr) {
+                field_2148_(field_A18_, position_);
+            }
+        } else {
+            win_parent_->on_scrolling(field_A18_,
+                                    (range_minimum_ - position_) + range_maximum_);
+            if (field_2148_ != nullptr) {
+                field_2148_(field_A18_,
+                            (range_minimum_ - position_) + range_maximum_);
+            }
         }
         // Original606A2F skips this sound path when the position is unchanged.
         // After notification606AB2 reloads the live parent, not an earlier view.

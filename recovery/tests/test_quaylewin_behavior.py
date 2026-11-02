@@ -486,3 +486,161 @@ def test_quayle_chapter_append_grammar_damage_is_detected(tmp_path, chapter, pha
     assert changed != body
     result = run_redraw_host(tmp_path, changed, should_pass=False)
     assert b"Assertion" in result.stderr
+
+
+# This projection exercises the existing Win virtual contract and the actual
+# two entry bodies. The real global object's C++ dynamic type may allow direct
+# and base-reference expressions to be observationally equivalent. Only the
+# pinned/captured target instructions establish VC6's actual dispatch lowering.
+ENTRY_HARNESS = r"""
+#include <cstdio>
+#include <cstdlib>
+#include <climits>
+#define __cdecl
+int IsMultiplayerNet, init_status, init_calls, modal_calls, rating_calls;
+int rating_value, rating_multiplayer, init_multiplayer, expected_page;
+int expected_faction, expected_score;
+void require(bool condition, const char *phase) {
+  if (!condition) { std::fprintf(stderr, "failed:%s\n", phase); std::abort(); }
+}
+struct Win {
+  virtual int set_modal(int, int (*)(), Win *) { return -5; }
+};
+struct QuayleWin : Win {
+  int field_2144_, field_2148_;
+  int init() {
+    ++init_calls;
+    field_2144_ = -801; field_2148_ = -802;
+    if (init_multiplayer >= 0) IsMultiplayerNet = init_multiplayer;
+    return init_status;
+  }
+  SET_CHAPTER
+  SET_PAGE
+  int set_modal(int flag, int (*poll)(), Win *owner) override;
+} QuayleWinGlobal;
+int QuayleWin::set_modal(int flag, int (*poll)(), Win *owner) {
+  require(this == &QuayleWinGlobal, "modal.receiver");
+  require(flag == 0 && poll == nullptr && owner == nullptr, "modal.arguments");
+  require(field_2148_ == expected_page, "modal.page");
+  require(field_2144_ == -1, "modal.chapter");
+  ++modal_calls;
+  return 37;
+}
+struct PlayerData { int unk_107; } PlayersData[8];
+int get_rating(int faction, int score) {
+  require(faction == expected_faction && score == expected_score, "rating.arguments");
+  ++rating_calls;
+  if (rating_multiplayer >= 0) IsMultiplayerNet = rating_multiplayer;
+  return rating_value;
+}
+BODY_DIRECT
+BODY_RATED
+void reset() {
+  IsMultiplayerNet = init_status = init_calls = modal_calls = rating_calls = 0;
+  rating_multiplayer = init_multiplayer = -1;
+  QuayleWinGlobal.field_2144_ = -701;
+  QuayleWinGlobal.field_2148_ = -702;
+  expected_faction = 2; expected_score = 123;
+  PlayersData[2].unk_107 = expected_score;
+  expected_page = 0;
+}
+int original_page(int page) { return page >= 25 ? 24 : page < -1 ? -1 : page; }
+int original_rank(int rating) {
+  // Independent thresholds from the pin's signed square/2 scan at4966A2..B8.
+  const int thresholds[] = {2,4,8,12,18,24,32,40,50,60,72,84,
+    98,112,128,144,162,180,200,220,242,264,288,312};
+  int rank = 0;
+  for (int threshold : thresholds) if (rating >= threshold) ++rank;
+  return rank;
+}
+int main() {
+  for (int multiplayer : {1, 256, INT_MIN}) {
+    reset(); IsMultiplayerNet = multiplayer;
+    sub_496610(0);
+    require(init_calls == 0 && modal_calls == 0, "guard.multiplayer");
+    require(QuayleWinGlobal.field_2144_ == -701 && QuayleWinGlobal.field_2148_ == -702,
+      "guard.multiplayer.fields");
+  }
+  for (int page : {INT_MIN, -2, -1, 0, 24, 25, INT_MAX}) {
+    reset(); init_status = 1;
+    sub_496610(page);
+    require(init_calls == 1 && modal_calls == 0, "guard.init");
+    require(QuayleWinGlobal.field_2144_ == -801 && QuayleWinGlobal.field_2148_ == -802,
+      "guard.init.fields");
+    reset(); expected_page = original_page(page);
+    sub_496610(page);
+    require(init_calls == 1 && modal_calls == 1, "modal.dispatch");
+  }
+  reset(); init_multiplayer = 256; expected_page = 7;
+  sub_496610(7);
+  require(modal_calls == 1, "init.no-second-multiplayer-guard");
+  const int ratings[] = {-1,0,1,2,3,4,7,8,11,12,17,18,23,24,31,32,
+    39,40,49,50,59,60,71,72,83,84,97,98,111,112,127,128,143,144,
+    161,162,179,180,199,200,219,220,241,242,263,264,287,288,311,312,313,INT_MAX};
+  for (int rating : ratings) {
+    reset(); rating_value = rating; expected_page = original_rank(rating);
+    quayle(2);
+    require(rating_calls == 1 && init_calls == 1 && modal_calls == 1, "rated.dispatch");
+  }
+  reset(); rating_value = 24; rating_multiplayer = 256;
+  quayle(2);
+  require(rating_calls == 1 && init_calls == 0 && modal_calls == 0, "rated.live-multiplayer");
+  require(QuayleWinGlobal.field_2144_ == -701 && QuayleWinGlobal.field_2148_ == -702,
+    "rated.guard.fields");
+  reset(); rating_value = 24; init_status = -1;
+  quayle(2);
+  require(rating_calls == 1 && init_calls == 1 && modal_calls == 0, "rated.init-failure");
+}
+"""
+
+
+@pytest.mark.parametrize("compiler_name", ["g++", "clang++"])
+@pytest.mark.parametrize("damage, failure", [
+    ("", ""),
+    ("old_global_syntax", ""),
+    ("qualified_base", "modal.dispatch"),
+    ("wrong_high_clamp", "modal.page"),
+    ("omit_chapter", "modal.chapter"),
+    ("skip_multiplayer", "guard.multiplayer"),
+])
+def test_actual_quayle_entry_modal_contract(tmp_path, compiler_name, damage, failure):
+    compiler = shutil.which(compiler_name)
+    if not compiler:
+        pytest.skip(f"{compiler_name} unavailable")
+    source = SOURCE.read_text()
+    direct = extract_function(source, 'extern "C" void __cdecl sub_496610(int page)')
+    rated = extract_function(source, "void __cdecl quayle(int faction_id)")
+    bodies = direct + "\n" + rated
+    if damage == "old_global_syntax":
+        assert bodies.count("Win &modal_window = QuayleWinGlobal;") == 2
+        bodies = bodies.replace("Win &modal_window = QuayleWinGlobal;", "")
+        bodies = bodies.replace("modal_window.set_modal", "QuayleWinGlobal.set_modal")
+    elif damage == "qualified_base":
+        assert bodies.count("modal_window.set_modal") == 2
+        bodies = bodies.replace("modal_window.set_modal", "modal_window.Win::set_modal")
+    elif damage == "wrong_high_clamp":
+        assert "page = 0x18;" in bodies
+        bodies = bodies.replace("page = 0x18;", "page = 0x17;", 1)
+    elif damage == "omit_chapter":
+        assert bodies.count("QuayleWinGlobal.set_chapter(-1);") == 2
+        bodies = bodies.replace("QuayleWinGlobal.set_chapter(-1);", "", 1)
+    elif damage == "skip_multiplayer":
+        assert "if (IsMultiplayerNet == 0)" in bodies
+        bodies = bodies.replace("if (IsMultiplayerNet == 0)", "if (true)", 1)
+    header = (ROOT / "src/quaylewin.h").read_text()
+    chapter = extract_function(header, "void set_chapter(int chapter)")
+    page = extract_function(header, "void set_page(int page)")
+    harness = ENTRY_HARNESS.replace("SET_CHAPTER", chapter).replace("SET_PAGE", page)
+    harness = harness.replace("BODY_DIRECT", bodies).replace("BODY_RATED", "")
+    harness = harness.replace("#include <climits>", "#include <climits>\n#include <initializer_list>")
+    cpp = tmp_path / "entry-contract.cpp"
+    cpp.write_text(harness)
+    executable = tmp_path / "entry-contract"
+    built = subprocess.run([compiler, "-std=c++17", "-Wall", "-Wextra", "-Werror",
+        str(cpp), "-o", str(executable)], text=True, capture_output=True)
+    assert built.returncode == 0, built.stderr
+    ran = subprocess.run([str(executable)], text=True, capture_output=True)
+    if failure:
+        assert ran.returncode < 0 and f"failed:{failure}" in ran.stderr, ran.stderr
+    else:
+        assert ran.returncode == 0, ran.stderr

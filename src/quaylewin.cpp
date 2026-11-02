@@ -417,7 +417,7 @@ void QuayleWin::on_redraw() {
 }
 
 // Promoted historical seed; its superseded source path is Git provenance only.
-// ORIGINAL: 0x00496610 sub_496610 0x00496610-0x00496668
+// ORIGINAL: 0x00496610 sub_496610 0x00496610-0x00496668 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"reason":"Recover the direct-page entry through QuayleWinGlobal, its existing page/chapter members and inherited Win modal virtual; preserve the original guards and clamp without fixed-address globals or manual virtual dispatch.","evidence":["Pinned original 00496610 reads page at [ebp+8], tests multiplayer DWORD 0093F660 and calls QuayleWin::init at 004951A0; nonzero init skips state/modal writes.","Source-owned QuayleWinGlobal at 00872CB0: original page 00874DF8 and chapter 00874DF4 are its +2148/+2144 members, exposed by typed setters.","Original indirect call at 00496660 uses vtable +E4, Win::set_modal slot 57, with three zero arguments and ignored result.","Clamp order is page >=25 to24, otherwise page <-1 to-1. Historical seed src/recovered/units/00496610.cpp in Git preserves the prior unit-level mismatch and scaffold experiments; they are not current matching claims."]}
 // symbol    _sub_496610
 // size      88 bytes
@@ -436,7 +436,8 @@ extern "C" void __cdecl sub_496610(int page) {
             }
             QuayleWinGlobal.set_page(page);
             QuayleWinGlobal.set_chapter(-1);
-            QuayleWinGlobal.set_modal(0, 0, 0);
+            Win &modal_window = QuayleWinGlobal;
+            modal_window.set_modal(0, 0, 0);
         }
     }
 }
@@ -465,5 +466,6 @@ void __cdecl quayle(int faction_id) {
   }
   QuayleWinGlobal.set_page(rank);
   QuayleWinGlobal.set_chapter(-1);
-  QuayleWinGlobal.set_modal(0, 0, 0);
+  Win &modal_window = QuayleWinGlobal;
+  modal_window.set_modal(0, 0, 0);
 }

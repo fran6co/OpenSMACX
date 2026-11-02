@@ -40,7 +40,7 @@ def _sources():
     assert "LocalFactionSlot" not in cpp and "WizardTransTable" not in cpp
     wizard = _function(cpp, "void __cdecl tech_wizard_unk2(")
     accessor = _function(header, "unsigned char transparent_index() const")
-    assert "g_TECH_ICON_SPRITES[sprite_index].transparent_index()" in wizard
+    assert "g_TECH_ICON_SPRITES[index].transparent_index()" in wizard
     assert "static_cast<Buffer *>(canvas)" in wizard
     return wizard, accessor
 
