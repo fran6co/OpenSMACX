@@ -1132,8 +1132,6 @@ sea576daf:
     return SEA_JOIN_577071;
 }
 
-// Pinned enemy_move577443..579208. Complete tactical scan and action tail.
-// No ORIGINAL marker: integration fragment, not a separately mapped function.
 #ifndef TACTICAL_TAIL_HOST
 #include "stdafx.h"
 #include "alpha.h"
@@ -1156,373 +1154,9 @@ static bool tactical_low(int x, int y) {
 static int tactical_offense(int unit) {
     return Weapon[VehPrototypes[Vehs[unit].proto_id].weapon_id].offense_rating;
 }
-static int enemy_move_tactical_postscan(EnemyMoveFullFrame &enemy_frame, int combat_choice);
 
-// Shared final action/path owner. Keeps saved coordinates, rather than
-// assuming that prior movement/probe calls left them equal to Veh.x/y.
-static int enemy_move_tactical_action_tail(EnemyMoveFullFrame &enemy_frame) {
-    Veh &v=Vehs[enemy_frame.vehicle_id];
-    if (v.order < 0x18) v.state &= ~0x10000u;
-    if (v.order == 0 || v.order == 2) {
-        if (enemy_frame.local_40 != 2 || !enemy_frame.local_64 ||
-            (map_loc(enemy_frame.local_18,enemy_frame.local_14)->bit & 0x40000u)) {
-            v.order = (GameDataStateStorage.fields_.lock_masks_.enable_mask_ & (unsigned char)(1u << (enemy_frame.local_c & 31))) &&
-                      !(v.state & 0x200u) ? 0 : 2;
-            veh_skip(enemy_frame.vehicle_id);
-        } else action_home(enemy_frame.vehicle_id,0);
-    }
-    if (v.order == 0x18 && v.waypoint_x[0] == enemy_frame.local_18 && v.waypoint_y[0] == enemy_frame.local_14) {
-        v.order=0;
-        veh_skip(enemy_frame.vehicle_id);
-    }
-    if ((v.order != 0x18 && v.order != 0x58) ||
-        (enemy_frame.local_50 != 8 && enemy_frame.local_50 != 9)) return 0;
-    const int direction=Paths.move(enemy_frame.vehicle_id,(v.order & 0x40)?-1:v.faction_id);
-    if (direction<0) { v.order=0; return 0; }
-    const int x=xrange(enemy_frame.local_18+VehMoveDeltaX[direction]);
-    const int y=enemy_frame.local_14+VehMoveDeltaY[direction];
-    if (base_who(x,y)>=0) return 0;
-    for (int n=0;n<8;++n) {
-        const int nx=xrange(x+VehMoveDeltaX[n]);
-        const int ny=y+VehMoveDeltaY[n];
-        if (!on_map(nx,ny) || tactical_low(nx,ny)!=tactical_low(x,y)) continue;
-        if (((abs(ny-enemy_frame.local_14)+x_dist(nx,enemy_frame.local_18)) & ~1)<3) continue;
-        const int enemy=stack_fix(veh_at(nx,ny));
-        if (enemy<0 || Vehs[enemy].faction_id==enemy_frame.local_c ||
-            !(PlayersData[enemy_frame.local_c].diplo_treaties[Vehs[enemy].faction_id] & 0x10u))
-            continue;
-        if (tactical_offense(enemy) || stack_check(enemy,0xe,-1,-1,-1)) {
-            v.order=0;
-            return 0;
-        }
-    }
-    return 0;
-}
 
-static int enemy_move_tactical_tail(EnemyMoveFullFrame &enemy_frame) {
-    Veh &acting=Vehs[enemy_frame.vehicle_id];
-    PlayerData &player=PlayersData[enemy_frame.local_c];
-    int best=-9999;
-    int combat_choice=0;
-    const int initial_zone=zoc_sea(enemy_frame.local_18,enemy_frame.local_14,enemy_frame.local_c);
-    if (initial_zone || enemy_frame.local_c4 || enemy_frame.local_98 || enemy_frame.local_a8)
-        enemy_frame.local_98=0;
-    else {
-        enemy_frame.local_98=1;
-        if (enemy_frame.local_50==12) enemy_frame.local_98=0;
-    }
-    char bias_text[]="ENEMYBIAS";
-    const int rotation=rnd(9,bias_text);
-    for (int iteration=0;iteration<9;++iteration) {
-        const int pos=(iteration+rotation)%9;
-        const int x=xrange(enemy_frame.local_18+RadiusOffsetX[pos]);
-        const int y=enemy_frame.local_14+RadiusOffsetY[pos];
-        if (!on_map(x,y) || (!pos && !enemy_frame.local_94 && enemy_frame.local_50!=2)) continue;
-        const int low=tactical_low(x,y);
-        enemy_frame.local_84=low;
-        int unit=stack_fix(veh_at(x,y));
-        const int base=base_at(x,y);
-        const int region=map_loc(x,y)->region;
-        int owner=enemy_frame.local_70;
-        if (enemy_frame.local_40==1 && !low) {
-            if (unit<0 || owner==enemy_frame.local_c || !enemy_frame.local_74) continue;
-        } else if (!enemy_frame.local_74 && !low && enemy_frame.local_bc && !enemy_frame.local_40 &&
-            unit<0 && !(VehPrototypes[acting.proto_id].ability_flags & 4u) &&
-            VehPrototypes[acting.proto_id].plan!=11 &&
-            zoc_move(x,y,enemy_frame.local_c)) continue;
-        if (!tactical_offense(enemy_frame.vehicle_id) && !(unit>=0 && pos) && base<0 &&
-            !(acting.state & 8u)) {
-            owner=zoc_sea(x,y,enemy_frame.local_c);
-            enemy_frame.local_70=owner;
-            if (owner==1) continue;
-            if (owner>0) {
-                const unsigned treaty=player.diplo_treaties[owner-1];
-                if ((treaty & 1u) && (treaty & 0x2000000u)) continue;
-                if (enemy_frame.local_50!=11) { if(treaty & 0x10u)continue; }
-                else if (acting.moves_expended) {
-                    const int cost=hex_cost(enemy_frame.local_ac,enemy_frame.local_c,enemy_frame.local_18,enemy_frame.local_14,x,y,0);
-                    if (veh_moves(enemy_frame.vehicle_id)-cost<=0 && (treaty & 0x10u)) continue;
-                }
-            }
-        }
-        char score_text[]="ENEMY3";
-        int score=rnd(6,score_text);
-        if (low && !enemy_frame.local_40) {
-            bool eligible=base>=0 && has_abil(acting.proto_id,8);
-            if (!eligible && unit>=0 && Vehs[unit].faction_id==enemy_frame.local_c &&
-                stack_check(unit,8,-1,-1,-1)>=1 &&
-                Vehs[unit].dmg_incurred<=VehPrototypes[Vehs[unit].proto_id].reactor_id*2u) {
-                if (enemy_frame.local_50==12) { score+=99;eligible=true; }
-                else if (enemy_frame.local_50!=8) {
-                    if (enemy_frame.local_50!=9 && ((player.region_base_plan[enemy_frame.local_34]==7 &&
-                        enemy_frame.local_50<2) || (!player.region_total_bases[enemy_frame.local_34] &&
-                        !(player.unk_77[enemy_frame.local_34]&6u) &&
-                        player.region_base_plan[enemy_frame.local_34]>=3))) {score+=16;eligible=true;}
-                } else if (player.region_base_plan[enemy_frame.local_34]==7) {score+=16;eligible=true;}
-            }
-            if (!eligible)continue;
-        }
-        if (enemy_frame.local_74 && !low && !enemy_frame.local_40 && !enemy_frame.local_64 &&
-            !has_abil(acting.proto_id,8) && !stack_check(enemy_frame.vehicle_id,2,7,-1,-1)) continue;
-        if (enemy_frame.local_74==low && (acting.state&0x10000u) &&
-            (!enemy_frame.local_94 || (enemy_frame.local_94>=2 &&
-             (player.diplo_treaties[enemy_frame.local_94-1]&7u)))) {
-            if (pos) {
-                int angular=acting.facing-pos+1;
-                if (angular<0)angular=pos-acting.facing-1;
-                if (angular>=5)angular=8-angular;
-                score-=angular*4;
-                if (angular==4)score-=256;
-            } else score-=12;
-        }
-        if(enemy_frame.local_50!=12){if(enemy_frame.local_c0&&!pos)score+=8;}
-        else {
-            int coast_penalty=0;
-            if(zoc_veh(x,y,enemy_frame.local_c))coast_penalty=-32;
-            if(!is_coast(x,y,0))coast_penalty-=32;
-            if(!pos&&!coast_penalty){score+=(enemy_frame.local_c0?24:0)+8;
-                base_find(x,y,enemy_frame.local_c);if(BaseFindDist<=enemy_frame.local_64)score+=8;}
-            score+=coast_penalty;
-        }
-        if(player.flags&0x20000000u){const Map &t=*map_loc(x,y);
-            if(!(t.bit&0x100000u)){score+=(t.bit&0x20u)&&(t.climate&0xe0)>=0x40?16:8;
-                if(t.bit&0x2000u)score+=8;}}
-        owner=whose_territory(enemy_frame.local_c,x,y,0,0);
-        enemy_frame.local_70=owner;
-        if(owner>=0&&owner!=enemy_frame.local_c&&VehPrototypes[acting.proto_id].plan!=11){
-            const unsigned treaty=player.diplo_treaties[owner];
-            if(!(treaty&0xc10u)){
-                if((player.diplo_agenda[owner]&2u)||(treaty&0x100000u))continue;
-                if(treaty&4u)score-=6;
-                if(treaty&2u){score-=12;
-                    if(!(treaty&1u)&&(enemy_frame.local_74||!(treaty&0x2020u)||GameDataStateStorage.fields_.sunspot_duration_>0))continue;}
-            }
-        }
-        if(enemy_frame.local_a8&&enemy_frame.local_50==2&&unit>=0&&owner==enemy_frame.local_c&&zoc_veh(x,y,enemy_frame.local_c))
-            score-=stack_check(enemy_frame.vehicle_id,1,-1,-1,-1)*2;
-        if(enemy_frame.local_74&&!enemy_frame.local_40&&enemy_frame.local_64){
-            if(player.region_base_plan[region]==enemy_frame.local_50)score+=32;
-            if(player.region_base_plan[region]!=7)score+=32;
-            base_find(x,y);
-            score+=32-BaseFindDist-stack_check(unit,1,-1,-1,-1);
-        }
-        if(goody_at(x,y)){
-            if(enemy_frame.local_50==7&&stack_check(enemy_frame.vehicle_id,1,-1,-1,-1)>1)continue;
-            score+=99;
-        }
-        if(!enemy_frame.local_74&&!low&&enemy_frame.local_34!=region&&player.region_total_bases[enemy_frame.local_34]){
-            bool permit=false;
-            if(tactical_offense(enemy_frame.vehicle_id)){
-                if(enemy_frame.local_50==3)permit=true;
-                else if(enemy_frame.local_88>=3)permit=!(player.unk_77[enemy_frame.local_34]&0x20u);
-            } else if(enemy_frame.local_50==8)permit=!player.unk_82[enemy_frame.local_34];
-            if(!permit)continue;
-        }
-        if(!(enemy_frame.local_98&&enemy_frame.local_b0)){
-            const int policy=enemy_frame.local_a8?2:enemy_frame.local_50;
-            bool friendly=unit>=0&&(Vehs[unit].faction_id==enemy_frame.local_c||
-                (player.diplo_treaties[Vehs[unit].faction_id]&1u));
-            if(!pos&&stack_check(unit,1,unit,-1,-1)==1)friendly=false;
-            // Native retains an unguarded Vehs[unit] read on this arm.
-            if(enemy_frame.local_74&&!enemy_frame.local_40&&policy!=8&&Vehs[unit].faction_id==enemy_frame.local_c){
-                if(stack_check(unit,2,8,-1,-1))score+=8;
-                if(policy<=1||policy==11){if(player.unk_77[region]&0x20u)score+=16;
-                    if(player.unk_77[region]&0x40u)score+=16;}}
-            switch(policy){
-            case 0:
-                if(friendly&&!enemy_frame.local_98)score+=stack_check(unit,2,2,-1,-1)*4;
-                score-=stack_check(unit,2,0,-1,-1)*2;
-                score-=hex_cost(enemy_frame.local_ac,enemy_frame.local_c,enemy_frame.local_18,enemy_frame.local_14,x,y,0)/(int)Rules.move_rate_roads;
-                break;
-            case 1:if(zoc_veh(x,y,enemy_frame.local_c))score+=defense_value(enemy_frame.local_c,x,y,enemy_frame.vehicle_id,-1)*2;break;
-            case 2:
-                if(zoc_veh(x,y,enemy_frame.local_c))score+=defense_value(enemy_frame.local_c,x,y,enemy_frame.vehicle_id,-1)*2;
-                if(friendly&&!enemy_frame.local_98)score+=stack_check(unit,2,0,-1,-1)*4-stack_check(unit,2,2,-1,-1)*2;
-                break;
-            case 3:score-=hex_cost(enemy_frame.local_ac,enemy_frame.local_c,enemy_frame.local_18,enemy_frame.local_14,x,y,0)/(int)Rules.move_rate_roads;break;
-            case 6:score+=stack_check(unit,2,7,-1,-1)*4-stack_check(unit,2,6,-1,-1)*2;break;
-            case 7:if(!enemy_frame.local_98)score+=stack_check(unit,2,6,-1,-1)*4;
-                score-=stack_check(unit,2,7,-1,-1)*8;break;
-            case 8:
-                if(enemy_frame.local_74&&zoc_sea(x,y,enemy_frame.local_c))continue;
-                if(owner>=0&&owner!=enemy_frame.local_c&&(player.diplo_treaties[owner]&3u)&&acting.order!=0x18)score-=16;
-                if(enemy_frame.local_74&&player.region_base_plan[region]==8){score+=Continents[region].open_terrain+16;
-                    if(!(player.unk_77[region]&0x20u))score+=8;
-                    if(!(player.unk_77[region]&0x10u))score+=16;}
-                break;
-            case 11:if(friendly)score+=stack_check(unit,0xe,-1,-1,-1)*2;break;
-            }
-            if((map_loc(enemy_frame.local_18,enemy_frame.local_14)->climate&0xe0)<(map_loc(x,y)->climate&0xe0)&&
-                (Rules.combat_pct_atk_higher_elev||Rules.combat_pen_pct_atk_lwr_elev))score+=2;
-        }
-        int combat=0;
-        if(unit<0){
-            if(base>=0&&Bases[base].faction_id_current!=enemy_frame.local_c&&
-                !(player.diplo_treaties[owner]&1u)){
-                const int enemy= Bases[base].faction_id_current;
-                if(enemy_frame.local_50==11&&!(VehPrototypes[acting.proto_id].ability_flags&0x10000000u)&&has_project(15,enemy))continue;
-                const unsigned treaty=player.diplo_treaties[owner];
-                if((treaty&7u)&&!(treaty&0x800u)){
-                    if(!(treaty&0x20u))continue;
-                    if(treaty&2u){char text[]="ENEMY4";
-                        if(reputation(owner,enemy_frame.local_c)<rnd(6,text)-player.ai_fight)continue;}}
-                if(!tactical_offense(enemy_frame.vehicle_id))continue;
-                combat=1;score+=9999;
-            }
-            if((map_loc(x,y)->bit&0x2000u)&&want_monolith(enemy_frame.vehicle_id))score+=99;
-        } else {
-            const int enemy=Vehs[unit].faction_id;
-            enemy_frame.local_70=enemy;
-            const unsigned treaty=player.diplo_treaties[enemy];
-            const bool direct= enemy_frame.local_40!=2 || !Chassis[VehPrototypes[acting.proto_id].chassis_id].range ||
-                !acting.terraforming_turns || acting.order!=0x18 ||
-                (acting.waypoint_x[0]==x&&acting.waypoint_y[0]==y);
-            // Raw57813E/57814E skips this candidate immediately when the
-            // ranged-air waypoint differs; Kuna's outer else is misleading.
-            if(!direct)continue;
-            const bool single_colony=stack_check(unit,1,-1,-1,-1)==1&&
-                !(treaty&0x11u)&&VehPrototypes[Vehs[unit].proto_id].plan==12&&
-                tactical_offense(enemy_frame.vehicle_id)&&base<0;
-            if(!single_colony){
-                if(enemy_frame.local_50==11&&enemy==enemy_frame.local_c)goto tactical_finish_score;
-                bool handled=false;
-                if(enemy_frame.local_50==11&&stack_check(unit,2,11,-1,-1)&&
-                    (!(treaty&1u)||!(treaty&0x2000000u))){
-                    combat=1;
-                    int odds=battle_fight(enemy_frame.vehicle_id,pos-1,0,0,&unit);
-                    if(whose_territory(enemy_frame.local_c,x,y,0,0)!=enemy_frame.local_c){
-                        if(base<0&&(treaty&7u))odds/=2;
-                    } else odds*=2;
-                    if(odds>=8){score+=odds;handled=true;}
-                    else if(base<0)continue;
-                    else handled=true;
-                }
-                if(!handled&&enemy!=enemy_frame.local_c&&!(treaty&1u)){
-                    if(enemy_frame.local_74&&!low&&enemy_frame.local_40==1&&!can_arty(enemy_frame.local_ac,1))continue;
-                    const bool protected_probe=stack_check(unit,1,-1,-1,-1)==1&&
-                        VehPrototypes[Vehs[unit].proto_id].plan==11&&
-                        (treaty&6u)&&whose_territory(enemy_frame.local_c,Vehs[unit].x,Vehs[unit].y,0,0)==enemy_frame.local_c;
-                    if(protected_probe){combat=1;score+=99;}
-                    else {
-                        if(enemy_frame.local_50==7&&stack_check(enemy_frame.vehicle_id,1,-1,-1,-1)>1)continue;
-                        if(!(enemy_frame.local_50<8||enemy_frame.local_50==11))continue;
-                        if(enemy_frame.local_74&&!enemy_frame.local_40&&!has_abil(acting.proto_id,8))continue;
-                        const int artillery=stack_check(unit,3,2,-1,-1);
-                        if(artillery&&!has_abil(acting.proto_id,0x20)&&base<0&&
-                            !(map_loc(x,y)->bit&0x40000u)&&!stack_check(unit,6,0x80,-1,-1))continue;
-                        if(enemy_frame.local_50!=11){
-                            if(tactical_offense(enemy_frame.vehicle_id)&&(treaty&0x810u)){
-                                combat=1;
-                                int odds=battle_fight(enemy_frame.vehicle_id,pos-1,0,0,&unit);
-                                if(enemy_frame.local_b4|| (veh_moves(enemy_frame.vehicle_id)<(int)Rules.move_rate_roads&&enemy_frame.local_ac!=8)||
-                                    (!enemy_frame.local_64&&enemy_frame.local_50>=1)){
-                                    const int reverse=battle_fight(unit,(pos+3)&7,0,0,0);
-                                    if(reverse){const int damage=enemy_frame.local_b4?enemy_frame.local_b4+1:0;
-                                        if((unsigned)(4-damage)*reverse<(unsigned)odds*4u||reverse<=7||odds<enemy_frame.local_b4+6)continue;}
-                                    else if(stack_check(enemy_frame.vehicle_id,1,-1,-1,-1)==1&&
-                                        VehPrototypes[Vehs[unit].proto_id].plan!=11)continue;
-                                }
-                                odds=compute_odds(odds,enemy_frame.local_c,enemy_frame.vehicle_id,unit,base);
-                                if(!enemy_frame.local_70&&(enemy_frame.local_5c<0||!Bases[enemy_frame.local_5c].eco_damage)&&
-                                    Vehs[unit].order_auto_type!=enemy_frame.local_c){
-                                    odds*=player.soc_effect_active.values_[SocialEffect::PLANET]>=3?8:2;}
-                                if(odds>=8){score+=odds;handled=true;}
-                            }
-                        } else if(stack_check(unit,1,-1,-1,-1)<=1&&
-                            base_who(Vehs[unit].x,Vehs[unit].y)<0){
-                            const int before=GameDataStateStorage.fields_.vehicle_current_count_;
-                            if(probe(enemy_frame.vehicle_id,-1,unit,1)){
-                                if(before!=GameDataStateStorage.fields_.vehicle_current_count_)return 1;
-                                best=999;enemy_frame.local_80=pos-1;combat_choice=1;
-                            }
-                        }
-                        if(!handled)continue;
-                    }
-                }
-            } else {
-                char intercept_text[]="ENEMYMISC";
-                if(!(treaty&0x20u)&&whose_territory(enemy_frame.local_c,x,y,0,0)!=enemy_frame.local_c&&
-                    !rnd(2,intercept_text))continue;
-                combat=1;score+=8;
-            }
-        }
-tactical_finish_score:
-        if((enemy_frame.local_98||enemy_frame.local_b0)&&pos&&
-            (enemy_frame.local_40==2||low==(enemy_frame.local_40==1))){
-            if(enemy_frame.local_b0){base_find(x,y,enemy_frame.local_c);score+=BaseFindDist*2;}
-            for(int step=0;step<8;++step){
-                const int rx=xrange(x+RadiusOffsetX[pos]*step);
-                const int ry=y+RadiusOffsetY[pos]*step;
-                if(!on_map(rx,ry)||(enemy_frame.local_40!=2&&tactical_low(rx,ry)!=(enemy_frame.local_40==1)))continue;
-                for(int n=0;n<8;++n){
-                    const int nx=xrange(rx+VehMoveDeltaX[n]);const int ny=ry+VehMoveDeltaY[n];
-                    if(!on_map(nx,ny))continue;
-                    const Map &tile=*map_loc(nx,ny);
-                    if((player.flags&0x20000000u)&&!(tile.bit&0x100000u)){
-                        score+=(tile.bit&0x20u)&&(tile.climate&0xe0)>=0x40?16:8;
-                        if(tile.bit&0x2000u)score+=8;}
-                    if(!is_known(nx,ny,enemy_frame.local_c)){score+=enemy_frame.local_b0*2+2;
-                        if(enemy_frame.local_40==1&&(tile.climate&0xe0)>=0x60&&!player.region_total_bases[tile.region])score+=8;}
-                    if(goody_at(nx,ny))score+=enemy_frame.local_b0*2+2;
-                    if(enemy_frame.local_50==8){const int territory=whose_territory(enemy_frame.local_c,nx,ny,0,0);
-                        enemy_frame.local_70=territory;
-                        if(territory>=0&&territory!=enemy_frame.local_c&&(player.diplo_treaties[territory]&3u))score-=6;}
-                }
-            }
-        }
-        if(best<score){enemy_frame.local_80=pos-1;best=score;combat_choice=combat;}
-    }
-    return enemy_move_tactical_postscan(enemy_frame,combat_choice);
-}
 
-//578AE1 is a loop increment, NOT a whole-function dispatch fallback. Every
-//surviving scan ends here with the original winner and combat flag live.
-static int enemy_move_tactical_postscan(EnemyMoveFullFrame &enemy_frame,int combat_choice) {
-    Veh &v=Vehs[enemy_frame.vehicle_id];
-    PlayerData &player=PlayersData[enemy_frame.local_c];
-    if(combat_choice){
-        if(planet_buster(enemy_frame.vehicle_id)){enemy_frame.local_80=-1;v.order=0;}
-    } else {
-        if(enemy_frame.local_8c){enemy_frame.local_80=-1;v.order=0;}
-        if(enemy_frame.local_c4&&v.order==0x18)return enemy_move_tactical_action_tail(enemy_frame);
-        if(can_arty(enemy_frame.local_ac,1)&&!v.order&&
-            (enemy_frame.local_40==1 || !tactical_low(enemy_frame.local_18,enemy_frame.local_14) || !enemy_frame.local_7c)){
-            for(int pos=0;pos<25;++pos){
-                const int x=xrange(enemy_frame.local_18+RadiusOffsetX[pos]);
-                const int y=enemy_frame.local_14+RadiusOffsetY[pos];
-                if(!on_map(x,y)||tactical_low(x,y)||anything_at(x,y)>=0)continue;
-                const int owner=whose_territory(enemy_frame.local_c,x,y,0,0);
-                if(owner<0||owner==enemy_frame.local_c||!(player.diplo_treaties[owner]&0x10u))continue;
-                const int region=map_loc(x,y)->region;
-                if(player.region_total_bases[region]&&player.region_base_plan[region]!=2&&!enemy_frame.local_40)continue;
-                const unsigned bits=map_loc(enemy_frame.local_18,enemy_frame.local_14)->bit;
-                if(!(bits&0x1000u)||!(bits&0x81208854u))continue;
-                if(!enemy_frame.local_a0){
-                    char text[]="Enemy doing ARTY DESTROY 2";
-                    log_say(text,enemy_frame.vehicle_id,x,y);
-                    action_destroy(enemy_frame.vehicle_id,0,x,y);
-                    return 1;
-                }
-                char text[]="Auto sending DESTROY2 message";
-                log_say(text,enemy_frame.vehicle_id,x,y);
-                message_data(0x2413,enemy_frame.vehicle_id,x,y,0,0);
-                NetDaemonNet.await_exec(1);
-                return 1;
-            }
-        }
-    }
-    v.move_to_ai_type='x';
-    if(enemy_frame.local_80>=0){
-        const int x=xrange(enemy_frame.local_18+VehMoveDeltaX[enemy_frame.local_80]);
-        const int y=enemy_frame.local_14+VehMoveDeltaY[enemy_frame.local_80];
-        v.order=0x58;v.waypoint_x[0]=(short)x;v.waypoint_y[0]=(short)y;
-    } else {
-        //578B34 falls through here after the absent direction.
-        v.state&=~0x10000u;
-        v.order=0;
-    }
-    return enemy_move_tactical_action_tail(enemy_frame);
-}
 
 // Complete577361..577443 bridge. Include aftertactical_tail.cpp.
 // Returns1 for direct578F46,0 for tactical577443. Does not execute either.
@@ -1537,21 +1171,6 @@ static void enemy_move_prepare_empty_region_goal(EnemyMoveFullFrame &enemy_frame
             add_goal(enemy_frame.local_c,7,1,x,y,-1);enemy_frame.local_c0=1;return;
         }
     }
-}
-static int enemy_move_pre_tactical(EnemyMoveFullFrame &enemy_frame){
-    Veh &v=Vehs[enemy_frame.vehicle_id];
-    if(v.order==0x18&&!enemy_frame.local_84&&!enemy_frame.local_8c){
-        if(!zoc_veh(enemy_frame.local_18,enemy_frame.local_14,enemy_frame.local_c))return 1;
-        const int distance=abs(enemy_frame.local_14-v.waypoint_y[0])+x_dist(enemy_frame.local_18,v.waypoint_x[0]);
-        if((distance&~1)==2){
-            enemy_frame.local_70=anything_at(v.waypoint_x[0],v.waypoint_y[0]);
-            if(enemy_frame.local_70>=0&&enemy_frame.local_70!=enemy_frame.local_c&&
-                !(PlayersData[enemy_frame.local_c].diplo_treaties[enemy_frame.local_70]&1u)&&
-                v.move_to_ai_type!='p')v.order=0;
-        }
-    }
-    if(v.order==0x18)enemy_frame.local_c4=1;
-    return 0;
 }
 
 // Pinned57302D..5741CF continuation after57300C's base-loop backedge finishes.
@@ -4740,8 +4359,350 @@ label_57717f:
         }
     }
 label_577361:
-    if (enemy_move_pre_tactical(f)) goto label_578f46;
-    return enemy_move_tactical_tail(f);
+    // Native577361..577443 continues into the tactical scan in this owner.
+    {
+
+    Veh &v=Vehs[f.vehicle_id];
+    if(v.order==0x18&&!f.local_84&&!f.local_8c){
+        if(!zoc_veh(f.local_18,f.local_14,f.local_c))goto label_578f46;
+        const int distance=abs(f.local_14-v.waypoint_y[0])+x_dist(f.local_18,v.waypoint_x[0]);
+        if((distance&~1)==2){
+            f.local_70=anything_at(v.waypoint_x[0],v.waypoint_y[0]);
+            if(f.local_70>=0&&f.local_70!=f.local_c&&
+                !(PlayersData[f.local_c].diplo_treaties[f.local_70]&1u)&&
+                v.move_to_ai_type!='p')v.order=0;
+        }
+    }
+    if(v.order==0x18)f.local_c4=1;
+    }
+// Pinned enemy_move577443..579208. Complete tactical scan and action tail.
+// No ORIGINAL marker: integration fragment, not a separately mapped function.
+    // Native577443..578AE1 scan and578AF1postscan share this frame.
+    {
+
+    Veh &acting=Vehs[f.vehicle_id];
+    PlayerData &player=PlayersData[f.local_c];
+    int best=-9999;
+    int combat_choice=0;
+    const int initial_zone=zoc_sea(f.local_18,f.local_14,f.local_c);
+    if (initial_zone || f.local_c4 || f.local_98 || f.local_a8)
+        f.local_98=0;
+    else {
+        f.local_98=1;
+        if (f.local_50==12) f.local_98=0;
+    }
+    char bias_text[]="ENEMYBIAS";
+    const int rotation=rnd(9,bias_text);
+    for (int iteration=0;iteration<9;++iteration) {
+        const int pos=(iteration+rotation)%9;
+        const int x=xrange(f.local_18+RadiusOffsetX[pos]);
+        const int y=f.local_14+RadiusOffsetY[pos];
+        if (!on_map(x,y) || (!pos && !f.local_94 && f.local_50!=2)) continue;
+        const int low=tactical_low(x,y);
+        f.local_84=low;
+        int unit=stack_fix(veh_at(x,y));
+        const int base=base_at(x,y);
+        const int region=map_loc(x,y)->region;
+        int owner=f.local_70;
+        if (f.local_40==1 && !low) {
+            if (unit<0 || owner==f.local_c || !f.local_74) continue;
+        } else if (!f.local_74 && !low && f.local_bc && !f.local_40 &&
+            unit<0 && !(VehPrototypes[acting.proto_id].ability_flags & 4u) &&
+            VehPrototypes[acting.proto_id].plan!=11 &&
+            zoc_move(x,y,f.local_c)) continue;
+        if (!tactical_offense(f.vehicle_id) && !(unit>=0 && pos) && base<0 &&
+            !(acting.state & 8u)) {
+            owner=zoc_sea(x,y,f.local_c);
+            f.local_70=owner;
+            if (owner==1) continue;
+            if (owner>0) {
+                const unsigned treaty=player.diplo_treaties[owner-1];
+                if ((treaty & 1u) && (treaty & 0x2000000u)) continue;
+                if (f.local_50!=11) { if(treaty & 0x10u)continue; }
+                else if (acting.moves_expended) {
+                    const int cost=hex_cost(f.local_ac,f.local_c,f.local_18,f.local_14,x,y,0);
+                    if (veh_moves(f.vehicle_id)-cost<=0 && (treaty & 0x10u)) continue;
+                }
+            }
+        }
+        char score_text[]="ENEMY3";
+        int score=rnd(6,score_text);
+        if (low && !f.local_40) {
+            bool eligible=base>=0 && has_abil(acting.proto_id,8);
+            if (!eligible && unit>=0 && Vehs[unit].faction_id==f.local_c &&
+                stack_check(unit,8,-1,-1,-1)>=1 &&
+                Vehs[unit].dmg_incurred<=VehPrototypes[Vehs[unit].proto_id].reactor_id*2u) {
+                if (f.local_50==12) { score+=99;eligible=true; }
+                else if (f.local_50!=8) {
+                    if (f.local_50!=9 && ((player.region_base_plan[f.local_34]==7 &&
+                        f.local_50<2) || (!player.region_total_bases[f.local_34] &&
+                        !(player.unk_77[f.local_34]&6u) &&
+                        player.region_base_plan[f.local_34]>=3))) {score+=16;eligible=true;}
+                } else if (player.region_base_plan[f.local_34]==7) {score+=16;eligible=true;}
+            }
+            if (!eligible)continue;
+        }
+        if (f.local_74 && !low && !f.local_40 && !f.local_64 &&
+            !has_abil(acting.proto_id,8) && !stack_check(f.vehicle_id,2,7,-1,-1)) continue;
+        if (f.local_74==low && (acting.state&0x10000u) &&
+            (!f.local_94 || (f.local_94>=2 &&
+             (player.diplo_treaties[f.local_94-1]&7u)))) {
+            if (pos) {
+                int angular=acting.facing-pos+1;
+                if (angular<0)angular=pos-acting.facing-1;
+                if (angular>=5)angular=8-angular;
+                score-=angular*4;
+                if (angular==4)score-=256;
+            } else score-=12;
+        }
+        if(f.local_50!=12){if(f.local_c0&&!pos)score+=8;}
+        else {
+            int coast_penalty=0;
+            if(zoc_veh(x,y,f.local_c))coast_penalty=-32;
+            if(!is_coast(x,y,0))coast_penalty-=32;
+            if(!pos&&!coast_penalty){score+=(f.local_c0?24:0)+8;
+                base_find(x,y,f.local_c);if(BaseFindDist<=f.local_64)score+=8;}
+            score+=coast_penalty;
+        }
+        if(player.flags&0x20000000u){const Map &t=*map_loc(x,y);
+            if(!(t.bit&0x100000u)){score+=(t.bit&0x20u)&&(t.climate&0xe0)>=0x40?16:8;
+                if(t.bit&0x2000u)score+=8;}}
+        owner=whose_territory(f.local_c,x,y,0,0);
+        f.local_70=owner;
+        if(owner>=0&&owner!=f.local_c&&VehPrototypes[acting.proto_id].plan!=11){
+            const unsigned treaty=player.diplo_treaties[owner];
+            if(!(treaty&0xc10u)){
+                if((player.diplo_agenda[owner]&2u)||(treaty&0x100000u))continue;
+                if(treaty&4u)score-=6;
+                if(treaty&2u){score-=12;
+                    if(!(treaty&1u)&&(f.local_74||!(treaty&0x2020u)||GameDataStateStorage.fields_.sunspot_duration_>0))continue;}
+            }
+        }
+        if(f.local_a8&&f.local_50==2&&unit>=0&&owner==f.local_c&&zoc_veh(x,y,f.local_c))
+            score-=stack_check(f.vehicle_id,1,-1,-1,-1)*2;
+        if(f.local_74&&!f.local_40&&f.local_64){
+            if(player.region_base_plan[region]==f.local_50)score+=32;
+            if(player.region_base_plan[region]!=7)score+=32;
+            base_find(x,y);
+            score+=32-BaseFindDist-stack_check(unit,1,-1,-1,-1);
+        }
+        if(goody_at(x,y)){
+            if(f.local_50==7&&stack_check(f.vehicle_id,1,-1,-1,-1)>1)continue;
+            score+=99;
+        }
+        if(!f.local_74&&!low&&f.local_34!=region&&player.region_total_bases[f.local_34]){
+            bool permit=false;
+            if(tactical_offense(f.vehicle_id)){
+                if(f.local_50==3)permit=true;
+                else if(f.local_88>=3)permit=!(player.unk_77[f.local_34]&0x20u);
+            } else if(f.local_50==8)permit=!player.unk_82[f.local_34];
+            if(!permit)continue;
+        }
+        if(!(f.local_98&&f.local_b0)){
+            const int policy=f.local_a8?2:f.local_50;
+            bool friendly=unit>=0&&(Vehs[unit].faction_id==f.local_c||
+                (player.diplo_treaties[Vehs[unit].faction_id]&1u));
+            if(!pos&&stack_check(unit,1,unit,-1,-1)==1)friendly=false;
+            // Native retains an unguarded Vehs[unit] read on this arm.
+            if(f.local_74&&!f.local_40&&policy!=8&&Vehs[unit].faction_id==f.local_c){
+                if(stack_check(unit,2,8,-1,-1))score+=8;
+                if(policy<=1||policy==11){if(player.unk_77[region]&0x20u)score+=16;
+                    if(player.unk_77[region]&0x40u)score+=16;}}
+            switch(policy){
+            case 0:
+                if(friendly&&!f.local_98)score+=stack_check(unit,2,2,-1,-1)*4;
+                score-=stack_check(unit,2,0,-1,-1)*2;
+                score-=hex_cost(f.local_ac,f.local_c,f.local_18,f.local_14,x,y,0)/(int)Rules.move_rate_roads;
+                break;
+            case 1:if(zoc_veh(x,y,f.local_c))score+=defense_value(f.local_c,x,y,f.vehicle_id,-1)*2;break;
+            case 2:
+                if(zoc_veh(x,y,f.local_c))score+=defense_value(f.local_c,x,y,f.vehicle_id,-1)*2;
+                if(friendly&&!f.local_98)score+=stack_check(unit,2,0,-1,-1)*4-stack_check(unit,2,2,-1,-1)*2;
+                break;
+            case 3:score-=hex_cost(f.local_ac,f.local_c,f.local_18,f.local_14,x,y,0)/(int)Rules.move_rate_roads;break;
+            case 6:score+=stack_check(unit,2,7,-1,-1)*4-stack_check(unit,2,6,-1,-1)*2;break;
+            case 7:if(!f.local_98)score+=stack_check(unit,2,6,-1,-1)*4;
+                score-=stack_check(unit,2,7,-1,-1)*8;break;
+            case 8:
+                if(f.local_74&&zoc_sea(x,y,f.local_c))continue;
+                if(owner>=0&&owner!=f.local_c&&(player.diplo_treaties[owner]&3u)&&acting.order!=0x18)score-=16;
+                if(f.local_74&&player.region_base_plan[region]==8){score+=Continents[region].open_terrain+16;
+                    if(!(player.unk_77[region]&0x20u))score+=8;
+                    if(!(player.unk_77[region]&0x10u))score+=16;}
+                break;
+            case 11:if(friendly)score+=stack_check(unit,0xe,-1,-1,-1)*2;break;
+            }
+            if((map_loc(f.local_18,f.local_14)->climate&0xe0)<(map_loc(x,y)->climate&0xe0)&&
+                (Rules.combat_pct_atk_higher_elev||Rules.combat_pen_pct_atk_lwr_elev))score+=2;
+        }
+        int combat=0;
+        if(unit<0){
+            if(base>=0&&Bases[base].faction_id_current!=f.local_c&&
+                !(player.diplo_treaties[owner]&1u)){
+                const int enemy= Bases[base].faction_id_current;
+                if(f.local_50==11&&!(VehPrototypes[acting.proto_id].ability_flags&0x10000000u)&&has_project(15,enemy))continue;
+                const unsigned treaty=player.diplo_treaties[owner];
+                if((treaty&7u)&&!(treaty&0x800u)){
+                    if(!(treaty&0x20u))continue;
+                    if(treaty&2u){char text[]="ENEMY4";
+                        if(reputation(owner,f.local_c)<rnd(6,text)-player.ai_fight)continue;}}
+                if(!tactical_offense(f.vehicle_id))continue;
+                combat=1;score+=9999;
+            }
+            if((map_loc(x,y)->bit&0x2000u)&&want_monolith(f.vehicle_id))score+=99;
+        } else {
+            const int enemy=Vehs[unit].faction_id;
+            f.local_70=enemy;
+            const unsigned treaty=player.diplo_treaties[enemy];
+            const bool direct= f.local_40!=2 || !Chassis[VehPrototypes[acting.proto_id].chassis_id].range ||
+                !acting.terraforming_turns || acting.order!=0x18 ||
+                (acting.waypoint_x[0]==x&&acting.waypoint_y[0]==y);
+            // Raw57813E/57814E skips this candidate immediately when the
+            // ranged-air waypoint differs; Kuna's outer else is misleading.
+            if(!direct)continue;
+            const bool single_colony=stack_check(unit,1,-1,-1,-1)==1&&
+                !(treaty&0x11u)&&VehPrototypes[Vehs[unit].proto_id].plan==12&&
+                tactical_offense(f.vehicle_id)&&base<0;
+            if(!single_colony){
+                if(f.local_50==11&&enemy==f.local_c)goto tactical_finish_score;
+                bool handled=false;
+                if(f.local_50==11&&stack_check(unit,2,11,-1,-1)&&
+                    (!(treaty&1u)||!(treaty&0x2000000u))){
+                    combat=1;
+                    int odds=battle_fight(f.vehicle_id,pos-1,0,0,&unit);
+                    if(whose_territory(f.local_c,x,y,0,0)!=f.local_c){
+                        if(base<0&&(treaty&7u))odds/=2;
+                    } else odds*=2;
+                    if(odds>=8){score+=odds;handled=true;}
+                    else if(base<0)continue;
+                    else handled=true;
+                }
+                if(!handled&&enemy!=f.local_c&&!(treaty&1u)){
+                    if(f.local_74&&!low&&f.local_40==1&&!can_arty(f.local_ac,1))continue;
+                    const bool protected_probe=stack_check(unit,1,-1,-1,-1)==1&&
+                        VehPrototypes[Vehs[unit].proto_id].plan==11&&
+                        (treaty&6u)&&whose_territory(f.local_c,Vehs[unit].x,Vehs[unit].y,0,0)==f.local_c;
+                    if(protected_probe){combat=1;score+=99;}
+                    else {
+                        if(f.local_50==7&&stack_check(f.vehicle_id,1,-1,-1,-1)>1)continue;
+                        if(!(f.local_50<8||f.local_50==11))continue;
+                        if(f.local_74&&!f.local_40&&!has_abil(acting.proto_id,8))continue;
+                        const int artillery=stack_check(unit,3,2,-1,-1);
+                        if(artillery&&!has_abil(acting.proto_id,0x20)&&base<0&&
+                            !(map_loc(x,y)->bit&0x40000u)&&!stack_check(unit,6,0x80,-1,-1))continue;
+                        if(f.local_50!=11){
+                            if(tactical_offense(f.vehicle_id)&&(treaty&0x810u)){
+                                combat=1;
+                                int odds=battle_fight(f.vehicle_id,pos-1,0,0,&unit);
+                                if(f.local_b4|| (veh_moves(f.vehicle_id)<(int)Rules.move_rate_roads&&f.local_ac!=8)||
+                                    (!f.local_64&&f.local_50>=1)){
+                                    const int reverse=battle_fight(unit,(pos+3)&7,0,0,0);
+                                    if(reverse){const int damage=f.local_b4?f.local_b4+1:0;
+                                        if((unsigned)(4-damage)*reverse<(unsigned)odds*4u||reverse<=7||odds<f.local_b4+6)continue;}
+                                    else if(stack_check(f.vehicle_id,1,-1,-1,-1)==1&&
+                                        VehPrototypes[Vehs[unit].proto_id].plan!=11)continue;
+                                }
+                                odds=compute_odds(odds,f.local_c,f.vehicle_id,unit,base);
+                                if(!f.local_70&&(f.local_5c<0||!Bases[f.local_5c].eco_damage)&&
+                                    Vehs[unit].order_auto_type!=f.local_c){
+                                    odds*=player.soc_effect_active.values_[SocialEffect::PLANET]>=3?8:2;}
+                                if(odds>=8){score+=odds;handled=true;}
+                            }
+                        } else if(stack_check(unit,1,-1,-1,-1)<=1&&
+                            base_who(Vehs[unit].x,Vehs[unit].y)<0){
+                            const int before=GameDataStateStorage.fields_.vehicle_current_count_;
+                            if(probe(f.vehicle_id,-1,unit,1)){
+                                if(before!=GameDataStateStorage.fields_.vehicle_current_count_)return 1;
+                                best=999;f.local_80=pos-1;combat_choice=1;
+                            }
+                        }
+                        if(!handled)continue;
+                    }
+                }
+            } else {
+                char intercept_text[]="ENEMYMISC";
+                if(!(treaty&0x20u)&&whose_territory(f.local_c,x,y,0,0)!=f.local_c&&
+                    !rnd(2,intercept_text))continue;
+                combat=1;score+=8;
+            }
+        }
+tactical_finish_score:
+        if((f.local_98||f.local_b0)&&pos&&
+            (f.local_40==2||low==(f.local_40==1))){
+            if(f.local_b0){base_find(x,y,f.local_c);score+=BaseFindDist*2;}
+            for(int step=0;step<8;++step){
+                const int rx=xrange(x+RadiusOffsetX[pos]*step);
+                const int ry=y+RadiusOffsetY[pos]*step;
+                if(!on_map(rx,ry)||(f.local_40!=2&&tactical_low(rx,ry)!=(f.local_40==1)))continue;
+                for(int n=0;n<8;++n){
+                    const int nx=xrange(rx+VehMoveDeltaX[n]);const int ny=ry+VehMoveDeltaY[n];
+                    if(!on_map(nx,ny))continue;
+                    const Map &tile=*map_loc(nx,ny);
+                    if((player.flags&0x20000000u)&&!(tile.bit&0x100000u)){
+                        score+=(tile.bit&0x20u)&&(tile.climate&0xe0)>=0x40?16:8;
+                        if(tile.bit&0x2000u)score+=8;}
+                    if(!is_known(nx,ny,f.local_c)){score+=f.local_b0*2+2;
+                        if(f.local_40==1&&(tile.climate&0xe0)>=0x60&&!player.region_total_bases[tile.region])score+=8;}
+                    if(goody_at(nx,ny))score+=f.local_b0*2+2;
+                    if(f.local_50==8){const int territory=whose_territory(f.local_c,nx,ny,0,0);
+                        f.local_70=territory;
+                        if(territory>=0&&territory!=f.local_c&&(player.diplo_treaties[territory]&3u))score-=6;}
+                }
+            }
+        }
+        if(best<score){f.local_80=pos-1;best=score;combat_choice=combat;}
+    }
+//578AE1 is a loop increment, NOT a whole-function dispatch fallback. Every
+//surviving scan ends here with the original winner and combat flag live.
+    // The native scan falls into its postscan with combat_choice live.
+    {
+
+    Veh &v=Vehs[f.vehicle_id];
+    PlayerData &player=PlayersData[f.local_c];
+    if(combat_choice){
+        if(planet_buster(f.vehicle_id)){f.local_80=-1;v.order=0;}
+    } else {
+        if(f.local_8c){f.local_80=-1;v.order=0;}
+        if(f.local_c4&&v.order==0x18)goto label_578f46;
+        if(can_arty(f.local_ac,1)&&!v.order&&
+            (f.local_40==1 || !tactical_low(f.local_18,f.local_14) || !f.local_7c)){
+            for(int pos=0;pos<25;++pos){
+                const int x=xrange(f.local_18+RadiusOffsetX[pos]);
+                const int y=f.local_14+RadiusOffsetY[pos];
+                if(!on_map(x,y)||tactical_low(x,y)||anything_at(x,y)>=0)continue;
+                const int owner=whose_territory(f.local_c,x,y,0,0);
+                if(owner<0||owner==f.local_c||!(player.diplo_treaties[owner]&0x10u))continue;
+                const int region=map_loc(x,y)->region;
+                if(player.region_total_bases[region]&&player.region_base_plan[region]!=2&&!f.local_40)continue;
+                const unsigned bits=map_loc(f.local_18,f.local_14)->bit;
+                if(!(bits&0x1000u)||!(bits&0x81208854u))continue;
+                if(!f.local_a0){
+                    char text[]="Enemy doing ARTY DESTROY 2";
+                    log_say(text,f.vehicle_id,x,y);
+                    action_destroy(f.vehicle_id,0,x,y);
+                    return 1;
+                }
+                char text[]="Auto sending DESTROY2 message";
+                log_say(text,f.vehicle_id,x,y);
+                message_data(0x2413,f.vehicle_id,x,y,0,0);
+                NetDaemonNet.await_exec(1);
+                return 1;
+            }
+        }
+    }
+    v.move_to_ai_type='x';
+    if(f.local_80>=0){
+        const int x=xrange(f.local_18+VehMoveDeltaX[f.local_80]);
+        const int y=f.local_14+VehMoveDeltaY[f.local_80];
+        v.order=0x58;v.waypoint_x[0]=(short)x;v.waypoint_y[0]=(short)y;
+    } else {
+        //578B34 falls through here after the absent direction.
+        v.state&=~0x10000u;
+        v.order=0;
+    }
+    goto label_578f46;
+    }
+    }
 label_578b26:
 label_578b29:
     if (f.local_80 < 0) goto label_578b34;
@@ -4758,5 +4719,46 @@ label_578b34:
 label_578de9:
     enemy_move_consume_route_waypoint(f.vehicle_id);
 label_578f46:
-    return enemy_move_tactical_action_tail(f);
+// Shared final action/path owner. Keeps saved coordinates, rather than
+// assuming that prior movement/probe calls left them equal to Veh.x/y.
+    // One shared native578F46..579208 action/path continuation.
+    {
+
+    Veh &v=Vehs[f.vehicle_id];
+    if (v.order < 0x18) v.state &= ~0x10000u;
+    if (v.order == 0 || v.order == 2) {
+        if (f.local_40 != 2 || !f.local_64 ||
+            (map_loc(f.local_18,f.local_14)->bit & 0x40000u)) {
+            v.order = (GameDataStateStorage.fields_.lock_masks_.enable_mask_ & (unsigned char)(1u << (f.local_c & 31))) &&
+                      !(v.state & 0x200u) ? 0 : 2;
+            veh_skip(f.vehicle_id);
+        } else action_home(f.vehicle_id,0);
+    }
+    if (v.order == 0x18 && v.waypoint_x[0] == f.local_18 && v.waypoint_y[0] == f.local_14) {
+        v.order=0;
+        veh_skip(f.vehicle_id);
+    }
+    if ((v.order != 0x18 && v.order != 0x58) ||
+        (f.local_50 != 8 && f.local_50 != 9)) return 0;
+    const int direction=Paths.move(f.vehicle_id,(v.order & 0x40)?-1:v.faction_id);
+    if (direction<0) { v.order=0; return 0; }
+    const int x=xrange(f.local_18+VehMoveDeltaX[direction]);
+    const int y=f.local_14+VehMoveDeltaY[direction];
+    if (base_who(x,y)>=0) return 0;
+    for (int n=0;n<8;++n) {
+        const int nx=xrange(x+VehMoveDeltaX[n]);
+        const int ny=y+VehMoveDeltaY[n];
+        if (!on_map(nx,ny) || tactical_low(nx,ny)!=tactical_low(x,y)) continue;
+        if (((abs(ny-f.local_14)+x_dist(nx,f.local_18)) & ~1)<3) continue;
+        const int enemy=stack_fix(veh_at(nx,ny));
+        if (enemy<0 || Vehs[enemy].faction_id==f.local_c ||
+            !(PlayersData[f.local_c].diplo_treaties[Vehs[enemy].faction_id] & 0x10u))
+            continue;
+        if (tactical_offense(enemy) || stack_check(enemy,0xe,-1,-1,-1)) {
+            v.order=0;
+            return 0;
+        }
+    }
+    return 0;
+    }
 }

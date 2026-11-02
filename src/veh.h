@@ -819,9 +819,7 @@ MEASURED inline uint32_t __cdecl planet_buster2(int proto_id) {
         ? VehPrototypes[proto_id].reactor_id : 0;
 }
 
-MEASURED inline uint32_t __cdecl planet_buster(int veh_id) {
-    return planet_buster2(Vehs[veh_id].proto_id);
-}
+uint32_t __cdecl planet_buster(int veh_id);
 
 MEASURED inline void __cdecl battle_init() {
     VehBattleModCount[0] = 0;

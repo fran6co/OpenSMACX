@@ -62,14 +62,16 @@ def assert_native_rows_preserved():
     before=subprocess.check_output(['git','show',BASE+':src/netdaemon.cpp'],cwd=ROOT,text=True)
     old={r.address:r for r in read_text(before,ROOT/'src/netdaemon.cpp')}
     rows=[*read_file(ROOT/'src/netdaemon.cpp'),*read_file(ROOT/'src/netdaemon_message_data.cpp'),
-          *read_file(ROOT/'src/netdaemon_spock.cpp'),*read_file(ROOT/'src/netdaemon_interface.cpp')]
+          *read_file(ROOT/'src/netdaemon_spock.cpp'),*read_file(ROOT/'src/netdaemon_interface.cpp'),
+          *read_file(ROOT/'src/netdaemon_vehicle.cpp')]
     current={r.address:r for r in rows}
     assert len(rows)==len(current)==len(old) and current.keys()==old.keys()
     for address,record in old.items():
         for field in fields(record):
-            if field.name=='path' and address in (0x592EE0,0x592E10,0x593090,0x51F1B0,0x51F0C0,*INTERFACE_OWNERS):
+            if field.name=='path' and address in (0x592EE0,0x592E10,0x593090,0x51F1B0,0x51F0C0,0x532140,0x532570,0x531780,*INTERFACE_OWNERS):
                 assert record.path==ROOT/'src/netdaemon.cpp'
                 expected_owner = ('src/netdaemon_message_data.cpp' if address in (0x592EE0,0x592E10,0x593090)
+                                  else 'src/netdaemon_vehicle.cpp' if address in (0x532140,0x532570,0x531780)
                                   else 'src/netdaemon_spock.cpp' if address in (0x51F1B0,0x51F0C0)
                                   else 'src/netdaemon_interface.cpp')
                 assert current[address].path==ROOT/expected_owner
@@ -106,14 +108,27 @@ def test_inverse_rehome_retains_complete_receiver_tokens_and_all_native_facts():
     'spock-extra-code','spock-fake-state','spock-duplicate-marker','spock-orphan-fact',
     'interface-guard','interface-opcode','interface-extra-code','interface-extra-identity',
     'interface-orphan-fact','interface-extra-include','interface-order','spock-order',
-    'vehicle-payload','lock-target','vehicle-record-extra','lock-record-extra'])
+    'vehicle-payload','lock-target','vehicle-record-extra','lock-record-extra',
+    'vehicle-owner-code','vehicle-owner-extra-code','vehicle-owner-extra-identity','vehicle-owner-order'])
 def test_inverse_projection_rejects_changed_or_hidden_new_owner_inputs(damage):
     sender=(ROOT/'src/netdaemon_message_data.cpp').read_text()
     header=(ROOT/'src/netdaemon_message_record.h').read_text()
     receiver=(ROOT/'src/netdaemon.cpp').read_text()
     spock=(ROOT/'src/netdaemon_spock.cpp').read_text()
     interface=(ROOT/'src/netdaemon_interface.cpp').read_text()
-    if damage=='vehicle-payload':
+    vehicle=(ROOT/'src/netdaemon_vehicle.cpp').read_text()
+    if damage=='vehicle-owner-code':
+        vehicle=vehicle.replace('NetDaemonWaitTicks += waited;', 'NetDaemonWaitTicks -= waited;', 1)
+    elif damage=='vehicle-owner-extra-code': vehicle+='\nint unexpected_vehicle_storage;\n'
+    elif damage=='vehicle-owner-extra-identity':
+        vehicle=vehicle.replace('// ORIGINAL: 0x00532140', '// ORIGINAL: 0x00532140\n// ORIGINAL: 0x00532140', 1)
+    elif damage=='vehicle-owner-order':
+        from netdaemon_packet_source import _vehicle_blocks
+        blocks = _vehicle_blocks(ROOT)
+        first, second = blocks[0x00532140], blocks[0x00532570]
+        vehicle=vehicle.replace(first, '/* VEHICLE_ORDER_SLOT */', 1)
+        vehicle=vehicle.replace(second, first, 1).replace('/* VEHICLE_ORDER_SLOT */', second, 1)
+    elif damage=='vehicle-payload':
         sender=sender.replace('message.field_14_ = payload_14;', 'message.field_14_ = payload_10;', 1)
     elif damage=='lock-target':
         sender=sender.replace('message.field_18_ = target;', 'message.field_18_ = payload_18;', 1)
@@ -164,7 +179,7 @@ def test_inverse_projection_rejects_changed_or_hidden_new_owner_inputs(damage):
         spock=spock.replace(second, first, 1).replace('/* TRANSPORT_ORDER_SLOT */', second, 1)
     with pytest.raises(AssertionError):
         historical_source(ROOT,receiver_text=receiver,sender_text=sender,header_text=header,
-                          spock_text=spock,interface_text=interface)
+                          spock_text=spock,interface_text=interface,vehicle_text=vehicle)
 
 
 def test_pinned_complete_caller_spans_retain_original_packet_builder_calls():
@@ -174,6 +189,7 @@ def test_pinned_complete_caller_spans_retain_original_packet_builder_calls():
     image=PeImage(path.read_bytes(),PIN)
     rows={r.address:r for r in read_file(ROOT/'src/netdaemon.cpp')}
     rows.update({r.address:r for r in read_file(ROOT/'src/netdaemon_message_data.cpp')})
+    rows.update({r.address:r for r in read_file(ROOT/'src/netdaemon_vehicle.cpp')})
     for address in (*CALLERS,0x592EE0):
         row=rows[address]
         assert len(row.image_spans)==1
@@ -201,7 +217,7 @@ def native_packet_objects():
     compiler=Compiler(ROOT,profile=settings.compiler_profile)
     return {unit:[Coff(compiler(ROOT/unit,(),flags+settings.layout_flags))
                   for flags in settings.flag_sets]
-            for unit in ('src/netdaemon.cpp','src/netdaemon_message_data.cpp')}
+            for unit in ('src/netdaemon.cpp','src/netdaemon_message_data.cpp','src/netdaemon_vehicle.cpp')}
 
 
 def edges(obj,symbol,target):
@@ -217,15 +233,18 @@ def edges(obj,symbol,target):
 
 
 def test_native_direct_packet_boundaries_and_real_sender_target(native_packet_objects):
-    receiver={r.address:r for r in read_file(ROOT/'src/netdaemon.cpp')}
-    sender,=read_file(ROOT/'src/netdaemon_message_data.cpp')
+    receiver={r.address:r for unit in ('src/netdaemon.cpp','src/netdaemon_vehicle.cpp')
+              for r in read_file(ROOT/unit)}
+    sender=next(r for r in read_file(ROOT/'src/netdaemon_message_data.cpp') if r.address==0x592EE0)
     target=sender.symbol or sender.name
     send=receiver[0x532940].symbol or receiver[0x532940].name
-    for obj in native_packet_objects['src/netdaemon.cpp']:
-        # synch's independently outlined source helper remains a separate
-        # physical boundary; it is not an invented second original identity.
-        for address in (*[a for a in CALLERS if a!=0x532E00],0x534400):
-            row=receiver[address]
-            assert edges(obj,row.symbol or row.name,target),hex(address)
+    for unit in ('src/netdaemon.cpp','src/netdaemon_vehicle.cpp'):
+        for obj in native_packet_objects[unit]:
+            # synch's independently outlined source helper remains a separate
+            # physical boundary; it is not an invented second original identity.
+            for address in (*[a for a in CALLERS if a!=0x532E00],0x534400):
+                row=receiver[address]
+                if row.path != ROOT/unit: continue
+                assert edges(obj,row.symbol or row.name,target),hex(address)
     for obj in native_packet_objects['src/netdaemon_message_data.cpp']:
         assert len(edges(obj,target,send))==1

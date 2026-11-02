@@ -53,7 +53,11 @@ static void check(bool okay, const char *message) {
 // Independent oracle: a 64-bit dot product, explicit modulo reduction and
 // floor division, then enumerate corners instead of repeating the live walk.
 static int reduce_reference(int64_t value, bool low_word) {
-  uint32_t biased = (uint32_t)(value + 128);
+  const uint32_t input = (uint32_t)value;
+  // SETNS on each wrapped center sum, TEST/SETGE on each extent product:
+  // original negative words receive -128, not the positive +128 bias.
+  const int64_t bias = input >= 0x80000000u ? -128 : 128;
+  uint32_t biased = input + (uint32_t)bias;
   int64_t signed_value = biased;
   if (biased >= 0x80000000u) signed_value -= 0x100000000LL;
   int reduced = (int)(signed_value / 256);
@@ -98,6 +102,14 @@ static short next_short(uint32_t &state) {
   return (short)(low < 32768 ? low : low - 65536);
 }
 int main() {
+  const uint32_t boundaries[] = {0u,1u,0x7fu,0x80u,0x7fffffffu,
+    0x80000000u,0x80000001u,0xffffff00u,0xffffff7fu,0xffffff80u,0xffffffffu};
+  for (unsigned j = 0; j < sizeof(boundaries)/sizeof(boundaries[0]); ++j) {
+    check(caviar_i32_from_bits(caviar_sar8_bits(boundaries[j])) ==
+          reduce_reference(boundaries[j], false), "input sign and wrapped bias");
+    check(fixed8(boundaries[j]) == reduce_reference(boundaries[j], true),
+          "extent low16 remains distinct from full32 center");
+  }
   CaviarFixedPointProjection.word_00_ = 256;
   CaviarFixedPointProjection.word_02_ = -256;
   CaviarFixedPointProjection.word_04_ = 128;
@@ -108,8 +120,8 @@ int main() {
   short extent[3] = {10, -20, 30};
   int rect[6] = {};
   sub_6401b0(centre, extent, rect);
-  check(rect[0] == 173 && rect[1] == 173 && rect[2] == 222 &&
-        rect[3] == 232 && rect[4] == 50 && rect[5] == 60,
+  check(rect[0] == 173 && rect[1] == 171 && rect[2] == 222 &&
+        rect[3] == 232 && rect[4] == 50 && rect[5] == 62,
         "varied matrix, negative extent, eight-corner min/max and inset");
 
   CaviarFixedPointProjection.word_00_ = 256;
@@ -238,3 +250,11 @@ def test_current_body_mutants_fail_oracle() -> None:
                 compile_run(compiler, mutant, False)
             except AssertionError as error:
                 raise AssertionError(old) from error
+    # The old always-positive bias passes its old oracle but contradicts
+    # all eight pinned negative-input paths, including the concrete box above.
+    mutant = list(bodies)
+    before = "(int32_t)bits < 0 ? 0xffffff80u : 0x80u"
+    assert before in mutant[1]
+    mutant[1] = mutant[1].replace(before, "0x80u", 1)
+    for compiler in compilers:
+        compile_run(compiler, mutant, False)

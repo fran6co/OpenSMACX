@@ -5915,6 +5915,7 @@ Ownership: Global three-pointer __cdecl helper, not an invented class method.
            signed-short centres/extents and six-int result storage; the
            source-owned projection matrix supplies its six coefficients.
 // ORIGINAL: 0x006401B0 sub_6401b0 0x006401B0-0x006404E2
+// symbol    _sub_6401b0
 // size      818 bytes
 // Deleted seed provenance: git:1ed59304110fc2098fb1dd11457fa5b0074169bd:src/unrecovered/006401b0.cpp
 Status: Coverage transcription of the retained seed (src/unrecovered/006401b0.cpp,
@@ -5932,30 +5933,30 @@ Status: Coverage transcription of the retained seed (src/unrecovered/006401b0.cp
         row 1 on its y axis, so the extent products are named per axis
         (extentN_x for the row-0 product, extentN_y for the row-1 one).
 */
+// The Status paragraph above retains the retired seed's measurements. Current
+// production uses /O2 /Ob2 /Z7 without /Oy-. The pinned reduction also has the
+// sign-dependent bias recovered below; unconditional +0x80 was incomplete.
 namespace {
 
-// Ghidra's bit-trick round, spelled as the arithmetic it performs: the
-// image adds 0x80 and shifts the 16.8 fixed-point product down to a short.
+// The original bias depends on the wrapped input's sign, before addition.
+// Six extent results later narrow to signed short; both centers stay full32.
 static int32_t caviar_i32_from_bits(uint32_t bits) {
     if (bits <= 0x7fffffffu) return (int32_t)bits;
     return -1 - (int32_t)(0xffffffffu - bits);
 }
 
-// The pinned code adds in a 32-bit register and uses x86 arithmetic SAR.
+// SETNS/SETGE, DEC and clear-low-byte select +128 or -128. Preserve the
+// unsigned addition even when that bias crosses the signed32 boundary.
 static uint32_t caviar_sar8_bits(uint32_t bits) {
-    const uint32_t biased = bits + 0x80u;
-    uint32_t shifted = biased >> 8;
-    if ((biased & 0x80000000u) != 0) shifted |= 0xff000000u;
-    return shifted;
+    const uint32_t bias = (int32_t)bits < 0 ? 0xffffff80u : 0x80u;
+    const uint32_t biased = bits + bias;
+    return (uint32_t)((int32_t)biased >> 8);
 }
 
 // Extent reductions are written through AX in the original. Center reductions
 // use the full EAX/EDX value and must not pass through this low-word helper.
 static int32_t caviar_fixed8_low16(uint32_t bits) {
-    const uint16_t low = (uint16_t)caviar_sar8_bits(bits);
-    return (low & 0x8000u) != 0
-        ? (int32_t)low - 0x10000
-        : (int32_t)low;
+    return (int16_t)caviar_sar8_bits(bits);
 }
 
 static int32_t caviar_add_i32(int32_t a, int32_t b) {

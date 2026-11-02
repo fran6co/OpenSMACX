@@ -311,11 +311,97 @@ void __cdecl wait_2();"""
     return source.replace(before_wait, after_wait, 1)
 
 
+VEHICLE_BASE = "6f76f28b8"
+VEHICLE_ANCHOR = "// Observed network path window at 0x0093AC88, shared with send_files."
+VEHICLE_OWNERS = {
+    0x00532140: ("// Original0x00532140 performs", "int NetDaemon::veh_drop("),
+    0x00532570: ("// ORIGINAL: 0x00532570 ", "int NetDaemon::action("),
+    0x00531780: ("// ORIGINAL: 0x00531780 ", "int NetDaemon::order_veh("),
+}
+
+
+@lru_cache(maxsize=None)
+def _vehicle_baseline(root):
+    return subprocess.check_output(["git", "show", VEHICLE_BASE + ":src/netdaemon.cpp"],
+                                   cwd=root, text=True, timeout=30)
+
+
+def _vehicle_expected_block(baseline, address, marker, signature):
+    start = baseline.index(marker)
+    end = _function_end(baseline, baseline.index(signature, start))
+    expected = baseline[start:end]
+    if address == 0x00532140:
+        old = "            rejected = (tile.bit & 2U) != 0 && (tile.val2 & 0x0FU) < 8;"
+        new = """            if ((tile.bit & 2U) != 0) {
+                const int owner = owner_at(x, y);
+                rejected = owner < 8 && owner >= 0;
+            }"""
+        assert expected.count(old) == 1
+        expected = expected.replace(old, new, 1)
+    elif address == 0x00531780:
+        start_tail = expected.index("\nrelease_lock:\n")
+        end_tail = expected.index("\nglobal_failed:\n", start_tail)
+        early = expected[start_tail + len("\nrelease_lock:\n"):end_tail].rstrip()
+        early = early.replace("release_lock_only:\n", "", 1)
+        comment = """    // Native 0x005320CF is the short failure tail used by a rejected order
+    // or exhausted movement. It does not clear/synchronize the vehicle.
+"""
+        assert early.count(comment) == 1
+        early = early.replace(comment, "", 1)
+        early = "\n".join("    " + line if line else "" for line in early.splitlines())
+        old = "    if (do_order && add_global() != 0) goto release_lock;"
+        new = "    if (do_order && add_global() != 0) {\n" + early + "\n    }"
+        assert expected.count(old) == 1
+        expected = expected.replace(old, new, 1).replace("\nrelease_lock:\n", "\n", 1)
+    return expected
+
+
+def _vehicle_blocks(root, vehicle_text=None):
+    """Validate the exact transport plus the two explicitly recovered operations."""
+    root = Path(root)
+    path = root / "src/netdaemon_vehicle.cpp"
+    text = path.read_text() if vehicle_text is None else vehicle_text
+    baseline = _vehicle_baseline(root)
+    blocks = {}
+    positions = []
+    for address, (marker, signature) in VEHICLE_OWNERS.items():
+        identity = f"// ORIGINAL: 0x{address:08X}"
+        assert text.count(identity) == 1, "sole genuine vehicle-method mapping"
+        start = text.index(marker)
+        end = _function_end(text, text.index(signature, start))
+        block = text[start:end]
+        expected = _vehicle_expected_block(baseline, address, marker, signature)
+        assert block == expected, f"complete actual vehicle {address:08X} block/history differs"
+        blocks[address] = block
+        positions.append(start)
+    assert positions == sorted(positions), "vehicle transport preserves definition order"
+    residual = text
+    for block in blocks.values():
+        assert residual.count(block) == 1
+        residual = residual.replace(block, "", 1)
+    _envelope(residual, ['#include "stdafx.h"', '#include <mmsystem.h>',
+              '#include "netdaemon.h"', '#include "netmsg.h"', '#include "console.h"',
+              '#include "game.h"', '#include "veh.h"', '#include "base.h"',
+              '#include "map.h"', '#include "log.h"', '#include "win.h"',
+              'extern int NetDaemonWaitTicks;'], "vehicle TU envelope")
+    records = read_text(text, path)
+    assert len(records) == 3 and {r.address for r in records} == set(VEHICLE_OWNERS)
+    return blocks
+
+
 def historical_source(root, *, receiver_text=None, sender_text=None, header_text=None,
-                      spock_text=None, interface_text=None):
+                      spock_text=None, interface_text=None, vehicle_text=None):
     """Inverse only this migration, validating all discarded new-owner envelope."""
     root = Path(root)
     receiver = (root / "src/netdaemon.cpp").read_text() if receiver_text is None else receiver_text
+    vehicle_blocks = _vehicle_blocks(root, vehicle_text)
+    for _address, (_marker, signature) in VEHICLE_OWNERS.items():
+        assert signature not in receiver, "vehicle definition must have sole new owner"
+    assert receiver.count(VEHICLE_ANCHOR) == 1
+    # These are the validated ACTUAL blocks, including recovered early sync and
+    # signed owner guard. Never substitute immutable baseline method bodies.
+    receiver = receiver.replace(VEHICLE_ANCHOR,
+                                "\n\n".join(vehicle_blocks.values()) + "\n\n" + VEHICLE_ANCHOR, 1)
     _sender, _header, packet_blocks, packet_records = _packet_boundary_parts(root, sender_text, header_text)
     for signature in ("void __cdecl message_veh(", "void __cdecl message_lock("):
         assert signature not in receiver, "transported builder must not remain in receiver"

@@ -86,7 +86,7 @@ int main(){
   CaviarFixedPointProjection.word_08_=0; CaviarFixedPointProjection.word_0A_=0;
   short bias_centre[3]={1,0,0}, bias_extent[3]={0,0,0}; int bias_rect[6]={};
   ck(caviar_sar8_bits(0x7fu)==0,"+0x80/SAR boundary bit pattern");
-  ck(caviar_sar8_bits(0xffffff00u)==0xffffffffu,"negative SAR sign fill");
+  ck(caviar_sar8_bits(0xffffff00u)==0xfffffffeu,"negative bias then SAR sign fill");
   sub_6401b0(bias_centre,bias_extent,bias_rect);
   ck(bias_rect[0]==-2&&bias_rect[2]==2&&bias_rect[4]==5,
      "bias boundary through center projection");
@@ -105,7 +105,7 @@ int main(){
   CaviarFixedPointProjection.word_08_=256; CaviarFixedPointProjection.word_0A_=256;
   short centre[3]={300,200,150}, extent[3]={10,-20,30}; int rect[6]={};
   sub_6401b0(centre,extent,rect);
-  ck(rect[0]==173&&rect[1]==173&&rect[2]==222&&rect[3]==232&&rect[4]==50&&rect[5]==60,
+  ck(rect[0]==173&&rect[1]==171&&rect[2]==222&&rect[3]==232&&rect[4]==50&&rect[5]==62,
      "independent eight-corner projection oracle");
   unsigned short *dst16=(unsigned short*)low_map(4096); unsigned char *dst8=(unsigned char*)low_map(4096);
   unsigned char *shade=(unsigned char*)low_map(4096); ck(dst16&&dst8&&shade,"pixel mappings");
@@ -202,13 +202,15 @@ def test_moved_records_and_bodies_retain_pinned_source_history():
         before,after=old_rows[address],current_rows[address]
         assert all(getattr(before,name)==getattr(after,name) for name in fields
                    if not (address in (0x63FA80, 0x6401B0, 0x63B11C, 0x63B1BF,
-                                       0x63B241) and name == "source_role")),hex(address)
+                                       0x63B241) and name == "source_role")
+                   and not (address == 0x6401B0 and name == "symbol")),hex(address)
         if address in (0x63B11C, 0x63B1BF, 0x63B241):
             assert after.source_role == "unclassified"
             assert after.region.count("RECOVERY_BINDING: v1") == 1
         if address == 0x6401B0:
             assert after.source_role == "unclassified"
             assert "Ownership: Global three-pointer __cdecl helper" in current
+            assert before.symbol == "" and after.symbol == "_sub_6401b0"
         signature="void __cdecl "+before.name+"("
         if address == 0x63FA80:
             assert after.source_role == "unclassified"
@@ -238,6 +240,10 @@ def test_moved_records_and_bodies_retain_pinned_source_history():
                     start = block.index("Ownership: Global three-pointer")
                     end = block.index("// ORIGINAL:", start)
                     block = block[:start] + block[end:]
+                if address == 0x6401B0:
+                    # Only the freshly COFF-observed emitted-symbol fact is
+                    # new; the complete original envelope stays preserved.
+                    block = block.replace("// symbol    _sub_6401b0\n", "", 1)
                 if address == 0x63B241:
                     old_phrase="with table[destination byte + table base]."
                     new_phrase="with table[destination byte]."
@@ -253,12 +259,12 @@ def test_actual_body_mutants_are_rejected_by_bounded_oracle():
       ("void __cdecl sub_63b1bf(","if (value != transparent)","if (value == transparent)"),
       ("void __cdecl sub_63b241(","*pixel = table[*pixel];",
        "*pixel = table[(unsigned char)(*pixel + 1)];"),
-      ("static uint32_t caviar_sar8_bits(","bits + 0x80u","bits + 0x81u"),
-      ("static uint32_t caviar_sar8_bits(","shifted |= 0xff000000u;",
-       "shifted |= 0x00000000u;"),
+      ("static uint32_t caviar_sar8_bits(","bits + bias","bits + bias + 1u"),
+      ("static uint32_t caviar_sar8_bits(","(int32_t)biased >> 8",
+       "biased >> 8"),
       ("static int32_t caviar_fixed8_low16(",
-       "const uint16_t low = (uint16_t)caviar_sar8_bits(bits);",
-       "const uint16_t low = 0;"),
+       "return (int16_t)caviar_sar8_bits(bits);",
+       "return 0;"),
       ("void __cdecl sub_63b11c(","source_rows * static_cast<uint32_t>(source_stride)","source_rows * static_cast<uint32_t>(destination_stride)"),
       ("void __cdecl sub_63b11c(","carried_x += static_cast<unsigned int>(source_x_step);","carried_x += 0x10000U;"),
       ("void __cdecl sub_63b1bf(","carried = (carried + step) & 0xffff;","carried = 0;"),

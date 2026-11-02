@@ -9,7 +9,7 @@ import pytest
 
 
 ROOT = Path(os.environ.get("OPENSMACX_ROOT", Path(__file__).resolve().parents[2])).resolve()
-OWNER_SOURCE = ROOT / "src/netdaemon.cpp"
+OWNER_SOURCE = ROOT / "src/netdaemon_vehicle.cpp"
 HARNESS = Path(__file__).with_name("netdaemon_protocol_harness.cpp")
 
 
@@ -138,7 +138,7 @@ def test_actual_owner_host_controls(mode: str) -> None:
          "PlayersData[Vehs[fixed_vehicle].faction_id]\n                 .diplo_treaties[faction]",
          "planet-buster treaty row is the vehicle faction"),
         ("earlyreject", "difference == 0))\n            goto release_lock_only;",
-         "difference == 0))\n            goto release_lock;",
+         "difference == 0)) { synch_veh(veh_id); goto release_lock_only; }",
          "native short reject tail must not synchronize vehicle"),
         ("globalfailed", 'NetMsgPrimary.pop("GLOBALFAILED",', 'NetMsgPrimary.pop("XFAILED",',
          "native GLOBALFAILED edge has its own popup tail"),

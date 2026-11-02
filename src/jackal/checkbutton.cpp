@@ -23,21 +23,25 @@
 #include "checkbutton.h"
 #include "checkbox.h"
 
-// The two defaults the constructor reads once and copies into the object:
+// The two defaults the constructor and close each read and copy into the object:
 // pointers to the checkbox sprites the whole check family shares -
 // g_CHECKBOX_SPRITE_1 / g_CHECKBOX_SPRITE_2 (checkbox.h), the instances the
 // image holds at 0x009B8F60 / 0x009B8F90 and CheckBox::init_class populates
 // from jackal.pcx. The image's slots at 0x00697F20 / 0x00697F24 hold these
-// two addresses, and nothing but this constructor ever reads them.
+// two addresses; both paths load the pointer cells independently.
 //
 // SPELLED AS BINDINGS, MEASURED: the image LOADS these two slots
 // (`mov eax,[0x697f20]` then stores the copy) - taking &instance directly
 // compiles one store-immediate instead of that load/store pair and the
 // ctor drops from 17 instructions to 15, 5/17.
-// Direct static storage addresses: no accessor call or extra dynamic initializer.
-Sprite *const CheckButtonDefaultA24 =
+// Original dword loads prove these pointer cells, whose initialized values
+// reside in writable .data. Their source names do not establish original TU
+// ownership or enclosing allocation bounds. Keep the borrowed sprite owners.
+// RECOVERY_OBJECT: v1 0x00697F20 _CheckButtonDefaultA24
+static Sprite *CheckButtonDefaultA24 =
     reinterpret_cast<Sprite *>(g_CHECKBOX_SPRITE_1.storage_.bytes);
-Sprite *const CheckButtonDefaultA28 =
+// RECOVERY_OBJECT: v1 0x00697F24 _CheckButtonDefaultA28
+static Sprite *CheckButtonDefaultA28 =
     reinterpret_cast<Sprite *>(g_CHECKBOX_SPRITE_2.storage_.bytes);
 
 /*

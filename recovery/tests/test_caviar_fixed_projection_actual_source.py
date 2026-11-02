@@ -100,7 +100,12 @@ def test_installed_6401b0_and_63b241_bodies_have_typed_candidate_semantics():
 static void ck(bool b,const char*s){if(!b){fprintf(stderr,"FAIL %s\n",s);exit(1);}}
 static void *lowmap(size_t n){void*p=mmap(0,n,PROT_READ|PROT_WRITE,MAP_PRIVATE|MAP_ANONYMOUS|MAP_32BIT,-1,0);return p==MAP_FAILED?0:p;}
 static int32_t frombits(uint32_t b){return b<=0x7fffffffu?(int32_t)b:-1-(int32_t)(0xffffffffu-b);}
-static int32_t oracle_sar(uint32_t b){b+=0x80u;return frombits((b>>8)|((b&0x80000000u)?0xff000000u:0));}
+static int32_t oracle_sar(uint32_t b){
+  const int64_t bias=b>=0x80000000u?-128:128;
+  b+=(uint32_t)bias;
+  const int64_t value=b>=0x80000000u?(int64_t)b-0x100000000LL:(int64_t)b;
+  return (int32_t)(value/256-((value<0&&value%256)?1:0));
+}
 int main(){
   const uint32_t bits[]={0u,0x7fu,0x80u,0xffu,0x7fffffffu,0x80000000u,0xffffff7fu,0xffffff80u,0xffffffffu};
   for(unsigned i=0;i<sizeof(bits)/sizeof(bits[0]);++i)ck(frombits(caviar_sar8_bits(bits[i]))==oracle_sar(bits[i]),"installed SAR");

@@ -20,10 +20,10 @@ ACTUAL = ROOT / "src/netdaemon.cpp"
 SIGNATURE = "void NetDaemon::hang_up()"
 
 
-def extract_method(text: str) -> str:
-    start = text.find(SIGNATURE)
-    assert start >= 0 and text.find(SIGNATURE, start + len(SIGNATURE)) < 0
-    opening = text.find("{", start + len(SIGNATURE))
+def extract_method(text: str, signature=SIGNATURE) -> str:
+    start = text.find(signature)
+    assert start >= 0 and text.find(signature, start + len(signature)) < 0
+    opening = text.find("{", start + len(signature))
     assert opening >= 0
     depth = 0
     quote = None
@@ -130,21 +130,42 @@ static std::string run_case(const char *name, int flags, int multiplayer,
     return joined;
 }
 int main() {
+    // Exercise the same genuine predicate as a standalone operation as well as
+    // through hang_up; the outer flag guard must not hide predicate damage.
+    GameDataStateStorage.fields_.net_turn_flags_ = 0;
+    ConsoleControlTurnActive = 0;
+    ConsoleGlobal.faction_id_ = 2;
+    GameDataStateStorage.fields_.net_turn_faction_ = 2;
+    assert(sub_52db70() == 0);
+    GameDataStateStorage.fields_.net_turn_flags_ = 0x10;
+    assert(sub_52db70() == 1);
+    GameDataStateStorage.fields_.net_turn_faction_ = 3;
+    assert(sub_52db70() == 0);
+    GameDataStateStorage.fields_.net_turn_faction_ = 2;
+    ConsoleControlTurnActive = 1;
+    assert(sub_52db70() == 0);
+
     run_case("flags", 1, 1, 0, 0, 2, 2, 1, 2, 0);
     run_case("offline", 0, 0, 0, 0, 2, 2, 1, 2, 0);
     run_case("active_close", 0, 1, 0, 0, 2, 2, 0, 2, 0);
     run_case("callback_refresh", 0, 1, 0x10, 0, 2, 2, 0, 2, 1);
     run_case("owner_mismatch", 0, 1, 0, 0, 2, 2, 1, 9, 0);
     run_case("control_turn_no_session", 0, 1, 0x10, 1, 2, 2, 0, 2, 0);
+    run_case("foreign_turn", 0, 1, 0x10, 0, 2, 3, 0, 2, 1);
+    run_case("control_turn_with_session", 0, 1, 0x10, 1, 2, 2, 1, 2, 0);
     return 0;
 }
 '''
 
 
-def run_variant(method: str, compiler_name="g++"):
+def run_variant(method: str, compiler_name="g++", predicate=None):
     compiler = shutil.which(compiler_name)
     assert compiler, "host C++ compiler unavailable"
-    source = HARNESS.replace("METHOD", method)
+    if predicate is None:
+        predicate = extract_method(ACTUAL.read_text(), "int __cdecl sub_52db70()")
+    # Only the platform calling-convention spelling is absent from this host.
+    predicate = predicate.replace("int __cdecl sub_52db70()", "int sub_52db70()", 1)
+    source = HARNESS.replace("METHOD", predicate + "\n\n" + method)
     with tempfile.TemporaryDirectory(prefix="opensmacx-hangup-host-") as tmp:
         cpp = Path(tmp) / "control.cpp"
         exe = Path(tmp) / "control"
@@ -169,6 +190,9 @@ def test_pinned_early_returns_and_tail_order(compiler_name):
     assert proposed["owner_mismatch"] == (
         ["lock.clear", "message:19200", "close"], 1, 9, 77, 251)
     assert proposed["control_turn_no_session"] == (["close"], 1, 2, 77, 255)
+    assert proposed["foreign_turn"] == (["close"], 1, 2, 77, 255)
+    assert proposed["control_turn_with_session"] == (
+        ["message:33537", "lock.clear", "message:19200", "close"], 1, 0, 0, 251)
 
 
 @pytest.mark.parametrize("compiler_name", ("g++", "clang++"))
@@ -182,3 +206,18 @@ def test_popup_close_on_early_return_damage_is_detected(compiler_name):
         damaged = method.replace(guard, guard.replace("return;", "goto L145;"), 1)
         observed = run_variant(damaged, compiler_name)
         assert observed[scenario] != ([], flags, 2, 77, 255)
+
+
+@pytest.mark.parametrize("compiler_name", ("g++", "clang++"))
+@pytest.mark.parametrize("needle,replacement", (
+    ("net_turn_flags_ & 0x10) == 0", "net_turn_flags_ & 0x10) != 0"),
+    ("ConsoleControlTurnActive != 0", "ConsoleControlTurnActive == 0"),
+    ("net_turn_faction_ == ConsoleGlobal.faction_id_", "net_turn_faction_ != ConsoleGlobal.faction_id_"),
+))
+def test_actual_predicate_damage_is_detected(compiler_name, needle, replacement):
+    text = ACTUAL.read_text()
+    predicate = extract_method(text, "int __cdecl sub_52db70()")
+    assert predicate.count(needle) == 1
+    damaged = predicate.replace(needle, replacement, 1)
+    with pytest.raises(subprocess.CalledProcessError):
+        run_variant(extract_method(text), compiler_name, damaged)

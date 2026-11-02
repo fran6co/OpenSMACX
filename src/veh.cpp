@@ -4160,25 +4160,6 @@ Status: Complete
 // reads it.
 
 
-/*
-Purpose: Check whether the specified unit is a planet buster.
-// ORIGINAL: 0x00500520 ?planet_buster@@YAHH@Z 0x00500520-0x00500556 BYTE_EXACT
-// body      src/veh.h
-// symbol    ?planet_buster@@YAIH@Z
-// size      54 bytes
-// prototype int (__cdecl ?planet_buster@@YAHH@Z)(int vehID)
-// callers   4   call targets   0
-// kind      game
-// flags     frame;hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: Reactor id if planet buster, otherwise 0
-Status: Complete
-*/
-// BODY IN veh.h, as `MEASURED inline`: the image writes it out at
-// some call sites and calls it at others, and a .cpp definition is only ever
-// one of those. The marker stays here because that is where the catalogue
-// reads it.
-
 
 /*
 Purpose: Calculate how defensive the specified tile is to the defending unit based on the terrain.

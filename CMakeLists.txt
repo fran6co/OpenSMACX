@@ -242,6 +242,7 @@ set(OPENSMACX_SOURCES
     src/planwin.cpp
     src/playerlock.cpp
     src/netdaemon.cpp
+    src/netdaemon_vehicle.cpp
     src/netdaemon_interface.cpp
     src/netdaemon_message_data.cpp
     src/netdaemon_spock.cpp
@@ -405,6 +406,7 @@ set_source_files_properties(
 # frame-preserving source profiles; application defaults and link settings stay fixed.
 set_source_files_properties(
     src/netdaemon.cpp
+    src/netdaemon_vehicle.cpp
     src/netdaemon_interface.cpp
     src/netdaemon_message_data.cpp
     src/netdaemon_spock.cpp
@@ -593,6 +595,7 @@ set_property(SOURCE
     src/map_sites.cpp
     src/mapwin.cpp
     src/netdaemon.cpp
+    src/netdaemon_vehicle.cpp
     src/prefwin.cpp
     src/log.cpp
     src/newtechwin.cpp

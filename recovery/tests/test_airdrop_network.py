@@ -34,6 +34,9 @@ def test_air_defense_popup_uses_original_alien_air_picture():
 
 
 def body(path, signature):
+    if signature == "int NetDaemon::veh_drop(":
+        assert path == "src/netdaemon.cpp"
+        path = "src/netdaemon_vehicle.cpp"
     source = (ROOT / path).read_text()
     start = source.index(signature)
     return source[start:source.index("\n}", start) + 2]
@@ -91,6 +94,7 @@ void message_data(int,int,int,int,int,int) {calls.push_back(6);}
 void wait_task() {calls.push_back(2);}
 int base_at(int x,int y) {assert(x==5&&y==7);return found_base;}
 Map *map_loc(int,int) {return &tile;}
+ACTUAL_OWNER_QUERY
 int add_global() {return 1;}
 void synch_veh(int) {}
 int speed(int id,int mode) {assert(id==1&&mode==0);return speed_result;}
@@ -145,6 +149,7 @@ int main() {
     assert((calls==std::vector<int>{6,2,3,4,5,6}));
 }
 '''.replace("AGGRESSION", body("src/faction.cpp", "int __cdecl act_of_aggression("))
+    harness = harness.replace("ACTUAL_OWNER_QUERY", body("src/map.h", "inline int __cdecl owner_at("))
     harness = harness.replace("DROP", body("src/netdaemon.cpp", "int NetDaemon::veh_drop("))
     unit = tmp_path / "network.cpp"
     unit.write_text(harness)
