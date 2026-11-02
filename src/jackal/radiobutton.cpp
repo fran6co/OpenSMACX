@@ -961,3 +961,4 @@ Status: Complete
 // RECOVERY_GENERATED: v1 vtable 0x00669A58 ? ??_7RadioButton@@6B@ 0x0060D0E0
 // RECOVERY_GENERATED: v1 vtable 0x00669A64 ? ??_7RadioButton@@6BBuffer@@@ 0x0060D0E0
 // RECOVERY_GENERATED: v1 vtable 0x00669A6C ? ??_7RadioButton@@6BWin@@@ 0x0060D0E0
+// RECOVERY_LITERAL: v1 0x006970F8 0x00697103 ??_C@_0L@OEOH@jackal?4pcx?$AA@ 0x0060E4D0

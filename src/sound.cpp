@@ -1990,3 +1990,4 @@ int VoiceTx::return_buffer(_MMIOINFO *buffer) {
 // ORIGINAL: 0x004C93F0 ??_GVoiceTx@@UAEPAXI@Z 0x004C93F0-0x004C9411 FILE BYTE_EXACT
 // symbol    ??_GVoiceTx@@UAEPAXI@Z
 // Compiler-owned VoiceTx scalar deletion mapping.
+// RECOVERY_GENERATED: v1 vtable 0x0066E538 ? ??_7Midi@@6B@ 0x004C75B0

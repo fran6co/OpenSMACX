@@ -2679,3 +2679,4 @@ void __stdcall main_interface_bubble_callback_4396b0(char *text, int x, int y) {
 // flags     hidden;thunk;sp_ready;purged_ok
 // calls     (none)
 */
+// RECOVERY_GENERATED: v1 vtable 0x0066C598 ? ??_7MainInterface@@6BWin@@@ 0x0045EF10

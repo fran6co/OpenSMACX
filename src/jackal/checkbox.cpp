@@ -1161,3 +1161,4 @@ void CheckBox::on_mouse_move(int x_coord, int y_coord) {
 // RECOVERY_GENERATED: v1 vtable 0x0067059C ? ??_7CheckBox@@6B@ 0x0060E670
 // RECOVERY_GENERATED: v1 vtable 0x006705A8 ? ??_7CheckBox@@6BBuffer@@@ 0x0060E670
 // RECOVERY_GENERATED: v1 vtable 0x006705B0 ? ??_7CheckBox@@6BWin@@@ 0x0060E670
+// RECOVERY_LITERAL: v1 0x0069710C 0x00697117 ??_C@_0L@OEOH@jackal?4pcx?$AA@ 0x0060FC60
