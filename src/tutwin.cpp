@@ -1744,3 +1744,5 @@ tut_check2(int flag) {
     GameDataStateStorage.fields_.tutorial_flags_2_ |= flag;
     return 1;
 }
+// RECOVERY_GENERATED: v1 vtable 0x0066DD84 ? ??_7TutWin@@6BWin@@@ 0x004BA6B0
+// RECOVERY_GENERATED: v1 vtable 0x0066DD7C ? ??_7TutWin@@6BBuffer@@@ 0x004BA6B0

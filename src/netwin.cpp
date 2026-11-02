@@ -3642,3 +3642,5 @@ extern "C" void __cdecl sub_4e2450() {
     NetWinSessionData.mode_ = 0;
     NetWinSessionData.scenario_text_wire_tail_[0] = 0;
 }
+// RECOVERY_GENERATED: v1 vtable 0x0066CCEC ? ??_7NetWin@@6BWin@@@ 0x00481C50
+// RECOVERY_GENERATED: v1 vtable 0x0066CCE4 ? ??_7NetWin@@6BBuffer@@@ 0x00481C50

@@ -385,3 +385,5 @@ void __cdecl show_credits() {
     credits->exec();
     delete credits;
 }
+// RECOVERY_GENERATED: v1 vtable 0x0066AC58 ? ??_7Credits@@6BWin@@@ 0x00428E90
+// RECOVERY_GENERATED: v1 vtable 0x0066AC50 ? ??_7Credits@@6BBuffer@@@ 0x00428E90

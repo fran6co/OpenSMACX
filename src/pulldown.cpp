@@ -1618,3 +1618,5 @@ void PullDown::on_redraw() {
     }
   }
 }
+// RECOVERY_GENERATED: v1 vtable 0x0066FF40 ? ??_7PullDown@@6BWin@@@ 0x005F8800
+// RECOVERY_GENERATED: v1 vtable 0x0066FF38 ? ??_7PullDown@@6BBuffer@@@ 0x005F8800

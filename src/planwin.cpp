@@ -769,3 +769,4 @@ Status: Complete
 // symbol    ??_EPlanWin@@$4PPPPPLLI@EEE@AEPAXI@Z
 // kind      game
 // RECOVERY_GENERATED: v1 vbtable 0x0066D414 0x0066D41C ??_8PlanWin@@7B@ 0x0048BCD0
+// RECOVERY_GENERATED: v1 vtable 0x0066D2A4 ? ??_7PlanWin@@6BBuffer@@@ 0x0048BCD0
