@@ -276,6 +276,8 @@ int main() {
     fail_factions = 1;
     failed.setup_faction_data(nullptr);
     assert(failed.faction_records_ != nullptr && failed.faction_records_copy_ != nullptr);
+    assert(failed.faction_records_[0].record_type_ == 7);
+    assert(failed.faction_records_[0].record_count_ == 14);
     assert(close_calls == 1); // this early return does not close the text source
     std::free(failed.faction_records_);
     std::free(failed.faction_records_copy_);

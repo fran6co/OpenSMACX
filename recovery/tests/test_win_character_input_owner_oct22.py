@@ -22,6 +22,21 @@ MUTANTS = [
      "snapshot[k] = debug_window.children_[k]; Win **list = snapshot;"),
     ("Sound *w = debug_window.val_4_;", "Sound *w = val_4_;"),
 ]
+PHASE_MUTANTS = [
+    ("debug_window.on_lose_mouse_capture();", "/* capture-call mutant */"),
+    ("debug_window.release_modal();", "/* modal-call mutant */"),
+    ("WinPointerOwner3 = 0;\n                debug_window.on_lose_mouse_capture();",
+     "debug_window.on_lose_mouse_capture();\n                WinPointerOwner3 = 0;"),
+    ("debug_window.iSomeFlag_ &= ~1;\n            if (WinFocusWindow == &WinBubbleWindow) {\n"
+     "                debug_window.release_modal();\n            }",
+     "if (WinFocusWindow == &WinBubbleWindow) {\n"
+     "                debug_window.release_modal();\n            }\n"
+     "            debug_window.iSomeFlag_ &= ~1;"),
+]
+PHASE_DIAGNOSTICS = [
+    "WinBubbleWindow.released == 1", "WinBubbleWindow.released == 2",
+    "capture_owner_seen == 0", "(modal_flags & 1) == 0",
+]
 
 
 def _actual_harness() -> str:
@@ -63,7 +78,7 @@ def test_on_char_actual_source_runtime(compiler, tmp_path):
 
 
 @pytest.mark.parametrize("compiler", _available_compilers())
-@pytest.mark.parametrize("before,after", MUTANTS)
+@pytest.mark.parametrize("before,after", MUTANTS + PHASE_MUTANTS)
 def test_on_char_compilable_mutants_fail_actual_source_runtime(
         compiler, before, after, tmp_path):
     text = _actual_harness()
@@ -71,3 +86,6 @@ def test_on_char_compilable_mutants_fail_actual_source_runtime(
     result = _compile_and_run(compiler, tmp_path, text.replace(before, after, 1),
                               "on-char-mutant")
     assert result.returncode != 0, "compiled mutant escaped runtime controls"
+    if (before, after) in PHASE_MUTANTS:
+        diagnostic = PHASE_DIAGNOSTICS[PHASE_MUTANTS.index((before, after))]
+        assert diagnostic in result.stderr, result.stderr

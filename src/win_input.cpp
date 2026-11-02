@@ -263,14 +263,14 @@ void Win::on_char(char param2, int param3) {
 
             if (WinPointerOwner3 == &WinBubbleWindow) {
                 WinPointerOwner3 = 0;
-                (&WinBubbleWindow)->on_lose_mouse_capture();
+                debug_window.on_lose_mouse_capture();
             }
             if (WinPointerOwner4 == &WinBubbleWindow) {
                 WinPointerOwner4 = 0;
             }
             debug_window.iSomeFlag_ &= ~1;
             if (WinFocusWindow == &WinBubbleWindow) {
-                (&WinBubbleWindow)->release_modal();
+                debug_window.release_modal();
             }
 
             if ((JackalInitFlags & 1) != 0) {

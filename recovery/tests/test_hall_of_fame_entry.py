@@ -66,11 +66,14 @@ int pop_wait() { return 1; }
 struct Console { int faction_id_; } ConsoleGlobal;
 struct ButtonGroup { void set(int faction,int value) {
   assert(value==1); selected_faction=faction; events.push_back("select"); } };
-struct FameWin {
+struct Win {
+  virtual int set_modal(int mode,int (*poll)(),Win *owner)=0;
+};
+struct FameWin : Win {
   ButtonGroup buttonGroup_;
   int init() { events.push_back("init"); return init_result; }
   void try_to_add_me() { ++adds; events.push_back("add"); }
-  virtual int set_modal(int mode,int (*poll)(),void *owner) {
+  int set_modal(int mode,int (*poll)(),Win *owner) override {
     assert(mode==0 && poll==pop_wait && !owner);
     events.push_back("modal"); ConsoleGlobal.faction_id_=6; return 0;
   }

@@ -386,3 +386,50 @@ def test_behavior_controls_reject_cached_state_and_swapped_delete_mutants(
     result = compile_and_run(tmp_path, fixture(net_method, alpha_method), compiler)
     assert result.returncode != 0, (owner, mutation, "mutation escaped behavior controls")
 
+
+def service_fixture():
+    # Use the same independent 402970 callback/delete-order oracles for this
+    # owner, while compiling its actual member definition and typed fields.
+    # This projects list effects, not the generated scalar-delete ABI.
+    net_method, _ = source_methods()
+    source = (ROOT / "src/net_class.cpp").read_text()
+    method = function_body(source, "void ServiceProviderList::remove_all()")
+    assert "clear_owned_list" not in source
+    assert "for (int removed = 0; removed < entry_count_; ++removed)" in method
+    harness = (HARNESS.replace("AlphaNetStringStruct", "ServiceProviderList")
+               .replace("AlphaNetLedgerEntry", "ServiceListEntry")
+               .replace("NetAllocationNode", "ServiceStruct"))
+    return harness.replace("NET_METHOD", net_method), method
+
+
+@pytest.mark.parametrize("compiler", host_compilers())
+@pytest.mark.parametrize("damage", ["", "count", "head", "current", "delete_order"])
+def test_actual_service_member_cleanup_effects(tmp_path, compiler, damage):
+    harness, method = service_fixture()
+    if damage == "count":
+        assert "removed < entry_count_" in method
+        method = method.replace("removed < entry_count_", "removed < 2", 1)
+    elif damage == "head":
+        next_read = "current_ = head_->next_;"
+        payload_read = "Payload *payload = head_->payload_;"
+        assert next_read in method and payload_read in method
+        method = method.replace(next_read, "Entry *const doomed = head_;\n" + next_read, 1)
+        method = method.replace(payload_read, payload_read.replace("head_", "doomed"), 1)
+        method = method.replace("head_->payload_ = 0;", "doomed->payload_ = 0;", 1)
+        method = method.replace("delete head_;", "delete doomed;", 1)
+    elif damage == "current":
+        next_read = "current_ = head_->next_;"
+        assert next_read in method and "head_ = current_;" in method
+        method = method.replace(next_read, next_read + "\nEntry *const saved_next = current_;", 1)
+        method = method.replace("head_ = current_;", "head_ = saved_next;", 1)
+    elif damage == "delete_order":
+        assert "delete payload;" in method and "delete head_;" in method
+        method = method.replace("delete payload;", "delete_payload_later;", 1)
+        method = method.replace("delete head_;", "delete payload;", 1)
+        method = method.replace("delete_payload_later;", "delete head_;", 1)
+    result = compile_and_run(
+        tmp_path, harness.replace("ALPHA_REMOVE_ALL_DEFINITION", method), compiler)
+    if damage:
+        assert result.returncode < 0 and "Assertion" in result.stderr, (damage, result.stderr)
+    else:
+        assert result.returncode == 0, result.stderr

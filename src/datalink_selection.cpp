@@ -74,7 +74,8 @@ void DatalinkSelectionQueue::dispatch_matching(int entry_id) {
   if (matched_count != 0) {
     datalink_entry_selection(first_match_index);
     DatalinkMain.show(0);
-    DatalinkMain.set_modal(0, pop_wait, 0);
+    Win &modal_window = DatalinkMain;
+    modal_window.set_modal(0, pop_wait, 0);
   }
 }
 

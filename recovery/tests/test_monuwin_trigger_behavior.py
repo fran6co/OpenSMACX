@@ -49,7 +49,9 @@ struct ConsoleInfo { int faction_id_; } ConsoleGlobal;
 struct Player { int rule_flags; } Players[8];
 struct MonumentRecord { int achieved_; };
 struct MonumentFaction { MonumentRecord records_[21]; } FactionMonuments[8];
-int IsMultiplayerNet, GameMorePreferences, GameState, MonumentWindowCount;
+int IsMultiplayerNet, MonumentWindowCount;
+struct GameFields { int game_more_preferences_, game_state_; };
+struct { GameFields fields_; } GameDataStateStorage;
 int init_result;
 bool first_event = true;
 void event(const char *name, int a=0, int b=0, int c=0, int d=0) {
@@ -57,13 +59,17 @@ void event(const char *name, int a=0, int b=0, int c=0, int d=0) {
     first_event = false;
     std::printf("[\"%s\",%d,%d,%d,%d]", name, a, b, c, d);
 }
-struct GraphicWin { void close() { event("base_close"); } };
+struct Win {
+    virtual int set_modal(int, int (*)(), Win *) { return -7; }
+};
+struct GraphicWin : Win { void close() { event("base_close"); } };
 struct MonuWin : GraphicWin {
     int selection_pending_;
     MonuWin() : selection_pending_(43) {}
     int init() { event("init", MonumentWindowCount); return init_result; }
-    void set_modal(int result, int (*poll)(), void *owner) {
+    int set_modal(int result, int (*poll)(), Win *owner) {
         event("modal", result, poll != 0, owner != 0, selection_pending_);
+        return 37;
     }
 } MonumentWindowGlobal;
 void do_all_draws() { event("draw_all"); }
@@ -75,8 +81,8 @@ int main(int argc, char **argv) {
     const int from_load = std::atoi(argv[2]);
     Players[faction].rule_flags = std::atoi(argv[3]);
     IsMultiplayerNet = std::atoi(argv[4]);
-    GameMorePreferences = std::atoi(argv[5]);
-    GameState = std::atoi(argv[6]);
+    GameDataStateStorage.fields_.game_more_preferences_ = std::atoi(argv[5]);
+    GameDataStateStorage.fields_.game_state_ = std::atoi(argv[6]);
     const unsigned current = (unsigned)std::strtoul(argv[7], 0, 0);
     const unsigned peer0 = (unsigned)std::strtoul(argv[8], 0, 0);
     const unsigned peer7 = (unsigned)std::strtoul(argv[9], 0, 0);
@@ -96,11 +102,18 @@ int main(int argc, char **argv) {
 """
 
 
-def compile_actual(tmp_path):
+def compile_actual(tmp_path, *, qualified_base=False):
     compiler = os.environ.get("CXX") or shutil.which("clang++") or shutil.which("g++")
     if not compiler:
         pytest.skip("GCC/Clang host compiler unavailable")
-    source = HARNESS.replace("// ACTUAL DEFINITION", actual_definition())
+    body = actual_definition()
+    if qualified_base:
+        needle = "modal_window.set_modal(result, 0, 0);"
+        assert body.count(needle) == 1
+        damaged = body.replace(needle, "modal_window.Win::set_modal(result, 0, 0);", 1)
+        assert damaged != body
+        body = damaged
+    source = HARNESS.replace("// ACTUAL DEFINITION", body)
     cpp, exe = tmp_path / "monument.cpp", tmp_path / "monument"
     cpp.write_text(source)
     subprocess.run([compiler, "-std=c++03", "-Wall", "-Wextra", "-Werror",
@@ -161,3 +174,12 @@ def test_success_sets_load_selection_then_modal_close_and_draw(executable):
     assert out["count"] == 3 and out["selection"] == 1
     assert out["events"] == [["init", 3, 0, 0, 0], ["modal", 0, 0, 0, 1],
                               ["base_close", 0, 0, 0, 0], ["draw_all", 0, 0, 0, 0]]
+
+
+def test_qualified_base_dispatch_damage_is_detected(tmp_path):
+    # This is a virtual-contract control. The old global-object expression
+    # can also pass behavior checks; native COFF proves VC6 dispatch lowering.
+    damaged = compile_actual(tmp_path, qualified_base=True)
+    with pytest.raises(AssertionError) as failure:
+        test_success_sets_load_selection_then_modal_close_and_draw(damaged)
+    assert "modal" in str(failure.value)

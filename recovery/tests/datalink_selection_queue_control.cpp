@@ -55,6 +55,8 @@ int pop_wait() { return 9; }
 struct Win {
     virtual int set_modal(int flag, int (*poll)(), Win *owner) {
         assert(flag == 0 && poll == pop_wait && owner == 0);
+        // Host-only override witness distinguishes a qualified base call.
+        assert(false && "virtual Datalink override required");
         sequence[sequence_count++] = 4;
         return 0;
     }

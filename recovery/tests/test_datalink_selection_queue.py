@@ -42,7 +42,8 @@ def test_actual_queue_callbacks_and_mutations(tmp_path, compiler_name):
         "missing_scratch_clear": ("StringTemp[0] = 0;", "StringTemp[0] = 'z';"),
         "wrong_detail": ("entry.append_text(StringTemp, 1);", "entry.append_text(StringTemp, 0);"),
         "wrong_selection": ("datalink_entry_selection(first_match_index);", "datalink_entry_selection(0);"),
-        "wrong_modal_flag": ("DatalinkMain.set_modal(0, pop_wait, 0);", "DatalinkMain.set_modal(1, pop_wait, 0);"),
+        "wrong_modal_flag": ("modal_window.set_modal(0, pop_wait, 0);", "modal_window.set_modal(1, pop_wait, 0);"),
+        "qualified_base_dispatch": ("modal_window.set_modal(0, pop_wait, 0);", "modal_window.Win::set_modal(0, pop_wait, 0);"),
         "wrong_table_mapping": ("entries[6].help = help_social;", "entries[6].help = help_weapon;"),
         "cached_count": ("for (int index = 0; index < count_; ++index)", "int captured_count = count_; for (int index = 0; index < captured_count; ++index)"),
     }

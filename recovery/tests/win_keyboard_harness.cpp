@@ -30,8 +30,8 @@ struct Win {
     void show(int value) { assert(value == 0); ++shown; }
     void update_screen(RECT *, int value) { assert(value == 0); ++updated; }
     void flip(RECT *) { ++flipped; }
-    void on_lose_mouse_capture() { ++released; }
-    void release_modal() { ++released; }
+    void on_lose_mouse_capture();
+    void release_modal();
     int vslot_23() { return query; }
     void vslot_07() { ++activated; }
     void key_click_event(int key, int modifiers) {
@@ -52,6 +52,19 @@ const char WinMdebugCode[] = "mdebug";
 char WinKeyRing[10], *WinKeyRingCursor;
 void *HandleMain = &receiver;
 int invalidations, traversals, shrink_roots, mutate_children;
+Win *capture_receiver, *modal_receiver, *capture_owner_seen;
+unsigned int capture_flags, modal_flags;
+void Win::on_lose_mouse_capture() {
+    ++released;
+    capture_receiver = this;
+    capture_owner_seen = WinPointerOwner3;
+    capture_flags = iSomeFlag_;
+}
+void Win::release_modal() {
+    ++released;
+    modal_receiver = this;
+    modal_flags = iSomeFlag_;
+}
 int Win::is_descendant(Win *window) {
     ++descendant_queries;
     if (this == &child1) {
@@ -92,6 +105,9 @@ void arm() {
     JackalInitFlags = 0;
     WinPointerOwner3 = 0;
     WinPointerOwner4 = 0;
+    WinFocusWindow = 0;
+    capture_receiver = modal_receiver = capture_owner_seen = 0;
+    capture_flags = modal_flags = 0;
     receiver.fallback = 0;
     sound.playing_calls = sound.play_calls = sound.playing_result = 0;
 }
@@ -111,6 +127,15 @@ int main() {
     assert(!WinPointerOwner4);
     arm(); WinPointerOwner3 = &WinBubbleWindow; receiver.on_char('g', 0);
     assert(!WinPointerOwner3 && WinBubbleWindow.released == 1);
+
+    // These service doubles observe the receiver and original store phases.
+    // Native COFF, rather than this host surface, proves virtual slot dispatch.
+    arm(); WinPointerOwner3 = WinFocusWindow = &WinBubbleWindow;
+    receiver.on_char('g', 0);
+    assert(WinBubbleWindow.released == 2);
+    assert(capture_receiver == &WinBubbleWindow && modal_receiver == &WinBubbleWindow);
+    assert(capture_owner_seen == 0);
+    assert((capture_flags & 1) != 0 && (modal_flags & 1) == 0);
 
     arm(); JackalInitFlags = 1; WinRootCount = 2;
     WinRootWindows[0] = &root1; WinRootWindows[1] = &root2;

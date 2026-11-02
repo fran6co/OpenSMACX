@@ -73,7 +73,8 @@ void __cdecl hall_of_fame(int add_current_player) {
   if (g_FAMEWIN.init() != 0) return;
   if (add_current_player != 0) g_FAMEWIN.try_to_add_me();
   g_FAMEWIN.buttonGroup_.set(ConsoleGlobal.faction_id_, 1);
-  g_FAMEWIN.set_modal(0, pop_wait, 0);
+  Win &modal_window = g_FAMEWIN;
+  modal_window.set_modal(0, pop_wait, 0);
 
   // The pinned hall_of_fame and hof_save fopen calls both reference the
   // initial "wb\0" bytes at 0x68460C; this writable-data correspondence does

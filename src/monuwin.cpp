@@ -1152,7 +1152,7 @@ MonuWin MonumentWindowGlobal;
 int MonumentWindowCount;
 // Native476A50: Player flags use59C-byte stride, records use4F4-byte stride.
 // Both tables have real source owners; the old int-pointer scaling was wrong.
-// ORIGINAL: 0x00476A50 ?monument@@YAXH@Z 0x00476A50-0x00476B22
+// ORIGINAL: 0x00476A50 ?monument@@YAXH@Z 0x00476A50-0x00476B22 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["image:0x00476A50; retired seed provenance source:src/stringstruct.cpp; original spans and historical lessons retained.", "image:477C80/477B10 member order and36DC extent; primary66C880 slots12/17/19/25/44.", "image:476A50 binds singleton7F9F58 and independent count7FD634; Player59C and MonumentFaction4F4 strides.", "image:4737EE..475E58 localized owner/grammar cases; 472230/4736E0 resource, clipping, sprite and Spot accesses."], "reason": "Native trigger uses the source-owned singleton, real Player rule flags and MonumentFaction records, and inherited modal/GraphicWin close operations; raw int-pointer scaling in the prior transcription multiplied Player stride by four."}
 // symbol    ?monument@@YAXH@Z
 // TRIED: literal 0 store to the count slot before the loop and the vtable-cast placement are what reach MNEMONIC_ONLY; the rest is register allocation not reproduced.
@@ -1167,16 +1167,15 @@ void __cdecl monument(int from_load) {
         return;
 
     MonumentWindowCount = 0;
-    int count = 0;
     for (int event = 0; event < 15; ++event)
         if (FactionMonuments[faction].records_[event].achieved_ != 0)
-            ++count;
-    MonumentWindowCount = count;
-    if (count == 0) return;
+            ++MonumentWindowCount;
+    if (MonumentWindowCount == 0) return;
     const int result = MonumentWindowGlobal.init();
     if (result != 0) return;
     MonumentWindowGlobal.selection_pending_ = from_load != 0;
-    MonumentWindowGlobal.set_modal(result, 0, 0);
+    Win &modal_window = MonumentWindowGlobal;
+    modal_window.set_modal(result, 0, 0);
     MonumentWindowGlobal.GraphicWin::close();
     do_all_draws();
 }

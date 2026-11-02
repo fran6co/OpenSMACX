@@ -308,58 +308,62 @@ void NetWin::setup_faction_data(MessageFactionData *message_faction_data) {
 
     // The 7 base factions land first, at the front of the block. The image
     // counts the loop DOWN (`mov [ebp-0x10],7 / dec / jne`), which is why the
-    // flag offset climbs in the third clause of the same for.
-    if (text_open(AlphaxFileID, NetWinSectionFactions) != 0) {
-        return;
-    }
+    // record position climbs in the third clause of the same for.
     NetWinFactionRecord *records;
-    int flag_offset;
-    int name_offset;
+    int flag_index;
+    int name_index;
     int record_index;
     records = faction_records_;
     records[0].record_count_ = static_cast<uint8_t>(record_count);
     records = faction_records_;
     records[0].record_type_ = 7;
-    flag_offset = 0;
-    for (record_index = 7; record_index != 0;
-         --record_index, flag_offset += 0x190) {
+    if (text_open(AlphaxFileID, NetWinSectionFactions) != 0) {
+        return;
+    }
+    flag_index = 0;
+    for (record_index = 7; record_index != 0; --record_index) {
         records = faction_records_;
-        records[flag_offset / 0x190].active_ = 1;
+        records[flag_index].active_ = 1;
         text_get();
         records = faction_records_;
-        strcpy(records[flag_offset / 0x190].filename_, text_item());
+        char *const filename = records[flag_index].filename_;
+        ++flag_index;
+        strcpy(filename, text_item());
     }
 
-    // The 7 expansion factions follow, one 0x190 stride further on: the flag
-    // offset walks 0..0xAF0 while the name offset starts at 0xAF0.
+    // The 7 expansion faction names follow at record 7, while the original
+    // active flags restart at record 0.
     if (text_open(AlphaxFileID, NetWinSectionNewFactions) != 0) {
         return;
     }
-    name_offset = 0xaf0;
-    for (flag_offset = 0; flag_offset < 0xaf0; flag_offset += 0x190) {
+    name_index = 7;
+    for (flag_index = 0; flag_index < 7; ++flag_index) {
         records = faction_records_;
-        records[flag_offset / 0x190].active_ = 1;
+        records[flag_index].active_ = 1;
         text_get();
         records = faction_records_;
-        strcpy(records[name_offset / 0x190].filename_, text_item());
-        name_offset += 0x190;
+        char *const filename = records[name_index].filename_;
+        ++name_index;
+        strcpy(filename, text_item());
     }
 
-    // Then however many custom factions the count pass found, at 0x15E0.
+    // Custom faction names start at record 14; their active flags also
+    // restart at record 0, as in the original.
     if (text_open(AlphaxFileID, NetWinSectionCustom) != 0) {
         return;
     }
     if (custom_count > 0) {
-        flag_offset = 0;
-        name_offset = 0x15e0;
+        flag_index = 0;
+        name_index = 14;
         for (record_index = custom_count; record_index != 0; --record_index) {
             records = faction_records_;
-            records[flag_offset / 0x190].active_ = 1;
+            records[flag_index].active_ = 1;
             text_get();
             records = faction_records_;
-            strcpy(records[name_offset / 0x190].filename_, text_item());
-            flag_offset += 0x190;
-            name_offset += 0x190;
+            char *const filename = records[name_index].filename_;
+            ++name_index;
+            strcpy(filename, text_item());
+            ++flag_index;
         }
     }
 
