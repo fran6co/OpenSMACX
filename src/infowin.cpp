@@ -727,12 +727,13 @@ void __cdecl InfoWin::timer_daemon(int tick) {
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/00459150.cpp"], "reason": "Home InfoWin timer behavior with typed pane members and MainInterface flat-button slot"}
 void InfoWin::timer_proc(int a1) {
     if (field_AC_ != 0) return;
-    if (active_interface_slot_occupied()) return;
+    if (IfaceIdToSlotStorage[ActiveIfaceIdStorage] != 0) return;
     if (MainInterfaceGlobal.flat_button_[11].is_visible() != 0) return;
 
+    ++visible_characters_[active_pane_];
     const int pane = active_pane_;
-    const int count = ++visible_characters_[pane];
     const int length = text_lengths_[pane];
+    const int count = visible_characters_[pane];
     if (count > length + 0x32) {
         int mouse_x;
         int mouse_y;
@@ -758,7 +759,7 @@ void InfoWin::timer_proc(int a1) {
 // ORIGINAL: 0x00458FF0 ?timer_change@InfoWin@@QAEXH@Z 0x00458FF0-0x00459141
 // RECOVERY_BINDING: v1 {"evidence": ["git:caf4963a:src/recovered/units/00458ff0.cpp", "source:src/infowin.h", "source:src/game.cpp:InterfaceBoxStyles", "pinned:0x004590C7-0x004590DF clears 0x007AF174, 0x007AF17C, 0x007AF178 and 0x007AF180 after successful state_valid", "source:MainInterfaceGlobal at 0x007AE820 has its GraphicWin Buffer subobject at +0x444; those destinations are Buffer +0x510, +0x518, +0x514 and +0x51C", "source:Buffer::reset_text_state clears the existing fields in that original order; InfoWin::draw_text uses the same owner operation"], "reason": "Home the timed pane transition with owned InfoWin state, pane rectangle and box style. The former animation-counter alias actually addressed MainInterfaceGlobal's Buffer text state; reset those members after the successful validity loop, preserving the original store order and callbacks."}
 void InfoWin::timer_change(int) {
-    if (active_interface_slot_occupied()) return;
+    if (IfaceIdToSlotStorage[ActiveIfaceIdStorage] != 0) return;
 
     const int old_pane = active_pane_;
     field_94_ = 0;

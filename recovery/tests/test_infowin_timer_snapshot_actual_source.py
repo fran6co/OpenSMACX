@@ -55,7 +55,8 @@ struct MainInterfaceProbe {
     int get_mouse_pos(int *x, int *y);
 };
 static MainInterfaceProbe MainInterfaceGlobal;
-static int slot_occupied;
+static int IfaceIdToSlotStorage[30];
+static int ActiveIfaceIdStorage;
 static int box_result;
 static int box_switch_pane;
 static int box_length;
@@ -74,7 +75,6 @@ struct InfoWin {
     int field_94_;
     RECT bounds_;
 
-    int active_interface_slot_occupied();
     void draw_text(int pane);
     void timer_change(int tick);
     void timer_proc(int tick);
@@ -93,7 +93,6 @@ int MainInterfaceProbe::get_mouse_pos(int *x, int *y) {
     }
     return 0;
 }
-int InfoWin::active_interface_slot_occupied() { return slot_occupied; }
 int in_box(int, int, const RECT *) {
     ++box_calls;
     if (MainInterfaceGlobal.owner != 0 && box_switch_pane >= 0) {
@@ -133,7 +132,9 @@ static void reset(InfoWin &info) {
     MainInterfaceGlobal.mouse_length = 0;
     for (int i = 0; i != 12; ++i)
         MainInterfaceGlobal.flat_button_[i].visible = 0;
-    slot_occupied = 0;
+    for (int i = 0; i != 30; ++i) IfaceIdToSlotStorage[i] = 0;
+    ActiveIfaceIdStorage = 4;
+    IfaceIdToSlotStorage[0] = 1; // The active index, not the first slot, controls entry.
     box_result = 0;
     box_switch_pane = -1;
     box_length = 0;
@@ -156,7 +157,14 @@ int main() {
     assert(MainInterfaceGlobal.mouse_calls == 0 && draw_calls == 0);
 
     reset(info);
-    slot_occupied = 1;
+    IfaceIdToSlotStorage[ActiveIfaceIdStorage] = 1;
+    info.timer_proc(13);
+    assert(info.visible_characters_[0] == 0);
+    assert(MainInterfaceGlobal.mouse_calls == 0 && draw_calls == 0);
+
+    // The pin tests the full DWORD slot; its low byte need not be nonzero.
+    reset(info);
+    IfaceIdToSlotStorage[ActiveIfaceIdStorage] = 0x100;
     info.timer_proc(13);
     assert(info.visible_characters_[0] == 0);
     assert(MainInterfaceGlobal.mouse_calls == 0 && draw_calls == 0);
@@ -271,3 +279,24 @@ def test_stale_pane_and_length_mutant_fails_the_callback_witness(
     assert "assert" in diagnostic and "visible_characters" in diagnostic, (
         "mutant must fail the intended stale-pane assertion, not crash for an "
         "unrelated reason:\n" + diagnostic)
+
+
+@pytest.mark.parametrize("compiler_name", ("g++", "clang++"))
+@pytest.mark.parametrize("damage", ("omit", "wrong-index", "low-byte"))
+def test_interface_slot_guard_damage_is_rejected(tmp_path, compiler_name, damage):
+    compiler = shutil.which(compiler_name)
+    if compiler is None:
+        pytest.skip(f"{compiler_name} unavailable")
+    body = actual_method()
+    guard = "if (IfaceIdToSlotStorage[ActiveIfaceIdStorage] != 0) return;"
+    replacements = {
+        "omit": "",
+        "wrong-index": "if (IfaceIdToSlotStorage[0] != 0) return;",
+        "low-byte": "if (static_cast<unsigned char>(IfaceIdToSlotStorage[ActiveIfaceIdStorage]) != 0) return;",
+    }
+    mutant = body.replace(guard, replacements[damage], 1)
+    assert mutant != body, "actual source lacks the admitted interface-slot guard"
+    result = _compile_run(tmp_path, compiler, mutant)
+    diagnostic = result.stderr.decode().lower()
+    assert result.returncode != 0
+    assert "assert" in diagnostic and "visible_characters" in diagnostic, diagnostic

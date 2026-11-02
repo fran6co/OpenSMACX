@@ -45,7 +45,7 @@ def test_both_original_priority_paths_use_named_player_members() -> None:
     assert "unk_38" not in setter and "unk_38" not in key_route
 
     popup = setter.index("x_pop_short(ConsoleStrTechRandom")
-    answer = setter.index("const int answer = PopupWriteCheckState;")
+    answer = setter.index("const signed char answer = static_cast<signed char>(PopupWriteCheckState);")
     sync = setter.index("synch_ai(faction_id)")
     assert setter.index("PopupWriteCheckState = static_cast<int>(flags);") < popup < answer < sync
     key_popup = key_route.index("x_pop_short(ConsoleStrTechRandom")

@@ -318,6 +318,7 @@ int CurrentFactionEnergyReserves;
 int BaseComputedID = -1;
 // Historical object identity moved to GameDataStateStorage; see the transport manifest.
 // 0x009A64CC
+// RECOVERY_OBJECT: v1 0x0090EA04 ?BaseFindDist@@3HA
 int BaseFindDist;  // 0x0090EA04
 // 0x009A6814
 // RECOVERY_OBJECT: v2 0x0090EA34 0x0090EA38 ?BaseUpkeepStage@@3IA 0x004E68B0
@@ -5941,33 +5942,41 @@ int __cdecl base_find(int x, int y, int faction_id, int region, int faction_id_2
     Base *base = Bases;
     for (int i = 0; i < GameDataStateStorage.fields_.base_current_count_; i++, base++) {
         if (region < 0 || region_at(base->x, base->y) == (uint32_t)region) {
-            if (faction_id < 0 ? (faction_id_2 < 0 || base->faction_id_current != faction_id_2)
-                : (faction_id == base->faction_id_current || (faction_id_2 == -2
-                    ? (PlayersData[faction_id].diplo_treaties[base->faction_id_current] & DTREATY_PACT)
-                    : (faction_id_2 >= 0 && faction_id_2 == base->faction_id_current)))) {
-                if (faction_id_3 < 0 || base->faction_id_current == faction_id_3
-                    || ((1 << faction_id_3) & base->visibility)) {
-                    // Open-coded vector_dist(x, y, base->x, base->y): the
-                    // image calls abs() four times, never vector_dist itself -
-                    // see del_site (0x00579E70) and base_find(x,y) (0x004E3B80)
-                    // for the same expansion.
-                    int dx = x_dist(x, base->x);
-                    int dy = abs(y - base->y);
-                    int abs_dx = abs(dx);
-                    int abs_dy = abs(dy);
-                    int largest = abs_dx;
-                    if (abs_dx <= abs_dy) {
-                        largest = abs_dy;
+            if (faction_id >= 0) {
+                if (faction_id != base->faction_id_current) {
+                    if (faction_id_2 == -2) {
+                        if (!(PlayersData[faction_id].diplo_treaties[base->faction_id_current] & DTREATY_PACT)) {
+                            continue;
+                        }
+                    } else if (faction_id_2 < 0 || faction_id_2 != base->faction_id_current) {
+                        continue;
                     }
-                    int smallest = abs_dx;
-                    if (abs_dx >= abs_dy) {
-                        smallest = abs_dy;
-                    }
-                    int dist = largest - ((((abs_dy + abs_dx) >> 1) - smallest + 1) >> 1);
-                    if (dist <= proximity) {
-                        proximity = dist;
-                        base_id = i;
-                    }
+                }
+            } else if (faction_id_2 >= 0 && base->faction_id_current == faction_id_2) {
+                continue;
+            }
+            if (faction_id_3 < 0 || base->faction_id_current == faction_id_3
+                || ((1 << faction_id_3) & base->visibility)) {
+                // Open-coded vector_dist(x, y, base->x, base->y): the
+                // image calls abs() four times, never vector_dist itself -
+                // see del_site (0x00579E70) and base_find(x,y) (0x004E3B80)
+                // for the same expansion.
+                int dx = x_dist(x, base->x);
+                int dy = abs(y - base->y);
+                int abs_dx = abs(dx);
+                int abs_dy = abs(dy);
+                int largest = abs_dx;
+                if (abs_dx <= abs_dy) {
+                    largest = abs_dy;
+                }
+                int smallest = abs_dx;
+                if (abs_dx >= abs_dy) {
+                    smallest = abs_dy;
+                }
+                int dist = largest - ((((abs_dy + abs_dx) >> 1) - smallest + 1) >> 1);
+                if (dist <= proximity) {
+                    proximity = dist;
+                    base_id = i;
                 }
             }
         }
@@ -9827,7 +9836,7 @@ int __cdecl value_of_base(int base_id, int faction_id_req, int faction_id_res,
 
 /*
 Purpose: Determine ideal non-offense (defense, combat, recon) unit count for the specified base.
-// ORIGINAL: 0x00560B30 ?garrison_check@@YAHH@Z 0x00560B30-0x00560D30
+// ORIGINAL: 0x00560B30 ?garrison_check@@YAHH@Z 0x00560B30-0x00560D30 BYTE_EXACT
 // size      512 bytes
 // prototype int (__cdecl ?garrison_check@@YAHH@Z)(int baseID)
 // callers   4   call targets   3
@@ -9854,27 +9863,27 @@ Return Value: Amount of non-offensive units needed (1-10)
 Status: Complete
 */
 int __cdecl garrison_check(int base_id) {
-    int x = Bases[base_id].x;
-    int y = Bases[base_id].y;
     uint32_t faction_id = Bases[base_id].faction_id_current;
-    uint32_t sp_count = 0;
-    for (uint32_t i = 0; i < MaxSecretProjectNum; i++) {
-        if (base_project(i) == (int)base_id) {
+    int region = region_at(Bases[base_id].x, Bases[base_id].y);
+    int sp_count = 0;
+    for (int project = 0; project < MaxSecretProjectNum; project++) {
+        if (GameDataStateStorage.fields_.secret_project_.project_base[project] == base_id) {
             sp_count++;
         }
     }
     int garrison = (sp_count + 2) / 3 + (Bases[base_id].population_size + 1) / 4 + 1;
-    if (has_fac_built(FAC_HEADQUARTERS, base_id) || bit_at(x, y) & BIT_UNK_40000000
+    if (has_fac(FAC_HEADQUARTERS, base_id, 0)
+        || bit_at(Bases[base_id].x, Bases[base_id].y) & BIT_UNK_40000000
         || is_objective(base_id)) {
         garrison++;
     }
     if (is_objective(base_id) && PlayersData[faction_id].flags & PFLAG_STRAT_DEF_OBJECTIVES) {
         garrison++;
     }
-    if (PlayersData[faction_id].region_base_plan[region_at(x, y)] == PLAN_COLONIZATION) {
+    if (PlayersData[faction_id].region_base_plan[region] == PLAN_COLONIZATION) {
         garrison--;
     }
-    int faction_id_sea = zoc_sea(x, y, faction_id) - 1;
+    int faction_id_sea = zoc_sea(Bases[base_id].x, Bases[base_id].y, faction_id) - 1;
     if (faction_id_sea > 0
         && ((PlayersData[faction_id].diplo_treaties[faction_id_sea]
              & (DTREATY_VENDETTA | DTREATY_WANT_REVENGE))

@@ -17,15 +17,15 @@ SOURCE = ROOT / "src/reportif.cpp"
 SIGNATURE = "void ReportIf::draw_sat()"
 
 
-def _actual_body():
-    source = SOURCE.read_text(encoding="utf-8")
+def _actual_body(path=SOURCE, signature=SIGNATURE):
+    source = path.read_text(encoding="utf-8")
     masked = COMMENTS_OR_STRINGS.sub(
         lambda match: "".join("\n" if c == "\n" else " " for c in match[0]),
         source,
     )
-    assert masked.count(SIGNATURE) == 1
-    start = masked.index(SIGNATURE)
-    opening = masked.index("{", start + len(SIGNATURE))
+    assert masked.count(signature) == 1
+    start = masked.index(signature)
+    opening = masked.index("{", start + len(signature))
     depth = 0
     for end in range(opening, len(masked)):
         if masked[end] == "{":
@@ -65,7 +65,8 @@ struct Buffer {
     void wrap_flying(char *) {}
     void wrap_flying(char *, int, int, int) {}
     void wrap_flying_flush() {}
-    void write_cent_l(char *, int, int, int, int) {}
+    int write_cent_l(char *, int, int, int, int) { return 0; }
+    // ACTUAL_CENTERED_TEXT_HELPER
 };
 
 struct MainInterface : Buffer {
@@ -193,7 +194,12 @@ int main() {
 
 
 def _program(body):
-    return FIXTURE + "\n" + body + "\n" + MAIN
+    helper = _actual_body(
+        ROOT / "src/buffer.h",
+        "int write_cent_text(char *text, int x, int y, int width)",
+    )
+    fixture = FIXTURE.replace("// ACTUAL_CENTERED_TEXT_HELPER", helper)
+    return fixture + "\n" + body + "\n" + MAIN
 
 
 @pytest.mark.parametrize("compiler_name", ("g++", "clang++"))

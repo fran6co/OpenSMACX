@@ -7246,8 +7246,8 @@ void __cdecl yearmotize(char *text) {
         return;
     }
     char c;
+    ++p;
     do {
-        ++p;
         char *run = p - 1;
         if (strlen(run) < 4) {
             return;

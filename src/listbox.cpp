@@ -2065,8 +2065,7 @@ void ListBox::set_selected_id(int id) {
             do {
                 StringStructEntry *entry = items.current_;
                 if (entry->id == id) {
-                    set_selected_pos(items.current_position_, 1);
-                    return;
+                    goto found;
                 }
                 ++index;
                 items.current_position_ = items.current_position_ + 1;
@@ -2075,6 +2074,10 @@ void ListBox::set_selected_id(int id) {
         }
     }
     set_selected_pos(-1, 1);
+    return;
+
+found:
+    set_selected_pos(Dialog::item_list_.current_position_, 1);
 }
 
 /*

@@ -2801,25 +2801,25 @@ Purpose: Edit one faction's four AI priority toggles through the checkbox
 void Console::set_ai(int faction_id) {
     // The pinned reads/writes at 96CDC0..96CDCC are the four named priority
     // fields at PlayersData + 0x3E0..0x3EC (VC6 CodeView offsets 992..1004).
-    unsigned char flags = (PlayersData[faction_id].ai_growth != 0) ? 1 : 0;
+    int flags = (PlayersData[faction_id].ai_growth != 0) ? 1 : 0;
     if (PlayersData[faction_id].ai_tech != 0) {
         flags |= 2;
     } else {
-        flags &= 0xFD;
+        flags &= ~2;
     }
     if (PlayersData[faction_id].ai_wealth != 0) {
         flags |= 4;
     } else {
-        flags &= 0xFB;
+        flags &= ~4;
     }
     if (PlayersData[faction_id].ai_power != 0) {
         flags |= 8;
     } else {
-        flags &= 0xF7;
+        flags &= ~8;
     }
     PopupWriteCheckState = static_cast<int>(flags);
     if (x_pop_short(ConsoleStrTechRandom, 1, (NullCallback)0) >= 0) {
-        const int answer = PopupWriteCheckState;
+        const signed char answer = static_cast<signed char>(PopupWriteCheckState);
         PlayersData[faction_id].ai_growth = answer & 1;
         PlayersData[faction_id].ai_tech = (answer & 2) >> 1;
         PlayersData[faction_id].ai_wealth = (answer & 4) >> 2;

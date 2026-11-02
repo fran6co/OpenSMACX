@@ -183,6 +183,16 @@ int write_multi_font_raw(char *text, int x, int y);
 // native 005DD250 interprets its fourth argument as maximum text length,
 // whereas this wrapper uses rectangle width and computes the full length.
 int write_cent(char *text, int x, int y, int width);
+
+// Shared implementation of the guarded full-text centered operation.
+int write_cent_text(char *text, int x, int y, int width) {
+    if (text == 0) {
+        return x;
+    }
+    int length = static_cast<int>(strlen(text));
+    return write_cent_l(text, x, y, width, length);
+}
+
 // 005E3770; forwards a borrowed pointer returned by find_line_break_l.
 char *find_line_break(char *text, int width);
 

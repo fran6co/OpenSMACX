@@ -42,6 +42,8 @@ def test_actual_timer_change_uses_actual_buffer_reset(tmp_path, compiler_name):
 #include <stdint.h>
 struct RECT { int left, top, right, bottom; };
 static int WinScreenWidth = 1024;
+static int IfaceIdToSlotStorage[30];
+static int ActiveIfaceIdStorage = 4;
 static int InterfaceBoxStyles[19];
 static int events[8], event_count;
 struct Buffer {
@@ -62,13 +64,12 @@ struct InfoWin {
     int field_94_, active_pane_, redraw_phase_, pane_states_[2];
     int visible_characters_[2], field_A8_;
     RECT pane_rects_[2];
-    int active_slot, validity_count;
+    int validity_count;
     InfoWin() : field_94_(9), active_pane_(1), redraw_phase_(-1),
-        field_A8_(7), active_slot(0), validity_count(0) {
+        field_A8_(7), validity_count(0) {
         pane_states_[0] = 0; pane_states_[1] = 0;
         visible_characters_[0] = 8; visible_characters_[1] = 9;
     }
-    bool active_interface_slot_occupied() const { return active_slot != 0; }
     bool state_valid(int) {
         assert(MainInterfaceGlobal.write_font_slot_ == 0xA1);
         assert(MainInterfaceGlobal.field_514_ == 0xA2);
@@ -89,10 +90,12 @@ int main() {
     MainInterfaceGlobal.font_slot_ = 0xA3;
     MainInterfaceGlobal.markup_pending_ = 0xA4;
     InfoWin blocked;
-    blocked.active_slot = 1;
+    IfaceIdToSlotStorage[0] = 1;
+    IfaceIdToSlotStorage[ActiveIfaceIdStorage] = 1;
     blocked.timer_change(0);
     assert(blocked.validity_count == 0 && event_count == 0);
     assert(MainInterfaceGlobal.write_font_slot_ == 0xA1);
+    IfaceIdToSlotStorage[ActiveIfaceIdStorage] = 0;
     InfoWin changed;
     changed.timer_change(0);
     assert(changed.validity_count == 3);

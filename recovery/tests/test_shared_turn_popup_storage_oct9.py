@@ -111,7 +111,7 @@ def test_shared_turn_storage_and_popup_dword_actual_sources(tmp_path: Path,
     assert "reinterpret_cast<int *>(0x0093E8C0)" not in console
     assert "reinterpret_cast<unsigned char *>(0x009BC06C)" not in console
     assert "PopupWriteCheckState = static_cast<int>(flags);" in bodies[4]
-    assert "const int answer = PopupWriteCheckState;" in bodies[4]
+    assert "const signed char answer = static_cast<signed char>(PopupWriteCheckState);" in bodies[4]
     assert "unk_38" not in bodies[4]
     assert "PlayersData[faction].ai_growth" in key_route
     assert "PlayersData[faction].ai_tech" in key_route
@@ -213,8 +213,8 @@ int main() {
     subprocess.run([str(executable)], check=True)
 
     wrong_owner = source.replace(
-        "unsigned char flags = (PlayersData[faction_id].ai_growth != 0)",
-        "unsigned char flags = (PlayersData[faction_id].unk_38[2] != 0)", 1)
+        "int flags = (PlayersData[faction_id].ai_growth != 0)",
+        "int flags = (PlayersData[faction_id].unk_38[2] != 0)", 1)
     assert wrong_owner != source
     mutant_path = tmp_path / "wrong_ai_owner.cpp"
     mutant_executable = tmp_path / "wrong_ai_owner"

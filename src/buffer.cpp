@@ -5889,11 +5889,7 @@ int Buffer::write_multi_font_raw(char *text, int x, int y) {
 // The retained seed's BufferProxy receiver is now the genuine Buffer owner.
 
 int Buffer::write_cent(char *text, int x, int y, int width) {
-    if (text == 0) {
-        return x;
-    }
-    int length = static_cast<int>(strlen(text));
-    return write_cent_l(text, x, y, width, length);
+    return write_cent_text(text, x, y, width);
 }
 
 

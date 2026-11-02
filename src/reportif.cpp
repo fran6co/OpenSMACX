@@ -1421,10 +1421,11 @@ void ReportIf::draw_score() {
     field_14_ = score_panel->right - left_inset - score_panel->left;
     field_18_ = score_panel->bottom - score_panel->top;
 
+    StringTemp[0] = 0;
+
     MainInterfaceGlobal.Buffer::set_font(field_1E190_, field_1E194_, field_1E198_, nullptr);
     MainInterfaceGlobal.Buffer::set_text_color(0xE1, -1, 1, 1);
 
-    StringTemp[0] = 0;
     strcat(StringTemp, Players[report_faction_id_].adj_name_faction);
     CharUpperA(StringTemp);
     strcat(StringTemp, " ");
@@ -1438,8 +1439,7 @@ void ReportIf::draw_score() {
         say_year(StringTemp);
     }
 
-    MainInterfaceGlobal.Buffer::write_cent_l(StringTemp, field_C_, field_10_ + 10, field_14_,
-                      static_cast<int>(strlen(StringTemp)));
+    MainInterfaceGlobal.Buffer::write_cent_text(StringTemp, field_C_, field_10_ + 10, field_14_);
 
     MainInterfaceGlobal.Buffer::set_font(field_1E180_, field_1E180_, field_1E180_, nullptr);
     MainInterfaceGlobal.Buffer::set_text_color(0x99, -1, 1, 1);
@@ -1953,7 +1953,7 @@ void ReportIf::draw_labs() {
         strcat(StringTemp, ", "); strcat(StringTemp, " ");
         strcat(StringTemp, label_get(0x2DA)); strcat(StringTemp, " "); say_year(StringTemp);
     }
-    buffer->write_cent_l(StringTemp, field_C_, field_10_ + 10, field_14_, strlen(StringTemp));
+    MainInterfaceGlobal.Buffer::write_cent_text(StringTemp, field_C_, field_10_ + 10, field_14_);
     buffer->set_font(field_1E180_, field_1E180_, field_1E180_, 0);
     buffer->set_text_color(0x99, -1, 1, 1);
     field_10_ += field_1C_ * 2;
@@ -1963,7 +1963,7 @@ void ReportIf::draw_labs() {
     strcat(StringTemp, "    "); strcat(StringTemp, label_get(0x179)); strcat(StringTemp, ": ");
     _itoa(PlayersData[report_faction_id_].tech_accumulated, number, 10); strcat(StringTemp, number);
     if (field_1E230_ == 0) {
-        buffer->write_cent_l(StringTemp, field_C_, field_10_, field_14_, strlen(StringTemp));
+        MainInterfaceGlobal.Buffer::write_cent_text(StringTemp, field_C_, field_10_, field_14_);
         field_10_ += field_1C_;
         StringTemp[0] = 0;
     } else strcat(StringTemp, "    ");
@@ -1974,7 +1974,7 @@ void ReportIf::draw_labs() {
         strcat(StringTemp, ".");
         _itoa((EnergyLabsTotal % 100) / 10, number, 10); strcat(StringTemp, number);
     }
-    buffer->write_cent_l(StringTemp, field_C_, field_10_, field_14_, strlen(StringTemp));
+    MainInterfaceGlobal.Buffer::write_cent_text(StringTemp, field_C_, field_10_, field_14_);
     buffer->set_clip(MainInterfaceGlobal.buffer_working_rect());
     buffer->set_clip(&field_30_);
     field_C_ = field_30_.left + 6;
@@ -2002,7 +2002,7 @@ void ReportIf::draw_labs() {
     }
     strcat(StringTemp, "]");
     field_18_ -= 4; field_10_ += 4;
-    buffer->write_cent_l(StringTemp, field_C_, field_10_, field_14_, strlen(StringTemp));
+    MainInterfaceGlobal.Buffer::write_cent_text(StringTemp, field_C_, field_10_, field_14_);
     field_18_ -= field_1C_; field_10_ += field_1C_;
     buffer->set_text_color3(0xE1, -1, 1, 1);
     field_18_ -= 2; field_C_ += 3;
@@ -2065,7 +2065,7 @@ void ReportIf::draw_energy() {
     StringTemp[0] = 0;
     strcat(StringTemp, "["); strcat(StringTemp, label_get(0xBE));
     strcat(StringTemp, " "); strcat(StringTemp, label_get(0x2E6)); strcat(StringTemp, "]");
-    buffer->write_cent_l(StringTemp, field_C_, field_10_ + 4, field_14_, strlen(StringTemp));
+    MainInterfaceGlobal.Buffer::write_cent_text(StringTemp, field_C_, field_10_ + 4, field_14_);
 
     draw_workspace_rect_.left = field_C_;
     draw_workspace_rect_.top = draw_workspace_rect_.bottom + 2;
@@ -2130,7 +2130,7 @@ void ReportIf::draw_energy() {
         strcat(StringTemp, ", "); strcat(StringTemp, " ");
         strcat(StringTemp, label_get(0x2DA)); strcat(StringTemp, " "); say_year(StringTemp);
     }
-    buffer->write_cent_l(StringTemp, field_C_, field_10_ + 10, field_14_, strlen(StringTemp));
+    MainInterfaceGlobal.Buffer::write_cent_text(StringTemp, field_C_, field_10_ + 10, field_14_);
     buffer->set_font(field_1E180_, field_1E180_, field_1E180_, 0);
     buffer->set_text_color(0x99, -1, 1, 1);
     field_10_ += field_1C_ * 2;
@@ -2138,7 +2138,7 @@ void ReportIf::draw_energy() {
     strcat(StringTemp, label_get(0x39)); strcat(StringTemp, ": ");
     char number[80];
     _itoa(PlayersData[report_faction_id_].energy_reserves, number, 10); strcat(StringTemp, number);
-    buffer->write_cent_l(StringTemp, field_C_, field_10_, field_14_, strlen(StringTemp));
+    MainInterfaceGlobal.Buffer::write_cent_text(StringTemp, field_C_, field_10_, field_14_);
     buffer->set_font(field_1E190_, field_1E194_, field_1E198_, 0);
     buffer->set_clip(MainInterfaceGlobal.buffer_working_rect());
     buffer->set_clip(&field_30_);
@@ -2152,7 +2152,7 @@ void ReportIf::draw_energy() {
     buffer->box_sprite(&draw_workspace_rect_, &InterfaceBoxStyles[0]);
     StringTemp[0] = 0;
     strcat(StringTemp, "["); strcat(StringTemp, label_get(0x3C2)); strcat(StringTemp, "]");
-    buffer->write_cent_l(StringTemp, field_C_, field_10_ + 4, field_14_, strlen(StringTemp));
+    MainInterfaceGlobal.Buffer::write_cent_text(StringTemp, field_C_, field_10_ + 4, field_14_);
     draw_workspace_rect_.top = draw_workspace_rect_.bottom + 2;
     draw_workspace_rect_.bottom = field_10_ + field_18_;
     buffer->box_sprite(&draw_workspace_rect_, &InterfaceBoxStyles[0]);
@@ -2334,7 +2334,7 @@ void ReportIf::draw_ops() {
         strcat(StringTemp, " ");
         say_year(StringTemp);
     }
-    canvas.write_cent_l(StringTemp, field_C_, field_10_ + 10, field_14_, strlen(StringTemp));
+    MainInterfaceGlobal.Buffer::write_cent_text(StringTemp, field_C_, field_10_ + 10, field_14_);
     canvas.set_font(field_1E180_, field_1E180_, field_1E180_, 0);
     canvas.set_text_color(0x99, -1, 1, 1);
     field_10_ += field_1C_ * 2;
@@ -2344,7 +2344,7 @@ void ReportIf::draw_ops() {
     char number[80];
     _itoa(PlayersData[report_faction_id_].energy_reserves, number, 10);
     strcat(StringTemp, number);
-    canvas.write_cent_l(StringTemp, field_C_, field_10_, field_14_, strlen(StringTemp));
+    MainInterfaceGlobal.Buffer::write_cent_text(StringTemp, field_C_, field_10_, field_14_);
     canvas.set_clip(MainInterfaceGlobal.buffer_working_rect());
     canvas.set_clip(&field_30_);
     field_C_ = field_30_.left + 6;
@@ -2365,7 +2365,7 @@ void ReportIf::draw_ops() {
     strcat(StringTemp, "[");
     strcat(StringTemp, label_get(0xF0C/4));
     strcat(StringTemp, "]");
-    canvas.write_cent_l(StringTemp, field_C_, field_10_ + 4, field_14_, strlen(StringTemp));
+    MainInterfaceGlobal.Buffer::write_cent_text(StringTemp, field_C_, field_10_ + 4, field_14_);
     canvas.set_clip(MainInterfaceGlobal.buffer_working_rect());
     StringTemp[0] = 0;
     MainInterfaceGlobal.set_date(StringTemp);
@@ -2408,8 +2408,8 @@ void ReportIf::draw_projects() {
     strcat(StringTemp, "[");
     strcat(StringTemp, label_get(0x32A));
     strcat(StringTemp, "]");
-    buffer->write_cent_l(StringTemp, draw_workspace_rect_.left, field_10_ + 4,
-                         field_14_, static_cast<int>(strlen(StringTemp)));
+    MainInterfaceGlobal.Buffer::write_cent_text(StringTemp, draw_workspace_rect_.left, field_10_ + 4,
+                         field_14_);
 
     int project = ReportWinGlobal.shared_report_selection();
     if (project >= 0x400)
@@ -2471,8 +2471,7 @@ void ReportIf::draw_projects() {
         strcat(StringTemp, " ");
         say_year(StringTemp);
     }
-    buffer->write_cent_l(StringTemp, field_C_, field_10_ + 10, field_14_,
-                         static_cast<int>(strlen(StringTemp)));
+    MainInterfaceGlobal.Buffer::write_cent_text(StringTemp, field_C_, field_10_ + 10, field_14_);
     buffer->set_font(field_1E180_, field_1E180_, field_1E180_, 0);
     buffer->set_text_color(0x99, -1, 1, 1);
     field_10_ += field_1C_ * 2;
@@ -2499,8 +2498,7 @@ void ReportIf::draw_projects() {
     strcat(StringTemp, "[");
     strcat(StringTemp, label_get(0x3C3));
     strcat(StringTemp, "]");
-    buffer->write_cent_l(StringTemp, field_C_, field_10_ + 4, field_14_,
-                         static_cast<int>(strlen(StringTemp)));
+    MainInterfaceGlobal.Buffer::write_cent_text(StringTemp, field_C_, field_10_ + 4, field_14_);
     buffer->set_clip(MainInterfaceGlobal.buffer_working_rect());
     StringTemp[0] = 0;
     MainInterfaceGlobal.set_date(StringTemp);
@@ -2561,7 +2559,7 @@ void ReportIf::draw_sat() {
         buffer->set_font(field_1E184_, field_1E194_, field_1E198_, 0);
         StringTemp[0] = 0; strcat(StringTemp, "[");
         strcat(StringTemp, label_get(0x3C6)); strcat(StringTemp, "]");
-        buffer->write_cent_l(StringTemp, field_C_, field_10_ + 4, field_14_, strlen(StringTemp));
+        MainInterfaceGlobal.Buffer::write_cent_text(StringTemp, field_C_, field_10_ + 4, field_14_);
         for (int other = 1; other < 8; ++other) {
             if (other == ConsoleGlobal.faction_id_) continue;
             int elevators = 0;
@@ -2590,7 +2588,7 @@ void ReportIf::draw_sat() {
         strcat(StringTemp, ", "); strcat(StringTemp, " ");
         strcat(StringTemp, label_get(0x2DA)); strcat(StringTemp, " "); say_year(StringTemp);
     }
-    buffer->write_cent_l(StringTemp, field_C_, field_10_ + 10, field_14_, strlen(StringTemp));
+    MainInterfaceGlobal.Buffer::write_cent_text(StringTemp, field_C_, field_10_ + 10, field_14_);
     buffer->set_font(field_1E180_, field_1E180_, field_1E180_, 0);
     buffer->set_text_color(0x99, -1, 1, 1);
     field_10_ += field_1C_ * 2;
@@ -2640,7 +2638,7 @@ void ReportIf::draw_sat() {
         buffer->set_font(field_1E184_, field_1E194_, field_1E198_, 0);
         StringTemp[0] = 0; strcat(StringTemp, "[");
         strcat(StringTemp, label_get(0x3C7)); strcat(StringTemp, "]");
-        buffer->write_cent_l(StringTemp, field_C_, field_10_ + 4, field_14_, strlen(StringTemp));
+        MainInterfaceGlobal.Buffer::write_cent_text(StringTemp, field_C_, field_10_ + 4, field_14_);
         field_C_ = field_30_.left + 9; field_10_ = field_30_.top + 32;
         field_14_ = field_30_.right - field_30_.left - 18;
         int target = buttonGroup3_.field_84_;
@@ -2712,8 +2710,7 @@ void ReportIf::draw_security() {
     strcat(StringTemp, "[");
     strcat(StringTemp, label_get(0x38A));
     strcat(StringTemp, "]");
-    buffer->write_cent_l(StringTemp, field_C_, field_10_ + 4, field_14_,
-                         static_cast<int>(strlen(StringTemp)));
+    MainInterfaceGlobal.Buffer::write_cent_text(StringTemp, field_C_, field_10_ + 4, field_14_);
 
     buffer->set_font(field_1E18C_, 0, 0, 0);
     buffer->set_text_color(0x99, -1, 1, 1);
@@ -2782,8 +2779,7 @@ void ReportIf::draw_security() {
         strcat(StringTemp, " ");
         say_year(StringTemp);
     }
-    buffer->write_cent_l(StringTemp, field_C_, field_10_ + 10, field_14_,
-                         static_cast<int>(strlen(StringTemp)));
+    MainInterfaceGlobal.Buffer::write_cent_text(StringTemp, field_C_, field_10_ + 10, field_14_);
     buffer->set_font(field_1E180_, field_1E180_, field_1E180_, 0);
     buffer->set_text_color(0x99, -1, 1, 1);
     field_10_ += field_1C_ * 2;
@@ -2809,8 +2805,7 @@ void ReportIf::draw_security() {
     strcat(StringTemp, "[");
     strcat(StringTemp, label_get(0x3BB));
     strcat(StringTemp, "]");
-    buffer->write_cent_l(StringTemp, field_C_, field_10_ + 4, field_14_,
-                         static_cast<int>(strlen(StringTemp)));
+    MainInterfaceGlobal.Buffer::write_cent_text(StringTemp, field_C_, field_10_ + 4, field_14_);
     flatButton12_.show(0);
     flatButton14_.show(0);
     flatButton13_.show(0);
@@ -2839,7 +2834,7 @@ void ReportIf::draw_intel() {
     canvas.box_sprite(&draw_workspace_rect_, &InterfaceBoxStyles[0]);
     StringTemp[0] = 0;
     strcat(StringTemp, "["); strcat(StringTemp, label_get(0x175)); strcat(StringTemp, "]");
-    canvas.write_cent_l(StringTemp, field_C_, field_10_ + 4, field_14_, strlen(StringTemp));
+    MainInterfaceGlobal.Buffer::write_cent_text(StringTemp, field_C_, field_10_ + 4, field_14_);
     draw_workspace_rect_.top = draw_workspace_rect_.bottom + 2;
     draw_workspace_rect_.bottom = field_10_ + field_18_;
     canvas.box_sprite(&draw_workspace_rect_, &InterfaceBoxStyles[0]);
@@ -2889,7 +2884,7 @@ void ReportIf::draw_intel() {
         strcat(StringTemp, label_get(0x2DA)); strcat(StringTemp, " ");
         say_year(StringTemp);
     }
-    canvas.write_cent_l(StringTemp, field_C_, field_10_ + 10, field_14_, strlen(StringTemp));
+    MainInterfaceGlobal.Buffer::write_cent_text(StringTemp, field_C_, field_10_ + 10, field_14_);
     canvas.set_clip(MainInterfaceGlobal.buffer_working_rect());
     canvas.set_clip(&field_30_);
     field_C_ = field_30_.left + 6;
@@ -2903,7 +2898,7 @@ void ReportIf::draw_intel() {
     canvas.box_sprite(&draw_workspace_rect_, &InterfaceBoxStyles[0]);
     StringTemp[0] = 0;
     strcat(StringTemp, "["); strcat(StringTemp, label_get(0x176)); strcat(StringTemp, "]");
-    canvas.write_cent_l(StringTemp, field_C_, field_10_ + 4, field_14_, strlen(StringTemp));
+    MainInterfaceGlobal.Buffer::write_cent_text(StringTemp, field_C_, field_10_ + 4, field_14_);
     draw_workspace_rect_.top = draw_workspace_rect_.bottom + 2;
     draw_workspace_rect_.bottom = field_10_ + field_18_;
     canvas.box_sprite(&draw_workspace_rect_, &InterfaceBoxStyles[0]);
