@@ -400,7 +400,7 @@ FX g_FX;
 
 /*
 Purpose: Trigger one sound effect from the process-wide bank.
-// ORIGINAL: 0x00446A00 ?play@FX@@QAEXH@Z 0x00446A00-0x00446A8E FILE
+// ORIGINAL: 0x00446A00 ?play@FX@@QAEXH@Z 0x00446A00-0x00446A8E FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Original446A00..446A8E; retired seed git:117282ee:src/unrecovered/00446a00.cpp records the same identity and spans with its shr/test TRIED note kept below.", "0x009A6490 is game.h's GamePreferences and 0x0074DAA0 is popup.h's PopupWaveOwnerSlot; the receiver is fx.h's own FX with effects_ at 0x0 in 0x6C-byte Effect records, and the wave-owner slot 82 plus the effect record's slots 35/7 run through member-fn-pointer unions because the slots' signatures are not declared anywhere.", "The bit-4 release test is the seed's measured ((flags >> 4) & 1) walk, and the wave-owner refresh runs only for effect kinds 0/1/2 exactly as the seed orders them."], "reason": "Recover the sound bank's play trigger on the typed FX receiver; the shr+test release mask stays spelled as the seed measured it."}
 // TRIED (seed): 141/142 bytes match (edit distance 1). Only the bit-4 test
 //         near the end differs: original is `shr ecx,4 / test cl,1`, every
@@ -414,10 +414,15 @@ void FX::play(int effect) {
         if (FactionMusic) FactionMusic->hostility();
         if (effect == 0) {
             const int playing = effects_[0].is_playing();
-            effects_[0].set_pitch(playing ? effects_[0].pitch_ + 100 : 0);
+            if (playing) {
+                effects_[0].set_pitch(effects_[0].pitch_ + 100);
+            } else {
+                effects_[0].set_pitch(0);
+            }
         }
     }
-    if ((effects_[effect].flags_54_ >> 4) & 1) effects_[effect].load();
+    const unsigned char release_flags = effects_[effect].flags_54_ >> 4;
+    if (release_flags & 1) effects_[effect].load();
     effects_[effect].play();
 }
 
