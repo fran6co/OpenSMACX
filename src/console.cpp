@@ -1562,8 +1562,7 @@ int Console::selecting(int tile_x, int tile_y) {
         const int distance_sum = dx + abs(tile_y - vehicle_y);
         // Map coordinates have representable differences and sums. The
         // original SAR floors negative odd sums rather than truncating.
-        const int distance = distance_sum >= 0 ? distance_sum / 2
-                           : -1 - ((-1 - distance_sum) / 2);
+        const int distance = distance_sum >> 1;
         forbidden = distance > field_23D14_;
     }
     if (!forbidden && field_23D10_ == 8) {

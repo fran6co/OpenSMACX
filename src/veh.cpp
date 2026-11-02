@@ -9131,39 +9131,6 @@ int __cdecl veh_ready(int veh_id) {
 }
 
 /*
-Purpose: May the player select this vehicle?
-// ORIGINAL: 0x005C1A20 ?veh_selectable@@YAHH@Z 0x005C1A20-0x005C1AAA
-// size      138 bytes
-// prototype int (__cdecl ?veh_selectable@@YAHH@Z)(int vehID)
-// callers   11   call targets   1
-// kind      game
-// flags     frame;sp_ready;purged_ok
-// calls     0x005C1C40
-// HOMED from src/unrecovered/005c1a20.cpp, 2026-09-04.
-// TRIED: nesting the veh_id < 0 guard as `if (veh_id >= 0) { ... }` with a
-//        single fall-through return - same jl polarity either way, /O2
-//        canonicalises both to the same CFG.
-Return Value: 1 when the vehicle is on the map, ours, and not jailed.
-Status: MISMATCH.
-*/
-int __cdecl veh_selectable(int veh_id) {
-    if (veh_id < 0) {
-        return 0;
-    }
-    if (Vehs[veh_id].y < 0 || Vehs[veh_id].y >= MapLatitudeBounds ||
-        Vehs[veh_id].x < 0 || Vehs[veh_id].x >= MapLongitudeBounds) {
-        return 0;
-    }
-    if (Vehs[veh_id].faction_id != ConsoleGlobal.faction_id_) {
-        return 0;
-    }
-    if ((Vehs[veh_id].flags & 0x40) != 0 && (Vehs[veh_id].flags & 0x400) != 0) {
-        return 0;
-    }
-    return veh_jail(veh_id) == 0;
-}
-
-/*
 Purpose: Has this vehicle any moves left?
 // ORIGINAL: 0x005C1AB0 ?veh_unmoved@@YAHH@Z 0x005C1AB0-0x005C1B6F
 // size      191 bytes
@@ -9419,7 +9386,7 @@ void __cdecl battle_kill_chaff(int veh_id, int *attacker_out,
 
 /*
 Purpose: Can this vehicle leave the stack on its own?
-// ORIGINAL: 0x005B61A0 sub_5b61a0 0x005B61A0-0x005B6259
+// ORIGINAL: 0x005B61A0 sub_5b61a0 0x005B61A0-0x005B6259 BYTE_EXACT
 // size      185 bytes
 // prototype int (__cdecl sub_5B61A0)(int vehID)
 // symbol    ?veh_can_leave_stack@@YAHH@Z
@@ -9440,12 +9407,12 @@ int __cdecl veh_can_leave_stack(int veh_id) {
     if (has_abil(Vehs[veh_id].proto_id, 4) != 0) {
         return 1;
     }
-    if ((Vehs[veh_id].flags & 0x400) != 0) {
+    if (static_cast<int16_t>(Vehs[veh_id].flags & 0x400) != 0) {
         return 1;
     }
     const Map *tile = map_loc(Vehs[veh_id].x, Vehs[veh_id].y);
     if (tile->bit & 0x20u) {
-        if ((tile->climate & 0xE0) >= 0x40 && Vehs[veh_id].proto_id != 0x13) {
+        if ((tile->climate & ~0x1F) >= 0x40 && Vehs[veh_id].proto_id != 0x13) {
             return 2;
         }
     }

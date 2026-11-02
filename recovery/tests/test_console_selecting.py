@@ -71,6 +71,7 @@ def actual_source():
     parts["GLOBALS"] = "\n".join(globals_)
     parts["HELPER"] = braced(source, "int selecting_signed(")
     parts["BODY"] = braced(source, "int Console::selecting(")
+    parts["HALF_EXPRESSION"], = re.findall(r"const int distance\s*=\s*([^;]+);", parts["BODY"])
     return parts
 
 
@@ -126,6 +127,7 @@ void do_non_input(){seen.push_back({'P',-1,0,0,0});
     if(scenario==7){console.field_23D10_=77;MapWinTable[7]=&windows[7];windows[7].view_active_=1;}}
 HELPER
 BODY
+int actual_distance_half(int distance_sum){return HALF_EXPRESSION;}
 void reset(){
     seen.clear();scenario=0;patrol_result=1;expected_vehicle=1;expected_x=10;expected_y=10;
     console.field_23D10_=2;console.field_23D14_=-1;console.selected_vehicle_=1;
@@ -151,6 +153,13 @@ void early_controls(){
     reset();console.field_23D14_=(-2147483647 - 1);console.selected_vehicle_=1;one_window();require(choose()==1);event(0,'S',0,2);
 }
 void range_controls(){
+    // These are the pinned SAR results for the actual distance initializer.
+    // Negative sums are always admitted by selecting's nonnegative range
+    // gate, so observe the expression directly to distinguish floor/truncation.
+    const int half_cases[][2]={{(-2147483647-1),-1073741824},
+        {-2147483647,-1073741824},{-5,-3},{-3,-2},{-1,-1},
+        {0,0},{1,0},{3,1},{2147483647,1073741823}};
+    for(const auto&t:half_cases)require(actual_distance_half(t[0])==t[1]);
     // Independent original geometry: (absX wrapped at stored HALF width +
     // absY) /2, range equality admitted; these examples use no candidate helper.
     struct Case{int x,y,range,flat,half,shape;};
@@ -234,7 +243,8 @@ MUTATIONS = [
     ("derived_instead_of_stored_half", "dx > MapLongitude", "dx > MapLongitudeBounds / 2"),
     ("flat_boolean_instead_of_bit", "(MapIsFlat & 1) == 0", "MapIsFlat == 0"),
     ("wrong_wrap_subtraction", "dx = MapLongitudeBounds - dx", "dx = dx - MapLongitudeBounds"),
-    ("distance_scaling", "distance_sum / 2", "distance_sum / 4"),
+    ("distance_scaling", "distance_sum >> 1", "distance_sum >> 2"),
+    ("negative_odd_truncation", "distance_sum >> 1", "distance_sum / 2"),
     ("range_equality_refused", "distance > field_23D14_", "distance >= field_23D14_"),
     ("patrol_after_range_refusal", "!forbidden && field_23D10_ == 8", "field_23D10_ == 8"),
     ("patrol_receiver_argument", "valid_patrol(selected_vehicle_,", "valid_patrol(selected_vehicle_ + 1,"),
@@ -261,6 +271,7 @@ def test_selecting_damage_controls(tmp_path, name, old, new):
     parts = actual_source()
     assert old in parts["BODY"], name
     parts["BODY"] = parts["BODY"].replace(old, new)
+    parts["HALF_EXPRESSION"], = re.findall(r"const int distance\s*=\s*([^;]+);", parts["BODY"])
     if name == "hotspots_cached_before_callbacks":
         parts["BODY"] = parts["BODY"].replace("CursorHotspotX[shape], CursorHotspotY[shape]", "cached_x, cached_y")
     if name == "table_cached_before_callbacks":

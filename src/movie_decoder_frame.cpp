@@ -13,9 +13,9 @@ static int32_t signed_word(uint32_t value) {
 
 static int32_t arithmetic_shift_right(uint32_t value,
                                           unsigned shift) {
-  const int32_t signed_value = signed_word(value);
-  if (signed_value >= 0) return signed_value >> shift;
-  return -1 - static_cast<int32_t>((~value) >> shift);
+  // Codebook selectors use the pinned SAR2/7/10 operations. VC6's signed
+  // conversion and right shift retain those two's-complement semantics.
+  return static_cast<int32_t>(value) >> shift;
 }
 
 static int32_t fixed_product_16(int32_t left,

@@ -118,10 +118,11 @@ std::vector<Event> kind(char c){std::vector<Event>v;for(auto&e:events)if(e.kind=
 int main(){ImageButton b;Sprite a{241,100,13,9}, second{230,7,31,17};
  // Every ordinary branch combination. Geometry expectations use original
  // independent counts, not the implementation's inset or SAR helpers.
- for(int pressed=0;pressed<2;++pressed)for(int outline=0;outline<2;++outline)
+ for(uint32_t pressed_word : {0u,1u,0x100u,0x80000000u})for(int outline=0;outline<2;++outline)
  for(int focused=0;focused<2;++focused)for(int thick=0;thick<=3;++thick)
  for(int narrow=0;narrow<2;++narrow)for(int null_sprite=0;null_sprite<2;++null_sprite){
-  a.iSpriteWidth_=narrow?100:5;reset(b,null_sprite?nullptr:&a);b.field_A9C_=pressed;b.field_A94_=outline?104:uint32_t(-1);
+  const int pressed=pressed_word!=0;
+  a.iSpriteWidth_=narrow?100:5;reset(b,null_sprite?nullptr:&a);b.field_A9C_=pressed_word;b.field_A94_=outline?104:uint32_t(-1);
   focus=focused;b.bevel_thickness_=thick;static_cast<Win*>(&b)->on_redraw();
   require(events.size()>=2);require(events[0].kind=='P'&&events[0].who==&palettes[0]);require(events[1].kind=='F'&&events[1].a==101);
   require(WinCallbackWindow==&parents[0]);require(kind('Q').size()==unsigned(outline));
@@ -169,6 +170,8 @@ int main(){ImageButton b;Sprite a{241,100,13,9}, second{230,7,31,17};
  require(kind('S')[0].b==24&&kind('S')[0].c==16);
  // Exact source-width fit takes the unscaled1/1 arm, not56/56.
  reset(b,&a);a.iSpriteWidth_=56;b.on_redraw();d=kind('S')[0];require(d.d==1&&d.e==1);a.iSpriteWidth_=100;
+ // The pressed arm has its own exact-fit threshold after subtracting thickness.
+ reset(b,&a);b.field_A9C_=0x100;a.iSpriteWidth_=54;b.on_redraw();d=kind('S')[0];require(d.d==1&&d.e==1);a.iSpriteWidth_=100;
  // Fill may add an initial sprite (before centering), focus may change the
  // pressed branch, and the shared callback owner is not restored on return.
  reset(b,nullptr);b.field_A94_=104;focus=1;
@@ -219,11 +222,13 @@ DAMAGE = {
     "center_source_width": ("BODY", "centering_sprite->width()", "centering_sprite->source_width()"),
     "center_height": ("BODY", "centering_sprite->height()", "centering_sprite->width()"),
     "center_origin": ("BODY", "x = center_x;", "x = center_x + rect2_.left;"),
-    "sar_negative": ("HELPERS", "return value >= 0 ? value / 2 : -1 - ((-1 - value) / 2);", "return value / 2;"),
+    "sar_negative": ("HELPERS", "return value >> 1;", "return value / 2;"),
     "bevel_bound": ("BODY", "while (layers < image_button_paint_signed(bevel_thickness_))", "while (layers <= image_button_paint_signed(bevel_thickness_))"),
     "bevel_pressed_colors": ("BODY", "Buffer::box(&area, image_button_paint_signed(bevel_lower_),\n                        image_button_paint_signed(bevel_upper_));",
         "Buffer::box(&area, image_button_paint_signed(bevel_upper_),\n                        image_button_paint_signed(bevel_lower_));"),
-    "pressed_branch_live": ("BODY", "if (!pressed) {\n            Buffer::box", "if (field_A9C_ == 0) {\n            Buffer::box"),
+    "pressed_branch_live": ("BODY", "Buffer::box(&area, image_button_paint_signed(bevel_lower_),\n                        image_button_paint_signed(bevel_upper_));",
+        "Buffer::box(&area, image_button_paint_signed(field_A9C_ ? bevel_lower_ : bevel_upper_),\n                        image_button_paint_signed(field_A9C_ ? bevel_upper_ : bevel_lower_));"),
+    "pressed_truncated": ("BODY", "const uint32_t pressed = field_A9C_;", "const uint32_t pressed = field_A9C_ & 0xff;"),
     "bevel_thickness_cached": ("BODY", "while (layers < image_button_paint_signed(bevel_thickness_))", "const int saved_thickness = image_button_paint_signed(bevel_thickness_);\n    while (layers < saved_thickness)"),
     "sprite_receiver_cached": ("BODY", "Sprite *const drawn_sprite = sprite_;", "Sprite *const drawn_sprite = centering_sprite;"),
     "scale_display_width": ("BODY", "drawn_sprite->source_width()", "drawn_sprite->width()"),
@@ -231,6 +236,8 @@ DAMAGE = {
     "pressed_x": ("BODY", "x = image_button_paint_add(center_x, thickness);", "x = center_x;"),
     "pressed_y": ("BODY", "y = image_button_paint_add(center_y, thickness);", "y = center_y;"),
     "scale_equal": ("BODY", "if (numerator >= denominator)", "if (numerator > denominator)"),
+    "scale_equal_normal": ("BODY", "if (numerator < denominator)", "if (numerator <= denominator)"),
+    "scale_unpressed_unit": ("BODY", "x, y, 1, 1);", "x, y, 1, 2);"),
     "scale_full_denominator": ("BODY", "denominator = 1;", "denominator = 2;"),
     "transparency_signed": ("BODY", "drawn_sprite->transparent_index(),", "static_cast<signed char>(drawn_sprite->transparent_index()),"),
     "text_pressed_offset": ("BODY", "area.left = image_button_paint_add(area.left, thickness);", "area.left = area.left;"),
@@ -242,6 +249,7 @@ DAMAGE = {
 @pytest.mark.parametrize("damage", [*DAMAGE, "missing_override", "pressed_cached_early", "text_cached_early", "text_thickness_cached"])
 def test_painter_rejects_compiling_damage(tmp_path, damage):
     parts = actual()
+    original_parts = parts.copy()
     if damage == "missing_override":
         # Removing the redundant virtual keyword would still override Win;
         # rename both declaration and body to remove dispatch genuinely.
@@ -249,7 +257,7 @@ def test_painter_rejects_compiling_damage(tmp_path, damage):
         parts["BODY"] = parts["BODY"].replace("ImageButton::on_redraw", "ImageButton::wrong_contents")
     elif damage in ("pressed_cached_early", "text_cached_early", "text_thickness_cached"):
         declaration, replacement = {
-            "pressed_cached_early": ("const bool pressed = field_A9C_ != 0;", ""),
+            "pressed_cached_early": ("const uint32_t pressed = field_A9C_;", ""),
             "text_cached_early": ("LPSTR const text = name_;", ""),
             "text_thickness_cached": ("const int post_draw_thickness = image_button_paint_signed(bevel_thickness_);", ""),
         }[damage]
@@ -264,7 +272,14 @@ def test_painter_rejects_compiling_damage(tmp_path, damage):
         parts["BODY"] = body.replace("void ImageButton::on_redraw() {", "void ImageButton::on_redraw() {\n" + declaration)
     else:
         part, good, bad = DAMAGE[damage]
-        assert parts[part].count(good) == 1, damage
+        # Each genuine paint arm has its own loop and sprite operation.
+        # Mutate both copies for controls shared by the two original arms.
+        copies = 3 if damage == "transparency_signed" else 2 if damage in {
+            "bevel_bound", "bevel_thickness_cached", "sprite_receiver_cached",
+            "scale_display_width",
+        } else 1
+        assert parts[part].count(good) == copies, damage
         parts[part] = parts[part].replace(good, bad)
+    assert parts != original_parts, damage
     result = run(tmp_path, parts)
     assert result.returncode == 97 and "assertion line" in result.stderr, result.stdout + result.stderr

@@ -68,8 +68,10 @@ class WorldWin : public GraphicWin {
   // Extent only - this class carries no size assertion, and the bound is a floor.
   // 5 member(s) from the IDA database, 3 named; it starts a member at 0xA14, which is where src/ ends.
 
-  uint32_t field_A14_;  // 0xA14
-  uint32_t field_A18_;  // 0xA18
+  // Signed overview pixel extents: on_redraw compares with JL and halves
+  // wrapped signed gaps (original 0x004C412A-0x004C415E).
+  int32_t field_A14_;  // 0xA14
+  int32_t field_A18_;  // 0xA18
   Buffer buffer1_;  // 0xA1C
   Buffer buffer2_;  // 0xFA4
   MapWin mapWin_;  // 0x152C

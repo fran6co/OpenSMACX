@@ -4,6 +4,7 @@ Host controls verify bounded C++ behavior, not VC6 ABI or live game acceptance.
 """
 from pathlib import Path
 import os
+import re
 import shutil
 import subprocess
 
@@ -22,6 +23,7 @@ HARNESS = r'''
 #include <vector>
 #include <string>
 #include <algorithm>
+#include <stdint.h>
 static int MapWinCaptionScale=0,MapWinCaptionDivisor=1;
 static int MapLongitudeBounds=8,MapLatitudeBounds=8;
 struct Palette {};
@@ -31,6 +33,7 @@ static std::vector<std::string> events;
 struct WorldWin;
 static WorldWin *active;
 static bool callback_mutation=false;
+static bool forbid_stretch=false;
 static int result_code=0;
 static void require(bool ok,const char *name) {if(!ok){std::fprintf(stderr,"witness: %s\n",name);std::exit(1);}}
 struct Header { int biWidth,biHeight; };
@@ -54,6 +57,7 @@ struct Buffer {
         return result_code;
     }
     int copy(Buffer *destination,int sx,int sy,int sw,int sh,int dx,int dy,int dw,int dh) {
+        require(!forbid_stretch,"signed-dimension-guard");
         Copy c={identity,destination->identity,sx,sy,sw,sh,dx,dy,dw,dh,true};copies.push_back(c);events.push_back("stretch-copy");
         std::vector<int> snapshot=pixels;
         for(int y=0;y<dh;++y)for(int x=0;x<dw;++x)
@@ -72,7 +76,9 @@ struct MapWin:GraphicWin {
     int gen_bases_only(){require(field_1DD70_==0x80000080U,"base-draw-flags");events.push_back("bases");pixels[1]=77;return result_code;}
 };
 struct WorldWin:GraphicWin {
-    unsigned field_239BC_;int field_A14_,field_A18_,field_239C4_,field_239C8_;
+    unsigned field_239BC_;
+    /* ACTUAL_DIMENSION_MEMBERS */
+    int field_239C4_,field_239C8_;
     MapWin mapWin_;Buffer buffer1_,buffer2_;
     WorldWin():GraphicWin(4),field_239BC_(0),field_A14_(4),field_A18_(2),field_239C4_(-99),field_239C8_(-99),buffer1_(1),buffer2_(2) {
         mapWin_.allocate(4,2,44);buffer1_.allocate(4,2,22);buffer2_.allocate(4,2,33);allocate(40,16,55);
@@ -132,6 +138,12 @@ int main(){
     {WorldWin w;active=&w;events.clear();copies.clear();w.field_239BC_=1;callback_mutation=true;w.on_redraw();require(w.buffer1_.pixels[0]==11&&w.buffer1_.pixels[1]==77,"callback-live-flags");callback_mutation=false;}
     // Positive caption scaling and signed odd map extents use integer /2.
     {WorldWin w;active=&w;events.clear();copies.clear();MapWinCaptionScale=1;MapWinCaptionDivisor=5;MapLongitudeBounds=9;MapLatitudeBounds=9;w.field_239BC_=8;w.on_redraw();require(w.field_A14_==64&&w.field_A18_==16,"positive-caption-sizing");}
+    // Native wrapped32-bit gaps are interpreted as signed before halving;
+    // the vertical NEG follows that truncating division, rather than preceding it.
+    {WorldWin w;active=&w;events.clear();copies.clear();w.field_A14_=static_cast<int32_t>(0x80000000u);w.field_A18_=static_cast<int32_t>(0x80000000u);forbid_stretch=true;w.on_redraw();forbid_stretch=false;
+     require(w.field_239C4_==-1073741804,"wrapped-horizontal-center");
+     require(w.field_239C8_==-1073741816,"wrapped-vertical-center");
+     require(copies.size()==1&&!copies[0].scaled,"wrapped-centered-copy");}
 }
 '''
 
@@ -140,9 +152,19 @@ def _body():
     return extract_definition((ROOT/"src/worldwin.cpp").read_text(),"WorldWin::on_redraw")
 
 
-def _run(tmp_path,compiler,body):
+def _dimension_members():
+    header=(ROOT/"src/worldwin.h").read_text()
+    declarations=[]
+    for name in ("field_A14_","field_A18_"):
+        matches=re.findall(r"^\s*(?:u?int32_t|int|unsigned)\s+"+name+r"\s*;",header,re.M)
+        assert len(matches)==1
+        declarations.append(matches[0].strip())
+    return "\n".join(declarations)
+
+
+def _run(tmp_path,compiler,body,members=None):
     cpp,exe=tmp_path/"world.cpp",tmp_path/"world"
-    cpp.write_text(HARNESS.replace("/* ACTUAL_BODY */",body))
+    cpp.write_text(HARNESS.replace("/* ACTUAL_BODY */",body).replace("/* ACTUAL_DIMENSION_MEMBERS */",_dimension_members() if members is None else members))
     built=subprocess.run([compiler,"-std=c++98","-O0",str(cpp),"-o",str(exe)],capture_output=True,text=True,timeout=40)
     assert built.returncode==0,built.stderr
     return subprocess.run([str(exe)],capture_output=True,text=True,timeout=10)
@@ -172,6 +194,34 @@ def test_compiling_reversed_copy_damage_fails_pixel_witness(tmp_path,damage,witn
     body=body[:occurrence]+body[occurrence:].replace(old,new,1)
     result=_run(tmp_path,compiler,body)
     assert result.returncode!=0 and "witness: "+witness in result.stderr,result.stderr
+
+
+@pytest.mark.parametrize("old,new,witness", (
+    ("static_cast<int>(\n            static_cast<uint32_t>(client_width) - field_A14_) / 2",
+     "(static_cast<uint32_t>(client_width) - field_A14_) / 2", "wrapped-horizontal-center"),
+    ("-(static_cast<int>(\n            static_cast<uint32_t>(Buffer::dib_.bmiHeader.biHeight) + field_A18_) / 2)",
+     "-(static_cast<uint32_t>(Buffer::dib_.bmiHeader.biHeight) + field_A18_) / 2", "wrapped-vertical-center"),
+))
+def test_center_signed_halving_mutants_are_detected(tmp_path,old,new,witness):
+    compiler=shutil.which("g++")or shutil.which("clang++")
+    if not compiler:pytest.skip("host compiler unavailable")
+    body=_body()
+    assert body.count(old)==1
+    mutated=body.replace(old,new,1)
+    assert mutated!=body
+    result=_run(tmp_path,compiler,mutated)
+    assert result.returncode!=0 and "witness: "+witness in result.stderr,result.stderr
+
+
+def test_unsigned_dimension_member_damage_is_detected(tmp_path):
+    compiler=shutil.which("g++")or shutil.which("clang++")
+    if not compiler:pytest.skip("host compiler unavailable")
+    members=_dimension_members()
+    assert members.count("int32_t ")==2
+    damaged=members.replace("int32_t ","uint32_t ")
+    assert damaged!=members
+    result=_run(tmp_path,compiler,_body(),damaged)
+    assert result.returncode!=0 and "witness: signed-dimension-guard" in result.stderr,result.stderr
 
 
 def test_pinned_full_redraw_copy_receivers_and_scaled_argument_anchors():

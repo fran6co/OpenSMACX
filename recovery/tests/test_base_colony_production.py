@@ -267,6 +267,7 @@ int main() {
 """
 UPGRADE_HARNESS = r"""
 #include <cassert>
+#include <climits>
 #include <cstdint>
 #include <cstring>
 #include <initializer_list>
@@ -357,6 +358,18 @@ static void set_popup_case(int flags, bool alien, const char *label, const char 
 }
 
 int main() {
+    // VC6 uses arithmetic signed shifts. The caller already supplies the
+    // negative +7 bias, so the complete expression truncates toward zero.
+    // Replacing the helper with /8 would apply a second rounding correction.
+    const int discounts[] = {INT_MIN, INT_MIN + 1, -17, -16, -9, -8,
+                             -7, -1, 0, 1, 7, 8, 9, INT_MAX};
+    for (int value : discounts) {
+        const int biased = base_yield_add(value, value < 0 ? 7 : 0);
+        assert(upgrade_arithmetic_shift_three(biased) == value / 8);
+    }
+    assert(upgrade_arithmetic_shift_three(-9) == -2);
+    assert(upgrade_arithmetic_shift_three(-2) == -1);
+
     GameDataStateStorage.fields_.lock_masks_.enable_mask_ = 1u << 2;
     GameDataStateStorage.fields_.game_warnings_ = 4;
     ConsoleGlobal.faction_id_ = 2;

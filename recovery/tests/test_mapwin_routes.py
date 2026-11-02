@@ -4,6 +4,8 @@ Complete source bodies/helpers and selected real declarations are extracted,
 without rewriting the implementation. Native geometry, object layout, Path,
 cursor pumping, hex costs, map storage lifecycle and rasterization are separate
 dependencies: the recording services below do not prove those implementations.
+The CRT abs boundary models the qualified VC6 leaf's 32-bit INT_MIN result;
+it does not establish host-libc, production linked selection or runtime proof.
 In particular the nine-argument Buffer::line remains explicitly unfinished;
 testing its call does not make patterned rendering operational. Fixtures use
 valid indexed cells/factions/prototypes/directions and initialized viewports.
@@ -96,6 +98,17 @@ HARNESS = r'''
 #include <limits>
 #define __cdecl
 typedef int BOOL;typedef char *LPSTR;
+// The native component check separately verifies the complete production
+// _abs leaf at 644F3A..644F45. Its NEG leaves INT_MIN's bits unchanged.
+// Clang's builtin abs instead diagnoses that input under UBSan, so keep
+// this external-runtime boundary explicit without weakening the sanitizer.
+int fixture_vc6_abs(int value){
+    uint32_t bits=static_cast<uint32_t>(value);
+    if(value<0)bits=0U-bits;
+    return bits<=0x7fffffffU?static_cast<int>(bits)
+                          :-1-static_cast<int>(0xffffffffU-bits);
+}
+#define abs fixture_vc6_abs
 struct AutoSound {virtual ~AutoSound(){}};
 STRUCTURES
 MAP_STORAGE
@@ -286,9 +299,9 @@ def test_actual_destination_routes(tmp_path):
 
 
 MUTANTS = [
-    ("connected-land", "fallback = map_loc(x1, y1)->region != map_loc(x2, y2)->region;", "fallback = map_loc(x1, y1)->region == map_loc(x2, y2)->region;"),
-    ("connected-ports", "fallback = port_to_port(base1, base2) == 0;", "fallback = port_to_port(base1, base2) != 0;"),
-    ("connected-coast", "fallback = base_on_sea(base1, map_loc(x2, y2)->region) == 0;", "fallback = base_on_sea(base1, map_loc(x2, y2)->region) != 0;"),
+    ("connected-land", "if (map_loc(x1, y1)->region != map_loc(x2, y2)->region)", "if (map_loc(x1, y1)->region == map_loc(x2, y2)->region)"),
+    ("connected-ports", "if (port_to_port(base1, base2) == 0)", "if (port_to_port(base1, base2) != 0)"),
+    ("connected-coast", "if (base_on_sea(base1, map_loc(x2, y2)->region) == 0)", "if (base_on_sea(base1, map_loc(x2, y2)->region) != 0)"),
     ("air-direct", "} else if (triad == 2) {", "} else if (triad != 2) {"),
     ("two-passes", "pass < 2 && !fallback", "pass < 1 && !fallback"),
     ("seed-pass-vs-step", "if (pass != 0) {", "if (steps != 0) {"),

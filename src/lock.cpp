@@ -311,7 +311,7 @@ int Lock::lock(int slot, int flags, int a3, int a4, int a5, int a6, int a7) {
     if (field_E0_ != 0 && field_E0_ != static_cast<uint32_t>(slot)) {
         return 1;
     }
-    const bool take_global = (flags & 2) != 0;
+    const int take_global = flags & 2;
     if (take_global) {
         // The entry guard above already narrowed field_E0_ to 0 or slot, so
         // this mirrors the binary's second, redundant owner check.

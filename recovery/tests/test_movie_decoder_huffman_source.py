@@ -95,6 +95,49 @@ def test_dc_and_ac_window_mutants_fail_actual_huffman_host(tmp_path: Path) -> No
         assert result.returncode != 0, f"mutant {index} survived host assertions"
 
 
+def test_actual_fixed_shift_helpers_keep_negative_boundary_bits(tmp_path: Path) -> None:
+    compiler = shutil.which("g++") or shutil.which("clang++")
+    if compiler is None:
+        return
+    for owner, signature in (
+        ("movie_decoder_huffman.cpp", "int32_t arithmetic_shift_right("),
+        ("movie_decoder_frame.cpp", "static int32_t arithmetic_shift_right("),
+    ):
+        actual = _function((SRC / owner).read_text(), signature)
+        anchor = "return static_cast<int32_t>(value) >> shift;"
+        assert actual.count(anchor) == 1
+        main = r'''
+int main() {
+  const uint32_t inputs[] = {0, 1, 0x7fffffffu, 0x80000000u,
+                            0xffffffffu, 0xffbfffffu, 0xffc00000u,
+                            0xff000001u, 0xffffff7fu};
+  const unsigned counts[] = {0, 2, 7, 10, 22, 24, 31};
+  for (uint32_t bits : inputs) for (unsigned shift : counts) {
+    // A 64-bit mathematical floor oracle, independent of signed right shift.
+    const int64_t value = bits < 0x80000000u ? int64_t(bits)
+                                            : int64_t(bits) - 4294967296LL;
+    const int64_t divisor = int64_t(1) << shift;
+    const int64_t expected = value >= 0 ? value / divisor
+                                      : (value - divisor + 1) / divisor;
+    assert(arithmetic_shift_right(bits, shift) == expected);
+  }
+}
+'''
+        for damage in ("none", "logical", "truncate"):
+            body = actual
+            if damage == "logical":
+                body = body.replace(anchor, "return static_cast<int32_t>(value >> shift);")
+            elif damage == "truncate":
+                body = body.replace(anchor, "return static_cast<int32_t>(value) / (int64_t(1) << shift);")
+            unit = tmp_path / f"{owner}_{damage}.cpp"
+            binary = tmp_path / f"{owner}_{damage}"
+            unit.write_text("#include <cstdint>\n#include <cassert>\n" + body + main)
+            subprocess.run([compiler, "-std=c++17", "-Wall", "-Wextra", "-Werror",
+                            "-pedantic", str(unit), "-o", str(binary)], check=True)
+            result = subprocess.run([str(binary)], capture_output=True, text=True)
+            assert (result.returncode == 0) == (damage == "none"), result.stderr
+
+
 def test_pinned_native_dc_store_precedes_refill_and_clears_ac_slots() -> None:
     from capstone import Cs, CS_ARCH_X86, CS_MODE_32
     from capstone.x86 import X86_OP_IMM, X86_OP_MEM, X86_OP_REG, X86_REG_EAX, X86_REG_EBX

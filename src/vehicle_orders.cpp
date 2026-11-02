@@ -18,6 +18,8 @@
 #include "stdafx.h"
 #include "general.h"
 #include "veh.h"
+#include "map.h"
+#include "console.h"
 
 // Keep the mapped operation outside veh.cpp so its same-TU callsites retain
 // the witnessed call boundary. The original object-file/TU assignment is
@@ -98,4 +100,39 @@ void __cdecl stack_sort(int veh_id) {
             } while (veh_id_loop2 >= 0);
         }
     }
+}
+
+// Player admission is an order-service query. The current owner preserves
+// the original external calls from vehicle sprite handlers; the original
+// object-file/translation-unit assignment remains unproved.
+/*
+Purpose: May the player select this vehicle?
+// ORIGINAL: 0x005C1A20 ?veh_selectable@@YAHH@Z 0x005C1A20-0x005C1AAA BYTE_EXACT
+// size      138 bytes
+// prototype int (__cdecl ?veh_selectable@@YAHH@Z)(int vehID)
+// callers   11   call targets   1
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x005C1C40
+// HOMED from src/unrecovered/005c1a20.cpp, 2026-09-04.
+// TRIED: nesting the veh_id < 0 guard as `if (veh_id >= 0) { ... }` with a
+//        single fall-through return - same jl polarity either way, /O2
+//        canonicalises both to the same CFG.
+Return Value: 1 when the vehicle is on the map, ours, and not jailed.
+Status: MISMATCH.
+*/
+int __cdecl veh_selectable(int veh_id) {
+    if (veh_id < 0) {
+        return 0;
+    }
+    if (!on_map(Vehs[veh_id].x, Vehs[veh_id].y)) {
+        return 0;
+    }
+    if (Vehs[veh_id].faction_id != ConsoleGlobal.faction_id_) {
+        return 0;
+    }
+    if ((Vehs[veh_id].flags & 0x40) != 0 && static_cast<int16_t>(Vehs[veh_id].flags & 0x400) != 0) {
+        return 0;
+    }
+    return veh_jail(veh_id) == 0;
 }

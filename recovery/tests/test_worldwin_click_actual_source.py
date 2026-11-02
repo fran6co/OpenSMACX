@@ -97,6 +97,8 @@ static int pixel_result;
 static int pixel_x;
 static int pixel_y;
 static int pixel_calls;
+static bool change_key_on_pixel;
+static int key_after_pixel;
 static int right_menu_calls;
 static std::vector<int> events;
 
@@ -155,6 +157,7 @@ struct WorldWin {
         events.push_back(PIXEL);
         *out_x = pixel_x;
         *out_y = pixel_y;
+        if (change_key_on_pixel) async_key_value = key_after_pixel;
         return pixel_result;
     }
 };
@@ -174,6 +177,7 @@ static void reset(WorldWin &world, MapWin &overview, MapWin &detail) {
     async_key_value = key_state_value = 0;
     async_key_calls = key_state_calls = pixel_calls = right_menu_calls = 0;
     pixel_result = 0; pixel_x = 12; pixel_y = 21;
+    change_key_on_pixel = false; key_after_pixel = 0;
     world.detail_map_selected_ = 0;
     overview.center_x_ = 17; overview.center_y_ = 23;
     MapWinTable[0] = &overview; MapWinTable[1] = &detail;
@@ -185,6 +189,8 @@ static void detail_click_case(int key_value, int is_double) {
     MapWin overview = {}, detail = {};
     reset(world, overview, detail);
     async_key_value = key_value;
+    change_key_on_pixel = true;
+    key_after_pixel = 0;
     world.click(40, 50, 0, is_double);
     assert(async_key_calls == 1 && key_state_calls == 0 && pixel_calls == 1);
     assert(world.detail_map_selected_ == 1);
@@ -203,6 +209,19 @@ int main() {
     detail_click_case(0x0100, 0);
     detail_click_case(0x8000, 0);
     detail_click_case(0, 1); // double click selects detail without a key state
+    for (int raw : {0, 1, -1, 0x100, (-2147483647 - 1)}) {
+        detail_click_case(0x0100, raw);
+        if (raw != 0) detail_click_case(0, raw);
+    }
+
+    // Conversion publishes a new key state after the original capture point.
+    reset(world, overview, detail);
+    change_key_on_pixel = true;
+    key_after_pixel = 0x8000;
+    world.click(40, 50, 0, 0);
+    assert(async_key_calls == 1 && pixel_calls == 1);
+    assert(world.detail_map_selected_ == 0 && overview.center_x == 12);
+    assert((events == std::vector<int>{CANCEL, ASYNC_KEY, PIXEL, PRIMARY_CENTER}));
 
     // A low transition bit alone is not shift-down; synchronous key state is
     // deliberately different and must not be consulted.

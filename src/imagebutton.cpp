@@ -202,7 +202,7 @@ int image_button_paint_sub(int left, int right) {
 
 int image_button_paint_half(int value) {
     // SAR by one, including negative odd dimensions; not truncation to zero.
-    return value >= 0 ? value / 2 : -1 - ((-1 - value) / 2);
+    return value >> 1;
 }
 
 void image_button_paint_inset(RECT *area) {
@@ -257,47 +257,50 @@ void ImageButton::on_redraw() {
     // The pressed branch is selected once, but colors and thickness remain
     // live across every box call. The first optional outline did not count
     // toward thickness; only the extra focus outline starts layers at one.
-    const bool pressed = field_A9C_ != 0;
-    while (layers < image_button_paint_signed(bevel_thickness_)) {
-        if (!pressed) {
+    const uint32_t pressed = field_A9C_;
+    if (!pressed) {
+        while (layers < image_button_paint_signed(bevel_thickness_)) {
             Buffer::box(&area, image_button_paint_signed(bevel_upper_),
                         image_button_paint_signed(bevel_lower_));
-        } else {
+            image_button_paint_inset(&area);
+            layers = image_button_paint_add(layers, 1);
+        }
+        Sprite *const drawn_sprite = sprite_;
+        if (drawn_sprite) {
+            int denominator = drawn_sprite->source_width();
+            int numerator = image_button_paint_sub(area.right, area.left);
+            int x = center_x;
+            int y = center_y;
+            if (numerator < denominator) {
+                drawn_sprite->draw(this, drawn_sprite->transparent_index(),
+                                   x, y, numerator, denominator);
+            } else {
+                drawn_sprite->draw(this, drawn_sprite->transparent_index(),
+                                   x, y, 1, 1);
+            }
+        }
+    } else {
+        while (layers < image_button_paint_signed(bevel_thickness_)) {
             Buffer::box(&area, image_button_paint_signed(bevel_lower_),
                         image_button_paint_signed(bevel_upper_));
+            image_button_paint_inset(&area);
+            layers = image_button_paint_add(layers, 1);
         }
-        image_button_paint_inset(&area);
-        layers = image_button_paint_add(layers, 1);
-    }
-
-    Sprite *const drawn_sprite = sprite_;
-    if (drawn_sprite) {
-        // Logical pixel width (+10), not displayed width (+18). The image
-        // only limits horizontal scale; no independent height fit occurs.
-        int numerator;
-        int denominator = drawn_sprite->source_width();
-        int x;
-        int y;
-        if (!pressed) {
-            numerator = image_button_paint_sub(area.right, area.left);
-            x = center_x;
-            y = center_y;
-        } else {
+        Sprite *const drawn_sprite = sprite_;
+        if (drawn_sprite) {
+            int denominator = drawn_sprite->source_width();
             const int thickness = image_button_paint_signed(bevel_thickness_);
-            numerator = image_button_paint_sub(
+            int numerator = image_button_paint_sub(
                 image_button_paint_sub(area.right, thickness), area.left);
-            x = image_button_paint_add(center_x, thickness);
-            y = image_button_paint_add(center_y, thickness);
+            int x = image_button_paint_add(center_x, thickness);
+            int y = image_button_paint_add(center_y, thickness);
+            if (numerator >= denominator) {
+                numerator = 1;
+                denominator = 1;
+            }
+            drawn_sprite->draw(this, drawn_sprite->transparent_index(),
+                               x, y, numerator, denominator);
         }
-        if (numerator >= denominator) {
-            numerator = 1;
-            denominator = 1;
-        }
-        drawn_sprite->draw(this, drawn_sprite->transparent_index(),
-                           x, y, numerator, denominator);
-    }
-
-    if (pressed) {
         // Fresh read after drawing, not the thickness used for the sprite.
         const int thickness = image_button_paint_signed(bevel_thickness_);
         area.left = image_button_paint_add(area.left, thickness);

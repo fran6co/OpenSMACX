@@ -12966,7 +12966,7 @@ after_growth:
 }
 
 static int upgrade_arithmetic_shift_three(int value) {
-    return value >= 0 ? value / 8 : -1 - ((-1 - value) / 8);
+    return value >> 3;
 }
 
 // ORIGINAL: 0x004EFE80 ?upgrade_prototype@@YAHHHHH@Z 0x004EFE80-0x004F045B

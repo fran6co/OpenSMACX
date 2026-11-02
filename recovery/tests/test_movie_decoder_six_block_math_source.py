@@ -335,6 +335,16 @@ int main() {
   assert(movie_media_signed32(0x7fffffffu) == INT_MAX);
   assert(movie_media_signed32(0x80000000u) == INT_MIN);
   assert(movie_media_signed32(0xffffffffu) == -1);
+  // SAR17 retains the sign and rounds negative nonmultiples downward.
+  assert(movie_media_sar17(0) == 0);
+  assert(movie_media_sar17(0x7fffffffu) == 16383);
+  assert(movie_media_sar17(0x80000000u) == -16384);
+  assert(movie_media_sar17(0xffffffffu) == -1);
+  assert(movie_media_sar17(0xfffe0000u) == -1);
+  assert(movie_media_sar17(0xfffdffffu) == -2);
+  assert(movie_media_sar17(0xfffe0001u) == -1);
+  assert(movie_media_sar17(0x0001ffffu) == 0);
+  assert(movie_media_sar17(0x00020000u) == 1);
   BYTE reader_input[24];
   for (int i = 0; i != 24; ++i)
     reader_input[i] = (BYTE)(i * 37 + 11);
@@ -648,6 +658,8 @@ int main() {
     assert "block 0 row 0 column 0 got 1515870810 expected 8" in rejected.stderr
 
     mutants = (
+        ("return static_cast<int>(value) >> 17;",
+         "return static_cast<int>(value >> 17);"),
         ("words[6 + run_position]", "words[7 + run_position]"),
         ("block < 4 ? 0x40 : 0x20", "block < 4 ? 0x20 : 0x20"),
         ("197 + (code >> 1)", "198 + (code >> 1)"),

@@ -1583,8 +1583,7 @@ void MapWin::draw_map(int draw_type) {
         altitude += get_alt(altitude_x, altitude_y, 2);
         altitude += get_alt(altitude_x, altitude_y, 1);
         // SAR rounds negative sums down, unlike signed division by four.
-        current_pixel_y += altitude >= 0 ? altitude / 4
-                                        : -1 - ((-1 - altitude) / 4);
+        current_pixel_y += altitude >> 2;
 
         int old_pixel_x;
         int old_pixel_y;
@@ -1593,8 +1592,7 @@ void MapWin::draw_map(int draw_type) {
         altitude += get_alt(old_x, old_y, 3);
         altitude += get_alt(old_x, old_y, 2);
         altitude += get_alt(old_x, old_y, 1);
-        old_pixel_y += altitude >= 0 ? altitude / 4
-                                    : -1 - ((-1 - altitude) / 4);
+        old_pixel_y += altitude >> 2;
 
         const int dx = old_pixel_x - current_pixel_x;
         const int dy = old_pixel_y - current_pixel_y;
@@ -1710,11 +1708,11 @@ int mapwin_dest_mul(int left, int right) {
 }
 
 int map_dest_abs(int value) {
-    return value < 0 ? mapwin_dest_sub(0, value) : value;
+    return abs(value);
 }
 
 int map_dest_half(int value) {
-    return value >= 0 ? value / 2 : -1 - ((-1 - value) / 2);
+    return value >> 1;
 }
 
 int map_dest_distance(int x1, int y1, int x2, int y2) {
@@ -1796,27 +1794,37 @@ void MapWin::direct_dest_line(int x1, int y1, int x2, int y2, int triad,
 void MapWin::dest_line(int x1, int y1, int x2, int y2, int proto_id,
                       int faction, int triad, int repeat,
                       int pattern_on, int pattern_off, int cover) {
-    bool fallback = false;
+    int fallback = 0;
     if (triad == 0) {
         // Original467481/483: equal regions RETAIN flag0 (path mode).
-        fallback = map_loc(x1, y1)->region != map_loc(x2, y2)->region;
+        if (map_loc(x1, y1)->region != map_loc(x2, y2)->region) {
+            fallback = 1;
+        }
     } else if (triad == 1) {
         const int base1 = base_at(x1, y1);
         const int base2 = base_at(x2, y2);
         // The map pointer/stride are loaded after the base_at callbacks.
         if (base1 >= 0) {
             if (base2 >= 0) {
-                fallback = port_to_port(base1, base2) == 0;
+                if (port_to_port(base1, base2) == 0) {
+                    fallback = 1;
+                }
             } else {
-                fallback = base_on_sea(base1, map_loc(x2, y2)->region) == 0;
+                if (base_on_sea(base1, map_loc(x2, y2)->region) == 0) {
+                    fallback = 1;
+                }
             }
         } else if (base2 >= 0) {
-            fallback = base_on_sea(base2, map_loc(x1, y1)->region) == 0;
+            if (base_on_sea(base2, map_loc(x1, y1)->region) == 0) {
+                fallback = 1;
+            }
         } else {
-            fallback = map_loc(x1, y1)->region != map_loc(x2, y2)->region;
+            if (map_loc(x1, y1)->region != map_loc(x2, y2)->region) {
+                fallback = 1;
+            }
         }
     } else if (triad == 2) {
-        fallback = true;
+        fallback = 1;
     }
 
     // Pass0 validates the WHOLE route. Pass1 charges and draws EVERY edge,
@@ -1848,7 +1856,7 @@ void MapWin::dest_line(int x1, int y1, int x2, int y2, int proto_id,
                 direction = Paths.find(current_x, current_y, x2, y2,
                                        proto_id, faction, flags, last_direction);
                 if (direction < 0) {
-                    fallback = true;
+                    fallback = 1;
                     break;
                 }
             } else {
@@ -1977,11 +1985,11 @@ void MapWin::dest_line(int x1, int y1, int x2, int y2, int proto_id,
                 (map_loc(next_x, next_y)->visibility &
                  static_cast<uint8_t>(1U << (static_cast<uint32_t>(faction) & 31))) == 0 &&
                 (GameDataStateStorage.fields_.game_state_ & 0x80) == 0 && (GameDataStateStorage.fields_.game_rules_ & 0x100) == 0) {
-                fallback = true;
+                fallback = 1;
             }
             steps = mapwin_dest_add(steps, 1);
             if (steps > mapwin_dest_mul(MapLongitudeBounds, 2)) {
-                fallback = true;
+                fallback = 1;
             }
             if (fallback) {
                 break;

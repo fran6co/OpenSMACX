@@ -48,9 +48,9 @@ void fill_block(uint8_t *base, int row_bytes, int fill) {
 }
 
 int32_t arithmetic_shift_right(uint32_t value, unsigned shift) {
-  const int32_t signed_value = static_cast<int32_t>(value);
-  if (signed_value >= 0) return signed_value >> shift;
-  return -1 - static_cast<int32_t>((~value) >> shift);
+  // VC6's signed right shift is the pinned SAR. Existing uses supply the
+  // fixed counts 22 and 24; variable bit-reader shifts keep their own masks.
+  return static_cast<int32_t>(value) >> shift;
 }
 
 // IMUL retains the low dword, including overflow, in the original decoder.

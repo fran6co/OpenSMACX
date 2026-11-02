@@ -63,16 +63,22 @@ def actual_source():
     assert len(parts["MAP_METHODS"].splitlines()) == 5
     parts["MOUSE_GETTER"], = re.findall(r"^  void get_mouse_pos\([^;{}]*\);", headers["win"], re.M)
     parts["CLIP_DECL"], = re.findall(r"^  int set_clip\(RECT \*rect\);", headers["buffer"], re.M)
+    parts["RESTORE_CLIP"] = braced(headers["buffer"], "void restore_clip()")
     parts["FILL_DECL"], = re.findall(r"^  int fill\(int x1, int y1, int x2, int y2, int color\);", headers["graphicwin"], re.M)
     parts["COPY_DECL"], = re.findall(
         r"^  MEASURED int copy\(Buffer \*buffer, int xCoord, int yCoord, int wx, int wy,\s+int width, int height\)",
         headers["buffer"], re.M)
     parts["COPY_DECL"] += ";"
-    globals_ = []
-    for unit, name in (("map", "MapLongitudeBounds"), ("map", "MapIsFlat")):
-        declaration, = re.findall(r"^extern \w+ " + name + r";", headers[unit], re.M)
-        globals_.append(declaration.removeprefix("extern "))
-    parts["GLOBALS"] = "\n".join(globals_)
+    # These are current source-owned metadata members, not independent globals.
+    # Keep the same declaration extraction used by the destination-route fixture.
+    landmark = braced(headers["map"], "struct Landmark {") + ";"
+    metadata = braced(headers["map"], "struct MapMetadataFields {") + ";"
+    storage = braced(headers["map"], "struct MapStorageWindow {") + ";"
+    max_landmarks, = re.findall(r"^static const int MaxLandmarkNum = \d+;", headers["map"], re.M)
+    aliases = re.findall(r"^#define Map(?:LongitudeBounds|IsFlat) .+$", headers["map"], re.M)
+    assert len(aliases) == 2
+    parts["GLOBALS"] = "\n".join(("struct Map;", landmark, max_landmarks, metadata, storage,
+                                   "MapStorageWindow MapStorage;", *aliases))
     arrays = []
     for name in ("MapCornerCopy", "MapCornerScratch"):
         declaration, = re.findall(r"^(?:static )?Vert " + name + r"\[4\](?:\s*=\s*\{\s*\})?;", source, re.M)
@@ -115,6 +121,7 @@ struct Buffer {
     SURFACE_FIELDS
     COPY_DECL
     CLIP_DECL
+    RESTORE_CLIP
 };
 GRAPHICWIN_BASES public:FILL_DECL};
 MAPWIN_BASES public:
@@ -337,9 +344,9 @@ MUTATIONS = [
     ("vertical_padding", "tile_height + old_y - 1 - 4", "tile_height + old_y - 1"),
     ("old_projection_origin", "const int altitude_x = field_1DDA4_;", "const int altitude_x = new_x;"),
     ("reload_each_altitude", "get_alt(altitude_x, altitude_y, 3)", "get_alt(field_1DDA4_, field_1DDA8_, 3)"),
-    ("negative_average_truncation", "-1 - ((-1 - altitude) / 4)", "altitude / 4"),
+    ("negative_average_truncation", "current_pixel_y += altitude >> 2;", "current_pixel_y += altitude / 4;"),
     ("old_negative_average_truncation",
-     "old_pixel_y += altitude >= 0 ? altitude / 4\n                                    : -1 - ((-1 - altitude) / 4);",
+     "old_pixel_y += altitude >> 2;",
      "old_pixel_y += altitude / 4;"),
     ("three_corners", "corner < 4", "corner < 3"),
     ("wrong_corner_owner", "MapCornerCopy[corner]", "MapCornerScratch[corner]"),
@@ -366,7 +373,7 @@ MUTATIONS = [
     ("wrong_draw_only", "draw_type < 0", "draw_type > 0"),
     ("no_mouse_feedback", "if (field_1DD80_ != 0)", "if (false)"),
     ("wrong_mouse_receiver", "ConsoleGlobal.get_mouse_pos", "this->get_mouse_pos"),
-    ("no_clip_restore", "canvas->set_clip(&canvas->rect2_);", ";"),
+    ("no_clip_restore", "canvas->restore_clip();", ";"),
     ("no_negative_update", "if (draw_type != 0)", "if (draw_type > 0)"),
 ]
 

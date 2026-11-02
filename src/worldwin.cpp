@@ -130,7 +130,7 @@ void WorldWin::click(int x, int y, int button, int is_double) {
         return;
     }
     const bool shift_down = (GetAsyncKeyState(VK_SHIFT) & 0xFF00) != 0;
-    const bool detail_click = shift_down || is_double != 0;
+    const int detail_click = shift_down ? 1 : is_double;
     int tile_x;
     int tile_y;
     if (pixel_to_tile(x, y, &tile_x, &tile_y) != 0 ||
@@ -489,6 +489,7 @@ void WorldWin::draw_viewport_outline() {
                       &left, &top) != 0) {
         return;
     }
+    detail_map = MapWinTable[1];
     if (tile_to_pixel(detail_map->field_1DDD4_ + detail_map->field_1DDCC_ +
                           detail_map->field_1DDA4_,
                       detail_map->field_1DDD8_ + detail_map->field_1DDD0_ +
@@ -524,15 +525,15 @@ void WorldWin::draw_viewport_outline() {
                                 ? mapWin_.GraphicWin::dib_.bmiHeader.biWidth +
                                       field_239C4_ - 1
                                 : Buffer::dib_.bmiHeader.biWidth - 1;
-    Buffer::hline(line_right, bottom_edge, line_bottom, 0xFB);
-    Buffer::vline(line_right, line_top, line_bottom - 1, 0xFB);
+    Buffer::hline(line_left, bottom_edge, line_bottom, 0xFB);
+    Buffer::vline(line_left, line_top, line_bottom - 1, 0xFB);
 }
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x004C4630 ?draw_box@WorldWin@@QAEXXZ 0x004C4630-0x004C47E7
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/004c4630.cpp; original 0x0093347C is ConsoleGlobal / MapWinTable[0] plus member offset 0x1DDCC."], "reason": "Home the selection outline over the primary MapWin member state and Buffer drawing."}
 void WorldWin::draw_box() {
-    MapWin *primary_map = MapWinTable[0];
+    MapWin *primary_map = &ConsoleGlobal;
     if (primary_map->field_1DDCC_ == 0 ||
         primary_map->field_1DDAC_ != 0 ||
         primary_map->field_1DDB0_ != 0) {
@@ -560,16 +561,24 @@ void WorldWin::draw_box() {
         Buffer::box(&rect, 0xFF, 0xFF);
         return;
     }
-    Buffer::hline(field_239C4_, rect.right - 1, rect.top, 0xFF);
-    Buffer::hline(field_239C4_, rect.right - 2, rect.bottom - 1, 0xFF);
-    Buffer::vline(rect.right - 1, rect.top + 1, rect.bottom - 1, 0xFF);
+    const int line_top = rect.top;
+    const int line_left = rect.left;
+    const int line_right = rect.right - 1;
+    const int line_bottom = rect.bottom - 1;
+    Buffer::hline(field_239C4_, line_right, line_top, 0xFF);
+    Buffer::hline(field_239C4_, line_right - 1, line_bottom, 0xFF);
+    Buffer::vline(line_right, line_top + 1, line_bottom, 0xFF);
     const int edge = field_239C4_ != 0
                          ? mapWin_.GraphicWin::dib_.bmiHeader.biWidth +
                                field_239C4_ - 1
                          : Buffer::dib_.bmiHeader.biWidth - 1;
-    Buffer::hline(rect.left + 1, edge, rect.top, 0xFF);
-    Buffer::hline(rect.left, edge, rect.bottom - 1, 0xFF);
-    Buffer::vline(rect.left, rect.top, rect.bottom - 2, 0xFF);
+    Buffer::hline(line_left + 1, edge, line_top, 0xFF);
+    const int bottom_edge = field_239C4_ != 0
+                                ? mapWin_.GraphicWin::dib_.bmiHeader.biWidth +
+                                      field_239C4_ - 1
+                                : Buffer::dib_.bmiHeader.biWidth - 1;
+    Buffer::hline(line_left, bottom_edge, line_bottom, 0xFF);
+    Buffer::vline(line_left, line_top, line_bottom - 1, 0xFF);
 }
 
 // The redraw rebuilds the owned MapWin and buffers according to field_239BC_.
@@ -588,8 +597,12 @@ void WorldWin::on_redraw() {
         static_cast<GraphicWin *>(&mapWin_));
     if (field_239BC_ & 8) {
         field_239BC_ |= 4;
-        field_A14_ = (MapLongitudeBounds / 2) * cell_size * 2;
-        field_A18_ = (MapLatitudeBounds / 2 - 2) * cell_size;
+        field_A14_ = static_cast<int32_t>(
+            static_cast<uint32_t>(MapLongitudeBounds / 2) *
+            static_cast<uint32_t>(cell_size) * 2u);
+        field_A18_ = static_cast<int32_t>(
+            static_cast<uint32_t>(MapLatitudeBounds / 2 - 2) *
+            static_cast<uint32_t>(cell_size));
         mapWin_.field_1DDAC_ = 0;
         mapWin_.field_1DDB0_ = 0;
         mapWin_.center_x_ = MapLongitudeBounds / 2;
@@ -621,11 +634,14 @@ void WorldWin::on_redraw() {
         map_surface->copy(&buffer1_, 0, 0, 0, 0, field_A14_, field_A18_);
     }
     const int client_width = Buffer::dib_.bmiHeader.biWidth;
-    const int client_height = -Buffer::dib_.bmiHeader.biHeight;
-    if (client_width >= static_cast<int>(field_A14_) &&
-        client_height >= static_cast<int>(field_A18_)) {
-        field_239C4_ = (client_width - field_A14_) / 2;
-        field_239C8_ = -(Buffer::dib_.bmiHeader.biHeight + field_A18_) / 2;
+    const int client_height = static_cast<int>(
+        0u - static_cast<uint32_t>(Buffer::dib_.bmiHeader.biHeight));
+    if (client_width >= field_A14_ &&
+        client_height >= field_A18_) {
+        field_239C4_ = static_cast<int>(
+            static_cast<uint32_t>(client_width) - field_A14_) / 2;
+        field_239C8_ = -(static_cast<int>(
+            static_cast<uint32_t>(Buffer::dib_.bmiHeader.biHeight) + field_A18_) / 2);
         buffer1_.copy(static_cast<Buffer *>(this), 0, 0,
                       field_239C4_, field_239C8_,
                       mapWin_.GraphicWin::dib_.bmiHeader.biWidth,
@@ -657,8 +673,12 @@ void WorldWin::refresh_world_map(int resize_buffers) {
     }
     const int cell_size = ((scale + 1) / 4) * 4;
 
-    field_A14_ = (MapLongitudeBounds / 2) * cell_size * 2;
-    field_A18_ = (MapLatitudeBounds / 2 - 2) * cell_size;
+    field_A14_ = static_cast<int32_t>(
+        static_cast<uint32_t>(MapLongitudeBounds / 2) *
+        static_cast<uint32_t>(cell_size) * 2u);
+    field_A18_ = static_cast<int32_t>(
+        static_cast<uint32_t>(MapLatitudeBounds / 2 - 2) *
+        static_cast<uint32_t>(cell_size));
     mapWin_.center_x_ = MapLongitudeBounds / 2;
     mapWin_.zoom_offset_ = -14;
     mapWin_.center_y_ = MapLatitudeBounds / 2;
@@ -668,24 +688,24 @@ void WorldWin::refresh_world_map(int resize_buffers) {
         static_cast<GraphicWin *>(&mapWin_));
     if (resize_buffers != 0) {
         set_dirty();
-        mapWin_.resize(static_cast<int>(field_A14_),
-                       static_cast<int>(field_A18_), 1);
-        buffer2_.resize(static_cast<int>(field_A14_),
-                         static_cast<int>(field_A18_));
-        buffer1_.resize(static_cast<int>(field_A14_),
-                         static_cast<int>(field_A18_));
+        mapWin_.resize(field_A14_,
+                       field_A18_, 1);
+        buffer2_.resize(field_A14_,
+                         field_A18_);
+        buffer1_.resize(field_A14_,
+                         field_A18_);
         static_cast<GraphicWin &>(mapWin_).fill(0);
     } else {
         buffer2_.copy(map_surface, 0, 0, 0, 0,
-                      static_cast<int>(field_A14_),
-                      static_cast<int>(field_A18_));
+                      field_A14_,
+                      field_A18_);
     }
 
     mapWin_.field_1DD70_ = 0x80000000;
     mapWin_.draw_map(0);
     map_surface->copy(&buffer2_, 0, 0, 0, 0,
-                      static_cast<int>(field_A14_),
-                      static_cast<int>(field_A18_));
+                      field_A14_,
+                      field_A18_);
 
     clear_dirty();
     WorldWinRebuildBusy = 0;

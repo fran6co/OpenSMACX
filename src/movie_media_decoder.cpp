@@ -486,10 +486,10 @@ static DWORD movie_media_coefficient_entry(DWORD code) {
 }
 
 static int movie_media_sar17(DWORD value) {
-  int signed_value;
-  std::memcpy(&signed_value, &value, sizeof(signed_value));
-  if (signed_value >= 0) return signed_value >> 17;
-  return -1 - (int)((~value) >> 17);
+  // Pinned 5D2CC5..5D2D09 and 5D119D use SAR17 without a division bias.
+  // VC6 preserves the DWORD bits on conversion and shifts signed values
+  // arithmetically, including negative values not divisible by 2^17.
+  return static_cast<int>(value) >> 17;
 }
 
 // The first five source-owned coefficient words are the exact operands read
@@ -519,6 +519,8 @@ static int movie_media_idct_biased_low_dword(const double &value) {
 }
 
 // ORIGINAL: 0x005D29E1 sub_5d29e1 0x005D29E1-0x005D2B20
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned005D29E1..005D2B20 full decode ends RET; eight destination offsets are [0, 36, 72, 108, 144, 180, 216, 252]; SAR17 count is 0. The row variant has an AC-zero broadcast path; dense siblings differ by eight final SAR17 reductions.", "Current ordinary extern-C declaration sub_5d29e1 has the unique independently owned COFF COMDAT _sub_5d29e1 in the qualified production object; only its current emitted-name fact is corrected.", "The stripped original provides no nominal name/type proof. Original ESI/EDI entry contracts and the current normalized cdecl mismatch remain recovery obligations; historical asm-only assertions are unproved hypotheses, not exclusions. No byte, ABI, lifetime or complete-behavior claim is granted."], "reason": "Retain the original butterfly identity and spans while selecting its actual current emitted symbol for strict observation."}
+// symbol    _sub_5d29e1
 // TRIED: this is not addressable with a normal calling convention - the body reads unaff_ESI/unaff_EDI with no stack access and no register setup of its own (first instruction is `push edi`, `mov ebx,[esi+0x14]` immediately after), so the 3 callers must be pre-loading esi/edi before `call`ing in. That is an interprocedural register-allocation artifact of compiling the 3 call sites and this body together as one translation unit; it cannot be reproduced by compiling this function alone under any ordinary C++ signature, since VC6 only picks a non-standard register ABI for an internal-linkage callee when it can see all of its callers. Declared it as a plain two-pointer __cdecl function instead (src, dst) for a faithful, compiling body. Also not reproduced: the fadd-then- reinterpret-low-dword pattern for double->int (`fstp qword ptr`, then `mov` of the low 4 bytes) is the classic magic- number float truncation trick that avoids calling `_ftol`; mimicked with a raw double-then-reinterpret-cast here. Best reached: MISMATCH, edit_count 7, 455 bytes vs 319 - the whole prologue/epilogue and call sequencing differ because of the calling-convention gap above.
 // size      319 bytes
 // prototype
@@ -595,6 +597,8 @@ extern "C" void __cdecl sub_5d29e1(int *src, int *dst) {
 }
 
 // ORIGINAL: 0x005D2B20 sub_5d2b20 0x005D2B20-0x005D2C0A FILE
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned005D2B20..005D2C0A full decode ends RET; eight destination offsets are [0, 4, 8, 12, 16, 20, 24, 28]; SAR17 count is 0. The row variant has an AC-zero broadcast path; dense siblings differ by eight final SAR17 reductions.", "Current ordinary extern-C declaration sub_5d2b20 has the unique independently owned COFF COMDAT _sub_5d2b20 in the qualified production object; only its current emitted-name fact is corrected.", "The stripped original provides no nominal name/type proof. Original ESI/EDI entry contracts and the current normalized cdecl mismatch remain recovery obligations; historical asm-only assertions are unproved hypotheses, not exclusions. No byte, ABI, lifetime or complete-behavior claim is granted."], "reason": "Retain the original butterfly identity and spans while selecting its actual current emitted symbol for strict observation."}
+// symbol    _sub_5d2b20
 // TRIED: BYTE_EXACT is likely structurally unreachable here without `__asm` (banned). The disassembly reads `esi` as an 8-int input array from instruction #1 (`mov ebx,[esi+0x14]`) and NEVER writes esi before that first read anywhere in the function - Ghidra names it `unaff_ESI` for exactly this reason. That means the real calling convention hands this function its input array already sitting in esi, which none of __cdecl/__stdcall/__fastcall/__thiscall can express - every standard convention either uses the stack or ecx/edx for the first argument, never esi with zero setup. This is plausible as a compiler-chosen convention specific to this internal, 2-caller helper (proven safe only in the context of its real callers, which this recovery unit does not see), but nothing in valid VC6 C++ can request it. Landed body takes the input array as a normal second parameter instead (MISMATCH from the very first instruction, since the prologue differs immediately) so the arithmetic shape is on record: an 8-point butterfly (pairwise sum/difference of src[0],src[2],src[4], src[6] and separately src[1],src[3],src[5],src[7]) combining one `__int64` fixed-point multiply-by-IdctSin45Q31 (the `imul dword ptr [addr]` high-dword-times-2 pattern) with float arithmetic against IdctInv2CosPi8/IdctInv2Cos3Pi8/IdctCos3Pi8, each float result added to IdctAanScale and reduced to an int via `fstp qword` followed by reading only the low dword - this looks like the classic "magic-constant" double-to-int rounding idiom (add a bias, read the mantissa's low bits) but a plain `(int)(double)expr` cast was NOT enough to reproduce it; the exact bias/rounding trick was not reverse-engineered.
 // size      234 bytes
 // prototype
@@ -649,6 +653,8 @@ extern "C" void __cdecl sub_5d2b20(int *dst, int *src) {
 }
 
 // ORIGINAL: 0x005D2C0A sub_5d2c0a 0x005D2C0A-0x005D2D13
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned005D2C0A..005D2D13 full decode ends RET; eight destination offsets are [0, 4, 8, 12, 16, 20, 24, 28]; SAR17 count is 8. The row variant has an AC-zero broadcast path; dense siblings differ by eight final SAR17 reductions.", "Current ordinary extern-C declaration sub_5d2c0a has the unique independently owned COFF COMDAT _sub_5d2c0a in the qualified production object; only its current emitted-name fact is corrected.", "The stripped original provides no nominal name/type proof. Original ESI/EDI entry contracts and the current normalized cdecl mismatch remain recovery obligations; historical asm-only assertions are unproved hypotheses, not exclusions. No byte, ABI, lifetime or complete-behavior claim is granted."], "reason": "Retain the original butterfly identity and spans while selecting its actual current emitted symbol for strict observation."}
+// symbol    _sub_5d2c0a
 // TRIED: BYTE_EXACT is structurally unreachable here without `__asm` (banned), same finding as the sibling 8-point butterfly at 0x005D2B20 (see the sibling 0x005D2B20 body (homed here)): the disassembly reads `esi` (src) from the very first real instruction and `edi` (dst, saved via `push edi` at entry and reloaded from the stack near the end) with no stack setup for either, which none of __cdecl/__stdcall/__fastcall/__thiscall can request. Landed as `sub_5d2c0a(int *dst, int *src)` (MISMATCH from instruction 0, the prologue) so the arithmetic is on record: identical sum/difference/`__int64` fixed-point-multiply butterfly to the sibling, but every combined pair is additionally scaled by `>> 17` before it is stored, which the sibling's version does not do.
 // size      265 bytes
 // prototype
