@@ -7208,23 +7208,15 @@ Status: Complete
 //   the image does not. Inlined the body by hand instead of `return veh_top(veh_id);`.
 int __cdecl veh_at(int x, int y) {
     const int lat_bounds = MapLatitudeBounds;
-    const int lon_bounds = MapLongitudeBounds;
-    if (y >= 0 && y < lat_bounds && x >= 0 && x < lon_bounds && !(bit_at(x, y) & BIT_VEH_IN_TILE)) {
+    if (y >= 0 && y < lat_bounds && x >= 0 && x < MapLongitudeBounds && !(bit_at(x, y) & BIT_VEH_IN_TILE)) {
         return -1; // not found
     }
     for (int veh_id = 0; veh_id < GameDataStateStorage.fields_.vehicle_current_count_; veh_id++) {
         if (Vehs[veh_id].x == x && Vehs[veh_id].y == y) {
-            if (veh_id < 0) {
-                return -1;
-            }
-            int top_veh_id = veh_id;
-            for (int i = Vehs[top_veh_id].prev_veh_id_stack; i >= 0; i = Vehs[i].prev_veh_id_stack) {
-                top_veh_id = i;
-            }
-            return top_veh_id;
+            return veh_top(veh_id);
         }
     }
-    if (y < 0 || y >= lat_bounds || x < 0 || x >= lon_bounds) {
+    if (y < 0 || y >= lat_bounds || x < 0 || x >= MapLongitudeBounds) {
         return -1;
     }
     if (!VehBitError) {
@@ -9087,10 +9079,9 @@ Status: MISMATCH #9 - the veh_id * 0x34 multiply lowers through a different
         lea/shl chain than the image's.
 */
 int __cdecl veh_ready(int veh_id) {
-    if (veh_id >= 0 && Vehs[veh_id].y >= 0 && Vehs[veh_id].y < MapLatitudeBounds &&
-        Vehs[veh_id].x >= 0 && Vehs[veh_id].x < MapLongitudeBounds &&
+    if (veh_id >= 0 && on_map(Vehs[veh_id].x, Vehs[veh_id].y) &&
         Vehs[veh_id].faction_id == ConsoleGlobal.faction_id_ &&
-        ((Vehs[veh_id].flags & 0x40) == 0 || (Vehs[veh_id].flags & 0x400) == 0) &&
+        ((Vehs[veh_id].flags & 0x40) == 0 || (int16_t)(Vehs[veh_id].flags & 0x400) == 0) &&
         veh_jail(veh_id) == 0 &&
         ((Vehs[veh_id].state & 0x4200) != 0 || Vehs[veh_id].order < 1 ||
          Vehs[veh_id].order > 3)) {
@@ -9116,10 +9107,9 @@ Return Value: 1 when the vehicle cannot move again this turn.
 Status: MISMATCH.
 */
 int __cdecl veh_unmoved(int veh_id) {
-    if (veh_id < 0 || Vehs[veh_id].y < 0 || Vehs[veh_id].y >= MapLatitudeBounds ||
-        Vehs[veh_id].x < 0 || Vehs[veh_id].x >= MapLongitudeBounds ||
+    if (veh_id < 0 || !on_map(Vehs[veh_id].x, Vehs[veh_id].y) ||
         Vehs[veh_id].faction_id != ConsoleGlobal.faction_id_ ||
-        ((Vehs[veh_id].flags & 0x40) != 0 && (Vehs[veh_id].flags & 0x400) != 0) ||
+        ((Vehs[veh_id].flags & 0x40) != 0 && (int16_t)(Vehs[veh_id].flags & 0x400) != 0) ||
         veh_jail(veh_id) != 0) {
         return 0;
     }
@@ -9280,7 +9270,7 @@ void __cdecl promote(int veh_id) {
 
 /*
 Purpose: Resolve a stack's worth of chaff deaths after a battle.
-// ORIGINAL: 0x005061B0 ?battle_kill_chaff@@YAXHPAHPAHPAHHH@Z 0x005061B0-0x005062A2
+// ORIGINAL: 0x005061B0 ?battle_kill_chaff@@YAXHPAHPAHPAHHH@Z 0x005061B0-0x005062A2 BYTE_EXACT
 // size      242 bytes
 // prototype void (__cdecl ?battle_kill_chaff@@YAXHPAHPAHPAHHH@Z)(int vehID, int*, int*, int*, int, int)
 // callers   ?   call targets   1
@@ -9317,19 +9307,13 @@ void __cdecl battle_kill_chaff(int veh_id, int *attacker_out,
     }
     int cur = idx;
     for (;;) {
-        const short proto_id = Vehs[cur].proto_id;
-        short next_id = Vehs[cur].next_veh_id_stack;
+        const int proto_id = Vehs[cur].proto_id;
+        int next_id = Vehs[cur].next_veh_id_stack;
         int pct;
         if (VehPrototypes[proto_id].plan == PLAN_ALIEN_ARTIFACT) {
             pct = 1;
         } else {
-            int clamped = VehPrototypes[proto_id].reactor_id;
-            if (clamped < 1) {
-                clamped = 1;
-            } else if (clamped > 0x64) {
-                clamped = 0x64;
-            }
-            pct = clamped * 10;
+            pct = range(VehPrototypes[proto_id].reactor_id, 1, 100) * 10;
         }
         const int left = pct - Vehs[cur].dmg_incurred;
         if (left < 0 || (left <= 0x270f && left <= 0) ||
@@ -14417,12 +14401,12 @@ int __cdecl veh_init(int prototype, int faction, int x, int y) {
 int __cdecl study_artifact(int veh_id) {
     char message[80];
     message[0] = 0;
-    strcat(message, "ARTIFACTTECH");
 
     Veh &vehicle = Vehs[veh_id];
     const int tile_x = vehicle.x;
     const int tile_y = vehicle.y;
     const int faction_id = vehicle.faction_id;
+    strcat(message, "ARTIFACTTECH");
     const int base_id = base_at(tile_x, tile_y);
     if (base_id != GameDataStateStorage.fields_.secret_project_.universal_translator() && base_id >= 0) {
         Base &base = Bases[base_id];
@@ -14462,10 +14446,8 @@ int __cdecl study_artifact(int veh_id) {
     for (int tech_id = 0; tech_id < MaxTechnologyNum; ++tech_id) {
         if (!has_tech(tech_id, faction_id)
             && tech_avail(tech_id, faction_id)) {
-            const int prereq_1 = Technology[tech_id].preq_tech_1;
-            const int prereq_2 = Technology[tech_id].preq_tech_2;
-            const BOOL has_prereq_1 = has_tech(prereq_1, faction_id);
-            const BOOL has_prereq_2 = has_tech(prereq_2, faction_id);
+            const BOOL has_prereq_1 = has_tech(Technology[tech_id].preq_tech_1, faction_id);
+            const BOOL has_prereq_2 = has_tech(Technology[tech_id].preq_tech_2, faction_id);
             if (has_prereq_1 || has_prereq_2) {
                 int weight = 8;
                 if (!has_prereq_1 || !has_prereq_2) {
@@ -14474,7 +14456,8 @@ int __cdecl study_artifact(int veh_id) {
                     }
                     weight = (11 - faction_data.ranking) * 2;
                 }
-                const int roll = (weight > 1) ? rand() % weight : 0;
+                const int roll = (static_cast<int32_t>(static_cast<uint32_t>(weight) - 1u) > 0)
+                    ? rand() % weight : 0;
                 if (best_score < roll) {
                     best_tech = tech_id;
                     best_score = roll;

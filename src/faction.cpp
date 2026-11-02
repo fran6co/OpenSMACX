@@ -1775,7 +1775,8 @@ BOOL __cdecl wants_to_attack(int faction_id, int faction_id_tgt, int faction_id_
     int want_to_attack = 0;
     for (uint32_t i = 1; i < MaxPlayerNum; i++) {
         if (i != faction_id && i != faction_id_tgt) {
-            if (has_treaty(faction_id, i, DTREATY_HAVE_SURRENDERED | DTREATY_PACT)) {
+            if (has_treaty(faction_id, i, DTREATY_HAVE_SURRENDERED)
+                && has_treaty(faction_id, i, DTREATY_PACT)) {
                 peace_faction_id = i;
             }
             if (has_treaty(faction_id, i, DTREATY_VENDETTA)

@@ -2786,12 +2786,11 @@ void Texture::draw(Buffer *buffer, Vert *vertices, int *zvals, int count,
     TextureRasterClipTop = clip.top;
     int min_y = 0x7fff, max_y = -0x7ffd;
     int min_x = 0x7fff, max_x = -0x7ffd;
-    int top = 0, bottom = 0;
+    int top = 0;
     for (int i = 0; i < count; ++i) {
         if (vertices[i].y < min_y) { min_y = vertices[i].y; top = i; }
         if (max_y < vertices[i].y) {
             max_y = vertices[i].y;
-            bottom = i;
             TextureRasterMaxYIndex = i;
         }
         if (vertices[i].x < min_x) min_x = vertices[i].x;
@@ -2817,10 +2816,8 @@ void Texture::draw(Buffer *buffer, Vert *vertices, int *zvals, int count,
         EdgeScan right = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
         left.f0 = -1;
         right.f0 = 1;
-        if (texture_gouraud_edge(left, top, vertices, edge_vertices,
-                                 zvals, count, bottom) &&
-            texture_gouraud_edge(right, top, vertices, edge_vertices,
-                                 zvals, count, bottom)) {
+        if (Texture::setup_edge_gouraud(&left, top) &&
+            Texture::setup_edge_gouraud(&right, top)) {
             _control87(_PC_24 | _RC_CHOP, _MCW_PC | _MCW_RC);
             int du = TextureRasterScratch4E4.dword;
             int dv = TextureRasterScratch4C8.dword;
@@ -2851,10 +2848,37 @@ void Texture::draw(Buffer *buffer, Vert *vertices, int *zvals, int count,
                     TextureRasterScratch4C8.dword = dv;
                     TextureRasterLightPackA.low_word = light_step;
                 }
-                const int done = !texture_advance_gouraud_edge(
-                                     left, vertices, edge_vertices, zvals, count, bottom) ||
-                                 !texture_advance_gouraud_edge(
-                                     right, vertices, edge_vertices, zvals, count, bottom);
+                int done = 0;
+                if (--left.counter == 0) {
+                    if (Texture::setup_edge_gouraud(&left, left.id) == 0)
+                        done = 1;
+                } else {
+                    left.accumA = static_cast<int>(static_cast<unsigned int>(left.accumA) + left.deltaA);
+                    left.accumB = static_cast<int>(static_cast<unsigned int>(left.accumB) + left.deltaB);
+                    left.accumC = static_cast<int>(static_cast<unsigned int>(left.accumC) + left.deltaC);
+                    left.accumD = static_cast<int>(static_cast<unsigned int>(left.accumD) + left.deltaD);
+                    left.fracAccum = static_cast<int>(static_cast<unsigned int>(left.fracAccum) + left.fracDelta);
+                    if (left.fracAccum > 0) {
+                        left.accumC = static_cast<int>(static_cast<unsigned int>(left.accumC) + left.extraDeltaC);
+                        left.fracAccum = texture_difference(left.fracAccum, left.fracSub);
+                    }
+                }
+                if (!done) {
+                    if (--right.counter == 0) {
+                        if (Texture::setup_edge_gouraud(&right, right.id) == 0)
+                            done = 1;
+                    } else {
+                        right.accumA = static_cast<int>(static_cast<unsigned int>(right.accumA) + right.deltaA);
+                        right.accumB = static_cast<int>(static_cast<unsigned int>(right.accumB) + right.deltaB);
+                        right.accumC = static_cast<int>(static_cast<unsigned int>(right.accumC) + right.deltaC);
+                        right.accumD = static_cast<int>(static_cast<unsigned int>(right.accumD) + right.deltaD);
+                        right.fracAccum = static_cast<int>(static_cast<unsigned int>(right.fracAccum) + right.fracDelta);
+                        if (right.fracAccum > 0) {
+                            right.accumC = static_cast<int>(static_cast<unsigned int>(right.accumC) + right.extraDeltaC);
+                            right.fracAccum = texture_difference(right.fracAccum, right.fracSub);
+                        }
+                    }
+                }
                 if (TextureRasterClipTop <= TextureRasterRowOffset &&
                     end > clip.left && x < clip.right && end > x) {
                     if (end > clip.right) end = clip.right;
@@ -4406,28 +4430,55 @@ static unsigned short texture_light_step(int delta, int width);
 void Texture::draw_below_cutoff(Buffer *buffer, Vert *vertices, int *zvals, int count,
                                 Vert *uv, int cutoff) {
     unsigned char *destination = static_cast<unsigned char *>(buffer->get_data());
+    TextureRasterPixelBase = destination;
+    TextureRasterLightThreshold = cutoff;
     texture_reset_fpu();
+    TextureRasterEdgeVerticesA = uv;
+    TextureRasterEdgeVerticesB = vertices;
+    TextureRasterVertexCount = count;
+    TextureRasterZValues = zvals;
+    TextureRasterScratch544 = pixels_;
+    TextureRasterBufferStride = static_cast<int>(buffer->stride_);
+    TextureRasterTextureWidth = iWidth_;
     const unsigned char *pixels = pixels_;
-    const int stride = static_cast<int>(buffer->stride_);
-    const int width = iWidth_;
+    const int stride = TextureRasterBufferStride;
+    const int width = TextureRasterTextureWidth;
     int in_front = 0;
     for (; in_front < count; ++in_front) {
         if (zvals[in_front] < cutoff) break;
     }
     if (in_front != count) {
         const RECT clip = buffer->rect1_;
+        TextureRasterClipRight = clip.right;
+        TextureRasterClipLeft = clip.left;
+        TextureRasterClipBottom = clip.bottom;
+        TextureRasterClipTop = clip.top;
         int min_y = 0x7fff, max_y = -0x7ffd;
-        int top = 0, bottom = 0;
+        int top = 0;
         for (int i = 0; i < count; ++i) {
             if (vertices[i].y < min_y) { min_y = vertices[i].y; top = i; }
-            if (vertices[i].y > max_y) { max_y = vertices[i].y; bottom = i; }
+            if (vertices[i].y > max_y) {
+                max_y = vertices[i].y;
+                TextureRasterMaxYIndex = i;
+            }
         }
         EdgeScan left, right;
         left.f0 = -1;
         right.f0 = 1;
+        if (min_y < max_y) {
+            TextureRasterRowOffset = static_cast<int>(
+                static_cast<unsigned int>(stride) * static_cast<unsigned int>(min_y) +
+                static_cast<unsigned int>(texture_pointer_address(TextureRasterPixelBase)));
+            TextureRasterClipBottom = static_cast<int>(
+                static_cast<unsigned int>(stride) * static_cast<unsigned int>(clip.bottom) +
+                static_cast<unsigned int>(texture_pointer_address(TextureRasterPixelBase)));
+            TextureRasterClipTop = static_cast<int>(
+                static_cast<unsigned int>(stride) * static_cast<unsigned int>(clip.top) +
+                static_cast<unsigned int>(texture_pointer_address(TextureRasterPixelBase)));
+        }
         if (min_y < max_y &&
-            texture_gouraud_edge(left, top, vertices, uv, zvals, count, bottom) &&
-            texture_gouraud_edge(right, top, vertices, uv, zvals, count, bottom)) {
+            Texture::setup_edge_gouraud(&left, top) &&
+            Texture::setup_edge_gouraud(&right, top)) {
             _control87(_PC_24 | _RC_CHOP, _MCW_PC | _MCW_RC);
             int du = 0, dv = 0;
             unsigned short dz = 0;
@@ -4447,9 +4498,37 @@ void Texture::draw_below_cutoff(Buffer *buffer, Vert *vertices, int *zvals, int 
                     dv = texture_span_step(texture_difference(right.accumB, v), span >> 16);
                     dz = texture_light_step(texture_difference(right.accumD, z), span >> 16);
                 }
-                const int done =
-                    !texture_advance_gouraud_edge(left, vertices, uv, zvals, count, bottom) ||
-                    !texture_advance_gouraud_edge(right, vertices, uv, zvals, count, bottom);
+                int done = 0;
+                if (--left.counter == 0) {
+                    if (Texture::setup_edge_gouraud(&left, left.id) == 0)
+                        done = 1;
+                } else {
+                    left.accumA = static_cast<int>(static_cast<unsigned int>(left.accumA) + left.deltaA);
+                    left.accumB = static_cast<int>(static_cast<unsigned int>(left.accumB) + left.deltaB);
+                    left.accumC = static_cast<int>(static_cast<unsigned int>(left.accumC) + left.deltaC);
+                    left.accumD = static_cast<int>(static_cast<unsigned int>(left.accumD) + left.deltaD);
+                    left.fracAccum = static_cast<int>(static_cast<unsigned int>(left.fracAccum) + left.fracDelta);
+                    if (left.fracAccum > 0) {
+                        left.accumC = static_cast<int>(static_cast<unsigned int>(left.accumC) + left.extraDeltaC);
+                        left.fracAccum = texture_difference(left.fracAccum, left.fracSub);
+                    }
+                }
+                if (!done) {
+                    if (--right.counter == 0) {
+                        if (Texture::setup_edge_gouraud(&right, right.id) == 0)
+                            done = 1;
+                    } else {
+                        right.accumA = static_cast<int>(static_cast<unsigned int>(right.accumA) + right.deltaA);
+                        right.accumB = static_cast<int>(static_cast<unsigned int>(right.accumB) + right.deltaB);
+                        right.accumC = static_cast<int>(static_cast<unsigned int>(right.accumC) + right.deltaC);
+                        right.accumD = static_cast<int>(static_cast<unsigned int>(right.accumD) + right.deltaD);
+                        right.fracAccum = static_cast<int>(static_cast<unsigned int>(right.fracAccum) + right.fracDelta);
+                        if (right.fracAccum > 0) {
+                            right.accumC = static_cast<int>(static_cast<unsigned int>(right.accumC) + right.extraDeltaC);
+                            right.fracAccum = texture_difference(right.fracAccum, right.fracSub);
+                        }
+                    }
+                }
                 if (y >= clip.bottom) break;
                 if (y >= clip.top && end > clip.left && x < clip.right && end > x) {
                     if (end > clip.right) end = clip.right;
@@ -4493,6 +4572,9 @@ void Texture::draw_below_cutoff(Buffer *buffer, Vert *vertices, int *zvals, int 
                 }
                 if (done) break;
                 ++y;
+                TextureRasterRowOffset = static_cast<int>(
+                    static_cast<unsigned int>(TextureRasterRowOffset) +
+                    static_cast<unsigned int>(stride));
             }
         }
     }
@@ -8979,29 +9061,56 @@ void Texture::draw2(Buffer *buffer, Vert *vertices, int *zvals, int count,
     }
 
     unsigned char *destination = static_cast<unsigned char *>(buffer->get_data());
+    TextureRasterPixelBase = destination;
+    TextureRasterLightThreshold = cutoff;
     texture_reset_fpu();
     TextureRasterScratch494 = static_cast<unsigned char>(fillColor);
+    TextureRasterEdgeVerticesB = vertices;
+    TextureRasterEdgeVerticesA = uv;
+    TextureRasterVertexCount = count;
+    TextureRasterZValues = zvals;
+    TextureRasterScratch544 = pixels_;
+    TextureRasterBufferStride = static_cast<int>(buffer->stride_);
+    TextureRasterTextureWidth = iWidth_;
     const unsigned char *pixels = pixels_;
-    const int stride = static_cast<int>(buffer->stride_);
-    const int width = iWidth_;
+    const int stride = TextureRasterBufferStride;
+    const int width = TextureRasterTextureWidth;
     int in_front = 0;
     for (; in_front < count; ++in_front) {
         if (zvals[in_front] < cutoff) break;
     }
     if (in_front != count) {
         const RECT clip = buffer->rect1_;
+        TextureRasterClipRight = clip.right;
+        TextureRasterClipLeft = clip.left;
+        TextureRasterClipBottom = clip.bottom;
+        TextureRasterClipTop = clip.top;
         int min_y = 0x7fff, max_y = -0x7ffd;
-        int top = 0, bottom = 0;
+        int top = 0;
         for (int i = 0; i < count; ++i) {
             if (vertices[i].y < min_y) { min_y = vertices[i].y; top = i; }
-            if (vertices[i].y > max_y) { max_y = vertices[i].y; bottom = i; }
+            if (vertices[i].y > max_y) {
+                max_y = vertices[i].y;
+                TextureRasterMaxYIndex = i;
+            }
         }
         EdgeScan left, right;
         left.f0 = -1;
         right.f0 = 1;
+        if (min_y < max_y) {
+            TextureRasterRowOffset = static_cast<int>(
+                static_cast<unsigned int>(stride) * static_cast<unsigned int>(min_y) +
+                static_cast<unsigned int>(texture_pointer_address(TextureRasterPixelBase)));
+            TextureRasterClipBottom = static_cast<int>(
+                static_cast<unsigned int>(stride) * static_cast<unsigned int>(clip.bottom) +
+                static_cast<unsigned int>(texture_pointer_address(TextureRasterPixelBase)));
+            TextureRasterClipTop = static_cast<int>(
+                static_cast<unsigned int>(stride) * static_cast<unsigned int>(clip.top) +
+                static_cast<unsigned int>(texture_pointer_address(TextureRasterPixelBase)));
+        }
         if (min_y < max_y &&
-            texture_gouraud_edge(left, top, vertices, uv, zvals, count, bottom) &&
-            texture_gouraud_edge(right, top, vertices, uv, zvals, count, bottom)) {
+            Texture::setup_edge_gouraud(&left, top) &&
+            Texture::setup_edge_gouraud(&right, top)) {
             _control87(_PC_24 | _RC_CHOP, _MCW_PC | _MCW_RC);
             int du = 0, dv = 0;
             unsigned short dz = 0;
@@ -9021,9 +9130,37 @@ void Texture::draw2(Buffer *buffer, Vert *vertices, int *zvals, int count,
                     dv = texture_span_step(texture_difference(right.accumB, v), span >> 16);
                     dz = texture_light_step(texture_difference(right.accumD, z), span >> 16);
                 }
-                const int done =
-                    !texture_advance_gouraud_edge(left, vertices, uv, zvals, count, bottom) ||
-                    !texture_advance_gouraud_edge(right, vertices, uv, zvals, count, bottom);
+                int done = 0;
+                if (--left.counter == 0) {
+                    if (Texture::setup_edge_gouraud(&left, left.id) == 0)
+                        done = 1;
+                } else {
+                    left.accumA = static_cast<int>(static_cast<unsigned int>(left.accumA) + left.deltaA);
+                    left.accumB = static_cast<int>(static_cast<unsigned int>(left.accumB) + left.deltaB);
+                    left.accumC = static_cast<int>(static_cast<unsigned int>(left.accumC) + left.deltaC);
+                    left.accumD = static_cast<int>(static_cast<unsigned int>(left.accumD) + left.deltaD);
+                    left.fracAccum = static_cast<int>(static_cast<unsigned int>(left.fracAccum) + left.fracDelta);
+                    if (left.fracAccum > 0) {
+                        left.accumC = static_cast<int>(static_cast<unsigned int>(left.accumC) + left.extraDeltaC);
+                        left.fracAccum = texture_difference(left.fracAccum, left.fracSub);
+                    }
+                }
+                if (!done) {
+                    if (--right.counter == 0) {
+                        if (Texture::setup_edge_gouraud(&right, right.id) == 0)
+                            done = 1;
+                    } else {
+                        right.accumA = static_cast<int>(static_cast<unsigned int>(right.accumA) + right.deltaA);
+                        right.accumB = static_cast<int>(static_cast<unsigned int>(right.accumB) + right.deltaB);
+                        right.accumC = static_cast<int>(static_cast<unsigned int>(right.accumC) + right.deltaC);
+                        right.accumD = static_cast<int>(static_cast<unsigned int>(right.accumD) + right.deltaD);
+                        right.fracAccum = static_cast<int>(static_cast<unsigned int>(right.fracAccum) + right.fracDelta);
+                        if (right.fracAccum > 0) {
+                            right.accumC = static_cast<int>(static_cast<unsigned int>(right.accumC) + right.extraDeltaC);
+                            right.fracAccum = texture_difference(right.fracAccum, right.fracSub);
+                        }
+                    }
+                }
                 if (y >= clip.bottom) break;
                 if (y >= clip.top && end > clip.left && x < clip.right && end > x) {
                     if (end > clip.right) end = clip.right;
@@ -9074,6 +9211,9 @@ void Texture::draw2(Buffer *buffer, Vert *vertices, int *zvals, int count,
                 }
                 if (done) break;
                 ++y;
+                TextureRasterRowOffset = static_cast<int>(
+                    static_cast<unsigned int>(TextureRasterRowOffset) +
+                    static_cast<unsigned int>(stride));
             }
         }
     }

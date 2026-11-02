@@ -22,7 +22,7 @@ OWNERS = (
 )
 
 COLOR_CALL = re.compile(
-    r"(?:\w+)->set_text_color\(\s*TextColourTable\[(\d+)\],\s*"
+    r"(?:(?:\w+)->|Buffer::)set_text_color\(\s*TextColourTable\[(\d+)\],\s*"
     r"TextColourTable\[(\d+)\],\s*1,\s*1\s*\);"
 )
 
@@ -70,7 +70,7 @@ HARNESS = r'''
 
 __TABLE_DEFINITION__
 
-struct BufferSpy {
+struct Buffer {
     int call_count;
     int actual[2][4];
 
@@ -94,24 +94,30 @@ struct BufferSpy {
     }
 };
 
+struct BufferSpy : Buffer {
+    void test_draw_chassis();
+    void test_draw_reactor();
+    void test_draw_armor();
+    void test_draw_weapon();
+};
 BufferSpy spy;
 BufferSpy *buf = &spy;
 BufferSpy *buf444 = &spy;
 BufferSpy *panel_buf = &spy;
 
-void test_draw_chassis() {
+void BufferSpy::test_draw_chassis() {
     __CHASSIS_CALL_0__
     __CHASSIS_CALL_1__
 }
-void test_draw_reactor() {
+void BufferSpy::test_draw_reactor() {
     __REACTOR_CALL_0__
     __REACTOR_CALL_1__
 }
-void test_draw_armor() {
+void BufferSpy::test_draw_armor() {
     __ARMOR_CALL_0__
     __ARMOR_CALL_1__
 }
-void test_draw_weapon() {
+void BufferSpy::test_draw_weapon() {
     __WEAPON_CALL_0__
     __WEAPON_CALL_1__
 }
@@ -123,23 +129,23 @@ void check_pair(int call, int first, int second) {
     assert(spy.actual[call][3] == 1);
 }
 
-void run_owner(void (*owner)()) {
+void run_owner(void (BufferSpy::*owner)()) {
     TextColourTable[158] = -101;
     TextColourTable[159] = 202;
     TextColourTable[160] = -303;
     TextColourTable[161] = 404;
     spy.reset();
-    owner();
+    (spy.*owner)();
     assert(spy.call_count == 2);
     check_pair(0, -101, 202);
     check_pair(1, 703, -804);
 }
 
 int main() {
-    run_owner(test_draw_chassis);
-    run_owner(test_draw_reactor);
-    run_owner(test_draw_armor);
-    run_owner(test_draw_weapon);
+    run_owner(&BufferSpy::test_draw_chassis);
+    run_owner(&BufferSpy::test_draw_reactor);
+    run_owner(&BufferSpy::test_draw_armor);
+    run_owner(&BufferSpy::test_draw_weapon);
     return 0;
 }
 '''

@@ -1584,12 +1584,16 @@ def shaded_rows_bodies():
     for name in ("texture_gouraud_edge", "texture_advance_gouraud_edge"):
         methods[name] = braced(source, "static int " + name + "(")
     methods["texture_light_step"] = braced(source, "static unsigned short texture_light_step(")
+    methods["setup_edge_gouraud"] = braced(source, "int __cdecl Texture::setup_edge_gouraud(")
     methods["draw2"] = braced(source, "void Texture::draw2(")
     return methods
 
 
 def shaded_rows_harness(methods):
     common = raster_harness(methods).split("        void start() {", 1)[0]
+    common = common.replace("static int setup_edge(EdgeScan *, int);",
+                            "static int setup_edge(EdgeScan *, int);\n"
+                            "static int setup_edge_gouraud(EdgeScan *, int);")
     common = common.replace("struct Texture {", "int forward_calls;\nstruct Texture {")
     common = common.replace(
         "void draw_trans(Buffer *, Vert *, int);",
@@ -1621,6 +1625,10 @@ def shaded_rows_harness(methods):
         void finish(Vert *vertices, int *z, int count, Vert *uv,
                     int cutoff, int color, bool active=true) {
             texture.draw2(&buffer, vertices, z, count, uv, cutoff, color);
+            require(TextureRasterEdgeVerticesB == vertices);
+            require(TextureRasterEdgeVerticesA == uv);
+            require(TextureRasterZValues == z && TextureRasterVertexCount == count);
+            require(TextureRasterLightThreshold == cutoff);
             const std::vector<int> raster = {1,2,3,4,5,2,3};
             const std::vector<int> skipped = {1,2,3,5,2,3};
             require(events == (active ? raster : skipped));
@@ -1676,8 +1684,23 @@ def shaded_rows_harness(methods):
                 finish(vertices,lit,4,mapped,3,0x91);
             }
 
-            // Real Gouraud setup keeps the half-texel at the start but
-            // subtracts it when deriving the endpoint delta.
+            // The actual mapped helper consumes the published owner inputs.
+            // The literal record values below independently fix the half-texel
+            // start and the endpoint delta; pixel planes alone need not expose
+            // removal of a half texel that stays inside one sampled cell.
+            TextureRasterEdgeVerticesB = vertices;
+            TextureRasterEdgeVerticesA = mapped;
+            TextureRasterZValues = lit;
+            TextureRasterVertexCount = 4;
+            TextureRasterMaxYIndex = 2;
+            EdgeScan published={}; published.f0=-1;
+            require(Texture::setup_edge_gouraud(&published,0)==1);
+            require(published.accumA==32768 && published.accumB==32768);
+            require(published.deltaA==-8192 && published.deltaB==57344);
+            require(published.accumD==0 && published.deltaD==65536);
+
+            // Retain the separate parameterized helper's existing controls:
+            // other original mappings still call this actual source helper.
             EdgeScan edge={}; edge.f0=-1;
             require(texture_gouraud_edge(edge,0,vertices,mapped,lit,4,2)==1);
             require(edge.accumA==32768 && edge.accumB==32768);
@@ -1705,7 +1728,8 @@ def test_actual_shaded_alternating_rows(tmp_path):
     ("draw2", "shade < static_cast<signed char>(cutoff)",
      "shade < cutoff"),
     ("texture_gouraud_edge", "+ 0x8000u", "+ 0u"),
-    ("texture_advance_gouraud_edge", "edge.accumD) + edge.deltaD", "edge.accumD) + 0"),
+    ("setup_edge_gouraud", "+ 0x8000", "+ 0"),
+    ("draw2", "left.accumD) + left.deltaD", "left.accumD) + 0"),
     ("texture_light_step", "return 0x8000u", "return 0u"),
 ])
 def test_shaded_row_damage_is_observed(tmp_path, method, before, after):
@@ -1726,6 +1750,9 @@ def cutoff_bodies():
 
 def cutoff_harness(methods):
     common = raster_harness(methods).split("        void start() {", 1)[0]
+    common = common.replace("static int setup_edge(EdgeScan *, int);",
+                            "static int setup_edge(EdgeScan *, int);\n"
+                            "static int setup_edge_gouraud(EdgeScan *, int);")
     common = common.replace(
         "void draw_trans(Buffer *, Vert *, int);",
         "void draw_below_cutoff(Buffer *, Vert *, int *, int, Vert *, int);")

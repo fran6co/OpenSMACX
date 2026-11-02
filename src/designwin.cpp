@@ -34,6 +34,7 @@
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned CRT slot0x682078 selects initializer0x432850..0x432866, registering exit0x432870..0x43287a. Root independent complete decode confirms exclusive RET/JMP bounds; original/source-owned storage is0x71f2b0 bound to?TutWinDesWindow@@3VDesignWin@@A.", "Original startup instruction evidence: [[\"0x432850\", \"mov\", \"ecx, 0x71f2b0\"], [\"0x432855\", \"call\", \"0x434480\"], [\"0x43285a\", \"push\", \"0x432870\"], [\"0x43285f\", \"call\", \"0x645398\"], [\"0x432864\", \"pop\", \"ecx\"], [\"0x432865\", \"ret\", \"\"]]. Original exit instruction evidence: [[\"0x432870\", \"mov\", \"ecx, 0x71f2b0\"], [\"0x432875\", \"jmp\", \"0x43ecb0\"]]. Preserve constructor arguments, array counts/strides, registration and reverse destruction without authored callback stand-ins.", "Fresh complete build-iveupb5l physical src/designwin.cpp COFF selects _$E21 via .CRT$XCU, registering _$E19. Startup relocation targets: [\"?TutWinDesWindow@@3VDesignWin@@A\", \"??0DesignWin@@QAE@XZ\", \"_$E19\", \"_atexit\"]; exit targets: [\"?TutWinDesWindow@@3VDesignWin@@A\", \"??1DesignWin@@UAE@XZ\"]. Actual linked helper occurs once at CRT slot0x63f2dc; selected same-owner order agrees with the pinned order.", "BaseWin/DesignWin definitions now precede their Wave globals as pinned. Existing DesignWin Wave mappings retain original names/spans and current helper overrides after fresh emission proof. Scalar constructor effects and array construction/cleanup belong to genuine source globals, classes and compiler-generated lifetime machinery.", "Current local labels are emission interpretations, not original debug names or recovered historical TU boundaries. Start bindings grant no allocation extent. Selected same-owner linked order is not full CRT/global-order, retained-selection, reference-target, dependency-provider, runtime or full-game acceptance. Guarded callbacks excluded; no claim grant or bug fix."], "reason": "Bind original exit operation to the genuine compiler-emitted lifetime of source-owned ?TutWinDesWindow@@3VDesignWin@@A; preserve complete original identity and remaining restoration/structure obligations."}
 // symbol    _$E6
 #include "stdafx.h"
+#include "font_metrics.h"
 #include "interface_fonts.h"
 #include "map.h"
 #include "wave.h"
@@ -709,18 +710,19 @@ int SelectPartWin::draw_chassis(int a1, RECT *a2, int a3) {
                               &caviar_);
     caviar_.set_scaling(0.06f);
 
-    Buffer *const buf = static_cast<Buffer *>(this);
-    const int x_avg = (a2->right + a2->left) / 2;
-    const int y_avg = (a2->bottom + a2->top) / 2;
 
     if (has_all_tech_flag != 0) {
-        caviar_.render_mono(buf, x_avg, y_avg, 0xB9, 6);
+        caviar_.render_mono(static_cast<Buffer *>(this),
+                            (a2->right + a2->left) / 2,
+                            (a2->bottom + a2->top) / 2, 0xB9, 6);
         return has_all_tech_flag == 0;
     }
 
-    caviar_.render(buf, x_avg, y_avg, 6);
+    caviar_.render(static_cast<Buffer *>(this),
+                   (a2->right + a2->left) / 2,
+                   (a2->bottom + a2->top) / 2, 6);
 
-    buf->set_text_color(TextColourTable[158], TextColourTable[159], 1, 1);
+    Buffer::set_text_color(TextColourTable[158], TextColourTable[159], 1, 1);
 
     Font *const font1 = &font1_;
     Font *const font2 = &font2_;
@@ -729,25 +731,25 @@ int SelectPartWin::draw_chassis(int a1, RECT *a2, int a3) {
     temp.left = a2->left;
     temp.right = a2->right;
     temp.top = a2->top;
-    temp.bottom = a2->top + font1->line_advance();
+    temp.bottom = a2->top + font_line_advance(*font1);
 
     StringTemp[0] = 0;
     strcat(StringTemp, StringTable.get(Chassis[slot].offsv_1_name));
     CharUpperA(StringTemp);
-    buf->wrap_cent(font1, StringTemp, &temp);
+    Buffer::wrap_cent(font1, StringTemp, &temp);
 
-    buf->set_text_color(TextColourTable[160], TextColourTable[161], 1, 1);
+    Buffer::set_text_color(TextColourTable[160], TextColourTable[161], 1, 1);
 
     temp.left = a2->left;
     temp.right = a2->right;
     temp.bottom = a2->bottom;
-    temp.top = a2->bottom - font1->line_advance();
+    temp.top = a2->bottom - font_line_advance(*font1);
 
     StringTemp[0] = 0;
     strcat(StringTemp, StringTable.get(Triad[Chassis[slot].triad]));
 
-    buf->set_font(font1, 0, 0, 0);
-    buf->write_l(StringTemp, &temp,
+    Buffer::set_font(font1, 0, 0, 0);
+    Buffer::write_l(StringTemp, &temp,
                  static_cast<int>(strlen(StringTemp)));
 
     char itoa_buf[80];
@@ -755,8 +757,8 @@ int SelectPartWin::draw_chassis(int a1, RECT *a2, int a3) {
     StringTemp[0] = 0;
     strcat(StringTemp, itoa_buf);
 
-    buf->set_font(font2, 0, 0, 0);
-    buf->write_right_l(StringTemp, &temp,
+    Buffer::set_font(font2, 0, 0, 0);
+    Buffer::write_right_l(StringTemp, &temp,
                        static_cast<int>(strlen(StringTemp)));
 
     return has_all_tech_flag == 0;
@@ -823,52 +825,53 @@ int SelectPartWin::draw_reactor(int a1, RECT *a2, int a3) {
                               &caviar_);
     caviar_.set_scaling(0.2f);
 
-    Buffer *const buf = static_cast<Buffer *>(this);
-    const int cy = (a2->bottom + a2->top) / 2;
-    const int cx = (a2->right + a2->left) / 2;
 
     if (has_tech_failed != 0) {
-        caviar_.render_mono(buf, cx, cy, 0xB9, 6);
+        caviar_.render_mono(static_cast<Buffer *>(this),
+                            (a2->right + a2->left) / 2,
+                            (a2->bottom + a2->top) / 2, 0xB9, 6);
         return has_tech_failed == 0;
     }
 
-    caviar_.render(buf, cx, cy, 6);
+    caviar_.render(static_cast<Buffer *>(this),
+                   (a2->right + a2->left) / 2,
+                   (a2->bottom + a2->top) / 2, 6);
 
-    buf->set_text_color(TextColourTable[158], TextColourTable[159], 1, 1);
+    Buffer::set_text_color(TextColourTable[158], TextColourTable[159], 1, 1);
 
     Font *const font1 = &font1_;
     RECT rect1;
     rect1.left = a2->left;
     rect1.top = a2->top;
     rect1.right = a2->right;
-    rect1.bottom = a2->top + font1->line_advance();
-    buf->set_font(font1, 0, 0, 0);
+    rect1.bottom = a2->top + font_line_advance(*font1);
+    Buffer::set_font(font1, 0, 0, 0);
 
     StringTemp[0] = 0;
     strcat(StringTemp, StringTable.get(Reactor[slot - 1].name));
     CharUpperA(StringTemp);
-    buf->wrap_cent(StringTemp, &rect1);
+    Buffer::wrap_cent(StringTemp, &rect1);
 
-    buf->set_text_color(TextColourTable[160], TextColourTable[161], 1, 1);
+    Buffer::set_text_color(TextColourTable[160], TextColourTable[161], 1, 1);
 
     RECT rect2;
     rect2.left = a2->left;
     rect2.right = a2->right;
     rect2.bottom = a2->bottom;
-    rect2.top = rect2.bottom - font1->line_advance();
+    rect2.top = rect2.bottom - font_line_advance(*font1);
 
     StringTemp[0] = 0;
     strcat(StringTemp, StringTable.get(Labels.strings_ptr[0x1E4 / 4]));
-    buf->write_l(StringTemp, &rect2,
+    Buffer::write_l(StringTemp, &rect2,
                  static_cast<int>(strlen(StringTemp)));
 
-    buf->set_font(&font2_, 0, 0, 0);
+    Buffer::set_font(&font2_, 0, 0, 0);
 
     char itoa_buf[80];
     StringTemp[0] = 0;
     _itoa(slot, itoa_buf, 10);
     strcat(StringTemp, itoa_buf);
-    buf->write_right_l(StringTemp, &rect2,
+    Buffer::write_right_l(StringTemp, &rect2,
                        static_cast<int>(strlen(StringTemp)));
 
     return has_tech_failed == 0;
@@ -900,7 +903,6 @@ Status: Coverage transcription - unclaimed body; historical seed at
         git:08336bcc:src/unrecovered/00433170.cpp.
 */
 int SelectPartWin::draw_armor(int a1, RECT *a2, int a3) {
-    Buffer *const buf444 = static_cast<Buffer *>(this);
     Caviar *const cav2b9c = &caviar_;
 
     int slot;
@@ -961,29 +963,29 @@ int SelectPartWin::draw_armor(int a1, RECT *a2, int a3) {
         if (slot != 0) {
             const int midY = (a2->bottom + a2->top) / 2;
             const int midX = (a2->right + a2->left) / 2;
-            cav2b9c->render_mono(buf444, midX, midY, 0xB9, 6);
+            cav2b9c->render_mono(static_cast<Buffer *>(this), midX, midY, 0xB9, 6);
             return noTechFlag == 0;
         }
     } else if (slot != 0) {
         const int midY = (a2->bottom + a2->top) / 2;
         const int midX = (a2->right + a2->left) / 2;
         if (slot == 5) {
-            cav2b9c->render_multi_table_dest(buf444, midX, midY, 0x18,
+            cav2b9c->render_multi_table_dest(static_cast<Buffer *>(this), midX, midY, 0x18,
                 ArmorTransparentColorTables, 6);
         } else {
-            cav2b9c->render(buf444, midX, midY, 6);
+            cav2b9c->render(static_cast<Buffer *>(this), midX, midY, 6);
         }
     }
 
-    buf444->set_text_color(TextColourTable[158], TextColourTable[159], 1, 1);
+    Buffer::set_text_color(TextColourTable[158], TextColourTable[159], 1, 1);
     {
         Font *const font45f4 = &font1_;
         rectScratch.left = a2->left;
         rectScratch.top = a2->top;
         rectScratch.right = a2->right;
         rectScratch.bottom = a2->bottom;
-        rectScratch.bottom = rectScratch.top + font45f4->line_advance();
-        buf444->set_font(0, 0, 0, font45f4);
+        rectScratch.bottom = rectScratch.top + font_line_advance(*font45f4);
+        Buffer::set_font(0, 0, 0, font45f4);
     }
     {
         const int slot16 = slot << 4;
@@ -991,8 +993,8 @@ int SelectPartWin::draw_armor(int a1, RECT *a2, int a3) {
         strcat(StringTemp,
                StringTable.get(Armor[slot].name));
         CharUpperA(StringTemp);
-        buf444->wrap_cent(StringTemp, &rectScratch);
-        buf444->set_text_color(TextColourTable[160], TextColourTable[161], 1, 1);
+        Buffer::wrap_cent(StringTemp, &rectScratch);
+        Buffer::set_text_color(TextColourTable[160], TextColourTable[161], 1, 1);
 
         Font *const font45f4b = &font1_;
         rectScratch.left = a2->left;
@@ -1000,14 +1002,14 @@ int SelectPartWin::draw_armor(int a1, RECT *a2, int a3) {
         rectScratch.right = a2->right;
         rectScratch.bottom = a2->bottom;
         rectScratch.top =
-            a2->bottom - font45f4b->line_advance();
+            a2->bottom - font_line_advance(*font45f4b);
 
         const unsigned char flag2 = Armor[slot].mode;
         if (flag2 < 3) {
             strcat(StringTemp,
                    StringTable.get(Labels.strings_ptr[0x1F8 / 4]));
         }
-        buf444->write_l(StringTemp, &rectScratch,
+        Buffer::write_l(StringTemp, &rectScratch,
                         static_cast<int>(strlen(StringTemp)));
 
         const signed char armLevel = Armor[slot].defense_rating;
@@ -1021,9 +1023,9 @@ int SelectPartWin::draw_armor(int a1, RECT *a2, int a3) {
             strcat(StringTemp, itoaBuf);
         }
 
-        buf444->set_font(0, 0, 0,
+        Buffer::set_font(0, 0, 0,
                          &font2_);
-        buf444->write_right_l(StringTemp, &rectScratch,
+        Buffer::write_right_l(StringTemp, &rectScratch,
                               static_cast<int>(strlen(StringTemp)));
     }
 
@@ -1149,34 +1151,33 @@ int SelectPartWin::draw_weapon(int a1, RECT *a2, int a3) {
     caviar->render(static_cast<Buffer *>(this),
                    (a2->right + a2->left) / 2, (a2->bottom + a2->top) / 2, 6);
 
-    Buffer *const panel_buf = static_cast<Buffer *>(this);
-    panel_buf->set_text_color(TextColourTable[158], TextColourTable[159], 1, 1);
+    Buffer::set_text_color(TextColourTable[158], TextColourTable[159], 1, 1);
 
     Font *const font45f4 = &font1_;
     RECT tmp_rect;
     tmp_rect.left = a2->left;
     tmp_rect.top = a2->top;
     tmp_rect.right = a2->right;
-    tmp_rect.bottom = a2->top + font45f4->line_advance();
+    tmp_rect.bottom = a2->top + font_line_advance(*font45f4);
     StringTemp[0] = 0;
     strcat(StringTemp, StringTable.get(Weapon[idx].name));
-    panel_buf->set_font(font45f4, 0, 0, 0);
+    Buffer::set_font(font45f4, 0, 0, 0);
     CharUpperA(StringTemp);
-    panel_buf->wrap_cent(StringTemp, &tmp_rect);
-    panel_buf->set_text_color(TextColourTable[160], TextColourTable[161], 1, 1);
+    Buffer::wrap_cent(StringTemp, &tmp_rect);
+    Buffer::set_text_color(TextColourTable[160], TextColourTable[161], 1, 1);
 
     tmp_rect.left = a2->left;
     tmp_rect.right = a2->right;
     tmp_rect.bottom = a2->bottom;
-    tmp_rect.top = tmp_rect.bottom - font45f4->line_advance();
+    tmp_rect.top = tmp_rect.bottom - font_line_advance(*font45f4);
     StringTemp[0] = 0;
     strcat(StringTemp,
            StringTable.get(Labels.strings_ptr[
                (cat_byte < 3 ? 0x204 : 0x200) / 4]));
-    panel_buf->write_l(StringTemp, &tmp_rect,
+    Buffer::write_l(StringTemp, &tmp_rect,
                        static_cast<int>(strlen(StringTemp)));
 
-    panel_buf->set_font(&font2_, 0, 0, 0);
+    Buffer::set_font(&font2_, 0, 0, 0);
     signed char count_char = Weapon[idx].offense_rating;
     StringTemp[0] = 0;
     if (count_char == -1) {
@@ -1190,7 +1191,7 @@ int SelectPartWin::draw_weapon(int a1, RECT *a2, int a3) {
         _itoa(count_char, num_buf, 10);
         strcat(StringTemp, num_buf);
     }
-    panel_buf->write_right_l(StringTemp, &tmp_rect,
+    Buffer::write_right_l(StringTemp, &tmp_rect,
                              static_cast<int>(strlen(StringTemp)));
 
     return weaponMissing == 0;

@@ -86,26 +86,11 @@ public:
   void draw2(Buffer *, Vert *, int *, int, Vert *, int, int);
   void draw_below_cutoff(Buffer *, Vert *, int *, int, Vert *, int);
   static int setup_edge(EdgeScan *, int);
+  static int setup_edge_gouraud(EdgeScan *, int);
 };
 void Texture::draw_color_key(Buffer *, Vert *, int, Vert *) { ++forward_calls; }
 void Texture::draw_below_cutoff(Buffer *, Vert *, int *, int, Vert *, int) {
   ++forward_calls;
-}
-static int texture_gouraud_edge(EdgeScan &edge, int, const Vert *, const Vert *,
-                                const int *, int, int) {
-  edge.counter = 3;
-  edge.accumA = edge.f0 < 0 ? 0 : 3 << 16;
-  edge.accumB = 0;
-  edge.accumC = edge.f0 < 0 ? 0 : 3;
-  edge.accumD = 5 << 16;
-  return 1;
-}
-static int texture_advance_gouraud_edge(EdgeScan &, const Vert *, const Vert *,
-                                        const int *, int, int) {
-  ++edge_advance_calls;
-  if (mutation_enabled && edge_advance_calls == mutate_scratch494_at_call)
-    TextureRasterScratch494 = scratch494_mutation;
-  return edge_advance_calls <= 4;
 }
 /* ACTUAL_BODIES */
 '''
@@ -148,6 +133,11 @@ def live_translation_unit() -> str:
         source, r"static void texture_uv_edge_step\(EdgeScan &edge\) \{")
     setup_edge = _function(
         source, r"int __cdecl Texture::setup_edge\s*\(EdgeScan\s*\*a1,\s*int\s+a2\)\s*\{")
+    setup_edge_gouraud = _function(
+        source, r"int __cdecl Texture::setup_edge_gouraud\s*\(EdgeScan\s*\*\s*a1,\s*int\s+a2\)\s*\{")
+    draw2 = _function(source, DRAW2)
+    assert draw2.count("Texture::setup_edge_gouraud(") == 4
+    draw2 = draw2.replace("Texture::setup_edge_gouraud(", "observe_setup_edge_gouraud(")
     draw_color_key = _function(source, DRAW_COLOR_KEY)
     draw_color_key = draw_color_key.replace(
         "Texture::setup_edge(", "observe_setup_edge(")
@@ -158,9 +148,18 @@ static int observe_setup_edge(EdgeScan *edge, int index) {
     TextureRasterScratch494 = scratch494_mutation;
   return Texture::setup_edge(edge, index);
 }
+// This delegates to the actual mapped setup. The third call is the first
+// terminal edge rollover, immediately before the last even output row.
+static int observe_setup_edge_gouraud(EdgeScan *edge, int index) {
+  ++setup_edge_calls;
+  if (mutation_enabled && setup_edge_calls == mutate_scratch494_at_setup)
+    TextureRasterScratch494 = scratch494_mutation;
+  return Texture::setup_edge_gouraud(edge, index);
+}
 '''
-    bodies = (edge_step + "\n\n" + uv_edge_step + "\n\n" + setup_edge + "\n\n" + observer + "\n\n" + draw_color_key
-              + "\n\n" + _function(source, DRAW2))
+    bodies = (edge_step + "\n\n" + uv_edge_step + "\n\n" + setup_edge
+              + "\n\n" + setup_edge_gouraud + "\n\n" + observer
+              + "\n\n" + draw_color_key + "\n\n" + draw2)
     assert "TextureRasterScratch494" in bodies
     prefix = PREFIX.replace("// TEXTURE_DIRECT_STORAGE_PRELUDE",
                             direct_storage_prelude(source), 1)
@@ -227,7 +226,9 @@ static void test_draw2_scratch_rows() {
   pixels[0] = pixels[1] = pixels[2] = pixels[4] = pixels[5] = pixels[6] =
       pixels[8] = pixels[9] = pixels[10] = 20;
   Vert vertices[4], uv[4]; setup_shape(vertices, uv);
-  int zvals[4] = {0, 0, 0, 0};
+  // Feed the real setup the five-unit light plane formerly supplied by
+  // the edge double. Existing expected pixels and scratch oracles stay fixed.
+  int zvals[4] = {5, 5, 5, 5};
   Buffer buffer;
   Texture texture(pixels);
   texture.draw2(&buffer, vertices, zvals, 4, uv, 10, 0x1A5);

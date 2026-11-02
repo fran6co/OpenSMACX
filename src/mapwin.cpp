@@ -68,6 +68,7 @@
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned CRT slot0x682540 selects initializer0x462080..0x462098 and registers exit0x4620a0..0x4620b4; complete independent decode establishes both ends.", "Original operations identify storage0x7d4060, source object?FarmMapWindow@@3VMapWin@@A. MainInterface uses constructor45EF10/destructor45EB80; FarmMap uses virtual-base constructor4626E0 with hidden most-derived argument1 and exit receiver7F5ACC calling own-part420F90 then virtual GraphicWin5D4DD0.", "Fresh physical mapwin.cpp COFF selects _$E26 via .CRT$XCU and registers _$E24, both naming the genuine global. The corrected declarations and actual linked table initialize MainInterface before FarmMap, matching original slots682534/682540; C++ owns reverse destruction and virtual-base lifetime.", "Current compiler-local symbols interpret present emission, not original debug names or historical TU identity. The bounded two-object ordering does not establish complete CRT order, strict linked preservation, runtime or game acceptance."], "reason": "Bind original exit to genuine source-owned ?FarmMapWindow@@3VMapWin@@A compiler-generated lifetime after correcting declaration order; no hand-authored callback or explicit virtual-base flag."}
 // symbol    _$E11
 #include "stdafx.h"
+#include "font_metrics.h"
 #include "interface_fonts.h"
 #include "popup_fonts.h"
 #include "terraforming.h"
@@ -5527,7 +5528,7 @@ void MapWin::draw_base_names() {
                 canvas->write_cent_l(detail,
                     pixel_x + field_1DDBC_,
                     pixel_y + (field_1DDC8_ * 7) / 2 +
-                        font_a_.line_advance(), strlen(detail));
+                        font_line_advance(font_a_), strlen(detail));
             } else {
                 const bool production_detail =
                     (GameDataStateStorage.fields_.game_more_preferences_ & MPREF_MAP_SHOW_PROD_WITH_BASE_NAMES) != 0 ||
@@ -5543,7 +5544,7 @@ void MapWin::draw_base_names() {
                         canvas->write_cent_l(detail,
                             pixel_x + field_1DDBC_,
                             pixel_y + (field_1DDC8_ * 7) / 2 +
-                                font_a_.line_advance(),
+                                font_line_advance(font_a_),
                             strlen(detail));
                     }
                 } else if (base.faction_id_current == faction ||
@@ -5581,7 +5582,7 @@ void MapWin::draw_base_names() {
                     canvas->write_cent_l(detail,
                         pixel_x + field_1DDBC_,
                         pixel_y + (field_1DDC8_ * 7) / 2 +
-                            font_a_.line_advance(),
+                            font_line_advance(font_a_),
                         strlen(detail));
                 } else {
                     const bool objective = is_objective(base_id) != 0;
@@ -5594,7 +5595,7 @@ void MapWin::draw_base_names() {
                         canvas->write_cent_l(detail,
                             pixel_x + field_1DDBC_,
                             pixel_y + (field_1DDC8_ * 7) / 2 +
-                                font_a_.line_advance(),
+                                font_line_advance(font_a_),
                             strlen(detail));
                     }
                 }
@@ -6101,10 +6102,8 @@ void MapWin::draw_legend() {
 void MapWin::draw_wars() {
     Font *const font = &font_b_;
     const int character_width = font->width("FUNGUS");
-    const int line_advance = font->line_advance();
-    int y = line_advance;
-    Buffer *const canvas = static_cast<Buffer *>(this);
-    canvas->set_font(font, 0, 0, 0);
+    int y = font_line_advance(*font);
+    Buffer::set_font(font, 0, 0, 0);
     int max_width = character_width;
 
     for (int faction = 1; faction < MaxPlayerNum; ++faction) {
@@ -6113,21 +6112,21 @@ void MapWin::draw_wars() {
         StringTemp[0] = '\0';
         strcat(StringTemp, Players[faction].noun_faction);
         strcat(StringTemp, ": ");
-        canvas->set_text_color(InfoFactionTextColors[faction], 0, 1, 1);
-        const int width = canvas->write_l(
+        Buffer::set_text_color(InfoFactionTextColors[faction], 0, 1, 1);
+        const int width = Buffer::write_l(
             StringTemp, character_width, y, strlen(StringTemp));
         if (max_width <= width) {
             max_width = width;
         }
-        y += line_advance;
+        y += font_line_advance(*font);
     }
 
     char letter = '-';
-    y = line_advance;
+    y = font_line_advance(*font);
     for (int row = 1; row < MaxPlayerNum; ++row) {
         int x = max_width;
         for (int column = 1; column < MaxPlayerNum; ++column) {
-            canvas->set_text_color(InfoFactionTextColors[column], 0, 1, 1);
+            Buffer::set_text_color(InfoFactionTextColors[column], 0, 1, 1);
             const uint32_t flags = PlayersData[row].diplo_treaties[column];
             if ((flags & 8U) == 0) {
                 letter = '-';
@@ -6142,10 +6141,10 @@ void MapWin::draw_wars() {
             }
             StringTemp[0] = letter;
             StringTemp[1] = '\0';
-            canvas->write_l(StringTemp, x, y, strlen(StringTemp));
+            Buffer::write_l(StringTemp, x, y, strlen(StringTemp));
             x += character_width;
         }
-        y += line_advance;
+        y += font_line_advance(*font);
     }
 }
 

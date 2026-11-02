@@ -20,6 +20,7 @@
 // symbol    ??_GProdPicker@@UAEPAXI@Z
 // kind      game
 #include "stdafx.h"
+#include "font_metrics.h"
 #include "interface_fonts.h"
 #include "basepop.h"
 #include "stringstruct.h"  // StringAllocationHeap; the staged vbtable constants
@@ -175,7 +176,7 @@ void ProdPicker::draw_item(int item, int update) {
     StringTemp[0] = 0;
     set_text_color(textColor, -1, 1, 1);
     set_font(&font1_, 0, 0, 0);
-    const int nameLineHeight = font1_.line_advance();
+    const int nameLineHeight = font_line_advance(font1_);
     RECT nameArea = { cell.left, cell.top + 5, cell.right,
                       cell.top + nameLineHeight * 3 + 5 };
     char *nameText = prod_a_.head_ != 0
@@ -197,7 +198,7 @@ void ProdPicker::draw_item(int item, int update) {
         ? prod_c_.current_->string_payload()->text : 0;
     wrap_cent(costText, &costArea);
 
-    const int costLineHeight = font3_.line_advance();
+    const int costLineHeight = font_line_advance(font3_);
     int turnsTop = costTop - costLineHeight;
     if (prod_b_.head_) {
         StringStructPayload *turns = prod_b_.current_entry();

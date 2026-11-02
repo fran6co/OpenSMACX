@@ -27,6 +27,7 @@ extern const char BufferJoinSpace[];
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned CRT slot0x6825f0 selects initializer0x4ae9b0..0x4ae9c6, registering exit0x4ae9d0..0x4ae9da. Root independent complete decode confirms exclusive RET/JMP bounds; original/source-owned storage is0x8a6270 bound to?TutWinSocWindow@@3VSocialWin@@A.", "Original startup instruction evidence: [[\"0x4ae9b0\", \"mov\", \"ecx, 0x8a6270\"], [\"0x4ae9b5\", \"call\", \"0x4ae9e0\"], [\"0x4ae9ba\", \"push\", \"0x4ae9d0\"], [\"0x4ae9bf\", \"call\", \"0x645398\"], [\"0x4ae9c4\", \"pop\", \"ecx\"], [\"0x4ae9c5\", \"ret\", \"\"]]. Original exit instruction evidence: [[\"0x4ae9d0\", \"mov\", \"ecx, 0x8a6270\"], [\"0x4ae9d5\", \"jmp\", \"0x4b3c80\"]]. Preserve constructor arguments, array counts/strides, registration and reverse destruction without authored callback stand-ins.", "Fresh complete build-iveupb5l physical src/socialwin.cpp COFF selects _$E21 via .CRT$XCU, registering _$E19. Startup relocation targets: [\"?TutWinSocWindow@@3VSocialWin@@A\", \"??0SocialWin@@QAE@XZ\", \"_$E19\", \"_atexit\"]; exit targets: [\"?TutWinSocWindow@@3VSocialWin@@A\", \"??1SocialWin@@UAE@XZ\"]. Actual linked helper occurs once at CRT slot0x63f2d4; selected same-owner order agrees with the pinned order.", "BaseWin/DesignWin definitions now precede their Wave globals as pinned. Existing DesignWin Wave mappings retain original names/spans and current helper overrides after fresh emission proof. Scalar constructor effects and array construction/cleanup belong to genuine source globals, classes and compiler-generated lifetime machinery.", "Current local labels are emission interpretations, not original debug names or recovered historical TU boundaries. Start bindings grant no allocation extent. Selected same-owner linked order is not full CRT/global-order, retained-selection, reference-target, dependency-provider, runtime or full-game acceptance. Guarded callbacks excluded; no claim grant or bug fix."], "reason": "Bind original exit operation to the genuine compiler-emitted lifetime of source-owned ?TutWinSocWindow@@3VSocialWin@@A; preserve complete original identity and remaining restoration/structure obligations."}
 // symbol    _$E6
 #include "stdafx.h"
+#include "font_metrics.h"
 #include "socialwin.h"
 #include "win.h"
 #include "subinterface.h"
@@ -1830,7 +1831,7 @@ void SocialWin::draw_overview() {
         }
         // This separate native cursor does not replace the wrapping RECT's
         // top. Its metric depends on Font state, never the social effect.
-        row_pitch_cursor += font7_.line_advance();
+        row_pitch_cursor += font_line_advance(font7_);
     }
 
     buffer->set_wrap_width(5);
@@ -2286,9 +2287,9 @@ void SocialWin::draw_info() {
     int text_y;
     int row_y;
     if (WinScreenWidth == 800) {
-        text_y = font6_.line_advance() + text_top;
+        text_y = font_line_advance(font6_) + text_top;
     } else {
-        text_y = ((tutRect14_.bottom + font6_.line_advance() * -2) - text_top) / 2
+        text_y = ((tutRect14_.bottom + font_line_advance(font6_) * -2) - text_top) / 2
             + text_top;
         row_y = text_y;
     }
@@ -2302,7 +2303,7 @@ void SocialWin::draw_info() {
     buf->set_text_color(0xa0, -1, 1, 1);
     buf->write_l(StringTemp, text_left, text_y, strlen(StringTemp));
 
-    row_y = text_y + font6_.line_advance();
+    row_y = text_y + font_line_advance(font6_);
 
     StringTemp[0] = 0;
     strcat(StringTemp, label_get(150));
@@ -2314,10 +2315,10 @@ void SocialWin::draw_info() {
     buf->write_l(StringTemp, text_left, row_y, strlen(StringTemp));
 
     if (WinScreenWidth == 800) {
-        row_y += font6_.line_advance();
+        row_y += font_line_advance(font6_);
     } else {
         text_left += (tutRect14_.right - tutRect14_.left) / 2;
-        row_y -= font6_.line_advance();
+        row_y -= font_line_advance(font6_);
     }
 
     int imbalance = PlayersData[factionID_].se_alloc_psych - 10
@@ -2398,7 +2399,7 @@ scaled:
         buf->set_text_color(0xf9, -1, 1, 1);
         buf->write_l(StringTemp, text_left, row_y, strlen(StringTemp));
 
-        row_y += font6_.line_advance();
+        row_y += font_line_advance(font6_);
     }
 
     if (upheaval < 0) {

@@ -856,6 +856,11 @@ def test_payload_null_guard_damage_changes_original_invalid_read(tmp_path, kind,
 
 
 def draw_text_read_projection(damage=""):
+    font_header = (ROOT / "src/jackal/font.h").read_text()
+    accessors = "\n".join(extract_function(font_header, signature) for signature in
+                           ("int pixel_height() const", "int line_height() const"))
+    metric = extract_function((ROOT / "src/jackal/font_metrics.h").read_text(),
+                              "inline int font_line_advance(")
     body = extract_function(UNIT.read_text(), "void ProdPicker::draw_item(int item, int update)")
     phase = body[body.index("    StringTemp[0] = 0;"):body.index("    int hasPrototypeCost = 0;")]
     before = phase
@@ -893,7 +898,10 @@ def draw_text_read_projection(damage=""):
 int getter_calls, mode, wrap_calls, length_calls, write_calls;
 LIST_NODES
 struct RECT { int left, top, right, bottom; };
-struct Font { int unk_1_ = 0; int line_advance() { return 5; } };
+struct Font { int unk_1_ = 0, height_ = 5, line_height_ = 5;
+ FONT_ACCESSORS
+};
+FONT_METRIC
 char StringTemp[2], stale[]="stale", name_ready[]="name", cost_height[]="height";
 char cost_draw[]="draw", turns_ready[]="old", turns_after[]="new";
 int mandate_color(int);
@@ -968,7 +976,8 @@ int main(int argc,char **argv) {
     assert(length_calls == (mode == 3 || mode == 4 || mode == 8 ? 0 : 1));
     assert(write_calls == length_calls);
 }
-'''.replace("LIST_NODES", nodes).replace("PHASE", phase))
+'''.replace("LIST_NODES", nodes).replace("FONT_ACCESSORS", accessors)
+        .replace("FONT_METRIC", metric).replace("PHASE", phase))
 
 
 @pytest.mark.parametrize("compiler_name", ["g++", "clang++"])

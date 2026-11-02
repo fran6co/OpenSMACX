@@ -196,6 +196,16 @@ one candidate compilation and measure every changed function together. Preserve
 existing exact functions and structural discoveries. Missing evidence and an
 uninspected function are not exhausted search contexts.
 
+For a shared fix whose helper/header is already correct, give independent client
+TUs separate trial scopes. A follow-up in one client must not trigger recompiling
+all other clients just because they share a packet. Combine their qualified
+handoffs at integration. A changed shared header still requires its affected
+closure. Count physical compiler calls and new strict matches, not trial count
+or masked similarity, when judging throughput. Retrying a blocked function needs
+new source, type, compiler or dependency evidence; a new batch name is not new
+evidence. This scheduling rule does not authorize reusing stale object receipts
+or treating an incremental build as qualified compiler evidence.
+
 Workers hand off measured patches, original/reference evidence, actual compiler
 reports, and source/dependency fingerprints. Failed attempts belong in ignored
 cache files, with their proposed source and compiler context; never repeat a

@@ -28,6 +28,7 @@
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned CRT slot0x68206c selects initializer0x4243a0..0x4243b6, registering exit0x4243c0..0x4243ca. Root independent complete decode confirms exclusive RET/JMP bounds; original/source-owned storage is0x6fec80 bound to?CouncilWindow@@3VCouncWin@@A.", "Original startup instruction evidence: [[\"0x4243a0\", \"mov\", \"ecx, 0x6fec80\"], [\"0x4243a5\", \"call\", \"0x428620\"], [\"0x4243aa\", \"push\", \"0x4243c0\"], [\"0x4243af\", \"call\", \"0x645398\"], [\"0x4243b4\", \"pop\", \"ecx\"], [\"0x4243b5\", \"ret\", \"\"]]. Original exit instruction evidence: [[\"0x4243c0\", \"mov\", \"ecx, 0x6fec80\"], [\"0x4243c5\", \"jmp\", \"0x428550\"]]. Preserve constructor arguments, array counts/strides, registration and reverse destruction without authored callback stand-ins.", "Fresh complete build-iveupb5l physical src/councwin.cpp COFF selects _$E21 via .CRT$XCU, registering _$E19. Startup relocation targets: [\"?CouncilWindow@@3VCouncWin@@A\", \"??0CouncWin@@QAE@XZ\", \"_$E19\", \"_atexit\"]; exit targets: [\"?CouncilWindow@@3VCouncWin@@A\", \"??1CouncWin@@UAE@XZ\"]. Actual linked helper occurs once at CRT slot0x63f360; selected same-owner order agrees with the pinned order.", "BaseWin/DesignWin definitions now precede their Wave globals as pinned. Existing DesignWin Wave mappings retain original names/spans and current helper overrides after fresh emission proof. Scalar constructor effects and array construction/cleanup belong to genuine source globals, classes and compiler-generated lifetime machinery.", "Current local labels are emission interpretations, not original debug names or recovered historical TU boundaries. Start bindings grant no allocation extent. Selected same-owner linked order is not full CRT/global-order, retained-selection, reference-target, dependency-provider, runtime or full-game acceptance. Guarded callbacks excluded; no claim grant or bug fix."], "reason": "Bind original exit operation to the genuine compiler-emitted lifetime of source-owned ?CouncilWindow@@3VCouncWin@@A; preserve complete original identity and remaining restoration/structure obligations."}
 // symbol    _$E6
 #include "stdafx.h"
+#include "font_metrics.h"
 #include "interface_fonts.h"
 #include "councwin.h"
 #include "mapwin.h"   // MainInterfaceGlobal - the interface owner on_status drives
@@ -374,7 +375,7 @@ void CouncWin::draw_info() {
     }
 
     RECT totals = {outer.left + 2, outer.top, outer.right - 2, outer.bottom};
-    const int totals_height = font2_.line_advance();
+    const int totals_height = font_line_advance(font2_);
     totals.top = totals.bottom - totals_height;
 
     if (proposal != 0) {

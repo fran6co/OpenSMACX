@@ -32,6 +32,7 @@
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned CRT slot0x682064 selects initializer0x4083e0..0x4083f6, registering exit0x408400..0x40840a. Root independent complete decode confirms exclusive RET/JMP bounds; original/source-owned storage is0x6eee68 bound to?g_BASEWIN_WAVE@@3VWave@@A.", "Original startup instruction evidence: [[\"0x4083e0\", \"mov\", \"ecx, 0x6eee68\"], [\"0x4083e5\", \"call\", \"0x4c66e0\"], [\"0x4083ea\", \"push\", \"0x408400\"], [\"0x4083ef\", \"call\", \"0x645398\"], [\"0x4083f4\", \"pop\", \"ecx\"], [\"0x4083f5\", \"ret\", \"\"]]. Original exit instruction evidence: [[\"0x408400\", \"mov\", \"ecx, 0x6eee68\"], [\"0x408405\", \"jmp\", \"0x4c67c0\"]]. Preserve constructor arguments, array counts/strides, registration and reverse destruction without authored callback stand-ins.", "Fresh complete build-iveupb5l physical src/basewin.cpp COFF selects _$E26 via .CRT$XCU, registering _$E24. Startup relocation targets: [\"?g_BASEWIN_WAVE@@3VWave@@A\", \"??0Wave@@QAE@XZ\", \"_$E24\", \"_atexit\"]; exit targets: [\"?g_BASEWIN_WAVE@@3VWave@@A\", \"??1Wave@@UAE@XZ\"]. Actual linked helper occurs once at CRT slot0x63f2b4; selected same-owner order agrees with the pinned order.", "BaseWin/DesignWin definitions now precede their Wave globals as pinned. Existing DesignWin Wave mappings retain original names/spans and current helper overrides after fresh emission proof. Scalar constructor effects and array construction/cleanup belong to genuine source globals, classes and compiler-generated lifetime machinery.", "Current local labels are emission interpretations, not original debug names or recovered historical TU boundaries. Start bindings grant no allocation extent. Selected same-owner linked order is not full CRT/global-order, retained-selection, reference-target, dependency-provider, runtime or full-game acceptance. Guarded callbacks excluded; no claim grant or bug fix."], "reason": "Bind original exit operation to the genuine compiler-emitted lifetime of source-owned ?g_BASEWIN_WAVE@@3VWave@@A; preserve complete original identity and remaining restoration/structure obligations."}
 // symbol    _$E11
 #include "stdafx.h"
+#include "font_metrics.h"
 #include "interface_fonts.h"
 #include "wave.h"
 #include "basewin.h"
@@ -6125,7 +6126,7 @@ void BaseWin::draw_misc(int update_mode) {
 
     Font *font = find_font(12, 0);
     canvas->set_font(font, nullptr, nullptr, nullptr);
-    const int advance = font->line_advance();
+    const int advance = font_line_advance(*font);
     const int row_height = panel.bottom - advance * 3 - panel.top;
     int y = panel.top + row_height / 2;
     int x = panel.left;
@@ -6141,7 +6142,7 @@ void BaseWin::draw_misc(int update_mode) {
     say_year(StringTemp);
     canvas->write_l(StringTemp, x, y, strlen(StringTemp));
 
-    y += font->line_advance();
+    y += font_line_advance(*font);
     x = panel.left;
     const int faction = BaseCurrent->faction_id_current;
     StringTemp[0] = 0;
@@ -6159,7 +6160,7 @@ void BaseWin::draw_misc(int update_mode) {
     canvas->set_text_color(TextColourTable[106], TextColourTable[107], 1, 1);
     canvas->write_l(StringTemp, x, y, strlen(StringTemp));
 
-    y += font->line_advance();
+    y += font_line_advance(*font);
     x = panel.left;
     StringTemp[0] = 0;
     strcat(StringTemp, label_get(958));

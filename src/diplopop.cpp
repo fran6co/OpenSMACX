@@ -22,6 +22,7 @@
 // ORIGINAL: 0x00440EF0 ??_EDiploPop@@WEEE@AEPAXI@Z 0x00440EF0-0x00440EFB FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned constructor at 0x0043EFF0 installs Buffer table 0x0066B470 at this+0x444; its first slot points to 0x00440EF0.", "Pinned entry 0x00440EF0 has exactly eleven bytes: SUB ECX,0x444 then JMP to already mapped primary deleting destructor 0x00440EC0, followed by INT3 padding.", "Owner diplopop.cpp physical COFF emits eleven-byte COMDAT ??_EDiploPop@@WEEE@AEPAXI@Z; Buffer table ??_7DiploPop@@6BBuffer@@@ selects it, and its REL32 targets weak ??_EDiploPop@@UAEPAXI@Z with scalar ??_GDiploPop@@UAEPAXI@Z fallback.", "The genuine GraphicWin:Win,Buffer hierarchy provides the receiver adjustment. Independent original constructor/table/body and physical COFF review supports this binding; local equality does not prove full linked table selection or runtime acceptance."], "reason": "Bind the original Buffer-view deleting receiver adjustment to the genuine DiploPop compiler-emitted operation. The symbol names this tree emits, not an original debug name; no adapter body is authored."}
 #include "stdafx.h"
+#include "font_metrics.h"
 #include "interface_fonts.h"
 #include "diplopop.h"
 #include "basepop.h"
@@ -315,7 +316,7 @@ void DiploPop::draw_portrait() {
     CharUpperA(StringTemp);
     canvas->write_l(StringTemp, text.left, text.top,
                     static_cast<int>(strlen(StringTemp)));
-    text.top += font3_.line_advance();
+    text.top += font_line_advance(font3_);
 
     canvas->set_font(&font2_, 0, 0, 0);
     StringTemp[0] = '\0';
@@ -332,7 +333,7 @@ void DiploPop::draw_portrait() {
                 counterpart_faction_);
     canvas->write_l(StringTemp, text.left, text.top,
                     static_cast<int>(strlen(StringTemp)));
-    text.top += font2_.line_advance();
+    text.top += font_line_advance(font2_);
 
     StringTemp[0] = '\0';
     strcat(StringTemp, label_get(0xE94 / 4));
@@ -955,7 +956,7 @@ void DiploPop::draw_info() {
                                 portrait_x, portrait_y, 0x41, 1, 1);
         } else {
             portrait->draw(canvas, portrait->transparent_index(), left,
-                           font3_.line_advance() + top + 3, 1, 1);
+                           font_line_advance(font3_) + top + 3, 1, 1);
         }
 
         canvas->set_text_color(ChatItemIdTable[faction], -1, 1, 1);
@@ -965,7 +966,7 @@ void DiploPop::draw_info() {
         CharUpperA(StringTemp);
 
         RECT name_area = {left, top + 2, right,
-                          font3_.line_advance() + top};
+                          font_line_advance(font3_) + top};
         int text_y = canvas->wrap_cent(StringTemp, &name_area);
         if (WinScreenWidth != 800) {
             left += 2 + portrait->width();
@@ -1021,7 +1022,7 @@ void DiploPop::draw_info() {
             strcat(StringTemp, amount);
             text_y = canvas->write_l(StringTemp, text_x, text_y,
                                      static_cast<int>(strlen(StringTemp)));
-            text_y += font2_.line_advance();
+            text_y += font_line_advance(font2_);
         }
 
         StringTemp[0] = '\0';

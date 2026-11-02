@@ -32,7 +32,9 @@ HARNESS = r'''
 #include <vector>
 #include <string>
 struct RECT { int left,top,right,bottom; };
-struct Font { int unk_1_,height_,line_height_; int line_advance() const; };
+struct Font { int unk_1_,height_,line_height_; int line_advance() const;
+ FONT_ACCESSORS
+};
 FONT_BODY
 struct SocialEffect { int values_[11]; };
 struct Player { SocialEffect soc_effect_pending; } PlayersData[2];
@@ -142,9 +144,16 @@ def run(tmp_path, scenario, change=None):
         before, after = change
         assert overview.count(before) == 1
         overview = overview.replace(before, after, 1)
-    font = body((ROOT / "src/jackal/font.cpp").read_text(), "int Font::line_advance() const")
+    header = (ROOT / "src/jackal/font.h").read_text()
+    accessors = "\n".join(body(header, signature) for signature in
+                           ("int pixel_height() const", "int line_height() const"))
+    helper = body((ROOT / "src/jackal/font_metrics.h").read_text(),
+                  "inline int font_line_advance(")
+    font = helper + "\n" + body((ROOT / "src/jackal/font.cpp").read_text(),
+                                "int Font::line_advance() const")
     source = tmp_path / "overview.cpp"
-    source.write_text(HARNESS.replace("FONT_BODY", font).replace("OVERVIEW_BODY", overview))
+    source.write_text(HARNESS.replace("FONT_ACCESSORS", accessors)
+                      .replace("FONT_BODY", font).replace("OVERVIEW_BODY", overview))
     exe = tmp_path / "overview"
     built = subprocess.run([compiler, "-std=c++11", "-O0", str(source), "-o", str(exe)], capture_output=True, text=True)
     assert built.returncode == 0, built.stderr

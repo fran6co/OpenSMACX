@@ -284,6 +284,59 @@ def test_wants_to_attack_signed_score_actual_source(compiler_name: str, tmp_path
     assert order_result.returncode != 0, 'gate-order mutant escaped callback trace controls'
 
 
+@pytest.mark.parametrize('compiler_name', ['g++', 'clang++'])
+def test_surrendered_partner_requires_pact(compiler_name: str, tmp_path: Path) -> None:
+    compiler = shutil.which(compiler_name)
+    if compiler is None:
+        pytest.skip(f'{compiler_name} is unavailable')
+    if not _supports_deterministic_stack(compiler, tmp_path):
+        pytest.skip(f'{compiler_name} lacks the existing host fixture compiler option')
+    body = _host_compatibility(_extract_actual_definition())
+    main = r'''int main() {
+        using namespace treaty_candidate;
+        // Original 55BDC7..55BDD5 requires both surrender and pact before
+        // remembering a peace partner. Its vendetta then forces an attack.
+        // Otherwise the negative ai_fight guard returns before the original
+        // uninitialized region array is reached; these cases need no stack model.
+        const uint32_t masks[] = {0, DTREATY_PACT, DTREATY_HAVE_SURRENDERED,
+                                 DTREATY_PACT | DTREATY_HAVE_SURRENDERED};
+        for (int i = 0; i != 4; ++i) {
+            reset();
+            PlayersData[1].ai_fight = -1;
+            treaties[1][3] = masks[i] | DTREATY_COMMLINK;
+            treaties[2][3] = DTREATY_VENDETTA;
+            assert(wants_to_attack(1, 2, 0) == (i == 3));
+        }
+        // Original 55BF2F is a distinct ANY(pact,treaty) predicate. Either
+        // agreement with the established partner must prevent an attack.
+        const uint32_t agreements[] = {DTREATY_PACT, DTREATY_TREATY};
+        for (int i = 0; i != 2; ++i) {
+            reset();
+            PlayersData[1].ai_fight = 1;
+            PlayersData[2].best_weapon_value = 3;
+            PlayersData[2].best_armor_value = 1;
+            treaties[1][3] = DTREATY_HAVE_SURRENDERED | DTREATY_PACT;
+            treaties[2][3] = agreements[i];
+            assert(wants_to_attack(1, 2, 0) == 0);
+        }
+        return 0;
+    }'''
+
+    def run(candidate: str, label: str) -> subprocess.CompletedProcess[str]:
+        harness = CPP_MODEL.replace('@NAMESPACE@', 'treaty_candidate').replace('@BODY@', candidate)
+        return _compile_and_run(compiler, harness + '\n' + main, tmp_path, label)
+
+    normal = run(body, 'partner_normal')
+    assert normal.returncode == 0, normal.stdout + normal.stderr
+    required = ('has_treaty(faction_id, i, DTREATY_HAVE_SURRENDERED)\n'
+                '                && has_treaty(faction_id, i, DTREATY_PACT)')
+    assert body.count(required) == 1
+    any_bit = body.replace(required,
+                           'has_treaty(faction_id, i, DTREATY_HAVE_SURRENDERED | DTREATY_PACT)', 1)
+    damaged = run(any_bit, 'partner_any_bit_mutant')
+    assert damaged.returncode != 0, 'single-bit partner mutant escaped the attack decision oracle'
+
+
 """Compile with -ftrivial-auto-var-init=zero only to make the
 function's documented, intentionally uninitialized region_top_base_count
 diagnostic reproducible. No initialization is inserted into either extracted
