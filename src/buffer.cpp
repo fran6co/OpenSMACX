@@ -82,6 +82,7 @@ static char BufferPcxLoadSuffix[] = ".pcx";
 // RECOVERY_IMPORT: v1 __imp__SelectClipRgn@8 GDI32.dll name:SelectClipRgn
 // RECOVERY_IMPORT: v1 __imp__SetDIBColorTable@16 GDI32.dll name:SetDIBColorTable
 // RECOVERY_IMPORT: v1 __imp__SetTextColor@8 GDI32.dll name:SetTextColor
+// RECOVERY_IMPORT: v1 __imp__StretchBlt@44 GDI32.dll name:StretchBlt
 
 /*
 Purpose: THE BLITTER. Copy a rectangle out of this buffer into `buffer`,
@@ -8071,7 +8072,7 @@ int __stdcall Buffer::load_bmp(const char *filename) {
     return load_bmp(filename, nullptr, 0, 0x100);
 }
 
-// ORIGINAL: 0x005D9610 ?copy@Buffer@@QAEHPAVBuffer@@HHHHHHHH@Z 0x005D9610-0x005D98EA
+// ORIGINAL: 0x005D9610 ?copy@Buffer@@QAEHPAVBuffer@@HHHHHHHH@Z 0x005D9610-0x005D98EA BYTE_EXACT
 // symbol    ?copy@Buffer@@QAEHPAV1@HHHHHHHH@Z
 //           The image spells the leading `Buffer *` as `PAVBuffer@@`; VC6 emits
 //           the back-reference `PAV1@` for the same type, so the fact names what
@@ -8104,32 +8105,8 @@ int Buffer::copy(Buffer *destination, int src_x, int src_y, int src_w,
         return 7;
     }
 
-    if (dib_bits_ != 0 && PaletteActive != 0) {
-        if (palette_seed_ != PaletteActive->seed_) {
-            palette_seed_ = PaletteActive->seed_;
-            RGBQUAD *const table = dib_.bmiColors;
-            PaletteActive->get_rgbquad(table, 0, 0x100);
-            if (get_hdc() != 0) {
-                SetDIBColorTable(hdc2_, 0, 0x100, table);
-                release_hdc(1);
-            }
-        }
-        has_palette_ = 1;
-        palette_ = PaletteActive;
-    }
-    if (destination->dib_bits_ != 0 && PaletteActive != 0) {
-        if (destination->palette_seed_ != PaletteActive->seed_) {
-            destination->palette_seed_ = PaletteActive->seed_;
-            RGBQUAD *const table = destination->dib_.bmiColors;
-            PaletteActive->get_rgbquad(table, 0, 0x100);
-            if (destination->get_hdc() != 0) {
-                SetDIBColorTable(destination->hdc2_, 0, 0x100, table);
-                destination->release_hdc(1);
-            }
-        }
-        destination->has_palette_ = 1;
-        destination->palette_ = PaletteActive;
-    }
+    sync_to_palette(PaletteActive);
+    destination->sync_to_palette(PaletteActive);
 
     StretchBlt(destination_dc, dest_x, dest_y, dest_w, dest_h, source_dc,
                src_x, src_y, src_w, src_h, SRCCOPY);
