@@ -101,7 +101,7 @@ int __cdecl do_withdrawal(int faction_id, int other_faction_id) {
         const int x = veh.x;
         const int y = veh.y;
         Map &tile = MapTiles[MapLongitude * y + (x >> 1)];
-        if ((tile.climate & 0xE0) < ALT_BIT_SHORE_LINE) continue;
+        if ((tile.climate & ~0x1F) < ALT_BIT_SHORE_LINE) continue;
         if (tile.territory != faction_id) continue;
 
         if (Chassis[VehPrototypes[proto_id].chassis_id].triad == TRIAD_LAND &&
@@ -119,7 +119,7 @@ int __cdecl do_withdrawal(int faction_id, int other_faction_id) {
 
                 Map &dest = MapTiles[MapLongitude * dest_y + (dest_x >> 1)];
                 int allowed = 0;
-                if ((dest.climate & 0xE0) < ALT_BIT_SHORE_LINE) {
+                if ((dest.climate & ~0x1F) < ALT_BIT_SHORE_LINE) {
                     const int occupant = stack_fix(veh_at(dest_x, dest_y));
                     if (stack_check(occupant, 8, other_faction_id, -1, -1) > 0)
                         allowed = 1;

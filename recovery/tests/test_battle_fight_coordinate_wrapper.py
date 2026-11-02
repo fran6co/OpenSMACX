@@ -19,6 +19,7 @@ import pytest
 
 ROOT = Path(__file__).resolve().parents[2]
 VEH = ROOT / "src" / "veh.cpp"
+WRAPPER = ROOT / "src" / "vehicle_orders.cpp"
 MAP = ROOT / "src" / "map.cpp"
 MAP_HEADER = ROOT / "src" / "map.h"
 
@@ -110,7 +111,7 @@ def product_fixture(body: str | None = None) -> str:
     veh_source = VEH.read_text()
     map_source = MAP.read_text()
     if body is None:
-        body = extract_function(veh_source)
+        body = extract_function(WRAPPER.read_text())
     arrays = "\n".join((
         extract_array(map_source, "RadiusOffsetX", 289),
         extract_array(map_source, "RadiusOffsetY", 289),
@@ -260,7 +261,7 @@ int main() {
 @pytest.mark.parametrize("compiler", compilers())
 @pytest.mark.parametrize("mutation", tuple(MUTANT_CASES))
 def test_safe_domain_mutants_are_rejected(mutation, compiler):
-    actual = extract_function(VEH.read_text())
+    actual = extract_function(WRAPPER.read_text())
     label, damaged = next(row for row in mutants(actual) if row[0] == mutation)
     assert label == mutation
     assert compile_and_run(damaged, MUTANT_CASES[mutation], compiler) != 0
@@ -268,7 +269,7 @@ def test_safe_domain_mutants_are_rejected(mutation, compiler):
 
 def test_extraction_is_five_argument_overload_and_owner_storage_is_unique():
     source = VEH.read_text()
-    body = extract_function(source)
+    body = extract_function(WRAPPER.read_text())
     signature = re.search(r"battle_fight\s*\(([^)]*)\)", body)
     assert signature and signature.group(1).count(",") == 4
     assert "RadiusOffsetX[dir]" in body and "RadiusOffsetY[dir]" in body

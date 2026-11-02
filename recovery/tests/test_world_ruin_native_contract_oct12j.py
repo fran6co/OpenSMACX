@@ -69,7 +69,7 @@ def source_controls():
     assert "bit2_set(x_radius, y_radius, BIT2_RUINS, true)" in body
     assert "code_set(x_radius, y_radius, i)" in body
     assert "if (on_map(x_radius, y_radius)) {" in body
-    assert "if (i < RadiusRange[2] || !is_ocean(x_radius, y_radius)) {" in body
+    assert "if (i < 25 || !is_ocean(x_radius, y_radius)) {" in body
     assert "if (i && i < 9)" in body and "if (!i)" in body
     assert "else if (i < 9)" in body
     assert "if (++loc_attempts >= 1000)" in body
@@ -99,7 +99,6 @@ PRELUDE = r'''#include <assert.h>
 typedef unsigned int uint32_t;
 typedef int BOOL;
 enum { @CONSTANTS@ };
-const int RadiusRange[9] = { 1, 9, 25, 49, 81, 121, 169, 225, 289 };
 int RadiusOffsetX[289], RadiusOffsetY[289];
 static int MapLatitudeBounds = 64, MapLongitudeBounds = 64;
 struct NaturalEntry { int name; };

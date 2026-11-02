@@ -494,13 +494,14 @@ Status: Complete - testing
 */
 void __cdecl world_riverbeds() {
     Map *tile = map_tiles();
-    // Native5C3697..36B6 retains this loaded area for the signed clearing
-    // loop and the low-dword target product; a high-bit area skips clearing.
+    // The clearing loop reloads the area after each write; its last value
+    // feeds the target product. A high-bit initial area skips clearing.
     int area = MapArea;
     int i;
     for (i = 0; i < area; i++) {
         tile->bit &= ~(BIT_RIVERBED);
         tile++;
+        area = MapArea;
     }
     int riverbed_count = 0;
     // Pinned5C36C4..36FF: low-dword multiply/add/subtract, signed /3,
@@ -517,9 +518,19 @@ void __cdecl world_riverbeds() {
     int max_riverbeds = scaled / 3200;
     for (i = 0; i < 4000 && riverbed_count < max_riverbeds; i++) {
         int x_bound = MapLongitudeBounds;
-        int x = (x_bound - 1 > 0) ? rand() % x_bound : 0;
+        int x;
+        if (x_bound - 1 <= 0) {
+            x = 0;
+        } else {
+            x = rand() % x_bound;
+        }
         int y_bound = MapLatitudeBounds;
-        int y = (y_bound - 1 > 0) ? rand() % y_bound : 0;
+        int y;
+        if (y_bound - 1 <= 0) {
+            y = 0;
+        } else {
+            y = rand() % y_bound;
+        }
         if (x & 1) {
             x--;
         }
@@ -527,31 +538,33 @@ void __cdecl world_riverbeds() {
             x++;
         }
         if (!is_ocean(x, y) && !(bit_at(x, y) & BIT_RIVERBED)) {
-            uint32_t search_alt = 0;
-            int x_search = -1;
-            int y_search = -1;
-            for (int j = 0; j < RadiusRange[4]; j++) {
+            int search_alt = 0;
+            int selected_index = -1;
+            for (int j = 0; j < 81; j++) {
                 int x_radius = xrange(x + RadiusOffsetX[j]);
                 int y_radius = y + RadiusOffsetY[j];
                 if (on_map(x_radius, y_radius)) {
                     if (bit_at(x_radius, y_radius) & BIT_RIVERBED) {
-                        break; // exit if riverbed already in search area
+                        goto next_trial;
                     }
-                    if (j < RadiusRange[3]) { // limit scope of where riverbeds can be in search
-                        uint32_t alt = alt_at(x_radius, y_radius);
+                    if (j < 49) { // limit scope of where riverbeds can be in search
+                        int alt = alt_at(x_radius, y_radius);
                         if (alt > search_alt) {
                             search_alt = alt;
-                            x_search = x_radius; // replaced storing j offset with radius values
-                            y_search = y_radius;
+                            selected_index = j;
                         }
                     }
                 }
             }
-            if (x_search >= 0) {
+            if (selected_index >= 0) {
+                int x_search = xrange(x + RadiusOffsetX[selected_index]);
+                int y_search = y + RadiusOffsetY[selected_index];
                 bit_set(x_search, y_search, BIT_RIVERBED, true);
                 riverbed_count++;
             }
         }
+next_trial:
+        ;
     }
 }
 
@@ -1214,14 +1227,14 @@ void __cdecl world_fungus() {
                 }
 
                 if ((tile->val3 & ~0x1F) >= 0x80
-                    && (tile->climate & 0xE0) >= 0x60) {
+                    && (tile->climate & ~0x1F) >= 0x60) {
                     continue;
                 }
 
                 tile->bit |= 0x20;
                 tile->bit &= ~MapTileFlagClearMask;
 
-                if (rand() % 40 == 0 && (tile->climate & 0xE0) >= 0x60
+                if (rand() % 40 == 0 && (tile->climate & ~0x1F) >= 0x60
                     && ExpansionEnabled != 0) {
                     veh_init(0x13, 0, x_coord, y_coord);
                 }
@@ -1592,7 +1605,7 @@ Return Value: n/a
 Status: Complete - testing
 */
 void __cdecl world_crater(int x, int y) {
-    uint32_t loc_attempts = 0;
+    int loc_attempts = 0;
     if (!on_map(x, y)) {
         do {
             do {
@@ -1627,7 +1640,7 @@ void __cdecl world_crater(int x, int y) {
     world_alt_set(x, y, ALT_OCEAN_SHELF, true);
     world_alt_set(x, y, ALT_SHORE_LINE, true);
     uint32_t temperature = temp_at(x, y);
-    for (int i = 0; i < RadiusRange[3]; i++) {
+    for (int i = 0; i < 49; i++) {
         int x_radius = xrange(x + RadiusOffsetX[i]);
         int y_radius = y + RadiusOffsetY[i];
         if (on_map(x_radius, y_radius)) {
@@ -1667,7 +1680,7 @@ Status: Complete - testing
 */
 void __cdecl world_monsoon(int x, int y) {
     world_rainfall();
-    uint32_t loc_attempts = 0;
+    int loc_attempts = 0;
     if (!on_map(x, y)) {
         do {
             uint32_t land_count;
@@ -1682,7 +1695,7 @@ void __cdecl world_monsoon(int x, int y) {
                 }
                 x = ((x_seed ^ y) & 1) ^ x_seed;
                 land_count = 0;
-                for (int i = 0; i < RadiusRange[5]; i++) {
+                for (int i = 0; i < 121; i++) {
                     int x_radius = xrange(x + RadiusOffsetX[i]);
                     int y_radius = y + RadiusOffsetY[i];
                     if (on_map(x_radius, y_radius) && !is_ocean(x_radius, y_radius)) {
@@ -1699,7 +1712,7 @@ void __cdecl world_monsoon(int x, int y) {
             return;
         }
     }
-    for (int i = 0; i < RadiusRange[5]; i++) {
+    for (int i = 0; i < 121; i++) {
         int x_radius = xrange(x + RadiusOffsetX[i]);
         int y_radius = y + RadiusOffsetY[i];
         if (abs(RadiusOffsetY[i]) <= 8 &&  on_map(x_radius, y_radius)) {
@@ -1733,7 +1746,7 @@ Return Value: n/a
 Status: Complete - testing
 */
 void __cdecl world_sargasso(int x, int y) {
-    uint32_t loc_attempts = 0;
+    int loc_attempts = 0;
     BOOL has_skipped = false;
     if (!on_map(x, y)) {
         do {
@@ -1763,7 +1776,7 @@ void __cdecl world_sargasso(int x, int y) {
             return;
         }
     }
-    for (int i = 0; i < RadiusRange[4]; i++) {
+    for (int i = 0; i < 81; i++) {
         int x_radius = xrange(x + RadiusOffsetX[i]);
         int y_radius = y + RadiusOffsetY[i];
         if (on_map(x_radius, y_radius) && (is_ocean(x_radius, y_radius) || i < 21)) {
@@ -1773,8 +1786,8 @@ void __cdecl world_sargasso(int x, int y) {
             if (i <= 4) {
                 bit_set(x_radius, y_radius, BIT_SUPPLY_POD, true);
             }
-            if ((has_skipped || i < RadiusRange[2] || rand() % 24) 
-                && (i < RadiusRange[3] || rand() % 3)) {
+            if ((has_skipped || i < 25 || rand() % 24)
+                && (i < 49 || rand() % 3)) {
                 bit_set(x_radius, y_radius, BIT_FUNGUS, true);
             } else {
                 has_skipped = true;
@@ -1804,7 +1817,7 @@ Return Value: n/a
 Status: Complete - testing
 */
 void __cdecl world_ruin(int x, int y) {
-    uint32_t loc_attempts = 0;
+    int loc_attempts = 0;
     if (!on_map(x, y)) {
         do {
             do {
@@ -1833,11 +1846,11 @@ void __cdecl world_ruin(int x, int y) {
             return;
         }
     }
-    for (int i = 0; i < RadiusRange[2]; i++) {
+    for (int i = 0; i < 25; i++) {
         int x_radius = xrange(x + RadiusOffsetX[i]);
         int y_radius = y + RadiusOffsetY[i];
         if (on_map(x_radius, y_radius)) {
-            if (i < RadiusRange[2] || !is_ocean(x_radius, y_radius)) { // is_ocean check pointless?
+            if (i < 25 || !is_ocean(x_radius, y_radius)) { // is_ocean check pointless?
                 world_alt_set(x_radius, y_radius, ALT_SHORE_LINE, true);
             }
             if (is_ocean(x_radius, y_radius)) {
@@ -1882,7 +1895,7 @@ Status: Complete - testing
 */
 void __cdecl world_dune(int x, int y) {
     world_rainfall();
-    uint32_t loc_attempts = 0;
+    int loc_attempts = 0;
     uint32_t half_vert_bounds = MapLatitudeBounds / 2;
     if (!on_map(x, y)) {
         do {
@@ -1912,7 +1925,7 @@ void __cdecl world_dune(int x, int y) {
             return;
         }
     }
-    for (int i = 0; i < RadiusRange[2]; i++) {
+    for (int i = 0; i < 25; i++) {
         int x_radius = xrange(x + RadiusOffsetX[i]);
         int y_radius = y + RadiusOffsetY[i];
         if (on_map(x_radius, y_radius) && (!is_ocean(x_radius, y_radius) || i < 9 || rand() % 3)) {
@@ -2170,7 +2183,7 @@ Return Value: n/a
 Status: Complete - testing
 */
 void __cdecl world_borehole(int x, int y) {
-    uint32_t loc_attempts = 0;
+    int loc_attempts = 0;
     if (!on_map(x, y)) {
         do {
             do {
@@ -2207,7 +2220,7 @@ void __cdecl world_borehole(int x, int y) {
         val2 = (val2 + 8) % 8 + 1;
         val3 = (val3 + 8) % 8 + 1;
     }
-    for (int i = 0; i < RadiusRange[1]; i++) {
+    for (int i = 0; i < 9; i++) {
         int x_radius = xrange(x + RadiusOffsetX[i]);
         int y_radius = y + RadiusOffsetY[i];
         if (on_map(x_radius, y_radius)) {
@@ -2271,7 +2284,7 @@ Return Value: n/a
 Status: Complete - testing
 */
 void __cdecl world_temple(int x, int y) {
-    uint32_t loc_attempts = 0;
+    int loc_attempts = 0;
     if (!on_map(x, y)) {
         do {
             do {
@@ -2300,7 +2313,7 @@ void __cdecl world_temple(int x, int y) {
             return;
         }
     }
-    for (int i = 0; i < RadiusRange[1]; i++) {
+    for (int i = 0; i < 9; i++) {
         int x_radius = xrange(x + RadiusOffsetX[i]);
         int y_radius = y + RadiusOffsetY[i];
         if (on_map(x_radius, y_radius)) {
@@ -2339,7 +2352,7 @@ Status: Complete - testing
 */
 void __cdecl world_unity(int x, int y) {
     if (ExpansionEnabled) {
-        uint32_t loc_attempts = 0;
+        int loc_attempts = 0;
         if (!on_map(x, y)) {
             do {
                 do {
@@ -2370,7 +2383,7 @@ void __cdecl world_unity(int x, int y) {
         }
         x--;
         y--;
-        for (int i = 0; i < RadiusRange[2]; i++) {
+        for (int i = 0; i < 25; i++) {
             int x_radius = xrange(x + RadiusOffsetX[i]);
             int y_radius = y + RadiusOffsetY[i];
             if (on_map(x_radius, y_radius)) {
@@ -2379,7 +2392,7 @@ void __cdecl world_unity(int x, int y) {
         }
         x += 2;
         y += 2;
-        for (i = 0; i < RadiusRange[2]; i++) {
+        for (i = 0; i < 25; i++) {
             int x_radius = xrange(x + RadiusOffsetX[i]);
             int y_radius = y + RadiusOffsetY[i];
             if (on_map(x_radius, y_radius)) {
@@ -2388,7 +2401,7 @@ void __cdecl world_unity(int x, int y) {
         }
         x--;
         y--;
-        for (i = 0; i < RadiusRange[2]; i++) {
+        for (i = 0; i < 25; i++) {
             int x_radius = xrange(x + RadiusOffsetX[i]);
             int y_radius = y + RadiusOffsetY[i];
             if (on_map(x_radius, y_radius)) {
@@ -2549,7 +2562,7 @@ Return Value: n/a
 Status: Complete - testing
 */
 void __cdecl world_mesa(int x, int y) {
-    uint32_t loc_attempts = 0;
+    int loc_attempts = 0;
     if (!on_map(x, y)) {
         do {
             do {
@@ -2578,11 +2591,11 @@ void __cdecl world_mesa(int x, int y) {
             return;
         }
     }
-    for (int i = 0; i < RadiusRange[3]; i++) {
+    for (int i = 0; i < 49; i++) {
         int x_radius = xrange(x + RadiusOffsetX[i]);
         int y_radius = y + RadiusOffsetY[i];
         if (on_map(x_radius, y_radius)) {
-            world_alt_set(x_radius, y_radius, (i < RadiusRange[2]) + ALT_SHORE_LINE, true);
+            world_alt_set(x_radius, y_radius, (i < 25) + ALT_SHORE_LINE, true);
             // 5C80F5 supplies the terrain bit, not Natural[]'s landmark id.
             bit2_set(x_radius, y_radius, BIT2_MESA, true);
             code_set(x_radius, y_radius, i);
@@ -2680,7 +2693,7 @@ Return Value: n/a
 Status: Complete - testing
 */
 void __cdecl world_geothermal(int x, int y) {
-    uint32_t loc_attempts = 0;
+    int loc_attempts = 0;
     if (!on_map(x, y)) {
         do {
             do {
@@ -2719,7 +2732,7 @@ void __cdecl world_geothermal(int x, int y) {
     // The bit2_set argument is BIT2_GEOTHERMAL (0x400), not LM_GEOTHERMAL (10) - the
     // image pushes 0x400.
     BOOL has_skipped = false;
-    for (int i = 0; i < RadiusRange[2]; i++) {
+    for (int i = 0; i < 25; i++) {
         int x_radius = xrange(x + RadiusOffsetX[i]);
         int y_radius = y + RadiusOffsetY[i];
         if (on_map(x_radius, y_radius) && (is_ocean(x_radius, y_radius) || i < 9)) {
@@ -2850,12 +2863,12 @@ void __cdecl world_rocky() {
             Map *tile = &map_tiles()[MapLongitude * y + half_x];
             uint32_t flags = tile->bit2;
 
-            if ((flags & 0x80) != 0 && (tile->climate & 0xe0) <= 0x5f) {
+            if ((flags & 0x80) != 0 && (tile->climate & ~0x1F) <= 0x5f) {
                 continue;
             }
 
             unsigned int bitval;
-            if ((tile->climate & 0xe0) < 0x60) {
+            if ((tile->climate & ~0x1F) < 0x60) {
                 bitval = 0x10000;
             } else {
                 bool useRandomFlat = false;

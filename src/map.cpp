@@ -1622,7 +1622,7 @@ extern "C" int __cdecl sub_565160(int faction_id, int tile_x, int tile_y) {
             continue;
         }
         const Map *tile = map_tiles() + MapLongitude * y + (x >> 1);
-        unsigned char altitude = tile->climate & 0xe0;
+        int altitude = tile->climate & ~0x1F;
         if (altitude < ALT_BIT_SHORE_LINE) {
             if ((tile->bit & BIT_FUNGUS) == 0) {
                 return 1;
@@ -2737,7 +2737,7 @@ int __cdecl good_sensor(int faction_id, int x, int y) {
         return false;
     }
     Map *tile = map_loc(x, y);
-    if (tile->bit & BIT_FUNGUS && (tile->climate & 0xE0) >= ALT_BIT_OCEAN_SHELF
+    if (tile->bit & BIT_FUNGUS && (tile->climate & ~0x1F) >= ALT_BIT_OCEAN_SHELF
         && !has_tech(Rules.tech_improve_fungus_sqr, faction_id)) {
         return false;
     }
@@ -2809,7 +2809,7 @@ int __cdecl good_sensor(int faction_id, int x, int y) {
     if (!(bit & BIT_FUNGUS)) {
         return false;
     }
-    return (site->climate & 0xE0) >= ALT_BIT_OCEAN_SHELF;
+    return (site->climate & ~0x1F) >= ALT_BIT_OCEAN_SHELF;
 }
 
 /*
@@ -3248,23 +3248,23 @@ int __cdecl alt_get_ocean_detail(int x, int y, int corner, int point) {
         int x_above = site_xrange(x + CornerOffsetX[corner][1]);
         int y_above = y + CornerOffsetY[corner][1];
         if (on_map(x_above, y_above)
-            && (site_tile(x_above, y_above)->climate & 0xE0) >= ALT_BIT_SHORE_LINE) {
+            && (site_tile(x_above, y_above)->climate & ~0x1F) >= ALT_BIT_SHORE_LINE) {
             detail += 7;
         }
         int x_below = site_xrange(x + CornerOffsetX[corner][3]);
         int y_below = y + CornerOffsetY[corner][3];
         if (on_map(x_below, y_below)
-            && (site_tile(x_below, y_below)->climate & 0xE0) >= ALT_BIT_SHORE_LINE) {
+            && (site_tile(x_below, y_below)->climate & ~0x1F) >= ALT_BIT_SHORE_LINE) {
             detail -= 3;
         }
-    } else if ((site_tile(x, y)->climate & 0xE0) < ALT_BIT_SHORE_LINE) {
+    } else if ((site_tile(x, y)->climate & ~0x1F) < ALT_BIT_SHORE_LINE) {
         // Water looking for land.
         int dir = corner * 2 - 4;
         for (int i = 0; i < 3; i++, dir++) {
             int x_scan = site_xrange(x + VehMoveDeltaX[dir & 7]);
             int y_scan = y + VehMoveDeltaY[dir & 7];
             if (!on_map(x_scan, y_scan)
-                || (site_tile(x_scan, y_scan)->climate & 0xE0) < ALT_BIT_SHORE_LINE) {
+                || (site_tile(x_scan, y_scan)->climate & ~0x1F) < ALT_BIT_SHORE_LINE) {
                 continue;
             }
             if (point == 1 && i == 0) {
@@ -3281,7 +3281,7 @@ int __cdecl alt_get_ocean_detail(int x, int y, int corner, int point) {
             int x_scan = site_xrange(x + VehMoveDeltaX[dir & 7]);
             int y_scan = y + VehMoveDeltaY[dir & 7];
             if (!on_map(x_scan, y_scan)
-                || (site_tile(x_scan, y_scan)->climate & 0xE0) >= ALT_BIT_SHORE_LINE) {
+                || (site_tile(x_scan, y_scan)->climate & ~0x1F) >= ALT_BIT_SHORE_LINE) {
                 continue;
             }
             if (point == 1 && i == 0) {
@@ -4233,7 +4233,7 @@ extern "C" int __cdecl sub_4c99d0(int x_coord, int y_coord) {
     if ((bits & 0x80) != 0) {
         result++;
     }
-    if ((bits & 0x20) != 0 && (tile->climate & 0xE0) >= 0x40) {
+    if ((bits & 0x20) != 0 && (tile->climate & ~0x1F) >= 0x40) {
         result += 2;
     }
     if ((bits & 0x200000) != 0) {

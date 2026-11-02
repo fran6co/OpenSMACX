@@ -14488,7 +14488,7 @@ int __cdecl base_upkeep(int base_id) {
         Base &climate_base = *BaseCurrent;
         const int event_tile = static_cast<int>(climate_base.y) *
             static_cast<int>(MapLongitude) + (static_cast<int>(climate_base.x) >> 1);
-        const int final_name = (MapTiles[event_tile].climate & 0xE0) < 0x60;
+        const int final_name = (MapTiles[event_tile].climate & ~0x1F) < 0x60;
         name_base(faction_id, climate_base.name_string, 1, final_name);
         // 0x4F7E1D reloads after name_base before parsing the renamed phrase.
         parse_says(2, BaseCurrent->name_string, -1, -1);

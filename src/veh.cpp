@@ -1258,9 +1258,12 @@ void __cdecl action_arty(int veh_id, int x, int y) {
         return;
     }
     const int vehicle_y = Vehs[veh_id].y;
-    int dx = abs(Vehs[veh_id].x - x);
-    if ((MapIsFlat & 1) == 0 && dx > static_cast<int>(MapLongitude)) {
-        dx = static_cast<int>(MapLongitudeBounds) - dx;
+    const int absolute_dx = abs(Vehs[veh_id].x - x);
+    int dx;
+    if ((MapIsFlat & 1) == 0 && absolute_dx > static_cast<int>(MapLongitude)) {
+        dx = static_cast<int>(MapLongitudeBounds) - absolute_dx;
+    } else {
+        dx = absolute_dx;
     }
     if (((abs(vehicle_y - y) + dx) & ~1) > 4) {
         NetMsgPrimary.pop("OUTOFRANGE", 5000, 0, nullptr);
@@ -5203,13 +5206,13 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl invasions(int base_id) {
+    int base_x = Bases[base_id].x;
+    int base_y = Bases[base_id].y;
     uint32_t faction_id_base = Bases[base_id].faction_id_current;
-    int16_t base_x = Bases[base_id].x;
-    int16_t base_y = Bases[base_id].y;
     for (int i = 0; i < GameDataStateStorage.fields_.vehicle_current_count_; i++) {
         uint32_t veh_faction_id = Vehs[i].faction_id;
         if (veh_faction_id && !is_human(veh_faction_id) && veh_faction_id != faction_id_base
-            && !has_treaty(veh_faction_id, faction_id_base, DTREATY_TREATY)) {
+            && !(PlayersData[veh_faction_id].diplo_treaties[faction_id_base] & DTREATY_TREATY)) {
             int veh_x = Vehs[i].x;
             int veh_y = Vehs[i].y;
             if (is_ocean(veh_x, veh_y) && veh_cargo(i) && stack_check(i, 3, TRIAD_LAND, -1, -1)) {
@@ -6438,7 +6441,7 @@ void __cdecl spot_loc(int x, int y, int faction_id) {
 /*
 Purpose: Determine if the specified unit wants to wake up based on certain conditions and
          preferences. Optional parameter for spotted veh_id (-1 to skip).
-// ORIGINAL: 0x005B5EA0 ?want_to_wake@@YAHHHH@Z 0x005B5EA0-0x005B6060
+// ORIGINAL: 0x005B5EA0 ?want_to_wake@@YAHHHH@Z 0x005B5EA0-0x005B6060 BYTE_EXACT
 // TRIED: image never reads Vehs[veh_id].faction_id eagerly - it re-reads it at each conditional use, and never caches it across the early return. Un-caching it into `Vehs[veh_id].faction_id` at every site (instead of a hoisted `veh_faction_id` local) let the compiler pick a plain ebp-frame prologue matching the image's, where the hoisted local forced a param-less-locals, esp-relative frame from instruction 0. Also restored the `veh_id >= 0 &&` half of the trailing guard - the image's `test edi, edi; jl` tests veh_id, not just spotted_veh_id, contradicting this body's own comment that it was safe to drop. Residual divergence past this is register allocation (esi/edi/ebx/ebp swapped throughout) and one 16-bit shift-then-extend vs extend-then-shift on `waypoint_x[0] >> 1`; an explicit `(int)` cast on the base_who() arguments did not change the codegen. Best flag set /O2 /Gy /GR- /Oy- /GX, 0.793 similar.
 // TRIED 2026-09-03: `uint8_t triad = get_triad(veh_id);` (the field's own
 //        width, against the usual width lever) - the image keeps the byte in
@@ -6456,43 +6459,55 @@ Return Value: Does unit want to wake? true/false
 Status: Complete
 */
 BOOL __cdecl want_to_wake(int faction_id, int veh_id, int spotted_veh_id) {
-    uint32_t triad = get_triad(veh_id);
+    uint8_t triad = get_triad(veh_id);
     if (triad == TRIAD_AIR && Vehs[veh_id].terraforming_turns
         && Vehs[veh_id].order == ORDER_MOVE_TO) {
         int base_faction_id = base_who(Vehs[veh_id].waypoint_x[0], Vehs[veh_id].waypoint_y[0]);
         if (base_faction_id >= 0
             && (((uint32_t)base_faction_id == Vehs[veh_id].faction_id)
-                || has_treaty(Vehs[veh_id].faction_id, base_faction_id, DTREATY_PACT))) {
+                || (PlayersData[Vehs[veh_id].faction_id].diplo_treaties[base_faction_id] & DTREATY_PACT))) {
             return false;
         }
     }
     BOOL wants_to_wake;
-    if (IsMultiplayerNet) { // restructured to be more efficient with same logic
-        if (has_treaty(Vehs[veh_id].faction_id, faction_id, DTREATY_PACT)) {
+    uint32_t preferences;
+    const uint32_t treaty =
+        PlayersData[Vehs[veh_id].faction_id].diplo_treaties[faction_id];
+    if (treaty & DTREATY_PACT) {
+        if (IsMultiplayerNet) {
             wants_to_wake = false;
-        } else if (has_treaty(Vehs[veh_id].faction_id, faction_id, DTREATY_TREATY)) {
-            wants_to_wake = true;
-        } else if (has_treaty(Vehs[veh_id].faction_id, faction_id, DTREATY_TRUCE)) {
-            wants_to_wake = true;
-        } else {
-            wants_to_wake = true;
+            goto check_spotted;
         }
+        preferences = GameDataStateStorage.fields_.game_preferences_;
+        wants_to_wake = preferences & PREF_AUTO_END_MOVE_SPOT_VEH_PACT;
+    } else if (treaty & DTREATY_TREATY) {
+        if (IsMultiplayerNet) {
+            wants_to_wake = true;
+            goto check_spotted;
+        }
+        preferences = GameDataStateStorage.fields_.game_preferences_;
+        wants_to_wake = preferences & PREF_AUTO_END_MOVE_SPOT_VEH_TREATY;
+    } else if (treaty & DTREATY_TRUCE) {
+        if (IsMultiplayerNet) {
+            wants_to_wake = true;
+            goto check_spotted;
+        }
+        preferences = GameDataStateStorage.fields_.game_preferences_;
+        wants_to_wake = preferences & PREF_AUTO_END_MOVE_SPOT_VEH_TRUCE;
     } else {
-        if (has_treaty(Vehs[veh_id].faction_id, faction_id, DTREATY_PACT)) {
-            wants_to_wake = GameDataStateStorage.fields_.game_preferences_ & PREF_AUTO_END_MOVE_SPOT_VEH_PACT;
-        } else if (has_treaty(Vehs[veh_id].faction_id, faction_id, DTREATY_TREATY)) {
-            wants_to_wake = GameDataStateStorage.fields_.game_preferences_ & PREF_AUTO_END_MOVE_SPOT_VEH_TREATY;
-        } else if (has_treaty(Vehs[veh_id].faction_id, faction_id, DTREATY_TRUCE)) {
-            wants_to_wake = GameDataStateStorage.fields_.game_preferences_ & PREF_AUTO_END_MOVE_SPOT_VEH_TRUCE;
-        } else {
-            wants_to_wake = GameDataStateStorage.fields_.game_preferences_ & PREF_AUTO_END_MOVE_SPOT_VEH_WAR;
+        if (IsMultiplayerNet) {
+            wants_to_wake = true;
+            goto check_spotted;
         }
-        if (!(GameDataStateStorage.fields_.game_preferences_ & PREF_AUTO_DONT_END_MOVE_DIFF_TRIAD)) {
-            return wants_to_wake;
-        }
+        preferences = GameDataStateStorage.fields_.game_preferences_;
+        wants_to_wake = preferences & PREF_AUTO_END_MOVE_SPOT_VEH_WAR;
     }
+    if (!(preferences & PREF_AUTO_DONT_END_MOVE_DIFF_TRIAD)) {
+        return wants_to_wake;
+    }
+check_spotted:
     if (veh_id >= 0 && spotted_veh_id >= 0) {
-        uint32_t triad_spotted = get_triad(spotted_veh_id);
+        uint8_t triad_spotted = get_triad(spotted_veh_id);
         if (triad != triad_spotted && ((Vehs[veh_id].state & (VSTATE_UNK_1000000 | VSTATE_UNK_200))
             != (VSTATE_UNK_1000000 | VSTATE_UNK_200) || triad_spotted == TRIAD_LAND)) {
             wants_to_wake = false;
@@ -9627,48 +9642,7 @@ void __cdecl action_gate(int veh_id, int base_id) {
     }
 }
 
-/*
-Purpose: Add a direction's tile offset to a vehicle's coordinates.
-// ORIGINAL: 0x00506A60 ?battle_fight@@YAHHHHHPAH@Z 0x00506A60-0x00506AEB
-// RECOVERY_BINDING: v1 {"reason":"Use the complete shared radius-offset owners for nonzero mode rather than truncated eight-element duplicates.","evidence":["Pinned506A70/506AB8 index66EFBC/66F440 directly; these are the existing289-dword RadiusOffsetX/Y owners in map.cpp.","Pinned action_destroy4CABEF..4CACFD supplies mode1 indices1..24; preserve unchecked direct indexing and the original single-wrap coordinate adjustment."]}
-// size      139 bytes
-// prototype int (__cdecl ?battle_fight@@YAHHHHHPAH@Z)(int vehID, int dir, int mode, int allow_interceptor, int *odds_out)
-// callers   6   call targets   1
-// kind      game
-// flags     frame;sp_ready;purged_ok
-// calls     0x00506AF0
-// HOMED from src/unrecovered/00506a60.cpp, 2026-09-04. Its `g_00952828`
-// short views are Vehs[].x (+0x00) and Vehs[].y (+0x02).
-// `mode` is named from what it does here and in the seven-parameter body:
-// a zero/nonzero flag selecting ordinary directions or full radius offsets. `allow_interceptor` and
-// `odds_out` are named from the seven-parameter body - the first gates its
-// call to interceptor (0x00506650), the second is the null-tested pointer it
-// stores the odds word through at 0x005070A2.
-Return Value: whatever the seven-parameter battle_fight returns.
-Status: MISMATCH.
-*/
 
-// The genuine seven-parameter combat owner is defined in this TU.
-// Its full original span and historical seed lessons remain source-owned.
-int __cdecl battle_fight(int veh_id, int dir, int x, int y, int src_mode,
-                         int allow_interceptor, int *odds_out);
-
-int __cdecl battle_fight(int veh_id, int dir, int mode, int allow_interceptor,
-                         int *odds_out) {
-    int x;
-    if (mode != 0) {
-        x = RadiusOffsetX[dir];
-    } else {
-        x = VehMoveDeltaX[dir];
-    }
-    const int val_x = xrange(Vehs[veh_id].x + x);
-
-    const int y = mode != 0 ? RadiusOffsetY[dir] : VehMoveDeltaY[dir];
-    const int val_y = Vehs[veh_id].y + y;
-
-    return battle_fight(veh_id, dir, val_x, val_y, mode, allow_interceptor,
-                        odds_out);
-}
 
 
 /*

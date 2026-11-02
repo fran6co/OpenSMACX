@@ -2114,7 +2114,7 @@ int __cdecl territory(int faction_id, int faction_id_with, int flags, int *base_
             continue;
         }
         Map *tile = map_loc(veh.x, veh.y);
-        if ((tile->climate & 0xE0) < (ALT_SHORE_LINE << 5)) {
+        if ((tile->climate & ~0x1F) < (ALT_SHORE_LINE << 5)) {
             continue;
         }
         if (region_shared[tile->region]) {
@@ -6756,7 +6756,7 @@ int __cdecl pact_withdraw(int faction_id, int faction_id_with) {
                 VehPrototypes[vehicle.proto_id].chassis_id;
             if (Chassis[chassis_id_for_sea_region].triad == TRIAD_SEA) {
                 const Map *tile = map_loc(vehicle.x, vehicle.y);
-                if ((tile->climate & 0xE0) < 0x60 &&
+                if ((tile->climate & ~0x1F) < 0x60 &&
                     !base_on_sea(base_id, tile->region)) {
                     continue;
                 }
@@ -13798,7 +13798,7 @@ int __cdecl dont_withdrawal(int faction_id, int against_id) {
         const int x = veh.x;
         const int y = veh.y;
         const Map *tile = map_tiles() + MapLongitude * y + (x >> 1);
-        if ((tile->climate & 0xE0) < 0x60) {
+        if ((tile->climate & ~0x1F) < 0x60) {
             continue;
         }
         const int base_idx = base_find(x, y, faction_id);

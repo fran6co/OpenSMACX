@@ -202,6 +202,27 @@ static void test_add_deletion_existing_and_new_records() {
     assert(log_events == std::vector<LogEvent>({LogEvent("deleting", 21, -3, 6)}));
 }
 
+// The pin writes an ID through unchecked count=-1, aliasing the count WORD,
+// then increments and reloads that stored WORD. This O0 host diagnostic
+// preserves that observed unsafe case; it is not portable C++ behavior proof.
+static void test_add_deletion_reads_count_after_id_write() {
+    set_mask(0x05);
+    log_events.clear();
+    DeletionList list;
+    initialize_records(list, 0xFF);
+    list.current_owner_ = 123;
+    list.records_[4].owner_ = 123;
+    list.records_[4].acknowledgements_ = 0;
+    list.records_[4].count_ = -1;
+    Vehs[17].x = 4;
+    Vehs[17].y = 9;
+    assert(list.add_deletion(17) == 17);
+    assert(list.records_[4].count_ == 18);
+    assert(list.records_[4].owner_ == 123);
+    assert(list.records_[4].acknowledgements_ == 0);
+    assert(log_events == std::vector<LogEvent>({LogEvent("deleting", 17, 4, 9)}));
+}
+
 static void test_convert_owner_walk_remap_delete_and_logs() {
     DeletionList remapped;
     initialize_records(remapped, 0xFF);
@@ -246,6 +267,7 @@ int main() {
     test_clear_free_and_owner_lookups();
     test_ack_keeps_count_and_clears_completed_record();
     test_add_deletion_existing_and_new_records();
+    test_add_deletion_reads_count_after_id_write();
     test_convert_owner_walk_remap_delete_and_logs();
 }
 '''
@@ -276,3 +298,27 @@ def test_deletionlist_homed_methods_actual_source_gcc_and_clang(tmp_path):
         assert built.returncode == 0, built.stdout + built.stderr
         ran = subprocess.run([str(binary)], capture_output=True, text=True, timeout=20)
         assert ran.returncode == 0, ran.stdout + ran.stderr
+
+
+@pytest.mark.parametrize("compiler_name", ["g++", "clang++"])
+def test_cached_count_mutant_compiles_and_fails_alias_control(tmp_path, compiler_name):
+    compiler = shutil.which(compiler_name)
+    if compiler is None:
+        pytest.skip(compiler_name + " unavailable")
+    program = _harness()
+    original = "++record.count_;\n    return static_cast<int>(record.count_) - 1;"
+    mutant = ("record.count_ = static_cast<short>(old_count + 1);\n"
+              "    return old_count;")
+    assert program.count(original) == 1
+    damaged = program.replace(original, mutant, 1)
+    assert damaged != program
+    source = tmp_path / "cached_count.cpp"
+    binary = tmp_path / "cached_count"
+    source.write_text(damaged, encoding="utf-8")
+    built = subprocess.run(
+        [compiler, "-std=c++17", "-O0", "-Wall", "-Wextra", "-Werror", "-pedantic",
+         str(source), "-o", str(binary)], capture_output=True, text=True, timeout=60)
+    assert built.returncode == 0, built.stdout + built.stderr
+    ran = subprocess.run([str(binary)], capture_output=True, text=True, timeout=20)
+    assert ran.returncode != 0
+    assert "list.add_deletion(17) == 17" in ran.stderr

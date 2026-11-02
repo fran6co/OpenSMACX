@@ -624,31 +624,38 @@ void ReportIf::on_iface_button_clicked(int button) {
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/004a6d70.cpp retained original identity, full spans and seed history", "recovery/tasks/interface-contract-report-closure.json authorized coupled owner recovery", "original:0x4a6d70 complete control/data-access audit; ReportIf declarations and genuine ReportWin control storage"], "reason": "Recover ReportIf's group callback from the retained seed through its genuine SubInterface owner and ReportWin controls. Its current emitted virtual symbol is recorded separately from the historical catalogue spelling."}
 // symbol    ?on_iface_group_clicked@ReportIf@@UAEXHHH@Z
 void ReportIf::on_iface_group_clicked(int group, int, int item) {
-    if (group == 2 && item >= 0x92 && item <= 0x93) {
-        field_1E1D8_ = item == 0x92;
-    } else {
-        if (group == 4) {
-            if (item == 0xD0B) {
-                flatButton5_.hide(); flatButton6_.hide(); flatButton7_.hide();
-                flatButton8_.hide(); flatButton9_.hide(); flatButton10_.hide();
-                flatButton11_.hide();
-            } else {
-                flatButton5_.show(0); flatButton6_.show(0); flatButton7_.show(0);
-                flatButton8_.show(0); flatButton9_.show(0); flatButton10_.show(0);
-                flatButton11_.show(0);
-            }
-        } else if (group == 0x6A) {
-            ReportWinGlobal.flatButton9_.reset_field_A9C_if_ungrouped();
-            ReportWinGlobal.flatButton9_.Win::hide();
-        } else if (group == 0xCE) {
-            ReportWinGlobal.flatButton9_.Win::show(0);
-        }
-        // The D0B branch jumps directly to the redraw, bypassing map mode.
-        if (!(group == 4 && item == 0xD0B)) {
-            if (item == 0x3EE) WorldClimateWorldWin.set_world_map();
-            else if (item == 0x3EF) WorldClimateWorldWin.set_detail_map();
+    if (group == 2) {
+        switch (item) {
+        case 0x92:
+            field_1E1D8_ = 1;
+            goto redraw_tail;
+        case 0x93:
+            field_1E1D8_ = 0;
+            goto redraw_tail;
+        default:
+            goto map_mode;
         }
     }
+    if (group == 4) {
+        if (item == 0xD0B) {
+            flatButton5_.hide(); flatButton6_.hide(); flatButton7_.hide();
+            flatButton8_.hide(); flatButton9_.hide(); flatButton10_.hide();
+            flatButton11_.hide();
+            goto redraw_tail;
+        }
+        flatButton5_.show(0); flatButton6_.show(0); flatButton7_.show(0);
+        flatButton8_.show(0); flatButton9_.show(0); flatButton10_.show(0);
+        flatButton11_.show(0);
+    } else if (group == 0x6A) {
+        ReportWinGlobal.flatButton9_.reset_field_A9C_if_ungrouped();
+        ReportWinGlobal.flatButton9_.Win::hide();
+    } else if (group == 0xCE) {
+        ReportWinGlobal.flatButton9_.Win::show(0);
+    }
+map_mode:
+    if (item == 0x3EE) WorldClimateWorldWin.set_world_map();
+    else if (item == 0x3EF) WorldClimateWorldWin.set_detail_map();
+redraw_tail:
     if (field_1E234_ == 0) {
         on_redraw();
         MainInterfaceGlobal.soft_update();

@@ -231,9 +231,9 @@ def test_actual_world_mesa(tmp_path):
 @pytest.mark.parametrize("before,after", [
     ("BIT2_MESA, true", "LM_MESA, true"),
     ("Natural[LM_MESA]", "Natural[LM_CRATER]"),
-    ("i < RadiusRange[3]", "i < RadiusRange[2]"),
-    ("i < RadiusRange[3]", "i <= RadiusRange[3]"),
-    ("i < RadiusRange[2]", "i <= RadiusRange[2]"),
+    ("i < 49", "i < 25"),
+    ("i < 49", "i <= 49"),
+    ("i < 25", "i <= 25"),
     ("+ ALT_SHORE_LINE", "+ ALT_OCEAN_SHELF"),
     ("ALT_SHORE_LINE, true", "ALT_SHORE_LINE, false"),
     ("BIT2_MESA, true", "BIT2_MESA, false"),

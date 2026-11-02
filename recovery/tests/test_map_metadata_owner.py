@@ -135,6 +135,11 @@ def test_actual_owner_and_complete_world_build(tmp_path):
     ("uint32_t orbit_bound_bits = static_cast<uint32_t>(MapPlanetaryOrbit) + 1u;",
      "uint32_t orbit_bound_bits = static_cast<uint32_t>(MapPlanetaryOrbit);"),
     ("if (++builds >= 100)", "if (++builds > 100)"),
+    ("        area = MapArea;\n", ""),
+    ("selected_index = j;", "selected_index = 0;"),
+    ("goto next_trial;", "if (selected_index < 0) { goto next_trial; }\n                        break;"),
+    ("if (x_bound - 1 <= 0)", "if (x_bound - 1 < 0)"),
+    ("if (y_bound - 1 <= 0)", "if (y_bound - 1 < 0)"),
 ])
 def test_compiling_world_build_damage_is_detected(tmp_path, damage):
     assert run_control(tmp_path, damage).returncode != 0
@@ -206,6 +211,18 @@ def test_pinned_native_map_windows_and_signed_rule_walk():
     assert [i.op_str for i in river if i.mnemonic == "mov" and i.op_str.startswith("eax,")] == [
         "eax, 0x55555556", "eax, edx", "eax, 0x51eb851f"]
     assert any(i.mnemonic == "sar" and i.op_str == "edx, 0xa" for i in river)
+    reload_area = Listing(pe.read(Span(0x5C36AE, 0x5C36B8)), 0x5C36AE).instructions
+    assert [(i.mnemonic, i.op_str) for i in reload_area] == [
+        ("mov", "esi, dword ptr [0x949884]"), ("cmp", "ecx, esi"),
+        ("jl", "0x5c36a2")]
+    abandon = Listing(pe.read(Span(0x5C381E, 0x5C3826)), 0x5C381E).instructions
+    assert [(i.mnemonic, i.op_str) for i in abandon] == [
+        ("mov", "ecx, dword ptr [eax + 8]"), ("test", "ch, 1"),
+        ("jne", "0x5c3896")]
+    selection = Listing(pe.read(Span(0x5C3834, 0x5C3840)), 0x5C3834).instructions
+    assert [(i.mnemonic, i.op_str) for i in selection] == [
+        ("shr", "eax, 5"), ("cmp", "eax, ecx"), ("jle", "0x5c3840"),
+        ("mov", "dword ptr [ebp - 0x10], eax"), ("mov", "edx, edi")]
     orbit = Listing(pe.read(Span(0x5C4234, 0x5C4245)), 0x5C4234).instructions
     assert [(i.mnemonic, i.op_str) for i in orbit] == [
         ("mov", "edx, dword ptr [0x94a2b0]"), ("mov", "esi, eax"),

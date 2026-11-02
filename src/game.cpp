@@ -7498,7 +7498,7 @@ void __cdecl scenario_setup() {
                 accept = true;
             } else {
                 tile = MapTiles + MapLongitude * y + (x >> 1);
-                const bool low_altitude = (tile->climate & 0xE0) < 0x60;
+                const bool low_altitude = (tile->climate & ~0x1F) < 0x60;
                 const bool is_sea = triad == TRIAD_SEA;
                 if (low_altitude == is_sea || counter > 0x26DD) {
                     accept = true;
@@ -7519,7 +7519,7 @@ void __cdecl scenario_setup() {
                     tile = MapTiles + MapLongitude * y + (x >> 1);
                 }
                 accept = ((tile->bit & BIT_FUNGUS) != 0 &&
-                          (tile->climate & 0xE0) >= 0x40) ||
+                          (tile->climate & ~0x1F) >= 0x40) ||
                          counter > 0x26AB;
             }
 

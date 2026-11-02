@@ -166,7 +166,7 @@ def validate_source_contract(sources):
     monsoon = balanced_body(world_cpp, "void __cdecl world_monsoon(int x, int y) {")
     assert "*field |= bit2;" in bit2 and "*field &= ~bit2;" in bit2
     assert "(*field & 0xFFFFFF) | (static_cast<uint32_t>(code) << 24)" in code
-    assert re.search(r"for \(int i = 0; i < RadiusRange\[5\]; i\+\+\).*?\n\s*new_landmark", monsoon, re.S)
+    assert re.search(r"\n    for \(int i = 0; i < 121; i\+\+\).*?\n\s*new_landmark", monsoon, re.S)
     assert "const int RadiusRange[9] = { 1, 9, 25, 49, 81, 121, 169, 225, 289 };" in map_cpp
     assert "BIT2_JUNGLE, true" in monsoon and "code_set(x_radius, y_radius, i)" in monsoon
     assert monsoon.index("bit2_set(x_radius, y_radius, BIT2_JUNGLE, true)") < monsoon.index("code_set(x_radius, y_radius, i)")

@@ -195,6 +195,6 @@ int DeletionList::add_deletion(int veh_id) {
     DeletionRecord &record = records_[slot];
     const int old_count = record.count_;
     record.vehicle_ids_[old_count] = static_cast<short>(veh_id);
-    record.count_ = static_cast<short>(old_count + 1);
-    return old_count;
+    ++record.count_;
+    return static_cast<int>(record.count_) - 1;
 }

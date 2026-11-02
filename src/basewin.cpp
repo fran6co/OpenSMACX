@@ -3021,7 +3021,7 @@ void BaseWin::zoom(int base_id, int wait) {
                 const int tile_y = BaseCurrent->y;
                 const int tile_x = BaseCurrent->x;
                 const unsigned char climate = map_loc(tile_x, tile_y)->climate;
-                const char *const label = (climate & 0xE0) < 0x60
+                const char *const label = (climate & ~0x1F) < 0x60
                     ? "LOWMINERALS2" : "LOWMINERALS";
                 TutorialWindow.do_base(&expenses_help_rects_[2], label, 0);
                 tutorial_popup_opened = true;

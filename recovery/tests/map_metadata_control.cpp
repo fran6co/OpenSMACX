@@ -5,11 +5,26 @@
 #include <string.h>
 #define __cdecl
 typedef int BOOL;
-struct Map { uint32_t bit; };
+// The host write observer exposes reload order without overlapping objects.
+// It is not the production Map ABI or evidence of a live-game callback.
+static void river_clear_observer();
+struct TileBits {
+    uint32_t value;
+    operator uint32_t() const { return value; }
+    TileBits &operator&=(uint32_t mask) {
+        value &= mask;
+        river_clear_observer();
+        return *this;
+    }
+};
+struct Map { TileBits bit; };
 static int draws[7], draw_count, draw_cursor, wipes, invalid;
+static int river_mode, river_draws, river_sets, river_alt_reads;
+static int shrink_area_on_clear, river_clear_writes;
 static int expected_rules[7];
 static Map attempt_tiles[3200];
 static int controlled_rand() {
+    if (river_mode) { ++river_draws; return 4; }
     if (draw_cursor >= draw_count) { invalid = 1; return 0; }
     return draws[draw_cursor++];
 }
@@ -34,10 +49,21 @@ static void world_temperature();
 static void world_riverbeds();
 static Map *map_tiles();
 static int river_trials;
-static bool is_ocean(int, int) { ++river_trials; return true; }
-static uint32_t bit_at(int, int) { return 0; }
-static uint32_t alt_at(int, int) { return 4; }
-static void bit_set(int, int, int, bool) {}
+static bool is_ocean(int, int) { ++river_trials; return river_mode == 0; }
+static uint32_t bit_at(int x, int) {
+    return river_mode == 2 && x == 14 ? 0x100u : 0u;
+}
+static uint32_t alt_at(int x, int) {
+    if (!river_mode) return 4;
+    ++river_alt_reads;
+    return x == 8 ? 7u : 0u;
+}
+static void bit_set(int x, int y, int mask, bool set) {
+    if (river_mode) {
+        if (x != 8 || y != 4 || mask != 0x100 || !set) invalid = 1;
+        ++river_sets;
+    }
+}
 static const uint32_t BIT_RIVERBED = 0x100, BIT2_UNK_80000000 = 0x80000000, BIT2_CRATER = 1;
 static const int BIT_THERMAL_BORE = 0x40000000, ALT_1_LEVEL_ABOVE_SEA = 4, ALT_2_LEVELS_ABOVE_SEA = 5;
 static const int RadiusRange[5] = {1,9,25,49,81};
@@ -92,6 +118,9 @@ static MapWinMock WorldClimateWorldWin;
 // @@ACTUAL_MAP_OWNER@@
 
 MapStorageWindow MapStorage;
+static void river_clear_observer() {
+    if (shrink_area_on_clear && ++river_clear_writes == 1) MapArea = 1;
+}
 static Map *map_tiles() { return MapTiles; }
 static uint32_t random(int, int bound) {
     if (++thermal_calls % 2 == 0) thermal_bound = bound;
@@ -186,6 +215,45 @@ int main() {
     MapArea = 0xFFFFFFFFu; river_trials = 0;
     world_riverbeds();
     if (river_trials != 0) return 8;
+
+    // The original reload at5C36AE follows each tile write. This defined
+    // observer changes the bound after the first write; the other tiles stay.
+    Map clearing[3] = {{BIT_RIVERBED}, {BIT_RIVERBED}, {BIT_RIVERBED}};
+    MapTiles = clearing; MapArea = 3;
+    MapOceanCoverage = 5;
+    shrink_area_on_clear = 1; river_clear_writes = 0;
+    world_riverbeds();
+    if (river_clear_writes != 1 || MapArea != 1 || clearing[0].bit != 0 ||
+        clearing[1].bit != BIT_RIVERBED || clearing[2].bit != BIT_RIVERBED) return 12;
+    shrink_area_on_clear = 0;
+
+    // Pin5C383E retains offset index2, then5C384E..3887 recomputes its row.
+    // A later existing riverbed at index5 abandons the whole trial instead
+    // of publishing that earlier highest tile (5C3824 ->5C3896).
+    for (int j = 0; j < 81; ++j) {
+        RadiusOffsetX[j] = 2 * j; RadiusOffsetY[j] = 0;
+    }
+    MapTiles = &tile; MapArea = 1; MapOceanCoverage = 1;
+    MapLongitudeBounds = 256; MapLatitudeBounds = 32; MapIsFlat = 1;
+    WorldBuilder.rivers_base = 3200;
+    river_mode = 1; river_trials = river_draws = river_sets = river_alt_reads = 0;
+    world_riverbeds();
+    if (invalid || river_trials != 1 || river_draws != 2 || river_sets != 1 ||
+        river_alt_reads != 49) return 13;
+    river_mode = 2; river_trials = river_draws = river_sets = river_alt_reads = 0;
+    world_riverbeds();
+    if (invalid || river_trials != 4000 || river_draws != 8000 || river_sets != 0)
+        return 14;
+    river_mode = 0;
+    // Original5C3723/5C3747 bypass both draws when bound-1 <=0.
+    const int degenerate_bounds[3] = {0, 1, -7};
+    for (int j = 0; j < 3; ++j) {
+        MapLongitudeBounds = MapLatitudeBounds = degenerate_bounds[j];
+        river_trials = 0;
+        int before_draws = draw_cursor;
+        world_riverbeds();
+        if (invalid || river_trials != 4000 || draw_cursor != before_draws) return 15;
+    }
 
     MapLatitudeBounds = MapLongitudeBounds = 1;
     MapPlanetaryOrbit = 0x7FFFFFFF;

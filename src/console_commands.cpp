@@ -1076,7 +1076,7 @@ void Console::automate(int veh_id, int order) {
     bool direct_lock = false;
     if (prototype.plan == 9) {
         if (order == 1 || order == 2) {
-            if (chassis.triad != TRIAD_LAND || (tile.climate & 0xE0) < 0x60) {
+            if (chassis.triad != TRIAD_LAND || (tile.climate & ~0x1F) < 0x60) {
                 return;
             }
         }
@@ -1331,7 +1331,7 @@ void Console::hold(int veh_id, int waypoint_y) {
     const Map &tile = map_tiles()[tile_index];
     const RulesChassis &chassis = Chassis[VehPrototypes[vehicle.proto_id].chassis_id];
 
-    bool should_hold = (tile.climate & 0xE0) >= 0x60 || chassis.triad != 0;
+    bool should_hold = (tile.climate & ~0x1F) >= 0x60 || chassis.triad != 0;
     if (!should_hold) {
         if ((tile.bit & 1) == 0 || (tile.val2 & 0x0F) >= 8) {
             NetDaemonNet.unlock_veh();
@@ -3791,7 +3791,7 @@ void Console::arty(int vehicle) {
         return;
     }
     Map *const tile = map_loc(Vehs[vehicle].x, Vehs[vehicle].y);
-    if ((tile->climate & 0xe0) < 0x60 &&
+    if ((tile->climate & ~0x1F) < 0x60 &&
         Chassis[VehPrototypes[Vehs[vehicle].proto_id].chassis_id].triad != 1 &&
         (!(tile->bit & 1) || (tile->val2 & 15) >= 8)) {
         NetMsgPrimary.pop("SEAARTY", 5000, 0, nullptr);

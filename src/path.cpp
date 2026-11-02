@@ -175,7 +175,7 @@ int Path::zoc_path(int x, int y, int faction_id) {
         && owner_tile >= 0) {
         return 0;
     }
-    BOOL is_ocean_tile = (tile->climate & 0xE0) < ALT_BIT_SHORE_LINE;
+    BOOL is_ocean_tile = (tile->climate & ~0x1F) < ALT_BIT_SHORE_LINE;
     for (uint32_t i = 0; i < 8; i++) {
         int x_radius = xrange(x + VehMoveDeltaX[i]);
         int y_radius = y + VehMoveDeltaY[i];
@@ -1251,7 +1251,7 @@ void Path::territory(int x, int y, int UNUSED(region), int faction_id) {
             Map *tile;
             if (on_map(x_radius, y_radius) && y_it && y_it != ((int)MapLatitudeBounds - 1)
                 && (tile = map_loc(x_radius, y_radius),
-                    (tile->climate & 0xE0) >= ALT_BIT_SHORE_LINE
+                    (tile->climate & ~0x1F) >= ALT_BIT_SHORE_LINE
                     && !tile->unk_1 && tile->territory == faction_id)) {
                 tile->unk_1 = 1;
                 x_table_[index1_] = (int16_t)x_radius;
