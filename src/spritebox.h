@@ -161,7 +161,6 @@ class SpriteList : public SpriteListBase {
   void on_remove(void *payload);
   int add(int id);
   void close();
-  virtual ~SpriteList();
   // RECOVERY_MEMBER: v3 SpriteList pending_sprite_ Sprite* 0x1C 0x005EB29F
   Sprite *pending_sprite_;
   // RECOVERY_MEMBER: v1 SpriteList pending_label_ 0x20 0x005EB29F

@@ -334,9 +334,7 @@ char *FileWin::save() {
         // The original suffix scan excludes a period at the first character.
         const char *suffix = memrchr(
             file_name_, file_name_ + strlen(file_name_), '.');
-        if (suffix == 0) {
-            strcat(file_name_, extension_filters_[0]);
-        } else {
+        if (suffix != 0) {
             bool matched = false;
             for (int index = 0; index < extension_count_; ++index) {
                 if (_strcmpi(suffix, extension_filters_[index]) == 0) {
@@ -347,6 +345,8 @@ char *FileWin::save() {
             if (!matched) {
                 set_def_name(0);
             }
+        } else {
+            strcat(file_name_, extension_filters_[0]);
         }
 
         WIN32_FIND_DATAA found;
@@ -371,10 +371,7 @@ char *FileWin::save() {
 
     if (field_638_ != 0x12C) {
         GetCurrentDirectoryA(260, previous_directory_);
-        if (strlen(previous_directory_) < 261) {
-            directory_[0] = 0;
-            strcat(directory_, previous_directory_);
-        }
+        set_directory(previous_directory_);
     }
     SetCurrentDirectoryA(current_directory_);
     return field_638_ == 0x12C ? 0 : selected_path_;
@@ -397,15 +394,15 @@ char *FileWin::load() {
         // The original suffix scan excludes a period at the first character.
         const char *suffix = memrchr(
             file_name_, file_name_ + strlen(file_name_), '.');
-        if (suffix == 0) {
-            strcat(file_name_, extension_filters_[0]);
-        } else {
+        if (suffix != 0) {
             for (int index = 0; index < extension_count_; ++index) {
                 if (_strcmpi(suffix, extension_filters_[index]) == 0) {
                     break;
                 }
                 set_def_name(0);
             }
+        } else {
+            strcat(file_name_, extension_filters_[0]);
         }
 
         WIN32_FIND_DATAA found;
@@ -426,10 +423,7 @@ char *FileWin::load() {
 
     if (field_638_ != 0x12C) {
         GetCurrentDirectoryA(260, previous_directory_);
-        if (strlen(previous_directory_) < 261) {
-            directory_[0] = 0;
-            strcat(directory_, previous_directory_);
-        }
+        set_directory(previous_directory_);
     }
     SetCurrentDirectoryA(current_directory_);
     // Native61410F..614132 tests the post-modal action after restoring CWD.
@@ -989,3 +983,4 @@ void FileWin::close_class() {
         s_filewin_text_ptr = nullptr;
     }
 }
+// RECOVERY_IMPORT: v1 __imp__SetCurrentDirectoryA@4 KERNEL32.dll name:SetCurrentDirectoryA

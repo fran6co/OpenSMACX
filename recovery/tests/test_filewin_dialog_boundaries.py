@@ -33,6 +33,7 @@ def test_actual_filewin_save_and_load_bodies(compiler, tmp_path):
     save = definition(source, "char *FileWin::save()")
     load = definition(source, "char *FileWin::load()")
     setter = definition(source, "int FileWin::set_def_name(char *name)")
+    directory_setter = definition(source, "int FileWin::set_directory(char *directory)")
     memrchr = definition(general, "const char *__cdecl memrchr(")
     assert "run_file_dialog" not in source + header
     assert "// ORIGINAL: 0x00613D50 ?save@FileWin@@QAEXXZ 0x00613D50-0x00613F5C" in source
@@ -42,7 +43,7 @@ def test_actual_filewin_save_and_load_bodies(compiler, tmp_path):
     assert "edit_box_.set_text(file_name_)" in save
     assert "edit_box_.set_text(file_name_)" not in load
 
-    bodies = "\n".join((memrchr, save, load, setter))
+    bodies = "\n".join((memrchr, save, load, setter, directory_setter))
     harness = r'''
 #include <assert.h>
 #include <string.h>
@@ -113,6 +114,7 @@ struct FileWin {
     strcpy(current_directory, "C:\\inside-dialog"); return 0;
   }
   int set_def_name(char *name);
+  int set_directory(char *directory);
   char *save(); char *load();
 };
 static FileWin *ActiveFileWin;

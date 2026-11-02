@@ -126,8 +126,11 @@ def installed_bodies(root):
     base_insert = base_insert.replace("virtual int on_insert(void *)", "int SpriteListBase::on_insert(void *)", 1)
     base_remove = extract_definition(header, "virtual void on_remove(void *)")
     base_remove = base_remove.replace("virtual void on_remove(void *)", "void SpriteListBase::on_remove(void *)", 1)
-    derived_dtor = extract_definition(sprite_source, "SpriteList::~SpriteList()")
-    assert re.search(r"SpriteList::~SpriteList\(\)\s*\{\s*\}$", derived_dtor)
+    derived_class = extract_definition(header, "class SpriteList : public SpriteListBase")
+    assert not re.search(r"~\s*SpriteList\s*\(", derived_class), (
+        "SpriteList must use the actual implicit derived destructor")
+    assert not re.search(r"SpriteList\s*::\s*~\s*SpriteList\s*\(", sprite_source), (
+        "an authored derived destructor would add a separate table stage")
     assert "remove_all();" in base_dtor and "current_position_ = 0;" in base_dtor, (
         "base destructor must drain its ring and unconditionally reset position")
     assert not re.search(r"\{\s*\}", base_dtor), "empty placeholder destructor is not recovery"
@@ -142,6 +145,8 @@ def installed_bodies(root):
     assert len(rows) == 1, "611730 identity must remain unique in installed source"
     row = rows[0]
     assert row.path == root / "src/spritebox.cpp"
+    assert row.mode.value == "file"
+    assert row.symbol == "??1SpriteList@@UAE@XZ"
     assert row.image_spans == ((0x611730, 0x6117C3),)
     base_rows = [row for row in read_file(root / "src/spritebox.cpp")
                  if row.address == 0x402BB0]
@@ -157,7 +162,6 @@ def installed_bodies(root):
         (sprite_body, "int SpriteList::on_insert(void *raw_payload)"),
         (sprite_body, "void SpriteList::on_remove(void *raw_payload)"),
         (sprite_body, "void SpriteList::close()"),
-        (sprite_body, "SpriteList::~SpriteList()"),
         (sprite_body, "void SpriteBox::close()"),
         (sprite_body, "SpriteBox::~SpriteBox()"),
     )

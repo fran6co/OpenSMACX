@@ -37,11 +37,15 @@ def test_actual_load_returns_full_path_or_null(compiler, tmp_path):
         definition(general, "const char *__cdecl memrchr("),
         definition(filewin, "char *FileWin::load()"),
         definition(filewin, "int FileWin::set_def_name(char *name)"),
+        definition(filewin, "int FileWin::set_directory(char *directory)"),
         definition(alpha, "char *AlphaSave::load()"),
     ])
     harness = r'''
 #include <assert.h>
 #include <string.h>
+#include <stdint.h>
+// Win32 LONG stays signed and 32-bit on a host with 64-bit C++ long.
+typedef int32_t LONG;
 typedef const char *LPCSTR;
 #define __cdecl
 typedef void *HANDLE;
@@ -86,6 +90,7 @@ struct FileWin {
   ListBox list_box_; EditBox edit_box_;
   int populate_directory(char *) { return 0; }
   int set_def_name(char *name);
+  int set_directory(char *directory);
   char *load();
 };
 static FileWin *ActiveFileWin;

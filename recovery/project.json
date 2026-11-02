@@ -1790,6 +1790,19 @@
           "/W4",
           "-c"
         ]
+      },
+      "src/vehicle_storage.cpp": {
+        "flags": [
+          "/nologo",
+          "/TP",
+          "/Zm200",
+          "/GX",
+          "/O2",
+          "/Ob2",
+          "-MT",
+          "/W4",
+          "-c"
+        ]
       }
     },
     "flag_sets": [

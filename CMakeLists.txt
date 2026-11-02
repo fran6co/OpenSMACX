@@ -301,6 +301,7 @@ set(OPENSMACX_SOURCES
     src/timer_messages.cpp
     src/enemy.cpp
     src/veh.cpp
+    src/vehicle_storage.cpp
     src/prototype_history.cpp
     src/vehicle_strategy.cpp
     src/vehicle_stats.cpp

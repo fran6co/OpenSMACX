@@ -529,8 +529,6 @@ LPSTR VehBattleDisplayTerrain;
 // and the alpha.txt / x.txt loaders fill them before use.
 // RECOVERY_OBJECT: v1 0x009AB868 ?VehPrototypes@@3PAUVehPrototype@@A
 VehPrototype VehPrototypes[MaxVehProtoNum];  // 0x009AB868
-// RECOVERY_OBJECT: v1 0x00952828 ?Vehs@@3PAUVeh@@A
-Veh Vehs[2049];  // 0x00952828
 // The rules loader fills entries0..8; original load_vehicles45446C..4546B4
 // additionally populates sprite metrics in entries9..18 at the same0x90 stride.
 // The full table ends at Natural's independent start0x0094ADE0.
@@ -540,9 +538,6 @@ RulesChassis Chassis[ChassisStorageCount];  // 0x0094A330
 RulesWeapon Weapon[MaxWeaponNum];  // 0x0094AE60
 // RECOVERY_OBJECT: v1 0x0094F278 ?Armor@@3PAURulesArmor@@A
 RulesArmor Armor[MaxArmorNum];  // 0x0094F278
-// Original 0x0042A910 selects the record base; best_reactor walks prerequisite fields; no extent claim.
-// RECOVERY_OBJECT: v1 0x009527F8 ?Reactor@@3PAURulesReactor@@A
-RulesReactor Reactor[MaxReactorNum];  // 0x009527F8
 // Ability-model assembly reads the signed prerequisite at record +0x18;
 // the original indexes these existing rules with a 0x1C-byte stride.
 // RECOVERY_OBJECT: v1 0x009AB538 ?Ability@@3PAURulesAbility@@A
@@ -7631,7 +7626,7 @@ int __cdecl morale_veh(int veh_id, BOOL check_drone_riot, int faction_id_vs_nati
 /*
 Purpose: Calculate the offense of the specified prototype. Optional param of the unit defending
          against (-1 to ignore) as well as whether artillery or missile combat is being utilized.
-// ORIGINAL: 0x005C1150 ?offense_proto@@YAHHHH@Z 0x005C1150-0x005C128F
+// ORIGINAL: 0x005C1150 ?offense_proto@@YAHHHH@Z 0x005C1150-0x005C128F BYTE_EXACT
 // TRIED: `abs()` for the negate - same similarity as the manual ternary. The remaining gap is the same defense_rating byte-load fold as can_arty's plateau (`cmp byte ptr [x], 0` here vs the image's `mov dl, ...; test dl, dl`) plus register-naming noise past that point; not moved by source reshuffling.
 // TRIED: `uint32_t weapon_id = VehPrototypes[proto_id].weapon_id;` local, read at its two use sites, made the compiler spill it back into proto_id's own stack slot (an extra store the image never makes) and renamed registers through the entire rest of the function. Writing `VehPrototypes[proto_id].weapon_id` at both call sites instead of caching it dropped that spill: 4/112 -> 47/112 (0.882 -> 0.918 similar). Also reproduced the missing `veh_id_def < 0` guard on the SECOND `Vehs[veh_id_def].proto_id != SPORE_LAUNCHER` check (see the BUG note below) and split `off_rating` into an `int8_t` read plus a widened ternary negate rather than negating an already-widened `int` - the image tests/negates the BYTE before the `movsx`. 47/112 -> 50/112 (0.932 similar).
 // size      319 bytes
@@ -7648,14 +7643,14 @@ int __cdecl offense_proto(int proto_id, int veh_id_def, BOOL is_bombard) {
         && VehPrototypes[Vehs[veh_id_def].proto_id].plan == PLAN_INFO_WARFARE) {
         return 16; // probe attacking another probe
     }
-    // Original -1 reads signed word0x9527FE: bits16..31 of the stored
-    // Reactor[0].name_short pointer, not an actual prototype field.
-    // Preserve that pointer representation through its named storage;
-    // the comparison stays inside the original short-circuit predicate.
-    // Other indices and the original unguarded path are not normalized.
+    // Preserve the original unchecked index at this short-circuit phase.
+    // The native storage owner places four Reactor records immediately before
+    // Vehs, so id -1 reads signed WORD0x9527FE: bits16..31 of the live
+    // Reactor[0].name_short pointer. This relies on the verified VC6 layout,
+    // not portable array bounds; other invalid indices are not normalized.
     if ((is_bombard || (Weapon[VehPrototypes[proto_id].weapon_id].offense_rating >= 0
         && (veh_id_def < 0 || get_defense_rating(veh_id_def) >= 0)))
-        && (veh_id_def == -1 ? static_cast<int16_t>(reinterpret_cast<uintptr_t>(Reactor[0].name_short) >> 16) : Vehs[veh_id_def].proto_id) != BSC_SPORE_LAUNCHER
+        && Vehs[veh_id_def].proto_id != BSC_SPORE_LAUNCHER
         && proto_id != BSC_SPORE_LAUNCHER) {
         int8_t off_rating_byte = get_proto_offense_rating(proto_id);
         int off_rating = (off_rating_byte < 0) ? -off_rating_byte : off_rating_byte;
@@ -7663,7 +7658,10 @@ int __cdecl offense_proto(int proto_id, int veh_id_def, BOOL is_bombard) {
         if (is_proto_missile(proto_id) && off_rating_byte < 99) {
             off_rating = (off_rating * 3) / 2;
         }
-        return (veh_id_def < 0) ? off_rating : off_rating * 8; // conventional
+        if (veh_id_def >= 0) {
+            off_rating *= 8;
+        }
+        return off_rating; // conventional
     }
     return (veh_id_def < 0) ? Rules.psi_combat_ratio_atk[TRIAD_LAND] : // PSI
         Rules.psi_combat_ratio_atk[get_triad(veh_id_def)] * 8;
@@ -7672,7 +7670,7 @@ int __cdecl offense_proto(int proto_id, int veh_id_def, BOOL is_bombard) {
 /*
 Purpose: Calculate the defense of the specified prototype. Optional param if unit is being attacked
          (-1 to ignore) as well as whether artillery or missile combat is being utilized.
-// ORIGINAL: 0x005C1290 ?armor_proto@@YAHHHH@Z 0x005C1290-0x005C13AD
+// ORIGINAL: 0x005C1290 ?armor_proto@@YAHHHH@Z 0x005C1290-0x005C13AD BYTE_EXACT
 // size      285 bytes
 // prototype int (__cdecl ?armor_proto@@YAHHHH@Z)(int protoID, int vehIDAtk, int isBombardment)
 // callers   3   call targets   0
@@ -7691,15 +7689,18 @@ int __cdecl armor_proto(int proto_id, int veh_id_atk, BOOL is_bombard) {
         && VehPrototypes[Vehs[veh_id_atk].proto_id].plan == PLAN_INFO_WARFARE) {
         return 16; // probe defending against another probe
     }
-    // The bombardment path's original -1 prototype word aliases bits16..31
-    // of Reactor[0].name_short (signed WORD0x9527FE). Keep the live pointer
-    // bits, not a default prototype or a skip; the lookup still follows the
-    // original bombardment gate and retains every other index unchanged.
-    if (is_bombard && (veh_id_atk == -1 ? static_cast<int16_t>(reinterpret_cast<uintptr_t>(Reactor[0].name_short) >> 16) : Vehs[veh_id_atk].proto_id) != BSC_SPORE_LAUNCHER
+    // Keep the unchecked read after the original bombardment gate. With the
+    // verified native Reactor-before-Vehs storage, id -1 observes signed
+    // WORD0x9527FE, the upper word of the live Reactor[0].name_short pointer.
+    // This is the original layout-dependent access, not a portable bound.
+    if (is_bombard && Vehs[veh_id_atk].proto_id != BSC_SPORE_LAUNCHER
         && proto_id != BSC_SPORE_LAUNCHER || (get_proto_defense_rating(proto_id) >= 0
             && (veh_id_atk < 0 || get_offense_rating(veh_id_atk) >= 0))) {
         uint32_t def_rating = range(get_proto_defense_rating(proto_id), 1, 9999);
-        return (veh_id_atk < 0) ? def_rating : def_rating * 8; // conventional
+        if (veh_id_atk >= 0) {
+            def_rating *= 8;
+        }
+        return def_rating; // conventional
     }
     return (veh_id_atk < 0) ? Rules.psi_combat_ratio_def[TRIAD_LAND] : // PSI
         Rules.psi_combat_ratio_def[get_proto_triad(proto_id)] * 8;

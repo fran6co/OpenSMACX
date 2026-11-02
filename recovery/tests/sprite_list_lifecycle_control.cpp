@@ -109,7 +109,6 @@ public:
     virtual int on_insert(void *payload);
     virtual void on_remove(void *payload);
     void close();
-    virtual ~SpriteList();
 };
 
 class Buffer {
