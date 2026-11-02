@@ -38,6 +38,14 @@
 #include "strings.h"
 #include "tutwin.h"
 
+namespace {
+// This checked lookup describes the existing StringList current-text operation.
+// Its two call sites retain separate original lookup phases; the name is local.
+inline char *current_message_text(StringList &items) {
+    return items.head_ != 0 ? items.current_->string_payload()->text : 0;
+}
+}
+
 // 0x007F67F8, declared in messagewin.h.
 // RECOVERY_OBJECT: v1 0x007F67F8 ?InterfaceMessageWin@@3VMessageWin@@A
 MessageWin InterfaceMessageWin;  // 0x007F67F8
@@ -67,6 +75,7 @@ int MessageWinTextBackground = 0x91;
 // ORIGINAL: 0x004718C0 ?on_selected@MessageWin@@QAEXHH@Z 0x004718C0-0x00471D36;0x00655F60-0x00655F75
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/004718c0.cpp", "image:0x004718C0"], "reason": "The archived selection handler owns the three-action PullDown, map/base navigation and embedded ListBox row removal."}
 void MessageWin::on_selected(int code, int) {
+    PullDown menu;
     if (MessageWinMenuBusy) {
         return;
     }
@@ -74,16 +83,17 @@ void MessageWin::on_selected(int code, int) {
     int mouse_x, mouse_y;
     ConsoleGlobal.get_mouse_pos(&mouse_x, &mouse_y);
     ConsoleGlobal.client_to_screen(&mouse_x, &mouse_y);
-    PullDown menu;
     menu.init(0);
-    LPSTR *labels = Labels.strings_ptr;
-    menu.add_item(1, StringTable.get(labels[0x44C]));
-    menu.add_item(2, StringTable.get(labels[0x44D]));
-    menu.add_item(3, StringTable.get(labels[0x44E]));
+    menu.add_item(1, StringTable.get(Labels.strings_ptr[0x44C]));
+    menu.add_item(2, StringTable.get(Labels.strings_ptr[0x44D]));
+    menu.add_item(3, StringTable.get(Labels.strings_ptr[0x44E]));
     menu.show(mouse_x, mouse_y, 0);
-    const int action = menu.get_selected_id();
+    const int selected = menu.get_selected();
+    const int action = selected < 64 ? menu.item_id(selected) : -1;
+    const int navigate = action & 1;
+    const int remove = action & 2;
 
-    if (action & 1) {
+    if (navigate) {
         MessageWinMenuBusy = 1;
         if (code & 0x40000000) {
             const unsigned int base_id = code & 0xBFFFFFFF;
@@ -97,7 +107,7 @@ void MessageWin::on_selected(int code, int) {
                 }
                 TutWinBaseWindow.zoom(base_id, 0);
             }
-        } else if (!(code & 0x20000000) && MapLongitudeBounds != 0) {
+        } else if (!(code & 0x20000000)) {
             const int square = code & 0x7FFFFFFF;
             const int y = square / MapLongitudeBounds;
             const int x = square % MapLongitudeBounds;
@@ -115,12 +125,12 @@ void MessageWin::on_selected(int code, int) {
         }
     }
 
-    if (action & 2) {
+    if (remove) {
         --MessageWinMessageCount;
         remove_selected_message();
-        listBox_.set_selected_pos(-1, 1);
-        listBox_.update_changes();
-        if (static_cast<Dialog &>(listBox_).item_list_.head_ == 0) {
+        InterfaceMessageWin.listBox_.set_selected_pos(-1, 1);
+        InterfaceMessageWin.listBox_.update_changes();
+        if (InterfaceMessageWin.listBox_.item_list_.head_ == 0) {
             MainInterfaceGlobal.button_group(0).set(1001, 1);
         }
     }
@@ -128,39 +138,33 @@ void MessageWin::on_selected(int code, int) {
     MessageWinMenuBusy = 0;
 }
 
-void MessageWin::remove_selected_message() {
-    Dialog &dialog = listBox_;
-    StringList &items = dialog.item_list_;
-    if (items.head_ == 0 || items.entry_count_ == 0) {
-        return;
-    }
-    items.seek_pos(dialog.selected_position_);
-    StringStructEntry *entry = items.current_;
-    if (entry == 0) {
-        return;
-    }
-    StringStructPayload *payload = entry->string_payload();
-    if (payload != 0) {
-        listBox_.field_20_ -= payload->field_C_;
-    }
-    if (items.entry_count_ == 1) {
-        items.head_ = 0;
-        items.current_ = 0;
-    } else {
-        entry->previous->next = entry->next;
-        entry->next->previous = entry->previous;
+inline void MessageWin::remove_selected_message() {
+    listBox_.item_list_.seek_pos(listBox_.selected_position_);
+    const uint32_t height = listBox_.item_list_.head_ != 0
+        ? listBox_.item_list_.current_->string_payload()->field_C_ : 0;
+    listBox_.field_20_ -= height;
+
+    StringList &items = listBox_.item_list_;
+    if (items.head_ != 0) {
+        items.current_->next->previous = items.current_->previous;
+        items.current_->previous->next = items.current_->next;
+        StringStructEntry *entry = items.current_;
         if (entry == items.head_) {
             items.head_ = entry->next;
         }
         items.current_ = entry->next;
-    }
-    items.on_remove(payload);
-    delete payload;
-    entry->payload = 0;
-    delete entry;
-    --items.entry_count_;
-    if (items.current_position_ >= items.entry_count_) {
-        items.current_position_ = items.entry_count_ - 1;
+        StringStructPayload *payload = entry->string_payload();
+        items.on_remove(payload);
+        delete payload;
+        entry->payload = 0;
+        delete entry;
+        --items.entry_count_;
+        if (items.entry_count_ == 0) {
+            items.head_ = 0;
+        }
+        if (items.current_position_ > items.entry_count_ - 1) {
+            items.current_position_ = items.entry_count_ - 1;
+        }
     }
 }
 
@@ -172,14 +176,10 @@ void MessageWin::remove_selected_message() {
 // ORIGINAL: 0x00471530 ?add_message@MessageWin@@QAEXPADH@Z 0x00471530-0x00471794
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/00471530.cpp", "image:0x00471530"], "reason": "The product MessageWin append method implements the archived ListBox and virtual Dialog list walk on the real embedded members."}
 void MessageWin::add_message(char *text, int item_id) {
-    Dialog &dialog = listBox_;
-    StringList &items = dialog.item_list_;
-
-    // The seed seeks the most recent entry before comparing zero-ID text.
-    if (item_id == 0 && MessageWinMessageCount != 0 && items.head_ != 0) {
-        StringStructEntry *last = items.head_->previous;
-        if (last->string_payload() != 0 && last->string_payload()->text != 0 &&
-            strcmp(text, last->string_payload()->text) == 0) {
+    if (MessageWinMessageCount != 0) {
+        listBox_.item_list_.seek_pos(MessageWinMessageCount - 1);
+        if (current_message_text(listBox_.item_list_) != 0 && item_id == 0 &&
+            strcmp(text, current_message_text(listBox_.item_list_)) == 0) {
             return;
         }
     }
@@ -191,32 +191,40 @@ void MessageWin::add_message(char *text, int item_id) {
     while (MessageWinMessageCount > 100) {
         --MessageWinMessageCount;
 
-        const int first_id = dialog.pos_to_id(0);
-        if (items.head_ != 0) {
-            const int entry_count = items.entry_count_;
-            items.current_position_ = 0;
-            items.current_ = items.head_;
-            if (entry_count > 0) {
-                int index = 0;
-                while (index < entry_count && items.current_->id != first_id) {
-                    ++items.current_position_;
-                    ++index;
-                    items.current_ = items.current_->next;
+        const int first_id = listBox_.pos_to_id(0);
+        {
+            StringList &items = listBox_.item_list_;
+            if (items.head_ != 0) {
+                const int entry_count = items.entry_count_;
+                items.current_position_ = 0;
+                items.current_ = items.head_;
+                if (entry_count > 0) {
+                    int index = 0;
+                    do {
+                        if (items.current_->id == first_id) {
+                            break;
+                        }
+                        ++items.current_position_;
+                        ++index;
+                        items.current_ = items.current_->next;
+                    } while (index < entry_count);
                 }
             }
         }
 
+        const uint32_t height = listBox_.item_list_.head_ != 0
+            ? listBox_.item_list_.current_->string_payload()->field_C_ : 0;
+        listBox_.field_20_ -= height;
+        StringList &items = listBox_.item_list_;
         if (items.head_ != 0) {
-            listBox_.field_20_ -= items.current_->string_payload()->field_C_;
-
+            items.current_->next->previous = items.current_->previous;
+            items.current_->previous->next = items.current_->next;
             StringStructEntry *entry = items.current_;
-            StringStructPayload *payload = entry->string_payload();
-            entry->previous->next = entry->next;
-            entry->next->previous = entry->previous;
             if (entry == items.head_) {
                 items.head_ = entry->next;
             }
             items.current_ = entry->next; // Original singleton removal leaves this dangling.
+            StringStructPayload *payload = entry->string_payload();
             items.on_remove(payload);
             if (payload != 0) {
                 delete payload;
@@ -227,7 +235,7 @@ void MessageWin::add_message(char *text, int item_id) {
             if (items.entry_count_ == 0) {
                 items.head_ = 0;
             }
-            if (items.current_position_ >= items.entry_count_) {
+            if (items.current_position_ > items.entry_count_ - 1) {
                 items.current_position_ = items.entry_count_ - 1;
             }
         }
@@ -448,24 +456,23 @@ void MessageWin::init() {
     bounds_ = MainInterfaceGlobal.message_bounds_;
 
     listBox_.close();
-    Dialog &dialog = listBox_;
-    dialog.init(&bounds_, static_cast<Heap *>(0));
-    dialog.field_38_ = 3;
-    dialog.field_3C_ = 3;
-    dialog.field_6C_ = 0;
-    dialog.set_dialog_font(&font_, &font_, &font_);
+    listBox_.Dialog::init(&bounds_, static_cast<Heap *>(0));
+    listBox_.Dialog::field_38_ = 3;
+    listBox_.Dialog::field_3C_ = 3;
+    listBox_.Dialog::field_6C_ = 0;
+    listBox_.set_dialog_font(&font_, &font_, &font_);
     listBox_.set_message_initial_state();
-    dialog.set_dialog_text_color(0, -1, 1, 1);
-    dialog.set_dialog_text_color2(255, -1, 1, 1);
-    dialog.set_dialog_text_color3(255, -1, 1, 1);
-    dialog.field_4C_ = 1;
-    dialog.field_48_ = (bounds_.bottom - bounds_.top) / 5;
-    dialog.field_34_ = (bounds_.bottom - bounds_.top) / 4;
+    listBox_.set_dialog_text_color(0, -1, 1, 1);
+    listBox_.set_dialog_text_color2(255, -1, 1, 1);
+    listBox_.set_dialog_text_color3(255, -1, 1, 1);
+    listBox_.Dialog::field_4C_ = 1;
+    listBox_.Dialog::field_48_ = (bounds_.bottom - bounds_.top) / 5;
+    listBox_.Dialog::field_34_ = (bounds_.bottom - bounds_.top) / 4;
     listBox_.set_callbacks(&MessageWin::listbox_draw,
                            &MessageWin::listbox_write,
                            &MessageWin::listbox_fill);
-    dialog.field_B4_ = 0;
-    dialog.attach(&MainInterfaceGlobal, bounds_.left, bounds_.top, 0x1000000);
+    listBox_.Dialog::field_B4_ = 0;
+    listBox_.attach(&MainInterfaceGlobal, bounds_.left, bounds_.top, 0x1000000);
     MessageWinMessageCount = 0;
 }
 

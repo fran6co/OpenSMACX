@@ -1216,16 +1216,28 @@ void SubInterface::set_iface_mode() {
     }
 }
 
-// ORIGINAL: 0x0045D380 ?release_iface_mode@SubInterface@@QAEXXZ 0x0045D380-0x0045D43F
+// ORIGINAL: 0x0045D380 ?release_iface_mode@SubInterface@@QAEXXZ 0x0045D380-0x0045D43F BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/0045d380.cpp", "image:terranx_original.exe:0x0045D380", "source:src/maininterface.h:InterfaceRegistry and mode-stack storage; source:src/multiwin.h:owned Sprite offsets; native callback-sensitive mode reload and downward repeated removal", "recovery/tasks/interface-contract-report-closure.json; owner expansion interface-registry-multiwin-small-20261001"], "reason": "Recover the original in its genuine C++ owner using source-owned interface registry and mode stack, real virtual callbacks, or owned MultiWin sprite geometry. Preserve historical seed obligations; this binding grants no current byte or runtime claim."}
 // TRIED: byte-exact - a stack-search-and-shift over a linear "iface mode" stack (0x7AE778) plus a parallel object table (0x7AE7F0); the found-and-shifted case does not break, it keeps scanning downward exactly like the disassembly, so no attempt used `break`. 59% mnemonic similarity; landed for the control-flow shape (nested for-loops, no early exit) rather than chase the remaining scheduling/frame differences.
 void SubInterface::release_iface_mode() {
     int depth = ActiveIfaceIdStorage;
     if (depth != 0) {
-        const int mode = static_cast<int>(field_4_);
-        if (IfaceIdToSlotStorage[depth] == mode) {
+        if (IfaceIdToSlotStorage[depth] != static_cast<int>(field_4_)) {
+            // Remove every buried occurrence, scanning downward after each
+            // shift. The original does not stop after the first match.
+            for (int index = depth - 1; index >= 1; --index) {
+                if (IfaceIdToSlotStorage[index] == static_cast<int>(field_4_)) {
+                    for (int move = index; move < depth; ++move) {
+                        IfaceIdToSlotStorage[move] = IfaceIdToSlotStorage[move + 1];
+                    }
+                    --depth;
+                    ActiveIfaceIdStorage = depth;
+                }
+            }
+        } else {
             --depth;
             ActiveIfaceIdStorage = depth;
+            const int mode = static_cast<int>(field_4_);
             const int next_mode = IfaceIdToSlotStorage[depth];
             if (mode != next_mode) {
                 SubInterface *previous = InterfaceRegistry[mode];
@@ -1238,21 +1250,10 @@ void SubInterface::release_iface_mode() {
             if (next != 0) {
                 next->on_status(1);
             }
-        } else {
-            // Remove every buried occurrence, scanning downward after each
-            // shift. The original does not stop after the first match.
-            for (int index = depth - 1; index >= 1; --index) {
-                if (IfaceIdToSlotStorage[index] == mode) {
-                    for (int move = index; move < depth; ++move) {
-                        IfaceIdToSlotStorage[move] = IfaceIdToSlotStorage[move + 1];
-                    }
-                    --depth;
-                    ActiveIfaceIdStorage = depth;
-                }
-            }
         }
     }
 }
+
 #pragma auto_inline(on)
 
 // Research state87BE24/885F30 is ReportWinGlobal+59AC/+FAB8.
@@ -1316,20 +1317,19 @@ ReportIf ReportIfGlobal;  // 0x00885F38
 
 
 void ReportIf::reset() {
-    Buffer *buf = static_cast<Buffer *>(&MainInterfaceGlobal);
 
     RECT *r1 = &field_20_;
-    buf->box_sprite(r1, &InterfaceBoxStyles[33]);
+    MainInterfaceGlobal.Buffer::box_sprite(r1, &InterfaceBoxStyles[33]);
     RECT *r2 = &field_30_;
-    buf->box_sprite(r2, &InterfaceBoxStyles[33]);
+    MainInterfaceGlobal.Buffer::box_sprite(r2, &InterfaceBoxStyles[33]);
     RECT *r3 = &field_50_;
-    buf->box_sprite(r3, &InterfaceBoxStyles[33]);
+    MainInterfaceGlobal.Buffer::box_sprite(r3, &InterfaceBoxStyles[33]);
     RECT *r4 = &field_40_;
-    buf->set_clip(r4);
+    MainInterfaceGlobal.Buffer::set_clip(r4);
     r4->left -= 7;
-    buf->box_sprite(r4, &InterfaceBoxStyles[33]);
+    MainInterfaceGlobal.Buffer::box_sprite(r4, &InterfaceBoxStyles[33]);
     r4->left += 7;
-    buf->set_clip(MainInterfaceGlobal.buffer_working_rect());
+    MainInterfaceGlobal.Buffer::set_clip(MainInterfaceGlobal.buffer_working_rect());
 
     r1->left += 3;
     r1->right -= 3;
@@ -1349,10 +1349,10 @@ void ReportIf::reset() {
     r4->bottom -= 4;
     r4->left -= 3;
 
-    buf->box_sprite(r1, &InterfaceBoxStyles[3]);
-    buf->box_sprite(r2, &InterfaceBoxStyles[3]);
-    buf->box_sprite(r3, &InterfaceBoxStyles[3]);
-    buf->box_sprite(r4, &InterfaceBoxStyles[3]);
+    MainInterfaceGlobal.Buffer::box_sprite(r1, &InterfaceBoxStyles[3]);
+    MainInterfaceGlobal.Buffer::box_sprite(r2, &InterfaceBoxStyles[3]);
+    MainInterfaceGlobal.Buffer::box_sprite(r3, &InterfaceBoxStyles[3]);
+    MainInterfaceGlobal.Buffer::box_sprite(r4, &InterfaceBoxStyles[3]);
 
     r3->left += 3;
     r3->right -= 3;
@@ -1363,8 +1363,8 @@ void ReportIf::reset() {
     r4->top += 3;
     r4->bottom -= 3;
 
-    buf->box_sprite(r3, &InterfaceBoxStyles[0]);
-    buf->box_sprite(r4, &InterfaceBoxStyles[0]);
+    MainInterfaceGlobal.Buffer::box_sprite(r3, &InterfaceBoxStyles[0]);
+    MainInterfaceGlobal.Buffer::box_sprite(r4, &InterfaceBoxStyles[0]);
 
     r4->left += 3;
     r1->left -= 3;
@@ -1384,11 +1384,11 @@ void ReportIf::reset() {
     r4->top -= 7;
     r4->bottom += 7;
 
-    buf->set_font(field_1E180_, field_1E184_, field_1E184_, 0);
-    buf->set_text_color(0x99, -1, 1, 1);
-    buf->set_text_color2(0x99, -1, 1, 1);
-    buf->set_text_color3(0xe1, -1, 1, 1);
-    buf->clear_links();
+    MainInterfaceGlobal.Buffer::set_font(field_1E180_, field_1E184_, field_1E184_, 0);
+    MainInterfaceGlobal.Buffer::set_text_color(0x99, -1, 1, 1);
+    MainInterfaceGlobal.Buffer::set_text_color2(0x99, -1, 1, 1);
+    MainInterfaceGlobal.Buffer::set_text_color3(0xe1, -1, 1, 1);
+    MainInterfaceGlobal.Buffer::clear_links();
 }
 
 // ORIGINAL: 0x004ABE70 ?draw_score@ReportIf@@QAEXXZ 0x004ABE70-0x004AC127
@@ -1398,10 +1398,9 @@ void ReportIf::reset() {
 // literals; their bytes at 0x00682820 and 0x00682E90 are respectively " "
 // and ", ".
 void ReportIf::draw_score() {
-    Buffer *buf = static_cast<Buffer *>(&MainInterfaceGlobal);
     RECT *first_panel = &field_20_;
 
-    buf->set_clip(first_panel);
+    MainInterfaceGlobal.Buffer::set_clip(first_panel);
     field_C_ = first_panel->left + 6;
     field_10_ = first_panel->top + 6;
     field_14_ = first_panel->right - first_panel->left - 0xC;
@@ -1411,19 +1410,19 @@ void ReportIf::draw_score() {
     draw_workspace_rect_.top = field_10_;
     draw_workspace_rect_.right = field_C_ + field_14_;
     draw_workspace_rect_.bottom = field_10_ + field_18_;
-    buf->box_sprite(&draw_workspace_rect_, &InterfaceBoxStyles[0]);
-    buf->set_clip(MainInterfaceGlobal.buffer_working_rect());
+    MainInterfaceGlobal.Buffer::box_sprite(&draw_workspace_rect_, &InterfaceBoxStyles[0]);
+    MainInterfaceGlobal.Buffer::set_clip(MainInterfaceGlobal.buffer_working_rect());
 
     RECT *score_panel = &field_50_;
-    buf->set_clip(score_panel);
+    MainInterfaceGlobal.Buffer::set_clip(score_panel);
     field_10_ = score_panel->top;
     const int left_inset = field_1E230_ != 0 ? 0x4C : 0;
     field_C_ = score_panel->left + left_inset;
     field_14_ = score_panel->right - left_inset - score_panel->left;
     field_18_ = score_panel->bottom - score_panel->top;
 
-    buf->set_font(field_1E190_, field_1E194_, field_1E198_, nullptr);
-    buf->set_text_color(0xE1, -1, 1, 1);
+    MainInterfaceGlobal.Buffer::set_font(field_1E190_, field_1E194_, field_1E198_, nullptr);
+    MainInterfaceGlobal.Buffer::set_text_color(0xE1, -1, 1, 1);
 
     StringTemp[0] = 0;
     strcat(StringTemp, Players[report_faction_id_].adj_name_faction);
@@ -1439,16 +1438,16 @@ void ReportIf::draw_score() {
         say_year(StringTemp);
     }
 
-    buf->write_cent_l(StringTemp, field_C_, field_10_ + 10, field_14_,
+    MainInterfaceGlobal.Buffer::write_cent_l(StringTemp, field_C_, field_10_ + 10, field_14_,
                       static_cast<int>(strlen(StringTemp)));
 
-    buf->set_font(field_1E180_, field_1E180_, field_1E180_, nullptr);
-    buf->set_text_color(0x99, -1, 1, 1);
+    MainInterfaceGlobal.Buffer::set_font(field_1E180_, field_1E180_, field_1E180_, nullptr);
+    MainInterfaceGlobal.Buffer::set_text_color(0x99, -1, 1, 1);
     field_10_ += field_1C_ * 2;
-    buf->set_clip(MainInterfaceGlobal.buffer_working_rect());
+    MainInterfaceGlobal.Buffer::set_clip(MainInterfaceGlobal.buffer_working_rect());
 
     RECT *last_panel = &field_30_;
-    buf->set_clip(last_panel);
+    MainInterfaceGlobal.Buffer::set_clip(last_panel);
     field_C_ = last_panel->left + 6;
     field_10_ = last_panel->top + 6;
     field_14_ = last_panel->right - last_panel->left - 0xC;
@@ -1457,8 +1456,8 @@ void ReportIf::draw_score() {
     draw_workspace_rect_.top = field_10_;
     draw_workspace_rect_.right = field_C_ + field_14_;
     draw_workspace_rect_.bottom = field_10_ + field_18_;
-    buf->box_sprite(&draw_workspace_rect_, &InterfaceBoxStyles[0]);
-    buf->set_clip(MainInterfaceGlobal.buffer_working_rect());
+    MainInterfaceGlobal.Buffer::box_sprite(&draw_workspace_rect_, &InterfaceBoxStyles[0]);
+    MainInterfaceGlobal.Buffer::set_clip(MainInterfaceGlobal.buffer_working_rect());
 }
 
 // MainInterface owns the interface-slot array and active interface ID.

@@ -131,7 +131,7 @@ void Path::set(uint32_t x, uint32_t y, int val) {
 /*
  Purpose: Check for unit zone of control conflicts taking into account land or ocean. This is a 
           slightly modified version of zoc_move() or zoc_sea().
-// ORIGINAL: 0x0059A370 ?zoc_path@Path@@QAEHHHH@Z 0x0059A370-0x0059A527
+// ORIGINAL: 0x0059A370 ?zoc_path@Path@@QAEHHHH@Z 0x0059A370-0x0059A527 BYTE_EXACT
 // LEVER: ONE `map_loc` for the entry test. The image computes the tile
 //   address once at 0x0059A395 and then reads `[eax+8]` (bit), `[eax+2]`
 //   (val2) and `[eax]` (climate) off THAT pointer - `bit_at`, `owner_at` and
@@ -176,20 +176,22 @@ int Path::zoc_path(int x, int y, int faction_id) {
         return 0;
     }
     BOOL is_ocean_tile = (tile->climate & ~0x1F) < ALT_BIT_SHORE_LINE;
-    for (uint32_t i = 0; i < 8; i++) {
+    int i = 0;
+    for (;;) {
         int x_radius = xrange(x + VehMoveDeltaX[i]);
         int y_radius = y + VehMoveDeltaY[i];
         if (on_map(x_radius, y_radius)) {
             int owner = veh_who(x_radius, y_radius);
             if (owner >= 0 && (uint32_t)owner != faction_id 
                 && is_ocean(x_radius, y_radius) == is_ocean_tile
-                && !has_treaty(faction_id, owner, DTREATY_VENDETTA | DTREATY_PACT)) {
+                && !(PlayersData[faction_id].diplo_treaties[owner]
+                     & (DTREATY_VENDETTA | DTREATY_PACT))) {
                 if (!is_human(faction_id)) {
                     return owner + 1;
                 }
                 for (int veh_id = veh_at(x_radius, y_radius); veh_id >= 0; 
                     veh_id = Vehs[veh_id].next_veh_id_stack) {
-                    if ((Vehs[veh_id].faction_id == faction_id && ((Vehs[veh_id].flags
+                    if ((Vehs[veh_id].faction_id == faction_id && ((int16_t)(Vehs[veh_id].flags
                         & (VFLAG_INVISIBLE | VFLAG_LURKER)) != (VFLAG_INVISIBLE | VFLAG_LURKER)))
                         || Vehs[veh_id].visibility & (1 << faction_id)) {
                         return owner + 1;
@@ -197,8 +199,10 @@ int Path::zoc_path(int x, int y, int faction_id) {
                 }
             }
         }
+        if (++i >= 8) {
+            return 0;
+        }
     }
-    return 0;
 }
 
 /*

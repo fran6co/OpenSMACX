@@ -175,8 +175,8 @@ def test_integer_zero_overload_mutant_is_rejected(compiler_name, tmp_path):
         pytest.skip(f"{compiler_name} is unavailable")
     source = (ROOT / "src/messagewin.cpp").read_text(encoding="utf-8")
     body = definition(source)
-    correct = "dialog.init(&bounds_, static_cast<Heap *>(0));"
-    mutant = body.replace(correct, "dialog.init(&bounds_, 0);", 1)
+    correct = "listBox_.Dialog::init(&bounds_, static_cast<Heap *>(0));"
+    mutant = body.replace(correct, "listBox_.Dialog::init(&bounds_, 0);", 1)
     assert mutant != body
     result = compile_and_run(compiler, tmp_path, fixture(mutant))
     assert result.returncode != 0, "integer-zero overload mutant unexpectedly passed"

@@ -1267,9 +1267,8 @@ int Wave::dyna_load(char *fname) {
         }
         const int created = (SoundXOrdinal1CreateSound())(&device_, fname, 1);
         if (created == 0) {
-            const int attribs = get_attrib();
-            wave_playback_device(device_)->set_attrib(
-                static_cast<unsigned long>(attribs));
+            device_->set_attrib(
+                static_cast<unsigned long>(get_attrib()));
             attach();
         }
         return created;
@@ -1429,9 +1428,8 @@ void Wave::init(char *group_id, unsigned long flags) {
         if (!device_ && WaveDeviceReleaseGuard) {
             const int created = (SoundXOrdinal1CreateSound())(&device_, resolved, 1);
             if (!created) {
-                const int attribs = get_attrib();
-                wave_playback_device(device_)->set_attrib(
-                    static_cast<unsigned long>(attribs));
+                device_->set_attrib(
+                    static_cast<unsigned long>(get_attrib()));
                 attach();
             }
         }

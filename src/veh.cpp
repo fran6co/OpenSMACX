@@ -6516,6 +6516,21 @@ check_spotted:
     return wants_to_wake;
 }
 
+// The original keeps one tile across these checks. Use the same owner
+// operation as base_who with the cached map inputs, allowing the compiler
+// to reuse the existing tile address. This local factoring does not claim
+// an original helper name or an additional original function.
+static inline int wake_stack_base_owner(Map *map_base, int map_width, int x, int y) {
+    Map *tile = map_base + ((x >> 1) + y * map_width);
+    if (tile->bit & BIT_BASE_IN_TILE) {
+        int owner = tile->val2 & 0xF;
+        if (owner < MaxPlayerNum) {
+            return owner;
+        }
+    }
+    return -1;
+}
+
 /*
 Purpose: Wake up units meeting specific conditions from the stack where specified unit is located.
 // ORIGINAL: 0x005B6060 ?wake_stack@@YAXH@Z 0x005B6060-0x005B619A
@@ -6570,11 +6585,11 @@ void __cdecl wake_stack(int veh_id) {
         int altitude;
         if (Vehs[i].order == ORDER_SENTRY_BOARD
             && (get_triad(i) || (x = Vehs[i].x, y = Vehs[i].y,
-                tile = map_base + ((x >> 1) + y * map_width), altitude = tile->climate & 0xE0,
+                tile = map_base + ((x >> 1) + y * map_width), altitude = tile->climate & ~0x1F,
             altitude >= ALT_BIT_SHORE_LINE
             && ((veh_id_way_point = Vehs[i].waypoint_x[0], veh_id_way_point < 0)
                 || get_triad(veh_id_way_point) != TRIAD_AIR
-                || ((tile->bit & BIT_BASE_IN_TILE) && (tile->val2 & 0xF) < MaxPlayerNum)
+                || wake_stack_base_owner(map_base, map_width, x, y) >= 0
                 || (tile->bit & BIT_AIRBASE))))) {
             Vehs[i].order = ORDER_NONE;
             Vehs[i].state &= ~VSTATE_EXPLORE;

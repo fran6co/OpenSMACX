@@ -30,13 +30,15 @@ static const unsigned long computed_attribs = 0xA55AUL;
 class Sound {
  public:
   virtual ~Sound() {}
+  virtual int set_attrib(unsigned long) = 0;
 };
 
 struct WavePlaybackDeviceInterface : Sound {
   std::vector<unsigned long> attribs;
-  void set_attrib(unsigned long value) {
+  int set_attrib(unsigned long value) {
     events.push_back("set");
     attribs.push_back(value);
+    return 0;
   }
 };
 
@@ -91,9 +93,9 @@ def actual_bodies(damage):
     dyna = extract_definition(source, "int Wave::dyna_load(char *fname) {")
     init = extract_definition(source, "void Wave::init(char *group_id, unsigned long flags) {")
     if damage == "dyna-mask":
-        old = "wave_playback_device(device_)->set_attrib(\n                static_cast<unsigned long>(attribs));"
+        old = "device_->set_attrib(\n                static_cast<unsigned long>(get_attrib()));"
         assert old in dyna
-        dyna = dyna.replace(old, "wave_playback_device(device_)->set_attrib(0UL);", 1)
+        dyna = dyna.replace(old, "device_->set_attrib((get_attrib(), 0UL));", 1)
     elif damage == "init-raw-mask":
         old = "wave_playback_device(device_)->set_attrib(flags);"
         assert old in init

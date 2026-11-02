@@ -5943,7 +5943,7 @@ int __cdecl base_find(int x, int y, int faction_id, int region, int faction_id_2
         if (region < 0 || region_at(base->x, base->y) == (uint32_t)region) {
             if (faction_id < 0 ? (faction_id_2 < 0 || base->faction_id_current != faction_id_2)
                 : (faction_id == base->faction_id_current || (faction_id_2 == -2
-                    ? has_treaty(faction_id, base->faction_id_current, DTREATY_PACT)
+                    ? (PlayersData[faction_id].diplo_treaties[base->faction_id_current] & DTREATY_PACT)
                     : (faction_id_2 >= 0 && faction_id_2 == base->faction_id_current)))) {
                 if (faction_id_3 < 0 || base->faction_id_current == faction_id_3
                     || ((1 << faction_id_3) & base->visibility)) {
@@ -9876,8 +9876,9 @@ int __cdecl garrison_check(int base_id) {
     }
     int faction_id_sea = zoc_sea(x, y, faction_id) - 1;
     if (faction_id_sea > 0
-        && (has_treaty(faction_id, faction_id_sea, DTREATY_VENDETTA | DTREATY_WANT_REVENGE)
-        || has_treaty(faction_id_sea, faction_id, DTREATY_WANT_REVENGE)
+        && ((PlayersData[faction_id].diplo_treaties[faction_id_sea]
+             & (DTREATY_VENDETTA | DTREATY_WANT_REVENGE))
+        || (PlayersData[faction_id_sea].diplo_treaties[faction_id] & DTREATY_WANT_REVENGE)
         || PlayersData[faction_id_sea].integrity_blemishes >= 4)) {
         garrison++;
     }

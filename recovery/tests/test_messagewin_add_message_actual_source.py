@@ -17,13 +17,13 @@ SOURCE = ROOT / "src/messagewin.cpp"
 SIGNATURE = "void MessageWin::add_message(char *text, int item_id)"
 
 
-def extract_method(source: str) -> str:
+def extract_method(source: str, signature: str = SIGNATURE) -> str:
     masked = COMMENTS_OR_STRINGS.sub(
         lambda match: re.sub(r"[^\n]", " ", match[0]), source
     )
-    assert masked.count(SIGNATURE) == 1
-    start = masked.index(SIGNATURE)
-    opening = masked.index("{", start + len(SIGNATURE))
+    assert masked.count(signature) == 1
+    start = masked.index(signature)
+    opening = masked.index("{", start + len(signature))
     depth = 0
     for index in range(opening, len(masked)):
         if masked[index] == "{":
@@ -36,6 +36,8 @@ def extract_method(source: str) -> str:
 
 
 FIXTURE = r'''#include <assert.h>
+#include <stdint.h>
+#include <stdlib.h>
 #include <string>
 #include <string.h>
 #define __cdecl
@@ -71,6 +73,7 @@ struct StringList {
     int entry_count_;
     int current_position_;
     StringList() : head_(0), current_(0), entry_count_(0), current_position_(0) {}
+    int seek_pos(int a1);
     void on_remove(StringStructPayload *) {
         events += 'r';
         if (MessageWinMessageCount == 100) remove_saw_predecrement_count = 1;
@@ -146,6 +149,21 @@ static StringStructEntry *append(StringList &list, int id, int height) {
 '''
 
 
+def projected_dependencies() -> str:
+    # Project the real inline cursor operation into the existing typed double.
+    signature = "MEASURED inline int StringStruct::seek_pos(int a1)"
+    seek = extract_method((ROOT / "src/stringstruct.h").read_text(), signature)
+    seek = seek.replace(signature, "int StringList::seek_pos(int a1)", 1)
+    checked_text = extract_method(SOURCE.read_text(),
+        "inline char *current_message_text(StringList &items)")
+    # VC6 sees the C integer abs declaration. Select that same overload in
+    # the host library while retaining the actual seek body/cast unchanged.
+    integer_abs = ("typedef int (*AbsFnT)(int);\n"
+                   "static int (&projected_integer_abs)(int) = *static_cast<AbsFnT>(&abs);\n"
+                   "#define abs projected_integer_abs\n")
+    return integer_abs + seek + "\n#undef abs\n" + checked_text
+
+
 MAIN = r'''
 int main() {
     {
@@ -207,7 +225,7 @@ def test_actual_add_message_preserves_cursor_removal_and_empty_drain(compiler_na
     if compiler is None:
         pytest.skip(f"{compiler_name} unavailable")
     body = extract_method(SOURCE.read_text(encoding="utf-8"))
-    source = FIXTURE + "\n" + body + "\n" + MAIN
+    source = FIXTURE + "\n" + projected_dependencies() + "\n" + body + "\n" + MAIN
     cpp = tmp_path / "messagewin_add_message.cpp"
     exe = tmp_path / "messagewin_add_message"
     cpp.write_text(source, encoding="utf-8")
@@ -224,4 +242,4 @@ def test_actual_add_message_source_keeps_original_count_only_loop():
     body = extract_method(SOURCE.read_text(encoding="utf-8"))
     assert "while (MessageWinMessageCount > 100)" in body
     assert "while (MessageWinMessageCount > 100 && items.head_ != 0)" not in body
-    assert "dialog.pos_to_id(0)" in body
+    assert "listBox_.pos_to_id(0)" in body
