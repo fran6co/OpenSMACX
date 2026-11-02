@@ -16,6 +16,7 @@
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
 #include "stdafx.h"
+#include "rectangle_operations.h"
 #include "sound.h"
 #include "scroll.h"
 #include "worldwin.h"
@@ -906,7 +907,7 @@ RECT *__cdecl expand_rect(RECT *rect, int horizontal, int vertical) {
 
 /*
 Purpose: Set the scrollbar thickness and reset its thumb rectangle.
-// ORIGINAL: 0x00605B80 ?set_bar_thickness@Scroll@@QAEXH@Z 0x00605B80-0x00605BE0
+// ORIGINAL: 0x00605B80 ?set_bar_thickness@Scroll@@QAEXH@Z 0x00605B80-0x00605BE0 BYTE_EXACT
 // TRIED: dropping the `volatile` casts on `bar_thickness_`, `border_color_`
 //   and the `thumb` RECT alias (plain assignments/reads to the named fields
 //   instead): 7/22 -> 8/22 but the compiler now folds the border-color guard
@@ -970,10 +971,7 @@ Status: Complete
 */
 void Scroll::set_bar_thickness(int thickness) {
     bar_thickness_ = thickness;
-    thumb_rect_.left = 0;
-    thumb_rect_.top = 0;
-    thumb_rect_.right = long_from_bits(static_cast<uint32_t>(thickness));
-    thumb_rect_.bottom = long_from_bits(static_cast<uint32_t>(thickness));
+    set_rectangle_dimensions(&thumb_rect_, 0, 0, thickness, thickness);
     if (border_color_ != -1) {
         expand_rect(&thumb_rect_, -1, -1);
     }
@@ -981,7 +979,7 @@ void Scroll::set_bar_thickness(int thickness) {
 
 /*
 Purpose: Set the border color and reset the scrollbar thumb rectangle.
-// ORIGINAL: 0x00605B10 ?set_border_color@Scroll@@QAEXH@Z 0x00605B10-0x00605B74
+// ORIGINAL: 0x00605B10 ?set_border_color@Scroll@@QAEXH@Z 0x00605B10-0x00605B74 BYTE_EXACT
 // LEVER: image writes defaults unconditionally then overwrites in the branch;
 //   ternary/direct-assign forms let the optimizer prove the first write dead and
 //   drop it. A `volatile RECT*` keeps both writes, and re-reading `border_color_`
@@ -1026,11 +1024,7 @@ Status: Complete
 */
 void Scroll::set_border_color(int color) {
     border_color_ = color;
-    const uint32_t thickness = static_cast<uint32_t>(bar_thickness_);
-    thumb_rect_.left = 0;
-    thumb_rect_.top = 0;
-    thumb_rect_.right = long_from_bits(thickness);
-    thumb_rect_.bottom = long_from_bits(thickness);
+    set_rectangle_dimensions(&thumb_rect_, 0, 0, bar_thickness_, bar_thickness_);
     if (border_color_ != -1) {
         expand_rect(&thumb_rect_, -1, -1);
     }
@@ -1389,7 +1383,7 @@ void Scroll::compute_thumb_rect(RECT *rect) {
 
 /*
 Purpose: Reset the scrollbar thumb rectangle from its stored thickness.
-// ORIGINAL: 0x00606EA0 ?set_thumb_rect@Scroll@@QAEXXZ 0x00606EA0-0x00606EF8
+// ORIGINAL: 0x00606EA0 ?set_thumb_rect@Scroll@@QAEXXZ 0x00606EA0-0x00606EF8 BYTE_EXACT
 // TRIED: dropping the `volatile` casts on `bar_thickness_`, `border_color_`
 //   and the `thumb` RECT alias: 12/20 -> 7/20, a clear regression. Without
 //   `volatile` the optimizer proves the unconditional 0/0/thickness/thickness
@@ -1422,11 +1416,7 @@ Purpose: Reset the scrollbar thumb rectangle from its stored thickness.
 Status: Complete
 */
 void Scroll::set_thumb_rect() {
-    const uint32_t thickness = static_cast<uint32_t>(bar_thickness_);
-    thumb_rect_.left = 0;
-    thumb_rect_.top = 0;
-    thumb_rect_.right = long_from_bits(thickness);
-    thumb_rect_.bottom = long_from_bits(thickness);
+    set_rectangle_dimensions(&thumb_rect_, 0, 0, bar_thickness_, bar_thickness_);
     if (border_color_ != -1) {
         expand_rect(&thumb_rect_, -1, -1);
     }

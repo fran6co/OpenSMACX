@@ -27,7 +27,8 @@
       {"archive": "src/jackal/jackal.lib", "object": "src/jackal/CMakeFiles/jackal.dir/filewin.cpp.obj", "member": "src/jackal/CMakeFiles/jackal.dir/filewin.cpp.obj"},
       {"archive": "src/jackal/jackal.lib", "object": "src/jackal/CMakeFiles/jackal.dir/time.cpp.obj", "member": "src/jackal/CMakeFiles/jackal.dir/time.cpp.obj"},
       {"archive": "src/jackal/jackal.lib", "object": "src/jackal/CMakeFiles/jackal.dir/time_lifecycle.cpp.obj", "member": "src/jackal/CMakeFiles/jackal.dir/time_lifecycle.cpp.obj"},
-      {"archive": "src/jackal/jackal.lib", "object": "src/jackal/CMakeFiles/jackal.dir/graphics_language.cpp.obj", "member": "src/jackal/CMakeFiles/jackal.dir/graphics_language.cpp.obj"}
+      {"archive": "src/jackal/jackal.lib", "object": "src/jackal/CMakeFiles/jackal.dir/graphics_language.cpp.obj", "member": "src/jackal/CMakeFiles/jackal.dir/graphics_language.cpp.obj"},
+      {"archive": "src/jackal/jackal.lib", "object": "src/jackal/CMakeFiles/jackal.dir/rectangle.cpp.obj", "member": "src/jackal/CMakeFiles/jackal.dir/rectangle.cpp.obj"}
     ],
     "command_stages": {"compile": "compiler-effective", "link": "link-wrapper"},
     "link_files": "OpenSMACX.link.inputs.json",

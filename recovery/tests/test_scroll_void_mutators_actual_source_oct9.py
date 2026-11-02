@@ -17,6 +17,8 @@ CPP = ROOT / "src/scroll.cpp"
 HEADER = ROOT / "src/scroll.h"
 GENERAL = ROOT / "src/general.h"
 GENERAL_CPP = ROOT / "src/general.cpp"
+RECTANGLE_OPERATIONS = ROOT / "src/rectangle_operations.h"
+RECTANGLE_SIGNATURE = "static inline RECT *__cdecl set_rectangle_dimensions("
 SWAP_SIGNATURE = "void __cdecl swap(int *var1, int *var2)"
 FUNCTIONS = {
     "set_range": (0x006059B0, "void Scroll::set_range(int minimum, int maximum)"),
@@ -267,12 +269,13 @@ def test_actual_scroll_bodies_with_return_warnings_as_errors(compiler: str) -> N
                             for _, signature in FUNCTIONS.values())
     bits_helper = extract_body(source, "inline LONG long_from_bits(uint32_t bits)")
     expand_body = extract_body(source, "RECT *__cdecl expand_rect(RECT *rect, int horizontal, int vertical)")
+    rectangle_body = extract_body(RECTANGLE_OPERATIONS.read_text(), RECTANGLE_SIGNATURE)
     swap_body = extract_body(GENERAL_CPP.read_text(), SWAP_SIGNATURE)
     with tempfile.TemporaryDirectory(prefix="opensmacx-scroll-mutators-") as directory:
         root = Path(directory)
         cpp = root / "scroll.cpp"
         binary = root / "scroll"
-        cpp.write_text(FIXTURE + swap_body + "\n" + bits_helper + "\n" + expand_body + "\n" + bodies + SUFFIX)
+        cpp.write_text(FIXTURE + swap_body + "\n" + bits_helper + "\n" + rectangle_body + "\n" + expand_body + "\n" + bodies + SUFFIX)
         result = subprocess.run(
             [executable, "-std=c++17", "-Wall", "-Wextra", "-Werror=return-type",
              str(cpp), "-o", str(binary)],
@@ -291,18 +294,20 @@ def test_geometry_mutants_compile_but_fail_runtime(compiler: str, mutation: str)
         pytest.skip(f"{compiler} is unavailable")
     source = CPP.read_text()
     bodies = {name: extract_body(source, signature) for name, (_, signature) in FUNCTIONS.items()}
+    rectangle_body = extract_body(RECTANGLE_OPERATIONS.read_text(), RECTANGLE_SIGNATURE)
     if mutation == "wrong_guard":
         target = "if (border_color_ != -1)"
         bodies["set_border_color"] = bodies["set_border_color"].replace(
             target, "if (border_color_ == -1)", 1)
         assert target in extract_body(source, FUNCTIONS["set_border_color"][1])
     elif mutation == "wrong_slot":
-        target = "thumb_rect_.right = long_from_bits(thickness);"
-        # A duplicate bottom store where the right store belongs leaves right
-        # at its zero-init value and is a compiled, behaviorally distinct mutant.
-        assert target in bodies["set_thumb_rect"]
-        bodies["set_thumb_rect"] = bodies["set_thumb_rect"].replace(
-            target, "thumb_rect_.bottom = long_from_bits(thickness);", 1)
+        target = "rect->right = x + width;"
+        # The shared operation mutant duplicates bottom and omits right in all
+        # three geometry users; existing value oracles must reject that damage.
+        original_rectangle_body = rectangle_body
+        assert rectangle_body.count(target) == 1
+        rectangle_body = rectangle_body.replace(target, "rect->bottom = x + width;", 1)
+        assert rectangle_body != original_rectangle_body
     elif mutation == "missing_update":
         target = "    bar_thickness_ = thickness;\n"
         assert target in bodies["set_bar_thickness"]
@@ -322,7 +327,7 @@ def test_geometry_mutants_compile_but_fail_runtime(compiler: str, mutation: str)
     with tempfile.TemporaryDirectory(prefix="opensmacx-scroll-mutant-") as directory:
         root = Path(directory)
         cpp, binary = root / "scroll.cpp", root / "scroll"
-        cpp.write_text(FIXTURE + swap_body + "\n" + bits_helper + "\n" + expand_body + "\n" +
+        cpp.write_text(FIXTURE + swap_body + "\n" + bits_helper + "\n" + rectangle_body + "\n" + expand_body + "\n" +
                        ordered_bodies + SUFFIX)
         build = subprocess.run(
             [executable, "-std=c++17", "-Wall", "-Wextra", "-Werror=return-type",

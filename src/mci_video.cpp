@@ -154,7 +154,9 @@ int MCIVideo::load(char *moviePath, Win *targetWindow, int x, int y) {
     target_window_ = targetWindow;
     blit_y_ = y;
     blit_x_ = x;
-    WaveDeviceGlobal.disable();
+    if (WaveDeviceGlobal.disable() != 0) {
+        return 1;
+    }
 
     char *deviceType = "avivideo";
     MCI_DGV_OPEN_PARMS openParams;

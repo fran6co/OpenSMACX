@@ -7659,7 +7659,8 @@ int __cdecl offense_proto(int proto_id, int veh_id_def, BOOL is_bombard) {
         && proto_id != BSC_SPORE_LAUNCHER) {
         int8_t off_rating_byte = get_proto_offense_rating(proto_id);
         int off_rating = (off_rating_byte < 0) ? -off_rating_byte : off_rating_byte;
-        if (is_proto_missile(proto_id) && off_rating < 99) {
+        // Native 5C1229 tests the signed raw byte; scaling uses its magnitude.
+        if (is_proto_missile(proto_id) && off_rating_byte < 99) {
             off_rating = (off_rating * 3) / 2;
         }
         return (veh_id_def < 0) ? off_rating : off_rating * 8; // conventional

@@ -178,8 +178,12 @@ struct Palette {
   void reseed() { ++reseed_calls; }
   void set() { ++set_calls; }
 };
-struct WaveDevice { int disables, enables; WaveDevice() : disables(0), enables(0) {}
-  void disable() { ++disables; } void enable() { ++enables; } };
+// The original disable returns int but always zero. A nonzero injected result
+// below tests the caller's compiled boundary, not a natural callee failure.
+struct WaveDevice { int disables, enables, disable_result;
+  WaveDevice() : disables(0), enables(0), disable_result(0) {}
+  int disable() { ++disables; return disable_result; }
+  void enable() { ++enables; } };
 WaveDevice WaveDeviceGlobal;
 HWND HandleMain = reinterpret_cast<HWND>(0x4444);
 struct Call { MCIDEVICEID device; DWORD command, flags; DWORD_PTR parameters; };
@@ -231,6 +235,11 @@ def _harness(members: tuple[str, str], bodies: dict[str, str], destructor: str,
         assert before in bodies["ctor"]
         bodies["ctor"] = bodies["ctor"].replace(
             before, before + "\n    unknown_6_[0] = 0;", 1)
+    elif damage == "ignore_disable_result":
+        before = "if (WaveDeviceGlobal.disable() != 0) {\n        return 1;\n    }"
+        assert bodies["load"].count(before) == 1
+        bodies["load"] = bodies["load"].replace(
+            before, "WaveDeviceGlobal.disable();", 1)
     elif damage == "truncate_to_byte":
         before = "static_cast<uint16_t>(openParams.wDeviceID)"
         assert before in bodies["load"]
@@ -338,6 +347,7 @@ static void reset_globals() {
   open_fields_match=0;
   moved_window=0; moved_x=moved_y=moved_width=moved_height=0;
   WaveDeviceGlobal.disables=WaveDeviceGlobal.enables=0;
+  WaveDeviceGlobal.disable_result=0;
   ActiveVideoPlayer=0; MciVideoCallbackWindow=0; current_video=0;
 }
 static void check(bool condition, const char *what) {
@@ -402,6 +412,32 @@ static void test_invalid_and_failed_open_paths() {
   check(video.target_window_==&window && video.blit_x_==14 && video.blit_y_==15 &&
         WaveDeviceGlobal.disables==1 && MciVideoCallbackWindow==HandleMain,
         "failed open retains earlier state changes and wave disable");
+}
+
+static void test_disable_result_guard_is_before_mci_setup() {
+  reset_globals(); MCIVideo video; current_video=&video; Win window;
+  video.field_0_=0xA5; video.mciId_=0x4321;
+  video.unknown_6_[0]=0x5A; video.unknown_6_[1]=0xA5;
+  video.window_handle_=(HWND)0x1110; video.palette_handle_=(HPALETTE)0x2220;
+  video.previous_window_proc_=(WNDPROC)0x3330;
+  video.blit_width_=91; video.blit_height_=92;
+  MciVideoCallbackWindow=(HWND)0x5550; WaveDeviceGlobal.disable_result=17;
+  check(video.load((char*)"movie.avi", &window, 14, 15)==1,
+        "disable boundary failure returns status 1");
+  check(video.target_window_==&window && video.blit_x_==14 && video.blit_y_==15,
+        "disable boundary failure retains the three earlier member stores");
+  check(WaveDeviceGlobal.disables==1 && WaveDeviceGlobal.enables==0 &&
+        calls.empty() && get_palette_calls==0 && move_window_calls==0 &&
+        video.palette_.init_calls==0 && video.palette_.reseed_calls==0,
+        "disable boundary failure exits before MCI palette and window operations");
+  check(video.field_0_==0xA5 && video.mciId_==0x4321 &&
+        video.unknown_6_[0]==0x5A && video.unknown_6_[1]==0xA5 &&
+        video.window_handle_==(HWND)0x1110 &&
+        video.palette_handle_==(HPALETTE)0x2220 &&
+        video.previous_window_proc_==(WNDPROC)0x3330 &&
+        video.blit_width_==91 && video.blit_height_==92 &&
+        MciVideoCallbackWindow==(HWND)0x5550,
+        "disable boundary failure preserves later state and callback storage");
 }
 
 static void test_load_truncation_repeated_reads_and_error_continuation() {
@@ -537,6 +573,7 @@ int main() {
   test_constructor_preserves_unknown_adjacent_word();
   test_user_destructor_closes_before_palette_member_destruction();
   test_invalid_and_failed_open_paths();
+  test_disable_result_guard_is_before_mci_setup();
   test_load_truncation_repeated_reads_and_error_continuation();
   test_status_returns_sdk_value_and_uses_word_device();
   test_play_branches_order_and_repeated_device_reads();
@@ -577,7 +614,7 @@ def test_actual_mci_owner_methods_preserve_word_storage_and_api_paths(
 
 @pytest.mark.parametrize("compiler_name", ("g++", "clang++"))
 @pytest.mark.parametrize("damage", (
-    "initialize_unknown_bytes", "truncate_to_byte",
+    "initialize_unknown_bytes", "truncate_to_byte", "ignore_disable_result",
     "return_on_status_error", "return_on_where_error", "split_status_blocks",
     "play_window_error_status", "play_play_error_status", "play_success_status"))
 def test_actual_mci_controls_reject_storage_and_error_flow_damage(
@@ -601,6 +638,7 @@ def test_actual_mci_controls_reject_storage_and_error_flow_damage(
     expected = {
         "initialize_unknown_bytes": "constructor preserves unknown bytes +6..+7",
         "truncate_to_byte": "load re-reads id for every later API call",
+        "ignore_disable_result": "disable boundary failure returns status 1",
         "return_on_status_error": "load success despite status errors",
         "return_on_where_error": "where failure is ignored and load still succeeds",
         "split_status_blocks": "load reuses one status parameter block across both queries",

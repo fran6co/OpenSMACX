@@ -424,12 +424,15 @@
       },
       "src/mci_video.cpp": {
         "flags": [
-          "/c",
-          "/O2",
-          "/Gy",
-          "/GR-",
+          "/nologo",
+          "/TP",
+          "/Zm200",
           "/GX",
-          "/Ob2"
+          "/O2",
+          "/Ob2",
+          "-MT",
+          "/W4",
+          "-c"
         ]
       },
       "src/dipedit.cpp": {
@@ -1763,6 +1766,19 @@
         ]
       },
       "src/stringlist.cpp": {
+        "flags": [
+          "/nologo",
+          "/TP",
+          "/Zm200",
+          "/GX",
+          "/O2",
+          "/Ob2",
+          "-MT",
+          "/W4",
+          "-c"
+        ]
+      },
+      "src/jackal/rectangle.cpp": {
         "flags": [
           "/nologo",
           "/TP",

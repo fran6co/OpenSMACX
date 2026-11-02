@@ -541,30 +541,6 @@ void __cdecl offset_rect(RECT *rect, int dx, int dy) {
     rect->bottom += dy;
 }
 
-/*
-Purpose: Build a rectangle from an origin and dimensions using wrapping coordinates.
-// ORIGINAL: 0x005F86C0 sub_5f86c0 0x005F86C0-0x005F86E6 BYTE_EXACT
-// symbol    ?make_rect@@YAPAUtagRECT@@PAU1@HHHH@Z
-// size      38 bytes
-// prototype 
-// callers   2   call targets   0
-// kind      game
-// flags     sp_ready;purged_ok
-// calls     (none)
-// notes     Runtime redirect installed by DllMain after byte-signature validation
-Status: Complete
-*/
-RECT *__cdecl make_rect(RECT *rect, int x, int y, int width, int height) {
-    // PLAIN ASSIGNMENTS. The `volatile RECT *` and the `long_from_bits`
-    // bit-cast were written to pin the store order and the signedness; both
-    // are things VC6 cannot fold, and together they doubled the body. The
-    // image's order IS declaration order, so nothing had to be pinned.
-    rect->left = x;
-    rect->top = y;
-    rect->right = x + width;
-    rect->bottom = y + height;
-    return rect;
-}
 
 
 
@@ -8102,6 +8078,7 @@ lab_default_cursor:
         return reinterpret_cast<int>(SetCursor(cur));
     }
 }
+
 
 // ORIGINAL: 0x005ED5C0 ?center@Win@@QAEHXZ 0x005ED5C0-0x005ED6F7 FILE
 // kind game
