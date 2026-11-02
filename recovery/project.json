@@ -152,6 +152,20 @@
     "backend": "pe-coff-i386",
     "compiler_profile": "application",
     "unit_flag_sets": {
+      "src/jackal/filewin.cpp": {
+        "flags": [
+          "/nologo",
+          "/TP",
+          "/Zm200",
+          "/GX",
+          "/O2",
+          "/Ob2",
+          "-MT",
+          "/W4",
+          "/Z7",
+          "-c"
+        ]
+      },
       "src/sound_loader.cpp": {
         "flags": [
           "/nologo",
@@ -189,6 +203,7 @@
           "/Ob2",
           "-MT",
           "/W4",
+          "/Z7",
           "-c"
         ]
       },
@@ -823,6 +838,7 @@
           "/Ob2",
           "-MT",
           "/W4",
+          "/Z7",
           "-c"
         ]
       },
@@ -1310,6 +1326,7 @@
           "/Ob2",
           "-MT",
           "/W4",
+          "/Z7",
           "-c"
         ]
       },

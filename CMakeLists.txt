@@ -602,6 +602,7 @@ set_property(SOURCE
     src/prototype_history.cpp
     src/console_commands.cpp
     src/net_class.cpp
+    src/sprite.cpp
     src/world.cpp
     src/win.cpp
     APPEND PROPERTY COMPILE_OPTIONS "/Z7")

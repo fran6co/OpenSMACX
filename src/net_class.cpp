@@ -2719,7 +2719,7 @@ Purpose: Read one packet off Net's middle queue, retrying until something
          shared NetGetScratch buffer and answers that buffer's address on
          success, zero on timeout.
 
-// ORIGINAL: 0x00630A80 sub_630a80 0x00630A80-0x00630AFC
+// ORIGINAL: 0x00630A80 sub_630a80 0x00630A80-0x00630AFC BYTE_EXACT
 // symbol    ?read_queue_head_until_timeout@Net@@QAEPAXPAI0@Z
 // TRIED: original spills its cached timeGetTime() start value into the (now-unused) first stack argument slot instead of a fresh local; not reproduced.
 // Historical emitted-symbol hint: @sub_630a80@16
@@ -2738,16 +2738,11 @@ void *Net::read_queue_head_until_timeout(unsigned int *key_out, unsigned int *le
         return 0;
     }
     const DWORD start = timeGetTime();
-    DWORD now = timeGetTime();
-    if (now - start >= field_6FC_) {
-        return 0;
-    }
-    do {
+    while (timeGetTime() - start < field_6FC_) {
         if (queue_10c_.get(NetGetScratch, key_out, 0, length_out) != 0) {
             return NetGetScratch;
         }
-        now = timeGetTime();
-    } while (now - start < field_6FC_);
+    }
     return 0;
 }
 
@@ -2756,7 +2751,7 @@ Purpose: The sender's twin of sub_630a80: wait on the same queue for the
          NEXT reader, using the signed-length get overload, until the
          timeout at Net+0x6FC expires.
 
-// ORIGINAL: 0x00630B00 sub_630b00 0x00630B00-0x00630B7C
+// ORIGINAL: 0x00630B00 sub_630b00 0x00630B00-0x00630B7C BYTE_EXACT
 // symbol    ?read_queue_key_until_timeout@Net@@QAEPAXHPAH@Z
 // TRIED: kept the contract's __stdcall(int,int) head question open - the disasm sets ebx = ecx on entry, so it is really this receiver.
 // Historical emitted-symbol hint: @sub_630b00@16
@@ -2773,14 +2768,10 @@ Status: Complete
 void *Net::read_queue_key_until_timeout(int key, int *length_out) {
     if (NetDirectPlay != 0 && key != 0) {
         const DWORD start = timeGetTime();
-        DWORD now = timeGetTime();
-        if (now - start < field_6FC_) {
-            do {
-                if (queue_10c_.get(NetGetScratch, key, 0, length_out) != 0) {
-                    return NetGetScratch;
-                }
-                now = timeGetTime();
-            } while (now - start < field_6FC_);
+        while (timeGetTime() - start < field_6FC_) {
+            if (queue_10c_.get(NetGetScratch, key, 0, length_out) != 0) {
+                return NetGetScratch;
+            }
         }
     }
     return 0;

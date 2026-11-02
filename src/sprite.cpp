@@ -2097,7 +2097,7 @@ uint8_t BlankSpriteCleanupGuard;
 // symbol    _$E8
 // TRIED: same finding as 0x00589870 - homed into general.cpp it measures 5 of 6
 // Historical TRIED continuation: the earlier atexit argument cleanup used add esp,4 where the pinned startup uses pop ecx.
-// ORIGINAL: 0x0063BB00 sub_63bb00 0x0063BB00-0x0063BB1F FILE
+// ORIGINAL: 0x0063BB00 sub_63bb00 0x0063BB00-0x0063BB1F FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence":["Pinned 0x0063BB00-0x0063BB1F tests and sets bit 0 at 0x009BEAE0 before calling Sprite::~Sprite on 0x009BEAE8; the set-bit branch returns without a second teardown.","The source-owned generated exit callback tests and sets the separate cleanup guard, then destroys the Sprite in rawstorage_.bytes. Its physical COFF references select this guard, this owner storage and Sprite::close; no unconditional second destruction is introduced.","docs/recovery/ida9-functions.csv retains the complete catalogued callback extent. This new identity has no matching claim."],"reason":"Bind the generated exit callback to the real owner’s guarded Sprite teardown; preserve bit-set-before-destruction and avoid an implicit second dtor."}
 // symbol    _$E6
 // RECOVERY_OBJECT: v3 0x009BEAE8 ?g_BLANK_SPRITE@@3VSprite@@A member ?g_BLANK_SPRITE_OWNER@@3UBlankSpriteStorageOwner@@A rawstorage_.bytes

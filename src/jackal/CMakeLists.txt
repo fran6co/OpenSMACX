@@ -9,3 +9,8 @@ add_library(jackal STATIC
 target_include_directories(jackal PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}")
 target_compile_definitions(jackal PRIVATE $<$<CONFIG:Debug>:BUILD_DEBUG>)
 target_compile_options(jackal PRIVATE /W4 "--repro-root=${PROJECT_SOURCE_DIR}")
+
+# Native member-reference verification needs these owners' actual CodeView types.
+# Qualified /Z7 controls preserve their runtime code, data, EH and FPO content.
+set_property(SOURCE checkbox.cpp radiobutton.cpp filewin.cpp
+    APPEND PROPERTY COMPILE_OPTIONS "/Z7")

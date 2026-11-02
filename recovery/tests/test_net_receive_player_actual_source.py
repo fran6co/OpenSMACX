@@ -228,9 +228,15 @@ def _definitions() -> str:
     records = {row.address: row for row in read_file(ROOT / "src/net_class.cpp")}
     record_type = extract((ROOT / "src/net_class.cpp").read_text(),
                           "struct NetPeerPlayerRecord") + ";"
-    return record_type + "\n\n" + "\n\n".join(
+    bodies = record_type + "\n\n" + "\n\n".join(
         _definition(records[address].region, signature)
         for address, signature in METHODS.items())
+    # Native pointers and int are both32bits. Adapt only this exact source
+    # conversion for the64bit host compiler; keep its actual null/result flow.
+    pointer_cast = "reinterpret_cast<int>(NetDirectPlay)"
+    assert bodies.count(pointer_cast) == 1
+    return bodies.replace(
+        pointer_cast, "static_cast<int>(reinterpret_cast<intptr_t>(NetDirectPlay))", 1)
 
 
 def test_actual_net_owner_bodies_and_damage_control() -> None:
@@ -266,3 +272,141 @@ def test_actual_net_owner_bodies_and_damage_control() -> None:
                     assert result.returncode == 0, f"{compiler} owner control failed:\n{result.stdout}"
                 else:
                     assert result.returncode != 0, f"{compiler} failed to detect the receiver-state mutant"
+
+
+TIMEOUT_AND_STAMP_MAIN = r"""
+static void shrink_receive_timeout() { active_net->field_6FC_ = 0; }
+static void extend_timeout_and_drop_interface() {
+  active_net->field_6FC_ = 100;
+  NetDirectPlay = 0;
+}
+int main() {
+  Net net;
+  active_net = &net;
+  memset(net.players_, 0, sizeof(net.players_));
+  FakeDirectPlay direct;
+  NetDirectPlay = &direct;
+  unsigned int key = 0, size = 0;
+  int signed_size = 0;
+
+  // Original guards return before touching the clock or queue.
+  time_count = 0; time_index = 0;
+  assert(net.read_queue_head_until_timeout(0, &size) == 0);
+  assert(net.read_queue_key_until_timeout(0, &signed_size) == 0);
+  NetDirectPlay = 0;
+  assert(net.read_queue_head_until_timeout(&key, &size) == 0);
+  assert(net.read_queue_key_until_timeout(7, &signed_size) == 0);
+  assert(time_index == 0 && net.queue_10c_.head_calls == 0 &&
+         net.queue_10c_.keyed_calls == 0);
+  NetDirectPlay = &direct;
+
+  // Unsigned elapsed time wraps; an exact deadline is already expired.
+  net.field_6FC_ = 50;
+  net.queue_10c_.head_result = 1;
+  time_values[0] = 0xFFFFFFF0u; time_values[1] = 4;
+  time_count = 2; time_index = 0;
+  assert(net.read_queue_head_until_timeout(&key, &size) == NetGetScratch);
+  assert(time_index == 2 && net.queue_10c_.head_calls == 1);
+  time_values[0] = 0; time_values[1] = 0x80000001u;
+  time_count = 2; time_index = 0;
+  assert(net.read_queue_head_until_timeout(&key, &size) == 0);
+  assert(time_index == 2 && net.queue_10c_.head_calls == 1);
+  time_values[0] = 100; time_values[1] = 150;
+  time_count = 2; time_index = 0;
+  assert(net.read_queue_head_until_timeout(&key, &size) == 0);
+  assert(time_index == 2 && net.queue_10c_.head_calls == 1);
+
+  net.field_6FC_ = 0;
+  time_values[0] = time_values[1] = 9;
+  time_count = 2; time_index = 0;
+  assert(net.read_queue_key_until_timeout(7, &signed_size) == 0);
+  assert(time_index == 2 && net.queue_10c_.keyed_calls == 0);
+
+  // Failed queue callbacks change the next deadline read. The interface
+  // guard belongs only to entry, so dropping it does not end a live wait.
+  net.field_6FC_ = 50;
+  net.queue_10c_.head_result = 0;
+  queue_callback = shrink_receive_timeout;
+  time_values[0] = 0; time_values[1] = 1; time_values[2] = 2;
+  time_count = 3; time_index = 0;
+  assert(net.read_queue_head_until_timeout(&key, &size) == 0);
+  assert(time_index == 3 && net.queue_10c_.head_calls == 2);
+
+  net.field_6FC_ = 50;
+  net.queue_10c_.keyed_result = 0;
+  queue_callback = extend_timeout_and_drop_interface;
+  time_values[0] = 0; time_values[1] = 1;
+  time_values[2] = 60; time_values[3] = 100;
+  time_count = 4; time_index = 0;
+  assert(net.read_queue_key_until_timeout(7, &signed_size) == 0);
+  assert(time_index == 4 && net.queue_10c_.keyed_calls == 2);
+  queue_callback = 0;
+
+  // The scan chooses its first matching slot, includes slot15 and compares
+  // message stamps as unsigned values without touching the polling stamp.
+  net.players_[0].field_0_ = net.players_[15].field_0_ = 99;
+  net.players_[0].field_4_ = 0xFFFFFFFEu;
+  net.players_[0].stamp_10_ = 0x12345678u;
+  net.players_[15].field_4_ = 0;
+  assert(net.check_message(99, 1) == 1);
+  assert(net.players_[0].field_4_ == 0xFFFFFFFEu &&
+         net.players_[15].field_4_ == 0);
+  assert(net.check_message(99, 0xFFFFFFFEu) == 1);
+  assert(net.check_message(99, 0xFFFFFFFFu) == 0);
+  assert(net.players_[0].field_4_ == 0xFFFFFFFFu &&
+         net.players_[0].stamp_10_ == 0x12345678u);
+  net.players_[0].field_0_ = 100;
+  assert(net.check_message(99, 7) == 0 && net.players_[15].field_4_ == 7);
+  assert(net.check_message(123, 8) == 0);
+  return 0;
+}
+"""
+
+
+def test_actual_net_timeout_callback_and_stamp_boundaries() -> None:
+    compilers = [compiler for compiler in ("g++", "clang++") if shutil.which(compiler)]
+    assert compilers, "neither GCC nor Clang is available"
+    harness = HARNESS.replace(
+        "static Net *active_net;",
+        "static Net *active_net;\nstatic void (*queue_callback)() = 0;", 1)
+    for counter in ("head_calls", "keyed_calls"):
+        old = "    ++" + counter + ";"
+        assert harness.count(old) == 1
+        harness = harness.replace(old, old + "\n    if (queue_callback) queue_callback();", 1)
+    bodies = _definitions()
+    loop = "while (timeGetTime() - start < field_6FC_)"
+    assert bodies.count(loop) == 2
+    cached = bodies.replace(
+        "const DWORD start = timeGetTime();",
+        "const DWORD saved_timeout = field_6FC_; const DWORD start = timeGetTime();")
+    cached = cached.replace("< field_6FC_)", "< saved_timeout)")
+    signed_elapsed = bodies.replace(
+        loop, "while (static_cast<int32_t>(timeGetTime() - start) < static_cast<int32_t>(field_6FC_))")
+    late_guard = bodies.replace(
+        loop, "while (NetDirectPlay != 0 && timeGetTime() - start < field_6FC_)")
+    inclusive = bodies.replace(loop, "while (timeGetTime() - start <= field_6FC_)")
+    signed_stamp = bodies.replace(
+        "stamp <= record->field_4_",
+        "static_cast<int32_t>(stamp) <= static_cast<int32_t>(record->field_4_)")
+    variants = [("owner", bodies, True)] + [
+        (name, mutant, False) for name, mutant in (
+            ("cached-timeout", cached), ("signed-elapsed", signed_elapsed),
+            ("late-interface-guard", late_guard), ("inclusive-deadline", inclusive),
+            ("signed-stamp", signed_stamp),
+        )]
+    assert all(mutant != bodies for _, mutant, success in variants if not success)
+    with tempfile.TemporaryDirectory(prefix="osmx-net-timeout-host-") as temp:
+        directory = Path(temp)
+        for compiler in compilers:
+            for label, implementation, expect_success in variants:
+                cpp = directory / f"{compiler.replace('+', 'p')}-{label}.cpp"
+                exe = cpp.with_suffix("")
+                cpp.write_text(harness + implementation + "\n" + TIMEOUT_AND_STAMP_MAIN)
+                subprocess.run(
+                    [compiler, "-std=c++11", "-Wall", "-Wextra", "-Werror",
+                     str(cpp), "-o", str(exe)], check=True,
+                    stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
+                result = subprocess.run([str(exe)], check=False, text=True,
+                                        stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+                assert (result.returncode == 0) == expect_success, (
+                    f"{compiler} {label} returned {result.returncode}:\n{result.stdout}")
