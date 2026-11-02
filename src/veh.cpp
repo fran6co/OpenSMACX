@@ -5719,23 +5719,6 @@ int __cdecl armor_budget(int faction_id, int max_cost) {
     return armor_id;
 }
 
-/*
-Purpose: Get the index value of a particular ability's bitfield.
-// ORIGINAL: 0x00581170 ?abil_index@@YAHH@Z 0x00581170-0x00581187 BYTE_EXACT
-// body      src/veh.h
-// size      23 bytes
-// prototype int (__cdecl ?abil_index@@YAHH@Z)(int abilityID)
-// callers   7   call targets   0
-// kind      game
-// flags     frame;sp_ready;purged_ok
-// calls     (none)
-Return Value: Ability index
-Status: Complete
-*/
-// BODY IN veh.h, as `MEASURED inline`: the image writes it out at
-// some call sites and calls it at others, and a .cpp definition is only ever
-// one of those. The marker stays here because that is where the catalogue
-// reads it.
 
 
 /*
@@ -25758,4 +25741,34 @@ int __cdecl veh_sprite_double_click(int veh_id) {
     NetDaemonNet.await_synch();
     NetDaemonNet.unlock_veh();
     return 1;
+}
+
+/*
+Purpose: Get the index value of a particular ability's bitfield.
+// ORIGINAL: 0x00581170 ?abil_index@@YAHH@Z 0x00581170-0x00581187 BYTE_EXACT
+// Previous body location: src/veh.h.
+// size      23 bytes
+// prototype int (__cdecl ?abil_index@@YAHH@Z)(int abilityID)
+// callers   7   call targets   0
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     (none)
+Return Value: Ability index
+Status: Complete
+*/
+// Historical placement note (superseded by pinned direct-call evidence):
+// BODY IN veh.h, as `MEASURED inline`: the image writes it out at
+// some call sites and calls it at others, and a .cpp definition is only ever
+// one of those. The marker stays here because that is where the catalogue
+// reads it.
+
+// An ordinary owner definition restores calls from other translation units,
+// including 0x439D5A/0x439D9A/0x439E26. Same-TU Veh calls still auto-inline;
+// this placement does not establish the original translation-unit boundaries.
+int __cdecl abil_index(int ability_id) {
+    int index = 0;
+    for (int check = ability_id; !(check & 1); index++) {
+        check >>= 1;
+    }
+    return index;
 }

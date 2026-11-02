@@ -29,9 +29,8 @@ struct VOX_Matrix {
 };
 
 // The voxel engine installs these six callbacks as one contiguous table. The
-// table's storage is also the beginning of the renderer's projection/message
-// output view below; keep the two views in CaviarOutputMessageWindowCandidate
-// rather than inventing independent globals for their overlapping bytes.
+// table precedes the renderer's disjoint packed projection rows and message
+// storage in CaviarOutputMessageWindowCandidate; keep their measured offsets.
 struct VoxIoCallbacks {
   void *(__cdecl *allocate)(unsigned long);
   void (__cdecl *release)(void *);
@@ -97,17 +96,30 @@ union CaviarKernelProjectionWindowCandidate {
   CaviarKernelStepRowCandidate raster_step_rows_[32];
   uint32_t accessed_words_[0x80];
 };
+// 6409E3..640A38 writes 26 rows of three packed dwords with stride16.
+// The source row/window sizes describe those accesses, not a proved original
+// array allocation. In particular, the last row's fourth word is not written.
+struct CaviarProjectionOutputRowCandidate {
+  uint32_t packed_x_;
+  int32_t depth_offset_;
+  uint32_t packed_z_;
+  uint32_t unobserved_word_;
+};
 struct CaviarOutputMessageWindowCandidate {
-  // Preserve the observed callback/projection byte overlap without accessing
-  // inactive union members: the first four callback fields are disjoint from
-  // projection output; the array begins at seek and occupies the same bytes.
-  // Seek/tell callback representations are still loaded from object bytes.
+  // 6392E0 installs six callbacks; 640A27's first projection destination is
+  // 9C0BA0, after all six slots. The old projection base at9C0B90 was an
+  // address-expression base, not the builder's first output element.
   void *(__cdecl *io_allocate_)(unsigned long);
   void (__cdecl *io_release_)(void *);
   int (__cdecl *io_read_)(int, char *, long);
   int (__cdecl *io_write_)(int, void *, long);
-  uint32_t projection_words_[0x6B];
-  uint8_t unidentified_gap_[0x24];
+  long (__cdecl *io_seek_)(int, long, int);
+  long (__cdecl *io_tell_)(int);
+#if defined(_M_IX86) || defined(__i386__)
+  uint8_t unidentified_callback_gap_[8];
+#endif
+  CaviarProjectionOutputRowCandidate projection_rows_[0x1A];
+  uint8_t unidentified_gap_[0x20];
   char message_[0x100];
 };
 #pragma pack(pop)
@@ -115,38 +127,52 @@ static_assert(sizeof(CaviarKernelStepRowCandidate) == 0x10,
               "raster stepper reads four dwords per row");
 static_assert(sizeof(CaviarKernelAliasTailCandidate) == 0x60,
               "projection tail occupies 0x9C09E0..0x9C0A3F");
-static_assert(offsetof(CaviarKernelKnownProjectionViewsCandidate, tail_) == 0x1A0,
-              "26 projection cells end exactly at 0x9C09E0");
 static_assert(offsetof(CaviarKernelAliasTailCandidate, vox_scene_extent_) == 0x18,
               "scene extent field follows six adjacent scratch floats");
 static_assert(offsetof(CaviarKernelProjectionWindowCandidate, current_views_) == 0,
               "projection child paths start at the parent base");
+static_assert(offsetof(CaviarKernelKnownProjectionViewsCandidate, tail_) == 0x1A0,
+              "26 projection cells end exactly at 0x9C09E0");
 static_assert(sizeof(CaviarKernelProjectionWindowCandidate) == 0x200,
               "projection owner covers the observed 0x200-byte access window");
+static_assert(sizeof(CaviarProjectionOutputRowCandidate) == 0x10 &&
+                  offsetof(CaviarProjectionOutputRowCandidate, packed_x_) == 0 &&
+                  offsetof(CaviarProjectionOutputRowCandidate, depth_offset_) == 4 &&
+                  offsetof(CaviarProjectionOutputRowCandidate, packed_z_) == 8,
+              "packed projection output stores three dwords with stride16");
 #if defined(_M_IX86) || defined(__i386__)
 static_assert(sizeof(CaviarOutputMessageWindowCandidate) == 0x2E0,
               "Win32 shared callback/projection/message storage is 0x2e0 bytes");
 static_assert(offsetof(CaviarOutputMessageWindowCandidate, io_allocate_) == 0 &&
                   offsetof(CaviarOutputMessageWindowCandidate, io_release_) == 4 &&
                   offsetof(CaviarOutputMessageWindowCandidate, io_read_) == 8 &&
-                  offsetof(CaviarOutputMessageWindowCandidate, io_write_) == 12,
-              "four typed callbacks occupy the disjoint prefix dwords");
-static_assert(offsetof(CaviarOutputMessageWindowCandidate, projection_words_) == 0x10,
-              "Win32 projection output begins over the seek slot");
+                  offsetof(CaviarOutputMessageWindowCandidate, io_write_) == 12 &&
+                  offsetof(CaviarOutputMessageWindowCandidate, io_seek_) == 16 &&
+                  offsetof(CaviarOutputMessageWindowCandidate, io_tell_) == 20,
+              "six typed callbacks occupy the original six prefix dwords");
+static_assert(offsetof(CaviarOutputMessageWindowCandidate, projection_rows_) == 0x20,
+              "Win32 packed projection rows begin at 0x9C0BA0");
 static_assert(offsetof(CaviarOutputMessageWindowCandidate, message_) == 0x1E0,
               "Win32 message buffer remains at the observed 0x9C0D60 address");
 #else
+// Host fixtures use 64-bit function pointers. Their two extra pointer dwords
+// occupy the native eight-byte gap, preserving the existing host window and
+// message offsets relative to the seek slot. This is not a Win32 ABI witness.
+static_assert(sizeof(void *) == 8 && sizeof(VoxIoCallbacks) == 6 * sizeof(void *),
+              "host callback projection expects six 64-bit function pointers");
 static_assert(sizeof(CaviarOutputMessageWindowCandidate) ==
                   offsetof(VoxIoCallbacks, seek) + 0x2D0,
               "host shared storage follows host callback pointer width");
 static_assert(offsetof(CaviarOutputMessageWindowCandidate, io_allocate_) == 0 &&
                   offsetof(CaviarOutputMessageWindowCandidate, io_release_) == sizeof(void *) &&
                   offsetof(CaviarOutputMessageWindowCandidate, io_read_) == 2 * sizeof(void *) &&
-                  offsetof(CaviarOutputMessageWindowCandidate, io_write_) == 3 * sizeof(void *),
-              "host typed callback prefix follows host function-pointer width");
-static_assert(offsetof(CaviarOutputMessageWindowCandidate, projection_words_) ==
-                  offsetof(VoxIoCallbacks, seek),
-              "host projection view follows host callback pointer width");
+                  offsetof(CaviarOutputMessageWindowCandidate, io_write_) == 3 * sizeof(void *) &&
+                  offsetof(CaviarOutputMessageWindowCandidate, io_seek_) == 4 * sizeof(void *) &&
+                  offsetof(CaviarOutputMessageWindowCandidate, io_tell_) == 5 * sizeof(void *),
+              "host typed callbacks follow host function-pointer width");
+static_assert(offsetof(CaviarOutputMessageWindowCandidate, projection_rows_) ==
+                  offsetof(VoxIoCallbacks, seek) + 0x10,
+              "host projection rows remain disjoint from all six callbacks");
 #endif
 
 extern CaviarKernelProjectionWindowCandidate CaviarKernelProjectionWindow;
@@ -581,7 +607,7 @@ class Caviar {
   // 0x00616DE0. Builds the 200-instance table and seeds the scene state: the
   // three allocations per instance, the rotation, the clipping defaults and
   // the channel bounds, then switches the renderer on.
-  void init();
+  int init();
   // Original 0x4210F0 tails close; instance entries have no additional
   // destructor work. Loaded CaviarData models have a separate destructor.
   ~Caviar() { close(); }

@@ -47,7 +47,8 @@ struct CaviarKernelViews { CaviarProjectionCell cells_[26]; CaviarKernelAliasTai
 union CaviarKernelProjectionWindowCandidate {
   CaviarKernelViews current_views_; CaviarKernelStepRowCandidate raster_step_rows_[32];
 };
-struct CaviarOutputMessageWindowCandidate { uint32_t projection_words_[0x6b]; uint8_t gap_[0x24]; char message_[0x100]; };
+struct CaviarProjectionOutputRowCandidate { uint32_t packed_x_; int32_t depth_offset_; uint32_t packed_z_; uint32_t unobserved_word_; };
+struct CaviarOutputMessageWindowCandidate { CaviarProjectionOutputRowCandidate projection_rows_[0x1a]; uint8_t gap_[0x20]; char message_[0x100]; };
 CaviarKernelProjectionWindowCandidate CaviarKernelProjectionWindow = {};
 CaviarOutputMessageWindowCandidate CaviarOutputMessageWindow = {};
 struct CaviarDrawSetupPointerStorageCandidate {

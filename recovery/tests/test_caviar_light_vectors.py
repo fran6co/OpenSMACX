@@ -21,11 +21,12 @@ PIN="01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
 def parts():
     source=(ROOT/"src/caviar.cpp").read_text()
     vector=(ROOT/"src/vector.cpp").read_text()
+    geometry=(ROOT/"src/caviar_geometry.cpp").read_text()
     return {"header":(ROOT/"src/caviar.h").read_text(),
-            "init":braced(source,source.index("void Caviar::init() {")),
+            "init":braced(source,source.index("int Caviar::init() {")),
             "setter":braced(source,source.index("void Caviar::set_shadow_vector(")),
             "add":braced(vector,vector.index("void __cdecl vector_add(")),
-            "normalise":braced(source,source.index("void __cdecl vox_normalise_vector("))}
+            "normalise":braced(geometry,geometry.index("void __cdecl vox_normalise_vector("))}
 
 
 def run_host(tmp_path,source):
@@ -86,7 +87,7 @@ def run_host(tmp_path,source):
             struct Guard {uint32_t before;Caviar object;uint32_t after;} value;
             value.before=0x12345678;value.after=0xABCD1234;
             external_vectors(value.object);
-            value.object.init();
+            require(value.object.init()==0);
             require(closes==1 && allocations.size()==600);
             for(int n=0;n<3;++n) {
                 require(value.object.light_vector().values[n]==(n==2?-1.0f:0.0f));

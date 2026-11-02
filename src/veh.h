@@ -832,13 +832,7 @@ MEASURED inline int __cdecl veh_moves(int veh_id) {
     return range(speed(veh_id, false) - Vehs[veh_id].moves_expended, 0, 999);
 }
 
-MEASURED inline int __cdecl abil_index(int ability_id) {
-    int index = 0;
-    for (int check = ability_id; !(check & 1); index++) {
-        check >>= 1;
-    }
-    return index;
-}
+int __cdecl abil_index(int ability_id);
 
 MEASURED inline void __cdecl veh_put(int veh_id, int x, int y) {
     veh_drop(veh_lift(veh_id), x, y);

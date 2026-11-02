@@ -33,11 +33,15 @@ def actual_body(*, bounded_bonus_loop=False):
     else:
         raise AssertionError("unterminated actual DesignWin::suggest_abil")
     if bounded_bonus_loop:
+        before = body
+        anchor = "for (int i = 0; i < 0x29; ++i)"
+        assert body.count(anchor) == 1
         body = body.replace(
-            "for (int i = 0; i < 0x29; ++i)",
-            "for (int i = 0; i < local.faction_bonus_count && i < 8; ++i)",
+            anchor,
+            "for (int i = 0; i < Players[ConsoleGlobal.faction_id_].faction_bonus_count && i < 8; ++i)",
             1,
         )
+        assert body != before
     return body
 
 

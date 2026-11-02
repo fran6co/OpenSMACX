@@ -118,8 +118,8 @@ def test_actual_owner_and_producer_bodies_preserve_partial_failure():
     assert "new_entry = ::new(entry_memory) StringStructEntry" in source
     assert "new_payload = ::new(payload_memory) SpriteStruct" in source
     assert "if (row_sprite == 0) return 3;" in source
-    assert "if (Dialog::item_list_.add(id) != 0) return 4;" in source
-    assert "if (list_.add(id) != 0) return 4;" in source
+    assert "if (items.add(id) != 0) return 4;" in source
+    assert "if (list->add(id) != 0) return 4;" in source
     compile_and_run(source)
 
 
@@ -133,7 +133,7 @@ def test_actual_fill_entry_mutant_is_detected():
 
 def test_actual_producer_rollback_mutant_is_detected():
     source = owner_bodies()
-    original = "if (Dialog::item_list_.add(id) != 0) return 4;"
-    mutant = "if (Dialog::item_list_.add(id) != 0) { list_.entry_count_ = 0; return 4; }"
+    original = "if (items.add(id) != 0) return 4;"
+    mutant = "if (items.add(id) != 0) { list_.entry_count_ = 0; return 4; }"
     assert original in source
     compile_and_run(source.replace(original, mutant, 1), expected_success=False)

@@ -98,7 +98,7 @@ const float CaviarCameraDistance = -10000.0f;
 // RECOVERY_OBJECT: v3 0x009C09FC ?CaviarProjectionScratchFC@@3MA member ?CaviarKernelProjectionWindow@@3TCaviarKernelProjectionWindowCandidate@@A current_views_.tail_.scratch_fc_
 // RECOVERY_OBJECT: v3 0x009C0A00 ?CaviarProjectionScratchA00@@3MA member ?CaviarKernelProjectionWindow@@3TCaviarKernelProjectionWindowCandidate@@A current_views_.tail_.scratch_a00_
 // RECOVERY_OBJECT: v3 0x009C0A04 ?CaviarProjectionScratchA04@@3MA member ?CaviarKernelProjectionWindow@@3TCaviarKernelProjectionWindowCandidate@@A current_views_.tail_.scratch_a04_
-// RECOVERY_OBJECT: v3 0x009C0B90 ?CaviarProjectionOutputWords@@3PAIA member ?CaviarOutputMessageWindow@@3UCaviarOutputMessageWindowCandidate@@A projection_words_
+// RECOVERY_OBJECT: v3 0x009C0B90 ?CaviarProjectionOutputWords@@3PAIA member ?CaviarOutputMessageWindow@@3UCaviarOutputMessageWindowCandidate@@A io_seek_
 CaviarKernelProjectionWindowCandidate CaviarKernelProjectionWindow = {0};
 CaviarOutputMessageWindowCandidate CaviarOutputMessageWindow = {0};
 // RECOVERY_OBJECT: v1 0x009C0A40 ?CaviarFixedPointProjection@@3UCaviarFixedPointProjectionMatrix@@A
@@ -1125,10 +1125,8 @@ long Caviar::vx_tell(int fd) {
 namespace {
 
 // The six vx_* IO callback slots installed at 0x009C0B80..0x009C0B94 are
-// ordered alloc/free/read/write/seek/tell in the original contiguous span.
-// The first four are disjoint typed fields; projection output begins at the
-// seek-slot offset and overwrites those bytes, while the row pattern leaves
-// tell untouched. Only seek/tell remain byte-representation loads.
+// ordered alloc/free/read/write/seek/tell. Projection output begins at
+// 0x009C0BA0, so all six slots are live typed fields disjoint from that output.
 #if defined(_M_IX86) || defined(__i386__)
 static_assert(sizeof(VoxIoCallbacks) == 24,
               "voxel callback table must remain six contiguous Win32 dwords");
@@ -1148,25 +1146,12 @@ static_assert(offsetof(VoxIoCallbacks, allocate) == 0 &&
               offsetof(VoxIoCallbacks, tell) == 5 * sizeof(void *),
               "host callback view follows host pointer width");
 #endif
-typedef long (__cdecl *VoxSeekCallback)(int, long, int);
-typedef long (__cdecl *VoxTellCallback)(int);
-
-template <typename Callback>
-static Callback vox_load_callback(size_t offset) {
-    Callback callback;
-    memcpy(&callback,
-           reinterpret_cast<const unsigned char *>(
-               &CaviarOutputMessageWindow) + offset,
-           sizeof(callback));
-    return callback;
-}
-
 #define vox_alloc_slot (CaviarOutputMessageWindow.io_allocate_)
 #define vox_free_slot (CaviarOutputMessageWindow.io_release_)
 #define vox_read_slot (CaviarOutputMessageWindow.io_read_)
 #define vox_write_slot (CaviarOutputMessageWindow.io_write_)
-#define vox_seek_slot (vox_load_callback<VoxSeekCallback>(offsetof(VoxIoCallbacks, seek)))
-#define vox_tell_slot (vox_load_callback<VoxTellCallback>(offsetof(VoxIoCallbacks, tell)))
+#define vox_seek_slot (CaviarOutputMessageWindow.io_seek_)
+#define vox_tell_slot (CaviarOutputMessageWindow.io_tell_)
 
 // The engine's fixed-address data bindings live at FILE SCOPE, below, as
 // plain static consts rather than inside this anonymous namespace: the
@@ -2132,10 +2117,10 @@ Purpose: Walk a CVR record's chunk list. Each chunk is an 8-byte {tag,
 //        not sequential; an if/else-if chain spells the same thing here and
 //        a switch spells it too - the two were measured identical on
 //        0x00638DE0, whose tags ARE sequential and whose chain is sub/dec/je.
-// BUG IN THE ORIGINAL: the 0x1020000 arm's condition is `record->float_at_8
-//        < 7.0` measured against the 7.0f constant, i.e. an OLD file whose
-//        palette has to be expanded; the 7.0 is data, not a limit, and no
-//        overflow is checked. Reproduced as written.
+// The historical seed used < 7.0 for the old-palette arm. The original
+//        0x006387D3 TEST AH,0x41 selects that arm for <= 7.0 and unordered
+//        values; only > 7.0 takes the newer payload path. No overflow is
+//        checked. Payload lengths survive the allocator/reader callbacks.
 Return Value: 0 when the walk consumed the block, -1 on any failure.
 // TRIED: the image loads the record pointer (ebx) and the fd (ebp) into
 //        callee-saved registers before the loop; this tree dedicates ebp
@@ -2150,10 +2135,7 @@ extern "C" int __cdecl vox_read_chunks(int fd, CvrRecord *record, int size) {
         int length;
     };
     int remaining = size - 8;
-    if (remaining == 0) {
-        return 0;
-    }
-    do {
+    while (remaining != 0) {
         ChunkHeader header;
         if (vox_read_exact(fd, &header, 8) != 0) {
             return -1;
@@ -2164,19 +2146,22 @@ extern "C" int __cdecl vox_read_chunks(int fd, CvrRecord *record, int size) {
             return -1;
         }
         switch (header.tag) {
-        case 0x1010000:
-            if (vox_alloc_typed(header.length - 8 + 1,
+        case 0x1010000: {
+            const int payload = header.length - 8;
+            if (vox_alloc_typed(payload + 1,
                                 &record->palette_name_) != 0) {
                 return -1;
             }
             if (vox_read_exact(fd, record->palette_name_,
-                               header.length - 8) != 0) {
+                               payload) != 0) {
                 return -1;
             }
-            record->palette_name_[header.length - 8] = 0;
+            record->palette_name_[payload] = 0;
             break;
-        case 0x1020000:
-            if (record->version_ < vox_threshold_seven) {
+        }
+        case 0x1020000: {
+            const int payload = header.length - 8;
+            if (!(record->version_ > vox_threshold_seven)) {
                 if (vox_alloc_typed(0x1b02, &record->palette_) != 0) {
                     return -1;
                 }
@@ -2184,26 +2169,29 @@ extern "C" int __cdecl vox_read_chunks(int fd, CvrRecord *record, int size) {
                     return -1;
                 }
             } else {
-                if (vox_alloc_typed(header.length - 8,
+                if (vox_alloc_typed(payload,
                                     &record->palette_) != 0) {
                     return -1;
                 }
                 if (vox_read_exact(fd, record->palette_,
-                                   header.length - 8) != 0) {
+                                   payload) != 0) {
                     return -1;
                 }
             }
             break;
-        case 0x1030000:
-            if (vox_alloc_typed(header.length - 8,
+        }
+        case 0x1030000: {
+            const int payload = header.length - 8;
+            if (vox_alloc_typed(payload,
                                 &record->field_18_) != 0) {
                 return -1;
             }
             if (vox_read_exact(fd, record->field_18_,
-                               header.length - 8) != 0) {
+                               payload) != 0) {
                 return -1;
             }
             break;
+        }
         default:
             if (vox_seek_slot((unsigned long)fd, header.length - 8, 1) < 0) {
                 vox_stage_error(vox_msg_bad_file_format);
@@ -2211,7 +2199,7 @@ extern "C" int __cdecl vox_read_chunks(int fd, CvrRecord *record, int size) {
             }
             break;
         }
-    } while (remaining != 0);
+    }
     return 0;
 }
 
@@ -2248,10 +2236,7 @@ extern "C" int __cdecl vox_read_colour_chunks(int fd, CvrStep *out, int size) {
         int length;
     };
     int remaining = size - 8;
-    if (remaining == 0) {
-        return 0;
-    }
-    do {
+    while (remaining != 0) {
         ChunkHeader header;
         if (vox_read_exact(fd, &header, 8) != 0) {
             return -1;
@@ -2289,7 +2274,7 @@ extern "C" int __cdecl vox_read_colour_chunks(int fd, CvrStep *out, int size) {
             }
             break;
         }
-    } while (remaining != 0);
+    }
     return 0;
 }
 
@@ -2331,10 +2316,7 @@ extern "C" int __cdecl vox_read_geometry_chunks(int fd, CvrPart *slots, int size
         int length;
     };
     int remaining = size - 8;
-    if (remaining == 0) {
-        return 0;
-    }
-    do {
+    while (remaining != 0) {
         ChunkHeader header;
         if (vox_read_exact(fd, &header, 8) != 0) {
             return -1;
@@ -2376,7 +2358,7 @@ extern "C" int __cdecl vox_read_geometry_chunks(int fd, CvrPart *slots, int size
             }
             break;
         }
-    } while (remaining != 0);
+    }
     return 0;
 }
 
@@ -3719,9 +3701,14 @@ void __cdecl caviar_direction_to_projection_index(
 //           int, matching IDA's one-argument guess; no explicit `mov eax,`
 //           before `ret` (see the sibling 0x0063FFE0's identical tail).
 // ORIGINAL: 0x0063FE00 sub_63fe00 0x0063FE00-0x0063FFDD
-// RECOVERY_BINDING: v1 {"evidence": ["Pinned original entry and seed span transported by the native source writer; current symbol observed from the VC6 source overlay.", "The four-helper closure uses real shared Caviar projection storage and existing vector/matrix owners, not executable-address aliases.", "Fresh native review corrected argument byte0, scaled Y/Z rounding, void builder result and overlapping output streams at offsets0/20/24 with stride16.", "Source arrays describe accessed windows, not proven original allocation bounds or original class names; remaining draw/setup callers are still unfinished."], "reason": "Complete typed Caviar helper in the existing renderer owner; preserve native branch/store order and historical restoration obligations."}
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned original entry and seed span transported by the native source writer; current symbol observed from the VC6 source overlay.", "The four-helper closure uses real shared Caviar projection storage and existing vector/matrix owners, not executable-address aliases.", "The projection builder at 0x640A27 advances its cursor before storing: packed rows begin at 0x9C0BA0, with fields at offsets0/4/8 and stride16, disjoint from callbacks at 0x9C0B80..0x9C0B94. This supersedes the earlier overlapping-output interpretation.", "Source arrays describe accessed windows, not proven original allocation bounds or original class names; remaining draw/setup callers are still unfinished."], "reason": "Complete typed Caviar helper in the existing renderer owner; preserve native branch/store order and historical restoration obligations."}
 // symbol    ?vox_direction_to_octant@@YAXPBUVoxRenderRecord@@@Z
 // TRIED: near-duplicate of 0x0063FFE0 past the preamble (same 628220/6281b0/round-to-nearest/octant/ratio tail) - only the first block differs, negating all three floats when `*param_1 & 1` instead of calling sub_627f50. The three round-to-nearest computations are inlined at each call site rather than factored into a shared helper: a free-function helper ahead of the definition compiles to zero external .text symbols in body-mode extraction (only a helper CLASS is special-cased). Landing the closest control-flow-faithful form (divergence starts at instruction #2, on the flag test).
+#if defined(_MSC_VER) && _MSC_VER <= 1200
+// Reconstruction control: stdafx forces CRT abs; these two original bodies
+// use inline integer absolute values. This does not recover an original pragma.
+#pragma intrinsic(abs)
+#endif
 void __cdecl vox_direction_to_octant(const VoxRenderRecord *render_record) {
     const VOX_Matrix &matrix = vox_projection_matrix_;
     float vector[3];
@@ -3736,23 +3723,31 @@ void __cdecl vox_direction_to_octant(const VoxRenderRecord *render_record) {
     }
 
     float unit[3];
-    float scaled[3];
     vox_normalise_vector(vector, unit);
-    vec3_scale(unit, CaviarProjectionDirectionScale, scaled);
+    vec3_scale(unit, 256.0f, vector);
 
     // The original tests x87 C0: unordered follows the below branch too.
-    const float add_x = unit[0] >= CaviarProjectionRoundThreshold
+    const float add_x = vector[0] >= CaviarProjectionRoundThreshold
                             ? CaviarProjectionRoundAbove
                             : CaviarProjectionRoundBelow;
-    vox_projection_component_[0] = static_cast<int>(scaled[0] + add_x);
-    const float add_y = scaled[1] >= CaviarProjectionRoundThreshold
+    vox_projection_component_[0] = static_cast<int>(vector[0] + add_x);
+    const float add_y = vector[1] >= CaviarProjectionRoundThreshold
                             ? CaviarProjectionRoundAbove
                             : CaviarProjectionRoundBelow;
-    vox_projection_component_[1] = static_cast<int>(scaled[1] + add_y);
-    const float add_z = scaled[2] >= CaviarProjectionRoundThreshold
+    vox_projection_component_[1] = static_cast<int>(vector[1] + add_y);
+    const float add_z = vector[2] >= CaviarProjectionRoundThreshold
                             ? CaviarProjectionRoundAbove
                             : CaviarProjectionRoundBelow;
-    vox_projection_component_[2] = static_cast<int>(scaled[2] + add_z);
+    vox_projection_component_[2] = static_cast<int>(vector[2] + add_z);
+
+    const int x = vox_projection_component_[0];
+    const int y = vox_projection_component_[1];
+    const int z = vox_projection_component_[2];
+    const int abs_x = abs(x);
+    const int abs_y = abs(y);
+    const int abs_z = abs(z);
+    const int sum = abs_x + abs_y + abs_z;
+    const float ratio = CaviarProjectionDirectionScale / (float)sum;
 
     int octant;
     if (vox_projection_component_[1] < 1) {
@@ -3764,24 +3759,16 @@ void __cdecl vox_direction_to_octant(const VoxRenderRecord *render_record) {
         octant += 4;
     }
 
-    const int x = vox_projection_component_[0];
-    const int y = vox_projection_component_[1];
-    const int z = vox_projection_component_[2];
-    const int abs_x = x < 0 ? -x : x;
-    const int abs_y = y < 0 ? -y : y;
-    const int abs_z = z < 0 ? -z : z;
-    const int sum = abs_x + abs_y + abs_z;
-    const float ratio = CaviarProjectionDirectionScale / (float)sum;
     const int fx = (int)(abs_x * ratio);
     const int fy = (int)(abs_y * ratio);
 
-    unsigned char bits;
+    int bits;
     if (fx > 0x80) {
         bits = 2;
     } else if (fy > 0x80) {
         bits = 3;
     } else {
-        bits = (unsigned char)(fy <= 0x80 - fx);
+        bits = fy <= 0x80 - fx;
     }
 
     vox_projection_prepared_ = 1;
@@ -3796,34 +3783,42 @@ void __cdecl vox_direction_to_octant(const VoxRenderRecord *render_record) {
 //           eax,` before `ret` - the value in eax at return is the `shl`
 //           result incidentally, not a deliberate return.
 // ORIGINAL: 0x0063FFE0 sub_63ffe0 0x0063FFE0-0x006401A8
-// RECOVERY_BINDING: v1 {"reason":"Complete typed Caviar helper in the existing renderer owner; preserve native branch/store order and historical restoration obligations.","evidence":["Pinned original entry and seed span transported by the native source writer; current symbol observed from the VC6 source overlay.","The four-helper closure uses real shared Caviar projection storage and existing vector/matrix owners, not executable-address aliases.","Fresh native review corrected argument byte0, scaled Y/Z rounding, void builder result and overlapping output streams at offsets0/20/24 with stride16.","Source arrays describe accessed windows, not proven original allocation bounds or original class names; remaining draw/setup callers are still unfinished."]}
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned original entry and seed span transported by the native source writer; current symbol observed from the VC6 source overlay.", "The four-helper closure uses real shared Caviar projection storage and existing vector/matrix owners, not executable-address aliases.", "The projection builder at 0x640A27 advances its cursor before storing: packed rows begin at 0x9C0BA0, with fields at offsets0/4/8 and stride16, disjoint from callbacks at 0x9C0B80..0x9C0B94. This supersedes the earlier overlapping-output interpretation.", "Source arrays describe accessed windows, not proven original allocation bounds or original class names; remaining draw/setup callers are still unfinished."], "reason": "Complete typed Caviar helper in the existing renderer owner; preserve native branch/store order and historical restoration obligations."}
 // symbol    ?vox_inverse_direction_to_octant@@YAXPBUVOX_Matrix@@@Z
 // TRIED: the three callees (sub_627f50/sub_628220/sub_6281b0) are catalogued nullary, so they are reached through explicit cdecl function-pointer casts rather than by name. The first round-to-nearest computation tests the sign of localC[0] (the sub_628220 output) but rounds local18 (the sub_6281b0 output) - an asymmetry the disassembly shows plainly and this keeps, even though axes 1 and 2 are self-referential. A shared `round_nearest` free-function helper ahead of the definition compiled to zero external .text symbols (body-mode extraction only special-cases a helper CLASS, not a helper free function) - inlined the three round computations instead. Landing the closest control-flow-faithful form (divergence starts at instruction #12, inside the float-copy preamble).
 void __cdecl vox_inverse_direction_to_octant(const VOX_Matrix *source) {
     vox_matrix_inverse(source->values, vox_projection_matrix_.values);
-    const float x_source = vox_projection_matrix_.values[0][2];
-    const float y_source = vox_projection_matrix_.values[1][2];
+    float vector[3];
+    vector[0] = vox_projection_matrix_.values[0][2];
+    vector[1] = vox_projection_matrix_.values[1][2];
+    vector[2] = vox_projection_matrix_.values[2][2];
     vox_projection_render_stage_ = 1;
-    const float z_source = vox_projection_matrix_.values[2][2];
-    float vector[3] = {x_source, y_source, z_source};
     float unit[3];
-    float scaled[3];
     vox_normalise_vector(vector, unit);
-    vec3_scale(unit, CaviarProjectionDirectionScale, scaled);
+    vec3_scale(unit, 256.0f, vector);
 
     // The original tests x87 C0: unordered follows the below branch too.
-    const float add_x = unit[0] >= CaviarProjectionRoundThreshold
+    const float add_x = vector[0] >= CaviarProjectionRoundThreshold
                             ? CaviarProjectionRoundAbove
                             : CaviarProjectionRoundBelow;
-    vox_projection_component_[0] = static_cast<int>(scaled[0] + add_x);
-    const float add_y = scaled[1] >= CaviarProjectionRoundThreshold
+    vox_projection_component_[0] = static_cast<int>(vector[0] + add_x);
+    const float add_y = vector[1] >= CaviarProjectionRoundThreshold
                             ? CaviarProjectionRoundAbove
                             : CaviarProjectionRoundBelow;
-    vox_projection_component_[1] = static_cast<int>(scaled[1] + add_y);
-    const float add_z = scaled[2] >= CaviarProjectionRoundThreshold
+    vox_projection_component_[1] = static_cast<int>(vector[1] + add_y);
+    const float add_z = vector[2] >= CaviarProjectionRoundThreshold
                             ? CaviarProjectionRoundAbove
                             : CaviarProjectionRoundBelow;
-    vox_projection_component_[2] = static_cast<int>(scaled[2] + add_z);
+    vox_projection_component_[2] = static_cast<int>(vector[2] + add_z);
+
+    const int x = vox_projection_component_[0];
+    const int y = vox_projection_component_[1];
+    const int z = vox_projection_component_[2];
+    const int abs_x = abs(x);
+    const int abs_y = abs(y);
+    const int abs_z = abs(z);
+    const int sum = abs_x + abs_y + abs_z;
+    const float ratio = CaviarProjectionDirectionScale / (float)sum;
 
     int octant;
     if (vox_projection_component_[1] < 1) {
@@ -3835,33 +3830,29 @@ void __cdecl vox_inverse_direction_to_octant(const VOX_Matrix *source) {
         octant += 4;
     }
 
-    const int x = vox_projection_component_[0];
-    const int y = vox_projection_component_[1];
-    const int z = vox_projection_component_[2];
-    const int abs_x = x < 0 ? -x : x;
-    const int abs_y = y < 0 ? -y : y;
-    const int abs_z = z < 0 ? -z : z;
-    const int sum = abs_x + abs_y + abs_z;
-    const float ratio = CaviarProjectionDirectionScale / (float)sum;
     const int fx = (int)(abs_x * ratio);
     const int fy = (int)(abs_y * ratio);
 
-    unsigned char bits;
+    int bits;
     if (fx > 0x80) {
         bits = 2;
     } else if (fy > 0x80) {
         bits = 3;
     } else {
-        bits = (unsigned char)(fy <= 0x80 - fx);
+        bits = fy <= 0x80 - fx;
     }
 
     vox_projection_prepared_ = 1;
     vox_projection_octant_mask_ = 1 << (octant * 4 | bits);
 }
+#if defined(_MSC_VER) && _MSC_VER <= 1200
+// Restore the shared CRT policy for all following renderer definitions.
+#pragma function(abs)
+#endif
 
 
 // ORIGINAL: 0x006404F0 sub_6404f0 0x006404F0-0x00640A42
-// RECOVERY_BINDING: v1 {"reason":"Complete typed Caviar helper in the existing renderer owner; preserve native branch/store order and historical restoration obligations.","evidence":["Pinned original entry and seed span transported by the native source writer; current symbol observed from the VC6 source overlay.","The four-helper closure uses real shared Caviar projection storage and existing vector/matrix owners, not executable-address aliases.","Fresh native review corrected argument byte0, scaled Y/Z rounding, void builder result and overlapping output streams at offsets0/20/24 with stride16.","Source arrays describe accessed windows, not proven original allocation bounds or original class names; remaining draw/setup callers are still unfinished."]}
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned original entry and seed span transported by the native source writer; current symbol observed from the VC6 source overlay.", "The four-helper closure uses real shared Caviar projection storage and existing vector/matrix owners, not executable-address aliases.", "The projection builder at 0x640A27 advances its cursor before storing: packed rows begin at 0x9C0BA0, with fields at offsets0/4/8 and stride16, disjoint from callbacks at 0x9C0B80..0x9C0B94. This supersedes the earlier overlapping-output interpretation.", "Source arrays describe accessed windows, not proven original allocation bounds or original class names; remaining draw/setup callers are still unfinished."], "reason": "Complete typed Caviar helper in the existing renderer owner; preserve native branch/store order and historical restoration obligations."}
 // symbol    ?caviar_build_projection_tables@@YAXXZ
 // TRIED: this is SMACX's own isometric-tile offset-table builder, not zlib/CRT - checked, no recognisable library algorithm. Read a 6-short/3-int source record at 0x9C0A40, fanned it out formula- for-formula (per the Ghidra decomp, cross-checked against the disassembly's add/sub/shl/neg chains) into ~80 fixed-address cells declared by the scaffold, then transcribed the closing 26-iteration (0x1A) table walk with raw int*/uint* pointer arithmetic over 0x9C0840/0x9C0BA8. Compiles and is formula- faithful but MISMATCHES at instruction #0 (`sub esp,0x34` vs a `push`-first prologue) - at this size (~200 instructions, 79 scratch cells) the compiler's register/stack-slot allocation diverges from the first instruction, and chasing it further is a search this pass's budget does not cover.
 void __cdecl caviar_build_projection_tables() {
@@ -3971,20 +3962,23 @@ void __cdecl caviar_build_projection_tables() {
     CaviarKernelProjectionWindow.current_views_.cells_[20].z_ = (d4c - d54) * 0x100;
     CaviarKernelProjectionWindow.current_views_.cells_[25].z_ = (iVar4 + d50) * 0x100;
 
-    unsigned int outputIndex = 0;
+    CaviarProjectionOutputRowCandidate *output =
+        CaviarOutputMessageWindow.projection_rows_;
     int localCount = 0x1a;
     CaviarProjectionCell *piVar2 = CaviarKernelProjectionWindow.current_views_.cells_;
     do {
         unsigned int uVar1 = (unsigned int)piVar2->y_;
         int recA = piVar2->x_;
-        CaviarOutputMessageWindow.projection_words_[outputIndex + 5] = (uint32_t)(((int)uVar1 >> 8) *
+        output->depth_offset_ = (((int)uVar1 >> 8) *
             (int32_t)vox_setup_copy_.depth_row_step_ + (recA >> 8));
-        CaviarOutputMessageWindow.projection_words_[outputIndex] =
+        // 640A0D advances the input cursor before 640A27's packed-X store:
+        // its first destination is 9C0BA0, leaving all six callbacks intact.
+        output->packed_x_ =
             (uint32_t)recA * 0x01000000u + (uVar1 & 0xffu);
-        CaviarOutputMessageWindow.projection_words_[outputIndex + 6] =
+        output->packed_z_ =
             (((unsigned int)piVar2->z_ >> 0x10) +
             (unsigned int)piVar2->z_ * 0x10000) & 0xff00ffff;
-        outputIndex += 4;
+        ++output;
         localCount = localCount - 1;
         ++piVar2;
     } while (localCount != 0);
@@ -5269,70 +5263,6 @@ void Caviar::set_shadow_vector(float elevation, float azimuth) {
     scene_context_.shadow_vector_.values[1] = sin_azimuth * sin_elevation;
 }
 
-/*
-Purpose: Normalise a vector in place: divide each component by the vector's
-         length. The engine's own normaliser, in the Vector family - its
-         neighbours are vector_add (0x00628150) and the scale helper at
-         0x006281B0 - and six game bodies call it besides Caviar::init, which
-         normalises the scene's down vector with it.
-// ORIGINAL: 0x00628220 sub_628220 0x00628220-0x0062828B FILE
-// symbol    ?vox_normalise_vector@@YAXPBMPAM@Z
-//           (the image carries no name for this address; the fact records
-//           what this tree emits. VC6 spells `const float *` and `float *`
-//           out in full - PBM and PAM - where a repeated IDENTICAL type
-//           would back-reference to `0`.)
-// size      107 bytes
-// callers   10   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-//
-// HOMED 2026-09-06, homed from src/unrecovered/00628220.cpp - which carried
-// five thousand scored spellings - and from the file-local stand-in this
-// definition replaces (Caviar::init reached the image address through it)
-// of the sum without reaching the image's 107 bytes. Nothing in that census
-// is contradicted here; the body below is the faithful reading, not a new
-// spelling of it.
-//
-// THE RECIPROCAL IS REAL. The image divides `1.0f` by the length
-// (`fdivr dword ptr [0x670c08]`, 0x670C08 being a float 1.0f the engine
-// keeps in data) and multiplies all three components by the answer, rather
-// than dividing three times - so `scale` below is a real variable, not a
-// transcription convenience.
-//
-// TRIED (archived census, 5760 scored units): no-locals src[i]*src[i] in every
-//        order/association/operand-order, 69 of 107 bytes; locals x,y,z with
-//        the tail reading source[], 69-76; the tail reading the locals, 85-95
-//        with one stack slot too many; const source, /Oa, an __inline helper,
-//        an aliasing store before the sum, dead stores, the sum in a variable
-//        - none of them reproduce the image's two spill slots. /Op and /O1
-//        both lose fsqrt to a call.
-// TRIED (this pass, all 0-1 of 37 agreeing against the committed body's 1 of
-//        37): `float v[3]` filled from source and read back per term - the
-//        array is not enregistered either, and the frame pointer still comes
-//        out where the image has `push ecx`; `float pair[2]` for y and z with
-//        source[0] direct; y and z as the only locals with the sum's x term
-//        reading source[0]; x,y,z locals with the tail reading the locals
-//        (33 instructions against the image's 37). The two memory slots the
-//        image spills y and z into are one `push ecx` and the CALLER'S OWN
-//        ARGUMENT SLOT - VC6 reusing a dead parameter slot for a local - and
-//        no spelling here produces it.
-*/
-void __cdecl vox_normalise_vector(const float *source, float *out) {
-    float x = source[0];
-    float y = source[1];
-    float z = source[2];
-    double length = sqrt(static_cast<double>(y) * y
-                       + static_cast<double>(z) * z
-                       + static_cast<double>(x) * x);
-    // The original stores this reciprocal to an m32 stack slot before using it.
-    // Volatile preserves that observed float32 conversion without narrowing the
-    // preceding square root or changing the sequential source rereads below.
-    volatile float scale = 1.0f / length;
-    out[0] = source[0] * scale;
-    out[1] = source[1] * scale;
-    out[2] = source[2] * scale;
-}
 
 /*
 Purpose: Build the renderer's per-instance table and seed the scene state.
@@ -5341,7 +5271,7 @@ Purpose: Build the renderer's per-instance table and seed the scene state.
          rotation, the clipping defaults and the channel bounds, and marks the
          renderer switched on.
 // ORIGINAL: 0x00616DE0 ?init@Caviar@@QAEXXZ 0x00616DE0-0x00617013
-// symbol    ?init@Caviar@@QAEXXZ
+// symbol    ?init@Caviar@@QAEHXZ
 // size      563 bytes
 // prototype void (__thiscall ?init@Caviar@@QAEXXZ)(Caviar* this)
 // callers   7   call targets   5
@@ -5372,7 +5302,7 @@ Purpose: Build the renderer's per-instance table and seed the scene state.
 Return Value: n/a
 Status: Complete
 */
-void Caviar::init() {
+int Caviar::init() {
     close();
 
     for (int index = 0; index < 200; ++index) {
@@ -5380,19 +5310,19 @@ void Caviar::init() {
         instance.instance_colour_ = static_cast<uint8_t *>(mem_get(1));
         if (instance.instance_colour_ == 0) {
             close();
-            return;
+            return 4;
         }
         instance.instance_vector_ =
             static_cast<VOX_Vect *>(mem_get(0xC));
         if (instance.instance_vector_ == 0) {
             close();
-            return;
+            return 4;
         }
         instance.instance_matrix_ =
             static_cast<VOX_Matrix *>(mem_get(0x24));
         if (instance.instance_matrix_ == 0) {
             close();
-            return;
+            return 4;
         }
     }
 
@@ -5485,6 +5415,7 @@ void Caviar::init() {
     scene_context_.shadow_enabled_ = 1;
     scene_context_.shadow_vector_.values[2] = scene_context_.light_vector_.values[2];
     field_4_ |= 1;
+    return 0;
 }
 
 // All cofactors are formed before any destination write. This preserves the
@@ -6344,8 +6275,8 @@ void __cdecl Caviar::object_start(VOX_ScnRenderHnd *handle, long instance,
 }
 
 // The two methods above require out-of-line memcpy. Restore the ordinary
-// intrinsic context for callback-loader template instantiations: the original
-// loader reads a callback slot directly rather than calling memcpy for it.
+// intrinsic context for following ordinary copies. The original callbacks
+// are direct live member reads rather than out-of-line representation copies.
 #if defined(_MSC_VER) && _MSC_VER <= 1200
 #pragma intrinsic(memcpy)
 #endif

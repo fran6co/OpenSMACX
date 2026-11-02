@@ -261,13 +261,12 @@ static void caviar_kernel_walk_stream(CaviarRasterKernelViewCandidate *view,
             static_cast<uint32_t>(z) << 8);
         if (selector < 0x1a) {
             if ((flags & 0x10) != 0) {
-                const unsigned int word = 4 + selector * 4;
                 part_x = static_cast<int32_t>(static_cast<uint32_t>(part_x) +
-                    CaviarOutputMessageWindow.projection_words_[word]);
+                    CaviarOutputMessageWindow.projection_rows_[selector].packed_x_);
                 part_y = static_cast<int32_t>(static_cast<uint32_t>(part_y) +
-                    CaviarOutputMessageWindow.projection_words_[word + 1]);
+                    static_cast<uint32_t>(CaviarOutputMessageWindow.projection_rows_[selector].depth_offset_));
                 part_z = static_cast<int32_t>(static_cast<uint32_t>(part_z) +
-                    CaviarOutputMessageWindow.projection_words_[word + 2]);
+                    CaviarOutputMessageWindow.projection_rows_[selector].packed_z_);
             } else {
                 part_x = static_cast<int32_t>(static_cast<uint32_t>(part_x) +
                     static_cast<uint32_t>(CaviarKernelProjectionWindow.current_views_.cells_[selector].x_));

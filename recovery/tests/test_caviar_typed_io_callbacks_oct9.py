@@ -109,7 +109,8 @@ def compile_actual_source(mutant=None):
     io_source = IO_SOURCE.read_text()
     header = HEADER.read_text()
     callback_type = extract(header, "struct VoxIoCallbacks {") + ";"
-    shared_type = extract(header, "struct CaviarOutputMessageWindowCandidate {") + ";"
+    shared_type = (extract(header, "struct CaviarProjectionOutputRowCandidate {") + ";\n" +
+                   extract(header, "struct CaviarOutputMessageWindowCandidate {") + ";")
     assert "offsetof(VoxIoCallbacks, allocate) == 0" in source
     assert "offsetof(VoxIoCallbacks, release) == 4" in source
     assert "offsetof(VoxIoCallbacks, read) == 8" in source
@@ -148,22 +149,13 @@ def compile_actual_source(mutant=None):
                             "#define vox_read_slot ", "#define vox_write_slot ",
                             "#define vox_seek_slot ", "#define vox_tell_slot "))
     )
-    callback_types = "\n".join(
-        line for line in source.splitlines()
-        if line.startswith(("typedef long (__cdecl *VoxSeekCallback)",
-                            "typedef long (__cdecl *VoxTellCallback)"))
-    )
-    load_helper = ("template <typename Callback>\n" +
-                   extract(source, "static Callback vox_load_callback("))
-
     # Compile the real callback type and producer initializer; only unrelated
     # engine globals and the CRT functions are host stubs.
     assert "int (__cdecl *read)(int, char *, long);" in callback_type
     type_end = PREAMBLE.index("struct Caviar {")
     type_start = PREAMBLE.index("#define __cdecl") + len("#define __cdecl")
     preamble = (PREAMBLE[:type_start] + "\n" + callback_type + "\n" + shared_storage +
-                "\n" + callback_types + "\n" + load_helper + "\n" +
-                slot_macros + "\n" + PREAMBLE[type_end:])
+                "\n" + slot_macros + "\n" + PREAMBLE[type_end:])
     if mutant == "wrong_read_slot":
         slot_macros = slot_macros.replace(
             "CaviarOutputMessageWindow.io_read_",

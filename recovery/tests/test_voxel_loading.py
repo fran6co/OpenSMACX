@@ -69,8 +69,9 @@ Caviar g_VEHDRAW_CAVIAR;
 Caviar::Caviar() {}
 void Caviar::close() {}
 void trigger(int point) {if(throw_at==point) throw Fault();}
-void Caviar::init() {
+int Caviar::init() {
     require(this==&g_VEHDRAW_CAVIAR && stage==0); stage=1; trigger(1);
+    return 0;
 }
 void __cdecl vehdraw_compute_facet_normals() {
     require(stage==1); stage=2; trigger(2);

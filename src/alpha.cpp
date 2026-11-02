@@ -144,6 +144,11 @@ RulesBonusName BonusName[MaxBonusNameNum];                  // 0x009461A8
 Player Players[MaxPlayerNum];                               // 0x00946A50
 // RECOVERY_OBJECT: v1 0x0096C9E0 ?PlayersData@@3PAUPlayerData@@A
 PlayerData PlayersData[MaxPlayerNum];                       // 0x0096C9E0
+// The original loader at 0x5881AB starts at 0x94ADE4 and fills name/name_short
+// at offsets -4/0 with stride8. Terrain consumers read those same pointer slots.
+// This binding establishes the start only; the source array does not prove the
+// complete original allocation extent or lifetime.
+// RECOVERY_OBJECT: v1 0x0094ADE0 ?Natural@@3PAURulesNatural@@A
 RulesNatural Natural[MaxNaturalNum];                        // 0x0094ADE0
 // MapLandmark at 0x00949894 is MapStorage.metadata_.landmarks_ (map.cpp).
 // RECOVERY_OBJECT: v1 0x009AA730 ?Continents@@3PAUContinent@@A

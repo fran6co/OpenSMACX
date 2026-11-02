@@ -1,4 +1,4 @@
-"""Actual-source controls for Caviar's disjoint four-callback prefix."""
+"""Actual-source controls for Caviar's disjoint six-callback prefix."""
 
 from pathlib import Path
 import shutil
@@ -44,39 +44,40 @@ static int replace_during_read(int, char *buffer, long count) {
 static void *prefix_alloc(unsigned long n) { return reinterpret_cast<void *>(n); }
 static void prefix_free(void *) {}
 static int prefix_write(int, void *, long n) { return (int)n + 2; }
+static long prefix_seek(int fd,long count,int origin) { return fd+count+origin; }
+static long prefix_tell(int fd) { return fd+9; }
 int main() {
     typedef char offsets_are_real[
         offsetof(CaviarOutputMessageWindowCandidate, io_allocate_) == 0 &&
         offsetof(CaviarOutputMessageWindowCandidate, io_release_) == sizeof(void *) &&
         offsetof(CaviarOutputMessageWindowCandidate, io_read_) == 2 * sizeof(void *) &&
         offsetof(CaviarOutputMessageWindowCandidate, io_write_) == 3 * sizeof(void *) &&
-        offsetof(CaviarOutputMessageWindowCandidate, projection_words_) ==
-            offsetof(VoxIoCallbacks, seek) ? 1 : -1];
+        offsetof(CaviarOutputMessageWindowCandidate, io_seek_) == offsetof(VoxIoCallbacks, seek) &&
+        offsetof(CaviarOutputMessageWindowCandidate, io_tell_) == offsetof(VoxIoCallbacks, tell) &&
+        offsetof(CaviarOutputMessageWindowCandidate, projection_rows_) ==
+            offsetof(VoxIoCallbacks, seek) + 0x10 ? 1 : -1];
     (void)sizeof(offsets_are_real);
     CaviarOutputMessageWindow.io_allocate_ = &prefix_alloc;
     CaviarOutputMessageWindow.io_release_ = &prefix_free;
     CaviarOutputMessageWindow.io_read_ = &first_read;
     CaviarOutputMessageWindow.io_write_ = &prefix_write;
-    uint32_t seek_word = 0x12345678u;
-    uint32_t tell_word = 0x87654321u;
-    memcpy(reinterpret_cast<unsigned char *>(&CaviarOutputMessageWindow) +
-               offsetof(VoxIoCallbacks, seek), &seek_word, sizeof(seek_word));
-    memcpy(reinterpret_cast<unsigned char *>(&CaviarOutputMessageWindow) +
-               offsetof(VoxIoCallbacks, tell), &tell_word, sizeof(tell_word));
+    CaviarOutputMessageWindow.io_seek_ = &prefix_seek;
+    CaviarOutputMessageWindow.io_tell_ = &prefix_tell;
+    unsigned char seek_before[sizeof(CaviarOutputMessageWindow.io_seek_)];
+    unsigned char tell_before[sizeof(CaviarOutputMessageWindow.io_tell_)];
+    memcpy(seek_before,&CaviarOutputMessageWindow.io_seek_,sizeof(seek_before));
+    memcpy(tell_before,&CaviarOutputMessageWindow.io_tell_,sizeof(tell_before));
     if (vox_alloc_slot(9) != reinterpret_cast<void *>(9) ||
         vox_read_slot(1, 0, 2) != 19 || vox_write_slot(1, 0, 3) != 5) return 1;
     CaviarOutputMessageWindow.io_read_ = &replacement_read;
     if (vox_read_slot(1, 0, 2) != 73) return 2;
-    CaviarOutputMessageWindow.projection_words_[0] = 0xaabbccddu;
+    CaviarOutputMessageWindow.projection_rows_[0].packed_x_ = 0xaabbccddu;
     if (vox_read_slot(1, 0, 2) != 73 || vox_write_slot(1, 0, 3) != 5) return 3;
-    uint32_t seek_after = 0, tell_after = 0;
-    memcpy(&seek_after, reinterpret_cast<unsigned char *>(
-               &CaviarOutputMessageWindow) + offsetof(VoxIoCallbacks, seek),
-           sizeof(seek_after));
-    memcpy(&tell_after, reinterpret_cast<unsigned char *>(
-               &CaviarOutputMessageWindow) + offsetof(VoxIoCallbacks, tell),
-           sizeof(tell_after));
-    if (seek_after != 0xaabbccddu || tell_after != tell_word) return 4;
+    if (memcmp(seek_before,&CaviarOutputMessageWindow.io_seek_,sizeof(seek_before)) ||
+        memcmp(tell_before,&CaviarOutputMessageWindow.io_tell_,sizeof(tell_before))) return 4;
+    if (CaviarOutputMessageWindow.io_seek_ != &prefix_seek ||
+        CaviarOutputMessageWindow.io_tell_ != &prefix_tell ||
+        vox_seek_slot(2,3,1) != 6 || vox_tell_slot(2) != 11) return 6;
     char buffer[3] = {};
     replacement_calls = 0;
     CaviarOutputMessageWindow.io_read_ = &replace_during_read;
@@ -92,9 +93,8 @@ def compile_and_run(mutant=None):
     source = SOURCE.read_text()
     io_source = IO_SOURCE.read_text()
     callbacks = extract(header, "struct VoxIoCallbacks {") + ";"
-    storage = extract(header, "struct CaviarOutputMessageWindowCandidate {") + ";"
-    helper = "template <typename Callback>\n" + extract(
-        source, "static Callback vox_load_callback(")
+    storage = (extract(header, "struct CaviarProjectionOutputRowCandidate {") + ";\n" +
+               extract(header, "struct CaviarOutputMessageWindowCandidate {") + ";")
     slots = "\n".join(
         line for line in source.splitlines()
         if line.startswith(("typedef long (__cdecl *VoxSeekCallback)",
@@ -108,13 +108,12 @@ def compile_and_run(mutant=None):
         slots = slots.replace("CaviarOutputMessageWindow.io_read_",
                               "CaviarOutputMessageWindow.io_write_")
     elif mutant == "cached_read_callback":
-        anchor = "    if (count > 0) {\n        do {"
+        anchor = "    for (int total = 0; total < count; ) {"
         assert anchor in read_exact
         read_exact = read_exact.replace(
             anchor,
-            "    if (count > 0) {\n"
-            "        int (__cdecl *cached_read)(int, char *, long) = vox_read_slot;\n"
-            "        do {", 1)
+            "    int (__cdecl *cached_read)(int, char *, long) = vox_read_slot;\n"
+            "    for (int total = 0; total < count; ) {", 1)
         read_exact = read_exact.replace("int read = vox_read_slot(",
                                         "int read = cached_read(", 1)
     fixture = r'''#include <stddef.h>
@@ -128,7 +127,7 @@ def compile_and_run(mutant=None):
                   'static void vox_stage_error(const char *) {}\n')
     cpp_text = (fixture + callbacks + "\n" + storage +
                 "\nCaviarOutputMessageWindowCandidate CaviarOutputMessageWindow = {};\n" +
-                slots + "\n" + helper + "\n" + stage_stub + read_exact +
+                slots + "\n" + stage_stub + read_exact +
                 "\n" + MAIN)
     compilers = [shutil.which(name) for name in ("g++", "clang++")]
     available = [compiler for compiler in compilers if compiler]

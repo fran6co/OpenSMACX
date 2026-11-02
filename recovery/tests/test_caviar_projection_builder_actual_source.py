@@ -53,6 +53,18 @@ typedef char kernel_window_is_0x200[sizeof(CaviarKernelProjectionWindowCandidate
 
 
 MAIN = r'''
+// Read the real owner's object representation with the original B90 base.
+// This oracle stays independent of the product's typed row member accesses.
+static uint32_t projection_word(size_t index) {
+    uint32_t value;
+    memcpy(&value,reinterpret_cast<const unsigned char *>(&CaviarOutputMessageWindow) +
+               offsetof(VoxIoCallbacks, seek) + index * sizeof(value),sizeof(value));
+    return value;
+}
+static void set_projection_word(size_t index,uint32_t value) {
+    memcpy(reinterpret_cast<unsigned char *>(&CaviarOutputMessageWindow) +
+               offsetof(VoxIoCallbacks, seek) + index * sizeof(value),&value,sizeof(value));
+}
 static int prefix_calls;
 static int prefix_read_value;
 static void *prefix_alloc(unsigned long size) {
@@ -80,7 +92,7 @@ int main() {
     CaviarFixedPointProjection.dword_14_ = 23;
     vox_setup_copy_.depth_row_step_ = 29;
     for (int i = 0; i < 0x6B; ++i) {
-        CaviarOutputMessageWindow.projection_words_[i] = 0xfeedfaceu;
+        set_projection_word(i,0xfeedfaceu);
     }
     for (int i = 0; i < 0x1A; ++i) {
         CaviarKernelProjectionWindow.current_views_.cells_[i].unobserved_word_ = 0x13579BDFu;
@@ -99,13 +111,13 @@ int main() {
     if (CaviarKernelProjectionWindow.current_views_.cells_[0].x_ != -10 ||
         CaviarKernelProjectionWindow.current_views_.cells_[0].y_ != -31 ||
         CaviarKernelProjectionWindow.current_views_.cells_[0].z_ != -15104) return 2;
-    if (CaviarOutputMessageWindow.projection_words_[5] != (uint32_t)-30 ||
-        CaviarOutputMessageWindow.projection_words_[0] != (uint32_t)-167771935) {
+    if (projection_word(5) != (uint32_t)-30 ||
+        projection_word(4) != (uint32_t)-167771935) {
         return 3;
     }
-    if (CaviarOutputMessageWindow.projection_words_[100] == 0xfeedfaceu ||
-        CaviarOutputMessageWindow.projection_words_[105] == 0xfeedfaceu ||
-        CaviarOutputMessageWindow.projection_words_[106] == 0xfeedfaceu) return 4;
+    if (projection_word(104) == 0xfeedfaceu ||
+        projection_word(105) == 0xfeedfaceu ||
+        projection_word(106) == 0xfeedfaceu) return 4;
     uint32_t seek_after = 0;
     uint32_t tell_after = 0;
     memcpy(&seek_after, reinterpret_cast<unsigned char *>(&CaviarOutputMessageWindow) +
@@ -114,10 +126,11 @@ int main() {
                             offsetof(VoxIoCallbacks, tell), sizeof(tell_after));
     if (CaviarKernelProjectionWindow.current_views_.cells_[0].unobserved_word_ != 0x13579BDFu ||
         CaviarKernelProjectionWindow.current_views_.cells_[25].unobserved_word_ != 0x13579BDFu ||
-        CaviarOutputMessageWindow.projection_words_[1] != 0xfeedfaceu ||
-        CaviarOutputMessageWindow.projection_words_[2] != tell_sentinel ||
-        CaviarOutputMessageWindow.projection_words_[3] != 0xfeedfaceu) return 5;
-    if (seek_after != CaviarOutputMessageWindow.projection_words_[0] ||
+        projection_word(0) != seek_sentinel ||
+        projection_word(1) != 0xfeedfaceu ||
+        projection_word(2) != tell_sentinel ||
+        projection_word(3) != 0xfeedfaceu) return 5;
+    if (seek_after != seek_sentinel ||
         tell_after != tell_sentinel || tell_after == seek_sentinel) return 7;
     prefix_read_value = 71;
     if (CaviarOutputMessageWindow.io_allocate_(3) != &prefix_calls ||
@@ -148,8 +161,8 @@ def compile_and_run(compiler, body, expected_success):
         output_type = extract_body(HEADER.read_text(),
             "struct CaviarOutputMessageWindowCandidate")
         descriptor = extract_body(HEADER.read_text(), "struct VoxIoCallbacks {")
-        fixture = (FIXTURE + "\n" + descriptor + ";\n" + output_type + ";\n" +
-            "typedef char projection_follows_seek[offsetof(CaviarOutputMessageWindowCandidate, projection_words_) == offsetof(VoxIoCallbacks, seek) ? 1 : -1];\n" +
+        fixture = (FIXTURE + "\n" + descriptor + ";\n" + extract_body(HEADER.read_text(), "struct CaviarProjectionOutputRowCandidate {") + ";\n" + output_type + ";\n" +
+            "typedef char projection_follows_seek[offsetof(CaviarOutputMessageWindowCandidate, projection_rows_) == offsetof(VoxIoCallbacks, seek) + 0x10 ? 1 : -1];\n" +
             "typedef char prefix_fields_match_slots[offsetof(CaviarOutputMessageWindowCandidate, io_allocate_) == offsetof(VoxIoCallbacks, allocate) && offsetof(CaviarOutputMessageWindowCandidate, io_release_) == offsetof(VoxIoCallbacks, release) && offsetof(CaviarOutputMessageWindowCandidate, io_read_) == offsetof(VoxIoCallbacks, read) && offsetof(CaviarOutputMessageWindowCandidate, io_write_) == offsetof(VoxIoCallbacks, write) ? 1 : -1];\n" +
             "typedef char host_storage_extent[sizeof(CaviarOutputMessageWindowCandidate) == offsetof(VoxIoCallbacks, seek) + 0x2D0 ? 1 : -1];\n" +
             "CaviarKernelProjectionWindowCandidate CaviarKernelProjectionWindow = {};\n" +
@@ -188,7 +201,9 @@ def test_loop_count_mutant_fails_actual_source_control():
 def test_depth_stream_row_offset_mutant_fails_actual_source_control():
     body = extract_body(PRODUCT.read_text(),
                         "void __cdecl caviar_build_projection_tables(")
-    mutant = body.replace("CaviarOutputMessageWindow.projection_words_[outputIndex] =",
-                          "CaviarOutputMessageWindow.projection_words_[outputIndex + 1] =", 1)
+    # Move the packed-X stream one dword into its row, overwriting depth.
+    # This is the same within-window wrong-output-offset control on real rows.
+    mutant = body.replace("output->packed_x_ =",
+                          "output->depth_offset_ =", 1)
     assert mutant != body
     compile_and_run(shutil.which("g++"), mutant, False)

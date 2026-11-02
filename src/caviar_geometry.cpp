@@ -58,3 +58,67 @@ void __cdecl vox_matrix_matrix_mul(const float (*left)[3], const float (*right)[
         + left[2][2] * right[2][2];
 }
 
+/*
+Purpose: Normalise a vector in place: divide each component by the vector's
+         length. The engine's own normaliser, in the Vector family - its
+         neighbours are vector_add (0x00628150) and the scale helper at
+         0x006281B0 - and six game bodies call it besides Caviar::init, which
+         normalises the scene's down vector with it.
+// ORIGINAL: 0x00628220 sub_628220 0x00628220-0x0062828B FILE
+// symbol    ?vox_normalise_vector@@YAXPBMPAM@Z
+//           (the image carries no name for this address; the fact records
+//           what this tree emits. VC6 spells `const float *` and `float *`
+//           out in full - PBM and PAM - where a repeated IDENTICAL type
+//           would back-reference to `0`.)
+// size      107 bytes
+// callers   10   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+//
+// HOMED 2026-09-06, homed from src/unrecovered/00628220.cpp - which carried
+// five thousand scored spellings - and from the file-local stand-in this
+// definition replaces (Caviar::init reached the image address through it)
+// of the sum without reaching the image's 107 bytes. Nothing in that census
+// is contradicted here; the body below is the faithful reading, not a new
+// spelling of it.
+//
+// THE RECIPROCAL IS REAL. The image divides `1.0f` by the length
+// (`fdivr dword ptr [0x670c08]`, 0x670C08 being a float 1.0f the engine
+// keeps in data) and multiplies all three components by the answer, rather
+// than dividing three times - so `scale` below is a real variable, not a
+// transcription convenience.
+//
+// TRIED (archived census, 5760 scored units): no-locals src[i]*src[i] in every
+//        order/association/operand-order, 69 of 107 bytes; locals x,y,z with
+//        the tail reading source[], 69-76; the tail reading the locals, 85-95
+//        with one stack slot too many; const source, /Oa, an __inline helper,
+//        an aliasing store before the sum, dead stores, the sum in a variable
+//        - none of them reproduce the image's two spill slots. /Op and /O1
+//        both lose fsqrt to a call.
+// TRIED (this pass, all 0-1 of 37 agreeing against the committed body's 1 of
+//        37): `float v[3]` filled from source and read back per term - the
+//        array is not enregistered either, and the frame pointer still comes
+//        out where the image has `push ecx`; `float pair[2]` for y and z with
+//        source[0] direct; y and z as the only locals with the sum's x term
+//        reading source[0]; x,y,z locals with the tail reading the locals
+//        (33 instructions against the image's 37). The two memory slots the
+//        image spills y and z into are one `push ecx` and the CALLER'S OWN
+//        ARGUMENT SLOT - VC6 reusing a dead parameter slot for a local - and
+//        no spelling here produces it.
+*/
+void __cdecl vox_normalise_vector(const float *source, float *out) {
+    float x = source[0];
+    float y = source[1];
+    float z = source[2];
+    double length = sqrt(static_cast<double>(y) * y
+                       + static_cast<double>(z) * z
+                       + static_cast<double>(x) * x);
+    // The original stores this reciprocal to an m32 stack slot before using it.
+    // Volatile preserves that observed float32 conversion without narrowing the
+    // preceding square root or changing the sequential source rereads below.
+    volatile float scale = 1.0f / length;
+    out[0] = source[0] * scale;
+    out[1] = source[1] * scale;
+    out[2] = source[2] * scale;
+}

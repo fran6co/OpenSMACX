@@ -1108,14 +1108,18 @@ int SpriteList::on_insert(void *raw_payload) {
         return 0;
     }
 
-    const size_t length = strlen(pending_label_);
-    char *copy = allocator_ != 0
-        ? static_cast<char *>(allocator_->get(length + 1))
-        : static_cast<char *>(mem_get(length + 1));
+    char *copy;
+    if (allocator_ != 0) {
+        const size_t length = strlen(pending_label_);
+        copy = static_cast<char *>(allocator_->get(length + 1));
+    } else {
+        const size_t length = strlen(pending_label_);
+        copy = static_cast<char *>(mem_get(length + 1));
+    }
     payload->label_ = copy;
     if (copy == 0) return 4;
     *copy = '\0';
-    strcat(copy, pending_label_);
+    strcat(payload->label_, pending_label_);
     payload->field_C_ = field_24_;
     return 0;
 }

@@ -59,8 +59,10 @@
 // `/O2` implies `/Oi`, which expands `strcat` into an inlined `repne scasb`
 // walk. The image does not have one: it makes 4,332 direct `call _strcat`,
 // 875 `_strlen`, 339 `_strcpy` and 155 `_strcmp`. The same holds for the
-// two names added 2026-09-03: `call _abs` at 553 sites with not one
-// inlined `cdq / xor / sub`, and `sin` as a real CRT call - `/Oi` would
+// two names added 2026-09-03: verified `call _abs` sites, and `sin` as a
+// real CRT call. This is a shared default, not a whole-image intrinsic rule:
+// the Caviar octant bodies at 0x63FE00/0x63FFE0 use inline integer abs and
+// select that policy locally. For sin, `/Oi` would
 // emit `fsin` and drop the `and esp,-8` the stack-passed double needs
 // (trig_init). Gating the whole project on `/Oi-` instead of naming names
 // measures 619 REGRESSED of 2,385 claims against the settled pair's 3 -

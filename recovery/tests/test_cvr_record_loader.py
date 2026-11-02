@@ -10,6 +10,7 @@ import os
 from pathlib import Path
 import re
 import shutil
+import struct
 import subprocess
 
 import pytest
@@ -124,6 +125,7 @@ def run_host(tmp_path, parts):
         CvrPart alternate_part;unsigned char late_pointer[1];
         bool mutate_free,shorten_free;void **watched_failure;
         bool capture_count,mutate_count;int *captured_count;int mutate_at,mutate_to;
+        bool capture_header,mutate_header_alloc,mutate_header_read;int *captured_header_length;
         void require(bool ok) { if(!ok) std::exit(42); }
         void vox_stage_error(const char *text) {
             if(watched_failure) require(*watched_failure==nullptr);
@@ -135,6 +137,7 @@ def run_host(tmp_path, parts):
             void *result=std::malloc(size+32);require(result!=nullptr);
             std::memset(result,0xCD,size+32);allocations.push_back(result);allocation_sizes.push_back(size);
             if(mutate_count && captured_count && allocs==mutate_at){*captured_count=mutate_to;mutate_count=false;}
+            if(mutate_header_alloc && captured_header_length){*captured_header_length=8;mutate_header_alloc=false;}
             return result;
         }
         void release(void *pointer) {
@@ -149,7 +152,11 @@ def run_host(tmp_path, parts):
             require(fd==17);++reads;if(reads==fail_read)return -1;
             if(size>input.size()-position)return -1;
             if(capture_count && size==4)captured_count=reinterpret_cast<int*>(out);
-            std::memcpy(out,input.data()+position,size);position+=size;return int(size);
+            std::memcpy(out,input.data()+position,size);position+=size;
+            if(capture_header && !captured_header_length && size==8)
+                captured_header_length=reinterpret_cast<int*>(out)+1;
+            else if(mutate_header_read && captured_header_length){*captured_header_length=8;mutate_header_read=false;}
+            return int(size);
         }
         long seek_bytes(int fd,long count,int origin) {
             require(fd==17 && origin==1);++seeks;if(seeks==fail_seek)return -1;
@@ -170,7 +177,7 @@ def run_host(tmp_path, parts):
         }
         Bytes fixture(bool patch=true,bool user=true,int count=1,uint32_t shape_bytes=32) {
             Bytes file;
-            join(file,chunk(0x01000000,number(0x40E00000))); // version 7
+            join(file,chunk(0x01000000,number(0x41000000))); // version 8: newer palette
             join(file,chunk(0x02000000,Bytes{'d','e','s','c'}));
             Bytes palette;
             join(palette,chunk(0x01010000,Bytes{'p','a','l'}));
@@ -224,9 +231,10 @@ def run_host(tmp_path, parts):
             vox_user_chunk=nullptr;std::strcpy(vox_message_buffer,"old error");
             loaded=free_record=nullptr;mutate_free=shorten_free=false;watched_failure=nullptr;
             capture_count=mutate_count=false;captured_count=nullptr;mutate_at=mutate_to=1;
+            capture_header=mutate_header_alloc=mutate_header_read=false;captured_header_length=nullptr;
         }
         void check_loaded(CvrRecord *r,bool patch) {
-            require(r && r->state_==3 && r->version_==7.0f && r->part_count_==1 && r->step_count_==1);
+            require(r && r->state_==3 && r->version_==8.0f && r->part_count_==1 && r->step_count_==1);
             require(r->field_38_==0 && r->field_3C_==0 && r->flags_==1);
             require(std::strcmp(r->description_,"desc")==0 && std::strcmp(r->palette_name_,"pal")==0);
             require(std::strcmp(r->parts_name_,"parts")==0 && std::strcmp(r->slot_table_[0],"one")==0);
@@ -288,6 +296,28 @@ def run_host(tmp_path, parts):
             for(int row=0;row<24;++row)for(int col=0;col<256;++col)
                 require(r->palette_[0x302+row*256+col]==old_payload[0x302+(row*2/3)*256+col]);
             require(r->palette_[0x1B02]==0xCD);
+            // TEST AH,0x41 at 6387D3 sends equality and unordered to the
+            // same old-format expansion, independently of the seed's < 7.
+            for(uint32_t version:{0x40E00000u,0x7FC00000u}) {
+                Bytes boundary_file;join(boundary_file,chunk(0x01000000,number(version)));
+                join(boundary_file,chunk(0x03000000,old_palette));
+                reset(chunk(0x00525643,boundary_file));r=vox_load_record(17);
+                require(r && position==input.size() && allocation_sizes.back()==0x1B02);
+                for(int row=0;row<24;++row)for(int col=0;col<256;++col)
+                    require(r->palette_[0x302+row*256+col]==old_payload[0x302+(row*2/3)*256+col]);
+            }
+            // A read callback may retain the live local header. Allocation
+            // and payload callbacks can then change its length; the original
+            // keeps the already captured payload, but reloads the output slot.
+            for(uint32_t tag:{0x01010000u,0x01020000u,0x01030000u})for(int phase=0;phase<2;++phase) {
+                reset(chunk(tag,Bytes{0x31,0x32,0x33}));CvrRecord header_record={};header_record.version_=8.0f;
+                capture_header=true;mutate_header_alloc=phase==0;mutate_header_read=phase==1;
+                require(vox_read_chunks(17,&header_record,int(input.size()+8))==0 && position==input.size());
+                const void *output=tag==0x01010000u?static_cast<void*>(header_record.palette_name_):
+                    tag==0x01020000u?static_cast<void*>(header_record.palette_):static_cast<void*>(header_record.field_18_);
+                require(std::memcmp(output,"123",3)==0 && allocation_sizes[0]==(tag==0x01010000u?4:3));
+                if(tag==0x01010000u)require(header_record.palette_name_[3]==0 && header_record.palette_name_[4]==char(0xCD));
+            }
             // The actual old-format reader makes four ordered reads. A failed
             // read cannot publish any expanded rows, but keeps prior prefix bytes.
             for(int failure=0;failure<=4;++failure) {
@@ -351,7 +381,8 @@ def test_actual_loader_closure_and_callback_failure_order(tmp_path):
 
 @pytest.mark.parametrize("damage",["magic","user_length","user_error","patch_offset","patch_length",
                                    "count_check","release_cache","release_count","allocator_publication","names_count_reload","parts_count_reload","forward_overlap_copy",
-                                   "palette_row","palette_read_failure","palette_extent"])
+                                   "palette_row","palette_read_failure","palette_extent",
+                                   "palette_version_equal","palette_version_unordered","payload_reload","terminator_reload"])
 def test_behavior_damage_controls(tmp_path,damage):
     parts=actual_source()
     if damage=="magic":parts["vox_load_record"]=parts["vox_load_record"].replace("0x00525643","0x00525644")
@@ -382,6 +413,19 @@ def test_behavior_damage_controls(tmp_path,damage):
         parts["vox_expand_palette"]=parts["vox_expand_palette"].replace("if (vox_read_exact(fd, shades, sizeof(shades)) != 0) return -1;","if (vox_read_exact(fd, shades, sizeof(shades)) != 0) return 0;")
     elif damage=="palette_extent":
         parts["vox_expand_palette"]=parts["vox_expand_palette"].replace("shade < 0x30","shade < 0x2E")
+    elif damage in ("palette_version_equal","palette_version_unordered"):
+        replacement="record->version_ < vox_threshold_seven" if damage=="palette_version_equal" else "record->version_ <= vox_threshold_seven"
+        original=parts["vox_read_chunks"]
+        parts["vox_read_chunks"]=original.replace("!(record->version_ > vox_threshold_seven)",replacement)
+        assert parts["vox_read_chunks"]!=original
+    elif damage=="payload_reload":
+        original=parts["vox_read_chunks"]
+        parts["vox_read_chunks"]=original.replace("                               payload) != 0)","                               header.length - 8) != 0)")
+        assert parts["vox_read_chunks"]!=original
+    elif damage=="terminator_reload":
+        original=parts["vox_read_chunks"]
+        parts["vox_read_chunks"]=original.replace("record->palette_name_[payload] = 0","record->palette_name_[header.length - 8] = 0")
+        assert parts["vox_read_chunks"]!=original
     else:
         parts["vox_read_shape_patches"]=parts["vox_read_shape_patches"].replace("memmove(bytes + prefix_size, bytes, old_size);","for (uint32_t n=0;n<old_size;++n) bytes[prefix_size+n]=bytes[n];")
     result=run_host(tmp_path,parts)
@@ -395,11 +439,13 @@ def test_pinned_original_dispatch_and_patch_boundaries():
     from match_recovery.pe_coff import PeImage
     from match_recovery.model import Span
     image=PeImage(path.read_bytes(),PIN);decoder=Cs(CS_ARCH_X86,CS_MODE_32)
-    extents=((0x6381F0,0x638425),(0x6388C0,0x638AC2),(0x638AD0,0x638CB9),(0x638F30,0x639086),(0x639090,0x6391E6))
+    extents=((0x6381F0,0x638425),(0x6388C0,0x638AC2),(0x638AD0,0x638CB9),(0x638F30,0x639086),(0x639090,0x6391E6),
+             (0x638720,0x6388B2))
     expected=({0x638650,0x638620,0x6386B0,0x6386D0,0x638720,0x6388C0,0x639390},
               {0x638650,0x638620,0x639090,0x638AD0,0x639390},
               {0x638650,0x638620,0x638CC0,0x638DE0,0x638F30,0x639390},
-              {0x638650,0x638620,0x639390},{0x638650,0x6474E0,0x639390})
+              {0x638650,0x638620,0x639390},{0x638650,0x6474E0,0x639390},
+              {0x638650,0x638620,0x639390,0x6391F0})
     instructions={}
     for (start,end),targets in zip(extents,expected):
         body=list(decoder.disasm(image.read(Span(start,end)),start))
@@ -411,8 +457,14 @@ def test_pinned_original_dispatch_and_patch_boundaries():
         0x63833B:("call","eax"),0x638340:("test","al, al"),0x638353:("mov","dword ptr [ecx + 0x40], eax"),
         0x638394:("mov","dword ptr [edx + 4], 3"),0x639109:("push","0x2a"),
         0x63912B:("mov","ecx, dword ptr [esp + 0x24]"),0x639154:("add","ebp, -0x2a"),
-        0x639173:("mov","dword ptr [ebx + 4], edx")}
+        0x639173:("mov","dword ptr [ebx + 4], edx"),
+        0x6387C1:("fld","dword ptr [ebx + 8]"),0x6387C4:("fcomp","dword ptr [0x670fec]"),
+        0x6387D3:("test","ah, 0x41"),0x6387D6:("je","0x638803"),
+        0x6387A6:("lea","esi, [eax - 8]"),0x6387CA:("lea","edi, [eax - 8]"),
+        0x638827:("lea","esi, [eax - 8]"),0x63884F:("mov","ecx, dword ptr [edi]"),
+        0x638851:("mov","byte ptr [esi + ecx], al")}
     for address,value in anchors.items():assert instructions[address]==value
+    assert struct.unpack("<f",image.read(Span(0x670FEC,0x670FF0)))==(7.0,)
     # This recognized CRT dependency has a memmove contract even though the
     # old seed called it memcpy_0. Inspect entry/overlap branch, not jump tables.
     runtime={i.address:(i.mnemonic,i.op_str) for start,end in ((0x6474E0,0x647500),(0x647678,0x647697))

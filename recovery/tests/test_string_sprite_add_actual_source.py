@@ -2,6 +2,7 @@
 from pathlib import Path
 import os
 import subprocess
+import shutil
 
 
 HERE = Path(__file__).resolve().parent
@@ -630,10 +631,140 @@ def test_cached_pending_label_mutant_fails_allocator_callback(tmp_path):
     source = product_bodies()
     body = extract_definition(source, "int SpriteList::on_insert(void *raw_payload)")
     anchor = "payload->sprite_ = pending_sprite_;"
-    assert body.count(anchor) == 1 and body.count("pending_label_") == 3
+    assert body.count(anchor) == 1 and body.count("pending_label_") == 4
     cached = body.replace("pending_label_", "saved_label").replace(
         anchor, anchor + "\n    char *const saved_label = pending_label_;", 1)
     exe = compile_fixture(tmp_path, source.replace(body, cached, 1))
     run = subprocess.run([str(exe)], capture_output=True, text=True)
     assert run.returncode != 0, "cached label survived allocator mutation"
     assert 'strcmp(payload->label_, "new") == 0' in run.stderr
+
+
+def test_sprite_insert_allocation_selection_receiver_and_destination_phases(tmp_path):
+    """Boundary doubles expose read phases, not a claim strlen mutates objects."""
+    root = repo_root()
+    body = extract_definition((root / "src/spritebox.cpp").read_text(),
+                              "int SpriteList::on_insert(void *raw_payload)")
+    fixture = r"""
+#include <cassert>
+#include <cstring>
+#include <cstdint>
+#include <new>
+class Heap { public: int calls; Heap(): calls(0) {} void *get(size_t); };
+struct SpriteStruct { void *sprite_; char *label_; unsigned field_C_; };
+class SpriteList {
+public:
+    Heap *allocator_;
+    void *pending_sprite_;
+    char *pending_label_;
+    unsigned field_24_;
+    int on_insert(void *);
+};
+static SpriteList *list;
+static Heap *strlen_owner, *expected_owner;
+static bool mutate_strlen, fail_allocation;
+static int lengths, mem_calls, concats;
+static char buffer[64], old_label[] = "old", new_label[] = "new";
+static char *allocation, *expected_destination;
+static size_t phase_strlen(const char *text) {
+    assert(text == old_label); ++lengths;
+    size_t result = std::strlen(text);
+    if (mutate_strlen) list->allocator_ = strlen_owner;
+    return result;
+}
+void *Heap::get(size_t bytes) {
+    assert(this == expected_owner && bytes == 4); ++calls;
+    if (fail_allocation) return 0;
+    list->pending_label_ = new_label;
+    return allocation;
+}
+static void *mem_get(size_t bytes) {
+    assert(bytes == 4); ++mem_calls;
+    if (fail_allocation) return 0;
+    list->pending_label_ = new_label;
+    return allocation;
+}
+static char *phase_strcat(char *destination, const char *source) {
+    assert(destination == expected_destination && source == new_label);
+    ++concats;
+    return std::strcat(destination, source);
+}
+#define strlen phase_strlen
+#define strcat phase_strcat
+ACTUAL
+#undef strcat
+#undef strlen
+static void reset(SpriteList &owner) {
+    list = &owner; owner.allocator_ = 0;
+    owner.pending_sprite_ = reinterpret_cast<void *>(7);
+    owner.pending_label_ = old_label; owner.field_24_ = 81;
+    mutate_strlen = fail_allocation = false;
+    lengths = mem_calls = concats = 0;
+    std::memset(buffer, 0, sizeof buffer);
+    allocation = expected_destination = buffer;
+}
+int main() {
+    SpriteList owner; SpriteStruct payload;
+    Heap before, after;
+    reset(owner); owner.allocator_ = &before;
+    mutate_strlen = true; strlen_owner = expected_owner = &after;
+    assert(owner.on_insert(&payload) == 0);
+    assert(before.calls == 0 && after.calls == 1 && mem_calls == 0 && lengths == 1);
+    assert(concats == 1 && std::strcmp(payload.label_, "new") == 0);
+    assert(payload.sprite_ == reinterpret_cast<void *>(7) && payload.field_C_ == 81);
+
+    reset(owner); mutate_strlen = true; strlen_owner = &after;
+    assert(owner.on_insert(&payload) == 0);
+    assert(mem_calls == 1 && after.calls == 1 && lengths == 1 && concats == 1);
+
+    // Allocator-owned bytes may overlap the destination pointer's object
+    // representation. Pin zeroes one byte then rereads that stored pointer.
+    alignas(256) unsigned char slab[1024] = {};
+    SpriteStruct *alias = new(slab + 384) SpriteStruct;
+    reset(owner); owner.allocator_ = expected_owner = &before;
+    allocation = reinterpret_cast<char *>(&alias->label_);
+    uintptr_t address = reinterpret_cast<uintptr_t>(allocation);
+    assert(*reinterpret_cast<unsigned char *>(&address) == (address & 255u));
+    expected_destination = reinterpret_cast<char *>(address & ~uintptr_t(255));
+    assert(owner.on_insert(alias) == 0);
+    assert(alias->label_ == expected_destination && concats == 1);
+    assert(std::strcmp(expected_destination, "new") == 0);
+
+    reset(owner); owner.pending_label_ = 0;
+    payload.field_C_ = 0xFEED;
+    assert(owner.on_insert(&payload) == 0 && payload.label_ == 0 && payload.field_C_ == 81);
+    assert(lengths == 0 && mem_calls == 0 && concats == 0);
+    reset(owner); fail_allocation = true; payload.field_C_ = 0xFEED;
+    assert(owner.on_insert(&payload) == 4 && payload.label_ == 0 && payload.field_C_ == 0xFEED);
+    assert(lengths == 1 && mem_calls == 1 && concats == 0);
+}
+"""
+    variants = [("actual", body, True)]
+    length = "        const size_t length = strlen(pending_label_);\n"
+    assert body.count(length) == 2
+    hoisted = body.replace(length, "").replace(
+        "    char *copy;", "    const size_t length = strlen(pending_label_);\n    char *copy;", 1)
+    variants.append(("hoisted_length", hoisted, False))
+    cached_owner = body.replace("if (allocator_ != 0)", "if (saved_owner != 0)", 1).replace(
+        "allocator_->get(length + 1)", "saved_owner->get(length + 1)", 1).replace(
+        "    char *copy;", "    Heap *const saved_owner = allocator_;\n    char *copy;", 1)
+    variants.append(("cached_allocator", cached_owner, False))
+    assert body.count("strcat(payload->label_, pending_label_);") == 1
+    variants.append(("cached_destination", body.replace(
+        "strcat(payload->label_, pending_label_);", "strcat(copy, pending_label_);", 1), False))
+    for compiler_name in ("g++", "clang++"):
+        compiler = shutil.which(compiler_name)
+        assert compiler, compiler_name + " required for allocation phase control"
+        for name, candidate, success in variants:
+            stem = compiler_name.replace("+", "p") + "-" + name
+            source = tmp_path / (stem + ".cpp")
+            source.write_text(fixture.replace("ACTUAL", candidate))
+            binary = tmp_path / stem
+            build = subprocess.run([compiler, "-std=c++11", "-O0", "-fsanitize=address,undefined",
+                                    "-fno-sanitize-recover=all", str(source), "-o", str(binary)],
+                                   capture_output=True, text=True)
+            assert build.returncode == 0, build.stderr
+            run = subprocess.run([str(binary)], capture_output=True, text=True, timeout=15,
+                                 env={**os.environ, "ASAN_OPTIONS": "detect_leaks=0",
+                                      "UBSAN_OPTIONS": "halt_on_error=1"})
+            assert (run.returncode == 0) == success, stem + run.stderr

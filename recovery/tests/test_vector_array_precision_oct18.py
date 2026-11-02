@@ -39,9 +39,9 @@ LENGTH_FUNCTION_RESTORE = (
 
 
 def actual_parts() -> dict[str, str]:
-    caviar = (ROOT / "src/caviar.cpp").read_text()
+    geometry = (ROOT / "src/caviar_geometry.cpp").read_text()
     vector = (ROOT / "src/vector.cpp").read_text()
-    normalizer = _definition(caviar, NORMALIZER)
+    normalizer = _definition(geometry, NORMALIZER)
     length = _definition(vector, LENGTH)
     normalize = _definition(vector, VECTOR_NORMALIZE)
     intrinsic_at = vector.index(LENGTH_INTRINSIC_SCOPE)

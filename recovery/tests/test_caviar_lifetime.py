@@ -27,9 +27,10 @@ def actual_source():
         "model_close":"void CaviarData::close()",
         "model_init":"int CaviarData::init(char *name)","renderer_ctor":"Caviar::Caviar()",
         "renderer_close":"void Caviar::close()",
-        "renderer_init":"void Caviar::init()", "instance_ctor":"VoxInstance::VoxInstance()",
+        "renderer_init":"int Caviar::init()", "instance_ctor":"VoxInstance::VoxInstance()",
         "normalise":"void __cdecl vox_normalise_vector("}
-    sources={"model_ctor":model,"model_close":model,"model_init":model}
+    sources={"model_ctor":model,"model_close":model,"model_init":model,
+             "normalise":(ROOT/"src/caviar_geometry.cpp").read_text()}
     return {"header":header,
             "model_dtor":braced(header,header.index("~CaviarData()")),
             "renderer_dtor":braced(header,header.index("~Caviar()")),
@@ -145,13 +146,13 @@ def run_host(tmp_path,parts):
                 require(sizeof(scene_scale_word)==sizeof(renderer.scene_scale_));
                 std::memcpy(&scene_scale_word,&renderer.scene_scale_,sizeof(scene_scale_word));
                 require(scene_scale_word==0x3F2AAAAB);
-                renderer.init();require(allocated.size()==600 && released.empty());
+                require(renderer.init()==0);require(allocated.size()==600 && released.empty());
                 require(renderer.scene_context_.state_.instances_==renderer.slots_);
             }
             require(allocated==released && released_models.size()==model_releases);
             reset_allocations();
             {
-                Caviar renderer;renderer.init();renderer.close();require_empty(renderer);
+                Caviar renderer;require(renderer.init()==0);renderer.close();require_empty(renderer);
                 require(allocated==released);renderer.close();require(allocated==released);
                 require(renderer.field_4_==0 && renderer.scene_scale_==2.0f/3.0f);
             }
@@ -159,7 +160,7 @@ def run_host(tmp_path,parts):
             // positions must free instance allocations, never treat them as CVRs.
             for(int failure=1;failure<=600;++failure) {
                 reset_allocations();fail_at=failure;
-                {Caviar renderer;renderer.init();require_empty(renderer);}
+                {Caviar renderer;require(renderer.init()==4);require_empty(renderer);}
                 require(allocated==released && released.size()==size_t(failure-1));
             }
             for(int failure:{1,2,3,300,600}) {
@@ -183,10 +184,16 @@ def test_actual_model_and_instance_lifetimes(tmp_path):
     result=run_host(tmp_path,actual_source());assert result.returncode==0,result.stderr
 
 
-@pytest.mark.parametrize("damage",["no_model_dtor","no_renderer_dtor","short_array","wrong_release","model_clear","model_fd_close","wrong_owner","instance_vector_not_zero","wrong_initial_scene_scale"])
+@pytest.mark.parametrize("damage",["no_model_dtor","no_renderer_dtor","short_array","wrong_release","model_clear","model_fd_close","wrong_owner","instance_vector_not_zero","wrong_initial_scene_scale","init_success_result","init_failure_result"])
 def test_lifetime_damage_controls(tmp_path,damage):
     parts=actual_source()
-    if damage=="no_model_dtor":parts["model_dtor"]=parts["model_dtor"].replace("close();","")
+    if damage=="init_success_result":
+        assert parts["renderer_init"].count("return 0;")==1
+        parts["renderer_init"]=parts["renderer_init"].replace("return 0;","return 4;")
+    elif damage=="init_failure_result":
+        assert parts["renderer_init"].count("return 4;")==3
+        parts["renderer_init"]=parts["renderer_init"].replace("return 4;","return 0;")
+    elif damage=="no_model_dtor":parts["model_dtor"]=parts["model_dtor"].replace("close();","")
     elif damage=="no_renderer_dtor":parts["renderer_dtor"]=parts["renderer_dtor"].replace("close();","")
     elif damage=="short_array":parts["renderer_close"]=parts["renderer_close"].replace("index < 200","index < 199")
     elif damage=="wrong_release":parts["renderer_close"]=parts["renderer_close"].replace("free(slots_[index].instance_colour_)","free(slots_[index].instance_vector_)")

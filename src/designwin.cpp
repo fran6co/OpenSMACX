@@ -3915,9 +3915,8 @@ void DesignWin::suggest_abil(int ability) {
     check_abil();
     if ((GameDataStateStorage.fields_.game_preferences_ & 0x4000) == 0) return;
 
-    const int ability_id = abil_index(ability);
-    const int faction = static_cast<int>(factionID_);
-    if (!has_tech(Ability[ability_id].preq_tech, faction)) {
+    if (!has_tech(Ability[abil_index(ability)].preq_tech,
+                  static_cast<int>(factionID_))) {
         return;
     }
 
@@ -3926,19 +3925,18 @@ void DesignWin::suggest_abil(int ability) {
     const int chassis_id = static_cast<int>(protoChassisType_);
     if (!abil_cond(abil_index(ability), chassis_id, weapon_id, armor_id)
         || bit_count(static_cast<int>(protoAbilityFlags_)) > 1
-        || (protoAbilityFlags_ != 0
-            && !has_tech(Rules.tech_two_spec_abilities, faction))) {
+        || (bit_count(static_cast<int>(protoAbilityFlags_)) != 0
+            && !has_tech(Rules.tech_two_spec_abilities,
+                         static_cast<int>(factionID_)))) {
         return;
     }
 
-    const Player &local = Players[ConsoleGlobal.faction_id_];
-    const int *const bonus_ids = local.faction_bonus_id;
-    const int *const bonus_values = local.faction_bonus_val1;
     // The original walks 0x29 dwords from both member-array starts instead
     // of honoring faction_bonus_count or the declared eight-entry extents.
     // Keep its stale/overrun reads; this is an original access quirk.
     for (int i = 0; i < 0x29; ++i) {
-        if (bonus_ids[i] == 15) {
+        if (Players[ConsoleGlobal.faction_id_].faction_bonus_id[i] == 15) {
+            const int *const bonus_values = Players[ConsoleGlobal.faction_id_].faction_bonus_val1;
             const int bonus_ability_id = abil_index(ability);
             if (bonus_values[i] == bonus_ability_id) {
                 return;
@@ -3951,10 +3949,11 @@ void DesignWin::suggest_abil(int ability) {
     protoAbilityIDs_[1] = -1;
     for (int id = 0; id < 0x1D; ++id) {
         if ((protoAbilityFlags_ & (1u << id)) == 0) continue;
-        if (protoAbilityIDs_[0] < 0) {
-            protoAbilityIDs_[0] = id;
-        } else if (protoAbilityIDs_[1] < 0) {
-            protoAbilityIDs_[1] = id;
+        for (int slot = 0; slot < 2; ++slot) {
+            if (protoAbilityIDs_[slot] < 0) {
+                protoAbilityIDs_[slot] = id;
+                break;
+            }
         }
     }
 }

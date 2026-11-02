@@ -141,6 +141,7 @@ def build_and_run(body, expected_success=True):
         extract(header, "struct CaviarSceneSetupDescriptorCandidate {") + ";\n" +
         extract(header, "struct VoxRenderClipBounds {") + ";\n" +
         extract(header, "struct VoxRenderRecord {") + ";\n" +
+        extract(header, "struct CaviarProjectionOutputRowCandidate {") + ";\n" +
         extract(header, "struct CaviarOutputMessageWindowCandidate {") + ";\n")
     with tempfile.TemporaryDirectory(prefix="caviar-ramps-") as directory:
         cpp = pathlib.Path(directory) / "actual_ramps.cpp"
@@ -166,11 +167,13 @@ def test_actual_ramp_body_preserves_borrowed_descriptor_and_distinct_domains():
     output_end = header.index("};", output_start)
     output_view = header[output_start:output_end]
     assert "union {" not in output_view
-    for field in ("io_allocate_", "io_release_", "io_read_", "io_write_"):
+    for field in ("io_allocate_", "io_release_", "io_read_", "io_write_", "io_seek_", "io_tell_"):
         assert field in output_view
     assert "uint8_t callback_prefix_" not in output_view
-    assert "uint32_t projection_words_[0x6B]" in output_view
-    assert "memcpy(&callback" in source  # overlapping seek/tell slots only
+    assert "CaviarProjectionOutputRowCandidate projection_rows_[0x1A]" in output_view
+    assert "vox_load_callback" not in source
+    assert "#define vox_seek_slot (CaviarOutputMessageWindow.io_seek_)" in source
+    assert "#define vox_tell_slot (CaviarOutputMessageWindow.io_tell_)" in source
     body = extract(source, "extern \"C\" char __cdecl sub_63f9b0(VoxRenderRecord *record) {")
     build_and_run(body)
 
