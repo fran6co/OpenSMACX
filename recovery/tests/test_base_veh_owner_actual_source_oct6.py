@@ -158,7 +158,15 @@ int RadiusOffsetX[16]={0}, RadiusOffsetY[16]={0};
 int BaseIDCurrentSelected=0, TileYieldRestricted=9;
 Map *map_tiles(){ return tiles; }
 static int resets=0;
-void base_reset(int i, int) { ++resets; if (i==0) MapLongitude=7; }
+static int reset_new_count=0, reset_visit_count=0, reset_visits[8]={};
+void base_reset(int i, int) {
+  ++resets; reset_visits[reset_visit_count++]=i;
+  if (i==0) {
+    MapLongitude=7;
+    if (reset_new_count!=0)
+      GameDataStateStorage.fields_.base_current_count_=reset_new_count;
+  }
+}
 static bool move_current_in_crop=false;
 int crop_yield(uint8_t,int,int,int,int){
   if (move_current_in_crop) { BaseCurrent=bases+1; move_current_in_crop=false; }
@@ -322,6 +330,19 @@ def test_full_translation_unit_mask_rejects_comment_hidden_definition() -> None:
         _active_definition(hidden, address, pattern)
 
 
+def test_bases_reset_original_reads_live_count_after_callback() -> None:
+    image = _pinned_history_image()
+    instructions = {item.address: item for item in _ENGINE.disasm(
+        image.read(Span(0x004E6300, 0x004E63FC)), 0x004E6300)}
+    assert instructions[0x004E63CD].mnemonic == "call"
+    assert instructions[0x004E63CD].op_str == "0x4e5fe0"
+    assert instructions[0x004E63E1].mnemonic == "mov"
+    assert instructions[0x004E63E1].op_str == "eax, dword ptr [0x9a64cc]"
+    assert instructions[0x004E63ED].op_str == "ebx, eax"
+    assert instructions[0x004E63EF].mnemonic == "jl"
+    assert instructions[0x004E63EF].op_str == "0x4e6342"
+
+
 @pytest.mark.parametrize("compiler", _compiler_list())
 def test_actual_source_owner_behaviors_and_compiling_mutant(tmp_path: Path,
                                                             compiler: str) -> None:
@@ -334,6 +355,18 @@ def test_actual_source_owner_behaviors_and_compiling_mutant(tmp_path: Path,
   tiles[0].bit=2; tiles[0].val2=1; tiles[1].bit=0;
   bases_reset(3,1,1);
   assert(resets==1);
+  reset_new_count=1; reset_visit_count=0; resets=0;
+  GameDataStateStorage.fields_.base_current_count_=2;
+  bases_reset(-1,1,0);
+  assert(resets==1 && reset_visit_count==1 && reset_visits[0]==0);
+  reset_new_count=3; reset_visit_count=0; resets=0;
+  GameDataStateStorage.fields_.base_current_count_=1;
+  bases[2].faction_id_current=1; bases[2].x=4; bases[2].y=0;
+  bases_reset(-1,1,0);
+  assert(resets==3 && reset_visit_count==3 && reset_visits[0]==0
+         && reset_visits[1]==1 && reset_visits[2]==2);
+  reset_new_count=0; reset_visit_count=0; resets=1;
+  GameDataStateStorage.fields_.base_current_count_=2; MapLongitude=8;
   move_current_in_crop=true;
   assert(sub_4e7e50(0)==12 && bases[0].intake_2[0]==0
          && bases[1].intake_2[0]==3 && bases[1].intake_2[1]==4
@@ -371,9 +404,25 @@ def test_actual_source_owner_behaviors_and_compiling_mutant(tmp_path: Path,
     base_source = (ROOT / "src/base.cpp").read_text()
     arithmetic = "\n".join(braced(base_source, head) for head in (
         "int base_yield_signed_bits(uint32_t value)", "int base_yield_sub(int left, int right)"))
+    map_header = (ROOT / "src/map.h").read_text()
+    arithmetic += "\n" + braced(map_header, "enum TerrainBit") + ";\n"
+    arithmetic += "\n".join(braced(map_header, head) for head in (
+        "inline Map *__cdecl map_loc(int x, int y)",
+        "inline int __cdecl veh_who(int x, int y)"))
     code = "#include <stdint.h>\n" + HOST + arithmetic + "\n" + "\n".join(functions.values()) + "\nint main(){\n" + main + "\n}\n"
     passed = _compile_run(tmp_path, code, compiler)
     assert passed.returncode == 0, passed.stdout + passed.stderr
+
+    cached_count_mutant = dict(functions)
+    live_bound = "} while (i < GameDataStateStorage.fields_.base_current_count_);"
+    assert cached_count_mutant[0x004E6300].count(live_bound) == 1
+    cached_count_mutant[0x004E6300] = cached_count_mutant[0x004E6300].replace(
+        live_bound, "} while (i < count);", 1
+    )
+    stale_bound = "#include <stdint.h>\n" + HOST + arithmetic + "\n" + "\n".join(cached_count_mutant.values()) + "\nint main(){\n" + main + "\n}\n"
+    failed = _compile_run(tmp_path, stale_bound, compiler)
+    assert failed.returncode != 0, "the cached count mutation survived"
+    assert "resets==1 && reset_visit_count==1" in failed.stderr
 
     mutant = dict(functions)
     old = "        base = BaseCurrent;"

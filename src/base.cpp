@@ -1218,9 +1218,7 @@ void __cdecl bases_reset(int region_id, int faction_id, int skip_occupied) {
                 if ((base->faction_id_current == faction_id) &&
                     (region_id < 0 ||
                      tiles[base->y * mult + (base->x >> 1)].region == region_id) &&
-                    (skip_occupied == 0 ||
-                     (tiles[base->y * mult + (base->x >> 1)].bit & 2) == 0 ||
-                     7 < (tiles[base->y * mult + (base->x >> 1)].val2 & 0xf)) &&
+                    (skip_occupied == 0 || veh_who(base->x, base->y) < 0) &&
                     (((unsigned char)mask &
                       GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_) == 0 ||
                      (BaseCurrent->state & 0x80000000) == 0)) {
@@ -1230,7 +1228,7 @@ void __cdecl bases_reset(int region_id, int faction_id, int skip_occupied) {
                 }
                 ++i;
                 ++base;
-            } while (i < count);
+            } while (i < GameDataStateStorage.fields_.base_current_count_);
         }
     }
 }
