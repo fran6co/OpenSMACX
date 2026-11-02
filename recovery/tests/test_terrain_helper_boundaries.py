@@ -91,15 +91,10 @@ def test_site_helper_identity_rejects_duplicate_nonheader_definition(name):
         helper_definition(duplicate + "\n" + duplicate, name)
 
 
-def test_near_landmark_moves_unchanged_to_one_world_owner():
-    baseline = subprocess.check_output(
-        ["git", "show", WORLD_OWNER_BASE + ":src/map.h"], cwd=ROOT,
-    ).decode("utf-8")
+def test_near_landmark_has_one_world_owner():
     header = (ROOT / "src/map.h").read_text(encoding="utf-8")
     world = (ROOT / "src/world.cpp").read_text(encoding="utf-8")
-    original = helper_definition(baseline, "near_landmark")
     current = helper_definition(world, "near_landmark")
-    assert current == original.removeprefix("MEASURED inline ")
     assert "BOOL __cdecl near_landmark(int x, int y);" in header
     with pytest.raises(ValueError, match=r"0 definitions found"):
         helper_definition(header, "near_landmark")
@@ -228,6 +223,13 @@ def test_pinned_spans_retain_direct_calls_and_the_setter_inline_exception():
             assert sum(instruction.size for instruction in listing.instructions) == high - low
             output.extend(site for site in call_sites(listing) if site.form == "direct")
         return output
+
+    # The standalone landmark scan and the volcano's inlined copy both
+    # stop at a fixed 289 four-byte offset entries, independent of RadiusRange.
+    for owner, site in ((0x005C5BD0, 0x005C5C48),
+                        (0x005C6DB0, 0x005C6EED)):
+        bound = next(item for item in instructions(owner) if item.address == site)
+        assert (bound.mnemonic, bound.op_str) == ("cmp", "esi, 0x484")
 
     world_alt = instructions(0x005C58C0)
     assert next(item for item in world_alt if item.address == 0x005C58C3).op_str == (

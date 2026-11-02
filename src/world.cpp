@@ -1529,7 +1529,7 @@ void __cdecl world_linearize_contours() {
 
 /*
 Purpose: Determine if the specified tile is near a landmark.
-// ORIGINAL: 0x005C5BD0 ?near_landmark@@YAHHH@Z 0x005C5BD0-0x005C5C61
+// ORIGINAL: 0x005C5BD0 ?near_landmark@@YAHHH@Z 0x005C5BD0-0x005C5C61 BYTE_EXACT
 // size      145 bytes
 // prototype BOOL (__cdecl ?near_landmark@@YAHHH@Z)(int xCoord, int yCoord)
 // callers   1   call targets   0
@@ -1552,7 +1552,7 @@ Status: Complete
 // Defined here so this owner can inline it; other TUs use the public declaration.
 
 BOOL __cdecl near_landmark(int x, int y) {
-    for (int i = 0; i < RadiusRange[8]; i++) {
+    for (int i = 0; i < 289; i++) {
         int x_radius = xrange(x + RadiusOffsetX[i]);
         int y_radius = y + RadiusOffsetY[i];
         if (on_map(x_radius, y_radius) && code_at(x_radius, y_radius)) {
@@ -2089,7 +2089,7 @@ Return Value: n/a
 Status: Complete - testing
 */
 void __cdecl world_volcano(int x, int y, BOOL is_not_landmark) {
-    uint32_t loc_attempts = 0;
+    int loc_attempts = 0;
     if (!on_map(x, y)) {
         do {
             do {
@@ -2120,7 +2120,7 @@ void __cdecl world_volcano(int x, int y, BOOL is_not_landmark) {
     }
     world_alt_set(x, y, ALT_BIT_OCEAN_TRENCH, true); // purpose??
     world_alt_set(x, y, ALT_3_LEVELS_ABOVE_SEA, true);
-    for (int i = 0; i < RadiusRange[1]; i++) {
+    for (int i = 0; i < 9; i++) {
         int x_radius = xrange(x + RadiusOffsetX[i]);
         int y_radius = y + RadiusOffsetY[i];
         if (on_map(x_radius, y_radius)) {
@@ -2140,7 +2140,7 @@ void __cdecl world_volcano(int x, int y, BOOL is_not_landmark) {
     GameDataStateStorage.fields_.mount_planet_x_ = x;
     GameDataStateStorage.fields_.mount_planet_y_ = y;
     if (!is_not_landmark) {
-        new_landmark(x, y, StringTable.get(Natural[LM_VOLCANO].name));
+        new_landmark(x, y + 2, StringTable.get(Natural[LM_VOLCANO].name));
     }
 }
 

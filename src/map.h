@@ -620,9 +620,7 @@ MEASURED inline int __cdecl region_at(int x, int y) {
 
 void __cdecl region_set(int x, int y, int region);
 
-MEASURED inline void __cdecl bit_put(int x, int y, int bit) {
-    map_loc(x, y)->bit = bit;
-}
+void __cdecl bit_put(int x, int y, int bit);
 
 void __cdecl bit_set(int x, int y, int bit, BOOL set);
 void __cdecl bit2_set(int x, int y, int bit2, BOOL set);

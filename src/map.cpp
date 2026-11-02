@@ -1245,7 +1245,6 @@ Status: Complete
 /*
 Purpose: Set the bit for the specified tile.
 // ORIGINAL: 0x00591D30 ?bit_put@@YAXHHH@Z 0x00591D30-0x00591D58 BYTE_EXACT
-// body      src/map.h
 // size      40 bytes
 // prototype void (__cdecl ?bit_put@@YAXHHH@Z)(int xCoord, int yCoord, int bit)
 // callers   1   call targets   0
@@ -1255,10 +1254,6 @@ Purpose: Set the bit for the specified tile.
 Return Value: n/a
 Status: Complete
 */
-// BODY IN map.h, as `MEASURED inline`: the image writes it out at
-// some call sites and calls it at others, and a .cpp definition is only ever
-// one of those. The marker stays here because that is where the catalogue
-// reads it.
 // TRIED: best MNEMONIC_ONLY (needs /Oy- to even get the ebp-frame; with
 //            it, 12/14 instructions, all mnemonics agree). The image loads
 //            the `bit` parameter into ecx BEFORE the map_tiles() pointer into
@@ -1268,6 +1263,9 @@ Status: Complete
 //            before it - both compiled byte-identical to the plain form, so
 //            the scheduling is fixed by the compiler regardless of source
 //            shape. Not chased further.
+void __cdecl bit_put(int x, int y, int bit) {
+    map_loc(x, y)->bit = bit;
+}
 
 
 /*
