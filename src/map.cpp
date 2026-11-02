@@ -3057,7 +3057,7 @@ __forceinline static int alt_shore_detail(int corner, int west, int north, int e
 
 /*
 Purpose: Is any of the eight tiles a tile's odd-q ring holds land?
-// ORIGINAL: 0x004620C0 sub_4620c0 0x004620C0-0x00462184 FILE
+// ORIGINAL: 0x004620C0 sub_4620c0 0x004620C0-0x00462184 FILE BYTE_EXACT
 // symbol    ?is_land_near@@YAHHH@Z
 // NO IMAGE CALLER AND NO IMAGE REFERENCE AT ALL, so the name is derived from
 //        the body, not from a catalogue entry. The eight offsets it walks are
@@ -3095,7 +3095,7 @@ BOOL __cdecl is_land_near(int x, int y) {
         int x_radius = xrange(x + VehMoveDeltaX[i]);
         int y_radius = y + VehMoveDeltaY[i];
         if (on_map(x_radius, y_radius)
-            && (map_loc(x_radius, y_radius)->climate & 0xE0) >= ALT_BIT_SHORE_LINE) {
+            && (map_loc(x_radius, y_radius)->climate & ~0x1F) >= ALT_BIT_SHORE_LINE) {
             return true;
         }
     }

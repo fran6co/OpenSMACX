@@ -1058,7 +1058,7 @@ Purpose: Load the wave from its remembered filename. With no wrapped device
          the device hears through its slot 0x6C, the base Sound::load reads
          the file, and on success the device reports the length in
          milliseconds through its slot 0xC4 into the field at 0x60.
-// ORIGINAL: 0x004C6CE0 ?load@Wave@@QAEHXZ 0x004C6CE0-0x004C6DAC
+// ORIGINAL: 0x004C6CE0 ?load@Wave@@QAEHXZ 0x004C6CE0-0x004C6DAC BYTE_EXACT
 // symbol    ?load@Wave@@UAEHXZ
 // LEVER: `int attribs = 0;` declared as the FIRST statement, before even the
 //        `fname` null check - matches the image's `xor edi, edi` right after
@@ -1093,6 +1093,7 @@ Status: Complete
 */
 int Wave::load() {
     int attribs = 0;
+    int result = 0;
     const char *const fname = fname_;
     if (fname != nullptr) {
         if (!device_) {
@@ -1129,14 +1130,14 @@ int Wave::load() {
         wave_playback_device(device_)->set_attrib(static_cast<unsigned long>(attribs));
         // The original calls Sound::load (0x004C6280) directly. Virtual
         // dispatch here would recurse into Wave's filename overload.
-        const int loaded = Sound::load(fname);
-        if (loaded) {
-            return loaded;
+        result = Sound::load(fname);
+        if (result == 0) {
+            ms_length_ = wave_playback_device(device_)->get_ms_length();
         }
-        ms_length_ = wave_playback_device(device_)->get_ms_length();
-        return 0;
+    } else {
+        result = 8;
     }
-    return 8;
+    return result;
 }
 
 

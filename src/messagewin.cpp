@@ -380,14 +380,13 @@ int MessageWin::UNK3(int x, int y, char *text, int) {
 
 // 0x004717A0. The list's real Dialog base owns the entry chain and its
 // allocator. Keep the containing ListBox open while removing its rows.
-// ORIGINAL: 0x004717A0 ?clear@MessageWin@@QAEXXZ 0x004717A0-0x00471864
+// ORIGINAL: 0x004717A0 ?clear@MessageWin@@QAEXXZ 0x004717A0-0x00471864 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/004717a0.cpp", "image:0x004717A0"], "reason": "The archived MessageWin reset walks the embedded ListBox Dialog entries and clears the same pane state and button group."}
 // TRIED: MISMATCH, closest at 194/196 bytes (mnemonic_similarity 0.99, 1 edit). Same embedded-manager close-and-relink shape as SetupWin::close/Dialog::init, but reached through a vbtable: `listBox_.vbtable_pointer_` (self+0x64) is a pointer to a displacement table, slot 2 (`[vtbl+8]`) is the byte displacement to the virtual base holding the manager - `char *base = self + vbtable[2] + 0x120;` reproduces the `[edx+ebx+0x128]`/`lea esi,[edx+ebx+0x120]` addressing exactly. Only the SECOND vtable-adjustment "deleting dtor" call (vtbl[1] read as a displacement, this-adjusted, that pointer's own vtbl[0] called with arg 1) still diverges by a handful of instructions - the same register-allocator nuance as the second call site in 0x004AD9C0 and 0x00609730, not chased further.
 void MessageWin::clear() {
     MessageWinMessageCount = 0;
-    Dialog &dialog = listBox_;
-    dialog.item_list_.remove_all();
-    dialog.selected_position_ = 0;
+    listBox_.item_list_.remove_all();
+    listBox_.selected_position_ = 0;
     listBox_.field_18_ = 0;
     listBox_.field_20_ = 0;
     MainInterfaceGlobal.button_group(0).set(1001, 1);
