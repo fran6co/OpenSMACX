@@ -439,12 +439,21 @@ int Scroll::init(int x, int y, int width, int height, Win *parent,
     range_minimum_ = 0;
 
     const bool horizontal = width > height;
-    bar_thickness_ = horizontal ? height : width;
-    make_rect(&thumb_rect_, 0, 0, bar_thickness_, bar_thickness_);
-    if (border_color_ != -1) {
-        expand_rect(&thumb_rect_, -1, -1);
+    if (horizontal) {
+        bar_thickness_ = height;
+        make_rect(&thumb_rect_, 0, 0, height, height);
+        if (border_color_ != -1) {
+            expand_rect(&thumb_rect_, -1, -1);
+        }
+        range_maximum_ = width - 2 * height;
+    } else {
+        bar_thickness_ = width;
+        make_rect(&thumb_rect_, 0, 0, width, width);
+        if (border_color_ != -1) {
+            expand_rect(&thumb_rect_, -1, -1);
+        }
+        range_maximum_ = height - 2 * width;
     }
-    range_maximum_ = horizontal ? width - 2 * height : height - 2 * width;
 
     int flags = (field_A14_ & 1U) != 0U ? 0x80000 : 0;
     flags |= ScrollNonClientInit != 0 ? 0x9020 : 0x1020;
