@@ -64,7 +64,7 @@ def compile_and_run(tmp_path: Path, source: str) -> None:
     subprocess.run([str(binary)], check=True, timeout=10)
 
 
-def compile_and_expect_failure(tmp_path: Path, source: str) -> None:
+def compile_and_expect_failure(tmp_path: Path, source: str, expected_assertion=None) -> None:
     compiler = shutil.which("g++") or shutil.which("clang++")
     if compiler is None:
         pytest.skip("host C++ compiler unavailable")
@@ -84,6 +84,9 @@ def compile_and_expect_failure(tmp_path: Path, source: str) -> None:
                             cwd=tmp_path, preexec_fn=no_core,
                             env=dict(os.environ, OPENSMACX_DISABLE_CORES="1"))
     assert result.returncode != 0, "stale-dimension snapshot mutant passed callback-mutation witnesses"
+    if expected_assertion is not None:
+        assert result.returncode == -6, result.stderr
+        assert expected_assertion in result.stderr, result.stderr
 
 
 def test_adjust_uses_real_sprite_dimensions_and_owned_maininterface_bounds(tmp_path):
@@ -231,9 +234,12 @@ Font popup_font;
 Font *PopupMenuBoldFont = &popup_font;
 int TextColourTable[195];
 int MenuSelection = 4;
+RECT *upper_rows = nullptr;
+int upper_row = 0;
 char *__stdcall CharUpperA(char *text) {
   char *result = text;
   for (; *text; ++text) *text = static_cast<char>(std::toupper(static_cast<unsigned char>(*text)));
+  if (upper_rows) upper_rows[upper_row++].top = 9000;
   return result;
 }
 struct MenuEntry { const char *text; unsigned char flags; };
@@ -315,9 +321,135 @@ int main() {
   assert(menu.colors[4][0] == 320);
   assert(menu.rects[0].left == 18 && menu.rects[0].right == 82);
   assert(menu.rects[4].top == 64 && menu.rects[4].bottom == 74);
+
+  AlphaMenu callback_menu;
+  upper_rows = callback_menu.spot_.rows;
+  callback_menu.on_redraw();
+  assert(upper_row == 5);
+  assert(callback_menu.rects[0].top == 20 && callback_menu.rects[4].top == 64);
 }
 """
     compile_and_run(tmp_path, harness)
+    late_snapshot = redraw.replace("    CharUpperA(text);\n", "", 1)
+    late_snapshot = late_snapshot.replace("    RECT row;", "    CharUpperA(text);\n    RECT row;", 1)
+    assert late_snapshot != redraw
+    compile_and_expect_failure(
+        tmp_path, harness.replace(redraw, late_snapshot, 1),
+        "callback_menu.rects[0].top == 20",
+    )
+
+
+def test_init_preserves_both_extract_arms_fresh_color_and_error_lifetimes(tmp_path):
+    body = extract_function(SOURCE.read_text(), "int AlphaMenu::init(Win *parent)")
+    harness = r"""
+#include <cassert>
+#include <cstring>
+#include <cstdint>
+struct RECT {};
+struct Win {};
+struct GraphicWin;
+int WinScreenWidth;
+unsigned char WinFillColour;
+int ctors, dtors, closes, loads, extracts, graphic_inits, markup, adjusts;
+int load_result, graphic_result, expected_width;
+int colors[4], ys[4], widths[4], heights[4];
+char filename[32];
+int field_value;
+Win MainInterfaceGlobal;
+int (*PullDownFieldF38Default)(GraphicWin *, int, RECT *);
+int (*PullDownFieldF3CDefault)(GraphicWin *);
+struct Buffer {
+  Buffer() { ++ctors; }
+  ~Buffer() { ++dtors; }
+  int load_pcx(const char *name, void *palette, int mode, int count) {
+    assert(!palette && mode == 10 && count == 0xEC);
+    ++loads; std::strcpy(filename, name);
+    // The input width has already selected the branch. A changed width
+    // cannot move the remaining extraction to the other resolution arm.
+    WinScreenWidth = expected_width == 0x320 ? 1024 : 0x320;
+    WinFillColour = 17;
+    return load_result;
+  }
+  void close() { ++closes; }
+  void set_markup_enabled(int enabled) { assert(enabled == 0); ++markup; }
+};
+struct GraphicWin : Win, Buffer {
+  int init(int x, int y, int w, int h, char *title, int flags,
+           Win *parent, void *menu, void *border) {
+    assert(x == 0 && y == 0 && w == 0x51 && h == 0x8F && !title);
+    assert(flags == 0x1000000 && parent == &MainInterfaceGlobal && !menu && !border);
+    ++graphic_inits;
+    return graphic_result;
+  }
+};
+struct Sprite {
+  int extract(Buffer *sheet, unsigned char color, int x, int y,
+              int width, int height, void *heap) {
+    assert(sheet && x == 1 && !heap && extracts < 4);
+    colors[extracts] = color; ys[extracts] = y;
+    widths[extracts] = width; heights[extracts] = height;
+    ++extracts;
+    // Model a change across the actual external extraction boundary,
+    // without claiming that a historical extract invokes this callback.
+    ++WinFillColour;
+    return 0;
+  }
+};
+struct AlphaMenu : GraphicWin {
+  int field_A28_;
+  Sprite sprite1_, sprites_[3];
+  int init(Win *parent);
+  void adjust() { ++adjusts; }
+  static int fill_func(GraphicWin *, int, RECT *) { return 1; }
+  static int backfill_func(GraphicWin *) { return 1; }
+};
+__BODY__
+int main() {
+  for (int resolution = 0; resolution != 3; ++resolution)
+  for (int failure = 0; failure != 4; ++failure) {
+    AlphaMenu menu;
+    ctors = dtors = closes = loads = extracts = graphic_inits = markup = adjusts = 0;
+    PullDownFieldF38Default = nullptr; PullDownFieldF3CDefault = nullptr;
+    menu.field_A28_ = -7;
+    expected_width = resolution == 0 ? 640 : resolution == 1 ? 1024 : 800;
+    WinScreenWidth = expected_width; WinFillColour = 200;
+    load_result = failure == 1 ? -9 : 0;
+    graphic_result = failure == 2 ? -11 : 0;
+    Win parent;
+    const int result = menu.init(failure == 3 ? nullptr : &parent);
+    assert(ctors == 1 && dtors == 1);
+    if (failure == 3) {
+      assert(result == 3 && !loads && !extracts && !closes && !graphic_inits);
+      assert(!PullDownFieldF38Default && !PullDownFieldF3CDefault && menu.field_A28_ == -7);
+      continue;
+    }
+    assert(loads == 1 && extracts == 4 && menu.field_A28_ == 5);
+    assert(PullDownFieldF38Default == &AlphaMenu::fill_func);
+    assert(PullDownFieldF3CDefault == &AlphaMenu::backfill_func);
+    assert(std::strcmp(filename, expected_width == 0x320 ? "menu.pcx" : "menu2.pcx") == 0);
+    for (int i = 0; i != 4; ++i) {
+      assert(colors[i] == 17 + i);
+      assert(ys[i] == (i == 0 ? 1 : 8 + (i - 1) * 19));
+      assert(widths[i] == (expected_width == 0x320 ? 0x8A : 0x8B));
+      assert(heights[i] == (i == 0 ? 6 : 0x12));
+    }
+    if (failure == 1) {
+      assert(result == -9 && !closes && !graphic_inits && !markup && !adjusts);
+    } else {
+      assert(closes == 1 && graphic_inits == 1);
+      if (failure == 2) assert(result == -11 && !markup && !adjusts);
+      else assert(result == 0 && markup == 1 && adjusts == 1);
+    }
+  }
+}
+"""
+    compile_and_run(tmp_path, harness.replace("__BODY__", body))
+    cached = body.replace("    sprite1_.extract", "    const unsigned char transparent = WinFillColour;\n    sprite1_.extract")
+    cached = cached.replace("extract(&sheet, WinFillColour,", "extract(&sheet, transparent,")
+    assert cached != body
+    compile_and_expect_failure(
+        tmp_path, harness.replace("__BODY__", cached), "colors[i] == 17 + i",
+    )
 
 
 def test_hide_animation_draws_the_owned_graphic_buffer_to_screen(tmp_path):

@@ -2266,9 +2266,8 @@ void __cdecl add_site(int faction_id, int type, int priority, int x, int y) {
     for (int i = 0; i < MaxSitesNum; i++) {
         Goal &sites = PlayersData[faction_id].sites[i];
         if (sites.x == x && sites.y == y && sites.type == type) {
-            if (sites.priority <= priority) {
-                sites.priority = (int16_t)priority;
-            }
+            sites.priority = static_cast<int16_t>(
+                sites.priority > priority ? sites.priority : priority);
             return;
         }
     }
@@ -2276,12 +2275,11 @@ void __cdecl add_site(int faction_id, int type, int priority, int x, int y) {
     int site_id = -1;
     for (i = 0; i < MaxSitesNum; i++) {
         Goal &sites = PlayersData[faction_id].sites[i];
-        int type_cmp = sites.type;
-        int priroty_cmp = sites.priority;
-        if (type_cmp < 0 || priroty_cmp < priority) {
+        const int16_t type_cmp = sites.type;
+        if (type_cmp < 0 || sites.priority < priority) {
             int cmp = type_cmp >= 0 ? 0 : 1000;
             if (!cmp) {
-                cmp = 20 - priroty_cmp;
+                cmp = 20 - sites.priority;
             }
             if (cmp > priority_search) {
                 priority_search = cmp;
@@ -2291,11 +2289,11 @@ void __cdecl add_site(int faction_id, int type, int priority, int x, int y) {
     }
     if (site_id >= 0) {
         Goal &sites = PlayersData[faction_id].sites[site_id];
-        sites.type = (int16_t)type;
-        sites.priority = (int16_t)priority;
         sites.x = x;
         sites.y = y;
-        add_goal(faction_id, type, priority, x, y, -1);
+        sites.type = (int16_t)type;
+        sites.priority = (int16_t)priority;
+        add_goal(faction_id, sites.type, sites.priority, sites.x, sites.y, -1);
     }
 }
 
@@ -2819,7 +2817,7 @@ void __cdecl rankings(int apply_ranks) {
 
 /*
 Purpose: Calculate the basic social engineering modifiers for the specified faction.
-// ORIGINAL: 0x005B0D70 ?compute_faction_modifiers@@YAXH@Z 0x005B0D70-0x005B0DF3
+// ORIGINAL: 0x005B0D70 ?compute_faction_modifiers@@YAXH@Z 0x005B0D70-0x005B0DF3 BYTE_EXACT
 // LEVER: three WALKING POINTERS (bonus_id/bonus_val1/bonus_val2) advanced
 //        together in the `for`'s increment, rather than `faction_bonus_id[i]`
 //        &c re-subscripted each iteration - the image walks ONE pointer and
@@ -2840,15 +2838,14 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl compute_faction_modifiers(int faction_id) {
-    ZeroMemory(&PlayersData[faction_id].soc_effect_base, sizeof(SocialEffect));
+    for (int effect = 0; effect < MaxSocialEffectNum; ++effect) {
+        PlayersData[faction_id].soc_effect_base.values_[effect] = 0;
+    }
     int count = Players[faction_id].faction_bonus_count;
-    int *bonus_id = Players[faction_id].faction_bonus_id;
-    int *bonus_val1 = Players[faction_id].faction_bonus_val1;
-    int *bonus_val2 = Players[faction_id].faction_bonus_val2;
-    for (int i = 0; i < count; i++, bonus_id++, bonus_val1++, bonus_val2++) {
-        if (*bonus_id == RULE_SOCIAL) {
-            *(&PlayersData[faction_id].soc_effect_base.values_[SocialEffect::ECONOMY] + *bonus_val1)
-                += *bonus_val2;
+    for (int i = 0; i < count; i++) {
+        if (Players[faction_id].faction_bonus_id[i] == RULE_SOCIAL) {
+            PlayersData[faction_id].soc_effect_base.values_[Players[faction_id].faction_bonus_val1[i]]
+                += Players[faction_id].faction_bonus_val2[i];
         }
     }
 }

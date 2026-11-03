@@ -200,3 +200,113 @@ def test_actual_shared_structure_and_live_phases(tmp_path, compiler, damage):
     else:
         assert result.returncode != 0
         assert diagnostic in result.stderr, result.stderr
+
+
+# This projection uses the actual Goal declaration and actual add_site body.
+# Its add_goal seam records the already-published fields and ordinary arguments;
+# it does not claim host compilation qualifies original offsets or VC6 emission.
+SITE_HARNESS = r"""
+#include <cassert>
+#include <cstdint>
+#include <cstring>
+#include <climits>
+#define __cdecl
+ACTUAL_GOAL
+static_assert(sizeof(Goal)==16,"actual Goal record");
+const int MaxSitesNum=25,MaxGoalsNum=75,STATE_DEBUG_MODE=0x1000;
+struct PlayerData {Goal goals[MaxGoalsNum],sites[MaxSitesNum];}PlayersData[8];
+struct State {struct Fields {int game_state_;}fields_;}GameDataStateStorage;
+int calls,dangers,expected[6],chosen;
+void danger(const char*,const char*,int,int,int){++dangers;}
+void add_goal(int f,int type,int priority,int x,int y,int base){
+ const Goal &site=PlayersData[f].sites[chosen];
+ assert(type==expected[1] && "stored signed type passed to add_goal");
+ assert(priority==expected[2] && "stored signed priority passed to add_goal");
+ assert(f==expected[0]&&x==expected[3]&&y==expected[4]&&base==expected[5]);
+ assert(site.type==type&&site.priority==priority&&site.x==x&&site.y==y&&"complete site published before call");
+ ++calls;
+}
+ACTUAL_SITE
+void reset(){
+ std::memset(PlayersData,0,sizeof PlayersData);
+ for(int f=0;f<8;++f)for(int i=0;i<25;++i){
+  Goal &s=PlayersData[f].sites[i];s.type=-1;s.priority=0;s.x=-200-i;s.y=-100-i;s.base_id=1000+i;
+ }
+ calls=dangers=0;GameDataStateStorage.fields_.game_state_=0;
+ expected[0]=2;expected[3]=10;expected[4]=8;expected[5]=-1;chosen=0;
+}
+int main(){
+ const int inputs[][4]={{0x10001,0x10002,1,2},{0x8000,0xffff,-32768,-1},
+  {-65537,-32769,-1,32767},{INT_MIN,INT_MAX,0,-1}};
+ for(const auto &v:inputs){reset();expected[1]=v[2];expected[2]=v[3];
+  add_site(2,v[0],v[1],10,8);assert(calls==1&&dangers==0&&"signed unused site insertion");
+  assert(PlayersData[2].sites[0].base_id==1000);
+  for(int i=1;i<25;++i)assert(PlayersData[2].sites[i].type==-1&&PlayersData[2].sites[i].x==-200-i);
+ }
+ // An unused signed type must outrank an ordinary priority-zero record.
+ reset();PlayersData[2].sites[0].type=7;chosen=1;expected[1]=3;expected[2]=1;
+ add_site(2,3,1,10,8);assert(calls==1&&PlayersData[2].sites[0].type==7&&"signed unused type wins selection");
+ // A duplicate never calls add_goal, and the selected maximum narrows once.
+ reset();Goal &same=PlayersData[2].sites[4];same.type=3;same.priority=32000;same.x=10;same.y=8;
+ add_site(2,3,0x10001,10,8);assert(calls==0&&same.priority==1);
+ same.priority=32000;add_site(2,3,-20,10,8);assert(calls==0&&same.priority==32000);
+ // Existing negative priority may outrank the unused score of 1000.
+ reset();Goal &low=PlayersData[2].sites[2];low.type=4;low.priority=-32768;
+ chosen=2;expected[1]=5;expected[2]=1;add_site(2,5,1,10,8);assert(calls==1);
+ // Native TEST AH,0x10 is bit0x1000; bit0x10 must not enable debug.
+ reset();GameDataStateStorage.fields_.game_state_=0x10;expected[1]=3;expected[2]=1;expected[3]=9;
+ add_site(2,3,1,9,8);assert(calls==1&&dangers==0);
+ // Preserve the debug-only bad parity callback without rejecting the site.
+ reset();GameDataStateStorage.fields_.game_state_=0x1000;expected[1]=3;expected[2]=1;expected[3]=9;
+ add_site(2,3,1,9,8);assert(calls==1&&dangers==1);
+}
+"""
+
+
+@pytest.mark.parametrize('compiler', ['g++', 'clang++'])
+@pytest.mark.parametrize('damage', ['none', 'input_type', 'input_priority', 'unsigned_type', 'swap_coordinates'])
+def test_actual_site_signed_fields_and_goal_arguments(tmp_path, compiler, damage):
+    executable = shutil.which(compiler)
+    if not executable:
+        pytest.skip(compiler + ' unavailable')
+    body = definition((ROOT / 'src/faction.cpp').read_text(), 'void __cdecl add_site(')
+    # VC6's original for-scope leaves i live for the second loop. Transport
+    # only that declaration for standard host C++; all operations stay actual.
+    vc6_for = 'for (int i = 0; i < MaxSitesNum; i++) {'
+    assert body.count(vc6_for) == 1
+    body = body.replace(vc6_for, 'int i; for (i = 0; i < MaxSitesNum; i++) {')
+    original = body
+    diagnostic = ''
+    if damage in ('input_type', 'input_priority'):
+        before = 'add_goal(faction_id, sites.type, sites.priority, sites.x, sites.y, -1);'
+        assert body.count(before) == 1
+        if damage == 'input_type':
+            after = 'add_goal(faction_id, type, sites.priority, sites.x, sites.y, -1);'
+            diagnostic = 'stored signed type passed to add_goal'
+        else:
+            after = 'add_goal(faction_id, sites.type, priority, sites.x, sites.y, -1);'
+            diagnostic = 'stored signed priority passed to add_goal'
+        body = body.replace(before, after)
+    elif damage == 'unsigned_type':
+        before = 'const int16_t type_cmp = sites.type;'
+        assert body.count(before) == 1
+        body = body.replace(before, 'const uint16_t type_cmp = sites.type;')
+        diagnostic = 'signed unused site insertion'
+    elif damage == 'swap_coordinates':
+        before = 'sites.x = x;\n        sites.y = y;'
+        assert body.count(before) == 1
+        body = body.replace(before, 'sites.x = y;\n        sites.y = x;')
+        diagnostic = 'x==expected[3]'
+    if damage != 'none':
+        assert body != original
+    goal = definition((ROOT / 'src/faction.h').read_text(), 'struct Goal {') + ';'
+    cpp, binary = tmp_path / 'actual.cpp', tmp_path / 'actual'
+    cpp.write_text(SITE_HARNESS.replace('ACTUAL_GOAL', goal).replace('ACTUAL_SITE', body))
+    compiled = subprocess.run([executable, '-std=c++11', '-O2', '-Wall', '-Wextra', str(cpp), '-o', str(binary)], capture_output=True, text=True)
+    assert compiled.returncode == 0, compiled.stdout + compiled.stderr
+    result = subprocess.run([str(binary)], capture_output=True, text=True)
+    if damage == 'none':
+        assert result.returncode == 0, result.stdout + result.stderr
+    else:
+        assert result.returncode != 0
+        assert diagnostic in result.stderr, result.stderr

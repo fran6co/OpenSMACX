@@ -531,16 +531,29 @@ int AlphaMenu::init(Win *parent) {
   PullDownFieldF3CDefault = &AlphaMenu::backfill_func;
   field_A28_ = 5;
 
-  const bool compact = WinScreenWidth == 0x320;
-  const int result = sheet.load_pcx(compact ? "menu.pcx" : "menu2.pcx",
-                                   nullptr, 10, 0xEC);
-  const unsigned char transparent = WinFillColour;
-  const int sprite_y = compact ? 0x8A : 0x8B;
-  sprite1_.extract(&sheet, transparent, 1, 1, sprite_y, 6, nullptr);
-  int frame_y = 8;
-  for (int i = 0; i != 3; ++i, frame_y += 0x13) {
-    sprites_[i].extract(&sheet, transparent, 1, frame_y, sprite_y, 0x12,
-                        nullptr);
+  int result;
+  if (WinScreenWidth == 0x320) {
+    result = sheet.load_pcx("menu.pcx", nullptr, 10, 0xEC);
+    sprite1_.extract(&sheet, WinFillColour, 1, 1, 0x8A, 6, nullptr);
+    int frame_y = 8;
+    Sprite *frame = sprites_;
+    for (int remaining = 3; remaining != 0; --remaining) {
+      frame->extract(&sheet, WinFillColour, 1, frame_y, 0x8A, 0x12,
+                     nullptr);
+      frame_y += 0x13;
+      ++frame;
+    }
+  } else {
+    result = sheet.load_pcx("menu2.pcx", nullptr, 10, 0xEC);
+    sprite1_.extract(&sheet, WinFillColour, 1, 1, 0x8B, 6, nullptr);
+    int frame_y = 8;
+    Sprite *frame = sprites_;
+    for (int remaining = 3; remaining != 0; --remaining) {
+      frame->extract(&sheet, WinFillColour, 1, frame_y, 0x8B, 0x12,
+                     nullptr);
+      frame_y += 0x13;
+      ++frame;
+    }
   }
   if (result != 0) return result;
 
@@ -664,10 +677,10 @@ int __cdecl AlphaMenu::fill_func(GraphicWin *target, int mode, RECT *clip) {
 // RECOVERY_BINDING: v1 {"evidence": ["Retained seeds src/unrecovered/00402f40.cpp,004032a0.cpp,00403af0.cpp and src/recovered/units/00403340.cpp,00403680.cpp,00403830.cpp; pinned original callback style27/29, positive hide height, branch-only clip restoration and actual caller dispatch audited by coordinator."], "reason": "Recover AlphaMenu owner behavior through existing Menu/GraphicWin/Buffer inheritance and owned Sprite lifetimes; historical seed identity and extents remain obligations, not measurement claims."}
 // symbol    ?on_redraw@AlphaMenu@@UAEXXZ
 void AlphaMenu::on_redraw() {
-  Buffer *const canvas = static_cast<Buffer *>(this);
   GraphicWin::fill(9);
-  sprite1_.draw(canvas, sprite1_.transparent_index(), 0, 0, 1, 1);
-  canvas->set_font(PopupMenuBoldFont, nullptr, nullptr, nullptr);
+  sprite1_.draw(static_cast<Buffer *>(this),
+                sprite1_.transparent_index(), 0, 0, 1, 1);
+  Buffer::set_font(PopupMenuBoldFont, nullptr, nullptr, nullptr);
 
   int y = sprite1_.height();
   for (int sprite_index = 0; sprite_index < count_; ++sprite_index) {
@@ -677,7 +690,8 @@ void AlphaMenu::on_redraw() {
     } else if (sprite_index == MenuSelection) {
       sprite = &sprites_[1];
     }
-    sprite->draw(canvas, sprite->transparent_index(), 0, y, 1, 1);
+    sprite->draw(static_cast<Buffer *>(this),
+                 sprite->transparent_index(), 0, y, 1, 1);
     y += sprites_[0].height();
   }
 
@@ -685,22 +699,27 @@ void AlphaMenu::on_redraw() {
     const uint8_t flags = entries_[label_index].flags;
     if ((flags & 1) == 0) continue;
 
-    const int color_pair = label_index == field_A24_
-        ? ((flags & 2) ? 34 : 30)
-        : ((flags & 2) ? 36 : 32);
-    canvas->set_text_color(TextColourTable[color_pair],
-                           TextColourTable[color_pair + 1], 1, 1);
+    if (label_index == field_A24_) {
+      if (flags & 2)
+        Buffer::set_text_color(TextColourTable[34], TextColourTable[35], 1, 1);
+      else
+        Buffer::set_text_color(TextColourTable[30], TextColourTable[31], 1, 1);
+    } else {
+      if (flags & 2)
+        Buffer::set_text_color(TextColourTable[36], TextColourTable[37], 1, 1);
+      else
+        Buffer::set_text_color(TextColourTable[32], TextColourTable[33], 1, 1);
+    }
 
     char text[256];
     text[0] = '\0';
     strcat(text, entries_[label_index].text);
-    CharUpperA(text);
-
     RECT row;
     spot_.get_rect_at(label_index, &row);
     row.left += 8;
     row.right -= 8;
-    canvas->write_l(text, &row, strlen(text));
+    CharUpperA(text);
+    Buffer::write_l(text, &row, strlen(text));
   }
 }
 
@@ -743,7 +762,7 @@ void AlphaMenu::show() {
 }
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x00403830 ?hide@AlphaMenu@@QAEXXZ 0x00403830-0x00403AE5 FILE
+// ORIGINAL: 0x00403830 ?hide@AlphaMenu@@QAEXXZ 0x00403830-0x00403AE5 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Retained seeds src/unrecovered/00402f40.cpp,004032a0.cpp,00403af0.cpp and src/recovered/units/00403340.cpp,00403680.cpp,00403830.cpp; pinned original callback style27/29, positive hide height, branch-only clip restoration and actual caller dispatch audited by coordinator."], "reason": "Recover AlphaMenu owner behavior through existing Menu/GraphicWin/Buffer inheritance and owned Sprite lifetimes; historical seed identity and extents remain obligations, not measurement claims."}
 // symbol    ?hide@AlphaMenu@@UAEXXZ
 void AlphaMenu::hide() {
@@ -764,7 +783,7 @@ void AlphaMenu::hide() {
   buffer_.init(width, height, 0, 0);
   const int console_copy_height = pixel_height();
   const int console_copy_width = pixel_width();
-  static_cast<Buffer *>(&ConsoleGlobal)->copy(
+  ConsoleGlobal.Buffer::copy(
       &buffer_, console_rect.left, console_rect.top, 0, 0,
       console_copy_width, console_copy_height);
 
@@ -781,7 +800,7 @@ void AlphaMenu::hide() {
       const int frame_copy_width = pixel_width();
       buffer_.copy(&ScreenBufferOwner.buffer(), 0, 0, screen_rect.left, screen_rect.top,
                    frame_copy_width, frame_copy_height);
-      static_cast<Buffer *>(this)->draw(&ScreenBufferOwner.buffer(), 9, frame_x, y, 1, 1);
+      Buffer::draw(&ScreenBufferOwner.buffer(), 9, frame_x, y, 1, 1);
       flip(&screen_rect);
       y += step;
       if (y >= target_y) y = target_y;
@@ -793,8 +812,8 @@ void AlphaMenu::hide() {
       const int final_copy_width = pixel_width();
       buffer_.copy(&ScreenBufferOwner.buffer(), 0, 0, screen_rect.left, screen_rect.top,
                    final_copy_width, final_copy_height);
-      static_cast<Buffer *>(this)->draw(&ScreenBufferOwner.buffer(), 9,
-                                        screen_rect.left, target_y, 1, 1);
+      Buffer::draw(&ScreenBufferOwner.buffer(), 9,
+                   screen_rect.left, target_y, 1, 1);
       flip(&screen_rect);
     }
     ScreenBufferOwner.buffer().restore_clip();
