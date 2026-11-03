@@ -296,6 +296,11 @@ static char ConsoleArtyUnitMovedText[] = "UNITMOVED";
 // RECOVERY_OBJECT: v1 0x00688F04 _ConsoleArtySeaText
 static char ConsoleArtySeaText[] = "SEAARTY";
 
+// RECOVERY_OBJECT: v1 0x00688568 _ConsoleUnloadNoText
+static char ConsoleUnloadNoText[] = "UNLOADNO";
+// RECOVERY_OBJECT: v1 0x00688574 _ConsoleUnloadNextText
+static char ConsoleUnloadNextText[] = "UNLOADNEXT";
+
 // Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x004D04A0 ?wait@Console@@QAEXH@Z 0x004D04A0-0x004D04E0 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/004d04a0.cpp: original identity and complete spans", "source:src/console.h: Console owner declarations and layout", "source:src/console.cpp: coupled navigation, selection and lifecycle caller relationships"], "reason": "The original Console operation is expressed by the corresponding real Console owner definition, using its recovered members and source-owned callees rather than the retained seed scaffold."}
@@ -1390,57 +1395,51 @@ void Console::hold(int veh_id, int waypoint_y) {
     }
 }
 
-// ORIGINAL: 0x004D04E0 ?unload@Console@@QAEXH@Z 0x004D04E0-0x004D06B6
+// ORIGINAL: 0x004D04E0 ?unload@Console@@QAEXH@Z 0x004D04E0-0x004D06B6 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["image:0x004D04E0-0x004D06B6", "image:.data:0x00688568 contains UNLOADNO and .data:0x00688574 contains UNLOADNEXT", "source:src/veh.h", "source:src/netdaemon.h", "source:src/netmsg.h", "source:src/console.h"], "reason": "Recover cargo unloading through Veh stack links, chassis traits and source-owned movement/ability predicates; preserve the daemon lock/synchronization lifecycle, selected-vehicle Console state, and the image's localization keys without absolute-address aliases."}
 void Console::unload(int veh_id) {
+    int flags = 0;
     if (NetDaemonNet.lock_veh(&veh_id, 0, -1, -1, 0) != 0) {
         return;
     }
-
-    const int carrier_proto = Vehs[veh_id].proto_id;
-    const bool has_carried_vehicles = veh_cargo(veh_id) != 0;
-    const bool carrier_ability = has_abil(carrier_proto, 0x80) != 0;
-    if (!has_carried_vehicles && !carrier_ability) {
+    if (veh_cargo(veh_id) == 0 &&
+        has_abil(Vehs[veh_id].proto_id, 0x80) == 0) {
         NetDaemonNet.unlock_veh();
         return;
     }
-
-    const int wanted_triad = carrier_ability ? 2 : 0;
+    const int wanted_triad = has_abil(Vehs[veh_id].proto_id, 0x80) ? 2 : 0;
     int first_cargo = veh_id;
     if (first_cargo < 0) {
         first_cargo = -1;
     } else {
-        while (Vehs[first_cargo].next_veh_id_stack >= 0) {
-            first_cargo = Vehs[first_cargo].next_veh_id_stack;
+        while (Vehs[first_cargo].prev_veh_id_stack >= 0) {
+            first_cargo = Vehs[first_cargo].prev_veh_id_stack;
         }
     }
-
-    int flags = 0;
-    for (int cargo_id = first_cargo; cargo_id >= 0;
-         cargo_id = Vehs[cargo_id].prev_veh_id_stack) {
-        Veh &cargo = Vehs[cargo_id];
-        if (cargo.year_end_lurking == 1) {
-            cargo.year_end_lurking = 0;
-            synch_veh(cargo_id);
+    veh_id = first_cargo;
+    while (veh_id >= 0) {
+        if (Vehs[veh_id].order == 1) {
+            Vehs[veh_id].order = 0;
+            synch_veh(veh_id);
         }
-
-        const RulesChassis &chassis = Chassis[VehPrototypes[cargo.proto_id].chassis_id];
+        const RulesChassis &chassis = Chassis[VehPrototypes[Vehs[veh_id].proto_id].chassis_id];
         if (chassis.triad == wanted_triad) {
             flags |= 1;
-            if (veh_unmoved(cargo_id) != 0 && cargo.year_end_lurking == 0) {
-                ConsoleGlobal.selected_vehicle_ = cargo_id;
+            if (veh_unmoved(veh_id) != 0 && Vehs[veh_id].order == 0) {
+                ConsoleGlobal.selected_vehicle_ = veh_id;
                 flags |= 2;
             }
         }
+        if (veh_id < 0) break;
+        veh_id = Vehs[veh_id].next_veh_id_stack;
     }
-
     NetDaemonNet.unlock_veh();
     if (flags == 0) {
-        NetMsgPrimary.pop("UNLOADNO", 0x1388, 0, nullptr);
+        NetMsgPrimary.pop(ConsoleUnloadNoText, 0x1388, 0, nullptr);
         return;
     }
     if ((flags & 2) == 0) {
-        NetMsgPrimary.pop("UNLOADNEXT", 0x1388, 0, nullptr);
+        NetMsgPrimary.pop(ConsoleUnloadNextText, 0x1388, 0, nullptr);
         return;
     }
     field_23BE4_ = 0;

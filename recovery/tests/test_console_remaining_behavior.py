@@ -432,6 +432,113 @@ int main() {
     subprocess.run([str(executable)], check=True, capture_output=True, text=True)
 
 
+UNLOAD_ACTUAL_HARNESS = r'''
+#include <cstdint>
+#include <cstddef>
+#include <cstdlib>
+#include <cstring>
+#include <iostream>
+#include <string>
+#include <vector>
+void check(bool ok,const char* why){if(!ok){std::cerr<<why;std::exit(7);}}
+struct Veh { char prefix[10]; int16_t proto_id;char pad[3];uint8_t year_end_lurking;
+ uint8_t damage;int8_t order;char rest[30];int16_t next_veh_id_stack,prev_veh_id_stack; } Vehs[8];
+static_assert(offsetof(Veh,order)==0x11 && offsetof(Veh,year_end_lurking)==0xf,"pin bytes");
+static_assert(offsetof(Veh,next_veh_id_stack)==0x30 && offsetof(Veh,prev_veh_id_stack)==0x32,"pin links");
+struct Prototype {int chassis_id;} VehPrototypes[8];
+struct RulesChassis {uint8_t triad;} Chassis[8];
+int *locked;int lock_result,unlocks,cargo_result,cargo_proto,first_ability,second_ability,ability_mutate;
+int synch_mutate,unmoved_mutate,unmoved_result,cargo_calls;
+std::vector<int> ability_args,synchs,unmoved;
+struct Daemon {int lock_veh(int*p,int a,int b,int c,int d){
+ check(a==0&&b==-1&&c==-1&&d==0,"lock arguments");locked=p;return lock_result;}
+ void unlock_veh(){++unlocks;}} NetDaemonNet;
+int veh_cargo(int id){check(id==0,"cargo id");++cargo_calls;if(cargo_proto>=0)Vehs[id].proto_id=cargo_proto;return cargo_result;}
+int has_abil(int proto,int mask){check(mask==0x80,"ability mask");ability_args.push_back(proto);
+ if(ability_args.size()==1&&ability_mutate>=0)Vehs[*locked].proto_id=ability_mutate;
+ return ability_args.size()==1?first_ability:second_ability;}
+void synch_veh(int id){synchs.push_back(id);if(synch_mutate>=0)*locked=synch_mutate;}
+int veh_unmoved(int id){unmoved.push_back(id);if(unmoved_mutate!=-2)*locked=unmoved_mutate;return unmoved_result;}
+struct Console {int selected_vehicle_=-9,field_23BE4_=9,moves=0;
+ void set_move(int n){check(n==1,"move argument");++moves;}void unload(int veh_id);} ConsoleGlobal;
+struct Message {std::string key;void pop(const char*k,int t,int z,const char*p){
+ check(t==5000&&z==0&&p==nullptr,"message arguments");key=k;}} NetMsgPrimary;
+ACTUAL
+void reset(){std::memset(Vehs,0,sizeof Vehs);std::memset(VehPrototypes,0,sizeof VehPrototypes);
+ std::memset(Chassis,0,sizeof Chassis);for(auto&v:Vehs)v.next_veh_id_stack=v.prev_veh_id_stack=-1;
+ locked=nullptr;lock_result=unlocks=cargo_result=first_ability=second_ability=cargo_calls=0;
+ cargo_proto=ability_mutate=synch_mutate=-1;unmoved_mutate=-2;unmoved_result=1;
+ ability_args.clear();synchs.clear();unmoved.clear();ConsoleGlobal=Console{};NetMsgPrimary.key.clear();}
+int main(){
+ reset();lock_result=1;ConsoleGlobal.unload(0);
+ check(cargo_calls==0&&ability_args.empty()&&unlocks==0,"failed lock path");
+ reset();ConsoleGlobal.unload(0);
+ check(ability_args.size()==1&&unlocks==1&&NetMsgPrimary.key.empty(),"failed admission path");
+ reset();cargo_result=1;Vehs[0].proto_id=2;cargo_proto=3;Vehs[0].order=1;Vehs[0].year_end_lurking=7;
+ ConsoleGlobal.unload(0);
+ check(ability_args==std::vector<int>{3},"fresh cargo prototype");
+ check(Vehs[0].order==0&&Vehs[0].year_end_lurking==7&&synchs==std::vector<int>{0},"original order byte");
+ check(ConsoleGlobal.selected_vehicle_==0&&ConsoleGlobal.moves==1&&unlocks==1,"selected carrier path");
+ reset();Vehs[0].proto_id=2;first_ability=1;ability_mutate=3;ConsoleGlobal.unload(0);
+ check(ability_args==std::vector<int>({2,3}),"second independent ability query");
+ check(ConsoleGlobal.selected_vehicle_==0,"second ability determines triad");
+ reset();cargo_result=1;Vehs[0].prev_veh_id_stack=1;Vehs[1].next_veh_id_stack=0;
+ ConsoleGlobal.unload(0);
+ check(unmoved==std::vector<int>({1,0})&&ConsoleGlobal.selected_vehicle_==0,"original stack direction");
+ reset();cargo_result=1;Vehs[0].order=1;Vehs[1].proto_id=1;VehPrototypes[1].chassis_id=1;Chassis[1].triad=2;synch_mutate=1;
+ ConsoleGlobal.unload(0);
+ check(unmoved.empty()&&NetMsgPrimary.key=="UNLOADNO","live index after synchronization");
+ reset();cargo_result=1;unmoved_mutate=1;ConsoleGlobal.unload(0);
+ check(ConsoleGlobal.selected_vehicle_==1&&unmoved==std::vector<int>{0},"live index after unmoved callback");
+ reset();cargo_result=1;unmoved_mutate=-1;unmoved_result=0;ConsoleGlobal.unload(0);
+ check(NetMsgPrimary.key=="UNLOADNEXT"&&unlocks==1,"original negative tail guard");
+ reset();cargo_result=1;Console other;other.unload(0);
+ check(ConsoleGlobal.selected_vehicle_==0&&ConsoleGlobal.field_23BE4_==9&&other.field_23BE4_==0&&other.moves==1,"original receiver ownership");
+}
+'''
+
+
+@pytest.mark.parametrize('compiler_name', ['g++', 'clang++'])
+@pytest.mark.parametrize('damage', [None, 'order_byte', 'stack_direction', 'proto_snapshot', 'live_index'])
+def test_unload_actual_owner_original_phases(tmp_path, compiler_name, damage):
+    compiler = shutil.which(compiler_name)
+    if compiler is None:
+        pytest.skip('host compiler unavailable')
+    actual = body_for('void Console::unload(int veh_id)')
+    if damage == 'order_byte':
+        actual = actual.replace('.order', '.year_end_lurking')
+    elif damage == 'stack_direction':
+        actual = actual.replace('.prev_veh_id_stack', '.swap_link')
+        actual = actual.replace('.next_veh_id_stack', '.prev_veh_id_stack')
+        actual = actual.replace('.swap_link', '.next_veh_id_stack')
+    elif damage == 'proto_snapshot':
+        actual = actual.replace('    if (veh_cargo(veh_id)',
+                                '    const int saved_proto = Vehs[veh_id].proto_id;\n    if (veh_cargo(veh_id)')
+        actual = actual.replace('has_abil(Vehs[veh_id].proto_id, 0x80)',
+                                'has_abil(saved_proto, 0x80)')
+    elif damage == 'live_index':
+        actual = actual.replace('VehPrototypes[Vehs[veh_id].proto_id].chassis_id',
+                                'VehPrototypes[Vehs[first_cargo].proto_id].chassis_id')
+    source = tmp_path / 'unload_actual.cpp'
+    declarations = '\n'.join(line for line in (ROOT / 'src/console_commands.cpp').read_text().splitlines()
+                             if line.startswith('static char ConsoleUnload'))
+    source.write_text(UNLOAD_ACTUAL_HARNESS.replace('ACTUAL', declarations + '\n' + actual))
+    binary = tmp_path / 'unload_actual'
+    subprocess.run([compiler, '-std=c++17', '-Wall', '-Wextra', '-Werror',
+                    str(source), '-o', str(binary)], check=True,
+                   capture_output=True, text=True, timeout=30)
+    run = subprocess.run([str(binary)], capture_output=True, text=True, timeout=10)
+    if damage is None:
+        assert run.returncode == 0, run.stderr
+    else:
+        assert run.returncode == 7, run.stderr
+        expected = {'order_byte': 'original order byte',
+                    'stack_direction': 'original stack direction',
+                    'proto_snapshot': 'fresh cargo prototype',
+                    'live_index': 'live index after synchronization'}[damage]
+        assert expected in run.stderr
+
+
 TERRAFORM_HARNESS = r'''
 #include <cassert>
 #include <cstdint>
@@ -1969,7 +2076,7 @@ void quayle(int faction) { QuayleFaction=faction; events.push_back("quayle"); }
 void hall_of_fame(int retire) { assert(retire==1); ++HallCalls; events.push_back("hall"); }
 void show_replay() { ++ReplayCalls; events.push_back("replay"); }
 void log_say(const char *message,int a,int b,int c) {
-  assert(std::string(message)=="Retire**"&&a==0&&b==0&&c==0); events.push_back("log"); }
+  assert(std::string(message)==std::string("Retire")+std::string(29,'*')&&a==0&&b==0&&c==0); events.push_back("log"); }
 struct AlphaNet { void close() { events.push_back("close"); } };
 struct Lock { void clear() { events.push_back("clear_locks"); } };
 struct LockStateEntry { uint32_t leading_words_[4]; union Payload { uint32_t flags; int *vehicle_selection_follow; } payload_; uint32_t trailing_words_[10]; };
