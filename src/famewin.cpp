@@ -35,17 +35,14 @@
 static char FameWinStandardCaption[4];
 static char FameWinWideCaption[4];
 
-// ORIGINAL: 0x0044AF70 sub_44af70 0x0044AF70-0x0044AF8D BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["Pinned native44AE50 reads/writes hallfame.jhh with rb/wb and mode759194;35records of8C bytes begin9A3840;44AF70 clears only their present bytes.", "Native44AEE6 owned ButtonGroup receiver753468 is FameWin74DAF8+5970;44AF04 virtual slot57 is Win::set_modal with callbackpop_wait5398E0.", "Root-only Console retirement dependency closure authorized in task history; retain git:b20012dad66f767e0e5f05b7aea45b88bd63a09d:src/recovered/units/0044ae50.cpp and git:b20012dad66f767e0e5f05b7aea45b88bd63a09d:src/recovered/0044af70.cpp seed interpretations.", "git:b20012dad66f767e0e5f05b7aea45b88bd63a09d:src/recovered/0044af70.cpp"], "reason": "Recover real FameWin entry and record-presence cleanup through existing typed HallOfFame records and owned button group, standard CRT I/O and inherited virtual modal API. Retain historical exact seed obligations and original spans; current binding grants no match or acceptance claim. Superseded scaffold retired at user request; historical claims and seed findings are transferred, not freshly granted. Current matching/restoration and any documented unfinished stages remain obligations."}
-// kind      game
-// symbol    ?clear_hall_of_fame@@YAXXZ
-void __cdecl clear_hall_of_fame() {
-    for (int group = 0; group < HallOfFameRecordCount / 5; ++group) {
-        for (int rank = 0; rank < 5; ++rank) {
-            HallOfFameRecords[group * 5 + rank].present = 0;
-        }
-    }
-}
+// The pinned entry and its read/write helpers reuse these two distinct
+// filename objects. Their static lifetime and 13-byte payload are retained;
+// the original allocation capacities and source names remain unproved.
+// RECOVERY_OBJECT: v1 0x00684610 _HallOfFameWriteFilename
+static char HallOfFameWriteFilename[] = "hallfame.jhh";
+
+// RECOVERY_OBJECT: v1 0x00684624 _HallOfFameReadFilename
+static char HallOfFameReadFilename[] = "hallfame.jhh";
 
 // ORIGINAL: 0x0044AE50 ?hall_of_fame@@YAXH@Z 0x0044AE50-0x0044AF6D BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned native44AE50 reads/writes hallfame.jhh with rb/wb and mode759194;35records of8C bytes begin9A3840;44AF70 clears only their present bytes.", "Native44AEE6 owned ButtonGroup receiver753468 is FameWin74DAF8+5970;44AF04 virtual slot57 is Win::set_modal with callbackpop_wait5398E0.", "Root-only Console retirement dependency closure authorized in task history; retain git:b20012dad66f767e0e5f05b7aea45b88bd63a09d:src/recovered/units/0044ae50.cpp and git:b20012dad66f767e0e5f05b7aea45b88bd63a09d:src/recovered/0044af70.cpp seed interpretations.", "git:b20012dad66f767e0e5f05b7aea45b88bd63a09d:src/recovered/units/0044ae50.cpp"], "reason": "Recover real FameWin entry and record-presence cleanup through existing typed HallOfFame records and owned button group, standard CRT I/O and inherited virtual modal API. Retain historical exact seed obligations and original spans; current binding grants no match or acceptance claim. Superseded scaffold retired at user request; historical claims and seed findings are transferred, not freshly granted. Current matching/restoration and any documented unfinished stages remain obligations."}
@@ -55,7 +52,7 @@ void __cdecl hall_of_fame(int add_current_player) {
   // initial "rb\0" bytes at 0x684620; this writable-data correspondence does
   // not claim runtime immutability or linker selection.
   // RECOVERY_LITERAL: v1 0x684620 0x684623 ??_C@_02JKAF@rb?$AA@ 0x44AE50
-  FILE *file = fopen("hallfame.jhh", "rb");
+  FILE *file = fopen(HallOfFameReadFilename, "rb");
   if (file == 0) {
     for (int group = 0; group < HallOfFameRecordCount / 5; ++group) {
         for (int rank = 0; rank < 5; ++rank) {
@@ -80,7 +77,7 @@ void __cdecl hall_of_fame(int add_current_player) {
   // initial "wb\0" bytes at 0x68460C; this writable-data correspondence does
   // not claim runtime immutability or linker selection.
   // RECOVERY_LITERAL: v1 0x68460C 0x68460F ??_C@_02NGAF@wb?$AA@ 0x44AE50
-  file = fopen("hallfame.jhh", "wb");
+  file = fopen(HallOfFameWriteFilename, "wb");
   if (file != 0) {
     HallOfFameIOMode = 1;
     if (fwrite(HallOfFameRecords, sizeof(HallOfFameRecords), 1, file) == 0) {
@@ -148,9 +145,7 @@ Purpose: Hall-of-fame save: open hallfame.jhh for writing, set the I/O mode,
 // The pinned fopen/fclose targets are 0x00645646/0x00645598; the data at
 // 0x00684610 spells "hallfame.jhh", not the former product filename.
 int __cdecl hof_save() {
-    // RECOVERY_OBJECT: v1 0x00684610 _?hof_save_filename@?1??hof_save@@YAHXZ@4PADA
-    static char hof_save_filename[] = "hallfame.jhh";
-    FILE *file = fopen(hof_save_filename, "wb");
+    FILE *file = fopen(HallOfFameWriteFilename, "wb");
     if (file == 0) {
         return 1;
     }
@@ -183,9 +178,7 @@ Purpose: Hall-of-fame load: open hallfame.jhh for reading, clear entry-present
 */
 // Pinned data at 0x00684620/0x00684624 is "rb"/"hallfame.jhh".
 int __cdecl hof_load() {
-    // RECOVERY_OBJECT: v1 0x00684624 _?hof_load_filename@?1??hof_load@@YAHXZ@4PADA
-    static char hof_load_filename[] = "hallfame.jhh";
-    FILE *f = fopen(hof_load_filename, "rb");
+    FILE *f = fopen(HallOfFameReadFilename, "rb");
     if (f == 0) {
         for (int group = 0; group < HallOfFameRecordCount / 5; ++group) {
             for (int rank = 0; rank < 5; ++rank) {

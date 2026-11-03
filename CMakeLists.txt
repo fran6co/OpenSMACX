@@ -164,6 +164,7 @@ set(OPENSMACX_SOURCES
     src/faction_dialogue.cpp
     src/faction_network.cpp
     src/famewin.cpp
+    src/halloffame.cpp
     src/filemap.cpp
     src/flatbutton.cpp
     src/flic.cpp
@@ -509,6 +510,7 @@ set_source_files_properties(
     src/infowin.cpp
     src/alphasave.cpp
     src/famewin.cpp
+    src/halloffame.cpp
     src/messagewin.cpp
     src/setupwin.cpp
     src/path.cpp

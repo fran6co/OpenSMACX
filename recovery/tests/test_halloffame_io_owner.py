@@ -9,6 +9,7 @@ import pytest
 from match_recovery.source import read_text
 from match_recovery.includes import COMMENTS_OR_STRINGS
 from match_recovery.object_source import parse_objects
+from recovery.tests.test_hall_of_fame_entry import filename_storage
 
 
 ROOT = next(parent for parent in Path(__file__).resolve().parents
@@ -228,6 +229,7 @@ int test_fclose(FILE *file) { assert(file==fake_file); ++closes; events.push_bac
 #define fwrite test_fwrite
 #define fclose test_fclose
 '''
+    harness += filename_storage()
     harness += "\n".join(_actual_body(owner, signature)
                           for signature in TARGETS.values())
     harness += r'''

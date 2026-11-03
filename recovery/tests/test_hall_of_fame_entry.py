@@ -4,6 +4,7 @@ Scripted I/O and window doubles check ordering and failure branches, not the
 native ABI, actual disk/UI behavior, byte matching or game acceptance.
 """
 from pathlib import Path
+import re
 import shutil
 import subprocess
 
@@ -12,8 +13,8 @@ import pytest
 ROOT = Path(__file__).resolve().parents[2]
 
 
-def body(signature):
-    text = (ROOT / "src/famewin.cpp").read_text()
+def body(signature, relative="src/famewin.cpp"):
+    text = (ROOT / relative).read_text()
     start = text.index(signature)
     opening = text.index("{", start)
     depth = 0
@@ -22,6 +23,16 @@ def body(signature):
         if depth == 0:
             return text[start:end + 1]
     raise AssertionError("unterminated source function")
+
+
+def filename_storage():
+    text = (ROOT / "src/famewin.cpp").read_text()
+    declarations = re.findall(
+        r'^static char HallOfFame(?:Read|Write)Filename\[\] = "[^"\n]*";',
+        text, re.MULTILINE,
+    )
+    assert len(declarations) == 2
+    return "\n".join(declarations) + "\n"
 
 
 def test_hall_of_fame_entry_preserves_io_modal_and_failure_order(tmp_path):
@@ -83,7 +94,8 @@ struct FameWin : Win {
 #define fwrite test_fwrite
 #define fclose test_fclose
 '''
-    harness += body("void __cdecl clear_hall_of_fame()") + "\n"
+    harness += filename_storage()
+    harness += body("void __cdecl clear_hall_of_fame()", "src/halloffame.cpp") + "\n"
     harness += body("void __cdecl hall_of_fame(int add_current_player)")
     harness += r'''
 void reset() {
