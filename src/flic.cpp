@@ -36,6 +36,7 @@
 
 #include "stdafx.h"
 #include "flic.h"
+#include "rectangle_operations.h"
 #include "general.h"  // mem_get, env_open
 #include <cstring>
 
@@ -706,15 +707,8 @@ void Flic::decode_byte_run() {
         }
     }
 
-    int y = origin_y_;
-    int x = origin_x_;
-    int height = decoded_height_;
-    int width = decoded_width_;
-    RECT *rect = &update_rect_;
-    rect->left = x;
-    rect->top = y;
-    rect->right = x + width;
-    rect->bottom = y + height;
+    set_rectangle_dimensions(&update_rect_, origin_x_, origin_y_,
+                             decoded_width_, decoded_height_);
 
     for (int row = 0; row < static_cast<int>(decoded_height_); row++) {
         uint8_t *row_dst = dst;
@@ -914,7 +908,7 @@ void Flic::decode_delta_flc() {
 /*
 Purpose: Fill the rectangle the animation occupies on the destination
          buffer with color zero and mark it dirty.
-// ORIGINAL: 0x0062AB10 ?fill@Flic@@QAEXXZ 0x0062AB10-0x0062AB72
+// ORIGINAL: 0x0062AB10 ?fill@Flic@@QAEXXZ 0x0062AB10-0x0062AB72 BYTE_EXACT
 // size      98 bytes
 // prototype void (__thiscall ?fill@Flic@@QAEXXZ)(Flic* this)
 // callers   0   call targets   1
@@ -925,84 +919,10 @@ Return Value: n/a
 Status: Complete
 */
 void Flic::fill() {
-    // Stores go through a `uint32_t *` to the four dirty-rectangle
-    // members: VC6's optimizer caches member loads across direct
-    // same-base stores but invalidates that cache for stores through a
-    // pointer local, which is what makes the image reload every operand
-    // for the call (0x0062AB10) - this spelling alone moves the function
-    // 80 -> 98 bytes, the recorded size. The one feature no spelling
-    // reaches is the image's add placement: it interleaves the two sums
-    // between the store pairs in statement order (`add edx,edi`,
-    // `add eax,esi` after both `mov [ecx+0x58c/0x590]`), while every
-    // plain-sum spelling - including `x += width`, `width + x` and named
-    // sum locals - hoists both adds above the stores, and every read-back
-    // spelling (`rect->right = rect->left + width`) anchors its adds after the
-    // FIRST store only: VC6 store-forwards rect->left back to the x register,
-    // both adds become free-floating register ops again and the scheduler
-    // lifts them above the rect1 store, and whichever local rect->left
-    // stores loads last instead of second. Declaration-order permutations
-    // and swapping the sum operands do not restore the load order.
-    // CORRECTION 2026-09-18 (deck dchunk-arm-readback, five arm
-    // spellings, both flag sets): the same block inline inside
-    // decode_chunk's two 0xD cases does NOT interleave either - plain
-    // sums hoist the same 18-byte cluster in both arms, and the
-    // read-back spelling that pins both adds between the store pairs
-    // flips the loads x-first and leaves the add destinations wrong
-    // (19 differing bytes per arm against plain sums' 18; the
-    // operand-swap and x-sum-only read-back spellings measure
-    // identical to it, and a read-back y-sum alone compiles
-    // byte-identical to plain sums). Placement and load order trade
-    // against each other in every context measured; the round-1
-    // "context-dependent scheduling" reading (arms interleave, esi
-    // holds `this`, no pending pushes) was placement-only and is
-    // disproven by bytes.
-    // Nineteen spellings measured under both flag sets (decks
-    // fill-rect-v1/v2/v3 and local compiles); plain sums stay as the
-    // idiomatic form that matches the image's loads, registers, stores
-    // and reloads. Extended 2026-09-17 with fifteen disassembled local
-    // /O2 compiles: two further anchor mechanisms exist, neither
-    // combines the image's prologue loads with its x/y destinations. A
-    // fresh member read inside the sum (`rect->right = x + decoded_width_`)
-    // keeps its load at the sum and anchors the add after both stores -
-    // the y-sum's destination lands on eax, the image's register - but
-    // the x-sum still accumulates into the fresh width register and
-    // neither load reaches the prologue (96 bytes). A read-back left
-    // operand (`rect->right = rect->left + width`) steers the FIRST add's
-    // destination onto x's register through store forwarding, but the
-    // second always lands on height's, the loads reorder to
-    // y,height,width,x, and every operand-swap spelling of it emits one
-    // identical body (112 bytes). Direct-member sum stores after the
-    // pointer stores (`update_rect_.right = x + width`) keep both plain stores
-    // first but sink both sum stores below the call's reload sequence.
-    // All-member spelling (no locals) disables the load cache
-    // entirely - every operand reloads at every use. Thirty-four
-    // spellings in total; the destination pair (edx,eax) with four
-    // prologue loads is VC6-internal allocation no spelling reaches.
-    // Closed 2026-09-17 (round 2, three fresh /O2 compiles): the
-    // statement-order form - destructive updates interleaved between
-    // the store pairs (`rect->top=y; x+=width; y+=height; rect->right=x;`)
-    // - compiles BYTE-IDENTICAL to the plain-sum baseline, compound
-    // and assignment spellings both: x and y are dead after their
-    // sums, so VC6 canonicalizes the interleaving away and nothing
-    // anchors the adds. The read-back spelling disassembles to its
-    // own 98-byte shape: loads permuted y,height,width,x, both adds
-    // pinned after the FIRST store only (between the rect0 and rect1
-    // stores), x-sum store-forwarded onto x's register, y-sum onto
-    // height's - the image pins both after the SECOND store onto
-    // x/y's registers. Statement order cannot express the image's
-    // placement; the anchor question is closed. The same residual
-    // add placement carries to
-    // decode_black_trans, decode_fli_copy and decode_fli_copy_trans,
-    // which share this block.
-    int y = origin_y_;
-    int x = origin_x_;
-    int height = decoded_height_;
-    int width = decoded_width_;
-    RECT *rect = &update_rect_;
-    rect->left = x;
-    rect->top = y;
-    rect->right = x + width;
-    rect->bottom = y + height;
+    // Share make_rect's recovered origin/dimensions operation. Drawing
+    // arguments remain live member reads after publishing the rectangle.
+    set_rectangle_dimensions(&update_rect_, origin_x_, origin_y_,
+                             decoded_width_, decoded_height_);
     destination_buffer_->fill(origin_x_, origin_y_, decoded_width_, decoded_height_, 0);
 }
 
@@ -1037,15 +957,8 @@ void Flic::decode_fli_copy() {
         }
     }
 
-    int y = origin_y_;
-    int x = origin_x_;
-    int height = decoded_height_;
-    int width = decoded_width_;
-    RECT *rect = &update_rect_;
-    rect->left = x;
-    rect->top = y;
-    rect->right = x + width;
-    rect->bottom = y + height;
+    set_rectangle_dimensions(&update_rect_, origin_x_, origin_y_,
+                             decoded_width_, decoded_height_);
 
     uint8_t *dst = destination_buffer_->get_data(origin_x_, origin_y_);
 
@@ -1116,26 +1029,9 @@ void Flic::decode_chunk(DataChunk *chunk) {
     // table [0,5,5,1,5,5,5,0,0,2,5,3,4,5,0] byte-for-byte; every
     // break/duplicate-default spelling collapses to the narrow
     // [7,0x10] four-slot fold. Arm order 7, 0xF, 0xD, 0x10 is the
-    // image's body order. The 0xD blocks spell plain sums with y
-    // loaded first - the image's load order. Measured 2026-09-18 in
-    // deck dchunk-arm-readback (five arm spellings, both flag sets):
-    // the read-back spelling pins both adds between the store pairs
-    // but flips the loads x-first and leaves the add destinations
-    // wrong (19 differing bytes per arm against plain sums' 18; the
-    // operand-swap and x-sum-only read-back spellings measure
-    // identical to it, a read-back y-sum alone byte-identical to
-    // plain sums, and fresh member reads inside the sums miss the
-    // recorded extent). The two adds still schedule above the store
-    // pair instead of between it and the second - the same
-    // add-placement residual fill() documents for the family,
-    // size-neutral at 52 bytes.
-    // Extent note: VC6 always emits these jump tables inside the
-    // function's own COMDAT (624 total, code-to-ret 541), while the
-    // recorded 0x0062ACD0-0x0062AEED extent stops at the ret - the
-    // linked image carries its tables past that boundary - so the
-    // extent check cannot admit any table-bearing spelling of this
-    // function. The structure above still matches the image's dispatch
-    // exactly; measured 541 code bytes + 80 table bytes + 3 pad.
+    // image's body order. Both black arms share make_rect's recovered
+    // origin/dimensions operation. The full mapped contribution includes
+    // 541 code bytes, three alignment bytes and 80 bytes of jump-table data.
     if (chunk->type_ == 0xf1fa) {
         int count = chunk->count_;
         if (count == 0) {
@@ -1165,15 +1061,8 @@ void Flic::decode_chunk(DataChunk *chunk) {
             decode_byte_run_trans();
             break;
         case 0xd: {
-            int y = origin_y_;
-            int x = origin_x_;
-            int height = decoded_height_;
-            int width = decoded_width_;
-            RECT *rect = &update_rect_;
-            rect->left = x;
-            rect->top = y;
-            rect->right = x + width;
-            rect->bottom = y + height;
+            set_rectangle_dimensions(&update_rect_, origin_x_, origin_y_,
+                                     decoded_width_, decoded_height_);
             if (transparent_index_ != 0) {
                 background_buffer_.copy(destination_buffer_, 0, 0, origin_x_, origin_y_,
                              decoded_width_, decoded_height_);
@@ -1202,15 +1091,8 @@ skip:
             decode_byte_run();
             break;
         case 0xd: {
-            int y = origin_y_;
-            int x = origin_x_;
-            int height = decoded_height_;
-            int width = decoded_width_;
-            RECT *rect = &update_rect_;
-            rect->left = x;
-            rect->top = y;
-            rect->right = x + width;
-            rect->bottom = y + height;
+            set_rectangle_dimensions(&update_rect_, origin_x_, origin_y_,
+                                     decoded_width_, decoded_height_);
             destination_buffer_->fill(origin_x_, origin_y_, decoded_width_,
                            decoded_height_, 0);
             break;
@@ -1289,15 +1171,8 @@ void Flic::decode_byte_run_trans() {
         }
     }
 
-    int y = origin_y_;
-    int x = origin_x_;
-    int height = decoded_height_;
-    int width = decoded_width_;
-    RECT *rect = &update_rect_;
-    rect->left = x;
-    rect->top = y;
-    rect->right = x + width;
-    rect->bottom = y + height;
+    set_rectangle_dimensions(&update_rect_, origin_x_, origin_y_,
+                             decoded_width_, decoded_height_);
 
     uint8_t *row_dst = destination_buffer_->get_data(origin_x_, origin_y_);
     uint8_t *row_src = static_cast<uint8_t *>(background_buffer_.get_data());
@@ -1541,7 +1416,7 @@ void Flic::decode_delta_flc_trans() {
 /*
 Purpose: Handle a type-0xD (FLI BLACK) chunk in transparent mode: restore
          the embedded scratch buffer over the animation's rectangle.
-// ORIGINAL: 0x0062B600 ?decode_black_trans@Flic@@QAEXXZ 0x0062B600-0x0062B66E
+// ORIGINAL: 0x0062B600 ?decode_black_trans@Flic@@QAEXXZ 0x0062B600-0x0062B66E BYTE_EXACT
 // size      110 bytes
 // prototype void (__thiscall ?decode_black_trans@Flic@@QAEXXZ)(Flic* this)
 // callers   0   call targets   1
@@ -1552,15 +1427,8 @@ Return Value: n/a
 Status: Complete
 */
 void Flic::decode_black_trans() {
-    int y = origin_y_;
-    int x = origin_x_;
-    int height = decoded_height_;
-    int width = decoded_width_;
-    RECT *rect = &update_rect_;
-    rect->left = x;
-    rect->top = y;
-    rect->right = x + width;
-    rect->bottom = y + height;
+    set_rectangle_dimensions(&update_rect_, origin_x_, origin_y_,
+                             decoded_width_, decoded_height_);
     if (transparent_index_ != 0) {
         background_buffer_.copy(destination_buffer_, 0, 0, origin_x_, origin_y_, decoded_width_,
                      decoded_height_);
@@ -1572,7 +1440,7 @@ Purpose: Decode a type-0x10 (FLI COPY) chunk in transparent mode: the
          rows follow verbatim in the file, and every pixel whose
          offset-adjusted value equals the transparent color is taken from
          the embedded scratch buffer instead.
-// ORIGINAL: 0x0062B670 ?decode_fli_copy_trans@Flic@@QAEXXZ 0x0062B670-0x0062B776
+// ORIGINAL: 0x0062B670 ?decode_fli_copy_trans@Flic@@QAEXXZ 0x0062B670-0x0062B776 BYTE_EXACT
 // size      262 bytes
 // prototype void (__thiscall ?decode_fli_copy_trans@Flic@@QAEXXZ)(Flic* this)
 // callers   1   call targets   3
@@ -1583,15 +1451,8 @@ Return Value: n/a
 Status: Complete
 */
 void Flic::decode_fli_copy_trans() {
-    int y = origin_y_;
-    int x = origin_x_;
-    int height = decoded_height_;
-    int width = decoded_width_;
-    RECT *rect = &update_rect_;
-    rect->left = x;
-    rect->top = y;
-    rect->right = x + width;
-    rect->bottom = y + height;
+    set_rectangle_dimensions(&update_rect_, origin_x_, origin_y_,
+                             decoded_width_, decoded_height_);
 
     uint8_t *dst = destination_buffer_->get_data(origin_x_, origin_y_);
     uint8_t *src = static_cast<uint8_t *>(background_buffer_.get_data());

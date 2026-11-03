@@ -28,6 +28,20 @@ def actual_body():
     raise AssertionError("unterminated byte-run decoder")
 
 
+def actual_rectangle_operation():
+    source = (ROOT / "src/rectangle_operations.h").read_text()
+    start = source.index("static inline RECT *__cdecl set_rectangle_dimensions(")
+    opening = source.index("{", start)
+    depth = 0
+    for index in range(opening, len(source)):
+        depth += (source[index] == "{") - (source[index] == "}")
+        if not depth:
+            # Host controls project the actual operation, dropping only the
+            # VC6 calling-convention keyword; they do not establish its ABI.
+            return source[start:index + 1].replace("__cdecl ", "")
+    raise AssertionError("unterminated actual rectangle operation")
+
+
 HEAD = r"""
 #include <cassert>
 #include <cstdint>
@@ -57,39 +71,46 @@ int main() {
  for(unsigned offset: {0u,29u,251u}) {
   for(int length=1;length<=128;++length) {
    Buffer destination{};destination.stride_=160;
-   Flic f{&destination,offset,0,0,static_cast<uint32_t>(length),1,nullptr,{}};
+   Flic f{&destination,offset,11,17,static_cast<uint32_t>(length),1,nullptr,{}};
    bytes={0,static_cast<uint8_t>(256-length)};
    for(int i=0;i<length;++i)bytes.push_back(static_cast<uint8_t>(i*3+200));
    position=0;oversized=false;f.decode_byte_run();
    if(oversized)return 23;
    assert(position==bytes.size());
    for(int i=0;i<length;++i)assert(destination.pixels[i]==static_cast<uint8_t>(i*3+200+offset));
-   assert(f.update_rect_.right==length&&f.update_rect_.bottom==1);
+   assert(f.update_rect_.left==11&&f.update_rect_.top==17);
+   assert(f.update_rect_.right==11+length&&f.update_rect_.bottom==18);
   }
   for(int length=1;length<=127;++length) {
    Buffer destination{};destination.stride_=160;
-   Flic f{&destination,offset,0,0,static_cast<uint32_t>(length),1,nullptr,{}};
+   Flic f{&destination,offset,11,17,static_cast<uint32_t>(length),1,nullptr,{}};
    bytes={0,static_cast<uint8_t>(length),218};position=0;oversized=false;f.decode_byte_run();
    assert(!oversized&&position==bytes.size());
    for(int i=0;i<length;++i)assert(destination.pixels[i]==static_cast<uint8_t>(218+offset));
+   assert(f.update_rect_.left==11&&f.update_rect_.top==17);
+   assert(f.update_rect_.right==11+length&&f.update_rect_.bottom==18);
   }
   Buffer destination{};destination.stride_=160;
-  Flic f{&destination,offset,0,0,3,1,nullptr,{}};
+  Flic f{&destination,offset,11,17,3,1,nullptr,{}};
   bytes={0,0,3,218};position=0;oversized=false;f.decode_byte_run();
   assert(!oversized&&position==bytes.size());
   for(int i=0;i<3;++i)assert(destination.pixels[i]==static_cast<uint8_t>(218+offset));
+  assert(f.update_rect_.left==11&&f.update_rect_.top==17);
+  assert(f.update_rect_.right==14&&f.update_rect_.bottom==18);
  }
 }
 """
 
 
-def run_control(tmp_path, compiler_name, body):
+def run_control(tmp_path, compiler_name, body, rectangle_operation=None):
     compiler = shutil.which(compiler_name)
     if compiler is None:
         pytest.skip(f"{compiler_name} unavailable")
     cpp = tmp_path / "byte_run.cpp"
     executable = tmp_path / "byte_run"
-    cpp.write_text(HEAD + body + TAIL)
+    if rectangle_operation is None:
+        rectangle_operation = actual_rectangle_operation()
+    cpp.write_text(HEAD + rectangle_operation + "\n" + body + TAIL)
     compiled = subprocess.run(
         [compiler, "-std=c++11", "-O1", "-Wall", "-Wextra", "-Werror",
          str(cpp), "-o", str(executable)], capture_output=True, text=True,
@@ -106,7 +127,7 @@ def test_actual_all_byte_run_lengths_offsets_and_zero_continuation(tmp_path, com
 
 
 @pytest.mark.parametrize("compiler_name", ("g++", "clang++"))
-@pytest.mark.parametrize("damage", ("old_signed_length", "unsigned_opcode_guard"))
+@pytest.mark.parametrize("damage", ("old_signed_length", "unsigned_opcode_guard", "wrong_rectangle_sum"))
 def test_compiling_old_source_and_signed_guard_damage_are_rejected(tmp_path, compiler_name, damage):
     body = actual_body()
     if damage == "old_signed_length":
@@ -115,15 +136,20 @@ def test_compiling_old_source_and_signed_guard_damage_are_rejected(tmp_path, com
         current = "count = static_cast<uint8_t>(abs(static_cast<int8_t>(count)));"
         assert body.count(current) == 1
         body = body.replace(current, "count = static_cast<int8_t>(abs(count));")
-    else:
+    elif damage == "unsigned_opcode_guard":
         guard = "if (static_cast<int8_t>(count) > 0)"
         assert body.count(guard) == 1
         body = body.replace(guard, "if (count > 0)")
-    result = run_control(tmp_path, compiler_name, body)
+    operation = actual_rectangle_operation()
+    if damage == "wrong_rectangle_sum":
+        anchor = "rect->right = x + width;"
+        assert operation.count(anchor) == 1
+        operation = operation.replace(anchor, "rect->right = width;", 1)
+    result = run_control(tmp_path, compiler_name, body, operation)
     if damage == "old_signed_length":
         assert result.returncode == 23, result.stderr
     else:
-        assert result.returncode != 0, "unsigned opcode guard escaped the host control"
+        assert result.returncode != 0, "compiling damage escaped the host control"
 
 
 def test_pinned_opcode_abs_byte_store_and_masked_literal_length():
