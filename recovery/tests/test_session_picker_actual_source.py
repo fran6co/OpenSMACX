@@ -11,6 +11,161 @@ ROOT = Path(__file__).resolve().parents[2]
 SOURCE = ROOT / "src/net_session_picker.cpp"
 
 
+@pytest.mark.parametrize("damage", (None, "old_extra_reset", "owner_show", "missing_second_clear"))
+def test_refresh_actual_clear_attach_and_show_receivers(tmp_path, damage):
+    """Real member/base relationships, without fabricating mutable vbtables.
+
+    The native COFF check owns adjustment-read epochs and direct call targets.
+    This control checks the complete body's visible clear/error/attach protocol.
+    """
+    body = function(SOURCE.read_text(), "void NetSessionPickerWin::refresh_player_list()")
+    harness = r'''
+#include <cassert>
+#include <cstdlib>
+#include <string>
+#include <vector>
+typedef unsigned long uintptr_t;
+struct GraphicWin {};
+static std::vector<std::string> events;
+static int clears, enum_result, populate, update_result, attach_result, expected_cursor;
+static void *HandleMain;
+struct StringStruct {
+  int current_position_;
+  void *allocator_;
+  StringStruct() : current_position_(77), allocator_(this) {}
+  void remove_all() {
+    events.push_back("items.clear");
+    assert(allocator_ != 0);
+    if (clears) assert(current_position_ == 0);
+    ++clears;
+    current_position_ = 0;
+  }
+};
+struct StringList : StringStruct {};
+struct Dialog {
+  StringList item_list_;
+  int window_x_, window_y_;
+  Dialog() : window_x_(17), window_y_(29) {}
+  virtual int attach(GraphicWin *, int, int, int) {
+    assert(!"must use original ListBox attach target"); return 0;
+  }
+};
+struct ListBox : virtual Dialog {
+  int attach(GraphicWin *, int x, int y, int flags) {
+    assert(x == 17 && y == 29 && flags == 0x80000);
+    events.push_back("view.attach"); return attach_result;
+  }
+  int update_changes() { events.push_back("view.update"); return update_result; }
+  void item(char *text, int) {
+    assert(clears == 2 && item_list_.current_position_ == 0);
+    assert(item_list_.allocator_ == 0);
+    events.push_back(text);
+  }
+  virtual void show(int value) {
+    assert(value == 0); events.push_back("view.show");
+  }
+};
+struct NetAllocationNode { char *session_name_; };
+struct AlphaNetLedgerEntry {
+  AlphaNetLedgerEntry *previous_;
+  NetAllocationNode *payload_;
+};
+static NetAllocationNode payload = {const_cast<char *>("one session")};
+static AlphaNetLedgerEntry entry = {&entry, &payload};
+struct AlphaNetLedger {
+  int entry_count_, current_position_;
+  AlphaNetLedgerEntry *head_, *current_;
+  AlphaNetLedger() : entry_count_(0), current_position_(9), head_(0), current_(0) {}
+  void remove_all() {
+    events.push_back("sessions.clear");
+    // The real inline operation retains all cursor/count state on null head.
+    if (head_) { head_ = 0; entry_count_ = 0; current_position_ = 0; }
+  }
+};
+struct Net {
+  int enumerate_sessions(AlphaNetLedger *list, int password) {
+    assert(password == 0 && list->entry_count_ == 0);
+    assert(list->current_position_ == expected_cursor);
+    events.push_back("enumerate");
+    if (enum_result) return enum_result;
+    list->entry_count_ = populate;
+    list->head_ = list->current_ = populate ? &entry : 0;
+    return 0;
+  }
+};
+struct NetSessionPickerTail { int action_result_; };
+struct NetSessionPickerWin : GraphicWin {
+  AlphaNetLedger sessions_;
+  ListBox sessions_view_;
+  Net *net_;
+  NetSessionPickerTail tail_;
+  void refresh_player_list();
+  void show(int) { assert(!"must show the embedded session view"); }
+};
+ACTUAL_REFRESH
+static void run(int enumeration, int rows, bool window, int result, bool old_head = false) {
+  Net net; NetSessionPickerWin owner;
+  owner.net_ = &net; owner.tail_.action_result_ = -77;
+  if (old_head) {
+    owner.sessions_.head_ = &entry; owner.sessions_.entry_count_ = 1;
+  }
+  expected_cursor = old_head ? 0 : 9;
+  events.clear(); clears = 0; enum_result = enumeration; populate = rows;
+  HandleMain = window ? &owner : 0;
+  update_result = attach_result = result;
+  owner.refresh_player_list();
+  assert(events[0] == "sessions.clear" && events[1] == "enumerate");
+  if (enumeration) {
+    assert(events.size() == 2 && clears == 0);
+    assert(owner.tail_.action_result_ == -77); return;
+  }
+  assert(events[2] == "items.clear" && events[3] == "items.clear");
+  assert(events[4] == (rows ? "one session" : "NO SESSIONS (Translate this)"));
+  assert(events[5] == (window ? "view.update" : "view.attach"));
+  assert(owner.tail_.action_result_ == result);
+  assert(events.size() == (result ? 6u : 7u));
+  if (!result) assert(events[6] == "view.show");
+}
+int main() {
+  run(8, 0, true, 0); run(8, 0, true, 0, true);
+  run(0, 0, false, 0, true);
+  for (int rows = 0; rows != 2; ++rows) {
+    run(0, rows, true, 0); run(0, rows, false, 0);
+    run(0, rows, true, 5); run(0, rows, false, 7);
+  }
+}
+'''
+    if damage == "old_extra_reset":
+        anchor = "sessions.remove_all();"
+        assert body.count(anchor) == 1
+        body = body.replace(anchor, anchor + "\n  sessions.current_position_ = 0;", 1)
+        diagnostic = "list->current_position_ == expected_cursor"
+    elif damage == "owner_show":
+        assert "sessions_view_.show(0);" in body
+        body = body.replace("sessions_view_.show(0);", "show(0);", 1)
+        diagnostic = "must show the embedded session view"
+    elif damage == "missing_second_clear":
+        anchor = "items.StringStruct::remove_all();"
+        assert body.count(anchor) == 2
+        before, after = body.rsplit(anchor, 1)
+        body = before + after
+        diagnostic = "clears == 2"
+    if damage is None:
+        compile_and_run(tmp_path, harness.replace("ACTUAL_REFRESH", body), "picker-refresh-")
+    else:
+        for compiler in [shutil.which("g++"), shutil.which("clang++")]:
+            if compiler is None:
+                continue
+            name = Path(compiler).name
+            cpp, exe = tmp_path / (name + ".cpp"), tmp_path / name
+            cpp.write_text(harness.replace("ACTUAL_REFRESH", body))
+            compiled = subprocess.run([compiler, "-std=c++98", str(cpp), "-o", str(exe)],
+                                      capture_output=True, text=True)
+            assert compiled.returncode == 0, compiled.stdout + compiled.stderr
+            result = subprocess.run([str(exe)], capture_output=True, text=True)
+            assert result.returncode != 0 and diagnostic in result.stderr, result.stderr
+
+
 def function(source, signature):
     start = source.index(signature)
     opening = source.index("{", start)

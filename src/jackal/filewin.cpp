@@ -452,9 +452,9 @@ int FileWin::populate_directory(char *directory) {
         }
     }
 
-    Dialog &dialog = list_box_;
-    dialog.item_list_.remove_all();
-    dialog.selected_position_ = 0;
+    list_box_.item_list_.StringStruct::remove_all();
+    // Native6143DC reloads the virtual Dialog view after the clear call.
+    list_box_.selected_position_ = 0;
     list_box_.field_18_ = 0;
     list_box_.field_20_ = 0;
 
@@ -513,7 +513,7 @@ int FileWin::populate_directory(char *directory) {
         ? list_box_.update_changes()
         : list_box_.ListBox::attach(
               modal_window_,
-              dialog.window_x_, dialog.window_y_,
+              list_box_.window_x_, list_box_.window_y_,
               FileWinInitSharedParameters.field_00_ != 0
                   ? FileWinInitSharedParameters.field_00_
                   : 0x80060);

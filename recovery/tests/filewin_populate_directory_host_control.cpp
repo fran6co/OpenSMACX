@@ -155,11 +155,13 @@ static int _strcmpi(const char *left, const char *right) {
   return static_cast<unsigned char>(*left) - static_cast<unsigned char>(*right);
 }
 
-struct ItemList {
+struct StringStruct {
   int removals;
-  ItemList() : removals(0) {}
+  StringStruct() : removals(0) {}
   void remove_all() { ++removals; }
 };
+
+struct ItemList : StringStruct {};
 
 struct GraphicWin {};
 

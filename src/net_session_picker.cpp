@@ -283,59 +283,62 @@ void NetSessionPickerWin::draw_selected_rows() {
 void NetSessionPickerWin::refresh_player_list() {
   // The list implementation owns the observed hook/delete/cursor-reset
   // sequence; it preserves the original callback and allocator protocol.
-  sessions_.remove_all();
-  sessions_.current_position_ = 0;
+  AlphaNetLedger &sessions = sessions_;
+  sessions.remove_all();
 
   // Direct pinned call 0x62E420: ECX is net_, arguments are this exact ledger
   // and a null password. A nonzero result returns before the UI lists change.
-  if (net_->enumerate_sessions(&sessions_, 0) != 0) return;
+  if (net_->enumerate_sessions(&sessions, 0) != 0) return;
 
-  Dialog &dialog = static_cast<Dialog &>(sessions_view_);
-  dialog.item_list_.remove_all();
-  dialog.item_list_.current_position_ = 0;
-  // The duplicate native call and the following allocator clear are retained;
-  // they are not collapsed into a single normalized reset.
-  dialog.item_list_.remove_all();
-  dialog.item_list_.current_position_ = 0;
-  dialog.item_list_.allocator_ = 0;
+  {
+    StringList &items = sessions_view_.item_list_;
+    items.StringStruct::remove_all();
+    items.current_position_ = 0;
+  }
+  // Native63C874 reloads the virtual Dialog view between the two clears.
+  // Each call's following stores use that call's captured list receiver.
+  StringList &items = sessions_view_.item_list_;
+  items.StringStruct::remove_all();
+  items.current_position_ = 0;
+  items.allocator_ = 0;
 
   static char no_sessions[] = "NO SESSIONS (Translate this)";
-  if (sessions_.entry_count_ == 0) {
+  if (sessions.entry_count_ == 0) {
     sessions_view_.item(no_sessions, 0);
   } else {
-    if (sessions_.entry_count_ - 1 >= -1) {
-      sessions_.current_ = sessions_.head_;
+    if (sessions.entry_count_ - 1 >= -1) {
+      sessions.current_ = sessions.head_;
       int steps = abs(-1);
-      if (steps <= sessions_.entry_count_) {
+      if (steps <= sessions.entry_count_) {
         steps = abs(-1);
         if (steps > 0) {
           do {
             --steps;
-            sessions_.current_ = sessions_.current_->previous_;
+            sessions.current_ = sessions.current_->previous_;
           } while (steps != 0);
         }
-        sessions_.current_position_ = sessions_.entry_count_ - 1;
+        sessions.current_position_ = sessions.entry_count_ - 1;
       }
     }
 
     int index = 0;
-    if (sessions_.entry_count_ > 0) {
+    if (sessions.entry_count_ > 0) {
       do {
-        AlphaNetLedgerEntry *head = sessions_.head_;
+        AlphaNetLedgerEntry *head = sessions.head_;
         int item_id = 0;
         if (head != 0) item_id = static_cast<int>(reinterpret_cast<uintptr_t>(
-            sessions_.current_->payload_));
+            sessions.current_->payload_));
 
         if (head != 0) {
-          sessions_.current_ = sessions_.current_->previous_;
-          const int position = sessions_.current_position_ - 1;
-          sessions_.current_position_ = position;
+          sessions.current_ = sessions.current_->previous_;
+          const int position = sessions.current_position_ - 1;
+          sessions.current_position_ = position;
           if (position == -1) {
-            sessions_.current_position_ = sessions_.entry_count_ - 1;
+            sessions.current_position_ = sessions.entry_count_ - 1;
           }
         }
 
-        AlphaNetLedgerEntry *current = sessions_.current_;
+        AlphaNetLedgerEntry *current = sessions.current_;
         char *text = 0;
         if (current != 0) {
           // The original's null-head/inconsistent-current path reads through
@@ -347,7 +350,7 @@ void NetSessionPickerWin::refresh_player_list() {
         }
         sessions_view_.item(text, item_id);
         ++index;
-      } while (index < sessions_.entry_count_);
+      } while (index < sessions.entry_count_);
     }
   }
 
@@ -355,14 +358,14 @@ void NetSessionPickerWin::refresh_player_list() {
   if (HandleMain != 0) {
     result = sessions_view_.update_changes();
   } else {
-    // This is the Dialog virtual base entry in the embedded ListBox. The
-    // source cast performs the real virtual-base adjustment; no hand offset
-    // or shim object stands in for it.
-    result = dialog.attach(this, dialog.window_x_, dialog.window_y_, 0x80000);
+    // Native63C963 reloads the Dialog coordinates at this late phase;
+    // Native63C981 directly calls the real ListBox attachment method.
+    result = sessions_view_.ListBox::attach(
+        this, sessions_view_.window_x_, sessions_view_.window_y_, 0x80000);
   }
   tail_.action_result_ = result;
   if (result != 0) return;
-  show(0);
+  sessions_view_.show(0);
 }
 
 // ORIGINAL: 0x0063C340 sub_63c340 0x0063C340-0x0063C38F FILE BYTE_EXACT
