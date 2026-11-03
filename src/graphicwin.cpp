@@ -1325,7 +1325,7 @@ void GraphicWin::compute_min_size() {
     }
 }
 
-// ORIGINAL: 0x005D5CF0 ?on_paint@GraphicWin@@QAEHPAURECT@@@Z 0x005D5CF0-0x005D620A
+// ORIGINAL: 0x005D5CF0 ?on_paint@GraphicWin@@QAEHPAURECT@@@Z 0x005D5CF0-0x005D620A BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["GraphicWin table66FC50 slot73 and EditBox table66A038 slot73 both select5D5CF0, with an unadjusted Win receiver and Buffer base at444. The original caller ignores a return; use the existing Win void paint signature.", "Original5D5E04 and5D5E56 establish destination clipping;5D61D4 rereads WinBackBuffer before restoring its clip.5D61CF passes width then height to Buffer copy. Real surface Blt and software drawing own separate branches."], "reason": "Recover the inherited GraphicWin paint override selected by the original tables; keep the seed and its original span."}
 // TRIED: transcribed from Ghidra's pseudocode (cross-checked several branches against the raw disassembly: win_parent_/iFlags_/ outer_rect_/client_rect_ offsets match the Win layout confirmed on 0x0050FB10/0x00510110; DAT_00696d14 in Ghidra's arg lists is a BYTE VALUE passed as int, not a pointer, confirmed by the draw()/draw_dest() signatures). Reusing one RECT local instead of two (matching the original's stack-slot reuse across the mutually-exclusive branches) made no measurable difference (sim stayed 0.49 at plain /O2). First divergence #22 is register scheduling in the client_to_screen/nonclient_to_screen setup, not chased further. Not byte-exact.
 // working copy - scaffold materialised by --work
@@ -1350,25 +1350,33 @@ void GraphicWin::on_paint(RECT *area) {
     if (parent != 0 && (iFlags_ & 0x20) != 0) {
         if (iFlags_ & 0x8000) {
             rectangle = parent->client_rect_;
-            rectangle.right -= rectangle.left;
-            rectangle.bottom -= rectangle.top;
-            rectangle.left = rectangle.top = 0;
+            const int dy = -rectangle.top;
+            const int dx = -rectangle.left;
+            rectangle.left += dx;
+            rectangle.right += dx;
+            rectangle.top += dy;
+            rectangle.bottom += dy;
             parent->nonclient_to_screen(&rectangle);
         } else {
             rectangle = parent->outer_rect_;
-            rectangle.right -= rectangle.left;
-            rectangle.bottom -= rectangle.top;
-            rectangle.left = rectangle.top = 0;
+            const int dy = -rectangle.top;
+            const int dx = -rectangle.left;
+            rectangle.left += dx;
+            rectangle.right += dx;
+            rectangle.top += dy;
+            rectangle.bottom += dy;
             parent->client_to_screen(&rectangle);
         }
         if (area != 0 && !IntersectRect(&rectangle, &rectangle, area)) {
             return;
         }
         if (WinBackBuffer != 0) {
-            rectangle.left -= WinViewOriginX;
-            rectangle.right -= WinViewOriginX;
-            rectangle.top -= WinViewOriginY;
-            rectangle.bottom -= WinViewOriginY;
+            const int dy = -WinViewOriginY;
+            const int dx = -WinViewOriginX;
+            rectangle.left += dx;
+            rectangle.right += dx;
+            rectangle.top += dy;
+            rectangle.bottom += dy;
             WinBackBuffer->set_clip(&rectangle);
         } else {
             ScreenBufferOwner.buffer().set_clip(&rectangle);
@@ -1377,33 +1385,89 @@ void GraphicWin::on_paint(RECT *area) {
         ScreenBufferOwner.buffer().set_clip(area);
     }
 
-    if ((iFlags_ & 0x1000000) == 0 && surface_ != 0) {
-        rectangle.left = origin_x;
-        rectangle.top = origin_y;
-        rectangle.right = origin_x + outer_rect_.right - outer_rect_.left;
-        rectangle.bottom = origin_y + outer_rect_.bottom - outer_rect_.top;
-        DirectDrawBackBuffer->Blt(&rectangle, surface_, 0, DDBLT_WAIT, 0);
-    } else {
-        Buffer *destination = &ScreenBufferOwner.buffer();
-        int x = origin_x;
-        int y = origin_y;
-        if (WinBackBuffer != 0) {
-            destination = WinBackBuffer;
-            x -= WinViewOriginX;
-            y -= WinViewOriginY;
-        }
-        if ((iFlags_ & 0x1000000) == 0) {
-            Buffer::copy(destination, 0, 0, x, y,
-                         outer_rect_.right - outer_rect_.left,
-                         outer_rect_.bottom - outer_rect_.top);
-        } else if (color_table_ != 0) {
-            Buffer::draw_dest(destination, WinFillColour, x, y, 1, 1,
-                              color_table_);
-        } else if (multi_color_tables_ != 0) {
-            Buffer::draw_multi_table_dest(destination, WinFillColour, x, y, 1, 1,
-                                          multi_color_tables_);
+    // Keep the original surface-first dispatch and separate destination paths.
+    if (surface_ != 0) {
+        if ((iFlags_ & 0x1000000) != 0) {
+            if (color_table_ != 0 || multi_color_tables_ != 0) {
+                if (color_table_ != 0) {
+                    if (WinBackBuffer != 0) {
+                        Buffer::draw_dest(WinBackBuffer, WinFillColour,
+                                     origin_x - WinViewOriginX, origin_y - WinViewOriginY,
+                                     1, 1, color_table_);
+                    } else {
+                        Buffer::draw_dest(&ScreenBufferOwner.buffer(), WinFillColour,
+                                     origin_x, origin_y, 1, 1, color_table_);
+                    }
+                } else {
+                    if (WinBackBuffer != 0) {
+                        Buffer::draw_multi_table_dest(WinBackBuffer, WinFillColour,
+                                     origin_x - WinViewOriginX, origin_y - WinViewOriginY,
+                                     1, 1, multi_color_tables_);
+                    } else {
+                        Buffer::draw_multi_table_dest(&ScreenBufferOwner.buffer(), WinFillColour,
+                                     origin_x, origin_y, 1, 1, multi_color_tables_);
+                    }
+                }
+            } else {
+                if (WinBackBuffer != 0) {
+                    Buffer::draw(WinBackBuffer, WinFillColour,
+                                 origin_x - WinViewOriginX, origin_y - WinViewOriginY,
+                                 1, 1);
+                } else {
+                    Buffer::draw(&ScreenBufferOwner.buffer(), WinFillColour,
+                                 origin_x, origin_y, 1, 1);
+                }
+            }
         } else {
-            Buffer::draw(destination, WinFillColour, x, y, 1, 1);
+            rectangle.left = origin_x;
+            rectangle.top = origin_y;
+            rectangle.right = origin_x + (outer_rect_.right - outer_rect_.left);
+            rectangle.bottom = origin_y + (outer_rect_.bottom - outer_rect_.top);
+            DirectDrawBackBuffer->Blt(&rectangle, surface_, 0, DDBLT_WAIT, 0);
+        }
+    } else {
+        if ((iFlags_ & 0x1000000) != 0) {
+            if (color_table_ != 0 || multi_color_tables_ != 0) {
+                if (color_table_ != 0) {
+                    if (WinBackBuffer != 0) {
+                        Buffer::draw_dest(WinBackBuffer, WinFillColour,
+                                     origin_x - WinViewOriginX, origin_y - WinViewOriginY,
+                                     1, 1, color_table_);
+                    } else {
+                        Buffer::draw_dest(&ScreenBufferOwner.buffer(), WinFillColour,
+                                     origin_x, origin_y, 1, 1, color_table_);
+                    }
+                } else {
+                    if (WinBackBuffer != 0) {
+                        Buffer::draw_multi_table_dest(WinBackBuffer, WinFillColour,
+                                     origin_x - WinViewOriginX, origin_y - WinViewOriginY,
+                                     1, 1, multi_color_tables_);
+                    } else {
+                        Buffer::draw_multi_table_dest(&ScreenBufferOwner.buffer(), WinFillColour,
+                                     origin_x, origin_y, 1, 1, multi_color_tables_);
+                    }
+                }
+            } else {
+                if (WinBackBuffer != 0) {
+                    Buffer::draw(WinBackBuffer, WinFillColour,
+                                 origin_x - WinViewOriginX, origin_y - WinViewOriginY,
+                                 1, 1);
+                } else {
+                    Buffer::draw(&ScreenBufferOwner.buffer(), WinFillColour,
+                                 origin_x, origin_y, 1, 1);
+                }
+            }
+        } else {
+            if (WinBackBuffer != 0) {
+                Buffer::copy(WinBackBuffer, 0, 0,
+                             origin_x - WinViewOriginX, origin_y - WinViewOriginY,
+                             outer_rect_.right - outer_rect_.left,
+                             outer_rect_.bottom - outer_rect_.top);
+            } else {
+                Buffer::copy(&ScreenBufferOwner.buffer(), 0, 0, origin_x, origin_y,
+                             outer_rect_.right - outer_rect_.left,
+                             outer_rect_.bottom - outer_rect_.top);
+            }
         }
     }
     // Drawing can change the back buffer. The original rereads it here.

@@ -673,7 +673,9 @@ int WinSizingFlag;           // 0x009B7AD4
 // RECOVERY_OBJECT: v1 0x009B7AE4 ?WinModalDepth@@3HA
 int WinModalDepth;           // 0x009B7AE4
 int WinKeyModifiers;         // 0x009B7B18
+// RECOVERY_OBJECT: v1 0x009B7A70 ?WinViewOriginX@@3HA
 int WinViewOriginX;          // 0x009B7A70
+// RECOVERY_OBJECT: v1 0x009B7A74 ?WinViewOriginY@@3HA
 int WinViewOriginY;          // 0x009B7A74
 const char WinMsgTooManyChildren[] = "Too many children";            // 0x00696D80
 const char WinMsgIncreaseMaxChildren[] = "Increase #define MAX_CHILDREN";  // 0x00696D60
@@ -686,6 +688,7 @@ int WinTrackingMode;       // 0x009B7AA8
 int WinTrackingX;          // 0x009B7AB0
 // RECOVERY_OBJECT: v1 0x009B7AB4 ?WinTrackingY@@3HA
 int WinTrackingY;          // 0x009B7AB4
+// RECOVERY_OBJECT: v1 0x009B7A68 ?WinBackBuffer@@3PAVBuffer@@A
 Buffer *WinBackBuffer;         // 0x009B7A68
 // RECOVERY_OBJECT: v1 0x009B8D7C ?WinModalFocus@@3PAVWin@@A
 Win *WinModalFocus;         // 0x009B8D7C

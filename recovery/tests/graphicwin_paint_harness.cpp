@@ -52,9 +52,16 @@ struct Buffer {
     }
 };
 Buffer ScreenBuffer;
+unsigned char paint_colour_table[1], paint_multi_colour_table[1];
+// Model the current owner's access API while preserving the same Buffer and
+// all existing destination/clip assertions; this seam makes no layout claim.
+struct ScreenBufferOwnerControl {
+    Buffer &buffer() { return ScreenBuffer; }
+} ScreenBufferOwner;
 struct Win {
     Win *win_parent_;
-    unsigned int iFlags_, field_A0_, field_A4_;
+    unsigned int iFlags_;
+    unsigned char *color_table_, *multi_color_tables_;
     RECT client_rect_, outer_rect_;
     virtual void on_paint(RECT *) { ++wrong_paint; }
     void client_to_screen(int *x, int *y) { *x += 30; *y += 40; }
@@ -86,7 +93,7 @@ void reset(EditBox &window) {
     draw_source = draw_destination = 0; table = 0;
     replace_back = false; intersection = true;
     window.win_parent_ = 0; window.iFlags_ = 0;
-    window.field_A0_ = window.field_A4_ = 0;
+    window.color_table_ = window.multi_color_tables_ = 0;
     window.surface_ = 0;
     RECT outer = { 2, 3, 19, 14 }; window.outer_rect_ = outer;
     WinBackBuffer = 0;
@@ -109,8 +116,8 @@ int main() {
         bool has_back = (mode & 4) != 0;
         window.surface_ = has_surface ? &source_surface : 0;
         if (transparent) window.iFlags_ |= 0x1000000;
-        if (mode & 8) window.field_A0_ = 123;
-        if (mode & 16) window.field_A4_ = 456;
+        if (mode & 8) window.color_table_ = paint_colour_table;
+        if (mode & 16) window.multi_color_tables_ = paint_multi_colour_table;
         WinBackBuffer = has_back ? &back : 0;
         event_receiver->on_paint(&damage);
         assert(!wrong_paint && clips == 2 && clip_targets[0] == &ScreenBuffer);
@@ -124,8 +131,8 @@ int main() {
             assert(draw_destination == (has_back ? &back : &ScreenBuffer));
             assert(draw_x == (has_back ? 27 : 30) && draw_y == (has_back ? 36 : 40));
             if (!transparent) assert(route == 1 && draw_width == 17 && draw_height == 11);
-            else if (mode & 8) assert(route == 3 && table == reinterpret_cast<unsigned char *>(123));
-            else if (mode & 16) assert(route == 4 && table == reinterpret_cast<unsigned char *>(456));
+            else if (mode & 8) assert(route == 3 && table == paint_colour_table);
+            else if (mode & 16) assert(route == 4 && table == paint_multi_colour_table);
             else assert(route == 2);
         }
     }
