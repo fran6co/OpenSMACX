@@ -1133,6 +1133,20 @@
           "-c"
         ]
       },
+      "src/win_zorder.cpp": {
+        "flags": [
+          "/nologo",
+          "/TP",
+          "/Zm200",
+          "/GX",
+          "/O2",
+          "/Ob2",
+          "-MT",
+          "/W4",
+          "/Z7",
+          "-c"
+        ]
+      },
       "src/console.cpp": {
         "flags": [
           "/nologo",

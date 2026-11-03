@@ -313,6 +313,7 @@ set(OPENSMACX_SOURCES
     src/vehicle_cost.cpp
     src/vector.cpp
     src/win.cpp
+    src/win_zorder.cpp
     src/win_coordinates.cpp
     src/win_point_coordinates.cpp
     src/win_input.cpp
@@ -617,6 +618,7 @@ set_property(SOURCE
     src/texheap.cpp
     src/world.cpp
     src/win.cpp
+    src/win_zorder.cpp
     APPEND PROPERTY COMPILE_OPTIONS "/Z7")
 # Keep these measured frame-based helper owners on their explicit source profile.
 set_source_files_properties(

@@ -872,7 +872,7 @@ class Win : public AutoSound {
   void set_field_128(int value);
   void set_parent_dialog(Win *dialog);
   void __cdecl update();
-  void __cdecl update_zorder();
+  static void __cdecl update_zorder();
   void window_line_raw(int x2, int y2, int x1, int y1, int colour, int width, unsigned int style);
 
  public:
