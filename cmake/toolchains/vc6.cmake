@@ -133,6 +133,10 @@ set(CMAKE_C_DEPFILE_FORMAT gcc)
 # assume a compiler that can share a PDB; this one cannot.
 # /Oy- keeps frame pointers: without them (/O2 implies /Oy) gdb and winedbg
 # cannot walk a backtrace, which is the whole point of the debug profile.
+# Pin the measured Release inlining policy instead of inheriting a modern
+# CMake MSVC default. Standalone recovery profiles must request /Ob2 too:
+# VC6's /O2 alone retains its older /Ob1 behavior.
+set(CMAKE_CXX_FLAGS_RELEASE "/O2 /Ob2 /DNDEBUG" CACHE STRING "" FORCE)
 set(CMAKE_CXX_FLAGS_DEBUG "/Z7 /Ob0 /Od /Oy- /GZ" CACHE STRING "" FORCE)
 set(CMAKE_C_FLAGS_DEBUG "/Z7 /Ob0 /Od /GZ" CACHE STRING "" FORCE)
 set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "/Z7 /O2" CACHE STRING "" FORCE)

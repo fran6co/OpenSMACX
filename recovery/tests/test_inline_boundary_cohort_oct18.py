@@ -192,7 +192,14 @@ def _measurement_contract(candidate_project: dict, baseline_project: dict) -> bo
     candidate = candidate_project.get("measurement", {})
     baseline = baseline_project.get("measurement", {})
     candidate_global = {key: value for key, value in candidate.items() if key != "unit_flag_sets"}
-    baseline_global = {key: value for key, value in baseline.items() if key != "unit_flag_sets"}
+    baseline_global = copy.deepcopy({key: value for key, value in baseline.items()
+                                     if key != "unit_flag_sets"})
+    # Carry the separately verified Release-profile calibration into this
+    # historical owner guard. Keep the frozen historical snapshot intact and
+    # continue refusing every other global or owner-policy change.
+    for flags in baseline_global.get("flag_sets", []):
+        if "/Ob2" not in flags:
+            flags.insert(flags.index("/O2") + 1, "/Ob2")
     if candidate_global != baseline_global:
         return False
 
@@ -380,7 +387,7 @@ def _queue_harness(queue_source: str, video_header: str, mutation: str | None = 
         assert needle in body
         bodies["int VideoFrameQueue::allocate("] = body.replace(
             needle,
-            "    node->bytes = 0;\n    node->byte_count = 0;\n" + needle,
+            "    tail_->bytes = 0;\n    tail_->byte_count = 0;\n" + needle,
             1,
         )
     elif mutation == "append_allocation_count":

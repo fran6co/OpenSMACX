@@ -83,7 +83,13 @@ meaning observations, not matching claims or proof of complete original TUs.
 ## Source-form experiments after structure
 
 OpenSMACX currently selects two release comparison flag sets in its local
-compiler configuration: `/c /O2 /Gy /GR- /GX` and the same with `/Oy-`.
+compiler configuration: `/c /O2 /Ob2 /Gy /GR- /GX` and the same with `/Oy-`.
+The explicit `/Ob2` aligns unpinned standalone measurements with the measured
+CMake Release producer. A real VC6 control retains a normal helper call with
+`/O2` alone and expands it with `/Ob2`; identical `/O2` spellings therefore do
+not establish matching inlining policy across modern CMake and VC6. This is
+current-producer calibration, not proof of the original command line. Owner
+exceptions still require fresh actual recipes and full preservation checks.
 There is no `--all-flags` option. Flag-policy changes are coordinator decisions,
 not a per-function search for a permissive checker.
 
