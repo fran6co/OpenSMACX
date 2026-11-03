@@ -1819,20 +1819,22 @@ for (i = 0; i < MaxCompassNum; i++) {
         Natural[i].name = text_item_string();
         Natural[i].name_short = text_item_string();
     }
-    // Revised original nested for loop code to be more efficient; Logic is still same.
+    // Superseded rationale: "Revised original nested for loop code to be more
+    // efficient; Logic is still same." The original translates each of 15 fixed
+    // button ordinals through all 20 rows anew, including after button callbacks.
     // Buttons used by "Edit Map" menus.
-    int j = 0;
-    for (i = 0; i < MaxTerrainNum; i++) {
-        // excludes: Fungus (removal), Aquifer, Raise Land, Lower Land, Level Terrain
-        if (Terraforming[i].bit) {
-            MainInterfaceGlobal.set_bubble_text(j++ + 17,
-                StringTable.get(Terraforming[i].name)); // 17-31
+    for (int button = 17; button <= 31; ++button) {
+        int terrain = button - 17;
+        for (int entry = 0; entry < MaxTerrainNum; ++entry) {
+            if (Terraforming[entry].bit == 0 && terrain >= entry) ++terrain;
         }
+        MainInterfaceGlobal.flat_button(button).set_bubble_text(
+            StringTable.get(Terraforming[terrain].name));
     }
-    MainInterfaceGlobal.set_bubble_text(32, StringTable.get(Natural[LM_JUNGLE].name_short));
-    MainInterfaceGlobal.set_bubble_text(33, StringTable.get(Natural[LM_DUNES].name_short));
-    MainInterfaceGlobal.set_bubble_text(34, StringTable.get(Natural[LM_URANIUM].name_short));
-    MainInterfaceGlobal.set_bubble_text(35, StringTable.get(Natural[LM_GEOTHERMAL].name_short));
+    MainInterfaceGlobal.flat_button(32).set_bubble_text(StringTable.get(Natural[LM_JUNGLE].name_short));
+    MainInterfaceGlobal.flat_button(33).set_bubble_text(StringTable.get(Natural[LM_DUNES].name_short));
+    MainInterfaceGlobal.flat_button(34).set_bubble_text(StringTable.get(Natural[LM_URANIUM].name_short));
+    MainInterfaceGlobal.flat_button(35).set_bubble_text(StringTable.get(Natural[LM_GEOTHERMAL].name_short));
     return false;
 }
 

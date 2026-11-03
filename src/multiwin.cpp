@@ -504,8 +504,12 @@ void MultiWin::draw(int draw_type) {
     rect.bottom = y + sprite4_.height();
     draw_time(&rect, draw_type);
 
-    rect.top = rect.bottom;
-    rect.bottom = rect.top + 14;
+    // The time renderer can call services before these live owner reads.
+    y += sprite4_.height();
+    rect.left = 0;
+    rect.top = y;
+    rect.right = dib_.bmiHeader.biWidth;
+    rect.bottom = y + 14;
     y = rect.bottom;
     sprite5_.draw(canvas, sprite5_.transparent_index(), 0, rect.top);
     canvas->set_clip(&rect);
