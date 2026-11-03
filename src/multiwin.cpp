@@ -1060,3 +1060,5 @@ void MultiWin::init() {
     g_MULTIWIN_WAVE.set_pan(0x20);
     g_MULTIWIN_WAVE.set_volume(0x28);
 }
+// RECOVERY_GENERATED: v1 vtable 0x0066C9F0 ? ??_7MultiWin@@6BWin@@@ 0x0047A590
+// RECOVERY_GENERATED: v1 vtable 0x0066C9E8 ? ??_7MultiWin@@6BBuffer@@@ 0x0047A590

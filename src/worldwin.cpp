@@ -728,3 +728,5 @@ void __cdecl show_world_map_view() {
     MapWinTable[1]->hide();
     WorldClimateWorldWin.Win::show(0);
 }
+// RECOVERY_GENERATED: v1 vtable 0x0066DF30 ? ??_7WorldWin@@6BWin@@@ 0x004C4BF0
+// RECOVERY_GENERATED: v1 vtable 0x0066DF28 ? ??_7WorldWin@@6BBuffer@@@ 0x004C4BF0

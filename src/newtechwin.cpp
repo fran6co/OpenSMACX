@@ -610,3 +610,5 @@ void NewTechWin::on_button_clicked(int) {
   release_modal();
 }
 // RECOVERY_LITERAL: v1 0x00686978 0x00686982 ??_C@_09EDHP@techlongs?$AA@ 0x00483EB0
+// RECOVERY_GENERATED: v1 vtable 0x0066CE5C ? ??_7NewTechWin@@6BWin@@@ 0x004849D0
+// RECOVERY_GENERATED: v1 vtable 0x0066CE54 ? ??_7NewTechWin@@6BBuffer@@@ 0x004849D0

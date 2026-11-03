@@ -715,3 +715,5 @@ void __cdecl list_was_dblclicked(int faction_id) {
     PickWinGlobal.on_button_clicked(faction_id);
   }
 }
+// RECOVERY_GENERATED: v1 vtable 0x0066D13C ? ??_7PickWin@@6BWin@@@ 0x0048AC10
+// RECOVERY_GENERATED: v1 vtable 0x0066D134 ? ??_7PickWin@@6BBuffer@@@ 0x0048AC10

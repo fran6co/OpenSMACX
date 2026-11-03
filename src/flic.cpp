@@ -1333,7 +1333,7 @@ void Flic::decode_byte_run_trans() {
                             dst++;
                             src++;
                             i++;
-                        } while (i < (count & 0xff));
+                        } while (i < static_cast<int>(count & 0xff));
                     }
                 }
             }

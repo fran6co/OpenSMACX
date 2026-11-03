@@ -996,3 +996,5 @@ void PrefWin::on_redraw() {
   cancelButton_.redraw();
   restoreDefaultButton_.redraw();
 }
+// RECOVERY_GENERATED: v1 vtable 0x0066D424 ? ??_7PrefWin@@6BWin@@@ 0x004921E0
+// RECOVERY_GENERATED: v1 vtable 0x0066D41C ? ??_7PrefWin@@6BBuffer@@@ 0x004921E0

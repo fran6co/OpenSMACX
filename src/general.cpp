@@ -1923,27 +1923,28 @@ typedef unsigned short uint16;
 typedef char int8;
 typedef unsigned char uint8;
 extern "C" void __fastcall sub_5d3f50(MediaRuntime *runtime) {
-    MediaDescriptor *const descriptor = runtime->descriptor;
-    const MediaPixelFormat &format = descriptor->pixel_format;
-    const unsigned char shift_green =
-        static_cast<unsigned char>(8 - format.green_bits);
-    const unsigned char shift_red =
-        static_cast<unsigned char>(8 - format.red_bits);
-    const unsigned char shift_blue =
-        static_cast<unsigned char>(8 - format.blue_bits);
+    const MediaPixelFormat &initial_format = runtime->descriptor->pixel_format;
+    const unsigned int shift_green =
+        8u - initial_format.green_bits;
+    const unsigned int shift_red =
+        8u - initial_format.red_bits;
+    const unsigned int shift_blue =
+        8u - initial_format.blue_bits;
 
-    for (int index = 0; index != 256; ++index) {
+    for (int index = 0; index < 256; ++index) {
+        MediaDescriptor *const descriptor = runtime->descriptor;
+        const MediaPixelFormat &format = descriptor->pixel_format;
         const int palette_index = index * 3;
         unsigned int green =
             (descriptor->palette_rgb_triplets_b0[palette_index + 1] >>
-             (shift_green & 0x1f)) << (format.green_shift & 0x1f);
+             shift_green) << format.green_shift;
         unsigned int red =
             (descriptor->palette_rgb_triplets_b0[palette_index] >>
-             (shift_red & 0x1f)) << (format.red_shift & 0x1f);
+             shift_red) << format.red_shift;
         unsigned int result = green | red;
         unsigned int blue =
             (descriptor->palette_rgb_triplets_b0[palette_index + 2] >>
-             (shift_blue & 0x1f)) << (format.blue_shift & 0x1f);
+             shift_blue) << format.blue_shift;
         result |= blue;
         if ((descriptor->flags & 0x40) != 0)
             result |= result << 0x10;

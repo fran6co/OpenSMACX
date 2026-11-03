@@ -270,24 +270,43 @@ void SocialWin::on_iface_left_click(int, int) {
 // symbol    ?on_iface_right_click@SocialWin@@UAEXHH@Z
 void SocialWin::on_iface_right_click(int x, int y) {
     TutorialWindow.reset();
-    int label;
-    if (in_box(x, y, &tooltipEconomy_)) {
-        label = 841;
-    } else if (in_box(x, y, &tooltipLabs_)) {
-        label = 842;
-    } else if (in_box(x, y, &tooltipPsych_)) {
-        label = 843;
-    } else if (in_box(x, y, &tooltipEffects_)) {
-        label = 839;
-    } else {
+    const int click_y = y;
+    const int click_x = x;
+    if (in_box(click_x, click_y, &tooltipEconomy_)) {
+        x = click_y;
+        y = click_x;
+        char *text = label_get(841);
+        MainInterfaceGlobal.client_to_screen(&y, &x);
+        RECT rectangle = {y, x, y, x};
+        MainInterfaceGlobal.Win::set_bubble_text(text, &rectangle);
         return;
     }
-    char *text = label_get(label);
-    // The original reuses its argument slots after swapping their contents;
-    // the resulting conversion is still x then y, on the main interface.
-    MainInterfaceGlobal.client_to_screen(&x, &y);
-    RECT rectangle = {x, y, x, y};
-    MainInterfaceGlobal.Win::set_bubble_text(text, &rectangle);
+    if (in_box(click_x, click_y, &tooltipLabs_)) {
+        x = click_y;
+        y = click_x;
+        char *text = label_get(842);
+        MainInterfaceGlobal.client_to_screen(&y, &x);
+        RECT rectangle = {y, x, y, x};
+        MainInterfaceGlobal.Win::set_bubble_text(text, &rectangle);
+        return;
+    }
+    if (in_box(click_x, click_y, &tooltipPsych_)) {
+        x = click_y;
+        y = click_x;
+        char *text = label_get(843);
+        MainInterfaceGlobal.client_to_screen(&y, &x);
+        RECT rectangle = {y, x, y, x};
+        MainInterfaceGlobal.Win::set_bubble_text(text, &rectangle);
+        return;
+    }
+    if (in_box(click_x, click_y, &tooltipEffects_)) {
+        x = click_y;
+        y = click_x;
+        char *text = label_get(839);
+        MainInterfaceGlobal.client_to_screen(&y, &x);
+        RECT rectangle = {y, x, y, x};
+        MainInterfaceGlobal.Win::set_bubble_text(text, &rectangle);
+    }
 }
 
 // ORIGINAL: 0x004B1B20 ?on_left_click@SocialWin@@QAEHHH@Z 0x004B1B20-0x004B1B2D BYTE_EXACT
@@ -302,23 +321,28 @@ void SocialWin::on_left_click(int, int) {
 // symbol    ?on_right_click@SocialWin@@UAEXHH@Z
 void SocialWin::on_right_click(int x, int y) {
     TutorialWindow.reset();
-    int label = -1;
-    for (int i = 0; i < 4; ++i) {
-        if (in_box(x, y, &categoryHeaders_[i])) {
-            label = 828;
-            break;
+    const int click_y = y;
+    const int click_x = x;
+    RECT *category = categoryHeaders_;
+    for (int i = 0; i < 4; ++i, ++category) {
+        if (in_box(click_x, click_y, category)) {
+            x = click_y;
+            y = click_x;
+            char *text = label_get(828);
+            client_to_screen(&y, &x);
+            RECT rectangle = {y, x, y, x};
+            Win::set_bubble_text(text, &rectangle);
+            return;
         }
     }
-    if (label < 0 && in_box(x, y, &tooltipFactionPower_)) {
-        label = 840;
+    if (in_box(click_x, click_y, &tooltipFactionPower_)) {
+        x = click_y;
+        y = click_x;
+        char *text = label_get(840);
+        client_to_screen(&y, &x);
+        RECT rectangle = {y, x, y, x};
+        Win::set_bubble_text(text, &rectangle);
     }
-    if (label < 0) {
-        return;
-    }
-    char *text = label_get(label);
-    client_to_screen(&x, &y);
-    RECT rectangle = {x, y, x, y};
-    Win::set_bubble_text(text, &rectangle);
 }
 
 // ORIGINAL: 0x004B1FC0 ?on_mouse_leave@SocialWin@@QAEXHH@Z 0x004B1FC0-0x004B1FEC FILE BYTE_EXACT

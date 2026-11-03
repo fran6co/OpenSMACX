@@ -2035,3 +2035,6 @@ extern "C" void __cdecl sub_441100(int faction_id, int faction_id_with) {
     DiploWindow.shared_string_box().add(text, id, 1);
   }
 }
+// RECOVERY_GENERATED: v1 vtable 0x0066B634 ? ??_7DiploWin@@6BWin@@@ 0x00444FC0
+// RECOVERY_GENERATED: v1 vtable 0x0066B62C ? ??_7DiploWin@@6BBuffer@@@ 0x00444FC0
+// RECOVERY_GENERATED: v1 vtable 0x0066B5E0 ? ??_7DiploWin@@6B@ 0x00444FC0

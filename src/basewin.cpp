@@ -7796,3 +7796,5 @@ int BaseWin::farm_get(int a1, int a2) {
     }
     return -1;
 }
+// RECOVERY_GENERATED: v1 vtable 0x0066A40C ? ??_7BaseWin@@6BWin@@@ 0x00408490
+// RECOVERY_GENERATED: v1 vtable 0x0066A404 ? ??_7BaseWin@@6BBuffer@@@ 0x00408490

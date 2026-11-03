@@ -880,11 +880,13 @@ void ReportWin::on_button_passover(int button_id, int state) {
     // path rather than silently adding a behavior-changing safety guard.
     report_work_rect_ = flatButtons1_[index].outer_rect();
 
-    int first_x = reportwin_signed_coordinate(lab_center_x_);
-    int first_y = reportwin_signed_coordinate(lab_center_y_);
-    int last_x = report_work_rect_.left;
-    int last_y = report_work_rect_.top;
-    if (index >= 3) {
+    int first_x, first_y, last_x, last_y;
+    if (index < 3) {
+        first_x = reportwin_signed_coordinate(lab_center_x_);
+        first_y = reportwin_signed_coordinate(lab_center_y_);
+        last_x = report_work_rect_.left;
+        last_y = report_work_rect_.top;
+    } else {
         first_x = report_work_rect_.left;
         first_y = report_work_rect_.top;
         last_x = reportwin_signed_coordinate(lab_center_x_);
@@ -905,18 +907,25 @@ void ReportWin::on_button_passover(int button_id, int state) {
         reportwin_signed_coordinate(field_59A8_ + field_A28_) + 3,
         reportwin_signed_coordinate(field_A24_) + center_y + 6
     };
-    Buffer *canvas = static_cast<Buffer *>(host);
-    BoxSpriteParams *style = state == 0
-        ? &InterfaceBoxStyles[3] : &InterfaceBoxStyles[5];
-    canvas->box_sprite(&marker, style);
-    marker.left += 3;
-    marker.top += 3;
-    marker.right -= 3;
-    marker.bottom -= 3;
-    canvas->box_sprite(&report_work_rect_, style);
-    labs_line(first_x, first_y, last_x, last_y,
-              static_cast<int>(field_59A0_), static_cast<int>(field_59A4_),
-              state != 0);
+    if (state != 0) {
+        host->Buffer::box_sprite(&marker, &InterfaceBoxStyles[5]);
+        marker.left += 3;
+        marker.top += 3;
+        marker.right -= 3;
+        marker.bottom -= 3;
+        host->Buffer::box_sprite(&report_work_rect_, &InterfaceBoxStyles[5]);
+        labs_line(first_x, first_y, last_x, last_y,
+                  static_cast<int>(field_59A0_), static_cast<int>(field_59A4_), 1);
+    } else {
+        host->Buffer::box_sprite(&marker, &InterfaceBoxStyles[3]);
+        marker.left += 3;
+        marker.top += 3;
+        marker.right -= 3;
+        marker.bottom -= 3;
+        host->Buffer::box_sprite(&report_work_rect_, &InterfaceBoxStyles[3]);
+        labs_line(first_x, first_y, last_x, last_y,
+                  static_cast<int>(field_59A0_), static_cast<int>(field_59A4_), 0);
+    }
     host->soft_update();
 }
 
@@ -1892,35 +1901,74 @@ int ReportWin::on_key_click(int, int code) {
             ReportIfGlobal.SubInterface::release_iface_mode();
             return 1;
         }
-        int report_code;
-        if (code == 0x71) {
-            ReportIfGlobal.field_8_ = 2;
-            report_code = 2;
-        } else if (code == 0x72) {
+        if (code == 0x71) goto select_page_2;
+        if (code == 0x72) {
+select_page_3:
             ReportIfGlobal.field_8_ = 3;
-            report_code = 3;
-        } else if (code == 0x73) {
-            ReportIfGlobal.field_8_ = 4;
-            report_code = 4;
-        } else if (code == 0x74) {
-            ReportIfGlobal.field_8_ = 5;
-            report_code = 5;
-        } else if (code == 0x75) {
-            ReportIfGlobal.field_8_ = 6;
-            report_code = 6;
-        } else if (code == 0x76) {
-            ReportIfGlobal.field_8_ = 7;
-            report_code = 7;
-        } else {
-            ReportIfGlobal.field_8_ = 8;
-            report_code = 8;
+            if (IfaceIdToSlotStorage[ActiveIfaceIdStorage] == 5) {
+                ReportIfGlobal.report(3,
+                                      ReportIfGlobal.report_faction_id(), 0);
+                return 1;
+            }
+            goto modal_report;
         }
-
+        if (code == 0x73) {
+select_page_4:
+            ReportIfGlobal.field_8_ = 4;
+            if (IfaceIdToSlotStorage[ActiveIfaceIdStorage] == 5) {
+                ReportIfGlobal.report(4,
+                                      ReportIfGlobal.report_faction_id(), 0);
+                return 1;
+            }
+            goto modal_report;
+        }
+        if (code == 0x74) {
+select_page_5:
+            ReportIfGlobal.field_8_ = 5;
+            if (IfaceIdToSlotStorage[ActiveIfaceIdStorage] == 5) {
+                ReportIfGlobal.report(5,
+                                      ReportIfGlobal.report_faction_id(), 0);
+                return 1;
+            }
+            goto modal_report;
+        }
+        if (code == 0x75) {
+select_page_6:
+            ReportIfGlobal.field_8_ = 6;
+            if (IfaceIdToSlotStorage[ActiveIfaceIdStorage] == 5) {
+                ReportIfGlobal.report(6,
+                                      ReportIfGlobal.report_faction_id(), 0);
+                return 1;
+            }
+            goto modal_report;
+        }
+        if (code == 0x76) {
+select_page_7:
+            ReportIfGlobal.field_8_ = 7;
+            if (IfaceIdToSlotStorage[ActiveIfaceIdStorage] == 5) {
+                ReportIfGlobal.report(7,
+                                      ReportIfGlobal.report_faction_id(), 0);
+                return 1;
+            }
+            goto modal_report;
+        }
+        {
+select_page_8:
+            ReportIfGlobal.field_8_ = 8;
+            if (IfaceIdToSlotStorage[ActiveIfaceIdStorage] == 5) {
+                ReportIfGlobal.report(8,
+                                      ReportIfGlobal.report_faction_id(), 0);
+                return 1;
+            }
+            goto modal_report;
+        }
+select_page_2:
+        ReportIfGlobal.field_8_ = 2;
         if (IfaceIdToSlotStorage[ActiveIfaceIdStorage] == 5) {
-            ReportIfGlobal.report(report_code,
-                                  ReportIfGlobal.report_faction_id(), 0);
+            ReportIfGlobal.report(2, ReportIfGlobal.report_faction_id(), 0);
             return 1;
         }
+modal_report:
         Win &modal_window = ReportWinGlobal;
         modal_window.set_modal(0, pop_wait, &MainInterfaceGlobal);
         return 1;
@@ -1941,46 +1989,16 @@ int ReportWin::on_key_click(int, int code) {
         int remainder = moved % 7;
         ReportIfGlobal.field_8_ = remainder + 2;
 
-        int report_code;
         switch (remainder) {
-        case 0:
-            ReportIfGlobal.field_8_ = 2;
-            report_code = 2;
-            break;
-        case 1:
-            ReportIfGlobal.field_8_ = 3;
-            report_code = 3;
-            break;
-        case 2:
-            ReportIfGlobal.field_8_ = 4;
-            report_code = 4;
-            break;
-        case 3:
-            ReportIfGlobal.field_8_ = 5;
-            report_code = 5;
-            break;
-        case 4:
-            ReportIfGlobal.field_8_ = 6;
-            report_code = 6;
-            break;
-        case 5:
-            ReportIfGlobal.field_8_ = 7;
-            report_code = 7;
-            break;
-        default:
-            ReportIfGlobal.field_8_ = 8;
-            report_code = 8;
-            break;
+        case 0: goto select_page_2;
+        case 1: goto select_page_3;
+        case 2: goto select_page_4;
+        case 3: goto select_page_5;
+        case 4: goto select_page_6;
+        case 5: goto select_page_7;
+        case 6: goto select_page_8;
+        default: return 1;
         }
-
-        if (IfaceIdToSlotStorage[ActiveIfaceIdStorage] == 5) {
-            ReportIfGlobal.report(report_code,
-                                  ReportIfGlobal.report_faction_id(), 0);
-            return 1;
-        }
-        Win &modal_window = ReportWinGlobal;
-        modal_window.set_modal(0, pop_wait, &MainInterfaceGlobal);
-        return 1;
     }
 
     switch (code) {
@@ -3910,3 +3928,5 @@ void __cdecl sat_expl_daemon(int context) {
     ReportWin *const window = reinterpret_cast<ReportWin *>(context);
     window->exp_anim();
 }
+// RECOVERY_GENERATED: v1 vtable 0x0066D754 ? ??_7ReportWin@@6BWin@@@ 0x004AD6B0
+// RECOVERY_GENERATED: v1 vtable 0x0066D74C ? ??_7ReportWin@@6BBuffer@@@ 0x004AD6B0

@@ -112,3 +112,113 @@ def test_actual_report_callbacks_and_live_range_state(tmp_path, compiler):
                'wrong_page').returncode != 0
     assert run(bodies.replace('Buffer::restore_clip();', '', 1),
                'missing_restore').returncode != 0
+
+
+@pytest.mark.parametrize('compiler', ['g++', 'clang++'])
+def test_actual_key_page_joins_and_callback_stores(tmp_path, compiler):
+    executable = shutil.which(compiler)
+    if not executable:
+        pytest.skip(f'{compiler} unavailable')
+    body = definition((ROOT / 'src/reportwin.cpp').read_text(),
+                      'int ReportWin::on_key_click(')
+    harness = r'''
+#include <cassert>
+#include <stdint.h>
+static int reports, modals, releases, iface_releases, buttons, redraws;
+static int delivered_page;
+int pop_wait() { return 0; }
+struct Win {
+ virtual void release_modal() { ++releases; }
+ virtual void set_modal(int, int (*)(), Win *);
+};
+Win MainInterfaceGlobal;
+struct SubInterface { void release_iface_mode() { ++iface_releases; } };
+struct Interface : SubInterface {
+ int field_8_;
+ int report_faction_id() { return 42; }
+ void report(int page, int faction, int mode) {
+  assert(field_8_ == page && faction == 42 && mode == 0);
+  delivered_page = page; ++reports;
+  field_8_ = 91; // No selector store may follow the opaque report call.
+ }
+} ReportIfGlobal;
+int ActiveIfaceIdStorage, IfaceIdToSlotStorage[1];
+struct Scroll {
+ int pos;
+ void set_pos(int p) { pos = p; }
+};
+struct ReportWin : Win {
+ uint32_t field_C0F8_,field_C0FC_,field_C100_,field_C104_,field_C108_;
+ Scroll scroll_;
+ int on_key_click(int,int);
+ virtual void on_button_clicked(int id) { assert(id == 1); ++buttons; }
+ virtual void redraw() { ++redraws; }
+} ReportWinGlobal;
+void Win::set_modal(int mode, int (*poll)(), Win *parent) {
+ assert(this == &ReportWinGlobal && mode == 0);
+ assert(poll == pop_wait && parent == &MainInterfaceGlobal);
+ delivered_page = ReportIfGlobal.field_8_; ++modals;
+ ReportIfGlobal.field_8_ = 92;
+}
+ACTUAL_KEY
+static void reset(int page, int mode) {
+ ReportIfGlobal.field_8_ = page; IfaceIdToSlotStorage[0] = mode;
+ reports=modals=releases=iface_releases=buttons=redraws=0;
+ ReportWinGlobal.field_C0F8_=0;
+}
+int main() {
+ for(int mode=4;mode!=6;++mode) {
+  for(int code=0x71;code<=0x77;++code) {
+   int target=code-0x6f;
+   reset(0,mode);
+   assert(ReportWinGlobal.on_key_click(9,code)==1);
+   assert(delivered_page==target);
+   assert(reports==(mode==5)&&modals==(mode!=5));
+   assert(ReportIfGlobal.field_8_==(mode==5?91:92));
+   reset(target,mode);
+   assert(ReportWinGlobal.on_key_click(9,code)==1);
+   assert(releases==1&&iface_releases==1&&!reports&&!modals);
+  }
+  for(int page=-8;page!=12;++page) {
+   for(int code=0x25;code<=0x27;code+=2) {
+    int remainder=(page+(code==0x25?4:6))%7;
+    int target=(remainder>=0&&remainder<=5)?remainder+2:8;
+    reset(page,mode);
+    assert(ReportWinGlobal.on_key_click(9,code)==1);
+    if (remainder < 0) {
+     assert(reports==0&&modals==0);
+     assert(ReportIfGlobal.field_8_==remainder+2);
+    } else {
+     assert(delivered_page==target);
+     assert(reports==(mode==5)&&modals==(mode!=5));
+     assert(ReportIfGlobal.field_8_==(mode==5?91:92));
+    }
+   }
+  }
+ }
+ reset(3,5); assert(ReportWinGlobal.on_key_click(0,0x70)==1&&buttons==1);
+ reset(3,5); assert(ReportWinGlobal.on_key_click(0,0x0d)==1);
+ assert(releases==1&&iface_releases==1);
+}
+'''
+    def run(actual, label):
+        cpp, binary = tmp_path/(label+'.cpp'), tmp_path/label
+        cpp.write_text(harness.replace('ACTUAL_KEY', actual))
+        result = subprocess.run([executable, '-std=c++11', '-O2', str(cpp),
+                                 '-o', str(binary)], capture_output=True, text=True)
+        assert result.returncode == 0, result.stdout + result.stderr
+        return subprocess.run([str(binary)], capture_output=True, text=True)
+    result = run(body, 'page_joins')
+    assert result.returncode == 0, result.stdout + result.stderr
+    anchor = 'ReportIfGlobal.report(3,'
+    assert body.count(anchor) == 1
+    result = run(body.replace(anchor, 'ReportIfGlobal.report(4,', 1), 'wrong_page')
+    assert result.returncode != 0 and 'field_8_ == page' in result.stderr
+
+    # Original49849F..4A2 rejects negative signed remainders after storing
+    # remainder+2. The former default-to-page8 normalization must fail.
+    anchor = 'default: return 1;'
+    assert body.count(anchor) == 1
+    result = run(body.replace(anchor, 'default: goto select_page_8;', 1),
+                 'old_negative_default')
+    assert result.returncode != 0 and 'reports==0&&modals==0' in result.stderr

@@ -3430,55 +3430,52 @@ void __cdecl set_dirty() {
 // calls     0x005D4510 0x00644EF2 0x0064603F
 int __cdecl encrypt_write(void *data, unsigned int size, unsigned int count,
                           FILE *file) {
-    unsigned char *src = reinterpret_cast<unsigned char *>(data);
     unsigned int raw_size = size * count;
     unsigned int padded = raw_size;
     if ((raw_size & 1) != 0) {
         padded = raw_size + 1;
     }
     unsigned char *buf = reinterpret_cast<unsigned char *>(mem_get(padded));
-    if (buf != 0) {
-        unsigned char key1 = 0x80;
-        unsigned char key2 = 0x80;
-        unsigned int i = 0;
-        unsigned char *dst = buf;
-        unsigned int pairs = padded >> 1;
-        if (pairs != 0) {
-            do {
-                key2 = key2 + 1;
-                key1 = key1 - 1;
-                unsigned char byte1 = *src;
-                unsigned char byte2;
-                unsigned char *next = src + 1;
-                if (i < raw_size) {
-                    byte2 = *next;
-                    next = src + 2;
-                } else {
-                    byte2 = 0;
-                }
-                unsigned char enc1 = byte1;
-                if (byte1 != 0 && (byte1 ^ key2) != 0) {
-                    enc1 = byte1 ^ key2;
-                }
-                unsigned char enc2 = byte2;
-                if (byte2 != 0) {
-                    unsigned char x = byte2 ^ key1;
-                    if (x != 0) {
-                        enc2 = x;
-                    }
-                }
-                *dst = enc2;
-                dst[1] = enc1;
-                dst += 2;
-                ++i;
-                src = next;
-            } while (i < pairs);
-        }
-        int result = fwrite(buf, padded, 1, file);
-        free(buf);
-        return result;
+    if (buf == 0) {
+        return 0;
     }
-    return 0;
+    unsigned char key1 = 0x80;
+    unsigned char key2 = 0x80;
+    unsigned int i = 0;
+    unsigned char *src = reinterpret_cast<unsigned char *>(data);
+    unsigned char *dst = buf;
+    unsigned int pairs = padded >> 1;
+    if (pairs != 0) {
+        do {
+            key2 = key2 + 1;
+            key1 = key1 - 1;
+            unsigned char byte1 = *src++;
+            unsigned char byte2;
+            if (i < raw_size) {
+                byte2 = *src++;
+            } else {
+                byte2 = 0;
+            }
+            if (byte1 != 0) {
+                unsigned char value = byte1 ^ key2;
+                if (value != 0) {
+                    byte1 = value;
+                }
+            }
+            if (byte2 != 0) {
+                unsigned char value = byte2 ^ key1;
+                if (value != 0) {
+                    byte2 = value;
+                }
+            }
+            *dst++ = byte2;
+            *dst++ = byte1;
+            ++i;
+        } while (i < pairs);
+    }
+    int result = fwrite(buf, padded, 1, file);
+    free(buf);
+    return result;
 }
 
 // ORIGINAL: 0x005A67B0 ?encrypt_read@@YAHPAXIIPAUFILE@@@Z 0x005A67B0-0x005A6886 FILE
@@ -3734,38 +3731,37 @@ void __cdecl proto_sort_2(int faction_id) {
     ProtoSortCount = 0;
     int sort_keys[128];
     for (int index = 0; index < 128; ++index) {
-        int prototype_id = index % MaxVehProtoFactionNum;
+        int prototype_id;
         if (index >= MaxVehProtoFactionNum) {
-            prototype_id += faction_id * MaxVehProtoFactionNum;
-        }
-        ProtoSortIds[index] = prototype_id;
-        const VehPrototype &prototype = VehPrototypes[prototype_id];
-        int key = prototype_id;
-        bool available = (prototype.flags & PROTO_ACTIVE) != 0;
-        if (available && prototype_id < MaxVehProtoFactionNum) {
-            available = Weapon[prototype.weapon_id].offense_rating >= 0
-                && prototype_id != 15
-                && has_tech(prototype.preq_tech, faction_id);
-        }
-        if (!available) {
-            if (prototype_id < MaxVehProtoFactionNum) {
-                key = 999999999;
-            } else {
-                key += 0x400;
-                ++ProtoSortCount;
-            }
+            prototype_id = faction_id * MaxVehProtoFactionNum;
         } else {
-            if (prototype.obsolete_factions & (1 << faction_id)) {
-                if (prototype_id < MaxVehProtoFactionNum) {
-                    key += 0x2000;
-                } else {
-                    key += PlayersData[faction_id].proto_id_active[prototype_id]
+            prototype_id = 0;
+        }
+        prototype_id += index % MaxVehProtoFactionNum;
+        ProtoSortIds[index] = prototype_id;
+        if ((VehPrototypes[prototype_id].flags & PROTO_ACTIVE) != 0
+            && (prototype_id >= MaxVehProtoFactionNum
+                || (Weapon[VehPrototypes[prototype_id].weapon_id].offense_rating >= 0
+                    && prototype_id != 15
+                    && has_tech(VehPrototypes[prototype_id].preq_tech, faction_id)))) {
+            if (VehPrototypes[prototype_id].obsolete_factions & (1 << faction_id)) {
+                if (prototype_id >= MaxVehProtoFactionNum) {
+                    prototype_id += PlayersData[faction_id].proto_id_active[prototype_id]
                         ? 0x800 : 0x1000;
+                } else {
+                    prototype_id += 0x2000;
                 }
             }
             ++ProtoSortCount;
+        } else {
+            if (prototype_id >= MaxVehProtoFactionNum) {
+                prototype_id += 0x400;
+                ++ProtoSortCount;
+            } else {
+                prototype_id = 999999999;
+            }
         }
-        sort_keys[index] = key;
+        sort_keys[index] = prototype_id;
     }
     sort(128, ProtoSortIds, sort_keys);
 }

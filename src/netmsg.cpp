@@ -260,3 +260,5 @@ void NetMsg::pop(const char *label, int duration, int channel,
 void __cdecl NetMsg::pop(const char *label, const char *target) {
     NetMsgPrimary.pop(label, -5000, 0, target);
 }
+// RECOVERY_GENERATED: v1 vtable 0x0066CB60 ? ??_7NetMsg@@6BWin@@@ 0x0047ACF0
+// RECOVERY_GENERATED: v1 vtable 0x0066CB58 ? ??_7NetMsg@@6BBuffer@@@ 0x0047ACF0
