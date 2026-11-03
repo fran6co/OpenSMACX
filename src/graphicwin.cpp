@@ -1100,7 +1100,7 @@ void GraphicWin::set_rects() {
     Win::set_rects();
 }
 
-// ORIGINAL: 0x005D6AC0 ?overlay_nonclient@GraphicWin@@QAEXPAURECT@@@Z 0x005D6AC0-0x005D6EB7 FILE
+// ORIGINAL: 0x005D6AC0 ?overlay_nonclient@GraphicWin@@QAEXPAURECT@@@Z 0x005D6AC0-0x005D6EB7 FILE BYTE_EXACT
 // symbol    ?overlay_nonclient@GraphicWin@@QAEXPAUtagRECT@@@Z
 // Frame placement evidence: 0x005D6BB7-0x005D6D00 chooses the corner
 // sprites and draws them; 0x005D6D15-0x005D6E65 tiles the edge sprites.
@@ -1115,27 +1115,39 @@ void GraphicWin::overlay_nonclient(RECT *area) {
         if (!IntersectRect(&clip, &window_rect, area)) {
             return;
         }
-        clip.left -= window_rect.left;
-        clip.right -= window_rect.left;
-        clip.top -= window_rect.top;
-        clip.bottom -= window_rect.top;
+        const int dy = -window_rect.top;
+        const int dx = -window_rect.left;
+        clip.left += dx;
+        clip.right += dx;
+        clip.top += dy;
+        clip.bottom += dy;
         Buffer::set_clip(&clip);
     } else {
-        Buffer::set_clip(&rect2_);
+        Buffer::restore_clip();
     }
 
     int top_inset = ((iFlags_ & 0x10) && !(iFlags_ & 0x400000))
                         ? caption_height_ : border_thickness_;
-    int bottom_inset = bottom_border_thickness_;
-    if (bottom_inset == -1) {
-        bottom_inset = border_thickness_;
-    }
+    const int configured_bottom_inset = bottom_border_thickness_;
+    int bottom_inset = configured_bottom_inset == -1
+                           ? border_thickness_ : configured_bottom_inset;
 
+    Sprite *top_left;
+    Sprite *top_right;
+    Sprite *bottom_left;
+    Sprite *bottom_right;
     if (iFlags_ & 0x60000000) {
-        Sprite *top_left = overlay_top_left_ ? overlay_top_left_ : frame_top_left_;
-        Sprite *top_right = overlay_top_right_ ? overlay_top_right_ : frame_top_right_;
-        Sprite *bottom_left = overlay_bottom_left_ ? overlay_bottom_left_ : frame_bottom_left_;
-        Sprite *bottom_right = overlay_bottom_right_ ? overlay_bottom_right_ : frame_bottom_right_;
+        top_left = overlay_top_left_ ? overlay_top_left_ : frame_top_left_;
+        top_right = overlay_top_right_ ? overlay_top_right_ : frame_top_right_;
+        bottom_left = overlay_bottom_left_ ? overlay_bottom_left_ : frame_bottom_left_;
+        bottom_right = overlay_bottom_right_ ? overlay_bottom_right_ : frame_bottom_right_;
+    } else {
+        top_left = frame_top_left_;
+        bottom_left = frame_bottom_left_;
+        top_right = frame_top_right_;
+        bottom_right = frame_bottom_right_;
+    }
+    if (iFlags_ & 0x60000000) {
         if (top_left) {
             top_left->draw(this, top_left->cTransparentIndex_,
                            -border_thickness_, -top_inset, 1, 1);
