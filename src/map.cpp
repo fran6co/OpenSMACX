@@ -643,37 +643,7 @@ BOOL __cdecl port_to_coast(int base_id, int region) {
     return false;
 }
 
-/*
-Purpose: Check to see if two port bases share a common body of water determined by region.
-// ORIGINAL: 0x0050E160 ?port_to_port@@YAHHH@Z 0x0050E160-0x0050E306 BYTE_EXACT
-// LEVER: call_diff showed this tree calling base_on_sea where the image makes
-//        no calls at all - the image inlines base_on_sea's whole body into
-//        the loop instead. Manually inlining it (guard clause on
-//        `region_sea >= RegionBounds`, then the destination-base radius
-//        loop) took this from 5/141 to 12/141 instructions agreeing
-//        (0.587 -> 0.785 similarity); still MISMATCH, the remaining gap
-//        looks like register/stack-slot allocation (image reserves
-//        `sub esp, 0x18`, this tree `0x10`) rather than another structural
-//        difference.
-// TRIED: the same inline rewritten as early-return guard clauses
-//            (`if (!on_map(...)) continue;` etc.) instead of nested `if` -
-//            scored identically (12/141), so the remaining gap is not
-//            branch polarity.
-// size      422 bytes
-// prototype int (__cdecl ?port_to_port@@YAHHH@Z)(int baseIDSrc, int baseIDDst)
-// callers   7   call targets   0
-// kind      game
-// flags     frame;sp_ready;purged_ok
-// calls     (none)
-// LEVER (2026-08-21): moved to map.h as `MEASURED inline`. naval_base (0x0050E3C0) and
-//        convoy (0x0050E5C0) call_diff MORE by exactly one call each on port_to_port -
-//        the image inlines this whole 422-byte body at both, while still keeping a
-//        real call at get_there and veh.cpp's valid_patrol (both already call_diff-clean
-//        and stayed that way after this move).
-Return Value: Are both ports accessible by water to each other? true/false
-Status: Complete
-*/
-BOOL __cdecl port_to_port(int base_id_src, int base_id_dst) {
+static __forceinline BOOL __cdecl port_to_port_body(int base_id_src, int base_id_dst) {
     int last_region = -1;
     int x = Bases[base_id_src].x;
     int y = Bases[base_id_src].y;
@@ -706,6 +676,40 @@ BOOL __cdecl port_to_port(int base_id_src, int base_id_dst) {
             return false;
         }
     }
+}
+
+/*
+Purpose: Check to see if two port bases share a common body of water determined by region.
+// ORIGINAL: 0x0050E160 ?port_to_port@@YAHHH@Z 0x0050E160-0x0050E306 BYTE_EXACT
+// LEVER: call_diff showed this tree calling base_on_sea where the image makes
+//        no calls at all - the image inlines base_on_sea's whole body into
+//        the loop instead. Manually inlining it (guard clause on
+//        `region_sea >= RegionBounds`, then the destination-base radius
+//        loop) took this from 5/141 to 12/141 instructions agreeing
+//        (0.587 -> 0.785 similarity); still MISMATCH, the remaining gap
+//        looks like register/stack-slot allocation (image reserves
+//        `sub esp, 0x18`, this tree `0x10`) rather than another structural
+//        difference.
+// TRIED: the same inline rewritten as early-return guard clauses
+//            (`if (!on_map(...)) continue;` etc.) instead of nested `if` -
+//            scored identically (12/141), so the remaining gap is not
+//            branch polarity.
+// size      422 bytes
+// prototype int (__cdecl ?port_to_port@@YAHHH@Z)(int baseIDSrc, int baseIDDst)
+// callers   7   call targets   0
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     (none)
+// LEVER (2026-08-21): moved to map.h as `MEASURED inline`. naval_base (0x0050E3C0) and
+//        convoy (0x0050E5C0) call_diff MORE by exactly one call each on port_to_port -
+//        the image inlines this whole 422-byte body at both, while still keeping a
+//        real call at get_there and veh.cpp's valid_patrol (both already call_diff-clean
+//        and stayed that way after this move).
+Return Value: Are both ports accessible by water to each other? true/false
+Status: Complete
+*/
+BOOL __cdecl port_to_port(int base_id_src, int base_id_dst) {
+    return port_to_port_body(base_id_src, base_id_dst);
 }
 
 /*
@@ -774,16 +778,22 @@ Return Value: Does base have a strategic naval importance? true/false
 Status: Complete
 */
 BOOL __cdecl naval_base(int base_id) {
-    if (base_coast(base_id) < 0 || GameDataStateStorage.fields_.base_current_count_ <= 0) {
+    if (base_coast(base_id) < 0) {
         return false;
     }
-    uint32_t faction_id = Bases[base_id].faction_id_current;
-    for (int i = 0; i < GameDataStateStorage.fields_.base_current_count_; i++) {
-        if (faction_id != Bases[i].faction_id_current) {
-            if (port_to_port(base_id, i)) {
-                return true;
+    int i = 0;
+    if (GameDataStateStorage.fields_.base_current_count_ > 0) {
+        uint8_t faction_id = Bases[base_id].faction_id_current;
+        Base *base = Bases;
+        do {
+            if (faction_id != base->faction_id_current) {
+                if (port_to_port_body(base_id, i)) {
+                    return true;
+                }
             }
-        }
+            ++base;
+            ++i;
+        } while (i < GameDataStateStorage.fields_.base_current_count_);
     }
     return false;
 }
@@ -820,7 +830,7 @@ BOOL __cdecl convoy(int veh_id, int base_id) {
         return true; // same region, by land or sea
     }
     if (triad) {
-        return port_to_port(base_id, home_base_id); // sea
+        return port_to_port_body(base_id, home_base_id); // sea
     }
     return false;
 }
