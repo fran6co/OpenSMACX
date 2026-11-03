@@ -6521,7 +6521,7 @@ void __cdecl Win::remove_parent(Win* window) {
 
 // ===== homed from src/recovered/units/005f2940.cpp =====
 
-// ORIGINAL: 0x005F2940 ?set_rects@Win@@QAEXXZ 0x005F2940-0x005F2ABA FILE
+// ORIGINAL: 0x005F2940 ?set_rects@Win@@QAEXXZ 0x005F2940-0x005F2ABA FILE BYTE_EXACT
 // symbol    ?set_rects@Win@@UAEXXZ
 // provenance (retired seed): git:3cb99d43^:src/recovered/units/005f2940.cpp
 void Win::set_rects() {
@@ -12523,9 +12523,3 @@ extern "C" LRESULT __stdcall PrevWndFunc(HWND window, UINT message,
 // directory; the verifier derives the IAT slot. This does not select or prove
 // a particular platform DLL implementation/version.
 // RECOVERY_IMPORT: v1 __imp__MoveWindow@24 USER32.dll name:MoveWindow
-
-// The Buffer drawing family reads the one-byte default transparency key
-// at 696D14; its pinned initial value is 9. This is constant storage, not
-// a pointer to an original-image object or a mutable palette instance.
-// RECOVERY_OBJECT: v2 0x00696D14 0x00696D15 ?WinFillColour@@3EB 0x005D8650
-const unsigned char WinFillColour = 9;  // 0x00696D14, read from the image

@@ -65,7 +65,7 @@ def actual_source():
                         "NewTechSpriteLifetime NewTechSpritesOwner;"):
         definition, = re.findall(r"^" + re.escape(declaration), objects, re.M)
         definitions.append(definition)
-    colour, = re.findall(r"^const unsigned char WinFillColour = \d+;", (ROOT / "src/win.cpp").read_text(), re.M)
+    colour, = re.findall(r"^const unsigned char WinFillColour = \d+;", (ROOT / "src/interface_palette.cpp").read_text(), re.M)
     definitions.append(colour)
     externs = []
     for definition in definitions:

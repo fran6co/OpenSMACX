@@ -39,7 +39,7 @@ def actual_source():
     source = (ROOT / "src/buffer.cpp").read_text()
     header = (ROOT / "src/buffer.h").read_text()
     sprite = (ROOT / "src/sprite.h").read_text()
-    win = (ROOT / "src/win.cpp").read_text()
+    win = (ROOT / "src/interface_palette.cpp").read_text()
     constant = re.findall(r"^const unsigned char WinFillColour\s*=\s*[^;]+;", win, re.M)
     assert len(constant) == 1
     signature = re.findall(r"\bint draw_mono\(Buffer \*destination,[^;]+;", header)
