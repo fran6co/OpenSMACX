@@ -1172,6 +1172,9 @@ vox_user_chunk_fn vox_user_chunk = 0; // 0x009C0834, zeroed on accepted CPU repo
 uint32_t vox_unk_9c0b78 = 0;    // 0x009C0B78, zeroed on accepted CPU report
 // caviar_cpu.cpp owns the original0x009C0B70 vendor byte: 0 unknown,
 // 1 GenuineIntel, 2 AuthenticAMD.
+// Original 6395EC/6395F2 increments and 639680/63968D decrements this counter.
+// Bind its observed start; an exclusive original allocation is not established.
+// RECOVERY_OBJECT: v1 0x009BE69C ?vox_record_count@@3IA
 uint32_t vox_record_count = 0;  // 0x009BE69C, records created, bumped per create
 
 // The pixel-size dispatch tables the engine's two dispatchers (sub_63ad60
