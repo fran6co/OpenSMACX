@@ -1375,6 +1375,15 @@ incremental command alone is insufficient. Keep this manual result distinct from
 `check-build` and automatic acceptance, which still require a fresh build tree.
 Header, include-set, toolchain or build-policy changes use the fresh-build route.
 
+Before deleting artifacts, inspect the build system's pending command plan.
+Its dirty set can exceed the Git/source-content diff: a checkout can make an
+unchanged source newer than its object, and a dependency can schedule further
+units. Preserve and clear compile observations for every scheduled object,
+including those unchanged sources, before invoking the build. Never change
+source timestamps, overwrite a receipt, or weaken its new-file requirement to
+make a pending compile appear current. Preserve a failed attempt's artifacts
+and report before retrying the exact remaining planned work.
+
 When the coordinator's checkout has a qualified prior application build, a clean
 coordinator branch in that checkout can preserve its physical artifact paths.
 Keep worker checkouts isolated. After verifying the candidate, commit it and
@@ -1385,6 +1394,16 @@ the same inputs again. Changed inputs or missing evidence require a rebuild.
 Reusing the build never permits replaying a destination verification report or
 waiving linked retention obligations. A different destination checkout must
 qualify its own build; do not rewrite receipt paths or transplant a build report.
+
+For a same-checkout transfer, avoid first checking out the old destination tree:
+that rewrites source mtimes and can schedule unchanged units at the next build.
+Only with a clean coordinator checkout, verified fast-forward ancestry, an
+unchanged destination baseline, and no worktree occupying the destination branch,
+the coordinator may atomically advance that branch with the expected old revision
+and then switch to the identical committed tree. Check source/artifact hashes,
+source mtimes and the build system's pending plan afterward. If any prerequisite
+fails, stop and preserve the candidate; do not force a moved/occupied branch.
+Fresh destination verification is still required.
 
 Every integrated step must leave the application compiling and linking. Trace
 new callees before integration. If an unresolved function cannot yet be recovered,
