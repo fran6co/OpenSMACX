@@ -214,6 +214,32 @@ context is only a history hint, not permission to suppress a fresh investigation
 Use the package's measurement and candidate-deck APIs/CLI; do not introduce a
 project CLI or a second claim ledger.
 
+Before the first candidate compile, inspect retained **actual source forms and
+compiler receipts**, not just TRIED comments or report titles. Deduplicate the
+retained body forms, then compare their ordered flags and relevant type, helper
+visibility and dependency context with the current trial. Record the evidence
+paths in the ignored assignment packet. An old negative under the same context
+closes that hypothesis; a missing context is only a hint. A changed helper or
+header can justify a bounded new trial, but identify precisely which functions
+use the changed declaration. Do not replay every function in the former batch.
+Keep rejected packets immutable and supersede mistaken conclusions explicitly.
+
+Use the comparison to choose follow-ups. Restoring the original branch shape
+can expose a new receiver/argument lifetime difference: a natural direct member
+call may match where cached receiver and argument locals change scheduling.
+Such a concrete residual justifies another trial without user approval. It does
+not justify a general register-spelling deck. Qualify instructions first; then
+resolve remaining references from original operands, section permissions and
+actual source objects. Equal string contents do not establish object identity.
+Start-only bindings retain unknown original extents and need wrong-target controls.
+
+Replenish a completed worker independently of the rest of its wave. Assign a
+bounded, history-qualified owner packet; reserve read-only investigations for
+specific demonstrated blockers. Collect ready winners while other owners keep
+searching. A zero-gain semantic correction can accompany a winner when it restores
+proved original behavior, but it earns no matching credit. Do not roll out an
+equivalent spelling change merely to collect a completed worker.
+
 For supported body-only trials, use `recover tasks variants ... --local` or the
 existing `match_recovery.source.asm.compare_unit` diagnostic before repeating
 whole-owner native verification. A qualified captured object may be reused only
@@ -241,6 +267,15 @@ spelling candidate or repeat the Python suite for C++-only recovery. A checkpoin
 must be bounded: do not hold a useful verified recovery indefinitely waiting for
 a target number of winners. Git operations and integration remain serial; source
 search and compilation in independent worktrees do not.
+
+For an eligible body-only manual checkpoint, use the incremental destination
+route below rather than another fresh application build by habit. Preserve old
+artifacts, identify dirty objects from actual dependencies, delete their receipts
+and application link products, rebuild/relink, and revalidate every retained and
+rebuilt compiler receipt. Run current strict comparisons and destination checks.
+Track physical compiler calls, new strict matches, and build/comparison elapsed
+time separately in ignored checkpoint reports. Never count a FAIL-to-UNKNOWN
+transition as a match. Keep this route distinct from automatic acceptance.
 
 Before changing a worker's measurement configuration or preparing its recipes,
 obtain an explicit confirmation that its capture and observation epoch has
