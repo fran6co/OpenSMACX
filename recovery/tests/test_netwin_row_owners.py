@@ -35,6 +35,8 @@ HARNESS = r'''
 #include <cstdlib>
 #include <cstring>
 #include <cctype>
+char SocialWinColonSpaceText[] = ": ";
+const char BufferJoinSpace[] = " ";
 
 ACTUAL_ROW_DECLARATION
 ACTUAL_SESSION_BLOCK_DECLARATION

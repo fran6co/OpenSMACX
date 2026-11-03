@@ -45,6 +45,9 @@
 #include "maininterface.h"
 #include "general.h"  // swap for the hot-seat pair callbacks
 
+// Shared original chat separators, also used by the general string formatter.
+extern char SocialWinColonSpaceText[];
+
 void __cdecl slide_show(GraphicWin *window, int mode);
 void __cdecl slide_hide(GraphicWin *window, int mode);
 extern int DiploOffersDirty;
@@ -1001,8 +1004,8 @@ int DiploWin::on_key_click(int repeat, int key) {
             GenderDefault = Players[faction].is_leader_female;
             strcat(line, Players[faction].name_leader);
             CharUpperA(line);
-            strcat(line, ": ");
-            strcat(line, " ");
+            strcat(line, SocialWinColonSpaceText);
+            strcat(line, BufferJoinSpace);
             strcat(line, editBox_.text_);
 
             stringBox_.add(line, faction, 1);

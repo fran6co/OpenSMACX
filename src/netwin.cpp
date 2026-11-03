@@ -48,6 +48,9 @@
 #include "xpops.h"     // x_pop_caption_label for lobby validation prompts
 #include <stdlib.h>      // _itoa
 
+// Shared original chat separators, also used by the general string formatter.
+extern char SocialWinColonSpaceText[];
+
 // MessageDataRecord and NetDaemon::process_message establish these shared
 // packet-prefix positions. F0D leaves +2..3 and +C unwritten; this describes
 // only the 16-byte prefix, not the complete allocation or payload extent.
@@ -2967,8 +2970,8 @@ void NetWin::new_chat(char *message, int slot) {
     text[0] = 0;
     strcat(text, NetDaemonNet.get_player_name(NetDaemonNet.process_slots_[slot].pid_));
     CharUpperA(text);
-    strcat(text, ": ");
-    strcat(text, " ");
+    strcat(text, SocialWinColonSpaceText);
+    strcat(text, BufferJoinSpace);
     strcat(text, message);
     stringBox_.add(text, slot, 1);
 }

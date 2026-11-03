@@ -11,6 +11,8 @@ HARNESS = r'''
 #include <string>
 #include <vector>
 using std::strlen; using std::strcat;
+char SocialWinColonSpaceText[] = ": ";
+const char BufferJoinSpace[] = " ";
 struct Player { int is_leader_female; char name_leader[32]; };
 static Player Players[8];
 static int PluralityDefault, GenderDefault, DiploOffersDirty;
