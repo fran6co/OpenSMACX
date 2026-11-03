@@ -872,3 +872,7 @@ int NetSessionPickerWin::scale_client_height(int factor) {
                              static_cast<uint32_t>(factor);
     return static_cast<int32_t>(product) / 440;
 }
+// RECOVERY_GENERATED: v1 vbtable 0x0066EAF0 ? ??_8AlphaNetLedger@@7B@ 0x0063BB20
+// RECOVERY_GENERATED: v1 vtable 0x0066EAE4 ? ??_7AlphaNetLedger@@6BStringAllocationBase@@@ 0x0063BB20
+// RECOVERY_GENERATED: v1 vtable 0x00670DDC ? ??_7NetSessionPickerWin@@6BWin@@@ 0x0063BB20
+// RECOVERY_GENERATED: v1 vtable 0x00670DD4 ? ??_7NetSessionPickerWin@@6BBuffer@@@ 0x0063BB20

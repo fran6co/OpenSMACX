@@ -1154,3 +1154,5 @@ int AlphaMenu::menu_init() {
 // compile_context src/console.cpp
 // symbol    ??_EAlphaMenu@@WEEE@AEPAXI@Z
 // kind game
+// RECOVERY_GENERATED: v1 vtable 0x0066ED88 ? ??_7AlphaMenu@@6BWin@@@ 0x0050F460
+// RECOVERY_GENERATED: v1 vtable 0x0066ED80 ? ??_7AlphaMenu@@6BBuffer@@@ 0x0050F460

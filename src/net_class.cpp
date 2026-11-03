@@ -4704,3 +4704,8 @@ int Net::send(void *data, int data_size, unsigned long target, int flags) {
 // RECOVERY_GENERATED: v1 vtable 0x006693D0 ? ??_7ServiceProviderList@@6BStringAllocationBase@@@ 0x00401660
 // RECOVERY_GENERATED: v1 vtable 0x0066EB20 ? ??_7ServiceList@@6BServiceProviderList@@@ 0x004E3730
 // RECOVERY_GENERATED: v1 vtable 0x0066EB1C ? ??_7ServiceList@@6BStringAllocationBase@@@ 0x004E3730
+// RECOVERY_GENERATED: v1 vbtable 0x00670DCC ? ??_8JackalVoiceRx@@7B@ 0x0062D6A0
+// RECOVERY_GENERATED: v1 vtable 0x0066EAFC ? ??_7JackalVoiceRx@@6B0@@ 0x0062D6A0
+// RECOVERY_GENERATED: v1 vtable 0x0066EAF8 ? ??_7JackalVoiceRx@@6BStringAllocationBase@@@ 0x0062D6A0
+// RECOVERY_GENERATED: v1 vbtable 0x00669430 ? ??_8NetAllocationNode@@7B@ 0x0062D6A0
+// RECOVERY_GENERATED: v1 vtable 0x0066942C ? ??_7NetAllocationNode@@6B@ 0x0062D6A0
