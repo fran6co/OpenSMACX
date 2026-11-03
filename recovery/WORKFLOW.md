@@ -233,6 +233,31 @@ resolve remaining references from original operands, section permissions and
 actual source objects. Equal string contents do not establish object identity.
 Start-only bindings retain unknown original extents and need wrong-target controls.
 
+Separate instruction recovery from reference qualification before allocating
+compiler trials. Use the current qualified application observation to distinguish
+an extent/instruction mismatch from a body blocked only by unresolved references.
+The latter needs original target identity evidence first, not another spelling
+deck. Group related missing targets by their real source owners and consumers.
+The observation is a cache: regenerate it after source/compiler/dependency changes.
+
+For generated-table starts, decode from a known original function entry, verify
+the original relocated operand and store role, and correlate it with an actual
+compiler-emitted symbol. Check existing object/generated/literal identities and
+bounded spans for conflicts. Write qualified bindings through the native source
+API in their real owner; never copy a vtable into product code or guess its full
+extent. Exercise wrong-target controls. A start-only identity can resolve a
+function reference while the original table extent/content remains unknown.
+
+For an annotation-only packet, use the qualified production objects to research
+all related bindings, then compile the affected units once under their actual
+recipes and compare all affected consumers together. Changed comments still
+invalidate compiler input fingerprints; old objects are not current compile
+proof. Avoid extra candidate recompiles whose only purpose is to repeat that
+same production check. Inspect historical claims before recording: preserved
+existing claims do not need a duplicate recorder invocation. Newly banked claims
+still require the native recorder. Retain unknown generated content, all prior
+strict passes, and linked retention obligations in the checkpoint evidence.
+
 Replenish a completed worker independently of the rest of its wave. Assign a
 bounded, history-qualified owner packet; reserve read-only investigations for
 specific demonstrated blockers. Collect ready winners while other owners keep
@@ -1349,6 +1374,17 @@ current function/reference comparison and relevant regression checks. A successf
 incremental command alone is insufficient. Keep this manual result distinct from
 `check-build` and automatic acceptance, which still require a fresh build tree.
 Header, include-set, toolchain or build-policy changes use the fresh-build route.
+
+When the coordinator's checkout has a qualified prior application build, a clean
+coordinator branch in that checkout can preserve its physical artifact paths.
+Keep worker checkouts isolated. After verifying the candidate, commit it and
+fast-forward master only if master still equals the reviewed baseline. For this
+same-checkout transfer, identical source/configuration and artifact hashes permit
+fresh destination receipt, link-input and comparison checks without compiling
+the same inputs again. Changed inputs or missing evidence require a rebuild.
+Reusing the build never permits replaying a destination verification report or
+waiving linked retention obligations. A different destination checkout must
+qualify its own build; do not rewrite receipt paths or transplant a build report.
 
 Every integrated step must leave the application compiling and linking. Trace
 new callees before integration. If an unresolved function cannot yet be recovered,
