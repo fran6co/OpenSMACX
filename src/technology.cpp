@@ -439,7 +439,10 @@ LPSTR __cdecl tech_name(int tech_id, BOOL category_lvl) {
 
 /*
 Purpose: Determine technology level for tech_id.
-// ORIGINAL: 0x005B9F90 ?tech_recurse@@YAHHH@Z 0x005B9F90-0x005B9FE0
+// Historical pointer/subscript trials below used a fixed-address table pointer.
+// The source-owned array permits direct prerequisite indexing while keeping
+// the second field read after the first recursive call.
+// ORIGINAL: 0x005B9F90 ?tech_recurse@@YAHHH@Z 0x005B9F90-0x005B9FE0 BYTE_EXACT
 // body      src/technology.h
 // LEVER: hoist-next-lvl `const int next_lvl = base_lvl + 1;` ahead of the tech
 //   pointer, passed to both recursive calls instead of writing `base_lvl + 1`

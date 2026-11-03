@@ -202,9 +202,8 @@ MEASURED inline int __cdecl tech_recurse(int tech_id, int base_lvl) {
         return base_lvl;
     }
     const int next_lvl = base_lvl + 1;
-    RulesTechnology *tech = &Technology[tech_id];
-    int val1 = tech_recurse(tech->preq_tech_1, next_lvl);
-    int val2 = tech_recurse(tech->preq_tech_2, next_lvl);
+    int val1 = tech_recurse(Technology[tech_id].preq_tech_1, next_lvl);
+    int val2 = tech_recurse(Technology[tech_id].preq_tech_2, next_lvl);
     return (val1 > val2) ? val1 : val2;
 }
 
