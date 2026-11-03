@@ -94,7 +94,7 @@ int MonuWin::on_key_click(int key, int state) {
   return 1;
 }
 
-// ORIGINAL: 0x00476780 ?on_left_click@MonuWin@@QAEXHH@Z 0x00476780-0x00476841
+// ORIGINAL: 0x00476780 ?on_left_click@MonuWin@@QAEXHH@Z 0x00476780-0x00476841 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["image:0x00476780; retired seed provenance git:670a036f:src/unrecovered/00476780.cpp; original spans and historical lessons retained.", "image:477C80/477B10 member order and36DC extent; primary66C880 slots12/17/19/25/44.", "image:476A50 binds singleton7F9F58 and independent count7FD634; Player59C and MonumentFaction4F4 strides.", "image:4737EE..475E58 localized owner/grammar cases; 472230/4736E0 resource, clipping, sprite and Spot accesses."], "reason": "Genuine GraphicWin-derived MonuWin owner with actual FlatButton/Spot/Buffer/Sprite members, real callback slots and automatic lifetimes; localized parser owner and grammar inputs follow the original branches rather than current-faction stand-ins."}
 // symbol    ?on_left_click@MonuWin@@UAEXHH@Z
 // TRIED: fixed const-pointer global for 0x94cea0 (indexed table base, address itself scales - own raw cast used). First divergence #1 mov/push (prologue reg alloc), 214 vs 193 B.
@@ -111,17 +111,14 @@ void MonuWin::on_left_click(int x, int y) {
     return;
   }
 
-  int type = y;
-  int spot_type = x;
-  const int hit = spot_.check(x, y, &type, &spot_type);
-  if (hit == -1) {
+  if (spot_.check(x, y, &y, &x) + 1 == 0) {
     return;
   }
-  if (type == 0x45) {
-    type = selected_monument_type_;
+  if (y == 0x45) {
+    y = selected_monument_type_;
   }
-  FactionMonuments[ConsoleGlobal.faction_id_].latest_type_ = type;
-  selected_monument_type_ = type;
+  FactionMonuments[ConsoleGlobal.faction_id_].latest_type_ = y;
+  selected_monument_type_ = y;
   selection_pending_ = 1;
   redraw();
 }
@@ -140,28 +137,30 @@ void MonuWin::on_mouse_move(int x, int y) {
     return;
   }
 
-  int type = y;
-  int spot_type = x;
-  if (spot_.check(x, y, &type, &spot_type) == -1 || type == 0x45) {
+  if (spot_.check(x, y, &y, &x) + 1 == 0 || y == 0x45) {
     return;
   }
 
-  Sprite *sprite;
-  if (type == 0xD) {
-    sprite = &sprite_first_;
-  } else if (type < 0xF) {
-    sprite = &sprites_2EA0_[type];
+  if (y == 0xD) {
+    sprite_first_.draw(static_cast<Buffer *>(this),
+                       sprite_first_.transparent_index(), rects_3134_[0].left,
+                       rects_3134_[0].top);
+  } else if (y < 0xF) {
+    sprites_2EA0_[y].draw(static_cast<Buffer *>(this),
+                          sprites_2EA0_[y].transparent_index(),
+                          rects_3134_[0].left, rects_3134_[0].top);
   } else {
     const int index = FactionMonuments[preview_faction_or_page_]
-                          .records_[type].word_8_;
+                          .records_[y].word_8_;
     // These victory/defeat records store the counterpart faction (0..7).
     // Native +0x34B4 is the last Sprite in the preceding 7-element array;
     // indices 1..7 are the following seven-element array.
-    sprite = index == 0 ? &sprites_33AC_[6] : &sprites_34E0_[index - 1];
+    Sprite *const sprite =
+        index == 0 ? &sprites_33AC_[6] : &sprites_34E0_[index - 1];
+    sprite->draw(static_cast<Buffer *>(this), sprite->transparent_index(),
+                 rects_3134_[0].left, rects_3134_[0].top);
   }
-  sprite->draw(static_cast<Buffer *>(this), sprite->transparent_index(),
-               rects_3134_[0].left, rects_3134_[0].top);
-  selected_monument_type_ = type;
+  selected_monument_type_ = y;
   soft_update();
 }
 

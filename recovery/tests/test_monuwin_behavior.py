@@ -60,8 +60,8 @@ def replace_once(source, old, new):
 
 def damage(methods, kind):
     if kind == "spot_output":
-        return replace_once(methods, "spot_.check(x, y, &type, &spot_type);",
-                            "spot_.check(x, y, &spot_type, &type);")
+        return methods.replace("spot_.check(x, y, &y, &x) + 1 == 0",
+                               "spot_.check(x, y, &x, &y) + 1 == 0", 1)
     if kind == "primary_spot":
         return replace_once(methods, "spot_.add(0x45, 0, primary.left, primary.top,",
                             "spot_.add(0, 0x45, primary.left, primary.top,")
@@ -112,8 +112,8 @@ def damage(methods, kind):
     if kind == "stale_faction_index":
         return replace_once(
             methods,
-            "FactionMonuments[ConsoleGlobal.faction_id_].latest_type_ = type;",
-            "FactionMonuments[faction].latest_type_ = type;")
+            "FactionMonuments[ConsoleGlobal.faction_id_].latest_type_ = y;",
+            "FactionMonuments[faction].latest_type_ = y;")
     raise AssertionError(kind)
 
 
