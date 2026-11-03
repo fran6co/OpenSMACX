@@ -2673,27 +2673,27 @@ int BasePop::init(int flags, long heap_base) {
             return 4;
         }
         if ((flags & 0x40000) == 0) {
-            unit_ids_.remove_all();
+            unit_ids_.StringStruct::remove_all();
             unit_ids_.current_position_ = 0;
             unit_ids_.allocator_ = &heap_;
-            item_ids_.remove_all();
+            item_ids_.StringStruct::remove_all();
             item_ids_.current_position_ = 0;
             item_ids_.allocator_ = &heap_;
             dialogs_.init(&heap_);
         } else {
-            unit_ids_.remove_all();
+            unit_ids_.StringStruct::remove_all();
             unit_ids_.current_position_ = 0;
             unit_ids_.allocator_ = 0;
-            item_ids_.remove_all();
+            item_ids_.StringStruct::remove_all();
             item_ids_.current_position_ = 0;
             item_ids_.allocator_ = 0;
             dialogs_.init(0);
         }
     } else {
-        unit_ids_.remove_all();
+        unit_ids_.StringStruct::remove_all();
         unit_ids_.current_position_ = 0;
         unit_ids_.allocator_ = 0;
-        item_ids_.remove_all();
+        item_ids_.StringStruct::remove_all();
         item_ids_.current_position_ = 0;
         item_ids_.allocator_ = 0;
         dialogs_.init(0);

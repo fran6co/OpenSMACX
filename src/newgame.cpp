@@ -939,10 +939,15 @@ char ConfigRandomLeaderInitial[4];
 
 // ORIGINAL: 0x005898A0 ?thumb_routine@@YAXH@Z 0x005898A0-0x00589A24 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["historical seed:src/recovered/units/005898a0.cpp", "pinned:5898A0..589A24; preview9403E0; detail945818; diplomacy art78EE48 with65C faction stride", "source:Popup537C and PickWin redraw/ListBox cdecl(int) callback contract; allocation/lifetime selection still requires native qualification"], "reason": "Typed shared faction preview callback with real Popup/SpriteBox/FactionArt owners and genuine global storage; no executable-address aliases or manual vtables."}
+// RECOVERY_LITERAL: v1 0x0068F5C0 0x0068F5CB ??_C@_0L@GOCJ@DATALINKS1?$AA@ 0x005898A0
+// RECOVERY_LITERAL: v1 0x0068F5CC 0x0068F5D2 ??_C@_05BHI@BLURB?$AA@ 0x005898A0
+// RECOVERY_LITERAL: v1 0x0068F5D4 0x0068F5DF ??_C@_0L@JBJA@DATALINKS2?$AA@ 0x005898A0
 void __cdecl thumb_routine(int faction) {
+// RECOVERY_OBJECT: v1 0x0068F5B8 _?preview_skip_filename@?1??thumb_routine@@YAXH@Z@4PADA
+    static char preview_skip_filename[] = "JENN282";
     if (ExpansionEnabled) {
         PickWinGlobal.GraphicWin::redraw();
-        if (strcmp(Players[faction].filename, "JENN282") == 0) {
+        if (strcmp(Players[faction].filename, preview_skip_filename) == 0) {
             ConfigFactionPreview.close();
             return;
         }

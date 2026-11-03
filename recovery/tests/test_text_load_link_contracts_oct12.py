@@ -29,6 +29,7 @@ from match_recovery.source import read_file
 import pytest
 
 from recovery.tests.test_buffer_line_layout_fidelity_oct12 import body, one
+from test_stringlist_teardown_visibility import assert_full_destructor_operation
 
 ROOT = Path(__file__).resolve().parents[2]
 IMAGE = Path(os.environ.get("OPENSMACX_IMAGE",
@@ -126,6 +127,9 @@ def test_original_owner_identities_and_unchanged_contracts():
     stringlist_dtor = body(stringlist_header, "~StringList()")
     assert stringlist_dtor.index("remove_all();") < stringlist_dtor.index(
         "current_position_ = 0;")
+    assert_full_destructor_operation(
+        stringlist_header.replace("nullptr", "0"),
+        body((ROOT / "src/stringstruct.cpp").read_text(), "void StringStruct::remove_all()"))
     dtor_row, = (row for row in read_file(ROOT / "src/stringlist.cpp")
                  if row.address == 0x004066C0)
     assert dtor_row.image_spans == ((0x004066C0, 0x00406818),
@@ -582,11 +586,21 @@ def actual_source(instrument=True):
     string_ctor = body(sh, "StringStruct::StringStruct()")
     assert sh.count("inline " + string_ctor) == 1
     sh = sh.replace("inline " + string_ctor, "", 1)
-    remove_all = body(sh, "void remove_all()")
+    sc = (ROOT / "src/stringstruct.cpp").read_text()
+    remove_all = body(sc, "void StringStruct::remove_all()")
+    assert_full_destructor_operation(sh.replace("nullptr", "0"), remove_all.replace("nullptr", "0"))
+    # Observe complete cleanup operations, whether public or destructor-owned.
+    # This probe does not assert a public-method call in the destructor.
+    operation = body(sh, "static void destroy_owned_entries(StringStruct *list)")
+    sh = sh.replace(operation, operation.replace(
+        "{", '{\n    events.push_back("clear");', 1), 1)
+    # The derived caller-facing operation is a distinct complete clear event.
+    derived_start = sh.index("class StringList : public StringStruct")
+    derived_clear = body(sh[derived_start:], "void remove_all()")
+    sh = sh.replace(derived_clear, derived_clear.replace(
+        "{", '{\n    events.push_back("clear");', 1), 1)
     instrumented_remove_all = remove_all.replace(
         "{", '{\n    events.push_back("clear");', 1)
-    sh = sh.replace(remove_all, instrumented_remove_all, 1)
-    sc = (ROOT / "src/stringstruct.cpp").read_text()
     sl = (ROOT / "src/stringlist.cpp").read_text()
     text_cpp = (ROOT / "src/text.cpp").read_text()
     bc = (ROOT / "src/buffer.cpp").read_text()
@@ -599,7 +613,8 @@ def actual_source(instrument=True):
         "STRING_HELPER": body(sl, "inline void release_text(char *text)"),
         "STRING_BASE_HOOKS": '\n'.join((
             body(sc, "int StringStruct::on_insert(void *)"),
-            body(sc, "void StringStruct::on_remove(void *)"))),
+            body(sc, "void StringStruct::on_remove(void *)"),
+            instrumented_remove_all)),
         "STRING_CTOR": string_ctor,
         "INSERT": body(sl, "int StringList::on_insert(void *raw_payload)"),
         "REMOVE": body(sl, "void StringList::on_remove(void *raw_payload)"),

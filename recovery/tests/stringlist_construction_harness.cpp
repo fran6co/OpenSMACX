@@ -69,6 +69,7 @@ const StringStructPayload *StringStructEntry::string_payload() const {
 #undef free
 // LIVE_LIST_BASE
 // LIVE_CONSTRUCTOR
+// LIVE_PUBLIC_REMOVE_ALL
 int StringStruct::on_insert(void *) { return 0; }
 void StringStruct::on_remove(void *) {}
 #define exit test_exit

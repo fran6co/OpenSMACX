@@ -180,11 +180,11 @@ struct StringStruct {{
     {ctor_body[1:-1]}
   }}
   virtual ~StringStruct() {{ base_destroyed[base_destroy_count++] = test_id_; }}
+  void remove_all() {{ removed[remove_count++] = test_id_; }}
 }};
 struct StringList : StringStruct {{
   StringList() {{ test_id_ = construct_count; constructed[construct_count++] = test_id_; }}
   ~StringList() {dtor_body}
-  void remove_all() {{ removed[remove_count++] = test_id_; }}
 }};
 int main() {{
   if ({rows} != 8 || {cols} != 8 || {rows} * {cols} != 64) return 21;
@@ -254,7 +254,7 @@ def test_transcript_array_ctor_dtor_vector_order_and_mutation_controls(tmp_path:
     )
     assert init_mutant.returncode != 0, "omitting real StringStruct field initialization must fail"
 
-    missing_cleanup = dtor.replace("remove_all();", "/* omitted list cleanup */", 1)
+    missing_cleanup = dtor.replace("StringStruct::remove_all();", "/* omitted list cleanup */", 1)
     assert missing_cleanup != dtor
     cleanup_mutant = _compile_and_run(
         tmp_path / "transcript-cleanup-mutant",

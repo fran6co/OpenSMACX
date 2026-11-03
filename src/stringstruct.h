@@ -241,8 +241,7 @@ class StringStruct : public virtual StringAllocationBase {
   // must still be active. These are real C++ destructor transitions, not
   // hand-written table installs.
   ~StringStruct() {
-    remove_all();
-    current_position_ = 0;
+    destroy_owned_entries(this);
   }
   MEASURED int seek_pos(int a1);
   int current_id();
@@ -254,31 +253,40 @@ class StringStruct : public virtual StringAllocationBase {
   StringStructPayload *current_entry();
   MEASURED StringStructPayload *next_entry();
   int seek_id(int id);
-  void remove_all() {
-    if (!head_) {
-      return;
+  void remove_all();
+
+ protected:
+  // Base cleanup resets position even when the list is empty.
+  static void destroy_owned_entries(StringStruct *list) {
+    if (list->head_ != nullptr) {
+
+      // The original initializes its index before testing the entry count.
+      int index = 0;
+      if (list->entry_count_ > 0) {
+        do {
+          StringStructEntry *const entry = list->head_;
+          list->current_ = entry->next;
+          ListPayloadBase *const payload = entry->payload;
+          list->on_remove(payload);
+          delete payload;
+          list->head_->payload = nullptr;
+          delete list->head_;
+          ++index;
+          list->head_ = list->current_;
+          // The loop bound is re-read every iteration, so a visitor that
+          // changes the count changes how far the walk goes.
+        } while (index < list->entry_count_);
+      }
+      list->head_ = nullptr;
+      list->current_position_ = 0;
+      list->entry_count_ = 0;
+    
     }
-    // The original initializes its index before testing the entry count.
-    int index = 0;
-    if (entry_count_ > 0) {
-      do {
-        StringStructEntry *const entry = head_;
-        current_ = entry->next;
-        ListPayloadBase *const payload = entry->payload;
-        on_remove(payload);
-        delete payload;
-        head_->payload = nullptr;
-        delete head_;
-        ++index;
-        head_ = current_;
-        // The loop bound is re-read every iteration, so a visitor that
-        // changes the count changes how far the walk goes.
-      } while (index < entry_count_);
-    }
-    head_ = nullptr;
-    current_position_ = 0;
-    entry_count_ = 0;
+    list->current_position_ = 0;
   }
+
+ public:
+
   // 0x00401100 appends an entry and payload, then invokes the insertion hook.
   // Allocation failures retain the original partially updated list state.
   int add(int id);
@@ -324,8 +332,36 @@ class StringList : public StringStruct {
   // 0x004066C0 removes entries while StringList's text hook is still active,
   // before the compiler enters StringStruct's base cleanup stage.
   ~StringList() {
-    remove_all();
+    StringStruct::remove_all();
     current_position_ = 0;
+  }
+  // Callers clear StringList entries through an inline-visible operation;
+  // destructor phases retain the separate public StringStruct entry.
+  // This source distinction is inferred from the original call boundaries.
+  void remove_all() {
+    if (!head_) {
+      return;
+    }
+    // The original initializes its index before testing the entry count.
+    int index = 0;
+    if (entry_count_ > 0) {
+      do {
+        StringStructEntry *const entry = head_;
+        current_ = entry->next;
+        ListPayloadBase *const payload = entry->payload;
+        on_remove(payload);
+        delete payload;
+        head_->payload = nullptr;
+        delete head_;
+        ++index;
+        head_ = current_;
+        // The loop bound is re-read every iteration, so a visitor that
+        // changes the count changes how far the walk goes.
+      } while (index < entry_count_);
+    }
+    head_ = nullptr;
+    current_position_ = 0;
+    entry_count_ = 0;
   }
   // Original primary slots name 0x006086F0 and 0x00608770. BasePop's
   // constructor (0x00600860) installs this table in both embedded lists;

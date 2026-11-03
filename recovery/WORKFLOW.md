@@ -1304,8 +1304,10 @@ For body-only manual batches with unchanged headers, include resolution,
 compiler and build policy, the coordinator may rebuild and relink in the prior
 application build directory. Preserve the old artifacts first, then remove the
 dirty objects and their compile observations, along with application/link outputs,
-so rebuilt artifacts and receipts are newly created. Use the actual build plan
-and dependencies to identify dirty objects. Never overwrite or edit a receipt to
+so rebuilt artifacts and receipts are newly created. Include generated program
+export files (`.exp`) and import libraries (`.lib`), not dependency libraries:
+a pre-existing export file leaves native linked-input coverage unknown. Use the
+actual build plan and dependencies to identify dirty objects. Never overwrite or edit a receipt to
 make it current. Revalidate every retained and rebuilt compilation and the fresh
 link inputs with `build_compile_evidence.verify_build_compilations`, then run the
 current function/reference comparison and relevant regression checks. A successful

@@ -5570,18 +5570,16 @@ int __cdecl encrypt_write(void *buffer, unsigned int size, unsigned int count, F
 
 static const char MapHeaderText[] = "TERRANMAP";
 
+// RECOVERY_OBJECT: v1 0x00690D88 _SaveHeaderText
 static const char SaveHeaderText[] = "TERRAN";
 
 static const char OpenFileMode[] = "rb";
-
-static const char SaveFileMode[] = "wb";
 
 static const char GameSaveReadMode[] = "rb";
 
 static const char GameSaveHeaderText[] = "TERRAN";
 
-static const char PathDot[] = ".";
-
+// RECOVERY_OBJECT: v1 0x00690DAC _MapSaveHeaderText
 static const char MapSaveHeaderText[] = "TERRANMAP";
 
 // RECOVERY_OBJECT: v1 0x00690F50 _MapFileFilterPattern
@@ -6021,6 +6019,11 @@ int __cdecl load_map_daemon(char *path) {
 #pragma function(memcpy)
 #endif
 int __cdecl save_daemon(char *save_path) {
+// RECOVERY_OBJECT: v1 0x00690D80 _?PathDot@?1??save_daemon@@YAHPAD@Z@4PADA
+    static char PathDot[] = ".";
+// RECOVERY_OBJECT: v1 0x00690D84 _?SaveFileMode@?1??save_daemon@@YAHPAD@Z@4PADA
+    static char SaveFileMode[] = "wb";
+
     if (IsMultiplayerPBEM != 0) ++TamperState93A9B4;
 
     DWORD save_tick = timeGetTime();
@@ -6080,6 +6083,11 @@ int __cdecl save_daemon(char *save_path) {
 // RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/005a9b20.cpp", "recovery/tasks/game-save-load-owner-coverage.json"], "reason": "Recover map-save header/version/data flow and preserve the original unconditional fclose and failed-file removal error behavior."}
 // symbol    ?save_map_daemon@@YAHPAD@Z
 int __cdecl save_map_daemon(char *path) {
+// RECOVERY_OBJECT: v1 0x00690DA4 _?PathDot@?1??save_map_daemon@@YAHPAD@Z@4PADA
+    static char PathDot[] = ".";
+// RECOVERY_OBJECT: v1 0x00690DA8 _?SaveFileMode@?1??save_map_daemon@@YAHPAD@Z@4PADA
+    static char SaveFileMode[] = "wb";
+
     int result = 1;
     char filename[256];
     filename[0] = 0;

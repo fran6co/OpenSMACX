@@ -209,6 +209,15 @@ def _translation_unit(mutations=()):
         "reinterpret_cast<int>(current)",
         "static_cast<int>(reinterpret_cast<uintptr_t>(current))",
     )
+    # Native x86 multiplies the uint32 pitch in a 32-bit address expression.
+    # Interpret that offset as signed on the 64-bit host so the unchanged
+    # negative-pitch oracle observes the same nearby pixel, not an extra 4GB.
+    # Apply the same projection to the coordinate-swap damage variant.
+    for row, column in (("a2", "a1"), ("a1", "a2")):
+        bodies[1] = bodies[1].replace(
+            "+ stride_ * " + row + " + " + column,
+            "+ static_cast<int32_t>(stride_ * " + row + ") + " + column,
+        )
     return HARNESS + "\n" + "\n".join(bodies) + "\n"
 
 
@@ -239,9 +248,9 @@ def test_actual_pixel_methods_keep_typed_storage_and_lock_effects(
     assert "unsigned char *locked;" in fill
     assert "locked + stride * y1 + x1" in fill
     assert "reinterpret_cast<int>(locked)" not in fill
-    assert "void *cur = dib_bits_;" in put
-    assert "const int row_offset = static_cast<int>(stride_ * a2);" in put
-    assert "local_48 + row_offset + a1" in put
+    assert "LPVOID bits;" in put
+    assert "reinterpret_cast<unsigned char *>(locked_bits_)" in put
+    assert "+ stride_ * a2 + a1" in put
     assert "reinterpret_cast<int>(dib_bits_)" not in put
     result = _run(tmp_path, compiler_name)
     assert result.returncode == 0, result.stdout + result.stderr
@@ -251,8 +260,8 @@ def test_actual_pixel_methods_keep_typed_storage_and_lock_effects(
     "mutations",
     (
         ((0, "locked + stride * y1 + x1", "locked + stride * x1 + y1"),),
-        ((1, "static_cast<int>(stride_ * a2)",
-          "static_cast<int>(stride_ * a1)"),),
+        ((1, "+ stride_ * a2 + a1",
+          "+ stride_ * a1 + a2"),),
     ),
 )
 def test_actual_pixel_address_mutants_are_detected(

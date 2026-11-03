@@ -3618,7 +3618,9 @@ reproduced here regardless of provable unreachability: mechanical
 transcription, not a dead branch this recovery gets to prune.
 
 Verification note: the original loads rect->right at 0x005DCFB8 and spills it
-at 0x005DCFC6 without ever reading it back; the dead store is not transcribed.
+at 0x005DCFC6 without ever reading it back. Earlier source omitted that field
+as a dead store; the ordinary whole-RECT snapshot now retains the four-field
+operation before the default-font publication, without a separate dummy read.
 */
 int Buffer::write_l(LPSTR text, RECT *rect, int len) {
     if (!text) {
@@ -3645,12 +3647,11 @@ int Buffer::write_l(LPSTR text, RECT *rect, int len) {
     // wrapping int arithmetic). Using rect->left/top/bottom and
     // font1_->height_ directly, without the memcpy bit-cast, drops the two
     // extra calls the image does not make.
-    if (!fonts_[0]) {
-        fonts_[0] = FontDefault;
-    }
-    const int y_span = (rect->bottom - fonts_[0]->height_) - rect->top;
-    const int y_coord = rect->top + y_span / 2;
-    return write_multi_font_raw_l(text, rect->left, y_coord, limit);
+    const RECT area = *rect;
+    const int font_height = text_height();
+    const int y_span = (area.bottom - font_height) - area.top;
+    const int y_coord = area.top + y_span / 2;
+    return write_multi_font_raw_l(text, area.left, y_coord, limit);
 }
 
 
@@ -5108,13 +5109,14 @@ int Buffer::dotted_box(RECT * a1, int a2) {
     if (a1 == 0) {
         return 0x10;
     }
+    int color = a2;
     int top = a1->top;
     int bottom = a1->bottom;
     int right = a1->right;
     int left = a1->left;
     --bottom;
     --right;
-    dotted_box(left, top, right, bottom, a2);
+    dotted_box(left, top, right, bottom, color);
     return 0;
 }
 
@@ -5672,28 +5674,21 @@ int Buffer::wrap_height_flying(char *input_text) {
         char *text = input_text;
         if (*text != '\0') {
             do {
+                int length = static_cast<int>(strlen(text));
                 int remaining = BufferFlyingWidth - BufferStrHeight;
-                text = find_line_break_l(text, &remaining, strlen(text));
-                if (text == 0) {
+                char *next = find_line_break_l(text, &remaining, length);
+                if (next == 0) {
                     break;
                 }
                 field_18_ = field_18_ + 1;
-                if (fonts_[0] == 0) {
-                    fonts_[0] = FontDefault;
-                }
-                Font *fnt = fonts_[0];
-                int lineAdvance;
-                if (fnt->unk_1_ < 0) {
-                    lineAdvance = fnt->line_height_;
-                } else {
-                    lineAdvance = fnt->height_ + fnt->unk_1_;
-                }
+                int lineAdvance = text_line_height();
                 BufferStrHeight = 0;
                 BufferFlyingY = BufferFlyingY + lineAdvance;
                 if (field_14_ != 0) {
                     BufferFlyingWidth = BufferFlyingWidth - field_14_;
                     field_14_ = 0;
                 }
+                text = next;
             } while (true);
             char *prompt = const_cast<char *>(BufferMeasureSpace);
             if (prompt != 0) {
@@ -6611,7 +6606,7 @@ int Buffer::wrap_flying(char *a1, int a2, int a3, int a4) {
     return wrap_flying(a1);
 }
 
-// ORIGINAL: 0x005E2330 ?put_pixel@Buffer@@QAEHHHH@Z 0x005E2330-0x005E2457
+// ORIGINAL: 0x005E2330 ?put_pixel@Buffer@@QAEHHHH@Z 0x005E2330-0x005E2457 BYTE_EXACT
 // TRIED: the two indirect calls are DirectDraw surface Lock/Unlock through the surface pointer stored at surface_ - stdcall COM methods, not thiscall members of this class, so they are reached through a plain typed function pointer read from the surface's own vtable rather than a member-pointer shim; this matches the original's own indirect-call instruction shape. Ruled out a named lock-descriptor struct in favour of a raw byte buffer sized 0x6c with the two fields it actually reads (lpSurface at +0x10, pitch at +0x24) addressed by offset, since the real DDSURFACEDESC layout is not declared here. Landing the closest MISMATCH; divergence starts at instruction #5, `push` in the original for the DDraw lock call setup versus `xor` in the rebuilt.
 // size      295 bytes
 // prototype int (__thiscall ?put_pixel@Buffer@@QAEHHHH@Z)(Buffer* this, int, int, int)
@@ -6626,79 +6621,60 @@ int Buffer::wrap_flying(char *a1, int a2, int a3, int a4) {
 // an ignored HRESULT from Unlock is not permission to change those paths.
 
 int Buffer::put_pixel(int a1, int a2, int a3) {
-  char *local_48;
-  int result;
-  DDSURFACEDESC description;
-  IDirectDrawSurface2 *surface;
+    if (dib_bits_ == nullptr && surface_ == nullptr) {
+        return 7;
+    }
+    if (a1 < 0 || a2 < 0 || a1 >= dib_.bmiHeader.biWidth
+        || a2 >= -dib_.bmiHeader.biHeight) {
+        return 0;
+    }
 
-  void *cur = dib_bits_;
-  if (cur == 0 && surface_ == 0) {
-    return 7;
-  }
-  if (a1 < 0) {
-    return 0;
-  }
-  if (a2 < 0) {
-    return 0;
-  }
-  if (dib_.bmiHeader.biWidth <= a1) {
-    return 0;
-  }
-  if (-dib_.bmiHeader.biHeight <= a2) {
-    return 0;
-  }
+    LPVOID bits;
+    if (surface_ == nullptr) {
+        locked_bits_ = dib_bits_;
+        bits = dib_bits_;
+        if (dib_bits_ != nullptr) {
+            ++surface_lock_count_;
+        }
+    } else if (locked_bits_ != nullptr) {
+        ++surface_lock_count_;
+        bits = locked_bits_;
+    } else {
+        DDSURFACEDESC description;
+        description.dwSize = sizeof(description);
+        if (surface_->Lock(nullptr, &description, DDLOCK_WAIT, nullptr) != 0) {
+            bits = nullptr;
+        } else {
+            stride_ = description.lPitch;
+            ++surface_lock_count_;
+            locked_bits_ = description.lpSurface;
+            bits = description.lpSurface;
+        }
+    }
 
-  surface = surface_;
-  if (surface == 0) {
-    locked_bits_ = cur;
-    if (cur == 0) {
-      goto after_write;
+    if (bits != nullptr) {
+        unsigned char *pixel = reinterpret_cast<unsigned char *>(locked_bits_)
+            + stride_ * a2 + a1;
+        if (pixel != nullptr) {
+            *pixel = static_cast<unsigned char>(a3);
+        }
     }
-    surface_lock_count_ = surface_lock_count_ + 1;
-    local_48 = static_cast<char *>(cur);
-  } else if (locked_bits_ == 0) {
-    description.dwSize = sizeof(description);
-    result = surface->Lock(nullptr, &description, 1, nullptr);
-    if (result != 0) {
-      goto after_write;
-    }
-    stride_ = description.lPitch;
-    surface_lock_count_ = surface_lock_count_ + 1;
-    locked_bits_ = description.lpSurface;
-    local_48 = static_cast<char *>(locked_bits_);
-  } else {
-    surface_lock_count_ = surface_lock_count_ + 1;
-    local_48 = static_cast<char *>(locked_bits_);
-  }
 
-  if (local_48 != 0) {
-    const int row_offset = static_cast<int>(stride_ * a2);
-    char *p = local_48 + row_offset + a1;
-    if (p != 0) {
-      *p = (unsigned char)a3;
+    if (surface_ == nullptr) {
+        const int count = --surface_lock_count_;
+        if (count <= 0) {
+            locked_bits_ = nullptr;
+            surface_lock_count_ = 0;
+        }
+    } else {
+        const int count = --surface_lock_count_;
+        if (locked_bits_ != nullptr && count <= 0) {
+            surface_->Unlock(locked_bits_);
+            locked_bits_ = nullptr;
+            surface_lock_count_ = 0;
+        }
     }
-  }
-
-after_write:
-  surface = surface_;
-  if (surface == 0) {
-    int n = surface_lock_count_ - 1;
-    surface_lock_count_ = n;
-    if (n < 1) {
-      locked_bits_ = nullptr;
-      surface_lock_count_ = 0;
-      return 0;
-    }
-  } else {
-    int n = surface_lock_count_ - 1;
-    surface_lock_count_ = n;
-    if (locked_bits_ != 0 && n < 1) {
-      surface->Unlock(locked_bits_);
-      locked_bits_ = nullptr;
-      surface_lock_count_ = 0;
-    }
-  }
-  return 0;
+    return 0;
 }
 
 // ORIGINAL: 0x005DDBB0 ?wrap_right@Buffer@@QAEHPADHHH@Z 0x005DDBB0-0x005DDC8F FILE
@@ -7101,15 +7077,17 @@ int Buffer::change_color(int a1, int a2) {
             int32_t row_count = rect.bottom - rect.top;
             int32_t stride_remainder = static_cast<int32_t>(stride_) - row_width;
             char *p = dest;
-            for (int32_t y = row_count; y != 0; --y) {
-                for (int32_t x = row_width; x != 0; --x) {
+            int32_t y = row_count;
+            do {
+                int32_t x = row_width;
+                do {
                     if (*p == static_cast<char>(a1)) {
                         *p = static_cast<char>(a2);
                     }
                     ++p;
-                }
+                } while (--x != 0);
                 p += stride_remainder;
-            }
+            } while (--y != 0);
 
             IDirectDrawSurface2 *const surface2 = surface_;
             const int32_t remaining = static_cast<int32_t>(
@@ -8094,15 +8072,17 @@ int Buffer::change_color(RECT *area, int find_color, int replace_color) {
     const int remainder = static_cast<int>(stride_) - width;
     const uint8_t find = static_cast<uint8_t>(find_color);
     const uint8_t replace = static_cast<uint8_t>(replace_color);
-    for (int row = 0; row < height; ++row) {
-        for (int col = 0; col < width; ++col) {
+    int rows = height;
+    do {
+        int columns = width;
+        do {
             if (*pixel == find) {
                 *pixel = replace;
             }
             ++pixel;
-        }
+        } while (--columns != 0);
         pixel += remainder;
-    }
+    } while (--rows != 0);
 
     free_data(1);
     return 0;

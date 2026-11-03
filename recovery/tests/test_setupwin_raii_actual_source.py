@@ -33,11 +33,9 @@ def extract_body(text: str, signature: str) -> str:
 def actual_close_and_list_cleanup() -> tuple[str, str]:
     setup = (ROOT / "src/setupwin.cpp").read_text()
     close = extract_body(setup, "void SetupWin::close()")
-    header = (ROOT / "src/stringstruct.h").read_text()
-    remove = extract_body(header, "void remove_all()")
-    # Keep the actual inline member body; only qualify its definition for the
-    # fixture's out-of-class declaration. The retired cpp helper is not source.
-    remove = remove.replace("void remove_all()", "void StringStruct::remove_all()", 1)
+    source = (ROOT / "src/stringstruct.cpp").read_text()
+    remove = extract_body(source, "void StringStruct::remove_all()")
+    # Keep the actual public member body in its current owning source.
     # Existing maintained control's sole C++98 spelling bridge.
     remove = remove.replace("nullptr", "0")
     return close, remove

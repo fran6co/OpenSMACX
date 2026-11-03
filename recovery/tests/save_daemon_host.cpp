@@ -39,9 +39,7 @@ BOOL IsMultiplayerNet;
 int TamperState93A9B4;
 int GameDataPlayerCountSnapshot;
 
-static const char PathDot[] = ".";
 static const char SaveGameFileExtension[] = "SAV";
-static const char SaveFileMode[] = "wb";
 static const char SaveHeaderText[] = "TERRAN";
 static FILE fake_file_storage;
 static FILE *const fake_file = &fake_file_storage;

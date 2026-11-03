@@ -70,7 +70,7 @@ def actual_source():
     assert "return 0x10;" in rect and "return 0;" in rect
     assert tuple(line.strip() for line in rect.splitlines()
                  if line.strip().startswith("dotted_box(")) == (
-                     "dotted_box(left, top, right, bottom, a2);",)
+                     "dotted_box(left, top, right, bottom, color);",)
     assert "dotted_hline(" not in rect and "dotted_vline(" not in rect
     return coord, rect
 

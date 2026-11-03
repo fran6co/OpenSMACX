@@ -61,6 +61,7 @@ const StringStructPayload *StringStructEntry::string_payload() const {
 // LIVE_LIST_BASE
 // LIVE_LIST
 // LIVE_CONSTRUCTOR
+// LIVE_PUBLIC_REMOVE_ALL
 int StringStruct::on_insert(void *) { return 0; }
 void StringStruct::on_remove(void *) {}
 int StringList::on_insert(void *) { return 0; }
