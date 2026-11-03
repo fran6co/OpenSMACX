@@ -1502,7 +1502,7 @@ int Buffer::init(int width, int height, int tgl, ExtDirectDraw *direct_draw) {
                                               nullptr, 0);
             if (bitmap_handle_ == nullptr) {
                 MessageBoxA(nullptr,
-                            "Unable to allocate draw-buffer; terminating program",
+                            "Unable to allocate draw-buffer; terminating program.",
                             "FATAL ERROR", MB_ICONEXCLAMATION);
                 exit(4);
             }

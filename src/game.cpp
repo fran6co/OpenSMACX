@@ -4411,6 +4411,13 @@ void __cdecl load_bases() {
 //         as its own `push 0` (24/49, prologue `lea` where the image has
 //         `push esi`).
 
+// These three TU-private literals are shared by control_game and this helper
+// in the current object. Both pinned bodies refer to these same original
+// starts; the bindings do not merge them with copies from other translation
+// units or claim linked retention.
+// RECOVERY_LITERAL: v1 0x0068BE94 0x0068BEDA ??_C@_0EG@PBPO@SOFTWARE?2Microsoft?2DirectPlay?2Ap@ 0x0052A9B0
+// RECOVERY_LITERAL: v1 0x0068BEDC 0x0068BEE5 ??_C@_08IAPL@Complete?$AA@ 0x0052A9B0
+// RECOVERY_LITERAL: v1 0x0068BEE8 0x0068BEEC ??_C@_03PEHN@Yes?$AA@ 0x0052A9B0
 extern "C" int __cdecl directplay_install_is_complete() {
     int result = 0;
     HKEY key;
