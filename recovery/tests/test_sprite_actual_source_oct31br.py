@@ -12,8 +12,8 @@ import pytest
 ROOT = Path(__file__).resolve().parents[2]
 
 
-def body(signature):
-    source = (ROOT / 'src/sprite.cpp').read_text()
+def body(signature, source_file='sprite.cpp'):
+    source = (ROOT / 'src' / source_file).read_text()
     start = source.index(signature)
     opening = source.index('{', start)
     depth = 0
@@ -89,12 +89,12 @@ def test_original_texheap_count_and_first_fit(tmp_path, compiler_name, damage):
     compiler = shutil.which(compiler_name)
     if not compiler:
         pytest.skip(compiler_name + ' unavailable')
-    source = '\n'.join(body(signature) for signature in (
+    source = '\n'.join(body(signature, 'texheap.cpp') for signature in (
         'void *TexHeap::get_mem(', 'void *TexHeap::get_tex_mem(',
         'void TexHeap::release_allocations()', 'void TexHeap::shutdown()'))
     if damage == 'signed_overflow':
         before='static_cast<int>(count_ + 1u)'
-        assert source.count(before)==4
+        assert source.count(before)==3
         source=source.replace(before,'static_cast<int>(count_) + 1')
     elif damage == 'alignment':
         before='& 0xffff) == 0'

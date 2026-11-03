@@ -284,6 +284,7 @@ set(OPENSMACX_SOURCES
     src/spot.cpp
     src/spying.cpp
     src/sprite.cpp
+    src/texheap.cpp
     src/sprite_assets.cpp
     src/sprite_objects.cpp
     src/caviar_renderer_objects.cpp
@@ -609,6 +610,7 @@ set_property(SOURCE
     src/console_commands.cpp
     src/net_class.cpp
     src/sprite.cpp
+    src/texheap.cpp
     src/world.cpp
     src/win.cpp
     APPEND PROPERTY COMPILE_OPTIONS "/Z7")

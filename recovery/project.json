@@ -1869,6 +1869,20 @@
           "/Oy-",
           "-c"
         ]
+      },
+      "src/texheap.cpp": {
+        "flags": [
+          "/nologo",
+          "/TP",
+          "/Zm200",
+          "/GX",
+          "/O2",
+          "/Ob2",
+          "-MT",
+          "/W4",
+          "/Z7",
+          "-c"
+        ]
       }
     },
     "flag_sets": [
