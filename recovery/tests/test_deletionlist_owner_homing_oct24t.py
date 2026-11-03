@@ -306,8 +306,8 @@ def test_cached_count_mutant_compiles_and_fails_alias_control(tmp_path, compiler
     if compiler is None:
         pytest.skip(compiler_name + " unavailable")
     program = _harness()
-    original = "++record.count_;\n    return static_cast<int>(record.count_) - 1;"
-    mutant = ("record.count_ = static_cast<short>(old_count + 1);\n"
+    original = "++records_[slot].count_;\n    return static_cast<int>(records_[slot].count_) - 1;"
+    mutant = ("records_[slot].count_ = static_cast<short>(old_count + 1);\n"
               "    return old_count;")
     assert program.count(original) == 1
     damaged = program.replace(original, mutant, 1)

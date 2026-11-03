@@ -76,8 +76,8 @@ def test_only_three_packet_builders_and_passive_layouts_change():
     assert [landmark.index(x) for x in writes] == sorted(landmark.index(x) for x in writes)
     assert "if (text)" in landmark and "strcpy(message.text_, text);" in landmark
     bulk = extract_definition(source, SIGNATURES["bulk"])
-    assert "if (count > 0)" in bulk and "i < count" in bulk
-    assert "filled = count;" in bulk and "i < 0x20 - filled" in bulk
+    assert "for (i = 0; i < count; ++i)" in bulk
+    assert "for (; i < 0x20; ++i)" in bulk
 
 
 def control(kind):
@@ -196,9 +196,9 @@ def test_actual_typed_packets_defined_paths_and_write_footprints(tmp_path, compi
             ("0x90, target", "0x30, target"),
         ),
         "bulk": (
-            ("if (count > 0)", "if (count > 1)"),
-            ("i < count; i++", "i < count - 1; i++"),
-            ("i < 0x20 - filled", "i < 0x1f - filled"),
+            ("i < count; ++i", "i < count && count > 1; ++i"),
+            ("i < count; ++i", "i < count - 1; ++i"),
+            ("i < 0x20; ++i", "i < 0x1f; ++i"),
         ),
         "landmark": (
             ("message.payload_1C_ = payload_1C;", "message.payload_1C_ = payload_18;"),

@@ -1963,7 +1963,7 @@ void __cdecl send_raw_data(int opcode, int target, int payload_10,
     NetBusyCount--;
 }
 
-// ORIGINAL: 0x00592FF0 ?message_big_data@@YAXHHPAHH@Z 0x00592FF0-0x00593089
+// ORIGINAL: 0x00592FF0 ?message_big_data@@YAXHHPAHH@Z 0x00592FF0-0x00593089 BYTE_EXACT
 // size      153 bytes
 // prototype void (__cdecl ?message_big_data@@YAXHHPAHH@Z)(int, int, int *, int)
 // callers   1   call targets   1
@@ -1982,32 +1982,18 @@ void __cdecl send_raw_data(int opcode, int target, int payload_10,
 void __cdecl message_big_data(int opcode, int target, int *payload,
                               int count) {
     MessageBigDataRecord message;
-    int filled;
     int i;
-    int *dst;
 
     message.opcode_ = static_cast<int16_t>(opcode);
     message.faction_ = ConsoleGlobal.faction_id_;
     message.timestamp_ = timeGetTime();
     message.sequence_ = NetDaemonNet.deletion_list_.sequence_bits();
 
-    filled = 0;
-    if (count > 0) {
-        filled = count;
-        dst = message.data_;
-        for (i = 0; i < count; i++) {
-            dst[i] = payload[i];
-        }
+    for (i = 0; i < count; ++i) {
+        message.data_[i] = payload[i];
     }
-    if (filled < 0x20) {
-        dst = message.data_ + filled;
-        // No named `fill_count` local: the image computes `0x20 - filled`
-        // straight into the rep count (`mov ecx,0x20 / sub ecx,eax`), and a
-        // local made VC6 test it separately - two instructions the image does
-        // not have.
-        for (i = 0; i < 0x20 - filled; i++) {
-            dst[i] = 0;
-        }
+    for (; i < 0x20; ++i) {
+        message.data_[i] = 0;
     }
 
     NetBusyCount++;

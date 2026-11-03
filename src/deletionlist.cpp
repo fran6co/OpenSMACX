@@ -73,10 +73,10 @@ Purpose: Find a reusable deletion record. The image returns slot zero if all
 // symbol    ?find_free_slot@DeletionList@@QAEHXZ
 */
 int DeletionList::find_free_slot() {
+    int slot = 0;
     DeletionRecord *record = records_;
     const unsigned char mask = static_cast<unsigned char>(GameDataStateStorage.fields_.lock_masks_.enable_mask_);
-    int slot;
-    for (slot = 0; slot < 24; ) {
+    for (; slot < 24; ) {
         if ((record->acknowledgements_ & mask) == mask) {
             return slot;
         }
@@ -141,24 +141,20 @@ int DeletionList::convert(int original_id, int new_owner) {
     int search = new_owner + 1;
     const int total = current_owner_;
     if (search <= total) {
-        const unsigned char mask = static_cast<unsigned char>(GameDataStateStorage.fields_.lock_masks_.enable_mask_);
         do {
-            for (int slot = 0; slot < 0x18; slot++) {
+            const int slot = find_owner_slot(search);
+            if (slot >= 0) {
                 const DeletionRecord &record = records_[slot];
-                if ((record.acknowledgements_ & mask) != mask
-                    && record.owner_ == search) {
-                    int count = record.count_;
-                    if (count > 0) {
-                        for (int index = 0; index < count; ++index) {
-                            const int deleted_id = record.vehicle_ids_[index];
-                            if (deleted_id == result) {
-                                result = -1;
-                            } else if (deleted_id < result) {
-                                result--;
-                            }
+                int count = record.count_;
+                if (count > 0) {
+                    for (int index = 0; index < count; ++index) {
+                        const int deleted_id = record.vehicle_ids_[index];
+                        if (deleted_id == result) {
+                            result = -1;
+                        } else if (deleted_id < result) {
+                            result--;
                         }
                     }
-                    break;
                 }
             }
             search++;
@@ -175,7 +171,7 @@ int DeletionList::convert(int original_id, int new_owner) {
 // the first free record), and append the id to that record's run.
 /*
 Purpose: Queue one vehicle deletion against its owner's deletion record.
-// ORIGINAL: 0x0052DE70 ?add_deletion@DeletionList@@QAEHH@Z 0x0052DE70-0x0052DF2E FILE
+// ORIGINAL: 0x0052DE70 ?add_deletion@DeletionList@@QAEHH@Z 0x0052DE70-0x0052DF2E FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Original52DE70..52DF2E; retired seed git:117282ee:src/unrecovered/0052de70.cpp records the same identity and spans with its raw-offset TRIED note kept below.", "The vehicles are veh.h's own Vehs (0x00952828, 0x34 stride) whose x/y words open the record; the occupancy mask is lock.h's LockEnableMask and the owner count sits at +0x5A0. The original uses 0x1E shorts as each 0x3C-byte record stride; 25 shorts fit after its 0xA-byte header."], "reason": "Coverage transcription of the deletion enqueue on the typed DeletionList receiver with Vehs and LockEnableMask named from their owners."}
 Status: Coverage transcription - unclaimed body
 */
@@ -185,16 +181,14 @@ int DeletionList::add_deletion(int veh_id) {
     int slot = find_owner_slot(current_owner_);
     if (slot < 0) {
         slot = find_free_slot();
-        DeletionRecord &new_record = records_[slot];
-        new_record.acknowledgements_ = 0xFF;
-        new_record.count_ = 0;
-        new_record.owner_ = current_owner_;
-        new_record.acknowledgements_ = 0;
+        records_[slot].acknowledgements_ = 0xFF;
+        records_[slot].count_ = 0;
+        records_[slot].owner_ = current_owner_;
+        records_[slot].acknowledgements_ = 0;
     }
 
-    DeletionRecord &record = records_[slot];
-    const int old_count = record.count_;
-    record.vehicle_ids_[old_count] = static_cast<short>(veh_id);
-    ++record.count_;
-    return static_cast<int>(record.count_) - 1;
+    const int old_count = records_[slot].count_;
+    records_[slot].vehicle_ids_[old_count] = static_cast<short>(veh_id);
+    ++records_[slot].count_;
+    return static_cast<int>(records_[slot].count_) - 1;
 }

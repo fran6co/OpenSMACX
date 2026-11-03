@@ -54,6 +54,10 @@ struct RulesAbility { int name, description; };
 static const int MaxAbilityNum = 29;
 static RulesAbility Ability[MaxAbilityNum + 4];
 static char StringTemp[2048];
+static int TextColourTable[195];
+static int *live_selection;
+static bool change_on_color, change_on_name;
+static bool title_uppercase_done;
 static char stored_name[] = "name";
 static char stored_description[] = "description";
 static char empty_label[] = "none";
@@ -64,14 +68,24 @@ struct Trace {
   RECT body_rect;
   int width;
   int height;
+  int title_result;
+  std::vector<int> lookup_ids;
+  std::vector<int> color_pairs;
 } trace;
 struct Strings {
-  char *get(int id) { return id == 1 ? stored_name : stored_description; }
+  char *get(int id) {
+    trace.lookup_ids.push_back(id);
+    // Opaque-call damage control only: real Strings::get is not claimed
+    // to change this selection. The original reload phase remains observable.
+    if (change_on_name && id == 21) *live_selection = 4;
+    return id == 1 || id == 21 ? stored_name : stored_description;
+  }
 } StringTable;
 static char *label_get(int id) {
   return id == 0x228 / 4 ? title_label : empty_label;
 }
 static char *CharUpperA(char *text) {
+  title_uppercase_done = true;
   for (char *p = text; *p; ++p)
     if (*p >= 'a' && *p <= 'z') *p = static_cast<char>(*p - 'a' + 'A');
   return text;
@@ -79,8 +93,17 @@ static char *CharUpperA(char *text) {
 struct Buffer {
   static void set_clip(RECT *) { trace.events.push_back("clip"); }
   void copy(Buffer *, RECT *) { trace.events.push_back("copy"); }
-  static void set_text_color(int, int, int, int) {
+  static void set_text_color(int foreground, int shadow, int a, int b) {
+    assert(a == 1 && b == 1);
+    const int pair = trace.color_pairs.empty() ? 156
+                   : trace.color_pairs.size() == 1 ? 160 : 158;
+    assert(foreground == TextColourTable[pair]);
+    assert(shadow == TextColourTable[pair + 1]);
+    if (pair == 156) assert(title_uppercase_done);
+    trace.color_pairs.push_back(pair);
     trace.events.push_back("color");
+    // Same bounded opaque-call sensitivity qualification as the getter.
+    if (pair == 158 && change_on_color) *live_selection = 3;
   }
   static void set_font(Font *, int, int, int) {
     trace.events.push_back("font1");
@@ -88,7 +111,7 @@ struct Buffer {
   static int wrap_cent(Font *, char *text, RECT *rect) {
     trace.events.push_back(std::string("title:") + text);
     trace.title_rect = *rect;
-    return 0;
+    return trace.title_result;
   }
   static int wrap_height(char *text, int width) {
     trace.events.push_back(std::string("height:") + text);
@@ -125,7 +148,14 @@ struct DesignWin : Buffer {
 /* ACTUAL_DRAW_BODY */
 static void reset_fixture() {
   trace.events.clear();
+  trace.lookup_ids.clear();
+  trace.color_pairs.clear();
   trace.width = trace.height = 0;
+  trace.title_result = 7;
+  title_uppercase_done = false;
+  live_selection = 0;
+  change_on_color = change_on_name = false;
+  for (int i = 0; i < 195; ++i) TextColourTable[i] = 4000 + i;
   for (int i = 0; i < MaxAbilityNum + 4; ++i)
     Ability[i] = RulesAbility{1, 2};
   StringTemp[0] = 0;
@@ -147,7 +177,8 @@ static void check_negative(DesignWin &win, bool second) {
   assert(event("font1") > 2);
   assert(event("write:none") > event("font1"));
   assert(trace.body_rect.left == (second ? 30 : 10));
-  assert(trace.body_rect.top == (second ? 40 : 20));
+  // 435C4D/435EFD stores the title writer's returned row into area.top.
+  assert(trace.body_rect.top == trace.title_result);
   assert(trace.body_rect.right == (second ? 230 : 210));
   assert(trace.body_rect.bottom == (second ? 120 : 100));
   int colors = 0;
@@ -178,6 +209,20 @@ static void check_positive(DesignWin &win, bool second, int ability) {
     colors += trace.events[i] == "color";
   assert(colors == 3);
 }
+static void check_live_selection(DesignWin &win, bool second) {
+  reset_fixture();
+  live_selection = &win.protoAbilityIDs_[second ? 1 : 0];
+  *live_selection = 2;
+  Ability[2] = RulesAbility{11, 12};
+  Ability[3] = RulesAbility{21, 22};
+  Ability[4] = RulesAbility{31, 32};
+  change_on_color = change_on_name = true;
+  trace.height = 17;
+  if (second) win.draw_special_2(0); else win.draw_special_1(0);
+  assert(trace.lookup_ids.size() == 2);
+  assert(trace.lookup_ids[0] == 21); // reload after selected-color callback
+  assert(trace.lookup_ids[1] == 32); // reload after name lookup/concatenations
+}
 int main() {
   DesignWin first, second;
   check_negative(first, false);
@@ -188,6 +233,8 @@ int main() {
   // original negative-only branch without reading outside the fixture.
   check_positive(first, false, MaxAbilityNum + 1);
   check_positive(second, true, MaxAbilityNum + 1);
+  check_live_selection(first, false);
+  check_live_selection(second, true);
   return 0;
 }
 '''
@@ -229,8 +276,8 @@ def test_added_upper_guard_mutant_is_rejected_safely(
     bodies = [actual_body(a, s) for a, s, _ in CASES]
     body_index = next(i for i, (a, _, _) in enumerate(CASES) if a == address)
     body = bodies[body_index]
-    old = "if (ability < 0) {"
-    new = "if (ability < 0 || ability >= MaxAbilityNum) {"
+    old = f"if ({_member} < 0) {{"
+    new = f"if ({_member} < 0 || {_member} >= MaxAbilityNum) {{"
     assert body.count(old) == 1
     bodies[body_index] = body.replace(old, new, 1)
     result = compile_and_run(compiler, tmp_path, "\n".join(bodies))
@@ -252,3 +299,33 @@ def test_missing_persistent_font_state_mutant_is_rejected(
     bodies[body_index] = body.replace("Buffer::set_font(&font1_, 0, 0, 0);", "", 1)
     result = compile_and_run(compiler, tmp_path, "\n".join(bodies))
     assert result.returncode != 0, "persistent-font removal survived"
+
+
+@pytest.mark.parametrize("address,signature,member", CASES)
+@pytest.mark.parametrize("damage", ("old-palette", "old-discarded-title-row",
+                                    "old-cached-selection"))
+def test_original_palette_return_and_live_selection_damage_controls(
+        tmp_path, address, signature, member, damage):
+    compiler = shutil.which("g++") or shutil.which("clang++")
+    if not compiler:
+        pytest.skip("no host C++ compiler")
+    bodies = [actual_body(a, s) for a, s, _ in CASES]
+    index = next(i for i, (a, _, _) in enumerate(CASES) if a == address)
+    body = bodies[index]
+    if damage == "old-palette":
+        old = "TextColourTable[156], TextColourTable[157]"
+        new = "0xE0, -1"
+    elif damage == "old-discarded-title-row":
+        old = "area.top = Buffer::wrap_cent(&font2_, StringTemp, &title);"
+        new = "Buffer::wrap_cent(&font2_, StringTemp, &title);"
+    else:
+        anchor = f"if ({member} < 0) {{"
+        assert body.count(anchor) == 1
+        body = body.replace(anchor,
+            f"const int cached_ability = {member};\n    " + anchor, 1)
+        old = f"Ability[{member}]"
+        new = "Ability[cached_ability]"
+    assert body.count(old) >= 1
+    bodies[index] = body.replace(old, new)
+    result = compile_and_run(compiler, tmp_path, "\n".join(bodies))
+    assert result.returncode != 0, "original-phase damage mutant survived"

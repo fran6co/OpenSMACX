@@ -227,14 +227,12 @@ def _mutant(body: str, name: str) -> str:
     if name == "late-lookup":
         old = (
             "        LPSTR resolved_label = StringTable.get(label);\n"
-            "        // The image swaps its two argument slots so the client_to_screen call\n"
-            "        // receives (&xCoord, &yCoord); the anchor rect is that screen square.\n"
-            "        MainInterfaceGlobal.client_to_screen(&xCoord, &yCoord);"
+            "        // Preserve the swapped argument slots and reversed pointer order.\n"
+            "        MainInterfaceGlobal.client_to_screen(&yCoord, &xCoord);"
         )
         new = (
-            "        // The image swaps its two argument slots so the client_to_screen call\n"
-            "        // receives (&xCoord, &yCoord); the anchor rect is that screen square.\n"
-            "        MainInterfaceGlobal.client_to_screen(&xCoord, &yCoord);\n"
+            "        // Preserve the swapped argument slots and reversed pointer order.\n"
+            "        MainInterfaceGlobal.client_to_screen(&yCoord, &xCoord);\n"
             "        LPSTR resolved_label = StringTable.get(label);"
         )
         return _replace_once(body, old, new)
@@ -244,14 +242,14 @@ def _mutant(body: str, name: str) -> str:
                              "MainInterfaceGlobal.Win::set_bubble_text(label, &rect);")
     if name == "swapped-coordinates":
         return _replace_once(body,
-                             "MainInterfaceGlobal.client_to_screen(&xCoord, &yCoord);",
-                             "MainInterfaceGlobal.client_to_screen(&yCoord, &xCoord);")
+                             "MainInterfaceGlobal.client_to_screen(&yCoord, &xCoord);",
+                             "MainInterfaceGlobal.client_to_screen(&xCoord, &yCoord);")
     if name == "negative-position-guard":
         return _replace_once(body, "position >= 0", "position > -2")
     if name == "failed-hit-guard":
         return _replace_once(body,
-                             "spot1_.check(xCoord, yCoord, &position, &type) != -1",
-                             "spot1_.check(xCoord, yCoord, &position, &type) != -2")
+                             "spot1_.check(click_x, click_y, &position, &type) != -1",
+                             "spot1_.check(click_x, click_y, &position, &type) != -2")
     if name == "hidden-derived-overload":
         return _replace_once(body,
                              "MainInterfaceGlobal.Win::set_bubble_text(resolved_label, &rect);",

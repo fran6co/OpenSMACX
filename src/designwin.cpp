@@ -2685,22 +2685,25 @@ void DesignWin::on_iface_left_click(int a1, int a2) {
 // through the main interface's client_to_screen.
 void DesignWin::on_iface_right_click(int xCoord, int yCoord) {
     TutorialWindow.reset();
+    const int click_y = yCoord;
+    const int click_x = xCoord;
     int position;
     int type;
-    if (spot1_.check(xCoord, yCoord, &position, &type) != -1 && position >= 0) {
+    if (spot1_.check(click_x, click_y, &position, &type) != -1 && position >= 0) {
         // The label pointer sits at byte offset 0xCE8 of the game block - slot
         // 0x33A of the LPSTR array, the same walk datalink.cpp's
         // CATEGORY_LABEL makes over Labels.strings_ptr.
+        xCoord = click_y;
+        yCoord = click_x;
         LPSTR label = Labels.strings_ptr[0x33A];
         LPSTR resolved_label = StringTable.get(label);
-        // The image swaps its two argument slots so the client_to_screen call
-        // receives (&xCoord, &yCoord); the anchor rect is that screen square.
-        MainInterfaceGlobal.client_to_screen(&xCoord, &yCoord);
+        // Preserve the swapped argument slots and reversed pointer order.
+        MainInterfaceGlobal.client_to_screen(&yCoord, &xCoord);
         RECT rect;
-        rect.left = xCoord;
-        rect.top = yCoord;
-        rect.right = xCoord;
-        rect.bottom = yCoord;
+        rect.left = yCoord;
+        rect.top = xCoord;
+        rect.right = yCoord;
+        rect.bottom = xCoord;
         // MainInterface declares its own (button_id, text) set_bubble_text,
         // which would hide the Win member the image calls directly.
         MainInterfaceGlobal.Win::set_bubble_text(resolved_label, &rect);
@@ -3898,10 +3901,11 @@ void DesignWin::check_abil() {
                 if ((protoAbilityFlags_ & (1u << candidate)) == 0) {
                     continue;
                 }
-                if (protoAbilityIDs_[0] < 0) {
-                    protoAbilityIDs_[0] = candidate;
-                } else if (protoAbilityIDs_[1] < 0) {
-                    protoAbilityIDs_[1] = candidate;
+                for (int slot = 0; slot < 2; ++slot) {
+                    if (protoAbilityIDs_[slot] < 0) {
+                        protoAbilityIDs_[slot] = candidate;
+                        break;
+                    }
                 }
             }
         }
@@ -4330,25 +4334,29 @@ void DesignWin::draw_special_1(int redraw) {
     Buffer::set_clip(&area);
     buffer_.copy(this, &area);
 
-    RECT title;
-    title.left = area.left + 5;
-    title.top = area.top + 2;
-    title.right = area.right - 5;
-    title.bottom = area.top + (font2_.unk_1_ < 0
-        ? font2_.line_height() : font2_.pixel_height() + font2_.unk_1_);
-    Buffer::set_text_color(0xE0, -1, 1, 1);
+    RECT title = area;
+    int title_height;
+    if (font2_.unk_1_ >= 0) {
+        title_height = font2_.pixel_height() + font2_.unk_1_;
+    } else {
+        title_height = font2_.line_height();
+    }
+    title.bottom = area.top + title_height;
+    title.top += 2;
+    title.left += 5;
+    title.right -= 5;
     StringTemp[0] = 0;
     strcat(StringTemp, label_get(0x228 / 4));
     strcat(StringTemp, " ");
 // RECOVERY_LITERAL: v1 0x00683554 0x00683556 ??_C@_01FBAH@1?$AA@ 0x00435B30
     strcat(StringTemp, "1"); // Original first special-ability title numeral.
     CharUpperA(StringTemp);
-    Buffer::wrap_cent(&font2_, StringTemp, &title);
+    Buffer::set_text_color(TextColourTable[156], TextColourTable[157], 1, 1);
+    area.top = Buffer::wrap_cent(&font2_, StringTemp, &title);
     Buffer::set_font(&font1_, 0, 0, 0);
-    Buffer::set_text_color(0xE0, -1, 1, 1);
+    Buffer::set_text_color(TextColourTable[160], TextColourTable[161], 1, 1);
 
-    const int ability = protoAbilityIDs_[0];
-    if (ability < 0) {
+    if (protoAbilityIDs_[0] < 0) {
         StringTemp[0] = 0;
         strcat(StringTemp, label_get(0x64 / 4));
         Buffer::write_cent_l(StringTemp, &area,
@@ -4356,14 +4364,14 @@ void DesignWin::draw_special_1(int redraw) {
         return;
     }
 
-    Buffer::set_text_color(0xE0, -1, 1, 1);
+    Buffer::set_text_color(TextColourTable[158], TextColourTable[159], 1, 1);
     StringTemp[0] = 0;
     strcat(StringTemp, "{");
-    strcat(StringTemp, StringTable.get(Ability[ability].name));
+    strcat(StringTemp, StringTable.get(Ability[protoAbilityIDs_[0]].name));
     strcat(StringTemp, ": ");
     strcat(StringTemp, " ");
     strcat(StringTemp, "}");
-    strcat(StringTemp, StringTable.get(Ability[ability].description));
+    strcat(StringTemp, StringTable.get(Ability[protoAbilityIDs_[0]].description));
     const int height = Buffer::wrap_height(
         StringTemp, area.right - area.left);
     area.top = area.bottom - height;
@@ -4379,25 +4387,29 @@ void DesignWin::draw_special_2(int redraw) {
     Buffer::set_clip(&area);
     buffer_.copy(this, &area);
 
-    RECT title;
-    title.left = area.left + 5;
-    title.top = area.top + 2;
-    title.right = area.right - 5;
-    title.bottom = area.top + (font2_.unk_1_ < 0
-        ? font2_.line_height() : font2_.pixel_height() + font2_.unk_1_);
-    Buffer::set_text_color(0xE0, -1, 1, 1);
+    RECT title = area;
+    int title_height;
+    if (font2_.unk_1_ >= 0) {
+        title_height = font2_.pixel_height() + font2_.unk_1_;
+    } else {
+        title_height = font2_.line_height();
+    }
+    title.bottom = area.top + title_height;
+    title.top += 2;
+    title.left += 5;
+    title.right -= 5;
     StringTemp[0] = 0;
     strcat(StringTemp, label_get(0x228 / 4));
     strcat(StringTemp, " ");
 // RECOVERY_LITERAL: v1 0x00683560 0x00683562 ??_C@_01KOLO@2?$AA@ 0x00435DE0
     strcat(StringTemp, "2"); // Original second special-ability title numeral.
     CharUpperA(StringTemp);
-    Buffer::wrap_cent(&font2_, StringTemp, &title);
+    Buffer::set_text_color(TextColourTable[156], TextColourTable[157], 1, 1);
+    area.top = Buffer::wrap_cent(&font2_, StringTemp, &title);
     Buffer::set_font(&font1_, 0, 0, 0);
-    Buffer::set_text_color(0xE0, -1, 1, 1);
+    Buffer::set_text_color(TextColourTable[160], TextColourTable[161], 1, 1);
 
-    const int ability = protoAbilityIDs_[1];
-    if (ability < 0) {
+    if (protoAbilityIDs_[1] < 0) {
         StringTemp[0] = 0;
         strcat(StringTemp, label_get(0x64 / 4));
         Buffer::write_cent_l(StringTemp, &area,
@@ -4405,14 +4417,14 @@ void DesignWin::draw_special_2(int redraw) {
         return;
     }
 
-    Buffer::set_text_color(0xE0, -1, 1, 1);
+    Buffer::set_text_color(TextColourTable[158], TextColourTable[159], 1, 1);
     StringTemp[0] = 0;
     strcat(StringTemp, "{");
-    strcat(StringTemp, StringTable.get(Ability[ability].name));
+    strcat(StringTemp, StringTable.get(Ability[protoAbilityIDs_[1]].name));
     strcat(StringTemp, ": ");
     strcat(StringTemp, " ");
     strcat(StringTemp, "}");
-    strcat(StringTemp, StringTable.get(Ability[ability].description));
+    strcat(StringTemp, StringTable.get(Ability[protoAbilityIDs_[1]].description));
     const int height = Buffer::wrap_height(
         StringTemp, area.right - area.left);
     area.top = area.bottom - height;
