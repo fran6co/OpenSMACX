@@ -159,6 +159,7 @@ set(OPENSMACX_SOURCES
     src/dialog.cpp
     src/dialogs.cpp
     src/faction.cpp
+    src/faction_treaty.cpp
     src/faction_diplomacy.cpp
     src/faction_dialogue.cpp
     src/faction_network.cpp
@@ -444,6 +445,7 @@ set_source_files_properties(
     src/territory.cpp
     src/world.cpp
     src/faction.cpp
+    src/faction_treaty.cpp
     src/faction_diplomacy.cpp
     src/faction_dialogue.cpp
     src/faction_network.cpp

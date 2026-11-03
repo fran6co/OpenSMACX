@@ -9,6 +9,7 @@ import pytest
 
 from match_recovery.source import read_text
 from match_recovery.source.writer import write_bytes
+from match_recovery.source_inventory import source_files
 from match_recovery.tasks import TaskStore
 
 
@@ -81,21 +82,24 @@ def projected_publication():
 
 def check_live_claim_continuity(current_files):
     """Check task identities and claim continuity, not line/order/body text."""
+    live_rows = []
+    for path in source_files(ROOT):
+        relative = path.relative_to(ROOT).as_posix()
+        current = current_files.get(relative, path.read_bytes())
+        live_rows.extend(read_text(current.decode("utf-8"), path))
     task_rows = {}
     for relative in ("src/game.cpp", *FILES):
         original = original_bytes(relative)
         path = ROOT / relative
         before = read_text(original.decode("utf-8"), path)
-        current = current_files.get(relative, path.read_bytes())
-        after = read_text(current.decode("utf-8"), path)
         for previous in before:
             if previous.address not in TASK_ADDRESSES:
                 continue
             identity = (previous.address, previous.name, previous.image_spans)
             task_rows[(relative, identity)] = previous
-            matches = [row for row in after
+            matches = [row for row in live_rows
                        if (row.address, row.name, row.image_spans) == identity]
-            assert len(matches) == 1
+            assert len(matches) == 1, (identity, len(matches))
             recorded = matches[0]
             if (relative, previous.address) in TARGETS:
                 assert recorded.byte_exact
@@ -143,8 +147,27 @@ def test_withdrawing_any_claim_is_rejected_by_checkpoint_projection():
         check_checkpoint_snapshot(withdrawn)
 
 
+def test_withdrawing_moved_treaty_claim_is_rejected():
+    relative = "src/faction_treaty.cpp"
+    path = ROOT / relative
+    current = path.read_bytes()
+    target, = [row for row in read_text(current.decode("utf-8"), path)
+               if row.address == 0x0055BB30]
+    assert target.byte_exact
+    withdrawn = write_bytes(current, [replace(target, byte_exact=False, semantic=False)])
+    with pytest.raises(AssertionError):
+        check_live_claim_continuity({relative: withdrawn})
+
+
 def test_unrelated_editor_energy_body_change_does_not_break_live_claims():
     check_live_claim_continuity({})
+    live_relative = "src/console_commands.cpp"
+    current = (ROOT / live_relative).read_bytes()
+    updated = current.replace(
+        b"parse_num(loop_faction, PlayersData[loop_faction].energy_reserves);",
+        b"parse_num(loop_faction, PlayersData[loop_faction].energy_reserves + 1);", 1)
+    assert updated != current
+    check_live_claim_continuity({live_relative: updated})
     relative = "src/console.cpp"
     snapshot = projected_publication()
     historical = snapshot[relative]
@@ -156,7 +179,6 @@ def test_unrelated_editor_energy_body_change_does_not_break_live_claims():
         b"// Restored the leader-derived energy field.\n        for (int loop_faction = 1; loop_faction < MaxPlayerNum; ++loop_faction) {",
         1)
     assert restored != historical
-    check_live_claim_continuity({relative: restored})
     with pytest.raises(AssertionError):
         check_checkpoint_snapshot({**snapshot, relative: restored})
 
