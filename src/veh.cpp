@@ -7487,7 +7487,7 @@ void __cdecl veh_clear(int veh_id, int proto_id, int faction_id) {
 /*
 Purpose: Check if the prototype can perform artillery combat. The 2nd parameter determines how sea
          units are treated.
-// ORIGINAL: 0x005C0DB0 ?can_arty@@YAHHH@Z 0x005C0DB0-0x005C0E35
+// ORIGINAL: 0x005C0DB0 ?can_arty@@YAHHH@Z 0x005C0DB0-0x005C0E35 BYTE_EXACT
 // TRIED 2026-09-03: the one remaining divergence is NOT the `mov bl/test bl`
 // wall the first TRIED line below describes - that is gone (both sides now
 // emit `mov bl, [edx+..]; test bl,bl`), and the Armor addressing of the
@@ -7511,20 +7511,20 @@ Return Value: Has artillery ability? true/false
 Status: Complete
 */
 BOOL __cdecl can_arty(int proto_id, BOOL sea_triad_retn) {
-    if (get_proto_offense_rating(proto_id) <= 0 && proto_id != BSC_SPORE_LAUNCHER) {
+    if (get_proto_offense_rating(proto_id) > 0 || proto_id == BSC_SPORE_LAUNCHER) {
+        if (get_proto_defense_rating(proto_id) >= 0 || proto_id == BSC_SPORE_LAUNCHER) {
+            uint8_t triad = get_proto_triad(proto_id);
+            switch (triad) {
+              case TRIAD_SEA:
+                return sea_triad_retn;
+              case TRIAD_AIR:
+                return false;
+            }
+            return has_abil(proto_id, ABL_ARTILLERY);
+        }
         return false;
     }
-    if (get_proto_defense_rating(proto_id) < 0 && proto_id != BSC_SPORE_LAUNCHER) {
-        return false;
-    }
-    uint8_t triad = get_proto_triad(proto_id);
-    switch (triad) {
-      case TRIAD_SEA:
-        return sea_triad_retn; // cursory check shows this value always being set to true
-      case TRIAD_AIR:
-        return false;
-    }
-    return has_abil(proto_id, ABL_ARTILLERY); // TRIAD_LAND
+    return false;
 }
 
 /*
