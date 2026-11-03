@@ -78,12 +78,12 @@ void WorldWin::init(int reset_map) {
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/004c3ab0.cpp and original 0x004C3AB0 disassembly; PullDown::get_selected_id owns 0xA20 item indexing."], "reason": "Home the retained world context menu over PullDown and owned map windows, preserving the EH cleanup span."}
 void WorldWin::right_menu(int x, int y) {
     PullDown menu;
-    int tile_x = 0;
-    int tile_y = 0;
-    bool in_range = pixel_to_tile(x, y, &tile_x, &tile_y) == 0;
-    if (tile_x < 0 || tile_x >= MapLongitudeBounds ||
-        tile_y < 0 || tile_y >= MapLatitudeBounds) {
-        in_range = false;
+    int tile_x;
+    int tile_y;
+    int in_range = pixel_to_tile(x, y, &tile_x, &tile_y) == 0;
+    if (tile_y < 0 || tile_y >= MapLatitudeBounds ||
+        tile_x < 0 || tile_x >= MapLongitudeBounds) {
+        in_range = 0;
     }
     Win::client_to_screen(&x, &y);
     menu.init(0);
@@ -100,7 +100,10 @@ void WorldWin::right_menu(int x, int y) {
     if ((GameDataStateStorage.fields_.game_state_ & 0x800) != 0) {
         return;
     }
-    switch (menu.get_selected_id()) {
+    const int selected_index = menu.get_selected();
+    const int selected_id = selected_index < 64
+        ? menu.item_id(selected_index) : -1;
+    switch (selected_id) {
     case 1:
         MapWinTable[0]->set_center(tile_x, tile_y, 1);
         break;
