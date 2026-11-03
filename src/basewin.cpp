@@ -908,8 +908,7 @@ void BaseWin::base_editor() {
 // RECOVERY_BINDING: v1 {"evidence": ["git:a538e0a3:src/recovered/units/00408eb0.cpp", "source:src/basewin.h", "image:original instruction and dispatch evidence for the BaseWin owner"], "reason": "Recover this original base-window operation through the real BaseWin owner, existing typed members and source-owned shared dependencies; catalogue naming and original intervals remain distinct from current compiler symbols."}
 void BaseWin::draw_support() {
     RECT saved = Buffer::rect1_;
-    Buffer *canvas = this;
-    canvas->set_clip(&rect1_);
+    Buffer::set_clip(&rect1_);
     fill(&rect1_, 0);
     const RECT area = rect1_;
     mapWin_.init(2, 0);
@@ -917,15 +916,16 @@ void BaseWin::draw_support() {
     const int width = mapWin_.pixel_width();
     const int height = mapWin_.pixel_height();
     mapWin_.field_1DD70_ = 0x200402;
+    const int caption_scale = MapWinCaptionScale;
     int zoom = 2;
     int width_step = 900;
     int height_step = 450;
     do {
-        const int horizontal = MapWinCaptionScale > 0
-            ? MapWinCaptionScale * 50 / MapWinCaptionDivisor : width_step / 16;
+        const int horizontal = caption_scale > 0
+            ? caption_scale * 50 / MapWinCaptionDivisor : width_step / 16;
         if ((MapLongitudeBounds / 2) * horizontal <= width) {
-            const int vertical = MapWinCaptionScale > 0
-                ? MapWinCaptionScale * 50 / MapWinCaptionDivisor : height_step / 16;
+            const int vertical = caption_scale > 0
+                ? caption_scale * 25 / MapWinCaptionDivisor : height_step / 16;
             if ((MapLatitudeBounds / 2) * vertical <= height) break;
         }
         --zoom;
@@ -936,11 +936,11 @@ void BaseWin::draw_support() {
     mapWin_.center_x_ = BaseCurrent->x;
     mapWin_.center_y_ = BaseCurrent->y;
     mapWin_.redraw();
-    mapWin_.copy(canvas, 0, 0,
+    mapWin_.copy(this, 0, 0,
         area.left + (area.right - area.left) / 2 - width / 2,
         area.top + (area.bottom - area.top) / 2 - height / 2, width, height);
     soft_update(&rect1_);
-    canvas->set_clip(&saved);
+    Buffer::set_clip(&saved);
 }
 
 // ORIGINAL: 0x0041A4C0 ?exit@BaseWin@@QAEXXZ 0x0041A4C0-0x0041A609
@@ -2762,7 +2762,7 @@ void BaseWin::draw_production(int update_mode) {
 
 // ORIGINAL: 0x00416DE0 ?add_queue@BaseWin@@QAEXHH@Z 0x00416DE0-0x00416FA8 FILE
 // RECOVERY_BINDING: v1 {"evidence": ["image:0x00416DE0-0x00416FA8 queue index/count and production-id accesses", "source:src/base.h:Base::queue_size", "source:src/base.h:Base::queue_production_id", "source:src/basewin.h:BaseWin queue selection fields"], "reason": "Apply the original queue insert/replace, sentinel removal and redraw sequence through typed Base queue storage; drawing remains an explicit unfinished dependency."}
-void BaseWin::add_queue(int insert, int production_id) {
+void BaseWin::add_queue(int production_id, int insert) {
     int index = selected_queue_slot_;
     if (index == 0 || index == 9) {
         return;
@@ -2773,25 +2773,25 @@ void BaseWin::add_queue(int insert, int production_id) {
     }
 
     if (production_id < 0
-        && (-production_id < 0x41 || (production_id != -0x44 && -production_id > 0x43))) {
+        && (-production_id < 0x41 || -production_id > 0x44)) {
         int slot = 1;
         while (slot < 9) {
-            if (BaseCurrent->queue_production_id[slot] == production_id) {
-                if (slot < index) {
-                    selected_queue_slot_ = index - 1;
-                }
-                --BaseCurrent->queue_size;
-                if (slot < 8) {
-                    int offset = slot;
-                    do {
-                        BaseCurrent->queue_production_id[offset] =
-                            BaseCurrent->queue_production_id[offset + 1];
-                        ++offset;
-                    } while (offset < 8);
-                }
-                break;
-            }
+            if (BaseCurrent->queue_production_id[slot] == production_id) break;
             ++slot;
+        }
+        if (slot < 9) {
+            if (slot < index) {
+                selected_queue_slot_ = index - 1;
+            }
+            --BaseCurrent->queue_size;
+            if (slot < 8) {
+                int offset = slot;
+                do {
+                    BaseCurrent->queue_production_id[offset] =
+                        BaseCurrent->queue_production_id[offset + 1];
+                    ++offset;
+                } while (offset < 8);
+            }
         }
     }
 

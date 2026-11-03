@@ -29,6 +29,19 @@ def _actual_hold():
     return body.replace("void Console::hold", "void hold", 1)
 
 
+def _actual_map_helpers():
+    header = (ROOT / "src/map.h").read_text()
+    faction = (ROOT / "src/faction.h").read_text()
+    base_bit = next(line.strip().rstrip(",") for line in header.splitlines()
+                    if line.strip().startswith("BIT_BASE_IN_TILE ="))
+    player_count = next(line for line in faction.splitlines()
+                        if line.startswith("static const int MaxPlayerNum ="))
+    return "\n".join(("enum { " + base_bit + " };", player_count,
+                       _definition(header, "inline Map *&map_tiles()"),
+                       _definition(header, "inline Map *__cdecl map_loc("),
+                       _definition(header, "MEASURED inline int __cdecl base_who(")))
+
+
 def _old_copied_local_mutant(body):
     original = "if (NetDaemonNet.lock_veh(&veh_id, 0, -1, -1, 0) != 0) {"
     mutant = (
@@ -40,8 +53,8 @@ def _old_copied_local_mutant(body):
 
 
 def _old_terrain_inequality_mutant(body):
-    original = "(tile.val2 & 0x0F) >= 8) {"
-    mutant = "(tile.val2 & 0x0F) < 8) {"
+    original = "if (base_who(x_coord, y_coord) < 0) {"
+    mutant = "if (base_who(x_coord, y_coord) >= 0) {"
     assert body.count(original) == 2
     return body.replace(original, mutant, 1)
 
@@ -50,6 +63,8 @@ def _harness(body):
     return r'''
 #include <assert.h>
 #include <stdint.h>
+#define __cdecl
+#define MEASURED
 
 enum { TRIAD_SEA = 1, TRIAD_AIR = 2, ORDER_HOLD = 2,
        PLAN_ALIEN_ARTIFACT = 12 };
@@ -66,9 +81,11 @@ struct VehPrototype { int chassis_id, plan; };
 
 Veh Vehs[4];
 Map Tiles[512];
+Map RedrawnTiles[512];
+Map *MapTiles = Tiles;
 RulesChassis Chassis[4];
 VehPrototype VehPrototypes[4];
-const int MapLongitude = 16;
+int MapLongitude = 16;
 
 enum { EV_LOCK = 1, EV_SYNCH = 2, EV_AWAIT = 3, EV_UNLOCK = 4,
        EV_CHECK = 5, EV_DRAW = 6, EV_ARTIFACT_ORDER = 7 };
@@ -76,6 +93,7 @@ int events[16], event_count;
 int fail_lock, lock_update_to, await_update_to;
 int synch_id, check_id, draw_x, draw_y, ordered_id;
 int synch_seen_waypoint, sync_mutate_coordinates;
+int change_map_on_draw;
 
 struct Daemon {
     int *follow;
@@ -111,7 +129,7 @@ struct TutorialWindow {
     }
 } TutWinBaseWindow;
 
-Map *map_tiles() { return Tiles; }
+MAP_HELPERS
 
 void synch_veh(int vehicle_id) {
     events[event_count++] = EV_SYNCH;
@@ -127,6 +145,10 @@ void draw_tile(int x, int y, int) {
     events[event_count++] = EV_DRAW;
     draw_x = x;
     draw_y = y;
+    if (change_map_on_draw) {
+        MapLongitude = 8;
+        MapTiles = RedrawnTiles;
+    }
 }
 
 BODY
@@ -137,7 +159,13 @@ void reset_state() {
         Chassis[i] = RulesChassis();
         VehPrototypes[i] = VehPrototype();
     }
-    for (int i = 0; i != 512; ++i) Tiles[i] = Map();
+    for (int i = 0; i != 512; ++i) {
+        Tiles[i] = Map();
+        RedrawnTiles[i] = Map();
+    }
+    MapLongitude = 16;
+    MapTiles = Tiles;
+    change_map_on_draw = 0;
     event_count = 0;
     fail_lock = 0;
     lock_update_to = -1;
@@ -348,7 +376,27 @@ void artifact_owner_comparison_keeps_full_width() {
     }
 }
 
+void artifact_lookup_reads_map_globals_after_draw() {
+    reset_state();
+    Vehs[0].x = 7; Vehs[0].y = 8;
+    Vehs[0].faction_id = 4;
+    Chassis[0].triad = TRIAD_SEA;
+    VehPrototypes[0].plan = PLAN_ALIEN_ARTIFACT;
+    Tiles[16 * 8 + (7 >> 1)].climate = 0x60;
+    RedrawnTiles[8 * 8 + (7 >> 1)].bit = 1;
+    RedrawnTiles[8 * 8 + (7 >> 1)].val2 = 4;
+    RedrawnTiles[16 * 8 + (7 >> 1)].bit = 1;
+    RedrawnTiles[16 * 8 + (7 >> 1)].val2 = 3;
+    change_map_on_draw = 1;
+    const int expected[] = {EV_LOCK, EV_SYNCH, EV_AWAIT, EV_UNLOCK,
+                            EV_CHECK, EV_DRAW, EV_ARTIFACT_ORDER};
+    hold(0, 55);
+    expect_prefix(expected, 7);
+    assert(ordered_id == 0 && draw_x == 7 && draw_y == 8);
+}
+
 int main() {
+    artifact_lookup_reads_map_globals_after_draw();
     artifact_owner_comparison_keeps_full_width();
     lock_failure_is_early();
     unchanged_selection_uses_expected_order();
@@ -362,7 +410,7 @@ int main() {
     air_range_accepts_valid_base_and_range_zero_disables_air_gate();
     return 0;
 }
-'''.replace("BODY", body)
+'''.replace("BODY", body).replace("MAP_HELPERS", _actual_map_helpers())
 
 
 def _compile_run(tmp_path, compiler, source, stem):
@@ -424,3 +472,24 @@ def test_actual_hold_old_narrowed_owner_compiles_then_fails(tmp_path, compiler_n
     assert built.returncode == 0, built.stderr
     ran = subprocess.run((str(exe),), capture_output=True, text=True, timeout=10)
     assert ran.returncode != 0
+
+
+@pytest.mark.parametrize("compiler_name", ("g++", "clang++"))
+def test_actual_hold_cached_final_tile_index_compiles_then_fails(tmp_path, compiler_name):
+    compiler = shutil.which(compiler_name)
+    if compiler is None:
+        pytest.skip(compiler_name + " unavailable")
+    actual = _actual_hold()
+    original = "const int owner = base_who(x_coord, y_coord);"
+    assert actual.count(original) == 1
+    stale = """int owner = -1;
+    if (map_tiles()[tile_index].bit & 1) {
+        owner = map_tiles()[tile_index].val2 & 0x0F;
+        if (owner > 7) owner = -1;
+    }"""
+    mutant = actual.replace(original, stale, 1)
+    built, exe = _compile_run(tmp_path, compiler, _harness(mutant), "cached_final_tile_index")
+    assert built.returncode == 0, built.stderr
+    ran = subprocess.run((str(exe),), capture_output=True, text=True, timeout=10)
+    assert ran.returncode != 0
+    assert "event_count == count" in ran.stderr

@@ -301,7 +301,7 @@ int main() {
     BaseCurrent->queue_size = -69;
     window.selected_queue_slot_ = 1;
     try {
-        window.add_queue(1, 5);
+        window.add_queue(5, 1);
     } catch (...) { return 90; }
     if (static_cast<int32_t>(BaseCurrent->queue_size) != -67) return 1;
     if (BaseCurrent->queue_production_id.values[1] != 5) return 2;
@@ -383,7 +383,7 @@ def _base_queue_body() -> str:
 
 
 def _basewin_add_queue_body() -> str:
-    return _extract_definition(PROJECT / "src/basewin.cpp", "void BaseWin::add_queue(int insert, int production_id)")
+    return _extract_definition(PROJECT / "src/basewin.cpp", "void BaseWin::add_queue(int production_id, int insert)")
 
 
 def _ai_loop() -> str:
@@ -400,6 +400,9 @@ def test_pinned_original_queue_count_branches_are_signed() -> None:
     # enemy_strategy's inclusive queue walk is skipped for a signed negative.
     assert image.read(Span(0x005614F7, 0x00561501)) == bytes.fromhex(
         "8b 86 8c d0 97 00 85 c0 7c 26")
+    # First argument is productionID in EBX; second is insertion flag in EAX.
+    assert image.read(Span(0x00416DFF, 0x00416E0F)) == bytes.fromhex(
+        "8b 45 0c 8b 5d 08 8b 0d 30 ea 90 00 85 c0 75 0f")
     # BaseWin::add_queue increments only when signed count is below 9.
     assert image.read(Span(0x00416EC1, 0x00416EC9)) == bytes.fromhex(
         "8b 41 4c 83 f8 09 7d 0a")
@@ -465,6 +468,18 @@ def test_actual_basewin_add_queue_keeps_signed_below_nine_behavior(
         _basewin_fixture(body, "uint32_t"),
     )
     assert unsigned_member.returncode != 0
+
+    wrong_order_body = body.replace(
+        "void BaseWin::add_queue(int production_id, int insert)",
+        "void BaseWin::add_queue(int insert, int production_id)",
+    )
+    assert wrong_order_body != body
+    wrong_order = _compile_run(
+        tmp_path / "wrong-parameter-order", _compiler(compiler_name),
+        _basewin_fixture(wrong_order_body),
+    )
+    # Count behavior still passes; the old definition writes id1 instead of5.
+    assert wrong_order.returncode == 2, wrong_order.stdout + wrong_order.stderr
 
 
 @pytest.mark.parametrize("compiler_name", ["g++", "clang++"])

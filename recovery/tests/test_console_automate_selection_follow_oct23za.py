@@ -31,6 +31,19 @@ def _actual_automate():
     return body.replace("void Console::automate", "void automate", 1)
 
 
+def _actual_map_helpers():
+    header = (ROOT / "src/map.h").read_text()
+    faction = (ROOT / "src/faction.h").read_text()
+    base_bit = next(line.strip().rstrip(",") for line in header.splitlines()
+                    if line.strip().startswith("BIT_BASE_IN_TILE ="))
+    player_count = next(line for line in faction.splitlines()
+                        if line.startswith("static const int MaxPlayerNum ="))
+    return "\n".join(("enum { " + base_bit + " };", player_count,
+                       _definition(header, "inline Map *&map_tiles()"),
+                       _definition(header, "inline Map *__cdecl map_loc("),
+                       _definition(header, "MEASURED inline int __cdecl base_who(")))
+
+
 def _old_prelock_reference_mutant(body):
     replacements = (
         ("Veh &locked_vehicle = Vehs[veh_id];", "Veh &locked_vehicle = vehicle;"),
@@ -51,6 +64,8 @@ def _harness(body):
     return r'''
 #include <assert.h>
 #include <stdint.h>
+#define __cdecl
+#define MEASURED
 
 enum { TRIAD_LAND = 0, TRIAD_AIR = 2, TERRA_FARM = 0 };
 
@@ -74,10 +89,11 @@ struct Map { uint8_t climate, contour, val2, region, visibility, val3, unknown; 
 struct RulesChassis { uint8_t triad, range; };
 struct VehPrototype { uint8_t chassis_id, weapon_id, plan; };
 struct RulesWeapon { int8_t offense_rating; };
-struct TerraformAction { int16_t preq_tech; };
+struct TerraformAction { int prerequisite_tech[2]; };
 
 Veh Vehs[4];
 Map Tiles[512];
+Map *MapTiles = Tiles;
 RulesChassis Chassis[4];
 VehPrototype VehPrototypes[4];
 RulesWeapon Weapon[4];
@@ -116,7 +132,7 @@ struct ConsoleState {
     }
 } ConsoleGlobal;
 
-Map *map_tiles() { return Tiles; }
+MAP_HELPERS
 int has_tech(int, int) { return tech_available; }
 void action_home(int vehicle_id, int) {
     events[event_count++] = EV_HOME;
@@ -254,7 +270,7 @@ int main() {
     direct_air_order_keeps_prelock_path();
     return 0;
 }
-'''.replace("BODY", body)
+'''.replace("BODY", body).replace("MAP_HELPERS", _actual_map_helpers())
 
 
 def _compile_run(tmp_path, compiler, source, stem):

@@ -288,6 +288,14 @@ static char console_disband_human_caption[] = "DISBAND";
 // RECOVERY_OBJECT: v1 0x0068834C ?GoToLastSelection@@3HA
 int GoToLastSelection = -1;
 
+// Distinct writable message cells consumed by the original artillery command.
+// RECOVERY_OBJECT: v1 0x00688EF0 _ConsoleArtySimulNoText
+static char ConsoleArtySimulNoText[] = "SIMULNO";
+// RECOVERY_OBJECT: v1 0x00688EF8 _ConsoleArtyUnitMovedText
+static char ConsoleArtyUnitMovedText[] = "UNITMOVED";
+// RECOVERY_OBJECT: v1 0x00688F04 _ConsoleArtySeaText
+static char ConsoleArtySeaText[] = "SEAARTY";
+
 // Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x004D04A0 ?wait@Console@@QAEXH@Z 0x004D04A0-0x004D04E0 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/004d04a0.cpp: original identity and complete spans", "source:src/console.h: Console owner declarations and layout", "source:src/console.cpp: coupled navigation, selection and lifecycle caller relationships"], "reason": "The original Console operation is expressed by the corresponding real Console owner definition, using its recovered members and source-owned callees rather than the retained seed scaffold."}
@@ -1100,7 +1108,7 @@ void Console::automate(int veh_id, int order) {
             direct_lock = true;
         }
         if (!direct_lock && (order == 4 || order == 5) &&
-            (tile.bit & 1) != 0 && (tile.val2 & 0x0F) < 8) {
+            base_who(vehicle.x, vehicle.y) >= 0) {
             return;
         }
     }
@@ -1350,14 +1358,14 @@ void Console::hold(int veh_id, int waypoint_y) {
 
     bool should_hold = (tile.climate & ~0x1F) >= 0x60 || chassis.triad != 0;
     if (!should_hold) {
-        if ((tile.bit & 1) == 0 || (tile.val2 & 0x0F) >= 8) {
+        if (base_who(x_coord, y_coord) < 0) {
             NetDaemonNet.unlock_veh();
             return;
         }
     }
 
     if (chassis.triad == TRIAD_AIR && chassis.range != 0) {
-        if ((tile.bit & 1) == 0 || (tile.val2 & 0x0F) >= 8) {
+        if (base_who(x_coord, y_coord) < 0) {
             if ((tile.bit & 0x40000) == 0) {
                 NetDaemonNet.unlock_veh();
                 return;
@@ -1376,13 +1384,7 @@ void Console::hold(int veh_id, int waypoint_y) {
     if (VehPrototypes[Vehs[veh_id].proto_id].plan != PLAN_ALIEN_ARTIFACT) {
         return;
     }
-    int owner = -1;
-    if (map_tiles()[tile_index].bit & 1) {
-        owner = map_tiles()[tile_index].val2 & 0x0F;
-        if (owner > 7) {
-            owner = -1;
-        }
-    }
+    const int owner = base_who(x_coord, y_coord);
     if (owner == Vehs[veh_id].faction_id) {
         NetDaemonNet.order_veh(veh_id, -1, 0);
     }
@@ -3767,51 +3769,54 @@ void Console::custom_my_faction() {
 }
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x004D6070 ?goto_routine@Console@@QAAXH@Z 0x004D6070-0x004D6196
+// ORIGINAL: 0x004D6070 ?goto_routine@Console@@QAAXH@Z 0x004D6070-0x004D6196 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/004d6070.cpp: original identity and complete spans", "source:src/console.h: Console owner declarations and layout", "source:src/console.cpp: coupled navigation, selection and lifecycle caller relationships"], "reason": "The original Console operation is expressed by the corresponding real Console owner definition, using its recovered members and source-owned callees rather than the retained seed scaffold."}
 // symbol    ?goto_routine@Console@@SAXH@Z
 void __cdecl Console::goto_routine(int base_id) {
     PlanWindow.clear_lines();
-    if (base_id < 0 || base_id >= GameDataStateStorage.fields_.base_current_count_) {
-        PlanWindow.back_redraw();
-        PlanWindow.on_redraw();
-        return;
-    }
-    if (GoToPreviewActive) {
-        PlanWindow.opticenter(GoToSourceX, GoToSourceY,
+    if (base_id >= 0 && base_id < GameDataStateStorage.fields_.base_current_count_) {
+        if (GoToPreviewActive) {
+            PlanWindow.opticenter(GoToSourceX, GoToSourceY,
                              Bases[base_id].x, Bases[base_id].y, 0);
-        if (base_id < GameDataStateStorage.fields_.base_current_count_)
-            PlanWindow.add_line(GoToSourceX, GoToSourceY,
+            if (base_id < GameDataStateStorage.fields_.base_current_count_) {
+                PlanWindow.add_line(GoToSourceX, GoToSourceY,
                                 Bases[base_id].x, Bases[base_id].y,
                                 InfoFactionTextColors[ConsoleGlobal.faction_id_]);
-        PlanWindow.on_redraw();
-        return;
-    }
-    PlanWindow.monocenter(Bases[base_id].x, Bases[base_id].y, 0);
-    PlanWindow.add_line(Bases[base_id].x, Bases[base_id].y,
+                PlanWindow.on_redraw();
+                return;
+            }
+        } else {
+            PlanWindow.monocenter(Bases[base_id].x, Bases[base_id].y, 0);
+            PlanWindow.add_line(Bases[base_id].x, Bases[base_id].y,
                         Bases[base_id].x, Bases[base_id].y,
                         InfoFactionTextColors[ConsoleGlobal.faction_id_]);
+            PlanWindow.on_redraw();
+            return;
+        }
+    } else {
+        PlanWindow.back_redraw();
+    }
     PlanWindow.on_redraw();
 }
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x004D9170 ?arty@Console@@QAEXH@Z 0x004D9170-0x004D92CD
+// ORIGINAL: 0x004D9170 ?arty@Console@@QAEXH@Z 0x004D9170-0x004D92CD BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/004d9170.cpp: original identity and complete spans", "source:src/console.h: Console owner declarations and layout", "source:src/console.cpp: coupled navigation, selection and lifecycle caller relationships"], "reason": "The original Console operation is expressed by the corresponding real Console owner definition, using its recovered members and source-owned callees rather than the retained seed scaffold."}
 void Console::arty(int vehicle) {
     if (!can_arty(Vehs[vehicle].proto_id, 1)) return;
     if (not_my_turn()) {
-        NetMsgPrimary.pop("SIMULNO", 5000, 0, nullptr);
+        NetMsgPrimary.pop(ConsoleArtySimulNoText, 5000, 0, nullptr);
         return;
     }
     if (!veh_ready(vehicle)) {
-        NetMsgPrimary.pop("UNITMOVED", 5000, 0, nullptr);
+        NetMsgPrimary.pop(ConsoleArtyUnitMovedText, 5000, 0, nullptr);
         return;
     }
     Map *const tile = map_loc(Vehs[vehicle].x, Vehs[vehicle].y);
     if ((tile->climate & ~0x1F) < 0x60 &&
         Chassis[VehPrototypes[Vehs[vehicle].proto_id].chassis_id].triad != 1 &&
-        (!(tile->bit & 1) || (tile->val2 & 15) >= 8)) {
-        NetMsgPrimary.pop("SEAARTY", 5000, 0, nullptr);
+        base_who(Vehs[vehicle].x, Vehs[vehicle].y) < 0) {
+        NetMsgPrimary.pop(ConsoleArtySeaText, 5000, 0, nullptr);
         return;
     }
     ConsoleGlobal.cursor_on(10, static_cast<int>(Rules.artillery_max_rng));
