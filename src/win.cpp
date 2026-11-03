@@ -6793,7 +6793,6 @@ typedef unsigned int uint32_t;
 // symbol    ?on_nc_paint@Win@@UAEXPAUtagRECT@@H@Z
 // kind game
 void Win::on_nc_paint(RECT * area, int flags) {
-
     if ((iFlags_ & 0x11) != 0 &&
         (iSomeFlag_ & 1) != 0 &&
         (win_parent_ == 0 || win_parent_->is_visible() != 0)) {
@@ -6801,85 +6800,56 @@ void Win::on_nc_paint(RECT * area, int flags) {
         this->client_to_screen(&stack8, &stack4);
         stack8 -= outer_rect_.left;
         stack4 -= outer_rect_.top;
-
         if (area != 0) {
             flags = -1;
             ScreenBufferOwner.buffer().set_clip(area);
         }
-
         int iVar1;
-        if ((iFlags_ & 0x10) == 0 ||
-            (iFlags_ & 0x400000) != 0) {
+        if ((iFlags_ & 0x10) == 0 || (iFlags_ & 0x400000) != 0) {
             iVar1 = border_thickness_;
         } else {
             iVar1 = caption_height_;
         }
-
         if (buffer1_ != 0 && (flags == -1 || flags == 0)) {
-            Buffer *buf;
-            int x, y;
-            if (WinBackBuffer == 0) {
-                buf = (&ScreenBufferOwner.buffer());
-                x = stack8;
-                y = stack4;
+            if (WinBackBuffer != 0) {
+                buffer1_->draw(WinBackBuffer, WinFillColour,
+                               stack8 - WinViewOriginX, stack4 - WinViewOriginY, 1, 1);
             } else {
-                buf = WinBackBuffer;
-                x = stack8 - WinViewOriginX;
-                y = stack4 - WinViewOriginY;
+                buffer1_->draw(&ScreenBufferOwner.buffer(), WinFillColour,
+                               stack8, stack4, 1, 1);
             }
-            buffer1_->draw(buf, WinFillColour, x, y, 1, 1);
         }
-
         if (buffer4_ != 0 && (flags == -1 || flags == 2)) {
             int v = bottom_border_thickness_;
-            if (v == -1) {
-                v = border_thickness_;
-            }
-            Buffer *buf;
-            int x;
-            if (WinBackBuffer == 0) {
-                v = (client_rect_.bottom -
-                     client_rect_.top) - v;
-                buf = (&ScreenBufferOwner.buffer());
-                x = stack8;
+            if (v == -1) v = border_thickness_;
+            if (WinBackBuffer != 0) {
+                buffer4_->draw(WinBackBuffer, WinFillColour, stack8 - WinViewOriginX,
+                               (((client_rect_.bottom - client_rect_.top) - WinViewOriginY) - v) + stack4, 1, 1);
             } else {
-                v = ((client_rect_.bottom -
-                      client_rect_.top) - WinViewOriginY) - v;
-                buf = WinBackBuffer;
-                x = stack8 - WinViewOriginX;
+                buffer4_->draw(&ScreenBufferOwner.buffer(), WinFillColour, stack8,
+                               ((client_rect_.bottom - client_rect_.top) - v) + stack4, 1, 1);
             }
-            buffer4_->draw(buf, WinFillColour, x, v + stack4, 1, 1);
         }
-
         if (buffer3_ != 0 && (flags == -1 || flags == 3)) {
-            if (WinBackBuffer == 0) {
-                buffer3_->draw((&ScreenBufferOwner.buffer()), WinFillColour, stack8,
-                           stack4 + iVar1, 1, 1);
-            } else {
+            if (WinBackBuffer != 0) {
                 buffer3_->draw(WinBackBuffer, WinFillColour,
-                           stack8 - WinViewOriginX, (iVar1 - WinViewOriginY) + stack4, 1, 1);
-            }
-        }
-
-        if (buffer2_ != 0 && (flags == -1 || flags == 1)) {
-            Buffer *buf;
-            int v;
-            int yv = iVar1;
-            if (WinBackBuffer == 0) {
-                v = (client_rect_.right -
-                     client_rect_.left) -
-                    border_thickness_;
-                buf = (&ScreenBufferOwner.buffer());
+                               stack8 - WinViewOriginX, (iVar1 - WinViewOriginY) + stack4, 1, 1);
             } else {
-                yv = iVar1 - WinViewOriginY;
-                v = ((client_rect_.right -
-                      client_rect_.left) -
-                     border_thickness_) - WinViewOriginX;
-                buf = WinBackBuffer;
+                buffer3_->draw(&ScreenBufferOwner.buffer(), WinFillColour,
+                               stack8, stack4 + iVar1, 1, 1);
             }
-            buffer2_->draw(buf, WinFillColour, v + stack8, yv + stack4, 1, 1);
         }
-
+        if (buffer2_ != 0 && (flags == -1 || flags == 1)) {
+            if (WinBackBuffer != 0) {
+                buffer2_->draw(WinBackBuffer, WinFillColour,
+                               (((client_rect_.right - client_rect_.left) - border_thickness_) - WinViewOriginX) + stack8,
+                               (iVar1 - WinViewOriginY) + stack4, 1, 1);
+            } else {
+                buffer2_->draw(&ScreenBufferOwner.buffer(), WinFillColour,
+                               ((client_rect_.right - client_rect_.left) - border_thickness_) + stack8,
+                               iVar1 + stack4, 1, 1);
+            }
+        }
         ScreenBufferOwner.buffer().restore_clip();
     }
 }
@@ -11512,14 +11482,14 @@ int __cdecl pump_key_message() {
 // symbol    ?pump_all_key_messages@@YAXXZ
 void __cdecl pump_all_key_messages() {
     MSG message;
-    for (;;) {
+    BOOL (WINAPI *translate_message)(const MSG *) = TranslateMessage;
+    BOOL (WINAPI *peek_message)(LPMSG, HWND, UINT, UINT, UINT) = PeekMessageA;
+    LRESULT (WINAPI *dispatch_message)(const MSG *) = DispatchMessageA;
+    do {
         do_video();
         check_net();
-        if (!PeekMessageA(&message, nullptr, WM_KEYDOWN, WM_KEYLAST, PM_REMOVE))
-            break;
-        TranslateMessage(&message);
-        DispatchMessageA(&message);
-    }
+    } while (peek_message(&message, nullptr, WM_KEYDOWN, WM_KEYLAST, PM_REMOVE) &&
+             (translate_message(&message), dispatch_message(&message), true));
     do_net();
 }
 
@@ -11580,16 +11550,17 @@ int __cdecl pump_sound_message() {
 }
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x005FD310 sub_5fd310 0x005FD310-0x005FD35D
+// ORIGINAL: 0x005FD310 sub_5fd310 0x005FD310-0x005FD35D BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/005fd310.cpp"], "reason": "Recover the complete core message helper using SDK MSG/USER32, original queue ranges and callback ordering; preserve catalogue identity and historical seed obligation."}
 // symbol    ?pump_all_sound_messages@@YAXXZ
 void __cdecl pump_all_sound_messages() {
     MSG message;
-    while (PeekMessageA(&message, nullptr, WM_USER + 1, WM_USER + 1, PM_REMOVE)) {
-        TranslateMessage(&message);
-        DispatchMessageA(&message);
-        check_net();
-    }
+    BOOL (WINAPI *translate_message)(const MSG *) = TranslateMessage;
+    BOOL (WINAPI *peek_message)(LPMSG, HWND, UINT, UINT, UINT) = PeekMessageA;
+    LRESULT (WINAPI *dispatch_message)(const MSG *) = DispatchMessageA;
+    do {
+    } while (peek_message(&message, nullptr, WM_USER + 1, WM_USER + 1, PM_REMOVE) &&
+             (translate_message(&message), dispatch_message(&message), check_net(), true));
 }
 
 // Historical catalogue name: this entry only clears the message status.

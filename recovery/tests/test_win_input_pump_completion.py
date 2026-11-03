@@ -33,6 +33,12 @@ const unsigned WM_LBUTTONDOWN=0x201, WM_LBUTTONUP=0x202;
 const unsigned WM_RBUTTONDOWN=0x204, WM_RBUTTONUP=0x205, WM_MBUTTONDBLCLK=0x209;
 const unsigned WM_USER=0x400, PM_REMOVE=1;
 struct MSG { void *hwnd; unsigned message; };
+#define WINAPI
+typedef int BOOL;
+typedef unsigned UINT;
+typedef void *HWND;
+typedef MSG *LPMSG;
+typedef long LRESULT;
 std::vector<MSG> Queue;
 std::vector<std::string> Trace;
 unsigned MsgStatus=0;
