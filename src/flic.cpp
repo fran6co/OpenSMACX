@@ -522,7 +522,7 @@ Purpose: Advance the animation to an arbitrary frame. When the target is
          frame whose subchunks are all still decodable (types other than
          7 and 0xC), and finally the remembered position is re-seeked and
          frames are decoded forward until the target is reached.
-// ORIGINAL: 0x0062A2C0 ?UNK3@Flic@@QAEHH@Z 0x0062A2C0-0x0062A4FA
+// ORIGINAL: 0x0062A2C0 ?UNK3@Flic@@QAEHH@Z 0x0062A2C0-0x0062A4FA BYTE_EXACT
 // symbol    ?advance_to_frame@Flic@@QAEHH@Z
 // size      570 bytes
 // prototype int (__thiscall ?UNK3@Flic@@QAEHH@Z)(Flic* this, int)
@@ -559,6 +559,15 @@ Return Value: 0
 Status: Complete
 */
 int Flic::advance_to_frame(int target_frame) {
+    // This scan reads only the six-byte disk size/type header. Its local
+    // still occupies an eight-byte stack slot; the recursive decoder keeps
+    // DataChunk's separate count word and its original unread-tail behavior.
+#pragma pack(push, 1)
+    struct FlicScanHeader {
+        uint32_t size_;
+        uint16_t type_;
+    };
+#pragma pack(pop)
     target_frame %= header_.frames_;
 
     if (target_frame < static_cast<int>(frame_) && (decoder_flags_ & 1)) {
@@ -591,7 +600,7 @@ int Flic::advance_to_frame(int target_frame) {
 
             int decodable = 0;
             for (int i = 0; i < subchunks; i++) {
-                DataChunk sub;
+                FlicScanHeader sub;
                 fread(&sub, 6, 1, file_);
                 if (sub.type_ == 7 || sub.type_ == 0xc) {
                     decodable = 1;
@@ -608,38 +617,38 @@ int Flic::advance_to_frame(int target_frame) {
         } while (static_cast<int>(frame_) <= target_frame);
     }
 
-    if (static_cast<int>(pending_frame) >= static_cast<int>(frame_)) {
+    if (static_cast<int>(pending_frame) < static_cast<int>(frame_)) {
+        frame_ = pending_frame;
+        fseek(file_, pending_pos, SEEK_SET);
+
+        if (static_cast<int>(frame_) < target_frame) {
+            do {
+                // x/y captured before the guards and stored back once both
+                // pass: the call may mutate *this, so the image carries the
+                // members through registers around it (0x0062A432-0x0062A474).
+                int y = origin_y_;
+                int x = origin_x_;
+                if (decoder_flags_ & 1) {
+                    if (destination_buffer_->get_data() != 0) {
+                        origin_x_ = x;
+                        origin_y_ = y;
+                        if (frame_ == header_.frames_) {
+                            fseek(file_, header_.second_frame_, SEEK_SET);
+                            frame_ = 0;
+                        }
+                        fread(chunks, 0x10, 1, file_);
+                        decode_chunk(&chunks->header_);
+                        frame_++;
+                    }
+                }
+            } while (static_cast<int>(frame_) < target_frame);
+        }
+
+        return 0;
+    } else {
         fseek(file_, frame_pos, SEEK_SET);
         return 0;
     }
-
-    frame_ = pending_frame;
-    fseek(file_, pending_pos, SEEK_SET);
-
-    if (static_cast<int>(frame_) < target_frame) {
-        do {
-            // x/y captured before the guards and stored back once both
-            // pass: the call may mutate *this, so the image carries the
-            // members through registers around it (0x0062A432-0x0062A474).
-            int y = origin_y_;
-            int x = origin_x_;
-            if (decoder_flags_ & 1) {
-                if (destination_buffer_->get_data() != 0) {
-                    origin_x_ = x;
-                    origin_y_ = y;
-                    if (frame_ == header_.frames_) {
-                        fseek(file_, header_.second_frame_, SEEK_SET);
-                        frame_ = 0;
-                    }
-                    fread(chunks, 0x10, 1, file_);
-                    decode_chunk(&chunks->header_);
-                    frame_++;
-                }
-            }
-        } while (static_cast<int>(frame_) < target_frame);
-    }
-
-    return 0;
 }
 
 /*

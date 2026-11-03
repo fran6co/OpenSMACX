@@ -37,13 +37,21 @@ def _actual_schema_fragment():
     header = HEADER.read_text()
     data = _braced_declaration(header, "struct DataChunk {")
     frame = _braced_declaration(header, "struct FlicFrameChunk {")
-    return "\n".join((data + ";", frame + ";"))
+    function = _braced_declaration(SOURCE.read_text(), "int Flic::advance_to_frame(")
+    start = function.index("#pragma pack(push, 1)")
+    end = function.index("#pragma pack(pop)", start) + len("#pragma pack(pop)")
+    scan = function[start:end]
+    assert _braced_declaration(function, "struct FlicScanHeader {") + ";" in scan
+    return "\n".join((data + ";", frame + ";", scan))
 
 
 def _compile_layout(fragment, compiler):
     program = """#include <cstddef>
 #include <cstdint>
 """ + fragment + """
+static_assert(sizeof(FlicScanHeader) == 6, "scan header extent");
+static_assert(offsetof(FlicScanHeader, size_) == 0, "scan size offset");
+static_assert(offsetof(FlicScanHeader, type_) == 4, "scan type offset");
 static_assert(sizeof(DataChunk) == 8, "DataChunk extent");
 static_assert(offsetof(DataChunk, size_) == 0, "size offset");
 static_assert(offsetof(DataChunk, type_) == 4, "type offset");
@@ -77,6 +85,7 @@ def test_current_actual_prefix_and_frame_declarations_compile():
 @pytest.mark.parametrize(("old", "new", "diagnostic"), [
     ("uint16_t count_;", "uint32_t count_;", "DataChunk extent"),
     ("uint8_t slack_[8];", "uint8_t slack_[9];", "frame extent"),
+    ("#pragma pack(push, 1)", "#pragma pack(push, 4)", "scan header extent"),
 ])
 def test_wrong_actual_field_extent_fails_the_intended_layout_assertion(
         old, new, diagnostic):
@@ -109,11 +118,11 @@ def test_frame_owners_and_decoder_use_actual_named_prefix_members():
     assert "chunks->header_.size_ + frame_pos" in unkn
     assert "chunks->header_.count_" in unkn
     assert "decode_chunk(&chunks->header_);" in unkn
-    # Full original prologue/scan/cleanup evidence below bounds this scan
-    # storage to eight bytes before the return address. The six-byte read
-    # alone would not establish that extent. Use the existing prefix type;
-    # leave its unread count tail and frame_pos uninitialized.
-    assert "DataChunk sub;" in unkn
+    # The original physical stack slot is eight bytes, while the scan reads
+    # only its six-byte file header. Slot padding does not require the
+    # recursive decoder's count field in this view. Preserve frame_pos's
+    # original uninitialized path and the recursive decoder's unread tail.
+    assert "FlicScanHeader sub;" in unkn
     assert "fread(&sub, 6, 1, file_);" in unkn
     assert "sub.type_ == 7 || sub.type_ == 0xc" in unkn
     assert "FlicFrameChunk sub{};" not in unkn
