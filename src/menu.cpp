@@ -49,7 +49,9 @@
 
 namespace {
 char MenuEntryPadding[] = "  ";
+// RECOVERY_OBJECT: v1 0x00696E48 ?MenuComputeLeftSpace@?%src/menu.cpp@@3PADA
 char MenuComputeLeftSpace[] = " ";
+// RECOVERY_OBJECT: v1 0x00696E4C ?MenuComputeRightSpace@?%src/menu.cpp@@3PADA
 char MenuComputeRightSpace[] = " ";
 char MenuLeftDownMargin[] = " ";
 char MenuMouseMoveMargin[] = " ";
@@ -202,7 +204,7 @@ int Menu::UNK10(int menu_id, char *text) {
 }
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x005FB9C0 ?compute@Menu@@QAEXXZ 0x005FB9C0-0x005FBABD
+// ORIGINAL: 0x005FB9C0 ?compute@Menu@@QAEXXZ 0x005FB9C0-0x005FBABD BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/005fb9c0.cpp", "image:Menu6700B0/AlphaMenu66ED88/PullDown66FF40 constructor-selected primary tables; Buffer secondary subobject+444", "recovery/tasks/popup-font-configuration-owner-closure.json"], "reason": "Recover this complete operation in its genuine Menu/PullDown owner, using native constructor-selected virtual dispatch, real members and shared source-owned dependencies; preserve original identity, retained seed and historical restoration obligations."}
 // symbol    ?compute@Menu@@UAEXXZ
 // TRIED: `(seed = DAT_9bb484, DAT_9b7b94 = seed, seed != 0)` (single load reused for both the store and the test) instead of a comma expression that rereads the global twice, which forced an extra reload. `reinterpret_cast<Spot*>(self+0xa2c)` kept INLINE at each call site, not hoisted to a named local - hoisting moves the `lea` ahead of the `DAT_9bb484` fallback branch and regresses to MISMATCH #9. Best form lands at MISMATCH #33 (deep past the loop setup); divergence is a 'mov' vs 'test' pairing whose surrounding bytes still match, not a missed field.
@@ -226,15 +228,13 @@ void Menu::compute() {
     for (int i = 0; i < count_; ++i) {
         MenuEntry &entry = entries_[i];
         if ((entry.flags & 1) == 0) continue;
-        char *const entry_text = entry.text;
-        Font *const entry_font = MenuDefaultFont;
-        const int width = entry_font->width(entry_text);
-        if ((entry.flags & 4) == 0) {
-            spot_.add(i, 0, right_space, 0, width, line_height);
-            right_space += width;
-        } else {
+        const int width = MenuDefaultFont->width(entry.text);
+        if (entry.flags & 4) {
             left_space -= width;
             spot_.add(i, 0, left_space, 0, width, line_height);
+        } else {
+            spot_.add(i, 0, right_space, 0, width, line_height);
+            right_space += width;
         }
     }
 }
