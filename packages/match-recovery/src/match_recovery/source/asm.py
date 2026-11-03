@@ -859,7 +859,7 @@ class AsmComparison:
     data_bytes: int = 0
     data_divergence: int | None = None    # first differing offset into
                                           # `code`, relocations discounted
-    diagnostic: str = ""            # NO_COMPILE only: what the compiler said
+    diagnostic: str = ""            # compiler, refusal or comparison context
     flags: str = ""                 # the flag set that produced `compiled`
 
 
@@ -997,6 +997,11 @@ def compare_asm(original: Listing, compiled: Listing) -> AsmComparison:
     because one side has been linked and the other has not, which is not a
     fact about the source. `context` still shows the REAL lines, because a
     reader chasing a divergence wants the address the image actually holds.
+
+    BYTE_EXACT compares the complete equal-length extent directly. Decoding
+    relocated table words can produce different instruction boundaries, and
+    an undecodable suffix must not disappear from the byte verdict. The
+    instruction counts and context remain diagnostics, not code/data proof.
     """
     compiled = _split_at(compiled, original.instruction_bytes)
     n, m = len(original.instructions), len(compiled.instructions)
@@ -1028,9 +1033,22 @@ def compare_asm(original: Listing, compiled: Listing) -> AsmComparison:
     # and whose jump table does not has not reproduced the function.
     data_divergence = _data_divergence(original, compiled)
 
+    mask = original.mask | compiled.mask
+    whole_extent_equal = (
+        len(original.code) == len(compiled.code)
+        and all(left == right or offset in mask
+                for offset, (left, right) in enumerate(zip(original.code, compiled.code)))
+    )
     constants: list = []
-    if n == m and matching == n and data_divergence is None:
+    diagnostic = ""
+    if whole_extent_equal and data_divergence is None:
         verdict = Tier.BYTE_EXACT
+        if n != m or matching != n:
+            diagnostic = (
+                "Complete relocation-masked extent agrees; instruction decoding "
+                "differs within masked bytes. No code/data boundary or target "
+                "agreement is inferred."
+            )
     elif original.shapes == compiled.shapes:
         verdict = Tier.SHAPE_EXACT
         constants = differing_constants(original, compiled)
@@ -1057,6 +1075,7 @@ def compare_asm(original: Listing, compiled: Listing) -> AsmComparison:
         differing_constants=tuple(constants),
         allocation_only=("" if verdict is Tier.BYTE_EXACT
                          else allocation_only(original, compiled)),
+        diagnostic=diagnostic,
         flags=compiled.flags)
 
 

@@ -987,7 +987,7 @@ Purpose: Dispatch one chunk: a type-0xF1FA frame ring recurses over its
          transparent variants when the transparent bit is set. Afterwards
          the file position is corrected by whatever the decoder did not
          consume.
-// ORIGINAL: 0x0062ACD0 ?decode_chunk@Flic@@QAEXPAUDataChunk@@@Z 0x0062ACD0-0x0062AF40
+// ORIGINAL: 0x0062ACD0 ?decode_chunk@Flic@@QAEXPAUDataChunk@@@Z 0x0062ACD0-0x0062AF40 BYTE_EXACT
 // size      624 bytes  (extent corrected 2026-09-17: 541 code-to-ret bytes plus the
 //             two switch jump-table pairs the original image carries at 0x0062AEED-
 //             0x0062AF38 and VC6 emits inside this COMDAT under both campaign flag

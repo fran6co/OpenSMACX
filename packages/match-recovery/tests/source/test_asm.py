@@ -614,6 +614,50 @@ def test_a_relocated_table_entry_is_discounted_like_any_other():
     assert asm.compare_asm(original, compiled).verdict == "BYTE_EXACT"
 
 
+def test_complete_extent_with_relocated_table_needs_no_data_boundary():
+    body = b"\x33\xC0\xC3"
+    image = body + struct.pack("<II", 0x4010A1, 0x401020) + b"\x00\x01"
+    obj = body + bytes(8) + b"\x00\x01"
+    mask = frozenset(range(len(body), len(body) + 8))
+    original, compiled = a_listing(image), a_listing(obj, mask=mask)
+    assert len(original.instructions) != len(compiled.instructions)
+    result = asm.compare_asm(original, compiled)
+    assert result.verdict == "BYTE_EXACT"
+    assert result.compared_bytes == len(image) - len(mask)
+    assert result.masked_bytes == len(mask)
+    # A byte verdict neither rewrites the actual disassembly nor invents a
+    # code/data boundary or proves the relocated targets.
+    assert result.original_instructions == len(original.instructions)
+    assert result.compiled_instructions == len(compiled.instructions)
+    assert result.data_bytes == 0
+    assert "decoding" in result.diagnostic
+
+
+@pytest.mark.parametrize("damage", ("opcode", "selector", "truncated", "extra"))
+def test_unpartitioned_relocated_table_rejects_unmasked_extent_damage(damage):
+    body = b"\x33\xC0\xC3"
+    image = body + struct.pack("<II", 0x4010A1, 0x401020) + b"\x00\x01"
+    obj = bytearray(body + bytes(8) + b"\x00\x01")
+    if damage == "opcode":
+        obj[0] = 0x31
+    elif damage == "selector":
+        obj[-1] = 0x02
+    elif damage == "truncated":
+        del obj[-1]
+    else:
+        obj.append(0x90)
+    mask = frozenset(range(len(body), len(body) + 8))
+    assert asm.compare_asm(a_listing(image), a_listing(bytes(obj), mask=mask)).verdict != "BYTE_EXACT"
+
+
+def test_different_undecodable_suffixes_are_not_byte_exact():
+    # Both suffixes are incomplete instruction prefixes. Decoding only RET
+    # must not hide a differing byte in the mapped contribution.
+    original, compiled = a_listing(b"\xC3\x0F"), a_listing(b"\xC3\x66")
+    assert len(original.instructions) == len(compiled.instructions) == 1
+    assert asm.compare_asm(original, compiled).verdict != "BYTE_EXACT"
+
+
 def test_the_split_declines_when_the_extent_is_not_a_boundary():
     """Landing mid-instruction means the shipped extent is not where this
     body's code ends, so nothing has been proved about the tail."""
