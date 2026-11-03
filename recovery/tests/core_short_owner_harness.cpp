@@ -12,6 +12,12 @@ struct RulesTechnology { const char *name; };
 struct Player { const char *adj_name_faction; };
 struct Console { int faction_id_; };
 struct MSG { unsigned int message; };
+#define WINAPI
+typedef int BOOL;
+typedef unsigned int UINT;
+typedef void *HWND;
+typedef MSG *LPMSG;
+typedef long LRESULT;
 struct Net { void handle_sys_msg(); };
 
 extern RulesTechnology Technology[89];

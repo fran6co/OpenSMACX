@@ -62,21 +62,26 @@ def require_import_contract(sources):
     assert "IAT_GetAsyncKeyState" not in stringstruct
     assert "::GetAsyncKeyState(0x10) >> 8" in stringstruct
 
-    # The Win message pump deliberately reads the three IAT slots in this
-    # declaration order before entering the loop's do_video/check_net calls.
+    assert require_win_pump_contract(win)
+    return True
+
+
+def require_win_pump_contract(win):
+    # Typed local snapshots precede the loop callbacks; native compiler
+    # observations separately check the emitted IAT load order.
     pump_start = win.index("void __cdecl pump_mouse_messages() {")
     pump_end = win.index("// ===== homed from src/unrecovered/005f4d90.cpp =====", pump_start)
     pump = win[pump_start:pump_end]
     names = [
-        "DispatchMessageProc const volatile dispatch = &::DispatchMessageA;",
-        "PeekMessageProc const volatile peek = &::PeekMessageA;",
-        "TranslateMessageProc const volatile translate = &::TranslateMessage;",
+        "BOOL (WINAPI *translate)(const MSG *) = TranslateMessage;",
+        "BOOL (WINAPI *peek)(LPMSG, HWND, UINT, UINT, UINT) = PeekMessageA;",
+        "LRESULT (WINAPI *dispatch)(const MSG *) = DispatchMessageA;",
     ]
     assert all(name in pump for name in names)
     positions = [pump.index(name) for name in names]
     assert positions == sorted(positions)
     assert positions[-1] < pump.index("do_video();") < pump.index("check_net();")
-    assert "translate(&msg);" in pump and "dispatch(&msg);" in pump
+    assert "translate(&msg)" in pump and "dispatch(&msg)" in pump
     return True
 
 
@@ -110,7 +115,7 @@ def test_import_migration_mutants_are_detected():
         ("src/netwin.cpp", "::UnionRect(name_rect, row_rect, &field);", "::UnionRect(row_rect, name_rect, &field);"),
         ("src/mapwin.cpp", "::GetKeyState(0x91) & 1", "::GetAsyncKeyState(0x91) & 1"),
         ("src/stringstruct.cpp", "::GetAsyncKeyState(0x10) >> 8", "::GetKeyState(0x10) >> 8"),
-        ("src/win.cpp", "PeekMessageProc const volatile peek = &::PeekMessageA;", "PeekMessageProc const volatile peek = &::PeekMessageW;"),
+        ("src/win.cpp", "BOOL (WINAPI *peek)(LPMSG, HWND, UINT, UINT, UINT) = PeekMessageA;", "BOOL (WINAPI *peek)(LPMSG, HWND, UINT, UINT, UINT) = PeekMessageW;"),
     )
     for relative, original, replacement in mutants:
         changed = dict(sources)
@@ -121,3 +126,25 @@ def test_import_migration_mutants_are_detected():
         except AssertionError:
             continue
         raise AssertionError("import-binding mutation survived: " + relative)
+
+
+def test_win_pump_typed_import_contract_and_damage():
+    source = read("src/win.cpp")
+    assert require_win_pump_contract(source)
+    mutants = (
+        ("BOOL (WINAPI *peek)(LPMSG, HWND, UINT, UINT, UINT) = PeekMessageA;",
+         "BOOL (WINAPI *peek)(LPMSG, HWND, UINT, UINT, UINT) = PeekMessageW;"),
+        ("do_video();\n        check_net();", "check_net();\n        do_video();"),
+        ("dispatch(&msg)", "translate(&msg)"),
+    )
+    for original, replacement in mutants:
+        start = source.index("void __cdecl pump_mouse_messages() {")
+        end = source.index("// ===== homed from src/unrecovered/005f4d90.cpp =====", start)
+        pump = source[start:end]
+        assert original in pump
+        changed = source[:start] + pump.replace(original, replacement) + source[end:]
+        try:
+            require_win_pump_contract(changed)
+        except AssertionError:
+            continue
+        raise AssertionError("Win pump import/order damage survived: " + original)

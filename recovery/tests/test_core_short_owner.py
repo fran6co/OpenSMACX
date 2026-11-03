@@ -137,20 +137,20 @@ def test_actual_body_damage_controls(tmp_path: Path, case: str) -> None:
         new = "if (true) {"
     elif case == "do_task_paint_poll_range":
         key = "DO_TASK"
-        old = "PeekMessageA(&paint_message, 0, WM_PAINT, WM_PAINT, PM_REMOVE)"
-        new = "PeekMessageA(&paint_message, 0, 0x0000, WM_PAINT, PM_REMOVE)"
+        old = "peek_message(&paint_message, 0, WM_PAINT, WM_PAINT, PM_REMOVE)"
+        new = "peek_message(&paint_message, 0, 0x0000, WM_PAINT, PM_REMOVE)"
     elif case == "wait_task_paint_poll_range":
         key = "WAIT_TASK"
-        old = "PeekMessageA(&paint_message, 0, WM_PAINT, WM_PAINT, PM_REMOVE)"
-        new = "PeekMessageA(&paint_message, 0, 0x0000, WM_PAINT, PM_REMOVE)"
+        old = "peek_message(&paint_message, 0, WM_PAINT, WM_PAINT, PM_REMOVE)"
+        new = "peek_message(&paint_message, 0, 0x0000, WM_PAINT, PM_REMOVE)"
     elif case == "do_task_initial_order":
         key = "DO_TASK"
         old = "do_net();\n    check_net();"
         new = "check_net();\n    do_net();"
     elif case == "do_all_tasks_final_cleanup":
         key = "DO_ALL_TASKS"
-        old = "MsgStatus = 0;\n            do_net();\n            return;"
-        new = "MsgStatus = 0;\n            return;"
+        old = "MsgStatus = 0;\n    do_net();\n}"
+        new = "MsgStatus = 0;\n}"
     elif case == "tech_secret_helper_order":
         key = "TECH_SECRET"
         old = "parse_say(0, Technology[tech_id].name, -1, -1);\n    parse_says(1, Players[faction_id].adj_name_faction, -1, -1);"

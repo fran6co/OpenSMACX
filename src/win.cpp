@@ -4028,7 +4028,7 @@ void __stdcall sub_5f86a0(Sound *sound) {
 // Native task pumps drain paint messages first, then poll ordinary messages
 // before the WM_USER-and-higher range. The network's 0x402 notification is
 // consumed by its actual owner instead of being sent to a window procedure.
-// ORIGINAL: 0x005FC7F0 ?do_task@@YAHXZ 0x005FC7F0-0x005FC8E8
+// ORIGINAL: 0x005FC7F0 ?do_task@@YAHXZ 0x005FC7F0-0x005FC8E8 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/005fc7f0.cpp", "image:terranx_original.exe:0x005FC7F0", "Pinned5FC74A..757 and5FC83A..847 both poll0xF..0xF. Only high-range402 messages route ActiveNet.handle_sys_msg; null network consumes them. do_all_tasks continues until empty and calls do_net after final MsgStatus=0.", "Coordinator-owned core-pump-secret-owner-20261001 scope; preserved original seeds and historical obligations, no matching/runtime claim from binding"], "reason": "Recover the native message pump using SDK MSG/USER32, existing MsgStatus and ActiveNet storage. Preserve paint-first and low/high queue priority, helper order and dedicated network notification dispatch."}
 // TRIED: PeekMessageA/TranslateMessage/DispatchMessageA (loaded as plain function pointers from the IAT slots at 0x669358/0x66935c/ 0x669340, per the emitted globals) read into locals right after the first do_video/do_net/check_net() triple, matching the original's `mov esi,[...]` placement AFTER those three calls rather than before (moving it earlier cost the first 5 instructions). Best reached is 78.3% mnemonic similarity (#5 call vs push): the callee-register-save prologue still spills one extra value this body doesn't, not chased further. `handle_sys_msg` at 0x632db0 is a thiscall `Net` member with `this` read from 0x9be608 right before the call (`mov ecx,[0x9be608]`), not a bare cdecl call.
 int __cdecl do_task() {
@@ -4039,36 +4039,37 @@ int __cdecl do_task() {
     do_video();
     do_net();
     check_net();
+    BOOL (WINAPI *peek_message)(LPMSG, HWND, UINT, UINT, UINT) = PeekMessageA;
+    BOOL (WINAPI *translate_message)(const MSG *) = TranslateMessage;
+    LRESULT (WINAPI *dispatch_message)(const MSG *) = DispatchMessageA;
     MsgStatus = 1;
-    for (;;) {
+    do {
         do_video();
         check_net();
         do_net();
-        if (!PeekMessageA(&paint_message, 0, WM_PAINT, WM_PAINT, PM_REMOVE)) {
-            break;
-        }
-        TranslateMessage(&paint_message);
-        DispatchMessageA(&paint_message);
-        MsgStatus = 1;
-    }
+    } while (peek_message(&paint_message, 0, WM_PAINT, WM_PAINT, PM_REMOVE) &&
+             (translate_message(&paint_message), dispatch_message(&paint_message), MsgStatus = 1, true));
     MsgStatus = 0;
-    if (!PeekMessageA(&message, 0, 0, WM_USER, PM_REMOVE)) {
-        if (!PeekMessageA(&message, 0, WM_USER, 0xFFFF, PM_REMOVE)) {
-            return 0;
-        }
+    if (peek_message(&message, 0, 0, WM_USER, PM_REMOVE)) {
+        translate_message(&message);
+        dispatch_message(&message);
+        return 1;
+    }
+    if (peek_message(&message, 0, WM_USER, 0xFFFF, PM_REMOVE)) {
         if (message.message == 0x402) {
             if (ActiveNet != 0) {
                 ActiveNet->handle_sys_msg();
             }
-            return 1;
+        } else {
+            translate_message(&message);
+            dispatch_message(&message);
         }
+        return 1;
     }
-    TranslateMessage(&message);
-    DispatchMessageA(&message);
-    return 1;
+    return 0;
 }
 
-// ORIGINAL: 0x005FC700 ?wait_task@@YAXXZ 0x005FC700-0x005FC7E4
+// ORIGINAL: 0x005FC700 ?wait_task@@YAXXZ 0x005FC700-0x005FC7E4 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/005fc700.cpp", "image:terranx_original.exe:0x005FC700", "Pinned5FC74A..757 and5FC83A..847 both poll0xF..0xF. Only high-range402 messages route ActiveNet.handle_sys_msg; null network consumes them. do_all_tasks continues until empty and calls do_net after final MsgStatus=0.", "Coordinator-owned core-pump-secret-owner-20261001 scope; preserved original seeds and historical obligations, no matching/runtime claim from binding"], "reason": "Recover the native message pump using SDK MSG/USER32, existing MsgStatus and ActiveNet storage. Preserve paint-first and low/high queue priority, helper order and dedicated network notification dispatch."}
 // TRIED: 260 vs 228 bytes; VC6's /O2 loop rotation duplicates the do_video/check_net/do_net top-of-loop block into a separate call sequence instead of the original's fall-through-then-jmp reuse of one copy. Tried both `for (;;)` and `do {} while(1)` for the poll loop; both rotate the same way.
 void __cdecl wait_task() {
@@ -4079,32 +4080,32 @@ void __cdecl wait_task() {
     do_video();
     do_net();
     check_net();
+    BOOL (WINAPI *peek_message)(LPMSG, HWND, UINT, UINT, UINT) = PeekMessageA;
+    BOOL (WINAPI *translate_message)(const MSG *) = TranslateMessage;
+    LRESULT (WINAPI *dispatch_message)(const MSG *) = DispatchMessageA;
     MsgStatus = 1;
-    for (;;) {
+    do {
         do_video();
         check_net();
         do_net();
-        if (!PeekMessageA(&paint_message, 0, WM_PAINT, WM_PAINT, PM_REMOVE)) {
-            break;
-        }
-        TranslateMessage(&paint_message);
-        DispatchMessageA(&paint_message);
-        MsgStatus = 1;
-    }
+    } while (peek_message(&paint_message, 0, WM_PAINT, WM_PAINT, PM_REMOVE) &&
+             (translate_message(&paint_message), dispatch_message(&paint_message), MsgStatus = 1, true));
     MsgStatus = 0;
-    if (!PeekMessageA(&message, 0, 0, WM_USER, PM_REMOVE)) {
-        if (!PeekMessageA(&message, 0, WM_USER, 0xFFFF, PM_REMOVE)) {
-            return;
-        }
+    if (peek_message(&message, 0, 0, WM_USER, PM_REMOVE)) {
+        translate_message(&message);
+        dispatch_message(&message);
+        return;
+    }
+    if (peek_message(&message, 0, WM_USER, 0xFFFF, PM_REMOVE)) {
         if (message.message == 0x402) {
             if (ActiveNet != 0) {
                 ActiveNet->handle_sys_msg();
             }
-            return;
+        } else {
+            translate_message(&message);
+            dispatch_message(&message);
         }
     }
-    TranslateMessage(&message);
-    DispatchMessageA(&message);
 }
 
 // ORIGINAL: 0x005FC8F0 ?do_all_tasks@@YAXXZ 0x005FC8F0-0x005FC9DE
@@ -4115,44 +4116,41 @@ void __cdecl do_all_tasks() {
     MSG message;
     // Native paint dispatch has its own MSG, separate from the ordinary queue.
     MSG paint_message;
+    BOOL (WINAPI *peek_message)(LPMSG, HWND, UINT, UINT, UINT) = PeekMessageA;
+    BOOL (WINAPI *translate_message)(const MSG *) = TranslateMessage;
+    LRESULT (WINAPI *dispatch_message)(const MSG *) = DispatchMessageA;
     for (;;) {
-        for (;;) {
-            MsgStatus = 0;
+        MsgStatus = 0;
+        do_video();
+        do_net();
+        check_net();
+        do {
+            MsgStatus = 1;
             do_video();
-            do_net();
             check_net();
-            for (;;) {
-                MsgStatus = 1;
-                do_video();
-                check_net();
-                do_net();
-                if (!PeekMessageA(&paint_message, 0, WM_PAINT, WM_PAINT, PM_REMOVE)) {
-                    break;
-                }
-                TranslateMessage(&paint_message);
-                DispatchMessageA(&paint_message);
-            }
-            MsgStatus = 0;
-            if (!PeekMessageA(&message, 0, 0, WM_USER, PM_REMOVE)) {
-                break;
-            }
-            TranslateMessage(&message);
-            DispatchMessageA(&message);
-        }
-        if (!PeekMessageA(&message, 0, WM_USER, 0xFFFF, PM_REMOVE)) {
-            MsgStatus = 0;
             do_net();
-            return;
+        } while (peek_message(&paint_message, 0, WM_PAINT, WM_PAINT, PM_REMOVE) &&
+                 (translate_message(&paint_message), dispatch_message(&paint_message), true));
+        MsgStatus = 0;
+        if (peek_message(&message, 0, 0, WM_USER, PM_REMOVE)) {
+            translate_message(&message);
+            dispatch_message(&message);
+            continue;
+        }
+        if (!peek_message(&message, 0, WM_USER, 0xFFFF, PM_REMOVE)) {
+            break;
         }
         if (message.message == 0x402) {
             if (ActiveNet != 0) {
                 ActiveNet->handle_sys_msg();
             }
         } else {
-            TranslateMessage(&message);
-            DispatchMessageA(&message);
+            translate_message(&message);
+            dispatch_message(&message);
         }
     }
+    MsgStatus = 0;
+    do_net();
 }
 
 void __cdecl do_all_chars();
@@ -10830,7 +10828,7 @@ typedef int(__stdcall *TranslateMessageProc)(const MSG *);
 typedef LRESULT(__stdcall *DispatchMessageProc)(const MSG *);
 // Keep one typed imported-function pointer snapshot per API, in the same
 // capture order and location as the original entry-point slot reads.
-// ORIGINAL: 0x005FCEC0 sub_5fcec0 0x005FCEC0-0x005FCF8C FILE
+// ORIGINAL: 0x005FCEC0 sub_5fcec0 0x005FCEC0-0x005FCF8C FILE BYTE_EXACT
 // symbol    ?pump_mouse_messages@@YAXXZ
 // size      204 bytes
 // prototype
@@ -10867,36 +10865,20 @@ typedef LRESULT(__stdcall *DispatchMessageProc)(const MSG *);
 // the image's own registers. 39 of 68, similarity 0.910, and the divergence
 // is that merge and nothing else.
 void __cdecl pump_mouse_messages() {
-    // Capture each imported target before the first loop callbacks. VC6 can
-    // sink ordinary import-address locals to their first use; observable
-    // local stores retain this capture epoch without original IAT addresses.
-    DispatchMessageProc const volatile dispatch = &::DispatchMessageA;
-    PeekMessageProc const volatile peek = &::PeekMessageA;
-    TranslateMessageProc const volatile translate = &::TranslateMessage;
-
     MSG msg;
-    for (;;) {
+    // Cache the SDK entry points before the first loop callbacks.
+    BOOL (WINAPI *translate)(const MSG *) = TranslateMessage;
+    BOOL (WINAPI *peek)(LPMSG, HWND, UINT, UINT, UINT) = PeekMessageA;
+    LRESULT (WINAPI *dispatch)(const MSG *) = DispatchMessageA;
+    do {
         do_video();
         check_net();
-        if (!peek(&msg, 0, 0x200, 0x209, 1)) {
-            break;
-        }
-        translate(&msg);
-        dispatch(&msg);
-        if (msg.message == 0x201) {
-            if (peek(&msg, msg.hwnd, 0x202, 0x202, 1)) {
-                translate(&msg);
-                dispatch(&msg);
-                continue;
-            }
-        }
-        if (msg.message == 0x204) {
-            if (peek(&msg, msg.hwnd, 0x205, 0x205, 1)) {
-                translate(&msg);
-                dispatch(&msg);
-            }
-        }
-    }
+    } while (peek(&msg, 0, 0x200, 0x209, 1) &&
+             (translate(&msg), dispatch(&msg),
+              (msg.message == 0x201 && peek(&msg, msg.hwnd, 0x202, 0x202, 1))
+                  ? (translate(&msg), dispatch(&msg), true)
+                  : ((msg.message == 0x204 && peek(&msg, msg.hwnd, 0x205, 0x205, 1))
+                         ? (translate(&msg), dispatch(&msg), true) : true)));
     do_net();
 }
 

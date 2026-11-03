@@ -8,7 +8,7 @@ def test_complete_win_input_pump_family():
     source = (Path(__file__).resolve().parents[2] / "src/win.cpp").read_text()
     names = ["pump_key_message", "pump_all_key_messages", "pump_mouse_move_message",
              "pump_mouse_button_message", "pump_sound_message", "pump_all_sound_messages",
-             "do_all_sounds"]
+             "do_all_sounds", "pump_mouse_messages"]
     bodies = []
     for name in names:
         start = source.index("__cdecl " + name + "()")
@@ -95,6 +95,13 @@ int main() {
     reset(); pump_all_sound_messages(); assert(trace()=="P" && MsgStatus==99);
     reset(); post(0x401); post(0x402); post(0x401); pump_all_sound_messages();
     assert(trace()=="PTDCPTDCP" && Queue.size()==1 && Queue[0].message==0x402 && MsgStatus==77);
+    reset(); pump_mouse_messages(); assert(trace()=="VCPN" && MsgStatus==99);
+    reset(); post(0x20A); post(0x201); post(0x202,Window2); post(0x202);
+    pump_mouse_messages();
+    assert(trace()=="VCPTDPTDVCPTDVCPN" && Queue.size()==1 && Queue[0].message==0x20A);
+    reset(); post(0x204); post(0x205); pump_mouse_messages();
+    assert(trace()=="VCPTDPTDVCPN" && Queue.empty());
+    reset(); post(0x201); pump_mouse_messages(); assert(trace()=="VCPTDPVCPN");
     reset(); do_all_sounds(); assert(trace().empty() && MsgStatus==0);
 }
 '''
