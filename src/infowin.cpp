@@ -756,22 +756,29 @@ void InfoWin::timer_proc(int a1) {
 
 // Advance the selected information pane through its valid display states,
 // then repaint the newly selected pane.
-// ORIGINAL: 0x00458FF0 ?timer_change@InfoWin@@QAEXH@Z 0x00458FF0-0x00459141
+// ORIGINAL: 0x00458FF0 ?timer_change@InfoWin@@QAEXH@Z 0x00458FF0-0x00459141 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:caf4963a:src/recovered/units/00458ff0.cpp", "source:src/infowin.h", "source:src/game.cpp:InterfaceBoxStyles", "pinned:0x004590C7-0x004590DF clears 0x007AF174, 0x007AF17C, 0x007AF178 and 0x007AF180 after successful state_valid", "source:MainInterfaceGlobal at 0x007AE820 has its GraphicWin Buffer subobject at +0x444; those destinations are Buffer +0x510, +0x518, +0x514 and +0x51C", "source:Buffer::reset_text_state clears the existing fields in that original order; InfoWin::draw_text uses the same owner operation"], "reason": "Home the timed pane transition with owned InfoWin state, pane rectangle and box style. The former animation-counter alias actually addressed MainInterfaceGlobal's Buffer text state; reset those members after the successful validity loop, preserving the original store order and callbacks."}
 void InfoWin::timer_change(int) {
     if (IfaceIdToSlotStorage[ActiveIfaceIdStorage] != 0) return;
 
     const int old_pane = active_pane_;
     field_94_ = 0;
-    active_pane_ = WinScreenWidth == 800 ? 0 : (old_pane - 1) & 1;
+    if (WinScreenWidth == 800) {
+        active_pane_ = 0;
+    } else {
+        active_pane_ = (old_pane - 1) & 1;
+    }
 
-    bool first = true;
+    int first = 1;
     for (;;) {
-        const int source_state = redraw_phase_ >= 0
-            ? redraw_phase_ : pane_states_[first ? old_pane : active_pane_];
-        pane_states_[active_pane_] = (source_state + 1) % 8;
+        if (redraw_phase_ >= 0) {
+            pane_states_[active_pane_] = (redraw_phase_ + 1) % 8;
+        } else {
+            pane_states_[active_pane_] =
+                (pane_states_[first ? old_pane : active_pane_] + 1) % 8;
+        }
         redraw_phase_ = -1;
-        first = false;
+        first = 0;
         if (state_valid(pane_states_[active_pane_])) break;
     }
 
@@ -781,12 +788,10 @@ void InfoWin::timer_change(int) {
     field_A8_ = 0;
     MainInterfaceGlobal.box_sprite(&pane_rects_[active_pane_],
                                    &InterfaceBoxStyles[18]);
-    // The original performs a second unconditional pair of stores after the
-    // box draw (its `this + 0x88` address test cannot be null for a live
-    // InfoWin). Keep this pair after the call so callback-visible state and
-    // the original write order are preserved.
-    visible_characters_[0] = 0;
-    visible_characters_[1] = 0;
+    if (pane_states_ != 0) {
+        visible_characters_[0] = 0;
+        visible_characters_[1] = 0;
+    }
     setup_text();
     draw_text(active_pane_);
 }

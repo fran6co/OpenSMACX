@@ -110,6 +110,11 @@ int main() {
     path = tmp_path / "timer.cpp"
     binary = tmp_path / "timer"
     path.write_text(source)
+    # The pinned post-box path tests the actual pane-state array address.
+    # Modern hosts diagnose that redundant legacy guard; retain the warning
+    # while allowing this source-behavior harness to execute it.
+    guard_warning = ("-Wno-error=tautological-pointer-compare"
+                     if compiler_name == "clang++" else "-Wno-error=address")
     subprocess.run([compiler, "-std=c++03", "-Wall", "-Wextra", "-Werror",
-                    str(path), "-o", str(binary)], check=True)
+                    guard_warning, str(path), "-o", str(binary)], check=True)
     subprocess.run([str(binary)], check=True)
