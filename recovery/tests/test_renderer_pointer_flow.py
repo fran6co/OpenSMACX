@@ -60,8 +60,8 @@ def pointer_sources():
     apply = _definition(base_h, "void apply_button_config(")
     apply = apply.replace("void apply_button_config(",
                           "void BasePop::apply_button_config(", 1)
-    game_source = (ROOT / "src/game.cpp").read_text()
-    assert function_line(ROOT / "src/game.cpp", "load_interface") > 0
+    game_source = (ROOT / "src/interface_assets.cpp").read_text()
+    assert function_line(ROOT / "src/interface_assets.cpp", "load_interface") > 0
     initializer = _definition(game_source, "void __cdecl load_interface(")
     expected_producer = {12: 18, 13: 21, 14: 24, 6: 19, 17: 26,
                          8: 25, 15: 20, 7: 22, 16: 23}

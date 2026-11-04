@@ -17,6 +17,7 @@
  */
 // ORIGINAL: 0x00456280 ??_GGamma@@UAEPAXI@Z 0x00456280-0x004562A1 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["historical deleting-thunk source src/deleting_thunks.cpp; original full spans retained: 0x00456280-0x004562A1", "Pinned class constructor ??0Gamma@@QAE@XZ at 0x005C8DA0 stores original class/view table VA 0x66c3d8 at 0x005C8E2E (mov dword ptr [esi], 0x66c3d8); the current genuine owner vftable ??_7Gamma@@6BWin@@@ selects generated ??_GGamma@@UAEPAXI@Z in slot 0 (+0x0) through weak entry ??_EGamma@@UAEPAXI@Z (mode 2).", "Pinned ??_GGamma@@UAEPAXI@Z at 0x00456280 calls the source-mapped ??1Gamma@@QAE@XZ at 0x00456110, then tests byte ptr [ebp + 8], 1; je 0x45629a bypasses scalar delete when bit 0 is clear, while bit 0 set calls 0x0064557F; it save original this; call destructor; delete only when flags bit 0 is set; return saved this with ret 4.", "The real class lifetime is owned by src/gamma.cpp; its compiler-emitted deleting symbol and vftable slot carry this original identity. Hand-written adapter bodies with live adjustor callers remain until those callers are independently qualified and transferred. The linked weak/COMDAT copy is not used to choose source ownership.", "the source writer preserves the historical mapping's exactness state (historical exactness obligation retained); current compiler extent is not asserted equal to the original span"], "reason": "Bind the original Gamma scalar deleting-destructor identity to the actual compiler-emitted class deleting destructor in its genuine owner translation unit. The original constructor's pinned vptr store and the current owner's physical table slot identify this class/view; no callback/thunk body is hand-authored here."}
+// compile_context src/interface_assets.cpp
 // symbol    ??_GGamma@@UAEPAXI@Z
 // kind      game
 #include "stdafx.h"
@@ -276,7 +277,7 @@ void Gamma::adjust_pal(double gamma) {
 // Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x00456110 ??1Gamma@@QAE@XZ 0x00456110-0x00456275;0x00655190-0x00655240 FILE
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00456110.cpp shows a Gamma::close call followed by reverse subobject teardown", "src/gamma.h declares the real member order and GraphicWin base", "C++ destruction emits subobject and EH cleanup without writing historical vtable addresses", "Pinned PrefWin::on_button_clicked 0x491400 and load_palette 0x451A10 normal cleanup expand the Gamma close and reverse member/base lifetime at the actual Gamma receiver.", "Both pinned cold EH cleanups call the standalone destructor at 0x456110; keep that independent exceptional entry and all original spans/claims.", "The current Gamma header owns the actual typed members and GraphicWin base; Gamma::close remains the unchanged mapped body at 0x5C9330.", "Current physical production-recipe screening observed a complete matching destructor copy in both real consumers; src/interface_palette.cpp is a measured current compile context only, not an assertion about original TU ownership."], "reason": "Retain Gamma’s standalone destructor identity in its original owner while exposing the unchanged class lifetime to the measured real consumer; the normal consumer paths inline Gamma::close and member/base teardown, while the original cold EH path enters this emitted destructor. Current compile_context names a present emitting TU, not the original translation unit."}
-// compile_context src/interface_palette.cpp
+// compile_context src/interface_assets.cpp
 // body src/gamma.h
 // symbol    ??1Gamma@@UAE@XZ
 
@@ -376,6 +377,7 @@ Gamma::Gamma() {
 Purpose: Step the receiver back to the subobject ??_GGamma@@UAEPAXI@Z expects,
          then forward unchanged.
 // ORIGINAL: 0x004562B0 ??_GGamma@@WEEE@AEPAXI@Z 0x004562B0-0x004562BB BYTE_EXACT
+// compile_context src/interface_assets.cpp
 // symbol    ??_EGamma@@WEEE@AEPAXI@Z
 // CORRECTED from ??3Gamma@@SAXPAXI@Z
 //   11 bytes, `sub ecx, 0x444; jmp 0x00456280` into

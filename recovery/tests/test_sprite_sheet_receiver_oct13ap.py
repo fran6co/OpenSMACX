@@ -21,7 +21,7 @@ from match_recovery.source.writer import write_bytes
 ROOT = Path(__file__).resolve().parents[2]
 BASE = "54f51003c1af9509f4c2abffc163c63b26df4e1e"
 STEP_BASE = "f33ccd479ac454752a51a204c5f1fe40b5656268"
-SOURCE_PATH = ROOT / "src/game.cpp"
+SOURCE_PATH = ROOT / "src/interface_assets.cpp"
 SIGNATURE = "int __cdecl extract_sheet_icon(Sprite *sprite,"
 OLD_SIGNATURE = (
     'extern "C" int __cdecl extract_sheet_icon(int sprite, int sheet_x, int sheet_y,\n'

@@ -66,7 +66,7 @@ def git(root, *arguments):
 
 
 def project(tmp_path, raw=None, *, start=0x401000, size=53,
-            symbol='_TerrainCoastRemapSource', unit='game.cpp', bounded=True):
+            symbol='_TerrainCoastRemapSource', unit='interface_assets.cpp', bounded=True):
     root = tmp_path / 'project'
     (root / 'src').mkdir(parents=True)
     (root / 'recovery').mkdir()
@@ -241,7 +241,7 @@ def test_changed_authority_before_publication_refuses(tmp_path, hook, monkeypatc
         elif damage == 'pin':
             (root / 'src/IMAGE_PIN').write_text('sha256 ' + '0' * 64 + '\n')
         else:
-            source = root / 'src/game.cpp'
+            source = root / 'src/interface_assets.cpp'
             source.write_text(source.read_text().replace('0x00401035', '0x00401034'))
         return image
 
@@ -380,7 +380,7 @@ def test_configured_terrain_generation_requires_every_bound_table(tmp_path, hook
     source.write_text('\n'.join(rows) + '\n')
     game_rows = [f'// RECOVERY_OBJECT: v2 0x00685D28 0x00685D5D _TerrainCoastRemapSource 0x004CF7C0',
                  'static const unsigned char TerrainCoastRemapSource[53] = {};']
-    (root / 'src/game.cpp').write_text('\n'.join(game_rows) + '\n')
+    (root / 'src/interface_assets.cpp').write_text('\n'.join(game_rows) + '\n')
     altitude_rows = []
     for index, symbol in enumerate(hook._ALTITUDE_TABLES.values()):
         start = altitude_start + index * 44

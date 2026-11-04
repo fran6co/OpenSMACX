@@ -32,7 +32,7 @@ def test_caviar_data_method_family_has_one_out_of_line_owner():
 
 def test_caviar_data_identity_and_global_definition_order_are_preserved():
     renderer = (ROOT / "src/caviar.cpp").read_text()
-    objects = (ROOT / "src/caviar_objects.cpp").read_text()
+    objects = (ROOT / "src/interface_assets.cpp").read_text()
     renderer_objects = (ROOT / "src/caviar_renderer_objects.cpp").read_text()
     owner = renderer
     before = subprocess.check_output(
@@ -83,26 +83,24 @@ def test_build_lists_application_caviar_object_owner_before_engine():
     cmake = (ROOT / "CMakeLists.txt").read_text()
     project = (ROOT / "recovery/project.json").read_text()
 
-    assert cmake.index("    src/caviar_objects.cpp") < cmake.index(
-        "    src/caviar.cpp")
+    assert cmake.index("    src/interface_assets.cpp") < cmake.index(
+        "    src/game.cpp")
     assert "    src/caviar_data.cpp\n" not in cmake
     assert "    src/caviar.cpp\n" in cmake
     # The renderer's observation recipe is checked by the metadata-policy tests.
-    assert '"src/caviar_objects.cpp": {' in project
-    assert (cmake.index("    src/caviar_objects.cpp")
-            < cmake.index("    src/texture_objects.cpp")
-            < cmake.index("    src/sprite_objects.cpp")
-            < cmake.index("    src/caviar_renderer_objects.cpp"))
+    assert '"src/interface_assets.cpp": {' in project
+    assert cmake.index("    src/interface_assets.cpp") < cmake.index(
+        "    src/sprite_objects.cpp")
 
 
 def test_native_reader_follows_moved_method_identities_and_claims():
     records = (read(ROOT / "src/caviar.cpp")
-               + read(ROOT / "src/caviar_objects.cpp")
+               + read(ROOT / "src/interface_assets.cpp")
                + read(ROOT / "src/caviar_renderer_objects.cpp"))
     expected = {
-        0x456100: ("src/caviar_objects.cpp", "src/caviar.h", True),
-        0x44D170: ("src/caviar_objects.cpp", "", True),
-        0x44D190: ("src/caviar_objects.cpp", "", True),
+        0x456100: ("src/interface_assets.cpp", "src/caviar.h", True),
+        0x44D170: ("src/interface_assets.cpp", "", True),
+        0x44D190: ("src/interface_assets.cpp", "", True),
         0x4BF6E0: ("src/caviar_renderer_objects.cpp", "", True),
         0x4BF700: ("src/caviar_renderer_objects.cpp", "", True),
         0x616BC0: ("src/caviar.cpp", "", True),

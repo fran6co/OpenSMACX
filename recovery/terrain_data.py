@@ -146,7 +146,7 @@ def _terrain_initializer(root: Path, original: Path, output: Path, *,
 
 def terrain_coast_initializer(root: Path, original: Path, output: Path) -> None:
     _terrain_initializer(root, original, output,
-                         output_name='terrain_coast_remap.inc', unit='src/game.cpp',
+                         output_name='terrain_coast_remap.inc', unit='src/interface_assets.cpp',
                          symbol='_TerrainCoastRemapSource', size=53)
 
 

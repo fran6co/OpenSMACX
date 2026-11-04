@@ -7,11 +7,16 @@ from pathlib import Path
 import re
 import struct
 import subprocess
+from collections import Counter
+import pytest
+from capstone import Cs, CS_ARCH_X86, CS_MODE_32, x86_const
 
 from match_recovery.model import Span
+from match_recovery.object_source import read_objects
 from match_recovery.object_source import parse_objects
 from match_recovery.pe_coff import PeImage
-from match_recovery.source import read_text
+from match_recovery.source import read, read_text
+from match_recovery.source_inventory import source_files
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -50,27 +55,110 @@ def test_object_split_preserves_definitions_order_and_original_obligations():
         cwd=ROOT, text=True,
     )
     implementation = (ROOT / "src/sprite.cpp").read_text()
-    objects = (ROOT / "src/sprite_objects.cpp").read_text()
-    definitions = r"^Sprite \w+(?:\[\d+\])?;[^\n]*$"
-    expected = re.findall(definitions, before, re.MULTILINE)
+    residual_path = ROOT / "src/sprite_objects.cpp"
+    assets_path = ROOT / "src/interface_assets.cpp"
+    residual = residual_path.read_text()
+    assets = assets_path.read_text()
+    objects = residual + "\n" + assets
+    # Compare typed declarations, not incidental trailing annotations/comments.
+    definitions = r"(?m)^Sprite\s+(\w+(?:\[\w+\])*)\s*;"
+    expected = re.findall(definitions, before)
+    actual = re.findall(definitions, objects)
     assert len(expected) == 190
-    assert re.findall(definitions, objects, re.MULTILINE) == expected
-    assert not re.findall(definitions, implementation, re.MULTILINE)
+    assert Counter(actual) == Counter(expected)
+    assert len(set(actual)) == 190
+    assert not re.findall(definitions, implementation)
     assert "Sprite::Sprite()" in implementation
     assert "Sprite::Sprite()" not in objects
 
     old = read_text(before, ROOT / "src/sprite.cpp")
     kept = read_text(implementation, ROOT / "src/sprite.cpp")
-    moved = read_text(objects, ROOT / "src/sprite_objects.cpp")
-    identity = lambda row: (row.address, row.name, row.image_spans, row.semantic)
-    assert sorted(map(identity, old)) == sorted(map(identity, kept + moved))
-    assert len(moved) == 381  # 380 lifetime helpers plus the natural inline destructor.
     previous = {row.address: row for row in old}
-    # Recording may add freshly measured obligations, never withdraw old ones.
-    for row in kept + moved:
-        assert not previous[row.address].byte_exact or row.byte_exact
+    assert len(previous) == len(old)
+    old_addresses = set(previous)
+    # Several original Sprite identities were already rehomed to other
+    # owners. Search configured live source units for the complete historical
+    # identity set instead of limiting continuity to the three old owners.
+    live = [row for path in source_files(ROOT) for row in read(path)
+            if row.address in old_addresses]
+    current = {row.address: row for row in live}
+    assert len(current) == len(live) == len(old)
+    assert set(current) == old_addresses
+    identity = lambda row: (row.address, row.name, row.image_spans, row.semantic)
+    assert sorted(map(identity, old)) == sorted(map(identity, live))
+    for address, old_row in previous.items():
+        row = current[address]
+        assert not old_row.byte_exact or row.byte_exact
+        assert not old_row.semantic or row.semantic
+        assert row.mode == old_row.mode
+        assert row.kind == old_row.kind
+        assert row.exclusion == old_row.exclusion
+        assert row.levers == old_row.levers
+        assert row.ruled_out == old_row.ruled_out
+        assert row.unrecoverable == old_row.unrecoverable
+        assert row.deferred == old_row.deferred
+        # File positions change when an owner moves; the complete authored
+        # lesson text, including its wrapping, must remain intact.
+        lesson_text = lambda item: tuple(
+            (lesson.kind, lesson.key, lesson.prose,
+             tuple(text for _line, text in lesson.lines))
+            for lesson in (item.origin or ())
+        )
+        assert lesson_text(row) == lesson_text(old_row)
     for row in kept:
         assert row.body == previous[row.address].body
+
+
+def test_moved_sprite_cohort_follows_pinned_crt_order():
+    image_path = pinned_image_path()
+    if not image_path.is_file():
+        pytest.skip("pinned original unavailable for Sprite CRT order check")
+    image_bytes = image_path.read_bytes()
+    assert hashlib.sha256(image_bytes).hexdigest() == PIN
+    image = PeImage(image_bytes, PIN)
+    assets_path = ROOT / "src/interface_assets.cpp"
+    assets = assets_path.read_text()
+    asset_lines = assets.splitlines()
+    asset_sprite_bindings = [
+        binding for binding in read_objects(ROOT, PIN)
+        if binding.unit == "src/interface_assets.cpp"
+        and re.match(r"^Sprite\s+\w+(?:\[\w+\])*\s*;", asset_lines[binding.line])
+    ]
+    assert len(asset_sprite_bindings) == 166
+    sprite_origins = {binding.origin.address for binding in asset_sprite_bindings}
+    assert len(sprite_origins) == 166
+
+    # Follow the pinned .CRT roots, then each mapped initializer's absolute
+    # receiver operand back to the exact original Sprite object identity.
+    asset_records = read_text(assets, assets_path)
+    record_by_address = {record.address: record for record in asset_records}
+    assert len(record_by_address) == len(asset_records)
+    decoder = Cs(CS_ARCH_X86, CS_MODE_32)
+    decoder.detail = True
+    ordered_sprite_origins = []
+    for slot in range(0x00682004, 0x006826CC, 4):
+        root = int.from_bytes(image.read(Span(slot, slot + 4)), "little")
+        record = record_by_address.get(root)
+        if root == 0 or record is None:
+            continue
+        assert record.image_spans and record.image_spans[0][0] == root
+        low, high = record.image_spans[0]
+        code = image.read(Span(low, high))
+        references = set()
+        for instruction in decoder.disasm(code, low):
+            for operand in instruction.operands:
+                if operand.type == x86_const.X86_OP_IMM:
+                    references.add(operand.imm & 0xFFFFFFFF)
+                elif (operand.type == x86_const.X86_OP_MEM
+                      and operand.mem.base == 0 and operand.mem.index == 0):
+                    references.add(operand.mem.disp & 0xFFFFFFFF)
+        receivers = references & sprite_origins
+        assert len(receivers) <= 1, hex(root)
+        if receivers:
+            ordered_sprite_origins.extend(receivers)
+    assert len(ordered_sprite_origins) == 166
+    assert len(set(ordered_sprite_origins)) == 166
+    assert ordered_sprite_origins == [binding.origin.address for binding in asset_sprite_bindings]
 
 
 def pinned_image_path() -> Path:

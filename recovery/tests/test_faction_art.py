@@ -36,8 +36,7 @@ def braced(source, signature):
 
 def actual_source():
     header = (ROOT / "src/faction.h").read_text()
-    source = (ROOT / "src/faction.cpp").read_text()
-    game = (ROOT / "src/game.cpp").read_text()
+    source = (ROOT / "src/interface_assets.cpp").read_text()
     maximum, = re.findall(r"^static const int MaxPlayerNum = \d+;", header, re.M)
     objects, = re.findall(r"^FactionArt FactionsArt\[MaxPlayerNum\];", source, re.M)
     table, = re.findall(r"^Sprite \*FactionBaseSprites\[MaxPlayerNum\]\[2\]\[4\]\[3\];", source, re.M)
@@ -50,7 +49,7 @@ def actual_source():
         "DTOR": braced(source, "FactionArt::~FactionArt()"),
         "PUBLIC": "\n".join((object_extern, table_extern)),
         "OBJECTS": objects + "\n" + table,
-        "LOADER": braced(game, "void __cdecl load_bases()"),
+        "LOADER": braced(source, "void __cdecl load_bases()"),
     }
 
 

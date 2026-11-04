@@ -500,57 +500,6 @@ char *StringList::current_text() {
 
 
 /*
-Purpose: Paint a window caption's text through the caller's canvas, honouring
-         the caption alignment flags, then restore the canvas clip.
-
-         The receiver is the window being captioned; the guard at entry
-         declines to paint the process-wide climate window, whose caption is
-         drawn by its own owner.
-// ORIGINAL: 0x004554C0 ?def_caption_draw@@YAHPAUGraphicWin@@PADPAUBuffer@@@Z 0x004554C0-0x00455606 FILE
-// RECOVERY_BINDING: v1 {"evidence": ["Original4554C0..455606; retired seed git:b18d3ac8:src/unrecovered/004554c0.cpp records the same identity and spans with its historical register-schedule TRIED note (kept below).", "The receiver state is Win's protected caption block (style word 0x98, font 0xF8, four text colours 0x104..0x110), GraphicWin's private frame sprites 0x9DC/0x9E8 with their +0x20/+0x24 offsets, and Buffer's protected rect1_ at 0x30: all spelled as documented offsets because this free painter is not a member or friend of those classes.", "0x008E9F60 is worldwin.h's WorldClimateWorldWin. All five callees are buffer.cpp's set_clip/set_font/set_text_color/write_l/write_cent_l/write_right_l overloads."], "reason": "Coverage transcription of the free caption painter with typed receivers; the emitted name spells class GraphicWin where the catalogue wrote the struct tag."}
-// symbol    ?def_caption_draw@@YAHPAVGraphicWin@@PADPAVBuffer@@@Z
-// TRIED: the four locals (local_14/local_10/local_c/local_8, adjacent on the stack in that order) are exactly a RECT (left, top, right, bottom) in memory order, so assigning through a local RECT was tried directly - it compiles but the register-save schedule differs (rebuilt saves ebx/edi immediately, the original defers them past both early-exit guards). Best reached: MISMATCH, edit_count 25, 317 bytes vs 326, mnemonic similarity ~0.73.
-Return Value: the restored set_clip verdict
-Status: Coverage transcription - unclaimed body
-*/
-int __cdecl def_caption_draw(GraphicWin *window, char *text, Buffer *canvas) {
-    // The historical offset-based access rationale above is superseded by
-    // narrow friendship with the existing owners, not by a guessed layout.
-    // Matching obligation: the pinned climate-window exit at 4554CA leaves
-    // EAX unspecified. This transcription's zero result is not proof of the
-    // original return ABI; redraw_nc_buffer ignores the callback result.
-    if (window == &WorldClimateWorldWin || text == 0) {
-        return 0;
-    }
-
-    // Pinned4554E6 copies Buffer+0x30 before reading the two frame sprites.
-    RECT *const canvas_rect = &canvas->rect1_;
-    RECT area = *canvas_rect;
-    area.right -= 0x28;
-    area.left += 0x23 + window->frame_left_->left_offset();
-    area.top += 0xB + window->frame_top_->top_offset();
-    area.bottom -= 0xC;
-
-    canvas->set_text_color(window->field_104_, window->field_108_,
-                           window->field_10C_, window->field_110_);
-    canvas->set_font(window->field_F8_, 0, 0, 0);
-    canvas->set_clip(&area);
-
-    const unsigned int style = window->iFlags_;
-    const unsigned int len = strlen(text);
-    if ((style & 0x10000) != 0) {
-        canvas->write_l(text, &area, len);
-    } else if ((style & 0x40000) != 0) {
-        canvas->write_right_l(text, &area, len);
-    } else {
-        canvas->write_cent_l(text, &area, len);
-    }
-    // The original final calls pass live Buffer+0x30, not a saved rectangle.
-    // Preserve that alias even when setting the caption clip changed rect1_.
-    return canvas->set_clip(canvas_rect);
-}
-
-/*
 Purpose: The third pronoun fetcher beside game.cpp's get_his_her/get_him_her:
          pick the he/she label by the faction leader's gender, copy the string
          table's text into the shared pronoun buffer, and uppercase it in

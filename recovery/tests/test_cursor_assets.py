@@ -32,8 +32,8 @@ ARRAYS=("g_CURSOR_SPRITES","g_CITIZEN_LG_CURSOR_SPRITES","g_SPECIALIST_LG_CURSOR
 
 
 def actual_source():
-    source=(ROOT/"src/game.cpp").read_text()
-    sprites=(ROOT/"src/sprite_objects.cpp").read_text()
+    source=(ROOT/"src/interface_assets.cpp").read_text()
+    sprites=(ROOT/"src/sprite_objects.cpp").read_text() + "\n" + (ROOT/"src/interface_assets.cpp").read_text()
     console=(ROOT/"src/console.cpp").read_text()
     declarations=[]
     for name in ARRAYS:
@@ -42,8 +42,13 @@ def actual_source():
     for name in ("CursorHotspotX","CursorHotspotY"):
         definition,=re.findall(r"^int "+name+r"\[12\] = \{0\};",console,re.M)
         declarations.append(definition)
+    definition,=re.findall(r"^static char CursorIconSheetName\[\] = \"[^\"]+\";",source,re.M)
+    declarations.append(definition)
     sprite_header=(ROOT/"src/sprite.h").read_text();buffer_header=(ROOT/"src/buffer.h").read_text()
-    extract,=re.findall(r"  int extract\([^;]+\);",sprite_header)
+    extract,=re.findall(
+        r"  int extract\(Buffer \*buffer, int a, int b, int c, int width, int height,\s*TexHeap \*heap\);",
+        sprite_header,
+    )
     methods=[]
     for pattern in (r"  int load_pcx\(const char \*[^;]+;",r"  int get_pixel\([^;]+;",
                     r"  int change_color\(int a1, int a2\);",r"  void close\(\);"):
@@ -165,6 +170,8 @@ MUTANTS=[
     ("last-close","g_PCX_PARSE_TEMP_BUFFER1.close();",""),
     ("failure-early-return",'g_PCX_PARSE_TEMP_BUFFER1.load_pcx("CURSOR.PCX", 0, 10, 236);',
         'if (g_PCX_PARSE_TEMP_BUFFER1.load_pcx("CURSOR.PCX", 0, 10, 236)) return;'),
+    ("wrong-icon-sheet", 'load_pcx(CursorIconSheetName, 0, 10, 236);',
+        'load_pcx("CURSOR.PCX", 0, 10, 236);'),
     ("publish-before-extract","g_CURSOR_SPRITES[cursor].extract(",
         "CursorHotspotX[cursor] = hot_x; CursorHotspotY[cursor] = hot_y; g_CURSOR_SPRITES[cursor].extract("),
 ]

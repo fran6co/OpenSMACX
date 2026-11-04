@@ -41,13 +41,13 @@ def braced(source, signature):
 
 
 def actual_source():
-    source = (ROOT / "src/game.cpp").read_text()
+    source = (ROOT / "src/interface_assets.cpp").read_text()
     sh = (ROOT / "src/sprite.h").read_text()
     bh = (ROOT / "src/buffer.h").read_text()
     headers = "\n".join((ROOT / ("src/" + name + ".h")).read_text()
                         for name in ("sprite", "buffer", "newtechwin", "win", "game"))
     objects = "\n".join((ROOT / ("src/" + name + ".cpp")).read_text()
-                        for name in ("sprite_objects", "sprite", "buffer", "newtechwin"))
+                        for name in ("interface_assets", "sprite_objects", "sprite", "buffer", "newtechwin"))
     definitions = []
     for name in SPRITES:
         definition, = re.findall(r"^Sprite " + name + r"(?:\[\d+\])?;", objects, re.M)

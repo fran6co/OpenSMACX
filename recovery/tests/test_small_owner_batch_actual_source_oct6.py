@@ -199,7 +199,7 @@ int main() {
 
 
 def test_deswin_lifetime_actual_projected_region(tmp_path: Path) -> None:
-    body = region("src/game.cpp", 0x00455E50)
+    body = region("src/interface_assets.cpp", 0x00455E50)
     assert "Buffer scratch;" in body
     assert "storage[0x588]" not in body
     compile_run(tmp_path, r'''
@@ -214,15 +214,15 @@ int main() { load_deswin_sprites(); assert(trace==12); }
 
 
 def test_control_rejects_a_commented_out_buffer_definition(tmp_path, monkeypatch) -> None:
-    source = (SOURCE_ROOT / "src/game.cpp").read_text()
-    body = region("src/game.cpp", 0x00455E50)
+    source = (SOURCE_ROOT / "src/interface_assets.cpp").read_text()
+    body = region("src/interface_assets.cpp", 0x00455E50)
     assert source.count(body) == 1
     damaged = source.replace(body, "/*\n" + body + "\n*/", 1)
     (tmp_path / "src").mkdir()
-    (tmp_path / "src/game.cpp").write_text(damaged)
+    (tmp_path / "src/interface_assets.cpp").write_text(damaged)
     monkeypatch.setitem(globals(), "SOURCE_ROOT", tmp_path)
     with pytest.raises(AssertionError, match="definition is not C\\+\\+ code"):
-        region("src/game.cpp", 0x00455E50)
+        region("src/interface_assets.cpp", 0x00455E50)
 
 
 def test_pop2_owner_views_and_complete_cold_span_are_retained_in_projection() -> None:

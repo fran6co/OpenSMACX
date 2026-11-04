@@ -21,14 +21,14 @@ OFFSETS = ("VehGunMountOffset", "VehDropOffset", "VehHoverGunOffset", "VehHoverL
 
 
 def sources():
-    game = (ROOT / "src/game.cpp").read_text()
+    game = (ROOT / "src/interface_assets.cpp").read_text()
     veh = (ROOT / "src/veh.cpp").read_text()
     return (braced(game, game.index("void __cdecl load_voxels()")),
             braced(veh, veh.index("void __cdecl vehdraw_setup()")))
 
 
 def actual_globals():
-    source = (ROOT / "src/caviar_objects.cpp").read_text()
+    source = (ROOT / "src/interface_assets.cpp").read_text()
     return re.findall(r"^CaviarData (\w+)(\[\d+\])?;", source, re.M)
 
 
@@ -257,7 +257,7 @@ def test_pinned_manifest_and_arithmetic():
     code = instructions(0x451030, 0x451A09)
     assert code[-1].address + code[-1].size == 0x451A09
     addresses = {0x78E968: "g_VBP_CAVIARDATA"}
-    for name, count, start in re.findall(r"CaviarData (\w+)(?:\[(\d+)\])?;  // (0x[0-9A-Fa-f]+)", (ROOT / "src/caviar_objects.cpp").read_text()):
+    for name, count, start in re.findall(r"CaviarData (\w+)(?:\[(\d+)\])?;  // (0x[0-9A-Fa-f]+)", (ROOT / "src/interface_assets.cpp").read_text()):
         for n in range(int(count or 1)):
             addresses[int(start, 16) + n * 12] = name + (f"[{n}]" if count else "")
     manifest = []

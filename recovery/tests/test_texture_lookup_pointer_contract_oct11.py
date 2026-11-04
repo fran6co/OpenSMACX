@@ -201,8 +201,10 @@ def test_pointer_contract_changes_only_selected_body_and_symbol_bindings():
                               "*blit_slot_564 = static_cast<int>(reinterpret_cast<intptr_t>(palette));")
     assert restored==expected
     prior={r.address:r for r in read_text(before,path)}
-    asset_path = ROOT / "src/texture_objects.cpp"
-    assets = read_text(asset_path.read_text(), asset_path)
+    asset_path = ROOT / "src/interface_assets.cpp"
+    historical_addresses = set(prior)
+    assets = [row for row in read_text(asset_path) if row.address in historical_addresses]
+    assert len(assets) == 40
     rows = read_text(current,path) + assets
     after={r.address:r for r in rows}
     assert len(rows) == len(after), "original identities must have unique owners"

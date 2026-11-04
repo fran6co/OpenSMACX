@@ -25,11 +25,12 @@ def extract(source: str, signature: str) -> str:
 def product_bodies():
     ambience_src = (ROOT / "src/ambience.cpp").read_text()
     game_src = (ROOT / "src/game.cpp").read_text()
+    assets_src = (ROOT / "src/interface_assets.cpp").read_text()
     return (
         extract(ambience_src, "int __cdecl ambience(int ambience_id)"),
         extract(game_src,
                 "void __cdecl colortables_init_faction(int faction_id)"),
-        extract(game_src, "void __cdecl load_faction_art(int faction_id)"),
+        extract(assets_src, "void __cdecl load_faction_art(int faction_id)"),
     )
 
 

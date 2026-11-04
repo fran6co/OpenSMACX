@@ -42,11 +42,11 @@ def braced(source, signature):
 
 
 def actual_source():
-    source = (ROOT / "src/sprite_assets.cpp").read_text()
+    source = (ROOT / "src/interface_assets.cpp").read_text()
     sh = (ROOT / "src/sprite.h").read_text()
     bh = (ROOT / "src/buffer.h").read_text()
     objects = "\n".join((ROOT / ("src/" + name + ".cpp")).read_text()
-                        for name in ("sprite_objects", "buffer"))
+                        for name in ("interface_assets", "sprite_objects", "buffer"))
     definitions = []
     for name in SPRITES:
         definition, = re.findall(r"^Sprite " + name + r"(?:\[\d+\])?;", objects, re.M)
@@ -58,6 +58,9 @@ def actual_source():
     for definition in definitions:
         public, = re.findall(r"^extern " + re.escape(definition), sh + "\n" + bh, re.M)
         externs.append(public)
+    for name in ("InterfaceIconSheetName", "IconWreckSheetName"):
+        definition, = re.findall(r"^static char " + name + r"\[\] = \"[^\"]+\";", source, re.M)
+        definitions.append(definition)
     loader, = re.findall(r"^void __cdecl load_icons\(\);", (ROOT / "src/game.h").read_text(), re.M)
     extract, = re.findall(
         r"  int extract\(Buffer \*buffer, int a, int b, int c, int width, int height,\s*TexHeap \*heap\);",
@@ -217,14 +220,14 @@ DAMAGE = [
     ("recolour_order", "buffer.change_color(263, 265);", "buffer.change_color(262, 265);"),
     ("skip_recolour", "buffer.change_color(262, 265);", ""),
     ("extract_key", "&buffer, 265, source_x", "&buffer, 264, source_x"),
-    ("wrong_sheet", '"TER1WRECK.PCX"', '"ICONS.PCX"'),
-    ("load_palette_range", '"NEWICONS.PCX", 0, 10, 236', '"NEWICONS.PCX", 0, 0, 236'),
+    ("wrong_sheet", 'buffer.load_pcx(IconWreckSheetName, 0, 10, 236);', 'buffer.load_pcx("ICONS.PCX", 0, 10, 236);'),
+    ("load_palette_range", 'buffer.load_pcx(InterfaceIconSheetName, 0, 10, 236);', 'buffer.load_pcx(InterfaceIconSheetName, 0, 0, 236);'),
     ("skip_sheet", 'buffer.load_pcx("ICONS.PCX", 0, 10, 236);', ""),
-    ("load_failure_exit", 'buffer.load_pcx("NEWICONS.PCX", 0, 10, 236);', 'if (buffer.load_pcx("NEWICONS.PCX", 0, 10, 236)) return;'),
+    ("load_failure_exit", 'buffer.load_pcx(InterfaceIconSheetName, 0, 10, 236);', 'if (buffer.load_pcx(InterfaceIconSheetName, 0, 10, 236)) return;'),
     ("extract_failure_exit", 'g_NULL_RESOURCE_ICON_SPRITE.extract(&buffer, 265, 1, 174, 22, 22, 0);', 'if (g_NULL_RESOURCE_ICON_SPRITE.extract(&buffer, 265, 1, 174, 22, 22, 0)) return;'),
     ("recolour_failure_exit", "buffer.change_color(263, 265);", "if (buffer.change_color(263, 265)) return;"),
     ("invented_mode_guard", "Buffer &buffer =", "if (BufferDirectDraw) return; Buffer &buffer ="),
-    ("invented_mid_mode_guard", 'buffer.load_pcx("TER1WRECK.PCX", 0, 10, 236);', 'if (BufferDirectDraw) return; buffer.load_pcx("TER1WRECK.PCX", 0, 10, 236);'),
+    ("invented_mid_mode_guard", 'buffer.load_pcx(IconWreckSheetName, 0, 10, 236);', 'if (BufferDirectDraw) return; buffer.load_pcx(IconWreckSheetName, 0, 10, 236);'),
     ("premature_close", 'buffer.load_pcx("ICONS.PCX", 0, 10, 236);', 'buffer.close(); buffer.load_pcx("ICONS.PCX", 0, 10, 236);'),
     ("missing_close", "buffer.close();", ""),
 ]

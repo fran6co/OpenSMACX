@@ -43,15 +43,17 @@ def one(pattern, text):
 
 
 def actual_source():
-    source = (ROOT / "src/game.cpp").read_text()
+    source = (ROOT / "src/interface_assets.cpp").read_text()
     headers = {name: (ROOT / f"src/{name}.h").read_text()
                for name in ("sprite", "texture", "buffer", "game")}
     owners = "\n".join((ROOT / f"src/{name}.cpp").read_text()
-                       for name in ("sprite", "texture", "buffer", "game"))
+                       for name in ("sprite", "texture", "buffer", "interface_assets"))
     body = "\n\n".join(braced(source, signature) for signature in (
         "void terrain_extract_texture_grid(", "void terrain_extract_sprite(",
         "void __cdecl load_terrain()"))
     objects, declarations, registrations = [], [], []
+    wreck_name = one(r"^static char TerrainWreckSheetName\[\] = \"TER1WRECK\.PCX\";", source)
+    objects.append(wreck_name)
     for name in sorted(set(re.findall(r"\bg_[A-Z0-9_]+", body))):
         definition = one(r"^(?:Sprite|Texture|Buffer) " + name + r"(?:\[\d+\])?;", owners)
         objects.append(definition)
@@ -474,7 +476,8 @@ DAMAGE = [
     ("grid_failure_exit", "textures[index].extract(&g_PCX_PARSE_TEMP_BUFFER1,",
      "if (textures[index].extract(&g_PCX_PARSE_TEMP_BUFFER1,"),
     ("glow_palette", '"glow.pcx", 0, 0, 256', '"glow.pcx", 0, 10, 236'),
-    ("sheet_boundary", '"TER1WRECK.PCX"', '"TER1.PCX"'),
+    ("sheet_boundary", "g_PCX_PARSE_TEMP_BUFFER1.load_pcx(TerrainWreckSheetName, 0, 10, 236);",
+     'g_PCX_PARSE_TEMP_BUFFER1.load_pcx("TER1.PCX", 0, 10, 236);'),
     ("initial_scratch_size", "scratch.init(28, 28, 0, 0);", "scratch.init(56, 56, 0, 0);"),
     ("third_init", "scratch.init(100, 62, 0, 0);", ""),
     ("remap_sprite_dimensions", "265, 2, 333, 113, 56", "265, 2, 333, 100, 56"),

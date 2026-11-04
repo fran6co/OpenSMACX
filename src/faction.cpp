@@ -15,12 +15,6 @@
  * You should have received a copy of the GNU General Public License
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
-// ORIGINAL: 0x0044CC50 _$E21 0x0044CC50-0x0044CC77 FILE
-// RECOVERY_BINDING: v1 {"evidence": ["Pinned CRT slot0x6820b4 selects initializer0x44cc50..0x44cc77, registering exit0x44cc80..0x44cc97. Root independent complete decode confirms exclusive RET/JMP bounds; original/source-owned storage is0x78e978 bound to?FactionsArt@@3PAUFactionArt@@A.", "Original startup instruction evidence: [[\"0x44cc50\", \"push\", \"0x456010\"], [\"0x44cc55\", \"push\", \"0x455f10\"], [\"0x44cc5a\", \"push\", \"8\"], [\"0x44cc5c\", \"push\", \"0x65c\"], [\"0x44cc61\", \"push\", \"0x78e978\"], [\"0x44cc66\", \"call\", \"0x6457c2\"], [\"0x44cc6b\", \"push\", \"0x44cc80\"], [\"0x44cc70\", \"call\", \"0x645398\"], [\"0x44cc75\", \"pop\", \"ecx\"], [\"0x44cc76\", \"ret\", \"\"]]. Original exit instruction evidence: [[\"0x44cc80\", \"push\", \"0x456010\"], [\"0x44cc85\", \"push\", \"8\"], [\"0x44cc87\", \"push\", \"0x65c\"], [\"0x44cc8c\", \"push\", \"0x78e978\"], [\"0x44cc91\", \"call\", \"0x6456e4\"], [\"0x44cc96\", \"ret\", \"\"]]. Preserve constructor arguments, array counts/strides, registration and reverse destruction without authored callback stand-ins.", "Fresh complete build-iveupb5l physical src/faction.cpp COFF selects _$E21 via .CRT$XCU, registering _$E19. Startup relocation targets: [\"??1FactionArt@@QAE@XZ\", \"??0FactionArt@@QAE@XZ\", \"?FactionsArt@@3PAUFactionArt@@A\", \"??_L@YGXPAXIHP6EX0@Z1@Z\", \"_$E19\", \"_atexit\"]; exit targets: [\"??1FactionArt@@QAE@XZ\", \"?FactionsArt@@3PAUFactionArt@@A\", \"??_M@YGXPAXIHP6EX0@Z@Z\"]. Actual linked helper occurs once at CRT slot0x63f240; selected same-owner order agrees with the pinned order.", "BaseWin/DesignWin definitions now precede their Wave globals as pinned. Existing DesignWin Wave mappings retain original names/spans and current helper overrides after fresh emission proof. Scalar constructor effects and array construction/cleanup belong to genuine source globals, classes and compiler-generated lifetime machinery.", "Current local labels are emission interpretations, not original debug names or recovered historical TU boundaries. Start bindings grant no allocation extent. Selected same-owner linked order is not full CRT/global-order, retained-selection, reference-target, dependency-provider, runtime or full-game acceptance. Guarded callbacks excluded; no claim grant or bug fix."], "reason": "Bind original startup operation to the genuine compiler-emitted lifetime of source-owned ?FactionsArt@@3PAUFactionArt@@A; preserve complete original identity and remaining restoration/structure obligations."}
-// symbol    _$E8
-// ORIGINAL: 0x0044CC80 _$E19 0x0044CC80-0x0044CC97 FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["Pinned CRT slot0x6820b4 selects initializer0x44cc50..0x44cc77, registering exit0x44cc80..0x44cc97. Root independent complete decode confirms exclusive RET/JMP bounds; original/source-owned storage is0x78e978 bound to?FactionsArt@@3PAUFactionArt@@A.", "Original startup instruction evidence: [[\"0x44cc50\", \"push\", \"0x456010\"], [\"0x44cc55\", \"push\", \"0x455f10\"], [\"0x44cc5a\", \"push\", \"8\"], [\"0x44cc5c\", \"push\", \"0x65c\"], [\"0x44cc61\", \"push\", \"0x78e978\"], [\"0x44cc66\", \"call\", \"0x6457c2\"], [\"0x44cc6b\", \"push\", \"0x44cc80\"], [\"0x44cc70\", \"call\", \"0x645398\"], [\"0x44cc75\", \"pop\", \"ecx\"], [\"0x44cc76\", \"ret\", \"\"]]. Original exit instruction evidence: [[\"0x44cc80\", \"push\", \"0x456010\"], [\"0x44cc85\", \"push\", \"8\"], [\"0x44cc87\", \"push\", \"0x65c\"], [\"0x44cc8c\", \"push\", \"0x78e978\"], [\"0x44cc91\", \"call\", \"0x6456e4\"], [\"0x44cc96\", \"ret\", \"\"]]. Preserve constructor arguments, array counts/strides, registration and reverse destruction without authored callback stand-ins.", "Fresh complete build-iveupb5l physical src/faction.cpp COFF selects _$E21 via .CRT$XCU, registering _$E19. Startup relocation targets: [\"??1FactionArt@@QAE@XZ\", \"??0FactionArt@@QAE@XZ\", \"?FactionsArt@@3PAUFactionArt@@A\", \"??_L@YGXPAXIHP6EX0@Z1@Z\", \"_$E19\", \"_atexit\"]; exit targets: [\"??1FactionArt@@QAE@XZ\", \"?FactionsArt@@3PAUFactionArt@@A\", \"??_M@YGXPAXIHP6EX0@Z@Z\"]. Actual linked helper occurs once at CRT slot0x63f240; selected same-owner order agrees with the pinned order.", "BaseWin/DesignWin definitions now precede their Wave globals as pinned. Existing DesignWin Wave mappings retain original names/spans and current helper overrides after fresh emission proof. Scalar constructor effects and array construction/cleanup belong to genuine source globals, classes and compiler-generated lifetime machinery.", "Current local labels are emission interpretations, not original debug names or recovered historical TU boundaries. Start bindings grant no allocation extent. Selected same-owner linked order is not full CRT/global-order, retained-selection, reference-target, dependency-provider, runtime or full-game acceptance. Guarded callbacks excluded; no claim grant or bug fix."], "reason": "Bind original exit operation to the genuine compiler-emitted lifetime of source-owned ?FactionsArt@@3PAUFactionArt@@A; preserve complete original identity and remaining restoration/structure obligations."}
-// symbol    _$E6
 #include "stdafx.h"
 #include "worldwin.h"
 #include "general.h"
@@ -596,22 +590,14 @@ char *__cdecl get_insult_leader(int faction_id) {
 // members, including cleanup on partial construction. Real member lifetime
 // supplies those operations and unwind actions exactly once.
 // Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x00455F10 ??0FactionArt@@QAE@XZ 0x00455F10-0x0045600B;0x00654ED0-0x00654F71 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["Retained seed src/recovered/units/00455f10.cpp supplies the original identity and both main/cleanup spans; complete original audit confirms the same member groups and their forward/reverse order.", "Original constructor455F10 and destructor456010 cover24 base Sprites,2 council logos,six individual Sprites,3 small report logos,2 report logos; current FactionArt declaration owns those objects with0x65C total extent.", "Original CRT6820B4 selects44CC50, which constructs8 elements at78E978 and registers44CC80 for reverse teardown. The compiled lifecycle is observed, but this binding is not a byte, exception-equivalence or linked-startup claim."], "reason": "Original FactionArt member construction/destruction has no additional application statements. Genuine C++ members own normal and partial-construction cleanup; the empty user body is not an unfinished placeholder."}
-FactionArt::FactionArt() {}
-
 // Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x00456010 ??1FactionArt@@QAE@XZ 0x00456010-0x004560FC;0x00654F80-0x00655021 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["Retained seed src/recovered/units/00456010.cpp supplies the original identity and both main/cleanup spans; complete original audit confirms the same member groups and their forward/reverse order.", "Original constructor455F10 and destructor456010 cover24 base Sprites,2 council logos,six individual Sprites,3 small report logos,2 report logos; current FactionArt declaration owns those objects with0x65C total extent.", "Original CRT6820B4 selects44CC50, which constructs8 elements at78E978 and registers44CC80 for reverse teardown. The compiled lifecycle is observed, but this binding is not a byte, exception-equivalence or linked-startup claim."], "reason": "Original FactionArt member construction/destruction has no additional application statements. Genuine C++ members own normal and partial-construction cleanup; the empty user body is not an unfinished placeholder."}
-FactionArt::~FactionArt() {}
+
 
 // CRT slot6820B4 selects44CC50: construct eight elements at78E978 with
 // stride65C, then register44CC80 to destroy that same vector at exit.
 // This independently bounds78E978..791C58; the last two members of each
 // element occupy604..65C. Content loading and linked startup ordering
 // remain unfinished; the compiler owns the new vector's lifetime.
-// RECOVERY_OBJECT: v2 0x0078E978 0x00791C58 ?FactionsArt@@3PAUFactionArt@@A 0x00455F10
-FactionArt FactionsArt[MaxPlayerNum];
 
 // new_base4CFD66/4CFE77 reads a writable eight-entry portrait pointer table.
 // Its initial targets are the diplomacy Sprites at FactionArt+4D0 with
@@ -628,8 +614,6 @@ Sprite *FactionDiplomacyPortraits[MaxPlayerNum] = {
 // Both original producers453A20/455EB0 fill192 four-byte pointers to the
 // first24 members of those eight objects, independently bounding
 //76E590..76E890. Initial pointer storage is zero.
-// RECOVERY_OBJECT: v2 0x0076E590 0x0076E890 ?FactionBaseSprites@@3PAY2132PAVSprite@@A 0x00453A20
-Sprite *FactionBaseSprites[MaxPlayerNum][2][4][3];
 
 // 0x009A650C
 // 0x009A6510

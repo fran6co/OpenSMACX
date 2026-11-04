@@ -33,7 +33,7 @@ def braced(source,signature):
 def actual_source():
     cpp=(ROOT/"src/basewin.cpp").read_text()
     base=(ROOT/"src/base.h").read_text();faction=(ROOT/"src/faction.h").read_text()
-    sprite=(ROOT/"src/sprite.h").read_text();storage=(ROOT/"src/sprite_objects.cpp").read_text()
+    sprite=(ROOT/"src/sprite.h").read_text();storage=(ROOT/"src/sprite_objects.cpp").read_text()+"\n"+(ROOT/"src/interface_assets.cpp").read_text()
     declarations=[]
     for source,names in ((base,("Base",)),(faction,("SocialCategory","SocialEffect","Goal","Player","PlayerData"))):
         for name in names:declarations.append(braced(source,"struct "+name+" {")+";")
@@ -96,6 +96,7 @@ struct Font {
 };
 struct Buffer {
     RECT rect1_;
+    const RECT &current_clip() const { return rect1_; }
     int set_clip(RECT *r){events.push_back("clip");rect1_=*r;++clip_calls;return 0;}
     int set_font(Font *font,Font *b,Font *c,Font *d){
         require(!b&&!c&&!d && MapWinCaptionScale==30 && MapWinCaptionDivisor==38);

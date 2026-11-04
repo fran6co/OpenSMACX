@@ -589,27 +589,7 @@
           "-c"
         ]
       },
-      "src/texture_objects.cpp": {
-        "flags": [
-          "/c",
-          "/O2",
-          "/Gy",
-          "/GR-",
-          "/GX",
-          "/Ob2"
-        ]
-      },
       "src/caviar_renderer_objects.cpp": {
-        "flags": [
-          "/c",
-          "/O2",
-          "/Gy",
-          "/GR-",
-          "/GX",
-          "/Ob2"
-        ]
-      },
-      "src/caviar_objects.cpp": {
         "flags": [
           "/c",
           "/O2",
@@ -627,20 +607,6 @@
           "/GR-",
           "/GX",
           "/Ob2"
-        ]
-      },
-      "src/sprite_assets.cpp": {
-        "flags": [
-          "/nologo",
-          "/TP",
-          "/Zm200",
-          "/GX",
-          "/O2",
-          "/Ob2",
-          "-MT",
-          "/W4",
-          "/Oy-",
-          "-c"
         ]
       },
       "src/jackal/time.cpp": {
@@ -1912,6 +1878,21 @@
         ]
       },
       "src/map_grid.cpp": {
+        "flags": [
+          "/nologo",
+          "/TP",
+          "/Zm200",
+          "/GX",
+          "/O2",
+          "/Ob2",
+          "-MT",
+          "/W4",
+          "/Oy-",
+          "/Z7",
+          "-c"
+        ]
+      },
+      "src/interface_assets.cpp": {
         "flags": [
           "/nologo",
           "/TP",

@@ -147,7 +147,6 @@ set(OPENSMACX_SOURCES
     src/buffer_mask.cpp
     src/polygon.cpp
     src/buttongroup.cpp
-    src/caviar_objects.cpp
     src/caviar.cpp
     src/caviar_chain.cpp
     src/caviar_record.cpp
@@ -170,6 +169,7 @@ set(OPENSMACX_SOURCES
     src/flic.cpp
     src/font_queue.cpp
     src/interface_fonts.cpp
+    src/interface_assets.cpp
     src/game.cpp
     src/game_desktop.cpp
     src/game_calendar.cpp
@@ -272,7 +272,6 @@ set(OPENSMACX_SOURCES
     src/deletionlist.cpp
     src/lock.cpp
     src/texture.cpp
-    src/texture_objects.cpp
     src/menu.cpp
     src/interface_palette.cpp
     src/path.cpp
@@ -286,7 +285,6 @@ set(OPENSMACX_SOURCES
     src/spying.cpp
     src/sprite.cpp
     src/texheap.cpp
-    src/sprite_assets.cpp
     src/sprite_objects.cpp
     src/caviar_renderer_objects.cpp
     src/stdafx.cpp
@@ -467,6 +465,7 @@ set_source_files_properties(
 # source profile; this does not assert the original translation-unit boundary.
 set_source_files_properties(
     src/game.cpp
+    src/interface_assets.cpp
     src/game_desktop.cpp
     src/game_calendar.cpp
     src/faction_monuments.cpp
@@ -601,6 +600,7 @@ set_property(SOURCE
     src/game_calendar.cpp
     src/faction_monuments.cpp
     src/interface_palette.cpp
+    src/interface_assets.cpp
     src/maininterface.cpp
     src/map.cpp
     src/map_grid.cpp
@@ -626,11 +626,6 @@ set_source_files_properties(
     src/shared_word.cpp
     src/span_math.cpp
     src/scale_adjustment.cpp
-    PROPERTIES COMPILE_OPTIONS "/Oy-")
-# The application asset helpers retain the original EBP-based argument frame.
-# Keep this profile local to the extracted asset owner; generic Sprite methods
-# retain their measured default recipe. This does not assert the original TU.
-set_source_files_properties(src/sprite_assets.cpp
     PROPERTIES COMPILE_OPTIONS "/Oy-")
 # Application timer integration retains the pinned argument frame. The generic
 # Time implementation is compiled separately in Jackal with its existing profile.
@@ -679,6 +674,7 @@ endif()
 set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS
     "${OPENSMACX_ORIGINAL_IMAGE}" "${CMAKE_CURRENT_SOURCE_DIR}/src/IMAGE_PIN"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/game.cpp" "${CMAKE_CURRENT_SOURCE_DIR}/src/mapwin.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/interface_assets.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/mapwin_terrain.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/map.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/map_grid.cpp"

@@ -20,7 +20,7 @@ ROOT = Path(__file__).resolve().parents[2]
 
 
 def actual_source():
-    source = (ROOT / "src/game.cpp").read_text()
+    source = (ROOT / "src/interface_assets.cpp").read_text()
     initializer, = re.findall(
         r"\bint\s+OceanDetailShade\s*\[80\]\s*=\s*\{[^}]*\}\s*;", source)
     for name in ("CyclingConfigFile", "OceanOffsetsConfigFile"):

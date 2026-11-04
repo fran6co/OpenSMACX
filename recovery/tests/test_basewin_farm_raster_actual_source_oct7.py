@@ -167,7 +167,7 @@ def test_actual_farm_get_maps_all_pinned_asset_indices(compiler: str) -> None:
 
 def test_source_producer_reader_and_unit_clip_chain() -> None:
     basewin = (ROOT / "src/basewin.cpp").read_text()
-    game = (ROOT / "src/game.cpp").read_text()
+    game = (ROOT / "src/interface_assets.cpp").read_text()
     sprite = (ROOT / "src/sprite.cpp").read_text()
     terrain_loader = source_function(game, "void __cdecl load_terrain()")
     sprite_producer = source_function(game, "void terrain_extract_sprite(")

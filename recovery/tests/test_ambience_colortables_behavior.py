@@ -16,7 +16,7 @@ FALLBACK_SOURCE = ROOT / "build/recovery/ambience-colortables-owner-oct5/candida
 
 def extract(signature: str) -> str:
     source = None
-    for product_file in (ROOT / "src/ambience.cpp", ROOT / "src/game.cpp"):
+    for product_file in (ROOT / "src/ambience.cpp", ROOT / "src/game.cpp", ROOT / "src/interface_assets.cpp"):
         if product_file.is_file():
             text = product_file.read_text()
             if signature in text:

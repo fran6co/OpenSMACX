@@ -137,26 +137,34 @@ def _cpp_tokens(source: str) -> list[str]:
             and not value.isspace()]
 
 
-def restore_asset_block_for_comparison(current: str, baseline: str, assets: str) -> str:
-    """Reassemble only the exact relocated globals for an old TU comparison.
+def texture_asset_segment(assets: str) -> str:
+    """Extract and validate just the contiguous moved Texture storage segment."""
+    definitions = list(re.finditer(r"(?m)^Texture g_\w+(?:\[\d+\])?;\s*$", assets))
+    assert len(definitions) == 20
+    start = assets.rfind("// RECOVERY_OBJECT:", 0, definitions[0].start())
+    assert start >= 0
+    end = definitions[-1].end()
+    segment = assets[start:end]
+    assert segment.count("// RECOVERY_OBJECT:") == 20
+    assert len(re.findall(r"(?m)^Texture g_\w+(?:\[\d+\])?;\s*$", segment)) == 20
+    return segment
 
-    This validates declaration/storage conservation, not linked startup order.
-    Native original-identity checks and the owner tests cover moved mappings.
+
+def restore_asset_block_for_comparison(current: str, baseline: str, assets: str) -> str:
+    """Reassemble only moved Texture globals for an old TU comparison.
+
+    Other application assets share interface_assets.cpp and are deliberately
+    outside this projection. This validates storage conservation, not startup order.
     """
     start = "// ===== MANAGED GLOBALS - real objects, homed to their domain ====="
     end = "// Shared Texture-owned storage"
     assert baseline.count(start) == baseline.count(end) == 1
     expected = baseline[baseline.index(start):baseline.index(end)]
+    segment = texture_asset_segment(assets)
     assert current.count(start) == 0 and current.count(end) == 1
-    assert assets.count(start) == 1
-    assert _cpp_tokens(assets[:assets.index(start)]) == _cpp_tokens(
-        '#include "stdafx.h"\n#include "texture.h"\n'), (
-        "relocated asset owner contains unexpected code before its globals")
-    assert assets[assets.index(start):] == expected
-    definitions = r"(?m)^Texture g_\w+(?:\[\d+\])?;"
-    assert len(re.findall(definitions, assets)) == 20
-    assert not re.findall(definitions, current)
-    return current.replace(end, expected + end, 1)
+    assert _cpp_tokens(segment) == _cpp_tokens(expected)
+    assert len(re.findall(r"(?m)^Texture g_\w+(?:\[\d+\])?;\s*$", current)) == 0
+    return current.replace(end, segment + "\n" + end, 1)
 
 
 def reverse_direct_storage_source(current: str, baseline: str) -> str:
@@ -168,7 +176,7 @@ def reverse_direct_storage_source(current: str, baseline: str) -> str:
     annotations and task metadata remain under the caller's existing checks.
     """
     if "// ===== MANAGED GLOBALS" not in current:
-        assets = (Path(__file__).resolve().parents[2] / "src/texture_objects.cpp").read_text()
+        assets = (Path(__file__).resolve().parents[2] / "src/interface_assets.cpp").read_text()
         current = restore_asset_block_for_comparison(current, baseline, assets)
     expected = direct_storage_projection(baseline)
     assert current.count(SIGNED_KEY_NOTE) == 1

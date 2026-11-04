@@ -678,6 +678,21 @@
         "The first nonzero original CRT slot682004 selects402F10, which constructs the actual g_ALPHAMENU_WAVE at6A7090 and registers cleanup402F30. Its direct play consumers are AlphaMenu methods, while Wave implementation methods are a distant library family.",
         "menu_init/check and detached AlphaMenu destructor/deleting entries remain explicit out-of-core provider obligations. The init secondary EH span remains attached. Moving this CPP to the first application source position supports the observed first-initializer order; other global order and linked/runtime acceptance remain unproven."
       ]
+    },
+    {
+      "name": "InterfaceAssets",
+      "start": "0x0044CC20",
+      "end_exclusive": "0x004562C0",
+      "recovered_tu": "src/interface_assets.cpp",
+      "reason": "Inferred shared asset-loader contribution core: original startup object operations and resource-loading code form a coherent recovered ownership group. The descriptive source filename and address band do not prove historical object boundaries.",
+      "evidence": [
+        "The startup/loader portion contains601 primary mappings:288 startup initializers,288 cleanup identities and25 ordinary functions/constructor. Complete source lookup finds all known mapped identities in the band; interstitial spans were independently classified as original NOP padding. Detached EH spans remain attached to their original mappings.",
+        "The pinned CRT slots43..330 identify288 real Buffer, FactionArt, Sprite, CaviarData and Texture objects. Original receiver references and resource-loader consumers link the storage with the loader code; legacy _$E ordinal spellings are not original debug/TU evidence.",
+        "The source relocation preserves historical identities, claims, storage and useful findings.170 original object allocation extents remain unknown; source correspondence, current compiler emission, full linked initialization order and matching are separate obligations.",
+        "Original terrain and icon filename operands452459 and454994 select separate14-byte TER1WRECK.PCX arrays at684FE4 and685074. Named writable source arrays retain both original extents and consumer evidence; their descriptive names are provisional. This prevents accidental source pooling but does not prove an original TU boundary or complete storage/reference matching.",
+        "The adjacent FactionArt destructor456010, CaviarData destructor456100 and Gamma destructor/deleting/Buffer-adjustor entries456110/456280/4562B0 complete the known provider frontier through4562BB. Pinned intervening bytes are NOP alignment, followed by five INT3 bytes before InfoWin at4562C0. All606 known primary identities in this proposed contribution have the asset CPP as their source/emission home; Gamma header-generated entries retain their class-owner annotations with explicit compile contexts.",
+        "Gamma has a genuine inline destructor in gamma.h, naturally emitted by load_palette. Rehome its existing source compile-context fact from the former palette-loader unit, without duplicating an implementation or inventing a callback. The reunited caption definition precedes its direct load_interface consumer, so it needs no new common-header API. Four equal-content filename arrays preserve distinct original writable allocations."
+      ]
     }
   ]
 }

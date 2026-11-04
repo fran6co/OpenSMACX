@@ -24,9 +24,9 @@ def _pinned_image():
 
 # Current proposal homes; coordinator may adjust these with actual integration.
 OWNERS = {
-    0x00454D10: ("src/sprite_assets.cpp", "void __cdecl load_misc()"),
-    0x00455EB0: ("src/sprite_assets.cpp", "void __cdecl load_sprites()"),
-    0x00451A10: ("src/interface_palette.cpp", "void __cdecl load_palette()"),
+    0x00454D10: ("src/interface_assets.cpp", "void __cdecl load_misc()"),
+    0x00455EB0: ("src/interface_assets.cpp", "void __cdecl load_sprites()"),
+    0x00451A10: ("src/interface_assets.cpp", "void __cdecl load_palette()"),
 }
 
 BASE = '97ad25151bb1c72962e41f711299c54a7912ed9d'
