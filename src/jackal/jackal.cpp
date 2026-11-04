@@ -208,7 +208,7 @@ void __cdecl jackal_close() {
     Time::close_class();
     WinDisplayInit.teardown();
     CheckButton::close_class();
-    buffer_close_class_redirect();
+    Buffer::close_class();
     teardown_0060fd60();
     teardown_0060e5d0();
     Font::close_font_class();

@@ -314,11 +314,11 @@ void draw_dest_unk1(Buffer *, int, int, int, int, unsigned char *);
   void set_text_color2(int color1, int color2, int color3, int color4);
   void set_text_color3(int color1, int color2, int color3, int color4);
   void set_text_color_hyper(int color1, int color2, int color3, int color4);
-  // `static`: the image's name is `?init_class@Buffer@@QAAHXZ` - `QAA` is a
-  // public member declared __cdecl, which takes no receiver - and
-  // jackal_init_real calls it with no ecx set up.
+  // Class-wide no-state lifecycle hooks. The pinned Jackal call sites set up
+  // no receiver; their retained catalogue decorations do not prove the
+  // original source declaration. Model both operations as static methods.
   static int init_class();
-  void close_class();
+  static void close_class();
   int sync_to_palette(Palette *palette);
   // The canonical definition is in buffer_mask.cpp. Original direct-call
   // consumers see this declaration; drawing methods whose original contains
@@ -855,11 +855,6 @@ extern Buffer g_BUFFER;
 // Value the close reset writes at offset 0x520; its meaning is unconfirmed.
 extern uint32_t BufferField520Default;
 // Releases a Sprite-style allocation through the executable's own CRT.
-
-
-void __cdecl buffer_close_class_redirect();
-
-
 
 
 

@@ -1,0 +1,85 @@
+{
+  "event_id": "02fc25c9723ac43d0ba546d0df321f5508dd28d4989e1a63dfc081bee4088795",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [],
+    "evidence": [
+      "The authorized nonvirtual static Buffer hook/header change alters compiler scheduling/register/frame/constant selection in thirteen already nonexact mapped functions across eight unchanged source TUs. Their C++ source bytes and flags are unchanged; only Buffer.h differs in their compile input closure. No new code edits in those TUs are authorized by this observation scope.",
+      "Fresh whole-project native observation preserves all3850current strict passes with exactly2planned restorations, all1973object identities and prior data/generated passes. These13functions remain FAIL/UNKNOWN; their changed bytes are NOT described as preserved or accepted matching code. Historical claims and restoration duties remain. Independent physical graph review lists their finite roots and confirms unchanged call/global target sets and no missing/extra roots.",
+      "Coordinator admits this reviewed compiler-output ripple to the observation/restoration scope while preserving the justified source structure; no demotion, gate relaxation, behavioral fix, compiler policy change or full outside-scope linked/game acceptance is granted. Physical/source review evidence retained in ignored lifecycle-literal-nov04e/integration-evidence."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 4235728,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4231680,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4472592,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5682608,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5550528,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5561584,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5967360,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5392496,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4544016,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4773952,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6008832,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5744224,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5851072,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": null,
+  "request_id": "review-header-codegen-impact-nov04e",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:buffer-class-hooks-nov04e"
+}

@@ -986,7 +986,7 @@ int Buffer::init_class() {
 /*
 Purpose: Close shared Buffer state; the legacy implementation is intentionally empty.
 // ORIGINAL: 0x005DF580 ?close_class@Buffer@@QAAXXZ 0x005DF580-0x005DF581 BYTE_EXACT
-// symbol    ?close_class@Buffer@@QAEXXZ
+// symbol    ?close_class@Buffer@@SAXXZ
 // size      1 bytes
 // prototype 
 // callers   1   call targets   0
@@ -1000,13 +1000,6 @@ Status: Complete
 void Buffer::close_class() {
 }
 
-
-int __cdecl buffer_init_class_redirect() {
-    return 0;
-}
-
-void __cdecl buffer_close_class_redirect() {
-}
 
 namespace {
 
