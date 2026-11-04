@@ -19,6 +19,20 @@ from .msvc_link_map import parse_link_map
 from .pe_coff import PeImage
 from .graph_limits import DEFAULT_NODES
 
+SOURCE_REGION_MAX_BYTES = min(1 << 30, DEFAULT_NODES * 65536)
+SOURCE_REGION_MAX_REFERENCES = min(4000000, DEFAULT_NODES * 1024)
+SOURCE_REGION_MAX_ROOTS = min(1000000, DEFAULT_NODES * 16)
+
+
+def _selected_root_fold_group(folding, owner, symbol, candidates):
+    """Resolve only advisory ICF candidates through complete native group APIs."""
+    if folding is None or (owner.casefold(), symbol) not in candidates:
+        return None
+    group = folding.for_map(owner, symbol, optional=True)
+    if group is None:
+        group = folding.group(owner, symbol, optional=True)
+    return group
+
 
 @dataclass(frozen=True)
 class LinkedInputs:
@@ -170,14 +184,151 @@ class LinkedBuild:
         try:
             self.check_current()
             value = self.inputs
-            weak_scope = _live_weak_reference_scope(value.objects, value.mapping, value.image)
-            return observe_code_graph(value.objects, value.mapping, value.image, roots,
-                                      fixups=value.fixups, folding=value.folding, max_functions=max_functions,
-                                      codeview=LinkedProcedures(self), _weak_scope=weak_scope)
+            weak_scope = _live_weak_reference_scope(value.objects, value.mapping, value.image,
+                                                    self.context, self.check_current)
+            return self._code_in_scope(roots, weak_scope, max_functions=max_functions)
         finally:
             if weak_scope is not None:
                 weak_scope.expire()
             self.check_current()
+
+    def _code_in_scope(self, roots, weak_scope, *, max_functions=DEFAULT_NODES):
+        """Observe code using the caller's still-live private weak scope."""
+        self.check_current()
+        from .linked_code_region import _LiveWeakReferenceScope
+        if type(weak_scope) is not _LiveWeakReferenceScope:
+            raise ValueError("linked code requires its live private weak-reference scope")
+        if (weak_scope._objects is not self.inputs.objects
+                or weak_scope._mapping is not self.inputs.mapping
+                or weak_scope._image is not self.inputs.image):
+            raise ValueError("weak-reference scope belongs to another linked build")
+        from .linked_codeview import LinkedProcedures
+        return observe_code_graph(self.inputs.objects, self.inputs.mapping, self.inputs.image, roots,
+                                  fixups=self.inputs.fixups, folding=self.inputs.folding,
+                                  max_functions=max_functions, codeview=LinkedProcedures(self),
+                                  _weak_scope=weak_scope)
+
+    def _weak_scope(self):
+        """Create one native-bound weak scope for an enclosing source comparison."""
+        from .linked_code_region import _live_weak_reference_scope
+        self.check_current()
+        return _live_weak_reference_scope(self.inputs.objects, self.inputs.mapping,
+                                          self.inputs.image, self.context, self.check_current)
+
+    def _source_regions_in_scope(self, roots, weak_scope):
+        """Verify selected weak caller regions without traversing their callees."""
+        from .linked_code_region import _LiveWeakReferenceScope, select_code_region, verify_code_region
+        from .linked_codeview import LinkedProcedures
+        from .linked_constant_batch import constant_lookups
+        from .linked_map_index import MapIndexes
+        from .model import Result
+        from .pe_coff import Coff
+        from .graph_limits import node_limit
+
+        self.check_current()
+        if type(weak_scope) is not _LiveWeakReferenceScope:
+            raise ValueError("source-region verification requires its live weak-reference scope")
+        if (weak_scope._objects is not self.inputs.objects
+                or weak_scope._mapping is not self.inputs.mapping
+                or weak_scope._image is not self.inputs.image):
+            raise ValueError("source-region scope belongs to another linked build")
+        rows = []
+        folding = self.inputs.folding
+        node_limit(DEFAULT_NODES)
+        if len(roots) > SOURCE_REGION_MAX_ROOTS:
+            raise ValueError("selected weak source-root request resource bound exceeded")
+        fold_candidate_error = None
+        try:
+            fold_candidates = folding.candidate_keys() if folding is not None else frozenset()
+        except (OSError, ValueError, KeyError, TypeError, AttributeError) as error:
+            fold_candidates, fold_candidate_error = frozenset(), str(error)
+        codeview = LinkedProcedures(self)
+        map_indexes = MapIndexes()
+        observed_bytes, observed_edges = 0, 0
+        fallback_keys = set()
+        budget_exhausted_reason = None
+
+        def charge(proof):
+            nonlocal observed_bytes, observed_edges, budget_exhausted_reason
+            regions = proof.get("regions")
+            if regions is None:
+                observed_bytes += proof.get("size", 0)
+                observed_edges += len(proof.get("references", ()))
+            else:
+                observed_bytes += sum(region.get("size", 0) for region in regions)
+                observed_edges += sum(len(region.get("references", ())) for region in regions)
+            for key, fallback in weak_scope._verified_fallbacks.items():
+                if key not in fallback_keys:
+                    fallback_keys.add(key)
+                    regions = fallback.get("regions")
+                    if regions is None:
+                        observed_bytes += fallback.get("size", 0)
+                        observed_edges += len(fallback.get("references", ()))
+                    else:
+                        observed_bytes += sum(region.get("size", 0) for region in regions)
+                        observed_edges += sum(len(region.get("references", ())) for region in regions)
+            if observed_bytes > SOURCE_REGION_MAX_BYTES:
+                budget_exhausted_reason = "selected weak source-region observed-byte resource bound exceeded"
+                raise ValueError(budget_exhausted_reason)
+            if observed_edges > SOURCE_REGION_MAX_REFERENCES:
+                budget_exhausted_reason = "selected weak source-region reference resource bound exceeded"
+                raise ValueError(budget_exhausted_reason)
+
+        try:
+            with constant_lookups(self.inputs.objects) as constants:
+                for request in roots:
+                    owner, name = request["owner"], request["symbol"]
+                    row = {"owner": owner, "symbol": name,
+                           "source_unit": request.get("unit"), "entity_id": request.get("entity_id"),
+                           "result": Result.UNKNOWN}
+                    obj = subject = weak_relocation = None
+                    proof_attempted = False
+                    try:
+                        if budget_exhausted_reason is not None:
+                            weak_scope.refuse_source_root(owner, name, budget_exhausted_reason)
+                            row["blocks_original_qualification"] = True
+                            raise ValueError(budget_exhausted_reason)
+                        selected = self.inputs.objects.resolve(owner)
+                        if selected["owner"].casefold() != owner.casefold() or selected["sha256"] != sha256(selected["raw"]).hexdigest():
+                            raise ValueError("selected root differs from its physical owner identity")
+                        obj = Coff(selected["raw"])
+                        unit, receipt = weak_scope.source_receipt(owner, obj)
+                        if unit is None or receipt is None or request.get("unit") not in (None, unit):
+                            raise ValueError("selected root lacks its matching source compile receipt")
+                        subject = select_code_region(obj, name)
+                        weak_relocations = [relocation for number in obj.code_sections(subject)
+                                            for relocation in obj.section_subject(number)[1]
+                                            if obj.symbols[int(relocation.target)].storage == 105]
+                        if len(weak_relocations) != 1:
+                            raise ValueError("selected source region requires exactly one weak relocation")
+                        weak_relocation, = weak_relocations
+                        if fold_candidate_error is not None:
+                            proof_attempted = True
+                            raise ValueError("folding candidate coverage unavailable: " + fold_candidate_error)
+                        if (owner.casefold(), name) in fold_candidates:
+                            proof_attempted = True
+                            group = _selected_root_fold_group(folding, owner, name, fold_candidates)
+                            if group is not None:
+                                raise ValueError("selected weak caller belongs to an ICF group; direct region proof refuses folding")
+                            proof_attempted = False
+                        proof_attempted = True
+                        proof = verify_code_region(
+                            obj, subject, owner, self.inputs.mapping, self.inputs.image,
+                            objects=self.inputs.objects, fixups=self.inputs.fixups,
+                            _index=map_indexes.for_map(self.inputs.mapping), _constants=constants,
+                            codeview=codeview, _weak_scope=weak_scope)
+                        charge(proof)
+                        row.update(object_identity=selected["identity"], object_sha256=selected["sha256"],
+                                   receipt_sha256=receipt, proof=proof, result=proof["result"])
+                    except (OSError, ValueError, KeyError, TypeError, AttributeError) as error:
+                        row["reason"] = str(error)
+                        if proof_attempted:
+                            weak_scope.refuse_current_edge(obj, subject, weak_relocation, owner, str(error))
+                            row["blocks_original_qualification"] = True
+                    rows.append(row)
+        finally:
+            self.check_current()
+        return rows
 
 
 @contextmanager

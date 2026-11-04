@@ -7,6 +7,7 @@ and runtime behavior remain unproved.
 """
 
 from hashlib import sha256
+from pathlib import Path
 
 from .binary import RelocationKind
 from .linked_function import _verify_region, verify_function
@@ -20,15 +21,17 @@ _LIVE_WEAK_TOKEN = object()
 class _WeakTargetBinding:
     """One unpersistable weak-edge qualification, consumed by one code region."""
 
-    __slots__ = ("address", "details", "_scope", "_object", "_owner", "_section", "_subject",
-                 "_weak_index", "_offset", "_kind")
+    __slots__ = ("address", "details", "_scope", "_object", "_object_state", "_owner", "_section", "_subject",
+                 "_weak_index", "_offset", "_kind", "_source_unit", "_receipt")
 
     def __init__(self, token, scope, obj, owner, section, subject, weak_index, offset, kind, address, details):
         if token is not _LIVE_WEAK_TOKEN:
             raise TypeError("weak target bindings require a live linked-code observation")
         self._scope, self._object = scope, obj
+        self._object_state = (obj.__dict__.copy(), sha256(obj.raw_data).hexdigest())
         self._owner, self._section, self._subject = owner, section, subject
         self._weak_index, self._offset, self._kind = weak_index, offset, kind
+        self._source_unit, self._receipt = scope.source_receipt(owner, obj)
         self.address, self.details = address, details
 
     def __reduce__(self):
@@ -37,24 +40,113 @@ class _WeakTargetBinding:
     def consume(self, obj, subject, owner, relocation):
         scope = self._scope
         scope.require_live()
-        if (obj is not self._object or subject != self._subject or owner != self._owner
+        if (obj.__dict__ != self._object_state[0] or sha256(obj.raw_data).hexdigest() != self._object_state[1]
+                or subject != self._subject or owner != self._owner
                 or subject.section != self._section or relocation.target != str(self._weak_index)
                 or relocation.offset != self._offset or relocation.kind != self._kind):
             raise ValueError("weak target qualification belongs to another caller reference")
+        return self.address, dict(self.details)
+
+    def original_target(self, binding, obj, subject, relocation, fallback_binding, fallback_row):
+        scope = self._scope
+        scope.require_live()
+        if (self.consume(obj, subject, self._owner, relocation)[0] != self.address
+                or binding.unit != self._source_unit or binding.symbol != self._subject.name
+                or binding.origin.entity_id == fallback_binding.origin.entity_id
+                or fallback_binding.unit != self._source_unit
+                or fallback_binding.symbol != self.details["fallback_symbol"]
+                or len(fallback_binding.spans) != 1 or fallback_binding.source_spans
+                or fallback_binding.local_only or fallback_row.get("entity_id") != fallback_binding.origin.entity_id
+                or fallback_row.get("result") != "pass"):
+            raise ValueError("weak original target lacks a strict same-unit fallback source comparison")
+        return _OriginalWeakTarget(_LIVE_WEAK_TOKEN, scope, self, binding, fallback_binding,
+                                   relocation, fallback_row)
+
+
+class _OriginalWeakTarget:
+    """One in-memory original target, scoped to one strict weak relocation."""
+
+    __slots__ = ("address", "details", "_scope", "_current", "_binding", "_fallback", "_offset", "_index",
+                 "_used")
+
+    def __init__(self, token, scope, current, binding, fallback, relocation, fallback_row):
+        if token is not _LIVE_WEAK_TOKEN:
+            raise TypeError("original weak targets require a live linked source comparison")
+        self._scope, self._current = scope, current
+        self._binding, self._fallback = binding, fallback
+        self._offset, self._index = relocation.offset, int(relocation.target)
+        self.address = fallback.origin.address
+        self.details = {"current_edge": dict(current.details),
+                        "fallback_entity_id": fallback.origin.entity_id,
+                        "fallback_original_address": self.address,
+                        "fallback_result": fallback_row["result"],
+                        "source_receipt_sha256": current._receipt}
+        self._used = False
+
+    def __reduce__(self):
+        raise TypeError("live original weak targets cannot be serialized")
+
+    def consume(self, binding, obj, subject, relocation):
+        self._scope.require_live()
+        if self._used:
+            raise ValueError("original weak target capability was already consumed")
+        if (binding != self._binding or obj.__dict__ != self._current._object_state[0]
+                or sha256(obj.raw_data).hexdigest() != self._current._object_state[1]
+                or subject != self._current._subject or subject.section != self._current._section
+                or relocation.offset != self._offset or relocation.target != str(self._index)
+                or relocation.kind != self._current._kind):
+            raise ValueError("original weak target belongs to another caller row or relocation")
+        self._used = True
         return self.address, dict(self.details)
 
 
 class _LiveWeakReferenceScope:
     """Private capability minted only inside one expiring LinkedBuild.code call."""
 
-    __slots__ = ("_objects", "_mapping", "_image", "_verified_fallbacks", "_live")
+    __slots__ = ("_objects", "_mapping", "_image", "_context", "_fresh", "_verified_fallbacks",
+                 "_weak_bindings", "_current_results", "_original_consumed", "_refused_current_edges",
+                 "_refused_source_roots", "_live")
 
-    def __init__(self, token, objects, mapping, image):
+    def __init__(self, token, objects, mapping, image, context=None, fresh=None):
         if token is not _LIVE_WEAK_TOKEN:
             raise TypeError("live weak qualification is available only from LinkedBuild.code")
-        self._objects, self._mapping, self._image = objects, mapping, image
+        self._objects, self._mapping, self._image, self._context, self._fresh = objects, mapping, image, context, fresh
         self._verified_fallbacks = {}
+        self._weak_bindings = {}
+        self._current_results = {}
+        self._original_consumed = set()
+        self._refused_current_edges = {}
+        self._refused_source_roots = {}
         self._live = True
+
+    @staticmethod
+    def _edge_key(obj, subject, relocation, owner):
+        return (owner.casefold(), sha256(obj.raw_data).hexdigest(), subject.name, subject.section,
+                int(relocation.target), relocation.offset, relocation.kind)
+
+    @staticmethod
+    def _binding_edge_key(binding):
+        return (binding._owner.casefold(), binding._object_state[1], binding._subject.name,
+                binding._section, binding._weak_index, binding._offset, binding._kind)
+
+    def refuse_current_edge(self, obj, subject, relocation, owner, reason):
+        self.require_live()
+        key = self._edge_key(obj, subject, relocation, owner)
+        self._refused_current_edges[key] = reason
+        self.refuse_source_root(owner, subject.name, reason)
+        for binding in self._weak_bindings.values():
+            if self._binding_edge_key(binding) == key:
+                current = self._current_results.get(id(binding))
+                self._current_results[id(binding)] = Result.FAIL if current == Result.FAIL else Result.UNKNOWN
+
+    def refuse_source_root(self, owner, symbol, reason):
+        self.require_live()
+        key = (owner.casefold(), symbol)
+        self._refused_source_roots[key] = reason
+        for binding in self._weak_bindings.values():
+            if (binding._owner.casefold(), binding._subject.name) == key:
+                current = self._current_results.get(id(binding))
+                self._current_results[id(binding)] = Result.FAIL if current == Result.FAIL else Result.UNKNOWN
 
     def __reduce__(self):
         raise TypeError("live weak qualification scopes cannot be serialized")
@@ -66,6 +158,41 @@ class _LiveWeakReferenceScope:
     def expire(self):
         self._live = False
 
+    def source_receipt(self, owner, obj):
+        self.require_live()
+        if self._context is None:
+            return None, None
+        report = self._context.report
+        compile_link = report.get("compile_link") if isinstance(report, dict) else None
+        if not isinstance(compile_link, dict) or compile_link.get("result") != Result.PASS:
+            return None, None
+        selected = self._objects.resolve(owner)
+        identity = selected["identity"]
+        if set(identity) != {"path"}:
+            return None, None
+        matches = [row for row in compile_link.get("compilations", ())
+                   if row.get("result") == Result.PASS and row.get("link_correspondence") == Result.PASS
+                   and row.get("output") == identity["path"]
+                   and row.get("compilation", {}).get("output", {}).get("after") == {
+                       "sha256": selected["sha256"], "size": len(selected["raw"])}]
+        commands = compile_link.get("command_bindings", {})
+        command_matches = [row for row in commands.get("compilations", ())
+                           if row.get("result") == Result.PASS
+                           and row.get("output") == identity["path"]]
+        if (len(matches) != 1 or len(command_matches) != 1
+                or command_matches[0].get("source") != matches[0].get("source")
+                or not command_matches[0].get("arguments")):
+            return None, None
+        source = matches[0]["source"]
+        try:
+            unit = Path(source).relative_to(self._context.root).as_posix()
+        except (ValueError, OSError):
+            return None, None
+        receipt = sha256(repr((matches[0], command_matches[0])).encode()).hexdigest()
+        if Coff(selected["raw"]).__dict__ != obj.__dict__:
+            raise ValueError("weak caller COFF differs from its receipt-bound physical source object")
+        return unit, receipt
+
     def bind(self, obj, subject, owner, relocation, *, objects, mapping, image, fixups, index,
              constants, codeview):
         self.require_live()
@@ -75,6 +202,12 @@ class _LiveWeakReferenceScope:
         if (target is None or target.storage != 105 or target.type != 0x20
                 or obj.symbols.get(target.index) != target):
             raise ValueError("weak target qualification does not name one exact COFF weak external")
+        edge_key = self._edge_key(obj, subject, relocation, owner)
+        root_reason = self._refused_source_roots.get((owner.casefold(), subject.name))
+        if root_reason is not None:
+            raise ValueError("weak source root was refused: " + root_reason)
+        if edge_key in self._refused_current_edges:
+            raise ValueError("weak current edge was refused: " + self._refused_current_edges[edge_key])
         if not obj.sections[subject.section - 1].flags & 0x1000:
             raise ValueError("weak fallback qualification requires one independently bounded COMDAT caller")
         code = obj.sections[subject.section - 1].data
@@ -144,13 +277,54 @@ class _LiveWeakReferenceScope:
             "map": {"weak_address": weak_rows[0].address, "fallback_address": fallback_rows[0].address},
             "selection_authority": "bounded same-owner body/reference proof only; retained-section and whole-link selection remain unknown"
         }
-        return _WeakTargetBinding(_LIVE_WEAK_TOKEN, self, obj, owner, subject.section, subject,
-                                  target.index, relocation.offset, relocation.kind,
-                                  fallback_rows[0].address, details)
+        binding = _WeakTargetBinding(_LIVE_WEAK_TOKEN, self, obj, owner, subject.section, subject,
+                                     target.index, relocation.offset, relocation.kind,
+                                     fallback_rows[0].address, details)
+        key = (owner.casefold(), selected["sha256"], subject.name, subject.section,
+               target.index, relocation.offset, relocation.kind)
+        self._weak_bindings[key] = binding
+        return binding
+
+    def qualify_original(self, obj, subject, relocation, binding, fallback_binding, fallback_row):
+        self.require_live()
+        if self._fresh is not None:
+            self._fresh()
+        edge_tail = (sha256(obj.raw_data).hexdigest(), subject.name, subject.section,
+                     int(relocation.target), relocation.offset, relocation.kind)
+        if any(key[1:] == edge_tail for key in self._refused_current_edges):
+            raise ValueError("weak current edge was refused by source-region resource proof")
+        object_sha = sha256(obj.raw_data).hexdigest()
+        candidates = [current for key, current in self._weak_bindings.items()
+                      if key[1] == object_sha and key[2:] == (subject.name, subject.section,
+                          int(relocation.target), relocation.offset, relocation.kind)]
+        if len(candidates) != 1:
+            raise ValueError("weak original comparison has no matching live current-edge proof")
+        current, = candidates
+        if self._current_results.get(id(current)) != Result.PASS:
+            raise ValueError("current linked caller relocation did not compare successfully")
+        unit, receipt = current._source_unit, current._receipt
+        if unit is None or receipt is None:
+            raise ValueError("weak original comparison lacks a source-bound compile and linker receipt")
+        identity = (id(current), binding.origin.entity_id, fallback_binding.origin.entity_id)
+        if identity in self._original_consumed:
+            raise ValueError("weak original target capability was already consumed")
+        target = current.original_target(binding, obj, subject, relocation, fallback_binding, fallback_row)
+        if fallback_binding.unit != unit:
+            raise ValueError("weak fallback source unit differs from the selected caller receipt")
+        self._original_consumed.add(identity)
+        return target
+
+    def confirm_current(self, binding, result):
+        self.require_live()
+        if binding not in self._weak_bindings.values() or result not in (Result.PASS, Result.FAIL, Result.UNKNOWN):
+            raise ValueError("current weak proof does not belong to this live scope")
+        if self._binding_edge_key(binding) in self._refused_current_edges:
+            result = Result.FAIL if result == Result.FAIL else Result.UNKNOWN
+        self._current_results[id(binding)] = result
 
 
-def _live_weak_reference_scope(objects, mapping, image):
-    return _LiveWeakReferenceScope(_LIVE_WEAK_TOKEN, objects, mapping, image)
+def _live_weak_reference_scope(objects, mapping, image, context=None, fresh=None):
+    return _LiveWeakReferenceScope(_LIVE_WEAK_TOKEN, objects, mapping, image, context, fresh)
 
 
 def _ordinary_symbols(obj, subject):

@@ -136,6 +136,8 @@ def register(commands):
     measure.add_argument("--image", type=Path, required=True)
     measure.add_argument("--in", dest="in_file", help="Exact project-relative annotation host")
     measure.add_argument("--jobs", type=int, default=1, help="Concurrent TUs; must fit isolated compiler capacity")
+    measure.add_argument("--linked-current", action="store_true",
+                         help="Also compare selected originals against receipt-bound objects in a fresh live application build")
     diff = commands.add_parser("diff", help="Recompile one mapping and generate a source-linked assembly HTML diff")
     diff.add_argument("target")
     diff.add_argument("--root", type=Path, default=Path.cwd())
@@ -334,7 +336,8 @@ def invoke_project(root: Path, arguments: dict) -> tuple[int, object]:
     if arguments.get("command") == "measure":
         from .source_measure import measure_source
         output = measure_source(root, arguments["targets"], image=arguments["image"],
-                                in_file=arguments.get("in_file"), jobs=arguments.get("jobs", 1))
+                                in_file=arguments.get("in_file"), jobs=arguments.get("jobs", 1),
+                                linked_current=arguments.get("linked_current", False))
         return {"pass": 0, "fail": 1, "unknown": 3}[output["result"]], output
     if arguments.get("command") == "inspect":
         from .inspection import inspect_source

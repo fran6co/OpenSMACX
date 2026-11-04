@@ -99,7 +99,7 @@ def _verify_region(obj, subject, owner, mapping, image, *, objects=None, fixups=
                 raise ValueError("unsupported linked function relocation identity: " + str(error)) from error
             address, details = binding.consume(obj, subject, owner, relocation)
             targets[relocation.target] = address
-            weak_bindings[relocation.offset] = details
+            weak_bindings[relocation.offset] = (details, binding)
             references.append({"offset": relocation.offset, "kind": relocation.kind,
                                "identity": {"coff_weak": {"symbol": target.name,
                                                           "fallback": details["fallback_symbol"],
@@ -141,7 +141,9 @@ def _verify_region(obj, subject, owner, mapping, image, *, objects=None, fixups=
         _weak_scope.require_live()
         for row in proof.get("relocations", ()):
             if row["offset"] in weak_bindings:
-                row["weak_resolution"] = weak_bindings[row["offset"]]
+                details, binding = weak_bindings[row["offset"]]
+                row["weak_resolution"] = details
+                _weak_scope.confirm_current(binding, proof["result"])
     fingerprint = digest({"code_sha256": hashlib.sha256(code).hexdigest(), "size": len(code),
                           "flags": obj.sections[subject.section - 1].flags,
                           "references": [{key: row[key] for key in ("offset", "kind", "identity")} for row in references]})

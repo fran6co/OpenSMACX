@@ -75,7 +75,8 @@ def _validate_compiled_namespaces(bindings, object_bindings, generated_bindings,
 def observe_compiled_selection(bindings, selected, object_bindings, generated_bindings,
                                objects, image, externals, *, errors=None,
                                import_bindings=(), shared_bindings=(), literal_bindings=(),
-                               fragments=(), associated_bindings=(), unit_extensions=None):
+                               fragments=(), associated_bindings=(), unit_extensions=None,
+                               _weak_scope=None):
     """Observe selected function rows and their complete typed evidence closure.
 
     The returned object deliberately has no aggregate acceptance/result field.
@@ -117,7 +118,8 @@ def observe_compiled_selection(bindings, selected, object_bindings, generated_bi
         function_support_bindings=tuple(item for item in bindings
                                         if item.origin.entity_id not in measurement_ids),
         selected_object_targets=evidence.object_targets,
-        selected_object_contents=evidence.object_contents)
+        selected_object_contents=evidence.object_contents,
+        _weak_scope=_weak_scope)
     function_rows, object_rows, generated_rows, import_rows, shared_rows, literal_rows = checked
     rows_by_id = {row.get("entity_id"): row for row in function_rows
                   if row.get("entity_id") in selected}
@@ -585,18 +587,18 @@ def select_fragment_bindings(view: dict, selected: frozenset[str], bindings: lis
 
 def check_compiled(bindings, object_bindings, generated_bindings, objects, image, externals, *, errors=None,
                    import_bindings=(), shared_bindings=(), literal_bindings=(), fragments=(),
-                   associated_bindings=()):
+                   associated_bindings=(), _weak_scope=None):
     """Same strict target resolution for ordinary measurements and source trials."""
     return _compiled_evidence(bindings, object_bindings, generated_bindings, objects, image, externals,
                               errors=errors, import_bindings=import_bindings, shared_bindings=shared_bindings,
                               literal_bindings=literal_bindings, fragments=fragments,
-                              associated_bindings=associated_bindings)[0]
+                              associated_bindings=associated_bindings, _weak_scope=_weak_scope)[0]
 
 
 def _compiled_evidence(bindings, object_bindings, generated_bindings, objects, image, externals, *, errors=None,
                        import_bindings=(), shared_bindings=(), literal_bindings=(), fragments=(),
                        associated_bindings=(), function_support_bindings=(), selected_object_targets=None,
-                       selected_object_contents=None):
+                       selected_object_contents=None, _weak_scope=None):
     """Resolve targets from product objects, never from a retention probe."""
     _validate_compiled_namespaces((*bindings, *function_support_bindings), object_bindings, generated_bindings,
                                   import_bindings, shared_bindings, externals)
@@ -633,7 +635,7 @@ def _compiled_evidence(bindings, object_bindings, generated_bindings, objects, i
                          local_data_targets=local_data_targets,
                          import_targets=imports, literal_targets=literal_targets, errors=errors,
                          fragments=fragments, associated_bindings=associated_bindings,
-                         support_bindings=function_support_bindings)
+                         support_bindings=function_support_bindings, _weak_scope=_weak_scope)
     if context_checks:
         for row in rows:
             names = {item["symbol"] for item in row.get("diagnostic", {}).get("emitted_references", ())}
@@ -1165,6 +1167,253 @@ def verify_records(root: Path, records, image_path: Path, *, flag_sets,
                               retained_diagnostics=retained_diagnostics,
                               selection_guard=guard, selection_label=None,
                               expected_image_sha256=pin, record_evidence=True)
+
+
+def _source_receipt_object_owners(objects, receipt_outputs):
+    """Resolve only final-pass owners named by source compilation receipts."""
+    owner_paths = {}
+    for owner_rows in objects._owners.values():
+        for owner_row in owner_rows:
+            if not receipt_outputs.intersection(owner_row["paths"]):
+                continue
+            owner = owner_row["owner"]
+            selected_object = objects.resolve(owner)
+            identity = selected_object["identity"]
+            if set(identity) == {"path"}:
+                owner_paths.setdefault(identity["path"], []).append((owner, selected_object))
+    return owner_paths
+
+
+def verify_linked_selection(root: Path, selected, image_path: Path) -> dict:
+    """Compare selected original rows using one fresh, receipt-bound live app build.
+
+    This explicit diagnostic path consumes the exact source objects selected by
+    the current linker. It does not bank claims, qualify preservation, or turn
+    a graph observation into acceptance.
+    """
+    from .application_context import application_build
+    from .build_check import Build
+    from .linked_context import linked_build
+    from .source_replica import replica_roots, replica_snapshot
+
+    root = Path(root).resolve()
+    selected = frozenset(selected)
+    if not selected:
+        raise ValueError("linked source comparison refuses an empty selection")
+    settings = Measurement.read(root)
+    image_path = image_path if image_path.is_absolute() else root / image_path
+    image_path = image_path.resolve()
+    pin = image_pin(root, settings.source)
+    raw_image = image_path.read_bytes()
+    if hashlib.sha256(raw_image).hexdigest() != pin:
+        raise ValueError("linked source comparison requires the configured pinned original image")
+    image = PeImage(raw_image, pin)
+    source_roots = replica_roots(settings.source.roots)
+    source_files = {name: data for name, data in replica_snapshot(root, source_roots).items()
+                    if data is not None}
+    build = Build.read(root)
+    versioned = {name: (root / name).read_bytes() for name in build.versioned_inputs}
+    before = settings.snapshot(root, {"linked_current_image": pin,
+                                      "linked_current_selection": sorted(selected)})
+    view, snapshot = project_view(root)
+    from .component_targets import component_targets
+    dependency_targets, component_reports = component_targets(root, snapshot, raw_image)
+    context_units = validated_context_units(root, snapshot, settings)
+    all_ids = frozenset(row["entity_id"] for row in snapshot["records"])
+    bindings, refused, externals = select_bindings(
+        view, all_ids, component_targets=dependency_targets, context_units=context_units)
+    bindings, fragments, _support, fragment_refused = select_fragment_bindings(view, all_ids, bindings)
+    refused.extend(fragment_refused)
+    selected_refused = [row for row in refused if row.get("entity_id") in selected]
+    bindings = [item for item in bindings if item.origin.entity_id not in {
+        row.get("entity_id") for row in selected_refused}]
+    from .object_source import read_objects
+    from .literal_source import read_literals
+    from .associated_source import read_associated
+    from .generated_source import read_generated
+    from .import_source import read_imports
+    from .shared_source import read_shared_bindings, resolve_shared_contexts
+    object_bindings = read_objects(root, pin)
+    literal_bindings = read_literals(root, pin)
+    associated_bindings = read_associated(root, pin)
+    generated_bindings = read_generated(root, pin)
+    import_bindings = read_imports(root)
+    shared_bindings = resolve_shared_contexts(
+        root, read_shared_bindings(root, pin), settings=settings)
+
+    with application_build(root, source_roots, source_files,
+                           versioned_files=versioned) as application:
+        with linked_build(application) as native:
+            report = application.report.get("compile_link")
+            if (not isinstance(report, dict) or report.get("result") != Result.PASS
+                    or report.get("command_bindings", {}).get("result") != Result.PASS):
+                raise ValueError("linked source comparison requires complete source/flag/output compile receipts")
+            command_rows = report["command_bindings"]["compilations"]
+            command_by_output = defaultdict(list)
+            for row in command_rows:
+                command_by_output[row["output"]].append(row)
+            compile_rows = [row for row in report.get("compilations", ())
+                            if row.get("result") == Result.PASS
+                            and row.get("link_correspondence") == Result.PASS]
+            receipt_outputs = {row["output"] for row in compile_rows
+                               if len(command_by_output.get(row["output"], ())) == 1
+                               and command_by_output[row["output"]][0].get("result") == Result.PASS
+                               and command_by_output[row["output"]][0].get("source") == row.get("source")}
+            outputs = {}
+            owner_paths = _source_receipt_object_owners(native.inputs.objects, receipt_outputs)
+            compile_by_unit = {}
+            for row in compile_rows:
+                output = row["output"]
+                commands_for_output = command_by_output.get(output, ())
+                if len(commands_for_output) != 1:
+                    continue
+                command, = commands_for_output
+                if command.get("result") != Result.PASS or command.get("source") != row.get("source"):
+                    continue
+                source = Path(row["source"])
+                try:
+                    unit = source.relative_to(application.root).as_posix()
+                except ValueError:
+                    continue
+                exact = owner_paths.get(output, ())
+                if len(exact) != 1:
+                    continue
+                owner, selected_object = exact[0]
+                observed = row.get("compilation", {}).get("output", {}).get("after")
+                if observed != {"sha256": selected_object["sha256"], "size": len(selected_object["raw"])}:
+                    continue
+                if unit in compile_by_unit:
+                    raise ValueError("linked source compile receipts duplicate one translation unit")
+                outputs[unit] = (owner, Coff(selected_object["raw"]))
+                compile_by_unit[unit] = {"owner": owner, "output": output,
+                                         "sha256": selected_object["sha256"],
+                                         "command": command}
+            objects = {unit: item[1] for unit, item in outputs.items()}
+            errors = {unit: "no unique selected physical object matches the source/command receipt"
+                      for unit in sorted({binding.unit for binding in bindings}) if unit not in objects}
+            weak_roots, weak_root_refusals = [], []
+            for binding in bindings:
+                if binding.origin.entity_id not in selected:
+                    continue
+                physical = objects.get(binding.unit)
+                owner_row = compile_by_unit.get(binding.unit)
+                if physical is None or owner_row is None:
+                    weak_root_refusals.append({"owner": binding.unit, "symbol": binding.symbol,
+                                               "source_unit": binding.unit, "result": Result.UNKNOWN,
+                                               "entity_id": binding.origin.entity_id,
+                                               "blocks_original_qualification": True,
+                                               "reason": "selected root has no unique receipt-bound physical source object"})
+                    continue
+                try:
+                    subject = physical.function(binding.symbol, comdat=True)
+                    has_weak = any(physical.symbols[int(relocation.target)].storage == 105
+                                   for number in physical.code_sections(subject)
+                                   for relocation in physical.section_subject(number)[1])
+                    if has_weak:
+                        map_rows = [row for row in native.inputs.mapping.publics
+                                    if row.symbol == binding.symbol and row.owner.casefold() == owner_row["owner"].casefold()
+                                    and row.function and row.segment]
+                        if len(map_rows) != 1:
+                            weak_root_refusals.append({"owner": owner_row["owner"], "symbol": binding.symbol,
+                                                       "source_unit": binding.unit, "result": Result.UNKNOWN,
+                                                       "entity_id": binding.origin.entity_id,
+                                                       "blocks_original_qualification": True,
+                                                       "reason": "selected weak root lacks one unique owner-qualified map placement"})
+                            continue
+                        weak_roots.append({"owner": owner_row["owner"], "symbol": binding.symbol,
+                                           "unit": binding.unit, "entity_id": binding.origin.entity_id})
+                except ValueError:
+                    weak_root_refusals.append({"owner": owner_row["owner"], "symbol": binding.symbol,
+                                               "source_unit": binding.unit, "result": Result.UNKNOWN,
+                                               "entity_id": binding.origin.entity_id,
+                                               "blocks_original_qualification": True,
+                                               "reason": "selected root is not a uniquely bounded weak caller"})
+                    continue
+            weak_scope = native._weak_scope()
+            try:
+                current_graphs = []
+                current_graph_result = Result.UNKNOWN
+                current_root_regions = [*native._source_regions_in_scope(weak_roots, weak_scope),
+                                        *weak_root_refusals]
+                current_root_result = (Result.UNKNOWN if not current_root_regions or
+                                       any(item.get("result") == Result.UNKNOWN
+                                           for item in current_root_regions) else
+                                       Result.FAIL if any(item.get("result") == Result.FAIL
+                                                          for item in current_root_regions) else Result.PASS)
+                observed = observe_compiled_selection(
+                    bindings, selected, object_bindings, generated_bindings, objects, image, externals,
+                    errors=errors, import_bindings=import_bindings, shared_bindings=shared_bindings,
+                    literal_bindings=literal_bindings, fragments=fragments,
+                    associated_bindings=associated_bindings, unit_extensions=settings.unit_extensions,
+                    _weak_scope=weak_scope)
+            finally:
+                weak_scope.expire()
+            native.check_current()
+    if (settings.snapshot(root, {"linked_current_image": pin,
+                                 "linked_current_selection": sorted(selected)}) != before
+            or image_path.read_bytes() != raw_image):
+        raise ValueError("source, linked build inputs or pinned image changed during linked comparison")
+    rows = list(observed.function_rows)
+    for row in rows:
+        row["linked_current_code_graph"] = current_graph_result
+        matching_regions = [item for item in current_root_regions
+                            if item.get("entity_id") == row.get("entity_id")
+                            or (item.get("entity_id") is None and item.get("symbol") == row.get("symbol")
+                                and (row.get("source_unit") is None
+                                     or item.get("source_unit") == row.get("source_unit")))]
+        if row.get("entity_id") is None and row.get("source_unit") is None and len(matching_regions) != 1:
+            matching_regions = []
+        row["linked_current_root_regions"] = matching_regions
+        if any(item.get("result") == Result.FAIL for item in matching_regions):
+            row["source_row_result_before_current_root"] = row.get("result", Result.UNKNOWN)
+            row["result"] = Result.FAIL
+        elif any(item.get("blocks_original_qualification") for item in matching_regions):
+            row["source_row_result_before_current_root"] = row.get("result", Result.UNKNOWN)
+            if row.get("result") != Result.FAIL:
+                row["result"] = Result.UNKNOWN
+    weak_rows = [relocation for row in rows for relocation in row.get("relocations", ())
+                 if relocation.get("storage_class") == 105]
+    result_values = [row.get("result", Result.UNKNOWN) for row in rows]
+    result_values.extend(Result.UNKNOWN for _ in selected_refused)
+    result_values.extend(Result.FAIL for item in current_root_regions
+                         if item.get("result") == Result.FAIL)
+    result_values.extend(Result.UNKNOWN for item in current_root_regions
+                         if item.get("blocks_original_qualification")
+                         and item.get("result") != Result.FAIL)
+    for check in observed.required_evidence_checks:
+        values = []
+        if "definition" in check:
+            values.append(check["definition"])
+        if "content" in check:
+            values.append(check["content"])
+        if "identity" in check:
+            values.append(Result.PASS if check["identity"] == "pass" else Result.UNKNOWN)
+        if "result" in check:
+            values.append(check["result"])
+        result_values.extend(values or [Result.UNKNOWN])
+    overall = (Result.UNKNOWN if Result.UNKNOWN in result_values else
+               Result.FAIL if Result.FAIL in result_values else Result.PASS)
+    return {"check": "linked_current_source_comparison", "result": overall,
+            "functions": rows, "selected_entities": len(selected),
+            "counts": dict(sorted(Counter(row.get("result", Result.UNKNOWN) for row in rows).items())),
+            "current_code_graphs": current_graphs, "current_code_graph": current_graph_result,
+            "current_code_graph_reason": "transitive callees were not traversed; selected source regions are reported separately",
+            "current_root_regions": current_root_regions,
+            "current_root_regions_result": current_root_result,
+            "current_root_regions_reason": ("no selected weak-reference root was observed"
+                                             if not current_root_regions else None),
+            "weak_original_references": weak_rows,
+            "required_evidence_checks": list(observed.required_evidence_checks),
+            "required_evidence_unknowns": list(observed.required_evidence_unknowns),
+            "source_object_receipts": {unit: compile_by_unit[unit]
+                                       for unit in sorted(compile_by_unit)
+                                       if unit in {binding.unit for binding in bindings}},
+            "unavailable_source_objects": errors,
+            "compile_link_result": Result.PASS, "component_verification": component_reports,
+            "limitations": ["diagnostic original body comparison only; no claims, acceptance or preservation authority",
+                            "only one receipt-bound physical object per source unit is eligible; archives and ambiguous owners remain unknown",
+                            "weak original targets require one current linked edge and a strict same-object fallback source PASS",
+                            "unsupported layouts, extra weak references and unrelated unresolved dependencies remain unknown"]}
 
 
 def verify_task(root: Path, task_name: str, image_path: Path, *,

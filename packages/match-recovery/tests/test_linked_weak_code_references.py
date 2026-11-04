@@ -1,6 +1,7 @@
 """Live, per-relocation COFF weak fallback proofs; never standalone aliases."""
 
 import json
+import hashlib
 import pickle
 import struct
 
@@ -14,6 +15,8 @@ from match_recovery.link_file_evidence import parse_link_files
 from match_recovery.linked_objects import SelectedObjects
 from match_recovery.msvc_link_map import parse_link_map
 from match_recovery.pe_coff import Coff, PeImage
+from match_recovery.bound_objects import FunctionBinding, check_objects
+from match_recovery.model import Origin, Span
 
 from test_linked_initializers import build, stamp, update_artifact
 
@@ -114,6 +117,16 @@ def test_live_code_graph_qualifies_one_mode2_fallback_and_keeps_weak_identity(tm
     assert ref["weak_resolution"]["caller"]["object_sha256"] == caller["object_sha256"]
     assert ref["weak_resolution"]["fallback"]["body_fingerprint"] == fallback["proof"]["body_fingerprint"]
     assert report["remaining_linked_effects"] == "unknown" and not report["ready_for_collection"]
+
+
+def test_live_code_graph_batches_multiple_roots_and_deduplicates_shared_nodes(tmp_path):
+    context = weak_build(tmp_path / "multi-root")
+    with linked_build(context) as live:
+        report = live.code([{"owner": "unit0.obj", "symbol": "_caller"},
+                            {"owner": "unit0.obj", "symbol": "_G"}])
+    assert report["result"] == "pass", report["gaps"]
+    assert [node["symbol"] for node in report["nodes"]] == ["_caller", "_G"]
+    assert len({(node["owner"], node["symbol"]) for node in report["nodes"]}) == len(report["nodes"])
 
 
 def test_standalone_region_does_not_resolve_weak_external_even_with_selected_objects(tmp_path):
@@ -227,3 +240,213 @@ def test_live_weak_scope_and_reference_binding_cannot_be_serialized_or_reused(tm
         scope.require_live()
     with pytest.raises(ValueError, match="scope has expired"):
         binding.consume(obj, subject, owner, relocation)
+
+
+def _receipt_bind(context, selected, unit="src/unit0.cpp"):
+    source = str(context.root / unit)
+    output = str(context.directory / "unit0.obj")
+    stamp_value = stamp(selected["raw"])
+    context.report["compile_link"] = {
+        "result": "pass",
+        "compilations": [{"result": "pass", "link_correspondence": "pass", "source": source,
+                          "output": output, "compilation": {"output": {"after": stamp_value}}}],
+        "command_bindings": {"result": "pass", "compilations": [{"result": "pass", "source": source,
+                              "output": output, "arguments": ["cl.exe", "/c", source]}]},
+    }
+
+
+def _weak_source_bindings(image, unit="src/unit0.cpp", *, damage_fallback=False):
+    pin = hashlib.sha256(image.data).hexdigest()
+    caller = FunctionBinding(Origin(pin, "pe:va", 0x401000),
+                             (Span(0x401000, 0x401010),), "_caller", unit)
+    fallback_span = Span(0x401010, 0x401011) if damage_fallback else Span(0x401010, 0x401020)
+    fallback = FunctionBinding(Origin(pin, "pe:va", 0x401010),
+                               (fallback_span,), "_G", unit)
+    return caller, fallback
+
+
+def test_linked_source_comparison_uses_original_fallback_only_after_strict_g_pass(tmp_path, monkeypatch):
+    from match_recovery import linked_code_region
+    original_qualify = linked_code_region._LiveWeakReferenceScope.qualify_original
+    captured_targets = []
+
+    def capture(self, *args):
+        target = original_qualify(self, *args)
+        captured_targets.append(target)
+        return target
+
+    monkeypatch.setattr(linked_code_region._LiveWeakReferenceScope, "qualify_original", capture)
+    context = weak_build(tmp_path / "original-bridge")
+    raw = (context.directory / "unit0.obj").read_bytes()
+    _receipt_bind(context, {"raw": raw, "sha256": hashlib.sha256(raw).hexdigest()})
+    with linked_build(context) as live:
+        selected = live.inputs.objects.resolve("unit0.obj")
+        obj = Coff(selected["raw"])
+        image = live.inputs.image
+        caller, fallback = _weak_source_bindings(image)
+        scope = live._weak_scope()
+        try:
+            current = live._code_in_scope([{"owner": "unit0.obj", "symbol": "_caller"}], scope)
+            assert current["result"] == "pass"
+            row, = check_objects([caller], {caller.unit: obj}, image,
+                                 support_bindings=[fallback], _weak_scope=scope)
+            assert row["result"] == "pass", row
+            weak, = [item for item in row["relocations"] if item["storage_class"] == 105]
+            assert weak["result"] == "pass"
+            assert weak["weak_original_target"]["fallback_entity_id"] == fallback.origin.entity_id
+            assert weak["weak_original_target"]["fallback_original_address"] == 0x401010
+            assert weak["weak_original_target"]["fallback_result"] == "pass"
+            assert weak["weak_original_target"]["source_receipt_sha256"]
+            with pytest.raises(TypeError, match="cannot be serialized"):
+                pickle.dumps(captured_targets[0])
+            with pytest.raises(ValueError, match="already consumed"):
+                captured_targets[0].consume(caller, obj, obj.function("_caller", comdat=True),
+                                            obj.section_subject(obj.function("_caller", comdat=True).section)[1][0])
+        finally:
+            scope.expire()
+
+
+def test_original_weak_target_does_not_leak_without_live_scope_or_after_fallback_miss(tmp_path):
+    context = weak_build(tmp_path / "original-bridge-damage")
+    raw = (context.directory / "unit0.obj").read_bytes()
+    _receipt_bind(context, {"raw": raw, "sha256": hashlib.sha256(raw).hexdigest()})
+    with linked_build(context) as live:
+        selected = live.inputs.objects.resolve("unit0.obj")
+        obj = Coff(selected["raw"])
+        damaged = bytearray(live.inputs.image.data)
+        damaged[512 + 0x10] = 0x90
+        original = PeImage(bytes(damaged), hashlib.sha256(damaged).hexdigest())
+        caller, fallback = _weak_source_bindings(original)
+        ordinary, = check_objects([caller], {caller.unit: obj}, original, support_bindings=[fallback])
+        assert ordinary["result"] == "unknown"
+        scope = live._weak_scope()
+        try:
+            current = live._code_in_scope([{"owner": "unit0.obj", "symbol": "_caller"}], scope)
+            assert current["result"] == "pass"
+            row, = check_objects([caller], {caller.unit: obj}, original,
+                                 support_bindings=[fallback], _weak_scope=scope)
+            assert row["result"] == "unknown" and "strictly compare PASS" in row.get("reason", ""), row
+        finally:
+            scope.expire()
+
+
+def test_original_weak_target_requires_fallback_reference_pass_not_just_equal_body(tmp_path):
+    context = weak_build(tmp_path / "original-reference-damage", g_reference=True)
+    with linked_build(context) as live:
+        selected = live.inputs.objects.resolve("unit0.obj")
+        obj = Coff(selected["raw"])
+        damaged = bytearray(live.inputs.image.data)
+        # Keep the candidate PE and current linked graph intact, but alter only
+        # the original G call operand so strict original reference comparison fails.
+        damaged[512 + 0x11:512 + 0x15] = struct.pack("<i", 0x4011E1 - (0x401015))
+        original = PeImage(bytes(damaged), hashlib.sha256(damaged).hexdigest())
+        caller, fallback = _weak_source_bindings(original)
+        scope = live._weak_scope()
+        try:
+            current = live._code_in_scope([{"owner": "unit0.obj", "symbol": "_caller"}], scope)
+            assert current["result"] == "pass"
+            row, = check_objects([caller], {caller.unit: obj}, original,
+                                 support_bindings=[fallback], _weak_scope=scope)
+            assert row["result"] == "unknown" and "strictly compare PASS" in row.get("reason", ""), row
+        finally:
+            scope.expire()
+
+
+def test_original_caller_reference_mismatch_remains_fail_after_fallback_pass(tmp_path):
+    context = weak_build(tmp_path / "original-caller-reference-damage")
+    raw = (context.directory / "unit0.obj").read_bytes()
+    _receipt_bind(context, {"raw": raw, "sha256": hashlib.sha256(raw).hexdigest()})
+    with linked_build(context) as live:
+        selected = live.inputs.objects.resolve("unit0.obj")
+        obj = Coff(selected["raw"])
+        damaged = bytearray(live.inputs.image.data)
+        damaged[512 + 1] = (damaged[512 + 1] + 1) & 0xFF
+        original = PeImage(bytes(damaged), hashlib.sha256(damaged).hexdigest())
+        caller, fallback = _weak_source_bindings(original)
+        scope = live._weak_scope()
+        try:
+            current = live._code_in_scope([{"owner": "unit0.obj", "symbol": "_caller"}], scope)
+            assert current["result"] == "pass"
+            row, = check_objects([caller], {caller.unit: obj}, original,
+                                 support_bindings=[fallback], _weak_scope=scope)
+            assert row["result"] == "fail", row
+            weak, = [item for item in row["relocations"] if item["storage_class"] == 105]
+            assert weak["result"] == "fail"
+        finally:
+            scope.expire()
+
+
+def test_original_weak_capability_is_unit_scoped_and_expires(tmp_path):
+    context = weak_build(tmp_path / "original-bridge-expiry")
+    raw = (context.directory / "unit0.obj").read_bytes()
+    _receipt_bind(context, {"raw": raw, "sha256": hashlib.sha256(raw).hexdigest()})
+    with linked_build(context) as live:
+        selected = live.inputs.objects.resolve("unit0.obj")
+        obj = Coff(selected["raw"])
+        image = live.inputs.image
+        caller, fallback = _weak_source_bindings(image)
+        scope = live._weak_scope()
+        try:
+            current = live._code_in_scope([{"owner": "unit0.obj", "symbol": "_caller"}], scope)
+            assert current["result"] == "pass"
+            changed = FunctionBinding(caller.origin, caller.spans, caller.symbol, "src/other.cpp")
+            row, = check_objects([changed], {changed.unit: obj}, image,
+                                 support_bindings=[fallback], _weak_scope=scope)
+            assert row["result"] == "unknown", row
+        finally:
+            scope.expire()
+        with pytest.raises(ValueError, match="expired"):
+            scope.require_live()
+
+
+def test_original_weak_target_is_index_and_offset_scoped(tmp_path):
+    context = weak_build(tmp_path / "original-bridge-wrong-reference")
+    raw = (context.directory / "unit0.obj").read_bytes()
+    _receipt_bind(context, {"raw": raw, "sha256": hashlib.sha256(raw).hexdigest()})
+    with linked_build(context) as live:
+        selected = live.inputs.objects.resolve("unit0.obj")
+        obj = Coff(selected["raw"])
+        image = live.inputs.image
+        caller, fallback = _weak_source_bindings(image)
+        scope = live._weak_scope()
+        try:
+            current = live._code_in_scope([{"owner": "unit0.obj", "symbol": "_caller"}], scope)
+            assert current["result"] == "pass"
+            g_row, = check_objects([fallback], {fallback.unit: obj}, image)
+            section = obj.function("_caller", comdat=True)
+            relocation = obj.section_subject(section.section)[1][0]
+            from dataclasses import replace
+            for wrong in (replace(relocation, offset=relocation.offset + 1),
+                          replace(relocation, target=str(int(relocation.target) + 1))):
+                with pytest.raises(ValueError, match="no matching live current-edge proof"):
+                    scope.qualify_original(obj, section, wrong, caller, fallback, g_row)
+        finally:
+            scope.expire()
+
+
+def test_original_weak_target_refuses_changed_selected_object_inside_live_scope(tmp_path):
+    context = weak_build(tmp_path / "original-bridge-mutated-object")
+    raw = (context.directory / "unit0.obj").read_bytes()
+    _receipt_bind(context, {"raw": raw, "sha256": hashlib.sha256(raw).hexdigest()})
+    object_path = context.directory / "unit0.obj"
+    try:
+        with pytest.raises(ValueError, match="changed"):
+            with linked_build(context) as live:
+                selected = live.inputs.objects.resolve("unit0.obj")
+                obj = Coff(selected["raw"])
+                image = live.inputs.image
+                caller, fallback = _weak_source_bindings(image)
+                scope = live._weak_scope()
+                try:
+                    current = live._code_in_scope([{"owner": "unit0.obj", "symbol": "_caller"}], scope)
+                    assert current["result"] == "pass"
+                    g_row, = check_objects([fallback], {fallback.unit: obj}, image)
+                    relocation = obj.section_subject(obj.function("_caller", comdat=True).section)[1][0]
+                    object_path.write_bytes(raw + b"\0")
+                    with pytest.raises(ValueError, match="changed"):
+                        scope.qualify_original(obj, obj.function("_caller", comdat=True), relocation,
+                                               caller, fallback, g_row)
+                finally:
+                    scope.expire()
+    finally:
+        object_path.write_bytes(raw)

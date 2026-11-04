@@ -11,7 +11,7 @@ from typing import Mapping, Sequence
 from .binary import AbsoluteConstant, BoundedTarget, CompilerArtifact, compare_bound_code
 from .components import archive_member_identity, relative_path
 from .model import Origin, Result, Span, require_text
-from .pe_coff import Coff, PeImage
+from .pe_coff import Coff, PeImage, weak_external
 
 
 MAX_REFERENCE_DIAGNOSTICS = 128
@@ -111,7 +111,8 @@ def check_objects(bindings: Sequence[FunctionBinding], objects: Mapping[str, Cof
                   errors: Mapping[str, str] | None = None, member_functions: bool = False,
                   section_bases: Mapping[tuple[str, int], int] | None = None,
                   fragments: Sequence[FunctionFragmentBinding] = (),
-                  associated_bindings=(), support_bindings: Sequence[FunctionBinding] = ()) -> list[dict]:
+                  associated_bindings=(), support_bindings: Sequence[FunctionBinding] = (),
+                  _weak_scope=None) -> list[dict]:
     """One report per selected binding, including missing objects and symbols.
 
     External targets must be unambiguous source-owned mappings supplied by the
@@ -284,6 +285,7 @@ def check_objects(bindings: Sequence[FunctionBinding], objects: Mapping[str, Cof
             if isinstance(subject, str):
                 raise ValueError(subject)
             layout = layouts.get(binding.origin.entity_id)
+            weak_original_details = {}
             obj, targets = objects[binding.unit], {}
             for index, symbol in obj.symbols.items():
                 if symbol.section > 0:
@@ -325,6 +327,48 @@ def check_objects(bindings: Sequence[FunctionBinding], objects: Mapping[str, Cof
                         targets[str(index)] = externals[symbol.name]
                     elif symbol.name in imports:
                         targets[str(index)] = imports[symbol.name]
+            if _weak_scope is not None:
+                weak_references = []
+                for number, _span in layout or ():
+                    _code, relocations, _alignment = obj.section_subject(number)
+                    weak_references.extend((number, relocation)
+                        for relocation in relocations
+                        if obj.symbols[int(relocation.target)].storage == 105)
+                if weak_references:
+                    if (len(layout or ()) != 1 or len(binding.spans) != 1 or binding.source_spans
+                            or len(weak_references) != 1):
+                        raise ValueError("original weak comparison requires one single-span caller with one weak relocation")
+                    number, relocation = weak_references[0]
+                    offset, weak_index, kind = relocation.offset, int(relocation.target), relocation.kind
+                    weak_symbol = obj.symbols[weak_index]
+                    fallback, mode = weak_external(obj, weak_symbol)
+                    if (weak_symbol.section != 0 or weak_symbol.value != 0 or weak_symbol.type != 0x20
+                            or mode != 2):
+                        raise ValueError("original weak comparison supports only one well-formed mode-2 function target: "
+                                         f"section={weak_symbol.section}, value={weak_symbol.value}, "
+                                         f"type={weak_symbol.type}, mode={mode}")
+                    fallbacks = [item for item in all_bindings
+                                 if item.unit == binding.unit and item.symbol == fallback.name]
+                    if (len(fallbacks) != 1 or fallbacks[0].origin.entity_id == binding.origin.entity_id
+                            or len(fallbacks[0].spans) != 1 or fallbacks[0].source_spans
+                            or fallbacks[0].local_only):
+                        raise ValueError("weak fallback lacks one same-unit source function binding")
+                    fallback_binding, = fallbacks
+                    fallback_rows = check_objects(
+                        [fallback_binding], objects, image, external_targets=externals,
+                        import_targets=imports, literal_targets=literals,
+                        local_data_targets=local_data, errors=errors,
+                        member_functions=member_functions, section_bases=section_bases,
+                        associated_bindings=associated_bindings,
+                        support_bindings=tuple(item for item in all_bindings if item is not fallback_binding))
+                    fallback_row, = fallback_rows
+                    if fallback_row.get("result") != Result.PASS:
+                        raise ValueError("weak fallback does not strictly compare PASS against its pinned source body")
+                    qualifier = _weak_scope.qualify_original(
+                        obj, subject, relocation, binding, fallback_binding, fallback_row)
+                    address, weak_details = qualifier.consume(binding, obj, subject, relocation)
+                    targets[str(weak_index)] = address
+                    weak_original_details[offset] = weak_details
             if len(binding.spans) == 2:
                 try:
                     from .source.eh_regions import eh_funcinfo_reference_target
@@ -361,7 +405,11 @@ def check_objects(bindings: Sequence[FunctionBinding], objects: Mapping[str, Cof
                     proof = compare_bound_code(span, image.read(span), code, relocations, targets,
                                                original_absolute_sites=image.absolute_sites(span), alignment=alignment)
                 for relocation in proof.get("relocations", []):
-                    relocation["symbol"] = obj.symbols[int(relocation["target"])].name
+                    symbol = obj.symbols[int(relocation["target"])]
+                    relocation["symbol"] = symbol.name
+                    relocation["storage_class"] = symbol.storage
+                    if relocation["offset"] in weak_original_details:
+                        relocation["weak_original_target"] = weak_original_details[relocation["offset"]]
                 proofs.append({**proof, "span": {"start": span.start, "end": span.end},
                                "section": number, "section_name": obj.sections[number - 1].name})
             if len(proofs) == 1:

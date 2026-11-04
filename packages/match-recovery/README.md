@@ -464,6 +464,17 @@ No result establishes structural or runtime acceptance. Existing claims survive
 regressions; unfinished placeholders cannot pass. No historical-claim gate must
 already be satisfied just to investigate a broken intermediate structure.
 
+The opt-in `--linked-current` mode also makes a fresh configured application build
+and compares selected original spans against its exact receipt-bound physical COFF
+inputs and current linked code. Its strict per-function rows include relocation
+target comparisons. A mode-2 weak fallback is usable for one caller relocation only
+when the live linked edge passes and the same-unit fallback function independently
+passes its pinned original comparison. Missing or ambiguous compile/link receipts,
+archive-member inputs, extra weak references, or unsupported spans remain unknown.
+This diagnostic mode does not bank claims, prove full linked preservation, or grant
+acceptance; the ordinary masked measurement remains unchanged when the option is
+omitted.
+
 Use `recover tasks variants` for candidate decks in private overlays, and only
 `recover record` to bank newly measured claims. Diagnostics do not configure a
 build or guess donor recipes; run configured preparation at a coordinator

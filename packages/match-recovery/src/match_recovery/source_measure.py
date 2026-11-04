@@ -38,12 +38,14 @@ def _unit(job):
                         strict_command_for=lambda _path: ())
 
 
-def measure_source(root: Path, targets, *, image: Path, in_file=None, jobs=1):
+def measure_source(root: Path, targets, *, image: Path, in_file=None, jobs=1, linked_current=False):
     root = root.resolve()
     if not isinstance(targets, (list, tuple)) or not targets:
         raise ValueError("measurement requires explicit nonempty targets")
     if type(jobs) is not int or jobs < 1:
         raise ValueError("measurement jobs must be a positive integer")
+    if type(linked_current) is not bool:
+        raise ValueError("linked-current measurement selection must be boolean")
     settings = Measurement.read(root)
     image = (image if image.is_absolute() else root / image).resolve()
 
@@ -203,7 +205,7 @@ def measure_source(root: Path, targets, *, image: Path, in_file=None, jobs=1):
         rows.append(row)
     counts = Counter(row["result"] for row in rows)
     result = "fail" if counts["fail"] else "unknown" if counts["unknown"] else "pass"
-    return {"schema_version": 1, "operation": "measure", "result": result,
+    output = {"schema_version": 1, "operation": "measure", "result": result,
             "verification": ("source_and_system_import_original_thunks"
                              if any(row.get("measurement_backend") == "system_import_original_thunk" for row in rows)
                              else "source_masked_bytes_and_component_binary" if component_selected
@@ -222,3 +224,34 @@ def measure_source(root: Path, targets, *, image: Path, in_file=None, jobs=1):
                             "masked-byte comparison is not strict reference, structure, preservation, build/link or runtime proof",
                             "missing recipes remain unavailable; compiler interaction owns any explicitly configured seed policy",
                             "use task variants for private candidate decks with scope and damage controls"]}
+    if linked_current:
+        pin = image_pin(root, settings.source)
+        selected_ids = frozenset(
+            Origin(pin, settings.source.address_space, record.address).entity_id
+            for record in selected)
+        from .application_binary import verify_linked_selection
+        strict = verify_linked_selection(root, selected_ids, image)
+        strict_by_id = {row.get("entity_id"): row for row in strict["functions"]}
+        for row in output["measurements"]:
+            identity = Origin(pin, settings.source.address_space, int(row["address"], 16)).entity_id
+            comparison = strict_by_id.get(
+                identity, {"entity_id": identity, "result": "unknown",
+                          "reason": "selected original identity has no linked strict comparison row"})
+            row["legacy_result"] = row.get("result", "unknown")
+            row["legacy_verdict"] = row.get("verdict")
+            row["linked_current_result"] = comparison.get("result", "unknown")
+            row["linked_current_original_comparison"] = comparison
+            results = (row["legacy_result"], row["linked_current_result"])
+            row["result"] = "fail" if "fail" in results else "unknown" if "unknown" in results else "pass"
+            row["verdict"] = "linked_current_" + row["result"]
+        output["legacy_result"] = output["result"]
+        output["legacy_counts"] = dict(output["counts"])
+        output["counts"] = dict(Counter(row.get("result", "unknown")
+                                        for row in output["measurements"]))
+        values = [output["result"], strict["result"]]
+        output["result"] = "fail" if "fail" in values else "unknown" if "unknown" in values else "pass"
+        output["linked_current"] = strict
+        output["verification"] = "legacy_source_measurement_plus_live_linked_original_comparison"
+        output["limitations"].append(
+            "linked-current rows are fresh diagnostics only; they do not grant acceptance or bank byte claims")
+    return output
