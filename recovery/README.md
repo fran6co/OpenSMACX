@@ -64,6 +64,9 @@ there is no literal proprietary table in tracked source or zero fallback.
 Recovery preparation generates Release recipes, matching the production
 application used for binary verification. Configure CMake Debug separately for
 IDE or runtime debugging; its `/Od /Ob0 /GZ` recipes are not matching baselines.
+Release and RelWithDebInfo C++ configurations explicitly select `/Ob2`;
+VC6's `/O2` alone does not select that inlining policy.
+Pulldown and DipEdit retain their measured per-owner `/Ob1` overrides.
 The compiler interface still receives optimization flags explicitly for each
 trial; preparing Release recipes does not change that interface or the settled
 comparison flag sets.
