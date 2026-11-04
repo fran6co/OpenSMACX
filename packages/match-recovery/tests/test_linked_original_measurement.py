@@ -236,6 +236,128 @@ def test_receipt_owner_resolution_still_refuses_needed_ambiguous_import():
         _source_receipt_object_owners(Objects(), {"/sdk/USER32.dll"})
 
 
+def test_archive_receipt_owner_resolution_binds_exact_native_member_and_object():
+    from hashlib import sha256
+    from match_recovery.application_binary import (_source_receipt_object_matches,
+                                                    _source_receipt_object_owners)
+
+    raw = b"physical archive member bytes"
+
+    class Objects:
+        _owners = {"jackal:checkbox.cpp.obj": [{
+            "owner": "jackal:checkbox.cpp.obj",
+            "member": "checkbox.cpp.obj",
+            "paths": ("/build/jackal.lib",),
+        }]}
+
+        def resolve(self, owner):
+            assert owner == "jackal:checkbox.cpp.obj"
+            return {"identity": {"path": "/build/jackal.lib",
+                                 "member": "src/jackal/checkbox.cpp.obj",
+                                 "occurrence": 0},
+                    "sha256": sha256(raw).hexdigest(), "raw": raw, "owner": owner}
+
+    receipt = {"archive": "/build/jackal.lib",
+               "member": "src/jackal/checkbox.cpp.obj",
+               "object": "/build/checkbox.cpp.obj", "source": "/src/checkbox.cpp"}
+    owners = _source_receipt_object_owners(Objects(), set(), [receipt])
+    owner, selected = owners["/build/checkbox.cpp.obj"][0]
+    assert owner == "jackal:checkbox.cpp.obj"
+    assert selected["identity"] == {"path": receipt["archive"],
+                                    "member": receipt["member"], "occurrence": 0}
+    assert _source_receipt_object_matches(
+        selected, {"sha256": sha256(raw).hexdigest(), "size": len(raw)})
+    assert not _source_receipt_object_matches(
+        selected, {"sha256": "0" * 64, "size": len(raw)})
+
+
+def test_archive_receipt_owner_resolution_uses_physical_native_archive_fixture(tmp_path):
+    from match_recovery.application_binary import _source_receipt_object_owners
+    from match_recovery.linked_objects import SelectedObjects
+    from test_linked_objects import library_inputs
+    from test_binary import coff_fixture
+
+    member = "checkbox.obj"
+    evidence = library_inputs(tmp_path, [(member + "/", coff_fixture())], [member])
+    objects = SelectedObjects(*evidence)
+    archive = str(tmp_path / "runtime.lib")
+    receipt = {"archive": archive, "member": member,
+               "object": str(tmp_path / "checkbox.cpp.obj"),
+               "source": str(tmp_path / "checkbox.cpp")}
+    owners = _source_receipt_object_owners(objects, set(), [receipt])
+    owner, selected = owners[receipt["object"]][0]
+    assert owner.casefold() == "runtime:checkbox.obj"
+    assert selected["identity"] == {"path": archive, "member": member, "occurrence": 0}
+    assert selected["raw"] == coff_fixture()
+
+
+@pytest.mark.parametrize("receipt", [
+    {"archive": "/build/other.lib", "member": "src/jackal/checkbox.cpp.obj",
+     "object": "/build/checkbox.cpp.obj", "source": "/src/checkbox.cpp"},
+    {"archive": "/build/jackal.lib", "member": "other/checkbox.cpp.obj",
+     "object": "/build/checkbox.cpp.obj", "source": "/src/checkbox.cpp"},
+])
+def test_archive_receipt_owner_resolution_refuses_wrong_archive_or_member(receipt):
+    from match_recovery.application_binary import _source_receipt_object_owners
+
+    class Objects:
+        _owners = {"jackal:checkbox.cpp.obj": [{
+            "owner": "jackal:checkbox.cpp.obj", "member": "checkbox.cpp.obj",
+            "paths": ("/build/jackal.lib",),
+        }]}
+
+        def resolve(self, owner):
+            return {"identity": {"path": "/build/jackal.lib",
+                                 "member": "src/jackal/checkbox.cpp.obj",
+                                 "occurrence": 0}, "sha256": "a" * 64,
+                    "raw": b"bytes", "owner": owner}
+
+    assert _source_receipt_object_owners(Objects(), set(), [receipt]) == {}
+
+
+def test_archive_receipt_owner_resolution_keeps_missing_proof_and_required_ambiguity_closed():
+    from match_recovery.application_binary import _source_receipt_object_owners
+
+    class Objects:
+        _owners = {"jackal:checkbox.cpp.obj": [{
+            "owner": "jackal:checkbox.cpp.obj", "member": "checkbox.cpp.obj",
+            "paths": ("/build/jackal.lib",),
+        }]}
+
+        def resolve(self, owner):
+            raise ValueError("missing or ambiguous final-pass object owner: " + owner)
+
+    assert _source_receipt_object_owners(Objects(), set()) == {}
+    receipt = {"archive": "/build/jackal.lib",
+               "member": "src/jackal/checkbox.cpp.obj",
+               "object": "/build/checkbox.cpp.obj", "source": "/src/checkbox.cpp"}
+    with pytest.raises(ValueError, match="missing or ambiguous final-pass object owner"):
+        _source_receipt_object_owners(Objects(), set(), [receipt])
+
+
+def test_archive_receipt_requires_passing_compile_link_and_unique_source_command():
+    from match_recovery.application_binary import _passing_archive_source_receipts
+
+    row = {"source": "/src/checkbox.cpp", "output": "/build/checkbox.cpp.obj",
+           "result": "pass", "link_correspondence": "pass",
+           "archive_correspondence": {"archive": "/build/jackal.lib",
+                                      "member": "src/jackal/checkbox.cpp.obj",
+                                      "object": "/build/checkbox.cpp.obj", "result": "pass"}}
+    good_command = {"source": row["source"], "result": "pass"}
+    assert _passing_archive_source_receipts([row], {row["output"]: [good_command]}) == [{
+        "archive": "/build/jackal.lib", "member": "src/jackal/checkbox.cpp.obj",
+        "object": row["output"], "source": row["source"]}]
+    assert _passing_archive_source_receipts([row], {row["output"]: [
+        {"source": "/src/different.cpp", "result": "pass"}]}) == []
+    assert _passing_archive_source_receipts([row], {row["output"]: [
+        {"source": row["source"], "result": "unknown"}]}) == []
+    assert _passing_archive_source_receipts([row], {row["output"]: [good_command, good_command]}) == []
+    missing_proof = {**row, "archive_correspondence": {**row["archive_correspondence"],
+                                                       "result": "unknown"}}
+    assert _passing_archive_source_receipts(
+        [missing_proof], {row["output"]: [good_command]}) == []
+
+
 def test_advisory_fold_candidate_without_complete_group_does_not_refuse_root():
     from match_recovery.linked_context import _selected_root_fold_group
 

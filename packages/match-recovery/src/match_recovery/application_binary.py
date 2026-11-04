@@ -7,7 +7,7 @@ This is a scoped diagnostic, not the full build/ownership/runtime admission gate
 from collections import Counter, defaultdict
 from dataclasses import dataclass, replace
 import hashlib
-from pathlib import Path
+from pathlib import Path, PurePosixPath, PureWindowsPath
 from typing import Callable
 
 from match_recovery.bound_objects import (FunctionBinding, FunctionFragmentBinding,
@@ -1169,19 +1169,80 @@ def verify_records(root: Path, records, image_path: Path, *, flag_sets,
                               expected_image_sha256=pin, record_evidence=True)
 
 
-def _source_receipt_object_owners(objects, receipt_outputs):
-    """Resolve only final-pass owners named by source compilation receipts."""
+def _source_receipt_object_owners(objects, receipt_outputs, archive_receipts=()):
+    """Resolve final-pass owners bound to direct or exact archive receipts.
+
+    ``archive_receipts`` are already passing compile/link observations. The
+    native selected-object resolver supplies the physical archive-member
+    identity and bytes; this function binds those observations to the unique
+    final-pass map owner without basename-only object selection.
+    """
+    archive_by_key = {}
+    for receipt in archive_receipts:
+        if (not isinstance(receipt, dict)
+                or set(receipt) != {"archive", "member", "object", "source"}
+                or not all(isinstance(receipt[key], str) and receipt[key]
+                           for key in ("archive", "member", "object", "source"))):
+            raise ValueError("invalid passing archive source receipt")
+        key = (receipt["archive"], receipt["member"], receipt["object"])
+        if key in archive_by_key:
+            raise ValueError("duplicate passing archive source receipt")
+        archive_by_key[key] = receipt
     owner_paths = {}
     for owner_rows in objects._owners.values():
         for owner_row in owner_rows:
-            if not receipt_outputs.intersection(owner_row["paths"]):
+            relevant = bool(receipt_outputs.intersection(owner_row["paths"]))
+            archive_candidates = [receipt for (archive, member, _output), receipt in archive_by_key.items()
+                                 if archive in owner_row["paths"]
+                                 and PurePosixPath(member).name.casefold()
+                                 == PureWindowsPath(owner_row["member"]).name.casefold()]
+            if not relevant and not archive_candidates:
                 continue
             owner = owner_row["owner"]
             selected_object = objects.resolve(owner)
             identity = selected_object["identity"]
             if set(identity) == {"path"}:
-                owner_paths.setdefault(identity["path"], []).append((owner, selected_object))
+                if identity["path"] in receipt_outputs:
+                    owner_paths.setdefault(identity["path"], []).append((owner, selected_object))
+                continue
+            if set(identity) != {"path", "member", "occurrence"}:
+                continue
+            if type(identity["occurrence"]) is not int or identity["occurrence"] < 0:
+                continue
+            matching = [receipt for (archive, member, _output), receipt in archive_by_key.items()
+                        if archive == identity["path"] and member == identity["member"]]
+            if len(matching) == 1:
+                receipt, = matching
+                owner_paths.setdefault(receipt["object"], []).append((owner, selected_object))
     return owner_paths
+
+
+def _passing_archive_source_receipts(compile_rows, command_by_output):
+    """Bind archive correspondence rows to their unique successful command receipt."""
+    receipts = []
+    for row in compile_rows:
+        output = row.get("output")
+        commands = command_by_output.get(output, ())
+        if (len(commands) != 1 or commands[0].get("result") != Result.PASS
+                or commands[0].get("source") != row.get("source")
+                or row.get("result") != Result.PASS
+                or row.get("link_correspondence") != Result.PASS):
+            continue
+        archive = row.get("archive_correspondence")
+        if (not isinstance(archive, dict) or archive.get("result") != Result.PASS
+                or archive.get("object") != output
+                or not all(isinstance(archive.get(key), str) and archive[key]
+                           for key in ("archive", "member"))):
+            continue
+        receipts.append({"archive": archive["archive"], "member": archive["member"],
+                         "object": output, "source": row["source"]})
+    return receipts
+
+
+def _source_receipt_object_matches(selected_object, observed):
+    """Require compiler-receipt content identity to match resolved physical bytes."""
+    return observed == {"sha256": selected_object["sha256"],
+                       "size": len(selected_object["raw"])}
 
 
 def verify_linked_selection(root: Path, selected, image_path: Path) -> dict:
@@ -1259,8 +1320,10 @@ def verify_linked_selection(root: Path, selected, image_path: Path) -> dict:
                                if len(command_by_output.get(row["output"], ())) == 1
                                and command_by_output[row["output"]][0].get("result") == Result.PASS
                                and command_by_output[row["output"]][0].get("source") == row.get("source")}
+            archive_receipts = _passing_archive_source_receipts(compile_rows, command_by_output)
             outputs = {}
-            owner_paths = _source_receipt_object_owners(native.inputs.objects, receipt_outputs)
+            owner_paths = _source_receipt_object_owners(native.inputs.objects, receipt_outputs,
+                                                        archive_receipts)
             compile_by_unit = {}
             for row in compile_rows:
                 output = row["output"]
@@ -1280,7 +1343,7 @@ def verify_linked_selection(root: Path, selected, image_path: Path) -> dict:
                     continue
                 owner, selected_object = exact[0]
                 observed = row.get("compilation", {}).get("output", {}).get("after")
-                if observed != {"sha256": selected_object["sha256"], "size": len(selected_object["raw"])}:
+                if not _source_receipt_object_matches(selected_object, observed):
                     continue
                 if unit in compile_by_unit:
                     raise ValueError("linked source compile receipts duplicate one translation unit")
@@ -1411,7 +1474,7 @@ def verify_linked_selection(root: Path, selected, image_path: Path) -> dict:
             "unavailable_source_objects": errors,
             "compile_link_result": Result.PASS, "component_verification": component_reports,
             "limitations": ["diagnostic original body comparison only; no claims, acceptance or preservation authority",
-                            "only one receipt-bound physical object per source unit is eligible; archives and ambiguous owners remain unknown",
+                            "only one receipt-bound physical object per source unit is eligible; archive members need exact source/output correspondence and ambiguous owners remain unknown",
                             "weak original targets require one current linked edge and a strict same-object fallback source PASS",
                             "unsupported layouts, extra weak references and unrelated unresolved dependencies remain unknown"]}
 

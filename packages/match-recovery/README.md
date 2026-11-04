@@ -469,8 +469,12 @@ and compares selected original spans against its exact receipt-bound physical CO
 inputs and current linked code. Its strict per-function rows include relocation
 target comparisons. A mode-2 weak fallback is usable for one caller relocation only
 when the live linked edge passes and the same-unit fallback function independently
-passes its pinned original comparison. Missing or ambiguous compile/link receipts,
-archive-member inputs, extra weak references, or unsupported spans remain unknown.
+passes its pinned original comparison. An archive member is eligible only when
+native compile/link evidence binds its exact archive, full member identity and
+compiler output, and the resolved member bytes match that output receipt. Missing
+or ambiguous correspondence, extra weak references, or unsupported spans remain
+unknown. Weak-fallback qualification still requires a direct-object source
+receipt; archive weak callers remain unqualified.
 This diagnostic mode does not bank claims, prove full linked preservation, or grant
 acceptance; the ordinary masked measurement remains unchanged when the option is
 omitted.
