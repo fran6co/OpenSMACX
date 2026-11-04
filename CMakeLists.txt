@@ -208,6 +208,7 @@ set(OPENSMACX_SOURCES
     src/alphamovie.cpp
     src/mci_video.cpp
     src/movie_media.cpp
+    src/movie_media_surface.cpp
     src/movie_media_decoder.cpp
     src/movie_decoder_frame.cpp
     src/movie_decoder_huffman.cpp

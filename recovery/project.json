@@ -1872,6 +1872,19 @@
           "-c"
         ]
       },
+      "src/movie_media_surface.cpp": {
+        "flags": [
+          "/nologo",
+          "/TP",
+          "/Zm200",
+          "/GX",
+          "/O2",
+          "/Ob2",
+          "-MT",
+          "/W4",
+          "-c"
+        ]
+      },
       "src/main.cpp": {
         "flags": [
           "/nologo",
