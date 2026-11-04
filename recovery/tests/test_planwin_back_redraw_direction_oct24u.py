@@ -15,7 +15,7 @@ import pytest
 
 
 ROOT = Path(__file__).resolve().parents[2]
-SOURCE = ROOT / "src/planwin.cpp"
+SOURCE = ROOT / "src/planwin_backing.cpp"
 SIGNATURE = "void PlanWin::back_redraw()"
 COPY_LINE = (
     "Buffer::copy(&buffer_, 0, 0, dib_.bmiHeader.biWidth,\n"

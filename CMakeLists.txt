@@ -250,6 +250,7 @@ set(OPENSMACX_SOURCES
     src/editgroup.cpp
     src/xpops.cpp
     src/planwin.cpp
+    src/planwin_backing.cpp
     src/playerlock.cpp
     src/netdaemon.cpp
     src/netdaemon_vehicle.cpp
@@ -500,6 +501,7 @@ set_source_files_properties(
     src/stringstruct.cpp
     src/councwin.cpp
     src/planwin.cpp
+    src/planwin_backing.cpp
     PROPERTIES COMPILE_OPTIONS "/Oy-")
 # Keep the application Popup on its measured frame-based profile while the
 # generic modal API remains on the default frameless profile.
