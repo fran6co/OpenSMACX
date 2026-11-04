@@ -36,6 +36,7 @@ enum {
     STATE_DISPLAYED_COUNCIL_AVAIL_MSG = 0x4000,
     STATE_COUNCIL_HAS_CONVENED = 0x10000,
     BSTATE_PRODUCTION_HURRIED = 0x40000000,
+    BSTATE_UNK_1 = 1,
     BSTATE_DRONE_RIOTS_ACTIVE = 2,
     RULES_VICTORY_ECONOMIC = 4,
     PREF_BSC_AUTOSAVE_EACH_TURN = 2,
@@ -340,6 +341,24 @@ static void test_faction_liveness_after_elimination() {
     assert(UnkGlobal0093A934 == 0);
 }
 
+static void test_faction_base_state_mask() {
+    reset_fixture();
+    const int faction = 1;
+    GameState = STATE_UNK_1;
+    PlayersData[faction].current_num_bases = 2;
+    BaseCurrentCount = 3;
+    Bases[0].faction_id_current = faction;
+    Bases[1].faction_id_current = 2;
+    Bases[2].faction_id_current = faction;
+    Bases[0].state = Bases[1].state = 0xFFFFFFFFu;
+    Bases[2].state = 0x40000007u;
+    faction_upkeep(faction);
+    // Pinned 0x52748E: AND 0xBFFFFFFE. The riot bit remains set.
+    assert(Bases[0].state == 0xBFFFFFFEu);
+    assert(Bases[1].state == 0xFFFFFFFFu);
+    assert(Bases[2].state == 6u);
+}
+
 static void test_faction_council_human_mask_reread() {
     reset_fixture();
     const int faction = 1;
@@ -368,6 +387,7 @@ int main() {
     test_production_reloads_base_count();
     test_faction_corner_market_and_path();
     test_faction_liveness_after_elimination();
+    test_faction_base_state_mask();
     test_faction_council_human_mask_reread();
     return 0;
 }
@@ -1763,16 +1783,29 @@ def compile_run(tmp_path: Path, name: str, source: str, *defines: str) -> None:
     assert ran.returncode == 0, ran.stdout + ran.stderr
 
 
-def test_turn_owner_bodies_against_embedded_retry_loan_and_upkeep_controls(tmp_path: Path) -> None:
+def turn_owner_program() -> str:
     host = re.sub(r"(?ms)^#ifdef PRODUCTION_PHASE_V2\n.*?^#endif\n#ifdef FACTION_UPKEEP_V2\n.*?^#endif\n?$", "", HOST_FIXTURE)
     turn = TURN_FIXTURE.replace('#include "host_syntax_control.cpp"\n', "")
-    source = (host + "\n" +
+    return (host + "\n" +
               owner_section("0x00526E70", "void __cdecl production_phase(int", "src/faction.cpp") +
               "\n" +
-              owner_section("0x00527290", "void __cdecl faction_upkeep(int", "src/faction.cpp") +
+              owner_section("0x00527290", "void __cdecl faction_upkeep(int", "src/faction_turn.cpp") +
               "\n" + turn)
-    compile_run(tmp_path, "actual_turn_chain", source, "PRODUCTION_PHASE_V2",
+
+
+def test_turn_owner_bodies_against_embedded_retry_loan_and_upkeep_controls(tmp_path: Path) -> None:
+    compile_run(tmp_path, "actual_turn_chain", turn_owner_program(), "PRODUCTION_PHASE_V2",
                 "FACTION_UPKEEP_V2")
+
+
+def test_faction_upkeep_preserves_riot_bit_damage_control(tmp_path: Path) -> None:
+    source = turn_owner_program()
+    correct = "BSTATE_PRODUCTION_HURRIED |\n                                          BSTATE_UNK_1"
+    assert source.count(correct) == 1
+    damaged = source.replace(correct, correct.replace("BSTATE_UNK_1", "BSTATE_DRONE_RIOTS_ACTIVE"), 1)
+    with pytest.raises(AssertionError, match=r"Bases\[0\]\.state == 0xBFFFFFFEu"):
+        compile_run(tmp_path, "wrong_faction_mask", damaged, "PRODUCTION_PHASE_V2",
+                    "FACTION_UPKEEP_V2")
 
 
 def test_base_upkeep_actual_body_role_and_damage_controls(tmp_path: Path) -> None:
