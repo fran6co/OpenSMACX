@@ -17,7 +17,7 @@ def test_actual_report_right_click_coordinates(tmp_path, compiler_name, damage):
     compiler = shutil.which(compiler_name)
     if compiler is None:
         pytest.skip(compiler_name + " unavailable")
-    body = definition((ROOT / "src/reportwin.cpp").read_text(),
+    body = definition((ROOT / "src/reportif.cpp").read_text(),
                       r"void\s+ReportWin::on_right_click\s*\(int x, int y\)")
     if damage:
         old, new = ("garrison_click(payload, x, y, 1)",

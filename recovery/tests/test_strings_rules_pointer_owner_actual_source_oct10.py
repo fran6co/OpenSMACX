@@ -63,7 +63,7 @@ def build_and_run(tmp_path: Path, source: str, *, expected_success: bool) -> Non
 def test_rules_callers_keep_pointer_owners_and_original_indices() -> None:
     datalink = (ROOT / "src/datalink.cpp").read_text()
     header = (ROOT / "src/datalink.h").read_text()
-    reportwin = (ROOT / "src/reportwin.cpp").read_text()
+    reportwin = (ROOT / "src/reportif.cpp").read_text()
     technology = (ROOT / "src/technology.cpp").read_text()
     veh = (ROOT / "src/veh.cpp").read_text()
 

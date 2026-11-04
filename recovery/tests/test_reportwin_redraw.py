@@ -11,7 +11,7 @@ import pytest
 
 def projects_body():
     root = Path(__file__).resolve().parents[2]
-    source = (root / "src/reportwin.cpp").read_text()
+    source = (root / "src/reportif.cpp").read_text()
     start = source.index("void ReportWin::draw_projects() {")
     return source[start:source.index("\n}\n", start) + 3]
 
@@ -333,7 +333,7 @@ def test_product_projects_page(tmp_path, damage):
 
 def product_body():
     root = Path(__file__).resolve().parents[2]
-    source = (root / "src/reportwin.cpp").read_text()
+    source = (root / "src/reportif.cpp").read_text()
     start = source.index("void ReportWin::on_redraw() {")
     return source[start:source.index("\n}\n", start) + 3]
 
@@ -345,14 +345,22 @@ int events[10], count;
 void event(int id) { events[count++] = id; }
 struct Buffer {
     RECT working;
-    void set_clip(RECT *area) { event(area == &working ? 11 : 10); }
+    RECT *last;
+    static Buffer *active;
+    static void set_clip(RECT *area) {
+        event(area == &active->working ? 11 : 10);
+        active->last = area;
+    }
+    static void restore_clip() { event(11); active->last = &active->working; }
 };
+Buffer *Buffer::active;
 struct ReportIfFixture { unsigned int field_8_; } ReportIfGlobal;
 struct ReportWin : Buffer {
     int field_59AC_;
     RECT energy_panel_rect_;
     void reset() { event(9); }
     RECT *buffer_working_rect() { return &working; }
+    ReportWin() { Buffer::active = this; }
     void draw_intel() { event(0); }
     void draw_labs() { event(2); }
     void draw_energy() { event(3); }
@@ -393,7 +401,7 @@ def test_product_reportwin_redraw(tmp_path, damage):
         "dispatch": ("case 0: draw_intel();", "case 0: draw_labs();"),
         "reset": ("reset();", ""),
         "selection": ("field_59AC_ = -1;", "field_59AC_ = 0;"),
-        "clip": ("canvas.set_clip(buffer_working_rect());", ""),
+        "clip": ("Buffer::set_clip(&energy_panel_rect_);", ""),
     }
     if damage is not None:
         before, after = mutations[damage]
@@ -411,7 +419,7 @@ def test_product_reportwin_redraw(tmp_path, damage):
 
 def energy_body():
     root = Path(__file__).resolve().parents[2]
-    source = (root / "src/reportwin.cpp").read_text()
+    source = (root / "src/reportif.cpp").read_text()
     start = source.index("void ReportWin::draw_energy() {")
     return source[start:source.index("\n}\n", start) + 3]
 
@@ -675,7 +683,7 @@ def test_production_draw_energy_accounts_and_relationships(tmp_path, damage,
 
 def lab_child_collector():
     root = Path(__file__).resolve().parents[2]
-    source = (root / "src/reportwin.cpp").read_text()
+    source = (root / "src/reportif.cpp").read_text()
     start = source.index("static int reportwin_collect_lab_children(")
     return source[start:source.index("\n}", start) + 2]
 
@@ -747,7 +755,7 @@ def test_reportwin_lab_child_fixture_rejects_fifth_slot_mutants(
 
 def lab_unlock_sections():
     root = Path(__file__).resolve().parents[2]
-    source = (root / "src/reportwin.cpp").read_text()
+    source = (root / "src/reportif.cpp").read_text()
     start = source.index("static void reportwin_append_lab_entry(")
     return source[start:source.index(
         "// The three-per-category records", start)]
@@ -920,14 +928,14 @@ int main() {
 
 def lab_category_style():
     root = Path(__file__).resolve().parents[2]
-    source = (root / "src/reportwin.cpp").read_text()
+    source = (root / "src/reportif.cpp").read_text()
     start = source.index("static BoxSpriteParams *reportwin_lab_category_style(")
     return source[start:source.index("\n}\n", start) + 3]
 
 
 def labs_body():
     root = Path(__file__).resolve().parents[2]
-    source = (root / "src/reportwin.cpp").read_text()
+    source = (root / "src/reportif.cpp").read_text()
     start = source.index("void ReportWin::draw_labs() {")
     return source[start:source.index("\n}\n", start) + 3]
 
@@ -965,21 +973,21 @@ def test_production_draw_labs_skips_unlock_passes_without_selected_technology(tm
 
 def lab_button_helper():
     root = Path(__file__).resolve().parents[2]
-    source = (root / "src/reportwin.cpp").read_text()
+    source = (root / "src/reportif.cpp").read_text()
     start = source.index("static void reportwin_init_lab_button(")
     return source[start:source.index("\n}\n", start) + 2]
 
 
 def lab_status_helper():
     root = Path(__file__).resolve().parents[2]
-    source = (root / "src/reportwin.cpp").read_text()
+    source = (root / "src/reportif.cpp").read_text()
     start = source.index("static void reportwin_draw_lab_status_rows(")
     return source[start:source.index("\n}\n", start) + 2]
 
 
 def lab_signed_coordinate_helper():
     root = Path(__file__).resolve().parents[2]
-    source = (root / "src/reportwin.cpp").read_text()
+    source = (root / "src/reportif.cpp").read_text()
     start = source.index("static int reportwin_signed_coordinate(")
     return source[start:source.index("\n}\n", start) + 2]
 

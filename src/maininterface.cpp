@@ -2680,3 +2680,82 @@ void __stdcall main_interface_bubble_callback_4396b0(char *text, int x, int y) {
 // calls     (none)
 */
 // RECOVERY_GENERATED: v1 vtable 0x0066C598 ? ??_7MainInterface@@6BWin@@@ 0x0045EF10
+
+// These SubInterface mode-stack methods use the shared registry and mode
+// storage declared with MainInterface. ReportIf::done calls the shared
+// declaration, preserving its out-of-line release boundary.
+// Superseded seed deleted; seed paths below are historical Git provenance.
+// ORIGINAL: 0x0045D2E0 ?delete_iface_mode@SubInterface@@QAEXXZ 0x0045D2E0-0x0045D303 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/0045d2e0.cpp", "image:terranx_original.exe:0x0045D2E0", "source:src/maininterface.h:InterfaceRegistry and mode-stack storage; source:src/multiwin.h:owned Sprite offsets; native callback-sensitive mode reload and downward repeated removal", "recovery/tasks/interface-contract-report-closure.json; owner expansion interface-registry-multiwin-small-20261001"], "reason": "Recover the original in its genuine C++ owner using source-owned interface registry and mode stack, real virtual callbacks, or owned MultiWin sprite geometry. Preserve historical seed obligations; this binding grants no current byte or runtime claim."}
+void SubInterface::delete_iface_mode() {
+    for (int index = 0; index < 12; ++index) {
+        if (InterfaceRegistry[index] == this) {
+            InterfaceRegistry[index] = 0;
+            return;
+        }
+    }
+}
+
+// Superseded seed deleted; seed paths below are historical Git provenance.
+// ORIGINAL: 0x0045D310 ?set_iface_mode@SubInterface@@QAEXXZ 0x0045D310-0x0045D37D
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/0045d310.cpp", "image:terranx_original.exe:0x0045D310", "source:src/maininterface.h:InterfaceRegistry and mode-stack storage; source:src/multiwin.h:owned Sprite offsets; native callback-sensitive mode reload and downward repeated removal", "recovery/tasks/interface-contract-report-closure.json; owner expansion interface-registry-multiwin-small-20261001"], "reason": "Recover the original in its genuine C++ owner using source-owned interface registry and mode stack, real virtual callbacks, or owned MultiWin sprite geometry. Preserve historical seed obligations; this binding grants no current byte or runtime claim."}
+void SubInterface::set_iface_mode() {
+    int depth = ActiveIfaceIdStorage;
+    int mode = static_cast<int>(field_4_);
+    const int current = IfaceIdToSlotStorage[depth];
+    if (current != mode && (mode != 10 || current == 0)) {
+        SubInterface *previous = InterfaceRegistry[current];
+        ++depth;
+        ActiveIfaceIdStorage = depth;
+        mode = static_cast<int>(field_4_);
+        IfaceIdToSlotStorage[depth] = mode;
+        if (previous != 0) {
+            previous->on_status(0);
+        }
+        MainInterfaceGlobal.set_clip(MainInterfaceGlobal.buffer_working_rect());
+        // Both callbacks may change the receiver's mode or registry entry.
+        mode = static_cast<int>(field_4_);
+        SubInterface *next = InterfaceRegistry[mode];
+        if (next != 0) {
+            next->on_status(1);
+        }
+    }
+}
+
+// ORIGINAL: 0x0045D380 ?release_iface_mode@SubInterface@@QAEXXZ 0x0045D380-0x0045D43F BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/0045d380.cpp", "image:terranx_original.exe:0x0045D380", "source:src/maininterface.h:InterfaceRegistry and mode-stack storage; source:src/multiwin.h:owned Sprite offsets; native callback-sensitive mode reload and downward repeated removal", "recovery/tasks/interface-contract-report-closure.json; owner expansion interface-registry-multiwin-small-20261001"], "reason": "Recover the original in its genuine C++ owner using source-owned interface registry and mode stack, real virtual callbacks, or owned MultiWin sprite geometry. Preserve historical seed obligations; this binding grants no current byte or runtime claim."}
+// TRIED: byte-exact - a stack-search-and-shift over a linear "iface mode" stack (0x7AE778) plus a parallel object table (0x7AE7F0); the found-and-shifted case does not break, it keeps scanning downward exactly like the disassembly, so no attempt used `break`. 59% mnemonic similarity; landed for the control-flow shape (nested for-loops, no early exit) rather than chase the remaining scheduling/frame differences.
+void SubInterface::release_iface_mode() {
+    int depth = ActiveIfaceIdStorage;
+    if (depth != 0) {
+        if (IfaceIdToSlotStorage[depth] != static_cast<int>(field_4_)) {
+            // Remove every buried occurrence, scanning downward after each
+            // shift. The original does not stop after the first match.
+            for (int index = depth - 1; index >= 1; --index) {
+                if (IfaceIdToSlotStorage[index] == static_cast<int>(field_4_)) {
+                    for (int move = index; move < depth; ++move) {
+                        IfaceIdToSlotStorage[move] = IfaceIdToSlotStorage[move + 1];
+                    }
+                    --depth;
+                    ActiveIfaceIdStorage = depth;
+                }
+            }
+        } else {
+            --depth;
+            ActiveIfaceIdStorage = depth;
+            const int mode = static_cast<int>(field_4_);
+            const int next_mode = IfaceIdToSlotStorage[depth];
+            if (mode != next_mode) {
+                SubInterface *previous = InterfaceRegistry[mode];
+                if (previous != 0) {
+                    previous->on_status(0);
+                }
+            }
+            MainInterfaceGlobal.set_clip(MainInterfaceGlobal.buffer_working_rect());
+            SubInterface *next = InterfaceRegistry[next_mode];
+            if (next != 0) {
+                next->on_status(1);
+            }
+        }
+    }
+}

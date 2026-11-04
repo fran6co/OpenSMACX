@@ -232,7 +232,6 @@ set(OPENSMACX_SOURCES
     src/monuwin.cpp
     src/pickwin.cpp
     src/prodpicker.cpp
-    src/reportwin.cpp
     src/setupwin.cpp
     src/multidebug.cpp
     src/tutwin.cpp
@@ -472,7 +471,6 @@ set_source_files_properties(
     src/game_calendar.cpp
     src/faction_monuments.cpp
     src/newgame.cpp
-    src/reportwin.cpp
     src/netwin.cpp
     PROPERTIES COMPILE_OPTIONS "/Oy-")
 # Preserve measured frame-based accesses across these application window owners.

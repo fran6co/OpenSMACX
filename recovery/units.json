@@ -642,6 +642,18 @@
         "ConfigFactionPreview real storage and its paired original startup/cleanup entries remain with this owner. OpeningWindow remains shared application storage in game.cpp. No manual initializer callback is introduced.",
         "Three source-associated, guard-bounded jump-target tables account for custom_planet and map_menu data gaps; independently checked original padding fills the remaining gaps. Source ownership is not original filename/TU proof or full linked/runtime acceptance."
       ]
+    },
+    {
+      "name": "ReportInterface",
+      "start": "0x00496900",
+      "end_exclusive": "0x004AD87C",
+      "recovered_tu": "src/reportif.cpp",
+      "reason": "Inferred interleaved ReportIf/ReportWin contribution core, reunited in one recovered CPP with actual source-owned globals and original-order mapped definitions. Imperfect bodies remain eligible; this is not historical object or matching proof.",
+      "evidence": [
+        "All92 mapped primary identities in this interval are in reportif.cpp. Three distant SubInterface methods retain complete mappings in the MainInterface provider rather than widening this bracket.",
+        "ReportIfGlobal and ReportWinGlobal are genuine objects declared in the pinned CRT order6825E8 then6825EC; initialization and cleanup remain compiler generated.",
+        "Guard-derived target/selector associations account for the original switch data. Six register-preserving LEA/MOV NOP idioms remain outside those data spans; the diagnostic strict90/CC padding classifier may leave them open. Associated data does not prove matching, retained selection or runtime behavior."
+      ]
     }
   ]
 }

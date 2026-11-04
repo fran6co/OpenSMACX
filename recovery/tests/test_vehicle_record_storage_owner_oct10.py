@@ -12,7 +12,7 @@ ROOT = Path(__file__).resolve().parents[2]
 
 
 def satellite_control():
-    source = (ROOT / "src/reportwin.cpp").read_text()
+    source = (ROOT / "src/reportif.cpp").read_text()
     body = extract(source, "void __cdecl sat_edit(")
     header = (ROOT / "src/faction.h").read_text()
     declarations = []
@@ -96,7 +96,7 @@ def test_actual_satellite_members_and_mutants(tmp_path, compiler, damage):
 
 def test_original_unbounded_guard_and_source_log_storage():
     source = (ROOT / "src/stringstruct.cpp").read_text()
-    body = extract((ROOT / "src/reportwin.cpp").read_text(), "void __cdecl sat_edit(")
+    body = extract((ROOT / "src/reportif.cpp").read_text(), "void __cdecl sat_edit(")
     assert "if (satellite_type < 4 && report_faction_id != 0)" in body
     assert "satellite_type >= 0" not in body and "reinterpret_cast" not in body
     for name, text in (("StrDeletingVehicle", "Deleting vehicle"),

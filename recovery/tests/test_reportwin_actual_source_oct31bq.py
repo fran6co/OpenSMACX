@@ -89,7 +89,7 @@ def test_actual_report_callbacks_and_live_range_state(tmp_path, compiler):
     executable = shutil.which(compiler)
     if not executable:
         pytest.skip(f'{compiler} unavailable')
-    source = (ROOT / 'src/reportwin.cpp').read_text()
+    source = (ROOT / 'src/reportif.cpp').read_text()
     signatures = ('void ReportWin::on_scrolled(', 'void ReportWin::on_scrolling(',
                   'void ReportWin::on_redraw()', 'void ReportWin::UNK1(')
     bodies = '\n'.join(definition(source, signature) for signature in signatures)
@@ -119,7 +119,7 @@ def test_actual_key_page_joins_and_callback_stores(tmp_path, compiler):
     executable = shutil.which(compiler)
     if not executable:
         pytest.skip(f'{compiler} unavailable')
-    body = definition((ROOT / 'src/reportwin.cpp').read_text(),
+    body = definition((ROOT / 'src/reportif.cpp').read_text(),
                       'int ReportWin::on_key_click(')
     harness = r'''
 #include <cassert>

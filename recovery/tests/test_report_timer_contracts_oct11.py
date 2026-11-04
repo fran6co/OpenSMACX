@@ -17,15 +17,15 @@ CALLBACKS = {
 }
 
 
-@pytest.mark.parametrize("relative", ("src/reportwin.cpp", "src/reportif.cpp"))
+@pytest.mark.parametrize("relative", ("src/reportif.cpp",))
 def test_callback_original_identity_span_and_emitted_symbol(relative):
     path = ROOT / relative
-    old = subprocess.check_output(["git", "show", BASE + ":" + relative], cwd=ROOT, text=True)
-    before = {r.address: r for r in read_text(old, path)}
     current = read_text(path.read_text(), path)
-    for address, (owner_file, name, *_) in CALLBACKS.items():
-        if owner_file != relative:
-            continue
+    for address, (baseline_file, name, *_) in CALLBACKS.items():
+        old = subprocess.check_output(
+            ["git", "show", BASE + ":" + baseline_file], cwd=ROOT, text=True)
+        baseline_path = ROOT / baseline_file
+        before = {r.address: r for r in read_text(old, baseline_path)}
         matches = [r for r in current if r.address == address]
         assert len(matches) == 1
         record = matches[0]
@@ -51,7 +51,7 @@ def test_pinned_stack_payload_unguarded_call_and_registration(address):
     assert [(i.mnemonic, i.op_str) for i in code] == [
         ("push", "ebp"), ("mov", "ebp, esp"), ("mov", "ecx, dword ptr [ebp + 8]"),
         ("call", hex(target)), ("pop", "ebp"), ("ret", "")]
-    report_path = ROOT / "src/reportwin.cpp"
+    report_path = ROOT / "src/reportif.cpp"
     record = next(r for r in read_text(report_path.read_text(), report_path) if r.address == caller)
     start, end = record.image_spans[0]
     registration = list(decoder.disasm(image.read(Span(start, end)), start))
@@ -62,7 +62,8 @@ def test_pinned_stack_payload_unguarded_call_and_registration(address):
 
 
 def program(address, damage):
-    relative, name, owner, method, *_ = CALLBACKS[address]
+    _baseline_file, name, owner, method, *_ = CALLBACKS[address]
+    relative = "src/reportif.cpp"
     callback = extract((ROOT / relative).read_text(), f"void __cdecl {name}(int context)")
     if damage == "dispatch":
         callback = callback.replace("->" + method + "();", "->calls += 0;", 1)

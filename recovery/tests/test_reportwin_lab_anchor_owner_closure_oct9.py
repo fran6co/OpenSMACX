@@ -9,7 +9,7 @@ ROOT = Path(__file__).resolve().parents[2]
 
 
 def source_methods():
-    source = (ROOT / "src/reportwin.cpp").read_text()
+    source = (ROOT / "src/reportif.cpp").read_text()
     helper_start = source.index("static int reportwin_signed_coordinate(")
     helper = source[helper_start:source.index("\n}\n", helper_start) + 2]
     line_start = source.index("void ReportWin::labs_line(")

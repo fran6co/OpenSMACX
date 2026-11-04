@@ -13,7 +13,7 @@ from match_recovery.source import read_text, write
 
 ROOT = Path(__file__).resolve().parents[2]
 BASE = "1b080a05a2c866f3bd4bdf7d388f79ce6ee828a5"
-UNITS = ["src/basewin.cpp","src/console.cpp","src/councwin.cpp","src/faction.cpp","src/famewin.cpp","src/game.cpp","src/general.cpp","src/maininterface.cpp","src/mapwin.cpp","src/monuwin.cpp","src/multiwin.cpp","src/netdaemon.cpp","src/netwin.cpp","src/newgame.cpp","src/probe.cpp","src/quaylewin.cpp","src/reportwin.cpp","src/statuswin.cpp","src/stringstruct.cpp","src/veh.cpp"]
+UNITS = ["src/basewin.cpp","src/console.cpp","src/councwin.cpp","src/faction.cpp","src/famewin.cpp","src/game.cpp","src/general.cpp","src/maininterface.cpp","src/mapwin.cpp","src/monuwin.cpp","src/multiwin.cpp","src/netdaemon.cpp","src/netwin.cpp","src/newgame.cpp","src/probe.cpp","src/quaylewin.cpp","src/reportif.cpp","src/statuswin.cpp","src/stringstruct.cpp","src/veh.cpp"]
 
 protected=re.compile(r'//[^\n]*|/\*.*?\*/|"(?:\\.|[^"\\])*"|\'(?:\\.|[^\'\\])*\'',re.S)
 

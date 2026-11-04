@@ -99,7 +99,7 @@ def test_installed_help_reset_and_report_store_paths_are_real_code():
     root = root_dir()
     datalink = (root / "src/datalink.cpp").read_text()
     technology = (root / "src/technology.cpp").read_text()
-    reportwin = (root / "src/reportwin.cpp").read_text()
+    reportwin = (root / "src/reportif.cpp").read_text()
     tech_heck = code_only(extract_function(
         datalink, "void __cdecl tech_heck(void (__cdecl *a1)(char *), int a2)"))
     help_info = code_only(extract_function(
@@ -217,7 +217,7 @@ def test_installed_reportwin_draw_pass_host_control(compiler, tmp_path):
     if executable is None:
         pytest.skip(f"{compiler} unavailable")
     root = root_dir()
-    reportwin = (root / "src/reportwin.cpp").read_text()
+    reportwin = (root / "src/reportif.cpp").read_text()
     number = extract_function(
         reportwin, "static void reportwin_append_number(char *text, int value)")
     start = reportwin.index("static void reportwin_append_lab_entry(")

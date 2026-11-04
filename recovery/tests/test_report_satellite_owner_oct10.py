@@ -18,10 +18,10 @@ def baseline(path):
 
 def test_entire_identity_history_and_algorithm_move_to_report_owner():
     previous = baseline("src/stringstruct.cpp")
-    current = (ROOT / "src/reportwin.cpp").read_text()
+    current = (ROOT / "src/reportif.cpp").read_text()
     old = next(row for row in read_text(previous, ROOT / "src/stringstruct.cpp")
                if row.address == ADDRESS)
-    new = next(row for row in read_file(ROOT / "src/reportwin.cpp")
+    new = next(row for row in read_file(ROOT / "src/reportif.cpp")
                if row.address == ADDRESS)
     for field in fields(old):
         if field.name not in {"path", "line", "region", "origin"}:

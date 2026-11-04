@@ -87,7 +87,7 @@ def test_status_wrappers_use_the_named_byte_members_and_preserve_unmasked_shift(
 def test_direct_mask_reads_use_named_members_and_keep_explicit_snapshots():
     source_files = (
         "src/faction.cpp", "src/probe.cpp", "src/game.cpp", "src/pickwin.cpp",
-        "src/reportwin.cpp", "src/base.cpp", "src/newgame.cpp", "src/veh.cpp",
+        "src/reportif.cpp", "src/base.cpp", "src/newgame.cpp", "src/veh.cpp",
     )
     source = "\n".join((ROOT / name).read_text() for name in source_files)
     code = uncomment(source)
@@ -110,7 +110,7 @@ def test_all_changed_direct_reads_use_byte_zero_or_one_without_changing_shift_fo
     faction = (ROOT / "src/faction.cpp").read_text()
     veh = (ROOT / "src/veh.cpp").read_text()
     assert "static_cast<uint8_t>(1 << turncoat_faction) & GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_" in faction
-    assert "GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_ & (1 << other)" in (ROOT / "src/reportwin.cpp").read_text()
+    assert "GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_ & (1 << other)" in (ROOT / "src/reportif.cpp").read_text()
     assert "GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ &\n         static_cast<uint8_t>(1u << (static_cast<unsigned>(faction) & 31u))" in veh
     assert "const uint8_t human_mask = GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_;" in game
 

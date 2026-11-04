@@ -11,7 +11,7 @@ import pytest
 ROOT = Path(__file__).resolve().parents[2]
 PRODUCTION_TUS = (
     "base.cpp", "basewin.cpp", "console.cpp", "designwin.cpp", "faction.cpp",
-    "game.cpp", "netwin.cpp", "popup.cpp", "reportif.cpp", "reportwin.cpp",
+    "game.cpp", "netwin.cpp", "popup.cpp", "reportif.cpp",
     "veh.cpp",
 )
 

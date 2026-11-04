@@ -26,7 +26,7 @@ def _extract_body(source: str, signature: str) -> str:
 
 def _actual_sat_anim_source() -> str:
     header = (ROOT / "src/reportwin.h").read_text()
-    source = (ROOT / "src/reportwin.cpp").read_text()
+    source = (ROOT / "src/reportif.cpp").read_text()
     assert "RECOVERY_MEMBER: v1 ReportWin satellite_index_ 0xE29C 0x0049FE40" in header
     assert "int satellite_index_;  // 0xE29C" in header
     assert "uint32_t field_E29C_" not in header
@@ -39,7 +39,7 @@ def _actual_draw_sat_loop_source() -> str:
     These synthetic mutations verify cursor reread order. They are not a claim
     that the synchronous native helpers currently write this member.
     """
-    source = (ROOT / "src/reportwin.cpp").read_text()
+    source = (ROOT / "src/reportif.cpp").read_text()
     draw_sat = _extract_body(source, "void ReportWin::draw_sat()")
     loop = _extract_body(
         draw_sat,
@@ -572,7 +572,7 @@ def test_actual_draw_sat_controls_reject_the_old_entry_cached_cursor(tmp_path):
 
 
 def _actual_on_selected_source() -> str:
-    source = (ROOT / "src/reportwin.cpp").read_text()
+    source = (ROOT / "src/reportif.cpp").read_text()
     body = _extract_body(source, "void ReportWin::on_selected(int selection_id, int)")
     assert "selection_id >= 0x5F5E0FE" in body
     return body

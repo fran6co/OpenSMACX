@@ -1,6 +1,6 @@
 """Actual-source host control for ReportWin::reset's Buffer receiver.
 
-The C++ method body is extracted from src/reportwin.cpp; no body is embedded
+The C++ method body is extracted from src/reportif.cpp; no body is embedded
 here and no other test/draft is imported. It calls the six inherited Buffer
 operations with explicit `Buffer::` qualification so the receiver is the
 GraphicWin base without an alias conversion. Host spies distinguish that base
@@ -21,7 +21,7 @@ import pytest
 
 def repository_root() -> Path:
     for parent in Path(__file__).resolve().parents:
-        if (parent / "src/reportwin.cpp").is_file() and (parent / "src/IMAGE_PIN").is_file():
+        if (parent / "src/reportif.cpp").is_file() and (parent / "src/IMAGE_PIN").is_file():
             return parent
     raise AssertionError("could not locate repository root")
 
@@ -41,7 +41,7 @@ def braced(source: str, signature: str) -> str:
 
 
 def actual_reset_body() -> str:
-    source = (ROOT / "src/reportwin.cpp").read_text()
+    source = (ROOT / "src/reportif.cpp").read_text()
     return braced(source, "void ReportWin::reset()")
 
 

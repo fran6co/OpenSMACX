@@ -16,7 +16,7 @@ def test_dialog_origin_members_are_signed_and_propagated_to_every_owner():
     sources = (
         "dialog.cpp", "listbox.cpp", "spritebox.cpp", "editgroup.cpp",
         "pickwin.cpp", "net_session_picker.cpp", "reportif.cpp",
-        "reportwin.cpp", "newgame.cpp", "jackal/checkbox.cpp",
+        "newgame.cpp", "jackal/checkbox.cpp",
         "jackal/radiobutton.cpp", "jackal/filewin.cpp",
     )
     for relative in sources:

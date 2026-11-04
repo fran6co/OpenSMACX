@@ -61,7 +61,7 @@ def test_fixed_window_receivers_are_named_source_objects() -> None:
     assert status_source.count("g_BattleWin.release_iface_mode();") == 2
     assert cat.count("ReportWinGlobal.reset();") == 2
     assert "reinterpret_cast<ReportWin *>(0x876478)" not in cat
-    assert "ReportWin ReportWinGlobal;  // 0x00876478" in (root / "src/reportwin.cpp").read_text()
+    assert "ReportWin ReportWinGlobal;  // 0x00876478" in (root / "src/reportif.cpp").read_text()
     first_reset = cat.index("ReportWinGlobal.reset();")
     category_store = cat.index("field_29DC_ = category;")
     assert cat.index("if (field_29DC_ == 0xE)") < first_reset < category_store

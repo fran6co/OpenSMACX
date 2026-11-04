@@ -1077,20 +1077,6 @@
           "-c"
         ]
       },
-      "src/reportwin.cpp": {
-        "flags": [
-          "/nologo",
-          "/TP",
-          "/Zm200",
-          "/GX",
-          "/O2",
-          "/Ob2",
-          "-MT",
-          "/W4",
-          "/Oy-",
-          "-c"
-        ]
-      },
       "src/ambience.cpp": {
         "flags": [
           "/nologo",

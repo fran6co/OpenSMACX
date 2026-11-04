@@ -58,7 +58,7 @@ SPECS = (
     (0x0048ADC0, 'src/pickwin.cpp', '??_GPickWin@@UAEPAXI@Z'),
     (0x004923E0, 'src/prefwin.cpp', '??_GPrefWin@@UAEPAXI@Z'),
     (0x004968C0, 'src/quaylewin.cpp', '??_GQuayleWin@@UAEPAXI@Z'),
-    (0x004AD840, 'src/reportwin.cpp', '??_GReportWin@@UAEPAXI@Z'),
+    (0x004AD840, 'src/reportif.cpp', '??_GReportWin@@UAEPAXI@Z'),
     (0x004AE760, 'src/setupwin.cpp', '??_GSetupWin@@UAEPAXI@Z'),
     (0x004B3F20, 'src/jackal/checkbutton.cpp', '??_GCheckButton@@UAEPAXI@Z'),
     (0x004B3F50, 'src/socialwin.cpp', '??_GSocialWin@@UAEPAXI@Z'),

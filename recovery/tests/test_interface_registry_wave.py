@@ -15,9 +15,9 @@ HARNESS = Path(__file__).with_name('interface_registry_wave_harness.cpp')
 def bodies():
     result = []
     for source, address, signature in (
-        ('src/reportif.cpp', 0x45D2E0, 'void SubInterface::delete_iface_mode()'),
-        ('src/reportif.cpp', 0x45D310, 'void SubInterface::set_iface_mode()'),
-        ('src/reportif.cpp', 0x45D380, 'void SubInterface::release_iface_mode()'),
+        ('src/maininterface.cpp', 0x45D2E0, 'void SubInterface::delete_iface_mode()'),
+        ('src/maininterface.cpp', 0x45D310, 'void SubInterface::set_iface_mode()'),
+        ('src/maininterface.cpp', 0x45D380, 'void SubInterface::release_iface_mode()'),
         ('src/multiwin.cpp', 0x479900, 'void MultiWin::UNK2()')):
         records = [r for r in read_file(ROOT / source) if r.address == address]
         assert len(records) == 1
