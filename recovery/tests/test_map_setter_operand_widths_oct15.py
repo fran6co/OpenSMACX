@@ -8,7 +8,7 @@ import pytest
 
 
 ROOT = Path(__file__).resolve().parents[2]
-MAP_SOURCE = ROOT / "src/map.cpp"
+MAP_SOURCE = ROOT / "src/map_grid.cpp"
 
 
 def definition(source: str, signature: str) -> str:

@@ -27,9 +27,8 @@ WORLD_OWNER_BASE = "61ba1b3c96f2f12a7c025e74e599fa9f1130546a"
 
 def test_altitude_owner_has_its_measured_inline_recipe():
     project = json.loads((ROOT / "recovery/project.json").read_text())
-    assert project["measurement"]["unit_flag_sets"]["src/map_altitude.cpp"]["flags"] == [
-        "/c", "/O2", "/Gy", "/GR-", "/Oy-", "/GX", "/Ob2",
-    ]
+    unit_flags = project["measurement"]["unit_flag_sets"]
+    assert unit_flags["src/map_grid.cpp"]["flags"] == unit_flags["src/map.cpp"]["flags"]
 
 
 def extract_body(source: str, signature: str) -> str:
@@ -107,14 +106,14 @@ def test_near_landmark_has_one_world_owner():
 
 def test_altitude_helpers_have_one_canonical_owner_and_world_callers():
     source = (ROOT / "src/world.cpp").read_text()
-    owner = (ROOT / "src/map_altitude.cpp").read_text()
+    owner = (ROOT / "src/map_grid.cpp").read_text()
     header = (ROOT / "src/map.h").read_text()
 
     put_definition = owner.index("void __cdecl alt_put_detail(int x, int y, int detail) {")
     natural_definition = owner.index("int __cdecl alt_natural(int x, int y) {")
     setter_definition = owner.index(
         "void __cdecl alt_set_both(int x, int y, int altitude_natural) {")
-    assert natural_definition < put_definition < setter_definition
+    assert put_definition < natural_definition < setter_definition
     assert "alt_natural(x, y)" not in extract_body(
         source, "void __cdecl world_alt_set(int x, int y, int altitude, BOOL is_set_both)")
     assert "void __cdecl alt_put_detail(int x, int y, int detail) {" not in source
@@ -149,11 +148,11 @@ def test_altitude_helpers_have_one_canonical_owner_and_world_callers():
 
 
 def test_mappings_parse_at_the_canonical_altitude_owner():
-    assert "    src/map_altitude.cpp\n" in (ROOT / "CMakeLists.txt").read_text()
+    assert "    src/map_grid.cpp\n" in (ROOT / "CMakeLists.txt").read_text()
     rows = {
         row.address: row
         for row in (read_file(ROOT / "src/world.cpp") + read_file(ROOT / "src/map.cpp")
-                    + read_file(ROOT / "src/map_altitude.cpp"))
+                    + read_file(ROOT / "src/map_grid.cpp"))
         if row.address in {0x005C58C0, 0x005C58E0, 0x005C5AE0,
                            0x005C38B0, 0x005C2CB0, ALT_PUT_DETAIL,
                            ALT_NATURAL, ALT_SET_BOTH, 0x005C2020}
@@ -165,7 +164,7 @@ def test_mappings_parse_at_the_canonical_altitude_owner():
     assert rows[0x005C58C0].body == "src/world.cpp"
     assert rows[0x005C2020].body == ""
     for address in (ALT_PUT_DETAIL, ALT_NATURAL):
-        assert rows[address].body == "src/map_altitude.cpp"
+        assert rows[address].body == "src/map_grid.cpp"
     assert rows[0x005C58E0].body == ""
     assert rows[0x005C5AE0].body == ""
     assert rows[ALT_SET_BOTH].body == ""
@@ -177,7 +176,7 @@ def test_mappings_parse_at_the_canonical_altitude_owner():
     assert rows[ALT_PUT_DETAIL].region.find("map_loc(x, y)->contour = detail;") >= 0
     # This checks the canonical source owner, not the historical unsigned
     # predicate spelling. Actual-source controls verify the signed operation.
-    actual_natural = extract_body((ROOT / "src/map_altitude.cpp").read_text(),
+    actual_natural = extract_body((ROOT / "src/map_grid.cpp").read_text(),
                                   "int __cdecl alt_natural(int x, int y)")
     assert actual_natural in rows[ALT_NATURAL].region
 
@@ -194,8 +193,8 @@ def test_pinned_spans_retain_direct_calls_and_the_setter_inline_exception():
     assert sha256(raw).hexdigest() == PIN
     image = PeImage(raw, PIN)
     rows = {row.address: row for row in (read_file(ROOT / "src/world.cpp")
-                                         + read_file(ROOT / "src/map.cpp"))
-            + read_file(ROOT / "src/map_altitude.cpp")}
+                                         + read_file(ROOT / "src/map.cpp")
+                                         + read_file(ROOT / "src/map_grid.cpp"))}
 
     def instructions(address: int):
         row = rows[address]

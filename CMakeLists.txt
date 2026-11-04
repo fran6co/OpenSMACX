@@ -187,12 +187,13 @@ set(OPENSMACX_SOURCES
     src/graphicwin_events.cpp
     src/log.cpp
     src/maininterface.cpp
+    src/worldwin.cpp
     src/map.cpp
+    src/map_grid.cpp
     src/movement_queries.cpp
     src/map_sites.cpp
     src/territory.cpp
     src/world.cpp
-    src/map_altitude.cpp
     src/mapwin.cpp
     src/mapwin_terrain.cpp
     src/basewin.cpp
@@ -204,7 +205,6 @@ set(OPENSMACX_SOURCES
     src/socialwin.cpp
     src/social.cpp
     src/designwin.cpp
-    src/worldwin.cpp
     src/diplowin.cpp
     src/alphamovie.cpp
     src/mci_video.cpp
@@ -377,7 +377,6 @@ add_subdirectory(src/jackal)
 # existing explicit recovery measurement profiles without changing the
 # application's default compiler flags.
 set_source_files_properties(
-    src/map_altitude.cpp
     src/wave.cpp
     PROPERTIES COMPILE_OPTIONS "/Oy-")
 # Keep the frame-based Wave_Device body on its measured
@@ -438,6 +437,7 @@ set_source_files_properties(src/sound.cpp PROPERTIES COMPILE_OPTIONS "/Oy-")
 # this does not establish the historical translation-unit boundary.
 set_source_files_properties(
     src/map.cpp
+    src/map_grid.cpp
     src/movement_queries.cpp
     src/map_sites.cpp
     src/territory.cpp
@@ -603,6 +603,7 @@ set_property(SOURCE
     src/interface_palette.cpp
     src/maininterface.cpp
     src/map.cpp
+    src/map_grid.cpp
     src/movement_queries.cpp
     src/map_sites.cpp
     src/mapwin.cpp
@@ -680,6 +681,7 @@ set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS
     "${CMAKE_CURRENT_SOURCE_DIR}/src/game.cpp" "${CMAKE_CURRENT_SOURCE_DIR}/src/mapwin.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/mapwin_terrain.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/map.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/map_grid.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/movie_media_decoder.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/graphicwin.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/recovery/terrain_data.py")

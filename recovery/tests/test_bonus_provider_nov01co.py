@@ -42,7 +42,7 @@ def test_bonus_provider_declaration_and_home():
     assert not re.search(r"\bbonus_at\s*\([^;{}]*\)\s*\{", header)
     statement = header[header.rfind(";", 0, declarations[0].start()) + 1:declarations[0].end()]
     assert not re.search(r"\b(?:inline|MEASURED|__declspec)\b", statement)
-    _definition((ROOT / "src/map.cpp").read_text(), r"\bint\s+__cdecl\s+bonus_at\s*\(")
+    _definition((ROOT / "src/map_grid.cpp").read_text(), r"\bint\s+__cdecl\s+bonus_at\s*\(")
 
 
 PREFIX = r'''#include <cassert>
@@ -102,7 +102,7 @@ def test_actual_bonus_algorithm(tmp_path, damage):
         pytest.skip("host C++ compiler unavailable")
     header = (ROOT / "src/map.h").read_text()
     declaration = _definition(header, r"\bstruct\s+Map\s*(?=\{)") + ";"
-    body = _definition((ROOT / "src/map.cpp").read_text(), r"\bint\s+__cdecl\s+bonus_at\s*\(")
+    body = _definition((ROOT / "src/map_grid.cpp").read_text(), r"\bint\s+__cdecl\s+bonus_at\s*\(")
     changes = {
         "seed_gate": ("!MapRandSeed", "MapRandSeed"),
         "deep_water": ("alt < ALT_OCEAN_SHELF", "alt < 0"),

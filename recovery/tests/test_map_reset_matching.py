@@ -52,7 +52,7 @@ def test_actual_map_reset_preserves_unwritten_fields(compiler, tmp_path):
     executable = shutil.which(compiler)
     if executable is None:
         pytest.skip(f"host compiler unavailable: {compiler}")
-    source = (ROOT / "src/map.cpp").read_text()
+    source = (ROOT / "src/map_grid.cpp").read_text()
     body = _map_wipe_body(source)
     assert _leading_reset_order(body) == RESET_ORDER
     harness = r'''
@@ -115,7 +115,7 @@ int main() {
 
 
 def test_reset_order_guard_rejects_previous_source_order():
-    source = (ROOT / "src/map.cpp").read_text()
+    source = (ROOT / "src/map_grid.cpp").read_text()
     body = _map_wipe_body(source)
     old_order = body.replace(
         "    MapSeaLevelCouncil = 0;\n    MapLandmarkCount = 0;\n    MapSeaLevel = 0;",

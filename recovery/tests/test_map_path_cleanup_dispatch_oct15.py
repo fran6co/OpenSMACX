@@ -66,7 +66,7 @@ def test_path_real_and_inline_cleanup_have_native_order_and_null_guards():
 
 def test_map_real_and_inline_cleanup_routes_are_distinct_and_ordered():
     header = (ROOT / "src/map.h").read_text()
-    source = (ROOT / "src/map.cpp").read_text()
+    source = (ROOT / "src/map_grid.cpp").read_text()
     helper = _function(header, "void __cdecl release_map_storage()")
     mapped = _function(source, "void __cdecl map_shutdown()")
     contract = (
@@ -117,11 +117,11 @@ def test_pinned_zoom_redraw_receiver_and_direct_target():
 
 def test_body_locations_now_match_out_of_line_definitions():
     path_rows = {row.address: row for row in read_file(ROOT / "src/path.cpp")}
-    map_rows = {row.address: row for row in read_file(ROOT / "src/map.cpp")}
+    map_rows = {row.address: row for row in read_file(ROOT / "src/map_grid.cpp")}
     assert path_rows[0x0059A2D0].body == "src/path.cpp"
-    assert map_rows[0x00590E90].body == "src/map.cpp"
+    assert map_rows[0x00590E90].body == "src/map_grid.cpp"
     assert "// body src/path.h" not in (ROOT / "src/path.cpp").read_text()
-    assert "// body src/map.h" not in (ROOT / "src/map.cpp").read_text()
+    assert "// body src/map.h" not in (ROOT / "src/map_grid.cpp").read_text()
 
 
 def test_extracted_cleanup_bodies_execute_null_and_free_order_controls(tmp_path: Path, host_compiler: str):
@@ -131,7 +131,7 @@ def test_extracted_cleanup_bodies_execute_null_and_free_order_controls(tmp_path:
     path_shutdown = _function((ROOT / "src/path.cpp").read_text(), "void Path::shutdown()")
     map_header = (ROOT / "src/map.h").read_text()
     map_helper = _function(map_header, "inline void __cdecl release_map_storage()")
-    map_shutdown = _function((ROOT / "src/map.cpp").read_text(), "void __cdecl map_shutdown()")
+    map_shutdown = _function((ROOT / "src/map_grid.cpp").read_text(), "void __cdecl map_shutdown()")
     source = r"""
 #include <stdint.h>
 #include <stdlib.h>

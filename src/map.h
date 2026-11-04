@@ -455,7 +455,8 @@ int __cdecl coast_or_border(int x_point_a, int y_point_a, int x_point_b,
 // computes the tile address itself, because this is a helper the tree
 // invented to name what the original open-coded. Defined in a .cpp, VC6
 // cannot inline it and every one of its callers pays a `call` the image
-// does not make; there are more than a hundred of them under map.cpp alone.
+// does not make. Historical source census: more than a hundred such uses
+// were then under map.cpp; that file grouping has since been reorganized.
 // `int`, not `uint32_t`: the image shifts x with `sar ecx, 1` at 0x005001BF,
 // which is the arithmetic shift a SIGNED right-shift compiles to. Unsigned
 // gives `shr` and is one byte different in every caller.
@@ -511,22 +512,23 @@ void __cdecl world_erosion();                  // 0x005C2CB0
 int __cdecl world_site(int x, int y, BOOL is_ocean_site);
 void __cdecl world_analysis();
 void __cdecl world_polar_caps();
-// Original world-builder helpers implemented in map.cpp.
+// Current owners: fixup_landmarks is in map_grid.cpp; world_rainfall is
+// in world.cpp.
 void __cdecl fixup_landmarks();
 void __cdecl world_rainfall();
 // Not yet recovered - pending_bodies forwarders. world_climate calls each
 // BY NAME.
 //
-// THE WORLD-BUILDER FAMILY, after the 2026-09-05 pass. Homed: world_fungus
-// (0x005C3440) and world_build (0x005C86E0), both in map.cpp over
-// src/fractal.h. Still archived, each with a BLOCKED note on its artifact:
-//   world_erosion (0x005C2CB0) - the last one that needed a class. It calls
-//     ?init@Fractal@@QAEXXZ (0x005C1E20) and ?UNK1@Fractal@@QAEHHH@Z
-//     (0x005C1F20), both homed in map.cpp now, and reserves `sub esp, 0x314`
-//     = the 722-byte Fractal plus its fourteen stack locals.
-//   world_rivers (0x005C38B0) - six calls, no Fractal, nothing left to name.
-//   world_rainfall (0x005C4470) - six calls, no Fractal; its artifact is a
-//     condensation, so its middle pass wants re-deriving from the raw bytes.
+// Historical compiler/context notes from the 2026-09-05 pass: the old note
+// placed world_fungus, world_build and Fractal methods in map.cpp and called
+// several world-builder artifacts BLOCKED. Those owner/status statements are
+// superseded: current recovered world-builder functions and Fractal methods
+// are in world.cpp. The historical stack observation for world_erosion was
+// `sub esp, 0x314` = the 722-byte Fractal plus fourteen stack locals.
+// Historical notes also recorded six calls in world_rivers and rainfall and
+// a condensed rainfall artifact whose middle pass wanted re-deriving.
+// Current definitions for world_fungus, world_build, world_rainfall and
+// Fractal methods are in world.cpp; this history is not a current TU claim.
 // Names this pass settled, so nothing is re-derived:
 //   0x0068FB20                      AltContour (map.h, below)
 //   0x0068FAF4                      AltNaturalDefault (map.h, below)
@@ -580,7 +582,7 @@ int __cdecl zoc_move(int x, int y, int faction_id);
 int __cdecl mandate_color(int mandate);
 
 // Shared source-owned terrain tables; original starts and evidence live at
-// their definitions in map.cpp. Bonus source windows are 113 bytes, not a
+// their definitions in map_grid.cpp. Bonus source windows are 113 bytes, not a
 // claim that the original allocations have exactly those upper bounds.
 extern const unsigned char AltDirectionTable[49 * 5];
 extern unsigned char AltBonusArid[113];
@@ -733,7 +735,7 @@ MEASURED inline BOOL __cdecl is_ocean(int x, int y) {
     return (map_loc(x, y)->climate & ~0x1F) < ALT_BIT_SHORE_LINE;
 }
 
-// Resource bonus queries use the canonical provider in map.cpp.
+// Resource bonus queries use the canonical provider in map_grid.cpp.
 int __cdecl bonus_at(int x, int y, int unk_val);
 
 MEASURED inline int __cdecl base_who(int x, int y) {

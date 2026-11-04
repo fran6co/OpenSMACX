@@ -373,7 +373,7 @@ def point_light_initializer(root: Path, original: Path, output: Path) -> None:
 
 def terrain_direction_initializer(root: Path, original: Path, output: Path) -> None:
     _terrain_initializer(root, original, output,
-                         output_name='terrain_alt_direction.inc', unit='src/map.cpp',
+                         output_name='terrain_alt_direction.inc', unit='src/map_grid.cpp',
                          symbol='?AltDirectionTable@@3QBEB', size=245)
 
 
@@ -382,7 +382,7 @@ def terrain_landmark_bonus_initializer(root: Path, original: Path, output: Path)
     if symbol is None:
         raise ValueError('unknown terrain landmark bonus initializer')
     _terrain_initializer(root, original, output, output_name=output.name,
-                         unit='src/map.cpp', symbol=symbol, size=113,
+                         unit='src/map_grid.cpp', symbol=symbol, size=113,
                          accessed_window=True)
 
 
@@ -391,7 +391,7 @@ def terrain_altitude_initializer(root: Path, original: Path, output: Path) -> No
     if symbol is None:
         raise ValueError('unknown terrain altitude initializer')
     _terrain_initializer(root, original, output, output_name=output.name,
-                         unit='src/map.cpp', symbol=symbol, size=44,
+                         unit='src/map_grid.cpp', symbol=symbol, size=44,
                          unsigned_words=True)
 
 

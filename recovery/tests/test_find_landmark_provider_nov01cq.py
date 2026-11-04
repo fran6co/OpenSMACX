@@ -37,7 +37,7 @@ def test_provider_contract():
     assert not re.search(r"\bfind_landmark\s*\([^;{}]*\)\s*\{", header)
     statement = header[header.rfind(";", 0, matches[0].start()) + 1:matches[0].end()]
     assert not re.search(r"\b(?:inline|MEASURED|__declspec)\b", statement)
-    _definition((ROOT / "src/map.cpp").read_text(), r"\bint\s+__cdecl\s+find_landmark\s*\(")
+    _definition((ROOT / "src/map_grid.cpp").read_text(), r"\bint\s+__cdecl\s+find_landmark\s*\(")
 
 
 PREFIX = r'''#include <cassert>
@@ -85,12 +85,13 @@ def test_actual_cases(tmp_path, damage):
         matches = list(re.finditer(rf"\bconst\s+int\s+{name}\[\d+\]\s*=\s*\{{[^}}]*\}}\s*;", _masked(source)))
         assert len(matches) == 1
         parts.append(source[matches[0].start():matches[0].end()])
-    for name in ("on_map", "xrange"):
-        parts.append(_definition(header, rf"\b(?:BOOL|int)\s+__cdecl\s+{name}\s*\("))
-    body = _definition(source, r"\bint\s+__cdecl\s+find_landmark\s*\(")
+    parts.append(_definition(header, r"\bBOOL\s+__cdecl\s+on_map\s*\("))
+    parts.append(_definition(header, r"\binline\s+int\s+__cdecl\s+wrap_map_x\s*\("))
+    body = _definition((ROOT / "src/map_grid.cpp").read_text(),
+                       r"\bint\s+__cdecl\s+find_landmark\s*\(")
     changes = {
         "radius_index": ("RadiusRange[radius_range_offset]", "radius_range_offset"),
-        "omit_wrap": ("xrange(x + RadiusOffsetX[i])", "(x + RadiusOffsetX[i])"),
+        "omit_wrap": ("wrap_map_x(x + RadiusOffsetX[i])", "(x + RadiusOffsetX[i])"),
         "last_index": ("return lm;", "return MapLandmarkCount - 1;"),
     }
     if damage:
@@ -184,12 +185,14 @@ def _kill_program(map_header, map_source, kill_body):
     arrays = []
     masked_source = _masked(map_source)
     for name in ("RadiusRange", "RadiusOffsetX", "RadiusOffsetY"):
+        table_source = (ROOT / "src/map.cpp").read_text()
+        masked_source = _masked(table_source)
         match = re.search(rf"\bconst\s+int\s+{name}\[\d+\]\s*=\s*\{{[^}}]*\}}\s*;",
                           masked_source)
         assert match
-        arrays.append(map_source[match.start():match.end()])
+        arrays.append(table_source[match.start():match.end()])
     on_map = _definition(map_header, r"\bBOOL\s+__cdecl\s+on_map\s*\(")
-    xrange = _definition(map_header, r"\bint\s+__cdecl\s+xrange\s*\(")
+    xrange = _definition(map_header, r"\binline\s+int\s+__cdecl\s+wrap_map_x\s*\(")
     assert "find_landmark(" not in kill_body
     assert "RadiusRange[1]" in kill_body
     return (KILL_PREFIX.replace("struct Landmark { int x; int y; char name[32]; };",
@@ -208,7 +211,7 @@ def test_actual_kill_landmark_search_and_full_record_removal(tmp_path, damage):
     compilers = [compiler for compiler in compilers if compiler]
     assert compilers
     header = (ROOT / "src/map.h").read_text()
-    source = (ROOT / "src/map.cpp").read_text()
+    source = (ROOT / "src/map_grid.cpp").read_text()
     body = _definition(source, r"\bvoid\s+__cdecl\s+kill_landmark\s*\(")
     if damage == "reverse_neighbor_order":
         old = "for (int i = 0; i < radius; i++) {"

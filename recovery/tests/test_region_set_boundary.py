@@ -1,4 +1,4 @@
-"""The mapped region setter owns Path calls; brush retains same-TU inlining."""
+"""The moved region setter owns Path calls and the world brush reference."""
 
 from pathlib import Path
 import os
@@ -26,7 +26,7 @@ def _body(text, signature):
 
 def test_region_set_is_the_map_cpp_owner_and_path_calls_it_directly():
     header = (ROOT / "src/map.h").read_text()
-    map_cpp = (ROOT / "src/map.cpp").read_text()
+    map_cpp = (ROOT / "src/map_grid.cpp").read_text()
     path_cpp = (ROOT / "src/path.cpp").read_text()
     declaration = "void __cdecl region_set(int x, int y, int region);"
     definition = "void __cdecl region_set(int x, int y, int region)"
@@ -34,10 +34,10 @@ def test_region_set_is_the_map_cpp_owner_and_path_calls_it_directly():
     assert "MEASURED inline void __cdecl region_set" not in header
     assert map_cpp.count(definition) == 1
     region = _body(map_cpp, definition)
-    brush = _body(map_cpp, "void __cdecl brush(int x, int y, int altitude)")
+    world_cpp = (ROOT / "src/world.cpp").read_text()
+    brush = _body(world_cpp, "void __cdecl brush(int x, int y, int altitude)")
     assert "map_loc(x, y)->region = region;" in region
     assert "region_set(" in brush
-    assert map_cpp.index(definition) < map_cpp.index("void __cdecl brush(")
     path_code = re.sub(r"/\*.*?\*/|//[^\n]*", "", path_cpp, flags=re.S)
     assert "region_set_call" not in path_code
     assert len(re.findall(r"\bregion_set\s*\(", path_code)) == 4
@@ -47,10 +47,11 @@ def test_region_set_is_the_map_cpp_owner_and_path_calls_it_directly():
 
 
 def _mapped_span(address):
-    rows = [row for row in read_file(ROOT / "src/path.cpp")
+    rows = [row for source in (ROOT / "src/path.cpp", ROOT / "src/world.cpp")
+            for row in read_file(source)
             if row.address == address]
     if not rows:
-        rows = [row for row in read_file(ROOT / "src/map.cpp")
+        rows = [row for row in read_file(ROOT / "src/map_grid.cpp")
                 if row.address == address]
     row, = rows
     spans = row.image_spans

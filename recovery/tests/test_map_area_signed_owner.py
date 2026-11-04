@@ -51,8 +51,10 @@ def test_signed_count_types_cover_the_real_shared_owner_and_consumers():
     assert "MapArea * sizeof(*map_table_)" in path_source
     assert "MapArea * 4);" not in path_source
 
-    # Keep the historical identity/member binding load-bearing and unchanged.
-    assert "// RECOVERY_OBJECT: v3 0x00949884 ?MapArea@@3IA member ?MapStorage@@3UMapStorageWindow@@A metadata_.area_" in map_source
+    # Keep the historical identity/member binding load-bearing and unchanged;
+    # MapStorage's definition now lives with the grouped map core.
+    storage_source = (ROOT / "src/map_grid.cpp").read_text()
+    assert "// RECOVERY_OBJECT: v3 0x00949884 ?MapArea@@3IA member ?MapStorage@@3UMapStorageWindow@@A metadata_.area_" in storage_source
 
 
 def test_signed_maparea_counters_are_paired_at_current_consumers():

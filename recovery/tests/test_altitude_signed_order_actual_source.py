@@ -9,7 +9,7 @@ import pytest
 
 
 ROOT = Path(__file__).resolve().parents[2]
-SOURCE = ROOT / "src" / "map_altitude.cpp"
+SOURCE = ROOT / "src" / "map_grid.cpp"
 SIGNATURE = "int __cdecl alt_natural(int x, int y) {"
 
 

@@ -206,7 +206,7 @@ def enum_values(header):
 
 def extracted_controls():
     source = SOURCE.read_text(encoding="utf-8")
-    map_source = (ROOT / "src/map.cpp").read_text(encoding="utf-8")
+    map_source = (ROOT / "src/map_grid.cpp").read_text(encoding="utf-8")
     header = HEADER.read_text(encoding="utf-8")
     constants = enum_values(header)
     records = {row.address: row for row in read_file(SOURCE)}
@@ -274,11 +274,19 @@ def mapping_inventory():
         ).decode("utf-8")
         task_rows.update({row.address: row for row in read_text(task_source, ROOT / relative)})
 
+    current_source_homes = (
+        "src/world.cpp", "src/map.cpp", "src/map_grid.cpp", "src/worldwin.cpp",
+        # These historical map.cpp entries already have independent current
+        # homes; keep them in the continuity inventory while regrouping the
+        # map core.
+        "src/planwin.cpp", "src/territory.cpp", "src/movement_queries.cpp",
+        "src/map_sites.cpp", "src/datalink_entries.cpp", "src/veh.cpp",
+    )
     current_rows = {
         row.address: row
-        for source_path in (ROOT / "src/world.cpp", ROOT / "src/map.cpp",
-                            ROOT / "src/map_altitude.cpp", ROOT / "src/worldwin.cpp")
+        for source_path in (ROOT / relative for relative in current_source_homes)
         for row in read_file(source_path)
+        if row.address in task_rows
     }
     return old_rows, task_rows, current_rows
 
@@ -373,7 +381,7 @@ def build_program(constants, calls, helper, overrides=None):
     helper_definition = "void __cdecl bit2_set" + helper[helper.index("("):]
     return (PRELUDE.replace("@ENUMS@", enum_text) +
             "\n" +
-            "/* actual src/map.cpp bit2_set implementation */\n" +
+            "/* actual src/map_grid.cpp bit2_set implementation */\n" +
             helper_definition + "\n" +
             "\n".join(wrappers) + MAIN_END.replace("@CASES@", cases))
 

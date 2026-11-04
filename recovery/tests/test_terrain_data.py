@@ -392,7 +392,7 @@ def test_configured_terrain_generation_requires_every_bound_table(tmp_path, hook
     for index, symbol in enumerate(hook._LANDMARK_BONUS_TABLES.values()):
         address = bonus_start + index * 113
         altitude_rows.append(f'// RECOVERY_OBJECT: v1 0x{address:08X} {symbol}')
-    (root / 'src/map.cpp').write_text('\n'.join(altitude_rows) + '\n')
+    (root / 'src/map_grid.cpp').write_text('\n'.join(altitude_rows) + '\n')
     hook.terrain_initializers(root, original, output.parent)
     assert {path.name for path in output.parent.iterdir()} == {
         'terrain_coast_remap.inc', *(filename for filename, _ in LANDMARKS),
@@ -416,7 +416,7 @@ def test_altitude_words_are_exact_unsigned_little_endian(tmp_path, hook, filenam
              0x7fffffff, 0x80000000, 0xfffffffe, 0xffffffff]
     raw = data_image(struct.pack('<11I', *words))
     root, original, output = project(
-        tmp_path, raw, size=44, unit='map.cpp',
+        tmp_path, raw, size=44, unit='map_grid.cpp',
         symbol=hook._ALTITUDE_TABLES[filename])
     output = output.with_name(filename)
     hook.terrain_altitude_initializer(root, original, output)
@@ -432,7 +432,7 @@ def test_altitude_refusals_preserve_previous_cache(tmp_path, hook, damage):
     raw = data_image(bytes(44), absolute=4) if damage == 'relocation' else data_image(bytes(44))
     root, original, output = project(
         tmp_path, raw, size=43 if damage == 'extent' else 44,
-        unit='map.cpp', symbol='?AltNatural@@3PAIA')
+        unit='map_grid.cpp', symbol='?AltNatural@@3PAIA')
     output = output.with_name('terrain_altitude_natural.inc')
     if damage == 'pin':
         (root / 'src/IMAGE_PIN').write_text('sha256 ' + '0' * 64 + '\n')
@@ -450,7 +450,7 @@ def test_actual_product_altitude_arrays_use_generated_initializers(tmp_path):
     compiler = shutil.which('g++')
     if compiler is None:
         pytest.skip('host C++ compiler required')
-    source = (ROOT / 'src/map.cpp').read_text()
+    source = (ROOT / 'src/map_grid.cpp').read_text()
     definitions = []
     for name, filename in [('AltNaturalDefault', 'terrain_altitude_default.inc'),
                            ('AltContour', 'terrain_altitude_contour.inc'),

@@ -99,11 +99,10 @@ class WorldWin : public GraphicWin {
 };
 
 
-// The process-wide WorldWin. Its storage is defined once, in map.cpp, and the
-// image keeps it at 0x008E9F60; game.cpp tears it down through this
-// declaration (`desktop_close`, `game_reload`) and world_climate clears its
-// terrain through the same object. Before this declaration map.cpp's
-// definition was reachable only as a private spelling and game.cpp reached
+// The process-wide WorldWin. Its storage is defined once in worldwin.cpp;
+// the image keeps it at 0x008E9F60. game.cpp tears it down through this
+// declaration (`desktop_close`, `game_reload`), and world.cpp clears its
+// terrain through the same object. Before this declaration, game.cpp reached
 // the address as a cast literal.
 extern WorldWin WorldClimateWorldWin;  // 0x008E9F60
 extern RECT WorldMapBounds;  // 0x00939F08; copied from MainInterface.

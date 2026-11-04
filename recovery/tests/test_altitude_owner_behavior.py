@@ -12,7 +12,7 @@ FIXTURES = Path(__file__).with_name("altitude_owners")
 COMPILERS = [c for c in ("g++", "clang++") if shutil.which(c)]
 
 def actual(address):
-    path = ROOT / "src/map.cpp"
+    path = ROOT / "src/map_grid.cpp"
     record = next(r for r in read_file(path) if r.address == address)
     lines = path.read_text().splitlines()
     block = False

@@ -199,7 +199,7 @@ def actual_body() -> tuple[str, str, str, str]:
     return (
         extract_body(header, "struct Map {") + ";",
         extract_body(header, "inline Map *__cdecl map_loc(int x, int y)"),
-        extract_body((ROOT / "src/map.cpp").read_text(), "int __cdecl elev_at(int x, int y)"),
+        extract_body((ROOT / "src/map_grid.cpp").read_text(), "int __cdecl elev_at(int x, int y)"),
         extract_body(source, "void __cdecl world_linearize_contours()"),
     )
 

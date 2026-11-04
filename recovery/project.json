@@ -539,20 +539,6 @@
           "-c"
         ]
       },
-      "src/map_altitude.cpp": {
-        "flags": [
-          "/nologo",
-          "/TP",
-          "/Zm200",
-          "/GX",
-          "/O2",
-          "/Ob2",
-          "-MT",
-          "/W4",
-          "/Oy-",
-          "-c"
-        ]
-      },
       "src/sound.cpp": {
         "flags": [
           "/nologo",
@@ -1922,6 +1908,21 @@
           "-MT",
           "/W4",
           "/Oy-",
+          "-c"
+        ]
+      },
+      "src/map_grid.cpp": {
+        "flags": [
+          "/nologo",
+          "/TP",
+          "/Zm200",
+          "/GX",
+          "/O2",
+          "/Ob2",
+          "-MT",
+          "/W4",
+          "/Oy-",
+          "/Z7",
           "-c"
         ]
       }

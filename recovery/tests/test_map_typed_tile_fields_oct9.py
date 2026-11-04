@@ -10,7 +10,7 @@ from match_recovery.includes import COMMENTS_OR_STRINGS
 
 
 ROOT = Path(__file__).resolve().parents[2]
-MAP_SOURCE = ROOT / "src/map.cpp"
+MAP_SOURCE = ROOT / "src/map_grid.cpp"
 WORLD_SOURCE = ROOT / "src/world.cpp"
 LOCK_SOURCE = ROOT / "src/lock.cpp"
 
@@ -477,7 +477,6 @@ def _analysis_boundary_source():
     helpers = "\n".join(definition(header, signature) for signature in (
         "inline Map *__cdecl map_loc(int x, int y)",
         "MEASURED inline BOOL __cdecl on_map(int x, int y)",
-        "MEASURED inline int __cdecl xrange(int x)",
         "MEASURED inline int __cdecl region_at(int x, int y)",
         "MEASURED inline int __cdecl bit_at(int x, int y)",
         "inline uint32_t __cdecl climate_at(uint32_t x, uint32_t y)",
@@ -485,6 +484,7 @@ def _analysis_boundary_source():
         "inline uint32_t __cdecl rocky_at(uint32_t x, uint32_t y)",
         "MEASURED inline BOOL __cdecl is_ocean(int x, int y)",
     ))
+    helpers += "\n" + definition(header, "inline int __cdecl wrap_map_x(int x)")
     body = definition(WORLD_SOURCE.read_text(encoding="utf-8"),
                       "void __cdecl world_analysis()")
     return r"""

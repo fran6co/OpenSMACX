@@ -39,7 +39,7 @@ def _definition(source: str, signature: str) -> str:
 
 def _actual_definitions() -> tuple[str, dict[str, str], dict[str, str]]:
     root = _root()
-    map_cpp = root / "src/map.cpp"
+    map_cpp = root / "src/map_grid.cpp"
     map_h = root / "src/map.h"
     body_source = map_cpp.read_text(encoding="utf-8")
     header_source = map_h.read_text(encoding="utf-8")

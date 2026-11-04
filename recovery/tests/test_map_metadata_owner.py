@@ -38,6 +38,7 @@ def actual_bundle():
     start = header.index("struct MapMetadataFields {")
     end = header.index("// The tile-flag mask", start)
     layout = header[start:end]
+    wrap_map_x = definition(header, "inline int __cdecl wrap_map_x(int x) {")
     record = next(r for r in read_file(ROOT / "src/world.cpp") if r.address == 0x5C86E0)
     assert record.image_spans == ((0x5C86E0, 0x5C899D),)
     body = definition(record.region, "void __cdecl world_build() {")
@@ -48,7 +49,9 @@ def actual_bundle():
     river_body = definition(river.region, "void __cdecl world_riverbeds()")
     temperature = next(r for r in read_file(ROOT / "src/world.cpp") if r.address == 0x5C4170)
     temperature_body = definition(temperature.region, "void __cdecl world_temperature()")
-    return landmark + "\nconst int MaxLandmarkNum = 64;\n" + layout + "\n" + body + "\n" + paint_body + "\n" + river_body + "\n" + temperature_body
+    return (landmark + "\nconst int MaxLandmarkNum = 64;\n" + layout + "\n"
+            + wrap_map_x + "\n" + body + "\n" + paint_body + "\n"
+            + river_body + "\n" + temperature_body)
 
 
 @pytest.mark.parametrize("damage", [False, True])
@@ -146,7 +149,7 @@ def test_compiling_world_build_damage_is_detected(tmp_path, damage):
 
 
 def test_live_object_identities_are_members():
-    rows = parse_objects((ROOT / "src/map.cpp").read_text(), "src/map.cpp", PIN,
+    rows = parse_objects((ROOT / "src/map_grid.cpp").read_text(), "src/map_grid.cpp", PIN,
                          address_space="pe:va")
     expected = {
         "?MapLongitudeBounds@@3HA": (0x949870, ("metadata_", "longitude_bounds_")),
@@ -169,12 +172,12 @@ def test_live_object_identities_are_members():
     assert parent.origin.address == 0x949870
     assert parent.span == Span(0x949870, 0x94A314)
     assert parent.parent_symbol is None and parent.member_path == ()
-    text = (ROOT / "src/map.cpp").read_text()
+    text = (ROOT / "src/map_grid.cpp").read_text()
     assert "fwrite(&MapStorage, 0xAA4, 1, map_file)" in text
     assert "fread(&MapStorage, 0xAA4, 1, map_file)" in text
     # The successful-read branch resets the transported pointer words;
     # failure must return first, preserving the original partial-read quirk.
-    read = next(r for r in read_file(ROOT / "src/map.cpp") if r.address == 0x591130)
+    read = next(r for r in read_file(ROOT / "src/map_grid.cpp") if r.address == 0x591130)
     assert re.search(r"fread\(&MapStorage, 0xAA4, 1, map_file\)\) \{\s*"
                      r"return true;\s*\}\s*map_tiles\(\) = 0;\s*MapAbstract\(\) = 0;", read.region)
 

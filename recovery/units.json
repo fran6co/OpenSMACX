@@ -539,12 +539,12 @@
     },
     {
       "name": "WorldWin",
-      "start": "0x004C38E0",
+      "start": "0x004C38B0",
       "end_exclusive": "0x004C4CAB",
       "recovered_tu": "src/worldwin.cpp",
       "reason": "Inferred complete known WorldWin contribution including its mapped lifecycle/helpers and dispatch data. Source correspondence permits imperfect bodies; original TU identity and unresolved associated evidence remain unproved.",
       "evidence": [
-        "Fresh source audit includes all27known primary identities in this entire current source home, with no foreign mapped primary inside the candidate bracket.",
+        "All29 known primary identities in the expanded bracket are in worldwin.cpp, including the original generated startup/cleanup pair and its genuine WorldClimateWorldWin object moved from the mixed map owner. Current local helper names require fresh physical compiler qualification.",
         "The source keeps WorldWin's map-window implementation and the global tutorial bounds it writes and MapWin later reads; other cross-owner globals/callers remain references rather than presumed members of this unit. Constructor/destructor and scalar/vector deletion identities occur in the same bracket.",
         "Nonpadding gaps contain owner-associated dispatch data; source annotations retain bounded table/selector identities independently of primary function spans. Those relationships do not establish matched data, exclusive allocation extents, historical object boundaries, retained selection or runtime behavior."
       ]
@@ -653,6 +653,18 @@
         "All92 mapped primary identities in this interval are in reportif.cpp. Three distant SubInterface methods retain complete mappings in the MainInterface provider rather than widening this bracket.",
         "ReportIfGlobal and ReportWinGlobal are genuine objects declared in the pinned CRT order6825E8 then6825EC; initialization and cleanup remain compiler generated.",
         "Guard-derived target/selector associations account for the original switch data. Six register-preserving LEA/MOV NOP idioms remain outside those data spans; the diagnostic strict90/CC padding classifier may leave them open. Associated data does not prove matching, retained selection or runtime behavior."
+      ]
+    },
+    {
+      "name": "MapGrid",
+      "start": "0x00590E90",
+      "end_exclusive": "0x00592D6F",
+      "recovered_tu": "src/map_grid.cpp",
+      "reason": "Inferred complete known map storage, terrain-field and landmark contribution core. Reunited mapped definitions in original primary-address order with shared terrain state. Current ownership and compiling coverage do not prove historical object boundaries or matching.",
+      "evidence": [
+        "All43 primary identities in this band are in map_grid.cpp:39 former map.cpp entries, three altitude helpers, and the interleaved map-location formatter say_loc. Complete original spans and claims remain attached.",
+        "MapStorage, resampling scratch, map-pod multipliers and landmark direction/template/bonus data accompany their core consumers. The adjacent AltNaturalDefault/Contour/Natural arrays remain one current shared terrain-state group; world generation references it externally. World-only canyon/ridge arrays and unrelated radius data remain residual ownership obligations.",
+        "The minerals_at jump table retains its bounded source association; independent pinned-image reads classify other internal gaps as NOP padding, with scale_adjustment starting the next contribution at592D70. Genuine WorldClimateWorldWin lifetime is homed separately with WorldWin."
       ]
     }
   ]

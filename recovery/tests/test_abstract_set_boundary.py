@@ -24,7 +24,7 @@ def _body(text, signature):
 
 
 def _mapped_span(address):
-    rows = [row for path in (ROOT / "src/path.cpp", ROOT / "src/map.cpp")
+    rows = [row for path in (ROOT / "src/path.cpp", ROOT / "src/map_grid.cpp")
             for row in read_file(path) if row.address == address]
     row, = rows
     assert len(row.image_spans) == 1
@@ -34,7 +34,7 @@ def _mapped_span(address):
 
 def test_abstract_set_is_an_ordinary_mapped_owner_with_uint8_parameter():
     header = (ROOT / "src/map.h").read_text(encoding="utf-8")
-    map_cpp = (ROOT / "src/map.cpp").read_text(encoding="utf-8")
+    map_cpp = (ROOT / "src/map_grid.cpp").read_text(encoding="utf-8")
     path_cpp = (ROOT / "src/path.cpp").read_text(encoding="utf-8")
     signature = "void __cdecl abstract_set(int x, int y, uint8_t region)"
     assert header.count(signature + ";") == 1
@@ -46,9 +46,9 @@ def test_abstract_set_is_an_ordinary_mapped_owner_with_uint8_parameter():
     assert "abstract_set_call" not in path_code
     assert len(re.findall(r"\babstract_set\s*\(", path_code)) == 1
     assert "abstract_set(x, y, region);" in path_code
-    record, = [row for row in read_file(ROOT / "src/map.cpp")
+    record, = [row for row in read_file(ROOT / "src/map_grid.cpp")
                if row.address == 0x00591230]
-    assert record.body == "src/map.cpp"
+    assert record.body == "src/map_grid.cpp"
 
 
 def test_pinned_make_abstract_calls_mapped_abstract_set_at_original_site():

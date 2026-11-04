@@ -39,7 +39,7 @@ def _block(text, start):
 
 def _mapped_spans(address):
     rows = [row for source in (ROOT / "src/base.cpp", ROOT / "src/game.cpp",
-                               ROOT / "src/map.cpp")
+                               ROOT / "src/map_grid.cpp")
             for row in read_file(source) if row.address == address]
     row, = rows
     from match_recovery.model import Span
@@ -48,7 +48,7 @@ def _mapped_spans(address):
 
 def test_all_verified_cross_tu_calls_name_the_mapped_bit_set_owner():
     header = (ROOT / "src/map.h").read_text(encoding="utf-8")
-    map_cpp = (ROOT / "src/map.cpp").read_text(encoding="utf-8")
+    map_cpp = (ROOT / "src/map_grid.cpp").read_text(encoding="utf-8")
     base_cpp = (ROOT / "src/base.cpp").read_text(encoding="utf-8")
     game_cpp = (ROOT / "src/game.cpp").read_text(encoding="utf-8")
 

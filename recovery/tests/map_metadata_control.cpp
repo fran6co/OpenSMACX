@@ -32,7 +32,6 @@ static int controlled_rand() {
 
 static void map_wipe();
 static void brush(int, int, int);
-static int xrange(int x) { return x; }
 static bool on_map(int, int) { return true; }
 static int VehMoveDeltaX[8] = {0, 1, 2, 3, 4, 5, 6, 7};
 static int VehMoveDeltaY[8];
