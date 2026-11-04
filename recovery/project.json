@@ -372,6 +372,21 @@
           "-c"
         ]
       },
+      "src/mapwin_terrain.cpp": {
+        "flags": [
+          "/nologo",
+          "/TP",
+          "/Zm200",
+          "/GX",
+          "/O2",
+          "/Ob2",
+          "-MT",
+          "/W4",
+          "/Oy-",
+          "/Z7",
+          "-c"
+        ]
+      },
       "src/video.cpp": {
         "flags": [
           "/c",

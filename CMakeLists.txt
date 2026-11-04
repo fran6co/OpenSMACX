@@ -195,6 +195,7 @@ set(OPENSMACX_SOURCES
     src/world.cpp
     src/map_altitude.cpp
     src/mapwin.cpp
+    src/mapwin_terrain.cpp
     src/basewin.cpp
     src/video.cpp
     src/video_queue.cpp
@@ -410,6 +411,7 @@ set_source_files_properties(
 # Preserve original frame-based arguments in the map and base interface owners.
 set_source_files_properties(
     src/mapwin.cpp
+    src/mapwin_terrain.cpp
     src/basewin.cpp
     PROPERTIES COMPILE_OPTIONS "/Oy-")
 # Keep the controlled diplomacy/network/overview owners on their measured
@@ -612,6 +614,7 @@ set_property(SOURCE
     src/movement_queries.cpp
     src/map_sites.cpp
     src/mapwin.cpp
+    src/mapwin_terrain.cpp
     src/netdaemon.cpp
     src/netdaemon_vehicle.cpp
     src/prefwin.cpp
@@ -685,6 +688,7 @@ endif()
 set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS
     "${OPENSMACX_ORIGINAL_IMAGE}" "${CMAKE_CURRENT_SOURCE_DIR}/src/IMAGE_PIN"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/game.cpp" "${CMAKE_CURRENT_SOURCE_DIR}/src/mapwin.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/mapwin_terrain.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/map.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/movie_media_decoder.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/graphicwin.cpp"

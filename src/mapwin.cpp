@@ -2283,19 +2283,6 @@ int MapWin::tile_in_view(int x, int y, int margin) {
     return x >= left && x < right;
 }
 
-// Original4712D0..471316, historically claimed exact as mapwin_unk1.
-// The adapter itself is genuine code, with a nullable derived-to-base cast;
-// its gen_terrain_poly dependency remains the retained renderer obligation.
-// ORIGINAL: 0x004712D0 mapwin_unk1 0x004712D0-0x00471316 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["Original4712D0..471316; retired seed git:b55fcf8b:src/recovered/units/004712d0.cpp records this identity and exact span, including its BYTE_EXACT obligation and historical ABI notes.", "Original conditional receiver conversion reads the GraphicWin virtual-base displacement and adds the Buffer subobject offset. C++ base conversion supplies the same null handling without manual vbtable arithmetic."], "reason": "This nine-argument cdecl adapter performs a nullable genuine MapWin-to-Buffer conversion before entering the common ten-argument renderer. Preserve its original mapwin_unk1 identity and historical seed obligation; gen_window_terrain describes the recovered source role."}
-// symbol    ?gen_window_terrain@@YAHPAVMapWin@@HHHHHHHH@Z
-int __cdecl gen_window_terrain(MapWin *window, int zoom, int faction,
-                              int base_id, int flags, int x, int y,
-                              int pixel_x, int pixel_y) {
-    return gen_terrain_poly(static_cast<Buffer *>(window), window,
-                            zoom, faction, base_id, flags,
-                            x, y, pixel_x, pixel_y);
-}
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x00466CA0 ?draw_vehicles@MapWin@@QAEXHHHHH@Z 0x00466CA0-0x0046718F FILE
