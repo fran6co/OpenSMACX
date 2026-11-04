@@ -61,7 +61,7 @@ RulesFacility Facility[MaxFacilityNum] = {};
 char StringTemp[1024];
 char ProjectNames[MaxSecretProjectNum][32];
 char *label_get(int) { return (char*)"COST_LABEL"; }
-struct Strings { char *get(int id) { return (char*)ProjectNames[id]; } };
+struct Strings { char *get(int id) { return id == 179 ? (char*)"COST_LABEL" : (char*)ProjectNames[id]; } };
 Strings StringTable;
 int _itoa(int value, char *out, int radix) {
   if (radix == 10) std::sprintf(out, "%d", value);
@@ -71,6 +71,8 @@ int _itoa(int value, char *out, int radix) {
 int Language = 0;
 char DatalinkConceptArticle[] = "The ";
 char DatalinkProjectIdSeparator[] = "|";
+char BufferJoinSpace[] = " ";
+struct LabelStore { LPSTR strings_ptr[256]; } Labels;
 struct GameDataState { unsigned int game_state_; };
 struct GameDataStateRoot { GameDataState fields_; };
 GameDataStateRoot GameDataStateStorage;
@@ -101,6 +103,7 @@ int main() {
     std::sprintf(ProjectNames[i], "Row%d", i);
     Facility[FacilitySPStart+i].name=(unsigned int)i;
   }
+  Labels.strings_ptr[179]=179;
   Facility[69].name=999;
   Facility[70].name=0;
   std::strcpy(ProjectNames[0], "The Alpha");
@@ -149,6 +152,7 @@ def test_facility_suffix_identity_and_actual_consumers():
     base_h = (root / "src/base.h").read_text()
     alpha = (root / "src/alpha.cpp").read_text()
     map_cpp = (root / "src/map.cpp").read_text()
+    entries_cpp = (root / "src/datalink_entries.cpp").read_text()
     datalink = (root / "src/datalink.cpp").read_text()
     assert "MaxFacilityNum = 134" in base_h
     assert "MaxSecretProjectNum = 64" in base_h
@@ -162,12 +166,13 @@ def test_facility_suffix_identity_and_actual_consumers():
     assert "0x009A5888" not in code_only(map_cpp)
     assert "0x009A5888" not in code_only(datalink)
 
-    say = extract_function(map_cpp, "void __cdecl say_project(char *output, int project_id, int with_cost)")
+    say = extract_function(entries_cpp, "void __cdecl say_project(char *output, int project_id, int with_cost)")
     cat = extract_function(datalink, "void Datalink::set_cat_project()")
     say_code = code_only(say)
     cat_code = code_only(cat)
     assert "Facility[FacilitySPStart + project_id].name" in say_code
-    assert "strcat(StringTemp, label_get(179));" in say_code
+    assert "LPSTR cost_label = Labels.strings_ptr[179];" in say_code
+    assert "strcat(StringTemp, StringTable.get(cost_label));" in say_code
     assert cat_code.count("record->preq_tech >= -1") == 1
     assert cat_code.count("record->name") == 1
     assert "&Facility[FacilitySPStart]" in cat_code
@@ -185,7 +190,7 @@ def test_actual_formatter_and_datalink_bodies(compiler_name: str, tmp_path: Path
         pytest.skip(f"{compiler_name} is unavailable")
     root = root_dir()
     say = extract_function(
-        (root / "src/map.cpp").read_text(),
+        (root / "src/datalink_entries.cpp").read_text(),
         "void __cdecl say_project(char *output, int project_id, int with_cost)")
     cat = extract_function(
         (root / "src/datalink.cpp").read_text(),
@@ -213,7 +218,7 @@ def test_host_fixture_rejects_wrong_owner_mapping(
         pytest.skip(f"{compiler_name} is unavailable")
     root = root_dir()
     say = extract_function(
-        (root / "src/map.cpp").read_text(),
+        (root / "src/datalink_entries.cpp").read_text(),
         "void __cdecl say_project(char *output, int project_id, int with_cost)")
     cat = extract_function(
         (root / "src/datalink.cpp").read_text(),

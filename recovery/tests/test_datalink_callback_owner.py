@@ -25,7 +25,7 @@ def test_actual_callback_row_methods(tmp_path, mutant):
     end = header.index("// Candidate lower-bound model", start)
     declarations = header[start:end]
 
-    source = (source_root / "src/datalink.cpp").read_text()
+    source = (source_root / "src/datalink_entries.cpp").read_text()
     bodies = definition(
         source, r"void DatalinkEntryCallbacks::set_callbacks\([^)]*\)"
     ) + "\n" + definition(

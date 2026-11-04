@@ -26,7 +26,7 @@ SIGNATURES = (
 
 
 def installed_strings() -> str:
-    path = ROOT / "src/string_formatting.cpp"
+    path = ROOT / "src/datalink_entries.cpp"
     text = path.read_text()
     rows = {row.address: row for row in read_text(text, path)}
     assert set(ADDRESSES).issubset(rows)

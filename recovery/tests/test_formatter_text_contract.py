@@ -38,6 +38,7 @@ def test_formatter_api_uses_character_destinations() -> None:
     strings_h = code_only((ROOT / "src/strings.h").read_text())
     map_cpp = code_only((ROOT / "src/map.cpp").read_text())
     string_formatting_cpp = code_only((ROOT / "src/string_formatting.cpp").read_text())
+    datalink_entries_cpp = code_only((ROOT / "src/datalink_entries.cpp").read_text())
     declarations = (
         "void __cdecl say_reactor(char *output, int reactor_id, int with_detail);",
         "void __cdecl say_weapon(char *output, int weapon_id, int with_detail);",
@@ -51,21 +52,20 @@ def test_formatter_api_uses_character_destinations() -> None:
         "void __cdecl say_project(char *output, int index, int detail);",
     )
     assert all(declaration in strings_h for declaration in declarations)
-    assert "void __cdecl say_vehicles(char *text, int chassis_id, int with_height)" in string_formatting_cpp
-    assert "void __cdecl say_project(char *output, int project_id, int with_cost)" in string_formatting_cpp
-    assert "void *output" not in strings_h + map_cpp + string_formatting_cpp
+    assert "void __cdecl say_vehicles(char *text, int chassis_id, int with_height)" in datalink_entries_cpp
+    assert "void __cdecl say_project(char *output, int project_id, int with_cost)" in datalink_entries_cpp
+    assert "void *output" not in strings_h + map_cpp + string_formatting_cpp + datalink_entries_cpp
 
 
 def test_datalink_callback_keeps_typed_output_through_dispatch() -> None:
     header = code_only((ROOT / "src/datalink.h").read_text())
-    source = (ROOT / "src/datalink.cpp").read_text()
-    selection_source = (ROOT / "src/datalink_selection.cpp").read_text()
+    entries_source = (ROOT / "src/datalink_entries.cpp").read_text()
     assert "typedef void (__cdecl *DatalinkTextCallback)(char *, int, int);" in header
     assert "void invoke_text(char *output, int value, int extra) const;" in header
-    selection = function_body(selection_source, "void DatalinkSelectionEntry::append_text(char *output, int extra) const")
-    dispatch = function_body(source, "void DatalinkEntryCallbacks::invoke_text(char *output, int value, int extra) const")
+    selection = function_body(entries_source, "void DatalinkSelectionEntry::append_text(char *output, int extra) const")
+    dispatch = function_body(entries_source, "void DatalinkEntryCallbacks::invoke_text(char *output, int value, int extra) const")
     assert "callbacks.append_text(output, value, extra);" in selection
     assert "append_text(output, value, extra);" in dispatch
-    queue_dispatch = function_body(selection_source, "void DatalinkSelectionQueue::dispatch_matching(int entry_id)")
+    queue_dispatch = function_body(entries_source, "void DatalinkSelectionQueue::dispatch_matching(int entry_id)")
     assert "entry.append_text(StringTemp, 1);" in queue_dispatch
 

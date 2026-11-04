@@ -406,6 +406,64 @@
         "The selected band contains the full current source-home family of X-prefixed popup forms and their callback/sprite overloads; the separate PopupAPI band at 0x00627110-0x00627CFC remains its own candidate rather than being merged by shared API names.",
         "Both wrapper families depend on external popup implementation and callback owners; current source placement does not establish whether they were separate original object files."
       ]
+    },
+    {
+      "name": "DatalinkEntries",
+      "start": "0x00590500",
+      "end_exclusive": "0x00590E90",
+      "recovered_tu": "src/datalink_entries.cpp",
+      "reason": "Inferred complete known entry-formatting/callback/selection contribution. The startup callback, ten formatters, callback-table construction/dispatch and selection queue form one continuous original neighborhood with direct table-target relationships. Historical object boundaries and table capacity remain unproved.",
+      "evidence": [
+        "Fresh source/image audit accounts for all 20 mapped primary identities in this band and only NOP/INT3 bytes between their complete primary spans.",
+        "Original identities, complete secondary spans, historical claims and useful findings remain in source; primary code closure does not establish associated data, generated entries, runtime behavior or historical TU boundaries.",
+        "The callback-table constructor directly installs the ten say_* formatters at0x590510..0x590C14; these functions account for the previously unexplained gap between its0x590500 CRT wrapper and0x590C20 constructor. The original callback table, formatter storage and selection methods are reunited in datalink_entries.cpp."
+      ]
+    },
+    {
+      "name": "JackalFileWin",
+      "start": "0x00613790",
+      "end_exclusive": "0x00614E4D",
+      "recovered_tu": "src/jackal/filewin.cpp",
+      "reason": "Inferred complete known file-window contribution, including its three Sprite startup/finalization pairs and class operations. Shared globals and guarded storage remain separately bounded source evidence, not proof of an original allocation or filename.",
+      "evidence": [
+        "Fresh source/image audit accounts for all 26 mapped primary identities in this band and only NOP/INT3 bytes between their complete primary spans.",
+        "Original identities, complete secondary spans, historical claims and useful findings remain in source; primary code closure does not establish associated data, generated entries, runtime behavior or historical TU boundaries."
+      ]
+    },
+    {
+      "name": "JackalAPI",
+      "start": "0x0062D3A0",
+      "end_exclusive": "0x0062D5A3",
+      "recovered_tu": "src/jackal/jackal.cpp",
+      "reason": "Inferred coherent Jackal API initialization/close/version-check contribution. Called subsystems are dependencies; current API ownership and this code neighborhood do not prove original archive or object boundaries.",
+      "evidence": [
+        "Fresh source/image audit accounts for all 3 mapped primary identities in this band and only NOP/INT3 bytes between their complete primary spans.",
+        "Original identities, complete secondary spans, historical claims and useful findings remain in source; primary code closure does not establish associated data, generated entries, runtime behavior or historical TU boundaries."
+      ]
+    },
+    {
+      "name": "Matrix3PhysicalCore",
+      "start": "0x006346C0",
+      "end_exclusive": "0x00634B94",
+      "recovered_tu": "src/matrix3.cpp",
+      "reason": "Inferred compact physical contribution of twelve nine-float receiver operations. The provisional Matrix3 class, full extent, lifecycle and original type identity remain unknown and source scaffold obligations remain. Corresponding source placement is not semantic or structural acceptance.",
+      "evidence": [
+        "Fresh source/image audit accounts for all 12 mapped primary identities in this band and only NOP/INT3 bytes between their complete primary spans.",
+        "Original identities, complete secondary spans, historical claims and useful findings remain in source; primary code closure does not establish associated data, generated entries, runtime behavior or historical TU boundaries."
+      ]
+    },
+    {
+      "name": "CheckBox",
+      "start": "0x0060E5F0",
+      "end_exclusive": "0x0060FEFE",
+      "recovered_tu": "src/jackal/checkbox.cpp",
+      "reason": "Inferred complete known CheckBox contribution, including guarded Sprite lifetimes, class methods and generated entries. The sole nonpadding primary gap is an explicitly source-annotated on_key_down jump/lookup table, not a missing helper. Original object boundaries, associated data matching and detached lifetime spans remain obligations.",
+      "evidence": [
+        "Fresh source audit accounts for all40primary identities in this band in checkbox.cpp, with no foreign mapped identity.",
+        "Pinned on_key_down at0x60F8FF indexes the byte lookup table0x60FA30..0x60FA79 and at0x60F905 dispatches through six relocated targets0x60FA18..0x60FA30; all targets lie inside its mapped handler. Seven NOPs follow to0x60FA80.",
+        "Existing RECOVERY_ASSOCIATED source annotations retain both tables and selector sites. They are associated data, not verified primary code/padding or proof of whole-unit exactness.",
+        "Two guarded Sprite lifetimes, generated destructor/thunk entries, and constructor/init secondary spans remain part of the complete source-owned cohort; class table/data extents and historical TU identity are not established by source placement."
+      ]
     }
   ]
 }

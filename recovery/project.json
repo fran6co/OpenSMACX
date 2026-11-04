@@ -301,17 +301,6 @@
           "-c"
         ]
       },
-      "src/datalink_selection.cpp": {
-        "flags": [
-          "/c",
-          "/O2",
-          "/Gy",
-          "/GR-",
-          "/GX",
-          "/Oy-",
-          "/Ob2"
-        ]
-      },
       "src/game.cpp": {
         "flags": [
           "/nologo",
@@ -1960,6 +1949,20 @@
         ]
       },
       "src/base_compute.cpp": {
+        "flags": [
+          "/nologo",
+          "/TP",
+          "/Zm200",
+          "/GX",
+          "/O2",
+          "/Ob2",
+          "-MT",
+          "/W4",
+          "/Oy-",
+          "-c"
+        ]
+      },
+      "src/datalink_entries.cpp": {
         "flags": [
           "/nologo",
           "/TP",

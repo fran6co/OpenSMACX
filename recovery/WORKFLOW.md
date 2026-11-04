@@ -204,6 +204,15 @@ interleaved helpers and alternative memberships explicitly. Separate library
 contributions from application contributions. Recompute inventories in ignored
 storage rather than maintaining a second source-identity ledger.
 
+Before labeling a gap between related members unexplained, inspect the global
+address-ordered mappings across all source homes and the member's associated
+tables. Follow callback-table targets and storage references through those
+neighbors. A gap in one CPP can contain the very providers installed by its
+initializer; a method's apparent code gap can contain its annotated switch
+tables. Reunite a supported complete cohort rather than dropping these members
+from the proposed unit. Keep unresolved bytes and associated data obligations
+explicit; source correspondence does not certify them as matched code or padding.
+
 For each candidate, define one ownership task containing the complete known
 cohort and its affected interface/consumer closure. Its evidence must account
 for regular bodies, compiler-generated entries, globals, tables, initializers,

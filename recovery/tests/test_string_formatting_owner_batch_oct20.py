@@ -17,7 +17,7 @@ from match_recovery.source import read_text
 
 
 ROOT = Path(__file__).resolve().parents[2]
-SOURCE = ROOT / "src/string_formatting.cpp"
+SOURCE = ROOT / "src/datalink_entries.cpp"
 TARGETS = (
     (0x00590510, "void __cdecl say_reactor(char *text, int reactor_id, int with_detail)"),
     (0x005905C0, "void __cdecl say_weapon(char *text, int weapon_id, int with_detail)"),

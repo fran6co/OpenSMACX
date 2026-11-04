@@ -3430,41 +3430,6 @@ int __cdecl datalink_entry_selection(int selected_index) {
     return selected_index;
 }
 
-// Native startup wrapper590500 constructs this table at945A60.
-// Eleven entries is the minimum observed initialized region, not an exact
-// original-capacity claim; higher category indices remain unverified.
-// RECOVERY_OBJECT: v1 0x00945A60 ?DatalinkEntryCallbackTableGlobal@@3VDatalinkEntryCallbackTable@@A
-DatalinkEntryCallbackTable DatalinkEntryCallbackTableGlobal;
-
-// ORIGINAL: 0x00590500 sub_590500 0x00590500-0x0059050A FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["task:datalink-selection-queue-owner", "Pinned queue/record operations share four-byte records and count at0x200; typed callbacks dispatch on category/value. Constructor owns minimum11-entry callback table, with zero-filled pair0 and CRT registration; exact total capacity and original TU remain unknown. Combined historical spans retain both CRT wrapper590500 and constructor590C20; emitted constructor alone is not proof of the generated wrapper matching.", "historical seed:src/unrecovered/00590500.cpp", "pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf:0x00590500 loads 0x00945A60 and tail-jumps to 0x00590C20; the wrapper ends at that jump.", "coff:src/datalink.cpp: _$E11 loads DatalinkEntryCallbackTableGlobal, tail-jumps to ??0DatalinkEntryCallbackTable, and .CRT$XCU selects _$E11."], "reason": "Bind the original 0x00590500 initializer wrapper to the compiler-emitted _$E11 in the genuine Datalink translation unit; retain its historical identity and all former combined-span evidence."}
-// symbol    _$E11
-// ORIGINAL: 0x00590C20 sub_590c20 0x00590C20-0x00590CAF BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf:0x00590500 tail-jumps to 0x00590C20; the 143-byte constructor body ends with RET at 0x00590CAE.", "coff:src/datalink.cpp: separate ??0DatalinkEntryCallbackTable@@QAE@XZ function symbol owns the typed callback-table constructor stores.", "source:src/datalink.cpp:DatalinkEntryCallbackTableGlobal and DatalinkEntryCallbackTable::DatalinkEntryCallbackTable are separate source-owned lifetime/storage entities.", "history:git:766ab7062:src/unrecovered/00590500.cpp preserves the former two-span placeholder identity; its source spans are partitioned here without dropping either range."], "reason": "Bind the separately bounded original 0x00590C20 constructor body to the genuine DatalinkEntryCallbackTable C++ constructor, without granting a byte claim."}
-// symbol    ??0DatalinkEntryCallbackTable@@QAE@XZ
-DatalinkEntryCallbackTable::DatalinkEntryCallbackTable() {
-  entries[1].help = 0;
-  entries[1].append_text = say_reactor;
-  entries[2].help = help_weapon;
-  entries[2].append_text = say_weapon;
-  entries[3].help = help_armor;
-  entries[3].append_text = say_armor;
-  entries[4].help = help_chassis;
-  entries[4].append_text = say_chassis;
-  entries[5].help = help_facility;
-  entries[5].append_text = say_facility;
-  entries[6].help = help_social;
-  entries[6].append_text = say_society;
-  entries[7].help = help_abil;
-  entries[7].append_text = say_ability;
-  entries[8].help = help_tech;
-  entries[8].append_text = say_techs;
-  entries[9].help = help_veh;
-  entries[9].append_text = say_vehicles;
-  entries[10].help = help_project;
-  entries[10].append_text = say_project;
-}
-
 // ORIGINAL: 0x00429300 ?init@Datalink@@QAEXXZ 0x00429300-0x0042A012;0x00653579-0x0065358E
 // RECOVERY_BINDING: v1 {"evidence": ["task:datalink-initializer-owner", "Pinned429300..42A012 establishes18RECT rows, typed UI receivers and distinct box bounds/fonts;653579..65358E cleans the local Buffer.", "historical seed:src/unrecovered/00429300.cpp"], "reason": "Recover Datalink initialization through real UI members, panel geometry, renderer camera and local Buffer lifetime; native call arguments supersede the retained seed approximations. Original spans and historical findings are retained without a matching or runtime claim."}
 // TRIED: huge UI-construction initializer (fonts, rects, a 16-entry facility-button loop at self+0x2a3c stride 0xb4c, 3 more BaseButtons, 4 StringBoxes) mostly transcribed from Ghidra (reliable for the field writes) plus raw-disasm-derived `this` pointers for every dropped-this call (Buffer at self+0x444, Caviar at self+0x150c, per-Font self+offset table, ListBox/ Dialog at self+0xf628 through a virtual-base-offset chase). The two uncatalogued quaternion helpers (sub_627d00/sub_6280e0) and the two extra StringBox instances' rect math are best-effort approximations, not individually verified against raw bytes.
@@ -3739,35 +3704,6 @@ void Datalink::init() {
     static_cast<Buffer &>(detail_box_).set_text_color2(0x96, -1, 1, 1);
     static_cast<Buffer &>(detail_box_).set_text_color_hyper(0x96, -1, 1, 1);
     (void)temporary_buffer;
-}
-
-// ORIGINAL: 0x00590CB0 sub_590cb0 0x00590CB0-0x00590CC2 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["pinned:0x00590CB0-0x00590CC2 stores the two incoming pointer words at receiver+0 and +4", "source:src/datalink.h DatalinkEntryCallbacks exposes help and append_text in those two word positions", "pinned:0x00590CD0/0x00590CF0 consumers dispatch through those same two fields"], "reason": "Own the two exact callback-pointer stores on the existing DatalinkEntryCallbacks value type; set_callbacks is an operation-derived current name, not a recovered original API name."}
-// symbol    ?set_callbacks@DatalinkEntryCallbacks@@QAEXP6AXH@ZP6AXPADHH@Z@Z
-// kind      game
-void DatalinkEntryCallbacks::set_callbacks(
-    DatalinkHelpCallback help_callback,
-    DatalinkTextCallback text_callback) {
-  help = help_callback;
-  append_text = text_callback;
-}
-
-// ORIGINAL: 0x00590CD0 sub_590cd0 0x00590CD0-0x00590CE6 FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["git:d3362d4a5fec8fef6555623f53e48513f4953148:src/recovered/00590cd0.cpp", "pinned:590CB0..590CC2 initializer;590CD0..590CE6 and590CF0..590D0F complete dispatch/stack cleanup", "source:src/datalink.h:DatalinkEntryCallbacks", "source:recovery/tests/test_datalink_callback_owner.py"], "reason": "Recover the complete guarded callback dispatch through the existing two-pointer row. Adjacent 590CB0 stores these fields at offsets0/4; the pinned member dispatches one or three stack arguments and skips null callbacks. Existing selection-entry direct dispatch remains unchanged. The native EAX survives the callback or is zero on the null path, but no observed direct call or stored pointer establishes a typed return contract; void source roles do not invent one. The old int-return scaffold interpretation remains historical; its BYTE claim and complete original span remain restoration obligations, not a fresh grant. Historical single-epilogue spelling observation: explicitly returning zero added a second return site; no such typed return is introduced."}
-// symbol    ?invoke_help@DatalinkEntryCallbacks@@QBEXH@Z
-void DatalinkEntryCallbacks::invoke_help(int value) const {
-  if (help != 0) {
-    help(value);
-  }
-}
-
-// ORIGINAL: 0x00590CF0 sub_590cf0 0x00590CF0-0x00590D0F FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["git:d3362d4a5fec8fef6555623f53e48513f4953148:src/recovered/00590cf0.cpp", "pinned:590CB0..590CC2 initializer;590CD0..590CE6 and590CF0..590D0F complete dispatch/stack cleanup", "source:src/datalink.h:DatalinkEntryCallbacks", "source:recovery/tests/test_datalink_callback_owner.py"], "reason": "Recover the complete guarded callback dispatch through the existing two-pointer row. Adjacent 590CB0 stores these fields at offsets0/4; the pinned member dispatches one or three stack arguments and skips null callbacks. Existing selection-entry direct dispatch remains unchanged. The native EAX survives the callback or is zero on the null path, but no observed direct call or stored pointer establishes a typed return contract; void source roles do not invent one. The old int-return scaffold interpretation remains historical; its BYTE claim and complete original span remain restoration obligations, not a fresh grant."}
-// symbol    ?invoke_text@DatalinkEntryCallbacks@@QBEXPADHH@Z
-void DatalinkEntryCallbacks::invoke_text(char *output, int value, int extra) const {
-  if (append_text != 0) {
-    append_text(output, value, extra);
-  }
 }
 
 static void emit_help(void (__cdecl *cb)(char *)) {

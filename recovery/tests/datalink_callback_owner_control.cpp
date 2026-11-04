@@ -7,7 +7,7 @@
 int help_calls = 0;
 int help_value = 0;
 int text_calls = 0;
-void *text_output = 0;
+char *text_output = 0;
 int text_value = 0;
 int text_extra = 0;
 char output_storage;
@@ -17,7 +17,7 @@ void record_help(int value) {
   help_value = value;
 }
 
-void record_text(void *output, int value, int extra) {
+void record_text(char *output, int value, int extra) {
   ++text_calls;
   text_output = output;
   text_value = value;

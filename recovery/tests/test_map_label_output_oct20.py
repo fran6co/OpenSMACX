@@ -92,7 +92,7 @@ def test_actual_vehicle_label_output_and_mutant(tmp_path, compiler_name):
     if compiler is None:
         pytest.skip(compiler_name + " unavailable")
 
-    source = (ROOT / "src/string_formatting.cpp").read_text()
+    source = (ROOT / "src/datalink_entries.cpp").read_text()
     body = definition(source, r"void __cdecl say_vehicles\([^)]*\)")
     actual = FIXTURE.replace("// @@FUNCTION@@", body)
     assert "strcat(text, StringTemp);" not in body
