@@ -16,6 +16,8 @@
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
 // RECOVERY_IMPORT: v1 __imp__CreateEventA@16 KERNEL32.dll name:CreateEventA
+// The launcher call uses the original loader entry, independently identified by its PE import directory.
+// RECOVERY_IMPORT: v1 __imp__WinExec@8 KERNEL32.dll name:WinExec
 // Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x00401660 ??0ServiceStruct@@QAE@H@Z 0x00401660-0x004016B8 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00401660.cpp: retained original spans and historical seed interpretation", "Pinned original receiver/table/call sequence reviewed in the Alpha ownership binding decision.", "Current C++ class/lifetime source owns the separately observed emitted symbol; this binding is unclaimed and preserves the independent historical exact seed."], "reason": "Original provider base tables6693D4/6693D0 and five cleared receiver fields; legacy ServiceStruct catalogue name is not payload ownership."}
