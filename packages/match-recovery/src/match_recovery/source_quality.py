@@ -122,35 +122,20 @@ def quality_report(root: Path) -> dict:
              for path, info in snapshot["files"].items()}
 
     def resolved_body(row, record):
-        """Resolve only the annotation region or one uniquely named definition."""
-        from .source.reader import _is_placeholder_region, _region_end, function_line
+        """Scan captured body text without claiming emitted-symbol identity."""
+        from .source.reader import _is_placeholder_region
+        from .source.body import resolve_body
         if reason := _generated_body_reason(record, source_config):
             return None, record.body or row["path"], row["line"], False, reason
         if record.mode.value != "file" and not record.body:
             return record.region, row["path"], record.line, record.state.value == "placeholder", "annotation body region"
-        body_path = record.body or row["path"]
-        body_text = texts.get(body_path)
-        if body_text is None:
-            return None, body_path, row["line"], False, "body source is outside configured source snapshot"
-        symbol = record.symbol or record.name
-        if source_config.get("symbol_format") == "msvc":
-            from .source.mangled import qualified_name
-            name = qualified_name(symbol)
-        else:
-            from .source.mangled import identifier
-            name = identifier(symbol) or symbol
-        if not name:
-            return None, body_path, row["line"], False, "mapping symbol has no supported source name"
-        try:
-            first = function_line(root / body_path, name)
-        except ValueError as error:
-            return None, body_path, row["line"], False, f"unique source definition unresolved: {error}"
-        lines = body_text.splitlines()
-        end = _region_end(lines, first - 1, name="")
-        if end is None:
-            return None, body_path, first, False, "resolved definition has no bounded body region"
-        body = "\n".join(lines[first - 1:end + 1])
-        return body, body_path, first, _is_placeholder_region(body), "unique symbol-resolved definition"
+        resolution = resolve_body(record, marker_path=row["path"], source_texts=texts,
+                                  symbol_format=source_config.get("symbol_format", "none"))
+        if resolution.status != "candidate":
+            return None, resolution.path or row["path"], row["line"], False, resolution.reason
+        return (resolution.body, resolution.path, resolution.line,
+                _is_placeholder_region(resolution.body),
+                "unique lexical definition candidate; emitted identity and compilation context unproven")
 
     for entity_id, rows in sorted(grouped.items()):
         locations = {(row["path"], row["line"]) for row in rows}
@@ -207,6 +192,6 @@ def quality_report(root: Path) -> dict:
             "historical_byte_claims_by_status": claim_cross_tab,
             "limitations": ["Historical byte claims are not fresh exactness measurements.",
                             "No absence of pattern findings establishes structural review or quality.",
-                            "FILE mappings are scanned only when a unique symbol-resolved definition is found; unresolved mappings remain unreviewed.",
+                            "FILE/explicit-body mappings are scanned only for unique lexical definition candidates; this does not prove full symbol identity or compilation context, and unresolved mappings remain unreviewed.",
                             "C-style cast-shaped expressions are conservative investigation signals and can include parenthesized expressions."],
             "functions": output}

@@ -22,6 +22,33 @@ FIRST = "// ORIGINAL: 0x00401000 _f 0x00401000-0x00401001\n// TRIED: seed observ
 SECOND = "// ORIGINAL: 0x00401001 _h 0x00401001-0x00401004\nint h() {return 0;}\n"
 
 
+def test_explicit_body_cannot_bank_an_exact_symbol_without_compiler_attribution(project):
+    from match_recovery.source import write_body
+    path = project / 'engine/family.cc'
+    record = read_file(path)[0]
+    path.write_bytes(write_body(path.read_bytes(), record, 'engine/types.hpp', insert=True))
+    (project / 'engine/types.hpp').write_text('inline void f() {}\n')
+    before = path.read_bytes()
+    measured = measure_source(project, ['_f'], image=Path('original/input.exe'))
+    assert measured['result'] == 'pass' and measured['compile_attempts'] == 1
+    assert measured['measurements'][0]['body_attribution'] == 'not_checked_diagnostic_only'
+    code, report = recording.record(project, ['_f'], image=Path('original/input.exe'))
+    assert code == 3 and report['updated'] == []
+    assert 'source body attribution refused' in report['unresolved'][0]['diagnostic']
+    assert path.read_bytes() == before
+
+
+def test_diagnostic_body_pointer_does_not_hide_a_marker_owned_placeholder(project):
+    from match_recovery.source import write_body
+    path = project / 'engine/family.cc'
+    path.write_bytes(write_body(path.read_bytes(), read_file(path)[0], 'engine/types.hpp', insert=True))
+    path.write_text(path.read_text().replace('void f() {}', 'void f() {\n// BODY GOES HERE.\n}'))
+    (project / 'engine/types.hpp').write_text('inline void f() {}\n')
+    report = measure_source(project, ['_f'], image=Path('original/input.exe'))
+    assert report['result'] == 'unknown' and report['compile_attempts'] == 0
+    assert 'unfinished source placeholder' in report['measurements'][0]['diagnostic']
+
+
 def compiler(root, functions=None, *, effect="", failure=False, raw_object=None, objects_by_source=None):
     obj = raw_object if raw_object is not None else coff(
         functions if functions is not None else [("_f", b"\xc3"), ("_h", b"\x33\xc0\xc3")])

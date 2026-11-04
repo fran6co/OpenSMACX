@@ -558,6 +558,24 @@ compiler-observed body-damage witnesses before attributing copies in other TUs;
 matching symbols alone are insufficient. Export and other independent metadata
 remain separate verification requirements.
 
+An explicit body fact does not authorize extracting a later caller or unrelated
+definition from the marker file. The single-file reader leaves external body
+text pending (including explicitly named same-file definitions); snapshot-backed
+discovery finds only a lexical candidate. Comments,
+declarations, ambiguous overloads and unsupported source forms are not definition
+evidence. Advisory quality scans use captured text and make no compiler identity
+claim. Native verification and recording additionally qualify
+supported ordinary free functions with fresh compiler overlays: an unchanged
+overlay must reproduce the ordinary object, then renaming the declared definition
+must remove the exact original emitted symbol and produce its renamed counterpart
+with the same ABI decoration. Controls are batched per TU and compiler trial and
+never supply matching bytes or alter tracked source. Unsupported member/declarator
+forms or compiler clients remain unknown. This establishes current compilation
+attribution, not historical TU boundaries, linked selection or runtime acceptance.
+Diagnostic measurement and assembly diffs retain their ordinary compiler trials:
+they show compiled-byte observations and captured source-line candidates, with
+body attribution explicitly unchecked. They do not bank claims or waive admission.
+
 ```
 ORIGINAL: 0x00401640 ?init@Game@@QAEHH@Z 0x00401640-0x00401B00
                                   the function definition that follows is

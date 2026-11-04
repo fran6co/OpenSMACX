@@ -1,10 +1,10 @@
 """Fresh, source-linked diagnostic views; never grants recovery claims."""
 
 from dataclasses import asdict
+import base64
 from hashlib import sha256
 from pathlib import Path
 import json
-import re
 import subprocess
 import tempfile
 
@@ -19,74 +19,7 @@ from .source.eh_regions import bind_eh_regions
 from .source_inventory import image_pin, source_snapshot
 from .source_selection import (compilation_context, select_records,
                                selected_source_records, snapshot_mappings)
-
-
-def listing_lines(text: str, symbol: str, code: bytes) -> dict[int, int | None]:
-    """Read MSVC /FAcs source anchors, checking each listed byte against COFF.
-
-    Wrapped byte lines continue the preceding instruction. Unsupported listings
-    refuse attribution rather than guessing source positions from instructions.
-    """
-    active = False
-    line = None
-    result = {}
-    seen = bytearray(len(code))
-    cursor = None
-    found = 0
-    segment = None
-    root_segment = None
-    for row in text.splitlines():
-        section = re.match(r"(\S+)\s+SEGMENT\b", row)
-        if section:
-            segment = section[1]
-        if re.match(r"\S+\s+ENDS\b", row):
-            segment = None
-        if re.match(re.escape(symbol) + r"\s+PROC\b", row):
-            active = True
-            found += 1
-            root_segment = segment
-            continue
-        if active and re.match(re.escape(symbol) + r"\s+ENDP\b", row):
-            active = False
-        if not active:
-            continue
-        if segment != root_segment:
-            continue
-        anchor = re.match(r";\s*(\d+)\s*:", row)
-        if anchor:
-            line = int(anchor[1])
-            continue
-        start = re.match(r"\s+([0-9a-fA-F]{5,8})\t", row)
-        if start:
-            cursor = int(start[1], 16)
-            rest = row[start.end():]
-            if line is not None:
-                result[cursor] = line
-        elif row.startswith("\t") and cursor is not None:
-            rest = row[1:]
-        else:
-            continue
-        raw = rest.split("\t", 1)[0].strip()
-        if not re.fullmatch(r"[0-9a-fA-F]{2}(?: +[0-9a-fA-F]{2})*", raw):
-            continue
-        data = bytes.fromhex(raw)
-        if cursor is None or code[cursor:cursor + len(data)] != data:
-            raise ValueError("compiler listing bytes do not match the fresh object")
-        seen[cursor:cursor + len(data)] = b"\1" * len(data)
-        cursor += len(data)
-    covered = next((i for i, value in enumerate(seen) if not value), len(seen))
-    # VC6 omits the section's terminal alignment bytes from /FAcs. Keep these
-    # bytes visible in the assembly, with no fabricated C++ line attribution.
-    padding = code[covered:]
-    valid_tail = (covered > 0 and len(padding) <= 15
-                  and all(value in (0x90, 0xCC) for value in padding)
-                  and not any(seen[covered:]))
-    if found != 1 or not result or (not all(seen) and not valid_tail):
-        raise ValueError("listing does not completely cover one selected function")
-    if padding:
-        result[covered] = None
-    return result
-
+from .source_listing import listing_lines
 
 def _instructions(code, base, relocations=(), coff=None, lines=None):
     import capstone
@@ -109,35 +42,6 @@ def _instructions(code, base, relocations=(), coff=None, lines=None):
     if consumed != len(code):
         raise ValueError("selected code contains undecoded bytes; diff cannot silently omit them")
     return rows
-
-
-def listing_source(text, symbol, files, anchors):
-    """Bind quoted compiler source lines to one actual file, including headers.
-
-    A FILE annotation may describe a function emitted from an inline header.
-    Attributing that header's line numbers to its .cpp host would be misleading.
-    """
-    active = False
-    quotes = {}
-    for row in text.splitlines():
-        if re.match(re.escape(symbol) + r"\s+PROC\b", row):
-            active = True
-        elif re.match(re.escape(symbol) + r"\s+ENDP\b", row):
-            active = False
-        elif active:
-            match = re.match(r";\s*(\d+)\s*:(.*)", row)
-            if match and int(match[1]) in anchors and match[2].strip():
-                quotes[int(match[1])] = match[2].strip()
-    matches = []
-    for path in files:
-        source = path.read_text()
-        rows = source.splitlines()
-        if quotes and all(1 <= n <= len(rows) and rows[n - 1].strip() == quote
-                          for n, quote in quotes.items()):
-            matches.append((path, source))
-    if len(matches) != 1:
-        raise ValueError("compiler source lines do not identify one current source file")
-    return matches[0]
 
 
 def generate_diff(root: Path, target: str, *, image: Path, in_file=None,
@@ -204,8 +108,11 @@ def _generate(root, target, *, image, in_file, output, flag_set):
         function = obj.function(symbol)
         code, relocations, _ = obj.subject(function)
         lines = listing_lines(listing, symbol, code)
-        source_path, source_text = listing_source(listing, symbol, settings.source.files(root),
-                                                  set(lines.values()) - {None})
+        from .source_listing import listing_source_texts
+        texts = {name: base64.b64decode(info['content_base64']).decode('utf-8', errors='replace')
+                 for name, info in snapshot['files'].items()}
+        relative, source_text = listing_source_texts(listing, symbol, texts, set(lines.values()) - {None})
+        source_path = root / relative
         if any(n < 1 or n > len(source_text.splitlines()) for n in lines.values() if n is not None):
             raise ValueError("compiler source anchors lie outside the selected source file")
         spans = tuple(record.image_spans)
@@ -249,6 +156,10 @@ def _generate(root, target, *, image, in_file, output, flag_set):
     return {"operation": "diff", "result": "pass", "output": str(output),
             "source_sha256": sha256(source_text.encode()).hexdigest(), "image_sha256": pin,
             "compiler_invocations": 2, "flags": list(flags), "comparison": asdict(comparison),
+            "source_path": source_path.relative_to(root).as_posix(),
+            "declared_body_path": record.body or None,
+            "body_attribution": "not_checked_diagnostic_only",
             "limitations": ["Diagnostic view, not reference, structure, linked preservation or game acceptance.",
                             "Source attribution is compiler-reported and may move under optimization.",
+                            "Captured source quotes can describe inlined code; this viewer does not qualify the declared body binding.",
                             "Refresh this command after editing; original source lines are unknown."]}

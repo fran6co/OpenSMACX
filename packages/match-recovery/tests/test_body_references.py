@@ -17,11 +17,13 @@ def link(root, name):
 
 def test_body_reference_uses_exact_configured_file(project):
     link(project, "engine/value.hpp")
-    (project / "engine/value.hpp").write_text("struct Value { int f(); };\n")
+    (project / "engine/value.hpp").write_text("inline int f() { return 0; }\n")
     report = check_mappings(project)
     assert report["result"] == "pass"
-    assert report["body_references"] == [{"path": "engine/current/widget.cc", "line": 1,
-                                          "body_path": "engine/value.hpp", "identifier": "f"}]
+    body, = report["body_references"]
+    assert body['path'] == 'engine/current/widget.cc' and body['body_path'] == 'engine/value.hpp'
+    assert body['definition_line'] == body['definition_end_line'] == 1
+    assert 'compiler identity/context unproven' in body['evidence']
 
 
 @pytest.mark.parametrize("name", ["engine/missing.hpp", "../missing.hpp", "/tmp/missing.hpp"])
@@ -31,12 +33,21 @@ def test_missing_or_escaping_body_reference_fails(project, name):
     assert report["result"] == "fail" and report["findings"][0]["rule"] == "body_reference"
 
 
-def test_body_reference_without_name_witness_fails(project):
+def test_body_reference_without_definition_remains_unknown(project):
     link(project, "engine/value.hpp")
     (project / "engine/value.hpp").write_text("int unrelated();\n")
     report = check_mappings(project)
-    assert report["result"] == "fail"
-    assert report["findings"][0]["reason"] == "body reference does not mention mapped identifier"
+    assert report["result"] == "unknown"
+    assert '0 definitions found' in report['errors'][0]['reason']
+
+
+@pytest.mark.parametrize('text', ['int f();\n', '// f is defined elsewhere\n'])
+def test_declarations_and_comments_are_not_definition_evidence(project, text):
+    link(project, 'engine/value.hpp')
+    (project / 'engine/value.hpp').write_text(text)
+    report = check_mappings(project)
+    assert report['result'] == 'unknown'
+    assert report['body_references'] == []
 
 
 def test_uncovered_body_reference_stays_unknown(project):
@@ -55,6 +66,7 @@ def test_body_witness_uses_emitted_msvc_identifier(project):
     owner = project / "engine/current/widget.cc"
     owner.write_text(owner.read_text().replace("\nint f", "\n// symbol ?other@Value@@QAEHXZ\nint f"))
     link(project, "engine/value.hpp")
-    (project / "engine/value.hpp").write_text("struct Value { int other(); };\n")
+    (project / "engine/value.hpp").write_text("struct Value { int other(); };\nint Value::other() { return 0; }\n")
     report = check_mappings(project)
-    assert report["result"] == "pass" and report["body_references"][0]["identifier"] == "other"
+    assert report["result"] == "pass"
+    assert report["body_references"][0]["definition_line"] == 2

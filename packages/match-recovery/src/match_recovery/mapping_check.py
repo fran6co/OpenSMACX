@@ -235,7 +235,8 @@ def check_mappings(root: Path) -> dict:
 
     # A source-owned body link is an exact project-relative identity, not a
     # request to search ancestors until some same-named file happens to exist.
-    # Keep the old lexical name witness, without calling it a definition proof.
+    # A lexical definition candidate is still not compiler attribution. A name
+    # appearing in a comment, declaration or caller is not even that candidate.
     body_references = []
     for record in records:
         name = record.get("context_path", "")
@@ -257,6 +258,11 @@ def check_mappings(root: Path) -> dict:
               or source.is_seed(name) or name not in units):
             findings.append({"rule": "context_reference", **row,
                              "reason": "context must name a configured product translation unit with a compilation recipe"})
+    from .source import read_text
+    from .source.body import resolve_body
+    body_texts = {name: base64.b64decode(info['content_base64']).decode('utf-8', errors='replace')
+                  for name, info in snapshot['files'].items()}
+    body_hosts = {}
     for record in records:
         name = record["body_path"]
         if not name:
@@ -272,18 +278,17 @@ def check_mappings(root: Path) -> dict:
         elif name not in snapshot["files"]:
             errors.append({**row, "reason": "body reference is outside configured source coverage"})
         else:
-            text = base64.b64decode(snapshot["files"][name]["content_base64"]).decode("utf-8")
-            symbol = record["emitted_symbol_hint"]
-            if source.symbol_format == "msvc":
-                from .source.mangled import identifier
-                symbol = identifier(symbol)
-            if not symbol:
-                errors.append({**row, "reason": "body reference has no interpretable identifier"})
-            elif symbol not in text:
-                findings.append({"rule": "body_reference", **row, "reason": "body reference does not mention mapped identifier",
-                                 "identifier": symbol})
+            host = record['path']
+            if host not in body_hosts:
+                body_hosts[host] = {item.line: item for item in read_text(body_texts[host], root / host)}
+            candidate = resolve_body(body_hosts[host][record['line']], marker_path=host,
+                                     source_texts=body_texts, symbol_format=source.symbol_format)
+            if candidate.status != 'candidate':
+                errors.append({**row, 'reason': candidate.reason})
             else:
-                body_references.append({**row, "identifier": symbol})
+                body_references.append({**row, 'definition_line': candidate.line,
+                                        'definition_end_line': candidate.end_line,
+                                        'evidence': 'unique lexical candidate; compiler identity/context unproven'})
 
     def location(record):
         return {key: record.get(key) for key in ("path", "line", "candidate_kind", "legacy_byte_exact", "legacy_semantic")}
@@ -396,6 +401,6 @@ def check_mappings(root: Path) -> dict:
                         "interface-header compile-context closure is source-membership evidence only, not compiled emission or ownership proof",
                         "seed alternatives remain hints; all historical claims still require separate remeasurement",
                         "forwarder macros are a lexical lens, not preprocessing, reachability or complete fixed-address detection",
-                        "body paths require an in-scope text witness, not proof of a compiled definition",
+                        "body paths require an in-scope unique lexical definition candidate; compiler attribution remains separate",
                         "component, global, import and generated-table bindings require their separate checks"],
     }

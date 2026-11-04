@@ -916,7 +916,18 @@ def _read_text(text: str, path: Path | str,
                 source_role_reason=source_role_reason))
             last_record_marker_line = index
         else:
-            if proved:
+            # An explicit body fact is a pointer to the definition, not a
+            # license to treat whatever follows this marker as that body.
+            # In particular, headers may be declared after a shared comment
+            # block or followed by unrelated code in the marker TU. Even a
+            # same-file fact needs project-relative snapshot resolution: this
+            # reader has no project root and must not guess one from suffixes.
+            if defined_in:
+                region = ""
+                # This reader only saw the marker file. A header body is
+                # pending snapshot resolution, not a failed local extraction.
+                error = ""
+            elif proved:
                 # Proved bodies keep the writeback semantics even once an
                 # explicit marker lands in the header: the body is the
                 # definition after the leading `//` run, never a brace count

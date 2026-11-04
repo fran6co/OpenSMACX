@@ -6,6 +6,7 @@ currently satisfied before investigating a structural regression.
 """
 
 from collections import Counter, defaultdict
+import base64
 from concurrent.futures import ProcessPoolExecutor
 from dataclasses import asdict
 from hashlib import file_digest, sha256
@@ -89,6 +90,9 @@ def measure_source(root: Path, targets, *, image: Path, in_file=None, jobs=1, li
     typed_by_key = {(row.path.resolve(), row.address, row.line): row for row in typed_hosts}
     selected = [typed_by_key[(row.path.resolve(), row.address, row.line)]
                 for row in selected_mappings]
+    body_texts = ({name: base64.b64decode(info['content_base64']).decode('utf-8', errors='replace')
+                   for name, info in snapshot['files'].items()} if any(row.body for row in selected) else {})
+    from .source.body import has_placeholder_body
     component_owners = exact_component_record_bindings(snapshot)
     component_candidates = component_record_identity_candidates(snapshot)
     component_keys = set()
@@ -122,7 +126,9 @@ def measure_source(root: Path, targets, *, image: Path, in_file=None, jobs=1, li
             component_selected[(relative, record.line)] = (record, owner)
         elif compilation_context(root, record, settings).suffix not in settings.unit_extensions:
             unavailable.append((record, "mapping host is not a configured translation unit"))
-        elif record.state is State.PLACEHOLDER:
+        elif record.state is State.PLACEHOLDER or (record.body and has_placeholder_body(
+                record, marker_path=relative, source_texts=body_texts,
+                symbol_format=settings.source.symbol_format)):
             unavailable.append((record, "unfinished source placeholder; matching an empty body is not recovery"))
         else:
             unit_path = compilation_context(root, record, settings)
@@ -166,6 +172,14 @@ def measure_source(root: Path, targets, *, image: Path, in_file=None, jobs=1, li
                "compile_context": record.context or None,
                "historical_byte_obligation": record.byte_exact, "historical_shape_obligation": record.semantic,
                "source_state": record.state.value, "source_mode": record.mode.value}
+        if record.body:
+            from .source.body import resolve_body
+            candidate = resolve_body(record, marker_path=row['path'], source_texts=body_texts,
+                                     symbol_format=settings.source.symbol_format)
+            row['declared_body'] = {'status': candidate.status, 'path': candidate.path,
+                                    'line': candidate.line, 'end_line': candidate.end_line,
+                                    'reason': candidate.reason}
+            row['body_attribution'] = 'not_checked_diagnostic_only'
         if isinstance(value, str):
             row.update(result="unknown", verdict="UNRESOLVED", diagnostic=value)
         elif isinstance(value, AsmComparison):

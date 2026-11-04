@@ -119,7 +119,7 @@ def test_missing_header_homed_body_cannot_borrow_next_annotation(between, close)
             + between + "ORIGINAL: 0x00401010 ?g@@YAHXZ 0x00401010-0x00401016"
             + close + "\nint g() { return 1; }\n")
     first, second = read_text(text, FIXTURE)
-    assert first.extract_error and not first.region
+    assert not first.extract_error and not first.region
     assert first.body == "src/inline.h" and first.byte_exact
     assert not second.extract_error
     assert second.region.endswith("int g() { return 1; }\n")

@@ -18,6 +18,20 @@ def records(raw):
     return read_text(text, PATH)
 
 
+def test_body_pointer_round_trip_preserves_placeholder_source_and_claims():
+    raw = MARKER + b'\nint f() {\n// BODY GOES HERE.\n}\n'
+    before, = records(raw)
+    assert before.state.value == 'placeholder'
+    pointed = write_body(raw, before, 'src/model.h', insert=True)
+    pending, = records(pointed)
+    assert not pending.region and not pending.extract_error
+    assert pending.byte_exact == before.byte_exact
+    restored = remove_body(pointed, pending)
+    assert restored == raw
+    after, = records(restored)
+    assert after.state == before.state and after.byte_exact == before.byte_exact
+
+
 @pytest.mark.parametrize("newline", [b"\n", b"\r\n", b"\r"])
 def test_replace_preserves_all_bytes_except_existing_body_path(newline):
     raw = (MARKER + newline + BINDING + newline

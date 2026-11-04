@@ -911,7 +911,9 @@ def write_body(raw: bytes, record: DecompilationState, body: str, *, insert: boo
     for i, (before, after) in enumerate(zip(records, reread)):
         left, right = asdict(before), asdict(after)
         left["body"] = body if i == position else before.body
-        for field in ("line", "region", "origin"):
+        # `extract_error` is derived from the source location selected by the
+        # body fact, so it may change when that fact is rehomed.
+        for field in ("line", "region", "origin", "extract_error", "state"):
             left.pop(field)
             right.pop(field)
         provenance = lambda row: tuple(
@@ -955,7 +957,9 @@ def remove_body(raw: bytes, record: DecompilationState) -> bytes:
     for i, (before, after) in enumerate(zip(records, reread)):
         left, right = asdict(before), asdict(after)
         left["body"] = "" if i == position else before.body
-        for field in ("line", "region", "origin"):
+        # Removing the body fact changes which local extraction diagnostic is
+        # applicable; that diagnostic is not an authored source fact.
+        for field in ("line", "region", "origin", "extract_error", "state"):
             left.pop(field)
             right.pop(field)
         provenance = lambda row: tuple(

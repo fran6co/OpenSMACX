@@ -118,7 +118,13 @@ def test_present_or_malformed_function_and_failed_compilation_do_not_probe(proje
     report = check(project, compiler=compiler)
     assert witness[0] == [] and report["retained_definitions"] == []
     assert report["compile_attempts"] == 1
-    assert report["result"] == ("pass" if case == "exact" else "fail" if case == "mismatch" else "unknown")
+    # The ordinary byte observation remains visible, but a function-returning
+    # test callable has no overlay capability to qualify its explicit body.
+    assert report["result"] == ("fail" if case == "mismatch" else "unknown")
+    if case in ('exact', 'mismatch'):
+        variant, = report['functions'][0]['variants']
+        assert variant['compiled_comparison_result'] == ('pass' if case == 'exact' else 'fail')
+        assert variant['body_attribution']['result'] == ('unknown' if case == 'exact' else 'not_checked')
 
 
 @pytest.mark.parametrize("header", [None, "code/model.cc", "uncovered/model.hpp", "code/model.txt", "code/seeds/model.hpp"])

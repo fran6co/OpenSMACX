@@ -86,9 +86,47 @@ void neighboring() { auto p = reinterpret_cast<int*>(value); }
     authored = next(row for row in rows if "_authored" in row["catalogued_symbols"])
     generated = next(row for row in rows if "_$E26" in row["catalogued_symbols"])
     assert authored["status"] == "needs_investigation"
-    assert authored["body_resolution"] == "unique symbol-resolved definition"
+    assert authored["body_resolution"] == "unique lexical definition candidate; emitted identity and compilation context unproven"
     assert authored["findings"][0]["line"] == 2
     assert generated["status"] == "unreviewed" and not generated["findings"]
+
+
+def test_explicit_body_scans_captured_header_not_later_marker_file_code(tmp_path, monkeypatch):
+    from match_recovery.source import reader
+    root = project(tmp_path, '''// ORIGINAL: 0x00401000 _authored 0x00401000-0x00401010
+// body src/body.h
+void unrelated() { return; }
+''')
+    (root / "src/body.h").write_text('''inline void authored() {
+    auto p = reinterpret_cast<int*>(value);
+}
+''')
+    original = reader.function_line
+    seen = []
+
+    def captured_only(source, name, **kwargs):
+        assert isinstance(source, str) and "\n" in source
+        seen.append(name)
+        return original(source, name, **kwargs)
+
+    monkeypatch.setattr(reader, "function_line", captured_only)
+    row, = quality_report(root)["functions"]
+    assert seen == ["authored"]
+    assert row["path"] == "src/body.h" and row["line"] == 1
+    assert row["findings"][0]["path"] == "src/body.h"
+    assert row["findings"][0]["line"] == 2
+    assert "unproven" in row["body_resolution"]
+
+
+def test_missing_explicit_body_never_falls_back_to_marker_file(tmp_path):
+    root = project(tmp_path, '''// ORIGINAL: 0x00401000 _authored 0x00401000-0x00401010
+// body src/missing.h
+void authored() { auto p = reinterpret_cast<int*>(value); }
+''')
+    row, = quality_report(root)["functions"]
+    assert row["scan_observation"] == "unresolved"
+    assert row["findings"] == []
+    assert "absent" in row["body_resolution"]
 
 
 def test_msvc_adjustor_file_does_not_inherit_override_body(tmp_path):

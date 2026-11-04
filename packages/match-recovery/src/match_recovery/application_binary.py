@@ -679,6 +679,8 @@ def _verify_selection(root: Path, selected: frozenset[str], image_path: Path, *,
                            **({"retained_diagnostics": True} if retained_diagnostics else {})}
     before = settings.snapshot(root, measurement_options)
     view, snapshot = project_view(root)
+    from .body_attribution import BodyAttribution
+    body_attribution = BodyAttribution(root, snapshot)
     if expected_image_sha256 is not None and expected_image_sha256 != snapshot["image_sha256"]:
         raise ValueError("records refer to a different configured original image")
     image_data = image_path.read_bytes()
@@ -722,6 +724,12 @@ def _verify_selection(root: Path, selected: frozenset[str], image_path: Path, *,
     # identities available to callers; this is not a binding withdrawal.
     placeholders = {(row["entity_id"], row["path"]) for row in snapshot["records"]
                     if row["candidate_kind"] == "source" and row["legacy_state"] == "placeholder"}
+    for binding in bindings:
+        entity_id = binding.origin.entity_id
+        if body_attribution.has_reference(entity_id):
+            record = body_attribution.record(entity_id)
+            if body_attribution.is_placeholder(record):
+                placeholders.add((entity_id, record.path.relative_to(root).as_posix()))
     unfinished = [item for item in bindings
                   if (item.origin.entity_id, item.source_unit or item.unit) in placeholders]
     refused.extend({"entity_id": item.origin.entity_id, "result": Result.UNKNOWN, "symbol": item.symbol,
@@ -926,6 +934,32 @@ def _verify_selection(root: Path, selected: frozenset[str], image_path: Path, *,
             selected_object_targets=(active_objects.object_targets if active_objects is not None else None),
             selected_object_contents=(active_objects.object_contents if active_objects is not None else None))
         checked_functions, checked_objects, checked_generated, checked_imports, checked_shared, checked_literals = checked
+        # An explicit header/body path is an independent source attribution
+        # obligation. Exact emitted bytes cannot validate a pointer to a
+        # different overload, namespace, header, or a marker-local caller.
+        binding_by_id = {binding.origin.entity_id: binding for binding in bindings}
+        for row in checked_functions:
+            entity_id = row.get('entity_id')
+            if not body_attribution.has_reference(entity_id):
+                continue
+            row['compiled_comparison_result'] = row.get('result', Result.UNKNOWN)
+            if row['compiled_comparison_result'] != Result.PASS:
+                row['body_attribution'] = {'result': 'not_checked',
+                                          'reason': 'ordinary comparison did not pass; no admission'}
+                continue
+            binding = binding_by_id.get(entity_id)
+            if binding is None or binding.unit not in objects:
+                continue  # Missing ordinary compilation already refuses.
+            try:
+                attribution = body_attribution.qualify(
+                    body_attribution.record(entity_id), objects[binding.unit],
+                    unit=binding.unit, arguments=commands[binding.unit],
+                    flags=effective_by_unit[binding.unit], compiler=compiler)
+                row['body_attribution'] = attribution
+            except (OSError, ValueError) as error:
+                row['body_attribution'] = {'result': 'unknown', 'reason': str(error)}
+                row['result'] = Result.UNKNOWN
+                row['reason'] = 'declared source body attribution refused: ' + str(error)
         if active_objects is not None:
             evidence_checks.extend({**row, "flags": list(flags), "graph_flags": list(flags)}
                                    for row in active_objects.unknown)
@@ -1041,6 +1075,7 @@ def _verify_selection(root: Path, selected: frozenset[str], image_path: Path, *,
                      "result": result, "variants": candidates})
     if (settings.snapshot(root, measurement_options) != before or image_path.read_bytes() != image_data):
         raise ValueError("source, build inputs or image changed during measurement; retry")
+    body_attribution.assert_current()
     if selection_guard is not None:
         selection_guard()
     counts = Counter(row["result"] for row in rows)
@@ -1060,7 +1095,9 @@ def _verify_selection(root: Path, selected: frozenset[str], image_path: Path, *,
             overall = Result.FAIL
     return {"task_id": selection_label, "check": "scoped_binary_references", "result": overall,
             "input_fingerprint": digest(before), "functions": rows, "counts": dict(sorted(counts.items())),
-            "compile_attempts": attempts, "selected_entities": len(selected), "translation_units": sorted(generated_units),
+            "compile_attempts": attempts + body_attribution.compile_attempts,
+            "body_attribution_compile_attempts": body_attribution.compile_attempts,
+            "selected_entities": len(selected), "translation_units": sorted(generated_units),
             "flag_sets": [list(flags) for flags in flag_sets],
             "unit_flag_sets": {unit: [list(profile) for profile in dict.fromkeys(
                 tuple(effective(unit, flags)) for flags in flag_sets)]

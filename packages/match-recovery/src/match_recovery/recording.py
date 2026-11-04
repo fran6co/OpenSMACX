@@ -18,7 +18,8 @@ from .model import digest, require_text
 from .records import parse_json_value, read_json
 from .source import read_file
 from .source.model import Mode
-from .source.asm import compare_unit, shared_spans
+from .source.asm import shared_spans
+from .body_attribution import compare_unit_with_attribution
 from .source.recording import record_claims
 from .source_history import git
 from .source_inventory import image_pin
@@ -27,9 +28,9 @@ from .source_selection import select_records, compilation_context
 
 def _unit(job):
     root, profile, path, records, image, arguments, flags, shared = job
-    return compare_unit(records, image, path, arguments, flags, shared,
-                        compiler=Compiler(root, profile=profile), root=root,
-                        strict_command_for=lambda _path: arguments)
+    compiler = Compiler(root, profile=profile)
+    return compare_unit_with_attribution(records, image, path, arguments, flags, shared,
+                                         root=root, compiler=compiler)
 
 
 def record(root: Path, targets, *, image: Path, in_file: str | None = None,
