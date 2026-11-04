@@ -327,6 +327,21 @@
           "-c"
         ]
       },
+      "src/game_desktop.cpp": {
+        "flags": [
+          "/nologo",
+          "/TP",
+          "/Zm200",
+          "/GX",
+          "/O2",
+          "/Ob2",
+          "-MT",
+          "/W4",
+          "/Oy-",
+          "/Z7",
+          "-c"
+        ]
+      },
       "src/faction_monuments.cpp": {
         "flags": [
           "/nologo",
