@@ -131,14 +131,49 @@ Git checkpoint of the faithful source before implementing fixes or improvements.
 ## Evidence-led recovery queue and bounded matching pass
 
 The active user priority is to reduce the measured application-function
-`FAIL` count to zero. Start with the current mismatch audit, using small
-evidence-backed packets and shared structural causes to obtain `FAIL` to
-`PASS` transitions. Keep `UNKNOWN` and unbound identities separate; moving a
+`FAIL` count to zero through systematic reconstruction of complete inferred
+translation-unit contributions. Single-function comparisons diagnose a unit;
+they are not the default scheduling boundary. Keep `UNKNOWN` and unbound identities separate; moving a
 failure into either category does not reduce the recovery debt. Preserve
 existing matches and historical obligations. Cleanup, new table-start mappings
 and framework work take priority only when they unblock a measured mismatch.
 Do not weaken comparison, change exclusions, remove identities or sweep flags
 to improve the count.
+
+### Translation-unit reconstruction
+
+Start from all source mappings sorted by original address, then identify coherent
+contribution candidates using class methods, calls, globals, initialization,
+generated lifetime code and associated spans. Current semantic source files are
+not presumed to be historical translation units. Address adjacency supplies a
+hypothesis, not proof of an original object boundary; record unresolved gaps,
+interleaved helpers and alternative memberships explicitly. Separate library
+contributions from application contributions. Recompute inventories in ignored
+storage rather than maintaining a second source-identity ledger.
+
+For each candidate, define one ownership task containing the complete known
+cohort and its affected interface/consumer closure. Its evidence must account
+for regular bodies, compiler-generated entries, globals, tables, initializers,
+exception-handling spans, padding and unexplained bytes. Distinguish verified
+bytes from inferred membership and unknown data extents. Keep original bindings
+in source and non-derivable scope decisions in the task JSON.
+
+Reconstruct definition order, header visibility, inline contracts, local types
+and compiler policy together. Test a concrete shared cause across all affected
+members; do not create another implementation file solely to make one caller
+stop inlining. A justified separate unit must have its own contribution evidence.
+Shared-header changes require checking affected consumers, including existing
+matches. Repeated trials need new disassembly or structural evidence, rather
+than another spelling of the same unsuccessful idea.
+
+Every trial reports the entire cohort's PASS/FAIL/UNKNOWN transitions, including
+lost matches, and the applicable data/reference checks. Progress means fewer
+actual mismatches with identities and obligations preserved. Resolving an
+UNKNOWN, rearranging files or improving comparison evidence is reported
+separately. A matched inferred contribution does not prove its historical
+filename, membership, final image layout or game acceptance. Preserve useful
+negative experiments as cached evidence; do not leave idle worker checkouts
+solely to retain their reports.
 
 For Caviar/CVR work, read [CAVIAR_EVIDENCE.md](CAVIAR_EVIDENCE.md) first.
 It correlates external research with loader ownership and records known
