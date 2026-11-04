@@ -70,7 +70,7 @@ class Time {
   // The inline core below preserves the original cancellation logic in the
   // timer setup and lifecycle callers that historically expanded it.
   MEASURED void stop(); // 00616730
-  void close(); // 00616780; implementation owned by time_lifecycle.cpp
+  void close(); // 00616780; implementation owned by jackal/time.cpp
   void set_modal();     // 00616860
   // Clear shared modal ownership without an instance receiver. All four pinned
   // callers omit Time receiver setup; original static spelling remains unknown.

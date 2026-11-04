@@ -30,7 +30,7 @@ def _source():
     netmsg = (ROOT / "src/netmsg.cpp").read_text()
     popup = (ROOT / "src/popup.cpp").read_text()
     popup_header = (ROOT / "src/popup.h").read_text()
-    time_lifecycle = (ROOT / "src/jackal/time_lifecycle.cpp").read_text()
+    time_lifecycle = (ROOT / "src/jackal/time.cpp").read_text()
     
     actual = "\n".join(
         [

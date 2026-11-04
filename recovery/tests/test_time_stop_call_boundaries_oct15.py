@@ -29,7 +29,7 @@ def definition(text: str, signature: str) -> str:
 def actual_parts():
     header = (ROOT / "src/time.h").read_text()
     source = (ROOT / "src/jackal/time.cpp").read_text()
-    lifecycle = (ROOT / "src/jackal/time_lifecycle.cpp").read_text()
+    lifecycle = (ROOT / "src/jackal/time.cpp").read_text()
     helper = definition(header, "void stop_pending_events()")
     wrapper = definition(source, "void Time::stop()")
     return header, source, lifecycle, helper, wrapper
@@ -40,7 +40,7 @@ def test_mapped_stop_is_a_wrapper_and_internal_paths_keep_the_inline_core():
     assert "MEASURED void stop(); // 00616730" in header
     assert "MEASURED void stop() {" not in header
     assert wrapper == "void Time::stop() {\n    stop_pending_events();\n}"
-    assert source.count("stop_pending_events();") == 7  # six setup paths and public wrapper
+    assert source.count("stop_pending_events();") == 8  # six setup paths, public wrapper and teardown core
     close_impl = definition(lifecycle, "inline void Time::close_impl()")
     assert close_impl.count("stop_pending_events();") == 1
     assert close_impl.count("stop();") == 0

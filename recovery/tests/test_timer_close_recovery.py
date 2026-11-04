@@ -29,8 +29,7 @@ def timer_objects():
     compiler = Compiler(ROOT, profile=settings.compiler_profile)
     return compiler, settings, {unit: [Coff(compiler(ROOT / unit, (), flags + settings.layout_flags))
                                       for flags in settings.flag_sets]
-        for unit in ("src/time.cpp", "src/jackal/time.cpp", "src/timer_messages.cpp",
-                     "src/jackal/time_lifecycle.cpp", "src/win.cpp",
+        for unit in ("src/time.cpp", "src/jackal/time.cpp", "src/timer_messages.cpp", "src/win.cpp",
                      "src/editbox.cpp", "src/flatbutton.cpp", "src/netmsg.cpp", "src/console.cpp")}
 
 
@@ -112,8 +111,8 @@ def test_lifecycle_and_all_emitted_stop_timers_copies_match_targets(timer_object
         targets["?close@Time@@QAEXXZ"] = 0x616780
         targets["?stop@Time@@QAEXXZ"] = 0x616730
         for unit, address in (("src/jackal/time.cpp", 0x616730),
-                              ("src/jackal/time_lifecycle.cpp", 0x616200),
-                              ("src/jackal/time_lifecycle.cpp", 0x616780)):
+                              ("src/jackal/time.cpp", 0x616200),
+                              ("src/jackal/time.cpp", 0x616780)):
             result, = check_objects([binding(unit, address)], units, image,
                                      external_targets=targets, import_targets=imports)
             assert result["boundary"] == result["bytes"] == result["references"] == "pass", result
@@ -126,7 +125,7 @@ def test_lifecycle_and_all_emitted_stop_timers_copies_match_targets(timer_object
                                      external_targets=targets, import_targets=imports)
             assert result["result"] == "pass", (unit, result)
         # A helper must not become another exported original entry.
-        obj = units["src/jackal/time_lifecycle.cpp"]
+        obj = units["src/jackal/time.cpp"]
         assert not any("close_impl" in s.name for s in obj.symbols.values())
 
 
@@ -161,10 +160,10 @@ def test_live_timer_close_and_destructor_share_ordered_cleanup(tmp_path, monkeyp
     run_recovered_harness(tmp_path, monkeypatch, "timer_close_harness.cpp", [
         ("// LIVE_CTOR", "src/jackal/time.cpp", 0x6161D0),
         ("// LIVE_STOP", "src/jackal/time.cpp", 0x616730),
-        ("// LIVE_CLOSE", "src/jackal/time_lifecycle.cpp", 0x616780),
-        ("// LIVE_DTOR", "src/jackal/time_lifecycle.cpp", 0x616200)], declarations=[
+        ("// LIVE_CLOSE", "src/jackal/time.cpp", 0x616780),
+        ("// LIVE_DTOR", "src/jackal/time.cpp", 0x616200)], declarations=[
         ("// LIVE_DECL", "src/time.h", "class Time {", "#if defined(_M_IX86)"),
-        ("// LIVE_HELPER", "src/jackal/time_lifecycle.cpp", "inline void Time::close_impl() {", "/*\nPurpose: Close")])
+        ("// LIVE_HELPER", "src/jackal/time.cpp", "inline void Time::close_impl() {", "/*\nPurpose: Close")])
 
 
 def test_live_control_rejects_omitted_destructor_cleanup(tmp_path, monkeypatch):

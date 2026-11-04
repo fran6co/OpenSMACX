@@ -702,16 +702,6 @@
           "-c"
         ]
       },
-      "src/jackal/time_lifecycle.cpp": {
-        "flags": [
-          "/c",
-          "/O2",
-          "/Gy",
-          "/GR-",
-          "/GX",
-          "/Ob2"
-        ]
-      },
       "src/map.cpp": {
         "flags": [
           "/nologo",

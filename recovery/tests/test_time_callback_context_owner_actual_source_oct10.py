@@ -15,7 +15,7 @@ ROOT = Path(__file__).resolve().parents[2]
 SOURCES = {
     name: ROOT / name
     for name in (
-        "src/time.cpp", "src/time.h", "src/jackal/time.cpp", "src/jackal/time_lifecycle.cpp", "src/win.cpp",
+        "src/time.cpp", "src/time.h", "src/jackal/time.cpp", "src/win.cpp",
         "src/basewin.cpp", "src/basewin.h", "src/basebutton.cpp",
         "src/basebutton.h", "src/flatbutton.cpp", "src/diplopop.cpp",
         "src/diplopop.h", "src/jackal/palette.cpp", "src/jackal/palette.h",
@@ -68,7 +68,7 @@ def compiled_source_parts() -> tuple[list[str], list[str], str]:
     begin = win.index("                timer->tick_posted_ = 0;", win.index("case WM_USER + 1"))
     end = win.index("                return DefWindowProcA(window, message, wparam, lparam);\n            }", begin)
     dispatch = win[begin:end]
-    lifecycle = SOURCES["src/jackal/time_lifecycle.cpp"].read_text(encoding="utf-8")
+    lifecycle = SOURCES["src/jackal/time.cpp"].read_text(encoding="utf-8")
     callbacks.extend([
         extract_definition(lifecycle, "inline void Time::close_impl()"),
         extract_definition(lifecycle, "void Time::close()"),
@@ -320,7 +320,7 @@ def test_complete_observed_callback_closure_uses_borrowed_context():
             assert source.count(fragment) >= fragments.count(fragment)
     assert "if (!context) return;" in SOURCES["src/diplopop.cpp"].read_text()
     assert "void BaseWin::timer_callback(int, void *)" in SOURCES["src/basewin.cpp"].read_text()
-    lifecycle = SOURCES["src/jackal/time_lifecycle.cpp"].read_text()
+    lifecycle = SOURCES["src/jackal/time.cpp"].read_text()
     assert "callback2_ = 0;" in lifecycle and "cb_param2_ = 0;" in lifecycle
     mappings = [row for row in read_file(SOURCES["src/jackal/time.cpp"])
                 if row.address in {0x006162D0, 0x00616410, 0x00616590}]

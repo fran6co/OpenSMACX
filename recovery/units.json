@@ -55,7 +55,7 @@
       "end_exclusive": "0x00616897",
       "reason": "Inferred contribution core: the complete known Time family and its local startup/free wrappers occupy this compact address band. This identifies a reviewed recovery scope, not proven original object boundaries or an original filename.",
       "evidence": [
-        "Pinned original source identities and complete spans remain annotated in src/jackal/time.cpp, src/jackal/time_lifecycle.cpp.",
+        "Pinned original source identities and complete spans remain annotated in src/jackal/time.cpp.",
         "All known family methods occur inside this band; no other mapped origin or unexplained non-padding bytes were found within the proposed core.",
         "Primary function spans and independently observed NOP/INT3 padding account for the core; associated data/import/generated obligations must still be checked from current source."
       ],
