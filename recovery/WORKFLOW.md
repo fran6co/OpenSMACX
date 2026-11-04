@@ -221,10 +221,12 @@ diagnostic until a fresh qualified compile. Annotation changes also require a
 fresh capture when they change the recorded compiler input bytes.
 
 Keep up to eight disjoint ownership groups active and reserve one compiler slot
-for integration. Split each owner's queue into packets of at most24 functions.
-After the initial five-minute screen, measure one concrete, faithful source
-candidate per promising function; bound repeated attempts on the same hypothesis
-to three, spending follow-ups only on an explained residual. New concrete
+for integration. Assign complete inferred contribution cohorts; do not split a
+shared compiler/visibility/layout hypothesis at an arbitrary function-count cap.
+Separate mechanical investigations may run in parallel inside a coordinator-owned
+cohort, but its source changes and verification must cover the affected closure.
+Measure one coherent candidate for each supported shared cause; bound repeated
+attempts on the same hypothesis to three, spending follow-ups only on an explained residual. New concrete
 evidence justifies continuing without another user approval, as described below.
 Combine independent changes in the same TU into
 one candidate compilation and measure every changed function together. Preserve
@@ -364,16 +366,17 @@ call-ordinal difference alone is not a defect. Reuse that build for read-only
 mapping, reference and instruction observations instead of compiling a new probe
 for each question. Those observations remain bound to its source/compiler inputs.
 
-Next select small matching misses with a specific pin-backed source hypothesis.
+Next select coherent contribution cohorts with specific pin-backed shared causes.
 An early prologue divergence or high mnemonic similarity alone does not justify
 another register-allocation experiment. Alphabetical filename, emitted symbol
 and original address are tie-breakers among equally actionable candidates, not
-a reason to allocate workers to an unexplained plateau. Work through triage
-packets of at most24 functions within disjoint real owners; a larger ownership
-reservation must be split into explicit packets rather than treated as one audit.
+a reason to allocate workers to an unexplained plateau. Inventory every known
+member of the assigned cohort before narrowing an experiment. Larger cohorts
+may have parallel read-only investigations; the cohort's gaps, shared source and
+all previous matches remain part of its verification boundary.
 
-Cap initial triage at five minutes per assigned packet and repeated candidate
-compiler attempts on the same hypothesis at three. The cap prevents repetitive
+Time-box initial hypothesis triage separately from complete cohort accounting,
+and cap repeated compiler attempts on the same hypothesis at three. The cap prevents repetitive
 search; it is not a lifetime limit on a function or a reason to stop when new
 information explains the residual. Newly established types, layouts, lifetimes,
 references, instruction effects or original control flow justify further

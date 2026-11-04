@@ -5,6 +5,15 @@ framework. Work units are ownership groups; functions and original spans are
 measurement units. Byte-exact code can still have wrong hierarchy, lifetime or
 references. Do not preserve those defects to protect a local similarity score.
 
+The active matching campaign reconstructs complete inferred translation-unit
+contributions and their interface/consumer closure. Functions are diagnostic
+and measurement units, not the default scheduling boundary. Account for the
+whole cohort, including globals, initialization, generated lifetime code and
+associated spans. Current semantic files and contiguous address runs are
+hypotheses about original contributions, not proven historical TUs. Test shared
+structural causes across the cohort before isolated spelling work; report actual
+FAIL-to-PASS gains separately from evidence improvements and file cleanup.
+
 First milestone: complete byte-exact source recovery, bug for bug with the pinned
 original. Bug fixes and improvements come afterward; this supersedes earlier
 prospective fix approvals. The immediate priority is complete compiling function
