@@ -13,7 +13,7 @@ from pathlib import Path
 
 from .binary import AbsoluteConstant
 from .component_binary import verify_toolchain
-from .components import ToolchainManifest
+from .components import SystemImportManifest, ToolchainManifest
 from .model import Result
 from .records import read_json
 from .import_source import parse_imports
@@ -30,13 +30,21 @@ def component_targets(root: Path, snapshot: dict, image_data: bytes) -> tuple[di
     from .ownership_source import component_entries
     configuration = read_json(root / "recovery/project.json")
     declared = configuration.get("components") if isinstance(configuration, dict) else None
-    archives = declared.get("toolchain_archives") if isinstance(declared, dict) else None
-    if archives is None:
+    configured = {}
+    for kind in ("toolchain_archives", "system_import_archives"):
+        value = declared.get(kind) if isinstance(declared, dict) else None
+        if value is None:
+            configured[kind] = {}
+            continue
+        if (not isinstance(value, dict) or not value
+                or not all(isinstance(key, str) and isinstance(path, str) and path
+                           for key, path in value.items())):
+            raise ValueError(f"component {kind} must map component ids to archive paths")
+        configured[kind] = value
+    archives = configured["toolchain_archives"]
+    system_archives = configured["system_import_archives"]
+    if not archives and not system_archives:
         return {}, []
-    if (not isinstance(archives, dict) or not archives
-            or not all(isinstance(key, str) and isinstance(value, str) and value
-                       for key, value in archives.items())):
-        raise ValueError("component toolchain archives must map component ids to archive paths")
     targets, reports = {}, []
     interpretations = {}
     configuration_source = SourceConfiguration.from_dict(snapshot["source_configuration"])
@@ -61,6 +69,25 @@ def component_targets(root: Path, snapshot: dict, image_data: bytes) -> tuple[di
                                  (record.get("emitted_symbol_hint"), record.get("catalogued_symbol"))
                                  if isinstance(symbol, str))
     for _, manifest in component_entries(snapshot):
+        if isinstance(manifest, SystemImportManifest):
+            path = system_archives.get(manifest.component.component_id)
+            if path is None:
+                continue
+            report = manifest.verify(image_data, Path(path).read_bytes(), imports)
+            reports.append(report)
+            if report["archive"]["result"] != Result.PASS:
+                continue
+            for row in report["functions"]:
+                if any(row[dimension] != Result.PASS
+                       for dimension in ("boundary", "bytes", "references")):
+                    continue
+                # The short record supplies the decorated function symbol.
+                # Its distinct __imp_ pointer still resolves only through the
+                # source import declaration and original loader table. Neither
+                # target establishes current-link selection or a DLL body.
+                symbol = row["physical_record"]["symbol"]
+                interpretations.setdefault(symbol, []).append(int(row["address"], 16))
+            continue
         if not isinstance(manifest, ToolchainManifest):
             continue
         if {item.symbol for item in manifest.data_starts} & imported_names:

@@ -255,7 +255,7 @@ class SystemImportManifest:
                 row["import"] = {"module": source_import.module, "name": source_import.name,
                                  "ordinal": source_import.ordinal, "address": f"0x{operand:08X}"}
                 row["physical_record"] = {"member": binding.unit, "occurrence": binding.occurrence,
-                                           "sha256": record_sha256}
+                                           "sha256": record_sha256, "symbol": imported["symbol"]}
                 row["archive_selection"] = Result.UNKNOWN
             except ValueError as error:
                 row["reason"] = str(error)
