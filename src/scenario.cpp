@@ -209,7 +209,7 @@ void inspect_loaded_state() {
     }
     size_t used = static_cast<size_t>(size);
     for (int index = 1; index < RadiusRange[1]; index++) {
-        int x = xrange(Vehs[candidate].x + RadiusOffsetX[index]);
+        int x = wrap_map_x(Vehs[candidate].x + RadiusOffsetX[index]);
         int y = Vehs[candidate].y + RadiusOffsetY[index];
         int occupied = on_map(x, y) ? veh_at(x, y) : -2;
         int cost = on_map(x, y)
@@ -262,7 +262,7 @@ void execute_commands(Console *self) {
     bool adjacent = false;
     int movement_direction = -1;
     for (int index = 1; index < RadiusRange[1]; index++) {
-        if (xrange(Vehs[State.vehicle_id].x + RadiusOffsetX[index]) == State.target_x
+        if (wrap_map_x(Vehs[State.vehicle_id].x + RadiusOffsetX[index]) == State.target_x
             && Vehs[State.vehicle_id].y + RadiusOffsetY[index] == State.target_y) {
             adjacent = true;
             movement_direction = index - 1;

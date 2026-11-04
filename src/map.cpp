@@ -287,7 +287,6 @@ Status: Complete
 /*
 Purpose: Bounds check and handling of x coordinate for round maps.
 // ORIGINAL: 0x0048BEE0 ?xrange@@YAHH@Z 0x0048BEE0-0x0048BF05 BYTE_EXACT
-// body      src/map.h
 // LEVER: `!(MapIsFlat & 1)`, not `!MapIsFlat` - the image reads the low BYTE
 //   and tests bit zero, matching every other MapIsFlat site in the tree
 //   (game.cpp, veh.cpp, terraforming.cpp already do this). Also, the guard's
@@ -305,10 +304,12 @@ Purpose: Bounds check and handling of x coordinate for round maps.
 Return Value: X coordinate
 Status: Complete
 */
-// BODY IN map.h, as `MEASURED inline`: the image writes it out at
-// some call sites and calls it at others, and a .cpp definition is only ever
-// one of those. The marker stays here because that is where the catalogue
-// reads it.
+// The canonical `xrange` symbol is emitted out of line here. Its single
+// wrap implementation is the shared inline `wrap_map_x` in map.h; measured
+// inline callers use that helper directly.
+int __cdecl xrange(int x) {
+    return wrap_map_x(x);
+}
 
 
 
@@ -532,7 +533,7 @@ BOOL __cdecl base_on_sea(int base_id, int region_sea) {
     int x = Bases[base_id].x;
     int y = Bases[base_id].y;
     for (uint32_t i = 0; i < 8; i++) {
-        int x_radius = xrange(x + VehMoveDeltaX[i]);
+        int x_radius = wrap_map_x(x + VehMoveDeltaX[i]);
         int y_radius = y + VehMoveDeltaY[i];
         if (on_map(x_radius, y_radius) && is_ocean(x_radius, y_radius)
             && (region_at(x_radius, y_radius) & RegionBounds) == region_sea) {
@@ -579,7 +580,7 @@ int __cdecl base_coast(int base_id) {
     int x = Bases[base_id].x;
     int y = Bases[base_id].y;
     for (int i = 0; i < 8; i++) { // is_coast()
-        int x_radius = xrange(x + VehMoveDeltaX[i]);
+        int x_radius = wrap_map_x(x + VehMoveDeltaX[i]);
         int y_radius = y + VehMoveDeltaY[i];
         if (on_map(x_radius, y_radius) && is_ocean(x_radius, y_radius)) {
             region = region_at(x_radius, y_radius);
@@ -624,7 +625,7 @@ BOOL __cdecl port_to_coast(int base_id, int region) {
         return true;
     }
     for (int i = 0; i < 8; i++) { // is_coast()
-        int x_radius = xrange(x + VehMoveDeltaX[i]);
+        int x_radius = wrap_map_x(x + VehMoveDeltaX[i]);
         int y_radius = y + VehMoveDeltaY[i];
         if (on_map(x_radius, y_radius) && is_ocean(x_radius, y_radius)) {
             // sea_coast() (0x0050DDC0, BYTE_EXACT as its own out-of-line
@@ -649,7 +650,7 @@ static __forceinline BOOL __cdecl port_to_port_body(int base_id_src, int base_id
     int y = Bases[base_id_src].y;
     uint32_t i = 0;
     for (;;) { // is_coast()
-        int x_radius = xrange(x + VehMoveDeltaX[i]);
+        int x_radius = wrap_map_x(x + VehMoveDeltaX[i]);
         int y_radius = y + VehMoveDeltaY[i];
         if (on_map(x_radius, y_radius) && is_ocean(x_radius, y_radius)) {
             int region_src = region_at(x_radius, y_radius);
@@ -662,7 +663,7 @@ static __forceinline BOOL __cdecl port_to_port_body(int base_id_src, int base_id
                     int x_dst = Bases[base_id_dst].x;
                     int y_dst = Bases[base_id_dst].y;
                     for (uint32_t j = 0; j < 8; j++) {
-                        int x_radius_dst = xrange(x_dst + VehMoveDeltaX[j]);
+                        int x_radius_dst = wrap_map_x(x_dst + VehMoveDeltaX[j]);
                         int y_radius_dst = y_dst + VehMoveDeltaY[j];
                         if (on_map(x_radius_dst, y_radius_dst) && is_ocean(x_radius_dst, y_radius_dst)
                             && (region_at(x_radius_dst, y_radius_dst) & RegionBounds) == region_sea) {
@@ -1704,7 +1705,7 @@ Status: Complete
 */
 void __cdecl site_radius(int x, int y, int UNUSED(unk_val)) {
     for (int i = 0; i < 21; i++) {
-        int x_radius = xrange(x + RadiusOffsetX[i]);
+        int x_radius = wrap_map_x(x + RadiusOffsetX[i]);
         int y_radius = y + RadiusOffsetY[i];
         if (on_map(x_radius, y_radius)) {
             Map *tile = map_loc(x_radius, y_radius);
@@ -1738,7 +1739,7 @@ void __cdecl fungus_radius(int x, int y) {
                             | BIT_CONDENSER | BIT_ECH_MIRROR
                             | BIT_THERMAL_BORE);
     for (int i = 0; i < 21; i++) {
-        int x_radius = xrange(x + RadiusOffsetX[i]);
+        int x_radius = wrap_map_x(x + RadiusOffsetX[i]);
         int y_radius = y + RadiusOffsetY[i];
         if (on_map(x_radius, y_radius)) {
             Map *tile = map_loc(x_radius, y_radius);
@@ -1767,7 +1768,7 @@ Status: Complete
 int __cdecl find_landmark(int x, int y, int radius_range_offset) {
     int radius = RadiusRange[radius_range_offset];
     for (int i = 0; i < radius; i++) {
-        int x_radius = xrange(x + RadiusOffsetX[i]);
+        int x_radius = wrap_map_x(x + RadiusOffsetX[i]);
         int y_radius = y + RadiusOffsetY[i];
         if (on_map(x_radius, y_radius)) {
             for (int lm = 0; lm < MapLandmarkCount; lm++) {
@@ -1863,7 +1864,7 @@ void __cdecl kill_landmark(int x, int y) {
     int landmark_to_kill = -1;
     int radius = RadiusRange[1];
     for (int i = 0; i < radius; i++) {
-        int x_radius = xrange(x + RadiusOffsetX[i]);
+        int x_radius = wrap_map_x(x + RadiusOffsetX[i]);
         int y_radius = y + RadiusOffsetY[i];
         if (on_map(x_radius, y_radius)) {
             for (int lm = 0; lm < MapLandmarkCount; lm++) {
@@ -1917,7 +1918,7 @@ int __cdecl is_coast(int x, int y, BOOL is_base_radius) {
         return 0;
     }
     for (; i < radius; i++) {
-        int x_radius = xrange(x + RadiusOffsetX[i]);
+        int x_radius = wrap_map_x(x + RadiusOffsetX[i]);
         int y_radius = y + RadiusOffsetY[i];
         if (on_map(x_radius, y_radius) && is_ocean(x_radius, y_radius)) {
             return i;
@@ -2492,7 +2493,7 @@ void __cdecl quick_zoc(int x_src, int y_src, int faction_id, int x_dst, int y_ds
     BOOL is_src_ocean = is_ocean(x_src, y_src);
     int search_zoc = -1;
     for (uint32_t i = 0; i < 8; i++) {
-        int x_radius = xrange(x_src + VehMoveDeltaX[i]);
+        int x_radius = wrap_map_x(x_src + VehMoveDeltaX[i]);
         int y_radius = y_src + VehMoveDeltaY[i];
         if (on_map(x_radius, y_radius)) {
             int owner = veh_who(x_radius, y_radius);
@@ -2916,7 +2917,7 @@ Status: Complete
 */
 int __cdecl zoc_any(int x, int y, int faction_id) {
     for (uint32_t i = 0; i < 8; i++) {
-        int x_radius = xrange(x + VehMoveDeltaX[i]);
+        int x_radius = wrap_map_x(x + VehMoveDeltaX[i]);
         int y_radius = y + VehMoveDeltaY[i];
         if (on_map(x_radius, y_radius)) {
             // Inlined anything_at(x_radius, y_radius): the image writes its
@@ -2955,7 +2956,7 @@ Status: Complete
 int __cdecl zoc_veh(int x, int y, int faction_id) {
     int ret = 0;
     for (uint32_t i = 0; i < 8; i++) {
-        int x_radius = xrange(x + VehMoveDeltaX[i]);
+        int x_radius = wrap_map_x(x + VehMoveDeltaX[i]);
         int y_radius = y + VehMoveDeltaY[i];
         if (on_map(x_radius, y_radius)) {
             int owner = veh_who(x_radius, y_radius);
@@ -2991,7 +2992,7 @@ Status: Complete
 int __cdecl zoc_sea(int x, int y, int faction_id) {
     BOOL is_ocean_tile = is_ocean(x, y);
     for (uint32_t i = 0; i < 8; i++) {
-        int x_radius = xrange(x + VehMoveDeltaX[i]);
+        int x_radius = wrap_map_x(x + VehMoveDeltaX[i]);
         int y_radius = y + VehMoveDeltaY[i];
         if (on_map(x_radius, y_radius)) {
             int owner = veh_who(x_radius, y_radius);
@@ -3102,7 +3103,7 @@ BOOL __cdecl is_land_near(int x, int y) {
         return false;
     }
     for (int i = 0; i < 8; i++) {
-        int x_radius = xrange(x + VehMoveDeltaX[i]);
+        int x_radius = wrap_map_x(x + VehMoveDeltaX[i]);
         int y_radius = y + VehMoveDeltaY[i];
         if (on_map(x_radius, y_radius)
             && (map_loc(x_radius, y_radius)->climate & ~0x1F) >= ALT_BIT_SHORE_LINE) {

@@ -2583,7 +2583,7 @@ void __cdecl vehdraw_scoot_start(int veh_id, int direction, int steps, int flags
     int h1[9], h2[9], h3[9], h4[9];
     int x, y;
     for (int cell = 0; cell < 9; ++cell) {
-        x = xrange(VehMoveDeltaX[cell] + VehLiftX);
+        x = wrap_map_x(VehMoveDeltaX[cell] + VehLiftX);
         y = VehMoveDeltaY[cell] + VehLiftY;
         h1[cell] = ConsoleGlobal.get_relative_alt(x, y, 1);
         h2[cell] = ConsoleGlobal.get_relative_alt(x, y, 2);
@@ -2600,7 +2600,7 @@ void __cdecl vehdraw_scoot_start(int veh_id, int direction, int steps, int flags
     }
     x = VehMoveDeltaX[direction] + VehLiftX;
     VehDrawAnimationStep = 1;
-    x = xrange(x);
+    x = wrap_map_x(x);
     y = VehMoveDeltaY[direction] + VehLiftY;
     if (vehdraw_uses_terrain(veh_id, x, y)) {
         vehdraw_average_facets(vehdraw_facet_index(h1, h2, h3, h4, direction), &end);
@@ -4269,7 +4269,7 @@ int __cdecl morale_alien(int veh_id, int faction_id_vs_native) {
         morale = 0;
         // similar to is_coast() > except with fungus check + Ocean Shelf included
         for (int i = RadiusRange[0]; i < RadiusRange[1]; i++) {
-            int x_radius = xrange(x + RadiusOffsetX[i]);
+            int x_radius = wrap_map_x(x + RadiusOffsetX[i]);
             int y_radius = y + RadiusOffsetY[i];
             if (on_map(x_radius, y_radius) && bit_at(x_radius, y_radius) & BIT_FUNGUS
                 && altitude_at(x_radius, y_radius) >= ALT_BIT_OCEAN_SHELF) {
@@ -4894,7 +4894,7 @@ void __cdecl battle_compute(int veh_id_atk, int veh_id_def, int *offense_out, in
                 }
                 if (faction_id_def && veh_id_atk >= 0 && is_proto_missile(proto_id_atk)) {
                     for (int i = 0; i < 25; i++) {
-                        int x_radius = xrange(x_def + RadiusOffsetX[i]);
+                        int x_radius = wrap_map_x(x_def + RadiusOffsetX[i]);
                         int y_radius = y_def + RadiusOffsetY[i];
                         if (on_map(x_radius, y_radius)) {
                             int base_id_radius = base_at(x_radius, y_radius);
@@ -4911,7 +4911,7 @@ void __cdecl battle_compute(int veh_id_atk, int veh_id_def, int *offense_out, in
                     uint32_t sensor_def = 0;
                     if (faction_id_def) {
                         for (int i = 0; i < 25; i++) {
-                            int x_radius = xrange(x_def + RadiusOffsetX[i]);
+                            int x_radius = wrap_map_x(x_def + RadiusOffsetX[i]);
                             int y_radius = y_def + RadiusOffsetY[i];
                             uint32_t sensor_status;
                             if (on_map(x_radius, y_radius)
@@ -8127,7 +8127,7 @@ int __cdecl action_home(int veh_id, int flags) {
         // saturates at the largest ring when nothing has been found at all.
         const int radius_count = RadiusRange[best_dist < 8 ? best_dist : 8];
         for (int i = 0; i < radius_count; i++) {
-            const int x_radius = xrange(veh_x + RadiusOffsetX[i]);
+            const int x_radius = wrap_map_x(veh_x + RadiusOffsetX[i]);
             const int y_radius = veh_y + RadiusOffsetY[i];
             if (!on_map(x_radius, y_radius)) {
                 continue;
@@ -12833,7 +12833,7 @@ void __cdecl action_tectonic(int vehicle_id, int x, int y) {
     // random calls follow this exact order in the original.
     for (int neighbor_index = 0; neighbor_index < affected_tile_count; ++neighbor_index) {
         const int near_x_unwrapped = x + RadiusOffsetX[neighbor_index];
-        const int near_x = xrange(near_x_unwrapped);
+        const int near_x = wrap_map_x(near_x_unwrapped);
         const int near_y = y + RadiusOffsetY[neighbor_index];
         if (!on_map(near_x, near_y)) {
             continue;
@@ -12948,7 +12948,7 @@ void __cdecl action_fungal(int vehicle_id, int x, int y) {
     }
     for (int neighbor_index = 0; neighbor_index < nearby_tile_count; ++neighbor_index) {
         const int raw_x = x + RadiusOffsetX[neighbor_index];
-        const int near_x = xrange(raw_x);
+        const int near_x = wrap_map_x(raw_x);
         const int near_y = y + RadiusOffsetY[neighbor_index];
         if (!on_map(near_x, near_y)) {
             continue;
@@ -12978,7 +12978,7 @@ void __cdecl action_fungal(int vehicle_id, int x, int y) {
     for (int spread_index = 0; spread_index < spread_bound; ++spread_index) {
         const int direction = spread_index == 0 ? 0 : 1 + (rand() & 7);
         const int raw_x = x + RadiusOffsetX[direction];
-        const int spread_x = xrange(raw_x);
+        const int spread_x = wrap_map_x(raw_x);
         const int spread_y = y + RadiusOffsetY[direction];
         if (!on_map(spread_x, spread_y)) {
             continue;
@@ -13062,7 +13062,7 @@ int __cdecl shoot_it(int attacker, int defender, int x, int y,
 
     bool has_flechette_defense = false;
     for (int base_scan_index = 0; base_scan_index < RadiusRange[2]; ++base_scan_index) {
-        const int neighbor_x = xrange(x + RadiusOffsetX[base_scan_index]);
+        const int neighbor_x = wrap_map_x(x + RadiusOffsetX[base_scan_index]);
         const int neighbor_y = y + RadiusOffsetY[base_scan_index];
         if (!on_map(neighbor_x, neighbor_y)) continue;
         const int neighbor_base = base_at(neighbor_x, neighbor_y);
@@ -13103,7 +13103,7 @@ int __cdecl shoot_it(int attacker, int defender, int x, int y,
     // with a Flechette system gets its own independent 50-percent roll.
     if (result == 0) {
         for (int flechette_scan_index = 0; flechette_scan_index < RadiusRange[2]; ++flechette_scan_index) {
-            const int neighbor_x = xrange(x + RadiusOffsetX[flechette_scan_index]);
+            const int neighbor_x = wrap_map_x(x + RadiusOffsetX[flechette_scan_index]);
             const int neighbor_y = y + RadiusOffsetY[flechette_scan_index];
             if (!on_map(neighbor_x, neighbor_y)) continue;
             const int neighbor_base = base_at(neighbor_x, neighbor_y);
@@ -14632,7 +14632,7 @@ int __cdecl air_power(int a1, int a2, int a3, int *a4, int *a5) {
             // Base::population_size is the original signed low-byte value;
             // retain its signed division/promotion behavior here.
             score = ((int)base.population_size + 4) / 5 * 8;
-            approach_x = xrange((int)base.x + 4);
+            approach_x = wrap_map_x((int)base.x + 4);
             if (base.y < 0 || base.y >= (int)MapLatitudeBounds
                 || approach_x < 0 || approach_x >= (int)MapLongitudeBounds)
                 continue;
@@ -14721,7 +14721,7 @@ int __cdecl air_power(int a1, int a2, int a3, int *a4, int *a5) {
             }
             base_score = (int)base.population_size * 8;
             for (offset_index = 0; offset_index < 21; ++offset_index) {
-                const int x = xrange((int)base.x + RadiusOffsetX[offset_index]);
+                const int x = wrap_map_x((int)base.x + RadiusOffsetX[offset_index]);
                 const int y = (int)base.y + RadiusOffsetY[offset_index];
                 const Map *tile;
                 int score = base_score;
@@ -14872,7 +14872,7 @@ int __cdecl air_power(int a1, int a2, int a3, int *a4, int *a5) {
                 bool friendly_vehicle_in_radius = false;
                 int radius_index;
                 for (radius_index = 0; radius_index < 25; ++radius_index) {
-                    const int x = xrange((int)Bases[base_id].x
+                    const int x = wrap_map_x((int)Bases[base_id].x
                                          + RadiusOffsetX[radius_index]);
                     const int y = (int)Bases[base_id].y
                                 + RadiusOffsetY[radius_index];
@@ -15006,7 +15006,7 @@ int __cdecl air_power(int a1, int a2, int a3, int *a4, int *a5) {
 
         int direction;
         for (direction = 0; direction < 8; ++direction) {
-            const int x = xrange(route_x + VehMoveDeltaX[direction]);
+            const int x = wrap_map_x(route_x + VehMoveDeltaX[direction]);
             const int y = route_y + VehMoveDeltaY[direction];
             if (y < 0 || y >= (int)MapLatitudeBounds
                 || x < 0 || x >= (int)MapLongitudeBounds)
@@ -18278,7 +18278,7 @@ static bool order_veh_reveal_unseen_hostiles(
     uint8_t native_visibility_mask) {
     bool spotted_any = false;
     for (int direction = 0; direction < 8; ++direction) {
-        const int x = xrange(origin_x + VehMoveDeltaX[direction]);
+        const int x = wrap_map_x(origin_x + VehMoveDeltaX[direction]);
         const int y = origin_y + VehMoveDeltaY[direction];
         if (y < 0 || y >= MapLatitudeBounds ||
             x < 0 || x >= MapLongitudeBounds) {
@@ -20050,7 +20050,7 @@ static OrderVehHighlandStackClaim order_veh_highland_stack_claim(
     int selected_faction = -1;
 
     for (int direction = 0; direction < 8; ++direction) {
-        const int x = xrange(destination_x + VehMoveDeltaX[direction]);
+        const int x = wrap_map_x(destination_x + VehMoveDeltaX[direction]);
         const int y = destination_y + VehMoveDeltaY[direction];
         if (!on_map(x, y)) continue;
         if ((map_loc(x, y)->climate & 0xE0) < 0x60) continue;
@@ -20322,7 +20322,7 @@ int __cdecl order_veh(int veh_id, int direction, int faction) {
     const int source_y = Vehs[veh_id].y;
     faction = Vehs[veh_id].faction_id;
     if (direction < 0) direction = 8;
-    destination_x = xrange(source_x + VehMoveDeltaX[direction]);
+    destination_x = wrap_map_x(source_x + VehMoveDeltaX[direction]);
     destination_y = source_y + VehMoveDeltaY[direction];
     if (!on_map(destination_x, destination_y)) goto label_599b1a;
     region = map_loc(destination_x, destination_y)->region;
@@ -23767,7 +23767,7 @@ static void battle_fight_b203_score_and_neighbor_refresh_v4(
     native_plus8_loop_slot = 0;
     while (native_plus8_loop_slot < 0x20) {
         const int neighbor_index = native_plus8_loop_slot / 4;
-        const int neighbor_x = xrange(target_x + VehMoveDeltaX[neighbor_index]);
+        const int neighbor_x = wrap_map_x(target_x + VehMoveDeltaX[neighbor_index]);
         const int neighbor_y = target_y + VehMoveDeltaY[neighbor_index];
         if (on_map(neighbor_x, neighbor_y)) {
             frame_minus_40_last_vehicle = veh_at(neighbor_x, neighbor_y);

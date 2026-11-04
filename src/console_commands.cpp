@@ -3101,7 +3101,7 @@ void Console::editor_natural(int place) {
     const int limit = RadiusRange[radius_index];
     bool has_clearable_feature = false;
     for (int probe_offset = 0; probe_offset < limit; ++probe_offset) {
-        const int tile_x = xrange(x + RadiusOffsetX[probe_offset]);
+        const int tile_x = wrap_map_x(x + RadiusOffsetX[probe_offset]);
         const int tile_y = y + RadiusOffsetY[probe_offset];
         if (tile_y < 0 || tile_y >= static_cast<int>(MapLatitudeBounds) ||
             tile_x < 0 || tile_x >= static_cast<int>(MapLongitudeBounds)) {
@@ -3116,7 +3116,7 @@ void Console::editor_natural(int place) {
     if (!has_clearable_feature) return;
 
     for (int clear_offset = 0; clear_offset < limit; ++clear_offset) {
-        const int tile_x = xrange(x + RadiusOffsetX[clear_offset]);
+        const int tile_x = wrap_map_x(x + RadiusOffsetX[clear_offset]);
         const int tile_y = y + RadiusOffsetY[clear_offset];
         if (tile_y < 0 || tile_y >= static_cast<int>(MapLatitudeBounds) ||
             tile_x < 0 || tile_x >= static_cast<int>(MapLongitudeBounds)) {

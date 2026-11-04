@@ -78,7 +78,7 @@ void __cdecl world_alt_set(int x, int y, int altitude, BOOL is_set_both) {
     for (i = 1, alt = altitude - 1; i < altitude; i++, alt--) {
         has_set_alt = false;
         for (int j = RadiusRange[i - 1]; j < RadiusRange[i]; j++) {
-            int x_radius = xrange(x + RadiusOffsetX[j]);
+            int x_radius = wrap_map_x(x + RadiusOffsetX[j]);
             int y_radius = y + RadiusOffsetY[j];
             if (on_map(x_radius, y_radius) && alt_at(x_radius, y_radius) < alt) {
                 if (is_set_both) {
@@ -100,7 +100,7 @@ void __cdecl world_alt_set(int x, int y, int altitude, BOOL is_set_both) {
     for (i = 1, alt = i + altitude; i < max_alt; i++, alt++) {
         has_set_alt = false;
         for (int j = RadiusRange[i - 1]; j < RadiusRange[i]; j++) {
-            int x_radius = xrange(x + RadiusOffsetX[j]);
+            int x_radius = wrap_map_x(x + RadiusOffsetX[j]);
             int y_radius = y + RadiusOffsetY[j];
             // Original 5C22AE/5C22B0 skips existing heights <= this cap.
             // This ring lowers high neighbors; it must not raise low ones.
@@ -196,12 +196,12 @@ void __cdecl brush(int x, int y, int altitude) {
     BOOL use_draw_radius = false;
     for (int i = 0; i < 4; i++) {
         if (i != 2) {
-            int x_radius = xrange(x + RadiusOffsetX[i]);
+            int x_radius = wrap_map_x(x + RadiusOffsetX[i]);
             int y_radius = y + RadiusOffsetY[i];
             if (on_map(x_radius, y_radius) && alt_at(x_radius, y_radius) != altitude) {
                 BOOL skip = false;
                 for (uint32_t j = 0; j < 8; j++) {
-                    int x_rad_base = xrange(x_radius + VehMoveDeltaX[j]);
+                    int x_rad_base = wrap_map_x(x_radius + VehMoveDeltaX[j]);
                     int y_rad_base = y_radius + VehMoveDeltaY[j];
                     if (on_map(x_rad_base, y_rad_base) && !is_ocean(x_rad_base, y_rad_base)
                         && !region_at(x_rad_base, y_rad_base)) {
@@ -211,13 +211,13 @@ void __cdecl brush(int x, int y, int altitude) {
                 if (!skip) {
                     if (altitude != 3) {
                         for (uint32_t j = 0, k = 0; j < 7; j += 3, k += 2) {
-                            int x_rad_base = xrange(x_radius + VehMoveDeltaX[k + 1]);
+                            int x_rad_base = wrap_map_x(x_radius + VehMoveDeltaX[k + 1]);
                             int y_rad_base = y_radius + VehMoveDeltaY[k + 1];
                             if (on_map(x_rad_base, y_rad_base)
                                 && altitude_at(x_rad_base, y_rad_base) == ALT_BIT_SHORE_LINE) {
-                                int x_rad_base2 = xrange(x_radius + VehMoveDeltaX[(k + 2) % 8]);
+                                int x_rad_base2 = wrap_map_x(x_radius + VehMoveDeltaX[(k + 2) % 8]);
                                 int y_rad_base2 = y_radius + VehMoveDeltaY[(k + 2) % 8];
-                                int x_rad_base3 = xrange(x_radius + VehMoveDeltaX[k % 8]);
+                                int x_rad_base3 = wrap_map_x(x_radius + VehMoveDeltaX[k % 8]);
                                 int y_rad_base3 = y_radius + VehMoveDeltaY[k % 8];
                                 if (on_map(x_rad_base2, y_rad_base2) 
                                     && on_map(x_rad_base3, y_rad_base3)
@@ -305,7 +305,7 @@ void __cdecl paint_land(int x, int y, int altitude, int radius) {
                 search = offset;
                 unk_val = 0;
             }
-            x_rad_base = xrange(x_rad_base + VehMoveDeltaX[offset]);
+            x_rad_base = wrap_map_x(x_rad_base + VehMoveDeltaX[offset]);
             y_rad_base += VehMoveDeltaY[offset];
             i++;
         } while (i < 2000 && on_map(x_rad_base, y_rad_base) && BrushVal2 < radius);
@@ -440,7 +440,7 @@ void __cdecl build_hills(int altitude) {
         }
         BOOL rejected_seed = false;
         for (int j = 0; j < 9; j++) {
-            int x_radius = xrange(x + RadiusOffsetX[j]);
+            int x_radius = wrap_map_x(x + RadiusOffsetX[j]);
             int y_radius = y + RadiusOffsetY[j];
             if (on_map(x_radius, y_radius) && alt_at(x_radius, y_radius) < (altitude - 1)) {
                 rejected_seed = true;
@@ -542,7 +542,7 @@ void __cdecl world_riverbeds() {
             int search_alt = 0;
             int selected_index = -1;
             for (int j = 0; j < 81; j++) {
-                int x_radius = xrange(x + RadiusOffsetX[j]);
+                int x_radius = wrap_map_x(x + RadiusOffsetX[j]);
                 int y_radius = y + RadiusOffsetY[j];
                 if (on_map(x_radius, y_radius)) {
                     if (bit_at(x_radius, y_radius) & BIT_RIVERBED) {
@@ -558,7 +558,7 @@ void __cdecl world_riverbeds() {
                 }
             }
             if (selected_index >= 0) {
-                int x_search = xrange(x + RadiusOffsetX[selected_index]);
+                int x_search = wrap_map_x(x + RadiusOffsetX[selected_index]);
                 int y_search = y + RadiusOffsetY[selected_index];
                 bit_set(x_search, y_search, BIT_RIVERBED, true);
                 riverbed_count++;
@@ -681,7 +681,7 @@ void __cdecl world_temperature() {
                 int temperature = (val2 > 2) ? ((val2 <= 9) + 1) : 3;
                 int alt = alt_at(x, y);
                 for (int i = 0; i < 8; i++) {
-                    int x_radius = xrange(x + RadiusOffsetX[i]);
+                    int x_radius = wrap_map_x(x + RadiusOffsetX[i]);
                     int y_radius = y + RadiusOffsetY[i];
                     if (on_map(x_radius, y_radius) && bit_at(x_radius, y_radius) & BIT_THERMAL_BORE
                         && (alt <= ALT_1_LEVEL_ABOVE_SEA || alt_at(x_radius, y_radius) >= alt)) {
@@ -958,7 +958,7 @@ void __cdecl world_analysis() {
                 uint32_t count_val1 = 0;
                 uint32_t count_val2 = 0;
                 for (uint32_t i = 0; i < 20; i++) {
-                    int x_radius = xrange(x + RadiusOffsetX[i + 1]);
+                    int x_radius = wrap_map_x(x + RadiusOffsetX[i + 1]);
                     int y_radius = y + RadiusOffsetY[i + 1];
                     if (on_map(x_radius, y_radius)) {
                         BOOL is_ocean_radius = is_ocean(x_radius, y_radius);
@@ -1567,7 +1567,7 @@ Status: Complete
 
 BOOL __cdecl near_landmark(int x, int y) {
     for (int i = 0; i < 289; i++) {
-        int x_radius = xrange(x + RadiusOffsetX[i]);
+        int x_radius = wrap_map_x(x + RadiusOffsetX[i]);
         int y_radius = y + RadiusOffsetY[i];
         if (on_map(x_radius, y_radius) && code_at(x_radius, y_radius)) {
             return true;
@@ -1642,7 +1642,7 @@ void __cdecl world_crater(int x, int y) {
     world_alt_set(x, y, ALT_SHORE_LINE, true);
     uint32_t temperature = temp_at(x, y);
     for (int i = 0; i < 49; i++) {
-        int x_radius = xrange(x + RadiusOffsetX[i]);
+        int x_radius = wrap_map_x(x + RadiusOffsetX[i]);
         int y_radius = y + RadiusOffsetY[i];
         if (on_map(x_radius, y_radius)) {
             bit_set(x_radius, y_radius, BIT_RIVERBED, false);
@@ -1697,7 +1697,7 @@ void __cdecl world_monsoon(int x, int y) {
                 x = ((x_seed ^ y) & 1) ^ x_seed;
                 land_count = 0;
                 for (int i = 0; i < 121; i++) {
-                    int x_radius = xrange(x + RadiusOffsetX[i]);
+                    int x_radius = wrap_map_x(x + RadiusOffsetX[i]);
                     int y_radius = y + RadiusOffsetY[i];
                     if (on_map(x_radius, y_radius) && !is_ocean(x_radius, y_radius)) {
                         land_count++;
@@ -1714,7 +1714,7 @@ void __cdecl world_monsoon(int x, int y) {
         }
     }
     for (int i = 0; i < 121; i++) {
-        int x_radius = xrange(x + RadiusOffsetX[i]);
+        int x_radius = wrap_map_x(x + RadiusOffsetX[i]);
         int y_radius = y + RadiusOffsetY[i];
         if (abs(RadiusOffsetY[i]) <= 8 &&  on_map(x_radius, y_radius)) {
             if (i < 21 && is_ocean(x_radius, y_radius)) {
@@ -1778,7 +1778,7 @@ void __cdecl world_sargasso(int x, int y) {
         }
     }
     for (int i = 0; i < 81; i++) {
-        int x_radius = xrange(x + RadiusOffsetX[i]);
+        int x_radius = wrap_map_x(x + RadiusOffsetX[i]);
         int y_radius = y + RadiusOffsetY[i];
         if (on_map(x_radius, y_radius) && (is_ocean(x_radius, y_radius) || i < 21)) {
             world_alt_set(x_radius, y_radius, ALT_OCEAN_SHELF, true);
@@ -1848,7 +1848,7 @@ void __cdecl world_ruin(int x, int y) {
         }
     }
     for (int i = 0; i < 25; i++) {
-        int x_radius = xrange(x + RadiusOffsetX[i]);
+        int x_radius = wrap_map_x(x + RadiusOffsetX[i]);
         int y_radius = y + RadiusOffsetY[i];
         if (on_map(x_radius, y_radius)) {
             if (i < 25 || !is_ocean(x_radius, y_radius)) { // is_ocean check pointless?
@@ -1927,7 +1927,7 @@ void __cdecl world_dune(int x, int y) {
         }
     }
     for (int i = 0; i < 25; i++) {
-        int x_radius = xrange(x + RadiusOffsetX[i]);
+        int x_radius = wrap_map_x(x + RadiusOffsetX[i]);
         int y_radius = y + RadiusOffsetY[i];
         if (on_map(x_radius, y_radius) && (!is_ocean(x_radius, y_radius) || i < 9 || rand() % 3)) {
             if (i == 2 || i == 7) {
@@ -1994,7 +1994,7 @@ void __cdecl world_diamond(int x, int y) {
         }
     }
     for (uint32_t i = 0; i < 21; i++) {
-        int x_radius = xrange(x + RadiusOffsetX[i]);
+        int x_radius = wrap_map_x(x + RadiusOffsetX[i]);
         int y_radius = y + RadiusOffsetY[i];
         if (on_map(x_radius, y_radius)) {
             if (i < 9 || !is_ocean(x_radius, y_radius) || rand() % 3) {
@@ -2135,7 +2135,7 @@ void __cdecl world_volcano(int x, int y, BOOL is_not_landmark) {
     world_alt_set(x, y, ALT_BIT_OCEAN_TRENCH, true); // purpose??
     world_alt_set(x, y, ALT_3_LEVELS_ABOVE_SEA, true);
     for (int i = 0; i < 9; i++) {
-        int x_radius = xrange(x + RadiusOffsetX[i]);
+        int x_radius = wrap_map_x(x + RadiusOffsetX[i]);
         int y_radius = y + RadiusOffsetY[i];
         if (on_map(x_radius, y_radius)) {
             bit2_set(x_radius, y_radius, BIT2_VOLCANO, true);
@@ -2223,7 +2223,7 @@ void __cdecl world_borehole(int x, int y) {
         val3 = (val3 + 8) % 8 + 1;
     }
     for (int i = 0; i < 9; i++) {
-        int x_radius = xrange(x + RadiusOffsetX[i]);
+        int x_radius = wrap_map_x(x + RadiusOffsetX[i]);
         int y_radius = y + RadiusOffsetY[i];
         if (on_map(x_radius, y_radius)) {
             world_alt_set(x_radius, y_radius, ALT_SHORE_LINE, true);
@@ -2235,28 +2235,28 @@ void __cdecl world_borehole(int x, int y) {
             }
         }
     }
-    int x_offset_val1 = xrange(x + RadiusOffsetX[val1]); // removed from loop
+    int x_offset_val1 = wrap_map_x(x + RadiusOffsetX[val1]); // removed from loop
     int y_offset_val1 = y + RadiusOffsetY[val1]; // removed from loop
     for (i = 0; i < 8; i++) {
-        int x_radius = xrange(x_offset_val1 + RadiusOffsetX[i + 1]);
+        int x_radius = wrap_map_x(x_offset_val1 + RadiusOffsetX[i + 1]);
         int y_radius = y_offset_val1 + RadiusOffsetY[i + 1];
         if (on_map(x_radius, y_radius) && is_ocean(x_radius, y_radius)) {
             world_alt_set(x_radius, y_radius, ALT_SHORE_LINE, true);
         }
     }
-    int x_offset_val2 = xrange(x + RadiusOffsetX[val2]); // removed from loop
+    int x_offset_val2 = wrap_map_x(x + RadiusOffsetX[val2]); // removed from loop
     int y_offset_val2 = y + RadiusOffsetY[val2]; // removed from loop
     for (i = 0; i < 8; i++) {
-        int x_radius = xrange(x_offset_val2 + RadiusOffsetX[i + 1]);
+        int x_radius = wrap_map_x(x_offset_val2 + RadiusOffsetX[i + 1]);
         int y_radius = y_offset_val2 + RadiusOffsetY[i + 1];
         if (on_map(x_radius, y_radius) && is_ocean(x_radius, y_radius)) {
             world_alt_set(x_radius, y_radius, ALT_SHORE_LINE, true);
         }
     }
-    int x_offset_val3 = xrange(x + RadiusOffsetX[val3]); // removed from loop
+    int x_offset_val3 = wrap_map_x(x + RadiusOffsetX[val3]); // removed from loop
     int y_offset_val3 = y + RadiusOffsetY[val3]; // removed from loop
     for (i = 0; i < 8; i++) {
-        int x_radius = xrange(x_offset_val3 + RadiusOffsetX[i + 1]);
+        int x_radius = wrap_map_x(x_offset_val3 + RadiusOffsetX[i + 1]);
         int y_radius = y_offset_val3 + RadiusOffsetY[i + 1];
         if (on_map(x_radius, y_radius) && is_ocean(x_radius, y_radius)) {
             world_alt_set(x_radius, y_radius, ALT_SHORE_LINE, true);
@@ -2316,7 +2316,7 @@ void __cdecl world_temple(int x, int y) {
         }
     }
     for (int i = 0; i < 9; i++) {
-        int x_radius = xrange(x + RadiusOffsetX[i]);
+        int x_radius = wrap_map_x(x + RadiusOffsetX[i]);
         int y_radius = y + RadiusOffsetY[i];
         if (on_map(x_radius, y_radius)) {
             world_alt_set(x_radius, y_radius, ALT_SHORE_LINE, true);
@@ -2386,7 +2386,7 @@ void __cdecl world_unity(int x, int y) {
         x--;
         y--;
         for (int i = 0; i < 25; i++) {
-            int x_radius = xrange(x + RadiusOffsetX[i]);
+            int x_radius = wrap_map_x(x + RadiusOffsetX[i]);
             int y_radius = y + RadiusOffsetY[i];
             if (on_map(x_radius, y_radius)) {
                 world_alt_set(x_radius, y_radius, ALT_1_LEVEL_ABOVE_SEA, true);
@@ -2395,7 +2395,7 @@ void __cdecl world_unity(int x, int y) {
         x += 2;
         y += 2;
         for (i = 0; i < 25; i++) {
-            int x_radius = xrange(x + RadiusOffsetX[i]);
+            int x_radius = wrap_map_x(x + RadiusOffsetX[i]);
             int y_radius = y + RadiusOffsetY[i];
             if (on_map(x_radius, y_radius)) {
                 world_alt_set(x_radius, y_radius, ALT_1_LEVEL_ABOVE_SEA, true);
@@ -2404,7 +2404,7 @@ void __cdecl world_unity(int x, int y) {
         x--;
         y--;
         for (i = 0; i < 25; i++) {
-            int x_radius = xrange(x + RadiusOffsetX[i]);
+            int x_radius = wrap_map_x(x + RadiusOffsetX[i]);
             int y_radius = y + RadiusOffsetY[i];
             if (on_map(x_radius, y_radius)) {
                 rocky_set(x_radius, y_radius, ROCKINESS_FLAT);
@@ -2483,7 +2483,7 @@ void __cdecl world_fossil(int x, int y) {
         }
     }
     for (uint32_t i = 0; i < 6; i++) {
-        int x_radius = xrange(x + RadiusOffsetX[i]);
+        int x_radius = wrap_map_x(x + RadiusOffsetX[i]);
         int y_radius = y + RadiusOffsetY[i];
         if (on_map(x_radius, y_radius) && is_ocean(x_radius, y_radius)) {
             world_alt_set(x_radius, y_radius, ALT_OCEAN, true);
@@ -2526,7 +2526,7 @@ void __cdecl world_canyon(int x, int y) {
         }
     } 
     for (uint32_t i = 0; i < 12; i++) {
-        int x_radius = xrange(x + RadiusOffsetX[WorldCanyonOffsetValues[i]]);
+        int x_radius = wrap_map_x(x + RadiusOffsetX[WorldCanyonOffsetValues[i]]);
         int y_radius = y + RadiusOffsetY[WorldCanyonOffsetValues[i]];
         if (on_map(x_radius, y_radius)) {
             world_alt_set(x_radius, y_radius, ALT_1_LEVEL_ABOVE_SEA, true);
@@ -2534,7 +2534,7 @@ void __cdecl world_canyon(int x, int y) {
         }
     }
     for (uint32_t j = 0; j < 12; j++) {
-        int x_radius = xrange(x + RadiusOffsetX[WorldCanyonOffsetValues[j]]);
+        int x_radius = wrap_map_x(x + RadiusOffsetX[WorldCanyonOffsetValues[j]]);
         int y_radius = y + RadiusOffsetY[WorldCanyonOffsetValues[j]];
         if (on_map(x_radius, y_radius)) {
             bit2_set(x_radius, y_radius, BIT2_CANYON, true);
@@ -2594,7 +2594,7 @@ void __cdecl world_mesa(int x, int y) {
         }
     }
     for (int i = 0; i < 49; i++) {
-        int x_radius = xrange(x + RadiusOffsetX[i]);
+        int x_radius = wrap_map_x(x + RadiusOffsetX[i]);
         int y_radius = y + RadiusOffsetY[i];
         if (on_map(x_radius, y_radius)) {
             world_alt_set(x_radius, y_radius, (i < 25) + ALT_SHORE_LINE, true);
@@ -2658,14 +2658,14 @@ void __cdecl world_ridge(int x, int y) {
         }
     }
     for (uint32_t i = 0; i < 13; i++) {
-        int x_radius = xrange(x + RadiusOffsetX[world_ridge_offset_val[i]]);
+        int x_radius = wrap_map_x(x + RadiusOffsetX[world_ridge_offset_val[i]]);
         int y_radius = y + RadiusOffsetY[world_ridge_offset_val[i]];
         if (on_map(x_radius, y_radius)) {
             world_alt_set(x_radius, y_radius, ALT_1_LEVEL_ABOVE_SEA, true);
         }
     }
     for (uint32_t j = 0; j < 13; j++) {
-        int x_radius = xrange(x + RadiusOffsetX[world_ridge_offset_val[j]]);
+        int x_radius = wrap_map_x(x + RadiusOffsetX[world_ridge_offset_val[j]]);
         int y_radius = y + RadiusOffsetY[world_ridge_offset_val[j]];
         if (on_map(x_radius, y_radius)) {
             bit2_set(x_radius, y_radius, BIT2_RIDGE, true);
@@ -2735,7 +2735,7 @@ void __cdecl world_geothermal(int x, int y) {
     // image pushes 0x400.
     BOOL has_skipped = false;
     for (int i = 0; i < 25; i++) {
-        int x_radius = xrange(x + RadiusOffsetX[i]);
+        int x_radius = wrap_map_x(x + RadiusOffsetX[i]);
         int y_radius = y + RadiusOffsetY[i];
         if (on_map(x_radius, y_radius) && (is_ocean(x_radius, y_radius) || i < 9)) {
             if ((has_skipped || !i || rand() % 25) && (i < 9 || rand() % 3)) {

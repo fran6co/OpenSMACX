@@ -5465,7 +5465,7 @@ void __cdecl farm_compute() {
             FarmStatus[position] = 1;
             continue;
         }
-        const int x = xrange(center_x + RadiusOffsetX[position]);
+        const int x = wrap_map_x(center_x + RadiusOffsetX[position]);
         const int y = center_y + RadiusOffsetY[position];
         if (!on_map(x, y)) {
             FarmStatus[position] = 2;
@@ -6199,7 +6199,7 @@ void __cdecl base_mark(int base_id) {
     int x_radius = 0;
     int y_radius = 0;
     for (int i = 0; i < 49; i++) {
-        x_radius = xrange(Bases[base_id].x + RadiusOffsetX[i]);
+        x_radius = wrap_map_x(Bases[base_id].x + RadiusOffsetX[i]);
         y_radius = Bases[base_id].y + RadiusOffsetY[i];
         if (on_map(x_radius, y_radius)) {
             if (i < 21) {
@@ -9740,7 +9740,7 @@ int __cdecl value_of_base(int base_id, int faction_id_req, int faction_id_res,
     }
     uint32_t region_base = region_at(x, y);
     for (int i = 1; i < RadiusRange[6]; i++) {
-        int x_radius = xrange(x + RadiusOffsetX[i]);
+        int x_radius = wrap_map_x(x + RadiusOffsetX[i]);
         int y_radius = y + RadiusOffsetY[i];
         if (on_map(x_radius, y_radius)) {
             int base_id_found = base_at(x_radius, y_radius);
@@ -13351,7 +13351,7 @@ void production_voice_of_planet_spread(int &offset_attempt) {
         bool found_center = false;
         for (;;) {
             const int offset_index = rand() % 0x120;
-            center_x = xrange(base.x + RadiusOffsetX[offset_index + 1]);
+            center_x = wrap_map_x(base.x + RadiusOffsetX[offset_index + 1]);
             center_y = base.y + RadiusOffsetY[offset_index + 1];
             offset_attempt = production_wrapped_add(offset_attempt, 1);
             if (offset_attempt >= 1000) break;
@@ -13379,7 +13379,7 @@ void production_voice_of_planet_spread(int &offset_attempt) {
         }
 
         for (int point_index = 0; point_index < 9; ++point_index) {
-            const int x_coord = xrange(center_x + RadiusOffsetX[point_index]);
+            const int x_coord = wrap_map_x(center_x + RadiusOffsetX[point_index]);
             const int y_coord = center_y + RadiusOffsetY[point_index];
             if (y_coord < 0
                 || y_coord >= static_cast<int>(MapLatitudeBounds)

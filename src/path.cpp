@@ -178,7 +178,7 @@ int Path::zoc_path(int x, int y, int faction_id) {
     BOOL is_ocean_tile = (tile->climate & ~0x1F) < ALT_BIT_SHORE_LINE;
     int i = 0;
     for (;;) {
-        int x_radius = xrange(x + VehMoveDeltaX[i]);
+        int x_radius = wrap_map_x(x + VehMoveDeltaX[i]);
         int y_radius = y + VehMoveDeltaY[i];
         if (on_map(x_radius, y_radius)) {
             int owner = veh_who(x_radius, y_radius);
@@ -404,7 +404,7 @@ int Path::find(int x_src, int y_src, int x_dst, int y_dst, int proto_id, int fac
             // colonists and terraformers keep clear of vendetta enemies: mode 1
             // is the enemy holding the tile itself, mode 2 a cardinal neighbour
             for (int i = 0; i < 9; i++) {
-                int x_threat = xrange(x_dst + RadiusOffsetX[i]);
+                int x_threat = wrap_map_x(x_dst + RadiusOffsetX[i]);
                 int y_threat = y_dst + RadiusOffsetY[i];
                 if ((i == 0 || i & 1) && on_map(x_threat, y_threat)
                     && (mask_vendetta & (1u << (static_cast<unsigned>(map_loc(x_threat, y_threat)->territory) & 31u)))) {
@@ -463,7 +463,7 @@ int Path::find(int x_src, int y_src, int x_dst, int y_dst, int proto_id, int fac
                 && (VehPrototypes[proto_id].plan == PLAN_COLONIZATION
                     || VehPrototypes[proto_id].plan == PLAN_TERRAFORMING)) {
                 for (int i = 0; i < 9; i++) {
-                    int x_threat = xrange(x_cur + RadiusOffsetX[i]);
+                    int x_threat = wrap_map_x(x_cur + RadiusOffsetX[i]);
                     int y_threat = y_cur + RadiusOffsetY[i];
                     if ((i == 0 || i & 1) && on_map(x_threat, y_threat)
                         && (mask_vendetta & (1u << (static_cast<unsigned>(map_loc(x_threat, y_threat)->territory) & 31u)))) {
@@ -473,7 +473,7 @@ int Path::find(int x_src, int y_src, int x_dst, int y_dst, int proto_id, int fac
                 }
             }
             for (int i = 0; i < 8; i++) {
-                int x_next = xrange(x_cur + VehMoveDeltaX[i]);
+                int x_next = wrap_map_x(x_cur + VehMoveDeltaX[i]);
                 int y_next = y_cur + VehMoveDeltaY[i];
                 if (!on_map(x_next, y_next)) {
                     continue;
@@ -500,7 +500,7 @@ int Path::find(int x_src, int y_src, int x_dst, int y_dst, int proto_id, int fac
                     if (faction_id >= 0) {
                         BOOL unexplored = FALSE;
                         for (int j = 0; j < 8; j++) {
-                            int x_adj = xrange(x_next + VehMoveDeltaX[j]);
+                            int x_adj = wrap_map_x(x_next + VehMoveDeltaX[j]);
                             int y_adj = y_next + VehMoveDeltaY[j];
                             if (on_map(x_adj, y_adj)
                                 && !(PlayersData[faction_id].flags & RFLAG_FREEPROTO)
@@ -607,7 +607,7 @@ int Path::find(int x_src, int y_src, int x_dst, int y_dst, int proto_id, int fac
                             && (VehPrototypes[proto_id].plan == PLAN_COLONIZATION
                                 || VehPrototypes[proto_id].plan == PLAN_TERRAFORMING)) {
                             for (int j = 0; j < 9; j++) {
-                                int x_threat = xrange(x_next + RadiusOffsetX[j]);
+                                int x_threat = wrap_map_x(x_next + RadiusOffsetX[j]);
                                 int y_threat = y_next + RadiusOffsetY[j];
                                 if (!on_map(x_threat, y_threat)
                                     || !(mask_vendetta
@@ -657,7 +657,7 @@ int Path::find(int x_src, int y_src, int x_dst, int y_dst, int proto_id, int fac
                                         penalty = 1;
                                     }
                                     for (int j = 0; j < 21; j++) {
-                                        int x_base = xrange(x_next + RadiusOffsetX[j]);
+                                        int x_base = wrap_map_x(x_next + RadiusOffsetX[j]);
                                         int y_base = y_next + RadiusOffsetY[j];
                                         if (on_map(x_base, y_base)) {
                                             Map *tile_base = map_loc(x_base, y_base);
@@ -683,7 +683,7 @@ int Path::find(int x_src, int y_src, int x_dst, int y_dst, int proto_id, int fac
                                     || owner_base < 0)) {
                                 // open water without a base: stand off enemy artillery
                                 for (int j = 1; j < 25; j++) {
-                                    int x_arty = xrange(x_next + RadiusOffsetX[j]);
+                                    int x_arty = wrap_map_x(x_next + RadiusOffsetX[j]);
                                     int y_arty = y_next + RadiusOffsetY[j];
                                     if (on_map(x_arty, y_arty)) {
                                         for (int veh_arty = veh_at(x_arty, y_arty);
@@ -743,7 +743,7 @@ int Path::find(int x_src, int y_src, int x_dst, int y_dst, int proto_id, int fac
         && (VehPrototypes[proto_id].plan == PLAN_COLONIZATION
             || VehPrototypes[proto_id].plan == PLAN_TERRAFORMING)) {
         for (int i = 0; i < 9; i++) {
-            int x_threat = xrange(x_src + RadiusOffsetX[i]);
+            int x_threat = wrap_map_x(x_src + RadiusOffsetX[i]);
             int y_threat = y_src + RadiusOffsetY[i];
             if ((i == 0 || i & 1) && on_map(x_threat, y_threat)
                 && (mask_vendetta & (1u << (static_cast<unsigned>(map_loc(x_threat, y_threat)->territory) & 31u)))) {
@@ -755,7 +755,7 @@ int Path::find(int x_src, int y_src, int x_dst, int y_dst, int proto_id, int fac
     int best_dir = -1;
     int best_score = 2000000000;
     for (int i = 0; i < 8; i++) {
-        int x_next = xrange(x_src + VehMoveDeltaX[i]);
+        int x_next = wrap_map_x(x_src + VehMoveDeltaX[i]);
         int y_next = y_src + VehMoveDeltaY[i];
         if (!on_map(x_next, y_next)) {
             continue;
@@ -816,7 +816,7 @@ int Path::find(int x_src, int y_src, int x_dst, int y_dst, int proto_id, int fac
                     && (VehPrototypes[proto_id].plan == PLAN_COLONIZATION
                         || VehPrototypes[proto_id].plan == PLAN_TERRAFORMING)) {
                     for (int j = 0; j < 9; j++) {
-                        int x_threat = xrange(x_next + RadiusOffsetX[j]);
+                        int x_threat = wrap_map_x(x_next + RadiusOffsetX[j]);
                         int y_threat = y_next + RadiusOffsetY[j];
                         if (!on_map(x_threat, y_threat)
                             || !(mask_vendetta
@@ -866,7 +866,7 @@ int Path::find(int x_src, int y_src, int x_dst, int y_dst, int proto_id, int fac
                                 penalty = 1;
                             }
                             for (int j = 0; j < 21; j++) {
-                                int x_base = xrange(x_next + RadiusOffsetX[j]);
+                                int x_base = wrap_map_x(x_next + RadiusOffsetX[j]);
                                 int y_base = y_next + RadiusOffsetY[j];
                                 if (on_map(x_base, y_base)) {
                                     Map *tile_base = map_loc(x_base, y_base);
@@ -891,7 +891,7 @@ int Path::find(int x_src, int y_src, int x_dst, int y_dst, int proto_id, int fac
                             || (owner_base = tile->val2 & 0xF) >= 8 || owner_base < 0)) {
                         // open water without a base: stand off enemy artillery
                         for (int j = 1; j < 25; j++) {
-                            int x_arty = xrange(x_next + RadiusOffsetX[j]);
+                            int x_arty = wrap_map_x(x_next + RadiusOffsetX[j]);
                             int y_arty = y_next + RadiusOffsetY[j];
                             if (on_map(x_arty, y_arty)) {
                                 for (int veh_arty = veh_at(x_arty, y_arty); veh_arty >= 0;
@@ -1043,7 +1043,7 @@ int Path::move(int veh_id, int faction_id) {
     int best_cost = 99999;
     int best_dir = -1;
     for (int i = 0; i < 8; i++) {
-        int x_scan = xrange(veh_x + VehMoveDeltaX[i]);
+        int x_scan = wrap_map_x(veh_x + VehMoveDeltaX[i]);
         int y_scan = veh_y + VehMoveDeltaY[i];
         if (!on_map(x_scan, y_scan)) {
             continue;
@@ -1142,7 +1142,7 @@ void Path::make_abstract() {
         for (int x = y & 1; x < (int)MapAbstractLongBounds; x += 2) {
             uint8_t region = 0;
             for (int i = 0; i < RadiusRange[1]; i++) {
-                int x_radius = xrange(x * 5 + RadiusOffsetX[i]);
+                int x_radius = wrap_map_x(x * 5 + RadiusOffsetX[i]);
                 int y_radius = y * 5 + RadiusOffsetY[i];
                 if (on_map(x_radius, y_radius) && !is_ocean(x_radius, y_radius)) {
                     region = (uint8_t)region_at(x_radius, y_radius);
@@ -1250,7 +1250,7 @@ void Path::territory(int x, int y, int UNUSED(region), int faction_id) {
         int x_it = x_table_[index2_];
         int y_it = y_table_[index2_++];
         for (uint32_t i = 0; i < 8; i++) {
-            int x_radius = xrange(x_it + VehMoveDeltaX[i]);
+            int x_radius = wrap_map_x(x_it + VehMoveDeltaX[i]);
             int y_radius = y_it + VehMoveDeltaY[i];
             Map *tile;
             if (on_map(x_radius, y_radius) && y_it && y_it != ((int)MapLatitudeBounds - 1)
@@ -1316,7 +1316,7 @@ void Path::continent(int x, int y, int region) {
         int16_t y_it = y_table_[index2_++];
         Continents[region].tile_count++;
         for (uint32_t i = 0; i < 8; i++) {
-            int x_radius = xrange(x_it + VehMoveDeltaX[i]);
+            int x_radius = wrap_map_x(x_it + VehMoveDeltaX[i]);
             int y_radius = y_it + VehMoveDeltaY[i];
             BOOL is_ocean_rad;
             if (on_map(x_radius, y_radius) && y_it && y_it != ((int)MapLatitudeBounds - 1)
@@ -1471,7 +1471,7 @@ void Path::continents() {
             uint32_t region = region_at(x, y);
             if (region < MaxRegionLandNum) {
                 for (int i = 0; i < 8; i++) {
-                    int x_radius = xrange(x + VehMoveDeltaX[i]);
+                    int x_radius = wrap_map_x(x + VehMoveDeltaX[i]);
                     int y_radius = y + VehMoveDeltaY[i];
                     if (on_map(x_radius, y_radius)) {
                         uint32_t region_rad = region_at(x_radius, y_radius);
@@ -1595,7 +1595,7 @@ BOOL Path::sensors(int faction_id, int *x_sensor, int *y_sensor) {
                         || has_tech(Rules.tech_improve_fungus_sqr, faction_id))) {
                     uint32_t flags = 0;
                     for (int i = 0; i < RadiusRange[2]; i++) {
-                        int x_radius = xrange(x + RadiusOffsetX[i]);
+                        int x_radius = wrap_map_x(x + RadiusOffsetX[i]);
                         int y_radius = y + RadiusOffsetY[i];
                         if (on_map(x_radius, y_radius) && !is_sensor(x_radius, y_radius)
                             && (whose_territory(faction_id, x_radius, y_radius, NULL, false)
@@ -1610,7 +1610,7 @@ BOOL Path::sensors(int faction_id, int *x_sensor, int *y_sensor) {
                         int proxminity = vector_dist(x_search, y_search, x, y);
                         for (uint32_t i = 0; i < 25; i++) {
                             int tile_faction_id;
-                            int x_radius = xrange(x + RadiusOffsetX[i]);
+                            int x_radius = wrap_map_x(x + RadiusOffsetX[i]);
                             int y_radius = y + RadiusOffsetY[i];
                             if (on_map(x_radius, y_radius) 
                                 && (tile_faction_id = base_who(x_radius, y_radius), 
@@ -1618,7 +1618,7 @@ BOOL Path::sensors(int faction_id, int *x_sensor, int *y_sensor) {
                                 flags |= 4;
                                 BOOL check = true;
                                 for (int j = 0; j < RadiusRange[2]; j++) {
-                                    int x_radius2 = xrange(x_radius + RadiusOffsetX[j]);
+                                    int x_radius2 = wrap_map_x(x_radius + RadiusOffsetX[j]);
                                     int y_radius2 = y_radius + RadiusOffsetY[j];
                                     if (on_map(x_radius2, y_radius2)
                                         && !is_sensor(x_radius2, y_radius2)

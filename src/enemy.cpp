@@ -683,7 +683,7 @@ static SeaScoringExit enemy_move_sea_scoring(EnemyMoveFullFrame &enemy_frame) {
     if (enemy_frame.local_54 < enemy_frame.local_6c && acting.move_to_ai_type != 'E') {
         for (enemy_frame.local_58 = 0; enemy_frame.local_58 < 32; enemy_frame.local_58 += 4) {
             const int n = enemy_frame.local_58 / 4;
-            enemy_frame.local_4 = xrange(enemy_frame.local_18 + VehMoveDeltaX[n]);
+            enemy_frame.local_4 = wrap_map_x(enemy_frame.local_18 + VehMoveDeltaX[n]);
             enemy_frame.local_8 = enemy_frame.local_14 + VehMoveDeltaY[n];
             if (!on_map(enemy_frame.local_4, enemy_frame.local_8)) continue;
             Map *tile = map_loc(enemy_frame.local_4, enemy_frame.local_8);
@@ -774,7 +774,7 @@ static SeaScoringExit enemy_move_sea_scoring(EnemyMoveFullFrame &enemy_frame) {
                 enemy_frame.local_30 = 0;
                 for (enemy_frame.local_30 = 0; enemy_frame.local_30 < 9; ++enemy_frame.local_30) {
                     const int pos = enemy_frame.local_30;
-                    enemy_frame.local_4 = xrange(enemy_frame.local_18 + RadiusOffsetX[pos]);
+                    enemy_frame.local_4 = wrap_map_x(enemy_frame.local_18 + RadiusOffsetX[pos]);
                     enemy_frame.local_8 = enemy_frame.local_14 + RadiusOffsetY[pos];
                     if (!on_map(enemy_frame.local_4, enemy_frame.local_8) ||
                         map_loc(enemy_frame.local_4, enemy_frame.local_8)->region != enemy_frame.local_34) continue;
@@ -783,7 +783,7 @@ static SeaScoringExit enemy_move_sea_scoring(EnemyMoveFullFrame &enemy_frame) {
                         continue;
                     enemy_frame.local_20 = 0;
                     for (int d = 1; d <= 8; ++d) {
-                        const int nx = xrange(enemy_frame.local_4 + RadiusOffsetX[d]);
+                        const int nx = wrap_map_x(enemy_frame.local_4 + RadiusOffsetX[d]);
                         const int ny = enemy_frame.local_8 + RadiusOffsetY[d];
                         if (!on_map(nx, ny) || map_loc(nx, ny)->region != r) continue;
                         if (base_who(nx, ny) >= 1) enemy_frame.local_20 += 4;
@@ -958,7 +958,7 @@ static SeaScoringExit enemy_move_sea_scoring(EnemyMoveFullFrame &enemy_frame) {
         }
         if (acting.order != 0x18) {
             for (int pos = 1; pos <= 288; ++pos) {
-                enemy_frame.local_4 = xrange(enemy_frame.local_18 + RadiusOffsetX[pos] * 2);
+                enemy_frame.local_4 = wrap_map_x(enemy_frame.local_18 + RadiusOffsetX[pos] * 2);
                 enemy_frame.local_8 = enemy_frame.local_14 + RadiusOffsetY[pos] * 2;
                 if (!on_map(enemy_frame.local_4, enemy_frame.local_8)) continue;
                 Map *tile = map_loc(enemy_frame.local_4, enemy_frame.local_8);
@@ -1069,10 +1069,10 @@ sea576a95:
                 enemy_frame.local_20=0;
                 for(enemy_frame.local_44=0;enemy_frame.local_44<=0x11f;enemy_frame.local_44+=4){
                     const int pos=9+enemy_frame.local_44/4;
-                    const int x=xrange(enemy_frame.local_4+RadiusOffsetX[pos]);
+                    const int x=wrap_map_x(enemy_frame.local_4+RadiusOffsetX[pos]);
                     const int y=enemy_frame.local_8+RadiusOffsetY[pos];
                     if(!on_map(x,y)||(map_loc(x,y)->climate&0xe0)<0x60)continue;
-                    const int ox=xrange(enemy_frame.local_4-RadiusOffsetX[pos]);
+                    const int ox=wrap_map_x(enemy_frame.local_4-RadiusOffsetX[pos]);
                     const int oy=enemy_frame.local_8-RadiusOffsetY[pos];
                     if(!on_map(ox,oy)||(map_loc(ox,oy)->climate&0xe0)<0x60)continue;
                     const int r=map_loc(x,y)->region;
@@ -1111,7 +1111,7 @@ sea576daf:
                 if(tile.bit&0x2000u)++enemy_frame.local_20;
             }
             for(int n=0;n<8;++n){
-                const int x=xrange(enemy_frame.local_4+VehMoveDeltaX[n]);
+                const int x=wrap_map_x(enemy_frame.local_4+VehMoveDeltaX[n]);
                 const int y=enemy_frame.local_8+VehMoveDeltaY[n];
                 if(!on_map(x,y))continue;
                 if(!(player.flags&0x20000000u)||(map_loc(x,y)->bit&0x100000u)){
@@ -1166,7 +1166,7 @@ static void enemy_move_prepare_empty_region_goal(EnemyMoveFullFrame &enemy_frame
         (player.unk_77[enemy_frame.local_34]&6u)||player.region_base_plan[enemy_frame.local_34]<3||
         ((enemy_frame.local_14<1||enemy_frame.local_14>=MapLatitudeBounds-1)&&enemy_frame.local_50!=12))return;
     for(int n=0;n<8;++n){
-        const int x=xrange(enemy_frame.local_18+VehMoveDeltaX[n]);const int y=enemy_frame.local_14+VehMoveDeltaY[n];
+        const int x=wrap_map_x(enemy_frame.local_18+VehMoveDeltaX[n]);const int y=enemy_frame.local_14+VehMoveDeltaY[n];
         if(on_map(x,y)&&(map_loc(x,y)->climate&0xe0)<0x60){
             add_goal(enemy_frame.local_c,7,1,x,y,-1);enemy_frame.local_c0=1;return;
         }
@@ -1252,7 +1252,7 @@ static StrategicActionExit enemy_move_strategic_actions(EnemyMoveFullFrame &enem
             enemy_frame.local_7c>=2&&(map_loc(enemy_frame.local_18,enemy_frame.local_14)->climate&0xe0)<=0xbf){
             bool high=false;
             for(int pos=0;pos<49;++pos){
-                enemy_frame.local_4=xrange(enemy_frame.local_18+RadiusOffsetX[pos]);enemy_frame.local_8=enemy_frame.local_14+RadiusOffsetY[pos];
+                enemy_frame.local_4=wrap_map_x(enemy_frame.local_18+RadiusOffsetX[pos]);enemy_frame.local_8=enemy_frame.local_14+RadiusOffsetY[pos];
                 if(on_map(enemy_frame.local_4,enemy_frame.local_8)&&(map_loc(enemy_frame.local_4,enemy_frame.local_8)->climate&0xe0)>=0xc0){high=true;break;}}
             if(!high){v.order=20;return STRATEGIC_JOIN_578F46;}
         }
@@ -1323,7 +1323,7 @@ static StrategicActionExit enemy_move_strategic_actions(EnemyMoveFullFrame &enem
                     has_tech(Terraforming[7].prerequisite_tech[0],enemy_frame.local_c)){
                     bool bunker=false;
                     for(int pos=0;pos<9;++pos){
-                        enemy_frame.local_4=xrange(enemy_frame.local_18+RadiusOffsetX[pos]);enemy_frame.local_8=enemy_frame.local_14+RadiusOffsetY[pos];
+                        enemy_frame.local_4=wrap_map_x(enemy_frame.local_18+RadiusOffsetX[pos]);enemy_frame.local_8=enemy_frame.local_14+RadiusOffsetY[pos];
                         if(on_map(enemy_frame.local_4,enemy_frame.local_8)&&(map_loc(enemy_frame.local_4,enemy_frame.local_8)->bit&0x800u)){bunker=true;break;}}
                     if(!bunker){v.order=11;return STRATEGIC_JOIN_578F46;}
                 }
@@ -1346,7 +1346,7 @@ static StrategicActionExit enemy_move_strategic_actions(EnemyMoveFullFrame &enem
             else {enemy_frame.local_a4=enemy_frame.local_18;enemy_frame.local_58=enemy_frame.local_14;}
             int current_formers=0;
             for(int pos=1;pos<=20;++pos){
-                enemy_frame.local_4=xrange(Bases[enemy_frame.local_5c].x+RadiusOffsetX[pos]);
+                enemy_frame.local_4=wrap_map_x(Bases[enemy_frame.local_5c].x+RadiusOffsetX[pos]);
                 enemy_frame.local_8=Bases[enemy_frame.local_5c].y+RadiusOffsetY[pos];
                 if(!on_map(enemy_frame.local_4,enemy_frame.local_8)||map_loc(enemy_frame.local_4,enemy_frame.local_8)->region!=enemy_frame.local_34)continue;
                 enemy_frame.local_1c=veh_at(enemy_frame.local_4,enemy_frame.local_8);
@@ -1361,7 +1361,7 @@ static StrategicActionExit enemy_move_strategic_actions(EnemyMoveFullFrame &enem
                     if(b.faction_id_current!=enemy_frame.local_c||map_loc(b.x,b.y)->region!=enemy_frame.local_34)continue;
                     int formers=0;
                     for(int pos=0;pos<25;++pos){
-                        const int x=xrange(b.x+RadiusOffsetX[pos]);const int y=b.y+RadiusOffsetY[pos];
+                        const int x=wrap_map_x(b.x+RadiusOffsetX[pos]);const int y=b.y+RadiusOffsetY[pos];
                         if(!on_map(x,y)||map_loc(x,y)->region!=enemy_frame.local_34)continue;
                         enemy_frame.local_1c=veh_at(x,y);
                         if(enemy_frame.local_1c>=0)formers+=stack_check(enemy_frame.local_1c,2,9,-1,-1);
@@ -1377,7 +1377,7 @@ static StrategicActionExit enemy_move_strategic_actions(EnemyMoveFullFrame &enem
             enemy_frame.local_28=9999;
             for(enemy_frame.local_2c=1;enemy_frame.local_2c<21;++enemy_frame.local_2c){
                 const int pos=(GameDataStateStorage.fields_.turn_current_num_+(int)enemy_frame.local_2c)%21;
-                enemy_frame.local_4=xrange(enemy_frame.local_a4+RadiusOffsetX[pos]);
+                enemy_frame.local_4=wrap_map_x(enemy_frame.local_a4+RadiusOffsetX[pos]);
                 enemy_frame.local_8=enemy_frame.local_58+RadiusOffsetY[pos];
                 if(!on_map(enemy_frame.local_4,enemy_frame.local_8)||base_who(enemy_frame.local_4,enemy_frame.local_8)>=0)continue;
                 const Map &tile=*map_loc(enemy_frame.local_4,enemy_frame.local_8);
@@ -1461,7 +1461,7 @@ static NonseaExit enemy_move_nonsea(EnemyMoveFullFrame &enemy_frame,
         !enemy_frame.local_74) {
         if (coast_or_border(enemy_frame.local_18,enemy_frame.local_14,enemy_frame.local_18,enemy_frame.local_14,enemy_frame.local_c)) {
             int direction = (Vehs[enemy_frame.vehicle_id].facing + 4) % 8;
-            enemy_frame.local_4 = xrange(enemy_frame.local_18 + VehMoveDeltaX[direction]);
+            enemy_frame.local_4 = wrap_map_x(enemy_frame.local_18 + VehMoveDeltaX[direction]);
             enemy_frame.local_8 = enemy_frame.local_14 + VehMoveDeltaY[direction];
             if (!coast_or_border(enemy_frame.local_4,enemy_frame.local_8,enemy_frame.local_4,enemy_frame.local_8,enemy_frame.local_c)) {
                 if (enemy_frame.vehicle_id & 1) Vehs[enemy_frame.vehicle_id].state |= 0x80000000u;
@@ -1475,7 +1475,7 @@ static NonseaExit enemy_move_nonsea(EnemyMoveFullFrame &enemy_frame,
                 if (Vehs[enemy_frame.vehicle_id].state & 0x80000000u)
                     rotation = enemy_frame.local_6c - 3;
                 direction = (rotation + Vehs[enemy_frame.vehicle_id].facing + 8) % 8;
-                enemy_frame.local_4 = xrange(enemy_frame.local_18 + VehMoveDeltaX[direction]);
+                enemy_frame.local_4 = wrap_map_x(enemy_frame.local_18 + VehMoveDeltaX[direction]);
                 enemy_frame.local_8 = enemy_frame.local_14 + VehMoveDeltaY[direction];
                 if (enemy_frame.local_30) {
                     if (on_map(enemy_frame.local_4,enemy_frame.local_8) &&
@@ -1505,7 +1505,7 @@ static NonseaExit enemy_move_nonsea(EnemyMoveFullFrame &enemy_frame,
                     enemy_frame.local_58 = 0;
                     do {
                         const int offset = enemy_frame.local_58 / 4;
-                        const int xx = xrange(enemy_frame.local_4 + RadiusOffsetX[offset]);
+                        const int xx = wrap_map_x(enemy_frame.local_4 + RadiusOffsetX[offset]);
                         const int yy = enemy_frame.local_8 + RadiusOffsetY[offset];
                         if (on_map(xx,yy)) {
                             if (map_loc(xx,yy)->region != enemy_frame.local_34) ++enemy_frame.local_20;
@@ -1555,7 +1555,7 @@ static NonseaExit enemy_move_nonsea(EnemyMoveFullFrame &enemy_frame,
                 enemy_frame.local_44 = 0;
                 enemy_frame.local_2c = enemy_frame.local_54 ? RadiusRange[enemy_frame.local_54-1] : 0;
                 while ((int)enemy_frame.local_2c < RadiusRange[enemy_frame.local_54]) {
-                    enemy_frame.local_4 = xrange(enemy_frame.local_18 + RadiusOffsetX[enemy_frame.local_2c]);
+                    enemy_frame.local_4 = wrap_map_x(enemy_frame.local_18 + RadiusOffsetX[enemy_frame.local_2c]);
                     enemy_frame.local_8 = enemy_frame.local_14 + RadiusOffsetY[enemy_frame.local_2c];
                     if (on_map(enemy_frame.local_4,enemy_frame.local_8) &&
                         map_loc(enemy_frame.local_4,enemy_frame.local_8)->region == enemy_frame.local_34) {
@@ -1568,7 +1568,7 @@ static NonseaExit enemy_move_nonsea(EnemyMoveFullFrame &enemy_frame,
                             do {
                                 // Original defect: indexes radius_index, NOT mode.
                                 // Thus the same offset tile is examined nine times.
-                                const int xx = xrange(enemy_frame.local_4 + RadiusOffsetX[enemy_frame.local_2c]);
+                                const int xx = wrap_map_x(enemy_frame.local_4 + RadiusOffsetX[enemy_frame.local_2c]);
                                 const int yy = enemy_frame.local_8 + RadiusOffsetY[enemy_frame.local_2c];
                                 if (on_map(xx,yy)) {
                                     if (is_known(xx,yy,enemy_frame.local_c)) {
@@ -1683,7 +1683,7 @@ static SelectedExit enemy_move_selected(EnemyMoveFullFrame &f) {
         Vehs[actor].order = 0;
         do {
             const int offset = f.local_6c / 4;
-            f.local_4 = xrange(f.local_18 + RadiusOffsetX[offset]);
+            f.local_4 = wrap_map_x(f.local_18 + RadiusOffsetX[offset]);
             f.local_8 = f.local_14 + RadiusOffsetY[offset];
             if (on_map(f.local_4,f.local_8) &&
                 map_loc(f.local_4,f.local_8)->region == f.local_34 &&
@@ -1815,7 +1815,7 @@ static SelectedExit enemy_move_selected(EnemyMoveFullFrame &f) {
         const int start = pass == 0 ? 1 : pass == 1 ? 9 : 25;
         const int end = pass == 0 ? 9 : pass == 1 ? 25 : 169;
         for (int offset = start; offset < end; ++offset) {
-            f.local_4 = xrange(target.x + RadiusOffsetX[offset]);
+            f.local_4 = wrap_map_x(target.x + RadiusOffsetX[offset]);
             f.local_8 = target.y + RadiusOffsetY[offset];
             if (!on_map(f.local_4,f.local_8)) continue;
             f.local_1c = stack_fix(veh_at(f.local_4,f.local_8));
@@ -1862,7 +1862,7 @@ static SelectedExit enemy_move_selected(EnemyMoveFullFrame &f) {
         f.local_28 = 0;
         f.local_2c = 0;
         do {
-            f.local_4 = xrange(f.local_18 + VehMoveDeltaX[f.local_2c]);
+            f.local_4 = wrap_map_x(f.local_18 + VehMoveDeltaX[f.local_2c]);
             f.local_8 = f.local_14 + VehMoveDeltaY[f.local_2c];
             if (on_map(f.local_4,f.local_8) &&
                 (map_loc(f.local_4,f.local_8)->climate & 0xe0) >= 0x60) {
@@ -1908,7 +1908,7 @@ selected_second_next:
     f.local_28 = -9999;
     f.local_2c = 0;
     do {
-        f.local_4 = xrange(f.local_18 + VehMoveDeltaX[f.local_2c]);
+        f.local_4 = wrap_map_x(f.local_18 + VehMoveDeltaX[f.local_2c]);
         f.local_8 = f.local_14 + VehMoveDeltaY[f.local_2c];
         if (on_map(f.local_4,f.local_8) &&
             (map_loc(f.local_4,f.local_8)->climate & 0xe0) >= 0x60) {
@@ -1916,7 +1916,7 @@ selected_second_next:
             if (((dy + x_dist(f.local_4,target.x)) & ~1) == 2) {
                 f.local_20 = (int)((unsigned int)defense_value(f.local_c,f.local_4,f.local_8,actor,-1) << 3);
                 for (int direction = 0; direction < 8; ++direction) {
-                    const int xx = xrange(f.local_4 + VehMoveDeltaX[direction]);
+                    const int xx = wrap_map_x(f.local_4 + VehMoveDeltaX[direction]);
                     const int yy = f.local_8 + VehMoveDeltaY[direction];
                     if (on_map(xx,yy) && (xx != target.x || yy != target.y)) {
                         f.local_1c = stack_fix(veh_at(xx,yy));
@@ -1992,7 +1992,7 @@ static EnemyMoveUpstreamProbeJoin enemy_move_upstream_56da90_probe(
     }
 
     for (int offset = 0; offset < 9; ++offset) {
-        const int x = xrange(s.local_18 + RadiusOffsetX[offset]);
+        const int x = wrap_map_x(s.local_18 + RadiusOffsetX[offset]);
         const int y = s.local_14 + RadiusOffsetY[offset];
         // Native 0x56DAB5/0x56DABA publishes each candidate into raw -4/-8
         // before reading its map data. These are live frame stores, not a
@@ -2054,7 +2054,7 @@ enemy_move_upstream_56dc96_low_stack(EnemyMoveFullFrame &f) {
         return ENEMY_MOVE_UPSTREAM_LOW_STACK_CONTINUE_56DDD7;
 
     for (int direction = 0; direction < 8; ++direction) {
-        const int x = xrange(f.local_18 + VehMoveDeltaX[direction]);
+        const int x = wrap_map_x(f.local_18 + VehMoveDeltaX[direction]);
         const int y = f.local_14 + VehMoveDeltaY[direction];
         f.local_4 = x;
         f.local_8 = y;

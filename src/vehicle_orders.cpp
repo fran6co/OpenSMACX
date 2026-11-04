@@ -190,7 +190,7 @@ int __cdecl battle_fight(int veh_id, int dir, int mode, int allow_interceptor,
     } else {
         x = VehMoveDeltaX[dir];
     }
-    const int val_x = xrange(Vehs[veh_id].x + x);
+    const int val_x = wrap_map_x(Vehs[veh_id].x + x);
 
     const int y = mode != 0 ? RadiusOffsetY[dir] : VehMoveDeltaY[dir];
     const int val_y = Vehs[veh_id].y + y;

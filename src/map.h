@@ -593,7 +593,11 @@ MEASURED inline BOOL __cdecl on_map(int x, int y) {
     return y >= 0 && y < (int)MapLatitudeBounds && x >= 0 && x < (int)MapLongitudeBounds;
 }
 
-MEASURED inline int __cdecl xrange(int x) {
+int __cdecl xrange(int x);
+
+// Shared inline coordinate-wrap implementation. Keep the mapped `xrange`
+// symbol out of line for source owners whose pinned code calls it directly.
+inline int __cdecl wrap_map_x(int x) {
     if (!(MapIsFlat & 1)) {
         const int longitude_bounds = MapLongitudeBounds;
         if (x < 0) return x + longitude_bounds;

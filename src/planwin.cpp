@@ -163,7 +163,7 @@ void PlanWin::init(char *) {
 // Midpoint along the shorter horizontal interval on a wrapped map. The
 // original uses the same three-stage calculation for two input pairs and
 // then for their midpoints; on a flat map it does not wrap the result.
-static int plan_horizontal_midpoint(int left, int right) {
+static inline int plan_horizontal_midpoint(int left, int right) {
     const int distance = abs(right - left);
     const int width = MapLongitudeBounds;
     const bool flat = (MapIsFlat & 1) != 0;
@@ -218,7 +218,7 @@ void PlanWin::opticenter(int x1, int y1, int x2, int y2, int force_redraw) {
         ++zoom_offset_;
         calculate_dimensions();
 
-        const bool flat = (MapIsFlat & 1) != 0;
+        const int flat = MapIsFlat & 1;
         const int width = MapLongitudeBounds;
         bool first_point_fits = true;
         {
@@ -328,7 +328,7 @@ void PlanWin::monocenter(int x, int y, int force_redraw) {
         ++zoom_offset_;
         calculate_dimensions();
 
-        const bool flat = (MapIsFlat & 1) != 0;
+        const int flat = MapIsFlat & 1;
         const int width = MapLongitudeBounds;
         const int height = MapLatitudeBounds;
         const int left = field_1DDA4_;
@@ -420,7 +420,7 @@ void PlanWin::draw_line_base(int base_id1, int base_id2, int color) {
 
 
 
-static bool planwin_base_known_to_faction(const Base &base, int faction) {
+static inline bool planwin_base_known_to_faction(const Base &base, int faction) {
     if (GameDataStateStorage.fields_.game_state_ & STATE_OMNISCIENT_VIEW) return true;
     if ((PlayersData[faction].flags & PFLAG_MAP_REVEALED) == 0) {
         const int tile_index = base.y * MapLongitude
@@ -432,7 +432,7 @@ static bool planwin_base_known_to_faction(const Base &base, int faction) {
         || (base.visibility & (1U << (faction & 31))) != 0;
 }
 
-static bool planwin_tile_has_known_base(int x, int y, int faction) {
+static inline bool planwin_tile_has_known_base(int x, int y, int faction) {
     int base_index;
     for (base_index = 0; base_index < GameDataStateStorage.fields_.base_current_count_; ++base_index) {
         const Base &base = Bases[base_index];
@@ -465,7 +465,7 @@ void PlanWin::on_redraw() {
         const Base &base = Bases[base_draw_index];
         if (!planwin_base_known_to_faction(base, faction)) continue;
 
-        bool intersects_plan_line = false;
+        int intersects_plan_line = 0;
         if (field_21A6C_ != 0) {
             int base_line_index;
             for (base_line_index = 0; base_line_index < line_count_;
@@ -473,7 +473,7 @@ void PlanWin::on_redraw() {
                 const PlanLineRecord &record = line_records_[base_line_index];
                 if ((base.x == record.x1 && base.y == record.y1)
                     || (base.x == record.x2 && base.y == record.y2)) {
-                    intersects_plan_line = true;
+                    intersects_plan_line = 1;
                 }
             }
         }
@@ -761,3 +761,13 @@ Status: Complete
 // kind      game
 // RECOVERY_GENERATED: v1 vbtable 0x0066D414 0x0066D41C ??_8PlanWin@@7B@ 0x0048BCD0
 // RECOVERY_GENERATED: v1 vtable 0x0066D2A4 ? ??_7PlanWin@@6BBuffer@@@ 0x0048BCD0
+
+// ORIGINAL: 0x0048B3F0 ?back_redraw@PlanWin@@QAEXXZ 0x0048B3F0-0x0048B445 FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["The body sets MapWin +0x1DD70, fills the GraphicWin virtual base, redraws the MapWin, then copies that base's Buffer into PlanWin's own Buffer using DIB width and top-down height.", "MapWin virtually inherits GraphicWin and PlanWin declares its own Buffer at +0x21A70. Typed base conversions follow the vbtable; Buffer::dib_ supplies the observed +0x4C4/+0x4C8 dimensions.", "Pinned48B432 forms ECX=virtual GraphicWin base+0x444 (Buffer source);48B43D pushes PlanWin+0x21A70 as destination before Buffer::copy5D95B0. Its five-argument wrapper and full blitter preserve receiver-as-source and pointer-argument-as-destination."], "reason": "Recover PlanWin's backing-image refresh through its real MapWin/GraphicWin hierarchy and typed buffers."}
+void PlanWin::back_redraw() {
+    field_1DD70_ = 0x84010002;
+    GraphicWin::fill(0);
+    draw_map(0);
+    Buffer::copy(&buffer_, 0, 0, dib_.bmiHeader.biWidth,
+                 -dib_.bmiHeader.biHeight);
+}

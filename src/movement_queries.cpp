@@ -110,7 +110,7 @@ int __cdecl coast_or_border(int x_point_a, int y_point_a, int x_point_b,
     }
     uint32_t region_b = region_at(x_point_b, y_point_b);
     for (int i = 1; i < 9; i++) {
-        int x_radius = xrange(x_point_a + RadiusOffsetX[i]);
+        int x_radius = wrap_map_x(x_point_a + RadiusOffsetX[i]);
         int y_radius = y_point_a + RadiusOffsetY[i];
         if (on_map(x_radius, y_radius) && (is_ocean(x_radius, y_radius)
                 || whose_territory(faction_id, x_radius, y_radius, NULL, false) != (int)faction_id
