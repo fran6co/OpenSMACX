@@ -284,32 +284,7 @@ Status: Complete
 // reads it.
 
 
-/*
-Purpose: Bounds check and handling of x coordinate for round maps.
-// ORIGINAL: 0x0048BEE0 ?xrange@@YAHH@Z 0x0048BEE0-0x0048BF05 BYTE_EXACT
-// LEVER: `!(MapIsFlat & 1)`, not `!MapIsFlat` - the image reads the low BYTE
-//   and tests bit zero, matching every other MapIsFlat site in the tree
-//   (game.cpp, veh.cpp, terraforming.cpp already do this). Also, the guard's
-//   two arms are written `if (x < 0) {...} else if (x >= bounds) {...}`, NOT
-//   `if (x >= 0) {...} else {...}` - same condition, but the image's jge
-//   falls through to the negative-x arm, which only the swapped polarity
-//   reproduces. Fixed xrange itself plus two callers, `site_radius` (this
-//   batch) and `SquareLock::unlock` (bonus, out of batch).
-// size      37 bytes
-// prototype 
-// callers   4   call targets   0
-// kind      game
-// flags     frame;sp_ready;purged_ok
-// calls     (none)
-Return Value: X coordinate
-Status: Complete
-*/
-// The canonical `xrange` symbol is emitted out of line here. Its single
-// wrap implementation is the shared inline `wrap_map_x` in map.h; measured
-// inline callers use that helper directly.
-int __cdecl xrange(int x) {
-    return wrap_map_x(x);
-}
+
 
 
 
@@ -1692,8 +1667,8 @@ int __cdecl goody_at(int x, int y) {
 /*
 Purpose: Clear the map's site values in a radius from the tile.
 // ORIGINAL: 0x00592400 ?site_radius@@YAXHHH@Z 0x00592400-0x00592480 BYTE_EXACT
-// LEVER: fixed by fixing `xrange()` itself (see 0x0048BEE0, same file) -
-//   `MapIsFlat & 1` and the swapped if/else polarity. No change needed here.
+// LEVER: fixed by fixing `xrange()` itself (see 0x0048BEE0, src/planwin.cpp) - `MapIsFlat & 1` and the swapped if/else polarity. No change needed here.
+
 // size      128 bytes
 // prototype void (__cdecl ?site_radius@@YAXHHH@Z)(int xCoord, int yCoord, int)
 // callers   2   call targets   0

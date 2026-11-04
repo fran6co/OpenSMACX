@@ -66,10 +66,10 @@
       "start": "0x0048AE00",
       "end_exclusive": "0x0048C060",
       "recovered_tu": "src/planwin.cpp",
-      "reason": "Inferred PlanWin contribution core, including the neighboring xrange implementation selected by the original direct caller. Membership remains a reviewed hypothesis; the current map.cpp provider and four mismatched methods are unresolved.",
+      "reason": "Inferred complete known PlanWin contribution core, including the externally callable xrange provider selected by opticenter. The helper is homed with this candidate; four mismatched methods and historical object/header-COMDAT provider attribution remain unresolved.",
       "evidence": [
         "Source-owned PlanWin startup, lifecycle, methods and generated receiver entries account for this band; original NOP/INT3 padding fills the inter-entry gaps.",
-        "The original opticenter body calls xrange at0x0048BEE0, adjacent to its own class lifetime entries. This helper provider needs investigation before consolidating the whole inferred unit.",
+        "Pinned opticenter directly calls xrange at0x0048B692, targeting0x0048BEE0 inside this core. The current external definition and complete mapping live in planwin.cpp; its shared map.h declaration continues serving other application consumers. This is inferred provider ownership, not proof of a historical filename or exclusion of a selected inline-header copy.",
         "Detached constructor/destructor EH spans remain associated obligations; vtable extents and historical object boundaries remain unproved."
       ]
     },
@@ -308,6 +308,103 @@
         "Original CRT slot0x006825F8 selects the TutorialWindow initializer; source owns its actual object, constructor, registered destructor and class-generated receiver entries.",
         "The eight formerly split member bodies are reunited in src/tutwin.cpp without changing their implementation or historical mappings. Prior separation was a compiler-context investigation, not historical TU evidence.",
         "Destructor/tut_win detached spans and tour7 literal ranges remain source-owned obligations. Tutorial flags and the unresolved climate-gate extent remain data/lifetime obligations; code grouping does not prove their complete layout."
+      ]
+    },
+    {
+      "name": "Credits",
+      "start": "0x00428750",
+      "end_exclusive": "0x00428F8B",
+      "recovered_tu": "src/credits.cpp",
+      "reason": "Inferred complete Credits contribution core, with lifetime startup/finalization, class lifecycle, generated deleting entries, and the local show entry included.",
+      "evidence": [
+        "The whole-home frontier reports 20 primary identities in one band, no foreign mapped identities, and no nonpadding gaps.",
+        "The source annotations include _$E21 and _$E19, Credits construction/destruction, deleting entries, load/unload, exec/draw, all mapped input/timer callbacks, and show_credits; no Credits primary was found elsewhere in the reviewed source annotations.",
+        "Constructor/destructor and loader secondary spans in 0x00653110-0x006532B0 are retained as obligations outside the contiguous core; associated owned tables, strings, globals, and vtable entries remain part of the review closure."
+      ]
+    },
+    {
+      "name": "FactionNetworkDiplomacy",
+      "start": "0x005391C0",
+      "end_exclusive": "0x00539460",
+      "recovered_tu": "src/faction_network.cpp",
+      "reason": "Inferred complete network treaty and agenda operation core: the three treaty updates and their three agenda counterparts form one complete paired helper set.",
+      "evidence": [
+        "The whole-home frontier reports all six mapped primary identities in one band, with no foreign mapped identities and no nonpadding gaps.",
+        "The six complete mapped functions are net_treaty_on/off/set_treaty and net_agenda_on/off/set_agenda; their paired protocol operations provide a concrete cohort relationship beyond address adjacency.",
+        "The functions consume external faction, network, message, and logging owners; those callers/providers are dependencies, not evidence that their bodies belong in this candidate interval."
+      ]
+    },
+    {
+      "name": "MultiDebug",
+      "start": "0x005C97C0",
+      "end_exclusive": "0x005C9EBB",
+      "recovered_tu": "src/multidebug.cpp",
+      "reason": "Inferred complete MultiDebug subsystem core, including static initialization/finalization and compiler-generated class deletion entries.",
+      "evidence": [
+        "The whole-home frontier reports all 11 mapped primary identities in one band, with no foreign mapped identities and no nonpadding gaps.",
+        "The source annotations include the MULTIDEBUG startup/finalizer pair, constructor/destructor, both deleting entries, init/close, timer callbacks, and redraw; source-wide symbol review found no MultiDebug method mapped outside the interval.",
+        "The diagnostics/UI role is not used as an exclusion; full network/global storage and caller closure still require ownership review."
+      ]
+    },
+    {
+      "name": "Path",
+      "start": "0x0059A1B0",
+      "end_exclusive": "0x0059D22A",
+      "recovered_tu": "src/path.cpp",
+      "reason": "Inferred complete pathfinding and path-state lifecycle contribution core, including Paths startup/finalization and the full mapped Path method family.",
+      "evidence": [
+        "The whole-home frontier reports all 14 mapped primary identities in one band, with no foreign mapped identities and no nonpadding gaps.",
+        "The band includes the Paths initializer/finalizer and Path init/shutdown/destructor, find/move, ZOC/territory/continent/sensor operations; source-wide annotated symbol review found no Path primary outside it.",
+        "Path static state, map consumers, and its related data extents are source-owned evidence outside the function interval and must remain linked in the candidate's ownership scope."
+      ]
+    },
+    {
+      "name": "PopupAPI",
+      "start": "0x00627110",
+      "end_exclusive": "0x00627CFC",
+      "recovered_tu": "src/popup_api.cpp",
+      "reason": "Inferred complete popup API overload-wrapper contribution core, including its local helper and the full pop/pops/pop_ask/pop_ask_number overload families.",
+      "evidence": [
+        "The whole-home frontier reports 39 mapped primary identities in one band, with no foreign mapped identities and no nonpadding gaps.",
+        "The source annotations account for the overload families and local pop_close/helper bodies across the entire current home band; no selected wrapper is omitted by a narrower class-only or address-slice proposal.",
+        "The separate popup implementation/callback providers in other source homes are dependencies; their proximity or API relationship does not establish shared original TU membership."
+      ]
+    },
+    {
+      "name": "VehicleStatsText",
+      "start": "0x0057D560",
+      "end_exclusive": "0x0057DED8",
+      "recovered_tu": "src/vehicle_stats.cpp",
+      "reason": "Inferred complete vehicle-stat text formatter core, grouped by the offense/defense/stats display family and its source-owned text fragments.",
+      "evidence": [
+        "The whole-home frontier reports all five mapped primary identities in one band, with no foreign mapped identities and no nonpadding gaps.",
+        "The five identities are the complete say_offense, say_defense, say_stats_3, say_stats_2, and say_stats output operations; the source also owns their separately addressed formatting fragments at 0x0068F118-0x0068F144.",
+        "Those data anchors support the full formatter ownership closure but do not prove that this current filename matches a historical source file."
+      ]
+    },
+    {
+      "name": "WorldGeneration",
+      "start": "0x005C1E20",
+      "end_exclusive": "0x005C899D",
+      "recovered_tu": "src/world.cpp",
+      "reason": "Inferred complete world-generation contribution core, including Fractal sampling operations, mapped world terrain/climate/site routines, and all local helpers in this dense source-home band.",
+      "evidence": [
+        "The whole-home frontier reports 45 mapped primary identities in one band, with no foreign mapped identities and no nonpadding gaps.",
+        "The source annotations account for Fractal initialization and sample helpers plus world construction, terrain/altitude, river/shoreline/climate/site, feature and landmark operations through world_build; no current-home primary is omitted from this interval.",
+        "The separately owned Map, Path, and other global terrain tables remain consumer/provider closure, not members inferred from world-function callers.",
+        "The breadth and source cohesion make this a practical full-owner candidate even though its 28KB span cannot be taken as proof of an original object size or filename."
+      ]
+    },
+    {
+      "name": "XPopupAPI",
+      "start": "0x005BF310",
+      "end_exclusive": "0x005BFE8E",
+      "recovered_tu": "src/xpops.cpp",
+      "reason": "Inferred complete X-prefixed popup overload-wrapper contribution core, covering all mapped X_pop/X_pops/X_pop_ask/X_pop_ask_number forms.",
+      "evidence": [
+        "The whole-home frontier reports 37 mapped primary identities in one band, with no foreign mapped identities and no nonpadding gaps.",
+        "The selected band contains the full current source-home family of X-prefixed popup forms and their callback/sprite overloads; the separate PopupAPI band at 0x00627110-0x00627CFC remains its own candidate rather than being merged by shared API names.",
+        "Both wrapper families depend on external popup implementation and callback owners; current source placement does not establish whether they were separate original object files."
       ]
     }
   ]

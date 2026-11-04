@@ -771,3 +771,33 @@ void PlanWin::back_redraw() {
     Buffer::copy(&buffer_, 0, 0, dib_.bmiHeader.biWidth,
                  -dib_.bmiHeader.biHeight);
 }
+
+// The pinned opticenter call at 0x0048B692 reaches this external helper.
+// Its selected body lies in the inferred PlanWin contribution core.
+// Historical object ownership versus header-COMDAT selection remains unproved.
+/*
+Purpose: Bounds check and handling of x coordinate for round maps.
+// ORIGINAL: 0x0048BEE0 ?xrange@@YAHH@Z 0x0048BEE0-0x0048BF05 BYTE_EXACT
+// LEVER: `!(MapIsFlat & 1)`, not `!MapIsFlat` - the image reads the low BYTE
+//   and tests bit zero, matching every other MapIsFlat site in the tree
+//   (game.cpp, veh.cpp, terraforming.cpp already do this). Also, the guard's
+//   two arms are written `if (x < 0) {...} else if (x >= bounds) {...}`, NOT
+//   `if (x >= 0) {...} else {...}` - same condition, but the image's jge
+//   falls through to the negative-x arm, which only the swapped polarity
+//   reproduces. Fixed xrange itself plus two callers, `site_radius` (this
+//   batch) and `SquareLock::unlock` (bonus, out of batch).
+// size      37 bytes
+// prototype
+// callers   4   call targets   0
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     (none)
+Return Value: X coordinate
+Status: Complete
+*/
+// The canonical `xrange` symbol is emitted out of line here. Its single
+// wrap implementation is the shared inline `wrap_map_x` in map.h; measured
+// inline callers use that helper directly.
+int __cdecl xrange(int x) {
+    return wrap_map_x(x);
+}
