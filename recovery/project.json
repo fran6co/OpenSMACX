@@ -273,6 +273,20 @@
           "-c"
         ]
       },
+      "src/caviar_chain.cpp": {
+        "flags": [
+          "/nologo",
+          "/TP",
+          "/Zm200",
+          "/GX",
+          "/O2",
+          "/Ob2",
+          "-MT",
+          "/W4",
+          "/Z7",
+          "-c"
+        ]
+      },
       "src/datalink.cpp": {
         "flags": [
           "/nologo",

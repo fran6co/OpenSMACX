@@ -149,6 +149,7 @@ set(OPENSMACX_SOURCES
     src/buttongroup.cpp
     src/caviar_objects.cpp
     src/caviar.cpp
+    src/caviar_chain.cpp
     src/caviar_record.cpp
     src/caviar_io.cpp
     src/caviar_error.cpp
@@ -600,6 +601,7 @@ set_property(SOURCE
     src/buffer.cpp
     src/buffer_string_writers.cpp
     src/caviar.cpp
+    src/caviar_chain.cpp
     src/credits.cpp
     src/game.cpp
     src/game_calendar.cpp

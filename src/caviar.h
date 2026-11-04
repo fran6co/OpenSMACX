@@ -19,6 +19,8 @@ class Palette;
 
 // Shared renderer camera scale, independently read from original readonly data.
 extern const float CaviarCameraDistance;
+// Shared readonly cut used by the loader's scaled chain walk.
+extern const float vox_sqrt_two;
 
 struct VOX_Vect {
   float values[3];
