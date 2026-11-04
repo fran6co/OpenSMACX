@@ -8,6 +8,27 @@ policy is in `WORKFLOW.md`; no spelling trick overrides that policy.
 
 ## Structural questions first
 
+- Contiguous executable addresses are not sufficient to recover an original
+  object module. A control with the configured VC6 compiler gives two ordinary
+  C-linkage functions returning the same string separate code COMDATs under
+  `/O2 /GX`, both with explicit `/Ob1` and `/Ob2`, without an explicit `/Gy`.
+  Both references share one string instance. `/Od /GX` instead gives one ordinary
+  code section and two string instances. These are observations of the current
+  compiler, not recovered original switches or proof of historical TU boundaries.
+  Combine address neighborhoods with literal storage, callers, generated
+  providers and lifecycle evidence; retain discontiguous provider obligations.
+- Equal strings at distinct original addresses establish distinct linked
+  storage, not named source arrays or separate original TUs by themselves.
+  With the observed optimized pooling behavior, finer TU boundaries are a
+  concrete alternative to named arrays or different pooling options. The
+  606-identity interface/assets correspondence therefore remains inferred.
+- Reuniting `Sound::set_type` with its Voice consumers makes `/Ob2` inline the
+  calls in the VoiceRx and VoiceTx constructors. Moving its definition after
+  those consumers did not restore the original calls. Definition visibility
+  across the TU matters; source order alone does not isolate this body from
+  VC6's inliner. Preserve the constructor claims and investigate original TU
+  visibility/compiler policy rather than forcing a local noinline workaround.
+
 - Catalogue return decorations need provenance too. The stripped executable's
   `Buffer::box_sprite` entry leaves incidental EAX on guard and no-mask paths;
   no result use was observed across 380 mapped direct call sites. A void model
