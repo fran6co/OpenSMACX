@@ -3807,6 +3807,14 @@ void __cdecl load_voxels() {
 // RECOVERY_OBJECT: v2 0x007A81A0 0x007A99A0 ?VoxelRowColorTables@@3PAY0BAA@EA 0x00451030
 unsigned char VoxelRowColorTables[24][256];
 
+// Preserve the palette loader's original string instances. The same PCX name
+// used by load_vehicles is a different original object at 0x0068504C.
+// These bounds cover the observed NUL-terminated contents, not extra padding.
+// RECOVERY_OBJECT: v2 0x00684F9C 0x00684FAD _PaletteGammaPreferenceName 0x00451A10
+static char PaletteGammaPreferenceName[] = "Gamma Correction";
+// RECOVERY_OBJECT: v2 0x00684FB0 0x00684FBC _PaletteSheetName 0x00451A10
+static char PaletteSheetName[] = "PALETTE.PCX";
+
 // ORIGINAL: 0x00451A10 ?load_palette@@YAXXZ 0x00451A10-0x00451C44;0x00655042-0x006550F9
 // RECOVERY_BINDING: v1 {"evidence": ["Earlier observation in the retired donor/seed: historical seed:src/recovered/units/00451a10.cpp", "task:asset-startup-loader-owner", "Native Buffer then Gamma lifetime; prefs key/default100; float operand66C540(0.01f) and existing PrefWinGammaCorrection6846A8; Palette1 PCX range10/236, Palette2 copy direction and Gamma apply1. Separate VGA port helper5D4240 is not this loader or a proved equivalent device path."], "reason": "Recover the complete asset loader through source-owned C++ objects, arrays and normal lifecycle while retaining original mappings and historical findings; no asset/runtime acceptance claimed."}
 void __cdecl load_palette() {
@@ -3814,10 +3822,10 @@ void __cdecl load_palette() {
     Gamma gamma;
     int gamma_percent;
 
-    gamma_percent = prefs_get("Gamma Correction", 100, 0);
+    gamma_percent = prefs_get(PaletteGammaPreferenceName, 100, 0);
     PrefWinGammaCorrection = static_cast<float>(gamma_percent) * 0.01f;
 
-    buffer.load_pcx("PALETTE.PCX", &g_PALETTE1, 0x0A, 0xEC);
+    buffer.load_pcx(PaletteSheetName, &g_PALETTE1, 0x0A, 0xEC);
     g_PALETTE2.copy_from(&g_PALETTE1);
     gamma.exec(&g_PALETTE1, PrefWinGammaCorrection, 1);
 }
