@@ -53,12 +53,11 @@ class AlphaMenu : public Menu {
   static int __cdecl fill_func(GraphicWin *target, int mode, RECT *clip);
   static int backfill_func(GraphicWin *target);
   // 0x00460DD0 - the catalogue pins the name ?check@MainMenu@@QAEXH@Z on it,
-  // but the object it runs on is THIS one (??0Console builds a Menu-shaped
-  // object at this+0x22A2C and then calls 0x00460DD0 on it), so the method
-  // lives here rather than on a class the tree would have to invent.
-  // Declared ahead of its own body landing because Console::prev_cursor and
-  // menu_update drive it every turn. The full source owner is
-  // this AlphaMenu definition in alphamenu.cpp; the native catalogue name is retained.
+  // and Console calls it on the menu subobject at +0x22A2C. Keep the current
+  // AlphaMenu layout and typed callers; a common receiver alone does not
+  // distinguish an original MainMenu subclass, alias or class naming error.
+  // Application policy is defined separately in console_menu_policy.cpp;
+  // the catalogue identity and unresolved relationship remain explicit.
   void check(int veh_id);
   int menu_init(); // original catalogue MainMenu::menu_init, Console-owned receiver
 

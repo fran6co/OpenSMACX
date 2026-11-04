@@ -17,6 +17,7 @@ import pytest
 ROOT = Path(__file__).resolve().parents[2]
 CALLER_FILES = (
     "src/alphamenu.cpp",
+    "src/console_menu_policy.cpp",
     "src/council.cpp",
     "src/councwin.cpp",
     "src/famewin.cpp",

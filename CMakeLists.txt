@@ -118,6 +118,7 @@ target_compile_options(zlib PRIVATE /W0)
 
 set(OPENSMACX_SOURCES
     src/alphamenu.cpp
+    src/console_menu_policy.cpp
     src/alpha.cpp
     src/alphasave.cpp
     src/faction_strategy.cpp
@@ -479,6 +480,7 @@ set_source_files_properties(
     src/statuswin.cpp
     src/prodpicker.cpp
     src/alphamenu.cpp
+    src/console_menu_policy.cpp
     PROPERTIES COMPILE_OPTIONS "/Oy-")
 # Preserve measured frame-based accesses in the qualifying owner cohort.
 # Generic Sprite implementation and networking retain their measured default recipes.

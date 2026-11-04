@@ -757,7 +757,8 @@ extern int TimeControlsSelection;
 // menu_update hands the console's selected-vehicle id to its embedded
 // AlphaMenu at +0x22A2C. The catalogued MainMenu::check (0x00460DD0,
 // 4782 bytes) is implemented on the genuine AlphaMenu member declared in
-// alphamenu.h; no MainMenu source type or forwarding seam is required.
+// alphamenu.h and console_menu_policy.cpp; original MainMenu type identity
+// remains unresolved without changing this receiver layout.
 
 
 // Supply dialog implemented by the Console translation unit.

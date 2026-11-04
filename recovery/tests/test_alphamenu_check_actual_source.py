@@ -9,7 +9,7 @@ from match_recovery.source import Mode, State, read_file
 
 
 ROOT = Path(__file__).resolve().parents[2]
-OWNER = ROOT / "src/alphamenu.cpp"
+OWNER = ROOT / "src/console_menu_policy.cpp"
 ADDRESS = 0x00460DD0
 END = 0x0046207E
 MARKER = "/* ACTUAL ALPHAMENU CHECK BODY */"

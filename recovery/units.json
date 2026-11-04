@@ -693,6 +693,18 @@
         "The adjacent FactionArt destructor456010, CaviarData destructor456100 and Gamma destructor/deleting/Buffer-adjustor entries456110/456280/4562B0 complete the known provider frontier through4562BB. Pinned intervening bytes are NOP alignment, followed by five INT3 bytes before InfoWin at4562C0. All606 known primary identities in this proposed contribution have the asset CPP as their source/emission home; Gamma header-generated entries retain their class-owner annotations with explicit compile contexts.",
         "Gamma has a genuine inline destructor in gamma.h, naturally emitted by load_palette. Rehome its existing source compile-context fact from the former palette-loader unit, without duplicating an implementation or inventing a callback. The reunited caption definition precedes its direct load_interface consumer, so it needs no new common-header API. Four equal-content filename arrays preserve distinct original writable allocations."
       ]
+    },
+    {
+      "name": "ConsoleMenuPolicy",
+      "start": "0x0045FB20",
+      "end_exclusive": "0x0046207E",
+      "recovered_tu": "src/console_menu_policy.cpp",
+      "reason": "Inferred two-entry application policy contribution, distinct from AlphaMenu drawing and generic library Menu. Exact adjacent spans and shared Console receiver support a source correspondence; no original filename or class hierarchy is asserted.",
+      "evidence": [
+        "menu_init45FB20..460DD0 and check460DD0..46207E are exactly consecutive, with no primary interleavers. WinMain ends45FB1B and the following MapWin initializer begins462080; the pinned surrounding gaps are separately checked alignment.",
+        "Both routines use the existing Menu interface on the Console-owned AlphaMenu receiver. This does not disprove an original MainMenu subclass or typedef; preserve the catalogue names, current typed symbols, and that unresolved structural question.",
+        "Neither function uses the AlphaMenu animation helpers, Wave global or animation timing/colour globals. Those remain with the compact AlphaMenu UI core; no class layout, globals or lifecycle operations move."
+      ]
     }
   ]
 }

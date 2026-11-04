@@ -6,7 +6,7 @@ def test_alphamenu_menu_init_population():
     import tempfile
     
     
-    candidate = (Path(__file__).resolve().parents[2] / "src/alphamenu.cpp").read_text()
+    candidate = (Path(__file__).resolve().parents[2] / "src/console_menu_policy.cpp").read_text()
     signature = "int AlphaMenu::menu_init()"
     start = candidate.index(signature)
     opening = candidate.index("{", start)

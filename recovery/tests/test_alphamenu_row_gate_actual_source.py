@@ -11,7 +11,7 @@ from match_recovery.source import State, read_file
 
 
 ROOT = Path(__file__).resolve().parents[2]
-SOURCE = ROOT / "src/alphamenu.cpp"
+SOURCE = ROOT / "src/console_menu_policy.cpp"
 
 
 def _expression(source: str) -> str:
