@@ -140,6 +140,7 @@ set(OPENSMACX_SOURCES
     src/ambience.cpp
     src/autosound.cpp
     src/base.cpp
+    src/base_compute.cpp
     src/basebutton.cpp
     src/basepop.cpp
     src/buffer.cpp
@@ -570,6 +571,7 @@ set_source_files_properties(src/alphanet.cpp PROPERTIES COMPILE_OPTIONS "/Oy-")
 # Mixed generic/application owners retain their independently measured defaults.
 set_source_files_properties(
     src/base.cpp
+    src/base_compute.cpp
     src/multiwin.cpp
     src/socialwin.cpp
     src/social.cpp
