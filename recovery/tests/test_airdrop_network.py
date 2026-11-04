@@ -34,9 +34,6 @@ def test_air_defense_popup_uses_original_alien_air_picture():
 
 
 def body(path, signature):
-    if signature == "int NetDaemon::veh_drop(":
-        assert path == "src/netdaemon.cpp"
-        path = "src/netdaemon_vehicle.cpp"
     source = (ROOT / path).read_text()
     start = source.index(signature)
     return source[start:source.index("\n}", start) + 2]

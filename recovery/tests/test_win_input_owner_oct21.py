@@ -17,8 +17,8 @@ import pytest
 HERE = Path(__file__).resolve()
 _root = os.environ.get("OPENSMACX_ROOT")
 ROOT = Path(_root).resolve() if _root else HERE.parents[2]
-PRODUCT = ROOT / "src/win_input.cpp"
-RETAINED = ROOT / "src/win.cpp"
+PRODUCT = ROOT / "src/win.cpp"
+RETAINED = ROOT / "src/win_input.cpp"
 
 
 def _mask_cpp(text):
@@ -104,6 +104,8 @@ def _actual_definitions():
     assert "void __cdecl Win::OnKey(" not in retained
     assert "void __cdecl OnChar(" not in retained
     assert "void __cdecl OnSysKey(" not in retained
+    assert "void __cdecl flush_input()" in retained
+    assert "void __cdecl do_all_chars()" in retained
     return {
         "key": _definition(product, r"void\s+__cdecl\s+Win::OnKey", "Win::OnKey"),
         "char": _definition(product, r"void\s+__cdecl\s+OnChar", "OnChar"),

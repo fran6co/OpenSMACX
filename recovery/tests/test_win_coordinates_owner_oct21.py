@@ -1,7 +1,7 @@
 """C++98 host controls for the relocated Win coordinate-owner methods.
 
-These compile six actual rectangle wrappers from win_coordinates.cpp and two
-actual XY helpers from win_point_coordinates.cpp. The harness models only Win
+These compile six actual rectangle wrappers and two actual XY helpers from
+win.cpp. The harness models only Win
 fields, RECT/POINT, and GetCursorPos; it does not claim VC6 instruction or full
 runtime fidelity.
 """
@@ -17,8 +17,7 @@ from match_recovery.source import read_file
 
 
 ROOT = Path(__file__).resolve().parents[2]
-COORDINATES = ROOT / "src/win_coordinates.cpp"
-POINT_COORDINATES = ROOT / "src/win_point_coordinates.cpp"
+WIN_CPP = ROOT / "src/win.cpp"
 COMPILERS = [path for name in ("g++", "clang++")
              if (path := shutil.which(name)) is not None]
 
@@ -34,45 +33,42 @@ def _actual_definition(text, qualified, *, after=0, before=None):
 
 
 def _actual_bodies():
-    moved_text = COORDINATES.read_text()
-    point_text = POINT_COORDINATES.read_text()
-    moved_rows = {row.address: row for row in read_file(COORDINATES)}
-    point_rows = {row.address: row for row in read_file(POINT_COORDINATES)}
+    source_text = WIN_CPP.read_text()
+    rows = {row.address: row for row in read_file(WIN_CPP)}
 
-    def mapped(text, rows, address, original_name, end, qualified, **bounds):
+    def mapped(address, original_name, end, qualified):
         assert address in rows
         row = rows[address]
         assert row.name == original_name
         assert row.image_spans == ((address, end),)
-        body = _actual_definition(text, qualified, **bounds)
+        # Restrict overload lookup to this identity's mapped region. In the full
+        # Win TU the RECT and XY overloads share names and must not be selected
+        # by whichever definition appears first.
+        next_line = min((candidate.line for candidate in rows.values()
+                         if candidate.line > row.line), default=None)
+        body = _actual_definition(source_text, qualified, after=row.line,
+                                  before=next_line)
+        assert body in source_text
         assert body in row.region
         return body
 
     bodies = {
-        "screen_rect": mapped(moved_text, moved_rows, 0x005ECF20,
-                              "?screen_to_client@Win@@QAEXPAURECT@@@Z",
+        "screen_rect": mapped(0x005ECF20, "?screen_to_client@Win@@QAEXPAURECT@@@Z",
                               0x005ECFD8, "Win::screen_to_client"),
-        "get_mouse": mapped(moved_text, moved_rows, 0x005EC8A0,
-                            "?get_mouse_pos@Win@@QAEXPAHPAH@Z",
+        "get_mouse": mapped(0x005EC8A0, "?get_mouse_pos@Win@@QAEXPAHPAH@Z",
                             0x005EC952, "Win::get_mouse_pos"),
-        "nonscreen_rect": mapped(moved_text, moved_rows, 0x005ED0A0,
-                                 "?nonscreen_to_client@Win@@QAEXPAURECT@@@Z",
+        "nonscreen_rect": mapped(0x005ED0A0, "?nonscreen_to_client@Win@@QAEXPAURECT@@@Z",
                                  0x005ED16A, "Win::nonscreen_to_client"),
-        "screen_nonclient": mapped(moved_text, moved_rows, 0x005ED520,
-                                    "?screen_to_nonclient@Win@@QAEXPAH0@Z",
+        "screen_nonclient": mapped(0x005ED520, "?screen_to_nonclient@Win@@QAEXPAH0@Z",
                                     0x005ED5BD, "Win::screen_to_nonclient"),
-        "client_rect": mapped(moved_text, moved_rows, 0x005ECFE0,
-                              "?client_to_screen@Win@@QAEXPAURECT@@@Z",
+        "client_rect": mapped(0x005ECFE0, "?client_to_screen@Win@@QAEXPAURECT@@@Z",
                               0x005ED094, "Win::client_to_screen"),
-        "nonclient_rect": mapped(moved_text, moved_rows, 0x005ED170,
-                                 "?nonclient_to_screen@Win@@QAEXPAURECT@@@Z",
+        "nonclient_rect": mapped(0x005ED170, "?nonclient_to_screen@Win@@QAEXPAURECT@@@Z",
                                  0x005ED236, "Win::nonclient_to_screen"),
         # These actual XY helper bodies moved together into their native owner TU.
-        "client_xy": mapped(point_text, point_rows, 0x005ED240,
-                            "?client_to_screen@Win@@QAEXPAH0@Z",
+        "client_xy": mapped(0x005ED240, "?client_to_screen@Win@@QAEXPAH0@Z",
                             0x005ED2C5, "Win::client_to_screen"),
-        "screen_xy": mapped(point_text, point_rows, 0x005ED2D0,
-                            "?screen_to_client@Win@@QAEXPAHPAH@Z",
+        "screen_xy": mapped(0x005ED2D0, "?screen_to_client@Win@@QAEXPAHPAH@Z",
                             0x005ED355, "Win::screen_to_client"),
     }
     for key in ("screen_rect", "get_mouse", "nonscreen_rect", "screen_nonclient",

@@ -356,11 +356,11 @@ def _vehicle_expected_block(baseline, address, marker, signature):
     return expected
 
 
-def _vehicle_blocks(root, vehicle_text=None):
-    """Validate the exact transport plus the two explicitly recovered operations."""
+def _vehicle_blocks(root, receiver_text=None):
+    """Validate the three real methods in their reunited daemon source owner."""
     root = Path(root)
-    path = root / "src/netdaemon_vehicle.cpp"
-    text = path.read_text() if vehicle_text is None else vehicle_text
+    path = root / "src/netdaemon.cpp"
+    text = path.read_text() if receiver_text is None else receiver_text
     baseline = _vehicle_baseline(root)
     blocks = {}
     positions = []
@@ -375,28 +375,21 @@ def _vehicle_blocks(root, vehicle_text=None):
         blocks[address] = block
         positions.append(start)
     assert positions == sorted(positions), "vehicle transport preserves definition order"
-    residual = text
-    for block in blocks.values():
-        assert residual.count(block) == 1
-        residual = residual.replace(block, "", 1)
-    _envelope(residual, ['#include "stdafx.h"', '#include <mmsystem.h>',
-              '#include "netdaemon.h"', '#include "netmsg.h"', '#include "console.h"',
-              '#include "game.h"', '#include "veh.h"', '#include "base.h"',
-              '#include "map.h"', '#include "log.h"', '#include "win.h"',
-              'extern int NetDaemonWaitTicks;'], "vehicle TU envelope")
     records = read_text(text, path)
-    assert len(records) == 3 and {r.address for r in records} == set(VEHICLE_OWNERS)
+    selected = [r for r in records if r.address in VEHICLE_OWNERS]
+    assert len(selected) == 3 and {r.address for r in selected} == set(VEHICLE_OWNERS)
     return blocks
 
 
 def historical_source(root, *, receiver_text=None, sender_text=None, header_text=None,
-                      spock_text=None, interface_text=None, vehicle_text=None):
+                      spock_text=None, interface_text=None):
     """Inverse only this migration, validating all discarded new-owner envelope."""
     root = Path(root)
     receiver = (root / "src/netdaemon.cpp").read_text() if receiver_text is None else receiver_text
-    vehicle_blocks = _vehicle_blocks(root, vehicle_text)
-    for _address, (_marker, signature) in VEHICLE_OWNERS.items():
-        assert signature not in receiver, "vehicle definition must have sole new owner"
+    vehicle_blocks = _vehicle_blocks(root, receiver)
+    for block in vehicle_blocks.values():
+        assert receiver.count(block) == 1
+        receiver = receiver.replace(block, "", 1)
     assert receiver.count(VEHICLE_ANCHOR) == 1
     # These are the validated ACTUAL blocks, including recovered early sync and
     # signed owner guard. Never substitute immutable baseline method bodies.

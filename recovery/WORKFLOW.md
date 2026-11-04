@@ -146,6 +146,17 @@ making local equality a prerequisite for the move. Do not replace recovered
 behavior with placeholders, weaken native gates, demote claims or invent accepted
 reports. The native automatic driver can still refuse a manual checkpoint.
 
+Before compiling a regrouping, audit every mapping and implementation in each
+source and destination, including helpers outside the selected address band.
+Check both transported and retained bodies; a selected-member audit can miss a
+helper accidentally carried with a larger comment/body block. Compare complete
+original identity/span/claim inventories and update emitting-TU/body facts through
+the source writer. After preparation, run `recover check-mappings` and
+`recover check-claims` before the full build. Host behavior tests do not establish
+whole-source uniqueness or complete retention. Freeze source, headers and build
+policy until all compiler measurements terminate; deliver further corrections to
+the coordinator for a new measurement epoch.
+
 Track the three nested counts: original TU candidates identified; those represented
 by corresponding recovered units, including placeholders; and those represented
 units verified byte-exact. Once correspondence is established, restore matching

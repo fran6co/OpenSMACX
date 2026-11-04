@@ -13,7 +13,7 @@ import pytest
 
 
 ROOT = Path(__file__).resolve().parents[2]
-SOURCE = ROOT / "src/tutwin_callouts.cpp"
+SOURCE = ROOT / "src/tutwin.cpp"
 HEADER = ROOT / "src/mapwin.h"
 METHODS = ("do_base", "do_iface", "do_soc", "do_des")
 RECEIVER_EXPRESSIONS = {

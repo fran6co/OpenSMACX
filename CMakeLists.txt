@@ -240,7 +240,6 @@ set(OPENSMACX_SOURCES
     src/setupwin.cpp
     src/multidebug.cpp
     src/tutwin.cpp
-    src/tutwin_callouts.cpp
     src/popmenu.cpp
     src/popup.cpp
     src/popup_wrappers.cpp
@@ -252,7 +251,6 @@ set(OPENSMACX_SOURCES
     src/planwin.cpp
     src/playerlock.cpp
     src/netdaemon.cpp
-    src/netdaemon_vehicle.cpp
     src/netdaemon_interface.cpp
     src/netdaemon_message_data.cpp
     src/netdaemon_spock.cpp
@@ -320,11 +318,8 @@ set(OPENSMACX_SOURCES
     src/vehicle_cost.cpp
     src/vector.cpp
     src/win.cpp
-    src/win_zorder.cpp
     src/win_coordinates.cpp
-    src/win_point_coordinates.cpp
     src/win_input.cpp
-    src/win_reparent.cpp
     src/winnodelist.cpp
 )
 
@@ -421,7 +416,6 @@ set_source_files_properties(
 # frame-preserving source profiles; application defaults and link settings stay fixed.
 set_source_files_properties(
     src/netdaemon.cpp
-    src/netdaemon_vehicle.cpp
     src/netdaemon_interface.cpp
     src/netdaemon_message_data.cpp
     src/netdaemon_spock.cpp
@@ -434,7 +428,6 @@ set_source_files_properties(
 set_source_files_properties(
     src/designwin.cpp
     src/tutwin.cpp
-    src/tutwin_callouts.cpp
     src/xpops.cpp
     PROPERTIES COMPILE_OPTIONS "/Oy-")
 # Original interface palette initialization and font lookup retain a frame
@@ -623,7 +616,6 @@ set_property(SOURCE
     src/mapwin.cpp
     src/mapwin_terrain.cpp
     src/netdaemon.cpp
-    src/netdaemon_vehicle.cpp
     src/prefwin.cpp
     src/log.cpp
     src/newtechwin.cpp
@@ -634,7 +626,6 @@ set_property(SOURCE
     src/texheap.cpp
     src/world.cpp
     src/win.cpp
-    src/win_zorder.cpp
     APPEND PROPERTY COMPILE_OPTIONS "/Z7")
 # Keep these measured frame-based helper owners on their explicit source profile.
 set_source_files_properties(

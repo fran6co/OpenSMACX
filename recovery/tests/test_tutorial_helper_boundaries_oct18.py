@@ -14,7 +14,7 @@ import pytest
 # When moved to recovery/tests, parents[2] is the worker root.
 ROOT = Path(__file__).resolve().parents[2]
 SOURCE = ROOT / "src/tutwin.cpp"
-CALLOUT_SOURCE = ROOT / "src/tutwin_callouts.cpp"
+CALLOUT_SOURCE = SOURCE
 PINNED_IMAGE = Path(os.environ.get(
     "OPENSMACX_IMAGE", str(ROOT / ".opensmacx/game/terranx_original.exe")
 ))

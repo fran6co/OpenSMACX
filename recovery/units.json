@@ -72,6 +72,243 @@
         "The original opticenter body calls xrange at0x0048BEE0, adjacent to its own class lifetime entries. This helper provider needs investigation before consolidating the whole inferred unit.",
         "Detached constructor/destructor EH spans remain associated obligations; vtable extents and historical object boundaries remain unproved."
       ]
+    },
+    {
+      "name": "Polygon",
+      "start": "0x00626470",
+      "end_exclusive": "0x00627100",
+      "recovered_tu": "src/polygon.cpp",
+      "reason": "Inferred compact polygon-rasterizer contribution core. The complete known mapped family forms one contiguous address neighborhood with no foreign mapped identities; the band is not asserted to be the historical object boundary.",
+      "evidence": [
+        "The candidate report lists eight complete mapped primary identities in this band: flat edge setup/advance, solid span/polygon, Gouraud edge/polygon, remapped span/polygon_dest.",
+        "All five mapped primary gaps are classified as original-image NOP/INT3 padding; there are no foreign mapped interleavers, same-family outliers, or cold nonpadding/unreadable spans.",
+        "All eight identities are currently mapped in src/polygon.cpp, which also owns the polygon scratch globals and typed storage anchors used by this family; those data spans remain associated evidence outside this code interval.",
+        "The pinned source mappings and primary spans establish the candidate membership evidence; current filename and matching results alone do not prove historical TU membership."
+      ]
+    },
+    {
+      "name": "FactionMonuments",
+      "start": "0x00476B30",
+      "end_exclusive": "0x00477B0F",
+      "recovered_tu": "src/faction_monuments.cpp",
+      "reason": "Inferred complete faction-monument event-handler core. Seventeen mapped functions form a tight uninterrupted ownership neighborhood with padding-only gaps and no other mapped contribution inside the band; historical object boundaries remain unproven.",
+      "evidence": [
+        "The candidate report lists all 17 mapped clear_monuments/mon_* handlers in the proposed interval; it reports no foreign mapped interleavers, same-family outliers, or cold spans.",
+        "All 15 mapped primary gaps are classified as original-image NOP/INT3 padding.",
+        "The current source owner contains the FactionMonuments object binding at 0x0094CA08 and its event handlers, providing a concrete data-owner closure to inspect alongside the function core.",
+        "The neighboring MonuWin::monument UI function at 0x00476A50 is separately mapped outside this interval; thematic proximity is not used to absorb it."
+      ]
+    },
+    {
+      "name": "Cursor",
+      "start": "0x0063B2D0",
+      "end_exclusive": "0x0063B931",
+      "recovered_tu": "src/cursor.cpp",
+      "reason": "Inferred complete Cursor class core, including constructor/destructor and class startup/shutdown entries.",
+      "evidence": [
+        "Whole-current-home frontier reports all five Cursor primary identities in one band, zero foreign mapped identities, and zero nonpadding gaps.",
+        "The source annotations show constructor, destructor, init, init_cursor_class, and close_cursor_class all inside this interval; the cursor-class source therefore does not use a class-only slice that omits lifecycle primaries.",
+        "The init secondary span at 0x00663910-0x0066393E remains an associated full-span obligation outside the core interval."
+      ]
+    },
+    {
+      "name": "DeletionList",
+      "start": "0x0052DCA0",
+      "end_exclusive": "0x0052DF2E",
+      "recovered_tu": "src/deletionlist.cpp",
+      "reason": "Inferred compact complete DeletionList operation core.",
+      "evidence": [
+        "Whole-current-home frontier reports all seven mapped primary identities in one band, zero foreign mapped identities, and zero nonpadding gaps.",
+        "The band contains the constructor and the complete mapped clear/ack/convert/add_deletion operation family; no same-class member was found in another source home during the source-wide annotation review."
+      ]
+    },
+    {
+      "name": "EditGroup",
+      "start": "0x00611940",
+      "end_exclusive": "0x0061282E",
+      "recovered_tu": "src/editgroup.cpp",
+      "reason": "Inferred complete EditGroup ownership core, including its compiler-generated adjustment entries and local helper bodies.",
+      "evidence": [
+        "Whole-current-home frontier reports all 23 mapped primary identities in one band, zero foreign mapped identities, and zero nonpadding gaps.",
+        "The interval includes EditGroup construction/destruction, editing, lifecycle and drawing methods, local helper bodies, and all mapped thunk1/thunk3 identities; source-wide search found no EditGroup methods outside the band.",
+        "Detached constructor/attach secondary spans at 0x00663020-0x0066305C remain associated obligations outside the core interval."
+      ]
+    },
+    {
+      "name": "FileBox",
+      "start": "0x00634BE0",
+      "end_exclusive": "0x00634FA1",
+      "recovered_tu": "src/filebox.cpp",
+      "reason": "Inferred compact complete FileBox class core.",
+      "evidence": [
+        "Whole-current-home frontier reports all nine mapped primary identities in one band, zero foreign mapped identities, and zero nonpadding gaps.",
+        "The source-wide annotation review found the constructor, destructor, save/load, filter/default-name/default-extension operations, and both remaining mapped helpers all inside the interval, with no out-of-band FileBox member."
+      ]
+    },
+    {
+      "name": "ImageButton",
+      "start": "0x006252E0",
+      "end_exclusive": "0x006256FB",
+      "recovered_tu": "src/imagebutton.cpp",
+      "reason": "Inferred compact complete ImageButton class core, including its deleting and vector-deleting entries.",
+      "evidence": [
+        "Whole-current-home frontier reports all eight mapped primary identities in one band, zero foreign mapped identities, and zero nonpadding gaps.",
+        "The interval includes construction/destruction, both deleting entries, close/init, the mapped local helper, and redraw; source-wide search found no ImageButton member outside the band."
+      ]
+    },
+    {
+      "name": "JackalHeap",
+      "start": "0x005D4540",
+      "end_exclusive": "0x005D47CB",
+      "recovered_tu": "src/jackal/heap.cpp",
+      "reason": "Inferred compact complete Jackal Heap lifecycle and allocation core.",
+      "evidence": [
+        "Whole-current-home frontier reports all seven mapped primary identities in one band, zero foreign mapped identities, and zero nonpadding gaps.",
+        "The band includes Heap::Heap2, construction/destruction, shutdown, squeeze, init, and get; source-wide annotation search found no Heap member definitions in another source home."
+      ]
+    },
+    {
+      "name": "Lock",
+      "start": "0x005900D0",
+      "end_exclusive": "0x005904FE",
+      "recovered_tu": "src/lock.cpp",
+      "reason": "Inferred complete Lock class core, kept separate from adjacent PlayerLock and SquareLock cohorts.",
+      "evidence": [
+        "Whole-current-home frontier reports all nine Lock primary identities in one band, zero foreign mapped identities, and zero nonpadding gaps.",
+        "The source-wide annotation review found all mapped Lock operations from clear/reset_map through lock, global checks, add_lock, and any_locks in this band.",
+        "PlayerLock and SquareLock are independently owned classes and current source homes; address adjacency alone does not justify combining them into this interval."
+      ]
+    },
+    {
+      "name": "MCIVideo",
+      "start": "0x005FFD80",
+      "end_exclusive": "0x00600326",
+      "recovered_tu": "src/mci_video.cpp",
+      "reason": "Inferred complete MCIVideo playback-control core, including constructor, teardown, local helpers, and playback/status methods.",
+      "evidence": [
+        "Whole-current-home frontier reports all ten mapped primary identities in one band, zero foreign mapped identities, and zero nonpadding gaps.",
+        "The source-wide annotation review found the complete constructor/close/load/play/stop/status/is_playing family and its three local helpers inside the interval, with no other mapped MCIVideo member elsewhere."
+      ]
+    },
+    {
+      "name": "NameTableCore",
+      "start": "0x004C7270",
+      "end_exclusive": "0x004C75A7",
+      "recovered_tu": "src/name_table.cpp",
+      "reason": "Inferred compact table-management contribution core under provisional source ownership names; this does not assert a historical NameTable class or constructor identity.",
+      "evidence": [
+        "Whole-current-home frontier reports all eight mapped primary identities in one band, zero foreign mapped identities, and zero nonpadding gaps.",
+        "The pinned/source annotations and bodies cover initialization/cleanup, range removal and installation, entry-name operations, and directory rewrite across one shared 128-slot table and 0x110-byte record model.",
+        "The source records explicitly leave original type identity, constructor-versus-initializer interpretation, and historical TU unresolved; keep that uncertainty in the unit reason and retain all prior obligations."
+      ]
+    },
+    {
+      "name": "NewTechWin",
+      "start": "0x00483850",
+      "end_exclusive": "0x00484ABB",
+      "recovered_tu": "src/newtechwin.cpp",
+      "reason": "Inferred complete NewTechWin contribution core with static startup/finalization and compiler-generated deletion entries included.",
+      "evidence": [
+        "Whole-current-home frontier reports all 16 mapped primary identities in one band, zero foreign mapped identities, and zero nonpadding gaps.",
+        "The interval includes _$E startup entries, the NewTechWin sprite cleanup helper, constructor/destructor and deleting entries, and the complete mapped window method family; source-wide search found no out-of-band NewTechWin member.",
+        "Constructor/destructor detached spans at 0x00657510-0x00657626 remain associated obligations outside the core interval."
+      ]
+    },
+    {
+      "name": "PlayerLock",
+      "start": "0x0058FF70",
+      "end_exclusive": "0x005900C1",
+      "recovered_tu": "src/playerlock.cpp",
+      "reason": "Inferred complete PlayerLock class core, separate from the immediately adjacent Lock and SquareLock classes.",
+      "evidence": [
+        "Whole-current-home frontier reports all five mapped primary identities in one band, zero foreign mapped identities, and zero nonpadding gaps.",
+        "The source-wide annotation review found clear, active, lock, add_lock, and unlock as the complete mapped PlayerLock family in this interval.",
+        "Nearby Lock/SquareLock functions remain separate source-owned cohorts; adjacency does not establish a shared original contribution."
+      ]
+    },
+    {
+      "name": "PushButton",
+      "start": "0x0062BF20",
+      "end_exclusive": "0x0062C85B",
+      "recovered_tu": "src/pushbutton.cpp",
+      "reason": "Inferred complete PushButton core, including base/vector deleting entries.",
+      "evidence": [
+        "Whole-current-home frontier reports all six mapped primary identities in one band, zero foreign mapped identities, and zero nonpadding gaps.",
+        "The interval includes constructor/destructor, both deleting entries, close, and redraw; source-wide search found no PushButton member outside the band."
+      ]
+    },
+    {
+      "name": "QuayleWin",
+      "start": "0x00495170",
+      "end_exclusive": "0x004968FB",
+      "recovered_tu": "src/quaylewin.cpp",
+      "reason": "Inferred complete QuayleWin and local entry-helper core, including startup/finalization, both deleting entries, and the mapped quayle entry point.",
+      "evidence": [
+        "Whole-current-home frontier reports all 15 mapped primary identities in one band, zero foreign mapped identities, and zero nonpadding gaps.",
+        "The interval includes _$E startup entries, QuayleWin construction/destruction and deleting entries, the full mapped window-method group, and the local quayle helper; source-wide search found no omitted QuayleWin member.",
+        "Constructor/destructor/redraw detached spans at 0x00658C40-0x00658D4F remain associated obligations outside the core interval."
+      ]
+    },
+    {
+      "name": "ReplayWin",
+      "start": "0x005AD3B0",
+      "end_exclusive": "0x005AE0EB",
+      "recovered_tu": "src/replaywin.cpp",
+      "reason": "Inferred complete ReplayWin and local replay-entry core, including all mapped callback entries, helper routines, and deleting entries.",
+      "evidence": [
+        "Whole-current-home frontier reports all 25 mapped primary identities in one band, zero foreign mapped identities, and zero nonpadding gaps.",
+        "The source-wide annotation review found all ReplayWin lifecycle/callback methods, local replay_base/show_replay routines, helper bodies, and deleting entries inside the interval; no same-class primary is mapped elsewhere.",
+        "show_replay and destructor detached spans at 0x00662240-0x0066244C remain associated obligations outside the core interval."
+      ]
+    },
+    {
+      "name": "TexHeap",
+      "start": "0x00634FB0",
+      "end_exclusive": "0x00635402",
+      "recovered_tu": "src/texheap.cpp",
+      "reason": "Inferred compact complete TexHeap lifecycle and memory-query core.",
+      "evidence": [
+        "Whole-current-home frontier reports all six mapped primary identities in one band, zero foreign mapped identities, and zero nonpadding gaps.",
+        "The interval includes construction, shutdown, the two mapped heap operations, and both memory-query methods; source-wide search found no TexHeap member elsewhere."
+      ]
+    },
+    {
+      "name": "Texture",
+      "start": "0x00619650",
+      "end_exclusive": "0x006252DE",
+      "recovered_tu": "src/texture.cpp",
+      "reason": "Inferred complete current texture-rendering contribution core, including TextureStore lifecycle entries and mapped local renderer helpers. Synthetic asset-table ownership is excluded.",
+      "evidence": [
+        "Whole-current-home frontier reports all 56 mapped primary identities in one band, zero foreign mapped identities, and zero nonpadding gaps.",
+        "The complete current source-home band includes Texture construction/destruction, extraction, drawing/clipping/edge methods, TextureStore construction/destruction, and its local helpers; no mapped primary from this home is omitted from the proposed interval.",
+        "The separate synthetic asset-table source src/texture_objects.cpp is not part of this proposal. Object/global extents referenced by the rendering code remain separate associated-data obligations.",
+        "This is a contribution-core hypothesis from complete source-home mappings and interval evidence, not proof that historical Texture and TextureStore definitions shared an original object."
+      ]
+    },
+    {
+      "name": "VideoFrameQueue",
+      "start": "0x0063E520",
+      "end_exclusive": "0x0063E85B",
+      "recovered_tu": "src/video_queue.cpp",
+      "reason": "Inferred compact complete video-frame queue operation core, including node cleanup and allocation failure paths.",
+      "evidence": [
+        "Whole-current-home frontier reports all seven mapped primary identities in one band, zero foreign mapped identities, and zero nonpadding gaps.",
+        "The current owner defines the VideoFrameQueue constructor, limit/clear/allocate/append/peek/discard_head operations, all inside the interval; source-wide search found no VideoFrameQueue member elsewhere.",
+        "The separate src/video.cpp home is not absorbed based on callers or adjacency."
+      ]
+    },
+    {
+      "name": "TutWin",
+      "start": "0x004BA5C0",
+      "end_exclusive": "0x004BEA2B",
+      "recovered_tu": "src/tutwin.cpp",
+      "reason": "Inferred complete known tutorial-window contribution, including process lifetime, free checkers and renderer callbacks. The former member-only band omitted its startup entries; historical object edges remain unproven.",
+      "evidence": [
+        "All 34 mapped primary identities fit this band: 30 class/callback entries plus startup at0x004BA5C0, exit at0x004BA5E0, tut_check at0x004BA5F0 and tut_check2 at0x004BA650.",
+        "Original CRT slot0x006825F8 selects the TutorialWindow initializer; source owns its actual object, constructor, registered destructor and class-generated receiver entries.",
+        "The eight formerly split member bodies are reunited in src/tutwin.cpp without changing their implementation or historical mappings. Prior separation was a compiler-context investigation, not historical TU evidence.",
+        "Destructor/tut_win detached spans and tour7 literal ranges remain source-owned obligations. Tutorial flags and the unresolved climate-gate extent remain data/lifetime obligations; code grouping does not prove their complete layout."
+      ]
     }
   ]
 }

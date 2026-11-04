@@ -522,7 +522,7 @@ Purpose: Slide a rectangle by a delta on each axis, the wrapping counterpart of
 // ORIGINAL: 0x005F8670 sub_5f8670 0x005F8670-0x005F869B BYTE_EXACT
 // symbol    ?offset_rect@@YAXPAUtagRECT@@HH@Z
 // size      43 bytes
-// prototype 
+// prototype
 // callers   1   call targets   0
 // kind      game
 // flags     hidden;sp_ready;purged_ok
@@ -822,7 +822,7 @@ Purpose: Acquire the process-wide device context, taking one reference.
 // ORIGINAL: 0x005EC690 ?get_hdc@Win@@QAGPAUHDC__@@XZ 0x005EC690-0x005EC6E1 BYTE_EXACT
 // symbol    ?get_hdc@Win@@SAPAUHDC__@@XZ
 // size      81 bytes
-// prototype 
+// prototype
 // callers   7   call targets   0
 // kind      game
 // flags     hidden;sp_ready;purged_ok
@@ -863,7 +863,7 @@ Purpose: Drop one reference to the process-wide device context, releasing it
 // ORIGINAL: 0x005EC6F0 ?release_hdc@Win@@QAGXXZ 0x005EC6F0-0x005EC73C BYTE_EXACT
 // symbol    ?release_hdc@Win@@SAXXZ
 // size      76 bytes
-// prototype 
+// prototype
 // callers   9   call targets   0
 // kind      game
 // flags     hidden;sp_ready;purged_ok
@@ -1374,7 +1374,7 @@ Purpose: Dismiss any pending bubble text and repaint the area it covered.
 // ORIGINAL: 0x005F8500 ?clear_bubble_text@Win@@QAGXXZ 0x005F8500-0x005F852F BYTE_EXACT
 // symbol    ?clear_bubble_text@Win@@SAXXZ
 // size      47 bytes
-// prototype 
+// prototype
 // callers   15   call targets   2
 // kind      game
 // flags     hidden;sp_ready;purged_ok
@@ -1762,7 +1762,7 @@ Purpose: Window cursor-set hook; the legacy implementation returns 1 to report
 // ORIGINAL: 0x005F2670 ?OnSetCursor@Win@@QAAHPAXPAXII@Z 0x005F2670-0x005F2676 BYTE_EXACT
 // symbol    ?OnSetCursor@Win@@SAHPAX0II@Z
 // size      6 bytes
-// prototype 
+// prototype
 // callers   1   call targets   0
 // kind      game
 // flags     hidden;sp_ready;purged_ok
@@ -6345,7 +6345,7 @@ tail_common:
 // ORIGINAL: 0x005F5200 ?add_child@Win@@QAEXPAUWin@@@Z 0x005F5200-0x005F5268 FILE BYTE_EXACT
 // symbol    ?add_child@Win@@QAEXPAV1@@Z
 // size      104 bytes
-// prototype 
+// prototype
 // callers   0   call targets   0
 // kind      game
 // flags     hidden;sp_ready;purged_ok
@@ -6429,7 +6429,7 @@ void Win::add_child(Win* child) {
 // ORIGINAL: 0x005F50E0 ?remove_parent@Win@@QAAXPAUWin@@@Z 0x005F50E0-0x005F5136 FILE BYTE_EXACT
 // symbol    ?remove_parent@Win@@QAAXPAV1@@Z
 // size      86 bytes
-// prototype 
+// prototype
 // callers   0   call targets   0
 // kind      game
 // flags     hidden;sp_ready;purged_ok
@@ -10547,7 +10547,7 @@ void __cdecl Win::OnActivate(void *hwnd, unsigned int state, void *other,
 // ORIGINAL: 0x005F4CC0 ?redraw@Win@@QAAXXZ 0x005F4CC0-0x005F4CF1 FILE BYTE_EXACT
 // symbol    ?redraw_all@Win@@QAAXXZ
 // size      49 bytes
-// prototype 
+// prototype
 // callers   0   call targets   1
 // kind      game
 // flags     hidden;sp_ready;purged_ok
@@ -10575,7 +10575,7 @@ void __cdecl add_parent(Win *);
 // ORIGINAL: 0x005F5080 ?add_parent@Win@@QAAXPAUWin@@@Z 0x005F5080-0x005F50D5 FILE BYTE_EXACT
 // symbol    ?add_parent@@YAXPAVWin@@@Z
 // size      85 bytes
-// prototype 
+// prototype
 // callers   0   call targets   0
 // kind      game
 // flags     hidden;sp_ready;purged_ok
@@ -11029,7 +11029,7 @@ void Win::dispatch_17(int a, int b, int alternate) {
 // symbol    ?dispatch_28@Win@@QAEXHHH@Z
 // working copy - scaffold materialised by --work
 // size      158 bytes
-// prototype 
+// prototype
 // callers   0   call targets   0
 // kind      game
 // flags     hidden;sp_ready;purged_ok
@@ -11076,7 +11076,7 @@ void Win::dispatch_28(int a, int b, int alternate) {
 // LEVER: void return (eax never set before ret) + own VCall2 shim for slot023 (int return, tested) and slots 29/39 ((int,int)), not the file's nullary VCall
 // working copy - scaffold materialised by --work
 // size      158 bytes
-// prototype 
+// prototype
 // callers   0   call targets   0
 // kind      game
 // flags     sp_ready;purged_ok
@@ -11174,7 +11174,7 @@ void Win::dispatch_19(int a, int b, int alternate) {
 // symbol    ?dispatch_21@Win@@QAEXHHH@Z
 // working copy - scaffold materialised by --work
 // size      158 bytes
-// prototype 
+// prototype
 // callers   0   call targets   0
 // kind      game
 // flags     hidden;sp_ready;purged_ok
@@ -11220,7 +11220,7 @@ void Win::dispatch_21(int a, int b, int alternate) {
 // symbol    ?dispatch_22@Win@@QAEXHHH@Z
 // working copy - scaffold materialised by --work
 // size      158 bytes
-// prototype 
+// prototype
 // callers   0   call targets   0
 // kind      game
 // flags     hidden;sp_ready;purged_ok
@@ -12382,3 +12382,1000 @@ extern "C" LRESULT __stdcall PrevWndFunc(HWND window, UINT message,
 // directory; the verifier derives the IAT slot. This does not select or prove
 // a particular platform DLL implementation/version.
 // RECOVERY_IMPORT: v1 __imp__MoveWindow@24 USER32.dll name:MoveWindow
+
+// ===== reunited Win contribution blocks (inferred source correspondence) =====
+
+// ORIGINAL: 0x005EC8A0 ?get_mouse_pos@Win@@QAEXPAHPAH@Z 0x005EC8A0-0x005EC952 FILE BYTE_EXACT
+// symbol    ?get_mouse_pos@Win@@QAEXPAH0@Z
+// working copy - scaffold materialised by --work
+// size      178 bytes
+// prototype void (__thiscall ?get_mouse_pos@Win@@QAEXPAHPAH@Z)(Win* this, int*, int*)
+// callers   26   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005ED2D0
+// indirect  0x005EC8C5
+
+void Win::get_mouse_pos(int * x, int * y) {
+    if (x != 0 && y != 0) {
+        POINT pt;  // the artifact spelled this `struct Pt { int x, y; }`
+        // 0x00669284, NOT the SetCursorPos slot this used to reach through
+        // the file-scope `g`. The image calls `[0x669284]` here
+        // (0x005EC8C5) and the two differ only in a relocation, which
+        // the byte comparison masks - so the claim held while the call
+        // was wrong.
+        GetCursorPos(&pt);
+        *x = pt.x;
+        *y = pt.y;
+        *x -= client_rect_.left + outer_rect_.left;
+        *y -= client_rect_.top + outer_rect_.top;
+        if ((iFlags_ & 0x20) != 0 && win_parent_ != 0) {
+            // THE PARENT'S, not this window's. The image loads win_parent_
+            // into ECX - the receiver register - and calls from there:
+            // `mov ecx, [esi + 0xc4]` / `test ecx, ecx` straight into the
+            // call. Calling it on `this` compiled the same load into EAX and
+            // then an extra `mov ecx, esi` to set the receiver back.
+            win_parent_->screen_to_client(x, y);
+            if ((iFlags_ & 0x8000) != 0) {
+                *x += win_parent_->outer_rect_.left;
+                *y += win_parent_->outer_rect_.top;
+            }
+        }
+    }
+}
+
+// ORIGINAL: 0x005ECDC0 ?UNK2@Win@@QAEHH@Z 0x005ECDC0-0x005ECE15 FILE
+// compile_context src/win.cpp
+// symbol    ?is_descendant_of@Win@@QAEHPAV1@@Z
+// notes     PAV1@, not PAVWin@@: MSVC back-references the enclosing class
+//           for a parameter of its own type.
+// size      85 bytes
+// prototype int (__thiscall ?UNK2@Win@@QAEHH@Z)(Win* this, int)
+// callers   2   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005ECDC0
+// PRESERVED UNIT - measured MISMATCH.
+//
+// Kept for COVERAGE. This directory IS on the ratchet: every file here
+// carries an ORIGINAL marker, `decomp_status.py` compiles and measures
+// it, and 336 of the 1,108 now carry a BYTE_EXACT claim - better than a
+// quarter of the project's total. It is still in no build; the earlier
+// header said "on no ratchet", which stopped being true when the map
+// moved into src/ and was still being written into new files.
+//
+// address        0x005ECDC0
+// measured tier  MISMATCH
+// divergence     4
+//
+// The WHOLE unit as measured, scaffolding included: for the units
+// that are byte-exact yet refuse extraction, the agent tuned the
+// emitted scaffolding and the body alone will not reproduce the
+// verdict. To resume, copy everything below back over
+//   build/byte-match/005ecdc0/unit.cpp
+// and score it with tools/agent_brief.py.
+// GENERATED SKELETON - tools/emit_translation_unit.py
+// subject: ?UNK2@Win@@QAEHH@Z  at 0x005ECDC0  (85 bytes)
+//
+// A VERIFICATION ARTIFACT, not product source: classes are opaque and
+// globals are bound to fixed addresses, because both are byte-visible
+// and both differ from the style src/ is written in.
+//
+// VC6 DIALECT - this must compile under cl 12.00.8168, which is the
+// only compiler this project builds with. Avoid: auto, nullptr, constexpr,
+// static_assert, enum class, range-for, lambdas, long long, <cstdint>,
+// and declaring `int i` twice in one function (VC6 leaks for-scope).
+// static_cast/reinterpret_cast are fine and are the right spelling.
+//
+// SOURCE-FORM RULES, each one learned by a fan-out agent that lost
+// attempts to it. They are here rather than in a prompt so the next
+// agent does not rediscover them:
+//
+//  * A ternary is not an if. `x ? a : b` lowers to `jne` with the arms
+//    swapped; `if (x) {...}` gives `je`.
+//  * VC6 NEVER hoists a same-polarity guard's body out of line. To get
+//    two special cases branching FAR away, write them negated and
+//    NESTED - `if (a != X) { if (a != Y) { return D; } ...; }` - not as
+//    sequential guard clauses, which inline each body instead.
+//  * VC6 rejects `__thiscall` on a free function pointer (C4234). For
+//    an indirect virtual call use the generated VCall shim below; for a
+//    thiscall function POINTER, take a member-function pointer of a
+//    dummy class instead of spelling the convention.
+//  * Loop form is visible: while / do-while / for lower differently,
+//    and so does counting up versus down.
+//  * If the original dedicates a callee-saved register to a constant
+//    across the whole body (an extra `push ebx`/`push edi` in the
+//    prologue), it had enough register pressure to do so. That is a
+//    hard case - the tool reports a similarity ratio so you can tell a
+//    near miss from a wrong body.
+
+
+// TRIED: 4 of 38. Named and retyped from `UNK2(int)` - it walks
+// `ancestor`'s children looking for `this`, so it is the mirror of
+// is_descendant - and the members replaced a `char *` walk of 0x1a4/0x3fc.
+// The bytes did not follow: 41 instructions against 38, with ebx and ebp
+// swapped from the first instruction on, which is the same allocation wall
+// its sibling is_descendant (0x005ECE20) sits behind at 17 of 37.
+// Flattening the two guards into `ancestor == 0 || child_count_ <= 0`
+// costs one more instruction and changes nothing else.
+int Win::is_descendant_of(Win *ancestor) {
+    if (ancestor != 0) {
+        if (ancestor->child_count_ > 0) {
+            Win *const *children = ancestor->children_;
+            int i = 0;
+            do {
+                Win *child = *children;
+                if (child == this) {
+                    return 1;
+                }
+                if (is_descendant_of(child)) {
+                    return 1;
+                }
+                ++i;
+                ++children;
+            } while (i < ancestor->child_count_);
+        }
+    }
+    return 0;
+}
+/*
+Purpose: Report whether a window is anywhere below this one in the child
+         tree, searching depth first. A direct child counts, and so does any
+         descendant of one.
+// ORIGINAL: 0x005ECE20 ?is_descendant@Win@@QAEHPAVWin@@@Z 0x005ECE20-0x005ECE73
+// compile_context src/win.cpp
+// symbol    ?is_descendant@Win@@QAEHPAV1@@Z
+// size      83 bytes
+// prototype int (__thiscall ?is_descendant@Win@@QAEHPAVWin@@@Z)(Win* this, Win*)
+// callers   4   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005ECE20
+Return Value: 1 when the candidate is a descendant, 0 otherwise
+Status: Complete
+Verification note: hoisting the count out of the loop is an EQUIVALENT mutant
+         and will survive the sweep. The original reloads it every iteration,
+         so this transcription does too, but the whole call tree here is
+         read-only - nothing reachable from is_descendant writes to any
+         object - so no execution can observe the reload. It is kept because
+         it is what the bytes do, not because a test pins it. If this function
+         ever gains a seam, that changes and the reload becomes testable.
+         The absent null check on children_[index] is likewise faithful: the
+         original dereferences the slot unconditionally at 0x005ECE2E, so a
+         null slot faults in both.
+
+// LEVER: the image walks `children_` with an incrementing POINTER
+// (`lea esi, [ebx+0x1a4]` once, `add esi, 4` per iteration, `mov ecx,[esi]`)
+// rather than re-deriving `children_[index]` from a scaled index each time.
+// Spelling it as `Win *const *child = children_; ... ++child;` instead of
+// `children_[index]` moved agreement from 2/37 to 17/37 (0.691 -> 0.727
+// similar) at `/c /O2 /Gy /GR- /GX`. `index` is kept only for the trailing
+// `index >= count` bound check, which the image still does with `cmp
+// edi, eax` against a separately-incremented edi.
+//
+// TRIED: hoisting `int index = 0;` to sit between the `count =
+// child_count_` load and the `count <= 0` check (matching the image's
+// `xor edi, edi` appearing before `test eax, eax`) - this makes VC6 pick
+// edi instead of ebx for `this` and is WORSE (10/37). The remaining
+// divergence (a missing early `xor edi, edi` and the resulting jump-target
+// shift) did not yield to reordering the two post-count-check statements
+// either; both orders compile identically.
+//
+// TRIED: loop shape, via try_spellings. `do { ... } while (index <
+// count);` ties the committed `for (;;) { ...; if (index >= count) return
+// 0; }` exactly (17/37, same bytes) - the image's single shared "return 1"
+// landing pad (reached by both `je` and the post-recursion `jne`) is not
+// reproduced by either; this tree's compiler duplicates that block instead of
+// sharing it. A top-tested `while (index < count) { ... }` is WORSE (9/37),
+// and merging the two early-return tests into one `||` condition is worse
+// still (5/37) - the image tests them separately, matching the existing
+// two-statement shape already committed.
+*/
+// TRIED: 17 of 37, and two restructurings made it no better or worse.
+// A `do { ... } while (index < count);` gets the image's BACKWARD `jl` in
+// place of this form's forward `jge` + repeated compare, but scores the
+// same 17 and adds a differing run. Merging the two `return 1` arms into
+// one `||` - the image has a single found-case epilogue where this emits
+// two - collapses the loop instead: 4 of 37 at 32 instructions against the
+// image's 37. What is left is instruction ORDER (the image zeroes edi
+// before loading children_, this body after) and the duplicated epilogue,
+// neither of which source order reached.
+int Win::is_descendant(Win *candidate) {
+    if (!candidate) {
+        return 0;
+    }
+    int count = child_count_;
+    if (count <= 0) {
+        return 0;
+    }
+    Win *const *child = children_;
+    int index = 0;
+    for (;;) {
+        if (*child == candidate) {
+            return 1;
+        }
+        if ((*child)->is_descendant(candidate)) {
+            return 1;
+        }
+        // Re-read, do NOT hoist. The original reloads the count at 0x005ECE50
+        // after every recursive call returns, so a recursion that adds or
+        // removes children is seen by the very next iteration. A loop-invariant
+        // count is the obvious tidy-up and it changes behaviour.
+        count = child_count_;
+        ++index;
+        ++child;
+        if (index >= count) {
+            return 0;
+        }
+    }
+}
+
+// ORIGINAL: 0x005ECF20 ?screen_to_client@Win@@QAEXPAURECT@@@Z 0x005ECF20-0x005ECFD8 FILE BYTE_EXACT
+// symbol    ?screen_to_client@Win@@QAEXPAUtagRECT@@@Z
+// notes     the RECT overload; the coordinate-pair form shares the name
+//           and marker_symbols resolves to whichever comes first.
+// working copy - scaffold materialised by --work
+// size      184 bytes
+// prototype void (__thiscall ?screen_to_client@Win@@QAEXPAURECT@@@Z)(Win* this, RECT*)
+// callers   4   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005ED2D0
+void Win::screen_to_client(RECT * rect) {
+    if (rect == 0) {
+        return;
+    }
+    int dx = -(client_rect_.left + outer_rect_.left);
+    int dy = -(client_rect_.top + outer_rect_.top);
+    if ((iFlags_ & 0x20) && win_parent_ != 0) {
+        win_parent_->screen_to_client(&dx, &dy);
+        if (iFlags_ & 0x8000) {
+            dx += win_parent_->outer_rect_.left;
+            dy += win_parent_->outer_rect_.top;
+        }
+    }
+    rect->left += dx;
+    rect->right += dx;
+    rect->top += dy;
+    rect->bottom += dy;
+}
+
+// ORIGINAL: 0x005ECFE0 ?client_to_screen@Win@@QAEXPAURECT@@@Z 0x005ECFE0-0x005ED094 FILE BYTE_EXACT
+// symbol    ?client_to_screen@Win@@QAEXPAUtagRECT@@@Z
+// in place of the `reinterpret_cast<char *>(this)` raw-offset form - same
+// score either way (9/56, 0.885 similar, best of ten flag sets); kept for
+// the class_debt fix, not a byte-exactness gain. Plateau MISMATCH.
+// working copy - scaffold materialised by --work
+// size      180 bytes
+// prototype void (__thiscall ?client_to_screen@Win@@QAEXPAURECT@@@Z)(Win* this, RECT*)
+// callers   12   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005ED240
+
+void Win::client_to_screen(RECT * rect) {
+    if (rect == 0) {
+        return;
+    }
+    int xAdj = client_rect_.left + outer_rect_.left;
+    int yAdj = client_rect_.top + outer_rect_.top;
+    // NO `owner` LOCAL. The image tests win_parent_ in ECX - the receiver
+    // register - and calls straight from there; binding it to a local put it
+    // in EBX and cost a `push ebx` plus a `mov ecx, ebx` at the call. And the
+    // image RELOADS it afterwards (`mov esi, [esi + 0xc4]` at 0x005ED044)
+    // rather than keeping it live, so the local was not what the original
+    // wrote either.
+    if ((iFlags_ & 0x20U) != 0 && win_parent_ != 0) {
+        win_parent_->client_to_screen(&xAdj, &yAdj);
+        if ((iFlags_ & 0x8000U) != 0) {
+            xAdj -= win_parent_->outer_rect_.left;
+            yAdj -= win_parent_->outer_rect_.top;
+        }
+    }
+    rect->left += xAdj;
+    rect->right += xAdj;
+    rect->top += yAdj;
+    rect->bottom += yAdj;
+}
+
+// ORIGINAL: 0x005ED0A0 ?nonscreen_to_client@Win@@QAEXPAURECT@@@Z 0x005ED0A0-0x005ED16A FILE BYTE_EXACT
+// symbol    ?nonscreen_to_client@Win@@QAEXPAUtagRECT@@@Z
+// working copy - scaffold materialised by --work
+// size      202 bytes
+// prototype void (__thiscall ?nonscreen_to_client@Win@@QAEXPAURECT@@@Z)(Win* this, RECT*)
+// callers   0   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005ED2D0
+
+// TRIED: 4 -> 18 of 64, and the two changes that got it there are BEHAVIOUR
+// fixes, not spellings. (1) The parent walk called `screen_to_client` on
+// `this`; the image loads win_parent_ into ECX - the receiver register - and
+// calls from there, exactly as the sibling client_to_screen does. (2) The
+// 0x8000 adjustment sat OUTSIDE the 0x20 block, so it applied even when no
+// parent walk had happened; the image's `test ah, 0x80` is between the call
+// and the `jmp` that rejoins the 0x20 test's own `je` target.
+//
+// What is left is allocation, not shape: 64 instructions against 64, with
+// `this` and `rect` in swapped registers throughout. The image pushes ecx to
+// allocate one local slot and then REUSES THE ARGUMENT SLOT for localX
+// (`lea edx, [esp + 0x14]`); this body keeps `rect` live instead. Converting
+// the guard to an early return - the form that made client_to_screen exact -
+// does not move it, so the difference is downstream of source shape.
+void Win::nonscreen_to_client(RECT * rect) {
+    // EARLY RETURN, matching the sibling client_to_screen that measures
+    // exact. The image loads `rect` into EDI and `this` into ESI;
+    // wrapping the body in `if (rect != 0)` swapped that assignment.
+    if (rect == 0) {
+        return;
+    }
+    int localX = -(client_rect_.left + outer_rect_.left);
+    int localY = -(client_rect_.top + outer_rect_.top);
+    if ((iFlags_ & 0x20) != 0 && win_parent_ != 0) {
+        // THE PARENT'S, not this window's: the image loads win_parent_
+        // into ECX - the receiver register - and calls from there
+        // (`mov ecx, [esi + 0xc4]` / `test ecx, ecx` at 0x005ED0E5),
+        // exactly as its sibling client_to_screen does.
+        win_parent_->screen_to_client(&localX, &localY);
+        // NESTED, not a sibling test. The image's `test ah, 0x80` at
+        // 0x005ED104 sits between the call and the `jmp 0x5ed135` that
+        // rejoins the 0x20 test's own `je` target - so it only runs when
+        // the parent walk did. Its sibling client_to_screen nests it the
+        // same way.
+        if ((iFlags_ & 0x8000) != 0) {
+            localX = localX + win_parent_->outer_rect_.left;
+            localY = localY + win_parent_->outer_rect_.top;
+        }
+    }
+    // Reuse localX/localY rather than adding `dx`/`dy` - the lever that made
+    // the sibling nonclient_to_screen exact: two extra locals held one value
+    // too many live and the compiler swapped `this` and `rect` between esi
+    // and edi for the whole body.
+    localX += outer_rect_.left;
+    localY += outer_rect_.top;
+    rect->left = rect->left + localX;
+    rect->right = rect->right + localX;
+    rect->top = rect->top + localY;
+    rect->bottom = rect->bottom + localY;
+}
+
+// ORIGINAL: 0x005ED170 ?nonclient_to_screen@Win@@QAEXPAURECT@@@Z 0x005ED170-0x005ED236 FILE BYTE_EXACT
+// symbol    ?nonclient_to_screen@Win@@QAEXPAUtagRECT@@@Z
+// working copy - scaffold materialised by --work
+// size      198 bytes
+// prototype void (__thiscall ?nonclient_to_screen@Win@@QAEXPAURECT@@@Z)(Win* this, RECT*)
+// callers   1   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005ED240
+
+void Win::nonclient_to_screen(RECT * rect) {
+    if (rect == 0) {
+        return;
+    }
+    int x = client_rect_.left + outer_rect_.left;
+    int y = client_rect_.top + outer_rect_.top;
+    if ((iFlags_ & 0x20) != 0 && win_parent_ != 0) {
+        // THE PARENT'S: `mov ecx, [esi + 0xc4]` / `test ecx, ecx` at
+        // 0x005ED1B1 puts win_parent_ in the receiver register.
+        win_parent_->client_to_screen(&x, &y);
+        if ((iFlags_ & 0x8000) != 0) {
+            x -= win_parent_->outer_rect_.left;
+            y -= win_parent_->outer_rect_.top;
+        }
+    }
+    // LEVER: reuse x and y, do NOT introduce `dx`/`dy`. Two extra locals
+    // held one value too many live and the compiler swapped `this` and
+    // `rect` between esi and edi for the whole body - 39 of 62 with every
+    // instruction otherwise in place. Subtracting into x/y and adding those
+    // is the same arithmetic with one fewer live value, and it is exact.
+    x -= outer_rect_.left;
+    y -= outer_rect_.top;
+    rect->left += x;
+    rect->right += x;
+    rect->top += y;
+    rect->bottom += y;
+}
+
+/*
+Purpose: Translate a client-relative point into screen coordinates by walking
+         the parent chain.
+// ORIGINAL: 0x005ED240 ?client_to_screen@Win@@QAEXPAH0@Z 0x005ED240-0x005ED2C5 BYTE_EXACT
+// LEVER: plain signed `+`/`-` instead of the `int_from_bits`/`long_bits` bit-cast chain - the image is straight `add`/`sub`, no cast dance. 21/44 MISMATCH -> BYTE_EXACT.
+// size      133 bytes
+// prototype void (__thiscall ?client_to_screen@Win@@QAEXPAH0@Z)(Win* this, int*, int*)
+// callers   71   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005ED240
+Status: Complete
+*/
+void Win::client_to_screen(int *x, int *y) {
+    *x = *x + client_rect_.left + outer_rect_.left;
+    *y = *y + client_rect_.top + outer_rect_.top;
+    // Bit 5 marks a window whose coordinates are relative to its parent, so
+    // the walk continues only while both that flag and a parent are present.
+    if ((iFlags_ & 0x20U) == 0 || !win_parent_) {
+        return;
+    }
+    win_parent_->client_to_screen(x, y);
+    // Bit 15 additionally backs out the parent's own outer origin. The legacy
+    // body re-reads win_parent_ for each subtraction rather than caching it.
+    if ((iFlags_ & 0x8000U) == 0) {
+        return;
+    }
+    *x = *x - win_parent_->outer_rect_.left;
+    *y = *y - win_parent_->outer_rect_.top;
+}
+
+/*
+Purpose: The inverse of client_to_screen above.
+// ORIGINAL: 0x005ED2D0 ?screen_to_client@Win@@QAEXPAHPAH@Z 0x005ED2D0-0x005ED355 BYTE_EXACT
+// symbol    ?screen_to_client@Win@@QAEXPAH0@Z
+// size      133 bytes
+// prototype void (__thiscall ?screen_to_client@Win@@QAEXPAHPAH@Z)(Win* this, int*, int*)
+// callers   0   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005ED2D0
+Return Value: n/a
+Status: Complete
+*/
+void Win::screen_to_client(int *x, int *y) {
+    *x = *x - (client_rect_.left + outer_rect_.left);
+    *y = *y - (client_rect_.top + outer_rect_.top);
+    // Bit 5 marks a window whose coordinates are relative to its parent, so
+    // the walk continues only while both that flag and a parent are present.
+    if ((iFlags_ & 0x20U) == 0 || !win_parent_) {
+        return;
+    }
+    win_parent_->screen_to_client(x, y);
+    // Bit 15 additionally adds back the parent's own outer origin. The legacy
+    // body re-reads win_parent_ for each addition rather than caching it.
+    if ((iFlags_ & 0x8000U) == 0) {
+        return;
+    }
+    *x = *x + win_parent_->outer_rect_.left;
+    *y = *y + win_parent_->outer_rect_.top;
+}
+
+// ===== homed from src/unrecovered/005ed3f0.cpp =====
+
+// ORIGINAL: 0x005ED3F0 ?nonclient_to_screen@Win@@QAEXPAH0@Z 0x005ED3F0-0x005ED48D FILE BYTE_EXACT
+// working copy - scaffold materialised by --work
+// size      157 bytes
+// prototype void (__thiscall ?nonclient_to_screen@Win@@QAEXPAH0@Z)(Win* this, int*, int*)
+// callers   1   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005ED240
+void Win::nonclient_to_screen(int * x, int * y) {
+    client_to_screen(x, y);
+    *x = *x - outer_rect_.left;
+    *y = *y - outer_rect_.top;
+}
+
+// ORIGINAL: 0x005ED520 ?screen_to_nonclient@Win@@QAEXPAH0@Z 0x005ED520-0x005ED5BD FILE BYTE_EXACT
+// working copy - scaffold materialised by --work
+// size      157 bytes
+// prototype void (__thiscall ?screen_to_nonclient@Win@@QAEXPAH0@Z)(Win* this, int*, int*)
+// callers   0   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005ED2D0
+void Win::screen_to_nonclient(int * x, int * y) {
+    *x -= client_rect_.left + outer_rect_.left;
+    *y -= client_rect_.top + outer_rect_.top;
+    if ((iFlags_ & 0x20) != 0 &&
+        win_parent_ != 0) {
+        (win_parent_)->screen_to_client(x, y);
+        if ((iFlags_ & 0x8000) != 0) {
+            *x += win_parent_->outer_rect_.left;
+            *y += win_parent_->outer_rect_.top;
+        }
+    }
+    *x += outer_rect_.left;
+    *y += outer_rect_.top;
+}
+
+// RECOVERY_IMPORT: v1 __imp__GetCursorPos@4 USER32.dll name:GetCursorPos
+
+/*
+Purpose: Refresh the cached screen metrics from the system.
+// ORIGINAL: 0x005EFD00 sub_5efd00 0x005EFD00-0x005EFD1B BYTE_EXACT
+// symbol    _DDInitRefreshScreenMetrics
+// size      27 bytes
+// callers   3   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+// indirect  0x005EFD09 0x005EFD12
+Return Value: The height, which is the second value read.
+Status: Complete
+*/
+extern "C" int __cdecl DDInitRefreshScreenMetrics() {
+    WinScreenWidth = GetSystemMetrics(SM_CXSCREEN);
+    return (WinScreenHeight = GetSystemMetrics(SM_CYSCREEN));
+}
+
+// ORIGINAL: 0x005F15C0 ?OnKey@Win@@QAAXPAXIJHI@Z 0x005F15C0-0x005F1657 FILE BYTE_EXACT
+// symbol    ?OnKey@Win@@SAXPAXIJHI@Z
+// kind game
+// TRIED: MISMATCH #1 test/push at the ternary-vs-if for the first global select; body verified structurally correct otherwise
+// ===== homed from src/unrecovered/005f15c0.cpp =====
+
+void __cdecl Win::OnKey(void * hwnd, unsigned int key, long flags, int repeat, unsigned int scan) {
+    Win *chosen;
+    if (WinFocusWindow != nullptr) {
+        chosen = WinModalFocus;
+        if (chosen == nullptr) chosen = WinFocusWindow;
+    } else {
+        chosen = WinInputFocus;
+        if (chosen == nullptr) chosen = WinDefaultFocus;
+    }
+    WinActiveWindow = chosen;
+
+    if (chosen != nullptr) {
+        Win *const inner = chosen->poWinBase_;
+        if (inner != nullptr && (inner->iSomeFlag_ & 1U) != 0) {
+            Win *const parent = inner->win_parent_;
+            int visible = 1;
+            if (parent != nullptr) visible = parent->is_visible();
+            if (visible != 0) inner->on_key(key, flags, repeat, scan);
+        }
+    }
+
+    if (WinKeyHook != nullptr && flags != 0) WinKeyHook(key);
+    if (WinMessageHook != nullptr) WinMessageHook();
+}
+
+// ===== homed from src/recovered/005f1660.cpp =====
+
+// ORIGINAL: 0x005F1660 ?OnChar@Win@@QAAXPAXDH@Z 0x005F1660-0x005F16CB BYTE_EXACT
+// symbol    ?OnChar@@YAXPAXDH@Z
+// symbol    ?OnChar@Win@@QAAXPAXHH@Z
+// notes     `H` where the catalogue guessed `D`: the image loads a dword
+//           for that parameter, so it is an int.
+// size      107 bytes
+// prototype
+// callers   0   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005F7E90
+// indirect  0x005F16C3
+// 0x005F1660  ?OnChar@Win@@QAAXPAXDH@Z  ->  ?OnChar@Win@@QAAXPAXDH@Z
+//
+// A byte-exact Mizuchi match that no file in the tree owns yet. NOT in
+// OPENSMACX_SOURCES and not compiled: it is the emitter's verification style,
+// and rewriting it in the tree's own style is a later phase. See README.md
+// beside this file. Re-verified in bulk by byte_match_fanout.py --collect.
+// FREE, not a member, and the shift is the whole finding. The catalogue
+// spells this `?OnChar@Win@@QAAXPAXDH@Z`; a QAA name invents a receiver, and
+// that invented `this` IS the HWND. Every parameter therefore sat one slot
+// late: what the member form called `hwnd` is the character and what it
+// called `ch` is the flags, which is why the body used to read
+// `on_char(hwnd, ch)` - dispatching the window handle as the typed
+// character. The stack slots it reads are unchanged, so the bytes are
+// unchanged; only the names were wrong. Its siblings OnNCHitTest and
+// OnSysKey were homed as free functions for the same reason.
+void __cdecl OnChar(void *hwnd, char ch, int flags) {
+    Win *active;
+    if (WinFocusWindow != nullptr) {
+        active = WinModalFocus;
+        if (active == nullptr) active = WinFocusWindow;
+    } else {
+        active = WinInputFocus;
+        if (active == nullptr) active = WinDefaultFocus;
+    }
+    WinActiveWindow = active;
+    if (active != nullptr) {
+        Win *const base_window = active->poWinBase_;
+        if (base_window != nullptr
+            && (base_window->iSomeFlag_ & 1U) != 0) {
+            Win *const parent = base_window->win_parent_;
+            if (parent == nullptr || parent->is_visible() != 0) {
+                base_window->on_char(ch, flags);
+            }
+        }
+    }
+}
+
+
+
+/*
+Purpose: The window class's WM_SYSKEYDOWN/WM_SYSCHAR router. It resolves
+         which window is active - the modal focus if one is set, else the
+         focus window, else the input focus, else the default - records that
+         in WinActiveWindow, and hands the key to that window's owner
+         through vtable slot 80. HOMED from src/recovered/units/005f16d0.cpp
+         on 2026-08-25.
+
+         The catalogued name spells a `Win` receiver (`QAA`) this body does
+         not have: `a1` is the HWND the window procedure was called with and
+         is never read. The `// symbol` fact records the free-function form
+         the build emits.
+*/
+// ORIGINAL: 0x005F16D0 ?OnSysKey@Win@@QAAXPAXIJHI@Z 0x005F16D0-0x005F1745 FILE BYTE_EXACT
+// symbol    ?OnSysKey@@YAXPAXIJHI@Z
+// size      118 bytes
+// callers   0   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005F7E90
+void __cdecl OnSysKey(void *hwnd, unsigned int key, long flags, int repeat,
+                      unsigned int scan) {
+    Win *active;
+    if (WinFocusWindow != nullptr) {
+        active = WinModalFocus;
+        if (active == 0) {
+            active = WinFocusWindow;
+        }
+    } else {
+        active = WinInputFocus;
+        if (active == 0) {
+            active = WinDefaultFocus;
+        }
+    }
+    WinActiveWindow = active;
+    if (active != 0) {
+        // 0xA8 is poWinBase_, which win.h already documents as the window that
+// owns a position - a third witness after Win::construct storing `this`
+// there and Win::get_mouse_window returning it.
+        Win *owner = active->poWinBase_;
+        if (owner != 0) {
+            if (owner->iSomeFlag_ & 1) {
+                Win *inner = owner->win_parent_;
+                if (inner != 0) {
+                    if (!inner->is_visible()) {
+                        return;
+                    }
+                }
+                owner->on_sys_key(key, flags, repeat, scan);
+            }
+        }
+    }
+}
+
+// SDK window-parent relationships; no original-address function adapters.
+// RECOVERY_IMPORT: v1 __imp__GetParent@4 USER32.dll name:GetParent
+// RECOVERY_IMPORT: v1 __imp__SetParent@8 USER32.dll name:SetParent
+
+// These are distinct HWND-valued dwords. Their starts are observed;
+// extent, setup and lifetime remain unresolved.
+// RECOVERY_OBJECT: v1 0x009B7B40 ?WinReparentMatchParent@@3PAUHWND__@@A
+HWND WinReparentMatchParent;
+// RECOVERY_OBJECT: v1 0x009B7B44 ?WinReparentTargetParent@@3PAUHWND__@@A
+HWND WinReparentTargetParent;
+
+// ORIGINAL 0x005F4D50 is a free stdcall HWND adapter. The original
+// reads its second stack argument only by popping it in ret 8.
+// Historical seed catalog (inactive): // prior-original: 0x005F4D50 sub_5f4d50 0x005F4D50-0x005F4D90 FILE historical-byte-exact
+// Historical seed catalog (inactive): // symbol    ?sub_5f4d50@@YGHHH@Z
+// Historical seed catalog (inactive): // size      64 bytes
+// Historical seed catalog (inactive): // prototype
+// Historical seed catalog (inactive): // callers   0   call targets   0
+// Historical seed catalog (inactive): // kind      game
+// Historical seed catalog (inactive): // flags     hidden;sp_ready;purged_ok
+// Historical seed catalog (inactive): // calls     (none)
+// Historical seed catalog (inactive): // indirect  0x005F4D58 0x005F4D6C 0x005F4D81
+// Historical seed catalog (inactive): // PRESERVED UNIT - measured historical-byte-exact.
+// Historical seed catalog (inactive): //
+// Historical seed catalog (inactive): // Kept for COVERAGE. This directory IS on the ratchet: every file here
+// Historical seed catalog (inactive): // carries an ORIGINAL marker, `decomp_status.py` compiles and measures
+// Historical seed catalog (inactive): // it, and 336 of the 1,108 now carry a historical-byte-exact claim - better than a
+// Historical seed catalog (inactive): // quarter of the project's total. It is still in no build; the earlier
+// Historical seed catalog (inactive): // header said "on no ratchet", which stopped being true when the map
+// Historical seed catalog (inactive): // moved into src/ and was still being written into new files.
+// Historical seed catalog (inactive): //
+// Historical seed catalog (inactive): // address        0x005F4D50
+// Historical seed catalog (inactive): // measured tier  historical-byte-exact
+// Historical seed catalog (inactive): //
+// Historical seed catalog (inactive): // The WHOLE unit as measured, scaffolding included: for the units
+// Historical seed catalog (inactive): // that are byte-exact yet refuse extraction, the agent tuned the
+// Historical seed catalog (inactive): // emitted scaffolding and the body alone will not reproduce the
+// Historical seed catalog (inactive): // verdict. To resume, copy everything below back over
+// Historical seed catalog (inactive): //   build/byte-match/005f4d50/unit.cpp
+// Historical seed catalog (inactive): // and score it with tools/agent_brief.py.
+// Historical seed catalog (inactive): // GENERATED SKELETON - tools/emit_translation_unit.py
+// Historical seed catalog (inactive): // subject: sub_5f4d50  at 0x005F4D50  (64 bytes)
+// Historical seed catalog (inactive): //
+// Historical seed catalog (inactive): // A VERIFICATION ARTIFACT, not product source: classes are opaque and
+// Historical seed catalog (inactive): // globals are bound to fixed addresses, because both are byte-visible
+// Historical seed catalog (inactive): // and both differ from the style src/ is written in.
+// Historical seed catalog (inactive): //
+// Historical seed catalog (inactive): // VC6 DIALECT - this must compile under cl 12.00.8168, which is the
+// Historical seed catalog (inactive): // only compiler this project builds with. Avoid: auto, nullptr, constexpr,
+// Historical seed catalog (inactive): // static_assert, enum class, range-for, lambdas, long long, <cstdint>,
+// Historical seed catalog (inactive): // and declaring `int i` twice in one function (VC6 leaks for-scope).
+// Historical seed catalog (inactive): // static_cast/reinterpret_cast are fine and are the right spelling.
+// Historical seed catalog (inactive): //
+// Historical seed catalog (inactive): // SOURCE-FORM RULES, each one learned by a fan-out agent that lost
+// Historical seed catalog (inactive): // attempts to it. They are here rather than in a prompt so the next
+// Historical seed catalog (inactive): // agent does not rediscover them:
+// Historical seed catalog (inactive): //
+// Historical seed catalog (inactive): //  * A ternary is not an if. `x ? a : b` lowers to `jne` with the arms
+// Historical seed catalog (inactive): //    swapped; `if (x) {...}` gives `je`.
+// Historical seed catalog (inactive): //  * VC6 NEVER hoists a same-polarity guard's body out of line. To get
+// Historical seed catalog (inactive): //    two special cases branching FAR away, write them negated and
+// Historical seed catalog (inactive): //    NESTED - `if (a != X) { if (a != Y) { return D; } ...; }` - not as
+// Historical seed catalog (inactive): //    sequential guard clauses, which inline each body instead.
+// Historical seed catalog (inactive): //  * VC6 rejects `__thiscall` on a free function pointer (C4234). For
+// Historical seed catalog (inactive): //    an indirect virtual call use the generated VCall shim below; for a
+// Historical seed catalog (inactive): //    thiscall function POINTER, take a member-function pointer of a
+// Historical seed catalog (inactive): //    dummy class instead of spelling the convention.
+// Historical seed catalog (inactive): //  * Loop form is visible: while / do-while / for lower differently,
+// Historical seed catalog (inactive): //    and so does counting up versus down.
+// Historical seed catalog (inactive): //  * If the original dedicates a callee-saved register to a constant
+// Historical seed catalog (inactive): //    across the whole body (an extra `push ebx`/`push edi` in the
+// Historical seed catalog (inactive): //    prologue), it had enough register pressure to do so. That is a
+// Historical seed catalog (inactive): //    hard case - the tool reports a similarity ratio so you can tell a
+// Historical seed catalog (inactive): //    near miss from a wrong body.
+// Historical seed catalog (inactive): address=0x005F4D50
+// Historical seed catalog (inactive): mode=file; state=implemented
+// Historical seed catalog (inactive): name=sub_5f4d50; symbol=?sub_5f4d50@@YGHHH@Z
+// Historical seed catalog (inactive): spans=((6245712, 6245776),)
+// Historical seed catalog (inactive): kind='game'; exclusion=''
+// Historical seed catalog (inactive): byte_exact=True; semantic=False
+// Historical seed catalog (inactive): recipe=verbatim
+// Historical seed catalog (inactive): levers=()
+// Historical seed catalog (inactive): ruled_out=()
+// Historical seed catalog (inactive): unrecoverable=()
+// Historical seed catalog (inactive): deferred=()
+// ORIGINAL: 0x005F4D50 sub_5f4d50 0x005F4D50-0x005F4D90 BYTE_EXACT
+// symbol    ?win_reparent_window@@YGHPAUHWND__@@H@Z
+int __stdcall win_reparent_window(HWND hwnd, int unused) {
+    (void)unused;
+    Win *const owner = reinterpret_cast<Win *>(
+        GetWindowLongA(hwnd, GWL_USERDATA));
+    if (owner != 0 &&
+        (owner->iFlags_ & WinFlagClipToParent) == 0) {
+        const HWND parent = GetParent(hwnd);
+        if (parent == WinReparentMatchParent) {
+            SetParent(hwnd, WinReparentTargetParent);
+        }
+    }
+    return 1;
+}
+
+// ===== homed from src/recovered/units/005f5020.cpp =====
+
+// ORIGINAL: 0x005F5020 ?update_zorder@Win@@QAAXXZ 0x005F5020-0x005F5080 FILE BYTE_EXACT
+// symbol    ?update_zorder@Win@@SAXXZ
+// size      96 bytes
+// prototype
+// callers   1   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005F4EC0
+// PRESERVED UNIT - measured NO_COMPILE.
+//
+// Kept for COVERAGE. This directory IS on the ratchet: every file here
+// carries an ORIGINAL marker, `decomp_status.py` compiles and measures
+// it, and 336 of the 1,108 now carry a BYTE_EXACT claim - better than a
+// quarter of the project's total. It is still in no build; the earlier
+// header said "on no ratchet", which stopped being true when the map
+// moved into src/ and was still being written into new files.
+//
+// address        0x005F5020
+// measured tier  NO_COMPILE
+// refusal        u005f5020.cpp(29) : error C2653: 'Win' : is not a class or namespace name u005f5020.cpp(31) : error C2065: 'WinRootCount' : undeclared identifier u005f5020.cpp(31
+//
+// The WHOLE unit as measured, scaffolding included: for the units
+// that are byte-exact yet refuse extraction, the agent tuned the
+// emitted scaffolding and the body alone will not reproduce the
+// verdict. To resume, copy everything below back over
+//   build/byte-match/005f5020/unit.cpp
+// and score it with tools/agent_brief.py.
+// 0x005F5020  ?update_zorder@Win@@QAAXXZ  (96 bytes)
+//
+// `QAAXXZ`: public, __cdecl, void, no params - a STATIC member (no `this` is
+// ever read; every operand is one of the five fixed globals or the array at
+// WinRootWindows). The stale on-disk scaffold had this as `fn_005f5020(Win* a1)`;
+// the fresh brief's contract head (`void __cdecl Win::update_zorder()`)
+// matches the disassembly, so that is what is defined here.
+//
+// The initial `mov eax, dword ptr [0x9b7b34]` (the loop bound) happens
+// BEFORE the `mov dword ptr [0x9b7b30], ebp` store in the original, even
+// though the store is unconditional and the load only feeds the guard below
+// it. Writing `WinZOrderCount = 0;` before reading the count reordered the two
+// (store first) under /O2; reading the count into a local FIRST, in source
+// order, reproduces the original ordering exactly. The do-while's own
+// continuation test re-reads `WinRootCount` fresh each iteration (matching
+// the original's second `mov eax, [0x9b7b34]` at the bottom of the loop) -
+// only the ONE-TIME guard above the loop uses the cached local.
+//
+// `target != 0 && target == arr[i]` short-circuits to exactly the original's
+// two-branch `cmp ecx,ebp / je skip; cmp ecx,[esi] / jne skip` - no
+// restructuring needed there.
+//
+// WinRootWindows (the Win* array base) did NOT need the extern-array override
+// the general lever warns about: the given `static Win *const g = ...`
+// (cast at the point of use, not redeclared) already reproduces the
+// register-walked indexing here - the lever's "address itself does work"
+// failure mode did not reproduce for this walk. Recorded so the next agent
+// does not re-pay for testing it.
+// GENERATED SKELETON - tools/emit_translation_unit.py
+// subject: ?update_zorder@Win@@QAAXXZ  at 0x005F5020  (96 bytes)
+//
+// A VERIFICATION ARTIFACT, not product source: classes are opaque and
+// globals are bound to fixed addresses, because both are byte-visible
+// and both differ from the style src/ is written in.
+//
+// The VC6 dialect limits and the source-form rules used to live here.
+// They are knowledge, not scaffolding, so they now live in the agent
+// system prompt (mizuchi.yaml, plugins.claude-runner.systemPrompt),
+// where they can be edited without regenerating anything and are in
+// context from the first token rather than behind a file read. This
+// emitter computes declarations; it does not carry lessons.
+void __cdecl Win::update_zorder() {
+    int i = 0;
+    int n = WinRootCount;
+    WinZOrderCount = 0;
+    if (n > 0) {
+        Win **arr = WinRootWindows;
+        Win *target = WinZOrderWindow;
+        do {
+            if (target != 0 && target == arr[i]) {
+                WinZOrderCount = 0;
+                WinZOrderFlag = 0;
+            }
+            if (arr[i]->iSomeFlag_ & 1) {
+                recurse_zorder(arr[i]);
+                target = WinZOrderWindow;
+            }
+            i++;
+        } while (i < WinRootCount);
+    }
+}
+// ===== homed from src/unrecovered/005f5fb0.cpp =====
+
+// ORIGINAL: 0x005F5FB0 sub_5f5fb0 0x005F5FB0-0x005F622B
+// RECOVERY_BINDING: v1 {"evidence": ["git:85fc7721f56c2a5cae754b993fe04fcfec74fec1:src/unrecovered/005f5fb0.cpp", "Pinned original5F5FB0..5F622B; direct global accesses5F60DD..5F619C"], "reason": "Restore the lost homing identity for the existing Win keyboard handler; its receiver, scroll dispatch and two stack words identify this method, not the separate string matcher at5F5F60."}
+// symbol    ?on_char@Win@@UAEXDH@Z
+// TRIED: extern "C" __stdcall(int,int) free function per IDA's guess - the spilled ecx is read back later ([esp+0x10] resolves to the "push ecx" slot itself, not a caller stack arg) and used as a Win* (scroll_vert_/scroll_horz_/key_click_event), so this is landed as Win::sub_5f5fb0(char, int) __thiscall instead; the unused 2nd stack dword explains `ret 8` with only 1 real read.
+void Win::on_char(char param2, int param3) {
+    char **cursor = &WinKeyRingCursor;
+    **cursor = param2;
+
+    bool matched = true;
+    {
+        // the LAST character; the loop below compares backward from it
+        const char *pat = WinMdebugCode + 5;
+        char *pos = *cursor;
+        int count = 6;
+        do {
+            if (*pos != *pat) {
+                matched = false;
+                break;
+            }
+            pos--;
+            pat--;
+            if (pos < (char *)WinKeyRing) {
+                pos = (char *)(WinKeyRing + 9);
+            }
+            count--;
+        } while (count > 0);
+    }
+
+    if (matched) {
+        Win &debug_window = WinBubbleWindow;
+        if ((static_cast<uint8_t>(debug_window.iSomeFlag_) & 1) == 0 ||
+            (debug_window.win_parent_ != 0 &&
+             debug_window.win_parent_->is_visible() == 0)) {
+            (&WinBubbleWindow)->show(0);
+        } else if ((static_cast<uint8_t>(debug_window.iSomeFlag_) & 1) != 0) {
+            if (WinBubbleCompanion == &WinBubbleWindow &&
+                WinBubbleActive != 0) {
+                WinBubbleCompanion = nullptr;
+                WinBubbleActive = 0;
+                (&WinBubbleWindow)->update_screen(&WinBubbleRect, 0);
+                (&WinBubbleWindow)->flip(&WinBubbleRect);
+            }
+
+            Win *cand = WinPointerOwner1;
+            if (cand == nullptr) {
+                cand = WinPointerOwner2;
+            }
+            if (cand == &WinBubbleWindow) {
+                WinPointerOwner1 = nullptr;
+                WinPointerOwner2 = 0;
+            } else if (cand != nullptr && debug_window.child_count_ > 0) {
+                Win **list = debug_window.children_;
+                int i = 0;
+                do {
+                    if (list[i] == cand || list[i]->is_descendant(cand)) {
+                        WinPointerOwner1 = nullptr;
+                        WinPointerOwner2 = 0;
+                        break;
+                    }
+                    i++;
+                } while (i < debug_window.child_count_);
+            }
+
+            if (WinPointerOwner3 == &WinBubbleWindow) {
+                WinPointerOwner3 = 0;
+                debug_window.on_lose_mouse_capture();
+            }
+            if (WinPointerOwner4 == &WinBubbleWindow) {
+                WinPointerOwner4 = 0;
+            }
+            debug_window.iSomeFlag_ &= ~1;
+            if (WinFocusWindow == &WinBubbleWindow) {
+                debug_window.release_modal();
+            }
+
+            if ((JackalInitFlags & 1) != 0) {
+                WinZOrderCount = 0;
+                if (WinRootCount > 0) {
+                    Win **entries = WinRootWindows;
+                    Win *cur = WinZOrderWindow;
+                    int j = 0;
+                    do {
+                        if (cur != 0 && cur == entries[j]) {
+                            WinZOrderCount = 0;
+                            WinZOrderFlag = 0;
+                        }
+                        if ((entries[j]->iSomeFlag_ & 1) != 0) {
+                            recurse_zorder(entries[j]);
+                            cur = WinZOrderWindow;
+                        }
+                        j++;
+                    } while (j < WinRootCount);
+                }
+
+                InvalidateRect(HandleMain, 0, 0);
+
+                Sound *w = debug_window.val_4_;
+                if (w != 0 && w->is_playing() == 0) {
+                    w->play();
+                }
+            }
+        }
+    }
+
+    *cursor = *cursor + 1;
+    if (*cursor > (char *)(WinKeyRing + 9)) {
+        *cursor = (char *)WinKeyRing;
+    }
+
+    bool handled = false;
+    if (scroll_vert_ != 0 &&
+        scroll_vert_->on_key_click((int)param2, WinKeyModifiers) != 0) {
+        handled = true;
+    }
+    if (!handled && scroll_horz_ != 0 &&
+        scroll_horz_->on_key_click((int)param2, WinKeyModifiers) != 0) {
+        handled = true;
+    }
+    if (!handled) {
+        key_click_event((int)param2, WinKeyModifiers);
+    }
+}
+
+// Window hierarchy queries share this Win relationship implementation.
+// Their original translation-unit filenames remain unproved.
+
+/*
+Purpose: Determine whether this window and every ancestor are visible.
+// ORIGINAL: 0x005F7E90 ?is_visible@Win@@QAEHXZ 0x005F7E90-0x005F7EB6 BYTE_EXACT
+// compile_context src/win.cpp
+// size      38 bytes
+// prototype int (__thiscall ?is_visible@Win@@QAEHXZ)(Win* this)
+// callers   120   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005F7E90
+// notes     Runtime redirect installed by DllMain after byte-signature validation
+Status: Complete
+*/
+int Win::is_visible() {
+    if (!(iSomeFlag_ & 1U)) {
+        return 0;
+    }
+    // A detached window is visible on its own; otherwise the whole parent
+    // chain must be visible, which the legacy body walks recursively.
+    if (win_parent_ && !win_parent_->is_visible()) {
+        return 0;
+    }
+    return 1;
+}

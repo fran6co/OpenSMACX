@@ -20,8 +20,8 @@ ROOT=Path(__file__).resolve().parents[2]
 SPEC=(
  ("graphicwin.cpp","int GraphicWin::update(RECT *area, GraphicWin *source)",0x5D5630,0x5D56AA),
  ("graphicwin.cpp","void GraphicWin::update(int x, int y, int width, int height,",0x5D55D0,0x5D562F),
- ("win_point_coordinates.cpp","void Win::nonclient_to_screen(int * x, int * y)",0x5ED3F0,0x5ED48D),
- ("win_point_coordinates.cpp","void Win::client_to_screen(int *x, int *y)",0x5ED240,0x5ED2C5),
+ ("win.cpp","void Win::nonclient_to_screen(int * x, int * y)",0x5ED3F0,0x5ED48D),
+ ("win.cpp","void Win::client_to_screen(int *x, int *y)",0x5ED240,0x5ED2C5),
  ("buffer.cpp","int Buffer::dotted_box(RECT * a1, int a2)",0x5E32F3,0x5E3370),
  ("buffer.cpp","void Buffer::dotted_box(int left, int top, int right, int bottom, int color)",0x5E3283,0x5E32E4),
 )
@@ -33,8 +33,9 @@ def actual():
         path=ROOT/"src"/filename
         record,=(r for r in read_file(path) if r.address==start)
         assert record.image_spans==((start,end),)
-        text=path.read_text()
-        # Select the exact overload, never just the first same-named body.
+        # The combined Win TU contains point and RECT overloads. Select the
+        # desired mapped row first, then resolve its signature in that region.
+        text=record.region
         assert text.count(signature)==1
         opening=text.index(signature)
         bodies.append(text[opening:_function_end(text,opening)])
@@ -43,20 +44,16 @@ def actual():
 
 def test_win_point_and_rectangle_annotations_bind_their_own_overloads():
     for filename,address,signature in (
-        ("win_point_coordinates.cpp",0x5ED3F0,"void Win::nonclient_to_screen(int * x, int * y) {"),
-        ("win_coordinates.cpp",0x5ED170,"void Win::nonclient_to_screen(RECT * rect) {"),
+        ("win.cpp",0x5ED3F0,"void Win::nonclient_to_screen(int * x, int * y) {"),
+        ("win.cpp",0x5ED170,"void Win::nonclient_to_screen(RECT * rect) {"),
     ):
         path=ROOT/"src"/filename
-        text=path.read_text()
         records=read_file(path)
         record,=(row for row in records if row.address==address)
-        assert text.count(signature)==1
-        definition_line=text[:text.index(signature)].count("\n")+1
-        next_marker=min((row.line for row in records if row.line>record.line),
-                        default=len(text.splitlines())+1)
-        # The former point marker sat above the RECT sibling and another
-        # marker intervened before its real body. Both bindings must be local.
-        assert record.line<definition_line<next_marker
+        # The selected mapping region must contain this exact overload once;
+        # this avoids binding the point identity to the RECT method or vice versa.
+        assert record.region.count(signature)==1
+        assert record.region.index("// ORIGINAL:") < record.region.index(signature)
 
 
 HARNESS=r'''

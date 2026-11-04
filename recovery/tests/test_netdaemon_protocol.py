@@ -9,7 +9,7 @@ import pytest
 
 
 ROOT = Path(os.environ.get("OPENSMACX_ROOT", Path(__file__).resolve().parents[2])).resolve()
-OWNER_SOURCE = ROOT / "src/netdaemon_vehicle.cpp"
+OWNER_SOURCE = ROOT / "src/netdaemon.cpp"
 HARNESS = Path(__file__).with_name("netdaemon_protocol_harness.cpp")
 
 

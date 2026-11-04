@@ -8,7 +8,7 @@ import tempfile
 import pytest
 from test_netdaemon_transfer_modal import extract
 ROOT=Path(__file__).resolve().parents[2]
-SOURCE=ROOT/'src/tutwin_callouts.cpp'
+SOURCE=ROOT/'src/tutwin.cpp'
 NAMES=('iface','base','soc','des')
 
 def product():
@@ -124,7 +124,8 @@ def test_pinned_arithmetic_and_receivers():
  image=Path('/home/fran6co/code/OpenSMACX/.opensmacx/game/terranx_original.exe')
  assert sha256(image.read_bytes()).hexdigest()=='01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf'
  receivers={0x4bc5a0:'0x7ae820',0x4bc5f0:'0x6a7628',0x4bc640:'0x8a6270',0x4bc690:'0x71f2b0',0x4ba870:'0x6a7628',0x4ba8f0:'0x7ae820',0x4ba970:'0x8a6270',0x4ba9f0:'0x71f2b0'}
- records=read_file(SOURCE);assert len(records)==8
+ records=[record for record in read_file(SOURCE) if record.address in receivers]
+ assert len(records)==8
  for rec in records:
   lines='\n'.join(map(str,original_asm(rec,image).lines))
   assert lines.count('cdq')==2 and lines.count('sar ')==2

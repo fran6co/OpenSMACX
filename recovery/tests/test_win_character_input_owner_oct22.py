@@ -9,7 +9,7 @@ from match_recovery.source.reader import read_file
 from test_application_link_recovery import ROOT
 
 
-UNIT = "src/win_input.cpp"
+UNIT = "src/win.cpp"
 ADDRESS = 0x5F5FB0
 SYMBOL = "?on_char@Win@@UAEXDH@Z"
 HARNESS = Path(__file__).with_name("win_keyboard_harness.cpp")

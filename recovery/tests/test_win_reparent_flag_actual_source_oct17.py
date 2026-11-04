@@ -73,7 +73,7 @@ def _definition(text, signature):
 
 
 def _current():
-    cpp = (ROOT / "src/win_reparent.cpp").read_text(encoding="utf-8")
+    cpp = (ROOT / "src/win.cpp").read_text(encoding="utf-8")
     signature = "int __stdcall win_reparent_window(HWND hwnd, int unused)"
     return cpp, _definition(cpp, signature)
 
@@ -221,7 +221,7 @@ def test_mapped_owner_field_mask_and_claim_are_continuous():
     assert re.search(r"owner->iFlags_\s*&\s*WinFlagClipToParent", body)
     assert "(void)unused;" in body
 
-    records = read_text(cpp, ROOT / "src/win_reparent.cpp")
+    records = read_text(cpp, ROOT / "src/win.cpp")
     row, = [record for record in records if record.address == ADDRESS]
     assert row.image_spans == ((ADDRESS, END),)
     assert row.byte_exact is True and row.semantic is False

@@ -20,7 +20,7 @@ from match_recovery.pe_coff import PeImage
 
 ROOT = Path(__file__).resolve().parents[2]
 PIN = "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
-OWNER_CANDIDATES = ("src/win.cpp", "src/win_coordinates.cpp")
+OWNER_CANDIDATES = ("src/win.cpp",)
 SIGNATURE = 'extern "C" int __cdecl DDInitRefreshScreenMetrics()'
 
 
@@ -89,9 +89,9 @@ def _function_body(text, signature):
 
 def test_helper_has_one_definition_and_current_clients_keep_delegation():
     owner, _ = _actual_helper()
-    assert owner == "src/win_coordinates.cpp"
+    assert owner == "src/win.cpp"
     header = (ROOT / "src/win.h").read_text(encoding="utf-8")
-    assert "Defined in win_coordinates.cpp;" in header
+    assert "Defined in win.cpp as part of the inferred Win contribution;" in header
     assert 'extern "C" int __cdecl DDInitRefreshScreenMetrics();' in header
     source = (ROOT / "src/win.cpp").read_text(encoding="utf-8")
     init = _function_body(source, "int DDInit::init(int width, int height, int depth, int tgl)")

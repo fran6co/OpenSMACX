@@ -263,9 +263,6 @@ def test_mapped_identity_claims_and_history_remain_monotonic():
     # Verify their current mappings and history rather than dropping them from
     # the baseline continuity check or requiring obsolete Win duplicates.
     relocated_owners = {
-        0x005ED240: "src/win_point_coordinates.cpp",
-        0x005ED2D0: "src/win_point_coordinates.cpp",
-        0x005ED3F0: "src/win_point_coordinates.cpp",
         0x005FA7A0: "src/win_coordinates.cpp",
         0x005FA7E0: "src/win_coordinates.cpp",
         0x005FD120: "src/win_input.cpp",

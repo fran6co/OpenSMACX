@@ -1,4 +1,4 @@
-"""C++98 actual-source controls for the relocated Win point helpers."""
+"""C++98 actual-source controls for Win point helpers in the reunited owner."""
 
 from __future__ import annotations
 
@@ -36,42 +36,41 @@ SPANS = {
 
 def _root() -> Path:
     for parent in Path(__file__).resolve().parents:
-        if (parent / "src/win_point_coordinates.cpp").is_file():
+        if (parent / "src/win.cpp").is_file():
             return parent
     raise AssertionError("could not find repository root")
 
 
-def _extract(text: str, qualified_signature: str) -> str:
-    lines = text.splitlines()
-    start = function_line(text, qualified_signature)
-    end = _region_end(lines, start - 1, qualified_signature)
-    assert end is not None, "native reader could not bound " + qualified_signature
-    return "".join(text.splitlines(keepends=True)[start - 1 : end + 1])
-
-
 def _actual_bodies() -> dict[str, str]:
     root = _root()
-    owner = root / "src/win_point_coordinates.cpp"
+    owner = root / "src/win.cpp"
     source = owner.read_text(encoding="utf-8")
-    old_owner = root / "src/win.cpp"
-    old_rows = {row.address: row for row in read_file(old_owner)}
-    new_rows = {row.address: row for row in read_file(owner)}
-    assert not (set(ADDRESSES.values()) & set(old_rows)), "old owner retained a moved identity"
-    assert set(ADDRESSES.values()) <= set(new_rows), "moved identity missing from real owner"
+    rows = {row.address: row for row in read_file(owner)}
+    retired_split = root / "src/win_point_coordinates.cpp"
+    assert not retired_split.exists(), "point-only split TU should be retired"
 
     bodies: dict[str, str] = {}
     for key, address in ADDRESSES.items():
-        row = new_rows[address]
+        row = rows[address]
         assert row.name == NAMES[key]
         assert row.image_spans == SPANS[key]
         assert row.byte_exact and not row.semantic
         assert Path(row.path).resolve() == owner.resolve()
-        body = _extract(source, SIGNATURES[key])
-        assert body in row.region, "actual definition must remain in its native mapped region"
+        # Resolve the overload only inside its selected mapped row. The full
+        # Win TU also contains same-named RECT overloads.
+        next_line = min((candidate.line for candidate in rows.values()
+                         if candidate.line > row.line), default=None)
+        start = function_line(source, SIGNATURES[key], after_line=row.line,
+                              before_line=next_line)
+        lines = source.splitlines()
+        end = _region_end(lines, start - 1, SIGNATURES[key])
+        assert end is not None, "native reader could not bound " + SIGNATURES[key]
+        body = "".join(source.splitlines(keepends=True)[start - 1:end + 1])
+        assert body in row.region, "actual definition must remain in its mapped row"
+        assert body in source, "actual definition must remain in the compiled Win owner"
         bodies[key] = body
 
-    assert len([new_rows[address] for address in ADDRESSES.values()]) == 3
-    assert all(new_rows[address].kind == "game" for address in ADDRESSES.values())
+    assert all(rows[address].kind == "game" for address in ADDRESSES.values())
     return bodies
 
 
@@ -86,13 +85,9 @@ def _source_boundary_checks() -> None:
                         "void screen_to_client(int *x, int *y);",
                         "void nonclient_to_screen(int * x, int * y);"):
         assert declaration in header
-    assert cmake.count("src/win_point_coordinates.cpp") == 1
-    property_blocks = re.findall(r"set_source_files_properties\((.*?)\)", cmake, re.S)
-    assert all("src/win_point_coordinates.cpp" not in block for block in property_blocks)
-    owner = (root / "src/win_point_coordinates.cpp").read_text(encoding="utf-8")
+    assert re.search(r"(?m)^\s*src/win\.cpp\s*$", cmake), "combined Win owner must be built"
     for body in _actual_bodies().values():
         assert "__forceinline" not in body and not re.search(r"__declspec\s*\(\s*noinline", body)
-    assert "__forceinline" not in owner and not re.search(r"__declspec\s*\(\s*noinline", owner)
 
 
 HARNESS = r'''#include <assert.h>

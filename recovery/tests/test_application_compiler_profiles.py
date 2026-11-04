@@ -217,7 +217,7 @@ EXPECTED_CMAKE_PROFILES = {
     tuple(sorted(("src/midi.cpp", "src/sounddevice.cpp", "src/sound_loader.cpp"))): ("/Oy-",),
     tuple(sorted(("src/datalink.cpp", "src/maininterface.cpp", "src/console.cpp"))): ("/Oy-",),
     tuple(sorted(("src/mapwin.cpp", "src/basewin.cpp"))): ("/Oy-",),
-    tuple(sorted(("src/designwin.cpp", "src/tutwin.cpp", "src/tutwin_callouts.cpp", "src/xpops.cpp"))): ("/Oy-",),
+    tuple(sorted(("src/designwin.cpp", "src/tutwin.cpp", "src/xpops.cpp"))): ("/Oy-",),
     tuple(sorted(("src/netdaemon.cpp", "src/diplowin.cpp", "src/diplopop.cpp", "src/worldwin.cpp"))): ("/Oy-",),
     tuple(sorted(("src/map.cpp", "src/world.cpp", "src/faction.cpp", "src/veh.cpp"))): ("/Oy-",),
     **{tuple(sorted(group)): ("/Oy-",) for group in PRIOR_PROFILE_GROUPS},
@@ -641,7 +641,8 @@ def test_application_profiles_match_immutable_baseline_plus_core_cohort():
     assert "src/crt_random.cpp" in application_sources
     assert "src/vehicle_cost.cpp" in application_sources
     assert "src/vehicle_orders.cpp" in application_sources
-    assert "src/tutwin_callouts.cpp" in application_sources
+    assert "src/tutwin.cpp" in application_sources
+    assert "src/tutwin_callouts.cpp" not in application_sources
     assert "src/world.cpp" in application_sources
     assert source_rows[source_rows.index("src/map.cpp") + 1] == "src/world.cpp"
     inline_owners = ("src/pulldown.cpp", "src/dipedit.cpp")
