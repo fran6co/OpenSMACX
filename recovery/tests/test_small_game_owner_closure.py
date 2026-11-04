@@ -1,4 +1,4 @@
-"""Actual-source host controls for the six admitted leaf-owner migrations.
+"""Actual-source host controls for the five admitted leaf-owner migrations.
 
 This file is a tracked-test candidate. It reads only the repository's active
 src/ files and the pinned historical Git snapshot; no staged-source fallback,
@@ -29,7 +29,6 @@ OWNERS = {
     # The native lexical mask blanks the string literal "C" in linkage specs.
     0x004E2450: ("src/netwin.cpp", r"extern\s+void\s+__cdecl\s+sub_4e2450\s*\(\s*\)\s*\{"),
     0x004E7DB0: ("src/base.cpp", r"extern\s+int\s+__cdecl\s+sub_4e7db0\s*\(\s*\)\s*\{"),
-    0x006051C0: ("src/scroll.cpp", r"extern\s+void\s+__cdecl\s+sub_6051c0\s*\(\s*\)\s*\{"),
     0x0059D230: ("src/basepop.cpp", r"int\s+BasePop::add_asterisk_item\s*\(\s*\)\s*\{"),
 }
 DURABLE = (
@@ -133,8 +132,6 @@ struct ReplayWin { ReplayBaseSite base_sites_[512]; void reset_base_sites(); };
 NetWinSessionBlock NetWinSessionData;
 int TileYieldRestricted;
 int ScrollDefaultThickness;
-int metric_seen = -1;
-int GetSystemMetrics(int metric) { metric_seen = metric; return 13; }
 struct Dialogs { char *text = 0; int index = 0; int item(char *s, int i) { text=s; index=i; return 37; } };
 struct BasePop { Dialogs dialogs_; int add_asterisk_item(); };
 '''
@@ -160,10 +157,6 @@ def _program(methods: dict[int, str], declaration: str,
         old = "TileYieldRestricted = 0;"
         assert parts[damage].count(old) == 1
         parts[damage] = parts[damage].replace(old, "TileYieldRestricted = 1;", 1)
-    elif damage == 0x006051C0:
-        old = "GetSystemMetrics(3)"
-        assert parts[damage].count(old) == 1
-        parts[damage] = parts[damage].replace(old, "GetSystemMetrics(2)", 1)
     elif damage == 0x0059D230:
         old = "dialogs_.Dialogs::item(BasePopItemMarkerText, -2)"
         assert parts[damage].count(old) == 1
@@ -189,7 +182,6 @@ int main() {
   NetWinSessionData.mode_=9; NetWinSessionData.scenario_text_wire_tail_[0]=8; NetWinSessionData.scenario_text_wire_tail_[1]=7;
   sub_4e2450(); assert(NetWinSessionData.mode_==0 && NetWinSessionData.scenario_text_wire_tail_[0]==0 && NetWinSessionData.scenario_text_wire_tail_[1]==7);
   TileYieldRestricted=4; assert(sub_4e7db0()==0 && TileYieldRestricted==0);
-  sub_6051c0(); assert(metric_seen==3 && ScrollDefaultThickness==13);
   BasePop popup; assert(popup.add_asterisk_item()==37 && popup.dialogs_.index==-2 && popup.dialogs_.text[0]=='*' && popup.dialogs_.text[1]=='\0');
   BasePopItemMarkerText[0]='?'; assert(popup.add_asterisk_item()==37 && popup.dialogs_.text[0]=='?');
   return 0;
@@ -211,7 +203,7 @@ def _compile_run(program: str, tmp_path: Path) -> subprocess.CompletedProcess:
     return subprocess.run([str(binary)], capture_output=True, text=True, timeout=10)
 
 
-def test_actual_source_behaviors_and_six_mutation_controls(tmp_path: Path) -> None:
+def test_actual_source_behaviors_and_five_mutation_controls(tmp_path: Path) -> None:
     methods, _rows, declaration = _active()
     program = _program(methods, declaration)
     actual = _compile_run(program, tmp_path / "actual")
@@ -220,3 +212,31 @@ def test_actual_source_behaviors_and_six_mutation_controls(tmp_path: Path) -> No
         program = _program(methods, declaration, address)
         changed = _compile_run(program, tmp_path / f"mutant-{index}")
         assert changed.returncode != 0, f"mutation for 0x{address:08X} escaped its behavioral control"
+
+
+def test_scroll_startup_mapping_binds_the_real_global_initializer() -> None:
+    source = (ROOT / "src/scroll.cpp").read_text(encoding="utf-8")
+    rows = [row for row in read_text(source, ROOT / "src/scroll.cpp")
+            if row.address == 0x006051C0]
+    assert len(rows) == 1
+    row = rows[0]
+    assert row.mode.value == "file"
+    assert row.name == "sub_6051c0"
+    assert row.symbol == "_$E6"
+    assert row.image_spans == ((0x006051C0, 0x006051CE),)
+    assert row.byte_exact and not row.semantic
+    historical_source = subprocess.check_output(
+        ["git", "show", f"{BASELINE}:{SEED}"], cwd=ROOT, text=True,
+        timeout=20)
+    historical_rows = [item for item in read_text(historical_source, ROOT / SEED)
+                       if item.address == 0x006051C0]
+    assert len(historical_rows) == 1
+    historical = historical_rows[0]
+    for field in ("address", "name", "image_spans", "kind", "byte_exact", "semantic",
+                  "levers", "ruled_out", "unrecoverable", "deferred"):
+        assert getattr(row, field) == getattr(historical, field), field
+    assert _lessons(row) == _lessons(historical)
+    assert "int ScrollDefaultThickness = GetSystemMetrics(SM_CYHSCROLL);" in source
+    assert "extern \"C\" void __cdecl sub_6051c0()" not in source
+    assert "0x00682690" in source and "0x009B8DD4" in source
+    assert "exactly one .CRT$XCU pointer relocation to _$E6" in source
