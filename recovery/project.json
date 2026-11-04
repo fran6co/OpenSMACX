@@ -1020,6 +1020,20 @@
           "-c"
         ]
       },
+      "src/veh_queries.cpp": {
+        "flags": [
+          "/nologo",
+          "/TP",
+          "/Zm200",
+          "/GX",
+          "/O2",
+          "/Ob2",
+          "-MT",
+          "/W4",
+          "/Oy-",
+          "-c"
+        ]
+      },
       "src/buffer.cpp": {
         "flags": [
           "/nologo",
