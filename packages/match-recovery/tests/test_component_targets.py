@@ -10,7 +10,7 @@ from match_recovery.application_binary import select_bindings
 from match_recovery.component_source import render_component
 from match_recovery.component_targets import component_targets
 from match_recovery.records import canonical
-from test_toolchain_components import dependency  # noqa: F401  shared pytest fixture
+from test_toolchain_components import data_component, dependency  # noqa: F401  shared pytest fixtures
 
 
 def entity(address, symbol, component=None, seed=False):
@@ -119,6 +119,67 @@ def test_component_targets_publish_only_freshly_passing_origins(tmp_path, depend
     targets, reports = component_targets(tmp_path, snapshot, image)
     assert targets == {"_f": 0x401000}
     assert len(reports) == 1 and reports[0]["result"] == "pass"
+
+
+def test_component_targets_publish_external_data_only_after_full_section_pass(tmp_path):
+    manifest, image, raw = data_component(double_storage=2)
+    archive = tmp_path / "runtime.lib"
+    archive.write_bytes(raw)
+    snapshot = _project(tmp_path, manifest, archive, image)
+    targets, reports = component_targets(tmp_path, snapshot, image)
+    assert targets == {"_f": 0x401000, "_DoubleFormat": 0x402000}
+    assert reports[0]["data_sections"][0]["result"] == "pass"
+
+
+def test_static_data_section_anchors_never_become_component_targets(tmp_path):
+    manifest, image, raw = data_component()
+    archive = tmp_path / "runtime.lib"
+    archive.write_bytes(raw)
+    snapshot = _project(tmp_path, manifest, archive, image)
+    targets, _ = component_targets(tmp_path, snapshot, image)
+    assert "_DoubleFormat" not in targets
+    assert "_FloatFormat" not in targets
+
+
+def test_damaged_data_section_does_not_publish_external_anchor(tmp_path):
+    damaged = b"X" + bytes(range(1, 48))
+    manifest, image, raw = data_component(section_bytes=damaged, double_storage=2)
+    archive = tmp_path / "runtime.lib"
+    archive.write_bytes(raw)
+    snapshot = _project(tmp_path, manifest, archive, image)
+    targets, reports = component_targets(tmp_path, snapshot, image)
+    assert "_DoubleFormat" not in targets
+    assert reports[0]["data_sections"][0]["result"] != "pass"
+
+
+def test_external_data_target_yields_to_conflicting_product_origin(tmp_path):
+    manifest, image, raw = data_component(double_storage=2)
+    archive = tmp_path / "runtime.lib"
+    archive.write_bytes(raw)
+    snapshot = _project(tmp_path, manifest, archive, image)
+    snapshot["records"] = [{"candidate_kind": "source", "path": "src/product.cpp",
+                            "entity_id": "product-double-format",
+                            "emitted_symbol_hint": "_DoubleFormat",
+                            "catalogued_symbol": "_DoubleFormat",
+                            "origin": {"address": 0x402004}}]
+    targets, _ = component_targets(tmp_path, snapshot, image)
+    assert targets == {"_f": 0x401000}
+
+
+def test_external_data_name_participates_in_cross_component_namespace_validation(dependency):
+    from dataclasses import replace
+    from match_recovery.component_source import parse_component_entries
+
+    data_manifest, _, _ = data_component(double_storage=2)
+    function_manifest, _, _ = dependency
+    binding = replace(function_manifest.bindings[0], symbol="_DoubleFormat")
+    function_manifest = replace(function_manifest,
+                                component=replace(function_manifest.component,
+                                                  component_id="other-runtime"),
+                                bindings=(binding,))
+    with pytest.raises(ValueError, match="target symbol is declared by multiple components"):
+        parse_component_entries({"src/data.recovery.h": render_component(data_manifest),
+                                 "src/function.recovery.h": render_component(function_manifest)})
 
 
 def test_failed_verification_publishes_nothing(tmp_path, dependency):

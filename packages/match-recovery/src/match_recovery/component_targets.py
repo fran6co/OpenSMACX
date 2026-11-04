@@ -90,6 +90,10 @@ def component_targets(root: Path, snapshot: dict, image_data: bytes) -> tuple[di
             continue
         if not isinstance(manifest, ToolchainManifest):
             continue
+        external_data_names = {anchor.name for section in manifest.data_sections
+                               for anchor in section.symbols if anchor.storage == 2}
+        if external_data_names & imported_names:
+            raise ValueError("component symbol is bound as both external data and import")
         if {item.symbol for item in manifest.data_starts} & imported_names:
             raise ValueError("component symbol is bound as both data start and import")
         path = archives.get(manifest.component.component_id)
@@ -133,6 +137,15 @@ def component_targets(root: Path, snapshot: dict, image_data: bytes) -> tuple[di
             if row["result"] == Result.PASS:
                 interpretations.setdefault(row["symbol"], []).append(
                     AbsoluteConstant(int(str(row["value"]), 16)))
+        for item, row in zip(manifest.data_sections, report.get("data_sections", ()), strict=True):
+            # A full section match independently proves the archived external
+            # name and its offset within the original contribution. Static
+            # anchors remain local and never enter the application target map.
+            if row.get("result") == Result.PASS:
+                for anchor in item.symbols:
+                    if anchor.storage == 2:
+                        interpretations.setdefault(anchor.name, []).append(
+                            item.span.start + anchor.offset)
     for symbol, values in interpretations.items():
         unique = set(values)
         if len(unique) != 1 or symbol in imported_names:

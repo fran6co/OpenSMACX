@@ -70,6 +70,8 @@ def _verify_data_sections(manifest, objects, image, errors):
                 if (len(matches) != 1 or matches[0].storage != anchor.storage
                         or matches[0].value != anchor.offset):
                     raise ValueError(f"COFF data anchor {name!r} differs from its section-relative identity")
+                if anchor.storage == 2 and matches[0].type != 0:
+                    raise ValueError(f"COFF external data anchor {name!r} is not an ordinary data symbol")
             row["result"] = Result.PASS
             bases[(item.unit, item.section)] = item.span.start
         except ValueError as error:
@@ -358,7 +360,12 @@ def verify_toolchain(manifest: ToolchainManifest, image_data: bytes, archive_dat
     """
     import hashlib
     from .coff_archive import CoffArchive
-    if {item.symbol for item in manifest.data_starts} & {item.symbol for item in import_bindings}:
+    imported_symbols = {item.symbol for item in import_bindings}
+    external_data_symbols = {anchor.name for section in manifest.data_sections
+                             for anchor in section.symbols if anchor.storage == 2}
+    if external_data_symbols & imported_symbols:
+        raise ValueError("component symbol is bound as both external data and import")
+    if {item.symbol for item in manifest.data_starts} & imported_symbols:
         raise ValueError("component symbol is bound as both data start and import")
     pins = {binding.origin.image_sha256 for binding in manifest.bindings}
     pins.update(item.origin.image_sha256 for item in manifest.data_sections)
@@ -458,6 +465,7 @@ def verify_toolchain(manifest: ToolchainManifest, image_data: bytes, archive_dat
                             "archive indexes, linker member selection, ABI and runtime behavior remain unproved",
                             "import identities use explicit source DLL/export declarations, not original operands or candidate link selection",
                             "unbound external functions, static data and undeclared imports remain unresolved",
+                            "full-section external data anchors publish only named starts, not extents, linked selection, allocation or lifetime",
                             "this report does not publish targets into application acceptance"]}
     if manifest.data_starts:
         report.update(data_starts=start_rows, data_start_inventory=start_inventory,

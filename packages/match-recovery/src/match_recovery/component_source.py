@@ -147,6 +147,8 @@ def parse_component_entries(sources: dict[str, str]) -> list[tuple[str, Componen
             names.extend(item.symbol for item in manifest.absolute_symbols)
             names.extend(item.symbol for item in manifest.data_starts)
             names.extend(anchor.name for section in manifest.code_sections for anchor in section.entries)
+            names.extend(anchor.name for section in manifest.data_sections for anchor in section.symbols
+                         if anchor.storage == 2)
         for name in names:
             previous = target_owners.setdefault(name, manifest.component.component_id)
             if previous != manifest.component.component_id:

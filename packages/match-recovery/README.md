@@ -3426,8 +3426,12 @@ load-bearing fields:
 - `bindings`: original image/spans, emitted symbol, `unit` naming the library
   member, and independent binding/boundary evidence, as for upstream components.
 - Optional `data_sections`: complete initialized non-COMDAT COFF contributions,
-  with exact member/section identity, original full span, static symbol offsets
-  and independent evidence. These anchors assert no per-symbol extent or type.
+  with exact member/section identity, original full span, symbol offsets and
+  independent evidence. Static (`storage: 3`) anchors remain local. External
+  (`storage: 2`) anchors must be ordinary type-zero data definitions; only a
+  freshly passing full-section proof publishes their exact original start
+  addresses as scoped component targets. Neither form asserts per-symbol
+  extent, and static anchors are never published.
 - Optional `data_starts`: independently evidenced ordinary external BSS or
   COMMON **start points**, with no original span. A `kind: "bss"` row has
   `unit`, `symbol`, `origin`, `section`, `section_name`, `offset`, `section_size`

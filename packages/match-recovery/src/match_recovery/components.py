@@ -475,6 +475,8 @@ class ToolchainManifest:
                                and right.end <= section.span.end)
                 if not allowed:
                     raise ValueError("toolchain function/data-section spans overlap")
+        external_data_names = [anchor.name for item in self.data_sections
+                               for anchor in item.symbols if anchor.storage == 2]
         occupied_names = ({item.symbol for item in self.bindings}
                           | {item.symbol for item in self.absolute_symbols}
                           | set(entry_symbols)
@@ -482,6 +484,12 @@ class ToolchainManifest:
         start_names = [item.symbol for item in self.data_starts]
         if len(set(start_names)) != len(start_names) or set(start_names) & occupied_names:
             raise ValueError("toolchain data-start symbols conflict with another binding")
+        if len(set(external_data_names)) != len(external_data_names):
+            raise ValueError("toolchain external data symbols conflict with another binding")
+        if set(external_data_names) & ({item.symbol for item in self.bindings}
+                                       | {item.symbol for item in self.absolute_symbols}
+                                       | set(entry_symbols)):
+            raise ValueError("toolchain external data symbols conflict with another binding")
         if len({item.origin.entity_id for item in self.data_starts}) != len(self.data_starts):
             raise ValueError("toolchain data-start identities must be unique; aliases are unsupported")
         for item in self.data_starts:
@@ -620,8 +628,8 @@ class DataSymbolAnchor:
         require_text(self.name, "data symbol anchor")
         if type(self.offset) is not int or self.offset < 0:
             raise ValueError("data symbol offset must be a nonnegative integer")
-        if type(self.storage) is not int or self.storage != 3:
-            raise ValueError("toolchain data anchor must be a static COFF definition")
+        if type(self.storage) is not int or self.storage not in (2, 3):
+            raise ValueError("toolchain data anchor must be a static or external COFF definition")
 
 
 @dataclass(frozen=True)

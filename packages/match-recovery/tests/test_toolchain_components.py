@@ -11,7 +11,7 @@ from match_recovery.coff_archive import CoffArchive
 from match_recovery.component_binary import verify_toolchain
 from match_recovery.component_source import parse_component, parse_components, render_component
 from match_recovery.components import (DataSymbolAnchor, ToolchainBinding,
-                                       ToolchainDataSectionBinding, ToolchainManifest,
+                                       ToolchainCommonDataStart, ToolchainDataSectionBinding, ToolchainManifest,
                                        VendorBinding)
 from match_recovery.model import Component, Delivery, Origin, Ownership, Span, canonical
 from test_binary import coff_fixture, pe_fixture
@@ -28,7 +28,8 @@ def archive(records):
     return b"!<arch>\n" + b"".join(member(name, body) for name, body in records)
 
 
-def coff_data_fixture(data, *, data_flags=0xC0400040, data_relocation=False):
+def coff_data_fixture(data, *, data_flags=0xC0400040, data_relocation=False,
+                      double_storage=3, double_type=0, double_value=0):
     import struct
     code = b"\xa1\0\0\0\0\xc3" + b"\xcc" * 10
     text_reloc = struct.pack("<IIH", 1, 1, 6)
@@ -38,7 +39,8 @@ def coff_data_fixture(data, *, data_flags=0xC0400040, data_relocation=False):
     double_name, float_name = b"_DoubleFormat\0", b"_FloatFormat\0"
     strings = struct.pack("<I", 4 + len(double_name) + len(float_name)) + double_name + float_name
     symbols = (b"_f".ljust(8, b"\0") + struct.pack("<IhHBB", 0, 1, 0x20, 2, 0)
-               + bytes(4) + struct.pack("<I", 4) + struct.pack("<IhHBB", 0, 2, 0, 3, 0)
+               + bytes(4) + struct.pack("<I", 4)
+               + struct.pack("<IhHBB", double_value, 2, double_type, double_storage, 0)
                + bytes(4) + struct.pack("<I", 4 + len(double_name))
                + struct.pack("<IhHBB", 24, 2, 0, 3, 0))
     header = struct.pack("<HHIIIHH", 0x14C, 2, 0, symbols_at, 3, 0, 0)
@@ -68,17 +70,20 @@ def pe_data_fixture(data, *, data_relocation=False):
 
 
 def data_component(*, section_bytes=None, data_flags=0xC0400040,
-                   data_relocation=False, double_offset=0, image_bytes=None):
+                   data_relocation=False, double_offset=0, image_bytes=None,
+                   double_storage=3, double_type=0, coff_double_offset=0):
     original, section = bytes(range(48)), section_bytes or bytes(range(48))
     image = pe_data_fixture(original) if image_bytes is None else image_bytes
     unit = "release/runtime.obj"
     raw = archive([("//", (unit + "\0").encode()), ("/0", coff_data_fixture(
-        section, data_flags=data_flags, data_relocation=data_relocation))])
+        section, data_flags=data_flags, data_relocation=data_relocation,
+        double_storage=double_storage, double_type=double_type,
+        double_value=coff_double_offset))])
     pin = hashlib.sha256(image).hexdigest()
     function = VendorBinding(Origin(pin, "pe:va", 0x401000), (Span(0x401000, 0x401006),),
                              "_f", unit, "synthetic original function boundary")
     data = ToolchainDataSectionBinding(unit, 2, ".data", Origin(pin, "pe:va", 0x402000),
-             Span(0x402000, 0x402030), (DataSymbolAnchor("_DoubleFormat", double_offset, 3),
+             Span(0x402000, 0x402030), (DataSymbolAnchor("_DoubleFormat", double_offset, double_storage),
              DataSymbolAnchor("_FloatFormat", 24, 3)), "synthetic full data-section placement")
     manifest = ToolchainManifest(Component("runtime", Ownership.RUNTIME, Delivery.TOOLCHAIN,
              ("Synthetic compiler distribution",), "test"), hashlib.sha256(raw).hexdigest(),
@@ -180,6 +185,44 @@ def test_duplicate_data_symbol_anchor_is_rejected_at_manifest_boundary():
     data = manifest.data_sections[0]
     with pytest.raises(ValueError, match="unique symbol anchors"):
         replace(data, symbols=data.symbols + (data.symbols[0],))
+
+
+def test_external_data_anchor_is_allowed_only_as_an_ordinary_data_symbol():
+    manifest, image, raw = data_component(double_storage=2)
+    result = verify_toolchain(manifest, image, raw)
+    assert result["data_sections"][0]["result"] == "pass"
+    assert result["functions"][0]["result"] == "pass"
+
+    malformed, image, raw = data_component(double_storage=2, double_type=0x20)
+    result = verify_toolchain(malformed, image, raw)
+    assert result["data_sections"][0]["result"] != "pass"
+    assert result["functions"][0]["result"] == "unknown"
+
+
+def test_external_data_name_cannot_alias_a_function_binding():
+    manifest, _, _ = data_component(double_storage=2)
+    function = replace(manifest.bindings[0], symbol="_DoubleFormat")
+    with pytest.raises(ValueError, match="external data symbols conflict"):
+        replace(manifest, bindings=(function,))
+
+
+def test_external_data_name_cannot_alias_an_import():
+    from match_recovery.import_source import ImportBinding
+
+    manifest, image, raw = data_component(double_storage=2)
+    imported = ImportBinding("_DoubleFormat", "fixture.dll", "external", None,
+                             "src/imports.cpp", 1)
+    with pytest.raises(ValueError, match="external data and import"):
+        verify_toolchain(manifest, image, raw, import_bindings=(imported,))
+
+
+def test_static_data_anchor_still_conflicts_with_a_data_start_name():
+    manifest, _, _ = data_component()
+    static_anchor = ToolchainCommonDataStart(manifest.data_sections[0].unit, "_FloatFormat",
+        Origin(manifest.data_sections[0].origin.image_sha256, "pe:va", 0x403000),
+        4, "independent COMMON origin")
+    with pytest.raises(ValueError, match="data-start symbols conflict"):
+        replace(manifest, data_starts=(static_anchor,))
 
 
 def test_explicit_data_section_base_conflicts_with_function_section_placement():
