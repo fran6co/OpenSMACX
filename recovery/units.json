@@ -666,6 +666,18 @@
         "MapStorage, resampling scratch, map-pod multipliers and landmark direction/template/bonus data accompany their core consumers. The adjacent AltNaturalDefault/Contour/Natural arrays remain one current shared terrain-state group; world generation references it externally. World-only canyon/ridge arrays and unrelated radius data remain residual ownership obligations.",
         "The minerals_at jump table retains its bounded source association; independent pinned-image reads classify other internal gaps as NOP padding, with scale_adjustment starting the next contribution at592D70. Genuine WorldClimateWorldWin lifetime is homed separately with WorldWin."
       ]
+    },
+    {
+      "name": "AlphaMenuCore",
+      "start": "0x00402F10",
+      "end_exclusive": "0x00403B94",
+      "recovered_tu": "src/alphamenu.cpp",
+      "reason": "Inferred AlphaMenu contribution core with its genuine application Wave lifetime, not a historical TU/filename proof. Source correspondence and compiling bodies remain distinct from byte matching.",
+      "evidence": [
+        "The thirteen known primary identities in this interval are the AlphaMenu Wave initializer/cleanup and eleven AlphaMenu methods. Complete global source lookup has no foreign interleavers; original internal gaps are NOP padding. The following AlphaMovie function starts separately at403BA0.",
+        "The first nonzero original CRT slot682004 selects402F10, which constructs the actual g_ALPHAMENU_WAVE at6A7090 and registers cleanup402F30. Its direct play consumers are AlphaMenu methods, while Wave implementation methods are a distant library family.",
+        "menu_init/check and detached AlphaMenu destructor/deleting entries remain explicit out-of-core provider obligations. The init secondary EH span remains attached. Moving this CPP to the first application source position supports the observed first-initializer order; other global order and linked/runtime acceptance remain unproven."
+      ]
     }
   ]
 }

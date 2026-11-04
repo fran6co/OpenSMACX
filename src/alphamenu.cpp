@@ -38,7 +38,8 @@
 // in the shared text-colour run built by textcolor_init (palette.cpp).
 extern int TextColourTable[195];
 extern int WindowAnimationFrameDelay;
-extern Wave g_ALPHAMENU_WAVE;
+// RECOVERY_OBJECT: v1 0x006A7090 ?g_ALPHAMENU_WAVE@@3VWave@@A
+Wave g_ALPHAMENU_WAVE;  // 0x006A7090
 
 namespace {
 
@@ -518,8 +519,15 @@ if ((GameDataStateStorage.fields_.game_more_preferences_ & 0x200000u) == 0) {
 // Superseded seed deleted; seed paths below are historical Git provenance.
 // Historical seed observations (not fresh measurements or acceptance):
 // TRIED: MISMATCH #58 (push vs mov) - a genuine local `Buffer` (RAII) reproduces the SEH try-frame/dtor exactly for 57 instructions (prologue, ctor, null check+early return, globals store, first branch's load_pcx+extract, loop setup); the do/while loop body's byte-read-then-extract() call diverges on push order. Tried inlining the byte read into the call expression (same as the first, unlooped, extract call) - made it worse (#43), so a separate local before the call is closer; kept.
+// ORIGINAL: 0x00402F10 _$E21 0x00402F10-0x00402F26 FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned CRT dispatcher 0x00644DEC-0x00644DFB supplies [0x00682000,0x006826CC) to 0x00644ED8, which calls each non-null dword; original slot 0x00682004 selects initializer 0x00402F10 and it registers finalizer 0x00402F30.", "Pinned original initializer 0x00402F10-0x00402F26 and finalizer 0x00402F30-0x00402F3A independently load receiver 0x006A7090 and call Wave constructor/destructor 0x004C66E0/0x004C67C0.", "AlphaMenu::play in src/alphamenu.cpp calls the source-owned g_ALPHAMENU_WAVE in both observed playback branches; this TU now owns its genuine Wave storage and the paired original lifetime mappings.", "Historical prior-owner observation only: before this source move, a physical wave.cpp COFF selected local STATIC helpers for this global. That observation does not establish current alphamenu.cpp emission or linked helper identity.", "Individual original lifetime ownership is retained; this binding does not establish complete CRT order, current linked selection, full data layout or runtime acceptance."], "reason": "Bind the original initializer to the genuine g_ALPHAMENU_WAVE Wave object now owned with its AlphaMenu playback consumer in alphamenu.cpp. The original CRT slot and constructor/destructor receiver remain pinned evidence; no callback body is authored."}
+// symbol    _$E8
+// ORIGINAL: 0x00402F30 _$E19 0x00402F30-0x00402F3A FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned CRT dispatcher 0x00644DEC-0x00644DFB supplies [0x00682000,0x006826CC) to 0x00644ED8, which calls each non-null dword; original slot 0x00682004 selects initializer 0x00402F10 and it registers finalizer 0x00402F30.", "Pinned original initializer 0x00402F10-0x00402F26 and finalizer 0x00402F30-0x00402F3A independently load receiver 0x006A7090 and call Wave constructor/destructor 0x004C66E0/0x004C67C0.", "AlphaMenu::play in src/alphamenu.cpp calls the source-owned g_ALPHAMENU_WAVE in both observed playback branches; this TU now owns its genuine Wave storage and the paired original lifetime mappings.", "Historical prior-owner observation only: before this source move, a physical wave.cpp COFF selected local STATIC helpers for this global. That observation does not establish current alphamenu.cpp emission or linked helper identity.", "Individual original lifetime ownership is retained; this binding does not establish complete CRT order, current linked selection, full data layout or runtime acceptance."], "reason": "Bind the original finalizer to the genuine g_ALPHAMENU_WAVE Wave object now owned with its AlphaMenu playback consumer in alphamenu.cpp. The original CRT slot and constructor/destructor receiver remain pinned evidence; no callback body is authored."}
+// symbol    _$E6
+
 // ORIGINAL: 0x00402F40 ?init@AlphaMenu@@QAEHPAUWin@@@Z 0x00402F40-0x00403199;0x006505C0-0x006505D5 FILE
-// RECOVERY_BINDING: v1 {"evidence": ["Retained seeds src/unrecovered/00402f40.cpp,004032a0.cpp,00403af0.cpp and src/recovered/units/00403340.cpp,00403680.cpp,00403830.cpp; pinned original callback style27/29, positive hide height, branch-only clip restoration and actual caller dispatch audited by coordinator."], "reason": "Recover AlphaMenu owner behavior through existing Menu/GraphicWin/Buffer inheritance and owned Sprite lifetimes; historical seed identity and extents remain obligations, not measurement claims."}
+// RECOVERY_BINDING: v1 {"evidence": ["Retired seed provenance: src/unrecovered/00402f40.cpp,004032a0.cpp,00403af0.cpp and src/recovered/units/00403340.cpp,00403680.cpp,00403830.cpp; pinned original callback style27/29, positive hide height, branch-only clip restoration and actual caller dispatch audited by coordinator."], "reason": "Recover AlphaMenu owner behavior through existing Menu/GraphicWin/Buffer inheritance and owned Sprite lifetimes; historical seed identity and extents remain obligations, not measurement claims."}
 // symbol    ?init@AlphaMenu@@UAEHPAVWin@@@Z
 int AlphaMenu::init(Win *parent) {
   Buffer sheet;
@@ -570,7 +578,7 @@ int AlphaMenu::init(Win *parent) {
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x004032A0 ?adjust@AlphaMenu@@QAEXXZ 0x004032A0-0x00403335 FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["Retained seeds src/unrecovered/00402f40.cpp,004032a0.cpp,00403af0.cpp and src/recovered/units/00403340.cpp,00403680.cpp,00403830.cpp; pinned original callback style27/29, positive hide height, branch-only clip restoration and actual caller dispatch audited by coordinator."], "reason": "Recover AlphaMenu owner behavior through existing Menu/GraphicWin/Buffer inheritance and owned Sprite lifetimes; historical seed identity and extents remain obligations, not measurement claims."}
+// RECOVERY_BINDING: v1 {"evidence": ["Retired seed provenance: src/unrecovered/00402f40.cpp,004032a0.cpp,00403af0.cpp and src/recovered/units/00403340.cpp,00403680.cpp,00403830.cpp; pinned original callback style27/29, positive hide height, branch-only clip restoration and actual caller dispatch audited by coordinator."], "reason": "Recover AlphaMenu owner behavior through existing Menu/GraphicWin/Buffer inheritance and owned Sprite lifetimes; historical seed identity and extents remain obligations, not measurement claims."}
 // symbol    ?adjust@AlphaMenu@@UAEXXZ
 void AlphaMenu::adjust() {
   const int height = sprites_[0].height() * count_ + sprite1_.height();
@@ -658,7 +666,7 @@ int AlphaMenu::backfill_func(GraphicWin *target) {
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x00403AF0 ?fill_func@AlphaMenu@@QAAHPAUGraphicWin@@HPAURECT@@@Z 0x00403AF0-0x00403B70 FILE
-// RECOVERY_BINDING: v1 {"evidence": ["Retained seeds src/unrecovered/00402f40.cpp,004032a0.cpp,00403af0.cpp and src/recovered/units/00403340.cpp,00403680.cpp,00403830.cpp; pinned original callback style27/29, positive hide height, branch-only clip restoration and actual caller dispatch audited by coordinator."], "reason": "Recover AlphaMenu owner behavior through existing Menu/GraphicWin/Buffer inheritance and owned Sprite lifetimes; historical seed identity and extents remain obligations, not measurement claims."}
+// RECOVERY_BINDING: v1 {"evidence": ["Retired seed provenance: src/unrecovered/00402f40.cpp,004032a0.cpp,00403af0.cpp and src/recovered/units/00403340.cpp,00403680.cpp,00403830.cpp; pinned original callback style27/29, positive hide height, branch-only clip restoration and actual caller dispatch audited by coordinator."], "reason": "Recover AlphaMenu owner behavior through existing Menu/GraphicWin/Buffer inheritance and owned Sprite lifetimes; historical seed identity and extents remain obligations, not measurement claims."}
 // symbol    ?fill_func@AlphaMenu@@SAHPAVGraphicWin@@HPAUtagRECT@@@Z
 int __cdecl AlphaMenu::fill_func(GraphicWin *target, int mode, RECT *clip) {
   RECT draw_clip = *clip;
@@ -674,7 +682,7 @@ int __cdecl AlphaMenu::fill_func(GraphicWin *target, int mode, RECT *clip) {
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x00403340 ?on_redraw@AlphaMenu@@QAEXXZ 0x00403340-0x00403544 FILE
-// RECOVERY_BINDING: v1 {"evidence": ["Retained seeds src/unrecovered/00402f40.cpp,004032a0.cpp,00403af0.cpp and src/recovered/units/00403340.cpp,00403680.cpp,00403830.cpp; pinned original callback style27/29, positive hide height, branch-only clip restoration and actual caller dispatch audited by coordinator."], "reason": "Recover AlphaMenu owner behavior through existing Menu/GraphicWin/Buffer inheritance and owned Sprite lifetimes; historical seed identity and extents remain obligations, not measurement claims."}
+// RECOVERY_BINDING: v1 {"evidence": ["Retired seed provenance: src/unrecovered/00402f40.cpp,004032a0.cpp,00403af0.cpp and src/recovered/units/00403340.cpp,00403680.cpp,00403830.cpp; pinned original callback style27/29, positive hide height, branch-only clip restoration and actual caller dispatch audited by coordinator."], "reason": "Recover AlphaMenu owner behavior through existing Menu/GraphicWin/Buffer inheritance and owned Sprite lifetimes; historical seed identity and extents remain obligations, not measurement claims."}
 // symbol    ?on_redraw@AlphaMenu@@UAEXXZ
 void AlphaMenu::on_redraw() {
   GraphicWin::fill(9);
@@ -725,7 +733,7 @@ void AlphaMenu::on_redraw() {
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x00403680 ?show@AlphaMenu@@QAEXXZ 0x00403680-0x0040382F FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["Retained seeds src/unrecovered/00402f40.cpp,004032a0.cpp,00403af0.cpp and src/recovered/units/00403340.cpp,00403680.cpp,00403830.cpp; pinned original callback style27/29, positive hide height, branch-only clip restoration and actual caller dispatch audited by coordinator."], "reason": "Recover AlphaMenu owner behavior through existing Menu/GraphicWin/Buffer inheritance and owned Sprite lifetimes; historical seed identity and extents remain obligations, not measurement claims."}
+// RECOVERY_BINDING: v1 {"evidence": ["Retired seed provenance: src/unrecovered/00402f40.cpp,004032a0.cpp,00403af0.cpp and src/recovered/units/00403340.cpp,00403680.cpp,00403830.cpp; pinned original callback style27/29, positive hide height, branch-only clip restoration and actual caller dispatch audited by coordinator."], "reason": "Recover AlphaMenu owner behavior through existing Menu/GraphicWin/Buffer inheritance and owned Sprite lifetimes; historical seed identity and extents remain obligations, not measurement claims."}
 void AlphaMenu::show() {
   if (is_visible()) return;
 
@@ -763,7 +771,7 @@ void AlphaMenu::show() {
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x00403830 ?hide@AlphaMenu@@QAEXXZ 0x00403830-0x00403AE5 FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["Retained seeds src/unrecovered/00402f40.cpp,004032a0.cpp,00403af0.cpp and src/recovered/units/00403340.cpp,00403680.cpp,00403830.cpp; pinned original callback style27/29, positive hide height, branch-only clip restoration and actual caller dispatch audited by coordinator."], "reason": "Recover AlphaMenu owner behavior through existing Menu/GraphicWin/Buffer inheritance and owned Sprite lifetimes; historical seed identity and extents remain obligations, not measurement claims."}
+// RECOVERY_BINDING: v1 {"evidence": ["Retired seed provenance: src/unrecovered/00402f40.cpp,004032a0.cpp,00403af0.cpp and src/recovered/units/00403340.cpp,00403680.cpp,00403830.cpp; pinned original callback style27/29, positive hide height, branch-only clip restoration and actual caller dispatch audited by coordinator."], "reason": "Recover AlphaMenu owner behavior through existing Menu/GraphicWin/Buffer inheritance and owned Sprite lifetimes; historical seed identity and extents remain obligations, not measurement claims."}
 // symbol    ?hide@AlphaMenu@@UAEXXZ
 void AlphaMenu::hide() {
   if (!is_visible()) return;

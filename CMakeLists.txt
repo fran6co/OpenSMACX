@@ -117,6 +117,7 @@ target_include_directories(zlib PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/src/vendor/z
 target_compile_options(zlib PRIVATE /W0)
 
 set(OPENSMACX_SOURCES
+    src/alphamenu.cpp
     src/alpha.cpp
     src/alphasave.cpp
     src/faction_strategy.cpp
@@ -256,7 +257,6 @@ set(OPENSMACX_SOURCES
     src/reportif.cpp
     src/console.cpp
     src/console_commands.cpp
-    src/alphamenu.cpp
     src/uv2player.cpp
     src/dipedit.cpp
     src/sound.cpp
