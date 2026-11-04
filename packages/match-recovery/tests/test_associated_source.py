@@ -297,14 +297,75 @@ def test_reader_checks_retained_seed_data_spans_for_collisions(
         read_associated(root, PIN)
 
 
-def test_reader_rejects_fragment_and_multi_span_owner(tmp_path) -> None:
+def test_reader_accepts_independent_primary_with_detached_tail(tmp_path) -> None:
     root = project(tmp_path)
     multi = mapped_source().replace(
         "0x00001000-0x00001020 FILE",
         "0x00001000-0x00001010;0x00001020-0x00001030 FILE",
     )
     (root / "src/a.cpp").write_text(multi)
-    with pytest.raises(ValueError, match="one independent non-fragment"):
+    assert read_associated(root, PIN) == (binding(),)
+
+
+@pytest.mark.parametrize("annotation,reason", [
+    (ANNOTATION.replace("0x00002000 0x00002008", "0x00001024 0x00001028"),
+     "overlaps a source-mapped function span"),
+    (ANNOTATION.replace("0x00001004", "0x00001024"),
+     "evidence must lie inside its mapped owner function"),
+])
+def test_reader_checks_detached_tail_overlap_and_evidence(annotation, reason, tmp_path) -> None:
+    root = project(tmp_path)
+    multi = mapped_source().replace(
+        ANNOTATION, annotation, 1).replace(
+            "0x00001000-0x00001020 FILE",
+            "0x00001000-0x00001010;0x00001020-0x00001030 FILE",
+        )
+    (root / "src/a.cpp").write_text(multi)
+    with pytest.raises(ValueError, match=reason):
+        read_associated(root, PIN)
+
+
+@pytest.mark.parametrize("spans", [
+    "0x00001000-0x00001010;0x00001020-0x00001020",
+    "0x00001000-0x00001010;0x00001030-0x00001020",
+    "0x00001000-0x00001010;0x00001008-0x00001018",
+    "0x00001000-0x00001010;0x00001020-0x00001030;0x00001028-0x00001038",
+])
+def test_reader_rejects_invalid_owner_span_topology(spans, tmp_path) -> None:
+    root = project(tmp_path)
+    source = mapped_source().replace(
+        "0x00001000-0x00001020 FILE", spans + " FILE")
+    (root / "src/a.cpp").write_text(source)
+    with pytest.raises(ValueError, match="associated owner spans"):
+        read_associated(root, PIN)
+
+
+def test_reader_accepts_disjoint_secondary_spans_out_of_address_order(tmp_path) -> None:
+    root = project(tmp_path)
+    source = mapped_source().replace(
+        "0x00001000-0x00001020 FILE",
+        "0x00001000-0x00001010;0x00001040-0x00001050;"
+        "0x00001020-0x00001030 FILE",
+    )
+    (root / "src/a.cpp").write_text(source)
+    assert read_associated(root, PIN) == (binding(),)
+
+
+def test_reader_rejects_fragment_associated_owner(tmp_path) -> None:
+    root = project(tmp_path)
+    text = (
+        "// ORIGINAL: 0x00000FE0 root 0x00000FE0-0x00001000 FILE\n"
+        "// symbol root\n"
+        "int root() { return 1; }\n"
+        "// ORIGINAL: 0x00001000 child 0x00001000-0x00001020 FILE\n"
+        '// RECOVERY_FRAGMENT: v1 {"parent_address":"0x00000FE0",'
+        '"parent_symbol":"root","reason":"split source contribution",'
+        '"evidence":["retained source fragment"]}\n'
+        + ANNOTATION + "\n"
+        "int child() { return 1; }\n"
+    )
+    (root / "src/a.cpp").write_text(text)
+    with pytest.raises(ValueError, match="one independent non-fragment primary"):
         read_associated(root, PIN)
 
 

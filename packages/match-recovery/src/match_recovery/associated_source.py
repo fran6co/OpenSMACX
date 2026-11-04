@@ -221,12 +221,19 @@ def read_associated(root: Path, pin: str) -> tuple[AssociatedDataBinding, ...]:
         if len(candidates) != 1:
             raise ValueError("associated owner must match one source-mapped function in its unit")
         parent = candidates[0]
-        if (parent.function_fragment is not None or len(parent.image_spans) != 1
+        if (parent.function_fragment is not None or not parent.image_spans
                 or parent.image_spans[0][0] != parent.address
                 or parent.image_spans[0][1] <= parent.image_spans[0][0]
                 or parent.extract_error):
-            raise ValueError("associated owner requires one independent non-fragment function span")
-        parent_span = Span(*parent.image_spans[0])
+            raise ValueError("associated owner requires one independent non-fragment primary function span")
+        if any(low < 0 or high <= low for low, high in parent.image_spans):
+            raise ValueError("associated owner spans must be positive nonnegative ranges")
+        owner_spans = tuple(Span(low, high) for low, high in parent.image_spans)
+        if any(_overlaps(left, right)
+               for index, left in enumerate(owner_spans)
+               for right in owner_spans[index + 1:]):
+            raise ValueError("associated owner spans must be pairwise disjoint")
+        parent_span = owner_spans[0]
         if _overlaps(binding.span, parent_span):
             raise ValueError("associated data must be outside its owner function span")
         if not parent_span.start <= binding.evidence.address < parent_span.end:

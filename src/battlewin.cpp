@@ -856,3 +856,7 @@ void BattleWin::battle_report(int first_vehicle_id, int second_vehicle_id,
     do_non_input();
     time_.pulse(&teardown_00422ec0, 0, 0x1388, 5);
 }
+// RECOVERY_ASSOCIATED: v1 switch_targets 0x00421B50 0x00422BFC 0x00422C14 0x00421EAD
+// RECOVERY_ASSOCIATED: v1 switch_selector 0x00421B50 0x00422C14 0x00422C1F 0x00421EA7
+// RECOVERY_ASSOCIATED: v1 switch_targets 0x00421B50 0x00422C20 0x00422C38 0x00421FE0
+// RECOVERY_ASSOCIATED: v1 switch_selector 0x00421B50 0x00422C38 0x00422C43 0x00421FDA

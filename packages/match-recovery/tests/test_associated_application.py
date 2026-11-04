@@ -9,7 +9,7 @@ import pytest
 
 from match_recovery.application_binary import check_compiled, verify_records, verify_task
 from match_recovery.bound_objects import FunctionBinding, check_objects
-from match_recovery.model import Result
+from match_recovery.model import Result, Span
 from match_recovery.source_integrity import check_annotation_text
 from match_recovery.source import read_file
 from match_recovery.source.asm import compare_unit
@@ -73,6 +73,19 @@ def test_bound_and_compiled_checks_consume_only_explicit_associated_relations():
     assert proof["span"] == proof["source_body_span"]
     assert proof["comparison_span"]["end"] > proof["span"]["end"]
     assert proof["linked_selection"] == proof["runtime"] == Result.UNKNOWN
+
+
+def test_native_multi_span_owner_with_association_remains_unknown():
+    binding, objects, image, associated = context()
+    primary = binding.spans[0]
+    compound = replace(
+        binding,
+        spans=(primary, Span(primary.end + 0x100, primary.end + 0x108)),
+    )
+    rows = check_objects([compound], objects, image,
+                         associated_bindings=associated)
+    row, = rows
+    assert row["result"] == Result.UNKNOWN
 
 
 @pytest.mark.parametrize("damage", ["unit", "source_spans", "pin", "duplicate"])

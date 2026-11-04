@@ -476,6 +476,103 @@
         "The class operations, constructor/destructor and class initialization/close reference the distinct source-owned FontDefault, FontHDC and FontInitCount identities; address adjacency does not prove a single aggregate allocation.",
         "Pinned selector5E3650 has three direct calls in the two Buffer string-list methods plus two expanded Buffer uses, and sits between the Buffer deleting entry and select_text_slot. Its mapping/body now reside with those Buffer consumers; the actual API and Font class layout remain unchanged. This is inferred provider attribution, not proof of original source spelling or absence of header COMDAT selection."
       ]
+    },
+    {
+      "name": "PullDown",
+      "start": "0x005F8800",
+      "end_exclusive": "0x005FA79B",
+      "recovered_tu": "src/pulldown.cpp",
+      "reason": "Inferred complete known PullDown contribution including its mapped lifecycle/helpers and dispatch data. Source correspondence permits imperfect bodies; original TU identity and unresolved associated evidence remain unproved.",
+      "evidence": [
+        "Fresh source audit includes all35known primary identities in this entire current source home, with no foreign mapped primary inside the candidate bracket.",
+        "Complete mapped constructor/destructor and scalar/vector deleting identities are in the same home. Keep all default callback/font/color/state objects with the class implementation; the source mappings do not prove one aggregate data allocation or process-wide order.",
+        "Nonpadding gaps contain owner-associated dispatch data; source annotations retain bounded table/selector identities independently of primary function spans. Those relationships do not establish matched data, exclusive allocation extents, historical object boundaries, retained selection or runtime behavior."
+      ]
+    },
+    {
+      "name": "ListBox",
+      "start": "0x00609DB0",
+      "end_exclusive": "0x0060D05E",
+      "recovered_tu": "src/listbox.cpp",
+      "reason": "Inferred complete known ListBox contribution including its mapped lifecycle/helpers and dispatch data. Source correspondence permits imperfect bodies; original TU identity and unresolved associated evidence remain unproved.",
+      "evidence": [
+        "Fresh source audit includes all46known primary identities in this entire current source home, with no foreign mapped primary inside the candidate bracket.",
+        "The 46 identities include constructor/destructor, class body, compiler/view thunks, helper wrappers and the full two dispatching methods. Keep the separate global guard and DDC/defaults with the source-home evidence, without assuming original aggregate extents or callback ordering.",
+        "Nonpadding gaps contain owner-associated dispatch data; source annotations retain bounded table/selector identities independently of primary function spans. Those relationships do not establish matched data, exclusive allocation extents, historical object boundaries, retained selection or runtime behavior."
+      ]
+    },
+    {
+      "name": "EditBox",
+      "start": "0x00614E50",
+      "end_exclusive": "0x006161CA",
+      "recovered_tu": "src/editbox.cpp",
+      "reason": "Inferred complete known EditBox contribution including its mapped lifecycle/helpers and dispatch data. Source correspondence permits imperfect bodies; original TU identity and unresolved associated evidence remain unproved.",
+      "evidence": [
+        "Fresh source audit includes all17known primary identities in this entire current source home, with no foreign mapped primary inside the candidate bracket.",
+        "All 17 current mapped identities span the class constructor/destructor behavior and UI handlers. Mapped EditBox default words and text colors are separate source identities, including both data and BSS addresses; retain them with this cohort without inferring allocation continuity.",
+        "Nonpadding gaps contain owner-associated dispatch data; source annotations retain bounded table/selector identities independently of primary function spans. Those relationships do not establish matched data, exclusive allocation extents, historical object boundaries, retained selection or runtime behavior."
+      ]
+    },
+    {
+      "name": "BattleWin",
+      "start": "0x004219B0",
+      "end_exclusive": "0x00422EFB",
+      "recovered_tu": "src/battlewin.cpp",
+      "reason": "Inferred complete known BattleWin contribution including its mapped lifecycle/helpers and dispatch data. Source correspondence permits imperfect bodies; original TU identity and unresolved associated evidence remain unproved.",
+      "evidence": [
+        "Fresh source audit includes all21known primary identities in this entire current source home, with no foreign mapped primary inside the candidate bracket.",
+        "The home starts with original _$E21/_$E19 initializer/exit identities at 0x4219B0/0x4219D0. Current source binds them to original CRT slot 0x682068 and the actual g_BattleWin storage; current physical object evidence selects compiler-generated lifetime callbacks. This is strong class/global closure evidence, but not full CRT ordering or original TU proof.",
+        "Nonpadding gaps contain owner-associated dispatch data; source annotations retain bounded table/selector identities independently of primary function spans. Those relationships do not establish matched data, exclusive allocation extents, historical object boundaries, retained selection or runtime behavior."
+      ]
+    },
+    {
+      "name": "SetupWin",
+      "start": "0x004AD880",
+      "end_exclusive": "0x004AE9AB",
+      "recovered_tu": "src/setupwin.cpp",
+      "reason": "Inferred complete known SetupWin contribution including its mapped lifecycle/helpers and dispatch data. Source correspondence permits imperfect bodies; original TU identity and unresolved associated evidence remain unproved.",
+      "evidence": [
+        "Fresh source audit includes all16known primary identities in this entire current source home, with no foreign mapped primary inside the candidate bracket.",
+        "Mapped SetupWin constructor, `close`, switch callback, draw, scalar/vector deleting thunks and full destructor all remain in the same source home. The task should preserve actual member/base lifetime behavior and the static scratch identity while leaving unproved buffer extent open.",
+        "Nonpadding gaps contain owner-associated dispatch data; source annotations retain bounded table/selector identities independently of primary function spans. Those relationships do not establish matched data, exclusive allocation extents, historical object boundaries, retained selection or runtime behavior."
+      ]
+    },
+    {
+      "name": "WorldWin",
+      "start": "0x004C38E0",
+      "end_exclusive": "0x004C4CAB",
+      "recovered_tu": "src/worldwin.cpp",
+      "reason": "Inferred complete known WorldWin contribution including its mapped lifecycle/helpers and dispatch data. Source correspondence permits imperfect bodies; original TU identity and unresolved associated evidence remain unproved.",
+      "evidence": [
+        "Fresh source audit includes all27known primary identities in this entire current source home, with no foreign mapped primary inside the candidate bracket.",
+        "The source keeps WorldWin's map-window implementation and the global tutorial bounds it writes and MapWin later reads; other cross-owner globals/callers remain references rather than presumed members of this unit. Constructor/destructor and scalar/vector deletion identities occur in the same bracket.",
+        "Nonpadding gaps contain owner-associated dispatch data; source annotations retain bounded table/selector identities independently of primary function spans. Those relationships do not establish matched data, exclusive allocation extents, historical object boundaries, retained selection or runtime behavior."
+      ]
+    },
+    {
+      "name": "PickWin",
+      "start": "0x00488750",
+      "end_exclusive": "0x0048ADFB",
+      "recovered_tu": "src/pickwin.cpp",
+      "reason": "Inferred complete known PickWin contribution including its mapped lifecycle/helpers and dispatch data. Source correspondence permits imperfect bodies; original TU identity and unresolved associated evidence remain unproved.",
+      "evidence": [
+        "Fresh source audit includes all16known primary identities in this entire current source home, with no foreign mapped primary inside the candidate bracket.",
+        "The home includes _$E21/_$E19 startup/exit identities at 0x488750/0x488770 with pinned CRT slot 0x68256C evidence and physical compiler-generated lifetime owner evidence for PickWinGlobal, plus complete constructor/destructor and deleting thunks. Retain caption and object identities without inferring extents or global order.",
+        "Nonpadding gaps contain owner-associated dispatch data; source annotations retain bounded table/selector identities independently of primary function spans. Those relationships do not establish matched data, exclusive allocation extents, historical object boundaries, retained selection or runtime behavior."
+      ]
+    },
+    {
+      "name": "InfoWin",
+      "start": "0x004562C0",
+      "end_exclusive": "0x00459556",
+      "recovered_tu": "src/infowin.cpp",
+      "reason": "Inferred complete known InfoWin contribution including its mapped lifecycle/helpers and dispatch data. Source correspondence permits imperfect bodies; original TU identity and unresolved associated evidence remain unproved.",
+      "evidence": [
+        "Fresh source audit includes all23known primary identities in this entire current source home, with no foreign mapped primary inside the candidate bracket.",
+        "The source home includes startup/exit records _$E21/_$E19 at 0x4562C0/0x4562E0 plus class initialization, state/timer handlers, draw path, constructor/destructor and helper stubs. Explicit startup slot and generated-callback relations should be refreshed if admitted; the current object/global starts are not an allocation or cross-TU order proof.",
+        "Nonpadding gaps contain owner-associated dispatch data; source annotations retain bounded table/selector identities independently of primary function spans. Those relationships do not establish matched data, exclusive allocation extents, historical object boundaries, retained selection or runtime behavior.",
+        "setup_text has two direct target tables plus one target/selector pair. All original data spans are retained in source; current strict associated proof refuses this mixed same-owner population. Source correspondence is not native proof or game acceptance."
+      ]
     }
   ]
 }

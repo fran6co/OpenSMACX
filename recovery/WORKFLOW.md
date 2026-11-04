@@ -8,6 +8,24 @@ boundary and unfinished capabilities are described in `README.md` here and
 
 ## Milestone order: faithful recovery before improvements
 
+The first reconstruction phase is translation-unit correspondence. Establish
+evidence-backed original contribution groups, give each a corresponding recovered
+CPP, and move the complete mapped implementations, storage and lifecycle code
+together. Imperfect bodies and explicitly unfinished placeholders may remain;
+do not wait for byte equality to establish their source homes. Preserve original
+identities, complete spans, historical claims and matching obligations through
+reviewed structural regressions. Then use the grouped code to restore matching
+under coherent application/Jackal compiler policies. Matching restoration must
+not dictate a false ownership boundary.
+
+The TU census is incomplete. Distinguish inferred contribution cores from proven
+historical object boundaries, source correspondence from native qualification,
+and complete bodies from placeholders. Track candidate groups, corresponding
+recovered CPPs and fully exact groups separately; an unknown original denominator
+does not justify a global TU completion percentage. Clustering helps recover
+shared declarations, inline providers, local data and startup ordering, but does
+not alone establish original filenames or guarantee byte equality.
+
 The user's first milestone is **complete byte-exact source recovery, bug for
 bug with the pinned original executable**. Fixes, safety improvements and other
 intentional behavior changes belong to a subsequent milestone. This ordering

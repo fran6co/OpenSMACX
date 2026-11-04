@@ -335,6 +335,16 @@ in the same source unit. Its original code spans and historical claims remain
 unchanged. The evidence address identifies the original instruction that indexes
 the declared data, not a guessed compiler label or a nearby return instruction.
 
+Source interpretation requires the owner mapping's first span to be an
+independent primary span beginning at the mapped entry. Detached secondary spans
+may remain attached to that mapping, but associated data and its evidence must
+stay outside those spans and inside the primary respectively; fragments remain
+ineligible. Collision checks cover every mapped code span in the source tree.
+This source-level allowance preserves the full mapping without qualifying a
+compound layout: native associated-binary and bound-object checks retain their
+existing refusal for EH/multi-span owners, so such evidence remains `UNKNOWN`
+until binary support is established separately.
+
 The bounded strict checker supports one independent i386 root COMDAT with
 same-layout code and trailing data. It checks the original instruction and PE
 relocation, the corresponding candidate operand and local COFF relocation, every

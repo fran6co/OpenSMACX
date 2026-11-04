@@ -717,3 +717,5 @@ void __cdecl list_was_dblclicked(int faction_id) {
 }
 // RECOVERY_GENERATED: v1 vtable 0x0066D13C ? ??_7PickWin@@6BWin@@@ 0x0048AC10
 // RECOVERY_GENERATED: v1 vtable 0x0066D134 ? ??_7PickWin@@6BBuffer@@@ 0x0048AC10
+// RECOVERY_ASSOCIATED: v1 switch_targets 0x00489BA0 0x0048A798 0x0048A7A8 0x00489C2B
+// RECOVERY_ASSOCIATED: v1 switch_selector 0x00489BA0 0x0048A7A8 0x0048A7B1 0x00489C25
