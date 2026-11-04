@@ -261,7 +261,6 @@ set(OPENSMACX_SOURCES
     src/uv2player.cpp
     src/dipedit.cpp
     src/sound.cpp
-    src/sound_loader.cpp
     src/wave_group_list.cpp
     src/spritebox.cpp
     src/listbox.cpp
@@ -388,7 +387,6 @@ set_source_files_properties(
 set_source_files_properties(
     src/midi.cpp
     src/sounddevice.cpp
-    src/sound_loader.cpp
     PROPERTIES COMPILE_OPTIONS "/Oy-")
 # Preserve the frame-based argument accesses in these interface owners while
 # keeping Win and the application-wide compiler defaults unchanged.

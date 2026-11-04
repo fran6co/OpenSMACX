@@ -188,7 +188,7 @@ int main() {
 
 def current_source() -> tuple[str, str]:
     sound_h = (ROOT / "src/sound.h").read_text(encoding="utf-8")
-    loader = (ROOT / "src/sound_loader.cpp").read_text(encoding="utf-8")
+    loader = (ROOT / "src/sound.cpp").read_text(encoding="utf-8")
     typedef_start = sound_h.index("typedef int (__cdecl *SoundXCreateSoundProc)")
     accessors_start = sound_h.index("inline SoundXCreateSoundProc SoundXOrdinal1CreateSound()")
     types = sound_h[typedef_start:accessors_start]

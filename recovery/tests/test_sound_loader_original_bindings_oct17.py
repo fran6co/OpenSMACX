@@ -8,7 +8,7 @@ from match_recovery.source import read_text, write_symbol
 
 
 ROOT = Path(__file__).resolve().parents[2]
-UNIT = "src/sound_loader.cpp"
+UNIT = "src/sound.cpp"
 PIN = "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
 
 

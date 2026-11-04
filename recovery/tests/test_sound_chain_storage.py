@@ -79,7 +79,7 @@ CHAIN_DECLARATIONS = [
 ]
 SOUNDX_EXPORT_DECLARATIONS = [
     ("// LIVE_EXPORT_ABIS", "src/sound.h", "typedef void *SoundDllProcsTable[11];", "// Product wrappers around the loader-owned module/export table."),
-    ("// LIVE_EXPORT_STORAGE", "src/sound_loader.cpp", "SoundDllProcsTable SoundDllProcs;", "int __cdecl load_sound_dll()"),
+    ("// LIVE_EXPORT_STORAGE", "src/sound.cpp", "SoundDllProcsTable SoundDllProcs;", "int __cdecl load_sound_dll()"),
 ]
 
 

@@ -72,7 +72,7 @@ def run_device(tmp_path, monkeypatch):
         ("// LIVE_CREATE", "src/sounddevice.cpp", 0x4C4ED0),
         ("// LIVE_DELETE", "src/sounddevice.cpp", 0x4C4F10),
         ("// LIVE_RELEASE", "src/sounddevice.cpp", 0x4C4F80)], declarations=[
-        ("// LIVE_LOADER", "src/sound_loader.cpp", "int __cdecl load_sound_dll()", "// ORIGINAL: 0x004C5F70"),
+        ("// LIVE_LOADER", "src/sound.cpp", "int __cdecl load_sound_dll()", "// ORIGINAL: 0x004C5F70"),
         ("// LIVE_DEVICE_BASE_DECLARATION", "src/sounddevice.h", "class SoundDeviceBase {", "class Midi_Device :"),
         ("// LIVE_GROUP_TYPES", "src/wave_device.h", "struct WaveGroupNode {", " /*\n  * Wave_Device class"),
         ("// LIVE_DEVICE_DECLARATION", "src/wave_device.h", "class Wave_Device : public SoundDeviceBase {", "// THE OBJECT, at 0x0090D978"),
@@ -88,7 +88,7 @@ def run_device(tmp_path, monkeypatch):
         ("// LIVE_SLOT_DISPATCH", "src/soundx_wave_device_abi.h", "class WaveDeviceProviderCallView {", "};"),
         ("// LIVE_EXPORT_TYPE", "src/sound.h", "typedef void *SoundDllProcsTable[11];", "// Pinned soundx.dll exports ordinals 1..11 form one fixed callable contract."),
         ("// LIVE_TYPED_EXPORT_ACCESSORS", "src/sound.h", "inline SoundXCreateSoundProc SoundXOrdinal1CreateSound()", "// Product wrappers around the loader-owned module/export table."),
-        ("// LIVE_EXPORT_STORAGE", "src/sound_loader.cpp", "SoundDllProcsTable SoundDllProcs;", "int __cdecl load_sound_dll()")])
+        ("// LIVE_EXPORT_STORAGE", "src/sound.cpp", "SoundDllProcsTable SoundDllProcs;", "int __cdecl load_sound_dll()")])
 
 
 def test_actual_lifecycle_observes_loading_rebinding_and_callback_changes(tmp_path, monkeypatch):

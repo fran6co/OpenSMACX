@@ -109,7 +109,7 @@ def run_constructor(tmp_path, monkeypatch):
         ("// LIVE_NEXT", "src/sound.cpp", 0x448310),
         ("// LIVE_PREV", "src/sound.cpp", 0x448320),
         ("// LIVE_TYPE", "src/sound.cpp", 0x448330),
-        ("// LIVE_SET_TYPE", "src/sound_loader.cpp", 0x4C61E0),
+        ("// LIVE_SET_TYPE", "src/sound.cpp", 0x4C61E0),
         ("// LIVE_VOICE_CONSTRUCTOR", "src/sound.cpp", 0x4C8CC0)], declarations=[
         ("// LIVE_FADE_DECLARATION", "src/sound.h", "class SoundFadeState {", "// RECOVERY_MEMBER: v1 SoundFadeState volume_"),
         ("// LIVE_SOUND_DECLARATION", "src/sound.h", "class Sound : public SoundFadeState {", "// Two independent sources agree on 0x54"),

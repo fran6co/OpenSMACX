@@ -13,7 +13,7 @@ from match_recovery.source.reader import _extract_forward_text
 
 ROOT = Path(__file__).resolve().parents[2]
 FIXTURE_FILE = Path(__file__).with_name("runtime_services") / "control.cpp"
-SUBJECTS = [('src/strings.cpp', 5920944), ('src/netdaemon.cpp', 5370560), ('src/faction.cpp', 5370368), ('src/game.cpp', 5365904), ('src/sound_loader.cpp', 5004688), ('src/game.cpp', 5829200)]
+SUBJECTS = [('src/strings.cpp', 5920944), ('src/netdaemon.cpp', 5370560), ('src/faction.cpp', 5370368), ('src/game.cpp', 5365904), ('src/sound.cpp', 5004688), ('src/game.cpp', 5829200)]
 
 def actual_bodies():
     bodies = []

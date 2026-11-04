@@ -28,17 +28,16 @@ def test_sound_cell_and_ordinal_one_output_use_common_sound_owner():
 def test_all_ordinal_one_callers_write_through_the_typed_sound_cell():
     owners = (
         "sound.cpp", "wave.cpp", "midi.cpp", "ambience.cpp",
-        "sound_loader.cpp",
     )
     calls = 0
     for owner in owners:
         source = (ROOT / "src" / owner).read_text()
         owner_calls = source.count("SoundXOrdinal1CreateSound()")
         calls += owner_calls
-        if owner != "sound_loader.cpp":
-            assert source.count("&device_") >= owner_calls
+        member_calls = owner_calls - (1 if owner == "sound.cpp" else 0)
+        assert source.count("&device_") >= member_calls
     assert calls == 13
-    loader = (ROOT / "src/sound_loader.cpp").read_text()
+    loader = (ROOT / "src/sound.cpp").read_text()
     assert re.search(
         r"sub_4c6000\(Sound\s*\*\*device_slot",
         loader,

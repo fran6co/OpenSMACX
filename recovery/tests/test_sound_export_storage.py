@@ -21,8 +21,8 @@ EXPORTS = "?SoundDllProcs@@3PAPAXA"
 @pytest.fixture(scope="module")
 def export_storage(family):
     compiler, settings, trials, image = family
-    objects = [{**trial, "src/sound_loader.cpp": Coff(compiler(
-        ROOT / "src/sound_loader.cpp", (), flags + settings.layout_flags))}
+    objects = [{**trial, "src/sound.cpp": Coff(compiler(
+        ROOT / "src/sound.cpp", (), flags + settings.layout_flags))}
         for trial, flags in zip(trials, settings.flag_sets)]
     binding, = (b for b in read_objects(ROOT, image_pin(ROOT)) if b.symbol == EXPORTS)
     return compiler, settings, objects, image, binding
@@ -82,10 +82,10 @@ def test_native_data_check_rejects_a_short_export_owner(export_storage):
     header = (ROOT / "src/sound.h").read_bytes()
     assert header.count(b"typedef void *SoundDllProcsTable[11];") == 1
     for flags in settings.flag_sets:
-        obj = Coff(compiler.overlay(ROOT / "src/sound_loader.cpp", {
+        obj = Coff(compiler.overlay(ROOT / "src/sound.cpp", {
             "src/sound.h": header.replace(b"SoundDllProcsTable[11]", b"SoundDllProcsTable[10]")
         }, (), flags + settings.layout_flags))
-        row, = check_initial_data([binding], {"src/sound_loader.cpp": obj}, image, {})
+        row, = check_initial_data([binding], {"src/sound.cpp": obj}, image, {})
         assert row["definition"] == "pass" and row["content"] == "fail"
         assert row["proof"]["boundary"] == "fail"
 
@@ -94,8 +94,8 @@ def run_loader(tmp_path, monkeypatch):
     run_recovered_harness(tmp_path, monkeypatch, "sound_export_storage_harness.cpp", [], declarations=[
         ("// LIVE_EXPORT_TYPE", "src/sound.h", "typedef void *SoundDllProcsTable[11];", "// Pinned soundx.dll exports ordinals 1..11 form one fixed callable contract."),
         ("// LIVE_EXPORT_ABIS", "src/sound.h", "typedef int (__cdecl *SoundXCreateSoundProc)", "// Product wrappers around the loader-owned module/export table."),
-        ("// LIVE_EXPORT_STORAGE", "src/sound_loader.cpp", "SoundDllProcsTable SoundDllProcs;", "int __cdecl load_sound_dll()"),
-        ("// LIVE_LOADER", "src/sound_loader.cpp", "int __cdecl load_sound_dll()", "/*\nPurpose: The sound-DLL version complaint box.")])
+        ("// LIVE_EXPORT_STORAGE", "src/sound.cpp", "SoundDllProcsTable SoundDllProcs;", "int __cdecl load_sound_dll()"),
+        ("// LIVE_LOADER", "src/sound.cpp", "int __cdecl load_sound_dll()", "/*\nPurpose: The sound-DLL version complaint box.")])
 
 
 def test_actual_loader_populates_rebinds_and_clears_the_actual_role_accessors(tmp_path, monkeypatch):
@@ -105,9 +105,9 @@ def test_actual_loader_populates_rebinds_and_clears_the_actual_role_accessors(tm
 @pytest.mark.parametrize("unit,before,after", [
     ("src/sound.h", "reinterpret_cast<SoundXDeleteSoundProc>(SoundDllProcs[1])", "reinterpret_cast<SoundXDeleteSoundProc>(SoundDllProcs[0])"),
     ("src/sound.h", "reinterpret_cast<SoundXCreateSoundProc>(SoundDllProcs[0])", "reinterpret_cast<SoundXCreateSoundProc>(SoundDllProcs[1])"),
-    ("src/sound_loader.cpp", "i < 0xb", "i < 0xa"),
-    ("src/sound_loader.cpp", "index < 11", "index < 10"),
-    ("src/sound_loader.cpp", "*slot = proc;", "if (index != 0) *slot = proc;"),
+    ("src/sound.cpp", "i < 0xb", "i < 0xa"),
+    ("src/sound.cpp", "index < 11", "index < 10"),
+    ("src/sound.cpp", "*slot = proc;", "if (index != 0) *slot = proc;"),
 ])
 def test_loader_role_contract_rejects_wrong_slots_or_incomplete_storage(tmp_path, monkeypatch, unit, before, after):
     original_read = Path.read_text
