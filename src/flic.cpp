@@ -64,7 +64,7 @@
 // decode_byte_run and decode_byte_run_trans call 0x006465F0/0x00645930
 // instead of expanding rep stos/rep movs loops, and stdafx.h's project-wide
 // `#pragma function(...)` line deliberately leaves both names to each
-// translation unit (textindex.cpp and buffer.cpp do the same locally).
+// translation unit (text.cpp and buffer.cpp do the same locally).
 #pragma function(memset, memcpy)
 
 // The header defines the close-only destructor before any close implementation

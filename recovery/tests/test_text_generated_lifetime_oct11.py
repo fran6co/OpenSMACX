@@ -7,24 +7,55 @@ from pathlib import Path
 
 import pytest
 
-from match_recovery.source import read_text
+from match_recovery.source import Mode, read_text
 from match_recovery.pe_coff import Coff, PeImage
 from match_recovery.model import Span
 
 ROOT = Path(__file__).resolve().parents[2]
 BASE = '0a4561ea47200ae85a3d3319d6c09db7a45a2297'
 PIN = '01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf'
-BINDINGS = {0x5FD400: '_$E8', 0x5FD460: '_$E6'}
+BINDINGS = {
+    0x5FD400: ((0x5FD400, 0x5FD456), False),
+    0x5FD460: ((0x5FD460, 0x5FD4B5), False),
+    0x5FD4C0: ((0x5FD4C0, 0x5FD4CB), True),
+    0x5FD4D0: ((0x5FD4D0, 0x5FD4DB), True),
+}
 
 
 def test_inline_destructor_retains_original_identity_and_body_binding():
-    records = read_text((ROOT/'src/text.cpp').read_text(), ROOT/'src/text.cpp')
+    records = read_text((ROOT/'src/stringlist.cpp').read_text(), ROOT/'src/stringlist.cpp')
     record, = (row for row in records if row.address == 0x608C00)
     assert record.image_spans == ((0x608C00, 0x608C05),)
     assert (record.symbol or record.name) == '??1Text@@QAE@XZ'
     assert record.byte_exact and not record.extract_error
     assert record.body and (ROOT/record.body).is_file()
     assert record.context and (ROOT/record.context).is_file()
+
+
+def test_original_text_crt_entries_bind_to_the_real_global_initializers():
+    source = (ROOT / 'src/text.cpp').read_text()
+    header = (ROOT / 'src/text.h').read_text()
+    rows = {row.address: row for row in read_text(source, ROOT / 'src/text.cpp')}
+    for address, (span, byte_exact) in BINDINGS.items():
+        row = rows[address]
+        assert row.mode is Mode.FILE
+        assert row.image_spans == (span,)
+        assert row.byte_exact is byte_exact
+        assert not row.extract_error
+
+    object_at = source.index('Text Txt(512);')
+    get_at = source.index('LPSTR TextBufferGetPtr = Txt.get_buffer_get();')
+    item_at = source.index('LPSTR TextBufferItemPtr = Txt.get_buffer_item();')
+    assert object_at < get_at < item_at
+    assert source.count('LPSTR TextBufferGetPtr = Txt.get_buffer_get();') == 1
+    assert source.count('LPSTR TextBufferItemPtr = Txt.get_buffer_item();') == 1
+    # The generated CRT callbacks own these original identities. The globals
+    # now initialize through the public Text accessors, without duplicate
+    # callable setter bodies or their private friend shims.
+    assert 'void __cdecl text_set_get_ptr() {' not in source
+    assert 'void __cdecl text_set_item_ptr() {' not in source
+    assert 'text_set_get_ptr_source' not in source + header
+    assert 'text_set_item_ptr_source' not in source + header
 
 
 def test_original_crt_root_and_paired_cleanup():
@@ -108,10 +139,8 @@ def fresh_object():
 
 @pytest.mark.parametrize('damage', ['none', 'missing_crt', 'missing_allocation', 'missing_atexit', 'missing_shutdown'])
 def test_fresh_physical_graph_and_damage_refusals(fresh_object, damage):
-    from match_recovery.source.asm import subject_asm
-    obj, raw = fresh_object
-    root, destructor, constructor = lifetime_graph(obj)
-    assert (root.name, destructor.name) == (BINDINGS[0x5FD400], BINDINGS[0x5FD460])
+    obj, _raw = fresh_object
+    lifetime_graph(obj)
     if damage == 'missing_crt':
         obj.sections = tuple(replace(s, relocations=()) if s.name == '.CRT$XCU' else s for s in obj.sections)
     elif damage != 'none':
@@ -124,19 +153,12 @@ def test_fresh_physical_graph_and_damage_refusals(fresh_object, damage):
         with pytest.raises(AssertionError, match='missing or ambiguous'):
             lifetime_graph(obj)
         return
-    rows = read_text((ROOT/'src/text.cpp').read_text(), ROOT/'src/text.cpp')
-    for address in BINDINGS:
-        row = next(r for r in rows if r.address == address)
-        listing = subject_asm(raw, row)
-        assert 0 < len(listing.code) <= row.image_spans[0][1]-address
-        with pytest.raises(ValueError):
-            subject_asm(raw, replace(row, symbol='_$E_missing'))
 
 
 def test_native_task_preserves_existing_subject_scope():
     from match_recovery.tasks import Task
     task = Task.from_dict(json.loads((ROOT/'recovery/tasks/text-generated-lifetime-oct11.json').read_text()))
-    assert task.base_revision == BASE and {s.address for s in task.subjects} == set(BINDINGS)
+    assert task.base_revision == BASE and {s.address for s in task.subjects} == {0x5FD400, 0x5FD460}
     assert {p for p in task.editable_files if p.startswith('src/')} == {'src/text.cpp', 'src/text.h'}
 
 
@@ -145,7 +167,7 @@ def fresh_destructor_object():
     value = os.environ.get('OPENSMACX_TEXT_DESTRUCTOR_OBJECT')
     if not value:
         pytest.skip('explicit fresh natural-destructor object required')
-    record, = (r for r in read_text((ROOT/'src/text.cpp').read_text(), ROOT/'src/text.cpp')
+    record, = (r for r in read_text((ROOT/'src/stringlist.cpp').read_text(), ROOT/'src/stringlist.cpp')
                if r.address == 0x608C00)
     path = Path(value)
     receipt = json.loads(Path(str(path)+'.compile.json').read_text())

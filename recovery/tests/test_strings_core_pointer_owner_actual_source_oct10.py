@@ -47,7 +47,7 @@ def extract_body(source: str, signature: str) -> str:
 
 
 def source_parts() -> tuple[str, str, str, str]:
-    strings = (ROOT / "src/strings.cpp").read_text()
+    strings = (ROOT / "src/string_table.cpp").read_text()
     alpha = (ROOT / "src/alpha.cpp").read_text()
     alpha_h = (ROOT / "src/alpha.h").read_text()
     general = (ROOT / "src/general.cpp").read_text()
@@ -58,7 +58,7 @@ def source_parts() -> tuple[str, str, str, str]:
     assert "StringTable.get((int)*((LPSTR *)Labels.strings_ptr" not in alpha_h
     return (
         extract_body(strings, "LPSTR Strings::get(LPSTR address)"),
-        extract_body((ROOT / "src/labels.cpp").read_text(), "BOOL __cdecl labels_init()"),
+        extract_body((ROOT / "src/string_table.cpp").read_text(), "BOOL __cdecl labels_init()"),
         extract_body(alpha_h, "__forceinline LPSTR __cdecl label_get(int label_offset)"),
         extract_body(general, "int __cdecl parse_say(int id, LPSTR input, int gender, int pluralality)"),
     )

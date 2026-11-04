@@ -573,6 +573,63 @@
         "Nonpadding gaps contain owner-associated dispatch data; source annotations retain bounded table/selector identities independently of primary function spans. Those relationships do not establish matched data, exclusive allocation extents, historical object boundaries, retained selection or runtime behavior.",
         "setup_text has two direct target tables plus one target/selector pair. All original data spans are retained in source; current strict associated proof refuses this mixed same-owner population. Source correspondence is not native proof or game acceptance."
       ]
+    },
+    {
+      "name": "StringTableLabels",
+      "start": "0x006168A0",
+      "end_exclusive": "0x00616A93",
+      "recovered_tu": "src/string_table.cpp",
+      "reason": "Inferred complete known contribution core with a corresponding recovered CPP. Compiling placeholders or mismatched bodies remain eligible for source correspondence; this is not proven historical TU membership or byte-exact acceptance.",
+      "evidence": [
+        "Eight Strings/StringTable primary identities and the two Labels lifecycle methods form this compact core, between the Time and Caviar contributions; every raw IDA start is already mapped and primary gaps are original NOP/INT3 padding.",
+        "StringTable at9B90D8 and Labels at9B90F8 remain distinct real objects. The genuine StringTable initializer/finalizer and the Labels allocation/parser methods now share this source home; no aggregate extent or original filename is inferred.",
+        "StringTemp and the distant clear/space providers remain in strings.cpp as separate ownership obligations. All original spans, claims, header-body witnesses and literal bindings are retained."
+      ]
+    },
+    {
+      "name": "FameWinHallOfFame",
+      "start": "0x004483D0",
+      "end_exclusive": "0x0044B33B",
+      "recovered_tu": "src/famewin.cpp",
+      "reason": "Inferred complete known contribution core with a corresponding recovered CPP. Compiling placeholders or mismatched bodies remain eligible for source correspondence; this is not proven historical TU membership or byte-exact acceptance.",
+      "evidence": [
+        "The complete known 20-entry module includes FameWin startup/shutdown, lifecycle, UI operations, hall_of_fame, clear_hall_of_fame and hall file I/O. The cleanup entry44AF70 is between the existing hall_of_fame and hall-save/load operations.",
+        "The real FameWin global, typed HallOfFame records, button-group state and retained literal/data bindings support the module grouping. Primary gaps and associated-data obligations remain separately reported; no whole data-layout or startup-order proof follows."
+      ]
+    },
+    {
+      "name": "TextParser",
+      "start": "0x005FD400",
+      "end_exclusive": "0x005FE299",
+      "recovered_tu": "src/text.cpp",
+      "reason": "Inferred complete known contribution core with a corresponding recovered CPP. Compiling placeholders or mismatched bodies remain eligible for source correspondence; this is not proven historical TU membership or byte-exact acceptance.",
+      "evidence": [
+        "All35 known primary identities from the Text and TextIndex sources form one band with only original NOP/INT3 primary gaps and no foreign mapped interleavers. The generic parser, index builder/search and their shared current-file/section storage form one SDK service.",
+        "Real Text globals precede the four-element TxtIndex array in declaration order. The old source files were adjacent in CMake; their genuine constructor/destructor emissions and complete secondary spans remain mapped in the combined owner.",
+        "The X_text_open application wrapper remains a separate application provider, and Text destructor608C00 retains its existing stringlist.cpp compilation context and text.h body. Original historical object selection, allocation and complete runtime behavior remain unproved."
+      ]
+    },
+    {
+      "name": "ButtonGroup",
+      "start": "0x0062B7C0",
+      "end_exclusive": "0x0062BA77",
+      "recovered_tu": "src/buttongroup.cpp",
+      "reason": "Inferred complete known contribution core with a corresponding recovered CPP. Compiling placeholders or mismatched bodies remain eligible for source correspondence; this is not proven historical TU membership or byte-exact acceptance.",
+      "evidence": [
+        "All six mapped operations over the same ButtonGroup state fit this entire current source home: constructor, close/init, add/set and button_click. No extra mapped primary lies outside the band.",
+        "The four primary gaps contain only original NOP bytes; neighboring Flic and AutoSound contributions have separate starts and source owners. Current members and callbacks support this grouping without proving an original filename or archive boundary."
+      ]
+    },
+    {
+      "name": "WinMain",
+      "start": "0x0045F920",
+      "end_exclusive": "0x0045FB1B",
+      "recovered_tu": "src/main.cpp",
+      "reason": "Inferred complete known contribution core with a corresponding recovered CPP. Compiling placeholders or mismatched bodies remain eligible for source correspondence; this is not proven historical TU membership or byte-exact acceptance.",
+      "evidence": [
+        "The configured whole-source index contains exactly three current main.cpp identities in this band: the genuine g_JACKAL_FONT initializer/finalizer and WinMain. Neighboring AlphaMenu entries45FB20/460DD0 are separate Console-owned contributions.",
+        "The source-owned Font global7D3948 and WinMain entry behavior provide lifecycle/application closure. Constructor call/reference and full-link startup ordering remain separate evidence obligations."
+      ]
     }
   ]
 }

@@ -95,7 +95,7 @@ struct FameWin : Win {
 #define fclose test_fclose
 '''
     harness += filename_storage()
-    harness += body("void __cdecl clear_hall_of_fame()", "src/halloffame.cpp") + "\n"
+    harness += body("void __cdecl clear_hall_of_fame()", "src/famewin.cpp") + "\n"
     harness += body("void __cdecl hall_of_fame(int add_current_player)")
     harness += r'''
 void reset() {

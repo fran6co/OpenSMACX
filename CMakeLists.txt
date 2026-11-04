@@ -118,7 +118,6 @@ target_compile_options(zlib PRIVATE /W0)
 
 set(OPENSMACX_SOURCES
     src/alpha.cpp
-    src/labels.cpp
     src/alphasave.cpp
     src/faction_strategy.cpp
     src/factionprofilewin.cpp
@@ -165,7 +164,6 @@ set(OPENSMACX_SOURCES
     src/faction_dialogue.cpp
     src/faction_network.cpp
     src/famewin.cpp
-    src/halloffame.cpp
     src/filemap.cpp
     src/flatbutton.cpp
     src/flic.cpp
@@ -298,11 +296,11 @@ set(OPENSMACX_SOURCES
     src/stringstruct.cpp
     src/name_table.cpp
     src/strings.cpp
+    src/string_table.cpp
     src/string_formatting.cpp
     src/technology.cpp
     src/terraforming.cpp
     src/text.cpp
-    src/textindex.cpp
     src/time.cpp
     src/timer_messages.cpp
     src/enemy.cpp
@@ -513,7 +511,6 @@ set_source_files_properties(
     src/infowin.cpp
     src/alphasave.cpp
     src/famewin.cpp
-    src/halloffame.cpp
     src/messagewin.cpp
     src/setupwin.cpp
     src/path.cpp

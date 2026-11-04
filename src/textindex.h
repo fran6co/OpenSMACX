@@ -53,7 +53,7 @@ static_assert(sizeof(TextIndex) == 0x118, "TextIndex layout must match the legac
 /*
 * global
 * THE ARRAY, at 0x009B7D08 in the shipped image - four TextIndex objects,
-* defined in textindex.cpp (it was `TextIndex TxtIndexGlobal[4]` beside a
+* defined with the parser in text.cpp (it was `TextIndex TxtIndexGlobal[4]` beside a
 * `TextIndex *const TxtIndex = (TextIndex *)0x009B7D08` binding, so the
 * storage existed twice: a real, constructed array nothing used, and every
 * `TxtIndex[i]` here reading and writing terranx.exe data, unmapped in a
@@ -70,7 +70,7 @@ extern TextIndex TxtIndex[MaxTextIndexNum];  // 0x009B7D08, 0x118 stride
 void __cdecl text_make_index(LPCSTR source_txt);
 // INLINE: `Text::open` (0x005FDA00) carries this whole loop rather than a
 // `call 0x5fe230` - only `TextIndex::search_index` (0x005FE120) shows up in
-// its own call list. Body claimed at 0x005FE230 in textindex.cpp, same
+// its own call list. Body claimed at 0x005FE230 in text.cpp, same
 // pattern as Text's destructor in text.h.
 MEASURED inline int __cdecl text_search_index(LPCSTR source_txt, LPCSTR section_txt) {
     for (int i = 0; i < MaxTextIndexNum; ++i) {

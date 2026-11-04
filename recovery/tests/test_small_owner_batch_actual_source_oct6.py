@@ -68,7 +68,7 @@ def compile_run(tmp_path: Path, source: str) -> None:
 
 
 def test_x_text_open_actual_projected_region_preserves_fallback_order(tmp_path: Path) -> None:
-    body = region("src/text.cpp", 0x005BECA0)
+    body = region("src/application_text.cpp", 0x005BECA0)
     harness = r'''
 #include <cassert>
 #include <cstring>

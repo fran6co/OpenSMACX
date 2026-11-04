@@ -553,16 +553,6 @@
           "-c"
         ]
       },
-      "src/labels.cpp": {
-        "flags": [
-          "/c",
-          "/O2",
-          "/Gy",
-          "/GR-",
-          "/GX",
-          "/Ob2"
-        ]
-      },
       "src/sound.cpp": {
         "flags": [
           "/nologo",
@@ -1826,19 +1816,6 @@
           "-c"
         ]
       },
-      "src/textindex.cpp": {
-        "flags": [
-          "/nologo",
-          "/TP",
-          "/Zm200",
-          "/GX",
-          "/O2",
-          "/Ob2",
-          "-MT",
-          "/W4",
-          "-c"
-        ]
-      },
       "src/movie_media.cpp": {
         "flags": [
           "/nologo",
@@ -1907,20 +1884,6 @@
         ]
       },
       "src/faction_treaty.cpp": {
-        "flags": [
-          "/nologo",
-          "/TP",
-          "/Zm200",
-          "/GX",
-          "/O2",
-          "/Ob2",
-          "-MT",
-          "/W4",
-          "/Oy-",
-          "-c"
-        ]
-      },
-      "src/halloffame.cpp": {
         "flags": [
           "/nologo",
           "/TP",

@@ -180,6 +180,21 @@ def test_famewin_io_migration_retains_original_history():
         assert _actual_body(owner, signature)
 
 
+def test_record_clear_mapping_moves_with_famewin_owner():
+    owner_path = SOURCE_ROOT / "src/famewin.cpp"
+    owner = owner_path.read_text()
+    bindings = [record for record in read_text(owner, owner_path)
+                if record.address == 0x0044AF70]
+    assert len(bindings) == 1
+    binding = bindings[0]
+    assert binding.path.resolve() == owner_path.resolve()
+    assert binding.name == "sub_44af70"
+    assert binding.image_spans == ((0x0044AF70, 0x0044AF8D),)
+    assert binding.byte_exact
+    assert _actual_body(owner, "void __cdecl clear_hall_of_fame()")
+    assert not (SOURCE_ROOT / "src/halloffame.cpp").exists()
+
+
 def test_famewin_io_actual_source_failure_controls_on_host_compilers(tmp_path):
     compilers = [compiler for name in ("g++", "clang++")
                  if (compiler := shutil.which(name))]

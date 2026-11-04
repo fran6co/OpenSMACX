@@ -40,7 +40,7 @@ LINK = "int Buffer::write_multi_font_raw_l(LPSTR text, int x_coord, int y_coord,
 
 
 def canonicalize_stringlist_destructor_migration(source, baseline):
-    """Reverse only the three reviewed later StringList owner changes."""
+    """Reverse only the reviewed later StringList and Text marker moves."""
     old_comment = (
         "// Derived cleanup uses virtual remove_all() before the base destructor changes\n"
         "// dispatch, then restores the cursor position even when the list was empty."
@@ -82,7 +82,28 @@ def canonicalize_stringlist_destructor_migration(source, baseline):
     expected_current = prefix.rstrip("\n") + "\n" + descriptor_compile + descriptor_body
     assert current_block == expected_current
 
-    return source[:current_start] + baseline_block + source[current_end:]
+    restored = source[:current_start] + baseline_block + source[current_end:]
+
+    # The Text destructor's identity block moved here from text.cpp as part
+    # of the same provider regrouping. Keep its full contents pinned while
+    # excluding only that newly owned block from this older StringList TU
+    # restoration comparison.
+    text_marker = (
+        "/*\n"
+        "// ORIGINAL: 0x00608C00 ??1Text@@QAE@XZ 0x00608C00-0x00608C05 FILE BYTE_EXACT\n"
+        "// compile_context src/stringlist.cpp\n"
+        "// body      src/text.h\n"
+        "// size      5 bytes\n"
+        "// prototype void (__thiscall ??1Text@@QAE@XZ)(_Text* this)\n"
+        "// callers   0   call targets   0\n"
+        "// kind      thunk\n"
+        "// flags     hidden;thunk;sp_ready;purged_ok\n"
+        "// calls     (none)\n"
+        "// notes     Natural inline destruction delegates to Text::shutdown; compile_context records the current emitting owner.\n"
+        "*/"
+    )
+    assert restored.count(text_marker) == 1
+    return restored.replace(text_marker, "", 1)
 
 
 def test_original_owner_identities_and_unchanged_contracts():

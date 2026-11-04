@@ -235,3 +235,16 @@ int StringList::load(LPSTR file_name, LPSTR section_id, int clear_existing,
 // RECOVERY_BINDING: v1 {"evidence": ["Original 4066C0 installs derived tables6698C4/6698C0 and clears entries before switching to base tables6693A4/6693A0; primary removal slot selects the text-cleanup hook during the derived stage. Implicit base-only cleanup cannot preserve that lifecycle.", "Original bounds4066C0-406818 and650980-650995 retained in 7eb1b2b0 parent src/stringstruct.cpp. Support code650980 adjusts the saved virtual-base receiver by -0xC before jumping to StringStruct base teardown401060. These are original identity/ownership interpretations, not a matching claim."], "reason": "Restore the original two-stage StringList destructor identity to its real C++ destructor, including its historical EH support span."}
 // compile_context src/alphanet.cpp
 // body      src/stringstruct.h
+
+/*
+// ORIGINAL: 0x00608C00 ??1Text@@QAE@XZ 0x00608C00-0x00608C05 FILE BYTE_EXACT
+// compile_context src/stringlist.cpp
+// body      src/text.h
+// size      5 bytes
+// prototype void (__thiscall ??1Text@@QAE@XZ)(_Text* this)
+// callers   0   call targets   0
+// kind      thunk
+// flags     hidden;thunk;sp_ready;purged_ok
+// calls     (none)
+// notes     Natural inline destruction delegates to Text::shutdown; compile_context records the current emitting owner.
+*/

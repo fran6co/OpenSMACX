@@ -67,24 +67,20 @@ MEASURED inline void __cdecl say_num(int value) {   // 0050B8A0
 
 class Strings : public Heap {
  public:
-  MEASURED Strings() : is_populated_(false) {
-  } // 006168D0
-  // Ordinary base teardown: the original 6169C0 tail-jumps to the distinct
-  // Heap destruction entry at 5D45B0. Its equal-body live reset at 5D4580
-  // is not an original linker-folded alias; shutdown does not end the base
-  // lifetime. Historical compiler-locality observations follow.
-  // MEASURED ~Strings (2026-09-03, the two-flag-set ladder): the five-byte
-  //        `jmp` is a SIZE decision. /O1 emits it, /O2 expands ~Heap into
-  //        nineteen instructions of the destructor's own body - same source,
-  //        and no source spelling can ask a void function to tail-call. The
-  //        out-of-line ~Heap that would make /O2 call rather than expand is
-  //        the same single edit Strings::shutdown needs (see its TRIED note).
-  MEASURED ~Strings() { }              // 006169C0
+  // The original destructor tail-jumps to Heap's distinct destruction entry
+  // at 5D45B0. Its equal-body live reset at 5D4580 is not a linker-folded
+  // alias; shutdown does not end the base lifetime.
+  Strings();
+  ~Strings();
+  // Historical compiler-locality observation (2026-09-03): /O1 emitted the
+  // five-byte destructor jump, while /O2 expanded Heap teardown into nineteen
+  // instructions. The ordinary StringTable owner now provides the out-of-line
+  // destructor; the historical tail-jump match remains a restoration obligation.
 
   BOOL init(size_t mem_size);
   // CORRECTED: the image's mangled name decorates an `int` return
   // (?shutdown@Strings@@QAEHXZ) and its tail is `xor eax, eax; ret`, not a
-  // bare `ret` - see strings.cpp's marker.
+  // bare `ret` - see string_table.cpp's marker.
   int shutdown();
   LPSTR put(LPCSTR input);
   LPSTR get(LPSTR address);
@@ -99,7 +95,7 @@ static_assert(sizeof(Strings) == 0x18, "Strings layout must match the legacy ABI
 
 // global
 // THE OBJECT, at 0x009B90D8 in the shipped image - REAL STORAGE, defined in
-// strings.cpp. It was `static Strings *const StringTable =
+// string_table.cpp. It was `static Strings *const StringTable =
 // (Strings *)0x009B90D8` - THE ADDRESS, NOT A VARIABLE HOLDING IT - because
 // `jackal_init_real` calls `StringTable->init(0x8000)` and the image sets the
 // receiver up as `mov ecx, 0x9b90d8`, an immediate; an `extern Strings *`

@@ -95,6 +95,8 @@ static void host_heap_free(void *pointer) {
 // @@HEAP_RESET@@
 // @@HEAP_DESTRUCTOR@@
 // @@HEAP_INIT@@
+// @@STRINGS_CONSTRUCTOR@@
+// @@STRINGS_DESTRUCTOR@@
 // @@STRINGS_SHUTDOWN@@
 // @@TEXTINDEX_CONSTRUCTOR@@
 // @@TEXTINDEX_DESTRUCTOR@@
@@ -315,9 +317,9 @@ def _class_definition(source: str, prefix: str) -> str:
 def _actual_sources():
     heap_cpp = (ROOT / "src/jackal/heap.cpp").read_text()
     strings_h = (ROOT / "src/strings.h").read_text()
-    strings_cpp = (ROOT / "src/strings.cpp").read_text()
+    strings_cpp = (ROOT / "src/string_table.cpp").read_text()
     textindex_h = (ROOT / "src/textindex.h").read_text()
-    textindex_cpp = (ROOT / "src/textindex.cpp").read_text()
+    textindex_cpp = (ROOT / "src/text.cpp").read_text()
 
     strings_class = _class_definition(strings_h, "class Strings : public Heap")
     assert strings_class.count("class Strings : public Heap") == 1
@@ -339,6 +341,8 @@ def _actual_sources():
     heap_reset = definition(heap_cpp, r"(?m)^void Heap::reset\s*\(\)")
     heap_destructor = definition(heap_cpp, r"(?m)^Heap::~Heap\s*\(\)")
     heap_init = definition(heap_cpp, r"(?m)^BOOL Heap::init\s*\(int\s+req_size\)")
+    strings_constructor = definition(strings_cpp, r"(?m)^Strings::Strings\s*\(\)")
+    strings_destructor = definition(strings_cpp, r"(?m)^Strings::~Strings\s*\(\)")
     strings_shutdown = definition(strings_cpp, r"(?m)^int Strings::shutdown\s*\(\)")
     textindex_constructor = definition(textindex_cpp, r"(?m)^TextIndex::TextIndex\s*\(\)")
     textindex_destructor = definition(textindex_cpp, r"(?m)^TextIndex::~TextIndex\s*\(\)")
@@ -363,6 +367,8 @@ def _actual_sources():
         "heap_reset": heap_reset,
         "heap_destructor": heap_destructor,
         "heap_init": heap_init,
+        "strings_constructor": strings_constructor,
+        "strings_destructor": strings_destructor,
         "strings_shutdown": strings_shutdown,
         "textindex_constructor": textindex_constructor,
         "textindex_destructor": textindex_destructor,
@@ -379,6 +385,8 @@ def _program(sources):
         ("heap_reset", "// @@HEAP_RESET@@"),
         ("heap_destructor", "// @@HEAP_DESTRUCTOR@@"),
         ("heap_init", "// @@HEAP_INIT@@"),
+        ("strings_constructor", "// @@STRINGS_CONSTRUCTOR@@"),
+        ("strings_destructor", "// @@STRINGS_DESTRUCTOR@@"),
         ("strings_shutdown", "// @@STRINGS_SHUTDOWN@@"),
         ("textindex_constructor", "// @@TEXTINDEX_CONSTRUCTOR@@"),
         ("textindex_destructor", "// @@TEXTINDEX_DESTRUCTOR@@"),
@@ -389,7 +397,8 @@ def _program(sources):
     for token in (
         "@@HEAP_HEADER@@", "@@STRINGS_CLASS@@", "@@TEXTINDEX_CLASS@@",
         "@@HEAP_CONSTRUCTOR@@", "@@HEAP_RESET@@", "@@HEAP_DESTRUCTOR@@",
-        "@@HEAP_INIT@@", "@@STRINGS_SHUTDOWN@@", "@@TEXTINDEX_CONSTRUCTOR@@",
+        "@@HEAP_INIT@@", "@@STRINGS_CONSTRUCTOR@@", "@@STRINGS_DESTRUCTOR@@",
+        "@@STRINGS_SHUTDOWN@@", "@@TEXTINDEX_CONSTRUCTOR@@",
         "@@TEXTINDEX_DESTRUCTOR@@", "@@CLEAR_INDEX_HELPER@@",
     ):
         assert token not in result

@@ -22,6 +22,7 @@
 #include "log.h"
 #include "strings.h"
 #include "textindex.h"
+#include "filemap.h"
 #include "popup.h"
 #include "game.h"
 #include "faction.h"
@@ -346,7 +347,8 @@ Text::Text(int size) {
 /*
 Purpose: The reader every `.txt` the game parses goes through, and the two
          initialisers MSVC emits for it.
-// ORIGINAL: 0x005FD400 ??__ETxt@@YAXXZ 0x005FD400-0x005FD456
+// ORIGINAL: 0x005FD400 ??__ETxt@@YAXXZ 0x005FD400-0x005FD456 FILE
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned CRT slot 0x682680 selects original 0x5FD400; the fresh physical initializer probe resolves the selected callback to the actual Text global Txt.", "src/text.cpp declares Text Txt(512) as the real storage owner; the compiler-generated callback performs its dynamic construction, rather than a hand-written function body.", "The adjacent original finalizer identity 0x5FD460 is the paired generated atexit cleanup for Txt; the source retains both historical identities and spans."], "reason": "Bind the original Text startup identity to the compiler-generated dynamic initializer for the real namespace-scope Text object."}
 // symbol    _$E8
 // size      86 bytes
 // prototype 
@@ -354,7 +356,8 @@ Purpose: The reader every `.txt` the game parses goes through, and the two
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 // calls     0x005D4510 0x00645398
-// ORIGINAL: 0x005FD460 ??__FTxt@@YAXXZ 0x005FD460-0x005FD4B5
+// ORIGINAL: 0x005FD460 ??__FTxt@@YAXXZ 0x005FD460-0x005FD4B5 FILE
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned PE/CRT evidence pairs original 0x5FD460 with Txt initialization rooted at 0x5FD400; the fresh physical initializer probe resolves the callback to the actual Text global Txt.", "src/text.cpp owns the namespace-scope Text Txt(512); its compiler-generated lifetime callback is the current source provider, with the original identity and span retained."], "reason": "Bind the original Text finalizer identity to the compiler-generated atexit cleanup for the real namespace-scope Text object."}
 // symbol    _$E6
 // size      85 bytes
 // prototype 
@@ -388,23 +391,18 @@ TRIED: a measurement of either. VC6 names a generated initialiser
 */
 // RECOVERY_OBJECT: v1 0x009B7BA0 ?Txt@@3VText@@A
 Text Txt(512);  // 0x009B7BA0
-// INITIALISED FROM Txt, in this order, in this file. Within one translation
-// unit C++ guarantees namespace-scope objects are initialised in DECLARATION
-// order, so `Txt` is constructed before these read its buffers - which is
-// exactly the guarantee the image gets from `??__ETxt` sitting immediately
-// before `text_set_get_ptr` in its initialiser table at 0x00682680.
-//
-// They used to be left null and set by `text_set_get_ptr()`, which NOTHING
-// CALLS: in the shipped image that function is not called either, it is an
-// entry IN that table. So in this build the pointers stayed null, and the
-// 44 functions that read them - `prefs_get` among them, four times from
-// WinMain - wrote through a null pointer on the startup path.
+// These real pointer globals are initialized directly from Txt, in declaration
+// order. The pinned CRT table selects Txt construction at 0x00682680, then
+// the get/item pointer initializers at 0x00682684/0x00682688; the source
+// declarations below preserve that dependency without hand-written wrappers.
 // RECOVERY_OBJECT: v1 0x009B7D00 ?TextBufferGetPtr@@3PADA
 LPSTR TextBufferGetPtr = Txt.get_buffer_get();    // 0x009B7D00
 // RECOVERY_OBJECT: v1 0x009B7D04 ?TextBufferItemPtr@@3PADA
 LPSTR TextBufferItemPtr = Txt.get_buffer_item();  // 0x009B7D04
 
-// ORIGINAL: 0x005FD4C0 ?text_set_get_ptr@@YAXXZ 0x005FD4C0-0x005FD4CB BYTE_EXACT
+// ORIGINAL: 0x005FD4C0 ?text_set_get_ptr@@YAXXZ 0x005FD4C0-0x005FD4CB FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned CRT slot 0x682684 selects original 0x5FD4C0; the fresh physical initializer probe resolves its callback to the actual TextBufferGetPtr global and its Txt member read.", "src/text.cpp initializes TextBufferGetPtr directly from Txt.get_buffer_get(); this namespace-scope initializer owns the pointer value and runs after Txt construction.", "A whole-repository caller search found no calls to the former explicit text_set_get_ptr wrapper; its original marker, name, span and BYTE_EXACT claim remain on this FILE mapping."], "reason": "Bind the original get-buffer pointer initializer identity to the compiler-generated initialization of the real TextBufferGetPtr global from Txt."}
+// symbol    _$E11
 // size      11 bytes
 // prototype 
 // callers   0   call targets   0
@@ -412,11 +410,10 @@ LPSTR TextBufferItemPtr = Txt.get_buffer_item();  // 0x009B7D04
 // flags     sp_ready;purged_ok
 // calls     (none)
 // notes     Staged hybrid export redirect calls the source-owned wrapper
-void __cdecl text_set_get_ptr() {
-    text_set_get_ptr_source(&Txt, &TextBufferGetPtr);
-}
 
-// ORIGINAL: 0x005FD4D0 ?text_set_item_ptr@@YAXXZ 0x005FD4D0-0x005FD4DB BYTE_EXACT
+// ORIGINAL: 0x005FD4D0 ?text_set_item_ptr@@YAXXZ 0x005FD4D0-0x005FD4DB FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned CRT slot 0x682688 selects original 0x5FD4D0; the fresh physical initializer probe resolves its callback to the actual TextBufferItemPtr global and its Txt member read.", "src/text.cpp initializes TextBufferItemPtr directly from Txt.get_buffer_item(); this namespace-scope initializer owns the pointer value and runs after Txt construction.", "A whole-repository caller search found no calls to the former explicit text_set_item_ptr wrapper; its original marker, name, span and BYTE_EXACT claim remain on this FILE mapping."], "reason": "Bind the original item-buffer pointer initializer identity to the compiler-generated initialization of the real TextBufferItemPtr global from Txt."}
+// symbol    _$E14
 // size      11 bytes
 // prototype 
 // callers   0   call targets   0
@@ -424,9 +421,6 @@ void __cdecl text_set_get_ptr() {
 // flags     hidden;sp_ready;purged_ok
 // calls     (none)
 // notes     Staged hybrid export redirect calls the source-owned wrapper
-void __cdecl text_set_item_ptr() {
-    text_set_item_ptr_source(&Txt, &TextBufferItemPtr);
-}
 
 // ORIGINAL: 0x005FD530 ?text_close@@YAXXZ 0x005FD530-0x005FD54D BYTE_EXACT
 // size      29 bytes
@@ -594,33 +588,6 @@ Status: Complete
 */
 
 
-// ORIGINAL: 0x005BECA0 ?X_text_open@@YAHPADPBD@Z 0x005BECA0-0x005BED17 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["the current helper calls only text_open and compares the requested file to the process script-file pointer", "ClimatePopupTitle aliases &ScriptPopupFile; 0x00939284 is ConsoleGlobal.faction_id_; 0x00946f58 is Players[0].rule_flags with 0x59c stride", "src/game.h, src/console.h, src/faction.h and src/popup.h declare the corresponding real objects and flags; unrelated leaf bodies still use the two TU-local aliases, which this transfer leaves in place", "the current function checks only the local faction's 0x80 rule bit and ExpansionEnabled, tries PopupStartAltFile1, then falls back to the original requested file"], "reason": "Home the original section-opening policy beside Text::open/text_open, replacing transitional pointer aliases with existing source-owned script, local-faction, player-rule, expansion, and alternate-file objects without changing branch order."}
-// size      119 bytes
-// prototype int (__cdecl ?X_text_open@@YAHPADPBD@Z)(int8* srcFileID, int8* sectionID)
-// callers   19   call targets   2
-// kind      game
-// flags     frame;hidden;sp_ready;purged_ok
-// calls     0x005FD550 0x00645660
-// notes     Seed provenance: the LEVER note records that the entry frame is
-//           downstream of the strcmp intrinsic - inlining a string routine
-//           forced esi/edi saves - and that the two globals are PTR_s_
-//           slots holding a char*, one dereference more than the string.
-// historical Return Value: text_open's result for the section
-// historical Status: Measured BYTE_EXACT here in place (wave 7 record-then-retire); the
-// LEVER: string-routines-are-calls "Original keeps a `push ebp; mov ebp, esp` frame this source form never reproduces (register-pressure shape, not yet found)" was the note here, and the shape has now been found: the scaffold inlined a string routine the image calls, the expansion needs esi and edi, and VC6 answered by changing what it saved on entry. The prologue was downstream of the intrinsic. The `g_00691b0c`/`g_00691b20` reading stands - they are PTR_s_ globals holding a `char*`, one dereference more than the address of the string itself.
-#pragma optimize("y", off)
-#pragma inline_depth(0)
-int __cdecl X_text_open(char *src_file_id, const char *section_id) {
-    if (strcmp(src_file_id, ScriptPopupFile) != 0) { return text_open(src_file_id, section_id); }
-    const int faction_id = ConsoleGlobal.faction_id_;
-    if ((Players[faction_id].rule_flags & RFLAG_ALIEN) != 0 && ExpansionEnabled != 0) {
-        if (text_open(PopupStartAltFile1, section_id) == 0) { return 0; }
-    }
-    return text_open(src_file_id, section_id);
-}
-#pragma inline_depth(8)
-#pragma optimize("y", on)
 // ORIGINAL: 0x005FD550 ?text_open@@YAHPADPAD@Z 0x005FD550-0x005FD565 BYTE_EXACT
 // symbol    ?text_open@@YAHPBD0@Z
 // size      21 bytes
@@ -658,15 +625,246 @@ BOOL __cdecl text_open(LPCSTR src_id, LPCSTR section_id) {
 // in-class body here fails the claim below. Measured, not assumed.
 // ---------------------------------------------------------------------------
 
+
+
+// TextIndex bodies, lifetime mappings and storage share this module cohort.
+// ORIGINAL: 0x005FD4E0 sub_5fd4e0 0x005FD4E0-0x005FD507 FILE
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned CRT slot 0x68268c selects startup 0x5fd4e0..0x5fd507 and registers cleanup 0x5fd510..0x5fd527. Complete root decode proves the exclusive RET/JMP endpoints.", "The source-owned object ?TxtIndex@@3PAVTextIndex@@A is selected by physical COFF constructor/destructor relocations; current emitted initializer is identified by the adjacent symbol fact. Original array construction and reverse destruction use four TextIndex elements at 9B7D08 with stride118.", "Buffer relative declaration order is PCX, interface array, middle, vehicle, special-text owner, Sprite, shared Buffer. Generated helpers are compiler output, not hand-authored address callbacks. Selected same-owner order does not establish full CRT order, dependency provider, linked preservation or runtime/game acceptance. Guarded cleanup is a separate unfinished obligation."], "reason": "Bind original init operation to the genuine C++ lifetime of ?TxtIndex@@3PAVTextIndex@@A; retain original behavior and remaining matching obligations."}
+// symbol    _$E19
+// ORIGINAL: 0x005FD510 sub_5fd510 0x005FD510-0x005FD527 FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned CRT slot 0x68268c selects startup 0x5fd4e0..0x5fd507 and registers cleanup 0x5fd510..0x5fd527. Complete root decode proves the exclusive RET/JMP endpoints.", "The source-owned object ?TxtIndex@@3PAVTextIndex@@A is selected by physical COFF constructor/destructor relocations; current emitted finalizer is identified by the adjacent symbol fact. Original array construction and reverse destruction use four TextIndex elements at 9B7D08 with stride118.", "Buffer relative declaration order is PCX, interface array, middle, vehicle, special-text owner, Sprite, shared Buffer. Generated helpers are compiler output, not hand-authored address callbacks. Selected same-owner order does not establish full CRT order, dependency provider, linked preservation or runtime/game acceptance. Guarded cleanup is a separate unfinished obligation."], "reason": "Bind original fini operation to the genuine C++ lifetime of ?TxtIndex@@3PAVTextIndex@@A; retain original behavior and remaining matching obligations."}
+// symbol    _$E17
+#if defined(_MSC_VER) && _MSC_VER <= 1200
+// This copy is the large, called form in the original image.  memcpy is
+// intentionally not project-wide forced out of line because small copies in
+// other translation units are known to inline.
+#pragma function(memcpy)
+#endif
+
 /*
-// ORIGINAL: 0x00608C00 ??1Text@@QAE@XZ 0x00608C00-0x00608C05 FILE BYTE_EXACT
-// compile_context src/stringlist.cpp
-// body      src/text.h
-// size      5 bytes
-// prototype void (__thiscall ??1Text@@QAE@XZ)(_Text* this)
-// callers   0   call targets   0
-// kind      thunk
-// flags     hidden;thunk;sp_ready;purged_ok
-// calls     (none)
-// notes     Natural inline destruction delegates to Text::shutdown; compile_context records the current emitting owner.
+Purpose: Read the specified file and create an index of section headers ("#EXAMPLE"). Store the file
+         offset of each section for improved search time.
+// ORIGINAL: 0x005FDF80 ?make_index@TextIndex@@QAEXPAD@Z 0x005FDF80-0x005FE11B;0x00662D40-0x00662D52
+// symbol    ?make_index@TextIndex@@QAEXPBD@Z
+// size      429 bytes
+// prototype void (__thiscall ?make_index@TextIndex@@QAEXPAD@Z)(TextIndex* this, int8*)
+// callers   1   call targets   17
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     0x005D4580 0x005D45E0 0x005D4620 0x005D4680 0x006007B0 0x00600820 0x00628380 0x006283E0 0x00628430 0x006287C0 0x006453E0 0x00645460 0x00645470 0x00645930 0x00645DD0 0x0064697A 0x006473F0
+// indirect  0x005FE007
+// TRIED: the image opens a real SEH frame (`mov eax, fs:[0]; push eax;
+//            mov fs:[0], esp` before `sub esp, 0x218`, and the second span
+//            0x00662D40-0x00662D52 is its unwind handler) - expected, since
+//            the local `Filemap txt_file_map` has a real destructor. This
+//            tree's compile never emits one at any of the 10 flag sets in
+//            FLAG_SETS (best 0.892 similar, /O2 /Oi- /GX, no /Oy-). Not
+//            resolved this pass - the frame's absence, not the body logic,
+//            is the ceiling.
+Return Value: n/a
+Status: Complete
 */
+void TextIndex::make_index(LPCSTR source_txt) {
+    Filemap txt_file_map;
+    // Original 0x005FDFB9 calls the shared Heap cleanup at 0x005D4580
+    // before clearing the count; the embedded Heap remains alive.
+    heap_.reset();
+    section_count_ = 0;
+    strcpy(file_name_, source_txt);
+    if (!strchr(file_name_, '.')) {
+        strcat(file_name_, TextFileExtension); // append extension if missing
+    }
+    LPVOID txt_addr_base = txt_file_map.open_read(file_name_, false);
+    if (txt_addr_base) {
+        LPVOID seek_addr = txt_addr_base;
+        LPVOID eof_addr = LPVOID(uint32_t(txt_addr_base) + GetFileSize(txt_file_map.get_handle(), NULL));
+        heap_.init(0x8000); // maximum amount of memory per section index
+        while (seek_addr < eof_addr) {
+            LPVOID found_addr = memchr(seek_addr, '\n', uint32_t(eof_addr) - uint32_t(seek_addr));
+            if (!found_addr) {
+                break; // invalid file, no newlines
+            }
+            memcpy(TextBufferGetPtr, seek_addr, uint32_t(found_addr) - uint32_t(seek_addr) + 1);
+            kill_lf(TextBufferGetPtr);
+            purge_spaces(TextBufferGetPtr);
+            if (TextBufferGetPtr[0] == '#' && isupper(TextBufferGetPtr[1])) {
+                size_t len = strlen(&TextBufferGetPtr[1]) + 1;
+                LPVOID store_addr = heap_.get(len + 4); // section name + address
+                *(LPDWORD)store_addr = uint32_t(seek_addr) - uint32_t(txt_addr_base); // file offset
+                strcpy(LPSTR(store_addr) + 4, &TextBufferGetPtr[1]);
+                section_count_++;
+            }
+            seek_addr = LPVOID(uint32_t(found_addr) + 1);
+        }
+        heap_.squeeze(true);
+        txt_file_map.close();
+    }
+}
+
+/*
+Purpose: Search the source text file for a section header.
+// ORIGINAL: 0x005FE120 ?search_index@TextIndex@@QAEHPAD0@Z 0x005FE120-0x005FE1E1 BYTE_EXACT
+// symbol    ?search_index@TextIndex@@QAEHPBD0@Z
+// size      193 bytes
+// prototype int (__thiscall ?search_index@TextIndex@@QAEHPAD0@Z)(TextIndex* this, int8*, int8*)
+// callers   2   call targets   4
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     0x00645460 0x00645470 0x00645DD0 0x0064FD20
+Return Value: File offset if found, otherwise -1
+Status: Complete
+*/
+int TextIndex::search_index(LPCSTR source_txt, LPCSTR section_txt) {
+    // WRONG CALLEE: the image calls plain strcpy/strchr/strcat (0x00645460,
+    // 0x00645DD0, 0x00645470), not the bounded `_s` variants - an unbounded
+    // copy into a 512-byte stack buffer, not MAX_PATH(260). BUG IN THE
+    // ORIGINAL, preserved.
+    char file_name_check[512];
+    strcpy(file_name_check, source_txt);
+    if (!strchr(file_name_check, '.')) {
+        strcat(file_name_check, TextFileExtension); // append extension if missing
+    }
+    if (!_stricmp(file_name_check, file_name_)) {
+        if (section_txt[0] == '#') {
+            section_txt++;
+        }
+        // NO UPFRONT GUARD: the image never tests section_count_ before the
+        // first comparison. `record_start` mirrors the image's own EDI - a
+        // pointer to the record's leading offset field, kept alongside
+        // `cmp_addr` (its ESI) rather than recomputed as `cmp_addr - 4` at
+        // the return - and the advance to the NEXT record happens only
+        // after the decrement-and-test, not before it.
+        int i = section_count_;
+        LPSTR cmp_addr = LPSTR(heap_.get_base());
+        LPSTR record_start = cmp_addr;
+        cmp_addr += 4;
+        for (;;) {
+            if (!_stricmp(section_txt, cmp_addr)) {
+                return *LPDWORD(record_start);
+            }
+            // PRE-TEST, THEN A FINAL SKIP: the image tests `*cmp_addr`
+            // before ever advancing, walking to the terminator with
+            // `++cmp_addr` inside the loop and one more `++cmp_addr` after
+            // it, rather than testing the post-incremented read each time.
+            while (*cmp_addr) {
+                ++cmp_addr;
+            }
+            ++cmp_addr;
+            if (--i == 0) {
+                break;
+            }
+            record_start = cmp_addr;
+            cmp_addr += 4;
+        }
+    }
+    return -1;
+}
+
+// global
+
+// ORIGINAL: 0x005FE270 ?text_clear_index@@YAXXZ 0x005FE270-0x005FE299 BYTE_EXACT
+// size      41 bytes
+// prototype
+// callers   1   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005D4580
+// notes     Staged hybrid export redirect calls the source-owned wrapper
+void __cdecl text_clear_index() {
+    text_clear_index_source(TxtIndex);
+}
+
+// ---------------------------------------------------------------------------
+// Merged from the retired src/textindex_recovery.cpp on 2026-08-20, following
+// src/text_recovery.cpp, which went into text.cpp on 2026-08-15. A class's
+// bodies in two translation units is not a neutral choice: which unit a
+// piece compiles in decides what can be inlined into it.
+// ---------------------------------------------------------------------------
+
+/*
+// ORIGINAL: 0x005FDF40 ??0TextIndex@@QAE@XZ 0x005FDF40-0x005FDF5F BYTE_EXACT
+// size      31 bytes
+// prototype void (__thiscall ??0TextIndex@@QAE@XZ)(TextIndex* this)
+// callers   0   call targets   1
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     0x005D4560
+// notes     Staged hybrid export redirect calls the source-owned constructor
+*/
+TextIndex::TextIndex() {
+    // NOT AN INITIALISER LIST. `section_count_` is declared BEFORE
+    // `heap_`, so initialising it in the list puts its store ahead
+    // of the member's constructor call; the image constructs the
+    // heap first and writes the fields after.
+    section_count_ = 0;
+    file_name_[0] = 0;
+}
+
+/*
+// ORIGINAL: 0x005FDF60 ??1TextIndex@@QAE@XZ 0x005FDF60-0x005FDF78 BYTE_EXACT
+// LEVER (2026-09-03): taking `~Heap` out of heap.h and into heap.cpp. The
+//        in-class `MEASURED ~Heap` was EXPANDED into the implicit
+//        `heap_.~Heap()` here - 21 instructions plus an SEH unwind frame the
+//        image does not pay for, because the expansion contains a
+//        non-intrinsic call. Out of line, the implicit teardown is a real
+//        call: 4/4, and the frame goes. The earlier TRIED note predicted
+//        exactly this and named heap.h as outside its own pass's files;
+//        this is that edit, made from the heap side.
+// size      24 bytes
+// prototype void (__thiscall ??1TextIndex@@QAE@XZ)(TextIndex* this)
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+// notes     Staged hybrid export redirect calls the source-owned destructor
+*/
+TextIndex::~TextIndex() {
+    // NO EXPLICIT SHUTDOWN. The member's own destructor runs after this
+    // body and the image's tail is exactly that call; spelling it here as
+    // well emitted the shutdown twice.
+    section_count_ = 0;
+    file_name_[0] = 0;
+}
+
+// ORIGINAL: 0x005FE1F0 ?text_make_index@@YAXPAD@Z 0x005FE1F0-0x005FE228 BYTE_EXACT
+// symbol    ?text_make_index@@YAXPBD@Z
+// size      56 bytes
+// prototype
+// callers   1   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005FDF80
+// notes     Staged hybrid export redirect calls the source-owned wrapper
+void __cdecl text_make_index(LPCSTR source_txt) {
+    for (int i = 0; i < MaxTextIndexNum; ++i) {
+        if (!TxtIndex[i].get_count()) {
+            TxtIndex[i].make_index(source_txt);
+            break;
+        }
+    }
+}
+
+// ORIGINAL: 0x005FE230 ?text_search_index@@YAHPAD0@Z 0x005FE230-0x005FE26C BYTE_EXACT
+// body      src/textindex.h
+// symbol    ?text_search_index@@YAHPBD0@Z
+// size      60 bytes
+// prototype
+// callers   0   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005FE120
+//
+// ===== MANAGED GLOBALS - real objects, homed to their domain =====
+// In the shipped image these live at fixed data addresses and are
+// constructed before WinMain by the CRT's dynamic-initializer walk
+// (winedbg-confirmed: walker return 0x00644EEB, table at 0x682568..).
+// Here the same recovered constructors run through this build's own
+// startup, and the matching destructors close them at exit.
+// Was `TextIndex TxtIndexGlobal[4]` beside textindex.h's
+// `TextIndex *const TxtIndex = (TextIndex *)0x009B7D08` binding; the array is
+// that binding's storage, so the object carries the public name now. See
+// textindex.h.
+// Original init 0x005FD4E0 and teardown 0x005FD510 both name
+// this constructed array run: 4 elements, stride 0x118; names remain provisional.
+// RECOVERY_OBJECT: v2 0x009B7D08 0x009B8168 ?TxtIndex@@3PAVTextIndex@@A 0x005FD4E0
+TextIndex TxtIndex[MaxTextIndexNum];  // 0x009B7D08, 0x118 stride

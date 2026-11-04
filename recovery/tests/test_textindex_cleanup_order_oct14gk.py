@@ -36,7 +36,7 @@ def _braced(text: str, signature: str) -> str:
 
 
 def _actual_body(source_text: str | None = None) -> str:
-    source = source_text if source_text is not None else (ROOT / "src/textindex.cpp").read_text()
+    source = source_text if source_text is not None else (ROOT / "src/text.cpp").read_text()
     body = _braced(source, "void TextIndex::make_index(")
     assert "heap_.reset();\n    section_count_ = 0;" in body
     assert "shutdown();" not in body

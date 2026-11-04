@@ -33,7 +33,7 @@
 // 0x004C7CA3); /O2 implies /Oi and the intrinsic would inline it as
 // `mov byte ptr [esi],0`. memset is not on stdafx.h's project-wide
 // `#pragma function` list, so the forcing is TU-local here - this file's
-// only memset - the same idiom textindex.cpp records for memcpy.
+// only memset - the same idiom text.cpp records for the index builder's memcpy.
 #pragma function(memset)
 #endif
 

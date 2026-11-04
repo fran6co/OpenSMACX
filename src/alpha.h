@@ -722,7 +722,7 @@ extern LPCSTR ScriptTxtID;
 // In the shipped binary each address below is zero-initialised data
 // (image_data.py: past the bytes the file carries) that read_rules() and
 // read_basic_rules() fill from ALPHAX.TXT/SCRIPT.TXT. Defined in alpha.cpp.
-extern Label Labels;  // 0x009B90F8; storage and lifecycle owned by labels.cpp
+extern Label Labels;  // 0x009B90F8; storage and lifecycle owned by string_table.cpp
 extern RulesResourceinfo ResourceInfo[MaxResourceInfoNum];  // 0x00945F50
 extern RulesTimeControl TimeControl[MaxTimeControlNum];     // 0x0094F1B8
 extern RulesResource Resource[MaxResourceNum];              // 0x00946158

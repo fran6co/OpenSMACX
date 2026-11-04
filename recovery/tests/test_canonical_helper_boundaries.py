@@ -15,7 +15,7 @@ from match_recovery.source import read_file, read_text, write_body
 ROOT = Path(__file__).resolve().parents[2]
 HELPERS = (
     ("src/time.cpp", 0x50F440, 0x50F45E, "src/time.h", "src/time.cpp", "?stop_timers@@YAXXZ"),
-    ("src/labels.cpp", 0x6169D0, 0x6169F7, "src/alpha.cpp", "src/labels.cpp", "?labels_shutdown@@YAXXZ"),
+    ("src/string_table.cpp", 0x6169D0, 0x6169F7, "src/alpha.cpp", "src/string_table.cpp", "?labels_shutdown@@YAXXZ"),
     ("src/map.cpp", 0x4F8090, 0x4F80CB, "src/map.h", "src/map.cpp", "?vector_dist@@YAHHH@Z"),
 )
 
@@ -81,7 +81,7 @@ def test_definitions_and_callers_use_the_real_shared_helpers():
     time_cpp = (ROOT / "src/time.cpp").read_text()
     time_h = (ROOT / "src/time.h").read_text()
     alpha_cpp = (ROOT / "src/alpha.cpp").read_text()
-    labels_cpp = (ROOT / "src/labels.cpp").read_text()
+    labels_cpp = (ROOT / "src/string_table.cpp").read_text()
     alpha_h = (ROOT / "src/alpha.h").read_text()
     map_cpp = (ROOT / "src/map.cpp").read_text()
     map_h = (ROOT / "src/map.h").read_text()
@@ -124,12 +124,15 @@ def test_definitions_and_callers_use_the_real_shared_helpers():
     assert "labels_shutdown();" in game_cpp
 
 
-def test_labels_owner_is_registered_with_its_scoped_measurement_flags():
+def test_labels_share_the_string_table_owner_and_compilation_policy():
+    from match_recovery.measurement import Measurement
+
     cmake = (ROOT / "CMakeLists.txt").read_text()
     project = json.loads((ROOT / "recovery/project.json").read_text())
-    assert "src/labels.cpp" in cmake
-    assert project["measurement"]["unit_flag_sets"]["src/labels.cpp"]["flags"] == [
-        "/c", "/O2", "/Gy", "/GR-", "/GX", "/Ob2"
-    ]
+    assert "src/string_table.cpp" in cmake
+    assert "src/labels.cpp" not in cmake
+    assert "src/labels.cpp" not in project["measurement"]["unit_flag_sets"]
+    policy = Measurement.read(ROOT)
+    assert policy.flags_for("src/string_table.cpp") == policy.flags_for("src/strings.cpp")
     alpha_cpp = (ROOT / "src/alpha.cpp").read_text()
     assert "BODY IN alpha.h, as `MEASURED inline`: the image writes it out at" in alpha_cpp

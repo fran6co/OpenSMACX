@@ -32,14 +32,8 @@ extern char TextFileExtension[];
 // declaration it sees second.
 LPVOID __cdecl mem_get(int size);
 
-// DECLARED BEFORE THE CLASS so the `friend` inside it refers to this
-// namespace-scope function. VC6 injects a friend declared only in-class
-// into CLASS scope, and then the definition below reads as a second body
-// for a member: `C2084: function 'void Text::text_set_get_ptr_source'
-// already has a body`.
+// Declared before the class so its friend names this namespace-scope helper.
 class Text;
-void __cdecl text_set_get_ptr_source(Text *text, LPSTR *output);
-void __cdecl text_set_item_ptr_source(Text *text, LPSTR *output);
 void __cdecl text_shutdown_source(Text *text);
 
 class Text {
@@ -96,8 +90,6 @@ class Text {
   // twice, and the compiler cannot tell you the day it stops matching, only
   // the day a size does.
   friend void __cdecl text_close_source(Text *text);
-  friend void __cdecl text_set_get_ptr_source(Text *text, LPSTR *output);
-  friend void __cdecl text_set_item_ptr_source(Text *text, LPSTR *output);
   friend LPSTR __cdecl text_get_source(Text *text);
   friend LPSTR __cdecl text_item_source(Text *text);
   friend void __cdecl text_shutdown_source(Text *text);
@@ -146,15 +138,11 @@ extern Text Txt;
 // of stored `.data` (0x006A8000), so it is zero-fill and the pointer form
 // carried no information the object form does not - it only cost a load
 // at each of its 26 uses, and dangles in an executable that is not the
-// shipped image. `text_set_get_ptr` fills it from `Txt->buffer_get_`,
-// which is why it already holds a heap pointer by WinMain's first
-// prefs_get: 0x01A31BE0, read out of the running original.
+// shipped image. text.cpp initializes both pointer globals directly from
+// Txt's fields; their generated CRT callbacks follow Txt construction in the
+// pinned initialization table, so no callable setter is needed.
 extern LPSTR TextBufferGetPtr;
 extern LPSTR TextBufferItemPtr;
-void __cdecl text_txt();
-void __cdecl text_txt_exit();
-void __cdecl text_set_get_ptr();
-void __cdecl text_set_item_ptr();
 void __cdecl text_close();
 BOOL __cdecl text_open(LPCSTR src_id, LPCSTR section_id);
 LPSTR __cdecl text_get();
@@ -181,15 +169,6 @@ inline void __cdecl text_close_source(Text *text) {
     fclose(value->text_file_);
     value->text_file_ = nullptr;
   }
-}
-// INLINE, because the image folds it: `text_set_get_ptr` is three
-// instructions - load the field, store it, return - where a call leaves
-// five. Same reason as Spot::shutdown and Font::close.
-inline void __cdecl text_set_get_ptr_source(Text *text, LPSTR *output) {
-  *output = text->buffer_get_;
-}
-inline void __cdecl text_set_item_ptr_source(Text *text, LPSTR *output) {
-  *output = text->buffer_item_;
 }
 inline LPSTR __cdecl text_get_source(Text *text) {
   Text *const value = text;

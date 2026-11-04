@@ -148,11 +148,11 @@ def _host_source(helper: str, constructor: str) -> str:
     """).replace("HELPER_BODY", helper).replace("CONSTRUCTOR_BODY", constructor)
 
 
-def test_text_and_textindex_have_the_pinned_owner_boundaries() -> None:
+def test_text_and_textindex_share_the_text_provider() -> None:
     text_header = (ROOT / "src/text.h").read_text()
     text_source = (ROOT / "src/text.cpp").read_text()
     index_header = (ROOT / "src/textindex.h").read_text()
-    index_source = (ROOT / "src/textindex.cpp").read_text()
+    index_source = text_source
 
     assert "MEASURED Text(int size);" in text_header
     assert "MEASURED inline Text(int size)" not in text_header
@@ -165,6 +165,9 @@ def test_text_and_textindex_have_the_pinned_owner_boundaries() -> None:
     assert "buffer_item_ = (LPSTR)mem_get(size);" in ctor
 
     assert "MEASURED inline int __cdecl text_search_index" in index_header
+    assert not (ROOT / "src/textindex.cpp").exists()
+    assert "void TextIndex::make_index(" in index_source
+    assert "int TextIndex::search_index(" in index_source
     assert "int __cdecl text_search_index(" not in index_source
     helper = _function(index_header, "inline int __cdecl text_search_index(")
     assert "return -1;" in helper
