@@ -671,13 +671,13 @@ def test_application_profiles_match_immutable_baseline_plus_core_cohort():
     assert "src/sprite.cpp" not in profiled_sources
     assert "src/net_class.cpp" not in profiled_sources
     appended_profiles = tuple(source_append_option_blocks(current_cmake))
-    assert appended_profiles.count((inline_owners, ("/Ob1",))) == 1
+    assert appended_profiles.count((inline_owners, ("$<$<NOT:$<CONFIG:Debug>>:/Ob1>",))) == 1
     appended_effective_profiles = effective_source_profiles(appended_profiles)
     append_counts = collections.Counter(
         owner for owners, _ in appended_profiles for owner in owners
     )
     assert all(append_counts[owner] == 1 for owner in inline_owners)
-    assert all(appended_effective_profiles[owner] == ("/Ob1",) for owner in inline_owners)
+    assert all(appended_effective_profiles[owner] == ("$<$<NOT:$<CONFIG:Debug>>:/Ob1>",) for owner in inline_owners)
     assert actual_profiles["src/dipedit.cpp"] == ("/Oy-",)
     assert all(owner not in profiled_sources for owner in inline_owners
                if owner != "src/dipedit.cpp")

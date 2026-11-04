@@ -577,10 +577,11 @@ set_property(SOURCE src/buffer.cpp src/buffer_string_writers.cpp APPEND PROPERTY
 # Preserve original out-of-line close/bit-helper calls in these owners.
 # Append so DipEdit keeps its independently measured frame-based context.
 # Video and MCI use separate implementation units under default app inlining.
+# This optimized matching exception must not override Debug's /Ob0.
 set_property(SOURCE
     src/pulldown.cpp
     src/dipedit.cpp
-    APPEND PROPERTY COMPILE_OPTIONS "/Ob1")
+    APPEND PROPERTY COMPILE_OPTIONS "$<$<NOT:$<CONFIG:Debug>>:/Ob1>")
 # Preserve the original frame-based AlphaMovie owner context without changing
 # its independently measured /Ob2 inlining policy.
 set_source_files_properties(src/alphamovie.cpp PROPERTIES COMPILE_OPTIONS "/Oy-")

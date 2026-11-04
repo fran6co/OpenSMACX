@@ -5,6 +5,7 @@ import copy
 import json
 import pathlib
 import re
+import shlex
 import shutil
 import subprocess
 
@@ -17,9 +18,10 @@ PROFILE_OWNERS = (
     "src/pulldown.cpp",
     "src/dipedit.cpp",
 )
+OPTIMIZED_INLINE_OPTION = "$<$<NOT:$<CONFIG:Debug>>:/Ob1>"
 OWNER_FLAGS = {
-    "src/pulldown.cpp": ("/Ob1",),
-    "src/dipedit.cpp": ("/Ob1",),
+    "src/pulldown.cpp": (OPTIMIZED_INLINE_OPTION,),
+    "src/dipedit.cpp": (OPTIMIZED_INLINE_OPTION,),
 }
 MEASURED_PULLDOWN_PROFILE = ["/c", "/O2", "/Gy", "/GR-", "/GX", "/Ob1"]
 MEASURED_DIPEDIT_PROFILE = ["/c", "/O2", "/Gy", "/GR-", "/Oy-", "/GX", "/Ob1"]
@@ -127,6 +129,51 @@ def _cohort_append_match(cmake: str):
     return None
 
 
+@pytest.mark.parametrize("configuration", ["Debug", "Release", "RelWithDebInfo"])
+def test_generated_inline_options_respect_debug(configuration, tmp_path):
+    """Let CMake evaluate the real source option, without invoking Wine."""
+    if not all(shutil.which(tool) for tool in ("cmake", "ninja", "c++")):
+        pytest.skip("CMake, Ninja and a host C++ compiler are required")
+    cmake = (ROOT / "CMakeLists.txt").read_text()
+    profile = _cohort_append_match(cmake)
+    assert profile is not None
+    toolchain = (ROOT / "cmake/toolchains/vc6.cmake").read_text()
+    flag_sets = re.findall(
+        r'^set\(CMAKE_CXX_FLAGS_(?:DEBUG|RELEASE|RELWITHDEBINFO) .*$',
+        toolchain, re.MULTILINE,
+    )
+    assert len(flag_sets) == 3
+    (tmp_path / "src").mkdir()
+    for name in ("pulldown", "dipedit", "ordinary"):
+        (tmp_path / "src" / (name + ".cpp")).write_text("int " + name + "() { return 1; }\n")
+    (tmp_path / "CMakeLists.txt").write_text(
+        "cmake_minimum_required(VERSION 3.20)\n"
+        "project(InlineOptions LANGUAGES CXX)\n"
+        "set(CMAKE_EXPORT_COMPILE_COMMANDS ON)\n"
+        + "\n".join(flag_sets) + "\n"
+        'set_source_files_properties(src/dipedit.cpp PROPERTIES COMPILE_OPTIONS "/Oy-")\n'
+        + profile.group(0) + "\n"
+        "add_library(sample OBJECT src/pulldown.cpp src/dipedit.cpp src/ordinary.cpp)\n"
+    )
+    build = tmp_path / "build"
+    subprocess.run(
+        ["cmake", "-S", str(tmp_path), "-B", str(build), "-G", "Ninja",
+         "-DCMAKE_BUILD_TYPE=" + configuration, "-DCMAKE_CXX_COMPILER=" + shutil.which("c++")],
+        check=True, capture_output=True, text=True,
+    )
+    rows = json.loads((build / "compile_commands.json").read_text())
+    assert len(rows) == 3
+    for row in rows:
+        arguments = shlex.split(row["command"])
+        inline = [arg for arg in arguments if re.fullmatch(r"/Ob[012]", arg)]
+        name = pathlib.Path(row["file"]).stem
+        expected = ["/Ob0"] if configuration == "Debug" else (
+            ["/Ob2"] if name == "ordinary" else ["/Ob2", "/Ob1"]
+        )
+        assert inline == expected, (configuration, name, inline)
+        assert ("/Oy-" in arguments) == (configuration == "Debug" or name == "dipedit")
+
+
 def _effective_source_profiles(cmake: str):
     result: dict[str, list[str]] = {}
     for files, options, _append in _source_profiles(cmake):
@@ -232,7 +279,7 @@ def _profile_contract(cmake: str, baseline_cmake: str) -> bool:
     return (
         len(additions) == 1
         and set(additions[0][0]) == set(PROFILE_OWNERS)
-        and additions[0][1] == ("/Ob1",)
+        and additions[0][1] == (OPTIMIZED_INLINE_OPTION,)
     )
 
 
@@ -286,7 +333,7 @@ def test_remaining_owner_profile_policy_rejects_bounded_damage():
         if append and set(files) & set(PROFILE_OWNERS)
     ]
     assert len(append_blocks) == 1
-    assert set(append_blocks[0][0]) == set(PROFILE_OWNERS) and append_blocks[0][1] == ("/Ob1",)
+    assert set(append_blocks[0][0]) == set(PROFILE_OWNERS) and append_blocks[0][1] == (OPTIMIZED_INLINE_OPTION,)
     profile_match = _cohort_append_match(cmake)
     assert profile_match is not None
     profile_text = profile_match.group(0)
@@ -296,7 +343,7 @@ def test_remaining_owner_profile_policy_rejects_bounded_damage():
     default_recipe = cmake.replace(profile_text, profile_text.replace("/Ob1", "/Ob2"), 1)
     frame_recipe = cmake.replace(
         profile_text,
-        profile_text.replace('COMPILE_OPTIONS "/Ob1"', 'COMPILE_OPTIONS "/Ob1 /Oy-"'),
+        profile_text.replace(OPTIMIZED_INLINE_OPTION, OPTIMIZED_INLINE_OPTION + ' /Oy-'),
         1,
     )
     duplicate_profile = cmake + "\n" + profile_text + "\n"
