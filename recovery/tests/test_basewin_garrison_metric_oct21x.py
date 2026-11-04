@@ -11,7 +11,7 @@ import pytest
 
 ROOT = Path(__file__).resolve().parents[2]
 SOURCE = ROOT / "src/basewin.cpp"
-FONT_SOURCE = ROOT / "src/jackal/font.cpp"
+FONT_SOURCE = ROOT / "src/buffer.cpp"
 SIGNATURE = "void BaseWin::draw_garrison(int update_mode)"
 
 
@@ -50,9 +50,13 @@ def actual_metric_block() -> str:
 
 def actual_public_metric() -> str:
     source = FONT_SOURCE.read_text(encoding="utf-8")
-    body = extract_function(source, "int Font::line_advance() const")
-    opening = body.index("{")
-    return "int line_advance() const " + body[opening:]
+    return extract_function(source, "int Font::line_advance() const")
+
+
+def actual_metric_helper() -> str:
+    return extract_function(
+        (ROOT / "src/jackal/font_metrics.h").read_text(encoding="utf-8"),
+        "inline int font_line_advance(")
 
 
 FIXTURE = r"""
@@ -77,8 +81,10 @@ public:
 
     int pixel_height() const { ++pixel_reads; return height_; }
     int line_height() const { ++line_reads; return line_height_; }
-    /*__PUBLIC_METRIC__*/
+    int line_advance() const;
 };
+/*__METRIC_HELPER__*/
+/*__PUBLIC_METRIC__*/
 
 static int metric_from_draw_garrison(Font &font) {
     /*__ACTUAL_METRIC_BLOCK__*/
@@ -90,13 +96,22 @@ static void check_case(int adjustment, int height, int line_height,
     Font font = { adjustment, line_height, height, 0, 0 };
     const int actual = metric_from_draw_garrison(font);
     check(actual == expected, name);
+    const int pixel_reads_after_inline = font.pixel_reads;
+    const int line_reads_after_inline = font.line_reads;
+    if (adjustment < 0) {
+        check(pixel_reads_after_inline == 0, "negative reads only line-height accessor");
+        check(line_reads_after_inline == 1, "negative selects line-height once");
+    } else {
+        check(pixel_reads_after_inline == 1, "nonnegative selects pixel-height once");
+        check(line_reads_after_inline == 0, "nonnegative does not read line-height");
+    }
     check(actual == font.line_advance(), "inline selection agrees with Font API");
     if (adjustment < 0) {
-        check(font.pixel_reads == 0, "negative reads only line-height accessor");
-        check(font.line_reads == 1, "negative selects line-height once");
+        check(font.pixel_reads == pixel_reads_after_inline, "public negative read count");
+        check(font.line_reads == line_reads_after_inline + 1, "public negative selector read");
     } else {
-        check(font.pixel_reads == 1, "nonnegative selects pixel-height once");
-        check(font.line_reads == 0, "nonnegative does not read line-height");
+        check(font.pixel_reads == pixel_reads_after_inline + 1, "public pixel selector read");
+        check(font.line_reads == line_reads_after_inline, "public positive avoids line-height");
     }
 }
 
@@ -121,6 +136,7 @@ def compile_run(tmp_path: Path, metric: str, compiler_name: str) -> subprocess.C
     source = tmp_path / f"garrison_metric_{compiler_name}.cpp"
     binary = tmp_path / f"garrison_metric_{compiler_name}"
     fixture = FIXTURE.replace("/*__ACTUAL_METRIC_BLOCK__*/", metric)
+    fixture = fixture.replace("/*__METRIC_HELPER__*/", actual_metric_helper())
     fixture = fixture.replace("/*__PUBLIC_METRIC__*/", actual_public_metric())
     source.write_text(fixture, encoding="utf-8")
     subprocess.run(

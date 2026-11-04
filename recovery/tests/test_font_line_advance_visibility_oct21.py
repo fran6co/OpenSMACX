@@ -14,7 +14,7 @@ import pytest
 
 ROOT = Path(__file__).resolve().parents[2]
 HEADER = ROOT / "src/jackal/font.h"
-FONT_SOURCE = ROOT / "src/jackal/font.cpp"
+FONT_SOURCE = ROOT / "src/buffer.cpp"
 BUFFER_SOURCE = ROOT / "src/buffer.cpp"
 
 
@@ -40,8 +40,10 @@ def product_parts():
     header = HEADER.read_text(encoding="utf-8")
     font_source = FONT_SOURCE.read_text(encoding="utf-8")
     buffer_source = BUFFER_SOURCE.read_text(encoding="utf-8")
+    metrics_source = (ROOT / "src/jackal/font_metrics.h").read_text(encoding="utf-8")
     return {
-        "public": extract(font_source, "int Font::line_advance() const"),
+        "public": extract(metrics_source, "inline int font_line_advance(") + "\n" +
+                   extract(font_source, "int Font::line_advance() const"),
         "metric": extract(buffer_source, "int Buffer::text_line_height()"),
         "vertical": extract(buffer_source,
                             "int Buffer::write_vertical(char *text, RECT *area)"),
@@ -69,6 +71,8 @@ public:
     int unk_1_;
     int line_height_;
     int height_;
+    int pixel_height() const { return height_; }
+    int line_height() const { return line_height_; }
     int line_advance() const;
 };
 /* PRODUCT_PUBLIC */

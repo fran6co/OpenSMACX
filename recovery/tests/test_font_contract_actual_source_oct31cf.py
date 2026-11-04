@@ -13,7 +13,7 @@ ROOT = Path(__file__).resolve().parents[2]
 
 def product():
     header = (ROOT / 'src/jackal/font.h').read_text()
-    owner = (ROOT / 'src/jackal/font.cpp').read_text()
+    owner = (ROOT / 'src/buffer.cpp').read_text()
     signature = 'int Font::line_advance() const'
     getter = extract_function(header if signature in header else owner, signature)
     helper = extract_function((ROOT / 'src/jackal/font_metrics.h').read_text(), 'inline int font_line_advance(')

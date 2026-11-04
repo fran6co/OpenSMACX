@@ -16,7 +16,6 @@
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
 #include "stdafx.h"
-#include "font_metrics.h"
 #include "buffer.h"
 #include "font.h"
 #include "general.h"
@@ -42,37 +41,6 @@
 HDC Font::FontHDC;
 // RECOVERY_OBJECT: v2 0x009BB48C 0x009BB490 ?FontInitCount@Font@@2HA 0x006195B0
 int Font::FontInitCount;
-
-/*
-Purpose: Field 0 as an offset into field 0x10, or field 0xc when it is negative.
-
-             mov edx,[ecx] / test edx,edx / jl other
-             mov eax,[ecx+0x10] / add eax,edx / ret
-      other: mov eax,[ecx+0xc] / ret
-
-         `jl` is the SIGNED test, so the negative branch is taken on the sign
-         bit rather than on a large unsigned value - the difference shows up
-         for any field with the top bit set.
-
-// ORIGINAL: 0x005E3650 sub_5e3650 0x005E3650-0x005E3660 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["pinned:0x005E3650-0x005E3660 reads this+0, this+0x0C, and this+0x10 with signed jl", "source:src/jackal/font.h Font::unk_1_, line_height_, and height_ are the named members at those offsets", "pinned callers in Buffer text layout invoke this metric operation"], "reason": "Bind the original signed Font metric selector to its existing named member operation, retaining native 32-bit addition wrap."}
-// symbol    ?line_advance@Font@@QBEHXZ
-// size      16 bytes
-// prototype
-// callers   2   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: field 0x10 + field 0, or field 0xc
-Status: Complete
-*/
-
-int Font::line_advance() const {
-    return font_line_advance(*this);
-}
-
-
-
 
 /*
 Purpose: Initialize the class using the font name, height and style.

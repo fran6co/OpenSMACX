@@ -129,7 +129,11 @@ BUFFER_PATTERN = (r"\bint\s+Buffer::fill_line\s*\(\s*int\s+x1\s*,\s*int\s+y1\s*,
 
 
 def host_fixture(font_source: str, buffer_source: str) -> str:
-    font_method = extract_definition(font_source, FONT_PATTERN)
+    font_metrics = (ROOT / "src/jackal/font_metrics.h").read_text()
+    metric_helper = extract_definition(
+        font_metrics,
+        r"\binline\s+int\s+font_line_advance\s*\(\s*const\s+Font\s*&\s*font\s*\)\s*\{")
+    font_method = metric_helper + "\n" + extract_definition(font_source, FONT_PATTERN)
     buffer_method = extract_definition(buffer_source, BUFFER_PATTERN)
     return r'''#define _GNU_SOURCE
 #include <cassert>
@@ -147,11 +151,14 @@ struct IDirectDrawSurface {
     virtual int Lock(void *, DDSURFACEDESC *, int, void *) = 0;
     virtual int Unlock(void *) = 0;
 };
+typedef IDirectDrawSurface IDirectDrawSurface2;
 
 struct Font {
     int unk_1_;
     int line_height_;
     int height_;
+    int pixel_height() const { return height_; }
+    int line_height() const { return line_height_; }
     int line_advance() const;
 };
 
@@ -323,12 +330,12 @@ def test_source_extractor_ignores_comment_and_string_decoys():
 
 
 def test_extracted_actual_owner_methods_compile_and_preserve_runtime_branches():
-    compile_and_run((ROOT / "src/jackal/font.cpp").read_text(),
-                    (ROOT / "src/buffer.cpp").read_text())
+    buffer = (ROOT / "src/buffer.cpp").read_text()
+    compile_and_run(buffer, buffer)
 
 
 def test_moved_annotations_preserve_full_baseline_metadata_and_file_mode():
-    font = actual_record("src/jackal/font.cpp", 0x005E3650)
+    font = actual_record("src/buffer.cpp", 0x005E3650)
     buffer = actual_record("src/buffer.cpp", 0x005E07A0)
     assert metadata(font) == metadata(baseline_record("src/leaf_recoveries.cpp", 0x005E3650))
     assert metadata(buffer) == metadata(baseline_record("src/leaf_recoveries.cpp", 0x005E07A0))

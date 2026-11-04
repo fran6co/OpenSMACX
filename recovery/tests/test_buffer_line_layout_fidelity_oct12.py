@@ -119,7 +119,6 @@ def test_only_three_complete_bodies_change_and_all_obligations_survive():
     baseline = subprocess.check_output(
         ["git", "show", task["base_revision"] + ":src/buffer.cpp"], cwd=ROOT).decode()
     current = (ROOT / "src/buffer.cpp").read_text()
-    current += "\n" + (ROOT / "src/buffer_string_writers.cpp").read_text()
     restored = current
     for address, end, signature, baseline_signature in SPECS:
         current_body = body(current, signature)
@@ -239,6 +238,7 @@ typedef int BOOL;
 Heap *StringAllocationHeap = 0;
 int StringStruct::on_insert(void *) { return 0; }
 void StringStruct::on_remove(void *) {}
+void StringStruct::remove_all() {}
 int StringList::on_insert(void *) { return 0; }
 void StringList::on_remove(void *) {}
 @CURSORS@
@@ -541,12 +541,10 @@ def actual_source():
             r'^  (int write_cent_l\(LPSTR text, int x_coord, int y_coord, int width, int len\);)'),
         "ADVANCE": body((ROOT / "src/jackal/font_metrics.h").read_text(),
                         "inline int font_line_advance(") + "\n" +
-            body((ROOT / "src/jackal/font.cpp").read_text(), "int Font::line_advance() const"),
+            body(product, "int Font::line_advance() const"),
         "SEARCH": search,
         "TOKEN": one(product, r'^(char BufferMarkupLinkToken\[\] = [^\n]+;)'),
-        "BODIES": '\n'.join(body(
-            (ROOT / "src/buffer_string_writers.cpp").read_text()
-            if address == 0x5DAD70 else product, signature)
+        "BODIES": '\n'.join(body(product, signature)
             for address, _, signature, _ in SPECS),
     }
     result = PRELUDE

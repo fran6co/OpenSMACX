@@ -149,7 +149,7 @@ def run(tmp_path, scenario, change=None):
                            ("int pixel_height() const", "int line_height() const"))
     helper = body((ROOT / "src/jackal/font_metrics.h").read_text(),
                   "inline int font_line_advance(")
-    font = helper + "\n" + body((ROOT / "src/jackal/font.cpp").read_text(),
+    font = helper + "\n" + body((ROOT / "src/buffer.cpp").read_text(),
                                 "int Font::line_advance() const")
     source = tmp_path / "overview.cpp"
     source.write_text(HARNESS.replace("FONT_ACCESSORS", accessors)

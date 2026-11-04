@@ -63,7 +63,13 @@ def test_generic_font_retains_identities_and_explicit_archive_membership():
                            r.levers, r.ruled_out, r.unrecoverable, r.deferred)
                 for r in rows}
     assert len(old) == 13
-    assert identities(old) == identities(current)
+    moved_address = 0x005E3650
+    moved, = (row for row in old if row.address == moved_address)
+    remaining_old = [row for row in old if row.address != moved_address]
+    assert identities(remaining_old) == identities(current)
+    moved_current, = (row for row in read_file(ROOT / 'src/buffer.cpp')
+                      if row.address == moved_address)
+    assert identities([moved]) == identities([moved_current])
     assert not (ROOT / 'src/font.cpp').exists()
     assert not (ROOT / 'src/font.h').exists()
     build = json.loads((ROOT / 'recovery/build.json').read_text())

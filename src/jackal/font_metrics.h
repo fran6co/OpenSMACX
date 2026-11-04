@@ -3,8 +3,9 @@
 
 // Share the observed signed Font metric operation with clients whose pinned
 // bodies contain it inline. This helper name is descriptive; its original
-// spelling is unknown. The out-of-line Font::line_advance API remains owned
-// by font.cpp for the original direct-call consumers.
+// spelling is unknown. The out-of-line Font::line_advance definition currently resides with
+// Buffer string writing in buffer.cpp; its original member, header-COMDAT,
+// or free-helper provider form remains unproved.
 inline int font_line_advance(const Font &font) {
   const int adjustment = font.unk_1_;
   if (adjustment >= 0) {

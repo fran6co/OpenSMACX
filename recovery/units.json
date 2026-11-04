@@ -464,6 +464,18 @@
         "Existing RECOVERY_ASSOCIATED source annotations retain both tables and selector sites. They are associated data, not verified primary code/padding or proof of whole-unit exactness.",
         "Two guarded Sprite lifetimes, generated destructor/thunk entries, and constructor/init secondary spans remain part of the complete source-owned cohort; class table/data extents and historical TU identity are not established by source placement."
       ]
+    },
+    {
+      "name": "Font",
+      "start": "0x00618EA0",
+      "end_exclusive": "0x00619644",
+      "recovered_tu": "src/jackal/font.cpp",
+      "reason": "Inferred complete known compact Font class/lifecycle contribution. The separately emitted metric selector at0x5E3650 is provided with its Buffer caller contribution; its original member/header-COMDAT/free-helper declaration remains unproved. Original TU boundaries and associated data lifetime/layout remain separate obligations.",
+      "evidence": [
+        "Fresh source/image audit finds all12primary identities in the Font band and only NOP/INT3 bytes between them, with no foreign mapped identity.",
+        "The class operations, constructor/destructor and class initialization/close reference the distinct source-owned FontDefault, FontHDC and FontInitCount identities; address adjacency does not prove a single aggregate allocation.",
+        "Pinned selector5E3650 has three direct calls in the two Buffer string-list methods plus two expanded Buffer uses, and sits between the Buffer deleting entry and select_text_slot. Its mapping/body now reside with those Buffer consumers; the actual API and Font class layout remain unchanged. This is inferred provider attribution, not proof of original source spelling or absence of header COMDAT selection."
+      ]
     }
   ]
 }

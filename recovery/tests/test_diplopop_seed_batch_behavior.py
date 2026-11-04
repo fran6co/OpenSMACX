@@ -80,7 +80,7 @@ def _actual_bodies(text: str) -> list[str]:
 
 def _actual_font_projection():
     header = (ROOT / "src/jackal/font.h").read_text()
-    owner = (ROOT / "src/jackal/font.cpp").read_text()
+    owner = (ROOT / "src/buffer.cpp").read_text()
     metrics = (ROOT / "src/jackal/font_metrics.h").read_text()
 
     def definition(text, signature):

@@ -17,6 +17,7 @@ from test_font_internal_sharing_oct12g import extract
 
 ROOT = Path(__file__).resolve().parents[2]
 SOURCE = ROOT / "src/jackal/font.cpp"
+BUFFER_SOURCE = ROOT / "src/buffer.cpp"
 BASE = "1a5e6a4b274bd8b0dc44be3df7ae8128755f1b04"
 TASK = "font-metric-publication-owner-oct13aj"
 PIN = "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
@@ -38,10 +39,13 @@ def _tokens(source: str) -> list[str]:
 
 
 def _bodies(source=None):
-    text = SOURCE.read_text(encoding="utf-8") if source is None else source
+    text = (SOURCE.read_text(encoding="utf-8") + "\n" +
+            BUFFER_SOURCE.read_text(encoding="utf-8")) if source is None else source
+    helper = extract((ROOT / "src/jackal/font_metrics.h").read_text(encoding="utf-8"),
+                     "inline int font_line_advance(")
     return {
         "init": extract(text, "int Font::init(LPCSTR font_name, int height, int style)"),
-        "line_advance": extract(text, "int Font::line_advance() const"),
+        "line_advance": helper + "\n" + extract(text, "int Font::line_advance() const"),
     }
 
 
@@ -290,6 +294,8 @@ LINE_FIXTURE = r"""
 class Font {
 public:
     int unk_1_, line_height_, height_;
+    int pixel_height() const { return height_; }
+    int line_height() const { return line_height_; }
     int line_advance() const;
 };
 /* PRODUCT_LINE_ADVANCE */
@@ -384,11 +390,14 @@ def test_task_base_source_recipe_and_all_font_identity_history_are_preserved():
     old_bytes = subprocess.check_output(
         ["git", "show", f"{BASE}:src/jackal/font.cpp"], cwd=ROOT, timeout=30)
     old_source = old_bytes.decode("utf-8")
-    current = SOURCE.read_text(encoding="utf-8")
+    current = (SOURCE.read_text(encoding="utf-8") + "\n" +
+               BUFFER_SOURCE.read_text(encoding="utf-8"))
     _assert_exact_source_delta(current, old_source)
 
     old_rows = {row.address: row for row in read_text(old_source, SOURCE)}
     current_rows = {row.address: row for row in read_file(SOURCE)}
+    current_rows.update({row.address: row for row in read_file(BUFFER_SOURCE)
+                         if row.address in old_rows})
     assert old_rows.keys() == current_rows.keys()
     for address, previous in old_rows.items():
         actual = current_rows[address]
