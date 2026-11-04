@@ -154,7 +154,6 @@ set(OPENSMACX_SOURCES
     src/caviar_io.cpp
     src/caviar_error.cpp
     src/caviar_geometry.cpp
-    src/caviar_data.cpp
     src/caviar_cpu.cpp
     src/council.cpp
     src/dialog.cpp

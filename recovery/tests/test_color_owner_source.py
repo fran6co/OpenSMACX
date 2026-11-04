@@ -22,7 +22,7 @@ def definition(text, signature):
 
 def test_actual_color_owner_declarations_and_bodies():
     header = (ROOT / "src/caviar.h").read_text()
-    caviar = (ROOT / "src/caviar_data.cpp").read_text()
+    caviar = (ROOT / "src/caviar.cpp").read_text()
     popup = (ROOT / "src/popup_api.cpp").read_text()
     declarations = definition(header, "struct CvrRecord {") + ";\n" + definition(header, "struct CaviarData {") + ";\n"
     caviar_bodies = definition(caviar, "CaviarData::CaviarData()") + "\n" + definition(caviar, "int CaviarData::apply_palette(") + "\n" + definition(caviar, "void CaviarData::release_palette_chunk(")

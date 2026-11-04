@@ -173,7 +173,7 @@ def compile_host(tmp_path, loader=None):
     header = re.sub(r"^#.*$", "", header, flags=re.M)
     palette_rows = (ROOT / "src/jackal/color_table.h").read_text()
     header = re.sub(r"^#.*$", "", palette_rows, flags=re.M) + "\n" + header
-    data = (ROOT / "src/caviar_data.cpp").read_text()
+    data = (ROOT / "src/caviar.cpp").read_text()
     model_ctor = braced(data, data.index("CaviarData::CaviarData()"))
     renderer = (ROOT / "src/caviar.cpp").read_text()
     instance_ctor = braced(renderer, renderer.index("VoxInstance::VoxInstance()"))

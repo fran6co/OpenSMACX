@@ -54,7 +54,7 @@ def assert_api_symbol_transition(address, before, after, current=None):
         assert current is not None
         assert current.mode.value == "file"
         assert current.path.relative_to(ROOT).as_posix() in {
-            "src/caviar.cpp", "src/caviar_cpu.cpp", "src/caviar_data.cpp",
+            "src/caviar.cpp", "src/caviar_cpu.cpp",
             "src/caviar_objects.cpp", "src/caviar_renderer_objects.cpp",
         }
         return

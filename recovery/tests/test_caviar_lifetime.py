@@ -21,7 +21,7 @@ PIN="01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
 
 def actual_source():
     text=(ROOT/"src/caviar.cpp").read_text()
-    model=(ROOT/"src/caviar_data.cpp").read_text()
+    model=(ROOT/"src/caviar.cpp").read_text()
     header=(ROOT/"src/caviar.h").read_text()
     signatures={"model_ctor":"CaviarData::CaviarData()",
         "model_close":"void CaviarData::close()",
