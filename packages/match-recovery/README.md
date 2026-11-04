@@ -2235,6 +2235,16 @@ remain checked. Direct weak declarations of the key, defined/private/common
 fallbacks and ambiguous metadata still refuse. Both ordinary and folded winner
 proofs expose these uses as `incoming_weak_references` with resolution unknown;
 actual code references still require their independent target proof.
+Separately, `LinkedBuild.code` can qualify a current PE reference through a
+mode-2 COFF weak fallback. It requires a zero-addend relative reference, an
+independently bounded caller, one fallback definition in the same physical
+object, unique same-owner weak/fallback MAP entries at the same address, and
+passing linked fallback bytes and references. The caller's actual relocation
+must encode that independently established address. The qualification expires
+when the code-graph call returns and cannot be serialized. Other modes, ambiguous
+owners and unsupported folded callers remain unresolved. This does not resolve
+standalone source comparisons, change incoming-weak selection reports, establish
+complete retained selection, or grant acceptance.
 For keys without a positive folding group, an absent fold-log entry is
 insufficient: every other possible physical code section needs an immutable byte
 mismatch outside relocation fields and possible trailing padding, a positive native
