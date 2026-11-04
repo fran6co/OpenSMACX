@@ -297,6 +297,7 @@ FlatButton::FlatButton() {
 Purpose: Step the receiver back to the subobject ??_GFlatButton@@UAEPAXI@Z
          expects, then forward unchanged.
 // ORIGINAL: 0x004070E0 ??_GFlatButton@@WEEE@AEPAXI@Z 0x004070E0-0x004070EB BYTE_EXACT
+// compile_context src/alphasave.cpp
 // symbol    ??_EFlatButton@@WEEE@AEPAXI@Z
 // CORRECTED from ??3FlatButton@@SAXPAXI@Z
 //   11 bytes, `sub ecx, 0x444; jmp 0x004068E0` into

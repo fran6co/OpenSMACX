@@ -1958,6 +1958,7 @@ Status: Complete
 Purpose: Step the receiver back to the subobject ??_GScroll@@UAEPAXI@Z expects,
          then forward unchanged.
 // ORIGINAL: 0x004070C0 ??_GScroll@@WEEE@AEPAXI@Z 0x004070C0-0x004070CB BYTE_EXACT
+// compile_context src/alphasave.cpp
 // symbol    ??_EScroll@@WEEE@AEPAXI@Z
 // CORRECTED from ??3Scroll@@SAXPAXI@Z
 //   11 bytes, `sub ecx, 0x444; jmp 0x00406F20` into

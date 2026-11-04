@@ -536,6 +536,7 @@ void StringBox::on_scrolled(int code, int pos) {
 Purpose: Step the receiver back to the subobject ??_GStringBox@@UAEPAXI@Z
          expects, then forward unchanged.
 // ORIGINAL: 0x00432830 ??_GStringBox@@WEEE@AEPAXI@Z 0x00432830-0x0043283B BYTE_EXACT
+// compile_context src/maininterface.cpp
 // symbol    ??_EStringBox@@WEEE@AEPAXI@Z
 // CORRECTED from ??3StringBox@@SAXPAXI@Z
 //   11 bytes, `sub ecx, 0x444; jmp 0x00432770` into
