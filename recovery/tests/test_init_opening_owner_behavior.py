@@ -12,7 +12,7 @@ ROOT = Path(__file__).resolve().parents[2]
 
 
 def projected(damage=None):
-    row = next(r for r in read_file(ROOT / 'src/game.cpp') if r.address == 0x589B60)
+    row = next(r for r in read_file(ROOT / 'src/newgame.cpp') if r.address == 0x589B60)
     assert row.image_spans == ((0x589B60, 0x589D29), (0x66026A, 0x66028A))
     body = _definition(row.region, 'int __cdecl init_opening(')
     if damage is not None:

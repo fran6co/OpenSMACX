@@ -57,8 +57,6 @@
 
 // Existing process-wide audio owner defined in wave.cpp.
 extern Wave g_TOP_MENU_WAVE;
-extern Wave g_CRASH_LANDING_WAVE;
-extern int ConsoleNoMapOverrideLatch;
 void __cdecl world_build();
 
 // New-game and menu ownership group; original TU boundary is not proven.
@@ -260,6 +258,8 @@ static int custom_planet_clamp_level(uint32_t raw_value) {
 }
 
 
+// RECOVERY_ASSOCIATED: v1 switch_targets 0x0058C2A0 0x0058CE9C 0x0058CEB4 0x0058C3C9
+// RECOVERY_ASSOCIATED: v1 switch_targets 0x0058C2A0 0x0058CEB4 0x0058CECC 0x0058C715
 // ORIGINAL: 0x0058C2A0 ?custom_planet@@YAHHH@Z 0x0058C2A0-0x0058CE9C;0x006605A5-0x006607D7
 // RECOVERY_BINDING: v1 {"evidence": ["task:newgame-menu-owner", "historical seed:src/unrecovered/0058c2a0.cpp", "pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf:complete mapped native control flow", "source:existing SetupWin/Popup/Buffer/NetDaemon owner declarations; provisional bounded945820 and9B2074 objects, not raw image aliases"], "reason": "Source-owned new-game/menu family preserving complete original identity, auxiliary spans and historical seed findings; existing genuine object lifetimes and typed member owners. Unfinished bodies remain explicit, not implementation coverage."}
 // TRIED: exact 12-case image/message switch (jump table at 0x58ce9c) transcribed as a representative subset, not all 12 cases; Popup/SetupWin/Buffer[3] RAII locals reproduce the close cascade shape but not every StringStruct/list-walk detail.
@@ -371,6 +371,7 @@ static const char MapMenuTitle[] = "MAPMENU";
 static const char MapXPlanetPath[] = "maps\\xplanet.mp";
 static const char MapXPlanetXPath[] = "maps\\xplanetx.mp";
 
+// RECOVERY_ASSOCIATED: v1 switch_targets 0x0058D6B0 0x0058DB18 0x0058DB2C 0x0058D778
 // ORIGINAL: 0x0058D6B0 ?map_menu@@YAHH@Z 0x0058D6B0-0x0058DB17;0x00660989-0x00660A96
 // RECOVERY_BINDING: v1 {"evidence": ["task:newgame-menu-owner", "historical seed:src/unrecovered/0058d6b0.cpp", "pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf:complete mapped native control flow", "source:existing SetupWin/Popup/Buffer/NetDaemon owner declarations; provisional bounded945820 and9B2074 objects, not raw image aliases"], "reason": "Source-owned new-game/menu family preserving complete original identity, auxiliary spans and historical seed findings; existing genuine object lifetimes and typed member owners. Unfinished bodies remain explicit, not implementation coverage."}
 // TRIED: MISMATCH #11. Real SetupWin/Popup/Buffer/Spot/StringStruct locals (Popup embeds Scroll+2 FlatButtons per the scaffold) do produce the SEH frame and destructor-chain shape, but local declaration order/count likely differs from the original's stack layout past instruction 11.
@@ -1026,6 +1027,134 @@ static unsigned char config_game_original_rule_byte(int selected) {
     return static_cast<unsigned char>(Players[selected].rule_flags);
 }
 
+/*
+Purpose: Swap the opening logo the desktop shows: load the PCX named a1 into
+         a local Buffer, blit it into the opening GraphicWin's Buffer base
+         from the decoded DIB, then call the window's virtual on_update
+         (Win slot 63) so it repaints.
+         Returns 7 when no opening window is up.
+
+// ORIGINAL: 0x00589A30 ?change_opening@@YAHPAD@Z 0x00589A30-0x00589B1D;0x00660255-0x0066026A
+// TRIED (seed): reproducing the SEH frame/unwind funclet for the local
+//            `Buffer buf` explicitly - a real local of non-trivial type
+//            (ctor/dtor declared, undefined) makes MSVC generate its own
+//            construction/destruction and unwind automatically; landed
+//            relying on that instead of hand-writing the funclet.
+// size      258 bytes
+// prototype int (__cdecl ?change_opening@@YAHPAD@Z)(int8* a1)
+// callers   1   call targets   4
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x005D7210 0x005D7410 0x005D7DE0 0x005D9610
+Return Value: 0 when the opening swapped, 7 when there is no opening window
+The second ORIGINAL span is the local Buffer's unwind funclet and scope
+descriptor. opening_window() still reaches original storage; its producer and
+lifetime consumers need a coordinated migration. The window is reloaded after
+load_pcx and before on_update, as in the image. The retained seed's SEH attempt
+relies on the compiler-generated unwind for the real local Buffer rather than
+hand-writing a funclet.
+*/
+int __cdecl change_opening(char *filename) {
+    Buffer buf;
+    if (opening_window() == 0) {
+        return 7;
+    }
+    buf.load_pcx(filename, 0, 10, 0xec);
+    GraphicWin *window = opening_window();
+    Buffer *surface = window != 0 ? static_cast<Buffer *>(window) : 0;
+    // The original dimensions use GraphicWin itself after the load callback;
+    // only the Buffer copy argument conversion is null-conditional.
+    int c1 = window->dib_.bmiHeader.biWidth;
+    int c2 = -window->dib_.bmiHeader.biHeight;
+    int p1 = buf.dib_.bmiHeader.biWidth;
+    int p2 = -static_cast<int>(buf.dib_.bmiHeader.biHeight);
+    buf.copy(surface, 0, 0, p1, p2, 0, 0, c1, c2);
+    opening_window()->on_update();
+    return 0;
+}
+
+
+
+/*
+Purpose: Publish the Console's Win base for popup parenting, then destroy
+         the owned opening window and clear its pointer.
+// ORIGINAL: 0x00589B20 ?close_opening@@YAXXZ 0x00589B20-0x00589B57 FILE BYTE_EXACT
+// size      55 bytes
+// prototype
+// callers   2   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+// indirect  0x00589B4A
+// The original converts Console through MapWin's virtual GraphicWin base.
+// At 0x00589B4A it calls the opening object's scalar deleting destructor
+// with flag one, not on_dialog_focus. GraphicWin's original primary table
+// at 0x0066FC50 selects 0x005D7140, which destroys and frees the allocation.
+Return Value: n/a
+*/
+void __cdecl close_opening() {
+    Win *console_window = &ConsoleGlobal;
+    GraphicWin *opening = opening_window();
+    // Publish the ordinary C++ conversion to the fallback parent window.
+    BasePopDefaultField322C = console_window;
+    if (opening != 0) {
+        delete opening;
+        opening_window() = 0;
+    }
+}
+
+
+// ORIGINAL: 0x00589B60 ?init_opening@@YAHPBD@Z 0x00589B60-0x00589D29;0x0066026A-0x0066028A BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["task:opening-window-lifetime-owner", "pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf:589B60..589D29;66026A..66028A", "source:src/unrecovered/00589b60.cpp complete original identity/spans and seed lessons retained; Buffer::pixel_height already negates the top-down DIB height."], "reason": "Recover opening-window construction, loading, presentation and popup-parent publication through genuine GraphicWin and Buffer lifetimes. Each callback-sensitive shared-slot reload is independent; no added null guard or failure-path behavior change."}
+int __cdecl init_opening(const char *filename) {
+    if (OpeningWindow == 0) {
+        GraphicWin *const window = new GraphicWin();
+        OpeningWindow = window;
+        if (window == 0) {
+            return 4;
+        }
+
+        const int result = window->init(0, 0, WinScreenWidth, WinScreenHeight,
+                                        0, 0x400000, 0, 0,
+                                        0);
+        if (result != 0) {
+            close_opening();
+            return result;
+        }
+    }
+
+    OpeningWindow->fill(0);
+    {
+        Buffer local_buffer;
+        if (OpeningWindow != 0) {
+            local_buffer.load_pcx(filename, 0, 10, 0xEC);
+
+            // Native reload after load_pcx supplies the copy destination and
+            // its metrics. The null arm only nulls the copy destination; the
+            // following metrics reads are unconditional in the original.
+            GraphicWin *const copy_window = OpeningWindow;
+            Buffer *const destination =
+                copy_window != 0 ? static_cast<Buffer *>(copy_window) : 0;
+            const int target_width = copy_window->pixel_width();
+            const int target_height = copy_window->pixel_height();
+            local_buffer.copy(destination, 0, 0, local_buffer.pixel_width(),
+                              local_buffer.pixel_height(), 0, 0, target_width,
+                              target_height);
+
+            // The native body reloads the slot after copy, independently of
+            // the receiver used above, before virtual on_update dispatch.
+            OpeningWindow->on_update();
+        }
+    } // Buffer's natural destructor runs before palette realization.
+
+    g_PALETTE1.set();
+    OpeningWindow->show(0);
+    do_all_draws();
+    BasePopDefaultField322C = static_cast<Win *>(OpeningWindow);
+    return 0;
+}
+
+
 // ORIGINAL: 0x00589D30 ?config_game@@YAHH@Z 0x00589D30-0x0058C29D;0x0066028A-0x006605A5
 // RECOVERY_BINDING: v1 {"evidence": ["historical seed:src/unrecovered/00589d30.cpp; existing original identity and useful lessons preserved", "pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf:589D30..58C29D and66028A..6605A5", "pinned:5898A0..589A24 typed cdecl(int) preview callback; ListBox dispatch retains current declaration", "source:BasePop +A44 value setter,+3100 input poll state; Popup picture/dialog/font and PickWin owned ListBox", "pinned:58A9BA passes zero-filled945834 initial string, allocation extent remains unknown", "source:recovery/tests/test_config_game_actual_source.py actual installed body, bounded API fixture and six compile-success runtime damage controls", "source:589870 initializer and589890 teardown identities now bind to the generated ConfigFactionPreview lifetime in this owner"], "reason": "Complete new-game rules, faction selection, custom naming, PBEM/network and world/setup flow with genuine Popup/SetupWin automatic local lifetimes and a source-owned shared preview. Original undefined and unchecked paths and historical main/cleanup spans remain restoration obligations; no byte or runtime acceptance is granted."}
 // TRIED: mismatch #0 - only the entry (a1&1 defaults shortcut) and the first two do_menu() results (0=default_rules toggle, 1=difficulty rules-flag encode) are transcribed from the 2618-instruction original; the disassembly shows several more do_menu() results driving a PickWin faction picker, Wave/Sound playback, EditGroup name entry and a time_controls_dialog that are NOT modelled - this body loops back to do_menu() for any other result rather than fabricating their bit-flag encodings.
@@ -1509,178 +1638,4 @@ time_controls:
         TamperState93A9B0 = ((date.wYear << 4) + date.wMonth) * 32 + date.wDay;
     }
     return 0;
-}
-
-// ORIGINAL: 0x005AE120 ?crash_landing@@YAXH@Z 0x005AE120-0x005AED43;0x00662450-0x00662705 FILE
-// RECOVERY_BINDING: v1 {"evidence": ["git:cd1b6385ec054fee65debf65d8bcda2c36f7176c:src/unrecovered/005ae120.cpp", "pinned:5AE120..5AED43 and662450..662705;5AE594 fungusx0;5AE58E/5AE5D0 signedcenters;5AE74A..74F fungus smoke gate", "source:src/game.cpp:control_turn;src/popup.h;src/flic.h;src/buffer.cpp", "source:recovery/tests/test_crash_landing_actual_source.py"], "reason": "Recover the complete first-landing operation through real Popup, Buffer, Flic, MapWin, Wave, Player, Base and vehicle owners with automatic normal/exceptional lifetimes. The historical second local widget aggregate is interpreted as Popup-owned embedded components, not duplicated manual vtable storage. Preserve first-owned-base/vehicle selection, early no-match teardown, single-player FUNGBOY shortcut, native fungus start at zero, signed viewport halves, previous-footprint restoration and normal-only smoke independent of pod draw return. The smoke table is existing ExplosionColorTables row12 at6FDB7C; the possible lookup beyond its4096-byte row remains unresolved original asset/read-range evidence, not permission to introduce detached storage or a bounds fix. Both primary and cleanup spans and the seed historical transcription limitations remain obligations; no byte or runtime acceptance is granted."}
-// TRIED: byte-exactness is out of reach here without more structural knowledge than the scaffold carries. The SEH frame is real (fs:[0] chain, __CxxFrameHandler, ~40-entry unwind thunk table) and Popup/BasePop already has its own giant field layout (FlatButton x2, Sprite, a 0xC94 dialogs_ blob) that the emitter resolved from other callers, so declaring `Popup popup;` and letting real RAII drive its construction/close() is right and reproduces the two search loops -> short-cleanup vs big-body split faithfully. What is NOT resolvable from this scaffold alone: a SECOND, function-local widget aggregate (GraphicWin+Dialog+ListBox+EditGroup+SpriteBox+CheckBox+Sprite+ 2x FlatButton+2x StringStruct+Heap) built with fully-inlined (vtable-write-only, no visible constructor call) construction and torn down through this-pointer adjustor arithmetic that reads a vtable-relative offset (`aiStackY_4900[1]+4/+8`) - true multiple/virtual-inheritance thunk codegen, not reachable by declaring ordinary separate locals. Modelled those as separate top-level objects in the same relative call order instead, which preserves the call graph but not the stack layout or the thunk bytes. Also approximated: the per-frame x87 pixel-interpolation math in the 30-frame drop loop (kept the draw/decode/timing calls exact, simplified the float position derivation) and the two indirect-IAT-style calls to StringStruct::remove_all/sub_406a90/sub_406820, which were dropped rather than guessing a `this`.
-void __cdecl crash_landing(int faction_id) {
-    Popup popup;
-    Buffer captured_screen;
-    Flic pod_animation;
-    Flic smoke_animation;
-    Buffer pod_frame;
-    Buffer smoke_frame;
-
-    int base_id = 0;
-    int base_found = 0;
-    const int base_count = GameDataStateStorage.fields_.base_current_count_;
-    for (; base_id < base_count; ++base_id) {
-        if (Bases[base_id].faction_id_current == faction_id) {
-            base_found = 1;
-            break;
-        }
-    }
-
-    int tile_x = 0;
-    int tile_y = 0;
-    int found_base = 0;
-    if (base_found && base_id < base_count) {
-        tile_x = Bases[base_id].x;
-        tile_y = Bases[base_id].y;
-        found_base = 1;
-    } else {
-        int vehicle_id = 0;
-        const int vehicle_count = GameDataStateStorage.fields_.vehicle_current_count_;
-        for (; vehicle_id < vehicle_count; ++vehicle_id) {
-            if (Vehs[vehicle_id].faction_id == faction_id) break;
-        }
-        if (vehicle_id < vehicle_count) {
-            tile_x = Vehs[vehicle_id].x;
-            tile_y = Vehs[vehicle_id].y;
-        } else {
-            return;
-        }
-    }
-
-    const int local_faction = ConsoleGlobal.faction_id_;
-    StringTemp[0] = '\0';
-    const int fungus = (Players[local_faction].rule_flags >> 7) & 1;
-    strcat(StringTemp, Players[local_faction].filename);
-    CharUpperA(StringTemp);
-
-    if (!IsMultiplayerNet) {
-        if (fungus) GameDataStateStorage.fields_.turn_current_num_ = 5;
-        if (strcmp(StringTemp, "FUNGBOY") == 0) {
-            GameDataStateStorage.fields_.turn_current_num_ = 5;
-            ConsoleGlobal.update_data(0);
-            goto flush_and_continue;
-        }
-    }
-    ConsoleGlobal.update_data(0);
-
-    if (GameDataStateStorage.fields_.game_preferences_ & 0x400) {
-        g_CRASH_LANDING_WAVE.init(const_cast<char *>("fx\\crash land.wav"), 4);
-        g_CRASH_LANDING_WAVE.play();
-    }
-
-    pod_frame.init(0x15f, 0x197, 0, 0);
-    smoke_frame.init(0x15f, 0x197, 0, 0);
-    if (!fungus) {
-        pod_animation.init(&pod_frame, const_cast<char *>("drop_pod.flc"), 0, 0, 0);
-        smoke_animation.init(&smoke_frame, const_cast<char *>("drop_smoke.flc"), 0, 0, 0);
-    } else {
-        pod_animation.init(&pod_frame, const_cast<char *>("alien_pod.flc"), 0, 0, 0);
-    }
-
-    {
-    MapWin &map_window = *MapWinTable[0];
-    map_window.field_1DD70_ &= 0xfffff73f;
-    map_window.set_center(tile_x, tile_y, 1);
-    map_window.draw_map(1);
-    do_all_draws();
-
-    GraphicWin &graphic_window = map_window;
-    Buffer &screen = graphic_window;
-    const int screen_width = screen.pixel_width();
-    const int screen_height = screen.pixel_height();
-    captured_screen.init(screen_width, screen_height, 0, 0);
-    screen.copy(&captured_screen, 0, 0, screen_width, screen_height);
-
-    int tile_pixel_x;
-    int tile_pixel_y;
-    map_window.tile_to_pixel(tile_x, tile_y, &tile_pixel_x, &tile_pixel_y);
-
-    const float initial_x = static_cast<float>(screen_width - 0x15f);
-    const float initial_y = static_cast<float>(screen_height - 0x197);
-    const float target_x = static_cast<float>(
-        map_window.tile_pixel_width_ / 2 + tile_pixel_x - 0xa8);
-    const float target_y = static_cast<float>(
-        map_window.tile_pixel_height_ / 2 + tile_pixel_y - 0xc0);
-    const float x_start = fungus ? 0.0f : initial_x;
-    const float x_step = (target_x - x_start) * (1.0f / 30.0f);
-    const float y_step = (target_y - initial_y) * (1.0f / 30.0f);
-    float animation_x = x_start;
-    float animation_y = initial_y + 15.0f;
-
-    RECT previous_rect;
-    previous_rect.left = static_cast<int>(animation_x);
-    previous_rect.top = static_cast<int>(animation_y);
-    previous_rect.right = previous_rect.left + 0x15f;
-    previous_rect.bottom = previous_rect.top + 0x197;
-    DWORD last_tick = timeGetTime();
-
-    for (int frame = 0; frame < 0x1e; ++frame) {
-        captured_screen.copy(&screen, &previous_rect);
-
-        const int half_frame = frame / 2;
-        if (fungus) {
-            animation_x = animation_x + x_step - static_cast<float>(half_frame) + 7.0f;
-        } else {
-            animation_x = animation_x + static_cast<float>(half_frame) + x_step - 7.0f;
-        }
-        animation_y = animation_y + static_cast<float>(frame) + y_step - 15.0f;
-
-        pod_animation.decode_frame(0, 0);
-        smoke_animation.decode_frame(0, 0);
-
-        RECT frame_rect;
-        frame_rect.left = static_cast<int>(animation_x);
-        frame_rect.top = static_cast<int>(animation_y);
-        frame_rect.right = frame_rect.left + 0x15f;
-        frame_rect.bottom = frame_rect.top + 0x197;
-
-        pod_frame.draw(&screen, 9, frame_rect.left, frame_rect.top, 1, 1);
-        if (!fungus) {
-            smoke_frame.draw_multi_table_dest(
-                &screen, 0xff, frame_rect.left, frame_rect.top, 1, 1,
-                ExplosionColorTables[12]);
-        }
-
-        RECT damage_rect;
-        UnionRect(&damage_rect, &frame_rect, &previous_rect);
-        graphic_window.update(&damage_rect, 0);
-        previous_rect = frame_rect;
-
-        const short shift_held = GetAsyncKeyState(VK_SHIFT);
-        DWORD tick;
-        for (;;) {
-            tick = timeGetTime();
-            const DWORD frame_delay = (shift_held & 0xff00) ? 1 : 0x47;
-            if (tick - last_tick >= frame_delay) break;
-            if (ConsoleNoMapOverrideLatch != 0) break;
-        }
-        last_tick = tick;
-    }
-    }
-
-flush_and_continue:
-    flush_input();
-    SpriteScaleNumerator = 1;
-    SpriteScaleDenominator = 1;
-    if (found_base) {
-        char base_name[256];
-        strcpy(base_name, Bases[base_id].name_string);
-        popup.start(PopupStartCaption, "FIRSTBASE", 0x17, base_name, 4, 0);
-        popup.exec(0, 0);
-        strcpy(Bases[base_id].name_string, ParseStrBuffer[0].str);
-        make_base_unique(base_id);
-    }
-
-    MapWin &map_window_after_animation = *MapWinTable[0];
-    map_window_after_animation.field_1DD70_ |= 0x8c0;
-    map_window_after_animation.draw_map(1);
-    flush_input();
-    captured_screen.close();
-    if (GameDataStateStorage.fields_.game_preferences_ & 0x400) g_CRASH_LANDING_WAVE.fade(1000);
 }

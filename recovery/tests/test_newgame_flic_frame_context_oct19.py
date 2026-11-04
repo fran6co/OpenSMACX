@@ -31,9 +31,9 @@ NEWGAME_MAPS = {
     0x005898A0: ("?thumb_routine@@YAXH@Z", ((0x005898A0, 0x00589A24),)),
     0x00589D30: ("?config_game@@YAHH@Z", ((0x00589D30, 0x0058C29D),
                                             (0x0066028A, 0x006605A5))),
-    0x005AE120: ("?crash_landing@@YAXH@Z", ((0x005AE120, 0x005AED43),
-                                              (0x00662450, 0x00662705))),
 }
+CRASH_LANDING_MAP = ("?crash_landing@@YAXH@Z", ((0x005AE120, 0x005AED43),
+                                                   (0x00662450, 0x00662705)))
 ORDINARY_ENTRIES = (
     0x0058CED0, 0x0058C2A0, 0x0058D6B0, 0x0058E360,
     0x0058DB30, 0x005898A0, 0x00589D30, 0x005AE120,
@@ -76,13 +76,17 @@ def test_all_eight_pinned_newgame_entries_have_ebp_prologues():
         ], f"unexpected original entry prologue at 0x{address:08X}"
 
 
-def test_all_ten_original_newgame_mappings_keep_identity_and_spans():
+def test_newgame_and_crash_landing_mappings_keep_identity_and_spans():
     states = _state_by_address(ROOT / "src/newgame.cpp")
     assert set(NEWGAME_MAPS) <= set(states)
     for address, (name, spans) in NEWGAME_MAPS.items():
         state = states[address]
         assert state.name == name
         assert state.image_spans == spans
+
+    crash = _state_by_address(ROOT / "src/game.cpp")[0x005AE120]
+    assert crash.name == CRASH_LANDING_MAP[0]
+    assert crash.image_spans == CRASH_LANDING_MAP[1]
 
 
 def test_newgame_uses_the_existing_framed_source_group():

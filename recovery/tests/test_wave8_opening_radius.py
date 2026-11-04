@@ -11,7 +11,7 @@ from match_recovery.source import read_file
 
 ROOT = Path(__file__).resolve().parents[2]
 SOURCES = {
-    0x589A30: ROOT / "src/game.cpp",
+    0x589A30: ROOT / "src/newgame.cpp",
     0x565160: ROOT / "src/map.cpp",
 }
 
@@ -194,7 +194,7 @@ def test_mutations_fail_runtime(tmp_path, damage):
         old, new = "opening_window()->on_update();", "window->on_update();"
         opening = opening.replace(old, new)
     elif damage == "wrong_scale":
-        old, new = "int c1 = surface->dib_.bmiHeader.biWidth;", "int c1 = buf.dib_.bmiHeader.biWidth;"
+        old, new = "int c1 = window->dib_.bmiHeader.biWidth;", "int c1 = buf.dib_.bmiHeader.biWidth;"
         opening = opening.replace(old, new)
     elif damage == "first_allied":
         old, new = "if (owner == static_cast<unsigned int>(faction_id)) {", "if (found >= 0) {"

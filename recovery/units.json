@@ -630,6 +630,18 @@
         "The configured whole-source index contains exactly three current main.cpp identities in this band: the genuine g_JACKAL_FONT initializer/finalizer and WinMain. Neighboring AlphaMenu entries45FB20/460DD0 are separate Console-owned contributions.",
         "The source-owned Font global7D3948 and WinMain entry behavior provide lifecycle/application closure. Constructor call/reference and full-link startup ordering remain separate evidence obligations."
       ]
+    },
+    {
+      "name": "NewGameOpening",
+      "start": "0x00589870",
+      "end_exclusive": "0x0058EE31",
+      "recovered_tu": "src/newgame.cpp",
+      "reason": "Inferred complete known opening/setup contribution core. Reunited opening lifecycle helpers and their complete original mappings; imperfect bodies remain eligible for source correspondence, without historical object-boundary or matching proof.",
+      "evidence": [
+        "All twelve mapped primary identities in this interval are in newgame.cpp; change_opening and opening lifecycle functions were reunited from application loop/desktop files. crash_landing belongs outside this core and retains its full primary and detached EH mapping in game.cpp.",
+        "ConfigFactionPreview real storage and its paired original startup/cleanup entries remain with this owner. OpeningWindow remains shared application storage in game.cpp. No manual initializer callback is introduced.",
+        "Three source-associated, guard-bounded jump-target tables account for custom_planet and map_menu data gaps; independently checked original padding fills the remaining gaps. Source ownership is not original filename/TU proof or full linked/runtime acceptance."
+      ]
     }
   ]
 }

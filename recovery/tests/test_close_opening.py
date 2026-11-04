@@ -20,7 +20,7 @@ PUBLICATION = "BasePopDefaultField322C = console_window;"
 
 
 def live_body():
-    path = ROOT / "src/game.cpp"
+    path = ROOT / "src/newgame.cpp"
     record, = (r for r in read_file(path) if r.address == 0x589B20)
     assert record.image_spans == ((0x589B20, 0x589B57),)
     source = path.read_text()

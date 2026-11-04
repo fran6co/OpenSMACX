@@ -9,8 +9,8 @@ import pytest
 ROOT=Path(__file__).resolve().parents[2]
 
 
-def definition(signature):
-    text=(ROOT/'src/game.cpp').read_text();start=text.index(signature)
+def definition(signature, source_path=None):
+    text=(source_path or (ROOT/'src/game.cpp')).read_text();start=text.index(signature)
     opening=text.index('{',start);depth=0
     for end in range(opening,len(text)):
         depth+=(text[end]=='{')-(text[end]=='}')
@@ -133,7 +133,7 @@ int main(int argc,char **argv){
 
 
 def run_host(tmp_path,scenario,mutant=None):
-    opening=definition('int __cdecl change_opening(')
+    opening=definition('int __cdecl change_opening(', ROOT/'src/newgame.cpp')
     climate=definition('void __cdecl climactic_changes(')
     if mutant=='stale_update':opening=opening.replace('opening_window()->on_update();','window->on_update();')
     if mutant=='early_null_guard':opening=opening.replace('GraphicWin *window = opening_window();','GraphicWin *window = opening_window();\n    if (!window) return 7;')

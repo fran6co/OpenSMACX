@@ -250,31 +250,31 @@ class CrashLandingCandidateTests(unittest.TestCase):
             return subprocess.run([str(exe)] + (args or []), check=False)
 
     def test_complete_candidate_host_control(self):
-        candidate = self.extract_function((ROOT / "src/newgame.cpp").read_text())
+        candidate = self.extract_function((ROOT / "src/game.cpp").read_text())
         result = self.compile_and_run(candidate)
         self.assertEqual(result.returncode, 0)
 
     def test_actual_candidate_rejects_frame_count_mutant(self):
-        candidate = self.extract_function((ROOT / "src/newgame.cpp").read_text()).replace("frame < 0x1e", "frame < 0x1d", 1)
+        candidate = self.extract_function((ROOT / "src/game.cpp").read_text()).replace("frame < 0x1e", "frame < 0x1d", 1)
         result = self.compile_and_run(candidate, ["mutant"])
         self.assertNotEqual(result.returncode, 0)
 
     def test_actual_candidate_preserves_fungus_frame_zero_drift(self):
-        result = self.compile_and_run(self.extract_function((ROOT / "src/newgame.cpp").read_text()), ["fungus"])
+        result = self.compile_and_run(self.extract_function((ROOT / "src/game.cpp").read_text()), ["fungus"])
         self.assertEqual(result.returncode, 0)
 
     def test_actual_source_preserves_fungboy_shortcut_and_teardown(self):
-        candidate = self.extract_function((ROOT / "src/newgame.cpp").read_text())
+        candidate = self.extract_function((ROOT / "src/game.cpp").read_text())
         self.assertEqual(self.compile_and_run(candidate, ["fungboy"]).returncode, 0)
 
     def test_actual_source_rejects_missing_restore(self):
-        candidate = self.extract_function((ROOT / "src/newgame.cpp").read_text())
+        candidate = self.extract_function((ROOT / "src/game.cpp").read_text())
         damaged = candidate.replace("captured_screen.copy(&screen, &previous_rect);", "", 1)
         self.assertNotEqual(candidate, damaged)
         self.assertNotEqual(self.compile_and_run(damaged).returncode, 0)
 
     def test_actual_source_rejects_smoke_result_gate(self):
-        candidate = self.extract_function((ROOT / "src/newgame.cpp").read_text())
+        candidate = self.extract_function((ROOT / "src/game.cpp").read_text())
         damaged = candidate.replace("if (!fungus) {\n            smoke_frame.draw_multi_table_dest(",
                                     "if (!fungus && g_draw == 0) {\n            smoke_frame.draw_multi_table_dest(", 1)
         self.assertNotEqual(candidate, damaged)
