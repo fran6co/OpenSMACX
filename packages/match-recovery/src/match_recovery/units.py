@@ -474,7 +474,46 @@ def _summary_identity_counts(report_units, *, mapping_only=False):
             "identity_count_scope": "unique mapped identities inside declared candidate ranges; may include compiler entries or fragments and is not a global function or historical-TU denominator"}
 
 
-def _owned_obligations(root, pin, recovered, closure):
+def _index_owned_obligations(items, path_of, value_of):
+    """Index rendered obligation rows by source path without changing order."""
+    indexed = {}
+    for order, item in enumerate(items):
+        indexed.setdefault(path_of(item), []).append((order, value_of(item)))
+    return {path: tuple(rows) for path, rows in indexed.items()}
+
+
+def _owned_obligation_snapshot(root, pin):
+    """Read and validate each source-owned obligation family once per report."""
+    objects = read_objects(root, pin)
+    literals = read_literals(root, pin)
+    generated = read_generated(root, pin)
+    imports = read_imports(root)
+    associated = read_associated(root, pin)
+    return {
+        "objects": _index_owned_obligations(
+            objects, lambda item: item.unit,
+            lambda item: {"kind": "object", "unit": item.unit,
+                          "symbol": item.symbol, "bounded": item.span is not None}),
+        "literals": _index_owned_obligations(
+            literals, lambda item: item.unit,
+            lambda item: {"kind": "literal", "unit": item.unit,
+                          "symbol": item.symbol}),
+        "generated": _index_owned_obligations(
+            generated, lambda item: item.path,
+            lambda item: {"kind": "generated", "path": item.path,
+                          "symbol": item.symbol}),
+        "imports": _index_owned_obligations(
+            imports, lambda item: item.path,
+            lambda item: {"kind": "import", "path": item.path,
+                          "symbol": item.symbol}),
+        "associated": _index_owned_obligations(
+            associated, lambda item: item.unit,
+            lambda item: {"kind": "associated", "unit": item.unit,
+                          "owner_entity_id": item.owner.entity_id}),
+    }
+
+
+def _owned_obligations(snapshot, recovered, closure):
     """Find source-declared evidence owned by a TU or one of its included headers.
 
     The current selected-evidence report does not retain stable IDs for every
@@ -484,23 +523,9 @@ def _owned_obligations(root, pin, recovered, closure):
     """
     paths = set(closure) | {recovered}
     values = []
-    for item in read_objects(root, pin):
-        if item.unit in paths:
-            values.append({"kind": "object", "unit": item.unit, "symbol": item.symbol,
-                           "bounded": item.span is not None})
-    for item in read_literals(root, pin):
-        if item.unit in paths:
-            values.append({"kind": "literal", "unit": item.unit, "symbol": item.symbol})
-    for item in read_generated(root, pin):
-        if item.path in paths:
-            values.append({"kind": "generated", "path": item.path, "symbol": item.symbol})
-    for item in read_imports(root):
-        if item.path in paths:
-            values.append({"kind": "import", "path": item.path, "symbol": item.symbol})
-    for item in read_associated(root, pin):
-        if item.unit in paths:
-            values.append({"kind": "associated", "unit": item.unit,
-                           "owner_entity_id": item.owner.entity_id})
+    for category in ("objects", "literals", "generated", "imports", "associated"):
+        rows = [row for path in paths for row in snapshot[category].get(path, ())]
+        values.extend(dict(value) for _order, value in sorted(rows, key=lambda row: row[0]))
     return values
 
 
@@ -538,6 +563,7 @@ def units_report(root: Path, image_path: Path, units_config: Path, *, mapping_on
     include_closure = DependencyGraph(edge for edge in include_graph_all.edges
                                       if edge.relationship == "includes")
     report_units = []
+    owned_obligation_snapshot = None
 
     for unit in units:
         members, records, coverage_issues, coverage = _unit_members(
@@ -564,8 +590,10 @@ def units_report(root: Path, image_path: Path, units_config: Path, *, mapping_on
         representation = _counterpart_representation(
             root, unit, members, view, snapshot, source, settings.unit_extensions,
             build_units_set, include_closure)
+        if owned_obligation_snapshot is None:
+            owned_obligation_snapshot = _owned_obligation_snapshot(root, pin)
         owned_obligations = _owned_obligations(
-            root, pin, unit["recovered_tu"],
+            owned_obligation_snapshot, unit["recovered_tu"],
             include_closure.prerequisites((unit["recovered_tu"],))
             if unit["recovered_tu"] in snapshot["files"] else frozenset())
         matched = None if mapping_only else bool(representation["represented_cpp"] and native_matched)

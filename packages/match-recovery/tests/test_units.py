@@ -12,6 +12,7 @@ from match_recovery.cli import parser
 from match_recovery import units as units_module
 from match_recovery.units import (_identity_counts, _native_current_translation_units,
                                   _counterpart_representation, _single_trial, _summary_identity_counts,
+                                  _owned_obligation_snapshot, _owned_obligations,
                                   _unit_members, _unit_trial_status,
                                   read_units_config)
 
@@ -163,7 +164,103 @@ def test_cli_exposes_configured_units_metric():
     assert args.mapping_only
 
 
-def test_mapping_only_reports_representation_without_calling_native_verifier(tmp_path, monkeypatch):
+def test_owned_obligation_snapshot_reads_once_and_filters_by_tu_and_include_paths(monkeypatch, tmp_path):
+    calls = {name: 0 for name in ("objects", "literals", "generated", "imports", "associated")}
+
+    def reader(name, rows):
+        def read(*_args):
+            calls[name] += 1
+            return rows
+        return read
+
+    rows = {
+        "objects": [SimpleNamespace(unit="src/b.cpp", symbol="b_object", span=None),
+                    SimpleNamespace(unit="src/a.cpp", symbol="a_object", span=object()),
+                    SimpleNamespace(unit="include/shared.h", symbol="shared_object", span=None)],
+        "literals": [SimpleNamespace(unit="include/shared.h", symbol="shared_literal"),
+                     SimpleNamespace(unit="src/a.cpp", symbol="a_literal")],
+        "generated": [SimpleNamespace(path="src/b.cpp", symbol="b_table"),
+                      SimpleNamespace(path="include/shared.h", symbol="shared_table")],
+        "imports": [SimpleNamespace(path="src/a.cpp", symbol="a_import"),
+                    SimpleNamespace(path="src/b.cpp", symbol="b_import")],
+        "associated": [SimpleNamespace(unit="src/b.cpp", owner=Origin(PIN, "pe:va", 0x2000)),
+                       SimpleNamespace(unit="include/shared.h", owner=Origin(PIN, "pe:va", 0x1000))],
+    }
+    for name, attribute in (("objects", "read_objects"), ("literals", "read_literals"),
+                            ("generated", "read_generated"), ("imports", "read_imports"),
+                            ("associated", "read_associated")):
+        monkeypatch.setattr(units_module, attribute, reader(name, rows[name]))
+
+    snapshot = _owned_obligation_snapshot(tmp_path, PIN)
+    first = _owned_obligations(snapshot, "src/a.cpp", {"include/shared.h"})
+    second = _owned_obligations(snapshot, "src/b.cpp", {"include/shared.h"})
+
+    assert calls == {name: 1 for name in calls}
+    assert first == [
+        {"kind": "object", "unit": "src/a.cpp", "symbol": "a_object", "bounded": True},
+        {"kind": "object", "unit": "include/shared.h", "symbol": "shared_object", "bounded": False},
+        {"kind": "literal", "unit": "include/shared.h", "symbol": "shared_literal"},
+        {"kind": "literal", "unit": "src/a.cpp", "symbol": "a_literal"},
+        {"kind": "generated", "path": "include/shared.h", "symbol": "shared_table"},
+        {"kind": "import", "path": "src/a.cpp", "symbol": "a_import"},
+        {"kind": "associated", "unit": "include/shared.h",
+         "owner_entity_id": Origin(PIN, "pe:va", 0x1000).entity_id},
+    ]
+    assert second == [
+        {"kind": "object", "unit": "src/b.cpp", "symbol": "b_object", "bounded": False},
+        {"kind": "object", "unit": "include/shared.h", "symbol": "shared_object", "bounded": False},
+        {"kind": "literal", "unit": "include/shared.h", "symbol": "shared_literal"},
+        {"kind": "generated", "path": "src/b.cpp", "symbol": "b_table"},
+        {"kind": "generated", "path": "include/shared.h", "symbol": "shared_table"},
+        {"kind": "import", "path": "src/b.cpp", "symbol": "b_import"},
+        {"kind": "associated", "unit": "src/b.cpp",
+         "owner_entity_id": Origin(PIN, "pe:va", 0x2000).entity_id},
+        {"kind": "associated", "unit": "include/shared.h",
+         "owner_entity_id": Origin(PIN, "pe:va", 0x1000).entity_id},
+    ]
+    first_shared = next(row for row in first if row.get("symbol") == "shared_object")
+    second_shared = next(row for row in second if row.get("symbol") == "shared_object")
+    assert first_shared is not second_shared
+    first_shared["symbol"] = "changed_by_first_unit"
+    assert second_shared["symbol"] == "shared_object"
+
+
+def test_owned_obligation_snapshot_is_fresh_and_existing_guard_rejects_source_damage(
+        tmp_path, monkeypatch):
+    from match_recovery import source_inventory
+
+    root = tmp_path
+    (root / "recovery").mkdir()
+    (root / "src").mkdir()
+    pin = "b" * 64
+    (root / "recovery/project.json").write_text(json.dumps({
+        "schema_version": 1,
+        "source": {"image_pin": "src/IMAGE_PIN", "address_space": "pe:va",
+                   "roots": ["src"], "extensions": [".cpp"], "seed_roots": []},
+    }))
+    (root / "src/IMAGE_PIN").write_text(f"sha256 {pin}\n")
+    source_path = root / "src/a.cpp"
+    source_path.write_text("// RECOVERY_OBJECT: v1 0x00001000 old_object\n")
+    monkeypatch.setattr(source_inventory, "_revision", lambda _root: None)
+    monkeypatch.setattr(source_inventory, "_parse_cache_directory", lambda _root: None)
+
+    baseline = source_inventory.source_snapshot(root, allow_empty=True)
+    first = _owned_obligation_snapshot(root, pin)
+    assert _owned_obligations(first, "src/a.cpp", ()) == [
+        {"kind": "object", "unit": "src/a.cpp", "symbol": "old_object", "bounded": False}]
+
+    source_path.write_text("// RECOVERY_OBJECT: v1 0x00001000 new_object\n")
+    with pytest.raises(ValueError, match="source changed since inventory"):
+        source_inventory.assert_snapshot_current(root, baseline)
+
+    second = _owned_obligation_snapshot(root, pin)
+    assert _owned_obligations(second, "src/a.cpp", ()) == [
+        {"kind": "object", "unit": "src/a.cpp", "symbol": "new_object", "bounded": False}]
+
+
+@pytest.mark.parametrize("unit_count", [0, 1, 2])
+def test_mapping_only_reads_owned_obligations_once_per_nonempty_report_without_native_verifier(
+        tmp_path, monkeypatch, unit_count):
     root = tmp_path
     (root / "recovery").mkdir()
     (root / "src").mkdir()
@@ -174,9 +271,12 @@ def test_mapping_only_reports_representation_without_calling_native_verifier(tmp
     image_path = root / "game.exe"
     image_path.write_bytes(b"pinned image fixture")
     config_path = root / "recovery/units.json"
-    config_path.write_text(json.dumps({"schema_version": 1, "units": [{
-        "name": "candidate", "start": "0x1000", "end_exclusive": "0x1008",
-        "recovered_tu": "src/a.cpp", "reason": "fixture", "evidence": ["fixture"]}]}))
+    configured_units = [{
+        "name": f"candidate-{index}", "start": f"0x{0x1000 + index * 0x10:X}",
+        "end_exclusive": f"0x{0x1008 + index * 0x10:X}",
+        "recovered_tu": f"src/{index}.cpp", "reason": "fixture", "evidence": ["fixture"]}
+        for index in range(unit_count)]
+    config_path.write_text(json.dumps({"schema_version": 1, "units": configured_units}))
     pin = "c" * 64
     settings = SimpleNamespace(flag_sets=(), unit_extensions={".cpp"},
                                snapshot=lambda _root, _extra: {"epoch": 1})
@@ -187,9 +287,11 @@ def test_mapping_only_reports_representation_without_calling_native_verifier(tmp
     member = {"entity_id": "fixture-id", "address": "0x00001000",
               "current_source_homes": [], "seed_only": False,
               "unbound": False, "component": None}
+    source_files = {row["recovered_tu"]: {
+        "content_base64": base64.b64encode(b"void placeholder();\n").decode()}
+        for row in configured_units}
     snapshot = {"image_sha256": pin, "revision": "fixture", "source_configuration": {
-        "address_space": "pe:va"}, "files": {"src/a.cpp": {
-            "content_base64": base64.b64encode(b"void placeholder();\n").decode()}},
+        "address_space": "pe:va"}, "files": source_files,
         "records": []}
     monkeypatch.setattr(units_module.Measurement, "read", lambda _root: settings)
     monkeypatch.setattr(units_module, "image_pin", lambda _root: pin)
@@ -202,23 +304,33 @@ def test_mapping_only_reports_representation_without_calling_native_verifier(tmp
     monkeypatch.setattr(units_module, "assert_snapshot_current", lambda *_args: None)
     monkeypatch.setattr(units_module, "_unit_members", lambda *_args: (
         [member], [record], [], {"closed": True}))
-    monkeypatch.setattr(units_module, "_counterpart_representation", lambda *_args: {
-        "recovered_tu": "src/a.cpp", "represented_cpp": True,
+    monkeypatch.setattr(units_module, "_counterpart_representation", lambda _root, unit_row, *_args: {
+        "recovered_tu": unit_row["recovered_tu"], "represented_cpp": True,
         "counterpart_placeholder": False, "representation_issues": []})
-    monkeypatch.setattr(units_module, "_owned_obligations", lambda *_args: [])
+    reader_calls = {name: 0 for name in (
+        "read_objects", "read_literals", "read_generated", "read_imports", "read_associated")}
+    for reader_name in reader_calls:
+        def empty_reader(*_args, _name=reader_name):
+            reader_calls[_name] += 1
+            return []
+        monkeypatch.setattr(units_module, reader_name, empty_reader)
     import match_recovery.mapping_check as mapping_check
-    monkeypatch.setattr(mapping_check, "build_units", lambda *_args: ({"src/a.cpp"}, ()))
+    monkeypatch.setattr(mapping_check, "build_units", lambda *_args: (
+        {row["recovered_tu"] for row in configured_units}, ()))
     monkeypatch.setattr(units_module, "verify_records", lambda *_args, **_kwargs: pytest.fail(
         "mapping-only mode must not invoke native verification"))
 
     report = units_module.units_report(root, image_path, config_path, mapping_only=True)
     assert report["metric_mode"] == "mapping_only"
-    assert report["counts"]["identified_original_tu_candidates"] == 1
-    assert report["counts"]["represented_cpp_units"] == 1
+    assert report["counts"]["identified_original_tu_candidates"] == unit_count
+    assert report["counts"]["represented_cpp_units"] == unit_count
     assert report["counts"]["fully_byte_exact_units"] is None
-    assert report["units"][0]["fully_byte_exact_unit"] is None
-    assert report["units"][0]["matched_code_unit"] is None
-    assert report["units"][0]["native_measurement"] == "not_run"
+    assert len(report["units"]) == unit_count
+    assert all(row["fully_byte_exact_unit"] is None for row in report["units"])
+    assert all(row["matched_code_unit"] is None for row in report["units"])
+    assert all(row["native_measurement"] == "not_run" for row in report["units"])
+    expected_reader_calls = 0 if unit_count == 0 else 1
+    assert reader_calls == {name: expected_reader_calls for name in reader_calls}
 
 
 def test_per_function_best_union_does_not_make_a_whole_unit_match():
