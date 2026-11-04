@@ -1,0 +1,77 @@
+{
+  "schema_version": 1,
+  "units": [
+    {
+      "name": "Filemap",
+      "start": "0x00628380",
+      "end_exclusive": "0x006288C4",
+      "reason": "Inferred contribution core: the complete known Filemap family and its local startup/free wrappers occupy this compact address band. This identifies a reviewed recovery scope, not proven original object boundaries or an original filename.",
+      "evidence": [
+        "Pinned original source identities and complete spans remain annotated in src/filemap.cpp.",
+        "All known family methods occur inside this band; no other mapped origin or unexplained non-padding bytes were found within the proposed core.",
+        "Primary function spans and independently observed NOP/INT3 padding account for the core; associated data/import/generated obligations must still be checked from current source."
+      ],
+      "recovered_tu": "src/filemap.cpp"
+    },
+    {
+      "name": "NetFifo",
+      "start": "0x006339C0",
+      "end_exclusive": "0x0063427E",
+      "reason": "Inferred contribution core: the complete known NetFifo family and its local startup/free wrappers occupy this compact address band. This identifies a reviewed recovery scope, not proven original object boundaries or an original filename.",
+      "evidence": [
+        "Pinned original source identities and complete spans remain annotated in src/net_fifo.cpp.",
+        "All known family methods occur inside this band; no other mapped origin or unexplained non-padding bytes were found within the proposed core.",
+        "Primary function spans and independently observed NOP/INT3 padding account for the core; associated data/import/generated obligations must still be checked from current source."
+      ],
+      "recovered_tu": "src/net_fifo.cpp"
+    },
+    {
+      "name": "Random",
+      "start": "0x00625700",
+      "end_exclusive": "0x00625880",
+      "reason": "Inferred contribution core: the complete known Random family and its local startup/free wrappers occupy this compact address band. This identifies a reviewed recovery scope, not proven original object boundaries or an original filename.",
+      "evidence": [
+        "Pinned original source identities and complete spans remain annotated in src/random.cpp.",
+        "All known family methods occur inside this band; no other mapped origin or unexplained non-padding bytes were found within the proposed core.",
+        "Primary function spans and independently observed NOP/INT3 padding account for the core; associated data/import/generated obligations must still be checked from current source."
+      ],
+      "recovered_tu": "src/random.cpp"
+    },
+    {
+      "name": "Log",
+      "start": "0x00625F20",
+      "end_exclusive": "0x00626461",
+      "reason": "Inferred contribution core: the complete known Log family and its local startup/free wrappers occupy this compact address band. This identifies a reviewed recovery scope, not proven original object boundaries or an original filename.",
+      "evidence": [
+        "Pinned original source identities and complete spans remain annotated in src/log.cpp.",
+        "All known family methods occur inside this band; no other mapped origin or unexplained non-padding bytes were found within the proposed core.",
+        "Primary function spans and independently observed NOP/INT3 padding account for the core; associated data/import/generated obligations must still be checked from current source."
+      ],
+      "recovered_tu": "src/log.cpp"
+    },
+    {
+      "name": "Time",
+      "start": "0x006161D0",
+      "end_exclusive": "0x00616897",
+      "reason": "Inferred contribution core: the complete known Time family and its local startup/free wrappers occupy this compact address band. This identifies a reviewed recovery scope, not proven original object boundaries or an original filename.",
+      "evidence": [
+        "Pinned original source identities and complete spans remain annotated in src/jackal/time.cpp, src/jackal/time_lifecycle.cpp.",
+        "All known family methods occur inside this band; no other mapped origin or unexplained non-padding bytes were found within the proposed core.",
+        "Primary function spans and independently observed NOP/INT3 padding account for the core; associated data/import/generated obligations must still be checked from current source."
+      ],
+      "recovered_tu": "src/jackal/time.cpp"
+    },
+    {
+      "name": "PlanWin",
+      "start": "0x0048AE00",
+      "end_exclusive": "0x0048C060",
+      "recovered_tu": "src/planwin.cpp",
+      "reason": "Inferred PlanWin contribution core, including the neighboring xrange implementation selected by the original direct caller. Membership remains a reviewed hypothesis; the current map.cpp provider and four mismatched methods are unresolved.",
+      "evidence": [
+        "Source-owned PlanWin startup, lifecycle, methods and generated receiver entries account for this band; original NOP/INT3 padding fills the inter-entry gaps.",
+        "The original opticenter body calls xrange at0x0048BEE0, adjacent to its own class lifetime entries. This helper provider needs investigation before consolidating the whole inferred unit.",
+        "Detached constructor/destructor EH spans remain associated obligations; vtable extents and historical object boundaries remain unproved."
+      ]
+    }
+  ]
+}

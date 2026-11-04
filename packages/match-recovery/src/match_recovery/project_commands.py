@@ -19,6 +19,13 @@ def _progress(event):
 
 
 def register(commands):
+    units = commands.add_parser("units", help="Measure explicit contribution ranges; not historical translation units")
+    units.add_argument("--root", type=Path, default=Path.cwd())
+    units.add_argument("--image", type=Path, required=True)
+    units.add_argument("--config", type=Path, default=Path("recovery/units.json"))
+    units.add_argument("--mapping-only", action="store_true",
+                       help="Derive candidate and current-source representation counts without native compiler verification (byte exactness is unmeasured)")
+    units.add_argument("--summary", action="store_true", help="Omit per-function and full native trial details")
     throughput = commands.add_parser("throughput", help="Summarize paired observations and timings; never verifies or banks recovery")
     throughput.add_argument("--root", type=Path, default=Path.cwd())
     throughput.add_argument("--observations", type=Path, required=True, help="Ignored JSON with explicit identity denominator, before/after observations and optional timings")
@@ -287,6 +294,17 @@ def invoke_project(root: Path, arguments: dict) -> tuple[int, object]:
     if (configuration.keys() - {"schema_version", "source", "source_history", "compiler", "toolchain", "measurement", "audits", "build", "mappings", "gate", "preparation", "acceptance", "initializers", "layout", "references", "components"}
             or type(configuration.get("schema_version")) is not int or configuration["schema_version"] != 1):
         raise ValueError("invalid local project command configuration")
+    if arguments.get("command") == "units":
+        from .units import units_report
+        output = units_report(root, Path(arguments["image"]), Path(arguments["config"]),
+                              mapping_only=arguments.get("mapping_only", False))
+        if arguments.get("summary"):
+            output["units"] = [{key: value for key, value in row.items()
+                                if key not in ("measurement_report", "members")}
+                               for row in output["units"]]
+        # This is a returned diagnostic even when evidence is incomplete or
+        # mismatched; it is not a gate and must not overload process success.
+        return 0, output
     if arguments.get("command") == "quality":
         from .source_quality import quality_report
         output = quality_report(root)

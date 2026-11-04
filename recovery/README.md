@@ -6,6 +6,20 @@ verification run in the library; the former application operation bridge is
 removed. Local compiler scripts remain in `environment/`. See
 [the portable package](../packages/match-recovery/README.md) for starting an unrelated project.
 
+Measure the reviewed candidate translation-unit cores:
+
+```sh
+uv run recover units --image .opensmacx/game/terranx_original.exe --summary
+```
+
+The package recomputes membership and measurements from source and the pinned
+image. `recovery/units.json` records only candidate grouping decisions. Results
+separate code matching, resolved data/import/generated evidence and placement
+in one current compiler unit. They require a coherent compiler trial, not a
+mixture of per-function winning flags. The candidate census is incomplete;
+there is no global original-TU percentage. Exit 0 means the diagnostic finished,
+including reported failures or unknowns; it is not recovery acceptance.
+
 Generate a fresh source-linked assembly diff for a mapped function:
 
 ```sh

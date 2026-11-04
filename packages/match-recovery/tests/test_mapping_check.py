@@ -36,6 +36,44 @@ def project(tmp_path):
     return tmp_path
 
 
+def header_host(project, *, context="engine/current/emitter.cc", include=True,
+                bridge=False, extra_record=None, build_context=True):
+    """Move the product mapping to a header included by an explicit TU."""
+    (project / "engine/current/widget.cc").write_text("// ordinary host without mappings\n")
+    marker = MARKER
+    if context:
+        marker = marker.replace("BYTE_EXACT", f"BYTE_EXACT\n// compile_context {context}")
+    if extra_record:
+        marker += extra_record
+    (project / "engine/current/widget.hpp").write_text(marker)
+    emitter = project / "engine/current/emitter.cc"
+    if bridge:
+        (project / "engine/current/bridge.hpp").write_text('#include "widget.hpp"\n')
+        include_line = '#include "bridge.hpp"'
+    else:
+        include_line = '#include "widget.hpp"'
+    emitter.write_text((include_line + "\n") if include else "")
+    database = project / "build/compilation.json"
+    rows = json.loads(database.read_text())
+    if build_context:
+        rows.append({"file": "current/emitter.cc", "directory": "engine",
+                     "arguments": ["compiler-not-run", "-c", "current/emitter.cc"]})
+    if context and context.startswith("engine/seeds/"):
+        seed_context = project / context
+        seed_context.write_text('#include "../current/widget.hpp"\n')
+        if build_context:
+            rows.append({"file": "seeds/emitter.cc", "directory": "engine",
+                         "arguments": ["compiler-not-run", "-c", "seeds/emitter.cc"]})
+    if context == "outside.cc":
+        (project / context).write_text('#include "engine/current/widget.hpp"\n')
+    database.write_text(json.dumps(rows))
+    config_path = project / "recovery/project.json"
+    config = json.loads(config_path.read_text())
+    config["measurement"] = {"unit_extensions": [".cc"]}
+    config_path.write_text(json.dumps(config))
+    return emitter
+
+
 def test_native_check_is_readonly_and_has_no_compiler_dependency(project):
     before = {path: (path.read_bytes(), path.stat().st_mtime_ns) for path in project.rglob("*") if path.is_file()}
     report = mappings.check_mappings(project)
@@ -64,6 +102,60 @@ def test_context_mapping_requires_a_built_product_tu(project):
     report = mappings.check_mappings(project)
     assert report["result"] == "fail"
     assert any(row["rule"] == "context_reference" for row in report["findings"])
+
+
+@pytest.mark.parametrize("bridge", [False, True])
+def test_header_mapping_is_built_only_when_every_context_includes_it(project, bridge):
+    header_host(project, bridge=bridge)
+    report = mappings.check_mappings(project)
+    assert report["result"] == "pass"
+    assert not any(row["rule"] == "unbuilt_host" and row["path"] == "engine/current/widget.hpp"
+                   for row in report["findings"])
+
+
+def test_header_mapping_without_include_context_is_still_unbuilt(project):
+    header_host(project, include=False)
+    report = mappings.check_mappings(project)
+    row, = [item for item in report["findings"]
+            if item["rule"] == "unbuilt_host" and item["path"] == "engine/current/widget.hpp"]
+    assert "include closure" in row["reason"]
+
+
+def test_uncertain_macro_include_is_not_resolved_header_membership(project):
+    emitter = header_host(project)
+    emitter.write_text('#define HEADER_NAME "widget.hpp"\n#include HEADER_NAME\n')
+    report = mappings.check_mappings(project)
+    row, = [item for item in report["findings"]
+            if item["rule"] == "unbuilt_host" and item["path"] == "engine/current/widget.hpp"]
+    assert "resolved include closure" in row["reason"]
+
+
+@pytest.mark.parametrize("context,build_context,expected", [
+    ("", True, "requires a compile_context"),
+    ("engine/current/missing.cc", False, "context_reference"),
+    ("engine/current/emitter.cc", False, "context_reference"),
+    ("engine/seeds/emitter.cc", True, "context_reference"),
+    ("outside.cc", True, "context_reference"),
+])
+def test_header_host_refuses_missing_seed_unbuilt_or_outside_context(project, context, build_context, expected):
+    header_host(project, context=context, include=False, build_context=build_context)
+    report = mappings.check_mappings(project)
+    assert report["result"] == "fail"
+    if expected == "context_reference":
+        assert any(row["rule"] == expected for row in report["findings"])
+    else:
+        row, = [item for item in report["findings"]
+                if item["rule"] == "unbuilt_host" and item["path"] == "engine/current/widget.hpp"]
+        assert expected in row["reason"]
+
+
+def test_every_product_mapping_in_header_needs_valid_context(project):
+    extra = MARKER.replace("0x00401000", "0x00401010").replace("0x00401008", "0x00401018")
+    extra = extra.replace(" BYTE_EXACT\n", "\n")
+    header_host(project, extra_record=extra)
+    report = mappings.check_mappings(project)
+    assert any(row["rule"] == "unbuilt_host" and row["path"] == "engine/current/widget.hpp"
+               and "every product mapping" in row["reason"] for row in report["findings"])
 
 
 def test_same_basename_does_not_hide_two_source_candidates(project):
@@ -170,7 +262,8 @@ def test_nested_unbuilt_host_and_seed_in_build_are_not_exempted(project):
     (path / "widget.cc").write_text(MARKER.replace("0x00401", "0x00403"))
     report = mappings.check_mappings(project)
     assert report["findings"] == [{"rule": "unbuilt_host", "path": "engine/current/nested/widget.cc",
-                                   "entities": report["findings"][0]["entities"]}]
+                                   "entities": report["findings"][0]["entities"],
+                                   "reason": "source host is not a configured build input"}]
     database = project / "build/compilation.json"
     entries = json.loads(database.read_text())
     entries.append({"directory": "engine", "file": "seeds/widget.cc", "command": "compiler-not-run"})

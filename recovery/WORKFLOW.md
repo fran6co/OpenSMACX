@@ -130,6 +130,28 @@ Git checkpoint of the faithful source before implementing fixes or improvements.
 
 ## Evidence-led recovery queue and bounded matching pass
 
+### Active phase: establish TU correspondence before matching
+
+First discover the original contribution structure and map each identified TU
+candidate to a corresponding recovered C++ translation unit. Preserve real
+implementations while moving them; unfinished bodies may remain explicit
+placeholders. Include globals, tables, startup/teardown, compiler-generated
+entries and detached spans in the ownership investigation. Record ambiguous
+boundaries rather than declaring every class or address run an original TU.
+
+During this phase, matching regressions from evidence-backed regrouping are
+authorized coordinator-reviewed changes. Build/link and identity/claim continuity
+remain required; measure and retain matching restoration obligations without
+making local equality a prerequisite for the move. Do not replace recovered
+behavior with placeholders, weaken native gates, demote claims or invent accepted
+reports. The native automatic driver can still refuse a manual checkpoint.
+
+Track the three nested counts: original TU candidates identified; those represented
+by corresponding recovered units, including placeholders; and those represented
+units verified byte-exact. Once correspondence is established, restore matching
+across complete units and their dependent interfaces. This phase takes precedence
+over the function-level matching queue below.
+
 The active user priority is to reduce the measured application-function
 `FAIL` count to zero through systematic reconstruction of complete inferred
 translation-unit contributions. Single-function comparisons diagnose a unit;
@@ -141,6 +163,26 @@ Do not weaken comparison, change exclusions, remove identities or sweep flags
 to improve the count.
 
 ### Translation-unit reconstruction
+
+Track reviewed contribution cores with `uv run recover units --image <image>
+--summary`. `recovery/units.json` holds non-derivable interval/grouping decisions;
+source annotations retain every original identity and span. Membership is
+independent of current filenames. The metric separates matching code, resolved
+native evidence and placement in one current compiler unit. Every member must
+pass in the same compiler graph trial; successes from different profiles cannot
+be combined. These are inferred candidates with an incomplete census, so their
+counts do not establish a global original-TU completion percentage.
+
+The compiler-policy goal is one application profile and one Jackal profile,
+with recognized dependencies retaining their own builds. Existing per-file
+exceptions are recovery debt, not evidence of original per-file settings. Test
+family profiles across complete contributions and their callers, then repair
+source visibility, declarations, representation and lifetime discrepancies that
+require exceptions. Header-inline library methods can be emitted by application
+units; classify their actual providers rather than assigning flags by class name
+alone. Do not choose settings per function or change production flags merely to
+improve a comparison count. Preserve claims and restoration obligations while
+resolving justified structural regressions.
 
 Start from all source mappings sorted by original address, then identify coherent
 contribution candidates using class methods, calls, globals, initialization,

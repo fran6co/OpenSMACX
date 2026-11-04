@@ -83,9 +83,29 @@ BOOL IsLoggingDisabled;  // 0x009BC004
 
 // These pinned callable entries belong to the Log implementation owner.
 // Keep the filename constructor's existing partial initialization unchanged.
+/*
+// ORIGINAL: 0x00625FB0 ??0Log@@QAE@XZ 0x00625FB0-0x00625FC0 BYTE_EXACT
+// size      16 bytes
+// prototype Log* (__thiscall ??0Log@@QAE@XZ)(Log* this)
+// callers   1   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+// notes     Staged hybrid export redirect calls the source-owned constructor
+*/
 Log::Log() : log_file_(nullptr), is_disabled_(false) {
 }
 
+/*
+// ORIGINAL: 0x00626020 ??1Log@@QAE@XZ 0x00626020-0x0062603A BYTE_EXACT
+// size      26 bytes
+// prototype void (__thiscall ??1Log@@QAE@XZ)(Log* this)
+// callers   1   call targets   1
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     0x00644EF2
+// notes     Staged hybrid export redirect calls the source-owned destructor
+*/
 Log::~Log() {
     if (log_file_) {
         free(log_file_);
@@ -95,6 +115,22 @@ Log::~Log() {
 
 // The filename constructor lives with the global object's initialization so
 // its original setup remains available for same-translation-unit inlining.
+/*
+// ORIGINAL: 0x00625FC0 ??0Log@@QAE@PAD@Z 0x00625FC0-0x00626016 BYTE_EXACT
+// Historical placement-new inference below is superseded by the pinned
+// global startup and matching arbitrary-receiver filename initialization.
+// LEVER: not a constructor - see the "NOT a constructor" note in log.h. `Logging.construct(input)` is an ordinary method (`??__ELogging` reaches it that way, not through a `new`-expression), which drops the SEH frame VC6 wraps around a placement-new'd non-trivial destructor. Inlines env_open/fclose directly on `input` rather than calling `reset()`, because the image keeps the incoming pointer live in edi and reopens THAT, not a reload of log_file_.
+// The original filename initialization is owned by Log(LPCSTR); it allocates
+// and copies the name, then opens the incoming pointer and closes only success.
+// symbol    ??0Log@@QAE@PBD@Z
+// size      86 bytes
+// prototype Log* (__thiscall ??0Log@@QAE@PAD@Z)(Log* this, int8*)
+// callers   0   call targets   5
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     0x005D4510 0x00634BB0 0x006453E0 0x00645470 0x00645598
+// notes     Staged hybrid export redirect calls the source-owned filename constructor
+*/
 Log::Log(LPCSTR input) {
     log_file_ = nullptr;
     if (input) {
@@ -124,6 +160,20 @@ Log Logging(LogDefaultFilename);  // 0x009BBFF8
 // RECOVERY_LITERAL: v1 0x006973B0 0x006973C6 ??_C@_0BG@DBHC@?$CFs?5?$CFs?5?$CF04x?5?$CF04x?5?$CF04x?6?$AA@ 0x00626190
 // RECOVERY_LITERAL: v1 0x006973C8 0x006973DB ??_C@_0BD@FBFL@?$CFs?5?$CF04x?5?$CF04x?5?$CF04x?6?$AA@ 0x00626190
 
+/*
+Purpose: Reset the log file.
+// ORIGINAL: 0x006260D0 ?reset@Log@@QAEXXZ 0x006260D0-0x006260EC BYTE_EXACT
+// LEVER: historical in-class (MEASURED) trial: free-function wrappers in
+//        this file inline it, matching the image's own inlining at those call
+//        sites. The current definition is out of line.
+// size      28 bytes
+// prototype void (__thiscall ?reset@Log@@QAEXXZ)(Log* this)
+// callers   2   call targets   2
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00634BB0 0x00645598
+Return Value: n/a
+*/
 void Log::reset() {
     FILE *file = env_open(log_file_, LogResetMode);
     if (file) {
@@ -131,6 +181,21 @@ void Log::reset() {
     }
 }
 
+/*
+Purpose: Write to the log file with the numbers displayed in base 10.
+// ORIGINAL: 0x006260F0 ?say@Log@@QAEXPADPADHHH@Z 0x006260F0-0x0062618B BYTE_EXACT
+// LEVER: historical in-class (MEASURED) trial: free-function wrappers in
+//        this file inline it, matching the image's own inlining at those call
+//        sites. The current definition is out of line.
+// symbol    ?say@Log@@QAEXPBD0HHH@Z
+// size      155 bytes
+// prototype void (__thiscall ?say@Log@@QAEXPADPADHHH@Z)(Log* this, int8*, int8*, int, int, int)
+// callers   1   call targets   3
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     0x00634BB0 0x00645598 0x00647815
+Return Value: n/a
+*/
 void Log::say(LPCSTR str1, LPCSTR str2, int num1, int num2, int num3) {
     if (!log_file_ || is_disabled_ || IsLoggingDisabled) {
         return;
@@ -143,6 +208,21 @@ void Log::say(LPCSTR str1, LPCSTR str2, int num1, int num2, int num3) {
     }
 }
 
+/*
+Purpose: Write to the log file with the numbers displayed in base 16.
+// ORIGINAL: 0x00626190 ?say_hex@Log@@QAEXPADPADHHH@Z 0x00626190-0x0062622B BYTE_EXACT
+// LEVER: historical in-class (MEASURED) trial: free-function wrappers in
+//        this file inline it, matching the image's own inlining at those call
+//        sites. The current definition is out of line.
+// symbol    ?say_hex@Log@@QAEXPBD0HHH@Z
+// size      155 bytes
+// prototype void (__thiscall ?say_hex@Log@@QAEXPADPADHHH@Z)(Log* this, int8*, int8*, int, int, int)
+// callers   0   call targets   3
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00634BB0 0x00645598 0x00647815
+Return Value: n/a
+*/
 void Log::say_hex(LPCSTR str1, LPCSTR str2, int num1, int num2, int num3) {
     if (!log_file_ || is_disabled_ || IsLoggingDisabled) {
         return;
@@ -288,95 +368,3 @@ void __cdecl log_set_state(BOOL state) { Logging.set_state(state); }
 // in this translation unit. The prior header-body/export experiment is retained in source history;
 // the ORIGINAL identities and byte claims remain unchanged.
 // ---------------------------------------------------------------------------
-
-/*
-// ORIGINAL: 0x00625FB0 ??0Log@@QAE@XZ 0x00625FB0-0x00625FC0 BYTE_EXACT
-// body      src/log.cpp
-// size      16 bytes
-// prototype Log* (__thiscall ??0Log@@QAE@XZ)(Log* this)
-// callers   1   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-// notes     Staged hybrid export redirect calls the source-owned constructor
-*/
-
-/*
-// ORIGINAL: 0x00625FC0 ??0Log@@QAE@PAD@Z 0x00625FC0-0x00626016 BYTE_EXACT
-// Historical placement-new inference below is superseded by the pinned
-// global startup and matching arbitrary-receiver filename initialization.
-// LEVER: not a constructor - see the "NOT a constructor" note in log.h. `Logging.construct(input)` is an ordinary method (`??__ELogging` reaches it that way, not through a `new`-expression), which drops the SEH frame VC6 wraps around a placement-new'd non-trivial destructor. Inlines env_open/fclose directly on `input` rather than calling `reset()`, because the image keeps the incoming pointer live in edi and reopens THAT, not a reload of log_file_.
-// The original filename initialization is owned by Log(LPCSTR); it allocates
-// and copies the name, then opens the incoming pointer and closes only success.
-// body      src/log.cpp
-// symbol    ??0Log@@QAE@PBD@Z
-// size      86 bytes
-// prototype Log* (__thiscall ??0Log@@QAE@PAD@Z)(Log* this, int8*)
-// callers   0   call targets   5
-// kind      game
-// flags     sp_ready;purged_ok
-// calls     0x005D4510 0x00634BB0 0x006453E0 0x00645470 0x00645598
-// notes     Staged hybrid export redirect calls the source-owned filename constructor
-*/
-
-/*
-// ORIGINAL: 0x00626020 ??1Log@@QAE@XZ 0x00626020-0x0062603A BYTE_EXACT
-// body      src/log.cpp
-// size      26 bytes
-// prototype void (__thiscall ??1Log@@QAE@XZ)(Log* this)
-// callers   1   call targets   1
-// kind      game
-// flags     sp_ready;purged_ok
-// calls     0x00644EF2
-// notes     Staged hybrid export redirect calls the source-owned destructor
-*/
-
-/*
-Purpose: Reset the log file.
-// ORIGINAL: 0x006260D0 ?reset@Log@@QAEXXZ 0x006260D0-0x006260EC BYTE_EXACT
-// body      src/log.cpp
-// LEVER: historical in-class (MEASURED) trial: free-function wrappers in
-//        this file inline it, matching the image's own inlining at those call
-//        sites. The current definition is out of line.
-// size      28 bytes
-// prototype void (__thiscall ?reset@Log@@QAEXXZ)(Log* this)
-// callers   2   call targets   2
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     0x00634BB0 0x00645598
-Return Value: n/a
-*/
-
-/*
-Purpose: Write to the log file with the numbers displayed in base 10.
-// ORIGINAL: 0x006260F0 ?say@Log@@QAEXPADPADHHH@Z 0x006260F0-0x0062618B BYTE_EXACT
-// body      src/log.cpp
-// LEVER: historical in-class (MEASURED) trial: free-function wrappers in
-//        this file inline it, matching the image's own inlining at those call
-//        sites. The current definition is out of line.
-// symbol    ?say@Log@@QAEXPBD0HHH@Z
-// size      155 bytes
-// prototype void (__thiscall ?say@Log@@QAEXPADPADHHH@Z)(Log* this, int8*, int8*, int, int, int)
-// callers   1   call targets   3
-// kind      game
-// flags     sp_ready;purged_ok
-// calls     0x00634BB0 0x00645598 0x00647815
-Return Value: n/a
-*/
-
-/*
-Purpose: Write to the log file with the numbers displayed in base 16.
-// ORIGINAL: 0x00626190 ?say_hex@Log@@QAEXPADPADHHH@Z 0x00626190-0x0062622B BYTE_EXACT
-// body      src/log.cpp
-// LEVER: historical in-class (MEASURED) trial: free-function wrappers in
-//        this file inline it, matching the image's own inlining at those call
-//        sites. The current definition is out of line.
-// symbol    ?say_hex@Log@@QAEXPBD0HHH@Z
-// size      155 bytes
-// prototype void (__thiscall ?say_hex@Log@@QAEXPADPADHHH@Z)(Log* this, int8*, int8*, int, int, int)
-// callers   0   call targets   3
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     0x00634BB0 0x00645598 0x00647815
-Return Value: n/a
-*/

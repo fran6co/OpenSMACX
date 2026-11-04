@@ -20,11 +20,19 @@
 
 #include <cstring>
 
+
+
+
+
+// Binary64 one emitted by the double-valued expressions below; the original
+// Random::get at 0x006257D2 reads this qword. This binds its start only.
+// RECOVERY_OBJECT: v1 0x0066D8D8 __real@8@3fff8000000000000000
+
+
 /*
 Purpose: Update the seed value, by the xor-swap with the argument that the image spells out.
 // ORIGINAL: 0x00625750 ?reseed@Random@@QAEXK@Z 0x00625750-0x00625763 BYTE_EXACT
 // LEVER: BYTE_EXACT 8/8. The body IS the xor-swap - `seed_ ^= n; n ^= seed_; seed_ ^= n;` - but written PLAINLY, VC6 recognises the idiom and folds the whole thing to the one `mov dword ptr [ecx], eax` the previous `seed_ = new_seed;` already emitted (measured: 3 instructions against the image's 8). Taking the ADDRESS of the parameter and xoring through it, `uint32_t *const b = &new_seed;`, denies VC6 the non-aliasing that algebra needs, and it then emits the image's four xors and two stores exactly. The same one change also took 0x006257E0 byte-exact.
-// body      src/random.cpp
 // symbol    ?reseed@Random@@QAEXI@Z
 // size      19 bytes
 // prototype void (__thiscall ?reseed@Random@@QAEXK@Z)(Random* this, unsigned int)
@@ -41,11 +49,16 @@ Status: Complete
 //        out-of-line copy out whatever the expansion does, and the free
 //        wrapper at 0x006257E0 still folds it. The body itself is unchanged.
 */
+void Random::reseed(uint32_t new_seed) {
+    uint32_t *const b = &new_seed;
+    seed_ ^= *b;
+    *b ^= seed_;
+    seed_ ^= *b;
+}
 
 /*
 Purpose: Get a random value between min and (max - 1).
 // ORIGINAL: 0x00625770 ?get@Random@@QAEIHH@Z 0x00625770-0x006257A7 BYTE_EXACT
-// body      src/random.cpp
 // size      55 bytes
 // prototype unsigned int (__thiscall ?get@Random@@QAEIHH@Z)(Random* this, int, int)
 // callers   5   call targets   0
@@ -55,33 +68,6 @@ Purpose: Get a random value between min and (max - 1).
 Return Value: Random unsigned integer within bounds
 Status: Complete
 */
-// body src/random.h
-
-// Binary64 one emitted by the double-valued expressions below; the original
-// Random::get at 0x006257D2 reads this qword. This binds its start only.
-// RECOVERY_OBJECT: v1 0x0066D8D8 __real@8@3fff8000000000000000
-/*
-Purpose: Get a random double value.
-// ORIGINAL: 0x006257B0 ?get@Random@@QAENXZ 0x006257B0-0x006257DA BYTE_EXACT
-// body      src/random.cpp
-// size      42 bytes
-// prototype unknown float (__thiscall ?get@Random@@QAENXZ)(Random* this)
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: Random double value
-Status: Complete
-*/
-// body src/random.h
-
-void Random::reseed(uint32_t new_seed) {
-    uint32_t *const b = &new_seed;
-    seed_ ^= *b;
-    *b ^= seed_;
-    seed_ ^= *b;
-}
-
 uint32_t Random::get(int min, int max) {
     if (min > max) {
         min ^= max;
@@ -104,6 +90,18 @@ uint32_t Random::get(int min, int max) {
     return ((range * (new_seed & 0xFFFF)) >> 16) + min;
 }
 
+/*
+Purpose: Get a random double value.
+// ORIGINAL: 0x006257B0 ?get@Random@@QAENXZ 0x006257B0-0x006257DA BYTE_EXACT
+// size      42 bytes
+// prototype unknown float (__thiscall ?get@Random@@QAENXZ)(Random* this)
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+Return Value: Random double value
+Status: Complete
+*/
 double Random::get() {
     seed_ = seed_ * 0x19660D + 0x3C6EF35F;
     const uint32_t bits = (seed_ & 0x7FFFFF) | 0x3F800000;
@@ -204,40 +202,5 @@ double __cdecl random() { return Rand.get(); }
 
 
 // ---------------------------------------------------------------------------
-// DEFINED IN THE HEADER, CLAIMED HERE.
-//
-// These pieces are written in-class so the image's own inlining reproduces -
-// a constructor or destructor the compiler is expected to fold into its
-// caller. A marker cannot live beside them: `decomp.reader` globs `*.cpp`
-// and `*.c`, and a comparison compiles a TRANSLATION UNIT, so a marker in a
-// header could be neither read nor measured. VC6 emits each of them into
-// this unit's object as its own COMDAT anyway, which is what the comparison
-// pulls out, and the `body` fact says where to go to edit one.
-//
-// The ratchet still covers the header: this unit includes it, so breaking an
-// in-class body here fails the claim below. Measured, not assumed.
-// ---------------------------------------------------------------------------
-
-/*
-// ORIGINAL: 0x00625730 ??0Random@@QAE@XZ 0x00625730-0x00625739 BYTE_EXACT
-// body      src/random.h
-// size      9 bytes
-// prototype void (__thiscall ??0Random@@QAE@XZ)(Random* this)
-// callers   5   call targets   0
-// kind      
-// flags     
-// calls     (none)
-// notes     Staged hybrid export redirect calls the source-owned constructor
-*/
-
-/*
-// ORIGINAL: 0x00625740 ??1Random@@QAE@XZ 0x00625740-0x00625747 BYTE_EXACT
-// body      src/random.h
-// size      7 bytes
-// prototype void (__thiscall ??1Random@@QAE@XZ)(Random* this)
-// callers   5   call targets   0
-// kind      
-// flags     
-// calls     (none)
-// notes     Staged hybrid export redirect calls the source-owned destructor
-*/
+// Inline lifecycle mappings live beside their definitions in random.h.
+// Their explicit compile contexts select this Rand-owning translation unit.

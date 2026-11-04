@@ -18,6 +18,8 @@ from .source_config import SourceConfiguration
 from .source_inventory import source_snapshot, assert_snapshot_current
 from .component_original_routing import (component_record_identity_candidates,
                                          exact_component_record_bindings)
+from .graph import DependencyGraph
+from .includes import include_graph
 
 
 RULES = ("ambiguous_source", "unbuilt_host", "seed_build_input", "claimed_forwarder", "body_reference",
@@ -128,6 +130,47 @@ def _unbound_problem(record: dict, source: SourceConfiguration, units: set[str])
     return None
 
 
+def _interface_host_context_problem(root: Path, header: str, records: list[dict],
+                                    source: SourceConfiguration, units: set[str],
+                                    unit_extensions: set[str], snapshot: dict,
+                                    include_closure: DependencyGraph) -> str | None:
+    """Require every product mapping in an interface host to have a built owner.
+
+    The dependency graph contains only explicitly resolved include edges. The
+    conservative graph's ``possibly_includes`` edges are useful for impact
+    analysis but cannot prove that a header is in a context's include closure.
+    """
+    product = [record for record in records
+               if record.get("candidate_kind") == "source"
+               and not source.is_seed(record.get("path", ""))
+               and not _is_unbound(record)]
+    if not product:
+        return "interface host has no product mapping with a compile context"
+    sources = set(snapshot["files"])
+    for record in product:
+        context = record.get("context_path", "")
+        if not context:
+            return "every product mapping in an interface host requires a compile_context"
+        try:
+            relative = Path(context)
+            target = source.path(root, context)
+        except (TypeError, ValueError):
+            return f"compile_context is not a configured project-relative path: {context}"
+        if (relative.is_absolute() or relative.as_posix() != context
+                or not any(relative.is_relative_to(Path(directory)) for directory in source.roots)
+                or relative.suffix not in unit_extensions
+                or relative.suffix in source.interface_extensions
+                or source.is_seed(context) or context not in units
+                or not target.is_file() or target.is_symlink()
+                or not target.resolve().is_relative_to(root)
+                or target.resolve().relative_to(root).as_posix() != context
+                or context not in sources):
+            return f"compile_context is not a canonical, built, nonseed product translation unit: {context}"
+        if header not in include_closure.prerequisites((context,)):
+            return f"interface host is not in compile_context's resolved include closure: {context}"
+    return None
+
+
 def check_mappings(root: Path) -> dict:
     root = root.resolve()
     path = root / "recovery/project.json"
@@ -168,6 +211,11 @@ def check_mappings(root: Path) -> dict:
     measurement = project.get("measurement", {})
     unit_extensions = measurement.get("unit_extensions", []) if isinstance(measurement, dict) else []
     records = snapshot["records"]
+    source_text = {name: base64.b64decode(row["content_base64"]).decode("utf-8", errors="replace")
+                   for name, row in snapshot["files"].items()}
+    resolved_includes, _include_uncertainties = include_graph(source_text, source.include_paths)
+    include_closure = DependencyGraph(edge for edge in resolved_includes.edges
+                                      if edge.relationship == "includes")
     component_owners = exact_component_record_bindings(snapshot)
     component_candidates = component_record_identity_candidates(snapshot)
     by_entity, by_file = defaultdict(list), defaultdict(list)
@@ -279,9 +327,18 @@ def check_mappings(root: Path) -> dict:
         component_owned = bool(candidates) and all(
             (name, row["entity_id"]) in component_owners for row in candidates)
         unbound_only = bool(candidates) and all(_is_unbound(row) for row in candidates)
-        if not source.is_seed(name) and name not in units and not component_owned and not unbound_only:
-            findings.append({"rule": "unbuilt_host", "path": name,
-                             "entities": sorted({row["entity_id"] for row in candidates})})
+        interface_host = Path(name).suffix in source.interface_extensions
+        if not source.is_seed(name) and not component_owned and not unbound_only:
+            if interface_host:
+                problem = _interface_host_context_problem(
+                    root, name, candidates, source, units, set(unit_extensions),
+                    snapshot, include_closure)
+            else:
+                problem = None if name in units else "source host is not a configured build input"
+            if problem:
+                findings.append({"rule": "unbuilt_host", "path": name,
+                                 "entities": sorted({row["entity_id"] for row in candidates}),
+                                 "reason": problem})
     for name in sorted(units):
         if source.is_seed(name):
             findings.append({"rule": "seed_build_input", "path": name})
@@ -336,6 +393,7 @@ def check_mappings(root: Path) -> dict:
         "persisted": False, "ready_for_collection": False,
         "limitations": ["source mappings and intended compilation inputs, not compiled symbols or link ownership",
                         "compilation databases do not establish included/generated source coverage",
+                        "interface-header compile-context closure is source-membership evidence only, not compiled emission or ownership proof",
                         "seed alternatives remain hints; all historical claims still require separate remeasurement",
                         "forwarder macros are a lexical lens, not preprocessing, reachability or complete fixed-address detection",
                         "body paths require an in-scope text witness, not proof of a compiled definition",

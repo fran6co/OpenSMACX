@@ -5,14 +5,20 @@ framework. Work units are ownership groups; functions and original spans are
 measurement units. Byte-exact code can still have wrong hierarchy, lifetime or
 references. Do not preserve those defects to protect a local similarity score.
 
-The active matching campaign reconstructs complete inferred translation-unit
-contributions and their interface/consumer closure. Functions are diagnostic
-and measurement units, not the default scheduling boundary. Account for the
-whole cohort, including globals, initialization, generated lifetime code and
-associated spans. Current semantic files and contiguous address runs are
-hypotheses about original contributions, not proven historical TUs. Test shared
-structural causes across the cohort before isolated spelling work; report actual
-FAIL-to-PASS gains separately from evidence improvements and file cleanup.
+The immediate phase is translation-unit discovery and source correspondence:
+identify original contribution candidates and give each a corresponding recovered
+TU. Move existing implementations, mappings, globals and lifetime code together;
+explicit placeholders for unfinished functions are allowed. Do not replace
+existing recovered behavior with placeholders or discard its discoveries.
+Matching regressions caused by justified regrouping are authorized for this
+phase: preserve every historical claim and restoration obligation, keep the
+application compiling/linking, and do not revert the grouping to protect scores.
+After the TU map is established, use those cohorts to restore byte exactness.
+The headline metric is identified TUs, represented recovered TUs, then fully
+byte-exact represented TUs. Label inferred boundaries and the incomplete census;
+current filenames and arbitrary address runs are not discovered historical TUs.
+Functions and original spans remain measurement units, not scheduling boundaries.
+This manual regrouping authorization does not weaken native automatic acceptance.
 
 First milestone: complete byte-exact source recovery, bug for bug with the pinned
 original. Bug fixes and improvements come afterward; this supersedes earlier

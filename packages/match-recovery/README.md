@@ -19,6 +19,76 @@ configuration plus commands exchanging JSON. Those commands can use any language
 
 ## Advisory recovery acceleration
 
+### Explicit contribution-unit measurements
+
+`recover units --image <pinned-image> --config recovery/units.json [--summary]`
+measures explicitly inferred address intervals as contribution candidates. The
+configuration stores intervals and their rationale/evidence only; the package
+derives identity membership from the configured source map and pinned image.
+Moving or splitting current source files does not change the candidate-unit
+denominator.
+
+For the source-correspondence phase without native compiler runs, use
+`recover units --image <pinned-image> --config recovery/units.json --mapping-only --summary`.
+This reports identified and represented candidates while setting byte-exact and
+all other native-measurement counts to `null` (unmeasured). The default command
+also runs fresh native measurements.
+
+```json
+{
+  "schema_version": 1,
+  "units": [
+    {
+      "name": "example contribution",
+      "start": "0x00401000",
+      "end_exclusive": "0x00401100",
+      "recovered_tu": "src/example.cpp",
+      "reason": "A compact original-address contribution bracket.",
+      "evidence": ["pinned disassembly and mapped source evidence"]
+    }
+  ]
+}
+```
+
+Intervals are half-open and must not overlap. Each declaration is an inferred
+candidate, not proof of a historical TU. The headline counts candidates,
+source-represented candidates, and fully byte-exact represented candidates in
+that order. Representation requires a configured built counterpart C++ TU and
+unambiguous source homes for all known nonseed product identities, with no
+outside identity also homed there. It does not require a body to exist or match,
+so explicit placeholders can be represented while remaining unmatched. An
+empty counterpart is counted as a placeholder only when the range has no known
+members. Bytes without maps remain visible in code coverage and never make a
+placeholder byte-exact.
+
+Intervals are half-open and must not overlap. The report retains every known
+identity in each interval, including unbound and dependency identities, and
+reports missing spans, overlaps, partial functions, and unexplained original
+bytes. Unmapped bytes count as padding only when every byte is `0x90` or
+`0xCC`. Code matching requires all selected functions to pass in one configured
+native graph trial; per-function best results from different trials are never
+combined. Evidence closure requires that same trial's native result to pass
+with its required data/import/generated checks.
+The `fully_byte_exact_unit` count additionally requires a represented C++ TU,
+coherent code matching, and same-trial evidence closure. Until native trial
+receipts identify every owned object, literal, generated, import, and associated
+obligation, units with any such obligations remain unknown for this count. Thus
+the byte-exact count is a verified lower bound over candidates whose obligations
+the existing native evidence can fully qualify; `null` in mapping-only mode means
+the phase was not measured, not zero.
+
+The report lists source homes separately from native selected-function owner
+rows. `single_current_tu` is derived from those current measured owners even
+when body matching or evidence closure fails; it is unknown when an identity
+has no unique native owner row. This describes the present build, not historical
+ownership. The denominator of original translation units remains unknown: inferred
+intervals do not prove original TU boundaries, and the global recovery
+percentage is therefore unknown. Identity-weighted totals count unique mapped
+identities inside declared ranges and may include compiler entries or fragments;
+they are not a global function denominator. Exit status 0 means the diagnostic report was
+produced; it does not mean every unit matched, evidence closed, preservation
+passed, or the game was accepted.
+
 - `recover prioritize <targets...> --reference <target> --image <image>` measures
   explicit exemplars freshly and ranks original-opcode similarity across owners.
   Repeat `--reference`; `--all` replaces explicit candidate targets. Returned
@@ -1378,6 +1448,14 @@ Both product and retained seed claims remain subject to fresh matching checks;
 this read-only ownership check neither copies nor banks a claim.
 This applies to unfinished placeholders as well as implemented candidates and
 does not establish behavior or matching.
+
+Configured interface headers may host product mappings only when every product
+record names a valid built nonseed C++ `compile_context` and the header appears
+in that context's resolved project-include closure. Missing, unbuilt, seed,
+noncanonical or non-including contexts remain `unbuilt_host` findings; the
+existing `context_reference` findings still report invalid context paths. This
+establishes source/build membership only, not that the compiler emitted or
+linked the mapped function.
 No claim is erased and no seed is promoted or deleted. The command masks ordinary
 comments and literals after line splicing; unresolved address expressions stay
 unknown. This lexical check does not expand macros or resolve conditional branches.
