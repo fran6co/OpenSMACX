@@ -66,6 +66,78 @@ def case_template(name):
     return text[start:end]
 
 
+def extract_struct(text, name):
+    signature = f"struct {name} {{"
+    start = text.index(signature)
+    opening = text.index("{", start)
+    depth = 0
+    state = "code"
+    index = opening
+    while index < len(text):
+        char = text[index]
+        nxt = text[index + 1] if index + 1 < len(text) else ""
+        if state == "code":
+            if char == "/" and nxt == "/":
+                state = "line"
+                index += 2
+                continue
+            if char == "/" and nxt == "*":
+                state = "block"
+                index += 2
+                continue
+            if char in ('"', "'"):
+                state = "string" if char == '"' else "character"
+            elif char == "{":
+                depth += 1
+            elif char == "}":
+                depth -= 1
+                if depth == 0:
+                    return text[start:index + 1] + ";"
+        elif state == "line" and char == "\n":
+            state = "code"
+        elif state == "block" and char == "*" and nxt == "/":
+            state = "code"
+            index += 1
+        elif state in ("string", "character"):
+            if char == "\\":
+                index += 1
+            elif (state == "string" and char == '"') or (
+                state == "character" and char == "'"
+            ):
+                state = "code"
+        index += 1
+    raise AssertionError(f"unterminated declaration: {name}")
+
+
+def bind_actual_network_storage(fixture):
+    header = (ROOT / "src/netwin.h").read_text(encoding="utf-8")
+    player = fixture.index("struct MockPlayer {")
+    old_state_start = fixture.index("struct MockOptions {")
+    fixture = (fixture[:old_state_start] + "\n".join(
+        extract_struct(header, name) for name in (
+            "NetWinLobbyRow", "NetWinLobbyRowsStorage", "NetWinSessionBlock",
+            "NetWinSessionDataStorage", "NetWinSessionOptionsState",
+            "NetWinSessionOptionsStorage",
+        )
+    ) + "\n" + fixture[player:])
+    fixture = fixture.replace("static MockOptions NetWinSessionOptions;",
+                              "static NetWinSessionOptionsStorage NetWinSessionOptions;")
+    fixture = fixture.replace("static MockSession NetWinSessionData;",
+                              "static NetWinSessionDataStorage NetWinSessionData;")
+    fixture = fixture.replace("static MockLobbyRow NetWinLobbyRows[8];",
+                              "static NetWinLobbyRowsStorage NetWinLobbyRows;")
+    fixture = fixture.replace("NetWinSessionData.", "NetWinSessionData.fields_.")
+    fixture = fixture.replace("NetWinSessionOptions.", "NetWinSessionOptions.fields_.")
+    fixture = fixture.replace("NetWinLobbyRows[", "NetWinLobbyRows.rows_[")
+    fixture = fixture.replace("memset(&NetWinSessionData, 0, sizeof(NetWinSessionData));",
+                              "memset(&NetWinSessionData.fields_, 0, sizeof(NetWinSessionData.fields_));")
+    fixture = fixture.replace("memset(&NetWinSessionOptions, 0, sizeof(NetWinSessionOptions));",
+                              "memset(&NetWinSessionOptions.fields_, 0, sizeof(NetWinSessionOptions.fields_));")
+    fixture = fixture.replace("memset(NetWinLobbyRows, 0, sizeof(NetWinLobbyRows));",
+                              "memset(NetWinLobbyRows.rows_, 0, sizeof(NetWinLobbyRows.rows_));")
+    return fixture
+
+
 def projected(name, damage=None):
     source_bodies = {
         "map_menu": product_function(0x58D6B0, "int __cdecl map_menu(int quick_start)"),
@@ -81,6 +153,8 @@ def projected(name, damage=None):
         assert old in body, (name, old)
         body = body.replace(old, new, 1)
     fixture = case_template(name)
+    if name == "multiplayer_init":
+        fixture = bind_actual_network_storage(fixture)
     fixture = DEFAULTS_HEADER.read_text().replace("#pragma once\n", "", 1) + fixture
     fixture = fixture.replace("// @@BODY_" + name + "@@", body)
     if name == "map_menu":
@@ -130,8 +204,8 @@ def test_actual_newgame_body(tmp_path, name, case):
     ("size_of_planet", "prefs_put(CustomMapXKey, custom_width, 0);",
      "prefs_put(CustomMapYKey, custom_width, 0);"),
     ("top_menu", "esi = multiplayer_init(0);", "esi = map_menu(0);"),
-    ("multiplayer_init", "static_cast<uint8_t>(\n            NetWinSessionOptions.time_control_)",
-     "static_cast<int8_t>(\n            NetWinSessionOptions.time_control_)"),
+    ("multiplayer_init", "static_cast<uint8_t>(\n            NetWinSessionOptions.fields_.time_control_)",
+     "static_cast<int8_t>(\n            NetWinSessionOptions.fields_.time_control_)"),
     ("multiplayer_reset", "network.primary_state_.leading_words_[0] = 0;",
      "network.primary_state_.leading_words_[1] = 0;"),
     ("custom_planet", "if (slot == 3)", "if (saved_value == 3)"),

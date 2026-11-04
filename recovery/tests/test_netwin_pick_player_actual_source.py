@@ -33,7 +33,7 @@ def test_installed_pick_player_source_and_controls(tmp_path: Path) -> None:
     method = _installed_method()
     assert "popup.input_poll_state() == 1" in method
     assert "ParseStrBuffer[5].str" in method
-    assert "NetWinLobbyRows[0] = updated" not in method
+    assert "NetWinLobbyRows.rows_[0] = updated" not in method
     assert "if (slot < 1)" in method
     # The original sends unwritten header bytes at +2 and +0xC. Do not
     # normalize them or inspect their unspecified values in the fixture.
@@ -66,8 +66,8 @@ struct Player {
 };
 struct char256 { char str[256]; };
 NetWinLobbyRow lobby_storage[9];
-NetWinLobbyRow *NetWinLobbyRows = &lobby_storage[1];
-NetWinSessionBlock NetWinSessionData;
+struct NetWinLobbyRowsMock { NetWinLobbyRow *rows_; } NetWinLobbyRows = {&lobby_storage[1]};
+struct NetWinSessionDataMock { NetWinSessionBlock fields_; } NetWinSessionData;
 Player Players[8];
 char256 ParseStrBuffer[10];
 char PopupStartCaption[256] = "caption";
@@ -215,7 +215,7 @@ int main() {
     // Guarded modes never open the modal or send.
     for (int mode = 2; mode <= 3; ++mode) {
         clear_run();
-        NetWinSessionData.mode_ = mode;
+        NetWinSessionData.fields_.mode_ = mode;
         win.pick_player();
         assert(popup_start_count == 0 && send_count == 0);
     }
@@ -223,10 +223,10 @@ int main() {
     // Cancellation leaves the global row and peer untouched after all seven
     // fields were offered in their pinned order and with their original limits.
     clear_run();
-    NetWinSessionData.mode_ = 0;
+    NetWinSessionData.fields_.mode_ = 0;
     selected_slot = 2;
-    seed_row(NetWinLobbyRows[2], -1, 1);
-    NetWinLobbyRow before_cancel = NetWinLobbyRows[2];
+    seed_row(NetWinLobbyRows.rows_[2], -1, 1);
+    NetWinLobbyRow before_cancel = NetWinLobbyRows.rows_[2];
     modal_result = -1;
     modal_state = 0;
     win.pick_player();
@@ -243,21 +243,21 @@ int main() {
     assert(edit_limit[6] == 0x17);
     assert(std::strcmp(gender_opened_with, "Female") == 0);
     assert(send_count == 0);
-    assert(std::memcmp(&NetWinLobbyRows[2], &before_cancel, sizeof(before_cancel)) == 0);
+    assert(std::memcmp(&NetWinLobbyRows.rows_[2], &before_cancel, sizeof(before_cancel)) == 0);
 
     // State 1 plus faction -1 restores the localized default name in all six
     // text slots, sets native gender byte 10, keeps unrelated fields, and publishes
     // exactly one 0x2F04 full-row packet.
     clear_run();
-    seed_row(NetWinLobbyRows[2], -1, 0);
-    NetWinLobbyRow before_default = NetWinLobbyRows[2];
+    seed_row(NetWinLobbyRows.rows_[2], -1, 0);
+    NetWinLobbyRow before_default = NetWinLobbyRows.rows_[2];
     modal_result = 0;
     modal_state = 1;
     edited_gender[0] = 0;
     std::strcpy(ParseStrBuffer[0].str, "not-used");
     win.pick_player();
-    assert(std::memcmp(&NetWinLobbyRows[2], &before_default, sizeof(before_default)) == 0);
-    NetWinLobbyRow expected_default = NetWinLobbyRows[2];
+    assert(std::memcmp(&NetWinLobbyRows.rows_[2], &before_default, sizeof(before_default)) == 0);
+    NetWinLobbyRow expected_default = NetWinLobbyRows.rows_[2];
     std::strcpy(expected_default.leader_name_, "DefaultFaction");
     std::strcpy(expected_default.formal_faction_name_, "DefaultFaction");
     std::strcpy(expected_default.noun_faction_, "DefaultFaction");
@@ -270,8 +270,8 @@ int main() {
     // State 1 plus a selected faction copies all six typed Player fields and
     // its female flag, without disturbing row padding/tail/owner bytes.
     clear_run();
-    seed_row(NetWinLobbyRows[2], 4, 0);
-    NetWinLobbyRow before_player = NetWinLobbyRows[2];
+    seed_row(NetWinLobbyRows.rows_[2], 4, 0);
+    NetWinLobbyRow before_player = NetWinLobbyRows.rows_[2];
     std::strcpy(Players[4].name_leader, "Leila");
     std::strcpy(Players[4].formal_name_faction, "Faction Four");
     std::strcpy(Players[4].noun_faction, "Four");
@@ -281,8 +281,8 @@ int main() {
     Players[4].is_leader_female = 1;
     modal_state = 1;
     win.pick_player();
-    assert(std::memcmp(&NetWinLobbyRows[2], &before_player, sizeof(before_player)) == 0);
-    NetWinLobbyRow expected_player = NetWinLobbyRows[2];
+    assert(std::memcmp(&NetWinLobbyRows.rows_[2], &before_player, sizeof(before_player)) == 0);
+    NetWinLobbyRow expected_player = NetWinLobbyRows.rows_[2];
     std::strcpy(expected_player.leader_name_, "Leila");
     std::strcpy(expected_player.formal_faction_name_, "Faction Four");
     std::strcpy(expected_player.noun_faction_, "Four");
@@ -295,16 +295,16 @@ int main() {
     // Non-1 poll state publishes the six parsed strings and the first-byte,
     // case-insensitive gender comparison from the seventh edit.
     clear_run();
-    seed_row(NetWinLobbyRows[2], 3, 0);
-    NetWinLobbyRow before_custom = NetWinLobbyRows[2];
+    seed_row(NetWinLobbyRows.rows_[2], 3, 0);
+    NetWinLobbyRow before_custom = NetWinLobbyRows.rows_[2];
     const char *parsed[6] = {"ParsedLeader", "ParsedFormal", "ParsedNoun",
                              "ParsedAdj", "ParsedTitle", "ParsedAdjLeader"};
     for (int i = 0; i < 6; ++i) std::strcpy(ParseStrBuffer[i].str, parsed[i]);
     std::strcpy(edited_gender, "feminine");
     modal_state = 0;
     win.pick_player();
-    assert(std::memcmp(&NetWinLobbyRows[2], &before_custom, sizeof(before_custom)) == 0);
-    NetWinLobbyRow expected_custom = NetWinLobbyRows[2];
+    assert(std::memcmp(&NetWinLobbyRows.rows_[2], &before_custom, sizeof(before_custom)) == 0);
+    NetWinLobbyRow expected_custom = NetWinLobbyRows.rows_[2];
     std::strcpy(expected_custom.leader_name_, parsed[0]);
     std::strcpy(expected_custom.formal_faction_name_, parsed[1]);
     std::strcpy(expected_custom.noun_faction_, parsed[2]);
@@ -318,25 +318,25 @@ int main() {
     // store back to the shared first row.
     clear_run();
     selected_slot = 0;
-    seed_row(NetWinLobbyRows[0], -1, 0);
-    NetWinLobbyRow before_zero = NetWinLobbyRows[0];
+    seed_row(NetWinLobbyRows.rows_[0], -1, 0);
+    NetWinLobbyRow before_zero = NetWinLobbyRows.rows_[0];
     modal_state = 1;
     win.pick_player();
     assert(send_count == 0);
-    assert(std::memcmp(&NetWinLobbyRows[0], &before_zero, sizeof(before_zero)) == 0);
+    assert(std::memcmp(&NetWinLobbyRows.rows_[0], &before_zero, sizeof(before_zero)) == 0);
 
     // Native signed compare rejects packet slots <= 0. Model the preceding
     // addressable row explicitly so the original unchecked slot -1 reads and
     // modal field setup are testable without indexing outside the fixture.
     clear_run();
     selected_slot = -1;
-    seed_row(NetWinLobbyRows[-1], -1, 1);
-    NetWinLobbyRow before_negative = NetWinLobbyRows[-1];
+    seed_row(NetWinLobbyRows.rows_[-1], -1, 1);
+    NetWinLobbyRow before_negative = NetWinLobbyRows.rows_[-1];
     modal_state = 1;
     win.pick_player();
     assert(popup_start_count == 1 && edit_count == 7);
     assert(send_count == 0);
-    assert(std::memcmp(&NetWinLobbyRows[-1], &before_negative, sizeof(before_negative)) == 0);
+    assert(std::memcmp(&NetWinLobbyRows.rows_[-1], &before_negative, sizeof(before_negative)) == 0);
 }
 '''
     )

@@ -58,7 +58,28 @@ static_assert(offsetof(NetWinLobbyRow, leader_title_) == 0xDD,
 static_assert(offsetof(NetWinLobbyRow, adjective_leader_) == 0xF5,
               "lobby leader-adjective offset");
 static_assert(offsetof(NetWinLobbyRow, owner_) == 0x178, "lobby owner slot");
-extern NetWinLobbyRow NetWinLobbyRows[8]; // 0x0090DB98
+// These owning objects retain the original wire/POD storage as their only
+// member. Their constructors reproduce the selected startup stores without
+// giving packet rows or stack snapshots implicit initialization.
+struct NetWinLobbyRowsStorage {
+  NetWinLobbyRow rows_[8];
+
+  NetWinLobbyRowsStorage() {
+    for (int row = 0; row < 8; ++row) {
+      rows_[row].owner_ = 0;
+      rows_[row].prefix_ = 0xFF;
+      rows_[row].ready_or_occupied_ = 0;
+      rows_[row].field_2_ = 0;
+      rows_[row].faction_or_color_ = -1;
+      rows_[row].field_4_ = 2;
+    }
+  }
+};
+static_assert(sizeof(NetWinLobbyRowsStorage) == 8 * sizeof(NetWinLobbyRow),
+              "lobby global storage extent");
+static_assert(offsetof(NetWinLobbyRowsStorage, rows_) == 0,
+              "lobby global storage base");
+extern NetWinLobbyRowsStorage NetWinLobbyRows; // 0x0090DB98
 
 // Mutable borrowed access to one row-shaped byte region. This is used for
 // received packet payloads whose storage is not a constructed NetWinLobbyRow;
@@ -265,7 +286,19 @@ static_assert(offsetof(NetWinLobbyRow, leader_name_) +
 static_assert(offsetof(NetWinLobbyRow, noun_faction_) +
                   sizeof(((NetWinLobbyRow *)0)->noun_faction_) <= sizeof(NetWinSessionBlock),
               "row-eight faction text is inside session storage");
-extern NetWinSessionBlock NetWinSessionData; // 0x0090E778, after the rows
+struct NetWinSessionDataStorage {
+  NetWinSessionBlock fields_;
+
+  NetWinSessionDataStorage() {
+    fields_.mode_ = 0;
+    fields_.scenario_text_wire_tail_[0] = 0;
+  }
+};
+static_assert(sizeof(NetWinSessionDataStorage) == sizeof(NetWinSessionBlock),
+              "session global storage extent");
+static_assert(offsetof(NetWinSessionDataStorage, fields_) == 0,
+              "session global storage base");
+extern NetWinSessionDataStorage NetWinSessionData; // 0x0090E778, after the rows
 
 // send_session2_packet copies 90 dwords after a 16-byte prefix. It initializes
 // only opcode_; the reserved bytes remain untouched.
@@ -308,7 +341,29 @@ static_assert(sizeof(NetWinSessionOptionsState) == 0x18,
               "session option extent");
 static_assert(offsetof(NetWinSessionOptionsState, rule_bits_a_) == 0xC,
               "first session rule word");
-extern NetWinSessionOptionsState NetWinSessionOptions; // 0x0090E8E0
+struct NetWinSessionOptionsStorage {
+  NetWinSessionOptionsState fields_;
+
+  NetWinSessionOptionsStorage() {
+    fields_.status_ = 0xFF;
+    fields_.player_count_ = 4;
+    fields_.difficulty_ = 1;
+    fields_.option_4_ = 0;
+    fields_.option_5_ = 0;
+    fields_.planet_size_ = 1;
+    fields_.ocean_coverage_ = 1;
+    fields_.erosion_ = 1;
+    fields_.native_life_ = 1;
+    fields_.cloud_cover_ = 1;
+    fields_.reserved_B_ = 0xFF;
+  }
+};
+static_assert(sizeof(NetWinSessionOptionsStorage) ==
+                  sizeof(NetWinSessionOptionsState),
+              "session options global storage extent");
+static_assert(offsetof(NetWinSessionOptionsStorage, fields_) == 0,
+              "session options global storage base");
+extern NetWinSessionOptionsStorage NetWinSessionOptions; // 0x0090E8E0
 
 // The pickers send the full 0x18-byte option state after a 16-byte prefix.
 // The pinned paths initialize only opcode/options; reserved header bytes stay

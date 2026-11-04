@@ -31,12 +31,12 @@ def test_netwin_aliases_are_direct_owner_fields_at_original_sites():
         assert alias not in source
 
     assert "NetDaemonNet.player_count_" in source
-    assert "NetWinSessionData.mode_" in source
-    assert "NetWinSessionData.scenario_text_wire_tail_[0]" in source
-    assert "strcpy(NetWinSessionData.scenario_text_wire_tail_, scenario_name);" in source
-    assert "NetWinSessionOptions.time_control_" in source
+    assert "NetWinSessionData.fields_.mode_" in source
+    assert "NetWinSessionData.fields_.scenario_text_wire_tail_[0]" in source
+    assert "strcpy(NetWinSessionData.fields_.scenario_text_wire_tail_, scenario_name);" in source
+    assert "NetWinSessionOptions.fields_.time_control_" in source
     for field in ("rule_bits_a_", "rule_bits_b_", "rule_bits_c_"):
-        assert f"NetWinSessionOptions.{field}" in source
+        assert f"NetWinSessionOptions.fields_.{field}" in source
     gate = "NetDaemonNet.primary_state_.leading_words_[0]"
     assert source.count(gate) >= 10
     assert "NetDaemonNet.lock_state_" not in source
@@ -51,15 +51,15 @@ def test_live_player_count_reload_and_time_control_byte_have_negative_controls()
     loop = faction.index("for (int player = 1; player <= player_count; ++player)")
     assert captured < loop < reload
 
-    time_owner = "NetWinSessionOptions.time_control_"
+    time_owner = "NetWinSessionOptions.fields_.time_control_"
     assert source.count(time_owner) >= 2
-    assert "NetWinSessionOptions.rule_bits_a_" in source
+    assert "NetWinSessionOptions.fields_.rule_bits_a_" in source
 
     # Mutation controls: a cached local, another byte, or a neighboring state
     # word would no longer satisfy the actual owner/site guards above.
     assert "player_count = count > 0 ? first : 0;" not in faction
     pick_time = _function(source, "void NetWin::pick_time()")
-    assert "NetWinSessionOptions.time_control_ =" in pick_time
-    assert "NetWinSessionOptions.option_4_ =" not in pick_time
-    assert "NetWinSessionData.scenario_text_wire_tail_[3]" not in source
+    assert "NetWinSessionOptions.fields_.time_control_ =" in pick_time
+    assert "NetWinSessionOptions.fields_.option_4_ =" not in pick_time
+    assert "NetWinSessionData.fields_.scenario_text_wire_tail_[3]" not in source
     assert "NetDaemonNet.primary_state_.leading_words_[1]" not in source

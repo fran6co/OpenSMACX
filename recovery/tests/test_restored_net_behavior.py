@@ -57,9 +57,9 @@ def test_player_index16_skips_initialization_then_keeps_shared_effects():
     assert init_end is not None
     init = body[init_open:init_end]
     tail = body[init_end:]
-    assert "player.field_0_ = static_cast<uint32_t>(id);" in init
-    assert "player.flags_14_ = flag;" in init
-    assert "strcat(player.name_and_tail_, text);" in init
+    assert "players_[index].field_0_ = static_cast<uint32_t>(id);" in init
+    assert "players_[index].flags_14_ = flag;" in init
+    assert "strcat(players_[index].name_and_tail_, text);" in init
     assert "host_player_id_ = static_cast<uint32_t>(id)" in init
     assert "++field_6DC_;" in tail
     assert "broadcast_player_table();" in tail
@@ -106,6 +106,6 @@ def test_exec_options_packet_only_asserts_assigned_bytes():
     packet_code = body[start:send]
     assert "memset(" not in packet_code
     assert "packet.opcode_ = 0x2F02;" in packet_code
-    assert "packet.options_ = NetWinSessionOptions;" in packet_code
+    assert "packet.options_ = NetWinSessionOptions.fields_;" in packet_code
 
     # Host controls inspect assigned opcode/options only, never reserved bytes.

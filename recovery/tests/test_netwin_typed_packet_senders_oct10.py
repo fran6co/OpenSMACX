@@ -9,7 +9,7 @@ from dataclasses import fields, replace
 from pathlib import Path
 
 import pytest
-from match_recovery.source import read_text, write
+from match_recovery.source import Mode, Recipe, read_text, write
 from test_net_hotseat_owner_actual_source_oct6 import (
     compile_and_run, extract_definition, installed_packet_declarations,
     repository_root,
@@ -36,12 +36,13 @@ def test_original_identities_and_historical_obligations_are_unchanged():
         capture_output=True, text=True, check=True, timeout=20,
     ).stdout
     current = sender_source()
-    old_rows = {r.address: r for r in read_text(original, "src/netwin.cpp")}
-    rows = {r.address: r for r in read_text(current, "src/netwin.cpp")}
-    assert rows.keys() == old_rows.keys()
+    old_rows = {row.address: row for row in read_text(original, root / "src/netwin.cpp")}
+    rows = {row.address: row for row in read_text(current, root / "src/netwin.cpp")}
+    assert old_rows.keys() <= rows.keys()
+    assert rows.keys() - old_rows.keys() == {0x004E2400, 0x004E2460}
     assert write(current, read_text(current, "src/netwin.cpp")) == current
-    for address, row in rows.items():
-        old = old_rows[address]
+    for address, old in old_rows.items():
+        row = rows[address]
         # Later bounded tail closure changes only these three complete extents;
         # its production recorder freshly banks new_chat. Keep every other
         # metadata field and all historical lessons strictly baseline-identical.
@@ -50,6 +51,13 @@ def test_original_identities_and_historical_obligations_are_unchanged():
             old = replace(old, image_spans=((address, tail_ends[address]),))
         if address == 0x483420:
             old = replace(old, byte_exact=True, semantic=False)
+        if address == 0x004E2450:
+            # This former body is now the real NetWinSessionDataStorage
+            # constructor mapping; the source writer preserved its BYTE_EXACT
+            # claim while moving the identity to FILE/TU ownership.
+            assert row.mode is Mode.FILE
+            assert row.symbol and row.symbol != "_sub_4e2450"
+            old = replace(old, mode=Mode.FILE, symbol=row.symbol, recipe=Recipe.VERBATIM)
         for field in fields(row):
             if field.name == "byte_exact":
                 # Native recorder grants may strengthen later source facts;
@@ -59,6 +67,8 @@ def test_original_identities_and_historical_obligations_are_unchanged():
             if field.name == "symbol" and not old.symbol:
                 # Empty historical bindings can gain a real emitted-symbol
                 # fact; native source/COFF checks qualify that new binding.
+                continue
+            if address in {0x004E2400, 0x004E2450, 0x004E2460} and field.name == "path":
                 continue
             if address == 0x481DA0 and field.name == "symbol":
                 assert old.symbol == "?fill_player@NetWin@@QAEXPAUNetWinLobbyRow@@H@Z"
@@ -128,9 +138,9 @@ struct Daemon : Net {
   struct Slot { unsigned pid_; } process_slots_[8];
   struct PrimaryState { unsigned leading_words_[3]; } primary_state_ = {{1,0,0}};
 } NetDaemonNet;
-NetWinLobbyRow NetWinLobbyRows[8];
-NetWinSessionOptionsState NetWinSessionOptions;
-NetWinSessionBlock NetWinSessionData;
+struct NetWinLobbyRowsMock { NetWinLobbyRow rows_[8]; } NetWinLobbyRows;
+struct NetWinSessionOptionsMock { NetWinSessionOptionsState fields_; } NetWinSessionOptions;
+struct NetWinSessionDataMock { NetWinSessionBlock fields_; } NetWinSessionData;
 static void reset() { sent.clear(); calls = 0; recipient = 0; }
 static unsigned word(unsigned at, unsigned width) {
   unsigned v = 0;
@@ -141,22 +151,22 @@ static unsigned word(unsigned at, unsigned width) {
 MAIN = r"""
 int main() {
   for (unsigned i = 0; i != 8; ++i) NetDaemonNet.process_slots_[i].pid_ = 0x1200 + i;
-  for (unsigned i = 0; i < sizeof(NetWinLobbyRows); ++i)
-    reinterpret_cast<unsigned char *>(NetWinLobbyRows)[i] = (i * 7 + 13) & 255;
-  for (unsigned i = 0; i < sizeof(NetWinSessionOptions); ++i)
-    reinterpret_cast<unsigned char *>(&NetWinSessionOptions)[i] = (i * 9 + 17) & 255;
-  for (unsigned i = 0; i < sizeof(NetWinSessionData); ++i)
-    reinterpret_cast<unsigned char *>(&NetWinSessionData)[i] = (i * 11 + 19) & 255;
+  for (unsigned i = 0; i < sizeof(NetWinLobbyRows.rows_); ++i)
+    reinterpret_cast<unsigned char *>(NetWinLobbyRows.rows_)[i] = (i * 7 + 13) & 255;
+  for (unsigned i = 0; i < sizeof(NetWinSessionOptions.fields_); ++i)
+    reinterpret_cast<unsigned char *>(&NetWinSessionOptions.fields_)[i] = (i * 9 + 17) & 255;
+  for (unsigned i = 0; i < sizeof(NetWinSessionData.fields_); ++i)
+    reinterpret_cast<unsigned char *>(&NetWinSessionData.fields_)[i] = (i * 11 + 19) & 255;
   NetDaemonNet.primary_state_.leading_words_[0] = 0; reset(); send_all_player_packets(-1); assert(calls == 0);
   reset(); send_all_player_packets(-2);
   assert(calls == 1 && recipient == 0 && sent.size() == 0xA74 && word(0,2) == 0x4F04);
   assert(word(4,4) == 0xFFFFFFFFu && word(8,4) == 0);
-  assert(!std::memcmp(sent.data()+0x10, &NetWinLobbyRows[1], 0xA64));
+  assert(!std::memcmp(sent.data()+0x10, &NetWinLobbyRows.rows_[1], 0xA64));
   NetDaemonNet.primary_state_.leading_words_[0] = 1; reset(); send_all_player_packets(-1);
   assert(calls == 1 && recipient == 0 && word(0,2) == 0x4F04);
   NetDaemonNet.primary_state_.leading_words_[0] = 0; reset(); send_all_player_packets(3);
   assert(calls == 1 && recipient == 0x1203 && word(0,2) == 0x1F04);
-  assert(!std::memcmp(sent.data()+0x10, &NetWinLobbyRows[1], 0xA64));
+  assert(!std::memcmp(sent.data()+0x10, &NetWinLobbyRows.rows_[1], 0xA64));
   unsigned char payload[0x17C];
   for (unsigned i = 0; i < sizeof(payload); ++i) payload[i] = (i * 13 + 31) & 255;
   reset(); sub_47b1d0(0,payload); assert(calls == 0);
@@ -171,12 +181,12 @@ int main() {
     assert(calls == 1 && sent.size() == 0x28);
     assert(word(0,2) == unsigned(target < 0 ? 0x4F02 : target == 0 ? 0x2F02 : 0x1F02));
     assert(recipient == unsigned(target < 0 ? 0 : target == 0 ? 77 : 0x1200+target));
-    assert(!std::memcmp(sent.data()+0x10, &NetWinSessionOptions, 0x18));
+    assert(!std::memcmp(sent.data()+0x10, &NetWinSessionOptions.fields_, 0x18));
     reset(); send_session2_packet(456,target);
     assert(calls == 1 && sent.size() == 0x178);
     assert(word(0,2) == unsigned(target < 0 ? 0x4F03 : target == 0 ? 0x2F03 : 0x1F03));
     assert(recipient == unsigned(target < 0 ? 0 : target == 0 ? 77 : 0x1200+target));
-    assert(!std::memcmp(sent.data()+0x10, &NetWinSessionData, 0x168));
+    assert(!std::memcmp(sent.data()+0x10, &NetWinSessionData.fields_, 0x168));
   }
 }
 """
@@ -188,8 +198,8 @@ MUTATIONS = (
     (1, "faction_id > 0", "faction_id >= 0"),
     (1, "sizeof(packet.row_)", "sizeof(packet.row_) - 1"),
     (2, "if (target != 0)", "if (target == 0)"),
-    (3, "packet.session_ = NetWinSessionData;",
-     "packet.session_ = NetWinSessionData; "
+    (3, "packet.session_ = NetWinSessionData.fields_;",
+     "packet.session_ = NetWinSessionData.fields_; "
      "packet.session_.scenario_text_wire_tail_[0x143] ^= 1;"),
 )
 

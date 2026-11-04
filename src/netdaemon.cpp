@@ -193,8 +193,8 @@ void NetDaemon::on_player_added(char *name, unsigned long id) {
         char *player_name = get_player_name(id);
         strcpy(process_slots_[player_count_].name_, player_name);
 
-        NetWinLobbyRows[player_count_].field_2_ = NetWinSessionOptions.difficulty_;
-        NetWinLobbyRows[player_count_].prefix_ = static_cast<uint8_t>(player_count_);
+        NetWinLobbyRows.rows_[player_count_].field_2_ = NetWinSessionOptions.fields_.difficulty_;
+        NetWinLobbyRows.rows_[player_count_].prefix_ = static_cast<uint8_t>(player_count_);
         process_slots_[player_count_].identity_ = static_cast<int8_t>(player_count_);
 
         int duplicate_host = 0;
@@ -218,7 +218,7 @@ void NetDaemon::on_player_added(char *name, unsigned long id) {
         if (primary_state_.leading_words_[0] != 0) {
             // The notification callbacks precede this native slot snapshot.
             const int slot = player_count_;
-            NetWinLobbyRow &row = NetWinLobbyRows[slot];
+            NetWinLobbyRow &row = NetWinLobbyRows.rows_[slot];
             row.owner_ = 0;
             row.prefix_ = 0xFF;
             row.ready_or_occupied_ = 0;
@@ -226,7 +226,7 @@ void NetDaemon::on_player_added(char *name, unsigned long id) {
             row.faction_or_color_ = -1;
             row.field_4_ = 2;
 
-            const uint8_t difficulty = NetWinSessionOptions.difficulty_;
+            const uint8_t difficulty = NetWinSessionOptions.fields_.difficulty_;
             row.faction_or_color_ = -1;
             row.prefix_ = static_cast<uint8_t>(player_count_);
             row.field_2_ = difficulty;
@@ -383,13 +383,13 @@ void NetDaemon::on_player_deleted(char *, unsigned long id) {
 
     if (slot == 8) {
         if (NetDaemonNet.primary_state_.session_phase_ < 2) {
-            NetWinSessionData.write_row8_prefix(0xFF);
+            NetWinSessionData.fields_.write_row8_prefix(0xFF);
         }
-        strcpy(NetWinSessionData.row8_leader_name(), label_get(0xFE4 / 4));
+        strcpy(NetWinSessionData.fields_.row8_leader_name(), label_get(0xFE4 / 4));
         // Separate native Strings::get calls reload the owner and index.
-        strcpy(NetWinSessionData.row8_noun_faction(), label_get(0xFE4 / 4));
+        strcpy(NetWinSessionData.fields_.row8_noun_faction(), label_get(0xFE4 / 4));
     } else {
-        NetWinLobbyRow &removed_row = NetWinLobbyRows[slot];
+        NetWinLobbyRow &removed_row = NetWinLobbyRows.rows_[slot];
         if (NetDaemonNet.primary_state_.session_phase_ < 2) {
             removed_row.prefix_ = 0xFF;
         }
@@ -400,8 +400,8 @@ void NetDaemon::on_player_deleted(char *, unsigned long id) {
     const int last_slot = player_count_ - 1;
     for (int moving = slot; moving <= last_slot; ++moving) {
         process_slots_[moving] = process_slots_[moving + 1];
-        NetWinLobbyRows[moving] = NetWinLobbyRows[moving + 1];
-        NetWinLobbyRows[moving].prefix_ = static_cast<uint8_t>(moving);
+        NetWinLobbyRows.rows_[moving] = NetWinLobbyRows.rows_[moving + 1];
+        NetWinLobbyRows.rows_[moving].prefix_ = static_cast<uint8_t>(moving);
     }
 
     --player_count_;
@@ -5662,7 +5662,7 @@ static void netdaemon_handle_session_options(NetDaemon *daemon,
                                               char *message,
                                               unsigned long message_size) {
     const NetWinPacketView packet(message);
-    NetWinSessionOptions.receive_wire_block(
+    NetWinSessionOptions.fields_.receive_wire_block(
         packet.payload());
     // Native 0x537C57 shares the unmarked redraw tail at 0x537CB4
     // with the session-data packet; the option block is already copied.
@@ -5680,7 +5680,7 @@ static void netdaemon_handle_session_block(NetDaemon *daemon,
                                             char *message,
                                             unsigned long message_size) {
     const NetWinPacketView packet(message);
-    NetWinSessionData.receive_wire_block(
+    NetWinSessionData.fields_.receive_wire_block(
         packet.payload());
     unsigned short type = packet.opcode();
     if ((type & 0x2000u) != 0) {
@@ -5744,9 +5744,9 @@ static void netdaemon_handle_session_lobby(NetDaemon &daemon,
         // faction byte in that sender's row before any selection update. The
         // sentinel paths return above without observing the saved-this value.
         const intptr_t previous_faction =
-            NetWinLobbyRows[sender].faction_or_color_;
+            NetWinLobbyRows.rows_[sender].faction_or_color_;
 
-        const unsigned int mode = NetWinSessionData.mode_;
+        const unsigned int mode = NetWinSessionData.fields_.mode_;
         if (mode == 2 || mode == 3) {
             const int faction = lobby.faction_or_color();
             if (faction != -1) {
@@ -5761,23 +5761,23 @@ static void netdaemon_handle_session_lobby(NetDaemon &daemon,
                      row_index <= NetDaemonNet.player_count_; ++row_index) {
                     if (static_cast<uint32_t>(row_index) == sender) continue;
                     const int row_faction =
-                        NetWinLobbyRows[row_index].faction_or_color_;
+                        NetWinLobbyRows.rows_[row_index].faction_or_color_;
                     if (row_faction != -1 && row_faction == faction) return;
                 }
 
             }
             // The native -1 branch skips ownership/duplicate validation but
             // still reaches the shared selected-row stores at 0x537E3C/48.
-            NetWinLobbyRows[sender].faction_or_color_ =
+            NetWinLobbyRows.rows_[sender].faction_or_color_ =
                 static_cast<int8_t>(faction);
-            NetWinLobbyRows[sender].owner_ =
+            NetWinLobbyRows.rows_[sender].owner_ =
                 lobby.owner();
         }
 
         // This comparison runs for every non-sentinel sender, even when the
         // packet carries faction -1 or the dialog mode skipped selection.
         const int current_faction =
-            NetWinLobbyRows[sender].faction_or_color_;
+            NetWinLobbyRows.rows_[sender].faction_or_color_;
         const int faction = lobby.faction_or_color();
         if (current_faction != faction ||
             previous_faction != current_faction) {
@@ -5794,15 +5794,15 @@ static void netdaemon_handle_session_lobby(NetDaemon &daemon,
     }
 
     if (!has_sender) {
-        std::memcpy(&NetWinLobbyRows[1], lobby.payload(), 0xA64);
+        std::memcpy(&NetWinLobbyRows.rows_[1], lobby.payload(), 0xA64);
         NetWinDialog.on_redraw();
         return;
     }
 
-    std::memcpy(&NetWinLobbyRows[sender], lobby.payload(),
+    std::memcpy(&NetWinLobbyRows.rows_[sender], lobby.payload(),
                 sizeof(NetWinLobbyRow));
     if (daemon.primary_state_.leading_words_[0] != 0) {
-        const unsigned int tail_mode = NetWinSessionData.mode_;
+        const unsigned int tail_mode = NetWinSessionData.fields_.mode_;
         if (tail_mode == 2 || tail_mode == 3) {
             unsigned char notification[0x20];
             *reinterpret_cast<unsigned short *>(notification) = 0x0F0E;

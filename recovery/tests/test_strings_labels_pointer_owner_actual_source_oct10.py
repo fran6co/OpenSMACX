@@ -9,7 +9,7 @@ from match_recovery.includes import COMMENTS_OR_STRINGS
 
 ROOT = next(p for p in Path(__file__).resolve().parents
             if (p / "src/IMAGE_PIN").is_file())
-CONSOLE = ROOT / "src/console.cpp"
+CONSOLE = ROOT / "src/console_commands.cpp"
 GAME = ROOT / "src/game.cpp"
 NETWIN = ROOT / "src/netwin.cpp"
 
@@ -63,7 +63,7 @@ def _actual_fragments():
     draw = _body(netwin_source, "void NetWin::draw_session_info()")
     opponent_start = draw.index("// ---- opponent difficulty ----")
     prefix_start = draw.index("StringTemp[0] = 0;", opponent_start)
-    branch_start = draw.index("if (NetWinSessionData.scenario_text_wire_tail_[0] == 0)", prefix_start)
+    branch_start = draw.index("if (NetWinSessionData.fields_.scenario_text_wire_tail_[0] == 0)", prefix_start)
     first_branch = _block(draw, branch_start)
     else_start = _mask(draw).index("else", branch_start + len(first_branch))
     else_branch = _block(draw, else_start)
@@ -190,15 +190,13 @@ struct Strings {
   }
 } StringTable;
 LPSTR label_get(int slot) { return StringTable.get(Labels.strings_ptr[slot]); }
-struct SessionOptions { int option_4_; int option_5_; } NetWinSessionOptions;
-NetWinSessionBlock NetWinSessionData;
 char StringTemp[4096];
 char * _itoa(int value, char *buffer, int) {
   sprintf(buffer, "%d", value);
   return buffer;
 }
 void opponent_case(int option) {
-  NetWinSessionOptions.option_4_ = option;
+  NetWinSessionOptions.fields_.option_4_ = option;
 ''' + fragment + r'''
 }
 int main() {
@@ -215,60 +213,62 @@ int main() {
   slots[(1 * 0x80 + 0x6614) / 4] = opponent1;
   slots[(31 * 0x80 + 0x6614) / 4] = opponent31;
   Labels.strings_ptr = slots;
-  NetWinSessionData.scenario_text_wire_tail_[0] = 0;
+  NetWinSessionData.fields_.scenario_text_wire_tail_[0] = 0;
 
   opponent_case(0);
-  assert(NetWinSessionOptions.option_4_ == 0);
+  assert(NetWinSessionOptions.fields_.option_4_ == 0);
   assert(StringTable.calls == 1 && StringTable.inputs[0] == raw_title);
   assert(strstr(StringTemp, "localized title") != 0);
   assert(strstr(StringTemp, "opponent 0") != 0);
 
   StringTable.calls = 0;
   opponent_case(1);
-  assert(NetWinSessionOptions.option_4_ == 1);
+  assert(NetWinSessionOptions.fields_.option_4_ == 1);
   assert(StringTable.calls == 1 && StringTable.inputs[0] == raw_title);
   assert(strstr(StringTemp, "opponent 1") != 0);
 
   StringTable.calls = 0;
   opponent_case(31);
-  assert(NetWinSessionOptions.option_4_ == 31);
+  assert(NetWinSessionOptions.fields_.option_4_ == 31);
   assert(StringTable.calls == 1 && StringTable.inputs[0] == raw_title);
   assert(strstr(StringTemp, "opponent 31") != 0);
 
   StringTable.calls = 0;
   opponent_case(-1);
-  assert(NetWinSessionOptions.option_4_ == -1);
-  assert(StringTable.calls == 2);
-  assert(StringTable.inputs[0] == raw_title);
-  assert(StringTable.inputs[1] == raw_fallback);
-  assert(strstr(StringTemp, "localized fallback") != 0);
-
-  StringTable.calls = 0;
-  opponent_case(-2); // non-sentinel negative clamps to slot zero
-  assert(NetWinSessionOptions.option_4_ == -2);
-  assert(strstr(StringTemp, "opponent 0") != 0);
-  StringTable.calls = 0;
-  opponent_case(32); // upper clamp selects slot thirty-one
-  assert(NetWinSessionOptions.option_4_ == 32);
+  assert(NetWinSessionOptions.fields_.option_4_ == 0xFF);
+  assert(StringTable.calls == 1 && StringTable.inputs[0] == raw_title);
   assert(strstr(StringTemp, "opponent 31") != 0);
 
-  NetWinSessionData.scenario_text_wire_tail_[0] = 1;
+  StringTable.calls = 0;
+  opponent_case(-2); // the POD byte wraps to 0xFE and clamps to slot thirty-one
+  assert(NetWinSessionOptions.fields_.option_4_ == 0xFE);
+  assert(strstr(StringTemp, "opponent 31") != 0);
+  StringTable.calls = 0;
+  opponent_case(32); // upper clamp selects slot thirty-one
+  assert(NetWinSessionOptions.fields_.option_4_ == 32);
+  assert(strstr(StringTemp, "opponent 31") != 0);
+
+  NetWinSessionData.fields_.scenario_text_wire_tail_[0] = 1;
   StringTable.calls = 0;
   opponent_case(7);
   assert(strstr(StringTemp, "7 X") != 0);
-  assert(NetWinSessionOptions.option_4_ == 7);
+  assert(NetWinSessionOptions.fields_.option_4_ == 7);
   return 0;
 }
 '''
     header = (ROOT / "src/netwin.h").read_text(encoding="utf-8")
     declarations = []
-    for name in ("NetWinLobbyRow", "NetWinSessionBlock"):
+    for name in ("NetWinLobbyRow", "NetWinSessionBlock",
+                 "NetWinSessionDataStorage", "NetWinSessionOptionsState",
+                 "NetWinSessionOptionsStorage"):
         match = re.search(rf"struct {name} \{{.*?\n\}};", header, re.S)
         assert match is not None, name
         declarations.append(match.group())
     return harness.replace(
         "/* ACTUAL_NETWIN_ROW_AND_SESSION_DECLARATIONS */",
-        "\n".join(declarations))
+        "\n".join(declarations) +
+        "\nNetWinSessionOptionsStorage NetWinSessionOptions;"
+        "\nNetWinSessionDataStorage NetWinSessionData;")
 
 
 def _run(source, compiler):

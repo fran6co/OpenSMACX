@@ -107,9 +107,9 @@ static_assert(sizeof(NetWinSessionOptionsState) == 0x18);
 static_assert(offsetof(NetWinSessionOptionsState, rule_bits_a_) == 0xC);
 static_assert(sizeof(NetWinFactionRecord) == 0x190);
 static_assert(offsetof(NetWinFactionRecord, owner_) == 4);
-NetWinLobbyRow NetWinLobbyRows[8] = {};
-NetWinSessionBlock NetWinSessionData = {};
-NetWinSessionOptionsState NetWinSessionOptions = {};
+struct NetWinLobbyRowsMock { NetWinLobbyRow rows_[8]; } NetWinLobbyRows = {};
+struct NetWinSessionDataMock { NetWinSessionBlock fields_; } NetWinSessionData = {};
+struct NetWinSessionOptionsMock { NetWinSessionOptionsState fields_; } NetWinSessionOptions = {};
 char *ScriptPopupFile = nullptr;
 int popup_result = 0;
 int popup_calls = 0;
@@ -155,6 +155,7 @@ struct NetWin {
 };
 """ + body + r"""
 int main() {
+    (void)NetWinSessionOptions;
     auto packet_word = [](int offset) {
         uint32_t value;
         std::memcpy(&value, NetDaemonNet.sent.data() + offset, sizeof(value));
@@ -170,9 +171,9 @@ int main() {
     assert(NetDaemonNet.sent.empty());
     assert(constructed_rows == 1);
 
-    NetWinLobbyRows[1].ready_or_occupied_ = 0;
-    NetWinLobbyRows[1].faction_or_color_ = 3;
-    NetWinLobbyRows[1].owner_ = 0x12345678;
+    NetWinLobbyRows.rows_[1].ready_or_occupied_ = 0;
+    NetWinLobbyRows.rows_[1].faction_or_color_ = 3;
+    NetWinLobbyRows.rows_[1].owner_ = 0x12345678;
     constructed_rows = 0;
     win.on_button_clicked(10);
     assert(NetDaemonNet.sent.size() == 0x18C);
@@ -180,16 +181,16 @@ int main() {
     assert(NetDaemonNet.sent[0x11] == 1);
     assert(NetDaemonNet.sent[0x13] == 3);
     assert(packet_word(4) == 1 && packet_word(8) == 0);
-    NetWinLobbyRow expected_row = NetWinLobbyRows[1];
+    NetWinLobbyRow expected_row = NetWinLobbyRows.rows_[1];
     expected_row.ready_or_occupied_ = 1;
     assert(std::memcmp(NetDaemonNet.sent.data() + 0x10,
                        &expected_row, sizeof(expected_row)) == 0);
-    assert(NetWinLobbyRows[1].ready_or_occupied_ == 0);
+    assert(NetWinLobbyRows.rows_[1].ready_or_occupied_ == 0);
     assert(static_cast<uint32_t>(NetDaemonNet.recipient) == NetDaemonNet.host_player_id_);
     assert(constructed_rows == 2);
 
     NetDaemonNet.primary_state_.leading_words_[0] = 1;
-    NetWinSessionData.mode_ = 0;
+    NetWinSessionData.fields_.mode_ = 0;
     constructed_rows = 0;
     win.on_button_clicked(10);
     assert(NetDaemonNet.sent.size() == 0xA74);
@@ -197,7 +198,7 @@ int main() {
     assert(NetDaemonNet.sent[0x13] == 3);
     assert(packet_word(4) == 0xFFFFFFFFu && packet_word(8) == 0);
     assert(std::memcmp(NetDaemonNet.sent.data() + 0x10,
-                       &NetWinLobbyRows[1], 7 * sizeof(NetWinLobbyRow)) == 0);
+                       &NetWinLobbyRows.rows_[1], 7 * sizeof(NetWinLobbyRow)) == 0);
     assert(NetDaemonNet.recipient == 0);
     assert(constructed_rows == 8);
     for (int i = 2; i != 8; ++i)
@@ -206,7 +207,7 @@ int main() {
     uint8_t claims[8 * 0x190] = {};
     *reinterpret_cast<uint32_t *>(claims + 0x194) = 0xDEADBEEF;
     win.faction_records_ = claims;
-    NetWinSessionData.mode_ = 2;
+    NetWinSessionData.fields_.mode_ = 2;
     constructed_rows = 0;
     win.on_button_clicked(10);
     assert(popup_calls == 1);
@@ -217,9 +218,9 @@ int main() {
 
     // A modal callback disables sending after entering the host branch.
     // The native local seven-row construction still precedes the late gate.
-    NetWinSessionData.mode_ = 0;
+    NetWinSessionData.fields_.mode_ = 0;
     NetDaemonNet.player_count_ = 2;
-    NetWinLobbyRows[2].ready_or_occupied_ = 0;
+    NetWinLobbyRows.rows_[2].ready_or_occupied_ = 0;
     NetDaemonNet.primary_state_.leading_words_[0] = 1;
     NetDaemonNet.sent.clear();
     popup_callback = clear_gate_after_prompt;
@@ -231,19 +232,19 @@ int main() {
 
     // The modal callback changes the live count after the readiness scan.
     // Faction validation and the final readiness writes both use that count.
-    NetWinSessionData.mode_ = 2;
+    NetWinSessionData.fields_.mode_ = 2;
     NetDaemonNet.player_count_ = 2;
     NetDaemonNet.primary_state_.leading_words_[0] = 1;
-    NetWinLobbyRows[2].ready_or_occupied_ = 0;
-    NetWinLobbyRows[3].ready_or_occupied_ = 0;
-    NetWinLobbyRows[3].faction_or_color_ = 1;
-    NetWinLobbyRows[3].owner_ = 0xDEADBEEF;
+    NetWinLobbyRows.rows_[2].ready_or_occupied_ = 0;
+    NetWinLobbyRows.rows_[3].ready_or_occupied_ = 0;
+    NetWinLobbyRows.rows_[3].faction_or_color_ = 1;
+    NetWinLobbyRows.rows_[3].owner_ = 0xDEADBEEF;
     NetDaemonNet.sent.clear();
     popup_callback = grow_count_after_prompt;
     constructed_rows = 0;
     win.on_button_clicked(10);
     assert(NetDaemonNet.sent.size() == 0xA74);
-    assert(NetWinLobbyRows[3].ready_or_occupied_ == 1);
+    assert(NetWinLobbyRows.rows_[3].ready_or_occupied_ == 1);
     assert(constructed_rows == 8 && popup_calls == 3);
     popup_callback = nullptr;
 
@@ -251,12 +252,12 @@ int main() {
     NetDaemonNet.selected_slot_ = 0;
     NetDaemonNet.primary_state_.leading_words_[0] = 0;
     NetDaemonNet.sent.clear();
-    NetWinLobbyRow old_zero = NetWinLobbyRows[0];
+    NetWinLobbyRow old_zero = NetWinLobbyRows.rows_[0];
     constructed_rows = 0;
     win.on_button_clicked(10);
     assert(constructed_rows == 2);
     assert(NetDaemonNet.sent.empty());
-    assert(std::memcmp(&NetWinLobbyRows[0], &old_zero, sizeof(old_zero)) == 0);
+    assert(std::memcmp(&NetWinLobbyRows.rows_[0], &old_zero, sizeof(old_zero)) == 0);
 
     // The actual constructor changes only the six original fields.
     alignas(NetWinConstructedLobbyRow) unsigned char storage[sizeof(NetWinConstructedLobbyRow)];

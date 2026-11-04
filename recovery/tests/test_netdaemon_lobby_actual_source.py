@@ -59,8 +59,8 @@ struct Dialog {
     }
     void on_redraw() { ++redraws; }
 };
-NetWinLobbyRow NetWinLobbyRows[8];
-Session NetWinSessionData;
+struct NetWinLobbyRowsMock { NetWinLobbyRow rows_[8]; } NetWinLobbyRows;
+struct NetWinSessionDataMock { Session fields_; } NetWinSessionData;
 Dialog NetWinDialog;
 NetDaemon NetDaemonNet;
 
@@ -76,8 +76,8 @@ static int fail(int n, const char *s) {
 }
 static void reset(unsigned char *m, size_t n) {
     std::memset(m, 0, n);
-    std::memset(NetWinLobbyRows, 0, sizeof(NetWinLobbyRows));
-    NetWinSessionData.mode_ = 0;
+    std::memset(NetWinLobbyRows.rows_, 0, sizeof(NetWinLobbyRows.rows_));
+    NetWinSessionData.fields_.mode_ = 0;
     NetWinDialog.fills = NetWinDialog.redraws = 0;
     NetWinDialog.last_faction = -99;
     NetWinDialog.last_row_bytes = nullptr;
@@ -92,11 +92,11 @@ int main() {
 
     // Actual 1F04/no-flag path copies one row, then notify+redraw.
     reset(m, sizeof(m)); put16(m, 0, 0x1F04);
-    NetWinSessionData.mode_ = 2;
+    NetWinSessionData.fields_.mode_ = 2;
     NetDaemonNet.primary_state_.leading_words_[0] = 1;
     std::memset(m + 0x10, 0x5A, sizeof(NetWinLobbyRow));
     netdaemon_handle_session_lobby(NetDaemonNet, m, 0x1F04, sizeof(m));
-    if (NetWinLobbyRows[2].prefix_ != 0x5A || NetWinLobbyRows[1].prefix_ != 0)
+    if (NetWinLobbyRows.rows_[2].prefix_ != 0x5A || NetWinLobbyRows.rows_[1].prefix_ != 0)
         return fail(1, "single-row 0x17C copy");
     if (NetWinDialog.redraws != 1 || NetDaemonNet.sends != 1 ||
         NetDaemonNet.last_type != 0x0F0E || NetDaemonNet.last_target != 1002)
@@ -105,14 +105,14 @@ int main() {
     // Actual 2F04 marked path selection, with faction -1 still storing the
     // packet owner, then send_message and no modal notify/redraw.
     reset(m, sizeof(m)); put16(m, 0, 0x2F04);
-    NetWinSessionData.mode_ = 2;
+    NetWinSessionData.fields_.mode_ = 2;
     NetDaemonNet.primary_state_.leading_words_[0] = 1;
-    NetWinLobbyRows[2].faction_or_color_ = 3;
-    NetWinLobbyRows[2].owner_ = 17;
+    NetWinLobbyRows.rows_[2].faction_or_color_ = 3;
+    NetWinLobbyRows.rows_[2].owner_ = 17;
     put32(m + 4, 2); m[0x13] = 0xFF; put32(m + 0x188, 77);
     netdaemon_handle_session_lobby(NetDaemonNet, m, 0x2F04, sizeof(m));
-    if (NetWinLobbyRows[2].faction_or_color_ != -1 ||
-        NetWinLobbyRows[2].owner_ != 77)
+    if (NetWinLobbyRows.rows_[2].faction_or_color_ != -1 ||
+        NetWinLobbyRows.rows_[2].owner_ != 77)
         return fail(3, "-1 faction stores and owner+0x188");
     if (NetWinDialog.last_row_bytes != m + 0x10 ||
         NetWinDialog.last_faction != -1 ||
@@ -126,24 +126,24 @@ int main() {
     // Count=1 still scans row 1. A duplicate exits before selected-row writes.
     reset(m, sizeof(m)); put16(m, 0, 0x2F04);
     NetDaemonNet.player_count_ = 1;
-    NetWinSessionData.mode_ = 3;
-    NetWinLobbyRows[1].faction_or_color_ = 5;
-    NetWinLobbyRows[2].faction_or_color_ = 3;
+    NetWinSessionData.fields_.mode_ = 3;
+    NetWinLobbyRows.rows_[1].faction_or_color_ = 5;
+    NetWinLobbyRows.rows_[2].faction_or_color_ = 3;
     put32(m + 4, 2); m[0x13] = 5;
     netdaemon_handle_session_lobby(NetDaemonNet, m, 0x2F04, sizeof(m));
-    if (NetWinLobbyRows[2].faction_or_color_ != 3 ||
+    if (NetWinLobbyRows.rows_[2].faction_or_color_ != 3 ||
         NetDaemonNet.sent_messages != 0 || NetWinDialog.redraws != 0)
         return fail(5, "count=1 duplicate bound");
 
     // The native loop includes row==player_count despite its zero-based EAX
     // compare: the equality arm sees the prior index, still below count.
     reset(m, sizeof(m)); put16(m, 0, 0x2F04);
-    NetWinSessionData.mode_ = 3;
-    NetWinLobbyRows[3].faction_or_color_ = 5;
-    NetWinLobbyRows[2].faction_or_color_ = 3;
+    NetWinSessionData.fields_.mode_ = 3;
+    NetWinLobbyRows.rows_[3].faction_or_color_ = 5;
+    NetWinLobbyRows.rows_[2].faction_or_color_ = 3;
     put32(m + 4, 2); m[0x13] = 5;
     netdaemon_handle_session_lobby(NetDaemonNet, m, 0x2F04, sizeof(m));
-    if (NetWinLobbyRows[2].faction_or_color_ != 3 ||
+    if (NetWinLobbyRows.rows_[2].faction_or_color_ != 3 ||
         NetDaemonNet.sent_messages != 0)
         return fail(7, "row==player_count duplicate bound");
 
@@ -151,8 +151,8 @@ int main() {
     reset(m, sizeof(m)); put16(m, 0, 0x1F04);
     put32(m + 4, 0xFFFFFFFFu); std::memset(m + 0x10, 0x2A, 0xA64);
     netdaemon_handle_session_lobby(NetDaemonNet, m, 0x1F04, sizeof(m));
-    if (NetWinLobbyRows[1].prefix_ != 0x2A ||
-        NetWinLobbyRows[7].prefix_ != 0x2A || NetWinDialog.redraws != 1)
+    if (NetWinLobbyRows.rows_[1].prefix_ != 0x2A ||
+        NetWinLobbyRows.rows_[7].prefix_ != 0x2A || NetWinDialog.redraws != 1)
         return fail(6, "sentinel 0xA64 copy");
 
     std::puts("actual-source session-lobby controls passed");
@@ -234,11 +234,11 @@ def test_actual_extracted_helper_runs_under_gcc_and_clang():
 def test_actual_helper_mutants_fail_native_semantic_controls():
     helper, _ = actual_helper_and_source()
     mutants = []
-    faction_store = "NetWinLobbyRows[sender].faction_or_color_ ="
+    faction_store = "NetWinLobbyRows.rows_[sender].faction_or_color_ ="
     assert faction_store in helper
     mutants.append(helper.replace(
         faction_store,
-        "if (faction != -1) NetWinLobbyRows[sender].faction_or_color_ =", 1))
+        "if (faction != -1) NetWinLobbyRows.rows_[sender].faction_or_color_ =", 1))
     # Add a redraw immediately after the marked-path send. The control has a
     # modal marker and requires the original direct jump to 0x538266.
     send_stmt = re.compile(
@@ -252,7 +252,7 @@ def test_actual_helper_mutants_fail_native_semantic_controls():
     mutants.append(helper.replace(
         "row_index <= NetDaemonNet.player_count_",
         "row_index < NetDaemonNet.player_count_", 1))
-    full_copy = "std::memcpy(&NetWinLobbyRows[1], lobby.payload(), 0xA64)"
+    full_copy = "std::memcpy(&NetWinLobbyRows.rows_[1], lobby.payload(), 0xA64)"
     assert full_copy in helper
     mutants.append(helper.replace(full_copy, full_copy.replace("0xA64", "0x17C"), 1))
     assert all(mutant != helper for mutant in mutants)

@@ -74,6 +74,82 @@ def extract_function(source: str, signature: str) -> str:
     raise AssertionError(f"unclosed function body for {signature}")
 
 
+def extract_struct(source: str, name: str) -> str:
+    signature = f"struct {name} {{"
+    start = source.index(signature)
+    opening = source.index("{", start)
+    depth = 0
+    state = "code"
+    index = opening
+    while index < len(source):
+        char = source[index]
+        nxt = source[index + 1] if index + 1 < len(source) else ""
+        if state == "code":
+            if char == "/" and nxt == "/":
+                state = "line"
+                index += 2
+                continue
+            if char == "/" and nxt == "*":
+                state = "block"
+                index += 2
+                continue
+            if char in ('"', "'"):
+                state = "string" if char == '"' else "character"
+            elif char == "{":
+                depth += 1
+            elif char == "}":
+                depth -= 1
+                if depth == 0:
+                    return source[start:index + 1] + ";"
+        elif state == "line" and char == "\n":
+            state = "code"
+        elif state == "block" and char == "*" and nxt == "/":
+            state = "code"
+            index += 1
+        elif state in ("string", "character"):
+            if char == "\\":
+                index += 1
+            elif (state == "string" and char == '"') or (
+                state == "character" and char == "'"
+            ):
+                state = "code"
+        index += 1
+    raise AssertionError(f"unterminated declaration: {name}")
+
+
+def bind_actual_storage_types(fixture: str, header: str) -> str:
+    for name in ("NetWinSessionOptionsState", "NetWinLobbyRow"):
+        start = fixture.index(f"struct {name} {{")
+        old = extract_struct(fixture, name)
+        fixture = fixture[:start] + extract_struct(header, name) + fixture[start + len(old):]
+
+    owners = (
+        ("static NetWinLobbyRow NetWinLobbyRows[8];", "NetWinLobbyRowsStorage"),
+        ("static NetWinSessionBlock NetWinSessionData;", "NetWinSessionDataStorage"),
+        ("static NetWinSessionOptionsState NetWinSessionOptions;", "NetWinSessionOptionsStorage"),
+    )
+    for declaration, owner_type in owners:
+        replacement = extract_struct(header, owner_type) + f"\nstatic {owner_type} "
+        replacement += {
+            "NetWinLobbyRowsStorage": "NetWinLobbyRows;",
+            "NetWinSessionDataStorage": "NetWinSessionData;",
+            "NetWinSessionOptionsStorage": "NetWinSessionOptions;",
+        }[owner_type]
+        assert declaration in fixture, declaration
+        fixture = fixture.replace(declaration, replacement, 1)
+
+    fixture = fixture.replace("NetWinSessionOptions.",
+                              "NetWinSessionOptions.fields_.")
+    fixture = fixture.replace("NetWinSessionData.",
+                              "NetWinSessionData.fields_.")
+    fixture = fixture.replace("NetWinLobbyRows[", "NetWinLobbyRows.rows_[")
+    fixture = fixture.replace("NetWinSessionOptions = {};",
+                              "NetWinSessionOptions.fields_ = {};")
+    fixture = fixture.replace("NetWinSessionData = {};",
+                              "NetWinSessionData.fields_ = {};")
+    return fixture
+
+
 @pytest.mark.parametrize("compiler_name", ("g++", "clang++"))
 def test_netwin_pick_map_actual_body(compiler_name, tmp_path):
     compiler = shutil.which(compiler_name)
@@ -84,7 +160,7 @@ def test_netwin_pick_map_actual_body(compiler_name, tmp_path):
     assert FIXTURE.is_file(), f"host fixture not found: {FIXTURE}"
 
     body = extract_function(SOURCE_FILE.read_text(), "void NetWin::pick_map()")
-    fixture = FIXTURE.read_text()
+    fixture = bind_actual_storage_types(FIXTURE.read_text(), HEADER_FILE.read_text())
     assert fixture.count(LOCK_MASK_MARKER) == 1
     assert fixture.count(MARKER) == 1
     assert fixture.count(RECORD_MARKER) == 1
@@ -110,11 +186,11 @@ def test_netwin_pick_map_actual_body(compiler_name, tmp_path):
     ) + ";"
 
     def generate(candidate_body: str) -> str:
-        snapshot = "memcpy(assigned_packet.rows_, &NetWinLobbyRows[1], 0xA64);"
+        snapshot = "memcpy(assigned_packet.rows_, &NetWinLobbyRows.rows_[1], 0xA64);"
         assert candidate_body.count(snapshot) == 1, "single live-row snapshot must remain"
         candidate_body = candidate_body.replace(
             snapshot,
-            "tracked_lobby_snapshot(assigned_packet.rows_, &NetWinLobbyRows[1], 0xA64);",
+            "tracked_lobby_snapshot(assigned_packet.rows_, &NetWinLobbyRows.rows_[1], 0xA64);",
             1,
         )
         return (fixture.replace(LOCK_MASK_MARKER, lock_bytes + "\n" + lock_view)
@@ -145,7 +221,7 @@ def test_netwin_pick_map_actual_body(compiler_name, tmp_path):
     # pinned body copies afterward, overwriting those local stores; keep a
     # compiled damage control so the actual-source witness rejects the old
     # ordering rather than merely matching the same final field names.
-    snapshot = "        memcpy(assigned_packet.rows_, &NetWinLobbyRows[1], 0xA64);\n"
+    snapshot = "        memcpy(assigned_packet.rows_, &NetWinLobbyRows.rows_[1], 0xA64);\n"
     assert body.count(snapshot) == 1, "late A64 snapshot anchor must be unique"
     old_order_body = body.replace(snapshot, "", 1)
     packet_declaration = "    NetWinLobbyFullPacket assigned_packet;\n"
@@ -244,7 +320,7 @@ def test_pick_map_uses_alive_byte_at_each_pinned_consumer_and_keeps_count_masks(
     assert "lock_masks_.enable_mask_ >> 8" not in body
     assert body.count("bytes_.alive_mask_ & 0xFEu") == 2
     status_byte = body.index(
-        "NetWinSessionOptions.status_ =\n                GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_;"
+        "NetWinSessionOptions.fields_.status_ =\n                GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_;"
     )
     assert body.index("bytes_.alive_mask_ & 0xFEu") < status_byte
     assert status_byte < body.rindex("bytes_.alive_mask_ & 0xFEu")

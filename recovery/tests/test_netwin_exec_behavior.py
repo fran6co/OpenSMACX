@@ -24,7 +24,7 @@ def test_compiler_array_mapping_and_passive_wire_storage():
     assert "NetWinLobbyRow(" not in wire and "virtual " not in wire
     assert "initialize_empty_slot" not in header
     source = (root / "src/netwin.cpp").read_text()
-    assert "NetWinLobbyRow NetWinLobbyRows[8];" in source
+    assert "NetWinLobbyRowsStorage NetWinLobbyRows;" in source
     assert "initialize_strided_array" not in source
     assert not (root / "src/array_initialization.cpp").exists()
     assert not (root / "src/array_initialization.h").exists()
@@ -86,6 +86,106 @@ def extract_function(source: str, signature: str) -> str:
     raise AssertionError(f"unclosed body: {signature}")
 
 
+def extract_struct(source: str, name: str) -> str:
+    signature = f"struct {name} {{"
+    start = source.index(signature)
+    opening = source.index("{", start)
+    depth = 0
+    state = "code"
+    index = opening
+    while index < len(source):
+        char = source[index]
+        nxt = source[index + 1] if index + 1 < len(source) else ""
+        if state == "code":
+            if char == "/" and nxt == "/":
+                state = "line"
+                index += 2
+                continue
+            if char == "/" and nxt == "*":
+                state = "block"
+                index += 2
+                continue
+            if char in ('"', "'"):
+                state = "string" if char == '"' else "character"
+            elif char == "{":
+                depth += 1
+            elif char == "}":
+                depth -= 1
+                if depth == 0:
+                    return source[start:index + 1] + ";"
+        elif state == "line" and char == "\n":
+            state = "code"
+        elif state == "block" and char == "*" and nxt == "/":
+            state = "code"
+            index += 1
+        elif state in ("string", "character"):
+            if char == "\\":
+                index += 1
+            elif (state == "string" and char == '"') or (
+                state == "character" and char == "'"
+            ):
+                state = "code"
+        index += 1
+    raise AssertionError(f"unterminated declaration: {name}")
+
+
+def bind_actual_storage_types(fixture: str, header: str) -> str:
+    for name in ("NetWinSessionOptionsState", "NetWinLobbyRow"):
+        start = fixture.index(f"struct {name} {{")
+        old = extract_struct(fixture, name)
+        fixture = fixture[:start] + extract_struct(header, name) + fixture[start + len(old):]
+    start = fixture.index("struct NetWinLobbyPacketHeader {")
+    old = extract_struct(fixture, "NetWinLobbyPacketHeader")
+    fixture = (fixture[:start] + extract_struct(header, "NetWinLobbyPacketHeader")
+               + fixture[start + len(old):])
+    fixture = fixture.replace(
+        "static NetWinLobbyRow NetWinLobbyRows[8];",
+        extract_struct(header, "NetWinLobbyRowsStorage") +
+        "\nstatic NetWinLobbyRowsStorage NetWinLobbyRows;",
+        1,
+    )
+    fixture = fixture.replace(
+        "static NetWinSessionOptionsState NetWinSessionOptions = {};",
+        extract_struct(header, "NetWinSessionOptionsStorage") +
+        "\nstatic NetWinSessionOptionsStorage NetWinSessionOptions;",
+        1,
+    )
+    # The harness's setup code deliberately clears the wire PODs, not their
+    # one-field owning wrappers, whose constructors model startup stores.
+    fixture = fixture.replace(
+        "std::memset(&NetWinSessionOptions, 0, sizeof(NetWinSessionOptions));",
+        "std::memset(&NetWinSessionOptions.fields_, 0, sizeof(NetWinSessionOptions.fields_));",
+    )
+    fixture = fixture.replace(
+        "std::memset(NetWinLobbyRows, 0, sizeof(NetWinLobbyRows));",
+        "std::memset(NetWinLobbyRows.rows_, 0, sizeof(NetWinLobbyRows.rows_));",
+    )
+    fixture = fixture.replace(
+        "std::memset(NetWinLobbyRows, 0x5A, sizeof(NetWinLobbyRows));",
+        "std::memset(NetWinLobbyRows.rows_, 0x5A, sizeof(NetWinLobbyRows.rows_));",
+    )
+    fixture = fixture.replace(
+        "reinterpret_cast<const uint8_t *>(NetWinLobbyRows)",
+        "reinterpret_cast<const uint8_t *>(NetWinLobbyRows.rows_)",
+    )
+    fixture = fixture.replace(
+        "    const uint8_t *global = reinterpret_cast<const uint8_t *>(NetWinLobbyRows.rows_);\n"
+        "    for (size_t i = 0; i < sizeof(NetWinLobbyRows); ++i) assert(global[i] == 0);",
+        "    for (int row_index = 0; row_index < 8; ++row_index) {\n"
+        "        const NetWinLobbyRow &row = NetWinLobbyRows.rows_[row_index];\n"
+        "        assert(row.prefix_ == 0xFF && row.ready_or_occupied_ == 0);\n"
+        "        assert(row.field_2_ == 0 && row.faction_or_color_ == -1);\n"
+        "        assert(row.field_4_ == 2 && row.owner_ == 0);\n"
+        "        const uint8_t *bytes = reinterpret_cast<const uint8_t *>(&row);\n"
+        "        for (size_t offset = 5; offset < 0x178; ++offset) assert(bytes[offset] == 0);\n"
+        "    }",
+        1,
+    )
+    fixture = fixture.replace("NetWinSessionOptions.", "NetWinSessionOptions.fields_.")
+    fixture = fixture.replace("NetWinLobbyRows[", "NetWinLobbyRows.rows_[")
+    return fixture
+
+
 @pytest.mark.parametrize("compiler_name", ["g++", "clang++"])
 def test_netwin_exec_and_row_actual_bodies(compiler_name: str) -> None:
     compiler = shutil.which(compiler_name)
@@ -96,7 +196,10 @@ def test_netwin_exec_and_row_actual_bodies(compiler_name: str) -> None:
     source_path = root / "src" / "netwin.cpp"
     fixture_path = Path(__file__).with_name("netwin_exec_host_control.cpp")
     source = source_path.read_text(encoding="utf-8")
-    fixture = fixture_path.read_text(encoding="utf-8")
+    fixture = bind_actual_storage_types(
+        fixture_path.read_text(encoding="utf-8"),
+        (root / "src" / "netwin.h").read_text(encoding="utf-8"),
+    )
 
     helper = extract_function(source, "static void netwin_set_rect(")
     exec_body = extract_function(source, "int NetWin::exec()")

@@ -9,8 +9,9 @@ HARNESS=r'''
 #include <cstdint>
 #include <cstring>
 struct AlphaNetProcessSlot { uint32_t pid_; char name_[32]; int8_t identity_; };
-struct NetWinLobbyRow { int owner_,prefix_,ready_or_occupied_,field_2_,faction_or_color_,field_4_; } NetWinLobbyRows[16];
-struct { int difficulty_; } NetWinSessionOptions;
+struct NetWinLobbyRow { int owner_,prefix_,ready_or_occupied_,field_2_,faction_or_color_,field_4_; };
+struct NetWinLobbyRowsMock { NetWinLobbyRow rows_[16]; } NetWinLobbyRows;
+struct { struct { int difficulty_; } fields_; } NetWinSessionOptions;
 struct Net { void send(void*p,int n,unsigned long id,int f); };
 struct NetDaemon:Net {
  struct {int leading_words_[1],session_phase_;} primary_state_;
@@ -26,14 +27,14 @@ void parse_says(int,char*,int,int){}
 struct Popup {void pop(const char*,int,int,void*){assert(active->process_slots_[4].identity_==4);active->player_count_=5;}} NetMsgPrimary;
 struct Dialog {bool is_visible(){return false;}void on_redraw(){}} NetWinDialog;
 int calls;
-void send_all_player_packets(int t){assert(t==-1&&NetWinLobbyRows[5].prefix_==5);++calls;active->player_count_=6;}
+void send_all_player_packets(int t){assert(t==-1&&NetWinLobbyRows.rows_[5].prefix_==5);++calls;active->player_count_=6;}
 void send_session_packet(int s,int t){assert(s==5&&t==-1);++calls;}
 void send_session2_packet(int s,int t){assert(s==5&&t==-1);++calls;}
 void send_faction_data(int s){assert(s==5);++calls;}
 #define strcpy observed_copy
 BODY
 #undef strcpy
-int main(){NetDaemon n={};active=&n;n.player_count_=1;n.process_slots_[1].pid_=17;NetWinSessionOptions.difficulty_=9;char name[]="join";n.on_player_added(name,99);assert(n.process_slots_[2].pid_==99&&std::strcmp(n.process_slots_[3].name_,"name")==0);assert(NetWinLobbyRows[4].prefix_==4&&NetWinLobbyRows[4].field_2_==9);assert(NetWinLobbyRows[5].prefix_==5&&NetWinLobbyRows[5].field_2_==9&&calls==4);n.player_count_=7;n.on_player_added(name,99);}
+int main(){NetDaemon n={};active=&n;n.player_count_=1;n.process_slots_[1].pid_=17;NetWinSessionOptions.fields_.difficulty_=9;char name[]="join";n.on_player_added(name,99);assert(n.process_slots_[2].pid_==99&&std::strcmp(n.process_slots_[3].name_,"name")==0);assert(NetWinLobbyRows.rows_[4].prefix_==4&&NetWinLobbyRows.rows_[4].field_2_==9);assert(NetWinLobbyRows.rows_[5].prefix_==5&&NetWinLobbyRows.rows_[5].field_2_==9&&calls==4);n.player_count_=7;n.on_player_added(name,99);}
 '''
 def run(body):
  with tempfile.TemporaryDirectory() as d:

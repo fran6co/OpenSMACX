@@ -133,15 +133,36 @@ int __cdecl load_map();
 // RECOVERY_OBJECT: v1 0x0080A6F8 ?NetWinDialog@@3VNetWin@@A
 NetWin NetWinDialog;  // 0x0080A6F8
 
+// Superseded seed deleted; seed paths below are historical Git provenance.
+// ORIGINAL: 0x004E2400 sub_4e2400 0x004E2400-0x004E2444 FILE
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned CRT slot0x682614 directly selects0x4E2400 as the first callback in the adjacent network-state startup sequence.", "The callback stores only options bytes0,1,2,4,5,6,7,8,9,A,B; NetWinSessionOptionsStorage contains only the existing 0x18-byte NetWinSessionOptionsState at offset zero and its constructor performs exactly those stores."], "reason": "Own the original selected options initialization in the storage object's constructor without adding value-initialization or changing the shared wire type."}
+// symbol    _$E11
+// RECOVERY_OBJECT: v4 0x0090E8E0 0x0090E8F8 ?NetWinSessionOptions@@3UNetWinSessionOptionsState@@A 0x0047B450 target ?NetWinSessionOptions@@3UNetWinSessionOptionsStorage@@A
+NetWinSessionOptionsStorage NetWinSessionOptions;
+
+// ORIGINAL: 0x004E2450 sub_4e2450 0x004E2450-0x004E245D FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned CRT slot0x682618 directly selects0x4E2450 between the options and lobby-row initializers.", "The callback writes only NetWinSessionData.mode_ and scenario_text_wire_tail_[0]; its real owner is the storage global at0x0090E778."], "reason": "Recover the pinned global's selected startup stores as construction of its owning storage object; keep the wire/POD member unchanged."}
+// symbol    _$E14
+// size      13 bytes
+// prototype
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+// Return Value: n/a
+// Status: Complete
+// RECOVERY_OBJECT: v4 0x0090E778 0x0090E8E0 ?NetWinSessionData@@3UNetWinSessionBlock@@A 0x0047B450 target ?NetWinSessionData@@3UNetWinSessionDataStorage@@A
+NetWinSessionDataStorage NetWinSessionData;
+
+// Superseded seed deleted; seed paths below are historical Git provenance.
+// ORIGINAL: 0x004E2460 sub_4e2460 0x004E2460-0x004E248F FILE
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned CRT slot0x68261C directly selects0x4E2460 after the options and session-data callbacks.", "The callback stores only six fields in each of eight 0x17C-byte rows; NetWinLobbyRowsStorage contains only the existing eight-row array at offset zero and its constructor writes those same fields."], "reason": "Own the original selected lobby-row initialization in the storage object's constructor while preserving the shared wire-row type and untouched bytes."}
+// symbol    _$E17
 // The pinned PE's .data raw contents end at 0x006A8000, while its virtual
 // extent includes 0x0090DB98..0x0090E778: these rows start zero-filled.
 // config_players and the network receive path subsequently populate them.
-// RECOVERY_OBJECT: v2 0x0090DB98 0x0090E778 ?NetWinLobbyRows@@3PAUNetWinLobbyRow@@A 0x0047B450
-NetWinLobbyRow NetWinLobbyRows[8];
-// RECOVERY_OBJECT: v2 0x0090E778 0x0090E8E0 ?NetWinSessionData@@3UNetWinSessionBlock@@A 0x0047B450
-NetWinSessionBlock NetWinSessionData;
-// RECOVERY_OBJECT: v2 0x0090E8E0 0x0090E8F8 ?NetWinSessionOptions@@3UNetWinSessionOptionsState@@A 0x0047B450
-NetWinSessionOptionsState NetWinSessionOptions;
+// RECOVERY_OBJECT: v4 0x0090DB98 0x0090E778 ?NetWinLobbyRows@@3PAUNetWinLobbyRow@@A 0x0047B450 target ?NetWinLobbyRows@@3UNetWinLobbyRowsStorage@@A
+NetWinLobbyRowsStorage NetWinLobbyRows;
 
 void NetWinSessionBlock::receive_wire_block(const unsigned char *bytes) {
     std::memcpy(this, bytes, sizeof(*this));
@@ -465,13 +486,13 @@ int NetWin::get_player_color(int faction) {
     }
     const NetWinFactionRecord *const records =
         static_cast<const NetWinFactionRecord *>(faction_records_);
-    int color = NetWinLobbyRows[faction].faction_or_color_;
+    int color = NetWinLobbyRows.rows_[faction].faction_or_color_;
     if (color == -1) {
         return 0xFF;
     }
     int taken = 1;
     {
-        const NetWinLobbyRow *row = &NetWinLobbyRows[1];
+        const NetWinLobbyRow *row = &NetWinLobbyRows.rows_[1];
         while (taken < faction) {
             if (row->faction_or_color_ == color) {
                 break;
@@ -490,7 +511,7 @@ int NetWin::get_player_color(int faction) {
             for (;;) {
                 int found = 1;
                 {
-                    const NetWinLobbyRow *row = &NetWinLobbyRows[1];
+                    const NetWinLobbyRow *row = &NetWinLobbyRows.rows_[1];
                     while (found < bound) {
                         if (row->faction_or_color_ == index) {
                             break;
@@ -675,28 +696,28 @@ Status: Coverage transcription - unclaimed body
 void NetWin::config_players() {
     unsigned char color = static_cast<unsigned char>(
         NetDaemonNet.allocation_node().max_players_);
-    NetWinSessionData.mode_ = 0;
-    NetWinSessionData.scenario_text_wire_tail_[0] = 0;
-    NetWinSessionOptions.status_ = 0xFF;
-    NetWinSessionOptions.option_4_ = 0;
-    NetWinSessionOptions.option_5_ = 0;
-    NetWinSessionOptions.reserved_B_ = 0xFF;
-    NetWinSessionOptions.player_count_ = color;
-    NetWinSessionOptions.difficulty_ = 2;
-    NetWinSessionOptions.planet_size_ = 2;
-    NetWinSessionOptions.ocean_coverage_ = 2;
-    NetWinSessionOptions.erosion_ = 2;
-    NetWinSessionOptions.native_life_ = 2;
-    NetWinSessionOptions.cloud_cover_ = 2;
+    NetWinSessionData.fields_.mode_ = 0;
+    NetWinSessionData.fields_.scenario_text_wire_tail_[0] = 0;
+    NetWinSessionOptions.fields_.status_ = 0xFF;
+    NetWinSessionOptions.fields_.option_4_ = 0;
+    NetWinSessionOptions.fields_.option_5_ = 0;
+    NetWinSessionOptions.fields_.reserved_B_ = 0xFF;
+    NetWinSessionOptions.fields_.player_count_ = color;
+    NetWinSessionOptions.fields_.difficulty_ = 2;
+    NetWinSessionOptions.fields_.planet_size_ = 2;
+    NetWinSessionOptions.fields_.ocean_coverage_ = 2;
+    NetWinSessionOptions.fields_.erosion_ = 2;
+    NetWinSessionOptions.fields_.native_life_ = 2;
+    NetWinSessionOptions.fields_.cloud_cover_ = 2;
 
-    NetWinLobbyRow *row = &NetWinLobbyRows[1];
+    NetWinLobbyRow *row = &NetWinLobbyRows.rows_[1];
     Player *player = &Players[1];
     int row_index = 1;
     do {
         row->owner_ = 0;
         row->prefix_ = 0xFF;
         row->ready_or_occupied_ = 0;
-        row->field_2_ = NetWinSessionOptions.difficulty_;
+        row->field_2_ = NetWinSessionOptions.fields_.difficulty_;
         row->faction_or_color_ = static_cast<int8_t>(0xFF);
         row->field_4_ = 2;
         strcpy(row->leader_name_, player->name_leader);
@@ -735,7 +756,7 @@ void NetWin::prepare_game() {
     }
     for (int used_seat = 1; used_seat < 8; ++used_seat) {
         const int existing_faction =
-            NetWinLobbyRows[used_seat].faction_or_color_;
+            NetWinLobbyRows.rows_[used_seat].faction_or_color_;
         if (existing_faction != -1) {
             used_mask |=
                 1u << (static_cast<unsigned int>(existing_faction) & 31u);
@@ -756,7 +777,7 @@ void NetWin::prepare_game() {
     int remaining = needed;
     for (int assign_seat = 1; assign_seat < 8; ++assign_seat) {
         int8_t &assigned_faction =
-            NetWinLobbyRows[assign_seat].faction_or_color_;
+            NetWinLobbyRows.rows_[assign_seat].faction_or_color_;
         if (assigned_faction == -1) {
             hidden_mask |= 1u << assign_seat;
             unsigned int picked;
@@ -773,13 +794,13 @@ void NetWin::prepare_game() {
         }
     }
 
-    const int mode = NetWinSessionData.mode_;
+    const int mode = NetWinSessionData.fields_.mode_;
     if (mode == 0 || mode == 1) {
         for (int player_slot_index = 0; player_slot_index < 8;
              ++player_slot_index) {
             AlphaNetProcessSlot &slot =
                 NetDaemonNet.process_slots_[player_slot_index];
-            const NetWinLobbyRow &row = NetWinLobbyRows[player_slot_index];
+            const NetWinLobbyRow &row = NetWinLobbyRows.rows_[player_slot_index];
             slot.identity_ = static_cast<int8_t>(row.prefix_);
             slot.field_25_ = row.ready_or_occupied_;
             slot.field_26_ = row.field_2_;
@@ -792,13 +813,13 @@ void NetWin::prepare_game() {
         for (int faction_slot_index = 0; faction_slot_index < 8;
              ++faction_slot_index) {
             int chosen_faction =
-                NetWinLobbyRows[faction_slot_index].faction_or_color_;
+                NetWinLobbyRows.rows_[faction_slot_index].faction_or_color_;
             if (chosen_faction == -1) {
                 chosen_faction = 0;
             }
             AlphaNetProcessSlot &slot =
                 NetDaemonNet.process_slots_[faction_slot_index];
-            const NetWinLobbyRow &row = NetWinLobbyRows[faction_slot_index];
+            const NetWinLobbyRow &row = NetWinLobbyRows.rows_[faction_slot_index];
             slot.identity_ = static_cast<int8_t>(row.prefix_);
             slot.field_25_ = row.ready_or_occupied_;
             slot.field_26_ = row.field_2_;
@@ -812,12 +833,12 @@ void NetWin::prepare_game() {
     if (mode == 0 || mode == 1) {
         for (int duplicate_seat = 2; duplicate_seat < 8; ++duplicate_seat) {
             char *const leader_name =
-                NetWinLobbyRows[duplicate_seat].leader_name_;
+                NetWinLobbyRows.rows_[duplicate_seat].leader_name_;
             int duplicate_count = 0;
             for (int earlier_seat = 1; earlier_seat < duplicate_seat;
                  ++earlier_seat) {
                 if (strcmp(leader_name,
-                           NetWinLobbyRows[earlier_seat].leader_name_) == 0) {
+                           NetWinLobbyRows.rows_[earlier_seat].leader_name_) == 0) {
                     ++duplicate_count;
                 }
             }
@@ -830,7 +851,7 @@ void NetWin::prepare_game() {
 
         for (int filename_seat = 1; filename_seat < 8; ++filename_seat) {
             const int filename_faction =
-                NetWinLobbyRows[filename_seat].faction_or_color_;
+                NetWinLobbyRows.rows_[filename_seat].faction_or_color_;
             const char *const faction_file =
                 faction_records[filename_faction].filename_;
             strcpy(Players[filename_seat].filename, faction_file);
@@ -843,7 +864,7 @@ void NetWin::prepare_game() {
             AlphaNetProcessSlot &slot_record =
                 NetDaemonNet.process_slots_[player_seat];
             const int player_faction = slot_record.identity_;
-            const NetWinLobbyRow &row = NetWinLobbyRows[player_seat];
+            const NetWinLobbyRow &row = NetWinLobbyRows.rows_[player_seat];
             PlayersData[player_faction].diff_level =
                 static_cast<int8_t>(slot_record.field_26_);
             if ((hidden_mask & (1u << player_seat)) == 0) {
@@ -1023,7 +1044,7 @@ void NetWin::draw_session_info() {
     strcat(StringTemp, "}");
     strcat(StringTemp, " ");
     {
-        int difficulty = static_cast<int8_t>(NetWinSessionOptions.difficulty_);
+        int difficulty = static_cast<int8_t>(NetWinSessionOptions.fields_.difficulty_);
         if (difficulty < 0) {
             difficulty = 0;
         } else if (6 < difficulty) {
@@ -1053,7 +1074,7 @@ void NetWin::draw_session_info() {
     strcat(StringTemp, " ");
     strcat(StringTemp,
            StringTable.get(
-               TimeControl[static_cast<unsigned char>(NetWinSessionOptions.time_control_)].name));
+               TimeControl[static_cast<unsigned char>(NetWinSessionOptions.fields_.time_control_)].name));
     {
         int written = buffer->write_l(StringTemp, col, row,
                                       strlen(StringTemp));
@@ -1073,24 +1094,24 @@ void NetWin::draw_session_info() {
     strcat(StringTemp, ": ");
     strcat(StringTemp, "}");
     strcat(StringTemp, " ");
-    if (NetWinSessionData.scenario_text_wire_tail_[0] == 0) {
+    if (NetWinSessionData.fields_.scenario_text_wire_tail_[0] == 0) {
         strcat(StringTemp,
                label_get(0x107C / 4));
     } else {
         strcat(StringTemp,
-               NetWinSessionData.scenario_text_wire_tail_);
+               NetWinSessionData.fields_.scenario_text_wire_tail_);
     }
-    if (NetWinSessionData.mode_ == 1) {
+    if (NetWinSessionData.fields_.mode_ == 1) {
         strcat(StringTemp, " ");
         strcat(StringTemp, "(");
         strcat(StringTemp,
                label_get(0x10 / 4));
-    } else if (NetWinSessionData.mode_ == 2) {
+    } else if (NetWinSessionData.fields_.mode_ == 2) {
         strcat(StringTemp, " ");
         strcat(StringTemp, "(");
         strcat(StringTemp,
                label_get(0x1018 / 4));
-    } else if (NetWinSessionData.mode_ == 3) {
+    } else if (NetWinSessionData.fields_.mode_ == 3) {
         strcat(StringTemp, " ");
         strcat(StringTemp, "(");
         strcat(StringTemp,
@@ -1116,8 +1137,8 @@ void NetWin::draw_session_info() {
     strcat(StringTemp, ": ");
     strcat(StringTemp, "}");
     strcat(StringTemp, " ");
-    if (NetWinSessionData.scenario_text_wire_tail_[0] == 0) {
-        int opponent = NetWinSessionOptions.option_4_;
+    if (NetWinSessionData.fields_.scenario_text_wire_tail_[0] == 0) {
+        int opponent = NetWinSessionOptions.fields_.option_4_;
         if (opponent == -1) {
             strcat(StringTemp,
                    label_get(0xFE4 / 4));
@@ -1132,12 +1153,12 @@ void NetWin::draw_session_info() {
         }
     } else {
         char tally[80];
-        _itoa(NetWinSessionOptions.option_4_, tally, 10);
+        _itoa(NetWinSessionOptions.fields_.option_4_, tally, 10);
         strcat(StringTemp, tally);
         strcat(StringTemp, " ");
         strcat(StringTemp, "X");
         strcat(StringTemp, " ");
-        _itoa(NetWinSessionOptions.option_5_, tally, 10);
+        _itoa(NetWinSessionOptions.fields_.option_5_, tally, 10);
         strcat(StringTemp, tally);
     }
     {
@@ -1149,7 +1170,7 @@ void NetWin::draw_session_info() {
             buffer->write_l(StringTemp, col, row, strlen(StringTemp));
             bottom = buffer->text_line_height() + row;
         }
-        if (NetDaemonNet.primary_state_.leading_words_[0] != 0 && NetWinSessionData.scenario_text_wire_tail_[0] == 0) {
+        if (NetDaemonNet.primary_state_.leading_words_[0] != 0 && NetWinSessionData.fields_.scenario_text_wire_tail_[0] == 0) {
             Sprite &arrow = g_IFACE_MP_COMBO_ARROW_SPRITES[0];
             arrow.draw(buffer, arrow.transparent_index(), col + 3, row);
             spot_.add(4, 0, col, row, 0x1E, bottom - row);
@@ -1167,10 +1188,10 @@ void NetWin::draw_session_info() {
         static const int kTableBases[4] = {0x3D8, 0x3DB, 0x3E1, 0x3E4};
         signed char flag;
         switch (rule) {
-        case 0: flag = static_cast<signed char>(NetWinSessionOptions.option_5_); break;
-        case 1: flag = static_cast<signed char>(NetWinSessionOptions.planet_size_); break;
-        case 2: flag = static_cast<signed char>(NetWinSessionOptions.ocean_coverage_); break;
-        default: flag = static_cast<signed char>(NetWinSessionOptions.erosion_); break;
+        case 0: flag = static_cast<signed char>(NetWinSessionOptions.fields_.option_5_); break;
+        case 1: flag = static_cast<signed char>(NetWinSessionOptions.fields_.planet_size_); break;
+        case 2: flag = static_cast<signed char>(NetWinSessionOptions.fields_.ocean_coverage_); break;
+        default: flag = static_cast<signed char>(NetWinSessionOptions.fields_.erosion_); break;
         }
 
         StringTemp[0] = 0;
@@ -1182,7 +1203,7 @@ void NetWin::draw_session_info() {
         strcat(StringTemp, " ");
 
         LPSTR text_address;
-        if (NetWinSessionData.scenario_text_wire_tail_[0] == 0) {
+        if (NetWinSessionData.fields_.scenario_text_wire_tail_[0] == 0) {
             if (flag == -1) {
                 text_address = Labels.strings_ptr[0xFE4 / 4];
             } else {
@@ -1201,7 +1222,7 @@ void NetWin::draw_session_info() {
             buffer->write_l(StringTemp, col, row, strlen(StringTemp));
             bottom = buffer->text_line_height() + row;
         }
-        if (NetDaemonNet.primary_state_.leading_words_[0] != 0 && NetWinSessionData.scenario_text_wire_tail_[0] == 0) {
+        if (NetDaemonNet.primary_state_.leading_words_[0] != 0 && NetWinSessionData.fields_.scenario_text_wire_tail_[0] == 0) {
             Sprite &arrow = g_IFACE_MP_COMBO_ARROW_SPRITES[0];
             arrow.draw(buffer, arrow.transparent_index(), col + 3, row);
             spot_.add(kSpotIds[rule], 0, col, row, 0x1E, bottom - row);
@@ -1211,7 +1232,7 @@ void NetWin::draw_session_info() {
 
     row = buffer->text_line_height() + row;
 
-    if (NetWinSessionData.mode_ == 3 || NetWinSessionData.mode_ == 2) {
+    if (NetWinSessionData.fields_.mode_ == 3 || NetWinSessionData.fields_.mode_ == 2) {
         // The unclaimed-faction tally: every record whose claimed id matches
         // nobody in the lobby.
         int connected = 0;
@@ -1221,7 +1242,7 @@ void NetWin::draw_session_info() {
             if (owned != 0) {
                 int seen = 0;
                 if (NetDaemonNet.player_count_ > 0) {
-                    const NetWinLobbyRow *scan = &NetWinLobbyRows[1];
+                    const NetWinLobbyRow *scan = &NetWinLobbyRows.rows_[1];
                     while (seen < NetDaemonNet.player_count_) {
                         if (scan->owner_ == owned) {
                             break;
@@ -1303,12 +1324,12 @@ void NetWin::draw_player_names() {
                              strlen(StringTemp));
     }
 
-    NetWinLobbyRow *lobby_row = &NetWinLobbyRows[1];
+    NetWinLobbyRow *lobby_row = &NetWinLobbyRows.rows_[1];
     AlphaNetProcessSlot *slot_record = NetDaemonNet.process_slots_ + 1;
     RECT *rects = &setup_rects_[6];
     for (int row = 0; row < 7;
          ++row, ++lobby_row, slot_record += 1) {
-        if (NetWinSessionData.mode_ == 3
+        if (NetWinSessionData.fields_.mode_ == 3
             && row >= faction_records_[0].record_type_) {
             break;
         }
@@ -1321,7 +1342,7 @@ void NetWin::draw_player_names() {
         int ready = lobby_row->ready_or_occupied_ != 0 ? 2 : 0;
         buffer->box_sprite(row_rect, &InterfaceBoxStyles[48 + ready]);
 
-        if (NetWinSessionData.mode_ == 3 && lobby_row->prefix_ == 0xFF) {
+        if (NetWinSessionData.fields_.mode_ == 3 && lobby_row->prefix_ == 0xFF) {
             continue;
         }
 
@@ -1329,7 +1350,7 @@ void NetWin::draw_player_names() {
         // record's claim dword, only while the eighth word is 2 or 3.
         signed char mode = lobby_row->faction_or_color_;
         int locked;
-        if (NetWinSessionData.mode_ == 2 || NetWinSessionData.mode_ == 3) {
+        if (NetWinSessionData.fields_.mode_ == 2 || NetWinSessionData.fields_.mode_ == 3) {
             locked = 0;
             if (mode != -1) {
                 unsigned long claimed = lobby_row->owner_;
@@ -1349,7 +1370,7 @@ void NetWin::draw_player_names() {
         field.left += 4;
         field.right -= 4;
 
-        if (NetWinSessionData.mode_ == 0 || NetWinSessionData.mode_ == 1) {
+        if (NetWinSessionData.fields_.mode_ == 0 || NetWinSessionData.fields_.mode_ == 1) {
             if (row + 1 == NetDaemonNet.pid_2_idx(NetDaemonNet.local_player_id())) {
                 Sprite &arrow = g_IFACE_MP_COMBO_ARROW_SPRITES[0];
                 arrow.draw(buffer, arrow.transparent_index(),
@@ -1381,7 +1402,7 @@ void NetWin::draw_player_names() {
                 // append the tally when there is more than one.
                 int matches = 0;
                 const char *name = lobby_row->leader_name_;
-                const NetWinLobbyRow *scan = &NetWinLobbyRows[1];
+                const NetWinLobbyRow *scan = &NetWinLobbyRows.rows_[1];
                 for (int seen = row; seen != 0; --seen) {
                     if (strcmp(name, scan->leader_name_) == 0) {
                         ++matches;
@@ -1405,7 +1426,7 @@ void NetWin::draw_player_names() {
         spot_.add(row, 2, row_rect->left, row_rect->top,
                   row_rect->right - row_rect->left,
                   row_rect->bottom - row_rect->top);
-        if (NetWinSessionData.mode_ == 0 || NetWinSessionData.mode_ == 1) {
+        if (NetWinSessionData.fields_.mode_ == 0 || NetWinSessionData.fields_.mode_ == 1) {
             spot_.add(row, 2, name_rect->left, name_rect->top,
                       name_rect->right - name_rect->left,
                       name_rect->bottom - name_rect->top);
@@ -1419,7 +1440,7 @@ void NetWin::draw_player_names() {
     if (NetDaemonNet.primary_state_.leading_words_[0] == 0) {
         // Not connected: the left button takes the connect label.
         unsigned char color =
-            static_cast<uint8_t>(NetWinLobbyRows[pid_idx].faction_or_color_);
+            static_cast<uint8_t>(NetWinLobbyRows.rows_[pid_idx].faction_or_color_);
         const LPSTR label = color != 0
             ? Labels.strings_ptr[0x1054 / 4]
             : Labels.strings_ptr[0x1050 / 4];
@@ -1488,7 +1509,7 @@ void NetWin::draw_custom_rules() {
     row_rect.bottom = bottom;
 
     // The standing free-technology checkbox, spot id 100.
-    int free_tech = (NetWinSessionOptions.rule_bits_c_ & 0x10) == 0 ? 2 : 0;
+    int free_tech = (NetWinSessionOptions.fields_.rule_bits_c_ & 0x10) == 0 ? 2 : 0;
     Sprite &standing = g_IFACE_CLOSE_X_SPRITES[free_tech];
     standing.draw(this, standing.transparent_index(), left, top);
     if (NetDaemonNet.primary_state_.leading_words_[0] != 0) {
@@ -1506,7 +1527,7 @@ void NetWin::draw_custom_rules() {
 
     for (int row = 0; row <= 0x11; ++row) {
         unsigned int state;
-        unsigned int bits = NetWinSessionOptions.rule_bits_a_;
+        unsigned int bits = NetWinSessionOptions.fields_.rule_bits_a_;
         switch (row) {
         case 0:
             state = bits & 0x800;
@@ -1554,10 +1575,10 @@ void NetWin::draw_custom_rules() {
             state = bits & 0x80;
             break;
         case 16:
-            state = NetWinSessionOptions.rule_bits_b_ & 0x800000;
+            state = NetWinSessionOptions.fields_.rule_bits_b_ & 0x800000;
             break;
         case 17:
-            state = NetWinSessionOptions.rule_bits_b_ & 0x1000000;
+            state = NetWinSessionOptions.fields_.rule_bits_b_ & 0x1000000;
             break;
         default:
             // Row 15 draws nothing - the separator line in the RULES text.
@@ -1618,15 +1639,15 @@ Status: Coverage transcription - unclaimed body
 void NetWin::draw_diffs() {
     spot_.kill_type(4);
     RECT *rect = &setup_rects_[20];
-    NetWinLobbyRow *row = &NetWinLobbyRows[1];
+    NetWinLobbyRow *row = &NetWinLobbyRows.rows_[1];
     for (int index = 0; index < 7;
          ++index, ++row, ++rect) {
-        if (NetWinSessionData.mode_ == 3
+        if (NetWinSessionData.fields_.mode_ == 3
             && index >= faction_records_[0].record_type_) {
             break;
         }
         Buffer::box_sprite(rect, &InterfaceBoxStyles[0]);
-        if (NetWinSessionData.mode_ == 3 && row->prefix_ == 0xFF) {
+        if (NetWinSessionData.fields_.mode_ == 3 && row->prefix_ == 0xFF) {
             continue;
         }
 
@@ -1683,15 +1704,15 @@ Status: Coverage transcription - unclaimed body
 void NetWin::draw_factions() {
     spot_.kill_type(3);
     RECT *rect = &setup_rects_[13];
-    NetWinLobbyRow *row = &NetWinLobbyRows[1];
+    NetWinLobbyRow *row = &NetWinLobbyRows.rows_[1];
     for (int index = 0; index < 7;
          ++index, ++row, ++rect) {
-        if (NetWinSessionData.mode_ == 3
+        if (NetWinSessionData.fields_.mode_ == 3
             && index >= faction_records_[0].record_type_) {
             break;
         }
         Buffer::box_sprite(rect, &InterfaceBoxStyles[0]);
-        if (NetWinSessionData.mode_ == 3 && row->prefix_ == 0xFF) {
+        if (NetWinSessionData.fields_.mode_ == 3 && row->prefix_ == 0xFF) {
             continue;
         }
 
@@ -1750,7 +1771,7 @@ static int __cdecl pick_daemon_callback() {
 static void pick_send_state() {
     NetDaemonNet.pid_2_idx(NetDaemonNet.local_player_id());
     NetWinSessionOptionsPacket packet;
-    packet.options_ = NetWinSessionOptions;
+    packet.options_ = NetWinSessionOptions.fields_;
     packet.opcode_ = 0x2F02;
     NetDaemonNet.send(&packet, sizeof(packet), NetDaemonNet.host_player_id(), 1);
 }
@@ -1761,7 +1782,7 @@ static void pick_send_state_with_captured_target() {
     NetDaemonNet.pid_2_idx(NetDaemonNet.local_player_id());
     const int target = NetDaemonNet.host_player_id();
     NetWinSessionOptionsPacket packet;
-    packet.options_ = NetWinSessionOptions;
+    packet.options_ = NetWinSessionOptions.fields_;
     packet.opcode_ = 0x2F02;
     NetDaemonNet.send(&packet, sizeof(packet), target, 1);
 }
@@ -1813,24 +1834,24 @@ void NetWin::on_left_click(int x, int y) {
             return;
         }
         switch (spot_position) {
-        case 0: NetWinSessionOptions.rule_bits_a_ ^= 0x800; break;
-        case 1: NetWinSessionOptions.rule_bits_a_ ^= 0x2; break;
-        case 2: NetWinSessionOptions.rule_bits_a_ ^= 0x8; break;
-        case 3: NetWinSessionOptions.rule_bits_a_ ^= 0x4; break;
-        case 4: NetWinSessionOptions.rule_bits_a_ ^= 0x1000; break;
-        case 5: NetWinSessionOptions.rule_bits_a_ ^= 0x1; break;
-        case 6: NetWinSessionOptions.rule_bits_a_ ^= 0x10; break;
-        case 7: NetWinSessionOptions.rule_bits_a_ ^= 0x20; break;
-        case 8: NetWinSessionOptions.rule_bits_a_ ^= 0x4000; break;
-        case 9: NetWinSessionOptions.rule_bits_a_ ^= 0x200; break;
-        case 10: NetWinSessionOptions.rule_bits_a_ ^= 0x40; break;
-        case 11: NetWinSessionOptions.rule_bits_a_ ^= 0x100; break;
-        case 12: NetWinSessionOptions.rule_bits_a_ ^= 0x2000; break;
-        case 13: NetWinSessionOptions.rule_bits_a_ ^= 0x8000; break;
-        case 14: NetWinSessionOptions.rule_bits_a_ ^= 0x80; break;
-        case 16: NetWinSessionOptions.rule_bits_b_ ^= 0x800000; break;
-        case 17: NetWinSessionOptions.rule_bits_b_ ^= 0x1000000; break;
-        case 100: NetWinSessionOptions.rule_bits_c_ ^= 0x10; break;
+        case 0: NetWinSessionOptions.fields_.rule_bits_a_ ^= 0x800; break;
+        case 1: NetWinSessionOptions.fields_.rule_bits_a_ ^= 0x2; break;
+        case 2: NetWinSessionOptions.fields_.rule_bits_a_ ^= 0x8; break;
+        case 3: NetWinSessionOptions.fields_.rule_bits_a_ ^= 0x4; break;
+        case 4: NetWinSessionOptions.fields_.rule_bits_a_ ^= 0x1000; break;
+        case 5: NetWinSessionOptions.fields_.rule_bits_a_ ^= 0x1; break;
+        case 6: NetWinSessionOptions.fields_.rule_bits_a_ ^= 0x10; break;
+        case 7: NetWinSessionOptions.fields_.rule_bits_a_ ^= 0x20; break;
+        case 8: NetWinSessionOptions.fields_.rule_bits_a_ ^= 0x4000; break;
+        case 9: NetWinSessionOptions.fields_.rule_bits_a_ ^= 0x200; break;
+        case 10: NetWinSessionOptions.fields_.rule_bits_a_ ^= 0x40; break;
+        case 11: NetWinSessionOptions.fields_.rule_bits_a_ ^= 0x100; break;
+        case 12: NetWinSessionOptions.fields_.rule_bits_a_ ^= 0x2000; break;
+        case 13: NetWinSessionOptions.fields_.rule_bits_a_ ^= 0x8000; break;
+        case 14: NetWinSessionOptions.fields_.rule_bits_a_ ^= 0x80; break;
+        case 16: NetWinSessionOptions.fields_.rule_bits_b_ ^= 0x800000; break;
+        case 17: NetWinSessionOptions.fields_.rule_bits_b_ ^= 0x1000000; break;
+        case 100: NetWinSessionOptions.fields_.rule_bits_c_ ^= 0x10; break;
         // Native 47B8BA and selector slot18 join the unchanged-options send.
         default: break;
         }
@@ -1846,7 +1867,7 @@ void NetWin::on_left_click(int x, int y) {
     case 4:
         if (NetDaemonNet.process_slots_[spot_position + 1].pid_ ==
                 static_cast<unsigned long>(NetDaemonNet.local_player_id()) ||
-            (NetWinLobbyRows[spot_position + 1].prefix_ == 0xFF &&
+            (NetWinLobbyRows.rows_[spot_position + 1].prefix_ == 0xFF &&
              NetDaemonNet.local_player_id() == NetDaemonNet.host_player_id())) {
             if (spot_type == 3) {
                 pick_faction(spot_position + 1);
@@ -1856,7 +1877,7 @@ void NetWin::on_left_click(int x, int y) {
         }
         return;
     case 5:
-        if ((NetWinSessionData.mode_ == 0 || NetWinSessionData.mode_ == 1) &&
+        if ((NetWinSessionData.fields_.mode_ == 0 || NetWinSessionData.fields_.mode_ == 1) &&
             NetDaemonNet.process_slots_[spot_position + 1].pid_ ==
                 static_cast<unsigned long>(NetDaemonNet.local_player_id())) {
             pick_pass(0);
@@ -1877,7 +1898,7 @@ void NetWin::on_left_click(int x, int y) {
 void NetWin::pick_player() {
     // Native 47BC1B constructs the owner even on the saved-mode early exit.
     Popup popup;
-    if (NetWinSessionData.mode_ == 2 || NetWinSessionData.mode_ == 3) {
+    if (NetWinSessionData.fields_.mode_ == 2 || NetWinSessionData.fields_.mode_ == 3) {
         return;
     }
     const int slot = NetDaemonNet.pid_2_idx(NetDaemonNet.local_player_id());
@@ -1887,23 +1908,23 @@ void NetWin::pick_player() {
     // window, not an original array/padding declaration or overflow layout.
     char gender_text[0x100];
     strcpy(gender_text,
-           label_get((NetWinLobbyRows[slot].tail_[0] == 0 ? 0xB88 : 0xB8C) /
+           label_get((NetWinLobbyRows.rows_[slot].tail_[0] == 0 ? 0xB88 : 0xB8C) /
                      4));
     popup.start(PopupStartCaption, "CUSTOMNAMES", -1, 0, 0x200044, 0);
     EditGroup &fields = static_cast<EditGroup &>(popup.dialogs());
-    fields.edit(label_get(0x2B8 / 4), NetWinLobbyRows[slot].leader_name_, 0x17);
-    fields.edit(label_get(0x2BC / 4), NetWinLobbyRows[slot].formal_faction_name_, 0x27);
-    fields.edit(label_get(0x2C0 / 4), NetWinLobbyRows[slot].noun_faction_, 0x17);
-    fields.edit(label_get(0x2C4 / 4), NetWinLobbyRows[slot].adjective_faction_, 0x17);
-    fields.edit(label_get(0x78C / 4), NetWinLobbyRows[slot].leader_title_, 0x17);
-    fields.edit(label_get(0x790 / 4), NetWinLobbyRows[slot].adjective_leader_, 0x17);
+    fields.edit(label_get(0x2B8 / 4), NetWinLobbyRows.rows_[slot].leader_name_, 0x17);
+    fields.edit(label_get(0x2BC / 4), NetWinLobbyRows.rows_[slot].formal_faction_name_, 0x27);
+    fields.edit(label_get(0x2C0 / 4), NetWinLobbyRows.rows_[slot].noun_faction_, 0x17);
+    fields.edit(label_get(0x2C4 / 4), NetWinLobbyRows.rows_[slot].adjective_faction_, 0x17);
+    fields.edit(label_get(0x78C / 4), NetWinLobbyRows.rows_[slot].leader_title_, 0x17);
+    fields.edit(label_get(0x790 / 4), NetWinLobbyRows.rows_[slot].adjective_leader_, 0x17);
     fields.edit(label_get(0x794 / 4), gender_text, 0x17);
     popup.set_loc(0x1000, 0x1000);
     if (popup.exec(0, pick_daemon_callback) < 0) {
         return;
     }
 
-    NetWinLobbyRow updated = NetWinLobbyRows[slot];
+    NetWinLobbyRow updated = NetWinLobbyRows.rows_[slot];
     if (popup.input_poll_state() == 1) {
         const int faction = updated.faction_or_color_;
         if (faction == -1) {
@@ -1974,11 +1995,11 @@ void NetWin::pick_faction(int slot) {
         }
 
         bool already_selected = false;
-        if (NetWinSessionData.mode_ == 2 || NetWinSessionData.mode_ == 3) {
+        if (NetWinSessionData.fields_.mode_ == 2 || NetWinSessionData.fields_.mode_ == 3) {
             // Native 47C656 compares zero with a negative scan bound too.
             already_selected = player_count < 0;
             for (int player = 1; player <= player_count; ++player) {
-                if (NetWinLobbyRows[player].faction_or_color_ == faction) {
+                if (NetWinLobbyRows.rows_[player].faction_or_color_ == faction) {
                     already_selected = true;
                     break;
                 }
@@ -1996,18 +2017,18 @@ void NetWin::pick_faction(int slot) {
     }
 
     const int chosen_faction = pop_menu.get_selected_id() - 1;
-    const int8_t previous = NetWinLobbyRows[slot].faction_or_color_;
-    NetWinLobbyRows[slot].faction_or_color_ =
+    const int8_t previous = NetWinLobbyRows.rows_[slot].faction_or_color_;
+    NetWinLobbyRows.rows_[slot].faction_or_color_ =
         static_cast<int8_t>(chosen_faction);
     const int accepted = pick_pass(1);
-    NetWinLobbyRows[slot].faction_or_color_ = previous;
+    NetWinLobbyRows.rows_[slot].faction_or_color_ = previous;
     if (accepted == 0) {
         return;
     }
 
     // Native 47C811 snapshots the restored live row before the signed guard.
     NetWinLobbyRow updated;
-    memcpy(&updated, &NetWinLobbyRows[slot], 0x17C);
+    memcpy(&updated, &NetWinLobbyRows.rows_[slot], 0x17C);
     updated.faction_or_color_ = static_cast<int8_t>(chosen_faction);
     if (slot >= 1) {
         NetWinLobbySinglePacket packet;
@@ -2037,7 +2058,7 @@ void NetWin::pick_diff(int slot) {
 
     const int answer = pick_answer(*this, pop_menu);
     NetWinLobbyRow row;
-    memcpy(&row, &NetWinLobbyRows[slot], sizeof(row));
+    memcpy(&row, &NetWinLobbyRows.rows_[slot], sizeof(row));
     if (answer >= 0) {
         row.field_2_ = static_cast<uint8_t>(answer);
     }
@@ -2089,16 +2110,16 @@ void NetWin::pick_map() {
             memcpy(faction_records_, faction_records_copy_, record_bytes);
 
             field_7728_ = 0;
-            NetWinSessionOptions.difficulty_ =
+            NetWinSessionOptions.fields_.difficulty_ =
                 static_cast<uint8_t>(DefaultPrefs.difficulty);
-            NetWinSessionOptions.rule_bits_a_ = AlphaIniPrefs.rules;
-            NetWinSessionData.scenario_text_wire_tail_[0] = 0;
-            NetWinSessionOptions.status_ = 0xFF;
+            NetWinSessionOptions.fields_.rule_bits_a_ = AlphaIniPrefs.rules;
+            NetWinSessionData.fields_.scenario_text_wire_tail_[0] = 0;
+            NetWinSessionOptions.fields_.status_ = 0xFF;
 
             NetDaemonNet.pid_2_idx(NetDaemonNet.local_player_id());
             NetWinSessionOptionsPacket options_packet;
             options_packet.opcode_ = 0x2F02;
-            options_packet.options_ = NetWinSessionOptions;
+            options_packet.options_ = NetWinSessionOptions.fields_;
             NetDaemonNet.Net::send(&options_packet, sizeof(options_packet),
                                    NetDaemonNet.host_player_id(), 1);
         } else {
@@ -2133,11 +2154,11 @@ void NetWin::pick_map() {
                     records[faction].owner_ = PlayersData[player_slot].unk_102;
                 }
 
-                NetWinSessionOptions.option_4_ = static_cast<uint8_t>(
+                NetWinSessionOptions.fields_.option_4_ = static_cast<uint8_t>(
                     MapLongitudeBounds / 2);
-                NetWinSessionOptions.option_5_ =
+                NetWinSessionOptions.fields_.option_5_ =
                     static_cast<uint8_t>(MapLatitudeBounds);
-                NetWinSessionData.scenario_text_wire_tail_[0] = 0;
+                NetWinSessionData.fields_.scenario_text_wire_tail_[0] = 0;
 
                 char *scenario_name = strrchr(
                     loaded_file_path_, '\\');
@@ -2146,24 +2167,24 @@ void NetWin::pick_map() {
                 } else {
                     ++scenario_name;
                 }
-                strcpy(NetWinSessionData.scenario_text_wire_tail_, scenario_name);
+                strcpy(NetWinSessionData.fields_.scenario_text_wire_tail_, scenario_name);
             }
 
             if ((GameDataStateStorage.fields_.net_turn_flags_ & 0x10u) != 0) {
-                NetWinSessionOptions.rule_bits_c_ |= 0x10u;
+                NetWinSessionOptions.fields_.rule_bits_c_ |= 0x10u;
             } else {
-                NetWinSessionOptions.rule_bits_c_ &= ~0x10u;
+                NetWinSessionOptions.fields_.rule_bits_c_ &= ~0x10u;
             }
-            NetWinSessionOptions.difficulty_ =
+            NetWinSessionOptions.fields_.difficulty_ =
                 static_cast<uint8_t>(GameDataStateStorage.fields_.diff_level_current_);
-            NetWinSessionOptions.status_ =
+            NetWinSessionOptions.fields_.status_ =
                 GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_;
-            NetWinSessionOptions.rule_bits_a_ = GameDataStateStorage.fields_.game_rules_;
+            NetWinSessionOptions.fields_.rule_bits_a_ = GameDataStateStorage.fields_.game_rules_;
 
             NetDaemonNet.pid_2_idx(NetDaemonNet.local_player_id());
             NetWinSessionOptionsPacket options_packet;
             options_packet.opcode_ = 0x2F02;
-            options_packet.options_ = NetWinSessionOptions;
+            options_packet.options_ = NetWinSessionOptions.fields_;
             NetDaemonNet.Net::send(&options_packet, sizeof(options_packet),
                                    NetDaemonNet.host_player_id(), 1);
         }
@@ -2182,7 +2203,7 @@ void NetWin::pick_map() {
             const Player &player = Players[player_slot];
             const uint8_t player_bit =
                 static_cast<uint8_t>(1u << player_slot);
-            if ((NetWinSessionOptions.status_ & player_bit) == 0) {
+            if ((NetWinSessionOptions.fields_.status_ & player_bit) == 0) {
                 record.active_ = 0;
                 continue;
             }
@@ -2229,7 +2250,7 @@ void NetWin::pick_map() {
         char *const default_faction_text =
             label_get(0xFE4 / 4);
         for (int player_slot = 1; player_slot < 8; ++player_slot) {
-            NetWinLobbyRow &row = NetWinLobbyRows[player_slot];
+            NetWinLobbyRow &row = NetWinLobbyRows.rows_[player_slot];
             row.faction_or_color_ = -1;
             strcpy(row.leader_name_, default_faction_text);
             strcpy(row.noun_faction_, default_faction_text);
@@ -2252,16 +2273,16 @@ void NetWin::pick_map() {
         assigned_packet.header_.field_8_ = 0;
         // Native 47DC27..47DC55 copies all seven live rows after the local
         // normalization loop, overwriting those row-field writes on this path.
-        memcpy(assigned_packet.rows_, &NetWinLobbyRows[1], 0xA64);
+        memcpy(assigned_packet.rows_, &NetWinLobbyRows.rows_[1], 0xA64);
         assigned_packet.header_.flags_ |= 0x40;
         NetDaemonNet.Net::send(&assigned_packet, sizeof(assigned_packet), 0, 1);
     }
 
-    NetWinSessionData.mode_ = static_cast<uint32_t>(field_7728_);
+    NetWinSessionData.fields_.mode_ = static_cast<uint32_t>(field_7728_);
     NetDaemonNet.pid_2_idx(NetDaemonNet.local_player_id());
     NetWinSessionLobbyPacket session_packet;
     session_packet.header_.set_opcode(0x2F03);
-    session_packet.session_ = NetWinSessionData;
+    session_packet.session_ = NetWinSessionData.fields_;
     NetDaemonNet.Net::send(&session_packet, sizeof(session_packet),
                            NetDaemonNet.host_player_id(), 1);
 
@@ -2303,7 +2324,7 @@ void NetWin::pick_clouds() {
     }
     int answer = pick_answer(*this, pop_menu);
     if (answer >= 0) {
-        NetWinSessionOptions.cloud_cover_ =
+        NetWinSessionOptions.fields_.cloud_cover_ =
             static_cast<unsigned char>(answer - 1);
     }
     pick_send_state();
@@ -2335,7 +2356,7 @@ void NetWin::pick_ocean() {
     }
     int answer = pick_answer(*this, pop_menu);
     if (answer >= 0) {
-        NetWinSessionOptions.ocean_coverage_ =
+        NetWinSessionOptions.fields_.ocean_coverage_ =
             static_cast<unsigned char>(answer - 1);
     }
     pick_send_state();
@@ -2367,7 +2388,7 @@ void NetWin::pick_erosion() {
     }
     int answer = pick_answer(*this, pop_menu);
     if (answer >= 0) {
-        NetWinSessionOptions.erosion_ =
+        NetWinSessionOptions.fields_.erosion_ =
             static_cast<unsigned char>(answer - 1);
     }
     pick_send_state();
@@ -2399,7 +2420,7 @@ void NetWin::pick_native() {
     }
     int answer = pick_answer(*this, pop_menu);
     if (answer >= 0) {
-        NetWinSessionOptions.native_life_ =
+        NetWinSessionOptions.fields_.native_life_ =
             static_cast<unsigned char>(answer - 1);
     }
     pick_send_state();
@@ -2432,7 +2453,7 @@ void NetWin::pick_planet_size() {
     }
     int answer = pick_answer(*this, pop_menu);
     if (answer >= 0) {
-        NetWinSessionOptions.planet_size_ =
+        NetWinSessionOptions.fields_.planet_size_ =
             static_cast<unsigned char>(answer - 1);
     }
     pick_send_state_with_captured_target();
@@ -2475,7 +2496,7 @@ int NetWin::exec() {
         lobby_message.header_.field_8_ = 0;
         // Preserve the original untouched header bytes +2..3 and +C..F.
         // Whole-packet zeroing would deliberately change the wire behavior.
-        memcpy(lobby_message.rows_, &NetWinLobbyRows[1], 0xA64);
+        memcpy(lobby_message.rows_, &NetWinLobbyRows.rows_[1], 0xA64);
         lobby_message.header_.flags_ |= 0x40;
         NetDaemonNet.send(&lobby_message, 0xA74, 0, 1);
     }
@@ -2616,17 +2637,17 @@ int NetWin::exec() {
     flatButton2_.set_text_color(0x41, -1, 1, 1);
 
     if (NetDaemonNet.primary_state_.leading_words_[0] != 0) {
-        NetWinSessionOptions.rule_bits_a_ = AlphaIniPrefs.rules;
-        NetWinSessionOptions.difficulty_ = static_cast<uint8_t>(DefaultPrefs.difficulty);
-        NetWinSessionOptions.rule_bits_c_ |= 0x10;
-        NetWinLobbyRows[1].field_2_ = static_cast<uint8_t>(DefaultPrefs.difficulty);
-        NetWinSessionOptions.rule_bits_b_ = AlphaIniPrefs.semaphore;
+        NetWinSessionOptions.fields_.rule_bits_a_ = AlphaIniPrefs.rules;
+        NetWinSessionOptions.fields_.difficulty_ = static_cast<uint8_t>(DefaultPrefs.difficulty);
+        NetWinSessionOptions.fields_.rule_bits_c_ |= 0x10;
+        NetWinLobbyRows.rows_[1].field_2_ = static_cast<uint8_t>(DefaultPrefs.difficulty);
+        NetWinSessionOptions.fields_.rule_bits_b_ = AlphaIniPrefs.semaphore;
         NetDaemonNet.pid_2_idx(NetDaemonNet.local_player_id());
         NetWinSessionOptionsPacket packet;
         // Original 0x482C64..0x482C88 writes only the opcode and six options
         // words; reserved header bytes +2..+0xF retain prior stack contents.
         packet.opcode_ = 0x2F02;
-        packet.options_ = NetWinSessionOptions;
+        packet.options_ = NetWinSessionOptions.fields_;
         NetDaemonNet.send(&packet, 0x28, NetDaemonNet.host_player_id(), 1);
     }
 
@@ -2705,7 +2726,7 @@ void NetWin::pick_num_players() {
                                      static_cast<uint32_t>(first));
         if (count < 2) count = 2;
         else if (count > 7) count = 7;
-        NetWinSessionOptions.player_count_ = static_cast<unsigned char>(count);
+        NetWinSessionOptions.fields_.player_count_ = static_cast<unsigned char>(count);
     }
     pick_send_state_with_captured_target();
 }
@@ -2735,7 +2756,7 @@ void NetWin::pick_global_diff() {
     }
     int answer = pick_answer(*this, pop_menu);
     if (answer >= 0) {
-        NetWinSessionOptions.difficulty_ =
+        NetWinSessionOptions.fields_.difficulty_ =
             static_cast<unsigned char>(answer);
     }
     pick_send_state();
@@ -2763,7 +2784,7 @@ void NetWin::pick_time() {
     time_controls_dialog(&pop_menu);
     int answer = pick_answer(*this, pop_menu);
     if (answer >= 0) {
-        NetWinSessionOptions.time_control_ =
+        NetWinSessionOptions.fields_.time_control_ =
             static_cast<unsigned char>(answer);
     }
     pick_send_state();
@@ -2799,7 +2820,7 @@ int NetWin::modal_callback() {
     if (field_7614_ == 0) {
         field_7618_ = 1;
         if (NetDaemonNet.player_count_ >= 1) {
-            NetWinLobbyRow *record = &NetWinLobbyRows[1];
+            NetWinLobbyRow *record = &NetWinLobbyRows.rows_[1];
             int index = 1;
             do {
                 if (record->ready_or_occupied_ == 0) {
@@ -2853,7 +2874,7 @@ int __cdecl NetWin::modal_callback_daemon() {
     int all_used = 1;
     NetWinDialog.field_7618_ = all_used;
     if (count >= 1) {
-        NetWinLobbyRow *record = &NetWinLobbyRows[1];
+        NetWinLobbyRow *record = &NetWinLobbyRows.rows_[1];
         do {
             if (record->ready_or_occupied_ == 0) {
                 all_used = 0;
@@ -3007,14 +3028,14 @@ Status: Compiler-generated CheckBox complete-object destructor, emitted from
 int NetWin::pick_pass(int payload) {
     Popup popup;
     const int slot = NetDaemonNet.pid_2_idx(NetDaemonNet.local_player_id());
-    const bool faction_mode = NetWinSessionData.mode_ == 2 ||
-                              NetWinSessionData.mode_ == 3;
+    const bool faction_mode = NetWinSessionData.fields_.mode_ == 2 ||
+                              NetWinSessionData.fields_.mode_ == 3;
 
     if (!faction_mode && payload != 0) {
         return 1;
     }
 
-    NetWinLobbyRow &row = NetWinLobbyRows[slot];
+    NetWinLobbyRow &row = NetWinLobbyRows.rows_[slot];
     const int faction = row.faction_or_color_;
     if (faction == -1) {
         row.owner_ = 0;
@@ -3325,13 +3346,13 @@ void NetWin::on_button_clicked(int clicked_id) {
 
     const int local_slot = NetDaemonNet.pid_2_idx(NetDaemonNet.local_player_id());
     if (NetDaemonNet.primary_state_.leading_words_[0] != 0) {
-        uint8_t &ready = NetWinLobbyRows[local_slot].ready_or_occupied_;
+        uint8_t &ready = NetWinLobbyRows.rows_[local_slot].ready_or_occupied_;
         const int slot_count = NetDaemonNet.player_count_ + 1;
         int slot = 1;
         ready = 1;
         if (slot_count > 1) {
             do {
-                if (NetWinLobbyRows[slot].ready_or_occupied_ == 0) {
+                if (NetWinLobbyRows.rows_[slot].ready_or_occupied_ == 0) {
                     break;
                 }
                 ++slot;
@@ -3345,7 +3366,7 @@ void NetWin::on_button_clicked(int clicked_id) {
             return;
         }
 
-        const int transport = NetWinSessionData.mode_;
+        const int transport = NetWinSessionData.fields_.mode_;
         if (transport == 2 || transport == 3) {
             const NetWinFactionRecord *const records =
                 static_cast<const NetWinFactionRecord *>(faction_records_);
@@ -3356,7 +3377,7 @@ void NetWin::on_button_clicked(int clicked_id) {
                     int scan = 1;
                     if (scan_count > 1) {
                         do {
-                            if (NetWinLobbyRows[scan].faction_or_color_ ==
+                            if (NetWinLobbyRows.rows_[scan].faction_or_color_ ==
                                 faction) {
                                 break;
                             }
@@ -3364,7 +3385,7 @@ void NetWin::on_button_clicked(int clicked_id) {
                         } while (scan < scan_count);
                     }
                     if (scan == scan_count ||
-                        owner != NetWinLobbyRows[scan].owner_) {
+                        owner != NetWinLobbyRows.rows_[scan].owner_) {
                         X_pop(ScriptPopupFile,
                                             "PASSWORDSNOTVALIDATED", 0);
                         NetWinLobbyLeavePacket packet;
@@ -3379,7 +3400,7 @@ void NetWin::on_button_clicked(int clicked_id) {
 
         const int ready_count = NetDaemonNet.player_count_ + 1;
         for (int ready_slot = 1; ready_slot < ready_count; ++ready_slot) {
-            NetWinLobbyRows[ready_slot].ready_or_occupied_ = 1;
+            NetWinLobbyRows.rows_[ready_slot].ready_or_occupied_ = 1;
         }
 
         struct ButtonFullLobbyPacket {
@@ -3396,11 +3417,11 @@ void NetWin::on_button_clicked(int clicked_id) {
         packet.header_.set_opcode(0x0F04);
         packet.header_.slot_ = -1;
         packet.header_.field_8_ = 0;
-        memcpy(static_cast<void *>(packet.rows_), &NetWinLobbyRows[1], sizeof(packet.rows_));
+        memcpy(static_cast<void *>(packet.rows_), &NetWinLobbyRows.rows_[1], sizeof(packet.rows_));
         packet.header_.flags_ |= 0x40;
         NetDaemonNet.Net::send(&packet, sizeof(packet), 0, 1);
     } else {
-        memcpy(&row.payload_, &NetWinLobbyRows[local_slot], sizeof(row.payload_));
+        memcpy(&row.payload_, &NetWinLobbyRows.rows_[local_slot], sizeof(row.payload_));
         row.payload_.ready_or_occupied_ = row.payload_.ready_or_occupied_ == 0 ? 1 : 0;
         struct ButtonSingleLobbyPacket {
             NetWinLobbyPacketHeader header_;
@@ -3517,7 +3538,7 @@ void __cdecl send_all_player_packets(int slot_id) {
         packet.header_.set_opcode(0x0F04);
         packet.header_.slot_ = -1;
         packet.header_.field_8_ = 0;
-        memcpy(packet.rows_, &NetWinLobbyRows[1], sizeof(packet.rows_));
+        memcpy(packet.rows_, &NetWinLobbyRows.rows_[1], sizeof(packet.rows_));
         if (slot_id < 0) {
             packet.header_.flags_ |= 0x40;
             NetDaemonNet.Net::send(&packet, sizeof(packet), 0, 1);
@@ -3584,7 +3605,7 @@ Status: Coverage transcription - claim pending re-measurement
 */
 void __cdecl send_session_packet(int slot_id, int target) {
     NetWinSessionOptionsPacket packet;
-    packet.options_ = NetWinSessionOptions;
+    packet.options_ = NetWinSessionOptions.fields_;
     if (target < 0) {
         packet.opcode_ = 0x4F02;
         NetDaemonNet.Net::send(&packet, sizeof(packet), 0, 1);
@@ -3619,7 +3640,7 @@ Status: Coverage transcription - unclaimed body
 */
 void __cdecl send_session2_packet(int slot_id, int target) {
     NetWinSessionBlockPacket packet;
-    packet.session_ = NetWinSessionData;
+    packet.session_ = NetWinSessionData.fields_;
     if (target < 0) {
         packet.opcode_ = 0x4F03;
         NetDaemonNet.Net::send(&packet, sizeof(packet), 0, 1);
@@ -3636,21 +3657,5 @@ void __cdecl send_session2_packet(int slot_id, int target) {
     NetDaemonNet.Net::send(&packet, sizeof(packet), who, 1);
 }
 
-/*
-// ORIGINAL: 0x004E2450 sub_4e2450 0x004E2450-0x004E245D BYTE_EXACT
-// symbol    _sub_4e2450
-// size      13 bytes
-// prototype
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: n/a
-Status: Complete
-*/
-extern "C" void __cdecl sub_4e2450() {
-    NetWinSessionData.mode_ = 0;
-    NetWinSessionData.scenario_text_wire_tail_[0] = 0;
-}
 // RECOVERY_GENERATED: v1 vtable 0x0066CCEC ? ??_7NetWin@@6BWin@@@ 0x00481C50
 // RECOVERY_GENERATED: v1 vtable 0x0066CCE4 ? ??_7NetWin@@6BBuffer@@@ 0x00481C50

@@ -119,8 +119,8 @@ struct FakeStringTable {
     }
 } StringTable;
 
-static NetWinLobbyRow NetWinLobbyRows[8];
-static NetWinSessionBlock NetWinSessionData;
+static struct NetWinLobbyRowsMock { NetWinLobbyRow rows_[8]; } NetWinLobbyRows;
+static struct NetWinSessionDataMock { NetWinSessionBlock fields_; } NetWinSessionData;
 
 struct Net {
     int player_count_;
@@ -154,7 +154,7 @@ public:
     int pick_pass(int payload) {
         ++g_pass_calls;
         g_pass_payload = payload;
-        g_faction_seen_during_pass = NetWinLobbyRows[g_pick_slot].faction_or_color_;
+        g_faction_seen_during_pass = NetWinLobbyRows.rows_[g_pick_slot].faction_or_color_;
         return g_pass_result;
     }
     void pick_faction(int slot);
@@ -221,11 +221,11 @@ int main() {
     strcpy(records[1].noun_faction_, "Faction One");
     netwin.faction_records_ = records;
     g_player_count = 0;
-    NetWinSessionData.mode_ = 0;
+    NetWinSessionData.fields_.mode_ = 0;
     NetWinLobbyRow original;
     fill_row(original, 0x31);
-    NetWinLobbyRows[1] = original;
-    const NetWinLobbyRow original_slot_zero = NetWinLobbyRows[0];
+    NetWinLobbyRows.rows_[1] = original;
+    const NetWinLobbyRow original_slot_zero = NetWinLobbyRows.rows_[0];
 
     // Cancelled faction dialog does not call pick_pass or send.
     reset_observations();
@@ -233,7 +233,7 @@ int main() {
     g_selected_id = 2;
     netwin.pick_faction(1);
     assert(g_pass_calls == 0 && NetDaemonNet.sends == 0);
-    assert(memcmp(&NetWinLobbyRows[1], &original, sizeof(original)) == 0);
+    assert(memcmp(&NetWinLobbyRows.rows_[1], &original, sizeof(original)) == 0);
 
     // A successful slot-zero choice temporarily changes shared state for
     // pick_pass, restores it afterward, and does not send a player packet.
@@ -246,7 +246,7 @@ int main() {
     assert(g_pass_calls == 1 && g_pass_payload == 1);
     assert(g_faction_seen_during_pass == 1);
     assert(NetDaemonNet.sends == 0);
-    assert(memcmp(&NetWinLobbyRows[0], &original_slot_zero, sizeof(original_slot_zero)) == 0);
+    assert(memcmp(&NetWinLobbyRows.rows_[0], &original_slot_zero, sizeof(original_slot_zero)) == 0);
 
     // Rejected faction choice restores the shared row and sends nothing.
     reset_observations();
@@ -255,7 +255,7 @@ int main() {
     g_pass_result = 0;
     netwin.pick_faction(1);
     assert(g_pass_calls == 1 && g_faction_seen_during_pass == 1);
-    assert(memcmp(&NetWinLobbyRows[1], &original, sizeof(original)) == 0);
+    assert(memcmp(&NetWinLobbyRows.rows_[1], &original, sizeof(original)) == 0);
     assert(NetDaemonNet.sends == 0);
 
     // Accepted positive slot sends an opcode/slot packet plus a full copied
@@ -266,7 +266,7 @@ int main() {
     g_pass_result = 1;
     netwin.pick_faction(1);
     assert(g_pass_calls == 1 && g_faction_seen_during_pass == 1);
-    assert(memcmp(&NetWinLobbyRows[1], &original, sizeof(original)) == 0);
+    assert(memcmp(&NetWinLobbyRows.rows_[1], &original, sizeof(original)) == 0);
     assert_packet_header(1);
     NetWinLobbyRow faction_row;
     memcpy(&faction_row, NetDaemonNet.bytes + sizeof(NetWinLobbyPacketHeader), sizeof(faction_row));
@@ -281,7 +281,7 @@ int main() {
     netwin.pick_diff(1);
     assert(StringTable.calls == 6);
     for (int i = 0; i < 6; ++i) assert(StringTable.ids[i] == 0x100 + i);
-    assert(memcmp(&NetWinLobbyRows[1], &original, sizeof(original)) == 0);
+    assert(memcmp(&NetWinLobbyRows.rows_[1], &original, sizeof(original)) == 0);
     assert_packet_header(1);
     NetWinLobbyRow cancelled_diff_row;
     memcpy(&cancelled_diff_row, NetDaemonNet.bytes + sizeof(NetWinLobbyPacketHeader), sizeof(cancelled_diff_row));
@@ -291,7 +291,7 @@ int main() {
     reset_observations();
     g_answer = 4;
     netwin.pick_diff(1);
-    assert(memcmp(&NetWinLobbyRows[1], &original, sizeof(original)) == 0);
+    assert(memcmp(&NetWinLobbyRows.rows_[1], &original, sizeof(original)) == 0);
     assert_packet_header(1);
     NetWinLobbyRow difficulty_row;
     memcpy(&difficulty_row, NetDaemonNet.bytes + sizeof(NetWinLobbyPacketHeader), sizeof(difficulty_row));
@@ -311,7 +311,7 @@ int main() {
     g_answer = 2;
     netwin.pick_diff(0);
     assert(NetDaemonNet.sends == 0);
-    assert(memcmp(&NetWinLobbyRows[1], &original, sizeof(original)) == 0);
+    assert(memcmp(&NetWinLobbyRows.rows_[1], &original, sizeof(original)) == 0);
 
     // Picker item identity is defined: faction ids are one-based, difficulty
     // ids are zero-based. The inactive faction is not offered.
@@ -379,7 +379,7 @@ def test_defined_field_and_row_damage_controls(compiler: str) -> None:
          "updated.faction_or_color_ = static_cast<int8_t>(chosen_faction);",
          "(void)chosen_faction;"),
         ("failed to restore shared row", "faction",
-         "NetWinLobbyRows[slot].faction_or_color_ = previous;", "(void)previous;"),
+         "NetWinLobbyRows.rows_[slot].faction_or_color_ = previous;", "(void)previous;"),
         ("wrong difficulty byte", "difficulty",
          "row.field_2_ = static_cast<uint8_t>(answer);",
          "row.field_2_ = static_cast<uint8_t>(answer + 1);"),

@@ -117,14 +117,14 @@ def _restore_netdaemon(current: str, baseline: str) -> str:
         ("packet.set_opcode(type);", "*reinterpret_cast<unsigned short *>(message) = type;")],
         "rebroadcast")
     current = _transform_function(current, "static void netdaemon_handle_session_options(", [
-        ("    const NetWinPacketView packet(message);\n    NetWinSessionOptions.receive_wire_block(\n        packet.payload());",
-         "    NetWinSessionOptions.receive_wire_block(\n        reinterpret_cast<const unsigned char *>(message + 0x10));"),
+        ("    const NetWinPacketView packet(message);\n    NetWinSessionOptions.fields_.receive_wire_block(\n        packet.payload());",
+         "    NetWinSessionOptions.fields_.receive_wire_block(\n        reinterpret_cast<const unsigned char *>(message + 0x10));"),
         ("packet.opcode()", "*reinterpret_cast<unsigned short *>(message)"),
         ("packet.set_opcode(type)", "*reinterpret_cast<unsigned short *>(message) = type")],
         "options")
     current = _transform_function(current, "static void netdaemon_handle_session_block(", [
-        ("    const NetWinPacketView packet(message);\n    NetWinSessionData.receive_wire_block(\n        packet.payload());",
-         "    NetWinSessionData.receive_wire_block(\n        reinterpret_cast<const unsigned char *>(message + 0x10));"),
+        ("    const NetWinPacketView packet(message);\n    NetWinSessionData.fields_.receive_wire_block(\n        packet.payload());",
+         "    NetWinSessionData.fields_.receive_wire_block(\n        reinterpret_cast<const unsigned char *>(message + 0x10));"),
         ("packet.opcode()", "*reinterpret_cast<unsigned short *>(message)"),
         ("packet.set_opcode(type)", "*reinterpret_cast<unsigned short *>(message) = type")],
         "session block")
@@ -172,23 +172,19 @@ def _restore_netwin_cpp(current: str, baseline: str) -> str:
         "PickMapLobbyLeavePacket leave_packet;", "pick_map leave packet")
     current = _replace_once(
         current,
-        "static char *const NetWinScenarioText =\n    NetWinSessionData.scenario_text_wire_tail_;",
-        "static unsigned char *const NetWinScenarioText = &NetWinSessionData.state_[0x20];",
+        "static char *const NetWinScenarioText =\n    NetWinSessionData.fields_.scenario_text_wire_tail_;",
+        "static unsigned char *const NetWinScenarioText = &NetWinSessionData.fields_.state_[0x20];",
         "scenario storage alias")
     current = _transform_function(current, "void NetWin::draw_session_info()", [
         ("strcat(StringTemp,\n               NetWinScenarioText);",
          "strcat(StringTemp,\n               reinterpret_cast<const char *>(NetWinScenarioText));")],
         "draw session scenario text cast")
     current = _transform_function(current, "void NetWin::pick_map()", [
-        ("NetWinSessionData.scenario_text_wire_tail_[0] = 0;",
-         "NetWinSessionData.state_[0x20] = 0;", 2),
+        ("NetWinSessionData.fields_.scenario_text_wire_tail_[0] = 0;",
+         "NetWinSessionData.fields_.state_[0x20] = 0;", 2),
         ("strcpy(NetWinScenarioText, scenario_name);",
          "strcpy(reinterpret_cast<char *>(NetWinScenarioText),\n                       scenario_name);")],
         "pick map scenario storage")
-    current = _transform_function(current, 'extern "C" void __cdecl sub_4e2450()', [
-        ("NetWinSessionData.scenario_text_wire_tail_[0] = 0;",
-         "NetWinSessionData.state_[0x20] = 0;")],
-        "session reset scenario byte")
     current = _insert_historical_region(current, baseline,
         "struct NetWinLobbyFullPacket {", "/*\nPurpose: Answer the multiplayer setup dialog's button click.",
         "/*\nPurpose: Answer the multiplayer setup dialog's button click.",
@@ -307,12 +303,17 @@ static void require(bool condition, const char *name) {
 }
 static unsigned label_calls;
 static char *active_noun;
-static const char *label_get(int) {
+static const char *label_strings[0xFE4 / 4 + 1] = {};
+struct LabelTableState { const char **strings_ptr; } Labels = { label_strings };
+struct StringTableState {
+    const char *get(const char *value) {
+    (void)value;
     ++label_calls;
     require(active_noun != 0 && active_noun[0] == 0,
             "slot-minus-one-clears-before-label");
-    return "fallback";
-}
+        return "fallback";
+    }
+} StringTable;
 class NetWin {
 public:
     NetWinFactionRecord *faction_records_;
@@ -570,12 +571,16 @@ def test_named_compile_success_view_damage_controls_exit_98(tmp_path, damage, ex
         assert before in types
         types = types.replace(before, after, 1)
     elif damage == "wrong-tail-source-byte":
-        before = "allocation_bytes[slot * 0x190 + 0x192]"
+        before = "[slot * 0x190 + 0x192]"
         assert fill.count(before) == 1
-        fill = fill.replace(before, "allocation_bytes[slot * 0x190 + 0x193]", 1)
+        fill = fill.replace(before, "[slot * 0x190 + 0x193]", 1)
     else:
-        before = "lobby_row.noun_faction()[0] = 0;\n        strcat(lobby_row.noun_faction(),\n               label_get(0xFE4 / 4));"
-        after = "const char *fallback = label_get(0xFE4 / 4);\n        lobby_row.noun_faction()[0] = 0;\n        strcat(lobby_row.noun_faction(), fallback);"
+        before = ("lobby_row.noun_faction()[0] = 0;\n"
+                  "        strcat(lobby_row.noun_faction(),\n"
+                  "               StringTable.get(Labels.strings_ptr[0xFE4 / 4]));")
+        after = ("const char *fallback = StringTable.get(Labels.strings_ptr[0xFE4 / 4]);\n"
+                 "        lobby_row.noun_faction()[0] = 0;\n"
+                 "        strcat(lobby_row.noun_faction(), fallback);")
         assert before in fill
         fill = fill.replace(before, after, 1)
     _build_run(tmp_path, types, fill, expected=expected, compiler=compiler)

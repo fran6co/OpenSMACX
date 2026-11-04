@@ -206,9 +206,9 @@ struct NetDaemonNetType : Net {
   AlphaNetProcessSlot process_slots_[8];
 } NetDaemonNet;
 // INSERT_INSTALLED_PACKET_DECLARATIONS
-static NetWinLobbyRow NetWinLobbyRows[8];
-static NetWinSessionBlock NetWinSessionData;
-static NetWinSessionOptionsState NetWinSessionOptions;
+static struct NetWinLobbyRowsMock { NetWinLobbyRow rows_[8]; } NetWinLobbyRows;
+static struct NetWinSessionDataMock { NetWinSessionBlock fields_; } NetWinSessionData;
+static struct NetWinSessionOptionsMock { NetWinSessionOptionsState fields_; } NetWinSessionOptions;
 static std::vector<void *> allocations;
 static void *mem_get(unsigned n) { void *p=std::malloc(n); assert(p); allocations.push_back(p); return p; }
 struct NetWinDialogType { NetWinFactionRecord *faction_records_; void setup_faction_data(int) { assert(faction_records_); } } NetWinDialog;
@@ -256,27 +256,27 @@ HOST_MAIN = r'''static void reset_send(){sent.clear();sent_to=0;send_calls=0;}
 int main(){
   for(unsigned i=0;i<8;++i)NetDaemonNet.process_slots_[i].pid_=0x1000+i;
   NetDaemonNet.local_player_id_=9;NetDaemonNet.host_player_id_=99;
-  for(unsigned i=0;i<sizeof(NetWinSessionOptions);++i)reinterpret_cast<unsigned char *>(&NetWinSessionOptions)[i]=i*3+1;
-  for(unsigned i=0;i<sizeof(NetWinSessionData);++i)reinterpret_cast<unsigned char *>(&NetWinSessionData)[i]=i*5+7;
+  for(unsigned i=0;i<sizeof(NetWinSessionOptions.fields_);++i)reinterpret_cast<unsigned char *>(&NetWinSessionOptions.fields_)[i]=i*3+1;
+  for(unsigned i=0;i<sizeof(NetWinSessionData.fields_);++i)reinterpret_cast<unsigned char *>(&NetWinSessionData.fields_)[i]=i*5+7;
   reset_send();send_session_packet(77,-1);assert(send_calls==1&&sent.size()==0x28&&sent_to==0);
   assert(*reinterpret_cast<unsigned short*>(sent.data())==0x4F02);
-  assert(!std::memcmp(sent.data()+0x10,&NetWinSessionOptions,0x18));
+  assert(!std::memcmp(sent.data()+0x10,&NetWinSessionOptions.fields_,0x18));
   reset_send();send_session_packet(77,0);assert(send_calls==1&&sent_to==(unsigned)NetDaemonNet.host_player_id_);
   assert(*reinterpret_cast<unsigned short*>(sent.data())==0x2F02);
   reset_send();send_session_packet(77,3);assert(send_calls==1&&sent_to==NetDaemonNet.process_slots_[3].pid_);
   assert(*reinterpret_cast<unsigned short*>(sent.data())==0x1F02);
   reset_send();send_session2_packet(55,-1);assert(send_calls==1&&sent.size()==0x178&&sent_to==0);
   assert(*reinterpret_cast<unsigned short*>(sent.data())==0x4F03);
-  assert(!std::memcmp(sent.data()+0x10,&NetWinSessionData,0x168));
+  assert(!std::memcmp(sent.data()+0x10,&NetWinSessionData.fields_,0x168));
   reset_send();send_session2_packet(55,0);assert(send_calls==1&&sent_to==(unsigned)NetDaemonNet.host_player_id_);
   assert(*reinterpret_cast<unsigned short*>(sent.data())==0x2F03);
   reset_send();send_session2_packet(55,3);assert(send_calls==1&&sent_to==NetDaemonNet.process_slots_[3].pid_);
   assert(*reinterpret_cast<unsigned short*>(sent.data())==0x1F03);
-  for(unsigned i=0;i<sizeof(NetWinLobbyRows);++i)reinterpret_cast<unsigned char*>(NetWinLobbyRows)[i]=i*7+9;
+  for(unsigned i=0;i<sizeof(NetWinLobbyRows.rows_);++i)reinterpret_cast<unsigned char*>(NetWinLobbyRows.rows_)[i]=i*7+9;
   NetDaemonNet.primary_state_.leading_words_[0]=0;reset_send();send_all_player_packets(-1);assert(send_calls==0);
   reset_send();send_all_player_packets(2);assert(send_calls==1&&sent.size()==0xA74&&sent_to==NetDaemonNet.process_slots_[2].pid_);
   assert(*reinterpret_cast<unsigned short*>(sent.data())==0x1F04);
-  assert(!std::memcmp(sent.data()+0x10,&NetWinLobbyRows[1],0xA64));
+  assert(!std::memcmp(sent.data()+0x10,&NetWinLobbyRows.rows_[1],0xA64));
   reset_send();NetDaemonNet.primary_state_.leading_words_[0]=1;send_all_player_packets(-1);assert(send_calls==1&&sent_to==0);
   assert(*reinterpret_cast<unsigned short*>(sent.data())==0x4F04);
   alignas(NetWinFactionRecord) unsigned char faction[0x400];for(unsigned i=0;i<sizeof(faction);++i)faction[i]=0xA0+i;faction[1]=1;

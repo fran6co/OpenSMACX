@@ -71,7 +71,7 @@ struct NetWinSessionOptionsPacket {
   NetWinSessionOptionsState options_;
 };
 static_assert(sizeof(NetWinSessionOptionsPacket) == 40, "packet size");
-NetWinSessionOptionsState NetWinSessionOptions{};
+struct NetWinSessionOptionsMock { NetWinSessionOptionsState fields_; } NetWinSessionOptions{};
 struct Net {
   uint32_t target_ = 0;
   int sends_ = 0;

@@ -9,6 +9,8 @@ from test_netdaemon_transfer_modal import extract
 from test_net_hotseat_owner_actual_source_oct6 import installed_packet_declarations
 
 ROOT = Path(__file__).resolve().parents[2]
+# These are the historical migration inputs, before storage-owner recovery.
+# The live-source behavior controls below use the current fields_ member.
 BEFORE = '''    NetWinSessionOptions.receive_wire_block(
         reinterpret_cast<const unsigned char *>(message + 0x10));
     netdaemon_rebroadcast_session_packet(daemon, message, message_size);
@@ -70,8 +72,8 @@ def test_actual_options_copy_then_redraw_or_rebroadcast(tmp_path, damage):
     changes = {
         "omit_redraw": ("NetWinDialog.on_redraw();", "(void)0;"),
         "invert_marker": ("& 0x2000u) == 0", "& 0x2000u) != 0"),
-        "early_redraw": ("    NetWinSessionOptions.receive_wire_block(",
-                          "    NetWinDialog.on_redraw();\n    NetWinSessionOptions.receive_wire_block("),
+        "early_redraw": ("    NetWinSessionOptions.fields_.receive_wire_block(",
+                          "    NetWinDialog.on_redraw();\n    NetWinSessionOptions.fields_.receive_wire_block("),
     }
     if damage == "short_copy":
         assert "sizeof(*this)" in copy
@@ -93,14 +95,14 @@ def test_actual_options_copy_then_redraw_or_rebroadcast(tmp_path, damage):
     std::exit(98); } } while (0)
 @@DECLARATION@@
 @@COPY@@
-static NetWinSessionOptionsState NetWinSessionOptions;
+static struct NetWinSessionOptionsMock { NetWinSessionOptionsState fields_; } NetWinSessionOptions;
 static unsigned char expected[0x18];
 static unsigned redraws, sends;
 static char *active_message;
 static unsigned short original_type;
 static void check_copy() {
     assert(sizeof(NetWinSessionOptionsState) == 0x18);
-    assert(std::memcmp(&NetWinSessionOptions, expected, sizeof expected) == 0);
+    assert(std::memcmp(&NetWinSessionOptions.fields_, expected, sizeof expected) == 0);
 }
 static struct Dialog {
     void on_redraw() {
@@ -127,7 +129,7 @@ int main() {
         std::memcpy(active_message, &original_type, 2);
         for (unsigned byte = 0; byte < sizeof expected; ++byte)
             expected[byte] = active_message[0x10 + byte] = static_cast<unsigned char>(byte * 7 + 1);
-        std::memset(&NetWinSessionOptions, 0xA5, sizeof NetWinSessionOptions);
+        std::memset(&NetWinSessionOptions.fields_, 0xA5, sizeof NetWinSessionOptions.fields_);
         sends = redraws = 0;
         NetDaemon daemon;
         netdaemon_handle_session_options(&daemon, active_message, sizeof packet);

@@ -20,45 +20,10 @@ static void assert_before(const char *a, const char *b) {
     assert(find_event(a) < find_event(b));
 }
 
-struct NetWinLobbyRow {
-    uint8_t prefix_, ready_or_occupied_, field_2_;
-    int8_t faction_or_color_;
-    uint8_t field_4_;
-    char leader_name_[0x18];
-    char formal_faction_name_[0x28];
-    char noun_faction_[0x18];
-    char adjective_faction_[0x80];
-    char leader_title_[0x18];
-    char adjective_leader_[0x80];
-    uint8_t tail_[3];
-    uint32_t owner_;
-};
-struct NetWinSessionBlock {
-    uint32_t mode_;
-    uint8_t state_[0x164];
-    void write_row8_prefix(uint8_t value);
-    char *row8_leader_name();
-    char *row8_noun_faction();
-};
-struct NetWinSessionOptionsState {
-    uint8_t status_, player_count_, difficulty_, time_control_;
-    uint8_t option_4_, option_5_, planet_size_, ocean_coverage_;
-    uint8_t erosion_, native_life_, cloud_cover_, reserved_B_;
-    uint32_t rule_bits_a_, rule_bits_b_, rule_bits_c_;
-};
-static_assert(sizeof(NetWinLobbyRow) == 0x17C, "row stride");
-static_assert(sizeof(NetWinSessionBlock) == 0x168, "session extent");
-static_assert(sizeof(NetWinSessionOptionsState) == 0x18, "options extent");
-static_assert(offsetof(NetWinLobbyRow, leader_name_) +
-              sizeof(((NetWinLobbyRow *)0)->leader_name_) <= sizeof(NetWinSessionBlock),
-              "leader alias stays in session object");
-static_assert(offsetof(NetWinLobbyRow, noun_faction_) +
-              sizeof(((NetWinLobbyRow *)0)->noun_faction_) <= sizeof(NetWinSessionBlock),
-              "noun alias stays in session object");
-
-extern NetWinSessionBlock NetWinSessionData;
-extern NetWinSessionOptionsState NetWinSessionOptions;
-extern NetWinLobbyRow NetWinLobbyRows[8];
+/* ACTUAL NETWIN OWNER TYPES */
+extern NetWinSessionDataStorage NetWinSessionData;
+extern NetWinSessionOptionsStorage NetWinSessionOptions;
+extern NetWinLobbyRowsStorage NetWinLobbyRows;
 extern int NextTurnReady;
 extern int NetUpkeepPhase;
 extern uint32_t NetHostChangeSlot;
@@ -137,7 +102,6 @@ struct FX { void play(int id) { assert(id == 0x15); note("fx:21"); } };
 struct ConsoleType { int faction_id_; };
 struct ParseStrType { char str[16]; };
 
-NetWinLobbyRow NetWinLobbyRows[8];
 NetWinDialogType NetWinDialog;
 Popup popup_storage;
 Popup &NetMsgPrimary = popup_storage;
@@ -225,9 +189,9 @@ static void reset_daemon(NetDaemon &daemon) {
     memset(&NetDaemonNet, 0, sizeof(NetDaemonNet));
     identity_callback_owner = 0;
     clear_control_on_8301 = false;
-    memset(NetWinLobbyRows, 0, sizeof(NetWinLobbyRows));
-    memset(&NetWinSessionData, 0, sizeof(NetWinSessionData));
-    memset(&NetWinSessionOptions, 0, sizeof(NetWinSessionOptions));
+    memset(NetWinLobbyRows.rows_, 0, sizeof(NetWinLobbyRows.rows_));
+    memset(&NetWinSessionData.fields_, 0, sizeof(NetWinSessionData.fields_));
+    memset(&NetWinSessionOptions.fields_, 0, sizeof(NetWinSessionOptions.fields_));
     NetWinDialog.visible = 0; NetWinDialog.redraws = 0; NetWinDialog.button_calls = 0;
     NetHostChangeSlot = 998; NextTurnReady = 0; NetUpkeepPhase = 7;
     GameDataStateStorage.fields_.net_turn_flags_ = 0; GameDataStateStorage.fields_.net_turn_faction_ = 0; GameDataStateStorage.fields_.turn_current_num_ = 14;
@@ -257,9 +221,9 @@ static void setup_two_player_delete(NetDaemon &daemon, int lock_phase) {
     daemon.channels_[1].trailing_words_[1] = 0x13579BDF;
     NetDaemonNet.channels_[1].payload_.flags = 0x2468ACEF;
     NetDaemonNet.channels_[1].trailing_words_[1] = 0x3579BDF7;
-    NetWinLobbyRows[2].prefix_ = 0x55;
-    strcpy(NetWinLobbyRows[2].leader_name_, "old-leader");
-    strcpy(NetWinLobbyRows[2].noun_faction_, "old-noun");
+    NetWinLobbyRows.rows_[2].prefix_ = 0x55;
+    strcpy(NetWinLobbyRows.rows_[2].leader_name_, "old-leader");
+    strcpy(NetWinLobbyRows.rows_[2].noun_faction_, "old-noun");
 }
 
 int main(int argc, char **argv) {
@@ -273,7 +237,7 @@ int main(int argc, char **argv) {
         daemon.process_slots_[1].pid_ = 44;
         strcpy(daemon.process_slots_[1].name_, "host");
         daemon.process_slots_[1].identity_ = 1;
-        NetWinSessionOptions.difficulty_ = 4;
+        NetWinSessionOptions.fields_.difficulty_ = 4;
         NetWinDialog.visible = 1;
         clear_trace();
         daemon.on_player_added(incoming_name, 20);
@@ -281,10 +245,10 @@ int main(int argc, char **argv) {
         assert(daemon.process_slots_[2].pid_ == 20);
         assert(daemon.process_slots_[2].identity_ == 2);
         assert(strcmp(daemon.process_slots_[2].name_, "new-player") == 0);
-        assert(NetWinLobbyRows[2].prefix_ == 2);
-        assert(NetWinLobbyRows[2].field_2_ == 4);
-        assert(NetWinLobbyRows[2].owner_ == 0);
-        assert(NetWinLobbyRows[2].faction_or_color_ == -1);
+        assert(NetWinLobbyRows.rows_[2].prefix_ == 2);
+        assert(NetWinLobbyRows.rows_[2].field_2_ == 4);
+        assert(NetWinLobbyRows.rows_[2].owner_ == 0);
+        assert(NetWinLobbyRows.rows_[2].faction_or_color_ == -1);
         assert(find_event("popup:ADDED") >= 0);
         assert_before("get-name:20", "parse:new-player");
         assert_before("parse:new-player", "popup:ADDED");
@@ -303,7 +267,7 @@ int main(int argc, char **argv) {
         strcpy(daemon.process_slots_[1].name_, "host");
         daemon.process_slots_[1].identity_ = 1;
         daemon.primary_state_.session_phase_ = -1;
-        NetWinSessionOptions.difficulty_ = 4;
+        NetWinSessionOptions.fields_.difficulty_ = 4;
         NetWinDialog.visible = 1;
         clear_trace();
         daemon.on_player_added(incoming_name, 20);
@@ -311,10 +275,10 @@ int main(int argc, char **argv) {
         assert(daemon.process_slots_[2].pid_ == 20);
         assert(daemon.process_slots_[2].identity_ == 2);
         assert(strcmp(daemon.process_slots_[2].name_, "new-player") == 0);
-        assert(NetWinLobbyRows[2].prefix_ == 2);
-        assert(NetWinLobbyRows[2].field_2_ == 4);
-        assert(NetWinLobbyRows[2].owner_ == 0);
-        assert(NetWinLobbyRows[2].faction_or_color_ == -1);
+        assert(NetWinLobbyRows.rows_[2].prefix_ == 2);
+        assert(NetWinLobbyRows.rows_[2].field_2_ == 4);
+        assert(NetWinLobbyRows.rows_[2].owner_ == 0);
+        assert(NetWinLobbyRows.rows_[2].faction_or_color_ == -1);
         assert(daemon.primary_state_.session_phase_ == -1);
         assert(find_event("popup:ADDED") >= 0);
         assert_before("get-name:20", "parse:new-player");
@@ -335,9 +299,9 @@ int main(int argc, char **argv) {
         assert(daemon.channels_[1].payload_.flags == 0xABCDEF77);
         assert(NetDaemonNet.channels_[1].trailing_words_[1] == 0x3579BDF7);
         assert(NetDaemonNet.channels_[1].payload_.flags == 0x2468ACEF);
-        assert(NetWinLobbyRows[2].prefix_ == 0xFF);
-        assert(strcmp(NetWinLobbyRows[2].leader_name_, "label1") == 0);
-        assert(strcmp(NetWinLobbyRows[2].noun_faction_, "label2") == 0);
+        assert(NetWinLobbyRows.rows_[2].prefix_ == 0xFF);
+        assert(strcmp(NetWinLobbyRows.rows_[2].leader_name_, "label1") == 0);
+        assert(strcmp(NetWinLobbyRows.rows_[2].noun_faction_, "label2") == 0);
         assert(label_calls == 2);
         assert(daemon.locks_.records_[2].entries_[0].first == -1);
         assert(daemon.channels_[0].trailing_words_[0] == (0xFF & ~0x8u));
@@ -359,7 +323,7 @@ int main(int argc, char **argv) {
         assert(daemon.locks_.records_[3].active_ == 0);
         assert(daemon.locks_.records_[3].entries_[0].flag == 0);
         assert(daemon.primary_state_.session_phase_ == 2);
-        assert(NetWinLobbyRows[2].prefix_ == 0x55); // phase 2: no prefix write
+        assert(NetWinLobbyRows.rows_[2].prefix_ == 0x55); // phase 2: no prefix write
         assert(message_calls == 0);
         assert(label_calls == 2);
     } else if (strcmp(scenario, "delete_active_lock") == 0) {
@@ -372,7 +336,7 @@ int main(int argc, char **argv) {
         daemon.on_player_deleted(0, 20);
         assert(daemon.locks_.records_[3].active_ == 4);
         assert(daemon.primary_state_.session_phase_ == 2);
-        assert(NetWinLobbyRows[2].prefix_ == 0x55);
+        assert(NetWinLobbyRows.rows_[2].prefix_ == 0x55);
         assert(message_calls == 0);
     } else if (strcmp(scenario, "delete_predicate_table") == 0) {
         // Independent native branch walk: 52E537..52E585. All 32 states,
@@ -453,33 +417,33 @@ int main(int argc, char **argv) {
         daemon.ledger_.session_flags_ = 0xAB000003;
         daemon.ledger_.max_players_ = 0x1200;
         for (int row = 1; row <= 4; ++row) {
-            NetWinLobbyRows[row].prefix_ = static_cast<uint8_t>(0x30 + row);
-            NetWinLobbyRows[row].ready_or_occupied_ = static_cast<uint8_t>(0x40 + row);
-            NetWinLobbyRows[row].field_2_ = static_cast<uint8_t>(0x50 + row);
-            NetWinLobbyRows[row].owner_ = static_cast<uint32_t>(0x600 + row);
+            NetWinLobbyRows.rows_[row].prefix_ = static_cast<uint8_t>(0x30 + row);
+            NetWinLobbyRows.rows_[row].ready_or_occupied_ = static_cast<uint8_t>(0x40 + row);
+            NetWinLobbyRows.rows_[row].field_2_ = static_cast<uint8_t>(0x50 + row);
+            NetWinLobbyRows.rows_[row].owner_ = static_cast<uint32_t>(0x600 + row);
         }
-        NetWinSessionData.mode_ = 0x11223344;
+        NetWinSessionData.fields_.mode_ = 0x11223344;
         GameDataStateStorage.fields_.lock_masks_.enable_mask_ = 0;
-        memset(&NetWinSessionOptions, 0xA5, sizeof(NetWinSessionOptions));
-        NetWinSessionOptions.difficulty_ = 5;
-        NetWinSessionOptionsState options_before = NetWinSessionOptions;
+        memset(&NetWinSessionOptions.fields_, 0xA5, sizeof(NetWinSessionOptions.fields_));
+        NetWinSessionOptions.fields_.difficulty_ = 5;
+        NetWinSessionOptionsState options_before = NetWinSessionOptions.fields_;
         NetWinDialog.visible = 0;
         clear_trace();
         daemon.on_player_deleted(0, 999);
         assert(daemon.player_count_ == 6); // the native not-found tail decrements
         assert(daemon.ledger_.session_flags_ == 0xFF0000FF);
         assert((daemon.ledger_.max_players_ & 0xFF) == 2);
-        assert(*reinterpret_cast<unsigned char *>(&NetWinSessionData) == 0xFF);
-        assert(strcmp(NetWinSessionData.row8_leader_name(), "label1") == 0);
-        assert(strcmp(NetWinSessionData.row8_noun_faction(), "label2") == 0);
-        assert(memcmp(&NetWinSessionOptions, &options_before,
-                      sizeof(NetWinSessionOptions)) == 0);
+        assert(*reinterpret_cast<unsigned char *>(&NetWinSessionData.fields_) == 0xFF);
+        assert(strcmp(NetWinSessionData.fields_.row8_leader_name(), "label1") == 0);
+        assert(strcmp(NetWinSessionData.fields_.row8_noun_faction(), "label2") == 0);
+        assert(memcmp(&NetWinSessionOptions.fields_, &options_before,
+                      sizeof(NetWinSessionOptions.fields_)) == 0);
         assert(label_calls == 2);
         for (int row = 1; row <= 4; ++row) {
-            assert(NetWinLobbyRows[row].prefix_ == 0x30 + row);
-            assert(NetWinLobbyRows[row].ready_or_occupied_ == 0x40 + row);
-            assert(NetWinLobbyRows[row].field_2_ == 0x50 + row);
-            assert(NetWinLobbyRows[row].owner_ == static_cast<uint32_t>(0x600 + row));
+            assert(NetWinLobbyRows.rows_[row].prefix_ == 0x30 + row);
+            assert(NetWinLobbyRows.rows_[row].ready_or_occupied_ == 0x40 + row);
+            assert(NetWinLobbyRows.rows_[row].field_2_ == 0x50 + row);
+            assert(NetWinLobbyRows.rows_[row].owner_ == static_cast<uint32_t>(0x600 + row));
         }
         assert_before("parse:ED", "label-get:1");
         assert_before("label-get:1", "label-get:2");

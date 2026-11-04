@@ -7,14 +7,6 @@
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
  */
-// Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x004E2400 sub_4e2400 0x004E2400-0x004E2444 FILE
-// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/004e2400.cpp: retained original spans and historical seed interpretation", "Pinned original receiver/table/call sequence reviewed in the Alpha ownership binding decision.", "Current C++ class/lifetime source owns the separately observed emitted symbol; this binding is unclaimed and preserves the independent historical exact seed."], "reason": "Writes selected bytes at90E8E0..EB, leaving unwritten bytes intact."}
-// symbol    ?reset_net_session_options@@YAXXZ
-// Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x004E2460 sub_4e2460 0x004E2460-0x004E248F FILE
-// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/004e2460.cpp: retained original spans and historical seed interpretation", "Pinned original receiver/table/call sequence reviewed in the Alpha ownership binding decision.", "Current C++ class/lifetime source owns the separately observed emitted symbol; this binding is unclaimed and preserves the independent historical exact seed."], "reason": "Eight rows, stride17C at90DB98; selected byte/DWORD stores only."}
-// symbol    ?reset_net_lobby_rows@@YAXXZ
 // ORIGINAL: 0x004E29E0 ?do_join_or_create@AlphaNet@@QAEHXZ 0x004E29E0-0x004E2A2F FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:b20012dad66f767e0e5f05b7aea45b88bd63a09d:src/recovered/units/004e29e0.cpp: retained original spans and historical seed interpretation", "Pinned original receiver/table/call sequence reviewed in the Alpha ownership binding decision.", "Current C++ class/lifetime source owns the separately observed emitted symbol; this binding is unclaimed and preserves the independent historical exact seed.", "git:b20012dad66f767e0e5f05b7aea45b88bd63a09d:src/recovered/units/004e29e0.cpp"], "reason": "Existing real xpops4args wrapper drives whole create/join operation. Superseded scaffold retired at user request; historical claims and seed findings are transferred, not freshly granted. Current matching/restoration and any documented unfinished stages remain obligations."}
 // kind      game
@@ -261,31 +253,6 @@ void AlphaNet::close() {
     Net::close();
 }
 // ALPHANET_CLOSE_END
-
-void reset_net_session_options() {
-    NetWinSessionOptions.status_ = 0xFF;
-    NetWinSessionOptions.player_count_ = 4;
-    NetWinSessionOptions.difficulty_ = 1;
-    NetWinSessionOptions.option_4_ = 0;
-    NetWinSessionOptions.option_5_ = 0;
-    NetWinSessionOptions.planet_size_ = 1;
-    NetWinSessionOptions.ocean_coverage_ = 1;
-    NetWinSessionOptions.erosion_ = 1;
-    NetWinSessionOptions.native_life_ = 1;
-    NetWinSessionOptions.cloud_cover_ = 1;
-    NetWinSessionOptions.reserved_B_ = 0xFF;
-}
-
-void reset_net_lobby_rows() {
-    for (int row = 0; row < 8; ++row) {
-        NetWinLobbyRows[row].owner_ = 0;
-        NetWinLobbyRows[row].prefix_ = 0xFF;
-        NetWinLobbyRows[row].ready_or_occupied_ = 0;
-        NetWinLobbyRows[row].field_2_ = 0;
-        NetWinLobbyRows[row].faction_or_color_ = -1;
-        NetWinLobbyRows[row].field_4_ = 2;
-    }
-}
 
 // ORIGINAL: 0x004E26E0 ?pick_service@AlphaNet@@QAEHPAH@Z 0x004E26E0-0x004E29DF;0x0065C630-0x0065C664
 // kind      game

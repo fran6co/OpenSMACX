@@ -91,34 +91,34 @@ def _restore_cpp(current: str, baseline: str) -> str:
     # scenario-storage reversal below. This is test-only reconstruction; the
     # installed source retains direct typed member accesses.
     current = current.replace("NetDaemonNet.player_count_", "*NetWinPlayerCount")
-    current = current.replace("NetWinSessionData.mode_", "*NetWinEighthSlotWord")
-    current = current.replace("NetWinSessionData.scenario_text_wire_tail_[0]",
+    current = current.replace("NetWinSessionData.fields_.mode_", "*NetWinEighthSlotWord")
+    current = current.replace("NetWinSessionData.fields_.scenario_text_wire_tail_[0]",
                               "*NetWinScenarioText")
-    current = current.replace("NetWinSessionData.scenario_text_wire_tail_",
+    current = current.replace("NetWinSessionData.fields_.scenario_text_wire_tail_",
                               "NetWinScenarioText")
-    current = current.replace("NetWinSessionOptions.time_control_", "NetWinNinthSlot[3]")
+    current = current.replace("NetWinSessionOptions.fields_.time_control_", "NetWinNinthSlot[3]")
     for suffix, field in (("A", "rule_bits_a_"), ("B", "rule_bits_b_"),
                           ("C", "rule_bits_c_")):
-        current = current.replace(f"NetWinSessionOptions.{field}",
+        current = current.replace(f"NetWinSessionOptions.fields_.{field}",
                                   f"*NetWinRuleBits{suffix}")
     current = current.replace("NetDaemonNet.primary_state_.leading_words_[0]",
                               "*NetWinRulesGate")
     current = current.replace(
-        "// Original 0x0090DB98 begins the eight NetWinLobbyRows (0x17C stride).",
+        "// Original 0x0090DB98 begins the eight NetWinLobbyRows.rows_ (0x17C stride).",
         "static int *const NetWinPlayerCount = &NetDaemonNet.player_count_;\n\n"
-        "// Original 0x0090DB98 begins the eight NetWinLobbyRows (0x17C stride).")
+        "// Original 0x0090DB98 begins the eight NetWinLobbyRows.rows_ (0x17C stride).")
     current = current.replace(
         "/*\nPurpose: Seed the seven base faction records of the static faction table.",
-        "static unsigned int *const NetWinEighthSlotWord = &NetWinSessionData.mode_;\n"
-        "static unsigned char *const NetWinScenarioText = &NetWinSessionData.state_[0x20];\n"
+        "static unsigned int *const NetWinEighthSlotWord = &NetWinSessionData.fields_.mode_;\n"
+        "static unsigned char *const NetWinScenarioText = &NetWinSessionData.fields_.state_[0x20];\n"
         "static unsigned char *const NetWinNinthSlot =\n"
-        "    reinterpret_cast<unsigned char *>(&NetWinSessionOptions);\n\n"
+        "    reinterpret_cast<unsigned char *>(&NetWinSessionOptions.fields_);\n\n"
         "/*\nPurpose: Seed the seven base faction records of the static faction table.")
     current = current.replace(
         "// 0x0080A6F0 - the planet-size name count beside the fixed dialog",
-        "static unsigned int *const NetWinRuleBitsA = &NetWinSessionOptions.rule_bits_a_;\n"
-        "static unsigned int *const NetWinRuleBitsB = &NetWinSessionOptions.rule_bits_b_;\n"
-        "static unsigned int *const NetWinRuleBitsC = &NetWinSessionOptions.rule_bits_c_;\n"
+        "static unsigned int *const NetWinRuleBitsA = &NetWinSessionOptions.fields_.rule_bits_a_;\n"
+        "static unsigned int *const NetWinRuleBitsB = &NetWinSessionOptions.fields_.rule_bits_b_;\n"
+        "static unsigned int *const NetWinRuleBitsC = &NetWinSessionOptions.fields_.rule_bits_c_;\n"
         "static unsigned int *const NetWinRulesGate =\n"
         "    &NetDaemonNet.primary_state_.leading_words_[0];\n\n"
         "// 0x0080A6F0 - the planet-size name count beside the fixed dialog")
@@ -133,16 +133,11 @@ def _restore_cpp(current: str, baseline: str) -> str:
     clear = "*NetWinScenarioText = 0;"
     assert pick.count(clear) == 2
     assert pick.count("strcpy(NetWinScenarioText, scenario_name);") == 1
-    pick = pick.replace(clear, "NetWinSessionData.state_[0x20] = 0;")
+    pick = pick.replace(clear, "NetWinSessionData.fields_.state_[0x20] = 0;")
     pick = pick.replace("strcpy(NetWinScenarioText, scenario_name);",
                         "strcpy(reinterpret_cast<char *>(NetWinScenarioText),\n                       scenario_name);")
     current = current.replace(_extract(current, "void NetWin::pick_map()"), pick, 1)
 
-    reset = _extract(current, 'extern "C" void __cdecl sub_4e2450()')
-    reset_clear = "*NetWinScenarioText = 0;"
-    assert reset.count(reset_clear) == 1
-    current = current.replace(reset, reset.replace(
-        reset_clear, "NetWinSessionData.state_[0x20] = 0;"), 1)
     assert _tokens(current) == _tokens(baseline), "netwin.cpp exact bounded reversal"
     return current
 
@@ -231,18 +226,21 @@ def test_actual_session_storage_shape_and_only_first_tail_byte_is_cleared():
     assert 'static_assert(sizeof(NetWinSessionBlock) == 0x168, "session block extent");' in header
     assert 'static_assert(offsetof(NetWinSessionBlock, scenario_text_wire_tail_) == 0x24,' in header
     assert "NetWinScenarioText" not in source
-    clear = "NetWinSessionData.scenario_text_wire_tail_[0] = 0;"
-    assert source.count(clear) == 4
+    clear = "NetWinSessionData.fields_.scenario_text_wire_tail_[0] = 0;"
+    assert source.count(clear) == 3
+    assert header.count("fields_.scenario_text_wire_tail_[0] = 0;") == 1
+    assert "NetWinSessionDataStorage()" in header
+    assert "extern \"C\" void __cdecl sub_4e2450()" not in source
     assert "state_[0x20]" not in source
-    assert "strcpy(NetWinSessionData.scenario_text_wire_tail_, scenario_name);" in source
+    assert "strcpy(NetWinSessionData.fields_.scenario_text_wire_tail_, scenario_name);" in source
     # The argument pointer and condition are reevaluated at their original sites.
     draw = _extract(source, "void NetWin::draw_session_info()")
-    assert draw.count("NetWinSessionData.scenario_text_wire_tail_[0]") == 5
-    assert draw.count("strcat(StringTemp,\n               NetWinSessionData.scenario_text_wire_tail_);") == 1
+    assert draw.count("NetWinSessionData.fields_.scenario_text_wire_tail_[0]") == 5
+    assert draw.count("strcat(StringTemp,\n               NetWinSessionData.fields_.scenario_text_wire_tail_);") == 1
     assert "char *scenario_text" not in draw
     pick = _extract(source, "void NetWin::pick_map()")
     assert pick.count(clear) == 2
-    assert pick.index(clear) < pick.index("strcpy(NetWinSessionData.scenario_text_wire_tail_, scenario_name);")
+    assert pick.index(clear) < pick.index("strcpy(NetWinSessionData.fields_.scenario_text_wire_tail_, scenario_name);")
     config = _extract(source, "void NetWin::config_players()")
     assert config.count(clear) == 1
 
@@ -257,26 +255,16 @@ static_assert(sizeof(NetWinSessionBlock) == 0x168, "full wire block");
 static_assert(offsetof(NetWinSessionBlock, mode_) == 0, "mode prefix");
 static_assert(offsetof(NetWinSessionBlock, reserved_session_prefix_) == 4, "opaque prefix");
 static_assert(offsetof(NetWinSessionBlock, scenario_text_wire_tail_) == 0x24, "tail offset");
-static NetWinSessionBlock NetWinSessionData;
-/* ACTUAL_RESET */
+static struct NetWinSessionDataMock { NetWinSessionBlock fields_; } NetWinSessionData;
 /* ACTUAL_RECEIVER */
 int main() {
-  unsigned char *bytes = reinterpret_cast<unsigned char *>(&NetWinSessionData);
-  for (unsigned i = 0; i < sizeof(NetWinSessionData); ++i) bytes[i] = (i * 37u + 0xA5u) & 0xFFu;
-  NetWinSessionData.mode_ = 0x78563412u;
-  unsigned char expected[0x168];
-  std::memcpy(expected, bytes, sizeof(expected));
-  expected[0] = expected[1] = expected[2] = expected[3] = 0;
-  expected[0x24] = 0;
-  sub_4e2450();
-  if (std::memcmp(bytes, expected, sizeof(expected)) != 0) {
-    std::fprintf(stderr, "CONTROL FAILURE: reset clears mode and only scenario byte zero\n");
-    return 98;
-  }
+  unsigned char *bytes = reinterpret_cast<unsigned char *>(&NetWinSessionData.fields_);
+  for (unsigned i = 0; i < sizeof(NetWinSessionData.fields_); ++i) bytes[i] = (i * 37u + 0xA5u) & 0xFFu;
+  NetWinSessionData.fields_.mode_ = 0x78563412u;
   unsigned char wire[0x168];
   for (unsigned i = 0; i < sizeof(wire); ++i) wire[i] = (i * 19u + 0x63u) & 0xFFu;
-  std::memset(bytes, 0xC7, sizeof(NetWinSessionData));
-  NetWinSessionData.receive_wire_block(wire);
+  std::memset(bytes, 0xC7, sizeof(NetWinSessionData.fields_));
+  NetWinSessionData.fields_.receive_wire_block(wire);
   if (std::memcmp(bytes, wire, sizeof(wire)) != 0) {
     std::fprintf(stderr, "CONTROL FAILURE: receiver copies all 360 session bytes\n");
     return 98;
@@ -288,7 +276,7 @@ int main() {
 
 
 @pytest.mark.parametrize("compiler_name", ("g++", "clang++"))
-def test_literal_reset_body_preserves_all_adjacent_wire_bytes_and_mutant_is_caught(
+def test_session_wire_receiver_copies_full_storage_and_mutant_is_caught(
     compiler_name, tmp_path
 ):
     compiler = shutil.which(compiler_name)
@@ -298,21 +286,14 @@ def test_literal_reset_body_preserves_all_adjacent_wire_bytes_and_mutant_is_caug
     source = (ROOT / "src/netwin.cpp").read_text(encoding="utf-8")
     row = _extract(header, "struct NetWinLobbyRow {") + ";"
     block = _extract(header, "struct NetWinSessionBlock {") + ";"
-    reset = _extract(source, 'extern "C" void __cdecl sub_4e2450()')
     receiver = _extract(source, "void NetWinSessionBlock::receive_wire_block(")
     harness = (RUNTIME.replace("/* ACTUAL_ROW_AND_SESSION_BLOCK */", row + "\n" + block)
-               .replace("/* ACTUAL_RESET */", reset)
                .replace("/* ACTUAL_RECEIVER */", receiver))
-    clear = "NetWinSessionData.scenario_text_wire_tail_[0] = 0;"
-    changed = reset.replace(clear, "NetWinSessionData.scenario_text_wire_tail_[1] = 0;")
-    assert changed != reset
-    damaged = harness.replace(reset, changed, 1)
     short_receiver = receiver.replace("sizeof(*this)", "sizeof(*this) - 1")
     assert short_receiver != receiver
     short_copy = harness.replace(receiver, short_receiver, 1)
     for name, program, expected_code, expected_text in (
         ("actual", harness, 0, "scenario storage first-byte control passed"),
-        ("wrong-tail-byte", damaged, 98, "CONTROL FAILURE: reset clears mode and only scenario byte zero"),
         ("short-receiver-copy", short_copy, 98, "CONTROL FAILURE: receiver copies all 360 session bytes"),
     ):
         cpp = tmp_path / f"scenario-{compiler_name}-{name}.cpp"

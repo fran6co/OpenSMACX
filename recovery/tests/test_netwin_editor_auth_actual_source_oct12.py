@@ -60,8 +60,8 @@ static std::vector<std::string> events;
 static std::function<void(const std::string&)> callback;
 static void event(const std::string&e) { events.push_back(e); if(callback)callback(e); }
 /* ACTUAL RECORDS */
-static NetWinLobbyRow NetWinLobbyRows[8],sent_row;
-static NetWinSessionBlock NetWinSessionData;
+static struct NetWinLobbyRowsMock { NetWinLobbyRow rows_[8]; } NetWinLobbyRows; NetWinLobbyRow sent_row;
+static struct NetWinSessionDataMock { NetWinSessionBlock fields_; } NetWinSessionData;
 static NetWinFactionRecord table_a[8],table_b[8];
 static Player Players[8];
 static struct Text { char str[256]; } ParseStrBuffer[10];
@@ -212,8 +212,8 @@ static char *copied_string(char *dst,const char *src) {
 static void reset(NetWin&w) {
     callback={}; events.clear(); visible.clear(); edited_gender="Female";
     fresh_default_labels=false; long_gender_label=false; default_lookups=0;
-    std::memset(NetWinLobbyRows,0x5a,sizeof NetWinLobbyRows);
-    for(auto&row:NetWinLobbyRows) {
+    std::memset(NetWinLobbyRows.rows_,0x5a,sizeof NetWinLobbyRows.rows_);
+    for(auto&row:NetWinLobbyRows.rows_) {
         row.faction_or_color_=-1;
         std::strcpy(row.leader_name_,"row-leader"); std::strcpy(row.formal_faction_name_,"row-formal");
         std::strcpy(row.noun_faction_,"row-noun"); std::strcpy(row.adjective_faction_,"row-adj");
@@ -225,7 +225,7 @@ static void reset(NetWin&w) {
         table_a[i].active_=table_b[i].active_=1;
         std::sprintf(table_a[i].noun_faction_,"a%d",i); std::sprintf(table_b[i].noun_faction_,"b%d",i);
     }
-    w.faction_records_=table_a; NetWinSessionData.mode_=0; player_count=2;
+    w.faction_records_=table_a; NetWinSessionData.fields_.mode_=0; player_count=2;
     local_slot=2; answer=0; editor_result=0; poll_state=0; NetDaemonNet.host_player_id_=39;
     popup_ctors=popup_dtors=pull_ctors=pull_dtors=sends=copies=identity_calls=ask_index=0;
     observe_owner=false; owner_accesses=0; ask_texts.clear(); ask_results.clear();
@@ -271,15 +271,15 @@ int main() {
     assert(!events.empty() && events.back() == "upper");
     NetWin w;
     // Complete player branches and the constructor-before-mode early path.
-    for(int mode : {2,3}) { reset(w); NetWinSessionData.mode_=mode; w.pick_player(); lifetime(1); assert(!identity_calls && !sends); }
-    reset(w); NetWinSessionData.mode_=2;
-    callback=[](const std::string&e){if(e=="popup+")NetWinSessionData.mode_=0;};
+    for(int mode : {2,3}) { reset(w); NetWinSessionData.fields_.mode_=mode; w.pick_player(); lifetime(1); assert(!identity_calls && !sends); }
+    reset(w); NetWinSessionData.fields_.mode_=2;
+    callback=[](const std::string&e){if(e=="popup+")NetWinSessionData.fields_.mode_=0;};
     w.pick_player(); lifetime(1); assert(sends==1 && identity_calls==1);
     for(int faction : {-1,3})for(int state : {0,1})for(int slot : {0,2})for(int result : {-1,0}) {
         reset(w); local_slot=slot; editor_result=result; poll_state=state;
-        NetWinLobbyRows[slot].faction_or_color_=static_cast<int8_t>(faction);
-        NetWinLobbyRow before=NetWinLobbyRows[slot];
-        w.pick_player(); lifetime(1); assert(std::memcmp(&before,&NetWinLobbyRows[slot],sizeof before)==0);
+        NetWinLobbyRows.rows_[slot].faction_or_color_=static_cast<int8_t>(faction);
+        NetWinLobbyRow before=NetWinLobbyRows.rows_[slot];
+        w.pick_player(); lifetime(1); assert(std::memcmp(&before,&NetWinLobbyRows.rows_[slot],sizeof before)==0);
         assert(sends==(result>=0 && slot>=1));
         if(sends) {
             assert(sent_slot==slot && sent_target==39);
@@ -311,12 +311,12 @@ int main() {
     callback=[&](const std::string&e){if(e=="item:Default")w.faction_records_=table_b;};
     w.pick_faction(1); lifetime(1,1); items({"Default","b0","b1"});
     for(int mode : {2,3})for(int count : {-3,0,2}) {
-        reset(w); answer=-1; NetWinSessionData.mode_=mode; player_count=count;
-        NetWinLobbyRows[1].faction_or_color_=1; NetWinLobbyRows[2].faction_or_color_=3;
+        reset(w); answer=-1; NetWinSessionData.fields_.mode_=mode; player_count=count;
+        NetWinLobbyRows.rows_[1].faction_or_color_=1; NetWinLobbyRows.rows_[2].faction_or_color_=3;
         w.pick_faction(1); lifetime(1,1);
         if(count<0)items({"Default"}); else if(count==0)items({"Default","a0","a1","a2","a3"}); else items({"Default","a0","a2"});
     }
-    reset(w); answer=-1; NetWinSessionData.mode_=2; player_count=0;
+    reset(w); answer=-1; NetWinSessionData.fields_.mode_=2; player_count=0;
     callback=[](const std::string&e){if(e=="item:a0")player_count=-1;};
     w.pick_faction(1); lifetime(1,1); items({"Default","a0"});
     reset(w); answer=-1; table_a[0].record_count_=0;
@@ -324,28 +324,28 @@ int main() {
     // Native out-of-range selected slot yields ID -1 then faction -2.
     // New-mode payload1 bypasses authentication, so this remains allocated.
     reset(w); answer=64; w.pick_faction(1); lifetime(2,1);
-    assert(sends==1 && sent_row.faction_or_color_==-2 && NetWinLobbyRows[1].faction_or_color_==-1);
+    assert(sends==1 && sent_row.faction_or_color_==-2 && NetWinLobbyRows.rows_[1].faction_or_color_==-1);
     // Actual caller and authentication callee keep distinct requested/local rows.
-    reset(w); NetWinSessionData.mode_=2; player_count=0; answer=1;
-    NetWinLobbyRows[1].faction_or_color_=2; NetWinLobbyRows[2].faction_or_color_=3;
-    NetWinLobbyRows[2].owner_=0; table_a[3].owner_=checksum_password("old"); table_b[3].owner_=checksum_password("new");
+    reset(w); NetWinSessionData.fields_.mode_=2; player_count=0; answer=1;
+    NetWinLobbyRows.rows_[1].faction_or_color_=2; NetWinLobbyRows.rows_[2].faction_or_color_=3;
+    NetWinLobbyRows.rows_[2].owner_=0; table_a[3].owner_=checksum_password("old"); table_b[3].owner_=checksum_password("new");
     events.clear(); ask({"new"},{0});
     callback=[&](const std::string&e) {
-        if(e=="identity")assert(NetWinLobbyRows[1].faction_or_color_==0);
-        if(e=="ask:ENTERPASSWORDFACTION") { w.faction_records_=table_b; NetDaemonNet.host_player_id_=99; NetWinLobbyRows[1].faction_or_color_=6; }
+        if(e=="identity")assert(NetWinLobbyRows.rows_[1].faction_or_color_==0);
+        if(e=="ask:ENTERPASSWORDFACTION") { w.faction_records_=table_b; NetDaemonNet.host_player_id_=99; NetWinLobbyRows.rows_[1].faction_or_color_=6; }
     };
     w.pick_faction(1); lifetime(2,1);
     assert(sends==1 && sent_slot==1 && sent_target==99 && sent_row.faction_or_color_==0);
-    assert(NetWinLobbyRows[1].faction_or_color_==2 && NetWinLobbyRows[2].owner_==table_b[3].owner_);
-    reset(w); NetWinSessionData.mode_=2; player_count=0; answer=1;
-    NetWinLobbyRows[1].faction_or_color_=2; NetWinLobbyRows[2].faction_or_color_=3;
-    NetWinLobbyRows[2].owner_=0; table_a[3].owner_=checksum_password("right");
+    assert(NetWinLobbyRows.rows_[1].faction_or_color_==2 && NetWinLobbyRows.rows_[2].owner_==table_b[3].owner_);
+    reset(w); NetWinSessionData.fields_.mode_=2; player_count=0; answer=1;
+    NetWinLobbyRows.rows_[1].faction_or_color_=2; NetWinLobbyRows.rows_[2].faction_or_color_=3;
+    NetWinLobbyRows.rows_[2].owner_=0; table_a[3].owner_=checksum_password("right");
     events.clear(); ask({"wrong"},{0}); w.pick_faction(1); lifetime(2,1);
-    assert(!sends && !copies && NetWinLobbyRows[1].faction_or_color_==2 && NetWinLobbyRows[2].owner_==0);
+    assert(!sends && !copies && NetWinLobbyRows.rows_[1].faction_or_color_==2 && NetWinLobbyRows.rows_[2].owner_==0);
     // Password success, cancel, bad hash, empty hash, and live table validation.
     for(int payload : {0,1})for(int type : {0,1,2,3,4,5,6,7}) {
-        reset(w); NetWinSessionData.mode_=2; NetWinLobbyRows[2].faction_or_color_=3;
-        NetWinLobbyRows[2].owner_=77;
+        reset(w); NetWinSessionData.fields_.mode_=2; NetWinLobbyRows.rows_[2].faction_or_color_=3;
+        NetWinLobbyRows.rows_[2].owner_=77;
         uint32_t right=checksum_password("right"),wrong=checksum_password("wrong"); events.clear();
         table_a[3].owner_=type==0 ? 0 : type==1 ? 77 : right;
         ask({type==5 ? "" : "right"},{type==2 ? -1 : type==7 ? -2 : 0});
@@ -360,35 +360,35 @@ int main() {
         assert(result==((type<=1 || type==4 || type==5 || type==7) ? 1 : 0)); assert(!sends && !copies);
         if(type==0)assert(owner_accesses==0);
         if(type<=1)assert(ask_index==0);
-        if(type==4)assert(NetWinLobbyRows[2].owner_==right);
-        if(type==5)assert(NetWinLobbyRows[2].owner_==0);
+        if(type==4)assert(NetWinLobbyRows.rows_[2].owner_==right);
+        if(type==5)assert(NetWinLobbyRows.rows_[2].owner_==0);
         if(type==3 || type==6)assert(pos("pop:BADPASSWORD")>=0);
     }
-    reset(w); NetWinSessionData.mode_=3; NetWinLobbyRows[2].faction_or_color_=-1;
-    assert(w.pick_pass(0)==1 && NetWinLobbyRows[2].owner_==0); lifetime(1); assert(!sends && !ask_index);
+    reset(w); NetWinSessionData.fields_.mode_=3; NetWinLobbyRows.rows_[2].faction_or_color_=-1;
+    assert(w.pick_pass(0)==1 && NetWinLobbyRows.rows_[2].owner_==0); lifetime(1); assert(!sends && !ask_index);
     // Identity-boundary callbacks are source order controls, not a claim that
     // the actual native pid_2_idx leaf mutates the mode.
-    reset(w); NetWinLobbyRows[2].faction_or_color_=3; ask({"cancel"},{-1});
-    callback=[](const std::string&e){if(e=="identity")NetWinSessionData.mode_=2;};
+    reset(w); NetWinLobbyRows.rows_[2].faction_or_color_=3; ask({"cancel"},{-1});
+    callback=[](const std::string&e){if(e=="identity")NetWinSessionData.fields_.mode_=2;};
     assert(w.pick_pass(0)==1); lifetime(1); assert(!ask_index && !sends);
     assert(pos("pop:PASSWORDOK")>=0);
-    reset(w); NetWinSessionData.mode_=2; NetWinLobbyRows[2].faction_or_color_=3;
-    NetWinLobbyRows[2].owner_=0; table_a[3].owner_=checksum_password("old"); table_b[3].owner_=checksum_password("new");
+    reset(w); NetWinSessionData.fields_.mode_=2; NetWinLobbyRows.rows_[2].faction_or_color_=3;
+    NetWinLobbyRows.rows_[2].owner_=0; table_a[3].owner_=checksum_password("old"); table_b[3].owner_=checksum_password("new");
     events.clear(); ask({"new"},{0});
-    callback=[&](const std::string&e){if(e=="upper") { w.faction_records_=table_b; NetWinSessionData.mode_=0; }};
-    assert(w.pick_pass(0)==1); lifetime(1); assert(NetWinLobbyRows[2].owner_==table_b[3].owner_ && !sends);
+    callback=[&](const std::string&e){if(e=="upper") { w.faction_records_=table_b; NetWinSessionData.fields_.mode_=0; }};
+    assert(w.pick_pass(0)==1); lifetime(1); assert(NetWinLobbyRows.rows_[2].owner_==table_b[3].owner_ && !sends);
     for(int slot : {0,2})for(int sequence : {0,1,2,3,4}) {
-        reset(w); local_slot=slot; NetWinLobbyRows[slot].faction_or_color_=3;
+        reset(w); local_slot=slot; NetWinLobbyRows.rows_[slot].faction_or_color_=3;
         if(sequence==0)ask({""},{0});
         if(sequence==1)ask({"right","right"},{0,0});
         if(sequence==2)ask({"wrong","different","right","right"},{0,0,0,0});
         if(sequence==3)ask({"right","right"},{0,-1}); // verification return ignored
         if(sequence==4)ask({"right","","right","right"},{0,0,0,0});
         assert(w.pick_pass(0)==1); lifetime(1); assert(copies==1 && sends==(slot>=1));
-        assert(NetWinLobbyRows[slot].owner_==(sequence==0 ? 0 : checksum_password("right")));
-        if(sends)assert(std::memcmp(&sent_row,&NetWinLobbyRows[slot],sizeof sent_row)==0);
+        assert(NetWinLobbyRows.rows_[slot].owner_==(sequence==0 ? 0 : checksum_password("right")));
+        if(sends)assert(std::memcmp(&sent_row,&NetWinLobbyRows.rows_[slot],sizeof sent_row)==0);
     }
-    reset(w); NetWinLobbyRows[2].faction_or_color_=3;
+    reset(w); NetWinLobbyRows.rows_[2].faction_or_color_=3;
     ask({"cancel"},{-1}); assert(w.pick_pass(0)==0); lifetime(1); assert(!sends && !copies);
     reset(w); assert(w.pick_pass(1)==1); lifetime(1); assert(!ask_index && !sends);
     // Default faction acceptance snapshots before the slot-zero send guard.
@@ -404,7 +404,7 @@ def compile_run(tmp_path,compiler,bodies=None,instrument=False):
     if instrument:
         bodies["pass"]=bodies["pass"].replace("row.owner_","owner_access(row)")
     for name, snapshot in (
-        ("faction", "memcpy(&updated, &NetWinLobbyRows[slot], 0x17C);"),
+        ("faction", "memcpy(&updated, &NetWinLobbyRows.rows_[slot], 0x17C);"),
         ("pass", "memcpy(&updated, &row, 0x17C);"),
     ):
         assert bodies[name].count(snapshot) == 1, (name, snapshot)
@@ -440,8 +440,8 @@ MUTANTS=(
     ("live_record_count","faction","faction < count;","faction < static_cast<NetWinFactionRecord *>(faction_records_)[0].record_count_;"),
     ("negative_count_normalized","faction","already_selected = player_count < 0;","already_selected = false;"),
     ("missing_player_reload","faction","            player_count = NetDaemonNet.player_count_;",""),
-    ("no_faction_snapshot_slot_zero","faction","memcpy(&updated, &NetWinLobbyRows[slot], 0x17C);","if(slot>=1) memcpy(&updated, &NetWinLobbyRows[slot], 0x17C);"),
-    ("no_restore_faction","faction","NetWinLobbyRows[slot].faction_or_color_ = previous;","(void)previous;"),
+    ("no_faction_snapshot_slot_zero","faction","memcpy(&updated, &NetWinLobbyRows.rows_[slot], 0x17C);","if(slot>=1) memcpy(&updated, &NetWinLobbyRows.rows_[slot], 0x17C);"),
+    ("no_restore_faction","faction","NetWinLobbyRows.rows_[slot].faction_or_color_ = previous;","(void)previous;"),
     ("invalid_selection_normalized","faction","const int chosen_faction = pop_menu.get_selected_id() - 1;",
      "const int selected_id=pop_menu.get_selected_id(); const int chosen_faction=selected_id<0 ? -1 : selected_id-1;"),
     ("entry_hash_validation","pass","if (records[faction].owner_ != entered_hash)","(void)records; if (table_a[faction].owner_ != entered_hash)"),
@@ -450,8 +450,8 @@ MUTANTS=(
     ("verify_return_checked","pass","        X_pop_ask(\"VERIFYPASSWORD\", 0x50,\n                  &NetWinPasswordVerifyInitialText, nullptr, 0x800000);",
      "        if(X_pop_ask(\"VERIFYPASSWORD\", 0x50,\n                  &NetWinPasswordVerifyInitialText, nullptr, 0x800000)==-1)return 0;"),
     ("no_password_snapshot_slot_zero","pass","memcpy(&updated, &row, 0x17C);","if(slot>=1) memcpy(&updated, &row, 0x17C);"),
-    ("mode_before_identity","pass","    const int slot = NetDaemonNet.pid_2_idx(NetDaemonNet.local_player_id());\n    const bool faction_mode = NetWinSessionData.mode_ == 2 ||\n                              NetWinSessionData.mode_ == 3;",
-     "    const bool faction_mode = NetWinSessionData.mode_ == 2 ||\n                              NetWinSessionData.mode_ == 3;\n    const int slot = NetDaemonNet.pid_2_idx(NetDaemonNet.local_player_id());"),
+    ("mode_before_identity","pass","    const int slot = NetDaemonNet.pid_2_idx(NetDaemonNet.local_player_id());\n    const bool faction_mode = NetWinSessionData.fields_.mode_ == 2 ||\n                              NetWinSessionData.fields_.mode_ == 3;",
+     "    const bool faction_mode = NetWinSessionData.fields_.mode_ == 2 ||\n                              NetWinSessionData.fields_.mode_ == 3;\n    const int slot = NetDaemonNet.pid_2_idx(NetDaemonNet.local_player_id());"),
     ("negative_result_normalized","pass","nullptr, 0x800040) == -1)","nullptr, 0x800040) < 0)"),
     ("table_before_checksum","pass","if (records[faction].owner_ != entered_hash)","(void)records; if (checked_records[faction].owner_ != entered_hash)"),
     ("cached_default_lookup","player","strcpy(updated.leader_name_, label_get(0xFE4 / 4));",

@@ -73,10 +73,10 @@ struct NetWinLobbyRow {
     char noun_faction_[24]="";
     uint32_t owner_=0;
 };
-static NetWinLobbyRow NetWinLobbyRows[8];
+static struct NetWinLobbyRowsMock { NetWinLobbyRow rows_[8]; } NetWinLobbyRows;
 struct NetWinFactionRecord { uint8_t record_type_=7; uint8_t pad[3]{}; uint32_t owner_=0; char gap[0x5A]{}; char noun_faction_[24]="Faction"; };
 struct NetWinSessionBlock { int mode_=0; };
-static NetWinSessionBlock NetWinSessionData;
+static struct NetWinSessionDataMock { NetWinSessionBlock fields_; } NetWinSessionData;
 static RECT *rect_to_mutate_during_pid = nullptr;
 static bool mutate_rect_on_pid = false;
 static int forced_pid_index = 99;
@@ -118,9 +118,9 @@ struct Buffer {
     void box_sprite(RECT *r, int *) {
         for (int i=0;i<7;++i) if (r == callback_rect + i*callback_stride) box_indices.push_back(i);
         if (callbacks++ == 0) {
-            if (callback_mode & 1) NetWinSessionData.mode_=3;
+            if (callback_mode & 1) NetWinSessionData.fields_.mode_=3;
             if ((callback_mode & 2) && callback_records) callback_records[0].record_type_=2;
-            if (callback_mode & 4) NetWinLobbyRows[7].field_2_=6;
+            if (callback_mode & 4) NetWinLobbyRows.rows_[7].field_2_=6;
         }
     }
     void set_font(int, int, int, int) {}
@@ -202,14 +202,14 @@ static void reset() { box_indices.clear(); spot_indices.clear(); write_indices.c
     Difficulty[-2]=const_cast<char *>("signed-minus2");
 }
 static void init_rows() {
-    std::memset(NetWinLobbyRows,0,sizeof(NetWinLobbyRows));
+    std::memset(NetWinLobbyRows.rows_,0,sizeof(NetWinLobbyRows.rows_));
     for (int i=1;i<=7;++i) {
-        NetWinLobbyRows[i].prefix_=0;
-        NetWinLobbyRows[i].ready_or_occupied_=1;
-        NetWinLobbyRows[i].field_2_=1;
-        NetWinLobbyRows[i].faction_or_color_=-1;
-        std::strcpy(NetWinLobbyRows[i].leader_name_,"Leader");
-        std::strcpy(NetWinLobbyRows[i].noun_faction_,"Noun");
+        NetWinLobbyRows.rows_[i].prefix_=0;
+        NetWinLobbyRows.rows_[i].ready_or_occupied_=1;
+        NetWinLobbyRows.rows_[i].field_2_=1;
+        NetWinLobbyRows.rows_[i].faction_or_color_=-1;
+        std::strcpy(NetWinLobbyRows.rows_[i].leader_name_,"Leader");
+        std::strcpy(NetWinLobbyRows.rows_[i].noun_faction_,"Noun");
         NetDaemonNet.process_slots_[i].pid_=i;
     }
 }
@@ -220,7 +220,7 @@ int main() {
     init_rows();
 
     // A null record pointer is not read outside mode 3.
-    reset(); NetWinSessionData.mode_=2; win.faction_records_=nullptr;
+    reset(); NetWinSessionData.fields_.mode_=2; win.faction_records_=nullptr;
     callback_rect=&win.setup_rects_[20];
     win.draw_diffs();
     if (box_indices.size()!=7 || spot_indices.size()!=7)
@@ -228,18 +228,18 @@ int main() {
 
     // Seven records reach row 7; a drawing callback can switch mode and
     // mutate a later row before it is consumed, and the live bound is reread.
-    reset(); NetWinSessionData.mode_=0; win.faction_records_=records;
+    reset(); NetWinSessionData.fields_.mode_=0; win.faction_records_=records;
     records[0].record_type_=7;
-    NetWinLobbyRows[1].prefix_=0xFF;
+    NetWinLobbyRows.rows_[1].prefix_=0xFF;
     callback_rect=&win.setup_rects_[20]; callback_mode=5;
     win.draw_diffs();
     if (box_indices.size()!=7 || spot_indices.size()!=6 || spot_indices[0]!=1) fail("draw_diffs omitted row 7 or lost callback-driven mode/continue");
     if (std::find(write_indices.begin(),write_indices.end(),700)==write_indices.end()) fail("draw_diffs did not read callback-updated row 7 difficulty");
 
     reset(); init_rows(); win.faction_records_=records; records[0].record_type_=7;
-    NetWinSessionData.mode_=3; NetWinLobbyRows[1].prefix_=0xFF;
-    for (int i=1;i<=7;++i) NetWinLobbyRows[i].prefix_=0xFF;
-    NetWinLobbyRows[2].prefix_=0;
+    NetWinSessionData.fields_.mode_=3; NetWinLobbyRows.rows_[1].prefix_=0xFF;
+    for (int i=1;i<=7;++i) NetWinLobbyRows.rows_[i].prefix_=0xFF;
+    NetWinLobbyRows.rows_[2].prefix_=0;
     callback_rect=&win.setup_rects_[13]; callback_mode=2; callback_records=records;
     win.draw_factions();
     if (box_indices.size()!=2) fail("draw_factions did not reread callback-mutated record bound");
@@ -249,14 +249,14 @@ int main() {
         fail("draw_factions lost prefix continue/order");
     }
 
-    reset(); init_rows(); win.faction_records_=nullptr; NetWinSessionData.mode_=0;
+    reset(); init_rows(); win.faction_records_=nullptr; NetWinSessionData.fields_.mode_=0;
     callback_rect=&win.setup_rects_[13];
     win.draw_factions();
     if (box_indices.size()!=7 || spot_indices.size()!=7) fail("draw_factions omitted row 7");
 
     reset(); init_rows(); win.faction_records_=records; records[0].record_type_=7;
-    NetWinSessionData.mode_=3; NetWinLobbyRows[1].prefix_=0xFF;
-    for (int i=1;i<=7;++i) NetWinLobbyRows[i].prefix_=0xFF;
+    NetWinSessionData.fields_.mode_=3; NetWinLobbyRows.rows_[1].prefix_=0xFF;
+    for (int i=1;i<=7;++i) NetWinLobbyRows.rows_[i].prefix_=0xFF;
     callback_rect=&win.setup_rects_[12]; callback_mode=2; callback_records=records;
     callback_stride=3;
     win.draw_player_names();
@@ -264,9 +264,9 @@ int main() {
     if (!spot_indices.empty()) fail("draw_player_names prefix continue was not preserved");
 
     reset(); init_rows(); win.faction_records_=records; records[0].record_type_=7;
-    NetWinSessionData.mode_=0;
+    NetWinSessionData.fields_.mode_=0;
     NetDaemonNet.primary_state_.leading_words_[0]=1;
-    for (int i=1;i<=7;++i) NetWinLobbyRows[i].field_2_=1;
+    for (int i=1;i<=7;++i) NetWinLobbyRows.rows_[i].field_2_=1;
     callback_rect=&win.setup_rects_[12]; callback_mode=3;
     callback_stride=3;
     win.draw_player_names();
@@ -275,7 +275,7 @@ int main() {
     // The arrow geometry is captured before pid_2_idx; text clipping and the
     // later spot registration use the live rectangle after that helper.
     reset(); init_rows(); win.faction_records_=records; records[0].record_type_=1;
-    NetWinSessionData.mode_=3; NetWinLobbyRows[1].prefix_=0;
+    NetWinSessionData.fields_.mode_=3; NetWinLobbyRows.rows_[1].prefix_=0;
     win.setup_rects_[20].left=10; win.setup_rects_[20].top=20;
     win.setup_rects_[20].right=50; win.setup_rects_[20].bottom=40;
     callback_rect=&win.setup_rects_[20];
@@ -296,7 +296,7 @@ int main() {
     // draw_factions uses the pre-helper rectangle for arrow and clipping;
     // its spot registration reads the live rectangle after the helper.
     reset(); init_rows(); win.faction_records_=records; records[0].record_type_=1;
-    NetWinSessionData.mode_=3; NetWinLobbyRows[1].faction_or_color_=0;
+    NetWinSessionData.fields_.mode_=3; NetWinLobbyRows.rows_[1].faction_or_color_=0;
     win.setup_rects_[13].left=10; win.setup_rects_[13].top=20;
     win.setup_rects_[13].right=50; win.setup_rects_[13].bottom=40;
     callback_rect=&win.setup_rects_[13]; forced_pid_index=1;
@@ -317,8 +317,8 @@ int main() {
     // This double is a call-count/value seam model, not a claim that the CRT
     // mutates labels or invokes callbacks.
     reset(); init_rows(); win.faction_records_=records; records[0].record_type_=1;
-    NetWinSessionData.mode_=3;
-    std::strcpy(NetWinLobbyRows[1].noun_faction_, "Noun");
+    NetWinSessionData.fields_.mode_=3;
+    std::strcpy(NetWinLobbyRows.rows_[1].noun_faction_, "Noun");
     vary_label_lookup=true;
     win.draw_factions();
     if (label_get_calls!=2 || std::strcmp(StringTemp, "Lobby")!=0)
@@ -326,8 +326,8 @@ int main() {
 
     for (int raw : {0x80, 0xFE}) {
         reset(); init_rows(); win.faction_records_=records;
-        records[0].record_type_=1; NetWinSessionData.mode_=3;
-        NetWinLobbyRows[1].field_2_=static_cast<uint8_t>(raw);
+        records[0].record_type_=1; NetWinSessionData.fields_.mode_=3;
+        NetWinLobbyRows.rows_[1].field_2_=static_cast<uint8_t>(raw);
         callback_rect=&win.setup_rects_[20];
         win.draw_diffs();
         char *expected=Difficulty[raw == 0x80 ? -128 : -2];
@@ -399,20 +399,20 @@ def test_compiled_hoisted_record_count_mutant_fails_runtime(compiler_name, tmp_p
     bodies = _painter_bodies()
     body = bodies["BODY_FACTIONS"]
     live_check = (
-        "if (NetWinSessionData.mode_ == 3\n"
+        "if (NetWinSessionData.fields_.mode_ == 3\n"
         "            && index >= faction_records_[0].record_type_)"
     )
     assert live_check in body
     body = body.replace(
         "    for (int index = 0; index < 7;",
-        "    const int record_type_snapshot = NetWinSessionData.mode_ == 3\n"
+        "    const int record_type_snapshot = NetWinSessionData.fields_.mode_ == 3\n"
         "        ? faction_records_[0].record_type_ : 0;\n"
         "    for (int index = 0; index < 7;",
         1,
     )
     body = body.replace(
         live_check,
-        "if (NetWinSessionData.mode_ == 3\n"
+        "if (NetWinSessionData.fields_.mode_ == 3\n"
         "            && index >= record_type_snapshot)",
         1,
     )

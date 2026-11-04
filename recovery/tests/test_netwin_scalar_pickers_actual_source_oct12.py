@@ -66,10 +66,10 @@ static int &destination() { if(trace_copy_reads)event("destination_read"); retur
 static char StringTemp[256];
 static int Difficulty[]={10,11,12,13,14,15};
 /* ACTUAL RECORDS */
-static NetWinSessionOptionsState options_storage, sent_options;
-// Instrumented lvalue evaluation witnesses source order only. The real POD
-// and native rep movsd acquire no artificial callback or provider semantics.
-static NetWinSessionOptionsState &options() {
+static NetWinSessionOptionsState sent_options;
+struct NetWinSessionOptionsMock { NetWinSessionOptionsState fields_; };
+static NetWinSessionOptionsMock options_storage;
+static NetWinSessionOptionsMock &options() {
     if(trace_copy_reads)event("options_read");
     return options_storage;
 }
@@ -171,7 +171,7 @@ static void invoke(NetWin&w,int kind) {
 static void reset(NetWin&w,int selected,int first=4) {
     callback={}; trace_copy_reads=false; events.clear(); visible.clear(); answer=selected; player_count=first;
     NetWinPlanetSizeLabelCount=2; dialog_count=pull_count=sends=0; recipient_storage=39;
-    std::memset(&NetWinSessionOptions,0x5a,sizeof NetWinSessionOptions);
+    std::memset(&NetWinSessionOptions.fields_,0x5a,sizeof NetWinSessionOptions.fields_);
     std::memset(&sent_options,0,sizeof sent_options); sent_target=-1;
     for(int i=0;i<8;++i)std::sprintf(w.world_size_labels_[i],"world%d",i);
 }
@@ -202,11 +202,11 @@ int main() {
     NetWin w;
     const int offsets[]={1,2,3,6,7,8,9,10};
     for(int kind=0;kind<8;++kind)for(int selected : {-1,0,1,255,256,2147483647}) {
-        reset(w,selected); NetWinSessionOptionsState expected=NetWinSessionOptions;
+        reset(w,selected); NetWinSessionOptionsState expected=NetWinSessionOptions.fields_;
         callback=[&](const std::string&e) {
-            if(e=="modal") { player_count=7; NetWinSessionOptions.rule_bits_a_=0x11223344;
+            if(e=="modal") { player_count=7; NetWinSessionOptions.fields_.rule_bits_a_=0x11223344;
                 expected.rule_bits_a_=0x11223344; }
-            if(e=="identity") { NetWinSessionOptions.rule_bits_b_=0x55667788;
+            if(e=="identity") { NetWinSessionOptions.fields_.rule_bits_b_=0x55667788;
                 expected.rule_bits_b_=0x55667788; recipient_storage=99; }
         };
         if(selected>=0) {
@@ -246,14 +246,14 @@ int main() {
     invoke(w,3); lifetime(); check_items(3,4,3);
     const uint32_t masks[]={0x800,2,8,4,0x1000,1,0x10,0x20,0x4000,0x200,0x40,0x100,0x2000,0x8000,0x80};
     for(int selected : {-2147483647-1,-1,0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,99,100,101,2147483647}) {
-        reset(w,0); rules_gate=1; NetWinSessionOptionsState expected=NetWinSessionOptions;
+        reset(w,0); rules_gate=1; NetWinSessionOptionsState expected=NetWinSessionOptions.fields_;
         if(selected>=0 && selected<=14)expected.rule_bits_a_^=masks[selected];
         else if(selected==16)expected.rule_bits_b_^=0x800000;
         else if(selected==17)expected.rule_bits_b_^=0x1000000;
         else if(selected==100)expected.rule_bits_c_^=0x10;
         callback=[&](const std::string&e) {
             if(e=="identity") { expected.rule_bits_c_^=0x800;
-                NetWinSessionOptions.rule_bits_c_^=0x800; recipient_storage=99; }
+                NetWinSessionOptions.fields_.rule_bits_c_^=0x800; recipient_storage=99; }
         };
         rule_toggle(selected);
         assert(sends==1 && dialog_count==0 && pull_count==0 && sent_target==99);
@@ -303,7 +303,7 @@ MUTANTS = [
     ("diff_default", "global_diff", "Dialogs &dialogs = pop_menu.dialogs();", "Dialogs &dialogs = pop_menu.dialogs(); dialogs.item(label_get(0xFE4 / 4),0);"),
     ("diff_off_by_one", "global_diff", "static_cast<unsigned char>(answer)", "static_cast<unsigned char>(answer - 1)"),
     ("time_off_by_one", "time", "static_cast<unsigned char>(answer)", "static_cast<unsigned char>(answer - 1)"),
-    ("time_wrong_owner_field", "time", "NetWinSessionOptions.time_control_", "NetWinSessionOptions.option_4_"),
+    ("time_wrong_owner_field", "time", "NetWinSessionOptions.fields_.time_control_", "NetWinSessionOptions.fields_.option_4_"),
     ("number_old_result", "num_players", "static_cast<uint32_t>(first)", "static_cast<uint32_t>(-1)"),
     ("number_live_first", "num_players", "static_cast<uint32_t>(first)", "static_cast<uint32_t>(NetDaemonNet.player_count_)"),
     ("number_no_clamp", "num_players", "else if (count > 7) count = 7;", "else if (count > 7) count = count;"),

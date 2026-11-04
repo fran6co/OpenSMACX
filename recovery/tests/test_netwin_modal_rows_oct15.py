@@ -52,7 +52,7 @@ struct NetWinLobbyRow {
 typedef char production_lobby_row_stride[(sizeof(NetWinLobbyRow) == 0x17C) ? 1 : -1];
 typedef char production_ready_byte_offset[
     (offsetof(NetWinLobbyRow, ready_or_occupied_) == 1) ? 1 : -1];
-NetWinLobbyRow NetWinLobbyRows[8];
+struct NetWinLobbyRowsMock { NetWinLobbyRow rows_[8]; } NetWinLobbyRows;
 
 struct NetDaemon {
     int player_count_;
@@ -85,14 +85,14 @@ NetWin NetWinDialog;
 
 void reset_rows() {
     for (int row = 0; row < 8; ++row) {
-        NetWinLobbyRows[row].prefix_ = 0xA0 + row;
-        NetWinLobbyRows[row].ready_or_occupied_ = 1;
+        NetWinLobbyRows.rows_[row].prefix_ = 0xA0 + row;
+        NetWinLobbyRows.rows_[row].ready_or_occupied_ = 1;
         // Set the adjacent byte to the opposite value so accidental raw
         // reads of field_2_ cannot pass the ready-byte oracle.
-        NetWinLobbyRows[row].field_2_ = 0;
-        NetWinLobbyRows[row].faction_or_color_ = static_cast<int8_t>(row);
-        NetWinLobbyRows[row].field_4_ = 0x5A;
-        NetWinLobbyRows[row].owner_ = 0x10203040u + row;
+        NetWinLobbyRows.rows_[row].field_2_ = 0;
+        NetWinLobbyRows.rows_[row].faction_or_color_ = static_cast<int8_t>(row);
+        NetWinLobbyRows.rows_[row].field_4_ = 0x5A;
+        NetWinLobbyRows.rows_[row].owner_ = 0x10203040u + row;
     }
 }
 void reset_common() {
@@ -149,14 +149,14 @@ void check_count_domains_and_named_ready_byte() {
 
     reset_common();
     NetDaemonNet.player_count_ = 1;
-    NetWinLobbyRows[1].ready_or_occupied_ = 1;
+    NetWinLobbyRows.rows_[1].ready_or_occupied_ = 1;
     require(run_instance(1) == 0);
     require(Events.size() == 1 && Events[0] == ReceiveEvent);
     require(run_daemon(1) == 0);
 
     reset_common();
     NetDaemonNet.player_count_ = 1;
-    NetWinLobbyRows[1].ready_or_occupied_ = 0;
+    NetWinLobbyRows.rows_[1].ready_or_occupied_ = 0;
     NetWin receiver;
     receiver.field_7614_ = 0;
     receiver.field_7618_ = 0;
@@ -165,7 +165,7 @@ void check_count_domains_and_named_ready_byte() {
     require(receiver.field_7618_ == 0 && receiver.field_7614_ == 0);
     reset_common();
     NetDaemonNet.player_count_ = 1;
-    NetWinLobbyRows[1].ready_or_occupied_ = 0;
+    NetWinLobbyRows.rows_[1].ready_or_occupied_ = 0;
     ExitTurnLoop = 1;
     require(NetWin::modal_callback_daemon() == 0);
     require(NetWinDialog.field_7618_ == 0 && NetWinDialog.field_7614_ == 0);
@@ -179,14 +179,14 @@ void check_count_domains_and_named_ready_byte() {
     // and the seven-row countdown.
     reset_common();
     NetDaemonNet.player_count_ = 2;
-    NetWinLobbyRows[2].ready_or_occupied_ = 0;
+    NetWinLobbyRows.rows_[2].ready_or_occupied_ = 0;
     receiver.field_7614_ = 0;
     receiver.field_7618_ = 0;
     receiver.id_ = 1;
     require(receiver.modal_callback() == 1);
     reset_common();
     NetDaemonNet.player_count_ = 2;
-    NetWinLobbyRows[2].ready_or_occupied_ = 0;
+    NetWinLobbyRows.rows_[2].ready_or_occupied_ = 0;
     ExitTurnLoop = 1;
     require(NetWin::modal_callback_daemon() == 0);
     require(NetWinDialog.field_7618_ == 0);
@@ -251,14 +251,14 @@ def test_production_row_definition_and_modal_loop_contracts():
     header = (ROOT / "src/netwin.h").read_text()
     assert "uint8_t ready_or_occupied_;       // +1" in header
     assert 'static_assert(sizeof(NetWinLobbyRow) == 0x17C' in header
-    assert "NetWinLobbyRow *record = &NetWinLobbyRows[1];" in INSTANCE_BODY
+    assert "NetWinLobbyRow *record = &NetWinLobbyRows.rows_[1];" in INSTANCE_BODY
     assert "record->ready_or_occupied_ == 0" in INSTANCE_BODY
     assert "int index = 1;" in INSTANCE_BODY
     assert "while (index <= NetDaemonNet.player_count_);" in INSTANCE_BODY
-    assert "NetWinLobbyRow *record = &NetWinLobbyRows[1];" in DAEMON_BODY
+    assert "NetWinLobbyRow *record = &NetWinLobbyRows.rows_[1];" in DAEMON_BODY
     assert "int count = NetDaemonNet.player_count_;" in DAEMON_BODY
     assert "while (--count != 0);" in DAEMON_BODY
-    assert "reinterpret_cast<char *>(&NetWinLobbyRows[1].ready_or_occupied_)" not in (
+    assert "reinterpret_cast<char *>(&NetWinLobbyRows.rows_[1].ready_or_occupied_)" not in (
         INSTANCE_BODY + DAEMON_BODY
     )
 

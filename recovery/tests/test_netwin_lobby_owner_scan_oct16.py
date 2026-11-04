@@ -61,7 +61,7 @@ static_assert(offsetof(NetWinLobbyRow, owner_) == 0x178, "actual owner offset");
 static_assert(sizeof(NetWinFactionRecord) == 0x190, "actual faction record stride");
 struct NetDaemonHostView { int player_count_; };
 static NetDaemonHostView NetDaemonNet;
-static NetWinLobbyRow NetWinLobbyRows[8];
+static struct NetWinLobbyRowsMock { NetWinLobbyRow rows_[8]; } NetWinLobbyRows;
 
 struct ScanHarness {
     NetWinFactionRecord faction_records_[8]{};
@@ -73,9 +73,9 @@ struct ScanHarness {
 
 static bool scenario(int count, uint32_t claimed,
                      const uint32_t row_owners[8], int expected) {
-    std::memset(NetWinLobbyRows, 0, sizeof(NetWinLobbyRows));
+    std::memset(NetWinLobbyRows.rows_, 0, sizeof(NetWinLobbyRows.rows_));
     for (int index = 0; index != 8; ++index)
-        NetWinLobbyRows[index].owner_ = row_owners[index];
+        NetWinLobbyRows.rows_[index].owner_ = row_owners[index];
     NetDaemonNet.player_count_ = count;
     ScanHarness scan{};
     scan.faction_records_[0].owner_ = claimed;
@@ -134,7 +134,7 @@ def test_actual_source_scan_and_damage_controls(compiler_name, tmp_path):
     assert compile_and_run(compiler, block, tmp_path, "actual-scan") == 0
 
     starts_at_row_zero = block.replace(
-        "&NetWinLobbyRows[1]", "&NetWinLobbyRows[0]", 1
+        "&NetWinLobbyRows.rows_[1]", "&NetWinLobbyRows.rows_[0]", 1
     )
     assert starts_at_row_zero != block
     assert compile_and_run(compiler, starts_at_row_zero, tmp_path,

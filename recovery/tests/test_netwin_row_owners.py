@@ -46,23 +46,23 @@ static Player Players[8];
 static_assert(sizeof(NetWinLobbyRow)==0x17C, "row stride");
 static_assert(offsetof(NetWinLobbyRow, owner_)==0x178, "claim field");
 static_assert(offsetof(NetWinLobbyRow, faction_or_color_)==3, "mode byte");
-NetWinLobbyRow NetWinLobbyRows[8];
+struct NetWinLobbyRowsMock { NetWinLobbyRow rows_[8]; } NetWinLobbyRows;
 
-NetWinSessionBlock NetWinSessionData;
+struct NetWinSessionDataMock { NetWinSessionBlock fields_; } NetWinSessionData;
 struct Options {
     uint8_t status_, player_count_, difficulty_, time_control_;
     uint8_t option_4_, option_5_, planet_size_, ocean_coverage_;
     uint8_t erosion_, native_life_, cloud_cover_, reserved_B_;
     uint32_t rule_bits_a_, rule_bits_b_, rule_bits_c_;
 };
-Options NetWinSessionOptions;
+struct NetWinSessionOptionsMock { Options fields_; } NetWinSessionOptions;
 
 alignas(int) static char label_storage[0xFE8];
 struct LabelBlock { char *strings_ptr; } Labels={label_storage};
 struct StringTableType {
     int calls=0;
     char *get(int) {
-        NetWinSessionOptions.difficulty_=static_cast<uint8_t>(3+calls++);
+        NetWinSessionOptions.fields_.difficulty_=static_cast<uint8_t>(3+calls++);
         return const_cast<char *>("localized-noun");
     }
 } StringTable;
@@ -104,7 +104,7 @@ BODY_CHAT
 static void fail(const char *s) { std::fprintf(stderr,"FAIL: %s\n",s); std::exit(1); }
 int main() {
     NetWin win;
-    std::memset(NetWinLobbyRows,0x5A,sizeof(NetWinLobbyRows));
+    std::memset(NetWinLobbyRows.rows_,0x5A,sizeof(NetWinLobbyRows.rows_));
     NetDaemonNet.node.max_players_=0xA5;
     for(int r=1;r<=7;++r) {
         std::sprintf(Players[r].name_leader,"L%d",r-1);
@@ -115,14 +115,14 @@ int main() {
         Players[r].is_leader_female=0x3F+r;
     }
     *reinterpret_cast<int *>(label_storage+0xFE4)=73;
-    NetWinSessionData.mode_=0x12345678;
-    NetWinSessionData.scenario_text_wire_tail_[0]=0xEE;
+    NetWinSessionData.fields_.mode_=0x12345678;
+    NetWinSessionData.fields_.scenario_text_wire_tail_[0]=0xEE;
     NetDaemonNet.node.max_players_=0xA5;
     win.config_players();
-    if(NetWinLobbyRows[0].prefix_!=0x5A || NetWinLobbyRows[0].owner_!=0x5A5A5A5A)
+    if(NetWinLobbyRows.rows_[0].prefix_!=0x5A || NetWinLobbyRows.rows_[0].owner_!=0x5A5A5A5A)
         fail("config must not touch row zero");
     for(int r=1;r<=7;++r) {
-        const NetWinLobbyRow &row=NetWinLobbyRows[r];
+        const NetWinLobbyRow &row=NetWinLobbyRows.rows_[r];
         char expected[16]; std::sprintf(expected,"L%d",r-1);
         if(row.prefix_!=0xFF || row.ready_or_occupied_!=0 || row.field_2_!=r+1 ||
            static_cast<uint8_t>(row.faction_or_color_)!=0xFF || row.field_4_!=2)
@@ -140,10 +140,10 @@ int main() {
         if(row.tail_[0]!=static_cast<uint8_t>(0x3F+r) || row.owner_!=0)
             fail("tail/owner byte lane");
     }
-    if(StringTable.calls!=7 || NetWinSessionOptions.difficulty_!=9)
+    if(StringTable.calls!=7 || NetWinSessionOptions.fields_.difficulty_!=9)
         fail("label callback mutations remain visible to later rows");
-    if(NetWinSessionData.mode_!=0 || NetWinSessionData.scenario_text_wire_tail_[0]!=0 ||
-       NetWinSessionOptions.player_count_!=0xA5 || NetWinSessionOptions.status_!=0xFF)
+    if(NetWinSessionData.fields_.mode_!=0 || NetWinSessionData.fields_.scenario_text_wire_tail_[0]!=0 ||
+       NetWinSessionOptions.fields_.player_count_!=0xA5 || NetWinSessionOptions.fields_.status_!=0xFF)
         fail("existing neighboring session/options writes");
 
     NetDaemonNet.process_slots_[4].pid_=0xA1234567u;
@@ -188,31 +188,36 @@ def test_candidate_closes_all_table_aliases_but_not_buffer_scope():
     source=(ROOT/"src/netwin.cpp").read_text()
     assert "NetWinFactionTable" not in source
     assert "NetWinSlotRecords" not in source
-    assert "NetWinLobbyRows[1]" in source
+    assert "NetWinLobbyRows.rows_[1]" in source
     assert "NetDaemonNet.process_slots_" in source
     # One-past row 8 may be a loop endpoint; there must not be a ninth-row
     # field access. Buffer/RECT receiver substitutions are owned separately.
-    assert not __import__("re").search(r"NetWinLobbyRows\s*\[\s*8\s*\]\s*\.", source)
+    assert not __import__("re").search(r"NetWinLobbyRows.rows_\s*\[\s*8\s*\]\s*\.", source)
     session = mod.extract_function(source, "void NetWin::draw_session_info()")
-    assert "const NetWinLobbyRow *scan = &NetWinLobbyRows[1];" in session
+    assert "const NetWinLobbyRow *scan = &NetWinLobbyRows.rows_[1];" in session
     assert "scan->owner_ == owned" in session
     assert "++scan;" in session
     assert "reinterpret_cast<unsigned long *>" not in session
     assert "scan += 0x5F" not in session
     players = mod.extract_function(source, "void NetWin::draw_player_names()")
-    assert "NetWinLobbyRow *lobby_row = &NetWinLobbyRows[1];" in players
+    assert "NetWinLobbyRow *lobby_row = &NetWinLobbyRows.rows_[1];" in players
     assert "++lobby_row" in players
     assert "lobby_row->ready_or_occupied_" in players
 
 
 def test_original_overlay_and_stride_witnesses():
+    from match_recovery.object_source import read_objects
+    from match_recovery.source_inventory import image_pin
     src=(ROOT/"src/netwin.cpp").read_text()
-    assert "// RECOVERY_OBJECT: v2 0x0090DB98 0x0090E778" in src
-    assert "// RECOVERY_OBJECT: v2 0x0090E778 0x0090E8E0" in src
-    assert "// RECOVERY_OBJECT: v2 0x0090E8E0 0x0090E8F8" in src
+    bindings={binding.origin.address:binding for binding in read_objects(ROOT,image_pin(ROOT))
+              if binding.unit=="src/netwin.cpp"}
+    for start,end in ((0x0090DB98,0x0090E778),(0x0090E778,0x0090E8E0),
+                      (0x0090E8E0,0x0090E8F8)):
+        assert bindings[start].span.start==start
+        assert bindings[start].span.end==end
     assert 0x0090DB98 + 8*0x17C == 0x0090E778
     assert 0x0090DB98 + 8*0x17C + 0x178 == 0x0090E8F0
     assert 0x0090E778 + 1 == 0x0090E779
-    assert "NetWinSessionOptions.rule_bits_b_" in src
+    assert "NetWinSessionOptions.fields_.rule_bits_b_" in src
 
 

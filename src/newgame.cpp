@@ -706,13 +706,13 @@ int __cdecl multiplayer_init(int startup_mode) {
 
     NetDaemonNet.primary_state_.trailing_words_[1] = 0;
     if (ExitTurnLoop == 0 && NetWinDialog.exec() > 0) {
-        const int difficulty = static_cast<int8_t>(NetWinSessionOptions.difficulty_);
-        const uint32_t rules_a = NetWinSessionOptions.rule_bits_a_;
-        const uint32_t rules_b = NetWinSessionOptions.rule_bits_b_;
+        const int difficulty = static_cast<int8_t>(NetWinSessionOptions.fields_.difficulty_);
+        const uint32_t rules_a = NetWinSessionOptions.fields_.rule_bits_a_;
+        const uint32_t rules_b = NetWinSessionOptions.fields_.rule_bits_b_;
         GameDataStateStorage.fields_.game_rules_ = rules_a;
         const uint32_t old_game_state = GameDataStateStorage.fields_.game_state_;
         GameDataStateStorage.fields_.diff_level_current_ = difficulty;
-        const uint8_t rules_c = NetWinSessionOptions.rule_bits_c_;
+        const uint8_t rules_c = NetWinSessionOptions.fields_.rule_bits_c_;
         const uint32_t merged_game_state = old_game_state | (rules_b & 0x01800000u);
         const bool enable_turn_flag = (rules_c & 0x10u) != 0;
         const uint32_t old_turn_flags = GameDataStateStorage.fields_.net_turn_flags_;
@@ -733,7 +733,7 @@ int __cdecl multiplayer_init(int startup_mode) {
             }
             GameDataStateStorage.fields_.lock_masks_.enable_mask_ = (GameDataStateStorage.fields_.lock_masks_.enable_mask_ & 0xFFFFFF00u) | mask;
 
-            if (NetWinSessionData.mode_ == 0) {
+            if (NetWinSessionData.fields_.mode_ == 0) {
                 result = text_open(AlphaxFileID, "WORLDSIZE");
                 if (result != 0) {
                     MapSizePlanet = 2;
@@ -753,7 +753,7 @@ int __cdecl multiplayer_init(int startup_mode) {
                         latitude[i] = text_item_number();
                     }
                     const int8_t selected =
-                        static_cast<int8_t>(NetWinSessionOptions.planet_size_);
+                        static_cast<int8_t>(NetWinSessionOptions.fields_.planet_size_);
                     const int index = selected == -1 ? rand() % 5 : selected;
                     MapSizePlanet = static_cast<uint32_t>(index);
                     MapLongitudeBounds = longitude[index] << 1;
@@ -776,18 +776,18 @@ int __cdecl multiplayer_init(int startup_mode) {
                 memcpy(&MapLandCoverage, &land_bits, sizeof(MapLandCoverage));
                 rand();
                 MapOceanCoverage = static_cast<int8_t>(
-                    NetWinSessionOptions.ocean_coverage_);
+                    NetWinSessionOptions.fields_.ocean_coverage_);
                 MapPlanetaryOrbit = 1;
                 MapErosiveForces = static_cast<int8_t>(
-                    NetWinSessionOptions.erosion_);
+                    NetWinSessionOptions.fields_.erosion_);
                 MapCloudCover = static_cast<int8_t>(
-                    NetWinSessionOptions.cloud_cover_);
+                    NetWinSessionOptions.fields_.cloud_cover_);
                 MapNativeLifeForms = static_cast<int8_t>(
-                    NetWinSessionOptions.native_life_);
+                    NetWinSessionOptions.fields_.native_life_);
                 world_build();
             }
 
-            if (NetWinSessionData.mode_ != 3 && NetWinSessionData.mode_ != 2) {
+            if (NetWinSessionData.fields_.mode_ != 3 && NetWinSessionData.fields_.mode_ != 2) {
                 GameDataStateStorage.fields_.vehicle_current_count_ = 0;
                 setup_game(0);
             }
@@ -798,21 +798,21 @@ int __cdecl multiplayer_init(int startup_mode) {
             for (int i = 0; i != count; ++i) {
                 const int8_t faction = NetDaemonNet.process_slots_[i + 1].identity_;
                 PlayersData[static_cast<int>(faction)].unk_99 =
-                    NetWinLobbyRows[i + 1].owner_;
+                    NetWinLobbyRows.rows_[i + 1].owner_;
             }
         }
 
-        GameDataStateStorage.fields_.game_state_ |= NetWinSessionOptions.rule_bits_b_ & 0x01800000u;
-        if ((NetWinSessionOptions.rule_bits_c_ & 0x10u) != 0)
+        GameDataStateStorage.fields_.game_state_ |= NetWinSessionOptions.fields_.rule_bits_b_ & 0x01800000u;
+        if ((NetWinSessionOptions.fields_.rule_bits_c_ & 0x10u) != 0)
             GameDataStateStorage.fields_.net_turn_flags_ |= 0x10u;
         else
             GameDataStateStorage.fields_.net_turn_flags_ &= ~0x10u;
         GameDataStateStorage.fields_.time_controls_selection_ = static_cast<uint8_t>(
-            NetWinSessionOptions.time_control_);
+            NetWinSessionOptions.fields_.time_control_);
         ConsoleGlobal.faction_id_ =
             NetDaemonNet.pid_2_who(static_cast<unsigned long>(NetDaemonNet.local_player_id()));
 
-        if (NetWinSessionData.mode_ == 3) {
+        if (NetWinSessionData.fields_.mode_ == 3) {
             GameDataStateStorage.fields_.game_state_ |= 0x10u;
             if (NetDaemonNet.send_files() != 0) {
                 pop_close();
@@ -849,7 +849,7 @@ int __cdecl multiplayer_init(int startup_mode) {
             NetDaemonNet.send_game();
         }
 
-        if (NetWinSessionData.mode_ == 3) {
+        if (NetWinSessionData.fields_.mode_ == 3) {
             TutWinDesWindow.close();
             TutWinBaseWindow.close();
             mapwin_system_shutdown();
@@ -869,7 +869,7 @@ int __cdecl multiplayer_init(int startup_mode) {
         NetDaemonNet.locks_.clear();
         if (ControlTurnPhase == 0) planetfall(ConsoleGlobal.faction_id_);
 
-        if (NetWinSessionData.mode_ == 3) {
+        if (NetWinSessionData.fields_.mode_ == 3) {
             int faction = ConsoleGlobal.faction_id_;
             GenderDefault = Players[faction].is_leader_female;
             PluralityDefault = 0;

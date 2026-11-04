@@ -105,7 +105,7 @@ def product_source():
         definition(netdaemon,
                    r"void NetDaemon::on_player_deleted\(char\s*\*\s*(?:name\s*)?,\s*unsigned long\s+id\)"),
     ]
-    assert re.search(r"NetWinLobbyRow\s+NetWinLobbyRows\s*\[\s*8\s*\]", netwin_header)
+    assert re.search(r"NetWinLobbyRowsStorage\s+NetWinLobbyRows\s*;", netwin_header)
     lock_bodies = [
         definition(playerlock, r"void PlayerLock::clear\(\)"),
         definition(playerlock, r"int PlayerLock::active\(\)"),
@@ -120,10 +120,27 @@ def product_source():
         one_line_definition(game, r"^int NextTurnReady;\s*$", "NextTurnReady"),
         one_line_definition(game, r"^int NetUpkeepPhase;\s*$", "NetUpkeepPhase"),
         one_line_definition(netclass, r"^uint32_t NetHostChangeSlot;\s*$", "NetHostChangeSlot"),
-        one_line_definition(netwin, r"^NetWinSessionBlock NetWinSessionData;\s*$", "original session object"),
-        one_line_definition(netwin, r"^NetWinSessionOptionsState NetWinSessionOptions;\s*$", "original options object"),
+        one_line_definition(netwin, r"^NetWinLobbyRowsStorage NetWinLobbyRows;\s*$", "original lobby rows"),
+        one_line_definition(netwin, r"^NetWinSessionDataStorage NetWinSessionData;\s*$", "original session object"),
+        one_line_definition(netwin, r"^NetWinSessionOptionsStorage NetWinSessionOptions;\s*$", "original options object"),
     ]
     return "\n\n".join(globals_ + accessors + lock_bodies + callback_bodies)
+
+
+def owner_type_declarations():
+    header = (ROOT / "src/netwin.h").read_text()
+    names = (
+        "NetWinLobbyRow", "NetWinLobbyRowsStorage", "NetWinSessionBlock",
+        "NetWinSessionDataStorage", "NetWinSessionOptionsState",
+        "NetWinSessionOptionsStorage",
+    )
+    declarations = [definition(header, rf"struct {name}") + ";" for name in names]
+    declarations.extend([
+        "extern NetWinLobbyRowsStorage NetWinLobbyRows;",
+        "extern NetWinSessionDataStorage NetWinSessionData;",
+        "extern NetWinSessionOptionsStorage NetWinSessionOptions;",
+    ])
+    return "\n\n".join(declarations)
 
 
 def run(tmp_path, product, scenario, flags=()):
@@ -140,6 +157,9 @@ def run(tmp_path, product, scenario, flags=()):
     assert masks
     assert template.count("/* ACTUAL LOCK MASKS */") == 1
     template = template.replace("/* ACTUAL LOCK MASKS */", masks.group(0))
+    assert template.count("/* ACTUAL NETWIN OWNER TYPES */") == 1
+    template = template.replace("/* ACTUAL NETWIN OWNER TYPES */",
+                                owner_type_declarations())
     cpp, exe = tmp_path / "owner.cpp", tmp_path / "owner"
     cpp.write_text(template.replace("/* PRODUCT */", product))
     command = [compiler, "-std=c++11", "-Wall", "-Wextra", "-Werror",

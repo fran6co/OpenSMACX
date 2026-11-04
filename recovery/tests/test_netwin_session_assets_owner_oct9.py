@@ -56,7 +56,7 @@ def test_config_players_uses_typed_player_fields_and_native_copy_order():
     ]
     offsets = [body.index(item) for item in copies]
     assert offsets == sorted(offsets)
-    assert "row->field_2_ = NetWinSessionOptions.difficulty_" in body
+    assert "row->field_2_ = NetWinSessionOptions.fields_.difficulty_" in body
     assert "template_record += 0x59C" not in body
 
 
@@ -105,7 +105,7 @@ def test_extracted_config_players_preserves_byte_and_player_array_behavior(
 #include <cstddef>
 ROW_DECL
 SESSION_DECL
-static NetWinLobbyRow NetWinLobbyRows[8];
+static struct NetWinLobbyRowsMock { NetWinLobbyRow rows_[8]; } NetWinLobbyRows;
 typedef int BOOL;
 ACTUAL_PLAYER_DECLARATION
 static_assert(offsetof(Player, is_leader_female)==0, "leader gender byte offset");
@@ -117,9 +117,9 @@ static Player Players[8];
 struct NetAllocationNode { uint32_t max_players_; };
 struct Net { NetAllocationNode node; const NetAllocationNode &allocation_node() const { return node; } };
 static Net NetDaemonNet;
-static NetWinSessionBlock NetWinSessionData;
+static struct NetWinSessionDataMock { NetWinSessionBlock fields_; } NetWinSessionData;
 struct Options { uint8_t status_, option_4_, option_5_, reserved_B_, player_count_, difficulty_, planet_size_, ocean_coverage_, erosion_, native_life_, cloud_cover_; };
-static Options NetWinSessionOptions;
+static struct NetWinSessionOptionsMock { Options fields_; } NetWinSessionOptions;
 static char noun[]="localized noun";
 static char *label_get(int) { return noun; }
 struct NetWin { void config_players(); };
@@ -136,9 +136,9 @@ int main() {
     }
     NetWin win;
     win.config_players();
-    if (NetWinSessionOptions.player_count_!=0xA5) return 1;
+    if (NetWinSessionOptions.fields_.player_count_!=0xA5) return 1;
     for (int i=1; i<8; ++i) {
-        const NetWinLobbyRow &row=NetWinLobbyRows[i];
+        const NetWinLobbyRow &row=NetWinLobbyRows.rows_[i];
         char expected[32];
         std::sprintf(expected,"Leader%d",i);
         if (std::strcmp(row.leader_name_,expected)) return 2;

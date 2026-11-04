@@ -45,7 +45,7 @@ using std::int8_t;
 #define __fastcall
 #endif
 """ + structs + r"""
-NetWinLobbyRow NetWinLobbyRows[8] = {};
+struct NetWinLobbyRowsMock { NetWinLobbyRow rows_[8]; } NetWinLobbyRows = {};
 struct NetDaemon { int player_count_ = 3; } NetDaemonNet;
 struct NetWin {
     void *faction_records_ = nullptr;
@@ -61,9 +61,9 @@ int main() {
     NetWinFactionRecord physical_records[256] = {};
     NetWinFactionRecord *records = physical_records + 128;
     win.faction_records_ = records;
-    NetWinLobbyRows[1].faction_or_color_ = -1;
+    NetWinLobbyRows.rows_[1].faction_or_color_ = -1;
     assert(win.get_player_color(1) == 0xFF);
-    NetWinLobbyRows[1].faction_or_color_ = 4;
+    NetWinLobbyRows.rows_[1].faction_or_color_ = 4;
     records[0].color_ = 7;
     records[4].color_ = 29;
     if (win.get_player_color(1) != 29) {
@@ -72,9 +72,9 @@ int main() {
     }
 
     records[0].record_count_ = 4;
-    NetWinLobbyRows[1].faction_or_color_ = 0;
-    NetWinLobbyRows[2].faction_or_color_ = 1;
-    NetWinLobbyRows[3].faction_or_color_ = 0;
+    NetWinLobbyRows.rows_[1].faction_or_color_ = 0;
+    NetWinLobbyRows.rows_[2].faction_or_color_ = 1;
+    NetWinLobbyRows.rows_[3].faction_or_color_ = 0;
     records[2].color_ = 9;
     assert(win.get_player_color(3) == 9);
 
@@ -82,10 +82,10 @@ int main() {
     records[1].color_ = 17;
     records[3].color_ = 37;
     NetDaemonNet.player_count_ = 3;
-    NetWinLobbyRows[1].faction_or_color_ = 0;
-    NetWinLobbyRows[2].faction_or_color_ = 1;
-    NetWinLobbyRows[3].faction_or_color_ = 2;
-    NetWinLobbyRows[4].faction_or_color_ = 0;
+    NetWinLobbyRows.rows_[1].faction_or_color_ = 0;
+    NetWinLobbyRows.rows_[2].faction_or_color_ = 1;
+    NetWinLobbyRows.rows_[3].faction_or_color_ = 2;
+    NetWinLobbyRows.rows_[4].faction_or_color_ = 0;
     records[0].record_count_ = 3;
     // Every candidate is used: native returns the index at logical count,
     // without adding a clamp. Physical backing remains large enough.
@@ -98,10 +98,10 @@ int main() {
     NetDaemonNet.player_count_ = -1;
     assert(win.get_player_color(4) == 37);
 
-    NetWinLobbyRows[1].faction_or_color_ = 3;
-    NetWinLobbyRows[2].faction_or_color_ = 4;
+    NetWinLobbyRows.rows_[1].faction_or_color_ = 3;
+    NetWinLobbyRows.rows_[2].faction_or_color_ = 4;
     assert(win.get_player_color(2) == 29);
-    NetWinLobbyRows[2].faction_or_color_ = 3;
+    NetWinLobbyRows.rows_[2].faction_or_color_ = 3;
     NetDaemonNet.player_count_ = 2;
     assert(win.get_player_color(2) == 7);
 
@@ -109,7 +109,7 @@ int main() {
         records[color].color_ = static_cast<uint8_t>(color + 128);
     }
     for (int color = -128; color <= 127; ++color) {
-        NetWinLobbyRows[1].faction_or_color_ = static_cast<int8_t>(color);
+        NetWinLobbyRows.rows_[1].faction_or_color_ = static_cast<int8_t>(color);
         const int expected = color == -1 ? 0xFF : color + 128;
         if (win.get_player_color(1) != expected) {
             std::fputs("signed-byte-unique-index-or-ff-sentinel\n", stderr);

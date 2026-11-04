@@ -31,8 +31,25 @@
 // AN OBJECT, NOT A POINTER TO A FIXED ADDRESS: the pointer form costs a
 // load at every use where the image addresses the storage directly, and
 // the address is terranx.exe's data, unmapped in a standalone build.
+/*
+// ORIGINAL: 0x006051C0 sub_6051c0 0x006051C0-0x006051CE FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned CRT slot0x00682690 selects original callback0x006051C0..0x006051CE.", "The pinned callback calls GetSystemMetrics with selector3 through import slot0x00669334 and stores its return into scalar storage at0x009B8DD4."], "reason": "Recover runtime initialization of the owned scalar through its compiler-generated global initializer, rather than an uncalled manual routine; original allocation extent remains unproved."}
+// symbol    _$E6
+// size      14 bytes
+// prototype
+// callers   0   call targets   0
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     (none)
+// indirect  0x006051C2
+Return Value: n/a
+Status: Complete
+*/
 // RECOVERY_OBJECT: v1 0x009B8DD4 ?ScrollDefaultThickness@@3HA
-int ScrollDefaultThickness;  // 0x009B8DD4
+int ScrollDefaultThickness = GetSystemMetrics(SM_CYHSCROLL);  // 0x009B8DD4
+// The imported GetSystemMetrics call is load-bearing: without
+// __declspec(dllimport), VC6 emits a direct call instead of the pinned
+// indirect call through import slot 0x00669334.
 // Original 0x00605914/0x00605964 set this shared mode before common Scroll setup; start only.
 // RECOVERY_OBJECT: v1 0x009B8E24 ?ScrollNonClientInit@@3HA
 int ScrollNonClientInit;  // 0x009B8E24
@@ -1974,30 +1991,6 @@ Purpose: Step the receiver back to the subobject ??_GScroll@@UAEPAXI@Z expects,
 Return Value: the forwarded call's
 Status: Complete
 */
-
-/*
-// ORIGINAL: 0x006051C0 sub_6051c0 0x006051C0-0x006051CE BYTE_EXACT
-// symbol    _sub_6051c0
-// size      14 bytes
-// prototype
-// callers   0   call targets   0
-// kind      game
-// flags     sp_ready;purged_ok
-// calls     (none)
-// indirect  0x006051C2
-Return Value: n/a
-Status: Complete
-*/
-// `__declspec(dllimport)` on GetSystemMetrics is load-bearing: without it
-// VC6 emits a direct `call rel32` (5 bytes) where the original calls
-// indirectly through the import slot at 0x00669334 with `call dword ptr`
-// (6 bytes). The declaration used to sit here for that reason; it comes from
-// the scaffold now (emit_translation_unit.WIN32_IMPORTS), which carries the
-// same `__declspec(dllimport)` for the same reason.
-
-extern "C" void __cdecl sub_6051c0() {
-    ScrollDefaultThickness = GetSystemMetrics(3);
-}
 
 // The original Scroll constructor at 0x006051D0 installs its Win view at
 // 0x00605214 (0x00669D58) and Buffer view at 0x0060521A (0x00669D50,
