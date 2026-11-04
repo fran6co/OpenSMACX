@@ -165,13 +165,18 @@ class LinkedBuild:
 
     def code(self, roots, *, max_functions=DEFAULT_NODES):
         from .linked_codeview import LinkedProcedures
+        from .linked_code_region import _live_weak_reference_scope
+        weak_scope = None
         try:
             self.check_current()
             value = self.inputs
+            weak_scope = _live_weak_reference_scope(value.objects, value.mapping, value.image)
             return observe_code_graph(value.objects, value.mapping, value.image, roots,
                                       fixups=value.fixups, folding=value.folding, max_functions=max_functions,
-                                      codeview=LinkedProcedures(self))
+                                      codeview=LinkedProcedures(self), _weak_scope=weak_scope)
         finally:
+            if weak_scope is not None:
+                weak_scope.expire()
             self.check_current()
 
 

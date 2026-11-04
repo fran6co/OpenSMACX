@@ -27,16 +27,19 @@ class _BudgetExhausted(ValueError):
 
 
 def observe_code_graph(objects, mapping, image, roots, *, max_functions=DEFAULT_NODES, fixups=None, folding=None,
-                       codeview=None):
+                       codeview=None, _weak_scope=None):
     with constant_lookups(objects) as constants:
         return _guarded_code_graph(objects, mapping, image, roots, max_functions=max_functions,
-                                   fixups=fixups, folding=folding, _constants=constants, codeview=codeview)
+                                   fixups=fixups, folding=folding, _constants=constants, codeview=codeview,
+                                   _weak_scope=_weak_scope)
 
 
-def _guarded_code_graph(objects, mapping, image, roots, *, max_functions, fixups, folding, _constants, codeview=None):
+def _guarded_code_graph(objects, mapping, image, roots, *, max_functions, fixups, folding, _constants,
+                        codeview=None, _weak_scope=None):
     if folding is None:
         return _observe_code_graph(objects, mapping, image, roots, max_functions=max_functions,
-                                   fixups=fixups, _constants=_constants, codeview=codeview)
+                                   fixups=fixups, _constants=_constants, codeview=codeview,
+                                   _weak_scope=_weak_scope)
     from .linked_folding import Folding
     if (not isinstance(folding, Folding) or folding._objects is not objects
             or folding._mapping != mapping or folding._image is not image or folding._fixups is not fixups):
@@ -44,13 +47,14 @@ def _guarded_code_graph(objects, mapping, image, roots, *, max_functions, fixups
     folding.check_current()
     try:
         return _observe_code_graph(objects, mapping, image, roots, max_functions=max_functions,
-                                   fixups=fixups, folding=folding, _constants=_constants, codeview=codeview)
+                                   fixups=fixups, folding=folding, _constants=_constants, codeview=codeview,
+                                   _weak_scope=_weak_scope)
     finally:
         folding.check_current()
 
 
 def _observe_code_graph(objects, mapping, image, roots, *, max_functions=DEFAULT_NODES, fixups=None,
-                        folding=None, _constants=None, codeview=None):
+                        folding=None, _constants=None, codeview=None, _weak_scope=None):
     """Observe a deterministic rooted graph inside the caller's live epoch.
 
 Node numbering follows root/relocation order, not local compiler spellings.
@@ -226,7 +230,8 @@ never merge distinct definitions. External symbol identity remains explicit.
             node_static = lookup.statics
             proof = verify_code_region(obj, subject, item["owner"], local_mapping, image,
                                        objects=objects, fixups=fixups, folded_frames=frames, _index=lookup,
-                                       _constants=_constants, codeview=codeview)
+                                       _constants=_constants, codeview=codeview,
+                                       _weak_scope=_weak_scope)
             node.update(input=item["identity"], object_sha256=item["sha256"],
                         section=subject.section, proof=proof, result=proof["result"])
             if "regions" in proof:
@@ -349,6 +354,21 @@ never merge distinct definitions. External symbol identity remains explicit.
                     if target.storage == 2 and proof.get("extent_kind") == "selected_code_section":
                         edge["target"]["external"] = target.name
                 else:
+                    weak_resolution = next((row.get("weak_resolution") for row in proof["references"]
+                                            if row["offset"] == relocation.offset), None)
+                    if target.storage == 105:
+                        if (weak_resolution is None or weak_resolution["weak_symbol"] != target.name
+                                or weak_resolution["relocation_kind"] != relocation.kind
+                                or weak_resolution["relocation_offset"] != relocation.offset):
+                            raise ValueError("weak code graph edge lacks its exact live fallback qualification")
+                        fallback_owner = weak_resolution["fallback"]["owner"]
+                        fallback_symbol = weak_resolution["fallback"]["symbol"]
+                        fallback_node = add(fallback_owner, fallback_symbol)
+                        edge["target"] = {"coff_weak_fallback": {
+                            "node": fallback_node, "weak_symbol": target.name,
+                            "fallback_symbol": fallback_symbol, "search_mode": weak_resolution["search_mode"]}}
+                        edges.append(edge)
+                        continue
                     if target.storage not in (2, 3) or target.section < 0:
                         raise ValueError("unsupported linked code target identity")
                     matches = [row for row in (public.get(target.name, ()) if target.storage == 2 else
@@ -423,6 +443,7 @@ never merge distinct definitions. External symbol identity remains explicit.
                             "code agreement is not guard, callback registration, storage or runtime effect equivalence",
                             "loader slots bind map symbols to actual PE import identities, not selected import-library intent or loaded DLL behavior",
                             "one bounded code COMDAT, a completely verified associated family, or an entire ordinary section with jointly placed external entries; other definitions refuse",
+                            "mode-2 weak fallbacks are qualified only per live same-owner code reference; no standalone alias or retained-selection proof is inferred",
                             "shared definitions, relocation order and linked address aliasing are retained"]}
 
 

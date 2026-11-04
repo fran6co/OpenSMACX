@@ -11,12 +11,12 @@ from .model import Result, Span, digest
 
 
 def verify_function(obj, symbol, owner, mapping, image, *, objects=None, fixups=None, _index=None,
-                    _constants=None):
+                    _constants=None, _weak_scope=None):
     subject = obj.function(symbol.name)
     if subject.index != symbol.index or len(obj.code_sections(subject)) != 1:
         raise ValueError("linked function requires one independently bounded code COMDAT")
     return _verify_region(obj, subject, owner, mapping, image, objects=objects, fixups=fixups,
-                          _index=_index, _constants=_constants)
+                          _index=_index, _constants=_constants, _weak_scope=_weak_scope)
 
 
 def _constant_binding(obj, target, mapping, bindings, *, _index=None):
@@ -41,7 +41,7 @@ def _constant_binding(obj, target, mapping, bindings, *, _index=None):
 
 
 def _verify_region(obj, subject, owner, mapping, image, *, objects=None, fixups=None, _index=None,
-                   _constants=None):
+                   _constants=None, _weak_scope=None):
     """Verify a caller-bounded whole section using its placed entry offset."""
     from .linked_map_index import index_for
     lookup = index_for(mapping, _index)
@@ -78,6 +78,7 @@ def _verify_region(obj, subject, owner, mapping, image, *, objects=None, fixups=
         private = (objects.resolve_local_symbols(owner, private_names, image)
                    if objects is not None and private_names else {})
     targets, references = {}, []
+    weak_bindings = {}
     for relocation in relocations:
         target = obj.symbols[int(relocation.target)]
         constant = _constant_binding(obj, target, mapping, bindings, _index=lookup)
@@ -86,6 +87,24 @@ def _verify_region(obj, subject, owner, mapping, image, *, objects=None, fixups=
             references.append({"offset": relocation.offset, "kind": relocation.kind,
                                "identity": {"absolute_constant": {"symbol": target.name, "value": constant["value"]}},
                                "constant_binding": constant})
+            continue
+        if target.storage == 105:
+            if _weak_scope is None or objects is None:
+                raise ValueError("unsupported linked function relocation identity (weak reference requires live qualification)")
+            try:
+                binding = _weak_scope.bind(obj, subject, owner, relocation, objects=objects, mapping=mapping,
+                                           image=image, fixups=fixups, index=_index, constants=_constants,
+                                           codeview=None)
+            except ValueError as error:
+                raise ValueError("unsupported linked function relocation identity: " + str(error)) from error
+            address, details = binding.consume(obj, subject, owner, relocation)
+            targets[relocation.target] = address
+            weak_bindings[relocation.offset] = details
+            references.append({"offset": relocation.offset, "kind": relocation.kind,
+                               "identity": {"coff_weak": {"symbol": target.name,
+                                                          "fallback": details["fallback_symbol"],
+                                                          "search_mode": details["search_mode"]}},
+                               "address": address, "weak_resolution": details})
             continue
         if target.section == subject.section and 0 <= target.value < len(code):
             address, identity = base + target.value, {"self_offset": target.value}
@@ -118,6 +137,11 @@ def _verify_region(obj, subject, owner, mapping, image, *, objects=None, fixups=
     span = Span(base, base + len(code))
     proof = compare_bound_code(span, image.read(span), code, relocations, targets,
                                original_absolute_sites=image.absolute_sites(span), alignment=alignment)
+    if _weak_scope is not None and weak_bindings:
+        _weak_scope.require_live()
+        for row in proof.get("relocations", ()):
+            if row["offset"] in weak_bindings:
+                row["weak_resolution"] = weak_bindings[row["offset"]]
     fingerprint = digest({"code_sha256": hashlib.sha256(code).hexdigest(), "size": len(code),
                           "flags": obj.sections[subject.section - 1].flags,
                           "references": [{key: row[key] for key in ("offset", "kind", "identity")} for row in references]})
