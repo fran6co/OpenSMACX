@@ -601,6 +601,220 @@
 //         }
 //       ],
 //       "unit": "../build/intel/mt_obj/intrncvt.obj"
+//     },
+//     {
+//       "evidence": "Base inferred from complete same-member DIR32 reference evidence: 2 references each give original operand minus COFF symbol offset and encoded addend = 0x006a5db0; every site has a matching original HIGHLOW. The complete archive section is raw-file-backed and byte-identical at that original span, with no data-section relocations or PE base relocations. This establishes startup section bytes, not runtime value immutability or original link selection.",
+//       "origin": {
+//         "address": 6970800,
+//         "address_space": "pe:va",
+//         "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+//       },
+//       "section": 2,
+//       "section_name": ".data",
+//       "span": {
+//         "end": 6970804,
+//         "start": 6970800
+//       },
+//       "symbols": [
+//         {
+//           "name": "_NAME_",
+//           "offset": 0,
+//           "storage": 3
+//         }
+//       ],
+//       "unit": "../build/intel/mt_obj/sin.obj"
+//     },
+//     {
+//       "evidence": "Base inferred from complete same-member DIR32 reference evidence: 2 references each give original operand minus COFF symbol offset and encoded addend = 0x006a5dc0; every site has a matching original HIGHLOW. The complete archive section is raw-file-backed and byte-identical at that original span, with no data-section relocations or PE base relocations. This establishes startup section bytes, not runtime value immutability or original link selection.",
+//       "origin": {
+//         "address": 6970816,
+//         "address_space": "pe:va",
+//         "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+//       },
+//       "section": 2,
+//       "section_name": ".data",
+//       "span": {
+//         "end": 6970820,
+//         "start": 6970816
+//       },
+//       "symbols": [
+//         {
+//           "name": "_NAME_",
+//           "offset": 0,
+//           "storage": 3
+//         }
+//       ],
+//       "unit": "../build/intel/mt_obj/cos.obj"
+//     },
+//     {
+//       "evidence": "Base inferred from complete same-member DIR32 reference evidence: 2 references each give original operand minus COFF symbol offset and encoded addend = 0x006a5dd0; every site has a matching original HIGHLOW. The complete archive section is raw-file-backed and byte-identical at that original span, with no data-section relocations or PE base relocations. This establishes startup section bytes, not runtime value immutability or original link selection.",
+//       "origin": {
+//         "address": 6970832,
+//         "address_space": "pe:va",
+//         "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+//       },
+//       "section": 2,
+//       "section_name": ".data",
+//       "span": {
+//         "end": 6970840,
+//         "start": 6970832
+//       },
+//       "symbols": [
+//         {
+//           "name": "_NAME_",
+//           "offset": 0,
+//           "storage": 3
+//         }
+//       ],
+//       "unit": "../build/intel/mt_obj/sqrt.obj"
+//     },
+//     {
+//       "evidence": "Base inferred from complete same-member DIR32 reference evidence: 2 references each give original operand minus COFF symbol offset and encoded addend = 0x006a5de0; every site has a matching original HIGHLOW. The complete archive section is raw-file-backed and byte-identical at that original span, with no data-section relocations or PE base relocations. This establishes startup section bytes, not runtime value immutability or original link selection.",
+//       "origin": {
+//         "address": 6970848,
+//         "address_space": "pe:va",
+//         "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+//       },
+//       "section": 2,
+//       "section_name": ".data",
+//       "span": {
+//         "end": 6970856,
+//         "start": 6970848
+//       },
+//       "symbols": [
+//         {
+//           "name": "_NAME_",
+//           "offset": 0,
+//           "storage": 3
+//         }
+//       ],
+//       "unit": "../build/intel/mt_obj/atan.obj"
+//     },
+//     {
+//       "evidence": "Base inferred from complete same-member DIR32 reference evidence: 3 references each give original operand minus COFF symbol offset and encoded addend = 0x006a5df0; every site has a matching original HIGHLOW. The complete archive section is raw-file-backed and byte-identical at that original span, with no data-section relocations or PE base relocations. This establishes startup section bytes, not runtime value immutability or original link selection.",
+//       "origin": {
+//         "address": 6970864,
+//         "address_space": "pe:va",
+//         "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+//       },
+//       "section": 2,
+//       "section_name": ".data",
+//       "span": {
+//         "end": 6970876,
+//         "start": 6970864
+//       },
+//       "symbols": [
+//         {
+//           "name": "POW_name",
+//           "offset": 8,
+//           "storage": 3
+//         },
+//         {
+//           "name": "__half",
+//           "offset": 0,
+//           "storage": 2
+//         }
+//       ],
+//       "unit": "../build/intel/mt_obj/pow.obj"
+//     },
+//     {
+//       "evidence": "Base inferred from complete same-member DIR32 reference evidence: 7 references each give original operand minus COFF symbol offset and encoded addend = 0x00671190; every site has a matching original HIGHLOW. The complete archive section is raw-file-backed and byte-identical at that original span, with no data-section relocations or PE base relocations. This establishes startup section bytes, not runtime value immutability or original link selection.",
+//       "origin": {
+//         "address": 6754704,
+//         "address_space": "pe:va",
+//         "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+//       },
+//       "section": 3,
+//       "section_name": ".rdata",
+//       "span": {
+//         "end": 6754772,
+//         "start": 6754704
+//       },
+//       "symbols": [
+//         {
+//           "name": "__pi_by_2_to_61",
+//           "offset": 10,
+//           "storage": 2
+//         },
+//         {
+//           "name": "_infinity",
+//           "offset": 52,
+//           "storage": 3
+//         },
+//         {
+//           "name": "__DEFAULT_CW_in_mem",
+//           "offset": 8,
+//           "storage": 2
+//         },
+//         {
+//           "name": "IeeeAdjU",
+//           "offset": 44,
+//           "storage": 3
+//         },
+//         {
+//           "name": "DblMin",
+//           "offset": 28,
+//           "storage": 3
+//         },
+//         {
+//           "name": "_zero",
+//           "offset": 60,
+//           "storage": 3
+//         },
+//         {
+//           "name": "One",
+//           "offset": 0,
+//           "storage": 3
+//         },
+//         {
+//           "name": "DblMax",
+//           "offset": 20,
+//           "storage": 3
+//         },
+//         {
+//           "name": "IeeeAdjO",
+//           "offset": 36,
+//           "storage": 3
+//         }
+//       ],
+//       "unit": "../build/intel/mt_obj/common.obj"
+//     },
+//     {
+//       "evidence": "Unique external storage-2 provider in complete pinned archive record inventory; every eligible bound-code DIR32 reference to this section derives 0x006a64d0 after subtracting provider symbol offset and encoded addend, with matching original HIGHLOW. Complete initialized section is raw-file-backed and byte-identical at that span, with no data-section relocations or PE base relocations. Data location only; original final-link selection and runtime value remain unknown.",
+//       "origin": {
+//         "address": 6972624,
+//         "address_space": "pe:va",
+//         "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+//       },
+//       "section": 2,
+//       "section_name": ".data",
+//       "span": {
+//         "end": 6972668,
+//         "start": 6972624
+//       },
+//       "symbols": [
+//         {
+//           "name": "XAMtoTagTab",
+//           "offset": 28,
+//           "storage": 3
+//         },
+//         {
+//           "name": "One",
+//           "offset": 20,
+//           "storage": 3
+//         },
+//         {
+//           "name": "__indefinite",
+//           "offset": 0,
+//           "storage": 2
+//         },
+//         {
+//           "name": "__piby2",
+//           "offset": 10,
+//           "storage": 2
+//         }
+//       ],
+//       "unit": "../build/intel/mt_obj/87disp.obj"
 //     }
 //   ],
 //   "data_starts": [

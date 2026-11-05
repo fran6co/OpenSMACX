@@ -296,6 +296,25 @@
         "An entry location does not prove callable ABI, complete relocation closure, original archive selection or final-link retention. Unknown prerequisites remain unknown."
       ],
       "reopen_when": "New archive, section, relocation-target or original-caller evidence changes the dependency interpretation."
+    },
+    {
+      "id": "bind-complete-initialized-dependency-pools",
+      "category": "candidate_strategy",
+      "evidence": {
+        "witness": "src/vendor/vc6-runtime.recovery.h initialized sin/cos/sqrt/atan/pow/common data-section bindings; .opensmacx/recovery/image-frontier-nov05ae/data-review.json"
+      },
+      "requires": [
+        "The referring code contribution is independently bounded and its non-relocation bytes match the pinned archive.",
+        "Corresponding COFF DIR32 and original PE HIGHLOW operands consistently identify one section base after subtracting symbol offsets and addends.",
+        "The complete ordinary raw-backed initialized data section matches the original bytes, with the full native symbol inventory and no internal relocations."
+      ],
+      "action": "Propose a full native ToolchainDataSectionBinding instead of inventing an application global or a per-symbol extent. Check all affected references together with wrong-base and wrong-symbol-offset controls.",
+      "contraindications": [
+        "Initialized writable data proves startup contents, not immutable runtime state.",
+        "Do not apply to COMMON, BSS, TLS, COMDAT, relocation-bearing sections or disagreeing bases without separately supported evidence.",
+        "Do not label an initialized section as a virtual-zero data start, or treat unresolved cross-member provider routing as a pass."
+      ],
+      "reopen_when": "New archive, source, code/data relocation or provider-selection evidence changes the interpretation; remeasure the complete affected dependency cohort."
     }
   ],
   "policy": [
