@@ -3495,8 +3495,8 @@ there is no separate compiler package or per-compiler CLI.
 
 ## Compiler interaction and dependency checks
 
-With source configuration, `components list`, `components check-source` and
-`components check-binary` are native commands; no project dispatcher is needed.
+With source configuration, component listing, source/binary checks and the
+toolchain entry proposal are native commands; no project dispatcher is needed.
 Manifests remain companion source annotations. They must match the configured
 image pin/address space; seed manifests cannot override dependency ownership.
 Source integrity needs the pinned upstream archive and is not binary proof.
@@ -3643,6 +3643,18 @@ application coverage. They do not participate in the COMDAT-only linked
 verifier and this version does not resolve cycles among new entries within a
 component. Legacy code-section rows without `entries` keep their old serialized
 form.
+
+`components propose-entries <component> --image <image> --archive <archive>`
+returns an advisory candidate manifest for review. It considers only code
+sections whose whole original boundary and every nonrelocation byte pass, then
+requires the complete defined external symbol inventory in that COFF section to
+consist of unique, in-bounds function symbols. It preserves existing entries
+and all other bindings, adds entry offsets only, and runs the native verifier on
+the candidate. Unresolved references remain unknown; the command writes no
+source and does not infer function extents, linker selection, runtime behavior,
+or acceptance. The reusable proposal function sees one manifest; the CLI checks
+its candidate against every current component manifest and refuses cross-component
+symbol or original-identity conflicts before returning it.
 
 The companion uses one `image` pin/address space and hexadecimal binding spans.
 It contains no archive location, extracted objects, derived per-member hashes,

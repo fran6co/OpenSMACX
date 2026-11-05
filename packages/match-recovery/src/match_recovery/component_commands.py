@@ -58,6 +58,44 @@ def execute(root: Path, arguments: dict):
         if arguments.get("summary"):
             result.pop("functions", None)
         return {Result.PASS: 0, Result.FAIL: 1, Result.UNKNOWN: 3}[result["result"]], result
+    if action == "propose-entries":
+        if not toolchain:
+            raise ValueError("entry proposals require a precompiled toolchain component")
+        from .component_proposals import propose_toolchain_entries
+        from .component_source import parse_component_entries, render_component
+        from .import_source import read_imports
+
+        image_path = Path(arguments["image"])
+        image_path = image_path if image_path.is_absolute() else root / image_path
+        archive_path = Path(arguments["archive"])
+        archive_path = archive_path if archive_path.is_absolute() else root / archive_path
+        image_data, archive_data = image_path.read_bytes(), archive_path.read_bytes()
+        imports_epoch = source_snapshot(root, allow_empty=True)
+        imports = read_imports(root)
+        assert_snapshot_current(root, imports_epoch)
+        sources = input_snapshot(root, [], manifest.to_dict())
+        report = propose_toolchain_entries(manifest, image_data, archive_data, import_bindings=imports)
+        candidate = ToolchainManifest.from_dict(report["candidate_manifest"])
+        if candidate.component.component_id != manifest.component.component_id:
+            raise ValueError("entry proposal changed the selected component identity")
+        candidate_manifests = [
+            candidate if item.component.component_id == manifest.component.component_id else item
+            for item in manifests]
+        candidate_sources = {
+            f"candidate-{index}.recovery.h": render_component(item)
+            for index, item in enumerate(candidate_manifests)
+        }
+        try:
+            parse_component_entries(candidate_sources)
+        except ValueError as error:
+            raise ValueError(f"candidate conflicts with current component ownership: {error}") from error
+        assert_snapshot_current(root, imports_epoch)
+        if (component_snapshot(root) != (manifests, before)
+                or input_snapshot(root, [], manifest.to_dict()) != sources
+                or image_path.read_bytes() != image_data
+                or archive_path.read_bytes() != archive_data):
+            raise ValueError("component, import, image or archive inputs changed during entry proposal")
+        return 0, report
     if (toolchain or system_import) and action != "check-binary":
         raise ValueError("precompiled dependencies have no upstream source; use check-binary --archive")
     inputs = [] if toolchain or system_import else [manifest.source_root + "/" + item.path for item in manifest.files]

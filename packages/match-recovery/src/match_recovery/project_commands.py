@@ -284,6 +284,11 @@ def register(commands):
     linked.add_argument("--archive", type=Path, required=True)
     linked.add_argument("--library", required=True, help="Explicit library label in the configured MSVC link map")
     linked.add_argument("--summary", action="store_true", help="Omit per-function relocation detail")
+    proposing = actions.add_parser("propose-entries", help="Propose size-free entries in verified toolchain code contributions; advisory only")
+    proposing.add_argument("component")
+    proposing.add_argument("--root", type=Path, default=Path.cwd())
+    proposing.add_argument("--image", type=Path, required=True)
+    proposing.add_argument("--archive", type=Path, required=True)
 
 
 def invoke_project(root: Path, arguments: dict) -> tuple[int, object]:
