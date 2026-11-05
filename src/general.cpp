@@ -1550,27 +1550,6 @@ extern "C" int __cdecl sound_header_version() {
 // RECOVERY_IMPORT: v1 __imp__FindFirstFileA@8 KERNEL32.dll name:FindFirstFileA
 // RECOVERY_IMPORT: v1 __imp__GetDC@4 USER32.dll name:GetDC
 // RECOVERY_IMPORT: v1 __imp__ReleaseDC@8 USER32.dll name:ReleaseDC
-/*
-Purpose: close_class - close the blank sprite (0x009BEAE8 in the image, the
-         real object g_BLANK_SPRITE here), unguarded; the caller
-         (jackal_close) tail-calls it as the sprite's teardown stage. Named
-         Sprite::close_class 2026-08-30 as the mirror of Sprite::init_class
-         (0x0063CE20) - the catalogue carries no name for either.
-// ORIGINAL: 0x0063CEF0 sub_63cef0 0x0063CEF0-0x0063CEFA BYTE_EXACT
-// symbol    ?close_class@Sprite@@SAXXZ
-// size      10 bytes
-// prototype
-// callers   1   call targets   0
-// kind      game
-// flags     sp_ready;purged_ok
-// calls     (none)
-Return Value: n/a
-Status: Complete
-*/
-void Sprite::close_class() {
-    blank_sprite().close();
-}
-
 // ===== MANAGED GLOBALS - real objects, homed to their domain =====
 // In the shipped image these live at fixed data addresses and are
 // constructed before WinMain by the CRT's dynamic-initializer walk

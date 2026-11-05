@@ -2164,6 +2164,27 @@ int Sprite::init_class() {
 }
 
 /*
+Purpose: close_class - close the blank sprite (0x009BEAE8 in the image, the
+         real object g_BLANK_SPRITE here), unguarded; the caller
+         (jackal_close) tail-calls it as the sprite's teardown stage. Named
+         Sprite::close_class 2026-08-30 as the mirror of Sprite::init_class
+         (0x0063CE20) - the catalogue carries no name for either.
+// ORIGINAL: 0x0063CEF0 sub_63cef0 0x0063CEF0-0x0063CEFA BYTE_EXACT
+// symbol    ?close_class@Sprite@@SAXXZ
+// size      10 bytes
+// prototype
+// callers   1   call targets   0
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     (none)
+Return Value: n/a
+Status: Complete
+*/
+void Sprite::close_class() {
+    blank_sprite().close();
+}
+
+/*
 Purpose: Extract a sprite from a rectangle, rejecting a null region.
 // ORIGINAL: 0x005E3960 ?extract@Sprite@@QAEHPAUBuffer@@HPAURECT@@PAUTexHeap@@@Z 0x005E3960-0x005E399E FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"reason":"The rectangle overload forwards its bounds to the source-owned coordinate extractor, returning 3 for a null rectangle.","evidence":["Original 0x005E3960-0x005E399E loads RECT.left/top/right/bottom, computes right-left and bottom-top, and calls 0x005E39A0.","src/sprite.cpp owns the coordinate overload at 0x005E39A0; git:d2e09e91:src/recovered/units/005e3960.cpp retains the historical exact seed."]}

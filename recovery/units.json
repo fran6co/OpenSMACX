@@ -798,6 +798,19 @@
         "Pinned image review accounts for the remaining band gaps as NOP/INT3 padding except two unassigned hotpatch-style mov edi,edi pairs at 0x005DC70A..0x005DC70C and 0x005DCA02..0x005DCA04; neither pair is claimed as padding or given an identity.",
         "Source correspondence is inferred from the current complete census, implementation/data dependencies and pinned span accounting. It is not proof of historical object membership, linked retained selection, runtime correctness or an original TU filename; subsequent native qualification and byte restoration remain required."
       ]
+    },
+    {
+      "name": "SpriteCore",
+      "start": "0x005E37E0",
+      "end_exclusive": "0x005EB294",
+      "reason": "Inferred contribution core: 35 complete Sprite primaries occupy a compact post-Buffer band and use one recovered owner. This is a reviewed correspondence candidate, not proof of historical object boundaries or original filename. Remote Sprite lifecycle satellites remain in the same source and are recorded separately because the unit schema has one address interval.",
+      "evidence": [
+        "Pinned original mapping/source audit found exactly 35 primary identities in [0x005E37E0,0x005EB294), all in src/sprite.cpp; all 34 gaps between consecutive primary spans contain only NOP byte 0x90.",
+        "SpriteMemoryUsed, scale/cache state, clipped/scaling scratch tables, row/column counters, pitch/tail state and remap storage are source-annotated with the Sprite implementation in src/sprite.cpp.",
+        "Sprite::save and Sprite::load keep their detached 0x00662C30..0x00662C54 secondary spans; Sprite::init_class keeps 0x00663998..0x006639AD.",
+        "The same Sprite source contains guarded blank Sprite storage and callback pair at 0x0063BAE0/0x0063BB00, blank drawing helper 0x0063CDC0 and Sprite::init_class 0x0063CE20. Sprite::close_class 0x0063CEF0 was moved intact from general.cpp into sprite.cpp as its matching teardown provider."
+      ],
+      "recovered_tu": "src/sprite.cpp"
     }
   ]
 }
