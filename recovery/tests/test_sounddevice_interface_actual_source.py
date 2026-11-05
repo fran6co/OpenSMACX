@@ -228,7 +228,7 @@ def test_actual_shared_fields_and_lifecycle_order_are_consistent():
     assert "if (device)" in base_dtor
     assert "SoundXDeviceAbi::release_device(device);" in base_dtor
     assert "VectorCtorIterator" not in wave_ctor
-    assert "field_20_ = 0" in wave_ctor
+    assert "memset(&field_20_, 0, 4);" in wave_ctor
     assert "VectorDtorIterator" not in wave_dtor
     wave_header = (ROOT / "src/wave_device.h").read_text()
     assert "WaveControlGroup groups_[16]" in wave_header

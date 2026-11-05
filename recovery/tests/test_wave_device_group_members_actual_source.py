@@ -50,7 +50,10 @@ def harness(bodies: dict[str, str]) -> str:
 #include <new>
 
 struct Wave;
-struct WaveGroupNode {{ WaveGroupNode *prev; WaveGroupNode *next; Wave *wave; }};
+struct WaveGroupNode {{
+  WaveGroupNode(Wave *value = nullptr) : prev(nullptr), next(nullptr), wave(value) {{}}
+  WaveGroupNode *prev; WaveGroupNode *next; Wave *wave;
+}};
 struct WaveGroupList {{
   WaveGroupNode *head; WaveGroupNode *tail; WaveGroupNode *cursor; uint32_t count;
   void insert(Wave *);
@@ -94,7 +97,8 @@ public:
 void WaveGroupList::insert(Wave *wave) {{
   slot_seen_by_insert = wave->slot();
   if (fail_insert) throw std::bad_alloc();
-  WaveGroupNode *node = new WaveGroupNode{{tail, nullptr, wave}};
+  WaveGroupNode *node = new WaveGroupNode(wave);
+  node->prev = tail;
   if (tail) tail->next = node; else head = node;
   tail = node;
   ++count;
@@ -119,9 +123,10 @@ static int test_pull_order_and_list_edges() {{
   if (d.pull_from_group(nullptr) != 0xA) return 1;
   Wave invalid{{}}; invalid.slot(16); if (d.pull_from_group(&invalid) != 0xA) return 2;
   Wave a{{}}, b{{}}, c{{}}, absent{{}}; a.slot(0); b.slot(0); c.slot(0); absent.slot(0);
-  WaveGroupNode *n1 = new WaveGroupNode{{nullptr, nullptr, &a}};
-  WaveGroupNode *n2 = new WaveGroupNode{{n1, nullptr, &b}};
-  WaveGroupNode *n3 = new WaveGroupNode{{n2, nullptr, &c}};
+  WaveGroupNode *n1 = new WaveGroupNode(&a);
+  WaveGroupNode *n2 = new WaveGroupNode(&b);
+  WaveGroupNode *n3 = new WaveGroupNode(&c);
+  n2->prev = n1; n3->prev = n2;
   n1->next = n2; n2->next = n3;
   auto &g = d.groups_[0].list_; g.head = n1; g.tail = n3; g.cursor = n2; g.count = 3;
   if (d.pull_from_group(&b) != 0 || b.slot() != 16) return 3;

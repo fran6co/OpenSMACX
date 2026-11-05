@@ -2392,27 +2392,15 @@ Purpose: Append a wave to a group's node list. A fresh 12-byte node comes
 // callers   1   call targets   1
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     0x0064558A
-// LEVER: `WaveGroupNode *const node` -> non-const with an explicit
-// `else { node = 0; }`. With the pointer const-initialized from the `if
-// (node) {...}` alone, this tree let the null path fall straight into the
-// tail-check with `eax` already zero from the allocator's own return,
-// dropping the image's own `jmp`/`xor eax,eax` merge pair (0x004C5C17-
-// 0x004C5C19) - 34/36 instructions, 0.971 similar. Materializing the
-// redundant zero explicitly reproduces the image's (needless) re-zero and
-// closes the last two instructions.
+// The allocation guard and three field stores at 0x004C5BF0-0x004C5C19
+// are represented by the node's ordinary constructor. VC6's null-returning
+// new-expression keeps the original failed-allocation path; the list still
+// increments its count, and a live tail still dereferences the null node.
 Return Value: n/a
 Status: Complete
 */
 void WaveGroupList::insert(Wave *a1) {
-    WaveGroupNode *node =
-        static_cast<WaveGroupNode *>(operator new(0xC));
-    if (node) {
-        node->prev = nullptr;
-        node->next = nullptr;
-        node->wave = a1;
-    } else {
-        node = 0;
-    }
+    WaveGroupNode *node = new WaveGroupNode(a1);
     WaveGroupNode *const tail = this->tail;
     if (tail) {
         // The old tail's next is written first and the tail field re-read

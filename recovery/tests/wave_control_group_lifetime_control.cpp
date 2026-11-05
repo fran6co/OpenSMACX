@@ -71,7 +71,7 @@ int main() {
     clear(group);
     assert(deleted_count == 0);
     Wave wave = {1};
-    WaveGroupNode sentinel = {0, 0, &wave};
+    WaveGroupNode sentinel(&wave);
     group = construct(storage);
     group->list_.cursor = &sentinel;
     link(*group, node(&wave), node(&wave), node(&wave));

@@ -1,8 +1,10 @@
 from __future__ import annotations
 
 import shutil
+import signal
 import subprocess
 import tempfile
+import resource
 from pathlib import Path
 
 import pytest
@@ -66,7 +68,7 @@ def source_parts(root: Path) -> dict[str, str]:
     for member in ("WaveGroupNode *head;", "WaveGroupNode *tail;",
                    "WaveGroupNode *cursor;", "uint32_t count;"):
         assert member in parts["list_type"]
-    assert "operator new(0xC)" in parts["insert"]
+    assert "new WaveGroupNode(a1)" in parts["insert"]
     assert "if (group > 0xF || !wave)" in parts["add_to_group"]
     assert "groups_[group].list_.insert(wave);" in parts["add_to_group"]
     assert parts["add_to_group"].index("groups_[group].list_.insert(wave);") < parts["add_to_group"].index("wave->group_slot_ = group;")
@@ -83,6 +85,7 @@ def harness(parts: dict[str, str]) -> str:
 struct Wave {{ uint32_t group_slot_; }};
 {parts['node_type']}
 {parts['list_type']}
+static_assert(sizeof(WaveGroupNode) == 3 * sizeof(void *), "node remains three pointers");
 
 struct WaveControlGroupForTest {{ WaveGroupList list_; }};
 class Wave_Device {{
@@ -131,7 +134,7 @@ static int test_empty_list_append_and_post_call_slot_store() {{
     watched_group_slot = &wave.group_slot_;
     allocation_saw_group_slot = wave.group_slot_;
     if (device.add_to_group(3, &wave) != 0) return 1;
-    if (allocation_count != 1 || last_allocation_size != 0xC) return 2;
+    if (allocation_count != 1 || last_allocation_size != sizeof(WaveGroupNode)) return 2;
     if (allocation_saw_group_slot != 0xDEADBEEFU) return 3;
     if (list.head != &allocation_pool[0] || list.tail != &allocation_pool[0]) return 4;
     if (list.cursor != 0 || list.count != 1) return 5;
@@ -146,14 +149,14 @@ static int test_nonempty_tail_append_preserves_cursor() {{
     Wave_Device device = {{}};
     Wave wave = {{0xABCDEF01U}};
     Wave old_wave = {{5}};
-    WaveGroupNode old_tail = {{0, 0, &old_wave}};
-    WaveGroupNode cursor = {{0, 0, 0}};
+    WaveGroupNode old_tail(&old_wave);
+    WaveGroupNode cursor;
     WaveGroupList &list = device.groups_[5].list_;
     list.head = &old_tail; list.tail = &old_tail; list.cursor = &cursor; list.count = 1;
     watched_group_slot = &wave.group_slot_;
     allocation_saw_group_slot = wave.group_slot_;
     if (device.add_to_group(5, &wave) != 0) return 11;
-    if (allocation_count != 1 || last_allocation_size != 0xC) return 12;
+    if (allocation_count != 1 || last_allocation_size != sizeof(WaveGroupNode)) return 12;
     if (allocation_saw_group_slot != 0xABCDEF01U) return 13;
     if (list.head != &old_tail || old_tail.next != &allocation_pool[0]) return 14;
     if (list.tail != &allocation_pool[0] || allocation_pool[0].prev != &old_tail ||
@@ -172,7 +175,7 @@ static int test_empty_list_allocation_failure_keeps_original_effects() {{
     watched_group_slot = &wave.group_slot_;
     allocation_saw_group_slot = wave.group_slot_;
     if (device.add_to_group(0, &wave) != 0) return 21;
-    if (allocation_count != 0 || last_allocation_size != 0xC) return 22;
+    if (allocation_count != 0 || last_allocation_size != sizeof(WaveGroupNode)) return 22;
     if (allocation_saw_group_slot != 0x12345678U) return 23;
     if (list.head != 0 || list.tail != 0 || list.cursor != 0 || list.count != 1) return 24;
     if (wave.group_slot_ != 0) return 25;
@@ -195,7 +198,21 @@ static int test_invalid_inputs_do_not_allocate_or_mutate() {{
     return 0;
 }}
 
-int main() {{
+static int trigger_live_tail_allocation_failure() {{
+    reset_allocator();
+    Wave_Device device = {{}};
+    Wave old_wave = {{1}};
+    Wave wave = {{0xCAFEBABEU}};
+    WaveGroupNode old_tail(&old_wave);
+    WaveGroupList &list = device.groups_[0].list_;
+    list.head = &old_tail; list.tail = &old_tail; list.count = 1;
+    fail_allocation = 1;
+    device.add_to_group(0, &wave);
+    return 99; // Reaching this return means the required null-node fault disappeared.
+}}
+
+int main(int argc, char **) {{
+    if (argc > 1) return trigger_live_tail_allocation_failure();
     int result = test_empty_list_append_and_post_call_slot_store(); if (result) return result;
     result = test_nonempty_tail_append_preserves_cursor(); if (result) return result;
     result = test_empty_list_allocation_failure_keeps_original_effects(); if (result) return result;
@@ -205,7 +222,7 @@ int main() {{
 """
 
 
-def compile_and_run(compiler: str, source: str) -> int:
+def compile_and_run(compiler: str, source: str, arguments: tuple[str, ...] = ()) -> int:
     with tempfile.TemporaryDirectory(prefix="osmx-wave-list-boundary-") as temporary:
         executable = Path(temporary) / "actual-source-controls"
         compiled = subprocess.run(
@@ -216,7 +233,12 @@ def compile_and_run(compiler: str, source: str) -> int:
             timeout=45,
         )
         assert compiled.returncode == 0, compiled.stderr
-        return subprocess.run([str(executable)], check=False, timeout=10).returncode
+        return subprocess.run([str(executable), *arguments], check=False, timeout=10,
+                              preexec_fn=_disable_core_dumps).returncode
+
+
+def _disable_core_dumps() -> None:
+    resource.setrlimit(resource.RLIMIT_CORE, (0, 0))
 
 
 def host_compilers() -> list[str]:
@@ -227,18 +249,16 @@ def test_actual_insert_and_add_to_group_effects() -> None:
     root = repository_root()
     parts = source_parts(root)
     insertion = parts["insert"]
-    allocation = insertion.index("operator new(0xC)")
-    explicit_null_arm = insertion.index("node = 0;")
+    allocation = insertion.index("new WaveGroupNode(a1)")
     tail_snapshot = insertion.index("WaveGroupNode *const tail = this->tail;")
     tail_test = insertion.index("if (tail)")
-    previous_next_store = insertion.index("(&tail->next) = node;")
-    tail_reread = insertion.index("(&this->tail);", previous_next_store)
+    previous_next_store = insertion.index("&tail->next) = node;")
+    tail_reread = insertion.index("&this->tail);", previous_next_store)
     tail_commit = insertion.index("this->tail = node;", tail_reread)
-    assert allocation < explicit_null_arm < tail_snapshot < tail_test
+    assert allocation < tail_snapshot < tail_test
     assert previous_next_store < tail_reread < tail_commit
     # The original live-tail allocation-failure case dereferences null at
-    # node->prev. We preserve and source-check that quirk; we do not execute
-    # the undefined fault path in a host test.
+    # node->prev. Its exact SIGSEGV is exercised in a subprocess below.
     tail_body = insertion[tail_test:]
     assert "node->prev =" in tail_body
     assert "if (node" not in tail_body
@@ -248,6 +268,11 @@ def test_actual_insert_and_add_to_group_effects() -> None:
     source = harness(parts)
     for compiler in compilers:
         assert compile_and_run(compiler, source) == 0
+        # The image's live-tail failure path writes tail->next from a null new
+        # result, then dereferences node->prev. -fcheck-new preserves a null
+        # result from operator new; the child must fault instead of normalizing
+        # this historical behavior into an allocation guard.
+        assert compile_and_run(compiler, source, ("live-tail-null",)) == -signal.SIGSEGV
 
 
 @pytest.mark.parametrize(

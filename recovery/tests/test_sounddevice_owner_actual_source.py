@@ -31,7 +31,7 @@ def test_sound_device_source_retains_original_constructor_and_destructor_records
 
 
 def test_basepop_helper_uses_typed_owner_members_in_original_order():
-    source = (ROOT / "src/basepop.cpp").read_text()
+    source = (ROOT / "src/popup.cpp").read_text()
     helper = source[source.index("int __cdecl sub_48cf00(BasePop *owner, int vehicle)"):]
     assert "owner->picture_enabled()" in helper
     assert "owner->set_caller_picture" in helper
@@ -43,8 +43,9 @@ def test_basepop_helper_uses_typed_owner_members_in_original_order():
 
 
 def test_sound_owner_note_does_not_claim_backend_closure_complete():
-    source = (ROOT / "src/basepop.cpp").read_text()
-    assert "int __cdecl sub_48cf00(BasePop *owner, int vehicle)" in source
+    source = (ROOT / "src/popup.cpp").read_text()
+    records = read_text(source, "src/popup.cpp")
+    assert any(record.address == 0x48CF00 for record in records)
     # Loader export cells now have a source owner; that does not resolve the
     # separate singleton extents or the backend's higher virtual interface.
     header = (ROOT / "src/sounddevice.h").read_text()

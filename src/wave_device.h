@@ -26,6 +26,7 @@ struct IDirectSound;
 // One node of a group's wave list, allocated on the game CRT heap by insert
 // and freed by group removal operations.
 struct WaveGroupNode {
+  WaveGroupNode(Wave *value = 0) : prev(0), next(0), wave(value) {}
   WaveGroupNode *prev;
   WaveGroupNode *next;
   Wave *wave;

@@ -44,6 +44,7 @@ def test_wave_control_group_actual_member_lifetime(compiler_name: str, tmp_path:
     harness.write_text(r"""
 #include <cassert>
 #include <cstdlib>
+#include <new>
 #include <stdint.h>
 #define __fastcall
 #define nullptr 0
@@ -56,9 +57,10 @@ void operator delete(void *p) throw() {
 struct Wave {};
 """ + declarations + "\n" + ctor + "\n" + dtor + r"""
 static WaveGroupNode *node(Wave *wave, WaveGroupNode *prev, WaveGroupNode *next) {
-    WaveGroupNode *value = static_cast<WaveGroupNode *>(std::malloc(sizeof(WaveGroupNode)));
-    assert(value != 0);
-    value->prev = prev; value->next = next; value->wave = wave;
+    void *memory = std::malloc(sizeof(WaveGroupNode));
+    assert(memory != 0);
+    WaveGroupNode *value = new (memory) WaveGroupNode(wave);
+    value->prev = prev; value->next = next;
     return value;
 }
     int main() {

@@ -53,6 +53,7 @@ def harness(bodies: dict[str, str]) -> str:
 
 struct Wave;
 struct WaveGroupNode {{
+    WaveGroupNode(Wave *value = nullptr) : prev(nullptr), next(nullptr), wave(value) {{}}
     WaveGroupNode *prev;
     WaveGroupNode *next;
     Wave *wave;
@@ -122,7 +123,7 @@ static bool event(int index, int op, int id, int value) {{
 }}
 static int test_volume_bounds_and_live_cursor() {{
     Wave_Device d{{}};
-    WaveGroupNode n1{{}}, n2{{}}, n3{{}};
+    WaveGroupNode n1, n2, n3;
     DerivedWave w1{{}};
     Wave w2{{}};
     Wave w3{{}};
@@ -152,7 +153,7 @@ static int test_volume_bounds_and_live_cursor() {{
 }}
 static int test_enable_walk_and_post_store() {{
     Wave_Device d{{}};
-    WaveGroupNode n1{{}}, n2{{}}, n3{{}};
+    WaveGroupNode n1, n2, n3;
     DerivedWave w1{{}};
     Wave w2{{}};
     DerivedWave w3{{}};
@@ -180,7 +181,7 @@ static int test_enable_walk_and_post_store() {{
 }}
 static int test_disable_walk_and_post_store() {{
     Wave_Device d{{}};
-    WaveGroupNode n1{{}}, n2{{}};
+    WaveGroupNode n1, n2;
     DerivedWave w1{{}};
     Wave w2{{}};
     Hook h1{{}};
