@@ -2293,6 +2293,11 @@ Purpose: The window procedure the class registers - route every input
 //   `lparam`'s and this tree spills them high.
 Status: MISMATCH, 119/657, call counts agreeing
 */
+// RECOVERY_ASSOCIATED: v1 switch_targets 0x005F0650 0x005F0E28 0x005F0E3C 0x005F069D
+// RECOVERY_ASSOCIATED: v1 switch_selector 0x005F0650 0x005F0E3C 0x005F0F38 0x005F0697
+// RECOVERY_ASSOCIATED: v1 switch_targets 0x005F0650 0x005F0F38 0x005F0F4C 0x005F0866
+// RECOVERY_ASSOCIATED: v1 switch_selector 0x005F0650 0x005F0F4C 0x005F1049 0x005F0860
+// RECOVERY_ASSOCIATED: v1 switch_targets 0x005F0650 0x005F104C 0x005F1060 0x005F0A64
 // VC6's winuser.h hides `WM_MOUSEWHEEL` behind
 // `_WIN32_WINNT >= 0x0400`, which this build does not set - and raising it
 // would change what every other translation unit sees for one constant. The
