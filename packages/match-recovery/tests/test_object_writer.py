@@ -46,6 +46,50 @@ def test_add_v1_unknown_extent_and_v2_explicit_extent_round_trip_without_io():
     assert raw.endswith(b"int second;\r\n")
 
 
+def test_add_and_replace_v6_preserves_explicit_local_scope_and_requires_promotion_grant():
+    raw = b"int guard;\n"
+    local = ObjectBinding(Origin(PIN, SPACE, 0x00401000), "_old_guard", PATH, 1,
+                          target_symbol="_$S15", target_local=True)
+    written = write_object_bytes(raw, expected=(), additions=(local,), path=PATH,
+                                 pin=PIN, address_space=SPACE)
+    parsed, = current(written)
+    assert parsed.target_local is True
+    assert parsed.target_symbol == "_$S15"
+    assert b"RECOVERY_OBJECT: v6 0x00401000 _old_guard target local _$S15" in written
+
+    v4raw = (b"// RECOVERY_OBJECT: v4 0x00401000 _old_guard target _$S15\n"
+             b"int guard;\n")
+    old, = current(v4raw)
+    promoted = replace(old, target_local=True)
+    with pytest.raises(ValueError, match="explicit promotion grant"):
+        replace_object_records({PATH: v4raw}, expected=(old,), replacements=(promoted,),
+                               destination=PATH, pin=PIN, address_space=SPACE)
+    out = replace_object_records(
+        {PATH: v4raw}, expected=(old,), replacements=(promoted,),
+        destination=PATH, pin=PIN, address_space=SPACE,
+        local_target_promotions=frozenset({old.origin.entity_id}))
+    result, = current(out[PATH])
+    assert (result.origin, result.symbol, result.span, result.evidence,
+            result.target_symbol, result.target_local) == (
+                old.origin, old.symbol, old.span, old.evidence, old.target_symbol, True)
+
+    wrong_target = replace(old, target_symbol="_other", target_local=True)
+    with pytest.raises(ValueError, match="preserve an unbounded direct alias"):
+        replace_object_records(
+            {PATH: v4raw}, expected=(old,), replacements=(wrong_target,),
+            destination=PATH, pin=PIN, address_space=SPACE,
+            local_target_promotions=frozenset({old.origin.entity_id}))
+
+
+def test_v6_scope_cannot_be_silently_removed_by_replacement():
+    raw = b"// RECOVERY_OBJECT: v6 0x00401000 _old_guard target local _$S15\nint guard;\n"
+    old, = current(raw)
+    with pytest.raises(ValueError, match="explicit promotion grant"):
+        replace_object_records(
+            {PATH: raw}, expected=(old,), replacements=(replace(old, target_local=False),),
+            destination=PATH, pin=PIN, address_space=SPACE)
+
+
 @pytest.mark.parametrize("symbol", ["x\n// injected", "x//comment", "x\\\nnext", "bad token", "x\x7f"])
 def test_rejects_symbol_injection(symbol):
     raw = b"int value;\n"

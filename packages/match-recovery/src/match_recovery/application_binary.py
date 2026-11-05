@@ -61,7 +61,8 @@ def _validate_compiled_namespaces(bindings, object_bindings, generated_bindings,
         object_bindings, declared_functions,
         {item.symbol for item in generated_bindings},
         {item.symbol for item in import_bindings},
-        {item.symbol for item in shared_bindings}))
+        {item.symbol for item in shared_bindings},
+        {item.symbol for item in literal_bindings}))
     namespaces = [declared_functions, object_symbols,
                   {item.symbol for item in generated_bindings},
                   {item.symbol for item in import_bindings},
@@ -610,6 +611,10 @@ def _compiled_evidence(bindings, object_bindings, generated_bindings, objects, i
                         else selected_object_contents)
     data_targets, checked_objects = object_targets(target_bindings, objects)
     local_data_targets, checked_local_objects = local_object_targets(target_bindings, objects)
+    explicit_local_data_targets = {
+        (item.unit, item.emitted_symbol): local_data_targets[(item.unit, item.emitted_symbol)]
+        for item in target_bindings if item.target_local
+        and (item.unit, item.emitted_symbol) in local_data_targets}
     local_reports = {(row["unit"], row["symbol"]): row for row in checked_local_objects
                      if row["definition"] == "pass"}
     checked_objects = [local_reports.get((row["unit"], row["symbol"]), row) for row in checked_objects]
@@ -627,13 +632,17 @@ def _compiled_evidence(bindings, object_bindings, generated_bindings, objects, i
     bounded = [item for item in content_bindings if item.span is not None
                and (item.unit in objects or item.unit in (errors or {}))]
     initial = check_initial_data(bounded, objects, image, {**externals, **data_targets, **generated_targets, **imports},
-                                 literal_targets=literal_targets, errors=errors)
+                                 literal_targets=literal_targets,
+                                 local_data_targets=explicit_local_data_targets, errors=errors)
     by_symbol = {item["symbol"]: item for item in initial}
     checked_objects = [by_symbol.pop(row["symbol"], row) for row in checked_objects] + list(by_symbol.values())
     targets = {**externals, **data_targets, **generated_targets}
     rows = check_objects(bindings, objects, image,
                          external_targets=targets,
                          local_data_targets=local_data_targets,
+                         explicit_local_data_names=tuple(
+                             (item.unit, item.emitted_symbol) for item in target_bindings
+                             if item.target_local),
                          import_targets=imports, literal_targets=literal_targets, errors=errors,
                          fragments=fragments, associated_bindings=associated_bindings,
                          support_bindings=function_support_bindings, _weak_scope=_weak_scope)

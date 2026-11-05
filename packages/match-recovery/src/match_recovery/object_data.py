@@ -25,6 +25,8 @@ def referenced_initial_object_units(selected, bindings, objects):
     validate_object_symbol_ownership(bindings)
     owners = {}
     for binding in bindings:
+        if binding.target_local:
+            continue
         symbol = binding.emitted_symbol
         owner = owners.setdefault(symbol, binding.unit)
         if owner != binding.unit:
@@ -58,11 +60,19 @@ def referenced_initial_object_units(selected, bindings, objects):
     return frozenset(required)
 
 
-def check_initial_data(bindings, objects, image, targets, *, literal_targets=None, errors=None):
+def check_initial_data(bindings, objects, image, targets, *, literal_targets=None,
+                       local_data_targets=None, errors=None):
     pin = hashlib.sha256(image.data).hexdigest()
     if any(b.origin.image_sha256 != pin or b.origin.address_space != "pe:va" for b in bindings):
         raise ValueError("object data binding belongs to another image")
     rows = []
+    local_data_targets = dict(local_data_targets or {})
+    local_target_names = {binding.emitted_symbol for binding in bindings if binding.target_local}
+    if local_target_names & set(targets):
+        raise ValueError("TU-local object target conflicts with a global initial-data target")
+    literal_names = {key[1] for key in (literal_targets or {})}
+    if local_target_names & literal_names:
+        raise ValueError("TU-local object target conflicts with a literal target")
     for binding in bindings:
         row = {"symbol": binding.symbol, "unit": binding.unit, "address": f"0x{binding.origin.address:08X}",
                "source": {"path": binding.unit, "line": binding.line}, "definition": Result.UNKNOWN,
@@ -92,8 +102,11 @@ def check_initial_data(bindings, objects, image, targets, *, literal_targets=Non
                     rows.append(row)
                     continue
             else:
-                if (binding.target_symbol is not None
-                        and targets.get(binding.emitted_symbol) != binding.origin.address):
+                if binding.target_local:
+                    if local_data_targets.get((binding.unit, binding.emitted_symbol)) != binding.origin.address:
+                        raise ValueError("TU-local target lacks a validated ordinary same-owner data definition")
+                elif (binding.target_symbol is not None
+                      and targets.get(binding.emitted_symbol) != binding.origin.address):
                     raise ValueError("direct target alias lacks a validated external object definition")
                 observed = data_layout(obj, binding.emitted_symbol)
             row.update(definition=Result.PASS, compiler_storage=observed)
@@ -134,6 +147,8 @@ def check_initial_data(bindings, objects, image, targets, *, literal_targets=Non
                 if local_key in (literal_targets or {}):
                     if symbol.section > 0 and literal_targets[local_key] is not None:
                         resolved[str(index)] = literal_targets[local_key]
+                elif symbol.storage == 3 and local_key in local_data_targets:
+                    resolved[str(index)] = local_data_targets[local_key]
                 elif symbol.storage == 2 and symbol.name in targets and symbol.section >= 0:
                     if symbol.section == 0 and symbol.value:
                         continue  # COFF common allocation is not a selected definition.

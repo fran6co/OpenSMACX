@@ -12,10 +12,10 @@ def test_actual_ddinit_lifetime(tmp_path, compiler_name):
     compiler = shutil.which(compiler_name)
     if compiler is None:
         pytest.skip(compiler_name + " unavailable")
-    header = (ROOT / "src/win.h").read_text()
+    header = (ROOT / "src/ddinit.h").read_text()
     start = header.index("class DDInit { public:")
     declaration = header[start:header.index("};", start) + 2]
-    source = (ROOT / "src/win.cpp").read_text()
+    source = (ROOT / "src/ddinit.cpp").read_text()
     global_definition = re.search(r"^DDInit WinDisplayInit;[^\n]*", source, re.MULTILINE)
     assert global_definition is not None
     bodies = [definition(source, p) for p in (

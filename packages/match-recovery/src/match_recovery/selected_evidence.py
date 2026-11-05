@@ -153,7 +153,8 @@ def select_evidence(functions, selected, objects, object_bindings, generated_bin
 
     def object_matches(unit, symbol, storage):
         return [item for item in all_objects if item.emitted_symbol == symbol
-                and (storage == 2 or item.unit == unit)]
+                and ((storage == 2 and not item.target_local)
+                     or (storage == 3 and item.unit == unit))]
 
     content_owners = {}
 

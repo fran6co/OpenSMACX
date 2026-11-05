@@ -22,6 +22,7 @@ MEMBER_BOUNDED = re.compile(r"// RECOVERY_OBJECT: v3 (0x[0-9A-Fa-f]+) (0x[0-9A-F
 TARGET_UNBOUNDED = re.compile(r"// RECOVERY_OBJECT: v4 (0x[0-9A-Fa-f]+) (\S+) target (\S+)\s*")
 TARGET_BOUNDED = re.compile(r"// RECOVERY_OBJECT: v4 (0x[0-9A-Fa-f]+) (0x[0-9A-Fa-f]+) (\S+) (0x[0-9A-Fa-f]+) target (\S+)\s*")
 SLICE_BOUNDED = re.compile(r"// RECOVERY_OBJECT: v5 (0x[0-9A-Fa-f]+) (0x[0-9A-Fa-f]+) (\S+) (0x[0-9A-Fa-f]+) member (\S+) (\S+)\s*")
+TARGET_LOCAL_UNBOUNDED = re.compile(r"// RECOVERY_OBJECT: v6 (0x[0-9A-Fa-f]+) (\S+) target local (\S+)\s*")
 _MEMBER_SEGMENT = re.compile(r"([A-Za-z_][A-Za-z_0-9]*)(?:\[(0|[1-9][0-9]*)\])?\Z")
 _ROOT_ARRAY_SEGMENT = re.compile(r"\[(0|[1-9][0-9]*)\]\Z")
 _ROOT_ARRAY_SLICE = re.compile(r"\[(0|[1-9][0-9]*):(0|[1-9][0-9]*)\]\Z")
@@ -61,10 +62,13 @@ class ObjectBinding:
     parent_symbol: str | None = None
     member_path: tuple[str, ...] = ()
     target_symbol: str | None = None
+    target_local: bool = False
 
     def __post_init__(self):
         relative_path(self.unit)
         require_text(self.symbol, "object symbol")
+        if type(self.target_local) is not bool:
+            raise ValueError("object target scope must be a boolean")
         if (self.span is None) != (self.evidence is None):
             raise ValueError("bounded object requires original evidence")
         if not isinstance(self.member_path, tuple):
@@ -81,6 +85,9 @@ class ObjectBinding:
             require_text(self.target_symbol, "target object symbol")
             if self.parent_symbol is not None:
                 raise ValueError("object target alias cannot be combined with a member owner")
+        if self.target_local and (self.target_symbol is None or self.parent_symbol is not None
+                                  or self.span is not None):
+            raise ValueError("TU-local target requires an unbounded direct target alias")
         if self.span is not None:
             if self.span.start != self.origin.address:
                 raise ValueError("object extent must begin at its original identity")
@@ -112,6 +119,12 @@ def parse_objects(text: str, path: str, pin: str, *, address_space: str) -> tupl
     bindings = []
     for line, source_line in enumerate(text.splitlines(), 1):
         if not source_line.lstrip().startswith(PREFIX):
+            continue
+        match = TARGET_LOCAL_UNBOUNDED.fullmatch(source_line.strip())
+        if match:
+            start, symbol, target = match.groups()
+            bindings.append(ObjectBinding(Origin(pin, address_space, int(start, 16)), symbol, path, line,
+                                          target_symbol=target, target_local=True))
             continue
         match = BOUNDED.fullmatch(source_line.strip())
         if match:
@@ -261,18 +274,27 @@ def validate_object_symbol_ownership(bindings) -> None:
         raise ValueError("historical object identity conflicts with an emitted member owner: "
                          + sorted(aliases)[0])
     emitted = {}
+    same_unit_emitted = {}
     historical = {row.symbol: row for row in rows}
     for row in rows:
         name = row.emitted_symbol
-        prior = emitted.setdefault(name, row)
-        if prior.unit != row.unit:
-            raise ValueError("current object owner must remain in one translation unit")
-        if prior is not row:
-            # A parent binding and its children deliberately share a COFF
-            # definition; unrelated direct roots and sibling roots do not.
-            if not (row.parent_symbol == name or prior.parent_symbol == name
-                    or (row.parent_symbol == prior.emitted_symbol == name)):
-                raise ValueError("one current object target is bound to multiple original objects")
+        unit_prior = same_unit_emitted.setdefault((row.unit, name), row)
+        if unit_prior is not row:
+            if row.target_local or unit_prior.target_local:
+                raise ValueError("TU-local object target collides with another same-unit object owner")
+            if not (row.parent_symbol == name or unit_prior.parent_symbol == name
+                    or (row.parent_symbol == unit_prior.emitted_symbol == name)):
+                raise ValueError("one current object target in a translation-unit scope is bound to multiple original objects")
+        if not row.target_local:
+            prior = emitted.setdefault(name, row)
+            if prior.unit != row.unit:
+                raise ValueError("current object owner must remain in one translation unit")
+            if prior is not row:
+                # A parent binding and its children deliberately share a COFF
+                # definition; unrelated direct roots and sibling roots do not.
+                if not (row.parent_symbol == name or prior.parent_symbol == name
+                        or (row.parent_symbol == prior.emitted_symbol == name)):
+                    raise ValueError("one current object target is bound to multiple original objects")
         old = historical.get(name)
         same_parent_anchor = (old is not None and old is not row
                              and old.parent_symbol is None and old.emitted_symbol == name
@@ -478,6 +500,10 @@ def object_targets(bindings: tuple[ObjectBinding, ...], objects: dict) -> tuple[
     emitted = {}
     for binding in bindings:
         symbol = binding.emitted_symbol
+        if binding.target_local:
+            # Explicit v6 aliases are resolved only through the separate
+            # (unit, name) storage-class-3 route below.
+            continue
         identity = ("owner", binding.unit, symbol)
         if symbol in emitted and emitted[symbol] != identity:
             raise ValueError("one emitted object symbol is bound to multiple original object identities")
@@ -518,9 +544,15 @@ def object_targets(bindings: tuple[ObjectBinding, ...], objects: dict) -> tuple[
             bad_groups.add(group)
     for binding in bindings:
         obj = objects.get(binding.unit)
+        target_symbol = binding.emitted_symbol
+        if binding.target_local:
+            reports.append({"symbol": binding.symbol, "target_symbol": target_symbol,
+                            "unit": binding.unit, "address": f"0x{binding.origin.address:08X}",
+                            "definition": "unknown",
+                            **({"reason": "owner object was not compiled"} if obj is None else {})})
+            continue
         if obj is None:
             continue  # The task does not prove objects owned by uncompiled TUs.
-        target_symbol = binding.emitted_symbol
         matches = [symbol for symbol in obj.symbols.values() if symbol.name == target_symbol
                    and symbol.storage == 2 and symbol.section > 0 and not symbol.type & 0x20]
         valid = len(matches) == 1 and not obj.sections[matches[0].section - 1].flags & 0x20
@@ -550,9 +582,10 @@ def object_targets(bindings: tuple[ObjectBinding, ...], objects: dict) -> tuple[
 
 
 def emitted_object_symbols(bindings) -> frozenset[str]:
-    """Historical IDs plus current emitted names for namespace reservation."""
+    """Historical IDs plus globally scoped emitted names for reservation."""
     return frozenset(symbol for binding in bindings
-                     for symbol in (binding.symbol, binding.emitted_symbol)
+                     for symbol in (binding.symbol,
+                                    None if binding.target_local else binding.emitted_symbol)
                      if symbol is not None)
 
 
@@ -560,8 +593,12 @@ def require_disjoint_object_symbols(bindings, *other_namespaces) -> frozenset[st
     """Refuse aliases between old object IDs/current owners and peer namespaces."""
     validate_object_symbol_ownership(bindings)
     symbols = emitted_object_symbols(bindings)
+    # Explicit TU-local emitted names stay out of external target maps, but we
+    # conservatively reserve them against every other source namespace. This
+    # refuses cross-kind aliases until those namespaces carry per-TU scope too.
+    namespace_symbols = symbols | {row.emitted_symbol for row in bindings if row.target_local}
     for namespace in other_namespaces:
-        overlap = symbols & set(namespace)
+        overlap = namespace_symbols & set(namespace)
         if overlap:
             raise ValueError("object symbol conflicts with another source namespace: " + sorted(overlap)[0])
     return symbols
@@ -592,6 +629,8 @@ def referenced_object_units(bindings: tuple[ObjectBinding, ...], objects: dict) 
     validate_object_symbol_ownership(bindings)
     owners = {}
     for binding in bindings:
+        if binding.target_local:
+            continue
         symbol = binding.emitted_symbol
         owner = owners.setdefault(symbol, binding.unit)
         if owner != binding.unit:

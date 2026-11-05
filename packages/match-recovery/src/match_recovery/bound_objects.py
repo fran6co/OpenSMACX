@@ -108,6 +108,7 @@ def check_objects(bindings: Sequence[FunctionBinding], objects: Mapping[str, Cof
                   import_targets: Mapping[str, int] | None = None,
                   literal_targets: Mapping[tuple[str, str], BoundedTarget | None] | None = None,
                   local_data_targets: Mapping[tuple[str, str], int] | None = None,
+                  explicit_local_data_names: Sequence[tuple[str, str]] = (),
                   errors: Mapping[str, str] | None = None, member_functions: bool = False,
                   section_bases: Mapping[tuple[str, int], int] | None = None,
                   fragments: Sequence[FunctionFragmentBinding] = (),
@@ -153,13 +154,20 @@ def check_objects(bindings: Sequence[FunctionBinding], objects: Mapping[str, Cof
     imports = dict(import_targets or {})
     literals = dict(literal_targets or {})
     local_data = dict(local_data_targets or {})
+    explicit_local_data = frozenset(explicit_local_data_names)
     for key, value in local_data.items():
         if (not isinstance(key, tuple) or len(key) != 2
                 or any(not isinstance(part, str) or not part for part in key)
                 or type(value) is not int or not 0 <= value <= 0xFFFFFFFF):
             raise ValueError("invalid TU-qualified local data target")
         relative_path(key[0])
-    if local_data.keys() & literals.keys():
+    if any(not isinstance(key, tuple) or len(key) != 2
+           or any(not isinstance(part, str) or not part for part in key)
+           for key in explicit_local_data):
+        raise ValueError("invalid explicit TU-local object target name")
+    for unit, _symbol in explicit_local_data:
+        relative_path(unit)
+    if (local_data.keys() | explicit_local_data) & literals.keys():
         raise ValueError("TU-local data target also has a literal binding")
     if local_data.keys() & {(item.unit, item.symbol) for item in all_bindings}:
         raise ValueError("TU-local data target also has a function binding")
@@ -175,6 +183,9 @@ def check_objects(bindings: Sequence[FunctionBinding], objects: Mapping[str, Cof
                     | externals.keys() | imports.keys())
     if local_names & global_names:
         raise ValueError("TU-local function name also has a global target binding")
+    local_data_names = {symbol for _unit, symbol in explicit_local_data}
+    if local_data_names & global_names:
+        raise ValueError("TU-local data target also has a global function/import binding")
     for key, value in literals.items():
         if (not isinstance(key, tuple) or len(key) != 2 or any(not isinstance(x, str) or not x for x in key)
                 or value is not None and type(value) is not BoundedTarget):

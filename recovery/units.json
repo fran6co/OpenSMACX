@@ -824,7 +824,21 @@
         "Win::window_proc at 0x005F0650 directly indexes five target/selector arrays whose pinned addresses and limits are annotated as RECOVERY_ASSOCIATED. Three other table spans at 0x005F2200..2250, 0x005F4C84..4C94 and 0x005F7E48..7E88 already carry owner facts.",
         "Primary-to-primary gaps are pinned NOP/INT3 after all associated switch data is accounted. Unassigned 8B FF at 0x005F4C82..4C84 and LEA 8D 49 00 at 0x005F1049..104C remain explicitly unassigned and are not padding.",
         "Win destructor, Win::init and Win::init_class retain all detached cold spans. Static drawing_buffer_/screen_buffer_ state and generated startup/finalizers remain in their existing source order with shared guard byte 0x009B6E30 and bits 1/2.",
-        "WinNodeList dtor, Win folded virtual views, message pump, DDInit, cd_check and rectangle/Sound helpers are out-of-band records with separate evidence and uncertainty; current file/domain similarity does not establish their original TU membership."
+        "WinNodeList dtor, Win folded virtual views, message pump, cd_check and rectangle/Sound helpers remain out-of-band records with separate evidence and uncertainty. DDInit has its own inferred contribution candidate and corresponding src/ddinit.cpp; no complete historical Win or DDInit TU boundary is claimed."
+      ]
+    },
+    {
+      "name": "DDInitCore",
+      "start": "0x00635410",
+      "end_exclusive": "0x006362F1",
+      "recovered_tu": "src/ddinit.cpp",
+      "reason": "Inferred DirectDraw device contribution: nine mapped primaries and the five target/selector pairs of report_error occupy this compact band. This is a source ownership decision, not proof of a historical filename or complete original object boundary.",
+      "evidence": [
+        "The nine original identities, complete declared spans and historical claims move intact from win.cpp. DDInit::init retains its detached cold span 0x00663870..0x00663885, and report_error retains all ten associated switch-data spans.",
+        "Pinned disassembly confirms half-open startup end 0x00635441 and report_error end 0x00635F0B. All observed gaps are NOP padding except the three-byte LEA at 0x00636121..0x00636124 between selector and target tables, which remains unassigned/alignment-like and gains no padding exemption. No function range is extended to absorb gaps.",
+        "The real WinDisplayInit object at 0x009BE618, class declaration with eight evidenced member offsets, class-name storage at 0x00697F3C and compiler-owned lifetime mappings move together. pitch remains untouched by the constructor.",
+        "DDInit depends on application-owned Win screen storage and stays in the application target with the existing Win compiler profile. Metrics helper 0x005EFD00 and cd_check remain in Win.",
+        "Pinned CRT entries place the Win drawing/screen initializers before DDInit. Register the extracted source after win.cpp, then verify the actual physical linked order. Source/CMake order alone is not a full startup-order or game-acceptance proof."
       ]
     },
     {

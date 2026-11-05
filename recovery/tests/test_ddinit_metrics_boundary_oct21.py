@@ -93,7 +93,7 @@ def test_helper_has_one_definition_and_current_clients_keep_delegation():
     header = (ROOT / "src/win.h").read_text(encoding="utf-8")
     assert "Defined in win.cpp as part of the inferred Win contribution;" in header
     assert 'extern "C" int __cdecl DDInitRefreshScreenMetrics();' in header
-    source = (ROOT / "src/win.cpp").read_text(encoding="utf-8")
+    source = (ROOT / "src/ddinit.cpp").read_text()
     init = _function_body(source, "int DDInit::init(int width, int height, int depth, int tgl)")
     teardown = _function_body(source, "void DDInit::teardown()")
     destructor = _function_body(source, "DDInit::~DDInit()")

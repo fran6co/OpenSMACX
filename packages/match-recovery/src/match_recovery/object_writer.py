@@ -31,6 +31,8 @@ def _symbol_token(symbol: str) -> None:
 
 def _record(binding: ObjectBinding, *, path: str, pin: str,
             address_space: str, line_limit: int) -> None:
+    if type(binding.target_local) is not bool:
+        raise ValueError("object target scope must be a boolean")
     _symbol_token(binding.symbol)
     if binding.parent_symbol is not None:
         _symbol_token(binding.parent_symbol)
@@ -40,6 +42,9 @@ def _record(binding: ObjectBinding, *, path: str, pin: str,
         _symbol_token(binding.target_symbol)
         if binding.parent_symbol is not None:
             raise ValueError("direct target alias cannot be combined with a member owner")
+    if binding.target_local and (binding.target_symbol is None or binding.parent_symbol is not None
+                                 or binding.span is not None):
+        raise ValueError("TU-local target requires an unbounded direct target alias")
     if binding.unit != path:
         raise ValueError("object binding belongs to another source unit")
     if (binding.origin.image_sha256, binding.origin.address_space) != (pin, address_space):
@@ -78,6 +83,9 @@ def _marker(binding: ObjectBinding) -> bytes:
         text = (f"// RECOVERY_OBJECT: v3 0x{binding.origin.address:08X} "
                 f"0x{binding.span.end:08X} {binding.symbol} 0x{binding.evidence.address:08X} "
                 f"member {binding.parent_symbol} {'.'.join(binding.member_path)}")
+    elif binding.target_local:
+        text = (f"// RECOVERY_OBJECT: v6 0x{binding.origin.address:08X} {binding.symbol} "
+                f"target local {binding.target_symbol}")
     elif binding.target_symbol is not None and binding.span is None:
         text = (f"// RECOVERY_OBJECT: v4 0x{binding.origin.address:08X} {binding.symbol} "
                 f"target {binding.target_symbol}")
@@ -180,10 +188,10 @@ def write_object_bytes(raw: bytes, *, expected: Sequence[ObjectBinding],
                            path, pin, address_space=address_space)
     _unique(reread)
     wanted = {(row.origin.entity_id, row.symbol, row.span, row.evidence,
-               row.parent_symbol, row.member_path, row.target_symbol)
+               row.parent_symbol, row.member_path, row.target_symbol, row.target_local)
               for row in tuple(parsed) + tuple(additions)}
     got = {(row.origin.entity_id, row.symbol, row.span, row.evidence,
-            row.parent_symbol, row.member_path, row.target_symbol)
+            row.parent_symbol, row.member_path, row.target_symbol, row.target_local)
            for row in reread}
     if got != wanted:
         raise ValueError("object annotation round-trip changed its identity")
@@ -195,7 +203,8 @@ def replace_object_records(current: Mapping[str, bytes], *,
                            replacements: Sequence[ObjectBinding],
                            destination: str, pin: str,
                            address_space: str,
-                           direct_owner_promotions: frozenset[str] = frozenset()) -> dict[str, bytes]:
+                           direct_owner_promotions: frozenset[str] = frozenset(),
+                           local_target_promotions: frozenset[str] = frozenset()) -> dict[str, bytes]:
     """Rehome existing identities as member records or direct target aliases.
 
     ``current`` must contain every affected source unit and ``expected`` must
@@ -204,6 +213,8 @@ def replace_object_records(current: Mapping[str, bytes], *,
     bounded initializer obligation exactly, and may change only current target,
     owner/path and source location. Dropping a member owner in favor of a direct
     target requires that identity's explicit ``direct_owner_promotions`` grant.
+    Promoting an unbounded v4 direct alias to v6 ``target local`` requires its
+    exact entity ID in ``local_target_promotions`` and retains the target name.
     This grant authorizes only the pure annotation transport; it proves no ABI,
     compiled layout, target equivalence or runtime behavior. All non-replaced
     records survive byte-for-byte. Selected records and destination anchors must
@@ -215,6 +226,10 @@ def replace_object_records(current: Mapping[str, bytes], *,
             type(identity) is not str or not identity
             for identity in direct_owner_promotions):
         raise ValueError("direct owner promotions must be a frozenset of nonempty entity IDs")
+    if type(local_target_promotions) is not frozenset or any(
+            type(identity) is not str or not identity
+            for identity in local_target_promotions):
+        raise ValueError("local target promotions must be a frozenset of nonempty entity IDs")
     if not current or destination not in current or not replacements:
         raise ValueError("object replacement requires affected units and a destination")
     if any(not isinstance(path, str) or not isinstance(raw, bytes)
@@ -269,6 +284,7 @@ def replace_object_records(current: Mapping[str, bytes], *,
     by_identity = {row.origin.entity_id: row for row in expected}
     selected = {}
     consumed_promotions = set()
+    consumed_local_promotions = set()
     for row in replacements:
         old = by_identity.get(row.origin.entity_id)
         if old is None or row.origin.entity_id in selected:
@@ -296,6 +312,16 @@ def replace_object_records(current: Mapping[str, bytes], *,
             raise ValueError("member object replacement cannot add a direct target alias")
         if old.parent_symbol is None and row.parent_symbol is not None and row.target_symbol is not None:
             raise ValueError("object replacement cannot combine member and direct target owners")
+        local_promotion = identity in local_target_promotions
+        if local_promotion:
+            if not (not old.target_local and row.target_local
+                    and old.parent_symbol is None and row.parent_symbol is None
+                    and old.target_symbol is not None and row.target_symbol == old.target_symbol
+                    and old.span is None and row.span is None):
+                raise ValueError("local target promotion must preserve an unbounded direct alias")
+            consumed_local_promotions.add(identity)
+        elif old.target_local != row.target_local:
+            raise ValueError("changing TU-local target scope requires its exact explicit promotion grant")
         _record(row, path=destination, pin=pin, address_space=address_space,
                 line_limit=len(lines_by_unit[destination]) + 1)
         if (first_splice_by_unit[destination] is not None
@@ -308,6 +334,8 @@ def replace_object_records(current: Mapping[str, bytes], *,
         raise ValueError("object replacement identity set is inconsistent")
     if consumed_promotions != direct_owner_promotions:
         raise ValueError("direct owner promotion grants must match member-to-target replacements exactly")
+    if consumed_local_promotions != local_target_promotions:
+        raise ValueError("local target promotion grants must match scope promotions exactly")
     selected_old = {identity: by_identity[identity] for identity in selected}
     remaining = [row for row in expected if row.origin.entity_id not in selected]
     _unique(tuple(remaining) + tuple(replacements))
@@ -320,8 +348,9 @@ def replace_object_records(current: Mapping[str, bytes], *,
         # Same-unit direct parent and historical children share one emitted
         # owner. Native object_targets must still prove their original base;
         # this pure writer preserves identities, not compiled layout claims.
+        key = ("local", row.unit, emitted) if row.target_local else ("global", emitted)
         identity = ("owner", row.unit, emitted)
-        prior = owner_identity.setdefault(emitted, identity)
+        prior = owner_identity.setdefault(key, identity)
         if prior != identity:
             raise ValueError("object replacement conflicts with an emitted owner binding")
 
@@ -358,7 +387,8 @@ def replace_object_records(current: Mapping[str, bytes], *,
     def continuity(row):
         interpretation_id = row.interpretation_id if row.span is not None else None
         return (row.origin.entity_id, row.symbol, row.span, row.evidence,
-                row.parent_symbol, row.member_path, row.target_symbol, interpretation_id)
+                row.parent_symbol, row.member_path, row.target_symbol,
+                row.target_local, interpretation_id)
 
     wanted = {continuity(row)
               for row in tuple(remaining) + tuple(replacements)}

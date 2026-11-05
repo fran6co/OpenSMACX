@@ -13,7 +13,7 @@ from .measurement import Measurement
 from .model import Result, digest
 from .object_data import check_initial_data, referenced_initial_object_units
 from .object_source import (object_targets, read_objects, referenced_object_units,
-                            require_disjoint_object_symbols)
+                            require_disjoint_object_symbols, local_object_targets)
 from .literal_source import read_literals
 from .literal_data import check_literals
 from .ownership_source import project_view
@@ -51,7 +51,7 @@ def check_data(root: Path, image_path: Path, *, symbols=None, compiler=None):
         view, frozenset(), context_units=validated_context_units(root, snapshot, settings))
     object_symbols = require_disjoint_object_symbols(
         bindings, set(functions), {b.symbol for b in generated}, {b.symbol for b in imports},
-        {b.symbol for b in shared})
+        {b.symbol for b in shared}, {b.symbol for b in literals})
     groups = [set(functions), set(object_symbols), {b.symbol for b in generated},
               {b.symbol for b in imports}, {b.symbol for b in shared}]
     if any(group & other for i, group in enumerate(groups) for other in groups[:i]):
@@ -102,6 +102,11 @@ def check_data(root: Path, image_path: Path, *, symbols=None, compiler=None):
                            for item in shared if item.object_unit in objects})) - objects.keys() - errors.keys()
         resolved_functions, _context_checks = qualify_context_targets(functions, objects)
         targets, _ = object_targets(bindings, objects)
+        all_local_data_targets, _ = local_object_targets(bindings, objects)
+        local_data_targets = {
+            (item.unit, item.emitted_symbol): all_local_data_targets[(item.unit, item.emitted_symbol)]
+            for item in bindings if item.target_local
+            and (item.unit, item.emitted_symbol) in all_local_data_targets}
         active_literals = [b for b in literals if b.unit in objects or b.unit in errors]
         local_targets, checked_literals = check_literals(active_literals, objects, image, errors=errors)
         wanted_literals = {b.interpretation_id for b in selected_literals}
@@ -117,7 +122,8 @@ def check_data(root: Path, image_path: Path, *, symbols=None, compiler=None):
                              for row in checked_shared)
         measured = check_initial_data(selected, objects, image,
             {**resolved_functions, **targets, **imported, **tables, **shared_targets},
-            literal_targets=local_targets, errors=errors)
+            literal_targets=local_targets, local_data_targets=local_data_targets,
+            errors=errors)
         rows.extend({**row, "flags": list(effective(row["unit"], flags)), "graph_flags": list(flags)}
                     for row in measured)
         dependencies.append({"flags": list(flags), "compiled_units": sorted(objects), "errors": errors,

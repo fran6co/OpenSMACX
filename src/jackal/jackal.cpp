@@ -20,6 +20,7 @@
 #include "general.h" // trig_init; utility ownership is not library membership.
 #include "palette.h"
 #include "win.h"
+#include "ddinit.h"
 #include "buffer.h"
 #include "checkbox.h"
 #include "checkbutton.h"

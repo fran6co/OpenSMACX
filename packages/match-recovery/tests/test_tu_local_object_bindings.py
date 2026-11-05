@@ -7,12 +7,19 @@ from dataclasses import replace
 
 import pytest
 
-from match_recovery.application_binary import check_compiled
+from match_recovery.application_binary import _validate_compiled_namespaces, check_compiled
 from match_recovery.bound_objects import FunctionBinding, check_objects
 from match_recovery.model import Origin, Result, Span
 from match_recovery.object_data import check_initial_data
-from match_recovery.object_source import local_object_targets, parse_objects
+from match_recovery.object_source import (emitted_object_symbols, local_object_targets,
+                                          object_targets, parse_objects,
+                                          require_disjoint_object_symbols,
+                                          validate_object_symbol_ownership)
+from match_recovery.generated_source import GeneratedBinding
+from match_recovery.import_source import ImportBinding
+from match_recovery.literal_source import LiteralBinding
 from match_recovery.pe_coff import Coff, PeImage
+from match_recovery.shared_source import SharedFunctionBinding
 from test_binary import pe_fixture
 from test_object_data import data_fixture, data_image
 
@@ -32,14 +39,14 @@ def _auxiliary(length, relocations, number, selection, parent=None):
                        number if parent is None else parent, selection) + bytes(3)
 
 
-def data_object(*, target="_hidden", target_value=0, target_section=2,
+def data_object(*, caller="_caller", target="_hidden", target_value=0, target_section=2,
                 target_type=0, target_storage=3, target_aux=0,
                 extra_symbols=(), references=None, bss=False,
                 data_comdat=False, data_associative=False):
     """One function COMDAT plus an ordinary data section and named COFF records."""
     code = b"\xa1\0\0\0\0\xc3" + b"\xcc" * 10
     data = b"" if bss else bytes(16)
-    specs = [("_caller", 0, 1, 0x20, 2, 0),
+    specs = [(caller, 0, 1, 0x20, 2, 0),
              (target, target_value, target_section, target_type, target_storage, target_aux),
              *extra_symbols]
     # Section symbols each consume one auxiliary record; ordinary symbols are
@@ -247,7 +254,6 @@ def test_same_symbol_in_another_tu_does_not_leak_and_missing_units_are_unknown()
     row, = check_objects([_function(pin, unit="src/caller.cpp")], objects, image,
                          local_data_targets=targets)
     assert row["result"] == Result.UNKNOWN
-
     wrong_unit = {("src/missing.cpp", "_hidden"): PINNED_TARGET}
     owner_with_reference = Coff(data_object(references=((1, "_hidden", 6),)))
     row, = check_objects([_function(pin)], {"src/owner.cpp": owner_with_reference}, image,
@@ -256,6 +262,179 @@ def test_same_symbol_in_another_tu_does_not_leak_and_missing_units_are_unknown()
     row, = check_objects([_function(pin)], {}, image,
                          local_data_targets=targets)
     assert row["result"] == Result.UNKNOWN
+
+
+def test_v6_same_spelling_static_targets_are_tu_qualified_and_never_global():
+    code = bytearray(b"\x90" * 48)
+    for offset, target in ((0, 0x401100), (16, 0x401200), (32, 0x401100)):
+        code[offset:offset + 6] = b"\xA1" + struct.pack("<I", target) + b"\xC3"
+    raw = bytearray(pe_fixture(bytes(code), absolute_site=1))
+    # Three independent absolute operand sites in the same original image.
+    struct.pack_into("<II", raw, 0x98 + 96 + 5 * 8, 0x1100, 16)
+    struct.pack_into("<IIHHHH", raw, 768, 0x1000, 16, 0x3001, 0x3011, 0x3021, 0)
+    pin = hashlib.sha256(raw).hexdigest()
+    image = PeImage(bytes(raw), pin)
+    units = ("src/owner_a.cpp", "src/owner_b.cpp")
+    bindings = tuple(parse_objects(
+        f"// RECOVERY_OBJECT: v6 0x{address:08X} {historical} target local _$S15\n",
+        unit, pin, address_space="pe:va")[0]
+        for unit, address, historical in zip(units, (0x401100, 0x401200),
+                                             ("_old_a_guard", "_old_b_guard")))
+    caller_unit = "src/external_caller.cpp"
+    objects = {
+        units[0]: Coff(data_object(caller="_call_a", target="_$S15", target_storage=3,
+                                   references=((1, "_$S15", 6),))),
+        units[1]: Coff(data_object(caller="_call_b", target="_$S15", target_storage=3,
+                                   references=((1, "_$S15", 6),))),
+        caller_unit: Coff(data_object(caller="_call_c", target="_$S15", target_section=0, target_storage=2,
+                                      references=((1, "_$S15", 6),))),
+    }
+    validate_object_symbol_ownership(bindings)
+    local, reports = local_object_targets(bindings, objects)
+    assert local == {(units[0], "_$S15"): 0x401100,
+                     (units[1], "_$S15"): 0x401200}
+    assert [row["definition"] for row in reports] == [Result.PASS, Result.PASS]
+    global_targets, global_rows = object_targets(bindings, objects)
+    assert global_targets == {}
+    assert len(global_rows) == 2 and all(row["definition"] == Result.UNKNOWN for row in global_rows)
+    reserved = emitted_object_symbols(bindings)
+    assert "_$S15" not in reserved
+    assert {"_old_a_guard", "_old_b_guard"} <= reserved
+    with pytest.raises(ValueError, match="another source namespace"):
+        require_disjoint_object_symbols(bindings, {"_$S15"})
+
+    functions = [
+        FunctionBinding(Origin(pin, "pe:va", address), (Span(address, address + 6),),
+                        symbol, unit)
+        for address, symbol, unit in zip((0x401000, 0x401010, 0x401020),
+                                         ("_call_a", "_call_b", "_call_c"),
+                                         (*units, caller_unit))
+    ]
+    explicit_names = {(row.unit, row.emitted_symbol) for row in bindings}
+    rows = check_objects(functions, objects, image, local_data_targets=local,
+                         explicit_local_data_names=explicit_names)
+    assert [row["result"] for row in rows] == [Result.PASS, Result.PASS, Result.UNKNOWN]
+
+    # Actual local references cannot borrow a same-unit literal or function
+    # binding with the same spelling.
+    with pytest.raises(ValueError, match="also has a literal binding"):
+        check_objects(functions[:1], objects, image, local_data_targets=local,
+                      explicit_local_data_names=explicit_names,
+                      literal_targets={(units[0], "_$S15"): None})
+    conflicting_function = FunctionBinding(Origin(pin, "pe:va", 0x401300),
+                                           (Span(0x401300, 0x401306),),
+                                           "_$S15", units[0])
+    with pytest.raises(ValueError, match="also has a function binding"):
+        check_objects((conflicting_function,), objects, image, local_data_targets=local,
+                      explicit_local_data_names=explicit_names)
+    with pytest.raises(ValueError, match="global function/import binding"):
+        check_objects(functions[:1], objects, image, local_data_targets=local,
+                      explicit_local_data_names=explicit_names,
+                      import_targets={"_$S15": 0x401100})
+    with pytest.raises(ValueError, match="global function/import binding"):
+        check_objects(functions[:1], objects, image, local_data_targets=local,
+                      explicit_local_data_names=explicit_names,
+                      external_targets={"_$S15": 0x401100})
+
+
+@pytest.mark.parametrize("damage", ["external", "common", "code", "comdat", "duplicate"])
+def test_v6_local_target_requires_one_ordinary_static_data_definition(damage):
+    image, pin = _image()
+    binding, = parse_objects(
+        "// RECOVERY_OBJECT: v6 0x00401100 _old_guard target local _$S15\n",
+        "src/owner.cpp", pin, address_space="pe:va")
+    owner = Coff(data_object(target="_$S15", target_storage=3))
+    target_index = next(index for index, symbol in owner.symbols.items()
+                        if symbol.name == "_$S15")
+    if damage == "external":
+        owner.symbols[target_index] = replace(owner.symbols[target_index], storage=2)
+    elif damage == "common":
+        owner.symbols[target_index] = replace(owner.symbols[target_index], section=0, value=4, storage=2)
+    elif damage == "code":
+        owner.symbols[target_index] = replace(owner.symbols[target_index], type=0x20)
+    elif damage == "comdat":
+        number = owner.symbols[target_index].section - 1
+        owner.sections = (*owner.sections[:number],
+                          replace(owner.sections[number], flags=owner.sections[number].flags | 0x1000),
+                          *owner.sections[number + 1:])
+    else:
+        duplicate_index = max(owner.symbols) + 1
+        owner.symbols[duplicate_index] = replace(owner.symbols[target_index], index=duplicate_index)
+    local, reports = local_object_targets((binding,), {binding.unit: owner})
+    assert local == {}
+    assert reports[0]["definition"] == Result.UNKNOWN
+
+
+def test_v6_rejects_same_translation_unit_collision_but_legacy_v4_fallback_is_unchanged():
+    image, pin = _image()
+    first, = parse_objects("// RECOVERY_OBJECT: v6 0x00401100 _old_a target local _$S15\n",
+                           "src/owner.cpp", pin, address_space="pe:va")
+    second, = parse_objects("// RECOVERY_OBJECT: v4 0x00401200 _old_b target _$S15\n",
+                            "src/owner.cpp", pin, address_space="pe:va")
+    with pytest.raises(ValueError, match="TU-local object target collides"):
+        validate_object_symbol_ownership((first, second))
+
+    legacy, = parse_objects("// RECOVERY_OBJECT: v4 0x00401100 _old_guard target _$S15\n",
+                            "src/owner.cpp", pin, address_space="pe:va")
+    owner = Coff(data_object(target="_$S15", target_storage=3))
+    local, reports = local_object_targets((legacy,), {legacy.unit: owner})
+    assert local == {(legacy.unit, "_$S15"): legacy.origin.address}
+    assert reports[0]["definition"] == Result.PASS
+
+
+def test_v6_unbounded_data_check_proves_only_owner_start_and_rejects_peer_namespaces():
+    raw = data_image()
+    pin = hashlib.sha256(raw).hexdigest()
+    image = PeImage(raw, pin)
+    binding, = parse_objects(
+        "// RECOVERY_OBJECT: v6 0x00401100 _old_guard target local _actual\n",
+        "src/owner.cpp", pin, address_space="pe:va")
+    owner = Coff(data_fixture(definition=b"_actual", storage=3))
+    local, _ = local_object_targets((binding,), {binding.unit: owner})
+    row, = check_initial_data((binding,), {binding.unit: owner}, image, {},
+                              local_data_targets=local)
+    assert row["definition"] == Result.PASS
+    assert row["content"] == Result.UNKNOWN
+    assert row["lifetime"] == Result.UNKNOWN
+
+    with pytest.raises(ValueError, match="global initial-data target"):
+        check_initial_data((binding,), {binding.unit: owner}, image, {"_actual": 0x401100},
+                           local_data_targets=local)
+    with pytest.raises(ValueError, match="literal target"):
+        check_initial_data((binding,), {binding.unit: owner}, image, {},
+                           local_data_targets=local,
+                           literal_targets={(binding.unit, "_actual"): None})
+
+
+@pytest.mark.parametrize("peer", ["function", "literal", "generated", "import", "shared"])
+def test_v6_emitted_name_is_refused_against_other_source_namespace(peer):
+    name = "??_7Peer@@6B@"
+    origin = Origin("a" * 64, "pe:va", 0x401000)
+    local, = parse_objects(
+        f"// RECOVERY_OBJECT: v6 0x00401000 _old_local target local {name}\n",
+        "src/local.cpp", "a" * 64, address_space="pe:va")
+    functions = ()
+    literals = ()
+    generated = ()
+    imports = ()
+    shared = ()
+    if peer == "function":
+        functions = (FunctionBinding(origin, (Span(0x401000, 0x401006),), name,
+                                     "src/peer.cpp"),)
+    elif peer == "literal":
+        literals = (LiteralBinding(origin, Span(0x401000, 0x401004), name,
+                                   "src/peer.cpp", 1, origin),)
+    elif peer == "generated":
+        generated = (GeneratedBinding(origin, None, name, origin, "src/peer.cpp", 1),)
+    elif peer == "import":
+        imports = (ImportBinding(name, "KERNEL32", "VirtualAlloc", None,
+                                 "src/peer.cpp", 1),)
+    else:
+        shared = (SharedFunctionBinding(origin, Span(0x401000, 0x401006), name,
+                                        origin, "src/peer.cpp", 1),)
+    with pytest.raises(ValueError, match="another source namespace"):
+        _validate_compiled_namespaces(functions, (local,), generated, imports, shared,
+                                      literal_bindings=literals)
 
 
 @pytest.mark.parametrize("damage", ["duplicate", "code", "section_symbol", "auxiliary",

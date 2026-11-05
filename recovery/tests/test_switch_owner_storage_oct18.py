@@ -3,7 +3,7 @@
 These controls do not waive unsupported physical COMDAT/gap/reference cases.
 The full application build and strict comparison remain separate requirements.
 """
-from collections import defaultdict
+from collections import Counter, defaultdict
 from dataclasses import replace
 from functools import cache
 from hashlib import sha256
@@ -43,6 +43,9 @@ def population(rows):
         (row.owner.address, row.span, row.kind, row.evidence.address, row.unit)
         for row in rows
         if row.unit in {"src/general.cpp", "src/number_parsing.cpp"}
+        # This immutable publication control covers the two utility owners
+        # below; later independent General owners are not this cohort.
+        and row.owner.address in {0x628950, 0x628B70}
     }
     assert utilities == {
         (0x628950, Span(0x628A00, 0x628A10), "switch_targets", 0x628976,
@@ -75,7 +78,19 @@ def inverse(raw, unit):
 
 def test_complete_source_population_and_published_checkpoint_exact_inverse():
     rows = bindings()
-    for unit in sorted({row.unit for row in rows}):
+    # Resolve the immutable publication's actual owners rather than asking Git
+    # for today's source homes at an older revision (DDInit has since moved).
+    paths = subprocess.run(
+        ["git", "grep", "-l", "RECOVERY_ASSOCIATED:", PUBLISHED, "--", "src"],
+        cwd=ROOT, check=True, capture_output=True, text=True).stdout.splitlines()
+    owners = {row.owner.address for row in rows}
+    published = [row for path in paths
+                 for row in parse_associated(committed(path.split(":", 1)[1], PUBLISHED).decode(),
+                                             path.split(":", 1)[1], PIN, address_space="pe:va")
+                 if row.owner.address in owners]
+    identity = lambda row: (row.owner, row.kind, row.span, row.evidence)
+    assert Counter(map(identity, published)) == Counter(map(identity, rows))
+    for unit in sorted({row.unit for row in published}):
         # Transport is a fact about this immutable publication, not a ban on
         # later genuine recovery in those ten live translation units.
         assert inverse(committed(unit, PUBLISHED), unit) == committed(unit)

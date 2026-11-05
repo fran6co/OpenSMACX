@@ -216,11 +216,25 @@ unique COFF static data symbol in a non-COMDAT, non-associative ordinary data
 section in that annotation's owning translation unit.
 Its start is resolved only for references to that exact local definition, never
 exported as a global target or used to place the surrounding data section.
-The same spelling in another unit, undefined/common/weak or section symbols,
-code and duplicate definitions remain unresolved. Bounded/member-backed local
-objects retain their separate unsupported proof obligations; a local start
-does not establish initializer bytes, allocation bounds, lifetime or linked
-selection.
+For the existing v1/v4 fallback, the same spelling in another unit,
+undefined/common/weak or section symbols, code and duplicate definitions remain
+unresolved. Bounded/member-backed local objects retain their separate
+unsupported proof obligations; a local start does not establish initializer
+bytes, allocation bounds, lifetime or linked selection.
+
+Version 6 explicitly scopes a direct unbounded alias to its owning translation
+unit:
+
+```cpp
+// RECOVERY_OBJECT: v6 <start> <old-symbol> target local <current-symbol>
+```
+
+The historical ID remains globally unique. The current spelling is resolved
+only as `(source unit, current symbol)` and must name one ordinary static,
+non-code definition in that exact COFF object. Identical v6 target spellings
+in different TUs are independent; a same-TU collision remains unresolved.
+Version 6 does not add an object extent, initializer claim, global target, or
+lifetime proof. Versions 1 through 5 retain their existing resolution behavior.
 
 Version 3 binds an old object identity to a named embedded member of a current
 parent object. The unbounded and bounded forms are:
@@ -308,6 +322,22 @@ slice (`type_index` is null). Existing parent-base consistency, exact initialize
 contained-relocation, namespace and ownership checks remain required. This view
 does not establish original allocation bounds, lifetime or final-link acceptance.
 
+Version 6 opts a direct unbounded alias into explicit TU-local name scoping:
+
+```cpp
+// RECOVERY_OBJECT: v6 <start> <old-symbol> target local <current-symbol>
+```
+
+The old identity remains globally unique. The current name is qualified by the
+annotated source unit and must resolve to one ordinary storage-class-3,
+non-code data definition in that unit's COFF object. Identical v6 target names
+in different TUs are independent, and a v6 target is never exported as a
+global or external relocation target. Same-unit collisions and conflicts with
+another current source namespace remain refused while those namespaces lack
+TU-qualified bindings. Version 6 is unbounded only: it proves no initializer
+extent/content, lifetime, placement or linked selection. Versions 1 through 5
+retain their prior resolution behavior.
+
 `match_recovery.object_writer.write_object_bytes` is the pure, add-only writer
 for these object bindings. Supply the complete current `parse_objects` snapshot
 and reviewed `ObjectBinding` additions; their one-based lines anchor insertion
@@ -319,7 +349,8 @@ bounds, initializers, acceptance or recovery permission. Compiler evidence and
 coordinator-authorized publication remain separate requirements.
 
 `match_recovery.object_writer.replace_object_records` is the pure rehome
-transformation for a reviewed v3 member/v5 slice migration or v4 direct-target change. Supply the complete object-annotation
+transformation for a reviewed v3 member/v5 slice migration, v4 direct-target
+change, or explicitly authorized v4-to-v6 local-target promotion. Supply the complete object-annotation
 snapshot and bytes for every affected source unit; one-for-one replacements retain
 old symbols, original addresses, spans and evidence anchors while changing only
 the parent/path and insertion unit/line. It reparses the result and refuses
@@ -329,8 +360,13 @@ review and guarded publication; the transformation itself writes no files.
 Selected records and destination anchors must precede the first line splice;
 unrelated records in an untouched spliced suffix remain byte-for-byte intact.
 Promoting a former member-backed identity to a direct v4 target additionally
-requires its exact origin entity ID in `direct_owner_promotions`. Every grant
-must be consumed by one such replacement; default owner-loss refusal remains.
+requires its exact origin entity ID in `direct_owner_promotions`. Promoting an
+unbounded v4 direct alias to v6 `target local` requires the exact entity ID in
+`local_target_promotions` and preserves its target spelling. Every grant must
+be consumed by one such replacement; default owner-loss refusal remains.
+Promoting an existing unbounded v4 direct alias to the explicitly scoped v6
+form requires its entity ID in `local_target_promotions`; the promotion must
+retain the same target spelling and cannot change its identity or extent.
 This transports an interpretation and never proves the new compiled layout.
 
 ## Source-owned associated compiler data

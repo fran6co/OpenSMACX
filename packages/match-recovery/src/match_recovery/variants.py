@@ -338,7 +338,8 @@ def measure_variants(root: Path, task_name: str, image_path: Path, deck: dict, *
     object_symbols = set(require_disjoint_object_symbols(
         data_bindings, set(externals) | {item.symbol for item in bindings},
         {item.symbol for item in generated},
-        {item.symbol for item in imports}, {item.symbol for item in shared}))
+        {item.symbol for item in imports}, {item.symbol for item in shared},
+        {item.symbol for item in literal_bindings}))
     validate_shared_bindings(shared, view, reserved=[*object_symbols, *[item.symbol for item in (*generated, *imports)]])
     if (object_symbols & set(externals)
             or {item.symbol for item in generated} & (set(externals) | object_symbols)):
