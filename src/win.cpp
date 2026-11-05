@@ -29,12 +29,10 @@
 // symbol    _$E25
 // RECOVERY_LITERAL: v1 0x00696DEC 0x00696DF8 ??_C@_0M@GDOO@JackalClass?$AA@ 0x005F04E0
 #include "stdafx.h"
-#include "win_callbacks.h"
 // Drawing imports resolve by SDK export identity in the pinned PE directory.
 // RECOVERY_IMPORT: v1 __imp__CreateSolidBrush@4 GDI32.dll name:CreateSolidBrush
 // RECOVERY_IMPORT: v1 __imp__FillRect@12 USER32.dll name:FillRect
 
-// RECOVERY_IMPORT: v1 __imp__CallWindowProcA@20 USER32.dll name:CallWindowProcA
 // SDK dependency used by the keyboard/mouse pumps; the pinned PE supplies
 // its IAT slot. This is not an application-function recovery identity.
 // RECOVERY_IMPORT: v1 __imp__PeekMessageA@20 USER32.dll name:PeekMessageA
@@ -871,28 +869,6 @@ void Win::release_hdc() {
 
 
 
-/*
-Purpose: Select a system cursor by name and refresh the displayed cursor.
-// ORIGINAL: 0x005EC7C0 ?set_cursor@Win@@QAEHH@Z 0x005EC7C0-0x005EC7FE BYTE_EXACT
-// size      62 bytes
-// prototype int (__thiscall ?set_cursor@Win@@QAEHH@Z)(Win* this, int nCursorName)
-// callers   13   call targets   1
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     0x005F1820
-Return Value: No errors (0); name outside the accepted range (3)
-Status: Complete with a temporary dependency on the cursor refresh
-Verification note: ordering the cursor_handle_ clear against the refresh is
-not observable here - the refresh is passed a null window, so it cannot read
-this object's state through the seam a fixture can see. The store order is
-kept as the legacy body has it rather than because a test distinguishes it.
-
-// LEVER: `<= 0x7EFF` / `>= 0x7F8B` and `< 0x7F00` / `> 0x7F8A` are the same
-// range but not the same codegen - the image is `cmp eax,0x7f00; jl` and
-// `cmp eax,0x7f8a; jg`, this was `cmp eax,0x7eff; jle` and `cmp
-// eax,0x7f8b; jge`. Spelling the boundary the way the image does moved
-// 13/17 (0.882) to BYTE_EXACT.
-*/
 // ORIGINAL: 0x005EC740 ?set_cursor@Win@@QAEHPAVSprite@@HH@Z 0x005EC740-0x005EC773 FILE BYTE_EXACT
 // symbol    ?set_cursor@Win@@QAEHPAVSprite@@HH@Z
 // notes     the Sprite overload; `marker_symbols` resolves a region to the
@@ -1010,6 +986,29 @@ kept as the legacy body has it rather than because a test distinguishes it.
 // where they can be edited without regenerating anything and are in
 // context from the first token rather than behind a file read. This
 // emitter computes declarations; it does not carry lessons.
+/*
+Purpose: Select a system cursor by name and refresh the displayed cursor.
+// ORIGINAL: 0x005EC7C0 ?set_cursor@Win@@QAEHH@Z 0x005EC7C0-0x005EC7FE BYTE_EXACT
+// size      62 bytes
+// prototype int (__thiscall ?set_cursor@Win@@QAEHH@Z)(Win* this, int nCursorName)
+// callers   13   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005F1820
+Return Value: No errors (0); name outside the accepted range (3)
+Status: Complete with a temporary dependency on the cursor refresh
+Verification note: ordering the cursor_handle_ clear against the refresh is
+not observable here - the refresh is passed a null window, so it cannot read
+this object's state through the seam a fixture can see. The store order is
+kept as the legacy body has it rather than because a test distinguishes it.
+
+// LEVER: `<= 0x7EFF` / `>= 0x7F8B` and `< 0x7F00` / `> 0x7F8A` are the same
+// range but not the same codegen - the image is `cmp eax,0x7f00; jl` and
+// `cmp eax,0x7f8a; jg`, this was `cmp eax,0x7eff; jle` and `cmp
+// eax,0x7f8b; jge`. Spelling the boundary the way the image does moved
+// 13/17 (0.882) to BYTE_EXACT.
+*/
+
 int Win::set_cursor(int name) {
     // Only the system cursor range is accepted; anything else is rejected
     // before any field is touched.
@@ -11502,44 +11501,10 @@ void __cdecl win_window_nonclient_sized(HWND hwnd,
 }
 
 // Superseded seed deleted; binding references retain historical provenance.
-// ORIGINAL: 0x005D6350 sub_5d6350 0x005D6350-0x005D637B BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["task:win-message-adapter-owner-extension original identity/spans, claims and useful findings retained from src/recovered/005d6350.cpp", "pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf:0x5d6350 full native body and API/vcall sequence.", "source:src/win.h actual slots16,70,71,74,85; original helper names and caller/registration routes remain unknown."], "reason": "Recover the complete Win userdata adapter with existing typed virtual methods and Windows APIs; preserve native payload ordering, null guards and paint lifetime. Anonymous generated seed return declarations are not evidence of an original integer contract for void callbacks."}
-// symbol    ?win_forward_size@@YAXPAUHWND__@@IHH@Z
-// kind      game
-void __cdecl win_forward_size(HWND hwnd, unsigned int flags, int width, int height) {
-    Win *const owner = reinterpret_cast<Win *>(
-        GetWindowLongA(hwnd, GWL_USERDATA));
-    if (owner != 0) {
-        owner->on_size(flags, width, height);
-    }
-}
 
 // Superseded seed deleted; binding references retain historical provenance.
-// ORIGINAL: 0x005D6380 sub_5d6380 0x005D6380-0x005D63AA BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["task:win-message-adapter-owner-extension original identity/spans, claims and useful findings retained from src/recovered/units/005d6380.cpp", "pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf:0x5d6380 full native body and API/vcall sequence.", "source:src/win.h actual slots16,70,71,74,85; original helper names and caller/registration routes remain unknown."], "reason": "Recover the complete Win userdata adapter with existing typed virtual methods and Windows APIs; preserve native payload ordering, null guards and paint lifetime. Anonymous generated seed return declarations are not evidence of an original integer contract for void callbacks."}
-// symbol    ?win_forward_mouse_move@@YAXPAUHWND__@@HHI@Z
-// kind      game
-void __cdecl win_forward_mouse_move(HWND hwnd, int x, int y, unsigned int keys) {
-    Win *const owner = reinterpret_cast<Win *>(GetWindowLongA(hwnd, GWL_USERDATA));
-    if (owner != 0) {
-        owner->on_mouse_move(x, y, keys, 0);
-    }
-}
 
 // Superseded seed deleted; binding references retain historical provenance.
-// ORIGINAL: 0x005D63B0 sub_5d63b0 0x005D63B0-0x005D63DE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["task:win-message-adapter-owner-extension original identity/spans, claims and useful findings retained from src/recovered/units/005d63b0.cpp", "pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf:0x5d63b0 full native body and API/vcall sequence.", "source:src/win.h actual slots16,70,71,74,85; original helper names and caller/registration routes remain unknown."], "reason": "Recover the complete Win userdata adapter with existing typed virtual methods and Windows APIs; preserve native payload ordering, null guards and paint lifetime. Anonymous generated seed return declarations are not evidence of an original integer contract for void callbacks."}
-// symbol    ?win_forward_set_cursor@@YAHPAUHWND__@@PAXII@Z
-// kind      game
-int __cdecl win_forward_set_cursor(HWND hwnd, void *cursor, unsigned int hit,
-                       unsigned int message) {
-    Win *const owner = reinterpret_cast<Win *>(
-        GetWindowLongA(hwnd, GWL_USERDATA));
-    if (owner != 0) {
-        return owner->on_set_cursor(cursor, hit, message);
-    }
-    return 0;
-}
 
 // Superseded seed deleted; binding references retain historical provenance.
 // ORIGINAL: 0x005F12B0 sub_5f12b0 0x005F12B0-0x005F12D6 BYTE_EXACT
@@ -12310,46 +12275,6 @@ int __cdecl Win::display_action(int action) {
  * [ARCHIVE] // indirect  0x005F2E85 0x005F30E4 0x005F319C 0x005F332B 0x005F33D3 0x005F3544 0x005F35FC 0x005F37AA
  */
 
-// PrevWndFunc, 0x005D5C50. The shared window-procedure pre-filter: route the
-// two messages the owner handles itself (window size and cursor
-// selection) into the object stored in the window's userdata, and hand every
-// other message to Win::window_proc through CallWindowProcA.
-/*
-Purpose: Pre-filter the owner window's messages before the shared window
-         procedure sees them.
-// ORIGINAL: 0x005D5C50 PrevWndFunc 0x005D5C50-0x005D5CEA FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["Historical seed git:117282ee:src/unrecovered/005d5c50.cpp retains original identity/spans.", "Pinned 5D5C50..5D5CEA handles WM_SIZE at Win virtual slot71 with signed low/high16-bit dimensions; WM_SETCURSOR uses slot85 with zero-extended words and returns its result.", "Win::on_size(unsigned int,int,int) and on_set_cursor(void*,unsigned int,unsigned int) are existing source-owned virtual slots71/85; Dialog::UNK2 calls this free WNDPROC through CallWindowProcA.", "GWL_USERDATA is the same genuine Win view used by the typed message adapters in win.cpp. Keep message-specific userdata lookup, null returns, the four-slot 32-bit stdcall WNDPROC boundary, and Win::window_proc fallback."], "reason": "Recover the window pre-filter as a genuine free Win-owned Windows callback, using existing virtual methods instead of fabricated slot receiver types. Preserve original payload transforms, guards and result/fallback behavior; no new match claim."}
-// symbol    _PrevWndFunc@16
-Status: Coverage transcription - unclaimed body
-*/
-extern "C" LRESULT __stdcall PrevWndFunc(HWND window, UINT message,
-                                         WPARAM wparam, LPARAM lparam) {
-    if (message != 5) {
-        if (message != 0x20) {
-            return CallWindowProcA(&Win::window_proc,
-                                   (HWND)window, (UINT)message, (WPARAM)wparam,
-                                   (LPARAM)lparam);
-        }
-        Win *const owner = reinterpret_cast<Win *>(
-            GetWindowLongA((HWND)window, GWL_USERDATA));
-        if (owner != 0) {
-            return owner->on_set_cursor(
-                reinterpret_cast<void *>(wparam),
-                static_cast<unsigned short>(lparam),
-                static_cast<unsigned short>(
-                    static_cast<unsigned int>(lparam) >> 16));
-        }
-        return 0;
-    }
-    Win *const owner = reinterpret_cast<Win *>(
-        GetWindowLongA((HWND)window, GWL_USERDATA));
-    if (owner != 0) {
-        owner->on_size(static_cast<unsigned int>(wparam),
-                       static_cast<short>(lparam),
-                       static_cast<short>(static_cast<unsigned int>(lparam) >> 16));
-    }
-    return 0;
-}
 
 // Original DLL/export identity is independently read from the pinned import
 // directory; the verifier derives the IAT slot. This does not select or prove

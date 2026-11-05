@@ -35,6 +35,7 @@
 #include "sounddevice.h"
 #include "menu.h"
 #include "win.h"
+#include "win_callbacks.h"
 #include "spritebox.h"
 #include "sprite.h"
 
@@ -743,6 +744,18 @@ void GraphicWin::soft_update(int x, int y, int width, int height) {
 // tests of this orchestration do not establish their complete behavior.
 
 
+// ORIGINAL: 0x005D50A0 ?init@GraphicWin@@QAEHPAURECT@@PADHPAUWin@@PAUMenu@@PAUBorderSizing@@@Z 0x005D50A0-0x005D50E8 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["git:10163d406a831ec8afdb8b85d18d04d1fde4ec27:src/recovered/005d50a0.cpp retains the historical 72-byte seed; the pinned original 0x005D50A0-0x005D50E8 returns 0x10 for null bounds and forwards nonnull rectangle coordinates to 0x005D4EF0."], "reason": "Home the byte-exact rectangle initializer in GraphicWin so MapWin and other owners use its real null behavior and base lifetime."}
+// symbol    ?init@GraphicWin@@QAEHPAUtagRECT@@PADHPAVWin@@PAVMenu@@PAUBorderSizing@@@Z
+int GraphicWin::init(RECT *bounds, char *caption, int flags, Win *parent,
+                     Menu *menu, BorderSizing *border) {
+    if (bounds == 0) return 0x10;
+    return init(bounds->left, bounds->top,
+                bounds->right - bounds->left,
+                bounds->bottom - bounds->top,
+                caption, flags, parent, menu, border);
+}
+
 /*
 Purpose: Initialise a GraphicWin. Reset the window, republish the eleven
          process window defaults when the style asks for them, optionally
@@ -820,17 +833,6 @@ Verification note: the original has no null check on title, parent, menu,
         border or on `this`, and none on the operator-new result beyond
         skipping the constructor. Their absence is deliberate.
 */
-// ORIGINAL: 0x005D50A0 ?init@GraphicWin@@QAEHPAURECT@@PADHPAUWin@@PAUMenu@@PAUBorderSizing@@@Z 0x005D50A0-0x005D50E8 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["git:10163d406a831ec8afdb8b85d18d04d1fde4ec27:src/recovered/005d50a0.cpp retains the historical 72-byte seed; the pinned original 0x005D50A0-0x005D50E8 returns 0x10 for null bounds and forwards nonnull rectangle coordinates to 0x005D4EF0."], "reason": "Home the byte-exact rectangle initializer in GraphicWin so MapWin and other owners use its real null behavior and base lifetime."}
-// symbol    ?init@GraphicWin@@QAEHPAUtagRECT@@PADHPAVWin@@PAVMenu@@PAUBorderSizing@@@Z
-int GraphicWin::init(RECT *bounds, char *caption, int flags, Win *parent,
-                     Menu *menu, BorderSizing *border) {
-    if (bounds == 0) return 0x10;
-    return init(bounds->left, bounds->top,
-                bounds->right - bounds->left,
-                bounds->bottom - bounds->top,
-                caption, flags, parent, menu, border);
-}
 
 int GraphicWin::init(int x, int y, int width, int height, LPSTR title,
                      int flags, Win *parent, Menu *menu,
@@ -996,7 +998,7 @@ void GraphicWin::on_mouse_move(int x, int y, unsigned int keys, int from_parent)
 /*
 Purpose: Step the receiver back to the subobject ??_GGraphicWin@@UAEPAXI@Z
          expects, then forward unchanged.
-// ORIGINAL: 0x005D7160 ??_GGraphicWin@@WEEE@AEPAXI@Z 0x005D7160-0x005D716B BYTE_EXACT
+// ORIGINAL: 0x005D7160 ??_GGraphicWin@@WEEE@AEPAXI@Z 0x005D7160-0x005D716B FILE BYTE_EXACT
 // symbol    ??_EGraphicWin@@WEEE@AEPAXI@Z
 // CORRECTED from ??3GraphicWin@@SAXPAXI@Z
 //   11 bytes, `sub ecx, 0x444; jmp 0x005D7140` into
@@ -1718,4 +1720,96 @@ Status: Complete
 int GraphicWin::check_pcx_input_data(PcxInputView *source,
                                     int second, int third, int fourth) {
     return Buffer::check_pcx_input_data(source, second, third, fourth);
+}
+
+// RECOVERY_IMPORT: v1 __imp__CallWindowProcA@20 USER32.dll name:CallWindowProcA
+// GetWindowLongA remains bound once in win.cpp; it is the shared USER32 import used by both Win and these callbacks.
+
+// Pending inferred-core member: original source owner/prototype/callers remain unresolved.
+// ORIGINAL: 0x005D5240 nullsub_224 0x005D5240-0x005D5241 UNBOUND BYTE_EXACT
+// kind game
+// Original effect: return without modifying EAX; callee stack cleanup 0 bytes.
+// Original prototype, callers and real source owner remain unresolved.
+
+// Transported shared Win-view callbacks in the inferred GraphicWin contribution.
+
+// PrevWndFunc, 0x005D5C50. The shared window-procedure pre-filter: route the
+// two messages the owner handles itself (window size and cursor
+// selection) into the object stored in the window's userdata, and hand every
+// other message to Win::window_proc through CallWindowProcA.
+/*
+Purpose: Pre-filter the owner window's messages before the shared window
+         procedure sees them.
+// ORIGINAL: 0x005D5C50 PrevWndFunc 0x005D5C50-0x005D5CEA FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Historical seed git:117282ee:src/unrecovered/005d5c50.cpp retains original identity/spans.", "Pinned 5D5C50..5D5CEA handles WM_SIZE at Win virtual slot71 with signed low/high16-bit dimensions; WM_SETCURSOR uses slot85 with zero-extended words and returns its result.", "Win::on_size(unsigned int,int,int) and on_set_cursor(void*,unsigned int,unsigned int) are existing source-owned virtual slots71/85; Dialog::UNK2 calls this free WNDPROC through CallWindowProcA.", "GWL_USERDATA is the same genuine Win view used by the typed message adapters in win.cpp. Keep message-specific userdata lookup, null returns, the four-slot 32-bit stdcall WNDPROC boundary, and Win::window_proc fallback.", "Pinned GraphicWin candidate interval 0x005D4CF0..0x005D716B contains these shared Win-view callback providers among 38 GraphicWin mappings; the 303-byte inter-primary complement is independently classified NOP/INT3 padding. This is an inferred contribution, not proof of a historical object boundary.", "The callback reads the generic Win userdata view and dispatches slots 71 and 85, which the genuine GraphicWin view overrides. Dialog::UNK2 is a concrete CallWindowProcA caller; the original dynamic registration set remains incomplete."], "reason": "Keep this shared Win-view callback provider with the inferred GraphicWin contribution because it dispatches through slots overridden by GraphicWin. Preserve the generic Win receiver/API and external callers; current source correspondence does not prove GraphicWin-only semantics or a historical TU boundary."}
+// symbol    _PrevWndFunc@16
+Status: Coverage transcription - unclaimed body
+*/
+extern "C" LRESULT __stdcall PrevWndFunc(HWND window, UINT message,
+                                         WPARAM wparam, LPARAM lparam) {
+    if (message != 5) {
+        if (message != 0x20) {
+            return CallWindowProcA(&Win::window_proc,
+                                   (HWND)window, (UINT)message, (WPARAM)wparam,
+                                   (LPARAM)lparam);
+        }
+        Win *const owner = reinterpret_cast<Win *>(
+            GetWindowLongA((HWND)window, GWL_USERDATA));
+        if (owner != 0) {
+            return owner->on_set_cursor(
+                reinterpret_cast<void *>(wparam),
+                static_cast<unsigned short>(lparam),
+                static_cast<unsigned short>(
+                    static_cast<unsigned int>(lparam) >> 16));
+        }
+        return 0;
+    }
+    Win *const owner = reinterpret_cast<Win *>(
+        GetWindowLongA((HWND)window, GWL_USERDATA));
+    if (owner != 0) {
+        owner->on_size(static_cast<unsigned int>(wparam),
+                       static_cast<short>(lparam),
+                       static_cast<short>(static_cast<unsigned int>(lparam) >> 16));
+    }
+    return 0;
+}
+
+// Superseded seed deleted; binding references retain historical provenance.
+// ORIGINAL: 0x005D6350 sub_5d6350 0x005D6350-0x005D637B BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["task:win-message-adapter-owner-extension original identity/spans, claims and useful findings retained from src/recovered/005d6350.cpp", "pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf:0x5d6350 full native body and API/vcall sequence.", "source:src/win.h actual slots16,70,71,74,85; original helper names and caller/registration routes remain unknown.", "Pinned GraphicWin candidate interval 0x005D4CF0..0x005D716B contains this shared Win-view callback among 38 GraphicWin mappings; the 303-byte inter-primary complement is independently classified NOP/INT3 padding. This is an inferred contribution, not proof of a historical object boundary.", "The callback consumes Win userdata and dispatches slot 71, overridden by GraphicWin::on_size; its general Win contract and possible use by other Win views remain intact."], "reason": "Keep this shared Win-view callback provider with the inferred GraphicWin contribution because it dispatches through slots overridden by GraphicWin. Preserve the generic Win receiver/API and external callers; current source correspondence does not prove GraphicWin-only semantics or a historical TU boundary."}
+// symbol    ?win_forward_size@@YAXPAUHWND__@@IHH@Z
+// kind      game
+void __cdecl win_forward_size(HWND hwnd, unsigned int flags, int width, int height) {
+    Win *const owner = reinterpret_cast<Win *>(
+        GetWindowLongA(hwnd, GWL_USERDATA));
+    if (owner != 0) {
+        owner->on_size(flags, width, height);
+    }
+}
+
+// Superseded seed deleted; binding references retain historical provenance.
+// ORIGINAL: 0x005D6380 sub_5d6380 0x005D6380-0x005D63AA BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["task:win-message-adapter-owner-extension original identity/spans, claims and useful findings retained from src/recovered/units/005d6380.cpp", "pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf:0x5d6380 full native body and API/vcall sequence.", "source:src/win.h actual slots16,70,71,74,85; original helper names and caller/registration routes remain unknown.", "Pinned GraphicWin candidate interval 0x005D4CF0..0x005D716B contains this shared Win-view callback among 38 GraphicWin mappings; the 303-byte inter-primary complement is independently classified NOP/INT3 padding. This is an inferred contribution, not proof of a historical object boundary.", "The callback consumes Win userdata and dispatches slot 16, overridden by GraphicWin::on_mouse_move; its general Win contract and possible use by other Win views remain intact."], "reason": "Keep this shared Win-view callback provider with the inferred GraphicWin contribution because it dispatches through slots overridden by GraphicWin. Preserve the generic Win receiver/API and external callers; current source correspondence does not prove GraphicWin-only semantics or a historical TU boundary."}
+// symbol    ?win_forward_mouse_move@@YAXPAUHWND__@@HHI@Z
+// kind      game
+void __cdecl win_forward_mouse_move(HWND hwnd, int x, int y, unsigned int keys) {
+    Win *const owner = reinterpret_cast<Win *>(GetWindowLongA(hwnd, GWL_USERDATA));
+    if (owner != 0) {
+        owner->on_mouse_move(x, y, keys, 0);
+    }
+}
+
+// Superseded seed deleted; binding references retain historical provenance.
+// ORIGINAL: 0x005D63B0 sub_5d63b0 0x005D63B0-0x005D63DE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["task:win-message-adapter-owner-extension original identity/spans, claims and useful findings retained from src/recovered/units/005d63b0.cpp", "pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf:0x5d63b0 full native body and API/vcall sequence.", "source:src/win.h actual slots16,70,71,74,85; original helper names and caller/registration routes remain unknown.", "Pinned GraphicWin candidate interval 0x005D4CF0..0x005D716B contains this shared Win-view callback among 38 GraphicWin mappings; the 303-byte inter-primary complement is independently classified NOP/INT3 padding. This is an inferred contribution, not proof of a historical object boundary.", "The callback consumes Win userdata and dispatches slot 85, overridden by GraphicWin::on_set_cursor; its general Win contract and possible use by other Win views remain intact."], "reason": "Keep this shared Win-view callback provider with the inferred GraphicWin contribution because it dispatches through slots overridden by GraphicWin. Preserve the generic Win receiver/API and external callers; current source correspondence does not prove GraphicWin-only semantics or a historical TU boundary."}
+// symbol    ?win_forward_set_cursor@@YAHPAUHWND__@@PAXII@Z
+// kind      game
+int __cdecl win_forward_set_cursor(HWND hwnd, void *cursor, unsigned int hit,
+                       unsigned int message) {
+    Win *const owner = reinterpret_cast<Win *>(
+        GetWindowLongA(hwnd, GWL_USERDATA));
+    if (owner != 0) {
+        return owner->on_set_cursor(cursor, hit, message);
+    }
+    return 0;
 }

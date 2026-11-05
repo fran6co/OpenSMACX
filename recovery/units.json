@@ -768,6 +768,20 @@
         "Pinned CRT slots 0x00682534/538 select MainInterfaceGlobal then its Wave; FarmMapWindow follows at 0x00682540. Definitions retain local order, and current MainInterface source precedes MapWin. This is not complete linked-selection or runtime-order proof.",
         "Other gaps are NOP alignment apart from 0x0045D271..0x0045D274 (lea ecx,[ecx]), left explicitly unassigned. Remote callbacks, asset-bank ownership and the generic ButtonGroup provider are not absorbed into this interval."
       ]
+    },
+    {
+      "name": "GraphicWin",
+      "start": "0x005D4CF0",
+      "end_exclusive": "0x005D716B",
+      "recovered_tu": "src/graphicwin.cpp",
+      "reason": "Inferred GraphicWin-centered contribution core with 38 GraphicWin mappings, four shared Win-view callback providers, and one explicitly unbound address. The interval and current source correspondence do not prove a historical object boundary or original filename.",
+      "evidence": [
+        "All 43 candidate identities touching or starting in this interval are accounted for in src/graphicwin.cpp: 38 existing GraphicWin mappings, four complete shared Win-view callback mappings, and nullsub_224 retained as UNBOUND. Candidate membership does not resolve nullsub ownership or count it as a completed implementation.",
+        "The four callbacks dispatch through Win slots 71, 16 and 85 that GraphicWin overrides; Dialog::UNK2 is a concrete caller of PrevWndFunc. Dynamic installation and all other external callers are not established.",
+        "Pinned-image accounting classifies all 303 bytes between primary identities as NOP/INT3 padding. The 0x5D5240 one-byte nullsub remains a prototype/caller/source-owner question and receives no body, symbol, or new claim.",
+        "The final mapped identity is the deleting-destructor adjusting entry 0x5D7160..0x5D716B; the scalar deleting body is 0x5D7140..0x5D715E. The following 0x5D716B..0x5D7170 is padding and Buffer helper 0x5D7170 begins the next mapped contribution.",
+        "Detached exception spans, original markers, historical claims and lessons are transported with their original records. This candidate does not establish native qualification, complete linked selection, runtime behavior, or a historical TU filename."
+      ]
     }
   ]
 }

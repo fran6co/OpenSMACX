@@ -173,7 +173,7 @@ def test_dialog_keeps_integer_entry_but_calls_typed_prev_window_callback():
         for path in (ROOT / "src").rglob("*.cpp")
         if '#include "win_callbacks.h"' in path.read_text(encoding="utf-8")
     }
-    assert callback_users == {"src/win.cpp", "src/dialog.cpp"}
+    assert callback_users == {"src/graphicwin.cpp", "src/dialog.cpp"}
     body = _extract_definition(
         dialog, r"^\s*void\s+Dialog::UNK2\s*\(\s*int\s+window\s*,\s*int\s+message\s*,\s*int\s+wparam\s*,\s*int\s+lparam\s*\)")
     assert "CallWindowProcA(&PrevWndFunc," in body

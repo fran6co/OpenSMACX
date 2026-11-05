@@ -7,21 +7,23 @@ from test_game_logic_seed_batch_behavior import _definition
 from test_popup_animation_owner_behavior import run_control
 
 ROOT = Path(__file__).resolve().parents[2]
-SUBJECTS = ((0x5F1230, 'LRESULT', 'window_pos_changing'),
-            (0x5F1280, 'LRESULT', 'window_pos_changed'),
-            (0x5F12E0, 'void', 'window_sized'),
-            (0x5F1310, 'void', 'window_nonclient_sized'),
-            (0x5D6350, 'void', 'forward_size'),
-            (0x5D6380, 'void', 'forward_mouse_move'),
-            (0x5D63B0, 'int', 'forward_set_cursor'),
-            (0x5F12B0, 'void', 'window_moved'),
-            (0x5F13B0, 'int', 'window_nc_paint'))
+SUBJECTS = ((0x5F1230, 'src/win.cpp', 'LRESULT', 'window_pos_changing'),
+            (0x5F1280, 'src/win.cpp', 'LRESULT', 'window_pos_changed'),
+            (0x5F12E0, 'src/win.cpp', 'void', 'window_sized'),
+            (0x5F1310, 'src/win.cpp', 'void', 'window_nonclient_sized'),
+            (0x5D6350, 'src/graphicwin.cpp', 'void', 'forward_size'),
+            (0x5D6380, 'src/graphicwin.cpp', 'void', 'forward_mouse_move'),
+            (0x5D63B0, 'src/graphicwin.cpp', 'int', 'forward_set_cursor'),
+            (0x5F12B0, 'src/win.cpp', 'void', 'window_moved'),
+            (0x5F13B0, 'src/win.cpp', 'int', 'window_nc_paint'))
 
 def projected(damage=None):
-    rows = read_file(ROOT / 'src/win.cpp')
-    bodies = '\n\n'.join(_definition(next(r.region for r in rows if r.address == address),
-                         result + ' __cdecl win_' + name + '(')
-                         for address, result, name in SUBJECTS)
+    rows_by_source = {relative: read_file(ROOT / relative)
+                      for relative in {item[1] for item in SUBJECTS}}
+    bodies = '\n\n'.join(
+        _definition(next(r.region for r in rows_by_source[source] if r.address == address),
+                    result + ' __cdecl win_' + name + '(')
+        for address, source, result, name in SUBJECTS)
     if damage is not None:
         old, new = damage
         assert old in bodies

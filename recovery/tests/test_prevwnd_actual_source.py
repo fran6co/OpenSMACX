@@ -1,4 +1,4 @@
-"""Host behavior controls for the actual Win-owned PrevWndFunc body.
+"""Host behavior controls for the actual GraphicWin-owned PrevWndFunc body.
 
 The fake Win methods prove only the extracted C++ body's routing and value
 conversion. They do not prove VC6's 32-bit Windows ABI or physical vtable
@@ -94,6 +94,7 @@ def _actual_definition():
                     break
     assert len(matches) == 1, f"expected unique current PrevWndFunc owner, got {len(matches)}"
     path, body = matches[0]
+    assert path.relative_to(ROOT).as_posix() == "src/graphicwin.cpp"
     assert "BODY GOES HERE" not in body
     assert "owner->on_size(" in body
     assert "owner->on_set_cursor(" in body
