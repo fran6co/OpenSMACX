@@ -222,6 +222,9 @@ def register(commands):
     variants.add_argument("--image", type=Path, required=True)
     variants.add_argument("--deck", type=Path, required=True, help="Exact-text replacements with current source digest and a damage control")
     variants.add_argument("--jobs", type=int, default=1, help="Compiler concurrency; must fit the project's isolated compiler capacity")
+    variants.add_argument("--resources", type=Path, help="Project-defined compiler resource pool, relative to --root")
+    variants.add_argument("--resource-timeout", type=float, default=0,
+                          help="Wait at most this many seconds for a slot (default: refuse immediately)")
     variants.add_argument("--compiled-diagnostics", action="store_true", help="Bounded target-only unlinked COFF listings from the existing trial objects; not verification")
     variants.add_argument("--local", action="store_true", help="Screen single-TU body variants without recursive provider compilation; masked-byte diagnostics only, never acceptance")
     discovery = task_actions.add_parser("discover")

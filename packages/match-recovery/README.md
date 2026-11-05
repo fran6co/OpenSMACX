@@ -1056,11 +1056,18 @@ integration targets are never retargeted by this decision.
 
 ## Lease project-provisioned compiler resources
 
-`run`, `start`, `prepare`, `worktree prepare` and `integrate publish` accept `--resources <pool.json>` (relative
+`run`, `start`, `prepare`, `worktree prepare`, `integrate publish`, `diff` and
+`tasks variants` accept `--resources <pool.json>` (relative
 to `--root`) and optional `--resource-timeout <seconds>`. Default wait is zero;
 the maximum is 3600 seconds. Other commands inherit an existing allocation or use
 their manually configured environment. The package does not create compiler
 installations, clone resources, infer their capacity or increase `--jobs`.
+
+For candidate scoring, use `recover tasks variants <task> --image <image>
+--deck <deck> --resources <pool.json>`. The CLI holds the allocation through
+the unchanged control, damage control and candidate compiles; compiler children
+inherit it. Do not wrap this command in a second allocation. This option also
+applies to local and compiled-diagnostic scoring; their verification limits remain.
 
 Example coordinator-owned configuration, with no project Python adapter:
 

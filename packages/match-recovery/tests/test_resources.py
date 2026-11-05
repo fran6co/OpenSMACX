@@ -236,6 +236,7 @@ def test_env_root_expansion_and_nested_allocation_refusal(pool, monkeypatch):
 
 
 @pytest.mark.parametrize("command", [["run", "owner"], ["start", "--planner", "planner.json"],
+                                    ["tasks", "variants", "owner", "--image", "original.exe", "--deck", "deck.json"],
                                     ["integrate", "publish", "owner", "--candidate", ".", "--authorization", "auth.json", "--reviewer", "reviewer.json"]])
 def test_top_level_cli_wraps_entire_dispatch_and_preserves_result(pool, monkeypatch, command):
     root, config = pool
@@ -263,12 +264,14 @@ def test_candidate_compiler_must_declare_allocated_variables_too(pool, monkeypat
     assert not list(root.parent.rglob(LOCK))
 
 
-def test_cli_busy_pool_never_dispatches_and_timeout_requires_pool(pool, monkeypatch, capsys):
+@pytest.mark.parametrize("command", [["run", "owner"],
+                                    ["tasks", "variants", "owner", "--image", "original.exe", "--deck", "deck.json"]])
+def test_cli_busy_pool_never_dispatches_and_timeout_requires_pool(pool, monkeypatch, capsys, command):
     root, config = pool
     monkeypatch.setattr(cli, "_dispatch", lambda args: pytest.fail("unexpected dispatch"))
-    assert cli.main(["run", "owner", "--resource-timeout", "1"]) == 3
+    assert cli.main([*command, "--resource-timeout", "1"]) == 3
     assert "requires --resources" in capsys.readouterr().err
     for slot in config["slots"]:
         (Path(slot["directory"]) / ACTIVE).write_text("interrupted")
-    assert cli.main(["run", "owner", "--root", str(root), "--resources", "recovery/resources.json"]) == 3
+    assert cli.main([*command, "--root", str(root), "--resources", "recovery/resources.json"]) == 3
     assert "busy or interrupted" in capsys.readouterr().err

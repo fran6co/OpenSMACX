@@ -662,7 +662,7 @@ hooks, original campaign choices or baselines to upgrade their diagnostics.
 See the package README for the permission schema and fresh verification boundary.
 For provisioned local prefixes, set `OPENSMACX_COMPILER_POOL` to the canonical
 absolute shared prefix directory and add `--resources recovery/resources.json`
-to `run`, `start`, `prepare`, `worktree prepare` or `integrate publish`. The current eight-slot configuration
+to `run`, `start`, `prepare`, `worktree prepare`, `integrate publish`, `diff` or `tasks variants`. The current eight-slot configuration
 selects one of `worker-18` through `worker-25` and exports its `VC6_PREFIX` for the entire run.
 All cooperating worktrees must use the same pool path; an isolated checkout's own
 relative `.opensmacx/` is not the shared pool. Missing prefixes refuse; no copying,
@@ -670,7 +670,7 @@ installation or increased compiler concurrency is implicit. Standalone commands
 remain manually coordinated; do not run them against a leased prefix. Interrupted
 slots quarantine until the coordinator verifies compiler/descendant termination;
 see the package README before clearing operational markers. This replaces manual
-slot selection for opted-in driver runs, not worktree/build isolation or fleet
+slot selection for opted-in driver and scoring commands, not worktree/build isolation or fleet
 capacity measurement.
 Old quarantined prefixes are not selected by this configuration and are not
 implicitly reclaimed. Provisioned prefixes use independent copies, never

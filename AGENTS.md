@@ -200,7 +200,7 @@ not weaken the native automatic driver's refusal conditions or prove game accept
 `recovery/worker.json` and `recovery/reviewer.json` use the package's native
 agent-command bridge; provider arguments live in `recovery/agents.json`.
 Verify provider access and isolated worktree/compiler resources before launching.
-Top-level `run`, `start`, `prepare`, `worktree prepare` and `integrate publish` can lease provisioned compiler
+`run`, `start`, `prepare`, `worktree prepare`, `integrate publish`, `diff` and `tasks variants` can lease provisioned compiler
 slots with `--resources recovery/resources.json` and an absolute shared
 `OPENSMACX_COMPILER_POOL`. Child commands inherit the selected prefix; do not
 allocate again or run standalone compiles on a leased prefix. Interrupted slots
