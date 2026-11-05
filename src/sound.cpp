@@ -1681,16 +1681,14 @@ int VideoSoundState::get_time() {
   return 0;
 }
 
-// ORIGINAL: 0x004C87B0 sub_4c87b0 0x004C87B0-0x004C8839 FILE
+// ORIGINAL: 0x004C87B0 sub_4c87b0 0x004C87B0-0x004C8839 FILE BYTE_EXACT
 // symbol    ?configure_streams@VideoSoundState@@UAEHPBX00H@Z
 int VideoSoundState::configure_streams(const void *audio_stream,
                                        const void *video_stream,
                                        const void *audio_format,
                                        int flags) {
-  VideoSoundDevice *device =
-      static_cast<VideoSoundDevice *>(device_);
   int result = 0;
-  if (device == 0) {
+  if (device_ == 0) {
     if (!WaveDeviceReleaseGuard) {
       return 1;
     }
@@ -1698,8 +1696,11 @@ int VideoSoundState::configure_streams(const void *audio_stream,
     if (result != 0) {
       return result;
     }
-    device = static_cast<VideoSoundDevice *>(device_);
   }
+
+  // Re-read the owned device after the factory branch, as at 0x004C87E9.
+  VideoSoundDevice *const device =
+      static_cast<VideoSoundDevice *>(device_);
 
   // Native 0x4C87E9..0x4C87ED allows success without a device object.
   if (device == 0) return result;

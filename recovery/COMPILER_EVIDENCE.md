@@ -61,6 +61,24 @@ policy is in `WORKFLOW.md`; no spelling trick overrides that policy.
   lifetimes and `set_fade` stay together in `sound.cpp`. This records a supported
   visibility constraint, not a complete historical TU reconstruction; other
   partitions or original inline-provider arrangements remain possible.
+- The remaining Wave/Midi/Ambience constructor EH mismatch is specific:
+  each original has one cleanup action targeting the fade-base helper, while
+  the current source emits additional completed Sound/Midi cleanup scopes.
+  Voice constructors correctly retain two actions. Removing the explicit
+  fade-base destructor repairs some constructor shapes but loses the required
+  root cleanup and previously matching teardown paths; it is not a fix.
+  An explicit `/EHsc` trial leaves the current Sound measurements unchanged.
+  Early dispatcher visibility under `/Ob1`, and explicit inline base providers,
+  expose different exception scopes but do not restore the complete group and
+  can lose standalone constructor emissions. Do not generalize these controls
+  into original compiler flags or a recovered class hierarchy.
+- A `throw()` experiment on the field-only type selector makes the Video
+  constructor match without those emission losses, but is not integrated:
+  that public virtual declaration also constrains unavailable DLL-derived
+  implementations. The body observation and codegen improvement do not prove
+  the original interface's exception contract. Keep this diagnostic distinct
+  from ordinary typed member reload corrections; do not narrow an external
+  contract merely to remove an unwind state.
 
 - Catalogue return decorations need provenance too. The stripped executable's
   `Buffer::box_sprite` entry leaves incidental EAX on guard and no-mask paths;
