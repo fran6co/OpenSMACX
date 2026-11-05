@@ -214,12 +214,20 @@ def _source_function_bases(manifest, objects, function_rows):
 
 
 def _code_section_targets(manifest, objects, section_bases, function_rows, import_rows, absolute_rows,
-                         data_start_rows=()):
+                         data_start_rows=(), code_entry_addresses=None):
     data_starts = {row["symbol"]: row for row in data_start_rows
                    if row.get("start_identity") == Result.PASS
                    and row.get("scoped_reference_target") is True}
     function_addresses = {}
+    entry_names = {anchor.name for section in manifest.code_sections for anchor in section.entries}
     for row in function_rows:
+        # A function row that shares an explicitly inventoried code-entry name
+        # cannot bootstrap that entry while its parent/reference result is
+        # unknown. Its entry route becomes available only after full PASS.
+        if row.get("symbol") in entry_names and not (
+                row.get("boundary") == Result.PASS and row.get("bytes") == Result.PASS
+                and row.get("references") == Result.PASS and row.get("result") == Result.PASS):
+            continue
         if (row.get("result") != Result.FAIL and row.get("boundary") == Result.PASS
                 and row.get("bytes") in (Result.PASS, Result.UNKNOWN)
                 and (row.get("bytes") == Result.PASS
@@ -234,9 +242,22 @@ def _code_section_targets(manifest, objects, section_bases, function_rows, impor
     for item, row in zip(manifest.absolute_symbols, absolute_rows, strict=True):
         if row["result"] == Result.PASS:
             absolute_values.setdefault(item.symbol, []).append(AbsoluteConstant(item.value))
+    code_references = {}
+    for item in manifest.code_sections:
+        obj = objects.get(item.unit)
+        if obj is None:
+            continue
+        try:
+            _, relocations, _ = obj.section_subject(item.section)
+        except ValueError:
+            continue
+        code_references.setdefault(item.unit, set()).update(int(relocation.target)
+                                                              for relocation in relocations)
     targets_by_member = {}
+    code_entry_addresses = code_entry_addresses or {}
     for unit, obj in objects.items():
         targets = {}
+        symbol_name_counts = Counter(symbol.name for symbol in obj.symbols.values())
         for index, symbol in obj.symbols.items():
             point = data_starts.get(symbol.name)
             if point is not None:
@@ -265,54 +286,142 @@ def _code_section_targets(manifest, objects, section_bases, function_rows, impor
             elif symbol.section == 0 and symbol.value == 0 and symbol.storage == 2:
                 choices = function_addresses.get(symbol.name, []) + import_addresses.get(symbol.name, [])
                 choices += absolute_values.get(symbol.name, [])
+                # Entry anchors add only scoped code-reference targets.  They
+                # never shadow an existing function, import or absolute binding,
+                # and only a unique ordinary undefined function can consume one.
+                entry = code_entry_addresses.get(symbol.name)
+                if (entry is not None and not choices
+                        and index in code_references.get(unit, set())
+                        and symbol.type == 0x20 and index not in obj.auxiliary):
+                    if symbol_name_counts[symbol.name] == 1:
+                        targets[str(index)] = entry
+                        continue
                 if len(choices) == 1:
                     targets[str(index)] = choices[0]
         targets_by_member[unit] = targets
     return targets_by_member
 
 
+def _qualified_code_entries(manifest, rows, archive_result, declared_imports=(), import_rows=()):
+    """Return only globally unambiguous entries from fully passing parents."""
+    if archive_result != Result.PASS:
+        return {}
+    candidates = {}
+    imported_names = ({item.symbol for item in declared_imports}
+                      | {row.get("symbol") for row in import_rows if row.get("symbol")})
+    # Imports are supplied by the caller rather than necessarily stored on the
+    # manifest; all source-declared non-code namespaces can still be blocked
+    # here regardless of whether their current evidence is PASS or UNKNOWN.
+    blocked_names = (imported_names
+                     | {item.symbol for item in manifest.absolute_symbols}
+                     | {item.symbol for item in manifest.data_starts}
+                     | {anchor.name for section in manifest.data_sections
+                        for anchor in section.symbols})
+    function_bindings = {}
+    for binding in manifest.bindings:
+        function_bindings.setdefault(binding.symbol, []).append(binding)
+    for item, row in zip(manifest.code_sections, rows, strict=True):
+        if not (row.get("boundary") == Result.PASS and row.get("bytes") == Result.PASS
+                and row.get("references") == Result.PASS and row.get("result") == Result.PASS
+                and row.get("entry_inventory") == Result.PASS
+                and len(row.get("entries", ())) == len(item.entries)):
+            continue
+        for anchor, entry in zip(item.entries, row["entries"], strict=True):
+            if not (entry.get("result") == Result.PASS and entry.get("callable") is True
+                    and entry.get("scoped_reference_target") is True
+                    and entry.get("link_target") is False
+                    and entry.get("function_extent") == Result.UNKNOWN
+                    and entry.get("symbol") == anchor.name
+                    and entry.get("offset") == anchor.offset
+                    and entry.get("address") == item.span.start + anchor.offset):
+                continue
+            if anchor.name in blocked_names:
+                continue
+            declared_functions = function_bindings.get(anchor.name, ())
+            if declared_functions and not (len(declared_functions) == 1
+                    and declared_functions[0].unit == item.unit
+                    and declared_functions[0].origin.address == entry["address"]):
+                continue
+            candidates.setdefault(anchor.name, []).append(
+                (item.unit, item.origin.entity_id, entry["address"]))
+    qualified = {}
+    for name, owners in candidates.items():
+        # Repeated aliases collapse only when the exact source owner and
+        # original identity agree.  Equal addresses alone do not establish
+        # that two independently owned entries are the same target.
+        unique = set(owners)
+        if len(unique) == 1:
+            qualified[name] = next(iter(unique))[2]
+    return qualified
+
+
 def _verify_code_section_references(manifest, objects, image, rows, bases, function_rows,
-                                    import_rows, absolute_rows, archive_result, data_start_rows=()):
-    targets_by_member = _code_section_targets(manifest, objects, bases, function_rows,
-                                              import_rows, absolute_rows, data_start_rows)
-    for item, row in zip(manifest.code_sections, rows, strict=True):
-        obj = objects.get(item.unit)
-        if obj is None or row.get("boundary") != Result.PASS or row.get("bytes") == Result.FAIL:
-            continue
-        try:
-            code, relocations, alignment = obj.section_subject(item.section)
-            proof = compare_bound_code(item.span, image.read(item.span), code, relocations,
-                                       targets_by_member.get(item.unit, {}),
-                                       original_absolute_sites=image.absolute_sites(item.span),
-                                       alignment=alignment)
-            for relocation in proof.get("relocations", []):
-                relocation["symbol"] = obj.symbols[int(relocation["target"])].name
-            row.update({key: proof[key] for key in ("boundary", "bytes", "references", "result")})
-            row["relocations"] = proof.get("relocations", [])
-            row["nonrelocation_bytes"] = (Result.FAIL if proof.get("differing_offsets")
-                                           else Result.PASS if proof["boundary"] == Result.PASS
-                                           else Result.UNKNOWN)
-            row.pop("reason", None)
-        except ValueError as error:
-            row.update(result=Result.UNKNOWN, reason=str(error))
-    for item, row in zip(manifest.code_sections, rows, strict=True):
-        parent_pass = (archive_result == Result.PASS and row.get("boundary") == Result.PASS
-                       and row.get("bytes") == Result.PASS
-                       and row.get("references") == Result.PASS
-                       and row.get("result") == Result.PASS
-                       and row.get("entry_inventory") == Result.PASS)
-        if parent_pass:
-            for entry in row["entries"]:
-                entry.update(address=item.span.start + entry["offset"], result=Result.PASS,
-                             callable=True, scoped_reference_target=True, link_target=False,
-                             function_extent=Result.UNKNOWN)
-        elif row.get("entry_inventory") == Result.FAIL:
-            continue
-        else:
-            for entry in row["entries"]:
-                entry.update(result=Result.UNKNOWN, callable=False,
-                             scoped_reference_target=False, link_target=False,
-                             function_extent=Result.UNKNOWN)
+                                    import_rows, absolute_rows, archive_result, data_start_rows=(),
+                                    declared_imports=()):
+    # Compute a bounded fixed point. Every round reads the prior round's
+    # immutable results, so manifest/archive order cannot bootstrap a cycle.
+    # Recreate rows from preflight each time to withdraw any seed that ceases
+    # to qualify after newly resolved references are checked.
+    import copy
+    preflight = copy.deepcopy(rows)
+    code_entries = {}
+    previous_signature = None
+    limit = sum(len(item.entries) for item in manifest.code_sections) + 2
+    for _ in range(limit):
+        current = copy.deepcopy(preflight)
+        targets_by_member = _code_section_targets(
+            manifest, objects, bases, function_rows, import_rows, absolute_rows,
+            data_start_rows, code_entries)
+        for item, row in zip(manifest.code_sections, current, strict=True):
+            obj = objects.get(item.unit)
+            if obj is None or row.get("boundary") != Result.PASS or row.get("bytes") == Result.FAIL:
+                continue
+            try:
+                code, relocations, alignment = obj.section_subject(item.section)
+                proof = compare_bound_code(item.span, image.read(item.span), code, relocations,
+                                           targets_by_member.get(item.unit, {}),
+                                           original_absolute_sites=image.absolute_sites(item.span),
+                                           alignment=alignment)
+                for relocation in proof.get("relocations", []):
+                    relocation["symbol"] = obj.symbols[int(relocation["target"])].name
+                row.update({key: proof[key] for key in ("boundary", "bytes", "references", "result")})
+                row["relocations"] = proof.get("relocations", [])
+                row["nonrelocation_bytes"] = (Result.FAIL if proof.get("differing_offsets")
+                                               else Result.PASS if proof["boundary"] == Result.PASS
+                                               else Result.UNKNOWN)
+                row.pop("reason", None)
+            except ValueError as error:
+                row.update(result=Result.UNKNOWN, reason=str(error))
+        for item, row in zip(manifest.code_sections, current, strict=True):
+            parent_pass = (archive_result == Result.PASS and row.get("boundary") == Result.PASS
+                           and row.get("bytes") == Result.PASS
+                           and row.get("references") == Result.PASS
+                           and row.get("result") == Result.PASS
+                           and row.get("entry_inventory") == Result.PASS)
+            if parent_pass:
+                for entry in row["entries"]:
+                    entry.update(address=item.span.start + entry["offset"], result=Result.PASS,
+                                 callable=True, scoped_reference_target=True, link_target=False,
+                                 function_extent=Result.UNKNOWN)
+            elif row.get("entry_inventory") == Result.FAIL:
+                continue
+            else:
+                for entry in row["entries"]:
+                    entry.update(result=Result.UNKNOWN, callable=False,
+                                 scoped_reference_target=False, link_target=False,
+                                 function_extent=Result.UNKNOWN)
+        next_entries = _qualified_code_entries(manifest, current, archive_result,
+                                               declared_imports, import_rows)
+        signature = tuple(sorted(next_entries.items()))
+        rows = current
+        if signature == previous_signature or next_entries == code_entries:
+            break
+        previous_signature = signature
+        code_entries = next_entries
+    else:
+        # Refuse rather than returning partial passes or weakening any known
+        # preflight/reference contradiction if the defensive bound is reached.
+        raise ValueError("code-entry routing did not converge within bounded rounds")
     return rows
 
 
@@ -360,6 +469,9 @@ def verify_toolchain(manifest: ToolchainManifest, image_data: bytes, archive_dat
     """
     import hashlib
     from .coff_archive import CoffArchive
+    # The manifest and all later native stages must see the same import
+    # namespace even when callers supply a one-shot iterable.
+    import_bindings = tuple(import_bindings)
     imported_symbols = {item.symbol for item in import_bindings}
     external_data_symbols = {anchor.name for section in manifest.data_sections
                              for anchor in section.symbols if anchor.storage == 2}
@@ -433,7 +545,8 @@ def verify_toolchain(manifest: ToolchainManifest, image_data: bytes, archive_dat
         qualified_bases[key] = base
     code_rows = _verify_code_section_references(manifest, objects, image, code_rows,
                                                 qualified_bases, rows, checked_imports,
-                                                absolute_rows, archive_result, start_rows)
+                                                absolute_rows, archive_result, start_rows,
+                                                import_bindings)
     outcomes = ({row["result"] for row in rows} | {archive_result}
                 | {row["result"] for row in absolute_rows} | {row["result"] for row in data_rows}
                 | {row["result"] for row in code_rows}

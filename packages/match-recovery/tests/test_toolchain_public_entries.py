@@ -9,12 +9,15 @@ import struct
 import pytest
 
 from match_recovery.component_binary import verify_toolchain
+from match_recovery.component_binary import _code_section_targets
 from match_recovery.component_source import parse_component, parse_component_entries, render_component
 from match_recovery.component_targets import component_targets
 from match_recovery.application_binary import select_bindings
+from match_recovery.import_source import ImportBinding
 from match_recovery.components import (CodeEntryAnchor, ToolchainCodeSectionBinding,
                                        ToolchainBinding, ToolchainManifest)
 from match_recovery.model import Component, Delivery, Origin, Ownership, Span, canonical
+from match_recovery.pe_coff import Coff
 from match_recovery import ownership_source
 from test_component_targets import _project
 from test_toolchain_components import archive
@@ -35,6 +38,85 @@ def member_object(symbols=(('_strcpy', 0, 0x20, 2), ('_strcat', 1, 0x20, 2)),
     section = (b".text\0\0\0" + struct.pack("<IIIIIIHHI", 0, 0, len(code), 60,
                0, 0, 0, 0, 0x60500020))
     return header + section + code + records + struct.pack("<I", 4)
+
+
+def routed_object(definitions, code, relocations=(), undefined=()):
+    """Small physical COFF member with real external symbol/relocation records."""
+    records = []
+    definition_indexes = {}
+    for name, offset in definitions:
+        definition_indexes[name] = len(records)
+        records.append((name, offset, 1, 0x20, 2))
+    undefined_indexes = {}
+    for index, (name, _, _, _, _) in enumerate(undefined, len(records)):
+        undefined_indexes.setdefault(name, index)
+    relocation_records = b"".join(
+        struct.pack("<IIH", offset, (definition_indexes[name] if name in definition_indexes
+                                     else undefined_indexes[name]), kind)
+        for offset, name, kind in relocations)
+    for name, value, section, kind, storage in undefined:
+        records.append((name, value, section, kind, storage))
+    symbol_records = b"".join(name.encode().ljust(8, b"\0")
+                                 + struct.pack("<IhHBB", value, section, kind, storage, 0)
+                                 for name, value, section, kind, storage in records)
+    relocations_at = 60 + len(code)
+    symbols_at = relocations_at + len(relocation_records)
+    header = struct.pack("<HHIIIHH", 0x14C, 1, 0, symbols_at, len(records), 0, 0)
+    section = (b".text\0\0\0" + struct.pack("<IIIIIIHHI", 0, 0, len(code), 60,
+               relocations_at if relocations else 0, 0, len(relocations), 0, 0x60500020))
+    return header + section + code + relocation_records + symbol_records + struct.pack("<I", 4)
+
+
+def data_reference_object():
+    data = bytes(4)
+    relocation = struct.pack("<IIH", 0, 0, 20)
+    symbols_at = 100 + len(data) + len(relocation)
+    header = struct.pack("<HHIIIHH", 0x14C, 2, 0, symbols_at, 1, 0, 0)
+    text_section = b".text\0\0\0" + struct.pack("<IIIIIIHHI", 0, 0, 0, 0, 0, 0, 0, 0, 0x60500020)
+    data_section = b".data\0\0\0" + struct.pack("<IIIIIIHHI", 0, 0, 4, 100, 104, 0, 1, 0, 0xC0400040)
+    external = b"_leaf\0\0\0" + struct.pack("<IhHBB", 0, 0, 0x20, 2, 0)
+    return header + text_section + data_section + data + relocation + external + struct.pack("<I", 4)
+
+
+def routed_manifest_and_image(entries, members, originals):
+    from test_toolchain_components import archive
+    image = bytearray(pe_fixture(bytes(originals)))
+    struct.pack_into("<I", image, 0x178 + 36, 0x60000020)
+    image = bytes(image)
+    raw = archive([(unit + "/", body) for unit, body in members])
+    pin = hashlib.sha256(image).hexdigest()
+    sections = tuple(ToolchainCodeSectionBinding(
+        unit, 1, ".text", Origin(pin, "pe:va", address), Span(address, address + size),
+        "whole ordinary contribution", (CodeEntryAnchor(symbol, 0, "COFF function inventory"),))
+        for unit, symbol, address, size in entries)
+    manifest = ToolchainManifest(Component("runtime", Ownership.RUNTIME, Delivery.TOOLCHAIN,
+        ("synthetic routing test",), "test"), hashlib.sha256(raw).hexdigest(),
+        "synthetic archive provenance", code_sections=sections)
+    return manifest, image, raw
+
+
+def chain_case(order=("top", "caller", "leaf"), *, damaged_leaf=False, duplicate_target=False):
+    # Leaf at 0x401000; caller and top use E9 rel32 tail transfers.
+    original = bytearray(0x26)
+    original[0:1] = b"\xc3"
+    original[0x10:0x16] = b"\xe9\xeb\xff\xff\xff\xc3"
+    original[0x20:0x26] = b"\xe9\xeb\xff\xff\xff\xc3"
+    leaf_code = b"\x90" if damaged_leaf else b"\xc3"
+    definitions = {
+        "leaf": ("_leaf", 0x401000, 1, routed_object((('_leaf', 0),), leaf_code)),
+        "caller": ("_caller", 0x401010, 6, routed_object((('_caller', 0),),
+            b"\xe9\0\0\0\0\xc3", ((1, "_leaf", 0x14),), (("_leaf", 0, 0, 0x20, 2),))),
+        "top": ("_top", 0x401020, 6, routed_object((('_top', 0),),
+            b"\xe9\0\0\0\0\xc3", ((1, "_caller", 0x14),),
+            (("_caller", 0, 0, 0x20, 2),)
+            + ((("_caller", 0, 0, 0x20, 2),) if duplicate_target else ()))),
+    }
+    # Keep original-code extent fixed while placing the one-byte leaf and two
+    # six-byte consumers at their mapped offsets.
+    entries = tuple(("../" + name + ".obj", definitions[name][0],
+                     definitions[name][1], definitions[name][2]) for name in order)
+    members = tuple(("../" + name + ".obj", definitions[name][3]) for name in order)
+    return routed_manifest_and_image(entries, members, original)
 
 
 def case(*, symbols=(('_strcpy', 0, 0x20, 2), ('_strcat', 1, 0x20, 2)),
@@ -123,6 +205,115 @@ def test_unknown_parent_reference_never_promotes_preflight_entry_anchor(alias):
     assert row["references"] == row["result"] == "unknown"
     assert all(entry["result"] == "unknown" and entry["address"] is None
                and not entry["scoped_reference_target"] for entry in row["entries"])
+
+
+def test_passing_entry_targets_propagate_through_reordered_tail_transfer_chain():
+    manifest, image, raw = chain_case()
+    report = verify_toolchain(manifest, image, raw)
+    assert report["code_section_counts"] == {"pass": 3}
+    assert report["code_entry_counts"] == {"pass": 3}
+    assert {row["unit"] for row in report["code_sections"]
+            if row["references"] == "pass"} == {"../top.obj", "../caller.obj", "../leaf.obj"}
+
+
+def test_unseeded_entry_cycle_does_not_bootstrap_from_itself():
+    original = bytearray(0x16)
+    original[0:6] = b"\xe9\x0b\0\0\0\xc3"
+    original[0x10:0x16] = b"\xe9\xeb\xff\xff\xff\xc3"
+    objects = {
+        "a": ("_a", 0x401000, b"\xe9\0\0\0\0\xc3", "_b"),
+        "b": ("_b", 0x401010, b"\xe9\0\0\0\0\xc3", "_a"),
+    }
+    members = tuple((f"../{name}.obj", routed_object(((symbol, 0),), code,
+        ((1, target, 0x14),), ((target, 0, 0, 0x20, 2),)))
+        for name, (symbol, _, code, target) in objects.items())
+    entries = tuple((f"../{name}.obj", symbol, address, 6)
+                    for name, (symbol, address, _, _) in reversed(tuple(objects.items())))
+    manifest, image, raw = routed_manifest_and_image(entries, members, original)
+    report = verify_toolchain(manifest, image, raw)
+    assert report["code_section_counts"] == {"unknown": 2}
+    assert report["code_entry_counts"] == {"unknown": 2}
+
+
+def test_unknown_overlapping_function_binding_cannot_seed_entry_cycle():
+    original = bytearray(0x26)
+    original[0:11] = b"\xe9\x1b\0\0\0\xe9\0\0\0\0\xc3"
+    original[0x20:0x26] = b"\xe9\xdb\xff\xff\xff\xc3"
+    a_code = b"\xe9\0\0\0\0\xe9\0\0\0\0\xc3"
+    b_code = b"\xe9\0\0\0\0\xc3"
+    members = (
+        ("../a.obj", routed_object((('_a', 0),), a_code,
+            ((1, "_b", 0x14), (6, "_missing", 0x14)),
+            (('_b', 0, 0, 0x20, 2), ('_missing', 0, 0, 0x20, 2)))),
+        ("../b.obj", routed_object((('_b', 0),), b_code, ((1, "_a", 0x14),),
+            (('_a', 0, 0, 0x20, 2),))),
+    )
+    # Put B first so no section ordering can accidentally provide a target.
+    entries = (("../b.obj", "_b", 0x401020, 6), ("../a.obj", "_a", 0x401000, 11))
+    manifest, image, raw = routed_manifest_and_image(entries, members, original)
+    section_a = manifest.code_sections[1]
+    function = ToolchainBinding(section_a.origin, (section_a.span,), "_a", "../a.obj",
+                               "overlapping original function mapping")
+    manifest = replace(manifest, bindings=(function,))
+    report = verify_toolchain(manifest, image, raw)
+    function_row = next(row for row in report["functions"] if row["symbol"] == "_a")
+    assert function_row["boundary"] == "pass"
+    assert function_row["bytes"] in ("pass", "unknown")
+    assert function_row["references"] == function_row["result"] == "unknown"
+    assert function_row["differing_offsets"] == []
+    by_unit = {row["unit"]: row for row in report["code_sections"]}
+    assert by_unit["../a.obj"]["references"] == "unknown"
+    assert by_unit["../b.obj"]["references"] == "unknown"
+    assert all(entry["result"] == "unknown"
+               for row in by_unit.values() for entry in row["entries"])
+    a_reference = next(row for row in by_unit["../b.obj"]["relocations"]
+                       if row["symbol"] == "_a")
+    assert a_reference["result"] == "unknown"
+
+
+def test_failed_entry_parent_cannot_seed_a_dependent_section():
+    manifest, image, raw = chain_case(damaged_leaf=True)
+    report = verify_toolchain(manifest, image, raw)
+    by_unit = {row["unit"]: row for row in report["code_sections"]}
+    assert by_unit["../leaf.obj"]["bytes"] == "fail"
+    assert by_unit["../leaf.obj"]["entries"][0]["result"] == "unknown"
+    assert by_unit["../caller.obj"]["references"] == "unknown"
+    assert by_unit["../top.obj"]["references"] == "unknown"
+
+
+def test_duplicate_undefined_external_symbol_name_is_not_routed():
+    manifest, image, raw = chain_case(duplicate_target=True)
+    report = verify_toolchain(manifest, image, raw)
+    by_unit = {row["unit"]: row for row in report["code_sections"]}
+    assert by_unit["../leaf.obj"]["result"] == "pass"
+    assert by_unit["../caller.obj"]["references"] == "pass"
+    assert by_unit["../top.obj"]["references"] == "unknown"
+
+
+def test_unknown_import_namespace_blocks_entry_routing_for_tuple_and_generator():
+    manifest, image, raw = chain_case()
+    binding = ImportBinding("_leaf", "missing.dll", "missing", None, "src/imports.cpp", 1)
+    tuple_report = verify_toolchain(manifest, image, raw, import_bindings=(binding,))
+    generator_report = verify_toolchain(manifest, image, raw,
+                                        import_bindings=(item for item in (binding,)))
+    for report in (tuple_report, generator_report):
+        by_unit = {row["unit"]: row for row in report["code_sections"]}
+        assert by_unit["../leaf.obj"]["result"] == "pass"
+        assert by_unit["../caller.obj"]["references"] == "unknown"
+        assert by_unit["../top.obj"]["references"] == "unknown"
+    assert tuple_report["code_sections"] == generator_report["code_sections"]
+
+
+def test_code_entry_target_is_not_added_for_data_only_references():
+    manifest, _, raw = case()
+    leaf_object = Coff(member_object((('_leaf', 0, 0x20, 2),), b"\xc3"))
+    data_object = Coff(data_reference_object())
+    data_unit = "../data.obj"
+    targets = _code_section_targets(manifest, {UNIT: leaf_object, data_unit: data_object},
+        {}, (), (), (), code_entry_addresses={"_leaf": 0x401000})
+    undefined_index = next(index for index, symbol in data_object.symbols.items()
+                           if symbol.name == "_leaf")
+    assert str(undefined_index) not in targets[data_unit]
 
 
 @pytest.mark.parametrize("symbols", [

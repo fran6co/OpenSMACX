@@ -3611,9 +3611,18 @@ acceptance. Full initialized-section qualification above is unchanged.
 Code contributions require exact complete-section bounds, ordinary executable
 flags, executable image backing, nonrelocation bytes and original HIGHLOW
 relocation shape. References resolve through independently placed same-member
-sections or existing explicit function, import and absolute bindings. Unresolved
-cross-member code-section symbols remain unknown; matching operands never supply
-their own targets. These placements do not supply targets to function checks.
+sections or existing explicit function, import and absolute bindings. Cross-member
+code-entry references can resolve only from another section whose complete
+contribution, references, archive pin and entry inventory all pass. The verifier
+propagates those qualified entries in bounded rounds, so a passing leaf can
+qualify its caller independent of manifest/archive order. Unknown or failed
+parents never seed targets, and an unseeded cycle remains unknown. Routing is
+limited to unique ordinary undefined external function references in declared
+code sections; it does not route data references or shadow function, import,
+absolute or data bindings. Matching operands never supply their own targets.
+Failure to reach a stable bounded result refuses the verification rather than
+weakening an existing failure or returning a partial pass.
+These placements do not supply targets to function checks.
 Reports keep `code_sections` and `code_section_counts` separate from function
 counts, with `callable` and `link_target` false. A passing contribution is not
 provider-selection, linked-preservation, application-function or runtime proof.
@@ -3640,8 +3649,7 @@ Alias names do not add original function identities or independent bodies.
 Passing entries are callable scoped-reference targets, but do not prove original/current linker
 selection (`link_target` remains false), independent function extent, or
 application coverage. They do not participate in the COMDAT-only linked
-verifier and this version does not resolve cycles among new entries within a
-component. Legacy code-section rows without `entries` keep their old serialized
+verifier. Legacy code-section rows without `entries` keep their old serialized
 form.
 
 `components propose-entries <component> --image <image> --archive <archive>`
