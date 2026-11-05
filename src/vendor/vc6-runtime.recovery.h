@@ -204,6 +204,18 @@
 //       "unit": "../build/intel/mt_obj/sqrt.obj"
 //     },
 //     {
+//       "entries": [
+//         {
+//           "evidence": "Complete pinned archive COFF inventory: external function symbol in ../build/intel/mt_obj/atan.obj section 1; verified native section-relative offset.",
+//           "name": "__CIatan",
+//           "offset": 0
+//         },
+//         {
+//           "evidence": "Complete pinned archive COFF inventory: external function symbol in ../build/intel/mt_obj/atan.obj section 1; verified native section-relative offset.",
+//           "name": "_atan",
+//           "offset": 20
+//         }
+//       ],
 //       "evidence": "Pinned VC6-era multithreaded LIBCMT contribution: the whole ordinary code section corresponds to this original image range outside relocation operands. Section membership is dependency provenance only, not a callable identity, original body boundary, or per-symbol extent. Original archive-member selection, complete relocation-target closure, final-link retention/allocation, original runtime version, and runtime equivalence remain unproved.",
 //       "origin": {
 //         "address": 6579792,
@@ -219,6 +231,18 @@
 //       "unit": "../build/intel/mt_obj/atan.obj"
 //     },
 //     {
+//       "entries": [
+//         {
+//           "evidence": "Complete pinned archive COFF inventory: external function symbol in ../build/intel/mt_obj/pow.obj section 1; verified native section-relative offset.",
+//           "name": "__CIpow",
+//           "offset": 0
+//         },
+//         {
+//           "evidence": "Complete pinned archive COFF inventory: external function symbol in ../build/intel/mt_obj/pow.obj section 1; verified native section-relative offset.",
+//           "name": "_pow",
+//           "offset": 25
+//         }
+//       ],
 //       "evidence": "Pinned VC6-era multithreaded LIBCMT contribution: the whole ordinary code section corresponds to this original image range outside relocation operands. Section membership is dependency provenance only, not a callable identity, original body boundary, or per-symbol extent. Original archive-member selection, complete relocation-target closure, final-link retention/allocation, original runtime version, and runtime equivalence remain unproved.",
 //       "origin": {
 //         "address": 6580864,
@@ -249,6 +273,18 @@
 //       "unit": "build/intel/mt_obj/exsup3.obj"
 //     },
 //     {
+//       "entries": [
+//         {
+//           "evidence": "Complete pinned archive COFF inventory: external function symbol in ../build/intel/mt_obj/acos.obj section 1; verified native section-relative offset.",
+//           "name": "__CIacos",
+//           "offset": 0
+//         },
+//         {
+//           "evidence": "Complete pinned archive COFF inventory: external function symbol in ../build/intel/mt_obj/acos.obj section 1; verified native section-relative offset.",
+//           "name": "_acos",
+//           "offset": 20
+//         }
+//       ],
 //       "evidence": "Pinned VC6-era multithreaded LIBCMT contribution: the whole ordinary code section corresponds to this original image range outside relocation operands. Section membership is dependency provenance only, not a callable identity, original body boundary, or per-symbol extent. Original archive-member selection, complete relocation-target closure, final-link retention/allocation, original runtime version, and runtime equivalence remain unproved.",
 //       "origin": {
 //         "address": 6585008,
@@ -294,6 +330,53 @@
 //       "unit": "../build/intel/mt_obj/87disp.obj"
 //     },
 //     {
+//       "entries": [
+//         {
+//           "evidence": "Complete pinned archive COFF inventory: external function symbol in ../build/intel/mt_obj/common.obj section 1; verified native section-relative offset.",
+//           "name": "__twoToTOS",
+//           "offset": 0
+//         },
+//         {
+//           "evidence": "Complete pinned archive COFF inventory: external function symbol in ../build/intel/mt_obj/common.obj section 1; verified native section-relative offset.",
+//           "name": "__load_CW",
+//           "offset": 21
+//         },
+//         {
+//           "evidence": "Complete pinned archive COFF inventory: external function symbol in ../build/intel/mt_obj/common.obj section 1; verified native section-relative offset.",
+//           "name": "__convertTOStoQNaN",
+//           "offset": 44
+//         },
+//         {
+//           "evidence": "Complete pinned archive COFF inventory: external function symbol in ../build/intel/mt_obj/common.obj section 1; verified native section-relative offset.",
+//           "name": "__fload_withFB",
+//           "offset": 69
+//         },
+//         {
+//           "evidence": "Complete pinned archive COFF inventory: external function symbol in ../build/intel/mt_obj/common.obj section 1; verified native section-relative offset.",
+//           "name": "__checkTOS_withFB",
+//           "offset": 136
+//         },
+//         {
+//           "evidence": "Complete pinned archive COFF inventory: external function symbol in ../build/intel/mt_obj/common.obj section 1; verified native section-relative offset.",
+//           "name": "__fast_exit",
+//           "offset": 158
+//         },
+//         {
+//           "evidence": "Complete pinned archive COFF inventory: external function symbol in ../build/intel/mt_obj/common.obj section 1; verified native section-relative offset.",
+//           "name": "__math_exit",
+//           "offset": 171
+//         },
+//         {
+//           "evidence": "Complete pinned archive COFF inventory: external function symbol in ../build/intel/mt_obj/common.obj section 1; verified native section-relative offset.",
+//           "name": "__check_overflow_exit",
+//           "offset": 213
+//         },
+//         {
+//           "evidence": "Complete pinned archive COFF inventory: external function symbol in ../build/intel/mt_obj/common.obj section 1; verified native section-relative offset.",
+//           "name": "__check_range_exit",
+//           "offset": 233
+//         }
+//       ],
 //       "evidence": "Pinned VC6-era multithreaded LIBCMT contribution: the whole ordinary code section corresponds to this original image range outside relocation operands. Section membership is dependency provenance only, not a callable identity, original body boundary, or per-symbol extent. Original archive-member selection, complete relocation-target closure, final-link retention/allocation, original runtime version, and runtime equivalence remain unproved.",
 //       "origin": {
 //         "address": 6596576,
