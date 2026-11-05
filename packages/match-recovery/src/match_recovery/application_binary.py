@@ -1175,6 +1175,9 @@ def verify_records(root: Path, records, image_path: Path, *, flag_sets,
 
     def fresh_records():
         current = _current_source_records(root, settings)
+        # Re-enumerate for each freshness pass, rather than each selected record.
+        configured_paths = {path.relative_to(root).as_posix()
+                            for path in settings.source.files(root)}
         by_key = defaultdict(list)
         for row in current:
             by_key[(row.path.resolve(), row.address, row.line)].append(row)
@@ -1185,7 +1188,7 @@ def verify_records(root: Path, records, image_path: Path, *, flag_sets,
                 key = (record.path.resolve(), record.address, record.line)
             except (AttributeError, OSError, ValueError) as error:
                 raise ValueError("selected record is not a configured current source annotation") from error
-            if (relative not in {path.relative_to(root).as_posix() for path in settings.source.files(root)}
+            if (relative not in configured_paths
                     or len(by_key.get(key, ())) != 1 or by_key[key][0] != record):
                 raise ValueError("selected record differs from the current configured source annotation")
             selected_ids.append(Origin(pin, settings.source.address_space, record.address).entity_id)
