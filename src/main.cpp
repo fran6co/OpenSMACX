@@ -15,7 +15,7 @@
  * You should have received a copy of the GNU General Public License
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
-// ORIGINAL: 0x0045F920 _$E21 0x0045F920-0x0045F936 FILE
+// ORIGINAL: 0x0045F920 _$E21 0x0045F920-0x0045F936 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Original CRT slot0x0068253C selects initializer0x0045F920-0x0045F936 and its registration names fini0x0045F940-0x0045F94A; complete instruction decode fixes both ends.", "Original operations identify storage0x007D3948; Font constructor/destructor618EA0/618EE0. Source object binding names ?g_JACKAL_FONT@@3VFont@@A.", "Fresh owner COFF selects _$E21 via .CRT$XCU and registers _$E19, both naming the same global. Fresh linked callback order is singleton, FontQueue VAL2/VAL1, FontTable, agreeing with their original slots.", "Current compiler-local names are emission interpretations, not original debug names or historical TU proof. The selected relative order does not establish complete CRT order, strict reference/linked preservation, dependency equivalence or runtime acceptance."], "reason": "Bind the original startup function to the genuine compiler-generated lifetime of source-owned g_JACKAL_FONT; declarations and construction order, not authored callbacks, provide the implementation."}
 // symbol    _$E16
 // ORIGINAL: 0x0045F940 _$E19 0x0045F940-0x0045F94A FILE BYTE_EXACT

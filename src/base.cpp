@@ -6176,7 +6176,7 @@ void __cdecl name_base(int faction_id, LPSTR name_out, BOOL is_final, BOOL is_se
 
 /*
 Purpose: TBD
-// ORIGINAL: 0x004E4350 ?base_mark@@YAXH@Z 0x004E4350-0x004E442D
+// ORIGINAL: 0x004E4350 ?base_mark@@YAXH@Z 0x004E4350-0x004E442D BYTE_EXACT
 // size      221 bytes
 // prototype void (__cdecl ?base_mark@@YAXH@Z)(int baseID)
 // callers   2   call targets   4

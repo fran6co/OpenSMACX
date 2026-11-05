@@ -28,7 +28,7 @@ void VideoFrameQueue::set_limit(int limit) {
     limit_ = limit;
 }
 
-// ORIGINAL: 0x0063E6E0 sub_63e6e0 0x0063E6E0-0x0063E7EE FILE
+// ORIGINAL: 0x0063E6E0 sub_63e6e0 0x0063E6E0-0x0063E7EE FILE BYTE_EXACT
 // symbol    ?allocate@VideoFrameQueue@@QAEHPAPAEHHI@Z
 // TRIED: the given definition head (`__stdcall`, no `this`) contradicts the disassembly - `ecx` does real field work (`self[0..3]`) with no matching stack slot, so this is really a `__thiscall` member with 4 stack params, not a 4-arg stdcall free function. Rewritten as a member on a synthetic class - landed FILE-mode because BODY mode's naive brace-balance extraction (`extract_forward_text`) stops at the first top-level `{...}` it meets, which is the class's own declaration block, truncating the out-of-line method definition entirely (measured: NO_COMPILE, "found 0" external symbols). Reproduces the redundant `if (headOld != 0)` re-test before the second `free()` (the original keeps it even though it is statically known true) since dropping it did not change the divergence. Landed at mnemonic_similarity 0.971, byte count already matches (270/270); only the free-path register scheduling around instruction 79 still differs.
 int VideoFrameQueue::allocate(unsigned char **payload_out, int byte_count,
@@ -64,7 +64,7 @@ int VideoFrameQueue::allocate(unsigned char **payload_out, int byte_count,
     return 0;
 }
 
-// ORIGINAL: 0x0063E5E0 sub_63e5e0 0x0063E5E0-0x0063E6DD FILE
+// ORIGINAL: 0x0063E5E0 sub_63e5e0 0x0063E5E0-0x0063E6DD FILE BYTE_EXACT
 // symbol    ?append@VideoFrameQueue@@QAEHPBEHHI@Z
 // TRIED: real `__thiscall` member (C0063e5e0::fill(int,int,int,int)) - `this[2]==this[3]` full-guard, mem_get(0x14) in BOTH the empty-list and grow-list arms matching the ASM exactly, a linked-list node {id,val,buf,buflen,next} appended at `this[1]`, and the alloc-failure path unwinding the node it just linked (free buf, unlink, free node, count--). Reproduces the whole body; MISMATCH #3 is the same "no ebp frame" prologue wall seen across this batch (0x005D4890, 0x005DEA20) plus a `cmp [mem],reg` vs `mov reg,[mem]; cmp reg,reg` operand-form choice neither a named local nor inlining changed.
 #if defined(_MSC_VER) && _MSC_VER == 1200
@@ -112,7 +112,7 @@ unsigned char *VideoFrameQueue::peek(int *next_frame_id,
     return head_->bytes;
 }
 
-// ORIGINAL: 0x0063E820 sub_63e820 0x0063E820-0x0063E85B FILE
+// ORIGINAL: 0x0063E820 sub_63e820 0x0063E820-0x0063E85B FILE BYTE_EXACT
 // symbol    ?discard_head@VideoFrameQueue@@QAEXXZ
 void VideoFrameQueue::discard_head() {
     if (head_ != 0) {

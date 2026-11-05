@@ -16,16 +16,16 @@
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
 #include "stdafx.h"
-// ORIGINAL: 0x004C5C80 ??__Eg_MIDI_DEVICE@@YAXXZ 0x004C5C80-0x004C5C96 FILE
+// ORIGINAL: 0x004C5C80 ??__Eg_MIDI_DEVICE@@YAXXZ 0x004C5C80-0x004C5C96 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf: lifecycle helper direct receiver/constructor/destructor/atexit instructions", "docs/recovery/derived-prototypes.csv historical dynamic initializer/destructor identity; fresh native sounddevice.cpp COFF confirms object and lifecycle relocation targets"], "reason": "MIDI construction and atexit registration at original receiver 0x0090D950; emitted by ordinary source-owned global lifetime, not a handwritten wrapper; terminal alignment NOPs excluded"}
 // symbol    _$E21
-// ORIGINAL: 0x004C5CA0 ??__Fg_MIDI_DEVICE@@YAXXZ 0x004C5CA0-0x004C5CAA FILE
+// ORIGINAL: 0x004C5CA0 ??__Fg_MIDI_DEVICE@@YAXXZ 0x004C5CA0-0x004C5CAA FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf: lifecycle helper direct receiver/constructor/destructor/atexit instructions", "docs/recovery/derived-prototypes.csv historical dynamic initializer/destructor identity; fresh native sounddevice.cpp COFF confirms object and lifecycle relocation targets"], "reason": "MIDI static destruction tail call at original receiver 0x0090D950; emitted by ordinary source-owned global lifetime, not a handwritten wrapper; terminal alignment NOPs excluded"}
 // symbol    _$E19
-// ORIGINAL: 0x004C5CB0 ??__Eg_WAVE_IN_DEVICE@@YAXXZ 0x004C5CB0-0x004C5CC6 FILE
+// ORIGINAL: 0x004C5CB0 ??__Eg_WAVE_IN_DEVICE@@YAXXZ 0x004C5CB0-0x004C5CC6 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf: lifecycle helper direct receiver/constructor/destructor/atexit instructions", "docs/recovery/derived-prototypes.csv historical dynamic initializer/destructor identity; fresh native sounddevice.cpp COFF confirms object and lifecycle relocation targets"], "reason": "Wave-In construction and atexit registration at original receiver 0x0090DB50; emitted by ordinary source-owned global lifetime, not a handwritten wrapper; terminal alignment NOPs excluded"}
 // symbol    _$E26
-// ORIGINAL: 0x004C5CD0 ??__Fg_WAVE_IN_DEVICE@@YAXXZ 0x004C5CD0-0x004C5CDA FILE
+// ORIGINAL: 0x004C5CD0 ??__Fg_WAVE_IN_DEVICE@@YAXXZ 0x004C5CD0-0x004C5CDA FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf: lifecycle helper direct receiver/constructor/destructor/atexit instructions", "docs/recovery/derived-prototypes.csv historical dynamic initializer/destructor identity; fresh native sounddevice.cpp COFF confirms object and lifecycle relocation targets"], "reason": "Wave-In static destruction tail call at original receiver 0x0090DB50; emitted by ordinary source-owned global lifetime, not a handwritten wrapper; terminal alignment NOPs excluded"}
 // symbol    _$E24
 #include "sounddevice.h"
@@ -954,7 +954,7 @@ int Wave_In_Device::release() {
  * You should have received a copy of the GNU General Public License
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
-// ORIGINAL: 0x004C5C50 sub_4c5c50 0x004C5C50-0x004C5C66 FILE
+// ORIGINAL: 0x004C5C50 sub_4c5c50 0x004C5C50-0x004C5C66 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned CRT slot 0x682608 selects startup 0x4c5c50..0x4c5c66 and registers cleanup 0x4c5c70..0x4c5c7a. Complete root decode proves the exclusive RET/JMP endpoints.", "The source-owned object ?WaveDeviceGlobal@@3VWave_Device@@A is selected by physical COFF constructor/destructor relocations; current emitted initializer is identified by the adjacent symbol fact. Original receiver 0x90d978 belongs to this real global; preserve its class lifetime and registration.", "Buffer relative declaration order is PCX, interface array, middle, vehicle, special-text owner, Sprite, shared Buffer. Generated helpers are compiler output, not hand-authored address callbacks. Selected same-owner order does not establish full CRT order, dependency provider, linked preservation or runtime/game acceptance. Guarded cleanup is a separate unfinished obligation."], "reason": "Bind original init operation to the genuine C++ lifetime of ?WaveDeviceGlobal@@3VWave_Device@@A; retain original behavior and remaining matching obligations."}
 // symbol    _$E16
 // ORIGINAL: 0x004C5C70 sub_4c5c70 0x004C5C70-0x004C5C7A FILE BYTE_EXACT
@@ -1236,7 +1236,7 @@ IDirectSound *Wave_Device::get_ds() {
 Purpose: Ask the wrapped device whether it supports EAX, through its vtable
          slot 0x74. With no device wrapped the original clears only al, which
          is the codegen for a false of byte width; zero is that value.
-// ORIGINAL: 0x004C54B0 ?is_eax@Wave_Device@@QAEHXZ 0x004C54B0-0x004C54BF SEMANTIC
+// ORIGINAL: 0x004C54B0 ?is_eax@Wave_Device@@QAEHXZ 0x004C54B0-0x004C54BF BYTE_EXACT
 // symbol    ?is_eax@Wave_Device@@UAE_NXZ
 // size      15 bytes
 // prototype int (__thiscall ?is_eax@Wave_Device@@QAEHXZ)(Wave_Device* this)
@@ -1308,7 +1308,7 @@ int Wave_Device::stop_raw_dump() {
 Purpose: Ask the wrapped device whether it does 3D audio, through vtable slot
          0x84. With no device wrapped the original clears only al, the codegen
          for a false of byte width; zero is that value.
-// ORIGINAL: 0x004C5530 ?is_3d@Wave_Device@@QAEHXZ 0x004C5530-0x004C5542 SEMANTIC
+// ORIGINAL: 0x004C5530 ?is_3d@Wave_Device@@QAEHXZ 0x004C5530-0x004C5542 BYTE_EXACT
 // symbol    ?is_3d@Wave_Device@@UAE_NXZ
 // size      18 bytes
 // prototype int (__thiscall ?is_3d@Wave_Device@@QAEHXZ)(Wave_Device* this)
@@ -1368,7 +1368,7 @@ void Wave_Device::set_volume(unsigned int volume) {
 
 /*
 Purpose: Hand the game window to the wrapped device, through vtable slot 0x6C.
-// ORIGINAL: 0x004C5000 ?set_hwnd@Wave_Device@@QAEHPAX@Z 0x004C5000-0x004C5020
+// ORIGINAL: 0x004C5000 ?set_hwnd@Wave_Device@@QAEHPAX@Z 0x004C5000-0x004C5020 BYTE_EXACT
 // symbol    ?set_hwnd@Wave_Device@@UAEHPAX@Z
 // TRIED     BYTE_EXACT IS REACHABLE AND COSTS A SEAM, WHICH IS WHY THIS IS STILL UNCLAIMED. The image wants the device path FIRST and the default LAST - it `je`s forward to `mov eax, 0x13` and falls through into the call - where forward_to_wrapped_device is a guard clause. The helper CANNOT be flipped to suit: its other two users, set_rate (0x004C5120) and set_volume (0x004C5150), are BYTE_EXACT with the guard order, so this shape belongs to the body. Written out with the flip it measures BYTE_EXACT, 14 of 14 - and takes `ORIGINAL() named-pointer seam` from 94 to 95, above its ceiling. The seam-free spelling that saved the sounddevice family does not work here because this call TAKES AN ARGUMENT: `__fastcall(void *, int)` passes it in edx while the image passes it on the stack, which is thiscall - the one convention VC6 reserves (C4234). Measured 4 of 14 that way. The claim is real but costs a ratcheted site, and buying that slot by rewriting some OTHER claimed body's seam would risk a live regression to satisfy a counter. Left unclaimed deliberately, with the price written down.
 // size      32 bytes
@@ -1520,7 +1520,7 @@ Purpose: Report whether a group is disabled: out-of-range groups always are,
          and a real one is disabled while its enabled byte is zero. The
          original defines only AL on the out-of-range path; callers test the
          byte.
-// ORIGINAL: 0x004C5460 ?is_group_disabled@Wave_Device@@QAEHI@Z 0x004C5460-0x004C5481
+// ORIGINAL: 0x004C5460 ?is_group_disabled@Wave_Device@@QAEHI@Z 0x004C5460-0x004C5481 BYTE_EXACT
 // symbol    ?is_group_disabled@Wave_Device@@QAE_NI@Z
 // TRIED: byte-exactness. Plateaus at 7/14, 0.875 similar (best
 // `/c /O2 /Gy /GR- /Oy- /GX`). The image writes only AL on BOTH return

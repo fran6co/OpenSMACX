@@ -7,7 +7,7 @@
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
  */
-// ORIGINAL: 0x00408390 ??_GAlphaSave@@WEEE@AEPAXI@Z 0x00408390-0x0040839B FILE
+// ORIGINAL: 0x00408390 ??_GAlphaSave@@WEEE@AEPAXI@Z 0x00408390-0x0040839B FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned original ??_GAlphaSave@@WEEE@AEPAXI@Z at 0x00408390 is an 11-byte secondary scalar deleting adjustor; it subtracts 0x444 from ECX and tail-jumps to the complete-object AlphaSave scalar deleting entry without touching stack or flags.", "Historical seed correction: the earlier `??3` deallocation interpretation was refuted; the original is a `??_G` scalar-deleting adjustor. `WEEE` demangles to adjustor{1092}, equal to 0x444.", "Pinned AlphaSave constructor at 0x004073f8 stores Buffer-view vftable 0x00669ec0 at this+0x444; the source owner is the typed AlphaSave GraphicWin/Buffer multiple-inheritance view.", "Current src/alphasave.cpp COFF Buffer-view vftable first slot selects generated ??_EAlphaSave@@WEEE@AEPAXI@Z; its body performs the same 0x444 adjustment and preserves the flag argument.", "Current AlphaSave COFF weak external ??_EAlphaSave@@UAEPAXI@Z records search mode 2 (library search) and fallback target ??_GAlphaSave@@UAEPAXI@Z; this linked image resolves both primary labels to the same physical class deleting body. The object fallback and linked address are per-build evidence, not a general E/G equivalence or owner-selection rule.", "That measured current primary body calls AlphaSave::~AlphaSave, tests flags bit 0, calls operator delete only when bit 0 is set, returns the saved object pointer, and uses ret 4; this is the per-class measured E-to-G scalar path, not a general vector/scalar equivalence.", "The removed transitional C++ names were ?adjust_this_alpha_save@@YIPAXPAX0I@Z and ?scalar_delete_alpha_save@@YIPAXPAX0I@Z; no callers exist outside deleting_thunks.cpp/.h, and the current generated Buffer vftable uses the class-owned E adjustor instead.", "Historical seed metadata noted flags hidden;sp_ready;purged_ok, zero direct callers, and no direct call targets. These remain historical observations only; they do not establish virtual-dispatch completeness or acceptance.", "The old secondary record had no BYTE_EXACT or SEMANTIC claim. Its original identity, full span, kind and parsed history are moved unchanged; no matching claim is granted."], "reason": "Bind the pinned secondary scalar deleting identity for AlphaSave to its measured genuine Buffer-view generated adjustor. Keep the original G identity and point its current symbol fact at the owner-emitted E adjustor; the per-object weak fallback and bit-0 path above establish why this exact current implementation preserves the original operation."}
 // symbol    ??_EAlphaSave@@WEEE@AEPAXI@Z
 // kind      game
@@ -34,7 +34,7 @@
 // retain older editbox.cpp owner-copy observations as historical
 // evidence, not current linked-selection proof; the class definition
 // remains in editbox.h.
-// ORIGINAL: 0x004083A0 ??_GEditBox@@WEEE@AEPAXI@Z 0x004083A0-0x004083AB FILE
+// ORIGINAL: 0x004083A0 ??_GEditBox@@WEEE@AEPAXI@Z 0x004083A0-0x004083AB FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned original ??_GEditBox@@WEEE@AEPAXI@Z at 0x004083a0 is an 11-byte secondary scalar deleting adjustor; it subtracts 0x444 from ECX and tail-jumps to the complete-object EditBox scalar deleting entry without touching stack or flags.", "Historical seed correction: the earlier `??3` deallocation interpretation was refuted; the original is a `??_G` scalar-deleting adjustor. `WEEE` demangles to adjustor{1092}, equal to 0x444.", "Pinned EditBox constructor at 0x00614e8a stores Buffer-view vftable 0x0066a030 at this+0x444; the source owner is the typed EditBox GraphicWin/Buffer multiple-inheritance view.", "Current src/editbox.cpp COFF Buffer-view vftable first slot selects generated ??_EEditBox@@WEEE@AEPAXI@Z; its body performs the same 0x444 adjustment and preserves the flag argument.", "Current EditBox COFF weak external ??_EEditBox@@UAEPAXI@Z records search mode 2 (library search) and fallback target ??_GEditBox@@UAEPAXI@Z; this linked image resolves both primary labels to the same physical class deleting body. The object fallback and linked address are per-build evidence, not a general E/G equivalence or owner-selection rule.", "That measured current primary body calls EditBox::~EditBox, tests flags bit 0, calls operator delete only when bit 0 is set, returns the saved object pointer, and uses ret 4; this is the per-class measured E-to-G scalar path, not a general vector/scalar equivalence.", "The removed transitional C++ names were ?adjust_this_edit_box@@YIPAXPAX0I@Z and ?scalar_delete_edit_box@@YIPAXPAX0I@Z; no callers exist outside deleting_thunks.cpp/.h, and the current generated Buffer vftable uses the class-owned E adjustor instead.", "Historical seed metadata noted flags hidden;sp_ready;purged_ok, zero direct callers, and no direct call targets. These remain historical observations only; they do not establish virtual-dispatch completeness or acceptance.", "The old secondary record had no BYTE_EXACT or SEMANTIC claim. Its original identity, full span, kind and parsed history are moved unchanged; no matching claim is granted."], "reason": "Bind the pinned secondary scalar deleting identity for EditBox to its measured genuine Buffer-view generated adjustor. Keep the original G identity and point its current symbol fact at the owner-emitted E adjustor; the per-object weak fallback and bit-0 path above establish why this exact current implementation preserves the original operation."}
 // symbol    ??_EEditBox@@WEEE@AEPAXI@Z
 // kind      game
@@ -213,7 +213,7 @@ void AlphaSave::init() {
     file_win_.cancel_button().redraw();
 }
 
-// ORIGINAL: 0x00407350 ??0AlphaSave@@QAE@XZ 0x00407350-0x00407410;0x00650BF0-0x00650C60
+// ORIGINAL: 0x00407350 ??0AlphaSave@@QAE@XZ 0x00407350-0x00407410;0x00650BF0-0x00650C60 BYTE_EXACT
 AlphaSave::AlphaSave() {
 }
 
@@ -360,7 +360,7 @@ void AlphaSave::on_selected(int) {
     file_win_.edit_box().redraw();
 }
 
-// ORIGINAL: 0x00407920 ?save@AlphaSave@@QAEXXZ 0x00407920-0x00407A7E
+// ORIGINAL: 0x00407920 ?save@AlphaSave@@QAEXXZ 0x00407920-0x00407A7E BYTE_EXACT
 // symbol    ?save@AlphaSave@@QAEPADXZ
 // The caption is label slot 674; the paired load dialog uses 673. The
 // original temporarily disables the two Net voice hotkeys while modal.
@@ -407,7 +407,7 @@ char *AlphaSave::save() {
     return selected;
 }
 
-// ORIGINAL: 0x00407A80 ?load@AlphaSave@@QAEXXZ 0x00407A80-0x00407BDE
+// ORIGINAL: 0x00407A80 ?load@AlphaSave@@QAEXXZ 0x00407A80-0x00407BDE BYTE_EXACT
 // symbol    ?load@AlphaSave@@QAEPADXZ
 // The retired standalone spelling could not reproduce VC6's two-register
 // frame, but its call order and owner identities are retained here.

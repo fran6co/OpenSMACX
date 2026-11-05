@@ -1099,7 +1099,7 @@ void ProdPicker::on_right_click(int x, int y) {
 // from the declaration.
 
 /*
-// ORIGINAL: 0x00492420 ??0ProdPicker@@QAE@XZ 0x00492420-0x004926AD;0x00658B70-0x00658C09
+// ORIGINAL: 0x00492420 ??0ProdPicker@@QAE@XZ 0x00492420-0x004926AD;0x00658B70-0x00658C09 BYTE_EXACT
 // TRIED: register allocation - compiled body agrees on the SEH prologue
 //            (7/7) then diverges at the push ebx/esi/edi save order; VC6
 //            chose a different callee-save order for this body's register

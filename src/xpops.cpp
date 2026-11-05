@@ -832,7 +832,7 @@ int __cdecl X_pop_ask(const char *label, char *text,
                      callback, flags);
 }
 
-// ORIGINAL: 0x005BF930 ?X_pops@@YAHPADPBDHPADHPAUSprite@@HHP6AHXZ@Z 0x005BF930-0x005BFAA2
+// ORIGINAL: 0x005BF930 ?X_pops@@YAHPADPBDHPADHPAUSprite@@HHP6AHXZ@Z 0x005BF930-0x005BFAA2 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["original:terranx_original.exe:0x005BF930-0x005BFAA2", "source:src/xpops.cpp:typed owner", "source:src/xpops.cpp:XPopModCheck literals/accessors and related routed overloads", "source:src/xpops.h:X_pops family", "source:src/popup.h:shared pops core", "seed:retained original source identity 0x005BF930"], "reason": "The full X_pops router belongs in xpops.cpp with its existing typed faction, caption/file literals, expansion flag, and shared popup core; it replaces only the pending executable forwarder."}
 // symbol    ?X_pops@@YAHPADPBDH0HPAVSprite@@HHP6AHXZ@Z
 // TRIED: precomputing the magic-string deref into a named local before the strcmp calls (#2 mismatch, 'mov' vs 'push'); same codegen.

@@ -7,16 +7,16 @@
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
  */
-// ORIGINAL: 0x00616AA0 sub_616aa0 0x00616AA0-0x00616AB6 FILE
+// ORIGINAL: 0x00616AA0 sub_616aa0 0x00616AA0-0x00616AB6 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned complete decode establishes this exclusive span and paired startup/atexit cleanup. Original receivers 9B9108 and 9B96B0 share guard byte9B9104 with independent masks1 and2; cleanup sets its bit before direct complete Buffer destruction.", "Private lifetime storage contains one Buffer at offset zero. The lifetime wrapper is a chosen implementation, not a recovered original class name or evidence for a larger combined allocation. A then B startup implies B then A atexit cleanup; explicit Caviar close retains A then B ordering.", "Physical COFF startup and registered-cleanup references identify the corresponding source-owned Buffer storage. The adjacent symbol fact identifies this operation; the stored object has Buffer type, while CaviarSceneBufferLifetime is a chosen lifetime wrapper, not an original class-name claim. Explicit Buffer-qualified destruction avoids virtual deleting dispatch. Startup byte restoration and full linked/runtime fidelity remain obligations; this binding banks no claim."], "reason": "Bind the original Caviar scene Buffer init to its source-owned guarded C++ lifetime."}
 // symbol    _$E16
-// ORIGINAL: 0x00616AC0 sub_616ac0 0x00616AC0-0x00616ADF FILE
+// ORIGINAL: 0x00616AC0 sub_616ac0 0x00616AC0-0x00616ADF FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned complete decode establishes this exclusive span and paired startup/atexit cleanup. Original receivers 9B9108 and 9B96B0 share guard byte9B9104 with independent masks1 and2; cleanup sets its bit before direct complete Buffer destruction.", "Private lifetime storage contains one Buffer at offset zero. The lifetime wrapper is a chosen implementation, not a recovered original class name or evidence for a larger combined allocation. A then B startup implies B then A atexit cleanup; explicit Caviar close retains A then B ordering.", "Physical COFF startup and registered-cleanup references identify the corresponding source-owned Buffer storage. The adjacent symbol fact identifies this operation; the stored object has Buffer type, while CaviarSceneBufferLifetime is a chosen lifetime wrapper, not an original class-name claim. Explicit Buffer-qualified destruction avoids virtual deleting dispatch. Startup byte restoration and full linked/runtime fidelity remain obligations; this binding banks no claim."], "reason": "Bind the original Caviar scene Buffer fini to its source-owned guarded C++ lifetime."}
 // symbol    _$E14
-// ORIGINAL: 0x00616AE0 sub_616ae0 0x00616AE0-0x00616AF6 FILE
+// ORIGINAL: 0x00616AE0 sub_616ae0 0x00616AE0-0x00616AF6 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned complete decode establishes this exclusive span and paired startup/atexit cleanup. Original receivers 9B9108 and 9B96B0 share guard byte9B9104 with independent masks1 and2; cleanup sets its bit before direct complete Buffer destruction.", "Private lifetime storage contains one Buffer at offset zero. The lifetime wrapper is a chosen implementation, not a recovered original class name or evidence for a larger combined allocation. A then B startup implies B then A atexit cleanup; explicit Caviar close retains A then B ordering.", "Physical COFF startup and registered-cleanup references identify the corresponding source-owned Buffer storage. The adjacent symbol fact identifies this operation; the stored object has Buffer type, while CaviarSceneBufferLifetime is a chosen lifetime wrapper, not an original class-name claim. Explicit Buffer-qualified destruction avoids virtual deleting dispatch. Startup byte restoration and full linked/runtime fidelity remain obligations; this binding banks no claim."], "reason": "Bind the original Caviar scene Buffer init to its source-owned guarded C++ lifetime."}
 // symbol    _$E21
-// ORIGINAL: 0x00616B00 sub_616b00 0x00616B00-0x00616B1F FILE
+// ORIGINAL: 0x00616B00 sub_616b00 0x00616B00-0x00616B1F FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned complete decode establishes this exclusive span and paired startup/atexit cleanup. Original receivers 9B9108 and 9B96B0 share guard byte9B9104 with independent masks1 and2; cleanup sets its bit before direct complete Buffer destruction.", "Private lifetime storage contains one Buffer at offset zero. The lifetime wrapper is a chosen implementation, not a recovered original class name or evidence for a larger combined allocation. A then B startup implies B then A atexit cleanup; explicit Caviar close retains A then B ordering.", "Physical COFF startup and registered-cleanup references identify the corresponding source-owned Buffer storage. The adjacent symbol fact identifies this operation; the stored object has Buffer type, while CaviarSceneBufferLifetime is a chosen lifetime wrapper, not an original class-name claim. Explicit Buffer-qualified destruction avoids virtual deleting dispatch. Startup byte restoration and full linked/runtime fidelity remain obligations; this binding banks no claim."], "reason": "Bind the original Caviar scene Buffer fini to its source-owned guarded C++ lifetime."}
 // symbol    _$E19
 #include "stdafx.h"
@@ -2497,7 +2497,7 @@ Purpose: Append every part of one loaded .cvr definition to the renderer's
          one colour byte, one accumulated vector and one matrix, copied out of
          the part's three parallel arrays at `step % step_count`, and the
          instance's palette and step entry come off the record.
-// ORIGINAL: 0x00617920 ?add_object@Caviar@@QAEHPAUCaviarData@@PAUVOX_Vect@@H@Z 0x00617920-0x00617A9F
+// ORIGINAL: 0x00617920 ?add_object@Caviar@@QAEHPAUCaviarData@@PAUVOX_Vect@@H@Z 0x00617920-0x00617A9F BYTE_EXACT
 // symbol    ?add_object@Caviar@@QAEHPAUCaviarData@@PAUVOX_Vect@@H@Z
 // size      383 bytes
 // prototype int (__thiscall ?add_object@Caviar@@QAEHPAUCaviarData@@PAUVOX_Vect@@H@Z)(Caviar* this, CaviarData*, VOX_Vect*, int)
@@ -2540,7 +2540,7 @@ Purpose: Append one .cvr definition's parts to the instance table using a
          second definition as the geometry source. The count and the step entry
          come off the first record, the vectors and the rotation step off the
          second; nothing writes the instance's colour or matrix.
-// ORIGINAL: 0x006176E0 ?add_object@Caviar@@QAEHPAUCaviarData@@PAUCaviarData@@PAUVOX_Vect@@H@Z 0x006176E0-0x006177FE
+// ORIGINAL: 0x006176E0 ?add_object@Caviar@@QAEHPAUCaviarData@@PAUCaviarData@@PAUVOX_Vect@@H@Z 0x006176E0-0x006177FE BYTE_EXACT
 // symbol    ?add_object@Caviar@@QAEHPAUCaviarData@@0PAUVOX_Vect@@H@Z
 //           (VC6 back-references a repeated identical argument type to `0`;
 //           the catalogued name spells the second CaviarData out in full,
@@ -2583,7 +2583,7 @@ Purpose: Append one .cvr definition's parts to the instance table using a
          second definition as the geometry source and a raw object pointer as
          the instance's id. The count and the step entry come off the first
          record, the vectors and the rotation step off the second.
-// ORIGINAL: 0x00617800 ?add_object@Caviar@@QAEHPAUCaviarData@@PAEPAUCaviarData@@PAUVOX_Vect@@@Z 0x00617800-0x00617916
+// ORIGINAL: 0x00617800 ?add_object@Caviar@@QAEHPAUCaviarData@@PAEPAUCaviarData@@PAUVOX_Vect@@@Z 0x00617800-0x00617916 BYTE_EXACT
 // symbol    ?add_object@Caviar@@QAEHPAUCaviarData@@PAE0PAUVOX_Vect@@H@Z
 //           (the back-reference again, and the fifth argument the image's
 //           own `ret 0x14` admits - see the note above the body.)
@@ -2628,7 +2628,7 @@ int Caviar::add_object(CaviarData *definition, uint8_t *object,
 Purpose: Append one .cvr definition's parts to the instance table in full -
          colour, accumulated vector, matrix - with a raw object pointer as the
          instance's id.
-// ORIGINAL: 0x00617AA0 ?add_object@Caviar@@QAEHPAUCaviarData@@PAEPAUVOX_Vect@@H@Z 0x00617AA0-0x00617C2E
+// ORIGINAL: 0x00617AA0 ?add_object@Caviar@@QAEHPAUCaviarData@@PAEPAUVOX_Vect@@H@Z 0x00617AA0-0x00617C2E BYTE_EXACT
 // symbol    ?add_object@Caviar@@QAEHPAUCaviarData@@PAEPAUVOX_Vect@@H@Z
 // size      398 bytes
 // prototype int (__thiscall ?add_object@Caviar@@QAEHPAUCaviarData@@PAEPAUVOX_Vect@@H@Z)(Caviar* this, CaviarData*, uint8*, VOX_Vect*, int)
@@ -2685,7 +2685,7 @@ Purpose: Append one .cvr definition's parts to the instance table in full -
          colour, vector, matrix - using a second definition as the geometry
          source. The count, the palette and the step entry come off the first
          record, the part arrays and the rotation step off the second.
-// ORIGINAL: 0x00617C30 ?add_object@Caviar@@QAEHPAUCaviarData@@PAUCaviarData@@H@Z 0x00617C30-0x00617DAE
+// ORIGINAL: 0x00617C30 ?add_object@Caviar@@QAEHPAUCaviarData@@PAUCaviarData@@H@Z 0x00617C30-0x00617DAE BYTE_EXACT
 // symbol    ?add_object@Caviar@@QAEHPAUCaviarData@@0H@Z
 //           (VC6 back-references the repeated CaviarData to `0`; the
 //           catalogued name spells it out in full.)
@@ -2728,7 +2728,7 @@ Purpose: Append one .cvr definition's parts to the instance table in full -
          source and a raw object pointer as the instance's id. The count and
          the step entry come off the first record, the part arrays and the
          rotation step off the second.
-// ORIGINAL: 0x00617DB0 ?add_object@Caviar@@QAEHPAUCaviarData@@PAEPAUCaviarData@@H@Z 0x00617DB0-0x00617F1F
+// ORIGINAL: 0x00617DB0 ?add_object@Caviar@@QAEHPAUCaviarData@@PAEPAUCaviarData@@H@Z 0x00617DB0-0x00617F1F BYTE_EXACT
 // RECOVERY_BINDING: v1 {"reason":"Map the complete instance-append body including its null-argument epilogue, not only its success/full/missing-record exits; no new implementation or match claim.","evidence":["pinned:the null-argument branches enter0x00617F12; that epilogue returns0x10 and ends after ret16 at0x00617F1F; the following byte is alignment padding before mapped0x00617F20","source:Caviar::add_object already returns0x10 for either null definition"]}
 // symbol    ?add_object@Caviar@@QAEHPAUCaviarData@@PAE0H@Z
 //           (VC6 back-references the repeated CaviarData to `0`.)
@@ -2770,7 +2770,7 @@ int Caviar::add_object(CaviarData *definition, uint8_t *object,
 Purpose: Append one .cvr definition's parts to the instance table in full -
          colour, vector, matrix - the whole record the instance comes from
          being the caller's first argument.
-// ORIGINAL: 0x00617F20 ?add_object@Caviar@@QAEHPAUCaviarData@@H@Z 0x00617F20-0x00618079
+// ORIGINAL: 0x00617F20 ?add_object@Caviar@@QAEHPAUCaviarData@@H@Z 0x00617F20-0x00618079 BYTE_EXACT
 // symbol    ?add_object@Caviar@@QAEHPAUCaviarData@@H@Z
 // prototype int (__thiscall ?add_object@Caviar@@QAEHPAUCaviarData@@H@Z)(Caviar* this, CaviarData*, int)
 // callers   0   call targets   0
@@ -2809,7 +2809,7 @@ int Caviar::add_object(CaviarData *definition, int step) {
 Purpose: Append one .cvr definition's parts to the instance table in full -
          colour, vector, matrix - with a raw object pointer as the instance's
          palette source and the whole record taken from the definition.
-// ORIGINAL: 0x00618080 ?add_object@Caviar@@QAEHPAUCaviarData@@PAEH@Z 0x00618080-0x006181D0
+// ORIGINAL: 0x00618080 ?add_object@Caviar@@QAEHPAUCaviarData@@PAEH@Z 0x00618080-0x006181D0 BYTE_EXACT
 // symbol    ?add_object@Caviar@@QAEHPAUCaviarData@@PAEH@Z
 // size      336 bytes
 // prototype int (__thiscall ?add_object@Caviar@@QAEHPAUCaviarData@@PAEH@Z)(Caviar* this, CaviarData*, uint8*, int)

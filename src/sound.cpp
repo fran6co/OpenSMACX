@@ -1074,7 +1074,7 @@ Purpose: Load the sound from a filename. The name resolves through the
          loaded bit is cleared. Either way the resolved path is copied onto
          the game heap - new copy first, old one freed after - and remembered
          at 0x4C.
-// ORIGINAL: 0x004C6280 ?load@Sound@@QAEHPBD@Z 0x004C6280-0x004C6361 SEMANTIC
+// ORIGINAL: 0x004C6280 ?load@Sound@@QAEHPBD@Z 0x004C6280-0x004C6361 BYTE_EXACT
 // symbol    ?load@Sound@@UAEHPBD@Z
 // LEVER: the two vtable dispatches (slots 0x60 and 0x10) spelled with `vtable_method<Fn>(object, offset)` instead of `original_slot<Fn>(vtable + offset)` - single indirect call, matching the image's `call dword ptr [reg+N]` where the slot-read idiom cost an extra `mov`. Took this from 44/102 to 100/102.
 // TRIED: the one remaining byte is the slot-0x60 dispatch alone - image loads the vtable into EDX (`mov edx,[ecx]; call [edx+0x60]`), this tree into EAX. Naming the method pointer in its own local first made it much WORSE (47/102) rather than fixing the register; reverted. Not chased further.
@@ -1752,7 +1752,7 @@ int VideoSoundState::submit_audio_buffer(void *record) {
   return 0x13;
 }
 
-// ORIGINAL: 0x004C8910 sub_4c8910 0x004C8910-0x004C8923 FILE
+// ORIGINAL: 0x004C8910 sub_4c8910 0x004C8910-0x004C8923 FILE BYTE_EXACT
 // symbol    ?current_frame@VideoSoundState@@UAEHXZ
 // TRIED: the tail-called vtable slot37 matches exactly (mov/test/je/mov/jmp, 5/5 mnemonics), so the divergence is entirely the null branch: the original's `return -1` JUMPS OUT of this function into a shared tail block at 0x4C891F, four bytes past its own 15, and no C++ spelling reaches another function's interior. This body inlines `or eax,-1; ret` instead and is 4 bytes long. Not a lever - it names why the remainder cannot close from here.
 // Original4C8915's null branch selects4C891F..4C8923 directly. That

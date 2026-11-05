@@ -82,7 +82,7 @@
 // kind      game
 // symbol    ?on_remove@NetUnk72C@@UAEXPAVNetTextPayload@@@Z
 // Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x00630C30 sub_630c30 0x00630C30-0x00630C7C FILE
+// ORIGINAL: 0x00630C30 sub_630c30 0x00630C30-0x00630C7C FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00630c30.cpp: retained original spans and historical seed interpretation", "Pinned original receiver/table/call sequence reviewed in the Alpha ownership binding decision.", "Current C++ class/lifetime source owns the separately observed emitted symbol; this binding is unclaimed and preserves the independent historical exact seed."], "reason": "SDK session descriptor fields populate ledger borrowed fields and call401D80; synchronous borrow target."}
 // symbol    ?enumerate_session_callback@@YGHPBUDPSESSIONDESC2@@PAKKPAX@Z
 #include "stdafx.h"
@@ -2901,7 +2901,7 @@ Purpose: Set or clear a player's "host" flag through DirectPlay: read the
          its HRESULT becomes the method result; a failed get is
          returned unchanged and suppresses the set call.
 
-// ORIGINAL: 0x00632290 sub_632290 0x00632290-0x006322FC
+// ORIGINAL: 0x00632290 sub_632290 0x00632290-0x006322FC BYTE_EXACT
 // symbol    ?set_player_host_flag@Net@@QAEHH@Z
 // Historical emitted-symbol hint: @sub_632290@12
 // size      108 bytes
@@ -3604,7 +3604,7 @@ int ServiceList::on_insert(ServiceStruct *payload) {
 Purpose: Copy one text record's string into fresh storage chosen by the
          record's own allocator and park the copy in the caller's output
          block; the metadata half is left to the caller.
-// ORIGINAL: 0x005D4C50 sub_5d4c50 0x005D4C50-0x005D4CBC FILE
+// ORIGINAL: 0x005D4C50 sub_5d4c50 0x005D4C50-0x005D4CBC FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Original 5D4C50-5D4CBC and its retained seed/history preserve identity and extent.", "The nested list receiver uses Heap +18 and borrowed text +1C to copy text into payload +4 through mem_get or Heap::get. Genuine NetUnk72C and NetTextPayload declarations replace the old raw receiver facade.", "The unseen factory, original nominal payload identity and complete allocation extent remain unresolved; observed prefix and delete protocol do not identify them."], "reason": "Recover NetUnk72C::on_insert for its dedicated observed-prefix NetTextPayload role."}
 // Historical superseded binding interpretation: {"evidence": ["Original5D4C50..5D4CBC; retired seed git:b18d3ac8:src/unrecovered/005d4c50.cpp records the same identity and spans.", "Same +0x18/+0x1C receiver record as sub_5d47d0 above, with mem_get and Heap::get resolving exactly as there; the seed's function-pointer CRT spellings are ordinary strlen/strcat calls here."], "reason": "Coverage transcription of the record copy-out's string half with the receiver as an explicit first argument."}
 // symbol    ?on_insert@NetUnk72C@@UAEHPAVNetTextPayload@@@Z

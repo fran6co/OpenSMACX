@@ -1216,7 +1216,7 @@ Purpose: Dialog's five-int init: reset through close(), store the geometry
          lands at +0x18 (the pointer slot) instead of the size slot, and no
          Heap::init runs.
 
-// ORIGINAL: 0x00609730 ?init@Dialog@@QAEHHHHHPAUHeap@@@Z 0x00609730-0x006097EE FILE
+// ORIGINAL: 0x00609730 ?init@Dialog@@QAEHHHHHPAUHeap@@@Z 0x00609730-0x006097EE FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence":["src/dialog.h declares this original Dialog overload; dialog.cpp owns the sibling init/close methods.","The body uses existing Dialog members and preserves its independent geometry, style and list teardown sequence."],"reason":"Move the existing typed overload to Dialog's owner without folding it into a sibling or altering its writes and cleanup."}
 // symbol    ?init@Dialog@@QAEHHHHHPAVHeap@@@Z
 // TRIED: MISMATCH, closest at 187/190 bytes (mnemonic_similarity 0.97). Same embedded-manager close-and-relink shape as SetupWin::close (0x004AD9C0): a single mutated `char *p` (starts as `this`, then `p += 0xbc` to become the manager) reproduces the whole prologue, field stores AND the loop body byte-for-byte - matching original's single-register reuse (esi: this, then mgr) instead of a separate named `mgr` local, which cost an extra register/push. The two vtable-adjustment "deleting dtor" calls (vtbl[1] read as a byte displacement, this-adjusted, then that pointer's own vtbl[0] called with arg 1) still diverge by a few instructions each - same register-allocator nuance as 0x004AD9C0's second call site, not chased further.

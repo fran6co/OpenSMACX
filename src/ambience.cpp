@@ -15,7 +15,7 @@
  * You should have received a copy of the GNU General Public License
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
-// ORIGINAL: 0x004455C0 _$E21 0x004455C0-0x004455D6 FILE
+// ORIGINAL: 0x004455C0 _$E21 0x004455C0-0x004455D6 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned CRT slot0x6820a8 selects initializer0x4455c0..0x4455d6, registering exit0x4455e0..0x4455ea. Root independent complete decode confirms exclusive RET/JMP bounds; original/source-owned storage is0x74da40 bound to?g_AMBIENCE@@3VAmbience@@A.", "Original startup instruction evidence: [[\"0x4455c0\", \"mov\", \"ecx, 0x74da40\"], [\"0x4455c5\", \"call\", \"0x4c8460\"], [\"0x4455ca\", \"push\", \"0x4455e0\"], [\"0x4455cf\", \"call\", \"0x645398\"], [\"0x4455d4\", \"pop\", \"ecx\"], [\"0x4455d5\", \"ret\", \"\"]]. Original exit instruction evidence: [[\"0x4455e0\", \"mov\", \"ecx, 0x74da40\"], [\"0x4455e5\", \"jmp\", \"0x4483c0\"]]. Preserve constructor arguments, array counts/strides, registration and reverse destruction without authored callback stand-ins.", "Fresh complete build-iveupb5l physical src/ambience.cpp COFF selects _$E21 via .CRT$XCU, registering _$E19. Startup relocation targets: [\"?g_AMBIENCE@@3VAmbience@@A\", \"??0Ambience@@QAE@XZ\", \"_$E19\", \"_atexit\"]; exit targets: [\"?g_AMBIENCE@@3VAmbience@@A\", \"??1Ambience@@UAE@XZ\"]. Actual linked helper occurs once at CRT slot0x63f05c; selected same-owner order agrees with the pinned order.", "BaseWin/DesignWin definitions now precede their Wave globals as pinned. Existing DesignWin Wave mappings retain original names/spans and current helper overrides after fresh emission proof. Scalar constructor effects and array construction/cleanup belong to genuine source globals, classes and compiler-generated lifetime machinery.", "Current local labels are emission interpretations, not original debug names or recovered historical TU boundaries. Start bindings grant no allocation extent. Selected same-owner linked order is not full CRT/global-order, retained-selection, reference-target, dependency-provider, runtime or full-game acceptance. Guarded callbacks excluded; no claim grant or bug fix."], "reason": "Bind original startup operation to the genuine compiler-emitted lifetime of source-owned ?g_AMBIENCE@@3VAmbience@@A; preserve complete original identity and remaining restoration/structure obligations."}
 // symbol    _$E12
 // ORIGINAL: 0x004455E0 _$E19 0x004455E0-0x004455EA FILE BYTE_EXACT
@@ -849,7 +849,7 @@ Purpose: Run the shared Ambience constructor, publish this variant's vtable,
          0x6c and 0x6d are BYTES. 0x6e and 0x6f are not written, so whatever
          the storage held survives there.
 
-// ORIGINAL: 0x004471F0 ??0FactionAmbience@@QAE@XZ 0x004471F0-0x00447219
+// ORIGINAL: 0x004471F0 ??0FactionAmbience@@QAE@XZ 0x004471F0-0x00447219 BYTE_EXACT
 // symbol    ??0FactionAmbience@@QAE@XZ
 // DEMOTED from BYTE_EXACT by direction (strip-all hand vptr writes): the
 // derived-stage vptr overlay store left with the de-management sweep.
@@ -884,7 +884,7 @@ FactionAmbience::FactionAmbience() {
 
 /*
 Purpose: As 004471F0, with the MAmbience vtable and one more field.
-// ORIGINAL: 0x00447310 ??0MAmbience@@QAE@XZ 0x00447310-0x0044733C
+// ORIGINAL: 0x00447310 ??0MAmbience@@QAE@XZ 0x00447310-0x0044733C BYTE_EXACT
 // symbol    ??0MAmbience@@QAE@XZ
 // DEMOTED from BYTE_EXACT by direction (strip-all hand vptr writes): the
 // derived-stage vptr overlay store left with the de-management sweep.
@@ -912,7 +912,7 @@ MAmbience::MAmbience() {
 
 /*
 Purpose: As 004471F0, with the SAmbience vtable and two more fields.
-// ORIGINAL: 0x00447850 ??0SAmbience@@QAE@XZ 0x00447850-0x0044787F
+// ORIGINAL: 0x00447850 ??0SAmbience@@QAE@XZ 0x00447850-0x0044787F BYTE_EXACT
 // symbol    ??0SAmbience@@QAE@XZ
 // DEMOTED from BYTE_EXACT by direction (strip-all hand vptr writes): the
 // derived-stage vptr overlay store left with the de-management sweep.
@@ -941,7 +941,7 @@ SAmbience::SAmbience() {
 
 /*
 Purpose: As 004471F0, with the GAmbience vtable and one more field.
-// ORIGINAL: 0x00447B90 ??0GAmbience@@QAE@XZ 0x00447B90-0x00447BBC
+// ORIGINAL: 0x00447B90 ??0GAmbience@@QAE@XZ 0x00447B90-0x00447BBC BYTE_EXACT
 // symbol    ??0GAmbience@@QAE@XZ
 // DEMOTED from BYTE_EXACT by direction (strip-all hand vptr writes): the
 // derived-stage vptr overlay store left with the de-management sweep.
@@ -1091,7 +1091,7 @@ void MAmbience::general() {
     }
 }
 
-// ORIGINAL: 0x00447570 ?general@UAmbience@@QAEXXZ 0x00447570-0x00447684 FILE
+// ORIGINAL: 0x00447570 ?general@UAmbience@@QAEXXZ 0x00447570-0x00447684 FILE BYTE_EXACT
 // symbol    ?general@UAmbience@@UAEXXZ
 // size      276 bytes
 // prototype void (__thiscall ?general@UAmbience@@QAEXXZ)(UAmbience* this)

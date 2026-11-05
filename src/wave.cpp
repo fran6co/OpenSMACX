@@ -1115,7 +1115,7 @@ Purpose: Reload the wave from its remembered filename. The device is created
          loaded bit of the 0x40 flag dword is set BEFORE the wave's own
          vtable slot 0x7C runs, and a nonzero dword at 0x30 additionally
          starts the device looping through its slot 0x48 with argument 1.
-// ORIGINAL: 0x004C6DF0 ?reload@Wave@@QAEHXZ 0x004C6DF0-0x004C6E95 SEMANTIC
+// ORIGINAL: 0x004C6DF0 ?reload@Wave@@QAEHXZ 0x004C6DF0-0x004C6E95 BYTE_EXACT
 // symbol    ?reload@Wave@@UAEHXZ
 // size      165 bytes
 // prototype int (__thiscall ?reload@Wave@@QAEHXZ)(Wave* this)

@@ -2340,7 +2340,7 @@ void BasePop::close() {
     heap_.reset();
 }
 
-// ORIGINAL: 0x00601980 ?string@BasePop@@QAEHPAD@Z 0x00601980-0x006019EE FILE
+// ORIGINAL: 0x00601980 ?string@BasePop@@QAEHPAD@Z 0x00601980-0x006019EE FILE BYTE_EXACT
 // working copy - scaffold materialised by --work
 // size      110 bytes
 // prototype int (__thiscall ?string@BasePop@@QAEHPAD@Z)(BasePop* this, int8*)

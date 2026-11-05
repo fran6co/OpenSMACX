@@ -488,7 +488,7 @@ int32_t PrefWinGeometryValue_8578CC = static_cast<int32_t>(static_cast<uint32_t>
 /*
 Purpose: sub_48d810 - arithmetic over 2 fixed global(s), one
          statement per original instruction.
-// ORIGINAL: 0x0048D810 sub_48d810 0x0048D810-0x0048D81E FILE
+// ORIGINAL: 0x0048D810 sub_48d810 0x0048D810-0x0048D81E FILE BYTE_EXACT
 // symbol    _$E74
 // TRIED: the last of four instructions. The image has `add eax, -2` (83 C0 FE); VC6 emits `sub eax, 2` (83 E8 02) and will not be talked out of it. Six spellings measured with `tools/try_spellings.py` - `eax + -2`, `eax += -2`, unsigned `+ 0xFFFFFFFEu`, an int cast around the unsigned add, and both one-liner forms - all score 3 of 4, identically. All ten flag sets score 3 of 4 or worse. The two are semantically the same instruction; the encoding is not reachable from C++ with this compiler.
 // TRIED: the one divergence is an ENCODING choice VC6 will not make - the image has `add eax, -2` (83 C0 FE), this tree emits `sub eax, 2` (83 E8 02), same semantics and same length. `eax = eax + -2` is already the source form and VC6 canonicalises it to a subtract; so does the unsigned spelling `eax + 0xFFFFFFFEu`, measured. A literal negative addend cannot reach that encoding, so whatever the original wrote, the -2 did not arrive as a constant here.

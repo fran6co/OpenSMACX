@@ -59,7 +59,7 @@ void __cdecl amovie_project(int project_id) {
 }
 
 
-// ORIGINAL: 0x004041C0 ?on_modal@AlphaMovie@@QAE_NXZ 0x004041C0-0x004041D2
+// ORIGINAL: 0x004041C0 ?on_modal@AlphaMovie@@QAE_NXZ 0x004041C0-0x004041D2 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["pinned:0x004041C0-0x004041D2 calls 0x00600320 through this+0xA14, then normalizes with neg/sbb/neg", "source:src/alphamovie.h AlphaMovie has MCIVideo mciVideo_ at +0xA14", "source:src/leaf_recoveries.cpp historical metadata: 18-byte body; prototype bool (__thiscall ?on_modal@AlphaMovie@@QAE_NXZ)(AlphaMovie* this); caller count 0; one direct call target 0x00600320; flags hidden;sp_ready;purged_ok; return value 1 when playing, 0 otherwise", "pinned behavior note: the original neg/sbb/neg normalizes any nonzero callee result to one; the callee currently masks bit 0, but the normalization remains explicit"], "reason": "Move the original AlphaMovie::on_modal body from the transitional leaf into the real AlphaMovie owner; use its typed embedded MCIVideo and preserve the native nonzero-to-bool normalization."}
 // symbol    ?on_modal@AlphaMovie@@UAEHXZ
 // kind      game
@@ -180,7 +180,7 @@ int AlphaMovie::exec(char *movie_name) {
 Purpose: Close the MCI stream and window. The MCIVideo member and GraphicWin
          base are then destroyed naturally by C++ in member/base order.
 */
-// ORIGINAL: 0x00404310 ??1AlphaMovie@@QAE@XZ 0x00404310-0x00404395;0x00650710-0x0065073B
+// ORIGINAL: 0x00404310 ??1AlphaMovie@@QAE@XZ 0x00404310-0x00404395;0x00650710-0x0065073B BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/00404310.cpp", "source:src/alphamovie.cpp:amovie_project"], "reason": "Model AlphaMovie teardown as a C++ destructor with explicit close and compiler-managed MCIVideo/member and GraphicWin/base destruction"}
 // symbol    ??1AlphaMovie@@UAE@XZ
 AlphaMovie::~AlphaMovie() {

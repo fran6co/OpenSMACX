@@ -18,14 +18,14 @@
 // ORIGINAL: 0x006127E0 sub_6127e0 0x006127E0-0x006127F1 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:01a84efe8fe7feece991db1a99114c60b7342c4f:src/recovered/006127e0.cpp; historical seed/source provenance (seed path is retired from the current working tree)", "pinned image vtable 0x006708CC entry zero selects original 0x006127E0; all original spans retained", "physical COFF:editgroup.cpp.obj defines observed emitted symbol ??_EEditGroup@@$4PPPPPLLI@EEE@AEPAXI@Z, and its table COMDAT selects that exact symbol", "physical COFF weak external tail alias resolves to ??_GEditGroup@@UAEPAXI@Z; linked map confirms the owner row", "strict native binary comparator readback covers the independent primary span; SpriteBox shared tail remains a separate full-span obligation", "current-owner:src/editgroup.cpp:0x006127E0; the live ORIGINAL marker retains name sub_6127e0, complete spans 0x006127E0-0x006127F1, historical byte claim retained=True, historical semantic claim retained=False, and the complete parsed LEVER/TRIED/UNRECOVERABLE/DEFERRED lesson set (0/0/0/0); current binding is source navigation/provenance only, not a new claim or match result"], "reason": "17-byte Buffer/secondary-GraphicWin view; weak external deleting entry resolves to the class deleting destructor."}
 // symbol    ??_EEditGroup@@$4PPPPPLLI@EEE@AEPAXI@Z
-// ORIGINAL: 0x00612700 sub_612700 0x00612700-0x00612708 FILE
+// ORIGINAL: 0x00612700 sub_612700 0x00612700-0x00612708 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["task:generated-control-lifetime-owner", "historical seed:src/deleting_thunks.cpp", "pinned:terranx_original.exe:original vtables and complete deletion/control flow; virtual-base Dialog then GraphicWin destruction and conditional allocation release", "source:src/editgroup.cpp:genuine destructor and actual compiler-generated COFF entry; no handwritten thunk or executable-address forwarding"], "reason": "Genuine virtual-base hierarchy and complete destruction own this compiler-generated entry; preserve the full original shared deleting-body spans and seed findings. Approximate source coverage only, not verified byte or reference identity."}
 // symbol    ??_EEditGroup@@$4PPPPPPPM@A@AEPAXI@Z
 
 // ORIGINAL: 0x00612800 sub_612800 0x00612800-0x0061280E FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:01a84efe8fe7feece991db1a99114c60b7342c4f:src/recovered/00612800.cpp; historical seed/source provenance (seed path is retired from the current working tree)", "pinned image vtable 0x006708C0 entry zero selects original 0x00612800; all original spans retained", "physical COFF:editgroup.cpp.obj defines observed emitted symbol ??_EEditGroup@@$4PPPPPPPM@KBI@AEPAXI@Z, and its table COMDAT selects that exact symbol", "physical COFF weak external tail alias resolves to ??_GEditGroup@@UAEPAXI@Z; linked map confirms the owner row", "strict native binary comparator readback covers the independent primary span; SpriteBox shared tail remains a separate full-span obligation", "current-owner:src/editgroup.cpp:0x00612800; the live ORIGINAL marker retains name sub_612800, complete spans 0x00612800-0x0061280E, historical byte claim retained=True, historical semantic claim retained=False, and the complete parsed LEVER/TRIED/UNRECOVERABLE/DEFERRED lesson set (0/0/0/0); current binding is source navigation/provenance only, not a new claim or match result"], "reason": "14-byte Dialog virtual-base view; weak external deleting entry resolves to the class deleting destructor."}
 // symbol    ??_EEditGroup@@$4PPPPPPPM@KBI@AEPAXI@Z
-// ORIGINAL: 0x00612710 sub_612710 0x00612710-0x006127AA FILE
+// ORIGINAL: 0x00612710 sub_612710 0x00612710-0x006127AA FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["task:generated-control-lifetime-owner", "historical seed:src/unrecovered/00612710.cpp", "pinned:terranx_original.exe:original vtables and complete deletion/control flow; virtual-base Dialog then GraphicWin destruction and conditional allocation release", "source:src/editgroup.cpp:genuine destructor and actual compiler-generated COFF entry; no handwritten thunk or executable-address forwarding"], "reason": "Genuine virtual-base hierarchy and complete destruction own this compiler-generated entry; preserve the full original shared deleting-body spans and seed findings. Approximate source coverage only, not verified byte or reference identity."}
 // symbol    ??_GEditGroup@@UAEPAXI@Z
 
@@ -90,7 +90,7 @@ Purpose: Close the EditGroup stage. Genuine C++ destruction owns the stage
          transitions, followed by Dialog and GraphicWin virtual-base teardown
          for a complete object. Historical helper experiments below predate
          the recovered lifetime; they do not require raw receiver adjustment.
-// ORIGINAL: 0x00611A20 ??1EditGroup@@QAE@XZ 0x00611A20-0x00611A88
+// ORIGINAL: 0x00611A20 ??1EditGroup@@QAE@XZ 0x00611A20-0x00611A88 BYTE_EXACT
 // TRIED: TWO changes, measured separately. (1) A real `~EditGroup()` has to destroy `virtual_base_` and `dialog_`, which under /GX is an SEH frame plus a thirty-instruction member-teardown tail - 67 compiled instructions against the image's 23, agreeing 0. The image reinstalls the base vtables and calls `close()` and destroys nothing, so this is a METHOD; spelling it `destruct()` drops the frame and the tail and lands exactly 23. (2) With that done the only remaining difference was register allocation, and a NAMED `base` local was causing it: `char *const base = self - 0x8C;` gets EAX and costs a `mov ecx, eax` before the call, 3 of 23. Writing `self - 0x8C` at each use lets VC6 common it into ECX - where the thiscall receiver has to be anyway - and spill `this` to EAX, which is the image's opening `mov eax, ecx`. 23 of 23, BYTE_EXACT.
 // TRIED: naming the local and calling through `self - 0x8C` anyway (3/23), a typed `EditGroup *const base_object` (3/23), an explicitly qualified `->EditGroup::close()` (3/23), and deriving `self` from `base` rather than the other way round, which loses four instructions outright (0 of 23, 19 compiled).
 // TRIED: `record` DROPPED the line above the first time it was written. Re-recording a body whose tier changes rewrites its annotation and keeps only the LEVER. Re-added after the claim was banked.
@@ -400,7 +400,7 @@ Purpose: Replace the standing default text of one field: a null label clears
          the stored copy in place, otherwise the stored copy is reallocated
          to the new text. The entry list is not touched.
 
-// ORIGINAL: 0x006120D0 ?set_default@EditGroup@@QAEHPADH@Z 0x006120D0-0x00612144 FILE
+// ORIGINAL: 0x006120D0 ?set_default@EditGroup@@QAEHPADH@Z 0x006120D0-0x00612144 FILE BYTE_EXACT
 // size      116 bytes
 // prototype int (__thiscall ?set_default@EditGroup@@QAEHPADH@Z)(EditGroup* this, int8*, int)
 // callers   1   call targets   1
@@ -667,7 +667,7 @@ void EditGroup::on_redraw() {
 }
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x006126C0 ?pass_dialog_focus@EditGroup@@QAEXXZ 0x006126C0-0x006126F8 FILE
+// ORIGINAL: 0x006126C0 ?pass_dialog_focus@EditGroup@@QAEXXZ 0x006126C0-0x006126F8 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/006126c0.cpp retained original identity, full spans and prior recovery evidence", "recovery/tasks/dialog-control-coverage-wave.json authorized coupled control ownership", "original:0x6126c0 complete control/data-access review and src/editgroup.h genuine declaration; cross-owner discoveries preserved in task history"], "reason": "Complete Dialog-control behavior belongs to this genuine control owner, with real inherited members, embedded controls, Win receivers and callback dispatch rather than fixed executable calls. Compatible seed identity and historical evidence remain retained; catalogue decorations and emitted ABI are separate facts."}
 // symbol    ?pass_dialog_focus@EditGroup@@UAEXXZ
 void EditGroup::pass_dialog_focus() {

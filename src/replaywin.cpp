@@ -223,7 +223,7 @@ void ReplayWin::remove_base_site(int x, int y, int) {
 }
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x005AD9E0 ?timer_callback@ReplayWin@@QAEXXZ 0x005AD9E0-0x005ADBCC
+// ORIGINAL: 0x005AD9E0 ?timer_callback@ReplayWin@@QAEXXZ 0x005AD9E0-0x005ADBCC BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:7f24e1c4:src/recovered/units/005ad9e0.cpp", "image:0x005AD9E0-0x005ADBCC", "src/replaywin.h replay_turn_, event_offset_, year_label_ and base_sites_", "src/win.h release_modal slot58 and redraw slot62"], "reason": "Consume typed replay events and update the ReplayWin-owned site table; replace the original-image forwarder without raw self-offsets or vtable shims. The retained seed remains a restoration input, not a product body."}
 #pragma function(memcpy)
 void ReplayWin::timer_callback() {
@@ -273,7 +273,7 @@ void ReplayWin::timer_callback() {
 }
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x005ADE80 ?replay_base@@YAXHHHH@Z 0x005ADE80-0x005ADF03
+// ORIGINAL: 0x005ADE80 ?replay_base@@YAXHHHH@Z 0x005ADE80-0x005ADF03 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned original 0x005ADE80-0x005ADF03 logs Replay Base and Replay Base Info, packs four arguments and TurnCurrentNum into eight bytes at 0x00950324 plus the byte counter at 0x009469F8, then adds eight", "git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/005b3920.cpp clears 0x800 dwords of that buffer; ReplayWin timer_callback reads the same eight-byte records"], "reason": "Own replay-event storage and byte-length accounting in the replay subsystem, replacing fixed-address writes with a typed event record."}
 void __cdecl replay_base(int type, int x, int y, int faction_id) {
 // RECOVERY_LITERAL: v1 0x00691444 0x00691450 ??_C@_0M@EHHJ@Replay?5Base?$AA@ 0x005ADE80

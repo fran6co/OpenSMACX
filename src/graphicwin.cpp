@@ -15,7 +15,7 @@
  * You should have received a copy of the GNU General Public License
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
-// ORIGINAL: 0x005D7140 ??_GGraphicWin@@UAEPAXI@Z 0x005D7140-0x005D715E FILE
+// ORIGINAL: 0x005D7140 ??_GGraphicWin@@UAEPAXI@Z 0x005D7140-0x005D715E FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["historical deleting-thunk source src/deleting_thunks.cpp; original full spans retained: 0x005D7140-0x005D715E", "Pinned class constructor ??0GraphicWin@@QAE@XZ at 0x005D4CF0 stores original class/view table VA 0x66fc50 at 0x005D4D2B (mov dword ptr [esi], 0x66fc50); the current genuine owner vftable ??_7GraphicWin@@6BWin@@@ selects generated ??_GGraphicWin@@UAEPAXI@Z in slot 0 (+0x0) through weak entry ??_EGraphicWin@@UAEPAXI@Z (mode 2).", "Pinned ??_GGraphicWin@@UAEPAXI@Z at 0x005D7140 calls the source-mapped ??1GraphicWin@@QAE@XZ at 0x005D4DD0, then tests byte ptr [esp + 8], 1; je 0x5d7158 bypasses scalar delete when bit 0 is clear, while bit 0 set calls 0x0064557F; it save original this; call destructor; delete only when flags bit 0 is set; return saved this with ret 4.", "The real class lifetime is owned by src/graphicwin.cpp; its compiler-emitted deleting symbol and vftable slot carry this original identity. Hand-written adapter bodies with live adjustor callers remain until those callers are independently qualified and transferred. The linked weak/COMDAT copy is not used to choose source ownership.", "the source writer preserves the historical mapping's exactness state (no byte-exact claim existed); current compiler extent is not asserted equal to the original span"], "reason": "Bind the original GraphicWin scalar deleting-destructor identity to the actual compiler-emitted class deleting destructor in its genuine owner translation unit. The original constructor's pinned vptr store and the current owner's physical table slot identify this class/view; no callback/thunk body is hand-authored here."}
 // symbol    ??_GGraphicWin@@UAEPAXI@Z
 // kind      game
@@ -135,7 +135,7 @@ GraphicWin::GraphicWin() {
 Purpose: Close a GraphicWin by closing its Win base and Buffer subobject,
          resetting its window-specific state, and deleting the trailing
          owned interface when present.
-// ORIGINAL: 0x005D4E40 ?close@GraphicWin@@QAEXXZ 0x005D4E40-0x005D4EE6 SEMANTIC
+// ORIGINAL: 0x005D4E40 ?close@GraphicWin@@QAEXXZ 0x005D4E40-0x005D4EE6 BYTE_EXACT
 // TRIED: image calls both 0x5EB640 (Win::close) and 0x5D7470 (Buffer::close) directly with no null check - the null-checked `if (WinOriginalClose) (ORIGINAL(this)->*WinOriginalClose)();` form at the call site compiled an extra load/compare/branch/ indirect-call the image never has (0/37 agreeing, diverging at instruction 0). Moving the null check into `win_close_original` (a real function, so the call site is a direct E8) and calling the already-recovered `buffer_.close()` in place of the second seam fixed both calls at once.
 // symbol    ?close@GraphicWin@@QAEXXZ
 // size      166 bytes
@@ -246,7 +246,7 @@ int GraphicWin::fill(int x1, int y1, int x2, int y2, int color) {
 Purpose: Paint the window's surface in one colour. A window that is marked
          transparent and whose parent agrees copies the parent's pixels in
          instead, then remaps them through the process colour table.
-// ORIGINAL: 0x005D5250 ?fill@GraphicWin@@QAEXH@Z 0x005D5250-0x005D5346
+// ORIGINAL: 0x005D5250 ?fill@GraphicWin@@QAEXH@Z 0x005D5250-0x005D5346 BYTE_EXACT
 // LEVER: `vtable_slot<parent_query_fn>(parent, 0xF4)(parent)` in place of
 //        the pointer-to-member `original_method<...>(vtable[0xF4/4])`
 //        spelling for the slot-0xF4 query - the image's own call is ONE
@@ -710,7 +710,7 @@ void GraphicWin::soft_update() {
 
 // Clip a borrowed client rectangle, then invalidate its screen projection.
 // A null argument takes the full-buffer path, including its visibility check.
-// ORIGINAL: 0x005D5930 ?soft_update@GraphicWin@@QAEXPAUtagRECT@@@Z 0x005D5930-0x005D5A6E
+// ORIGINAL: 0x005D5930 ?soft_update@GraphicWin@@QAEXPAUtagRECT@@@Z 0x005D5930-0x005D5A6E BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Original 0x005D5937 checks visibility and null path repeats it at 0x005D5954. 0x005D59D5 copies caller coordinates; 0x005D5A01 intersects the local copy with Buffer bounds, 0x005D5A1F converts the zero origin, and 0x005D5A60 invalidates HandleMain without erasing. Complete span retained from src/recovered/units/005d5930.cpp.", "git:293937ab6f3be75999e0c0a4c9c110c02930624c:src/recovered/units/005d5930.cpp", "Historical seed spelling ?soft_update@GraphicWin@@QAEXPAURECT@@@Z; current source mapping ?soft_update@GraphicWin@@QAEXPAUtagRECT@@@Z; emitted symbol ?soft_update@GraphicWin@@QAEXPAUtagRECT@@@Z."], "reason": "Invalidate a clipped, translated copy of a borrowed client rectangle; null takes the full Buffer path with the original repeated visibility check. Superseded seed retired after owner review; original spans, existing claims and useful seed findings remain in source. This cleanup grants no new match or acceptance claim."}
 void GraphicWin::soft_update(RECT *area) {
     if (!Win::is_visible()) return;
@@ -732,7 +732,7 @@ void GraphicWin::soft_update(RECT *area) {
 }
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x005D5720 ?soft_update@GraphicWin@@QAEXHHHH@Z 0x005D5720-0x005D588C
+// ORIGINAL: 0x005D5720 ?soft_update@GraphicWin@@QAEXHHHH@Z 0x005D5720-0x005D588C BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence":["source:src/recovered/units/005d5720.cpp","source:src/graphicwin.cpp:GraphicWin::soft_update","Pinned5D5739/5D573E form coordinate extents before visibility;5D57FA selects GraphicWin+474 (Buffer::rect2_) for IntersectRect5D581B, then5D583B converts the zero origin and5D587C invalidates HandleMain with eraseFALSE. The duplicated null/full-buffer branch matches the existing rectangle overload's source behavior; delegation is a source reconstruction, not a byte claim."],"reason":"Own the coordinate invalidation path through the existing typed rectangle overload: clip against Buffer working bounds, not the unrelated Win client rectangle, translate to screen, and invalidate without erasing."}
 void GraphicWin::soft_update(int x, int y, int width, int height) {
     RECT local = {x, y, x + width, y + height};

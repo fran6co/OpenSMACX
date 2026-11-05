@@ -82,7 +82,7 @@ Video::Video()
 #pragma intrinsic(memset)
 #endif
 
-// ORIGINAL: 0x00636530 ??1Video@@QAE@XZ 0x00636530-0x006365A6;0x006638C9-0x00663902 FILE
+// ORIGINAL: 0x00636530 ??1Video@@QAE@XZ 0x00636530-0x006365A6;0x006638C9-0x00663902 FILE BYTE_EXACT
 // symbol    ??1Video@@QAE@XZ
 // TRIED: MISMATCH #1 push/mov - no SEH __try/__finally frame emitted; Video/Buffer/Palette have no dtor chain in the scaffold so the compiler treats it as trivial-unwind and skips the frame
 Video::~Video() {
@@ -702,7 +702,7 @@ int Video::play_at(int x, int y) {
 // symbol    ?rewind@Video@@QAEHXZ
 int Video::rewind() { return seek(0); }
 
-// ORIGINAL: 0x006371D0 Video_unk10 0x006371D0-0x006372F7
+// ORIGINAL: 0x006371D0 Video_unk10 0x006371D0-0x006372F7 BYTE_EXACT
 // symbol    ?seek@Video@@QAEHH@Z
 // TRIED: reads at 0x4b0/0x4ac/0x100c/0x4c0/0x1000/0x1004 with the receiver cached to esi and no matching stack slot mean __thiscall on a Video object, but Video_unk14 (0x638090) and sub_63e540 (0x63e540) are BOTH called with the SAME receiver in ecx too - a second thiscall convention the scaffold's own nullary/stdcall fallback declarations for those two callees cannot express without conflicting with the declaration already in this translation unit. Landed the calls to those two exactly as the scaffold declared them (stdcall, no receiver), which compiles and keeps the call target addresses right but drops the ecx setup at those two call sites - a real, local divergence rather than a byte-exact ABI. The decode_frame/read_frame calls reuse Video's own catalogued declarations directly. mmioSeek/mmioDescend are read through their import-table globals with locally-declared signatures, since the scaffold does not carry MMIO types.
 int Video::seek(int requested_frame) {

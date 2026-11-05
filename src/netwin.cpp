@@ -19,7 +19,7 @@
 // RECOVERY_BINDING: v1 {"evidence": ["historical deleting-thunk source src/deleting_thunks.cpp; original full spans retained: 0x004837C0-0x004837E1", "Pinned class constructor ??0NetWin@@QAE@XZ at 0x00481C50 stores original class/view table VA 0x66ccec at 0x00481CD6 (mov dword ptr [esi], 0x66ccec); the current genuine owner vftable ??_7NetWin@@6BWin@@@ selects generated ??_GNetWin@@UAEPAXI@Z in slot 0 (+0x0) through weak entry ??_ENetWin@@UAEPAXI@Z (mode 2).", "Pinned ??_GNetWin@@UAEPAXI@Z at 0x004837C0 calls the source-mapped ??1NetWin@@QAE@XZ at 0x004834E0, then tests byte ptr [ebp + 8], 1; je 0x4837da bypasses scalar delete when bit 0 is clear, while bit 0 set calls 0x0064557F; it save original this; call destructor; delete only when flags bit 0 is set; return saved this with ret 4.", "The real class lifetime is owned by src/netwin.cpp; its compiler-emitted deleting symbol and vftable slot carry this original identity. Hand-written adapter bodies with live adjustor callers remain until those callers are independently qualified and transferred. The linked weak/COMDAT copy is not used to choose source ownership.", "the source writer preserves the historical mapping's exactness state (historical exactness obligation retained); current compiler extent is not asserted equal to the original span"], "reason": "Bind the original NetWin scalar deleting-destructor identity to the actual compiler-emitted class deleting destructor in its genuine owner translation unit. The original constructor's pinned vptr store and the current owner's physical table slot identify this class/view; no callback/thunk body is hand-authored here."}
 // symbol    ??_GNetWin@@UAEPAXI@Z
 // kind      game
-// ORIGINAL: 0x0047AFF0 _$E21 0x0047AFF0-0x0047B006 FILE
+// ORIGINAL: 0x0047AFF0 _$E21 0x0047AFF0-0x0047B006 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned CRT slot0x682560 selects initializer0x47aff0..0x47b006, registering exit0x47b010..0x47b01a. Root independent complete decode confirms exclusive RET/JMP bounds; original/source-owned storage is0x80a6f8 bound to?NetWinDialog@@3VNetWin@@A.", "Original startup instruction evidence: [[\"0x47aff0\", \"mov\", \"ecx, 0x80a6f8\"], [\"0x47aff5\", \"call\", \"0x481c50\"], [\"0x47affa\", \"push\", \"0x47b010\"], [\"0x47afff\", \"call\", \"0x645398\"], [\"0x47b004\", \"pop\", \"ecx\"], [\"0x47b005\", \"ret\", \"\"]]. Original exit instruction evidence: [[\"0x47b010\", \"mov\", \"ecx, 0x80a6f8\"], [\"0x47b015\", \"jmp\", \"0x4834e0\"]]. Preserve constructor arguments, array counts/strides, registration and reverse destruction without authored callback stand-ins.", "Fresh complete build-iveupb5l physical src/netwin.cpp COFF selects _$E21 via .CRT$XCU, registering _$E19. Startup relocation targets: [\"?NetWinDialog@@3VNetWin@@A\", \"??0NetWin@@QAE@XZ\", \"_$E19\", \"_atexit\"]; exit targets: [\"?NetWinDialog@@3VNetWin@@A\", \"??1NetWin@@UAE@XZ\"]. Actual linked helper occurs once at CRT slot0x63f2cc; selected same-owner order agrees with the pinned order.", "BaseWin/DesignWin definitions now precede their Wave globals as pinned. Existing DesignWin Wave mappings retain original names/spans and current helper overrides after fresh emission proof. Scalar constructor effects and array construction/cleanup belong to genuine source globals, classes and compiler-generated lifetime machinery.", "Current local labels are emission interpretations, not original debug names or recovered historical TU boundaries. Start bindings grant no allocation extent. Selected same-owner linked order is not full CRT/global-order, retained-selection, reference-target, dependency-provider, runtime or full-game acceptance. Guarded callbacks excluded; no claim grant or bug fix."], "reason": "Bind original startup operation to the genuine compiler-emitted lifetime of source-owned ?NetWinDialog@@3VNetWin@@A; preserve complete original identity and remaining restoration/structure obligations."}
 // symbol    _$E16
 // ORIGINAL: 0x0047B010 _$E19 0x0047B010-0x0047B01A FILE BYTE_EXACT
@@ -898,7 +898,7 @@ Purpose: Repaint the setup dialog: the guard test, the panel sprites (the
          session title upper-cased out of the string table, and the five
          content groups - draw_custom_rules, draw_player_names, draw_diffs,
          draw_factions, draw_session_info - then soft_update.
-// ORIGINAL: 0x00481AD0 ?on_redraw@NetWin@@QAEXXZ 0x00481AD0-0x00481C50 FILE
+// ORIGINAL: 0x00481AD0 ?on_redraw@NetWin@@QAEXXZ 0x00481AD0-0x00481C50 FILE BYTE_EXACT
 // symbol    ?on_redraw@NetWin@@UAEXXZ
 // size      384 bytes
 // prototype void (__thiscall ?on_redraw@NetWin@@QAEXXZ)(NetWin* this)
@@ -3267,7 +3267,7 @@ NetWinConstructedLobbyRow::NetWinConstructedLobbyRow() {
 // ---------------------------------------------------------------------------
 
 /*
-// ORIGINAL: 0x00481C50 ??0NetWin@@QAE@XZ 0x00481C50-0x00481D08;0x00657491-0x006574E9
+// ORIGINAL: 0x00481C50 ??0NetWin@@QAE@XZ 0x00481C50-0x00481D08;0x00657491-0x006574E9 BYTE_EXACT
 // size      272 bytes
 // prototype void (__thiscall ??0NetWin@@QAE@XZ)(NetWin* this)
 // callers   1   call targets   6

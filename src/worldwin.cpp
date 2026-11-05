@@ -40,7 +40,7 @@ void __cdecl help_any();
 
 RECT WorldMapBounds;
 
-// ORIGINAL: 0x004C38B0 _$E21 0x004C38B0-0x004C38C6 FILE
+// ORIGINAL: 0x004C38B0 _$E21 0x004C38B0-0x004C38C6 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned CRT slot0x682604 selects original initializer0x4c38b0..0x4c38c6, registering fini0x4c38d0..0x4c38da; complete independent decode establishes exclusive boundaries.", "Source-owned object?WorldClimateWorldWin@@3VWorldWin@@A identifies original storage0x8e9f60. Startup arguments/calls: call 0x4c4bf0; push 0x4c38d0. Cleanup receiver/calls: mov ecx, 0x8e9f60; jmp 0x4c4a70. Constructor/destructor targets retain their existing class-owned source mappings.", "Historical pre-move evidence: the prior map owner emitted local initializer _$E21 and cleanup _$E19 for this same real object. These former emission names are not current symbol hints or proof of historical TU identity.", "Current local helper symbols interpret present emission, not original debug names or historical TU boundaries. Object starts do not prove allocation extents. This binding establishes neither cross-TU global order, masked-reference correctness, strict linked preservation, dependency-provider equivalence nor runtime/game acceptance; excluded guarded sprite cleanup remains separate.", "The worldwin.cpp physical object selects _$E8 through .CRT$XCU, referencing WorldClimateWorldWin, its real constructor and the _$E6 atexit cleanup. Cleanup references the same object and its real destructor. The adjacent symbol facts bind these current generated entries to their original identities; no authored callback is retained."], "reason": "Bind original startup identity to the genuine compiler-generated lifetime of ?WorldClimateWorldWin@@3VWorldWin@@A in its actual source owner; no manual lifecycle callback is authored."}
 // symbol    _$E16
 // ORIGINAL: 0x004C38D0 _$E19 0x004C38D0-0x004C38DA FILE BYTE_EXACT
@@ -53,7 +53,7 @@ WorldWin WorldClimateWorldWin;
 int __cdecl pop_expire();
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x004C3A70 ?UNK1@WorldWin@@QAEXXZ 0x004C3A70-0x004C3AA9
+// ORIGINAL: 0x004C3A70 ?UNK1@WorldWin@@QAEXXZ 0x004C3A70-0x004C3AA9 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/004c3a70.cpp and original disassembly 0x004C3A70-0x004C3AA9; MainInterfaceGlobal + 0xCFC is 0x007AF51C."], "reason": "Move the existing seed into the WorldWin owner using the MainInterface tutorial RECT and active map bounds, preserving the status bit operation."}
 void WorldWin::UNK1() {
     WorldMapBounds = MainInterfaceGlobal.tutorial_bounds_;
@@ -62,7 +62,7 @@ void WorldWin::UNK1() {
 
 // The original startup path copies the tutorial bounds once, optionally resets
 // the embedded map and passes the same typed rectangle to GraphicWin::init.
-// ORIGINAL: 0x004C49A0 ?init@WorldWin@@QAEXH@Z 0x004C49A0-0x004C4A66
+// ORIGINAL: 0x004C49A0 ?init@WorldWin@@QAEXH@Z 0x004C49A0-0x004C4A66 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/004c49a0.cpp retains the complete historical seed for0x004C49A0-0x004C4A66.", "Pinned0x004C4A11 stores1 at WorldWin+0x1F2A4: embedded MapWin+0x152C plus slot/index+0x1DD78, distinct from its active flag+0x1DD74. Existing MapWin::clear0x00462870 and MapWin::init0x00470A90 establish the separate slot and activity roles.", "Pinned directCALL0x004C4A53 targets GraphicWin::init(RECT*,...)0x005D50A0 with the WorldWin receiver, tutorial bounds,flags0x20 and MainInterface parent; it does not target Win::init(RECT*,...)0x005EC630. WorldWin derives GraphicWin; keep graphical/Buffer initialization and the original ignored result before virtualshow(0)."], "reason": "Recover WorldWin startup through its embedded map slot, tutorial bounds and GraphicWin initialization, preserving optional reset and inherited virtual show."}
 // TRIED: custom VCallW(int) shim for slot001 (scaffold's slot001 is nullary); byte-read/dword-write split for g_00939ed8's flag bit. MISMATCH from #4: register push scheduling around the four af51c/af520/af524/af528 locals differs
 void WorldWin::init(int reset_map) {

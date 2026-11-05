@@ -21,7 +21,7 @@
 // kind      game
 // ORIGINAL: 0x00432840 ??_EDatalink@@WEEE@AEPAXI@Z 0x00432840-0x0043284B FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned constructor at 0x00428FC0 installs Buffer table 0x0066AF7C at this+0x444; its first slot points to 0x00432840.", "Pinned entry 0x00432840 has exactly eleven bytes: SUB ECX,0x444 then JMP to already mapped primary deleting destructor 0x00432800, followed by INT3 padding.", "Owner datalink.cpp physical COFF emits eleven-byte COMDAT ??_EDatalink@@WEEE@AEPAXI@Z; Buffer table ??_7Datalink@@6BBuffer@@@ selects it, and its REL32 targets weak ??_EDatalink@@UAEPAXI@Z with scalar ??_GDatalink@@UAEPAXI@Z fallback.", "The genuine GraphicWin:Win,Buffer hierarchy provides the receiver adjustment. Independent original constructor/table/body and physical COFF review supports this binding; local equality does not prove full linked table selection or runtime acceptance."], "reason": "Bind the original Buffer-view deleting receiver adjustment to the genuine Datalink compiler-emitted operation. The symbol names this tree emits, not an original debug name; no adapter body is authored."}
-// ORIGINAL: 0x00428F90 _$E21 0x00428F90-0x00428FA6 FILE
+// ORIGINAL: 0x00428F90 _$E21 0x00428F90-0x00428FA6 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned CRT slot0x682074 selects initializer0x428f90..0x428fa6, registering exit0x428fb0..0x428fba. Root independent complete decode confirms exclusive RET/JMP bounds; original/source-owned storage is0x703ea0 bound to?DatalinkMain@@3VDatalink@@A.", "Original startup instruction evidence: [[\"0x428f90\", \"mov\", \"ecx, 0x703ea0\"], [\"0x428f95\", \"call\", \"0x428fc0\"], [\"0x428f9a\", \"push\", \"0x428fb0\"], [\"0x428f9f\", \"call\", \"0x645398\"], [\"0x428fa4\", \"pop\", \"ecx\"], [\"0x428fa5\", \"ret\", \"\"]]. Original exit instruction evidence: [[\"0x428fb0\", \"mov\", \"ecx, 0x703ea0\"], [\"0x428fb5\", \"jmp\", \"0x432290\"]]. Preserve constructor arguments, array counts/strides, registration and reverse destruction without authored callback stand-ins.", "Fresh complete build-iveupb5l physical src/datalink.cpp COFF selects _$E21 via .CRT$XCU, registering _$E19. Startup relocation targets: [\"?DatalinkMain@@3VDatalink@@A\", \"??0Datalink@@QAE@XZ\", \"_$E19\", \"_atexit\"]; exit targets: [\"?DatalinkMain@@3VDatalink@@A\", \"??1Datalink@@UAE@XZ\"]. Actual linked helper occurs once at CRT slot0x63f2c0; selected same-owner order agrees with the pinned order.", "BaseWin/DesignWin definitions now precede their Wave globals as pinned. Existing DesignWin Wave mappings retain original names/spans and current helper overrides after fresh emission proof. Scalar constructor effects and array construction/cleanup belong to genuine source globals, classes and compiler-generated lifetime machinery.", "Current local labels are emission interpretations, not original debug names or recovered historical TU boundaries. Start bindings grant no allocation extent. Selected same-owner linked order is not full CRT/global-order, retained-selection, reference-target, dependency-provider, runtime or full-game acceptance. Guarded callbacks excluded; no claim grant or bug fix."], "reason": "Bind original startup operation to the genuine compiler-emitted lifetime of source-owned ?DatalinkMain@@3VDatalink@@A; preserve complete original identity and remaining restoration/structure obligations."}
 // symbol    _$E16
 // ORIGINAL: 0x00428FB0 _$E19 0x00428FB0-0x00428FBA FILE BYTE_EXACT
@@ -125,7 +125,7 @@ Datalink DatalinkMain;  // 0x00703EA0
 // Member/base lifetimes run naturally in declaration order. The original
 // ListBox constructor's extra 1 is its hidden most-derived ABI flag, not an
 // explicit C++ parameter: the real virtual bases generate it automatically.
-// ORIGINAL: 0x004080B0 sub_4080b0 0x004080B0-0x004080D3 FILE
+// ORIGINAL: 0x004080B0 sub_4080b0 0x004080B0-0x004080D3 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["pinned:0x004080B0-0x004080D3 calls ListBox, Dialog and GraphicWin destructor stages in that order at the evidenced subobject views", "source:src/listbox.h ListBox is the genuine virtual GraphicWin/Dialog class; src/listbox.cpp ListBox::~ListBox calls close()", "source:src/datalink.h Datalink owns a typed ListBox member; src/datalink.cpp Datalink lifetime naturally emits the complete-object stage", "build/recovery/builds/build-gyzprt2j/OpenSMACX.map selects current ??_DListBox at 0x004D3740 from datalink.cpp.obj; the selected physical COFF code COMDAT is 48 bytes", "the selected ListBox COFF relocations at +0x0A/+0x15/+0x1C resolve to ??1ListBox@@UAE@XZ, ??1Dialog@@UAE@XZ, ??1GraphicWin@@UAE@XZ; section bytes preserve the pinned call order, +0x48 shared receiver and +0xA60 Dialog view, followed by 13 bytes linker/compiler padding", "current MAP/COFF proves natural emission and the selected current linked copy only; it does not prove the pinned executable's original translation unit or whole-game acceptance"], "reason": "The pinned complete-object identity destroys the real ListBox subobject and its shared virtual bases. Datalink owns a typed ListBox member; the naturally emitted compiler complete-object destructor is recorded in this existing consumer TU. This is source-owner/lifetime evidence, not a claim that the historical original translation unit was datalink.cpp."}
 // kind      game
 // symbol    ??_DListBox@@QAEXXZ
@@ -2089,7 +2089,7 @@ Purpose: Show one topic outright - the forward direction of UNK5.
          Writes the facility id into ring slot 0, so the topic UNK4 pushes
          next lands after it, then runs the same chain set_cat /
          set_selected_id / slot 62 that every other entry point here runs.
-// ORIGINAL: 0x0042A260 ?UNK3@Datalink@@QAEXIH@Z 0x0042A260-0x0042A2BF FILE
+// ORIGINAL: 0x0042A260 ?UNK3@Datalink@@QAEXIH@Z 0x0042A260-0x0042A2BF FILE BYTE_EXACT
 // TRIED: inlining repaint_slot in the header - basewin.cpp carries its own local `class VCall`, which then collides with vtable_shim.h's, so the definition lives in this TU and /Ob2 re-inlines it. MISMATCH 6/31 - the image is 31 instructions where ours is 25: its `push edi` sits before the `push 0` argument of set_cat, ours after, so the argument is evaluated before the callee-saved saves here and after them there.
 //            The image's catalogue name is ours to spell from behaviour:
 //            the catalogue calls this ?UNK3@Datalink@@QAEXIH@Z.
@@ -2118,7 +2118,7 @@ Purpose: Follow a hyperlink in the topic text: "category*10000+facility".
          prototype list invented - so they are ignored. The return is 0
          whatever happened; the image returns 0 on the ignored path and
          falls off the end (also 0) after the chain.
-// ORIGINAL: 0x00431DC0 ?on_link_clicked@Datalink@@QAEHHPAD@Z 0x00431DC0-0x00431E64 FILE
+// ORIGINAL: 0x00431DC0 ?on_link_clicked@Datalink@@QAEHHPAD@Z 0x00431DC0-0x00431E64 FILE BYTE_EXACT
 // symbol    ?on_link_clicked@Datalink@@UAEHHPAD@Z
 // MISMATCH 24/58, first divergence at 24 - the image reloads the facility slot after the set_cat call where ours folds it into the store. TRIED: the guard as `facility > 1000` in both polarities, and `atoi` against the CRT's own binding.
 // size      161 bytes
@@ -3361,7 +3361,7 @@ void __cdecl help_project(int project_id) {
     DatalinkMain.exec(0xB, project_id + 0x46);
 }
 
-// ORIGINAL: 0x00429180 ?exec@Datalink@@QAEXIH@Z 0x00429180-0x004292FC
+// ORIGINAL: 0x00429180 ?exec@Datalink@@QAEXIH@Z 0x00429180-0x004292FC BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["task:datalink-owner-coverage", "pinned:terranx_original.exe:429180..4292FC complete geometry, saved-state, list redraw, modal and restoration sequence", "source:src/reportwin.h:ReportWinGlobal shared_research_focus owns885F30; src/reportif.h existing category/faction fields", "historical seed:src/recovered/units/00429180.cpp"], "reason": "Recover the complete modal Datalink operation through its existing class, embedded text/list controls and real shared ReportWin/ReportIf state; preserve the original identity and seed findings without a new byte claim."}
 void Datalink::exec(unsigned int topic, int index) {
     if (WinScreenWidth == 0x320) {

@@ -15,7 +15,7 @@
  * You should have received a copy of the GNU General Public License
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
-// ORIGINAL: 0x0052DB10 _$E21 0x0052DB10-0x0052DB26 FILE
+// ORIGINAL: 0x0052DB10 _$E21 0x0052DB10-0x0052DB26 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned CRT slot 0x00682634 selects init 0x0052DB10-0x0052DB26, registering fini 0x0052DB30-0x0052DB3A; complete independent instruction decode establishes both ends.", "Both pinned operations identify storage 0x0093CD90; scalar NetDaemon constructor/destructor 0x005389F0/0x00538D10.", "Current owner physical COFF selects _$E21 via .CRT$XCU and registers _$E19, with relocations naming ?NetDaemonNet@@3VNetDaemon@@A; the genuine global definition owns this lifetime, including possible inline scalar construction.", "Current helper names are compiler-output interpretations, not original debug symbols. These individual bindings do not establish full initialization order, allocation extents, linked retained selection or runtime acceptance."], "reason": "Bind original startup operation to the genuine compiler-emitted lifetime of source-owned NetDaemonNet; no callback body is authored."}
 // symbol    _$E16
 // ORIGINAL: 0x0052DB30 _$E19 0x0052DB30-0x0052DB3A FILE BYTE_EXACT
@@ -1929,7 +1929,7 @@ static_assert(offsetof(MessageLandmarkRecord, payload_1C_) == 0x1C,
 static_assert(offsetof(MessageLandmarkRecord, text_) == 0x20,
               "landmark optional text start");
 
-// ORIGINAL: 0x00592F50 sub_592f50 0x00592F50-0x00592FE9
+// ORIGINAL: 0x00592F50 sub_592f50 0x00592F50-0x00592FE9 BYTE_EXACT
 // symbol    ?send_raw_data@@YAXHHHHHHHHHH@Z
 // size      153 bytes
 // callers   0   call targets   1

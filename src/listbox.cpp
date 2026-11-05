@@ -2086,7 +2086,7 @@ Purpose: Turn a mouse-wheel step count into that many scroll clicks: the
          non-negative its wheel-up, once per notch, on the Win virtual
          base the list's vbtable names.
 
-// ORIGINAL: 0x0060CB70 ?on_mousewheel@ListBox@@QAEXH@Z 0x0060CB70-0x0060CBBA FILE
+// ORIGINAL: 0x0060CB70 ?on_mousewheel@ListBox@@QAEXH@Z 0x0060CB70-0x0060CBBA FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned 0x60CB84..0x60CB98 repeats Win::on_mousewheel_down(1) once per negated notch; 0x60CBA1..0x60CBB3 repeats Win::on_mousewheel_up(1) for nonnegative input.", "The original obtains the Win receiver by following ListBox's GraphicWin virtual-base vbtable adjustment (-0x48 plus vbtable[1]); ListBox genuinely inherits GraphicWin and GraphicWin genuinely derives from Win.", "ListBox::on_mousewheel is already declared override in src/listbox.h; the projected qualified Win member calls let the declared C++ base conversion supply that receiver without raw-vtable dispatch."], "reason": "Transfer the declared ListBox override into its class implementation TU. Preserve the original notch loops and route through the genuine Win base methods; no manual slot or receiver adapter is introduced."}
 // symbol    ?on_mousewheel@ListBox@@UAEXH@Z
 // size      74 bytes

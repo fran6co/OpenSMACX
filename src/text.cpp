@@ -347,7 +347,7 @@ Text::Text(int size) {
 /*
 Purpose: The reader every `.txt` the game parses goes through, and the two
          initialisers MSVC emits for it.
-// ORIGINAL: 0x005FD400 ??__ETxt@@YAXXZ 0x005FD400-0x005FD456 FILE
+// ORIGINAL: 0x005FD400 ??__ETxt@@YAXXZ 0x005FD400-0x005FD456 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned CRT slot 0x682680 selects original 0x5FD400; the fresh physical initializer probe resolves the selected callback to the actual Text global Txt.", "src/text.cpp declares Text Txt(512) as the real storage owner; the compiler-generated callback performs its dynamic construction, rather than a hand-written function body.", "The adjacent original finalizer identity 0x5FD460 is the paired generated atexit cleanup for Txt; the source retains both historical identities and spans."], "reason": "Bind the original Text startup identity to the compiler-generated dynamic initializer for the real namespace-scope Text object."}
 // symbol    _$E16
 // size      86 bytes
@@ -356,7 +356,7 @@ Purpose: The reader every `.txt` the game parses goes through, and the two
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 // calls     0x005D4510 0x00645398
-// ORIGINAL: 0x005FD460 ??__FTxt@@YAXXZ 0x005FD460-0x005FD4B5 FILE
+// ORIGINAL: 0x005FD460 ??__FTxt@@YAXXZ 0x005FD460-0x005FD4B5 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned PE/CRT evidence pairs original 0x5FD460 with Txt initialization rooted at 0x5FD400; the fresh physical initializer probe resolves the callback to the actual Text global Txt.", "src/text.cpp owns the namespace-scope Text Txt(512); its compiler-generated lifetime callback is the current source provider, with the original identity and span retained."], "reason": "Bind the original Text finalizer identity to the compiler-generated atexit cleanup for the real namespace-scope Text object."}
 // symbol    _$E14
 // size      85 bytes
@@ -628,7 +628,7 @@ BOOL __cdecl text_open(LPCSTR src_id, LPCSTR section_id) {
 
 
 // TextIndex bodies, lifetime mappings and storage share this module cohort.
-// ORIGINAL: 0x005FD4E0 sub_5fd4e0 0x005FD4E0-0x005FD507 FILE
+// ORIGINAL: 0x005FD4E0 sub_5fd4e0 0x005FD4E0-0x005FD507 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned CRT slot 0x68268c selects startup 0x5fd4e0..0x5fd507 and registers cleanup 0x5fd510..0x5fd527. Complete root decode proves the exclusive RET/JMP endpoints.", "The source-owned object ?TxtIndex@@3PAVTextIndex@@A is selected by physical COFF constructor/destructor relocations; current emitted initializer is identified by the adjacent symbol fact. Original array construction and reverse destruction use four TextIndex elements at 9B7D08 with stride118.", "Buffer relative declaration order is PCX, interface array, middle, vehicle, special-text owner, Sprite, shared Buffer. Generated helpers are compiler output, not hand-authored address callbacks. Selected same-owner order does not establish full CRT order, dependency provider, linked preservation or runtime/game acceptance. Guarded cleanup is a separate unfinished obligation."], "reason": "Bind original init operation to the genuine C++ lifetime of ?TxtIndex@@3PAVTextIndex@@A; retain original behavior and remaining matching obligations."}
 // symbol    _$E27
 // ORIGINAL: 0x005FD510 sub_5fd510 0x005FD510-0x005FD527 FILE BYTE_EXACT

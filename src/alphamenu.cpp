@@ -218,7 +218,7 @@ int AlphaMenu::backfill_func(GraphicWin *target) {
 }
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x00403AF0 ?fill_func@AlphaMenu@@QAAHPAUGraphicWin@@HPAURECT@@@Z 0x00403AF0-0x00403B70 FILE
+// ORIGINAL: 0x00403AF0 ?fill_func@AlphaMenu@@QAAHPAUGraphicWin@@HPAURECT@@@Z 0x00403AF0-0x00403B70 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Retired seed provenance: src/unrecovered/00402f40.cpp,004032a0.cpp,00403af0.cpp and src/recovered/units/00403340.cpp,00403680.cpp,00403830.cpp; pinned original callback style27/29, positive hide height, branch-only clip restoration and actual caller dispatch audited by coordinator."], "reason": "Recover AlphaMenu owner behavior through existing Menu/GraphicWin/Buffer inheritance and owned Sprite lifetimes; historical seed identity and extents remain obligations, not measurement claims."}
 // symbol    ?fill_func@AlphaMenu@@SAHPAVGraphicWin@@HPAUtagRECT@@@Z
 int __cdecl AlphaMenu::fill_func(GraphicWin *target, int mode, RECT *clip) {

@@ -482,7 +482,7 @@ StringBox::StringBox() {
 Purpose: Add a string to the box - stage the text, index and a cleared flag
          into the string struct at 0x2B70, add it, and run the fixup pass when
          insertion succeeds. Return the insertion error unchanged or zero.
-// ORIGINAL: 0x00629710 ?add@StringBox@@QAEXPADHH@Z 0x00629710-0x00629749
+// ORIGINAL: 0x00629710 ?add@StringBox@@QAEXPADHH@Z 0x00629710-0x00629749 BYTE_EXACT
 // symbol    ?add@StringBox@@QAEHPADHH@Z
 // size      57 bytes
 // prototype void (__thiscall ?add@StringBox@@QAEXPADHH@Z)(StringBox* this, int8*, int, int)

@@ -676,7 +676,7 @@ int BaseButton::init(LPCSTR name, int id, int x, int y, int width, int height,
     return 0;
 }
 
-// ORIGINAL: 0x00607190 ?UNK1@BaseButton@@QAEHPAUFont@@PADHHHHPAUWin@@H@Z 0x00607190-0x0060720A FILE
+// ORIGINAL: 0x00607190 ?UNK1@BaseButton@@QAEHPAUFont@@PADHHHHPAUWin@@H@Z 0x00607190-0x0060720A FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:9db3d883:src/unrecovered/00607190.cpp", "source:src/jackal/font.h:Font::height_", "source:src/graphicwin.h:GraphicWin inherits Buffer"], "reason": "Size the button from the supplied font's own height, initialize its typed BaseButton owner, select the font on the inherited Buffer and redraw."}
 // symbol    ?UNK1@BaseButton@@QAEHPAVFont@@PADHHHHPAVWin@@H@Z
 int BaseButton::UNK1(Font *font, char *name, int id, int x, int y,
@@ -733,7 +733,7 @@ void BaseButton::on_right_click(int a, int b) {
 // mouse capture protocol. The button state, timer and notifications remain
 // owned by this BaseButton and its real Win parent.
 // Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x006075C0 ?on_left_down@BaseButton@@QAEXHH@Z 0x006075C0-0x0060771C FILE
+// ORIGINAL: 0x006075C0 ?on_left_down@BaseButton@@QAEXHH@Z 0x006075C0-0x0060771C FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/006075c0.cpp retained original identity, full spans and prior recovery evidence", "recovery/tasks/dialog-control-coverage-wave.json authorized coupled control ownership", "original:0x6075c0 complete control/data-access review and src/basebutton.h genuine declaration; cross-owner discoveries preserved in task history"], "reason": "Complete Dialog-control behavior belongs to this genuine control owner, with real inherited members, embedded controls, Win receivers and callback dispatch rather than fixed executable calls. Compatible seed identity and historical evidence remain retained; catalogue decorations and emitted ABI are separate facts."}
 // symbol    ?on_left_down@BaseButton@@UAEXHH@Z
 void BaseButton::on_left_down(int, int) {
@@ -794,7 +794,7 @@ void BaseButton::on_left_down(int, int) {
 // scaffold's VCall types every slot void(), so a second/third shim
 // with the real trailing signature is needed for these two calls.
 // Deleted seed provenance: git:26e5eed1:src/unrecovered/00607720.cpp
-// ORIGINAL: 0x00607720 ?on_left_up@BaseButton@@QAEXHH@Z 0x00607720-0x006077E6 FILE
+// ORIGINAL: 0x00607720 ?on_left_up@BaseButton@@QAEXHH@Z 0x00607720-0x006077E6 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/00607720.cpp retained original identity, full spans and prior recovery evidence", "recovery/tasks/dialog-control-coverage-wave.json authorized coupled control ownership", "original:0x607720 complete control/data-access review and src/basebutton.h genuine declaration; cross-owner discoveries preserved in task history"], "reason": "Complete Dialog-control behavior belongs to this genuine control owner, with real inherited members, embedded controls, Win receivers and callback dispatch rather than fixed executable calls. Compatible seed identity and historical evidence remain retained; catalogue decorations and emitted ABI are separate facts."}
 // symbol    ?on_left_up@BaseButton@@UAEXHH@Z
 void BaseButton::on_left_up(int, int) {
@@ -875,7 +875,7 @@ void BaseButton::on_left_click(int, int) {
 // 0x00607850. Buffer::rect2_ is the client rectangle used by the original
 // hit test. The hover owners and sizing flag are Win's own published state.
 // Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x00607850 ?on_mouse_move@BaseButton@@QAEXHH@Z 0x00607850-0x006079F3 FILE
+// ORIGINAL: 0x00607850 ?on_mouse_move@BaseButton@@QAEXHH@Z 0x00607850-0x006079F3 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00607850.cpp retained original identity, full spans and prior recovery evidence", "recovery/tasks/dialog-control-coverage-wave.json authorized coupled control ownership", "original:0x607850 complete control/data-access review and src/basebutton.h genuine declaration; cross-owner discoveries preserved in task history"], "reason": "Complete Dialog-control behavior belongs to this genuine control owner, with real inherited members, embedded controls, Win receivers and callback dispatch rather than fixed executable calls. Compatible seed identity and historical evidence remain retained; catalogue decorations and emitted ABI are separate facts."}
 // symbol    ?on_mouse_move@BaseButton@@UAEXHH@Z
 void BaseButton::on_mouse_move(int x, int y) {
@@ -956,7 +956,7 @@ void __cdecl base_button_timer_callback(int stage, void *context) {
 // Superseded seed deleted; seed paths below are historical Git provenance.
 // Historical seed observations (not fresh measurements or acceptance):
 // TRIED: reading the 4 rect fields through a `RECT*` base pointer, and through 4 plain named int locals (Ghidra's own local_10/local_c/local_8/ local_4 shape) - neither recovers the original's single `lea`-then-4-reads codegen; /O2 keeps re-deriving `[esi+0x13c+k]` per read either way. Not reproduced; everything else (branch shape, vtable shim at +0x50, Time start/stop calls) matches.
-// ORIGINAL: 0x00607B30 ?timer_callback@BaseButton@@QAEXH@Z 0x00607B30-0x00607C29
+// ORIGINAL: 0x00607B30 ?timer_callback@BaseButton@@QAEXH@Z 0x00607B30-0x00607C29 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/00607b30.cpp;src/basebutton.h:Time members;image:0x00607B30-0x00607C29"], "reason": "The BaseButton timer stage owns bubble positioning, repeat scheduling, and its inherited Win callback; the former pending forwarder has been replaced by typed state and calls."}
 void BaseButton::timer_callback(int stage) {
     if (stage == 0) {

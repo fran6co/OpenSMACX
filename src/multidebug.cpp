@@ -21,7 +21,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-// ORIGINAL: 0x005C97C0 ??__Eg_MULTIDEBUG@@YAXXZ 0x005C97C0-0x005C97D6 FILE
+// ORIGINAL: 0x005C97C0 ??__Eg_MULTIDEBUG@@YAXXZ 0x005C97C0-0x005C97D6 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"reason":"The original relocated CRT entry constructs the static MultiDebug object and registers its complete teardown; bind the compiler's natural initializer, not a handwritten wrapper.","evidence":["git:24472a5a^:src/init_thunks.cpp","original:CRT slot 0x00682668 points to 0x005C97C0","original:0x005C97C0 constructs 0x009B22F0 and registers 0x005C97E0"]}
 // symbol    _$E12
 

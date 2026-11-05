@@ -843,7 +843,7 @@ void __cdecl vehdraw_construct_abil(uint32_t abilities, Caviar *renderer, int fa
 }
 
 
-// ORIGINAL: 0x004C2360 ?vehdraw_construct_vehicle@@YAHHHHHHHPAUCaviar@@@Z 0x004C2360-0x004C246D
+// ORIGINAL: 0x004C2360 ?vehdraw_construct_vehicle@@YAHHHHHHHPAUCaviar@@@Z 0x004C2360-0x004C246D BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Original4C23BC loads argument6 as ability flags and pushes faction as the ability helper final argument. The seed swapped these inputs. Original signed armor-defense comparison may substitute infantry for a supply crawler.", "Reactor selection follows all component builders and therefore observes current weapon mode. Original void exits and all mapped callers support no returned value; the legacy catalogue name remains provenance."], "reason": "Recover explicit vehicle component assembly through real chassis, weapon, ability, armor and reactor operations."}
 // symbol    ?vehdraw_construct_vehicle@@YAXHHHHHIPAVCaviar@@@Z
 void __cdecl vehdraw_construct_vehicle(int faction_id, int chassis, int weapon,

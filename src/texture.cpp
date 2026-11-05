@@ -529,7 +529,7 @@ Purpose: Destroy the texture. Unlike close, which resets the descriptor fields
          and borrowed flag, the destructor only settles an owned pixel pointer:
          free it and clear it; borrowed pixels remain unchanged. Descriptor
          fields and the borrowed flag keep whatever they held.
-// ORIGINAL: 0x00619660 ??1Texture@@QAE@XZ 0x00619660-0x00619685
+// ORIGINAL: 0x00619660 ??1Texture@@QAE@XZ 0x00619660-0x00619685 BYTE_EXACT
 // size      37 bytes
 // prototype void (__thiscall ??1Texture@@QAE@XZ)(Texture* this)
 // callers   0   call targets   1
@@ -552,7 +552,7 @@ Purpose: Release the texture. The pixels are freed only when they are ours -
          a borrowed texture keeps its block and is merely forgotten. Either way
          the same four fields the constructor set are reset, except that a
          borrowed texture leaves its pixel pointer alone.
-// ORIGINAL: 0x00619690 ?close@Texture@@QAEXXZ 0x00619690-0x006196CA
+// ORIGINAL: 0x00619690 ?close@Texture@@QAEXXZ 0x00619690-0x006196CA BYTE_EXACT
 // size      58 bytes
 // prototype void (__thiscall ?close@Texture@@QAEXXZ)(Texture* this)
 // callers   0   call targets   1

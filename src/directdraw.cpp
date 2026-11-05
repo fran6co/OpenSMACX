@@ -284,7 +284,7 @@ extern "C" int __cdecl sub_62d100() {
     return 0;
 }
 
-// ORIGINAL: 0x0062D160 sub_62d160 0x0062D160-0x0062D191
+// ORIGINAL: 0x0062D160 sub_62d160 0x0062D160-0x0062D191 BYTE_EXACT
 // symbol    ?sub_62d160@@YAPAUHDC__@@XZ
 // kind game
 HDC __cdecl sub_62d160() {
@@ -322,7 +322,7 @@ struct DirectDrawClipRegion {
     RECT rectangle;
 };
 
-// ORIGINAL: 0x0062D1E0 sub_62d1e0 0x0062D1E0-0x0062D2B1
+// ORIGINAL: 0x0062D1E0 sub_62d1e0 0x0062D1E0-0x0062D2B1 BYTE_EXACT
 // symbol    ?sub_62d1e0@@YAXPAUtagRECT@@@Z
 // TRIED: 209 vs 204 bytes; struct-literal field order for the 0x30-byte DrawRegion local drifts the compiler's address-of scheduling (lea moves relative to the field stores) versus the original's register reuse. Tried plain field assigns and an early `DrawRegion *preg = &region;` alias; neither matched.
 // kind game

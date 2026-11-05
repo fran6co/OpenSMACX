@@ -352,10 +352,10 @@ void DiploPop::draw_portrait() {
 // that initializer. Its complete constructed member footprint is 0x433C;
 // the original storage is zero-initialized before those constructors run.
 // RECOVERY_OBJECT: v2 0x00733990 0x00737CCC ?DiplomacyPopup@@3VDiploPop@@A 0x0043EFF0
-// ORIGINAL: 0x0043EFC0 ??__EDiplomacyPopup@@YAXXZ 0x0043EFC0-0x0043EFD6 FILE
+// ORIGINAL: 0x0043EFC0 ??__EDiplomacyPopup@@YAXXZ 0x0043EFC0-0x0043EFD6 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Original relocated CRT slot682080 names43EFC0, which constructs733990 with43EFF0 then registers43EFE0 through atexit645398. Native compiler emits the constructor/registration helpers as an initializer chain; that split remains a measurement difference, not a source workaround."], "reason": "Bind the natural C++ process-lifetime initializer for the diplomacy popup, without a handwritten startup thunk."}
 // symbol    _$E16
-// ORIGINAL: 0x0043EFE0 ??__FDiplomacyPopup@@YAXXZ 0x0043EFE0-0x0043EFEA FILE
+// ORIGINAL: 0x0043EFE0 ??__FDiplomacyPopup@@YAXXZ 0x0043EFE0-0x0043EFEA FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Original43EFE0 loads733990 and tail-calls the complete destructor440D50. This is the entry registered by43EFC0, not the scalar deleting destructor and not an independently allocated popup."], "reason": "Bind the compiler-generated teardown registered for the same real diplomacy popup object."}
 // symbol    _$E14
 DiploPop DiplomacyPopup;
@@ -369,7 +369,7 @@ DiploPop DiplomacyPopup;
 int DiploCallbackState737CD0;
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x0043EFF0 ??0DiploPop@@QAE@XZ 0x0043EFF0-0x0043F0EA;0x00654880-0x006548F4
+// ORIGINAL: 0x0043EFF0 ??0DiploPop@@QAE@XZ 0x0043EFF0-0x0043F0EA;0x00654880-0x006548F4 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Original43EFF0..43F0EA and unwind654880..6548F4 construct GraphicWin, the secondary interface base, three Fonts, two Times atA98/AC0, Flics atAE8/15CC and three FlatButtons at2158 with strideB4C. All compiler-generated unwind targets belong to those real lifetimes.", "43F0C8/43F0D2 set counterpart factionA94=-1 and field2154=1 only after all members.43F30D publishes the faction argument intoA94. The old field20AC was inside the second Flic, not an additional scalar. Original CRT43EFC0 constructs733990 and registers its destructor wrapper43EFE0."], "reason": "Recover the complete diplomacy-popup construction through real C++ bases and embedded member lifetimes."}
 DiploPop::DiploPop() {
     // Original 0x0043F0C8/0x0043F0D2 publish these only after the three
@@ -379,7 +379,7 @@ DiploPop::DiploPop() {
 }
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x00440D50 ??1DiploPop@@QAE@XZ 0x00440D50-0x00440EB8;0x006547B0-0x00654871
+// ORIGINAL: 0x00440D50 ??1DiploPop@@QAE@XZ 0x00440D50-0x00440EB8;0x006547B0-0x00654871 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Original440D50..440EB8 and unwind6547B0..654871 restore the class tables, perform the same two Time stops, virtual hide and direct GraphicWin close as close(), then resetA94/20B0/2154. Normal C++ destructor dispatch supplies those table transitions; no table stores are handwritten.", "440DEB onward destroys FlatButton[3] in reverse, then Flic2/Flic1 including their Palette/Buffer members, Time2/Time1, Font3/Font2/Font1, and GraphicWin. The complete unwind path preserves the same partially live subobjects. Existing downstream lifecycle and renderer limitations are not waived."], "reason": "Recover complete diplomacy-popup destruction through close followed by automatic reverse member and base destruction."}
 // symbol    ??1DiploPop@@UAE@XZ
 DiploPop::~DiploPop() {
@@ -605,7 +605,7 @@ void DiploPop::on_status(int mode) {
 // flags     frame;hidden;sp_ready;purged_ok
 // indirect  0x00440582
 // Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x00440550 ?on_iface_button_clicked@DiploPop@@QAEXH@Z 0x00440550-0x00440604 FILE
+// ORIGINAL: 0x00440550 ?on_iface_button_clicked@DiploPop@@QAEXH@Z 0x00440550-0x00440604 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/00440550.cpp retained original identity and spans", "recovery/tasks/interface-contract-report-closure.json authorized ownership recovery", "original:0x00440550 complete control/member accesses and concrete interface table"], "reason": "Recover the concrete SubInterface owner operation through genuine window members and source-owned globals. Original table/call evidence identifies the callback receiver; the retained compatible seed supplies its complete original intervals, not an executable-address forwarding implementation."}
 // symbol    ?on_iface_button_clicked@DiploPop@@UAEXH@Z
 void DiploPop::on_iface_button_clicked(int button_id) {
@@ -844,7 +844,7 @@ int DiploPop::set_modal(int flag, int (__cdecl *poll)(), Win *owner) {
 }
 
 /*
-// ORIGINAL: 0x004406F0 ?release_modal@DiploPop@@QAEXXZ 0x004406F0-0x004406F5 FILE
+// ORIGINAL: 0x004406F0 ?release_modal@DiploPop@@QAEXXZ 0x004406F0-0x004406F5 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned4406F0 jumps unconditionally to the mapped Win::release_modal5EE280; eleven NOPs follow at4406F5..440700, then independently mapped DiploPop::init starts440700.", "Independent IDA extent and entry-rooted PE decoding agree on4406F0..4406F5. Historical2f1f617d:src/diplopop.cpp covered through440707 and swallowed seven initializer bytes; that erroneous extent remains Git provenance, not this function code. No claim or C++ body changed."], "reason": "Bind the release_modal tail entry to its complete original five-byte jump, excluding alignment and the separate initializer."}
 // symbol    ?release_modal@DiploPop@@UAEXXZ
 // Historical seed trials below predate the reviewed extent correction.
@@ -889,7 +889,7 @@ void __cdecl diplo_bioscan_timer_callback(int, void *context) {
     static_cast<DiploPop *>(context)->bioscan_anim();
 }
 
-// ORIGINAL: 0x0043F250 ?timer_callback_daemon2@DiploPop@@QAAXHH@Z 0x0043F250-0x0043F288 FILE
+// ORIGINAL: 0x0043F250 ?timer_callback_daemon2@DiploPop@@QAAXHH@Z 0x0043F250-0x0043F288 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Disassembly reads the popup pointer from the second cdecl stack argument ([ebp+0xC]); this is a free callback, not a DiploPop member entry despite the historical catalog symbol spelling.", "The callback's Flic1 decode and update rectangle are the work owned by DiploPop::portrait_anim."], "reason": "Preserve the timer callback's actual cdecl stack ABI and use the typed portrait animation implementation."}
 // symbol    ?diplo_portrait_timer_callback@@YAXHPAX@Z
 void __cdecl diplo_portrait_timer_callback(int, void *context) {

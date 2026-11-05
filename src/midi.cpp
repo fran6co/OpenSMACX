@@ -145,7 +145,7 @@ int Midi::set_nswitch_threads(unsigned long a1) {
 /*
 Purpose: ?map_patch@Midi@@QAEHPADKK@Z - forward 3 argument(s) to slot 0xdc of the
          object at +0x3c, answering 0x14 when that object is absent.
-// ORIGINAL: 0x004C7860 ?map_patch@Midi@@QAEHPADKK@Z 0x004C7860-0x004C788B SEMANTIC
+// ORIGINAL: 0x004C7860 ?map_patch@Midi@@QAEHPADKK@Z 0x004C7860-0x004C788B BYTE_EXACT
 // symbol    ?map_patch@Midi@@UAEHPADKK@Z
 // size      43 bytes
 // prototype int (__thiscall ?map_patch@Midi@@QAEHPADKK@Z)(Midi* this, int8*, unsigned int, unsigned int)
@@ -167,7 +167,7 @@ int Midi::map_patch(char *a1, unsigned long a2, unsigned long a3) {
 /*
 Purpose: ?map_patch@Midi@@QAEHPADK@Z - forward 2 argument(s) to slot 0xd8 of the
          object at +0x3c, answering 0x14 when that object is absent.
-// ORIGINAL: 0x004C7890 ?map_patch@Midi@@QAEHPADK@Z 0x004C7890-0x004C78B7 SEMANTIC
+// ORIGINAL: 0x004C7890 ?map_patch@Midi@@QAEHPADK@Z 0x004C7890-0x004C78B7 BYTE_EXACT
 // symbol    ?map_patch@Midi@@UAEHPADK@Z
 // size      39 bytes
 // prototype int (__thiscall ?map_patch@Midi@@QAEHPADK@Z)(Midi* this, int8*, unsigned int)
@@ -298,7 +298,7 @@ int Midi::unmute_track(unsigned long a1) {
 /*
 Purpose: ?set_active_tracks@Midi@@QAEHKK@Z - forward 2 argument(s) to slot 0x94 of the
          object at +0x3c, answering 0x14 when that object is absent.
-// ORIGINAL: 0x004C79C0 ?set_active_tracks@Midi@@QAEHKK@Z 0x004C79C0-0x004C79E7 SEMANTIC
+// ORIGINAL: 0x004C79C0 ?set_active_tracks@Midi@@QAEHKK@Z 0x004C79C0-0x004C79E7 BYTE_EXACT
 // symbol    ?set_active_tracks@Midi@@UAEHKK@Z
 // size      39 bytes
 // prototype int (__thiscall ?set_active_tracks@Midi@@QAEHKK@Z)(Midi* this, unsigned int, unsigned int)
@@ -320,7 +320,7 @@ int Midi::set_active_tracks(unsigned long a1, unsigned long a2) {
 /*
 Purpose: ?set_active_tracks@Midi@@QAEHI@Z - forward 1 argument(s) to slot 0x90 of the
          object at +0x3c, answering 0x14 when that object is absent.
-// ORIGINAL: 0x004C79F0 ?set_active_tracks@Midi@@QAEHI@Z 0x004C79F0-0x004C7A13 SEMANTIC
+// ORIGINAL: 0x004C79F0 ?set_active_tracks@Midi@@QAEHI@Z 0x004C79F0-0x004C7A13 BYTE_EXACT
 // symbol    ?set_active_tracks@Midi@@UAEHI@Z
 // size      35 bytes
 // prototype int (__thiscall ?set_active_tracks@Midi@@QAEHI@Z)(Midi* this, unsigned int)
@@ -1084,7 +1084,7 @@ bool Midi::is_trackset_playing(unsigned int trackset) {
     return false;
 }
 
-// ORIGINAL: 0x004C8050 ?set_play_type@Midi@@QAEHI@Z 0x004C8050-0x004C806A
+// ORIGINAL: 0x004C8050 ?set_play_type@Midi@@QAEHI@Z 0x004C8050-0x004C806A BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned4C8058 null guard reaches POP EBP/RET4 at4C8066/67; the nonnull virtual call rejoins that epilogue. Eleven reachable instructions end4C806A, then six NOPs and independently mapped initialize4C8070.", "IDA/Ghidra and entry-rooted PE flow agree. Historical2f1f617d:src/midi.cpp extended through4C8072, incorrectly including the next MOV EAX,ECX. The null path does not write EAX; missing-return/compiler-effect fidelity remains unresolved. No return value, body or claim is changed."], "reason": "Bind the Midi delegate forwarder to both local-return paths, excluding padding and a different initializer."}
 // symbol    ?set_play_type@Midi@@UAEHI@Z
 // Historical TRIED interpretation below is disproven by entry-based decoding:

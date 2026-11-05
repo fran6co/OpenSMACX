@@ -30,7 +30,7 @@
 // symbol    ??_ECheckBox@@$4PPPPPPPM@KBI@AEPAXI@Z
 // TRIED: signature stdcall(int) -> thiscall member(unsigned int flag), returning void*; same body as 0x0060FD80 (this thunk only differs in the leading adjustor, `sub ecx,[ecx-4]; sub ecx,0xa18` vs `sub ecx,[ecx-4]`), which is why it is COMDAT-folded with it. Vtordisp thunk not modeled; see 0x0060FD80 for the reasoning.
 
-// ORIGINAL: 0x0060FD90 sub_60fd90 0x0060FD90-0x0060FE40 FILE
+// ORIGINAL: 0x0060FD90 sub_60fd90 0x0060FD90-0x0060FE40 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["pinned image 01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf: 0x0060FD90 is an independently entered scalar-deleting body reached by original adjustment entries 0x0060FD80, 0x0060FEB0, and 0x0060FED0; it consumes the deleting flag, conditionally deletes, returns the adjusted pointer, and ends in RET 4.", "pinned body 0x0060FD90..0x0060FE40 stages CheckBox Win/Buffer/primary views and vtordisps, resets CheckBox members, calls Dialog::close then GraphicWin::close, then destroys Dialog followed by GraphicWin.", "src/jackal/checkbox.h declares CheckBox with genuine virtual GraphicWin and Dialog bases; src/jackal/checkbox.cpp defines the member-reset and base-close destructor sequence owned by this generated deleting entry.", "The actual source owner emits the distinct compiler-generated symbol ??_GCheckBox@@UAEPAXI@Z for the scalar-deleting body; the source annotations retain the three separate ??_ECheckBox adjustment-entry symbols."], "reason": "Map the independently callable original CheckBox scalar-deleting body to the genuine compiler-generated scalar-deleting entry of the real CheckBox virtual-base owner. Keep the three adjustor entries separate, preserve their original identities and historical lessons, and leave this generated body without a byte-exact claim."}
 // symbol    ??_GCheckBox@@UAEPAXI@Z
 // ORIGINAL: 0x0060FE40 ?on_redraw@thunk1_CheckBox@@QAEXXZ 0x0060FE40-0x0060FE48 FILE BYTE_EXACT
@@ -164,7 +164,7 @@ void CheckBox::close() {
 Purpose: Tear down a CheckBox: reinstall the base subobjects' own
          vtable/vtordisp values, reset the state fields, and close the
          Dialog and GraphicWin subobjects through the object's own vbtable.
-// ORIGINAL: 0x0060E740 ??1CheckBox@@UAE@XZ 0x0060E740-0x0060E7C0
+// ORIGINAL: 0x0060E740 ??1CheckBox@@UAE@XZ 0x0060E740-0x0060E7C0 BYTE_EXACT
 // LEVER: the manual `- 0x1C` came OUT - this is a real override of
 //   GraphicWin's virtual destructor now, so VC6 enters it on the GraphicWin
 //   subobject and walks back itself, and subtracting again double-counted.
@@ -508,7 +508,7 @@ int CheckBox::attach(GraphicWin *parent, int x, int y, int flags) {
 // Historical seed observations (not fresh measurements or acceptance):
 // Historical superseded trial note: the earlier candidate used ID lookup/getter and Dialog::field_F0_ for row highlighting; its register-allocation observation does not describe the corrected direct-row implementation below.
 // TRIED (historical): reusing one `char *b = self - 0x1c` for both the vtable-slot lookup and the null-check-then-adjust pattern collapses two distinct registers (edi and ebp in the original, which hold the same VALUE but are never merged) into one - the original keeps a separate register alive purely for the "cast-to-virtual-base" null check, this candidate CSEs it away. 69/84 mnemonics match, no stack spill (ternary over if/else avoided the local-int spill an earlier if/else form produced).
-// ORIGINAL: 0x0060FAB0 ?on_redraw@CheckBox@@QAEXXZ 0x0060FAB0-0x0060FB8D FILE
+// ORIGINAL: 0x0060FAB0 ?on_redraw@CheckBox@@QAEXXZ 0x0060FAB0-0x0060FB8D FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/0060fab0.cpp retained original identity, full spans and prior recovery evidence", "recovery/tasks/dialog-control-coverage-wave.json authorized coupled control ownership", "pinned 0x60FAB0..0x60FB8C: ESI-0x18 is CheckBox::field_4_ highlight; selected mask is shifted by row EBX and ANDed with Dialog selected_position_; loop calls draw_item(row,mask,focus) without ID search", "host test compiles this actual body and rejects Dialog field_F0_ highlight and state-getter substitutions"], "reason": "The pinned row renderer directly tests the row bit and compares the row ordinal with CheckBox::field_4_; preserving that direct path avoids list cursor side effects absent from the original. Parent back-draw/fallback copy and the original full member identity remain retained."}
 // symbol    ?on_redraw@CheckBox@@UAEXXZ
 void CheckBox::on_redraw() {
@@ -533,7 +533,7 @@ void CheckBox::on_redraw() {
 }
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x0060F700 ?on_left_down@CheckBox@@QAEXHH@Z 0x0060F700-0x0060F8B0 FILE
+// ORIGINAL: 0x0060F700 ?on_left_down@CheckBox@@QAEXHH@Z 0x0060F700-0x0060F8B0 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/0060f700.cpp retained original identity, full spans and prior recovery evidence", "recovery/tasks/dialog-control-coverage-wave.json authorized coupled control ownership", "pinned 0x60F700 geometry: field_64_+field_44_ width and field_68_+field_44_ height; 0x60F760/0x60F78A retain separate ID searches on the clear branch, while set branch calls set_state_id", "pinned 0x60F78D..0x60F80C compares pos_to_id(previous) with clicked ID, redraws old ordinal mask only on inequality, updates field_4_ only on that branch, and dispatches key_notification_callback_ at CheckBox front+8", "pinned post-callback walk re-finds ID; final draw uses fresh id_to_pos and current row mask", "actual-source host control covers duplicate IDs, callback list/state mutation, geometry and callback-cell mutants"], "reason": "Restore the original CheckBox receiver/member access and event order, including its repeated search, ID-based old-row decision, +8 callback and post-callback re-find. This is behavioral recovery of the caller path, not a change to class layout or a claim of byte identity."}
 // symbol    ?on_left_down@CheckBox@@UAEXHH@Z
 void CheckBox::on_left_down(int x, int y) {
@@ -839,7 +839,7 @@ void CheckBox::set_state_id(int id, int value) {
     }
 }
 
-// ORIGINAL: 0x0060EA10 ?flip_state_id@CheckBox@@QAEXH@Z 0x0060EA10-0x0060EB48
+// ORIGINAL: 0x0060EA10 ?flip_state_id@CheckBox@@QAEXH@Z 0x0060EA10-0x0060EB48 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned 0x0060EA10 performs one head-gated ID search, tests the selected bit at that resulting cursor, then performs a second head-gated search in each branch before clearing or setting the bit at the second resulting cursor. src/dialog.h exposes the actual item_list_ and selected_position_; src/stringstruct.h exposes typed list cursor/node members."], "reason": "Recover the original two-pass CheckBox toggle through genuine Dialog and StringStruct members, retaining its branch-specific repeated traversal and cursor effects rather than collapsing it to XOR."}
 void CheckBox::flip_state_id(int id) {
     {
@@ -986,7 +986,7 @@ Purpose: Add one item to a check box: reject a null label, set or clear this
          shared state word, publish the borrowed label for the insertion hook
          to copy, and append the entry under `id`.
 
-// ORIGINAL: 0x0060E980 ?item@CheckBox@@QAEHPADHH@Z 0x0060E980-0x0060EA0D
+// ORIGINAL: 0x0060E980 ?item@CheckBox@@QAEHPADHH@Z 0x0060E980-0x0060EA0D BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["pinned image 01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf; original identity 0x0060E980 retains name and all original spans/claims", "src/jackal/checkbox.h declares the actual CheckBox::item class member; body uses that existing owner API", "historical source was FILE-mode in git:e9190930285ebdae9121f3ac00645c634df1efea:src/leaf_recoveries.cpp; this transfer places the unchanged C++ member definition in its actual owner TU and changes measurement mode to BODY explicitly; it does not assert historical recipe equality", "the complete source body and existing TRIED/LEVER/DEFERRED history are carried forward unchanged; only annotation mode/location and transitional SCAFFOLD classification change"], "reason": "Transfer the complete CheckBox::item definition to its existing source owner without changing its C++ body. Keep the original FILE spans and historical claim state; BODY is the new per-member measurement scope, not a claim that the old whole-TU recipe is equivalent."}
 // size      141 bytes
 // prototype int (__thiscall ?item@CheckBox@@QAEHPADHH@Z)(CheckBox* this, int8*, int, int)

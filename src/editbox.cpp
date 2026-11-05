@@ -124,7 +124,7 @@ void EditBox::pass_dialog_focus() {
 // 616030. Empty selected text returns zero, NOT the current scroll position.
 // The last comparison is against B44, not the x argument or string length.
 // Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x00616030 ?text_position@EditBox@@QAEXH@Z 0x00616030-0x00616135
+// ORIGINAL: 0x00616030 ?text_position@EditBox@@QAEXH@Z 0x00616030-0x00616135 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00616030.cpp", "Pinned original EditBox table66A038 and direct call/branch evidence"], "reason": "EditBox owns this table override or its direct text helper: pinned primary table66A038 slots12,17,20,21,25,26,51,64 and original direct-call receivers establish ownership. Use existing Win slot signatures without changing their order; text_position returns the EAX index consumed by callers despite the catalogue void label."}
 // symbol    ?text_position@EditBox@@QAEHH@Z
 int EditBox::text_position(int x) {
@@ -698,7 +698,7 @@ Purpose: Replace one edit box's text: clear the cursor; if the input exceeds
          the character limit, trim the caller's mutable input until it fits,
          then append it and recompute the text length before repainting.
 
-// ORIGINAL: 0x006151E0 ?set_text@EditBox@@QAEXPAD@Z 0x006151E0-0x0061526A
+// ORIGINAL: 0x006151E0 ?set_text@EditBox@@QAEXPAD@Z 0x006151E0-0x0061526A BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["pinned image 01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf; original identity 0x006151E0 retains name and all original spans/claims", "src/editbox.h declares the actual EditBox::set_text class member; body uses that existing owner API", "historical source was FILE-mode in git:e9190930285ebdae9121f3ac00645c634df1efea:src/leaf_recoveries.cpp; this transfer places the unchanged C++ member definition in its actual owner TU and changes measurement mode to BODY explicitly; it does not assert historical recipe equality", "the complete source body and existing TRIED/LEVER/DEFERRED history are carried forward unchanged; only annotation mode/location and transitional SCAFFOLD classification change"], "reason": "Transfer the complete EditBox::set_text definition to its existing source owner without changing its C++ body. Keep the original FILE spans and historical claim state; BODY is the new per-member measurement scope, not a claim that the old whole-TU recipe is equivalent."}
 // size      138 bytes
 // prototype void (__thiscall ?set_text@EditBox@@QAEXPAD@Z)(EditBox* this, int8*)

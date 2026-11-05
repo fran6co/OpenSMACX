@@ -1454,7 +1454,7 @@ int __cdecl council_votes(int faction_id) {
 
 /*
 Purpose: Check whether a faction's leader is eligible to be a Planetary Governor candidate.
-// ORIGINAL: 0x0052AE20 ?eligible@@YAHH@Z 0x0052AE20-0x0052AEA4 SEMANTIC
+// ORIGINAL: 0x0052AE20 ?eligible@@YAHH@Z 0x0052AE20-0x0052AEA4 BYTE_EXACT
 // LEVER: `faction_count` declared and zeroed BEFORE the `is_alien_faction`
 // guard (the image's `mov [ebp-4],0` runs ahead of the alien test even
 // though only the non-alien path reads it). `int`, not `uint32_t`, for

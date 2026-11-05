@@ -1648,7 +1648,7 @@ void Console::editor_reset_tech() {
 
 // Fixed-slot bindings carried from 004e0a00.cpp
 
-// ORIGINAL: 0x004E0A00 ?editor_load@Console@@QAEXXZ 0x004E0A00-0x004E0A50 FILE
+// ORIGINAL: 0x004E0A00 ?editor_load@Console@@QAEXXZ 0x004E0A00-0x004E0A50 FILE BYTE_EXACT
 // size      80 bytes
 // prototype void (__thiscall ?editor_load@Console@@QAEXXZ)(Console* this)
 // callers   2   call targets   2

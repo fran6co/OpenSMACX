@@ -3503,7 +3503,7 @@ int Buffer::write_multi_font_raw_l(LPSTR text, int x_coord, int y_coord,
 /*
 Purpose: Draw at most `len` characters of a string at an explicit pen
          position, clamping the count to the string's own length first.
-// ORIGINAL: 0x005DCEA0 ?write_l@Buffer@@QAEHPADHHH@Z 0x005DCEA0-0x005DCF34
+// ORIGINAL: 0x005DCEA0 ?write_l@Buffer@@QAEHPADHHH@Z 0x005DCEA0-0x005DCF34 BYTE_EXACT
 // LEVER: re-wrote the min(strlen(text), len) TERNARY OUT TWICE in source
 //        (once for the `< 0` guard, once for the final argument) instead of
 //        hoisting it into one local - `call_diff` showed FEWER strlen calls
@@ -5711,7 +5711,7 @@ int Buffer::wrap_cent(Font *font_override, char *text, int x_coord, int y_coord,
     return y;
 }
 
-// ORIGINAL: 0x005DC360 ?wrap_height@Buffer@@QAEHPADH@Z 0x005DC360-0x005DC40A FILE
+// ORIGINAL: 0x005DC360 ?wrap_height@Buffer@@QAEHPADH@Z 0x005DC360-0x005DC40A FILE BYTE_EXACT
 // TRIED: `if (font->field0 < 0)` compiled to jge with the arms swapped (original is jl, negative-first fallthrough); writing `if (field0 >= 0) {...} else {...}` (arms swapped to match) lifted mnemonic similarity 0.929 -> 0.976. One scheduling-only diff remains (field_14 check's loads reordered around the field_18 increment store, #49) - not chased further.
 // working copy - scaffold materialised by --work
 // size      170 bytes
@@ -5824,7 +5824,7 @@ int Buffer::wrap_height_flying(char *input_text) {
     return BufferFlyingY;
 }
 
-// ORIGINAL: 0x005E3690 sub_5e3690 0x005E3690-0x005E372A FILE
+// ORIGINAL: 0x005E3690 sub_5e3690 0x005E3690-0x005E372A FILE BYTE_EXACT
 // symbol    ?write_multi_font_raw@Buffer@@QAEHPADHH@Z
 // TRIED: naked strlen() got inlined to repne scasb (0.36 mnemonic sim); an untyped `_strlen` nullary alias + StrlenFn cast keeps the CALL and lifted similarity to 0.88. Buffer_5e3690 : public Buffer gives a real __thiscall receiver since explicit __thiscall is C4234.
 // working copy - scaffold materialised by --work
@@ -5883,7 +5883,7 @@ int Buffer::write_cent(char *text, int x, int y, int width) {
 }
 
 
-// ORIGINAL: 0x005DE1D0 ?wrap_flying_flush@Buffer@@QAEHXZ 0x005DE1D0-0x005DE2DE
+// ORIGINAL: 0x005DE1D0 ?wrap_flying_flush@Buffer@@QAEHXZ 0x005DE1D0-0x005DE2DE BYTE_EXACT
 // TRIED: the `_strlen` no-arg-extern lever (0x006141C0) moved the divergence from instruction 0 to instruction 5. The original reads `FlyingTextX`/`FlyingTextY` into ebx/ebp up front, before the text/font-metric checks that guard the call using them; this source form evaluates them only at the call site, which is a hoisting choice VC6 made differently. Not chased further.
 // size      270 bytes
 // prototype int (__thiscall ?wrap_flying_flush@Buffer@@QAEHXZ)(Buffer* this)
@@ -6800,7 +6800,7 @@ int Buffer::put_pixel(int a1, int a2, int a3) {
     return 0;
 }
 
-// ORIGINAL: 0x005DDBB0 ?wrap_right@Buffer@@QAEHPADHHH@Z 0x005DDBB0-0x005DDC8F FILE
+// ORIGINAL: 0x005DDBB0 ?wrap_right@Buffer@@QAEHPADHHH@Z 0x005DDBB0-0x005DDC8F FILE BYTE_EXACT
 // TRIED: source order already matches Ghidra's (g=0; field18=0; field14=field10; y=a3); the original's `ebx/ebp` push order ahead of the field writes looks like pure register-scheduling, not reachable by reordering the C statements that produced it.
 // working copy - scaffold materialised by --work
 // size      223 bytes
@@ -9520,7 +9520,7 @@ int Buffer::wrap_cent_flying(char *text, int x, int y, int width) {
     return wrap_cent_flying(text);
 }
 
-// ORIGINAL: 0x005DE4D0 sub_5de4d0 0x005DE4D0-0x005DE580 FILE
+// ORIGINAL: 0x005DE4D0 sub_5de4d0 0x005DE4D0-0x005DE580 FILE BYTE_EXACT
 // symbol    ?wrap_cent_flying_flush@Buffer@@QAEHXZ
 // working copy - scaffold materialised by --work
 // size      176 bytes

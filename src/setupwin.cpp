@@ -434,7 +434,7 @@ int SetupWin::do_menu_rightside(char *filename, int flags) {
     return result;
 }
 
-// ORIGINAL: 0x004AE380 ?on_mouse_move@SetupWin@@QAEHHH@Z 0x004AE380-0x004AE3DA
+// ORIGINAL: 0x004AE380 ?on_mouse_move@SetupWin@@QAEHHH@Z 0x004AE380-0x004AE3DA BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/004ae380.cpp"], "reason": "Home SetupWin hover selection through typed Spot and selected-item fields"}
 // symbol    ?on_mouse_move@SetupWin@@UAEXHH@Z
 void SetupWin::on_mouse_move(int x, int y) {
