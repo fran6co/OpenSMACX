@@ -1,4 +1,4 @@
-"""Controls for Dialogs' kind-8-only left-click forwarding."""
+"""Controls for Dialogs' five qualified left-click dispatch cases."""
 
 from pathlib import Path
 import os
@@ -31,16 +31,48 @@ def extract_body(source: str) -> str:
 
 
 BODY = extract_body(SOURCE)
+WIN_SOURCE = (ROOT / "src/win.h").read_text(encoding="utf-8")
+
+
+def class_body(source: str, name: str) -> str:
+    start = source.index("class " + name)
+    opening = source.index("{", start)
+    depth = 0
+    for end in range(opening, len(source)):
+        depth += (source[end] == "{") - (source[end] == "}")
+        if depth == 0:
+            return source[start:end + 1]
+    raise AssertionError(f"unterminated class: {name}")
+
+
+def test_non_sprite_click_inherits_the_actual_empty_win_operation():
+    assert "virtual void on_left_click(int = 0, int = 0) {}" in WIN_SOURCE
+    for owner, path in (
+        ("CheckBox", ROOT / "src/jackal/checkbox.h"),
+        ("ListBox", ROOT / "src/listbox.h"),
+        ("EditGroup", ROOT / "src/editgroup.h"),
+        ("RadioButton", ROOT / "src/jackal/radiobutton.h"),
+    ):
+        assert "on_left_click" not in class_body(path.read_text(encoding="utf-8"), owner)
+    assert "on_left_click" in class_body((ROOT / "src/spritebox.h").read_text(encoding="utf-8"), "SpriteBox")
+
 
 HARNESS = r'''#include <cassert>
 #include <climits>
 
 static int calls = 0;
 static int received_x = 0, received_y = 0;
-struct SpriteBox {
+struct Win { virtual void on_left_click(int = 0, int = 0) {} };
+struct GraphicWin : virtual Win {};
+struct Dialog : virtual Win {};
+struct ListBox : virtual GraphicWin, virtual Dialog {};
+struct RadioButton : virtual GraphicWin, virtual Dialog {};
+struct CheckBox : virtual GraphicWin, virtual Dialog {};
+struct SpriteBox : virtual GraphicWin, virtual Dialog {
     void on_left_click(int x, int y) { ++calls; received_x = x; received_y = y; }
 };
-struct DialogsMock : SpriteBox {
+struct EditGroup : virtual GraphicWin, virtual Dialog {};
+struct DialogsMock : ListBox, RadioButton, CheckBox, SpriteBox, EditGroup {
     int kind_;
     DialogsMock(): kind_(0) {}
     void on_left_click(int a, int b);
@@ -79,7 +111,7 @@ def test_left_click_actual_source_kind_domain_and_coordinates(compiler, tmp_path
                     str(cpp), "-o", str(binary)], check=True, timeout=30)
     subprocess.run([str(binary)], check=True, timeout=30)
 
-    wrong_body = BODY.replace("if (kind_ == 8)", "if (kind_ == 7)", 1)
+    wrong_body = BODY.replace("case 8:", "case 7:", 1)
     assert wrong_body != BODY
     wrong_body = wrong_body.replace("Dialogs::", "DialogsMock::")
     wrong_cpp, wrong_binary = tmp_path / "wrong_map.cpp", tmp_path / "wrong_map"

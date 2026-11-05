@@ -62,6 +62,7 @@ public:
         ++events.slot_calls; events.slot_receiver=this; events.slot_arg=value;
         return events.slot_result;
     }
+    virtual void on_left_click(int = 0, int = 0) {}
 };
 struct ParentWin : Win {
     Scroll *on_listbox_scroll_delete(Scroll *value) {

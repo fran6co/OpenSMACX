@@ -622,7 +622,7 @@ Scroll *Dialogs::on_scroll_delete(Scroll *scroll) {
 /*
 Purpose: Forward a left click to the embedded SpriteBox only for kind 8;
          other kinds and out-of-range selectors are no-ops.
-// ORIGINAL: 0x00612E80 ?on_left_click@Dialogs@@QAEXHH@Z 0x00612E80-0x00612EB0 SEMANTIC
+// ORIGINAL: 0x00612E80 ?on_left_click@Dialogs@@QAEXHH@Z 0x00612E80-0x00612EB0 BYTE_EXACT
 // symbol    ?on_left_click@Dialogs@@UAEXHH@Z
 // size      48 bytes
 // prototype void (__thiscall ?on_left_click@Dialogs@@QAEXHH@Z)(Dialogs* this, int xCoord, int yCoord)
@@ -646,8 +646,24 @@ Return Value: n/a
 Status: Complete
 */
 void Dialogs::on_left_click(int a, int b) {
-    if (kind_ == 8) {
+    switch (kind_) {
+    case 1:
+        CheckBox::on_left_click(a, b);
+        break;
+    case 2:
+        ListBox::on_left_click(a, b);
+        break;
+    case 4:
+        EditGroup::on_left_click(a, b);
+        break;
+    case 8:
         SpriteBox::on_left_click(a, b);
+        break;
+    case 16:
+        RadioButton::on_left_click(a, b);
+        break;
+    default:
+        break;
     }
 }
 

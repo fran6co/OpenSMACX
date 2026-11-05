@@ -40,18 +40,22 @@ struct Win {
     Win() : result(0), scroll_calls(0), iFlags_(0), win_parent_(0) {}
     virtual Scroll *on_listbox_scroll_create() { ++scroll_calls; return result; }
     virtual Scroll *on_listbox_scroll_delete(Scroll *scroll) { return scroll; }
+    virtual void on_left_click(int = 0, int = 0) {}
 };
 struct GraphicWin : virtual Win {};
 struct Dialog : virtual Win {};
 struct ListBox : virtual GraphicWin, virtual Dialog {
     ACTUAL_LISTBOX_SCROLL_METHODS
 };
+struct RadioButton : virtual GraphicWin, virtual Dialog {};
+struct CheckBox : virtual GraphicWin, virtual Dialog {};
+struct EditGroup : virtual GraphicWin, virtual Dialog {};
 struct SpriteBox : virtual GraphicWin, virtual Dialog {
     int calls, x, y;
     SpriteBox() : calls(0), x(0), y(0) {}
     void on_left_click(int a, int b) { ++calls; x = a; y = b; }
 };
-struct DialogsMock : ListBox, SpriteBox {
+struct DialogsMock : ListBox, RadioButton, CheckBox, SpriteBox, EditGroup {
     int kind_;
     DialogsMock() : kind_(0) {}
     void on_left_click(int a, int b);
@@ -120,7 +124,7 @@ def compile_source(compiler: str, tmp_path: Path, click: str, scroll: str,
 def test_dialogs_actual_source_dispatch_and_damage_controls(compiler, tmp_path):
     assert compile_source(compiler, tmp_path, CLICK, SCROLL, "actual").returncode == 0
 
-    wrong_click = CLICK.replace("if (kind_ == 8)", "if (kind_ == 7)", 1)
+    wrong_click = CLICK.replace("case 8:", "case 7:", 1)
     assert wrong_click != CLICK
     result = compile_source(compiler, tmp_path, wrong_click, SCROLL, "wrong_click")
     assert result.returncode != 0 and "Assertion" in result.stderr, result.stderr
