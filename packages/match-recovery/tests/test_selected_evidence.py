@@ -328,6 +328,114 @@ def test_public_observation_keeps_body_pass_separate_from_unbounded_data_unknown
                for row in observation.required_evidence_unknowns)
 
 
+def _parent_member_selection(*, parent_bounded=True, member_offset=4, damage=None,
+                             parent_size=16, candidate=None):
+    from test_member_object_binding import owner_object
+
+    raw = bytearray(image_fixture())
+    raw[1024:1040] = bytes(16)
+    # The parent contains no address now; retain only the code HIGHLOW.
+    struct.pack_into("<H", raw, 768 + 12 + 8, 0)
+    pin = hashlib.sha256(raw).hexdigest()
+    origin = Origin(pin, "pe:va", 0x401000)
+    function = FunctionBinding(origin, (Span(0x401000, 0x401006),), "_f", "code/caller.cc")
+    parent = ObjectBinding(Origin(pin, "pe:va", 0x402000), "_parent", "data/owner.cc", 1,
+                           Span(0x402000, 0x402000 + parent_size) if parent_bounded else None,
+                           origin if parent_bounded else None)
+    member = ObjectBinding(Origin(pin, "pe:va", 0x402000 + member_offset),
+                           "_child", parent.unit, 2, parent_symbol=parent.symbol,
+                           member_path=("child",))
+    obj, _ = owner_object(candidate, damage=damage)
+    objects = {function.unit: Coff(function_object(symbol="_parent")), parent.unit: obj}
+    return function, parent, member, objects, PeImage(bytes(raw), pin)
+
+
+def test_selected_bounded_parent_covers_contents_without_inventing_member_extents():
+    from match_recovery.selected_evidence import select_evidence
+
+    function, parent, member, objects, image = _parent_member_selection()
+    selected = {function.origin.entity_id}
+    evidence = select_evidence((function,), selected, objects, (parent, member), (), (), (), ())
+    assert set(evidence.object_targets) == {parent, member}
+    assert evidence.object_contents == (parent,)
+    assert member.span is None and member.evidence is None
+    observation = observe_compiled_selection((function,), selected, (parent, member), (),
+                                             objects, image, {})
+    assert observation.body_result == Result.PASS
+    assert not observation.required_evidence_unknowns
+    by_symbol = {row["symbol"]: row for row in observation.required_evidence_checks}
+    assert by_symbol[parent.symbol]["content"] == Result.PASS
+    assert by_symbol[member.symbol]["definition"] == Result.PASS
+
+
+@pytest.mark.parametrize("kwargs", [
+    {"parent_bounded": False}, {"member_offset": 8}, {"parent_size": 8},
+    {"damage": "missing_field"}, {"damage": "duplicate_field"},
+    {"damage": "missing_cv"}, {"damage": "out_of_parent"},
+])
+def test_parent_content_selection_does_not_hide_missing_bounds_or_bad_member_layout(kwargs):
+    function, parent, member, objects, image = _parent_member_selection(**kwargs)
+    observation = observe_compiled_selection((function,), {function.origin.entity_id},
+                                             (parent, member), (), objects, image, {})
+    assert observation.required_evidence_unknowns or any(
+        row.get("content") == Result.FAIL or row.get("result") == Result.FAIL
+        for row in observation.required_evidence_checks)
+
+
+def test_selected_parent_still_checks_bytes_outside_the_named_member():
+    damaged = bytearray(16)
+    damaged[15] = 1
+    function, parent, member, objects, image = _parent_member_selection(candidate=bytes(damaged))
+    observation = observe_compiled_selection((function,), {function.origin.entity_id},
+                                             (parent, member), (), objects, image, {})
+    row = next(row for row in observation.required_evidence_checks
+               if row.get("symbol") == parent.symbol and "content" in row)
+    assert row["content"] == Result.FAIL
+    assert row["proof"]["differing_offsets"] == [15]
+
+
+@pytest.mark.parametrize("target_value", [7, 8])
+def test_parent_cover_follows_and_checks_relocations_outside_the_named_member(target_value):
+    from match_recovery.selected_evidence import select_evidence
+    from test_member_object_binding import owner_object
+
+    function, parent, member, objects, image = _parent_member_selection()
+    raw = bytearray(image.data)
+    struct.pack_into("<I", raw, 1024 + 12, 0x403000)
+    struct.pack_into("<H", raw, 768 + 12 + 8, 0x300C)
+    pin = hashlib.sha256(raw).hexdigest()
+    function = replace(function, origin=replace(function.origin, image_sha256=pin))
+    parent = replace(parent, origin=replace(parent.origin, image_sha256=pin), evidence=function.origin)
+    member = replace(member, origin=replace(member.origin, image_sha256=pin))
+    target = ObjectBinding(Origin(pin, "pe:va", 0x403000), "_h", "data/target.cc", 1,
+                           Span(0x403000, 0x403004), function.origin)
+    objects[parent.unit], _ = owner_object(data_relocations=((12, 1, 6),))
+    objects[target.unit] = Coff(data_fixture(struct.pack("<I", target_value), definition=b"_h"))
+    bindings = (parent, member, target)
+    selected = {function.origin.entity_id}
+    evidence = select_evidence((function,), selected, objects, bindings, (), (), (), ())
+    assert set(evidence.object_contents) == {parent, target}
+    assert member in evidence.object_targets
+    observation = observe_compiled_selection((function,), selected, bindings, (),
+                                             objects, PeImage(bytes(raw), pin), {})
+    assert not observation.required_evidence_unknowns
+    row = next(row for row in observation.required_evidence_checks
+               if row.get("symbol") == target.symbol and "content" in row)
+    assert row["content"] == (Result.PASS if target_value == 7 else Result.FAIL)
+
+
+def test_disagreeing_parent_target_routes_do_not_cover_an_unbounded_member(monkeypatch):
+    from match_recovery.selected_evidence import select_evidence
+
+    function, parent, member, objects, _ = _parent_member_selection()
+    monkeypatch.setattr("match_recovery.object_source.local_object_targets",
+                        lambda *_args: ({(parent.unit, parent.emitted_symbol): 0x402100}, []))
+    evidence = select_evidence((function,), {function.origin.entity_id}, objects,
+                               (parent, member), (), (), (), ())
+    assert member in evidence.object_contents
+    assert any(row.get("symbol") == member.symbol for row in evidence.unknown)
+
+
 def test_public_observation_checks_only_selected_functions_but_keeps_full_namespace():
     from test_shared_functions import code_object
 

@@ -155,11 +155,48 @@ def select_evidence(functions, selected, objects, object_bindings, generated_bin
         return [item for item in all_objects if item.emitted_symbol == symbol
                 and (storage == 2 or item.unit == unit)]
 
+    content_owners = {}
+
+    def content_owner(item):
+        if item.span is not None or item.parent_symbol is None:
+            return item
+        key = (item.unit, item.parent_symbol)
+        if key not in content_owners:
+            # An unbounded member remains a target/layout obligation. Only
+            # an independently bounded direct parent, qualified against this
+            # actual object, can cover its contents. Never synthesize a child
+            # span from current types or a neighboring original address.
+            group = _closure_object_group(item, all_objects)
+            parents = [row for row in group if row.parent_symbol is None
+                       and row.span is not None]
+            owner = None
+            obj = objects.get(item.unit)
+            if len(parents) == 1 and obj is not None:
+                parent = parents[0]
+                try:
+                    from .object_source import object_targets, local_object_targets
+                    targets, _ = object_targets(group, {item.unit: obj})
+                    local_targets, _ = local_object_targets(group, {item.unit: obj})
+                    addresses = {targets.get(parent.emitted_symbol),
+                                 local_targets.get((item.unit, parent.emitted_symbol))} - {None}
+                    if (addresses == {parent.origin.address}
+                            and all((row.origin.image_sha256, row.origin.address_space)
+                                    == (parent.origin.image_sha256, parent.origin.address_space)
+                                    for row in group)):
+                        _object_reference_span(parent, obj)
+                        owner = parent
+                except ValueError:
+                    pass  # Keep the original member's unknown prerequisite.
+            content_owners[key] = owner
+        return content_owners[key] or item
+
     def merge_object(item, *, content):
         for group_item in _closure_object_group(item, all_objects):
             target_objects[(group_item.unit, group_item.symbol, group_item.line)] = group_item
         if content:
+            item = content_owner(item)
             content_objects[(item.unit, item.symbol, item.line)] = item
+        return item
 
     pending_refs = list(refs)
     processed_refs = set()
@@ -173,8 +210,8 @@ def select_evidence(functions, selected, objects, object_bindings, generated_bin
             processed_refs.add(ref_key)
             matches = object_matches(unit, symbol, storage)
             for item in matches:
+                item = merge_object(item, content=True)
                 key = (item.unit, item.symbol, item.line)
-                merge_object(item, content=True)
                 if key in scanned_data:
                     continue
                 scanned_data.add(key)
