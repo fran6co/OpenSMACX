@@ -442,6 +442,61 @@
         "A bounded lifetime subsequence does not prove complete global startup order, original filenames or a full historical TU boundary."
       ],
       "reopen_when": "Source/global declaration order, compiler policy or lifetime ownership changes, or new original CRT evidence contradicts the current binding."
+    },
+    {
+      "id": "measure-declared-emitting-context-before-changing-source",
+      "category": "evidence_guard",
+      "evidence": {
+        "commit": "88f5387ce",
+        "witness": "src/basepop.cpp and src/flatbutton.cpp compile_context annotations; .opensmacx/recovery/ddinit-tu-nov05aq/selected-dtor-provider-review.json; match_recovery.source_selection.compilation_context"
+      },
+      "requires": [
+        "A mapping has an explicit compile_context or multiple emitted inline/COMDAT copies.",
+        "A screen used the marker host object or has not established which current copy the mapping selects."
+      ],
+      "action": "Resolve the declared compilation context with the native source selector before diagnosing a body regression. Compare the selected physical object and, when claiming linked placement, qualify the actual linked provider separately. Seven destructor misses in the marker-host screen were already exact in their declared contexts; no C++ or recipe change was needed.",
+      "contraindications": [
+        "Do not search copies for a convenient winner or silently rewrite compile_context.",
+        "A selected current provider does not establish the original historical TU or equality of all other emitted copies."
+      ],
+      "reopen_when": "Source ownership, explicit context, compiler recipe, emitted copies or linked selection changes; a disagreement in an unselected copy alone does not justify changing the selected body."
+    },
+    {
+      "id": "scope-generated-local-storage-by-emitting-unit",
+      "category": "candidate_strategy",
+      "evidence": {
+        "commit": "d6cf83b2f",
+        "witness": "docs/DECOMP_MAP.md v6 local object targets; Win and CheckBox cleanup guards; packages/match-recovery/src/match_recovery/source"
+      },
+      "requires": [
+        "A source move changes a compiler-generated local storage name.",
+        "Fresh physical COFF proves ordinary non-code storage with local storage class in the same emitting unit, and independent receiver/access evidence identifies the original object."
+      ],
+      "action": "Use the guarded source writer to express the evidenced TU-local object target. Keep original identity and spans fixed. Check both the extracted owner and remaining unit; identical local names in different objects need not denote the same storage.",
+      "contraindications": [
+        "Never classify a target as local from its spelling or ordinal alone.",
+        "Do not make it globally routable, erase ambiguous cross-kind references or infer complete CRT order from a matching subsequence."
+      ],
+      "reopen_when": "Storage class, owner, physical accesses, generated lifetimes or linked selection changes."
+    },
+    {
+      "id": "batch-fresh-matches-without-erasing-body-evidence",
+      "category": "execution_strategy",
+      "evidence": {
+        "commit": "88f5387ce",
+        "witness": ".opensmacx/recovery/build-frontier-nov06as/record-confirm.json; record-additional.json; source-delta.json; final-review.json"
+      },
+      "requires": [
+        "A fresh native measurement identifies currently matching implementations not yet recorded as byte claims.",
+        "Original identities, complete spans, current emitted contexts and source/body attribution remain intact."
+      ],
+      "action": "Batch eligible addresses through the native recorder under one frozen source epoch, inspect per-address publication even on a nonzero command exit, then freshly confirm the published set. In the witnessed batch, 204 claims were recorded across 81 owners without C++ statement changes; four explicit member-body attribution obligations stayed pending.",
+      "contraindications": [
+        "Do not equate a new claim with a new implementation or strict reference-aware equality.",
+        "Do not delete a valid explicit body fact or move a correct inline definition to bypass unsupported attribution.",
+        "A partial recorder publication with exit 3 is not a successful whole request; inspect its diff and confirm winners freshly."
+      ],
+      "reopen_when": "New native member-body attribution support or actual ownership evidence resolves a pending case; source, compiler or image changes require fresh measurements."
     }
   ],
   "policy": [

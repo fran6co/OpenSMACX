@@ -1345,6 +1345,21 @@ rediscover them. After the trial, compare the expected causal effect with the
 actual object result; promote a new rule only with its bounded witnesses,
 counterexamples and reopening conditions.
 
+Resolve each mapping's explicit `compile_context` with the native source
+selector before grouping object comparisons or diagnosing a regression. The
+marker host, body declaration, emitting TU and linked selected provider are
+separate facts. A host-object miss is not a selected-provider regression; never
+search alternate copies merely to obtain a pass. Retain explicit body facts
+when native attribution is unsupported, and report that limitation separately
+from the byte comparison. This avoids unnecessary C++ changes and repeated
+trials against the wrong object.
+
+When banking a freshly matching cohort, inspect per-address recorder outcomes
+and the actual source diff even on a nonzero exit. Partial publication can occur;
+freshly confirm the published subset before review. Count new implementations,
+current masked matches, historical claims and strict reference matches
+separately. Library verification rows are not application recovery gains.
+
 For source-group moves, explicitly check required standalone emission and direct
 call edges, owned data/associated spans, compiler-generated lifetime bindings in
 both old and new units, and the complete affected consumer set. A cleaner TU
