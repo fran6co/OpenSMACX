@@ -40,6 +40,14 @@ expansion from the coordinator, who may grant it under this standing authority.
 Preserve previous attempts, historical claims and restoration obligations; do not
 use a new task name or equivalent spelling to disguise repetitive search.
 
+For eligible single-TU, body-only candidate decks, start with
+`recover tasks variants ... --local` under a compiler lease. This fast screen
+uses the current TU recipe and never banks claims or establishes strict
+references. Run strict scoped verification on a promising candidate before
+publication. Associated data, header, signature, binding and cross-owner changes
+need the strict route. Keep full provider verification for that qualification
+step rather than repeatedly invoking it to reject ordinary body spellings.
+
 ## Read next
 
 - `recovery/WORKFLOW.md`: active coordinator, worker and review workflow.

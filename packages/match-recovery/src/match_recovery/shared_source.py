@@ -132,32 +132,41 @@ def parse_shared(text, path, pin, *, address_space):
     return tuple(bindings)
 
 
-def read_shared(root: Path, pin: str, *, contents=None):
+def read_shared(root: Path, pin: str, *, contents=None, inputs=None):
     """Read shared annotations and body state without deriving compiler contexts."""
     root = root.resolve()
-    configuration = SourceConfiguration.read(root)
+    if inputs is not None:
+        if inputs.root != root:
+            raise ValueError("captured source inputs belong to a different root")
+        configuration = inputs.configuration
+        source_rows = ((relative, inputs.text(relative)) for relative in inputs.paths)
+    else:
+        configuration = SourceConfiguration.read(root)
+        source_rows = ((path.relative_to(root).as_posix(),
+                        (contents or {}).get(path.relative_to(root).as_posix()).decode("utf-8")
+                        if (contents or {}).get(path.relative_to(root).as_posix()) is not None
+                        else path.read_text(encoding="utf-8"))
+                       for path in configuration.files(root))
     bindings = []
-    for path in configuration.files(root):
-        relative = path.relative_to(root).as_posix()
+    for relative, text in source_rows:
         if configuration.is_seed(relative):
             continue
-        raw = (contents or {}).get(relative)
-        text = path.read_text(encoding="utf-8") if raw is None else raw.decode("utf-8")
         bindings.extend(parse_shared(text, relative, pin, address_space=configuration.address_space))
     if len({item.symbol for item in bindings}) != len(bindings):
         raise ValueError("duplicate shared function symbol binding")
     return tuple(bindings)
 
 
-def read_shared_bindings(root: Path, pin: str, *, contents=None):
+def read_shared_bindings(root: Path, pin: str, *, contents=None, inputs=None):
     """Read body-backed shared methods and declaration-anchored generated members."""
     from .generated_member_source import read_generated_members
 
-    return (*read_shared(root, pin, contents=contents),
-            *read_generated_members(root, pin, contents=contents))
+    return (*read_shared(root, pin, contents=contents, inputs=inputs),
+            *read_generated_members(root, pin, contents=contents, inputs=inputs))
 
 
-def resolve_shared_contexts(root: Path, bindings, *, settings, contents=None, source_records=None):
+def resolve_shared_contexts(root: Path, bindings, *, settings, contents=None, source_records=None,
+                            inputs=None):
     """Derive each shared definition's compiler TU from its mapped evidence.
 
     `unit` remains the source annotation/body path. In particular, a header
@@ -170,13 +179,23 @@ def resolve_shared_contexts(root: Path, bindings, *, settings, contents=None, so
     from .source_selection import compilation_context
 
     root = Path(root).resolve()
-    configuration = SourceConfiguration.read(root)
+    if inputs is not None and inputs.root != root:
+        raise ValueError("captured source inputs belong to a different root")
+    configuration = inputs.configuration if inputs is not None else SourceConfiguration.read(root)
     if not hasattr(settings, "unit_extensions") or not hasattr(settings, "source"):
         raise TypeError("shared compiler-context resolution requires project measurement settings")
     from .generated_member_source import GeneratedMemberBinding
     needs_witnesses = any(Path(binding.unit).suffix in configuration.interface_extensions
                           or isinstance(binding, GeneratedMemberBinding) for binding in bindings)
-    if source_records is None and needs_witnesses:
+    if source_records is None and needs_witnesses and inputs is not None:
+        evidence_addresses = {binding.evidence.address for binding in bindings}
+        witness_paths = {row["path"] for row in inputs.records
+                         if row["origin"]["address"] in evidence_addresses
+                         and not configuration.is_seed(row["path"])}
+        source_records = []
+        for relative in sorted(witness_paths):
+            source_records.extend(read_text(inputs.text(relative), root / relative))
+    elif source_records is None and needs_witnesses:
         source_records = []
         for path in configuration.files(root):
             relative = path.relative_to(root).as_posix()

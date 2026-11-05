@@ -3,6 +3,7 @@
 from dataclasses import replace
 import hashlib
 import json
+import os
 from pathlib import Path
 
 import pytest
@@ -143,6 +144,173 @@ def test_native_record_verifier_accepts_only_current_records_and_explicit_trials
     stale = replace(records[0], symbol="_stale")
     with pytest.raises(ValueError, match="current configured source annotation"):
         verify_records(root, [stale], root / "image.exe", flag_sets=(("first",),), compiler=compile)
+    stale_body = replace(records[0], region=records[0].region + "\n// stale caller body\n")
+    with pytest.raises(ValueError, match="current configured source annotation"):
+        verify_records(root, [stale_body], root / "image.exe", flag_sets=(("first",),), compiler=compile)
+
+
+def test_native_record_verifier_returns_same_fresh_report_for_unchanged_source(tmp_path):
+    root, _task, raw = project(tmp_path)
+    records = read_file(root / "code/unit.cc")
+    verify = lambda: verify_records(root, records, root / "image.exe",
+                                    flag_sets=(("first",),), compiler=lambda *_: raw,
+                                    command_for=lambda _path: ())
+    first, second = verify(), verify()
+    assert first == second
+
+
+@pytest.mark.parametrize("damage", ["same_mtime_edit", "add_source", "remove_source", "retarget_symlink", "config"])
+def test_record_verifier_refuses_captured_source_changes_during_compilation(tmp_path, damage):
+    root, _task, raw = project(tmp_path)
+    records = read_file(root / "code/unit.cc")
+    extra = root / "code/extra.h"
+    if damage in ("same_mtime_edit", "remove_source"):
+        extra.write_text("// retained configured host\n")
+    elif damage == "retarget_symlink":
+        first_target, second_target = root / "code/first-target.h", root / "code/second-target.h"
+        first_target.write_text("// same target bytes\n")
+        second_target.write_text("// same target bytes\n")
+        extra.symlink_to(first_target.name)
+    original_stat = extra.stat() if extra.exists() else None
+
+    def compile(*_args):
+        if damage == "same_mtime_edit":
+            extra.write_text("// changed, but mtime restored\n")
+            os.utime(extra, ns=(original_stat.st_atime_ns, original_stat.st_mtime_ns))
+        elif damage == "add_source":
+            extra.write_text("// new configured host\n")
+        elif damage == "remove_source":
+            extra.unlink()
+        elif damage == "retarget_symlink":
+            extra.unlink()
+            extra.symlink_to(second_target.name)
+        elif damage == "config":
+            project_config = json.loads((root / "recovery/project.json").read_text())
+            project_config["source"]["extensions"] = [".cc", ".h", ".hpp"]
+            (root / "recovery/project.json").write_text(json.dumps(project_config))
+        return raw
+
+    with pytest.raises(ValueError, match="source|build inputs|inventory"):
+        verify_records(root, records, root / "image.exe", flag_sets=(("first",),),
+                       compiler=compile, command_for=lambda _path: ())
+
+
+def test_record_verifier_checks_namespace_collisions_in_unselected_headers(tmp_path):
+    root, _task, _raw = project(tmp_path)
+    marker = "// RECOVERY_IMPORT: v1 __imp__shared m.dll name:Shared\n"
+    (root / "code/unit.cc").write_text((root / "code/unit.cc").read_text() + marker)
+    (root / "code/other.h").write_text(marker)
+    records = read_file(root / "code/unit.cc")
+    with pytest.raises(ValueError, match="duplicate source import"):
+        verify_records(root, records, root / "image.exe", flag_sets=(("first",),),
+                       compiler=lambda *_: pytest.fail("namespace collision reached compilation"),
+                       command_for=lambda _path: ())
+
+
+def test_captured_source_readers_are_stable_while_standalone_reader_stays_fresh(tmp_path):
+    from match_recovery.import_source import read_imports
+    from match_recovery.source_inventory import SourceInputs, source_snapshot
+
+    root, _task, _raw = project(tmp_path)
+    snapshot = source_snapshot(root)
+    inputs = SourceInputs.from_snapshot(root, snapshot)
+    before = inputs.text("code/unit.cc")
+    snapshot_view = inputs.snapshot
+    snapshot_view["files"]["code/unit.cc"]["content_base64"] = ""
+    assert inputs.text("code/unit.cc") == before
+    with pytest.raises(TypeError):
+        inputs.texts["code/unit.cc"] = "mutated"
+    source = root / "code/unit.cc"
+    source.write_text(source.read_text() + "\n// RECOVERY_IMPORT: v1 __imp__fresh m.dll name:Fresh\n")
+
+    assert read_imports(root) and read_imports(root)[0].name == "Fresh"
+    assert read_imports(root, inputs=inputs) == ()
+
+
+def test_record_verification_keeps_strict_utf8_source_fact_decoding(tmp_path):
+    from match_recovery.source_inventory import SourceInputs, source_snapshot
+
+    root, _task, _raw = project(tmp_path)
+    (root / "code/invalid.h").write_bytes(b"// invalid byte: \xff\n")
+    snapshot = source_snapshot(root)
+    with pytest.raises(UnicodeDecodeError):
+        SourceInputs.from_snapshot(root, snapshot)
+
+
+def test_source_snapshot_guards_same_content_symlink_target_identity(tmp_path):
+    from match_recovery.source_inventory import assert_snapshot_current, source_snapshot
+
+    root, _task, _raw = project(tmp_path)
+    first, second = root / "code/first.h", root / "code/second.h"
+    alias = root / "code/alias.h"
+    first.write_text("// identical bytes\n")
+    second.write_text("// identical bytes\n")
+    alias.symlink_to(first.name)
+    snapshot = source_snapshot(root)
+    assert snapshot["files"]["code/alias.h"]["resolved_path"] == "code/first.h"
+    alias.unlink()
+    alias.symlink_to(second.name)
+    with pytest.raises(ValueError, match="source target changed"):
+        assert_snapshot_current(root, snapshot)
+
+
+def test_source_snapshot_refuses_symlink_retarget_during_capture(tmp_path, monkeypatch):
+    import match_recovery.source_inventory as source_inventory
+
+    root, _task, _raw = project(tmp_path)
+    first, second = root / "code/first.h", root / "code/second.h"
+    alias = root / "code/alias.h"
+    first.write_text("// identical bytes\n")
+    second.write_text("// identical bytes\n")
+    alias.symlink_to(first.name)
+    original_memoized = source_inventory.memoized
+    changed = False
+
+    def retarget_after_parse(cache, key, load):
+        nonlocal changed
+        result = original_memoized(cache, key, load)
+        if not changed:
+            changed = True
+            alias.unlink()
+            alias.symlink_to(second.name)
+        return result
+
+    monkeypatch.setattr(source_inventory, "memoized", retarget_after_parse)
+    with pytest.raises(ValueError, match="source target changed during import"):
+        source_inventory.source_snapshot(root)
+
+
+@pytest.mark.parametrize("line_ending", [b"\r\n", b"\r"])
+def test_captured_fact_reader_text_matches_universal_newlines_and_unselected_collision(tmp_path, line_ending):
+    from match_recovery.associated_source import read_associated
+    from match_recovery.import_source import read_imports
+    from match_recovery.source import read_text
+    from match_recovery.source_inventory import (SourceInputs, source_file_texts,
+                                                 source_snapshot)
+
+    root, _task, _raw = project(tmp_path)
+    source = root / "code/unit.cc"
+    source.write_bytes(source.read_bytes().replace(b"\r\n", b"\n").replace(b"\r", b"\n")
+                       .replace(b"\n", line_ending))
+    marker = b"// RECOVERY_IMPORT: v1 __imp__same m.dll name:Same"
+    other_ending = b"\r" if line_ending == b"\r\n" else b"\r\n"
+    source.write_bytes(source.read_bytes() + marker + line_ending)
+    (root / "code/other.h").write_bytes(marker + other_ending)
+
+    snapshot = source_snapshot(root)
+    inputs = SourceInputs.from_snapshot(root, snapshot)
+    _, fresh_rows = source_file_texts(root)
+    _, captured_rows = source_file_texts(root, inputs)
+    fresh_texts = dict(fresh_rows)
+    captured_texts = dict(captured_rows)
+    assert captured_texts == fresh_texts
+    assert read_text(inputs.text("code/unit.cc"), source) == read_file(source)
+    assert read_associated(root, snapshot["image_sha256"], inputs=inputs) == read_associated(
+        root, snapshot["image_sha256"])
+    with pytest.raises(ValueError, match="duplicate source import"):
+        read_imports(root)
+    with pytest.raises(ValueError, match="duplicate source import"):
+        read_imports(root, inputs=inputs)
 
 
 @pytest.mark.parametrize("damage", ["guard", "table", "reference"])

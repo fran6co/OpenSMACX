@@ -85,15 +85,15 @@ def validate_literals(bindings) -> tuple[LiteralBinding, ...]:
     return bindings
 
 
-def read_literals(root: Path, pin: str) -> tuple[LiteralBinding, ...]:
+def read_literals(root: Path, pin: str, *, inputs=None) -> tuple[LiteralBinding, ...]:
     root = root.resolve()
-    configuration = SourceConfiguration.read(root)
+    from .source_inventory import source_file_texts
+    configuration, source_rows = source_file_texts(root, inputs)
     bindings = []
-    for path in configuration.files(root):
-        relative = path.relative_to(root).as_posix()
+    for relative, text in source_rows:
         if configuration.is_seed(relative):
             continue
-        bindings.extend(parse_literals(path.read_text(encoding="utf-8"), relative, pin,
+        bindings.extend(parse_literals(text, relative, pin,
                                        address_space=configuration.address_space))
     bindings = validate_literals(bindings)
     if bindings:
@@ -101,7 +101,7 @@ def read_literals(root: Path, pin: str) -> tuple[LiteralBinding, ...]:
         # object/table. Unbounded starts constrain only that known point.
         from .object_source import read_objects
         from .generated_source import read_generated
-        others = (*read_objects(root, pin), *read_generated(root, pin))
+        others = (*read_objects(root, pin, inputs=inputs), *read_generated(root, pin, inputs=inputs))
         for literal in bindings:
             for other in others:
                 overlap = (literal.span.start <= other.origin.address < literal.span.end

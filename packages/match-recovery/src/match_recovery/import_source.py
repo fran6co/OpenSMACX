@@ -45,14 +45,14 @@ def parse_imports(text: str, path: str) -> tuple[ImportBinding, ...]:
     return tuple(bindings)
 
 
-def read_imports(root: Path) -> tuple[ImportBinding, ...]:
+def read_imports(root: Path, *, inputs=None) -> tuple[ImportBinding, ...]:
     root = root.resolve()
-    source = SourceConfiguration.read(root)
+    from .source_inventory import source_file_texts
+    source, source_rows = source_file_texts(root, inputs)
     bindings = []
-    for path in source.files(root):
-        relative = path.relative_to(root).as_posix()
+    for relative, text in source_rows:
         if not source.is_seed(relative):
-            bindings.extend(parse_imports(path.read_text(encoding="utf-8"), relative))
+            bindings.extend(parse_imports(text, relative))
     if len({item.symbol for item in bindings}) != len(bindings):
         raise ValueError("duplicate source import symbol binding")
     return tuple(bindings)

@@ -27,7 +27,8 @@ from match_recovery.ownership_source import project_view
 from match_recovery.generated_binary import check_generated, generated_coverage
 from .compiler import Compiler
 from .measurement import Measurement
-from .source_inventory import image_pin
+from .source_inventory import (SourceInputs, assert_snapshot_current, image_pin,
+                               source_snapshot)
 from .import_source import read_imports, import_targets
 from .shared_source import (read_shared_bindings, referenced_shared_units,
                             resolve_shared_contexts, validate_shared_bindings)
@@ -651,7 +652,7 @@ def _verify_selection(root: Path, selected: frozenset[str], image_path: Path, *,
                       compiler: Callable | None = None, command_for: Callable | None = None,
                       flag_sets=None, debug_types: bool = False, retained_diagnostics: bool = False,
                       selection_guard=None, selection_label=None, expected_image_sha256=None,
-                      record_evidence: bool = False) -> dict:
+                      record_evidence: bool = False, source_inputs: SourceInputs | None = None) -> dict:
     # Joint layout checks need configured debug flags. This is a measured configuration,
     # never an assumption that debug and non-debug objects are interchangeable.
     if type(debug_types) is not bool:
@@ -678,22 +679,28 @@ def _verify_selection(root: Path, selected: frozenset[str], image_path: Path, *,
     measurement_options = {"debug_types": debug_types,
                            **({"retained_diagnostics": True} if retained_diagnostics else {})}
     before = settings.snapshot(root, measurement_options)
-    view, snapshot = project_view(root)
+    if source_inputs is None:
+        source_inputs = SourceInputs.from_snapshot(root, source_snapshot(root))
+    elif source_inputs.root != root:
+        raise ValueError("captured source inputs belong to a different root")
+    snapshot = source_inputs.snapshot
+    view, snapshot = project_view(root, snapshot=snapshot)
     from .body_attribution import BodyAttribution
     body_attribution = BodyAttribution(root, snapshot)
     if expected_image_sha256 is not None and expected_image_sha256 != snapshot["image_sha256"]:
         raise ValueError("records refer to a different configured original image")
     image_data = image_path.read_bytes()
     image = PeImage(image_data, snapshot["image_sha256"])
-    object_bindings = read_objects(root, snapshot["image_sha256"])
-    literal_bindings = read_literals(root, snapshot["image_sha256"])
-    associated_bindings = read_associated(root, snapshot["image_sha256"])
+    object_bindings = read_objects(root, snapshot["image_sha256"], inputs=source_inputs)
+    literal_bindings = read_literals(root, snapshot["image_sha256"], inputs=source_inputs)
+    associated_bindings = read_associated(root, snapshot["image_sha256"], inputs=source_inputs)
     if any(item.span is not None for item in object_bindings) and not explicit_flag_sets:
         flag_sets = tuple(flags + settings.layout_flags for flags in settings.flag_sets)
-    generated_bindings = read_generated(root, snapshot["image_sha256"])
-    import_bindings = read_imports(root)
+    generated_bindings = read_generated(root, snapshot["image_sha256"], inputs=source_inputs)
+    import_bindings = read_imports(root, inputs=source_inputs)
     shared_bindings = resolve_shared_contexts(
-        root, read_shared_bindings(root, snapshot["image_sha256"]), settings=settings)
+        root, read_shared_bindings(root, snapshot["image_sha256"], inputs=source_inputs),
+        settings=settings, inputs=source_inputs)
     object_symbols = set(emitted_object_symbols(object_bindings))
     validate_shared_bindings(shared_bindings, view, reserved=[*object_symbols,
         *[item.symbol for item in (*generated_bindings, *import_bindings)]])
@@ -1163,50 +1170,53 @@ def verify_records(root: Path, records, image_path: Path, *, flag_sets,
     settings = Measurement.read(root)
     if settings.source.address_space != "pe:va":
         raise ValueError("record verification requires the configured PE virtual-address space")
-    pin = image_pin(root, settings.source)
     image_path = image_path if image_path.is_absolute() else root / image_path
     image_path = image_path.resolve()
-    actual = hashlib.sha256(image_path.read_bytes()).hexdigest()
-    if actual != pin:
-        raise ValueError("record verification requires the configured pinned original image")
+    snapshot = source_snapshot(root, image_path)
+    from .source_config import SourceConfiguration
+    if SourceConfiguration.from_dict(snapshot["source_configuration"]) != settings.source:
+        raise ValueError("source configuration changed while starting record verification")
+    source_inputs = SourceInputs.from_snapshot(root, snapshot)
+    pin = snapshot["image_sha256"]
     selected_records = tuple(records)
     if not selected_records:
         raise ValueError("record verification requires an explicit nonempty selection")
-
-    def fresh_records():
-        current = _current_source_records(root, settings)
-        # Re-enumerate for each freshness pass, rather than each selected record.
-        configured_paths = {path.relative_to(root).as_posix()
-                            for path in settings.source.files(root)}
-        by_key = defaultdict(list)
-        for row in current:
-            by_key[(row.path.resolve(), row.address, row.line)].append(row)
-        selected_ids = []
-        for record in selected_records:
-            try:
-                relative = record.path.resolve().relative_to(root).as_posix()
-                key = (record.path.resolve(), record.address, record.line)
-            except (AttributeError, OSError, ValueError) as error:
-                raise ValueError("selected record is not a configured current source annotation") from error
-            if (relative not in configured_paths
-                    or len(by_key.get(key, ())) != 1 or by_key[key][0] != record):
-                raise ValueError("selected record differs from the current configured source annotation")
-            selected_ids.append(Origin(pin, settings.source.address_space, record.address).entity_id)
-        if len(set(selected_ids)) != len(selected_ids):
-            raise ValueError("record verification selection contains duplicate original identities")
-        return frozenset(selected_ids)
-
-    selected = fresh_records()
+    by_key = defaultdict(list)
+    selected_ids, selected_keys, selected_hosts = [], [], {}
+    for record in selected_records:
+        try:
+            relative = record.path.resolve().relative_to(root).as_posix()
+            key = (record.path.resolve(), record.address, record.line)
+        except (AttributeError, OSError, ValueError) as error:
+            raise ValueError("selected record is not a configured current source annotation") from error
+        if relative not in snapshot["files"]:
+            raise ValueError("selected record is not a configured current source annotation")
+        selected_hosts[relative] = record.path.resolve()
+        selected_keys.append(key)
+        selected_ids.append(Origin(pin, settings.source.address_space, record.address).entity_id)
+    from match_recovery.source import read_text
+    for relative, path in selected_hosts.items():
+        for current in read_text(source_inputs.text(relative), path):
+            by_key[(current.path.resolve(), current.address, current.line)].append(current)
+    for key, selected_record in zip(selected_keys, selected_records):
+        candidates = by_key.get(key, ())
+        if len(candidates) != 1 or candidates[0] != selected_record:
+            raise ValueError("selected record differs from the current configured source annotation")
+    if len(set(selected_ids)) != len(selected_ids):
+        raise ValueError("record verification selection contains duplicate original identities")
+    selected = frozenset(selected_ids)
 
     def guard():
-        if fresh_records() != selected or image_pin(root, settings.source) != pin:
+        assert_snapshot_current(root, snapshot)
+        if image_pin(root, settings.source) != pin:
             raise ValueError("source records or configured image pin changed during verification; retry")
 
     return _verify_selection(root, selected, image_path, compiler=compiler,
                               command_for=command_for, flag_sets=flag_sets,
                               retained_diagnostics=retained_diagnostics,
                               selection_guard=guard, selection_label=None,
-                              expected_image_sha256=pin, record_evidence=True)
+                              expected_image_sha256=pin, record_evidence=True,
+                              source_inputs=source_inputs)
 
 
 def _source_receipt_object_owners(objects, receipt_outputs, archive_receipts=()):

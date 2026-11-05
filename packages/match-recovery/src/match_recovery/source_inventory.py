@@ -12,16 +12,113 @@ import ast
 from collections import Counter, defaultdict
 from dataclasses import asdict
 import hashlib
+from copy import deepcopy
 import os
 from pathlib import Path
 import re
 import subprocess
 import sys
+from dataclasses import dataclass
+from types import MappingProxyType
 from typing import Any
 
 from match_recovery.model import Dimension, Obligation, Origin, Span, digest, require_digest
 from match_recovery.memo import memoized
 from .source_config import SourceConfiguration
+
+
+def _freeze_snapshot_value(value):
+    if isinstance(value, dict):
+        return MappingProxyType({key: _freeze_snapshot_value(item) for key, item in value.items()})
+    if isinstance(value, list):
+        return tuple(_freeze_snapshot_value(item) for item in value)
+    return value
+
+
+@dataclass(frozen=True)
+class SourceInputs:
+    """One verification's captured source corpus and its parsed identity rows.
+
+    This view is deliberately invocation-local.  Its caller must validate the
+    snapshot before returning a measurement; it is not a process cache.
+    """
+    root: Path
+    _snapshot: dict[str, Any]
+    configuration: SourceConfiguration
+    texts: Any
+    _records: tuple[Any, ...]
+
+    @classmethod
+    def from_snapshot(cls, root: Path, snapshot: dict[str, Any]) -> "SourceInputs":
+        root = root.resolve()
+        configuration = SourceConfiguration.from_dict(snapshot["source_configuration"])
+        if (snapshot.get("schema_version") != 1
+                or not isinstance(snapshot.get("files"), dict)
+                or not isinstance(snapshot.get("records"), list)):
+            raise ValueError("invalid captured source inputs")
+        texts = {}
+        for relative, row in snapshot["files"].items():
+            source_path = configuration.path(root, relative)
+            resolved_relative = source_path.resolve().relative_to(root).as_posix()
+            if row.get("resolved_path") != resolved_relative:
+                raise ValueError(f"captured source path target changed: {relative}")
+            raw = base64.b64decode(row["content_base64"], validate=True)
+            if hashlib.sha256(raw).hexdigest() != row.get("sha256"):
+                raise ValueError(f"captured source bytes do not match their digest: {relative}")
+            # Fact readers historically decoded configured files strictly;
+            # keep that refusal even though the legacy mapping importer uses
+            # replacement decoding for annotation recovery.
+            decoded = raw.decode("utf-8")
+            # Match Path.read_text's universal-newline translation used by
+            # the standalone fact readers. The attested bytes and digest stay
+            # raw; only the per-invocation parser view is normalized.
+            texts[relative] = decoded.replace("\r\n", "\n").replace("\r", "\n")
+        for row in snapshot["records"]:
+            relative = row.get("path")
+            if relative not in texts:
+                raise ValueError("captured source mapping has no source host")
+            if row.get("file_sha256") != snapshot["files"][relative].get("sha256"):
+                raise ValueError("captured source mapping is not bound to its raw source bytes")
+            origin = row.get("origin", {})
+            expected = Origin(snapshot["image_sha256"], configuration.address_space,
+                              origin.get("address", -1))
+            if origin != expected.__dict__ or row.get("entity_id") != expected.entity_id:
+                raise ValueError("captured source mapping identity does not match the pinned original")
+        records = tuple(_freeze_snapshot_value(row) for row in snapshot["records"])
+        return cls(root, deepcopy(snapshot), configuration, MappingProxyType(texts), records)
+
+    @property
+    def snapshot(self) -> dict[str, Any]:
+        # Consumers receive a disposable view. Mutating it cannot desynchronize
+        # the captured annotation rows from the immutable text corpus.
+        return deepcopy(self._snapshot)
+
+    @property
+    def records(self) -> tuple[Any, ...]:
+        return self._records
+
+    @property
+    def paths(self) -> tuple[str, ...]:
+        return tuple(sorted(self.texts))
+
+    def text(self, relative: str) -> str:
+        try:
+            return self.texts[relative]
+        except KeyError as error:
+            raise ValueError(f"source file is outside the captured corpus: {relative}") from error
+
+
+def source_file_texts(root: Path, inputs: SourceInputs | None = None):
+    """Yield configured source text, using captured bytes only when supplied."""
+    root = root.resolve()
+    if inputs is not None:
+        if inputs.root != root:
+            raise ValueError("captured source inputs belong to a different root")
+        return inputs.configuration, ((name, inputs.text(name)) for name in inputs.paths)
+    configuration = SourceConfiguration.read(root)
+    return configuration, ((path.relative_to(root).as_posix(),
+                            path.read_text(encoding="utf-8"))
+                           for path in configuration.files(root))
 
 
 _PARSER_ROOTS = (
@@ -352,16 +449,19 @@ def source_snapshot(root: Path, image: Path | None = None, *, allow_empty: bool 
     files, records, obligations = {}, [], []
     paths = source_files(root, configuration)
     for path in paths:
-        if not path.resolve().is_relative_to(root):
+        resolved_path = path.resolve()
+        if not resolved_path.is_relative_to(root):
             raise ValueError(f"source resolves outside the worktree: {path}")
+        resolved_relative = resolved_path.relative_to(root).as_posix()
         raw = path.read_bytes()
         file_digest = hashlib.sha256(raw).hexdigest()
         relative = path.relative_to(root).as_posix()
         files[relative] = {"sha256": file_digest,
-                           "content_base64": base64.b64encode(raw).decode("ascii")}
+                           "content_base64": base64.b64encode(raw).decode("ascii"),
+                           "resolved_path": resolved_relative}
         # Resolved path shape affects the legacy proved-store body extraction.
         key = digest({"parser": parser_key, "file": file_digest, "path": relative,
-                      "resolved_path": path.resolve().relative_to(root).as_posix(), "image": pin,
+                      "resolved_path": resolved_relative, "image": pin,
                       "source_configuration": asdict(configuration)})
         parsed = memoized(cache, key, lambda: _parse_file(raw, path, root, pin, configuration))
         records.extend(parsed["records"])
@@ -373,6 +473,10 @@ def source_snapshot(root: Path, image: Path | None = None, *, allow_empty: bool 
             or pin != image_pin(root, configuration) or revision != _revision(root)):
         raise ValueError("source inventory changed during import; retry at a checkpoint")
     for name, info in files.items():
+        current_path = configuration.path(root, name).resolve()
+        if (not current_path.is_relative_to(root)
+                or current_path.relative_to(root).as_posix() != info["resolved_path"]):
+            raise ValueError(f"source target changed during import: {name}")
         if hashlib.sha256((root / name).read_bytes()).hexdigest() != info["sha256"]:
             raise ValueError(f"source changed during import: {name}")
     return {"schema_version": 1, "provider": "original-comments", "source_configuration": asdict(configuration),
@@ -391,7 +495,13 @@ def assert_snapshot_current(root: Path, snapshot: dict) -> None:
             or snapshot["revision"] != _revision(root)):
         raise ValueError("source inventory changed; retry at a checkpoint")
     for name, row in snapshot["files"].items():
-        if hashlib.sha256(configuration.path(root, name).read_bytes()).hexdigest() != row["sha256"]:
+        path = configuration.path(root, name)
+        resolved = path.resolve()
+        if (not resolved.is_relative_to(root)
+                or (row.get("resolved_path") is not None
+                    and resolved.relative_to(root).as_posix() != row["resolved_path"])):
+            raise ValueError(f"source target changed since inventory: {name}")
+        if hashlib.sha256(path.read_bytes()).hexdigest() != row["sha256"]:
             raise ValueError(f"source changed since inventory: {name}")
 
 

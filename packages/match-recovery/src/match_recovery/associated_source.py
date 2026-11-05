@@ -171,20 +171,20 @@ def _overlaps(left: Span, right: Span) -> bool:
     return left.start < right.end and right.start < left.end
 
 
-def read_associated(root: Path, pin: str) -> tuple[AssociatedDataBinding, ...]:
+def read_associated(root: Path, pin: str, *, inputs=None) -> tuple[AssociatedDataBinding, ...]:
     """Read product annotations and prove their source-level owner closure.
 
     This validates mappings and overlap declarations only. Instruction-boundary
     evidence and physical code/data layout belong to binary verification.
     """
     root = root.resolve()
-    configuration = SourceConfiguration.read(root)
+    from .source_inventory import source_file_texts
+    configuration, source_rows = source_file_texts(root, inputs)
+    source_rows = tuple(source_rows)
     bindings = []
-    for path in configuration.files(root):
-        relative = path.relative_to(root).as_posix()
+    for relative, text in source_rows:
         if configuration.is_seed(relative):
             continue
-        text = path.read_text(encoding="utf-8")
         bindings.extend(parse_associated(text, relative, pin,
                                          address_space=configuration.address_space))
     result = validate_associated(bindings)
@@ -199,9 +199,7 @@ def read_associated(root: Path, pin: str) -> tuple[AssociatedDataBinding, ...]:
     from .literal_source import parse_literals
     from .object_source import parse_objects
 
-    for path in configuration.files(root):
-        relative = path.relative_to(root).as_posix()
-        text = path.read_text(encoding="utf-8")
+    for relative, text in source_rows:
         # Retained seed mappings do not supply live owner annotations, but
         # remain original identities whose bytes cannot be relabelled.
         objects.extend(parse_objects(text, relative, pin,
@@ -210,7 +208,16 @@ def read_associated(root: Path, pin: str) -> tuple[AssociatedDataBinding, ...]:
                                          address_space=configuration.address_space))
         literals.extend(parse_literals(text, relative, pin,
                                        address_space=configuration.address_space))
-        functions.extend((relative, item) for item in read_text(text, relative))
+        if inputs is None:
+            functions.extend((relative, item) for item in read_text(text, relative))
+    if inputs is not None:
+        from types import SimpleNamespace
+        functions.extend((row["path"], SimpleNamespace(
+            address=row["origin"]["address"],
+            image_spans=tuple(tuple(span) for span in row["spans"]),
+            function_fragment=row.get("function_fragment"),
+            extract_error=row.get("extract_error")))
+            for row in inputs.records)
 
     functions_by_unit: dict[str, list] = {}
     for unit, record in functions:

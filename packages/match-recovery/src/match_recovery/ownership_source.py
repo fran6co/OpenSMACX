@@ -56,8 +56,14 @@ def component_manifests(snapshot: dict):
     return [manifest for _, manifest in component_entries(snapshot)]
 
 
-def project_view(root: Path, image: Path | None = None, *, allow_empty: bool = False) -> tuple[dict, dict]:
-    snapshot = source_snapshot(root, image, allow_empty=allow_empty)
+def project_view(root: Path, image: Path | None = None, *, allow_empty: bool = False,
+                 snapshot: dict | None = None) -> tuple[dict, dict]:
+    if snapshot is None:
+        snapshot = source_snapshot(root, image, allow_empty=allow_empty)
+    elif image is not None:
+        from .source_inventory import image_pin
+        if image_pin(root, SourceConfiguration.from_dict(snapshot["source_configuration"])) != snapshot["image_sha256"]:
+            raise ValueError("provided source snapshot does not match the configured image pin")
     configuration = SourceConfiguration.from_dict(snapshot["source_configuration"])
     component_owners = exact_component_record_bindings(snapshot)
     candidates = []

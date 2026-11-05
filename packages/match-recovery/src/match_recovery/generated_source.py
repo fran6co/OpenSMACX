@@ -133,15 +133,15 @@ def add_generated(text: str, binding: GeneratedBinding) -> str:
     return candidate
 
 
-def read_generated(root: Path, pin: str) -> tuple[GeneratedBinding, ...]:
+def read_generated(root: Path, pin: str, *, inputs=None) -> tuple[GeneratedBinding, ...]:
     root = root.resolve()
-    configuration = SourceConfiguration.read(root)
+    from .source_inventory import source_file_texts
+    configuration, source_rows = source_file_texts(root, inputs)
     bindings = []
-    for path in configuration.files(root):
-        relative = path.relative_to(root).as_posix()
+    for relative, text in source_rows:
         if configuration.is_seed(relative):
             continue
-        bindings.extend(parse_generated(path.read_text(encoding="utf-8"), relative, pin,
+        bindings.extend(parse_generated(text, relative, pin,
                                         address_space=configuration.address_space))
     if (len({row.symbol for row in bindings}) != len(bindings)
             or len({row.origin.entity_id for row in bindings}) != len(bindings)):

@@ -361,16 +361,24 @@ def parse_generated_members(text: str, path: str, pin: str, *, address_space: st
     return tuple(bindings)
 
 
-def read_generated_members(root: Path, pin: str, *, contents=None):
+def read_generated_members(root: Path, pin: str, *, contents=None, inputs=None):
     root = root.resolve()
-    configuration = SourceConfiguration.read(root)
+    if inputs is not None:
+        if inputs.root != root:
+            raise ValueError("captured source inputs belong to a different root")
+        configuration = inputs.configuration
+        source_rows = ((relative, inputs.text(relative)) for relative in inputs.paths)
+    else:
+        configuration = SourceConfiguration.read(root)
+        source_rows = ((path.relative_to(root).as_posix(),
+                        (contents or {}).get(path.relative_to(root).as_posix()).decode("utf-8")
+                        if (contents or {}).get(path.relative_to(root).as_posix()) is not None
+                        else path.read_text(encoding="utf-8"))
+                       for path in configuration.files(root))
     bindings = []
-    for path in configuration.files(root):
-        relative = path.relative_to(root).as_posix()
+    for relative, text in source_rows:
         if configuration.is_seed(relative):
             continue
-        raw = (contents or {}).get(relative)
-        text = path.read_text(encoding="utf-8") if raw is None else raw.decode("utf-8")
         bindings.extend(parse_generated_members(text, relative, pin, address_space=configuration.address_space))
     symbols = [binding.symbol for binding in bindings]
     if len(set(symbols)) != len(symbols):
