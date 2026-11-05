@@ -355,6 +355,93 @@
         "Preserve justified structural work and historical obligations when matching remains incomplete; do not call unknown preservation or data-extent prerequisites a pass."
       ],
       "reopen_when": "New original call, lifetime, data-layout, provider or TU evidence changes the consumer partition, or fresh native code shows a changed external caller or missing standalone emission."
+    },
+    {
+      "id": "header-visibility-must-retain-required-emission",
+      "category": "bounded_negative",
+      "evidence": {
+        "witness": ".opensmacx/recovery/buffer-inline-owner-nov05ap/probe.json; inspect.json; spot-inspect.json; Buffer::write_cent_l at 0x0047A720 and Spot::add at 0x0047A6F0"
+      },
+      "requires": [
+        "Pinned direct calls identify a standalone helper entry and its actual receiver; current class declarations agree with the receiver ownership.",
+        "A proposed header-inline or provider-visibility move changes where the helper can be emitted or expanded."
+      ],
+      "action": "Check the actual helper symbol and required call edges in fresh objects as well as all affected consumer bodies. In the witnessed Buffer/Spot header trial both required standalone entries disappeared and no measured cohort gained exact functions; keep their genuine owners and do not adopt that trial.",
+      "contraindications": [
+        "A class satellite outside an inferred contribution core does not justify moving it to the caller class or claiming a historical inline header.",
+        "Do not force emission with exports, dummy address-taking or noinline attributes. An incomplete mapped-call census cannot prove absence of other callers."
+      ],
+      "reopen_when": "New original call/emission or source ownership evidence, or a relevant compiler/provider change, supports a distinct model that retains the required entry and consumers."
+    },
+    {
+      "id": "preserve-observed-access-width-with-shared-storage",
+      "category": "bounded_negative",
+      "evidence": {
+        "witness": ".opensmacx/recovery/prototype-mask-match-nov05ao/hypothesis-outcome.json; original byte clear at 0x0052A988 and word flags operation at 0x0057F680"
+      },
+      "requires": [
+        "Independent original accesses show both byte and word operations on the same evidenced storage.",
+        "A proposed typed mask, bitfield or union rewrite improves instruction count but changes access width or collateral consumers."
+      ],
+      "action": "Retain both the proven storage width and the original operation width as obligations. Compare the full original operands and all affected consumers; a word AND with 0xFFFE is not the observed byte AND with 0xFE, even when the instruction count agrees.",
+      "contraindications": [
+        "Do not infer a historical union or bitfield declaration from overlapping accesses alone.",
+        "Do not promote shape equality, fewer instructions or a score improvement to byte equality, reference qualification or layout proof."
+      ],
+      "reopen_when": "New original alias/type/lifetime evidence or a distinct source/compiler model explains both widths without changing other required accesses."
+    },
+    {
+      "id": "retire-tested-register-and-cpu-hypotheses-by-input-family",
+      "category": "bounded_negative",
+      "evidence": {
+        "witness": ".opensmacx/recovery/report-scroll-match-nov05an/hypothesis-outcome.json; callbacks 0x00498180 and 0x00498200; current /G3 /G4 Game and ReportIf cohort controls"
+      },
+      "requires": [
+        "Complete compared instructions localize a residual and prior reports identify the tested body, compiler, recipe and visibility inputs.",
+        "The proposed retry repeats the same source hypothesis or the same policy sweep without new causal evidence."
+      ],
+      "action": "Skip the exhausted hypothesis and select another owner or investigate a distinct dependency. The witnessed callback return/break, explicit-this, continuation and reduced-TU trials did not fix the four register bytes; the Game/ReportIf CPU sweeps produced no gains. Keep the remaining matching obligations open.",
+      "contraindications": [
+        "A reduced diagnostic TU does not prove every possible ownership arrangement irrelevant.",
+        "These bounded negatives do not establish impossible C++ matching, a historical CPU recipe, or results for unscored associated spans."
+      ],
+      "reopen_when": "Relevant source/header/provider, visibility/TU, compiler/recipe or original dataflow evidence changes; a new session alone does not reopen the hypothesis."
+    },
+    {
+      "id": "share-pure-historical-parse-cache-across-workers",
+      "category": "execution_strategy",
+      "evidence": {
+        "commit": "0fe034c6d",
+        "witness": ".opensmacx/recovery/report-scroll-match-nov05an/warm-record-timing.json; cross-worktree-cache-control.json; recovery/WORKFLOW.md shared parse cache instructions"
+      },
+      "requires": [
+        "Workers use the existing native source inventory cache and a trusted canonical absolute ignored shared directory.",
+        "Fresh current-source and Git history/claim continuity checks remain enabled; only pure parsing projections are cached."
+      ],
+      "action": "Set RECOVERY_PARSE_CACHE_DIR to the coordinator checkout shared .opensmacx/cache/parse before entering worker directories, and pass the same absolute value to every worker and verification subprocess. Batch compatible frozen recording selections to amortize history checks; perform real compilations and fresh verification as usual.",
+      "contraindications": [
+        "Do not copy claim ledgers, replay acceptance reports, skip history traversal or assume a cached parse proves source freshness.",
+        "Do not derive the shared directory from each worker PWD or reuse compiler leases concurrently. Measured cache timings are bounded observations, not recovery-throughput guarantees."
+      ],
+      "reopen_when": "Cache format/trust boundaries, native parsing behavior or shared-directory configuration changes; delete the disposable cache if necessary and rerun fresh checks."
+    },
+    {
+      "id": "refresh-generated-lifetime-bindings-after-source-moves",
+      "category": "candidate_strategy",
+      "evidence": {
+        "commit": "0fe034c6d",
+        "witness": "src/game.cpp startup at 0x00477E10; src/reportif.cpp startups at 0x00496900 and 0x00496930; .opensmacx/recovery/tu-wave-nov05u/physical-owner-crosswalk.json; .opensmacx/recovery/tu-wave-nov05u/maininterface-draft.json; .opensmacx/recovery/report-scroll-match-nov05an/claim-review.json"
+      },
+      "requires": [
+        "An ownership move can renumber compiler-generated initialization/destruction symbols in the extracted and remaining source units.",
+        "Original entries, actual object receivers and fresh physical COFF/CRT relocations can distinguish each lifetime independently of generated name ordinals."
+      ],
+      "action": "Audit generated lifetimes in both the extracted owner and remaining TU. Resolve each current symbol from fresh physical receiver/call/CRT evidence and publish any binding changes through the guarded source writer, preserving original identities, complete spans and claims.",
+      "contraindications": [
+        "Do not infer helper identity from a matching $E ordinal or fabricate initialization callbacks to preserve an old name.",
+        "A bounded lifetime subsequence does not prove complete global startup order, original filenames or a full historical TU boundary."
+      ],
+      "reopen_when": "Source/global declaration order, compiler policy or lifetime ownership changes, or new original CRT evidence contradicts the current binding."
     }
   ],
   "policy": [

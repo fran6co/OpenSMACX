@@ -1336,6 +1336,24 @@ lesson IDs and test every prerequisite against the current pinned instructions,
 source and compiler context. A class name, ICF group or callee set is a search
 hint, not permission to transplant a body. Unknown prerequisites stay unknown.
 
+Before the first compile of a batch, put the applicable lesson IDs, checked
+prerequisites and unresolved prerequisites in its ignored investigation report.
+Include the prior tested hypothesis and the specific new evidence if reopening
+one. This is a planning aid, not a new source annotation or acceptance ledger.
+Pass those decisions to workers with their scope instead of making every worker
+rediscover them. After the trial, compare the expected causal effect with the
+actual object result; promote a new rule only with its bounded witnesses,
+counterexamples and reopening conditions.
+
+For source-group moves, explicitly check required standalone emission and direct
+call edges, owned data/associated spans, compiler-generated lifetime bindings in
+both old and new units, and the complete affected consumer set. A cleaner TU
+census or closer instruction count alone is insufficient. For byte/word flag
+updates, compare actual access widths before accepting a typed rewrite. Retire
+unchanged-input spelling and CPU-policy hypotheses rather than repeating them
+in the next session. Use the shared native parse cache described above for all
+worker and coordinator checks; cached parsing never replaces fresh verification.
+
 For the dependency-entry lesson, use the package's read-only
 `uv run recover components propose-entries <component> --image <image> --archive <archive>`.
 It generates and natively checks a complete entry inventory against the current
