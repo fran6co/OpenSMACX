@@ -201,6 +201,22 @@ meaning observations, not matching claims or proof of complete original TUs.
 
 ## Source-form experiments after structure
 
+Check the complete original control flow before treating a size difference as
+an arithmetic-spelling problem. `Sprite::change_color` at `0x005EAD9F` contains
+three reachable `LOOP` instructions (`0x005EAE10`, `0x005EAE31`,
+`0x005EAE42`), two separate ESI saves/restores, and unrolled AL comparisons
+with AH stores. These are clues to a hand-written assembly block, not proof of
+its source provenance or permission to introduce assembly. The ordinary C++
+implementation remains an unclaimed matching obligation. Replacing its explicit
+unsigned sign-fill calculation with target signed SAR arithmetic did not repair
+the surrounding control flow; do not repeat that arithmetic-only hypothesis.
+
+The same bounded CFG survey finds reachable `LOOP` instructions in the failed
+Buffer vertical/dotted-line and General checksum families. A reachable opcode
+does not identify an original TU or establish that C++ matching is impossible.
+Keep these kernels in scope, distinguish behavior recovery from byte matching,
+and require new instruction-level evidence before more equivalent loop spellings.
+
 OpenSMACX currently selects two release comparison flag sets in its local
 compiler configuration: `/c /O2 /Ob2 /Gy /GR- /GX` and the same with `/Oy-`.
 The explicit `/Ob2` aligns unpinned standalone measurements with the measured
