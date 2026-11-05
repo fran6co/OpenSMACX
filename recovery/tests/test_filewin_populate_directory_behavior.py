@@ -120,7 +120,8 @@ def test_draw_only_listbox_callback_family_is_void_and_typed():
     assert "return arrow.draw" not in draw_body
     assert "set_callbacks(&hq_list_draw, 0, 0)" in designwin_cpp
     assert "workshop_list_draw_adapter" not in designwin_cpp
-    assert "void __cdecl filebox_draw" in filewin_h
+    assert "static void __cdecl filebox_draw" in filewin_h
     # FileWin installs only the draw callback; the compiled init control also
     # checks that the write/fill callbacks retain their existing sentinels.
-    assert "list_box_.set_draw_callback(&filebox_draw)" in filewin_cpp
+    assert "void __cdecl FileWin::filebox_draw(" in filewin_cpp
+    assert "list_box_.set_draw_callback(&FileWin::filebox_draw)" in filewin_cpp

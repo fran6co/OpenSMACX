@@ -38,6 +38,18 @@ policy is in `WORKFLOW.md`; no spelling trick overrides that policy.
   production-policy decision. Do not bind a pooled symbol to one original
   cell when independent uses establish several, or count an unresolved
   initializer-to-wrapper edge as an exact original Sprite-constructor call.
+- Ordinary class-static objects explain a guarded lifetime pattern without
+  hand-written storage wrappers: VC6 emits direct constructor/atexit roots and
+  guarded finalizers, sharing a byte with successive masks. A two-class,
+  one-TU control shares the same guard across both classes (masks1/2/4/8), so
+  the sharing is not merely a class relationship. FileWin, RadioButton and
+  CheckBox class-static Sprite definitions reproduce their original paired
+  startup/finalizer bodies and references. This corroborates contribution
+  co-location; it does not establish complete historical TU boundaries or names.
+  Local `_$E`/`_$S` numbers can change after header declarations change. An old
+  number may still exist while naming a different helper: refresh correspondence
+  through object/constructor/registration/cleanup graphs, never presence or
+  equal bytes alone. Keep the original mappings and claims during that refresh.
 - Reuniting `Sound::set_type` with its Voice consumers makes `/Ob2` inline the
   calls in the VoiceRx and VoiceTx constructors. Moving its definition after
   those consumers did not restore the original calls. Definition visibility

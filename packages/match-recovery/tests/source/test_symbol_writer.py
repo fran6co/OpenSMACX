@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pytest
 
-from match_recovery.source import read_text, write_symbol
+from match_recovery.source import read_text, write_symbol, write_symbols
 from match_recovery.source.publication import publish
 from match_recovery import binding_source
 
@@ -265,3 +265,36 @@ def test_guarded_publication_refuses_changed_source(tmp_path):
     with pytest.raises(ValueError):
         publish({path: raw}, {path: rendered}, staging_directory=tmp_path / "publication", validate=lambda: None)
     assert path.read_bytes() == changed
+
+
+def test_batch_replaces_and_inserts_symbols_once_preserving_crlf_binding_and_peer_bytes():
+    next_symbol = "?next@@YAXXZ"
+    first_code = b"int f() { return 0; }\r\n"
+    second_code = b"int next() { return; }\r\n"
+    raw = (MARKER + b"\r\n// symbol _old\r\n" + first_code
+           + NEXT + b"\r\n" + BINDING + b"\r\n" + second_code)
+    first, second = records(raw)
+    updated = write_symbols(raw, ((first, SYMBOL), (second, next_symbol)))
+    expected = (MARKER + b"\r\n// symbol " + SYMBOL.encode() + b"\r\n" + first_code
+                + NEXT + b"\r\n" + BINDING + b"\r\n// symbol    "
+                + next_symbol.encode() + b"\r\n" + second_code)
+    assert updated == expected
+
+    after_first, after_second = records(updated)
+    assert after_first.symbol == SYMBOL and after_second.symbol == next_symbol
+    assert after_first.byte_exact and after_first.image_spans == first.image_spans
+    before_bindings = binding_source.parse(raw.decode(), [first, second])
+    after_bindings = binding_source.parse(updated.decode(), [after_first, after_second])
+    assert [before_bindings.get(row.line) for row in (first, second)] == [
+        after_bindings.get(row.line) for row in (after_first, after_second)]
+
+
+def test_batch_refuses_duplicate_or_stale_record_updates():
+    raw = MARKER + b"\nint f() {}\n" + NEXT + b"\nint next() {}\n"
+    first, second = records(raw)
+    with pytest.raises(ValueError, match="duplicate source record"):
+        write_symbols(raw, ((first, SYMBOL), (first, "_again")))
+    with pytest.raises(ValueError, match="current record snapshot"):
+        write_symbols(raw.replace(b"int f", b"int changed"),
+                      ((replace(first, symbol="invented"), SYMBOL),
+                       (second, "?next@@YAXXZ")))

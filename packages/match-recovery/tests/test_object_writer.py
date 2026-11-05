@@ -371,3 +371,112 @@ def test_replace_alias_root_can_share_a_current_emitted_member_owner():
     result = current(output[PATH])
     assert result[0].symbol == "_old_root" and result[0].emitted_symbol == "_typed_root"
     assert result[1].parent_symbol == result[0].emitted_symbol
+
+
+@pytest.mark.parametrize("bounded", [False, True])
+def test_explicit_member_to_direct_target_promotion_preserves_identity_and_peer(bounded):
+    if bounded:
+        member_marker = (b"// RECOVERY_OBJECT: v3 0x00401000 0x00401008 "
+                        b"_old_sprite 0x00402000 member _storage sprites\n")
+    else:
+        member_marker = (b"// RECOVERY_OBJECT: v3 0x00401000 _old_sprite "
+                        b"member _storage sprites\n")
+    peer_marker = b"// RECOVERY_OBJECT: v1 0x00403000 _untouched\n"
+    raw = member_marker + b"int sprite_storage;\n" + peer_marker + b"int peer;\n"
+    old, peer = current(raw)
+    replacement = replace(old, line=2, parent_symbol=None, member_path=(),
+                          target_symbol="_sprite_class_storage")
+    output = replace_object_records(
+        {PATH: raw}, expected=(old, peer), replacements=(replacement,),
+        destination=PATH, pin=PIN, address_space=SPACE,
+        direct_owner_promotions=frozenset({old.origin.entity_id}))[PATH]
+
+    updated, retained = current(output)
+    assert updated.symbol == old.symbol
+    assert updated.origin == old.origin
+    assert updated.span == old.span and updated.evidence == old.evidence
+    if bounded:
+        assert updated.interpretation_id == old.interpretation_id
+    assert updated.parent_symbol is None and updated.member_path == ()
+    assert updated.target_symbol == "_sprite_class_storage"
+    assert retained == peer
+    assert output.endswith(b"int sprite_storage;\n" + peer_marker + b"int peer;\n")
+
+
+def test_member_to_direct_target_promotion_remains_denied_without_grant():
+    raw = b"// RECOVERY_OBJECT: v3 0x00401000 _old member _storage sprites\nint storage;\n"
+    old, = current(raw)
+    replacement = replace(old, line=2, parent_symbol=None, member_path=(),
+                          target_symbol="_direct")
+    with pytest.raises(ValueError, match="cannot discard its current owner"):
+        replace_object_records({PATH: raw}, expected=(old,), replacements=(replacement,),
+                               destination=PATH, pin=PIN, address_space=SPACE)
+
+
+@pytest.mark.parametrize("grant, replacement_kind, message", [
+    ([], "promotion", "frozenset"),
+    (["not-an-entity-id"], "promotion", "frozenset"),
+    ("wrong-shape", "promotion", "frozenset"),
+    (frozenset({"b" * 64}), "promotion", "cannot discard|exactly"),
+    ("use_identity", "retained_member", "does not select"),
+    ("use_identity", "nonmember", "does not select"),
+    ("use_identity", "null_target", "nonempty direct target"),
+])
+def test_direct_owner_promotion_grants_are_exact_and_one_use(grant, replacement_kind, message):
+    raw = b"// RECOVERY_OBJECT: v3 0x00401000 _old member _storage sprites\nint storage;\n"
+    old, = current(raw)
+    if replacement_kind == "promotion":
+        replacement = replace(old, line=2, parent_symbol=None, member_path=(),
+                              target_symbol="_direct")
+    elif replacement_kind == "retained_member":
+        replacement = replace(old, line=2)
+    elif replacement_kind == "nonmember":
+        direct_raw = b"// RECOVERY_OBJECT: v1 0x00401000 _old\nint storage;\n"
+        old, = current(direct_raw)
+        raw = direct_raw
+        replacement = replace(old, line=2, target_symbol="_direct")
+    else:
+        replacement = replace(old, line=2, parent_symbol=None, member_path=(),
+                              target_symbol=None)
+    if grant == "use_identity":
+        grant = frozenset({old.origin.entity_id})
+    with pytest.raises(ValueError, match=message):
+        replace_object_records({PATH: raw}, expected=(old,), replacements=(replacement,),
+                               destination=PATH, pin=PIN, address_space=SPACE,
+                               direct_owner_promotions=grant)
+
+
+@pytest.mark.parametrize("change", ["symbol", "span", "evidence"])
+def test_direct_owner_promotion_cannot_change_historical_identity_or_bounds(change):
+    raw = (b"// RECOVERY_OBJECT: v3 0x00401000 0x00401008 _old "
+           b"0x00402000 member _storage sprites\nint storage;\n")
+    old, = current(raw)
+    replacement = replace(old, line=2, parent_symbol=None, member_path=(),
+                          target_symbol="_direct")
+    if change == "symbol":
+        replacement = replace(replacement, symbol="_different")
+    elif change == "span":
+        replacement = replace(replacement, span=Span(0x00401000, 0x0040100C))
+    else:
+        replacement = replace(replacement, evidence=Origin(PIN, SPACE, 0x00403000))
+    with pytest.raises(ValueError, match="historical identity or initializer obligation"):
+        replace_object_records({PATH: raw}, expected=(old,), replacements=(replacement,),
+                               destination=PATH, pin=PIN, address_space=SPACE,
+                               direct_owner_promotions=frozenset({old.origin.entity_id}))
+
+
+def test_direct_owner_promotion_keeps_complete_snapshot_and_target_collision_guards():
+    raw = (b"// RECOVERY_OBJECT: v3 0x00401000 _old member _storage sprites\nint storage;\n"
+           b"// RECOVERY_OBJECT: v1 0x00403000 _occupied\nint occupied;\n")
+    old, occupied = current(raw)
+    replacement = replace(old, line=2, parent_symbol=None, member_path=(),
+                          target_symbol="_direct")
+    with pytest.raises(ValueError, match="complete current source snapshot"):
+        replace_object_records({PATH: raw}, expected=(old,), replacements=(replacement,),
+                               destination=PATH, pin=PIN, address_space=SPACE,
+                               direct_owner_promotions=frozenset({old.origin.entity_id}))
+    collision = replace(replacement, target_symbol=occupied.symbol)
+    with pytest.raises(ValueError, match="target conflicts|multiple original objects|same current object|one current object target"):
+        replace_object_records({PATH: raw}, expected=(old, occupied), replacements=(collision,),
+                               destination=PATH, pin=PIN, address_space=SPACE,
+                               direct_owner_promotions=frozenset({old.origin.entity_id}))

@@ -15,27 +15,25 @@
  * You should have received a copy of the GNU General Public License
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
-// ORIGINAL: 0x00613790 sub_613790 0x00613790-0x006137A6 FILE
-// RECOVERY_BINDING: v1 {"evidence": ["Complete pinned exclusive span 0x613790..0x6137a6; CRT slot 0x6826a4 selects startup and its registered cleanup. The corresponding original receiver is separately bound to one offset-zero placed Sprite, with no inferred enclosing allocation.", "Original cleanup reads its independently bound shared byte, tests/sets its own bit BEFORE direct Sprite::close5E3820. Native physical COFF identifies current object _FileWinSprite1Owner, guard ?FileWinSpritesCleanupGuard@@3EA, startup _$E21 and cleanup _$E19. Actual Sprite destruction is solely close; explicit qualified destruction ends the placed lifetime without duplicate implicit cleanup.", "Chosen lifetime representation, not a recovered original class name. Existing runtime close order and static default-pointer cells remain distinct from guarded registered shutdown. Generated startup can be split among compiler helpers; closure semantics do not establish original startup/unwind bytes, complete cross-TU ordering, retained selection or runtime/game acceptance. Binding banks no claim."], "reason": "Bind original init to the genuine source-owned guarded Sprite global lifetime."}
-// symbol    _$E8
-// ORIGINAL: 0x006137B0 sub_6137b0 0x006137B0-0x006137CF FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["Complete pinned exclusive span 0x6137b0..0x6137cf; CRT slot 0x6826a4 selects startup and its registered cleanup. The corresponding original receiver is separately bound to one offset-zero placed Sprite, with no inferred enclosing allocation.", "Original cleanup reads its independently bound shared byte, tests/sets its own bit BEFORE direct Sprite::close5E3820. Native physical COFF identifies current object _FileWinSprite1Owner, guard ?FileWinSpritesCleanupGuard@@3EA, startup _$E21 and cleanup _$E19. Actual Sprite destruction is solely close; explicit qualified destruction ends the placed lifetime without duplicate implicit cleanup.", "Chosen lifetime representation, not a recovered original class name. Existing runtime close order and static default-pointer cells remain distinct from guarded registered shutdown. Generated startup can be split among compiler helpers; closure semantics do not establish original startup/unwind bytes, complete cross-TU ordering, retained selection or runtime/game acceptance. Binding banks no claim."], "reason": "Bind original fini to the genuine source-owned guarded Sprite global lifetime."}
-// symbol    _$E6
-// ORIGINAL: 0x006137D0 sub_6137d0 0x006137D0-0x006137E6 FILE
-// RECOVERY_BINDING: v1 {"evidence": ["Complete pinned exclusive span 0x6137d0..0x6137e6; CRT slot 0x6826a8 selects startup and its registered cleanup. The corresponding original receiver is separately bound to one offset-zero placed Sprite, with no inferred enclosing allocation.", "Original cleanup reads its independently bound shared byte, tests/sets its own bit BEFORE direct Sprite::close5E3820. Native physical COFF identifies current object _FileWinSprite0Owner, guard ?FileWinSpritesCleanupGuard@@3EA, startup _$E26 and cleanup _$E24. Actual Sprite destruction is solely close; explicit qualified destruction ends the placed lifetime without duplicate implicit cleanup.", "Chosen lifetime representation, not a recovered original class name. Existing runtime close order and static default-pointer cells remain distinct from guarded registered shutdown. Generated startup can be split among compiler helpers; closure semantics do not establish original startup/unwind bytes, complete cross-TU ordering, retained selection or runtime/game acceptance. Binding banks no claim."], "reason": "Bind original init to the genuine source-owned guarded Sprite global lifetime."}
-// symbol    _$E13
-// ORIGINAL: 0x006137F0 sub_6137f0 0x006137F0-0x0061380F FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["Complete pinned exclusive span 0x6137f0..0x61380f; CRT slot 0x6826a8 selects startup and its registered cleanup. The corresponding original receiver is separately bound to one offset-zero placed Sprite, with no inferred enclosing allocation.", "Original cleanup reads its independently bound shared byte, tests/sets its own bit BEFORE direct Sprite::close5E3820. Native physical COFF identifies current object _FileWinSprite0Owner, guard ?FileWinSpritesCleanupGuard@@3EA, startup _$E26 and cleanup _$E24. Actual Sprite destruction is solely close; explicit qualified destruction ends the placed lifetime without duplicate implicit cleanup.", "Chosen lifetime representation, not a recovered original class name. Existing runtime close order and static default-pointer cells remain distinct from guarded registered shutdown. Generated startup can be split among compiler helpers; closure semantics do not establish original startup/unwind bytes, complete cross-TU ordering, retained selection or runtime/game acceptance. Binding banks no claim."], "reason": "Bind original fini to the genuine source-owned guarded Sprite global lifetime."}
-// symbol    _$E11
-// ORIGINAL: 0x00613810 sub_613810 0x00613810-0x00613826 FILE
-// RECOVERY_BINDING: v1 {"evidence": ["Complete pinned exclusive span 0x613810..0x613826; CRT slot 0x6826ac selects startup and its registered cleanup. The corresponding original receiver is separately bound to one offset-zero placed Sprite, with no inferred enclosing allocation.", "Original cleanup reads its independently bound shared byte, tests/sets its own bit BEFORE direct Sprite::close5E3820. Native physical COFF identifies current object _FileWinSprite2Owner, guard ?FileWinSpritesCleanupGuard@@3EA, startup _$E31 and cleanup _$E29. Actual Sprite destruction is solely close; explicit qualified destruction ends the placed lifetime without duplicate implicit cleanup.", "Chosen lifetime representation, not a recovered original class name. Existing runtime close order and static default-pointer cells remain distinct from guarded registered shutdown. Generated startup can be split among compiler helpers; closure semantics do not establish original startup/unwind bytes, complete cross-TU ordering, retained selection or runtime/game acceptance. Binding banks no claim."], "reason": "Bind original init to the genuine source-owned guarded Sprite global lifetime."}
-// symbol    _$E18
-// ORIGINAL: 0x00613830 sub_613830 0x00613830-0x0061384F FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["Complete pinned exclusive span 0x613830..0x61384f; CRT slot 0x6826ac selects startup and its registered cleanup. The corresponding original receiver is separately bound to one offset-zero placed Sprite, with no inferred enclosing allocation.", "Original cleanup reads its independently bound shared byte, tests/sets its own bit BEFORE direct Sprite::close5E3820. Native physical COFF identifies current object _FileWinSprite2Owner, guard ?FileWinSpritesCleanupGuard@@3EA, startup _$E31 and cleanup _$E29. Actual Sprite destruction is solely close; explicit qualified destruction ends the placed lifetime without duplicate implicit cleanup.", "Chosen lifetime representation, not a recovered original class name. Existing runtime close order and static default-pointer cells remain distinct from guarded registered shutdown. Generated startup can be split among compiler helpers; closure semantics do not establish original startup/unwind bytes, complete cross-TU ordering, retained selection or runtime/game acceptance. Binding banks no claim."], "reason": "Bind original fini to the genuine source-owned guarded Sprite global lifetime."}
+// ORIGINAL: 0x00613790 sub_613790 0x00613790-0x006137A6 FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Complete pinned exclusive span 0x613790..0x6137a6; CRT slot 0x6826a4 selects startup and its registered cleanup. The corresponding original receiver is separately bound to one offset-zero placed Sprite, with no inferred enclosing allocation.", "Pinned startup0x00613790 calls Sprite constructor0x005E37E0 on original object0x009B9048, then registers cleanup0x006137B0. Cleanup tests and publishes mask0x1 of shared guard0x009B9014 before direct Sprite::close0x005E3820, retaining upper bits and repeated-cleanup skip.", "Current class-static FileWin::shared_sprite1_ emits object ?shared_sprite1_@FileWin@@0VSprite@@A, startup _$E16, cleanup _$E13, and compiler-owned guard _$S14 in src/jackal/filewin.cpp. These name current compiler emission, not recovered original debug names.", "Class-static construction and reverse registered cleanup preserve the pinned owner order; explicit runtime close remains separate. No raw storage, placement constructor, handwritten guard or authored atexit substitute remains."], "reason": "Bind the original lifetime operation to genuine class-static Sprite storage and compiler-generated initialization/destruction. Preserve original identity, spans and historical claims. The original member spellings and complete historical TU remain unproved; linked retained selection, full data placement and game acceptance remain separate obligations."}
 // symbol    _$E16
+// ORIGINAL: 0x006137B0 sub_6137b0 0x006137B0-0x006137CF FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Complete pinned exclusive span 0x6137b0..0x6137cf; CRT slot 0x6826a4 selects startup and its registered cleanup. The corresponding original receiver is separately bound to one offset-zero placed Sprite, with no inferred enclosing allocation.", "Pinned startup0x00613790 calls Sprite constructor0x005E37E0 on original object0x009B9048, then registers cleanup0x006137B0. Cleanup tests and publishes mask0x1 of shared guard0x009B9014 before direct Sprite::close0x005E3820, retaining upper bits and repeated-cleanup skip.", "Current class-static FileWin::shared_sprite1_ emits object ?shared_sprite1_@FileWin@@0VSprite@@A, startup _$E16, cleanup _$E13, and compiler-owned guard _$S14 in src/jackal/filewin.cpp. These name current compiler emission, not recovered original debug names.", "Class-static construction and reverse registered cleanup preserve the pinned owner order; explicit runtime close remains separate. No raw storage, placement constructor, handwritten guard or authored atexit substitute remains."], "reason": "Bind the original lifetime operation to genuine class-static Sprite storage and compiler-generated initialization/destruction. Preserve original identity, spans and historical claims. The original member spellings and complete historical TU remain unproved; linked retained selection, full data placement and game acceptance remain separate obligations."}
+// symbol    _$E13
+// ORIGINAL: 0x006137D0 sub_6137d0 0x006137D0-0x006137E6 FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Complete pinned exclusive span 0x6137d0..0x6137e6; CRT slot 0x6826a8 selects startup and its registered cleanup. The corresponding original receiver is separately bound to one offset-zero placed Sprite, with no inferred enclosing allocation.", "Pinned startup0x006137D0 calls Sprite constructor0x005E37E0 on original object0x009B9018, then registers cleanup0x006137F0. Cleanup tests and publishes mask0x2 of shared guard0x009B9014 before direct Sprite::close0x005E3820, retaining upper bits and repeated-cleanup skip.", "Current class-static FileWin::shared_sprite0_ emits object ?shared_sprite0_@FileWin@@0VSprite@@A, startup _$E21, cleanup _$E19, and compiler-owned guard _$S14 in src/jackal/filewin.cpp. These name current compiler emission, not recovered original debug names.", "Class-static construction and reverse registered cleanup preserve the pinned owner order; explicit runtime close remains separate. No raw storage, placement constructor, handwritten guard or authored atexit substitute remains."], "reason": "Bind the original lifetime operation to genuine class-static Sprite storage and compiler-generated initialization/destruction. Preserve original identity, spans and historical claims. The original member spellings and complete historical TU remain unproved; linked retained selection, full data placement and game acceptance remain separate obligations."}
+// symbol    _$E21
+// ORIGINAL: 0x006137F0 sub_6137f0 0x006137F0-0x0061380F FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Complete pinned exclusive span 0x6137f0..0x61380f; CRT slot 0x6826a8 selects startup and its registered cleanup. The corresponding original receiver is separately bound to one offset-zero placed Sprite, with no inferred enclosing allocation.", "Pinned startup0x006137D0 calls Sprite constructor0x005E37E0 on original object0x009B9018, then registers cleanup0x006137F0. Cleanup tests and publishes mask0x2 of shared guard0x009B9014 before direct Sprite::close0x005E3820, retaining upper bits and repeated-cleanup skip.", "Current class-static FileWin::shared_sprite0_ emits object ?shared_sprite0_@FileWin@@0VSprite@@A, startup _$E21, cleanup _$E19, and compiler-owned guard _$S14 in src/jackal/filewin.cpp. These name current compiler emission, not recovered original debug names.", "Class-static construction and reverse registered cleanup preserve the pinned owner order; explicit runtime close remains separate. No raw storage, placement constructor, handwritten guard or authored atexit substitute remains."], "reason": "Bind the original lifetime operation to genuine class-static Sprite storage and compiler-generated initialization/destruction. Preserve original identity, spans and historical claims. The original member spellings and complete historical TU remain unproved; linked retained selection, full data placement and game acceptance remain separate obligations."}
+// symbol    _$E19
+// ORIGINAL: 0x00613810 sub_613810 0x00613810-0x00613826 FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Complete pinned exclusive span 0x613810..0x613826; CRT slot 0x6826ac selects startup and its registered cleanup. The corresponding original receiver is separately bound to one offset-zero placed Sprite, with no inferred enclosing allocation.", "Pinned startup0x00613810 calls Sprite constructor0x005E37E0 on original object0x009B9078, then registers cleanup0x00613830. Cleanup tests and publishes mask0x4 of shared guard0x009B9014 before direct Sprite::close0x005E3820, retaining upper bits and repeated-cleanup skip.", "Current class-static FileWin::shared_sprite2_ emits object ?shared_sprite2_@FileWin@@0VSprite@@A, startup _$E26, cleanup _$E24, and compiler-owned guard _$S14 in src/jackal/filewin.cpp. These name current compiler emission, not recovered original debug names.", "Class-static construction and reverse registered cleanup preserve the pinned owner order; explicit runtime close remains separate. No raw storage, placement constructor, handwritten guard or authored atexit substitute remains."], "reason": "Bind the original lifetime operation to genuine class-static Sprite storage and compiler-generated initialization/destruction. Preserve original identity, spans and historical claims. The original member spellings and complete historical TU remain unproved; linked retained selection, full data placement and game acceptance remain separate obligations."}
+// symbol    _$E26
+// ORIGINAL: 0x00613830 sub_613830 0x00613830-0x0061384F FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Complete pinned exclusive span 0x613830..0x61384f; CRT slot 0x6826ac selects startup and its registered cleanup. The corresponding original receiver is separately bound to one offset-zero placed Sprite, with no inferred enclosing allocation.", "Pinned startup0x00613810 calls Sprite constructor0x005E37E0 on original object0x009B9078, then registers cleanup0x00613830. Cleanup tests and publishes mask0x4 of shared guard0x009B9014 before direct Sprite::close0x005E3820, retaining upper bits and repeated-cleanup skip.", "Current class-static FileWin::shared_sprite2_ emits object ?shared_sprite2_@FileWin@@0VSprite@@A, startup _$E26, cleanup _$E24, and compiler-owned guard _$S14 in src/jackal/filewin.cpp. These name current compiler emission, not recovered original debug names.", "Class-static construction and reverse registered cleanup preserve the pinned owner order; explicit runtime close remains separate. No raw storage, placement constructor, handwritten guard or authored atexit substitute remains."], "reason": "Bind the original lifetime operation to genuine class-static Sprite storage and compiler-generated initialization/destruction. Preserve original identity, spans and historical claims. The original member spellings and complete historical TU remain unproved; linked retained selection, full data placement and game acceptance remain separate obligations."}
+// symbol    _$E24
 #include "stdafx.h"
-#include <new>
-#include <stddef.h>
 // Generic Jackal file-selection owner; application presentation stays in AlphaSave.
 #include "filewin.h"
 #include "sprite.h"
@@ -550,45 +548,19 @@ static const char FileWinTextTableDefaultNext[4] = {'.', 0, 0, 0};  // 0x0069711
 // RECOVERY_OBJECT: v1 0x00697128 _FileWinSpriteSheet
 static const char FileWinSpriteSheet[] = "jackal.pcx";
 
-// Three independently owned dialog sprites. init's width read at 0x613B1C
-// fixes Sprite0 to 0x009B9018 (+0x18); draw's case0/case1 branches fix
-// Sprite1 to 0x009B9048 and Sprite0 to 0x009B9018. Sprite2 is 0x009B9078.
-// The original CRT constructs 1,0,2 (slots 0x6826A4/6A8/6AC), and close()
-// uses that same order. These are storage identities, not executable pointers.
-// Their particular UI roles are unproved, so retain neutral source names.
-// Original exits6137B0/7F0/830 test/set bits1/2/4 of independent byte9B9014
-// before directly closing the corresponding Sprite. This private chosen
-// lifetime representation is not proof of an original wrapper class name.
-// RECOVERY_OBJECT: v1 0x009B9014 ?FileWinSpritesCleanupGuard@@3EA
-uint8_t FileWinSpritesCleanupGuard;
-union FileWinSpriteStorage {
-    char bytes[sizeof(Sprite)];
-    uint32_t alignment_[sizeof(Sprite) / sizeof(uint32_t)];
-};
-template<unsigned char Mask> struct FileWinSpriteLifetime {
-    FileWinSpriteStorage storage_;
-    FileWinSpriteLifetime() { new (storage_.bytes) Sprite(); }
-    ~FileWinSpriteLifetime() {
-        if ((FileWinSpritesCleanupGuard & Mask) != 0) return;
-        FileWinSpritesCleanupGuard |= Mask;
-        sprite().Sprite::~Sprite();
-    }
-    Sprite &sprite() { return *reinterpret_cast<Sprite *>(storage_.bytes); }
-};
-static_assert(sizeof(FileWinSpriteLifetime<1>) == sizeof(Sprite) &&
-              sizeof(FileWinSpriteLifetime<2>) == sizeof(Sprite) &&
-              sizeof(FileWinSpriteLifetime<4>) == sizeof(Sprite),
-              "FileWin Sprite lifetime storage extent");
-static_assert(offsetof(FileWinSpriteLifetime<1>, storage_) == 0 &&
-              offsetof(FileWinSpriteLifetime<2>, storage_) == 0 &&
-              offsetof(FileWinSpriteLifetime<4>, storage_) == 0,
-              "FileWin Sprite starts at owner offset zero");
-// RECOVERY_OBJECT: v3 0x009B9048 _FileWinSprite1 member _FileWinSprite1Owner storage_.bytes
-static FileWinSpriteLifetime<1> FileWinSprite1Owner;
-// RECOVERY_OBJECT: v3 0x009B9018 _FileWinSprite0 member _FileWinSprite0Owner storage_.bytes
-static FileWinSpriteLifetime<2> FileWinSprite0Owner;
-// RECOVERY_OBJECT: v3 0x009B9078 _FileWinSprite2 member _FileWinSprite2Owner storage_.bytes
-static FileWinSpriteLifetime<4> FileWinSprite2Owner;
+// Shared FileWin sprites. The original CRT constructs Sprite1, Sprite0,
+// Sprite2, and close() uses that same order; registered cleanup runs in reverse.
+// Ordinary class-static Sprite members let VC6 own both construction and the
+// shared set-bit-before-close guard. No placement storage or authored destructor
+// substitutes are needed. Member names remain descriptive interpretations.
+
+// RECOVERY_OBJECT: v4 0x009B9014 ?FileWinSpritesCleanupGuard@@3EA target _$S14
+// RECOVERY_OBJECT: v4 0x009B9048 _FileWinSprite1 target ?shared_sprite1_@FileWin@@0VSprite@@A
+Sprite FileWin::shared_sprite1_;
+// RECOVERY_OBJECT: v4 0x009B9018 _FileWinSprite0 target ?shared_sprite0_@FileWin@@0VSprite@@A
+Sprite FileWin::shared_sprite0_;
+// RECOVERY_OBJECT: v4 0x009B9078 _FileWinSprite2 target ?shared_sprite2_@FileWin@@0VSprite@@A
+Sprite FileWin::shared_sprite2_;
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x006139B0 ?init@FileWin@@QAEHPADPAUGraphicWin@@PAUFileWinConstruct@@@Z 0x006139B0-0x00613B97
@@ -651,8 +623,8 @@ int FileWin::init(char *, GraphicWin *parent, FileWinConstruct *parameters) {
 
   list_box_.field_8_ = 1;
   static_cast<Dialog &>(list_box_).field_34_ =
-      (FileWinSprite0Owner.sprite().width() * 3) / 2;
-  list_box_.set_draw_callback(&filebox_draw);
+      (shared_sprite0_.width() * 3) / 2;
+  list_box_.set_draw_callback(&FileWin::filebox_draw);
 
   directory_list_handle_ = CreateWindowExA(
       0, "LISTBOX", FileWinListWindowTitle, 0x40000040,
@@ -662,11 +634,12 @@ int FileWin::init(char *, GraphicWin *parent, FileWinConstruct *parameters) {
 }
 
 // ORIGINAL: 0x00614C50 ?filebox_draw@FileWin@@QAAXPAUGraphicWin@@HHHHH@Z 0x00614C50-0x00614D84 BYTE_EXACT
-// symbol    ?filebox_draw@@YAXPAVGraphicWin@@HHHHH@Z
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned0x00614C50 has the existing six-argument cdecl callback contract with no hidden receiver and consumes the three FileWin shared Sprite objects.", "The actual ListBox callback installation and AlphaSave forwarding call use FileWin::filebox_draw with the same parameter list and return type. Class-static ownership permits the callback to access private resources without a friend or a raw global facade."], "reason": "Recover the FileWin drawing callback as a public static class operation over its private class-static sprites. Preserve the original catalogue identity/span and claim, and the existing cdecl ABI; this does not prove the original nominal declaration."}
+// symbol    ?filebox_draw@FileWin@@SAXPAVGraphicWin@@HHHHH@Z
 // The six-argument callback has no hidden FileWin receiver. The three
 // process sprites belong to this TU; their width, height and transparent
 // index are Sprite members rather than separate address-bound integers.
-void __cdecl filebox_draw(GraphicWin *window, int item_kind, int,
+void __cdecl FileWin::filebox_draw(GraphicWin *window, int item_kind, int,
                          int x, int y, int height) {
     if (CurrentListBoxDraw == 0) {
         return;
@@ -674,23 +647,23 @@ void __cdecl filebox_draw(GraphicWin *window, int item_kind, int,
     switch (item_kind) {
     case 0: {
         Buffer *canvas = window ? static_cast<Buffer *>(window) : 0;
-        FileWinSprite1Owner.sprite().draw(canvas, FileWinSprite1Owner.sprite().transparent_index(),
-                            x + FileWinSprite1Owner.sprite().width() / 4,
-                            y + (height - FileWinSprite1Owner.sprite().height()) / 2, 1, 1);
+        shared_sprite1_.draw(canvas, shared_sprite1_.transparent_index(),
+                            x + shared_sprite1_.width() / 4,
+                            y + (height - shared_sprite1_.height()) / 2, 1, 1);
         break;
     }
     case 1: {
         Buffer *canvas = window ? static_cast<Buffer *>(window) : 0;
-        FileWinSprite0Owner.sprite().draw(canvas, FileWinSprite0Owner.sprite().transparent_index(),
-                            x + FileWinSprite1Owner.sprite().width() / 4,
-                            y + (height - FileWinSprite0Owner.sprite().height()) / 2, 1, 1);
+        shared_sprite0_.draw(canvas, shared_sprite0_.transparent_index(),
+                            x + shared_sprite1_.width() / 4,
+                            y + (height - shared_sprite0_.height()) / 2, 1, 1);
         break;
     }
     case 2: {
         Buffer *canvas = window ? static_cast<Buffer *>(window) : 0;
-        FileWinSprite2Owner.sprite().draw(canvas, FileWinSprite2Owner.sprite().transparent_index(),
-                            x + FileWinSprite1Owner.sprite().width() / 4,
-                            y + (height - FileWinSprite2Owner.sprite().height()) / 2, 1, 1);
+        shared_sprite2_.draw(canvas, shared_sprite2_.transparent_index(),
+                            x + shared_sprite1_.width() / 4,
+                            y + (height - shared_sprite2_.height()) / 2, 1, 1);
         break;
     }
     }
@@ -767,9 +740,9 @@ void FileWin::close() {
     extension_count_ = 0;
     directory_[0] = 0;
     strcat(directory_, FileWinTextTableDefaultNext);
-    FileWinSprite1Owner.sprite().close();
-    FileWinSprite0Owner.sprite().close();
-    FileWinSprite2Owner.sprite().close();
+    shared_sprite1_.close();
+    shared_sprite0_.close();
+    shared_sprite2_.close();
     modal_window_ = 0;
     if (directory_list_handle_ != 0) {
         DestroyWindow(directory_list_handle_);
@@ -786,17 +759,17 @@ int FileWin::prepare_sprites() {
     Buffer sheet;
     int result;
     if (sheet.load_pcx(FileWinSpriteSheet, 0, 10, 0xEC) == 0) {
-        result = FileWinSprite1Owner.sprite().extract(&sheet, 9, 1, 1, 0x10, 0x10, 0);
+        result = shared_sprite1_.extract(&sheet, 9, 1, 1, 0x10, 0x10, 0);
         if (result != 0) return result;
-        result = FileWinSprite0Owner.sprite().extract(&sheet, 9, 0x12, 1, 0x10, 0x10, 0);
+        result = shared_sprite0_.extract(&sheet, 9, 0x12, 1, 0x10, 0x10, 0);
         if (result != 0) return result;
-        result = FileWinSprite2Owner.sprite().extract(&sheet, 9, 0x23, 1, 0x10, 0x10, 0);
+        result = shared_sprite2_.extract(&sheet, 9, 0x23, 1, 0x10, 0x10, 0);
     } else {
-        result = FileWinSprite1Owner.sprite().create_blank(0x10, 0x10, 9);
+        result = shared_sprite1_.create_blank(0x10, 0x10, 9);
         if (result != 0) return result;
-        result = FileWinSprite0Owner.sprite().create_blank(0x10, 0x10, 9);
+        result = shared_sprite0_.create_blank(0x10, 0x10, 9);
         if (result != 0) return result;
-        result = FileWinSprite2Owner.sprite().create_blank(0x10, 0x10, 9);
+        result = shared_sprite2_.create_blank(0x10, 0x10, 9);
     }
     return result;
 }

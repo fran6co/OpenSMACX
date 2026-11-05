@@ -63,6 +63,7 @@ import json
 from dataclasses import asdict
 from difflib import SequenceMatcher
 from pathlib import Path
+from typing import Sequence
 
 from .. import binding_source
 from ..components import relative_path
@@ -591,24 +592,43 @@ def write_bytes(raw: bytes, records: list[DecompilationState]) -> bytes:
     return "".join(output).encode("utf-8", errors="surrogateescape")
 
 
-def write_symbol(raw: bytes, record: DecompilationState, symbol: str) -> bytes:
-    """Prepare an explicit emitted-symbol fact update without writing a file.
+def write_symbols(raw: bytes,
+                  updates: Sequence[tuple[DecompilationState, str]]) -> bytes:
+    """Prepare a batch of emitted-symbol fact updates without file IO.
 
-    Ordinary ``write`` deliberately preserves fact blocks. This separate
-    operation requires a current reader snapshot, retains all other bytes and
-    bindings, and refuses ambiguous facts. The caller owns compiler evidence,
+    The source and binding snapshots are parsed once before the edits and once
+    after the combined edits. Every selected record must be an exact current
+    reader snapshot. Existing claims, spans, lessons, bindings and all
+    nonselected facts remain guarded. Callers own compiler evidence,
     authorization and guarded publication; this never grants a byte claim.
     """
-    validate_unbound_mapping(record)
-    if record.mode is Mode.UNBOUND:
-        raise ValueError("cannot assign an emitted symbol to an UNBOUND mapping")
+    if (not isinstance(updates, Sequence)
+            or isinstance(updates, (str, bytes, bytearray)) or not updates):
+        raise ValueError("symbol rewriting requires a nonempty update sequence")
     if not isinstance(raw, bytes):
         raise ValueError("symbol rewriting requires original source bytes")
-    if (not isinstance(symbol, str) or not symbol
-            or any(c.isspace() or ord(c) < 32 or ord(c) == 127 for c in symbol)
-            or any(token in symbol for token in ("/*", "*/", "//", "\\", "??/"))):
-        raise ValueError("emitted symbol must be one annotation-safe token")
-    encoded = symbol.encode("utf-8")
+    prepared = []
+    seen_lines = set()
+    for item in updates:
+        if not isinstance(item, (tuple, list)) or len(item) != 2:
+            raise ValueError("each symbol update must contain one record and one symbol")
+        record, symbol = item
+        if not isinstance(record, DecompilationState):
+            raise ValueError("symbol update requires a source record snapshot")
+        if prepared and record.path != prepared[0][0].path:
+            raise ValueError("one symbol batch must target a single source file")
+        validate_unbound_mapping(record)
+        if record.mode is Mode.UNBOUND:
+            raise ValueError("cannot assign an emitted symbol to an UNBOUND mapping")
+        if (not isinstance(symbol, str) or not symbol
+                or any(c.isspace() or ord(c) < 32 or ord(c) == 127 for c in symbol)
+                or any(token in symbol for token in ("/*", "*/", "//", "\\", "??/"))):
+            raise ValueError("emitted symbol must be one annotation-safe token")
+        if record.line in seen_lines:
+            raise ValueError("duplicate source record in symbol updates")
+        seen_lines.add(record.line)
+        prepared.append((record, symbol, symbol.encode("utf-8")))
+
     # Match read_file's universal-newline and replacement-decoding semantics;
     # edits below use the original bytes, not this parsing-only representation.
     text = raw.decode("utf-8", errors="replace").replace("\r\n", "\n").replace("\r", "\n")
@@ -621,63 +641,88 @@ def write_symbol(raw: bytes, record: DecompilationState, symbol: str) -> bytes:
            for token in _SYMBOL_SOURCE_TOKENS.finditer(logical_text)):
         raise ValueError("symbol rewriting does not support raw-string source")
     macro_lines = _define_directive_lines(text)
-    records = read_text(text, record.path)
-    selected = [i for i, row in enumerate(records) if row.line == record.line]
-    if len(selected) != 1 or asdict(records[selected[0]]) != asdict(record):
-        raise ValueError("source symbol update requires a current record snapshot")
-    if record.line - 1 in macro_lines:
-        raise ValueError("symbol annotation is inside a #define directive")
-    bindings = binding_source.parse(text, records)
-    position = selected[0]
+    records = read_text(text, prepared[0][0].path)
     lines, source_lines = text.splitlines(), raw.splitlines(keepends=True)
     if len(lines) != len(source_lines):
         raise ValueError("unsupported source line separator")
-    facts = []
-    for offset, stripped in _fact_lines(lines, record.line - 1):
-        match = FACT_LINE.fullmatch(stripped)
-        if match and match.group(1) == "symbol":
-            value = match.group(2) or ""
-            if value and not any(c.isspace() for c in value):
-                facts.append((offset, match, value))
-    if len(facts) > 1:
-        raise ValueError("ambiguous duplicate emitted-symbol facts")
-    if facts and facts[0][0] in macro_lines:
-        raise ValueError("emitted-symbol fact is inside a #define directive")
-    output = list(source_lines)
-    if facts:
-        offset, match, value = facts[0]
-        if any(token in value for token in ("/*", "*/", "//", "\\", "??/")):
-            raise ValueError("existing symbol is not an annotation-safe token")
-        line = source_lines[offset]
-        leading = len(line) - len(line.lstrip(b" \t"))
-        start = leading + match.start(2)
-        old = value.encode("utf-8")
-        if line[start:start + len(old)] != old:
-            raise ValueError("symbol fact cannot be rewritten byte-for-byte")
-        output[offset] = line[:start] + encoded + line[start + len(old):]
-    else:
-        index = record.line - 1
-        line = source_lines[index]
-        newline = b"\r\n" if line.endswith(b"\r\n") else b"\r" if line.endswith(b"\r") else b"\n"
+    position_by_line = {row.line: index for index, row in enumerate(records)}
+    if len(position_by_line) != len(records):
+        raise ValueError("source contains duplicate annotation line identities")
+
+    record_positions = {}
+    for record, symbol, _encoded in prepared:
+        position = position_by_line.get(record.line)
+        if position is None or asdict(records[position]) != asdict(record):
+            raise ValueError("source symbol update requires a current record snapshot")
+        if record.line - 1 in macro_lines:
+            raise ValueError("symbol annotation is inside a #define directive")
+        record_positions[position] = (record, symbol)
+    bindings = binding_source.parse(text, records)
+
+    replacements = {}
+    insertions = {}
+    insertion_newlines = {}
+    for position, (record, symbol) in record_positions.items():
+        facts = []
+        for offset, stripped in _fact_lines(lines, record.line - 1):
+            match = FACT_LINE.fullmatch(stripped)
+            if match and match.group(1) == "symbol":
+                value = match.group(2) or ""
+                if value and not any(c.isspace() for c in value):
+                    facts.append((offset, match, value))
+        if len(facts) > 1:
+            raise ValueError("ambiguous duplicate emitted-symbol facts")
+        if facts and facts[0][0] in macro_lines:
+            raise ValueError("emitted-symbol fact is inside a #define directive")
+        if facts:
+            offset, match, value = facts[0]
+            if any(token in value for token in ("/*", "*/", "//", "\\", "??/")):
+                raise ValueError("existing symbol is not an annotation-safe token")
+            line = source_lines[offset]
+            leading = len(line) - len(line.lstrip(b" \t"))
+            start = leading + match.start(2)
+            old = value.encode("utf-8")
+            if line[start:start + len(old)] != old:
+                raise ValueError("symbol fact cannot be rewritten byte-for-byte")
+            if offset in replacements:
+                raise ValueError("duplicate emitted-symbol fact update anchor")
+            replacements[offset] = (start, start + len(old), symbol.encode("utf-8"))
+            continue
+
         # Binding rationale belongs immediately after its original marker.
         # Inserting a symbol between them would orphan load-bearing evidence.
+        index = record.line - 1
         if record.line in bindings:
             index += 1
-            line = source_lines[index]
-        if not line.endswith((b"\n", b"\r")):
-            output[index] += newline
-        output.insert(index + 1, b"// symbol    " + encoded + newline)
+        if index >= len(source_lines):
+            raise ValueError("symbol insertion anchor is outside the source")
+        marker_line = source_lines[record.line - 1]
+        newline = next((ending for ending in (b"\r\n", b"\r", b"\n")
+                        if marker_line.endswith(ending)), b"\n")
+        insertion_newlines[index + 1] = newline
+        insertions.setdefault(index + 1, []).append(
+            b"// symbol    " + symbol.encode("utf-8") + newline)
+
+    output = []
+    for offset, line in enumerate(source_lines):
+        if offset in replacements:
+            start, end, encoded = replacements[offset]
+            line = line[:start] + encoded + line[end:]
+        if offset + 1 in insertions and not line.endswith((b"\n", b"\r")):
+            line += insertion_newlines[offset + 1]
+        output.append(line)
+        output.extend(insertions.get(offset + 1, ()))
     result = b"".join(output)
-    reread = read_text(result.decode("utf-8", errors="replace").replace("\r\n", "\n").replace("\r", "\n"), record.path)
+    reread = read_text(result.decode("utf-8", errors="replace").replace("\r\n", "\n").replace("\r", "\n"), prepared[0][0].path)
     if len(reread) != len(records):
         raise ValueError("symbol rewrite changed annotation coverage")
     rebound = binding_source.parse(result.decode("utf-8", errors="replace"), reread)
     if ([bindings.get(row.line) for row in records]
             != [rebound.get(row.line) for row in reread]):
         raise ValueError("symbol rewrite changed original binding rationale")
-    for i, (before, after) in enumerate(zip(records, reread)):
+    for index, (before, after) in enumerate(zip(records, reread)):
         left, right = asdict(before), asdict(after)
-        left["symbol"] = symbol if i == position else before.symbol
+        left["symbol"] = record_positions[index][1] if index in record_positions else before.symbol
         for field in ("line", "region", "origin"):
             left.pop(field)
             right.pop(field)
@@ -688,6 +733,11 @@ def write_symbol(raw: bytes, record: DecompilationState, symbol: str) -> bytes:
         if left != right or provenance(before) != provenance(after):
             raise ValueError("symbol rewrite changed other source facts or lessons")
     return result
+
+
+def write_symbol(raw: bytes, record: DecompilationState, symbol: str) -> bytes:
+    """Single-record compatibility entry point backed by the batch writer."""
+    return write_symbols(raw, ((record, symbol),))
 
 
 def remove(text: str, records: list[DecompilationState]) -> str:

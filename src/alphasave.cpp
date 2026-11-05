@@ -98,7 +98,7 @@ void __cdecl alpha_save_filebox_draw(GraphicWin *window, int item_kind,
     Buffer *background = CurrentListBoxDraw->Dialog::selected_position_ == item_id
         ? InterfaceBoxStyles[29].mask_ : InterfaceBoxStyles[0].mask_;
     window->Buffer::tile(background, x, y, x, y, window->Buffer::pixel_width(), height);
-    filebox_draw(window, item_kind, item_id, x, y, height);
+    FileWin::filebox_draw(window, item_kind, item_id, x, y, height);
 }
 
 void __cdecl scroll_hide(GraphicWin *window, Scroll *scroll);

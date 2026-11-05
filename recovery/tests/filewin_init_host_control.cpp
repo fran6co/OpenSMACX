@@ -49,10 +49,6 @@ struct Sprite {
   int width_value;
   int width() const { return width_value; }
 };
-struct FileWinSpriteOwnerDouble {
-  Sprite value;
-  Sprite &sprite() { return value; }
-};
 struct Dialog {
   uint32_t field_34_;
   int init(RECT *rect, int flags) {
@@ -71,7 +67,7 @@ struct EditBox : Win {
     return edit_result;
   }
 };
-static void sentinel_draw(void *, int, int, int, int, int) {}
+static void __cdecl sentinel_draw(GraphicWin *, int, int, int, int, int) {}
 static int sentinel_write(void *, int, int, RECT *, char *) { return 0; }
 static int sentinel_fill(void *, int, int, RECT *) { return 0; }
 struct FlatButton {
@@ -86,7 +82,7 @@ struct FlatButton {
   }
 };
 struct ListBox : Dialog {
-  typedef void (*DrawCallback)(void *, int, int, int, int, int);
+  typedef void (__cdecl *DrawCallback)(GraphicWin *, int, int, int, int, int);
   typedef int (*WriteCallback)(void *, int, int, RECT *, char *);
   typedef int (*FillCallback)(void *, int, int, RECT *);
   DrawCallback draw_callback_;
@@ -110,6 +106,8 @@ struct ListBox : Dialog {
   }
 };
 struct FileWin {
+  static Sprite shared_sprite0_;
+  static void __cdecl filebox_draw(GraphicWin *, int, int, int, int, int) {}
   uint32_t field_638_;
   Win *modal_window_;
   RECT list_box_bounds_, edit_box_bounds_;
@@ -120,18 +118,17 @@ struct FileWin {
   int init(char *, GraphicWin *, FileWinConstruct *);
   int prepare_sprites() { event(1); return prepare_result; }
 };
+Sprite FileWin::shared_sprite0_ = {9};
 
 static char ok_text[] = "OK";
 static char cancel_text[] = "Cancel";
 char *BasePopDefaultOkText = ok_text;
 char *BasePopDefaultCancelText = cancel_text;
 FileWinConstructPrefix FileWinInitSharedParameters;
-FileWinSpriteOwnerDouble FileWinSprite0Owner;
 char FileWinListWindowTitle[32] = "";
 int SpriteScaleNumerator, SpriteScaleDenominator;
 HWND HandleMain = reinterpret_cast<HWND>(0x1234);
 HINSTANCE WinInstance = reinterpret_cast<HINSTANCE>(0x5678);
-void __cdecl filebox_draw(void *, int, int, int, int, int) {}
 
 static HWND create_window(DWORD ex_style, const char *class_name,
                           const char *window_name, DWORD style, int x, int y,
@@ -158,7 +155,7 @@ static void reset_controls() {
   prepare_result = edit_result = button2_result = button1_result = 0;
   list_result = create_result = 0; window_name_seen = 0;
   SpriteScaleNumerator = SpriteScaleDenominator = 0;
-  FileWinSprite0Owner.sprite().width_value = 9;
+  FileWin::shared_sprite0_.width_value = 9;
 }
 
 static FileWinConstruct parameters() {
@@ -217,7 +214,7 @@ int main() {
   reset_controls();
   assert(win.init(0, &parent, &args) == 0);
   assert(win.list_box_.field_8_ == 1);
-  assert(win.list_box_.draw_callback_ == filebox_draw);
+  assert(win.list_box_.draw_callback_ == &FileWin::filebox_draw);
   assert(win.list_box_.write_callback_ == sentinel_write);
   assert(win.list_box_.fill_callback_ == sentinel_fill);
   assert(args.field_44_ == 0x76543210);

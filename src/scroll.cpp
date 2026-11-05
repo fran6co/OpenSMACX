@@ -34,7 +34,7 @@
 /*
 // ORIGINAL: 0x006051C0 sub_6051c0 0x006051C0-0x006051CE FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned CRT slot0x00682690 selects original callback0x006051C0..0x006051CE.", "The pinned callback calls GetSystemMetrics with selector3 through import slot0x00669334 and stores its return into scalar storage at0x009B8DD4."], "reason": "Recover runtime initialization of the owned scalar through its compiler-generated global initializer, rather than an uncalled manual routine; original allocation extent remains unproved."}
-// symbol    _$E6
+// symbol    _$E10
 // size      14 bytes
 // prototype
 // callers   0   call targets   0

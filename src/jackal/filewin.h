@@ -36,8 +36,11 @@
   * leading fields remain unknown, but directory storage and suffix filters
   * now have roles established by the directory-enumeration body.
 */
+class Sprite;
+
 class FileWin {
  public:
+  static void __cdecl filebox_draw(GraphicWin *window, int item_kind, int item_id, int x, int y, int height);
   // AlphaSave customizes the generic controls embedded by this owner. These
   // accessors expose those existing subobjects without coupling FileWin to
   // the application-specific AlphaSave class.
@@ -78,6 +81,9 @@ class FileWin {
   static void __cdecl close_class();
 
  private:
+  static Sprite shared_sprite0_;
+  static Sprite shared_sprite1_;
+  static Sprite shared_sprite2_;
   // Not a base class: the constructor builds a FlatButton at +0x660 on an
   // offset `this`. The constructor reaches 0x33C0, so the object is at least
   // that large; nothing else about it is established.
@@ -123,8 +129,6 @@ static_assert(sizeof(FileWin) == 0x33C4,
 
 // The image labels this as a FileWin __cdecl member, but the entered stack
 // has six explicit arguments and no hidden receiver. It is a free callback.
-void __cdecl filebox_draw(GraphicWin *window, int item_kind, int item_id,
-                         int x, int y, int height);
 
 // The modal file-dialog path publishes its active FileWin here.
 extern FileWin *ActiveFileWin;

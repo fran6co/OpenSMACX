@@ -1,9 +1,13 @@
-"""Execute actual FileWin sprite paths with bounded host doubles.
+"""Host projection of the actual FileWin class-static Sprite lifecycle.
 
-The expected receivers/order come from the pinned instructions, not masked
-byte equality. This does not prove VC6 ABI, original exit guards or game runtime.
+The test injects the actual FileWin::close and prepare_sprites bodies and the
+actual class-static Sprite definitions. A host compiler checks ordinary C++
+static construction order and reverse teardown only. It cannot observe or
+qualify VC6's private generated guard byte, per-object mask, or reentry path;
+those require fresh native generated-fini byte/reference evidence.
 """
 from pathlib import Path
+import re
 import shutil
 import subprocess
 
@@ -26,10 +30,15 @@ def definition(text, signature):
     raise AssertionError("unterminated actual definition")
 
 
-def source_lifetime(text):
-    start = text.index("uint8_t FileWinSpritesCleanupGuard;")
-    end = text.index("// Superseded seed deleted;", start)
-    return text[start:end]
+def class_static_sprites(text):
+    definitions = re.findall(
+        r"(?m)^Sprite FileWin::(shared_sprite[102]_);$", text)
+    assert definitions == ["shared_sprite1_", "shared_sprite0_", "shared_sprite2_"]
+    assert "FileWinSpriteStorage" not in text
+    assert "FileWinSpriteLifetime" not in text
+    assert not re.search(r"(?m)^uint8_t FileWinSpritesCleanupGuard;", text)
+    assert "storage_.bytes" not in text
+    return "\n".join("Sprite FileWin::" + name + ";" for name in definitions)
 
 
 @pytest.fixture(params=("g++", "clang++"), scope="module")
@@ -37,18 +46,13 @@ def control(request, tmp_path_factory):
     compiler = shutil.which(request.param)
     if compiler is None:
         pytest.skip(f"host compiler unavailable: {request.param}")
-    text = (ROOT / "src/jackal/filewin.cpp").read_text()
-    ownership = source_lifetime(text)
-    assert ownership.count("union FileWinSpriteStorage") == 1
-    assert ownership.count("template<unsigned char Mask> struct FileWinSpriteLifetime") == 1
-    assert ownership.count("static FileWinSpriteLifetime<") == 3
-    assert "if ((FileWinSpritesCleanupGuard & Mask) != 0) return;" in ownership
-    assert "FileWinSpritesCleanupGuard |= Mask;" in ownership
-    assert ownership.index("FileWinSpritesCleanupGuard |= Mask;") < ownership.index("sprite().Sprite::~Sprite();")
-    assert "static FileWinSpriteLifetime<1> FileWinSprite1Owner;" in ownership
-    assert "static FileWinSpriteLifetime<2> FileWinSprite0Owner;" in ownership
-    assert "static FileWinSpriteLifetime<4> FileWinSprite2Owner;" in ownership
-    bodies = "\n".join(definition(text, signature) for signature in (
+    cpp = (ROOT / "src/jackal/filewin.cpp").read_text(encoding="utf-8")
+    header = (ROOT / "src/jackal/filewin.h").read_text(encoding="utf-8")
+    for name in ("shared_sprite0_", "shared_sprite1_", "shared_sprite2_"):
+        assert re.search(r"(?m)^\s*static Sprite " + name + r";$", header)
+
+    objects = class_static_sprites(cpp)
+    bodies = "\n".join(definition(cpp, signature) for signature in (
         "void FileWin::close()", "int FileWin::prepare_sprites()"))
     harness = r'''
 #include <assert.h>
@@ -64,8 +68,6 @@ static std::vector<int> events;
 static std::vector<int> destruction_order;
 static int load_result, results[3], sheet_destructors;
 static int sprite_destructors[3];
-static uint8_t expected_initial_guard;
-extern uint8_t FileWinSpritesCleanupGuard;
 struct Buffer {
   Buffer() { events.push_back(20); }
   ~Buffer() { ++sheet_destructors; events.push_back(21); }
@@ -83,32 +85,53 @@ struct Sprite {
   int create_blank(int,int,int);
 };
 static int sprite_id(Sprite *p);
+struct FileWin {
+  // Public only in this minimal host projection so main can inspect identity.
+  // The installed product keeps these static members private.
+  static Sprite shared_sprite1_;
+  static Sprite shared_sprite0_;
+  static Sprite shared_sprite2_;
+  struct Control {
+    int id;
+    void close() { events.push_back(id); }
+  } flat_button2_,flat_button1_,edit_box_,list_box_;
+  char selected_path_[260],selected_basename_[260],file_name_[260];
+  int extension_count_; char directory_[263];
+  void *modal_window_; int directory_list_handle_;
+  void close(); int prepare_sprites();
+};
 struct ShutdownCheck {
+  ShutdownCheck() {}
   ~ShutdownCheck() {
-    assert(FileWinSpritesCleanupGuard == static_cast<uint8_t>(expected_initial_guard | 7));
     assert(construction.size() == 3);
-    const int ids[] = {1, 0, 2};
-    const int masks[] = {1, 2, 4};
-    int expected_order[3], expected_count=0;
+    assert(construction[0] == &FileWin::shared_sprite1_);
+    assert(construction[1] == &FileWin::shared_sprite0_);
+    assert(construction[2] == &FileWin::shared_sprite2_);
+    const int expected[] = {2, 0, 1};
+    assert(destruction_order.size() == 3);
     for (int i=0; i<3; ++i) {
-      const int expected = (expected_initial_guard & masks[i]) ? 0 : 1;
-      assert(sprite_destructors[ids[i]] == expected);
-      if (expected) expected_order[expected_count++]=ids[i];
+      assert(destruction_order[i] == expected[i]);
+      assert(sprite_destructors[expected[i]] == 1);
     }
-    assert(destruction_order.size()==static_cast<unsigned>(expected_count));
-    for (int i=0; i<expected_count; ++i)
-      assert(destruction_order[i]==expected_order[expected_count-1-i]);
   }
 } shutdown_check;
-''' + ownership + r'''
+''' + objects + r'''
+static const char FileWinTextTableDefaultNext[]=".";
+static const char FileWinSpriteSheet[]="jackal.pcx";
+static void DestroyWindow(int handle) {
+  assert(handle==7); events.push_back(15);
+}
+''' + bodies + r'''
 static int sprite_id(Sprite *p) {
-  const int ids[] = {1, 0, 2};
-  for (int i=0; i<3; ++i) if (construction[i]==p) return ids[i];
+  if (p == &FileWin::shared_sprite1_) return 1;
+  if (p == &FileWin::shared_sprite0_) return 0;
+  if (p == &FileWin::shared_sprite2_) return 2;
   assert(false); return -1;
 }
 Sprite::~Sprite() {
   const int id=sprite_id(this);
   ++sprite_destructors[id]; destruction_order.push_back(id);
+  close();
 }
 void Sprite::close() { events.push_back(sprite_id(this)); }
 int Sprite::extract(Buffer *p,int color,int x,int y,int w,int h,int flags) {
@@ -122,45 +145,13 @@ int Sprite::create_blank(int w,int h,int color) {
   const int id=sprite_id(this);
   events.push_back(40+id); return results[id];
 }
-struct Control {
-  int id;
-  void close() { events.push_back(id); }
-};
-struct FileWin {
-  Control flat_button2_,flat_button1_,edit_box_,list_box_;
-  char selected_path_[260],selected_basename_[260],file_name_[260];
-  int extension_count_; char directory_[263];
-  void *modal_window_; int directory_list_handle_;
-  void close(); int prepare_sprites();
-};
-static const char FileWinTextTableDefaultNext[]=".";
-static const char FileWinSpriteSheet[]="jackal.pcx";
-static void DestroyWindow(int handle) {
-  assert(handle==7); events.push_back(15);
-}
-''' + bodies + r'''
 static void expect(const int *values,int count) {
   assert(events.size()==static_cast<unsigned>(count));
   for (int i=0;i<count;++i) assert(events[i]==values[i]);
 }
 int main(int argc,char **argv) {
   assert(argc==2);
-  if (strcmp(argv[1],"guardA8")==0) expected_initial_guard=FileWinSpritesCleanupGuard=0xA8;
-  else if (strncmp(argv[1],"guard",5)==0) {
-    assert(strlen(argv[1])==6 && argv[1][5]>='0' && argv[1][5]<='7');
-    const int mask=atoi(argv[1]+5);
-    assert(mask>=0 && mask<=7);
-    expected_initial_guard=FileWinSpritesCleanupGuard=static_cast<uint8_t>(mask);
-  }
-  else assert(FileWinSpritesCleanupGuard==0);
-  if (strncmp(argv[1],"guard",5)==0) return 0;
-  if (strcmp(argv[1],"construction")==0) {
-    assert(construction.size()==3);
-    assert(construction[0]==&FileWinSprite1Owner.sprite());
-    assert(construction[1]==&FileWinSprite0Owner.sprite());
-    assert(construction[2]==&FileWinSprite2Owner.sprite());
-    return 0;
-  }
+  if (strcmp(argv[1],"construction")==0) return 0;
   if (strcmp(argv[1],"close")==0) {
     for (int has_handle=0;has_handle<2;++has_handle) {
       FileWin f; memset(&f,0,sizeof(f));
@@ -198,7 +189,7 @@ int main(int argc,char **argv) {
   }
 }
 '''
-    directory = tmp_path_factory.mktemp("filewin-sprite-control")
+    directory = tmp_path_factory.mktemp("filewin-class-static-sprite-control")
     source = directory / "control.cpp"
     source.write_text(harness)
     binary = directory / "control"
@@ -209,8 +200,8 @@ int main(int argc,char **argv) {
     return binary
 
 
-@pytest.mark.parametrize("path", ("construction", "close", "prepare", *(f"guard{i}" for i in range(8)), "guardA8"))
-def test_actual_sprite_paths(control, path):
-    ran = subprocess.run([str(control), path], capture_output=True, text=True,
-                         timeout=30)
-    assert ran.returncode == 0, ran.stdout + ran.stderr
+@pytest.mark.parametrize("mode", ("construction", "close", "prepare"))
+def test_actual_filewin_paths_and_class_static_startup_shutdown(control, mode):
+    run = subprocess.run([str(control), mode], capture_output=True,
+                         text=True, timeout=10)
+    assert run.returncode == 0, run.stdout + run.stderr

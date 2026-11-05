@@ -2822,6 +2822,10 @@ the source unit/line, parent/member path or direct target. The pure result is re
 identity-checked; stale or partial snapshots, namespace aliases and unsafe
 comment boundaries refuse. It performs no file writes. The publisher still has
 to revalidate fresh inputs and enforce coordinator authorization.
+An existing member may become a direct target only with an explicit
+`direct_owner_promotions` frozenset containing that origin's entity ID. Grants
+must match the selected member-to-target replacements exactly; identity and
+initializer obligations remain unchanged. This is not a compiled-layout waiver.
 
 The PE/COFF backend uses standalone CodeView data records to measure candidate
 widths, tying the exact emitted symbol to its debug record with SECTION/SECREL

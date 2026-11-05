@@ -323,6 +323,10 @@ the parent/path and insertion unit/line. It reparses the result and refuses
 stale/incomplete snapshots, duplicate identities, parent/target-owner aliases and
 insertion inside a block comment. The caller still owns fresh on-disk validation,
 review and guarded publication; the transformation itself writes no files.
+Promoting a former member-backed identity to a direct v4 target additionally
+requires its exact origin entity ID in `direct_owner_promotions`. Every grant
+must be consumed by one such replacement; default owner-loss refusal remains.
+This transports an interpretation and never proves the new compiled layout.
 
 ## Source-owned associated compiler data
 
@@ -522,6 +526,10 @@ piece whose emitted name is its `name`.
 
 For a compiler-observed symbol change, `match_recovery.source.write_symbol`
 prepares an explicit fact update from original bytes and a fresh reader record.
+`write_symbols(raw, updates)` applies a one-file batch of `(record, symbol)`
+pairs against one complete input snapshot, validating the combined result once.
+Duplicate updates and stale records refuse the entire batch. This is useful
+when a header change renumbers compiler-local helpers across an ownership group.
 It preserves the historical marker, claims, lessons and unrelated bytes; ordinary
 `write`/`write_file` still deliberately leave fact blocks untouched. Publish the
 result through `source.publication.publish` with current-input validation and

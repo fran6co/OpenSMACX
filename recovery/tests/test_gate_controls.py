@@ -130,12 +130,10 @@ def symbol(edits, name):
 
 
 RADIO_BUTTON_DEFAULT1 = (
-    "Sprite *RadioButtonDefault1 =\n"
-    "    reinterpret_cast<Sprite *>(g_RADIOBUTTON_SPRITE_1.storage_.bytes);")
+    "Sprite *RadioButtonDefault1 = &RadioButton::shared_sprite1_;")
 RADIO_BUTTON_DEFAULT1_ZERO = "Sprite *RadioButtonDefault1 = 0;"
 RADIO_BUTTON_DEFAULT1_OTHER = (
-    "Sprite *RadioButtonDefault1 =\n"
-    "    reinterpret_cast<Sprite *>(g_RADIOBUTTON_SPRITE_2.storage_.bytes);")
+    "Sprite *RadioButtonDefault1 = &RadioButton::shared_sprite2_;")
 
 
 @dataclass(frozen=True)

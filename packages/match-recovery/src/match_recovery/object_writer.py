@@ -194,17 +194,25 @@ def replace_object_records(current: Mapping[str, bytes], *,
                            expected: Sequence[ObjectBinding],
                            replacements: Sequence[ObjectBinding],
                            destination: str, pin: str,
-                           address_space: str) -> dict[str, bytes]:
+                           address_space: str,
+                           direct_owner_promotions: frozenset[str] = frozenset()) -> dict[str, bytes]:
     """Rehome existing identities as member records or direct target aliases.
 
     ``current`` must contain every affected source unit and ``expected`` must
     be the complete parsed object snapshot for those units. Replacements are
     one-for-one with selected old rows, preserve their old identity and any
     bounded initializer obligation exactly, and may change only current target,
-    owner/path and source location. All non-replaced records survive byte-for-byte. This is a
-    pure transformation; callers remain responsible for native review and
-    guarded publication.
+    owner/path and source location. Dropping a member owner in favor of a direct
+    target requires that identity's explicit ``direct_owner_promotions`` grant.
+    This grant authorizes only the pure annotation transport; it proves no ABI,
+    compiled layout, target equivalence or runtime behavior. All non-replaced
+    records survive byte-for-byte. Callers remain responsible for independent
+    native review and guarded publication.
     """
+    if type(direct_owner_promotions) is not frozenset or any(
+            type(identity) is not str or not identity
+            for identity in direct_owner_promotions):
+        raise ValueError("direct owner promotions must be a frozenset of nonempty entity IDs")
     if not current or destination not in current or not replacements:
         raise ValueError("object replacement requires affected units and a destination")
     if any(not isinstance(path, str) or not isinstance(raw, bytes)
@@ -263,6 +271,7 @@ def replace_object_records(current: Mapping[str, bytes], *,
 
     by_identity = {row.origin.entity_id: row for row in expected}
     selected = {}
+    consumed_promotions = set()
     for row in replacements:
         old = by_identity.get(row.origin.entity_id)
         if old is None or row.origin.entity_id in selected:
@@ -272,12 +281,21 @@ def replace_object_records(current: Mapping[str, bytes], *,
         if (row.symbol, row.origin, row.span, row.evidence, row_interpretation) != (
                 old.symbol, old.origin, old.span, old.evidence, old_interpretation):
             raise ValueError("object replacement changed historical identity or initializer obligation")
-        if old.parent_symbol is not None and row.target_symbol is not None:
+        identity = row.origin.entity_id
+        is_promotion = old.parent_symbol is not None and row.parent_symbol is None
+        granted = identity in direct_owner_promotions
+        if granted and not is_promotion:
+            raise ValueError("direct owner promotion grant does not select a member-to-target transition")
+        if is_promotion:
+            if not granted:
+                raise ValueError("member object replacement cannot discard its current owner")
+            if row.member_path != () or not row.target_symbol:
+                raise ValueError("member promotion requires an empty member path and nonempty direct target")
+            consumed_promotions.add(identity)
+        elif old.parent_symbol is not None and row.target_symbol is not None:
             raise ValueError("member object replacement cannot add a direct target alias")
         if old.parent_symbol is None and row.parent_symbol is not None and row.target_symbol is not None:
             raise ValueError("object replacement cannot combine member and direct target owners")
-        if old.parent_symbol is not None and row.parent_symbol is None:
-            raise ValueError("member object replacement cannot discard its current owner")
         _record(row, path=destination, pin=pin, address_space=address_space,
                 line_limit=len(lines_by_unit[destination]) + 1)
         if (first_splice_by_unit[destination] is not None
@@ -288,6 +306,8 @@ def replace_object_records(current: Mapping[str, bytes], *,
         selected[row.origin.entity_id] = row
     if len(selected) != len(replacements):
         raise ValueError("object replacement identity set is inconsistent")
+    if consumed_promotions != direct_owner_promotions:
+        raise ValueError("direct owner promotion grants must match member-to-target replacements exactly")
     selected_old = {identity: by_identity[identity] for identity in selected}
     remaining = [row for row in expected if row.origin.entity_id not in selected]
     _unique(tuple(remaining) + tuple(replacements))
