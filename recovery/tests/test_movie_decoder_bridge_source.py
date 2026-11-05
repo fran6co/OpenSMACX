@@ -8,6 +8,11 @@ from pathlib import Path
 
 import pytest
 
+from test_movie_decoder_huffman_source import (
+    huffman_provider_source,
+    write_huffman_provider,
+)
+
 
 TEST_FILE = Path(__file__).resolve()
 ROOT = next(parent for parent in TEST_FILE.parents if (parent / "src").is_dir())
@@ -50,7 +55,7 @@ def test_live_huffman_body_and_all_three_fixture_initializers(
         pytest.skip(f"{compiler_name} is unavailable")
 
     header = (SRC / "movie_decoder_huffman.h").read_text()
-    source = (SRC / "movie_decoder_huffman.cpp").read_text()
+    source = huffman_provider_source()
     host = (TESTS / "movie_decoder_huffman_host.cpp").read_text()
     assert "void (*pack_rows)(const uint8_t *component_rows" in header
     assert "args.pack_rows(args.scratch.luma_16x16, args.scratch.chroma_16x8," in source
@@ -58,7 +63,7 @@ def test_live_huffman_body_and_all_three_fixture_initializers(
     assert host.count("idct, remap, pack_rows};") == 4
     assert "&coeff_state, idct, remap, pack_rows};" in host
 
-    general = (SRC / "general.cpp").read_text()
+    general = (SRC / "movie_media_decoder.cpp").read_text()
     helpers = "\n\n".join(
         _function(general, sig)
         for sig in ('extern "C" void __fastcall sub_5d2d20(',
@@ -66,9 +71,10 @@ def test_live_huffman_body_and_all_three_fixture_initializers(
     )
     product = tmp_path / "mapped_delta_helpers.cpp"
     product.write_text("#define __fastcall\n#include <cstdint>\n" + helpers)
+    provider = write_huffman_provider(tmp_path)
     _compile_and_run(
         compiler, tmp_path,
-        [SRC / "movie_decoder_huffman.cpp", TESTS / "movie_decoder_huffman_host.cpp", product],
+        [provider, TESTS / "movie_decoder_huffman_host.cpp", product],
     )
 
 
@@ -95,7 +101,7 @@ def test_live_5d2e70_bridge_calls_mapped_5cea09_with_native_arguments(
                     "static void movie_decoder_pack_rows(",
                     "void __fastcall sub_5d2e70(")
     )
-    general = (SRC / "general.cpp").read_text()
+    general = (SRC / "movie_media_decoder.cpp").read_text()
     helpers = "\n\n".join(
         _function(general, sig)
         for sig in ('extern "C" void __fastcall sub_5d2d20(',
@@ -157,12 +163,13 @@ int main() {
 '''
     host = tmp_path / "mapped_bridge.cpp"
     host.write_text(unit)
+    provider = write_huffman_provider(tmp_path)
     # Compile the extracted current mapped adapter together with its globals
     # and edge capture stub. The Huffman TU and product delta helpers are live.
     binary = tmp_path / "mapped-bridge-host"
     result = subprocess.run(
         [compiler, "-std=c++17", "-D__fastcall=", "-Wall", "-Wextra", "-Werror",
-         "-pedantic", "-iquote", str(SRC), str(SRC / "movie_decoder_huffman.cpp"),
+         "-pedantic", "-iquote", str(SRC), str(provider),
          str(host), "-o", str(binary)],
         capture_output=True, text=True, check=False,
     )

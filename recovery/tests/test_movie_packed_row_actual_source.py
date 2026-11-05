@@ -8,7 +8,7 @@ import pytest
 
 ROOT = next(parent for parent in Path(__file__).resolve().parents
             if (parent / "src/general.cpp").is_file())
-SOURCE = ROOT / "src/general.cpp"
+SOURCE = ROOT / "src/movie_media_decoder.cpp"
 
 
 def definition(text, signature):

@@ -6,13 +6,17 @@ import tempfile
 
 import pytest
 
+from match_recovery.source import function_line
+
 
 ROOT = next(parent for parent in Path(__file__).resolve().parents
             if (parent / "src/general.cpp").is_file())
 
 
 def definition(text, signature):
-    start = text.index(signature)
+    name = signature.split("(", 1)[0].split()[-1]
+    line = function_line(text, name)
+    start = text.index(signature, sum(len(item) + 1 for item in text.splitlines()[:line - 1]))
     opening = text.index("{", start)
     depth = 0
     for pos in range(opening, len(text)):
@@ -26,7 +30,7 @@ def definition(text, signature):
 
 
 def live_source():
-    general = (ROOT / "src/general.cpp").read_text()
+    general = (ROOT / "src/movie_media_decoder.cpp").read_text()
     decoder = (ROOT / "src/movie_media_decoder.cpp").read_text()
     callback_header = (ROOT / "src/movie_decoder_frame.h").read_text()
     body = definition(general, "void __cdecl sub_5d2761(")

@@ -195,7 +195,6 @@ def test_macroblock_bodies_initialize_shared_reader_and_emit_six_phases(
 ) -> None:
     owner = (SRC / "movie_media_decoder.cpp").read_text()
     media = (SRC / "movie_media.cpp").read_text()
-    general = (SRC / "general.cpp").read_text()
     helpers = "\n".join(
         _function(owner, signature)
         for signature in (
@@ -212,9 +211,9 @@ def test_macroblock_bodies_initialize_shared_reader_and_emit_six_phases(
             "void movie_media_write_macroblock_rows(",
         )
     )
-    packer = _function(general, "int __cdecl sub_5ceb12(")
+    packer = _function(owner, "int __cdecl sub_5ceb12(")
     bodies = "\n".join(
-        _function(media, signature)
+        _function(owner, signature)
         for signature in (
             "void __cdecl sub_5cfaed(",
             "void __cdecl sub_5d02cc(BYTE *compressed, void *destination,",

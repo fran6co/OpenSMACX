@@ -31,7 +31,7 @@ def test_actual_sub_5d2901_wraps_before_logical_shift(
     compiler = shutil.which(compiler_name)
     if compiler is None:
         pytest.skip(f"{compiler_name} is unavailable")
-    general = (ROOT / "src/general.cpp").read_text()
+    general = (ROOT / "src/movie_media_decoder.cpp").read_text()
     function = _body(general, "int __cdecl sub_5d2901(")
     unit = tmp_path / "sink.cpp"
     unit.write_text(r'''#include <cassert>

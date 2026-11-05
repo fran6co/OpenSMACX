@@ -24,11 +24,44 @@ def _function(source: str, signature: str) -> str:
     raise AssertionError(f"unterminated function {signature}")
 
 
+def huffman_provider_source() -> str:
+    """Extract the isolated Huffman provider from its current product TU.
+
+    The media TU contains Windows-only storage and adapter code, so host
+    controls compile this balanced namespace block with the same current
+    header and the prototypes actually carried by that owner.
+    """
+    owner = (SRC / "movie_media_decoder.cpp").read_text()
+    declarations = []
+    for signature in (
+        'extern "C" void __fastcall sub_5d2d20(',
+        "void __fastcall sub_5d2e00(",
+    ):
+        start = owner.rindex(signature)
+        end = owner.index(";", start)
+        declarations.append(owner[start : end + 1])
+    namespace = _function(owner, "namespace movie_decoder_huffman {")
+    return (
+        '#include "movie_decoder_huffman.h"\n'
+        "#include <cstring>\n"
+        + "\n".join(declarations)
+        + "\n\n"
+        + namespace
+        + "\n"
+    )
+
+
+def write_huffman_provider(tmp_path: Path) -> Path:
+    path = tmp_path / "movie_decoder_huffman_provider.cpp"
+    path.write_text(huffman_provider_source())
+    return path
+
+
 def test_huffman_host_links_actual_product_delta_helpers(tmp_path: Path) -> None:
     compiler = shutil.which("g++") or shutil.which("clang++")
     if compiler is None:
         return
-    decoder = (SRC / "movie_decoder_huffman.cpp").read_text()
+    decoder = huffman_provider_source()
     executable = _compile_huffman_host(compiler, decoder, tmp_path, "huffman_host")
     subprocess.run([str(executable)], check=True)
 
@@ -36,7 +69,7 @@ def test_huffman_host_links_actual_product_delta_helpers(tmp_path: Path) -> None
 def _compile_huffman_host(
     compiler: str, decoder_source: str, tmp_path: Path, stem: str
 ) -> Path:
-    general = (SRC / "general.cpp").read_text()
+    general = (SRC / "movie_media_decoder.cpp").read_text()
     helper_4x = _function(general, 'extern "C" void __fastcall sub_5d2d20(')
     helper_2x = _function(general, 'void __fastcall sub_5d2e00(')
     product = tmp_path / "mapped_delta_helpers.cpp"
@@ -76,7 +109,7 @@ def test_dc_and_ac_window_mutants_fail_actual_huffman_host(tmp_path: Path) -> No
     compiler = shutil.which("g++") or shutil.which("clang++")
     if compiler is None:
         return
-    actual = (SRC / "movie_decoder_huffman.cpp").read_text()
+    actual = huffman_provider_source()
     mutants = (
         ("state.coefficients[0] = state.fill_value;",
          "static_cast<void>(state.fill_value);"),
@@ -99,11 +132,13 @@ def test_actual_fixed_shift_helpers_keep_negative_boundary_bits(tmp_path: Path) 
     compiler = shutil.which("g++") or shutil.which("clang++")
     if compiler is None:
         return
-    for owner, signature in (
-        ("movie_decoder_huffman.cpp", "int32_t arithmetic_shift_right("),
-        ("movie_decoder_frame.cpp", "static int32_t arithmetic_shift_right("),
+    for owner, source, signature in (
+        ("movie_decoder_huffman", huffman_provider_source(),
+         "int32_t arithmetic_shift_right("),
+        ("movie_decoder_frame", (SRC / "movie_decoder_frame.cpp").read_text(),
+         "static int32_t arithmetic_shift_right("),
     ):
-        actual = _function((SRC / owner).read_text(), signature)
+        actual = _function(source, signature)
         anchor = "return static_cast<int32_t>(value) >> shift;"
         assert actual.count(anchor) == 1
         main = r'''

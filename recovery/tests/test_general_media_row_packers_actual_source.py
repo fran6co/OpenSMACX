@@ -16,7 +16,7 @@ def repository_root() -> Path:
 
 
 ROOT = repository_root()
-SOURCE = ROOT / "src/general.cpp"
+SOURCE = ROOT / "src/movie_media_decoder.cpp"
 
 
 def definition(source: str, signature: str) -> str:

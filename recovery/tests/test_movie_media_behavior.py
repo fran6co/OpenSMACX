@@ -24,7 +24,7 @@ def adpcm_source_projection():
     header = (ROOT / 'src/general.h').read_text()
     start = header.index('struct MediaAdpcmStorage {')
     declaration = header[start:header.index('};', start) + 2]
-    source = (ROOT / 'src/general.cpp').read_text()
+    source = (ROOT / 'src/movie_media_decoder.cpp').read_text()
     start = source.index('#define MEDIA_ADPCM_MAG')
     end = source.index('#undef MEDIA_ADPCM_MAG', start) + len('#undef MEDIA_ADPCM_MAG')
     return declaration + '\n' + source[start:end]
@@ -78,7 +78,7 @@ def test_native_adpcm_storage_layout_and_all_initial_bytes():
     # its two-file overlay no longer supplies the retired header closure. This
     # test does not re-certify that comparison or replace preservation checks.
     for flags in settings.flag_sets:
-        obj = Coff(compiler(ROOT / 'src/general.cpp', (), flags + settings.layout_flags))
+        obj = Coff(compiler(ROOT / 'src/movie_media_decoder.cpp', (), flags + settings.layout_flags))
         layout = class_layout(obj, 'MediaAdpcmStorage')
         assert layout['size'] == 0x1690
         assert layout['members']['lookup_and_delta_words'] == 0
@@ -97,15 +97,15 @@ def test_native_adpcm_storage_layout_and_all_initial_bytes():
         assert section.data[start:end] == expected
         bindings = tuple(b for b in read_objects(ROOT, image_pin(ROOT)) if b.symbol == symbol)
         assert len(bindings) == 1
-        targets, _ = object_targets(bindings, {'src/general.cpp': obj})
-        row, = check_initial_data(bindings, {'src/general.cpp': obj}, image, targets)
+        targets, _ = object_targets(bindings, {'src/movie_media_decoder.cpp': obj})
+        row, = check_initial_data(bindings, {'src/movie_media_decoder.cpp': obj}, image, targets)
         assert row['definition'] == row['content'] == 'pass'
         assert row['lifetime'] == 'unknown'
         # VC6 may retain the small delta reader rather than inline it.
         helper = '?media_adpcm_delta@@YAHHI@Z'
         _, helper_relocs, _ = obj.subject(obj.function(helper))
         assert symbol in {obj.symbols[int(r.target)].name for r in helper_relocs}
-        mono_record, = (row for row in read_file(ROOT / 'src/general.cpp')
+        mono_record, = (row for row in read_file(ROOT / 'src/movie_media_decoder.cpp')
                         if row.address == 0x5CE640)
         assert mono_record.symbol
         for function in (mono_record.symbol, '?sub_5ce6e3@@YAXPAEPAFHPAH2@Z'):
@@ -183,6 +183,7 @@ def generated_source(source: str, edits=()) -> str:
             "static const DWORD media_block_quant_order[64]",
         )
     )
+    decoder = (ROOT / 'src/movie_media_decoder.cpp').read_text()
     bodies = {
         "// ACTUAL_HELPERS": "\n".join(
             definition(source, signature)
@@ -201,7 +202,7 @@ def generated_source(source: str, edits=()) -> str:
             source, 'extern "C" void __cdecl sub_5cd560('
         ),
         "// ACTUAL_SUB_5CF120": definition(
-            source, 'extern "C" char *__fastcall sub_5cf120('
+            decoder, 'extern "C" char *__fastcall sub_5cf120('
         ),
         "// ACTUAL_PARSE_FORMAT": definition(
             source, "int __fastcall MediaRuntime::parse_initial_format("
@@ -225,10 +226,10 @@ def generated_source(source: str, edits=()) -> str:
     template = FIXTURE.read_text()
     bodies["// ACTUAL_TABLES"] = tables
     bodies["// ACTUAL_HRESULT_TABLE"] = initializer(
-        source, "static const MediaHResultText media_hresult_texts[]"
+        decoder, "static const MediaHResultText media_hresult_texts[]"
     )
     bodies["// ACTUAL_HRESULT_FALLBACK"] = declaration(
-        source, "static const char media_hresult_unknown[]"
+        decoder, "static const char media_hresult_unknown[]"
     )
     for old, new in edits:
         changed = False
@@ -410,7 +411,9 @@ def historical_media_records():
 ))
 def test_media_owner_retains_original_identity_and_findings(address, historical_media_records):
     from match_recovery.source import read_file, Mode, State
-    current, = (record for record in read_file(ROOT / 'src/movie_media.cpp') if record.address == address)
+    current, = (record for path in (ROOT / 'src/movie_media.cpp',
+                                   ROOT / 'src/movie_media_decoder.cpp')
+                for record in read_file(path) if record.address == address)
     old = [record for record in historical_media_records if record.address == address]
     assert old
     assert current.mode == Mode.BODY and current.state == State.IMPLEMENTED

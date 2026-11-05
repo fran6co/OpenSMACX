@@ -3,6 +3,10 @@ from __future__ import annotations
 import subprocess
 from pathlib import Path
 
+from match_recovery.source.reader import function_line
+
+from test_movie_decoder_huffman_source import write_huffman_provider
+
 
 ROOT = Path(__file__).resolve().parent
 PRODUCT = ROOT.parents[1]
@@ -10,9 +14,10 @@ SRC = PRODUCT / "src"
 
 
 def _extract_mapped_blender() -> str:
-    source = (SRC / "general.cpp").read_text()
+    source = (SRC / "movie_media_decoder.cpp").read_text()
     signature = "void __cdecl sub_5d2761("
-    start = source.index(signature)
+    definition_line = function_line(source, "sub_5d2761")
+    start = sum(map(len, source.splitlines(keepends=True)[:definition_line - 1]))
     opening = source.index("{", start)
     depth = 0
     for end in range(opening, len(source)):
@@ -31,7 +36,7 @@ def _extract_mapped_blender() -> str:
 
 
 def _extract_mapped_delta_helpers() -> str:
-    source = (SRC / "general.cpp").read_text()
+    source = (SRC / "movie_media_decoder.cpp").read_text()
 
     def extract(signature: str) -> str:
         start = source.index(signature)
@@ -80,6 +85,7 @@ static DWORD *const MovieBlendTableLow = blend_low;
     delta_helpers.write_text(_extract_mapped_delta_helpers())
     product_path = tmp_path / "mapped_blender.cpp"
     product_path.write_text(product)
+    huffman_provider = write_huffman_provider(tmp_path)
     executable = tmp_path / "combined_decoder_host"
     compile_result = subprocess.run(
         [
@@ -97,7 +103,7 @@ static DWORD *const MovieBlendTableLow = blend_low;
             "-iquote",
             str(SRC),
             str(SRC / "movie_decoder_frame.cpp"),
-            str(SRC / "movie_decoder_huffman.cpp"),
+            str(huffman_provider),
             str(SRC / "movie_decoder_idct.cpp"),
             str(product_path),
             str(delta_helpers),

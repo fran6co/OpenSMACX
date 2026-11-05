@@ -114,7 +114,7 @@ int main() {
 @pytest.mark.parametrize("compiler", COMPILERS)
 @pytest.mark.parametrize("damaged", [False, True], ids=["actual", "wrong-cursor-control"])
 def test_actual_movie_lz_commands(tmp_path: Path, compiler: str, damaged: bool) -> None:
-    body = _definition((ROOT / "src/general.cpp").read_text(), SIGNATURE)
+    body = _definition((ROOT / "src/movie_media_decoder.cpp").read_text(), SIGNATURE)
     if damaged:
         anchor = "} else {\n              puVar8 = puVar8 + 4;"
         assert body.count(anchor) == 1

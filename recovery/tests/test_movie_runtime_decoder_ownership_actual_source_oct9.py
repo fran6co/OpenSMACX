@@ -10,7 +10,7 @@ import pytest
 
 
 ROOT = Path(__file__).resolve().parents[2]
-GENERAL = ROOT / "src/general.cpp"
+GENERAL = ROOT / "src/movie_media_decoder.cpp"
 MOVIE = ROOT / "src/movie_media.cpp"
 
 

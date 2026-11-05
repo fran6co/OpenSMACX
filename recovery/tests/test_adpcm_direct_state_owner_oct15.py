@@ -12,7 +12,7 @@ import pytest
 
 
 ROOT = Path(__file__).resolve().parents[2]
-SOURCE = (ROOT / "src/general.cpp").read_text()
+SOURCE = (ROOT / "src/movie_media_decoder.cpp").read_text()
 HEADER = (ROOT / "src/general.h").read_text()
 
 

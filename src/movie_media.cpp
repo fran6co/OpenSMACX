@@ -78,14 +78,6 @@ extern "C" char *__fastcall sub_5cf120(int code);
 // the CRT thread-entry contract, not a seed-only or placeholder dependency.
 extern "C" void __cdecl sub_5cdfa0(void *runtime);
 
-// The pinned image contains exactly 92 adjacent {HRESULT, relocated string}
-// records in this scanned table window. Text and order are preserved from the
-// image; no claim is made about storage beyond the observed window.
-struct MediaHResultText {
-  HRESULT result;
-  const char *text;
-};
-
 // The source-owned owner starts with the 64-entry block scale lookup at
 // 0x9C5820, then preserves the 12 intervening bytes before three adjacent
 // 128-DWORD color banks. The remap table follows those banks exactly.
@@ -107,118 +99,6 @@ static const DWORD media_block_transform_weights[64] = {
     15137, 10913, 11585, 12873, 15137, 19266, 27969, 54864,
     29692, 21407, 22725, 25251, 29692, 37791, 54864, 107619,
 };
-
-// RECOVERY_OBJECT: v1 0x00694E28 _media_hresult_texts
-static const MediaHResultText media_hresult_texts[] = {
-    {0x88760005L, "DDERR_ALREADYINITIALIZED"},
-    {0x8876000AL, "DDERR_CANNOTATTACHSURFACE"},
-    {0x88760014L, "DDERR_CANNOTDETACHSURFACE"},
-    {0x88760028L, "DDERR_CURRENTLYNOTAVAIL"},
-    {0x88760037L, "DDERR_EXCEPTION"},
-    {0x80004005L, "DDERR_GENERIC"},
-    {0x8876005AL, "DDERR_HEIGHTALIGN"},
-    {0x8876005FL, "DDERR_INCOMPATIBLEPRIMARY"},
-    {0x88760064L, "DDERR_INVALIDCAPS"},
-    {0x8876006EL, "DDERR_INVALIDCLIPLIST"},
-    {0x88760078L, "DDERR_INVALIDMODE"},
-    {0x88760082L, "DDERR_INVALIDOBJECT"},
-    {0x80070057L, "DDERR_INVALIDPARAMS"},
-    {0x88760091L, "DDERR_INVALIDPIXELFORMAT"},
-    {0x88760096L, "DDERR_INVALIDRECT"},
-    {0x887600A0L, "DDERR_LOCKEDSURFACES"},
-    {0x887600AAL, "DDERR_NO3D"},
-    {0x887600B4L, "DDERR_NOALPHAHW"},
-    {0x887600CDL, "DDERR_NOCLIPLIST"},
-    {0x887600D2L, "DDERR_NOCOLORCONVHW"},
-    {0x887600D4L, "DDERR_NOCOOPERATIVELEVELSET"},
-    {0x887600D7L, "DDERR_NOCOLORKEY"},
-    {0x887600DCL, "DDERR_NOCOLORKEYHW"},
-    {0x887600DEL, "DDERR_NODIRECTDRAWSUPPORT"},
-    {0x887600E1L, "DDERR_NOEXCLUSIVEMODE"},
-    {0x887600E6L, "DDERR_NOFLIPHW"},
-    {0x887600F0L, "DDERR_NOGDI"},
-    {0x887600FAL, "DDERR_NOMIRRORHW"},
-    {0x887600FFL, "DDERR_NOTFOUND"},
-    {0x88760104L, "DDERR_NOOVERLAYHW"},
-    {0x88760118L, "DDERR_NORASTEROPHW"},
-    {0x88760122L, "DDERR_NOROTATIONHW"},
-    {0x88760136L, "DDERR_NOSTRETCHHW"},
-    {0x8876013CL, "DDERR_NOT4BITCOLOR"},
-    {0x8876013DL, "DDERR_NOT4BITCOLORINDEX"},
-    {0x88760140L, "DDERR_NOT8BITCOLOR "},
-    {0x8876014AL, "DDERR_NOTEXTUREHW"},
-    {0x8876014FL, "DDERR_NOVSYNCHW"},
-    {0x88760154L, "DDERR_NOZBUFFERHW"},
-    {0x8876015EL, "DDERR_NOZOVERLAYHW"},
-    {0x88760168L, "DDERR_OUTOFCAPS"},
-    {0x8007000EL, "DDERR_OUTOFMEMORY"},
-    {0x8876017CL, "DDERR_OUTOFVIDEOMEMORY"},
-    {0x8876017EL, "DDERR_OVERLAYCANTCLIP"},
-    {0x88760180L, "DDERR_OVERLAYCOLORKEYONLYONEACTIVE"},
-    {0x88760183L, "DDERR_PALETTEBUSY"},
-    {0x88760190L, "DDERR_COLORKEYNOTSET"},
-    {0x8876019AL, "DDERR_SURFACEALREADYATTACHED"},
-    {0x887601A4L, "DDERR_SURFACEALREADYDEPENDENT"},
-    {0x887601AEL, "DDERR_SURFACEBUSY"},
-    {0x887601B8L, "DDERR_SURFACEISOBSCURED"},
-    {0x887601C2L, "DDERR_SURFACELOST"},
-    {0x887601CCL, "DDERR_SURFACENOTATTACHED"},
-    {0x887601D6L, "DDERR_TOOBIGHEIGHT"},
-    {0x887601E0L, "DDERR_TOOBIGSIZE"},
-    {0x887601EAL, "DDERR_TOOBIGWIDTH"},
-    {0x80004001L, "DDERR_UNSUPPORTED"},
-    {0x887601FEL, "DDERR_UNSUPPORTEDFORMAT"},
-    {0x88760208L, "DDERR_UNSUPPORTEDMASK"},
-    {0x88760219L, "DDERR_VERTICALBLANKINPROGRESS"},
-    {0x8876021CL, "DDERR_WASSTILLDRAWING"},
-    {0x88760230L, "DDERR_XALIGN"},
-    {0x88760231L, "DDERR_INVALIDDIRECTDRAWGUID"},
-    {0x88760232L, "DDERR_DIRECTDRAWALREADYCREATED"},
-    {0x88760233L, "DDERR_NODIRECTDRAWHW"},
-    {0x88760234L, "DDERR_PRIMARYSURFACEALREADYEXISTS"},
-    {0x88760235L, "DDERR_NOEMULATION"},
-    {0x88760236L, "DDERR_REGIONTOOSMALL"},
-    {0x88760237L, "DDERR_CLIPPERISUSINGHWND"},
-    {0x88760238L, "DDERR_NOCLIPPERATTACHED"},
-    {0x88760239L, "DDERR_NOHWND"},
-    {0x8876023AL, "DDERR_HWNDSUBCLASSED"},
-    {0x8876023BL, "DDERR_HWNDALREADYSET"},
-    {0x8876023CL, "DDERR_NOPALETTEATTACHED"},
-    {0x8876023DL, "DDERR_NOPALETTEHW"},
-    {0x8876023EL, "DDERR_BLTFASTCANTCLIP"},
-    {0x8876023FL, "DDERR_NOBLTHW"},
-    {0x88760240L, "DDERR_NODDROPSHW"},
-    {0x88760241L, "DDERR_OVERLAYNOTVISIBLE"},
-    {0x88760242L, "DDERR_NOOVERLAYDEST"},
-    {0x88760243L, "DDERR_INVALIDPOSITION"},
-    {0x88760244L, "DDERR_NOTAOVERLAYSURFACE"},
-    {0x88760245L, "DDERR_EXCLUSIVEMODEALREADYSET"},
-    {0x88760246L, "DDERR_NOTFLIPPABLE"},
-    {0x88760247L, "DDERR_CANTDUPLICATE"},
-    {0x88760248L, "DDERR_NOTLOCKED"},
-    {0x88760249L, "DDERR_CANTCREATEDC"},
-    {0x8876024AL, "DDERR_NODC"},
-    {0x8876024BL, "DDERR_WRONGMODE"},
-    {0x8876024CL, "DDERR_IMPLICITLYCREATED"},
-    {0x8876024DL, "DDERR_NOTPALETTIZED"},
-    {0x8876024EL, "DDERR_UNSUPPORTEDMODE"},
-};
-
-// RECOVERY_OBJECT: v1 0x00695B34 _media_hresult_unknown
-static const char media_hresult_unknown[] = "Uknown Error Code";
-
-// ORIGINAL: 0x005CF120 sub_5cf120 0x005CF120-0x005CF144 BYTE_EXACT
-// symbol    @sub_5cf120@4
-// kind      game
-extern "C" char *__fastcall sub_5cf120(int code) {
-  for (unsigned int i = 0;
-       i < sizeof(media_hresult_texts) / sizeof(media_hresult_texts[0]);
-       ++i) {
-    if (code == media_hresult_texts[i].result)
-      return (char *)media_hresult_texts[i].text;
-  }
-  return (char *)media_hresult_unknown;
-}
 
 // ECX, EDX plus eight stack arguments; 5CC150 supplies exactly this layout.
 // ORIGINAL: 0x005CBC00 sub_5cbc00 0x005CBC00-0x005CBE2A
@@ -684,6 +564,8 @@ static void media_build_runtime_block_scale_table(int quality) {
 // Typed mapped worker. Local source packet bytes begin after the eight-byte
 // record header; the full caller-owned payload remains the in-place output
 // area used by the native block converter.
+// RECOVERY_ASSOCIATED: v1 switch_targets 0x005CC940 0x005CD28C 0x005CD2A8 0x005CC985
+// RECOVERY_ASSOCIATED: v1 switch_targets 0x005CC940 0x005CD2A8 0x005CD2C4 0x005CCE0D
 // ORIGINAL: 0x005CC940 sub_5cc940 0x005CC940-0x005CD28C
 // symbol    @sub_5cc940@8
 // kind      game
@@ -2665,40 +2547,7 @@ extern "C" void __fastcall sub_5cda30(MediaRuntime *runtime,
   }
 }
 
-// ORIGINAL: 0x005CFAED sub_5cfaed 0x005CFAED-0x005D02CC
-// TRIED: signature changed to (unsigned char *, int, int) - the disasm reads 3 stack args ([esp+0x38] at entry, [esp+0x20]/[esp+0x24] after the scratch frame is released), not the 0-arg contract. The body is a mechanically-generated 1:1 transcription (script-derived from the raw disassembly, not hand-typed, to avoid transcription error over ~150 near-identical calls): 6x (sub_5cf150(); 8x sub_5d29e1; 8x sub_5d2b20) then 16x OutputPixelRow with an `edi` accumulator stepped by param3. sub_5d29e1/sub_5d2b20/OutputPixelRow all pass their SECOND (and for OutputPixelRow, first/third) operand through ESI/EDI/EBX with NO stack push at those call sites - a register convention this rewrite cannot reproduce without inline asm (banned), so it passes the same values as ordinary arguments instead. Low similarity (sim ~0.1-0.3 across all four builds) is a direct, expected consequence of that convention mismatch, not a structural error - every call target, argument value and order is transcribed 1:1 from the disassembly. Landed for coverage; TRIED as byte-exact without __asm.
-// symbol    ?sub_5cfaed@@YAXPAE0H@Z
-// kind      game
-void __cdecl sub_5cfaed(BYTE *compressed, BYTE *destination,
-                        int row_pitch_bytes) {
-  MediaTransformBitState &reader =
-      movie_media_conversion_tables.transform_bit_state;
-  reader.cursor = compressed + 1;
-  reader.accumulator = *compressed;
-  reader.available_bits = 8;
 
-  for (int phase = 0; phase != 6; ++phase)
-    movie_media_transform_block_pair(phase);
-  movie_media_write_macroblock_rows(destination, row_pitch_bytes, 0);
-}
-
-// ORIGINAL: 0x005D02CC sub_5d02cc 0x005D02CC-0x005D0AAB
-// TRIED: the callees use a custom register convention (row/block ptr in esi, the single stack arg written once to a fixed [esp] slot instead of pushed per call; OutputPixelRow16 takes esi/ebx/edi with no stack args at all) that no standard C++ calling convention expresses without __asm. Landed all 96 sub_5d29e1/sub_5d2b20 calls plus the 16 OutputPixelRow16 calls with the right addresses/order as plain cdecl(void*,void*[,void*]) - compiles, right call graph, but sim only ~0.12 since every call site's instruction shape differs. Signature changed to (unsigned char*, void*, int) from the disasm's 3-arg use (a1=byte* string, a2=dest, a3=row stride). Not retried given the convention mismatch is structural, not a wording issue.
-// symbol    ?sub_5d02cc@@YAXPAEPAXH@Z
-// kind      game
-void __cdecl sub_5d02cc(BYTE *compressed, void *destination,
-                        int row_pitch_bytes) {
-  MediaTransformBitState &reader =
-      movie_media_conversion_tables.transform_bit_state;
-  reader.cursor = compressed + 1;
-  reader.accumulator = *compressed;
-  reader.available_bits = 8;
-
-  for (int phase = 0; phase != 6; ++phase)
-    movie_media_transform_block_pair(phase);
-  movie_media_write_macroblock_rows(
-      reinterpret_cast<unsigned char *>(destination), row_pitch_bytes, 1);
-}
 
 
 /*

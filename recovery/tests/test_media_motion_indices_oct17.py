@@ -17,6 +17,7 @@ from test_movie_runtime_decoder_ownership_actual_source_oct9 import (
 
 ROOT = Path(__file__).resolve().parents[2]
 GENERAL = ROOT / "src/general.cpp"
+DECODER = ROOT / "src/movie_media_decoder.cpp"
 HEADER = ROOT / "src/movie_media.h"
 BASE = "5e5dd149b8146859c6854e4505f6db4b520adee1"
 
@@ -135,7 +136,7 @@ MAIN = r'''int main() {
 
 
 def test_actual_motion_index_word_and_ordered_copy_controls(tmp_path: Path) -> None:
-    _compile_run(tmp_path, _unit(GENERAL.read_text(), MAIN), "motion_indices")
+    _compile_run(tmp_path, _unit(DECODER.read_text(), MAIN), "motion_indices")
 
 
 def test_motion_index_migration_preserves_native_identities_and_lessons() -> None:
@@ -199,7 +200,7 @@ def test_motion_index_migration_preserves_native_identities_and_lessons() -> Non
 def test_mutated_motion_copy_controls_are_detected(
     tmp_path: Path, old: str, new: str, name: str,
 ) -> None:
-    source = GENERAL.read_text()
+    source = DECODER.read_text()
     assert source.count(old) == 1
     mutated = source.replace(old, new, 1)
     with pytest.raises(subprocess.CalledProcessError):

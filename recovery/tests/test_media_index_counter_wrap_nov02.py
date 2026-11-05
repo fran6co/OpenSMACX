@@ -10,7 +10,7 @@ from test_movie_runtime_decoder_ownership_actual_source_oct9 import (
 )
 
 
-GENERAL = Path(__file__).resolve().parents[2] / "src/general.cpp"
+GENERAL = Path(__file__).resolve().parents[2] / "src/movie_media_decoder.cpp"
 
 
 def _unit(source: str) -> str:

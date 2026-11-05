@@ -9,6 +9,7 @@ import pytest
 
 ROOT = Path(__file__).resolve().parents[2]
 SOURCE = ROOT / "src/movie_media.cpp"
+DECODER = ROOT / "src/movie_media_decoder.cpp"
 
 
 def definition(source: str, signature: str) -> str:
@@ -258,11 +259,12 @@ int main() {
 
 def projected_source(mutant=None) -> str:
     source = SOURCE.read_text()
+    decoder = DECODER.read_text()
     bodies = {
         "session": definition(source, "int MediaRuntime::release_session_interfaces()"),
         "playback": definition(source, "int MediaRuntime::release_playback_buffer()"),
         "cleanup": definition(source, "int MediaRuntime::sub_5cae00()"),
-        "lookup": definition(source, 'extern "C" char *__fastcall sub_5cf120('),
+        "lookup": definition(decoder, 'extern "C" char *__fastcall sub_5cf120('),
     }
     if mutant:
         key, old, new = mutant
@@ -270,8 +272,8 @@ def projected_source(mutant=None) -> str:
         bodies[key] = bodies[key].replace(old, new, 1)
     strings = "\n".join((
         "struct MediaHResultText { HRESULT result; const char *text; };",
-        initializer(source, "static const MediaHResultText media_hresult_texts[]"),
-        declaration(source, "static const char media_hresult_unknown[]"),
+        initializer(decoder, "static const MediaHResultText media_hresult_texts[]"),
+        declaration(decoder, "static const char media_hresult_unknown[]"),
     ))
     cleanup = "#define free test_free\n" + bodies["cleanup"] + "\n#undef free"
     return "\n".join((PRELUDE, strings, bodies["lookup"], bodies["session"],
