@@ -1336,6 +1336,15 @@ lesson IDs and test every prerequisite against the current pinned instructions,
 source and compiler context. A class name, ICF group or callee set is a search
 hint, not permission to transplant a body. Unknown prerequisites stay unknown.
 
+For the dependency-entry lesson, use the package's read-only
+`uv run recover components propose-entries <component> --image <image> --archive <archive>`.
+It generates and natively checks a complete entry inventory against the current
+component context. Review and publish only supported annotations through the
+source writer, then replay the command to confirm no duplicate proposals remain.
+Entry targets do not establish independent function extents or new application
+function matches. The other catalogue rules still require coordinator-led
+applicability checks and bounded candidate decks.
+
 Apply the supported transformation to the complete matching family as proposed
 decks, using the existing variant commands. Include previously exact neighbors
 and affected consumers; header/provider changes require their wider scope.

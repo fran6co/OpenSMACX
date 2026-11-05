@@ -1,7 +1,7 @@
 {
   "schema": "opensmacx.reviewed-recovery-lessons.v1",
   "kind": "coordinator_decision_catalogue",
-  "automation_status": "Reviewed eligibility rules for workers; not an implemented automatic propagation or acceptance engine.",
+  "automation_status": "Reviewed eligibility rules for workers. Dependency entry inventories have a native advisory proposal command; the remaining rules are coordinator guidance, not an automatic propagation or acceptance engine.",
   "rules": [
     {
       "id": "dispatch-qualified-inherited-operation",
@@ -290,7 +290,7 @@
         "An already-bound complete executable contribution matches original bytes outside independently checked relocation operands.",
         "The complete external function inventory has unique symbols at exact section-relative offsets; entries lie within that contribution."
       ],
-      "action": "Propagate the existing native CodeEntryAnchor representation to newly identified dependency entries. Retain the whole contribution binding; do not fabricate per-function extents, application implementations or original symbol provenance.",
+      "action": "Run recover components propose-entries with the component, pinned image and local archive to generate and natively check the complete candidate entry inventory. Review the candidate against the whole component context before publishing through the source writer. Retain the whole contribution binding; do not fabricate per-function extents, application implementations or original symbol provenance.",
       "contraindications": [
         "Address proximity and a familiar CRT name are insufficient.",
         "An entry location does not prove callable ABI, complete relocation closure, original archive selection or final-link retention. Unknown prerequisites remain unknown."
