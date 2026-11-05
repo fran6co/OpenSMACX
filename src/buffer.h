@@ -324,7 +324,7 @@ void draw_dest_unk1(Buffer *, int, int, int, int, unsigned char *);
   static int init_class();
   static void close_class();
   int sync_to_palette(Palette *palette);
-  // The canonical definition is in buffer_mask.cpp. Original direct-call
+  // The mapped definition is in buffer.cpp. Original direct-call
   // consumers see this declaration; drawing methods whose original contains
   // inline acquisition share the private acquire_pixels operation below.
   // Pointer-valued source contract: original 5E3380/5E3396/5E33DE returns

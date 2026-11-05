@@ -354,12 +354,14 @@ def test_unresolved_mappings_keep_identity_claims_and_lessons():
         ("src/vendor/zlib.recovery.h", "src/leaf_recoveries.cpp",
          (0x00640A80, 0x00644930)),
         ("src/unbound_functions.h", "src/field_accessors.cpp",
-         (0x005DA6A0, 0x005DA6B0, 0x005E2460, 0x005E2470, 0x00616D80)),
+         (0x00616D80,)),
+        ("src/buffer.cpp", "src/field_accessors.cpp",
+         (0x005DA6A0, 0x005DA6B0, 0x005E2460, 0x005E2470)),
     ):
         for address in addresses:
             current = actual_record(path, address)
             before = baseline_record(baseline_path, address)
-            if path == "src/unbound_functions.h":
+            if path in ("src/unbound_functions.h", "src/buffer.cpp"):
                 assert current.mode is Mode.UNBOUND
                 assert not current.symbol and not current.region
                 before = replace(before, mode=Mode.UNBOUND,

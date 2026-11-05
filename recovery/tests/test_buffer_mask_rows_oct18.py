@@ -14,7 +14,7 @@ PIN = "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
 
 
 def body():
-    path = ROOT / "src/buffer_mask.cpp"
+    path = ROOT / "src/buffer.cpp"
     source = path.read_text()
     signature = "int Buffer::copy_mask("
     start = source.index(signature)
@@ -39,7 +39,7 @@ def body():
 
 
 def scratch_definitions():
-    source = (ROOT / "src/buffer_mask.cpp").read_text()
+    source = (ROOT / "src/buffer.cpp").read_text()
     result = {}
     for name in (
         "BufferMaskGroupCount",

@@ -782,6 +782,22 @@
         "The final mapped identity is the deleting-destructor adjusting entry 0x5D7160..0x5D716B; the scalar deleting body is 0x5D7140..0x5D715E. The following 0x5D716B..0x5D7170 is padding and Buffer helper 0x5D7170 begins the next mapped contribution.",
         "Detached exception spans, original markers, historical claims and lessons are transported with their original records. This candidate does not establish native qualification, complete linked selection, runtime behavior, or a historical TU filename."
       ]
+    },
+    {
+      "name": "Buffer",
+      "start": "0x005D7170",
+      "end_exclusive": "0x005E37DA",
+      "recovered_tu": "src/buffer.cpp",
+      "reason": "Inferred Buffer-centered source contribution candidate from a complete configured-source address census and primary-band audit. The candidate preserves mapped bodies, associated state and lifetimes in the current Buffer owner; it does not establish a historical TU boundary or original filename.",
+      "evidence": [
+        "All 168 existing identities in 0x005D7170..0x005E37DA are represented in src/buffer.cpp after transport: 163 non-UNBOUND mapped records (82 BODY and 81 FILE-mode) and five existing UNBOUND notes. The five pending notes remain unresolved owner/prototype/caller obligations, do not assert Buffer class membership, and have no invented bodies. Their four historical BYTE_EXACT claims and the unclaimed 0x005DFB40 state are retained.",
+        "The 160 existing Buffer.cpp identities remain, with complete copy_mask and parameterless get_data mappings moved from the retired src/buffer_mask.cpp, StringList::current_text moved with its mapping from src/stringstruct.cpp as a Buffer text-writer provider, and three mask scratch object bindings retained beside copy_mask. StringList declarations and its other methods remain in src/stringstruct.h/stringstruct.cpp.",
+        "Pinned-band accounting includes associated switch data: text_width targets 0x005DCA04..0x005DCA20 and selector bytes 0x005DCA20..0x005DCA7A; write_multi_font_raw_l targets 0x005DCE24..0x005DCE40 and selector bytes 0x005DCE40..0x005DCE9A; find_line_break_l targets 0x005DC70C..0x005DC728 and selector bytes 0x005DC728..0x005DC782.",
+        "Nine mapped cold spans remain attached to their original Buffer primaries: constructor 0x00662B50..0x00662B68, destructor 0x00662B68..0x00662B80, helper 0x00662B80..0x00662B92, load_tga 0x00662B92..0x00662BA7, load_bmp 0x00662BA7..0x00662BBC, load_pcx 0x00662BBC..0x00662BD1, sub_5d7f20 0x00662BD1..0x00662BFC, write_pcx 0x00662BFC..0x00662C11, and get_pcx_dimensions 0x00662C11..0x00662C26.",
+        "The band begins immediately after GraphicWin\u2019s final mapped adjusting entry at 0x005D716B and ends at the Buffer lifetime finalizer 0x005E37D0..0x005E37DA. Other associated Buffer lifetimes remain with their mapped owners: special_texts_[10] and shared_sprite_ use guard 0x009B37CC (bits 1 and 2); ordinary g_BUFFER at 0x009B6080 uses initializer/finalizer 0x005E37B0..0x005E37C6 / 0x005E37D0..0x005E37DA without a guard. The separate g_VEHDRAW_BUFFER lifetime remains in vehicle_render.cpp.",
+        "Pinned image review accounts for the remaining band gaps as NOP/INT3 padding except two unassigned hotpatch-style mov edi,edi pairs at 0x005DC70A..0x005DC70C and 0x005DCA02..0x005DCA04; neither pair is claimed as padding or given an identity.",
+        "Source correspondence is inferred from the current complete census, implementation/data dependencies and pinned span accounting. It is not proof of historical object membership, linked retained selection, runtime correctness or an original TU filename; subsequent native qualification and byte restoration remain required."
+      ]
     }
   ]
 }

@@ -6,7 +6,7 @@ import subprocess
 import pytest
 
 from match_recovery.binding_source import parse
-from match_recovery.source import read_text
+from match_recovery.source import Mode, read_text
 from match_recovery.source.writer import write_bytes
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -33,13 +33,17 @@ def test_native_writer_only_corrects_unclaimed_extent():
     assert "5DF910..5DFB48" in evidence["evidence"][1]
     assert "No byte claim" in evidence["evidence"][1]
     emitted = write_bytes(before.encode(), [replace(old, image_spans=new.image_spans)]).decode()
-    marker = emitted.splitlines()[old.line - 1]
-    emitted = emitted.replace(marker + "\n", marker + "\n" + binding + "\n", 1)
-    emitted = emitted.replace("// size      568 bytes\n", "// size      559 bytes\n", 1)
-    assert emitted == after
-    normalize = lambda r: replace(r, line=1, region="", image_spans=old.image_spans if r.address == old.address else r.image_spans)
-    assert [normalize(r) for r in prior] == [normalize(r) for r in current]
-    assert not any(r.address == 0x5DFB40 for r in current)
+    expected_marker = emitted.splitlines()[old.line - 1]
+    current_marker = after.splitlines()[new.line - 1]
+    assert current_marker == expected_marker
+    assert binding.startswith("// RECOVERY_BINDING: v1 ")
+    assert new.image_spans == ((0x5DF910, 0x5DFB3F),)
+    # This Buffer TU now contains independently transported source records;
+    # verify the affected old mapping locally instead of requiring whole-file
+    # equality with its historical pre-transport snapshot.
+    separate, = (r for r in current if r.address == 0x5DFB40)
+    assert separate.mode is Mode.UNBOUND
+    assert separate.image_spans == ((0x5DFB40, 0x5DFB48),)
 
 
 def test_pinned_terminal_padding_and_separate_constant_return_body():

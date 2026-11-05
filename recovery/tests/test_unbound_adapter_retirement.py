@@ -28,10 +28,14 @@ OLD_CPP = ("src/field_accessors.cpp", "src/nullsub_thunks.cpp")
 UNRELATED_PENDING = {0x005DFB40}
 VEHDRAW_PENDING = 0x004C1D00
 GRAPHICWIN_PENDING = 0x005D5240
+BUFFER_PENDING = {0x005DA6A0, 0x005DA6B0, 0x005DFB40,
+                  0x005E2460, 0x005E2470}
+MOVED_PENDING = {VEHDRAW_PENDING, GRAPHICWIN_PENDING} | BUFFER_PENDING
 PENDING_OWNERS = {
     "src/unbound_functions.h",
     "src/vehicle_render.cpp",
     "src/graphicwin.cpp",
+    "src/buffer.cpp",
 }
 
 
@@ -66,20 +70,21 @@ def transfer():
 
 
 def _combined_pending_header(current, historical, header_text):
-    vehdraw = next(record for record in current if record.address == VEHDRAW_PENDING)
-    assert VEHDRAW_PENDING in {record.address for record in historical}
-    assert vehdraw.path.as_posix().endswith("src/vehicle_render.cpp")
-    graphicwin = next(record for record in current
-                      if record.address == GRAPHICWIN_PENDING)
-    assert GRAPHICWIN_PENDING in {record.address for record in historical}
-    assert graphicwin.path.as_posix().endswith("src/graphicwin.cpp")
-    # Reuse the parsed identities, complete spans, dispositions, claims and
-    # lessons; only relocate their scratch annotation insertion points.
-    # Write one addition at a time: source.writer validates every insertion
-    # position against the current text, so a second original-text EOF line
-    # would be past the end before the first insertion is applied.
+    old_addresses = {record.address for record in historical}
+    expected_owners = {
+        VEHDRAW_PENDING: "src/vehicle_render.cpp",
+        GRAPHICWIN_PENDING: "src/graphicwin.cpp",
+        **{address: "src/buffer.cpp" for address in BUFFER_PENDING},
+    }
+    records = {record.address: record for record in current}
     combined = header_text
-    for record in (vehdraw, graphicwin):
+    for address, owner in expected_owners.items():
+        record = records[address]
+        assert record.path.as_posix().endswith(owner)
+        if address not in UNRELATED_PENDING:
+            assert address in old_addresses
+        # Reuse each parsed identity/span/disposition/claim/lesson block. Add
+        # records sequentially so each EOF insertion line is valid.
         addition = replace(record, line=len(combined.splitlines()) + 1)
         combined = write(combined, [addition])
     return combined
@@ -95,12 +100,14 @@ def test_all_52_adapter_identities_are_transferred_without_claim_or_lesson_loss(
     assert len(current_by_address) == 53
     assert len(current) == 53
     assert set(current_by_address) == expected | UNRELATED_PENDING
+    moved = MOVED_PENDING
     assert {record.address for record in current if record.path.name == "unbound_functions.h"} == (
-        expected - {VEHDRAW_PENDING, GRAPHICWIN_PENDING}) | UNRELATED_PENDING
+        (expected | UNRELATED_PENDING) - moved)
     assert {record.address for record in current if record.path.name == "vehicle_render.cpp"} == {
         VEHDRAW_PENDING}
     assert {record.address for record in current if record.path.name == "graphicwin.cpp"} == {
         GRAPHICWIN_PENDING}
+    assert {record.address for record in current if record.path.name == "buffer.cpp"} == BUFFER_PENDING
     unrelated = [current_by_address[address] for address in UNRELATED_PENDING]
     assert all(record.mode is Mode.UNBOUND and record.state is State.UNBOUND
                and record.recipe is Recipe.UNBOUND and not record.byte_exact
@@ -140,8 +147,10 @@ def test_retired_files_and_build_inputs_are_absent_and_no_product_duplicate_owns
     owner_by_address = {row["origin"]["address"]: row["path"] for row in owners}
     assert owner_by_address[VEHDRAW_PENDING] == "src/vehicle_render.cpp"
     assert owner_by_address[GRAPHICWIN_PENDING] == "src/graphicwin.cpp"
-    assert all(owner_by_address[address] == PENDING_FILE for address in
-               (expected - {VEHDRAW_PENDING, GRAPHICWIN_PENDING}) | UNRELATED_PENDING)
+    assert {address for address, owner in owner_by_address.items()
+            if owner == "src/buffer.cpp"} == BUFFER_PENDING
+    assert all(owner_by_address[address] == PENDING_FILE
+               for address in (expected | UNRELATED_PENDING) - MOVED_PENDING)
 
 
 def test_pending_measurement_and_symbol_checks_refuse_without_compiler_calls(transfer, tmp_path):
@@ -208,6 +217,7 @@ def test_pending_header_has_no_adapter_declarations_or_symbol_role_fallbacks():
     current_addresses = {record.address for record in current}
     historical = [record for path in OLD_CPP for record in _records_for_source(path)]
     expected = {record.address for record in historical}
-    assert len([line for line in text.splitlines() if line.startswith("// ORIGINAL:")]) == 51
-    assert current_addresses == (expected - {VEHDRAW_PENDING, GRAPHICWIN_PENDING}) | UNRELATED_PENDING
+    moved = MOVED_PENDING
+    assert len([line for line in text.splitlines() if line.startswith("// ORIGINAL:")]) == 46
+    assert current_addresses == (expected | UNRELATED_PENDING) - moved
     assert len(expected) == 52

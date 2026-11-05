@@ -164,31 +164,6 @@
 // Original effect: return without modifying EAX; callee stack cleanup 0 bytes.
 // Original prototype, callers and real source owner remain unresolved.
 
-// ORIGINAL: 0x005DA6A0 sub_5da6a0 0x005DA6A0-0x005DA6A8 UNBOUND BYTE_EXACT
-// kind game
-// Original effect: set EAX to 8 and return; callee stack cleanup 12 bytes.
-// Original prototype, callers and real source owner remain unresolved.
-
-// ORIGINAL: 0x005DA6B0 sub_5da6b0 0x005DA6B0-0x005DA6B8 UNBOUND BYTE_EXACT
-// kind game
-// Original effect: set EAX to 8 and return; callee stack cleanup 16 bytes.
-// Original prototype, callers and real source owner remain unresolved.
-
-// ORIGINAL: 0x005DFB40 sub_5dfb40 0x005DFB40-0x005DFB48 UNBOUND
-// kind game
-// Original effect: set EAX to 8 and return; callee stack cleanup 16 bytes.
-// Original prototype, callers and real source owner remain unresolved.
-
-// ORIGINAL: 0x005E2460 sub_5e2460 0x005E2460-0x005E2468 UNBOUND BYTE_EXACT
-// kind game
-// Original effect: set EAX to 8 and return; callee stack cleanup 20 bytes.
-// Original prototype, callers and real source owner remain unresolved.
-
-// ORIGINAL: 0x005E2470 sub_5e2470 0x005E2470-0x005E2478 UNBOUND BYTE_EXACT
-// kind game
-// Original effect: set EAX to 8 and return; callee stack cleanup 20 bytes.
-// Original prototype, callers and real source owner remain unresolved.
-
 // ORIGINAL: 0x005FC9E0 sub_5fc9e0 0x005FC9E0-0x005FC9E3 UNBOUND BYTE_EXACT
 // kind game
 // Original effect: zero EAX and return; callee stack cleanup 0 bytes.

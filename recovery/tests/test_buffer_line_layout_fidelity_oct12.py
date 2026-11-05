@@ -503,6 +503,7 @@ def actual_source():
     # native 32-bit layout assertions alone are projected for the host.
     sh = re.sub(r'^#include[^\n]*\n', '', sh, flags=re.M)
     source = (ROOT / "src/stringstruct.cpp").read_text()
+    buffer_source = (ROOT / "src/buffer.cpp").read_text()
     string_ctor = body(sh, "StringStruct::StringStruct()")
     assert sh.count("inline " + string_ctor) == 1
     sh = sh.replace("inline " + string_ctor, "", 1)
@@ -511,9 +512,11 @@ def actual_source():
     search = search.replace('{', '{\n    ++reverse_calls;', 1)
     parts = {
         "STRINGS": sh,
-        "CURSORS": '\n'.join([string_ctor] + [body(source, s) for s in
-            ("StringStructPayload *StringStruct::current_entry()",
-             "char *StringList::current_text()")]),
+        "CURSORS": '\n'.join([
+            string_ctor,
+            body(source, "StringStructPayload *StringStruct::current_entry()"),
+            body(buffer_source, "char *StringList::current_text()"),
+        ]),
         "FONT_FIELDS": '\n'.join(one(fh, r'^  (' + typ + r' ' + name + r';)')
             for typ, name in (("int", "unk_1_"), ("BOOL", "is_fot_set_"),
             ("HFONT", "font_obj_"), ("int", "line_height_"), ("int", "height_"),

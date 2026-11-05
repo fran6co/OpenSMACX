@@ -12,7 +12,7 @@ from match_recovery.includes import COMMENTS_OR_STRINGS
 
 
 ROOT = Path(__file__).resolve().parents[2]
-CPP = ROOT / "src/buffer_mask.cpp"
+CPP = ROOT / "src/buffer.cpp"
 HEADER = ROOT / "src/buffer.h"
 
 HARNESS = r'''#include <cassert>

@@ -25,7 +25,8 @@ def test_real_text_accessor_guards_head_not_current(tmp_path, compiler_name):
     if compiler is None:
         pytest.skip(f"{compiler_name} unavailable")
     source = (ROOT / "src/stringstruct.cpp").read_text()
-    body = definition(source, "char *StringList::current_text()")
+    buffer_source = (ROOT / "src/buffer.cpp").read_text()
+    body = definition(buffer_source, "char *StringList::current_text()")
     current_entry = definition(source,
                                "StringStructPayload *StringStruct::current_entry()")
     fixture = r"""
