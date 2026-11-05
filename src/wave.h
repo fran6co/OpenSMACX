@@ -178,7 +178,7 @@ extern Wave g_MULTIWIN_WAVE;
 // here so control_game (game.cpp) reaches it by name.
 extern Wave g_WAVE_GENERAL;  // 0x00945ED0
 
-// The forty-five entry wave bank, at the fixed address wave.cpp pins it to
+// The forty-five entry wave bank, owned by fx_wave_resources.cpp at the mapped address
 // (0x6c element stride, the image's own `VectorCtorIterator(g_CPU_WAVES,
 // 0x6C, 45, ...)` array thunk). Declared here so popup_wave_callback
 // (popup.cpp) reaches the bank by name instead of through a pointer

@@ -53,7 +53,7 @@ def class_member_definition(full_definition: str, qualified_name: str, member_na
 def source_parts(root: Path) -> dict[str, str]:
     header = (root / "src/wave_device.h").read_text()
     device = (root / "src/sounddevice.cpp").read_text()
-    helper = (root / "src/wave_group_list.cpp").read_text()
+    helper = (root / "src/sounddevice.cpp").read_text()
     parts = {
         "node_type": declaration(header, "struct WaveGroupNode {"),
         "list_type": declaration(header, "struct WaveGroupList {"),

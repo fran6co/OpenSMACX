@@ -136,6 +136,7 @@ set(OPENSMACX_SOURCES
     src/byte_utilities.cpp
     src/shared_word.cpp
     src/fx.cpp
+    src/fx_wave_resources.cpp
     src/alphanet.cpp
     src/alphanet_records.cpp
     src/ambience.cpp
@@ -261,7 +262,6 @@ set(OPENSMACX_SOURCES
     src/dipedit.cpp
     src/sound.cpp
     src/sound_type.cpp
-    src/wave_group_list.cpp
     src/spritebox.cpp
     src/listbox.cpp
     src/net_class.cpp
@@ -376,11 +376,7 @@ add_subdirectory(src/jackal)
 # application's default compiler flags.
 set_source_files_properties(
     src/wave.cpp
-    PROPERTIES COMPILE_OPTIONS "/Oy-")
-# Keep the frame-based Wave_Device body on its measured
-# translation-unit profile without changing application-wide compiler flags.
-set_source_files_properties(
-    src/wave_group_list.cpp
+    src/fx_wave_resources.cpp
     PROPERTIES COMPILE_OPTIONS "/Oy-")
 # The Midi, device-wrapper and sound-loader bodies also retain frame-based
 # argument accesses in the measured application release profile.

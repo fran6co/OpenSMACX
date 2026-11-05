@@ -718,6 +718,42 @@
         "Six switch-target tables are associated in source with their actual indirect jumps: the existing scoot table, two chassis tables, one weapon table and two armor tables. The corrected second chassis table has nine entries ending at 0x004C2CE4.",
         "Mapped primaries, associated tables and observed alignment account for the interval except two explicitly unassigned multi-byte no-op sequences at 0x004C306A..0x004C306C and 0x004C3795..0x004C3798. Their lack of direct targets is not proof of dead code or historical TU boundaries."
       ]
+    },
+    {
+      "name": "SoundDevice",
+      "start": "0x004C4D70",
+      "end_exclusive": "0x004C5CDA",
+      "reason": "Inferred contribution core with a corresponding recovered CPP, not proof of historical object boundaries or original filename.",
+      "evidence": [
+        "All 100 mapped primaries in this core belong to the SoundDevice family and its WaveControlGroup/List members; all 92 inter-primary gaps are original NOP alignment.",
+        "The Wave_Device constructor/destructor retain their detached 0x00659EA0..0x00659EC4 spans; three real device objects retain the consecutive startup slots 0x00682608..0x00682610.",
+        "WaveGroupList::insert and its direct Wave_Device caller share this recovered source; no original object boundary or filename is established."
+      ],
+      "recovered_tu": "src/sounddevice.cpp"
+    },
+    {
+      "name": "Menu",
+      "start": "0x005FAC60",
+      "end_exclusive": "0x005FC6FB",
+      "reason": "Inferred contribution core with a corresponding recovered CPP, not proof of historical object boundaries or original filename.",
+      "evidence": [
+        "All 42 mapped primaries in this core belong to Menu; no foreign mapped primary overlaps the interval.",
+        "The original target and selector tables at 0x005FC220..0x005FC28E account for non-padding primary gaps. Constructor, add_menu and destructor retain detached spans covering 0x00662CF0..0x00662D37.",
+        "Application Wave resources are a separate startup contribution, not Menu member state."
+      ],
+      "recovered_tu": "src/menu.cpp"
+    },
+    {
+      "name": "AppWaveResources",
+      "start": "0x00445450",
+      "end_exclusive": "0x0044558A",
+      "reason": "Inferred application resource contribution core, not proven historical TU boundaries or an original filename.",
+      "evidence": [
+        "Twelve mapped compiler-generated initializers/finalizers target six real Wave resources; all eleven inter-primary gaps are original NOP padding.",
+        "Pinned consecutive CRT slots 0x0068208C..0x006820A0 establish CPU bank, menu-up, menu-down, scoot, OK and passover startup order; declarations retain that order.",
+        "Generic Wave methods, FX manager and Ambience remain separate. Source correspondence is not proof of linked retained selection or complete historical object extent."
+      ],
+      "recovered_tu": "src/fx_wave_resources.cpp"
     }
   ]
 }
