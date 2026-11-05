@@ -16,14 +16,13 @@ char *NameTable::get_name() {
     return name_;
 }
 // ORIGINAL: 0x004C7270 sub_4c7270 0x004C7270-0x004C729E BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["task:name-table-owner", "Original4C7270/72A0 initialization,4C7300/7380 inclusive cleanup,4C73C0 cloned0x110-byte records,4C74B0 heap string at200 and4C74F0 inline names at0C.", "historical source:src/recovered/004c7270.cpp"], "reason": "Recover demonstrated inline range/name record and128-slot table accesses as genuine members under provisional ownership names; initializer-versus-constructor identity and historical TU are unproved. Preserve original obligations and seed discoveries."}
-// symbol    ?initialize@NameTableEntry@@QAEPAU1@XZ
-NameTableEntry *NameTableEntry::initialize() {
+// RECOVERY_BINDING: v1 {"evidence": ["task:name-table-owner", "Original4C7270/72A0 initialization,4C7300/7380 inclusive cleanup,4C73C0 cloned0x110-byte records,4C74B0 heap string at200 and4C74F0 inline names at0C.", "historical source:src/recovered/004c7270.cpp", "Pinned4C73C0 allocation of0x110 bytes guards the same4C7270 initialization before copying the name; current source uses this record initialization only at that allocation site."], "reason": "Model the observed new-record initialization as a genuine default constructor, preserving the memset and field-store order, null-allocation path, complete original identity/span and historical byte claim. The original nominal class/TU names and constructor interpretation remain provisional; verify the emitted constructor and its allocation caller together."}
+// symbol    ??0NameTableEntry@@QAE@XZ
+NameTableEntry::NameTableEntry() throw() {
     memset(name_, 0, 0x104);
     low_index_ = 0;
     high_index_ = 0;
     status_ = 1;
-    return this;
 }
 // ORIGINAL: 0x004C72A0 sub_4c72a0 0x004C72A0-0x004C72F5 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["task:name-table-owner", "Original4C7270/72A0 initialization,4C7300/7380 inclusive cleanup,4C73C0 cloned0x110-byte records,4C74B0 heap string at200 and4C74F0 inline names at0C.", "historical source:src/recovered/units/004c72a0.cpp"], "reason": "Recover demonstrated inline range/name record and128-slot table accesses as genuine members under provisional ownership names; initializer-versus-constructor identity and historical TU are unproved. Preserve original obligations and seed discoveries."}
@@ -55,7 +54,7 @@ unsigned int NameTable::remove_range(const NameTableEntry *range) {
     }
     return end;
 }
-// ORIGINAL: 0x004C7300 sub_4c7300 0x004C7300-0x004C7373
+// ORIGINAL: 0x004C7300 sub_4c7300 0x004C7300-0x004C7373 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["task:name-table-owner", "Original4C7270/72A0 initialization,4C7300/7380 inclusive cleanup,4C73C0 cloned0x110-byte records,4C74B0 heap string at200 and4C74F0 inline names at0C.", "historical source:src/stringstruct.cpp", "Pinned4C7300..4C7373: every instruction is accounted for; optional name deallocation calls void operator delete64557F and the tail performs no EAX result definition before RET.", "Pinned64557F..64558A: push argument; call CRT free644EF2; popECX; ret, without an integer result contract. No directCALL/JMP candidate to4C7300 or current application source consumer of the clear result was observed; indirect caller completeness remains unproved.", "Pinned4C7380..4C73B3 exact remove_range owns the same bound snapshots, unconditional record deallocation and unsigned inclusive zeroing graph inlined at4C731A..4C733E. Pin outer loop uses signedJL at4C734A."], "reason": "Recover demonstrated inline range/name record and128-slot table accesses as genuine members under provisional ownership names; initializer-versus-constructor identity and historical TU are unproved. Preserve original obligations and seed discoveries. The observed cleanup operation has no defined result; expose it as void rather than inventing a zero result. This does not assert the original nominal return type or complete original caller coverage."}
 // symbol    ?clear@NameTable@@QAEXXZ
 // TRIED: scaffold had 0 params/cdecl; disassembly reads ecx with no stack access -> changed to `__fastcall sub_4c7300(int param_1)`. Redeclared the callee fn_0064557f (operator delete@0x64557f) to take `void *` instead of the scaffold's 0-arg stub. for-loop over the outer bucket scan diverges at instr #24 ('mov' vs rebuilt 'sub').
@@ -86,7 +85,7 @@ void NameTable::install(const NameTableEntry *entry) {
     NameTableEntry *allocation = new NameTableEntry;
     NameTableEntry *clone = 0;
     if (allocation != 0) {
-        clone = allocation->initialize();
+        clone = allocation;
     }
 
     // Deliberately unconditional, including the original allocation-failure
@@ -133,7 +132,7 @@ void NameTable::set_name(char *name) {
     name_ = static_cast<char *>(::operator new(strlen(name) + 1));
     strcpy(name_, name);
 }
-// ORIGINAL: 0x004C74F0 sub_4c74f0 0x004C74F0-0x004C75A0
+// ORIGINAL: 0x004C74F0 sub_4c74f0 0x004C74F0-0x004C75A0 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["task:name-table-owner", "Original4C7270/72A0 initialization,4C7300/7380 inclusive cleanup,4C73C0 cloned0x110-byte records,4C74B0 heap string at200 and4C74F0 inline names at0C.", "historical source:src/stringstruct.cpp"], "reason": "Recover demonstrated inline range/name record and128-slot table accesses as genuine members under provisional ownership names; initializer-versus-constructor identity and historical TU are unproved. Preserve original obligations and seed discoveries."}
 // symbol    ?rewrite_directory@NameTable@@QAEXPAD@Z
 // TRIED: [ecx+N] reads with no matching stack slot -> a __thiscall receiver (Obj4c74f0), not the given __stdcall(int). 0.89 mnemonic sim; first divergence is prologue register/stack-slot allocation for the `this`/`a1` locals, not chased further.

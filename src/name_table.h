@@ -3,7 +3,7 @@
 #pragma once
 
 // Provisional name/range ownership family; no historical class/TU name proven.
-// Explicit initialize/clear operations preserve observed lifetime boundaries;
+// Entry construction and explicit table initialize/clear preserve lifetime boundaries;
 // do not infer an automatic destructor or reset live storage implicitly.
 struct NameTableEntry {
     // RECOVERY_MEMBER: v1 NameTableEntry high_index_ 0x0 0x004C7380
@@ -15,7 +15,8 @@ struct NameTableEntry {
     // RECOVERY_MEMBER: v1 NameTableEntry name_ 0xC 0x004C74F0
     char name_[0x104];        // +0xC; total record size 0x110
 
-    NameTableEntry *initialize();
+    // Fixed-size CRT clearing and primitive stores cannot throw C++ exceptions.
+    NameTableEntry() throw();
 };
 
 struct NameTable {

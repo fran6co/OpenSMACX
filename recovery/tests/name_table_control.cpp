@@ -24,7 +24,7 @@ void operator delete(void *memory) throw() {
 // @@DECLARATIONS@@
 // @@BODIES@@
 static NameTableEntry entry(unsigned low,unsigned high,const char *name,unsigned status=1) {
-    NameTableEntry result;assert(result.initialize()==&result);
+    NameTableEntry result;
     result.low_index_=low;result.high_index_=high;result.status_=status;
     std::strcpy(result.name_,name);return result;
 }
@@ -33,7 +33,7 @@ static void empty(const NameTable &owner,unsigned low,unsigned end) {
 }
 static void initialization() {
     NameTableEntry e;std::memset(&e,0xA5,sizeof(e));
-    assert(e.initialize()==&e);
+    assert(new (&e) NameTableEntry == &e);
     assert(e.high_index_==0&&e.low_index_==0&&e.status_==1);
     for(unsigned i=0;i<sizeof(e.name_);++i)assert(e.name_[i]==0);
     NameTable table;std::memset(&table,0xA5,sizeof(table));
