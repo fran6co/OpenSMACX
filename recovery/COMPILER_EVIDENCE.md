@@ -25,9 +25,32 @@ policy is in `WORKFLOW.md`; no spelling trick overrides that policy.
 - Reuniting `Sound::set_type` with its Voice consumers makes `/Ob2` inline the
   calls in the VoiceRx and VoiceTx constructors. Moving its definition after
   those consumers did not restore the original calls. Definition visibility
-  across the TU matters; source order alone does not isolate this body from
-  VC6's inliner. Preserve the constructor claims and investigate original TU
+  across this compiling TU matters; source order alone does not isolate this
+  body from VC6's inliner. Preserve the constructor claims and investigate original TU
   visibility/compiler policy rather than forcing a local noinline workaround.
+- Bounded unchanged-source Sound controls do not support an `/Ob1` fix:
+  replacing only `/Ob2` with `/Ob1` leaves both Voice constructor misses and
+  loses masked matches for `release_sound` and `Sound::Sound`. Removing the
+  explicit `Sound::` qualification from the two Voice `set_type` calls also
+  leaves their inlining and verdicts unchanged. These are negative controls,
+  not changes to production compiler policy.
+- A paired visibility control exposes the real dependency more narrowly.
+  Making the complete `SoundFadeState` and `Sound` constructor bodies and
+  `Sound::set_fade` visible inline, with the `set_type` definition removed from
+  this diagnostic overlay's compiling unit, restores both Voice constructor bodies
+  and their EH regions **only when the existing function-call lowering of
+  `memset` is preserved**. Moving definitions ahead of that intrinsic context
+  does not restore them. The strict reference-aware comparator passes both
+  constructor body rows in the corrected overlay; aggregate qualification
+  remains unknown, including generated-table linker selection. A production
+  provider and linked target for `set_type` remain unverified. The overlay
+  also stops emitting the standalone base constructors at `0x004C6080` and
+  `0x004C8410`; their complete mappings and historical obligations must remain.
+  No independent source use requiring those standalone emissions is currently
+  established. This is a constraint on inline visibility and provider placement,
+  not proof of a historical object boundary or an integrated recovery. Do not
+  manufacture constructor uses, export attributes or noinline controls to hide
+  the remaining emission question. The diagnostic overlays are not source claims.
 
 - Catalogue return decorations need provenance too. The stripped executable's
   `Buffer::box_sprite` entry leaves incidental EAX on guard and no-mask paths;
