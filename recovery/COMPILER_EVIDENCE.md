@@ -22,6 +22,22 @@ policy is in `WORKFLOW.md`; no spelling trick overrides that policy.
   With the observed optimized pooling behavior, finer TU boundaries are a
   concrete alternative to named arrays or different pooling options. The
   606-identity interface/assets correspondence therefore remains inferred.
+- FileWin gives a within-function counterexample to inferring TU boundaries
+  from duplicate strings. Its original `UNK4` at `0x006146A0` compares against
+  the `..` cell at `0x0069714C` and later appends the distinct cell at
+  `0x006971C0`; `populate_directory` uses another at `0x00697144`. The current
+  compiling unit pools these uses into one literal COMDAT. Moving whole
+  functions cannot distinguish two occurrences inside the same function.
+  Separate source storage and compiler pooling policy remain alternatives.
+  A bounded current-compiler control keeps four identical source occurrences
+  separate under explicit `/Og /Oi /Ot /Oy /Gs /Gy /GX /Ob2`; adding `/Gf`
+  pools them into one, as does the observed `/O2` context. This does not prove
+  original switches or that this explicit profile reproduces every implicit
+  `/O2` setting. A complete FileWin diagnostic under the unpooled combination
+  leaves its masked body verdicts unchanged; it is not a matching fix or a
+  production-policy decision. Do not bind a pooled symbol to one original
+  cell when independent uses establish several, or count an unresolved
+  initializer-to-wrapper edge as an exact original Sprite-constructor call.
 - Reuniting `Sound::set_type` with its Voice consumers makes `/Ob2` inline the
   calls in the VoiceRx and VoiceTx constructors. Moving its definition after
   those consumers did not restore the original calls. Definition visibility
