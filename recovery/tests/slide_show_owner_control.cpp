@@ -11,7 +11,7 @@ static int last_draw_x=-1,last_draw_y=-1,last_draw_key=-1;
 class Buffer;
 static Buffer *ctor_ptrs[8],*dtor_ptrs[8];
 static int ctor_count=0,dtor_count=0;
-enum { CTOR=1,DTOR,VISIBLE,INIT,FILL,CLIP,CLIP_SET,DRAW,UPDATE,TRANSFORM,
+enum { CTOR=1,DTOR,VISIBLE,INIT,FILL,CLIP,CLIP_SET,CLIP_RESTORE,DRAW,UPDATE,TRANSFORM,
        FLIP,SOUND,RESTORE,SOFT,WAVE_PLAY,WAVE_FADE };
 class Buffer {
 public:
@@ -24,6 +24,7 @@ public:
     int fill(int) { events.push_back(FILL);return 0; }
     int draw(Buffer*,int,int,int,int,int) { events.push_back(DRAW);return 0; }
     int set_clip(RECT*) { events.push_back(CLIP_SET);return 0; }
+    void restore_clip() { set_clip(&rect2_); events.push_back(CLIP_RESTORE); }
 protected: RECT rect2_; int width_,height_;
 };
 class Sprite {
@@ -36,6 +37,7 @@ private:int w_,h_,key_;
 };
 class Win {
 public:
+    static Buffer screen_buffer_;
     Win():visible_(0){outer_.left=51;outer_.top=62;outer_.right=540;outer_.bottom=400;}
     virtual ~Win(){}
     int is_visible(){events.push_back(VISIBLE);return visible_;}
@@ -48,6 +50,7 @@ public:
 private:int visible_;RECT outer_;
 };
 class GraphicWin:public Win,public Buffer{};
+Buffer Win::screen_buffer_;
 class MainInterface:public GraphicWin{
 public:
     MainInterface(){bottom_.left=244;bottom_.top=504;bottom_.right=779;bottom_.bottom=600;layout_.left=0;layout_.top=0;layout_.right=800;layout_.bottom=600;}
@@ -63,10 +66,13 @@ private:
 };
 class Wave { public:int play(){events.push_back(WAVE_PLAY);return 0;} void fade(unsigned long){events.push_back(WAVE_FADE);} };
 MainInterface MainInterfaceGlobal;
-Buffer ScreenBuffer;
+Buffer &ScreenBuffer=Win::screen_buffer_;
 RECT WinScreenClipRect={0,0,800,600};
 int WinScreenWidth=800,WinScreenHeight=600,IsMultiplayerNet=0;
-unsigned int GamePreferences=0;
+struct GameDataStateFields { unsigned int game_preferences_, game_more_preferences_; };
+struct GameDataState { GameDataStateFields fields_; };
+static GameDataState GameDataStateStorage={{0,0}};
+static unsigned int &GamePreferences=GameDataStateStorage.fields_.game_preferences_;
 unsigned char WinFillColour=32;
 int WinFlipClipped=0,MainInterfaceTileFlag=0;
 int WindowAnimationFrameDelay=20;

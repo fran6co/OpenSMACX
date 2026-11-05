@@ -4,16 +4,27 @@ import shutil
 import subprocess
 import pytest
 from match_recovery.source import read_file
+from test_game_logic_seed_batch_behavior import _definition
 
 ROOT = Path(__file__).resolve().parents[2]
 FIXTURE = Path(__file__).with_name('startup_owner_host.cpp')
 
 
-def product_bodies():
-    records = {r.address:r for r in read_file(ROOT / 'src/game.cpp')}
-    bodies = '\n'.join(records[a].region for a in (0x58EE60,0x4595C0))
-    assert all(records[a].state.value == 'implemented' and not records[a].extract_error
-               for a in (0x58EE60,0x4595C0))
+def product_bodies(font_mutant=False):
+    game_records = {r.address:r for r in read_file(ROOT / 'src/game.cpp')}
+    interface_records = {r.address:r for r in read_file(ROOT / 'src/maininterface.cpp')}
+    desktop = game_records[0x58EE60].region
+    bung = interface_records[0x4595C0].region
+    if font_mutant:
+        definition = _definition(bung, 'void __cdecl bung_momma()')
+        old = 'MainInterfaceGlobal.tertiary_font()'
+        assert definition.count(old) == 1
+        bung = bung.replace(definition, definition.replace(
+            old, 'MainInterfaceGlobal.secondary_font()', 1), 1)
+    bodies = '\n'.join((desktop, bung))
+    selected = (game_records[0x58EE60], interface_records[0x4595C0])
+    assert all(record.state.value == 'implemented' and not record.extract_error
+               for record in selected)
     # This tiny projection uses the real caller's expression, not a second
     # manually maintained startup wrapper or executable-address call.
     source = (ROOT / 'src/game.cpp').read_text()
@@ -28,16 +39,15 @@ def product_bodies():
 def test_actual_startup_order_geometry_lifetime_and_mutants(tmp_path,compiler_name,mutation):
     compiler=shutil.which(compiler_name)
     if not compiler:pytest.skip(f'{compiler_name} unavailable')
-    body=product_bodies()
+    body=product_bodies(font_mutant=(mutation=='font'))
     replacements={
-        'font':('MainInterfaceGlobal.tertiary_font()', 'MainInterfaceGlobal.secondary_font()'),
         'multiplayer_width':('static_cast<uint32_t>(multi_client.left) -\n            static_cast<uint32_t>(multi_client.right)',
                              'static_cast<uint32_t>(multi_client.right) -\n            static_cast<uint32_t>(multi_client.left)'),
         'height':('static_cast<uint32_t>(-10) -\n        static_cast<uint32_t>(ConsoleGlobal.dib_.bmiHeader.biHeight)',
                   'static_cast<uint32_t>(-10) +\n        static_cast<uint32_t>(ConsoleGlobal.dib_.bmiHeader.biHeight)'),
         'initial_store':('ConsoleGlobal.field_23D80_ = 10;', ''),
     }
-    if mutation!='none':
+    if mutation not in ('none', 'font'):
         old,new=replacements[mutation];assert body.count(old)==1;body=body.replace(old,new)
     fixture=FIXTURE.read_text();assert fixture.count('// ACTUAL_STARTUP_BODIES')==1
     cpp=tmp_path/'actual.cpp';binary=tmp_path/'actual'
@@ -49,10 +59,12 @@ def test_actual_startup_order_geometry_lifetime_and_mutants(tmp_path,compiler_na
 
 
 def test_original_identity_seed_retirement_and_real_members():
-    records={r.address:r for r in read_file(ROOT/'src/game.cpp')}
-    for address,name,end in ((0x58EE60,'?desktop_init@@YAHH@Z',0x58EFEB),
-                             (0x4595C0,'?bung_momma@@YAXXZ',0x45967F)):
-        row=records[address];assert row.name==name and row.image_spans==((address,end),)
+    game_records={r.address:r for r in read_file(ROOT/'src/game.cpp')}
+    interface_records={r.address:r for r in read_file(ROOT/'src/maininterface.cpp')}
+    for row,address,name,end in (
+            (game_records[0x58EE60],0x58EE60,'?desktop_init@@YAHH@Z',0x58EFEB),
+            (interface_records[0x4595C0],0x4595C0,'?bung_momma@@YAXXZ',0x45967F)):
+        assert row.address==address and row.name==name and row.image_spans==((address,end),)
         assert not (ROOT/f'src/unrecovered/{address:08x}.cpp').exists()
     assert 'Font *tertiary_font() { return &font3_; }' in (ROOT/'src/maininterface.h').read_text()
     assert 'const RECT &client_rect() const { return client_rect_; }' in (ROOT/'src/win.h').read_text()

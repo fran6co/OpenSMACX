@@ -65,6 +65,48 @@ Status: Complete
 #include "wave.h"
 #include "strings.h"
 
+// ORIGINAL: 0x00459560 _$E21 0x00459560-0x00459576 FILE
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned CRT slot0x682534 selects initializer0x459560..0x459576 and registers exit0x459580..0x45958a; complete independent decode establishes both ends.", "Original operations identify storage0x7ae820, source object?MainInterfaceGlobal@@3VMainInterface@@A. MainInterface uses constructor45EF10/destructor45EB80; FarmMap uses virtual-base constructor4626E0 with hidden most-derived argument1 and exit receiver7F5ACC calling own-part420F90 then virtual GraphicWin5D4DD0.", "Historical pre-transport physical mapwin.cpp COFF selected the MainInterfaceGlobal initializer/finalizer and established its prior compiler-generated callbacks. After this move the emitting source is src/maininterface.cpp; native COFF qualification and the MainInterface-before-FarmMap CRT order require a fresh coordinator measurement.", "Current compiler-local symbols interpret present emission, not original debug names or historical TU identity. The bounded two-object ordering does not establish complete CRT order, strict linked preservation, runtime or game acceptance.", "Source-owned MainInterfaceGlobal and its dedicated Wave share src/maininterface.cpp in pinned local startup order. Fresh physical linked evidence qualifies only their order before FarmMapWindow, not complete CRT/runtime or historical TU proof."], "reason": "Keep the pinned MainInterfaceGlobal initializer and exit mapping with the genuine MainInterface source-owned object and compiler-generated lifetime. Preserve its ordering ahead of FarmMapWindow; do not author callbacks or infer a historical filename."}
+// symbol    _$E17
+// ORIGINAL: 0x00459580 _$E19 0x00459580-0x0045958A FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned CRT slot0x682534 selects initializer0x459560..0x459576 and registers exit0x459580..0x45958a; complete independent decode establishes both ends.", "Original operations identify storage0x7ae820, source object?MainInterfaceGlobal@@3VMainInterface@@A. MainInterface uses constructor45EF10/destructor45EB80; FarmMap uses virtual-base constructor4626E0 with hidden most-derived argument1 and exit receiver7F5ACC calling own-part420F90 then virtual GraphicWin5D4DD0.", "Fresh physical mapwin.cpp COFF selects _$E21 via .CRT$XCU and registers _$E19, both naming the genuine global. The corrected declarations and actual linked table initialize MainInterface before FarmMap, matching original slots682534/682540; C++ owns reverse destruction and virtual-base lifetime.", "Current compiler-local symbols interpret present emission, not original debug names or historical TU identity. The bounded two-object ordering does not establish complete CRT order, strict linked preservation, runtime or game acceptance.", "Source-owned MainInterfaceGlobal and its dedicated Wave share src/maininterface.cpp in pinned local startup order. Fresh physical linked evidence qualifies only their order before FarmMapWindow, not complete CRT/runtime or historical TU proof."], "reason": "Bind original exit to genuine source-owned ?MainInterfaceGlobal@@3VMainInterface@@A compiler-generated lifetime after correcting declaration order; no hand-authored callback or explicit virtual-base flag."}
+// symbol    _$E15
+
+// The hit-test rectangle at 0x007AF50C is this object's +0xCEC member;
+// MapWin::main_caption also selects its complete receiver at 0x007AE820.
+// RECOVERY_OBJECT: v1 0x007AE820 ?MainInterfaceGlobal@@3VMainInterface@@A
+// The former independent Console gate identity is this embedded word:
+// 0x007AE820 + 0x1EAC8 = 0x007CD2E8. MainInterface::init clears it at
+// 0x004596CD and Console's Enter/Space paths read it at 0x00517A0B/0x00517A93.
+// Keep its historical unbounded identity without asserting a new extent.
+// RECOVERY_OBJECT: v3 0x007CD2E8 ?ConsoleModalState7CD2E8@@3HA member ?MainInterfaceGlobal@@3VMainInterface@@A field_1EAC8_
+MainInterface MainInterfaceGlobal;  // 0x007AE820
+
+// ORIGINAL: 0x00459590 _$E46 0x00459590-0x004595A6 FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned CRT dispatcher 0x00644DEC-0x00644DFB supplies [0x00682000,0x006826CC) to 0x00644ED8, which calls each non-null dword. Slot 0x00682538 selects init 0x00459590, which registers exit callback 0x004595B0.", "Original init span 0x00459590-0x004595A6 and exit span 0x004595B0-0x004595BA are independently disassembled; both identify receiver 0x007D38B8 and Wave constructor/destructor 0x004C66E0/0x004C67C0.", "Historical earlier wave.cpp physical COFF selected local STATIC init _$E46 via .CRT$XCU, relocating to g_MAININTERFACE_WAVE, Wave construction, paired local fini _$E44 and atexit; fini relocates to the same object and Wave destruction. Native comparator can select these physical local function symbols.", "Independent pin/COFF/source review supports individual lifetime ownership. These mappings do not establish complete global initialization order, linked retained selection, full data layout, original debug names or runtime acceptance.", "Current source correspondence moves the real g_MAININTERFACE_WAVE object and these compiler-owned lifetime identities to src/maininterface.cpp; the earlier wave.cpp COFF observation remains historical and must be freshly requalified after transport.", "Source-owned MainInterfaceGlobal and its dedicated Wave share src/maininterface.cpp in pinned local startup order. Fresh physical linked evidence qualifies only their order before FarmMapWindow, not complete CRT/runtime or historical TU proof."], "reason": "Keep the genuine MainInterface music Wave object and its compiler-generated initialization/cleanup identities with the MainInterface configuration and animation source correspondence; preserve its pinned CRT slot without manual callbacks."}
+// symbol    _$E22
+// ORIGINAL: 0x004595B0 _$E44 0x004595B0-0x004595BA FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned CRT dispatcher 0x00644DEC-0x00644DFB supplies [0x00682000,0x006826CC) to 0x00644ED8, which calls each non-null dword. Slot 0x00682538 selects init 0x00459590, which registers exit callback 0x004595B0.", "Original init span 0x00459590-0x004595A6 and exit span 0x004595B0-0x004595BA are independently disassembled; both identify receiver 0x007D38B8 and Wave constructor/destructor 0x004C66E0/0x004C67C0.", "Historical earlier wave.cpp physical COFF selected local STATIC init _$E46 via .CRT$XCU, relocating to g_MAININTERFACE_WAVE, Wave construction, paired local fini _$E44 and atexit; fini relocates to the same object and Wave destruction. Native comparator can select these physical local function symbols.", "Independent pin/COFF/source review supports individual lifetime ownership. These mappings do not establish complete global initialization order, linked retained selection, full data layout, original debug names or runtime acceptance.", "Source-owned MainInterfaceGlobal and its dedicated Wave share src/maininterface.cpp in pinned local startup order. Fresh physical linked evidence qualifies only their order before FarmMapWindow, not complete CRT/runtime or historical TU proof."], "reason": "Bind the original exit operation to the genuine compiler-emitted lifetime of source-owned g_MAININTERFACE_WAVE. The local symbol identifies current emitted code, not an original debug name; no callback body is authored."}
+// symbol    _$E20
+
+// These start-only identities are witnessed by each pinned init and its
+// registered exit callback loading the same receiver for Wave construction
+// and destruction. They do not establish full bounds or startup ordering.
+// RECOVERY_OBJECT: v1 0x007D38B8 ?g_MAININTERFACE_WAVE@@3VWave@@A
+Wave g_MAININTERFACE_WAVE;  // 0x007D38B8
+
+// Scroll animation state: distinct original DWORD starts, not interface/Wave members.
+// Allocation extents beyond the observed DWORD accesses remain unverified.
+// RECOVERY_OBJECT: v1 0x007D38B0 ?PopupScrollHorizontalStep@@3HA
+int PopupScrollHorizontalStep;
+// RECOVERY_OBJECT: v1 0x007D3924 ?PopupScrollVerticalFrameCount@@3HA
+int PopupScrollVerticalFrameCount;
+extern int WindowAnimationFrameDelay;
+
+#include <mmsystem.h>
+#include "win.h"
+#include "autosound.h"
+
 // Original dword writes/reads in45D170,45C3A0,45CA40 respectively.
 // Independently read initial bytes:7D3934/7D3938/7D3944 all zero;
 // 68526C is initialized to one. Names retain bounded observed roles.
@@ -216,9 +258,38 @@ MainInterface::MainInterface() {
     // Genuine embedded members and both bases construct in declaration order.
 }
 
-extern Wave g_MAININTERFACE_WAVE;
 void __cdecl main_interface_timer_callback(int, void *);
 
+// ORIGINAL: 0x004595C0 ?bung_momma@@YAXXZ 0x004595C0-0x0045967F
+// RECOVERY_BINDING: v1 {"evidence": ["git:b84036a86445148d25d4e216ac24c131e108bea8:src/unrecovered/004595c0.cpp", "Pinned4595C0..45967F font7CFEDC is MainInterface7AE820+216BC, its third Font; native title bounds and shared StringBox identify actual members.", "recovery/tasks/startup-desktop-owner-oct5.json", "recovery/tests/test_startup_actual_source.py", "source:src/maininterface.cpp: the sole startup helper initializes MainInterfaceGlobal.tertiary_font(), shared_string_box() and title_bounds() through the actual MainInterface/Console bases."], "reason": "Keep the shared MainInterface message-box setup beside its real MainInterface owner and owned resources; preserve the free __cdecl API and startup call. This current source correspondence does not prove a historical filename."}
+// kind      game
+void __cdecl bung_momma() {
+    const int screen_width = WinScreenWidth;
+    const int box_width = screen_width - 0x140;
+    Font *const font = MainInterfaceGlobal.tertiary_font();
+    const int font_mode = font->unk_1_;
+    const int rows = font_mode < 0
+        ? font->line_height()
+        : font_mode + font->pixel_height();
+    const int box_height = rows * 4;
+    const int box_x = (screen_width - box_width) / 2;
+    const int box_y = MainInterfaceGlobal.title_bounds().bottom - box_height;
+
+    StringBox &box = MainInterfaceGlobal.shared_string_box();
+    Win *const parent = static_cast<Win *>(&ConsoleGlobal);
+    box.init(box_x, box_y, box_width, box_height, parent, 0, 0x1000022);
+    box.set_draw_mode(1);
+    box.set_visible_rows(4);
+
+    Buffer &buffer = static_cast<Buffer &>(box);
+    buffer.set_font(font, 0, 0, 0);
+    buffer.set_text_color(0x5F, -1, 1, 1);
+    box.clear();
+    static_cast<Win &>(box).Win::show(0);
+}
+
+// RECOVERY_ASSOCIATED: v1 switch_targets 0x00459680 0x0045B500 0x0045B52C 0x0045B1DC
+// RECOVERY_ASSOCIATED: v1 switch_selector 0x00459680 0x0045B52C 0x0045B545 0x0045B1D6
 // ORIGINAL: 0x00459680 ?init@MainInterface@@QAEHH@Z 0x00459680-0x0045B500;0x00655730-0x00655745 FILE
 // RECOVERY_BINDING: v1 {"evidence": ["src/maininterface.h", "git:b4601390:recovery/tasks/maininterface-owner-coverage.json", "git:f7bbce35:src/unrecovered/00459680.cpp"], "reason": "Original owner calls, secondary interface receiver and ordinary embedded-member lifecycle identify this MainInterface operation; compatible historical seed spans are retained, without a matching claim."}
 int MainInterface::init(int) {
@@ -2758,4 +2829,531 @@ void SubInterface::release_iface_mode() {
             }
         }
     }
+}
+
+// ORIGINAL: 0x0045D440 ?slide_show@@YAXPAUGraphicWin@@H@Z 0x0045D440-0x0045D966;0x00655757-0x00655777
+// RECOVERY_BINDING: v1 {"evidence": ["git:3e11f655:src/recovered/units/0045d440.cpp complete original identity/spans and historical discoveries", "pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf:0x45d440 full native stack/register/call/lifetime audit.", "source:src/maininterface.h existing Sprite arrays; src/buffer.h source-receiver copy and signed DIB height; src/console.h real virtual GraphicWin base, no raw-offset alias.", "source:src/maininterface.cpp: the helper uses MainInterfaceGlobal-owned slide/scroll sprites, interface geometry and shared transition state; its Wave configuration belongs to MainInterface::init.", "pinned:Pinned cold unwind regions remain consecutive with MainInterface dtor/ctor/init/set_message: 0x6552C0-0x65552F, 0x655530-0x655723, 0x655730-0x655745, 0x655745-0x655757, followed by these four helper spans 0x655757-0x655777, 0x655777-0x6557A2, 0x6557A2-0x6557CD, and 0x6557CD-0x6557F8; no other mapped span intersects this detached range."], "reason": "Keep this free ?slide_show UI transition helper with the MainInterface resource and lifetime provider while preserving its existing __cdecl signature and external window callers. This is an inferred source correspondence, not proof of an original filename or historical TU boundary."}
+// symbol    ?slide_show@@YAXPAVGraphicWin@@H@Z
+void __cdecl slide_show(GraphicWin *window, int mode) {
+    Buffer frame_buffer;
+    Buffer background;
+
+    if (window != 0 && window->Win::is_visible()) {
+        return;
+    }
+
+    if (window != 0) {
+        if ((GameDataStateStorage.fields_.game_preferences_ & PREF_AV_SOUND_EFFECTS) != 0) {
+            g_MAININTERFACE_WAVE.play();
+        }
+
+        const int frame_edge = WinScreenWidth == 800 ? 0x5E : 0xEE;
+        const int frame_divisor = IsMultiplayerNet != 0 ? 3 : 5;
+        RECT area = window->Buffer::clip_rect();
+        window->client_to_screen(&area);
+        background.init(MainInterfaceGlobal.Buffer::pixel_width(),
+                        MainInterfaceGlobal.Buffer::pixel_height(), 0, 0);
+        background.fill(WinFillColour);
+        MainInterfaceGlobal.update_window_to_buffer(&background);
+
+        frame_buffer.resize(window->Buffer::pixel_width(),
+                            window->Buffer::pixel_height());
+        frame_buffer.fill(WinFillColour);
+        window->update_window_to_buffer(&frame_buffer);
+
+        int frame_count = (area.bottom - area.top) / frame_divisor;
+        if (area.top < area.bottom - frame_count * frame_divisor) {
+            ++frame_count;
+        }
+
+        Win::screen_buffer_.set_clip(&area);
+        RECT animation_strip = { area.left, 0, area.right, 0x39 };
+        window->client_to_screen(&animation_strip);
+
+        Sprite &left_outer = MainInterfaceGlobal.slide_frame_sprite(0);
+        Sprite &left_inner = MainInterfaceGlobal.slide_frame_sprite(1);
+        Sprite &right_inner = MainInterfaceGlobal.slide_frame_sprite(2);
+        Sprite &right_outer = MainInterfaceGlobal.slide_frame_sprite(3);
+        const int left_x = area.left;
+        const int left_inner_x = left_x + left_outer.width();
+        const int right_inner_x = area.left + area.right
+            - right_inner.width() - right_outer.width() - 0x20;
+        const int right_x = area.left + area.right
+            - right_outer.width() - 0x20;
+
+        int animation_y = area.bottom - frame_count;
+        if ((GameDataStateStorage.fields_.game_preferences_ & PREF_AV_SLIDING_WINDOWS) != 0
+            && IsMultiplayerNet == 0) {
+            WinFlipClipped = 1;
+            for (int frame = 0; frame < frame_divisor; ++frame) {
+                const DWORD started = timeGetTime();
+                background.draw(&Win::screen_buffer_, 9, area.left, animation_y, 1, 1);
+
+                int left_y = animation_y;
+                if (left_y <= frame_edge) left_y = frame_edge;
+                left_outer.draw(&Win::screen_buffer_, left_outer.transparent_index(),
+                                left_x, left_y, 1, 1);
+                left_inner.draw(&Win::screen_buffer_, left_inner.transparent_index(),
+                                left_inner_x, animation_y, 1, 1);
+                right_inner.draw(&Win::screen_buffer_, right_inner.transparent_index(),
+                                 right_inner_x, animation_y, 1, 1);
+                int right_y = animation_y;
+                if (right_y <= frame_edge) right_y = frame_edge;
+                right_outer.draw(&Win::screen_buffer_, right_outer.transparent_index(),
+                                 right_x, right_y, 1, 1);
+
+                Win::screen_buffer_.set_clip(&animation_strip);
+                background.draw(&Win::screen_buffer_, 9,
+                    MainInterfaceGlobal.outer_rect().left,
+                    MainInterfaceGlobal.outer_rect().top, 1, 1);
+                Win::flip(&area);
+                animation_y -= frame_count;
+                if (animation_y <= area.top) animation_y = area.top;
+                Win::screen_buffer_.set_clip(&area);
+                do_sound();
+                while (static_cast<DWORD>(timeGetTime() - started)
+                       < static_cast<DWORD>(WindowAnimationFrameDelay)) {
+                    do_sound();
+                }
+            }
+            Win::screen_buffer_.restore_clip();
+            WinFlipClipped = 0;
+        }
+
+        if ((GameDataStateStorage.fields_.game_preferences_ & PREF_AV_SOUND_EFFECTS) != 0) {
+            g_MAININTERFACE_WAVE.fade(0x32);
+        }
+
+        RECT window_clip = window->Buffer::clip_rect();
+        window->Buffer::set_clip(&window_clip);
+        int left_y = animation_y;
+        if (left_y <= frame_edge) left_y = frame_edge;
+        left_outer.draw(static_cast<Buffer *>(window), left_outer.transparent_index(),
+                        0, left_y - area.top, 1, 1);
+        left_inner.draw(static_cast<Buffer *>(window), left_inner.transparent_index(),
+                        left_inner_x - area.left, 0, 1, 1);
+        right_inner.draw(static_cast<Buffer *>(window), right_inner.transparent_index(),
+                         right_inner_x - area.left, 0, 1, 1);
+        int right_y = animation_y;
+        if (right_y <= frame_edge) right_y = frame_edge;
+        right_outer.draw(static_cast<Buffer *>(window), right_outer.transparent_index(),
+                         right_x - area.left, right_y - area.top, 1, 1);
+    }
+
+    if ((mode & 2) != 0) {
+        MainInterfaceGlobal.interface_down_sprite().draw(
+            static_cast<Buffer *>(&MainInterfaceGlobal),
+            MainInterfaceGlobal.interface_down_sprite().transparent_index(),
+            MainInterfaceGlobal.bottom_bounds().left,
+            MainInterfaceGlobal.bottom_bounds().top, 1, 1);
+        MainInterfaceTileFlag = 1;
+        RECT interface_clip = MainInterfaceGlobal.main_layout_rect();
+        MainInterfaceGlobal.Buffer::set_clip(&interface_clip);
+        MainInterfaceGlobal.restore_back(0);
+        RECT main_buffer_clip = MainInterfaceGlobal.Buffer::clip_rect();
+        MainInterfaceGlobal.Buffer::set_clip(&main_buffer_clip);
+        MainInterfaceGlobal.soft_update();
+    }
+    WinFlipClipped = 0;
+}
+// ORIGINAL: 0x0045D970 ?slide_hide@@YAXPAUGraphicWin@@H@Z 0x0045D970-0x0045DEA0;0x00655777-0x006557A2
+// RECOVERY_BINDING: v1 {"evidence": ["git:14a0bcaf:src/recovered/units/0045d970.cpp original hot/cold spans and retained seed findings.", "pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf:0x45d970 full native register, rectangle mutation, receiver, call and lifetime audit.", "source:src/console.h virtual GraphicWin base; src/maininterface.h existing Sprite arrays and interface-up member; src/buffer.h source-receiver copy, full bounds and DIB geometry.", "source:src/maininterface.cpp: the helper uses MainInterfaceGlobal-owned slide/scroll sprites, interface geometry and shared transition state; its Wave configuration belongs to MainInterface::init.", "pinned:Pinned cold unwind regions remain consecutive with MainInterface dtor/ctor/init/set_message: 0x6552C0-0x65552F, 0x655530-0x655723, 0x655730-0x655745, 0x655745-0x655757, followed by these four helper spans 0x655757-0x655777, 0x655777-0x6557A2, 0x6557A2-0x6557CD, and 0x6557CD-0x6557F8; no other mapped span intersects this detached range."], "reason": "Keep this free ?slide_hide UI transition helper with the MainInterface resource and lifetime provider while preserving its existing __cdecl signature and external window callers. This is an inferred source correspondence, not proof of an original filename or historical TU boundary."}
+// symbol    ?slide_hide@@YAXPAVGraphicWin@@H@Z
+void __cdecl slide_hide(GraphicWin *window, int mode) {
+    Buffer window_frame;          // native F498, constructed first
+    Buffer interface_background;  // native FA20, constructed second
+    Buffer screen_restore;        // native EF10, constructed third
+
+    if (window != 0 && window->Win::is_visible() != 0
+        && (GameDataStateStorage.fields_.game_preferences_ & PREF_AV_SLIDING_WINDOWS) != 0
+        && IsMultiplayerNet == 0) {
+        if ((GameDataStateStorage.fields_.game_preferences_ & PREF_AV_SOUND_EFFECTS) != 0)
+            g_MAININTERFACE_WAVE.play();
+
+        const int frame_edge = WinScreenWidth == 0x320 ? 0x5e : 0xee;
+        const int frame_divisor = (IsMultiplayerNet != 0
+                                   || MapMouseFeedbackBusy != 0
+                                   || ConsoleControlTurnActive != 0) ? 3 : 5;
+        RECT area = window->Buffer::clip_rect();
+        window->client_to_screen(&area);
+
+        interface_background.init(MainInterfaceGlobal.Buffer::pixel_width(),
+                                  MainInterfaceGlobal.Buffer::pixel_height(), 0, 0);
+        interface_background.fill(WinFillColour);
+        MainInterfaceGlobal.update_window_to_buffer(&interface_background);
+
+        // Native initializes the third local before initializing/filling the first.
+        // The declarations above still preserve compiler cleanup order.
+        screen_restore.init(window->Buffer::pixel_width(),
+                            window->Buffer::pixel_height(), 0, 0);
+
+        window_frame.init(window->Buffer::pixel_width(),
+                          window->Buffer::pixel_height(), 0, 0);
+        window_frame.fill(WinFillColour);
+
+        // Native 0x45DB05/1B clears the two client-side bands before capturing
+        // the target frame at 0x45DB3A.
+        window->fill(0, 0, 0x17, window->Buffer::pixel_height(), 9);
+        window->fill(window->Buffer::pixel_width() - 0x17, 0, 0x17,
+                     window->Buffer::pixel_height(), 9);
+        window->update_window_to_buffer(&window_frame);
+        window->update_back_to_window(&screen_restore);
+
+        RECT animation_strip = { area.left, 0, area.right, 0x39 };
+        MainInterfaceGlobal.client_to_screen(&animation_strip);
+        const int frame_count = (area.bottom - area.top) / frame_divisor;
+
+        Sprite &left_outer = MainInterfaceGlobal.slide_frame_sprite(0);
+        Sprite &left_inner = MainInterfaceGlobal.slide_frame_sprite(1);
+        Sprite &right_inner = MainInterfaceGlobal.slide_frame_sprite(2);
+        Sprite &right_outer = MainInterfaceGlobal.slide_frame_sprite(3);
+        const int left_x = area.left;
+        const int left_inner_x = left_x + left_outer.width();
+        const int right_inner_x = area.left + window_frame.pixel_width()
+            - right_outer.width()
+            - right_inner.width() - 0x20;
+        const int right_outer_x = area.left + window_frame.pixel_width()
+            - right_outer.width() - 0x20;
+        int frame_y = area.top + frame_count;
+
+        Win::screen_buffer_.set_clip(&area);
+        WinFlipClipped = 1;
+        // Native stores frame_divisor into its reused [ebp+8] scratch slot at
+        // 0x45DA52; incoming mode at [ebp+0xC] is only tested for bit 2.
+        for (int frame = 0; frame < frame_divisor; ++frame) {
+            const DWORD started = timeGetTime();
+            screen_restore.copy(&Win::screen_buffer_, 0, 0, area.left, area.top,
+                                window->Buffer::pixel_width(),
+                                window->Buffer::pixel_height());
+            window_frame.draw(&Win::screen_buffer_, 9, area.left, frame_y, 1, 1);
+
+            int left_y = frame_y;
+            if (left_y <= frame_edge) left_y = frame_edge;
+            left_outer.draw(&Win::screen_buffer_, left_outer.transparent_index(),
+                            left_x, left_y, 1, 1);
+            left_inner.draw(&Win::screen_buffer_, left_inner.transparent_index(),
+                            left_inner_x, frame_y, 1, 1);
+            right_inner.draw(&Win::screen_buffer_, right_inner.transparent_index(),
+                             right_inner_x, frame_y, 1, 1);
+            int right_y = frame_y;
+            if (right_y <= frame_edge) right_y = frame_edge;
+            right_outer.draw(&Win::screen_buffer_, right_outer.transparent_index(),
+                             right_outer_x, right_y, 1, 1);
+
+            Win::screen_buffer_.set_clip(&animation_strip);
+            interface_background.draw(&Win::screen_buffer_, 9,
+                MainInterfaceGlobal.outer_rect().left,
+                MainInterfaceGlobal.outer_rect().top, 1, 1);
+            Win::flip(&area);
+            frame_y += frame_count;
+            Win::screen_buffer_.set_clip(&area);
+            do {
+                do_sound();
+                int delay = WindowAnimationFrameDelay;
+                if (MapMouseFeedbackBusy != 0 || ConsoleControlTurnActive != 0)
+                    delay = delay / 2;
+                if (static_cast<DWORD>(timeGetTime() - started)
+                    >= static_cast<DWORD>(delay))
+                    break;
+            } while (true);
+        }
+        if ((GameDataStateStorage.fields_.game_preferences_ & PREF_AV_SOUND_EFFECTS) != 0)
+            g_MAININTERFACE_WAVE.fade(0x32);
+        Win::screen_buffer_.restore_clip();
+    }
+
+    if ((mode & 2) != 0) {
+        MainInterfaceGlobal.interface_up_sprite().draw(
+            static_cast<Buffer *>(&MainInterfaceGlobal),
+            MainInterfaceGlobal.interface_up_sprite().transparent_index(),
+            MainInterfaceGlobal.bottom_bounds().left,
+            MainInterfaceGlobal.bottom_bounds().top, 1, 1);
+        MainInterfaceTileFlag = 0;
+        RECT interface_clip = MainInterfaceGlobal.info_frame_rect();
+        interface_clip.bottom += 0x64;
+        RECT original_interface_clip = MainInterfaceGlobal.Buffer::clip_rect();
+        MainInterfaceGlobal.Buffer::set_clip(&interface_clip);
+        MainInterfaceGlobal.restore_back(0);
+        MainInterfaceGlobal.Buffer::set_clip(&original_interface_clip);
+        MainInterfaceGlobal.soft_update();
+    }
+    WinFlipClipped = 0;
+}
+// ORIGINAL: 0x0045DEA0 ?scroll_show@@YAXPAUGraphicWin@@PAUScroll@@@Z 0x0045DEA0-0x0045E535;0x006557A2-0x006557CD
+// RECOVERY_BINDING: v1 {"evidence": ["git:3e11f655:src/unrecovered/0045dea0.cpp complete original identity/spans and historical discoveries", "pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf:0x45dea0 full native stack/register/call/lifetime audit.", "source:src/maininterface.h existing Sprite arrays; src/buffer.h source-receiver copy and signed DIB height; src/console.h real virtual GraphicWin base, no raw-offset alias.", "source:src/maininterface.cpp: the helper uses MainInterfaceGlobal-owned slide/scroll sprites, interface geometry and shared transition state; its Wave configuration belongs to MainInterface::init.", "pinned:Pinned cold unwind regions remain consecutive with MainInterface dtor/ctor/init/set_message: 0x6552C0-0x65552F, 0x655530-0x655723, 0x655730-0x655745, 0x655745-0x655757, followed by these four helper spans 0x655757-0x655777, 0x655777-0x6557A2, 0x6557A2-0x6557CD, and 0x6557CD-0x6557F8; no other mapped span intersects this detached range."], "reason": "Keep this free ?scroll_show UI transition helper with the MainInterface resource and lifetime provider while preserving its existing __cdecl signature and external window callers. This is an inferred source correspondence, not proof of an original filename or historical TU boundary."}
+// symbol    ?scroll_show@@YAXPAVGraphicWin@@PAVScroll@@@Z
+// TRIED: full transcription of scroll_show (twin of the landed scroll_hide at 0x0045E540), using automatic Buffer ctor/dtor for the 3 local RAII objects (relying on the compiler's own SEH frame for unwind, not manual tracking), plain-register-name locals for the straight-line arithmetic, and ORIGINAL()/original_slot() for the two indirect vtable calls (slots 1 and 3). Compiles and matches through instr #9 (push vs lea) - not chased further, large SEH-heavy function, landed for coverage.
+// The retained TRIED note describes the superseded initial transcription,
+// not this owner body with real members, virtual calls and automatic lifetime.
+void __cdecl scroll_show(GraphicWin *window, Scroll *scroll) {
+    Buffer scroll_frame;
+    Buffer interface_background;
+    Buffer screen_save;
+
+    if (scroll->Win::is_visible()) {
+        return;
+    }
+
+    const int frame_edge = WinScreenWidth == 800 ? 0x5E : 0xEE;
+    const int vertical_step = IsMultiplayerNet != 0 ? 3 : 6;
+
+    RECT area = window->Buffer::clip_rect();
+    window->client_to_screen(&area);
+    const RECT original_area = area;
+
+    interface_background.init(MainInterfaceGlobal.Buffer::pixel_width(),
+                              MainInterfaceGlobal.Buffer::pixel_height(), 0, 0);
+    interface_background.fill(WinFillColour);
+    MainInterfaceGlobal.update_window_to_buffer(&interface_background);
+
+    Sprite &right_edge = MainInterfaceGlobal.slide_frame_sprite(3);
+    const int right_edge_x = area.right - right_edge.width() - 0x20;
+    RECT vertical_strip = { right_edge_x, 0, area.right, 0x39 };
+    MainInterfaceGlobal.client_to_screen(&vertical_strip);
+
+    const int area_width = area.right - area.left;
+    const int area_height = area.bottom - area.top;
+    screen_save.init(area_width, area_height, 0, 0);
+    RECT screen_save_area = area;
+    ConsoleGlobal.screen_to_client(&screen_save_area);
+    // `Buffer::copy` reads from its receiver and writes to its first argument.
+    // Native 0x45E071..0x45E0A0 uses ConsoleGlobal's GraphicWin Buffer as
+    // source and local F49C as destination.
+    static_cast<Buffer *>(static_cast<GraphicWin *>(&ConsoleGlobal))->copy(
+        &screen_save, screen_save_area.left, screen_save_area.top,
+        0, 0, area_width, area_height);
+
+    int edge_y = frame_edge;
+    if (edge_y <= area.top) edge_y = area.top;
+    int first_y = area.top + 0xD;
+    if (first_y >= edge_y) first_y = edge_y;
+    PopupScrollVerticalFrameCount = (edge_y - first_y) / vertical_step;
+    // The native stores first_y over the transformed area.top at 0x45E0C1.
+    area.top = first_y;
+    if (PopupScrollVerticalFrameCount > 1) {
+        Win::screen_buffer_.set_clip(&area);
+        edge_y -= PopupScrollVerticalFrameCount;
+        if ((GameDataStateStorage.fields_.game_more_preferences_ & MPREF_AV_SLIDING_SCROLLBARS) != 0
+            && IsMultiplayerNet == 0) {
+            WinFlipClipped = 1;
+            for (int frame = vertical_step; frame > 0; --frame) {
+                const DWORD started = timeGetTime();
+                int sprite_y = edge_y;
+                if (sprite_y <= first_y) sprite_y = first_y;
+                right_edge.draw(&Win::screen_buffer_, right_edge.transparent_index(),
+                                right_edge_x, sprite_y, 1, 1);
+                Win::screen_buffer_.set_clip(&vertical_strip);
+                interface_background.draw(&Win::screen_buffer_, 9,
+                    MainInterfaceGlobal.outer_rect().left,
+                    MainInterfaceGlobal.outer_rect().top, 1, 1);
+                Win::flip(&area);
+                edge_y -= PopupScrollVerticalFrameCount;
+                Win::screen_buffer_.set_clip(&area);
+                do_sound();
+                while (static_cast<DWORD>(timeGetTime() - started)
+                       < static_cast<DWORD>(WindowAnimationFrameDelay) / 2) {
+                    do_sound();
+                }
+            }
+            Win::screen_buffer_.restore_clip();
+            WinFlipClipped = 0;
+        }
+        RECT window_clip = window->Buffer::clip_rect();
+        window->Buffer::set_clip(&window_clip);
+    }
+
+    // The captured image keeps its original height. The panel is created
+    // after area.top changes, so its negative DIB height is different.
+    const int frame_height = area.bottom - area.top;
+    scroll_frame.init(area_width, frame_height, 0, 0);
+    scroll_frame.fill(9);
+    Sprite &upper_left = MainInterfaceGlobal.scroll_frame_sprite(0);
+    Sprite &top_edge = MainInterfaceGlobal.scroll_frame_sprite(1);
+    Sprite &lower_left = MainInterfaceGlobal.scroll_frame_sprite(2);
+    Sprite &side_edge = MainInterfaceGlobal.scroll_frame_sprite(3);
+
+    const int panel_bottom = upper_left.height()
+        - ((-frame_height + lower_left.height() + 0x2C + upper_left.height())
+           / top_edge.height()) * top_edge.height()
+        + lower_left.height();
+    scroll_frame.tile(&top_edge, 0, 0, 0, 3, top_edge.width(), panel_bottom);
+    scroll_frame.tile(&side_edge, 0, panel_bottom + 3, 0, panel_bottom,
+                      side_edge.width(), frame_height - panel_bottom);
+    upper_left.draw(&scroll_frame, upper_left.transparent_index(), 0, 3, 1, 1);
+    lower_left.draw(&scroll_frame, lower_left.transparent_index(), 0,
+                    panel_bottom - lower_left.height() + 3, 1, 1);
+    right_edge.draw(&scroll_frame, right_edge.transparent_index(),
+                    area_width - right_edge.width(), 0, 1, 1);
+
+    Win::screen_buffer_.set_clip(&area);
+    const int horizontal_frame_count = IsMultiplayerNet != 0 ? 4 : 8;
+    PopupScrollHorizontalStep = IsMultiplayerNet != 0 ? 8 : 4;
+    int frame_x = area.left + PopupScrollHorizontalStep - 0x20;
+    if ((GameDataStateStorage.fields_.game_preferences_ & PREF_AV_SLIDING_WINDOWS) != 0
+        && IsMultiplayerNet == 0) {
+        WinFlipClipped = 1;
+        for (int frame = horizontal_frame_count; frame > 0; --frame) {
+            const DWORD started = timeGetTime();
+            // Restore the saved screen image at its original screen position.
+            screen_save.copy(&Win::screen_buffer_, 0, 0, area.left, area.top,
+                             area_width, area_height);
+            scroll_frame.draw(&Win::screen_buffer_, 9, frame_x, area.top, 1, 1);
+            Win::screen_buffer_.set_clip(&vertical_strip);
+            interface_background.draw(&Win::screen_buffer_, 9,
+                MainInterfaceGlobal.outer_rect().left,
+                MainInterfaceGlobal.outer_rect().top, 1, 1);
+            Win::flip(&area);
+            frame_x += PopupScrollHorizontalStep;
+            Win::screen_buffer_.set_clip(&area);
+            do_sound();
+            while (static_cast<DWORD>(timeGetTime() - started)
+                   < static_cast<DWORD>(WindowAnimationFrameDelay) / 2) {
+                do_sound();
+            }
+        }
+        Win::screen_buffer_.restore_clip();
+        WinFlipClipped = 0;
+    }
+
+    const int destination_y = area.top - original_area.top;
+    const int destination_x = window->Buffer::pixel_width()
+        - scroll_frame.pixel_width();
+    scroll_frame.draw(static_cast<Buffer *>(window), 9,
+                      destination_x, destination_y, 1, 1);
+
+    scroll->resize(0x18, panel_bottom - 0xA, 0);
+    scroll->move(window->Buffer::pixel_width() - 0x2B, 0x15);
+    scroll->show(0);
+}
+// ORIGINAL: 0x0045E540 ?scroll_hide@@YAXPAUGraphicWin@@PAUScroll@@@Z 0x0045E540-0x0045EB5A;0x006557CD-0x006557F8
+// RECOVERY_BINDING: v1 {"evidence": ["git:14a0bcaf:src/unrecovered/0045e540.cpp original hot/cold spans and retained seed findings.", "pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf:0x45e540 full native register, rectangle mutation, receiver, call and lifetime audit.", "source:src/console.h virtual GraphicWin base; src/maininterface.h existing Sprite arrays and interface-up member; src/buffer.h source-receiver copy, full bounds and DIB geometry.", "source:src/maininterface.cpp: the helper uses MainInterfaceGlobal-owned slide/scroll sprites, interface geometry and shared transition state; its Wave configuration belongs to MainInterface::init.", "pinned:Pinned cold unwind regions remain consecutive with MainInterface dtor/ctor/init/set_message: 0x6552C0-0x65552F, 0x655530-0x655723, 0x655730-0x655745, 0x655745-0x655757, followed by these four helper spans 0x655757-0x655777, 0x655777-0x6557A2, 0x6557A2-0x6557CD, and 0x6557CD-0x6557F8; no other mapped span intersects this detached range."], "reason": "Keep this free ?scroll_hide UI transition helper with the MainInterface resource and lifetime provider while preserving its existing __cdecl signature and external window callers. This is an inferred source correspondence, not proof of an original filename or historical TU boundary."}
+// symbol    ?scroll_hide@@YAXPAVGraphicWin@@PAVScroll@@@Z
+// TRIED: Ghidra's decompilation was unusable here (stack-frame analysis fell apart on the SEH-heavy huge frame); rebuilt from raw disassembly only. Three real `Buffer` locals (RAII) matching construction/destruction order, register-variable/goto transcription for the two scroll-animation throttle loops (timeGetTime via IAT-slot fn ptr + do_sound), the fixed global screen Buffer at 0x9B7490, and a pointer-to-member vtable-slot call (slot 2) on `a2` at the very end. Compiles and matches through instruction #35 (diverges #36, mov vs push) - the deepest match of this batch's giant functions. The two `0x9156b0`/`0x915af4`-relative receiver computations (`*(int*)(*(int*)g_009156b0+4) + <base>`) are transcribed literally; their semantic meaning (which sub-object they reach) was not resolved.
+void __cdecl scroll_hide(GraphicWin *window, Scroll *scroll) {
+    // The seed's 0x9156B0/0x915AF4 vbtable arithmetic reaches Console's real
+    // GraphicWin virtual base and its Buffer base. Buffer::copy names its
+    // source receiver; the final hide is the inherited virtual operation.
+    Buffer window_frame;          // native F490, constructed first
+    Buffer interface_background;  // native EF08, constructed second
+    Buffer screen_restore;        // native FA18, constructed third
+
+    if (scroll->Win::is_visible() == 0)
+        return;
+
+    const int frame_edge = WinScreenWidth == 0x320 ? 0x5e : 0xee;
+    RECT area = window->Buffer::clip_rect();
+    window->client_to_screen(&area);
+    const int screen_left = area.left;
+    const int screen_top = area.top;
+    const int area_height = area.bottom - area.top;
+
+    interface_background.init(MainInterfaceGlobal.Buffer::pixel_width(),
+                              MainInterfaceGlobal.Buffer::pixel_height(), 0, 0);
+    interface_background.fill(WinFillColour);
+    MainInterfaceGlobal.update_window_to_buffer(&interface_background);
+
+    Sprite &right_edge = MainInterfaceGlobal.slide_frame_sprite(3);
+    const int right_edge_x = area.right - right_edge.width() - 0x20;
+    area.left = right_edge_x;
+    const int area_width = area.right - area.left;
+
+    RECT vertical_strip = { right_edge_x, 0, area.right, 0x39 };
+    MainInterfaceGlobal.client_to_screen(&vertical_strip);
+
+    screen_restore.init(area_width, area_height, 0, 0);
+    RECT console_area = area;
+    ConsoleGlobal.screen_to_client(&console_area);
+    static_cast<Buffer *>(static_cast<GraphicWin *>(&ConsoleGlobal))->copy(
+        &screen_restore, console_area.left, console_area.top, 0, 0,
+        area_width, area_height);
+
+    window_frame.init(area_width, area_height, 0, 0);
+    static_cast<Buffer *>(window)->copy(
+        &window_frame, area.left - screen_left, area.top - screen_top,
+        0, 0, area_width, area_height);
+
+    const int horizontal_step = IsMultiplayerNet != 0 ? 8 : 4;
+    PopupScrollHorizontalStep = horizontal_step;
+    int frame_x = area.left - horizontal_step;
+    const int horizontal_frames = IsMultiplayerNet != 0 ? 4 : 8;
+    Win::screen_buffer_.set_clip(&area);
+    if ((GameDataStateStorage.fields_.game_more_preferences_ & MPREF_AV_SLIDING_SCROLLBARS) != 0
+        && IsMultiplayerNet == 0) {
+        WinFlipClipped = 1;
+        for (int frame = 0; frame < horizontal_frames; ++frame) {
+            const DWORD started = timeGetTime();
+            screen_restore.copy(&Win::screen_buffer_, 0, 0, area.left, screen_top,
+                                area_width, area_height);
+            window_frame.draw(&Win::screen_buffer_, 9, frame_x, screen_top, 1, 1);
+            Win::screen_buffer_.set_clip(&vertical_strip);
+            interface_background.draw(&Win::screen_buffer_, 9,
+                MainInterfaceGlobal.outer_rect().left,
+                MainInterfaceGlobal.outer_rect().top, 1, 1);
+            Win::flip(&area);
+            frame_x -= PopupScrollHorizontalStep;
+            Win::screen_buffer_.set_clip(&area);
+            do_sound();
+            while (static_cast<DWORD>(timeGetTime() - started)
+                   < static_cast<DWORD>(WindowAnimationFrameDelay) / 2)
+                do_sound();
+        }
+        Win::screen_buffer_.restore_clip();
+        WinFlipClipped = 0;
+        frame_x += PopupScrollHorizontalStep;
+    } else {
+        frame_x += horizontal_step;
+    }
+
+    const int vertical_frame_step = IsMultiplayerNet != 0 ? 3 : 6;
+    const int vertical_iterations = vertical_frame_step + 1;
+    int closing_y = screen_top + PopupScrollVerticalFrameCount;
+    const bool enter_vertical_close = PopupScrollVerticalFrameCount > 1;
+    if (enter_vertical_close) {
+        Win::screen_buffer_.set_clip(&area);
+        int edge_y = frame_edge - 0xD;
+        if ((GameDataStateStorage.fields_.game_preferences_ & PREF_AV_SLIDING_WINDOWS) != 0
+            && IsMultiplayerNet == 0) {
+            WinFlipClipped = 1;
+            for (int frame = 0; frame < vertical_iterations; ++frame) {
+                const DWORD started = timeGetTime();
+                screen_restore.copy(&Win::screen_buffer_, 0, 0, area.left, screen_top,
+                                    area_width, area_height);
+                int draw_y = closing_y;
+                if (draw_y >= edge_y) draw_y = edge_y;
+                window_frame.draw(&Win::screen_buffer_, 9, frame_x, draw_y, 1, 1);
+                Win::screen_buffer_.set_clip(&vertical_strip);
+                interface_background.draw(&Win::screen_buffer_, 9,
+                    MainInterfaceGlobal.outer_rect().left,
+                    MainInterfaceGlobal.outer_rect().top, 1, 1);
+                Win::flip(&area);
+                closing_y += PopupScrollVerticalFrameCount;
+                Win::screen_buffer_.set_clip(&area);
+                do_sound();
+                while (static_cast<DWORD>(timeGetTime() - started)
+                       < static_cast<DWORD>(WindowAnimationFrameDelay) / 2)
+                    do_sound();
+            }
+            Win::screen_buffer_.restore_clip();
+            WinFlipClipped = 0;
+        }
+    }
+
+    RECT original_buffer_clip = window->Buffer::clip_rect();
+    if (enter_vertical_close)
+        window->Buffer::set_clip(&original_buffer_clip);
+
+    RECT local_area = area;
+    local_area.left -= screen_left;
+    local_area.right -= screen_left;
+    local_area.top -= screen_top;
+    local_area.bottom -= screen_top;
+    window->Buffer::set_clip(&local_area);
+    window->fill(9);
+    int final_y_screen = closing_y;
+    if (final_y_screen < local_area.top) final_y_screen = local_area.top;
+    const int final_y = final_y_screen - screen_top;
+    window_frame.draw(static_cast<Buffer *>(window), 9,
+                      frame_x - screen_left, final_y, 1, 1);
+    window->Buffer::set_clip(&original_buffer_clip);
+    scroll->hide();
 }

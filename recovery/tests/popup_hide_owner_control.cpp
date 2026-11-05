@@ -36,7 +36,8 @@ static void record(int op, int source, int target, int a, int b, int c, int d, i
 struct Buffer {
     int id, width, height;
     RECT clip, current_clip;
-    Buffer() : id(next_id++), width(120), height(80) {
+    Buffer(int initial_width=120, int initial_height=80)
+        : id(next_id++), width(initial_width), height(initial_height) {
         clip.left = clip.top = current_clip.left = current_clip.top = 0;
         clip.right = current_clip.right = width;
         clip.bottom = current_clip.bottom = height;
@@ -50,6 +51,7 @@ struct Buffer {
         current_clip = *r;
         record(op_clip, id, 0, r->left, r->top, r->right, r->bottom);
     }
+    void restore_clip() { set_clip(&clip); }
     void init(int w, int h, int, int) {
         width = w; height = h < 0 ? -h : h;
         record(op_init, id, 0, width, height, 0, 0);
@@ -72,6 +74,7 @@ struct Buffer {
 };
 
 struct Win {
+    static Buffer screen_buffer_;
     int visible;
     Win() : visible(1) {}
     int is_visible() const { return visible; }
@@ -86,6 +89,7 @@ struct Win {
             PopupScrollHorizontalStep=7;
     }
 };
+Buffer Win::screen_buffer_(800,768);
 struct GraphicWin : Win, Buffer {
     int fill(int x, int y, int w, int h, int color) {
         record(op_graphic_fill_rect, static_cast<Buffer *>(this)->id,
@@ -144,10 +148,12 @@ struct Scroll : GraphicWin {
 
 static MainInterface MainInterfaceGlobal;
 static Console ConsoleGlobal;
-static Buffer ScreenBuffer;
-static RECT WinScreenClipRect = {0,0,800,768};
-static int GamePreferences;
-static unsigned int GameMorePreferences;
+static Buffer &ScreenBuffer=Win::screen_buffer_;
+struct GameDataStateFields { unsigned int game_preferences_, game_more_preferences_; };
+struct GameDataState { GameDataStateFields fields_; };
+static GameDataState GameDataStateStorage={{0,0}};
+static unsigned int &GamePreferences=GameDataStateStorage.fields_.game_preferences_;
+static unsigned int &GameMorePreferences=GameDataStateStorage.fields_.game_more_preferences_;
 static int IsMultiplayerNet;
 static int WinScreenWidth = 800;
 static unsigned char WinFillColour = 9;

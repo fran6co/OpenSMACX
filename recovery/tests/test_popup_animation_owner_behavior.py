@@ -23,7 +23,7 @@ HIDE_BODIES = {
 def projected_control(kind, damage=None):
     if kind in HIDE_BODIES:
         bodies = []
-        rows = read_file(ROOT / "src/popup.cpp")
+        rows = read_file(ROOT / "src/maininterface.cpp")
         for name, (address, signature) in HIDE_BODIES.items():
             row = next(row for row in rows if row.address == address)
             body = _definition(row.region, signature)
@@ -36,7 +36,8 @@ def projected_control(kind, damage=None):
         assert fixture.count("// ACTUAL_SOURCE_BODIES") == 1
         return fixture.replace("// ACTUAL_SOURCE_BODIES", "\n\n".join(bodies))
     address, signature, filename = BODIES[kind]
-    record = next(row for row in read_file(ROOT / "src/popup.cpp") if row.address == address)
+    owner = "src/popup.cpp" if kind == "popup" else "src/maininterface.cpp"
+    record = next(row for row in read_file(ROOT / owner) if row.address == address)
     body = _definition(record.region, signature)
     if damage is not None:
         old, new = damage

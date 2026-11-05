@@ -55,18 +55,12 @@
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned constructor ??0MapWin@@QAE@H@Z at 0x004626E0 stores the MapWin view table at 0066A57C.", "Pinned view slot +0x12C contains original thunk VA 00421940.", "Original full-span receiver adjustment is sub ecx, dword ptr [ecx - 4]; its tail reaches 0046F660 (?on_nc_hittest@MapWin@@QAEXHH@Z).", "The original tail target ?on_nc_hittest@MapWin@@QAEXHH@Z is source-mapped in /home/fran6co/code/OpenSMACX/src/mapwin.cpp; the MapWin class-view entry is owned by src/mapwin.cpp."], "reason": "Bind the original receiver-adjustor identity to the typed callback source-mapped in /home/fran6co/code/OpenSMACX/src/mapwin.cpp through the compiler-generated MapWin class-view entry owned by src/mapwin.cpp; no adapter body or vtable is authored."}
 // symbol    ?on_nc_hittest@MapWin@@$4PPPPPPPM@A@AEHHH@Z
 // kind game
-// ORIGINAL: 0x00459560 _$E21 0x00459560-0x00459576 FILE
-// RECOVERY_BINDING: v1 {"evidence": ["Pinned CRT slot0x682534 selects initializer0x459560..0x459576 and registers exit0x459580..0x45958a; complete independent decode establishes both ends.", "Original operations identify storage0x7ae820, source object?MainInterfaceGlobal@@3VMainInterface@@A. MainInterface uses constructor45EF10/destructor45EB80; FarmMap uses virtual-base constructor4626E0 with hidden most-derived argument1 and exit receiver7F5ACC calling own-part420F90 then virtual GraphicWin5D4DD0.", "Fresh physical mapwin.cpp COFF selects _$E21 via .CRT$XCU and registers _$E19, both naming the genuine global. The corrected declarations and actual linked table initialize MainInterface before FarmMap, matching original slots682534/682540; C++ owns reverse destruction and virtual-base lifetime.", "Current compiler-local symbols interpret present emission, not original debug names or historical TU identity. The bounded two-object ordering does not establish complete CRT order, strict linked preservation, runtime or game acceptance."], "reason": "Bind original startup to genuine source-owned ?MainInterfaceGlobal@@3VMainInterface@@A compiler-generated lifetime after correcting declaration order; no hand-authored callback or explicit virtual-base flag."}
-// symbol    _$E16
-// ORIGINAL: 0x00459580 _$E19 0x00459580-0x0045958A FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["Pinned CRT slot0x682534 selects initializer0x459560..0x459576 and registers exit0x459580..0x45958a; complete independent decode establishes both ends.", "Original operations identify storage0x7ae820, source object?MainInterfaceGlobal@@3VMainInterface@@A. MainInterface uses constructor45EF10/destructor45EB80; FarmMap uses virtual-base constructor4626E0 with hidden most-derived argument1 and exit receiver7F5ACC calling own-part420F90 then virtual GraphicWin5D4DD0.", "Fresh physical mapwin.cpp COFF selects _$E21 via .CRT$XCU and registers _$E19, both naming the genuine global. The corrected declarations and actual linked table initialize MainInterface before FarmMap, matching original slots682534/682540; C++ owns reverse destruction and virtual-base lifetime.", "Current compiler-local symbols interpret present emission, not original debug names or historical TU identity. The bounded two-object ordering does not establish complete CRT order, strict linked preservation, runtime or game acceptance."], "reason": "Bind original exit to genuine source-owned ?MainInterfaceGlobal@@3VMainInterface@@A compiler-generated lifetime after correcting declaration order; no hand-authored callback or explicit virtual-base flag."}
-// symbol    _$E14
 // ORIGINAL: 0x00462080 _$E26 0x00462080-0x00462098 FILE
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned CRT slot0x682540 selects initializer0x462080..0x462098 and registers exit0x4620a0..0x4620b4; complete independent decode establishes both ends.", "Original operations identify storage0x7d4060, source object?FarmMapWindow@@3VMapWin@@A. MainInterface uses constructor45EF10/destructor45EB80; FarmMap uses virtual-base constructor4626E0 with hidden most-derived argument1 and exit receiver7F5ACC calling own-part420F90 then virtual GraphicWin5D4DD0.", "Fresh physical mapwin.cpp COFF selects _$E26 via .CRT$XCU and registers _$E24, both naming the genuine global. The corrected declarations and actual linked table initialize MainInterface before FarmMap, matching original slots682534/682540; C++ owns reverse destruction and virtual-base lifetime.", "Current compiler-local symbols interpret present emission, not original debug names or historical TU identity. The bounded two-object ordering does not establish complete CRT order, strict linked preservation, runtime or game acceptance."], "reason": "Bind original startup to genuine source-owned ?FarmMapWindow@@3VMapWin@@A compiler-generated lifetime after correcting declaration order; no hand-authored callback or explicit virtual-base flag."}
-// symbol    _$E21
+// symbol    _$E16
 // ORIGINAL: 0x004620A0 _$E24 0x004620A0-0x004620B4 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned CRT slot0x682540 selects initializer0x462080..0x462098 and registers exit0x4620a0..0x4620b4; complete independent decode establishes both ends.", "Original operations identify storage0x7d4060, source object?FarmMapWindow@@3VMapWin@@A. MainInterface uses constructor45EF10/destructor45EB80; FarmMap uses virtual-base constructor4626E0 with hidden most-derived argument1 and exit receiver7F5ACC calling own-part420F90 then virtual GraphicWin5D4DD0.", "Fresh physical mapwin.cpp COFF selects _$E26 via .CRT$XCU and registers _$E24, both naming the genuine global. The corrected declarations and actual linked table initialize MainInterface before FarmMap, matching original slots682534/682540; C++ owns reverse destruction and virtual-base lifetime.", "Current compiler-local symbols interpret present emission, not original debug names or historical TU identity. The bounded two-object ordering does not establish complete CRT order, strict linked preservation, runtime or game acceptance."], "reason": "Bind original exit to genuine source-owned ?FarmMapWindow@@3VMapWin@@A compiler-generated lifetime after correcting declaration order; no hand-authored callback or explicit virtual-base flag."}
-// symbol    _$E19
+// symbol    _$E14
 #include "stdafx.h"
 #include "font_metrics.h"
 #include "interface_fonts.h"
@@ -389,19 +383,10 @@ void __cdecl base_draw(Buffer *target, int base_id, int pixel_x, int pixel_y,
 
 void __cdecl draw_my_dest(int vehicle_id);
 
-// The hit-test rectangle at 0x007AF50C is this object's +0xCEC member;
-// MapWin::main_caption also selects its complete receiver at 0x007AE820.
-// RECOVERY_OBJECT: v1 0x007AE820 ?MainInterfaceGlobal@@3VMainInterface@@A
-// The former independent Console gate identity is this embedded word:
-// 0x007AE820 + 0x1EAC8 = 0x007CD2E8. MainInterface::init clears it at
-// 0x004596CD and Console's Enter/Space paths read it at 0x00517A0B/0x00517A93.
-// Keep its historical unbounded identity without asserting a new extent.
-// RECOVERY_OBJECT: v3 0x007CD2E8 ?ConsoleModalState7CD2E8@@3HA member ?MainInterfaceGlobal@@3VMainInterface@@A field_1EAC8_
-MainInterface MainInterfaceGlobal;  // 0x007AE820
 
-// Original CRT slots 0x00682534 and 0x00682540 construct MainInterface
-// before FarmMap. Keep this declaration order; ordinary C++ construction
-// and reverse destruction own the two lifetimes, not explicit callbacks.
+// MainInterfaceGlobal now lives in src/maininterface.cpp. Keep its pinned
+// CRT slot 0x00682534 before FarmMapWindow at 0x00682540; requalify the
+// cross-TU compiler order after this ownership move.
 
 // The farm display and terrain-fixup pass share one complete MapWin. Its
 // same-type heap allocation at 0x58F177 requests 0x22480 bytes; the constructor's

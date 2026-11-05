@@ -2094,33 +2094,6 @@ int __cdecl desktop_init(int fresh) {
     return 0;
 }
 
-// ORIGINAL: 0x004595C0 ?bung_momma@@YAXXZ 0x004595C0-0x0045967F
-// RECOVERY_BINDING: v1 {"evidence": ["git:b84036a86445148d25d4e216ac24c131e108bea8:src/unrecovered/004595c0.cpp", "Pinned4595C0..45967F font7CFEDC is MainInterface7AE820+216BC, its third Font; native title bounds and shared StringBox identify actual members.", "recovery/tasks/startup-desktop-owner-oct5.json", "recovery/tests/test_startup_actual_source.py"], "reason": "Complete shared message-box setup through MainInterface owned Font/StringBox, genuine Console parent and Buffer base; retain both original font-height paths and original window geometry."}
-// kind      game
-void __cdecl bung_momma() {
-    const int screen_width = WinScreenWidth;
-    const int box_width = screen_width - 0x140;
-    Font *const font = MainInterfaceGlobal.tertiary_font();
-    const int font_mode = font->unk_1_;
-    const int rows = font_mode < 0
-        ? font->line_height()
-        : font_mode + font->pixel_height();
-    const int box_height = rows * 4;
-    const int box_x = (screen_width - box_width) / 2;
-    const int box_y = MainInterfaceGlobal.title_bounds().bottom - box_height;
-
-    StringBox &box = MainInterfaceGlobal.shared_string_box();
-    Win *const parent = static_cast<Win *>(&ConsoleGlobal);
-    box.init(box_x, box_y, box_width, box_height, parent, 0, 0x1000022);
-    box.set_draw_mode(1);
-    box.set_visible_rows(4);
-
-    Buffer &buffer = static_cast<Buffer &>(box);
-    buffer.set_font(font, 0, 0, 0);
-    buffer.set_text_color(0x5F, -1, 1, 1);
-    box.clear();
-    static_cast<Win &>(box).Win::show(0);
-}
 
 /*
 Purpose: Bring a game up: reseed both random chains off the clock, then either

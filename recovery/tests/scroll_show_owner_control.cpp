@@ -21,7 +21,7 @@ struct TileCall { int src_x,src_y,x,y,w,h; };
 static TileCall tile_calls[8];
 static int tile_count=0;
 enum { CTOR=1, DTOR, VISIBLE, CLIP, INIT, FILL, COPY, DRAW, TILE,
-       CLIP_SET, TRANSFORM, UPDATE, FLIP, SOUND, RESIZE, MOVE, SHOW };
+       CLIP_SET, CLIP_RESTORE, TRANSFORM, UPDATE, FLIP, SOUND, RESIZE, MOVE, SHOW };
 
 class Buffer {
 public:
@@ -65,6 +65,7 @@ public:
         return 0;
     }
     int set_clip(RECT*) { events.push_back(CLIP_SET); return 0; }
+    void restore_clip() { events.push_back(CLIP_RESTORE); }
 protected:
     RECT rect2_;
     int width_, height_;
@@ -82,6 +83,7 @@ private: int w_,h_,key_;
 
 class Win {
 public:
+    static Buffer screen_buffer_;
     Win() : visible_(0) { outer_.left=51; outer_.top=62; outer_.right=540; outer_.bottom=400; }
     virtual ~Win() {}
     int is_visible() { events.push_back(VISIBLE); return visible_; }
@@ -96,6 +98,7 @@ public:
     void set_visible(int v) { visible_=v; }
 private: int visible_; RECT outer_;
 };
+Buffer Win::screen_buffer_;
 
 class GraphicWin : public Win, public Buffer {};
 class MapWin : public virtual GraphicWin {};
@@ -126,12 +129,15 @@ public:
 
 MainInterface MainInterfaceGlobal;
 Console ConsoleGlobal;
-Buffer ScreenBuffer;
+Buffer &ScreenBuffer=Win::screen_buffer_;
 RECT WinScreenClipRect={0,0,800,600};
 int WinScreenWidth=800;
 int IsMultiplayerNet=0;
-int GameMorePreferences=0;
-int GamePreferences=0;
+struct GameDataStateFields { unsigned int game_preferences_, game_more_preferences_; };
+struct GameDataState { GameDataStateFields fields_; };
+static GameDataState GameDataStateStorage={{0,0}};
+static unsigned int &GamePreferences=GameDataStateStorage.fields_.game_preferences_;
+static unsigned int &GameMorePreferences=GameDataStateStorage.fields_.game_more_preferences_;
 enum { PREF_AV_SLIDING_WINDOWS=0x8000000, MPREF_AV_SLIDING_SCROLLBARS=0x80000 };
 int WindowAnimationFrameDelay=20;
 int WinFlipClipped=0;

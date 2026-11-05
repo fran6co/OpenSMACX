@@ -8,6 +8,20 @@ policy is in `WORKFLOW.md`; no spelling trick overrides that policy.
 
 ## Structural questions first
 
+- Regrouping MainInterface exposed duplicate dynamic initialization: a Wave
+  definition followed by its old redundant `extern` declaration produced two
+  constructor/atexit/cleanup pairs for the same physical object. Removing that
+  later declaration restored one pair. Check all CRT contributions and object
+  references; equal wrapper bytes do not justify choosing one duplicate.
+- A direct scalar clear in `Wave_Device::Wave_Device` hid an original four-byte
+  `memset` call. Merely restoring the call under `#pragma function(memset)` added
+  an array-unwind action absent from the original. `/EHsc` did not repair it.
+  Removing that pragma and disabling intrinsics with `/Oi-` reproduced both
+  constructor spans while retaining the other passing SoundDevice bodies.
+  This is a bounded compiler-policy observation, not permission to change the
+  whole application's flags without broader controls. A coherent policy must
+  also account for explicit intrinsic toggles and scalar copies spelled as
+  `memcpy`; do not protect those spellings by inventing per-function flags.
 - Contiguous executable addresses are not sufficient to recover an original
   object module. A control with the configured VC6 compiler gives two ordinary
   C-linkage functions returning the same string separate code COMDATs under

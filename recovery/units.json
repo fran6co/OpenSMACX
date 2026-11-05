@@ -754,6 +754,20 @@
         "Generic Wave methods, FX manager and Ambience remain separate. Source correspondence is not proof of linked retained selection or complete historical object extent."
       ],
       "recovered_tu": "src/fx_wave_resources.cpp"
+    },
+    {
+      "name": "MainInterface",
+      "start": "0x00459560",
+      "end_exclusive": "0x0045F1FB",
+      "recovered_tu": "src/maininterface.cpp",
+      "reason": "Inferred MainInterface contribution core: real interface and Wave storage/lifetimes, shared-message startup, class/SubInterface methods and four UI transition providers. Historical object boundaries and original filename remain unproved.",
+      "evidence": [
+        "All 66 mapped primaries in this core share the recovered MainInterface CPP. The four free transition providers consume its sprite resources, geometry/state and Wave; caller declarations/ABIs remain unchanged.",
+        "The constructor/destructor/init/set_message and four animation EH spans occupy a consecutive original cold cluster 0x006552C0..0x006557F8; these complete detached spans remain with their original owners.",
+        "Two independently checked init dispatch associations cover 11 target DWORDs at 0x0045B500..0x0045B52C and 25 selector bytes at 0x0045B52C..0x0045B545. Existing button tables are retained.",
+        "Pinned CRT slots 0x00682534/538 select MainInterfaceGlobal then its Wave; FarmMapWindow follows at 0x00682540. Definitions retain local order, and current MainInterface source precedes MapWin. This is not complete linked-selection or runtime-order proof.",
+        "Other gaps are NOP alignment apart from 0x0045D271..0x0045D274 (lea ecx,[ecx]), left explicitly unassigned. Remote callbacks, asset-bank ownership and the generic ButtonGroup provider are not absorbed into this interval."
+      ]
     }
   ]
 }

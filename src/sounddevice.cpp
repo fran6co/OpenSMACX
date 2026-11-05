@@ -2451,7 +2451,7 @@ Return Value: n/a (the redirect answers the object pointer)
 Status: Complete
 */
 Wave_Device::Wave_Device() {
-    field_20_ = 0;
+    memset(&field_20_, 0, 4);
 }
 
 

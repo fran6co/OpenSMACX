@@ -4,14 +4,16 @@ from __future__ import annotations
 
 import subprocess
 import json
+from dataclasses import replace
 from pathlib import Path
 
 import pytest
 
-from match_recovery.source import Mode, Recipe, SourceRole, State, Tier, read, read_text
+from match_recovery.source import Mode, Recipe, SourceRole, State, Tier, read, read_file, read_text
 from match_recovery.source.asm import compare_unit
 from match_recovery.source_config import SourceConfiguration
-from match_recovery.source_inventory import source_snapshot
+from match_recovery.source.writer import write
+from match_recovery.source_inventory import source_files, source_snapshot
 from match_recovery.symbol_check import check_symbols
 
 
@@ -23,6 +25,12 @@ OLD_FILES = (
 )
 PENDING_FILE = "src/unbound_functions.h"
 OLD_CPP = ("src/field_accessors.cpp", "src/nullsub_thunks.cpp")
+UNRELATED_PENDING = {0x005DFB40}
+VEHDRAW_PENDING = 0x004C1D00
+PENDING_OWNERS = {
+    "src/unbound_functions.h",
+    "src/vehicle_render.cpp",
+}
 
 
 def _historical(path: str) -> str:
@@ -45,20 +53,48 @@ def _records_for_source(path: str):
 @pytest.fixture(scope="module")
 def transfer():
     historical = [record for path in OLD_CPP for record in _records_for_source(path)]
-    current = read(ROOT / PENDING_FILE)
+    configuration = SourceConfiguration.read(ROOT)
+    configured = {path.relative_to(ROOT).as_posix(): path
+                  for path in source_files(ROOT, configuration)}
+    assert PENDING_OWNERS <= set(configured)
+    addresses = {record.address for record in historical} | UNRELATED_PENDING
+    current = [record for relative in sorted(PENDING_OWNERS)
+               for record in read_file(configured[relative]) if record.address in addresses]
     return historical, current
+
+
+def _combined_pending_header(current, historical, header_text):
+    vehdraw = next(record for record in current if record.address == VEHDRAW_PENDING)
+    assert VEHDRAW_PENDING in {record.address for record in historical}
+    assert vehdraw.path.as_posix().endswith("src/vehicle_render.cpp")
+    # Reuse the parsed identity, complete span, disposition, claims and lessons;
+    # only move its scratch annotation insertion point into the temporary header.
+    addition = replace(vehdraw, line=len(header_text.splitlines()) + 1)
+    return write(header_text, [addition])
 
 
 def test_all_52_adapter_identities_are_transferred_without_claim_or_lesson_loss(transfer):
     historical, current = transfer
+    expected = {record.address for record in historical}
+    current_by_address = {record.address: record for record in current}
     assert len(historical) == 52
-    assert len(current) == 52
+    assert len(expected) == 52
     assert len({record.address for record in historical}) == 52
-    assert len({record.address for record in current}) == 52
+    assert len(current_by_address) == 53
+    assert len(current) == 53
+    assert set(current_by_address) == expected | UNRELATED_PENDING
+    assert {record.address for record in current if record.path.name == "unbound_functions.h"} == (
+        expected - {VEHDRAW_PENDING}) | UNRELATED_PENDING
+    assert {record.address for record in current if record.path.name == "vehicle_render.cpp"} == {
+        VEHDRAW_PENDING}
+    unrelated = [current_by_address[address] for address in UNRELATED_PENDING]
+    assert all(record.mode is Mode.UNBOUND and record.state is State.UNBOUND
+               and record.recipe is Recipe.UNBOUND and not record.byte_exact
+               and not record.semantic for record in unrelated)
 
     old_by_address = {record.address: record for record in historical}
-    new_by_address = {record.address: record for record in current}
-    assert set(new_by_address) == set(old_by_address)
+    new_by_address = {address: current_by_address[address] for address in expected}
+    assert set(new_by_address) == expected
     for address, old in old_by_address.items():
         new = new_by_address[address]
         assert (new.name, new.image_spans, new.kind) == (old.name, old.image_spans, old.kind)
@@ -84,33 +120,40 @@ def test_retired_files_and_build_inputs_are_absent_and_no_product_duplicate_owns
     snapshot = source_snapshot(ROOT)
     owners = [row for row in snapshot["records"]
               if row["candidate_kind"] == "source" and not configuration.is_seed(row["path"])
-              and row["origin"]["address"] in expected]
-    assert len(owners) == 52
-    assert {row["origin"]["address"] for row in owners} == expected
-    assert all(row["path"] == PENDING_FILE for row in owners)
-    assert len(current) == len(owners)
+              and row["origin"]["address"] in expected | UNRELATED_PENDING]
+    assert len(owners) == 53
+    assert {row["origin"]["address"] for row in owners} == expected | UNRELATED_PENDING
+    owner_by_address = {row["origin"]["address"]: row["path"] for row in owners}
+    assert owner_by_address[VEHDRAW_PENDING] == "src/vehicle_render.cpp"
+    assert all(owner_by_address[address] == PENDING_FILE
+               for address in (expected - {VEHDRAW_PENDING}) | UNRELATED_PENDING)
 
 
 def test_pending_measurement_and_symbol_checks_refuse_without_compiler_calls(transfer, tmp_path):
-    _, current = transfer
+    historical, current = transfer
+    expected = {record.address for record in historical}
+    header_text = (ROOT / PENDING_FILE).read_text(encoding="utf-8")
+    scratch_text = _combined_pending_header(current, historical, header_text)
+    scratch_header = tmp_path / "src/unbound_functions.h"
+    for directory in ("src", "recovery", "build", "original"):
+        (tmp_path / directory).mkdir()
+    scratch_header.write_text(scratch_text, encoding="utf-8")
+    complete_pending = read_text(scratch_text, scratch_header)
     calls = []
 
     def forbidden_compiler(*args, **kwargs):
         calls.append((args, kwargs))
         raise AssertionError("UNBOUND originals must never request compilation")
 
-    result = compare_unit(current, ROOT / "missing-original-image.exe", ROOT / PENDING_FILE,
+    result = compare_unit(complete_pending, ROOT / "missing-original-image.exe", scratch_header,
                           (), ("not-a-real-compiler-trial",), compiler=forbidden_compiler)
     assert result.compile_attempts == result.reused_attempts == 0
-    assert len(result.results) == 52
+    assert len(result.results) == 53
+    assert {record.address for record, _observation in result.results} == expected | UNRELATED_PENDING
     assert all(observation.verdict is Tier.REFUSED
                and "UNBOUND" in observation.diagnostic
                for _, observation in result.results)
 
-    for directory in ("src", "recovery", "build", "original"):
-        (tmp_path / directory).mkdir()
-    (tmp_path / "src/unbound_functions.h").write_text(
-        (ROOT / PENDING_FILE).read_text(encoding="utf-8"), encoding="utf-8")
     (tmp_path / "src/decoy.cc").write_text("void decoy() {}\n")
     (tmp_path / "original/PIN").write_text("sha256 " + "a" * 64 + "\n")
     (tmp_path / "build/compile_commands.json").write_text(json.dumps([
@@ -132,8 +175,9 @@ def test_pending_measurement_and_symbol_checks_refuse_without_compiler_calls(tra
                             compiler=forbidden_compiler)
     assert symbols["result"] == "unknown"
     assert symbols["compile_attempts"] == 0
-    assert symbols["counts"] == {"unknown": 52}
-    assert len(symbols["functions"]) == 52
+    assert symbols["counts"] == {"unknown": 53}
+    assert len(symbols["functions"]) == 53
+    assert {int(row["address"], 16) for row in symbols["functions"]} == expected | UNRELATED_PENDING
     assert all(row["result"] == "unknown" and row["symbol"] == ""
                and row["mapping_disposition"] == "unbound_pending"
                for row in symbols["functions"])
@@ -145,4 +189,10 @@ def test_pending_header_has_no_adapter_declarations_or_symbol_role_fallbacks():
     assert "RECOVERY_ROLE:" not in text
     assert not any(line.lstrip().startswith("// symbol") for line in text.splitlines())
     assert "_redirect(" not in text
+    current = read(ROOT / PENDING_FILE)
+    current_addresses = {record.address for record in current}
+    historical = [record for path in OLD_CPP for record in _records_for_source(path)]
+    expected = {record.address for record in historical}
     assert len([line for line in text.splitlines() if line.startswith("// ORIGINAL:")]) == 52
+    assert current_addresses == (expected - {VEHDRAW_PENDING}) | UNRELATED_PENDING
+    assert len(expected) == 52
