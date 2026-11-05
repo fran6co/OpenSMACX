@@ -287,13 +287,10 @@ extern Palette *PaletteActive;
  * `extern Buffer *` the same source compiles to
  * `mov ecx, dword ptr [ScreenBuffer]`, a load the image does not perform, and
  * it lands one instruction earlier than the `push esi` beside it.
- * The actual Buffer now lives at offset zero of ScreenBufferOwner in win.cpp,
- * beside the drawing Buffer whose cleanup uses bit 1 of the same guard byte.
- * Its inline accessor borrows that object, not a separately initialized pointer
- * or reference global. The lifetime definition is in win.h.
+ * The current Buffer object is Win::screen_buffer_ in win.cpp, alongside
+ * Win::drawing_buffer_ in original CRT construction order. This declaration
+ * remains historical provenance; the current typed storage is declared by Win.
  */
-struct ScreenBufferLifetime;
-extern ScreenBufferLifetime ScreenBufferOwner;
 
 /*
  * 0x009B8184. The seed_ value Palette::set last animated, so it can skip

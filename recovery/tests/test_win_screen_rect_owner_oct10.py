@@ -2,7 +2,9 @@
 
 Pinned 5F7320..749F establishes aliased IntersectRect operands, the six
 copy arguments and propagation of the copy result. These are bounded
-call/state controls, not a working GUI or byte/layout acceptance.
+call/state controls, not a working GUI or byte/layout acceptance. The static
+Buffer doubles below check direct receiver identity only; VC6-generated
+startup/cleanup guards require separate fresh native COFF evidence.
 """
 import pytest
 
@@ -55,11 +57,6 @@ struct Buffer {
     void fill(RECT *area, int colour) { assert(colour==0); ++fill_calls; filled=area; }
     void fill(int colour) { assert(colour==0); ++fill_calls; filled=0; }
 };
-struct BufferOwner {
-    Buffer object;
-    Buffer &buffer() { return object; }
-};
-static BufferOwner ScreenBufferOwner, WinDrawingBufferOwner;
 static int IntersectRect(RECT *out, const RECT *first, const RECT *second) {
     ++intersection_calls;
     assert(out==first); // original two LEAs select one complete RECT
@@ -84,6 +81,7 @@ static long DefWindowProcA(HWND, int msg, int wparam, LPARAM pos) {
 }
 class Win {
 public:
+    static Buffer drawing_buffer_, screen_buffer_;
     int iSomeFlag_, iFlags_, field_134_, field_138_, iVertScaleNum_, iVertScaleDenom_;
     int identity;
     Win *win_parent_, *poWinBase_;
@@ -104,6 +102,8 @@ public:
     void nonclient_to_client(int *x, int *y) { *x-=4; *y-=6; }
     void client_to_nonclient(int *x, int *y) { *x+=4; *y+=6; }
 };
+Buffer Win::drawing_buffer_;
+Buffer Win::screen_buffer_;
 // UPDATE_INSERTION
 // POSITION_INSERTION
 static Win first, second, parent, other;
@@ -126,8 +126,8 @@ static void reset() {
 static void check_copy(int a,int b,int c,int d,int e,int f) {
     const int wanted[6]={a,b,c,d,e,f};
     assert(copy_calls==1);
-    assert(copy_receiver==&ScreenBufferOwner.object);
-    assert(copy_destination==&WinDrawingBufferOwner.object);
+    assert(copy_receiver==&Win::screen_buffer_);
+    assert(copy_destination==&Win::drawing_buffer_);
     for (int i=0;i<6;++i) assert(copy_args[i]==wanted[i]);
 }
 int main() {
@@ -160,9 +160,9 @@ int main() {
 
     reset(); WinFlipSprite=0; WinBackBuffer=0;
     Win::update_screen(&area,0);
-    assert(fill_calls==1 && ScreenBufferOwner.object.filled==&area && copy_calls==0);
+    assert(fill_calls==1 && Win::screen_buffer_.filled==&area && copy_calls==0);
     Win::update_screen(0,0);
-    assert(fill_calls==2 && ScreenBufferOwner.object.filled==0);
+    assert(fill_calls==2 && Win::screen_buffer_.filled==0);
 
     reset(); WinFlipSprite=0; first.iSomeFlag_=1;
     first.win_parent_=&parent; second.iSomeFlag_=3; replace_slot=&second;
@@ -230,9 +230,9 @@ def test_actual_screen_update_and_window_position(compiler: str) -> None:
     ("IntersectRect(&rectangle, &rectangle, area)", "IntersectRect(&rectangle, area, &rectangle)"),
     ("origin_y = WinFlipSpriteX;", "origin_y = WinFlipSpriteY;"),
     ("rectangle.left, rectangle.top,", "rectangle.top, rectangle.left,"),
-    ("return ScreenBufferOwner.buffer().copy(", "return 0 * ScreenBufferOwner.buffer().copy("),
-    ("return ScreenBufferOwner.buffer().copy(", "return WinDrawingBufferOwner.buffer().copy("),
-    ("&WinDrawingBufferOwner.buffer(), rectangle.left", "&ScreenBufferOwner.buffer(), rectangle.left"),
+    ("return Win::screen_buffer_.copy(", "return 0 * Win::screen_buffer_.copy("),
+    ("return Win::screen_buffer_.copy(", "return Win::drawing_buffer_.copy("),
+    ("&Win::drawing_buffer_, rectangle.left", "&Win::screen_buffer_, rectangle.left"),
 ))
 def test_screen_update_rejects_reconstruction_mutants(compiler: str, old: str, new: str) -> None:
     body = extract_method(SOURCE.read_text(), UPDATE)

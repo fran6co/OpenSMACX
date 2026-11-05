@@ -2,6 +2,8 @@
 
 Pinned 5F5810..5F5ACA selects the parent visibility receiver, ScreenBuffer
 clip state and four member-buffer draw receivers. Host layouts are not ABI proof.
+The static Buffer double checks the current receiver only; it does not model
+the compiler-private process-start lifetime guard.
 """
 from pathlib import Path
 
@@ -35,11 +37,10 @@ struct Buffer {
         Draw d={this,destination,x,y}; draws.push_back(d); events.push_back(4);
     }
 };
-struct Owner { Buffer object; Buffer &buffer() { return object; } };
-static Owner ScreenBufferOwner;
 static Buffer *WinBackBuffer;
 class Win {
 public:
+    static Buffer screen_buffer_;
     int iFlags_,iSomeFlag_,border_thickness_,caption_height_,bottom_border_thickness_;
     int identity, visible;
     Win *win_parent_;
@@ -51,6 +52,7 @@ public:
     }
     void on_nc_paint(RECT *,int);
 };
+Buffer Win::screen_buffer_;
 // BODY_INSERTION
 static Buffer one,two,three,four,back;
 static Win window,parent;
@@ -76,17 +78,17 @@ int main() {
     reset(); window.win_parent_=&parent;
     window.on_nc_paint(0,-1);
     assert(visibility_calls==1 && queried_identity==2 && draws.size()==4);
-    check(0,&one,&ScreenBufferOwner.object,90,180);
-    check(1,&four,&ScreenBufferOwner.object,90,367);
-    check(2,&three,&ScreenBufferOwner.object,90,187);
-    check(3,&two,&ScreenBufferOwner.object,183,187);
-    assert(clip_owner==0 && restore_owner==&ScreenBufferOwner.object);
+    check(0,&one,&Win::screen_buffer_,90,180);
+    check(1,&four,&Win::screen_buffer_,90,367);
+    check(2,&three,&Win::screen_buffer_,90,187);
+    check(3,&two,&Win::screen_buffer_,183,187);
+    assert(clip_owner==0 && restore_owner==&Win::screen_buffer_);
     assert(events.front()==1 && events.back()==3);
 
     reset(); WinBackBuffer=&back; window.iFlags_=0x10;
     RECT area={1,2,3,4},saved=area;
     window.on_nc_paint(&area,99); // area forces every side, irrespective of selector
-    assert(draws.size()==4 && clip_owner==&ScreenBufferOwner.object && clip_area==&area);
+    assert(draws.size()==4 && clip_owner==&Win::screen_buffer_ && clip_area==&area);
     assert(area.left==saved.left && area.top==saved.top && area.right==saved.right && area.bottom==saved.bottom);
     assert(events[0]==1 && events[1]==2 && events.back()==3);
     check(0,&one,&back,87,175); check(1,&four,&back,87,362);
@@ -94,20 +96,20 @@ int main() {
 
     reset(); window.iFlags_=0x400010; window.bottom_border_thickness_=-1;
     window.on_nc_paint(0,-1);
-    check(1,&four,&ScreenBufferOwner.object,90,373);
-    check(2,&three,&ScreenBufferOwner.object,90,187);
+    check(1,&four,&Win::screen_buffer_,90,373);
+    check(2,&three,&Win::screen_buffer_,90,187);
 
     Buffer *sources[4]={&one,&two,&four,&three};
     for(int selector=0;selector!=4;++selector) {
         reset(); window.on_nc_paint(0,selector);
         assert(draws.size()==1 && draws[0].source==sources[selector]);
-        assert(restore_owner==&ScreenBufferOwner.object);
+        assert(restore_owner==&Win::screen_buffer_);
     }
     reset(); window.on_nc_paint(0,99);
-    assert(draws.empty() && restore_owner==&ScreenBufferOwner.object);
+    assert(draws.empty() && restore_owner==&Win::screen_buffer_);
     reset(); window.buffer2_=0; window.buffer4_=0; window.on_nc_paint(0,-1);
-    assert(draws.size()==2); check(0,&one,&ScreenBufferOwner.object,90,180);
-    check(1,&three,&ScreenBufferOwner.object,90,187);
+    assert(draws.size()==2); check(0,&one,&Win::screen_buffer_,90,180);
+    check(1,&three,&Win::screen_buffer_,90,187);
 
     reset(); window.win_parent_=&parent; parent.visible=0; window.visible=1;
     window.on_nc_paint(&area,-1);
@@ -132,13 +134,13 @@ def test_actual_non_client_paint(compiler: str) -> None:
 @pytest.mark.parametrize("compiler", ("g++", "clang++"))
 @pytest.mark.parametrize("old,new", (
     ("win_parent_->is_visible()", "this->is_visible()"),
-    ("ScreenBufferOwner.buffer().set_clip(area)", "reinterpret_cast<Buffer *>(area)->set_clip(area)"),
-    ("buffer1_->draw", "ScreenBufferOwner.buffer().draw"),
-    ("buffer4_->draw", "ScreenBufferOwner.buffer().draw"),
-    ("buffer3_->draw", "ScreenBufferOwner.buffer().draw"),
-    ("buffer2_->draw", "ScreenBufferOwner.buffer().draw"),
+    ("Win::screen_buffer_.set_clip(area)", "reinterpret_cast<Buffer *>(area)->set_clip(area)"),
+    ("buffer1_->draw", "Win::screen_buffer_.draw"),
+    ("buffer4_->draw", "Win::screen_buffer_.draw"),
+    ("buffer3_->draw", "Win::screen_buffer_.draw"),
+    ("buffer2_->draw", "Win::screen_buffer_.draw"),
     ("flags = -1;", "flags = 0;"),
-    ("ScreenBufferOwner.buffer().restore_clip();", "(void)0;"),
+    ("Win::screen_buffer_.restore_clip();", "(void)0;"),
 ))
 def test_rejects_wrong_ownership_or_state(compiler: str, old: str, new: str) -> None:
     body=extract_method(SOURCE.read_text(), SIGNATURE)

@@ -61,8 +61,8 @@ struct Buffer {
         assert(p==expected && PaletteActive==p); ++syncs;
     }
 };
-struct Owner { Buffer value; Buffer &buffer() { return value; } };
-static Owner ScreenBufferOwner;
+struct Win { static Buffer screen_buffer_; };
+Buffer Win::screen_buffer_;
 void IDirectDrawPalette::SetEntries(int flags,int start,int count,int *entries) {
     assert(this==&direct && flags==0 && start==0 && count==256);
     assert(entries==expected->entries_); ++dd_calls;

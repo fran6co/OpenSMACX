@@ -74,10 +74,10 @@ void wait_for_animation_frame(DWORD started) {
 // TRIED: MISMATCH #58 (push vs mov) - a genuine local `Buffer` (RAII) reproduces the SEH try-frame/dtor exactly for 57 instructions (prologue, ctor, null check+early return, globals store, first branch's load_pcx+extract, loop setup); the do/while loop body's byte-read-then-extract() call diverges on push order. Tried inlining the byte read into the call expression (same as the first, unlooped, extract call) - made it worse (#43), so a separate local before the call is closer; kept.
 // ORIGINAL: 0x00402F10 _$E21 0x00402F10-0x00402F26 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned CRT dispatcher 0x00644DEC-0x00644DFB supplies [0x00682000,0x006826CC) to 0x00644ED8, which calls each non-null dword; original slot 0x00682004 selects initializer 0x00402F10 and it registers finalizer 0x00402F30.", "Pinned original initializer 0x00402F10-0x00402F26 and finalizer 0x00402F30-0x00402F3A independently load receiver 0x006A7090 and call Wave constructor/destructor 0x004C66E0/0x004C67C0.", "AlphaMenu::play in src/alphamenu.cpp calls the source-owned g_ALPHAMENU_WAVE in both observed playback branches; this TU now owns its genuine Wave storage and the paired original lifetime mappings.", "Historical prior-owner observation only: before this source move, a physical wave.cpp COFF selected local STATIC helpers for this global. That observation does not establish current alphamenu.cpp emission or linked helper identity.", "Individual original lifetime ownership is retained; this binding does not establish complete CRT order, current linked selection, full data layout or runtime acceptance."], "reason": "Bind the original initializer to the genuine g_ALPHAMENU_WAVE Wave object now owned with its AlphaMenu playback consumer in alphamenu.cpp. The original CRT slot and constructor/destructor receiver remain pinned evidence; no callback body is authored."}
-// symbol    _$E8
+// symbol    _$E10
 // ORIGINAL: 0x00402F30 _$E19 0x00402F30-0x00402F3A FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned CRT dispatcher 0x00644DEC-0x00644DFB supplies [0x00682000,0x006826CC) to 0x00644ED8, which calls each non-null dword; original slot 0x00682004 selects initializer 0x00402F10 and it registers finalizer 0x00402F30.", "Pinned original initializer 0x00402F10-0x00402F26 and finalizer 0x00402F30-0x00402F3A independently load receiver 0x006A7090 and call Wave constructor/destructor 0x004C66E0/0x004C67C0.", "AlphaMenu::play in src/alphamenu.cpp calls the source-owned g_ALPHAMENU_WAVE in both observed playback branches; this TU now owns its genuine Wave storage and the paired original lifetime mappings.", "Historical prior-owner observation only: before this source move, a physical wave.cpp COFF selected local STATIC helpers for this global. That observation does not establish current alphamenu.cpp emission or linked helper identity.", "Individual original lifetime ownership is retained; this binding does not establish complete CRT order, current linked selection, full data layout or runtime acceptance."], "reason": "Bind the original finalizer to the genuine g_ALPHAMENU_WAVE Wave object now owned with its AlphaMenu playback consumer in alphamenu.cpp. The original CRT slot and constructor/destructor receiver remain pinned evidence; no callback body is authored."}
-// symbol    _$E6
+// symbol    _$E8
 
 // ORIGINAL: 0x00402F40 ?init@AlphaMenu@@QAEHPAUWin@@@Z 0x00402F40-0x00403199;0x006505C0-0x006505D5 FILE
 // RECOVERY_BINDING: v1 {"evidence": ["Retired seed provenance: src/unrecovered/00402f40.cpp,004032a0.cpp,00403af0.cpp and src/recovered/units/00403340.cpp,00403680.cpp,00403830.cpp; pinned original callback style27/29, positive hide height, branch-only clip restoration and actual caller dispatch audited by coordinator."], "reason": "Recover AlphaMenu owner behavior through existing Menu/GraphicWin/Buffer inheritance and owned Sprite lifetimes; historical seed identity and extents remain obligations, not measurement claims."}
@@ -298,24 +298,24 @@ void AlphaMenu::show() {
   const int frame_x = animation_frame_x();
   int y = screen_rect.bottom - sprite1_.height();
   const int step = (screen_rect.bottom - screen_rect.top) / 5;
-  ScreenBufferOwner.buffer().set_clip(&screen_rect);
+  Win::screen_buffer_.set_clip(&screen_rect);
 
   if ((GameDataStateStorage.fields_.game_preferences_ & 0x8000000) != 0 && IsMultiplayerNet == 0) {
     WinFlipClipped = 1;
     for (int frame = 0; frame != 6; ++frame) {
       const DWORD started = timeGetTime();
-      Buffer::draw(&ScreenBufferOwner.buffer(), 9,
+      Buffer::draw(&Win::screen_buffer_, 9,
                                         frame_x, y, 1, 1);
       flip(&screen_rect);
       y -= step;
       do_sound();
       wait_for_animation_frame(started);
     }
-    ScreenBufferOwner.buffer().restore_clip();
+    Win::screen_buffer_.restore_clip();
     WinFlipClipped = 0;
   }
 
-  ScreenBufferOwner.buffer().restore_clip();
+  Win::screen_buffer_.restore_clip();
   WinFlipClipped = 0;
   Win::show(3);
   MainInterfaceGlobal.flat_button_[3].set_pressed_visual(1);
@@ -351,7 +351,7 @@ void AlphaMenu::hide() {
   const int frame_x = animation_frame_x();
   int y = screen_rect.top;
   const int step = (screen_rect.bottom - screen_rect.top) / 5;
-  ScreenBufferOwner.buffer().set_clip(&screen_rect);
+  Win::screen_buffer_.set_clip(&screen_rect);
   const int target_y = screen_rect.bottom - sprite1_.height();
   if ((GameDataStateStorage.fields_.game_preferences_ & 0x8000000) != 0 && IsMultiplayerNet == 0) {
     WinFlipClipped = 1;
@@ -359,9 +359,9 @@ void AlphaMenu::hide() {
       const DWORD started = timeGetTime();
       const int frame_copy_height = pixel_height();
       const int frame_copy_width = pixel_width();
-      buffer_.copy(&ScreenBufferOwner.buffer(), 0, 0, screen_rect.left, screen_rect.top,
+      buffer_.copy(&Win::screen_buffer_, 0, 0, screen_rect.left, screen_rect.top,
                    frame_copy_width, frame_copy_height);
-      Buffer::draw(&ScreenBufferOwner.buffer(), 9, frame_x, y, 1, 1);
+      Buffer::draw(&Win::screen_buffer_, 9, frame_x, y, 1, 1);
       flip(&screen_rect);
       y += step;
       if (y >= target_y) y = target_y;
@@ -371,13 +371,13 @@ void AlphaMenu::hide() {
     if (y < target_y) {
       const int final_copy_height = pixel_height();
       const int final_copy_width = pixel_width();
-      buffer_.copy(&ScreenBufferOwner.buffer(), 0, 0, screen_rect.left, screen_rect.top,
+      buffer_.copy(&Win::screen_buffer_, 0, 0, screen_rect.left, screen_rect.top,
                    final_copy_width, final_copy_height);
-      Buffer::draw(&ScreenBufferOwner.buffer(), 9,
+      Buffer::draw(&Win::screen_buffer_, 9,
                    screen_rect.left, target_y, 1, 1);
       flip(&screen_rect);
     }
-    ScreenBufferOwner.buffer().restore_clip();
+    Win::screen_buffer_.restore_clip();
     WinFlipClipped = 0;
   }
 

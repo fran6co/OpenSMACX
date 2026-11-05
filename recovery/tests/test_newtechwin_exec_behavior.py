@@ -74,11 +74,6 @@ struct MainInterface { Font primary; Font *primary_font() { return &primary; } }
 Font font_pool[64] = {};
 Font *find_font(int size, int style) { font_pool[size * 4 + style].id = size * 4 + style; return &font_pool[size * 4 + style]; }
 struct BoxStyle InterfaceBoxStyles[51] = {};
-// Borrower identity fixture, not a model of production guarded lifetimes.
-struct NewTechSpritesFixtureOwner {
-    Sprite elements_[6];
-    Sprite &at(int index) { return elements_[index]; }
-} NewTechSpritesOwner = {};
 char *label_get(int) { static char label[] = "close"; return label; }
 struct Buffer {
     Font *fonts[4]; int colors[4];
@@ -134,6 +129,7 @@ struct Wave {
 struct WaveDevice { int get_group_volume(unsigned int) { return 73; } } WaveDeviceGlobal;
 int modal_event_pending = 0;
 struct NewTechWin {
+    static Sprite technology_sprites_[6];
     uint32_t field_A14_,field_A18_,field_A1C_,field_A20_;
     RECT main_rect_,title_rect_,category_rect_,row_rects_[4],label_rects_[4],bottom_rect_;
     uint32_t field_AE4_,field_AE8_,field_AEC_,field_AF0_;
@@ -154,6 +150,7 @@ struct NewTechWin {
     int on_link_clicked(int,char *link);
     void exec(int technology_id,int other_faction_id);
 } NewTechWindow;
+Sprite NewTechWin::technology_sprites_[6];
 void do_all_draws() { ++trace.draw_calls; }
 void help_tech_info(void (__cdecl *append)(char *),int,int,int box_index) {
     ++trace.help_calls; char text[20]; std::sprintf(text,"box%d",box_index); append(text);
@@ -165,6 +162,11 @@ void help_tech_info(void (__cdecl *append)(char *),int,int,int box_index) {
 
 
 def compile_and_run() -> None:
+    header = (ROOT / "src/newtechwin.h").read_text()
+    owner = SOURCE.read_text()
+    assert "static Sprite technology_sprites_[6];" in header
+    assert "Sprite NewTechWin::technology_sprites_[6];" in owner
+    assert "set_report_icons(&technology_sprites_[3]," in owner
     program = HARNESS + "\n" + CTOR + "\n" + DTOR + "\n" + LINK_HOOK + "\n" + INFO_CALLBACK + "\n" + BODY + r'''
 int main() {
     ConsoleGlobal.faction_id_=2; GameDataStateStorage.fields_.lock_masks_.enable_mask_=0; IsMultiplayerNet=0;
@@ -207,7 +209,7 @@ int main() {
     assert(NewTechWindow.flatButtons_[1].args[2]==518);
     assert(NewTechWindow.flatButtons_[1].args[3]==28);
     assert(NewTechWindow.flatButtons_[1].args[4]==34);
-    assert(NewTechWindow.flatButtons_[2].icons[2]==&NewTechSpritesOwner.at(5));
+    assert(NewTechWindow.flatButtons_[2].icons[2]==&NewTechWin::technology_sprites_[5]);
     assert(NewTechWindow.buttonGroup_.add_count==2 && NewTechWindow.buttonGroup_.selected==1);
     assert(trace.wave_path=="voices\\tech37.mp3" && trace.wave_loads==1);
     assert(trace.wave_unloads==1 && trace.wave_plays==1 && trace.last_volume==73);

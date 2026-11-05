@@ -17,6 +17,8 @@
  */
 #pragma once
 
+#include <stddef.h>
+
 #include "font.h"
 #include "graphicwin.h"
 #include "spot.h"

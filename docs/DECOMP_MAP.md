@@ -323,6 +323,8 @@ the parent/path and insertion unit/line. It reparses the result and refuses
 stale/incomplete snapshots, duplicate identities, parent/target-owner aliases and
 insertion inside a block comment. The caller still owns fresh on-disk validation,
 review and guarded publication; the transformation itself writes no files.
+Selected records and destination anchors must precede the first line splice;
+unrelated records in an untouched spliced suffix remain byte-for-byte intact.
 Promoting a former member-backed identity to a direct v4 target additionally
 requires its exact origin entity ID in `direct_owner_promotions`. Every grant
 must be consumed by one such replacement; default owner-loss refusal remains.

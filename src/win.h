@@ -23,32 +23,6 @@
 #include "heap.h"
 #include "spot.h"
 #include "sprite.h"
-#include <new>
-#include <stddef.h>
-
-// Win's two process-lifetime Buffers share one original cleanup byte.
-// Drawing uses bit 1, screen uses bit 2; the bits are published before
-// direct complete destruction, retaining the byte's other state.
-extern uint8_t WinDrawingBufferCleanupGuard;
-union ScreenBufferStorage {
-    char bytes[sizeof(Buffer)];
-    uint32_t alignment_[sizeof(Buffer) / sizeof(uint32_t)];
-};
-struct ScreenBufferLifetime {
-    ScreenBufferStorage storage_;
-    ScreenBufferLifetime() { new (storage_.bytes) Buffer(); }
-    ~ScreenBufferLifetime() {
-        if ((WinDrawingBufferCleanupGuard & 2) != 0) return;
-        WinDrawingBufferCleanupGuard |= 2;
-        buffer().Buffer::~Buffer();
-    }
-    Buffer &buffer() { return *reinterpret_cast<Buffer *>(storage_.bytes); }
-};
-static_assert(sizeof(ScreenBufferLifetime) == sizeof(Buffer),
-              "Screen Buffer storage extent");
-static_assert(offsetof(ScreenBufferLifetime, storage_) == 0,
-              "Screen Buffer starts at its owner identity");
-extern ScreenBufferLifetime ScreenBufferOwner;
 
 class Menu; // forward declaration
 extern HWND HandleMain;
@@ -112,6 +86,10 @@ typedef int (__cdecl *WinDisplayActionHookFn)();
 
 class Win : public AutoSound {
  public:
+  // Process-lifetime render buffers shared by Win and its rendering callers.
+  static Buffer drawing_buffer_;
+  static Buffer screen_buffer_;
+
   // The two scrollbar callback slots share Scroll's consumer signature.
   typedef void (__cdecl *ScrollCallback)(int, int);
 

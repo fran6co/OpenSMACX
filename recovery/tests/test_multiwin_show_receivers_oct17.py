@@ -169,13 +169,6 @@ void Buffer::set_clip(const RECT *rect) {
     record("screen.set_clip");
 }
 
-struct ScreenBufferOwnerType {
-    Buffer screen;
-    ScreenBufferOwnerType() : screen("screen", false) {}
-    Buffer &buffer() { return screen; }
-};
-static ScreenBufferOwnerType ScreenBufferOwner;
-
 struct Wave {
     int plays;
     int fades;
@@ -196,6 +189,8 @@ static DWORD timeGetTime() {
 }
 
 struct Win {
+    // Borrower receiver double only; no private startup guard is modeled here.
+    static Buffer screen_buffer_;
     unsigned int iSomeFlag_;
     Win() : iSomeFlag_(0) {}
     void show(int mode) {
@@ -208,6 +203,7 @@ struct Win {
         record("Win.flip");
     }
 };
+Buffer Win::screen_buffer_("screen", false);
 
 struct WinView {
 protected:
@@ -485,11 +481,10 @@ def test_actual_source_show_roles_and_callbacks(tmp_path, host_compiler):
 def test_actual_source_receiver_reversal_is_detected(tmp_path, host_compiler):
     body = actual_show_body()
     good = re.compile(
-        r"background\s*\.\s*draw\s*\(\s*&\s*ScreenBufferOwner\s*\.\s*"
-        r"buffer\s*\(\s*\)\s*,\s*9\s*,\s*screen_rect\.left\s*,\s*"
+        r"background\s*\.\s*draw\s*\(\s*&\s*Win::screen_buffer_\s*,\s*9\s*,\s*screen_rect\.left\s*,\s*"
         r"position\s*,\s*1\s*,\s*1\s*\)\s*;"
     )
-    bad = "ScreenBufferOwner.buffer().draw(&background, 9, screen_rect.left, position, 1, 1);"
+    bad = "Win::screen_buffer_.draw(&background, 9, screen_rect.left, position, 1, 1);"
     assert good.search(body), "positive control must contain the corrected typed receiver order"
     baseline_build, baseline_run = compile_run(tmp_path / "baseline", body, host_compiler)
     assert baseline_build.returncode == 0, "positive control did not compile: " + baseline_build.stderr

@@ -46,6 +46,11 @@ policy is in `WORKFLOW.md`; no spelling trick overrides that policy.
   CheckBox class-static Sprite definitions reproduce their original paired
   startup/finalizer bodies and references. This corroborates contribution
   co-location; it does not establish complete historical TU boundaries or names.
+  The Win drawing/screen Buffer pair reproduces shared masks1/2, and the
+  NewTechWin six-Sprite array reproduces forward construction with prefix
+  unwind and guarded reverse vector destruction. Ordinary class-static arrays
+  can therefore recover these lifetimes without placement-storage wrappers or
+  authored guard variables; namespace globals are a different compiler case.
   Local `_$E`/`_$S` numbers can change after header declarations change. An old
   number may still exist while naming a different helper: refresh correspondence
   through object/constructor/registration/cleanup graphs, never presence or

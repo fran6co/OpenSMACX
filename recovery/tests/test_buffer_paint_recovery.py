@@ -121,7 +121,7 @@ def test_actual_graphicwin_paint_clipping_routing_and_restoration(tmp_path, monk
 
 @pytest.mark.parametrize("address,old,new,control", [
     (0x5D84C0, "return denominator;", "return 0;", "draw"),
-    (0x5D5CF0, "ScreenBufferOwner.buffer().set_clip(area);", "Buffer::set_clip(area);", "paint"),
+    (0x5D5CF0, "Win::screen_buffer_.set_clip(area);", "Buffer::set_clip(area);", "paint"),
 ])
 def test_live_controls_reject_wrong_return_or_clip_receiver(tmp_path, monkeypatch, address, old, new, control):
     reader = harness_support.read_file

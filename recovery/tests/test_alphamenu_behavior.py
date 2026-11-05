@@ -527,15 +527,10 @@ void Buffer::set_clip(const RECT *r) {
   }
   if (sprite_height_target) *sprite_height_target = sprite_height_after_clip;
 }
-// Borrower control only: real placement construction/guarded destruction
-// is verified separately by the actual production lifetime controls.
-struct ScreenBufferFixtureOwner {
-  Buffer value_;
-  Buffer &buffer() { return value_; }
-};
-ScreenBufferFixtureOwner ScreenBufferOwner;
 class Win {
  public:
+  // Borrowed screen storage identity only; native Win lifetime evidence is separate.
+  static Buffer screen_buffer_;
   int is_visible() const { return visible; }
   void client_to_screen(RECT *r) { r->left += 10; r->right += 10; r->top += 20; r->bottom += 20; }
   void flip(RECT *) {
@@ -549,6 +544,7 @@ class Win {
   bool visible = true;
   int flips = 0, hides = 0;
 };
+Buffer Win::screen_buffer_;
 class GraphicWin : public Buffer, public Win {
  public:
   RECT *buffer_working_rect() { return &working; }
@@ -586,7 +582,7 @@ int main() {
   assert(static_cast<Buffer *>(&menu)->width == 100 && static_cast<Buffer *>(&menu)->height == 100);
   assert(menu.buffer_.copy_count == 6);
   assert(menu.buffer_.copy_source == &menu.buffer_);
-  assert(menu.buffer_.copy_destination == &ScreenBufferOwner.buffer());
+  assert(menu.buffer_.copy_destination == &Win::screen_buffer_);
   assert(menu.buffer_.copy_args[0] == 0 && menu.buffer_.copy_args[1] == 0);
   assert(menu.buffer_.copy_args[2] == 10 && menu.buffer_.copy_args[3] == 20);
   assert(menu.buffer_.copy_args[5] == 100);
@@ -601,22 +597,22 @@ int main() {
       && copies[0].height == 100);
   for (int i = 0; i != 6; ++i) {
     assert(copies[i + 1].source == &menu.buffer_);
-    assert(copies[i + 1].destination == &ScreenBufferOwner.buffer());
+    assert(copies[i + 1].destination == &Win::screen_buffer_);
     assert(copies[i + 1].width == 100 && copies[i + 1].height == 100);
   }
   assert(draws.size() == 6);
   for (int i = 0; i != 6; ++i) {
     assert(draws[i].source == static_cast<Buffer *>(&menu));
-    assert(draws[i].destination == &ScreenBufferOwner.buffer());
+    assert(draws[i].destination == &Win::screen_buffer_);
     assert(draws[i].index == 9 && draws[i].x == 0);
   }
   assert(draws[0].y == 20 && draws[1].y == 40 && draws[2].y == 60);
   assert(draws[3].y == 80 && draws[4].y == 100 && draws[5].y == 110);
-  assert(menu.flips == 6 && WinFlipClipped == 0 && ScreenBufferOwner.buffer().clip_count == 2);
-  assert(ScreenBufferOwner.buffer().clip.left == ScreenBufferOwner.buffer().rect2_.left);
-  assert(ScreenBufferOwner.buffer().clip.top == ScreenBufferOwner.buffer().rect2_.top);
-  assert(ScreenBufferOwner.buffer().clip.right == ScreenBufferOwner.buffer().rect2_.right);
-  assert(ScreenBufferOwner.buffer().clip.bottom == ScreenBufferOwner.buffer().rect2_.bottom);
+  assert(menu.flips == 6 && WinFlipClipped == 0 && Win::screen_buffer_.clip_count == 2);
+  assert(Win::screen_buffer_.clip.left == Win::screen_buffer_.rect2_.left);
+  assert(Win::screen_buffer_.clip.top == Win::screen_buffer_.rect2_.top);
+  assert(Win::screen_buffer_.clip.right == Win::screen_buffer_.rect2_.right);
+  assert(Win::screen_buffer_.clip.bottom == Win::screen_buffer_.rect2_.bottom);
   assert(!menu.visible && menu.hides == 1 && sounds == 6);
   assert(MainInterfaceGlobal.flat_button_[3].pressed == 0);
   assert(MainInterfaceGlobal.flat_button_[3].redraws == 1);
@@ -627,12 +623,12 @@ int main() {
   GameDataStateStorage.fields_.game_preferences_ = 0;
   IsMultiplayerNet = 1;
   WinFlipClipped = 7;
-  const int clips_before = ScreenBufferOwner.buffer().clip_count;
+  const int clips_before = Win::screen_buffer_.clip_count;
   const size_t draws_before = draws.size();
   networked.hide();
   assert(draws.size() == draws_before && networked.flips == 0);
-  assert(ScreenBufferOwner.buffer().clip_count == clips_before + 1);
-  assert(ScreenBufferOwner.buffer().clip.left == 10 && ScreenBufferOwner.buffer().clip.top == 20);
+  assert(Win::screen_buffer_.clip_count == clips_before + 1);
+  assert(Win::screen_buffer_.clip.left == 10 && Win::screen_buffer_.clip.top == 20);
   assert(WinFlipClipped == 7);
   assert(!networked.visible && networked.hides == 1 && networked.buffer_.closed);
 

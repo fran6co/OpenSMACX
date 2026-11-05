@@ -79,17 +79,12 @@ static Buffer *WinBackBuffer;
 static int WinViewOriginX, WinViewOriginY;
 static int WinFlipSpriteY, WinFlipSpriteX, WinClipWidth, WinClipHeight;
 static Sprite *WinFlipSprite;
-// These tests cover borrower identity, not the production lifetime guards.
-struct BufferFixtureOwner {
-  Buffer value_;
-  Buffer &buffer() { return value_; }
-};
-static BufferFixtureOwner ScreenBufferOwner, WinDrawingBufferOwner;
 static Win *visibility_callback_target;
 static Win *visibility_callback_owner;
 static bool callback_armed;
 
 struct Win {
+  static Buffer drawing_buffer_, screen_buffer_;
   unsigned int iFlags_, iSomeFlag_;
   Win *poWinBase_, *win_parent_;
   Win *children_[8];
@@ -111,6 +106,8 @@ struct Win {
   static int update_screen(RECT *, Win *);
   void update_window_to_buffer(Buffer *);
 };
+Buffer Win::drawing_buffer_;
+Buffer Win::screen_buffer_;
 static int IntersectRect(RECT *out, const RECT *a, const RECT *b) {
   out->left = a->left > b->left ? a->left : b->left;
   out->top = a->top > b->top ? a->top : b->top;
@@ -175,7 +172,7 @@ int main(int argc, char **argv) {
   visibility_callback_owner=&parent_probe;
   visibility_callback_target=&second_root;
   callback_armed=true;
-  subject.update_window_to_buffer(&WinDrawingBufferOwner.buffer());
+  subject.update_window_to_buffer(&Win::drawing_buffer_);
   // Visibility reenters the traversal and changes the active window. Both
   // root passes must reload that pointer after recursion; the second root
   // then resets the list before appending itself.

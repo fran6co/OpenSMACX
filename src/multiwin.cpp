@@ -721,13 +721,13 @@ void MultiWin::show() {
   int position = screen_rect.bottom - sprite3_.height();
   if (IsMultiplayerNet != 0) position -= 14 + sprite4_.height();
   const int slide = (position - screen_rect.top) / 5;
-  ScreenBufferOwner.buffer().set_clip(&screen_rect);
+  Win::screen_buffer_.set_clip(&screen_rect);
 
   if ((GameDataStateStorage.fields_.game_preferences_ & 0x8000000) != 0 && IsMultiplayerNet == 0) {
     WinFlipClipped = 1;
     for (int frame = 0; frame < 6; ++frame) {
       const DWORD start = timeGetTime();
-      background.draw(&ScreenBufferOwner.buffer(), 9, screen_rect.left, position, 1, 1);
+      background.draw(&Win::screen_buffer_, 9, screen_rect.left, position, 1, 1);
       Win::flip(&screen_rect);
       position -= slide;
       do_sound();
@@ -735,7 +735,7 @@ void MultiWin::show() {
         do_sound();
       }
     }
-    ScreenBufferOwner.buffer().restore_clip();
+    Win::screen_buffer_.restore_clip();
     WinFlipClipped = 0;
   }
 
@@ -776,16 +776,16 @@ void MultiWin::hide() {
   int limit = screen_rect.bottom - sprite3_.height();
   if (IsMultiplayerNet != 0) limit -= 14 + sprite4_.height();
   const int slide = (limit - screen_rect.top) / 5;
-  ScreenBufferOwner.buffer().set_clip(&screen_rect);
+  Win::screen_buffer_.set_clip(&screen_rect);
 
   if ((GameDataStateStorage.fields_.game_preferences_ & 0x8000000) != 0 && IsMultiplayerNet == 0) {
     WinFlipClipped = 1;
     int position = screen_rect.top;
     for (int frame = 0; frame < 6; ++frame) {
       const DWORD start = timeGetTime();
-      buffer_.copy(&ScreenBufferOwner.buffer(), 0, 0, screen_rect.left, screen_rect.top,
+      buffer_.copy(&Win::screen_buffer_, 0, 0, screen_rect.left, screen_rect.top,
                    width, height);
-      background.draw(&ScreenBufferOwner.buffer(), 9, screen_rect.left, position, 1, 1);
+      background.draw(&Win::screen_buffer_, 9, screen_rect.left, position, 1, 1);
       Win::flip(&screen_rect);
       position += slide;
       if (position >= limit) position = limit;
@@ -795,13 +795,13 @@ void MultiWin::hide() {
       }
     }
     if (position < limit) {
-      buffer_.copy(&ScreenBufferOwner.buffer(), 0, 0, screen_rect.left, screen_rect.top,
+      buffer_.copy(&Win::screen_buffer_, 0, 0, screen_rect.left, screen_rect.top,
                    width, height);
       static_cast<Buffer *>(this)->draw(
-          &ScreenBufferOwner.buffer(), 9, screen_rect.left, limit, 1, 1);
+          &Win::screen_buffer_, 9, screen_rect.left, limit, 1, 1);
       Win::flip(&screen_rect);
     }
-    ScreenBufferOwner.buffer().restore_clip();
+    Win::screen_buffer_.restore_clip();
     WinFlipClipped = 0;
   }
 

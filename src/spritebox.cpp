@@ -44,6 +44,7 @@
 // symbol    ?on_redraw@SpriteBox@@$4PPPPPPPM@KBI@AEXXZ
 // kind      game
 #include "stdafx.h"
+#include <new>
 #include "spritebox.h"
 #include "general.h"
 #include "dialog.h"

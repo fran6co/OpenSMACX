@@ -144,8 +144,8 @@ int __cdecl sub_62cd50(int bit_depth) {
         BufferDirectDraw->Release();
         BufferDirectDraw = 0;
     }
-    ScreenBufferOwner.buffer().surface_ = 0;
-    ScreenBufferOwner.buffer().clipper_ = 0;
+    Win::screen_buffer_.surface_ = 0;
+    Win::screen_buffer_.clipper_ = 0;
     DirectDrawSurface = 0;
     DirectDrawBackBuffer = 0;
     DDActive = 0;
@@ -245,11 +245,11 @@ int __cdecl sub_62cd50(int bit_depth) {
             goto failure;
         }
         DDActive = 1;
-        ScreenBufferOwner.buffer().close();
-        ScreenBufferOwner.buffer().locked_bits_ = 0;
-        ScreenBufferOwner.buffer().hdc2_ = 0;
-        ScreenBufferOwner.buffer().surface_ = DirectDrawBackBuffer;
-        ScreenBufferOwner.buffer().clipper_ = DirectDrawClipper;
+        Win::screen_buffer_.close();
+        Win::screen_buffer_.locked_bits_ = 0;
+        Win::screen_buffer_.hdc2_ = 0;
+        Win::screen_buffer_.surface_ = DirectDrawBackBuffer;
+        Win::screen_buffer_.clipper_ = DirectDrawClipper;
     }
     return 0;
 
@@ -276,8 +276,8 @@ extern "C" int __cdecl sub_62d100() {
         BufferDirectDraw->Release();
         BufferDirectDraw = 0;
     }
-    ScreenBufferOwner.buffer().surface_ = 0;
-    ScreenBufferOwner.buffer().clipper_ = 0;
+    Win::screen_buffer_.surface_ = 0;
+    Win::screen_buffer_.clipper_ = 0;
     DirectDrawSurface = 0;
     DirectDrawBackBuffer = 0;
     DDActive = 0;

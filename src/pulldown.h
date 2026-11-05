@@ -8,6 +8,7 @@
  * (at your option) any later version.
  */
 #pragma once
+#include <stddef.h>
 #include "graphicwin.h"
 
 class Menu;

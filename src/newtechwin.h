@@ -21,41 +21,6 @@
 #include "graphicwin.h"
 #include "stringbox.h"
 #include "sprite.h"
-#include <new>
-#include <stddef.h>
-
-// Two columns of three technology-popup icons, populated by load_box_sprites.
-// The separate original guard at 0x822604 is not part of NewTechWindow.
-extern uint8_t NewTechSpritesCleanupGuard;
-struct NewTechSpriteArray {
-  Sprite elements_[6];
-};
-union NewTechSpriteStorage {
-  char bytes[sizeof(NewTechSpriteArray)];
-  uint32_t alignment_[sizeof(NewTechSpriteArray) / sizeof(uint32_t)];
-};
-// Chosen lifetime implementation, not a recovered original class name.
-// A real embedded array gives the compiler prefix unwind and reverse cleanup;
-// placement construction of its enclosing aggregate adds no array cookie.
-struct NewTechSpriteLifetime {
-  NewTechSpriteStorage storage_;
-  NewTechSpriteLifetime() { new (storage_.bytes) NewTechSpriteArray; }
-  ~NewTechSpriteLifetime() {
-    if ((NewTechSpritesCleanupGuard & 1) != 0) return;
-    NewTechSpritesCleanupGuard |= 1;
-    array().NewTechSpriteArray::~NewTechSpriteArray();
-  }
-  NewTechSpriteArray &array() {
-    return *reinterpret_cast<NewTechSpriteArray *>(storage_.bytes);
-  }
-  Sprite &at(int index) { return array().elements_[index]; }
-};
-static_assert(sizeof(NewTechSpriteLifetime) == 6 * sizeof(Sprite),
-              "six Sprite lifetime storage extent");
-static_assert(offsetof(NewTechSpriteLifetime, storage_) == 0 &&
-              offsetof(NewTechSpriteArray, elements_) == 0,
-              "technology Sprite array starts at its owner identity");
-extern NewTechSpriteLifetime NewTechSpritesOwner;
 
  /*
   * NewTechWin class
@@ -67,6 +32,10 @@ extern NewTechSpriteLifetime NewTechSpritesOwner;
   */
 class NewTechWin : public GraphicWin {
  public:
+  // The six technology-popup icons are process-start storage owned with the
+  // technology window's source contribution, not instance data.
+  static Sprite technology_sprites_[6];
+
   NewTechWin();
   void exec(int technology_id, int other_faction_id);
   // Real member/base destruction is emitted from the out-of-line body.
@@ -126,6 +95,8 @@ class NewTechWin : public GraphicWin {
 
 static_assert(sizeof(NewTechWin) == 0x107C4,
               "NewTechWin layout must match the original executable");
+static_assert(sizeof(NewTechWin::technology_sprites_) == 6 * sizeof(Sprite),
+              "technology popup storage is six contiguous Sprites");
 
 // Original technology-popup singleton, owned by newtechwin.cpp.
 extern NewTechWin NewTechWindow;

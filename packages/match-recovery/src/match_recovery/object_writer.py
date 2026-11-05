@@ -206,7 +206,9 @@ def replace_object_records(current: Mapping[str, bytes], *,
     target requires that identity's explicit ``direct_owner_promotions`` grant.
     This grant authorizes only the pure annotation transport; it proves no ABI,
     compiled layout, target equivalence or runtime behavior. All non-replaced
-    records survive byte-for-byte. Callers remain responsible for independent
+    records survive byte-for-byte. Selected records and destination anchors must
+    precede the first line splice; an untouched spliced suffix may contain other
+    records. Callers remain responsible for independent
     native review and guarded publication.
     """
     if type(direct_owner_promotions) is not frozenset or any(
@@ -240,11 +242,6 @@ def replace_object_records(current: Mapping[str, bytes], *,
         if raw and not lines:
             raise ValueError("source line parsing failed")
         parsed = parse_objects(text, path, pin, address_space=address_space)
-        # An untouched spliced suffix cannot affect an earlier physical-line
-        # replacement. Do not interpret object records in that suffix.
-        if first_splice_by_unit[path] is not None and any(
-                row.line >= first_splice_by_unit[path] for row in parsed):
-            raise ValueError("object writer does not support records in line-spliced source")
         parsed_by_unit[path] = parsed
         lines_by_unit[path] = lines
         newline_by_unit[path] = next((line[len(line.rstrip(b"\r\n")):] for line in lines
@@ -276,6 +273,9 @@ def replace_object_records(current: Mapping[str, bytes], *,
         old = by_identity.get(row.origin.entity_id)
         if old is None or row.origin.entity_id in selected:
             raise ValueError("object replacement identity is missing or duplicated")
+        old_splice = first_splice_by_unit[old.unit]
+        if old_splice is not None and old.line >= old_splice:
+            raise ValueError("object writer does not support replacement of records in line-spliced source")
         row_interpretation = row.interpretation_id if row.span is not None else None
         old_interpretation = old.interpretation_id if old.span is not None else None
         if (row.symbol, row.origin, row.span, row.evidence, row_interpretation) != (

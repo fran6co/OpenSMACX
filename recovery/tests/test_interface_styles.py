@@ -56,19 +56,21 @@ def actual_source():
         definition, = re.findall(r"^Buffer " + name + r"(?:\[\d+\])?;", objects, re.M)
         definitions.append(definition)
     newtech_header = (ROOT / "src/newtechwin.h").read_text()
-    owner_types = "\n".join(
-        braced(newtech_header, signature) + ";"
-        for signature in ("struct NewTechSpriteArray {",
-                          "union NewTechSpriteStorage {",
-                          "struct NewTechSpriteLifetime {"))
-    for declaration in ("uint8_t NewTechSpritesCleanupGuard;",
-                        "NewTechSpriteLifetime NewTechSpritesOwner;"):
-        definition, = re.findall(r"^" + re.escape(declaration), objects, re.M)
-        definitions.append(definition)
+    technology_member, = re.findall(
+        r"^  static Sprite technology_sprites_\[6\];$", newtech_header, re.M)
+    owner_types = ("struct NewTechWin {\n" + technology_member +
+                   "\n};\nstatic_assert(sizeof(NewTechWin::technology_sprites_) == "
+                   "6 * sizeof(Sprite), \"six technology Sprites\");")
+    technology_definition, = re.findall(
+        r"^Sprite NewTechWin::technology_sprites_\[6\];$",
+        (ROOT / "src/newtechwin.cpp").read_text(), re.M)
+    definitions.append(technology_definition)
     colour, = re.findall(r"^const unsigned char WinFillColour = \d+;", (ROOT / "src/interface_palette.cpp").read_text(), re.M)
     definitions.append(colour)
     externs = []
     for definition in definitions:
+        if definition.startswith("Sprite NewTechWin::technology_sprites_"):
+            continue
         declaration = definition.split(" = ")[0] + ";" if " = " in definition else definition
         public, = re.findall(r"^extern " + re.escape(declaration), headers, re.M)
         externs.append(public)
@@ -89,7 +91,7 @@ def actual_source():
     return {
         "INTERFACES": "struct Sprite {" + extract + "};\nstruct Buffer {" + "\n".join(methods) + "};",
         "PARAMS": braced(bh, "struct BoxSpriteParams {") + ";",
-        "OWNER_TYPES": "extern uint8_t NewTechSpritesCleanupGuard;\n" + owner_types,
+        "OWNER_TYPES": owner_types,
         "PUBLIC_DECLARATIONS": "\n".join(externs + [style_extern, loader_declaration]),
         "OBJECTS": "\n".join(definitions),
         "STYLES": style,
@@ -177,7 +179,11 @@ void prepare(){
     for(int n=0;n<2;++n)identities[&g_IFACE_LOCK_SPRITES[n]]={1,n};
     identities[&g_IFACE_GREEN_RIGHT_ARROW_SPRITE[0]]={2,0};
     for(int n=0;n<3;++n){identities[&g_IFACE_MP_COMBO_ARROW_SPRITES[n]]={3,n};identities[&g_IFACE_TECH_TREE_ARROW_SPRITES[n]]={4,n};}
-    for(int n=0;n<6;++n)identities[&NewTechSpritesOwner.at(n)]={5,n};
+    for(int n=0;n<6;++n){
+        identities[&NewTechWin::technology_sprites_[n]]={5,n};
+        require(&NewTechWin::technology_sprites_[n] ==
+                &NewTechWin::technology_sprites_[0] + n);
+    }
     for(int n=0;n<8;++n)identities[popups[n]]={6,n};
     expected_event('L',{10,236});
     expected_event('E',{1,0,247,71,15,19,WinFillColour});expected_event('E',{1,1,263,71,15,19,WinFillColour});

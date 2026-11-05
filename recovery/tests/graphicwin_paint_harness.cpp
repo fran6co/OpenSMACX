@@ -1,4 +1,5 @@
-// Actual paint body with deterministic window, buffer and OS doubles.
+// Actual paint body with deterministic window, buffer and OS doubles. This
+// verifies receiver behavior only; private Win lifetime guards need native proof.
 #include <assert.h>
 #include <string.h>
 struct RECT { int left, top, right, bottom; };
@@ -51,14 +52,9 @@ struct Buffer {
         observe(destination, x, y, 4); return 0;
     }
 };
-Buffer ScreenBuffer;
 unsigned char paint_colour_table[1], paint_multi_colour_table[1];
-// Model the current owner's access API while preserving the same Buffer and
-// all existing destination/clip assertions; this seam makes no layout claim.
-struct ScreenBufferOwnerControl {
-    Buffer &buffer() { return ScreenBuffer; }
-} ScreenBufferOwner;
 struct Win {
+    static Buffer screen_buffer_;
     Win *win_parent_;
     unsigned int iFlags_;
     unsigned char *color_table_, *multi_color_tables_;
@@ -72,6 +68,7 @@ struct Win {
         area->left += 100; area->right += 100; area->top += 200; area->bottom += 200;
     }
 };
+Buffer Win::screen_buffer_;
 struct GraphicWin : Win, Buffer { virtual void on_paint(RECT *); };
 struct EditBox : GraphicWin {};
 bool IntersectRect(RECT *out, const RECT *first, const RECT *second) {
@@ -106,7 +103,7 @@ int main() {
     Surface source_surface, output_surface;
     DirectDrawBackBuffer = &output_surface;
     RECT screen_clip = { 0, 0, 640, 480 }, back_clip = { 1, 2, 60, 40 };
-    ScreenBuffer.rect2_ = screen_clip; back.rect2_ = back_clip; other.rect2_ = back_clip;
+    Win::screen_buffer_.rect2_ = screen_clip; back.rect2_ = back_clip; other.rect2_ = back_clip;
     RECT damage = { 4, 5, 100, 120 };
     // Unequal dimensions and nonzero origins catch the seed's swapped copy
     // dimensions and a mistaken copy receiver/destination interpretation.
@@ -120,15 +117,15 @@ int main() {
         if (mode & 16) window.multi_color_tables_ = paint_multi_colour_table;
         WinBackBuffer = has_back ? &back : 0;
         event_receiver->on_paint(&damage);
-        assert(!wrong_paint && clips == 2 && clip_targets[0] == &ScreenBuffer);
+        assert(!wrong_paint && clips == 2 && clip_targets[0] == &Win::screen_buffer_);
         equal(clip_areas[0], 4, 5, 100, 120);
-        assert(clip_targets[1] == (has_back ? &back : &ScreenBuffer));
+        assert(clip_targets[1] == (has_back ? &back : &Win::screen_buffer_));
         if (!transparent && has_surface) {
             assert(route == 5 && output_surface.source == &source_surface);
             equal(blit_area, 30, 40, 47, 51);
         } else {
             assert(draw_source == static_cast<Buffer *>(&window));
-            assert(draw_destination == (has_back ? &back : &ScreenBuffer));
+            assert(draw_destination == (has_back ? &back : &Win::screen_buffer_));
             assert(draw_x == (has_back ? 27 : 30) && draw_y == (has_back ? 36 : 40));
             if (!transparent) assert(route == 1 && draw_width == 17 && draw_height == 11);
             else if (mode & 8) assert(route == 3 && table == paint_colour_table);
@@ -146,7 +143,7 @@ int main() {
         if (mode2 & 2) WinBackBuffer = &back;
         event_receiver->on_paint(mode2 & 4 ? &broad : 0);
         assert(clips == 2 && intersections == ((mode2 & 4) ? 1 : 0));
-        assert(clip_targets[0] == ((mode2 & 2) ? &back : &ScreenBuffer));
+        assert(clip_targets[0] == ((mode2 & 2) ? &back : &Win::screen_buffer_));
         int x = mode2 & 1 ? 100 : 10, y = mode2 & 1 ? 200 : 20;
         int width = mode2 & 1 ? 80 : 100, height = mode2 & 1 ? 60 : 80;
         if (mode2 & 2) { x -= 3; y -= 4; }
@@ -163,7 +160,7 @@ int main() {
         reset(window); WinBackBuffer = change ? &back : 0;
         replace_back = true; replacement = change == 1 ? 0 : &other;
         event_receiver->on_paint(0);
-        assert(clips == 1 && clip_targets[0] == (replacement ? replacement : &ScreenBuffer));
+        assert(clips == 1 && clip_targets[0] == (replacement ? replacement : &Win::screen_buffer_));
     }
     return 0;
 }

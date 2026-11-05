@@ -1,6 +1,8 @@
 """Behavioral boundary controls compile the actual shared-display owner bodies.
 
 The host SDK models do not prove native ABI, link selection or game acceptance.
+The Win static Buffer is only a directdraw state receiver; its generated
+startup/cleanup guard is a separate fresh-COFF obligation.
 """
 from pathlib import Path
 import shutil

@@ -557,7 +557,7 @@ int Palette::set() {
         return 7;
     }
     PaletteActive = this;
-    ScreenBufferOwner.buffer().sync_to_palette(this);
+    Win::screen_buffer_.sync_to_palette(this);
     if (PaletteUsesSystemColours == 0) {
         // Animate only when the seed changed; entries 10-245 are the ramp.
         if (PaletteSeedCache != seed_) {
@@ -1626,7 +1626,7 @@ int Palette::fade_to_entry(int colour_index, int start, int count, int steps,
     if (BufferDirectDraw == nullptr) {
         if (PaletteInitialized != nullptr) {
             PaletteActive = this;
-            ScreenBufferOwner.buffer().sync_to_palette(this);
+            Win::screen_buffer_.sync_to_palette(this);
             if (PaletteUsesSystemColours == 0 &&
                 PaletteSeedCache != (int)seed_) {
                 AnimatePalette(PaletteInitialized, 10, 0xec, &entries_[10]);

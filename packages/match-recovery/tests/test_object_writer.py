@@ -312,16 +312,19 @@ def test_replace_direct_target_is_guarded_and_does_not_rewrite_history():
 @pytest.mark.parametrize("splice", (b"\\\n", b"\\\r\n", b"??/\n"))
 def test_replace_before_untouched_spliced_suffix(splice):
     prefix=b"// RECOVERY_OBJECT: v1 0x00401000 _old\nint old;\n"
-    suffix=b"#define MACRO "+splice+b"    1\n"
+    peer=b"// RECOVERY_OBJECT: v1 0x00402000 _peer\nint peer;\n"
+    suffix=b"#define MACRO "+splice+b"    1\n"+peer
     raw=prefix+suffix
-    old,=current(raw)
+    old, untouched=current(raw)
     replacement=replace(old,line=2,target_symbol="_current")
-    output=replace_object_records({PATH:raw},expected=(old,),replacements=(replacement,),
+    output=replace_object_records({PATH:raw},expected=(old,untouched),replacements=(replacement,),
                                   destination=PATH,pin=PIN,address_space=SPACE)[PATH]
     assert output.endswith(suffix)
-    updated,=current(output)
+    updated,retained=current(output)
     assert updated.origin==old.origin and updated.symbol==old.symbol
     assert updated.target_symbol=="_current"
+    assert retained.origin==untouched.origin and retained.symbol==untouched.symbol
+    assert retained.target_symbol==untouched.target_symbol
 
 
 @pytest.mark.parametrize("splice", (b"\\\n", b"\\\r\n", b"??/\n"))

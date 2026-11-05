@@ -21,10 +21,10 @@
 // kind      game
 // ORIGINAL: 0x0047AFF0 _$E21 0x0047AFF0-0x0047B006 FILE
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned CRT slot0x682560 selects initializer0x47aff0..0x47b006, registering exit0x47b010..0x47b01a. Root independent complete decode confirms exclusive RET/JMP bounds; original/source-owned storage is0x80a6f8 bound to?NetWinDialog@@3VNetWin@@A.", "Original startup instruction evidence: [[\"0x47aff0\", \"mov\", \"ecx, 0x80a6f8\"], [\"0x47aff5\", \"call\", \"0x481c50\"], [\"0x47affa\", \"push\", \"0x47b010\"], [\"0x47afff\", \"call\", \"0x645398\"], [\"0x47b004\", \"pop\", \"ecx\"], [\"0x47b005\", \"ret\", \"\"]]. Original exit instruction evidence: [[\"0x47b010\", \"mov\", \"ecx, 0x80a6f8\"], [\"0x47b015\", \"jmp\", \"0x4834e0\"]]. Preserve constructor arguments, array counts/strides, registration and reverse destruction without authored callback stand-ins.", "Fresh complete build-iveupb5l physical src/netwin.cpp COFF selects _$E21 via .CRT$XCU, registering _$E19. Startup relocation targets: [\"?NetWinDialog@@3VNetWin@@A\", \"??0NetWin@@QAE@XZ\", \"_$E19\", \"_atexit\"]; exit targets: [\"?NetWinDialog@@3VNetWin@@A\", \"??1NetWin@@UAE@XZ\"]. Actual linked helper occurs once at CRT slot0x63f2cc; selected same-owner order agrees with the pinned order.", "BaseWin/DesignWin definitions now precede their Wave globals as pinned. Existing DesignWin Wave mappings retain original names/spans and current helper overrides after fresh emission proof. Scalar constructor effects and array construction/cleanup belong to genuine source globals, classes and compiler-generated lifetime machinery.", "Current local labels are emission interpretations, not original debug names or recovered historical TU boundaries. Start bindings grant no allocation extent. Selected same-owner linked order is not full CRT/global-order, retained-selection, reference-target, dependency-provider, runtime or full-game acceptance. Guarded callbacks excluded; no claim grant or bug fix."], "reason": "Bind original startup operation to the genuine compiler-emitted lifetime of source-owned ?NetWinDialog@@3VNetWin@@A; preserve complete original identity and remaining restoration/structure obligations."}
-// symbol    _$E12
+// symbol    _$E14
 // ORIGINAL: 0x0047B010 _$E19 0x0047B010-0x0047B01A FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned CRT slot0x682560 selects initializer0x47aff0..0x47b006, registering exit0x47b010..0x47b01a. Root independent complete decode confirms exclusive RET/JMP bounds; original/source-owned storage is0x80a6f8 bound to?NetWinDialog@@3VNetWin@@A.", "Original startup instruction evidence: [[\"0x47aff0\", \"mov\", \"ecx, 0x80a6f8\"], [\"0x47aff5\", \"call\", \"0x481c50\"], [\"0x47affa\", \"push\", \"0x47b010\"], [\"0x47afff\", \"call\", \"0x645398\"], [\"0x47b004\", \"pop\", \"ecx\"], [\"0x47b005\", \"ret\", \"\"]]. Original exit instruction evidence: [[\"0x47b010\", \"mov\", \"ecx, 0x80a6f8\"], [\"0x47b015\", \"jmp\", \"0x4834e0\"]]. Preserve constructor arguments, array counts/strides, registration and reverse destruction without authored callback stand-ins.", "Fresh complete build-iveupb5l physical src/netwin.cpp COFF selects _$E21 via .CRT$XCU, registering _$E19. Startup relocation targets: [\"?NetWinDialog@@3VNetWin@@A\", \"??0NetWin@@QAE@XZ\", \"_$E19\", \"_atexit\"]; exit targets: [\"?NetWinDialog@@3VNetWin@@A\", \"??1NetWin@@UAE@XZ\"]. Actual linked helper occurs once at CRT slot0x63f2cc; selected same-owner order agrees with the pinned order.", "BaseWin/DesignWin definitions now precede their Wave globals as pinned. Existing DesignWin Wave mappings retain original names/spans and current helper overrides after fresh emission proof. Scalar constructor effects and array construction/cleanup belong to genuine source globals, classes and compiler-generated lifetime machinery.", "Current local labels are emission interpretations, not original debug names or recovered historical TU boundaries. Start bindings grant no allocation extent. Selected same-owner linked order is not full CRT/global-order, retained-selection, reference-target, dependency-provider, runtime or full-game acceptance. Guarded callbacks excluded; no claim grant or bug fix."], "reason": "Bind original exit operation to the genuine compiler-emitted lifetime of source-owned ?NetWinDialog@@3VNetWin@@A; preserve complete original identity and remaining restoration/structure obligations."}
-// symbol    _$E10
+// symbol    _$E12
 #include "stdafx.h"
 #include "interface_fonts.h"
 #include "netwin.h"
@@ -136,13 +136,13 @@ NetWin NetWinDialog;  // 0x0080A6F8
 // Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x004E2400 sub_4e2400 0x004E2400-0x004E2444 FILE
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned CRT slot0x682614 directly selects0x4E2400 as the first callback in the adjacent network-state startup sequence.", "The callback stores only options bytes0,1,2,4,5,6,7,8,9,A,B; NetWinSessionOptionsStorage contains only the existing 0x18-byte NetWinSessionOptionsState at offset zero and its constructor performs exactly those stores."], "reason": "Own the original selected options initialization in the storage object's constructor without adding value-initialization or changing the shared wire type."}
-// symbol    _$E15
+// symbol    _$E17
 // RECOVERY_OBJECT: v4 0x0090E8E0 0x0090E8F8 ?NetWinSessionOptions@@3UNetWinSessionOptionsState@@A 0x0047B450 target ?NetWinSessionOptions@@3UNetWinSessionOptionsStorage@@A
 NetWinSessionOptionsStorage NetWinSessionOptions;
 
 // ORIGINAL: 0x004E2450 sub_4e2450 0x004E2450-0x004E245D FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned CRT slot0x682618 directly selects0x4E2450 between the options and lobby-row initializers.", "The callback writes only NetWinSessionData.mode_ and scenario_text_wire_tail_[0]; its real owner is the storage global at0x0090E778."], "reason": "Recover the pinned global's selected startup stores as construction of its owning storage object; keep the wire/POD member unchanged."}
-// symbol    _$E18
+// symbol    _$E20
 // size      13 bytes
 // prototype
 // callers   0   call targets   0
@@ -157,7 +157,7 @@ NetWinSessionDataStorage NetWinSessionData;
 // Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x004E2460 sub_4e2460 0x004E2460-0x004E248F FILE
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned CRT slot0x68261C directly selects0x4E2460 after the options and session-data callbacks.", "The callback stores only six fields in each of eight 0x17C-byte rows; NetWinLobbyRowsStorage contains only the existing eight-row array at offset zero and its constructor writes those same fields."], "reason": "Own the original selected lobby-row initialization in the storage object's constructor while preserving the shared wire-row type and untouched bytes."}
-// symbol    _$E21
+// symbol    _$E23
 // The pinned PE's .data raw contents end at 0x006A8000, while its virtual
 // extent includes 0x0090DB98..0x0090E778: these rows start zero-filled.
 // config_players and the network receive path subsequently populate them.

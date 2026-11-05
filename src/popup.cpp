@@ -1465,7 +1465,7 @@ void __cdecl slide_show(GraphicWin *window, int mode) {
             ++frame_count;
         }
 
-        ScreenBufferOwner.buffer().set_clip(&area);
+        Win::screen_buffer_.set_clip(&area);
         RECT animation_strip = { area.left, 0, area.right, 0x39 };
         window->client_to_screen(&animation_strip);
 
@@ -1486,36 +1486,36 @@ void __cdecl slide_show(GraphicWin *window, int mode) {
             WinFlipClipped = 1;
             for (int frame = 0; frame < frame_divisor; ++frame) {
                 const DWORD started = timeGetTime();
-                background.draw(&ScreenBufferOwner.buffer(), 9, area.left, animation_y, 1, 1);
+                background.draw(&Win::screen_buffer_, 9, area.left, animation_y, 1, 1);
 
                 int left_y = animation_y;
                 if (left_y <= frame_edge) left_y = frame_edge;
-                left_outer.draw(&ScreenBufferOwner.buffer(), left_outer.transparent_index(),
+                left_outer.draw(&Win::screen_buffer_, left_outer.transparent_index(),
                                 left_x, left_y, 1, 1);
-                left_inner.draw(&ScreenBufferOwner.buffer(), left_inner.transparent_index(),
+                left_inner.draw(&Win::screen_buffer_, left_inner.transparent_index(),
                                 left_inner_x, animation_y, 1, 1);
-                right_inner.draw(&ScreenBufferOwner.buffer(), right_inner.transparent_index(),
+                right_inner.draw(&Win::screen_buffer_, right_inner.transparent_index(),
                                  right_inner_x, animation_y, 1, 1);
                 int right_y = animation_y;
                 if (right_y <= frame_edge) right_y = frame_edge;
-                right_outer.draw(&ScreenBufferOwner.buffer(), right_outer.transparent_index(),
+                right_outer.draw(&Win::screen_buffer_, right_outer.transparent_index(),
                                  right_x, right_y, 1, 1);
 
-                ScreenBufferOwner.buffer().set_clip(&animation_strip);
-                background.draw(&ScreenBufferOwner.buffer(), 9,
+                Win::screen_buffer_.set_clip(&animation_strip);
+                background.draw(&Win::screen_buffer_, 9,
                     MainInterfaceGlobal.outer_rect().left,
                     MainInterfaceGlobal.outer_rect().top, 1, 1);
                 Win::flip(&area);
                 animation_y -= frame_count;
                 if (animation_y <= area.top) animation_y = area.top;
-                ScreenBufferOwner.buffer().set_clip(&area);
+                Win::screen_buffer_.set_clip(&area);
                 do_sound();
                 while (static_cast<DWORD>(timeGetTime() - started)
                        < static_cast<DWORD>(WindowAnimationFrameDelay)) {
                     do_sound();
                 }
             }
-            ScreenBufferOwner.buffer().restore_clip();
+            Win::screen_buffer_.restore_clip();
             WinFlipClipped = 0;
         }
 
@@ -1608,7 +1608,7 @@ void __cdecl scroll_show(GraphicWin *window, Scroll *scroll) {
     // The native stores first_y over the transformed area.top at 0x45E0C1.
     area.top = first_y;
     if (PopupScrollVerticalFrameCount > 1) {
-        ScreenBufferOwner.buffer().set_clip(&area);
+        Win::screen_buffer_.set_clip(&area);
         edge_y -= PopupScrollVerticalFrameCount;
         if ((GameDataStateStorage.fields_.game_more_preferences_ & MPREF_AV_SLIDING_SCROLLBARS) != 0
             && IsMultiplayerNet == 0) {
@@ -1617,22 +1617,22 @@ void __cdecl scroll_show(GraphicWin *window, Scroll *scroll) {
                 const DWORD started = timeGetTime();
                 int sprite_y = edge_y;
                 if (sprite_y <= first_y) sprite_y = first_y;
-                right_edge.draw(&ScreenBufferOwner.buffer(), right_edge.transparent_index(),
+                right_edge.draw(&Win::screen_buffer_, right_edge.transparent_index(),
                                 right_edge_x, sprite_y, 1, 1);
-                ScreenBufferOwner.buffer().set_clip(&vertical_strip);
-                interface_background.draw(&ScreenBufferOwner.buffer(), 9,
+                Win::screen_buffer_.set_clip(&vertical_strip);
+                interface_background.draw(&Win::screen_buffer_, 9,
                     MainInterfaceGlobal.outer_rect().left,
                     MainInterfaceGlobal.outer_rect().top, 1, 1);
                 Win::flip(&area);
                 edge_y -= PopupScrollVerticalFrameCount;
-                ScreenBufferOwner.buffer().set_clip(&area);
+                Win::screen_buffer_.set_clip(&area);
                 do_sound();
                 while (static_cast<DWORD>(timeGetTime() - started)
                        < static_cast<DWORD>(WindowAnimationFrameDelay) / 2) {
                     do_sound();
                 }
             }
-            ScreenBufferOwner.buffer().restore_clip();
+            Win::screen_buffer_.restore_clip();
             WinFlipClipped = 0;
         }
         RECT window_clip = window->Buffer::clip_rect();
@@ -1662,7 +1662,7 @@ void __cdecl scroll_show(GraphicWin *window, Scroll *scroll) {
     right_edge.draw(&scroll_frame, right_edge.transparent_index(),
                     area_width - right_edge.width(), 0, 1, 1);
 
-    ScreenBufferOwner.buffer().set_clip(&area);
+    Win::screen_buffer_.set_clip(&area);
     const int horizontal_frame_count = IsMultiplayerNet != 0 ? 4 : 8;
     PopupScrollHorizontalStep = IsMultiplayerNet != 0 ? 8 : 4;
     int frame_x = area.left + PopupScrollHorizontalStep - 0x20;
@@ -1672,23 +1672,23 @@ void __cdecl scroll_show(GraphicWin *window, Scroll *scroll) {
         for (int frame = horizontal_frame_count; frame > 0; --frame) {
             const DWORD started = timeGetTime();
             // Restore the saved screen image at its original screen position.
-            screen_save.copy(&ScreenBufferOwner.buffer(), 0, 0, area.left, area.top,
+            screen_save.copy(&Win::screen_buffer_, 0, 0, area.left, area.top,
                              area_width, area_height);
-            scroll_frame.draw(&ScreenBufferOwner.buffer(), 9, frame_x, area.top, 1, 1);
-            ScreenBufferOwner.buffer().set_clip(&vertical_strip);
-            interface_background.draw(&ScreenBufferOwner.buffer(), 9,
+            scroll_frame.draw(&Win::screen_buffer_, 9, frame_x, area.top, 1, 1);
+            Win::screen_buffer_.set_clip(&vertical_strip);
+            interface_background.draw(&Win::screen_buffer_, 9,
                 MainInterfaceGlobal.outer_rect().left,
                 MainInterfaceGlobal.outer_rect().top, 1, 1);
             Win::flip(&area);
             frame_x += PopupScrollHorizontalStep;
-            ScreenBufferOwner.buffer().set_clip(&area);
+            Win::screen_buffer_.set_clip(&area);
             do_sound();
             while (static_cast<DWORD>(timeGetTime() - started)
                    < static_cast<DWORD>(WindowAnimationFrameDelay) / 2) {
                 do_sound();
             }
         }
-        ScreenBufferOwner.buffer().restore_clip();
+        Win::screen_buffer_.restore_clip();
         WinFlipClipped = 0;
     }
 
@@ -1813,37 +1813,37 @@ void __cdecl slide_hide(GraphicWin *window, int mode) {
             - right_outer.width() - 0x20;
         int frame_y = area.top + frame_count;
 
-        ScreenBufferOwner.buffer().set_clip(&area);
+        Win::screen_buffer_.set_clip(&area);
         WinFlipClipped = 1;
         // Native stores frame_divisor into its reused [ebp+8] scratch slot at
         // 0x45DA52; incoming mode at [ebp+0xC] is only tested for bit 2.
         for (int frame = 0; frame < frame_divisor; ++frame) {
             const DWORD started = timeGetTime();
-            screen_restore.copy(&ScreenBufferOwner.buffer(), 0, 0, area.left, area.top,
+            screen_restore.copy(&Win::screen_buffer_, 0, 0, area.left, area.top,
                                 window->Buffer::pixel_width(),
                                 window->Buffer::pixel_height());
-            window_frame.draw(&ScreenBufferOwner.buffer(), 9, area.left, frame_y, 1, 1);
+            window_frame.draw(&Win::screen_buffer_, 9, area.left, frame_y, 1, 1);
 
             int left_y = frame_y;
             if (left_y <= frame_edge) left_y = frame_edge;
-            left_outer.draw(&ScreenBufferOwner.buffer(), left_outer.transparent_index(),
+            left_outer.draw(&Win::screen_buffer_, left_outer.transparent_index(),
                             left_x, left_y, 1, 1);
-            left_inner.draw(&ScreenBufferOwner.buffer(), left_inner.transparent_index(),
+            left_inner.draw(&Win::screen_buffer_, left_inner.transparent_index(),
                             left_inner_x, frame_y, 1, 1);
-            right_inner.draw(&ScreenBufferOwner.buffer(), right_inner.transparent_index(),
+            right_inner.draw(&Win::screen_buffer_, right_inner.transparent_index(),
                              right_inner_x, frame_y, 1, 1);
             int right_y = frame_y;
             if (right_y <= frame_edge) right_y = frame_edge;
-            right_outer.draw(&ScreenBufferOwner.buffer(), right_outer.transparent_index(),
+            right_outer.draw(&Win::screen_buffer_, right_outer.transparent_index(),
                              right_outer_x, right_y, 1, 1);
 
-            ScreenBufferOwner.buffer().set_clip(&animation_strip);
-            interface_background.draw(&ScreenBufferOwner.buffer(), 9,
+            Win::screen_buffer_.set_clip(&animation_strip);
+            interface_background.draw(&Win::screen_buffer_, 9,
                 MainInterfaceGlobal.outer_rect().left,
                 MainInterfaceGlobal.outer_rect().top, 1, 1);
             Win::flip(&area);
             frame_y += frame_count;
-            ScreenBufferOwner.buffer().set_clip(&area);
+            Win::screen_buffer_.set_clip(&area);
             do {
                 do_sound();
                 int delay = WindowAnimationFrameDelay;
@@ -1856,7 +1856,7 @@ void __cdecl slide_hide(GraphicWin *window, int mode) {
         }
         if ((GameDataStateStorage.fields_.game_preferences_ & PREF_AV_SOUND_EFFECTS) != 0)
             g_MAININTERFACE_WAVE.fade(0x32);
-        ScreenBufferOwner.buffer().restore_clip();
+        Win::screen_buffer_.restore_clip();
     }
 
     if ((mode & 2) != 0) {
@@ -1928,28 +1928,28 @@ void __cdecl scroll_hide(GraphicWin *window, Scroll *scroll) {
     PopupScrollHorizontalStep = horizontal_step;
     int frame_x = area.left - horizontal_step;
     const int horizontal_frames = IsMultiplayerNet != 0 ? 4 : 8;
-    ScreenBufferOwner.buffer().set_clip(&area);
+    Win::screen_buffer_.set_clip(&area);
     if ((GameDataStateStorage.fields_.game_more_preferences_ & MPREF_AV_SLIDING_SCROLLBARS) != 0
         && IsMultiplayerNet == 0) {
         WinFlipClipped = 1;
         for (int frame = 0; frame < horizontal_frames; ++frame) {
             const DWORD started = timeGetTime();
-            screen_restore.copy(&ScreenBufferOwner.buffer(), 0, 0, area.left, screen_top,
+            screen_restore.copy(&Win::screen_buffer_, 0, 0, area.left, screen_top,
                                 area_width, area_height);
-            window_frame.draw(&ScreenBufferOwner.buffer(), 9, frame_x, screen_top, 1, 1);
-            ScreenBufferOwner.buffer().set_clip(&vertical_strip);
-            interface_background.draw(&ScreenBufferOwner.buffer(), 9,
+            window_frame.draw(&Win::screen_buffer_, 9, frame_x, screen_top, 1, 1);
+            Win::screen_buffer_.set_clip(&vertical_strip);
+            interface_background.draw(&Win::screen_buffer_, 9,
                 MainInterfaceGlobal.outer_rect().left,
                 MainInterfaceGlobal.outer_rect().top, 1, 1);
             Win::flip(&area);
             frame_x -= PopupScrollHorizontalStep;
-            ScreenBufferOwner.buffer().set_clip(&area);
+            Win::screen_buffer_.set_clip(&area);
             do_sound();
             while (static_cast<DWORD>(timeGetTime() - started)
                    < static_cast<DWORD>(WindowAnimationFrameDelay) / 2)
                 do_sound();
         }
-        ScreenBufferOwner.buffer().restore_clip();
+        Win::screen_buffer_.restore_clip();
         WinFlipClipped = 0;
         frame_x += PopupScrollHorizontalStep;
     } else {
@@ -1961,31 +1961,31 @@ void __cdecl scroll_hide(GraphicWin *window, Scroll *scroll) {
     int closing_y = screen_top + PopupScrollVerticalFrameCount;
     const bool enter_vertical_close = PopupScrollVerticalFrameCount > 1;
     if (enter_vertical_close) {
-        ScreenBufferOwner.buffer().set_clip(&area);
+        Win::screen_buffer_.set_clip(&area);
         int edge_y = frame_edge - 0xD;
         if ((GameDataStateStorage.fields_.game_preferences_ & PREF_AV_SLIDING_WINDOWS) != 0
             && IsMultiplayerNet == 0) {
             WinFlipClipped = 1;
             for (int frame = 0; frame < vertical_iterations; ++frame) {
                 const DWORD started = timeGetTime();
-                screen_restore.copy(&ScreenBufferOwner.buffer(), 0, 0, area.left, screen_top,
+                screen_restore.copy(&Win::screen_buffer_, 0, 0, area.left, screen_top,
                                     area_width, area_height);
                 int draw_y = closing_y;
                 if (draw_y >= edge_y) draw_y = edge_y;
-                window_frame.draw(&ScreenBufferOwner.buffer(), 9, frame_x, draw_y, 1, 1);
-                ScreenBufferOwner.buffer().set_clip(&vertical_strip);
-                interface_background.draw(&ScreenBufferOwner.buffer(), 9,
+                window_frame.draw(&Win::screen_buffer_, 9, frame_x, draw_y, 1, 1);
+                Win::screen_buffer_.set_clip(&vertical_strip);
+                interface_background.draw(&Win::screen_buffer_, 9,
                     MainInterfaceGlobal.outer_rect().left,
                     MainInterfaceGlobal.outer_rect().top, 1, 1);
                 Win::flip(&area);
                 closing_y += PopupScrollVerticalFrameCount;
-                ScreenBufferOwner.buffer().set_clip(&area);
+                Win::screen_buffer_.set_clip(&area);
                 do_sound();
                 while (static_cast<DWORD>(timeGetTime() - started)
                        < static_cast<DWORD>(WindowAnimationFrameDelay) / 2)
                     do_sound();
             }
-            ScreenBufferOwner.buffer().restore_clip();
+            Win::screen_buffer_.restore_clip();
             WinFlipClipped = 0;
         }
     }

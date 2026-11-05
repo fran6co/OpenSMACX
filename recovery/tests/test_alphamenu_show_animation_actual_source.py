@@ -82,7 +82,10 @@ static string number(const char *prefix, int a, int b = -999, int c = -999) {
   else std::sprintf(out, "%s%d:%d:%d", prefix, a, b, c);
   return string(out);
 }
+struct Buffer;
 struct Win {
+  // Receiver-only host double; generated Win lifetime guards are native proof.
+  static Buffer screen_buffer_;
   void show(int mode) { events.push_back(number("win.show:", mode)); }
 };
 struct Buffer {
@@ -98,6 +101,7 @@ struct Buffer {
     events.push_back(out);
   }
 };
+Buffer Win::screen_buffer_;
 struct Sprite { int height() const { return 10; } };
 struct Fields { unsigned int game_preferences_; };
 struct GameData { Fields fields_; };
@@ -108,8 +112,6 @@ static int IsMultiplayerNet;
 static int WinFlipClipped;
 struct Wave { void play() { record("wave.play"); } };
 static Wave g_ALPHAMENU_WAVE;
-struct ScreenOwner { Buffer screen; Buffer &buffer() { return screen; } };
-static ScreenOwner ScreenBufferOwner;
 struct Button {
   int pressed;
   void set_pressed_visual(int v) { pressed = v; events.push_back(number("button:", v)); }
@@ -181,10 +183,10 @@ int main() {
   expected.push_back("button.redraw");
   assert_equal(events, expected);
   if (WinFlipClipped != 0 || MainInterfaceGlobal.flat_button_[3].pressed != 1) return 18;
-  if (ScreenBufferOwner.screen.last_clip.left != 11 ||
-      ScreenBufferOwner.screen.last_clip.top != 12 ||
-      ScreenBufferOwner.screen.last_clip.right != 111 ||
-      ScreenBufferOwner.screen.last_clip.bottom != 72) return 19;
+  if (Win::screen_buffer_.last_clip.left != 11 ||
+      Win::screen_buffer_.last_clip.top != 12 ||
+      Win::screen_buffer_.last_clip.right != 111 ||
+      Win::screen_buffer_.last_clip.bottom != 72) return 19;
 
   // The visible guard must return before preferences, redraw, clip or UI writes.
   events.clear(); menu.visible = true; menu.show();

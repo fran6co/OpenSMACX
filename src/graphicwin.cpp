@@ -1391,10 +1391,10 @@ void GraphicWin::on_paint(RECT *area) {
             rectangle.bottom += dy;
             WinBackBuffer->set_clip(&rectangle);
         } else {
-            ScreenBufferOwner.buffer().set_clip(&rectangle);
+            Win::screen_buffer_.set_clip(&rectangle);
         }
     } else if (area != 0) {
-        ScreenBufferOwner.buffer().set_clip(area);
+        Win::screen_buffer_.set_clip(area);
     }
 
     // Keep the original surface-first dispatch and separate destination paths.
@@ -1407,7 +1407,7 @@ void GraphicWin::on_paint(RECT *area) {
                                      origin_x - WinViewOriginX, origin_y - WinViewOriginY,
                                      1, 1, color_table_);
                     } else {
-                        Buffer::draw_dest(&ScreenBufferOwner.buffer(), WinFillColour,
+                        Buffer::draw_dest(&Win::screen_buffer_, WinFillColour,
                                      origin_x, origin_y, 1, 1, color_table_);
                     }
                 } else {
@@ -1416,7 +1416,7 @@ void GraphicWin::on_paint(RECT *area) {
                                      origin_x - WinViewOriginX, origin_y - WinViewOriginY,
                                      1, 1, multi_color_tables_);
                     } else {
-                        Buffer::draw_multi_table_dest(&ScreenBufferOwner.buffer(), WinFillColour,
+                        Buffer::draw_multi_table_dest(&Win::screen_buffer_, WinFillColour,
                                      origin_x, origin_y, 1, 1, multi_color_tables_);
                     }
                 }
@@ -1426,7 +1426,7 @@ void GraphicWin::on_paint(RECT *area) {
                                  origin_x - WinViewOriginX, origin_y - WinViewOriginY,
                                  1, 1);
                 } else {
-                    Buffer::draw(&ScreenBufferOwner.buffer(), WinFillColour,
+                    Buffer::draw(&Win::screen_buffer_, WinFillColour,
                                  origin_x, origin_y, 1, 1);
                 }
             }
@@ -1446,7 +1446,7 @@ void GraphicWin::on_paint(RECT *area) {
                                      origin_x - WinViewOriginX, origin_y - WinViewOriginY,
                                      1, 1, color_table_);
                     } else {
-                        Buffer::draw_dest(&ScreenBufferOwner.buffer(), WinFillColour,
+                        Buffer::draw_dest(&Win::screen_buffer_, WinFillColour,
                                      origin_x, origin_y, 1, 1, color_table_);
                     }
                 } else {
@@ -1455,7 +1455,7 @@ void GraphicWin::on_paint(RECT *area) {
                                      origin_x - WinViewOriginX, origin_y - WinViewOriginY,
                                      1, 1, multi_color_tables_);
                     } else {
-                        Buffer::draw_multi_table_dest(&ScreenBufferOwner.buffer(), WinFillColour,
+                        Buffer::draw_multi_table_dest(&Win::screen_buffer_, WinFillColour,
                                      origin_x, origin_y, 1, 1, multi_color_tables_);
                     }
                 }
@@ -1465,7 +1465,7 @@ void GraphicWin::on_paint(RECT *area) {
                                  origin_x - WinViewOriginX, origin_y - WinViewOriginY,
                                  1, 1);
                 } else {
-                    Buffer::draw(&ScreenBufferOwner.buffer(), WinFillColour,
+                    Buffer::draw(&Win::screen_buffer_, WinFillColour,
                                  origin_x, origin_y, 1, 1);
                 }
             }
@@ -1476,7 +1476,7 @@ void GraphicWin::on_paint(RECT *area) {
                              outer_rect_.right - outer_rect_.left,
                              outer_rect_.bottom - outer_rect_.top);
             } else {
-                Buffer::copy(&ScreenBufferOwner.buffer(), 0, 0, origin_x, origin_y,
+                Buffer::copy(&Win::screen_buffer_, 0, 0, origin_x, origin_y,
                              outer_rect_.right - outer_rect_.left,
                              outer_rect_.bottom - outer_rect_.top);
             }
@@ -1486,7 +1486,7 @@ void GraphicWin::on_paint(RECT *area) {
     if (WinBackBuffer != 0) {
         WinBackBuffer->restore_clip();
     } else {
-        ScreenBufferOwner.buffer().restore_clip();
+        Win::screen_buffer_.restore_clip();
     }
 }
 
