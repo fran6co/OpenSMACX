@@ -205,6 +205,45 @@ def test_local_char_array_object_keeps_full_encoded_identity_and_duplicate_detec
         }, "msvc")
 
 
+def test_member_local_array_keeps_alias_detection_and_scope_distinctions():
+    symbol = "_?path@?7??exec@Movie@@QAEHPAD@Z@4QBDB"
+    other = symbol.replace("@?7?", "@?8?")
+    counts, _, rows = findings({
+        "movie.cpp": f"// RECOVERY_OBJECT: v1 0x12345678 {symbol}\n"
+                     f"// RECOVERY_OBJECT: v1 0x23456789 {other}\n",
+        "alias.hpp": "int Alias; // 0x12345678\n",
+    }, "msvc")
+    assert counts["duplicate global identities"] == 1
+    assert rows[0]["symbols"] == ["Alias", symbol]
+    with pytest.raises(ValueError, match="duplicate original object"):
+        findings({
+            "movie.cpp": f"// RECOVERY_OBJECT: v1 0x12345678 {symbol}\n",
+            "other.cpp": f"// RECOVERY_OBJECT: v1 0x23456789 {symbol}\n",
+        }, "msvc")
+
+
+@pytest.mark.parametrize("symbol", [
+    "?label@?%src/unit.cpp@@3PADA",
+    "_?key@?1??phrase@@YAPADHH@Z@4QBDB",
+    "_?rates@?1??cost@@YAHHHH@Z@4QBHB",
+    "_?dot@?1??save@@YAHPAD@Z@4PADA",
+    "__real@8@3fff8000000000000000",
+])
+def test_legacy_array_and_literal_names_preserve_storage_conflicts(symbol):
+    counts, _, rows = findings({
+        "unit.cpp": f"// RECOVERY_OBJECT: v1 0x12345678 {symbol}\n",
+        "alias.hpp": "int Alias; // 0x12345678\n",
+    }, "msvc")
+    assert counts["duplicate global identities"] == 1
+    assert len(rows) == 2
+    assert all("Alias" in row["symbols"] and len(row["symbols"]) == 2 for row in rows)
+    with pytest.raises(ValueError, match="duplicate original object"):
+        findings({
+            "unit.cpp": f"// RECOVERY_OBJECT: v1 0x12345678 {symbol}\n",
+            "other.cpp": f"// RECOVERY_OBJECT: v1 0x23456789 {symbol}\n",
+        }, "msvc")
+
+
 def _zero_offset_parent_member(parent="Parent", child="Child"):
     start, end, evidence = 0x12345678, 0x12345690, 0x23456789
     return (

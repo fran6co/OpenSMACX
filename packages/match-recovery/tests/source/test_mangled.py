@@ -86,7 +86,7 @@ def test_a_method_still_drops_its_return_type():
     "src/unit.cpp", "other/unit.cpp", "unit.cpp", "src/../unit.cpp",
     "src/unit.cpp123", "src/unit.cpp456", r"C:\project\unit.cpp",
 ])
-@pytest.mark.parametrize("encoding", ["EA", "HA", "PAEA", "PAGA", "UPayload@1@A", "VBuffer@@A"])
+@pytest.mark.parametrize("encoding", ["EA", "HA", "PADA", "PAEA", "PAGA", "UPayload@1@A", "VBuffer@@A"])
 def test_vc6_anonymous_data_keeps_the_entire_encoded_scope(path, encoding):
     from match_recovery.source.mangled import qualified_name
     assert qualified_name("?Global@?%" + path + "@@3" + encoding) == "?%" + path + "::Global"
@@ -114,6 +114,7 @@ def test_vc6_anonymous_data_does_not_merge_path_or_nonce_spellings():
     "?Global@?%src/unit.cpp@@3PAE", "?Global@?%src/unit.cpp@@3PAEAjunk",
     "?Global@?%src/unit.cpp@@3PAG", "?Global@?%src/unit.cpp@@3PAGAjunk",
     "?Global@?%src/unit.cpp@@3PAGZ", "?Global@?%src/unit.cpp@@3PBG A",
+    "?Global@?%src/unit.cpp@@3PAD", "?Global@?%src/unit.cpp@@3PADAjunk",
     "?Global@?%src/unit.cpp@@3PAXA", "?Global@?%src/unit.cpp@@3PAG\nA",
     "?Global@?%src/unit.cpp@@3P6AHXZEA", "?Global@?%src/unit.cpp@@3PAU@@A",
     "?Global@?%src/un it.cpp@@3HA", "?Global@?%src/unit%.cpp@@3HA",
@@ -147,7 +148,7 @@ def test_anonymous_function_class_and_template_eligibility_is_unchanged(symbol):
         _expression(symbol, "msvc")
 
 
-@pytest.mark.parametrize("encoding", ["HA", "PAEA", "PAGA"])
+@pytest.mark.parametrize("encoding", ["HA", "PADA", "PAEA", "PAGA"])
 def test_recognized_anonymous_data_cannot_become_a_function_or_class_witness(encoding):
     from match_recovery.function_witness import _expression
     from match_recovery.ownership_source import class_hint
@@ -168,6 +169,11 @@ def test_recognized_anonymous_data_cannot_become_a_function_or_class_witness(enc
     "_?tokens@?HL@??parse_tokens@@YAHPAD0@Z@4QAY0BE@$$CBDA",
     "_?tokens@?HM@??parse_tokens@@YAHPAH@Z@4QAY0BE@$$CBDA",
     "_?tokens@?@??parse_tokens@@YAHPAD0@Z@4QAY0BE@$$CBDA",
+    "_?key@?1??phrase@@YAPADHH@Z@4QBDB",
+    "_?rates@?1??cost@@YAHHHH@Z@4QBHB",
+    "_?dot@?1??save@@YAHPAD@Z@4PADA",
+    "_?label@?1??popup@@YAHPADPBDH0HP6AHXZ@Z@4QBDB",
+    "_?label@?1??popup@@YAHPADPBDH0HPAVSprite@@HHP6AHXZ@Z@4QBDB",
 ])
 def test_vc6_local_data_retains_the_complete_encoded_identity(symbol):
     from match_recovery.function_witness import _expression
@@ -214,6 +220,66 @@ def test_local_array_reader_accepts_the_retained_real_symbol_shape():
     from match_recovery.source.mangled import qualified_name
     symbol = "_?part_speech@?HL@??parse_string@@YAHPAD0@Z@4QAY0BE@$$CBDA"
     assert qualified_name(symbol) == symbol
+
+
+@pytest.mark.parametrize("symbol", [
+    "_?path@?7??exec@Movie@@QAEHPAD@Z@4QBDB",
+    "_?path@?8??exec@Movie@@QAEHPAD@Z@4QBDB",
+    "_?path@?7??exec@OtherMovie@@QAEHPAD@Z@4QBDB",
+    "_?path@?7??exec@Movie@@QAEHH@Z@4QBDB",
+])
+def test_member_local_array_retains_opaque_scope_and_overload_identity(symbol):
+    from match_recovery.function_witness import _expression
+    from match_recovery.ownership_source import class_hint
+    from match_recovery.source.mangled import qualified_name
+    assert qualified_name(symbol) == symbol
+    assert class_hint(symbol) is None
+    with pytest.raises(ValueError):
+        _expression(symbol, "msvc")
+
+
+@pytest.mark.parametrize("symbol", [
+    "?path@?7??exec@Movie@@QAEHPAD@Z@4QBDB",  # missing local-data prefix
+    "_?path@?07??exec@Movie@@QAEHPAD@Z@4QBDB",
+    "_?path@?7??exec@Movie@@QAEHW@Z@4QBDB",  # unreadable signature
+    "_?path@?7??exec@@QAEHPAD@Z@4QBDB",       # no member owner
+    "_?path@?7??exec@Movie@@YAHHPAD@Z@4QBDB", # not a member signature
+    "_?path@?7??exec@Movie@@QAEHPAD@Z@3QBDB",
+    "_?path@?7??exec@Movie@@QAEHPAD@Z@4QBDA",
+    "_?path@?7??exec@Movie@@QAEHPAD@Z@4QBDBextra",
+    "_?path@?7??exec@Movie@@QAEHPAD@Z@4QBDB\nextra",
+    "_?path@?7???0Movie@@QAE@XZ@4QBDB",       # constructor not covered
+    "_?path@?7??exec@?$Movie@H@@QAEHPAD@Z@4QBDB",
+])
+def test_unsupported_member_local_array_forms_refuse(symbol):
+    from match_recovery.source.mangled import qualified_name
+    assert qualified_name(symbol) == ""
+
+
+@pytest.mark.parametrize("symbol", [
+    "__real@8@3fff8000000000000000", "__real@8@40008000000000000000",
+])
+def test_compiler_real_data_retains_opaque_identity_without_function_witness(symbol):
+    from match_recovery.function_witness import _expression
+    from match_recovery.ownership_source import class_hint
+    from match_recovery.source.mangled import qualified_name
+    assert qualified_name(symbol) == symbol
+    assert class_hint(symbol) is None
+    with pytest.raises(ValueError):
+        _expression(symbol, "msvc")
+
+
+@pytest.mark.parametrize("symbol", [
+    "__real@8@3fff800000000000000", "__real@8@3fff80000000000000000",
+    "__real@8@3fff800000000000000z", "__real@4@3fff8000000000000000",
+    "__real@8@3fff8000000000000000extra", "_real@8@3fff8000000000000000",
+    "_?key@?1??phrase@@YAPADHH@Z@4QBDBextra",
+    "_?rates@?1??cost@@YAHHHH@Z@4QBH", "_?dot@?1??save@@YAHPAD@Z@4PAD",
+    "_?key@?1??phrase@@YAPADHH@Z@4QBDA",
+])
+def test_malformed_legacy_array_and_real_data_envelopes_refuse(symbol):
+    from match_recovery.source.mangled import qualified_name
+    assert qualified_name(symbol) == ""
 
 
 @pytest.mark.parametrize("symbol", [

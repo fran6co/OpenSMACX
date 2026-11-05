@@ -95,7 +95,7 @@ _SPECIAL = {
 # an opaque scope component. Keep every path/nonce character: this is name
 # reading, not the separate unchanged-replica identity normalization. Limit
 # this addition to ordinary data names and the observed global-data prefix;
-# E/H scalars, the observed PAE/PAG byte/word-pointer spellings, and untemplated
+# E/H scalars, the observed PAD/PAE/PAG pointer spellings, and untemplated
 # U/V names cover the evidenced data trailers. These do not distinguish an
 # array from a pointer or establish its extent; this reads only the name.
 # Unnamed functions, classes and template name heads remain unsupported.
@@ -103,20 +103,36 @@ _VC6_ANONYMOUS_DATA = re.compile(
     r"\?(?P<name>[A-Za-z_]\w*)@"
     r"(?P<scope>\?%(?:[A-Za-z]:)?[\\/]?"
     r"(?:[A-Za-z_0-9.-]+[\\/])*[A-Za-z_0-9.-]+\.[A-Za-z_0-9]+)"
-    r"@@3(?:[EH]|PA[EG]|[UV][A-Za-z_]\w*(?:@@|@1@))[ABCD]", re.ASCII)
+    r"@@3(?:[EH]|PA[DEG]|[UV][A-Za-z_]\w*(?:@@|@1@))[ABCD]", re.ASCII)
 
 
 # VC6 local data uses an additional underscore, a lexical-scope component and
 # an entire ordinary cdecl free-function name. The scope component is a
 # single decimal digit, the zero form `@`, or the encoded multi-digit form
 # `[B-P][A-P]*@`. Recognize only the observed class-object and const-char-array
-# trailers. This retains the complete opaque identity; it does not infer a C++
+# trailers, plus older character/integer array forms. This retains the complete
+# opaque identity; it does not infer a C++
 # expression, class, array extent, or storage lifetime.
 _VC6_LOCAL_SCOPE = r"(?:\?[0-9]\?|\?@\?|\?[B-P][A-P]*@\?)"
 _VC6_LOCAL_FUNCTION = r"(?P<function>\?[A-Za-z_]\w*@@YA[A-Za-z_0-9@]+Z)"
 _VC6_LOCAL_DATA = re.compile(
     r"_\?[A-Za-z_]\w*@" + _VC6_LOCAL_SCOPE + _VC6_LOCAL_FUNCTION +
-    r"(?:@4(?:PAV|V)[A-Za-z_]\w*@@A|@4QAY0(?:[0-9]|[A-P]+@)\$\$CBDA)", re.ASCII)
+    r"(?:@4(?:PAV|V)[A-Za-z_]\w*@@A|@4QAY0(?:[0-9]|[A-P]+@)\$\$CBDA"
+    r"|@4QB[DH]B|@4PADA)", re.ASCII)
+# The older const-character-array trailer also occurs inside an ordinary
+# public thiscall member. Keep this envelope separate: recognizing it does
+# not extend the free-function class-object or newer array encodings above.
+# The complete enclosing signature is checked by arity before admitting the
+# opaque identity. Neither reader resolves a local into a source expression
+# or infers the array's bounds, contents or lifetime.
+_VC6_MEMBER_LOCAL_ARRAY = re.compile(
+    r"_\?[A-Za-z_]\w*@" + _VC6_LOCAL_SCOPE +
+    r"(?P<function>\?[A-Za-z_]\w*@[A-Za-z_]\w*@@QAE[A-Za-z_0-9@]+Z)"
+    r"@4QBDB", re.ASCII)
+# VC6's observed double-constant identity uses an 80-bit hexadecimal spelling.
+# Keep it opaque; reading this name neither decodes a value nor proves storage
+# bounds, pooling, or which instruction selects it.
+_VC6_REAL_DATA = re.compile(r"__real@8@[0-9a-f]{20}", re.ASCII)
 # Once a name is followed by the local-scope introducer, malformed encodings
 # must not fall through to `_components` and become a partial ordinary name.
 _LOCAL_SCOPE_HEAD = re.compile(r"^_?\?[A-Za-z_]\w*@\?", re.ASCII)
@@ -158,10 +174,13 @@ def qualified_name(mangled: str) -> str:
     `identifier`, and every caller reads it as "cannot tell".
     """
     mangled = (mangled or "").strip()
+    if _VC6_REAL_DATA.fullmatch(mangled):
+        return mangled
     anonymous_data = _VC6_ANONYMOUS_DATA.fullmatch(mangled)
     if anonymous_data is not None:
         return anonymous_data["scope"] + "::" + anonymous_data["name"]
-    local_data = _VC6_LOCAL_DATA.fullmatch(mangled)
+    local_data = (_VC6_LOCAL_DATA.fullmatch(mangled)
+                  or _VC6_MEMBER_LOCAL_ARRAY.fullmatch(mangled))
     if local_data is not None and arity(local_data["function"]) is not None:
         return mangled
     if _LOCAL_SCOPE_HEAD.match(mangled):
