@@ -2508,39 +2508,6 @@ void __cdecl do_checksums(int type) {
     log_say_hex(text, checksums.base_value, 0, 0);
 }
 
-/*
-Purpose: Select the live road or magtube terraforming rate from tile mask 0x4,
-         then add the contributions selected by the tile flags, climate
-         and upper val3 bits. The final gameplay purpose remains unresolved.
-
-// Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x004C99D0 sub_4c99d0 0x004C99D0-0x004C9A43 FILE
-// symbol    _sub_4c99d0
-// size      115 bytes
-// prototype
-// callers   0   call targets   0
-// kind      game
-// flags     frame;hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: the selected terraforming rate plus tile-derived contributions
-Status: Coverage transcription - unclaimed body
-*/
-extern "C" int __cdecl sub_4c99d0(int x_coord, int y_coord) {
-    const Map *tile = map_tiles() + MapLongitude * y_coord + (x_coord >> 1);
-    const uint32_t bits = tile->bit;
-    const int selected = TERRA_ROAD + ((bits & 4) != 0);
-    int result = Terraforming[selected].rate;
-    if ((bits & 0x80) != 0) {
-        result++;
-    }
-    if ((bits & 0x20) != 0 && (tile->climate & ~0x1F) >= 0x40) {
-        result += 2;
-    }
-    if ((bits & 0x200000) != 0) {
-        return result + 2;
-    }
-    return result + (tile->val3 >> 6);
-}
 // Neutral source captions for the initial bytes at 0x687B60 and 0x687B6C: original `push` references at 0x4C9713/0x4C972B and terminating NULs bound 12/17 bytes. The original .data section is writable; original symbols and wider allocation extents are unproved.
 // RECOVERY_OBJECT: v2 0x00687B60 0x00687B6C ?ActionBuildLogCaption@@3PADA 0x004C9713
 char ActionBuildLogCaption[12] = "Action Base";

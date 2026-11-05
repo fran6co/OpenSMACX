@@ -1,0 +1,26 @@
+{
+  "event_id": "7dcf4f97c9a9ad523600678be3c0335c8a295c8305c9ce0fd8572fd3052f8220",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "src/terraforming.cpp"
+    ],
+    "evidence": [
+      "Coordinator authorizes moving the existing contribution body with its complete mapping into the same current TU as the road-cost provider and action_terraform; replace only the two equivalent contribution blocks, keeping separate calls/accumulators.",
+      "No header, ABI, compiler policy or original behavior change; source ownership remains an inferred provider cohort and all matching obligations survive."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 5020240,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "b9f66eb4a6611c9018f67c11a03a8263e5072c78842aaee354db39684fccf407",
+  "request_id": "contribution-inline-scope",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:terrain-road-provider-nov05ai"
+}

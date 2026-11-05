@@ -1,0 +1,19 @@
+{
+  "event_id": "faf613b93be1fbafab7ee8f0c09da615916893c53da6aa70fefdfda62f1cdd36",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "recovery/lessons.json"
+    ],
+    "evidence": [
+      "Preserve the reviewed direct-call versus expanded-consumer boundary rule for later ownership groups; its prerequisites require independently checked instructions and full affected-consumer controls."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "2e1f96cd2d74bdd6de5d66e0378459ff0a7a4e97ed10818e2053dbbe1184bb43",
+  "request_id": "shared-provider-reuse-guidance",
+  "schema_version": 1,
+  "sequence": 9,
+  "stream": "task:terrain-road-provider-nov05ai"
+}

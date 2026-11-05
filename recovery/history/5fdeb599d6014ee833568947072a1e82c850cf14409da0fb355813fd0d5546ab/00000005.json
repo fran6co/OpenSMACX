@@ -1,0 +1,21 @@
+{
+  "event_id": "c0c560ecdb5d6b1998544d8ae46c76cef2e6b966add721555203da29e9b24ae5",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "CMakeLists.txt",
+      "src/terraforming_actions.cpp"
+    ],
+    "evidence": [
+      "The inferred road-work/contribution/action core needs one corresponding source unit without the unrelated terraform_cost and can_terraform identities; keep external veh_wake outside its provider visibility.",
+      "Use the existing application compiler policy and pinned EBP frame profile. Dedicated source correspondence is not a historical filename or full original TU claim."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "e5821626eed76303063fe944c56a178ed3c27413e416513f0a31dfc5601a9dcb",
+  "request_id": "dedicated-terraform-core-unit",
+  "schema_version": 1,
+  "sequence": 5,
+  "stream": "task:terrain-road-provider-nov05ai"
+}

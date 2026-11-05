@@ -1,0 +1,18 @@
+{
+  "event_id": "2e1f96cd2d74bdd6de5d66e0378459ff0a7a4e97ed10818e2053dbbe1184bb43",
+  "payload": {
+    "author": "coordinator",
+    "discovery_id": "action-switch-data-ownership",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "src/terraforming_actions.cpp carries the three typed switch_targets annotations with the action mapping and its owned label objects.",
+      "The source annotations retain original bounds/dispatch evidence without granting candidate table matching, storage allocation or runtime acceptance."
+    ]
+  },
+  "previous_event": "2c20ef03c7f6a8d4717ed69b50a1874a4a3f8d202f288ab90fdbace51472bdce",
+  "request_id": "incorporate-action-switch-ownership",
+  "schema_version": 1,
+  "sequence": 8,
+  "stream": "task:terrain-road-provider-nov05ai"
+}

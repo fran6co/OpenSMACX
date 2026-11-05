@@ -1,0 +1,20 @@
+{
+  "event_id": "637a2cad74a9073f890363466dfc48faa6f8dbeac401fdca94abf18828c0530b",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "recovery/project.json"
+    ],
+    "evidence": [
+      "Register the new TU with the existing framed application measurement profile used by map.cpp, including standalone CodeView type evidence; its pinned functions all use EBP frames. Do not search or mix per-function flag winners.",
+      "Add the production source to the existing CMake Z7 observability group too, preserving application O2/Ob2/runtime/frame policy. Verify executable-body equality with and without type evidence before integration."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "c0c560ecdb5d6b1998544d8ae46c76cef2e6b966add721555203da29e9b24ae5",
+  "request_id": "terraform-core-type-evidence-profile",
+  "schema_version": 1,
+  "sequence": 6,
+  "stream": "task:terrain-road-provider-nov05ai"
+}

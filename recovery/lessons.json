@@ -335,6 +335,26 @@
         "Do not reuse a cached verdict after its pinned inputs or source interpretations change."
       ],
       "reopen_when": "New source-owned contribution, entry, import, data or function evidence, or a different pinned archive/image, changes the reference closure; rerun the full affected dependency family."
+    },
+    {
+      "id": "place-providers-with-observed-expanded-consumers",
+      "category": "candidate_strategy",
+      "evidence": {
+        "witness": "src/terraforming_actions.cpp; src/veh.cpp veh_wake; .opensmacx/recovery/terrain-road-provider-nov05ai/dedicated-source-final-review.json"
+      },
+      "requires": [
+        "Pinned standalone provider code and expanded consumer instructions independently agree on operations, argument mapping and read/call order.",
+        "Pinned external callers and current compiled calls distinguish consumers that must retain real calls from those that require expansion.",
+        "The complete provider/consumer ownership group includes its labels, storage, associated compiler data and all affected historical claims."
+      ],
+      "action": "Co-locate the real providers and expanded consumers in a coherent source unit, keeping required external callers outside its definition visibility. Measure the complete group and its caller witnesses together under one justified TU recipe. Let the compiler propagate provider corrections to the shared uses.",
+      "contraindications": [
+        "Source/address order alone does not fence optimization or prove a historical TU boundary. A duplicated arithmetic sequence alone is only a search hint.",
+        "Do not add noinline attributes, exports, dummy address-taking or register-pressure tricks to repair a mistaken ownership boundary. Explicit inline can elide a required standalone body; verify emission and every consumer.",
+        "Carry original data annotations and object ownership with the implementation. Type-evidence options must agree in production and measurement, with an executable-body control; they are not original compiler provenance or acceptance.",
+        "Preserve justified structural work and historical obligations when matching remains incomplete; do not call unknown preservation or data-extent prerequisites a pass."
+      ],
+      "reopen_when": "New original call, lifetime, data-layout, provider or TU evidence changes the consumer partition, or fresh native code shows a changed external caller or missing standalone emission."
     }
   ],
   "policy": [

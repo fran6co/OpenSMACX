@@ -1,0 +1,23 @@
+{
+  "event_id": "b9f66eb4a6611c9018f67c11a03a8263e5072c78842aaee354db39684fccf407",
+  "payload": {
+    "affects": [
+      "entity-3cff0d33efae06d43b40455c0f961f0b865e41e15809beb0ff5f0b3b1ab77475",
+      "entity-b8a0b1b078a5a71032efb476b0cd6115158eb5bab98f1362ffe4b00cb0b528d1"
+    ],
+    "author": "coordinator",
+    "discovery_id": "contribution-inline-evidence",
+    "evidence": [
+      "Pinned contribution at 0x4C9A50 matches action expansions at 0x4C9D66 and 0x4C9E67: ability-based 2/4 rate, action 10/11 Xenoempathy multiplier, otherwise Weather Paradigm multiplier, separate vehicle faction/project reads.",
+      "A separate decoded veh_wake call at 0x5C1DCD targets 0x4C9A50. This supports a retained out-of-line provider and expanded consumers, not original source order or TU identity.",
+      "Independent read-only review confirms unsigned faction byte identity and separate per-vehicle accumulation; preserve original call/read order and quirks."
+    ],
+    "hypothesis": "The standalone contribution routine is the shared provider for two expanded contribution computations inside action_terraform.",
+    "kind": "discovery"
+  },
+  "previous_event": null,
+  "request_id": "contribution-inline-evidence",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:terrain-road-provider-nov05ai"
+}

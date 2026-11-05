@@ -1,0 +1,18 @@
+{
+  "event_id": "2c20ef03c7f6a8d4717ed69b50a1874a4a3f8d202f288ab90fdbace51472bdce",
+  "payload": {
+    "author": "coordinator",
+    "discovery_id": "contribution-inline-evidence",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "src/terraforming_actions.cpp owns the real road-work and contribution definitions plus action_terraform; its three call sites use those shared algorithms without altering surrounding guards or separate progress reads.",
+      "src/veh.cpp keeps veh_wake outside the provider TU, preserving its observed external contribution call. The source home is an inferred cohort, not a claimed original filename."
+    ]
+  },
+  "previous_event": "637a2cad74a9073f890363466dfc48faa6f8dbeac401fdca94abf18828c0530b",
+  "request_id": "incorporate-shared-work-providers",
+  "schema_version": 1,
+  "sequence": 7,
+  "stream": "task:terrain-road-provider-nov05ai"
+}

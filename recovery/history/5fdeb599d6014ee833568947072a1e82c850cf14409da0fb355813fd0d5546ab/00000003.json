@@ -1,0 +1,19 @@
+{
+  "event_id": "3c96ec9cb723dee63d0b6ebcf01885ecf5ad47674988620e47c096da3303b044",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "recovery/units.json"
+    ],
+    "evidence": [
+      "Record the independently guarded shared-provider contribution core after source homing; this is not proof of a historical filename or whole original TU boundary."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "7dcf4f97c9a9ad523600678be3c0335c8a295c8305c9ce0fd8572fd3052f8220",
+  "request_id": "contribution-core-decision-scope",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:terrain-road-provider-nov05ai"
+}

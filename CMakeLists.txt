@@ -295,6 +295,7 @@ set(OPENSMACX_SOURCES
     src/string_formatting.cpp
     src/technology.cpp
     src/terraforming.cpp
+    src/terraforming_actions.cpp
     src/text.cpp
     src/time.cpp
     src/timer_messages.cpp
@@ -612,6 +613,7 @@ set_property(SOURCE
     src/console_commands.cpp
     src/net_class.cpp
     src/sprite.cpp
+    src/terraforming_actions.cpp
     src/texheap.cpp
     src/world.cpp
     src/win.cpp
@@ -635,8 +637,8 @@ set_source_files_properties(src/header_io.cpp src/crt_random.cpp
 # The remaining General helpers retain their existing source recipe.
 set_source_files_properties(src/application_math.cpp src/application_text.cpp
     PROPERTIES COMPILE_OPTIONS "/Oy-")
-# Terraforming's three pinned functions retain EBP-based argument frames.
-set_property(SOURCE src/terraforming.cpp APPEND PROPERTY COMPILE_OPTIONS "/Oy-")
+# Terraforming providers and actions retain their pinned EBP-based frames.
+set_property(SOURCE src/terraforming.cpp src/terraforming_actions.cpp APPEND PROPERTY COMPILE_OPTIONS "/Oy-")
 # Only the CPU register probe uses the explicitly registered intrinsic frontend.
 # The rest of Caviar and the application continue to use their VC6 recipes.
 set_source_files_properties(src/caviar_cpu.cpp

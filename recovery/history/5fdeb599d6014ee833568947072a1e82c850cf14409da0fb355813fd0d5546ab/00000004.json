@@ -1,0 +1,21 @@
+{
+  "event_id": "e5821626eed76303063fe944c56a178ed3c27413e416513f0a31dfc5601a9dcb",
+  "payload": {
+    "affects": [
+      "entity-3cff0d33efae06d43b40455c0f961f0b865e41e15809beb0ff5f0b3b1ab77475"
+    ],
+    "author": "coordinator",
+    "discovery_id": "action-switch-data-ownership",
+    "evidence": [
+      "Pinned JMPs at 0x4C9C0D, 0x4CA0E6 and 0x4CA5A9 independently guard target spans 0x4CA76C..0x4CA78C, 0x4CA78C..0x4CA7B0 and 0x4CA7B0..0x4CA7F0.",
+      "Every cell has a HIGHLOW relocation and targets an instruction within the action primary body; source ownership is not compiled-layout qualification."
+    ],
+    "hypothesis": "Three adjacent guarded indirect target tables belong to action_terraform and must travel with its source mapping.",
+    "kind": "discovery"
+  },
+  "previous_event": "3c96ec9cb723dee63d0b6ebcf01885ecf5ad47674988620e47c096da3303b044",
+  "request_id": "action-switch-data-ownership",
+  "schema_version": 1,
+  "sequence": 4,
+  "stream": "task:terrain-road-provider-nov05ai"
+}

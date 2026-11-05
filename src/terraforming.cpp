@@ -136,50 +136,6 @@ int __cdecl terraform_cost(int x, int y, int faction_id) {
 }
 
 /*
-Purpose: Calculate the Former rate to perform terrain enhancements.
-// ORIGINAL: 0x004C9A50 ?contribution@@YAHHH@Z 0x004C9A50-0x004C9AFB
-// size      171 bytes
-// prototype int (__cdecl ?contribution@@YAHHH@Z)(int vehID, int terraformID)
-// callers   1   call targets   1
-// kind      game
-// flags     frame;hidden;sp_ready;purged_ok
-// calls     0x005BF1F0
-// LEVER: `faction_id` cached in a local (the image loads it once alongside
-//        `proto_id` and reuses it for both `has_project` calls, this body
-//        was re-reading `Vehs[veh_id].faction_id` at each site).
-// TRIED: `if/else` in place of the `? 4 : 2` ternary for the has_abil
-//        result - VC6 compiles BOTH forms to the same branchless
-//        `neg/sbb/and/add` idiom (any zero/nonzero boolean qualifies, not
-//        just exactly-0-or-1), where the image keeps two real branches
-//        with separate `mov edi, N` stores. Not a source-shape question.
-//        The two inlined `has_project` sites also keep a `sete`+`test`+`je`
-//        shape the image uses that this body's direct `cmp`/`jne` does not
-//        reproduce. Best reached this pass: 3/66, MISMATCH.
-Return Value: Terraforming speed
-Status: Complete
-*/
-int __cdecl contribution(int veh_id, int terraform_id) {
-    // CACHED, NOT RE-READ: the image loads Vehs[veh_id].faction_id ONCE,
-    // alongside proto_id, and reuses it for both has_project() calls below.
-    const int faction_id = Vehs[veh_id].faction_id;
-    int rate = 2;
-    // AN IF, NOT A TERNARY: the image branches to two separate `mov edi, N`
-    // stores rather than computing 2/4 branchlessly.
-    if (has_abil(Vehs[veh_id].proto_id, ABL_SUPER_TERRAFORMER)) {
-        rate = 4;
-    }
-    if (terraform_id == (ORDER_REMOVE_FUNGUS - 4) || terraform_id == (ORDER_PLANT_FUNGUS - 4)) {
-        if (has_project(SP_XENOEMPATYH_DOME, faction_id)) {
-            rate *= 2; // Doubled
-        }
-    } else if (has_project(SP_WEATHER_PARADIGM, faction_id)) {
-        rate = (rate * 3) / 2; // +50%
-    }
-    return rate;
-}
-
-
-/*
 Purpose: Wrap an x coordinate on a round map, as can_terraform() wraps it.
 Original Offset: n/a
 Return Value: Wrapped x

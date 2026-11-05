@@ -1,0 +1,30 @@
+{
+  "author": "coordinator",
+  "base_revision": "0b8f02dc844baac612fd1d02ab1df362a9311a8b",
+  "editable_files": [
+    "src/map.cpp",
+    "src/veh.cpp"
+  ],
+  "evidence": [
+    "Pinned helper 0x4C99D0 and action road branch at0x4C9C14 repeat the same tile recomputation, row5/6 selector and river/fungus/forest/rock contributions.",
+    "Current action branch instead reuses its earlier tile pointer and duplicates that computation. No decoded direct call to4C99D0 occurs in the action span.",
+    "Independent read-only source/instruction review supports shared inline semantics, not proof of historical filename or inline spelling. Test same-TU definition visibility under existing flags before adopting a source move.",
+    "No ABI/flags tricks, machine code, artificial register pressure or bug fixes. Only coordinator performs Git/publication; fresh compiler resources, build/link, scoped matching and outside-function preservation remain required."
+  ],
+  "intent": "Recover the common road work-cost computation with original coordinate rereads, one real standalone body and same-TU provider visibility; preserve original quirks, mappings, claims and compiler policy.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 5020112,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5020416,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "road/magtube work-cost provider and its expanded caller",
+  "task_id": "terrain-road-provider-nov05ai"
+}
