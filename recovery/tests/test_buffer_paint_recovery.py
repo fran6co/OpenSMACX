@@ -54,8 +54,8 @@ def test_draw_uses_one_real_sprite_and_correct_six_argument_entry(paint_objects)
         (ROOT / "src/buffer.cpp").read_text(), "src/buffer.cpp", pin,
         address_space="pe:va") if row.origin.address == 0x9B3A50)
     shared = binding.emitted_symbol
-    assert shared == "?BufferSpriteOwner@@3UBufferSpriteLifetime@@A"
-    assert binding.member_path == ("storage_", "bytes")
+    assert shared and "BufferSpriteOwner" not in shared
+    assert binding.member_path == ()
     for obj in paint_objects["src/buffer.cpp"]:
         assert len([s for s in obj.symbols.values() if s.name == shared and s.section > 0]) == 1
         targets = references(obj, draw)

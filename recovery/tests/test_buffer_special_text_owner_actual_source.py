@@ -1,8 +1,9 @@
-"""Permanent pytest control for the installed BufferSpecialTexts owner.
+"""Host controls for Buffer's direct ten-element static member.
 
-The fixture extracts current product declarations and method bodies on every
-run. It deliberately has no source-hash pin, proposal fallback, or synthesized
-owner body: missing/incomplete product source is a test failure.
+The host fixture extracts the real element constructor/destructor and uses a
+typed static array receiver. It checks element field behavior and the C++ array
+prefix-unwind/reverse-destruction rules. It does not simulate or qualify the
+VC6-generated process-start guard; that requires fresh native COFF/PE evidence.
 """
 from __future__ import annotations
 
@@ -27,8 +28,6 @@ def extract_definition(source: str, signature: str) -> str:
     if start < 0 or source.find(signature, start + len(signature)) >= 0:
         raise AssertionError(f"expected exactly one installed definition: {signature}")
     opening = source.find("{", start)
-    if opening < 0:
-        raise AssertionError(f"missing method body: {signature}")
     depth = 0
     for index in range(opening, len(source)):
         if source[index] == "{":
@@ -40,231 +39,137 @@ def extract_definition(source: str, signature: str) -> str:
     raise AssertionError(f"unterminated method body: {signature}")
 
 
-def inject_after_opening(definition: str, statements: str) -> str:
-    opening = definition.find("{")
-    return definition[:opening + 1] + "\n" + statements + definition[opening + 1:]
-
-
 PRELUDE = r"""
 #include <cassert>
 #include <cstddef>
+#include <cstdint>
 #include <cstring>
 #include <new>
-typedef unsigned char uint8_t;
-typedef unsigned int uint32_t;
-#define OSMX_JOIN_INNER(a, b) a##b
-#define OSMX_JOIN(a, b) OSMX_JOIN_INNER(a, b)
-#define static_assert(condition, message) \
-    typedef char OSMX_JOIN(recovery_static_assert_, __LINE__)[(condition) ? 1 : -1]
 struct RECT { int left; int top; int right; int bottom; };
 #include "buffer_special_text.h"
-"""
-
-SUPPORT = r"""
-static bool controls_enabled = false;
-static char *owner_bytes = 0;
-static BufferSpecialTextArrayOwner *active_owner = 0;
-static int constructor_attempts = 0;
-static int constructor_failure = -1;
-static int destructor_count = 0;
-static int destructor_order[20];
-static bool cause_reentry = false;
-static int expected_guard_bit = 0;
-static int element_index(const BufferSpecialText *item) {
-    return static_cast<int>(reinterpret_cast<const char *>(item) - owner_bytes) / 0x30;
-}
+struct Buffer { static BufferSpecialText special_texts_[10]; };
+BufferSpecialText Buffer::special_texts_[10];
+static bool observe_lifetime = false;
+static int fail_after = -1;
+static int attempts = 0, destroyed = 0;
+static const BufferSpecialText *constructed[10];
+static const BufferSpecialText *destruction_order[10];
 """
 
 MAIN = r"""
-union OwnerStorage {
-    long alignment[sizeof(BufferSpecialTextArrayOwner) / sizeof(long)];
-    char bytes[sizeof(BufferSpecialTextArrayOwner)];
-};
-static void check_partial_ctor_unwind() {
+static void test_element_fields_and_untouched_suffix() {
+    assert(sizeof(Buffer::special_texts_) == 10 * 0x30);
+    for (int i = 0; i < 10; ++i) {
+        const BufferSpecialText &item = Buffer::special_texts_[i];
+        assert(item.bounds[0].left == 0 && item.bounds[0].top == 0);
+        assert(item.bounds[0].right == 0 && item.bounds[0].bottom == 0);
+        assert(item.bounds[1].left == 0 && item.bounds[1].top == 0);
+        assert(item.bounds[1].right == 0 && item.bounds[1].bottom == 0);
+        assert(item.field_20_ == 0);
+        assert(item.field_24_ == 0 && item.field_28_ == 0 && item.color_ == 0);
+    }
+    alignas(BufferSpecialText) unsigned char bytes[sizeof(BufferSpecialText)] = {};
+    const uint32_t sentinel = 0xA5A5A5A5;
+    for (int offset = 0x24; offset <= 0x2C; offset += 4)
+        std::memcpy(bytes + offset, &sentinel, sizeof(sentinel));
+    BufferSpecialText *item = new (bytes) BufferSpecialText;
+    for (int offset = 0x24; offset <= 0x2C; offset += 4) {
+        uint32_t value = 0;
+        std::memcpy(&value, bytes + offset, sizeof(value));
+        assert(value == sentinel);
+    }
+    item->~BufferSpecialText();
+}
+
+static void test_language_array_prefix_unwind() {
     for (int failure = 0; failure < 10; ++failure) {
-        OwnerStorage storage;
-        std::memset(storage.bytes, 0, sizeof(storage.bytes));
-        for (int index = 0; index < 10; ++index) {
-            const uint32_t sentinel = 0xA5A5A5A5;
-            for (int offset = 0x24; offset <= 0x2C; offset += 4)
-                std::memcpy(storage.bytes + index * 0x30 + offset, &sentinel, 4);
-        }
-        owner_bytes = storage.bytes;
-        active_owner = 0;
-        controls_enabled = true;
-        constructor_attempts = 0;
-        constructor_failure = failure;
-        destructor_count = 0;
-        BufferSpecialTextsCleanupGuard = 0;
-        expected_guard_bit = 0;
+        attempts = destroyed = 0;
+        fail_after = failure;
+        observe_lifetime = true;
         bool caught = false;
-        try { new (storage.bytes) BufferSpecialTextArrayOwner; }
-        catch (int value) { caught = value == failure; }
-        assert(caught && constructor_attempts == failure + 1 &&
-               destructor_count == failure);
-        for (int index = 0; index < failure; ++index)
-            assert(destructor_order[index] == failure - 1 - index);
-        assert(BufferSpecialTextsCleanupGuard == 0);
-        for (int index = 0; index < 10; ++index) {
-            for (int offset = 0x24; offset <= 0x2C; offset += 4) {
-                uint32_t suffix = 0;
-                std::memcpy(&suffix, storage.bytes + index * 0x30 + offset, 4);
-                assert(suffix == 0xA5A5A5A5);
-            }
+        try {
+            BufferSpecialText local[10];
+            (void)local;
+        } catch (int value) {
+            caught = value == failure;
         }
+        observe_lifetime = false;
+        assert(caught && attempts == failure + 1 && destroyed == failure);
+        for (int i = 0; i < failure; ++i)
+            assert(destruction_order[i] == constructed[failure - 1 - i]);
     }
+    attempts = destroyed = 0;
+    fail_after = -1;
+    observe_lifetime = true;
+    {
+        BufferSpecialText local[10];
+        assert(attempts == 10);
+    }
+    observe_lifetime = false;
+    assert(destroyed == 10);
+    for (int i = 0; i < 10; ++i)
+        assert(destruction_order[i] == constructed[9 - i]);
 }
-static void check_success_reentrant_teardown() {
-    OwnerStorage storage;
-    std::memset(storage.bytes, 0, sizeof(storage.bytes));
-    owner_bytes = storage.bytes;
-    active_owner = 0;
-    controls_enabled = true;
-    constructor_attempts = 0;
-    constructor_failure = -1;
-    destructor_count = 0;
-    BufferSpecialTextsCleanupGuard = 0;
-    expected_guard_bit = 0;
-    for (int index = 0; index < 10; ++index) {
-        uint32_t sentinel = 0xA5A5A5A5;
-        std::memcpy(storage.bytes + index * 0x30 + 0x24, &sentinel, 4);
-        std::memcpy(storage.bytes + index * 0x30 + 0x28, &sentinel, 4);
-        std::memcpy(storage.bytes + index * 0x30 + 0x2C, &sentinel, 4);
-    }
-    BufferSpecialTextArrayOwner *owner = new (storage.bytes) BufferSpecialTextArrayOwner;
-    active_owner = owner;
-    assert(constructor_attempts == 10 && BufferSpecialTextsCleanupGuard == 0);
-    for (int index = 0; index < 10; ++index) {
-        assert(owner->at(index).bounds[0].right == 0);
-        assert(owner->at(index).field_20_ == 0);
-        assert(owner->at(index).field_24_ == 0xA5A5A5A5);
-        assert(owner->at(index).field_28_ == 0xA5A5A5A5);
-        assert(owner->at(index).color_ == 0xA5A5A5A5);
-    }
-    BufferSpecialTextsCleanupGuard = 0xA4;
-    expected_guard_bit = 1;
-    cause_reentry = true;
-    owner->~BufferSpecialTextArrayOwner();
-    assert(BufferSpecialTextsCleanupGuard == 0xA5 && destructor_count == 10);
-    for (int index = 0; index < 10; ++index) {
-        assert(destructor_order[index] == 9 - index);
-        for (int offset = 0x24; offset <= 0x2C; offset += 4) {
-            uint32_t suffix = 0;
-            std::memcpy(&suffix, storage.bytes + index * 0x30 + offset, 4);
-            assert(suffix == 0xA5A5A5A5);
-        }
-    }
-}
+
 int main() {
-    check_partial_ctor_unwind();
-    check_success_reentrant_teardown();
-    BufferSpecialTextsCleanupGuard = 0;
-    controls_enabled = false;
-    return 0;
+    test_element_fields_and_untouched_suffix();
+    test_language_array_prefix_unwind();
 }
 """
 
 
-def installed_sources() -> tuple[str, str, str, str]:
+def installed_sources() -> tuple[str, str, str]:
     root = repository_root()
-    header_path = root / "src/buffer_special_text.h"
-    cpp_path = root / "src/buffer.cpp"
-    if not header_path.is_file() or not cpp_path.is_file():
-        raise AssertionError("installed BufferSpecialText source is missing")
-    header = header_path.read_text(encoding="utf-8")
-    cpp = cpp_path.read_text(encoding="utf-8")
-    required_header = (
-        "struct BufferSpecialTextArrayOwner",
-        "struct BufferSpecialTextArray {",
-        "BufferSpecialText elements_[10];",
-        "BufferSpecialTextArrayStorage elements_;",
-        "BufferSpecialTextsCleanupGuard |= 1;",
-        "new (&elements_.bytes[0]) BufferSpecialTextArray;",
-        "array().~BufferSpecialTextArray();",
-        "BufferSpecialText &at(int index)",
-    )
-    missing = [needle for needle in required_header if needle not in header]
-    if missing:
-        raise AssertionError(f"installed owner declaration is incomplete: {missing}")
-    guard = "uint8_t BufferSpecialTextsCleanupGuard;"
-    owner = "BufferSpecialTextArrayOwner BufferSpecialTextsOwner;"
-    guard_matches = list(re.finditer(r"^" + re.escape(guard) + r"$", cpp, re.MULTILINE))
-    owner_matches = list(re.finditer(r"^" + re.escape(owner) + r"$", cpp, re.MULTILINE))
-    if len(guard_matches) != 1 or len(owner_matches) != 1:
-        raise AssertionError("installed guard/owner globals are missing or ambiguous")
-    if guard_matches[0].start() > owner_matches[0].start():
-        raise AssertionError("installed global construction order changed")
-    signatures = ("BufferSpecialText::BufferSpecialText()", "BufferSpecialText::~BufferSpecialText()")
-    methods = [extract_definition(cpp, signature) for signature in signatures]
-    if "BufferSpecialTextsOwner.at(special)" not in cpp:
-        raise AssertionError("installed consumers do not use the genuine owner")
-    return header, guard + "\n" + owner + "\n", methods[0], methods[1]
+    header = (root / "src/buffer_special_text.h").read_text(encoding="utf-8")
+    buffer_header = (root / "src/buffer.h").read_text(encoding="utf-8")
+    cpp = (root / "src/buffer.cpp").read_text(encoding="utf-8")
+    assert "static BufferSpecialText special_texts_[10];" in buffer_header
+    assert "BufferSpecialText Buffer::special_texts_[10];" in cpp
+    combined = cpp + buffer_header + header
+    assert not re.search(
+        r"^\s*(?:uint8_t|unsigned char|char)\s+BufferSpecialTextsCleanupGuard\s*;",
+        combined, re.MULTILINE)
+    assert not re.search(
+        r"^\s*(?:BufferSpecialTextArrayOwner|BufferSpecialTextsOwner)\s+\w+\s*;",
+        combined, re.MULTILINE)
+    assert not re.search(r"^\s*(?:struct|class)\s+BufferSpecialTextArrayOwner\b",
+                         combined, re.MULTILINE)
+    assert "special_texts_[special]" in cpp
+    ctor = extract_definition(cpp, "BufferSpecialText::BufferSpecialText()")
+    dtor = extract_definition(cpp, "BufferSpecialText::~BufferSpecialText()")
+    return header, ctor, dtor
 
 
-def instrumented_methods(ctor: str, dtor: str) -> str:
-    ctor = inject_after_opening(ctor, """    if (controls_enabled) {
-        const int index = element_index(this);
-        ++constructor_attempts;
-        if (index == constructor_failure) throw index;
-    }""")
-    dtor = inject_after_opening(dtor, """    if (controls_enabled) {
-        const int index = element_index(this);
-        assert((BufferSpecialTextsCleanupGuard & 1) == expected_guard_bit);
-        if (cause_reentry && index == 9) {
-            cause_reentry = false;
-            active_owner->~BufferSpecialTextArrayOwner();
-        }
-        destructor_order[destructor_count++] = index;
-    }""")
-    return ctor + "\n\n" + dtor + "\n"
+def instrument(ctor: str, dtor: str) -> str:
+    ctor_open = ctor.index("{")
+    ctor = ctor[:ctor_open + 1] + r"""
+    if (observe_lifetime) {
+        const int index = attempts++;
+        if (index < 10) constructed[index] = this;
+        if (index == fail_after) throw index;
+    }
+""" + ctor[ctor_open + 1:]
+    dtor_open = dtor.index("{")
+    dtor = dtor[:dtor_open + 1] + r"""
+    if (observe_lifetime) destruction_order[destroyed++] = this;
+""" + dtor[dtor_open + 1:]
+    return ctor + "\n" + dtor + "\n"
 
 
-def run_fixture(compiler: str, header: str, globals_source: str, methods: str) -> subprocess.CompletedProcess[str]:
-    with tempfile.TemporaryDirectory(prefix="buffer-owner-actual-source-") as directory:
+@pytest.mark.parametrize("compiler", [name for name in ("g++", "clang++")
+                                       if shutil.which(name)])
+def test_direct_static_array_element_behavior_and_language_unwind(compiler: str) -> None:
+    header, ctor, dtor = installed_sources()
+    with tempfile.TemporaryDirectory(prefix="buffer-static-array-") as directory:
         temp = Path(directory)
         (temp / "buffer_special_text.h").write_text(header, encoding="utf-8")
-        executable = temp / "owner-control"
-        source = PRELUDE + globals_source + SUPPORT + methods + MAIN
+        executable = temp / "array-control"
+        source = PRELUDE + instrument(ctor, dtor) + MAIN
         compiled = subprocess.run(
-            [compiler, "-std=c++98", "-O0", "-Wall", "-Wextra", "-Werror", "-I", str(temp), "-x", "c++", "-", "-o", str(executable)],
+            [compiler, "-std=c++11", "-O0", "-Wall", "-Wextra", "-Werror",
+             "-I", str(temp), "-x", "c++", "-", "-o", str(executable)],
             input=source, text=True, capture_output=True, timeout=30, check=False)
         assert compiled.returncode == 0, f"{compiler} compile failed:\n{compiled.stderr}"
-        return subprocess.run([str(executable)], text=True, capture_output=True, timeout=10, check=False)
-
-
-COMPILERS = [name for name in ("g++", "clang++") if shutil.which(name)]
-pytestmark = pytest.mark.skipif(not COMPILERS, reason="no supported host C++ compiler found")
-
-
-@pytest.mark.parametrize("compiler", COMPILERS)
-def test_installed_owner_behaviors(compiler: str) -> None:
-    header, globals_source, ctor, dtor = installed_sources()
-    result = run_fixture(compiler, header, globals_source, instrumented_methods(ctor, dtor))
-    assert result.returncode == 0, f"{compiler} runtime control failed:\n{result.stderr}"
-
-
-@pytest.mark.parametrize("compiler", COMPILERS)
-@pytest.mark.parametrize("mutation", ("forward teardown", "late guard", "missing ctor unwind"))
-def test_mutations_fail_behaviorally(compiler: str, mutation: str) -> None:
-    header, globals_source, ctor, dtor = installed_sources()
-    if mutation == "forward teardown":
-        changed = header.replace(
-            "array().~BufferSpecialTextArray();",
-            "for (int index = 0; index < 10; ++index)\n"
-            "            array().elements_[index].~BufferSpecialText();", 1)
-    elif mutation == "late guard":
-        changed = header.replace(
-            "        BufferSpecialTextsCleanupGuard |= 1;\n"
-            "        array().~BufferSpecialTextArray();",
-            "        array().~BufferSpecialTextArray();\n"
-            "        BufferSpecialTextsCleanupGuard |= 1;", 1)
-    else:
-        changed = header.replace(
-            "new (&elements_.bytes[0]) BufferSpecialTextArray;",
-            "for (int index = 0; index < 10; ++index) {\n"
-            "            new (reinterpret_cast<char *>(&elements_) +\n"
-            "                 index * sizeof(BufferSpecialText)) BufferSpecialText();\n"
-            "        }", 1)
-    assert changed != header, f"mutation anchor disappeared: {mutation}"
-    result = run_fixture(compiler, changed, globals_source, instrumented_methods(ctor, dtor))
-    assert result.returncode != 0, f"{compiler} mutation survived behavior control: {mutation}"
+        result = subprocess.run([str(executable)], text=True, capture_output=True,
+                                timeout=10, check=False)
+        assert result.returncode == 0, f"{compiler} runtime control failed:\n{result.stderr}"

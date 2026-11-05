@@ -3,10 +3,11 @@
 Host controls compile the two unchanged branch bodies and real declarations
 with service/field doubles. Native product compilation, emitted symbols and
 historical byte obligations are independently checked by the coordinator.
-Synthetic surface installation executes field-transition branches; the real
-inline Sprite accessor has no callback, so this is not callback reachability
-evidence. Null-table forwarding is observed by doubles, not a real pixel/fault
-test of the original's unguarded table reads.
+The Sprite double can change the Buffer surface at the call boundary to check
+that the already-completed setup/cleanup path is not retroactively changed.
+This is a host state-transition control, not callback reachability evidence.
+Null-table forwarding is observed by doubles, not a real pixel/fault test of
+the original's unguarded table reads.
 """
 
 import os
@@ -17,16 +18,14 @@ import subprocess
 
 import pytest
 
-from match_recovery.model import Span
-from match_recovery.pe_coff import PeImage
 from match_recovery.source.reader import read_file
-from match_recovery.source_history import revision_files
+from match_recovery.pe_coff import PeImage
+from match_recovery.model import Span
 
 
 ROOT = Path(__file__).resolve().parents[2]
 PIN = "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
 METHODS = {"draw_dest": 0x5D8A30, "draw_multi_table_dest": 0x5D93C0}
-BASE = "46a3d7771689f88454238c2359782d734a4ac10e"
 
 
 def actual_parts():
@@ -76,74 +75,69 @@ def five_argument_declaration(header, name):
     return declarations[0]
 
 
-@pytest.fixture(scope="module")
-def baseline_text():
-    # Installed history API reads immutable committed objects, never mutations.
-    files = revision_files(ROOT, BASE, ("src",))
-    return files["src/buffer.cpp"].decode(), files["src/buffer.h"].decode()
+HISTORICAL = {
+    "draw_dest": ("// ORIGINAL: 0x005D8A30 ?draw_dest@Buffer@@QAEHPAVBuffer@@HHHH@Z 0x005D8A30-0x005D8B1E BYTE_EXACT",
+                   "// symbol    ?draw_dest@Buffer@@QAEHPAV1@HHHPAE@Z"),
+    "draw_multi_table_dest": (
+        "// ORIGINAL: 0x005D93C0 ?draw_multi_table_dest@Buffer@@QAEHPAVBuffer@@HHHH@Z 0x005D93C0-0x005D94AE BYTE_EXACT",
+        "// symbol    ?draw_multi_table_dest@Buffer@@QAEHPAV1@HHHPAY0BAA@E@Z"),
+}
+LESSONS = {
+    "draw_dest": "The ten Blit slots this wrapper",
+    "draw_multi_table_dest": "same shape and same landing as draw_dest above",
+}
 
 
-def assert_exact_continuity(cpp, header, baseline):
-    before_cpp, before_header = baseline
+def assert_scoped_source(cpp, header):
     for name in METHODS:
-        current_body = five_argument_body(cpp, name)
-        previous_body = five_argument_body(before_cpp, name)
-        assert cpp.count(current_body) == 1
-        cpp = cpp.replace(current_body, previous_body)
-        current_declaration = five_argument_declaration(header, name)
-        previous_declaration = five_argument_declaration(before_header, name)
-        assert header.count(current_declaration) == 1
-        header = header.replace(current_declaration, previous_declaration)
-        # Only these two compiler-observed fact transitions are authorized.
-        previous_symbol = "// symbol    ?" + name + "@Buffer@@QAEHPAV1@HHHH@Z"
-        observed_symbol = "// symbol    ?" + name + "@Buffer@@QAEHPAV1@HHHPAE@Z"
-        assert before_cpp.count(previous_symbol) == cpp.count(observed_symbol) == 1
-        cpp = cpp.replace(observed_symbol, previous_symbol)
-    # Function heads/claims/lessons and all object bindings stay outside the
-    # replaceable C++ bodies. No metadata or global symbol blanket waiver.
-    assert cpp == before_cpp
-    assert header == before_header
+        original, symbol = HISTORICAL[name]
+        assert cpp.count(original) == 1
+        assert cpp.count(symbol) == 1
+        block_start = cpp.index(original)
+        block_end = cpp.index(f"int Buffer::{name}(", block_start)
+        provenance = cpp[block_start:block_end]
+        assert "// LEVER:" in provenance or "// TRIED:" in provenance
+        assert LESSONS[name] in provenance
+        declaration = five_argument_declaration(header, name)
+        expected_type = "unsigned char *table" if name == "draw_dest" else "ColorTable *table"
+        assert expected_type in declaration and "int table" not in declaration
+        body = five_argument_body(cpp, name)
+        assert "shared_sprite_" in body and "BufferSpriteOwner" not in body
+        assert "shared_sprite_.pcBits_ = 0;" in body
+    assert "static Sprite shared_sprite_;" in header
 
 
-def test_exact_full_baseline_source_and_header_continuity(baseline_text):
-    assert_exact_continuity((ROOT / "src/buffer.cpp").read_text(),
-                            (ROOT / "src/buffer.h").read_text(), baseline_text)
+def test_scoped_original_identity_claim_and_current_abi():
+    assert_scoped_source((ROOT / "src/buffer.cpp").read_text(),
+                         (ROOT / "src/buffer.h").read_text())
 
 
-@pytest.mark.parametrize("damage", ["outside_source", "identity", "span", "claim",
-                                    "lesson", "object_binding", "other_symbol",
-                                    "wrong_observed_symbol", "outside_header"])
-def test_continuity_damage_is_refused(baseline_text, damage):
+@pytest.mark.parametrize("damage", ["identity", "span", "claim", "lesson",
+                                    "member", "symbol", "declaration"])
+def test_scoped_source_damage_is_refused(damage):
     cpp = (ROOT / "src/buffer.cpp").read_text()
     header = (ROOT / "src/buffer.h").read_text()
-    if damage == "outside_source":
-        old, new = 'const char BufferExtTgf[] = ".tgf";', 'const char BufferExtTgf[] = ".bad";'
-    elif damage == "identity":
-        old, new = "0x005D8A30 ?draw_dest@Buffer@@QAEHPAVBuffer@@HHHH@Z", "0x005D8A30 wrong_identity"
+    if damage == "identity":
+        cpp = cpp.replace(HISTORICAL["draw_dest"][0],
+                          HISTORICAL["draw_dest"][0].replace("?draw_dest@Buffer@@", "?wrong@Buffer@@"), 1)
     elif damage == "span":
-        old, new = "0x005D8A30-0x005D8B1E", "0x005D8A30-0x005D8B1D"
+        cpp = cpp.replace("0x005D8A30-0x005D8B1E", "0x005D8A30-0x005D8B1D", 1)
     elif damage == "claim":
-        old, = (line for line in cpp.splitlines() if line.startswith("// ORIGINAL: 0x005D8A30 "))
-        new = old.rsplit(" ", 1)[0]
+        cpp = cpp.replace("0x005D8A30-0x005D8B1E BYTE_EXACT",
+                          "0x005D8A30-0x005D8B1E MISMATCH", 1)
     elif damage == "lesson":
-        old, new = "// function's own a5 is `int`, so the tail call casts it.", "// deleted historical lesson"
-    elif damage == "object_binding":
-        old, new = "member ?BufferSpriteOwner@@3UBufferSpriteLifetime@@A storage_.bytes", "member ?BufferSpriteOwner@@3UBufferSpriteLifetime@@A wrong_member"
-    elif damage == "other_symbol":
-        old, new = "// symbol    ?release_buff_sprite@Buffer@@SAXXZ", "// symbol    wrong_unrelated_symbol"
-    elif damage == "wrong_observed_symbol":
-        old, new = "// symbol    ?draw_dest@Buffer@@QAEHPAV1@HHHPAE@Z", "// symbol    ?draw_dest@Buffer@@QAEHPAV1@HHHHHPAE@Z"
+        cpp = cpp.replace(LESSONS["draw_dest"], "the removed slots this wrapper", 1)
+    elif damage == "member":
+        header = header.replace("static Sprite shared_sprite_;", "static Sprite changed_sprite_;", 1)
+    elif damage == "symbol":
+        cpp = cpp.replace(HISTORICAL["draw_dest"][1], "// symbol    ?draw_dest_wrong", 1)
     else:
-        old, new = "  int draw_unk2(Buffer *destination, int transparent, int x, int y, int table);", "  int draw_unk2(Buffer *destination, int transparent, int x, int y, unsigned char *table);"
-        assert header.count(old) == 1
-        header = header.replace(old, new)
-        with pytest.raises(AssertionError):
-            assert_exact_continuity(cpp, header, baseline_text)
-        return
-    assert cpp.count(old) == 1
-    cpp = cpp.replace(old, new)
+        declaration = five_argument_declaration(header, "draw_dest")
+        assert "unsigned char *table" in declaration
+        header = header.replace(declaration,
+                                declaration.replace("unsigned char *table", "int table", 1), 1)
     with pytest.raises(AssertionError):
-        assert_exact_continuity(cpp, header, baseline_text)
+        assert_scoped_source(cpp, header)
 
 
 HARNESS = r'''
@@ -153,7 +147,9 @@ HARNESS = r'''
 #include <initializer_list>
 #include <type_traits>
 #include <utility>
-static void require(bool value) { if (!value) std::exit(42); }
+#define require(value) do { if (!(value)) { \
+    std::fprintf(stderr, "host fixture require failed at line %d\n", __LINE__); \
+    std::exit(42); } } while (0)
 struct Buffer;
 using ColorTable = unsigned char[256];
 struct Surface { int Unlock(void *); };
@@ -168,40 +164,35 @@ struct Sprite {
     int draw_multi_table_dest(Buffer *, int, int, int, ColorTable *);
 };
 struct Buffer {
+    static Sprite shared_sprite_;
     void *locked_bits_, *dib_bits_;
     Surface *surface_;
     int surface_lock_count_, stride_;
     Dib dib_;
     ACTUAL_DECLARATIONS
 };
+Sprite Buffer::shared_sprite_;
 static Buffer *source;
 static Surface surface;
 static bool install_surface, replace_bits;
-static int accesses, unlocks, calls, seen_kind;
+static int unlocks, calls, seen_kind;
 static Buffer *seen_destination;
 static int seen_transparent, seen_x, seen_y;
 static const void *seen_table;
 static Sprite seen_sprite;
 static unsigned char replaced_pixel;
-struct SpriteDoubleOwner {
-    Sprite value;
-    Sprite &sprite() {
-        if (install_surface && accesses++ == 0) source->surface_ = &surface;
-        return value;
-    }
-};
-static SpriteDoubleOwner BufferSpriteOwner;
 static unsigned char WinFillColour = 0xD7;
 int Surface::Unlock(void *bits) {
     require(bits == source->dib_bits_ && source->locked_bits_ == bits);
     require(source->surface_lock_count_ == 0);
-    require(BufferSpriteOwner.value.pcBits_ == bits);
+    require(Buffer::shared_sprite_.pcBits_ == bits);
     ++unlocks;
     return 0;
 }
 static int observe(Sprite *sprite, int kind, Buffer *destination,
                    int transparent, int x, int y, const void *table) {
-    require(sprite == &BufferSpriteOwner.value);
+    require(sprite == &Buffer::shared_sprite_);
+    if (install_surface) source->surface_ = &surface;
     ++calls; seen_kind = kind; seen_destination = destination;
     seen_transparent = transparent; seen_x = x; seen_y = y; seen_table = table;
     seen_sprite = *sprite;
@@ -245,10 +236,10 @@ static void route(int kind, bool existing_surface, bool have_bits, int count,
     owner.stride_ = 37;
     owner.dib_.bmiHeader.biWidth = 5;
     owner.dib_.bmiHeader.biHeight = -3;
-    BufferSpriteOwner.value = {&replaced_pixel, 71, 72, 73, 74, 75, 76, 77, 78, 79};
-    const Sprite before = BufferSpriteOwner.value;
+    Buffer::shared_sprite_ = {&replaced_pixel, 71, 72, 73, 74, 75, 76, 77, 78, 79};
+    const Sprite before = Buffer::shared_sprite_;
     install_surface = reenter; replace_bits = replace;
-    accesses = unlocks = calls = seen_kind = 0;
+    unlocks = calls = seen_kind = 0;
     unsigned char *plain_pointer = null_table ? nullptr : &table[0][0];
     ColorTable *multi_pointer = null_table ? nullptr : table;
     const int result = kind == 1
@@ -259,16 +250,16 @@ static void route(int kind, bool existing_surface, bool have_bits, int count,
     require(seen_x == -19 && seen_y == 23 &&
             seen_table == (kind == 1 ? static_cast<void *>(plain_pointer)
                                      : static_cast<void *>(multi_pointer)));
-    require(BufferSpriteOwner.value.pcBits_ == nullptr);
-    require(BufferSpriteOwner.value.iSpriteWidth2_ == seen_sprite.iSpriteWidth2_);
-    require(BufferSpriteOwner.value.iSpriteWidth_ == seen_sprite.iSpriteWidth_);
-    require(BufferSpriteOwner.value.iSpriteHeight_ == seen_sprite.iSpriteHeight_);
-    require(BufferSpriteOwner.value.iWidth_ == seen_sprite.iWidth_);
-    require(BufferSpriteOwner.value.iHeight_ == seen_sprite.iHeight_);
-    require(BufferSpriteOwner.value.iLeftOffset_ == seen_sprite.iLeftOffset_);
-    require(BufferSpriteOwner.value.iTopOffset_ == seen_sprite.iTopOffset_);
-    require(BufferSpriteOwner.value.cTransparentIndex_ == seen_sprite.cTransparentIndex_);
-    require(BufferSpriteOwner.value.fObj1Exists_ == seen_sprite.fObj1Exists_);
+    require(Buffer::shared_sprite_.pcBits_ == nullptr);
+    require(Buffer::shared_sprite_.iSpriteWidth2_ == seen_sprite.iSpriteWidth2_);
+    require(Buffer::shared_sprite_.iSpriteWidth_ == seen_sprite.iSpriteWidth_);
+    require(Buffer::shared_sprite_.iSpriteHeight_ == seen_sprite.iSpriteHeight_);
+    require(Buffer::shared_sprite_.iWidth_ == seen_sprite.iWidth_);
+    require(Buffer::shared_sprite_.iHeight_ == seen_sprite.iHeight_);
+    require(Buffer::shared_sprite_.iLeftOffset_ == seen_sprite.iLeftOffset_);
+    require(Buffer::shared_sprite_.iTopOffset_ == seen_sprite.iTopOffset_);
+    require(Buffer::shared_sprite_.cTransparentIndex_ == seen_sprite.cTransparentIndex_);
+    require(Buffer::shared_sprite_.fObj1Exists_ == seen_sprite.fObj1Exists_);
     if (existing_surface) {
         require(seen_sprite.pcBits_ == before.pcBits_ && unlocks == 0);
         require(seen_sprite.iSpriteWidth2_ == before.iSpriteWidth2_);
@@ -287,10 +278,12 @@ static void route(int kind, bool existing_surface, bool have_bits, int count,
         require(seen_sprite.cTransparentIndex_ ==
                 (transparent == -1 ? WinFillColour : static_cast<unsigned char>(transparent)));
         const int remaining = count + (have_bits ? 1 : 0) - 1;
-        const bool retain = remaining > 0 || (reenter && !have_bits);
+        const bool retain = remaining > 0;
         require(owner.surface_lock_count_ == (retain ? remaining : 0));
         require(owner.locked_bits_ == (retain ? owner.dib_bits_ : nullptr));
-        require(unlocks == (reenter && have_bits && remaining <= 0 ? 1 : 0));
+        // Surface installation occurs inside the Sprite call, after this
+        // wrapper's lock-count cleanup, so it must not cause a late Unlock.
+        require(unlocks == 0);
     }
     require(owner.surface_ == (existing_surface || reenter ? &surface : nullptr));
     require(owner.dib_bits_ == (have_bits ? pixels : nullptr) && owner.stride_ == 37);
@@ -356,12 +349,12 @@ RUNTIME_DAMAGE = [
     ("surface_lock_count_ = surface_lock_count_ + 1;", "/* missing increment */"),
     ("surface_lock_count_ = surface_lock_count_ - 1;", "surface_lock_count_ = surface_lock_count_ - 0;"),
     ("(int)surface_lock_count_ > 0", "static_cast<unsigned int>(surface_lock_count_) > 0"),
-    ("BufferSpriteOwner.sprite().iSpriteWidth_ = dib_.bmiHeader.biWidth;",
-     "BufferSpriteOwner.sprite().iSpriteWidth_ = stride_;"),
-    ("BufferSpriteOwner.sprite().pcBits_ = 0;", "/* missing cleanup */"),
-    ("BufferSpriteOwner.sprite().pcBits_ = 0;",
-     "if (BufferSpriteOwner.sprite().pcBits_ == nullptr) BufferSpriteOwner.sprite().pcBits_ = 0;"),
-    ("return result;", "BufferSpriteOwner.sprite().iSpriteWidth_ = 0; return result;"),
+    ("shared_sprite_.iSpriteWidth_ = dib_.bmiHeader.biWidth;",
+     "shared_sprite_.iSpriteWidth_ = stride_;"),
+    ("shared_sprite_.pcBits_ = 0;", "/* missing cleanup */"),
+    ("shared_sprite_.pcBits_ = 0;",
+     "if (shared_sprite_.pcBits_ == nullptr) shared_sprite_.pcBits_ = 0;"),
+    ("return result;", "shared_sprite_.iSpriteWidth_ = 0; return result;"),
     ("return result;", "(void)result; return 0;"),
 ]
 

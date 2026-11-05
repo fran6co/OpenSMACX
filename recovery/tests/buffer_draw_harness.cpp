@@ -17,12 +17,6 @@ class TexHeap;
 #undef private
 Sprite::Sprite() { memset(this, 0, sizeof(*this)); }
 void Sprite::close() {}
-Sprite g_BUFFER_SPRITE;
-// Behavior-only owner seam: both product accesses and existing oracles use
-// this one Sprite. This double makes no allocation or lifetime-layout claim.
-struct BufferSpriteOwnerDouble {
-    Sprite &sprite() { return g_BUFFER_SPRITE; }
-} BufferSpriteOwner;
 const unsigned char WinFillColour = 201;
 int key_calls, blits, unlocks, draws, whole_surface_blits, draws4;
 struct Surface {
@@ -45,6 +39,7 @@ struct Surface {
 };
 class Buffer {
  public:
+    static Sprite shared_sprite_;
     Surface *surface_;
     void *locked_bits_, *dib_bits_;
     int surface_lock_count_, stride_;
@@ -55,11 +50,12 @@ class Buffer {
     int draw(Buffer *, int, int, int, int, int);
     int draw(Buffer *, int, int, int);
 };
+Sprite Buffer::shared_sprite_;
 Buffer *expected_destination;
 unsigned char *expected_bits;
 int expected_index, expected_colour, expected_stride, expected_width, expected_height;
 int Sprite::draw(Buffer *destination, int index, int x, int y, int numerator, int denominator) {
-    assert(this == &g_BUFFER_SPRITE && destination == expected_destination);
+    assert(this == &Buffer::shared_sprite_ && destination == expected_destination);
     assert(index == expected_index && x == 5 && y == 7 && numerator == 2 && denominator == 3);
     assert(pcBits_ == expected_bits && cTransparentIndex_ == expected_colour);
     assert(iSpriteWidth2_ == expected_stride && iSpriteWidth_ == expected_width);
@@ -69,7 +65,7 @@ int Sprite::draw(Buffer *destination, int index, int x, int y, int numerator, in
     return 71;
 }
 int Sprite::draw(Buffer *destination, int index, int x, int y) {
-    assert(this == &g_BUFFER_SPRITE && destination == expected_destination);
+    assert(this == &Buffer::shared_sprite_ && destination == expected_destination);
     assert(index == expected_index && x == 5 && y == 7);
     assert(pcBits_ == expected_bits && cTransparentIndex_ == expected_colour);
     assert(iSpriteWidth2_ == expected_stride && iSpriteWidth_ == expected_width);
@@ -112,7 +108,7 @@ static void six_argument_control() {
         expected_colour = mode & 4 ? 201 : 4;
         int before = draws;
         assert(source.draw(&destination, expected_index, 5, 7, 2, 3) == 71);
-        assert(draws == before + 1 && !g_BUFFER_SPRITE.pcBits_);
+        assert(draws == before + 1 && !Buffer::shared_sprite_.pcBits_);
         assert(!source.locked_bits_ && !source.surface_lock_count_ && !unlocks);
     }
     // A surface source with a software destination leaves the shared
@@ -122,23 +118,23 @@ static void six_argument_control() {
     source.dib_bits_ = pixels;
     source.locked_bits_ = retained_lock;
     source.surface_lock_count_ = 3;
-    g_BUFFER_SPRITE.pcBits_ = reinterpret_cast<unsigned char *>(retained_pixels);
+    Buffer::shared_sprite_.pcBits_ = reinterpret_cast<unsigned char *>(retained_pixels);
     expected_bits = reinterpret_cast<unsigned char *>(retained_pixels);
-    g_BUFFER_SPRITE.cTransparentIndex_ = expected_colour = 17;
-    g_BUFFER_SPRITE.iSpriteWidth2_ = expected_stride = 40;
-    g_BUFFER_SPRITE.iSpriteWidth_ = g_BUFFER_SPRITE.iWidth_ = expected_width = 23;
-    g_BUFFER_SPRITE.iSpriteHeight_ = g_BUFFER_SPRITE.iHeight_ = expected_height = 19;
-    Sprite retained_descriptor = g_BUFFER_SPRITE;
+    Buffer::shared_sprite_.cTransparentIndex_ = expected_colour = 17;
+    Buffer::shared_sprite_.iSpriteWidth2_ = expected_stride = 40;
+    Buffer::shared_sprite_.iSpriteWidth_ = Buffer::shared_sprite_.iWidth_ = expected_width = 23;
+    Buffer::shared_sprite_.iSpriteHeight_ = Buffer::shared_sprite_.iHeight_ = expected_height = 19;
+    Sprite retained_descriptor = Buffer::shared_sprite_;
     expected_index = -1;
     assert(source.draw(&destination, -1, 5, 7, 2, 3) == 71);
-    assert(!g_BUFFER_SPRITE.pcBits_);
+    assert(!Buffer::shared_sprite_.pcBits_);
     assert(source.locked_bits_ == retained_lock && source.surface_lock_count_ == 3);
     assert(!unlocks);
     retained_descriptor.pcBits_ = 0;
-    assert(memcmp(&g_BUFFER_SPRITE, &retained_descriptor, sizeof(Sprite)) == 0);
-    g_BUFFER_SPRITE.pcBits_ = reinterpret_cast<unsigned char *>(pixels);
+    assert(memcmp(&Buffer::shared_sprite_, &retained_descriptor, sizeof(Sprite)) == 0);
+    Buffer::shared_sprite_.pcBits_ = reinterpret_cast<unsigned char *>(pixels);
     Buffer::release_buff_sprite();
-    assert(!g_BUFFER_SPRITE.pcBits_ && !unlocks);
+    assert(!Buffer::shared_sprite_.pcBits_ && !unlocks);
 }
 
 static void four_argument_control() {
@@ -172,7 +168,7 @@ static void four_argument_control() {
         expected_colour = mode & 4 ? 201 : 4;
         int before = draws4;
         assert(source.draw(&destination, expected_index, 5, 7) == 73);
-        assert(draws4 == before + 1 && !g_BUFFER_SPRITE.pcBits_);
+        assert(draws4 == before + 1 && !Buffer::shared_sprite_.pcBits_);
         assert(!source.locked_bits_ && !source.surface_lock_count_ && !unlocks);
     }
     source.surface_ = &from; destination.surface_ = 0;
@@ -180,20 +176,20 @@ static void four_argument_control() {
     source.dib_bits_ = pixels;
     source.locked_bits_ = retained_lock;
     source.surface_lock_count_ = 3;
-    g_BUFFER_SPRITE.pcBits_ = reinterpret_cast<unsigned char *>(retained_pixels);
+    Buffer::shared_sprite_.pcBits_ = reinterpret_cast<unsigned char *>(retained_pixels);
     expected_bits = reinterpret_cast<unsigned char *>(retained_pixels);
-    g_BUFFER_SPRITE.cTransparentIndex_ = expected_colour = 17;
-    g_BUFFER_SPRITE.iSpriteWidth2_ = expected_stride = 40;
-    g_BUFFER_SPRITE.iSpriteWidth_ = g_BUFFER_SPRITE.iWidth_ = expected_width = 23;
-    g_BUFFER_SPRITE.iSpriteHeight_ = g_BUFFER_SPRITE.iHeight_ = expected_height = 19;
-    Sprite retained_descriptor = g_BUFFER_SPRITE;
+    Buffer::shared_sprite_.cTransparentIndex_ = expected_colour = 17;
+    Buffer::shared_sprite_.iSpriteWidth2_ = expected_stride = 40;
+    Buffer::shared_sprite_.iSpriteWidth_ = Buffer::shared_sprite_.iWidth_ = expected_width = 23;
+    Buffer::shared_sprite_.iSpriteHeight_ = Buffer::shared_sprite_.iHeight_ = expected_height = 19;
+    Sprite retained_descriptor = Buffer::shared_sprite_;
     expected_index = -1;
     assert(source.draw(&destination, -1, 5, 7) == 73);
-    assert(!g_BUFFER_SPRITE.pcBits_);
+    assert(!Buffer::shared_sprite_.pcBits_);
     assert(source.locked_bits_ == retained_lock && source.surface_lock_count_ == 3);
     assert(!unlocks);
     retained_descriptor.pcBits_ = 0;
-    assert(memcmp(&g_BUFFER_SPRITE, &retained_descriptor, sizeof(Sprite)) == 0);
+    assert(memcmp(&Buffer::shared_sprite_, &retained_descriptor, sizeof(Sprite)) == 0);
 }
 
 static const bool four_argument_first = false;

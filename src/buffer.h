@@ -22,6 +22,8 @@
 #include "spot.h"
 #include "sprite.h"
 
+struct BufferSpecialText;
+
 extern "C" int __cdecl sub_62d100();
 
 class Palette;
@@ -231,6 +233,8 @@ void draw_dest_unk1(Buffer *, int, int, int, int, unsigned char *);
   void setup_buff_sprite(int colour);
   static void release_buff_sprite();
  private:
+  static BufferSpecialText special_texts_[10];
+  static Sprite shared_sprite_;
   void prepare_shared_sprite(int colour);
 
  public:

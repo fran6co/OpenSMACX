@@ -104,9 +104,6 @@ struct Sprite {
         return seen.result = 0x369c;
     }
 };
-static Sprite g_sprite = {};
-struct SpriteOwner { Sprite &sprite() { return g_sprite; } };
-static SpriteOwner BufferSpriteOwner;
 
 struct IDirectDrawSurface2 {
     int unlocks = 0;
@@ -115,6 +112,7 @@ struct IDirectDrawSurface2 {
 };
 struct Dib { struct { int biWidth, biHeight; } bmiHeader; };
 struct Buffer {
+    static Sprite shared_sprite_;
     void *locked_bits_;
     void *dib_bits_;
     IDirectDrawSurface2 *surface_;
@@ -124,17 +122,18 @@ struct Buffer {
     int draw_dest(Buffer *, int, int, int, int, int, unsigned char *);
     int draw_multi_table_dest(Buffer *, int, int, int, int, int, ColorTable *);
 };
+Sprite Buffer::shared_sprite_ = {};
 
 ACTUAL_METHODS
 
 static void reset_sprite() {
-    g_sprite = {};
-    g_sprite.pcBits_ = reinterpret_cast<unsigned char *>(uintptr_t(0x1110));
-    g_sprite.iSpriteWidth2_ = 71; g_sprite.iSpriteWidth_ = 72;
-    g_sprite.iSpriteHeight_ = 73; g_sprite.iWidth_ = 74;
-    g_sprite.iHeight_ = 75; g_sprite.iLeftOffset_ = 76;
-    g_sprite.iTopOffset_ = 77; g_sprite.cTransparentIndex_ = 78;
-    g_sprite.fObj1Exists_ = 79;
+    Buffer::shared_sprite_ = {};
+    Buffer::shared_sprite_.pcBits_ = reinterpret_cast<unsigned char *>(uintptr_t(0x1110));
+    Buffer::shared_sprite_.iSpriteWidth2_ = 71; Buffer::shared_sprite_.iSpriteWidth_ = 72;
+    Buffer::shared_sprite_.iSpriteHeight_ = 73; Buffer::shared_sprite_.iWidth_ = 74;
+    Buffer::shared_sprite_.iHeight_ = 75; Buffer::shared_sprite_.iLeftOffset_ = 76;
+    Buffer::shared_sprite_.iTopOffset_ = 77; Buffer::shared_sprite_.cTransparentIndex_ = 78;
+    Buffer::shared_sprite_.fObj1Exists_ = 79;
 }
 
 static int invoke(int route, Buffer &owner, Buffer *destination, int a2,
@@ -176,7 +175,7 @@ static void check_setup_path(int route, bool has_bits, int initial_count) {
     require(seen.logical_width == 13 && seen.logical_height == -9);
     require(seen.left == 0 && seen.top == 0 && seen.colour == WinFillColour);
     require(seen.object_exists == 0);
-    require(g_sprite.pcBits_ == nullptr);
+    require(Buffer::shared_sprite_.pcBits_ == nullptr);
 
     const int after_increment = initial_count + (has_bits ? 1 : 0);
     const int after_decrement = after_increment - 1;
@@ -219,7 +218,7 @@ static void check_existing_surface_skips_setup(int route) {
     require(seen.left == 76 && seen.top == 77 && seen.colour == 78);
     require(seen.object_exists == 79);
     require(owner.surface_lock_count_ == 7 && owner.locked_bits_ == pixels);
-    require(surface.unlocks == 0 && g_sprite.pcBits_ == nullptr);
+    require(surface.unlocks == 0 && Buffer::shared_sprite_.pcBits_ == nullptr);
 }
 
 int main() {

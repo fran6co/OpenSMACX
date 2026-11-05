@@ -70,15 +70,11 @@ struct Font {
     int width(char *, int length) { ++width_calls; return length; }
 };
 struct SpecialText { uint32_t color_; RECT bounds[2]; };
-struct SpecialTextOwner {
-    SpecialText value = {};
-    SpecialText &at(int) { return value; }
-};
-static SpecialTextOwner BufferSpecialTextsOwner;
 
 typedef int (__cdecl *BufferWriteRawCallback)(LPSTR, int, int, int);
 class Buffer {
 public:
+    static SpecialText special_texts_[10];
     Font *fonts_[4];
     uint32_t text_parameters_[4][4];
     BufferWriteRawCallback field_8_;
@@ -108,6 +104,7 @@ public:
     void set_text_color3(int, int, int, int);
     void set_text_color_hyper(int, int, int, int);
 };
+SpecialText Buffer::special_texts_[10] = {};
 
 /* ACTUAL_WRITE_RAW_L */
 /* ACTUAL_SET_COLOR_0 */
@@ -224,6 +221,11 @@ int main() {
 
 def source_fixture(mutation: str | None = None) -> str:
     source = SOURCE.read_text(encoding="utf-8")
+    header = HEADER.read_text(encoding="utf-8")
+    assert "static BufferSpecialText special_texts_[10];" in header
+    assert "BufferSpecialText Buffer::special_texts_[10];" in source
+    assert "special_texts_[special]" in source
+    assert "BufferSpecialTextsOwner.at(special)" not in source
     raw = body(source, "int Buffer::write_raw_l(char *text, int x, int y, int length)")
     setters = [
         body(source, "void Buffer::set_text_color(int color1, int color2, int color3, int color4)"),

@@ -91,7 +91,6 @@ struct Sprite {
     int draw_dest_unk2(Buffer *, int, int, int, unsigned char *);
 };
 Sprite g_BUFFER_SPRITE;
-struct SharedSpriteOwnerDouble { Sprite &sprite() { return g_BUFFER_SPRITE; } } BufferSpriteOwner;
 struct SpriteNoop { int draw_noop(Buffer *, int, int, int, int); };
 
 struct IDirectDrawSurface2 {
@@ -102,6 +101,7 @@ struct IDirectDrawSurface2 {
 struct Dib { struct { int biWidth, biHeight; } bmiHeader; };
 
 struct Buffer {
+    static Sprite shared_sprite_;
     void *locked_bits_;
     void *dib_bits_;
     IDirectDrawSurface2 *surface_;
@@ -112,40 +112,41 @@ struct Buffer {
     int draw(Buffer *, int, int, int, unsigned char *);
     int draw_dest_unk2(Buffer *, int, int, int, unsigned char *);
 };
+Sprite Buffer::shared_sprite_;
 
 static void observe(int route, Buffer *destination, int transparent,
                     int x, int y, uintptr_t table) {
     seen.route = route; seen.destination = destination;
     seen.transparent = transparent; seen.x = x; seen.y = y;
-    seen.table = table; seen.bits = g_BUFFER_SPRITE.pcBits_;
-    seen.pitch = g_BUFFER_SPRITE.iSpriteWidth2_;
-    seen.width = g_BUFFER_SPRITE.iSpriteWidth_;
-    seen.sprite_height = g_BUFFER_SPRITE.iSpriteHeight_;
-    seen.logical_width = g_BUFFER_SPRITE.iWidth_;
-    seen.logical_height = g_BUFFER_SPRITE.iHeight_;
-    seen.left = g_BUFFER_SPRITE.iLeftOffset_;
-    seen.top = g_BUFFER_SPRITE.iTopOffset_;
-    seen.colour = g_BUFFER_SPRITE.cTransparentIndex_;
-    seen.object_exists = g_BUFFER_SPRITE.fObj1Exists_;
+    seen.table = table; seen.bits = Buffer::shared_sprite_.pcBits_;
+    seen.pitch = Buffer::shared_sprite_.iSpriteWidth2_;
+    seen.width = Buffer::shared_sprite_.iSpriteWidth_;
+    seen.sprite_height = Buffer::shared_sprite_.iSpriteHeight_;
+    seen.logical_width = Buffer::shared_sprite_.iWidth_;
+    seen.logical_height = Buffer::shared_sprite_.iHeight_;
+    seen.left = Buffer::shared_sprite_.iLeftOffset_;
+    seen.top = Buffer::shared_sprite_.iTopOffset_;
+    seen.colour = Buffer::shared_sprite_.cTransparentIndex_;
+    seen.object_exists = Buffer::shared_sprite_.fObj1Exists_;
 }
 int Sprite::draw_noop(Buffer *destination, int transparent, int x, int y,
                       int table) {
     observe(0, destination, transparent, x, y, static_cast<uintptr_t>(table));
-    if (replace_bits_during_call) g_BUFFER_SPRITE.pcBits_ = replacement_bits;
+    if (replace_bits_during_call) Buffer::shared_sprite_.pcBits_ = replacement_bits;
     return seen.result = 0x1357;
 }
 int Sprite::draw(Buffer *destination, int transparent, int x, int y,
                  unsigned char *table) {
     observe(1, destination, transparent, x, y,
             reinterpret_cast<uintptr_t>(table));
-    if (replace_bits_during_call) g_BUFFER_SPRITE.pcBits_ = replacement_bits;
+    if (replace_bits_during_call) Buffer::shared_sprite_.pcBits_ = replacement_bits;
     return seen.result = 0x2468;
 }
 int Sprite::draw_dest_unk2(Buffer *destination, int transparent, int x, int y,
                            unsigned char *table) {
     observe(2, destination, transparent, x, y,
             reinterpret_cast<uintptr_t>(table));
-    if (replace_bits_during_call) g_BUFFER_SPRITE.pcBits_ = replacement_bits;
+    if (replace_bits_during_call) Buffer::shared_sprite_.pcBits_ = replacement_bits;
     return seen.result = 0x369c;
 }
 
@@ -178,17 +179,17 @@ static void check_route(int route, bool surface_path, bool absent_bits,
     owner.dib_.bmiHeader.biWidth = 13;
     owner.dib_.bmiHeader.biHeight = negative_height ? -9 : 9;
 
-    g_BUFFER_SPRITE = {};
-    g_BUFFER_SPRITE.pcBits_ = surface_path ? pixels : nullptr;
-    g_BUFFER_SPRITE.iSpriteWidth2_ = 71;
-    g_BUFFER_SPRITE.iSpriteWidth_ = 72;
-    g_BUFFER_SPRITE.iSpriteHeight_ = 73;
-    g_BUFFER_SPRITE.iWidth_ = 74;
-    g_BUFFER_SPRITE.iHeight_ = 75;
-    g_BUFFER_SPRITE.iLeftOffset_ = 76;
-    g_BUFFER_SPRITE.iTopOffset_ = 77;
-    g_BUFFER_SPRITE.cTransparentIndex_ = 78;
-    g_BUFFER_SPRITE.fObj1Exists_ = 79;
+    Buffer::shared_sprite_ = {};
+    Buffer::shared_sprite_.pcBits_ = surface_path ? pixels : nullptr;
+    Buffer::shared_sprite_.iSpriteWidth2_ = 71;
+    Buffer::shared_sprite_.iSpriteWidth_ = 72;
+    Buffer::shared_sprite_.iSpriteHeight_ = 73;
+    Buffer::shared_sprite_.iWidth_ = 74;
+    Buffer::shared_sprite_.iHeight_ = 75;
+    Buffer::shared_sprite_.iLeftOffset_ = 76;
+    Buffer::shared_sprite_.iTopOffset_ = 77;
+    Buffer::shared_sprite_.cTransparentIndex_ = 78;
+    Buffer::shared_sprite_.fObj1Exists_ = 79;
     seen = {};
     replace_bits_during_call = replace_bits;
 
@@ -227,7 +228,7 @@ static void check_route(int route, bool surface_path, bool absent_bits,
         }
     }
     // Every method clears after the callee has observed the published pointer.
-    require(g_BUFFER_SPRITE.pcBits_ == nullptr);
+    require(Buffer::shared_sprite_.pcBits_ == nullptr);
 }
 
 int main() {
@@ -277,11 +278,11 @@ def test_actual_buffer_draw_sibling_controls(actual_executable):
 @pytest.mark.parametrize("method,old,new", [
     ("draw_unk2", "draw_noop(source,", "draw_noop(this,"),
     ("draw", "source, transparent_in, x, y, table)", "source, transparent, x, y, table)"),
-    ("draw_dest_unk2", "BufferSpriteOwner.sprite().pcBits_ = 0;", "/* missing clear */"),
+    ("draw_dest_unk2", "shared_sprite_.pcBits_ = 0;", "/* missing clear */"),
     ("draw_dest_unk2", "surface_lock_count_ = surface_lock_count_ - 1;\n            if ((int)surface_lock_count_ > 0) {",
      "if ((int)surface_lock_count_ > 0) {"),
-    ("draw_dest_unk2", "BufferSpriteOwner.sprite().pcBits_ = 0;",
-     "if (BufferSpriteOwner.sprite().pcBits_ == nullptr) BufferSpriteOwner.sprite().pcBits_ = 0;"),
+    ("draw_dest_unk2", "shared_sprite_.pcBits_ = 0;",
+     "if (shared_sprite_.pcBits_ == nullptr) shared_sprite_.pcBits_ = 0;"),
 ])
 def test_actual_buffer_draw_mutations_fail(tmp_path, method, old, new):
     methods = actual_source()

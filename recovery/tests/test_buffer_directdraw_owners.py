@@ -37,18 +37,16 @@ def actual_host_bodies():
     multi = body_after(
         "int Buffer::draw_multi_table_dest(Buffer * a1, int a2, int a3, int a4, int a5, int a6, ColorTable * a7)")
 
-    # Product COM dispatch and receiver ownership must already be typed.
-    assert "IDirectDrawSurface2 *surface;" in pixel
-    assert "surface = surface_;" in pixel and pixel.count("surface = surface_;") == 2
-    assert "surface->Lock(nullptr, &description, 1, nullptr)" in pixel
-    assert "surface->Unlock(locked_bits_)" in pixel
+    # Product COM dispatch uses the Buffer's live surface receiver directly.
+    # Preserve the call and ordering contract without fixing a temporary name.
+    assert "surface_->Lock(nullptr, &description, DDLOCK_WAIT, nullptr)" in pixel
+    assert "surface_->Unlock(locked_bits_)" in pixel
     assert "LockFn" not in pixel and "UnlockFn" not in pixel
     assert "description.dwSize = sizeof(description);" in pixel
     assert "DDSURFACEDESC description =" not in pixel
     assert "memset(&description" not in pixel
-    assert pixel.index("surface = surface_;") < pixel.index("surface->Lock(")
-    assert pixel.rindex("surface = surface_;") > pixel.index("after_write:")
-    assert pixel.index("surface->Unlock(") > pixel.rindex("surface = surface_;")
+    assert pixel.index("description.dwSize = sizeof(description);") < pixel.index("surface_->Lock(")
+    assert pixel.index("surface_->Lock(") < pixel.index("surface_->Unlock(locked_bits_)")
 
     for body in (draw, multi):
         assert "IDirectDrawSurface2 *surface = surface_;" in body
@@ -96,6 +94,7 @@ static void require(bool condition, const char *what) {
 }
 typedef uint32_t DWORD;
 typedef void *LPVOID;
+enum { DDLOCK_WAIT = 1 };
 struct DDSURFACEDESC { DWORD dwSize; int32_t lPitch; void *lpSurface; };
 struct RECT { int left, top, right, bottom; };
 struct Header { int biWidth, biHeight; };
@@ -140,13 +139,9 @@ struct Sprite {
         multi_table=a7; return call_result;
     }
 };
-static Sprite g_BUFFER_SPRITE = {};
-struct BufferSpriteOwnerAdapter {
-    Sprite &sprite() { return g_BUFFER_SPRITE; }
-};
-static BufferSpriteOwnerAdapter BufferSpriteOwner;
 static int WinFillColour = 13;
 struct Buffer {
+    static Sprite shared_sprite_;
     void *dib_bits_;
     IDirectDrawSurface2 *surface_;
     void *locked_bits_;
@@ -157,6 +152,7 @@ struct Buffer {
     int draw_dest(Buffer *,int,int,int,int,int,unsigned char *);
     int draw_multi_table_dest(Buffer *,int,int,int,int,int,ColorTable *);
 };
+Sprite Buffer::shared_sprite_ = {};
 static Buffer *lock_mutation_buffer;
 static IDirectDrawSurface2 *lock_mutation_target;
 static bool mutate_surface_on_lock;
@@ -197,11 +193,11 @@ static void reset_fake() {
     lock_calls=unlock_calls=0; last_unlock_receiver=last_unlock_bits=0;
     lock_status=0; mutate_surface_on_lock=false;
     lock_mutation_buffer=0; lock_mutation_target=0;
-    g_BUFFER_SPRITE.call_kind=0; g_BUFFER_SPRITE.call_result=0x2468;
-    g_BUFFER_SPRITE.pcBits_=reinterpret_cast<unsigned char *>(1);
-    g_BUFFER_SPRITE.seen_pc_bits=0; g_BUFFER_SPRITE.seen_pitch=0;
-    g_BUFFER_SPRITE.seen_width=0; g_BUFFER_SPRITE.seen_height=0;
-    g_BUFFER_SPRITE.seen_transparent=0;
+    Buffer::shared_sprite_.call_kind=0; Buffer::shared_sprite_.call_result=0x2468;
+    Buffer::shared_sprite_.pcBits_=reinterpret_cast<unsigned char *>(1);
+    Buffer::shared_sprite_.seen_pc_bits=0; Buffer::shared_sprite_.seen_pitch=0;
+    Buffer::shared_sprite_.seen_width=0; Buffer::shared_sprite_.seen_height=0;
+    Buffer::shared_sprite_.seen_transparent=0;
 }
 '''
 
@@ -259,43 +255,43 @@ int main() {
     // exact arguments and the wrapper clears only pcBits_ after the call.
     reset_fake(); b.surface_=&first; b.dib_bits_=dib; b.locked_bits_=pixels;
     b.surface_lock_count_=17; b.stride_=19;
-    g_BUFFER_SPRITE.call_result=0x3456;
+    Buffer::shared_sprite_.call_result=0x3456;
     require(b.draw_dest(&target, -1, -2, 3, 4, 5, table)==0x3456,
             "draw_dest forwards result");
-    require(g_BUFFER_SPRITE.call_kind==1 && g_BUFFER_SPRITE.seen_buffer==&target &&
-            g_BUFFER_SPRITE.args[0]==-1 && g_BUFFER_SPRITE.args[1]==-2 &&
-            g_BUFFER_SPRITE.args[2]==3 && g_BUFFER_SPRITE.args[3]==4 &&
-            g_BUFFER_SPRITE.args[4]==5 && g_BUFFER_SPRITE.table==table,
+    require(Buffer::shared_sprite_.call_kind==1 && Buffer::shared_sprite_.seen_buffer==&target &&
+            Buffer::shared_sprite_.args[0]==-1 && Buffer::shared_sprite_.args[1]==-2 &&
+            Buffer::shared_sprite_.args[2]==3 && Buffer::shared_sprite_.args[3]==4 &&
+            Buffer::shared_sprite_.args[4]==5 && Buffer::shared_sprite_.table==table,
             "draw_dest exact Sprite arguments");
-    require(g_BUFFER_SPRITE.pcBits_==0 && b.surface_lock_count_==17 &&
+    require(Buffer::shared_sprite_.pcBits_==0 && b.surface_lock_count_==17 &&
             b.locked_bits_==pixels && unlock_calls==0,
             "draw_dest surface path remains passthrough");
-    require(g_BUFFER_SPRITE.seen_pc_bits==reinterpret_cast<unsigned char *>(1),
+    require(Buffer::shared_sprite_.seen_pc_bits==reinterpret_cast<unsigned char *>(1),
             "draw_dest invokes Sprite before only pcBits_ is cleared");
 
     // DIB branch stages the global Sprite, decrements the hold, and only
     // clears lock state after its original count condition.
     reset_fake(); b.surface_=0; b.dib_bits_=dib; b.locked_bits_=pixels;
     b.surface_lock_count_=0; b.stride_=31; b.dib_.bmiHeader=Header{6,-3};
-    g_BUFFER_SPRITE.call_result=0x4567;
+    Buffer::shared_sprite_.call_result=0x4567;
     require(b.draw_multi_table_dest(&target, -1, 8, 9, 10, 11, multi_tables)==0x4567,
             "multi-table draw result");
-    require(g_BUFFER_SPRITE.call_kind==2 && g_BUFFER_SPRITE.seen_buffer==&target &&
-            g_BUFFER_SPRITE.args[0]==-1 && g_BUFFER_SPRITE.args[1]==8 &&
-            g_BUFFER_SPRITE.args[2]==9 && g_BUFFER_SPRITE.args[3]==10 &&
-            g_BUFFER_SPRITE.args[4]==11 && g_BUFFER_SPRITE.multi_table==multi_tables,
+    require(Buffer::shared_sprite_.call_kind==2 && Buffer::shared_sprite_.seen_buffer==&target &&
+            Buffer::shared_sprite_.args[0]==-1 && Buffer::shared_sprite_.args[1]==8 &&
+            Buffer::shared_sprite_.args[2]==9 && Buffer::shared_sprite_.args[3]==10 &&
+            Buffer::shared_sprite_.args[4]==11 && Buffer::shared_sprite_.multi_table==multi_tables,
             "multi-table exact Sprite arguments");
-    require(g_BUFFER_SPRITE.iSpriteWidth2_==31 &&
-            g_BUFFER_SPRITE.iSpriteWidth_==6 &&
-            g_BUFFER_SPRITE.iSpriteHeight_==3 &&
-            g_BUFFER_SPRITE.cTransparentIndex_==WinFillColour,
+    require(Buffer::shared_sprite_.iSpriteWidth2_==31 &&
+            Buffer::shared_sprite_.iSpriteWidth_==6 &&
+            Buffer::shared_sprite_.iSpriteHeight_==3 &&
+            Buffer::shared_sprite_.cTransparentIndex_==WinFillColour,
             "multi-table staged Sprite metadata and color fallback");
-    require(g_BUFFER_SPRITE.seen_pc_bits==reinterpret_cast<unsigned char *>(dib) &&
-            g_BUFFER_SPRITE.seen_pitch==31 && g_BUFFER_SPRITE.seen_width==6 &&
-            g_BUFFER_SPRITE.seen_height==3 &&
-            g_BUFFER_SPRITE.seen_transparent==13,
+    require(Buffer::shared_sprite_.seen_pc_bits==reinterpret_cast<unsigned char *>(dib) &&
+            Buffer::shared_sprite_.seen_pitch==31 && Buffer::shared_sprite_.seen_width==6 &&
+            Buffer::shared_sprite_.seen_height==3 &&
+            Buffer::shared_sprite_.seen_transparent==13,
             "multi-table Sprite observes metadata before post-call reset");
-    require(g_BUFFER_SPRITE.pcBits_==0 && b.locked_bits_==0 &&
+    require(Buffer::shared_sprite_.pcBits_==0 && b.locked_bits_==0 &&
             b.surface_lock_count_==0 && unlock_calls==0,
             "multi-table DIB cleanup order");
     require(munmap(pixels, 4096)==0 && munmap(dib, 4096)==0,

@@ -72,11 +72,9 @@ struct MockSprite {
     args[3]=n; args[4]=d; args[5]=(table!=0);
   }
 };
-struct BufferSpriteOwnerType { MockSprite value; MockSprite &sprite(){return value;} };
-BufferSpriteOwnerType BufferSpriteOwner;
-
 class BufferMock {
  public:
+  static MockSprite shared_sprite_;
   MockSurface *surface_;
   LPVOID dib_bits_, locked_bits_;
   int surface_lock_count_;
@@ -92,15 +90,16 @@ class BufferMock {
  private:
   void prepare_shared_sprite(int colour);
 };
+MockSprite BufferMock::shared_sprite_;
 // PREPARE
 // SETUP
 // RELEASE
 // MONO
 // UNIT
 
-static void clean_sprite() { BufferSpriteOwner.value=MockSprite(); }
+static void clean_sprite() { BufferMock::shared_sprite_=MockSprite(); }
 static void check_descriptor(const unsigned char *bits) {
-  const MockSprite &s=BufferSpriteOwner.value;
+  const MockSprite &s=BufferMock::shared_sprite_;
   assert(s.pcBits_==bits && s.iSpriteWidth2_==29);
   assert(s.iSpriteWidth_==23 && s.iSpriteHeight_==17);
   assert(s.iWidth_==23 && s.iHeight_==17);
@@ -116,60 +115,60 @@ int main() {
   check_descriptor(pixels);
   assert(b.locked_bits_==0 && b.surface_lock_count_==0);
   BufferMock::release_buff_sprite();
-  assert(BufferSpriteOwner.value.pcBits_==0);
+  assert(BufferMock::shared_sprite_.pcBits_==0);
 
   clean_sprite(); b.dib_bits_=0; b.locked_bits_=pixels; b.surface_lock_count_=0;
   b.setup_buff_sprite(0x123);
-  assert(BufferSpriteOwner.value.pcBits_==0 && b.locked_bits_==0);
-  assert(b.surface_lock_count_==0 && BufferSpriteOwner.value.cTransparentIndex_==0x23);
+  assert(BufferMock::shared_sprite_.pcBits_==0 && b.locked_bits_==0);
+  assert(b.surface_lock_count_==0 && BufferMock::shared_sprite_.cTransparentIndex_==0x23);
 
   clean_sprite(); b.dib_bits_=pixels; b.surface_lock_count_=4;
   b.setup_buff_sprite(0x123);
-  assert(BufferSpriteOwner.value.pcBits_==pixels && b.locked_bits_==pixels);
-  assert(b.surface_lock_count_==4 && BufferSpriteOwner.value.cTransparentIndex_==0x23);
+  assert(BufferMock::shared_sprite_.pcBits_==pixels && b.locked_bits_==pixels);
+  assert(b.surface_lock_count_==4 && BufferMock::shared_sprite_.cTransparentIndex_==0x23);
 
   // The setup guard exits on a non-null surface before publication; reaching
   // its later surface arm would require alias mutation outside this model.
   clean_sprite(); MockSurface surface; b.surface_=&surface;
   b.locked_bits_=pixels; b.surface_lock_count_=7;
-  BufferSpriteOwner.value.pcBits_=pixels;
-  BufferSpriteOwner.value.cTransparentIndex_=0x44;
+  BufferMock::shared_sprite_.pcBits_=pixels;
+  BufferMock::shared_sprite_.cTransparentIndex_=0x44;
   b.setup_buff_sprite(-1);
-  assert(BufferSpriteOwner.value.pcBits_==pixels);
-  assert(BufferSpriteOwner.value.cTransparentIndex_==0x44);
+  assert(BufferMock::shared_sprite_.pcBits_==pixels);
+  assert(BufferMock::shared_sprite_.cTransparentIndex_==0x44);
   assert(b.locked_bits_==pixels && b.surface_lock_count_==7 && surface.unlocks==0);
 
   clean_sprite(); b.surface_=0; b.locked_bits_=0; b.surface_lock_count_=0;
   BufferMock target;
   assert(b.draw_mono(&target,-1,31,-42,9,3,5)==721);
-  assert(BufferSpriteOwner.value.kind==1 && BufferSpriteOwner.value.calls==1);
-  assert(BufferSpriteOwner.value.target_seen==&target);
-  assert(BufferSpriteOwner.value.observed_bits==pixels);
-  assert(BufferSpriteOwner.value.args[0]==1 && BufferSpriteOwner.value.args[1]==-1);
-  assert(BufferSpriteOwner.value.args[2]==31 && BufferSpriteOwner.value.args[3]==-42);
-  assert(BufferSpriteOwner.value.args[4]==9 && BufferSpriteOwner.value.args[5]==3 &&
-         BufferSpriteOwner.value.args[6]==5);
-  assert(BufferSpriteOwner.value.cTransparentIndex_==0xAB);
-  assert(BufferSpriteOwner.value.pcBits_==0 && b.locked_bits_==0 && b.surface_lock_count_==0);
+  assert(BufferMock::shared_sprite_.kind==1 && BufferMock::shared_sprite_.calls==1);
+  assert(BufferMock::shared_sprite_.target_seen==&target);
+  assert(BufferMock::shared_sprite_.observed_bits==pixels);
+  assert(BufferMock::shared_sprite_.args[0]==1 && BufferMock::shared_sprite_.args[1]==-1);
+  assert(BufferMock::shared_sprite_.args[2]==31 && BufferMock::shared_sprite_.args[3]==-42);
+  assert(BufferMock::shared_sprite_.args[4]==9 && BufferMock::shared_sprite_.args[5]==3 &&
+         BufferMock::shared_sprite_.args[6]==5);
+  assert(BufferMock::shared_sprite_.cTransparentIndex_==0xAB);
+  assert(BufferMock::shared_sprite_.pcBits_==0 && b.locked_bits_==0 && b.surface_lock_count_==0);
 
   clean_sprite();
   unsigned char table[4]={1,2,3,4};
   b.draw_dest_unk1(&target,-13,27,table);
-  assert(BufferSpriteOwner.value.kind==3 && BufferSpriteOwner.value.calls==1);
-  assert(BufferSpriteOwner.value.target_seen==&target && BufferSpriteOwner.value.table_seen==table);
-  assert(BufferSpriteOwner.value.observed_bits==pixels);
-  assert(BufferSpriteOwner.value.args[0]==1 && BufferSpriteOwner.value.args[1]==-13 &&
-         BufferSpriteOwner.value.args[2]==27 && BufferSpriteOwner.value.args[3]==1);
-  assert(BufferSpriteOwner.value.cTransparentIndex_==0xAB);
-  assert(BufferSpriteOwner.value.pcBits_==0);
+  assert(BufferMock::shared_sprite_.kind==3 && BufferMock::shared_sprite_.calls==1);
+  assert(BufferMock::shared_sprite_.target_seen==&target && BufferMock::shared_sprite_.table_seen==table);
+  assert(BufferMock::shared_sprite_.observed_bits==pixels);
+  assert(BufferMock::shared_sprite_.args[0]==1 && BufferMock::shared_sprite_.args[1]==-13 &&
+         BufferMock::shared_sprite_.args[2]==27 && BufferMock::shared_sprite_.args[3]==1);
+  assert(BufferMock::shared_sprite_.cTransparentIndex_==0xAB);
+  assert(BufferMock::shared_sprite_.pcBits_==0);
 
   clean_sprite(); b.surface_=&surface; b.locked_bits_=pixels;
-  BufferSpriteOwner.value.pcBits_=pixels;
+  BufferMock::shared_sprite_.pcBits_=pixels;
   assert(b.draw_mono(&target,-1,1,2,3,4,5)==721);
-  assert(BufferSpriteOwner.value.target_seen==&target &&
-         BufferSpriteOwner.value.observed_bits==pixels);
-  assert(BufferSpriteOwner.value.args[1]==-1 && BufferSpriteOwner.value.pcBits_==0);
-  assert(BufferSpriteOwner.value.cTransparentIndex_==0);
+  assert(BufferMock::shared_sprite_.target_seen==&target &&
+         BufferMock::shared_sprite_.observed_bits==pixels);
+  assert(BufferMock::shared_sprite_.args[1]==-1 && BufferMock::shared_sprite_.pcBits_==0);
+  assert(BufferMock::shared_sprite_.cTransparentIndex_==0);
 }
 '''
 
@@ -221,9 +220,9 @@ def test_setup_and_forwarding_mutants_compile_but_fail(compiler_name, tmp_path):
     assert result.returncode != 0
 
     clear_before_draw = MONO.replace(
-        "    int result = BufferSpriteOwner.sprite().draw_mono(",
-        "    BufferSpriteOwner.sprite().pcBits_ = 0;\n"
-        "    int result = BufferSpriteOwner.sprite().draw_mono(", 1)
+        "    int result = shared_sprite_.draw_mono(",
+        "    shared_sprite_.pcBits_ = 0;\n"
+        "    int result = BufferMock::shared_sprite_.draw_mono(", 1)
     assert clear_before_draw != MONO
     result = compile_and_run(compiler, fixture(mono=clear_before_draw),
                              "clear_before_draw", tmp_path)

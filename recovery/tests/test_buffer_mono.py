@@ -57,13 +57,14 @@ def actual_source():
         "Sprite g_BUFFER_SPRITE;",
         # Controlled owner accessor; process-start lifetime/layout are tested
         # separately. Keep the real consumer bodies and observed Sprite identity.
-        "struct SharedSpriteOwnerDouble { Sprite &sprite() { return g_BUFFER_SPRITE; } } BufferSpriteOwner;",
         "struct Buffer {", buffer_fields,
+        "static Sprite shared_sprite_;",
         "Dib dib_; void prepare_shared_sprite(int); void setup_buff_sprite(int); static void release_buff_sprite();",
         signature[0], "};",
         braced(source, "inline void Buffer::prepare_shared_sprite("),
         braced(source, "void Buffer::setup_buff_sprite("),
         braced(source, "void Buffer::release_buff_sprite("),
+        "Sprite Buffer::shared_sprite_;",
         braced(source, "int Buffer::draw_mono("),
     ])
 
@@ -92,7 +93,7 @@ unsigned char replacement[4];
 int Sprite::draw_mono(Buffer *destination, int transparent, int x, int y,
                       int colour, int numerator, int denominator) {
     ++calls;
-    require(this == &g_BUFFER_SPRITE && destination == expected_destination);
+    require(this == &Buffer::shared_sprite_ && destination == expected_destination);
     const int args[] = {transparent, x, y, colour, numerator, denominator};
     for (int i = 0; i < 6; ++i) require(args[i] == expected_args[i]);
     require(pcBits_ == expected_sprite.pcBits_);
@@ -133,15 +134,15 @@ void check(int scenario) {
     if (scenario == 6) expected_destination = nullptr;
     if (scenario == 7) replace_borrow = true;
     g_BUFFER_SPRITE = {};
-    g_BUFFER_SPRITE.pcBits_ = old_bits;
-    g_BUFFER_SPRITE.cTransparentIndex_ = 71;
-    g_BUFFER_SPRITE.iSpriteWidth2_ = 81;
-    g_BUFFER_SPRITE.iSpriteWidth_ = 82;
-    g_BUFFER_SPRITE.iSpriteHeight_ = 83;
-    g_BUFFER_SPRITE.iWidth_ = 84; g_BUFFER_SPRITE.iHeight_ = 85;
-    g_BUFFER_SPRITE.iLeftOffset_ = 86; g_BUFFER_SPRITE.iTopOffset_ = 87;
-    g_BUFFER_SPRITE.fObj1Exists_ = 88;
-    expected_sprite = g_BUFFER_SPRITE;
+    Buffer::shared_sprite_.pcBits_ = old_bits;
+    Buffer::shared_sprite_.cTransparentIndex_ = 71;
+    Buffer::shared_sprite_.iSpriteWidth2_ = 81;
+    Buffer::shared_sprite_.iSpriteWidth_ = 82;
+    Buffer::shared_sprite_.iSpriteHeight_ = 83;
+    Buffer::shared_sprite_.iWidth_ = 84; Buffer::shared_sprite_.iHeight_ = 85;
+    Buffer::shared_sprite_.iLeftOffset_ = 86; Buffer::shared_sprite_.iTopOffset_ = 87;
+    Buffer::shared_sprite_.fObj1Exists_ = 88;
+    expected_sprite = Buffer::shared_sprite_;
     expected_locked = old_bits; expected_count = 3;
     if (scenario != 5) {
         expected_sprite.pcBits_ = static_cast<unsigned char *>(source.dib_bits_);
@@ -160,9 +161,9 @@ void check(int scenario) {
     expected_args[4] = 3; expected_args[5] = 7;
     int result = source.draw_mono(expected_destination, transparent, -23, 41, 0x1F9, 3, 7);
     require(result == draw_result && calls == 1);
-    require(g_BUFFER_SPRITE.pcBits_ == nullptr);
-    require(g_BUFFER_SPRITE.cTransparentIndex_ == expected_sprite.cTransparentIndex_);
-    require(g_BUFFER_SPRITE.iSpriteWidth2_ == expected_sprite.iSpriteWidth2_);
+    require(Buffer::shared_sprite_.pcBits_ == nullptr);
+    require(Buffer::shared_sprite_.cTransparentIndex_ == expected_sprite.cTransparentIndex_);
+    require(Buffer::shared_sprite_.iSpriteWidth2_ == expected_sprite.iSpriteWidth2_);
     require(source.surface_lock_count_ == expected_count && source.locked_bits_ == expected_locked);
     require(source.dib_bits_ == (scenario == 3 || scenario == 4 ? nullptr : pixels));
     require(surface.calls == 0);
@@ -213,10 +214,10 @@ def test_actual_buffer_mono(actual_executable, scenario):
      "destination, transparent, x, y, colour & 255, numerator, denominator);", 0),
     ("destination, transparent, x, y, colour, numerator, denominator);",
      "destination, transparent, x, y, colour, denominator, numerator);", 0),
-    ("    BufferSpriteOwner.sprite().pcBits_ = 0;", "    /* missing release */", 0),
+    ("    shared_sprite_.pcBits_ = 0;", "    /* missing release */", 0),
     ("    return result;", "    return 0;", 0),
-    ("BufferSpriteOwner.sprite().iSpriteWidth2_ = stride_;",
-     "BufferSpriteOwner.sprite().iSpriteWidth2_ = dib_.bmiHeader.biWidth;", 0),
+    ("shared_sprite_.iSpriteWidth2_ = stride_;",
+     "shared_sprite_.iSpriteWidth2_ = dib_.bmiHeader.biWidth;", 0),
     ("    prepare_shared_sprite(transparent);", "    if (!destination) return 3;\n    prepare_shared_sprite(transparent);", 6),
     ("    prepare_shared_sprite(transparent);", "    if (surface_) return 3;\n    prepare_shared_sprite(transparent);", 5),
     ("++surface_lock_count_;", "/* missing acquisition */", 2),
@@ -234,11 +235,11 @@ def test_damage_compiles_but_fails(tmp_path, before, after, scenario):
 
 def test_release_before_draw_is_behavioral_damage(tmp_path):
     source = actual_source()
-    cleanup = "    BufferSpriteOwner.sprite().pcBits_ = 0;"
+    cleanup = "    shared_sprite_.pcBits_ = 0;"
     assert source.count(cleanup) == 2
     prefix, _, suffix = source.rpartition(cleanup)
     source = prefix + suffix
-    draw = "    int result = BufferSpriteOwner.sprite().draw_mono("
+    draw = "    int result = shared_sprite_.draw_mono("
     assert source.count(draw) == 1
     source = source.replace(draw, cleanup + "\n" + draw)
     executable = compile_host(tmp_path, source)

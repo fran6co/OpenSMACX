@@ -236,7 +236,7 @@ void Log::say_hex(LPCSTR str1, LPCSTR str2, int num1, int num2, int num3) {
 }
 
 // ORIGINAL: 0x00625F20 ??__ELogging@@YAXXZ 0x00625F20-0x00625F8B FILE BYTE_EXACT
-// symbol    _$E6
+// symbol    _$E8
 // size      107 bytes
 // prototype 
 // callers   0   call targets   6
@@ -258,7 +258,7 @@ void Log::say_hex(LPCSTR str1, LPCSTR str2, int num1, int num2, int num3) {
 // and atexit registration. Its original single-body byte obligation remains.
 
 // ORIGINAL: 0x00625F90 ??__FLogging@@YAXXZ 0x00625F90-0x00625FAD FILE BYTE_EXACT
-// symbol    _$E4
+// symbol    _$E6
 // size      29 bytes
 // prototype 
 // callers   0   call targets   1

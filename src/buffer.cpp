@@ -19,24 +19,24 @@
 // RECOVERY_BINDING: v1 {"evidence": ["historical deleting-thunk source src/deleting_thunks.cpp; original full spans retained: 0x005E3610-0x005E362E", "Pinned class constructor ??0Buffer@@QAE@XZ at 0x005D7210 stores original class/view table VA 0x66fdbc at 0x005D7248 (mov dword ptr [esi], 0x66fdbc); the current genuine owner vftable ??_7Buffer@@6B@ selects generated ??_GBuffer@@UAEPAXI@Z in slot 0 (+0x0) through weak entry ??_EBuffer@@UAEPAXI@Z (mode 2).", "Pinned ??_GBuffer@@UAEPAXI@Z at 0x005E3610 calls the source-mapped ??1Buffer@@QAE@XZ at 0x005D7410, then tests byte ptr [esp + 8], 1; je 0x5e3628 bypasses scalar delete when bit 0 is clear, while bit 0 set calls 0x0064557F; it save original this; call destructor; delete only when flags bit 0 is set; return saved this with ret 4.", "The real class lifetime is owned by src/buffer.cpp; its compiler-emitted deleting symbol and vftable slot carry this original identity. Hand-written adapter bodies with live adjustor callers remain until those callers are independently qualified and transferred. The linked weak/COMDAT copy is not used to choose source ownership.", "the source writer preserves the historical mapping's exactness state (historical exactness obligation retained); current compiler extent is not asserted equal to the original span"], "reason": "Bind the original Buffer scalar deleting-destructor identity to the actual compiler-emitted class deleting destructor in its genuine owner translation unit. The original constructor's pinned vptr store and the current owner's physical table slot identify this class/view; no callback/thunk body is hand-authored here."}
 // symbol    ??_GBuffer@@UAEPAXI@Z
 // kind      game
-// ORIGINAL: 0x005E37B0 _$E51 0x005E37B0-0x005E37C6 FILE
-// RECOVERY_BINDING: v1 {"evidence": ["Pinned CRT slot0x682674 selects initializer0x5e37b0..0x5e37c6, registering exit0x5e37d0..0x5e37da. Root independent complete decode confirms exclusive RET/JMP bounds; original/source-owned storage is0x9b6080 bound to?g_BUFFER@@3VBuffer@@A.", "Original startup instruction evidence: [[\"0x5e37b0\", \"mov\", \"ecx, 0x9b6080\"], [\"0x5e37b5\", \"call\", \"0x5d7210\"], [\"0x5e37ba\", \"push\", \"0x5e37d0\"], [\"0x5e37bf\", \"call\", \"0x645398\"], [\"0x5e37c4\", \"pop\", \"ecx\"], [\"0x5e37c5\", \"ret\", \"\"]]. Original exit instruction evidence: [[\"0x5e37d0\", \"mov\", \"ecx, 0x9b6080\"], [\"0x5e37d5\", \"jmp\", \"0x5d7410\"]]. Preserve constructor arguments, array counts/strides, registration and reverse destruction without authored callback stand-ins.", "Fresh complete build-iveupb5l physical src/buffer.cpp COFF selects _$E51 via .CRT$XCU, registering _$E49. Startup relocation targets: [\"?g_BUFFER@@3VBuffer@@A\", \"??0Buffer@@QAE@XZ\", \"_$E49\", \"_atexit\"]; exit targets: [\"?g_BUFFER@@3VBuffer@@A\", \"??1Buffer@@UAE@XZ\"]. Actual linked helper occurs once at CRT slot0x63f08c; selected same-owner order agrees with the pinned order.", "BaseWin/DesignWin definitions now precede their Wave globals as pinned. Existing DesignWin Wave mappings retain original names/spans and current helper overrides after fresh emission proof. Scalar constructor effects and array construction/cleanup belong to genuine source globals, classes and compiler-generated lifetime machinery.", "Current local labels are emission interpretations, not original debug names or recovered historical TU boundaries. Start bindings grant no allocation extent. Selected same-owner linked order is not full CRT/global-order, retained-selection, reference-target, dependency-provider, runtime or full-game acceptance. Guarded callbacks excluded; no claim grant or bug fix."], "reason": "Bind original startup operation to the genuine compiler-emitted lifetime of source-owned ?g_BUFFER@@3VBuffer@@A; preserve complete original identity and remaining restoration/structure obligations."}
-// symbol    _$E38
+// ORIGINAL: 0x005E37B0 _$E51 0x005E37B0-0x005E37C6 FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned CRT slot 0x00682674 selects startup 0x005E37B0..0x005E37C6, which constructs the ordinary namespace-global Buffer at 0x009B6080 and registers finalizer 0x005E37D0..0x005E37DA. This separate lifetime has no cleanup guard.", "The existing g_BUFFER object and its source ownership remain unchanged. Its generated constructor registration and destructor references identify these compiler callbacks independently of private compiler label numbering.", "Original identities, full spans and historical claims remain unchanged. Static members add no instance fields. Current compiler symbols are binding facts, not historical debug names; complete original TU boundaries, linked storage placement and game fidelity remain unproved. Fresh strict measurement is required; this binding grants no claim."], "reason": "Bind the original lifetime to ordinary typed storage and its compiler-generated initialization/destruction, preserving guard, order and restoration obligations."}
+// symbol    _$E28
 // ORIGINAL: 0x005E37D0 _$E49 0x005E37D0-0x005E37DA FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["Pinned CRT slot0x682674 selects initializer0x5e37b0..0x5e37c6, registering exit0x5e37d0..0x5e37da. Root independent complete decode confirms exclusive RET/JMP bounds; original/source-owned storage is0x9b6080 bound to?g_BUFFER@@3VBuffer@@A.", "Original startup instruction evidence: [[\"0x5e37b0\", \"mov\", \"ecx, 0x9b6080\"], [\"0x5e37b5\", \"call\", \"0x5d7210\"], [\"0x5e37ba\", \"push\", \"0x5e37d0\"], [\"0x5e37bf\", \"call\", \"0x645398\"], [\"0x5e37c4\", \"pop\", \"ecx\"], [\"0x5e37c5\", \"ret\", \"\"]]. Original exit instruction evidence: [[\"0x5e37d0\", \"mov\", \"ecx, 0x9b6080\"], [\"0x5e37d5\", \"jmp\", \"0x5d7410\"]]. Preserve constructor arguments, array counts/strides, registration and reverse destruction without authored callback stand-ins.", "Fresh complete build-iveupb5l physical src/buffer.cpp COFF selects _$E51 via .CRT$XCU, registering _$E49. Startup relocation targets: [\"?g_BUFFER@@3VBuffer@@A\", \"??0Buffer@@QAE@XZ\", \"_$E49\", \"_atexit\"]; exit targets: [\"?g_BUFFER@@3VBuffer@@A\", \"??1Buffer@@UAE@XZ\"]. Actual linked helper occurs once at CRT slot0x63f08c; selected same-owner order agrees with the pinned order.", "BaseWin/DesignWin definitions now precede their Wave globals as pinned. Existing DesignWin Wave mappings retain original names/spans and current helper overrides after fresh emission proof. Scalar constructor effects and array construction/cleanup belong to genuine source globals, classes and compiler-generated lifetime machinery.", "Current local labels are emission interpretations, not original debug names or recovered historical TU boundaries. Start bindings grant no allocation extent. Selected same-owner linked order is not full CRT/global-order, retained-selection, reference-target, dependency-provider, runtime or full-game acceptance. Guarded callbacks excluded; no claim grant or bug fix."], "reason": "Bind original exit operation to the genuine compiler-emitted lifetime of source-owned ?g_BUFFER@@3VBuffer@@A; preserve complete original identity and remaining restoration/structure obligations."}
-// symbol    _$E36
-// ORIGINAL: 0x004BF710 sub_4bf710 0x004BF710-0x004BF726 FILE
-// RECOVERY_BINDING: v1 {"evidence": ["Pinned CRT slot 0x682600 selects startup 0x4bf710..0x4bf726 and registers cleanup 0x4bf730..0x4bf73a. Complete root decode proves the exclusive RET/JMP endpoints.", "The source-owned object ?g_VEHDRAW_BUFFER@@3VBuffer@@A is selected by physical COFF constructor/destructor relocations; current emitted initializer is identified by the adjacent symbol fact. Original receiver 0x8cc298 belongs to this real global; preserve its class lifetime and registration.", "Buffer relative declaration order is PCX, interface array, middle, vehicle, special-text owner, Sprite, shared Buffer. Generated helpers are compiler output, not hand-authored address callbacks. Selected same-owner order does not establish full CRT order, dependency provider, linked preservation or runtime/game acceptance. Pinned cleanup unconditionally tail-calls Buffer::~Buffer; the resource-state checks belong to Buffer::close, not to a separate global teardown guard."], "reason": "Bind original init operation to the genuine C++ lifetime of ?g_VEHDRAW_BUFFER@@3VBuffer@@A; retain original behavior and remaining matching obligations."}
-// symbol    _$E25
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned CRT slot 0x00682674 selects startup 0x005E37B0..0x005E37C6, which constructs the ordinary namespace-global Buffer at 0x009B6080 and registers finalizer 0x005E37D0..0x005E37DA. This separate lifetime has no cleanup guard.", "The existing g_BUFFER object and its source ownership remain unchanged. Its generated constructor registration and destructor references identify these compiler callbacks independently of private compiler label numbering.", "Original identities, full spans and historical claims remain unchanged. Static members add no instance fields. Current compiler symbols are binding facts, not historical debug names; complete original TU boundaries, linked storage placement and game fidelity remain unproved. Fresh strict measurement is required; this binding grants no claim."], "reason": "Bind the original lifetime to ordinary typed storage and its compiler-generated initialization/destruction, preserving guard, order and restoration obligations."}
+// symbol    _$E26
+// ORIGINAL: 0x004BF710 sub_4bf710 0x004BF710-0x004BF726 FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned CRT slot 0x00682600 selects initializer 0x004BF710..0x004BF726 for Buffer at 0x008CC298 and registers finalizer 0x004BF730..0x004BF73A. Cleanup unconditionally tail-calls Buffer::~Buffer; resource-state checks belong to Buffer::close, not an added global teardown guard.", "Physical constructor, atexit-registration and destructor relocation graphs identify g_VEHDRAW_BUFFER independently of private label numbering. The ordinary g_BUFFER at 0x009B6080 is a separate lifetime; same-shaped code does not establish receiver identity.", "Original identities, complete spans and historical claims remain unchanged. Vehicle-rendering ownership is supported by its consumers and adjacent renderer state; complete historical TU boundaries, linked placement and game acceptance remain unproved. This binding grants no claim."], "reason": "Bind the original vehicle-rendering Buffer lifetime to its actual typed global and compiler-generated callbacks."}
+// symbol    _$E12
 // ORIGINAL: 0x004BF730 sub_4bf730 0x004BF730-0x004BF73A FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["Pinned CRT slot 0x682600 selects startup 0x4bf710..0x4bf726 and registers cleanup 0x4bf730..0x4bf73a. Complete root decode proves the exclusive RET/JMP endpoints.", "The source-owned object ?g_VEHDRAW_BUFFER@@3VBuffer@@A is selected by physical COFF constructor/destructor relocations; current emitted finalizer is identified by the adjacent symbol fact. Original receiver 0x8cc298 belongs to this real global; preserve its class lifetime and registration.", "Buffer relative declaration order is PCX, interface array, middle, vehicle, special-text owner, Sprite, shared Buffer. Generated helpers are compiler output, not hand-authored address callbacks. Selected same-owner order does not establish full CRT order, dependency provider, linked preservation or runtime/game acceptance. Pinned cleanup unconditionally tail-calls Buffer::~Buffer; the resource-state checks belong to Buffer::close, not to a separate global teardown guard."], "reason": "Bind original fini operation to the genuine C++ lifetime of ?g_VEHDRAW_BUFFER@@3VBuffer@@A; retain original behavior and remaining matching obligations."}
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned CRT slot 0x00682600 selects initializer 0x004BF710..0x004BF726 for Buffer at 0x008CC298 and registers finalizer 0x004BF730..0x004BF73A. Cleanup unconditionally tail-calls Buffer::~Buffer; resource-state checks belong to Buffer::close, not an added global teardown guard.", "Physical constructor, atexit-registration and destructor relocation graphs identify g_VEHDRAW_BUFFER independently of private label numbering. The ordinary g_BUFFER at 0x009B6080 is a separate lifetime; same-shaped code does not establish receiver identity.", "Original identities, complete spans and historical claims remain unchanged. Vehicle-rendering ownership is supported by its consumers and adjacent renderer state; complete historical TU boundaries, linked placement and game acceptance remain unproved. This binding grants no claim."], "reason": "Bind the original vehicle-rendering Buffer lifetime to its actual typed global and compiler-generated callbacks."}
+// symbol    _$E10
+// ORIGINAL: 0x005D71D0 sub_5d71d0 0x005D71D0-0x005D71E6 FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned startup 0x005D71D0..0x005D71E6 constructs the Sprite at 0x009B3A50..0x009B3A7C and registers finalizer 0x005D71F0..0x005D720F. Cleanup publishes bit 2 of the same byte 0x009B37CC before Sprite::close at 0x005E3820; constructors do not reset the guard.", "Buffer::shared_sprite_ is ordinary class-static storage defined after the special-text array. Physical compiler output supplies the shared guard and registration edges; consumers access the actual typed Sprite directly.", "Original identities, full spans and historical claims remain unchanged. Static members add no instance fields. Current compiler symbols are binding facts, not historical debug names; complete original TU boundaries, linked storage placement and game fidelity remain unproved. Fresh strict measurement is required; this binding grants no claim."], "reason": "Bind the original lifetime to ordinary typed storage and its compiler-generated initialization/destruction, preserving guard, order and restoration obligations."}
 // symbol    _$E23
-// ORIGINAL: 0x005D71D0 sub_5d71d0 0x005D71D0-0x005D71E6 FILE
-// RECOVERY_BINDING: v1 {"evidence": ["Pinned complete exclusive span and selected CRT startup pair: NewTech483880..4838A4/4838B0..4838D8, sharedSprite5D71D0..5D71E6/5D71F0..5D720F, WinBuffer5EB350..5EB366/5EB370..5EB38F. These are process-start lifetimes, not lazy statics or authored callback substitutes.", "NewTech has six actual stride2C Sprite elements at822610 with separate guard822604 mask1. Shared Buffer Sprite9B3A50 uses mask2 of existing special-text guard9B37CC; Win drawing Buffer9B6F08 uses separate guard9B6E30 mask1. Guard is published before actual reverse/direct teardown, upper bits retained and constructors do not reset it.", "Fresh complete build-4esa2of5 COFF proves owner ?BufferSpriteOwner@@3UBufferSpriteLifetime@@A with generated init symbol _$E46. Constructor/registration closures and direct cleanup guard/receiver references are physically verified; aggregate uses real compiler vector construction/destruction. Selected same-owner CRT order stays unchanged. GCC/Clang actual source controls cover prefix unwind, reverse order, shared masks and guarded reentry.", "Chosen owner types are implementation, not recovered original names or enclosing allocation proof. Exact initializer/unwind spelling, original data layout, linked retained selection and runtime/full-game fidelity remain obligations; no measurement claim is granted. Preserve prior claims and historical discoveries."], "reason": "Bind original buffer guarded global init to its genuine source-owned lifetime and actual compiler-generated closure."}
-// symbol    _$E33
-// ORIGINAL: 0x005D71F0 sub_5d71f0 0x005D71F0-0x005D720F FILE
-// RECOVERY_BINDING: v1 {"evidence": ["Pinned complete exclusive span and selected CRT startup pair: NewTech483880..4838A4/4838B0..4838D8, sharedSprite5D71D0..5D71E6/5D71F0..5D720F, WinBuffer5EB350..5EB366/5EB370..5EB38F. These are process-start lifetimes, not lazy statics or authored callback substitutes.", "NewTech has six actual stride2C Sprite elements at822610 with separate guard822604 mask1. Shared Buffer Sprite9B3A50 uses mask2 of existing special-text guard9B37CC; Win drawing Buffer9B6F08 uses separate guard9B6E30 mask1. Guard is published before actual reverse/direct teardown, upper bits retained and constructors do not reset it.", "Fresh complete build-4esa2of5 COFF proves owner ?BufferSpriteOwner@@3UBufferSpriteLifetime@@A with generated fini symbol _$E44. Constructor/registration closures and direct cleanup guard/receiver references are physically verified; aggregate uses real compiler vector construction/destruction. Selected same-owner CRT order stays unchanged. GCC/Clang actual source controls cover prefix unwind, reverse order, shared masks and guarded reentry.", "Chosen owner types are implementation, not recovered original names or enclosing allocation proof. Exact initializer/unwind spelling, original data layout, linked retained selection and runtime/full-game fidelity remain obligations; no measurement claim is granted. Preserve prior claims and historical discoveries."], "reason": "Bind original buffer guarded global fini to its genuine source-owned lifetime and actual compiler-generated closure."}
-// symbol    _$E31
+// ORIGINAL: 0x005D71F0 sub_5d71f0 0x005D71F0-0x005D720F FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned startup 0x005D71D0..0x005D71E6 constructs the Sprite at 0x009B3A50..0x009B3A7C and registers finalizer 0x005D71F0..0x005D720F. Cleanup publishes bit 2 of the same byte 0x009B37CC before Sprite::close at 0x005E3820; constructors do not reset the guard.", "Buffer::shared_sprite_ is ordinary class-static storage defined after the special-text array. Physical compiler output supplies the shared guard and registration edges; consumers access the actual typed Sprite directly.", "Original identities, full spans and historical claims remain unchanged. Static members add no instance fields. Current compiler symbols are binding facts, not historical debug names; complete original TU boundaries, linked storage placement and game fidelity remain unproved. Fresh strict measurement is required; this binding grants no claim."], "reason": "Bind the original lifetime to ordinary typed storage and its compiler-generated initialization/destruction, preserving guard, order and restoration obligations."}
+// symbol    _$E21
 #include "stdafx.h"
 
 // Distinct writable string cells observed at the original call sites.
@@ -3922,27 +3922,6 @@ int Buffer::write_right_l(char *text, int x_coord, int y_coord, int field_width,
 // All buffer blitters borrow the same Sprite descriptor. Its real object
 // definition and original construction evidence are below.
 // It shares the special-text cleanup byte, but uses its independent bit 2.
-extern uint8_t BufferSpecialTextsCleanupGuard;
-union BufferSpriteStorage {
-    char bytes[sizeof(Sprite)];
-    uint32_t alignment_[sizeof(Sprite) / sizeof(uint32_t)];
-};
-struct BufferSpriteLifetime {
-    BufferSpriteStorage storage_;
-    BufferSpriteLifetime() { new (storage_.bytes) Sprite(); }
-    ~BufferSpriteLifetime() {
-        if ((BufferSpecialTextsCleanupGuard & 2) != 0) return;
-        BufferSpecialTextsCleanupGuard |= 2;
-        sprite().Sprite::~Sprite();
-    }
-    Sprite &sprite() { return *reinterpret_cast<Sprite *>(storage_.bytes); }
-};
-static_assert(sizeof(BufferSpriteLifetime) == sizeof(Sprite),
-              "shared blit Sprite storage extent");
-static_assert(offsetof(BufferSpriteLifetime, storage_) == 0,
-              "shared blit Sprite starts at its owner identity");
-extern BufferSpriteLifetime BufferSpriteOwner;
-
 inline void Buffer::prepare_shared_sprite(int colour) {
     if (surface_ != nullptr) {
         return;
@@ -3961,16 +3940,16 @@ inline void Buffer::prepare_shared_sprite(int colour) {
     if (bits != nullptr) {
         ++surface_lock_count_;
     }
-    BufferSpriteOwner.sprite().pcBits_ = static_cast<unsigned char *>(bits);
-    BufferSpriteOwner.sprite().iSpriteWidth2_ = stride_;
-    BufferSpriteOwner.sprite().iSpriteWidth_ = dib_.bmiHeader.biWidth;
-    BufferSpriteOwner.sprite().iSpriteHeight_ = -dib_.bmiHeader.biHeight;
-    BufferSpriteOwner.sprite().iWidth_ = dib_.bmiHeader.biWidth;
-    BufferSpriteOwner.sprite().iHeight_ = -dib_.bmiHeader.biHeight;
-    BufferSpriteOwner.sprite().iLeftOffset_ = 0;
-    BufferSpriteOwner.sprite().iTopOffset_ = 0;
-    BufferSpriteOwner.sprite().cTransparentIndex_ = (uint8_t)colour;
-    BufferSpriteOwner.sprite().fObj1Exists_ = 0;
+    shared_sprite_.pcBits_ = static_cast<unsigned char *>(bits);
+    shared_sprite_.iSpriteWidth2_ = stride_;
+    shared_sprite_.iSpriteWidth_ = dib_.bmiHeader.biWidth;
+    shared_sprite_.iSpriteHeight_ = -dib_.bmiHeader.biHeight;
+    shared_sprite_.iWidth_ = dib_.bmiHeader.biWidth;
+    shared_sprite_.iHeight_ = -dib_.bmiHeader.biHeight;
+    shared_sprite_.iLeftOffset_ = 0;
+    shared_sprite_.iTopOffset_ = 0;
+    shared_sprite_.cTransparentIndex_ = (uint8_t)colour;
+    shared_sprite_.fObj1Exists_ = 0;
 
     // The same release pair `get_pixel` ends with, in the same two arms.
     if (surface_ == nullptr) {
@@ -4016,16 +3995,16 @@ void Buffer::setup_buff_sprite(int colour) {
     if (bits != nullptr) {
         ++surface_lock_count_;
     }
-    BufferSpriteOwner.sprite().pcBits_ = static_cast<unsigned char *>(bits);
-    BufferSpriteOwner.sprite().iSpriteWidth2_ = stride_;
-    BufferSpriteOwner.sprite().iSpriteWidth_ = dib_.bmiHeader.biWidth;
-    BufferSpriteOwner.sprite().iSpriteHeight_ = -dib_.bmiHeader.biHeight;
-    BufferSpriteOwner.sprite().iWidth_ = dib_.bmiHeader.biWidth;
-    BufferSpriteOwner.sprite().iHeight_ = -dib_.bmiHeader.biHeight;
-    BufferSpriteOwner.sprite().iLeftOffset_ = 0;
-    BufferSpriteOwner.sprite().iTopOffset_ = 0;
-    BufferSpriteOwner.sprite().cTransparentIndex_ = (uint8_t)colour;
-    BufferSpriteOwner.sprite().fObj1Exists_ = 0;
+    shared_sprite_.pcBits_ = static_cast<unsigned char *>(bits);
+    shared_sprite_.iSpriteWidth2_ = stride_;
+    shared_sprite_.iSpriteWidth_ = dib_.bmiHeader.biWidth;
+    shared_sprite_.iSpriteHeight_ = -dib_.bmiHeader.biHeight;
+    shared_sprite_.iWidth_ = dib_.bmiHeader.biWidth;
+    shared_sprite_.iHeight_ = -dib_.bmiHeader.biHeight;
+    shared_sprite_.iLeftOffset_ = 0;
+    shared_sprite_.iTopOffset_ = 0;
+    shared_sprite_.cTransparentIndex_ = (uint8_t)colour;
+    shared_sprite_.fObj1Exists_ = 0;
     if (surface_ == nullptr) {
         const int count = --surface_lock_count_;
         if (count <= 0) {
@@ -4056,7 +4035,7 @@ Return Value: n/a
 Status: Complete
 */
 void Buffer::release_buff_sprite() {
-    BufferSpriteOwner.sprite().pcBits_ = 0;
+    shared_sprite_.pcBits_ = 0;
 }
 
 // ORIGINAL: 0x005D84C0 ?draw@Buffer@@QAEHPAVBuffer@@HHHHH@Z 0x005D84C0-0x005D8646
@@ -4092,8 +4071,8 @@ int Buffer::draw(Buffer *destination, int index, int x, int y,
         return denominator;
     }
     prepare_shared_sprite(index);
-    int result = BufferSpriteOwner.sprite().draw(destination, index, x, y, numerator, denominator);
-    BufferSpriteOwner.sprite().pcBits_ = 0;
+    int result = shared_sprite_.draw(destination, index, x, y, numerator, denominator);
+    shared_sprite_.pcBits_ = 0;
     return result;
 }
 
@@ -4103,9 +4082,9 @@ int Buffer::draw(Buffer *destination, int index, int x, int y,
 int Buffer::draw_mono(Buffer *destination, int transparent, int x, int y,
                       int colour, int numerator, int denominator) {
     prepare_shared_sprite(transparent);
-    int result = BufferSpriteOwner.sprite().draw_mono(
+    int result = shared_sprite_.draw_mono(
         destination, transparent, x, y, colour, numerator, denominator);
-    BufferSpriteOwner.sprite().pcBits_ = 0;
+    shared_sprite_.pcBits_ = 0;
     return result;
 }
 
@@ -4129,8 +4108,8 @@ int Buffer::draw_mono(Buffer *destination, int transparent, int x, int y,
 int Buffer::draw_mono(Buffer *target, int transparent, int x, int y,
                       int colour) {
     prepare_shared_sprite(transparent);
-    int result = BufferSpriteOwner.sprite().draw_mono(target, transparent, x, y, colour);
-    BufferSpriteOwner.sprite().pcBits_ = 0;
+    int result = shared_sprite_.draw_mono(target, transparent, x, y, colour);
+    shared_sprite_.pcBits_ = 0;
     return result;
 }
 
@@ -4167,7 +4146,7 @@ int Buffer::draw(Buffer *destination, int index, int x, int y) {
         return index;
     }
     prepare_shared_sprite(index);
-    int result = BufferSpriteOwner.sprite().draw(destination, index, x, y);
+    int result = shared_sprite_.draw(destination, index, x, y);
     release_buff_sprite();
     return result;
 }
@@ -4765,17 +4744,11 @@ void Buffer::box_sprite(RECT *rect, BoxSpriteParams *params) {
     }
 }
 
-// Preserve the selected original startup order for these source-owned objects:
-// PCX, interface array, middle buffer, vehicle buffer, special texts, Sprite,
-// then the shared file-backed Sprite buffer. Cross-TU CRT order is separate.
-// Startup 44CC20 constructs this Buffer; 44CC40 destroys it. Constructor
-// 5D7254 writes the final DWORD at +584; the three independent Buffer
-// receivers in 462779..4627A1 have stride588, bounding its complete extent.
-// 0x00798668
-// Original initializer 0x44CF70 and exit 0x44CFA0 use 51 elements at stride
-// 0x588; the loader's end pointer is 0x76DC30. Image-initial storage is zero.
-// Original initializer/exit 0x44D140/0x44D160 use Buffer's complete 0x588
-// extent (constructor's final DWORD is at +0x584), initially zero.
+// Vehicle-rendering scratch Buffer: CRT slot 0x00682600 selects startup
+// 0x004BF710 and registered cleanup 0x004BF730. Its 0x588-byte extent ends
+// at 0x008CC820, the independently mapped VehDrawTurnVehicle state.
+// Interface PCX, array and popup buffers are owned by interface_assets.cpp;
+// their separate lifetimes do not establish this unit's complete CRT order.
 // RECOVERY_OBJECT: v1 0x008CC298 ?g_VEHDRAW_BUFFER@@3VBuffer@@A
 Buffer g_VEHDRAW_BUFFER;  // 0x008CC298
 
@@ -4783,37 +4756,35 @@ Buffer g_VEHDRAW_BUFFER;  // 0x008CC298
 // Native CRT slots68266C/682670 establish record-array then Sprite order.
 // Exact native shared once-guard; constructor leaves its static zero intact.
 // ORIGINAL: 0x005D7170 sub_5d7170 0x005D7170-0x005D7194 FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"reason":"The original ten-record initializer belongs to the genuine BufferSpecialTextsOwner static lifetime, not a fixed-address callback wrapper.","evidence":["Pinned 5D7170..5D7194 constructs ten records at 9B37E0 with stride30 through 5E35D0/5E35F0 and registers cleanup5D71A0.","BufferSpecialTextArrayOwner placement-default-constructs one typed BufferSpecialTextArray in its contiguous 0x1E0-byte storage; the compiler-generated array constructor owns element construction and prefix unwind, and the global initializer registers that owner's cleanup.","The original unbounded record-array identity is retained as the owner's elements_ storage member at offset zero; historical exactness is a restoration obligation, not a current matching claim."]}
-// symbol    _$E28
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned 0x005D7170..0x005D7194 constructs ten stride-0x30 records at 0x009B37E0 through constructor 0x005E35D0 and registers finalizer 0x005D71A0..0x005D71C8. Cleanup publishes bit 1 of byte 0x009B37CC before reverse destruction through 0x005E35F0, retaining other bits.", "Buffer::special_texts_[10] is ordinary class-static storage, default initialized without braces. Compiler vector construction owns prefix unwind and reverse destruction. The element constructor deliberately leaves field24, field28 and color untouched; no value initialization or authored lifetime wrapper is introduced.", "Original identities, full spans and historical claims remain unchanged. Static members add no instance fields. Current compiler symbols are binding facts, not historical debug names; complete original TU boundaries, linked storage placement and game fidelity remain unproved. Fresh strict measurement is required; this binding grants no claim."], "reason": "Bind the original lifetime to ordinary typed storage and its compiler-generated initialization/destruction, preserving guard, order and restoration obligations."}
+// symbol    _$E18
 // size      36 bytes
 // prototype 
 // callers   0   call targets   2
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 // calls     0x00645398 0x006457C2
-// RECOVERY_OBJECT: v1 0x009B37CC ?BufferSpecialTextsCleanupGuard@@3EA
-uint8_t BufferSpecialTextsCleanupGuard;
-// One true C++ static-lifetime owner for the ten records.
-// The generated initializer and registered cleanup belong to this owner;
-// their selected symbols and historical obligations remain mapped separately.
-// ORIGINAL: 0x005D71A0 sub_5d71a0 0x005D71A0-0x005D71C8 FILE
-// RECOVERY_BINDING: v1 {"reason":"The original registered cleanup belongs to BufferSpecialTextsOwner's guarded reverse teardown of actual BufferSpecialText objects.","evidence":["Pinned 5D71A0..5D71C8 tests and sets bit0 at9B37CC before invoking the reverse-array destructor for ten stride30 records at9B37E0 through5E35F0.","The guard is a separate byte:9B37D0/D4 are existing renderer globals, not padding for this owner.","The trivial 0x1E0-byte storage leaves array lifetime under explicit owner control; after preserving upper guard bits and setting bit0, the owner invokes the compiler-generated BufferSpecialTextArray destructor, which owns reverse destruction."]}
-// symbol    _$E26
+// The two direct Buffer static objects share the compiler-generated cleanup
+// guard bound below, preserving separate masks and reverse cleanup.
+// ORIGINAL: 0x005D71A0 sub_5d71a0 0x005D71A0-0x005D71C8 FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned 0x005D7170..0x005D7194 constructs ten stride-0x30 records at 0x009B37E0 through constructor 0x005E35D0 and registers finalizer 0x005D71A0..0x005D71C8. Cleanup publishes bit 1 of byte 0x009B37CC before reverse destruction through 0x005E35F0, retaining other bits.", "Buffer::special_texts_[10] is ordinary class-static storage, default initialized without braces. Compiler vector construction owns prefix unwind and reverse destruction. The element constructor deliberately leaves field24, field28 and color untouched; no value initialization or authored lifetime wrapper is introduced.", "Original identities, full spans and historical claims remain unchanged. Static members add no instance fields. Current compiler symbols are binding facts, not historical debug names; complete original TU boundaries, linked storage placement and game fidelity remain unproved. Fresh strict measurement is required; this binding grants no claim."], "reason": "Bind the original lifetime to ordinary typed storage and its compiler-generated initialization/destruction, preserving guard, order and restoration obligations."}
+// symbol    _$E15
 // size      40 bytes
 // prototype 
 // callers   0   call targets   1
 // kind      game
 // flags     sp_ready;purged_ok
 // calls     0x006456E4
-// RECOVERY_OBJECT: v3 0x009B37E0 ?BufferSpecialTexts@@3PAUBufferSpecialText@@A member ?BufferSpecialTextsOwner@@3UBufferSpecialTextArrayOwner@@A elements_
-BufferSpecialTextArrayOwner BufferSpecialTextsOwner;
+// RECOVERY_OBJECT: v4 0x009B37CC ?BufferSpecialTextsCleanupGuard@@3EA target _$S16
+// RECOVERY_OBJECT: v4 0x009B37E0 ?BufferSpecialTexts@@3PAUBufferSpecialText@@A target ?special_texts_@Buffer@@0PAUBufferSpecialText@@A
+BufferSpecialText Buffer::special_texts_[10];
 
 // Original initializer 0x005D71D0 constructs this Sprite at 0x009B3A50
 // through 0x005E37E0 and registers its cleanup; 0x005D71F0 closes it through
 // 0x005E3820. The blit setup/reset family borrows its pixel pointer rather
 // than owning another allocation. Its original storage is 0x2C zero-fill bytes.
-// RECOVERY_OBJECT: v3 0x009B3A50 0x009B3A7C ?g_BUFFER_SPRITE@@3VSprite@@A 0x005D8290 member ?BufferSpriteOwner@@3UBufferSpriteLifetime@@A storage_.bytes
-BufferSpriteLifetime BufferSpriteOwner;
+// RECOVERY_OBJECT: v4 0x009B3A50 0x009B3A7C ?g_BUFFER_SPRITE@@3VSprite@@A 0x005D8290 target ?shared_sprite_@Buffer@@0VSprite@@A
+Sprite Buffer::shared_sprite_;
 
 // See the declaration in buffer.h. Copied verbatim out of the image's .rdata,
 // four characters plus a NUL each, so the loader families append exactly what
@@ -7511,16 +7482,16 @@ int Buffer::draw_dest(Buffer *destination, int transparent_in, int x, int y,
         if (locked_bits_ != nullptr) {
             surface_lock_count_ = surface_lock_count_ + 1;
         }
-        BufferSpriteOwner.sprite().pcBits_ = static_cast<unsigned char *>(locked_bits_);
-        BufferSpriteOwner.sprite().iSpriteWidth2_ = stride_;
-        BufferSpriteOwner.sprite().iSpriteWidth_ = dib_.bmiHeader.biWidth;
-        BufferSpriteOwner.sprite().iSpriteHeight_ = -dib_.bmiHeader.biHeight;
-        BufferSpriteOwner.sprite().iWidth_ = dib_.bmiHeader.biWidth;
-        BufferSpriteOwner.sprite().iHeight_ = -dib_.bmiHeader.biHeight;
-        BufferSpriteOwner.sprite().iLeftOffset_ = 0;
-        BufferSpriteOwner.sprite().iTopOffset_ = 0;
-        BufferSpriteOwner.sprite().cTransparentIndex_ = (unsigned char)transparent;
-        BufferSpriteOwner.sprite().fObj1Exists_ = 0;
+        shared_sprite_.pcBits_ = static_cast<unsigned char *>(locked_bits_);
+        shared_sprite_.iSpriteWidth2_ = stride_;
+        shared_sprite_.iSpriteWidth_ = dib_.bmiHeader.biWidth;
+        shared_sprite_.iSpriteHeight_ = -dib_.bmiHeader.biHeight;
+        shared_sprite_.iWidth_ = dib_.bmiHeader.biWidth;
+        shared_sprite_.iHeight_ = -dib_.bmiHeader.biHeight;
+        shared_sprite_.iLeftOffset_ = 0;
+        shared_sprite_.iTopOffset_ = 0;
+        shared_sprite_.cTransparentIndex_ = (unsigned char)transparent;
+        shared_sprite_.fObj1Exists_ = 0;
 
         if (surface_ == 0) {
             surface_lock_count_ = surface_lock_count_ - 1;
@@ -7541,9 +7512,9 @@ int Buffer::draw_dest(Buffer *destination, int transparent_in, int x, int y,
     }
 tail:
     {
-        int result = BufferSpriteOwner.sprite().draw_dest(
+        int result = shared_sprite_.draw_dest(
             destination, transparent_in, x, y, table);
-        BufferSpriteOwner.sprite().pcBits_ = 0;
+        shared_sprite_.pcBits_ = 0;
         return result;
     }
 }
@@ -7613,16 +7584,16 @@ int Buffer::draw_multi_table_dest(Buffer *destination, int transparent_in, int x
         if (locked_bits_ != nullptr) {
             surface_lock_count_ = surface_lock_count_ + 1;
         }
-        BufferSpriteOwner.sprite().pcBits_ = static_cast<unsigned char *>(locked_bits_);
-        BufferSpriteOwner.sprite().iSpriteWidth2_ = stride_;
-        BufferSpriteOwner.sprite().iSpriteWidth_ = dib_.bmiHeader.biWidth;
-        BufferSpriteOwner.sprite().iSpriteHeight_ = -dib_.bmiHeader.biHeight;
-        BufferSpriteOwner.sprite().iWidth_ = dib_.bmiHeader.biWidth;
-        BufferSpriteOwner.sprite().iHeight_ = -dib_.bmiHeader.biHeight;
-        BufferSpriteOwner.sprite().iLeftOffset_ = 0;
-        BufferSpriteOwner.sprite().iTopOffset_ = 0;
-        BufferSpriteOwner.sprite().cTransparentIndex_ = (unsigned char)transparent;
-        BufferSpriteOwner.sprite().fObj1Exists_ = 0;
+        shared_sprite_.pcBits_ = static_cast<unsigned char *>(locked_bits_);
+        shared_sprite_.iSpriteWidth2_ = stride_;
+        shared_sprite_.iSpriteWidth_ = dib_.bmiHeader.biWidth;
+        shared_sprite_.iSpriteHeight_ = -dib_.bmiHeader.biHeight;
+        shared_sprite_.iWidth_ = dib_.bmiHeader.biWidth;
+        shared_sprite_.iHeight_ = -dib_.bmiHeader.biHeight;
+        shared_sprite_.iLeftOffset_ = 0;
+        shared_sprite_.iTopOffset_ = 0;
+        shared_sprite_.cTransparentIndex_ = (unsigned char)transparent;
+        shared_sprite_.fObj1Exists_ = 0;
 
         if (surface_ == 0) {
             surface_lock_count_ = surface_lock_count_ - 1;
@@ -7643,9 +7614,9 @@ int Buffer::draw_multi_table_dest(Buffer *destination, int transparent_in, int x
     }
 tail:
     {
-        int result = BufferSpriteOwner.sprite().draw_multi_table_dest(
+        int result = shared_sprite_.draw_multi_table_dest(
             destination, transparent_in, x, y, table);
-        BufferSpriteOwner.sprite().pcBits_ = 0;
+        shared_sprite_.pcBits_ = 0;
         return result;
     }
 }
@@ -7690,16 +7661,16 @@ int Buffer::draw_dest(Buffer * a1, int a2, int a3, int a4, int a5, int a6, unsig
         if (bits != nullptr) {
             ++surface_lock_count_;
         }
-        BufferSpriteOwner.sprite().pcBits_ = static_cast<unsigned char *>(locked_bits_);
-        BufferSpriteOwner.sprite().iSpriteWidth2_ = stride_;
-        BufferSpriteOwner.sprite().iSpriteWidth_ = dib_.bmiHeader.biWidth;
-        BufferSpriteOwner.sprite().iSpriteHeight_ = -dib_.bmiHeader.biHeight;
-        BufferSpriteOwner.sprite().iWidth_ = dib_.bmiHeader.biWidth;
-        BufferSpriteOwner.sprite().iHeight_ = -dib_.bmiHeader.biHeight;
-        BufferSpriteOwner.sprite().iLeftOffset_ = 0;
-        BufferSpriteOwner.sprite().iTopOffset_ = 0;
-        BufferSpriteOwner.sprite().cTransparentIndex_ = static_cast<char>(transparentIndex);
-        BufferSpriteOwner.sprite().fObj1Exists_ = 0;
+        shared_sprite_.pcBits_ = static_cast<unsigned char *>(locked_bits_);
+        shared_sprite_.iSpriteWidth2_ = stride_;
+        shared_sprite_.iSpriteWidth_ = dib_.bmiHeader.biWidth;
+        shared_sprite_.iSpriteHeight_ = -dib_.bmiHeader.biHeight;
+        shared_sprite_.iWidth_ = dib_.bmiHeader.biWidth;
+        shared_sprite_.iHeight_ = -dib_.bmiHeader.biHeight;
+        shared_sprite_.iLeftOffset_ = 0;
+        shared_sprite_.iTopOffset_ = 0;
+        shared_sprite_.cTransparentIndex_ = static_cast<char>(transparentIndex);
+        shared_sprite_.fObj1Exists_ = 0;
 
         IDirectDrawSurface2 *surface = surface_;
         if (surface == 0) {
@@ -7721,8 +7692,8 @@ int Buffer::draw_dest(Buffer * a1, int a2, int a3, int a4, int a5, int a6, unsig
 
 forward:
     {
-        int result = BufferSpriteOwner.sprite().draw_dest(a1, a2, a3, a4, a5, a6, a7);
-        BufferSpriteOwner.sprite().pcBits_ = 0;
+        int result = shared_sprite_.draw_dest(a1, a2, a3, a4, a5, a6, a7);
+        shared_sprite_.pcBits_ = 0;
         return result;
     }
 }
@@ -7760,16 +7731,16 @@ int Buffer::draw_multi_table_dest(Buffer * a1, int a2, int a3, int a4, int a5, i
         if (bits != nullptr) {
             ++surface_lock_count_;
         }
-        BufferSpriteOwner.sprite().pcBits_ = static_cast<unsigned char *>(locked_bits_);
-        BufferSpriteOwner.sprite().iSpriteWidth2_ = stride_;
-        BufferSpriteOwner.sprite().iSpriteWidth_ = dib_.bmiHeader.biWidth;
-        BufferSpriteOwner.sprite().iSpriteHeight_ = -dib_.bmiHeader.biHeight;
-        BufferSpriteOwner.sprite().iWidth_ = dib_.bmiHeader.biWidth;
-        BufferSpriteOwner.sprite().iHeight_ = -dib_.bmiHeader.biHeight;
-        BufferSpriteOwner.sprite().iLeftOffset_ = 0;
-        BufferSpriteOwner.sprite().iTopOffset_ = 0;
-        BufferSpriteOwner.sprite().cTransparentIndex_ = static_cast<char>(transparentIndex);
-        BufferSpriteOwner.sprite().fObj1Exists_ = 0;
+        shared_sprite_.pcBits_ = static_cast<unsigned char *>(locked_bits_);
+        shared_sprite_.iSpriteWidth2_ = stride_;
+        shared_sprite_.iSpriteWidth_ = dib_.bmiHeader.biWidth;
+        shared_sprite_.iSpriteHeight_ = -dib_.bmiHeader.biHeight;
+        shared_sprite_.iWidth_ = dib_.bmiHeader.biWidth;
+        shared_sprite_.iHeight_ = -dib_.bmiHeader.biHeight;
+        shared_sprite_.iLeftOffset_ = 0;
+        shared_sprite_.iTopOffset_ = 0;
+        shared_sprite_.cTransparentIndex_ = static_cast<char>(transparentIndex);
+        shared_sprite_.fObj1Exists_ = 0;
 
         IDirectDrawSurface2 *surface = surface_;
         if (surface == 0) {
@@ -7791,8 +7762,8 @@ int Buffer::draw_multi_table_dest(Buffer * a1, int a2, int a3, int a4, int a5, i
 
 forward:
     {
-        int result = BufferSpriteOwner.sprite().draw_multi_table_dest(a1, a2, a3, a4, a5, a6, a7);
-        BufferSpriteOwner.sprite().pcBits_ = 0;
+        int result = shared_sprite_.draw_multi_table_dest(a1, a2, a3, a4, a5, a6, a7);
+        shared_sprite_.pcBits_ = 0;
         return result;
     }
 }
@@ -8407,16 +8378,16 @@ int Buffer::draw_unk2(Buffer *source, int transparent_in, int x, int y,
         if (locked_bits_ != nullptr) {
             surface_lock_count_ = surface_lock_count_ + 1;
         }
-        BufferSpriteOwner.sprite().pcBits_ = static_cast<unsigned char *>(locked_bits_);
-        BufferSpriteOwner.sprite().iSpriteWidth2_ = stride_;
-        BufferSpriteOwner.sprite().iSpriteWidth_ = dib_.bmiHeader.biWidth;
-        BufferSpriteOwner.sprite().iSpriteHeight_ = -dib_.bmiHeader.biHeight;
-        BufferSpriteOwner.sprite().iWidth_ = dib_.bmiHeader.biWidth;
-        BufferSpriteOwner.sprite().iHeight_ = -dib_.bmiHeader.biHeight;
-        BufferSpriteOwner.sprite().iLeftOffset_ = 0;
-        BufferSpriteOwner.sprite().iTopOffset_ = 0;
-        BufferSpriteOwner.sprite().cTransparentIndex_ = (unsigned char)transparent;
-        BufferSpriteOwner.sprite().fObj1Exists_ = 0;
+        shared_sprite_.pcBits_ = static_cast<unsigned char *>(locked_bits_);
+        shared_sprite_.iSpriteWidth2_ = stride_;
+        shared_sprite_.iSpriteWidth_ = dib_.bmiHeader.biWidth;
+        shared_sprite_.iSpriteHeight_ = -dib_.bmiHeader.biHeight;
+        shared_sprite_.iWidth_ = dib_.bmiHeader.biWidth;
+        shared_sprite_.iHeight_ = -dib_.bmiHeader.biHeight;
+        shared_sprite_.iLeftOffset_ = 0;
+        shared_sprite_.iTopOffset_ = 0;
+        shared_sprite_.cTransparentIndex_ = (unsigned char)transparent;
+        shared_sprite_.fObj1Exists_ = 0;
 
         if (surface_ == 0) {
             surface_lock_count_ = surface_lock_count_ - 1;
@@ -8435,9 +8406,9 @@ int Buffer::draw_unk2(Buffer *source, int transparent_in, int x, int y,
     }
 tail:
     {
-        int result = BufferSpriteOwner.sprite().draw_noop(source,
+        int result = shared_sprite_.draw_noop(source,
                                           transparent_in, x, y, table);
-        BufferSpriteOwner.sprite().pcBits_ = 0;
+        shared_sprite_.pcBits_ = 0;
         return result;
     }
 }
@@ -8457,16 +8428,16 @@ int Buffer::draw(Buffer *source, int transparent_in, int x, int y,
         if (locked_bits_ != nullptr) {
             surface_lock_count_ = surface_lock_count_ + 1;
         }
-        BufferSpriteOwner.sprite().pcBits_ = static_cast<unsigned char *>(locked_bits_);
-        BufferSpriteOwner.sprite().iSpriteWidth2_ = stride_;
-        BufferSpriteOwner.sprite().iSpriteWidth_ = dib_.bmiHeader.biWidth;
-        BufferSpriteOwner.sprite().iSpriteHeight_ = -dib_.bmiHeader.biHeight;
-        BufferSpriteOwner.sprite().iWidth_ = dib_.bmiHeader.biWidth;
-        BufferSpriteOwner.sprite().iHeight_ = -dib_.bmiHeader.biHeight;
-        BufferSpriteOwner.sprite().iLeftOffset_ = 0;
-        BufferSpriteOwner.sprite().iTopOffset_ = 0;
-        BufferSpriteOwner.sprite().cTransparentIndex_ = (unsigned char)transparent;
-        BufferSpriteOwner.sprite().fObj1Exists_ = 0;
+        shared_sprite_.pcBits_ = static_cast<unsigned char *>(locked_bits_);
+        shared_sprite_.iSpriteWidth2_ = stride_;
+        shared_sprite_.iSpriteWidth_ = dib_.bmiHeader.biWidth;
+        shared_sprite_.iSpriteHeight_ = -dib_.bmiHeader.biHeight;
+        shared_sprite_.iWidth_ = dib_.bmiHeader.biWidth;
+        shared_sprite_.iHeight_ = -dib_.bmiHeader.biHeight;
+        shared_sprite_.iLeftOffset_ = 0;
+        shared_sprite_.iTopOffset_ = 0;
+        shared_sprite_.cTransparentIndex_ = (unsigned char)transparent;
+        shared_sprite_.fObj1Exists_ = 0;
 
         if (surface_ == 0) {
             surface_lock_count_ = surface_lock_count_ - 1;
@@ -8485,8 +8456,8 @@ int Buffer::draw(Buffer *source, int transparent_in, int x, int y,
     }
 tail:
     {
-        int result = BufferSpriteOwner.sprite().draw(source, transparent_in, x, y, table);
-        BufferSpriteOwner.sprite().pcBits_ = 0;
+        int result = shared_sprite_.draw(source, transparent_in, x, y, table);
+        shared_sprite_.pcBits_ = 0;
         return result;
     }
 }
@@ -8506,16 +8477,16 @@ int Buffer::draw_dest_unk2(Buffer *source, int transparent_in, int x, int y,
         if (locked_bits_ != nullptr) {
             surface_lock_count_ = surface_lock_count_ + 1;
         }
-        BufferSpriteOwner.sprite().pcBits_ = static_cast<unsigned char *>(locked_bits_);
-        BufferSpriteOwner.sprite().iSpriteWidth2_ = stride_;
-        BufferSpriteOwner.sprite().iSpriteWidth_ = dib_.bmiHeader.biWidth;
-        BufferSpriteOwner.sprite().iSpriteHeight_ = -dib_.bmiHeader.biHeight;
-        BufferSpriteOwner.sprite().iWidth_ = dib_.bmiHeader.biWidth;
-        BufferSpriteOwner.sprite().iHeight_ = -dib_.bmiHeader.biHeight;
-        BufferSpriteOwner.sprite().iLeftOffset_ = 0;
-        BufferSpriteOwner.sprite().iTopOffset_ = 0;
-        BufferSpriteOwner.sprite().cTransparentIndex_ = (unsigned char)transparent;
-        BufferSpriteOwner.sprite().fObj1Exists_ = 0;
+        shared_sprite_.pcBits_ = static_cast<unsigned char *>(locked_bits_);
+        shared_sprite_.iSpriteWidth2_ = stride_;
+        shared_sprite_.iSpriteWidth_ = dib_.bmiHeader.biWidth;
+        shared_sprite_.iSpriteHeight_ = -dib_.bmiHeader.biHeight;
+        shared_sprite_.iWidth_ = dib_.bmiHeader.biWidth;
+        shared_sprite_.iHeight_ = -dib_.bmiHeader.biHeight;
+        shared_sprite_.iLeftOffset_ = 0;
+        shared_sprite_.iTopOffset_ = 0;
+        shared_sprite_.cTransparentIndex_ = (unsigned char)transparent;
+        shared_sprite_.fObj1Exists_ = 0;
 
         if (surface_ == 0) {
             surface_lock_count_ = surface_lock_count_ - 1;
@@ -8534,9 +8505,9 @@ int Buffer::draw_dest_unk2(Buffer *source, int transparent_in, int x, int y,
     }
 tail:
     {
-        int result = BufferSpriteOwner.sprite().draw_dest_unk2(source, transparent_in, x,
+        int result = shared_sprite_.draw_dest_unk2(source, transparent_in, x,
                                                     y, table);
-        BufferSpriteOwner.sprite().pcBits_ = 0;
+        shared_sprite_.pcBits_ = 0;
         return result;
     }
 }
@@ -8716,9 +8687,9 @@ extern const char BufferCenteredSpace[] = " ";
 int Buffer::draw_unk2(Buffer *destination, int transparent, int x, int y,
                       int numerator, int denominator, int table) {
     prepare_shared_sprite(transparent);
-    int result = BufferSpriteOwner.sprite().draw_noop(destination, transparent, x, y,
+    int result = shared_sprite_.draw_noop(destination, transparent, x, y,
                                           numerator, denominator, table);
-    BufferSpriteOwner.sprite().pcBits_ = 0;
+    shared_sprite_.pcBits_ = 0;
     return result;
 }
 
@@ -8730,9 +8701,9 @@ int Buffer::draw_dest_source(Buffer *destination, int transparent, int x, int y,
                              int numerator, int denominator,
                              unsigned char *table) {
     prepare_shared_sprite(transparent);
-    int result = BufferSpriteOwner.sprite().draw_dest_source(destination, transparent, x, y,
+    int result = shared_sprite_.draw_dest_source(destination, transparent, x, y,
                                                   numerator, denominator, table);
-    BufferSpriteOwner.sprite().pcBits_ = 0;
+    shared_sprite_.pcBits_ = 0;
     return result;
 }
 
@@ -8743,9 +8714,9 @@ int Buffer::draw_dest_source(Buffer *destination, int transparent, int x, int y,
 int Buffer::draw(Buffer *destination, int transparent, int x, int y,
                   int numerator, int denominator, unsigned char *table) {
     prepare_shared_sprite(transparent);
-    int result = BufferSpriteOwner.sprite().draw(destination, transparent, x, y,
+    int result = shared_sprite_.draw(destination, transparent, x, y,
                                       numerator, denominator, table);
-    BufferSpriteOwner.sprite().pcBits_ = 0;
+    shared_sprite_.pcBits_ = 0;
     return result;
 }
 
@@ -8757,9 +8728,9 @@ int Buffer::draw_dest_unk2(Buffer *destination, int transparent, int x, int y,
                            int numerator, int denominator,
                            unsigned char *table) {
     prepare_shared_sprite(transparent);
-    int result = BufferSpriteOwner.sprite().draw_dest_unk2(destination, transparent, x, y,
+    int result = shared_sprite_.draw_dest_unk2(destination, transparent, x, y,
                                                numerator, denominator, table);
-    BufferSpriteOwner.sprite().pcBits_ = 0;
+    shared_sprite_.pcBits_ = 0;
     return result;
 }
 
@@ -9653,11 +9624,11 @@ int Buffer::write_raw_l(char *text, int x, int y, int length) {
             segment_length = remaining;
             field_528_ = special;
         }
-        SetTextColor(hdc2_, (BufferSpecialTextsOwner.at(special).color_ & 0xffff) | 0x10ff0000);
+        SetTextColor(hdc2_, (special_texts_[special].color_ & 0xffff) | 0x10ff0000);
         TextOutA(hdc2_, x, y, cursor, segment_length);
         int advanced = fonts[font_slot]->width(cursor, segment_length) + x;
         cursor += segment_length + 1;
-        RECT &bounds = BufferSpecialTextsOwner.at(special).bounds[second_bounds];
+        RECT &bounds = special_texts_[special].bounds[second_bounds];
         bounds.left = x;
         bounds.top = y;
         bounds.right = advanced;
@@ -10026,8 +9997,8 @@ Status: Coverage transcription - unclaimed body
 void Buffer::draw_dest_unk1(Buffer *destination, int x, int y,
                             unsigned char *table) {
     prepare_shared_sprite(-1);
-    BufferSpriteOwner.sprite().draw_dest_unk1(destination, x, y, table);
-    BufferSpriteOwner.sprite().pcBits_ = 0;
+    shared_sprite_.draw_dest_unk1(destination, x, y, table);
+    shared_sprite_.pcBits_ = 0;
 }
 
 // Existing original5D8D00..5D8DEA: same physical owner/order, six stack
@@ -10045,9 +10016,9 @@ void Buffer::draw_dest_unk1(Buffer *destination, int x, int y,
                             int numerator, int denominator,
                             unsigned char *table) {
     prepare_shared_sprite(-1);
-    BufferSpriteOwner.sprite().draw_dest_unk1(destination, x, y,
+    shared_sprite_.draw_dest_unk1(destination, x, y,
                                   numerator, denominator, table);
-    BufferSpriteOwner.sprite().pcBits_ = 0;
+    shared_sprite_.pcBits_ = 0;
 }
 
 
@@ -10178,7 +10149,7 @@ int Buffer::load_pcx_from_source(PcxInputView *source, Palette *palette,
 
 /*
 Purpose: The Buffer draw wrapper whose descriptor is the shared surface
-         Sprite (BufferSpriteOwner.sprite(), 0x009B3A50), the draw_dest_source member:
+         Sprite (Buffer::shared_sprite_, 0x009B3A50), the draw_dest_source member:
          lock the surface (or reuse the DIB bits), publish this buffer's
          geometry into the sprite descriptor the way every draw_* sibling
          does, release the lock when this body holds the last one, then
@@ -10217,16 +10188,16 @@ int Buffer::draw_dest_source(Buffer *source, int transparent_in, int x, int y,
         if (locked_bits_ != nullptr) {
             surface_lock_count_ = surface_lock_count_ + 1;
         }
-        BufferSpriteOwner.sprite().pcBits_ = static_cast<unsigned char *>(locked_bits_);
-        BufferSpriteOwner.sprite().iSpriteWidth2_ = stride_;
-        BufferSpriteOwner.sprite().iSpriteWidth_ = dib_.bmiHeader.biWidth;
-        BufferSpriteOwner.sprite().iSpriteHeight_ = -dib_.bmiHeader.biHeight;
-        BufferSpriteOwner.sprite().iWidth_ = dib_.bmiHeader.biWidth;
-        BufferSpriteOwner.sprite().iHeight_ = -dib_.bmiHeader.biHeight;
-        BufferSpriteOwner.sprite().iLeftOffset_ = 0;
-        BufferSpriteOwner.sprite().iTopOffset_ = 0;
-        BufferSpriteOwner.sprite().cTransparentIndex_ = (unsigned char)transparent;
-        BufferSpriteOwner.sprite().fObj1Exists_ = 0;
+        shared_sprite_.pcBits_ = static_cast<unsigned char *>(locked_bits_);
+        shared_sprite_.iSpriteWidth2_ = stride_;
+        shared_sprite_.iSpriteWidth_ = dib_.bmiHeader.biWidth;
+        shared_sprite_.iSpriteHeight_ = -dib_.bmiHeader.biHeight;
+        shared_sprite_.iWidth_ = dib_.bmiHeader.biWidth;
+        shared_sprite_.iHeight_ = -dib_.bmiHeader.biHeight;
+        shared_sprite_.iLeftOffset_ = 0;
+        shared_sprite_.iTopOffset_ = 0;
+        shared_sprite_.cTransparentIndex_ = (unsigned char)transparent;
+        shared_sprite_.fObj1Exists_ = 0;
 
         if (surface_ == 0) {
             surface_lock_count_ = surface_lock_count_ - 1;
@@ -10245,9 +10216,9 @@ int Buffer::draw_dest_source(Buffer *source, int transparent_in, int x, int y,
     }
 tail:
     {
-        int result = BufferSpriteOwner.sprite().draw_dest_source(source, transparent_in,
+        int result = shared_sprite_.draw_dest_source(source, transparent_in,
                                                       x, y, bits);
-        BufferSpriteOwner.sprite().pcBits_ = 0;
+        shared_sprite_.pcBits_ = 0;
         return result;
     }
 }
