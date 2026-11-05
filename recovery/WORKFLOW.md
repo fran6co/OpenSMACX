@@ -1329,6 +1329,25 @@ relax a check to bank a result.
 
 ### Reuse examples and measure throughput
 
+Read `recovery/lessons.json` before allocating a spelling or structural batch.
+It records reviewed decisions from successful and negative experiments, not
+current match status or an automatic propagation engine. Identify the applicable
+lesson IDs and test every prerequisite against the current pinned instructions,
+source and compiler context. A class name, ICF group or callee set is a search
+hint, not permission to transplant a body. Unknown prerequisites stay unknown.
+
+Apply the supported transformation to the complete matching family as proposed
+decks, using the existing variant commands. Include previously exact neighbors
+and affected consumers; header/provider changes require their wider scope.
+Keep derivable applicability, source/compiler fingerprints, attempts and results
+in ignored reports. Keep non-derivable scope and review decisions in the existing
+task workflow. Add a reusable decision to the catalogue after reviewing its
+causal evidence and counterexamples; do not infer a universal rule from one win.
+Do not retry an exhausted same-input hypothesis just because a session changed.
+New source/header/provider, TU, recipe/compiler or original evidence can reopen
+it. A justified structural regression follows the reviewed restoration path;
+it is not automatically reverted or used to demote a historical claim.
+
 `uv run recover prioritize <targets...> --reference <target> --image <image>`
 freshly measures the explicitly selected exemplars and ranks candidates by
 original opcode similarity, spreading recommendations across ownership groups.

@@ -55,6 +55,8 @@ step rather than repeatedly invoking it to reject ordinary body spellings.
 - `docs/DECOMP_MAP.md`: current source annotation grammar and transitional writer.
 - `recovery/COMPILER_EVIDENCE.md`: relevant historical compiler observations,
   not an overriding prompt or a list of current measurements.
+- `recovery/lessons.json`: reviewed reuse strategies, prerequisites and exhausted
+  hypotheses. Check these before scheduling a new candidate or retry.
 - `docs/EXCLUSIONS.md`: declared scope; difficulty alone is not an exclusion.
 - `docs/RETIRED_ROUTES.md`: historical evidence; do not rebuild a retired route
   without new evidence.

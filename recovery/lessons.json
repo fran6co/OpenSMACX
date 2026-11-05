@@ -1,0 +1,309 @@
+{
+  "schema": "opensmacx.reviewed-recovery-lessons.v1",
+  "kind": "coordinator_decision_catalogue",
+  "automation_status": "Reviewed eligibility rules for workers; not an implemented automatic propagation or acceptance engine.",
+  "rules": [
+    {
+      "id": "dispatch-qualified-inherited-operation",
+      "category": "candidate_strategy",
+      "evidence": {
+        "commit": "ce2cb20809205eae313c3863ff027c5815d5d3fa",
+        "witness": "commit message; src/dialogs.cpp; recovery/tests/test_dialogs_left_click_routing_oct15.py"
+      },
+      "requires": [
+        "Pinned call targets identify a specific inherited/base operation, not merely a shared implementation guess.",
+        "Current class declarations confirm the receiver's inheritance path and which derived kinds override the operation.",
+        "The original selector/default cases and target-table data are independently bounded."
+      ],
+      "action": "Write the explicit qualified base call for the cases whose pinned target is that base operation; retain derived overrides, selector order, default behavior and table data.",
+      "contraindications": [
+        "A matching callee name without target identity is insufficient.",
+        "Do not turn inherited no-op cases into new behavior or reorder the switch."
+      ],
+      "reopen_when": "New pinned target or caller evidence contradicts the qualified operation mapping, or a fresh production-object comparison exposes a different selector/data interpretation."
+    },
+    {
+      "id": "typed-heap-node-construction",
+      "category": "candidate_strategy",
+      "evidence": {
+        "commit": "fc26f9089bccb73d15ab478828dac1bc782d397b",
+        "witness": "commit message; src/wave_device.h; src/sounddevice.cpp; recovery/tests/test_wave_group_list_boundary_actual_source.py"
+      },
+      "requires": [
+        "Pinned accesses and current member declarations agree on object size, field offsets and initialized values.",
+        "The allocation site and initialization sequence belong to one object lifetime, and the call graph identifies the corresponding operation.",
+        "The typed construction preserves the original allocation-failure path, store order, rereads and post-call effects."
+      ],
+      "action": "Represent an observed object initialization as a genuine constructor and typed new-expression instead of raw storage plus duplicated member stores, only when all lifetime and failure-path predicates hold.",
+      "contraindications": [
+        "Do not infer nominal historical class identity from a size or mangled name alone.",
+        "Do not alter allocator, null handling, insertion order or compiler policy to obtain the result."
+      ],
+      "reopen_when": "New original lifetime/caller evidence changes initialization order, allocation semantics or which object owns the fields."
+    },
+    {
+      "id": "remove-redundant-same-file-body-fact",
+      "category": "candidate_strategy",
+      "evidence": {
+        "commit": "5dd33a14692a9963baa1098a95c45ed3e059f029",
+        "witness": "commit message; .opensmacx/recovery/buffer-tu-nov05x/source-review.json; .opensmacx/recovery/buffer-tu-nov05x/final-debug-line-review.json; .opensmacx/recovery/buffer-tu-nov05x/final-object-bridge.json"
+      },
+      "requires": [
+        "The source reader reports ambiguity caused by duplicate body attribution within the same actual source file.",
+        "The remaining definition is uniquely selected by the real declaration and current compiled source ownership.",
+        "A before/after annotation audit proves mapping identity, span, mode, claim and implementation text are unchanged."
+      ],
+      "action": "Remove just the redundant body-location fact through the source writer; do not remove the original identity or weaken mapping/reference checks.",
+      "contraindications": [
+        "Do not use this to resolve cross-file or genuinely overloaded ambiguity.",
+        "Do not interpret a debug-line-only object delta as a general preservation pass."
+      ],
+      "reopen_when": "A new overload, source move or reader change means the remaining source attribution is no longer uniquely grounded."
+    },
+    {
+      "id": "separate-provider-to-preserve-original-calls",
+      "category": "candidate_strategy",
+      "evidence": {
+        "commit": "25ab2a81d67b5f27da9e5574a2c044941f278dbe",
+        "witness": "commit message; .opensmacx/recovery/sound-type-provider-nov05g/source-review-final.json; .opensmacx/recovery/sound-type-provider-nov05g/native-transitions.json"
+      },
+      "requires": [
+        "Pinned callers retain real calls to the identified provider; current COFF embeds its operations instead.",
+        "The complete provider can move intact to a separate same-recipe source unit, preserving public declarations, original identities and owned data.",
+        "Every affected constructor, standalone provider and other consumer is included in the comparison."
+      ],
+      "action": "Test removal of unintended same-TU provider visibility. In the witnessed Sound change, moving set_type/get_type OUT of sound.cpp restored external calls in constructors; it did not make those providers inline.",
+      "contraindications": [
+        "Do not add inline/noinline attributes or global optimization changes as substitutes for source ownership evidence.",
+        "Do not infer a historical filename or whole-TU boundary from one restored inline.",
+        "Do not treat co-location or outlining as universally beneficial; the direction of original call visibility must be observed."
+      ],
+      "reopen_when": "Fresh COFF shows the provider still does not inline, collateral losses appear, or new ownership/caller evidence changes the justified cohort."
+    },
+    {
+      "id": "co-locate-lifetime-and-deduplicate-real-object-init",
+      "category": "candidate_strategy",
+      "evidence": {
+        "commit": "b791d43d867fd2d576f0f9248a797e0abd527387",
+        "witness": "commit message; .opensmacx/recovery/tu-wave-nov05u/physical-owner-crosswalk.json; .opensmacx/recovery/tu-wave-nov05u/maininterface-draft.json"
+      },
+      "requires": [
+        "Pinned init/exit code identifies a storage receiver and paired constructor/destructor behavior.",
+        "Current COFF init/fini relocations and linked table entries independently identify the same real object; do not infer local symbol identity from ordinal alone.",
+        "A declaration after the actual definition is proven redundant and the rebuilt object confirms exactly one lifetime pair."
+      ],
+      "action": "Keep genuine object storage and compiler-generated lifetime operations with the evidenced owner; remove only the proven duplicate post-definition declaration that causes duplicate emission.",
+      "contraindications": [
+        "Never author fake init/fini callbacks or claim full CRT order from a bounded subsequence.",
+        "Do not remove declarations without the physical duplicate-pair evidence."
+      ],
+      "reopen_when": "Fresh physical symbols show multiple or missing lifetime pairs, or new pinned CRT entries contradict the bounded order."
+    },
+    {
+      "id": "fieldwise-store-when-aggregate-copy-changes-observed-shape",
+      "category": "candidate_strategy",
+      "evidence": {
+        "commit": "bff2dd701607cd6c758a3d1b696996ba58d6e209",
+        "witness": "src/caviar.cpp: set_camera_direct ORIGINAL/LEVER/TRIED annotation and current typed member accesses; commit bff2dd701"
+      },
+      "requires": [
+        "Pinned instructions show distinct scalar stores and exact offsets rather than a bulk copy.",
+        "Typed members and static layout evidence prove each source/destination element correspondence.",
+        "Guard order, null behavior, operand order and all element stores are preserved."
+      ],
+      "action": "Use explicit typed element assignments when struct assignment or memcpy demonstrably emits a different access sequence under the production recipe.",
+      "contraindications": [
+        "Do not generalize from one matrix or copy width; do not use raw `this + offset` aliases to force the bytes.",
+        "No mangled catalogue spelling alone establishes the pointer or aggregate type."
+      ],
+      "reopen_when": "New layout/caller evidence changes element mapping, or production COFF no longer shows the measured aggregate-versus-scalar distinction."
+    },
+    {
+      "id": "nonthrow-contract-for-local-primitive-constructor",
+      "category": "candidate_strategy",
+      "evidence": {
+        "commit": "cdbfab91dea863e72e60da00d691158916945c8f",
+        "witness": "commit message; .opensmacx/recovery/name-table-claims-nov05m/source-review.json; .opensmacx/recovery/name-table-claims-nov05m/final-integration-review.json"
+      },
+      "requires": [
+        "Pinned construction site identifies initialization after successful storage allocation.",
+        "The constructor is nonvirtual and its full body/base/member closure has no operation that can throw.",
+        "Allocation failure and post-construction failure paths remain outside the constructor and are preserved."
+      ],
+      "action": "Model the observed initialization as a genuine constructor; use a nonthrowing contract only when body and closure justify it, while keeping allocation and legacy failure behavior unchanged.",
+      "contraindications": [
+        "Do not add a nonthrowing contract to a virtual method with unproven derived implementers.",
+        "Do not call the contract recovered original spelling or use it to normalize allocation failure."
+      ],
+      "reopen_when": "New bases, members, callbacks, virtual overrides or throwing operations enter the constructor closure."
+    },
+    {
+      "id": "loop-opcode-is-not-a-source-spelling-target",
+      "category": "bounded_negative",
+      "evidence": {
+        "commit": "0e5ff3f3d82b4e546cbf0cde46c7a32ccaa553ed",
+        "witness": "recovery/COMPILER_EVIDENCE.md, Source-form experiments after structure; pinned Sprite::change_color at 0x005EAD9F"
+      },
+      "requires": [
+        "A failed function contains a distinctive repeated/loop opcode, but no source-level CFG and dataflow explanation has yet been established."
+      ],
+      "action": "Stop equivalent loop-spelling retries. First map complete control flow, register lifetimes, unrolled operations and memory effects; retain ordinary C++ recovery obligations.",
+      "contraindications": [
+        "Do not infer that C++ matching is impossible or introduce assembly from LOOP presence."
+      ],
+      "reopen_when": "New pinned instruction-level evidence identifies a distinct source construct or a faithful compiler-supported structural model not covered by prior trials."
+    },
+    {
+      "id": "signed-local-fixes-only-the-signed-branch",
+      "category": "bounded_negative",
+      "evidence": {
+        "witness": ".opensmacx/recovery/near-byte-frontier-nov03lu/retired-packets/reports/faction-signed-counter-nov03mb/worker-report.json"
+      },
+      "requires": [
+        "Pinned signed compare/branch and source dataflow establish a signed loop counter; current code uses unsigned comparison."
+      ],
+      "action": "Correct the semantically wrong signedness when evidence supports it, then treat the rest of the function as a separate residual. Do not report a full match from one corrected branch.",
+      "contraindications": [
+        "Do not cast or widen unrelated globals to coerce a mnemonic.",
+        "Do not treat the local signed correction as proof of prototype or class ABI."
+      ],
+      "reopen_when": "New evidence identifies the remaining call targets/register lifetimes or reveals that the signed range differs from the tested source model."
+    },
+    {
+      "id": "intrinsic-policy-needs-whole-cohort-evidence",
+      "category": "bounded_negative",
+      "evidence": {
+        "witness": "recovery/COMPILER_EVIDENCE.md; .opensmacx/recovery/tu-wave-nov05u/oi-off-loss-causal-review.json; .opensmacx/recovery/sound-ctor-nov05ab/pragma-control.json"
+      },
+      "requires": [
+        "A proposed change alters a compiler flag or pragma beyond the single evidenced owner."
+      ],
+      "action": "Distinguish /Oi intrinsic policy from /Ob inlining and inspect actual unit recipes. Test the complete affected cohort; a local gain never authorizes an unreviewed global flag/pragma change.",
+      "contraindications": [
+        "A changed byte score in one function is not sufficient when the cohort loses other passes."
+      ],
+      "reopen_when": "A distinct source/compiler hypothesis or coherent ownership-policy change has new evidence; preserve any justified structural regression for explicit review/restoration instead of automatically reverting it."
+    },
+    {
+      "id": "cpu-target-sweep-is-not-a-caviar-body-fix",
+      "category": "bounded_negative",
+      "evidence": {
+        "report": "recovery/COMPILER_EVIDENCE.md, Compiler identity before more spelling searches; .opensmacx/recovery/easy-wave-oct26bs/cpu-caviar-cohort-result.json"
+      },
+      "requires": [
+        "A proposed fix changes CPU target policy for a Caviar body because of an x87/register residual, without new source-level operand or type evidence."
+      ],
+      "action": "Keep production CPU policy unchanged. Compare target source, recipe and compiler identity with the retained cohort before requesting any new policy experiment; prefer evidence-backed C++ structure under the current recipe.",
+      "contraindications": [
+        "Do not generalize the cohort to other TUs or compiler versions.",
+        "Do not infer impossible matching from unchanged results."
+      ],
+      "reopen_when": "New pinned operand/dataflow evidence supports a distinct source model, or a genuinely different, independently qualified compiler context is proposed with a bounded no-loss control."
+    },
+    {
+      "id": "do-not-add-virtual-throw-contract-to-recover-one-row",
+      "category": "bounded_negative",
+      "evidence": {
+        "commit": "25ab2a81d67b5f27da9e5574a2c044941f278dbe",
+        "witness": ".opensmacx/recovery/sound-visibility-nov05h/type-throw-review.json; .opensmacx/recovery/sound-visibility-nov05h/type-throw-native.json; .opensmacx/recovery/sound-visibility-nov05h/type-throw-proposal-decision.json"
+      },
+      "requires": [
+        "A score-driven exception specification is proposed on a virtual API whose complete derived implementation surface is not known."
+      ],
+      "action": "Keep the original declaration contract until class hierarchy and external implementers are evidenced; prefer source ownership/call visibility fixes that do not narrow the virtual contract.",
+      "contraindications": [
+        "A bounded native gain does not prove historical spelling or ABI compatibility."
+      ],
+      "reopen_when": "Complete current and external derived-class evidence establishes the contract and all virtual callers/overrides remain compatible."
+    },
+    {
+      "id": "output-slot-alias-does-not-prove-original-register-lifetime",
+      "category": "bounded_negative",
+      "evidence": {
+        "witness": ".opensmacx/recovery/reportwin-argument-lifetime-nov03lq/retired-worker/worker-report.json; .opensmacx/recovery/reportwin-argument-lifetime-nov03lq/retired-worker/final-summary.json"
+      },
+      "requires": [
+        "An original helper writes through caller output slots and the proposed source aliases a local to that output."
+      ],
+      "action": "Trace post-call uses and complete lifetimes of all output and position values before changing locals. Compare saved registers, stack frame, call arguments and helper behavior independently.",
+      "contraindications": [
+        "Do not use volatile/dummy locals or change a shared helper used by other callers to manufacture a register spill."
+      ],
+      "reopen_when": "New original lifetime/type evidence explains the remaining spill or demonstrates that the helper mask is semantically redundant across every caller."
+    },
+    {
+      "id": "destructor-visibility-is-consumer-dependent",
+      "category": "bounded_negative",
+      "evidence": {
+        "witness": ".opensmacx/recovery/flatbutton-visibility-nov05ae/final-eh-overlay-review.json; src/flatbutton.h"
+      },
+      "requires": [
+        "An inline destructor exposes nested base/member cleanup in a caller.",
+        "Other pinned consumers also expand that destructor; source visibility is shared."
+      ],
+      "action": "Compare all affected consumer lifetime graphs before moving the definition. The FlatButton out-of-line control did not restore Console and removed five required DipEdit expansions; do not replay this global move as a solution.",
+      "contraindications": [
+        "Raw FuncInfo counts are diagnostics, not semantic EH equivalence.",
+        "Scratch-slot equality does not prove object identity; trace saved receivers and predecessor states."
+      ],
+      "reopen_when": "New receiver/lifetime or TU/provider evidence supports a different model; no independent class change is justified solely by an EH count."
+    },
+    {
+      "id": "catalogue-decoration-is-not-original-type-proof",
+      "category": "evidence_guard",
+      "evidence": {
+        "witness": "docs/DECOMP_MAP.md, The source map; recovery/COMPILER_EVIDENCE.md, Constructor tables and intrinsic call boundaries"
+      },
+      "requires": [
+        "A recovered catalogue decoration disagrees with the current symbol or declaration."
+      ],
+      "action": "Trace actual call/return use, constructor-selected tables, memory widths and signed operations. A stripped original does not authenticate recovered H/I or Q/U decorations.",
+      "contraindications": [
+        "Do not rename symbols or change signedness/virtualness from catalogue spelling alone."
+      ],
+      "reopen_when": "Authenticated original symbols/debug data or independent instruction/caller evidence establishes the declaration."
+    },
+    {
+      "id": "reference-offset-shift-is-not-wrong-callee",
+      "category": "evidence_guard",
+      "evidence": {
+        "witness": ".opensmacx/recovery/easy-match-nov05ab/monuments-plan.json"
+      },
+      "requires": [
+        "Candidate instruction scheduling differs before a reported relocation mismatch."
+      ],
+      "action": "Locate original and candidate instruction/operand boundaries separately, then resolve their actual targets. A candidate relocation offset can fall on a different original opcode; do not repair a correct binding to silence that diagnostic.",
+      "contraindications": [
+        "Same callee sets alone do not prove instruction correspondence or whole-function equivalence."
+      ],
+      "reopen_when": "Aligned operand/target evidence identifies a real reference error."
+    },
+    {
+      "id": "identify-dependency-entries-without-inventing-extents",
+      "category": "candidate_strategy",
+      "evidence": {
+        "commit": "c2000f13a8f6bbc83773a0ded7416e48648d1830",
+        "witness": "src/vendor/vc6-runtime.recovery.h existing sin/cos/sqrt code-section entries; packages/match-recovery/src/match_recovery/component_binary.py"
+      },
+      "requires": [
+        "The archive bytes match the source-owned archive pin.",
+        "An already-bound complete executable contribution matches original bytes outside independently checked relocation operands.",
+        "The complete external function inventory has unique symbols at exact section-relative offsets; entries lie within that contribution."
+      ],
+      "action": "Propagate the existing native CodeEntryAnchor representation to newly identified dependency entries. Retain the whole contribution binding; do not fabricate per-function extents, application implementations or original symbol provenance.",
+      "contraindications": [
+        "Address proximity and a familiar CRT name are insufficient.",
+        "An entry location does not prove callable ABI, complete relocation closure, original archive selection or final-link retention. Unknown prerequisites remain unknown."
+      ],
+      "reopen_when": "New archive, section, relocation-target or original-caller evidence changes the dependency interpretation."
+    }
+  ],
+  "policy": [
+    "Source annotations remain the identity/claim authority; this catalogue grants no match or acceptance.",
+    "Current measurements, fingerprints, attempt counts and derived worklists belong in ignored caches; negative observations apply only to their tested inputs/hypothesis.",
+    "Use independent original evidence before adapting a sibling; similarity, ICF membership or a callee set alone is insufficient.",
+    "Test the full affected family and retain exact neighbors. Justified structural regressions require explicit review/restoration, not automatic rejection or claim demotion.",
+    "Reopen a plateau on relevant new evidence, body/header/provider/TU, recipe, compiler or image changes; a session boundary alone is not a new attempt.",
+    "A witness demonstrates a bounded case, not a universally proven code-generation rule."
+  ]
+}
