@@ -15,7 +15,7 @@
  * You should have received a copy of the GNU General Public License
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
-// ORIGINAL: 0x00496900 _$E21 0x00496900-0x00496916 FILE
+// ORIGINAL: 0x00496900 _$E21 0x00496900-0x00496916 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned CRT slot0x6825e8 selects original initializer0x496900..0x496916, registering fini0x496920..0x49692a; complete independent decode establishes exclusive boundaries.", "Source-owned object?ReportIfGlobal@@3VReportIf@@A identifies original storage0x885f38. Startup arguments/calls: call 0x4ad170; push 0x496920. Cleanup receiver/calls: mov ecx, 0x885f38; jmp 0x4acda0. Constructor/destructor targets retain their existing class-owned source mappings.", "Fresh physical src/reportif.cpp COFF selects _$E21 through .CRT$XCU and registers _$E19, both referencing the genuine source global. Original NetMsg argument triples and implicit PlanWin/Console most-derived flags are preserved by the existing declarations; complete virtual-base teardown is compiler-owned, not authored offsets.", "Current local helper symbols interpret present emission, not original debug names or historical TU boundaries. Object starts do not prove allocation extents. This binding establishes neither cross-TU global order, masked-reference correctness, strict linked preservation, dependency-provider equivalence nor runtime/game acceptance; excluded guarded sprite cleanup remains separate."], "reason": "Bind original startup identity to the genuine compiler-generated lifetime of ?ReportIfGlobal@@3VReportIf@@A in its actual source owner; no manual lifecycle callback is authored."}
 // symbol    _$E14
 // ORIGINAL: 0x00496920 _$E19 0x00496920-0x0049692A FILE BYTE_EXACT
@@ -132,7 +132,7 @@ static void report_iface_button(FlatButton &button, RECT &rect, int id,
 /*
 Purpose: Tear down every sub-object the constructor built, in exactly the
          reverse order.
-// ORIGINAL: 0x004ACDA0 ??1ReportIf@@QAE@XZ 0x004ACDA0-0x004AD16C;0x00658D50-0x00658F74 FILE
+// ORIGINAL: 0x004ACDA0 ??1ReportIf@@QAE@XZ 0x004ACDA0-0x004AD16C;0x00658D50-0x00658F74 FILE BYTE_EXACT
 // compile_context src/reportif.cpp
 // TRIED: SEH frame - the image has one (flags carry `frame`) but a body
 //            built entirely from plain `->method()`/`->~T()` calls at raw
@@ -344,7 +344,7 @@ int ReportIf::on_iface_dialog_back_draw(::GraphicWin *) {
 // RECOVERY_BINDING: v1 {"evidence": ["historical deleting-thunk source src/deleting_thunks.cpp; original full spans retained: 0x004AD840-0x004AD861", "Pinned class constructor ??0ReportWin@@QAE@XZ at 0x004AD6B0 stores original class/view table VA 0x66d754 at 0x004AD81A (mov dword ptr [esi], 0x66d754); the current genuine owner vftable ??_7ReportWin@@6BWin@@@ selects generated ??_GReportWin@@UAEPAXI@Z in slot 0 (+0x0) through weak entry ??_EReportWin@@UAEPAXI@Z (mode 2).", "Pinned ??_GReportWin@@UAEPAXI@Z at 0x004AD840 calls the source-mapped ??1ReportWin@@QAE@XZ at 0x004AD3B0, then tests byte ptr [ebp + 8], 1; je 0x4ad85a bypasses scalar delete when bit 0 is clear, while bit 0 set calls 0x0064557F; it save original this; call destructor; delete only when flags bit 0 is set; return saved this with ret 4.", "The real class lifetime is owned by src/reportif.cpp; its compiler-emitted deleting symbol and vftable slot carry this original identity. Hand-written adapter bodies with live adjustor callers remain until those callers are independently qualified and transferred. The linked weak/COMDAT copy is not used to choose source ownership.", "the source writer preserves the historical mapping's exactness state (historical exactness obligation retained); current compiler extent is not asserted equal to the original span"], "reason": "Bind the original ReportWin scalar deleting-destructor identity to the actual compiler-emitted class deleting destructor in its genuine owner translation unit. The original constructor's pinned vptr store and the current owner's physical table slot identify this class/view; no callback/thunk body is hand-authored here."}
 // symbol    ??_GReportWin@@UAEPAXI@Z
 // kind      game
-// ORIGINAL: 0x00496930 _$E21 0x00496930-0x00496946 FILE
+// ORIGINAL: 0x00496930 _$E21 0x00496930-0x00496946 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned CRT slot0x6825ec selects original initializer0x496930..0x496946, registering fini0x496950..0x49695a; complete independent decode establishes exclusive boundaries.", "Source-owned object?ReportWinGlobal@@3VReportWin@@A identifies original storage0x876478. Startup arguments/calls: call 0x4ad6b0; push 0x496950. Cleanup receiver/calls: mov ecx, 0x876478; jmp 0x4ad3b0. Constructor/destructor targets retain their existing class-owned source mappings.", "Historical standalone ReportWin COFF selected local initializer _$E21 through .CRT$XCU and cleanup _$E19, both referencing the genuine source global. Original NetMsg argument triples and implicit PlanWin/Console most-derived flags are preserved by the existing declarations; complete virtual-base teardown is compiler-owned, not authored offsets.", "Current local helper symbols interpret present emission, not original debug names or historical TU boundaries. Object starts do not prove allocation extents. This binding establishes neither cross-TU global order, masked-reference correctness, strict linked preservation, dependency-provider equivalence nor runtime/game acceptance; excluded guarded sprite cleanup remains separate.", "The source-owned ReportWinGlobal now shares reportif.cpp with ReportIfGlobal, in pinned CRT order. Physical compiler qualification resolves its initializer to _$E13 and cleanup to _$E11, targeting the actual ReportWin constructor/destructor; the adjacent symbol fact binds the corresponding original entry. These local names do not prove a historical filename or retained selection."], "reason": "Bind original startup identity to the genuine compiler-generated lifetime of ?ReportWinGlobal@@3VReportWin@@A in its actual source owner; no manual lifecycle callback is authored."}
 // symbol    _$E21
 // ORIGINAL: 0x00496950 _$E19 0x00496950-0x0049695A FILE BYTE_EXACT
@@ -782,7 +782,7 @@ int __cdecl pop_wait();
 
 
 
-// ORIGINAL: 0x004AD3B0 ??1ReportWin@@QAE@XZ 0x004AD3B0-0x004AD6A9;0x00659140-0x006592EE FILE
+// ORIGINAL: 0x004AD3B0 ??1ReportWin@@QAE@XZ 0x004AD3B0-0x004AD6A9;0x00659140-0x006592EE FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Retired recovered seed provenance: git:a538e0a3:src/recovered/units/004ad3b0.cpp", "source:src/reportwin.h", "source:src/reportif.h", "image:original ReportWin instructions, callbacks and lifecycle evidence"], "reason": "Recover this report-window operation in its genuine owner using typed members, natural subobject lifetimes and shared source-owned state; retained catalogue identity and spans remain distinct from current emitted symbols."}
 // symbol    ??1ReportWin@@UAE@XZ
 
@@ -7101,7 +7101,7 @@ Purpose: Construct the SubInterface base, then every
          sub-object in image order - seven FlatButton runs, three Sprite
          runs, two ListBoxes, four ButtonGroups and fourteen individual
          FlatButtons, and a Spot - before installing ReportIf's own vftable.
-// ORIGINAL: 0x004AD170 ??0ReportIf@@QAE@XZ 0x004AD170-0x004AD3AA;0x00658F80-0x00659134
+// ORIGINAL: 0x004AD170 ??0ReportIf@@QAE@XZ 0x004AD170-0x004AD3AA;0x00658F80-0x00659134 BYTE_EXACT
 // TRIED: register allocation - the SEH prologue agrees (7/7) then the
 //            compiled body reserves an extra `sub esp, 8` the image does
 //            not. MISMATCH, 34/132 instructions agree - the best of this
