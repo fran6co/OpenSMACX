@@ -260,6 +260,7 @@ set(OPENSMACX_SOURCES
     src/uv2player.cpp
     src/dipedit.cpp
     src/sound.cpp
+    src/sound_type.cpp
     src/wave_group_list.cpp
     src/spritebox.cpp
     src/listbox.cpp
@@ -426,7 +427,7 @@ set_source_files_properties(src/interface_palette.cpp src/interface_fonts.cpp
     PROPERTIES COMPILE_OPTIONS "/Oy-")
 # The co-located Sound-family lifetimes retain the original frame-based
 # cleanup/deleting entries. Release already supplies /Ob2 for base inlining.
-set_source_files_properties(src/sound.cpp PROPERTIES COMPILE_OPTIONS "/Oy-")
+set_source_files_properties(src/sound.cpp src/sound_type.cpp PROPERTIES COMPILE_OPTIONS "/Oy-")
 # Preserve original frame-based argument and local-slot accesses in these core
 # owners while keeping application-wide compiler defaults unchanged.
 # World generation keeps its existing map.cpp profile after source separation;

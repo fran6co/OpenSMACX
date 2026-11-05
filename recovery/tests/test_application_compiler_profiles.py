@@ -229,7 +229,7 @@ EXPECTED_CMAKE_PROFILES = {
     ("src/crt_random.cpp", "src/header_io.cpp"): ("/Oy-",),
     ("src/vehicle_cost.cpp", "src/vehicle_orders.cpp"): ("/Oy-",),
     tuple(sorted(("src/interface_palette.cpp", "src/interface_fonts.cpp"))): ("/Oy-",),
-    ("src/sound.cpp",): ("/Oy-",),
+    ("src/sound.cpp", "src/sound_type.cpp"): ("/Oy-",),
     ("src/caviar_cpu.cpp",): ("--frontend=intrinsics-i386-no-debug",),
 }
 EXISTING_MEASURED_PROFILES = {
@@ -237,6 +237,7 @@ EXISTING_MEASURED_PROFILES = {
     "src/map_altitude.cpp": {"flags": FRAME_PROFILE},
     "src/wave.cpp": {"flags": FRAME_PROFILE},
     "src/sound.cpp": {"flags": FRAME_PROFILE},
+    "src/sound_type.cpp": {"flags": FRAME_PROFILE},
     "src/interface_palette.cpp": [1],
     "src/interface_fonts.cpp": [1],
 }

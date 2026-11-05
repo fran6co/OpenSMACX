@@ -72,7 +72,7 @@ def test_complete_lifecycle_blocks_preserve_behavior_and_seed_history():
 def test_all_original_audio_identities_and_claims_survive_once():
     units = ('sound','wave','midi','ambience')
     old = {r.address:r for unit in units for r in read_text(original(unit),ROOT/f'src/{unit}.cpp')}
-    rows = [r for unit in units for r in read_file(ROOT/f'src/{unit}.cpp')]
+    rows = [r for unit in (*units, 'sound_type') for r in read_file(ROOT/f'src/{unit}.cpp')]
     assert len(rows) == len(old)
     current = {r.address:r for r in rows}
     assert current.keys() == old.keys()

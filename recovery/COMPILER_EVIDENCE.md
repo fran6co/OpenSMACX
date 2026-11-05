@@ -51,6 +51,16 @@ policy is in `WORKFLOW.md`; no spelling trick overrides that policy.
   not proof of a historical object boundary or an integrated recovery. Do not
   manufacture constructor uses, export attributes or noinline controls to hide
   the remaining emission question. The diagnostic overlays are not source claims.
+- A simpler subsequent control needs no header changes: omitting only the
+  `set_type` definition from the current compiling Sound unit restores both
+  Voice constructor rows while retaining both standalone base-constructor
+  bodies. The inline-header experiment therefore does not establish that
+  constructor definitions must move into headers. The production source uses
+  `sound_type.cpp` for the type dispatch/query provider, preserving its complete
+  switch-table binding and the existing compiler recipe. The base and derived
+  lifetimes and `set_fade` stay together in `sound.cpp`. This records a supported
+  visibility constraint, not a complete historical TU reconstruction; other
+  partitions or original inline-provider arrangements remain possible.
 
 - Catalogue return decorations need provenance too. The stripped executable's
   `Buffer::box_sprite` entry leaves incidental EAX on guard and no-mask paths;

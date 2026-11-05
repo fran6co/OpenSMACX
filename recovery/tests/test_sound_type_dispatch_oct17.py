@@ -41,7 +41,7 @@ PINNED_TARGETS = (0x004C6215, 0x004C6205, 0x004C6255, 0x004C61F5,
 
 
 def _source_method() -> str:
-    return extract_definition((ROOT / "src/sound.cpp").read_text(),
+    return extract_definition((ROOT / "src/sound_type.cpp").read_text(),
                               "void Sound::set_type(unsigned int type)")
 
 
@@ -379,7 +379,7 @@ def test_native_profiles_reject_the_original_recovery_dispatch_error(profile_ind
     settings = Measurement.read(ROOT)
     compiler = Compiler(ROOT, profile=settings.compiler_profile)
     flags = settings.flag_sets[profile_index] + settings.layout_flags
-    unit = ROOT / "src/sound.cpp"
+    unit = ROOT / "src/sound_type.cpp"
     actual = Coff(compiler(unit, (), flags))
     validate_native_sound_dispatch(actual)
     method = _source_method()
@@ -390,7 +390,7 @@ def test_native_profiles_reject_the_original_recovery_dispatch_error(profile_ind
                .replace(marker, "case 4:", 1))
     text = unit.read_text()
     assert text.count(method) == 1
-    damaged = Coff(compiler.overlay(unit, {"src/sound.cpp": text.replace(method, swapped, 1).encode()},
+    damaged = Coff(compiler.overlay(unit, {"src/sound_type.cpp": text.replace(method, swapped, 1).encode()},
                                     (), flags))
     with pytest.raises(AssertionError):
         validate_native_sound_dispatch(damaged)

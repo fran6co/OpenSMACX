@@ -37,9 +37,9 @@ def family():
     settings = Measurement.read(ROOT)
     compiler = Compiler(ROOT, profile=settings.compiler_profile)
     trials = [{unit: Coff(compiler(ROOT / unit, (),
-                   (settings.flags_for(unit)[0] if unit == "src/sound.cpp" else flags)
+                   (settings.flags_for(unit)[0] if unit in ("src/sound.cpp", "src/sound_type.cpp") else flags)
                    + settings.layout_flags))
-               for unit in ("src/sound.cpp", "src/wave.cpp", "src/fx.cpp")}
+               for unit in ("src/sound.cpp", "src/sound_type.cpp", "src/wave.cpp", "src/fx.cpp")}
               for flags in settings.flag_sets]
     return compiler, settings, trials, PeImage(path.read_bytes(), image_pin(ROOT))
 
@@ -47,7 +47,7 @@ def family():
 def observations(objects, image):
     bindings = [b for b in read_generated(ROOT, image_pin(ROOT)) if b.symbol in TABLES]
     assert {b.symbol: b.origin.address for b in bindings} == TABLES
-    targets = {r.symbol or r.name: r.address for unit in ("sound", "wave")
+    targets = {r.symbol or r.name: r.address for unit in ("sound", "sound_type", "wave")
                for r in read_file(ROOT / f"src/{unit}.cpp")}
     _, rows = check_generated(bindings, objects, image, targets)
     assert {r["symbol"] for r in rows} == set(TABLES)
@@ -222,13 +222,14 @@ extern "C" unsigned int sound_type_probe(Sound *s) { return s->get_type(); }
 
 
 def local_binding(image, address):
-    record, = (r for r in read_file(ROOT / "src/sound.cpp") if r.address == address)
+    unit = "src/sound_type.cpp" if address == 0x448330 else "src/sound.cpp"
+    record, = (r for r in read_file(ROOT / unit) if r.address == address)
     assert record.byte_exact  # The move retains, rather than re-grants, the old obligation.
     owner = "SoundFadeState" if address == 0x4482F0 else "Sound"
     assert record.symbol.startswith("?" + LOCAL_MEMBERS[address] + "@" + owner + "@@UAE")
     return FunctionBinding(Origin(image_pin(ROOT), "pe:va", address),
                            tuple(Span(a, b) for a, b in record.image_spans),
-                           record.symbol, "src/sound.cpp")
+                           record.symbol, unit)
 
 
 @pytest.mark.parametrize("address", LOCAL_MEMBERS)
@@ -258,13 +259,14 @@ def test_other_original_family_tables_share_these_local_member_contracts(family)
 ])
 def test_compiler_rejects_wrong_zero_guard_or_member_identity(family, address, before, after):
     compiler, settings, _, image = family
-    path = ROOT / "src/sound.cpp"
+    unit = "src/sound_type.cpp" if address == 0x448330 else "src/sound.cpp"
+    path = ROOT / unit
     source = path.read_bytes()
     assert source.count(before) == (2 if address == 0x4482F0 else 1)
     binding = local_binding(image, address)
     for flags in settings.flag_sets:
-        obj = Coff(compiler.overlay(path, {"src/sound.cpp": source.replace(before, after)},
+        obj = Coff(compiler.overlay(path, {unit: source.replace(before, after)},
                                     (), flags + settings.layout_flags))
-        row, = check_objects([binding], {"src/sound.cpp": obj}, image)
+        row, = check_objects([binding], {unit: obj}, image)
         assert row["result"] == "fail", row
     assert path.read_bytes() == source
