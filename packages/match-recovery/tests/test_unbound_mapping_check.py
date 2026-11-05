@@ -94,6 +94,63 @@ def test_accidentally_compiled_unbound_interface_fails(project):
     assert header.exists()
 
 
+def test_interface_suffix_remains_forbidden_when_unit_extensions_overlap(project):
+    _write_unbound(project)
+    config_path = project / "recovery/project.json"
+    config = json.loads(config_path.read_text())
+    config["measurement"] = {"unit_extensions": [".cc", ".hpp"]}
+    config_path.write_text(json.dumps(config))
+    database = project / "build/compilation.json"
+    rows = json.loads(database.read_text())
+    rows.append({"file": "current/pending.hpp", "directory": "engine",
+                 "arguments": ["compiler-not-run", "-c", "current/pending.hpp"]})
+    database.write_text(json.dumps(rows))
+
+    report = mappings.check_mappings(project)
+    unbound, = [row for row in _rule(report, "unbound_source")
+                if row["path"] == "engine/current/pending.hpp"]
+    assert "build input" in unbound["reason"]
+    assert report["result"] == "fail"
+
+
+def test_unbound_note_can_share_a_built_product_tu_without_becoming_a_body_candidate(project):
+    host = project / "engine/current/widget.cc"
+    host.write_text(host.read_text() +
+                    "\n// ORIGINAL: 0x00403000 _pending 0x00403000-0x00403008 UNBOUND\n")
+    config_path = project / "recovery/project.json"
+    config = json.loads(config_path.read_text())
+    config["measurement"] = {"unit_extensions": [".cc"]}
+    config_path.write_text(json.dumps(config))
+
+    snapshot = source_snapshot(project)
+    pending, = [row for row in snapshot["records"] if row["origin"]["address"] == 0x403000]
+    assert pending["mapping_disposition"] == "unbound_pending"
+    assert pending["legacy_mode"] == pending["legacy_state"] == "unbound"
+    assert pending["source_body_region_present"] is False
+    assert not pending["body_path"] and not pending["context_path"]
+    assert not pending["emitted_symbol_hint"]
+
+    report = mappings.check_mappings(project)
+    assert report["result"] == "pass", report["findings"]
+    assert report["build_units"] == 2
+    assert report["annotations"] == 3
+    assert not _rule(report, "unbound_source")
+    assert not _rule(report, "unbuilt_host")
+
+    # The pending note does not let the ordinary product mapping escape its
+    # built-host requirement when the TU is removed from the configured build.
+    database = project / "build/compilation.json"
+    rows = json.loads(database.read_text())
+    rows = [row for row in rows if row["file"] != "current/widget.cc"]
+    database.write_text(json.dumps(rows))
+    report = mappings.check_mappings(project)
+    assert report["result"] == "fail"
+    assert any(row["rule"] == "unbuilt_host" and row["path"] == "engine/current/widget.cc"
+               for row in report["findings"])
+    assert any(row["rule"] == "unbound_source" and row["path"] == "engine/current/widget.cc"
+               for row in report["findings"])
+
+
 @pytest.mark.parametrize("mode_tail", ["", " FILE"])
 def test_ordinary_unbuilt_body_or_file_in_interface_still_fails(project, mode_tail):
     header = project / "engine/current/ordinary.hpp"

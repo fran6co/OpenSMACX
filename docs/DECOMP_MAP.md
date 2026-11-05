@@ -72,8 +72,11 @@ pretending that an artificial adapter is a source implementation:
 ```
 
 The derived mode, state and recipe are `unbound`; there is no definition region,
-emitted-symbol hint or compiler recipe. Place these canonical pending mappings
-in an ordinary configured, non-built interface file, not a legacy seed root.
+emitted-symbol hint or compiler recipe. A pending mapping may live in an
+ordinary configured, non-built interface file or alongside recovered records
+in a configured, built product translation unit. In either case it remains
+annotation-only: it adds no body, binding, or implementation. Never place it in
+a legacy seed root or in an interface file that is also a build input.
 The `.recovery.h` suffix remains reserved for dependency-component manifests;
 it is not a generic annotation-file suffix. No project-specific filename is
 required by the package.

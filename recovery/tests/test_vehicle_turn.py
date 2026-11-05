@@ -39,7 +39,7 @@ def braced(text, start):
 
 
 def live_body():
-    source = uncomment((ROOT / "src/veh.cpp").read_text())
+    source = uncomment((ROOT / "src/vehicle_render.cpp").read_text())
     match, = re.finditer(r"int\s+(?:__cdecl\s+)?vehdraw_turn_start\([^;{]*\)\s*\{", source)
     return braced(source,match.start())
 
@@ -76,7 +76,7 @@ def test_original_weapon_mode_operand():
 
 
 def test_turn_start_native_identity():
-    record, = (r for r in read_file(ROOT / "src/veh.cpp") if r.address == 0x4BF8D0)
+    record, = (r for r in read_file(ROOT / "src/vehicle_render.cpp") if r.address == 0x4BF8D0)
     assert record.image_spans == ((0x4BF8D0,0x4BFC67),)
 
 
@@ -116,6 +116,8 @@ unsigned char ShadowColorTable[256];
 struct Console { int get_relative_alt(int,int,int); } ConsoleGlobal;
 struct Caviar {
     VOX_Vect light_vector_,shadow_vector_;
+    VOX_Vect &light_vector() { return light_vector_; }
+    VOX_Vect &shadow_vector() { return shadow_vector_; }
     int set_shadow_table(unsigned char *);
     void set_camera_direct(const VOX_Vect *,const VOX_Matrix *);
 } g_VEHDRAW_CAVIAR;
@@ -179,7 +181,7 @@ void compute_camera(VOX_Vect *normal,VOX_Matrix *matrix) {
 }
 void vox_matrix_inverse(const float (*matrix)[3],float (*out)[3]) {
     event('I'); check(matrix == camera_matrix->values && matrix != out);
-    vec(g_VEHDRAW_CAVIAR.light_vector_.values,11,12,13);
+    vec(g_VEHDRAW_CAVIAR.light_vector().values,11,12,13);
     inverse_matrix = out;
     for (int r=0; r<3; ++r) for (int c=0; c<3; ++c) out[r][c] = float(101+r*3+c);
 }
@@ -191,7 +193,7 @@ void vox_matrix_vector_mul(const float (*matrix)[3],const float *input,float *ou
 int Caviar::set_shadow_table(unsigned char *table) {
     event('S'); check(this == &g_VEHDRAW_CAVIAR && table == ShadowColorTable);
     for (int i=0; i<256; ++i) check(table[i] == (i^0x5A));
-    vec(light_vector_.values,11,12,13); vec(shadow_vector_.values,31,32,33);
+    vec(light_vector().values,11,12,13); vec(shadow_vector().values,31,32,33);
     check(VehDrawTurnAngle == 901 && VehDrawTurnIncrement == 902);
     return 0;
 }
@@ -210,7 +212,7 @@ void run(int facing,int direction,int flags,int climate,int chassis,int mode,int
     sequence += sloped ? "1234AAAN" : ""; sequence += "CIMSD";
     phase=adds=0; VehDrawTurnVehicle=-17; VehDrawTurnAngle=901; VehDrawTurnIncrement=902;
     VehLightDirMap=VOX_Vect{{11,12,13}};
-    g_VEHDRAW_CAVIAR.light_vector_=g_VEHDRAW_CAVIAR.shadow_vector_=VOX_Vect{{-1,-1,-1}};
+    g_VEHDRAW_CAVIAR.light_vector()=g_VEHDRAW_CAVIAR.shadow_vector()=VOX_Vect{{-1,-1,-1}};
     std::memset(Vehs,0,sizeof(Vehs)); std::memset(VehPrototypes,0,sizeof(VehPrototypes));
     std::memset(Weapon,0,sizeof(Weapon)); std::memset(terrain,0,sizeof(terrain));
     Vehs[chosen].facing=int8_t((flags&1) ? -55 : facing);

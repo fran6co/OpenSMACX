@@ -115,7 +115,8 @@ def _span_pair(value):
     raise ValueError("source inventory contains an invalid span representation")
 
 
-def _unit_members(view, snapshot, source_rows, unit, image):
+def _unit_members(view, snapshot, source_rows, unit, image, associated_data=(),
+                  associated_data_units=frozenset()):
     start, end = unit["start"], unit["end_exclusive"]
     entities = {}
     for group in view["groups"]:
@@ -231,6 +232,51 @@ def _unit_members(view, snapshot, source_rows, unit, image):
             issues.append({"kind": "multiple_source_annotations", "entity_id": entity_id,
                            "paths": sorted(path for path, _ in current)})
 
+    # A validated RECOVERY_ASSOCIATED interpretation can account for original
+    # table bytes only when its source-mapped owner is itself a member of this
+    # candidate and both origins use the snapshot's pinned address space.
+    # This describes original source ownership; it does not match a current
+    # compiler table or contribute code bytes.
+    members_by_id = {member["entity_id"]: member for member in members}
+    associated_data_spans = []
+    for binding in associated_data:
+        owner = getattr(binding, "owner", None)
+        span = getattr(binding, "span", None)
+        if owner is None or span is None:
+            continue
+        member = members_by_id.get(owner.entity_id)
+        if (member is None or member["unbound"]
+                or not unit["start"] <= owner.address < unit["end_exclusive"]
+                or binding.unit not in associated_data_units
+                or owner.image_sha256 != snapshot["image_sha256"]
+                or owner.address_space != snapshot["source_configuration"]["address_space"]
+                or binding.evidence.image_sha256 != snapshot["image_sha256"]
+                or binding.evidence.address_space != snapshot["source_configuration"]["address_space"]):
+            continue
+        left, right = span.start, span.end
+        if (type(left) is not int or type(right) is not int
+                or not 0 <= left < right <= 0x100000000):
+            issues.append({"kind": "invalid_associated_data_span",
+                           "owner_entity_id": owner.entity_id})
+            continue
+        if not _intersects((left, right), start, end):
+            continue
+        if left < start or right > end:
+            issues.append({"kind": "partial_associated_data_span",
+                           "owner_entity_id": owner.entity_id,
+                           "span": [f"0x{left:08X}", f"0x{right:08X}"]})
+            continue
+        if any(left < known_right and known_left < right
+               for known_left, known_right, *_rest in accounted_spans):
+            issues.append({"kind": "overlapping_associated_data_span",
+                           "owner_entity_id": owner.entity_id,
+                           "span": [f"0x{left:08X}", f"0x{right:08X}"]})
+            continue
+        accounted_spans.append((left, right, owner.entity_id, "associated_data"))
+        associated_data_spans.append({"owner_entity_id": owner.entity_id,
+                                      "kind": binding.kind,
+                                      "span": [f"0x{left:08X}", f"0x{right:08X}"]})
+
     primary_spans.sort()
     for left, right in zip(primary_spans, primary_spans[1:]):
         if left[1] > right[0]:
@@ -278,8 +324,14 @@ def _unit_members(view, snapshot, source_rows, unit, image):
         covered += padding_gap(cursor, end)
     primary_bytes = sum(right - left for left, right, _ in primary_spans)
     secondary_bytes = sum(right - left for left, right, _entity, kind in accounted_spans if kind == "secondary")
+    associated_data_bytes = sum(right - left for left, right, _entity, kind in accounted_spans
+                                if kind == "associated_data")
     code_coverage = {"candidate_size": end - start, "mapped_primary_span_bytes": primary_bytes,
                      "associated_secondary_span_bytes": secondary_bytes,
+                     "associated_data_bytes": associated_data_bytes,
+                     "associated_data_spans": associated_data_spans,
+                     "associated_data_basis": ("source_interpretation_only_not_current_table_match"
+                                                if associated_data_spans else "none"),
                      "verified_padding_bytes": covered,
                      "closed": bool(primary_spans) and not issues}
     return members, list(selected_records.values()), issues, code_coverage
@@ -316,6 +368,21 @@ def _unit_trial_status(report, members, coverage_closed):
     matched = bool(coverage_closed and all_selected and code_trials and not nonproduct)
     closed = bool(matched and evidence_trials)
     return matched, closed, code_trials if matched else [], evidence_trials if closed else []
+
+
+def _qualified_evidence_status(native_evidence_closed, evidence_trials,
+                               owned_evidence_covered):
+    """Qualify native aggregate closure only with same-trial owned receipts."""
+    if native_evidence_closed is None:
+        return None, []
+    closed = bool(native_evidence_closed and owned_evidence_covered is True)
+    return closed, list(evidence_trials) if closed else []
+
+
+def _fully_byte_exact_status(represented, matched, evidence_closed,
+                             owned_evidence_covered):
+    return bool(represented and matched and evidence_closed
+                and owned_evidence_covered is True)
 
 
 def _native_current_translation_units(report, members):
@@ -388,6 +455,7 @@ def _counterpart_representation(root, unit, members, view, snapshot, source,
                        "reason": "recovered_tu must be a canonical, configured, built nonseed translation unit"})
 
     closure = include_closure.prerequisites((recovered,)) if recovered in snapshot["files"] else frozenset()
+    pending_unbound_count = 0
     for member in members:
         address = int(member["address"], 16)
         if not unit["start"] <= address < unit["end_exclusive"]:
@@ -396,6 +464,23 @@ def _counterpart_representation(root, unit, members, view, snapshot, source,
         product = [candidate for candidate in member["source_candidates"]
                    if not candidate["seed"] and not candidate["component"]
                    and not candidate["unbound"]]
+        unbound = [candidate for candidate in member["source_candidates"]
+                   if candidate["unbound"]]
+        if unbound:
+            pending_unbound_count += len(unbound)
+            if len(unbound) != 1 or len(member["source_candidates"]) != 1:
+                issues.append({"kind": "unbound_source_cardinality", "entity_id": member["entity_id"],
+                               "reason": "a pending UNBOUND identity cannot compete with another source candidate"})
+                continue
+            candidate, = unbound
+            home = _candidate_home(candidate)
+            if (candidate["seed"] or candidate["component"] or home != recovered
+                    or Path(candidate["path"]).suffix in source.interface_extensions
+                    or candidate.get("body_path") or candidate.get("context_path")):
+                issues.append({"kind": "unbound_host_mismatch", "entity_id": member["entity_id"],
+                               "path": candidate["path"], "recovered_tu": recovered,
+                               "reason": "a pending note must be bodyless in the built product TU counterpart"})
+            continue
         component_only = bool(member["source_candidates"]) and not product and any(
             candidate["component"] for candidate in member["source_candidates"])
         if component_only:
@@ -452,6 +537,7 @@ def _counterpart_representation(root, unit, members, view, snapshot, source,
                     break
 
     return {"recovered_tu": recovered, "represented_cpp": not issues,
+            "pending_unbound_count": pending_unbound_count,
             "counterpart_placeholder": not issues and not members,
             "representation_issues": issues,
             "representation_basis": "configured source homes/context paths and intended build membership; no body match or native verifier PASS is required"}
@@ -482,13 +568,14 @@ def _index_owned_obligations(items, path_of, value_of):
     return {path: tuple(rows) for path, rows in indexed.items()}
 
 
-def _owned_obligation_snapshot(root, pin):
+def _owned_obligation_snapshot(root, pin, associated_bindings=None):
     """Read and validate each source-owned obligation family once per report."""
     objects = read_objects(root, pin)
     literals = read_literals(root, pin)
     generated = read_generated(root, pin)
     imports = read_imports(root)
-    associated = read_associated(root, pin)
+    associated = (read_associated(root, pin) if associated_bindings is None
+                  else associated_bindings)
     return {
         "objects": _index_owned_obligations(
             objects, lambda item: item.unit,
@@ -556,6 +643,7 @@ def units_report(root: Path, image_path: Path, units_config: Path, *, mapping_on
     database = source.path(root, mappings["compile_commands"])
     database_bytes = database.read_bytes()
     build_units_set, _external = build_units(root, database_bytes)
+    associated_bindings = read_associated(root, pin) if units else ()
     import base64
     decoded_source = {name: base64.b64decode(row["content_base64"]).decode("utf-8", errors="replace")
                       for name, row in snapshot["files"].items()}
@@ -566,8 +654,12 @@ def units_report(root: Path, image_path: Path, units_config: Path, *, mapping_on
     owned_obligation_snapshot = None
 
     for unit in units:
+        associated_source_units = (include_closure.prerequisites((unit["recovered_tu"],))
+                                   | {unit["recovered_tu"]}
+                                   if unit["recovered_tu"] in snapshot["files"] else frozenset())
         members, records, coverage_issues, coverage = _unit_members(
-            view, snapshot, source_rows, unit, image)
+            view, snapshot, source_rows, unit, image, associated_bindings,
+            associated_source_units)
         selected_ids = {Origin(pin, snapshot["source_configuration"]["address_space"], record.address).entity_id
                         for record in records}
         report = None
@@ -591,23 +683,24 @@ def units_report(root: Path, image_path: Path, units_config: Path, *, mapping_on
             root, unit, members, view, snapshot, source, settings.unit_extensions,
             build_units_set, include_closure)
         if owned_obligation_snapshot is None:
-            owned_obligation_snapshot = _owned_obligation_snapshot(root, pin)
+            owned_obligation_snapshot = _owned_obligation_snapshot(root, pin, associated_bindings)
         owned_obligations = _owned_obligations(
             owned_obligation_snapshot, unit["recovered_tu"],
             include_closure.prerequisites((unit["recovered_tu"],))
             if unit["recovered_tu"] in snapshot["files"] else frozenset())
         matched = None if mapping_only else bool(representation["represented_cpp"] and native_matched)
         native_closed = None if mapping_only else bool(representation["represented_cpp"] and native_closed)
-        closed = native_closed
         # The existing trial record has aggregate data/import/generated results
         # but no stable per-obligation identity receipts. Do not claim stage 3
         # for a TU with owned data obligations until those can be tied to the
         # same passing trial. Function-only candidates can use native closure.
         owned_evidence_covered = (None if mapping_only else
                                   True if not owned_obligations else None)
+        closed, qualified_evidence_trials = _qualified_evidence_status(
+            native_closed, evidence_trials, owned_evidence_covered)
         byte_exact = (None if mapping_only else
-                      bool(representation["represented_cpp"] and matched and closed
-                           and owned_evidence_covered is True))
+                      _fully_byte_exact_status(representation["represented_cpp"], matched,
+                                               closed, owned_evidence_covered))
         if mapping_only:
             current_tus, single_current_tu, owner_unknowns = [], None, []
         else:
@@ -630,7 +723,9 @@ def units_report(root: Path, image_path: Path, units_config: Path, *, mapping_on
                       len({member["entity_id"] for member in members} - selected_ids)),
                   "matched_code_unit": matched, "code_matching_trial_indexes": code_trials,
                   "native_evidence_closed_unit": native_closed,
-                  "evidence_closed_unit": closed, "evidence_closed_trial_indexes": evidence_trials,
+                  "native_evidence_closed_trial_indexes": evidence_trials,
+                  "evidence_closed_unit": closed,
+                  "evidence_closed_trial_indexes": qualified_evidence_trials,
                   "owned_evidence_obligations": owned_obligations,
                   "owned_evidence_covered_in_passing_trial": owned_evidence_covered,
                   "owned_evidence_status": ("no_owned_obligations" if not owned_obligations
@@ -659,6 +754,7 @@ def units_report(root: Path, image_path: Path, units_config: Path, *, mapping_on
     count["candidate_units"] = len(report_units)
     count["identified_original_tu_candidates"] = len(report_units)
     count["represented_cpp_units"] = sum(row["represented_cpp"] for row in report_units)
+    count["pending_unbound_mappings"] = sum(row.get("pending_unbound_count", 0) for row in report_units)
     count["matched_code_units"] = None if mapping_only else sum(row["matched_code_unit"] for row in report_units)
     count["evidence_closed_units"] = None if mapping_only else sum(row["evidence_closed_unit"] for row in report_units)
     count["fully_byte_exact_units"] = (None if mapping_only else
@@ -679,9 +775,10 @@ def units_report(root: Path, image_path: Path, units_config: Path, *, mapping_on
             "limitations": ["explicit ranges are inferred contribution candidates, not proven historical translation units",
                             "source homes describe current organization and do not define candidate membership",
                             "native diagnostics do not establish whole-project linked preservation or game acceptance",
-                            "code matching requires every selected identity to PASS in one native graph trial",
+                            "code matching requires every selected implementation identity to PASS in one native graph trial; pending UNBOUND notes remain unmeasurable",
                             "evidence closure requires the same trial's native aggregate result to PASS",
-            "whole-unit byte exactness remains unknown when owned object, literal, import, generated, or associated obligations cannot be tied to that same trial",
+                            "source-associated original data intervals are reported separately and do not prove a matching current table",
+                            "whole-unit byte exactness remains unknown when owned object, literal, import, generated, or associated obligations cannot be tied to that same trial",
                             "the original translation-unit denominator and global recovery percentage are unknown",
                             *(["mapping-only mode did not run native verification; byte-exact and all other native counts are unmeasured"]
                               if mapping_only else [])]}

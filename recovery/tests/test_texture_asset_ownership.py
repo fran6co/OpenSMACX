@@ -76,7 +76,7 @@ def test_lifetime_identities_spans_and_historical_claims_follow_assets():
 
 def test_relative_asset_contribution_order_and_out_of_line_lifetime():
     cmake = (ROOT / "CMakeLists.txt").read_text()
-    owners = ["interface_assets", "sprite_objects", "caviar_renderer_objects"]
+    owners = ["interface_assets", "sprite_objects", "vehicle_render"]
     indices = [cmake.index("    src/" + owner + ".cpp\n") for owner in owners]
     assert indices == sorted(indices)
     objects = (ROOT / "src/interface_assets.cpp").read_text()

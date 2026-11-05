@@ -55,7 +55,7 @@ def assert_api_symbol_transition(address, before, after, current=None):
         assert current.mode.value == "file"
         assert current.path.relative_to(ROOT).as_posix() in {
             "src/caviar.cpp", "src/caviar_cpu.cpp",
-            "src/interface_assets.cpp", "src/caviar_renderer_objects.cpp",
+            "src/interface_assets.cpp", "src/vehicle_render.cpp",
         }
         return
     assert address in SYMBOL_TRANSITIONS

@@ -30,7 +30,7 @@ def braced(source, start):
 
 
 def live(name):
-    path = ROOT / "src/veh.cpp"
+    path = ROOT / "src/vehicle_render.cpp"
     source = re.sub(r"/\*.*?\*/|//[^\n]*", "", path.read_text(), flags=re.S)
     match, = re.finditer(r"void\s+(?:__cdecl\s+)?" + name + r"\([^;{]*\)\s*\{", source)
     body = braced(source, match.start())
@@ -105,10 +105,17 @@ void vox_matrix_vector_mul(const float (*matrix)[3], const float *normal, float 
     tagged(matrix, 1);
     for (int i=0; i<3; ++i) out[i] = transformed.values[i];
 }
-float leaf_006281e0_redirect(const float *xy) {
+// Instrument the mapped vec3_length call while preserving its extended
+// accumulation order and the helper's zero third component in this caller.
+float vec3_length(const float *xy) {
     event('L');
     vector_is(xy, transformed.values[0], transformed.values[1], 0);
-    return std::sqrt(xy[0]*xy[0] + xy[1]*xy[1]);
+    const float y = xy[1];
+    const float z = xy[2];
+    const long double sum = static_cast<long double>(y) * y
+                          + static_cast<long double>(z) * z
+                          + static_cast<long double>(xy[0]) * xy[0];
+    return static_cast<float>(std::sqrt(sum));
 }
 void vox_matrix_matrix_mul(const float (*left)[3], const float (*right)[3], float (*out)[3]) {
     event('M'); check(left == first_matrix->values && right == last_matrix->values);
@@ -250,7 +257,7 @@ def normals_body():
 
 @pytest.mark.parametrize("address,end", [(0x4BF740, 0x4BF8C1), (0x4C1B10, 0x4C1CF7)])
 def test_vehicle_setup_native_identity(address, end):
-    records = [record for record in read_file(ROOT / "src/veh.cpp") if record.address == address]
+    records = [record for record in read_file(ROOT / "src/vehicle_render.cpp") if record.address == address]
     record, = records
     assert record.image_spans == ((address, end),)
 

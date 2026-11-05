@@ -22,7 +22,7 @@ OFFSETS = ("VehGunMountOffset", "VehDropOffset", "VehHoverGunOffset", "VehHoverL
 
 def sources():
     game = (ROOT / "src/interface_assets.cpp").read_text()
-    veh = (ROOT / "src/veh.cpp").read_text()
+    veh = (ROOT / "src/vehicle_render.cpp").read_text()
     return (braced(game, game.index("void __cdecl load_voxels()")),
             braced(veh, veh.index("void __cdecl vehdraw_setup()")))
 

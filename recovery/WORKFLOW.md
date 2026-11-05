@@ -48,8 +48,10 @@ entries are annotated in those owners, not in a shared adapter unit. The
 `field_accessors.*` and `nullsub_thunks.*` collections are retired. Their52
 unused artificial adapters were removed; the same original identities, full
 declared spans, historical claims and bounded effect observations remain as
-explicitly pending `UNBOUND` records in `src/unbound_functions.h`. These are
-not implementations, matches, resolved ownership or proof of dead original
+explicitly pending `UNBOUND` records. Most remain in
+`src/unbound_functions.h`; an evidence-backed contribution may retain its pending
+note beside the recovered code in a configured, built product CPP. These notes
+are not implementations, matches, resolved prototypes or proof of dead original
 code. Other genuine owner no-ops are unaffected. The former `global_arith.*` collection is retired:
 PrefWin geometry storage/initializers are owned in `prefwin_geometry.*`, and
 the real `SharedWordValue` object with its paired setter/toggle is owned in
@@ -70,8 +72,10 @@ adapter, lacking source callers, or retaining a historical exactness token
 does not qualify it. For an unused artificial adapter with no established real
 owner, an explicitly reviewed migration may remove the fabricated C++ while
 retaining its same original identity, spans, historical claims and useful
-findings as `UNBOUND` comments in a configured non-built interface file.
-Missing callers are not proof that the original function is dead. These records
+findings as `UNBOUND` comments in a configured non-built interface file or an
+admitted built product CPP. A built host does not give the note a body, symbol
+binding, compiler selection or matching result. Missing callers are not proof
+that the original function is dead. These records
 remain pending, unmeasurable and outside genuine implementation coverage; do
 not erase them or wait to rediscover their existence. Ordinary workers still
 cannot change a binding's mode without coordinator review. Rebinding to a real

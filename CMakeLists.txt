@@ -286,7 +286,6 @@ set(OPENSMACX_SOURCES
     src/sprite.cpp
     src/texheap.cpp
     src/sprite_objects.cpp
-    src/caviar_renderer_objects.cpp
     src/stdafx.cpp
     src/stringbox.cpp
     src/stringlist.cpp
@@ -302,6 +301,7 @@ set(OPENSMACX_SOURCES
     src/timer_messages.cpp
     src/enemy.cpp
     src/veh.cpp
+    src/vehicle_render.cpp
     src/veh_queries.cpp
     src/vehicle_storage.cpp
     src/prototype_history.cpp
@@ -446,6 +446,7 @@ set_source_files_properties(
     src/faction_dialogue.cpp
     src/faction_network.cpp
     src/veh.cpp
+    src/vehicle_render.cpp
     src/veh_queries.cpp
     src/prototype_history.cpp
     PROPERTIES COMPILE_OPTIONS "/Oy-")

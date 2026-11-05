@@ -128,10 +128,6 @@
 // Original effect: return without modifying EAX; callee stack cleanup 8 bytes.
 // Original prototype, callers and real source owner remain unresolved.
 
-// ORIGINAL: 0x004C1D00 vehdraw_nullsub1 0x004C1D00-0x004C1D01 UNBOUND BYTE_EXACT
-// kind game
-// Original effect: return without modifying EAX; callee stack cleanup 0 bytes.
-// Original prototype, callers and real source owner remain unresolved.
 
 // ORIGINAL: 0x004C38A0 vehdraw_nullsub2 0x004C38A0-0x004C38A1 UNBOUND BYTE_EXACT
 // kind game

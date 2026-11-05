@@ -57,9 +57,14 @@ that order. Representation requires a configured built counterpart C++ TU and
 unambiguous source homes for all known nonseed product identities, with no
 outside identity also homed there. It does not require a body to exist or match,
 so explicit placeholders can be represented while remaining unmatched. An
-empty counterpart is counted as a placeholder only when the range has no known
-members. Bytes without maps remain visible in code coverage and never make a
-placeholder byte-exact.
+annotation-only `UNBOUND` mapping can also be represented when it is in that
+built counterpart TU; `pending_unbound_count` reports it separately. This records
+source correspondence only. `known_product_function_count` excludes pending
+UNBOUND mappings, which remain unmeasurable and cannot satisfy matching or
+evidence closure. UNBOUND notes in interfaces, seeds, or with body/binding
+fallbacks do not establish representation. An empty counterpart is counted as
+a placeholder only when the range has no known members. Bytes without maps
+remain visible in code coverage and never make a placeholder byte-exact.
 
 Intervals are half-open and must not overlap. The report retains every known
 identity in each interval, including unbound and dependency identities, and
@@ -69,6 +74,14 @@ bytes. Unmapped bytes count as padding only when every byte is `0x90` or
 native graph trial; per-function best results from different trials are never
 combined. Evidence closure requires that same trial's native result to pass
 with its required data/import/generated checks.
+Validated source-associated data intervals appear separately as
+`associated_data_bytes`; they describe original table extents owned by a mapped
+member. They can account for those original intervals and do not by themselves
+block a same-trial code match, but they do not prove a matching current compiler
+table. Native aggregate evidence closure is reported separately; qualified
+evidence closure and byte exactness remain unknown until per-obligation receipts
+cover owned data. Unknown alignment bytes and pending UNBOUND identities remain
+open obligations; accounting for associated data does not waive them.
 The `fully_byte_exact_unit` count additionally requires a represented C++ TU,
 coherent code matching, and same-trial evidence closure. Until native trial
 receipts identify every owned object, literal, generated, import, and associated

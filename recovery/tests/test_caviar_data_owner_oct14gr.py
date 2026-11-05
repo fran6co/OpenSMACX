@@ -33,7 +33,7 @@ def test_caviar_data_method_family_has_one_out_of_line_owner():
 def test_caviar_data_identity_and_global_definition_order_are_preserved():
     renderer = (ROOT / "src/caviar.cpp").read_text()
     objects = (ROOT / "src/interface_assets.cpp").read_text()
-    renderer_objects = (ROOT / "src/caviar_renderer_objects.cpp").read_text()
+    vehicle_renderer = (ROOT / "src/vehicle_render.cpp").read_text()
     owner = renderer
     before = subprocess.check_output(
         ["git", "show", "69759b7d1c8664a463d562eaa3b5df2f6b6400a1:src/caviar.cpp"],
@@ -43,9 +43,8 @@ def test_caviar_data_identity_and_global_definition_order_are_preserved():
     original_definitions = re.findall(definitions, before, re.MULTILINE)
     assert len(original_definitions) == 99
     assert re.findall(definitions, objects, re.MULTILINE) == original_definitions[:-1]
-    assert re.findall(definitions, renderer_objects, re.MULTILINE) == original_definitions[-1:]
+    assert re.findall(definitions, vehicle_renderer, re.MULTILINE) == original_definitions[-1:]
     assert not re.findall(definitions, renderer, re.MULTILINE)
-    assert not re.findall(definitions, owner, re.MULTILINE)
     def object_bindings(source):
         lines = source.splitlines()
         return [
@@ -55,7 +54,7 @@ def test_caviar_data_identity_and_global_definition_order_are_preserved():
             and re.match(r"^(?:CaviarData \w+(?:\[\d+\])?|Caviar g_VEHDRAW_CAVIAR);",
                          lines[index + 1])
         ]
-    assert object_bindings(objects) + object_bindings(renderer_objects) == object_bindings(before)
+    assert object_bindings(objects) + object_bindings(vehicle_renderer) == object_bindings(before)
 
     # Existing original identities/claims moved with the out-of-line method
     # family; its formerly header-defined constructor keeps its original span.
@@ -72,9 +71,10 @@ def test_caviar_data_identity_and_global_definition_order_are_preserved():
     ) == 1
     assert "0x00456100 ??1CaviarData@@QAE@XZ 0x00456100-0x00456105 FILE BYTE_EXACT" not in renderer
     assert "Caviar g_VEHDRAW_CAVIAR;" not in objects
-    assert renderer_objects.count("Caviar g_VEHDRAW_CAVIAR;") == 1
+    assert vehicle_renderer.count("Caviar g_VEHDRAW_CAVIAR;") == 1
     assert objects.count("CaviarData g_") == 98
     assert "Caviar g_VEHDRAW_CAVIAR;" not in renderer
+    assert not (ROOT / "src/caviar_renderer_objects.cpp").exists()
     assert "Caviar::Caviar()" in renderer
     assert "VoxInstance::VoxInstance()" in renderer
 
@@ -87,6 +87,8 @@ def test_build_lists_application_caviar_object_owner_before_engine():
         "    src/game.cpp")
     assert "    src/caviar_data.cpp\n" not in cmake
     assert "    src/caviar.cpp\n" in cmake
+    assert "    src/vehicle_render.cpp\n" in cmake
+    assert "src/caviar_renderer_objects.cpp" not in cmake
     # The renderer's observation recipe is checked by the metadata-policy tests.
     assert '"src/interface_assets.cpp": {' in project
     assert cmake.index("    src/interface_assets.cpp") < cmake.index(
@@ -96,13 +98,15 @@ def test_build_lists_application_caviar_object_owner_before_engine():
 def test_native_reader_follows_moved_method_identities_and_claims():
     records = (read(ROOT / "src/caviar.cpp")
                + read(ROOT / "src/interface_assets.cpp")
-               + read(ROOT / "src/caviar_renderer_objects.cpp"))
+               + read(ROOT / "src/vehicle_render.cpp"))
     expected = {
         0x456100: ("src/interface_assets.cpp", "src/caviar.h", True),
         0x44D170: ("src/interface_assets.cpp", "", True),
         0x44D190: ("src/interface_assets.cpp", "", True),
-        0x4BF6E0: ("src/caviar_renderer_objects.cpp", "", True),
-        0x4BF700: ("src/caviar_renderer_objects.cpp", "", True),
+        0x4BF6E0: ("src/vehicle_render.cpp", "", True),
+        0x4BF700: ("src/vehicle_render.cpp", "", True),
+        0x4BF710: ("src/vehicle_render.cpp", "", True),
+        0x4BF730: ("src/vehicle_render.cpp", "", True),
         0x616BC0: ("src/caviar.cpp", "", True),
         0x616BD0: ("src/caviar.cpp", "", True),
         0x616C60: ("src/caviar.cpp", "", True),

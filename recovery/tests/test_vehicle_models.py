@@ -33,7 +33,8 @@ def braced(text, start):
 
 
 def live_source():
-    source = clean((ROOT / "src/veh.cpp").read_text())
+    source = clean((ROOT / "src/vehicle_render.cpp").read_text())
+    vehicle_data = clean((ROOT / "src/veh.cpp").read_text())
     matches = list(re.finditer(r"void\s+__cdecl\s+vehdraw_construct_\w+\([^;{]*\)\s*\{", source))
     assert len(matches) == 7
     bodies = "\n".join(braced(source, m.start()) for m in matches)
@@ -53,8 +54,12 @@ def live_source():
         else:
             models.append('CaviarData ' + name + '={"' + name + '",0};')
     storage = []
-    for name in ("VehDrawAnimationStep", "VehInfantryOffset"):
-        match, = re.findall(r"(?:int|VOX_Vect) " + name + r"[^;]*;", source)
+    storage_sources = {
+        "VehDrawAnimationStep": source,
+        "VehInfantryOffset": vehicle_data,
+    }
+    for name, owner_source in storage_sources.items():
+        match, = re.findall(r"(?:int|VOX_Vect) " + name + r"[^;]*;", owner_source)
         storage.append(match)
     return "\n".join(records), "\n".join(models), prototypes, bodies, reset, "\n".join(storage)
 
@@ -211,7 +216,7 @@ void chassis_cases() {
     event(6,g_VCTB_CAVIARDATA,4);event(7,g_VCT0_CAVIARDATA[0],0,&BodyTintColorTables[3][0][0]);check(VehDrawAnimationStep==201);
     reset(); vehdraw_construct_chassis(3,7,2,0,0,&renderer);names({"VB","VBP","VGMC","VGMCP","VGS","VGSP"});
     reset(); vehdraw_construct_chassis(3,8,24,0,0,&renderer);names({"VM","TECLOAD","VB","VBP"});
-    reset(); Armor[2].defense_rating=-128; Weapon[21].mode=11;
+    reset(); Armor[2].defense_rating=-1; Weapon[21].mode=11;
     vehdraw_construct_chassis(3,1,21,2,1,&renderer);names({"VPT"});event(0,g_VPT_CAVIARDATA,4,0,&VehInfantryOffset);
     reset(); Players[3].rule_flags=0x80; vehdraw_construct_chassis(3,1,2,10,4,&renderer);
     check(events.size()==10);event(0,g_SCJ_CAVIARDATA);event(1,g_ACP_CAVIARDATA[3],0,&ArmorTintColorTables[0][0][0]);
@@ -277,7 +282,7 @@ void vehicle_cases() {
     reset();vehdraw_construct_vehicle(3,8,24,0,2,1u<<24,&renderer);
     names({"VM","TECLOAD","VB","VBP","SP_SOPORIFIC","VPBR0"});event(5,g_VPBR0_CAVIARDATA[1]);
     check(renderer.field_13CC_==6 && renderer.allocation==&renderer);
-    reset();Armor[2].defense_rating=-128;Weapon[21].mode=11;
+    reset();Armor[2].defense_rating=-1;Weapon[21].mode=11;
     vehdraw_construct_vehicle(3,1,21,2,1,0,&renderer);
     names({"VPT","VIPTA","VIPTR"});
     event(0,g_VPT_CAVIARDATA,4,0,&VehInfantryOffset);
@@ -300,7 +305,11 @@ def run_host(tmp_path, damage=None):
     if damage:
         old, new = damage
         assert old in bodies
-        bodies = bodies.replace(old, new, 1)
+        if "defense_rating" in old:
+            assert bodies.count(old) == 3
+            bodies = bodies.replace(old, new)
+        else:
+            bodies = bodies.replace(old, new, 1)
     code = HARNESS
     for marker, value in (("RECORDS", records), ("MODELS", models), ("STORAGE", storage),
                           ("RESET", reset), ("PROTOTYPES", prototypes), ("BODIES", bodies)):

@@ -705,6 +705,19 @@
         "Both routines use the existing Menu interface on the Console-owned AlphaMenu receiver. This does not disprove an original MainMenu subclass or typedef; preserve the catalogue names, current typed symbols, and that unresolved structural question.",
         "Neither function uses the AlphaMenu animation helpers, Wave global or animation timing/colour globals. Those remain with the compact AlphaMenu UI core; no class layout, globals or lifecycle operations move."
       ]
+    },
+    {
+      "name": "VehicleRender",
+      "start": "0x004BF6E0",
+      "end_exclusive": "0x004C3896",
+      "recovered_tu": "src/vehicle_render.cpp",
+      "reason": "Inferred vehicle-rendering contribution core: both renderer globals and their four lifetime entries, sixteen known renderer bodies, and one explicitly unbound return identity. Original historical object boundaries and filename remain unproved.",
+      "evidence": [
+        "Pinned CRT slots 0x006825FC and 0x00682600 initialize the Caviar renderer and scratch Buffer in that order. Their consumers, renderer state, helpers and ordinary functions are homed together; Caviar class methods and asset loaders remain external providers.",
+        "The complete address-ordered source scan includes pending vehdraw_nullsub1 at 0x004C1D00. It retains UNBOUND state and unknown prototype/callers; source placement grants no implementation or matching claim. The separate return at 0x004C38A0 lies outside this core.",
+        "Six switch-target tables are associated in source with their actual indirect jumps: the existing scoot table, two chassis tables, one weapon table and two armor tables. The corrected second chassis table has nine entries ending at 0x004C2CE4.",
+        "Mapped primaries, associated tables and observed alignment account for the interval except two explicitly unassigned multi-byte no-op sequences at 0x004C306A..0x004C306C and 0x004C3795..0x004C3798. Their lack of direct targets is not proof of dead code or historical TU boundaries."
+      ]
     }
   ]
 }

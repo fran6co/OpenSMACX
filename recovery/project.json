@@ -575,16 +575,6 @@
           "-c"
         ]
       },
-      "src/caviar_renderer_objects.cpp": {
-        "flags": [
-          "/c",
-          "/O2",
-          "/Gy",
-          "/GR-",
-          "/GX",
-          "/Ob2"
-        ]
-      },
       "src/sprite_objects.cpp": {
         "flags": [
           "/c",
@@ -1921,6 +1911,20 @@
         ]
       },
       "src/sound_type.cpp": {
+        "flags": [
+          "/nologo",
+          "/TP",
+          "/Zm200",
+          "/GX",
+          "/O2",
+          "/Ob2",
+          "-MT",
+          "/W4",
+          "/Oy-",
+          "-c"
+        ]
+      },
+      "src/vehicle_render.cpp": {
         "flags": [
           "/nologo",
           "/TP",

@@ -50,7 +50,8 @@ def test_unbound_public_measurement_is_unknown_without_compiling(project):
 
 
 def test_mixed_measurement_keeps_unbound_unknown_despite_same_name_coff_symbol(project):
-    mark_unbound(project)
+    source = mark_unbound(project)
+    assert source.relative_to(project).as_posix() == "engine/family.cc"
     report = measure_source(project, ("_f", "_h"), image=Path("original/input.exe"))
     rows = {row["name"]: row for row in report["measurements"]}
     assert report["result"] == "unknown"
@@ -104,6 +105,7 @@ def test_low_level_comparers_refuse_unbound_before_compiler_lookup(project):
 
 def test_recording_paths_refuse_unbound_before_validation_or_measurement(project):
     source = mark_unbound(project)
+    assert source.relative_to(project).as_posix() == "engine/family.cc"
     before = source.read_bytes()
     row = next(row for row in read_file(source) if row.name == "_f")
     observed = []

@@ -6,13 +6,14 @@ from types import SimpleNamespace
 
 import pytest
 
-from match_recovery.model import Origin
+from match_recovery.model import Origin, Span
 from match_recovery.graph import DependencyGraph
 from match_recovery.cli import parser
 from match_recovery import units as units_module
 from match_recovery.units import (_identity_counts, _native_current_translation_units,
                                   _counterpart_representation, _single_trial, _summary_identity_counts,
                                   _owned_obligation_snapshot, _owned_obligations,
+                                  _fully_byte_exact_status, _qualified_evidence_status,
                                   _unit_members, _unit_trial_status,
                                   read_units_config)
 
@@ -122,16 +123,48 @@ def test_split_home_and_external_body_block_source_representation(tmp_path):
             "external_original_identity_in_recovered_tu"} <= kinds
 
 
-def test_unbound_and_seed_candidates_do_not_establish_representation(tmp_path):
+def test_built_product_unbound_note_is_represented_but_not_implementation(tmp_path):
     source, snapshot, closure = _representation_fixture(tmp_path)
     unit_row = {"start": 0x1000, "end_exclusive": 0x1010, "recovered_tu": "src/a.cpp"}
-    for seed, unbound in ((False, True), (True, False)):
-        member = {"entity_id": "inside", "address": "0x00001000", "source_candidates": [
-            {"path": "src/a.cpp", "context_path": "", "body_path": "",
-             "seed": seed, "unbound": unbound, "component": None}]}
+    member = {"entity_id": "inside", "address": "0x00001000", "seed_only": False,
+              "unbound": True, "component": None, "source_candidates": [
+                  {"path": "src/a.cpp", "context_path": "", "body_path": "",
+                   "seed": False, "unbound": True, "component": None}]}
+    result = _counterpart_representation(tmp_path, unit_row, [member], {"groups": []},
+        snapshot, source, {".cpp"}, {"src/a.cpp"}, closure)
+    assert result["represented_cpp"]
+    assert result["pending_unbound_count"] == 1
+    assert _identity_counts([member]) == {"known_function_count": 1,
+                                          "known_product_function_count": 0,
+                                          "seed_only_function_count": 0,
+                                          "unbound_function_count": 1,
+                                          "dependency_component_count": 0}
+    passing = {"functions": [{"entity_id": "inside", "result": "pass", "unit": "src/a.cpp"}],
+               "selected_evidence": {"trials": [{"result": "pass", "function_results": ["pass"]}]}}
+    assert _unit_trial_status(passing, [member], True) == (False, False, [], [])
+
+    seed_member = {**member, "entity_id": "seed", "unbound": False,
+                   "source_candidates": [{"path": "src/a.cpp", "context_path": "", "body_path": "",
+                                          "seed": True, "unbound": False, "component": None}]}
+    seed_result = _counterpart_representation(tmp_path, unit_row, [seed_member], {"groups": []},
+        snapshot, source, {".cpp"}, {"src/a.cpp"}, closure)
+    assert not seed_result["represented_cpp"]
+
+
+def test_unbound_interface_or_body_fallback_cannot_establish_representation(tmp_path):
+    source, snapshot, closure = _representation_fixture(tmp_path)
+    unit_row = {"start": 0x1000, "end_exclusive": 0x1010, "recovered_tu": "src/a.cpp"}
+    header = {"entity_id": "inside", "address": "0x00001000", "source_candidates": [
+        {"path": "include/pending.h", "context_path": "", "body_path": "",
+         "seed": False, "unbound": True, "component": None}]}
+    body = {"entity_id": "inside", "address": "0x00001000", "source_candidates": [
+        {"path": "src/a.cpp", "context_path": "", "body_path": "src/a.cpp",
+         "seed": False, "unbound": True, "component": None}]}
+    for member in (header, body):
         result = _counterpart_representation(tmp_path, unit_row, [member], {"groups": []},
             snapshot, source, {".cpp"}, {"src/a.cpp"}, closure)
         assert not result["represented_cpp"]
+        assert "unbound_host_mismatch" in {item["kind"] for item in result["representation_issues"]}
 
 
 def test_unconfigured_or_missing_counterpart_cannot_represent_candidate(tmp_path):
@@ -401,6 +434,88 @@ def test_unbound_member_is_counted_but_blocks_verified_code_coverage():
     assert counts["known_function_count"] == 2
     assert counts["known_product_function_count"] == 1
     assert counts["unbound_function_count"] == 1
+
+
+def test_associated_data_bytes_are_separate_and_do_not_native_close_candidate():
+    owner = entity(0x1000, spans=((0x1000, 0x1002),))
+    rows = [source_row(0x1000, ((0x1000, 0x1002),))]
+    view, snapshot = ledger(owner, rows=rows)
+    binding = SimpleNamespace(
+        owner=Origin(PIN, "pe:va", 0x1000),
+        evidence=Origin(PIN, "pe:va", 0x1001),
+        span=Span(0x1002, 0x1006), kind="switch_targets", unit="src/a.cpp")
+    members, _, issues, coverage = _unit_members(
+        view, snapshot, {}, unit(), BytesImage(b"\xc3\xc3\x10\x20\x30\x40\x90\x90"),
+        [binding], {"src/a.cpp"})
+    assert coverage["mapped_primary_span_bytes"] == 2
+    assert coverage["associated_secondary_span_bytes"] == 0
+    assert coverage["associated_data_bytes"] == 4
+    assert coverage["associated_data_spans"] == [{
+        "owner_entity_id": owner["entity_id"], "kind": "switch_targets",
+        "span": ["0x00001002", "0x00001006"]}]
+    assert coverage["associated_data_basis"] == "source_interpretation_only_not_current_table_match"
+    assert coverage["closed"] and not issues
+    passing = {"functions": [{"entity_id": owner["entity_id"], "result": "pass", "unit": "src/a.cpp"}],
+               "selected_evidence": {"trials": [{"result": "pass", "function_results": ["pass"]}]}}
+    matched, native_closed, code_trials, evidence_trials = _unit_trial_status(
+        passing, members, coverage["closed"])
+    assert matched and native_closed and code_trials == evidence_trials == [0]
+    qualified_closed, qualified_trials = _qualified_evidence_status(
+        native_closed, evidence_trials, owned_evidence_covered=None)
+    assert not qualified_closed and qualified_trials == []
+    assert not _fully_byte_exact_status(True, matched, qualified_closed,
+                                        owned_evidence_covered=None)
+
+
+def test_owned_evidence_needs_same_trial_receipt_for_qualified_closure():
+    native_closed, trials = _qualified_evidence_status(True, [2], owned_evidence_covered=True)
+    assert native_closed and trials == [2]
+    missing, missing_trials = _qualified_evidence_status(True, [2], owned_evidence_covered=None)
+    assert not missing and missing_trials == []
+    assert _qualified_evidence_status(None, [2], owned_evidence_covered=None) == (None, [])
+
+
+def test_foreign_or_wrong_pin_associated_data_does_not_cover_candidate_gap():
+    owner = entity(0x1000, spans=((0x1000, 0x1002),))
+    view, snapshot = ledger(owner, rows=[source_row(0x1000, ((0x1000, 0x1002),))])
+    foreign = SimpleNamespace(
+        owner=Origin(PIN, "pe:va", 0x2000), evidence=Origin(PIN, "pe:va", 0x2001),
+        span=Span(0x1002, 0x1006), kind="switch_targets", unit="src/b.cpp")
+    wrong_pin = SimpleNamespace(
+        owner=Origin("b" * 64, "pe:va", 0x1000),
+        evidence=Origin("b" * 64, "pe:va", 0x1001),
+        span=Span(0x1002, 0x1006), kind="switch_targets", unit="src/a.cpp")
+    unrelated_unit = SimpleNamespace(
+        owner=Origin(PIN, "pe:va", 0x1000), evidence=Origin(PIN, "pe:va", 0x1001),
+        span=Span(0x1002, 0x1006), kind="switch_targets", unit="src/b.cpp")
+    _, _, issues, coverage = _unit_members(
+        view, snapshot, {}, unit(), BytesImage(b"\xc3\xc3\x10\x20\x30\x40\x90\x90"),
+        [foreign, wrong_pin, unrelated_unit], {"src/a.cpp"})
+    assert coverage["associated_data_bytes"] == 0
+    assert not coverage["closed"]
+    assert any(item["kind"] == "unexplained_gap" for item in issues)
+
+    partial = SimpleNamespace(
+        owner=Origin(PIN, "pe:va", 0x1000), evidence=Origin(PIN, "pe:va", 0x1001),
+        span=Span(0x0FFF, 0x1003), kind="switch_targets", unit="src/a.cpp")
+    _, _, partial_issues, partial_coverage = _unit_members(
+        view, snapshot, {}, unit(), BytesImage(b"\xc3\xc3\x10\x20\x30\x40\x90\x90"),
+        [partial], {"src/a.cpp"})
+    assert partial_coverage["associated_data_bytes"] == 0
+    assert any(item["kind"] == "partial_associated_data_span" for item in partial_issues)
+
+
+def test_associated_data_from_resolved_include_header_can_cover_member_interval():
+    owner = entity(0x1000, spans=((0x1000, 0x1002),))
+    view, snapshot = ledger(owner, rows=[source_row(0x1000, ((0x1000, 0x1002),))])
+    included = SimpleNamespace(
+        owner=Origin(PIN, "pe:va", 0x1000), evidence=Origin(PIN, "pe:va", 0x1001),
+        span=Span(0x1002, 0x1006), kind="switch_targets", unit="include/shared.h")
+    _, _, issues, coverage = _unit_members(
+        view, snapshot, {}, unit(), BytesImage(b"\xc3\xc3\x10\x20\x30\x40\x90\x90"),
+        [included], {"src/a.cpp", "include/shared.h"})
+    assert coverage["associated_data_bytes"] == 4
+    assert coverage["closed"] and not issues
 
 
 def test_passing_seed_only_identity_stays_in_denominator_but_not_product_match():

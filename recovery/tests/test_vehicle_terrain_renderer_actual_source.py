@@ -14,7 +14,7 @@ FIXTURE = Path(__file__).parent / "fixtures" / "vehicle_renderer_host.cpp.in"
 
 def extract_actual_function(text):
     signature = "void __cdecl vehdraw_unk1("
-    assert text.count(signature) == 1, "actual src/veh.cpp must contain one vehdraw_unk1"
+    assert text.count(signature) == 1, "actual src/vehicle_render.cpp must contain one vehdraw_unk1"
     start = text.index(signature)
     brace = text.index("{", start)
     depth = 0
@@ -63,7 +63,7 @@ def compile_run(compiler, body, tmp_path, name):
 
 
 def test_vehicle_terrain_renderer_actual_source(tmp_path):
-    source = (ROOT / "src/veh.cpp").read_text()
+    source = (ROOT / "src/vehicle_render.cpp").read_text()
     body = extract_actual_function(source)
     if os.environ.get("OSMX_HOST_CXX"):
         compilers = [shutil.which(os.environ["OSMX_HOST_CXX"])]

@@ -37,18 +37,22 @@ def braced(text, start):
 
 def product():
     source = uncomment((ROOT / "src/veh.cpp").read_text())
+    renderer = uncomment((ROOT / "src/vehicle_render.cpp").read_text())
     names = ("vehdraw_scale", "vehdraw_centre_offset", "vehdraw_uses_terrain",
              "vehdraw_facet_index", "vehdraw_average_facets", "vehdraw_finish_frame",
              "vehdraw_turn", "vehdraw_scoot_start", "vehdraw_scoot", "vehdraw_draw")
     bodies = []
     for name in names:
         match, = re.finditer(r"^(?:static )?(?:float|int|bool|void)\s+(?:__cdecl\s+)?"
-                             + name + r"\([^;{]*\)\s*\{", source, re.M)
-        bodies.append(braced(source, match.start()))
+                             + name + r"\([^;{]*\)\s*\{", renderer, re.M)
+        bodies.append(braced(renderer, match.start()))
     for name in ("VehMoveDeltaX", "VehMoveDeltaY"):
         declaration, = re.findall(r"int " + name + r"\[\d+\]\s*=\s*\{[^}]*\};", source)
         bodies.insert(0, declaration)
-    return "\n".join(bodies)
+    product_source = "\n".join(bodies)
+    product_source = product_source.replace("vec3_subtract(", "leaf_00628180_redirect(")
+    product_source = product_source.replace("vec3_scale(", "leaf_006281b0_redirect(")
+    return product_source
 
 
 def declarations():
@@ -62,6 +66,20 @@ def declarations():
     result.append("extern Map *MapTiles;")
     result.append(braced(map_header, map_header.index("inline Map *&map_tiles()")))
     return "\n".join(result)
+
+
+def helpers():
+    vector_source = uncomment((ROOT / "src/vector.cpp").read_text())
+    vector_bodies = []
+    for name in ("vec3_subtract", "vec3_scale"):
+        match, = re.finditer(r"void\s+__cdecl\s+" + name + r"\([^;{]*\)\s*\{",
+                             vector_source)
+        actual = braced(vector_source, match.start())
+        vector_bodies.append(actual.replace(name, name + "_actual", 1))
+    map_header = uncomment((ROOT / "src/map.h").read_text())
+    match, = re.finditer(r"inline\s+int\s+__cdecl\s+wrap_map_x\([^;{]*\)\s*\{",
+                         map_header)
+    return "\n".join(vector_bodies + [braced(map_header, match.start())])
 
 
 def test_pinned_animation_control_anchors():
@@ -139,12 +157,15 @@ VOX_Vect VehDrawFacetNormals2[2401],VehDrawFacetNormals3[2401];
 VOX_Vect *tables[]={VehDrawFacetNormals0,VehDrawFacetNormals1,VehDrawFacetNormals2,VehDrawFacetNormals3};
 int VehDrawPositionX,VehDrawPositionY,VehDrawPositionVehicle;
 int MapWinCaptionScale,MapWinCaptionDivisor;
+// HELPERS
 using ColorTable = unsigned char[256];
 unsigned char ShadowColorTable[256],ArmorTransparentColorTables[24][256];
 struct Buffer { int tag; } destination;
 struct Console { int get_relative_alt(int,int,int); } ConsoleGlobal;
 struct Caviar {
     VOX_Vect light_vector_,shadow_vector_; int field_13CC_;
+    VOX_Vect &light_vector() { return light_vector_; }
+    VOX_Vect &shadow_vector() { return shadow_vector_; }
     void reset_objects() { field_13CC_=0; }
     void set_scaling(float); void set_scene_rotation(float,float,float);
     void set_shadow_table(unsigned char *);
@@ -239,7 +260,7 @@ void leaf_00628180_redirect(const float *a,const float *b,float *out) {
     same(a,unit(sub_calls==0?expected_mid:expected_end));
     same(b,unit(sub_calls==0?expected_start:expected_mid));
     check(out==(sub_calls==0?VehDrawScootFirstIncrement.values:VehDrawScootSecondIncrement.values));
-    for(int i=0;i<3;++i) out[i]=a[i]-b[i]; ++sub_calls;
+    vec3_subtract_actual(a,b,out); ++sub_calls;
 }
 void leaf_006281b0_redirect(const float *in,float factor,float *out) {
     events+='f'; check(in==out);
@@ -255,7 +276,7 @@ void leaf_006281b0_redirect(const float *in,float factor,float *out) {
         check(factor==1.0f/count);
         check(out==(scalar_calls==0?VehDrawScootFirstIncrement.values:VehDrawScootSecondIncrement.values));
     }
-    for(int i=0;i<3;++i) out[i]=in[i]*factor; ++scalar_calls;
+    vec3_scale_actual(in,factor,out); ++scalar_calls;
 }
 void compute_camera(VOX_Vect *normal,VOX_Matrix *matrix) {
     events+='C'; same(normal->values,unit(expected_normal)); camera_seen=matrix;
@@ -264,7 +285,7 @@ void compute_camera(VOX_Vect *normal,VOX_Matrix *matrix) {
 }
 void vox_matrix_inverse(const float (*matrix)[3],float (*out)[3]) {
     events+='I'; check(matrix==camera_seen->values && matrix!=out); inverse_seen=out;
-    same(g_VEHDRAW_CAVIAR.light_vector_.values,VOX_Vect{{11,12,13}});
+    same(g_VEHDRAW_CAVIAR.light_vector().values,VOX_Vect{{11,12,13}});
     for(int r=0;r<3;++r) for(int c=0;c<3;++c) out[r][c]=float(101+r*3+c);
 }
 void vox_matrix_vector_mul(const float (*matrix)[3],const float *v,float *out) {
@@ -274,7 +295,7 @@ void vox_matrix_vector_mul(const float (*matrix)[3],const float *v,float *out) {
 }
 void Caviar::set_shadow_table(unsigned char *table) {
     events+='H'; check(this==&g_VEHDRAW_CAVIAR && table==ShadowColorTable);
-    same(shadow_vector_.values,VOX_Vect{{31,32,33}});
+    same(shadow_vector().values,VOX_Vect{{31,32,33}});
 }
 void Caviar::set_scaling(float value) {
     events+='S'; check(this==&g_VEHDRAW_CAVIAR);
@@ -438,7 +459,8 @@ def run_host(tmp_path, body):
     if not compiler:
         pytest.skip("host g++ required")
     source, executable = tmp_path / "animation.cpp", tmp_path / "animation"
-    source.write_text(HARNESS.replace("// DECLARATIONS", declarations()).replace("// PRODUCT", body))
+    source.write_text(HARNESS.replace("// DECLARATIONS", declarations())
+        .replace("// HELPERS", helpers()).replace("// PRODUCT", body))
     compiled = subprocess.run([compiler, "-std=c++11", "-O1", "-fsanitize=undefined",
         "-fno-sanitize-recover=undefined", str(source), "-o", str(executable)],
         text=True, capture_output=True, timeout=45)

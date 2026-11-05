@@ -87,11 +87,13 @@ def _is_unbound(record: dict) -> bool:
     return record.get("legacy_mode") == "unbound" or record.get("legacy_state") == "unbound"
 
 
-def _unbound_problem(record: dict, source: SourceConfiguration, units: set[str]) -> str | None:
-    """Return why an explicit UNBOUND identity is not a permitted interface note.
+def _unbound_problem(record: dict, source: SourceConfiguration, units: set[str],
+                     unit_extensions: set[str]) -> str | None:
+    """Return why an explicit UNBOUND identity is not a permitted source note.
 
-    UNBOUND preserves an original identity in a configured, non-built interface
-    host. It is never a body candidate, seed substitute, or symbol/body lookup.
+    UNBOUND preserves an original identity in either a configured, non-built
+    interface host or a canonical built product TU. It is never a body
+    candidate, seed substitute, or symbol/body lookup.
     """
     path = record.get("path")
     if not isinstance(path, str) or not path:
@@ -105,10 +107,14 @@ def _unbound_problem(record: dict, source: SourceConfiguration, units: set[str])
             return "unbound identity is outside configured source roots"
     except (TypeError, ValueError):
         return "unbound identity has an invalid source path"
-    if relative.suffix not in source.interface_extensions:
-        return "unbound identity must be in a configured interface file"
-    if path in units:
-        return "unbound interface host is an accidental build input"
+    interface_note = (relative.suffix in source.interface_extensions and path not in units)
+    product_note = (relative.suffix in unit_extensions
+                    and relative.suffix not in source.interface_extensions
+                    and path in units)
+    if not (interface_note or product_note):
+        if relative.suffix in source.interface_extensions:
+            return "unbound interface host is an accidental build input"
+        return "unbound identity must be in a configured interface file or built product translation unit"
     if record.get("legacy_mode") != "unbound" or record.get("legacy_state") != "unbound":
         return "unbound mode and state are inconsistent"
     origin = record.get("origin")
@@ -225,7 +231,7 @@ def check_mappings(root: Path) -> dict:
     findings, alternatives, errors, forwarders = [], [], [], []
     for record in records:
         if _is_unbound(record):
-            problem = _unbound_problem(record, source, units)
+            problem = _unbound_problem(record, source, units, set(unit_extensions))
             if (record.get("path"), record.get("entity_id")) in component_candidates:
                 problem = "an unbound identity collides with a component manifest interpretation"
             if problem:

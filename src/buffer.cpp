@@ -21,22 +21,16 @@
 // kind      game
 // ORIGINAL: 0x005E37B0 _$E51 0x005E37B0-0x005E37C6 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned CRT slot 0x00682674 selects startup 0x005E37B0..0x005E37C6, which constructs the ordinary namespace-global Buffer at 0x009B6080 and registers finalizer 0x005E37D0..0x005E37DA. This separate lifetime has no cleanup guard.", "The existing g_BUFFER object and its source ownership remain unchanged. Its generated constructor registration and destructor references identify these compiler callbacks independently of private compiler label numbering.", "Original identities, full spans and historical claims remain unchanged. Static members add no instance fields. Current compiler symbols are binding facts, not historical debug names; complete original TU boundaries, linked storage placement and game fidelity remain unproved. Fresh strict measurement is required; this binding grants no claim."], "reason": "Bind the original lifetime to ordinary typed storage and its compiler-generated initialization/destruction, preserving guard, order and restoration obligations."}
-// symbol    _$E28
+// symbol    _$E23
 // ORIGINAL: 0x005E37D0 _$E49 0x005E37D0-0x005E37DA FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned CRT slot 0x00682674 selects startup 0x005E37B0..0x005E37C6, which constructs the ordinary namespace-global Buffer at 0x009B6080 and registers finalizer 0x005E37D0..0x005E37DA. This separate lifetime has no cleanup guard.", "The existing g_BUFFER object and its source ownership remain unchanged. Its generated constructor registration and destructor references identify these compiler callbacks independently of private compiler label numbering.", "Original identities, full spans and historical claims remain unchanged. Static members add no instance fields. Current compiler symbols are binding facts, not historical debug names; complete original TU boundaries, linked storage placement and game fidelity remain unproved. Fresh strict measurement is required; this binding grants no claim."], "reason": "Bind the original lifetime to ordinary typed storage and its compiler-generated initialization/destruction, preserving guard, order and restoration obligations."}
-// symbol    _$E26
-// ORIGINAL: 0x004BF710 sub_4bf710 0x004BF710-0x004BF726 FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["Pinned CRT slot 0x00682600 selects initializer 0x004BF710..0x004BF726 for Buffer at 0x008CC298 and registers finalizer 0x004BF730..0x004BF73A. Cleanup unconditionally tail-calls Buffer::~Buffer; resource-state checks belong to Buffer::close, not an added global teardown guard.", "Physical constructor, atexit-registration and destructor relocation graphs identify g_VEHDRAW_BUFFER independently of private label numbering. The ordinary g_BUFFER at 0x009B6080 is a separate lifetime; same-shaped code does not establish receiver identity.", "Original identities, complete spans and historical claims remain unchanged. Vehicle-rendering ownership is supported by its consumers and adjacent renderer state; complete historical TU boundaries, linked placement and game acceptance remain unproved. This binding grants no claim."], "reason": "Bind the original vehicle-rendering Buffer lifetime to its actual typed global and compiler-generated callbacks."}
-// symbol    _$E12
-// ORIGINAL: 0x004BF730 sub_4bf730 0x004BF730-0x004BF73A FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["Pinned CRT slot 0x00682600 selects initializer 0x004BF710..0x004BF726 for Buffer at 0x008CC298 and registers finalizer 0x004BF730..0x004BF73A. Cleanup unconditionally tail-calls Buffer::~Buffer; resource-state checks belong to Buffer::close, not an added global teardown guard.", "Physical constructor, atexit-registration and destructor relocation graphs identify g_VEHDRAW_BUFFER independently of private label numbering. The ordinary g_BUFFER at 0x009B6080 is a separate lifetime; same-shaped code does not establish receiver identity.", "Original identities, complete spans and historical claims remain unchanged. Vehicle-rendering ownership is supported by its consumers and adjacent renderer state; complete historical TU boundaries, linked placement and game acceptance remain unproved. This binding grants no claim."], "reason": "Bind the original vehicle-rendering Buffer lifetime to its actual typed global and compiler-generated callbacks."}
-// symbol    _$E10
+// symbol    _$E21
 // ORIGINAL: 0x005D71D0 sub_5d71d0 0x005D71D0-0x005D71E6 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned startup 0x005D71D0..0x005D71E6 constructs the Sprite at 0x009B3A50..0x009B3A7C and registers finalizer 0x005D71F0..0x005D720F. Cleanup publishes bit 2 of the same byte 0x009B37CC before Sprite::close at 0x005E3820; constructors do not reset the guard.", "Buffer::shared_sprite_ is ordinary class-static storage defined after the special-text array. Physical compiler output supplies the shared guard and registration edges; consumers access the actual typed Sprite directly.", "Original identities, full spans and historical claims remain unchanged. Static members add no instance fields. Current compiler symbols are binding facts, not historical debug names; complete original TU boundaries, linked storage placement and game fidelity remain unproved. Fresh strict measurement is required; this binding grants no claim."], "reason": "Bind the original lifetime to ordinary typed storage and its compiler-generated initialization/destruction, preserving guard, order and restoration obligations."}
-// symbol    _$E23
+// symbol    _$E18
 // ORIGINAL: 0x005D71F0 sub_5d71f0 0x005D71F0-0x005D720F FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned startup 0x005D71D0..0x005D71E6 constructs the Sprite at 0x009B3A50..0x009B3A7C and registers finalizer 0x005D71F0..0x005D720F. Cleanup publishes bit 2 of the same byte 0x009B37CC before Sprite::close at 0x005E3820; constructors do not reset the guard.", "Buffer::shared_sprite_ is ordinary class-static storage defined after the special-text array. Physical compiler output supplies the shared guard and registration edges; consumers access the actual typed Sprite directly.", "Original identities, full spans and historical claims remain unchanged. Static members add no instance fields. Current compiler symbols are binding facts, not historical debug names; complete original TU boundaries, linked storage placement and game fidelity remain unproved. Fresh strict measurement is required; this binding grants no claim."], "reason": "Bind the original lifetime to ordinary typed storage and its compiler-generated initialization/destruction, preserving guard, order and restoration obligations."}
-// symbol    _$E21
+// symbol    _$E16
 #include "stdafx.h"
 
 // Distinct writable string cells observed at the original call sites.
@@ -4744,20 +4738,13 @@ void Buffer::box_sprite(RECT *rect, BoxSpriteParams *params) {
     }
 }
 
-// Vehicle-rendering scratch Buffer: CRT slot 0x00682600 selects startup
-// 0x004BF710 and registered cleanup 0x004BF730. Its 0x588-byte extent ends
-// at 0x008CC820, the independently mapped VehDrawTurnVehicle state.
-// Interface PCX, array and popup buffers are owned by interface_assets.cpp;
-// their separate lifetimes do not establish this unit's complete CRT order.
-// RECOVERY_OBJECT: v1 0x008CC298 ?g_VEHDRAW_BUFFER@@3VBuffer@@A
-Buffer g_VEHDRAW_BUFFER;  // 0x008CC298
 
 #include "buffer_special_text.h"
 // Native CRT slots68266C/682670 establish record-array then Sprite order.
 // Exact native shared once-guard; constructor leaves its static zero intact.
 // ORIGINAL: 0x005D7170 sub_5d7170 0x005D7170-0x005D7194 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned 0x005D7170..0x005D7194 constructs ten stride-0x30 records at 0x009B37E0 through constructor 0x005E35D0 and registers finalizer 0x005D71A0..0x005D71C8. Cleanup publishes bit 1 of byte 0x009B37CC before reverse destruction through 0x005E35F0, retaining other bits.", "Buffer::special_texts_[10] is ordinary class-static storage, default initialized without braces. Compiler vector construction owns prefix unwind and reverse destruction. The element constructor deliberately leaves field24, field28 and color untouched; no value initialization or authored lifetime wrapper is introduced.", "Original identities, full spans and historical claims remain unchanged. Static members add no instance fields. Current compiler symbols are binding facts, not historical debug names; complete original TU boundaries, linked storage placement and game fidelity remain unproved. Fresh strict measurement is required; this binding grants no claim."], "reason": "Bind the original lifetime to ordinary typed storage and its compiler-generated initialization/destruction, preserving guard, order and restoration obligations."}
-// symbol    _$E18
+// symbol    _$E13
 // size      36 bytes
 // prototype 
 // callers   0   call targets   2
@@ -4768,14 +4755,14 @@ Buffer g_VEHDRAW_BUFFER;  // 0x008CC298
 // guard bound below, preserving separate masks and reverse cleanup.
 // ORIGINAL: 0x005D71A0 sub_5d71a0 0x005D71A0-0x005D71C8 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned 0x005D7170..0x005D7194 constructs ten stride-0x30 records at 0x009B37E0 through constructor 0x005E35D0 and registers finalizer 0x005D71A0..0x005D71C8. Cleanup publishes bit 1 of byte 0x009B37CC before reverse destruction through 0x005E35F0, retaining other bits.", "Buffer::special_texts_[10] is ordinary class-static storage, default initialized without braces. Compiler vector construction owns prefix unwind and reverse destruction. The element constructor deliberately leaves field24, field28 and color untouched; no value initialization or authored lifetime wrapper is introduced.", "Original identities, full spans and historical claims remain unchanged. Static members add no instance fields. Current compiler symbols are binding facts, not historical debug names; complete original TU boundaries, linked storage placement and game fidelity remain unproved. Fresh strict measurement is required; this binding grants no claim."], "reason": "Bind the original lifetime to ordinary typed storage and its compiler-generated initialization/destruction, preserving guard, order and restoration obligations."}
-// symbol    _$E15
+// symbol    _$E10
 // size      40 bytes
 // prototype 
 // callers   0   call targets   1
 // kind      game
 // flags     sp_ready;purged_ok
 // calls     0x006456E4
-// RECOVERY_OBJECT: v4 0x009B37CC ?BufferSpecialTextsCleanupGuard@@3EA target _$S16
+// RECOVERY_OBJECT: v4 0x009B37CC ?BufferSpecialTextsCleanupGuard@@3EA target _$S11
 // RECOVERY_OBJECT: v4 0x009B37E0 ?BufferSpecialTexts@@3PAUBufferSpecialText@@A target ?special_texts_@Buffer@@0PAUBufferSpecialText@@A
 BufferSpecialText Buffer::special_texts_[10];
 
