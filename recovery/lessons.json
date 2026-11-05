@@ -1,7 +1,7 @@
 {
   "schema": "opensmacx.reviewed-recovery-lessons.v1",
   "kind": "coordinator_decision_catalogue",
-  "automation_status": "Reviewed eligibility rules for workers. Dependency entry inventories have a native advisory proposal command; the remaining rules are coordinator guidance, not an automatic propagation or acceptance engine.",
+  "automation_status": "Reviewed eligibility rules for workers. Dependency entry proposals and qualified code-entry reference propagation are native; the remaining rules are coordinator guidance, not a general automatic propagation or acceptance engine.",
   "rules": [
     {
       "id": "dispatch-qualified-inherited-operation",
@@ -315,6 +315,26 @@
         "Do not label an initialized section as a virtual-zero data start, or treat unresolved cross-member provider routing as a pass."
       ],
       "reopen_when": "New archive, source, code/data relocation or provider-selection evidence changes the interpretation; remeasure the complete affected dependency cohort."
+    },
+    {
+      "id": "propagate-qualified-dependency-code-entries",
+      "category": "candidate_strategy",
+      "evidence": {
+        "commit": "34de49ab4",
+        "witness": "packages/match-recovery/tests/test_toolchain_public_entries.py; .opensmacx/recovery/component-entry-routing-nov05ah/independent-review.json"
+      },
+      "requires": [
+        "Source owns the complete contribution boundaries and complete unique external function entry inventories under a pinned archive and image.",
+        "A seed contribution's boundary, bytes, references and entry inventory all pass the native verifier.",
+        "The consumer is a declared code contribution with a unique ordinary undefined external function symbol; no conflicting function, import, absolute or data interpretation is shadowed."
+      ],
+      "action": "Run the native component binary check across the complete declared family. It propagates independently qualified entry targets in bounded immutable rounds, allowing a passing leaf to qualify callers and their entries without function-local retries.",
+      "contraindications": [
+        "Unknown parents and partially verified overlapping function bindings cannot bootstrap a cycle.",
+        "Do not derive target addresses from the operands being checked, route these entries through data or ordinary function checks, or infer ABI, independent extents, linker selection or application acceptance.",
+        "Do not reuse a cached verdict after its pinned inputs or source interpretations change."
+      ],
+      "reopen_when": "New source-owned contribution, entry, import, data or function evidence, or a different pinned archive/image, changes the reference closure; rerun the full affected dependency family."
     }
   ],
   "policy": [
