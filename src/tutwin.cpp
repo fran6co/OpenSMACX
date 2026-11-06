@@ -1772,6 +1772,9 @@ tut_check2(int flag) {
  */
 
 
+// The original calls these four centring helpers out of line from every tour
+// even though they share this TU; keep them out of automatic inline expansion.
+#pragma auto_inline(off)
 /*
 Purpose: Centre the rectangle on both axes and convert the result to screen
          coordinates through the iface window.
@@ -1897,6 +1900,7 @@ void TutWin::des_rect(RECT *rect, int *x, int *y) {
             static_cast<uint32_t>(rect->bottom) - static_cast<uint32_t>(rect->top)) / 2));
     TutWinDesWindow.client_to_screen(x, y);
 }
+#pragma auto_inline(on)
 
 
 
