@@ -117,7 +117,7 @@ extern uint32_t EditBoxDefaultB2C;
 
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x00588460 ?popups_normal@@YAXXZ 0x00588460-0x005887F2
+// ORIGINAL: 0x00588460 ?popups_normal@@YAXXZ 0x00588460-0x005887F2 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/00588460.cpp: retained original spans and seed history", "source:recovery/tasks/popup-font-configuration-owner-closure.json: coordinator-authorized ownership scope", "manual: independent frozen C++ review of original callback, font style order, palette, geometry and sprite assignments", "compiler:build/recovery/popup-font-physical-emission.json;build/recovery/interface-producer-physical.json: actual emitted symbols in both historical flag sets"], "reason": "Original-backed real font/default producer and consumer closure through source-owned storage and C++ classes; preserves seed extents and historical matching obligations without granting a new claim."}
 // symbol    ?popups_normal@@YAXXZ
 void __cdecl popups_normal() {
@@ -2050,7 +2050,7 @@ Purpose: Draw one dialog item's background for the popup: restore the
          from the pair of tables the title-bar list selects against.
 
 // HISTORICAL SCAFFOLD ROLE: SCAFFOLD Transitional leaf collection, not completed genuine owner recovery; preserve body evidence during owner migration.
-// ORIGINAL: 0x00405B20 ?on_dialog_item_back_draw@Popup@@QAEHPAUGraphicWin@@HHPAURECT@@@Z 0x00405B20-0x00405C72 FILE
+// ORIGINAL: 0x00405B20 ?on_dialog_item_back_draw@Popup@@QAEHPAUGraphicWin@@HHPAURECT@@@Z 0x00405B20-0x00405C72 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/popup.h Popup : BasePop and existing field/dialog callback API", "source:src/basepop.h and src/dialogs.h establish the protected dialog kind member", "source:src/interface_palette.cpp textcolor_init populates source-owned TextColourTable", "source:src/diplopop.cpp source-owned DiplomacyPopup object"], "reason": "Own the dialog-item background callback as a nonvirtual Popup member: it reads Popup/BasePop state and uses the already-owned palette table, style tables and diplomacy singleton."}
 // symbol    ?on_dialog_item_back_draw@Popup@@UAEHPAVGraphicWin@@HHPAUtagRECT@@@Z
 // TRIED: RECT-by-value local plus Sprite/BoxSpriteParams table lookups (a3-indexed, stride 0x2C/0x28) compiles and matches structure; first divergence is #4 push/mov, not chased further.

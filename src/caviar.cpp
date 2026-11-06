@@ -5128,7 +5128,7 @@ Purpose: Point the renderer at a Buffer and reset the six channel bounds to
          their defaults {0, 0, 0xff, 0xff, 0x100, 0x100}. 7 means the
          renderer is not switched on (field_4_'s bit 0 is clear), 0x10 means
          the caller passed no Buffer.
-// ORIGINAL: 0x006183D0 ?set_buffer@Caviar@@QAEHPAUBuffer@@@Z 0x006183D0-0x00618426 FILE
+// ORIGINAL: 0x006183D0 ?set_buffer@Caviar@@QAEHPAUBuffer@@@Z 0x006183D0-0x00618426 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["pinned:the RET 4 instruction begins at 0x618423 and ends at 0x618426; the former exclusive bound cut that instruction."], "reason": "Retain the complete original set_buffer operation, including all bytes of its callee-pop return."}
 // symbol    ?set_buffer@Caviar@@QAEHPAVBuffer@@@Z
 // size      84 bytes

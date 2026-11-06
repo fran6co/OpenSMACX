@@ -751,7 +751,7 @@ void __cdecl temp_set(int x, int y, int temperature) {
 
 /*
 Purpose: Set the faction owner for the specified tile.
-// ORIGINAL: 0x00591B10 ?owner_set@@YAXHHH@Z 0x00591B10-0x00591B48
+// ORIGINAL: 0x00591B10 ?owner_set@@YAXHHH@Z 0x00591B10-0x00591B48 BYTE_EXACT
 // TRIED: direct `tile->val2` read/write (no pointer hoist) - worse (0.857 vs 0.895).
 //            Rewriting the RHS as the explicit XOR-merge identity
 //            (`*field ^ ((*field ^ faction_id) & 0xF)`, which is what the image's
@@ -1639,7 +1639,7 @@ void __cdecl delete_landmark(int x, int y) {
 }
 /*
 Purpose: Rebuild the altitude-bonus tables from the landmarks on the map.
-// ORIGINAL: 0x00592940 ?fixup_landmarks@@YAXXZ 0x00592940-0x00592A74 FILE
+// ORIGINAL: 0x00592940 ?fixup_landmarks@@YAXXZ 0x00592940-0x00592A74 FILE BYTE_EXACT
 // size      308 bytes
 // prototype void (__cdecl ?fixup_landmarks@@YAXXZ)(void)
 // callers   2   call targets   0
@@ -1817,7 +1817,7 @@ void __cdecl clear_dirty() {
 // Superseded seed deleted; seed paths below are historical Git provenance.
 // Historical seed observations (not fresh measurements or acceptance):
 // TRIED: single cached srcIndex/width/height locals across the record copy loop cause /O2 to spill to a `sub esp` stack frame where the original keeps everything in registers and the [ebp+8]/ [ebp+0xc] parameter slots as scratch; first divergence is the prologue itself (mov ebp,esp vs sub esp,N). Semantics verified against the Ghidra decompile and disasm field-by-field.
-// ORIGINAL: 0x00592B40 sub_592b40 0x00592B40-0x00592D6F
+// ORIGINAL: 0x00592B40 sub_592b40 0x00592B40-0x00592D6F BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/00592b40.cpp: canonical full559byte original span and retained TRIED evidence", "historical pre-move source:src/map.cpp contained map_init allocation/failure and map read/write lifetime", "source:recovery/tasks/map-allocation-owner-closure.json: coordinator-reviewed producer/reader closure"], "reason": "Original592B40 is the map allocation owners shrink/resample producer: it saves prior allocation/dimensions, obtains new map storage through map_init, copies terrain fields and releases old tiles. Source-owned pointer cells preserve actual allocation and consumer relationships."}
 // symbol    ?map_resample@@YAXHH@Z
 void __cdecl map_resample(int width, int height) {

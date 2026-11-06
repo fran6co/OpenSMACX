@@ -100,7 +100,7 @@ Video::~Video() {
 // The former FILE interval through 0x637310 was owner-run provenance.
 // Entry-rooted control flow bounds close at 0x636732; later entries, switch
 // data and padding are accounted separately without changing their identities.
-// ORIGINAL: 0x006365B0 Video_unk1 0x006365B0-0x00636732 FILE
+// ORIGINAL: 0x006365B0 Video_unk1 0x006365B0-0x00636732 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned entry-rooted PE flow has103 reachable instructions ending at RET636731, exclusive636732; IDA and Ghidra agree independently. The next reset begins636740 after14NOPs.", "Historical2f1f617d:src/video.cpp assigned6365B0..637310 as an owner run. Later reset/register/load/process/play/stop/seek/rewind identities remain separate, and UNBOUND637190 retains its original identity/span/claim without implementation.", "The removed region also contains independently recognized padding and load636960 switch-target data636F9C..636FB4 referenced at6369D0; preserve that explicit source association, not close code. No C++ bodies, layout, flags or claims change."], "reason": "Bind Video::close to its complete reachable original cleanup body rather than the former multi-entry owner interval."}
 // symbol    ?close@Video@@QAEXXZ
 #if defined(_MSC_VER) && _MSC_VER == 1200
@@ -558,7 +558,7 @@ int Video::previous_key_frame(int frame) {
   return frame;
 }
 
-// ORIGINAL: 0x00638130 Video_unk15 0x00638130-0x006381DD FILE
+// ORIGINAL: 0x00638130 Video_unk15 0x00638130-0x006381DD FILE BYTE_EXACT
 // symbol    ?next_key_frame@Video@@QAEHH@Z
 int Video::next_key_frame(int frame) {
   if (media_file_ == 0 || frame_index_table_ == 0) return -1;
@@ -592,7 +592,7 @@ int Video::next_key_frame(int frame) {
 
 // Native registration permits index 10: the eleventh store lands past the
 // ten-entry registry (on codec origin_x at 0x9BE668), as the original does.
-// ORIGINAL: 0x00636850 Video_unk3 0x00636850-0x006368C8 FILE
+// ORIGINAL: 0x00636850 Video_unk3 0x00636850-0x006368C8 FILE BYTE_EXACT
 // symbol    ?register_window@Video@@QAEHHHPAVGraphicWin@@I@Z
 int Video::register_window(int x, int y, GraphicWin *window,
                            unsigned int flags) {
@@ -610,7 +610,7 @@ int Video::register_window(int x, int y, GraphicWin *window,
   return 0;
 }
 
-// ORIGINAL: 0x006368D0 Video_unk4 0x006368D0-0x00636954 FILE
+// ORIGINAL: 0x006368D0 Video_unk4 0x006368D0-0x00636954 FILE BYTE_EXACT
 // symbol    ?register_window_buffer@Video@@QAEHHHPAVGraphicWin@@I@Z
 int Video::register_window_buffer(int x, int y, GraphicWin *window,
                                   unsigned int flags) {
@@ -715,7 +715,7 @@ int Video::seek(int requested_frame) {
   return 0;
 }
 
-// ORIGINAL: 0x00636740 Video_unk2 0x00636740-0x0063684D FILE
+// ORIGINAL: 0x00636740 Video_unk2 0x00636740-0x0063684D FILE BYTE_EXACT
 // symbol    ?reset@Video@@QAEXXZ
 // TRIED: not chased to byte-exact (MISMATCH from instruction 1, 276 vs 269 bytes). Landed for the field-write order and call order, which match the disassembly one-for-one, including the `and ch,0x7f` / `test al,1` pair - a mask-after-copy on the SAME dword (`bit0` read before the 0x8000 bit is cleared).
 #if defined(_MSC_VER) && _MSC_VER == 1200

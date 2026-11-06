@@ -1711,7 +1711,7 @@ int map_dest_distance(int x1, int y1, int x2, int y2) {
 
 }
 
-// ORIGINAL: 0x004672C0 ?direct_dest_line@MapWin@@QAEXHHHHHHHH@Z 0x004672C0-0x0046742C
+// ORIGINAL: 0x004672C0 ?direct_dest_line@MapWin@@QAEXHHHHHHHH@Z 0x004672C0-0x0046742C BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Original4672C0..46742C; retired seed git:b55fcf8b:src/recovered/units/004672c0.cpp records this identity and exact span.", "Original467388 uses source Y as the default color; both tile conversions precede center-offset reads, and cover rendering performs both screen-to-client conversions."], "reason": "MapWin projects both endpoints and draws the route edge on either CoverWindow or its own Buffer. Preserve both target branches and the original phase/color selection; the patterned Buffer dependency remains explicitly unfinished."}
 void MapWin::direct_dest_line(int x1, int y1, int x2, int y2, int triad,
                              int pattern_on, int pattern_off, int cover) {
@@ -2229,7 +2229,7 @@ int map_radius_half_width(int extent, int row) {
 
 // Original4216F0..42180C: genuine MapWin thiscall, not the seed's stdcall.
 // Proposed name; the original has no surviving decorated method identity.
-// ORIGINAL: 0x004216F0 sub_4216f0 0x004216F0-0x0042180C
+// ORIGINAL: 0x004216F0 sub_4216f0 0x004216F0-0x0042180C BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Original4216F0..42180C; retired seed git:b55fcf8b:src/unrecovered/004216f0.cpp records this identity and exact span; gen_radius469190 calls this method for overlay admission."], "reason": "The original uses a MapWin receiver and three stack arguments, testing its viewport and optional altitude margin. The seed stdcall declaration loses the genuine receiver; tile_in_view is a behavior-based provisional name."}
 // TRIED (retired seed git:b55fcf8b:src/unrecovered/004216f0.cpp): the synthetic Obj4216F0 __thiscall receiver was rejected because disassembly reads [ecx+0x1ddaN] without loading ecx from the stack; this is the this-not-a-parameter signal, so IDA's guessed __stdcall(int,int,int) was wrong (a proposal, not a catalogue fact; no mangled name survives). The seed landed at 0.74 similarity: its tile-pointer expression collapsed arithmetic that the original keeps as an explicit zeroed accumulator beside imul, a register-allocation difference that plain restatement did not move.
 // symbol    ?tile_in_view@MapWin@@QAEHHHH@Z
@@ -2395,7 +2395,7 @@ draw_target:
 }
 
 // Original468F90..469183: distinct from the five-argument tile renderer.
-// ORIGINAL: 0x00468F90 ?draw_vehicles@MapWin@@QAEXHHHH@Z 0x00468F90-0x00469183
+// ORIGINAL: 0x00468F90 ?draw_vehicles@MapWin@@QAEXHHHH@Z 0x00468F90-0x00469183 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Original468F90..469183; retired seed git:b55fcf8b:src/recovered/units/00468f90.cpp records this identity and exact span; the original vehicle scan caps extension at10, unlike terrain and overlay scans."], "reason": "The four-argument MapWin overload scans a clipped radius and calls the distinct five-argument tile renderer. It preserves the capped upward extension, asymmetric rows and live viewport/center reads."}
 void MapWin::draw_vehicles(int x, int y, int radius, int faction) {
     int span = radius * 2 + 2;
@@ -2651,7 +2651,7 @@ void MapWin::gen_radius(int x, int y, int radius, int faction, int skip_terrain)
 
 // Original46A2A0..46A496. This consumes the SAME copied vertices produced
 // by gen_terrain_poly, never a detached radius-local copy or address alias.
-// ORIGINAL: 0x0046A2A0 ?draw_radius@MapWin@@QAEXHHHH@Z 0x0046A2A0-0x0046A496
+// ORIGINAL: 0x0046A2A0 ?draw_radius@MapWin@@QAEXHHHH@Z 0x0046A2A0-0x0046A496 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Original46A2A0..46A496; retired seed git:b55fcf8b:src/recovered/units/0046a2a0.cpp records this identity and exact span.", "Original46A437 passes shared7D3BE8 vertices to the selected genuine radius Texture; signed zoom selects the texture. Console state is observed after generation and soft_update precedes optional do_all_draws."], "reason": "This unadjusted MapWin receiver owns radius generation, the live console cursor-overlay decision and the bounded update. It consumes the same four copied vertices as the terrain producer and scroll controller."}
 void MapWin::draw_radius(int x, int y, int radius, int draw_type) {
     const int faction = (GameDataStateStorage.fields_.game_state_ & 0x80) != 0 ? -1 : ConsoleGlobal.faction_id_;
@@ -7148,7 +7148,7 @@ merge:
     return local_c;
 }
 
-// ORIGINAL: 0x00462F00 ?tile_to_pixel@MapWin@@QAEXHHPAHPAH@Z 0x00462F00-0x0046303C FILE
+// ORIGINAL: 0x00462F00 ?tile_to_pixel@MapWin@@QAEXHHPAHPAH@Z 0x00462F00-0x0046303C FILE BYTE_EXACT
 // symbol    ?tile_to_pixel@MapWin@@QAEXHHPAH0@Z
 // size      316 bytes
 // prototype void (__thiscall ?tile_to_pixel@MapWin@@QAEXHHPAHPAH@Z)(MapWin* this, int xCoord, int yCoord, int*, int*)
@@ -7425,7 +7425,7 @@ int MapWin::get_relative_alt(int x, int y, int detail) {
 
 // Fixed-slot bindings carried from 00462870.cpp
 
-// ORIGINAL: 0x00462870 ?clear@MapWin@@QAEXH@Z 0x00462870-0x00462959 FILE
+// ORIGINAL: 0x00462870 ?clear@MapWin@@QAEXH@Z 0x00462870-0x00462959 FILE BYTE_EXACT
 // HOMED 2026-09-04 from the 0x00462870 artifact; the artifact's
 // `g_9392c0`/`g_939340`/`g_009392b8`/`g_00949870`/`g_00949874` are the
 // ConsoleGlobal's cursor_history_x_/cursor_history_y_/cursor_history_index_
@@ -8530,7 +8530,7 @@ void MapWin::on_nc_left_down(int x_coord, int y_coord) {
     }
 }
 
-// ORIGINAL: 0x0046FD90 ?clear_terrain@MapWin@@QAEXXZ 0x0046FD90-0x0046FDFE FILE
+// ORIGINAL: 0x0046FD90 ?clear_terrain@MapWin@@QAEXXZ 0x0046FD90-0x0046FDFE FILE BYTE_EXACT
 // size      110 bytes
 // prototype void (__thiscall ?clear_terrain@MapWin@@QAEXXZ)(MapWin* this)
 // callers   4   call targets   0
@@ -8640,7 +8640,7 @@ Purpose: Range-and-parity screen test for one map coordinate: halve the
          report whether the requested half-coordinate falls inside the
          computed band.
 
-// ORIGINAL: 0x004468F0 sub_4468f0 0x004468F0-0x0044695B FILE
+// ORIGINAL: 0x004468F0 sub_4468f0 0x004468F0-0x0044695B FILE BYTE_EXACT
 // symbol    _sub_4468f0
 // size      107 bytes
 // prototype
