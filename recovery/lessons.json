@@ -516,6 +516,45 @@
         "Do not infer complete vtable contents, linked selection or game acceptance from constructor byte/reference equality. The Credits aggregate strict report still has unresolved generated-table/dependency evidence."
       ],
       "reopen_when": "New original store/lifetime evidence, array layout, provider/TU or compiler inputs change the causal hypothesis; a new session alone does not reopen a failed array-clear spelling."
+    },
+    {
+      "id": "recover-independently-addressed-state-groups-with-producer-closure",
+      "category": "candidate_strategy",
+      "evidence": {
+        "witness": "src/flatbutton.cpp and src/flatbutton.h; src/interface_assets.cpp load_interface; pinned FlatButton constructor 0x00607CF0 and close 0x00607DA0; .opensmacx/recovery/flatbutton-default-groups-nov06bf/original-data-xrefs.json; linked-current-final.json; .opensmacx/recovery/basepop-default-groups-nov06bg/outcome.json"
+      },
+      "requires": [
+        "Independent consumers and producers establish logical scalar-array groups, valid element ranges and access order; contiguous addresses or a byte score alone are insufficient.",
+        "Fresh original/current instructions localize an induction-base residual to a flattened source object; prior negative trials must be qualified against the current class/lifetime shape.",
+        "All known users and producer writes are included, and historical object identities and any bounded obligations can be preserved through the native object writer."
+      ],
+      "action": "Test separately named typed groups instead of treating semantically distinct state groups as one flattened global array. In the measured FlatButton bundle, nine named groups of three borrowed Sprite pointers plus nine explicit copies inside the three-state loop restore both constructor and reset code; migrate the real definitions, declarations, producer and behavioral fixtures together. Preserve the first historical start with a target alias and keep additional starts unbounded when original allocations are unproved. Compare the whole affected cohort and actual application build before integrating.",
+      "contraindications": [
+        "Do not publish the undefined extern-only prototype as working code or retain a flat compatibility facade.",
+        "Nine logical groups do not prove nine historical allocations, names, original TUs or complete linked data layout.",
+        "The related BasePop experiment produced no exact gains; do not propagate a source rewrite solely because another class has a 27-slot table.",
+        "Host compiler success does not prove legacy compiler acceptance; the producer's repeated loop variables required ordinary separate blocks for VC6."
+      ],
+      "reopen_when": "New semantic grouping, original references, source ownership, class lifetime or compiler inputs distinguish a new hypothesis; do not repeat the same flattened-array spelling trials."
+    },
+    {
+      "id": "preserve-raw-versus-normalized-member-contracts",
+      "category": "candidate_strategy",
+      "evidence": {
+        "witness": "src/buffer.h pixel_height; pinned Buffer::init 0x005D7756-0x005D775A; FlatButton::on_redraw 0x00607E50; recovery/tests/test_flatbutton_redraw_height_actual_source.py; .opensmacx/recovery/flatbutton-default-groups-nov06bf/independent-evidence-review.json"
+      },
+      "requires": [
+        "The actual receiver type, subobject offset and member definition distinguish a raw stored value from a normalized accessor.",
+        "Pinned producer stores and consumer arithmetic independently establish the sign/scale convention and read timing."
+      ],
+      "action": "Restore the typed raw member reads where the original operates on stored representation, keeping repeated reads, signed division and operation order. FlatButton's seven formulas require negative DIB biHeight; substituting positive pixel_height reverses centered and bottom extents. Verify complete extracted source behavior with a positive-helper damage control.",
+      "contraindications": [
+        "Do not change a shared accessor to repair one caller or replace helper calls tree-wide.",
+        "A negated accessor is not inherently wrong; -pixel_height can already express raw biHeight correctly.",
+        "Names and decompiler local labels do not establish geometry; trace real draw/tile arguments and distinguish unrelated receiver types such as Font.",
+        "Do not add bounds checks, normalize error paths or claim the whole renderer exact from this semantic correction."
+      ],
+      "reopen_when": "New producer/consumer, receiver-layout, scale/sign or callback-reread evidence changes the proven member contract."
     }
   ],
   "policy": [

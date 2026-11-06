@@ -26,6 +26,14 @@ FIXTURE = HERE / "renderer_pointer_flow_harness.cpp"
 sys.path.insert(0, str(ROOT / "recovery/tests"))
 from test_game_logic_seed_batch_behavior import _definition
 
+DEFAULT_GROUPS = (
+    "FlatButtonDefaultLeftTiles", "FlatButtonDefaultRightTiles",
+    "FlatButtonDefaultTopTiles", "FlatButtonDefaultBottomTiles",
+    "FlatButtonDefaultTopLeft", "FlatButtonDefaultTopRight",
+    "FlatButtonDefaultBottomLeft", "FlatButtonDefaultBottomRight",
+    "FlatButtonDefaultCenterTiles",
+)
+
 
 def mapped_body(relative, address, signature):
     records = [row for row in read_file(ROOT / relative) if row.address == address]
@@ -42,10 +50,11 @@ def pointer_sources():
     base_h = (ROOT / "src/basepop.h").read_text()
     base_cpp = (ROOT / "src/basepop.cpp").read_text()
     assert re.search(r"Sprite\s*\*\s*config\s*\[\s*27\s*\]", flat_h)
-    assert re.search(r"Sprite\s*\*\s*FlatButtonDefaultsTable\s*\[\s*27\s*\]", flat_h)
     assert re.search(r"Sprite\s*\*\s*default_block_\s*\[\s*27\s*\]", base_h)
     assert re.search(r"Sprite\s*\*\s*BasePopDefaultBlock31B8\s*\[\s*27\s*\]", base_h)
-    assert re.search(r"Sprite\s*\*\s*FlatButtonDefaultsTable\s*\[\s*27\s*\]", flat_cpp)
+    for group in DEFAULT_GROUPS:
+        assert re.search(rf"extern\s+Sprite\s*\*\s*{group}\s*\[\s*3\s*\]", flat_h)
+        assert re.search(rf"Sprite\s*\*\s*{group}\s*\[\s*3\s*\]", flat_cpp)
     assert re.search(r"Sprite\s*\*\s*BasePopDefaultBlock31B8\s*\[\s*27\s*\]", base_cpp)
 
     ctor = mapped_body("src/flatbutton.cpp", 0x00607CF0,
@@ -65,13 +74,21 @@ def pointer_sources():
     initializer = _definition(game_source, "void __cdecl load_interface(")
     expected_producer = {12: 18, 13: 21, 14: 24, 6: 19, 17: 26,
                          8: 25, 15: 20, 7: 22, 16: 23}
-    for table in ("FlatButtonDefaultsTable", "BasePopDefaultBlock31B8"):
+    for table in DEFAULT_GROUPS:
         writes = re.findall(
             rf"{table}\s*\[\s*(\d+)\s*\]\s*=\s*&g_BASEWIN_SPRITES\s*\[\s*(\d+)\s*\]",
             initializer)
-        assert {int(slot): int(sprite) for slot, sprite in writes} == expected_producer
+        group = DEFAULT_GROUPS.index(table)
+        expected = {slot - group * 3: sprite for slot, sprite in expected_producer.items()
+                    if slot // 3 == group}
+        assert {int(slot): int(sprite) for slot, sprite in writes} == expected
         table_lines = [line for line in initializer.splitlines() if table + "[" in line]
         assert all("reinterpret_cast" not in line for line in table_lines)
+    zero_groups = re.findall(
+        r"for\s*\(int\s+state\s*=\s*0;\s*state\s*<\s*3;\s*\+\+state\)\s*"
+        r"(FlatButtonDefault\w+)\s*\[\s*state\s*\]\s*=\s*0\s*;",
+        initializer)
+    assert zero_groups == [DEFAULT_GROUPS[index] for index in (6, 7, 3, 0, 1, 8)]
     return ctor, close, setter, apply
 
 

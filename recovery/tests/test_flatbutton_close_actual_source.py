@@ -94,7 +94,31 @@ HOST = r'''
 
 struct Sprite { int id; };
 static Sprite sprite_tokens[256];
-Sprite *FlatButtonDefaultsTable[27];
+Sprite *FlatButtonDefaultLeftTiles[3];
+Sprite *FlatButtonDefaultRightTiles[3];
+Sprite *FlatButtonDefaultTopTiles[3];
+Sprite *FlatButtonDefaultBottomTiles[3];
+Sprite *FlatButtonDefaultTopLeft[3];
+Sprite *FlatButtonDefaultTopRight[3];
+Sprite *FlatButtonDefaultBottomLeft[3];
+Sprite *FlatButtonDefaultBottomRight[3];
+Sprite *FlatButtonDefaultCenterTiles[3];
+static Sprite **flat_default_group(int group) {
+    switch (group) {
+    case 0: return FlatButtonDefaultLeftTiles;
+    case 1: return FlatButtonDefaultRightTiles;
+    case 2: return FlatButtonDefaultTopTiles;
+    case 3: return FlatButtonDefaultBottomTiles;
+    case 4: return FlatButtonDefaultTopLeft;
+    case 5: return FlatButtonDefaultTopRight;
+    case 6: return FlatButtonDefaultBottomLeft;
+    case 7: return FlatButtonDefaultBottomRight;
+    default: return FlatButtonDefaultCenterTiles;
+    }
+}
+static void set_flat_default(int index, Sprite *value) {
+    flat_default_group(index / 3)[index % 3] = value;
+}
 class FlatButton;
 static FlatButton *active_button;
 static std::vector<int> events;
@@ -131,7 +155,7 @@ void Time::close() {
     events.push_back(1);
     // The owner must not have copied defaults before Time::close returns.
     for (int i = 0; i < 27; ++i)
-        FlatButtonDefaultsTable[i] = &sprite_tokens[20 + i];
+        set_flat_default(i, &sprite_tokens[20 + i]);
 }
 
 void BaseButton::close() {
@@ -154,7 +178,7 @@ void BaseButton::close() {
     // Values installed here must be the ones copied into all 27 links.
     const int first = 80 + callback_generation * 32;
     for (int i = 0; i < 27; ++i)
-        FlatButtonDefaultsTable[i] = &sprite_tokens[first + i];
+        set_flat_default(i, &sprite_tokens[first + i]);
     ++callback_generation;
 }
 
@@ -169,7 +193,7 @@ static void reset_case(FlatButton &button, int generation) {
     button.field_AB8_ = 0xAB800003U;
     for (int i = 0; i < 27; ++i) {
         button.config[i] = &sprite_tokens[1 + i];
-        FlatButtonDefaultsTable[i] = &sprite_tokens[2 + i];
+        set_flat_default(i, &sprite_tokens[2 + i]);
     }
     for (int i = 0; i < 3; ++i) {
         button.field_ABC_[i] = 0x12340000U + static_cast<uint32_t>(i);
@@ -237,8 +261,8 @@ def test_actual_close_resets_all_links_after_ordered_callbacks(tmp_path, compile
 
 MUTATIONS = (
     ("wrong default source index",
-     "config[column + 3] = FlatButtonDefaultsTable[column + 3];",
-     "config[column + 3] = FlatButtonDefaultsTable[column + 6];"),
+     "config[column + 3] = FlatButtonDefaultRightTiles[column];",
+     "config[column + 3] = FlatButtonDefaultTopTiles[column];"),
     ("skip final column",
      "column < 3; ++column", "column < 2; ++column"),
     ("call timer after resets",

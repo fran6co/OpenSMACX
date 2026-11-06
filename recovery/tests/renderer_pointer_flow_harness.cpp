@@ -6,7 +6,31 @@
 #define nullptr 0
 
 struct Sprite { int identity; };
-Sprite *FlatButtonDefaultsTable[27];
+Sprite *FlatButtonDefaultLeftTiles[3];
+Sprite *FlatButtonDefaultRightTiles[3];
+Sprite *FlatButtonDefaultTopTiles[3];
+Sprite *FlatButtonDefaultBottomTiles[3];
+Sprite *FlatButtonDefaultTopLeft[3];
+Sprite *FlatButtonDefaultTopRight[3];
+Sprite *FlatButtonDefaultBottomLeft[3];
+Sprite *FlatButtonDefaultBottomRight[3];
+Sprite *FlatButtonDefaultCenterTiles[3];
+static Sprite **flat_default_group(int group) {
+  switch (group) {
+    case 0: return FlatButtonDefaultLeftTiles;
+    case 1: return FlatButtonDefaultRightTiles;
+    case 2: return FlatButtonDefaultTopTiles;
+    case 3: return FlatButtonDefaultBottomTiles;
+    case 4: return FlatButtonDefaultTopLeft;
+    case 5: return FlatButtonDefaultTopRight;
+    case 6: return FlatButtonDefaultBottomLeft;
+    case 7: return FlatButtonDefaultBottomRight;
+    default: return FlatButtonDefaultCenterTiles;
+  }
+}
+static void set_flat_default(int index, Sprite *value) {
+  flat_default_group(index / 3)[index % 3] = value;
+}
 struct Time {
   int closes;
   Time() : closes(0) {}
@@ -44,14 +68,14 @@ int main() {
   Sprite objects[27];
   for (int i = 0; i < 27; ++i) {
     objects[i].identity = i;
-    FlatButtonDefaultsTable[i] = &objects[i];
+    set_flat_default(i, &objects[i]);
   }
   FlatButton button;
   for (int i = 0; i < 27; ++i) assert(button.config[i] == &objects[i]);
 
   for (int i = 0; i < 27; ++i) {
     button.config[i] = 0;
-    FlatButtonDefaultsTable[i] = &objects[26 - i];
+    set_flat_default(i, &objects[26 - i]);
   }
   button.close();
   assert(button.time1_.closes == 1 && button.base_closes == 1);

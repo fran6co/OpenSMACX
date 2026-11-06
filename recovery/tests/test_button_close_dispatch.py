@@ -152,7 +152,19 @@ OWNERS
 void __cdecl close_callback_probe(int) {}
 Sprite flat_default_sprites[81];
 Sprite push_default_sprites[36], push_seed_sprites[18];
-Sprite *flat_defaults[27];Sprite **const FlatButtonDefaultsTable=flat_defaults;
+Sprite *FlatButtonDefaultLeftTiles[3], *FlatButtonDefaultRightTiles[3];
+Sprite *FlatButtonDefaultTopTiles[3], *FlatButtonDefaultBottomTiles[3];
+Sprite *FlatButtonDefaultTopLeft[3], *FlatButtonDefaultTopRight[3];
+Sprite *FlatButtonDefaultBottomLeft[3], *FlatButtonDefaultBottomRight[3];
+Sprite *FlatButtonDefaultCenterTiles[3];
+static Sprite **flat_default_group(int group){switch(group){
+    case 0:return FlatButtonDefaultLeftTiles; case 1:return FlatButtonDefaultRightTiles;
+    case 2:return FlatButtonDefaultTopTiles; case 3:return FlatButtonDefaultBottomTiles;
+    case 4:return FlatButtonDefaultTopLeft; case 5:return FlatButtonDefaultTopRight;
+    case 6:return FlatButtonDefaultBottomLeft; case 7:return FlatButtonDefaultBottomRight;
+    default:return FlatButtonDefaultCenterTiles;}}
+static Sprite *flat_default_at(int index){return flat_default_group(index/3)[index%3];}
+static void set_flat_default(int index,Sprite *value){flat_default_group(index/3)[index%3]=value;}
 BaseButton *active;Font fonts[6]={{true},{true},{true},{true},{false},{true}};
 void Time::close(){require(!observing||this==&active->time1_);event('T');}
 Win parent;ButtonGroup group;Sprite sprite{31,-17};
@@ -197,7 +209,7 @@ template<class T>struct Probe:T{
 };
 void defaults(){
     for(int i=0;i<37;++i)DialogDefaults[i]=1000+i*17;
-    for(int i=0;i<27;++i)flat_defaults[i]=&flat_default_sprites[i];
+    for(int i=0;i<27;++i)set_flat_default(i,&flat_default_sprites[i]);
     for(int i=0;i<18;++i)PushButtonDefaults[i]=&push_default_sprites[i];
     BaseButtonA94Default=401;BaseButtonA98Default=402;
     BaseButtonDefaultFonts[0]=&fonts[0];BaseButtonDefaultFonts[1]=&fonts[1];BaseButtonDefaultFonts[2]=&fonts[2];
@@ -229,7 +241,7 @@ void flat_poison(FlatButton&f){poison(f);f.field_AB8_=88;
 }
 void flat_cleared(FlatButton&f){base_cleared(f);require(f.field_A14_==0&&f.field_A18_==0&&f.field_AB8_==0xffffffffU);
     for(int i=0;i<3;++i)require(f.field_ABC_[i]==0xffffffffU&&f.border_styles_[i]==0&&f.field_AD4_[i]==nullptr);
-    for(int i=0;i<27;++i)require(f.config[i]==flat_defaults[i]);
+    for(int i=0;i<27;++i)require(f.config[i]==flat_default_at(i));
 }
 void push_poison(PushButton&p){poison(p);PUSH_SEED}
 std::vector<Sprite*> push_values(PushButton&p){return {PUSH_VALUES};}
@@ -254,7 +266,7 @@ void closes(){
     hook=[&](char k){if(k=='T'){require(f.field_A14_==51&&f.field_A18_==52&&f.field_AB8_==88);}
         if(k=='G'){require(f.field_A14_==0&&f.field_A18_==0&&f.field_AB8_==0xffffffffU);
             require(f.config[0]==&flat_default_sprites[27]&&f.field_AD4_[0]==&sprite);
-            for(int i=0;i<27;++i)flat_defaults[i]=&flat_default_sprites[54+i];}};
+            for(int i=0;i<27;++i)set_flat_default(i,&flat_default_sprites[54+i]);}};
     static_cast<BaseButton*>(&f)->close();require(events=="QTG");flat_cleared(f);
     events.clear();hook=nullptr;f.FlatButton::close();require(events=="TG");end();
     defaults();poison(image);image.sprite_=&sprite;begin(image);
@@ -381,7 +393,7 @@ DAMAGE = [
     ('flatbutton_close', 'BaseButton::close();', 'GraphicWin::close();'),
     ('flatbutton_close', 'column < 3', 'column < 2'),
     ('flatbutton_close',
-     'config[column + 24] = FlatButtonDefaultsTable[column + 24];',
+     'config[column + 24] = FlatButtonDefaultCenterTiles[column];',
      'config[column + 24] = nullptr;'),
     ('flatbutton_close', 'field_AD4_[column] = nullptr;', ''),
     ('flatbutton_close', 'border_styles_[column] = 0;', ''),

@@ -28,25 +28,41 @@
 #include "sprite.h"
 #include <cstring>
 
-// The nine-group defaults table read by both the constructor and close():
-// runtime defaults that load_interface (0x00455610) publishes into the
-// same genuine source storage read by the constructor and close.
-// TRIED: an accessor returning the pointer - identical 28/41: cl
-// materializes the row base either way (`mov ecx, 0x9b8e50 / mov edx,
-// [ecx - 0xc]`) where the image keeps the index in ecx against the
-// constant (`xor ecx,ecx / mov edx,[ecx + 0x9b8e44]`).
-// Historical integer-array symbol: ?FlatButtonDefaultsTable@@3PAIA; redraw proves borrowed Sprite pointers.
-// RECOVERY_OBJECT: v1 0x009B8E44 ?FlatButtonDefaultsTable@@3PAPAVSprite@@A
-Sprite *FlatButtonDefaultsTable[27]; // 0x009B8E44, initially zero-filled
-
-
-
+// The nine source-owned groups consumed by FlatButton's constructor, close
+// and redraw. The original starts run from 0x009B8E44 through 0x009B8EA4 at
+// 12-byte intervals; load_interface at 0x00455610 publishes the observed
+// borrowed Sprite pointers. Current names describe the nine three-state
+// groups, not proven original symbols or complete object bounds.
+// Historical access experiment from when the groups were represented by one
+// 27-pointer table: an accessor returning the pointer was identical at 28/41;
+// the earlier recovered code materialized the row base either way while the
+// pin indexed from 0x009B8E44. The old integer-array catalogue spelling was
+// ?FlatButtonDefaultsTable@@3PAIA; redraw proves these are borrowed Sprite
+// pointers. Those names/forms are historical and no longer describe storage.
+// RECOVERY_OBJECT: v4 0x009B8E44 ?FlatButtonDefaultsTable@@3PAPAVSprite@@A target ?FlatButtonDefaultLeftTiles@@3PAPAVSprite@@A
+Sprite *FlatButtonDefaultLeftTiles[3];
+// RECOVERY_OBJECT: v1 0x009B8E50 ?FlatButtonDefaultRightTiles@@3PAPAVSprite@@A
+Sprite *FlatButtonDefaultRightTiles[3];
+// RECOVERY_OBJECT: v1 0x009B8E5C ?FlatButtonDefaultTopTiles@@3PAPAVSprite@@A
+Sprite *FlatButtonDefaultTopTiles[3];
+// RECOVERY_OBJECT: v1 0x009B8E68 ?FlatButtonDefaultBottomTiles@@3PAPAVSprite@@A
+Sprite *FlatButtonDefaultBottomTiles[3];
+// RECOVERY_OBJECT: v1 0x009B8E74 ?FlatButtonDefaultTopLeft@@3PAPAVSprite@@A
+Sprite *FlatButtonDefaultTopLeft[3];
+// RECOVERY_OBJECT: v1 0x009B8E80 ?FlatButtonDefaultTopRight@@3PAPAVSprite@@A
+Sprite *FlatButtonDefaultTopRight[3];
+// RECOVERY_OBJECT: v1 0x009B8E8C ?FlatButtonDefaultBottomLeft@@3PAPAVSprite@@A
+Sprite *FlatButtonDefaultBottomLeft[3];
+// RECOVERY_OBJECT: v1 0x009B8E98 ?FlatButtonDefaultBottomRight@@3PAPAVSprite@@A
+Sprite *FlatButtonDefaultBottomRight[3];
+// RECOVERY_OBJECT: v1 0x009B8EA4 ?FlatButtonDefaultCenterTiles@@3PAPAVSprite@@A
+Sprite *FlatButtonDefaultCenterTiles[3];
 /*
 Purpose: Close the primary Time member, reset FlatButton orientation state,
          close the BaseButton base, and reload all nine three-entry tables.
 The historical forwarding notes below predate the separate timer lifecycle TU;
 this definition now calls the actual Time member.
-// ORIGINAL: 0x00607DA0 ?close@FlatButton@@QAEXXZ 0x00607DA0-0x00607E41
+// ORIGINAL: 0x00607DA0 ?close@FlatButton@@QAEXXZ 0x00607DA0-0x00607E41 BYTE_EXACT
 // LEVER: two fixes, stacked. (1) a real out-of-line `time_close_call`
 //        forwarder (same idiom as `sleep_call`/`base_cost_call` in
 //        veh.cpp) so `time1_.close()` compiles the `call rel32` the image
@@ -120,15 +136,15 @@ void FlatButton::close() {
     BaseButton::close();
     for (int column = 0; column < 3; ++column) {
         field_ABC_[column] = 0xFFFFFFFFU;
-        config[column] = FlatButtonDefaultsTable[column];
-        config[column + 3] = FlatButtonDefaultsTable[column + 3];
-        config[column + 6] = FlatButtonDefaultsTable[column + 6];
-        config[column + 9] = FlatButtonDefaultsTable[column + 9];
-        config[column + 12] = FlatButtonDefaultsTable[column + 12];
-        config[column + 15] = FlatButtonDefaultsTable[column + 15];
-        config[column + 18] = FlatButtonDefaultsTable[column + 18];
-        config[column + 21] = FlatButtonDefaultsTable[column + 21];
-        config[column + 24] = FlatButtonDefaultsTable[column + 24];
+        config[column] = FlatButtonDefaultLeftTiles[column];
+        config[column + 3] = FlatButtonDefaultRightTiles[column];
+        config[column + 6] = FlatButtonDefaultTopTiles[column];
+        config[column + 9] = FlatButtonDefaultBottomTiles[column];
+        config[column + 12] = FlatButtonDefaultTopLeft[column];
+        config[column + 15] = FlatButtonDefaultTopRight[column];
+        config[column + 18] = FlatButtonDefaultBottomLeft[column];
+        config[column + 21] = FlatButtonDefaultBottomRight[column];
+        config[column + 24] = FlatButtonDefaultCenterTiles[column];
         field_AD4_[column] = nullptr;
         border_styles_[column] = 0;
     }
@@ -172,7 +188,7 @@ Status: Complete
 // ---------------------------------------------------------------------------
 
 /*
-// ORIGINAL: 0x00607CF0 ??0FlatButton@@QAE@XZ 0x00607CF0-0x00607D96
+// ORIGINAL: 0x00607CF0 ??0FlatButton@@QAE@XZ 0x00607CF0-0x00607D96 BYTE_EXACT
 // RECOVERY_GENERATED: v1 vtable 0x00669754 0x006698C0 ??_7FlatButton@@6BWin@@@ 0x00607CF0
 // RECOVERY_GENERATED: v1 vtable 0x0066974C ? ??_7FlatButton@@6BBuffer@@@ 0x00607CF0
 // Pinned constructor stores the Win view at this+0 and Buffer at this+0x444.
@@ -282,12 +298,17 @@ FlatButton::FlatButton() {
     field_A18_ = 0;
     field_A14_ = 0;
     field_AB8_ = 0xFFFFFFFFU;
-    for (size_t index = 0; index < 3; ++index) {
+    for (int index = 0; index < 3; ++index) {
         field_ABC_[index] = 0xFFFFFFFFU;
-        for (size_t group = 0; group < 9; ++group) {
-            config[group * 3 + index] =
-                FlatButtonDefaultsTable[group * 3 + index];
-        }
+        config[index] = FlatButtonDefaultLeftTiles[index];
+        config[3 + index] = FlatButtonDefaultRightTiles[index];
+        config[6 + index] = FlatButtonDefaultTopTiles[index];
+        config[9 + index] = FlatButtonDefaultBottomTiles[index];
+        config[12 + index] = FlatButtonDefaultTopLeft[index];
+        config[15 + index] = FlatButtonDefaultTopRight[index];
+        config[18 + index] = FlatButtonDefaultBottomLeft[index];
+        config[21 + index] = FlatButtonDefaultBottomRight[index];
+        config[24 + index] = FlatButtonDefaultCenterTiles[index];
         field_AD4_[index] = 0;
         border_styles_[index] = 0;
     }
@@ -407,6 +428,8 @@ void FlatButton::on_redraw() {
 
   Buffer *const buffer = static_cast<Buffer *>(this);
   buffer->sync_to_palette(PaletteActive);
+  // The pinned redraw reads the raw, negative DIB biHeight and negates its
+  // sums to form positive destination coordinates; pixel_height() is positive.
   const RECT working = buffer->current_clip();
   int rect_left = working.left;
   int rect_top = working.top;
@@ -427,7 +450,7 @@ void FlatButton::on_redraw() {
   Sprite *const fill_sprite = field_AD4_[state];
   if (fill_sprite != 0) {
     const int x = (buffer->pixel_width() - fill_sprite->width()) / 2;
-    const int y = -((fill_sprite->height() + buffer->pixel_height()) / 2);
+    const int y = -((fill_sprite->height() + buffer->dib_.bmiHeader.biHeight) / 2);
     fill_sprite->draw(buffer, fill_sprite->transparent_index(), x, y, 1, 1);
   } else if (border_styles_[state] != 0) {
     RECT box = {rect_left, rect_top, rect_right, rect_bottom};
@@ -449,7 +472,7 @@ void FlatButton::on_redraw() {
       if (bottom != 0) {
         ++drawn_count;
         bottom->draw(buffer, bottom->transparent_index(), 0,
-                     -(bottom->height() + buffer->pixel_height()), 1, 1);
+                     -(bottom->height() + buffer->dib_.bmiHeader.biHeight), 1, 1);
       }
 
       Sprite *const bottom_right =
@@ -458,7 +481,7 @@ void FlatButton::on_redraw() {
         ++drawn_count;
         bottom_right->draw(buffer, bottom_right->transparent_index(),
                            buffer->pixel_width() - bottom_right->width(),
-                           -(bottom_right->height() + buffer->pixel_height()),
+                           -(bottom_right->height() + buffer->dib_.bmiHeader.biHeight),
                            1, 1);
       }
 
@@ -468,7 +491,7 @@ void FlatButton::on_redraw() {
         ++drawn_count;
         buffer->tile(top_left_tile, 0, 0, 0, center_height,
                      top_left_tile->width(),
-                     -(bottom->height() + buffer->pixel_height()
+                     -(bottom->height() + buffer->dib_.bmiHeader.biHeight
                        + center_height));
       }
 
@@ -481,7 +504,7 @@ void FlatButton::on_redraw() {
         buffer->tile(bottom_left_tile, 0, 0,
                      buffer->pixel_width() - tile_width, right_height,
                      tile_width,
-                     -(bottom_right->height() + buffer->pixel_height()
+                     -(bottom_right->height() + buffer->dib_.bmiHeader.biHeight
                        + right_height));
       }
 
@@ -502,7 +525,7 @@ void FlatButton::on_redraw() {
         const int tile_height = bottom_right_mid_tile->height();
         ++drawn_count;
         buffer->tile(bottom_right_mid_tile, 0, 0, bottom_width,
-                     -(buffer->pixel_height() + tile_height),
+                     -(buffer->dib_.bmiHeader.biHeight + tile_height),
                      (buffer->pixel_width() - bottom_right->width())
                          - bottom_width,
                      tile_height);
@@ -519,7 +542,7 @@ void FlatButton::on_redraw() {
                      (buffer->pixel_width()
                       - top_left_tile->width()) - tile_left,
                      -(bottom_right_mid_tile->height()
-                       + buffer->pixel_height() + tile_height));
+                       + buffer->dib_.bmiHeader.biHeight + tile_height));
       }
     } else {
       int highlight_color = static_cast<int>(field_A94_);

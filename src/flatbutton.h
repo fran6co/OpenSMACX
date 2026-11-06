@@ -20,7 +20,15 @@
 
 class Sprite;
 // Nine groups of three borrowed sprite pointers, read by the redraw method.
-extern Sprite *FlatButtonDefaultsTable[27];
+extern Sprite *FlatButtonDefaultLeftTiles[3];
+extern Sprite *FlatButtonDefaultRightTiles[3];
+extern Sprite *FlatButtonDefaultTopTiles[3];
+extern Sprite *FlatButtonDefaultBottomTiles[3];
+extern Sprite *FlatButtonDefaultTopLeft[3];
+extern Sprite *FlatButtonDefaultTopRight[3];
+extern Sprite *FlatButtonDefaultBottomLeft[3];
+extern Sprite *FlatButtonDefaultBottomRight[3];
+extern Sprite *FlatButtonDefaultCenterTiles[3];
 static_assert(sizeof(Sprite *) == 4, "FlatButton sprite table requires x86 pointers");
 
  /*

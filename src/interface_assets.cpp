@@ -4977,13 +4977,13 @@ void __cdecl load_interface(int mode) {
     PushButtonDefaults[14] = &g_BASEWIN_SPRITES[26];
     const int push_zero_slots[12] = {6,15,7,16,3,12,0,9,1,10,8,17};
     for (int slot = 0; slot < 12; ++slot) PushButtonDefaults[push_zero_slots[slot]] = 0;
-    FlatButtonDefaultsTable[12] = &g_BASEWIN_SPRITES[18];
-    FlatButtonDefaultsTable[13] = &g_BASEWIN_SPRITES[21];
-    FlatButtonDefaultsTable[14] = &g_BASEWIN_SPRITES[24];
-    FlatButtonDefaultsTable[6] = &g_BASEWIN_SPRITES[19];
-    FlatButtonDefaultsTable[17] = &g_BASEWIN_SPRITES[26];
-    FlatButtonDefaultsTable[8] = &g_BASEWIN_SPRITES[25];
-    FlatButtonDefaultsTable[15] = &g_BASEWIN_SPRITES[20];
+    FlatButtonDefaultTopLeft[0] = &g_BASEWIN_SPRITES[18];
+    FlatButtonDefaultTopLeft[1] = &g_BASEWIN_SPRITES[21];
+    FlatButtonDefaultTopLeft[2] = &g_BASEWIN_SPRITES[24];
+    FlatButtonDefaultTopTiles[0] = &g_BASEWIN_SPRITES[19];
+    FlatButtonDefaultTopRight[2] = &g_BASEWIN_SPRITES[26];
+    FlatButtonDefaultTopTiles[2] = &g_BASEWIN_SPRITES[25];
+    FlatButtonDefaultTopRight[0] = &g_BASEWIN_SPRITES[20];
 
     InterfaceAltCaptionHeight = g_UNUSED_SPRITE_VAR29.source_height() + g_UNUSED_SPRITE_VAR29.top_offset();
     InterfaceAltBorderThickness = g_UNUSED_SPRITE_VAR27.source_width() + g_UNUSED_SPRITE_VAR27.left_offset();
@@ -4998,10 +4998,26 @@ void __cdecl load_interface(int mode) {
     InterfaceThirdBottomBorderThickness = g_UNUSED_SPRITE_VAR04.height() - g_UNUSED_SPRITE_VAR04.top_offset();
     InterfaceFourthBorderThickness = g_UNUSED_SPRITE_VAR16.source_width() + g_UNUSED_SPRITE_VAR16.left_offset();
     InterfaceFourthBottomBorderThickness = g_UNUSED_SPRITE_VAR13.height() - g_UNUSED_SPRITE_VAR13.top_offset();
-    FlatButtonDefaultsTable[7] = &g_BASEWIN_SPRITES[22];
-    FlatButtonDefaultsTable[16] = &g_BASEWIN_SPRITES[23];
-    const int flat_zero_slots[18] = {18,19,20,21,22,23,9,10,11,0,1,2,3,4,5,24,25,26};
-    for (int zero = 0; zero < 18; ++zero) FlatButtonDefaultsTable[flat_zero_slots[zero]] = 0;
+    FlatButtonDefaultTopTiles[1] = &g_BASEWIN_SPRITES[22];
+    FlatButtonDefaultTopRight[1] = &g_BASEWIN_SPRITES[23];
+    {
+        for (int state = 0; state < 3; ++state) FlatButtonDefaultBottomLeft[state] = 0;
+    }
+    {
+        for (int state = 0; state < 3; ++state) FlatButtonDefaultBottomRight[state] = 0;
+    }
+    {
+        for (int state = 0; state < 3; ++state) FlatButtonDefaultBottomTiles[state] = 0;
+    }
+    {
+        for (int state = 0; state < 3; ++state) FlatButtonDefaultLeftTiles[state] = 0;
+    }
+    {
+        for (int state = 0; state < 3; ++state) FlatButtonDefaultRightTiles[state] = 0;
+    }
+    {
+        for (int state = 0; state < 3; ++state) FlatButtonDefaultCenterTiles[state] = 0;
+    }
     InterfaceDefaultMetric = 45;
     InterfaceTopLeftMetric = 10;
     InterfaceMidRightMetric = 10;

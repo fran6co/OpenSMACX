@@ -56,14 +56,29 @@ class Sprite { public: int id; };
 #define MEASURED
 // LIVE_FLATBUTTON_DECL
 Sprite default_sprites[27];
-Sprite *FlatButtonDefaultsTable[27];
+Sprite *FlatButtonDefaultLeftTiles[3], *FlatButtonDefaultRightTiles[3];
+Sprite *FlatButtonDefaultTopTiles[3], *FlatButtonDefaultBottomTiles[3];
+Sprite *FlatButtonDefaultTopLeft[3], *FlatButtonDefaultTopRight[3];
+Sprite *FlatButtonDefaultBottomLeft[3], *FlatButtonDefaultBottomRight[3];
+Sprite *FlatButtonDefaultCenterTiles[3];
+static Sprite **flat_default_group(int group) { switch (group) {
+    case 0: return FlatButtonDefaultLeftTiles; case 1: return FlatButtonDefaultRightTiles;
+    case 2: return FlatButtonDefaultTopTiles; case 3: return FlatButtonDefaultBottomTiles;
+    case 4: return FlatButtonDefaultTopLeft; case 5: return FlatButtonDefaultTopRight;
+    case 6: return FlatButtonDefaultBottomLeft; case 7: return FlatButtonDefaultBottomRight;
+    default: return FlatButtonDefaultCenterTiles;
+} }
+static Sprite *flat_default_at(int index) { return flat_default_group(index / 3)[index % 3]; }
+static void set_flat_default(int index, Sprite *value) {
+    flat_default_group(index / 3)[index % 3] = value;
+}
 // LIVE_FLATBUTTON_CTOR
 void FlatButton::close() {
     assert(field_A14_ == 0 && field_A18_ == 0 && field_AB8_ == 0xFFFFFFFFU);
     for (int i = 0; i < 3; ++i) {
         assert(field_ABC_[i] == 0xFFFFFFFFU && border_styles_[i] == 0 && field_AD4_[i] == 0);
     }
-    for (int j = 0; j < 27; ++j) assert(config[j] == FlatButtonDefaultsTable[j]);
+    for (int j = 0; j < 27; ++j) assert(config[j] == flat_default_at(j));
 }
 // Rendering is an explicit boundary double in this lifetime-only fixture.
 void FlatButton::on_redraw() {}
@@ -82,7 +97,7 @@ void expect(const int *values, int size) {
     count = buttons = 0;
 }
 int main() {
-    for (int i = 0; i < 27; ++i) FlatButtonDefaultsTable[i] = &default_sprites[i];
+    for (int i = 0; i < 27; ++i) set_flat_default(i, &default_sprites[i]);
     const int normal[] = {11, 12, 21, 22, 30, 50, 31, 23, 24, 25, 42, 41};
     { FileWin win; }
     expect(normal, 12);
