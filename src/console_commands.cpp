@@ -609,10 +609,9 @@ void Console::sentry(int vehicle_id, int parameter) { // 0x004D2220
 // ORIGINAL: 0x004D5D30 ?oblit@Console@@QAEXH@Z 0x004D5D30-0x004D5F64
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned original entry 004D5D30; retained seed src/recovered/units/004d5d30.cpp", "Native4D5D44 captures vehicle faction/coordinates; post-lock lookup rechecks ownership. Original post-lock disappearance/mismatch returns without unlocking; cancellation unlocks; network and local obliteration paths remain distinct.", "recovery/tasks/console-scenario-owner-wave.json; native scope expansions retain the original task baseline"], "reason": "Recover the complete Console command into its genuine owner using typed state and existing lifecycle/network APIs. Preserve original spans and retained seed evidence; this binding is not a byte, reference or runtime acceptance claim."}
 void Console::oblit(int vehicle_id) { // 0x004D5D30
-    const Veh &vehicle = Vehs[vehicle_id];
-    const int faction_id = vehicle.faction_id;
-    const int x = vehicle.x;
-    const int y = vehicle.y;
+    const int faction_id = Vehs[vehicle_id].faction_id;
+    const int x = Vehs[vehicle_id].x;
+    const int y = Vehs[vehicle_id].y;
 
     if (not_my_turn()) {
         NetMsgPrimary.pop("SIMULNO", 5000, 0, nullptr);
@@ -649,14 +648,17 @@ void Console::oblit(int vehicle_id) { // 0x004D5D30
     }
 
     parse_says(0, Bases[base_id].name_string, -1, -1);
-    const bool alien = (Players[faction_id].rule_flags & RFLAG_ALIEN) != 0;
-    const char *const picture = alien ? "al_col_sm.pcx" : "colfoun_sm.pcx";
-    const char *message = "OBLIT";
-    if (Rules.tgl_oblit_base_atrocity == 0) {
-        message = "OBLITOK";
+    int confirmed;
+    if (Players[faction_id].rule_flags & RFLAG_ALIEN) {
+        confirmed = popp(ScriptPopupFile,
+                         Rules.tgl_oblit_base_atrocity ? "OBLIT" : "OBLITOK", 0,
+                         "al_col_sm.pcx", nullptr);
+    } else {
+        confirmed = popp(ScriptPopupFile,
+                         Rules.tgl_oblit_base_atrocity ? "OBLIT" : "OBLITOK", 0,
+                         "colfoun_sm.pcx", nullptr);
     }
-
-    if (!popp(ScriptPopupFile, message, 0, picture, nullptr)) {
+    if (!confirmed) {
         NetDaemonNet.unlock_veh();
         return;
     }
@@ -1354,28 +1356,17 @@ void Console::hold(int veh_id, int waypoint_y) {
         return;
     }
 
-    const Veh &vehicle = Vehs[veh_id];
-    const int x_coord = vehicle.x;
-    const int y_coord = vehicle.y;
-    const int tile_index = MapLongitude * y_coord + (x_coord >> 1);
-    const Map &tile = map_tiles()[tile_index];
-    const RulesChassis &chassis = Chassis[VehPrototypes[vehicle.proto_id].chassis_id];
-
-    bool should_hold = (tile.climate & ~0x1F) >= 0x60 || chassis.triad != 0;
-    if (!should_hold) {
-        if (base_who(x_coord, y_coord) < 0) {
-            NetDaemonNet.unlock_veh();
-            return;
-        }
-    }
-
-    if (chassis.triad == TRIAD_AIR && chassis.range != 0) {
-        if (base_who(x_coord, y_coord) < 0) {
-            if ((tile.bit & 0x40000) == 0) {
-                NetDaemonNet.unlock_veh();
-                return;
-            }
-        }
+    const int x_coord = Vehs[veh_id].x;
+    const int y_coord = Vehs[veh_id].y;
+    Map *tile = &map_tiles()[MapLongitude * y_coord + (x_coord >> 1)];
+    if (((tile->climate & ~0x1F) < 0x60
+         && Chassis[VehPrototypes[Vehs[veh_id].proto_id].chassis_id].triad == TRIAD_LAND
+         && base_who(x_coord, y_coord) < 0)
+        || (Chassis[VehPrototypes[Vehs[veh_id].proto_id].chassis_id].triad == TRIAD_AIR
+            && Chassis[VehPrototypes[Vehs[veh_id].proto_id].chassis_id].range != 0
+            && base_who(x_coord, y_coord) < 0 && (tile->bit & 0x40000) == 0)) {
+        NetDaemonNet.unlock_veh();
+        return;
     }
 
     Vehs[veh_id].waypoint_y[0] = static_cast<int16_t>(waypoint_y);
@@ -1389,7 +1380,16 @@ void Console::hold(int veh_id, int waypoint_y) {
     if (VehPrototypes[Vehs[veh_id].proto_id].plan != PLAN_ALIEN_ARTIFACT) {
         return;
     }
-    const int owner = base_who(x_coord, y_coord);
+    Map *owner_tile = map_loc(x_coord, y_coord);
+    int owner;
+    if ((owner_tile->bit & BIT_BASE_IN_TILE) == 0) {
+        owner = -1;
+    } else {
+        owner = owner_tile->val2 & 0xF;
+        if (owner >= MaxPlayerNum) {
+            owner = -1;
+        }
+    }
     if (owner == Vehs[veh_id].faction_id) {
         NetDaemonNet.order_veh(veh_id, -1, 0);
     }
@@ -1466,53 +1466,32 @@ void Console::unload(int veh_id) {
 // calls     0x005B0D70 0x005B44D0 0x005BF310
 void Console::editor_reset_faction() {
     if (X_pop(ConsoleStrResetAllFac, (NullCallback)0) != 0) {
-        PlayerData *faction = &PlayersData[1];
-        unsigned int factionId = 1;
-        uint32_t *rules_flag = TectonicDetonationCount + 1;
-        do {
-            faction->se_alloc_labs = 5;
-            faction->se_alloc_psych = 0;
-            compute_faction_modifiers(factionId);
-
+        for (int faction_id = 1; faction_id < MaxPlayerNum; ++faction_id) {
+            PlayersData[faction_id].se_alloc_labs = 5;
+            PlayersData[faction_id].se_alloc_psych = 0;
+            compute_faction_modifiers(faction_id);
             for (int i = 0; i < 4; ++i) {
-                faction->soc_category_active.models_[i] = 0;
-                faction->soc_category_pending.models_[i] = 0;
+                PlayersData[faction_id].soc_category_active.models_[i] = 0;
+                PlayersData[faction_id].soc_category_pending.models_[i] = 0;
             }
-
-            social_upkeep(factionId);
-            int count = GameDataStateStorage.fields_.base_current_count_;
-            faction->major_atrocities = 0;
-            faction->atrocities = 0;
-            *rules_flag = 0;
-            faction->integrity_blemishes = 0;
-
-            if (count > 0) {
-                Base *base = Bases;
-                do {
-                    if (base->faction_id_current == factionId) {
-                        base->governor &= 0x7fffffff;
-                        base->queue_size = 0;
-                    }
-                    ++base;
-                    --count;
-                } while (count != 0);
+            social_upkeep(faction_id);
+            PlayersData[faction_id].major_atrocities = 0;
+            PlayersData[faction_id].atrocities = 0;
+            TectonicDetonationCount[faction_id] = 0;
+            PlayersData[faction_id].integrity_blemishes = 0;
+            for (int base_id = 0; base_id < GameDataStateStorage.fields_.base_current_count_; ++base_id) {
+                if (Bases[base_id].faction_id_current == faction_id) {
+                    Bases[base_id].governor &= 0x7fffffff;
+                    Bases[base_id].queue_size = 0;
+                }
             }
-            int vehicle_count = GameDataStateStorage.fields_.vehicle_current_count_;
-            if (vehicle_count > 0) {
-                Veh *vehicle = Vehs;
-                do {
-                    if (vehicle->faction_id == factionId) {
-                        vehicle->order = 0;
-                        vehicle->state &= 0xfcffbdff;
-                    }
-                    ++vehicle;
-                    --vehicle_count;
-                } while (vehicle_count != 0);
+            for (int veh_id = 0; veh_id < GameDataStateStorage.fields_.vehicle_current_count_; ++veh_id) {
+                if (Vehs[veh_id].faction_id == faction_id) {
+                    Vehs[veh_id].order = 0;
+                    Vehs[veh_id].state &= 0xfcffbdff;
+                }
             }
-            ++factionId;
-            ++rules_flag;
-            ++faction;
-        } while (rules_flag < TectonicDetonationCount + 8);
+        }
     }
 }
 
@@ -1528,23 +1507,17 @@ void Console::editor_reset_faction() {
 
 void Console::editor_clear_vehicles() {
     auto_undo();
-    const int initial_area = MapArea;
-    Map *tile = MapTiles;
     GameDataStateStorage.fields_.game_state_ |= 4;
-    int count = 0;
     GameDataStateStorage.fields_.vehicle_current_count_ = 0;
     GameDataStateStorage.fields_.base_current_count_ = 0;
     ConsoleGlobal.cursor_active_ = 0;
     ConsoleGlobal.selected_vehicle_ = -1;
-    if (initial_area > 0) {
-        do {
-            tile->bit &= 0xfffffffcU;
-            for (int i = 0; i < 7; ++i) {
-                tile->bit_visible[i] = tile->bit;
-            }
-            ++count;
-            ++tile;
-        } while (count < MapArea);
+    Map *tile = MapTiles;
+    for (int count = 0; count < MapArea; ++count, ++tile) {
+        tile->bit &= 0xfffffffcU;
+        for (int i = 0; i < 7; ++i) {
+            tile->bit_visible[i] = tile->bit;
+        }
     }
     reset_territory();
     ::draw_map(1);
@@ -1629,18 +1602,11 @@ void Console::editor_reset_tech() {
             } while (selected_vehicle_ >= 0);
         }
 
-        int base_count = GameDataStateStorage.fields_.base_current_count_;
-        if (base_count > 0) {
-            Base *base = Bases;
-            do {
-                base->queue_size = 0;
-                const int next_queue_item = base->queue_production_id[0];
-                if (next_queue_item >= 0x40) {
-                    base->queue_size = 0xFFFFFFBBU;
-                }
-                ++base;
-                --base_count;
-            } while (base_count != 0);
+        for (int base_id = 0; base_id < GameDataStateStorage.fields_.base_current_count_; ++base_id) {
+            Bases[base_id].queue_size = 0;
+            if (Bases[base_id].queue_production_id[0] >= 0x40) {
+                Bases[base_id].queue_size = 0xFFFFFFBBU;
+            }
         }
         ::draw_map(1);
     }
@@ -1891,31 +1857,19 @@ void Console::editor_clear_random() {
     if (MapRandSeed == 0) {
         MapRandSeed = random(0, 0x7fff) + 1;
         ::draw_map(1);
-        return;
-    }
-    const int initial_area = MapArea;
-    Map *tile = MapTiles;
-    MapRandSeed = 0;
-    if (initial_area > 0) {
-        int i = 0;
-        do {
-            uint32_t v = tile->bit;
-            if ((v & 0x400) != 0 && (v & 0x20000000) == 0) {
-                v &= 0xdffffbff;
-                tile->bit = v;
-                uint32_t *dst = tile->bit_visible;
-                int count = 7;
-                do {
-                    *dst = tile->bit;
-                    dst++;
-                    count--;
-                } while (count != 0);
+    } else {
+        MapRandSeed = 0;
+        Map *tile = MapTiles;
+        for (int i = 0; i < MapArea; ++i, ++tile) {
+            if ((tile->bit & 0x400) != 0 && (tile->bit & 0x20000000) == 0) {
+                tile->bit &= 0xdffffbff;
+                for (int j = 0; j < 7; ++j) {
+                    tile->bit_visible[j] = tile->bit;
+                }
             }
-            i++;
-            ++tile;
-        } while (i < MapArea);
+        }
+        ::draw_map(1);
     }
-    ::draw_map(1);
 }
 
 // ORIGINAL: 0x004E14A0 ?editor_rockiness@Console@@QAEXXZ 0x004E14A0-0x004E14C8 BYTE_EXACT
@@ -2066,15 +2020,13 @@ void Console::editor_fungus() {
 //        does not ask for - and neither guard reordering nor the mask's source
 //        form reaches it. Not chased further.
 void Console::editor_lock2() {
-    const uint32_t flags = GameDataStateStorage.fields_.game_state_;
-    const uint32_t lock_mask = 0x8000000;
-    if (flags & lock_mask) {
-        GameDataStateStorage.fields_.game_state_ = flags & ~lock_mask;
+    if (GameDataStateStorage.fields_.game_state_ & STATE_EDITOR_ONLY_MODE) {
+        GameDataStateStorage.fields_.game_state_ &= ~STATE_EDITOR_ONLY_MODE;
         NetMsgPrimary.pop(ConsoleStrProtectOff, 5000, 0, 0);
         MainInterfaceGlobal.draw_edit_pane();
         return;
     }
-    GameDataStateStorage.fields_.game_state_ = flags | lock_mask;
+    GameDataStateStorage.fields_.game_state_ |= STATE_EDITOR_ONLY_MODE;
     NetMsgPrimary.pop(ConsoleStrProtectOn, 5000, 0, 0);
     if (ConsoleGlobal.cursor_active_ != 0) {
         set_view(1);
@@ -2605,9 +2557,7 @@ void Console::editor_strategy() {
     PluralityDefault = Players[faction].is_noun_plural;
     parse_says(2, Players[faction].noun_faction, -1, -1);
 
-    PlayerData &data = PlayersData[faction];
-    const unsigned int flags = data.flags;
-    const unsigned int extended = data.flags_ext;
+    const unsigned int flags = PlayersData[faction].flags;
     unsigned int checks = PopupWriteCheckState;
     checks = (flags & 0x04000000u) ? checks | 1u : checks & ~1u;
     checks = (flags & 0x08000000u) ? checks | 2u : checks & ~2u;
@@ -2616,33 +2566,33 @@ void Console::editor_strategy() {
     checks = (flags & 0x40000000u) ? checks | 0x10u : checks & ~0x10u;
     checks = (flags & 0x20000000u) ? checks | 0x20u : checks & ~0x20u;
     checks = (flags & 0x00200000u) ? checks | 0x40u : checks & ~0x40u;
-    checks = (extended & 1u) ? checks | 0x80u : checks & ~0x80u;
-    checks = (extended & 2u) ? checks | 0x100u : checks & ~0x100u;
-    checks = (extended & 4u) ? checks | 0x200u : checks & ~0x200u;
-    checks = (extended & 8u) ? checks | 0x400u : checks & ~0x400u;
-    checks = (extended & 0x10u) ? checks | 0x800u : checks & ~0x800u;
-    PopupWriteCheckState = (extended & 0x40u) ? checks | 0x1000u : checks & ~0x1000u;
+    checks = (PlayersData[faction].flags_ext & 1u) ? checks | 0x80u : checks & ~0x80u;
+    checks = (PlayersData[faction].flags_ext & 2u) ? checks | 0x100u : checks & ~0x100u;
+    checks = (PlayersData[faction].flags_ext & 4u) ? checks | 0x200u : checks & ~0x200u;
+    checks = (PlayersData[faction].flags_ext & 8u) ? checks | 0x400u : checks & ~0x400u;
+    checks = (PlayersData[faction].flags_ext & 0x10u) ? checks | 0x800u : checks & ~0x800u;
+    PopupWriteCheckState = (PlayersData[faction].flags_ext & 0x40u) ? checks | 0x1000u : checks & ~0x1000u;
 
     const int result = x_pop_short("AIEDITOR2", 0x41, nullptr);
     if (result < 0) {
         return;
     }
     const unsigned int accepted = PopupWriteCheckState;
-    data.flags &= ~0xFC200000u;
-    data.flags_ext &= ~0x5Fu;
-    if (accepted & 1u) data.flags |= 0x04000000u;
-    if (accepted & 2u) data.flags |= 0x08000000u;
-    if (accepted & 4u) data.flags |= 0x10000000u;
-    if (accepted & 8u) data.flags |= 0x80000000u;
-    if (accepted & 0x10u) data.flags |= 0x40000000u;
-    if (accepted & 0x20u) data.flags |= 0x20000000u;
-    if (accepted & 0x40u) data.flags |= 0x00200000u;
-    if (accepted & 0x80u) data.flags_ext |= 1u;
-    if (accepted & 0x100u) data.flags_ext |= 2u;
-    if (accepted & 0x200u) data.flags_ext |= 4u;
-    if (accepted & 0x400u) data.flags_ext |= 8u;
-    if (accepted & 0x800u) data.flags_ext |= 0x10u;
-    if (accepted & 0x1000u) data.flags_ext |= 0x40u;
+    PlayersData[faction].flags &= ~0xFC200000u;
+    PlayersData[faction].flags_ext &= ~0x5Fu;
+    if (accepted & 1u) PlayersData[faction].flags |= 0x04000000u;
+    if (accepted & 2u) PlayersData[faction].flags |= 0x08000000u;
+    if (accepted & 4u) PlayersData[faction].flags |= 0x10000000u;
+    if (accepted & 8u) PlayersData[faction].flags |= 0x80000000u;
+    if (accepted & 0x10u) PlayersData[faction].flags |= 0x40000000u;
+    if (accepted & 0x20u) PlayersData[faction].flags |= 0x20000000u;
+    if (accepted & 0x40u) PlayersData[faction].flags |= 0x00200000u;
+    if (accepted & 0x80u) PlayersData[faction].flags_ext |= 1u;
+    if (accepted & 0x100u) PlayersData[faction].flags_ext |= 2u;
+    if (accepted & 0x200u) PlayersData[faction].flags_ext |= 4u;
+    if (accepted & 0x400u) PlayersData[faction].flags_ext |= 8u;
+    if (accepted & 0x800u) PlayersData[faction].flags_ext |= 0x10u;
+    if (accepted & 0x1000u) PlayersData[faction].flags_ext |= 0x40u;
 }
 
 // Superseded seed deleted; seed paths below are historical Git provenance.

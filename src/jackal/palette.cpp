@@ -975,14 +975,11 @@ int Palette::make_remap_table(Palette *source, unsigned char *table, int start,
         table[i] = (char)i;
     }
     if (start < end) {
-        const PALETTEENTRY *p = &entries_[start];
         int idx = start;
         do {
-            int result = source->get_nearest_palette_index(
-                p->peRed, p->peGreen, p->peBlue, 1);
-            table[idx] = (char)result;
+            table[idx] = (char)source->get_nearest_palette_index(
+                entries_[idx].peRed, entries_[idx].peGreen, entries_[idx].peBlue, 1);
             idx = idx + 1;
-            ++p;
         } while (idx < end);
     }
     return 0;

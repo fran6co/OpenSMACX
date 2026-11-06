@@ -12,6 +12,10 @@ namespace {
 const char video_decode_phase_entering[] = "Entering";
 // RECOVERY_OBJECT: v1 0x00698894 _video_read_phase_entering
 const char video_read_phase_entering[] = "Entering";
+// read_frame's still-frame log names its own "read_frame()" copy; a pooled
+// literal lets VC6 merge that push into the normal-frame tail.
+// RECOVERY_OBJECT: v1 0x00698918 _video_read_frame_still_name
+const char video_read_frame_still_name[] = "read_frame()";
 }
 // RECOVERY_IMPORT: v1 __imp__ICClose@4 MSVFW32.dll name:ICClose
 // RECOVERY_IMPORT: v1 __imp__ICOpen@12 MSVFW32.dll name:ICOpen
@@ -286,7 +290,7 @@ int Video::read_frame() {
     result = frame_queue_.allocate(&position, 0,
                                   static_cast<unsigned int>(buffered_frame_), 1);
     if (result != 0) return 0;
-    log_say("read_frame()", "Read data--still frame", buffered_frame_,
+    log_say(video_read_frame_still_name, "Read data--still frame", buffered_frame_,
             frame_queue_.count(), 0);
   } else {
     result = frame_queue_.allocate(&position,
@@ -307,8 +311,8 @@ int Video::read_frame() {
         flags_ &= 0xFFFF7FFFU;
         return 0;
       }
-      position += bytes_read;
       remaining -= static_cast<unsigned int>(bytes_read);
+      position += bytes_read;
     }
     log_say("read_frame()", "Read data--normal frame", buffered_frame_,
             frame_queue_.count(), 0);
@@ -536,16 +540,14 @@ int Video::previous_key_frame(int frame) {
   if (frame >= frame_count_ || frame < 0) return -1;
   AVIINDEXENTRY *record = frame_index_table_;
   while (record->ckid != video_chunk_id_) ++record;
-  if (frame > 0) {
-    int remaining = frame;
-    do {
-      do { ++record; } while (record->ckid != video_chunk_id_);
-      --remaining;
-    } while (remaining != 0);
-    while (frame > 0 && (record->dwFlags & 0x10) == 0) {
-      do { --record; } while (record->ckid != video_chunk_id_);
-      --frame;
-    }
+  for (int index = 0; index < frame; ++index) {
+    ++record;
+    while (record->ckid != video_chunk_id_) ++record;
+  }
+  while (frame > 0 && (record->dwFlags & 0x10) == 0) {
+    --record;
+    while (record->ckid != video_chunk_id_) --record;
+    --frame;
   }
   // Native638114 rejects even a sync frame at index0; do not normalize it.
   if (frame == 0) return -1;
@@ -633,19 +635,6 @@ int Video::register_window_buffer(int x, int y, GraphicWin *window,
   return 0;
 }
 
-// The ordinary registry span is ten pointers. For the native error state
-// count11, the pump consumes the codec origin_x word as the eleventh receiver.
-// Recover that observed effect explicitly, without asserting array[10] is valid.
-static inline Video *video_registry_receiver(int index) {
-  if (index == 10) {
-    Video *video = 0;
-    memcpy(&video, &VideoViewportCodec.origin_x,
-           sizeof VideoViewportCodec.origin_x);
-    return video;
-  }
-  return VideoRegistry[index];
-}
-
 // ORIGINAL: 0x00636300 ?do_video@@YAXXZ 0x00636300-0x006363EE FILE
 // symbol    ?do_video@@YAXXZ
 // TRIED: nothing yet - MISMATCH #2 mov/push, mnemonic similarity 0.908. for-loop and do/while shaped identically; not chased further.
@@ -654,7 +643,8 @@ void __cdecl do_video() {
   // play_frame/decode_frame/read_frame, not Video::process. Keep those calls.
   // Reload the count after each iteration; callbacks can rethread the registry.
   for (int index = 0; index < VideoRegistryCount; ++index) {
-    Video *const video = video_registry_receiver(index);
+    // Count 11 reads past the ten-entry registry, as the original does.
+    Video *const video = VideoRegistry[index];
     if ((video->flags_ & 0x8000) == 0) continue;
     if ((video->flags_ & 0x10) == 0) {
       if (video->play_frame() != 0) continue;

@@ -3013,18 +3013,17 @@ int __cdecl interceptor(int faction_id, int opposing_faction,
 void __cdecl do_fungal_towers() {
     for (int vehicle_id = GameDataStateStorage.fields_.vehicle_current_count_ - 1;
          vehicle_id >= 0; --vehicle_id) {
-        Veh &vehicle = Vehs[vehicle_id];
-        if (vehicle.proto_id != BSC_FUNGAL_TOWER) {
+        if (Vehs[vehicle_id].proto_id != BSC_FUNGAL_TOWER) {
             continue;
         }
 
-        vehicle.state |= VSTATE_UNK_4;
-        const int x = vehicle.x;
-        const int y = vehicle.y;
+        Vehs[vehicle_id].state |= VSTATE_UNK_4;
+        const int x = Vehs[vehicle_id].x;
+        const int y = Vehs[vehicle_id].y;
 
         if (rand() % 5 == 0) {
-            const int direction = rand() % 8;
-            int spread_x = x + RadiusOffsetX[direction + 1];
+            const int direction = rand() % 8 + 1;
+            int spread_x = x + RadiusOffsetX[direction];
             if ((MapIsFlat & 1) == 0) {
                 if (spread_x < 0) {
                     spread_x += MapLongitudeBounds;
@@ -3032,7 +3031,7 @@ void __cdecl do_fungal_towers() {
                     spread_x -= MapLongitudeBounds;
                 }
             }
-            const int spread_y = y + RadiusOffsetY[direction + 1];
+            const int spread_y = y + RadiusOffsetY[direction];
 
             if (spread_y >= 0 && spread_y < MapLatitudeBounds &&
                 spread_x >= 0 && spread_x < MapLongitudeBounds) {
@@ -3062,7 +3061,7 @@ void __cdecl do_fungal_towers() {
         synch_bit(x, y, 7);
         draw_tile(x, y, 2);
 
-        vehicle.morale = static_cast<uint8_t>(morale_alien(vehicle_id, 0));
+        Vehs[vehicle_id].morale = static_cast<uint8_t>(morale_alien(vehicle_id, 0));
         spot_all(vehicle_id, 1);
     }
 }
@@ -4322,10 +4321,10 @@ Return Value: Unit id if found, otherwise -1
 Status: Complete
 */
 int __cdecl veh_top(int veh_id) {
+    int top_veh_id = veh_id;
     if (veh_id < 0) {
         return -1;
     }
-    int top_veh_id = veh_id;
     for (int16_t i = Vehs[top_veh_id].prev_veh_id_stack; i >= 0; i = Vehs[i].prev_veh_id_stack) {
         top_veh_id = i;
     }
@@ -7889,26 +7888,34 @@ Status: MISMATCH.
 */
 int __cdecl veh_find(int x, int y, int faction_id, int skip_veh_id) {
     int best_dist = 9999;
-    VehFindBestDist = 9999;
+    VehFindBestDist = best_dist;
     int best_idx = -1;
     int i = 0;
     if (GameDataStateStorage.fields_.vehicle_current_count_ > 0) {
         do {
             if ((faction_id < 0 || Vehs[i].faction_id == (unsigned)faction_id) &&
                 i != skip_veh_id) {
-                int d1 = abs(x - Vehs[i].x);
-                if (!(MapIsFlat & 1) && d1 > MapLongitude) {
-                    d1 = MapLongitudeBounds - d1;
+                // vector_dist(x, y, veh x, veh y) and its two-argument
+                // overload, expanded inline as in the image.
+                const int veh_y = Vehs[i].y;
+                const int veh_x = Vehs[i].x;
+                int x_distance = x_dist(x, veh_x);
+                int y_distance = abs(y - veh_y);
+                x_distance = abs(x_distance);
+                y_distance = abs(y_distance);
+                int largest = x_distance;
+                if (x_distance <= y_distance) {
+                    largest = y_distance;
                 }
-                const int d2 = abs(y - Vehs[i].y);
-                const int ad1 = abs(d1);
-                const int ad2 = abs(d2);
-                const int mx = ad1 <= ad2 ? ad2 : ad1;
-                const int mn = ad2 <= ad1 ? ad2 : ad1;
-                const int dist = mx - ((ad1 + ad2 >> 1) - mn + 1 >> 1);
+                int smallest = x_distance;
+                if (x_distance >= y_distance) {
+                    smallest = y_distance;
+                }
+                const int dist = largest -
+                    ((((y_distance + x_distance) >> 1) - smallest + 1) >> 1);
                 if (dist <= best_dist) {
-                    best_idx = i;
                     best_dist = dist;
+                    best_idx = i;
                 }
             }
             ++i;
@@ -9047,8 +9054,8 @@ void __cdecl action_oblit(int veh_id, int base_id) {
     PluralityDefault = 0;
     parse_says(4, Players[veh_faction].name_leader, -1, -1);
 
-    const bool audible = Bases[base_id].faction_id_current == ConsoleGlobal.faction_id_
-        || (Bases[base_id].visibility & (1 << (ConsoleGlobal.faction_id_ & 0x1f))) != 0;
+    const int audible = Bases[base_id].faction_id_current == ConsoleGlobal.faction_id_
+        || (Bases[base_id].visibility & (1 << ConsoleGlobal.faction_id_)) != 0;
 
     base_kill(base_id);
     draw_map(1);
@@ -9093,7 +9100,11 @@ void __cdecl action_sat_attack(int attacker, int target, int type, int base_id) 
         GenderDefault = Players[target].noun_gender;
         PluralityDefault = Players[target].is_noun_plural;
         parse_says(5, Players[target].noun_faction, -1, -1);
-        parse_say(6, Facility[type == 4 ? 41 : 65 + type].name, -1, -1);
+        if (type == 4) {
+            parse_say(6, Facility[41].name, -1, -1);
+        } else {
+            parse_say(6, Facility[65 + type].name, -1, -1);
+        }
         // Native 4CF606 selects Player + 0x304, the faction adjective.
         parse_says(7, Players[target].adj_name_faction, -1, -1);
     }

@@ -1301,18 +1301,13 @@ void MapWin::set_center(int x, int y, int draw_type) {
     }
     const int old_x = center_x_;
     const int old_y = center_y_;
-    int wrapped = x;
-    if ((MapIsFlat & 1) == 0) {
-        if (x < 0) {
-            wrapped += MapLongitudeBounds;
-        } else if (x >= MapLongitudeBounds) {
-            wrapped -= MapLongitudeBounds;
-        }
-    }
-    center_x_ = wrapped;
+    // The image inlines the shared wrap (one `mov eax,ebx` for both the flat
+    // and in-range paths) and sets the -1 destination on the non-Console
+    // path only.
+    center_x_ = wrap_map_x(x);
     center_y_ = y;
 
-    int destination = -1;
+    int destination;
     if (this == static_cast<MapWin *>(&ConsoleGlobal)) {
         destination = DestinationVehicleId;
         if (destination >= 0 &&
@@ -1321,6 +1316,8 @@ void MapWin::set_center(int x, int y, int draw_type) {
             !(GameDataStateStorage.fields_.game_more_preferences_ & 0x2000000)) {
             CoverWindow.fill(9);
         }
+    } else {
+        destination = -1;
     }
     if (old_x != center_x_ || old_y != center_y_) {
         draw_map(draw_type);
@@ -7154,17 +7151,21 @@ merge:
 // Original0x00462F4D and0x00462F6B load the receiver's horizontal margin;
 // 0x00462F95 reloads the original x argument for the out-of-view fallback.
 // The four altitude samples use the unwrapped input coordinates, in4..1 order.
+// LEVER: wrapped_x is seeded from tile_x before the width load and the seam
+// add is width + tile_x (the image's `mov edx,eax / lea eax,[ebx+edx]`):
+// 109 of 119. TRIED: `altitude >>= 2` as its own statement (17) and
+// `altitude / 4` (103); the residual is where `sar ebx,2` is scheduled.
 void MapWin::tile_to_pixel(int tile_x, int tile_y, int *pixel_x, int *pixel_y) {
+    int wrapped_x = tile_x;
     int map_width = MapLongitudeBounds;
     int relative_x;
     bool in_view = false;
     if (tile_y >= field_1DDA8_ &&
         tile_y < field_1DDD8_ + field_1DDD0_ + field_1DDA8_) {
-        int wrapped_x = tile_x;
         int flat = MapIsFlat & 1;
         if (flat == 0) {
-            if (wrapped_x < field_1DDA4_) {
-                wrapped_x += map_width;
+            if (tile_x < field_1DDA4_) {
+                wrapped_x = map_width + tile_x;
             }
             if (wrapped_x >= field_1DDD4_ + field_1DDCC_ + field_1DDA4_) {
                 wrapped_x -= map_width;
@@ -7416,66 +7417,6 @@ int MapWin::get_relative_alt(int x, int y, int detail) {
     return (val >> shift) & 0xf;
 }
 
-// ORIGINAL: 0x0046AE00 ?draw_cursor@@YAXXZ 0x0046AE00-0x0046AEED FILE
-// RECOVERY_BINDING: v1 {"reason":"Use full map longitude bounds for viewport seam adjustments while retaining cursor gating and arrow dispatch.","evidence":["Pinned46AE80 adds949870 MapLongitudeBounds to tile X;46AE9A subtracts the same full-width object.68FAF0 MapLongitude is a different half-width row stride."]}
-// NOTE ON THE HANDOFF: this was queued as "declare it on MapWin", but the
-// image's mangled name is ?draw_cursor@@YAXXZ - a FREE function taking
-// nothing, not a member. It walks every slot of the map-window table rather
-// than acting on one window, which is what the name is hiding. So it lives at
-// file scope beside the other free drawing helpers, not on the class.
-//
-// TRIED: MapWinTable spelled as the header's `MapWinSlots &` accessor. The
-// image walks a live cursor (`add ebx,4 / cmp ebx,0x7d3c5c`) and an index loop
-// compares a different thing; the walk is kept, the end bound spelled as the
-// table's own one-past-the-end slot.
-// size      237 bytes
-// callers   2   call targets   2
-// kind      game
-// flags     frame;sp_ready;purged_ok
-// calls     0x0046A2A0 0x004BDEA0
-// 0x0046AE04 reads ConsoleGlobal's survey mode at 0x9392B0: any active
-// survey mode suppresses this cursor pass.
-
-void __cdecl draw_cursor() {
-    if (ConsoleGlobal.survey_mode_ == 0) {
-        MapWinSlots &table = MapWinTable;
-        MapWin **slot = table;
-        do {
-            MapWin *window = *slot;
-            if (window != 0 &&
-                (slot == table ||
-                 window->view_active_ != 0)) {
-                int index = ConsoleGlobal.cursor_history_index_;
-                int tile_y = ConsoleGlobal.cursor_history_y_[index];
-                int tile_x = ConsoleGlobal.cursor_history_x_[index];
-                if (window->field_1DDA8_ <= tile_y &&
-                    tile_y < window->field_1DDD8_ +
-                             window->field_1DDD0_ +
-                             window->field_1DDA8_) {
-                    int wrapped_x = tile_x;
-                    if ((MapIsFlat & 1) == 0) {
-                        if (tile_x < window->field_1DDA4_) {
-                            wrapped_x = MapLongitudeBounds + tile_x;
-                        }
-                        if (window->field_1DDD4_ +
-                            window->field_1DDCC_ +
-                            window->field_1DDA4_ <= wrapped_x) {
-                            wrapped_x = wrapped_x - MapLongitudeBounds;
-                        }
-                    }
-                    if (window->field_1DDA4_ <= wrapped_x &&
-                        wrapped_x < window->field_1DDD4_ +
-                                    window->field_1DDCC_ +
-                                    window->field_1DDA4_) {
-                        window->draw_radius(tile_x, tile_y, 0, 2);
-                    }
-                }
-            }
-            slot++;
-        } while (slot < table + MapWinTableSlots);
-    }
-    TutorialWindow.draw_arrow();
-}
 
 // Fixed-slot bindings carried from 00462870.cpp
 
@@ -8125,6 +8066,9 @@ int MapWin::pixel_to_tile(int x_pixel, int y_pixel, int *out_tile_x,
 // view window (with the cylindrical wrap when the map is round), and hand
 // the tile to draw_radius as a radius-0 repaint. mapwin.h declares the
 // member; the distinct free cursor remains a separate operation.
+// LEVER: the cursor index is read at each subscript, y before x, and the
+// adjusted x is seeded before the nested view tests (the image's
+// `mov eax,edx` ahead of the y compare).
 /*
 Purpose: Repaint the map tile under the terrain cursor.
 // ORIGINAL: 0x0046AD60 ?draw_cursor@MapWin@@QAEXXZ 0x0046AD60-0x0046ADF1 FILE
@@ -8132,35 +8076,85 @@ Purpose: Repaint the map tile under the terrain cursor.
 Status: Coverage transcription - unclaimed body
 */
 void MapWin::draw_cursor() {
-    const int index = ConsoleGlobal.cursor_history_index_;
-    const int x = ConsoleGlobal.cursor_history_x_[index];
-    const int y = ConsoleGlobal.cursor_history_y_[index];
-
-    if (y < field_1DDA8_) {
-        return;
-    }
-    if (y >= field_1DDD8_ + field_1DDD0_ + field_1DDA8_) {
-        return;
-    }
-
+    int y = ConsoleGlobal.cursor_history_y_[ConsoleGlobal.cursor_history_index_];
+    int x = ConsoleGlobal.cursor_history_x_[ConsoleGlobal.cursor_history_index_];
     int adjusted_x = x;
-    if ((MapIsFlat & 1) == 0) {
-        if (x < field_1DDA4_) {
-            adjusted_x = MapLongitudeBounds + x;
+    if (y >= field_1DDA8_ && y < field_1DDD8_ + field_1DDD0_ + field_1DDA8_) {
+        if ((MapIsFlat & 1) == 0) {
+            if (x < field_1DDA4_) {
+                adjusted_x = MapLongitudeBounds + x;
+            }
+            if (adjusted_x >= field_1DDD4_ + field_1DDCC_ + field_1DDA4_) {
+                adjusted_x -= MapLongitudeBounds;
+            }
         }
-        if (adjusted_x >= field_1DDD4_ + field_1DDCC_ + field_1DDA4_) {
-            adjusted_x = adjusted_x - MapLongitudeBounds;
+        if (adjusted_x >= field_1DDA4_ &&
+            adjusted_x < field_1DDD4_ + field_1DDCC_ + field_1DDA4_) {
+            draw_radius(x, y, 0, 2);
         }
     }
+}
 
-    if (adjusted_x < field_1DDA4_) {
-        return;
-    }
-    if (adjusted_x >= field_1DDD4_ + field_1DDCC_ + field_1DDA4_) {
-        return;
-    }
+// ORIGINAL: 0x0046AE00 ?draw_cursor@@YAXXZ 0x0046AE00-0x0046AEED FILE
+// RECOVERY_BINDING: v1 {"reason":"Use full map longitude bounds for viewport seam adjustments while retaining cursor gating and arrow dispatch.","evidence":["Pinned46AE80 adds949870 MapLongitudeBounds to tile X;46AE9A subtracts the same full-width object.68FAF0 MapLongitude is a different half-width row stride."]}
+// NOTE ON THE HANDOFF: this was queued as "declare it on MapWin", but the
+// image's mangled name is ?draw_cursor@@YAXXZ - a FREE function taking
+// nothing, not a member. It walks every slot of the map-window table rather
+// than acting on one window, which is what the name is hiding. So it lives at
+// file scope beside the other free drawing helpers, not on the class.
+//
+// TRIED: MapWinTable spelled as the header's `MapWinSlots &` accessor. The
+// image walks a live cursor (`add ebx,4 / cmp ebx,0x7d3c5c`) and an index loop
+// compares a different thing; the walk is kept, the end bound spelled as the
+// table's own one-past-the-end slot.
+// LEVER: the walk is an int index loop after all - VC6 strength-reduces it to
+//        the image's ebx cursor with a signed `jl` and an `index == 0` slot
+//        compare. MapWin::draw_cursor's body is spelled out in the loop: the
+//        image inlines that member here, and this compiler keeps a plain
+//        `window->draw_cursor()` out of line (measured: 20 instructions with
+//        a call; `inline` on the member inlines it but drops the
+//        out-of-line 0x0046AD60 copy console.cpp calls).
+// size      237 bytes
+// callers   2   call targets   2
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x0046A2A0 0x004BDEA0
+// 0x0046AE04 reads ConsoleGlobal's survey mode at 0x9392B0: any active
+// survey mode suppresses this cursor pass.
 
-    draw_radius(x, y, 0, 2);
+void __cdecl draw_cursor() {
+    if (ConsoleGlobal.survey_mode_ == 0) {
+        for (int index = 0; index < (int)MapWinTableSlots; ++index) {
+            MapWin *window = MapWinTable[index];
+            if (window != 0 && (index == 0 || window->view_active_ != 0)) {
+                // MapWin::draw_cursor, expanded: the image inlines it here.
+                int y = ConsoleGlobal.cursor_history_y_[ConsoleGlobal.cursor_history_index_];
+                int x = ConsoleGlobal.cursor_history_x_[ConsoleGlobal.cursor_history_index_];
+                int adjusted_x = x;
+                if (y >= window->field_1DDA8_ &&
+                    y < window->field_1DDD8_ + window->field_1DDD0_ +
+                            window->field_1DDA8_) {
+                    if ((MapIsFlat & 1) == 0) {
+                        if (x < window->field_1DDA4_) {
+                            adjusted_x = MapLongitudeBounds + x;
+                        }
+                        if (adjusted_x >= window->field_1DDD4_ +
+                                              window->field_1DDCC_ +
+                                              window->field_1DDA4_) {
+                            adjusted_x -= MapLongitudeBounds;
+                        }
+                    }
+                    if (adjusted_x >= window->field_1DDA4_ &&
+                        adjusted_x < window->field_1DDD4_ +
+                                         window->field_1DDCC_ +
+                                         window->field_1DDA4_) {
+                        window->draw_radius(x, y, 0, 2);
+                    }
+                }
+            }
+        }
+    }
+    TutorialWindow.draw_arrow();
 }
 
 /*

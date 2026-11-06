@@ -59,113 +59,139 @@ void __cdecl clear_monuments() {
 // RECOVERY_BINDING: v1 {"evidence": ["image:terranx_original.exe:0x00476B70-0x00476C84", "source:src/recovered/units/00476b70.cpp", "Original faction stride4F4, record0 flag/first-owner words and name copy to4AC determine existing type ownership; preserve24byte strncpy behavior."], "reason": "Recover first colony founding in the shared genuine FactionMonuments owner, including first-achiever selection, the bounded faction-owned base-name field and live local notification."}
 void __cdecl mon_colony_founded(int faction_id, char *base_name) {
     const int year = static_cast<int>(game_year(GameDataStateStorage.fields_.turn_current_num_));
-    if ((Players[faction_id].rule_flags & RFLAG_ALIEN) != 0)
+    MonumentRecord &record = FactionMonuments[faction_id].records_[0];
+
+    if ((Players[faction_id].rule_flags & RFLAG_ALIEN) != 0 || record.achieved_ != 0) {
         return;
-    MonumentFaction &faction = FactionMonuments[faction_id];
-    MonumentRecord &record = faction.records_[0];
-    if (record.achieved_ != 0)
-        return;
+    }
 
     record.word_14_ = 0;
-    int peer;
-    for (peer = 0; peer < MaxPlayerNum; ++peer) {
-        if (peer != faction_id && FactionMonuments[peer].records_[0].achieved_ != 0)
+    for (int other = 0; other < 8; ++other) {
+        if (other != faction_id &&
+            FactionMonuments[other].records_[0].achieved_ != 0) {
             ++record.word_14_;
+        }
     }
-    int first_faction = faction_id;
+
+    int owner_faction;
     if (record.word_14_ != 0) {
         record.word_14_ = 0;
-        for (peer = 0; peer < MaxPlayerNum; ++peer) {
-            const MonumentRecord &other = FactionMonuments[peer].records_[0];
-            if (peer != faction_id && other.achieved_ != 0 && other.word_14_ != 0)
-                first_faction = peer;
+        owner_faction = faction_id;
+        for (int other = 0; other < 8; ++other) {
+            const MonumentRecord &other_record =
+                FactionMonuments[other].records_[0];
+            if (other != faction_id && other_record.achieved_ != 0 &&
+                other_record.word_14_ != 0) {
+                owner_faction = other;
+            }
         }
     } else {
         record.word_14_ = 1;
+        owner_faction = faction_id;
     }
-    record.owner_faction_ = first_faction;
+
+    record.owner_faction_ = owner_faction;
     record.achieved_ = 1;
     record.year_ = year;
     // Native strncpy copies exactly 24 bytes; a full-length name is not
     // forcibly terminated here. The field remains owned by this faction.
-    strncpy(faction.founding_base_name_, base_name, sizeof(faction.founding_base_name_));
-    faction.latest_type_ = 0;
-    if (faction_id == ConsoleGlobal.faction_id_)
+    strncpy(FactionMonuments[faction_id].founding_base_name_, base_name,
+            sizeof(FactionMonuments[faction_id].founding_base_name_));
+    const int local_faction = ConsoleGlobal.faction_id_;
+    FactionMonuments[faction_id].latest_type_ = 0;
+    if (faction_id == local_faction) {
         monument(1);
+    }
 }
 
 // ORIGINAL: 0x00476C90 ?mon_tech_discovered@@YAXHH@Z 0x00476C90-0x00476D93
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned original00476C90 and seed git:91b86557299ab66a61f1184540338d569e780e7e:src/recovered/units/00476c90.cpp; record1 at factionstride4F4, year0, payload8, firstownerC, achieved10, firstflag14 and latesttype498 are independently established by native stores.", "The original calls game_year before alien/duplicate guards and includes all eight peer records regardless of peer flags; later qualifying first-achiever ties win."], "reason": "Recover the complete native milestone producer against genuine shared monument records, with typed peer selection and live local notification rather than executable-address table views."}
 void __cdecl mon_tech_discovered(int faction_id, int tech_id) {
     const int year = static_cast<int>(game_year(GameDataStateStorage.fields_.turn_current_num_));
-    if ((Players[faction_id].rule_flags & RFLAG_ALIEN) != 0)
+    MonumentRecord &record = FactionMonuments[faction_id].records_[1];
+
+    if ((Players[faction_id].rule_flags & RFLAG_ALIEN) != 0 || record.achieved_ != 0) {
         return;
-    MonumentFaction &faction = FactionMonuments[faction_id];
-    MonumentRecord &record = faction.records_[1];
-    if (record.achieved_ != 0)
-        return;
+    }
 
     record.word_14_ = 0;
-    int peer;
-    for (peer = 0; peer < MaxPlayerNum; ++peer) {
-        if (peer != faction_id && FactionMonuments[peer].records_[1].achieved_ != 0)
+    for (int other = 0; other < 8; ++other) {
+        if (other != faction_id &&
+            FactionMonuments[other].records_[1].achieved_ != 0) {
             ++record.word_14_;
+        }
     }
-    int first_faction = faction_id;
+
+    int owner_faction;
     if (record.word_14_ != 0) {
         record.word_14_ = 0;
-        for (peer = 0; peer < MaxPlayerNum; ++peer) {
-            const MonumentRecord &other = FactionMonuments[peer].records_[1];
-            if (peer != faction_id && other.achieved_ != 0 && other.word_14_ != 0)
-                first_faction = peer;
+        owner_faction = faction_id;
+        for (int other = 0; other < 8; ++other) {
+            const MonumentRecord &other_record =
+                FactionMonuments[other].records_[1];
+            if (other != faction_id && other_record.achieved_ != 0 &&
+                other_record.word_14_ != 0) {
+                owner_faction = other;
+            }
         }
     } else {
         record.word_14_ = 1;
+        owner_faction = faction_id;
     }
+
     record.achieved_ = 1;
     record.year_ = year;
-    record.owner_faction_ = first_faction;
+    record.owner_faction_ = owner_faction;
     record.word_8_ = tech_id;
-    faction.latest_type_ = 1;
-    if (faction_id == ConsoleGlobal.faction_id_)
+    FactionMonuments[faction_id].latest_type_ = 1;
+    if (faction_id == ConsoleGlobal.faction_id_) {
         monument(1);
+    }
 }
 
 // ORIGINAL: 0x00477100 ?mon_secret_project@@YAXHH@Z 0x00477100-0x00477207
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned original00477100 and seed git:91b86557299ab66a61f1184540338d569e780e7e:src/recovered/units/00477100.cpp; record5 at factionstride4F4, year0, payload8, firstownerC, achieved10, firstflag14 and latesttype498 are independently established by native stores.", "The original calls game_year before alien/duplicate guards and includes all eight peer records regardless of peer flags; later qualifying first-achiever ties win."], "reason": "Recover the complete native milestone producer against genuine shared monument records, with typed peer selection and live local notification rather than executable-address table views."}
 void __cdecl mon_secret_project(int faction_id, int project_id) {
     const int year = static_cast<int>(game_year(GameDataStateStorage.fields_.turn_current_num_));
-    if ((Players[faction_id].rule_flags & RFLAG_ALIEN) != 0)
+    MonumentRecord &record = FactionMonuments[faction_id].records_[5];
+
+    if ((Players[faction_id].rule_flags & RFLAG_ALIEN) != 0 || record.achieved_ != 0) {
         return;
-    MonumentFaction &faction = FactionMonuments[faction_id];
-    MonumentRecord &record = faction.records_[5];
-    if (record.achieved_ != 0)
-        return;
+    }
 
     record.word_14_ = 0;
-    int peer;
-    for (peer = 0; peer < MaxPlayerNum; ++peer) {
-        if (peer != faction_id && FactionMonuments[peer].records_[5].achieved_ != 0)
+    for (int other = 0; other < 8; ++other) {
+        if (other != faction_id &&
+            FactionMonuments[other].records_[5].achieved_ != 0) {
             ++record.word_14_;
+        }
     }
-    int first_faction = faction_id;
+
+    int owner_faction;
     if (record.word_14_ != 0) {
         record.word_14_ = 0;
-        for (peer = 0; peer < MaxPlayerNum; ++peer) {
-            const MonumentRecord &other = FactionMonuments[peer].records_[5];
-            if (peer != faction_id && other.achieved_ != 0 && other.word_14_ != 0)
-                first_faction = peer;
+        owner_faction = faction_id;
+        for (int other = 0; other < 8; ++other) {
+            const MonumentRecord &other_record =
+                FactionMonuments[other].records_[5];
+            if (other != faction_id && other_record.achieved_ != 0 &&
+                other_record.word_14_ != 0) {
+                owner_faction = other;
+            }
         }
     } else {
         record.word_14_ = 1;
+        owner_faction = faction_id;
     }
+
     record.achieved_ = 1;
     record.year_ = year;
-    record.owner_faction_ = first_faction;
+    record.owner_faction_ = owner_faction;
     record.word_8_ = project_id;
-    faction.latest_type_ = 5;
-    if (faction_id == ConsoleGlobal.faction_id_)
+    FactionMonuments[faction_id].latest_type_ = 5;
+    if (faction_id == ConsoleGlobal.faction_id_) {
         monument(1);
+    }
 }
 
 // ORIGINAL: 0x00477840 ?mon_built_preserve@@YAXH@Z 0x00477840-0x0047793E
@@ -173,108 +199,140 @@ void __cdecl mon_secret_project(int faction_id, int project_id) {
 // TRIED: single `if(!(flag)&&active==0)` short-circuit form vs hoisting `winner`/`count=0` before the scan loop - both land the same MISMATCH #3 (original reserves the stack slot for `year` with `push ecx` ahead of the ebx/esi pushes; every C form tried here has the compiler push ebx/esi first instead).
 void __cdecl mon_built_preserve(int faction_id) {
     const int year = static_cast<int>(game_year(GameDataStateStorage.fields_.turn_current_num_));
-    if ((Players[faction_id].rule_flags & RFLAG_ALIEN) != 0)
+    MonumentRecord &record = FactionMonuments[faction_id].records_[12];
+
+    if ((Players[faction_id].rule_flags & RFLAG_ALIEN) != 0 || record.achieved_ != 0) {
         return;
-    MonumentFaction &faction = FactionMonuments[faction_id];
-    MonumentRecord &record = faction.records_[12];
-    if (record.achieved_ != 0)
-        return;
+    }
 
     record.word_14_ = 0;
-    int peer;
-    for (peer = 0; peer < MaxPlayerNum; ++peer) {
-        if (peer != faction_id && FactionMonuments[peer].records_[12].achieved_ != 0)
+    for (int other = 0; other < 8; ++other) {
+        if (other != faction_id &&
+            FactionMonuments[other].records_[12].achieved_ != 0) {
             ++record.word_14_;
+        }
     }
-    int first_faction = faction_id;
+
+    int owner_faction;
     if (record.word_14_ != 0) {
         record.word_14_ = 0;
-        for (peer = 0; peer < MaxPlayerNum; ++peer) {
-            const MonumentRecord &other = FactionMonuments[peer].records_[12];
-            if (peer != faction_id && other.achieved_ != 0 && other.word_14_ != 0)
-                first_faction = peer;
+        owner_faction = faction_id;
+        for (int other = 0; other < 8; ++other) {
+            const MonumentRecord &other_record =
+                FactionMonuments[other].records_[12];
+            if (other != faction_id && other_record.achieved_ != 0 &&
+                other_record.word_14_ != 0) {
+                owner_faction = other;
+            }
         }
     } else {
         record.word_14_ = 1;
+        owner_faction = faction_id;
     }
+
     record.achieved_ = 1;
-    record.owner_faction_ = first_faction;
+    record.owner_faction_ = owner_faction;
     record.year_ = year;
-    faction.latest_type_ = 12;
-    if (faction_id == ConsoleGlobal.faction_id_)
+    FactionMonuments[faction_id].latest_type_ = 12;
+    if (faction_id == ConsoleGlobal.faction_id_) {
         monument(1);
+    }
 }
 
 // ORIGINAL: 0x00476FE0 ?mon_facility_built@@YAXHPAD@Z 0x00476FE0-0x004770F2
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned original 00476FE0 and seed git:fc8112d1ca80fbe743dd051511ad7e0af8454e94:src/recovered/units/00476fe0.cpp; faction stride4F4, record4, name field4C4 and24byte strncpy are established by the complete native body.", "Native first-achiever selection includes all eight peer factions; alien target and duplicate events return without updates. Local notification reads the live ConsoleGlobal owner after game_year and name copying."], "reason": "Recover the native milestone and its bounded base-name storage in the genuine shared FactionMonuments owner, not a duplicate raw table view."}
 void __cdecl mon_facility_built(int faction_id, char *base_name) {
     const int year = static_cast<int>(game_year(GameDataStateStorage.fields_.turn_current_num_));
-    if (FactionMonuments[faction_id].records_[4].achieved_ != 0 || (Players[faction_id].rule_flags & RFLAG_ALIEN) != 0)
-        return;
+    MonumentRecord &record = FactionMonuments[faction_id].records_[4];
 
-    FactionMonuments[faction_id].records_[4].word_14_ = 0;
-    int peer;
-    for (peer = 0; peer < MaxPlayerNum; ++peer) {
-        if (peer != faction_id && FactionMonuments[peer].records_[4].achieved_ != 0)
-            ++FactionMonuments[faction_id].records_[4].word_14_;
+    if (record.achieved_ != 0 || (Players[faction_id].rule_flags & RFLAG_ALIEN) != 0) {
+        return;
     }
-    int first_faction = faction_id;
-    if (FactionMonuments[faction_id].records_[4].word_14_ != 0) {
-        FactionMonuments[faction_id].records_[4].word_14_ = 0;
-        for (peer = 0; peer < MaxPlayerNum; ++peer) {
-            const MonumentRecord &other = FactionMonuments[peer].records_[4];
-            if (peer != faction_id && other.achieved_ != 0 && other.word_14_ != 0)
-                first_faction = peer;
+
+    record.word_14_ = 0;
+    for (int other = 0; other < 8; ++other) {
+        if (other != faction_id &&
+            FactionMonuments[other].records_[4].achieved_ != 0) {
+            ++record.word_14_;
+        }
+    }
+
+    int owner_faction;
+    if (record.word_14_ != 0) {
+        record.word_14_ = 0;
+        owner_faction = faction_id;
+        for (int other = 0; other < 8; ++other) {
+            const MonumentRecord &other_record =
+                FactionMonuments[other].records_[4];
+            if (other != faction_id && other_record.achieved_ != 0 &&
+                other_record.word_14_ != 0) {
+                owner_faction = other;
+            }
         }
     } else {
-        FactionMonuments[faction_id].records_[4].word_14_ = 1;
+        record.word_14_ = 1;
+        owner_faction = faction_id;
     }
-    FactionMonuments[faction_id].records_[4].owner_faction_ = first_faction;
-    FactionMonuments[faction_id].records_[4].achieved_ = 1;
-    FactionMonuments[faction_id].records_[4].year_ = year;
+
+    record.owner_faction_ = owner_faction;
+    record.achieved_ = 1;
+    record.year_ = year;
     // Native copies exactly 24 bytes, including strncpy's zero padding but
     // without forcing a terminator for a full-length name.
-    strncpy(FactionMonuments[faction_id].facility_base_name_, base_name, sizeof(FactionMonuments[faction_id].facility_base_name_));
+    strncpy(FactionMonuments[faction_id].facility_base_name_, base_name,
+            sizeof(FactionMonuments[faction_id].facility_base_name_));
     const int local_faction = ConsoleGlobal.faction_id_;
     FactionMonuments[faction_id].latest_type_ = 4;
-    if (faction_id == local_faction)
+    if (faction_id == local_faction) {
         monument(1);
+    }
 }
 
 // ORIGINAL: 0x00477320 ?mon_conquer_base@@YAXHPAD@Z 0x00477320-0x00477434
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned original 00477320 and seed git:fc8112d1ca80fbe743dd051511ad7e0af8454e94:src/recovered/units/00477320.cpp; faction stride4F4, record7, name field4DC and24byte strncpy are established by the complete native body.", "Native first-achiever selection includes all eight peer factions; alien target and duplicate events return without updates. Local notification reads the live ConsoleGlobal owner after game_year and name copying."], "reason": "Recover the native milestone and its bounded base-name storage in the genuine shared FactionMonuments owner, not a duplicate raw table view."}
 void __cdecl mon_conquer_base(int faction_id, char *base_name) {
     const int year = static_cast<int>(game_year(GameDataStateStorage.fields_.turn_current_num_));
-    if ((Players[faction_id].rule_flags & RFLAG_ALIEN) != 0)
-        return;
-    if (FactionMonuments[faction_id].records_[7].achieved_ != 0)
-        return;
+    MonumentRecord &record = FactionMonuments[faction_id].records_[7];
 
-    FactionMonuments[faction_id].records_[7].word_14_ = 0;
-    int peer;
-    for (peer = 0; peer < MaxPlayerNum; ++peer) {
-        if (peer != faction_id && FactionMonuments[peer].records_[7].achieved_ != 0)
-            ++FactionMonuments[faction_id].records_[7].word_14_;
+    if ((Players[faction_id].rule_flags & RFLAG_ALIEN) != 0 || record.achieved_ != 0) {
+        return;
     }
-    int first_faction = faction_id;
-    if (FactionMonuments[faction_id].records_[7].word_14_ != 0) {
-        FactionMonuments[faction_id].records_[7].word_14_ = 0;
-        for (peer = 0; peer < MaxPlayerNum; ++peer) {
-            const MonumentRecord &other = FactionMonuments[peer].records_[7];
-            if (peer != faction_id && other.achieved_ != 0 && other.word_14_ != 0)
-                first_faction = peer;
+
+    record.word_14_ = 0;
+    for (int other = 0; other < 8; ++other) {
+        if (other != faction_id &&
+            FactionMonuments[other].records_[7].achieved_ != 0) {
+            ++record.word_14_;
+        }
+    }
+
+    int owner_faction;
+    if (record.word_14_ != 0) {
+        record.word_14_ = 0;
+        owner_faction = faction_id;
+        for (int other = 0; other < 8; ++other) {
+            const MonumentRecord &other_record =
+                FactionMonuments[other].records_[7];
+            if (other != faction_id && other_record.achieved_ != 0 &&
+                other_record.word_14_ != 0) {
+                owner_faction = other;
+            }
         }
     } else {
-        FactionMonuments[faction_id].records_[7].word_14_ = 1;
+        record.word_14_ = 1;
+        owner_faction = faction_id;
     }
-    FactionMonuments[faction_id].records_[7].owner_faction_ = first_faction;
-    FactionMonuments[faction_id].records_[7].achieved_ = 1;
-    FactionMonuments[faction_id].records_[7].year_ = year;
-    strncpy(FactionMonuments[faction_id].conquered_base_name_, base_name, sizeof(FactionMonuments[faction_id].conquered_base_name_));
+
+    record.owner_faction_ = owner_faction;
+    record.achieved_ = 1;
+    record.year_ = year;
+    strncpy(FactionMonuments[faction_id].conquered_base_name_, base_name,
+            sizeof(FactionMonuments[faction_id].conquered_base_name_));
     const int local_faction = ConsoleGlobal.faction_id_;
     FactionMonuments[faction_id].latest_type_ = 7;
-    if (faction_id == local_faction)
+    if (faction_id == local_faction) {
         monument(1);
+    }
 }
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
@@ -282,15 +340,17 @@ void __cdecl mon_conquer_base(int faction_id, char *base_name) {
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00476da0.cpp preserved original identity/extent; pinned instructions and independent family review establish317byte body and fields; actual-source milestone/reset controls verify shared ownership and native branches"], "reason": "Record first/repeated technology secrets in genuine shared monument record2, retain first-achiever peer interpretation and notify the live local faction."}
 void __cdecl mon_secrets_of_tech(int faction_id) {
     const int year = static_cast<int>(game_year(GameDataStateStorage.fields_.turn_current_num_));
+    MonumentRecord &record = FactionMonuments[faction_id].records_[2];
     if ((Players[faction_id].rule_flags & RFLAG_ALIEN) != 0)
         return;
 
-    MonumentRecord &record = FactionMonuments[faction_id].records_[2];
     if (record.achieved_ != 0) {
-        if (record.word_8_ == -1)
+        if (record.word_8_ + 1 != 0) {
+            if (record.word_4_ + 1 == 0)
+                record.word_4_ = year;
+        } else {
             record.word_8_ = year;
-        else if (record.word_4_ == -1)
-            record.word_4_ = year;
+        }
     } else {
         record.word_14_ = 0;
         int peer;
@@ -397,36 +457,43 @@ Status: Coverage transcription of the retained seed
 // TRIED: MonRecord struct + reinterpret_cast<MonRecord*>(base)+a1 array indexing reproduces every instruction from the flag/active check onward byte-for-byte; only the prologue diverges at MISMATCH #6 (original reserves the `year` local with `push ecx` ahead of the ebx/esi callee-save pushes - same wall as 0x00477840's sibling, and every C form tried here has the compiler push ebx/esi first instead).
 void __cdecl mon_prototype_built(int faction_id) {
     const int year = static_cast<int>(game_year(GameDataStateStorage.fields_.turn_current_num_));
-    if ((Players[faction_id].rule_flags & 0x80) == 0) {
-        MonumentRecord &record = FactionMonuments[faction_id].records_[3];
-        if (record.achieved_ == 0) {
-            record.word_14_ = 0;
-            for (int i = 0; i < 8; i++) {
-                if (i != faction_id && FactionMonuments[i].records_[3].achieved_ != 0) {
-                    record.word_14_++;
-                }
-            }
-            int builder = faction_id;
-            if (record.word_14_ == 0) {
-                record.word_14_ = 1;
-            } else {
-                record.word_14_ = 0;
-                for (int j = 0; j < 8; j++) {
-                    if (j != faction_id && FactionMonuments[j].records_[3].achieved_ != 0 &&
-                        FactionMonuments[j].records_[3].word_14_ != 0) {
-                        builder = j;
-                    }
-                }
-            }
-            record.achieved_ = 1;
-            record.owner_faction_ = builder;
-            record.year_ = year;
-            const bool is_local = (faction_id == ConsoleGlobal.faction_id_);
-            FactionMonuments[faction_id].latest_type_ = 3;
-            if (is_local) {
-                monument(1);
+    MonumentRecord &record = FactionMonuments[faction_id].records_[3];
+
+    if ((Players[faction_id].rule_flags & RFLAG_ALIEN) != 0 || record.achieved_ != 0) {
+        return;
+    }
+
+    record.word_14_ = 0;
+    for (int other = 0; other < 8; ++other) {
+        if (other != faction_id &&
+            FactionMonuments[other].records_[3].achieved_ != 0) {
+            ++record.word_14_;
+        }
+    }
+
+    int owner_faction;
+    if (record.word_14_ != 0) {
+        record.word_14_ = 0;
+        owner_faction = faction_id;
+        for (int other = 0; other < 8; ++other) {
+            const MonumentRecord &other_record =
+                FactionMonuments[other].records_[3];
+            if (other != faction_id && other_record.achieved_ != 0 &&
+                other_record.word_14_ != 0) {
+                owner_faction = other;
             }
         }
+    } else {
+        record.word_14_ = 1;
+        owner_faction = faction_id;
+    }
+
+    record.achieved_ = 1;
+    record.owner_faction_ = owner_faction;
+    record.year_ = year;
+    FactionMonuments[faction_id].latest_type_ = 3;
+    if (faction_id == ConsoleGlobal.faction_id_) {
+        monument(1);
     }
 }
 
@@ -442,36 +509,43 @@ Status: Coverage transcription of the retained seed
 // TRIED: MonRecord struct + reinterpret_cast<MonRecord*>(base)+a1 array indexing reproduces every instruction from the flag/active check onward byte-for-byte; only the prologue diverges at MISMATCH #6 (original reserves the `year` local with `push ecx` ahead of the ebx/esi callee-save pushes - same wall as 0x00477840's sibling, and every C form tried here has the compiler push ebx/esi first instead).
 void __cdecl mon_naval_unit_built(int faction_id) {
     const int year = static_cast<int>(game_year(GameDataStateStorage.fields_.turn_current_num_));
-    if ((Players[faction_id].rule_flags & 0x80) == 0) {
-        MonumentRecord &record = FactionMonuments[faction_id].records_[8];
-        if (record.achieved_ == 0) {
-            record.word_14_ = 0;
-            for (int i = 0; i < 8; i++) {
-                if (i != faction_id && FactionMonuments[i].records_[8].achieved_ != 0) {
-                    record.word_14_++;
-                }
-            }
-            int builder = faction_id;
-            if (record.word_14_ == 0) {
-                record.word_14_ = 1;
-            } else {
-                record.word_14_ = 0;
-                for (int j = 0; j < 8; j++) {
-                    if (j != faction_id && FactionMonuments[j].records_[8].achieved_ != 0 &&
-                        FactionMonuments[j].records_[8].word_14_ != 0) {
-                        builder = j;
-                    }
-                }
-            }
-            record.achieved_ = 1;
-            record.owner_faction_ = builder;
-            record.year_ = year;
-            const bool is_local = (faction_id == ConsoleGlobal.faction_id_);
-            FactionMonuments[faction_id].latest_type_ = 8;
-            if (is_local) {
-                monument(1);
+    MonumentRecord &record = FactionMonuments[faction_id].records_[8];
+
+    if ((Players[faction_id].rule_flags & RFLAG_ALIEN) != 0 || record.achieved_ != 0) {
+        return;
+    }
+
+    record.word_14_ = 0;
+    for (int other = 0; other < 8; ++other) {
+        if (other != faction_id &&
+            FactionMonuments[other].records_[8].achieved_ != 0) {
+            ++record.word_14_;
+        }
+    }
+
+    int owner_faction;
+    if (record.word_14_ != 0) {
+        record.word_14_ = 0;
+        owner_faction = faction_id;
+        for (int other = 0; other < 8; ++other) {
+            const MonumentRecord &other_record =
+                FactionMonuments[other].records_[8];
+            if (other != faction_id && other_record.achieved_ != 0 &&
+                other_record.word_14_ != 0) {
+                owner_faction = other;
             }
         }
+    } else {
+        record.word_14_ = 1;
+        owner_faction = faction_id;
+    }
+
+    record.achieved_ = 1;
+    record.owner_faction_ = owner_faction;
+    record.year_ = year;
+    FactionMonuments[faction_id].latest_type_ = 8;
+    if (faction_id == ConsoleGlobal.faction_id_) {
+        monument(1);
     }
 }
 
@@ -487,36 +561,43 @@ Status: Coverage transcription of the retained seed
 // TRIED: MonRecord struct + reinterpret_cast<MonRecord*>(base)+a1 array indexing reproduces every instruction from the flag/active check onward byte-for-byte; only the prologue diverges at MISMATCH #6 (original reserves the `year` local with `push ecx` ahead of the ebx/esi callee-save pushes - same wall as 0x00477840's sibling, and every C form tried here has the compiler push ebx/esi first instead).
 void __cdecl mon_air_unit_built(int faction_id) {
     const int year = static_cast<int>(game_year(GameDataStateStorage.fields_.turn_current_num_));
-    if ((Players[faction_id].rule_flags & 0x80) == 0) {
-        MonumentRecord &record = FactionMonuments[faction_id].records_[9];
-        if (record.achieved_ == 0) {
-            record.word_14_ = 0;
-            for (int i = 0; i < 8; i++) {
-                if (i != faction_id && FactionMonuments[i].records_[9].achieved_ != 0) {
-                    record.word_14_++;
-                }
-            }
-            int builder = faction_id;
-            if (record.word_14_ == 0) {
-                record.word_14_ = 1;
-            } else {
-                record.word_14_ = 0;
-                for (int j = 0; j < 8; j++) {
-                    if (j != faction_id && FactionMonuments[j].records_[9].achieved_ != 0 &&
-                        FactionMonuments[j].records_[9].word_14_ != 0) {
-                        builder = j;
-                    }
-                }
-            }
-            record.achieved_ = 1;
-            record.owner_faction_ = builder;
-            record.year_ = year;
-            const bool is_local = (faction_id == ConsoleGlobal.faction_id_);
-            FactionMonuments[faction_id].latest_type_ = 9;
-            if (is_local) {
-                monument(1);
+    MonumentRecord &record = FactionMonuments[faction_id].records_[9];
+
+    if ((Players[faction_id].rule_flags & RFLAG_ALIEN) != 0 || record.achieved_ != 0) {
+        return;
+    }
+
+    record.word_14_ = 0;
+    for (int other = 0; other < 8; ++other) {
+        if (other != faction_id &&
+            FactionMonuments[other].records_[9].achieved_ != 0) {
+            ++record.word_14_;
+        }
+    }
+
+    int owner_faction;
+    if (record.word_14_ != 0) {
+        record.word_14_ = 0;
+        owner_faction = faction_id;
+        for (int other = 0; other < 8; ++other) {
+            const MonumentRecord &other_record =
+                FactionMonuments[other].records_[9];
+            if (other != faction_id && other_record.achieved_ != 0 &&
+                other_record.word_14_ != 0) {
+                owner_faction = other;
             }
         }
+    } else {
+        record.word_14_ = 1;
+        owner_faction = faction_id;
+    }
+
+    record.achieved_ = 1;
+    record.owner_faction_ = owner_faction;
+    record.year_ = year;
+    FactionMonuments[faction_id].latest_type_ = 9;
+    if (faction_id == ConsoleGlobal.faction_id_) {
+        monument(1);
     }
 }
 
@@ -532,36 +613,43 @@ Status: Coverage transcription of the retained seed
 // TRIED: MonRecord struct + reinterpret_cast<MonRecord*>(base)+a1 array indexing reproduces every instruction from the flag/active check onward byte-for-byte; only the prologue diverges at MISMATCH #6 (original reserves the `year` local with `push ecx` ahead of the ebx/esi callee-save pushes - same wall as 0x00477840's sibling, and every C form tried here has the compiler push ebx/esi first instead).
 void __cdecl mon_native_life_bred(int faction_id) {
     const int year = static_cast<int>(game_year(GameDataStateStorage.fields_.turn_current_num_));
-    if ((Players[faction_id].rule_flags & 0x80) == 0) {
-        MonumentRecord &record = FactionMonuments[faction_id].records_[10];
-        if (record.achieved_ == 0) {
-            record.word_14_ = 0;
-            for (int i = 0; i < 8; i++) {
-                if (i != faction_id && FactionMonuments[i].records_[10].achieved_ != 0) {
-                    record.word_14_++;
-                }
-            }
-            int builder = faction_id;
-            if (record.word_14_ == 0) {
-                record.word_14_ = 1;
-            } else {
-                record.word_14_ = 0;
-                for (int j = 0; j < 8; j++) {
-                    if (j != faction_id && FactionMonuments[j].records_[10].achieved_ != 0 &&
-                        FactionMonuments[j].records_[10].word_14_ != 0) {
-                        builder = j;
-                    }
-                }
-            }
-            record.achieved_ = 1;
-            record.owner_faction_ = builder;
-            record.year_ = year;
-            const bool is_local = (faction_id == ConsoleGlobal.faction_id_);
-            FactionMonuments[faction_id].latest_type_ = 10;
-            if (is_local) {
-                monument(1);
+    MonumentRecord &record = FactionMonuments[faction_id].records_[10];
+
+    if ((Players[faction_id].rule_flags & RFLAG_ALIEN) != 0 || record.achieved_ != 0) {
+        return;
+    }
+
+    record.word_14_ = 0;
+    for (int other = 0; other < 8; ++other) {
+        if (other != faction_id &&
+            FactionMonuments[other].records_[10].achieved_ != 0) {
+            ++record.word_14_;
+        }
+    }
+
+    int owner_faction;
+    if (record.word_14_ != 0) {
+        record.word_14_ = 0;
+        owner_faction = faction_id;
+        for (int other = 0; other < 8; ++other) {
+            const MonumentRecord &other_record =
+                FactionMonuments[other].records_[10];
+            if (other != faction_id && other_record.achieved_ != 0 &&
+                other_record.word_14_ != 0) {
+                owner_faction = other;
             }
         }
+    } else {
+        record.word_14_ = 1;
+        owner_faction = faction_id;
+    }
+
+    record.achieved_ = 1;
+    record.owner_faction_ = owner_faction;
+    record.year_ = year;
+    FactionMonuments[faction_id].latest_type_ = 10;
+    if (faction_id == ConsoleGlobal.faction_id_) {
+        monument(1);
     }
 }
 
@@ -577,36 +665,43 @@ Status: Coverage transcription of the retained seed
 // TRIED: MonRecord struct + reinterpret_cast<MonRecord*>(base)+a1 array indexing reproduces every instruction from the flag/active check onward byte-for-byte; only the prologue diverges at MISMATCH #6 (original reserves the `year` local with `push ecx` ahead of the ebx/esi callee-save pushes - same wall as 0x00477840's sibling, and every C form tried here has the compiler push ebx/esi first instead).
 void __cdecl mon_first_in_space(int faction_id) {
     const int year = static_cast<int>(game_year(GameDataStateStorage.fields_.turn_current_num_));
-    if ((Players[faction_id].rule_flags & 0x80) == 0) {
-        MonumentRecord &record = FactionMonuments[faction_id].records_[11];
-        if (record.achieved_ == 0) {
-            record.word_14_ = 0;
-            for (int i = 0; i < 8; i++) {
-                if (i != faction_id && FactionMonuments[i].records_[11].achieved_ != 0) {
-                    record.word_14_++;
-                }
-            }
-            int builder = faction_id;
-            if (record.word_14_ == 0) {
-                record.word_14_ = 1;
-            } else {
-                record.word_14_ = 0;
-                for (int j = 0; j < 8; j++) {
-                    if (j != faction_id && FactionMonuments[j].records_[11].achieved_ != 0 &&
-                        FactionMonuments[j].records_[11].word_14_ != 0) {
-                        builder = j;
-                    }
-                }
-            }
-            record.achieved_ = 1;
-            record.owner_faction_ = builder;
-            record.year_ = year;
-            const bool is_local = (faction_id == ConsoleGlobal.faction_id_);
-            FactionMonuments[faction_id].latest_type_ = 11;
-            if (is_local) {
-                monument(1);
+    MonumentRecord &record = FactionMonuments[faction_id].records_[11];
+
+    if ((Players[faction_id].rule_flags & RFLAG_ALIEN) != 0 || record.achieved_ != 0) {
+        return;
+    }
+
+    record.word_14_ = 0;
+    for (int other = 0; other < 8; ++other) {
+        if (other != faction_id &&
+            FactionMonuments[other].records_[11].achieved_ != 0) {
+            ++record.word_14_;
+        }
+    }
+
+    int owner_faction;
+    if (record.word_14_ != 0) {
+        record.word_14_ = 0;
+        owner_faction = faction_id;
+        for (int other = 0; other < 8; ++other) {
+            const MonumentRecord &other_record =
+                FactionMonuments[other].records_[11];
+            if (other != faction_id && other_record.achieved_ != 0 &&
+                other_record.word_14_ != 0) {
+                owner_faction = other;
             }
         }
+    } else {
+        record.word_14_ = 1;
+        owner_faction = faction_id;
+    }
+
+    record.achieved_ = 1;
+    record.owner_faction_ = owner_faction;
+    record.year_ = year;
+    FactionMonuments[faction_id].latest_type_ = 11;
+    if (faction_id == ConsoleGlobal.faction_id_) {
+        monument(1);
     }
 }
 
@@ -708,15 +803,16 @@ Status: Coverage transcription - unclaimed body
 // TRIED: the flag byte needs its own extern beside the scaffold's int-typed binding (C2373), and the three table bases need masked relocations; the spill of `year` to an extra frame slot stayed a 0.86-similarity MISMATCH.
 // kind game
 void __cdecl mon_killed_faction(int faction_id, int counterpart) {
-    const int year = static_cast<int>(game_year(GameDataStateStorage.fields_.turn_current_num_));
+    // The image tests the -1 sentinel as `chosen + 1` (lea/test).
     int chosen = -1;
+    const int year = static_cast<int>(game_year(GameDataStateStorage.fields_.turn_current_num_));
     for (int index = 0; index < 6; ++index) {
         if (FactionMonuments[faction_id].records_[index + 0xF].achieved_ == 0
-            && chosen == -1) {
+            && chosen + 1 == 0) {
             chosen = index + 0xF;
         }
     }
-    if (chosen == -1) {
+    if (chosen + 1 == 0) {
         return;
     }
     MonumentRecord &record = FactionMonuments[faction_id].records_[chosen];

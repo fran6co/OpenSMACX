@@ -42,6 +42,7 @@
 #include "worldwin.h"
 #include "xpops.h"
 #include "palette.h"
+#include "crt_random_inline.h"
 
 // Existing shared punctuation: declared in string_formatting.cpp and defined in socialwin.cpp.
 extern char SocialWinCommaSpaceText[];
@@ -651,13 +652,8 @@ Status: Complete
 void __cdecl alt_set_both(int x, int y, int altitude_natural) {
     alt_set(x, y, altitude_natural);
     if (alt_natural(x, y) != altitude_natural) {
-        // `rnd()`'s own body, written out: it is a real function used
-        // elsewhere (general.cpp), so a cross-TU call to it cannot inline -
-        // the image's `call 0x0064601D` is straight to the CRT `rand`.
-        uint32_t *const base = &AltNatural[altitude_natural];
-        int bounds = base[1] - base[0];
-        int roll = (bounds - 1 > 0) ? rand() % bounds : 0;
-        alt_put_detail(x, y, (uint8_t)(base[0] + MapSeaLevel + roll));
+        int roll = bounded_crt_random(AltNatural[altitude_natural + 1] - AltNatural[altitude_natural]);
+        alt_put_detail(x, y, AltNatural[altitude_natural] + MapSeaLevel + roll);
     }
 }
 /*
@@ -696,13 +692,14 @@ Status: Complete
 int __cdecl elev_at(int x, int y) {
     Map *const tile = map_loc(x, y);
     int contour = tile->contour;
-    int elev = 50 * (contour - AltContour[3] - MapSeaLevel);
+    int elev = 50 * (contour - MapSeaLevel - AltContour[3]);
     if (contour > (int)AltContour[tile->climate >> 5]) {
         elev += (x * 113 + y * 217 + MapSeaLevel * 301) % 50;
     } else {
         elev += 10;
     }
-    return range(elev, -3000, 3500);
+    elev = range(elev, -3000, 3500);
+    return elev;
 }
 /*
 Purpose: Set the rainfall (climate) for the specified tile.
@@ -867,10 +864,7 @@ Status: Complete
 */
 void __cdecl rocky_set(int x, int y, int rocky) {
     Map *tile = map_loc(x, y);
-    uint8_t *const field = &tile->val3;
-    uint8_t masked = *field & 0x3F;
-    const uint8_t rocky_byte = static_cast<uint8_t>(rocky);
-    *field = static_cast<uint8_t>(masked | (rocky_byte << 6));
+    tile->val3 = static_cast<uint8_t>((tile->val3 & 0x3F) | (rocky << 6));
     tile->bit2 |= 0x400000; // TODO: identify value
     UnkBitfield1 |= 1; // TODO: identify variable + value
 }
@@ -1244,17 +1238,21 @@ Status: Complete
 //            there regardless of the forwarder. Not added.
 
 int __cdecl bonus_at(int x, int y, int UNUSED(unk_val)) {
-    uint32_t bit = bit_at(x, y);
     int alt = alt_at(x, y);
+    uint32_t bit = bit_at(x, y);
     BOOL has_rsc_bonus = bit & BIT_RSC_BONUS;
-    if (!has_rsc_bonus && (!MapRandSeed
-        || (alt >= ALT_SHORE_LINE && !(GameDataStateStorage.fields_.game_rules_ & RULES_NO_UNITY_SCATTERING)))) {
-        return 0;
+    if (!has_rsc_bonus) {
+        if (!MapRandSeed) {
+            return 0;
+        }
+        if (alt >= ALT_SHORE_LINE && !(GameDataStateStorage.fields_.game_rules_ & RULES_NO_UNITY_SCATTERING)) {
+            return 0;
+        }
     }
-    uint32_t avg = (x + y) >> 1;
+    int avg = (x + y) >> 1;
     x -= avg;
     int chk = (avg & 3) + 4 * (x & 3);
-    if (!has_rsc_bonus && chk != ((MapRandSeed + (-5 * (avg >> 2)) - 3 * (x >> 2)) & 0xF)) {
+    if (!has_rsc_bonus && chk != ((-5 * (avg >> 2) - 3 * (x >> 2) + MapRandSeed) & 0xF)) {
         return 0;
     }
     if (alt < ALT_OCEAN_SHELF) {
@@ -1263,9 +1261,10 @@ int __cdecl bonus_at(int x, int y, int UNUSED(unk_val)) {
     int ret = (alt < ALT_SHORE_LINE) ? chk % 3 + 1 : (chk % 5) & 3;
     if (!ret || bit & BIT_NUTRIENT_RSC) {
         if (bit & BIT_ENERGY_RSC) {
-            return 3; // energy
+            ret = 3; // energy
+        } else {
+            ret = (bit & BIT_MINERAL_RSC) ? 2 : 1; // nutrient or mineral
         }
-        return ((bit & BIT_MINERAL_RSC) != 0) + 1; // nutrient or mineral
     }
     return ret;
 }
@@ -1303,13 +1302,13 @@ int __cdecl goody_at(int x, int y) {
     }
     int avg = (x + y) >> 1;
     int x_diff = x - avg;
-    uint32_t cmp = (avg & 3) + 4 * (x_diff & 3);
     if (!is_ocean(x, y)
-        && cmp == ((-5 * (avg >> 2) - 3 * (x_diff >> 2) + MapRandSeed) & 0xF)) {
+        && (avg & 3) + 4 * (x_diff & 3)
+            == ((-5 * (avg >> 2) - 3 * (x_diff >> 2) + MapRandSeed) & 0xF)) {
         return 2;
     }
-    return cmp == ((MapPodAverageMultiplier * (avg / 4)
-        + MapPodDifferenceMultiplier * (x_diff / 4) + MapRandSeed + 8) & 0x1F); // 0 or 1
+    return (avg & 3) + 4 * (x_diff & 3) == ((MapPodDifferenceMultiplier * (x_diff / 4)
+        + MapPodAverageMultiplier * (avg / 4) + MapRandSeed + 8) & 0x1F); // 0 or 1
 }
 // Pinned say_loc also references shared punctuation at0x00682E9C/0x00682E98.
 // Their canonical original bindings are beside say_vehicles in datalink_entries.cpp;

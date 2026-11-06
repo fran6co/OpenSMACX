@@ -1900,12 +1900,16 @@ Purpose: Free a CVR record: five plain pointer fields (0xc, 0x10, 0x14, 0x18,
 //        pops ebx first). The eager-save placement is upstream of the body -
 //        same wall the Palette receivers hit. 8 of the 19 remaining runs.
 //        102 of 154, /c /O2 /Gy /GR- /GX.
+// LEVER: one function-scope index and `for` loops put the image's index
+//        zeroing ahead of each count test: 114 of 154. Wrapping the body in
+//        `if (record != 0)` instead of the early return measured the same.
 Return Value: n/a
 */
 void __cdecl caviar_free_record(CvrRecord *record) {
     if (record == 0) {
         return;
     }
+    int index;
     char *first = record->description_;
     if (first != 0) {
         vox_free_slot(first);
@@ -1928,69 +1932,53 @@ void __cdecl caviar_free_record(CvrRecord *record) {
     }
 
     if (record->slot_table_ != 0) {
-        if (record->part_count_ > 0) {
-            int index = 0;
-            do {
-                // No null test - the image frees the slot's answer whatever
-                // it holds.
-                char *element = record->slot_table_[index];
-                vox_free_slot(element);
-                ++index;
-            } while (index < record->part_count_);
+        for (index = 0; index < record->part_count_; ++index) {
+            // No null test - the image frees the slot's answer whatever
+            // it holds.
+            char *element = record->slot_table_[index];
+            vox_free_slot(element);
         }
         vox_free_slot(record->slot_table_);
     }
 
     if (record->parts_ != 0) {
-        if (record->part_count_ > 0) {
-            int index = 0;
-            do {
-                uint8_t *lead = record->parts_[index].colours_;
-                if (lead != 0) {
-                    vox_free_slot(lead);
-                }
-                VOX_Vect *mid = record->parts_[index].vectors_;
-                if (mid != 0) {
-                    vox_free_slot(mid);
-                }
-                VOX_Matrix *last = record->parts_[index].matrices_;
-                if (last != 0) {
-                    vox_free_slot(last);
-                }
-                ++index;
-            } while (index < record->part_count_);
+        for (index = 0; index < record->part_count_; ++index) {
+            uint8_t *lead = record->parts_[index].colours_;
+            if (lead != 0) {
+                vox_free_slot(lead);
+            }
+            VOX_Vect *mid = record->parts_[index].vectors_;
+            if (mid != 0) {
+                vox_free_slot(mid);
+            }
+            VOX_Matrix *last = record->parts_[index].matrices_;
+            if (last != 0) {
+                vox_free_slot(last);
+            }
         }
         vox_free_slot(record->parts_);
     }
 
     if (record->steps_ != 0) {
-        if (record->part_count_ > 0) {
-            int index = 0;
-            do {
-                CvrShape *lead = record->steps_[index].shape_;
-                if (lead != 0) {
-                    vox_free_slot(lead);
-                }
-                ++index;
-            } while (index < record->part_count_);
+        for (index = 0; index < record->part_count_; ++index) {
+            CvrShape *lead = record->steps_[index].shape_;
+            if (lead != 0) {
+                vox_free_slot(lead);
+            }
         }
         vox_free_slot(record->steps_);
     }
 
     if (record->shadows_ != 0) {
-        if (record->part_count_ > 0) {
-            int index = 0;
-            do {
-                uint8_t *lead = record->shadows_[index].field_4_;
-                if (lead != 0) {
-                    vox_free_slot(lead);
-                }
-                uint8_t *mid = record->shadows_[index].field_8_;
-                if (mid != 0) {
-                    vox_free_slot(mid);
-                }
-                ++index;
-            } while (index < record->part_count_);
+        for (index = 0; index < record->part_count_; ++index) {
+            uint8_t *lead = record->shadows_[index].field_4_;
+            if (lead != 0) {
+                vox_free_slot(lead);
+            }
+            uint8_t *mid = record->shadows_[index].field_8_;
+            if (mid != 0) {
+                vox_free_slot(mid);
+            }
         }
         vox_free_slot(record->shadows_);
     }
@@ -2022,19 +2010,21 @@ extern "C" int __cdecl vox_read_length_field(int fd, CvrRecord *record,
     // only then forms the slot address in edi (0x6386DD) - so `base` has to
     // be its own local or the first load lands on the wrong argument, and
     // `payload` has to precede `slot` or the two registers swap (measured:
-    // 11 of 36 either way round without the base local).
+    // 11 of 36 either way round without the base local). Subtracting in
+    // place gives the image's `sub esi,8` on the reloaded argument (31 of
+    // 36); the residual is `or eax,-1` scheduled ahead of `pop edi`.
     CvrRecord *base = record;
-    int payload = length - 8;
+    length -= 8;
     // The slot lives at +0xc of the record the caller hands over - the same
     // field caviar_free_record releases first.
     char **slot = &base->description_;
-    if (vox_alloc_typed(payload + 1, slot) != 0) {
+    if (vox_alloc_typed(length + 1, slot) != 0) {
         return -1;
     }
-    if (vox_read_exact(fd, (void *)*slot, payload) != 0) {
+    if (vox_read_exact(fd, (void *)*slot, length) != 0) {
         return -1;
     }
-    (*slot)[payload] = 0;
+    (*slot)[length] = 0;
     return 0;
 }
 
@@ -2076,6 +2066,8 @@ Return Value: 0 when the walk consumed the block, -1 on any failure.
 //        (first divergence at instruction 3). No spelling tried - a local
 //        for the record, a pointer walked by case, per-case casts - made
 //        VC6 dedicate ebx here. /c /O2 /Gy /GR- /GX.
+// LEVER: 0x1030000 is spelled before 0x1020000 so its arm jumps into the
+//        palette arm's shared read call, as the image does (112 of 151).
 */
 extern "C" int __cdecl vox_read_chunks(int fd, CvrRecord *record, int size) {
     struct ChunkHeader {
@@ -2107,6 +2099,18 @@ extern "C" int __cdecl vox_read_chunks(int fd, CvrRecord *record, int size) {
             record->palette_name_[payload] = 0;
             break;
         }
+        case 0x1030000: {
+            const int payload = header.length - 8;
+            if (vox_alloc_typed(payload,
+                                &record->field_18_) != 0) {
+                return -1;
+            }
+            if (vox_read_exact(fd, record->field_18_,
+                               payload) != 0) {
+                return -1;
+            }
+            break;
+        }
         case 0x1020000: {
             const int payload = header.length - 8;
             if (!(record->version_ > vox_threshold_seven)) {
@@ -2125,18 +2129,6 @@ extern "C" int __cdecl vox_read_chunks(int fd, CvrRecord *record, int size) {
                                    payload) != 0) {
                     return -1;
                 }
-            }
-            break;
-        }
-        case 0x1030000: {
-            const int payload = header.length - 8;
-            if (vox_alloc_typed(payload,
-                                &record->field_18_) != 0) {
-                return -1;
-            }
-            if (vox_read_exact(fd, record->field_18_,
-                               payload) != 0) {
-                return -1;
             }
             break;
         }
@@ -2177,6 +2169,9 @@ Return Value: 0 when the walk consumed the block, -1 on any failure.
 //        the top of the loop) left it deferred. 53 of 116 at /O2, first
 //        divergence at instruction 8 - the missing ebx load. /c /O2 /Gy
 //        /GR- /GX.
+// LEVER: the image tests lead_ and falls through to the lead_ allocation,
+//        so the nonzero arm is spelled first (82 of 115). A top `if` plus
+//        do-while for the two return-0 epilogues measured worse (56).
 */
 extern "C" int __cdecl vox_read_colour_chunks(int fd, CvrStep *out, int size) {
     struct ChunkHeader {
@@ -2197,12 +2192,12 @@ extern "C" int __cdecl vox_read_colour_chunks(int fd, CvrStep *out, int size) {
         }
         switch (header.tag) {
         case 0x4040201:
-            if (out->lead_ == 0) {
-                if (vox_alloc_typed(payload, &out->shape_) != 0) {
+            if (out->lead_ != 0) {
+                if (vox_alloc_typed(out->lead_, &out->shape_) != 0) {
                     return -1;
                 }
             } else {
-                if (vox_alloc_typed(out->lead_, &out->shape_) != 0) {
+                if (vox_alloc_typed(payload, &out->shape_) != 0) {
                     return -1;
                 }
             }
@@ -2256,6 +2251,10 @@ Return Value: 0 when the walk consumed the block, -1 on any failure.
 //        everything after shifts (75 of 134 at /O2, first divergence at
 //        instruction 8). Same callee-save wall as vox_read_chunks and
 //        vox_read_colour_chunks. /c /O2 /Gy /GR- /GX.
+// LEVER: 0x4040303 is spelled before 0x4040302 so the matrices arm jumps
+//        into the vectors arm's shared read call, as the image does (98 of
+//        133). TRIED: `goto fail` for the read failures to keep the image's
+//        separate -1 and 0 epilogues unmerged - no change.
 */
 extern "C" int __cdecl vox_read_geometry_chunks(int fd, CvrPart *slots, int size,
                                                 int count) {
@@ -2283,19 +2282,19 @@ extern "C" int __cdecl vox_read_geometry_chunks(int fd, CvrPart *slots, int size
                 return -1;
             }
             break;
-        case 0x4040302:
-            if (vox_alloc_typed(count * sizeof(VOX_Vect), &slots->vectors_) != 0) {
-                return -1;
-            }
-            if (vox_read_exact(fd, slots->vectors_, count * sizeof(VOX_Vect)) != 0) {
-                return -1;
-            }
-            break;
         case 0x4040303:
             if (vox_alloc_typed(count * sizeof(VOX_Matrix), &slots->matrices_) != 0) {
                 return -1;
             }
             if (vox_read_exact(fd, slots->matrices_, count * sizeof(VOX_Matrix)) != 0) {
+                return -1;
+            }
+            break;
+        case 0x4040302:
+            if (vox_alloc_typed(count * sizeof(VOX_Vect), &slots->vectors_) != 0) {
+                return -1;
+            }
+            if (vox_read_exact(fd, slots->vectors_, count * sizeof(VOX_Vect)) != 0) {
                 return -1;
             }
             break;
@@ -5514,7 +5513,7 @@ int __cdecl vox_read_parts(int fd, CvrRecord *record, int size) {
         CvrChunkHeader header;
         if (vox_read_exact(fd, &header, sizeof(header)) != 0) return -1;
         remaining -= (uint32_t)header.length;
-        if ((remaining & 0x80000000u) != 0) {
+        if ((int32_t)remaining < 0) {
             vox_stage_error(vox_msg_bad_file_format);
             return -1;
         }
@@ -5571,7 +5570,7 @@ int __cdecl vox_read_part(int fd, CvrRecord *record, int index, int size) {
         CvrChunkHeader header;
         if (vox_read_exact(fd, &header, sizeof(header)) != 0) return -1;
         remaining -= (uint32_t)header.length;
-        if ((remaining & 0x80000000u) != 0) {
+        if ((int32_t)remaining < 0) {
             vox_stage_error(vox_msg_bad_file_format);
             return -1;
         }
@@ -5590,11 +5589,11 @@ int __cdecl vox_read_part(int fd, CvrRecord *record, int index, int size) {
                 memset(record->steps_, 0, bytes);
             }
             if (vox_read_colour_chunks(fd, &record->steps_[index], header.length) != 0) return -1;
-            if (record->steps_[index].lead_ == 0) {
+            if (record->steps_[index].lead_ != 0) {
+                record->flags_ |= 1u;
+            } else {
                 record->flags_ &= ~1u;
                 record->steps_[index].lead_ = record->steps_[index].shape_->byte_size_;
-            } else {
-                record->flags_ |= 1u;
             }
             break;
         case 0x04040300:
@@ -5627,7 +5626,7 @@ int __cdecl vox_read_shadow(int fd, CvrRecord *record, int index, int size) {
         CvrChunkHeader header;
         if (vox_read_exact(fd, &header, sizeof(header)) != 0) return -1;
         remaining -= (uint32_t)header.length;
-        if ((remaining & 0x80000000u) != 0) {
+        if ((int32_t)remaining < 0) {
             vox_stage_error(vox_msg_bad_file_format);
             return -1;
         }
@@ -5636,13 +5635,13 @@ int __cdecl vox_read_shadow(int fd, CvrRecord *record, int index, int size) {
         case 0x04040401:
             if (vox_read_exact(fd, entry, payload) != 0) return -1;
             break;
-        case 0x04040402:
-            if (vox_alloc_typed(payload, &entry->field_4_) != 0) return -1;
-            if (vox_read_exact(fd, entry->field_4_, payload) != 0) return -1;
-            break;
         case 0x04040403:
             if (vox_alloc_typed(payload, &entry->field_8_) != 0) return -1;
             if (vox_read_exact(fd, entry->field_8_, payload) != 0) return -1;
+            break;
+        case 0x04040402:
+            if (vox_alloc_typed(payload, &entry->field_4_) != 0) return -1;
+            if (vox_read_exact(fd, entry->field_4_, payload) != 0) return -1;
             break;
         default:
             if (vox_seek_slot((unsigned long)fd, payload, 1) < 0) {
@@ -5666,11 +5665,11 @@ int __cdecl vox_read_shape_patches(int fd, CvrRecord *record, int size) {
         CvrChunkHeader header;
         if (vox_read_exact(fd, &header, sizeof(header)) != 0) return -1;
         remaining -= (uint32_t)header.length;
-        if ((remaining & 0x80000000u) != 0) {
+        if ((int32_t)remaining < 0) {
             vox_stage_error(vox_msg_bad_file_format);
             return -1;
         }
-        int payload = vox_chunk_payload(header.length);
+        const int payload = vox_chunk_payload(header.length);
         switch (header.tag) {
         case 0x04050001:
             if (vox_read_exact(fd, &index, payload) != 0) return -1;
@@ -5679,18 +5678,18 @@ int __cdecl vox_read_shape_patches(int fd, CvrRecord *record, int size) {
             CvrShape *shape = record->steps_[index].shape_;
             // A 42-byte serialized prefix of a variable-size shape allocation,
             // not a declaration of a 42-byte complete object or array stride.
-            unsigned char prefix[0x2A];
-            if (vox_read_exact(fd, prefix, sizeof(prefix)) != 0) return -1;
-            uint32_t prefix_size;
-            memcpy(&prefix_size, prefix + sizeof(uint32_t), sizeof(prefix_size));
+            // Only the serialized prefix (offsets 0..0x29) is read into it.
+            CvrShape prefix;
+            const uint32_t prefix_bytes = offsetof(CvrShape, item_stream_);
+            if (vox_read_exact(fd, &prefix, prefix_bytes) != 0) return -1;
             uint32_t old_size = shape->byte_size_;
-            uint32_t new_size = prefix_size + old_size;
+            uint32_t new_size = prefix.byte_size_ + old_size;
             unsigned char *bytes = reinterpret_cast<unsigned char *>(shape);
             // The original CRT target copies backward when these ranges
             // overlap; the patch prefix need not exceed the old shape size.
-            memmove(bytes + prefix_size, bytes, old_size);
-            memcpy(bytes, prefix, sizeof(prefix));
-            if (vox_read_exact(fd, bytes + sizeof(prefix), (uint32_t)payload - sizeof(prefix)) != 0) return -1;
+            memmove(bytes + prefix.byte_size_, bytes, old_size);
+            memcpy(bytes, &prefix, prefix_bytes);
+            if (vox_read_exact(fd, bytes + prefix_bytes, (uint32_t)payload - prefix_bytes) != 0) return -1;
             shape->byte_size_ = new_size;
             break;
         }
@@ -6334,18 +6333,11 @@ int CaviarData::apply_palette(Palette *destination, int) {
     const int first = record->palette_[0];
     const int count = record->palette_[1] - first;
     RGBQUAD colours[256];
-    if (count > 0) {
-        RGBQUAD *output = colours;
-        int source_index = first * 3;
-        int remaining = count;
-        do {
-            output->rgbRed = record->palette_[source_index + 2];
-            output->rgbGreen = record->palette_[source_index + 3];
-            output->rgbBlue = record->palette_[source_index + 4];
-            // rgbReserved remains unwritten, as in the pinned original.
-            source_index += 3;
-            ++output;
-        } while (--remaining != 0);
+    for (int index = 0; index < count; ++index) {
+        colours[index].rgbRed = record->palette_[(first + index) * 3 + 2];
+        colours[index].rgbGreen = record->palette_[(first + index) * 3 + 3];
+        colours[index].rgbBlue = record->palette_[(first + index) * 3 + 4];
+        // rgbReserved remains unwritten, as in the pinned original.
     }
     return destination->set_rgbquad(colours, first, count);
 }

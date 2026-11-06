@@ -265,51 +265,51 @@ int TutWin::tut_map(const char *text, int x_coord, int y_coord, int pixel_x,
                     int arrow_y) {
     int arrow_pixel_x = -1;
     int arrow_pixel_y = -1;
-    const int original_y_coord = y_coord;
 
-    if (pixel_x < 0) {
-        if (sprite == 0) {
-            field_537C_ = x_coord;
-            field_5380_ = y_coord;
-        }
-    } else {
+    if (pixel_x >= 0) {
         field_53AC_ = pixel_x;
+    } else if (sprite == 0) {
+        field_537C_ = x_coord;
+        field_5380_ = y_coord;
     }
 
     MapWinTable[0]->focus(x_coord, y_coord);
-    MapWinTable[0]->tile_to_pixel(x_coord, original_y_coord, &y_coord, &pixel_x);
+    int screen_x;
+    int screen_y;
+    MapWinTable[0]->tile_to_pixel(x_coord, y_coord, &screen_x, &screen_y);
     MapWin *map_window = MapWinTable[0];
-    y_coord += map_window->field_1DDBC_;
-    pixel_x += map_window->field_1DDC0_;
+    screen_x += map_window->field_1DDBC_;
+    screen_y += map_window->field_1DDC0_;
 
-    if (arrow_x >= 0 &&
-        arrow_y >= map_window->field_1DDA8_ &&
-        arrow_y < map_window->field_1DDD8_ + map_window->field_1DDD0_ +
-                      map_window->field_1DDA8_) {
+    if (arrow_x >= 0) {
         int adjusted_arrow_x = arrow_x;
-        if ((MapIsFlat & 1) == 0) {
-            if (adjusted_arrow_x < map_window->field_1DDA4_) {
-                adjusted_arrow_x += MapLongitudeBounds;
+        if (arrow_y >= map_window->field_1DDA8_ &&
+            arrow_y < map_window->field_1DDD8_ + map_window->field_1DDD0_ +
+                          map_window->field_1DDA8_) {
+            if ((MapIsFlat & 1) == 0) {
+                if (adjusted_arrow_x < map_window->field_1DDA4_) {
+                    adjusted_arrow_x = MapLongitudeBounds + arrow_x;
+                }
+                if (adjusted_arrow_x >= map_window->field_1DDD4_ +
+                        map_window->field_1DDCC_ + map_window->field_1DDA4_) {
+                    adjusted_arrow_x -= MapLongitudeBounds;
+                }
             }
-            if (map_window->field_1DDD4_ + map_window->field_1DDCC_ +
-                    map_window->field_1DDA4_ <= adjusted_arrow_x) {
-                adjusted_arrow_x -= MapLongitudeBounds;
+            if (adjusted_arrow_x >= map_window->field_1DDA4_ &&
+                adjusted_arrow_x < map_window->field_1DDD4_ +
+                                      map_window->field_1DDCC_ +
+                                      map_window->field_1DDA4_) {
+                map_window->tile_to_pixel(arrow_x, arrow_y, &arrow_pixel_x,
+                                              &arrow_pixel_y);
+                map_window = MapWinTable[0];
+                arrow_pixel_x += map_window->field_1DDBC_;
+                arrow_pixel_y += map_window->field_1DDC0_;
             }
-        }
-        if (map_window->field_1DDA4_ <= adjusted_arrow_x &&
-            adjusted_arrow_x < map_window->field_1DDD4_ +
-                                  map_window->field_1DDCC_ +
-                                  map_window->field_1DDA4_) {
-            MapWinTable[0]->tile_to_pixel(arrow_x, arrow_y, &arrow_pixel_x,
-                                          &arrow_pixel_y);
-            map_window = MapWinTable[0];
-            arrow_pixel_x += map_window->field_1DDBC_;
-            arrow_pixel_y += map_window->field_1DDC0_;
         }
     }
 
     GraphicWin *const owner = static_cast<GraphicWin *>(map_window);
-    return tut_win(owner, text, y_coord, pixel_x, sprite,
+    return tut_win(owner, text, screen_x, screen_y, sprite,
                    forwarded_6, arrow_pixel_x, arrow_pixel_y);
 }
 
@@ -322,9 +322,7 @@ static int tut_callout(TutWin &tutorial, Win &coordinates, RECT &rect,
     int x = rect.left + (rect.right - rect.left) / 2;
     int y = rect.top + (rect.bottom - rect.top) / 2;
     coordinates.client_to_screen(&x, &y);
-    MapWin *const map = MapWinTable[0];
-    GraphicWin *const owner = map != 0 ? static_cast<GraphicWin *>(map) : 0;
-    return tutorial.tut_win(owner, label, x, y, 0, 2, -1, -1);
+    return tutorial.tut_win(MapWinTable[0], label, x, y, 0, 2, -1, -1);
 }
 
 static LPSTR tutorial_button_label(unsigned int byte_offset) {
@@ -1228,10 +1226,7 @@ tour7_cleanup:
 // RECOVERY_BINDING: v1 {"evidence": ["seed:src/recovered/units/004bb380.cpp", "image:0x004bb380; original call/rectangle/lifetime review"], "reason": "Restore the original ownership-group implementation through real tutorial/editor windows, declared members and normal C++ lifecycle; retained seed extents include the associated exception cleanup where present."}
 void TutWin::tour5() {
     const int was_visible = TutWinSocWindow.is_visible();
-    int x;
-    int y;
     int i;
-    RECT *rect;
 
     if (!was_visible) {
         TutWinSocWindow.init(-ConsoleGlobal.faction_id_);
@@ -1239,47 +1234,87 @@ void TutWin::tour5() {
     }
 
 
-    soc_rect(&TutWinSocWindow.categoryHeaders_[1], &x, &y);
-    if (tut_win(MapWinTable[0],
-    "SOCTOURMAIN", x, y, 0, 2, -1, -1) == 0) goto tour5_cleanup;
-    soc_rect(&TutWinSocWindow.tooltipFactionPower_, &x, &y);
-    if (tut_win(MapWinTable[0],
-    "SOCTOURFACTION", x, y, 0, 2, -1, -1) == 0) goto tour5_cleanup;
-    iface_rect(&TutWinSocWindow.tooltipEffects_, &x, &y);
-    if (tut_win(MapWinTable[0],
-    "SOCTOUROVERVIEW", x, y, 0, 2, -1, -1) == 0) goto tour5_cleanup;
-    soc_rect(&TutWinSocWindow.tutRect1_, &x, &y);
-    if (tut_win(MapWinTable[0],
-    "SOCTOUREFFECTS", x, y, 0, 2, -1, -1) == 0) goto tour5_cleanup;
-    rect = TutWinSocWindow.tutRects2_;
+    {
+        int x;
+        int y;
+        soc_rect(&TutWinSocWindow.categoryHeaders_[1], &x, &y);
+        if (tut_win(MapWinTable[0],
+        "SOCTOURMAIN", x, y, 0, 2, -1, -1) == 0) goto tour5_cleanup;
+    }
+    {
+        int x;
+        int y;
+        soc_rect(&TutWinSocWindow.tooltipFactionPower_, &x, &y);
+        if (tut_win(MapWinTable[0],
+        "SOCTOURFACTION", x, y, 0, 2, -1, -1) == 0) goto tour5_cleanup;
+    }
+    {
+        int x;
+        int y;
+        iface_rect(&TutWinSocWindow.tooltipEffects_, &x, &y);
+        if (tut_win(MapWinTable[0],
+        "SOCTOUROVERVIEW", x, y, 0, 2, -1, -1) == 0) goto tour5_cleanup;
+    }
+    {
+        int x;
+        int y;
+        soc_rect(&TutWinSocWindow.tutRect1_, &x, &y);
+        if (tut_win(MapWinTable[0],
+        "SOCTOUREFFECTS", x, y, 0, 2, -1, -1) == 0) goto tour5_cleanup;
+    }
     for (i = 0; i < 10; ++i) {
         StringTemp[0] = 0;
         strcat(StringTemp, "SOCTOUR");
         say_num(i);
-        soc_rect(rect, &x, &y);
+        int x;
+        int y;
+        soc_rect(&TutWinSocWindow.tutRects2_[i], &x, &y);
         if (tut_win(MapWinTable[0],
                     StringTemp, x, y, 0, 2, -1, -1) == 0) goto tour5_cleanup;
-        ++rect;
     }
 
-    iface_rect(&TutWinSocWindow.tooltipEconomy_, &x, &y);
-    if (tut_win(MapWinTable[0],
-    "SOCTOURECON", x, y, 0, 2, -1, -1) == 0) goto tour5_cleanup;
-    iface_rect(&TutWinSocWindow.tooltipPsych_, &x, &y);
-    if (tut_win(MapWinTable[0],
-    "SOCTOURPSYCH", x, y, 0, 2, -1, -1) == 0) goto tour5_cleanup;
-    iface_rect(&TutWinSocWindow.tooltipLabs_, &x, &y);
-    if (tut_win(MapWinTable[0],
-    "SOCTOURLABS", x, y, 0, 2, -1, -1) == 0) goto tour5_cleanup;
-    iface_rect(&TutWinSocWindow.tutRect14_, &x, &y);
-    if (tut_win(MapWinTable[0],
-    "SOCTOURINFO", x, y, 0, 2, -1, -1) == 0) goto tour5_cleanup;
-    soc_rect(&TutWinSocWindow.tutRect11_, &x, &y);
-    if (tut_win(MapWinTable[0],
-    "SOCTOURCANCEL", x, y, 0, 2, -1, -1) == 0) goto tour5_cleanup;
-    soc_rect(&TutWinSocWindow.tutRect12_, &x, &y);
-    if (tut_win(MapWinTable[0],
-    "SOCTOURRESET", x, y, 0, 2, -1, -1) == 0) goto tour5_cleanup;
+    {
+        int x;
+        int y;
+        iface_rect(&TutWinSocWindow.tooltipEconomy_, &x, &y);
+        if (tut_win(MapWinTable[0],
+        "SOCTOURECON", x, y, 0, 2, -1, -1) == 0) goto tour5_cleanup;
+    }
+    {
+        int x;
+        int y;
+        iface_rect(&TutWinSocWindow.tooltipPsych_, &x, &y);
+        if (tut_win(MapWinTable[0],
+        "SOCTOURPSYCH", x, y, 0, 2, -1, -1) == 0) goto tour5_cleanup;
+    }
+    {
+        int x;
+        int y;
+        iface_rect(&TutWinSocWindow.tooltipLabs_, &x, &y);
+        if (tut_win(MapWinTable[0],
+        "SOCTOURLABS", x, y, 0, 2, -1, -1) == 0) goto tour5_cleanup;
+    }
+    {
+        int x;
+        int y;
+        iface_rect(&TutWinSocWindow.tutRect14_, &x, &y);
+        if (tut_win(MapWinTable[0],
+        "SOCTOURINFO", x, y, 0, 2, -1, -1) == 0) goto tour5_cleanup;
+    }
+    {
+        int x;
+        int y;
+        soc_rect(&TutWinSocWindow.tutRect11_, &x, &y);
+        if (tut_win(MapWinTable[0],
+        "SOCTOURCANCEL", x, y, 0, 2, -1, -1) == 0) goto tour5_cleanup;
+    }
+    {
+        int x;
+        int y;
+        soc_rect(&TutWinSocWindow.tutRect12_, &x, &y);
+        if (tut_win(MapWinTable[0],
+        "SOCTOURRESET", x, y, 0, 2, -1, -1) == 0) goto tour5_cleanup;
+    }
     do_soc(&TutWinSocWindow.tutRect13_, "SOCTOUROK", 2);
 
 tour5_cleanup:
@@ -1308,37 +1343,31 @@ void TutWin::tour6() {
     parse_says(0, BaseCurrent->name_string, -1, -1);
     int x;
     int y;
-    RECT temporary = TutWinBaseWindow.population_rect_;
-    x = temporary.left + 5;
-    y = temporary.top + (temporary.bottom - temporary.top) / 2;
+    // DRONETOUR1/5 pass the unconverted client left edge + 5 as x.
+    x = TutWinBaseWindow.population_rect_.left + (TutWinBaseWindow.population_rect_.right - TutWinBaseWindow.population_rect_.left) / 2;
+    y = TutWinBaseWindow.population_rect_.top + (TutWinBaseWindow.population_rect_.bottom - TutWinBaseWindow.population_rect_.top) / 2;
     MainInterfaceGlobal.client_to_screen(&x, &y);
-    if (!tut_win(MapWinTable[0],
-                 "DRONETOUR1", x, y, 0, 2, -1, -1)) return;
-    temporary = TutWinBaseWindow.garrison_rect_;
-    if (!tut_callout(*this, MainInterfaceGlobal, temporary, "DRONETOUR2")) return;
-    temporary = TutWinBaseWindow.rect12_;
-    if (!tut_callout(*this, MainInterfaceGlobal, temporary, "DRONETOUR3")) return;
-    temporary = TutWinBaseWindow.flash_rect_a_;
-    if (!tut_callout(*this, TutWinBaseWindow, temporary, "DRONETOUR4")) return;
-    temporary = TutWinBaseWindow.population_rect_;
-    x = temporary.left + 5;
-    y = temporary.top + (temporary.bottom - temporary.top) / 2;
+    if (!tut_win(MapWinTable[0], "DRONETOUR1", TutWinBaseWindow.population_rect_.left + 5, y, 0, 2, -1, -1)) return;
+    if (!tut_callout(*this, MainInterfaceGlobal, TutWinBaseWindow.garrison_rect_, "DRONETOUR2")) return;
+    if (!tut_callout(*this, MainInterfaceGlobal, TutWinBaseWindow.rect12_, "DRONETOUR3")) return;
+    if (!tut_callout(*this, MainInterfaceGlobal, TutWinBaseWindow.flash_rect_a_, "DRONETOUR4")) return;
+    x = TutWinBaseWindow.population_rect_.left + (TutWinBaseWindow.population_rect_.right - TutWinBaseWindow.population_rect_.left) / 2;
+    y = TutWinBaseWindow.population_rect_.top + (TutWinBaseWindow.population_rect_.bottom - TutWinBaseWindow.population_rect_.top) / 2;
     MainInterfaceGlobal.client_to_screen(&x, &y);
-    if (!tut_win(MapWinTable[0],
-                 "DRONETOUR5", x, y, 0, 2, -1, -1)) return;
+    if (!tut_win(MapWinTable[0], "DRONETOUR5", TutWinBaseWindow.population_rect_.left + 5, y, 0, 2, -1, -1)) return;
 
     TutWinBaseWindow.draw_energy_alloc(2);
     if (!TutWinBaseWindow.flatButtons_[17].is_visible()) {
-        temporary = TutWinBaseWindow.expenses_help_rects_[5];
-        if (!tut_callout(*this, TutWinBaseWindow, temporary, "DRONETOUR6")) return;
+        x = TutWinBaseWindow.expenses_help_rects_[5].left + (TutWinBaseWindow.expenses_help_rects_[5].right - TutWinBaseWindow.expenses_help_rects_[5].left) / 2;
+        y = TutWinBaseWindow.expenses_help_rects_[5].top + (TutWinBaseWindow.expenses_help_rects_[5].bottom - TutWinBaseWindow.expenses_help_rects_[5].top) / 2;
+        TutWinBaseWindow.client_to_screen(&x, &y);
+        if (!tut_win(MapWinTable[0], "DRONETOUR6", x, y, 0, 2, -1, -1)) return;
     } else {
-        temporary = TutWinBaseWindow.rect13_;
-        if (!tut_callout(*this, TutWinBaseWindow, temporary, "DRONETOUR6")) return;
+        if (!tut_callout(*this, TutWinBaseWindow, TutWinBaseWindow.rect13_, "DRONETOUR6")) return;
     }
     TutWinBaseWindow.draw_expenses(1);
     TutWinBaseWindow.draw_farm(2);
-    temporary = TutWinBaseWindow.rect11_;
-    if (tut_callout(*this, TutWinBaseWindow, temporary, "DRONETOUR6")) {
+    if (tut_callout(*this, TutWinBaseWindow, TutWinBaseWindow.rect11_, "TOUR1PSYCHBUTTON")) {
         TutWinBaseWindow.draw_farm(1);
     }
 }
@@ -1366,134 +1395,167 @@ void TutWin::tour1() {
 
     int x;
     int y;
-    RECT rect;
 
-    rect = TutWinBaseWindow.rect8_;
-    x = rect.left + (rect.right - rect.left) / 2;
-    y = rect.top + (rect.bottom - rect.top) / 2;
-    TutWinBaseWindow.client_to_screen(&x, &y);
-    if (tut_win(MapWinTable[0], "TOUR1GOVERNOR", x, y, 0, 2, -1, -1) == 0) return;
-    rect = TutWinBaseWindow.rect14_;
-    x = rect.left + (rect.right - rect.left) / 2;
-    y = rect.top + (rect.bottom - rect.top) / 2;
-    TutWinBaseWindow.client_to_screen(&x, &y);
-    if (tut_win(MapWinTable[0], "TOUR1EXPLORE", x, y, 0, 2, -1, -1) == 0) return;
-    rect = TutWinBaseWindow.rect15_;
-    x = rect.left + (rect.right - rect.left) / 2;
-    y = rect.top + (rect.bottom - rect.top) / 2;
-    TutWinBaseWindow.client_to_screen(&x, &y);
-    if (tut_win(MapWinTable[0], "TOUR1DISCOVER", x, y, 0, 2, -1, -1) == 0) return;
-    rect = TutWinBaseWindow.rect18_;
-    x = rect.left + (rect.right - rect.left) / 2;
-    y = rect.top + (rect.bottom - rect.top) / 2;
-    TutWinBaseWindow.client_to_screen(&x, &y);
-    if (tut_win(MapWinTable[0], "TOUR1BUILD", x, y, 0, 2, -1, -1) == 0) return;
-    rect = TutWinBaseWindow.rect19_;
-    x = rect.left + (rect.right - rect.left) / 2;
-    y = rect.top + (rect.bottom - rect.top) / 2;
-    TutWinBaseWindow.client_to_screen(&x, &y);
-    if (tut_win(MapWinTable[0], "TOUR1CONQUER", x, y, 0, 2, -1, -1) == 0) return;
-    rect = TutWinBaseWindow.rect8_;
-    x = rect.left + (rect.right - rect.left) / 2;
-    y = rect.top + (rect.bottom - rect.top) / 2;
-    TutWinBaseWindow.client_to_screen(&x, &y);
-    if (tut_win(MapWinTable[0], "TOUR1GOVERNOR2", x, y, 0, 2, -1, -1) == 0) return;
-    rect = TutWinBaseWindow.rect16_;
-    x = rect.left + (rect.right - rect.left) / 2;
-    y = rect.top + (rect.bottom - rect.top) / 2;
-    TutWinBaseWindow.client_to_screen(&x, &y);
-    if (tut_win(MapWinTable[0], "TOUR1ADVANCED", x, y, 0, 2, -1, -1) == 0) return;
+    if (!tut_callout(*this, TutWinBaseWindow, TutWinBaseWindow.rect8_, "TOUR1GOVERNOR")) return;
+    if (!tut_callout(*this, TutWinBaseWindow, TutWinBaseWindow.rect14_, "TOUR1EXPLORE")) return;
+    if (!tut_callout(*this, TutWinBaseWindow, TutWinBaseWindow.rect15_, "TOUR1DISCOVER")) return;
+    if (!tut_callout(*this, TutWinBaseWindow, TutWinBaseWindow.rect18_, "TOUR1BUILD")) return;
+    if (!tut_callout(*this, TutWinBaseWindow, TutWinBaseWindow.rect19_, "TOUR1CONQUER")) return;
+    if (!tut_callout(*this, TutWinBaseWindow, TutWinBaseWindow.rect8_, "TOUR1GOVERNOR2")) return;
+    if (!tut_callout(*this, TutWinBaseWindow, TutWinBaseWindow.rect16_, "TOUR1ADVANCED")) return;
 
-    iface_rect(&TutWinBaseWindow.info_title_rect_, &x, &y);
-    if (tut_win(MapWinTable[0], "TOUR1CAPTION", x, y, 0, 2, -1, -1) == 0) return;
-    base_rect(&TutWinBaseWindow.rect5_, &x, &y);
-    if (tut_win(MapWinTable[0], "TOUR1ECO", x, y, 0, 2, -1, -1) == 0) return;
+    {
+        int x;
+        int y;
+        iface_rect(&TutWinBaseWindow.info_title_rect_, &x, &y);
+        if (tut_win(MapWinTable[0], "TOUR1CAPTION", x, y, 0, 2, -1, -1) == 0) return;
+    }
+    {
+        int x;
+        int y;
+        base_rect(&TutWinBaseWindow.rect5_, &x, &y);
+        if (tut_win(MapWinTable[0], "TOUR1ECO", x, y, 0, 2, -1, -1) == 0) return;
+    }
 
-    rect = TutWinBaseWindow.population_rect_;
-    x = rect.left + (rect.right - rect.left) / 2;
-    y = rect.top + (rect.bottom - rect.top) / 2;
-    TutWinBaseWindow.client_to_screen(&x, &y);
+    x = TutWinBaseWindow.population_rect_.left +
+        (TutWinBaseWindow.population_rect_.right - TutWinBaseWindow.population_rect_.left) / 2;
+    y = TutWinBaseWindow.population_rect_.top +
+        (TutWinBaseWindow.population_rect_.bottom - TutWinBaseWindow.population_rect_.top) / 2;
+    MainInterfaceGlobal.client_to_screen(&x, &y);
     if (tut_win(MapWinTable[0], "TOUR1POP", x, y, 0, 2, -1, -1) == 0) return;
     if (tut_win(MapWinTable[0], "TOUR1POP2", x, y, 0, 2, -1, -1) == 0) return;
 
-    iface_rect(&TutWinBaseWindow.rect12_, &x, &y);
-    if (tut_win(MapWinTable[0], "TOUR1STAPLE", x, y, 0, 2, -1, -1) == 0) return;
-    iface_rect(&TutWinBaseWindow.queue_help_rect_, &x, &y);
-    if (tut_win(MapWinTable[0], "TOUR1PRODUCTION", x, y, 0, 2, -1, -1) == 0) return;
-    iface_rect(&TutWinBaseWindow.queue_content_rect_, &x, &y);
-    if (tut_win(MapWinTable[0], "TOUR1QUEUE", x, y, 0, 2, -1, -1) == 0) return;
-    iface_rect(&TutWinBaseWindow.flash_rect_a_, &x, &y);
-    if (tut_win(MapWinTable[0], "TOUR1CHANGE", x, y, 0, 2, -1, -1) == 0) return;
-    iface_rect(&TutWinBaseWindow.flash_rect_b_, &x, &y);
-    if (tut_win(MapWinTable[0], "TOUR1HURRY", x, y, 0, 2, -1, -1) == 0) return;
-    iface_rect(&TutWinBaseWindow.garrison_rect_, &x, &y);
-    if (tut_win(MapWinTable[0], "TOUR1GARRISON", x, y, 0, 2, -1, -1) == 0) return;
-    iface_rect(&TutWinBaseWindow.supported_content_rect_, &x, &y);
-    if (tut_win(MapWinTable[0], "TOUR1SUPPORTED", x, y, 0, 2, -1, -1) == 0) return;
-    base_rect(&TutWinBaseWindow.rect2_, &x, &y);
-    if (tut_win(MapWinTable[0], "TOUR1FACILITIES", x, y, 0, 2, -1, -1) == 0) return;
-    base_rect(&TutWinBaseWindow.commerce_report_rect_, &x, &y);
-    if (tut_win(MapWinTable[0], "TOUR1COMMERCE", x, y, 0, 2, -1, -1) == 0) return;
-    base_rect(&TutWinBaseWindow.nutrient_content_rect_, &x, &y);
-    if (tut_win(MapWinTable[0], "TOUR1NUTRIENTS", x, y, 0, 2, -1, -1) == 0) return;
+    {
+        int x;
+        int y;
+        iface_rect(&TutWinBaseWindow.rect12_, &x, &y);
+        if (tut_win(MapWinTable[0], "TOUR1STAPLE", x, y, 0, 2, -1, -1) == 0) return;
+    }
+    {
+        int x;
+        int y;
+        iface_rect(&TutWinBaseWindow.queue_help_rect_, &x, &y);
+        if (tut_win(MapWinTable[0], "TOUR1PRODUCTION", x, y, 0, 2, -1, -1) == 0) return;
+    }
+    {
+        int x;
+        int y;
+        iface_rect(&TutWinBaseWindow.queue_content_rect_, &x, &y);
+        if (tut_win(MapWinTable[0], "TOUR1QUEUE", x, y, 0, 2, -1, -1) == 0) return;
+    }
+    {
+        int x;
+        int y;
+        iface_rect(&TutWinBaseWindow.flash_rect_a_, &x, &y);
+        if (tut_win(MapWinTable[0], "TOUR1CHANGE", x, y, 0, 2, -1, -1) == 0) return;
+    }
+    {
+        int x;
+        int y;
+        iface_rect(&TutWinBaseWindow.flash_rect_b_, &x, &y);
+        if (tut_win(MapWinTable[0], "TOUR1HURRY", x, y, 0, 2, -1, -1) == 0) return;
+    }
+    {
+        int x;
+        int y;
+        iface_rect(&TutWinBaseWindow.garrison_rect_, &x, &y);
+        if (tut_win(MapWinTable[0], "TOUR1GARRISON", x, y, 0, 2, -1, -1) == 0) return;
+    }
+    {
+        int x;
+        int y;
+        iface_rect(&TutWinBaseWindow.supported_content_rect_, &x, &y);
+        if (tut_win(MapWinTable[0], "TOUR1SUPPORTED", x, y, 0, 2, -1, -1) == 0) return;
+    }
+    {
+        int x;
+        int y;
+        base_rect(&TutWinBaseWindow.rect2_, &x, &y);
+        if (tut_win(MapWinTable[0], "TOUR1FACILITIES", x, y, 0, 2, -1, -1) == 0) return;
+    }
+    {
+        int x;
+        int y;
+        base_rect(&TutWinBaseWindow.commerce_report_rect_, &x, &y);
+        if (tut_win(MapWinTable[0], "TOUR1COMMERCE", x, y, 0, 2, -1, -1) == 0) return;
+    }
+    {
+        int x;
+        int y;
+        base_rect(&TutWinBaseWindow.nutrient_content_rect_, &x, &y);
+        if (tut_win(MapWinTable[0], "TOUR1NUTRIENTS", x, y, 0, 2, -1, -1) == 0) return;
+    }
 
-    base_rect(&TutWinBaseWindow.rect1_, &x, &y);
-    if (tut_win(MapWinTable[0], "TOUR1AREA", x, y, 0, 2, -1, -1) == 0) return;
+    {
+        int x;
+        int y;
+        base_rect(&TutWinBaseWindow.rect1_, &x, &y);
+        if (tut_win(MapWinTable[0], "TOUR1AREA", x, y, 0, 2, -1, -1) == 0) return;
+    }
     TutWinBaseWindow.draw_expenses(2);
-    parse_num(0, static_cast<int>(Rules.nutrient_req_citizen));
-    rect = TutWinBaseWindow.expenses_help_rects_[1];
-    x = rect.left + (rect.right - rect.left) / 2;
-    y = rect.top + (rect.bottom - rect.top) / 2;
+    x = TutWinBaseWindow.expenses_help_rects_[1].left + (TutWinBaseWindow.expenses_help_rects_[1].right - TutWinBaseWindow.expenses_help_rects_[1].left) / 2;
+    y = TutWinBaseWindow.expenses_help_rects_[1].top + (TutWinBaseWindow.expenses_help_rects_[1].bottom - TutWinBaseWindow.expenses_help_rects_[1].top) / 2;
     TutWinBaseWindow.client_to_screen(&x, &y);
+    parse_num(0, static_cast<int>(Rules.nutrient_req_citizen));
     if (tut_win(MapWinTable[0], "TOUR1NUT", x, y, 0, 2, -1, -1) == 0) return;
-    rect = TutWinBaseWindow.expenses_help_rects_[2];
-    x = rect.left + (rect.right - rect.left) / 2;
-    y = rect.top + (rect.bottom - rect.top) / 2;
+    x = TutWinBaseWindow.expenses_help_rects_[2].left + (TutWinBaseWindow.expenses_help_rects_[2].right - TutWinBaseWindow.expenses_help_rects_[2].left) / 2;
+    y = TutWinBaseWindow.expenses_help_rects_[2].top + (TutWinBaseWindow.expenses_help_rects_[2].bottom - TutWinBaseWindow.expenses_help_rects_[2].top) / 2;
     TutWinBaseWindow.client_to_screen(&x, &y);
     if (tut_win(MapWinTable[0], "TOUR1MIN", x, y, 0, 2, -1, -1) == 0) return;
 
-    rect = TutWinBaseWindow.expenses_help_rects_[0];
-    x = rect.left + (rect.right - rect.left) / 2;
-    y = rect.top + (rect.bottom - rect.top) / 2;
+    x = TutWinBaseWindow.expenses_help_rects_[0].left + (TutWinBaseWindow.expenses_help_rects_[0].right - TutWinBaseWindow.expenses_help_rects_[0].left) / 2;
+    y = TutWinBaseWindow.expenses_help_rects_[0].top + (TutWinBaseWindow.expenses_help_rects_[0].bottom - TutWinBaseWindow.expenses_help_rects_[0].top) / 2;
     TutWinBaseWindow.client_to_screen(&x, &y);
     if (tut_win(MapWinTable[0], "TOUR1ENERGY", x, y, 0, 2, -1, -1) == 0) return;
     TutWinBaseWindow.draw_energy_alloc(2);
 
-    if (TutWinBaseWindow.flatButtons_[17].is_visible()) {
-        base_rect(&TutWinBaseWindow.rect13_, &x, &y);
-        if (tut_win(MapWinTable[0], "TOUR1ALLOC2", x, y, 0, 2, -1, -1) == 0) return;
-    } else {
-        rect = TutWinBaseWindow.expenses_help_rects_[5];
-        x = rect.left + (rect.right - rect.left) / 2;
-        y = rect.top + (rect.bottom - rect.top) / 2;
+    if (!TutWinBaseWindow.flatButtons_[17].is_visible()) {
+        x = TutWinBaseWindow.expenses_help_rects_[5].left + (TutWinBaseWindow.expenses_help_rects_[5].right - TutWinBaseWindow.expenses_help_rects_[5].left) / 2;
+        y = TutWinBaseWindow.expenses_help_rects_[5].top + (TutWinBaseWindow.expenses_help_rects_[5].bottom - TutWinBaseWindow.expenses_help_rects_[5].top) / 2;
         TutWinBaseWindow.client_to_screen(&x, &y);
         if (tut_win(MapWinTable[0], "TOUR1ALLOC", x, y, 0, 2, -1, -1) == 0) return;
+    } else {
+        {
+            int x;
+            int y;
+            base_rect(&TutWinBaseWindow.rect13_, &x, &y);
+            if (tut_win(MapWinTable[0], "TOUR1ALLOC2", x, y, 0, 2, -1, -1) == 0) return;
+        }
     }
-    rect = TutWinBaseWindow.expenses_help_rects_[5];
-    x = rect.left + (rect.right - rect.left) / 2;
-    y = rect.top + (rect.bottom - rect.top) / 2;
+    x = TutWinBaseWindow.expenses_help_rects_[5].left + (TutWinBaseWindow.expenses_help_rects_[5].right - TutWinBaseWindow.expenses_help_rects_[5].left) / 2;
+    y = TutWinBaseWindow.expenses_help_rects_[5].top + (TutWinBaseWindow.expenses_help_rects_[5].bottom - TutWinBaseWindow.expenses_help_rects_[5].top) / 2;
     TutWinBaseWindow.client_to_screen(&x, &y);
     if (tut_win(MapWinTable[0], "TOUR1ECON", x, y, 0, 2, -1, -1) == 0) return;
-    rect = TutWinBaseWindow.expenses_help_rects_[3];
-    x = rect.left + (rect.right - rect.left) / 2;
-    y = rect.top + (rect.bottom - rect.top) / 2;
+    x = TutWinBaseWindow.expenses_help_rects_[3].left + (TutWinBaseWindow.expenses_help_rects_[3].right - TutWinBaseWindow.expenses_help_rects_[3].left) / 2;
+    y = TutWinBaseWindow.expenses_help_rects_[3].top + (TutWinBaseWindow.expenses_help_rects_[3].bottom - TutWinBaseWindow.expenses_help_rects_[3].top) / 2;
     TutWinBaseWindow.client_to_screen(&x, &y);
     if (tut_win(MapWinTable[0], "TOUR1PSYCH", x, y, 0, 2, -1, -1) == 0) return;
-    rect = TutWinBaseWindow.expenses_help_rects_[4];
-    x = rect.left + (rect.right - rect.left) / 2;
-    y = rect.top + (rect.bottom - rect.top) / 2;
+    x = TutWinBaseWindow.expenses_help_rects_[4].left + (TutWinBaseWindow.expenses_help_rects_[4].right - TutWinBaseWindow.expenses_help_rects_[4].left) / 2;
+    y = TutWinBaseWindow.expenses_help_rects_[4].top + (TutWinBaseWindow.expenses_help_rects_[4].bottom - TutWinBaseWindow.expenses_help_rects_[4].top) / 2;
     TutWinBaseWindow.client_to_screen(&x, &y);
     if (tut_win(MapWinTable[0], "TOUR1LABS", x, y, 0, 2, -1, -1) == 0) return;
     TutWinBaseWindow.draw_expenses(1);
     TutWinBaseWindow.draw_farm(3);
-    base_rect(&TutWinBaseWindow.rect9_, &x, &y);
-    if (tut_win(MapWinTable[0], "TOUR1SUPPORTBUTTON", x, y, 0, 2, -1, -1) == 0) return;
+    {
+        int x;
+        int y;
+        base_rect(&TutWinBaseWindow.rect9_, &x, &y);
+        if (tut_win(MapWinTable[0], "TOUR1SUPPORTBUTTON", x, y, 0, 2, -1, -1) == 0) return;
+    }
     TutWinBaseWindow.draw_farm(2);
-    base_rect(&TutWinBaseWindow.rect11_, &x, &y);
-    if (tut_win(MapWinTable[0], "TOUR1PSYCHBUTTON", x, y, 0, 2, -1, -1) == 0) return;
+    {
+        int x;
+        int y;
+        base_rect(&TutWinBaseWindow.rect11_, &x, &y);
+        if (tut_win(MapWinTable[0], "TOUR1PSYCHBUTTON", x, y, 0, 2, -1, -1) == 0) return;
+    }
     TutWinBaseWindow.draw_farm(4);
-    base_rect(&TutWinBaseWindow.rect10_, &x, &y);
-    if (tut_win(MapWinTable[0], "TOUR1RESOURCEBUTTON", x, y, 0, 2, -1, -1) == 0) return;
+    {
+        int x;
+        int y;
+        base_rect(&TutWinBaseWindow.rect10_, &x, &y);
+        if (tut_win(MapWinTable[0], "TOUR1RESOURCEBUTTON", x, y, 0, 2, -1, -1) == 0) return;
+    }
 
     if (do_iface(&TutWinBaseWindow.previous_button_rect_, "TOUR1PREV", 2) == 0) return;
     if (do_iface(&TutWinBaseWindow.next_button_rect_, "TOUR1NEXT", 2) == 0) return;
@@ -1900,7 +1962,6 @@ void TutWin::des_rect(RECT *rect, int *x, int *y) {
             static_cast<uint32_t>(rect->bottom) - static_cast<uint32_t>(rect->top)) / 2));
     TutWinDesWindow.client_to_screen(x, y);
 }
-#pragma auto_inline(on)
 
 
 
@@ -1944,15 +2005,7 @@ int TutWin::do_base(RECT *rect, const char *text, int flag) {
         static_cast<uint32_t>(static_cast<int32_t>(
             static_cast<uint32_t>(rect->bottom) - static_cast<uint32_t>(rect->top)) / 2));
     TutWinBaseWindow.client_to_screen(&x, &y);
-
-    MapWin *const primary = MapWinTable[0];
-    GraphicWin *window;
-    if (primary == nullptr) {
-        window = nullptr;
-    } else {
-        window = &static_cast<GraphicWin &>(*primary);
-    }
-    return this->tut_win(window, text, x, y, nullptr, flag, -1, -1);
+    return this->tut_win(MapWinTable[0], text, x, y, nullptr, flag, -1, -1);
 }
 
 
@@ -1988,15 +2041,7 @@ int TutWin::do_iface(RECT *rect, const char *text, int flag) {
         static_cast<uint32_t>(static_cast<int32_t>(
             static_cast<uint32_t>(rect->bottom) - static_cast<uint32_t>(rect->top)) / 2));
     MainInterfaceGlobal.client_to_screen(&x, &y);
-
-    MapWin *const primary = MapWinTable[0];
-    GraphicWin *window;
-    if (primary == nullptr) {
-        window = nullptr;
-    } else {
-        window = &static_cast<GraphicWin &>(*primary);
-    }
-    return this->tut_win(window, text, x, y, nullptr, flag, -1, -1);
+    return this->tut_win(MapWinTable[0], text, x, y, nullptr, flag, -1, -1);
 }
 
 
@@ -2032,15 +2077,7 @@ int TutWin::do_soc(RECT *rect, const char *text, int flag) {
         static_cast<uint32_t>(static_cast<int32_t>(
             static_cast<uint32_t>(rect->bottom) - static_cast<uint32_t>(rect->top)) / 2));
     TutWinSocWindow.client_to_screen(&x, &y);
-
-    MapWin *const primary = MapWinTable[0];
-    GraphicWin *window;
-    if (primary == nullptr) {
-        window = nullptr;
-    } else {
-        window = &static_cast<GraphicWin &>(*primary);
-    }
-    return this->tut_win(window, text, x, y, nullptr, flag, -1, -1);
+    return this->tut_win(MapWinTable[0], text, x, y, nullptr, flag, -1, -1);
 }
 
 
@@ -2076,13 +2113,6 @@ int TutWin::do_des(RECT *rect, const char *text, int flag) {
         static_cast<uint32_t>(static_cast<int32_t>(
             static_cast<uint32_t>(rect->bottom) - static_cast<uint32_t>(rect->top)) / 2));
     TutWinDesWindow.client_to_screen(&x, &y);
-
-    MapWin *const primary = MapWinTable[0];
-    GraphicWin *window;
-    if (primary == nullptr) {
-        window = nullptr;
-    } else {
-        window = &static_cast<GraphicWin &>(*primary);
-    }
-    return this->tut_win(window, text, x, y, nullptr, flag, -1, -1);
+    return this->tut_win(MapWinTable[0], text, x, y, nullptr, flag, -1, -1);
 }
+#pragma auto_inline(on)

@@ -501,7 +501,9 @@ void SelectPartWin::on_mouse_move(int x, int y) {
         int next = (y - 4) / 94 * field_2B6C_ + (x - 4) / 108 + field_2B60_;
         const int previous = field_2B80_;
         if (next == previous) return;
-        if (next < field_2B74_) {
+        if (next >= field_2B74_) {
+            if (previous >= 0) draw_part(previous, 0);
+        } else {
             field_4648_ = draw_part(next, 1);
             if (field_2B80_ >= 0) {
                 draw_part(field_2B80_, 0);
@@ -510,7 +512,6 @@ void SelectPartWin::on_mouse_move(int x, int y) {
             on_update();
             return;
         }
-        if (previous >= 0) draw_part(previous, 0);
     } else {
         if (field_2B80_ >= 0) draw_part(field_2B80_, 0);
     }
@@ -532,14 +533,15 @@ void SelectPartWin::on_left_up(int x, int y) {
             on_lose_mouse_capture();
         }
         if (WinPointerOwner4 == this) WinPointerOwner4 = 0;
-    } else {
-        field_2B80_ = -1;
-        if (WinPointerOwner3 == this) {
-            WinPointerOwner3 = 0;
-            on_lose_mouse_capture();
-        }
-        if (WinPointerOwner4 == this) WinPointerOwner4 = 0;
+        release_modal();
+        return;
     }
+    field_2B80_ = -1;
+    if (WinPointerOwner3 == this) {
+        WinPointerOwner3 = 0;
+        on_lose_mouse_capture();
+    }
+    if (WinPointerOwner4 == this) WinPointerOwner4 = 0;
     release_modal();
 }
 
@@ -1744,24 +1746,23 @@ void DesignWin::on_right_click(int x, int y) {
 // RECOVERY_BINDING: v1 {"evidence": ["git:3f6ab06bdf3b791aa23454e19f71b4e8b5935caf:src/recovered/units/004379a0.cpp;InterfaceBoxStyles source ownership in src/game.cpp;MainInterface primary_font and working rectangle"], "reason": "Restore the design frame and caption through real screen and embedded Buffer objects, redraw all editor panels, and frame the union of the lower panels."}
 // symbol    ?on_redraw@DesignWin@@UAEXXZ
 void DesignWin::on_redraw() {
-    Buffer *screen = static_cast<Buffer *>(&MainInterfaceGlobal);
-    screen->set_clip(MainInterfaceGlobal.buffer_working_rect());
-    Buffer::set_clip(buffer_working_rect());
+    MainInterfaceGlobal.Buffer::restore_clip();
+    Buffer::restore_clip();
     MainInterfaceGlobal.restore_back(1);
-    screen->box_sprite(&frame_rect_, &InterfaceBoxStyles[3]);
+    MainInterfaceGlobal.Buffer::box_sprite(&frame_rect_, &InterfaceBoxStyles[3]);
     RECT caption = caption_rect_;
-    screen->box_sprite(&caption, &InterfaceBoxStyles[6]);
+    MainInterfaceGlobal.Buffer::box_sprite(&caption, &InterfaceBoxStyles[6]);
     caption.left += 3;
     caption.top += 3;
     caption.right -= 3;
     caption.bottom -= 3;
     StringTemp[0] = 0;
-    screen->set_font(MainInterfaceGlobal.primary_font(), 0, 0, 0);
+    MainInterfaceGlobal.Buffer::set_font(MainInterfaceGlobal.primary_font(), 0, 0, 0);
     strcat(StringTemp, StringTable.get(
         Labels.strings_ptr[0xA70 / 4]));
-    screen->set_text_color(0xF0, -1, 1, 1);
+    MainInterfaceGlobal.Buffer::set_text_color(0xF0, -1, 1, 1);
     CharUpperA(StringTemp);
-    screen->write_cent_l(StringTemp, &caption, strlen(StringTemp));
+    MainInterfaceGlobal.Buffer::write_cent_l(StringTemp, &caption, strlen(StringTemp));
     check_abil();
     draw_chassis(0);
     draw_weapon(0);
@@ -1773,7 +1774,7 @@ void DesignWin::on_redraw() {
     draw_info();
     draw_stack();
     draw_flash();
-    Buffer::set_clip(buffer_working_rect());
+    Buffer::restore_clip();
     UnionRect(&caption, &lower_panel_rows_[lower_panel_cancel],
               &lower_panel_rows_[lower_panel_done]);
     UnionRect(&caption, &caption, &lower_panel_rows_[lower_panel_rename]);
@@ -3773,8 +3774,7 @@ int DesignWin::on_key_click(int a1, int a2) {
         break;
     case 0x23:
     case 0x61: {
-        moved = ProtoSortCount - 10;
-        prototype_stack_start_ = (moved < 0) ? 0 : moved;
+        prototype_stack_start_ = (ProtoSortCount - 10 < 0) ? 0 : ProtoSortCount - 10;
         draw_stack();
         break;
     }
@@ -3875,8 +3875,9 @@ static void redraw_design_picker_changes(DesignWin *window) {
 void DesignWin::check_abil() {
     if (Chassis[protoChassisType_].missile != 0) {
         protoAbilityFlags_ = 0;
-        protoAbilityIDs_[0] = -1;
-        protoAbilityIDs_[1] = -1;
+        for (int slot = 0; slot < 2; ++slot) {
+            protoAbilityIDs_[slot] = -1;
+        }
         return;
     }
 
@@ -3895,8 +3896,9 @@ void DesignWin::check_abil() {
                     || !has_tech(Rules.tech_two_spec_abilities,
                                  static_cast<int>(factionID_))))) {
             protoAbilityFlags_ &= ~bit;
-            protoAbilityIDs_[0] = -1;
-            protoAbilityIDs_[1] = -1;
+            for (int slot = 0; slot < 2; ++slot) {
+                protoAbilityIDs_[slot] = -1;
+            }
             for (int candidate = 0; candidate < 0x1D; ++candidate) {
                 if ((protoAbilityFlags_ & (1u << candidate)) == 0) {
                     continue;
@@ -3939,21 +3941,19 @@ void DesignWin::suggest_abil(int ability) {
     // of honoring faction_bonus_count or the declared eight-entry extents.
     // Keep its stale/overrun reads; this is an original access quirk.
     for (int i = 0; i < 0x29; ++i) {
-        if (Players[ConsoleGlobal.faction_id_].faction_bonus_id[i] == 15) {
-            const int *const bonus_values = Players[ConsoleGlobal.faction_id_].faction_bonus_val1;
-            const int bonus_ability_id = abil_index(ability);
-            if (bonus_values[i] == bonus_ability_id) {
-                return;
-            }
+        if (Players[ConsoleGlobal.faction_id_].faction_bonus_id[i] == 15
+            && Players[ConsoleGlobal.faction_id_].faction_bonus_val1[i] == abil_index(ability)) {
+            return;
         }
     }
 
     protoAbilityFlags_ |= static_cast<uint32_t>(ability);
-    protoAbilityIDs_[0] = -1;
-    protoAbilityIDs_[1] = -1;
+    for (int slot = 0; slot < 2; ++slot) {
+        protoAbilityIDs_[slot] = -1;
+    }
     for (int id = 0; id < 0x1D; ++id) {
         if ((protoAbilityFlags_ & (1u << id)) == 0) continue;
-        for (int slot = 0; slot < 2; ++slot) {
+        for (slot = 0; slot < 2; ++slot) {
             if (protoAbilityIDs_[slot] < 0) {
                 protoAbilityIDs_[slot] = id;
                 break;
@@ -6246,9 +6246,7 @@ void __cdecl hq_list_draw(GraphicWin *window, int prototype, int flags,
     }
     const int vehicle = veh_fake(prototype, WorkshopFaction);
     // Reload the faction after veh_fake, matching the native callback.
-    const unsigned int faction_bit = 1u <<
-        (static_cast<unsigned int>(WorkshopFaction) & 31u);
-    if ((VehPrototypes[prototype].obsolete_factions & faction_bit) != 0)
+    if ((VehPrototypes[prototype].obsolete_factions & (1 << WorkshopFaction)) != 0)
         Vehs[vehicle].order = 1;
     veh_draw(window ? static_cast<Buffer *>(window) : 0,
              vehicle, x, y, zoom, 0x2044, 0);
