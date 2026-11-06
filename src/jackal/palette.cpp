@@ -1208,7 +1208,7 @@ int Palette::create_table_from_color(int colour_index, unsigned char *table,
     return 0;
 }
 
-// ORIGINAL: 0x005FF220 ?UNK6@Palette@@QAEHHHH@Z 0x005FF220-0x005FF277 FILE
+// ORIGINAL: 0x005FF220 ?UNK6@Palette@@QAEHHHH@Z 0x005FF220-0x005FF277 FILE BYTE_EXACT
 // symbol    ?map_to_palette@Palette@@QAEHPAV1@HH@Z
 // size      87 bytes
 // prototype int (__thiscall ?UNK6@Palette@@QAEHHHH@Z)(Palette* this, int, int, int)

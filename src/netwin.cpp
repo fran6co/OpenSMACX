@@ -134,7 +134,7 @@ int __cdecl load_map();
 NetWin NetWinDialog;  // 0x0080A6F8
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x004E2400 sub_4e2400 0x004E2400-0x004E2444 FILE
+// ORIGINAL: 0x004E2400 sub_4e2400 0x004E2400-0x004E2444 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned CRT slot0x682614 directly selects0x4E2400 as the first callback in the adjacent network-state startup sequence.", "The callback stores only options bytes0,1,2,4,5,6,7,8,9,A,B; NetWinSessionOptionsStorage contains only the existing 0x18-byte NetWinSessionOptionsState at offset zero and its constructor performs exactly those stores."], "reason": "Own the original selected options initialization in the storage object's constructor without adding value-initialization or changing the shared wire type."}
 // symbol    _$E19
 // RECOVERY_OBJECT: v4 0x0090E8E0 0x0090E8F8 ?NetWinSessionOptions@@3UNetWinSessionOptionsState@@A 0x0047B450 target ?NetWinSessionOptions@@3UNetWinSessionOptionsStorage@@A
@@ -155,7 +155,7 @@ NetWinSessionOptionsStorage NetWinSessionOptions;
 NetWinSessionDataStorage NetWinSessionData;
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x004E2460 sub_4e2460 0x004E2460-0x004E248F FILE
+// ORIGINAL: 0x004E2460 sub_4e2460 0x004E2460-0x004E248F FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned CRT slot0x68261C directly selects0x4E2460 after the options and session-data callbacks.", "The callback stores only six fields in each of eight 0x17C-byte rows; NetWinLobbyRowsStorage contains only the existing eight-row array at offset zero and its constructor writes those same fields."], "reason": "Own the original selected lobby-row initialization in the storage object's constructor while preserving the shared wire-row type and untouched bytes."}
 // symbol    _$E25
 // The pinned PE's .data raw contents end at 0x006A8000, while its virtual
@@ -682,7 +682,7 @@ Purpose: Seed the seven base faction records of the static faction table.
          slot's prefix carrying the colour byte at 0x93D4B0). The image
          writes the prefix twice per record - the second pass re-stores
          0xFF/0xFF/2/0 over the same bytes - so only the net values land.
-// ORIGINAL: 0x00481E90 ?config_players@NetWin@@QAEXXZ 0x00481E90-0x00481FC9 FILE
+// ORIGINAL: 0x00481E90 ?config_players@NetWin@@QAEXXZ 0x00481E90-0x00481FC9 FILE BYTE_EXACT
 // size      313 bytes
 // prototype void (__thiscall ?config_players@NetWin@@QAEXXZ)(NetWin* this)
 // callers   1   call targets   2

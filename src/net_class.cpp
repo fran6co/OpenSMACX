@@ -3382,7 +3382,7 @@ Purpose: Drain the system-message queue: one 0x28-byte record at a time off
          The receive scratch doubles as the message body: peer flags are a
          byte, but system messages have the SDK's DWORD type. Peer rows and
          system envelopes are distinct views of the shared receive bytes.
-// ORIGINAL: 0x00632DB0 ?handle_sys_msg@Net@@QAEXXZ 0x00632DB0-0x00632F97 FILE
+// ORIGINAL: 0x00632DB0 ?handle_sys_msg@Net@@QAEXXZ 0x00632DB0-0x00632F97 FILE BYTE_EXACT
 // size      487 bytes
 // prototype void (__thiscall ?handle_sys_msg@Net@@QAEXXZ)(Net* this)
 // callers   7   call targets   4
