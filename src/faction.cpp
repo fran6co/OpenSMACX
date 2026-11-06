@@ -1341,66 +1341,68 @@ void __cdecl scan_prototypes(int faction_id, int faction_id_with) {
     int best_mention_value = 0;
     for (int i = 0; i < MaxVehProtoFactionNum; i++) {
         int proto_id = faction_id_with * MaxVehProtoFactionNum + i;
-        VehPrototype &proto = VehPrototypes[proto_id];
-        if (!(proto.flags & PROTO_ACTIVE) || !(proto.flags & PROTO_TYPED_COMPLETE)) {
+        if (!(VehPrototypes[proto_id].flags & PROTO_ACTIVE) || !(VehPrototypes[proto_id].flags & PROTO_TYPED_COMPLETE)) {
             continue;
         }
-        if (proto.obsolete_factions & (1 << faction_id_with)) {
+        if (VehPrototypes[proto_id].obsolete_factions & (1 << faction_id_with)) {
             continue;
         }
-        int value = 3 * Weapon[proto.weapon_id].offense_rating
-            + 4 * (((7 - proto.plan) << 14) + Armor[proto.armor_id].defense_rating)
-            + Chassis[proto.chassis_id].speed;
         int unmatched = 1;
-        for (int j = 0; j < MaxVehProtoFactionNum && unmatched; j++) {
-            VehPrototype &rival = VehPrototypes[faction_id * MaxVehProtoFactionNum + j];
-            if (!(rival.flags & PROTO_ACTIVE) || !(rival.flags & PROTO_TYPED_COMPLETE)) {
+        int value = 3 * Weapon[VehPrototypes[proto_id].weapon_id].offense_rating
+            + 4 * (((7 - VehPrototypes[proto_id].plan) << 14) + Armor[VehPrototypes[proto_id].armor_id].defense_rating)
+            + Chassis[VehPrototypes[proto_id].chassis_id].speed;
+        for (int j = 0; unmatched && j < MaxVehProtoFactionNum; j++) {
+            int rival_id = faction_id * MaxVehProtoFactionNum + j;
+            if (!(VehPrototypes[rival_id].flags & PROTO_ACTIVE) || !(VehPrototypes[rival_id].flags & PROTO_TYPED_COMPLETE)) {
                 continue;
             }
-            if (rival.obsolete_factions & (1 << faction_id)) {
+            if (VehPrototypes[rival_id].obsolete_factions & (1 << faction_id)) {
                 continue;
             }
-            if (rival.plan != proto.plan) {
+            if (VehPrototypes[rival_id].plan != VehPrototypes[proto_id].plan) {
                 continue;
             }
-            if (Chassis[rival.chassis_id].triad != Chassis[proto.chassis_id].triad) {
+            if (Chassis[VehPrototypes[rival_id].chassis_id].triad != Chassis[VehPrototypes[proto_id].chassis_id].triad) {
                 continue;
             }
-            if (rival.reactor_id > proto.reactor_id) {
+            if (VehPrototypes[rival_id].reactor_id > VehPrototypes[proto_id].reactor_id) {
                 unmatched = 0;
             }
-            if (Chassis[rival.chassis_id].speed > Chassis[proto.chassis_id].speed) {
+            if (Chassis[VehPrototypes[rival_id].chassis_id].speed > Chassis[VehPrototypes[proto_id].chassis_id].speed) {
                 unmatched = 0;
             }
             // Both arm_strat calls read the weapon id; see the note above.
-            int rival_weapon = weap_strat(rival.weapon_id, faction_id);
-            int proto_weapon = weap_strat(proto.weapon_id, faction_id);
-            int rival_armor = arm_strat(rival.weapon_id, faction_id);
-            int proto_armor = arm_strat(proto.weapon_id, faction_id);
-            if (Chassis[rival.chassis_id].speed >= Chassis[proto.chassis_id].speed
+            int rival_weapon = weap_strat(VehPrototypes[rival_id].weapon_id, faction_id);
+            int proto_weapon = weap_strat(VehPrototypes[proto_id].weapon_id, faction_id);
+            int rival_armor = arm_strat(VehPrototypes[rival_id].weapon_id, faction_id);
+            int proto_armor = arm_strat(VehPrototypes[proto_id].weapon_id, faction_id);
+            if (Chassis[VehPrototypes[rival_id].chassis_id].speed >= Chassis[VehPrototypes[proto_id].chassis_id].speed
                 && rival_weapon >= proto_weapon && rival_armor >= proto_armor
                 && (rival_weapon > proto_weapon || rival_armor > proto_armor)) {
                 unmatched = 0;
             }
         }
-        int trade_value = unmatched ? value : (value >> 4);
+        int trade_value = value;
+        if (!unmatched) {
+            trade_value >>= 4;
+        }
         if (trade_value > best_trade_value) {
             best_trade_value = trade_value;
             BestProtoForTrade = proto_id;
         }
         uint32_t treaty = PlayersData[faction_id].diplo_treaties[faction_id_with];
         if (treaty & DTREATY_PACT) {
-            if (proto.flags & PROTO_UNK_20) {
+            if (VehPrototypes[proto_id].flags & PROTO_UNK_20) {
                 continue;
             }
-        } else if (proto.flags & (PROTO_UNK_10 | PROTO_UNK_20)) {
+        } else if (VehPrototypes[proto_id].flags & (PROTO_UNK_10 | PROTO_UNK_20)) {
             continue;
         }
-        if (proto.plan > PLAN_NAVAL_SUPERIORITY || proto.plan == PLAN_RECONNAISANCE) {
+        if (VehPrototypes[proto_id].plan > PLAN_NAVAL_SUPERIORITY || VehPrototypes[proto_id].plan == PLAN_RECONNAISANCE) {
             continue;
         }
         if (!unmatched) {
-            value = ((treaty & DTREATY_VENDETTA) && proto.plan == PLAN_DEFENSIVE)
+            value = ((treaty & DTREATY_VENDETTA) && VehPrototypes[proto_id].plan == PLAN_DEFENSIVE)
                 ? (value >> 4) : 0;
         }
         if (value > best_mention_value) {
@@ -3588,49 +3590,48 @@ void __cdecl enemy_capabilities(int faction_id) {
     PlayersData[faction_id].enemy_best_weapon_value = 0;
     PlayersData[faction_id].enemy_best_psi_defense = 0;
     PlayersData[faction_id].enemy_best_psi_offense = 0;
-    const int actor = faction_id;
-    for (faction_id = 0; faction_id < 4 && !PlayersData[actor].enemy_best_weapon_value; faction_id++) {
+    for (int pass = 0; pass < 4 && !PlayersData[faction_id].enemy_best_weapon_value; pass++) {
         // 1st pass: vendetta, no treaty, has commlink
         // 2nd pass: no treaty, has commlink
         // 3rd pass: has commlink
         // 4th pass: any non-pact faction
-        for (uint32_t j = 1; j < MaxPlayerNum; j++) {
-            if (j == actor) continue;
-            // Read the actor's treaty word once, then apply each pass filter.
-            uint32_t treaties = PlayersData[actor].diplo_treaties[j];
+        for (int j = 1; j < MaxPlayerNum; j++) {
+            if (j == faction_id) continue;
+            // Read the faction_id's treaty word once, then apply each pass filter.
+            uint32_t treaties = PlayersData[faction_id].diplo_treaties[j];
             if (treaties & DTREATY_PACT) continue;
-            if (faction_id == 0 && (treaties & DTREATY_VENDETTA) == 0) continue;
-            if (faction_id <= 1 && (treaties & DTREATY_TREATY) != 0) continue;
-            if (faction_id <= 2 && (treaties & DTREATY_COMMLINK) == 0) continue;
+            if (pass == 0 && (treaties & DTREATY_VENDETTA) == 0) continue;
+            if (pass <= 1 && (treaties & DTREATY_TREATY) != 0) continue;
+            if (pass <= 2 && (treaties & DTREATY_COMMLINK) == 0) continue;
             {
-                int best = PlayersData[actor].enemy_best_weapon_value;
+                int best = PlayersData[faction_id].enemy_best_weapon_value;
                 const int other = PlayersData[j].best_weapon_value;
                 if (best <= other) best = other;
-                PlayersData[actor].enemy_best_weapon_value = best;
+                PlayersData[faction_id].enemy_best_weapon_value = best;
             }
             {
-                int best = PlayersData[actor].enemy_best_armor_value;
+                int best = PlayersData[faction_id].enemy_best_armor_value;
                 const int other = PlayersData[j].best_armor_value;
                 if (best <= other) best = other;
-                PlayersData[actor].enemy_best_armor_value = best;
+                PlayersData[faction_id].enemy_best_armor_value = best;
             }
             {
-                int best = PlayersData[actor].enemy_best_land_speed;
+                int best = PlayersData[faction_id].enemy_best_land_speed;
                 const int other = PlayersData[j].best_land_speed;
                 if (best <= other) best = other;
-                PlayersData[actor].enemy_best_land_speed = best;
+                PlayersData[faction_id].enemy_best_land_speed = best;
             }
             {
-                int best = PlayersData[actor].enemy_best_psi_offense;
+                int best = PlayersData[faction_id].enemy_best_psi_offense;
                 const int other = PlayersData[j].best_psi_offense;
                 if (best <= other) best = other;
-                PlayersData[actor].enemy_best_psi_offense = best;
+                PlayersData[faction_id].enemy_best_psi_offense = best;
             }
             {
-                int best = PlayersData[actor].enemy_best_psi_defense;
+                int best = PlayersData[faction_id].enemy_best_psi_defense;
                 const int other = PlayersData[j].best_psi_defense;
                 if (best <= other) best = other;
-                PlayersData[actor].enemy_best_psi_defense = best;
+                PlayersData[faction_id].enemy_best_psi_defense = best;
             }
         }
     }
@@ -7075,14 +7076,14 @@ void __cdecl enemies_unpact(int faction_id, int faction_id_with) {
 // RECOVERY_BINDING: v1 {"evidence": ["original:0x0055D430:complete-mapped-spans", "git:13693539:src/unrecovered/0055d430.cpp", "source:src/faction.h:PlayersData-and-diplomacy-interfaces"], "reason": "Recover bilateral and conditional one-way technology transfers using typed player technology-source bytes, treaty and friction rows. The second direction intentionally uses actor source/relation but reloads the peer source for peer friction; repeated has_tech calls and signed wrapped valuation decrement are original behavior."}
 // TRIED: 0x20cc-stride diplomacy tables (0x96cd4c tech-source byte, 0x96c9f8 relation-flags dword, 0x96ca38 tech-level dword, 0x96cd3c tech-rank dword) rederived directly from the lea-chain address math (fac*65,*131,*1049,*2099 -> fac*0x20cc), not from Ghidra's mixed-unit indexing. Matches to #23/803 bytes; the nested-if rewrite of the has_tech/goto-LAB_0055d552 sharing is semantically equivalent but not chased for byte order.
 void __cdecl enemies_trade_tech(int faction_id, int faction_id_with) {
-    if ((GameDataStateStorage.fields_.game_rules_ & 0x02000000u) != 0) return;
     int best_tech_to_faction = -1, best_tech_to_partner = -1;
     int best_value_to_faction = -9999, best_value_to_partner = -9999;
+    if ((GameDataStateStorage.fields_.game_rules_ & 0x02000000u) != 0) return;
 
     for (int tech_id = 0; tech_id < MaxTechnologyNum; ++tech_id) {
         if (!has_tech(tech_id, faction_id)) {
             if (has_tech(tech_id, faction_id_with)) {
-                const int donor_source =
+                const char donor_source =
                     PlayersData[faction_id_with].tech_trade_source[tech_id];
                 bool eligible = true;
                 if (donor_source != 0 &&
@@ -7094,13 +7095,12 @@ void __cdecl enemies_trade_tech(int faction_id, int faction_id_with) {
                     const int minimum_friction =
                         (PlayersData[faction_id].diplo_treaties[faction_id_with]
                          & DTREATY_PACT) != 0 ? 6 : 16;
-                    if (PlayersData[faction_id_with].diplo_friction[donor_source]
+                    if (static_cast<int>(PlayersData[faction_id_with].diplo_friction[donor_source])
                         < minimum_friction) eligible = false;
                 }
                 if (eligible) {
                     const int value = tech_val(tech_id, faction_id, FALSE);
-                    const int score = diplo_sub(value, 1) > 0
-                        ? rand() % value : 0;
+                    const int score = value - 1 <= 0 ? 0 : rand() % value;
                     if (score > best_value_to_faction) {
                         best_value_to_faction = score;
                         best_tech_to_faction = tech_id;
@@ -7116,7 +7116,7 @@ void __cdecl enemies_trade_tech(int faction_id, int faction_id_with) {
         if (has_tech(tech_id, faction_id_with)) continue;
         if (!has_tech(tech_id, faction_id)) continue;
 
-        const int donor_source =
+        const char donor_source =
             PlayersData[faction_id].tech_trade_source[tech_id];
         bool eligible = true;
         if (donor_source != 0 &&
@@ -7128,14 +7128,14 @@ void __cdecl enemies_trade_tech(int faction_id, int faction_id_with) {
             const int minimum_friction =
                 (PlayersData[faction_id].diplo_treaties[faction_id_with]
                  & DTREATY_PACT) != 0 ? 6 : 16;
-            const int recipient_source =
+            const char recipient_source =
                 PlayersData[faction_id_with].tech_trade_source[tech_id];
-            if (PlayersData[faction_id_with].diplo_friction[recipient_source]
+            if (static_cast<int>(PlayersData[faction_id_with].diplo_friction[recipient_source])
                 < minimum_friction) eligible = false;
         }
         if (eligible) {
             const int value = tech_val(tech_id, faction_id_with, FALSE);
-            const int score = diplo_sub(value, 1) > 0 ? rand() % value : 0;
+            const int score = value - 1 <= 0 ? 0 : rand() % value;
             if (score > best_value_to_partner) {
                 best_value_to_partner = score;
                 best_tech_to_partner = tech_id;
@@ -7629,9 +7629,8 @@ void __cdecl mention_prototypes(int faction_id, int faction_id_with) {
     if (BestProtoToMention < 0) return;
     if (!wants_to_speak(faction_id, faction_id_with)) return;
 
-    const int first_proto = faction_id_with * MaxVehProtoFactionNum;
     for (int i = 0; i < MaxVehProtoFactionNum; ++i) {
-        VehPrototypes[first_proto + i].flags |= PROTO_UNK_10;
+        VehPrototypes[faction_id_with * MaxVehProtoFactionNum + i].flags |= PROTO_UNK_10;
     }
 
     const int selected_proto = BestProtoToMention;
@@ -7664,15 +7663,15 @@ void __cdecl mention_prototypes(int faction_id, int faction_id_with) {
             faction_id * MaxVehProtoFactionNum + proto_id;
         const int faction_proto_code = faction_proto + 0x61;
         if (wants_prototype(faction_proto, faction_id_with)) {
-            if (IsMultiplayerNet == 0) {
-                tech_achieved(faction_id_with, faction_proto_code,
-                              faction_id, 0);
-            } else {
+            if (IsMultiplayerNet != 0) {
                 log_say(DiploLabelSendingTECH, faction_id_with,
                         faction_proto_code, faction_id);
                 message_data(0x244B, 0, faction_id_with,
                              faction_proto_code, faction_id, 0);
                 NetDaemonNet.await_diplo(0x44B);
+            } else {
+                tech_achieved(faction_id_with, faction_proto_code,
+                              faction_id, 0);
             }
         }
         VehPrototypes[faction_proto].flags |= PROTO_UNK_20;
@@ -7681,15 +7680,15 @@ void __cdecl mention_prototypes(int faction_id, int faction_id_with) {
             faction_id_with * MaxVehProtoFactionNum + proto_id;
         const int other_proto_code = other_proto + 0x61;
         if (wants_prototype(other_proto, faction_id)) {
-            if (IsMultiplayerNet == 0) {
-                tech_achieved(faction_id, other_proto_code,
-                              faction_id_with, 0);
-            } else {
+            if (IsMultiplayerNet != 0) {
                 log_say(DiploLabelSendingTECH, faction_id,
                         other_proto_code, faction_id_with);
                 message_data(0x244B, 0, faction_id,
                              other_proto_code, faction_id_with, 0);
                 NetDaemonNet.await_diplo(0x44B);
+            } else {
+                tech_achieved(faction_id, other_proto_code,
+                              faction_id_with, 0);
             }
         }
         VehPrototypes[other_proto].flags |= PROTO_UNK_20;
@@ -7865,29 +7864,13 @@ void __cdecl pledge_truce(int faction_id, int faction_id_with,
     diplomacy_check(faction_id, faction_id_with, 0);
     ++PlayersData[faction_id].global_reputation;
     ++PlayersData[faction_id_with].global_reputation;
-    if (show_dialogue == 0) return;
-
-    diplomacy_caption(faction_id, faction_id_with);
-    PluralityDefault = 0;
-    GenderDefault = Players[faction_id].is_leader_female;
-    parse_says(0, Players[faction_id].title_leader, -1, -1);
-    GenderDefault = Players[faction_id].is_leader_female;
-    PluralityDefault = 0;
-    parse_says(1, Players[faction_id].name_leader, -1, -1);
-    GenderDefault = Players[faction_id].noun_gender;
-    PluralityDefault = Players[faction_id].is_noun_plural;
-    parse_says(2, Players[faction_id].noun_faction, -1, -1);
-    PluralityDefault = 0;
-    GenderDefault = Players[faction_id_with].is_leader_female;
-    parse_says(3, Players[faction_id_with].title_leader, -1, -1);
-    GenderDefault = Players[faction_id_with].is_leader_female;
-    PluralityDefault = 0;
-    parse_says(4, Players[faction_id_with].name_leader, -1, -1);
-    GenderDefault = Players[faction_id_with].noun_gender;
-    PluralityDefault = Players[faction_id_with].is_noun_plural;
-    parse_says(5, Players[faction_id_with].noun_faction, -1, -1);
-    X_pops("MAKETRUCE", 0x100000,
-                 FactionDiplomacyPortraits[faction_id_with], pop_wait);
+    if (show_dialogue != 0) {
+        diplomacy_caption(faction_id, faction_id_with);
+        faction_parse_leader_fields(faction_id, 0, 1, 2, -1);
+        faction_parse_leader_fields(faction_id_with, 3, 4, 5, -1);
+        X_pops("MAKETRUCE", 0x100000,
+                     FactionDiplomacyPortraits[faction_id_with], pop_wait);
+    }
 }
 
 // The two original opponent walks carry territory state into orbital attacks.
@@ -10152,8 +10135,7 @@ void __cdecl wait_loop() {
                      (1 << other)) == 0 &&
                     FactionDiplomacyFlags[other] != 0) {
                     log_say("Initiating diplomatic channel", faction, other, 0);
-                    const int open_faction = ConsoleGlobal.faction_id_;
-                    if (NetDaemonNet.open_channel(open_faction, other) == 0) {
+                    if (NetDaemonNet.open_channel(ConsoleGlobal.faction_id_, other) == 0) {
                         communicate(ConsoleGlobal.faction_id_, other, 0);
                     }
                 }
@@ -10946,32 +10928,26 @@ int __cdecl buy_tech(int faction_id, int other_faction_id, int action,
 
     if (action == 1) return 0;
 
-    int value = tech_val(DiploScratchF800, other_faction_id, 1);
-    int rounded_turn = diplo_add(GameDataStateStorage.fields_.turn_current_num_, 7);
-    const int research_scale = diplo_add(
-        rounded_turn, (rounded_turn >> 31) & 7) >> 3;
-    value = diplo_mul(value, research_scale);
-    if (great_satan(faction_id, 0)) value = diplo_mul(value, 2);
-    if (DiploScratchFA3C != 0) value = diplo_mul(value, 2);
-    if (is_commlink != 0) value = diplo_mul(value, 3) / 2;
+    int value = tech_val(DiploScratchF800, other_faction_id, 1) *
+        ((GameDataStateStorage.fields_.turn_current_num_ + 7) / 8);
+    if (great_satan(faction_id, 0)) value *= 2;
+    if (DiploScratchFA3C != 0) value *= 2;
+    if (is_commlink != 0) value = value * 3 / 2;
 
     // The original does not bound the selected ID before this byte read,
     // including pseudo-tech IDs. Preserve that lookup and its subsequent
     // clamp; do not substitute a divisor for an invalid array index.
-    int divisor = bit_count(
-        GameDataStateStorage.fields_.game_tech_achieved_[DiploScratchF800]) - 1;
-    if (divisor < 1) divisor = 1;
-    if (divisor > 999) divisor = 999;
-    value /= divisor;
+    value /= range(bit_count(
+        GameDataStateStorage.fields_.game_tech_achieved_[DiploScratchF800]) - 1, 1, 999);
 
     const uint32_t treaty = PlayersData[faction_id].diplo_treaties[other_faction_id];
     if ((treaty & 1) != 0 &&
-        static_cast<int>(PlayersData[faction_id].ranking) < static_cast<int>(PlayersData[other_faction_id].ranking)) {
+        static_cast<int>(PlayersData[other_faction_id].ranking) > static_cast<int>(PlayersData[faction_id].ranking)) {
         const int actor_research = PlayersData[faction_id].tech_ranking;
         const int partner_research = PlayersData[other_faction_id].tech_ranking;
-        if (diplo_add(actor_research, 8) < partner_research) {
+        if (partner_research > actor_research + 8) {
             value /= 4;
-        } else if (actor_research < partner_research) {
+        } else if (partner_research > actor_research) {
             value /= 2;
         }
     }
@@ -10981,6 +10957,7 @@ int __cdecl buy_tech(int faction_id, int other_faction_id, int action,
     if (PlayersData[faction_id].energy_reserves < cost &&
         action != 5 && mode != 5) return 0;
 
+    char prompt_number[80];
     StringTemp[0] = '\0';
     say_tech(StringTemp, DiploScratchF800, 1);
     parse_says(0, StringTemp, -1, -1);
@@ -10999,7 +10976,6 @@ int __cdecl buy_tech(int faction_id, int other_faction_id, int action,
     if (PlayersData[faction_id].energy_reserves < cost) {
         strcat(StringTemp, "HIGH");
         const int prompt = (mode == 5 || mode == 0xD) ? 0 : random(0, 2);
-        char prompt_number[16];
         _itoa(prompt, prompt_number, 10);
         strcat(StringTemp, prompt_number);
         X_pops(StringTemp, 0x100000,
@@ -11008,7 +10984,6 @@ int __cdecl buy_tech(int faction_id, int other_faction_id, int action,
     }
 
     const int prompt = (mode == 5 || mode == 0xD) ? 0 : random(0, 2);
-    char prompt_number[16];
     _itoa(prompt, prompt_number, 10);
     strcat(StringTemp, prompt_number);
     const int answer = X_pops(
@@ -13657,47 +13632,32 @@ int __cdecl contiguous(int faction_id1, int faction_id2, int region,
         }
     }
 
-    for (int fill_idx = 0; fill_idx < MapArea; ++fill_idx) {
-        map_tiles()[fill_idx].unk_1 = 0;
+    Map *tile = map_tiles();
+    for (int fill_idx = 0; fill_idx < MapArea; ++tile, ++fill_idx) {
+        tile->unk_1 = 0;
     }
 
-    int outer_idx = 0;
-    while (outer_idx < GameDataStateStorage.fields_.base_current_count_) {
-        const Base &base1 = Bases[outer_idx];
-        if (base1.faction_id_current == faction_id1) {
-            const int y1 = base1.y;
-            const int x1 = base1.x;
-            const Map *tile1 =
-                map_tiles() + y1 * MapLongitude + (x1 >> 1);
-            const uint8_t type = tile1->region;
-            if ((region == 0 || type == region) && tile1->unk_1 == 0) {
-                Paths.territory(x1, y1, type, faction_id1);
-
-                int inner_idx = 0;
-                while (inner_idx < GameDataStateStorage.fields_.base_current_count_) {
-                    const Base &base2 = Bases[inner_idx];
-                    if (base2.faction_id_current == faction_id2) {
-                        const int y2 = base2.y;
-                        const int x2 = base2.x;
-                        const Map *tile2 =
-                            map_tiles() + y2 * MapLongitude + (x2 >> 1);
-                        if (tile2->region == type && tile2->unk_1 == 0) {
-                            Paths.territory(x2, y2, type, faction_id2);
-
-                            const int flags = (flag != 0 ? 0xc00 : 0) | 0x201;
-                            const int result =
-                                Paths.find(x1, y1, x2, y2, faction_id1,
-                                           faction_id2, flags, -1);
-                            if (result >= 0) {
-                                return 1;
-                            }
-                        }
-                    }
-                    ++inner_idx;
-                }
+    for (int outer_idx = 0;
+         outer_idx < GameDataStateStorage.fields_.base_current_count_;
+         ++outer_idx) {
+        if (Bases[outer_idx].faction_id_current != faction_id1) continue;
+        const Map *tile1 = map_loc(Bases[outer_idx].x, Bases[outer_idx].y);
+        const int type = tile1->region;
+        if ((region != 0 && type != region) || tile1->unk_1 != 0) continue;
+        Paths.territory(Bases[outer_idx].x, Bases[outer_idx].y, type, faction_id1);
+        for (int inner_idx = 0;
+             inner_idx < GameDataStateStorage.fields_.base_current_count_;
+             ++inner_idx) {
+            const Base &base2 = Bases[inner_idx];
+            if (base2.faction_id_current != faction_id2) continue;
+            const Map *tile2 = map_loc(base2.x, base2.y);
+            if (tile2->region != type || tile2->unk_1 != 0) continue;
+            Paths.territory(base2.x, base2.y, type, faction_id2);
+            if (Paths.find(Bases[outer_idx].x, Bases[outer_idx].y, base2.x, base2.y, faction_id1,
+                           faction_id2, (flag != 0 ? 0xc00 : 0) | 0x201, -1) >= 0) {
+                return 1;
             }
         }
-        ++outer_idx;
     }
     return 0;
 }

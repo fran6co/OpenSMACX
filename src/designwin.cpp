@@ -1752,16 +1752,17 @@ void DesignWin::on_redraw() {
     MainInterfaceGlobal.Buffer::box_sprite(&frame_rect_, &InterfaceBoxStyles[3]);
     RECT caption = caption_rect_;
     MainInterfaceGlobal.Buffer::box_sprite(&caption, &InterfaceBoxStyles[6]);
-    caption.left += 3;
-    caption.top += 3;
-    caption.right -= 3;
     caption.bottom -= 3;
+    caption.right -= 3;
+    caption.top += 3;
+    caption.left += 3;
     StringTemp[0] = 0;
     MainInterfaceGlobal.Buffer::set_font(MainInterfaceGlobal.primary_font(), 0, 0, 0);
-    strcat(StringTemp, StringTable.get(
-        Labels.strings_ptr[0xA70 / 4]));
+    strcat(StringTemp, label_get(0xA70 / 4));
     MainInterfaceGlobal.Buffer::set_text_color(0xF0, -1, 1, 1);
     CharUpperA(StringTemp);
+    // The image inlines the null-checked two-argument write_cent_l here
+    // (0x00437AA7 test/je before strlen); needs a header inline to match.
     MainInterfaceGlobal.Buffer::write_cent_l(StringTemp, &caption, strlen(StringTemp));
     check_abil();
     draw_chassis(0);
@@ -1778,15 +1779,17 @@ void DesignWin::on_redraw() {
     UnionRect(&caption, &lower_panel_rows_[lower_panel_cancel],
               &lower_panel_rows_[lower_panel_done]);
     UnionRect(&caption, &caption, &lower_panel_rows_[lower_panel_rename]);
-    caption.left -= 3;
-    caption.top -= 3;
-    caption.right += 3;
     caption.bottom += 3;
+    caption.right += 3;
+    caption.top -= 3;
+    caption.left -= 3;
     Buffer::box_sprite(&caption, &InterfaceBoxStyles[3]);
 }
 
 // ORIGINAL: 0x0043E490 ?setup_veh@DesignWin@@QAEXHH@Z 0x0043E490-0x0043E952
 // RECOVERY_BINDING: v1 {"evidence": ["image:0x43E496,0x43E6D1;git:3f6ab06bdf3b791aa23454e19f71b4e8b5935caf:src/recovered/units/0043e490.cpp"], "reason": "Original first argument is the prototype and second enables automatic component selection; real prototype records, component tables and shared design state preserve each branch."}
+// Exact once VehPrototype::flags is a signed 16-bit field: the image narrows
+// every `flags &= ~bit` to a byte `and` (0x0043E4E4, 0x0043E687, 0x0043E909).
 void DesignWin::setup_veh(int proto_id, int automatic) {
     // Original E496 reads the FIRST argument as the prototype index; the
     // retained seed reversed the formals and also used byte-array flags
@@ -1799,104 +1802,125 @@ void DesignWin::setup_veh(int proto_id, int automatic) {
         int row = 0;
         while (row < ProtoSortCount &&
                (VehPrototypes[ProtoSortIds[row]].flags & 1)) ++row;
-        protoID_ = row == ProtoSortCount ? factionID_ << 6 : ProtoSortIds[row];
+        if (row == ProtoSortCount) {
+            protoID_ = factionID_ << 6;
+        } else {
+            protoID_ = ProtoSortIds[row];
+        }
     } else {
         protoID_ = proto_id;
     }
+    proto_id = protoID_;
     protoReactorType_ = best_reactor(factionID_);
-    VehPrototype &prototype = VehPrototypes[protoID_];
-    if (prototype.flags & 1) {
-        prototype.flags &= ~0x80;
-        protoChassisType_ = prototype.chassis_id;
-        protoWeaponType_ = prototype.weapon_id;
-        protoArmorType_ = prototype.armor_id;
-        protoAbilityFlags_ = prototype.ability_flags;
-        protoReactorType_ = prototype.reactor_id;
-        protoAbilityIDs_[0] = protoAbilityIDs_[1] = -1;
+    if (VehPrototypes[proto_id].flags & 1) {
+        VehPrototypes[proto_id].flags &= ~0x80;
+        protoChassisType_ = VehPrototypes[proto_id].chassis_id;
+        protoWeaponType_ = VehPrototypes[proto_id].weapon_id;
+        protoArmorType_ = VehPrototypes[proto_id].armor_id;
+        protoAbilityFlags_ = VehPrototypes[proto_id].ability_flags;
+        protoReactorType_ = VehPrototypes[proto_id].reactor_id;
+        for (int clear = 0; clear < 2; ++clear) {
+            protoAbilityIDs_[clear] = -1;
+        }
         for (int ability = 0; ability < 29; ++ability) {
-            if (protoAbilityFlags_ & (1u << ability)) {
-                if (protoAbilityIDs_[0] < 0) protoAbilityIDs_[0] = ability;
-                else if (protoAbilityIDs_[1] < 0) protoAbilityIDs_[1] = ability;
+            if ((protoAbilityFlags_ & (1u << ability)) == 0) continue;
+            for (int slot = 0; slot < 2; ++slot) {
+                if (protoAbilityIDs_[slot] < 0) {
+                    protoAbilityIDs_[slot] = ability;
+                    break;
+                }
             }
         }
-        if ((prototype.flags & 2) && static_cast<int>(protoID_) >= 64) {
-            strcpy(prototype_name_, prototype.veh_name);
+        if ((VehPrototypes[proto_id].flags & 2) && proto_id >= 64) {
+            strcpy(prototype_name_, VehPrototypes[proto_id].veh_name);
             char generated_name[80];
-            name_proto(generated_name, protoID_, factionID_, protoChassisType_,
+            name_proto(generated_name, proto_id, factionID_, protoChassisType_,
                        protoWeaponType_, protoArmorType_, protoAbilityFlags_,
                        protoReactorType_);
             if (strcmp(prototype_name_, generated_name) == 0) {
                 strcpy(prototype_name_, DesignDefaultName);
-                prototype.flags &= ~2;
+                VehPrototypes[proto_id].flags &= ~2;
             }
-        } else {
-            prototype.flags &= ~2;
-            strcpy(prototype_name_, DesignPredefinedName);
+            field_14210_ = 0;
+            return;
         }
+        VehPrototypes[proto_id].flags &= ~2;
+        strcpy(prototype_name_, DesignPredefinedName);
         field_14210_ = 0;
         return;
     }
 
-    protoArmorType_ = protoWeaponType_ = 0;
-    if (automatic == 0) {
-        protoChassisType_ = protoAbilityFlags_ = 0;
-        protoReactorType_ = 1;
-        protoAbilityIDs_[0] = protoAbilityIDs_[1] = -1;
+    protoWeaponType_ = protoArmorType_ = 0;
+    if (automatic != 0) {
+        protoAbilityFlags_ = 0;
+        int best = 0;
+        int rating = 0;
+        for (protoChassisType_ = 0; static_cast<int>(protoChassisType_) < 9;
+             ++protoChassisType_) {
+            if (has_tech(Chassis[protoChassisType_].preq_tech, factionID_) &&
+                Chassis[protoChassisType_].triad == 0 &&
+                Chassis[protoChassisType_].speed >= rating) {
+                rating = Chassis[protoChassisType_].speed;
+                best = protoChassisType_;
+            }
+        }
+        protoChassisType_ = best;
+        best = rating = 0;
+        for (protoWeaponType_ = 0; static_cast<int>(protoWeaponType_) < 26;
+             ++protoWeaponType_) {
+            if (has_tech(Weapon[protoWeaponType_].preq_tech, factionID_) &&
+                Weapon[protoWeaponType_].offense_rating < 99 &&
+                Weapon[protoWeaponType_].offense_rating >= rating) {
+                rating = Weapon[protoWeaponType_].offense_rating;
+                best = protoWeaponType_;
+            }
+        }
+        protoWeaponType_ = best;
+        best = rating = 0;
+        for (protoArmorType_ = 0; static_cast<int>(protoArmorType_) < 14;
+             ++protoArmorType_) {
+            if (has_tech(Armor[protoArmorType_].preq_tech, factionID_) &&
+                Armor[protoArmorType_].defense_rating >= rating) {
+                rating = Armor[protoArmorType_].defense_rating;
+                best = protoArmorType_;
+            }
+        }
+        protoArmorType_ = best;
+        strcpy(prototype_name_, DesignAutomaticName);
+        DesignConsiderWeapon = protoWeaponType_;
+        DesignConsiderArmor = protoArmorType_;
+        DesignConsiderChassis = protoChassisType_;
+        DesignConsiderAbilities = protoAbilityFlags_;
+        DesignConsiderOverride = 1;
+        DesignConsiderPrototype = -1;
+        consider_designs(factionID_);
+        protoWeaponType_ = DesignConsiderWeapon;
+        protoArmorType_ = DesignConsiderArmor;
+        protoChassisType_ = DesignConsiderChassis;
+        protoAbilityFlags_ = DesignConsiderAbilities;
+        for (int clear = 0; clear < 2; ++clear) {
+            protoAbilityIDs_[clear] = -1;
+        }
+        for (int bit = 0; bit < 29; ++bit) {
+            if ((protoAbilityFlags_ & (1u << bit)) == 0) continue;
+            for (int slot = 0; slot < 2; ++slot) {
+                if (protoAbilityIDs_[slot] < 0) {
+                    protoAbilityIDs_[slot] = bit;
+                    break;
+                }
+            }
+        }
+        DesignConsiderOverride = 0;
+        VehPrototypes[proto_id].flags &= ~0x80;
         field_14210_ = 0;
         return;
     }
+    protoChassisType_ = 0;
     protoAbilityFlags_ = 0;
-    int best = 0;
-    int rating = 0;
-    for (protoChassisType_ = 0; protoChassisType_ < 9; ++protoChassisType_) {
-        const RulesChassis &chassis = Chassis[protoChassisType_];
-        if (has_tech(chassis.preq_tech, factionID_) && chassis.triad == 0 &&
-            chassis.speed >= rating) {
-            best = protoChassisType_;
-            rating = chassis.speed;
-        }
+    protoReactorType_ = 1;
+    for (int clear = 0; clear < 2; ++clear) {
+        protoAbilityIDs_[clear] = -1;
     }
-    protoChassisType_ = best;
-    best = rating = 0;
-    for (protoWeaponType_ = 0; protoWeaponType_ < 26; ++protoWeaponType_) {
-        const RulesWeapon &weapon = Weapon[protoWeaponType_];
-        if (has_tech(weapon.preq_tech, factionID_) && weapon.offense_rating < 99 &&
-            weapon.offense_rating >= rating) {
-            best = protoWeaponType_;
-            rating = weapon.offense_rating;
-        }
-    }
-    protoWeaponType_ = best;
-    best = rating = 0;
-    for (protoArmorType_ = 0; protoArmorType_ < 14; ++protoArmorType_) {
-        const RulesArmor &armor = Armor[protoArmorType_];
-        if (has_tech(armor.preq_tech, factionID_) && armor.defense_rating >= rating) {
-            best = protoArmorType_;
-            rating = armor.defense_rating;
-        }
-    }
-    protoArmorType_ = best;
-    strcpy(prototype_name_, DesignAutomaticName);
-    DesignConsiderWeapon = protoWeaponType_;
-    DesignConsiderArmor = protoArmorType_;
-    DesignConsiderChassis = protoChassisType_;
-    DesignConsiderAbilities = protoAbilityFlags_;
-    DesignConsiderOverride = 1;
-    DesignConsiderPrototype = -1;
-    consider_designs(factionID_);
-    protoWeaponType_ = DesignConsiderWeapon;
-    protoArmorType_ = DesignConsiderArmor;
-    protoChassisType_ = DesignConsiderChassis;
-    protoAbilityFlags_ = DesignConsiderAbilities;
-    protoAbilityIDs_[0] = protoAbilityIDs_[1] = -1;
-    for (int bit = 0; bit < 29; ++bit) {
-        if (protoAbilityFlags_ & (1u << bit)) {
-            if (protoAbilityIDs_[0] < 0) protoAbilityIDs_[0] = bit;
-            else if (protoAbilityIDs_[1] < 0) protoAbilityIDs_[1] = bit;
-        }
-    }
-    DesignConsiderOverride = 0;
-    prototype.flags &= ~0x80;
     field_14210_ = 0;
 }
 
@@ -3429,70 +3453,57 @@ DesignWin *DesignWindowSelf;
 int DesignWin::exec(int faction_id, int prototype_id) {
     Buffer execution_buffer;
     (void)execution_buffer;
+    int x;
+    int y;
 
     if (DesignTutorState != 2) init();
 
     const int interactive_run = prototype_id == -2;
     if (prototype_id < 0) {
-        const int faction_prototype_base = faction_id * MaxVehProtoFactionNum;
-        int fallback_prototype = faction_prototype_base;
-        int most_recent_obsolete = prototype_id;
-        int candidate = faction_prototype_base;
-        int scanned = 0;
-        int result = candidate;
-        while (scanned < MaxVehProtoFactionNum) {
-            const VehPrototype &record = VehPrototypes[candidate];
-            result = candidate;
-            if ((record.flags & PROTO_ACTIVE) == 0) break;
-            const unsigned int obsolete = static_cast<unsigned char>(
-                record.obsolete_factions);
-            if ((obsolete & (1U << (faction_id & 0x1f))) != 0) {
-                most_recent_obsolete = candidate;
+        for (int i = 0; i < MaxVehProtoFactionNum; ++i) {
+            const int candidate = faction_id * MaxVehProtoFactionNum + i;
+            if ((VehPrototypes[candidate].flags & PROTO_ACTIVE) == 0) {
+                prototype_id = candidate;
+                break;
             }
-            ++scanned;
-            ++candidate;
-            result = most_recent_obsolete;
+            if (VehPrototypes[candidate].obsolete_factions & (1 << faction_id)) {
+                prototype_id = candidate;
+            }
         }
-        prototype_id = result < 0 ? fallback_prototype : result;
+        if (prototype_id < 0) prototype_id = faction_id * MaxVehProtoFactionNum;
     }
 
-    int normalized_faction = faction_id;
-    if (normalized_faction < 0) normalized_faction = -normalized_faction;
     protoID_ = static_cast<uint32_t>(prototype_id);
-    factionID_ = static_cast<uint32_t>(normalized_faction);
-    enemy_capabilities(normalized_faction);
+    if (faction_id < 0) faction_id = -faction_id;
+    factionID_ = static_cast<uint32_t>(faction_id);
+    enemy_capabilities(faction_id);
     mineralCostFactor_ = static_cast<uint32_t>(
         cost_factor(static_cast<int>(factionID_), 1, -1));
-    protoAbilityIDs_[0] = -1;
-    protoAbilityIDs_[1] = -1;
+    for (int clear = 0; clear < 2; ++clear) {
+        protoAbilityIDs_[clear] = -1;
+    }
     setup_veh(prototype_id, 1);
     proto_sort_2(static_cast<int>(factionID_));
 
     const int sort_count = ProtoSortCount;
-    int sorted_index = prototype_stack_start_;
-    const int sort_limit = sorted_index + sort_count;
-    if (sorted_index < sort_limit) {
-        do {
-            const int relative_index = sorted_index % sort_count;
-            if (prototype_id == ProtoSortIds[relative_index]) {
-                prototype_stack_start_ =
-                    (relative_index + sort_count - 5) % sort_count;
-                break;
-            }
-            ++sorted_index;
-        } while (sorted_index < sort_limit);
+    const int sort_limit = prototype_stack_start_ + sort_count;
+    for (int sorted_index = prototype_stack_start_; sorted_index < sort_limit;
+         ++sorted_index) {
+        const int relative_index = sorted_index % sort_count;
+        if (prototype_id == ProtoSortIds[relative_index]) {
+            prototype_stack_start_ = (relative_index + sort_count - 5) % sort_count;
+            break;
+        }
     }
 
     field_14210_ = 0;
     if (!has_tech(Rules.tech_two_spec_abilities,
                   static_cast<int>(factionID_))) {
         int selected_abilities = 0;
-        if (protoAbilityIDs_[0] >= 0) {
-            ++selected_abilities;
-        }
-        if (protoAbilityIDs_[1] >= 0 &&
-            ++selected_abilities > 1) {
-            protoAbilityIDs_[1] = -1;
+        for (int slot = 0; slot < 2; ++slot) {
+            if (protoAbilityIDs_[slot] >= 0 && ++selected_abilities >= 2) {
+                protoAbilityIDs_[slot] = -1;
+            }
         }
     }
 
@@ -3518,12 +3529,10 @@ int DesignWin::exec(int faction_id, int prototype_id) {
     } else {
         if (tut_check2(0x2000) != 0) {
             TutorialWindow.set_tour_stage(7);
-            int x;
-            int y;
-            TutorialWindow.des_rect(&vehicle_panel_rect_, &x, &y);
+            TutorialWindow.des_rect(&TutWinDesWindow.vehicle_panel_rect_, &x, &y);
             MapWin *const map = MapWinTable[0];
-            GraphicWin *const owner = map != 0
-                ? static_cast<GraphicWin *>(map) : 0;
+            GraphicWin *const owner = map == 0
+                ? 0 : static_cast<GraphicWin *>(map);
             TutorialWindow.tut_win(owner, "DESWIN", x, y, 0, 1, -1, -1);
         }
         if (!interactive_run) {
@@ -3843,13 +3852,14 @@ static int picker_row_before(int selected, const Record *records, int count) {
 
 template <typename Record>
 static int picker_record_at(int row, const Record *records, int count) {
-    for (int index = 0; index < count; ++index) {
+    int index;
+    for (index = 0; index < count; ++index) {
         if (records[index].preq_tech >= -1) {
-            if (row == 0) return index;
+            if (row == 0) break;
             --row;
         }
     }
-    return count;
+    return index;
 }
 
 static const int DesignSelectableChassisCount = CHSI_MISSILE + 1;
@@ -5093,56 +5103,53 @@ void DesignWin::select_chassis() {
     SelectPartWin picker;
     const int row = picker_row_before(protoChassisType_, Chassis,
                                       DesignSelectableChassisCount);
+    RECT rect = client_rect_;
     const int selected_row = picker.exec(
-        client_rect_.left, client_rect_.top, factionID_, 0, row,
+        rect.left, rect.top, factionID_, 0, row,
         protoChassisType_, protoWeaponType_, protoArmorType_,
         protoAbilityFlags_, protoReactorType_, SpotlightColorTable);
-    const int previous_kind = Chassis[protoChassisType_].triad;
     const int next_chassis = picker_record_at(selected_row, Chassis,
                                               DesignSelectableChassisCount);
+    const int previous_kind = Chassis[protoChassisType_].triad;
     protoChassisType_ = next_chassis;
 
-    if (Chassis[next_chassis].missile == 0) {
+    if (Chassis[next_chassis].missile != 0) {
         protoArmorType_ = 0;
-        const int weapon_kind = static_cast<unsigned char>(
-            Weapon[protoWeaponType_].offense_rating);
-        if (weapon_kind >= 2) protoWeaponType_ = 0;
+        if (Weapon[protoWeaponType_].mode >= 2) protoWeaponType_ = 0;
         if (protoWeaponType_ != 0x10 && protoWeaponType_ != 0x18 &&
             protoWeaponType_ != 0x19) {
             protoWeaponType_ = 0x17;
         }
-    } else {
-        const int weapon_kind = static_cast<unsigned char>(
-            Weapon[protoWeaponType_].offense_rating);
-        if (weapon_kind >= 0x63 || protoWeaponType_ == 0x17 ||
-            protoWeaponType_ == 0x18 || protoWeaponType_ == 0x19) {
-            protoWeaponType_ = 0;
-        }
+    } else if (Weapon[protoWeaponType_].offense_rating >= 99 ||
+               protoWeaponType_ == 0x17 || protoWeaponType_ == 0x18 ||
+               protoWeaponType_ == 0x19) {
+        protoWeaponType_ = 0;
     }
 
-    const int next_kind = Chassis[next_chassis].triad;
-    if (next_kind != previous_kind) {
-        if (next_kind != 0) {
+    if (Chassis[next_chassis].triad != previous_kind) {
+        if (Chassis[next_chassis].triad != 0) {
             suggest_abil(2);
-            if (next_kind == 2) {
+            if (Chassis[protoChassisType_].triad == 2) {
                 if (Weapon[protoWeaponType_].mode == 0x0b) {
                     protoWeaponType_ = 0;
                 }
                 if (Weapon[protoWeaponType_].mode == 9 &&
-                    Chassis[next_chassis].range != 0) {
+                    Chassis[protoChassisType_].range != 0) {
                     protoWeaponType_ = 0;
                 }
             }
         } else if ((protoAbilityFlags_ & 2) != 0) {
             protoAbilityFlags_ &= ~2U;
-            protoAbilityIDs_[0] = -1;
-            protoAbilityIDs_[1] = -1;
+            for (int slot = 0; slot < 2; ++slot) {
+                protoAbilityIDs_[slot] = -1;
+            }
             for (int bit = 0; bit < 0x1d; ++bit) {
                 if ((protoAbilityFlags_ & (1U << bit)) == 0) continue;
-                if (protoAbilityIDs_[0] < 0) {
-                    protoAbilityIDs_[0] = bit;
-                } else if (protoAbilityIDs_[1] < 0) {
-                    protoAbilityIDs_[1] = bit;
+                for (int slot = 0; slot < 2; ++slot) {
+                    if (protoAbilityIDs_[slot] < 0) {
+                        protoAbilityIDs_[slot] = bit;
+                        break;
+                    }
                 }
             }
         }
@@ -5155,17 +5162,18 @@ void DesignWin::select_chassis() {
 void DesignWin::select_weapon() {
     SelectPartWin picker;
     const int row = picker_row_before(protoWeaponType_, Weapon, MaxWeaponNum);
+    RECT rect = client_rect_;
     const int selected_row = picker.exec(
-        client_rect_.left, client_rect_.top, factionID_, 1, row,
+        rect.left, rect.top, factionID_, 1, row,
         protoChassisType_, protoWeaponType_, protoArmorType_,
         protoAbilityFlags_, protoReactorType_, SpotlightColorTable);
-    const int previous_weapon = protoWeaponType_;
     const int selected_weapon = picker_record_at(selected_row, Weapon,
                                                  MaxWeaponNum);
+    const int previous_offense = Weapon[protoWeaponType_].offense_rating;
+    const int previous_weapon = protoWeaponType_;
     protoWeaponType_ = selected_weapon;
-    const int chassis_kind = Chassis[protoChassisType_].triad;
 
-    if (chassis_kind == 2) {
+    if (Chassis[protoChassisType_].triad == 2) {
         if (Weapon[selected_weapon].mode == 0x0b) {
             protoWeaponType_ = previous_weapon;
         }
@@ -5173,33 +5181,37 @@ void DesignWin::select_weapon() {
             Chassis[protoChassisType_].range != 0) {
             protoWeaponType_ = previous_weapon;
         }
-        const int compatibility = Chassis[protoChassisType_].missile;
-        if (compatibility != 0 && protoWeaponType_ != 0x10 &&
-            protoWeaponType_ != 0x18 && protoWeaponType_ != 0x19) {
+        if (Chassis[protoChassisType_].missile == 0) {
+            if (protoWeaponType_ == 0x10) protoWeaponType_ = previous_weapon;
+            if (protoWeaponType_ == 0x17) protoWeaponType_ = previous_weapon;
+            if (protoWeaponType_ == 0x18) protoWeaponType_ = previous_weapon;
+            if (protoWeaponType_ == 0x19) protoWeaponType_ = previous_weapon;
+        } else if (protoWeaponType_ != 0x10 && protoWeaponType_ != 0x18 &&
+                   protoWeaponType_ != 0x19) {
             protoWeaponType_ = 0x17;
-        } else if (compatibility == 0 &&
-                   (protoWeaponType_ == 0x10 || protoWeaponType_ == 0x17 ||
-                    protoWeaponType_ == 0x18)) {
-            protoWeaponType_ = previous_weapon;
         }
-    } else if (selected_weapon == 0x10 || protoWeaponType_ == 0x17 ||
-               protoWeaponType_ == 0x18) {
-        protoWeaponType_ = previous_weapon;
+    } else {
+        if (selected_weapon == 0x10) protoWeaponType_ = previous_weapon;
+        if (protoWeaponType_ == 0x17) protoWeaponType_ = previous_weapon;
+        if (protoWeaponType_ == 0x18) protoWeaponType_ = previous_weapon;
+        if (protoWeaponType_ == 0x19) protoWeaponType_ = previous_weapon;
     }
-    if (protoWeaponType_ == 0x19) protoWeaponType_ = previous_weapon;
 
-    if (static_cast<unsigned char>(
-            Weapon[protoWeaponType_].offense_rating) > 'b') {
+    if (Weapon[protoWeaponType_].offense_rating >= 99) {
         protoAbilityIDs_[0] = -1;
         protoAbilityIDs_[1] = -1;
         protoAbilityFlags_ = 0;
     }
     if (protoAbilityFlags_ == 0 && protoWeaponType_ != previous_weapon) {
-        if (Weapon[protoWeaponType_].mode == 7) suggest_abil(0x80000);
-        if (Weapon[protoWeaponType_].mode == 9) {
-            suggest_abil(1);
-            suggest_abil(0x2000);
+        // The image keeps this write-only byte store (0x0043A51A); only a
+        // memory-resident local reproduces it.
+        volatile char offense;
+        if (previous_offense <= 1) {
+            offense = Weapon[protoWeaponType_].offense_rating;
         }
+        if (Weapon[protoWeaponType_].mode == 7) suggest_abil(0x80000);
+        if (Weapon[protoWeaponType_].mode == 9) suggest_abil(1);
+        if (Weapon[protoWeaponType_].mode == 9) suggest_abil(0x2000);
         if (Weapon[protoWeaponType_].offense_rating >=
             Armor[protoArmorType_].defense_rating * 2) {
             suggest_abil(0x20000);
@@ -5213,8 +5225,9 @@ void DesignWin::select_weapon() {
 void DesignWin::select_armor() {
     SelectPartWin picker;
     const int row = picker_row_before(protoArmorType_, Armor, MaxArmorNum);
+    RECT rect = client_rect_;
     const int selected_row = picker.exec(
-        client_rect_.left, client_rect_.top, factionID_, 2, row,
+        rect.left, rect.top, factionID_, 2, row,
         protoChassisType_, protoWeaponType_, protoArmorType_,
         protoAbilityFlags_, protoReactorType_, SpotlightColorTable);
     protoArmorType_ = picker_record_at(selected_row, Armor, MaxArmorNum);
@@ -5238,8 +5251,9 @@ void DesignWin::select_reactor() {
     SelectPartWin picker;
     const int row = picker_row_before(protoReactorType_, Reactor,
                                       MaxReactorNum);
+    RECT rect = client_rect_;
     const int selected_row = picker.exec(
-        client_rect_.left, client_rect_.top, factionID_, 3, row,
+        rect.left, rect.top, factionID_, 3, row,
         protoChassisType_, protoWeaponType_, protoArmorType_,
         protoAbilityFlags_, protoReactorType_, SpotlightColorTable);
     protoReactorType_ = picker_record_at(selected_row, Reactor,
@@ -6217,36 +6231,24 @@ static int workshop_scaled_dimension(int dimension, int numerator,
 void __cdecl hq_list_draw(GraphicWin *window, int prototype, int flags,
                           int x, int y, int height) {
     const int zoom = WorkshopPreviewZoom;
-    const int override_scale = MapWinCaptionScale;
-    if ((flags & 1) != 0) {
-        const int width = override_scale > 0
-            ? workshop_scaled_dimension(132, override_scale, MapWinCaptionDivisor)
-            : workshop_scaled_dimension(132,
-                workshop_signed_bits(static_cast<unsigned int>(zoom) + 16u), 16);
-        x = workshop_signed_bits(static_cast<unsigned int>(x) +
-                                  static_cast<unsigned int>(width));
-    }
+    const int scale = MapWinCaptionScale;
+    x += (flags & 1) ? (scale > 0 ? 132 * scale / MapWinCaptionDivisor
+                                  : 132 * (WorkshopPreviewZoom + 16) / 16)
+                     : 0;
     if ((VehPrototypes[prototype].flags & 1) == 0) return;
 
-    const int draw_height = override_scale > 0
-        ? workshop_scaled_dimension(75, override_scale, MapWinCaptionDivisor)
-        : workshop_scaled_dimension(75,
-            workshop_signed_bits(static_cast<unsigned int>(zoom) + 16u), 16);
-    const int height_difference = workshop_signed_bits(
-        static_cast<unsigned int>(height) - static_cast<unsigned int>(draw_height));
-    y = workshop_signed_bits(static_cast<unsigned int>(y) +
-                              static_cast<unsigned int>(height_difference / 2));
-    if (override_scale > 0) {
-        SpriteScaleNumerator = override_scale;
+    const int draw_height = scale > 0 ? 75 * scale / MapWinCaptionDivisor
+                                      : 75 * (WorkshopPreviewZoom + 16) / 16;
+    y += (height - draw_height) / 2;
+    if (scale > 0) {
+        SpriteScaleNumerator = scale;
         SpriteScaleDenominator = MapWinCaptionDivisor;
     } else {
         SpriteScaleDenominator = 16;
-        SpriteScaleNumerator = workshop_signed_bits(
-            static_cast<unsigned int>(WorkshopPreviewZoom) + 16u);
+        SpriteScaleNumerator = WorkshopPreviewZoom + 16;
     }
     const int vehicle = veh_fake(prototype, WorkshopFaction);
-    // Reload the faction after veh_fake, matching the native callback.
-    if ((VehPrototypes[prototype].obsolete_factions & (1 << WorkshopFaction)) != 0)
+    if (VehPrototypes[prototype].obsolete_factions & (1 << WorkshopFaction))
         Vehs[vehicle].order = 1;
     veh_draw(window ? static_cast<Buffer *>(window) : 0,
              vehicle, x, y, zoom, 0x2044, 0);
