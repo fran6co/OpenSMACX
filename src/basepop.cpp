@@ -2574,7 +2574,7 @@ void __cdecl BasePop::close_class() {
     }
 }
 
-// ORIGINAL: 0x00605010 ?set_external_window@BasePop@@QAEXPAUGraphicWin@@HHHH@Z 0x00605010-0x006050E7 FILE SEMANTIC
+// ORIGINAL: 0x00605010 ?set_external_window@BasePop@@QAEXPAUGraphicWin@@HHHH@Z 0x00605010-0x006050E7 FILE BYTE_EXACT
 // symbol    ?set_external_window@BasePop@@QAEXPAVGraphicWin@@HHHH@Z
 // The image spells GraphicWin a struct (U) where this tree declares a class
 // (V); the bytes are identical.

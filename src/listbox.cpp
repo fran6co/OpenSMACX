@@ -505,7 +505,7 @@ void ListBox::on_mouse_leave(int a1, int a2) {
 // AutoSound window at +0x90 receives slots 23/7. These typed owners and
 // receiver slots follow the seed's vbtable walk and callsites.
 // Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x0060A020 ?set_selected_pos@ListBox@@QAEXHH@Z 0x0060A020-0x0060A1DD
+// ORIGINAL: 0x0060A020 ?set_selected_pos@ListBox@@QAEXHH@Z 0x0060A020-0x0060A1DD BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/0060a020.cpp", "source:src/listbox.h", "source:src/dialog.h", "source:src/win.h", "source:src/autosound.h", "pinned 0x0060A020 reads AutoSound +0x90 and calls Sound slots 23/7"], "reason": "Recover ListBox selection, viewport and notify-gated item callbacks through its typed Dialog and GraphicWin owners. The child at AutoSound +0x90 is a Sound interface view, not a Win* field; preserve the original seed and historical claim."}
 void ListBox::set_selected_pos(int position, int notify) {
     int moved = 0;
@@ -1529,7 +1529,7 @@ Purpose: Refresh the list after its entries changed: run the layout pass and
          ranges from the new metrics, then fire the callback and the
          notification slots. Returns 7 when there is no main window, or the
          attach result on failure.
-// ORIGINAL: 0x0060C9B0 ?update_changes@ListBox@@QAEHXZ 0x0060C9B0-0x0060CB63 FILE
+// ORIGINAL: 0x0060C9B0 ?update_changes@ListBox@@QAEHXZ 0x0060C9B0-0x0060CB63 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/listbox.h", "source:src/dialog.h", "source:src/win.h", "source:src/autosound.h", "Pinned 0x0060CA20..0x0060CA2B directly calls ListBox::attach; subsequent notifications reload the parent after callbacks."], "reason": "Recover refresh through real virtual bases, list state, callback and parent members, retaining the concrete attach target and original notification ordering. The AutoSound child storage is identified, but its nullary slot-23/slot-7 dynamic receiver type remains unresolved."}
 // size      435 bytes
 // prototype int (__thiscall ?update_changes@ListBox@@QAEHXZ)(ListBox* this)
@@ -2028,7 +2028,7 @@ Purpose: Land the list selection on the row whose id matches: reset the
          select the position the walk reached - or position -1 when the id
          is absent or the list is empty.
 
-// ORIGINAL: 0x00609FA0 ?set_selected_id@ListBox@@QAEXH@Z 0x00609FA0-0x0060A013 FILE
+// ORIGINAL: 0x00609FA0 ?set_selected_id@ListBox@@QAEXH@Z 0x00609FA0-0x0060A013 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["The pinned body at 0x609FAB forms the Dialog virtual-base list at Dialog+0xBC; loads/stores at +0xC4/+0xC8/+0xCC/+0xD0 correspond to declared StringList head/current/count/position fields.", "Pinned branches 0x609FBB/0x609FC8 and 0x609FD4/0x609FE8 preserve the empty-list, count-bounded ID walk, selection-on-hit and -1 selection-on-miss paths; the successful call is 0x60A020.", "ListBox already declares set_selected_id; src/listbox.cpp owns its sibling set_selected_pos and src/listbox.h owns the real virtual Dialog inheritance. No guessed class or layout is introduced."], "reason": "Transfer the existing ListBox method into its class implementation TU and retain its complete list walk and set_selected_pos calls. This source binding records owner placement and field provenance, not a byte-exact or linked-selection verdict."}
 // size      115 bytes
 // prototype void (__thiscall ?set_selected_id@ListBox@@QAEXH@Z)(ListBox* this, int)
@@ -2112,7 +2112,7 @@ Purpose: Find the list entry whose text case-insensitively matches the given
          previous links for a negative one (wrapping through the entry count),
          and report the matched position, or -1 when nothing matched.
 
-// ORIGINAL: 0x0060C7D0 ?UNK2@ListBox@@QAEHPAD@Z 0x0060C7D0-0x0060C920 FILE
+// ORIGINAL: 0x0060C7D0 ?UNK2@ListBox@@QAEHPAD@Z 0x0060C7D0-0x0060C920 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned 0x60C7D4..0x60C7DC obtains the Dialog virtual-base view and tests its StringList count at Dialog+0xCC; subsequent head/current/position accesses are +0xC4/+0xC8/+0xD0.", "StringStructEntry declares next at +0x0C, previous at +0x10 and payload at +0x08; StringStructEntry::string_payload()->text is the declared payload path for the original [entry+8][+4] text read.", "Pinned 0x60C867..0x60C86C explicitly zeroes EAX then loads [EAX+4] when current is nonnull but head is null. The source keeps the original absolute address-4 read in that malformed-state branch; it is not normalized or claimed as a source-owned global.", "Pinned calls 0x644F3A and 0x64FD20 are the original abs and _strcmpi callees; loop count reloads, cursor order, early returns and current-position restoration are retained.", "ListBox already declares UNK2 and genuinely virtually inherits Dialog; src/listbox.cpp is the existing implementation TU for ListBox list behavior."], "reason": "Transfer the existing ListBox member into its implementation TU, replacing verified Dialog/StringList/entry/payload offset accesses with the declared owners while retaining original branches, reload order, CRT calls and address-4 malformed-state behavior. The retained MISMATCH remains an exactness obligation."}
 // size      336 bytes
 // prototype int (__thiscall ?UNK2@ListBox@@QAEHPAD@Z)(ListBox* this, char*)

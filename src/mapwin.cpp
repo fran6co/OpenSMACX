@@ -2032,7 +2032,7 @@ void mouse_feedback_store_y(MapWin &window, int index, int value) {
 
 // The custom title strip returns HTCLIENT; points outside it use Win's normal
 // non-client hit test through the genuine virtual GraphicWin/Win base.
-// ORIGINAL: 0x0046F660 ?on_nc_hittest@MapWin@@QAEXHH@Z 0x0046F660-0x0046F6F9
+// ORIGINAL: 0x0046F660 ?on_nc_hittest@MapWin@@QAEXHH@Z 0x0046F660-0x0046F6F9 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:b55fcf8b:src/unrecovered/0046f660.cpp; retained identity, exact span, and return-register evidence.", "src/mapwin.h:MapWin::on_nc_hittest and src/win.h:Win::on_nc_hittest/client_rect_ establish the owner, inherited hit-test contract, and named client rectangle fields.", "Pinned MapWin and PlanWin constructor-installed Win views preserve the original on_nc_hittest receiver adjustments through their existing typed class callbacks."], "reason": "Home the original map-window non-client hit test in its typed owner, returning the client hit code for the custom title strip and delegating other points to the genuine Win base."}
 // symbol    ?on_nc_hittest@MapWin@@UAEHHH@Z
 // TRIED (retired seed git:b55fcf8b:src/unrecovered/0046f660.cpp): the seed's int return was contradicted by its standalone scaffold's void declaration (C2556/C2371); keeping void dropped the mov eax,1 custom-hit result. Its remaining MISMATCH #6 ('mov' vs 'push') concerns instruction scheduling around the in_box/RECT stores.
@@ -8484,7 +8484,7 @@ void __cdecl go_timer(int selection_mode) {
 
 
 
-// ORIGINAL: 0x0046F700 ?on_nc_left_down@MapWin@@QAEXHH@Z 0x0046F700-0x0046F880 FILE
+// ORIGINAL: 0x0046F700 ?on_nc_left_down@MapWin@@QAEXHH@Z 0x0046F700-0x0046F880 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned46F700 reads Win client_rect_.right/+154 and left/+14C, computes right-left-5B, then advances each half-open rectangle by15.", "Win::on_button_clicked(int) is virtual slot44/+B0; MapWin has the existing real override at46F8C0.", "Fresh VC6 private candidate reproduces vbtable-dependent client rectangle reads and independently reloads receiver/vptr for each +B0 call; keep the three early returns and final fallthrough."], "reason": "Recover non-client map buttons using the real Win client rectangle and MapWin virtual on_button_clicked; preserve four ordered hit tests and callbacks 3,2,1,0."}
 // symbol    ?on_nc_left_down@MapWin@@UAEXHH@Z
 // size      384 bytes

@@ -965,7 +965,7 @@ Status: Complete
  * it, so the DLL cannot link without a definition.
  */
 
-// ORIGINAL: 0x00609BF0 ?UNK2@Dialog@@QAEXHHHH@Z 0x00609BF0-0x00609C60
+// ORIGINAL: 0x00609BF0 ?UNK2@Dialog@@QAEXHHHH@Z 0x00609BF0-0x00609C60 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"reason":"Recover the complete body in its genuine C++ owner, with real embedded members, shared virtual bases, lifecycle and parent operations. Compiler-generated overrides/adjustors replace executable-address or vbtable stand-ins; no current matching claim is granted.","evidence":["git:de91fffe:src/recovered/units/00609bf0.cpp","image:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf","recovery/tasks/ui-eight-owner-coverage.json","Original entry 0x00609bf0; physical VC6 COFF emitted symbol ?UNK2@Dialog@@QAEXHHHH@Z."]}
 // symbol    ?UNK2@Dialog@@QAEHHHHH@Z
 int Dialog::UNK2(int window, int message, int wparam, int lparam) {
