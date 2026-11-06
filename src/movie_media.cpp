@@ -16,7 +16,7 @@
 // RECOVERY_IMPORT: v1 __imp__Sleep@4 KERNEL32.dll name:Sleep
 // RECOVERY_IMPORT: v1 __imp__mmioClose@8 WINMM.dll name:mmioClose
 
-// ORIGINAL: 0x005CBAE0 sub_5cbae0 0x005CBAE0-0x005CBBB6 FILE
+// ORIGINAL: 0x005CBAE0 sub_5cbae0 0x005CBAE0-0x005CBBB6 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"reason":"Recover the runtime-owned DirectDraw overlay operation and its actual source/destination interfaces, rectangles and failure-path receiver; update_overlay is a descriptive recovered name, not an original debug-symbol claim.","evidence":["Pinned5CBAE0..5CBBB6 passes runtime in ECX and mode in EDX;5CBB6C calls Surface2 slot33(+84), the installed DDRAW.H UpdateOverlay contract, with DDOVERLAYFX size38 and DDFX at30.","MediaRuntime descriptor+0 and rectangle fields+0C/+10/+14/+18; MediaDescriptor Surface2 pointers+14/+1C and dimensions+60/+64 have existing typed producers in movie_media.cpp and UV2Player::exec.","Pinned5CBB5E..6B passes distinct source and destination RECTs; destination is0,0,width-1,height-1. Flags200/84000 mean hide/show|DDFX, not DDBLT_WAIT or rotation.","Pinned5CBB7F writes runtime queue_record_kind+4C on E_INVALIDARG;5CBB98..A0 reloads runtime->descriptor->surface_1c after UpdateOverlay before Restore, ignoring its return.","Original identity/span and seed provenance retained from git:36d19d9ef:src/stringstruct.cpp and retired seed git:117282ee:src/unrecovered/005cbae0.cpp; prior Blt and descriptor-Restore interpretation is superseded, not original behavior."]}
 // symbol    ?update_overlay@MediaRuntime@@QAIHH@Z
 
@@ -1186,7 +1186,7 @@ extern "C" void __cdecl sub_5cdfa0(void *argument) {
   _endthread();
 }
 
-// ORIGINAL: 0x005CB050 sub_5cb050 0x005CB050-0x005CB220
+// ORIGINAL: 0x005CB050 sub_5cb050 0x005CB050-0x005CB220 BYTE_EXACT
 // symbol    ?initialize_stream@MediaRuntime@@SIHPADPAU1@@Z
 // kind      game
 // TRIED: sub_5c9ec0 is catalogued nullary cdecl but the disassembly sets `ecx = esi` (this=a2) before every call - a free __thiscall declaration is C4234, so it is reached through the Dummy member-function-pointer trick. The four mmio* Windows multimedia calls go through fixed-address function-pointer globals rather than by name, since the catalogue does not model them. Landing the closest control-flow-faithful form (divergence starts at instruction #6, on the mmio-open guard).
@@ -1627,7 +1627,7 @@ extern "C" int __fastcall sub_5ca310(MediaRuntime *r, int byte_count) {
   return 2;
 }
 
-// ORIGINAL: 0x005CA970 sub_5ca970 0x005CA970-0x005CAAA1
+// ORIGINAL: 0x005CA970 sub_5ca970 0x005CA970-0x005CAAA1 BYTE_EXACT
 // symbol    @sub_5ca970@4
 // kind      game
 extern "C" void __fastcall sub_5ca970(MediaRuntime *runtime) {
@@ -1841,7 +1841,7 @@ int MediaRuntime::sub_5cae00() {
   return 0;
 }
 
-// ORIGINAL: 0x005CC710 sub_5cc710 0x005CC710-0x005CC856
+// ORIGINAL: 0x005CC710 sub_5cc710 0x005CC710-0x005CC856 BYTE_EXACT
 // symbol    ?sub_5cc710@MediaRuntime@@QAEXXZ
 // kind      game
 // TRIED: the four vtable-slot-2 calls read `push piVar1; mov ecx, [piVar1]; call dword ptr [ecx+8]` - a plain function-pointer call taking one explicit pointer argument, NOT a thiscall dispatch (the receiver never lands in ecx before the call), so these are cdecl function-pointer casts, not virtual calls through an introduced class. `sub_5cbae0` similarly cannot be called by name (catalogued unmangled with no CRT_SIGNATURES entry, so declfix leaves it nullary - C2660 direct, C2733 redeclared) and the real call passes `this` in ecx and a literal 0 in edx with no stack push, i.e. __fastcall(void*, int); routed through a __fastcall function-pointer cast. Best reached: MISMATCH, edit_count 4, 338 bytes vs 326, mnemonic similarity ~0.98.
@@ -2435,7 +2435,7 @@ extern "C" void __fastcall sub_5cd750(MediaRuntime *runtime,
   }
 }
 
-// ORIGINAL: 0x005CD8D0 sub_5cd8d0 0x005CD8D0-0x005CD97B
+// ORIGINAL: 0x005CD8D0 sub_5cd8d0 0x005CD8D0-0x005CD97B BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned 0x5cd8d0 reloads runtime descriptor after each block helper before the width bound and after each row before the height bound; runtime +0x40 is reread for every block.", "The destination flows to packed byte/pixel writers without a disjointness contract. Output can therefore replace the runtime descriptor pointer or format option; no in-tree deliberate alias is asserted.", "Preserve the original helper branches, unchecked accesses, predictor/input initialization, sixteen-pixel steps and this format's distinct block/row byte strides."], "reason": "Retain live descriptor bounds and per-block format selection across caller-owned pixel output, matching the original sibling decoder loop rather than freezing the owner."}
 // TRIED: the given `__stdcall(int,int,int)` head - disasm reads edx with no prior init (a real 2nd register param) and `push ecx` at entry is pure stack reservation, not `this` preservation; rewrote as `__fastcall(int*,int,int,int,uint)` matching Ghidra's 5-param read, with differently-named cdecl externs for the two nullary-scaffolded callees. MISMATCH #4 push/mov, prologue register shape only.
 // symbol    @sub_5cd8d0@20
@@ -2471,7 +2471,7 @@ extern "C" void __fastcall sub_5cd8d0(MediaRuntime *runtime,
   }
 }
 
-// ORIGINAL: 0x005CD980 sub_5cd980 0x005CD980-0x005CDA2C
+// ORIGINAL: 0x005CD980 sub_5cd980 0x005CD980-0x005CDA2C BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned 0x5cd980 reloads runtime descriptor after each block helper before the width bound and after each row before the height bound; runtime +0x40 is reread for every block.", "The destination flows to packed byte/pixel writers without a disjointness contract. Output can therefore replace the runtime descriptor pointer or format option; no in-tree deliberate alias is asserted.", "Preserve the original helper branches, unchecked accesses, predictor/input initialization, sixteen-pixel steps and this format's distinct block/row byte strides."], "reason": "Retain live descriptor bounds and per-block format selection across caller-owned pixel output, matching the original sibling decoder loop rather than freezing the owner."}
 // symbol    @sub_5cd980@20
 // kind      game

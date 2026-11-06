@@ -411,7 +411,7 @@ int Flic::decode_frame(int x, int y) {
 Purpose: Decode the next frame in transparent mode - identical to
          decode_frame except the transparent bit is set for the duration
          of the decode and cleared again on every exit.
-// ORIGINAL: 0x0062A120 ?UNK1@Flic@@QAEHHH@Z 0x0062A120-0x0062A202
+// ORIGINAL: 0x0062A120 ?UNK1@Flic@@QAEHHH@Z 0x0062A120-0x0062A202 BYTE_EXACT
 // symbol    ?decode_frame_with_transparency@Flic@@QAEHHH@Z
 // size      226 bytes
 // prototype int (__thiscall ?UNK1@Flic@@QAEHHH@Z)(Flic* this, int, int)

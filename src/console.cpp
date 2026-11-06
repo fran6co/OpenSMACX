@@ -1855,7 +1855,7 @@ void Console::show_scen_objectives() {
 
 // Fixed-slot bindings carried from 00510ce0.cpp
 
-// ORIGINAL: 0x00510CE0 ?ready_search@Console@@QAEHH@Z 0x00510CE0-0x00510F48 FILE
+// ORIGINAL: 0x00510CE0 ?ready_search@Console@@QAEHH@Z 0x00510CE0-0x00510F48 FILE BYTE_EXACT
 // TRIED: prologue register order (7-slot frame, edi saved to a local purely to free it as scratch across the inner loop) - not chased byte-for-byte; control flow/offsets re-derived from raw disasm since Ghidra's local_N numbering did not line up with the real ebp-relative slots here.
 // working copy - scaffold materialised by --work
 // size      616 bytes
@@ -2018,7 +2018,7 @@ void Console::move_cursor(int direction) {
     }
 }
 
-// ORIGINAL: 0x005147E0 ?set_cursor@Console@@QAEXHH@Z 0x005147E0-0x0051487D FILE
+// ORIGINAL: 0x005147E0 ?set_cursor@Console@@QAEXHH@Z 0x005147E0-0x0051487D FILE BYTE_EXACT
 // TRIED: nesting the last bound check as its own `if` (both alone and after a 3-way `||` early return), and a fully split `&&` chain with success nested two levels deep - all reproduce the same MISMATCH #15 'jl' vs 'jge' on the 4th comparison (a1 < bound2); similarity 0.9091. void return keeps the C2556 declared prototype; the eax=1/xor eax,eax result codes are dropped.
 // size      157 bytes
 // prototype void (__thiscall ?set_cursor@Console@@QAEXHH@Z)(Console* this, int xCoord, int yCoord)
@@ -2812,7 +2812,7 @@ void Console::set_ai(int faction_id) {
 Purpose: Load a saved game: leave the base window, refuse outside an active
          network/PBEM session, then rebuild the desktop or reload the running
          game and redraw the world.
-// ORIGINAL: 0x0051BBA0 ?load_proc@Console@@QAEXHH@Z 0x0051BBA0-0x0051BC62 FILE
+// ORIGINAL: 0x0051BBA0 ?load_proc@Console@@QAEXHH@Z 0x0051BBA0-0x0051BC62 FILE BYTE_EXACT
 // size      194 bytes
 // prototype void (__thiscall ?load_proc@Console@@QAEXHH@Z)(Console* this, int, int)
 // callers   2   call targets   9
@@ -2883,7 +2883,7 @@ void Console::end_of_turn() {
     field_23BE4_ = 0;
 }
 
-// ORIGINAL: 0x005165B0 ?zoom_to_upkeep_base@Console@@QAEXXZ 0x005165B0-0x005166C3
+// ORIGINAL: 0x005165B0 ?zoom_to_upkeep_base@Console@@QAEXXZ 0x005165B0-0x005166C3 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["The retained 0x005165B0 seed selects the nearest own base carrying Base::state bit 0x10, using the current MapWin camera coordinates and wraps X on round maps.", "base.h names the 0x0097D040 array as Bases with 0x134-byte Base records; its x/y/faction/state members are at offsets 0/2/4/0x30, matching all seed reads.", "MapWin fields 0x1DD9C/0x1DDA0 supply the camera point; map.cpp binds MapLongitude/MapIsFlat/MapLongitudeBounds; tutwin.h binds the image's BaseWin at 0x006A7628 as TutWinBaseWindow."], "reason": "Choose the nearest base of ConsoleGlobal's current faction with the seed's wrapped-map distance calculation and pass its typed index to the established BaseWin zoom path."}
 void Console::zoom_to_upkeep_base() {
     const MapWin *map_window = console_map_win();
@@ -5123,7 +5123,7 @@ void Console::on_nc_left_up(int x, int y) {
 
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x005169F0 ?end_my_turn@Console@@QAEXXZ 0x005169F0-0x00516C4D
+// ORIGINAL: 0x005169F0 ?end_my_turn@Console@@QAEXXZ 0x005169F0-0x00516C4D BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/005169f0.cpp: retained complete original identity/spans and seed evidence", "recovery/tasks/console-scenario-owner-wave.json; native scope expansions through sequence27", "Source owner interpretation preserves mapped original accesses, lifetime calls and branch roles; source-bound members and globals replace the seed offsets/address aliases. Historical seeds and claims remain independent restoration obligations."], "reason": "Recover end-turn into the genuine Console owner using existing pane/timer/lifecycle members, shared faction waiting state and the independently read original popup captions. Preserve remote-turn and ready-vehicle decisions, including separate timer clear rather than InfoWin::reset. No matching or game-acceptance claim."}
 void Console::end_my_turn() {
     TutWinBaseWindow.cancel_zoom_wait();

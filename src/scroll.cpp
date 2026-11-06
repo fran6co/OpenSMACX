@@ -809,7 +809,7 @@ void Scroll::set_bevel_lower(int color) {
 /*
 Purpose: Resize the scrollbar track and its right/down arrow after the parent
          changes size. The smaller axis sets the track thickness.
-// ORIGINAL: 0x00606860 ?on_resize@Scroll@@QAEXHH@Z 0x00606860-0x0060699B FILE
+// ORIGINAL: 0x00606860 ?on_resize@Scroll@@QAEXHH@Z 0x00606860-0x0060699B FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence":["source:src/recovered/units/00606860.cpp","source:src/scroll.h:Scroll","source:src/win.h:Win::on_resize"],"reason":"Home the resize handler on the actual Scroll layout and dispatch the embedded FlatButton through its inherited virtual resize, without raw self offsets or an invented vtable."}
 // symbol    ?on_resize@Scroll@@UAEXHH@Z
 // The catalogue spells this QAE, but the real Win base declares slot 13;
@@ -1147,7 +1147,7 @@ void Scroll::set_sprite_down(
 
 /*
 Purpose: Clamp, optionally reverse, and redraw the scrollbar position.
-// ORIGINAL: 0x00605D20 ?set_pos@Scroll@@QAEXH@Z 0x00605D20-0x00605D8A
+// ORIGINAL: 0x00605D20 ?set_pos@Scroll@@QAEXH@Z 0x00605D20-0x00605D8A BYTE_EXACT
 // TRIED: the guard clause's branch polarity (image falls through to the
 //   continue path and jumps forward to a shared `ret` for the early return;
 //   this tree's `if(!parent) return 0;` gets compiled the other way around,
@@ -1583,7 +1583,7 @@ void Scroll::on_mouse_move(int x, int y) {
     redraw();
 }
 
-// ORIGINAL: 0x006061E0 ?on_left_down@Scroll@@QAEXHH@Z 0x006061E0-0x006062B8 FILE
+// ORIGINAL: 0x006061E0 ?on_left_down@Scroll@@QAEXHH@Z 0x006061E0-0x006062B8 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/006061e0.cpp", "Scroll thumb and range members in src/scroll.h", "Win::on_mouse_move and WinPointerOwner3/4 in src/win.h"], "reason": "Recover the Scroll thumb press handler using its typed orientation, thumb geometry, parent callback and capture-owner state."}
 // symbol    ?on_left_down@Scroll@@UAEXHH@Z
 void Scroll::on_left_down(int x, int y) {
@@ -1638,7 +1638,7 @@ void Scroll::on_left_up(int, int) {
     }
 }
 
-// ORIGINAL: 0x00606320 ?on_mousewheel_down@Scroll@@QAEXH@Z 0x00606320-0x0060643E
+// ORIGINAL: 0x00606320 ?on_mousewheel_down@Scroll@@QAEXH@Z 0x00606320-0x0060643E BYTE_EXACT
 // RECOVERY_BINDING: v1 {"reason":"Keep the original chosen reversal branch, callback-visible reloads and delta-gated sound operation instead of caching notification values or omitting sound.","evidence":["pinned:606382..6063FD reloads callback/id/position/bounds after parent notification inside the original reversal branch","pinned:60637C jumps directly to redraw for delta zero;606402..606425 otherwise reloads the live parent and checks/plays its sound after both notifications, without another parent-null guard"]}
 void Scroll::on_mousewheel_down(int delta) {
     Win *const parent = win_parent_;
@@ -1725,7 +1725,7 @@ void Scroll::on_mousewheel_up(int delta) {
 /*
 Purpose: Move a scrollbar to an endpoint with Home/End when horizontal, or
          advance one page with Page Up/Down when vertical; notify its owner.
-// ORIGINAL: 0x00606560 ?on_key_click@Scroll@@QAEHHH@Z 0x00606560-0x006066EC FILE
+// ORIGINAL: 0x00606560 ?on_key_click@Scroll@@QAEHHH@Z 0x00606560-0x006066EC FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence":["source:src/unrecovered/00606560.cpp","source:src/scroll.cpp:Scroll::on_mousewheel_up","source:src/listbox.cpp:ListBoxGlobalDDC"],"reason":"Home the key navigation on Scroll's inherited Buffer, range members, real parent dispatch and source-owned notification globals; no vtable stand-ins or fixed executable addresses."}
 // symbol    ?on_key_click@Scroll@@UAEHHH@Z
 // The old seed's spelling diverged at its prologue; this typed owner body is
