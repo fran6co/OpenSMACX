@@ -752,7 +752,7 @@ int TamperRegistryCursor;
 
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x00441250 ?clear_all_offers@@YAXXZ 0x00441250-0x00441296
+// ORIGINAL: 0x00441250 ?clear_all_offers@@YAXXZ 0x00441250-0x00441296 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned441250 writes four words at offsets0/4/8/12 in90-byte cells over8x8 faction pairs. Source-extracted tracked assignments exercise exact interleaved flat/transposed order."], "reason": "Recover complete offer reset using genuine64-cell storage and typed fields while preserving flat/transposed write ordering and untouched payload. No wider offer semantics are invented."}
 void __cdecl clear_all_offers() {
     for (int row = 0; row < MaxPlayerNum; ++row) {
@@ -1183,7 +1183,7 @@ BOOL __cdecl not_my_turn() {
 
 /*
 Purpose: Handle creation of pop-up message on Planetfall.
-// ORIGINAL: 0x00589180 ?planetfall@@YAXH@Z 0x00589180-0x00589329
+// ORIGINAL: 0x00589180 ?planetfall@@YAXH@Z 0x00589180-0x00589329 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned 0x00589180-0x00589329 calls parse_says with slots 2, 3, 0, 1 in that order; the four text pointers are Player.title_leader (+0x4C), name_leader (+0x34), adj_name_faction (+0x304), and noun_faction (+0x2E4).", "Pinned default writes are ordered: PluralityDefault=0 before slot 2; GenderDefault=is_leader_female before slot 2; then GenderDefault and PluralityDefault=0 before slot 3; slot 0 inherits those defaults; finally noun_gender then is_noun_plural before slot 1. general.h binds those defaults to 0x009BBFEC/0x009BBFF0.", "Pinned Player records begin at 0x00946A50 with 0x59C stride; rule_flags is +0x508 and alien bit 0x80 is tested directly. The image uppercases the copied filename via CharUpperA then calls the pinned _strcmp entry at 0x00645660 for exact USURPER/FUNGBOY comparisons; this preserves the raw flag test and exact string behavior, not is_alien_faction's expansion gate or case-insensitive comparison.", "Pinned UI key construction clears and appends PLANETFALLX for an alien USURPER, PLANETFALLF for exact FUNGBOY, otherwise PLANETFALL. It uses shared StringTemp at 0x009B86A0. Nonzero TurnCurrentNum at 0x009A64D4 gates parse_num(0, turn), the 64-slot project scan, and a final appended '2' suffix before X_pop(StringTemp, 0); zero turn skips all three.", "The project scan reads the 64 dword SecretProject array at 0x009A6514, accepts nonnegative base owners matching faction_id, and calls the int-input parse_say(4, Facility[70+project].name, -1, -1) for each match. The typed sources are GameDataStateWindowFields::secret_project_, Base.faction_id_current, and RulesFacility.name; the generated body uses has_project without adding bounds or error-path changes.", "The previous TRIED finding remains verbatim as history; this rationale records the pinned call/global/UI mapping only. Existing ORIGINAL identity and complete 425-byte span remain; no exactness/semantic claim is granted."], "reason": "Recover Planetfall's ordered parser defaults, shared scratch-buffer popup key, current-turn project context and source-owned faction/project state from the pinned body."}
 // size      425 bytes
 // prototype void (__cdecl ?planetfall@@YAXH@Z)(int factionID)
@@ -1926,7 +1926,7 @@ Purpose: Bring the shared system up, once per process: create the four data
          label tables, upper-case the two default button captions out of them,
          load the fixed art, then build the eight map-window slots and the
          desktop's standing windows.
-// ORIGINAL: 0x0058F040 ?system_init@@YAHXZ 0x0058F040-0x0058F245;0x00660BD7-0x00660BEC
+// ORIGINAL: 0x0058F040 ?system_init@@YAHXZ 0x0058F040-0x0058F245;0x00660BD7-0x00660BEC BYTE_EXACT
 // size      538 bytes
 // prototype int (__cdecl ?system_init@@YAHXZ)(void)
 // callers   1   call targets   23
@@ -2236,7 +2236,7 @@ int __cdecl game_reload(int mode, int reload) {
     return 0;
 }
 
-// ORIGINAL: 0x00524210 ?climactic_changes@@YAXXZ 0x00524210-0x005242C0 FILE
+// ORIGINAL: 0x00524210 ?climactic_changes@@YAXXZ 0x00524210-0x005242C0 FILE BYTE_EXACT
 // working copy - scaffold materialised by --work
 // size      176 bytes
 // prototype
@@ -2365,7 +2365,7 @@ int __cdecl sub_52a980() {
 }
 
 
-// ORIGINAL: 0x0052DBF0 ?next_player_turn@@YAHXZ 0x0052DBF0-0x0052DC68 FILE
+// ORIGINAL: 0x0052DBF0 ?next_player_turn@@YAHXZ 0x0052DBF0-0x0052DC68 FILE BYTE_EXACT
 // TRIED: do-while loop over i=[NetTurnFaction+1, 8) with hi/lo byte reads hoisted before the loop, matching the Ghidra hypothesis closely; diverges at instr #14 (original 'lea' vs rebuilt 'inc'), a register/addressing-mode choice around the `+1`.
 // working copy - scaffold materialised by --work
 // size      120 bytes
@@ -2451,7 +2451,7 @@ void Demo::redraw() {
     soft_update(&area);
 }
 
-// ORIGINAL: 0x005243A0 sub_5243a0 0x005243A0-0x0052445B
+// ORIGINAL: 0x005243A0 sub_5243a0 0x005243A0-0x0052445B BYTE_EXACT
 // symbol    ?on_left_down@Demo@@UAEXHH@Z
 // kind      game
 // TRIED: extern "C" __stdcall(int,int) contract (ecx has no matching stack slot, so it is __thiscall); own Obj_5243a0 class (3 embedded RECTs) + VCall slot058 reaches MNEMONIC_ONLY, same 187 bytes, same mnemonics, an operand still differs
@@ -2840,7 +2840,7 @@ void Demo::toggle_and_repaint() {
 
 // ===== homed out of the archive 2026-09-04 =====
 
-// ORIGINAL: 0x0058FA20 ?get_pacts@@YAPADH@Z 0x0058FA20-0x0058FA69
+// ORIGINAL: 0x0058FA20 ?get_pacts@@YAPADH@Z 0x0058FA20-0x0058FA69 BYTE_EXACT
 // LEVER: the carried bindings renamed to the tree's own models - Players
 //         (faction.h, 0x00946A50), Labels (alpha.h, 0x009B90F8), StringTable
 //         (strings.h, 0x009B90D8) and general.h's noun defaults - so no
@@ -2862,7 +2862,7 @@ char *__cdecl get_pacts(int faction_id) {
     return StringTable.get(Labels.strings_ptr[noun != 0 ? 0xcc : 0xcb]);
 }
 
-// ORIGINAL: 0x0058F9D0 ?get_pact@@YAPADH@Z 0x0058F9D0-0x0058FA19
+// ORIGINAL: 0x0058F9D0 ?get_pact@@YAPADH@Z 0x0058F9D0-0x0058FA19 BYTE_EXACT
 // MISMATCH #3 'xor' vs 'mov': the original zeroes edx BEFORE storing
 // PluralityDefault = 0, and every source order tried compiles that store
 // first. A second divergence follows: the original keeps `add edx, 0xc9` as
@@ -3112,7 +3112,7 @@ extern "C" int __cdecl directplay_install_is_complete() {
     return result;
 }
 
-// ORIGINAL: 0x0058FA70 ?get_pacts@@YAPADHH@Z 0x0058FA70-0x0058FAFA
+// ORIGINAL: 0x0058FA70 ?get_pacts@@YAPADHH@Z 0x0058FA70-0x0058FAFA BYTE_EXACT
 // working copy - scaffold materialised by --work
 // size      138 bytes
 // prototype
@@ -3354,7 +3354,7 @@ int __cdecl generators(int faction_id, int *count_out) {
     return count;
 }
 
-// ORIGINAL: 0x0058FBC0 ?get_his_her@@YAPADHH@Z 0x0058FBC0-0x0058FC4B
+// ORIGINAL: 0x0058FBC0 ?get_his_her@@YAPADHH@Z 0x0058FBC0-0x0058FC4B BYTE_EXACT
 // LEVER: the fixed-address bindings renamed to the tree's own models - Players
 //         (faction.h), Labels (alpha.h), StringTable (strings.h), the CharUpperA
 //         import slot (windows.h) and 0x00945838 as PronounBuffer below. The
@@ -3389,7 +3389,7 @@ char *__cdecl get_his_her(int faction_id, int sentence_form) {
 /*
 Purpose: Fetch the "him/her" pronoun into the shared game pronoun buffer,
          optionally upper-casing it, beside the sibling get_his_her body.
-// ORIGINAL: 0x0058FC50 ?get_him_her@@YAPADHH@Z 0x0058FC50-0x0058FCDB
+// ORIGINAL: 0x0058FC50 ?get_him_her@@YAPADHH@Z 0x0058FC50-0x0058FCDB BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Original58FC50..58FCDB; retired seed git:b18d3ac8:src/unrecovered/0058fc50.cpp records the same identity and spans.", "The fixed-address bindings rename to the tree's own models exactly as game.cpp's sibling get_his_her (0x0058FBC0) already does: Players (faction.h, the 0x167-stride first word is is_leader_female), Labels (alpha.h), StringTable (strings.h), PronounBuffer (game.h, 0x00945838) and the CharUpperA import the header supplies.", "Label code 0xC7/0xC8 and the sentence-form handling are the seed's measured behaviour."], "reason": "Home the sibling pronoun fetcher beside its shared buffer and get_his_her in the game source."}
 Return Value: PronounBuffer
 Status: Coverage transcription - unclaimed body
@@ -3410,7 +3410,7 @@ char *__cdecl get_him_her(int faction_id, int sentence_form) {
     return PronounBuffer;
 }
 
-// ORIGINAL: 0x0058FB00 ?get_pact_hood@@YAPADHH@Z 0x0058FB00-0x0058FB61
+// ORIGINAL: 0x0058FB00 ?get_pact_hood@@YAPADHH@Z 0x0058FB00-0x0058FB61 BYTE_EXACT
 // LEVER: the five fixed-address bindings renamed to the tree's own models - see
 //         get_pacts above for the address map. No anonymous g_ binding arrived.
 // TRIED: `int code = 0xcd; if (...) code = 0xce;`, the ternary form, and a
@@ -4516,7 +4516,7 @@ void __cdecl read_tamper() {
 
 
 
-// ORIGINAL: 0x0051E110 ?check_tamper@@YAXXZ 0x0051E110-0x0051E38B
+// ORIGINAL: 0x0051E110 ?check_tamper@@YAXXZ 0x0051E110-0x0051E38B BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:9f6ee90ae7baa6354fcca006def5561fb956792b:src/recovered/units/0051e110.cpp", "recovery/tasks/game-save-load-owner-coverage.json"], "reason": "Recover the full PBEM tamper check using shared typed registry records and cursor, faction state, direct registry APIs and the original unguarded corrupt-cursor/error behavior."}
 // symbol    ?check_tamper@@YAXXZ
 void __cdecl check_tamper() {
@@ -4740,7 +4740,7 @@ int __cdecl map_data(FILE *file, int write_mode, int transfer_map_header) {
     return result != 0;
 }
 
-// ORIGINAL: 0x005A9C10 ?load_map_daemon@@YAHPAD@Z 0x005A9C10-0x005A9DAD
+// ORIGINAL: 0x005A9C10 ?load_map_daemon@@YAHPAD@Z 0x005A9C10-0x005A9DAD BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/005a9c10.cpp", "recovery/tasks/game-save-load-owner-coverage.json"], "reason": "Recover extension/header/version validation, map windows and map tiles, contour copy direction and Paths lifecycle through existing genuine owners."}
 // symbol    ?load_map_daemon@@YAHPAD@Z
 // TRIED: extension check, env_open, header_check against the TERRAN/ TERRANMAP string depending on the extension, then (fread reuses the `a1` parameter's own stack slot as scratch, matching the disassembly) a MapWin close sweep, map_data, and the counter table reset/copy. Landed at 0.80 similarity; diverges at #3 on register vs stack scheduling for the extension check.
@@ -5996,7 +5996,7 @@ int __cdecl load_map() {
 }
 
 /*
-// ORIGINAL: 0x005A9DB0 ?yearmotize@@YAXPAD@Z 0x005A9DB0-0x005A9EB0 FILE
+// ORIGINAL: 0x005A9DB0 ?yearmotize@@YAXPAD@Z 0x005A9DB0-0x005A9EB0 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:f802f71a:src/leaf_recoveries.cpp", "image:0x005A9DB0", "source:src/game.cpp"], "reason": "The complete year-digit rewrite is the helper called by save_game; move its unchanged typed body and original identity out of the generic leaf container into the game owner."}
 // TRIED: scaffold's own `isdigit()`/`_itoa()` (empty-parens fallback declarations) - redeclared under new names `my_isdigit`/ `my_itoa` with the real signatures instead (relocation is masked regardless of the symbol name, matching the existing `my_itoa` idiom in git:20b88b523285a816ba99f503d727b761b89b227f:src/recovered/units/0042abc0.cpp).
 */
@@ -6324,7 +6324,7 @@ void __cdecl scenario_setup() {
     }
 }
 
-// ORIGINAL: 0x00588F90 ?alien_start@@YAXXZ 0x00588F90-0x0058917C
+// ORIGINAL: 0x00588F90 ?alien_start@@YAXXZ 0x00588F90-0x0058917C BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:99d6e72bcd5ae3be3566222736528cb0dc57935c:src/recovered/units/00588f90.cpp", "pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "recovery/tasks/game-logic-seed-owner-coverage.json; preserve original extents and historical seed lessons. Ordinary owned literals have pinned content provenance, not exact original data-allocation claims."], "reason": "Recover first-turn alien faction suppression through real Player filename/rules, lock masks, descending Base/Veh lifetimes and faction records."}
 void __cdecl alien_start() {
     static const char alien_filename_a[] = "FUNGBOY";
@@ -8244,7 +8244,7 @@ void __cdecl clear_offer_pair(int faction_a, int faction_b) {
     OfferResetCells[faction_b][faction_a].state_[1] = 0;
 }
 
-// ORIGINAL: 0x0051DFD0 sub_51dfd0 0x0051DFD0-0x0051DFF9
+// ORIGINAL: 0x0051DFD0 sub_51dfd0 0x0051DFD0-0x0051DFF9 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["task:typed-offer-tamper-reset-owners", "pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf:0x51dfd0", "historical seed:src/recovered/units/0051dfd0.cpp; identity/spans/claims and useful discoveries retained; seed retirement requires fresh verification."], "reason": "Reset the existing fifty-record registry and cursor with native field order 0,4,8,10,C,14. Native interior cursor begins at record+4 and terminates at93A514; the touched storage ends93A510, not93A514. Neutral fields and unknown reachability remain explicit; no larger allocation or game semantics are inferred."}
 // symbol    ?clear_tamper_registry@@YAXXZ
 void __cdecl clear_tamper_registry() {
@@ -8431,7 +8431,7 @@ static const char NetUpkeepMapSectionChecksum[] = "Failed MAP section chcksum - 
 // RECOVERY_OBJECT: v2 0x0068BD84 0x0068BD9A _NetUpkeepSkippingUpkeepPhase 0x005290A0
 static const char NetUpkeepSkippingUpkeepPhase[] = "Skipping upkeep phase";
 
-// ORIGINAL: 0x00528EA0 ?net_upkeep_phase@@YAHH@Z 0x00528EA0-0x00529097
+// ORIGINAL: 0x00528EA0 ?net_upkeep_phase@@YAHH@Z 0x00528EA0-0x00529097 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["image:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf; original:0x00528EA0-0x00529097; saved pinned full-span sha256:6d3147e1a8d83201f57389f6c8ed65a0938667f845bfcec4215f941828ab75ee", "source:src/game.cpp:net_upkeep at 0x005290A0 is the existing caller/turn owner; game.cpp already includes the NetDaemon, Console, lock-mask, MultiWindow, parser/message, log, temp and WinMM interfaces", "source:src/netdaemon.h:LockStateEntry is 0x3C bytes; lock_state_ begins at NetDaemon+0x1B2C; the referenced sent, ack and turn-end words are existing members, not new globals", "source:src/console.h:ConsoleGlobal.faction_id_; source:src/game_data_state_window.h:GameDataStateStorage.fields_.turn_current_num_ and lock_masks_.enable_mask_; source:src/game.h:ExitTurnLoop", "pinned branch review: preserve early returns before close/mask reset, timeout > 1000, phase>=4 popup suppression, live callback mask rereads, server receive loop, common cleanup order and final ExitTurnLoop reread", "historical seed:git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/00528ea0.cpp; existing TRIED note remains attached verbatim"], "reason": "Keep the multiplayer turn rendezvous in the existing game-turn owner, using the already typed NetDaemon lock-state, Console, game-turn, GameDataStateWindow lock-mask and WinMM APIs while retaining this complete original body identity."}
 // TRIED: `int shiftAmt = *g_00939284; ... 1 << shiftAmt` vs a two-statement `unsigned int bit = 1; bit <<= shiftAmt;` vs computing the bitmask load before/after the shift - all three schedule the same as the original up to instruction #5, where the original still has a bare `mov eax, 1` that the rebuilt folds away before the `shl`. Rest of the function (the do/while upkeep-poll loop, the two log_say/message_data pairs, the NetDaemon/NetMsg calls) is a straight disassembly transcription.
 // kind      game
@@ -8863,7 +8863,7 @@ static const char NetEndTurnSaveGameSuffix[] = "end";
 // RECOVERY_OBJECT: v2 0x0068BE20 0x0068BE32 _NetEndTurnSaveFileLog 0x00529F30
 static const char NetEndTurnSaveFileLog[] = "Writing save file";
 
-// ORIGINAL: 0x00529F30 ?net_end_of_turn@@YAXXZ 0x00529F30-0x0052A2D3
+// ORIGINAL: 0x00529F30 ?net_end_of_turn@@YAXXZ 0x00529F30-0x0052A2D3 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["historical seed:src/recovered/units/00529f30.cpp", "task:net-turn-coordinator-owner", "ConsoleGlobal9156B0+23BE4/+23BE8 owns939294/939298; UpgradePromptAnswered90EA3C, TurnRedrawPending703DE0 and CouncilPendingMessageArgs68BF38 already own their storage. Do not create competing aliases.", "Native prototypes64..511 use34-byte records and flags+30/obsolete_factions+2C, not seed1A stride; peer checksums use8x21-word existing storage. Preserve wait/abort ordering and masked PlayerLock active-bit test; extent/lifetime/runtime and retained-link evidence remain bounded."], "reason": "Recover the complete multiplayer turn operation through actual source-owned objects, arrays, members and SDK calls; preserve historical identity, spans and seed discoveries without implying game acceptance."}
 void __cdecl net_end_of_turn() {
     if ((GameDataStateStorage.fields_.net_turn_flags_ & 0x10u) != 0) {
