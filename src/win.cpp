@@ -2021,16 +2021,7 @@ Win *Win::get_mouse_window(int *x, int *y) {
     for (;;) {
         if (WinPointerOwner1 != nullptr) {
             if ((WinPointerOwner1->iSomeFlag_ & WinFlagVisible) != 0) {
-                *x -= WinPointerOwner1->client_rect_.left + WinPointerOwner1->outer_rect_.left;
-                *y -= WinPointerOwner1->client_rect_.top + WinPointerOwner1->outer_rect_.top;
-                if ((WinPointerOwner1->iFlags_ & WinFlagClipToParent) != 0
-                    && WinPointerOwner1->win_parent_ != nullptr) {
-                    WinPointerOwner1->win_parent_->screen_to_client(x, y);
-                    if ((WinPointerOwner1->iFlags_ & WinFlagParentOffset) != 0) {
-                        *x += WinPointerOwner1->win_parent_->outer_rect_.left;
-                        *y += WinPointerOwner1->win_parent_->outer_rect_.top;
-                    }
-                }
+                WinPointerOwner1->screen_to_client(x, y);
                 WinMouseDirect = 0;
                 found = WinPointerOwner1;
                 break;
@@ -2052,16 +2043,7 @@ Win *Win::get_mouse_window(int *x, int *y) {
         }
         if (WinPointerOwner3 != nullptr) {
             if ((WinPointerOwner3->iSomeFlag_ & WinFlagVisible) != 0) {
-                *x -= WinPointerOwner3->client_rect_.left + WinPointerOwner3->outer_rect_.left;
-                *y -= WinPointerOwner3->client_rect_.top + WinPointerOwner3->outer_rect_.top;
-                if ((WinPointerOwner3->iFlags_ & WinFlagClipToParent) != 0
-                    && WinPointerOwner3->win_parent_ != nullptr) {
-                    WinPointerOwner3->win_parent_->screen_to_client(x, y);
-                    if ((WinPointerOwner3->iFlags_ & WinFlagParentOffset) != 0) {
-                        *x += WinPointerOwner3->win_parent_->outer_rect_.left;
-                        *y += WinPointerOwner3->win_parent_->outer_rect_.top;
-                    }
-                }
+                WinPointerOwner3->screen_to_client(x, y);
                 WinMouseDirect = 0;
                 found = WinPointerOwner3;
                 break;
@@ -2086,16 +2068,7 @@ Win *Win::get_mouse_window(int *x, int *y) {
 
     if (found == nullptr) {
         if (WinFocusWindow != nullptr) {
-            *x -= WinFocusWindow->client_rect_.left + WinFocusWindow->outer_rect_.left;
-            *y -= WinFocusWindow->client_rect_.top + WinFocusWindow->outer_rect_.top;
-            if ((WinFocusWindow->iFlags_ & WinFlagClipToParent) != 0
-                && WinFocusWindow->win_parent_ != nullptr) {
-                WinFocusWindow->win_parent_->screen_to_client(x, y);
-                if ((WinFocusWindow->iFlags_ & WinFlagParentOffset) != 0) {
-                    *x += WinFocusWindow->win_parent_->outer_rect_.left;
-                    *y += WinFocusWindow->win_parent_->outer_rect_.top;
-                }
-            }
+            WinFocusWindow->screen_to_client(x, y);
             *x += WinFocusWindow->outer_rect_.left;
             *y += WinFocusWindow->outer_rect_.top;
             found = get_mouse_window_recurse(WinFocusWindow, x, y);
@@ -2112,16 +2085,7 @@ Win *Win::get_mouse_window(int *x, int *y) {
                 // and the position goes back to where it started.
                 *x = WinMouseScreenX;
                 *y = WinMouseScreenY;
-                *x -= WinFocusWindow->client_rect_.left + WinFocusWindow->outer_rect_.left;
-                *y -= WinFocusWindow->client_rect_.top + WinFocusWindow->outer_rect_.top;
-                if ((WinFocusWindow->iFlags_ & WinFlagClipToParent) != 0
-                    && WinFocusWindow->win_parent_ != nullptr) {
-                    WinFocusWindow->win_parent_->screen_to_client(x, y);
-                    if ((WinFocusWindow->iFlags_ & WinFlagParentOffset) != 0) {
-                        *x += WinFocusWindow->win_parent_->outer_rect_.left;
-                        *y += WinFocusWindow->win_parent_->outer_rect_.top;
-                    }
-                }
+                WinFocusWindow->screen_to_client(x, y);
                 WinMouseDirect = 0;
                 found = WinFocusWindow;
             }
@@ -3050,83 +3014,47 @@ Purpose: Walk one root window's subtree in z-order, appending every visible
 // flags     hidden;sp_ready;purged_ok
 // calls     0x005F4EC0 0x005F7E90
 void __cdecl recurse_zorder(Win * window) {
-    bool found = false;
+    int found = 0;
     int i = 0;
-    // TRIED (2026-08-27): carrying `cur` as `Win *` and reading the parent
-    // through c->win_parent_ - both the honest spellings. It collapsed the
-    // body from its high-nineties agreement to 1 of 107: the typed compare
-    // forces VC6 off the register pairing the image schedules, unlike
-    // get_mouse_window_recurse where the same retype held. Casts restored
-    // for that measurement; the parent field is now named for structural
-    // fidelity, without revisiting the pointer/int comparison.
-    // The later owner-level pointer-flow recovery keeps the historical match
-    // result above while expressing the child/global identity as Win pointers.
-    Win *cur;
+    // WinZOrderWindow is read directly: VC6 keeps it in a register and
+    // reloads it only after calls, as the image does.
+    for (; i < window->child_count_; ++i) {
+        if ((window->children_[i]->iFlags_ & 0x20) == 0) {
+            if (WinZOrderWindow != 0 && WinZOrderWindow == window->children_[i]) {
+                WinZOrderCount = 0;
+                found = 1;
+            }
+            if (window->children_[i]->is_visible()) {
+                recurse_zorder(window->children_[i]);
+            }
+            if (WinZOrderWindow != 0 && found) {
+                break;
+            }
+        }
+    }
 
-    if (window->child_count_ > 0) {
-        cur = WinZOrderWindow;
-        Win **child = &window->children_[0];
-        do {
-            Win *c = *child;
-            if ((c->iFlags_ & 0x20) == 0) {
-                if (cur != 0 && cur == c) {
-                    WinZOrderCount = 0;
-                    found = true;
-                }
-                if (c->iSomeFlag_ & 1) {
-                    Win *child_parent = c->win_parent_;
-                    if (child_parent == 0 || child_parent->is_visible() != 0) {
-                        recurse_zorder(c);
-                    }
-                    cur = WinZOrderWindow;
-                }
-                if (cur != 0 && found) {
-                    break;
+    if (!(WinZOrderWindow != 0 && found)) {
+        for (i = 0; i < window->child_count_; ++i) {
+            if (WinZOrderWindow != 0 && WinZOrderWindow == window->children_[i]) {
+                WinZOrderCount = 0;
+                found = 1;
+            }
+            if (window->poWinBase_ == window &&
+                (window->children_[i]->iFlags_ & 0x20)) {
+                if (window->children_[i]->is_visible()) {
+                    recurse_zorder(window->children_[i]);
                 }
             }
-            ++i;
-            ++child;
-        } while (i < window->child_count_);
-    } else {
-        cur = WinZOrderWindow;
-    }
-
-    if (!(cur != 0 && found)) {
-        i = 0;
-        if (window->child_count_ > 0) {
-            Win **child = &window->children_[0];
-            do {
-                Win *c = *child;
-                if (cur != 0 && cur == c) {
-                    WinZOrderCount = 0;
-                    found = true;
-                }
-                if (window->poWinBase_ == window &&
-                    (c->iFlags_ & 0x20)) {
-                    if (c->iSomeFlag_ & 1) {
-                        Win *child_parent = c->win_parent_;
-                        if (child_parent == 0 || child_parent->is_visible() != 0) {
-                            recurse_zorder(c);
-                        }
-                        cur = WinZOrderWindow;
-                    }
-                }
-                if (cur != 0 && found) {
-                    break;
-                }
-                ++i;
-                ++child;
-            } while (i < window->child_count_);
+            if (WinZOrderWindow != 0 && found) {
+                break;
+            }
         }
     }
 
-    if (window->iSomeFlag_ & 1) {
-        Win *window_parent = window->win_parent_;
-        if (window_parent == 0 || window_parent->is_visible() != 0) {
-            int idx = WinZOrderCount;
-            WinZOrderArray[idx] = window;
-            WinZOrderCount = idx + 1;
-        }
+    if (window->is_visible()) {
+        int idx = WinZOrderCount;
+        WinZOrderArray[idx] = window;
+        WinZOrderCount = idx + 1;
     }
 }
 
@@ -3180,17 +3108,11 @@ Purpose: The tree walk `Win::get_mouse_window` delegates to once it has a
 //   fields as offsets; the friend declaration now permits named access.
 //   The historical receiver-spill mismatch remains unaddressed.
 Win *__cdecl get_mouse_window_recurse(Win * window, int * x, int * y) {
-    int savedX = 0, savedY = 0;
+    int savedX, savedY;
     int i;
 
-    if ((window->iSomeFlag_ & 1) == 0) {
+    if (!window->is_visible()) {
         return 0;
-    }
-    {
-        Win *parent = window->win_parent_;
-        if (parent != 0 && !parent->is_visible()) {
-            return 0;
-        }
     }
 
     if ((window->iFlags_ & 0x20) == 0) {
@@ -3200,117 +3122,108 @@ Win *__cdecl get_mouse_window_recurse(Win * window, int * x, int * y) {
         *y = WinMouseScreenY;
     }
 
-    {
-        int childCount = window->child_count_;
-        Win **children = window->children_;
-        for (i = 0; i < childCount; i++) {
-            Win *child = children[i];
-            if ((child->iFlags_ & 0x20) == 0) {
-                Win *r = get_mouse_window_recurse(child, x, y);
+    for (i = 0; i < window->child_count_; i++) {
+        if ((window->children_[i]->iFlags_ & 0x20) == 0) {
+            Win *r = get_mouse_window_recurse(window->children_[i], x, y);
+            if (r != 0) return r;
+        }
+    }
+
+    if ((window->iSomeFlag_ & 2) != 0) {
+        if (!in_box(*x, *y, &window->client_rect_)) {
+            goto tail;
+        }
+        *x -= window->client_rect_.left;
+        *y -= window->client_rect_.top;
+
+        for (i = 0; i < window->child_count_; i++) {
+            if (window == window->poWinBase_ &&
+                (window->children_[i]->iFlags_ & 0x8000) != 0 &&
+                (window->children_[i]->iFlags_ & 0x20) != 0) {
+                Win *r = get_mouse_window_recurse(window->children_[i], x, y);
                 if (r != 0) return r;
             }
         }
-    }
 
-    if ((window->iSomeFlag_ & 2) == 0) {
-        goto alt_path;
-    }
-
-    if (!in_box(*x, *y, &window->client_rect_)) {
-        goto tail;
-    }
-    *x -= window->client_rect_.left;
-    *y -= window->client_rect_.top;
-
-    {
-        int childCount = window->child_count_;
-        Win **children = window->children_;
-        if (window == window->poWinBase_) {
-            for (i = 0; i < childCount; i++) {
-                Win *child = children[i];
-                unsigned int flags = child->iFlags_;
-                if ((flags & 0x8000) != 0 && (flags & 0x20) != 0) {
-                    Win *r = get_mouse_window_recurse(child, x, y);
-                    if (r != 0) return r;
-                }
+        if (in_box(*x, *y, &window->outer_rect_)) {
+            *x -= window->outer_rect_.left;
+            *y -= window->outer_rect_.top;
+            goto outer_hit;
+        }
+        {
+            // pixel-precise hit test against one of the window's four render buffers
+            int threshold1;
+            int threshold2;
+            GraphicWin *slotResult = window->get_graphic_win();
+            if (slotResult == 0 || (window->iFlags_ & 0x10000000) == 0) {
+                goto direct_hit;
             }
-        }
-    }
 
-    if (!in_box(*x, *y, &window->outer_rect_)) {
-        // pixel-precise hit test against one of the window's four render buffers
-        unsigned char key = static_cast<unsigned char>(WinFillColour);
-        unsigned int flagsHere;
-        int threshold1, threshold2;
-        unsigned int pixel;
-        Buffer *buf;
-        bool hit;
+            threshold1 = ((window->iFlags_ & 0x10) == 0 || (window->iFlags_ & 0x400000) != 0)
+                             ? window->border_thickness_
+                             : window->caption_height_;
+            threshold2 = (window->bottom_border_thickness_ != -1)
+                             ? window->bottom_border_thickness_
+                             : window->border_thickness_;
 
-        GraphicWin *slotResult = window->get_graphic_win();
-        flagsHere = window->iFlags_;
-        if (slotResult == 0 || (flagsHere & 0x10000000) == 0) {
+            if (*y < threshold1) {
+                unsigned char key = WinFillColour;
+                if (window->buffer1_->get_pixel(*x, *y) != key) {
+                    goto direct_hit;
+                }
+                *x += window->client_rect_.left;
+                *y += window->client_rect_.top;
+                goto tail;
+            }
+            if (window->client_rect_.bottom - window->client_rect_.top - threshold2 < *y) {
+                unsigned char key = WinFillColour;
+                if (window->buffer4_->get_pixel(*x, (window->client_rect_.top - window->client_rect_.bottom) + *y + threshold2) != key) {
+                    goto direct_hit;
+                }
+                *x += window->client_rect_.left;
+                *y += window->client_rect_.top;
+                goto tail;
+            }
+            if (*x < window->border_thickness_) {
+                unsigned char key = WinFillColour;
+                if (window->buffer3_->get_pixel(*x, *y - threshold1) != key) {
+                    goto direct_hit;
+                }
+                *x += window->client_rect_.left;
+                *y += window->client_rect_.top;
+                goto tail;
+            }
+            {
+                unsigned char key = WinFillColour;
+                // The image passes left - right + border + x, as written here.
+                if (window->buffer2_->get_pixel((window->client_rect_.left - window->client_rect_.right) + window->border_thickness_ + *x, *y - threshold1) != key) {
+                    goto direct_hit;
+                }
+                *x += window->client_rect_.left;
+                *y += window->client_rect_.top;
+                goto tail;
+            }
+        direct_hit:
             WinMouseDirect = 1;
             return window;
         }
-
-        threshold1 = ((flagsHere & 0x10) == 0 || (flagsHere & 0x400000) != 0)
-                         ? window->border_thickness_
-                         : window->caption_height_;
-        threshold2 = (window->bottom_border_thickness_ != -1)
-                              ? window->bottom_border_thickness_
-                              : window->border_thickness_;
-
-        if (*y < threshold1) {
-            buf = window->buffer1_;
-            pixel = (unsigned int)buf->get_pixel(*x, *y);
-            hit = (pixel != key);
-        } else if (window->client_rect_.bottom - window->client_rect_.top - threshold2 < *y) {
-            buf = window->buffer4_;
-            pixel = (unsigned int)buf->get_pixel(*x, (window->client_rect_.top - window->client_rect_.bottom) + *y + threshold2);
-            hit = (pixel != key);
-        } else if (*x < window->border_thickness_) {
-            buf = window->buffer3_;
-            pixel = (unsigned int)buf->get_pixel(*x, *y - threshold1);
-            hit = (pixel != key);
-        } else {
-            buf = window->buffer2_;
-            pixel = (unsigned int)buf->get_pixel((window->client_rect_.right - window->client_rect_.left) + window->border_thickness_ + *x, *y - threshold1);
-            hit = (pixel != key);
-        }
-
-        if (hit) {
-            WinMouseDirect = 1;
-            return window;
-        }
-        *x += window->client_rect_.left;
-        *y += window->client_rect_.top;
-        goto tail;
     }
-
-    *x += window->client_rect_.left;
-    *y += window->client_rect_.top;
-    return window;
-
-alt_path:
     if (!in_box(*x, *y, &window->outer_rect_)) {
         goto tail;
     }
     *x -= window->outer_rect_.left;
     *y -= window->outer_rect_.top;
+outer_hit:
+    // The client path joins here when the point is inside the outer
+    // rectangle (0x005F6DDC), rather than returning.
     WinMouseDirect = 0;
 
-    {
-        int childCount = window->child_count_;
-        Win **children = window->children_;
-        if (window == window->poWinBase_) {
-            for (i = 0; i < childCount; i++) {
-                Win *child = children[i];
-                unsigned int flags = child->iFlags_;
-                if ((flags & 0x8000) == 0 && (flags & 0x20) != 0) {
-                    Win *r = get_mouse_window_recurse(child, x, y);
-                    if (r != 0) return r;
-                }
-            }
+    for (i = 0; i < window->child_count_; i++) {
+        if (window == window->poWinBase_ &&
+            (window->children_[i]->iFlags_ & 0x8000) == 0 &&
+            (window->children_[i]->iFlags_ & 0x20) != 0) {
+            Win *r = get_mouse_window_recurse(window->children_[i], x, y);
+            if (r != 0) return r;
         }
     }
 
@@ -3500,21 +3413,21 @@ void __cdecl do_all_tasks() {
     MSG message;
     // Native paint dispatch has its own MSG, separate from the ordinary queue.
     MSG paint_message;
-    BOOL (WINAPI *peek_message)(LPMSG, HWND, UINT, UINT, UINT) = PeekMessageA;
-    BOOL (WINAPI *translate_message)(const MSG *) = TranslateMessage;
-    LRESULT (WINAPI *dispatch_message)(const MSG *) = DispatchMessageA;
     for (;;) {
         MsgStatus = 0;
         do_video();
         do_net();
         check_net();
+        BOOL (WINAPI *peek_message)(LPMSG, HWND, UINT, UINT, UINT) = PeekMessageA;
+        BOOL (WINAPI *translate_message)(const MSG *) = TranslateMessage;
+        LRESULT (WINAPI *dispatch_message)(const MSG *) = DispatchMessageA;
+        MsgStatus = 1;
         do {
-            MsgStatus = 1;
             do_video();
             check_net();
             do_net();
         } while (peek_message(&paint_message, 0, WM_PAINT, WM_PAINT, PM_REMOVE) &&
-                 (translate_message(&paint_message), dispatch_message(&paint_message), true));
+                 (translate_message(&paint_message), dispatch_message(&paint_message), MsgStatus = 1, true));
         MsgStatus = 0;
         if (peek_message(&message, 0, 0, WM_USER, PM_REMOVE)) {
             translate_message(&message);
@@ -3783,6 +3696,7 @@ void Win::set_mouse_pos(int x, int y) {
 // rather than reusing the loop's node - costs one instruction and one
 // agreeing pair, 15 of 61 at 60. So the layout difference is the compiler's
 // loop rotation, not the source's arrangement.
+// RESOLVED: a counted `for` loop with `break` reproduces that rotation.
 //
 // FIXED, and it was reading another object entirely: every access here was
 // `*reinterpret_cast<int *>(parent + 0xNN)`, which is POINTER ARITHMETIC ON
@@ -3792,42 +3706,35 @@ void Win::set_mouse_pos(int x, int y) {
 void Win::remove_parent_dialog() {
     Win *parent = win_parent_;
     if (parent != 0 && parent->list_.head_ != 0) {
-        int counter = 0;
-        // HOISTED, unlike is_descendant's count: the image loads it once
-        // (`mov edi, [esi + 0xd4]` at 0x005ECB7E) and compares against the
-        // register (`cmp edx, edi`). Safe here because the only write to
-        // count_ is in the arm that breaks out.
+        // The image loads the count once and compares against the register.
         const int total = parent->list_.count_;
-        if (total > 0) {
-            do {
-                WinDialogNode *node = parent->list_.current_;
-                if (node->focus_owner_ == this) {
-                    // Link stores can alias the next live list/node reads.
-                    parent->list_.current_->next_->previous_ =
-                        parent->list_.current_->previous_;
-                    parent->list_.current_->previous_->next_ =
-                        parent->list_.current_->next_;
-                    node = parent->list_.current_;
-                    if (node == parent->list_.head_) {
-                        parent->list_.head_ = node->next_;
-                    }
-                    parent->list_.current_ = node->next_;
-                    if (parent->list_.allocator_ == 0) {
-                        void *payload = node->allocation_;
-                        if (payload != 0) {
-                            free(payload);
-                        }
-                        node->allocation_ = 0;
-                        if (node != 0) {
-                            free(node);
-                        }
-                    }
-                    parent->list_.count_ = parent->list_.count_ - 1;
-                    break;
+        for (int counter = 0; counter < total; ++counter) {
+            WinDialogNode *node = parent->list_.current_;
+            if (node->focus_owner_ == this) {
+                // Link stores can alias the next live list/node reads.
+                parent->list_.current_->next_->previous_ =
+                    parent->list_.current_->previous_;
+                parent->list_.current_->previous_->next_ =
+                    parent->list_.current_->next_;
+                node = parent->list_.current_;
+                if (node == parent->list_.head_) {
+                    parent->list_.head_ = node->next_;
                 }
-                ++counter;
                 parent->list_.current_ = node->next_;
-            } while (counter < total);
+                if (parent->list_.allocator_ == 0) {
+                    void *payload = node->allocation_;
+                    if (payload != 0) {
+                        free(payload);
+                    }
+                    node->allocation_ = 0;
+                    if (node != 0) {
+                        free(node);
+                    }
+                }
+                parent->list_.count_ = parent->list_.count_ - 1;
+                break;
+            }
+            parent->list_.current_ = node->next_;
         }
         if (parent->list_.count_ == 0) {
             parent->list_.head_ = 0;
@@ -5039,121 +4946,58 @@ typedef void(__stdcall *ThreeArgFn)(int, int, int);
 // ORIGINAL: 0x005EDCD0 ?hide@Win@@QAEXXZ 0x005EDCD0-0x005EDE56
 // RECOVERY_BINDING: v1 {"evidence": ["git3cb99d431fb928d698e7eb29afee4ac2fc664027 deleted src/recovered/units/005edcd0.cpp and homed this body without its mapping. The parent has canonical symbol?hide@Win@@QAEXXZ and complete390-byte span0x005EDCD0-0x005EDE56 with a MISMATCH note, not an exact claim. The current body retains the homed-from heading and genuine Win declaration; original WorldWin::set_detail_map tail-calls this exact entry on the distinct WorldClimateWorldWin global."], "reason": "Restore the original identity lost when the existing Win::hide implementation was homed. Preserve its historically unclaimed state; the catalogue nonvirtual spelling is provenance, while the actual product declaration is virtual."}
 // symbol    ?hide@Win@@UAEXXZ
-void Win::hide() {
-    int32_t zero;
-    Win *focus_a, *focus_b, *chosen;
-    Win **child;
-    int32_t i;
-
-    if (!(iSomeFlag_ & 1)) {
-        return;
-    }
-
-    if (WinBubbleCompanion == this) {
-        zero = 0;
-        if (WinBubbleActive != 0) {
+// `inline` here only: Win::on_char (0x005F5FB0) expands this whole body,
+// beyond /Ob2's automatic limit; other units still call 0x005EDCD0.
+inline void Win::hide() {
+    if (iSomeFlag_ & 1) {
+        if (WinBubbleCompanion == this && WinBubbleActive != 0) {
             WinBubbleCompanion = 0;
             WinBubbleActive = 0;
             update_screen(&WinBubbleRect, 0);
             flip(&WinBubbleRect);
         }
-        goto converge;
-    }
-    zero = 0;
-
-converge:
-    focus_a = WinPointerOwner1;
-    focus_b = WinPointerOwner2;
-    chosen = (focus_a != 0) ? focus_a : focus_b;
-    if (chosen == this) {
-        goto clear_focus;
-    }
-    if (focus_a == 0) {
-        if (focus_b == 0) {
-            goto skip_all;
+        // The mouse owner is evaluated twice; is_descendant is inlined.
+        if ((WinPointerOwner1 != 0 ? WinPointerOwner1 : WinPointerOwner2) != this) {
+            Win *owner;
+            if (WinPointerOwner1 != 0) {
+                owner = WinPointerOwner1;
+            } else if (WinPointerOwner2 != 0) {
+                owner = WinPointerOwner2;
+            } else {
+                owner = 0;
+            }
+            if (!is_descendant(owner)) {
+                goto keep_owner;
+            }
         }
-        goto search;
-    }
-    focus_b = focus_a;
-
-search:
-    if (focus_b == 0) {
-        goto skip_all;
-    }
-    if (child_count_ <= 0) {
-        goto skip_all;
-    }
-    child = children_;
-    i = 0;
-    for (;;) {
-        if (*child == focus_b) {
-            goto found;
+        WinPointerOwner1 = 0;
+        WinPointerOwner2 = 0;
+    keep_owner:
+        if (WinPointerOwner3 == this) {
+            WinPointerOwner3 = 0;
+            this->on_lose_mouse_capture();
         }
-        if ((*child)->is_descendant(focus_b)) {
-            goto found;
+        if (WinPointerOwner4 == this) {
+            WinPointerOwner4 = 0;
         }
-        i++;
-        child++;
-        if (i >= child_count_) {
-            goto skip_all;
+        iSomeFlag_ &= ~1u;
+        if (WinFocusWindow == this) {
+            this->release_modal();
         }
-    }
-
-found:
-    zero = 0;
-clear_focus:
-    WinPointerOwner1 = 0;
-    WinPointerOwner2 = 0;
-
-skip_all:
-    if (WinPointerOwner3 == this) {
-        WinPointerOwner3 = 0;
-        this->on_lose_mouse_capture();
-    }
-    if (WinPointerOwner4 == this) {
-        WinPointerOwner4 = 0;
-    }
-    iSomeFlag_ &= 0xfffffffeu;
-    if (WinFocusWindow == this) {
-        this->release_modal();
-    }
-
-    if ((JackalInitFlags & 1) == 0) {
-        return;
-    }
-
-    {
-        int32_t total = WinRootCount;
-        WinZOrderCount = 0;
-        if (total > 0) {
-            Win *target = WinZOrderWindow;
-            Win **p = WinRootWindows;
-            int32_t j = 0;
-            for (;;) {
-                if (target != 0 && target == *p) {
+        if (JackalInitFlags & 1) {
+            WinZOrderCount = 0;
+            for (int root = 0; root < WinRootCount; ++root) {
+                if (WinZOrderWindow != 0 && WinZOrderWindow == WinRootWindows[root]) {
                     WinZOrderCount = 0;
                     WinZOrderFlag = 0;
                 }
-                if ((*p)->iSomeFlag_ & 1) {
-                    recurse_zorder(*p);
-                    target = WinZOrderWindow;
-                }
-                total = WinRootCount;
-                j++;
-                p++;
-                if (j >= total) {
-                    break;
+                if (WinRootWindows[root]->iSomeFlag_ & 1) {
+                    recurse_zorder(WinRootWindows[root]);
                 }
             }
-        }
-    }
-
-    InvalidateRect(HandleMain, 0, 0);
-
-    {
-        Sound *other = val_4_;
-        if (other != 0) {
-            if (other->is_playing() == 0) {
+            InvalidateRect(HandleMain, 0, 0);
+            Sound *other = val_4_;
+            if (other != 0 && other->is_playing() == 0) {
                 other->play();
             }
         }
@@ -5174,22 +5018,16 @@ void Win::on_l_button_down(long double_click, int x, int y, unsigned int, int fr
         child->bring_child_to_top(this);
     } else if (this != nullptr &&
                (iFlags_ & 0x2000000) == 0) {
-        int32_t idx = 0;
-        int32_t count = WinRootCount;
-        Win **p = WinRootWindows;
-        for (; idx < count; ++idx, ++p) {
-            if (*p == this) {
+        int32_t idx;
+        for (idx = 0; idx < WinRootCount; ++idx) {
+            if (WinRootWindows[idx] == this) {
                 break;
             }
         }
-        if (idx < count) {
-            if (idx > 0) {
-                Win **q = WinRootWindows + idx;
-                do {
-                    *q = *(q - 1);
-                    --q;
-                    --idx;
-                } while (idx != 0);
+        if (idx < WinRootCount) {
+            while (idx > 0) {
+                WinRootWindows[idx] = WinRootWindows[idx - 1];
+                --idx;
             }
             WinRootWindows[0] = this;
         }
@@ -5266,11 +5104,8 @@ void Win::on_l_button_up(int x, int y, unsigned int keys, int dbl) {
     WinPointerOwner2 = 0;
 
     if (isSelf) {
-        RECT r;
-        r.left = 0;
-        r.top = 0;
-        r.right = outer_rect_.right - outer_rect_.left;
-        r.bottom = outer_rect_.bottom - outer_rect_.top;
+        RECT r = outer_rect_;
+        offset_rect(&r, -r.left, -r.top);
         if (in_box(x, y, &r) != 0 &&
             (iFlags_ & 0x200000) == 0 &&
             (iSomeFlag_ & 8) == 0) {
@@ -5295,11 +5130,7 @@ void Win::on_l_button_up(int x, int y, unsigned int keys, int dbl) {
         }
     }
 
-    if (iSomeFlag_ & 1) {
-        Win *w = win_parent_;
-        if (w != 0 && w->is_visible() == 0) {
-            return;
-        }
+    if (is_visible()) {
         if ((iFlags_ & 0x200000) == 0 &&
             (iSomeFlag_ & 8) == 0) {
             if (dbl == 0) {
@@ -5442,89 +5273,50 @@ LRESULT Win::on_window_pos_changed(WINDOWPOS* pos) {
 void Win::bring_to_top() {
     Win *parent = win_parent_;
     if (parent != 0) {
-        if (this == 0) return;
-        if (iFlags_ & 0x2000000) return;
-
-        int count = parent->child_count_;
-        int i = 0;
-        if (count > 0) {
-            Win **slot = &parent->children_[0];
-            do {
-                if (*slot == this) break;
-                i++;
-                slot++;
-            } while (i < count);
-        }
-        if (i < count) {
-            if (i > 0) {
-                Win **dst = &parent->children_[i];
-                do {
-                    *dst = dst[-1];
-                    dst--;
-                } while (--i);
+        if (this != 0 && (iFlags_ & 0x2000000) == 0) {
+            int index = 0;
+            while (index < parent->child_count_ && parent->children_[index] != this) {
+                ++index;
             }
-            parent->children_[0] = this;
-        }
-
-        WinZOrderCount = 0;
-        if (WinRootCount > 0) {
-            Win *highlighted = WinZOrderWindow;
-            Win **zslot = WinRootWindows;
-            for (int j = 0; j < WinRootCount; j++) {
-                if (highlighted != 0 && highlighted == *zslot) {
+            if (index < parent->child_count_) {
+                while (index > 0) {
+                    parent->children_[index] = parent->children_[index - 1];
+                    --index;
+                }
+                parent->children_[0] = this;
+            }
+            WinZOrderCount = 0;
+            for (int root = 0; root < WinRootCount; ++root) {
+                if (WinZOrderWindow != 0 && WinZOrderWindow == WinRootWindows[root]) {
                     WinZOrderCount = 0;
                     WinZOrderFlag = 0;
                 }
-                Win *w = *zslot;
-                if (w->iSomeFlag_ & 1) {
-                    recurse_zorder(w);
-                    highlighted = WinZOrderWindow;
+                if (WinRootWindows[root]->iSomeFlag_ & 1) {
+                    recurse_zorder(WinRootWindows[root]);
                 }
-                zslot++;
             }
         }
-        return;
-    }
-
-    if (this == 0) return;
-    if (iFlags_ & 0x2000000) return;
-
-    int count = WinRootCount;
-    int i = 0;
-    if (count > 0) {
-        Win **slot = WinRootWindows;
-        do {
-            if (*slot == this) break;
-            i++;
-            slot++;
-        } while (i < count);
-    }
-    if (i < count) {
-        if (i > 0) {
-            Win **dst = WinRootWindows + i;
-            do {
-                *dst = dst[-1];
-                dst--;
-            } while (--i);
+    } else if (this != 0 && (iFlags_ & 0x2000000) == 0) {
+        int index = 0;
+        while (index < WinRootCount && WinRootWindows[index] != this) {
+            ++index;
         }
-        WinRootWindows[0] = this;
-    }
-
-    WinZOrderCount = 0;
-    if (WinRootCount > 0) {
-        Win *highlighted = WinZOrderWindow;
-        Win **zslot = WinRootWindows;
-        for (int j = 0; j < WinRootCount; j++) {
-            if (highlighted != 0 && highlighted == *zslot) {
+        if (index < WinRootCount) {
+            while (index > 0) {
+                WinRootWindows[index] = WinRootWindows[index - 1];
+                --index;
+            }
+            WinRootWindows[0] = this;
+        }
+        WinZOrderCount = 0;
+        for (int root = 0; root < WinRootCount; ++root) {
+            if (WinZOrderWindow != 0 && WinZOrderWindow == WinRootWindows[root]) {
                 WinZOrderCount = 0;
                 WinZOrderFlag = 0;
             }
-            Win *w = *zslot;
-            if (w->iSomeFlag_ & 1) {
-                recurse_zorder(w);
-                highlighted = WinZOrderWindow;
+            if (WinRootWindows[root]->iSomeFlag_ & 1) {
+                recurse_zorder(WinRootWindows[root]);
             }
-            zslot++;
         }
     }
 }
@@ -6168,9 +5960,7 @@ typedef unsigned int uint32_t;
 // symbol    ?on_nc_paint@Win@@UAEXPAUtagRECT@@H@Z
 // kind game
 void Win::on_nc_paint(RECT * area, int flags) {
-    if ((iFlags_ & 0x11) != 0 &&
-        (iSomeFlag_ & 1) != 0 &&
-        (win_parent_ == 0 || win_parent_->is_visible() != 0)) {
+    if ((iFlags_ & 0x11) != 0 && is_visible()) {
         int stack8 = 0, stack4 = 0;
         this->client_to_screen(&stack8, &stack4);
         stack8 -= outer_rect_.left;
@@ -6237,26 +6027,15 @@ void Win::on_nc_paint(RECT * area, int flags) {
 void Win::remove_child(Win *child) {
     if (child == 0) return;
 
-    int count = child_count_;
-    int i = 0;
-    Win **slot = children_;
-    if (count > 0) {
-        do {
-            if (*slot == child) break;
-            ++i;
-            ++slot;
-        } while (i < count);
+    int i;
+    for (i = 0; i < child_count_; ++i) {
+        if (children_[i] == child) break;
     }
-    if (i < count) {
-        child_count_ = count - 1;
+    if (i < child_count_) {
+        --child_count_;
         child->hide();
-        if (i < child_count_) {
-            slot = children_ + i;
-            do {
-                *slot = slot[1];
-                ++i;
-                ++slot;
-            } while (i < child_count_);
+        for (; i < child_count_; ++i) {
+            children_[i] = children_[i + 1];
         }
     }
 }
@@ -6276,10 +6055,8 @@ void Win::on_r_button_up(int x, int y, unsigned int keys, int dbl) {
     WinPointerOwner2 = nullptr;
 
     if (captured == this) {
-        int32_t fa = outer_rect_.left;
-        int32_t fb = outer_rect_.top;
         RECT testRect = outer_rect_;
-        offset_rect(&testRect, -fa, -fb);
+        offset_rect(&testRect, -testRect.left, -testRect.top);
 
         if (in_box(x, y, &testRect)) {
             if ((iFlags_ & 0x200000) != 0) {
@@ -6454,25 +6231,19 @@ void Win::set_caption_height(int height) {
 // int - but every caller assigns the result to a `Win *`. The int is
 // the pointer, and win.h has said so since the focus-window work.
 Win *Win::get_key_window() {
-    Win *window;
-    if (WinFocusWindow == nullptr) {
+    Win *window = WinFocusWindow;
+    if (window != nullptr) {
+        if (WinModalFocus != nullptr) window = WinModalFocus;
+    } else {
         window = WinInputFocus;
         if (window == nullptr) window = WinDefaultFocus;
-    } else {
-        window = WinFocusWindow;
-        if (WinModalFocus != nullptr) window = WinModalFocus;
     }
     WinActiveWindow = window;
-    if (window == nullptr) return nullptr;
-
-    Win *const base_window = window->poWinBase_;
-    if (base_window != nullptr) {
-        if ((base_window->iSomeFlag_ & 1U) == 0) return nullptr;
-        // 5F6A95 loads base_window->win_parent_; 5F6A9F calls is_visible on it.
-        Win *const parent = base_window->win_parent_;
-        if (parent != nullptr && parent->is_visible() == 0) return nullptr;
+    if (window != nullptr) {
+        window = window->poWinBase_;
+        if (window != nullptr && !window->is_visible()) return nullptr;
     }
-    return base_window;
+    return window;
 }
 
 // ===== homed from src/recovered/units/005ed9d0.cpp =====
@@ -6680,8 +6451,9 @@ typedef void *(__stdcall *PFN_LoadCursorA)(void *, const char *);
 typedef void *(__stdcall *PFN_SetCursor)(void *);
 
 int Win::set_modal(int flags, int (__cdecl *callback)(), Win * owner) {
+    int result = 0;
     if (WinModalDepth >= 4) {
-        return 0;
+        return result;
     }
     int idx = WinModalDepth;
     WinModalStack[idx] = this;
@@ -6707,25 +6479,18 @@ int Win::set_modal(int flags, int (__cdecl *callback)(), Win * owner) {
     HCURSOR cursor = LoadCursorA(0, IDC_ARROW);
     SetCursor(cursor);
 
-    int result = 0;
-    if (WinFocusWindow == this) {
-        int (__cdecl *const modal_callback)() = callback;
-        do {
-            if (this->on_modal() == 0) {
-                break;
+    while (WinFocusWindow == this) {
+        if (this->on_modal() == 0) {
+            break;
+        }
+        if (callback != 0 && callback() == 0) {
+            if (WinFocusWindow != 0) {
+                WinFocusWindow->release_modal();
             }
-            if (modal_callback != 0) {
-                if (modal_callback() == 0) {
-                    Win *cur = WinFocusWindow;
-                    if (cur != 0) {
-                        cur->release_modal();
-                    }
-                    result = 1;
-                    break;
-                }
-            }
-            wait_task();
-        } while (WinFocusWindow == this);
+            result = 1;
+            break;
+        }
+        wait_task();
     }
     return result;
 }
@@ -7094,14 +6859,8 @@ int Win::init(int x, int y, int width, int height, char * caption,
         }
     }
 
-    if ((this->iSomeFlag_ & 1) != 0) {
-        bool draw = true;
-        if (this->win_parent_ != 0) {
-            draw = this->win_parent_->is_visible() != 0;
-        }
-        if (draw) {
-            this->on_nc_paint(0, -1);
-        }
+    if (this->is_visible()) {
+        this->on_nc_paint(0, -1);
     }
 
 init_set_rects:
@@ -7978,35 +7737,26 @@ void Win::set_caption(char * text) {
 // symbol    ?bring_parent_to_top@Win@@SAXPAV1@@Z
 void __cdecl Win::bring_parent_to_top(Win * window) {
     if (window != 0 && (window->iFlags_ & 0x2000000) == 0) {
-        int count = WinRootCount;
-        int i = 0;
-        for (; i < count; ++i) {
-            if (WinRootWindows[i] == window) break;
+        int index = 0;
+        while (index < WinRootCount && WinRootWindows[index] != window) {
+            ++index;
         }
-        if (i < count) {
-            while (i > 0) {
-                WinRootWindows[i] = WinRootWindows[i - 1];
-                --i;
+        if (index < WinRootCount) {
+            while (index > 0) {
+                WinRootWindows[index] = WinRootWindows[index - 1];
+                --index;
             }
             WinRootWindows[0] = window;
         }
-        int j = 0;
         WinZOrderCount = 0;
-        if (count > 0) {
-            Win *cur = WinZOrderWindow;
-            do {
-                if (cur != 0 && cur == WinRootWindows[j]) {
-                    WinZOrderCount = 0;
-                    WinZOrderFlag = 0;
-                }
-                Win *w = WinRootWindows[j];
-                if (w->iSomeFlag_ & 1) {
-                    recurse_zorder(w);
-                    count = WinRootCount;
-                    cur = WinZOrderWindow;
-                }
-                ++j;
-            } while (j < count);
+        for (int root = 0; root < WinRootCount; ++root) {
+            if (WinZOrderWindow != 0 && WinZOrderWindow == WinRootWindows[root]) {
+                WinZOrderCount = 0;
+                WinZOrderFlag = 0;
+            }
+            if (WinRootWindows[root]->iSomeFlag_ & 1) {
+                recurse_zorder(WinRootWindows[root]);
+            }
         }
     }
 
@@ -8145,52 +7895,28 @@ int Win::update_window(RECT * area) {
 // ===== homed from src/unrecovered/005f52e0.cpp =====
 
 void Win::bring_child_to_top(Win * child) {
-    if (child == 0) {
-        return;
-    }
-    if (child->iFlags_ & 0x2000000) {
-        return;
-    }
-    int count = child_count_;
-    int i = 0;
-    if (count > 0) {
-        Win **slot = children_;
-        do {
-            if (*slot == child) {
-                break;
-            }
-            ++i;
-            ++slot;
-        } while (i < count);
-    }
-    if (i < count) {
-        if (i > 0) {
-            Win **p = &children_[i];
-            do {
-                *p = p[-1];
-                --p;
-                --i;
-            } while (i != 0);
+    if (child != 0 && (child->iFlags_ & 0x2000000) == 0) {
+        int index = 0;
+        while (index < child_count_ && children_[index] != child) {
+            ++index;
         }
-        children_[0] = child;
-    }
-    WinZOrderCount = 0;
-    if (WinRootCount > 0) {
-        Win **entry = WinRootWindows;
-        Win *cur = WinZOrderWindow;
-        int j = 0;
-        do {
-            if (cur != 0 && cur == *entry) {
+        if (index < child_count_) {
+            while (index > 0) {
+                children_[index] = children_[index - 1];
+                --index;
+            }
+            children_[0] = child;
+        }
+        WinZOrderCount = 0;
+        for (int root = 0; root < WinRootCount; ++root) {
+            if (WinZOrderWindow != 0 && WinZOrderWindow == WinRootWindows[root]) {
                 WinZOrderCount = 0;
                 WinZOrderFlag = 0;
             }
-            if ((*entry)->iSomeFlag_ & 1) {
-                recurse_zorder(*entry);
-                cur = WinZOrderWindow;
+            if (WinRootWindows[root]->iSomeFlag_ & 1) {
+                recurse_zorder(WinRootWindows[root]);
             }
-            ++j;
-            ++entry;
-        } while (j < WinRootCount);
+        }
     }
 }
 
@@ -8553,28 +8279,18 @@ int __cdecl Win::update_screen(RECT *area, Win *window) {
         return 0;
     }
 
-    Win *target;
-    if (WinZOrderWindow != 0) {
-        target = window;
-    } else {
-        target = 0;
+    if (WinZOrderWindow == 0) {
+        window = 0;
     }
 
-    int idx = windowCount - 1;
-    if (target != 0) {
-        idx = 0;
-        if (windowCount > 0) {
-            Win **table = WinZOrderArray;
-            int i = 0;
-            while (table[i] != target) {
-                ++i;
-                if (i >= windowCount) {
-                    break;
-                }
+    int i = windowCount - 1;
+    if (window != 0) {
+        for (i = 0; i < windowCount; ++i) {
+            if (WinZOrderArray[i] == window) {
+                break;
             }
-            idx = i;
         }
-        if (idx == windowCount) {
+        if (i == windowCount) {
             return windowCount;
         }
     } else {
@@ -8587,31 +8303,16 @@ int __cdecl Win::update_screen(RECT *area, Win *window) {
         }
     }
 
-    if (idx >= 0) {
-        for (int i = idx; i >= 0; --i) {
+    for (; i >= 0; --i) {
+        if (WinZOrderArray[i]->is_visible()) {
+            // The parent visibility call can change the table: 5F73C8
+            // reloads this slot before painting.
             Win *w = WinZOrderArray[i];
-            if ((w->iSomeFlag_ & 1) != 0) {
-                Win *menuLike = w->win_parent_;
-                bool visible = true;
-                if (menuLike != 0) {
-                    visible = menuLike->is_visible() != 0;
-                }
-                if (visible) {
-                    // The virtual parent visibility query can change the
-                    // table: 5F73C8 reloads this slot before painting.
-                    w = WinZOrderArray[i];
-                    if ((w->iSomeFlag_ & 2) != 0) {
-                        w->on_nc_paint(area, -1);
-                    }
-                    bool doSecond = true;
-                    if (target != 0) {
-                        doSecond = (target == target->poWinBase_);
-                    }
-                    if (doSecond) {
-                        Win *const other = w->poWinBase_;
-                        other->on_paint(area);
-                    }
-                }
+            if ((w->iSomeFlag_ & 2) != 0) {
+                w->on_nc_paint(area, -1);
+            }
+            if (window == 0 || window == window->poWinBase_) {
+                w->poWinBase_->on_paint(area);
             }
         }
     }
@@ -8660,16 +8361,14 @@ void Win::on_key(unsigned int key, long flags, int repeat, unsigned int scan) {
     (void)repeat;
     (void)scan;
 
-    const SHORT shift_state = GetKeyState(0x10);
-    unsigned int with_modifiers = key;
-    if (shift_state & 0x8000) with_modifiers |= 0x10000;
-    if (GetKeyState(0x11) & 0x8000) with_modifiers |= 0x20000;
-    if (GetKeyState(0x12) & 0x8000) with_modifiers |= 0x40000;
+    if (GetKeyState(0x10) & 0x8000) key |= 0x10000;
+    if (GetKeyState(0x11) & 0x8000) key |= 0x20000;
+    if (GetKeyState(0x12) & 0x8000) key |= 0x40000;
 
     Net *net = ActiveNet;
     if (net != 0) {
         MsgT msg;
-        if (with_modifiers == net->voice_hotkey_48_) {
+        if (key == net->voice_hotkey_48_) {
             if (flags != 0) {
                 net->start_voice(net->voice_target_50_);
             } else {
@@ -8682,7 +8381,7 @@ void Win::on_key(unsigned int key, long flags, int repeat, unsigned int scan) {
             } while (PeekMessageA(&msg, HandleMain, 0x102, 0x102, 1));
             return;
         }
-        if (with_modifiers == net->voice_hotkey_4c_) {
+        if (key == net->voice_hotkey_4c_) {
             if (flags != 0) {
                 net->start_voice(static_cast<long>(net->field_54_));
             } else {
@@ -8711,7 +8410,7 @@ void Win::on_key(unsigned int key, long flags, int repeat, unsigned int scan) {
             } else {
                 target = 0;
             }
-            if (target->key_up_event(with_modifiers) != 0) {
+            if (target->key_up_event(key) != 0) {
                 return;
             }
         }
@@ -8719,9 +8418,9 @@ void Win::on_key(unsigned int key, long flags, int repeat, unsigned int scan) {
         WinCallbackWindow = this;
         WinKeyHookFn cb = field_434_;
         if (cb != 0) {
-            cb(with_modifiers);
+            cb(key);
         }
-        on_key_up(with_modifiers);
+        on_key_up(key);
 
         Sound *next = val_16_;
         if (next == 0) {
@@ -8735,12 +8434,12 @@ void Win::on_key(unsigned int key, long flags, int repeat, unsigned int scan) {
     }
 
     // The original 5F5ED8 store targets DWORD 9B7B18 itself, not its value.
-    WinKeyModifiers = with_modifiers;
+    WinKeyModifiers = key;
     if (IsWindow(HandleMain)) {
-        this->key_down_event(with_modifiers);
+        this->key_down_event(key);
     }
 
-    if (with_modifiers >= 0x60 && with_modifiers <= 0x6f) {
+    if (key >= 0x60 && key <= 0x6f) {
         MsgT msg;
         if (!PeekMessageA(&msg, HandleMain, 0x102, 0x102, 1)) {
             return;
@@ -9802,10 +9501,10 @@ void Win::set_dialog_focus(Win * window) {
     }
 
     Win *newFocus;
-    if (list_.head_ == 0) {
-        newFocus = 0;
-    } else {
+    if (list_.head_ != 0) {
         newFocus = list_.current_->focus_owner_;
+    } else {
+        newFocus = 0;
     }
 
     if (window == newFocus) {
@@ -9819,36 +9518,20 @@ void Win::set_dialog_focus(Win * window) {
     }
 
     int count = list_.count_;
-    int idx = 0;
     list_.tail_ = 0;
     list_.current_ = list_.head_;
-
-    if (count > 0) {
-        WinDialogNode *node;
-        for (;;) {
-            node = list_.current_;
-            if (node->focus_owner_ == window) {
-                break;
+    for (int idx = 0; idx < count; ++idx) {
+        if (list_.current_->focus_owner_ == window) {
+            if (newFocus != 0 && list_.count_ > 1) {
+                newFocus->on_dialog_focus(0);
             }
-            list_.tail_ = list_.tail_ + 1;
-            idx++;
-            list_.current_ = node->next_;
-            if (idx >= count) {
-                return;
+            if (list_.head_ != 0 && list_.current_->focus_owner_ != 0) {
+                list_.current_->focus_owner_->on_dialog_focus(1);
             }
+            return;
         }
-
-        if (newFocus != 0 && count > 1) {
-            newFocus->on_dialog_focus(0);
-        }
-
-        if (list_.head_ != 0) {
-            WinDialogNode *node2 = list_.current_;
-            Win *target = node2->focus_owner_;
-            if (target != 0) {
-                target->on_dialog_focus(1);
-            }
-        }
+        list_.tail_ = list_.tail_ + 1;
+        list_.current_ = list_.current_->next_;
     }
 }
 
@@ -11706,22 +11389,14 @@ void Win::get_mouse_pos(int * x, int * y) {
 // its sibling is_descendant (0x005ECE20) sits behind at 17 of 37.
 // Flattening the two guards into `ancestor == 0 || child_count_ <= 0`
 // costs one more instruction and changes nothing else.
+// RESOLVED: a plain counted `for` over ancestor->children_[i] matches.
 int Win::is_descendant_of(Win *ancestor) {
     if (ancestor != 0) {
-        if (ancestor->child_count_ > 0) {
-            Win *const *children = ancestor->children_;
-            int i = 0;
-            do {
-                Win *child = *children;
-                if (child == this) {
-                    return 1;
-                }
-                if (is_descendant_of(child)) {
-                    return 1;
-                }
-                ++i;
-                ++children;
-            } while (i < ancestor->child_count_);
+        for (int i = 0; i < ancestor->child_count_; ++i) {
+            if (ancestor->children_[i] == this ||
+                is_descendant_of(ancestor->children_[i])) {
+                return 1;
+            }
         }
     }
     return 0;
@@ -11788,34 +11463,18 @@ Verification note: hoisting the count out of the loop is an EQUIVALENT mutant
 // image's 37. What is left is instruction ORDER (the image zeroes edi
 // before loading children_, this body after) and the duplicated epilogue,
 // neither of which source order reached.
+// RESOLVED: a plain counted `for` over children_[index] matches.
 int Win::is_descendant(Win *candidate) {
-    if (!candidate) {
-        return 0;
-    }
-    int count = child_count_;
-    if (count <= 0) {
-        return 0;
-    }
-    Win *const *child = children_;
-    int index = 0;
-    for (;;) {
-        if (*child == candidate) {
-            return 1;
-        }
-        if ((*child)->is_descendant(candidate)) {
-            return 1;
-        }
-        // Re-read, do NOT hoist. The original reloads the count at 0x005ECE50
-        // after every recursive call returns, so a recursion that adds or
-        // removes children is seen by the very next iteration. A loop-invariant
-        // count is the obvious tidy-up and it changes behaviour.
-        count = child_count_;
-        ++index;
-        ++child;
-        if (index >= count) {
-            return 0;
+    if (candidate != 0) {
+        // The count is re-read after every recursive call (0x005ECE50).
+        for (int index = 0; index < child_count_; ++index) {
+            if (children_[index] == candidate ||
+                children_[index]->is_descendant(candidate)) {
+                return 1;
+            }
         }
     }
+    return 0;
 }
 
 // ORIGINAL: 0x005ECF20 ?screen_to_client@Win@@QAEXPAURECT@@@Z 0x005ECF20-0x005ECFD8 FILE BYTE_EXACT
@@ -12338,6 +11997,8 @@ int __stdcall win_reparent_window(HWND hwnd, int unused) {
 // where they can be edited without regenerating anything and are in
 // context from the first token rather than behind a file read. This
 // emitter computes declarations; it does not carry lessons.
+// The image calls this out of line from on_l_button_down.
+#pragma auto_inline(off)
 void __cdecl Win::update_zorder() {
     int i = 0;
     int n = WinRootCount;
@@ -12358,6 +12019,7 @@ void __cdecl Win::update_zorder() {
         } while (i < WinRootCount);
     }
 }
+#pragma auto_inline(on)
 // ===== homed from src/unrecovered/005f5fb0.cpp =====
 
 // ORIGINAL: 0x005F5FB0 sub_5f5fb0 0x005F5FB0-0x005F622B
@@ -12365,108 +12027,20 @@ void __cdecl Win::update_zorder() {
 // symbol    ?on_char@Win@@UAEXDH@Z
 // TRIED: extern "C" __stdcall(int,int) free function per IDA's guess - the spilled ecx is read back later ([esp+0x10] resolves to the "push ecx" slot itself, not a caller stack arg) and used as a Win* (scroll_vert_/scroll_horz_/key_click_event), so this is landed as Win::sub_5f5fb0(char, int) __thiscall instead; the unused 2nd stack dword explains `ret 8` with only 1 real read.
 void Win::on_char(char param2, int param3) {
-    char **cursor = &WinKeyRingCursor;
-    **cursor = param2;
-
-    bool matched = true;
-    {
-        // the LAST character; the loop below compares backward from it
-        const char *pat = WinMdebugCode + 5;
-        char *pos = *cursor;
-        int count = 6;
-        do {
-            if (*pos != *pat) {
-                matched = false;
-                break;
-            }
-            pos--;
-            pat--;
-            if (pos < (char *)WinKeyRing) {
-                pos = (char *)(WinKeyRing + 9);
-            }
-            count--;
-        } while (count > 0);
-    }
-
-    if (matched) {
-        Win &debug_window = WinBubbleWindow;
-        if ((static_cast<uint8_t>(debug_window.iSomeFlag_) & 1) == 0 ||
-            (debug_window.win_parent_ != 0 &&
-             debug_window.win_parent_->is_visible() == 0)) {
-            (&WinBubbleWindow)->show(0);
-        } else if ((static_cast<uint8_t>(debug_window.iSomeFlag_) & 1) != 0) {
-            if (WinBubbleCompanion == &WinBubbleWindow &&
-                WinBubbleActive != 0) {
-                WinBubbleCompanion = nullptr;
-                WinBubbleActive = 0;
-                (&WinBubbleWindow)->update_screen(&WinBubbleRect, 0);
-                (&WinBubbleWindow)->flip(&WinBubbleRect);
-            }
-
-            Win *cand = WinPointerOwner1;
-            if (cand == nullptr) {
-                cand = WinPointerOwner2;
-            }
-            if (cand == &WinBubbleWindow) {
-                WinPointerOwner1 = nullptr;
-                WinPointerOwner2 = 0;
-            } else if (cand != nullptr && debug_window.child_count_ > 0) {
-                Win **list = debug_window.children_;
-                int i = 0;
-                do {
-                    if (list[i] == cand || list[i]->is_descendant(cand)) {
-                        WinPointerOwner1 = nullptr;
-                        WinPointerOwner2 = 0;
-                        break;
-                    }
-                    i++;
-                } while (i < debug_window.child_count_);
-            }
-
-            if (WinPointerOwner3 == &WinBubbleWindow) {
-                WinPointerOwner3 = 0;
-                debug_window.on_lose_mouse_capture();
-            }
-            if (WinPointerOwner4 == &WinBubbleWindow) {
-                WinPointerOwner4 = 0;
-            }
-            debug_window.iSomeFlag_ &= ~1;
-            if (WinFocusWindow == &WinBubbleWindow) {
-                debug_window.release_modal();
-            }
-
-            if ((JackalInitFlags & 1) != 0) {
-                WinZOrderCount = 0;
-                if (WinRootCount > 0) {
-                    Win **entries = WinRootWindows;
-                    Win *cur = WinZOrderWindow;
-                    int j = 0;
-                    do {
-                        if (cur != 0 && cur == entries[j]) {
-                            WinZOrderCount = 0;
-                            WinZOrderFlag = 0;
-                        }
-                        if ((entries[j]->iSomeFlag_ & 1) != 0) {
-                            recurse_zorder(entries[j]);
-                            cur = WinZOrderWindow;
-                        }
-                        j++;
-                    } while (j < WinRootCount);
-                }
-
-                InvalidateRect(HandleMain, 0, 0);
-
-                Sound *w = debug_window.val_4_;
-                if (w != 0 && w->is_playing() == 0) {
-                    w->play();
-                }
-            }
+    *WinKeyRingCursor = param2;
+    // typed_keys_differ is inlined; WinMdebugCode is "mdebug".
+    if (!typed_keys_differ(const_cast<char *>(WinMdebugCode), 6)) {
+        // Toggle the debug window; hide() is inlined here.
+        if (WinBubbleWindow.is_visible()) {
+            WinBubbleWindow.hide();
+        } else {
+            WinBubbleWindow.show(0);
         }
     }
 
-    *cursor = *cursor + 1;
-    if (*cursor > (char *)(WinKeyRing + 9)) {
-        *cursor = (char *)WinKeyRing;
+    ++WinKeyRingCursor;
+    if (WinKeyRingCursor >= WinKeyRing + 10) {
+        WinKeyRingCursor = WinKeyRing;
     }
 
     bool handled = false;

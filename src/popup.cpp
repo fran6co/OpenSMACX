@@ -520,9 +520,8 @@ void __cdecl popup_wave_callback(BasePopTextBlock *popup, int) {
         if (!g_WAVE_GENERAL.Wave::is_playing() &&
             !(g_CPU_WAVES + PopupWaveLastIndex)->Wave::is_playing()) {
             PopupWaveLastIndex = chosen;
-            Wave *const wave = g_CPU_WAVES + chosen;
-            wave->Wave::load();
-            wave->Wave::play();
+            (g_CPU_WAVES + chosen)->Wave::load();
+            (g_CPU_WAVES + chosen)->Wave::play();
         }
     }
     if (popup->field_104_ == 0x19) {
@@ -912,9 +911,8 @@ void __cdecl wave_it(int wave_id) {
         if (!g_WAVE_GENERAL.Wave::is_playing()) {
             if (!(g_CPU_WAVES + PopupWaveLastIndex)->Wave::is_playing()) {
                 PopupWaveLastIndex = wave_id;
-                Wave *const wave = g_CPU_WAVES + wave_id;
-                wave->Wave::load();
-                wave->Wave::play();
+                (g_CPU_WAVES + wave_id)->Wave::load();
+                (g_CPU_WAVES + wave_id)->Wave::play();
             }
         }
     }
@@ -1090,13 +1088,15 @@ Scroll *Popup::on_listbox_scroll_create() {
     }
     scroll_normal();
 
-    const RECT area = this->Buffer::rect2_;
-    const int inset_top = MainInterfaceGlobal.scroll_frame_sprite(2).height();
-    const int row_height = MainInterfaceGlobal.scroll_frame_sprite(1).height();
+    RECT area = this->Buffer::rect2_;
+    area.top += 0xd;
     const int gap = MainInterfaceGlobal.scroll_frame_sprite(0).height();
-    const int rows = (area.bottom - inset_top - gap
-                      - (area.top + 0xd) - 0x2c) / row_height;
-    const int top = rows * row_height + inset_top + gap - 0xa;
+    const int row_height = MainInterfaceGlobal.scroll_frame_sprite(1).height();
+    const int rows = (area.bottom - MainInterfaceGlobal.scroll_frame_sprite(2).height()
+                      - gap - area.top - 0x2c) / row_height;
+    const int top = rows * row_height
+                    + MainInterfaceGlobal.scroll_frame_sprite(2).height()
+                    + gap - 0xa;
     const int left = this->Buffer::dib_.bmiHeader.biWidth - 0x2b;
 
     scroll_.init(left, 0x15, 0x18, top, this, -1, 1);
@@ -1180,14 +1180,11 @@ int Popup::on_exec() {
         StringStructEntry *const entry = unit_ids_.current_;
         const char *msg;
         if (entry != 0) {
-            if (head != 0) {
-                msg = entry->string_payload()->text;
-            } else {
-                // A cursor without a list head retains the original null
-                // payload's text read at absolute address 4.
-                StringStructPayload *payload = 0;
-                msg = payload->text;
-            }
+            // A cursor without a list head reads the text of a null
+            // payload (address 4), as the original does.
+            StringStructPayload *const payload =
+                head != 0 ? entry->string_payload() : 0;
+            msg = payload->text;
         } else {
             msg = 0;
         }
@@ -1196,6 +1193,7 @@ int Popup::on_exec() {
 
     switch (code) {
     case 3:
+        return 1;
     case 4:
         return 1;
     case 1:
