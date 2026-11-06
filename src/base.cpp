@@ -5843,7 +5843,7 @@ int __cdecl base_find(int x, int y, int faction_id) {
 
 /*
 Purpose: Find the base id closest to the specified coordinates meeting various conditional checks.
-// ORIGINAL: 0x004E3D50 ?base_find@@YAHHHHHHH@Z 0x004E3D50-0x004E3EEB
+// ORIGINAL: 0x004E3D50 ?base_find@@YAHHHHHHH@Z 0x004E3D50-0x004E3EEB BYTE_EXACT
 // TRIED: region_at(base->x, base->y) - the image widens base->y (int16_t)
 //   to int with `movsx` BEFORE the `sar edx, 1` inside map_loc's `x >> 1`;
 //   this tree's compiled body does the shift in 16-bit (`sar dx, 1`) and

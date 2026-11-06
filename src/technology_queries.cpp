@@ -786,7 +786,7 @@ int __cdecl tech_val(int tech_id, int faction_id, BOOL simple_calc) {
     return value_ret;
 }
 
-// ORIGINAL: 0x005BE940 ?tech_research@@YAXHH@Z 0x005BE940-0x005BEB70
+// ORIGINAL: 0x005BE940 ?tech_research@@YAXHH@Z 0x005BE940-0x005BEB70 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:9f6ee90ae7baa6354fcca006def5561fb956792b:src/recovered/units/005be940.cpp", "recovery/tasks/base-colony-economy-coverage-wave.json", "recovery/tests/test_base_colony_economy.py", "Pinned original 01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf; complete original extent reviewed against native instructions and measured VC6 owner layouts.", "Original5BE940..5BEB70 uses Facility33/102 prerequisites, low-byte LockEnableMask, tech_cost=-1 before recomputation, and shared945F48 phase distinct from9B2070 UI phase."], "reason": "Recover complete research accumulation, climactic prerequisite decisions, advances and selection through real faction/technology storage and shared TurnUpkeepPhase. Preserve native byte-width human mask, callback-owned selection and wrap. Seed retained; no new byte or runtime claim."}
 // symbol    ?tech_research@@YAXHH@Z
 // LEVER: same TU as has_tech (0x005BE940 inside the 0x005B9F20-0x005BEB70
