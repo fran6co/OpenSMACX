@@ -292,7 +292,7 @@ void Palette::remove_animation(int key) {
 /*
 Purpose: Find the palette entry nearest the given colour.
 // ORIGINAL: 0x005FF280 ?UNK7@Palette@@QAEHHHHHHH@Z 0x005FF280-0x005FF46B
-// symbol    ?closest@Palette@@QAEHHHHHHH@Z
+// symbol    ?closest@Palette@@QAEHEEEHHH@Z
 // size      491 bytes
 // prototype int (__thiscall)(Palette* this, int, int, int, int, int, int)
 // kind      game
@@ -333,7 +333,7 @@ by both `reserved[256]`-scanning bodies, not two separate puzzles.
 //   locals, they are what the allocator chose to spill. Both edits reverted: the named
 //   forms are the better C++ and the higher agreement of the two was 5/150.
 */
-int Palette::closest(int red, int green, int blue, int start, int count,
+int Palette::closest(uint8_t red, uint8_t green, uint8_t blue, int start, int count,
                      int skip_animated) {
     int best = 200000;
     if (!PaletteInitialized) {
@@ -1287,8 +1287,7 @@ int Palette::create_table_from_color(int colour_index, unsigned char *table,
 //    near miss from a wrong body.
 
 
-// 2026-11-06: this indexed body is exact once closest() takes uint8_t
-//   red/green/blue (image pushes the raw bytes; header change proposed).
+// Exact with closest() taking uint8_t red/green/blue (image pushes raw bytes).
 int Palette::map_to_palette(Palette *dest, int start, int count) {
     if (dest == 0) {
         return 0x10;

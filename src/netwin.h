@@ -43,6 +43,16 @@ struct NetWinLobbyRow {
   uint8_t tail_[3];                // +0x175..+0x177
   uint32_t owner_;                  // +178
 
+  // Empty-row stores; an inline boundary in the image (storage init,
+  // config_players, NetDaemon::on_player_added, sub_47b1d0).
+  void reset() {
+    owner_ = 0;
+    prefix_ = -1;
+    ready_or_occupied_ = 0;
+    field_2_ = 0;
+    faction_or_color_ = -1;
+    field_4_ = 2;
+  }
 };
 static_assert(sizeof(NetWinLobbyRow) == 0x17C, "lobby row stride");
 static_assert(offsetof(NetWinLobbyRow, leader_name_) == 5,
@@ -66,12 +76,7 @@ struct NetWinLobbyRowsStorage {
 
   NetWinLobbyRowsStorage() {
     for (int row = 0; row < 8; ++row) {
-      rows_[row].owner_ = 0;
-      rows_[row].prefix_ = -1;
-      rows_[row].ready_or_occupied_ = 0;
-      rows_[row].field_2_ = 0;
-      rows_[row].faction_or_color_ = -1;
-      rows_[row].field_4_ = 2;
+      rows_[row].reset();
     }
   }
 };
@@ -332,7 +337,7 @@ struct NetWinSessionOptionsState {
   uint8_t erosion_;         // +8
   uint8_t native_life_;     // +9
   uint8_t cloud_cover_;     // +0xA
-  uint8_t reserved_B_;      // +0xB
+  int8_t reserved_B_;       // +0xB
   uint32_t rule_bits_a_; // +0xC, 0x0090E8EC
   uint32_t rule_bits_b_; // +0x10, 0x0090E8F0
   uint32_t rule_bits_c_; // +0x14, 0x0090E8F4
@@ -356,7 +361,7 @@ struct NetWinSessionOptionsStorage {
     fields_.erosion_ = 1;
     fields_.native_life_ = 1;
     fields_.cloud_cover_ = 1;
-    fields_.reserved_B_ = 0xFF;
+    fields_.reserved_B_ = -1;
   }
 };
 static_assert(sizeof(NetWinSessionOptionsStorage) ==

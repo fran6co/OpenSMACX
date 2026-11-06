@@ -672,18 +672,6 @@ void NetWin::fill_player(NetWinLobbyRowView lobby_row, int slot) {
 // The original byte read at 0x0090E8E3 is options.time_control_ (+3), not a
 // separate ninth-row object.
 
-// The empty-row stores are an inline boundary in the image (also used by
-// NetDaemon::on_player_added and sub_47b1d0's packet row).
-// Proposed home: an inline NetWinLobbyRow reset in netwin.h.
-static inline void reset_lobby_row(NetWinLobbyRow *row) {
-    row->owner_ = 0;
-    row->prefix_ = -1;
-    row->ready_or_occupied_ = 0;
-    row->field_2_ = 0;
-    row->faction_or_color_ = -1;
-    row->field_4_ = 2;
-}
-
 /*
 Purpose: Seed the seven base faction records of the static faction table.
          Each record's colour/mode prefix is rewritten - 0xFF, 0, 2, 0xFF, 2,
@@ -713,7 +701,7 @@ void NetWin::config_players() {
     NetWinSessionOptions.fields_.status_ = 0xFF;
     NetWinSessionOptions.fields_.option_4_ = 0;
     NetWinSessionOptions.fields_.option_5_ = 0;
-    NetWinSessionOptions.fields_.reserved_B_ = 0xFF;
+    NetWinSessionOptions.fields_.reserved_B_ = -1;
     NetWinSessionOptions.fields_.player_count_ = color;
     NetWinSessionOptions.fields_.difficulty_ = 2;
     NetWinSessionOptions.fields_.planet_size_ = 2;
@@ -723,7 +711,7 @@ void NetWin::config_players() {
     NetWinSessionOptions.fields_.cloud_cover_ = 2;
 
     for (int i = 1; i < 8; i++) {
-        reset_lobby_row(&NetWinLobbyRows.rows_[i]);
+        NetWinLobbyRows.rows_[i].reset();
         NetWinLobbyRows.rows_[i].prefix_ = -1;
         NetWinLobbyRows.rows_[i].faction_or_color_ = -1;
         NetWinLobbyRows.rows_[i].field_2_ = NetWinSessionOptions.fields_.difficulty_;
@@ -3559,12 +3547,7 @@ Status: Coverage transcription - unclaimed body
 */
 void __cdecl sub_47b1d0(int faction_id, void *payload) {
     NetWinLobbySinglePacket packet;
-    packet.row_.owner_ = 0;
-    packet.row_.prefix_ = -1;
-    packet.row_.ready_or_occupied_ = 0;
-    packet.row_.field_2_ = 0;
-    packet.row_.faction_or_color_ = -1;
-    packet.row_.field_4_ = 2;
+    packet.row_.reset();
     if (faction_id >= 1 && payload != 0) {
         packet.header_.field_8_ = 0;
         packet.header_.set_opcode(0x2F04);

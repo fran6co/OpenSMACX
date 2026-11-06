@@ -126,15 +126,15 @@ inline int AlphaNetStringStruct::seek_pos(int position) {
             --remaining;
             current_ = current_->previous_;
         }
-        current_position_ = entry_count_ + position;
+        position += entry_count_;
     } else {
         int remaining = position;
         while (remaining > 0) {
             --remaining;
             current_ = current_->next_;
         }
-        current_position_ = position;
     }
+    current_position_ = position;
     return 1;
 }
 

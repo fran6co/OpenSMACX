@@ -3090,8 +3090,8 @@ static NetPlayerNameBuffer NetPlayerNameRecord;
 // ORIGINAL: 0x00632CC0 sub_632cc0 0x00632CC0-0x00632DAA BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:c96a47e3f89e8792c8514ac2ca79259ab6f42c3e:src/unrecovered/00632cc0.cpp", "Historical seed spelling sub_632cc0; current source mapping sub_632cc0; emitted symbol ?sub_632cc0@Net@@QAEHPADHE@Z.", "Pinned632CE8/632CED skips slot initialization at index16 but continues632D2B count/broadcast and632D4F callback. The fixed 0x58-byte row formula computes ID at receiver+6D4 and name at receiver+6E9; these alias existing field_6D4_ and one byte into guid_6E8_. No seventeenth row is allocated.", "Pinned632D6E reloads the callback-visible row ID before JackalVoiceRx::add_player632D7D."], "reason": "Recover player insertion through the real sixteen-row owner and preserve the native full-table fallthrough and fresh callback-visible ID read. The C++ index-16 member access remains outside the declared array while retaining the original computed addresses; historical safety rejection remains in Git for the later improvement milestone. Original spans, claims and seed findings remain; no exactness or acceptance claim."}
 // TRIED: bare `strcat` intrinsic-expands to strlen(scasb)+memcpy; `#pragma function(strcat)` forces the real call. ecx is `this` (not the stdcall the IDA guess implied) - rewritten as a thiscall member of a throwaway class taking (char*, int, unsigned char), matching the "ret 0xc" 3-stack-arg cleanup. do-while / for over the 16-slot search loop UNROLLS the first iteration (duplicated body) under /O2, which the original does not show; `while(true){...; if(cond) break;}` keeps a single instance matching the original's layout, but still emits `jge` where the original has `jl` at the loop's back edge - flipping the break condition's polarity didn't change it. 84% mnemonic match, single divergence region.
-// symbol    ?sub_632cc0@Net@@QAEHPADHE@Z
-int Net::sub_632cc0(char *text, int id, unsigned char flag) {
+// symbol    ?sub_632cc0@Net@@QAEHPADHH@Z
+int Net::sub_632cc0(char *text, int id, int flag) {
     int index = 0;
     while (index < 16) {
         const uint32_t row_id = players_[index].field_0_;
@@ -3418,8 +3418,7 @@ void Net::handle_sys_msg() {
                 // Original632E3D reloads the count byte after each insertion
                 // (byte test on entry); the loop index is an integer.
                 for (int seen = 0; seen < message->count_; ++seen) {
-                    // Exact once sub_632cc0 takes an int flag (image loads
-                    // the DWORD, not its low byte): header change proposed.
+                    // The image passes the whole flags DWORD (int parameter).
                     sub_632cc0(message->records()[seen].name_,
                                message->records()[seen].id_,
                                message->records()[seen].flags_);

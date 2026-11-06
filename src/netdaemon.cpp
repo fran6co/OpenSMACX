@@ -180,18 +180,6 @@ int NetDaemon::lock_base(int base_id, int target, int payload_1C, int payload_20
 
 // Derived player lifecycle callbacks. Retained seeds supply historical hints;
 // the original missing-player tail and its unresolved index domain are kept.
-// The empty-row stores are an inline boundary in the image: the second
-// faction store survives and the difficulty load stays after them.
-// Proposed home: an inline NetWinLobbyRow reset in netwin.h.
-static inline void reset_lobby_row(NetWinLobbyRow *row) {
-    row->owner_ = 0;
-    row->prefix_ = -1;
-    row->ready_or_occupied_ = 0;
-    row->field_2_ = 0;
-    row->faction_or_color_ = -1;
-    row->field_4_ = 2;
-}
-
 // ORIGINAL: 0x0052E160 ?on_player_added@NetDaemon@@UAEXPADK@Z 0x0052E160-0x0052E364 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned52E160..52E364 and52E370..52E8FD; retained recovered seeds are hints, not mandatory C++.", "The not-found delete tail still runs and decrements count. Slot8 identity/status bytes belong to the real ledger; lobby prefix/name writes are byte views wholly inside the existing168-byte session object. Keep both session object lifetimes and their original bindings.", "PlayerLock::active return controls notification; process identity offsets are not doubled. Two label_get calls remain independent, and prefix writes depend on live phase below2.", "Source-owned NextTurnReady, NetUpkeepPhase and NetHostChangeSlot replace private address aliases. Upkeep producer remains unfinished; ledger-derived lock index domain remains unproven.", "recovery/tasks/netdaemon-player-lifecycle-recovery.json; actual-source host damage controls and native compilation required", "git:293937ab6f3be75999e0c0a4c9c110c02930624c:src/recovered/units/0052e160.cpp", "Historical seed spelling ?on_player_added@NetDaemon@@QAEXPADK@Z; current source mapping ?on_player_added@NetDaemon@@UAEXPADK@Z; emitted symbol ?on_player_added@NetDaemon@@UAEXPADK@Z."], "reason": "Recover the complete derived network player lifecycle callback through actual AlphaNet records, PlayerLock behavior, NetWin storage and shared turn state. Preserve its original identity and useful seed findings; no exact, runtime or full acceptance claim is implied. Superseded seed retired after owner review; original spans, existing claims and useful seed findings remain in source. This cleanup grants no new match or acceptance claim."}
 void NetDaemon::on_player_added(char *name, unsigned long id) {
@@ -227,7 +215,7 @@ void NetDaemon::on_player_added(char *name, unsigned long id) {
         if (primary_state_.leading_words_[0] != 0) {
             // The notification callbacks precede this native slot snapshot.
             const int slot = player_count_;
-            reset_lobby_row(&NetWinLobbyRows.rows_[slot]);
+            NetWinLobbyRows.rows_[slot].reset();
 
             const uint8_t difficulty = NetWinSessionOptions.fields_.difficulty_;
             NetWinLobbyRows.rows_[slot].faction_or_color_ = -1;

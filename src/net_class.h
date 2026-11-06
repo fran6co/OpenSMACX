@@ -434,7 +434,7 @@ class Net {
   // 0x00632CC0. Adds the player record, announces it, then creates and
   // initializes its VoiceRx receiver. At a full table native skips row
   // initialization but continues the count, broadcast and callback path.
-  int sub_632cc0(char *text, int id, unsigned char flag);
+  int sub_632cc0(char *text, int id, int flag);
   // 0x0062E2A0. Joins one enumerated service provider: copies its GUID into
   // the 0x6EC session slot, launches the Zone's "mplaynow.exe" for the
   // internet service, and otherwise creates and publishes the DirectPlay

@@ -164,7 +164,7 @@ class Palette {
   // walk `entries_[start .. start+count)` and return the index whose RGB is
   // nearest, by squared distance. `skip_animated` makes it ignore every
   // entry an active `internal_` slot has reserved.
-  int closest(int red, int green, int blue, int start, int count,
+  int closest(uint8_t red, uint8_t green, uint8_t blue, int start, int count,
               int skip_animated);
   // ?UNK3@Palette@@QAEXH@Z at 0x005FE950: drop the animation slot holding
   // `key` - stop its timer, put the colours it was cycling back, re-apply
