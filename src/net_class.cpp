@@ -285,8 +285,10 @@ static const GUID KeptServiceProviderGuid = {
 // protocol and callback definitions in this recovered TU omit the frame. The
 // local settings reproduce that distinction without asserting original TU
 // boundaries; each empty-option restore returns to command-line optimization.
+// `inline` lets /Ob2 expand it in Net::close (0x0062E010) while the
+// out-of-line copy stays emitted.
 #pragma optimize("y", off)
-void JackalVoiceRx::clear() {
+inline void JackalVoiceRx::clear() {
     if (head_) {
         for (int removed = 0; removed < count_; ++removed) {
             cursor_ = head_->next_;
@@ -575,11 +577,26 @@ void Net::close() {
         thread_info_.lock_initialized_ = 0;
         DeleteCriticalSection(&thread_info_.receive_lock_);
     }
-    for (int event = 0; event != 5; ++event) {
-        if (thread_info_.events_[event] != 0) {
-            CloseHandle(thread_info_.events_[event]);
-            thread_info_.events_[event] = 0;
-        }
+    // Five separate closes in the image, not a loop.
+    if (thread_info_.events_[0] != 0) {
+        CloseHandle(thread_info_.events_[0]);
+        thread_info_.events_[0] = 0;
+    }
+    if (thread_info_.events_[1] != 0) {
+        CloseHandle(thread_info_.events_[1]);
+        thread_info_.events_[1] = 0;
+    }
+    if (thread_info_.events_[2] != 0) {
+        CloseHandle(thread_info_.events_[2]);
+        thread_info_.events_[2] = 0;
+    }
+    if (thread_info_.events_[3] != 0) {
+        CloseHandle(thread_info_.events_[3]);
+        thread_info_.events_[3] = 0;
+    }
+    if (thread_info_.events_[4] != 0) {
+        CloseHandle(thread_info_.events_[4]);
+        thread_info_.events_[4] = 0;
     }
     if (allocation_node_.session_name_ != 0) {
         free(allocation_node_.session_name_);
@@ -602,9 +619,7 @@ void Net::close() {
         players_[player].field_8_ = 0;
         players_[player].flags_14_ = 0;
     }
-    if (jackal_voice_rx_.head_ != 0) {
-        jackal_voice_rx_.clear();
-    }
+    jackal_voice_rx_.clear();
     voice_key_D4_ = 0;
     voice_flags_D8_ = 0;
     queue_e8_.close();
@@ -1762,18 +1777,17 @@ Status: Coverage transcription - unclaimed body
 */
 int Net::enum_players(unsigned long player_id, unsigned long, const DPNAME *name,
                       unsigned long, void *) {
-    const unsigned long original_id = player_id;
-    NetPlayerTable[NetPlayerWriteIndex].field_0_ = original_id;
+    NetPlayerTable[NetPlayerWriteIndex].field_0_ = player_id;
 
     // Native630C8B..CB6 supplies DPGET_REMOTE (zero) as the fifth stack
-    // argument including the interface receiver. The one-byte data is written
-    // into the player_id argument; the separate DWORD initialized to one is
-    // buffer capacity, not the returned flags. Retain the original id for the
-    // later polling publication, and reload callback-selected storage.
+    // argument including the interface receiver. The one-byte data lands in
+    // an ordinary local that VC6 places in the dead player_id slot; the DWORD
+    // initialized to one is buffer capacity, not the returned flags.
+    DWORD data;
     DWORD data_size = 1;
-    NetDirectPlay->GetPlayerData(original_id, &player_id, &data_size, 0);
+    NetDirectPlay->GetPlayerData(player_id, &data, &data_size, 0);
 
-    NetPlayerTable[NetPlayerWriteIndex].flags_14_ = static_cast<uint8_t>(player_id);
+    NetPlayerTable[NetPlayerWriteIndex].flags_14_ = static_cast<uint8_t>(data);
 
     if (ActiveNet != 0 && (ActiveNet->voice_flags_D8_ & 2) != 0) {
         NetPlayerTable[NetPlayerWriteIndex].flags_14_ = static_cast<uint8_t>(
@@ -1787,8 +1801,8 @@ int Net::enum_players(unsigned long player_id, unsigned long, const DPNAME *name
     strcat(NetPlayerTable[NetPlayerWriteIndex].name_and_tail_,
            name->lpszLongNameA);
 
-    if ((player_id & 1) != 0 && ActiveNet != 0) {
-        ActiveNet->host_player_id_ = original_id;
+    if ((data & 1) != 0 && ActiveNet != 0) {
+        ActiveNet->host_player_id_ = player_id;
     }
 
     ++NetPlayerWriteIndex;
@@ -2573,7 +2587,13 @@ Return Value: the allocation node's address, or 0 when any stage failed
 Status: Coverage transcription - unclaimed body
 */
 NetAllocationNode *Net::create_session(char *name, int max_players, char *password) {
-    if (NetDirectPlay == 0 || name == 0 || max_players < 2) {
+    if (NetDirectPlay == 0) {
+        return 0;
+    }
+    if (name == 0) {
+        return 0;
+    }
+    if (max_players < 2) {
         return 0;
     }
 
@@ -2589,22 +2609,21 @@ NetAllocationNode *Net::create_session(char *name, int max_players, char *passwo
     }
 
     // The modem and serial providers host exactly two players.
-    int seeded_max_players = max_players;
     if (memcmp(&service_provider_guid_, &NetSerialServiceGuid, 0x10) == 0
         || memcmp(&service_provider_guid_, &NetModemServiceGuid, 0x10) == 0) {
-        seeded_max_players = 2;
+        max_players = 2;
     }
 
     DPSESSIONDESC2 desc;
     memset(&desc, 0, 0x50);
     desc.dwSize = 0x50;
-    desc.dwFlags = DPSESSION_MIGRATEHOST;
     desc.guidApplication = *guid_6E8_;
-    desc.dwMaxPlayers = seeded_max_players;
-    desc.lpszSessionNameA = name;
+    desc.dwFlags = DPSESSION_MIGRATEHOST;
+    desc.dwMaxPlayers = max_players;
     desc.lpszPasswordA =
         password != 0 && *password != 0 ? password : 0;
     desc.dwUser1 = field_44_;
+    desc.lpszSessionNameA = name;
 
     if (NetDirectPlay->Open(&desc, DPOPEN_CREATE) != 0) {
         return 0;
@@ -2640,7 +2659,7 @@ NetAllocationNode *Net::create_session(char *name, int max_players, char *passwo
 
     allocation_node_.instance_guid_ = live->guidInstance;
     allocation_node_.session_flags_ = live->dwFlags;
-    allocation_node_.max_players_ = seeded_max_players;
+    allocation_node_.max_players_ = max_players;
     allocation_node_.current_players_ = 0;
     free(live);
     voice_flags_D8_ |= 0x10000;
@@ -2863,14 +2882,12 @@ void Net::broadcast_player_table() {
     const int size = count * 0x2C + 4;
     unsigned char *const packet = static_cast<unsigned char *>(mem_get(size));
     *packet = static_cast<unsigned char>(count);
-    NetPeerPlayerRecord *const entries =
-        reinterpret_cast<NetPeerPlayerRecord *>(packet + 4);
     for (int index = 0; index < count; index++) {
-        entries[index].id_ = players_[index].field_0_;
-        entries[index].name_[0] = 0;
+        reinterpret_cast<NetPeerPlayerRecord *>(packet + 4)[index].id_ = players_[index].field_0_;
+        reinterpret_cast<NetPeerPlayerRecord *>(packet + 4)[index].name_[0] = 0;
         players_[index].name_and_tail_[0x1F] = 0;
-        strcat(entries[index].name_, players_[index].name_and_tail_);
-        entries[index].flags_ = players_[index].flags_14_;
+        strcat(reinterpret_cast<NetPeerPlayerRecord *>(packet + 4)[index].name_, players_[index].name_and_tail_);
+        reinterpret_cast<NetPeerPlayerRecord *>(packet + 4)[index].flags_ = players_[index].flags_14_;
     }
     send_packet_type(packet, size, 0, 0x10, 1);
     if (packet != 0) {
@@ -3401,9 +3418,11 @@ void Net::handle_sys_msg() {
                 // Original632E3D reloads the count byte after each insertion
                 // (byte test on entry); the loop index is an integer.
                 for (int seen = 0; seen < message->count_; ++seen) {
-                    NetPeerPlayerRecord &entry = message->records()[seen];
-                    sub_632cc0(entry.name_, entry.id_,
-                              static_cast<unsigned char>(entry.flags_));
+                    // Exact once sub_632cc0 takes an int flag (image loads
+                    // the DWORD, not its low byte): header change proposed.
+                    sub_632cc0(message->records()[seen].name_,
+                               message->records()[seen].id_,
+                               message->records()[seen].flags_);
                 }
             }
             continue;
@@ -3425,7 +3444,7 @@ void Net::handle_sys_msg() {
                     static_cast<unsigned char *>(message->lpData);
                 int first = text != 0 ? text[0] : 0;
                 sub_632cc0(NetPlayerNameRecord.name_.lpszLongNameA, message->dpId,
-                    static_cast<unsigned char>(first));
+                    first);
             }
             break;
         case 5: {

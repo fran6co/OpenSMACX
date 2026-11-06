@@ -243,6 +243,8 @@ undersells it same as elsewhere in this file). The remaining gap is register
 naming/allocation on the `PaletteInternal` fields (`slot.time`/`.first`/
 `.count`/`.colours`), all at the CORRECT struct-relative offsets already -
 not chased further given the size of the function.
+2026-11-06: exact once every field is spelled internal_[index].x (no slot
+reference) and the compaction is a counted for loop over an unused index.
 */
 #if defined(_MSC_VER) && _MSC_VER == 1200
 #pragma function(memcpy)
@@ -260,31 +262,27 @@ void Palette::remove_animation(int key) {
     if (internal_[index].key != static_cast<uint32_t>(key)) {
         return;
     }
-    PaletteInternal &slot = internal_[index];
-    if (slot.time) {
-        delete slot.time;
-        slot.time = nullptr;
+    if (internal_[index].time) {
+        delete internal_[index].time;
+        internal_[index].time = nullptr;
     }
     // THE STORED COLOURS GO BACK. `colours` holds what the entries this slot
     // animates looked like before it started.
-    memcpy(&entries_[slot.first], slot.colours,
-           slot.count * sizeof(PALETTEENTRY));
+    memcpy(&entries_[internal_[index].first], internal_[index].colours,
+           internal_[index].count * sizeof(PALETTEENTRY));
     set();
-    if (slot.colours) {
-        free(slot.colours);
-        slot.colours = nullptr;
+    if (internal_[index].colours) {
+        free(internal_[index].colours);
+        internal_[index].colours = nullptr;
     }
     // The original repeatedly copies the same next slot into this slot.
     // Neither row advances; preserve this table-compaction bug.
-    if (index < 4) {
-        int remaining = 4 - index;
-        do {
-            internal_[index].key = internal_[index + 1].key;
-            internal_[index].first = internal_[index + 1].first;
-            internal_[index].count = internal_[index + 1].count;
-            internal_[index].time = internal_[index + 1].time;
-            internal_[index].colours = internal_[index + 1].colours;
-        } while (--remaining);
+    for (int i = index; i < 4; ++i) {
+        internal_[index].key = internal_[index + 1].key;
+        internal_[index].first = internal_[index + 1].first;
+        internal_[index].count = internal_[index + 1].count;
+        internal_[index].time = internal_[index + 1].time;
+        internal_[index].colours = internal_[index + 1].colours;
     }
 }
 #if defined(_MSC_VER) && _MSC_VER == 1200
@@ -501,30 +499,31 @@ void Palette::init_palette_class(int use_system_colours) {
             header->palPalEntry[i + 246].peFlags = 0;
         }
         // Everything between the two reserved runs is ours to animate.
-        PALETTEENTRY *free_entry = header->palPalEntry + 10;
-        for (int remaining = 236; remaining != 0; --remaining) {
-            free_entry->peFlags = 5;  // PC_RESERVED | PC_NOCOLLAPSE
-            ++free_entry;
+        for (int j = 10; j < 246; ++j) {
+            header->palPalEntry[j].peFlags = 5;  // PC_RESERVED | PC_NOCOLLAPSE
         }
         // Four entries are handed back to the system by INDEX: PC_EXPLICIT
         // means peRed holds a system palette slot rather than an intensity.
-        PALETTEENTRY *reserved = header->palPalEntry + 8;
         for (int pair = 0; pair < 2; ++pair) {
-            reserved[0].peRed = (uint8_t)(pair + 8);
-            reserved[0].peGreen = 0;
-            reserved[0].peBlue = 0;
-            reserved[0].peFlags = 2;  // PC_EXPLICIT
+            header->palPalEntry[pair + 8].peRed = (uint8_t)(pair + 8);
+            header->palPalEntry[pair + 8].peGreen = 0;
+            header->palPalEntry[pair + 8].peBlue = 0;
+            header->palPalEntry[pair + 8].peFlags = 2;  // PC_EXPLICIT
             // BUG IN THE ORIGINAL: entry 246 is given system index 245 and
             // entry 247 index 246, one below each entry's own slot. The four
             // lines above get this right for entries 8 and 9.
-            reserved[238].peRed = (uint8_t)(pair - 11);
-            reserved[238].peGreen = 0;
-            reserved[238].peBlue = 0;
-            reserved[238].peFlags = 2;  // PC_EXPLICIT
-            ++reserved;
+            header->palPalEntry[pair + 246].peRed = (uint8_t)(pair - 11);
+            header->palPalEntry[pair + 246].peGreen = 0;
+            header->palPalEntry[pair + 246].peBlue = 0;
+            header->palPalEntry[pair + 246].peFlags = 2;  // PC_EXPLICIT
         }
     }
     PaletteInitialized = CreatePalette(header);
+    // Both arms free the header; the image keeps the merged test (cmp eax,ebx).
+    if (PaletteInitialized == 0) {
+        free(header);
+        return;
+    }
     free(header);
 }
 
@@ -952,6 +951,8 @@ int Palette::get_nearest_palette_index(unsigned char red, unsigned char green,
 //   (`for (int fill = end; ...)`) compiles BYTE-IDENTICAL to reusing `i`, and
 //   /G6 - which reorders that mov/cmp pair on general.cpp's add_lf - regresses
 //   to 24/53 here. Not source-reachable; left at 46/53.
+// 2026-11-06: exact once the second loop starts at `start + count` and
+//   `end` is named only after it.
 
 // `source` is the palette the remap TARGETS, not an int: the image loads it
 // into ecx as the receiver of get_nearest_palette_index at 0x005FF1F4
@@ -970,10 +971,10 @@ int Palette::make_remap_table(Palette *source, unsigned char *table, int start,
             i = i + 1;
         } while (i < start);
     }
-    int end = start + count;
-    for (i = end; i < 0x100; i = i + 1) {
+    for (i = start + count; i < 0x100; i = i + 1) {
         table[i] = (char)i;
     }
+    int end = start + count;
     if (start < end) {
         int idx = start;
         do {
@@ -1007,6 +1008,8 @@ int Palette::make_remap_table(Palette *source, unsigned char *table, int start,
 //   (`count`) AND the index both live for the `<` comparison, which is a
 //   register more than the image's single counter costs. Left as the
 //   pointer-walk form, which is the higher-similarity of the two measured.
+// 2026-11-06: exact as a plain `for (i = 0; i < count; i++)` indexing
+//   entries_[start + i] and src[i]; VC6 derives the counter/pointer walk.
 
 int Palette::set_rgbquad(const RGBQUAD *src, int start, int count) {
     if (src == 0) {
@@ -1015,17 +1018,11 @@ int Palette::set_rgbquad(const RGBQUAD *src, int start, int count) {
     if (PaletteInitialized == nullptr) {
         return 7;
     }
-    if (count > 0) {
-        PALETTEENTRY *dst = &entries_[start];
-        do {
-            dst->peRed = src->rgbRed;
-            dst->peGreen = src->rgbGreen;
-            dst->peBlue = src->rgbBlue;
-            dst->peFlags = 5;
-            ++dst;
-            ++src;
-            count--;
-        } while (count != 0);
+    for (int i = 0; i < count; i++) {
+        entries_[start + i].peRed = src[i].rgbRed;
+        entries_[start + i].peGreen = src[i].rgbGreen;
+        entries_[start + i].peBlue = src[i].rgbBlue;
+        entries_[start + i].peFlags = 5;
     }
     seed_ = 0;
     int result;
@@ -1066,7 +1063,8 @@ int Palette::set_rgbquad(const RGBQUAD *src, int start, int count) {
 //   remaining gap reads as the same "keep the receiver in a register instead
 //   of a stack spill" wall as `closest()`/`get_nearest_palette_index`, not
 //   chased further.
-
+// 2026-11-06: exact with direct channel stores, the call rereading them, and
+//   the second fill loop starting at `start + count`.
 
 #if defined(_MSC_VER) && _MSC_VER == 1200
 #pragma function(memcpy)
@@ -1087,10 +1085,10 @@ int Palette::make_blend_table(const Palette *other, uint8_t *table, int start,
         table[i0] = static_cast<uint8_t>(i0);
     }
 
-    int end = start + count;
-    for (int i1 = end; i1 < 0x100; ++i1) {
+    for (int i1 = start + count; i1 < 0x100; ++i1) {
         table[i1] = static_cast<uint8_t>(i1);
     }
+    int end = start + count;
 
     PALETTEENTRY selfCopy[256];
     PALETTEENTRY otherCopy[256];
@@ -1101,29 +1099,21 @@ int Palette::make_blend_table(const Palette *other, uint8_t *table, int start,
         int divisor = self_weight + other_weight;
         int i = start;
         do {
-            uint8_t r = static_cast<uint8_t>(
+            selfCopy[i].peRed = static_cast<uint8_t>(
                 (otherCopy[i].peRed * other_weight +
                  selfCopy[i].peRed * self_weight) /
                 divisor);
-            selfCopy[i].peRed = r;
-
-            uint8_t g = static_cast<uint8_t>(
+            selfCopy[i].peGreen = static_cast<uint8_t>(
                 (otherCopy[i].peGreen * other_weight +
                  selfCopy[i].peGreen * self_weight) /
                 divisor);
-            selfCopy[i].peGreen = g;
-
-            int bSum =
-                otherCopy[i].peBlue * other_weight +
-                selfCopy[i].peBlue * self_weight;
-            int b = bSum / divisor;
-            selfCopy[i].peBlue = static_cast<uint8_t>(b);
-
-            uint8_t idx = static_cast<uint8_t>(
-                get_nearest_palette_index(r, g, static_cast<uint8_t>(b), 0));
-
+            selfCopy[i].peBlue = static_cast<uint8_t>(
+                (otherCopy[i].peBlue * other_weight +
+                 selfCopy[i].peBlue * self_weight) /
+                divisor);
+            table[i] = static_cast<uint8_t>(get_nearest_palette_index(
+                selfCopy[i].peRed, selfCopy[i].peGreen, selfCopy[i].peBlue, 0));
             ++i;
-            table[i - 1] = idx;
         } while (i < end);
     }
 
@@ -1157,6 +1147,8 @@ int Palette::make_blend_table(const Palette *other, uint8_t *table, int start,
 //   dead on the three sibling functions above (guard-first reordering,
 //   dropping the trailing `nearest`/`bSum`-style intermediate) - this is the
 //   fourth body with the identical shape, not a fresh puzzle.
+// 2026-11-06: exact with indexed blend[]/entries_[]/internal_[] accesses
+//   (VC6 derives the walking pointers) and `first + count` bounds.
 
 
 int Palette::create_table_from_color(int colour_index, unsigned char *table,
@@ -1177,52 +1169,41 @@ int Palette::create_table_from_color(int colour_index, unsigned char *table,
             ++i;
         } while (i < start);
     }
-    int range_end = start + count;
-    for (i = range_end; i < 0x100; ++i) {
+    for (i = start + count; i < 0x100; ++i) {
         table[i] = static_cast<unsigned char>(i);
     }
+    int range_end = start + count;
 
     int index = start;
     const PALETTEENTRY target = entries_[colour_index & 0xff];
 
     if (start < range_end) {
         int divisor = keep_weight + colour_weight;
-        unsigned char blend[0x400];
-        unsigned char *dest = blend + start * 4;
-        const PALETTEENTRY *src = &entries_[start];
+        PALETTEENTRY blend[256];
         do {
-            dest[0] = static_cast<unsigned char>(
-                (static_cast<int>(src->peRed) * keep_weight + static_cast<int>(target.peRed) * colour_weight) / divisor);
-            dest[1] = static_cast<unsigned char>(
-                (static_cast<int>(src->peGreen) * keep_weight + static_cast<int>(target.peGreen) * colour_weight) / divisor);
-            int sum = static_cast<int>(src->peBlue) * keep_weight + static_cast<int>(target.peBlue) * colour_weight;
-            int blue = sum / divisor;
-            dest[2] = static_cast<unsigned char>(blue);
-            unsigned char nearest = static_cast<unsigned char>(
-                get_nearest_palette_index(dest[0], dest[1], dest[2], 1));
-            ++src;
-            dest += 4;
-            table[index] = nearest;
+            blend[index].peRed = static_cast<unsigned char>(
+                (entries_[index].peRed * keep_weight + target.peRed * colour_weight) / divisor);
+            blend[index].peGreen = static_cast<unsigned char>(
+                (entries_[index].peGreen * keep_weight + target.peGreen * colour_weight) / divisor);
+            blend[index].peBlue = static_cast<unsigned char>(
+                (entries_[index].peBlue * keep_weight + target.peBlue * colour_weight) / divisor);
+            table[index] = static_cast<unsigned char>(get_nearest_palette_index(
+                blend[index].peRed, blend[index].peGreen, blend[index].peBlue, 1));
             ++index;
         } while (index < range_end);
     }
 
-    const PaletteInternal *record = internal_;
-    int remaining = 5;
-    do {
-        if ((int32_t)record->key != -1) {
-            unsigned int start = record->first;
-            if (start < static_cast<unsigned int>(record->count + start)) {
+    for (int k = 0; k < 5; k++) {
+        if (internal_[k].key != 0xffffffff) {
+            int first = internal_[k].first;
+            if (first < internal_[k].first + internal_[k].count) {
                 do {
-                    table[start] = static_cast<unsigned char>(start);
-                    ++start;
-                } while (static_cast<int>(start) <
-                         static_cast<int>(record->first + record->count));
+                    table[first] = static_cast<unsigned char>(first);
+                    ++first;
+                } while (first < internal_[k].first + internal_[k].count);
             }
         }
-        ++record;
-        --remaining;
-    } while (remaining != 0);
+    }
 
     return 0;
 }
@@ -1306,19 +1287,16 @@ int Palette::create_table_from_color(int colour_index, unsigned char *table,
 //    near miss from a wrong body.
 
 
+// 2026-11-06: this indexed body is exact once closest() takes uint8_t
+//   red/green/blue (image pushes the raw bytes; header change proposed).
 int Palette::map_to_palette(Palette *dest, int start, int count) {
     if (dest == 0) {
         return 0x10;
     }
-    PALETTEENTRY *dst = &dest->entries_[10];
-    const PALETTEENTRY *src = &entries_[10];
-    int remaining = 0xec;
-    do {
-        int idx = closest(src->peRed, src->peGreen, src->peBlue, start, count, 1);
-        ++src;
-        *dst = entries_[idx];
-        dst += 1;
-    } while (--remaining);
+    for (int i = 10; i < 0xf6; i++) {
+        dest->entries_[i] = entries_[closest(entries_[i].peRed, entries_[i].peGreen,
+                                             entries_[i].peBlue, start, count, 1)];
+    }
     return 0;
 }
 
@@ -1347,6 +1325,8 @@ int Palette::map_to_palette(Palette *dest, int start, int count) {
 // indirect  0x005FEB91
 
 
+// 2026-11-06: exact with the first-entry save as a PALETTEENTRY local
+//   (packs into the dead context slot), count read before first, for+break.
 void __cdecl Palette::timer_callback(int key, void *context) {
     if (context == nullptr || PaletteUsesSystemColours != 0) {
         return;
@@ -1354,25 +1334,25 @@ void __cdecl Palette::timer_callback(int key, void *context) {
 
     Palette *self = static_cast<Palette *>(context);
     int idx = 0;
-    do {
-        int slot_key = self->internal_[idx].key;
+    for (; idx < 5; ++idx) {
+        const int slot_key = static_cast<int>(self->internal_[idx].key);
         if (key == slot_key || slot_key == -1) {
             break;
         }
-        idx++;
-    } while (idx < 5);
+    }
 
     if ((int)self->internal_[idx].key != key) {
         return;
     }
 
-    unsigned int iStartIndex = self->internal_[idx].first;
     int cEntries = self->internal_[idx].count;
+    unsigned int iStartIndex = self->internal_[idx].first;
 
     PALETTEENTRY *entries = &self->entries_[iStartIndex];
-    unsigned char lastBlue = entries[0].peBlue;
-    unsigned char lastGreen = entries[0].peGreen;
-    unsigned char lastRed = entries[0].peRed;
+    PALETTEENTRY last;
+    last.peRed = entries[0].peRed;
+    last.peGreen = entries[0].peGreen;
+    last.peBlue = entries[0].peBlue;
 
     int i;
     for (i = 0; i < cEntries - 1; i++) {
@@ -1381,9 +1361,9 @@ void __cdecl Palette::timer_callback(int key, void *context) {
         entries[i].peBlue = entries[i + 1].peBlue;
     }
 
-    entries[cEntries - 1].peRed = lastRed;
-    entries[cEntries - 1].peGreen = lastGreen;
-    entries[cEntries - 1].peBlue = lastBlue;
+    entries[cEntries - 1].peRed = last.peRed;
+    entries[cEntries - 1].peGreen = last.peGreen;
+    entries[cEntries - 1].peBlue = last.peBlue;
 
     AnimatePalette(
         PaletteInitialized, iStartIndex, cEntries, entries);
@@ -1416,6 +1396,10 @@ void __cdecl Palette::timer_callback(int key, void *context) {
 #if defined(_MSC_VER) && _MSC_VER == 1200
 #pragma function(memcpy)
 #endif
+// 2026-11-06: the image writes the blend into this->entries_ and animates
+//   &entries_[start] (memcpy #1 copies this, the loop base is the spilled
+//   this); the old body wrote into other. Left: two blue-channel delta slots
+//   swap ([esp+0x1c]/[esp+0x20]).
 int Palette::fade_to(Palette *other, int start, int count, int steps,
                      int min_frame_ms) {
   if (PaletteUsesSystemColours != 0) {
@@ -1436,39 +1420,33 @@ int Palette::fade_to(Palette *other, int start, int count, int steps,
   
 
   int frame = 0;
-  if (steps != -1 && steps + 1 >= 0) {
+  if (frame < steps + 1) {
     int weight = steps;
     do {
       DWORD t0 = timeGetTime();
-      if (start < start + count) {
-        PALETTEENTRY *dst = &other->entries_[start];
-        int k = start;
+      int k = start;
+      if (k < start + count) {
         do {
-          dst->peRed = static_cast<char>(
+          entries_[k].peRed = static_cast<char>(
               (selfCopy[k].peRed * weight +
                otherCopy[k].peRed * frame) /
               steps);
-          dst->peGreen = static_cast<char>(
+          entries_[k].peGreen = static_cast<char>(
               (selfCopy[k].peGreen * weight +
                otherCopy[k].peGreen * frame) /
               steps);
-          dst->peBlue = static_cast<char>(
+          entries_[k].peBlue = static_cast<char>(
               (selfCopy[k].peBlue * weight +
                otherCopy[k].peBlue * frame) /
               steps);
           ++k;
-          ++dst;
         } while (k < start + count);
       }
 
       AnimatePalette(PaletteInitialized, start, count,
-                     &other->entries_[start]);
+                     &entries_[start]);
 
-      DWORD t1 = timeGetTime();
-      unsigned int elapsed = t1 - t0;
-      while (elapsed < static_cast<unsigned int>(min_frame_ms)) {
-        t1 = timeGetTime();
-        elapsed = t1 - t0;
+      while (timeGetTime() - t0 < static_cast<unsigned int>(min_frame_ms)) {
       }
 
       ++frame;
@@ -1607,6 +1585,8 @@ int Palette::init_cycle(int key, int first, int count, unsigned long interval) {
 #if defined(_MSC_VER) && _MSC_VER == 1200
 #pragma function(memcpy)
 #endif
+// 2026-11-06: the DirectDraw/GDI block is the inlined set(); body follows
+//   fade_to. Left: start/this/timeGetTime load scheduling at the loop head.
 int Palette::fade_to_entry(int colour_index, int start, int count, int steps,
                            int min_frame_ms) {
     if (PaletteInitialized == nullptr) {
@@ -1619,54 +1599,28 @@ int Palette::fade_to_entry(int colour_index, int start, int count, int steps,
     const PALETTEENTRY target = entries_[colour_index];
     PALETTEENTRY backup[256];
     memcpy(backup, entries_, sizeof(backup));
+    set();
 
-    if (BufferDirectDraw == nullptr) {
-        if (PaletteInitialized != nullptr) {
-            PaletteActive = this;
-            Win::screen_buffer_.sync_to_palette(this);
-            if (PaletteUsesSystemColours == 0 &&
-                PaletteSeedCache != (int)seed_) {
-                AnimatePalette(PaletteInitialized, 10, 0xec, &entries_[10]);
-                PaletteSeedCache = (int)seed_;
-            }
-        }
-    } else if (DirectDrawPalette != nullptr) {
-        DirectDrawPalette->SetEntries(0, 0, 0x100, entries_);
-    }
-
-    if (steps + 1 > 0) {
-        unsigned int targetR = target.peRed;
-        unsigned int targetG = target.peGreen;
-        unsigned int targetB = target.peBlue;
-        int stepsRemaining = steps;
-        int progressCounter = 0;
+    int frame = 0;
+    int weight = steps;
+    if (frame < steps + 1) {
         do {
-            unsigned int tick1 = timeGetTime();
-            int endIndex = start + count;
-            if (start < endIndex) {
-                PALETTEENTRY *dst = &entries_[start];
-                const PALETTEENTRY *src = &backup[start];
-                int remaining = endIndex - start;
-                int r = targetR * progressCounter;
-                int g = targetG * progressCounter;
-                int b = targetB * progressCounter;
-                do {
-                    dst->peRed = (unsigned char)((src->peRed * stepsRemaining + r) / steps);
-                    dst->peGreen = (unsigned char)((src->peGreen * stepsRemaining + g) / steps);
-                    dst->peBlue = (unsigned char)((src->peBlue * stepsRemaining + b) / steps);
-                    ++dst;
-                    ++src;
-                    --remaining;
-                } while (remaining != 0);
+            DWORD t0 = timeGetTime();
+            int end = start + count;
+            for (int k = start; k < end; ++k) {
+                    entries_[k].peRed = static_cast<unsigned char>(
+                        (backup[k].peRed * weight + target.peRed * frame) / steps);
+                    entries_[k].peGreen = static_cast<unsigned char>(
+                        (backup[k].peGreen * weight + target.peGreen * frame) / steps);
+                    entries_[k].peBlue = static_cast<unsigned char>(
+                        (backup[k].peBlue * weight + target.peBlue * frame) / steps);
             }
             AnimatePalette(PaletteInitialized, start, count, &entries_[start]);
-            unsigned int tick2 = timeGetTime();
-            while (tick2 - tick1 < (unsigned int)min_frame_ms) {
-                tick2 = timeGetTime();
+            while (timeGetTime() - t0 < static_cast<unsigned int>(min_frame_ms)) {
             }
-            ++progressCounter;
-            --stepsRemaining;
-        } while (progressCounter < steps + 1);
+            ++frame;
+            --weight;
+        } while (frame < steps + 1);
     }
 
     seed_ = 0;
@@ -1749,18 +1703,19 @@ int Palette::fade_to_entry(int colour_index, int start, int count, int steps,
 // context from the first token rather than behind a file read. This
 // emitter computes declarations; it does not carry lessons.
 
+// 2026-11-06: exact with `>` max-selects, a ternary s, compound *=/+= on
+//   out->h and literal 60.0 / 0.0 in the hue tail.
 void __cdecl RGB_to_HSV(const PALETTEENTRY *entry, HSV *out) {
     if (out != 0 && entry != 0) {
         double r = static_cast<double>(static_cast<int>(entry->peRed)) * hsv_value_byte_scale;
         double g = static_cast<double>(static_cast<int>(entry->peGreen)) * hsv_value_byte_scale;
         double b = static_cast<double>(static_cast<int>(entry->peBlue)) * hsv_value_byte_scale;
-        double vmax = (r < g) ? g : r;
-        vmax = (vmax < b) ? b : vmax;
+        double vmax = (g > r) ? g : r;
+        vmax = (b > vmax) ? b : vmax;
         double vmin = (g < r) ? g : r;
         vmin = (b < vmax) ? b : vmin;
         out->v = vmax;
-        double s = hsv_zero;
-        if (vmax != hsv_zero) s = (vmax - vmin) / vmax;
+        double s = (vmax != hsv_zero) ? (vmax - vmin) / vmax : hsv_zero;
         out->s = s;
         if (s == hsv_zero) {
             // The transcription wrote this as two int stores of 0x00000000
@@ -1777,10 +1732,11 @@ void __cdecl RGB_to_HSV(const PALETTEENTRY *entry, HSV *out) {
         } else {
             out->h = (r - g) / delta + hsv_sector_offset_r_minus_g;
         }
-        double h2 = out->h * hsv_degrees_per_sector;
-        out->h = h2;
-        if (h2 < hsv_zero) {
-            out->h = h2 + hsv_hue_wrap_degrees;
+        // Literals: named const doubles reorder these two (fmul operand
+        // order, fst/fcom order); 0x66FA70/0x670C40 are shared constants.
+        out->h *= 60.0;
+        if (out->h < 0.0) {
+            out->h += hsv_hue_wrap_degrees;
         }
     }
 }
@@ -1795,6 +1751,9 @@ void __cdecl RGB_to_HSV(const PALETTEENTRY *entry, HSV *out) {
 //   /c /O2 /Gy /GR- /GX set on instruction count (both 7/224) and beat it on similarity, 0.462 vs
 //   0.378 - the only body in this file where /G6 is the better set outright. Re-measured over all
 //   26 flag sets; the best figure is still a long way off.
+// TRIED: 2026-11-06, got to stack-slot order only: literal `* 0.017453292519444445`
+//   (fld field; fmul const - the named const loads first), `&hsv_block[i]` in both
+//   loops, signed start/end. Left: best/best_index slots mirrored (0x30/0x3c in image).
 // TRIED: MISMATCH #5 push/mov - and/sub-esp frame differs because the helper hsv_sq_distance() is a separate function call rather than inlined FPU code sharing one scratch stack slot per the original's single sub-esp-8 staging area reused across both sin/cos call sites in each loop body.
 // LEVER: `static __forceinline` on `hsv_sq_distance` makes VC6 actually inline
 //   it - confirmed by objdump on the compiled object: the `call` sites now
