@@ -672,6 +672,18 @@ void NetWin::fill_player(NetWinLobbyRowView lobby_row, int slot) {
 // The original byte read at 0x0090E8E3 is options.time_control_ (+3), not a
 // separate ninth-row object.
 
+// The empty-row stores are an inline boundary in the image (also used by
+// NetDaemon::on_player_added and sub_47b1d0's packet row).
+// Proposed home: an inline NetWinLobbyRow reset in netwin.h.
+static inline void reset_lobby_row(NetWinLobbyRow *row) {
+    row->owner_ = 0;
+    row->prefix_ = -1;
+    row->ready_or_occupied_ = 0;
+    row->field_2_ = 0;
+    row->faction_or_color_ = -1;
+    row->field_4_ = 2;
+}
+
 /*
 Purpose: Seed the seven base faction records of the static faction table.
          Each record's colour/mode prefix is rewritten - 0xFF, 0, 2, 0xFF, 2,
@@ -710,28 +722,21 @@ void NetWin::config_players() {
     NetWinSessionOptions.fields_.native_life_ = 2;
     NetWinSessionOptions.fields_.cloud_cover_ = 2;
 
-    NetWinLobbyRow *row = &NetWinLobbyRows.rows_[1];
-    Player *player = &Players[1];
-    int row_index = 1;
-    do {
-        row->owner_ = 0;
-        row->prefix_ = -1;
-        row->ready_or_occupied_ = 0;
-        row->field_2_ = NetWinSessionOptions.fields_.difficulty_;
-        row->faction_or_color_ = static_cast<int8_t>(0xFF);
-        row->field_4_ = 2;
-        strcpy(row->leader_name_, player->name_leader);
-        strcpy(row->formal_faction_name_, player->formal_name_faction);
-        strcpy(row->noun_faction_,
-               label_get(0xFE4 / 4));
-        strcpy(row->adjective_faction_, player->adj_name_faction);
-        strcpy(row->leader_title_, player->title_leader);
-        strcpy(row->adjective_leader_, player->adj_leader);
-        row->tail_[0] = static_cast<uint8_t>(player->is_leader_female);
-        ++row;
-        ++player;
-        ++row_index;
-    } while (row_index < 8);
+    for (int i = 1; i < 8; i++) {
+        reset_lobby_row(&NetWinLobbyRows.rows_[i]);
+        NetWinLobbyRows.rows_[i].prefix_ = -1;
+        NetWinLobbyRows.rows_[i].faction_or_color_ = -1;
+        NetWinLobbyRows.rows_[i].field_2_ = NetWinSessionOptions.fields_.difficulty_;
+        NetWinLobbyRows.rows_[i].ready_or_occupied_ = 0;
+        strcpy(NetWinLobbyRows.rows_[i].leader_name_, Players[i].name_leader);
+        strcpy(NetWinLobbyRows.rows_[i].formal_faction_name_, Players[i].formal_name_faction);
+        strcpy(NetWinLobbyRows.rows_[i].noun_faction_,
+               StringTable.get(Labels.strings_ptr[0xFE4 / 4]));
+        strcpy(NetWinLobbyRows.rows_[i].adjective_faction_, Players[i].adj_name_faction);
+        strcpy(NetWinLobbyRows.rows_[i].leader_title_, Players[i].title_leader);
+        strcpy(NetWinLobbyRows.rows_[i].adjective_leader_, Players[i].adj_leader);
+        NetWinLobbyRows.rows_[i].tail_[0] = static_cast<uint8_t>(Players[i].is_leader_female);
+    }
 }
 
 // Private recovered body for the native 0x00482D90 roster finalizer.
@@ -1638,41 +1643,40 @@ Status: Coverage transcription - unclaimed body
 */
 void NetWin::draw_diffs() {
     spot_.kill_type(4);
-    RECT *rect = &setup_rects_[20];
-    NetWinLobbyRow *row = &NetWinLobbyRows.rows_[1];
-    for (int index = 0; index < 7;
-         ++index, ++row, ++rect) {
+    for (int index = 0; index < 7; ++index) {
         if (NetWinSessionData.fields_.mode_ == 3
             && index >= faction_records_[0].record_type_) {
             break;
         }
+        RECT *rect = &setup_rects_[20 + index];
         Buffer::box_sprite(rect, &InterfaceBoxStyles[0]);
-        if (NetWinSessionData.fields_.mode_ == 3 && row->prefix_ == -1) {
+        if (NetWinSessionData.fields_.mode_ == 3
+            && NetWinLobbyRows.rows_[index + 1].prefix_ == -1) {
             continue;
         }
 
-        const RECT arrow_rect = *rect;
+        RECT field = *rect;
         // The combo-arrow chip: the player's own slot, or - with the two ids
         // still equal - the row whose prefix is the 0xFF default.
         int slot = index + 1;
         if (slot == NetDaemonNet.pid_2_idx(NetDaemonNet.local_player_id())
             || (NetDaemonNet.local_player_id() == NetDaemonNet.host_player_id()
-                && row->prefix_ == -1)) {
+                && NetWinLobbyRows.rows_[index + 1].prefix_ == -1)) {
             Sprite &arrow = g_IFACE_MP_COMBO_ARROW_SPRITES[0];
             arrow.draw(this, arrow.transparent_index(),
-                       arrow_rect.right - 0xA,
-                       arrow_rect.top
-                           + (arrow_rect.bottom - arrow.height() - arrow_rect.top) / 2);
+                       field.right - 0xA,
+                       field.top
+                           + (field.bottom - arrow.height() - field.top) / 2);
         }
 
         Buffer::set_font(find_font(0xE, 1), 0, 0, 0);
         Buffer::set_text_color(get_player_color(slot), 0, 1, 1);
-        RECT field = *rect;
+        field = *rect;
         field.left += 4;
         field.right -= 4;
         Buffer::set_clip(&field);
         char *name = StringTable.get(
-            Difficulty[static_cast<int8_t>(row->field_2_)]);
+            Difficulty[static_cast<int8_t>(NetWinLobbyRows.rows_[index + 1].field_2_)]);
         if (name != 0) {
             Buffer::write_l(name, &field, strlen(name));
         }
@@ -2816,28 +2820,21 @@ int NetWin::modal_callback() {
         }
         on_redraw();
     }
-    int result = 1;
     if (field_7614_ == 0) {
         field_7618_ = 1;
-        if (NetDaemonNet.player_count_ >= 1) {
-            NetWinLobbyRow *record = &NetWinLobbyRows.rows_[1];
-            int index = 1;
-            do {
-                if (record->ready_or_occupied_ == 0) {
-                    field_7618_ = 0;
-                }
-                index++;
-                ++record;
-            } while (index <= NetDaemonNet.player_count_);
+        for (int index = 1; index <= NetDaemonNet.player_count_; index++) {
+            if (NetWinLobbyRows.rows_[index].ready_or_occupied_ == 0) {
+                field_7618_ = 0;
+            }
         }
         if (field_7618_ != 0) {
             field_7614_ = 1;
         }
     }
     if (field_7614_ != 0 || ExitTurnLoop != 0) {
-        result = 0;
+        return 0;
     }
-    return result;
+    return 1;
 }
 
 /*
@@ -2867,30 +2864,21 @@ int __cdecl NetWin::modal_callback_daemon() {
         GraphicWin &dialog = NetWinDialog;
         dialog.on_redraw();
     }
-    if (NetWinDialog.field_7614_ != 0) {
-        return 0;
-    }
-    int count = NetDaemonNet.player_count_;
-    int all_used = 1;
-    NetWinDialog.field_7618_ = all_used;
-    if (count >= 1) {
-        NetWinLobbyRow *record = &NetWinLobbyRows.rows_[1];
-        do {
-            if (record->ready_or_occupied_ == 0) {
-                all_used = 0;
+    if (NetWinDialog.field_7614_ == 0) {
+        NetWinDialog.field_7618_ = 1;
+        for (int index = 1; index <= NetDaemonNet.player_count_; index++) {
+            if (NetWinLobbyRows.rows_[index].ready_or_occupied_ == 0) {
+                NetWinDialog.field_7618_ = 0;
             }
-            ++record;
-        } while (--count != 0);
-        NetWinDialog.field_7618_ = all_used;
-        if (all_used == 0) {
-            if (ExitTurnLoop != 0) {
-                return 0;
-            }
-            return 1;
+        }
+        if (NetWinDialog.field_7618_ != 0) {
+            NetWinDialog.field_7614_ = 1;
         }
     }
-    NetWinDialog.field_7614_ = 1;
-    return 0;
+    if (NetWinDialog.field_7614_ != 0 || ExitTurnLoop != 0) {
+        return 0;
+    }
+    return 1;
 }
 
 /*
@@ -3571,13 +3559,13 @@ Status: Coverage transcription - unclaimed body
 */
 void __cdecl sub_47b1d0(int faction_id, void *payload) {
     NetWinLobbySinglePacket packet;
-    packet.row_.prefix_ = -1;
-    packet.row_.faction_or_color_ = -1;
     packet.row_.owner_ = 0;
+    packet.row_.prefix_ = -1;
     packet.row_.ready_or_occupied_ = 0;
     packet.row_.field_2_ = 0;
+    packet.row_.faction_or_color_ = -1;
     packet.row_.field_4_ = 2;
-    if (faction_id > 0 && payload != 0) {
+    if (faction_id >= 1 && payload != 0) {
         packet.header_.field_8_ = 0;
         packet.header_.set_opcode(0x2F04);
         packet.header_.slot_ = faction_id;

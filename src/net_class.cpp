@@ -1366,39 +1366,33 @@ void Net::check_polling() {
         }
         if (local_player_id_ == players_[1].field_0_) {
             const DWORD stamp = players_->stamp_10_;
-            if (stamp == 0) {
-                NetReapBusy = 0;
-                return;
+            if (stamp != 0) {
+                const DWORD tick = now();
+                if (tick - stamp > poll_timeout_E0_
+                    && drop_player(players_->field_0_, 0) == 0) {
+                    players_->stamp_10_ = now();
+                    NetReapBusy = 0;
+                    return;
+                }
             }
-            const DWORD tick = now();
-            if (tick - stamp <= poll_timeout_E0_) {
-                NetReapBusy = 0;
-                return;
+        } else {
+            // Neither timer word names a player this table holds, so both
+            // leading slots are stale: cut the lot.
+            for (int checked = 0; checked < 2; ++checked) {
+                const DWORD stamp = players_[checked].stamp_10_;
+                if (stamp == 0) {
+                    return;
+                }
+                const DWORD tick = timeGetTime();
+                if (tick - stamp < poll_timeout_E0_) {
+                    return;
+                }
             }
-            if (drop_player(players_->field_0_, 0) != 0) {
-                NetReapBusy = 0;
-                return;
+            if (drop_player(0xFFFFFFFF, 0) == 0) {
+                uint32_t cut = timeGetTime();
+                players_[1].stamp_10_ = cut;
+                players_[0].stamp_10_ = cut;
             }
-            players_->stamp_10_ = now();
-            NetReapBusy = 0;
-            return;
-        }
-        // Neither timer word names a player this table holds, so both leading
-        // slots are stale: cut the lot.
-        for (int checked = 0; checked < 2; ++checked) {
-            const DWORD stamp = players_[checked].stamp_10_;
-            if (stamp == 0) {
-                return;
-            }
-            const DWORD tick = timeGetTime();
-            if (tick - stamp < poll_timeout_E0_) {
-                return;
-            }
-        }
-        if (drop_player(0xFFFFFFFF, 0) == 0) {
-            uint32_t cut = timeGetTime();
-            players_[1].stamp_10_ = cut;
-            players_[0].stamp_10_ = cut;
         }
     }
     NetReapBusy = 0;
@@ -2859,34 +2853,28 @@ Return Value: n/a
 Status: Complete
 */
 void Net::broadcast_player_table() {
-    if (local_player_id_ == host_player_id_) {
-        const int count = static_cast<int>(field_6DC_);
-        if (count != 0) {
-            const unsigned int size = static_cast<unsigned int>(count) * 0x2C + 4;
-            unsigned char *const packet = static_cast<unsigned char *>(mem_get(static_cast<int>(size)));
-            *packet = static_cast<unsigned char>(count);
-            if (count > 0) {
-                NetPeerPlayerRecord *entry =
-                    reinterpret_cast<NetPeerPlayerRecord *>(packet + 4);
-                NetPlayer *player = players_;
-                int remaining = count;
-                do {
-                    entry->id_ = player->field_0_;
-                    entry->name_[0] = 0;
-                    player->name_and_tail_[0x1F] = 0;
-                    strcat(entry->name_, player->name_and_tail_);
-                    const unsigned int flags = player->flags_14_;
-                    ++player;
-                    entry->flags_ = flags;
-                    ++entry;
-                    --remaining;
-                } while (remaining != 0);
-            }
-            send_packet_type(packet, static_cast<int>(size), 0, 0x10, 1);
-            if (packet != 0) {
-                free(packet);
-            }
-        }
+    if (local_player_id_ != host_player_id_) {
+        return;
+    }
+    const int count = static_cast<int>(field_6DC_);
+    if (count == 0) {
+        return;
+    }
+    const int size = count * 0x2C + 4;
+    unsigned char *const packet = static_cast<unsigned char *>(mem_get(size));
+    *packet = static_cast<unsigned char>(count);
+    NetPeerPlayerRecord *const entries =
+        reinterpret_cast<NetPeerPlayerRecord *>(packet + 4);
+    for (int index = 0; index < count; index++) {
+        entries[index].id_ = players_[index].field_0_;
+        entries[index].name_[0] = 0;
+        players_[index].name_and_tail_[0x1F] = 0;
+        strcat(entries[index].name_, players_[index].name_and_tail_);
+        entries[index].flags_ = players_[index].flags_14_;
+    }
+    send_packet_type(packet, size, 0, 0x10, 1);
+    if (packet != 0) {
+        free(packet);
     }
 }
 
@@ -3130,7 +3118,8 @@ namespace {
 // but the original receiver does not impose that bound on incoming packets.
 struct NetPeerPlayerTableMessage {
     NetPacketEnvelope envelope_;
-    DWORD count_;
+    unsigned char count_;
+    unsigned char unused_9_[3];
     NetPeerPlayerRecord *records() {
         return reinterpret_cast<NetPeerPlayerRecord *>(this + 1);
     }
@@ -3409,10 +3398,9 @@ void Net::handle_sys_msg() {
             } else if ((flags & 0x10) != 0) {
                 NetPeerPlayerTableMessage *const message =
                     reinterpret_cast<NetPeerPlayerTableMessage *>(NetGetScratch);
-                // Original632E3D reloads the low count byte after each
-                // insertion; the loop index is an integer, not a byte.
-                for (int seen = 0;
-                     seen < static_cast<int>(message->count_ & 0xFF); ++seen) {
+                // Original632E3D reloads the count byte after each insertion
+                // (byte test on entry); the loop index is an integer.
+                for (int seen = 0; seen < message->count_; ++seen) {
                     NetPeerPlayerRecord &entry = message->records()[seen];
                     sub_632cc0(entry.name_, entry.id_,
                               static_cast<unsigned char>(entry.flags_));

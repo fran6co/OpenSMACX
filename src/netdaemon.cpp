@@ -180,6 +180,18 @@ int NetDaemon::lock_base(int base_id, int target, int payload_1C, int payload_20
 
 // Derived player lifecycle callbacks. Retained seeds supply historical hints;
 // the original missing-player tail and its unresolved index domain are kept.
+// The empty-row stores are an inline boundary in the image: the second
+// faction store survives and the difficulty load stays after them.
+// Proposed home: an inline NetWinLobbyRow reset in netwin.h.
+static inline void reset_lobby_row(NetWinLobbyRow *row) {
+    row->owner_ = 0;
+    row->prefix_ = -1;
+    row->ready_or_occupied_ = 0;
+    row->field_2_ = 0;
+    row->faction_or_color_ = -1;
+    row->field_4_ = 2;
+}
+
 // ORIGINAL: 0x0052E160 ?on_player_added@NetDaemon@@UAEXPADK@Z 0x0052E160-0x0052E364
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned52E160..52E364 and52E370..52E8FD; retained recovered seeds are hints, not mandatory C++.", "The not-found delete tail still runs and decrements count. Slot8 identity/status bytes belong to the real ledger; lobby prefix/name writes are byte views wholly inside the existing168-byte session object. Keep both session object lifetimes and their original bindings.", "PlayerLock::active return controls notification; process identity offsets are not doubled. Two label_get calls remain independent, and prefix writes depend on live phase below2.", "Source-owned NextTurnReady, NetUpkeepPhase and NetHostChangeSlot replace private address aliases. Upkeep producer remains unfinished; ledger-derived lock index domain remains unproven.", "recovery/tasks/netdaemon-player-lifecycle-recovery.json; actual-source host damage controls and native compilation required", "git:293937ab6f3be75999e0c0a4c9c110c02930624c:src/recovered/units/0052e160.cpp", "Historical seed spelling ?on_player_added@NetDaemon@@QAEXPADK@Z; current source mapping ?on_player_added@NetDaemon@@UAEXPADK@Z; emitted symbol ?on_player_added@NetDaemon@@UAEXPADK@Z."], "reason": "Recover the complete derived network player lifecycle callback through actual AlphaNet records, PlayerLock behavior, NetWin storage and shared turn state. Preserve its original identity and useful seed findings; no exact, runtime or full acceptance claim is implied. Superseded seed retired after owner review; original spans, existing claims and useful seed findings remain in source. This cleanup grants no new match or acceptance claim."}
 void NetDaemon::on_player_added(char *name, unsigned long id) {
@@ -194,21 +206,18 @@ void NetDaemon::on_player_added(char *name, unsigned long id) {
         strcpy(process_slots_[player_count_].name_, player_name);
 
         NetWinLobbyRows.rows_[player_count_].field_2_ = NetWinSessionOptions.fields_.difficulty_;
-        NetWinLobbyRows.rows_[player_count_].prefix_ = static_cast<uint8_t>(player_count_);
+        NetWinLobbyRows.rows_[player_count_].prefix_ = static_cast<int8_t>(player_count_);
         process_slots_[player_count_].identity_ = static_cast<int8_t>(player_count_);
 
         int duplicate_host = 0;
         const int count = player_count_;
         if (count > 1) {
             const unsigned long local_id = local_player_id();
-            const AlphaNetProcessSlot *prior = process_slots_ + 1;
-            int remaining = count - 1;
-            do {
-                if (prior->pid_ == local_id) {
+            for (int i = 1; i < count; ++i) {
+                if (process_slots_[i].pid_ == local_id) {
                     duplicate_host = 1;
                 }
-                ++prior;
-            } while (--remaining != 0);
+            }
             if (duplicate_host) {
                 parse_says(0, name, -1, -1);
                 NetMsgPrimary.pop("ADDED", 3000, 0, nullptr);
@@ -218,19 +227,13 @@ void NetDaemon::on_player_added(char *name, unsigned long id) {
         if (primary_state_.leading_words_[0] != 0) {
             // The notification callbacks precede this native slot snapshot.
             const int slot = player_count_;
-            NetWinLobbyRow &row = NetWinLobbyRows.rows_[slot];
-            row.owner_ = 0;
-            row.prefix_ = 0xFF;
-            row.ready_or_occupied_ = 0;
-            row.field_2_ = 0;
-            row.faction_or_color_ = -1;
-            row.field_4_ = 2;
+            reset_lobby_row(&NetWinLobbyRows.rows_[slot]);
 
             const uint8_t difficulty = NetWinSessionOptions.fields_.difficulty_;
-            row.faction_or_color_ = -1;
-            row.prefix_ = static_cast<uint8_t>(player_count_);
-            row.field_2_ = difficulty;
-            row.ready_or_occupied_ = 0;
+            NetWinLobbyRows.rows_[slot].faction_or_color_ = -1;
+            NetWinLobbyRows.rows_[slot].prefix_ = static_cast<int8_t>(player_count_);
+            NetWinLobbyRows.rows_[slot].field_2_ = difficulty;
+            NetWinLobbyRows.rows_[slot].ready_or_occupied_ = 0;
 
             send_all_player_packets(-1);
             send_session_packet(slot, -1);
@@ -2321,41 +2324,39 @@ int NetDaemon::automated_lock(int *veh_id, int target) {
             static_cast<int>(static_cast<int8_t>(Vehs[*veh_id].order)), 0);
     ++NetBusyCount;
     DWORD (WINAPI *const ticks)() = timeGetTime;
-    const DWORD initial_time = ticks();
-    DWORD retry_time = initial_time;
+    DWORD retry_time = ticks();
+    const DWORD initial_time = retry_time;
     // This is the daemon's existing state entry at this+0x1BB4, not
     // separate storage or an executable-address flag.
     channels_[1].payload_.flags = 1;
     // Native 0x5311BC and 0x531209 use a full dword warning flag.
     int awaiting_orders = 0;
-    if (ExitTurnLoop == 0) {
-        do {
-            if (lock_veh(veh_id, target, -1, -1, 0) == 0) break;
-            // The warning uses the initial time; retry pacing uses its own
-            // moving timestamp. Resetting both prevents the native warning.
-            if (!awaiting_orders && ticks() - initial_time > 500U) {
-                awaiting_orders = 1;
-                NetMsgPrimary.pop("AWAITORDERS", 0, 2, 0);
-            } else {
-                log_say("(Auto lock delay)", *veh_id, 0, 0);
-                while (ticks() - retry_time < 250U && ExitTurnLoop == 0) {
-                    wait_task();
-                    unsigned long first;
-                    unsigned long second;
-                    void *message = NetDaemonNet.Net::get(&first, &second);
-                    if (message != 0) {
-                        process_message(static_cast<char *>(message),
-                                        second, static_cast<int>(first));
-                    }
-                    locks_.check_global();
-                    check_spock();
+    while (ExitTurnLoop == 0) {
+        if (lock_veh(veh_id, target, -1, -1, 0) == 0) break;
+        // The warning uses the initial time; retry pacing uses its own
+        // moving timestamp. Resetting both prevents the native warning.
+        if (!awaiting_orders && ticks() - initial_time > 500U) {
+            awaiting_orders = 1;
+            NetMsgPrimary.pop("AWAITORDERS", 0, 2, 0);
+        } else {
+            log_say("(Auto lock delay)", *veh_id, 0, 0);
+            while (ticks() - retry_time < 250U && ExitTurnLoop == 0) {
+                wait_task();
+                unsigned long first;
+                unsigned long second;
+                void *message = NetDaemonNet.Net::get(&first, &second);
+                if (message != 0) {
+                    process_message(static_cast<char *>(message),
+                                    second, static_cast<int>(first));
                 }
-                retry_time = ticks();
+                locks_.check_global();
+                check_spock();
             }
-            check_spock();
-        } while (ExitTurnLoop == 0);
-        if (awaiting_orders) NetMsgPrimary.close();
+            retry_time = ticks();
+        }
+        check_spock();
     }
+    if (awaiting_orders) NetMsgPrimary.close();
     log_say("Got auto lock", *veh_id,
             static_cast<int>(static_cast<int8_t>(Vehs[*veh_id].order)), 0);
     channels_[1].payload_.flags = 0;
@@ -2491,34 +2492,31 @@ int NetDaemon::wait(char * message, uint32_t * state, int value, int timeout) {
 
 int NetDaemon::open_channel(int payload_10, int payload_14) {
 
-  if (IsMultiplayerNet == 0) {
-    return 0;
-  }
-  if (channels_[0].trailing_words_[9] != 0) {
-    return 1;
-  }
+  if (IsMultiplayerNet != 0) {
+    if (channels_[0].trailing_words_[9] != 0) {
+      return 1;
+    }
 
-  log_say("Client requesting Diplo Channel", ConsoleGlobal.faction_id_, 0, 0);
-  channels_[0].trailing_words_[9] = 1;
-  channels_[1].leading_words_[0] = 0;
+    log_say("Client requesting Diplo Channel", ConsoleGlobal.faction_id_, 0, 0);
+    channels_[0].trailing_words_[9] = 1;
+    channels_[1].leading_words_[0] = 0;
 
-  message_data(0x8240, 0, payload_10, payload_14, 0, 0);
+    message_data(0x8240, 0, payload_10, payload_14, 0, 0);
 
-  DWORD (WINAPI *const timeGetTime_)() = timeGetTime;
-  int savedE904 = NetDaemonNet.channels_[0].leading_words_[3];
-  (NetBusyCount)++;
-  const DWORD start_time = timeGetTime_();
+    DWORD (WINAPI *const timeGetTime_)() = timeGetTime;
+    int savedE904 = NetDaemonNet.channels_[0].leading_words_[3];
+    (NetBusyCount)++;
+    const DWORD start_time = timeGetTime_();
 
-  bool sentAwait = false;
-  if (channels_[1].leading_words_[0] == 0) {
-    for (;;) {
+    int sentAwait = 0;
+    while (channels_[1].leading_words_[0] == 0) {
       if (ExitTurnLoop != 0) {
         break;
       }
       if (!sentAwait) {
         const DWORD elapsed = timeGetTime_() - start_time;
         if (elapsed > 0x640) {
-          sentAwait = true;
+          sentAwait = 1;
           NetMsgPrimary.pop("AWAITCHANNEL", 0, 2, 0);
         }
       }
@@ -2531,26 +2529,22 @@ int NetDaemon::open_channel(int payload_10, int payload_14) {
       }
       locks_.check_global();
       check_spock();
-
-      if (channels_[1].leading_words_[0] != 0) {
-        break;
-      }
     }
     if (sentAwait) {
       NetMsgPrimary.close();
     }
-  }
 
-  (NetBusyCount)--;
-  NetDaemonNet.channels_[0].leading_words_[3] = savedE904;
+    NetDaemonNet.channels_[0].leading_words_[3] = savedE904;
+    (NetBusyCount)--;
 
-  int32_t response;
-  std::memcpy(&response, &channels_[1].leading_words_[0], sizeof response);
-  if (response < 2) {
-    return 0;
+    int32_t response;
+    std::memcpy(&response, &channels_[1].leading_words_[0], sizeof response);
+    if (response >= 2) {
+      channels_[0].trailing_words_[9] = 0;
+      return 1;
+    }
   }
-  channels_[0].trailing_words_[9] = 0;
-  return 1;
+  return 0;
 }
 
 // Fixed-slot bindings carried from 00530630.cpp
@@ -2588,71 +2582,67 @@ int NetDaemon::lock(int target, int x, int y, int payload_18, int payload_1C, in
     log_say((char *)"Client requesting lock", ConsoleGlobal.faction_id_, x, y);
     message_lock(0x2210, target, x, y, payload_18, payload_1C, scratch, 0);
 
-    NetBusyCount = NetBusyCount + 1;
     scratch = NetDaemonNet.channels_[0].leading_words_[3];
+    NetBusyCount = NetBusyCount + 1;
     unsigned long t0 = timeGetTime();
     int waited = 0;
-    if (channels_[0].leading_words_[2] == 0) {
-        do {
-            if (ExitTurnLoop != 0) {
-                break;
-            }
-            if (!waited) {
-                unsigned long now = timeGetTime();
-                if (now - t0 > 0x640) {
-                    waited = 1;
-                    NetMsgPrimary.pop((const char *)"AWAITLOCK", 0, 2, (const char *)0);
-                }
-            }
-            wait_task();
-            unsigned long sender, length;
-            void *got = NetDaemonNet.Net::get(&sender, &length);
-            if (got != 0) {
-                this->process_message(static_cast<char *>(got), length, static_cast<int>(sender));
-            }
-            locks_.check_global();
-            check_spock();
-        } while (channels_[0].leading_words_[2] == 0);
-        if (waited) {
-            NetMsgPrimary.close();
+    while (channels_[0].leading_words_[2] == 0) {
+        if (ExitTurnLoop != 0) {
+            break;
         }
+        if (!waited) {
+            unsigned long now = timeGetTime();
+            if (now - t0 > 0x640) {
+                waited = 1;
+                NetMsgPrimary.pop((const char *)"AWAITLOCK", 0, 2, (const char *)0);
+            }
+        }
+        wait_task();
+        unsigned long sender, length;
+        void *got = NetDaemonNet.Net::get(&sender, &length);
+        if (got != 0) {
+            this->process_message(static_cast<char *>(got), length, static_cast<int>(sender));
+        }
+        locks_.check_global();
+        check_spock();
+    }
+    if (waited) {
+        NetMsgPrimary.close();
     }
 
-    NetBusyCount = NetBusyCount - 1;
     NetDaemonNet.channels_[0].leading_words_[3] = scratch;
+    NetBusyCount = NetBusyCount - 1;
 
     if (channels_[0].leading_words_[2] == 1) {
         channels_[1].trailing_words_[4] = 0;
         if ((unsigned char)target & 2) {
-            NetBusyCount = NetBusyCount + 1;
             scratch = NetDaemonNet.channels_[0].leading_words_[3];
+            NetBusyCount = NetBusyCount + 1;
             unsigned long t0b = timeGetTime();
             target = (int)t0b;
             int waited2 = 0;
-            if (locks_.field_E8_ == 0) {
-                do {
-                    if (ExitTurnLoop != 0) {
-                        break;
-                    }
-                    if (!waited2) {
-                        unsigned long now2 = timeGetTime();
-                        if (now2 - (unsigned long)target > 0x320) {
-                            waited2 = 1;
-                            NetMsgPrimary.pop((const char *)"AWAITGLOBALLOCK", 0, 2, (const char *)0);
-                        }
-                    }
-                    wait_task();
-                    unsigned long sender, length;
-                    void *got2 = NetDaemonNet.Net::get(&sender, &length);
-                    if (got2 != 0) {
-                        this->process_message(static_cast<char *>(got2), length, static_cast<int>(sender));
-                    }
-                    locks_.check_global();
-                    check_spock();
-                } while (locks_.field_E8_ == 0);
-                if (waited2) {
-                    NetMsgPrimary.close();
+            while (locks_.field_E8_ == 0) {
+                if (ExitTurnLoop != 0) {
+                    break;
                 }
+                if (!waited2) {
+                    unsigned long now2 = timeGetTime();
+                    if (now2 - (unsigned long)target > 0x320) {
+                        waited2 = 1;
+                        NetMsgPrimary.pop((const char *)"AWAITGLOBALLOCK", 0, 2, (const char *)0);
+                    }
+                }
+                wait_task();
+                unsigned long sender, length;
+                void *got2 = NetDaemonNet.Net::get(&sender, &length);
+                if (got2 != 0) {
+                    this->process_message(static_cast<char *>(got2), length, static_cast<int>(sender));
+                }
+                locks_.check_global();
+                check_spock();
+            }
+            if (waited2) {
+                NetMsgPrimary.close();
             }
             NetDaemonNet.channels_[0].leading_words_[3] = scratch;
             NetBusyCount = NetBusyCount - 1;
@@ -2664,12 +2654,9 @@ int NetDaemon::lock(int target, int x, int y, int payload_18, int payload_1C, in
     }
 
     if (channels_[1].trailing_words_[3] == 0) {
-        ++channels_[1].trailing_words_[4];
         // Native INC wraps, while its JG/JLE comparisons interpret signed bits.
-        int32_t retries, response;
-        std::memcpy(&retries, &channels_[1].trailing_words_[4], sizeof retries);
-        std::memcpy(&response, &channels_[0].leading_words_[2], sizeof response);
-        if (retries > 0 || response > 2) {
+        if ((int32_t)++channels_[1].trailing_words_[4] > 0
+            || (int32_t)channels_[0].leading_words_[2] > 2) {
             const char *msg = (channels_[0].leading_words_[2] == 2) ? (const char *)"NOLOCK" : (const char *)"NOLOCKGLOBAL";
             NetMsgPrimary.pop(msg, 5000, 2, (const char *)0);
             channels_[1].trailing_words_[4] = 0;
@@ -2709,38 +2696,36 @@ int NetDaemon::add_lock(int target, int x, int y) {
     ++NetBusyCount;
     y = timeGetTimeFn();
 
-    bool popped = false;
+    int popped = 0;
     NetMsg *netMsg = &NetMsgPrimary;
     Lock &lock = locks_;
 
-    if (channels_[0].leading_words_[2] == 0) {
-        do {
-            if (ExitTurnLoop != 0) {
-                break;
-            }
-            if (!popped) {
-                if (static_cast<unsigned int>(timeGetTimeFn() - y) > 0x640) {
-                    popped = true;
-                    netMsg->pop("AWAITLOCK", 0, 2, 0);
-                }
-            }
-            wait_task();
-            unsigned long sender, length;
-            void *msgResult = NetDaemonNet.Net::get(&sender, &length);
-            if (msgResult != 0) {
-                process_message(static_cast<char *>(msgResult),
-                                 length, static_cast<int>(sender));
-            }
-            lock.check_global();
-            check_spock();
-        } while (channels_[0].leading_words_[2] == 0);
-        if (popped) {
-            netMsg->close();
+    while (channels_[0].leading_words_[2] == 0) {
+        if (ExitTurnLoop != 0) {
+            break;
         }
+        if (!popped) {
+            if (static_cast<unsigned int>(timeGetTimeFn() - y) > 0x640) {
+                popped = 1;
+                netMsg->pop("AWAITLOCK", 0, 2, 0);
+            }
+        }
+        wait_task();
+        unsigned long sender, length;
+        void *msgResult = NetDaemonNet.Net::get(&sender, &length);
+        if (msgResult != 0) {
+            process_message(static_cast<char *>(msgResult),
+                             length, static_cast<int>(sender));
+        }
+        lock.check_global();
+        check_spock();
+    }
+    if (popped) {
+        netMsg->close();
     }
 
-    --NetBusyCount;
     NetDaemonNet.channels_[0].leading_words_[3] = savedVal;
+    --NetBusyCount;
     if (channels_[0].leading_words_[2] != 1) {
         netMsg->pop("NOLOCK", 5000, 2, 0);
     }
@@ -2768,62 +2753,59 @@ int NetDaemon::add_global() {
     channels_[0].leading_words_[2] = 0;
     locks_.field_E8_ = 0;
     message_data(0x2211, 0, 0, 0, 0, 0);
-    NetBusyCount = NetBusyCount + 1;
     int saved_e904 = NetDaemonNet.channels_[0].leading_words_[3];
+    NetBusyCount = NetBusyCount + 1;
     unsigned long start_time1 = timeGetTime();
 
-    bool warned1 = false;
-    if (channels_[0].leading_words_[2] == 0) {
-        do {
+    int warned1 = 0;
+    while (channels_[0].leading_words_[2] == 0) {
+        if (ExitTurnLoop != 0) break;
+        if (!warned1) {
+            unsigned long now = timeGetTime();
+            if (now - start_time1 > 0x640) {
+                warned1 = 1;
+                NetMsgPrimary.pop("AWAITGLOBALLOCK", 0, 2, 0);
+            }
+        }
+        wait_task();
+        unsigned long out_id, out_len;
+        void *result = NetDaemonNet.Net::get(&out_id, &out_len);
+        if (result != 0) {
+            process_message(static_cast<char *>(result), out_len, static_cast<int>(out_id));
+        }
+        locks_.check_global();
+        check_spock();
+    }
+    if (warned1) {
+        NetMsgPrimary.close();
+    }
+    NetDaemonNet.channels_[0].leading_words_[3] = saved_e904;
+    NetBusyCount = NetBusyCount - 1;
+
+    if (channels_[0].leading_words_[2] == 1) {
+        NetBusyCount = NetBusyCount + 1;
+        unsigned long start_time2 = timeGetTime();
+        int warned2 = 0;
+        while (locks_.field_E8_ == 0) {
             if (ExitTurnLoop != 0) break;
-            if (!warned1) {
+            if (!warned2) {
                 unsigned long now = timeGetTime();
-                if (now - start_time1 > 0x640) {
-                    warned1 = true;
+                if (now - start_time2 > 800) {
+                    warned2 = 1;
                     NetMsgPrimary.pop("AWAITGLOBALLOCK", 0, 2, 0);
                 }
             }
             wait_task();
-            unsigned long out_id, out_len;
-            void *result = NetDaemonNet.Net::get(&out_id, &out_len);
-            if (result != 0) {
-                process_message(static_cast<char *>(result), out_len, static_cast<int>(out_id));
+            unsigned long out_id2, out_len2;
+            void *result2 = NetDaemonNet.Net::get(&out_id2, &out_len2);
+            if (result2 != 0) {
+                process_message(static_cast<char *>(result2), out_len2, static_cast<int>(out_id2));
             }
             locks_.check_global();
             check_spock();
-        } while (channels_[0].leading_words_[2] == 0);
-        if (warned1) {
-            NetMsgPrimary.close();
         }
-    }
-    NetDaemonNet.channels_[0].leading_words_[3] = saved_e904;
-    int newE664 = NetBusyCount - 1;
-
-    if (channels_[0].leading_words_[2] == 1) {
-        unsigned long start_time2 = timeGetTime();
-        bool warned2 = false;
-        if (locks_.field_E8_ == 0) {
-            do {
-                if (ExitTurnLoop != 0) break;
-                if (!warned2) {
-                    unsigned long now = timeGetTime();
-                    if (now - start_time2 > 800) {
-                        warned2 = true;
-                        NetMsgPrimary.pop("AWAITGLOBALLOCK", 0, 2, 0);
-                    }
-                }
-                wait_task();
-                unsigned long out_id2, out_len2;
-                void *result2 = NetDaemonNet.Net::get(&out_id2, &out_len2);
-                if (result2 != 0) {
-                    process_message(static_cast<char *>(result2), out_len2, static_cast<int>(out_id2));
-                }
-                locks_.check_global();
-                check_spock();
-            } while (locks_.field_E8_ == 0);
-            if (warned2) {
-                NetMsgPrimary.close();
-            }
+        if (warned2) {
+            NetMsgPrimary.close();
         }
         NetDaemonNet.channels_[0].leading_words_[3] = saved_e904;
         NetBusyCount = NetBusyCount - 1;
@@ -2832,21 +2814,13 @@ int NetDaemon::add_global() {
             return 0;
         }
         channels_[0].leading_words_[2] = 2;
-        newE664 = NetBusyCount;
     }
-    NetBusyCount = newE664;
 
     if (channels_[1].trailing_words_[3] == 0) {
-        ++channels_[1].trailing_words_[4];
         // Native INC wraps, while its JG/JLE comparisons interpret signed bits.
-        int32_t retries, response;
-        std::memcpy(&retries, &channels_[1].trailing_words_[4], sizeof retries);
-        std::memcpy(&response, &channels_[0].leading_words_[2], sizeof response);
-        if (retries > 0 || response > 2) {
-            const char *msg = "NOLOCK";
-            if (channels_[0].leading_words_[2] != 2) {
-                msg = "NOLOCKGLOBAL";
-            }
+        if ((int32_t)++channels_[1].trailing_words_[4] > 0
+            || (int32_t)channels_[0].leading_words_[2] > 2) {
+            const char *msg = (channels_[0].leading_words_[2] == 2) ? "NOLOCK" : "NOLOCKGLOBAL";
             NetMsgPrimary.pop(msg, 5000, 2, 0);
             channels_[1].trailing_words_[4] = 0;
         }
@@ -2914,34 +2888,32 @@ void NetDaemon::unlock_base(int base_id) {
             unsigned long baseline = timeGetTime();
 
             int logged_wait = 0;
-            if (channels_[1].trailing_words_[0] == 1) {
-                do {
-                    if (ExitTurnLoop != 0) {
-                        break;
-                    }
-                    if (logged_wait == 0) {
-                        if (timeGetTime() - baseline > 0x7d0) {
-                            logged_wait = 1;
-                            NetMsgPrimary.pop(
-                                "AWAITEXEC", 0, 2, 0);
-                        }
-                    }
-                    wait_task();
-                    unsigned long p1, p2;
-                    void *r = NetDaemonNet.Net::get(&p1, &p2);
-                    if (r != 0) {
-                        process_message(static_cast<char *>(r), p2, p1);
-                    }
-                    locks_.check_global();
-                    check_spock();
-                } while (channels_[1].trailing_words_[0] == 1);
-                if (logged_wait) {
-                    NetMsgPrimary.close();
+            while (channels_[1].trailing_words_[0] == 1) {
+                if (ExitTurnLoop != 0) {
+                    break;
                 }
+                if (logged_wait == 0) {
+                    if (timeGetTime() - baseline > 0x7d0) {
+                        logged_wait = 1;
+                        NetMsgPrimary.pop(
+                            "AWAITEXEC", 0, 2, 0);
+                    }
+                }
+                wait_task();
+                unsigned long p1, p2;
+                void *r = NetDaemonNet.Net::get(&p1, &p2);
+                if (r != 0) {
+                    process_message(static_cast<char *>(r), p2, p1);
+                }
+                locks_.check_global();
+                check_spock();
+            }
+            if (logged_wait) {
+                NetMsgPrimary.close();
             }
 
-            --NetBusyCount;
             NetDaemonNet.channels_[0].leading_words_[3] = saved;
+            --NetBusyCount;
             if (channels_[1].trailing_words_[0] == 0) {
                 log_say("Received SYNCH acknowledgement", ConsoleGlobal.faction_id_, 0, 0);
             }
@@ -3015,34 +2987,32 @@ void NetDaemon::await_exec(int opcode) {
     unsigned long baseline = timeGetTime();
 
     int logged_wait = 0;
-    if (channels_[1].leading_words_[3] == 1) {
-        do {
-            if (ExitTurnLoop != 0) {
-                break;
-            }
-            if (logged_wait == 0) {
-                if (timeGetTime() - baseline > 0x7d0) {
-                    logged_wait = 1;
-                    NetMsgPrimary.pop(
-                        "AWAITEXEC", 0, 2, 0);
-                }
-            }
-            wait_task();
-            unsigned long p1, p2;
-            void *r = NetDaemonNet.Net::get(&p1, &p2);
-            if (r != 0) {
-                process_message(static_cast<char *>(r), p2, p1);
-            }
-            locks_.check_global();
-            check_spock();
-        } while (channels_[1].leading_words_[3] == 1);
-        if (logged_wait) {
-            NetMsgPrimary.close();
+    while (channels_[1].leading_words_[3] == 1) {
+        if (ExitTurnLoop != 0) {
+            break;
         }
+        if (logged_wait == 0) {
+            if (timeGetTime() - baseline > 0x7d0) {
+                logged_wait = 1;
+                NetMsgPrimary.pop(
+                    "AWAITEXEC", 0, 2, 0);
+            }
+        }
+        wait_task();
+        unsigned long p1, p2;
+        void *r = NetDaemonNet.Net::get(&p1, &p2);
+        if (r != 0) {
+            process_message(static_cast<char *>(r), p2, p1);
+        }
+        locks_.check_global();
+        check_spock();
+    }
+    if (logged_wait) {
+        NetMsgPrimary.close();
     }
 
-    --NetBusyCount;
     NetDaemonNet.channels_[0].leading_words_[3] = saved;
+    --NetBusyCount;
     log_say("Client received acknowledgement", ConsoleGlobal.faction_id_, 0, 0);
 
     if (opcode != 0) {
@@ -3115,37 +3085,35 @@ void NetDaemon::await_synch() {
         unsigned long start_time = timeGetTime();
 
         int warned = 0;
-        if (*state == synching) {
-            do {
-                if (ExitTurnLoop != 0) {
-                    break;
-                }
-                if (!warned) {
-                    unsigned long now =
-                        timeGetTime();
-                    if (now - start_time > 0x7d0) {
-                        warned = synching;
-                        NetMsgPrimary.pop(
-                            "AWAITEXEC", 0, 2, 0);
-                    }
-                }
-                wait_task();
-                unsigned long v1, v2;
-                void *r = NetDaemonNet.Net::get(&v1, &v2);
-                if (r != 0) {
-                    process_message(static_cast<char *>(r), v2,
-                                    static_cast<int>(v1));
-                }
-                locks_.check_global();
-                check_spock();
-            } while (*state == synching);
-            if (warned) {
-                NetMsgPrimary.close();
+        while (*state == synching) {
+            if (ExitTurnLoop != 0) {
+                break;
             }
+            if (!warned) {
+                unsigned long now =
+                    timeGetTime();
+                if (now - start_time > 0x7d0) {
+                    warned = synching;
+                    NetMsgPrimary.pop(
+                        "AWAITEXEC", 0, 2, 0);
+                }
+            }
+            wait_task();
+            unsigned long v1, v2;
+            void *r = NetDaemonNet.Net::get(&v1, &v2);
+            if (r != 0) {
+                process_message(static_cast<char *>(r), v2,
+                                static_cast<int>(v1));
+            }
+            locks_.check_global();
+            check_spock();
+        }
+        if (warned) {
+            NetMsgPrimary.close();
         }
 
-        (NetBusyCount)--;
         NetDaemonNet.channels_[0].leading_words_[3] = saved;
+        (NetBusyCount)--;
         if (*state == 0) {
             log_say("Received SYNCH acknowledgement", ConsoleGlobal.faction_id_, 0, 0);
         }
@@ -3205,35 +3173,33 @@ void NetDaemon::await_diplo(int opcode) {
         (NetBusyCount)++;
         unsigned int start_time = timeGetTime();
         int timed_out = 0;
-        if (channels_[1].leading_words_[1] == opcode) {
-            do {
-                if (ExitTurnLoop != 0) {
-                    break;
-                }
-                if (!timed_out) {
-                    unsigned int now = timeGetTime();
-                    if (now - start_time > 0x7d0) {
-                        timed_out = 1;
-                        NetMsgPrimary.pop(
-                            "AWAITDIPLO", 0, 2, 0);
-                    }
-                }
-                wait_task();
-                unsigned long v_at_4;
-                unsigned long v_at_8;
-                void *result = NetDaemonNet.Net::get(&v_at_4, &v_at_8);
-                if (result != 0) {
-                    process_message(static_cast<char *>(result), v_at_8, v_at_4);
-                }
-                locks_.check_global();
-                check_spock();
-            } while (channels_[1].leading_words_[1] == opcode);
-            if (timed_out) {
-                NetMsgPrimary.close();
+        while (channels_[1].leading_words_[1] == opcode) {
+            if (ExitTurnLoop != 0) {
+                break;
             }
+            if (!timed_out) {
+                unsigned int now = timeGetTime();
+                if (now - start_time > 0x7d0) {
+                    timed_out = 1;
+                    NetMsgPrimary.pop(
+                        "AWAITDIPLO", 0, 2, 0);
+                }
+            }
+            wait_task();
+            unsigned long v_at_4;
+            unsigned long v_at_8;
+            void *result = NetDaemonNet.Net::get(&v_at_4, &v_at_8);
+            if (result != 0) {
+                process_message(static_cast<char *>(result), v_at_8, v_at_4);
+            }
+            locks_.check_global();
+            check_spock();
         }
-        (NetBusyCount)--;
+        if (timed_out) {
+            NetMsgPrimary.close();
+        }
         NetDaemonNet.channels_[0].leading_words_[3] = saved;
+        (NetBusyCount)--;
         if (channels_[1].leading_words_[1] == 0) {
             log_say("Received DIPLO acknowledgement", ConsoleGlobal.faction_id_, 0, 0);
         }
@@ -7470,27 +7436,25 @@ int NetDaemon::veh_drop(int veh_id, int x, int y) {
             if (IsMultiplayerNet != 0) {
                 log_say("Client waiting for acknowledgement",
                         ConsoleGlobal.faction_id_, 0, 0);
-                ++NetBusyCount;
                 const int saved_action_mode = NetDaemonNet.channels_[0].leading_words_[3];
+                ++NetBusyCount;
                 const DWORD start_time = timeGetTime();
                 int showed_wait_popup = 0;
-                if (channels_[1].leading_words_[3] == 1) {
-                    do {
-                        if (ExitTurnLoop != 0) break;
-                        if (!showed_wait_popup &&
-                            timeGetTime() - start_time > 2000) {
-                            showed_wait_popup = 1;
-                            NetMsgPrimary.pop("AWAITEXEC", 0, 2, nullptr);
-                        }
-                        wait_task();
-                        receive();
-                        locks_.check_global();
-                        check_spock();
-                    } while (channels_[1].leading_words_[3] == 1);
-                    if (showed_wait_popup) NetMsgPrimary.close();
+                while (channels_[1].leading_words_[3] == 1) {
+                    if (ExitTurnLoop != 0) break;
+                    if (!showed_wait_popup &&
+                        timeGetTime() - start_time > 2000) {
+                        showed_wait_popup = 1;
+                        NetMsgPrimary.pop("AWAITEXEC", 0, 2, nullptr);
+                    }
+                    wait_task();
+                    receive();
+                    locks_.check_global();
+                    check_spock();
                 }
-                --NetBusyCount;
+                if (showed_wait_popup) NetMsgPrimary.close();
                 NetDaemonNet.channels_[0].leading_words_[3] = saved_action_mode;
+                --NetBusyCount;
                 log_say("Client received acknowledgement",
                         ConsoleGlobal.faction_id_, 0, 0);
                 if (IsMultiplayerNet != 0) {
@@ -7581,27 +7545,25 @@ int NetDaemon::action(int veh_id, int mode) {
             DWORD (WINAPI *const get_time)() = timeGetTime;
             ++NetBusyCount;
             const DWORD start_time = get_time();
-            bool showed_wait_popup = false;
-            if (channels_[1].leading_words_[3] == 1) {
-                do {
-                    if (ExitTurnLoop != 0) break;
-                    if (!showed_wait_popup && get_time() - start_time > 2000) {
-                        showed_wait_popup = true;
-                        NetMsgPrimary.pop("AWAITEXEC", 0, 2, nullptr);
-                    }
-                    wait_task();
-                    unsigned long first, second;
-                    void *message = NetDaemonNet.Net::get(&first, &second);
-                    if (message != 0)
-                        process_message(static_cast<char *>(message),
-                                        second, static_cast<int>(first));
-                    locks_.check_global();
-                    check_spock();
-                } while (channels_[1].leading_words_[3] == 1);
-                if (showed_wait_popup) NetMsgPrimary.close();
+            int showed_wait_popup = 0;
+            while (channels_[1].leading_words_[3] == 1) {
+                if (ExitTurnLoop != 0) break;
+                if (!showed_wait_popup && get_time() - start_time > 2000) {
+                    showed_wait_popup = 1;
+                    NetMsgPrimary.pop("AWAITEXEC", 0, 2, nullptr);
+                }
+                wait_task();
+                unsigned long first, second;
+                void *message = NetDaemonNet.Net::get(&first, &second);
+                if (message != 0)
+                    process_message(static_cast<char *>(message),
+                                    second, static_cast<int>(first));
+                locks_.check_global();
+                check_spock();
             }
-            --NetBusyCount;
+            if (showed_wait_popup) NetMsgPrimary.close();
             NetDaemonNet.channels_[0].leading_words_[3] = saved_action_mode;
+            --NetBusyCount;
             log_say("Client received acknowledgement", ConsoleGlobal.faction_id_, 0, 0);
             if (IsMultiplayerNet != 0) {
                 log_say("Client releasing lock", ConsoleGlobal.faction_id_, 0, 0);
