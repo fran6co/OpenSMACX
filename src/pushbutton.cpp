@@ -191,7 +191,10 @@ void PushButton::on_redraw() {
             draw_count = 1;
         }
         const int width = buffer->pixel_width();
-        const int height = buffer->pixel_height();
+        // Keep the original signed, top-down DIB member at each bottom/tile
+        // coordinate site. The pinned body reloads biHeight and adds it to
+        // Sprite heights before negating; pixel_height() is its positive
+        // magnitude and changes those coordinates when substituted here.
         if (top_right != 0) {
             ++draw_count;
             top_right->draw(buffer, top_right->transparent_index(),
@@ -200,27 +203,31 @@ void PushButton::on_redraw() {
         if (bottom_left != 0) {
             ++draw_count;
             bottom_left->draw(buffer, bottom_left->transparent_index(), 0,
-                              -(bottom_left->height() + height), 1, 1);
+                              -(bottom_left->height()
+                                + buffer->dib_.bmiHeader.biHeight), 1, 1);
         }
         if (bottom_right != 0) {
             ++draw_count;
             bottom_right->draw(buffer, bottom_right->transparent_index(),
                                width - bottom_right->width(),
-                               -(bottom_right->height() + height), 1, 1);
+                               -(bottom_right->height()
+                                 + buffer->dib_.bmiHeader.biHeight), 1, 1);
         }
         if (top_edge != 0 && top_left != 0 && bottom_left != 0) {
             const int source_height = top_left->height();
             ++draw_count;
             buffer->tile(top_edge, 0, 0, 0, source_height,
                          top_edge->width(),
-                         -(bottom_left->height() + height + source_height));
+                         -(bottom_left->height()
+                           + buffer->dib_.bmiHeader.biHeight + source_height));
         }
         if (bottom_edge != 0 && top_right != 0 && bottom_right != 0) {
             const int source_height = top_right->height();
             ++draw_count;
             buffer->tile(bottom_edge, 0, 0, width - bottom_edge->width(),
                          source_height, bottom_edge->width(),
-                         -(bottom_right->height() + height + source_height));
+                         -(bottom_right->height()
+                           + buffer->dib_.bmiHeader.biHeight + source_height));
         }
         if (left_edge != 0 && top_left != 0 && top_right != 0) {
             const int source_width = top_left->width();
@@ -233,7 +240,8 @@ void PushButton::on_redraw() {
             const int source_width = bottom_left->width();
             ++draw_count;
             buffer->tile(right_edge, 0, 0, source_width,
-                         -(height + right_edge->height()),
+                         -(buffer->dib_.bmiHeader.biHeight
+                           + right_edge->height()),
                          (width - bottom_right->width()) - source_width,
                          right_edge->height());
         }
@@ -243,7 +251,8 @@ void PushButton::on_redraw() {
             bottom_left != 0 && bottom_right != 0) {
             const int source_y = left_edge->height();
             const int source_x = bottom_edge->width();
-            const int tile_height = height + right_edge->height() + source_y;
+            const int tile_height = buffer->dib_.bmiHeader.biHeight
+                + right_edge->height() + source_y;
             buffer->tile(center, 0, 0, source_x, source_y,
                          (width - top_edge->width()) - source_x, -tile_height);
         }

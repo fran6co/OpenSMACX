@@ -113,7 +113,7 @@ def test_graphicwin_caption_callback_uses_typed_storage_and_safe_raw_view():
     header = (ROOT / "src/graphicwin.h").read_text(encoding="utf-8")
     source = (ROOT / "src/graphicwin.cpp").read_text(encoding="utf-8")
     consumer = (ROOT / "src/basewin.cpp").read_text(encoding="utf-8")
-    producer = (ROOT / "src/game.cpp").read_text(encoding="utf-8")
+    producer = (ROOT / "src/interface_assets.cpp").read_text(encoding="utf-8")
     assert "GraphicWinCaptionDraw field_A0C_;" in header
     assert "union GraphicWinCaptionAction" not in header
     accessor = _definition(ROOT / "src/graphicwin.cpp",
@@ -128,7 +128,7 @@ def test_graphicwin_caption_callback_uses_typed_storage_and_safe_raw_view():
 def test_pushbutton_sprite_producers_and_all_consumers_are_typed():
     header = (ROOT / "src/pushbutton.h").read_text(encoding="utf-8")
     pushbutton = (ROOT / "src/pushbutton.cpp").read_text(encoding="utf-8")
-    game = (ROOT / "src/game.cpp").read_text(encoding="utf-8")
+    game = (ROOT / "src/interface_assets.cpp").read_text(encoding="utf-8")
     assert "Sprite *PushButtonDefaults[18];" in pushbutton
     for name in ("AB8", "ABC", "AC0", "AC4", "AC8", "ACC", "AD0",
                  "AD4", "AD8", "ADC", "AE0", "AE4", "AE8", "AEC",

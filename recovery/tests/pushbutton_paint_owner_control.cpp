@@ -23,13 +23,15 @@ public:
 static Win parent;
 static Win *WinCallbackWindow=0;
 static void *HandleMain=(void*)1;
+struct DibHeader { int biWidth; LONG biHeight; };
+struct Dib { DibHeader bmiHeader; };
 class Buffer {
 public:
     RECT rect2;
-    int width,height;
+    Dib dib_;
     void sync_to_palette(Palette *) { log("palette"); }
-    int pixel_width() const { return width; }
-    int pixel_height() const { return height; }
+    int pixel_width() const { return dib_.bmiHeader.biWidth; }
+    int pixel_height() const { return static_cast<int>(-dib_.bmiHeader.biHeight); }
     int box(RECT *r,int a,int b) { log("box",a,b,r->left,r->top); return 0; }
     int tile(class Sprite *,int,int,int x,int y,int w,int h) { log("tile",x,y,w,h); return 0; }
     int write_cent_l(char *,RECT *,unsigned int) { log("text"); return 0; }
@@ -67,7 +69,7 @@ public:
 static Sprite sprites[18];
 static void setup(PushButton &b,int alternate) {
     b.rect2.left=0;b.rect2.top=0;b.rect2.right=100;b.rect2.bottom=60;
-    b.width=100;b.height=60;b.name_=0;
+    b.dib_.bmiHeader.biWidth=100;b.dib_.bmiHeader.biHeight=-60;b.name_=0;
     b.color_=3;b.bevel_upper_=11;b.bevel_lower_=22;b.bevel_thickness_=2;
     b.field_A94_=0xFFFFFFFFU;b.field_A9C_=static_cast<uint32_t>(alternate);
     b.field_AB8_=&sprites[0];b.field_ABC_=&sprites[1];b.field_AC0_=&sprites[2];

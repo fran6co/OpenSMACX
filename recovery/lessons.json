@@ -541,18 +541,19 @@
       "id": "preserve-raw-versus-normalized-member-contracts",
       "category": "candidate_strategy",
       "evidence": {
-        "witness": "src/buffer.h pixel_height; pinned Buffer::init 0x005D7756-0x005D775A; FlatButton::on_redraw 0x00607E50; recovery/tests/test_flatbutton_redraw_height_actual_source.py; .opensmacx/recovery/flatbutton-default-groups-nov06bf/independent-evidence-review.json"
+        "witness": "src/buffer.h pixel_height; pinned Buffer::init 0x005D7756-0x005D775A; FlatButton::on_redraw 0x00607E50; recovery/tests/test_flatbutton_redraw_height_actual_source.py; .opensmacx/recovery/flatbutton-default-groups-nov06bf/independent-evidence-review.json; src/pushbutton.cpp PushButton::on_redraw 0x0062C110; pinned bottom-coordinate arithmetic at 0x0062C23B-0x0062C253 and alternate state at 0x0062C4B7-0x0062C4CF; recovery/tests/test_pushbutton_redraw_height_actual_source.py"
       },
       "requires": [
         "The actual receiver type, subobject offset and member definition distinguish a raw stored value from a normalized accessor.",
         "Pinned producer stores and consumer arithmetic independently establish the sign/scale convention and read timing."
       ],
-      "action": "Restore the typed raw member reads where the original operates on stored representation, keeping repeated reads, signed division and operation order. FlatButton's seven formulas require negative DIB biHeight; substituting positive pixel_height reverses centered and bottom extents. Verify complete extracted source behavior with a positive-helper damage control.",
+      "action": "Restore the typed raw member reads where the original operates on stored representation, keeping repeated reads, signed division and operation order. FlatButton's seven formulas require negative DIB biHeight; substituting positive pixel_height reverses centered and bottom extents. Verify complete extracted source behavior with a positive-helper damage control. The same contract applies to PushButton's default/pressed nine-sprite painters: restore six raw reads in their common source body, including bottom corners and tile extents. This is a semantic restoration, not an exact-match result.",
       "contraindications": [
         "Do not change a shared accessor to repair one caller or replace helper calls tree-wide.",
         "A negated accessor is not inherently wrong; -pixel_height can already express raw biHeight correctly.",
         "Names and decompiler local labels do not establish geometry; trace real draw/tile arguments and distinguish unrelated receiver types such as Font.",
-        "Do not add bounds checks, normalize error paths or claim the whole renderer exact from this semantic correction."
+        "Do not add bounds checks, normalize error paths or claim the whole renderer exact from this semantic correction.",
+        "PickTech draw_item uses -3 - raw, algebraically equal to -3 + pixel_height(); its mismatch does not justify the same replacement."
       ],
       "reopen_when": "New producer/consumer, receiver-layout, scale/sign or callback-reread evidence changes the proven member contract."
     }
