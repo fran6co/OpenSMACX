@@ -1186,7 +1186,7 @@ void Texture::draw_coast(Buffer * a1, Vert * a2, int * a3, Texture * a4, unsigne
 // restoration obligation.
 
 
-// ORIGINAL: 0x0061FC90 ?setup_edge_gouraud@Texture@@QAAHPAUEdgeScan@@H@Z 0x0061FC90-0x0061FDEA FILE
+// ORIGINAL: 0x0061FC90 ?setup_edge_gouraud@Texture@@QAAHPAUEdgeScan@@H@Z 0x0061FC90-0x0061FDEA FILE BYTE_EXACT
 // symbol    ?setup_edge_gouraud@Texture@@SAHPAUEdgeScan@@H@Z
 //            the image spells `Buffer` and `Texture` as structs (PAU) and the
 //            two setups as `QAA`, a __cdecl member taking no receiver; this tree
@@ -1248,7 +1248,7 @@ int __cdecl Texture::setup_edge_gouraud(EdgeScan *edge, int vertex_index) {
     return 1;
 }
 
-// ORIGINAL: 0x00624D80 ?setup_edge@Texture@@QAAHPAUEdgeScan@@H@Z 0x00624D80-0x00624EA9
+// ORIGINAL: 0x00624D80 ?setup_edge@Texture@@QAAHPAUEdgeScan@@H@Z 0x00624D80-0x00624EA9 BYTE_EXACT
 // symbol    ?setup_edge@Texture@@SAHPAUEdgeScan@@H@Z
 //            the image spells `Buffer` and `Texture` as structs (PAU) and the
 //            two setups as `QAA`, a __cdecl member taking no receiver; this tree
@@ -3639,7 +3639,7 @@ static int texture_advance_cached_edge(EdgeScan &edge, const Vert *vertices,
     return 1;
 }
 
-// ORIGINAL: 0x00625080 sub_625080 0x00625080-0x00625294 FILE
+// ORIGINAL: 0x00625080 sub_625080 0x00625080-0x00625294 FILE BYTE_EXACT
 // symbol    ?sub_625080@@YAHPAUEdgeScan@@HPAVTextureStore@@@Z
 // TRIED: verbatim zero-param head - disasm reads [esp+0x10]/[esp+0x14]/ [esp+0x1c] as three stack args before any push (IDA's 3-int guess confirmed by field roles: int*, int, byte*), so the head was widened to those 3 params; prologue order still diverges from the original's odd 2-push-then-arg2 pattern.
 // TRIED: consolidating blit_edge_uvs_a/b + blit_z_values onto ONE `int **const`
@@ -3758,7 +3758,7 @@ int __cdecl sub_625080(EdgeScan *edge, int index, TextureStore *cache) {
 
 // Fixed-slot bindings carried from 00620100.cpp
 
-// ORIGINAL: 0x00620100 sub_620100 0x00620100-0x00620254 FILE
+// ORIGINAL: 0x00620100 sub_620100 0x00620100-0x00620254 FILE BYTE_EXACT
 // symbol    ?sub_620100@@YAHPAUEdgeScan@@H@Z
 // TRIED: IDA/Ghidra guessed a nullary/void signature; the disassembly proves 2 explicit int args (int*, int) with no `this`. The 0x9BB490/0x9BB4F4/0x9BB4FC globals hold POINTERS (double indirection: `mov ecx,[addr]` then index off ecx), not raw table bases - a plain load, not an indexed-base address. First divergence #0 mov/push, not chased further.
 // size      340 bytes
@@ -3892,7 +3892,7 @@ int __cdecl sub_620260(EdgeScan *edge) {
     return 1;
 }
 
-// ORIGINAL: 0x00624EB0 sub_624eb0 0x00624EB0-0x00625075
+// ORIGINAL: 0x00624EB0 sub_624eb0 0x00624EB0-0x00625075 BYTE_EXACT
 // symbol    ?sub_624eb0@@YAHPAUEdgeScan@@HPAVTextureStore@@@Z
 // TRIED: the two fixed-point globals at 0x9BB490/0x9BB4F4 hold POINTERS (dereferenced then indexed *8), not plain scalars, so they are declared `int **const` and dereferenced once. Landing the direct transcription; the extra locals needed push the prologue to a spilled form the original's tighter register allocation does not use (divergence starts at instruction #0).
 // size      453 bytes

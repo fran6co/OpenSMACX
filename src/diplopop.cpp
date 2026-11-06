@@ -252,7 +252,7 @@ void DiploPop::init() {
     field_20B0_ = 0;
 }
 
-// ORIGINAL: 0x0043F5F0 ?draw_bioscan@DiploPop@@QAEXXZ 0x0043F5F0-0x0043F784
+// ORIGINAL: 0x0043F5F0 ?draw_bioscan@DiploPop@@QAEXXZ 0x0043F5F0-0x0043F784 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/0043f5f0.cpp", "image:terranx_original.exe:0x0043F5F0", "source:src/diplopop.h:DiploPop"], "reason": "Recover the bioscan renderer through DiploPop rectangles, MainInterface buffer, source-owned styles, and borrowed Sprite."}
 // Guarded full-length form of Buffer::write_cent_l(text, rect); the image
 // inlines the null test before strlen at its call site.
@@ -293,7 +293,7 @@ void DiploPop::draw_bioscan() {
         1, 1);
 }
 
-// ORIGINAL: 0x0043F790 ?draw_portrait@DiploPop@@QAEXXZ 0x0043F790-0x0043FA8E
+// ORIGINAL: 0x0043F790 ?draw_portrait@DiploPop@@QAEXXZ 0x0043F790-0x0043FA8E BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/0043f790.cpp", "image:terranx_original.exe:0x0043F790", "source:src/diplopop.h:DiploPop"], "reason": "Recover the portrait renderer through typed DiploPop/Faction state and existing text, mood, and repute services."}
 // Guarded full-length form of Buffer::write_l(text, x, y, len); the image
 // inlines the null test before strlen at each call site.
@@ -639,7 +639,7 @@ void DiploPop::on_iface_button_clicked(int button_id) {
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok
 // indirect  0x00440643
-// ORIGINAL: 0x00440620 ?on_iface_group_clicked@DiploPop@@QAEXHHH@Z 0x00440620-0x004406CB FILE
+// ORIGINAL: 0x00440620 ?on_iface_group_clicked@DiploPop@@QAEXHHH@Z 0x00440620-0x004406CB FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/00440620.cpp retained original identity and spans", "recovery/tasks/interface-contract-report-closure.json authorized ownership recovery", "original:0x00440620 complete control/member accesses and concrete interface table"], "reason": "Recover the concrete SubInterface owner operation through genuine window members and source-owned globals. Original table/call evidence identifies the callback receiver; the retained compatible seed supplies its complete original intervals, not an executable-address forwarding implementation."}
 // TRIED: MISMATCH #7 sub/add, virtual-base offset arithmetic form differs
 // symbol    ?on_iface_group_clicked@DiploPop@@UAEXHHH@Z

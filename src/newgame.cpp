@@ -1034,7 +1034,7 @@ Purpose: Swap the opening logo the desktop shows: load the PCX named a1 into
          (Win slot 63) so it repaints.
          Returns 7 when no opening window is up.
 
-// ORIGINAL: 0x00589A30 ?change_opening@@YAHPAD@Z 0x00589A30-0x00589B1D;0x00660255-0x0066026A
+// ORIGINAL: 0x00589A30 ?change_opening@@YAHPAD@Z 0x00589A30-0x00589B1D;0x00660255-0x0066026A BYTE_EXACT
 // TRIED (seed): reproducing the SEH frame/unwind funclet for the local
 //            `Buffer buf` explicitly - a real local of non-trivial type
 //            (ctor/dtor declared, undefined) makes MSVC generate its own

@@ -28,7 +28,7 @@
 // SDK dependency for releasing the dynamically loaded sound module.
 // RECOVERY_IMPORT: v1 __imp__FreeLibrary@4 KERNEL32.dll name:FreeLibrary
 
-// ORIGINAL: 0x004C5E50 ?load_sound_dll@@YAHXZ 0x004C5E50-0x004C5F68 FILE
+// ORIGINAL: 0x004C5E50 ?load_sound_dll@@YAHXZ 0x004C5E50-0x004C5F68 FILE BYTE_EXACT
 // A plain indexed for loop over SoundDllProcs; the failure path is the
 // inlined unload_sound_dll followed by a second guard clear, and the version
 // probe is the inlined get_sound_version.
