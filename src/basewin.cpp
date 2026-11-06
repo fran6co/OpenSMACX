@@ -2836,21 +2836,6 @@ void BaseWin::check_base(int base_id) {
     }
 }
 
-// The image inlines the 2-arg vector_dist body here (parameter registers);
-// a visible inline copy of vector_dist is the likely original source.
-static inline int check_loc_dist(int x_distance, int y_distance) {
-    x_distance = abs(x_distance);
-    y_distance = abs(y_distance);
-    int largest = x_distance;
-    if (x_distance <= y_distance) {
-        largest = y_distance;
-    }
-    int smallest = x_distance;
-    if (x_distance >= y_distance) {
-        smallest = y_distance;
-    }
-    return largest - ((((y_distance + x_distance) >> 1) - smallest + 1) >> 1);
-}
 
 // Visibility gates every base-coordinate read. Original 0x0041A80A captures
 // the signed y coordinate before computing wrapped x distance. This uses
@@ -2862,7 +2847,7 @@ void BaseWin::check_loc(int x, int y, int radius) {
         const int base_y = Bases[focusedBaseID_].y;
         const int base_x = Bases[focusedBaseID_].x;
         const int dx = x_dist(x, base_x);
-        if (check_loc_dist(dx, abs(y - base_y)) <= radius) {
+        if (vector_dist(dx, abs(y - base_y)) <= radius) {
             base_compute(1);
             redraw();
             MainInterfaceGlobal.GraphicWin::redraw();

@@ -430,7 +430,6 @@ int __cdecl whose_territory(int faction_id, int x, int y, int *base_id,
                                       BOOL ignore_comm);
 int __cdecl base_territory(int faction_id, int x, int y);
 int __cdecl crappy(int x, int y);
-int __cdecl vector_dist(int x_point_a, int y_point_a, int x_point_b, int y_point_b);
 // NOTE: abs is a real call throughout the image (553 `call _abs` sites, zero
 // inlined) and stdafx.h's project-wide `#pragma function(..., abs, ...)`
 // line keeps it one. This file carried a non-inline `abs_call` forwarder
@@ -664,11 +663,22 @@ MEASURED inline int __cdecl x_dist(int x_point_a, int x_point_b) {
     return dist;
 }
 
-// Pinned evidence: the image calls this overload from five caller functions,
-// while the four-argument overload at 0x005A5910 contains its arithmetic
-// inline. Its canonical definition is in map.cpp before that overload so the
-// compiler's same-translation-unit visibility can be measured.
-int __cdecl vector_dist(int x_distance, int y_distance);
+// Emitted at 0x004F8090 and called from five functions, but inlined by the
+// four-argument overload and by vulnerable.
+MEASURED inline int __cdecl vector_dist(int x_distance, int y_distance) {
+    x_distance = abs(x_distance);
+    y_distance = abs(y_distance);
+    int largest = (x_distance > y_distance) ? x_distance : y_distance;
+    int smallest = (x_distance < y_distance) ? x_distance : y_distance;
+    // Preserve `>> 1`, not `/ 2` (arithmetic shift semantics).
+    return largest - ((((y_distance + x_distance) >> 1) - smallest + 1) >> 1);
+}
+
+MEASURED inline int __cdecl vector_dist(int x_point_a, int y_point_a, int x_point_b, int y_point_b) {
+    int x_distance = x_dist(x_point_a, x_point_b);
+    int y_distance = abs(y_point_a - y_point_b);
+    return vector_dist(x_distance, y_distance);
+}
 
 MEASURED inline uint8_t __cdecl abstract_at(int x, int y) {
     return (MapAbstract())[(x >> 1) + y * (MapAbstractLongBounds >> 1)];

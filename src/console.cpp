@@ -1891,20 +1891,6 @@ void Console::show_scen_objectives() {
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     0x005C1B70 0x00644F3A
 
-// Same-TU copy of map.cpp's vector_dist(int, int) arithmetic.
-static inline int map_distance(int x_distance, int y_distance) {
-    x_distance = abs(x_distance);
-    y_distance = abs(y_distance);
-    int largest = x_distance;
-    if (x_distance <= y_distance) {
-        largest = y_distance;
-    }
-    int smallest = x_distance;
-    if (x_distance >= y_distance) {
-        smallest = y_distance;
-    }
-    return largest - ((((y_distance + x_distance) >> 1) - smallest + 1) >> 1);
-}
 
 int Console::ready_search(int veh_id) {
     int bestScore = 9999;
@@ -1952,7 +1938,7 @@ int Console::ready_search(int veh_id) {
                 int vehX = vehicle.x;
                 int vehY = vehicle.y;
 
-                int score = map_distance(x_dist(coordA, vehX), abs(coordB - vehY));
+                int score = vector_dist(x_dist(coordA, vehX), abs(coordB - vehY));
 
                 if (score < bestScore) {
                     bestScore = score;
@@ -2925,7 +2911,7 @@ void Console::zoom_to_upkeep_base() {
             const int base_x = base.x;
             const int base_y = base.y;
             const int distance =
-                map_distance(x_dist(camera_x, base_x), abs(camera_y - base_y));
+                vector_dist(x_dist(camera_x, base_x), abs(camera_y - base_y));
             if (distance <= best_distance) {
                 best_base = base_id;
                 best_distance = distance;

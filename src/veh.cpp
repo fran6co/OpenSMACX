@@ -186,20 +186,6 @@ static void apply_prototype_name_collisions(
     }
 }
 
-// map.cpp's vector_dist(int, int), which the image inlines in this file.
-static inline int veh_vector_dist(int x_distance, int y_distance) {
-    x_distance = abs(x_distance);
-    y_distance = abs(y_distance);
-    int largest = x_distance;
-    if (x_distance <= y_distance) {
-        largest = y_distance;
-    }
-    int smallest = x_distance;
-    if (x_distance >= y_distance) {
-        smallest = y_distance;
-    }
-    return largest - ((((y_distance + x_distance) >> 1) - smallest + 1) >> 1);
-}
 
 // ORIGINAL: 0x0057E040 ?name_proto@@YAXPADHHHHHHH@Z 0x0057E040-0x0057EF95
 // RECOVERY_BINDING: v1 {"evidence": ["git:2f89503ec251ffc8b9ff894998c01944c173a4fb:src/unrecovered/0057e040.cpp;image:0x0057E040-0x0057EF95", "pinned image:0x0057EE10 or esi,-1;0x0057EE13 test edi,edi;0x0057EE1B..0x0057EE35 builds VehPrototypes[-1].veh_name and calls strcmp", "pinned image:0x0057EF67..0x0057EF71 resets ESI after a matched alternate suffix and increments/restarts at zero", "Owned accidental storage:Ability base0x009AB538,stride0x1C,abbreviation+8 =>0x009AB834 = VehPrototypes base0x009AB868-0x34;source:src/veh.h RulesAbility;source:src/alpha.cpp ability loader", "git:2f89503ec251ffc8b9ff894998c01944c173a4fb:src/unrecovered/0057e040.cpp"], "reason": "Complete the original duplicate-name candidate loop, including its unconditional primary-collision restart before the differing-form alternate compare and its alternate-collision restart. The -1 candidate name view points to the source-owned object representation of Ability[27].abbreviation, preserving the native pointer-field-byte comparison instead of resolving the pointed-to rule string. The original unbounded strcmp read extent beyond that member remains unresolved; preserve its unsafe read/overflow behavior as an obligation. Full span and prior source/history remain intact; no byte-exact or runtime acceptance is claimed."}
@@ -7368,7 +7354,7 @@ int __cdecl alien_base(int veh_id, int x, int y) {
             continue;
         }
         const int base_y = base.y;
-        int value = veh_vector_dist(x_dist(x, base.x), abs(y - base_y)) * 32
+        int value = vector_dist(x_dist(x, base.x), abs(y - base_y)) * 32
             / (base.intake_2[RSC_MINERALS] + base.intake_2[RSC_ENERGY] + 32);
         const int veh_id_at = veh_at(base.x, base.y);
         if (stack_check(veh_id_at, 2, PLAN_ALIEN_ARTIFACT, -1, -1)) {
@@ -7753,7 +7739,7 @@ int __cdecl veh_find(int x, int y, int faction_id, int skip_veh_id) {
                 // vector_dist(x, y, veh x, veh y), expanded inline.
                 const int veh_y = Vehs[i].y;
                 const int veh_x = Vehs[i].x;
-                const int dist = veh_vector_dist(x_dist(x, veh_x), abs(y - veh_y));
+                const int dist = vector_dist(x_dist(x, veh_x), abs(y - veh_y));
                 if (dist <= best_dist) {
                     best_dist = dist;
                     best_idx = i;
@@ -23785,7 +23771,7 @@ int __cdecl can_convoy(int x, int y) {
     }
     for (int i = 0; i < GameDataStateStorage.fields_.base_current_count_; i++) {
         const int base_y = Bases[i].y;
-        if (veh_vector_dist(x_dist(x, Bases[i].x), abs(y - base_y)) <= 2) {
+        if (vector_dist(x_dist(x, Bases[i].x), abs(y - base_y)) <= 2) {
             const int dir = radius_move(Bases[i].x, Bases[i].y, x, y, 0x15);
             if (dir >= 0 && (Bases[i].resource_sqr_radius & (1 << dir)) != 0) {
                 return 0;

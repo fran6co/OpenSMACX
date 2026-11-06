@@ -249,7 +249,7 @@ Purpose: Take the absolute distance between two points as parameters to calculat
          radiate. This is mainly used to determine proximity or how far away the two points are from
          each other in a rough circle shape (see RadiusOffsetX[]/RadiusOffsetY[]).
 // ORIGINAL: 0x004F8090 ?vector_dist@@YAHHH@Z 0x004F8090-0x004F80CB BYTE_EXACT
-// body      src/map.cpp
+// body      src/map.h
 // LEVER: the two `abs()` stay real calls (image: `call _abs` 0x00644F3A
 //            twice) because stdafx.h's project-wide `#pragma function` line
 //            names abs - /Oi would otherwise expand it inline at every site.
@@ -264,30 +264,14 @@ Purpose: Take the absolute distance between two points as parameters to calculat
 Return Value: Distance radius
 Status: Complete
 */
-// Historical: an inline header body and an abs_call forwarder were tried to
-// reproduce the mixed call/inlining shape. The canonical body is now in this
-// translation unit; visibility to the overload below remains a measurement
-// question.
-int __cdecl vector_dist(int x_distance, int y_distance) {
-    x_distance = abs(x_distance);
-    y_distance = abs(y_distance);
-    int largest = x_distance;
-    if (x_distance <= y_distance) {
-        largest = y_distance;
-    }
-    int smallest = x_distance;
-    if (x_distance >= y_distance) {
-        smallest = y_distance;
-    }
-    // Preserve `>> 1`, not `/ 2`; the original arithmetic shift semantics are
-    // part of the recovered expression, including INT_MIN/overflow cases.
-    return largest - ((((y_distance + x_distance) >> 1) - smallest + 1) >> 1);
-}
+// BODY IN map.h as `MEASURED inline`: vulnerable inlines it while
+// base_ecology, enemy_move, mind_control and probe call it.
 
 /*
 Purpose: Take two points and calculate how far out they radiate. This is mainly used to determine
          proximity or how far away the two points are from each other in a rough circle shape.
 // ORIGINAL: 0x005A5910 ?vector_dist@@YAHHHHH@Z 0x005A5910-0x005A5987 BYTE_EXACT
+// body      src/map.h
 // Historical LEVER: inlining the two-argument overload here removed the
 //        original function call from this body. The overload now has an
 //        ordinary map.cpp definition above; same-translation-unit visibility
@@ -308,11 +292,7 @@ Purpose: Take two points and calculate how far out they radiate. This is mainly 
 Return Value: Distance radius
 Status: Complete
 */
-int __cdecl vector_dist(int x_point_a, int y_point_a, int x_point_b, int y_point_b) {
-    int x_distance = x_dist(x_point_a, x_point_b);
-    int y_distance = abs(y_point_a - y_point_b);
-    return vector_dist(x_distance, y_distance);
-}
+// BODY IN map.h as `MEASURED inline`: vulnerable inlines it; probe calls it.
 
 /*
 Purpose: Check whether there is a path between two regions. It seems to only take into account land
@@ -649,19 +629,11 @@ BOOL __cdecl naval_base(int base_id) {
     if (base_coast(base_id) < 0) {
         return false;
     }
-    int i = 0;
-    if (GameDataStateStorage.fields_.base_current_count_ > 0) {
-        uint8_t faction_id = Bases[base_id].faction_id_current;
-        Base *base = Bases;
-        do {
-            if (faction_id != base->faction_id_current) {
-                if (port_to_port_body(base_id, i)) {
-                    return true;
-                }
-            }
-            ++base;
-            ++i;
-        } while (i < GameDataStateStorage.fields_.base_current_count_);
+    for (int i = 0; i < GameDataStateStorage.fields_.base_current_count_; i++) {
+        if (Bases[i].faction_id_current != Bases[base_id].faction_id_current
+            && port_to_port(base_id, i)) {
+            return true;
+        }
     }
     return false;
 }
@@ -685,20 +657,20 @@ Status: Complete
 */
 BOOL __cdecl convoy(int veh_id, int base_id) {
     int home_base_id = Vehs[veh_id].home_base_id;
-    if (home_base_id < 0 || base_id == (uint32_t)home_base_id) {
+    if (home_base_id < 0 || home_base_id == base_id) {
         return false;
     }
-    uint32_t triad = get_triad(veh_id);
+    uint8_t triad = get_triad(veh_id);
     if (triad == TRIAD_AIR) {
         return true;
     }
-    uint32_t region_base = region_at(Bases[base_id].x, Bases[base_id].y);
-    if (region_at(Bases[home_base_id].x, Bases[home_base_id].y) == region_base
-        && ((region_base >= 64) == (triad == TRIAD_SEA))) {
+    int region_base = region_at(Bases[base_id].x, Bases[base_id].y);
+    if (region_base == region_at(Bases[home_base_id].x, Bases[home_base_id].y)
+        && ((triad == TRIAD_SEA) == (region_base >= 64))) {
         return true; // same region, by land or sea
     }
     if (triad) {
-        return port_to_port_body(base_id, home_base_id); // sea
+        return port_to_port(base_id, home_base_id); // sea
     }
     return false;
 }
@@ -1173,23 +1145,7 @@ void __cdecl quick_zoc(int x_src, int y_src, int faction_id, int x_dst, int y_ds
             if (owner >= 0 && owner != faction_id
                 && is_ocean(x_radius, y_radius) == is_src_ocean
                 && !(PlayersData[faction_id].diplo_treaties[owner] & DTREATY_PACT)) {
-                // image inlines BOTH vector_dist(x,y,x,y) and vector_dist(x,y) at this
-                // one call site (4 direct `abs()` calls, no call to either helper), while
-                // both keep real callers elsewhere - so the body is duplicated here rather
-                // than marking either `inline` and disturbing those other sites.
-                int dist_x = x_dist(x_radius, x_dst);
-                int dist_y = abs((int)y_radius - y_dst);
-                int abs_dist_x = abs(dist_x);
-                int abs_dist_y = abs(dist_y);
-                int largest = abs_dist_x;
-                if (abs_dist_x <= abs_dist_y) {
-                    largest = abs_dist_y;
-                }
-                int smallest = abs_dist_x;
-                if (abs_dist_x >= abs_dist_y) {
-                    smallest = abs_dist_y;
-                }
-                int proximity = largest - ((((abs_dist_y + abs_dist_x) >> 1) - smallest + 1) >> 1);
+                int proximity = vector_dist(x_radius, y_radius, x_dst, y_dst);
                 if (proximity >= search_zoc) {
                     search_zoc = proximity;
                     *x_zoc = x_radius;
@@ -2082,6 +2038,8 @@ int __cdecl encrypt_write(void *data, unsigned int size, unsigned int count,
 // symbol    ?encrypt_read@@YAHPAXIIPAU_iobuf@@@Z
 // this tree's FILE is struct _iobuf, so the tag differs from the image's
 // working copy - scaffold materialised by --work
+// NOTE: mirrors encrypt_write; remaining gap is the src load/increment
+//        schedule (image: inc esi; mov cl,[esi-1]; inc esi).
 // size      214 bytes
 // prototype int (__cdecl ?encrypt_read@@YAHPAXIIPAUFILE@@@Z)(void* buffer, unsigned int block, unsigned int count, FILE* file)
 // callers   3   call targets   3
@@ -2090,47 +2048,46 @@ int __cdecl encrypt_write(void *data, unsigned int size, unsigned int count,
 // calls     0x005D4510 0x00644EF2 0x00646178
 int __cdecl encrypt_read(void *data, unsigned int size, unsigned int count,
                          FILE *file) {
-    unsigned int total = size * count;
-    unsigned int allocSize = total;
-    if (allocSize & 1) {
-        allocSize = allocSize + 1;
+    unsigned int padded = size * count;
+    unsigned int remaining = padded;
+    if (padded & 1) {
+        padded++;
     }
-    unsigned char *buf = static_cast<unsigned char *>(mem_get(allocSize));
+    unsigned char *buf = reinterpret_cast<unsigned char *>(mem_get(padded));
     if (buf == 0) {
         return 0;
     }
-    int n = fread(buf, allocSize, 1, file);
-    if (n == 0) {
+    unsigned char *src = buf;
+    if (!fread(src, padded, 1, file)) {
         free(buf);
         return 0;
     }
-    unsigned char prevA = 0x80;
-    unsigned char prevB = 0x80;
-    unsigned char *src = buf;
-    unsigned char *dst = static_cast<unsigned char *>(data);
-    unsigned int remaining = total;
-
-    for (unsigned int pairs = allocSize >> 1; pairs != 0; --pairs) {
-        ++prevB;
-        unsigned char b1 = src[1];
-        --prevA;
-        unsigned char b0 = src[0];
+    unsigned char *dst = reinterpret_cast<unsigned char *>(data);
+    unsigned char key1 = 0x80;
+    unsigned char key2 = 0x80;
+    for (unsigned int i = padded / 2; i != 0; --i) {
+        key2 = key2 + 1;
+        key1 = key1 - 1;
+        unsigned char byte2 = src[1];
+        unsigned char byte1 = src[0];
         src += 2;
-        if (b1 != 0 && (unsigned char)(b1 ^ prevB) != 0) {
-            b1 = b1 ^ prevB;
+        if (byte2 != 0) {
+            unsigned char value = byte2 ^ key2;
+            if (value != 0) {
+                byte2 = value;
+            }
         }
-        if (b0 != 0 && (unsigned char)(b0 ^ prevA) != 0) {
-            b0 = b0 ^ prevA;
+        if (byte1 != 0) {
+            unsigned char value = byte1 ^ key1;
+            if (value != 0) {
+                byte1 = value;
+            }
         }
-        *dst = b1;
-        unsigned char *next = dst + 1;
+        *dst++ = byte2;
         if (remaining > 1) {
-            *next = b0;
-            next = dst + 2;
+            *dst++ = byte1;
         }
-
         remaining -= 2;
-        dst = next;
     }
     free(buf);
     return 1;

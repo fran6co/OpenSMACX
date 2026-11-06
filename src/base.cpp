@@ -5764,25 +5764,7 @@ int __cdecl base_at(int x, int y) {
     return -1;
 }
 
-// The image inlines the 2-arg vector_dist body as a call-like copy, as in
-// faction.cpp's del_site_dist. Kept TU-local pending a header.
-static inline int base_find_dist(int x_distance, int y_distance) {
-    x_distance = abs(x_distance);
-    y_distance = abs(y_distance);
-    int largest = x_distance;
-    if (x_distance <= y_distance) {
-        largest = y_distance;
-    }
-    int smallest = x_distance;
-    if (x_distance >= y_distance) {
-        smallest = y_distance;
-    }
-    return largest - ((((y_distance + x_distance) >> 1) - smallest + 1) >> 1);
-}
 
-static inline int base_find_dist(int x_point_a, int y_point_a, int x_point_b, int y_point_b) {
-    return base_find_dist(x_dist(x_point_a, x_point_b), abs(y_point_a - y_point_b));
-}
 
 /*
 Purpose: Find the base id closest to the specified coordinates.
@@ -5810,7 +5792,7 @@ int __cdecl base_find(int x, int y) {
     int base_id = -1;
     for (int i = 0; i < GameDataStateStorage.fields_.base_current_count_; i++) {
         // Inline vector_dist copy: the image calls abs() four times.
-        int dist = base_find_dist(x, y, Bases[i].x, Bases[i].y);
+        int dist = vector_dist(x, y, Bases[i].x, Bases[i].y);
         if (dist <= proximity) {
             proximity = dist;
             base_id = i;
@@ -5846,7 +5828,7 @@ int __cdecl base_find(int x, int y, int faction_id) {
     int base_id = -1;
     for (int i = 0; i < GameDataStateStorage.fields_.base_current_count_; i++) {
         if (Bases[i].faction_id_current == faction_id) {
-            int dist = base_find_dist(x, y, Bases[i].x, Bases[i].y);
+            int dist = vector_dist(x, y, Bases[i].x, Bases[i].y);
             if (dist <= proximity) {
                 proximity = dist;
                 base_id = i;
@@ -5913,7 +5895,7 @@ int __cdecl base_find(int x, int y, int faction_id, int region, int faction_id_2
                 || ((1 << faction_id_3) & base->visibility)) {
                 // Inlined vector_dist(x, y, base->x, base->y): the image calls
                 // abs() four times, never vector_dist itself.
-                int dist = base_find_dist(x, y, base->x, base->y);
+                int dist = vector_dist(x, y, base->x, base->y);
                 if (dist <= proximity) {
                     proximity = dist;
                     base_id = i;
@@ -8684,7 +8666,7 @@ int __cdecl black_market(int energy) {
             // times, never vector_dist itself - see base_find (0x004E3D50)
             // for the same expansion. (BaseCurrent())->x/y are re-read here,
             // not hoisted, matching the image reading the global fresh.
-            int dist = base_find_dist(Bases[i].x, Bases[i].y, BaseCurrent->x, BaseCurrent->y);
+            int dist = vector_dist(Bases[i].x, Bases[i].y, BaseCurrent->x, BaseCurrent->y);
             if (dist < dist_hq) {
                 dist_hq = dist;
             }

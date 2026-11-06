@@ -2304,22 +2304,6 @@ void __cdecl init_goals(int faction_id) {
     }
 }
 
-// The image inlines the 2-arg vector_dist body here as a call-like copy
-// (parameter registers, not open-coded locals); a visible inline copy of
-// vector_dist is the likely original source. Kept TU-local pending a header.
-static inline int del_site_dist(int x_distance, int y_distance) {
-    x_distance = abs(x_distance);
-    y_distance = abs(y_distance);
-    int largest = x_distance;
-    if (x_distance <= y_distance) {
-        largest = y_distance;
-    }
-    int smallest = x_distance;
-    if (x_distance >= y_distance) {
-        smallest = y_distance;
-    }
-    return largest - ((((y_distance + x_distance) >> 1) - smallest + 1) >> 1);
-}
 
 /*
 Purpose: Delete sites of the specified type within proximity of the tile along with related goals.
@@ -2360,7 +2344,7 @@ void __cdecl del_site(int faction_id, int type, int x, int y, int proximity) {
             int site_y = sites->y;
             int dx = x_dist(x, sites->x);
             int dy = abs(y - site_y);
-            if (del_site_dist(dx, dy) <= proximity) {
+            if (vector_dist(dx, dy) <= proximity) {
                 sites->type = AI_GOAL_UNUSED;
                 sites->priority = 0;
                 Goal *goal_compare = PlayersData[faction_id].goals;

@@ -785,3 +785,64 @@ int __cdecl tech_val(int tech_id, int faction_id, BOOL simple_calc) {
     }
     return value_ret;
 }
+
+// ORIGINAL: 0x005BE940 ?tech_research@@YAXHH@Z 0x005BE940-0x005BEB70
+// RECOVERY_BINDING: v1 {"evidence": ["git:9f6ee90ae7baa6354fcca006def5561fb956792b:src/recovered/units/005be940.cpp", "recovery/tasks/base-colony-economy-coverage-wave.json", "recovery/tests/test_base_colony_economy.py", "Pinned original 01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf; complete original extent reviewed against native instructions and measured VC6 owner layouts.", "Original5BE940..5BEB70 uses Facility33/102 prerequisites, low-byte LockEnableMask, tech_cost=-1 before recomputation, and shared945F48 phase distinct from9B2070 UI phase."], "reason": "Recover complete research accumulation, climactic prerequisite decisions, advances and selection through real faction/technology storage and shared TurnUpkeepPhase. Preserve native byte-width human mask, callback-owned selection and wrap. Seed retained; no new byte or runtime claim."}
+// symbol    ?tech_research@@YAXHH@Z
+// LEVER: same TU as has_tech (0x005BE940 inside the 0x005B9F20-0x005BEB70
+//        block), which the image inlines twice here; technology.cpp cannot
+//        see it without valid_tech_leap (another TU) inlining it too.
+void __cdecl tech_research(int faction, int points) {
+    if (points <= 0) {
+        return;
+    }
+
+    if (!is_human(faction) && climactic_battle()) {
+        if (!has_tech(Facility[FAC_PSI_GATE].preq_tech, faction)
+            || !has_tech(Facility[FAC_ASCENT_TO_TRANSCENDENCE].preq_tech, faction)) {
+            points *= 2;
+        }
+    }
+
+    PlayersData[faction].tech_accumulated += points;
+    if (IsMultiplayerNet == 0 && PlayersData[faction].tech_id_researching < 0) {
+        goto after_advance;
+    }
+
+    {
+        const int research_rate = tech_rate(faction);
+        if (PlayersData[faction].tech_id_researching >= 0x59) {
+            PlayersData[faction].tech_accumulated += points;
+        }
+        if (PlayersData[faction].tech_accumulated >= research_rate) {
+            log_say("Researched Advance", Players[faction].name_leader,
+                    faction, 0, 0);
+            const int advance = tech_advance(faction);
+            if (advance >= 0) {
+                mon_tech_discovered(faction, advance);
+            }
+            PlayersData[faction].tech_accumulated = 0;
+            PlayersData[faction].tech_cost = -1;
+            PlayersData[faction].tech_cost = tech_rate(faction);
+        }
+
+        if ((PlayersData[faction].flags & 0x40u) != 0) {
+            log_say("Secret Advance", Players[faction].name_leader,
+                    faction, 0, 0);
+            PlayersData[faction].flags &= ~0x40u;
+            const int advance = tech_advance(faction);
+            if (advance >= 0) {
+                mon_tech_discovered(faction, advance);
+            }
+        }
+    }
+
+after_advance:
+    if (PlayersData[faction].tech_accumulated >= 0 && PlayersData[faction].tech_id_researching < 0
+        && TurnUpkeepPhase != 1
+        && (!is_human(faction)
+            || faction == ConsoleGlobal.faction_id_
+            || IsMultiplayerPBEM == 0)) {
+        PlayersData[faction].tech_id_researching = tech_selection(faction);
+    }
+}

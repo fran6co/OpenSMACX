@@ -49,20 +49,6 @@ int __cdecl steal_energy(int base_id) {
         : ((energy * Bases[base_id].population_size) / (PlayersData[faction_id].pop_total + 1));
 }
 
-// TU-local copies of map.cpp's two vector_dist overloads, which vulnerable
-// inlines (four abs calls); ternary min/max picks the image's registers.
-static inline int probe_vector_dist(int x_distance, int y_distance) {
-    x_distance = abs(x_distance);
-    y_distance = abs(y_distance);
-    int largest = (x_distance > y_distance) ? x_distance : y_distance;
-    int smallest = (x_distance < y_distance) ? x_distance : y_distance;
-    return largest - ((((y_distance + x_distance) >> 1) - smallest + 1) >> 1);
-}
-
-static inline int probe_vector_dist(int x_point_a, int y_point_a, int x_point_b, int y_point_b) {
-    return probe_vector_dist(x_dist(x_point_a, x_point_b), abs(y_point_a - y_point_b));
-}
-
 /*
 Purpose: Calculate how vulnerable the coordinates are for the specified faction based on how far
          away this tile is from the faction's Headquarters.
@@ -81,7 +67,7 @@ Status: Complete
 int __cdecl vulnerable(int faction_id, int x, int y) {
     for (int i = 0; i < GameDataStateStorage.fields_.base_current_count_; i++) {
         if (Bases[i].faction_id_current == faction_id && has_fac(FAC_HEADQUARTERS, i, 0)) {
-            return probe_vector_dist(x, y, Bases[i].x, Bases[i].y);
+            return vector_dist(x, y, Bases[i].x, Bases[i].y);
         }
     }
     return 12; // no bases or no HQ
@@ -140,6 +126,9 @@ Purpose: Calculate the cost for the faction to be able to mind control the speci
 //        hand-inlined at each use - both are already header `inline`, but
 //        VC6 declines to fold them into a function this large, so a plain
 //        call to either stood where the image has none.
+// NOTE: with vector_dist now a map.h inline, calling vulnerable() reproduces
+//        its inlined copy (0.666 -> 0.708). Remaining gap: the image keeps
+//        that copy's has_fac as a real call; this tree inlines it.
 Return Value: Mind control cost
 Status: Complete
 */
@@ -148,23 +137,13 @@ int __cdecl mind_control(int base_id, int faction_id, BOOL is_corner_market) {
     uint32_t target_faction_id = Bases[base_id].faction_id_current;
     int target_x = Bases[base_id].x;
     int target_y = Bases[base_id].y;
-    // The image inlines vulnerable() (same TU) here; calling it scores 0.672 vs
-    // 0.666 but routes vector_dist to the TU-local copy until map.h makes the
-    // two-argument vector_dist an inline the depth limit leaves as a call.
-    int cost = 12; // vulnerable(): default when faction has no HQ
-    for (int i = 0; i < GameDataStateStorage.fields_.base_current_count_; i++) {
-        if (Bases[i].faction_id_current == target_faction_id && has_fac(FAC_HEADQUARTERS, i, 0)) {
-            int dx = x_dist(target_x, Bases[i].x);
-            int dy = abs(target_y - Bases[i].y);
-            cost = vector_dist(dx, dy);
-            break;
-        }
-    }
+    int cost = vulnerable(target_faction_id, target_x, target_y);
     if (cost <= 0) {
-        if (!is_corner_market) {
+        if (is_corner_market) {
+            cost = 1;
+        } else {
             return -1;
         }
-        cost = 1;
     }
     if (has_fac(FAC_GENEJACK_FACTORY, base_id, 0)) {
         cost *= 2;
