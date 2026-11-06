@@ -944,7 +944,7 @@ void BaseWin::draw_support() {
 }
 
 // base_killed inlines this whole body: the original defined it inline here.
-// ORIGINAL: 0x0041A4C0 ?exit@BaseWin@@QAEXXZ 0x0041A4C0-0x0041A609
+// ORIGINAL: 0x0041A4C0 ?exit@BaseWin@@QAEXXZ 0x0041A4C0-0x0041A609 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:a538e0a3:src/recovered/units/0041a4c0.cpp", "source:src/basewin.h", "image:original instruction and dispatch evidence for the BaseWin owner"], "reason": "Recover this original base-window operation through the real BaseWin owner, existing typed members and source-owned shared dependencies; catalogue naming and original intervals remain distinct from current compiler symbols."}
 inline void BaseWin::exit() {
     const int visible = TutWinBaseWindow.is_visible();
@@ -984,7 +984,7 @@ inline void BaseWin::exit() {
         ConsoleGlobal.center();
 }
 
-// ORIGINAL: 0x0041A620 ?base_killed@BaseWin@@QAEXH@Z 0x0041A620-0x0041A79D
+// ORIGINAL: 0x0041A620 ?base_killed@BaseWin@@QAEXH@Z 0x0041A620-0x0041A79D BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:a538e0a3:src/recovered/units/0041a620.cpp", "source:src/basewin.h", "image:original instruction and dispatch evidence for the BaseWin owner"], "reason": "Recover this original base-window operation through the real BaseWin owner, existing typed members and source-owned shared dependencies; catalogue naming and original intervals remain distinct from current compiler symbols."}
 void BaseWin::base_killed(int base_id) {
     if (is_visible()) {
@@ -2856,7 +2856,7 @@ static inline int check_loc_dist(int x_distance, int y_distance) {
 // Visibility gates every base-coordinate read. Original 0x0041A80A captures
 // the signed y coordinate before computing wrapped x distance. This uses
 // the game's existing hex metric, not square-grid or Euclidean distance.
-// ORIGINAL: 0x0041A7E0 ?check_loc@BaseWin@@QAEXHHH@Z 0x0041A7E0-0x0041A8A7
+// ORIGINAL: 0x0041A7E0 ?check_loc@BaseWin@@QAEXHHH@Z 0x0041A7E0-0x0041A8A7 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Original41A7F3 uses focusedBaseID_+40B0C and Bases stride134;41A80A/11 sign extend y/x before distance calculation. Win visibility gates every coordinate access. MapIsFlat bit0, MapLongitude half-width and MapLongitudeBounds width govern the wrapped x difference.", "Original41A81B..41A87D is x_dist followed by abs(y-base_y) and the two-distance vector_dist metric;41A882 accepts distance equal to radius. The refresh chain forces base_compute once, virtual this redraw, then direct main-interface GraphicWin redraw, without selecting another current base. Existing helpers retain the finite valid-coordinate domain; no new malformed-index or overflow policy is introduced."], "reason": "Recover the visible base screen proximity refresh using typed Base coordinates and existing cylindrical-map hex distance helpers."}
 void BaseWin::check_loc(int x, int y, int radius) {
     if (Win::is_visible()) {
@@ -4895,7 +4895,7 @@ void BaseWin::on_iface_mouse_move(int a1, int a2) {
 /*
 Purpose: Clear the queue hover and restore the base-production selection
          when the pointer leaves the BaseWin interface.
-// ORIGINAL: 0x0041E3E0 ?on_iface_mouse_leave@BaseWin@@QAEXHH@Z 0x0041E3E0-0x0041E4C0 FILE
+// ORIGINAL: 0x0041E3E0 ?on_iface_mouse_leave@BaseWin@@QAEXHH@Z 0x0041E3E0-0x0041E4C0 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["image:0x0041E3E0-0x0041E4C0 clears the bubble twice, conditionally clears queue hover, resets fields 0x400EC/0x400F0, recomputes focused base, and invokes the multiplayer radius lock path", "source:src/basewin.h:BaseWin focused/queue fields", "source:src/base.h:Base records", "source:src/win.h:Win::clear_bubble_text", "source:src/netdaemon.h"], "reason": "Recover the mouse-leave state transition with typed BaseWin/Base state and existing Win, base-computation, NetDaemon and panel interfaces; panel rendering remains explicitly unfinished."}
 // symbol    ?on_iface_mouse_leave@BaseWin@@UAEXHH@Z
 // TRIED: two `char*` bases (self, self-0xa14) computed via arithmetic instead of matching the single-esi-reuse register shape

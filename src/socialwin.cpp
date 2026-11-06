@@ -1286,7 +1286,7 @@ void SocialWin::allocate_energy(int a1, int a2) {
 // The image's presets title is label slot 69 (0x114 / sizeof(LPSTR)) in the
 // loaded label table. The former unit scaffold kept that lookup as a raw
 // pointer walk; label_get owns the same lookup in the product source.
-// ORIGINAL: 0x004AF1E0 ?draw_presets@SocialWin@@QAEXXZ 0x004AF1E0-0x004AF307
+// ORIGINAL: 0x004AF1E0 ?draw_presets@SocialWin@@QAEXXZ 0x004AF1E0-0x004AF307 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:seed:src/recovered/units/004af1e0.cpp; source:src/socialwin.h:tutRect1_,font1_; source:src/alpha.h:label_get; source:src/strings.h:StringTemp; source:src/game.cpp:InterfaceBoxStyles"], "reason": "Home the presets panel painter on SocialWin with its typed RECT, Buffer base, font and source-owned strings."}
 void SocialWin::draw_presets() {
     RECT panel = tutRect1_;
@@ -1495,7 +1495,7 @@ void SocialWin::UNK1(int soc_category, int soc_model) {
  *          that effect, select it in the category's button group and apply it
  *          through UNK1. A trailing redraw leaves the panels in step, and the
  *          arm clears once the clicks that follow consume it.
-// ORIGINAL: 0x004AF110 ?maximize_effect@SocialWin@@QAEXH@Z 0x004AF110-0x004AF1D7 FILE
+// ORIGINAL: 0x004AF110 ?maximize_effect@SocialWin@@QAEXH@Z 0x004AF110-0x004AF1D7 FILE BYTE_EXACT
 // size      199 bytes
 // prototype void (__thiscall ?maximize_effect@SocialWin@@QAEXH@Z)(SocialWin* this, int effectID)
 // callers   1   call targets   3
