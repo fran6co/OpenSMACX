@@ -1421,21 +1421,13 @@ extern "C" void __cdecl sub_4d5ff0(int *id_list) {
     int did_swap;
     do {
         did_swap = 0;
-        int last = GameDataStateStorage.fields_.base_current_count_;
-        last = base_yield_sub(last, 1);
-        if (last <= 0) return;
-        int *cursor = id_list;
-        int index = 0;
-        do {
-            if (_stricmp(Bases[cursor[0]].name_string,
-                         Bases[cursor[1]].name_string) > 0) {
+        for (int i = 0; i < GameDataStateStorage.fields_.base_current_count_ - 1; i++) {
+            if (_stricmp(Bases[id_list[i]].name_string, Bases[id_list[i + 1]].name_string) > 0) {
                 did_swap = 1;
-                swap(cursor, cursor + 1);
+                swap(&id_list[i], &id_list[i + 1]);
             }
-            ++index;
-            ++cursor;
-        } while (index < base_yield_sub(GameDataStateStorage.fields_.base_current_count_, 1));
-    } while (did_swap != 0);
+        }
+    } while (did_swap);
 }
 
 // ORIGINAL: 0x004E4B80 ?base_init@@YAHHHH@Z 0x004E4B80-0x004E5250
@@ -5805,6 +5797,26 @@ int __cdecl base_at(int x, int y) {
     return -1;
 }
 
+// The image inlines the 2-arg vector_dist body as a call-like copy, as in
+// faction.cpp's del_site_dist. Kept TU-local pending a header.
+static inline int base_find_dist(int x_distance, int y_distance) {
+    x_distance = abs(x_distance);
+    y_distance = abs(y_distance);
+    int largest = x_distance;
+    if (x_distance <= y_distance) {
+        largest = y_distance;
+    }
+    int smallest = x_distance;
+    if (x_distance >= y_distance) {
+        smallest = y_distance;
+    }
+    return largest - ((((y_distance + x_distance) >> 1) - smallest + 1) >> 1);
+}
+
+static inline int base_find_dist(int x_point_a, int y_point_a, int x_point_b, int y_point_b) {
+    return base_find_dist(x_dist(x_point_a, x_point_b), abs(y_point_a - y_point_b));
+}
+
 /*
 Purpose: Find the base id closest to the specified coordinates.
 // ORIGINAL: 0x004E3B80 ?base_find@@YAHHH@Z 0x004E3B80-0x004E3C5F
@@ -5830,24 +5842,9 @@ int __cdecl base_find(int x, int y) {
     int proximity = 9999;
     int base_id = -1;
     for (int i = 0; i < GameDataStateStorage.fields_.base_current_count_; i++) {
-        // Open-coded vector_dist(x, y, Bases[i].x, Bases[i].y): the image calls
-        // abs() four times (never vector_dist itself) - see del_site
-        // (0x00579E70) for the same expansion.
-        const int base_y = Bases[i].y;
-        int dx = x_dist(x, Bases[i].x);
-        int dy = abs(y - base_y);
-        int abs_dx = abs(dx);
-        int abs_dy = abs(dy);
-        int largest = abs_dx;
-        if (abs_dx <= abs_dy) {
-            largest = abs_dy;
-        }
-        int smallest = abs_dx;
-        if (abs_dx >= abs_dy) {
-            smallest = abs_dy;
-        }
-        int dist;
-        if ((dist = largest - ((((abs_dx + abs_dy) >> 1) - smallest + 1) >> 1)) <= proximity) {
+        // Inline vector_dist copy: the image calls abs() four times.
+        int dist = base_find_dist(x, y, Bases[i].x, Bases[i].y);
+        if (dist <= proximity) {
             proximity = dist;
             base_id = i;
         }
@@ -5878,30 +5875,11 @@ Return Value: Base id or -1 if not found
 Status: Complete
 */
 int __cdecl base_find(int x, int y, int faction_id) {
-    if (GameDataStateStorage.fields_.base_current_count_ <= 0) {
-        return -1;
-    }
     int proximity = 9999;
     int base_id = -1;
     for (int i = 0; i < GameDataStateStorage.fields_.base_current_count_; i++) {
         if (Bases[i].faction_id_current == faction_id) {
-            // Open-coded vector_dist(x, y, Bases[i].x, Bases[i].y): the
-            // image calls abs() four times, never vector_dist itself - see
-            // del_site (0x00579E70) and base_find(x,y) (0x004E3B80) for the
-            // same expansion.
-            int dx = x_dist(x, Bases[i].x);
-            int dy = abs(y - Bases[i].y);
-            int abs_dx = abs(dx);
-            int abs_dy = abs(dy);
-            int largest = abs_dx;
-            if (abs_dx <= abs_dy) {
-                largest = abs_dy;
-            }
-            int smallest = abs_dx;
-            if (abs_dx >= abs_dy) {
-                smallest = abs_dy;
-            }
-            int dist = largest - ((((abs_dy + abs_dx) >> 1) - smallest + 1) >> 1);
+            int dist = base_find_dist(x, y, Bases[i].x, Bases[i].y);
             if (dist <= proximity) {
                 proximity = dist;
                 base_id = i;
@@ -7418,20 +7396,19 @@ Status: Complete
 */
 void __cdecl base_first(int base_id) {
     int priority = -1;
+    Bases[base_id].queue_production_id[0] = BSC_SCOUT_PATROL;
     uint32_t proto_id = BSC_SCOUT_PATROL;
-    Bases[base_id].queue_production_id[0] = proto_id;
     for (int i = 0; i < MaxVehProtoNum; i++) {
         if (veh_avail(i, Bases[base_id].faction_id_current, base_id)) {
             if (i < MaxVehProtoFactionNum || VehPrototypes[i].flags & PROTO_TYPED_COMPLETE) {
                 int compare = get_proto_defense_rating(i) * 32;
-                uint8_t plan = VehPrototypes[i].plan;
-                if (plan == PLAN_DEFENSIVE) {
+                if (VehPrototypes[i].plan == PLAN_DEFENSIVE) {
                     compare *= 4;
                 }
-                if (plan == PLAN_COMBAT) {
+                if (VehPrototypes[i].plan == PLAN_COMBAT) {
                     compare *= 3;
                 }
-                if (plan == PLAN_RECONNAISANCE) {
+                if (VehPrototypes[i].plan == PLAN_RECONNAISANCE) {
                     compare *= 2;
                 }
                 if (get_proto_triad(i) != TRIAD_LAND) {
@@ -9224,26 +9201,27 @@ Return Value: Is there a valid item in queue to be built? true/false
 Status: Complete
 */
 BOOL __cdecl base_queue(int base_id) {
-    Base *base = &Bases[base_id];
-    uint32_t faction_id = base->faction_id_current;
-    while (base->queue_size) {
-        int queue_prod_id = base->queue_production_id[0];
-        if (queue_prod_id >= 0) {
-            PlayersData[faction_id].proto_id_queue[queue_prod_id]--;
+    uint32_t faction_id = Bases[base_id].faction_id_current;
+    while (Bases[base_id].queue_size) {
+        if (Bases[base_id].queue_production_id[0] >= 0) {
+            PlayersData[faction_id].proto_id_queue[Bases[base_id].queue_production_id[0]]--;
         }
-        for (int i = 0; i < base->queue_size; i++) {
-            base->queue_production_id[i] = base->queue_production_id[i + 1];
+        for (int i = 0; i < Bases[base_id].queue_size; i++) {
+            Bases[base_id].queue_production_id[i] = Bases[base_id].queue_production_id[i + 1];
         }
-        base->queue_size--;
-        queue_prod_id = base->queue_production_id[0];
-        if((queue_prod_id >= 0) ? veh_avail(queue_prod_id, faction_id, base_id)
-            : facility_avail(-queue_prod_id, faction_id, base_id, 0)) {
-            if (base->queue_production_id[0] <= -FacilitySPStart) {
-                wave_it(36); // CPU project initiated
+        Bases[base_id].queue_size--;
+        if (Bases[base_id].queue_production_id[0] >= 0) {
+            if (!veh_avail(Bases[base_id].queue_production_id[0], faction_id, base_id)) {
+                continue;
             }
-            draw_radius(base->x, base->y, 2, 2);
-            return true;
+        } else if (!facility_avail(-Bases[base_id].queue_production_id[0], faction_id, base_id, 0)) {
+            continue;
         }
+        if (Bases[base_id].queue_production_id[0] <= -FacilitySPStart) {
+            wave_it(36); // CPU project initiated
+        }
+        draw_radius(Bases[base_id].x, Bases[base_id].y, 2, 2);
+        return true;
     }
     return false;
 }
@@ -9273,26 +9251,19 @@ void __cdecl base_energy_costs() {
     const uint32_t faction_id = BaseCurrent->faction_id_current;
     if (BaseCurrent->energy_surplus >= 0) return;
     const int total = GameDataStateStorage.fields_.vehicle_current_count_;
-    if (total <= 0) return;
-    Map *const tiles = MapTiles;
-    const int longitude = MapLongitude;
-    Veh *vehicle = Vehs;
-    int remaining = total;
-    do {
-        if (vehicle->faction_id == faction_id
-            && VehPrototypes[vehicle->proto_id].plan == PLAN_SUPPLY_CONVOY
-            && vehicle->order == ORDER_CONVOY && vehicle->order_auto_type == RSC_ENERGY) {
-            Map *const tile = tiles + vehicle->y * longitude + (vehicle->x >> 1);
+    for (int i = 0; i < total; i++) {
+        if (Vehs[i].faction_id == faction_id
+            && VehPrototypes[Vehs[i].proto_id].plan == PLAN_SUPPLY_CONVOY
+            && Vehs[i].order == ORDER_CONVOY && Vehs[i].order_auto_type == RSC_ENERGY) {
+            Map *const tile = MapTiles + Vehs[i].y * MapLongitude + (Vehs[i].x >> 1);
             int owner = -1;
             if ((tile->bit & BIT_BASE_IN_TILE) != 0) {
                 const int candidate = tile->val2 & 0xF;
                 if (candidate < MaxPlayerNum) owner = candidate;
             }
-            if (owner >= 0) vehicle->order = ORDER_NONE;
+            if (owner >= 0) Vehs[i].order = ORDER_NONE;
         }
-        ++vehicle;
-        --remaining;
-    } while (remaining != 0);
+    }
 }
 
 /*
@@ -9325,12 +9296,11 @@ int __cdecl fac_maint(int facility_id, int faction_id) {
         }
         return (reactor > diff_factor) ? diff_factor : reactor;
     }
-    int *bonus_id = &Players[faction_id].faction_bonus_id[0];
-    int *bonus_val = &Players[faction_id].faction_bonus_val1[0];
-    for (int i = 0; i < Players[faction_id].faction_bonus_count; i++, bonus_id++, bonus_val++) {
-        if ((*bonus_id == RULE_FACILITY || (*bonus_id == RULE_FREEFAC
-            && has_tech(Facility[*bonus_val].preq_tech, faction_id)))
-            && *bonus_val == (int)facility_id) {
+    for (int i = 0; i < Players[faction_id].faction_bonus_count; i++) {
+        if ((Players[faction_id].faction_bonus_id[i] == RULE_FACILITY
+            || (Players[faction_id].faction_bonus_id[i] == RULE_FREEFAC
+                && has_tech(Facility[Players[faction_id].faction_bonus_val1[i]].preq_tech, faction_id)))
+            && Players[faction_id].faction_bonus_val1[i] == (int)facility_id) {
             return 0;
         }
     }
