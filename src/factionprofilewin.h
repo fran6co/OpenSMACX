@@ -12,7 +12,7 @@ class FactionProfileWin : public GraphicWin {
  public:
   void initialize(int faction_id, int profile_mode);
   void set_faction_id(int faction_id);
-  int show_profile();
+  void show_profile();
 
  private:
   // RECOVERY_MEMBER: v1 FactionProfileWin field_A14_ 0xA14 0x00589760

@@ -50,6 +50,7 @@
 #include "text.h"
 
 #include "tutwin.h"
+#include "rectangle_operations.h"
 #include "wave_device.h"
 
 int __cdecl X_text_open(char *src_file_id, const char *section_id);
@@ -491,11 +492,13 @@ void PrefWin::display(int page) {
   warningsPending_ = GameDataStateStorage.fields_.game_warnings_;
   prefsMapPending_ = GameDataStateStorage.fields_.game_preferences_;
   morePrefsMapPending_ = GameDataStateStorage.fields_.game_more_preferences_;
-  RECT outer = {0x17, 0, PrefWinDisplayWidth + 0x17, PrefWinDisplayHeight};
-  RECT inner = {0x1B, 4, PrefWinDisplayWidth + 0x13, PrefWinDisplayHeight - 4};
-  RECT buttons = {PrefWinGeometryValue_857888, PrefWinGeometryValue_857884,
-      PrefWinButtonWidth + PrefWinGeometryValue_857888,
-      PrefWinGeometryValue_8578C0 + PrefWinGeometryValue_857884};
+  RECT outer;
+  set_rectangle_dimensions(&outer, 0x17, 0, PrefWinDisplayWidth, PrefWinDisplayHeight);
+  RECT inner;
+  set_rectangle_dimensions(&inner, 0x1B, 4, PrefWinDisplayWidth - 8, PrefWinDisplayHeight - 8);
+  RECT buttons;
+  set_rectangle_dimensions(&buttons, PrefWinGeometryValue_857888, PrefWinGeometryValue_857884,
+      PrefWinButtonWidth, PrefWinGeometryValue_8578C0);
   Buffer::box_sprite(&outer, &InterfaceBoxStyles[9]);
   Buffer::box_sprite(&inner, &InterfaceBoxStyles[9]);
   Buffer::box_sprite(&buttons, &InterfaceBoxStyles[18]);
@@ -794,7 +797,7 @@ void PrefWin::on_button_clicked(int button_id) {
       PrefWinGammaCorrection = static_cast<float>(
           gamma.exec(&g_PALETTE1, PrefWinGammaCorrection, 0));
       prefs_put("Gamma Correction",
-          static_cast<int>(PrefWinGammaCorrection * PrefWinGammaScale), 0);
+          static_cast<int>(PrefWinGammaScale * PrefWinGammaCorrection), 0);
       break;
     case 0x5E:
       if (field_A14_ == 2) {

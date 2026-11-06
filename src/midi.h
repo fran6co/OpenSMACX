@@ -116,12 +116,11 @@ class Midi : public Sound {
   virtual int unload_patch(unsigned int);                     // 73
   virtual int set_patch(unsigned int, unsigned int);          // 74
   int set_fname(const char *fname);
-  int set_mode(int mode);
+  int set_mode(uint8_t mode);
+  // 0x00447D20, defined in ambience.cpp (it sits in the ambience block).
+  // A thiscall member: the free __fastcall spelling scheduled `mov ecx`
+  // before the pushes. The exact receiver class may be narrower.
+  void advance_trackset_transposition();
  protected:
   uint8_t field_54_; // Original clears exactly one byte, leaving55..57 alone.
 };
-
-// Start the next available trackset through Midi's real trackset
-// interface. The original identity's dynamic receiver type and lifecycle
-// are not yet bound more narrowly than this Midi-compatible interface.
-void __fastcall advance_midi_trackset_transposition(Midi *midi);

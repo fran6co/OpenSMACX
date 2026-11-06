@@ -769,12 +769,7 @@ inline LPSTR __cdecl compass_name(int direction) {
 void __cdecl say_label(int label_offset);
 LPSTR __cdecl label_get(int label_offset);
 
-MEASURED inline uint32_t __cdecl default_warn() {
-    return WARN_STOP_RANDOM_EVENT | WARN_STOP_ENERGY_SHORTAGE | WARN_STOP_MINERAL_SHORTAGE
-        | WARN_STOP_STARVATION | WARN_STOP_BUILD_OUT_OF_DATE | WARN_STOP_UNK_100
-        | WARN_STOP_NUTRIENT_SHORTAGE | WARN_STOP_GOLDEN_AGE | WARN_STOP_DRONE_RIOTS
-        | WARN_STOP_NEW_FAC_BUILT; // 0x3C3A9
-}
+int __cdecl default_warn();
 
 void __cdecl labels_shutdown();
 

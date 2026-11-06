@@ -942,7 +942,7 @@ int __cdecl filefind_init(LPCSTR file_check, BOOL is_complete) {
     strcat(saved_dir, FilefindPath.exe_dir);
     strcat(FilefindPath.exe_dir, "\\");
 
-    char root_path[5];
+    char root_path[12];
     WIN32_FIND_DATAA find_file_data;
     HANDLE file_found;
     for (;;) {
@@ -957,7 +957,6 @@ int __cdecl filefind_init(LPCSTR file_check, BOOL is_complete) {
                 file_found = FindFirstFileA(FilefindPath.last_path, &find_file_data);
                 if (file_found != INVALID_HANDLE_VALUE) {
                     FindClose(file_found);
-                    FilefindPath.cd_path[0] = 0;
                     strcat(FilefindPath.cd_path, root_path);
                     SetCurrentDirectoryA(saved_dir);
                     delete popup;

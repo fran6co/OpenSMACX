@@ -26,6 +26,8 @@
 // can see - a cast-of-constant folds the address into the disp32 with no
 // relocation at all.
 #include "wave.h"
+#include "ambience.h"
+#include "general.h"
 
 #if defined(_MSC_VER) && _MSC_VER <= 1200
 // init's one-byte clear of the Midi-own byte at 0x54 is a REAL memset call
@@ -1137,8 +1139,8 @@ int Midi::set_attrib(unsigned long) { return 0x0B; }
 // Original4C7CC0: replace bit0 throughout the chained Midi objects.
 // ORIGINAL: 0x004C7CC0 sub_4c7cc0 0x004C7CC0-0x004C7CEA FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:f7bbce35:src/recovered/004c7cc0.cpp", "src/ambience.h", "src/midi.h"], "reason": "Original audio event tables and compiler-call contracts identify this genuine owner operation; compatible historical seeds and matching obligations remain retained, not an acceptance verdict."}
-// symbol    ?set_mode@Midi@@QAEHH@Z
-int Midi::set_mode(int mode) {
+// symbol    ?set_mode@Midi@@QAEHE@Z
+int Midi::set_mode(uint8_t mode) {
     field_54_ ^= (field_54_ ^ static_cast<uint8_t>(mode)) & 1;
     // The native body recurses on the object pointer stored at +0x3C; it does
     // not dispatch a Midi provider virtual. This cast preserves the same
@@ -1147,6 +1149,30 @@ int Midi::set_mode(int mode) {
     if (child) child->set_mode(mode);
     return 0;
 }
+
+// ORIGINAL: 0x004C8530 ?load@Ambience@@QAEHPBD@Z 0x004C8530-0x004C85EF FILE
+// RECOVERY_BINDING: v1 {"evidence": ["git:f7bbce35:src/unrecovered/004c8530.cpp", "src/ambience.h", "src/midi.h"], "reason": "Original audio event tables and compiler-call contracts identify this genuine owner operation; compatible historical seeds and matching obligations remain retained, not an acceptance verdict."}
+// Defined here, not in ambience.cpp: the image inlines set_mode (byte
+// parameter, stored in the dead filename slot) into this body.
+// symbol    ?load@Ambience@@UAEHPBD@Z
+#pragma optimize("y", off)
+int Ambience::load(const char *filename) {
+    char path[256];
+    strcpy(path, filename);
+    const char *const found = filefind_get(path);
+    if (!found) return 10;
+    if (device_) unload();
+    if (!device_) {
+        if (!WaveDeviceReleaseGuard) return 1;
+        const int error = SoundXOrdinal1CreateSound()(&device_, found, 5);
+        if (error) return error;
+    }
+    // The pinned mode5 factory returns the common Sound object whose shared
+    // constructor and 75-slot table match Midi; the child address is unchanged.
+    static_cast<Midi *>(device_)->set_mode(field_54_ & 1);
+    return Sound::load(found);
+}
+#pragma optimize("", on)
 
 // ORIGINAL: 0x004C7F70 sub_4c7f70 0x004C7F70-0x004C7F97 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:f7bbce35:src/recovered/004c7f70.cpp", "src/ambience.h", "src/midi.h"], "reason": "Original audio event tables and compiler-call contracts identify this genuine owner operation; compatible historical seeds and matching obligations remain retained, not an acceptance verdict."}
@@ -1196,23 +1222,3 @@ int Midi::sub_4c8020(int a1) {
 // RECOVERY_OBJECT: v1 0x00683C2C ?MidiTracksetTransposition@@3HA
 int MidiTracksetTransposition = -0x4B0;
 
-// ORIGINAL: 0x00447D20 sub_447d20 0x00447D20-0x00447DA5 FILE
-// RECOVERY_BINDING: v1 {"evidence": ["Pinned original 0x00447D20..0x00447DA5: virtual calls at offsets 0x118, 0x114 and 0x10C have the argument/return behavior restored by Midi::is_trackset_playing, Midi::xpose_trackset and Midi::play_trackset.", "Pinned original initializes 0x00683C2C to signed -0x4B0; only this function has an observed source writer/use. Source owns a signed int initialized to that value; full original allocation and indirect writers remain unknown.", "Historical settings-checkbox/repaint interpretation is retained as superseded binding history in stringstruct.cpp, not as current behavior."], "reason": "Recover the pinned trackset cascade through the existing Midi status, transpose and play virtual methods. The dynamic subclass, original helper/member distinction, call lifecycle and full allocation of the shared transposition cell remain unproven."}
-// symbol    ?advance_midi_trackset_transposition@@YIXPAVMidi@@@Z
-void __fastcall advance_midi_trackset_transposition(Midi *midi) {
-    if (!midi->is_trackset_playing(1)) {
-        if (!midi->is_trackset_playing(2)) {
-            if (MidiTracksetTransposition == 0) {
-                MidiTracksetTransposition = -0x4B0;
-            }
-            MidiTracksetTransposition = MidiTracksetTransposition + 0x12C;
-            midi->xpose_trackset(1, MidiTracksetTransposition);
-            midi->play_trackset(1);
-            return;
-        }
-    }
-    if (!midi->is_trackset_playing(2)) {
-        midi->xpose_trackset(2, MidiTracksetTransposition);
-        midi->play_trackset(2);
-    }
-}

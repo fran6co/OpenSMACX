@@ -287,7 +287,7 @@ HDC __cdecl sub_62d160();
 void __cdecl sub_62d1a0();
 int __cdecl sub_62d0f0();
 void __cdecl sub_62d1e0(RECT *rect);
-int __cdecl sub_62d2c0();
+void __cdecl sub_62d2c0();
 void *__fastcall sub_63bb20(void *this_ptr);
 
 // Source-owned original helper; identity and behavior evidence are in its TU.

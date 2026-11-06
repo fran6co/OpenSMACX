@@ -242,6 +242,27 @@ void BAmbience::hostility() {
     }
 }
 
+// ORIGINAL: 0x00447D20 sub_447d20 0x00447D20-0x00447DA5 FILE
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned original 0x00447D20..0x00447DA5: virtual calls at offsets 0x118, 0x114 and 0x10C have the argument/return behavior restored by Midi::is_trackset_playing, Midi::xpose_trackset and Midi::play_trackset.", "Pinned original initializes 0x00683C2C to signed -0x4B0; only this function has an observed source writer/use. Source owns a signed int initialized to that value; full original allocation and indirect writers remain unknown.", "Historical settings-checkbox/repaint interpretation is retained as superseded binding history in stringstruct.cpp, not as current behavior."], "reason": "Recover the pinned trackset cascade through the existing Midi status, transpose and play virtual methods. The dynamic subclass, original helper/member distinction, call lifecycle and full allocation of the shared transposition cell remain unproven."}
+// symbol    ?advance_trackset_transposition@Midi@@QAEXXZ
+void Midi::advance_trackset_transposition() {
+    if (!is_trackset_playing(1)) {
+        if (!is_trackset_playing(2)) {
+            if (MidiTracksetTransposition == 0) {
+                MidiTracksetTransposition = -0x4B0;
+            }
+            MidiTracksetTransposition = MidiTracksetTransposition + 0x12C;
+            xpose_trackset(1, MidiTracksetTransposition);
+            play_trackset(1);
+            return;
+        }
+    }
+    if (!is_trackset_playing(2)) {
+        xpose_trackset(2, MidiTracksetTransposition);
+        play_trackset(2);
+    }
+}
+
 // ORIGINAL: 0x00447DB0 ?begin@AAmbience@@QAEXXZ 0x00447DB0-0x00447DC6 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:f7bbce35:src/recovered/00447db0.cpp", "src/ambience.h", "src/midi.h"], "reason": "Original audio event tables and compiler-call contracts identify this genuine owner operation; compatible historical seeds and matching obligations remain retained, not an acceptance verdict."}
 // symbol    ?begin@AAmbience@@UAEXXZ
@@ -343,27 +364,6 @@ finish_phase:
         AAmbiencePhase = 1;
     }
     AAmbiencePass = 0;
-}
-
-// ORIGINAL: 0x004C8530 ?load@Ambience@@QAEHPBD@Z 0x004C8530-0x004C85EF FILE
-// RECOVERY_BINDING: v1 {"evidence": ["git:f7bbce35:src/unrecovered/004c8530.cpp", "src/ambience.h", "src/midi.h"], "reason": "Original audio event tables and compiler-call contracts identify this genuine owner operation; compatible historical seeds and matching obligations remain retained, not an acceptance verdict."}
-// TRIED: reused-parameter-slot byte/garbage-upper-bits trick for the sub_4c7cc0 arg (UB, not attempted); passed the plain flag bit instead. Ambience reinterpreted as Sound* for the trailing Sound::load call (single-inheritance-at-0 evidence: ecx=edi unchanged across the call). First divergence #3 mov/push.
-// symbol    ?load@Ambience@@UAEHPBD@Z
-int Ambience::load(const char *filename) {
-    char path[256];
-    strcpy(path, filename);
-    const char *const found = filefind_get(path);
-    if (!found) return 10;
-    if (device_) unload();
-    if (!device_) {
-        if (!WaveDeviceReleaseGuard) return 1;
-        const int error = SoundXOrdinal1CreateSound()(&device_, found, 5);
-        if (error) return error;
-    }
-    // The pinned mode5 factory returns the common Sound object whose shared
-    // constructor and 75-slot table match Midi; the child address is unchanged.
-    static_cast<Midi *>(device_)->set_mode(field_54_ & 1);
-    return Sound::load(found);
 }
 
 // ORIGINAL: 0x004C85F0 ?unload@Ambience@@QAEXXZ 0x004C85F0-0x004C861C FILE BYTE_EXACT

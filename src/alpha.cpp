@@ -1141,12 +1141,10 @@ BOOL __cdecl read_factions() {
     // that resets at 8 (`xor edi,edi` ... `inc edi; cmp edi,8; jl`; the
     // array walk is a separate pointer, so the loop index is
     // strength-reduced away). 0x00586F50 / 0x00586F73 are the two call
-    // sites that gives - but spelling that out regressed the body, so the
-    // recovery keeps the modulo form (see this marker's LEVER for the score).
-    for (uint32_t i = 0; i < MaxBonusNameNum; i++) {
-        if (!(i % 8)) { // 8 entries per line
-            text_get();
-        }
+    // sites that gives; the counter form below now matches that loop.
+    text_get();
+    int per_line = 0;
+    for (int i = 0; i < MaxBonusNameNum; i++) {
         // BUG IN THE ORIGINAL (preserved): `call 0x00645460` at 0x00586F63
         // pushes only the two arguments - plain unbounded `strcpy`, not a
         // 24-byte-bounded copy. Same for both `Players[player]` fields just
@@ -1158,8 +1156,13 @@ BOOL __cdecl read_factions() {
         // where the image makes a real call (same lever as prefs_put's
         // strcat, 0x0059E530).
         strcpy(BonusName[i].key, text_item());
+        if (++per_line >= 8) { // 8 entries per line
+            per_line = 0;
+            text_get();
+        }
     }
-    if (text_open(AlphaxFileID, ExpansionEnabled ? "NEWFACTIONS" : "FACTIONS")) {
+    if (ExpansionEnabled ? text_open(AlphaxFileID, "NEWFACTIONS")
+                         : text_open(AlphaxFileID, "FACTIONS")) {
         return true;
     }
     int player;
@@ -1243,8 +1246,8 @@ BOOL __cdecl read_factions() {
                 // by the reroll before the loop is re-entered). Peel and plain
                 // for measured back to back: 75/214 against 71/214.
                 text_get();
-                int j = faction_id;
-                if (j > 0) {
+                if (faction_id > 0) {
+                    int j = faction_id;
                     do {
                         text_get();
                     } while (--j != 0);
@@ -1261,7 +1264,7 @@ BOOL __cdecl read_factions() {
                     if (player != k) {
                         if (!strcmp(Players[player].filename, Players[k].filename)) {
                             faction_id = -1;
-                            break;
+                            k = MaxPlayerNum;  // not break: the image stores 8
                         }
                     }
                 }
@@ -1373,8 +1376,7 @@ BOOL __cdecl read_units() {
     int total_units = range(text_item_number(), 0, MaxVehProtoFactionNum);
     for (int proto_id = 0; proto_id < total_units; proto_id++) {
         text_get();
-        LPSTR name = text_item();
-        strcpy(VehPrototypes[proto_id].veh_name, name);
+        strcpy(VehPrototypes[proto_id].veh_name, text_item());
         int chas_id = chas_name(text_item());
         int weap_id = weap_name(text_item());
         int armor_id = arm_name(text_item());
@@ -1384,22 +1386,15 @@ BOOL __cdecl read_units() {
         VehPrototypes[proto_id].preq_tech = (int16_t)tech_name(text_item());
         int icon = text_item_number();
         int ability = text_item_binary();
-        int reactor_id;
-        switch (proto_id) {
-          case BSC_BATTLE_OGRE_MK1:
-            reactor_id = RECT_FISSION;
-            break;
-          case BSC_BATTLE_OGRE_MK2:
-            reactor_id = RECT_FUSION;
-            break;
-          case BSC_BATTLE_OGRE_MK3:
-            reactor_id = RECT_QUANTUM;
-            break;
-          default:
-            reactor_id = RECT_FISSION;
-            break;
+        if (proto_id == BSC_BATTLE_OGRE_MK1) {
+            make_proto(proto_id, chas_id, weap_id, armor_id, ability, RECT_FISSION);
+        } else if (proto_id == BSC_BATTLE_OGRE_MK2) {
+            make_proto(proto_id, chas_id, weap_id, armor_id, ability, RECT_FUSION);
+        } else if (proto_id == BSC_BATTLE_OGRE_MK3) {
+            make_proto(proto_id, chas_id, weap_id, armor_id, ability, RECT_QUANTUM);
+        } else {
+            make_proto(proto_id, chas_id, weap_id, armor_id, ability, RECT_FISSION);
         }
-        make_proto(proto_id, chas_id, weap_id, armor_id, ability, reactor_id);
         // If set, override auto calculated values from make_proto()
         if (plan >= 0) {
             VehPrototypes[proto_id].plan = (uint8_t)plan;
@@ -1935,8 +1930,7 @@ uint32_t __cdecl default_prefs2() {
 /*
 Purpose: Get the default value for the warning pop-up preferences.
 // ORIGINAL: 0x0059DB20 ?default_warn@@YAHXZ 0x0059DB20-0x0059DB26 BYTE_EXACT
-// body      src/alpha.h
-// symbol    ?default_warn@@YAIXZ
+// symbol    ?default_warn@@YAHXZ
 // size      6 bytes
 // prototype 
 // callers   1   call targets   0
@@ -1946,10 +1940,13 @@ Purpose: Get the default value for the warning pop-up preferences.
 Return Value: Default warning preferences
 Status: Complete
 */
-// BODY IN alpha.h, as `MEASURED inline`: the image writes it out at
-// some call sites and calls it at others, and a .cpp definition is only ever
-// one of those. The marker stays here because that is where the catalogue
-// reads it.
+int __cdecl default_warn() {
+    return WARN_STOP_RANDOM_EVENT | WARN_STOP_ENERGY_SHORTAGE | WARN_STOP_MINERAL_SHORTAGE
+        | WARN_STOP_STARVATION | WARN_STOP_BUILD_OUT_OF_DATE | WARN_STOP_UNK_100
+        | WARN_STOP_NUTRIENT_SHORTAGE | WARN_STOP_GOLDEN_AGE | WARN_STOP_DRONE_RIOTS
+        | WARN_STOP_NEW_FAC_BUILT; // 0x3C3A9
+}
+
 /*
 Purpose: Get the default value for the rule related preferences.
 // ORIGINAL: 0x0059DB30 ?default_rules@@YAHXZ 0x0059DB30-0x0059DB36 BYTE_EXACT
@@ -2294,7 +2291,8 @@ void __cdecl prefs_save(BOOL save_factions) {
         for (uint32_t i = 1; i < MaxPlayerNum; i++) {
             if (ExpansionEnabled) {
                 StringTemp[0] = 0;
-                strcat(StringTemp, "Faction ");
+                strcat(StringTemp, "Faction");
+                strcat(StringTemp, " ");
                 say_num(i);
                 prefs_put(StringTemp, Players[i].filename);
             }

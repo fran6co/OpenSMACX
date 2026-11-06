@@ -119,15 +119,10 @@ class DipEdit : public GraphicWin {
   void read_check();
   void do_check();  // 0x004DADA0, defined in src/dipedit.cpp
   DipEdit() { ; }
-  // EMPTY ON PURPOSE: the teardown IS the compiler's, from the member
-  // declarations below - five expanded ~FlatButtons, the CheckBox (dtor
-  // entered on its GraphicWin vbase at 0x15bc, then ??1Dialog/??1GraphicWin
-  // on its virtual bases), the ListBox (dtor entered on 0xa94, then its
-  // virtual bases), the Font, and the GraphicWin base - in that order,
-  // reverse of declaration, with the EH state stepped between each. Defined
-  // out-of-line in dipedit.cpp, beside its claim against
-  // ??1DipEdit@@QAE@XZ 0x004E2240.
-  ~DipEdit();
+  // NO USER DESTRUCTOR: ??1DipEdit (0x004E2240) is compiler-generated. The
+  // image has no vptr stores at its entry (a user-declared empty dtor emits
+  // both), and editor_diplomacy expands it inline. It is emitted where the
+  // object is built, in console_commands.cpp.
   void on_left_click(int, int);
   void on_redraw();
 

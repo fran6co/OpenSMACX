@@ -44,6 +44,9 @@ namespace {
 inline char *current_message_text(StringList &items) {
     return items.head_ != 0 ? items.current_->string_payload()->text : 0;
 }
+inline uint32_t current_message_height(StringList &items) {
+    return items.head_ != 0 ? items.current_->string_payload()->field_C_ : 0;
+}
 }
 
 // 0x007F67F8, declared in messagewin.h.
@@ -138,9 +141,7 @@ void MessageWin::on_selected(int code, int) {
 
 inline void MessageWin::remove_selected_message() {
     listBox_.item_list_.seek_pos(listBox_.selected_position_);
-    const uint32_t height = listBox_.item_list_.head_ != 0
-        ? listBox_.item_list_.current_->string_payload()->field_C_ : 0;
-    listBox_.field_20_ -= height;
+    listBox_.field_20_ -= current_message_height(listBox_.item_list_);
 
     StringList &items = listBox_.item_list_;
     if (items.head_ != 0) {

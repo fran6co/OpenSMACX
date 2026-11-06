@@ -1003,10 +1003,8 @@ Purpose: Open the diplomacy editor. A modal list popup asks which faction to
 //   ~DipEdit member by member - both ~FlatButton expansions first, then
 //   out-of-line ??1FlatButton for the remaining three, then the CheckBox,
 //   ListBox, Font and GraphicWin teardowns, ~40 instructions - while the
-//   success exit makes a single `call ??1DipEdit`. ~DipEdit is defined in
-//   dipedit.cpp, not visible here, so our compiler emits one call and MERGES
-//   the two exits into a shared tail. Both are the image's inliner choosing
-//   a different depth per site; no source form reaches it.
+//   success exit makes a single `call ??1DipEdit`. ~DipEdit is now the
+//   implicit one, visible here (it was out of line in dipedit.cpp).
 // TRIED: the frame slots. The image puts the popup BELOW the DipEdit
 //   (popup at ebp-0xacd0, edit at ebp-0x5954); ours lays them the other way
 //   round. Measured twice on 20-line repros: this compiler gives the
@@ -5827,3 +5825,80 @@ void Console::editor_kill_vehicles() {
     stack_kill(veh_at(ConsoleGlobal.cursor_history_x_[index],
                       ConsoleGlobal.cursor_history_y_[index]));
 }
+
+/*
+// ORIGINAL: 0x004E2240 ??1DipEdit@@QAE@XZ 0x004E2240-0x004E23BA;0x0065C570-0x0065C60C
+// body      src/dipedit.h
+// symbol    ??1DipEdit@@UAE@XZ
+//   the catalogue spells the plain dtor `QAE`; this compiler emits it
+//   `UAE` (virtual through virtual ~AutoSound), as for ??1FlatButton,
+//   whose image body is likewise Q-catalogued and U-emitted.
+// size      378 bytes
+// prototype void (__thiscall ??1DipEdit@@QAE@XZ)(DipEdit* this)
+// callers   2   call targets   7
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x005D4DD0 0x00607040 0x00607DA0 0x00608E10 0x00609EC0 0x0060E740 0x00618EE0
+Return Value: n/a
+
+Compiler-generated (DipEdit declares no destructor; a user-declared empty
+one adds two vptr stores the image lacks). Emitted here because
+editor_diplomacy above builds the object; the image block 0x004D9DC0..
+0x004E23FB suggests dipedit and these editor commands shared one TU.
+Every byte of 0x004E2240 is generated from the member declarations: five
+expanded ~FlatButtons (0x4DF8 down to 0x20C8, each the 0x669754/0x66974c
+stage pair plus `call ?close@FlatButton` plus `call ??1BaseButton`), the
+CheckBox member (??1CheckBox entered on its GraphicWin vbase at 0x15bc,
+then ??1Dialog at 0x1fd4 and ??1GraphicWin at 0x15bc - its virtual bases),
+the ListBox member (??1ListBox entered on 0xa94, ??1Dialog at 0x14ac,
+??1GraphicWin at 0xa94), the Font member, and the GraphicWin base. The
+EH states in the image's frame (0x8/0x7, 0x9/0x6, 0xa/0x5, 0xb/0x4, 0xc/0x3,
+0x2, 0x1, 0x0, -1) step through those same teardowns in that same order.
+
+The image has no standalone ??0DipEdit to pair with it: the constructor is
+fully inlined into its only caller (sub_4DB870, 0x004DB870), which builds a
+stack DipEdit, calls ?init@DipEdit@@QAEXH@Z on it, and destroys it with the
+??1DipEdit recovered here.
+*/
+
+/*
+Purpose: The compiler-generated scalar deleting destructor at
+         ??_GDipEdit@@UAEPAXI@Z: run the complete destructor, then release
+         the storage through the executable's operator delete only when bit 0
+         of the flags asks. COMPILER-EMITTED from the implicit ~DipEdit;
+         the former hand shim `scalar_delete_dip_edit` was retired when the
+         compiler-generated entry became source-owned, the same move
+         the adjustor above made.
+// ORIGINAL: 0x004E23C0 ??_GDipEdit@@UAEPAXI@Z 0x004E23C0-0x004E23E1 BYTE_EXACT
+// symbol    ??_GDipEdit@@UAEPAXI@Z
+// size      33 bytes
+// prototype void* (__thiscall ??_GDipEdit@@UAEPAXI@Z)(DipEdit* this, unsigned int)
+// callers   0   call targets   2
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x004E2240 0x0064557F
+Return Value: the object pointer
+Status: Complete
+*/
+
+/*
+Purpose: Step the receiver back to the subobject ??_GDipEdit@@UAEPAXI@Z
+         expects, then forward unchanged. COMPILER-EMITTED from the implicit
+         ~DipEdit (the forwarder era emitted it from
+         pending_bodies.cpp; the marker moved with the emission).
+// ORIGINAL: 0x004E23F0 ??_GDipEdit@@WEEE@AEPAXI@Z 0x004E23F0-0x004E23FB BYTE_EXACT
+// symbol    ??_EDipEdit@@WEEE@AEPAXI@Z
+// CORRECTED from ??3DipEdit@@SAXPAXI@Z
+//   11 bytes, `sub ecx, 0x444; jmp 0x004E23C0` into
+//   ??_GDipEdit@@UAEPAXI@Z, which executes `ret 4`; no stack access and
+//   the receiver stays in ECX. `WEEE@` re-demangles to adjustor{1092}
+//   and 1092 == 0x444, the constant subtracted
+// size      11 bytes
+// prototype 
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+Return Value: the forwarded call's
+Status: Complete
+*/

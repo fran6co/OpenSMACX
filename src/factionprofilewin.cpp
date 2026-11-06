@@ -47,9 +47,9 @@ void FactionProfileWin::initialize(int faction_id, int profile_mode) {
 
 // ORIGINAL: 0x00589560 sub_589560 0x00589560-0x00589748
 // RECOVERY_BINDING: v1 {"evidence": ["image:0x00589560-0x00589748 reads receiver fields and Popup at +0xA3C, builds the faction profile content and finishes through the update slot", "source:src/faction.h Player formal_name_faction is +0x384; source:src/game.cpp owns InterfaceBoxStyles[51], populated by load_box_sprites; 0x78D690 is entry 9 at 0x28 stride"], "reason": "Carry the complete seed identity and body span into the typed show_profile member, preserving fresh owner-field reads across callback-capable Popup and SpriteBox operations. The class role is provisional and does not claim original identity or allocation registration."}
-// symbol    ?show_profile@FactionProfileWin@@QAEHXZ
+// symbol    ?show_profile@FactionProfileWin@@QAEXXZ
 #pragma optimize("y", off)
-int FactionProfileWin::show_profile() {
+void FactionProfileWin::show_profile() {
   RECT local_bounds = clip_rect();
   box_sprite(&local_bounds, &InterfaceBoxStyles[9]);
 
@@ -90,7 +90,5 @@ int FactionProfileWin::show_profile() {
   popup_.exec(0, 0);
 
   on_update();
-  // The image returns no value (void): header change pending.
-  return 0;
 }
 #pragma optimize("", on)

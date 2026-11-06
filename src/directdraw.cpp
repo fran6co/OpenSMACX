@@ -367,29 +367,28 @@ void __cdecl sub_62d1e0(RECT *clip_rect) {
 }
 
 // ORIGINAL: 0x0062D2C0 sub_62d2c0 0x0062D2C0-0x0062D38E
-// symbol    ?sub_62d2c0@@YAHXZ
+// symbol    ?sub_62d2c0@@YAXXZ
 // TRIED: homed into general.cpp (its real TU) 2026-09-03 and reverted for one reason:
 // TRIED: IntersectRect/EqualRect are called through the fixed IAT-style slots (0x669338/0x6692bc) with `this` pushed as an explicit stdcall arg, not via C++ virtual dispatch - modelled with raw `PFN_*` casts. Every early-out in the original shares ONE epilogue (add esp,0x40; ret); separate `if (x) return 0;` statements each get their own inline return instead of jumping to a shared tail, which is most of the 0.82 mnemonic-similarity gap.
 // kind game
-int __cdecl sub_62d2c0() {
-    if (DirectDrawBackBuffer == 0) {
-        return 0;
-    }
+void __cdecl sub_62d2c0() {
+    RECT *const clip = &DirectDrawClipRect;  // image keeps a dead null test
     RECT intersection;
-    if (!IntersectRect(&intersection, &DirectDrawClipRect, &DirectDrawClipRect)) {
-        return 0;
+    if (DirectDrawBackBuffer != 0 && clip != 0 &&
+        IntersectRect(&intersection, clip, clip)) {
+        if (EqualRect(clip, &intersection)) {
+            DirectDrawBackBuffer->SetClipper(0);
+            return;
+        }
+        DirectDrawClipRegion region;
+        region.header.dwSize = 0x20;
+        region.header.iType = 1;
+        region.header.nCount = 1;
+        region.header.nRgnSize = 0x10;
+        region.header.rcBound = intersection;
+        region.rectangle = intersection;
+        DirectDrawClipper->SetClipList(reinterpret_cast<RGNDATA *>(&region), 0);
+        DirectDrawBackBuffer->SetClipper(DirectDrawClipper);
     }
-    if (EqualRect(&DirectDrawClipRect, &intersection)) {
-        return DirectDrawBackBuffer->SetClipper(0);
-    }
-    DirectDrawClipRegion region;
-    region.header.dwSize = 0x20;
-    region.header.iType = 1;
-    region.header.nCount = 1;
-    region.header.nRgnSize = 0x10;
-    region.header.rcBound = intersection;
-    region.rectangle = intersection;
-    DirectDrawClipper->SetClipList(reinterpret_cast<RGNDATA *>(&region), 0);
-    return DirectDrawBackBuffer->SetClipper(DirectDrawClipper);
 }
 
