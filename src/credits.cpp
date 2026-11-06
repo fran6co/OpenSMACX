@@ -384,10 +384,13 @@ Purpose: Start the credit roll: construct the 0x2D6C Credits object, run
 Status: Typed Credits construction, execution and deleting-destructor
         dispatch. The owned lifecycle bodies still require restoration.
 */
+// The image keeps an ebp frame around this EH-scoped new/exec/delete.
+#pragma optimize("y", off)
 void __cdecl show_credits() {
     Credits *credits = new Credits();
     credits->exec();
     delete credits;
 }
+#pragma optimize("", on)
 // RECOVERY_GENERATED: v1 vtable 0x0066AC58 ? ??_7Credits@@6BWin@@@ 0x00428E90
 // RECOVERY_GENERATED: v1 vtable 0x0066AC50 ? ??_7Credits@@6BBuffer@@@ 0x00428E90
