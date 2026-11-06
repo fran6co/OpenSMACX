@@ -2221,8 +2221,8 @@ void BaseWin::prev() {
         return;
     }
 
-    int selected = static_cast<int>(focusedBaseID_);
     int nearest = -1;
+    int selected = static_cast<int>(focusedBaseID_);
     for (int candidate = 0; candidate < GameDataStateStorage.fields_.base_current_count_; ++candidate) {
         if (candidate != static_cast<int>(focusedBaseID_)
             && Bases[candidate].faction_id_current == Bases[focusedBaseID_].faction_id_current) {
@@ -2254,8 +2254,8 @@ void BaseWin::next() {
         return;
     }
 
-    int selected = static_cast<int>(focusedBaseID_);
     int nearest = -1;
+    int selected = static_cast<int>(focusedBaseID_);
     for (int candidate = 0; candidate < GameDataStateStorage.fields_.base_current_count_; ++candidate) {
         if (candidate != static_cast<int>(focusedBaseID_)
             && Bases[candidate].faction_id_current == Bases[focusedBaseID_].faction_id_current) {
@@ -2768,9 +2768,8 @@ void BaseWin::add_queue(int production_id, int insert) {
     }
 
     if (insert != 0) {
-        const int count = BaseCurrent->queue_size;
+        selected_queue_slot_ = BaseCurrent->queue_size + 1;
         field_40B30_ = 0;
-        selected_queue_slot_ = count + 1;
     }
 
     for (int visited = 0, slot = 0; visited < BaseCurrent->queue_size + 1; ++visited, ++slot) {

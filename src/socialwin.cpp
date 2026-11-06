@@ -274,7 +274,7 @@ void SocialWin::on_iface_right_click(int x, int y) {
     if (in_box(click_x, click_y, &tooltipEconomy_)) {
         x = click_y;
         y = click_x;
-        char *text = label_get(841);
+        char *text = StringTable.get(Labels.strings_ptr[841]);
         MainInterfaceGlobal.client_to_screen(&y, &x);
         RECT rectangle = {y, x, y, x};
         MainInterfaceGlobal.Win::set_bubble_text(text, &rectangle);
@@ -283,7 +283,7 @@ void SocialWin::on_iface_right_click(int x, int y) {
     if (in_box(click_x, click_y, &tooltipLabs_)) {
         x = click_y;
         y = click_x;
-        char *text = label_get(842);
+        char *text = StringTable.get(Labels.strings_ptr[842]);
         MainInterfaceGlobal.client_to_screen(&y, &x);
         RECT rectangle = {y, x, y, x};
         MainInterfaceGlobal.Win::set_bubble_text(text, &rectangle);
@@ -292,7 +292,7 @@ void SocialWin::on_iface_right_click(int x, int y) {
     if (in_box(click_x, click_y, &tooltipPsych_)) {
         x = click_y;
         y = click_x;
-        char *text = label_get(843);
+        char *text = StringTable.get(Labels.strings_ptr[843]);
         MainInterfaceGlobal.client_to_screen(&y, &x);
         RECT rectangle = {y, x, y, x};
         MainInterfaceGlobal.Win::set_bubble_text(text, &rectangle);
@@ -301,7 +301,7 @@ void SocialWin::on_iface_right_click(int x, int y) {
     if (in_box(click_x, click_y, &tooltipEffects_)) {
         x = click_y;
         y = click_x;
-        char *text = label_get(839);
+        char *text = StringTable.get(Labels.strings_ptr[839]);
         MainInterfaceGlobal.client_to_screen(&y, &x);
         RECT rectangle = {y, x, y, x};
         MainInterfaceGlobal.Win::set_bubble_text(text, &rectangle);
@@ -323,12 +323,12 @@ void SocialWin::on_right_click(int x, int y) {
     RECT *category = categoryHeaders_;
     for (int i = 0; i < 4; ++i, ++category) {
         if (in_box(x, y, category)) {
-            bubble_me_elmo2(label_get(828), x, y);
+            bubble_me_elmo2(StringTable.get(Labels.strings_ptr[828]), x, y);
             return;
         }
     }
     if (in_box(x, y, &tooltipFactionPower_)) {
-        bubble_me_elmo2(label_get(840), x, y);
+        bubble_me_elmo2(StringTable.get(Labels.strings_ptr[840]), x, y);
     }
 }
 
@@ -1257,9 +1257,8 @@ void SocialWin::allocate_energy(int a1, int a2) {
     pendingAlloc_[a1] = static_cast<uint32_t>(a2);
 
     while (static_cast<int32_t>(pendingAlloc_[2] + pendingAlloc_[0] + pendingAlloc_[1]) < 10) {
-        int idx = a1 + 1;
-        for (int attempts = 0; attempts < 3; ++attempts, ++idx) {
-            int candidate = idx % 3;
+        for (int attempts = 0; attempts < 3; ++attempts) {
+            int candidate = (a1 + attempts + 1) % 3;
             if (a1 == candidate ||
                 (energyLockButtons_[candidate].checked_ == 0 &&
                  static_cast<int32_t>(pendingAlloc_[candidate]) < limit)) {
@@ -1270,9 +1269,8 @@ void SocialWin::allocate_energy(int a1, int a2) {
     }
 
     while (static_cast<int32_t>(pendingAlloc_[2] + pendingAlloc_[0] + pendingAlloc_[1]) > 10) {
-        int idx = a1 + 1;
-        for (int attempts = 0; attempts < 3; ++attempts, ++idx) {
-            int candidate = idx % 3;
+        for (int attempts = 0; attempts < 3; ++attempts) {
+            int candidate = (a1 + attempts + 1) % 3;
             if (a1 == candidate ||
                 (energyLockButtons_[candidate].checked_ == 0 &&
                  pendingAlloc_[candidate] != 0)) {

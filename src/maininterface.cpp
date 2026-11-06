@@ -223,7 +223,7 @@ void MainInterface::redraw_complete() {
     RECT button_rect;
     MainInterfaceGlobal.set_text_color(0x65, -1, 1, 1);
     text[0] = 0;
-    strcat(text, label_get(0x68 / 4));
+    strcat(text, StringTable.get(Labels.strings_ptr[0x68 / 4]));
     CharUpperA(text);
     spot_.get_rect(5, 0, &button_rect);
     MainInterfaceGlobal.set_font(&font1_, 0, 0, 0);
@@ -239,19 +239,16 @@ void MainInterface::redraw_complete() {
         flic2_.decode_stored_frame();
         MainInterfaceEndTurnAnimation = 0;
     }
-    LPSTR label;
     if (IsMultiplayerNet && (GameDataStateStorage.fields_.game_state_ & 2)
         && !(GameDataStateStorage.fields_.net_turn_flags_ & 0x10)
         && NetDaemonNet.primary_state_.trailing_words_[6] != 0xFF
         && (NetDaemonNet.primary_state_.trailing_words_[6] & (1u << ConsoleGlobal.faction_id_))) {
         text[0] = 0;
-        label = Labels.strings_ptr[0x3FC / 4];
+        strcat(text, StringTable.get(Labels.strings_ptr[0x3FC / 4]));
     } else {
         text[0] = 0;
-        label = Labels.strings_ptr[0x68 / 4];
+        strcat(text, StringTable.get(Labels.strings_ptr[0x68 / 4]));
     }
-    // RESIDUAL: the image holds the label in ECX and Labels in EAX here.
-    strcat(text, StringTable.get(label));
     ++MainInterfaceRedrawCount;
     CharUpperA(text);
     MainInterfaceGlobal.set_text_color(0x65, -1, 1, 1);
@@ -1276,6 +1273,19 @@ void MainInterface::chat(char *text, int channel) {
 // RECOVERY_OBJECT: v2 0x007D3930 0x007D3934 ?MainInterfaceTileFlag@@3HA 0x0045C290
 int MainInterfaceTileFlag;
 
+// The four frame strips share one inset tile helper; the lower strip
+// widens one pixel back to the left.
+static inline void restore_back_strip(RECT *rect, int widen) {
+    RECT r = *rect;
+    ++r.left;
+    --r.right;
+    ++r.top;
+    --r.bottom;
+    r.left -= widen;
+    MainInterfaceGlobal.Buffer::tile(InterfaceBoxStyles[9].mask_, r.left, r.top, r.left, r.top,
+                                     r.right - r.left, r.bottom - r.top);
+}
+
 // ORIGINAL: 0x0045C290 ?restore_back@MainInterface@@QAEXH@Z 0x0045C290-0x0045C393 FILE
 // RECOVERY_BINDING: v1 {"reason":"The receiver owns the six frame RECTs; drawing uses the separate process-global MainInterfaceGlobal Buffer, not the receiver's Buffer.","evidence":["pinned:0x0045C290 reads receiver+D80/D90/DA0/DB0/DC0/DD0","src/maininterface.h:rect4_,right_frame_rect_,info_panel_frame_,lower_frame_rect_,rect1_,lower_animation_bounds_","src/maininterface.h:MainInterfaceGlobal;src/buffer.h:restore_clip uses rect2_; global+444 is Buffer and global+474 is rect2_"]}
 // size      259 bytes
@@ -1285,52 +1295,19 @@ int MainInterfaceTileFlag;
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     0x005D8000 0x005DA860
 
+// Kept out of line: the image calls it from on_redraw.
+#pragma auto_inline(off)
 void MainInterface::restore_back(int a1) {
-    Buffer &canvas = MainInterfaceGlobal;
     if (a1 != 0) {
-        canvas.restore_clip();
+        MainInterfaceGlobal.Buffer::restore_clip();
     }
-
-    {
-        RECT &r = rect4_;
-        int x = static_cast<int32_t>(static_cast<uint32_t>(r.left) + 1u);
-        int y = static_cast<int32_t>(static_cast<uint32_t>(r.top) + 1u);
-        int w = static_cast<int32_t>(static_cast<uint32_t>(r.right) - 1u - static_cast<uint32_t>(x));
-        int h = static_cast<int32_t>(static_cast<uint32_t>(r.bottom) - 1u - static_cast<uint32_t>(y));
-        canvas.tile(InterfaceBoxStyles[9].mask_, x, y, x, y, w, h);
-    }
-
-    {
-        RECT &r = MainInterfaceTileFlag != 0
-            ? lower_animation_bounds_
-            : lower_frame_rect_;
-        int x = r.left;
-        int y = static_cast<int32_t>(static_cast<uint32_t>(r.top) + 1u);
-        int w = static_cast<int32_t>(static_cast<uint32_t>(r.right) - 1u - static_cast<uint32_t>(x));
-        int h = static_cast<int32_t>(static_cast<uint32_t>(r.bottom) - 1u - static_cast<uint32_t>(y));
-        canvas.tile(InterfaceBoxStyles[9].mask_, x, y, x, y, w, h);
-    }
-
-    {
-        RECT &r = MainInterfaceTileFlag != 0
-            ? rect1_
-            : info_panel_frame_;
-        int x = static_cast<int32_t>(static_cast<uint32_t>(r.left) + 1u);
-        int y = static_cast<int32_t>(static_cast<uint32_t>(r.top) + 1u);
-        int w = static_cast<int32_t>(static_cast<uint32_t>(r.right) - 1u - static_cast<uint32_t>(x));
-        int h = static_cast<int32_t>(static_cast<uint32_t>(r.bottom) - 1u - static_cast<uint32_t>(y));
-        canvas.tile(InterfaceBoxStyles[9].mask_, x, y, x, y, w, h);
-    }
-
-    {
-        RECT &r = right_frame_rect_;
-        int x = static_cast<int32_t>(static_cast<uint32_t>(r.left) + 1u);
-        int y = static_cast<int32_t>(static_cast<uint32_t>(r.top) + 1u);
-        int w = static_cast<int32_t>(static_cast<uint32_t>(r.right) - 1u - static_cast<uint32_t>(x));
-        int h = static_cast<int32_t>(static_cast<uint32_t>(r.bottom) - 1u - static_cast<uint32_t>(y));
-        canvas.tile(InterfaceBoxStyles[9].mask_, x, y, x, y, w, h);
-    }
+    restore_back_strip(&rect4_, 0);
+    restore_back_strip(MainInterfaceTileFlag != 0 ? &lower_animation_bounds_
+                                                  : &lower_frame_rect_, 1);
+    restore_back_strip(MainInterfaceTileFlag != 0 ? &rect1_ : &info_panel_frame_, 0);
+    restore_back_strip(&right_frame_rect_, 0);
 }
+#pragma auto_inline(on)
 
 
 /*
