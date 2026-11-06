@@ -3093,7 +3093,7 @@ int edge_int(uint32_t bits) {
 
 /*
 Purpose: Fill one horizontal run of pixels, clipped to the buffer's rectangle.
-// ORIGINAL: 0x005E1A80 ?hline@Buffer@@QAEXHHHH@Z 0x005E1A80-0x005E1BF0
+// ORIGINAL: 0x005E1A80 ?hline@Buffer@@QAEXHHHH@Z 0x005E1A80-0x005E1BF0 BYTE_EXACT
 // LEVER: the image's dead second null test survives when the address is a
 // ternary on the acquire result; a plain sum folds it into the add's flags.
 // size      368 bytes
@@ -5730,7 +5730,7 @@ int Buffer::wrap_height_flying_flush() {
     return BufferFlyingY;
 }
 
-// ORIGINAL: 0x005DDDE0 ?wrap_height_flying@Buffer@@QAEHPAD@Z 0x005DDDE0-0x005DDEEA
+// ORIGINAL: 0x005DDDE0 ?wrap_height_flying@Buffer@@QAEHPAD@Z 0x005DDDE0-0x005DDEEA BYTE_EXACT
 // Early returns (not nested ifs) and a `while (text)` loop: VC6 folds its
 // redundant test into the back-edge jmp, and pushes edi in the prologue.
 // size      266 bytes
@@ -5861,7 +5861,7 @@ int Buffer::wrap_flying_flush() {
     return BufferFlyingY;
 }
 
-// ORIGINAL: 0x005DDFB0 ?wrap_flying@Buffer@@QAEHPAD@Z 0x005DDFB0-0x005DE1C8 FILE
+// ORIGINAL: 0x005DDFB0 ?wrap_flying@Buffer@@QAEHPAD@Z 0x005DDFB0-0x005DE1C8 FILE BYTE_EXACT
 // The image inlines text_width(LPSTR) and write_multi_font_raw; strlen is
 // evaluated before the available width, as in the bytes.
 // working copy - scaffold materialised by --work
@@ -6434,7 +6434,7 @@ int Buffer::wrap(Font *font_override, char *text, RECT *area) {
     return result;
 }
 
-// ORIGINAL: 0x005DDDA0 ?wrap_height_flying@Buffer@@QAEHPADH@Z 0x005DDDA0-0x005DDDD2 FILE
+// ORIGINAL: 0x005DDDA0 ?wrap_height_flying@Buffer@@QAEHPADH@Z 0x005DDDA0-0x005DDDD2 FILE BYTE_EXACT
 // size      50 bytes
 // prototype int (__thiscall ?wrap_height_flying@Buffer@@QAEHPADH@Z)(Buffer* this, int8*, int)
 // callers   2   call targets   1
