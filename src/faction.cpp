@@ -1735,7 +1735,7 @@ BOOL __cdecl wants_to_attack(int faction_id, int faction_id_tgt, int faction_id_
     int region_target_hq = -1;
     int region_hq = -1;
     for (int player = 0; player < GameDataStateStorage.fields_.base_current_count_; player++) {
-        if (has_fac_built(FAC_HEADQUARTERS, player)) {
+        if (has_fac(FAC_HEADQUARTERS, player, 0)) {
             uint32_t base_faction = Bases[player].faction_id_current;
             if (base_faction == faction_id) {
                 region_hq = region_at(Bases[player].x, Bases[player].y);
@@ -6764,7 +6764,7 @@ psych_rebalance_done:
                     base_value = diplo_add(base_value, Bases[base_id3].unk_10);
                     for (int facility_id = 0; facility_id < 0x46; ++facility_id) {
                         if (facility_id < 0x41
-                            && has_fac_built(facility_id, base_id3))
+                            && has_fac(facility_id, base_id3, 0))
                             base_value = diplo_sub(
                                 base_value, fac_maint(facility_id, faction_id));
                     }
@@ -6921,16 +6921,6 @@ void __cdecl comm_check(int faction_id, int faction_id_with) {
     communicate(faction_id, faction_id_with, 0);
 }
 
-// has_project with an if/return body: the image materializes the compare
-// (sete/test) where base.h's ternary form folds it. Pending header review.
-static inline BOOL faction_has_project(int project_id, int faction_id) {
-    int base_id = base_project(project_id);
-    if (base_id < 0) {
-        return false;
-    }
-    return Bases[base_id].faction_id_current == faction_id;
-}
-
 // ORIGINAL: 0x0055C840 ?enemies_war@@YAXHH@Z 0x0055C840-0x0055CC9A
 // RECOVERY_BINDING: v1 {"evidence": ["original:0x0055C840:complete-mapped-spans", "git:13693539:src/recovered/units/0055c840.cpp", "source:src/faction.h:PlayersData-and-diplomacy-interfaces"], "reason": "Use genuine player treaty rows, local console, owned NetMsg and parser state for war declarations. The observed protected-notice bit is 0x1000, not 0x100000; preserve the original treaty and agenda calls and notice ordering."}
 void __cdecl enemies_war(int faction_id, int faction_id_with) {
@@ -6966,11 +6956,11 @@ void __cdecl enemies_war(int faction_id, int faction_id_with) {
         NetMsgPrimary.pop(DiploLabelPACTATTACKS, 5000, 0, nullptr);
     } else {
         if (has_treaty(local_faction_id, faction_id, DTREATY_HAVE_INFILTRATOR) ||
-            faction_has_project(SP_EMPATH_GUILD, local_faction_id) ||
+            has_project(SP_EMPATH_GUILD, local_faction_id) ||
             (local_faction_id == GameDataStateStorage.fields_.governor_faction_ &&
              !(Players[faction_id].rule_flags & RFLAG_ALIEN)) ||
             has_treaty(local_faction_id, faction_id_with, DTREATY_HAVE_INFILTRATOR) ||
-            faction_has_project(SP_EMPATH_GUILD, local_faction_id) ||
+            has_project(SP_EMPATH_GUILD, local_faction_id) ||
             (local_faction_id == GameDataStateStorage.fields_.governor_faction_ &&
              !(Players[faction_id_with].rule_flags & RFLAG_ALIEN)) ||
             (GameDataStateStorage.fields_.game_state_ & 0x80)) {
@@ -7046,11 +7036,11 @@ void __cdecl enemies_unpact(int faction_id, int faction_id_with) {
 
     const int current_faction_id = ConsoleGlobal.faction_id_;
     if (has_treaty(current_faction_id, faction_id, DTREATY_HAVE_INFILTRATOR) ||
-        faction_has_project(SP_EMPATH_GUILD, current_faction_id) ||
+        has_project(SP_EMPATH_GUILD, current_faction_id) ||
         (current_faction_id == GameDataStateStorage.fields_.governor_faction_ &&
          !(Players[faction_id].rule_flags & RFLAG_ALIEN)) ||
         has_treaty(current_faction_id, faction_id_with, DTREATY_HAVE_INFILTRATOR) ||
-        faction_has_project(SP_EMPATH_GUILD, current_faction_id) ||
+        has_project(SP_EMPATH_GUILD, current_faction_id) ||
         (current_faction_id == GameDataStateStorage.fields_.governor_faction_ &&
          !(Players[faction_id_with].rule_flags & RFLAG_ALIEN)) ||
         (GameDataStateStorage.fields_.game_state_ & 0x80)) {

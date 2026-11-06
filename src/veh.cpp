@@ -201,16 +201,6 @@ static inline int veh_vector_dist(int x_distance, int y_distance) {
     return largest - ((((y_distance + x_distance) >> 1) - smallest + 1) >> 1);
 }
 
-// has_project with an if/return body: the image materializes the compare
-// (sete/test) where base.h's ternary form folds it. Pending header review.
-static inline BOOL veh_has_project(int project_id, int faction_id) {
-    int base_id = base_project(project_id);
-    if (base_id < 0) {
-        return false;
-    }
-    return Bases[base_id].faction_id_current == faction_id;
-}
-
 // ORIGINAL: 0x0057E040 ?name_proto@@YAXPADHHHHHHH@Z 0x0057E040-0x0057EF95
 // RECOVERY_BINDING: v1 {"evidence": ["git:2f89503ec251ffc8b9ff894998c01944c173a4fb:src/unrecovered/0057e040.cpp;image:0x0057E040-0x0057EF95", "pinned image:0x0057EE10 or esi,-1;0x0057EE13 test edi,edi;0x0057EE1B..0x0057EE35 builds VehPrototypes[-1].veh_name and calls strcmp", "pinned image:0x0057EF67..0x0057EF71 resets ESI after a matched alternate suffix and increments/restarts at zero", "Owned accidental storage:Ability base0x009AB538,stride0x1C,abbreviation+8 =>0x009AB834 = VehPrototypes base0x009AB868-0x34;source:src/veh.h RulesAbility;source:src/alpha.cpp ability loader", "git:2f89503ec251ffc8b9ff894998c01944c173a4fb:src/unrecovered/0057e040.cpp"], "reason": "Complete the original duplicate-name candidate loop, including its unconditional primary-collision restart before the differing-form alternate compare and its alternate-collision restart. The -1 candidate name view points to the source-owned object representation of Ability[27].abbreviation, preserving the native pointer-field-byte comparison instead of resolving the pointed-to rule string. The original unbounded strcmp read extent beyond that member remains unresolved; preserve its unsafe read/overflow behavior as an obligation. Full span and prior source/history remain intact; no byte-exact or runtime acceptance is claimed."}
 
@@ -2083,7 +2073,7 @@ void __cdecl say_morale(LPSTR morale_output, int veh_id, int faction_id_vs_nativ
         VehMoraleModifierCount = 0;
         int base_id = base_at(Vehs[veh_id].x, Vehs[veh_id].y);
         if (base_id >= 0 && morale < 6) {
-            if (has_fac_built(FAC_CHILDREN_CRECHE, base_id)) {
+            if (has_fac(FAC_CHILDREN_CRECHE, base_id, 0)) {
                 VehMoraleModifierCount++;
                 int morale_active = range(PlayersData[faction_id].soc_effect_active.values_[SocialEffect::MORALE], -4, 4);
                 if (morale_active <= -2) {
@@ -2100,11 +2090,11 @@ void __cdecl say_morale(LPSTR morale_output, int veh_id, int faction_id_vs_nativ
                         morale_active++;
                     } while (morale_active < 0);
                 }
-                if(has_fac_built(FAC_BROOD_PIT, base_id) && proto_id < MaxVehProtoFactionNum
+                if(has_fac(FAC_BROOD_PIT, base_id, 0) && proto_id < MaxVehProtoFactionNum
                     && (get_proto_offense_rating(proto_id) < 0 || proto_id == BSC_SPORE_LAUNCHER)) {
                     VehMoraleModifierCount++;
                 }
-            } else if (morale < 6 && has_fac_built(FAC_BROOD_PIT, base_id)
+            } else if (morale < 6 && has_fac(FAC_BROOD_PIT, base_id, 0)
                 && proto_id < MaxVehProtoFactionNum
                 && (get_proto_offense_rating(proto_id) < 0 || proto_id == BSC_SPORE_LAUNCHER)) {
                 VehMoraleModifierCount++;
@@ -3128,7 +3118,7 @@ int __cdecl defense_value(int faction_id, int x, int y, int veh_id_def,
     uint32_t bit = bit_at(x, y);
     if (bit & BIT_FUNGUS && altitude_at(x, y) >= ALT_BIT_OCEAN_SHELF && veh_id_atk >= 0
         && (!Vehs[veh_id_atk].faction_id
-            || veh_has_project(SP_PHOLUS_MUTAGEN, Vehs[veh_id_atk].faction_id)
+            || has_project(SP_PHOLUS_MUTAGEN, Vehs[veh_id_atk].faction_id)
             || (get_offense_rating(veh_id_atk) < 0
                 && Vehs[veh_id_atk].proto_id < MaxVehProtoFactionNum))) {
                 return 2;
@@ -3140,11 +3130,11 @@ int __cdecl defense_value(int faction_id, int x, int y, int veh_id_def,
         && get_triad(veh_id_def) != TRIAD_AIR) {
         if (veh_id_atk >= 0 && ((get_offense_rating(veh_id_atk) < 0
                 && Vehs[veh_id_atk].proto_id < MaxVehProtoFactionNum)
-            || veh_has_project(SP_PHOLUS_MUTAGEN, Vehs[veh_id_atk].faction_id))) {
+            || has_project(SP_PHOLUS_MUTAGEN, Vehs[veh_id_atk].faction_id))) {
             defense = is_rocky;
         } else {
             VehBattleDisplayTerrain = *(Labels.strings_ptr + 338); // "Fungus"
-            defense = (veh_has_project(SP_PHOLUS_MUTAGEN, faction_id)
+            defense = (has_project(SP_PHOLUS_MUTAGEN, faction_id)
                 || (Vehs[veh_id_def].proto_id < MaxVehProtoFactionNum
                     && get_offense_rating(veh_id_def) < 0)) ? 2 : 1;
         }
@@ -3287,7 +3277,7 @@ int __cdecl get_basic_offense(int veh_id_atk, int veh_id_def, int psi_combat_typ
         : morale_alien(veh_id_atk, veh_id_def >= 0 ? Vehs[veh_id_def].faction_id : -1);
     int base_id_atk = base_at(Vehs[veh_id_atk].x, Vehs[veh_id_atk].y);
     if (base_id_atk >= 0) {
-        if (has_fac_built(FAC_CHILDREN_CRECHE, base_id_atk)) {
+        if (has_fac(FAC_CHILDREN_CRECHE, base_id_atk, 0)) {
             morale++;
             int morale_active = range(PlayersData[faction_id_atk].soc_effect_active.values_[SocialEffect::MORALE], -4, 4);
             if (morale_active <= -2) {
@@ -3298,11 +3288,11 @@ int __cdecl get_basic_offense(int veh_id_atk, int veh_id_def, int psi_combat_typ
             // fallthrough, a brood pit check ALSO runs, but only as a bare
             // `morale++` - the full range()/cap adjustment below it belongs
             // only to the crèche-false (`else if`) arm.
-            if (has_fac_built(FAC_BROOD_PIT, base_id_atk) && proto_id_atk < MaxVehProtoFactionNum
+            if (has_fac(FAC_BROOD_PIT, base_id_atk, 0) && proto_id_atk < MaxVehProtoFactionNum
                 && (get_proto_offense_rating(proto_id_atk) < 0 || proto_id_atk == BSC_SPORE_LAUNCHER)) {
                 morale++;
             }
-        } else if (has_fac_built(FAC_BROOD_PIT, base_id_atk) && proto_id_atk < MaxVehProtoFactionNum
+        } else if (has_fac(FAC_BROOD_PIT, base_id_atk, 0) && proto_id_atk < MaxVehProtoFactionNum
             && (get_proto_offense_rating(proto_id_atk) < 0 || proto_id_atk == BSC_SPORE_LAUNCHER)) {
             morale++;
             int morale_active = range(PlayersData[faction_id_atk].soc_effect_active.values_[SocialEffect::MORALE], -4, 4);
@@ -3371,7 +3361,7 @@ int __cdecl get_basic_defense(int veh_id_def, int veh_id_atk, int psi_combat_typ
         : morale_alien(veh_id_def, veh_id_atk >= 0 ? Vehs[veh_id_atk].faction_id : -1);
     int base_id_def = base_at(Vehs[veh_id_def].x, Vehs[veh_id_def].y);
     if (base_id_def >= 0) {
-        if (has_fac_built(FAC_CHILDREN_CRECHE, base_id_def)) {
+        if (has_fac(FAC_CHILDREN_CRECHE, base_id_def, 0)) {
             morale++;
             int morale_active = range(PlayersData[faction_id_def].soc_effect_active.values_[SocialEffect::MORALE], -4, 0);
             if (morale_active <= -2) {
@@ -3382,12 +3372,12 @@ int __cdecl get_basic_defense(int veh_id_def, int veh_id_atk, int psi_combat_typ
             // above for the disassembly evidence: the crèche-true fallthrough
             // only bumps morale by 1 for a brood pit, the full range()/cap
             // adjustment belongs to the crèche-false arm only.
-            if (has_fac_built(FAC_BROOD_PIT, base_id_def)
+            if (has_fac(FAC_BROOD_PIT, base_id_def, 0)
                 &&  proto_id_def < MaxVehProtoFactionNum
                 && (get_proto_offense_rating(proto_id_def) < 0 || proto_id_def == BSC_SPORE_LAUNCHER)) {
                 morale++;
             }
-        } else if (has_fac_built(FAC_BROOD_PIT, base_id_def)
+        } else if (has_fac(FAC_BROOD_PIT, base_id_def, 0)
             &&  proto_id_def < MaxVehProtoFactionNum
             && (get_proto_offense_rating(proto_id_def) < 0 || proto_id_def == BSC_SPORE_LAUNCHER)) {
             morale++;
@@ -3759,21 +3749,21 @@ void __cdecl battle_compute(int veh_id_atk, int veh_id_def, int *offense_out, in
                             uint32_t triad_atk = get_triad(veh_id_atk);
                             switch (triad_atk) {
                               case TRIAD_LAND:
-                                if (has_fac_built(FAC_PERIMETER_DEFENSE, base_id_def)
+                                if (has_fac(FAC_PERIMETER_DEFENSE, base_id_def, 0)
                                     || has_project(SP_CITIZENS_DEFENSE_FORCE, faction_id_def)) {
                                     display_def = label_get(354); // "Perimeter"
                                     fac_modifier = 4;
                                 }
                                 break;
                               case TRIAD_SEA:
-                                if (has_fac_built(FAC_NAVAL_YARD, base_id_def)
+                                if (has_fac(FAC_NAVAL_YARD, base_id_def, 0)
                                     || has_project(SP_MARITIME_CONTROL_CENTER, faction_id_def)) {
                                     display_def = Facility[FAC_NAVAL_YARD].name;
                                     fac_modifier = 4;
                                 }
                                 break;
                               case TRIAD_AIR:
-                                if (has_fac_built(FAC_AEROSPACE_COMPLEX, base_id_def)
+                                if (has_fac(FAC_AEROSPACE_COMPLEX, base_id_def, 0)
                                     || has_project(SP_CLOUDBASE_ACADEMY, faction_id_def)) {
                                     display_def = Facility[FAC_AEROSPACE_COMPLEX].name;
                                     fac_modifier = 4;
@@ -3784,7 +3774,7 @@ void __cdecl battle_compute(int veh_id_atk, int veh_id_def, int *offense_out, in
                                 break;
                             }
                         }
-                        if (has_fac_built(FAC_TACHYON_FIELD, base_id_def)) {
+                        if (has_fac(FAC_TACHYON_FIELD, base_id_def, 0)) {
                             fac_modifier += 2;
                             display_def = label_get(357); // "Tachyon"
                         }
@@ -3841,7 +3831,7 @@ void __cdecl battle_compute(int veh_id_atk, int veh_id_def, int *offense_out, in
                             int base_id_radius = base_at(x_radius, y_radius);
                             if (base_id_radius >= 0
                                 && Bases[base_id_radius].faction_id_current == faction_id_def
-                                && has_fac_built(FAC_FLECHETTE_DEFENSE_SYS, base_id_radius)) {
+                                && has_fac(FAC_FLECHETTE_DEFENSE_SYS, base_id_radius, 0)) {
                                 defense = 3 * defense / 2;
                                 add_bat(1, 50, label_get(1113)); // "Flechette"
                             }
@@ -6192,7 +6182,7 @@ BOOL __cdecl has_abil(int proto_id, int ability_id) {
         }
     }
     if (VehPrototypes[proto_id].weapon_id == WPN_PROBE_TEAM && ability_id == ABL_ALGO_ENHANCEMENT
-        && veh_has_project(SP_NETHACK_TERMINUS, faction_id)) {
+        && has_project(SP_NETHACK_TERMINUS, faction_id)) {
         return true; // All Probe Teams act as though they have the "Algorithmic Enhancement"
     }
     return false;
@@ -6481,10 +6471,10 @@ int __cdecl morale_veh(int veh_id, BOOL check_drone_riot, int faction_id_vs_nati
     }
     int home_base_id = Vehs[veh_id].home_base_id;
     if (home_base_id >= 0) { // home base countering negative effects
-        if (has_fac_built(FAC_CHILDREN_CRECHE, home_base_id) && morale_modifier < 0) {
+        if (has_fac(FAC_CHILDREN_CRECHE, home_base_id, 0) && morale_modifier < 0) {
             morale_modifier /= 2;
         }
-        if (has_fac_built(FAC_BROOD_PIT, home_base_id) && proto_id < MaxVehProtoFactionNum
+        if (has_fac(FAC_BROOD_PIT, home_base_id, 0) && proto_id < MaxVehProtoFactionNum
             && (offense_rating < 0 || proto_id == BSC_SPORE_LAUNCHER) && morale_modifier < 0) {
             morale_modifier /= 2; // never reached due to above 'Basic Psi Veh' checks
         }
@@ -6630,7 +6620,7 @@ int __cdecl speed_proto(int proto_id) {
         if (has_abil(proto_id, ABL_FUEL_NANOCELLS)) {
             speed_val += 2;
         }
-        if (veh_has_project(SP_CLOUDBASE_ACADEMY, proto_id / MaxVehProtoFactionNum)) {
+        if (has_project(SP_CLOUDBASE_ACADEMY, proto_id / MaxVehProtoFactionNum)) {
             speed_val += 2; // bonus from Aerospace Complex
         }
         if (has_abil(proto_id, ABL_AIR_SUPERIORITY)) {
@@ -6663,7 +6653,7 @@ int __cdecl speed(int veh_id, BOOL skip_morale) {
     uint32_t proto_id = Vehs[veh_id].proto_id;
     int speed_val = speed_proto(proto_id);
     uint8_t triad = get_proto_triad(proto_id);
-    if (triad == TRIAD_SEA && veh_has_project(SP_MARITIME_CONTROL_CENTER, Vehs[veh_id].faction_id)) {
+    if (triad == TRIAD_SEA && has_project(SP_MARITIME_CONTROL_CENTER, Vehs[veh_id].faction_id)) {
         speed_val += Rules.move_rate_roads * 2;
     }
     if (morale_veh(veh_id, true, 0) == MORALE_ELITE && !skip_morale
@@ -6774,7 +6764,7 @@ int __cdecl veh_cost(int proto_id, int base_id, BOOL *has_proto_cost) {
     // (0x005C1890) has none. Reproduced.
     if (proto_id < MaxVehProtoFactionNum
         && (get_proto_offense_rating(proto_id) < 0 || proto_id == BSC_SPORE_LAUNCHER)
-        && has_fac_built(FAC_BROOD_PIT, base_id)) {
+        && has_fac(FAC_BROOD_PIT, base_id, 0)) {
         cost = (cost * 3) / 4; // Decrease the cost of alien units by 25%
     }
     if (VehPrototypes[proto_id].plan == PLAN_COLONIZATION && base_id >= 0) {
@@ -6810,7 +6800,7 @@ int __cdecl veh_cost(int proto_id, int base_id, BOOL *has_proto_cost) {
         // FAC_SKUNKWORKS check - not short-circuited behind it the way a
         // `cond ? 0 : (factor * base_cost(...) + 50) / 100` ternary would.
         proto_cost_first = (factor * base_cost(proto_id) + 50) / 100;
-        if (base_id >= 0 && has_fac_built(FAC_SKUNKWORKS, base_id)) {
+        if (base_id >= 0 && has_fac(FAC_SKUNKWORKS, base_id, 0)) {
             proto_cost_first = 0;
         }
         cost += proto_cost_first;
@@ -11449,7 +11439,7 @@ int __cdecl shoot_it(int attacker, int defender, int x, int y,
             || Bases[neighbor_base].faction_id_current == attacker) {
             continue;
         }
-        if (has_fac_built(FAC_FLECHETTE_DEFENSE_SYS, neighbor_base)) {
+        if (has_fac(FAC_FLECHETTE_DEFENSE_SYS, neighbor_base, 0)) {
             has_flechette_defense = true;
             break;
         }
@@ -11488,7 +11478,7 @@ int __cdecl shoot_it(int attacker, int defender, int x, int y,
             const int neighbor_base = base_at(neighbor_x, neighbor_y);
             if (neighbor_base < 0
                 || Bases[neighbor_base].faction_id_current == attacker
-                || !has_fac_built(FAC_FLECHETTE_DEFENSE_SYS, neighbor_base)) {
+                || !has_fac(FAC_FLECHETTE_DEFENSE_SYS, neighbor_base, 0)) {
                 continue;
             }
             if (rand() % 100 < 50) {
@@ -14021,7 +14011,7 @@ int __cdecl shoot(int atk_factionID, int def_factionID, int xDest, int yDest) {
             continue;
         const int base_id = base_at(x, y);
         if (base_id >= 0 && Bases[base_id].faction_id_current != atk_factionID &&
-            has_fac_built(FAC_FLECHETTE_DEFENSE_SYS, base_id))
+            has_fac(FAC_FLECHETTE_DEFENSE_SYS, base_id, 0))
             adjacent_flechette = 1;
     }
 
@@ -14064,7 +14054,7 @@ int __cdecl shoot(int atk_factionID, int def_factionID, int xDest, int yDest) {
                 continue;
             const int base_id = base_at(x, y);
             if (base_id < 0 || Bases[base_id].faction_id_current == atk_factionID ||
-                !has_fac_built(FAC_FLECHETTE_DEFENSE_SYS, base_id))
+                !has_fac(FAC_FLECHETTE_DEFENSE_SYS, base_id, 0))
                 continue;
             if (rand() % 100 >= 0x32)
                 continue;
@@ -16208,7 +16198,7 @@ int __cdecl enemy_planet_buster(int vehicle_id) {
                     score = enemy_pb_policy::add_city_pressure(
                         score, static_cast<int>(PlayersData[city_faction].ranking),
                         static_cast<int>(city.population_size),
-                        has_fac_built(FAC_HEADQUARTERS, city_id),
+                        has_fac(FAC_HEADQUARTERS, city_id, 0),
                         GameDataStateStorage.fields_.turn_current_num_ < PlayersData[city_faction].corner_market_turn,
                         city.queue_production_id[0] == -FAC_ASCENT_TO_TRANSCENDENCE,
                         city.minerals_accumulated,

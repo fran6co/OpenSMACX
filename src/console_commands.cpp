@@ -790,7 +790,7 @@ void Console::corner_the_market() { // 0x004E2000
     int hq_base_id = -1;
     for (int base_id = 0; base_id < GameDataStateStorage.fields_.base_current_count_; ++base_id) {
         if (Bases[base_id].faction_id_current == faction_id) {
-            const int built = has_fac_built(FAC_HEADQUARTERS, base_id);
+            const int built = has_fac(FAC_HEADQUARTERS, base_id, 0);
             if (built) {
                 hq_base_id = base_id;
                 break;
@@ -1561,8 +1561,7 @@ void Console::editor_reset_tech() {
             VehPrototype &prototype = VehPrototypes[prototype_id];
             prototype.obsolete_factions = 0;
             if (prototype_id >= MaxVehProtoFactionNum) {
-                unsigned char &flags_low = *reinterpret_cast<unsigned char *>(&prototype.flags);
-                flags_low &= 0xfe;
+                prototype.flags &= ~PROTO_ACTIVE;
             }
         }
 

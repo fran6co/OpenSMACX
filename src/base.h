@@ -659,7 +659,6 @@ extern int GovernorFaction; // elected Planetary Governor; see the note in base.
 extern int GlobalEnergyEventState; // energy tripling state driven by random_events
 extern int UnkGlobal0093A934; // TODO: identify global; selects the bit above
 
-BOOL __cdecl has_fac(int facility_id, int base_id, int queue_count);
 void __cdecl farm_compute();
 void __cdecl say_base(LPSTR base_str, int base_id);
 int __cdecl base_at(int x, int y);
@@ -767,7 +766,10 @@ MEASURED inline int __cdecl base_project(int project_id) {
 
 MEASURED inline BOOL __cdecl has_project(int project_id, int faction_id) {
     int base_id = base_project(project_id);
-    return (base_id < 0) ? false : (Bases[base_id].faction_id_current == faction_id);
+    if (base_id < 0) {
+        return false;
+    }
+    return Bases[base_id].faction_id_current == faction_id;
 }
 
 inline int __cdecl has_fac_built(int facility_id, int base_id) {
@@ -775,6 +777,27 @@ inline int __cdecl has_fac_built(int facility_id, int base_id) {
     int mask;
     bitmask(facility_id, &offset, &mask);
     return (Bases[base_id].facilities_built[offset] & mask) != 0;
+}
+
+// Header inline: the image writes has_fac(id, base_id, 0) out at most call
+// sites (is_built stays a materialized variable, `neg/sbb/neg; test eax`)
+// and keeps an out-of-line COMDAT copy at 0x00421670 for the rest.
+MEASURED inline BOOL __cdecl has_fac(int facility_id, int base_id, int queue_count) {
+    if (facility_id >= FacilityRepStart) {
+        return false;
+    }
+    BOOL is_built = has_fac_built(facility_id, base_id);
+    if (is_built || !queue_count) {
+        return is_built;
+    }
+    // BUG IN THE ORIGINAL: no upper bound on queue_count (queue_production_id
+    // holds 10 entries); reproduced deliberately.
+    for (int i = 0; i < queue_count; i++) {
+        if (Bases[base_id].queue_production_id[i] == -facility_id) {
+            return true;
+        }
+    }
+    return false;
 }
 
 int __cdecl has_fac_built(int facility_id);

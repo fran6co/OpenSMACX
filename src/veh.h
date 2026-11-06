@@ -524,7 +524,7 @@ struct Veh {
     int16_t x;
     int16_t y;
     uint32_t state; // see VehStateBitfield
-    uint16_t flags; // see VehFlagsBitfield
+    int16_t flags; // see VehFlagsBitfield
     int16_t proto_id;
     uint16_t unk_1; // seems to only be set by veh_clear()
     uint8_t faction_id;
@@ -573,7 +573,7 @@ struct VehPrototype {
     int8_t combat_factions; // faction bitfield for those that have seen it in combat (atk/def)
     int8_t icon_offset;
     int8_t padding; // unused
-    uint16_t flags; // see veh_prototype_flag_bitfield
+    int16_t flags; // see veh_prototype_flag_bitfield
     int16_t preq_tech; // only set for predefined alpha/x.txt units
 };
 

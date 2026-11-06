@@ -1331,9 +1331,9 @@ int __cdecl is_sensor(int x, int y) {
     int base_id = base_find(x, y);
     if (base_id != -1) {
         if (!x_dist(x, Bases[base_id].x) || x_dist(x, Bases[base_id].x) == 2) {
-            int dist_y = abs((int)y - Bases[base_id].y);
-            if (!dist_y || dist_y == 2) {
-                if (has_fac_built(FAC_GEOSYNC_SURVEY_POD, base_id)) {
+            int dist_y = y - Bases[base_id].y;
+            if (!dist_y || (dist_y >= 0 ? dist_y : Bases[base_id].y - y) == 2) {
+                if (has_fac(FAC_GEOSYNC_SURVEY_POD, base_id, 0)) {
                     return 2; // Geosynchronous Survey Pod
                 }
             }

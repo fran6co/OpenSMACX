@@ -1511,7 +1511,7 @@ void __cdecl repair_phase(int faction_id) {
                     facility_id = FAC_COMMAND_CENTER;
                     project_id = SP_COMMAND_NEXUS;
                 }
-                if (has_fac_built(facility_id, base_id) || has_project(project_id, faction_id)) {
+                if (has_fac(facility_id, base_id, 0) || has_project(project_id, faction_id)) {
                     repair_rate = Vehs[veh_id].dmg_incurred;
                 }
             }
@@ -2349,14 +2349,10 @@ void __cdecl climactic_changes() {
 // Historical candidate note: the const-pointer spelling reproduced the old
 // fixed-address encoding; it is not the current typed-object implementation.
 int __cdecl sub_52a980() {
-    // Original 52A988 clears only bit 0 of the low flags byte; neither the
-    // high flags byte nor preq_tech is accessed. Other users (57F680: word OR
-    // 0x104) establish the shared 16-bit flags member. The character view
-    // selects its low representation byte under the original x86 ABI.
+    // Signed 16-bit flags: VC6 narrows the clear to `and byte ptr [+0x30], 0xfe`.
     for (int prototype_id = 0; prototype_id < MaxVehProtoNum; ++prototype_id) {
         VehPrototype &prototype = VehPrototypes[prototype_id];
-        unsigned char *flags_bytes = reinterpret_cast<unsigned char *>(&prototype.flags);
-        flags_bytes[0] &= 0xFE;
+        prototype.flags &= ~PROTO_ACTIVE;
         prototype.icon_offset = -1;
     }
     GameDataStateStorage.fields_.vehicle_current_count_ = 0;
@@ -3304,30 +3300,22 @@ void __cdecl balance() {
 // The original walk reads Players[].rule_flags and Bases[] ownership,
 // population and facility bits. Compare population as signed, as in the image.
 int __cdecl generators(int faction_id, int *count_out) {
-    int count = 0;
     if (count_out != 0) {
         *count_out = 0;
     }
     if ((Players[faction_id].rule_flags & RFLAG_ALIEN) == 0) {
         return 0;
     }
-    int total = GameDataStateStorage.fields_.base_current_count_;
-    if (total > 0) {
-        int index = 0;
-        do {
-            if (Bases[index].faction_id_current == faction_id
-                && has_fac_built(0x28, index)) {
-                if (Bases[index].population_size
-                    < static_cast<int>(Rules.size_base_subspace_gen)) {
-                    if (count_out != 0) {
-                        ++*count_out;
-                    }
-                } else {
-                    ++count;
-                }
+    int count = 0;
+    for (int index = 0; index < GameDataStateStorage.fields_.base_current_count_; ++index) {
+        if (Bases[index].faction_id_current == faction_id && has_fac(0x28, index, 0)) {
+            if (Bases[index].population_size
+                >= static_cast<int>(Rules.size_base_subspace_gen)) {
+                ++count;
+            } else if (count_out != 0) {
+                ++*count_out;
             }
-            ++index;
-        } while (index < GameDataStateStorage.fields_.base_current_count_);
+        }
     }
     return count;
 }
@@ -7280,9 +7268,9 @@ void __cdecl random_events(int mode) {
         const int facility_gate_b = 18;
         const int project_slots[3] = { 0, 14, 26 };
         const int project_facilities[3] = { 70, 84, 96 };
-        if (has_fac_built(facility_gate_a, selected_base_id) ||
-            has_fac_built(facility_gate_b, selected_base_id)) {
-            const int has_gate_b = has_fac_built(facility_gate_b, selected_base_id);
+        if (has_fac(facility_gate_a, selected_base_id, 0) ||
+            has_fac(facility_gate_b, selected_base_id, 0)) {
+            const int has_gate_b = has_fac(facility_gate_b, selected_base_id, 0);
             const int facility = has_gate_b ? 28 : 27;
             parse_say(1, Facility[facility].name, -1, -1);
             if (faction_id == ConsoleGlobal.faction_id_) {
@@ -7354,8 +7342,8 @@ void __cdecl random_events(int mode) {
             if (dy < 0) dy = -dy;
             if (((dx + dy) >> 1) > upper_bound) continue;
 
-            if (has_fac_built(facility_gate_a, candidate_id) ||
-                has_fac_built(facility_gate_b, candidate_id)) continue;
+            if (has_fac(facility_gate_a, candidate_id, 0) ||
+                has_fac(facility_gate_b, candidate_id, 0)) continue;
             const int candidate_faction = Bases[candidate_id].faction_id_current;
             bool project_protected = false;
             for (int slot = 0; slot < 3; ++slot) {
@@ -7818,7 +7806,7 @@ void __cdecl random_events(int mode) {
         case 17: {
             if (!has_tech(Facility[FAC_ENERGY_BANK].preq_tech, faction_id)) break;
             const bool has_energy_bank =
-                has_fac_built(FAC_ENERGY_BANK, selected_base_id);
+                has_fac(FAC_ENERGY_BANK, selected_base_id, 0);
             if (!has_energy_bank) {
                 const int minimum_ranking =
                     (GameDataStateStorage.fields_.turn_current_num_ >= 150) ? 5 : 4;
@@ -7890,7 +7878,7 @@ void __cdecl random_events(int mode) {
                 ? research_rate / 4
                 : -static_cast<int>((0u - static_cast<unsigned int>(research_rate)) / 4u);
             if (PlayersData[faction_id].tech_accumulated < minimum_progress) break;
-            if (has_fac_built(FAC_NETWORK_NODE, selected_base_id)) {
+            if (has_fac(FAC_NETWORK_NODE, selected_base_id, 0)) {
                 PlayersData[faction_id].tech_accumulated = research_rate;
                 if (faction_id == ConsoleGlobal.faction_id_)
                     ConsoleGlobal.focus(Bases[selected_base_id].x,
