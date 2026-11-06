@@ -773,11 +773,11 @@ void __cdecl clear_all_offers() {
 // ORIGINAL: 0x0051E390 ?clear_tamper@@YAXXZ 0x0051E390-0x0051E3BC
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned51E390 resets value93A9D8 then faction93A9B8 arrays and scalar93A9AC/B0/B4. Consumer5275B0 uses typed faction/value pairs for tamper dialogs; source-extracted fixture checks full arrays and scalars."], "reason": "Recover complete tamper reset with two independent faction arrays and three independent state words. Keep scalar semantics neutral until their actual consumers are recovered."}
 void __cdecl clear_tamper() {
-    memset(TamperDialogValue, 0, sizeof TamperDialogValue);
-    memset(TamperDialogFaction, 0, sizeof TamperDialogFaction);
     TamperState93A9AC = 0;
     TamperState93A9B0 = 0;
     TamperState93A9B4 = 0;
+    memset(TamperDialogValue, 0, sizeof TamperDialogValue);
+    memset(TamperDialogFaction, 0, sizeof TamperDialogFaction);
 }
 
 // 0x009A6494
@@ -2879,28 +2879,6 @@ char *__cdecl get_pact(int faction_id) {
     int noun = Players[faction_id].is_leader_female;
     GenderDefault = noun;
     return StringTable.get(Labels.strings_ptr[noun != 0 ? 0xca : 0xc9]);
-}
-
-// ORIGINAL: 0x0052DBA0 ?current_server@@YAHXZ 0x0052DBA0-0x0052DBE6
-// MISMATCH #6 'push' vs 'cmp': the original spends TWO push/pop pairs (esi,
-// edi) and a xor/sete/test dance to compare NetTurnFaction against
-// LocalFaction before restoring registers and testing the boolean; every
-// source spelling tried here (direct `==`, named locals for one or both
-// operands, top-level vs nested loads, goto-style vs nested-if for the
-// shared "not active" tail) instead gets a single push/pop esi plus a direct
-// cmp+jne under all four measured flag sets - a strictly shorter encoding
-// the register allocator prefers once it is allowed to. Ruled out: not guard
-// duplication or tail sharing (those match through the merged trailing
-// return); it reads as five live values forcing two callee-saved spills.
-int __cdecl current_server() {
-    int in_transit = ConsoleControlTurnActive;
-    if ((GameDataStateStorage.fields_.net_turn_flags_ & 0x10) != 0 && in_transit == 0) {
-        if (GameDataStateStorage.fields_.net_turn_faction_ == ConsoleGlobal.faction_id_) {
-            return 1;
-        }
-        return 0;
-    }
-    return turns_assigned();
 }
 
 // RECOVERY_LITERAL: v1 0x0068FAAC 0x0068FAAE ??_C@_01FAFK@?$DO?$AA@ 0x0058F610

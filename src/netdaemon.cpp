@@ -771,87 +771,8 @@ void NetDaemon::close_channel() {
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 // calls     (none)
-// PRESERVED UNIT - measured MISMATCH.
-//
-// Kept for COVERAGE. This directory IS on the ratchet: every file here
-// carries an ORIGINAL marker, `decomp_status.py` compiles and measures
-// it, and 336 of the 1,108 now carry a BYTE_EXACT claim - better than a
-// quarter of the project's total. It is still in no build; the earlier
-// header said "on no ratchet", which stopped being true when the map
-// moved into src/ and was still being written into new files.
-//
-// address        0x0052DB70
-// measured tier  MISMATCH
-// divergence     14
-//
-// The WHOLE unit as measured, scaffolding included: for the units
-// that are byte-exact yet refuse extraction, the agent tuned the
-// emitted scaffolding and the body alone will not reproduce the
-// verdict. To resume, copy everything below back over
-//   build/byte-match/0052db70/unit.cpp
-// and score it with tools/agent_brief.py.
-// GENERATED SKELETON - tools/emit_translation_unit.py
-// subject: sub_52db70  at 0x0052DB70  (44 bytes)
-//
-// A VERIFICATION ARTIFACT, not product source: classes are opaque and
-// globals are bound to fixed addresses, because both are byte-visible
-// and both differ from the style src/ is written in.
-//
-// VC6 DIALECT - this must compile under cl 12.00.8168, which is the
-// only compiler this project builds with. Avoid: auto, nullptr, constexpr,
-// static_assert, enum class, range-for, lambdas, long long, <cstdint>,
-// and declaring `int i` twice in one function (VC6 leaks for-scope).
-// static_cast/reinterpret_cast are fine and are the right spelling.
-//
-// SOURCE-FORM RULES, each one learned by a fan-out agent that lost
-// attempts to it. They are here rather than in a prompt so the next
-// agent does not rediscover them:
-//
-//  * A ternary is not an if. `x ? a : b` lowers to `jne` with the arms
-//    swapped; `if (x) {...}` gives `je`.
-//  * VC6 NEVER hoists a same-polarity guard's body out of line. To get
-//    two special cases branching FAR away, write them negated and
-//    NESTED - `if (a != X) { if (a != Y) { return D; } ...; }` - not as
-//    sequential guard clauses, which inline each body instead.
-//  * VC6 rejects `__thiscall` on a free function pointer (C4234). For
-//    an indirect virtual call use the generated VCall shim below; for a
-//    thiscall function POINTER, take a member-function pointer of a
-//    dummy class instead of spelling the convention.
-//  * Loop form is visible: while / do-while / for lower differently,
-//    and so does counting up versus down.
-//  * If the original dedicates a callee-saved register to a constant
-//    across the whole body (an extra `push ebx`/`push edi` in the
-//    prologue), it had enough register pressure to do so. That is a
-//    hard case - the tool reports a similarity ratio so you can tell a
-//    near miss from a wrong body.
-
-// The const-pointer spelling reproduces the original's
-// encoding including the address; `extern T *g` does not.
+// Shares the TU with current_server and hang_up, which both inline it.
 int __cdecl sub_52db70() {
-    // NEAR MISS, recorded so the next agent does not repeat the search.
-    // MISMATCH: #14 original 'ret' vs rebuilt 'mov' (44 vs 45 bytes,
-    // mnemonic similarity 0.9677, exactly one inserted instruction).
-    // The first two guards match byte-for-byte. The final comparison
-    // is the divergence: original is
-    //     mov ecx, [0x9a6820]; mov edx, [0x939284]; xor eax, eax;
-    //     cmp ecx, edx; sete al; ret
-    // (operands land in ecx/edx, eax is reserved for the flag from the
-    // start, no final move). Every spelling of `return a == b;` tried
-    // here instead evaluates the first operand into EAX (regardless of
-    // textual/declaration order), needs a second scratch register for
-    // the flag, and ends with an extra `mov eax, <flag>` before `ret` -
-    // proven in isolation with zero preceding code, so it is not caused
-    // by the two guards above. RULED OUT: direct `return a==b`, ternary,
-    // `!=` with swapped return literals, `!(a^b)`, unsigned casts, an
-    // out-of-line `static` compare helper (does not inline here), bool
-    // return type, a `this`-only `__thiscall` member (dead `this` in
-    // ecx does not get reused for the load). A mutable `int result = 0;
-    // if (a == b) result = 1; return result;` DOES reproduce the
-    // ecx/edx/eax-preclear register roles exactly, but then compiles to
-    // `cmp; jne; mov eax,1; ret` (branch, not `sete`) - 48 bytes. No
-    // form found gets both the register roles and the `sete` tail at
-    // once. Left as the closest candidate (edit_count 1) rather than
-    // reverted, per the "do not throw away a measured near miss" rule.
     if ((GameDataStateStorage.fields_.net_turn_flags_ & 0x10) == 0) {
         return 0;
     }
@@ -859,6 +780,18 @@ int __cdecl sub_52db70() {
         return 0;
     }
     return GameDataStateStorage.fields_.net_turn_faction_ == ConsoleGlobal.faction_id_;
+}
+
+// ORIGINAL: 0x0052DBA0 ?current_server@@YAHXZ 0x0052DBA0-0x0052DBE6
+// The image inlines sub_52db70 here, hence the two spilled registers.
+int __cdecl current_server() {
+    if (sub_52db70()) {
+        return 1;
+    }
+    if ((GameDataStateStorage.fields_.net_turn_flags_ & 0x10) != 0 && ConsoleControlTurnActive == 0) {
+        return 0;
+    }
+    return static_cast<int>(NetDaemonNet.primary_state_.leading_words_[0]);
 }
 
 // ORIGINAL: 0x0052E050 ?hang_up@NetDaemon@@QAEXXZ 0x0052E050-0x0052E151 FILE
@@ -933,8 +866,9 @@ void NetDaemon::hang_up() {
 
     primary_state_.flags_ = 1;
     if (GameDataStateStorage.fields_.net_turn_flags_ & 0x10) {
-        if (sub_52db70() || ConsoleControlTurnActive != 0) {
-            if (ConsoleControlTurnActive != 0 &&
+        const int in_transit = ConsoleControlTurnActive;
+        if (sub_52db70() || in_transit != 0) {
+            if (in_transit != 0 &&
                 NetDaemonNet.primary_state_.leading_words_[0] == 0) goto L145;
             message_data(0x8301, 0, 0, 0, 0, 0);
         }
@@ -3229,44 +3163,6 @@ static_assert(offsetof(EntityCommandPrefix, entity_id_) == 0x10,
 static_assert(sizeof(EntityCommandPrefix) == 0x14,
               "entity command prefix width through entity id");
 
-class EntityCommandPrefixReader {
-public:
-    explicit EntityCommandPrefixReader(const char *bytes)
-        : bytes_(reinterpret_cast<const unsigned char *>(bytes)) {}
-
-    uint16_t opcode() const {
-        uint16_t value;
-        std::memcpy(&value, bytes_ + offsetof(EntityCommandPrefix, opcode_), sizeof value);
-        return value;
-    }
-    int32_t sequence() const {
-        int32_t value;
-        std::memcpy(&value, bytes_ + offsetof(EntityCommandPrefix, sequence_), sizeof value);
-        return value;
-    }
-    int32_t entity_id() const {
-        int32_t value;
-        std::memcpy(&value, bytes_ + offsetof(EntityCommandPrefix, entity_id_), sizeof value);
-        return value;
-    }
-
-private:
-    const unsigned char *bytes_;
-};
-
-class EntityCommandPrefixWriter {
-public:
-    explicit EntityCommandPrefixWriter(char *bytes)
-        : bytes_(reinterpret_cast<unsigned char *>(bytes)) {}
-
-    void store_entity_id(int32_t value) {
-        std::memcpy(bytes_ + offsetof(EntityCommandPrefix, entity_id_), &value, sizeof value);
-    }
-
-private:
-    unsigned char *bytes_;
-};
-
 // The synchronization packet's serialized header prefix is 0x24 bytes. It is
 // a field map over borrowed bytes, not the type or extent of the allocated
 // packet. In particular, the sender leaves +2..+3, +8..+0xB, and +0x20..+0x23
@@ -3388,33 +3284,9 @@ private:
     unsigned char *bytes_;
 };
 
-class SyncVehiclePayloadView {
-public:
-    explicit SyncVehiclePayloadView(unsigned char *bytes) : bytes_(bytes) {}
-
-    int8_t order() const {
-        int8_t value;
-        std::memcpy(&value, bytes_ + sizeof(SyncHeaderPrefix) + offsetof(Veh, order), sizeof value);
-        return value;
-    }
-    int16_t waypoint_x() const {
-        int16_t value;
-        std::memcpy(&value, bytes_ + sizeof(SyncHeaderPrefix) + offsetof(Veh, waypoint_x), sizeof value);
-        return value;
-    }
-    void store_order(int8_t value) {
-        std::memcpy(bytes_ + sizeof(SyncHeaderPrefix) + offsetof(Veh, order), &value, sizeof value);
-    }
-    void store_waypoint_x(uint16_t value) {
-        std::memcpy(bytes_ + sizeof(SyncHeaderPrefix) + offsetof(Veh, waypoint_x), &value, sizeof value);
-    }
-
-private:
-    unsigned char *bytes_;
-};
-
 // ORIGINAL: 0x00534330 ?fixup_message@NetDaemon@@QAEHPAD@Z 0x00534330-0x005343FC FILE
-// TRIED: MISMATCH, closest at 212/204 bytes (mnemonic_similarity 0.87, 3 edit blocks). `goto fail;`/`fail:` in place of five scattered `return 0;` was needed to get VC6 to share ONE epilogue the way the original's disassembly jumps into a single shared block - plain early returns each got their own copy. `int code` (signed) not `unsigned short`/`unsigned int` reproduces the `cmp eax,CONST` 32-bit signed compares (jg/jge) the original uses, and writing the boundaries as `<= 0x2406`/`<= 0x2402` (not `< 0x2407`/`< 0x2403`) matches the exact `jg` vs `jge` original picked for each - the `x<N` vs `x<=N-1` lever. `DeletionList*` for `this+0x158c` inlined at each of the three call sites (not cached in an upfront local) matches the original computing it lazily, right before its first use. Remaining diff: the `code== 0x2403` arm compiles to `jne fail; jmp common` where the original does a single `je common`, and the `0x2408 || 0x2413` pair still compiles as two `cmp/je` where the original uses a `sub eax,0x2408; je; sub eax,0xb; jne` switch-lowering idiom - not chased further.
+// A switch over the direct packet fields. 0x2403 is a separate (empty) label
+// that falls into the shared body: the image's decision tree tests it alone.
 // working copy - scaffold materialised by --work
 // size      204 bytes
 // prototype int (__thiscall ?fixup_message@NetDaemon@@QAEHPAD@Z)(NetDaemon* this, int8*)
@@ -3424,50 +3296,42 @@ private:
 // calls     0x0052DDC0
 
 int NetDaemon::fixup_message(char * message) {
-    const EntityCommandPrefixReader command(message);
-    const int code = command.opcode();
+    EntityCommandPrefix *command = reinterpret_cast<EntityCommandPrefix *>(message);
+    int code = command->opcode_;
     switch (code) {
     case 0x2101: {
-        unsigned char *bytes = reinterpret_cast<unsigned char *>(message);
-        const SyncHeaderPrefixReader header(bytes);
-        if (header.opcode() != 0x11) return 0;
-
-        SyncHeaderPrefixWriter header_writer(bytes);
-        const int first = deletion_list_.convert(
-            header.argument_2(), header.signed_sequence());
-        header_writer.store_argument_2(first);
-
-        SyncVehiclePayloadView vehicle(bytes);
-        if (vehicle.order() != 1) return 0;
-        const int16_t waypoint = vehicle.waypoint_x();
-        if (waypoint < 0) return 0;
-
-        const int converted = deletion_list_.convert(
-            waypoint, header.signed_sequence());
-        const uint16_t converted_bits = static_cast<uint16_t>(converted);
-        vehicle.store_waypoint_x(converted_bits);
-        if (converted_bits != 0xFFFFu) return 0;
-
-        vehicle.store_order(0);
-        return 0;
+        SyncHeaderPrefix *header = reinterpret_cast<SyncHeaderPrefix *>(message);
+        if (header->opcode == 0x11) {
+            header->argument_2 = deletion_list_.convert(
+                header->argument_2, header->sequence);
+            Veh *vehicle = reinterpret_cast<Veh *>(message + sizeof(SyncHeaderPrefix));
+            if (vehicle->order == 1 && vehicle->waypoint_x[0] >= 0) {
+                vehicle->waypoint_x[0] = static_cast<int16_t>(deletion_list_.convert(
+                    vehicle->waypoint_x[0], header->sequence));
+                if (vehicle->waypoint_x[0] == -1) {
+                    vehicle->order = 0;
+                }
+            }
+        }
+        break;
     }
+    case 0x2403:
+        ;  // own label; see the note above
     case 0x2401:
     case 0x2402:
-    case 0x2403:
     case 0x2404:
     case 0x2405:
     case 0x2406:
     case 0x2408:
-    case 0x2413: {
-        const int converted = deletion_list_.convert(
-            command.entity_id(), command.sequence());
-        EntityCommandPrefixWriter command_writer(message);
-        command_writer.store_entity_id(converted);
-        return converted < 0;
+    case 0x2413:
+        command->entity_id_ = deletion_list_.convert(
+            command->entity_id_, command->sequence_);
+        if (command->entity_id_ < 0) {
+            return 1;
+        }
+        break;
     }
-    default:
-        return 0;
-    }
+    return 0;
 }
 
 // File-transfer protocol state and storage, shared by the sender and receiver.
