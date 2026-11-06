@@ -452,17 +452,14 @@ char LandmarkDefaultName[1] = {0};
 // ORIGINAL: 0x00515770 ?chat@Console@@QAEXH@Z 0x00515770-0x005158F4
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00515770.cpp", "src/netdaemon.h", "src/xpops.h"], "reason": "The chat command belongs to Console, reads network lock state through NetDaemonNet, and uses source-owned text buffers and message services rather than fixed executable addresses; seed matching alone is not structural proof."}
 void Console::chat(int target_faction) {
-    int faction = 1;
     if (!IsMultiplayerNet) return;
 
     NetDaemon &network = NetDaemonNet;
-    if (ConsoleControlTurnActive) {
-        const unsigned int local_bit = 1u << (ConsoleGlobal.faction_id_ & 31);
-        if ((network.channels_[0].leading_words_[1] & local_bit) == 0 &&
-            network.primary_state_.trailing_words_[3] == 0) {
-            NetMsgPrimary.pop("FINISHUPKEEP", 1000, 0, 0);
-            return;
-        }
+    if (ConsoleControlTurnActive &&
+        (network.channels_[0].leading_words_[1] & (1 << ConsoleGlobal.faction_id_)) == 0 &&
+        network.primary_state_.trailing_words_[3] == 0) {
+        NetMsgPrimary.pop("FINISHUPKEEP", 1000, 0, 0);
+        return;
     }
 
     if (X_pop_ask("CHATASK", 0xff, ConsoleChatInput, pop_wait, 0) != 0)
@@ -478,15 +475,18 @@ void Console::chat(int target_faction) {
     if (network.primary_state_.session_phase_ >= 2) {
         const unsigned int enabled = GameDataStateStorage.fields_.lock_masks_.enable_mask_ & 0xff;
         if ((enabled & network.channels_[1].trailing_words_[6]) != enabled) {
-            for (; faction < 8; ++faction) {
-                const unsigned int bit = 1u << faction;
+            for (int faction = 1; faction < 8; ++faction) {
+                const int bit = 1 << faction;
                 if (!(*reinterpret_cast<const unsigned char *>(
                         &GameDataStateStorage.fields_.lock_masks_.enable_mask_) & bit)) continue;
-                const bool selected = target_faction > 0
-                    ? faction == target_faction
-                    : CommlinkPending ? faction == CommlinkFaction
-                    : TurnRedrawPending || (network.channels_[1].trailing_words_[6] & bit) != 0;
-                if (!selected) continue;
+                if (target_faction > 0) {
+                    if (faction != target_faction) continue;
+                } else if (CommlinkPending) {
+                    if (faction != CommlinkFaction) continue;
+                } else if (!TurnRedrawPending &&
+                           !(network.channels_[1].trailing_words_[6] & bit)) {
+                    continue;
+                }
                 message_chat(0x1e00, faction, message);
                 log_say("Sent CHAT", message, faction, 0, 0);
             }
@@ -1865,23 +1865,38 @@ void Console::show_scen_objectives() {
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     0x005C1B70 0x00644F3A
 
+// Same-TU copy of map.cpp's vector_dist(int, int) arithmetic.
+static inline int map_distance(int x_distance, int y_distance) {
+    x_distance = abs(x_distance);
+    y_distance = abs(y_distance);
+    int largest = x_distance;
+    if (x_distance <= y_distance) {
+        largest = y_distance;
+    }
+    int smallest = x_distance;
+    if (x_distance >= y_distance) {
+        smallest = y_distance;
+    }
+    return largest - ((((y_distance + x_distance) >> 1) - smallest + 1) >> 1);
+}
+
 int Console::ready_search(int veh_id) {
     int bestScore = 9999;
     int result = -1;
     int coordA, coordB;
 
-    if (veh_id < 0 || Vehs[veh_id].faction_id != ConsoleGlobal.faction_id_) {
-        veh_id = -1;
-        coordA = ConsoleGlobal.cursor_history_x_[ConsoleGlobal.cursor_history_index_];
-        coordB = ConsoleGlobal.cursor_history_y_[ConsoleGlobal.cursor_history_index_];
-    } else {
+    if (veh_id >= 0 && Vehs[veh_id].faction_id == ConsoleGlobal.faction_id_) {
         coordA = Vehs[veh_id].x;
         coordB = Vehs[veh_id].y;
+    } else {
+        coordA = ConsoleGlobal.cursor_history_x_[ConsoleGlobal.cursor_history_index_];
+        coordB = ConsoleGlobal.cursor_history_y_[ConsoleGlobal.cursor_history_index_];
+        veh_id = -1;
     }
 
     int outerIdx = (IsMultiplayerNet != 0) ? -1 : 0;
 
-    while (outerIdx <= 2) {
+    while (outerIdx < 3) {
         int vehCount = GameDataStateStorage.fields_.vehicle_current_count_;
 
         if ((IsMultiplayerNet != 0) && (outerIdx == 0) && (focus_vehicle_ >= 0) &&
@@ -1911,17 +1926,7 @@ int Console::ready_search(int veh_id) {
                 int vehX = vehicle.x;
                 int vehY = vehicle.y;
 
-                int diffX = abs(coordA - vehX);
-                if ((MapIsFlat & 1) == 0 && diffX > (int)MapLongitude) {
-                    diffX = MapLongitudeBounds - diffX;
-                }
-                int diffY = abs(coordB - vehY);
-                diffX = abs(diffX);
-                diffY = abs(diffY);
-
-                int hi = (diffX > diffY) ? diffX : diffY;
-                int lo = (diffX < diffY) ? diffX : diffY;
-                int score = hi - (((diffX + diffY) >> 1) - lo + 1 >> 1);
+                int score = map_distance(x_dist(coordA, vehX), abs(coordB - vehY));
 
                 if (score < bestScore) {
                     bestScore = score;
@@ -1947,11 +1952,7 @@ int Console::ready_search(int veh_id) {
     }
 
 searchDone:
-    if (IsMultiplayerNet != 0 && outerIdx < 0) {
-        field_23D24_ = 1;
-    } else {
-        field_23D24_ = 0;
-    }
+    field_23D24_ = IsMultiplayerNet != 0 && outerIdx < 0;
     return result;
 }
 
@@ -2007,29 +2008,12 @@ void Console::cursor_on(int cursor_shape, int veh_id) {
 
 
 void Console::move_cursor(int direction) {
-    const int slot = ConsoleGlobal.cursor_history_index_;
-    int new_x = ConsoleGlobal.cursor_history_x_[slot] + VehMoveDeltaX[direction];
-    if ((MapIsFlat & 1) == 0) {
-        if (new_x < 0) {
-            new_x = new_x + MapLongitudeBounds;
-        } else if (new_x >= MapLongitudeBounds) {
-            new_x = new_x - MapLongitudeBounds;
-        }
-    }
-    int new_y = VehMoveDeltaY[direction] + ConsoleGlobal.cursor_history_y_[slot];
-    if (new_y >= 0 && new_y < MapLatitudeBounds && new_x >= 0 &&
-        new_x < MapLongitudeBounds) {
-        field_23BF8_ = 0;
-        if (survey_mode_ != 0) {
-            survey_mode_ = 0;
-            console_map_win()->draw_map(1);
-        }
-        console_map_win()->draw_cursor();
-        cursor_next(new_x, new_y);
-        ConsoleStatusWin.redraw();
-        field_23BF8_ = 1;
-        field_23BFC_ = 1;
-        console_map_win()->draw_cursor();
+    int new_x = wrap_map_x(
+        ConsoleGlobal.cursor_history_x_[ConsoleGlobal.cursor_history_index_] +
+        VehMoveDeltaX[direction]);
+    int new_y = VehMoveDeltaY[direction] +
+                ConsoleGlobal.cursor_history_y_[ConsoleGlobal.cursor_history_index_];
+    if (!set_cursor(new_x, new_y)) {
         console_map_win()->focus(new_x, new_y);
     }
 }
@@ -2065,28 +2049,21 @@ void Console::move_cursor(int direction) {
 
 
 int Console::set_cursor(int x_coord, int y_coord) {
-    if (y_coord < 0 || y_coord >= MapLatitudeBounds || x_coord < 0) {
+    if (!on_map(x_coord, y_coord)) {
         return 1;
     }
-    // The image's FOURTH test jumps to the body on `jl` (0x00514805 `jl
-    // 0x514812`) and falls through to the failure epilogue, so it is spelled
-    // as the in-bounds guard rather than chained into the rejection above -
-    // the "jumps TO the work" shape, not a fourth `||` term.
-    if (x_coord < MapLongitudeBounds) {
-        field_23BF8_ = 0;
-        if (survey_mode_ != 0) {
-            survey_mode_ = 0;
-            console_map_win()->draw_map(1);
-        }
-        console_map_win()->draw_cursor();
-        cursor_next(x_coord, y_coord);
-        ConsoleStatusWin.redraw();
-        field_23BF8_ = 1;
-        field_23BFC_ = 1;
-        console_map_win()->draw_cursor();
-        return 0;
+    field_23BF8_ = 0;
+    if (survey_mode_ != 0) {
+        survey_mode_ = 0;
+        console_map_win()->draw_map(1);
     }
-    return 1;
+    console_map_win()->draw_cursor();
+    cursor_next(x_coord, y_coord);
+    ConsoleStatusWin.redraw();
+    field_23BF8_ = 1;
+    field_23BFC_ = 1;
+    console_map_win()->draw_cursor();
+    return 0;
 }
 
 // ORIGINAL: 0x00515530 ?survey2@Console@@QAEXXZ 0x00515530-0x005155F5 FILE BYTE_EXACT
@@ -2854,10 +2831,12 @@ void Console::load_proc(int save_slot, int faction_id) {
     if (load_game(save_slot, faction_id) != 0) {
         return;
     }
-    if (GameSessionActive == 0) {
+    if (GameSessionActive != 0) {
+        if (game_reload(1, 0) != 0) {
+            exit(3);
+        }
+    } else {
         desktop_init(0);
-    } else if (game_reload(1, 0) != 0) {
-        exit(3);
     }
     if (save_slot != 0) {
         GameDataStateStorage.fields_.game_state_ |= 0xE0;
@@ -2913,31 +2892,23 @@ void Console::zoom_to_upkeep_base() {
     int best_distance = 99999;
     int best_base = -1;
 
-    if (GameDataStateStorage.fields_.base_current_count_ > 0) {
-        for (int base_id = 0; base_id < GameDataStateStorage.fields_.base_current_count_; ++base_id) {
-            const Base &base = Bases[base_id];
-            if (base.faction_id_current == ConsoleGlobal.faction_id_ &&
-                (base.state & BSTATE_UNK_10) != 0) {
-                int dx = abs(camera_x - base.x);
-                if ((MapIsFlat & 1) == 0 && dx > static_cast<int>(MapLongitude)) {
-                    dx = MapLongitudeBounds - dx;
-                }
-                const int dy = abs(camera_y - base.y);
-                const int abs_dx = abs(dx);
-                const int abs_dy = abs(dy);
-                const int high = (abs_dx > abs_dy) ? abs_dx : abs_dy;
-                const int low = (abs_dx < abs_dy) ? abs_dx : abs_dy;
-                const int distance = high - (((abs_dx + abs_dy >> 1) - low) + 1 >> 1);
-                if (distance <= best_distance) {
-                    best_base = base_id;
-                    best_distance = distance;
-                }
+    for (int base_id = 0; base_id < GameDataStateStorage.fields_.base_current_count_; ++base_id) {
+        const Base &base = Bases[base_id];
+        if (base.faction_id_current == ConsoleGlobal.faction_id_ &&
+            (base.state & BSTATE_UNK_10) != 0) {
+            const int base_x = base.x;
+            const int base_y = base.y;
+            const int distance =
+                map_distance(x_dist(camera_x, base_x), abs(camera_y - base_y));
+            if (distance <= best_distance) {
+                best_base = base_id;
+                best_distance = distance;
             }
         }
+    }
 
-        if (best_base >= 0) {
-            TutWinBaseWindow.zoom(best_base, 0);
-        }
+    if (best_base >= 0) {
+        TutWinBaseWindow.zoom(best_base, 0);
     }
 }
 
@@ -5171,18 +5142,17 @@ void Console::end_my_turn() {
     if (IsMultiplayerNet != 0) {
         if ((GameDataStateStorage.fields_.net_turn_flags_ & 0x10) != 0 &&
             GameDataStateStorage.fields_.net_turn_faction_ != ConsoleGlobal.faction_id_) {
-            const int faction = GameDataStateStorage.fields_.net_turn_faction_;
-            GenderDefault = Players[faction].is_leader_female;
+            GenderDefault = Players[GameDataStateStorage.fields_.net_turn_faction_].is_leader_female;
             PluralityDefault = 0;
-            parse_says(0, Players[faction].title_leader, -1, -1);
-            GenderDefault = Players[faction].is_leader_female;
+            parse_says(0, Players[GameDataStateStorage.fields_.net_turn_faction_].title_leader, -1, -1);
+            GenderDefault = Players[GameDataStateStorage.fields_.net_turn_faction_].is_leader_female;
             PluralityDefault = 0;
-            parse_says(1, Players[faction].name_leader, -1, -1);
-            GenderDefault = Players[faction].noun_gender;
-            PluralityDefault = Players[faction].is_noun_plural;
-            parse_says(2, Players[faction].noun_faction, -1, -1);
-            const int process_id = NetDaemonNet.who_2_pid(faction);
-            parse_says(3, NetDaemonNet.get_player_name(process_id), -1, -1);
+            parse_says(1, Players[GameDataStateStorage.fields_.net_turn_faction_].name_leader, -1, -1);
+            GenderDefault = Players[GameDataStateStorage.fields_.net_turn_faction_].noun_gender;
+            PluralityDefault = Players[GameDataStateStorage.fields_.net_turn_faction_].is_noun_plural;
+            parse_says(2, Players[GameDataStateStorage.fields_.net_turn_faction_].noun_faction, -1, -1);
+            parse_says(3, NetDaemonNet.get_player_name(NetDaemonNet.who_2_pid(
+                              GameDataStateStorage.fields_.net_turn_faction_)), -1, -1);
             NetMsgPrimary.pop("SIMULWHOSE", 0x1388, 0, nullptr);
             return;
         }
@@ -5664,7 +5634,7 @@ void Console::init(int) {
     focus_vehicle_ = -1;
     field_23BEC_ = 0;
 
-    if ((StatusFlags & 1u) == 0) {
+    if ((~StatusFlags & 1u) != 0) {
         field_23BCC_ = WinScreenWidth;
         IfaceScreenWidth = WinScreenWidth;
         field_23BD0_ = WinScreenHeight - MainInterfaceGlobal.panel_height();
@@ -5677,14 +5647,11 @@ void Console::init(int) {
         StatusFlags |= 1u;
     }
 
-    char *const menu_caption = label_get(0x70);
-    GraphicWin *const console_window = static_cast<GraphicWin *>(this);
-    console_window->GraphicWin::init(
-        &ConsoleMenuBounds, menu_caption, 0x02400000, 0,
-        &alpha_menu_, 0);
+    char *const menu_caption = label_get(0x1C);
+    GraphicWin::init(&ConsoleMenuBounds, menu_caption, 0x02400000, 0,
+                     &alpha_menu_, 0);
 
-    graphic_win_.init(0, 0, console_window->pixel_width(),
-                      console_window->pixel_height(), 0, 0x01000022,
+    graphic_win_.init(0, 0, pixel_width(), pixel_height(), 0, 0x01000022,
                       static_cast<Win *>(this), 0, 0);
     Win::set_def_focus(static_cast<Win *>(this));
 

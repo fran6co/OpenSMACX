@@ -424,44 +424,10 @@ Return Value: 0 frame decoded; 7 when no file is open; 0x10 when the
 Status: Complete
 */
 int Flic::decode_frame_with_transparency(int x, int y) {
-    // Plain member read-modify-writes match the image's entry exactly
-    // (0x0062A120): the cached `or edx,2` stays a dword op, the bit-1 test
-    // goes through a copy (`mov eax,edx; test al,1`), and the
-    // historical pointer-to-member get_data call invalidated the cache; the
-    // ordinary out-of-line call below retains that call boundary so both later
-    // clears reload the member (`mov ecx,[esi+0x5b4]`) the way the image
-    // does. A `flags` local round trip instead keeps the whole
-    // computation in the byte domain (`or al,2` / `and al,0xfd`) from the
-    // first instruction. The one feature left: every clear temp lands in
-    // eax, where VC6 shortens `& ~2` to the 2-byte AL special form
-    // (`and al,0xfd`), while the image's temps sit in ecx - where the
-    // 3-byte `and ecx,0xfffffffd` sign-extended form is the same length
-    // as the byte op and VC6 keeps the dword encoding. No spelling
-    // measured (member, local round trip, result-local, explicit
-    // self-read, full-width 0xfffffffd masks) steers those three temps
-    // off eax; the retval constant sinks past the clear instead of
-    // occupying eax first, which is what the image's interleaved
-    // `mov eax,7` between copy and and would need.
     decoder_flags_ |= 2;
-    if (!(decoder_flags_ & 1)) {
-        decoder_flags_ &= ~2;
-        return 7;
-    }
-    if (destination_buffer_->get_data() == 0) {
-        decoder_flags_ &= ~2;
-        return 0x10;
-    }
-    origin_x_ = x;
-    origin_y_ = y;
-    if (frame_ == header_.frames_) {
-        fseek(file_, header_.second_frame_, SEEK_SET);
-        frame_ = 0;
-    }
-    fread(&chunk_, 0x10, 1, file_);
-    decode_chunk(&chunk_.header_);
-    frame_++;
+    int result = decode_frame(x, y);
     decoder_flags_ &= ~2;
-    return 0;
+    return result;
 }
 
 /*
@@ -721,8 +687,7 @@ void Flic::decode_byte_run() {
                 uint8_t value;
                 fread(&value, 1, 1, file_);
                 if (palette_offset_ != 0) {
-                    value = static_cast<uint8_t>(
-                        value + static_cast<uint8_t>(palette_offset_));
+                    value += palette_offset_;
                 }
                 memset(row_dst, value, static_cast<uint8_t>(count));
             } else {

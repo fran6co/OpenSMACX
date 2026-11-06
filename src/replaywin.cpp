@@ -69,18 +69,20 @@ void ReplayWin::init() {
     // The initial title is "Replay"; the timer later prefixes the year with "Replay: ".
     strcat(year_label_, Language != 0 ? ReplayLocalizedTitle : "Replay");
 
-    rect.left += 3;
+    rect.top += 0x17;
     rect.bottom -= 0x17;
+    rect.left += 3;
+    rect.top += 3;
     rect.right -= 3;
     rect.bottom -= 3;
-    rect.top += 0x1A;
     map_win_.init(&rect, 0, 0x20);
     map_win_.GraphicWin::init(&rect, 0, 0x200020, this, 0, 0);
     map_win_.zoom_offset_ = zoom;
     map_win_.field_1DD70_ = 0x85010080;
-    const int cursor = ConsoleGlobal.cursor_history_index_;
-    map_win_.center_x_ = ConsoleGlobal.cursor_history_x_[cursor];
-    map_win_.center_y_ = ConsoleGlobal.cursor_history_y_[cursor];
+    map_win_.center_x_ =
+        ConsoleGlobal.cursor_history_x_[ConsoleGlobal.cursor_history_index_];
+    map_win_.center_y_ =
+        ConsoleGlobal.cursor_history_y_[ConsoleGlobal.cursor_history_index_];
 
     rect.top = rect.bottom + 3;
     rect.bottom = rect.top + 0x14;

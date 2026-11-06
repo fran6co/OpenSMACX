@@ -816,36 +816,18 @@ Purpose: Resize the scrollbar track and its right/down arrow after the parent
 // Scroll's emitted override is UAE, as independently checked with VC6.
 */
 void Scroll::on_resize(int width, int height) {
-    const int thickness = width > height ? height : width;
-    bar_thickness_ = thickness;
-    thumb_rect_.left = 0;
-    thumb_rect_.top = 0;
-    thumb_rect_.right = thickness;
-    thumb_rect_.bottom = thickness;
+    set_bar_thickness(width > height ? height : width);
 
-    if (border_color_ != -1) {
-        thumb_rect_.left = 1;
-        --thumb_rect_.right;
-        ++thumb_rect_.top;
-        --thumb_rect_.bottom;
-    }
-
-    if (border_color_ != -1) {
-        const int button_size = bar_thickness_ - 2;
-        flat_button_right_.resize(button_size, button_size, 0);
-        if (width <= height) {
-            flat_button_right_.move(1, height - bar_thickness_ + 1);
-        } else {
-            flat_button_right_.move(width - bar_thickness_ + 1, 1);
-        }
-        return;
-    }
-
-    flat_button_right_.resize(bar_thickness_, bar_thickness_, 0);
-    if (width <= height) {
-        flat_button_right_.move(0, height - bar_thickness_);
+    if (border_color_ == -1) {
+        flat_button_right_.resize(bar_thickness_, bar_thickness_, 0);
+        const int y = width > height ? 0 : height - bar_thickness_;
+        const int x = width > height ? width - bar_thickness_ : 0;
+        flat_button_right_.move(x, y);
     } else {
-        flat_button_right_.move(width - bar_thickness_, 0);
+        flat_button_right_.resize(bar_thickness_ - 2, bar_thickness_ - 2, 0);
+        const int y = width > height ? 1 : height - bar_thickness_ + 1;
+        const int x = width > height ? width - bar_thickness_ + 1 : 1;
+        flat_button_right_.move(x, y);
     }
 }
 
@@ -1221,30 +1203,18 @@ Status: Complete
 // call at 0x00605D80. Mapped callers discard EAX; no result contract is
 // established here, and caller coverage is bounded to recovered edges.
 void Scroll::set_pos(int position) {
-    ::Win *const parent = win_parent_;
-    if (parent != nullptr) {
-        WinCallbackWindow = parent;
-
-        const int minimum = range_minimum_;
-        int *const current = &position_;
-        if (position < minimum) {
-            *current = minimum;
+    if (win_parent_ != nullptr) {
+        WinCallbackWindow = win_parent_;
+        if (position < range_minimum_) {
+            position_ = range_minimum_;
+        } else if (position > range_maximum_) {
+            position_ = range_maximum_;
         } else {
-            const int maximum = range_maximum_;
-            if (position > maximum) {
-                *current = maximum;
-            } else {
-                *current = position;
-            }
+            position_ = position;
         }
         if (range_reversed_ != 0U) {
-            const uint32_t maximum = static_cast<uint32_t>(range_maximum_);
-            const uint32_t clamped = static_cast<uint32_t>(*current);
-            *current = long_from_bits(
-                maximum - clamped + static_cast<uint32_t>(minimum));
+            position_ = range_maximum_ - position_ + range_minimum_;
         }
-        // Slot 62 = GraphicWin::redraw (see set_range); the plain virtual call
-        // is the image's two-instruction `mov edx,[ecx]; call [edx+0xf8]`.
         redraw();
     }
 }
@@ -1331,17 +1301,18 @@ void Scroll::compute_thumb_rect(RECT *rect) {
         rect->bottom += 1;
     }
     const LONG extent = rect->right - rect->left;
-    LONG thumb_offset;
     if (field_A3C_ == -1) {
-        LONG adjustment;
+        LONG thumb_offset;
+        LONG span;
         if ((field_A14_ & 2) != 0) {
             thumb_offset = 0;
-            adjustment = extent;
+            span = extent;
         } else {
             thumb_offset = extent + 1;
-            adjustment = extent * 3;
+            span = extent * 3;
         }
-        adjustment = 0 - adjustment;
+        // The image subtracts from -1, not 0 (0x00606CEE `mov edx,ebx`).
+        LONG adjustment = -1 - span;
         if (border_color_ != -1) {
             adjustment -= 2;
         }
@@ -1363,38 +1334,51 @@ void Scroll::compute_thumb_rect(RECT *rect) {
             rect->bottom += thumb_offset;
         }
     } else {
-        const bool no_end_buttons = (field_A14_ & 2) != 0;
-        const LONG far_edge = rect->left + extent;
-        const LONG candidate = field_A3C_ + extent / 2;
-        field_A3C_ = candidate;
-        const LONG height = -dib_.bmiHeader.biHeight;
-        const LONG width = dib_.bmiHeader.biWidth;
-        if (width > height) {
-            const LONG upper = no_end_buttons ? width - far_edge : width - far_edge * 2;
-            const LONG limited = candidate < upper ? candidate : upper;
-            if (no_end_buttons) {
-                thumb_offset = limited < 0 ? 0 : limited;
-            } else if (far_edge > limited) {
-                thumb_offset = far_edge;
+        // MIN/MAX are macro-shaped: the image re-evaluates the inner MIN.
+        if ((field_A14_ & 2) != 0) {
+            const LONG far_edge = rect->left + extent;
+            const LONG candidate = static_cast<LONG>(field_A3C_) + (extent >> 1);
+            field_A3C_ = candidate;
+            LONG offset;
+            const LONG height = -dib_.bmiHeader.biHeight;
+            const LONG width = dib_.bmiHeader.biWidth;
+            if (width > height) {
+                const LONG upper = width - far_edge;
+                offset = (candidate < upper ? candidate : upper) < 0
+                    ? 0 : (candidate < upper ? candidate : upper);
+                field_A3C_ = offset;
+                rect->left += offset;
+                rect->right += offset;
             } else {
-                thumb_offset = limited;
+                const LONG upper = height - far_edge;
+                offset = (candidate < upper ? candidate : upper) < 0
+                    ? 0 : (candidate < upper ? candidate : upper);
+                field_A3C_ = offset;
+                rect->top += offset;
+                rect->bottom += offset;
             }
-            field_A3C_ = thumb_offset;
-            rect->left += thumb_offset;
-            rect->right += thumb_offset;
         } else {
-            const LONG upper = no_end_buttons ? height - far_edge : height - far_edge * 2;
-            const LONG limited = candidate < upper ? candidate : upper;
-            if (no_end_buttons) {
-                thumb_offset = limited < 0 ? 0 : limited;
-            } else if (far_edge > limited) {
-                thumb_offset = far_edge;
+            const LONG far_edge = rect->left + extent;
+            const LONG candidate = static_cast<LONG>(field_A3C_) + (extent >> 1);
+            field_A3C_ = candidate;
+            LONG offset;
+            const LONG height = -dib_.bmiHeader.biHeight;
+            const LONG width = dib_.bmiHeader.biWidth;
+            if (width > height) {
+                const LONG upper = width - far_edge * 2;
+                offset = far_edge > (candidate < upper ? candidate : upper)
+                    ? far_edge : (candidate < upper ? candidate : upper);
+                field_A3C_ = offset;
+                rect->left += offset;
+                rect->right += offset;
             } else {
-                thumb_offset = limited;
+                const LONG upper = height - far_edge * 2;
+                offset = far_edge > (candidate < upper ? candidate : upper)
+                    ? far_edge : (candidate < upper ? candidate : upper);
+                field_A3C_ = offset;
+                rect->top += offset;
+                rect->bottom += offset;
             }
-            field_A3C_ = thumb_offset;
-            rect->top += thumb_offset;
-            rect->bottom += thumb_offset;
         }
         field_A3C_ = -1;
     }
@@ -1606,38 +1590,35 @@ void Scroll::on_left_down(int x, int y) {
     if (win_parent_ == 0) {
         return;
     }
-    if (-dib_.bmiHeader.biHeight < dib_.bmiHeader.biWidth) {
+    if (dib_.bmiHeader.biWidth > -dib_.bmiHeader.biHeight) {
         if (x < thumb_rect_.left) {
             field_A44_ = 0xffffffffU;
             field_A38_ = 0;
             on_mouse_move(x, y);
-            goto track_scroll;
-        }
-        if (thumb_rect_.right < x) {
+        } else if (x > thumb_rect_.right) {
             field_A44_ = 1;
             field_A38_ = 0;
             on_mouse_move(x, y);
-            goto track_scroll;
+        } else {
+            field_A44_ = 0;
         }
-        field_A44_ = 0;
     } else {
         if (y < thumb_rect_.top) {
             field_A44_ = 0xffffffffU;
-        } else {
-            if (y <= thumb_rect_.bottom) {
-                field_A44_ = 0;
-                goto track_scroll;
-            }
+            field_A38_ = 0;
+            on_mouse_move(x, y);
+        } else if (y > thumb_rect_.bottom) {
             field_A44_ = 1;
+            field_A38_ = 0;
+            on_mouse_move(x, y);
+        } else {
+            field_A44_ = 0;
         }
-        field_A38_ = 0;
-        on_mouse_move(x, y);
     }
 
-track_scroll:
     if (WinPointerOwner3 == 0) {
-        WinPointerOwner4 = 0;
         WinPointerOwner3 = this;
+        WinPointerOwner4 = 0;
     }
 }
 
@@ -1667,14 +1648,13 @@ void Scroll::on_mousewheel_down(int delta) {
     WinCallbackWindow = parent;
 
     const int next = position_ + 1;
-    const int maximum = range_maximum_;
-    if (next <= maximum) {
-        position_ = next;
+    if (next > range_maximum_) {
+        position_ = range_maximum_;
     } else {
-        position_ = maximum;
+        position_ = next;
     }
     if (range_reversed_ != 0U) {
-        position_ = (range_minimum_ - position_) + maximum;
+        position_ = (range_minimum_ - position_) + range_maximum_;
     }
 
     if (delta != 0) {
@@ -1684,11 +1664,9 @@ void Scroll::on_mousewheel_down(int delta) {
                 field_2144_(field_A18_, position_);
             }
         } else {
-            win_parent_->on_scrolled(field_A18_,
-                                    (range_minimum_ - position_) + range_maximum_);
+            win_parent_->on_scrolled(field_A18_, (range_minimum_ - position_) + range_maximum_);
             if (field_2144_ != nullptr) {
-                field_2144_(field_A18_,
-                            (range_minimum_ - position_) + range_maximum_);
+                field_2144_(field_A18_, (range_minimum_ - position_) + range_maximum_);
             }
         }
         Sound *const target = win_parent_->legacy_sound_32();
@@ -1754,8 +1732,8 @@ Purpose: Move a scrollbar to an endpoint with Home/End when horizontal, or
 // deliberately unclaimed until it is remeasured and restored.
 */
 int Scroll::on_key_click(int, int key) {
-    Win *const parent = win_parent_;
-    if (parent == nullptr) {
+    int handled = 0;
+    if (win_parent_ == nullptr) {
         return 0;
     }
 
@@ -1763,52 +1741,64 @@ int Scroll::on_key_click(int, int key) {
     const int width = dib_.bmiHeader.biWidth;
     const int height = -dib_.bmiHeader.biHeight;
     if (width > height) {
-        if (key == VK_END) {
+        switch (key) {
+        case VK_END:
             position_ = range_maximum_;
-        } else if (key == VK_HOME) {
+            break;
+        case VK_HOME:
             position_ = range_minimum_;
+            break;
+        default:
+            goto done;
+        }
+    } else {
+        switch (key) {
+        case VK_PRIOR:
+            position_ -= paging_;
+            if (position_ < range_minimum_) {
+                position_ = range_minimum_;
+            }
+            break;
+        case VK_NEXT:
+            position_ += paging_;
+            if (position_ > range_maximum_) {
+                position_ = range_maximum_;
+            }
+            break;
+        default:
+            goto done;
+        }
+    }
+
+    {
+        WinCallbackWindow = win_parent_;
+        handled = 1;
+        // Native606625 chooses the mapping branch before the virtual callback;
+        // 606655/60668B reload its values afterward without retesting reversal.
+        if (range_reversed_ == 0U) {
+            win_parent_->on_scrolled(field_A18_, position_);
+            if (field_2144_ != nullptr) {
+                field_2144_(field_A18_, position_);
+            }
         } else {
-            return 0;
+            win_parent_->on_scrolled(field_A18_,
+                                    (range_maximum_ - position_) + range_minimum_);
+            if (field_2144_ != nullptr) {
+                field_2144_(field_A18_,
+                            (range_maximum_ - position_) + range_minimum_);
+            }
         }
-    } else if (key == VK_PRIOR) {
-        position_ -= paging_;
-        if (position_ < range_minimum_) {
-            position_ = range_minimum_;
-        }
-    } else if (key == VK_NEXT) {
-        position_ += paging_;
-        if (position_ > range_maximum_) {
-            position_ = range_maximum_;
-        }
-    } else {
-        return 0;
-    }
 
-    WinCallbackWindow = parent;
-    // Native606625 chooses the mapping branch before the virtual callback;
-    // 606655/60668B reload its values afterward without retesting reversal.
-    if (range_reversed_ == 0U) {
-        win_parent_->on_scrolled(field_A18_, position_);
-        if (field_2144_ != nullptr) {
-            field_2144_(field_A18_, position_);
+        Sound *const target = win_parent_->legacy_sound_32();
+        if (target != nullptr && target->is_playing() == 0) {
+            target->play();
         }
-    } else {
-        win_parent_->on_scrolled(field_A18_,
-                                (range_maximum_ - position_) + range_minimum_);
-        if (field_2144_ != nullptr) {
-            field_2144_(field_A18_,
-                        (range_maximum_ - position_) + range_minimum_);
-        }
-    }
 
-    Sound *const target = win_parent_->legacy_sound_32();
-    if (target != nullptr && target->is_playing() == 0) {
-        target->play();
+        field_A3C_ = 0xFFFFFFFFU;
+        redraw();
     }
-
-    field_A3C_ = 0xFFFFFFFFU;
-    redraw();
-    return 1;
+done:
+    return handled;
 }
 
 // ORIGINAL: 0x00606B20 ?on_button_clicked@Scroll@@QAEXH@Z 0x00606B20-0x00606C43 BYTE_EXACT
@@ -1865,63 +1855,60 @@ void Scroll::on_button_clicked(int button_id) {
 // ORIGINAL: 0x006069A0 ?on_button_pressed@Scroll@@QAEXH@Z 0x006069A0-0x00606B14
 // symbol    ?on_button_pressed@Scroll@@UAEHH@Z
 int Scroll::on_button_pressed(int button_id) {
-    // Constructor table669D58 slot41 selects this int callback. All original
-    // exits converge on606B08, whose epilogue sets EAX=1, including throttling.
-    if (win_parent_ == nullptr) {
-        return 1;
-    }
-
-    const DWORD start_time = timeGetTime();
-    const int last_time = field_A38_;
-    if (last_time != 0) {
-        const DWORD now = timeGetTime();
-        if (static_cast<int>(now - static_cast<DWORD>(last_time)) <
-            static_cast<int>(field_A30_)) {
-            return 1;
-        }
-    } else {
-        field_A38_ = static_cast<int>(timeGetTime());
-    }
-
-    ListBoxGlobalDDC = 0;
-    const int old_position = position_;
-    if (button_id == 1) {
-        if (range_minimum_ < old_position) {
-            position_ = old_position - 1;
-        }
-    } else if (button_id == 2 && old_position < range_maximum_) {
-        position_ = old_position + 1;
-    }
-
-    WinCallbackWindow = win_parent_;
-    if (old_position != position_) {
-        if (range_reversed_ == 0U) {
-            win_parent_->on_scrolling(field_A18_, position_);
-            if (field_2148_ != nullptr) {
-                field_2148_(field_A18_, position_);
+    // All original exits converge on 0x00606B08, whose epilogue sets EAX=1.
+    if (win_parent_ != nullptr) {
+        const DWORD start_time = timeGetTime();
+        const int last_time = field_A38_;
+        if (last_time == 0 ||
+            static_cast<int>(timeGetTime() - static_cast<DWORD>(last_time)) >=
+                static_cast<int>(field_A30_)) {
+            if (last_time == 0) {
+                field_A38_ = static_cast<int>(timeGetTime());
             }
-        } else {
-            win_parent_->on_scrolling(field_A18_,
-                                    (range_minimum_ - position_) + range_maximum_);
-            if (field_2148_ != nullptr) {
-                field_2148_(field_A18_,
-                            (range_minimum_ - position_) + range_maximum_);
+
+            ListBoxGlobalDDC = 0;
+            const int old_position = position_;
+            switch (button_id) {
+            case 1:
+                if (position_ > range_minimum_) {
+                    --position_;
+                }
+                break;
+            case 2:
+                if (position_ < range_maximum_) {
+                    ++position_;
+                }
+                break;
+            }
+
+            WinCallbackWindow = win_parent_;
+            if (old_position != position_) {
+                if (range_reversed_ == 0U) {
+                    win_parent_->on_scrolling(field_A18_, position_);
+                    if (field_2148_ != nullptr) {
+                        field_2148_(field_A18_, position_);
+                    }
+                } else {
+                    win_parent_->on_scrolling(field_A18_, (range_maximum_ - position_) + range_minimum_);
+                    if (field_2148_ != nullptr) {
+                        field_2148_(field_A18_, (range_maximum_ - position_) + range_minimum_);
+                    }
+                }
+                // After notification 0x00606AB2 reloads the live parent.
+                Sound *const target = win_parent_->legacy_sound_33();
+                if (target != nullptr && target->is_playing() == 0) {
+                    target->play();
+                }
+            }
+
+            field_A3C_ = 0xFFFFFFFFU;
+            redraw();
+            const DWORD elapsed = timeGetTime() - start_time;
+            const DWORD duration = 1000U / static_cast<DWORD>(field_A34_);
+            if (elapsed < duration) {
+                Sleep(duration - elapsed);
             }
         }
-        // Original606A2F skips this sound path when the position is unchanged.
-        // After notification606AB2 reloads the live parent, not an earlier view.
-        Sound *const target = win_parent_->legacy_sound_33();
-        if (target != nullptr && target->is_playing() == 0) {
-            target->play();
-        }
-    }
-
-    field_A3C_ = 0xFFFFFFFFU;
-    redraw();
-    const DWORD elapsed = timeGetTime() - start_time;
-    const DWORD duration = 1000U / static_cast<DWORD>(field_A34_);
-    if (elapsed < duration) {
-        Sleep(duration - elapsed);
     }
     return 1;
 }

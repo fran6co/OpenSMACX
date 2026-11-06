@@ -316,23 +316,16 @@ Matrix3 Matrix3::multiply(const Matrix3 *other) {
         0.0f, 1.0f, 0.0f,
         0.0f, 0.0f, 1.0f
     }};
-    int row = 0;
-    do {
-        int column = 0;
-        do {
+    for (int row = 0; row < 3; ++row) {
+        for (int column = 0; column < 3; ++column) {
             result.cells[row * 3 + column] = 0.0f;
-            float sum = result.cells[row * 3 + column];
-            int depth = 0;
-            do {
-                sum = cells[row * 3 + depth] *
-                      other->cells[depth * 3 + column] + sum;
-                ++depth;
-            } while (depth < 3);
-            result.cells[row * 3 + column] = sum;
-            ++column;
-        } while (column < 3);
-        ++row;
-    } while (row < 3);
+            for (int depth = 0; depth < 3; ++depth) {
+                result.cells[row * 3 + column] =
+                    other->cells[depth * 3 + column] *
+                    cells[row * 3 + depth] + result.cells[row * 3 + column];
+            }
+        }
+    }
     return result;
 }
 
@@ -387,11 +380,10 @@ Status: Complete
 // The pin supports a hidden three-float value result, not this type's
 // historical name or ownership.
 Matrix3TransformResult Matrix3::transform(const float *in) {
-    const float *m = cells;
     Matrix3TransformResult result;
-    result.x_ = m[1] * in[1] + m[2] * in[2] + m[0] * in[0];
-    result.y_ = m[4] * in[1] + m[3] * in[0] + m[5] * in[2];
-    result.z_ = m[7] * in[1] + m[6] * in[0] + m[8] * in[2];
+    result.x_ = cells[0] * in[0] + cells[1] * in[1] + cells[2] * in[2];
+    result.y_ = cells[3] * in[0] + cells[4] * in[1] + cells[5] * in[2];
+    result.z_ = cells[6] * in[0] + cells[7] * in[1] + cells[8] * in[2];
     return result;
 }
 

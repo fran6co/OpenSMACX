@@ -743,25 +743,7 @@ void SpriteBox::close() {
     double_click_callback_ = 0;
     right_double_click_callback_ = 0;
 
-    if (list_.head_ != 0) {
-        int index = 0;
-        if (list_.entry_count_ > 0) {
-            do {
-                StringStructEntry *const entry = list_.head_;
-                list_.current_ = entry->next;
-                SpriteStruct *const payload = entry->sprite_payload();
-                list_.on_remove(payload);
-                if (payload != 0) delete payload;
-                entry->payload = 0;
-                delete entry;
-                ++index;
-                list_.head_ = list_.current_;
-            } while (index < list_.entry_count_);
-        }
-        list_.head_ = 0;
-        list_.current_position_ = 0;
-        list_.entry_count_ = 0;
-    }
+    list_.remove_all();
     list_.current_position_ = 0;
 
     spots_.shutdown();
@@ -1105,22 +1087,18 @@ int SpriteList::on_insert(void *raw_payload) {
     payload->sprite_ = pending_sprite_;
     if (pending_label_ == 0) {
         payload->label_ = 0;
-        payload->field_C_ = field_24_;
-        return 0;
-    }
-
-    char *copy;
-    if (allocator_ != 0) {
-        const size_t length = strlen(pending_label_);
-        copy = static_cast<char *>(allocator_->get(length + 1));
     } else {
-        const size_t length = strlen(pending_label_);
-        copy = static_cast<char *>(mem_get(length + 1));
+        char *copy;
+        if (allocator_ != 0) {
+            copy = static_cast<char *>(allocator_->get(strlen(pending_label_) + 1));
+        } else {
+            copy = static_cast<char *>(mem_get(strlen(pending_label_) + 1));
+        }
+        payload->label_ = copy;
+        if (copy == 0) return 4;
+        *copy = '\0';
+        strcat(payload->label_, pending_label_);
     }
-    payload->label_ = copy;
-    if (copy == 0) return 4;
-    *copy = '\0';
-    strcat(payload->label_, pending_label_);
     payload->field_C_ = field_24_;
     return 0;
 }

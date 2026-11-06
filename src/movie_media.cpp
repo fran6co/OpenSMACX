@@ -32,27 +32,27 @@ int __fastcall MediaRuntime::update_overlay(int show) {
     flags = DDOVER_HIDE;
   }
 
-  RECT source_rectangle;
-  source_rectangle.left = static_cast<LONG>(output_rect_left_14);
-  source_rectangle.top = static_cast<LONG>(output_rect_top_18);
-  source_rectangle.right = static_cast<LONG>(output_rect_left_14 + output_rect_extent_0c);
-  source_rectangle.bottom = static_cast<LONG>(output_rect_top_18 + output_rect_height_10);
+  // The pinned call passes the runtime output rectangle as lpDestRect and
+  // the whole overlay surface (0,0,width-1,height-1) as lpSrcRect.
+  RECT destination_rectangle;
+  destination_rectangle.top = static_cast<LONG>(output_rect_top_18);
+  destination_rectangle.left = static_cast<LONG>(output_rect_left_14);
+  destination_rectangle.bottom = static_cast<LONG>(output_rect_top_18 + output_rect_height_10);
+  destination_rectangle.right = static_cast<LONG>(output_rect_left_14 + output_rect_extent_0c);
 
   MediaDescriptor *const output = descriptor;
-  RECT destination_rectangle;
-  destination_rectangle.left = 0;
-  destination_rectangle.top = 0;
-  destination_rectangle.right = static_cast<LONG>(output->output_width_64 - 1U);
-  destination_rectangle.bottom = static_cast<LONG>(output->output_height_60 - 1U);
+  RECT source_rectangle;
+  source_rectangle.top = 0;
+  source_rectangle.left = 0;
+  source_rectangle.right = static_cast<LONG>(output->output_width_64 - 1U);
+  source_rectangle.bottom = static_cast<LONG>(output->output_height_60 - 1U);
 
   const HRESULT result = output->surface_1c->UpdateOverlay(
       &source_rectangle, output->surface_14, &destination_rectangle, flags, &effects);
   if (result != DD_OK) {
     if (result == E_INVALIDARG) {
       queue_record_kind = 1;
-      return 1;
-    }
-    if (result == DDERR_SURFACELOST) {
+    } else if (result == DDERR_SURFACELOST) {
       // Original reloads both pointers after the COM callback, not a cached receiver.
       descriptor->surface_1c->Restore();
     }
@@ -301,8 +301,8 @@ void MediaPixelFormat::sub_5cc450() {
     int clamped = value;
     if (clamped < -0x40) clamped = -0x40;
     else if (clamped > 0x3f) clamped = 0x3f;
-    unsigned int index = (unsigned int)(value - 0xc0) & 0x1ff;
-    double shifted = (double)clamped + 0.5;
+    int index = (value - 0xc0) & 0x1ff;
+    double shifted = clamped + 0.5f;
 
     movie_media_conversion_tables.contribution_byte3[index] =
         clamped * 0x800801 + 0x4883d8a9;
@@ -324,7 +324,7 @@ void MediaPixelFormat::sub_5cc450() {
     int value = ((1 << (-(int)red_bits + 7)) + clamped) >>
                 (-(int)red_bits + 8);
     int maximum = (1 << red_bits) - 1;
-    if (maximum < value) value = maximum;
+    if (value > maximum) value = maximum;
     int shifted_value = value << red_shift;
     movie_media_conversion_tables.blend_high[output_index] = shifted_value;
     if (total_component_bits <= 0x10)
@@ -341,7 +341,7 @@ void MediaPixelFormat::sub_5cc450() {
     int value = ((1 << (-(int)green_bits + 7)) + clamped) >>
                 (-(int)green_bits + 8);
     int maximum = (1 << green_bits) - 1;
-    if (maximum < value) value = maximum;
+    if (value > maximum) value = maximum;
     int shifted_value = value << green_shift;
     movie_media_conversion_tables.blend_mid[output_index] = shifted_value;
     if (total_component_bits <= 0x10)
@@ -358,7 +358,7 @@ void MediaPixelFormat::sub_5cc450() {
     int value = ((1 << (-(int)blue_bits + 7)) + clamped) >>
                 (-(int)blue_bits + 8);
     int maximum = (1 << blue_bits) - 1;
-    if (maximum < value) value = maximum;
+    if (value > maximum) value = maximum;
     int shifted_value = value << blue_shift;
     movie_media_conversion_tables.blend_low[output_index] = shifted_value;
     if (total_component_bits <= 0x10)
@@ -1193,8 +1193,8 @@ extern "C" void __cdecl sub_5cdfa0(void *argument) {
 int __fastcall MediaRuntime::initialize_stream(LPSTR filename,
                                                MediaRuntime *runtime) {
   MediaRuntime &r = *runtime;
-  r.stream_eof = 0;
-  DWORD signature = 0;
+  *reinterpret_cast<volatile LONG *>(&r.stream_eof) = 0;
+  DWORD signature;  // not initialized by the original; a short read keeps stack garbage
   if ((r.descriptor->flags & 0x00080000) == 0)
     r.descriptor->stream = mmioOpenA(filename, 0, 0);
   if (r.descriptor->stream == 0) return 1;
@@ -1202,16 +1202,12 @@ int __fastcall MediaRuntime::initialize_stream(LPSTR filename,
   mmioRead(r.descriptor->stream, (HPSTR)&signature, 4);
   mmioSeek(r.descriptor->stream, -4, SEEK_CUR);
 
-  if (signature == 0x44414553 || signature == 0x6c484353 ||
-      signature == 0x684e5331)
-    r.descriptor->stream_gate_7c = 1;
-  else
-    r.descriptor->stream_gate_7c = 0;
+  r.descriptor->stream_gate_7c = signature == 0x44414553 ||
+                                 signature == 0x6c484353 ||
+                                 signature == 0x684e5331;
 
-  for (int i = 0; i != 24; ++i) {
-    r.output_records[i].payload = 0;
-    r.read_records[i].payload = 0;
-  }
+  for (int i = 0; i < 24; ++i) r.output_records[i].payload = 0;
+  for (int k = 0; k < 24; ++k) r.read_records[k].payload = 0;
 
   r.input_ring_base = (BYTE *)calloc(1, 1200000);
   r.input_ring_current = r.input_ring_base;
@@ -1227,24 +1223,29 @@ int __fastcall MediaRuntime::initialize_stream(LPSTR filename,
   for (int output_count = 75000; output_count != 0; --output_count)
     *decoded_words++ = 0;
 
+  volatile LONG &read_records = r.pending_read_records;
+  volatile LONG &output_records = r.pending_output_records;
   r.read_counter = 0;
   r.output_counter = 0;
   r.read_consumer_cursor = 0;
   r.read_producer_cursor = 0;
-  r.pending_read_records = 0;
-  r.pending_output_records = 0;
+
+  read_records = 0;
+  output_records = 0;
   r.channel_state = 4;
 
-  if (r.descriptor->stream_gate_7c == 0) {
-    while (r.pending_read_records < 0x14 && sub_5c9ec0(runtime) != -1) {
+  if (r.descriptor->stream_gate_7c != 0) {
+    while (output_records < 0x15) {
+      if (sub_5c9ec0(runtime) == -1) break;
+      if (sub_5c9ec0(runtime) == -1) break;
     }
   } else {
-    while (r.pending_output_records < 0x15 &&
-           sub_5c9ec0(runtime) != -1 &&
-           sub_5c9ec0(runtime) != -1) {
+    while (read_records < 0x14) {
+      if (sub_5c9ec0(runtime) == -1) break;
     }
   }
-  r.descriptor->stream_gate_80 = (r.read_counter == 0);
+  r.descriptor->stream_gate_80 =
+      (*reinterpret_cast<volatile LONG *>(&r.read_counter) == 0);
   return 0;
 }
 
@@ -1643,12 +1644,9 @@ extern "C" void __fastcall sub_5ca970(MediaRuntime *runtime) {
   }
 
   if (runtime->channel_state == no_handle) return;
-  LONG pending_output_count = *reinterpret_cast<volatile LONG *>(
-      &runtime->pending_output_records);
-  if (pending_output_count >= 0x16) return;
-  LONG pending_read_count = *reinterpret_cast<volatile LONG *>(
-      &runtime->pending_read_records);
-  if (pending_read_count >= 0x16) return;
+  volatile LONG &output_records = runtime->pending_output_records;
+  volatile LONG &read_records = runtime->pending_read_records;
+  if (output_records >= 0x16 || read_records >= 0x16) return;
 
   int result = sub_5c9ec0(runtime);
   runtime->channel_poll_result = result;
@@ -1671,8 +1669,7 @@ extern "C" void __fastcall sub_5ca970(MediaRuntime *runtime) {
     return;
 
   case 2:
-    if (runtime->descriptor->stream_gate_80 == 0 ||
-        runtime->pending_output_records < 0x16)
+    if (runtime->descriptor->stream_gate_80 == 0 || output_records < 0x16)
       runtime->channel_state = sub_5c9ec0(runtime);
     return;
 
@@ -1858,27 +1855,23 @@ void MediaRuntime::sub_5cc710() {
     if (motion_row_offsets != 0) { free(motion_row_offsets); motion_row_offsets = 0; }
     if (motion_block_indices != 0) { free(motion_block_indices); motion_block_indices = 0; }
 
-    if (queue_record_kind == 2 && output_handle_candidate != 0)
-      output_handle_candidate = (DWORD)update_overlay(0);
+    if (queue_record_kind == 2) update_overlay(0);
 
-    DWORD flags = descriptor->flags;
-    if (descriptor->palette_24 != 0 && (flags & 0x04000000) == 0) {
+    if (descriptor->palette_24 != 0 && (descriptor->flags & 0x04000000) == 0) {
       descriptor->palette_24->Release();
       descriptor->palette_24 = 0;
     }
-    if (descriptor->surface_20 != 0 && (flags & 0x00000800) == 0) {
+    if (descriptor->surface_20 != 0 && (descriptor->flags & 0x00000800) == 0) {
       descriptor->surface_20->Release();
       descriptor->surface_20 = 0;
     }
-    if (descriptor->surface_1c != 0 && (flags & 0x00000800) == 0) {
+    if (descriptor->surface_1c != 0 && (descriptor->flags & 0x00000800) == 0) {
       descriptor->surface_1c->Release();
       descriptor->surface_1c = 0;
     }
     if (release_interface_10 != 0) {
-      if (descriptor->draw_device_10 != 0) {
-        descriptor->draw_device_10->Release();
-        descriptor->draw_device_10 = 0;
-      }
+      descriptor->draw_device_10->Release();
+      descriptor->draw_device_10 = 0;
       release_interface_10 = 0;
     }
     teardown_gate_3c = 0;
@@ -2459,13 +2452,12 @@ extern "C" void __fastcall sub_5cd8d0(MediaRuntime *runtime,
   runtime->decoder_context_3f8.compressed_input_200 = compressed;
   runtime->decoder_context_3f8.bit_position_204 = 0;
   (void)unused;
-  DWORD block_y = 0;
-  DWORD row_step = (pitch >> 1) << 5;
   BYTE *row_destination = destination;
-  while (block_y < runtime->descriptor->output_height_60) {
-    DWORD block_x = 0;
+  for (DWORD block_y = 0; block_y < runtime->descriptor->output_height_60;
+       block_y += 0x10) {
     BYTE *block_destination = row_destination;
-    while (block_x < runtime->descriptor->output_width_64) {
+    for (DWORD block_x = 0; block_x < runtime->descriptor->output_width_64;
+         block_x += 0x10) {
       if (runtime->record_option_040 != 0) {
         sub_5d1466(block_destination, (int)pitch,
                    &runtime->decoder_context_3f8);
@@ -2473,11 +2465,9 @@ extern "C" void __fastcall sub_5cd8d0(MediaRuntime *runtime,
         sub_5d1842(block_destination, (int)pitch,
                    &runtime->decoder_context_3f8);
       }
-      block_x += 0x10;
       block_destination += 0x20;
     }
-    row_destination += row_step;
-    block_y += 0x10;
+    row_destination += pitch / 2 * 32;
   }
 }
 
@@ -2494,13 +2484,12 @@ extern "C" void __fastcall sub_5cd980(MediaRuntime *runtime,
   runtime->decoder_context_3f8.compressed_input_200 = compressed;
   runtime->decoder_context_3f8.bit_position_204 = 0;
   (void)unused;
-  DWORD block_y = 0;
-  DWORD row_step = (pitch >> 2) << 6;
   BYTE *row_destination = destination;
-  while (block_y < runtime->descriptor->output_height_60) {
-    DWORD block_x = 0;
+  for (DWORD block_y = 0; block_y < runtime->descriptor->output_height_60;
+       block_y += 0x10) {
     BYTE *block_destination = row_destination;
-    while (block_x < runtime->descriptor->output_width_64) {
+    for (DWORD block_x = 0; block_x < runtime->descriptor->output_width_64;
+         block_x += 0x10) {
       if (runtime->record_option_040 != 0) {
         sub_5d1654(block_destination, (int)pitch,
                    &runtime->decoder_context_3f8);
@@ -2508,11 +2497,9 @@ extern "C" void __fastcall sub_5cd980(MediaRuntime *runtime,
         sub_5d1a30(block_destination, (int)pitch,
                    &runtime->decoder_context_3f8);
       }
-      block_x += 0x10;
       block_destination += 0x40;
     }
-    row_destination += row_step;
-    block_y += 0x10;
+    row_destination += pitch / 4 * 64;
   }
 }
 
@@ -2530,20 +2517,17 @@ extern "C" void __fastcall sub_5cda30(MediaRuntime *runtime,
   runtime->decoder_context_3f8.predictor_4fc = 0;
   runtime->decoder_context_3f8.predictor_4f8 = 0;
   (void)unused;
-  DWORD block_y = 0;
-  DWORD row_step = (pitch >> 1) << 5;
   BYTE *row_destination = destination;
-  while (block_y < runtime->descriptor->output_height_60) {
-    DWORD block_x = 0;
+  for (DWORD block_y = 0; block_y < runtime->descriptor->output_height_60;
+       block_y += 0x10) {
     BYTE *block_destination = row_destination;
-    while (block_x < runtime->descriptor->output_width_64) {
+    for (DWORD block_x = 0; block_x < runtime->descriptor->output_width_64;
+         block_x += 0x10) {
       sub_5d1278(block_destination, (int)pitch,
                  &runtime->decoder_context_3f8);
-      block_x += 0x10;
       block_destination += 0x20;
     }
-    row_destination += row_step;
-    block_y += 0x10;
+    row_destination += pitch / 2 * 32;
   }
 }
 
