@@ -11,7 +11,7 @@ from match_recovery.source import Mode, read_file, read_text
 ROOT = Path(__file__).resolve().parents[2]
 BASE = '9f7d39cdb1f16680ac232f60bab112bfbe678a3d'
 SPECS = (
-    (0x515430, 'src/statuswin.cpp', 'src/recovered/00515430.cpp', 'int __cdecl reset_status_and_initialize_desktop(', '?reset_status_and_initialize_desktop@@YAHXZ'),
+    (0x515430, 'src/statuswin.cpp', 'src/recovered/00515430.cpp', 'void __cdecl reset_status_and_initialize_desktop(', '?reset_status_and_initialize_desktop@@YAXXZ'),
     (0x58FB70, 'src/stringstruct.cpp', 'src/recovered/units/0058fb70.cpp', 'char *__cdecl uppercase_text(', '?uppercase_text@@YAPADPADH@Z'),
     (0x592D70, 'src/scale_adjustment.cpp', 'src/recovered/00592d70.cpp', 'int __cdecl set_scale_adjustment(', '?set_scale_adjustment@@YAHH@Z'),
     (0x592D90, 'src/scale_adjustment.cpp', 'src/recovered/00592d90.cpp', 'int __cdecl apply_scale_adjustment(', '?apply_scale_adjustment@@YAHH@Z'),

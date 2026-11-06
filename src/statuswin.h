@@ -145,4 +145,4 @@ void say_orders(char *text, int veh_id);
 // source storage, not a pointer back into the retired executable image.
 extern uint32_t StatusFlags;
 
-int __cdecl reset_status_and_initialize_desktop();
+void __cdecl reset_status_and_initialize_desktop();

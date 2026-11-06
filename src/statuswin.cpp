@@ -73,15 +73,15 @@ void __cdecl draw_my_dest(int vehicle_id) {
     if (vehicle_id < 0 || vehicle_id >= GameDataStateStorage.fields_.vehicle_current_count_) {
         return;
     }
-    Veh &vehicle = Vehs[vehicle_id];
-    if (vehicle.faction_id != ConsoleGlobal.faction_id_ &&
+    if (Vehs[vehicle_id].faction_id != ConsoleGlobal.faction_id_ &&
         (GameDataStateStorage.fields_.game_state_ & STATE_OMNISCIENT_VIEW) == 0) {
         return;
     }
-    if (vehicle.order != 0x18) {
+    if (Vehs[vehicle_id].order != 0x18) {
         return;
     }
     CoverWindow.fill(9);
+    Veh &vehicle = Vehs[vehicle_id];
     const int prototype_id = vehicle.proto_id;
     const int chassis_id = VehPrototypes[prototype_id].chassis_id;
     const int route_color = Chassis[chassis_id].triad;
@@ -1983,8 +1983,8 @@ void __stdcall sub_50f630(int unused) {
 
 // ORIGINAL: 0x00515430 sub_515430 0x00515430-0x00515443 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["historical seed:src/recovered/00515430.cpp", "task:owned-helper-coverage-batch", "StatusFlags939ED8 is already owned by statuswin.cpp; native515430 clears it before desktop_init(1)."], "reason": "Recover a complete native helper through genuine source owners and SDK calls, preserving original identity, extent and historical obligations. Source home is not proof of original TU or complete-game acceptance."}
-// symbol    ?reset_status_and_initialize_desktop@@YAHXZ
-int __cdecl reset_status_and_initialize_desktop() {
+// symbol    ?reset_status_and_initialize_desktop@@YAXXZ
+void __cdecl reset_status_and_initialize_desktop() {
     StatusFlags = 0;
-    return desktop_init(1);
+    desktop_init(1);
 }

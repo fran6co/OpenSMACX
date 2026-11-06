@@ -87,9 +87,8 @@ char SocialWinUpheavalPlusText[] = "+";             // 0x00687490
 // RECOVERY_BINDING: v1 {"evidence": ["git:b20012dad66f767e0e5f05b7aea45b88bd63a09d:src/recovered/units/004aef10.cpp", "image:terranx_original.exe:0x004AEF10", "Original instructions establish owner, bounded body and callback/state order; SocialWin reloads faction after social_upheaval and every later stateful call. GraphicWin dispatches through the real Buffer base.", "recovery/tasks/interface-contract-report-closure.json; bounded UI-five scope preserves original baseline"], "reason": "Recover the original in its genuine UI owner using actual members, globals and base/virtual calls. Retain seed evidence and historical obligations; this binding does not grant a current matching or runtime claim. Superseded scaffold retired at user request; historical claims and seed findings are transferred, not freshly granted. Current matching/restoration and any documented unfinished stages remain obligations."}
 // kind      game
 void SocialWin::exit() {
-    const uint32_t gross_upheaval = social_upheaval(factionID_, &socCategory_);
-    int upheaval = static_cast<int>(
-        gross_upheaval - PlayersData[factionID_].soc_upheaval_cost_paid);
+    int upheaval = social_upheaval(factionID_, &socCategory_)
+        - PlayersData[factionID_].soc_upheaval_cost_paid;
 
     if ((GameDataStateStorage.fields_.game_state_ & STATE_SCENARIO_EDITOR) == 0
         || (GameDataStateStorage.fields_.game_state_ & STATE_OMNISCIENT_VIEW) == 0) {

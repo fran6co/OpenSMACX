@@ -50,7 +50,7 @@ int main() {
             assert(apply_scale_adjustment(values[v]) == native_scale(expected, values[v]));
     }
     StatusFlags = 0xFFFFFFFFu;
-    assert(reset_status_and_initialize_desktop() == 37);
+    reset_status_and_initialize_desktop();
     assert(desktop_calls == 1 && StatusFlags == 0);
     char text[] = "Workshop";
     main_interface_bubble_callback_4396b0(text, 20, 30);
