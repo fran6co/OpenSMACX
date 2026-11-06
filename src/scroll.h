@@ -146,18 +146,17 @@ struct ScrollCloseStaticDefaultsData {
 static_assert(sizeof(ScrollCloseStaticDefaultsData) == 11 * sizeof(uint32_t),
               "Scroll defaults must retain the observed eleven-word window");
 extern ScrollCloseStaticDefaultsData ScrollCloseStaticDefaults;
-struct ScrollCloseDynamicDefaultsData {
-  uint32_t flags;
-  uint32_t position;
-  Sprite *sprite_left[3];
-  Sprite *sprite_up[3];
-  Sprite *sprite_right[3];
-  Sprite *sprite_down[3];
-  uint32_t reserved_38;
-  Sprite *thumb;
-  Sprite *background;
-};
-extern ScrollCloseDynamicDefaultsData ScrollCloseDynamicDefaults;
+// Dynamic defaults copied by construction and close(). The image indexes
+// the four sprite arrays from zero with each array's own absolute address as
+// the displacement, so they were separate globals, not one record.
+extern uint32_t ScrollDefaultFlags;         // 0x009B8DE0
+extern uint32_t ScrollDefaultPosition;      // 0x009B8DE4
+extern Sprite *ScrollDefaultSpriteLeft[3];  // 0x009B8DE8
+extern Sprite *ScrollDefaultSpriteUp[3];    // 0x009B8DF4
+extern Sprite *ScrollDefaultSpriteRight[3]; // 0x009B8E00
+extern Sprite *ScrollDefaultSpriteDown[3];  // 0x009B8E0C
+extern Sprite *ScrollDefaultThumb;          // 0x009B8E1C
+extern Sprite *ScrollDefaultBackground;     // 0x009B8E20
 void __cdecl scroll_normal();
 void __cdecl scroll_small();
 RECT *__cdecl expand_rect(RECT *rect, int horizontal, int vertical);

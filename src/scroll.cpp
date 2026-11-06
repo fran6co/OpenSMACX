@@ -59,15 +59,30 @@ int ScrollNonClientInit;  // 0x009B8E24
 // RECOVERY_OBJECT: v4 0x00697020 ?ScrollCloseStaticDefaults@@3PAIA target ?ScrollCloseStaticDefaults@@3UScrollCloseStaticDefaultsData@@A
 ScrollCloseStaticDefaultsData ScrollCloseStaticDefaults = {
     2, 0xFFFFFFFFU, 250, -1, 100, 247, 247, 7, 2, 255, 248};
-// RECOVERY_OBJECT: v4 0x009B8DE0 0x009B8E24 ?ScrollCloseDynamicDefaults@@3PAIA 0x006051D0 target ?ScrollCloseDynamicDefaults@@3UScrollCloseDynamicDefaultsData@@A
-// The historical mapping covers the accessed default window; +0x38 remains
-// an opaque word because the original constructor and close never read it.
-ScrollCloseDynamicDefaultsData ScrollCloseDynamicDefaults;
+// The historical record identity 0x009B8DE0..0x009B8E24 (evidence 0x006051D0)
+// is retained on its first word. The constructor and close index each sprite
+// array from zero with that array's absolute address as displacement, so the
+// window was separate globals; +0x38 (0x009B8E18) is never read here.
+// RECOVERY_OBJECT: v4 0x009B8DE0 ?ScrollCloseDynamicDefaults@@3PAIA target ?ScrollDefaultFlags@@3IA
+uint32_t ScrollDefaultFlags;  // 0x009B8DE0
+// RECOVERY_OBJECT: v1 0x009B8DE4 ?ScrollDefaultPosition@@3IA
+uint32_t ScrollDefaultPosition;  // 0x009B8DE4
+// RECOVERY_OBJECT: v1 0x009B8DE8 ?ScrollDefaultSpriteLeft@@3PAPAVSprite@@A
+Sprite *ScrollDefaultSpriteLeft[3];  // 0x009B8DE8
+// RECOVERY_OBJECT: v1 0x009B8DF4 ?ScrollDefaultSpriteUp@@3PAPAVSprite@@A
+Sprite *ScrollDefaultSpriteUp[3];  // 0x009B8DF4
+// RECOVERY_OBJECT: v1 0x009B8E00 ?ScrollDefaultSpriteRight@@3PAPAVSprite@@A
+Sprite *ScrollDefaultSpriteRight[3];  // 0x009B8E00
+// RECOVERY_OBJECT: v1 0x009B8E0C ?ScrollDefaultSpriteDown@@3PAPAVSprite@@A
+Sprite *ScrollDefaultSpriteDown[3];  // 0x009B8E0C
+// RECOVERY_OBJECT: v1 0x009B8E1C ?ScrollDefaultThumb@@3PAVSprite@@A
+Sprite *ScrollDefaultThumb;  // 0x009B8E1C
+// RECOVERY_OBJECT: v1 0x009B8E20 ?ScrollDefaultBackground@@3PAVSprite@@A
+Sprite *ScrollDefaultBackground;  // 0x009B8E20
 
 // The older LEVER/TRIED notes below describe experiments against the former
-// integer-array spelling. They remain historical matching evidence; this
-// source now models the pointer-bearing defaults with named fields and leaves
-// the unobserved +0x38 word opaque.
+// single-record spellings; the induction "wall" they record was the record
+// itself. Separate globals made 0x006051D0 and 0x00605370 BYTE_EXACT.
 
 // The original setters populate the same twelve sprite slots in four
 // triplets. These are source-owned sprite pointers, not addresses in the old
@@ -76,19 +91,19 @@ ScrollCloseDynamicDefaultsData ScrollCloseDynamicDefaults;
 static __forceinline void set_scroll_icon_defaults(Sprite *arrows,
                                                     Sprite *filler,
                                                     int thickness) {
-    ScrollCloseDynamicDefaults.sprite_up[0] = &arrows[0];
-    ScrollCloseDynamicDefaults.sprite_up[1] = &arrows[1];
-    ScrollCloseDynamicDefaults.sprite_up[2] = &arrows[2];
-    ScrollCloseDynamicDefaults.sprite_down[0] = &arrows[3];
-    ScrollCloseDynamicDefaults.sprite_down[1] = &arrows[4];
-    ScrollCloseDynamicDefaults.sprite_down[2] = &arrows[5];
-    ScrollCloseDynamicDefaults.sprite_left[0] = &arrows[6];
-    ScrollCloseDynamicDefaults.sprite_left[1] = &arrows[7];
-    ScrollCloseDynamicDefaults.sprite_left[2] = &arrows[8];
-    ScrollCloseDynamicDefaults.sprite_right[0] = &arrows[9];
-    ScrollCloseDynamicDefaults.sprite_right[1] = &arrows[10];
-    ScrollCloseDynamicDefaults.sprite_right[2] = &arrows[11];
-    ScrollCloseDynamicDefaults.thumb = filler;
+    ScrollDefaultSpriteUp[0] = &arrows[0];
+    ScrollDefaultSpriteUp[1] = &arrows[1];
+    ScrollDefaultSpriteUp[2] = &arrows[2];
+    ScrollDefaultSpriteDown[0] = &arrows[3];
+    ScrollDefaultSpriteDown[1] = &arrows[4];
+    ScrollDefaultSpriteDown[2] = &arrows[5];
+    ScrollDefaultSpriteLeft[0] = &arrows[6];
+    ScrollDefaultSpriteLeft[1] = &arrows[7];
+    ScrollDefaultSpriteLeft[2] = &arrows[8];
+    ScrollDefaultSpriteRight[0] = &arrows[9];
+    ScrollDefaultSpriteRight[1] = &arrows[10];
+    ScrollDefaultSpriteRight[2] = &arrows[11];
+    ScrollDefaultThumb = filler;
     ScrollDefaultThickness = thickness;
 }
 
@@ -279,14 +294,12 @@ Status: Complete
 Scroll::Scroll() {
     // Both vtable stores are the compiler's now that Buffer is a real base of
     // GraphicWin; it puts them where the image does.
-    ScrollCloseDynamicDefaultsData *const dynamic = &ScrollCloseDynamicDefaults;
-
-    field_A14_ = dynamic->flags;
+    field_A14_ = ScrollDefaultFlags;
     border_color_ = ScrollCloseStaticDefaults.border_color;
     range_reversed_ = 0;
-    range_minimum_ = static_cast<int>(dynamic->position);
+    range_minimum_ = static_cast<int>(ScrollDefaultPosition);
     range_maximum_ = ScrollCloseStaticDefaults.range_maximum;
-    position_ = static_cast<int>(dynamic->position);
+    position_ = static_cast<int>(ScrollDefaultPosition);
     field_A30_ = ScrollCloseStaticDefaults.field_A30;
     field_A3C_ = 0xFFFFFFFFU;
     field_A38_ = 0;
@@ -305,13 +318,13 @@ Scroll::Scroll() {
     bevel_lower_ = ScrollCloseStaticDefaults.bevel_lower;
 
     for (int index = 0; index < 3; ++index) {
-        sprite_left_[index] = dynamic->sprite_left[index];
-        sprite_up_[index] = dynamic->sprite_up[index];
-        sprite_right_[index] = dynamic->sprite_right[index];
-        sprite_down_[index] = dynamic->sprite_down[index];
+        sprite_left_[index] = ScrollDefaultSpriteLeft[index];
+        sprite_up_[index] = ScrollDefaultSpriteUp[index];
+        sprite_right_[index] = ScrollDefaultSpriteRight[index];
+        sprite_down_[index] = ScrollDefaultSpriteDown[index];
     }
-    thumb_sprite_ = dynamic->thumb;
-    field_A78_ = dynamic->background;
+    thumb_sprite_ = ScrollDefaultThumb;
+    field_A78_ = ScrollDefaultBackground;
     field_2144_ = 0;
     field_2148_ = 0;
 }
@@ -389,14 +402,12 @@ Return Value: n/a
 Status: Complete; embedded FlatButton close redirects are source-owned
 */
 void Scroll::close() {
-    ScrollCloseDynamicDefaultsData *const dynamic = &ScrollCloseDynamicDefaults;
-
-    field_A14_ = dynamic->flags;
+    field_A14_ = ScrollDefaultFlags;
     border_color_ = ScrollCloseStaticDefaults.border_color;
     range_reversed_ = 0;
-    range_minimum_ = static_cast<int>(dynamic->position);
+    range_minimum_ = static_cast<int>(ScrollDefaultPosition);
     range_maximum_ = ScrollCloseStaticDefaults.range_maximum;
-    position_ = static_cast<int>(dynamic->position);
+    position_ = static_cast<int>(ScrollDefaultPosition);
     field_A3C_ = 0xFFFFFFFFU;
     field_A38_ = 0;
     field_A30_ = ScrollCloseStaticDefaults.field_A30;
@@ -415,13 +426,13 @@ void Scroll::close() {
     bevel_lower_ = ScrollCloseStaticDefaults.bevel_lower;
 
     for (int index = 0; index < 3; ++index) {
-        sprite_left_[index] = dynamic->sprite_left[index];
-        sprite_up_[index] = dynamic->sprite_up[index];
-        sprite_right_[index] = dynamic->sprite_right[index];
-        sprite_down_[index] = dynamic->sprite_down[index];
+        sprite_left_[index] = ScrollDefaultSpriteLeft[index];
+        sprite_up_[index] = ScrollDefaultSpriteUp[index];
+        sprite_right_[index] = ScrollDefaultSpriteRight[index];
+        sprite_down_[index] = ScrollDefaultSpriteDown[index];
     }
-    thumb_sprite_ = dynamic->thumb;
-    field_A78_ = dynamic->background;
+    thumb_sprite_ = ScrollDefaultThumb;
+    field_A78_ = ScrollDefaultBackground;
     field_2144_ = 0;
     field_2148_ = 0;
 
@@ -1858,11 +1869,10 @@ int Scroll::on_button_pressed(int button_id) {
     // All original exits converge on 0x00606B08, whose epilogue sets EAX=1.
     if (win_parent_ != nullptr) {
         const DWORD start_time = timeGetTime();
-        const int last_time = field_A38_;
-        if (last_time == 0 ||
-            static_cast<int>(timeGetTime() - static_cast<DWORD>(last_time)) >=
+        if (field_A38_ == 0 ||
+            static_cast<int>(timeGetTime() - static_cast<DWORD>(field_A38_)) >=
                 static_cast<int>(field_A30_)) {
-            if (last_time == 0) {
+            if (field_A38_ == 0) {
                 field_A38_ = static_cast<int>(timeGetTime());
             }
 
