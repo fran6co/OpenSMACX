@@ -57,7 +57,7 @@ BOOL __cdecl can_arty(int proto_id, BOOL sea_triad_retn) {
 /*
 Purpose: Calculate the cargo capacity of a unit. It seems Spore Launchers were considered to have
          cargo capacity at one time.
-// ORIGINAL: 0x005C1760 ?veh_cargo@@YAHH@Z 0x005C1760-0x005C17C4
+// ORIGINAL: 0x005C1760 ?veh_cargo@@YAHH@Z 0x005C1760-0x005C17C4 BYTE_EXACT
 // TRIED: proto_id` (not `uint32_t`/`int`) matches the image, which keeps the 16-bit `proto_id` in `si` for the `< MaxVehProtoFactionNum` and `== BSC_SPORE_LAUNCHER` compares and only does `movsx eax,si` at the array-indexing use sites.
 // size      100 bytes
 // prototype int (__cdecl ?veh_cargo@@YAHH@Z)(int vehID)

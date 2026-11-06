@@ -148,7 +148,7 @@ Purpose: Hand out the first sheet-heap block whose free tail fits `size` and
          one more condition in the filter, and `Texture::extract` is its only
          caller - it takes the returned block as a borrowed texture rather
          than allocating fresh pixels.
-// ORIGINAL: 0x00635370 ?get_tex_mem@TexHeap@@QAEHH@Z 0x00635370-0x006353BD
+// ORIGINAL: 0x00635370 ?get_tex_mem@TexHeap@@QAEHH@Z 0x00635370-0x006353BD BYTE_EXACT
 // symbol    ?get_tex_mem@TexHeap@@QAEPAXH@Z
 // size      77 bytes
 // prototype int (__thiscall ?get_tex_mem@TexHeap@@QAEHH@Z)(TexHeap* this, int)
@@ -173,7 +173,7 @@ void *TexHeap::get_tex_mem(int size) {
 /*
 Purpose: Take `size` bytes of sheet memory: walk the heap's block table and
          allocate from the first block whose free tail is large enough.
-// ORIGINAL: 0x006353C0 ?get_mem@TexHeap@@QAEHH@Z 0x006353C0-0x00635402 FILE SEMANTIC
+// ORIGINAL: 0x006353C0 ?get_mem@TexHeap@@QAEHH@Z 0x006353C0-0x00635402 FILE BYTE_EXACT
 // symbol    ?get_mem@TexHeap@@QAEPAXH@Z
 // size      66 bytes
 // prototype int (__thiscall ?get_mem@TexHeap@@QAEHH@Z)(#120* this, int)

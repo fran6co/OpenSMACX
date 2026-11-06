@@ -40,7 +40,7 @@ Purpose: Select the live road or magtube terraforming rate from tile mask 0x4,
          and upper val3 bits. The final gameplay purpose remains unresolved.
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x004C99D0 sub_4c99d0 0x004C99D0-0x004C9A43 FILE
+// ORIGINAL: 0x004C99D0 sub_4c99d0 0x004C99D0-0x004C9A43 FILE BYTE_EXACT
 // symbol    _sub_4c99d0
 // size      115 bytes
 // prototype

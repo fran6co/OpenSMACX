@@ -131,7 +131,7 @@ char *FileBox::load() {
 
 /*
 Purpose: Append one label/pattern pair to the double-NUL filter buffer.
-// ORIGINAL: 0x00634DB0 ?add_filter@FileBox@@QAEHPADPAD@Z 0x00634DB0-0x00634E73 FILE
+// ORIGINAL: 0x00634DB0 ?add_filter@FileBox@@QAEHPADPAD@Z 0x00634DB0-0x00634E73 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"reason":"The cursor at +0x410 advances within FileBox's inline filter buffer at +0x30c; this operation belongs to that class.","evidence":["Original 0x00634DB0-0x00634E73 checks two strings and available filter bytes, appends both pieces and updates +0x410.","The prior compiling redirect and its observations are preserved at git:06248782:src/leaf_recoveries.cpp."]}
 // symbol    ?add_filter@FileBox@@QAEHPAD0@Z
 */

@@ -118,7 +118,7 @@ Purpose: The buffered writer's re-entry half, run as the embedded Buffer's
          with the same busy-wait the timed writer uses, and re-arm the hook
          with this function before returning.
 
-// ORIGINAL: 0x004BEE60 ?UNK2@UV2Player@@QAAHHHHH@Z 0x004BEE60-0x004BEEFD FILE
+// ORIGINAL: 0x004BEE60 ?UNK2@UV2Player@@QAAHHHHH@Z 0x004BEE60-0x004BEEFD FILE BYTE_EXACT
 // symbol   _uv2_player_writer_redirect
 // size      157 bytes
 // prototype
@@ -419,7 +419,7 @@ void UV2Player::show_post_movie_text() {
     }
 }
 
-// ORIGINAL: 0x004BEA50 ?exec@UV2Player@@QAEHPADHHH@Z 0x004BEA50-0x004BEDB5
+// ORIGINAL: 0x004BEA50 ?exec@UV2Player@@QAEHPADHHH@Z 0x004BEA50-0x004BEDB5 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["image:terranx_original.exe:0x004BEA50-0x004BEDB5", "image:terranx_original.exe:0x00403BE0 caller passes a found .wve path, 640x480, flags 0xC", "image:terranx_original.exe:0x004BF390 is ?on_key@UV2Player@@QAAHXZ", "image:terranx_original.exe:0x005CB220 and 0x005CAAB0 consume MediaDescriptor+0xAC only under flags&0x40000", "image:terranx_original.exe:0x005CB6C0 reads and 0x005CD750 writes MediaDescriptor palette bytes at +0xB0", "source:src/uv2player.h:UV2Player exact 0xE68 layout, media_ and Buffer ownership", "source:src/movie_media.h:MediaDescriptor exact 0x7B4 storage view", "source:src/wave_device.h:WaveDeviceGlobal", "source:src/alphamovie.cpp:amovie_project .wve caller"], "reason": "Recover the .wve controller on UV2Player using its real descriptor, sound device, movie lifecycle and caller, preserving the pinned message/audio/cursor order and early-return behavior."}
 // TRIED: direct transcription off Ghidra + raw disasm, `this` used as the char* name buffer at offset 0, indirect calls through the fixed import-table slots (ShowCursor/PeekMessage/GetMessage/ TranslateMessage/DispatchMessage/Sleep/CharUpperA); matches through instr #26, diverges in the strrchr/inc-vs-lea shape
 // Proposed source-owner replacement for the PENDING_BODY at 0x004BEA50.

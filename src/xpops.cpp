@@ -544,7 +544,7 @@ Purpose: The full builder every xpops wrapper funnels into. When the label
          the popup dialog's faction having its spying flag set, and on
          expansions being enabled; on success substitute a fixed caption for
          the popup. Either way, fall through to the shared pop builder.
-// ORIGINAL: 0x005BF480 ?X_pop@@YAHPADPBDHPADHP6AHXZ@Z 0x005BF480-0x005BF5C2 SEMANTIC
+// ORIGINAL: 0x005BF480 ?X_pop@@YAHPADPBDHPADHP6AHXZ@Z 0x005BF480-0x005BF5C2 BYTE_EXACT
 // NOTE: needs the ebp frame (optimize "y" off) and pop_full args written inline.
 // symbol    ?X_pop@@YAHPADPBDH0HP6AHXZ@Z
 // size      322 bytes

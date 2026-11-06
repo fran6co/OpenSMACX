@@ -44,7 +44,7 @@ int Font::FontInitCount;
 
 /*
 Purpose: Initialize the class using the font name, height and style.
-// ORIGINAL: 0x00618F40 ?init@Font@@QAEHPADHH@Z 0x00618F40-0x006190C6
+// ORIGINAL: 0x00618F40 ?init@Font@@QAEHPADHH@Z 0x00618F40-0x006190C6 BYTE_EXACT
 // symbol    ?init@Font@@QAEHPBDHH@Z
 // size      390 bytes
 // prototype int (__thiscall ?init@Font@@QAEHPADHH@Z)(Font* this, int8* fontName, int height, int style)

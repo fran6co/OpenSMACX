@@ -144,7 +144,7 @@ void StringList::sort(int) {
 // Read a text section into the list, preserving the caret-prefixed value
 // conventions used by the original string tables. The callback parameter is
 // part of the original interface but is not used by this body.
-// ORIGINAL: 0x00608980 ?load@StringList@@QAEHPADPADHP6AXPAD@Z@Z 0x00608980-0x00608B9B;0x00662EA0-0x00662EB5
+// ORIGINAL: 0x00608980 ?load@StringList@@QAEHPADPADHP6AXPAD@Z@Z 0x00608980-0x00608B9B;0x00662EA0-0x00662EB5 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/00608980.cpp", "source:src/stringstruct.h:StringList"], "reason": "Home StringList section loading with typed Text lifecycle and inherited StringStruct entry/payload ownership"}
 // symbol    ?load@StringList@@QAEHPAD0HP6AX0@Z@Z
 int StringList::load(LPSTR file_name, LPSTR section_id, int clear_existing,

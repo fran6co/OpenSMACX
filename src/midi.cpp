@@ -888,7 +888,7 @@ Purpose: Load the MIDI from a caller-supplied filename. With no wrapped
 // preference for this shape (which stack param gets which saved register)
 // rather than anything source-form can steer - the same class of thing the
 // scheduler notes above describe for `lea`/`push` ordering.
-// ORIGINAL: 0x004C7D80 ?load@Midi@@QAEHPBD@Z 0x004C7D80-0x004C7DCD
+// ORIGINAL: 0x004C7D80 ?load@Midi@@QAEHPBD@Z 0x004C7D80-0x004C7DCD BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned 0x4C7DB8 loads filename stack word into EAX; 0x4C7DBB tests it and only a nonzero word bypasses Sound::load at0x4C7DC2.", "Pinned 0x4C7D86 checks receiver device at+3C. Missing device uses the guarded factory with mode2; factory failure remains its returned integer.", "Existing Midi and Sound declarations own this virtual override and device field. The free factory and qualified base call retain their existing ABI; pointer-to-int narrowing is the configured 32-bit target interpretation."], "reason": "Preserve the original pointer-valued integer status on the already-wrapped MIDI path; a null filename must still reach the qualified Sound loader."}
 // symbol    ?load@Midi@@UAEHPBD@Z
 // size      78 bytes

@@ -162,7 +162,7 @@ Status: Complete
 /*
 Purpose: Bubble-sort one int array descending while applying the identical
          exchanges to a parallel array addressed relative to it.
-// ORIGINAL: 0x004D5F70 sub_4d5f70 0x004D5F70-0x004D5FE6 FILE
+// ORIGINAL: 0x004D5F70 sub_4d5f70 0x004D5F70-0x004D5FE6 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Original4D5F70..4D5FE6; retired seed git:b18d3ac8:src/unrecovered/004d5f70.cpp records the same identity and spans.", "The pinned body calls integer swap at 0x628A50; the typed declaration and implementation are owned by general.h/general.cpp.", "The parallel array is reached by the same base-plus-index arithmetic the seed measured."], "reason": "Coverage transcription of the paired bubble sort with the source-owned integer swap; the parallel-array base stays an int because no owning array is named anywhere in the tree."}
 // symbol    _sub_4d5f70
 Status: Coverage transcription - unclaimed body

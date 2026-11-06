@@ -66,7 +66,7 @@ void Spot::init(int count) {
 
 /*
 Purpose: Search for a specific spot and replace the RECT value.
-// ORIGINAL: 0x005FA900 ?replace@Spot@@QAEXHHHHHH@Z 0x005FA900-0x005FA956
+// ORIGINAL: 0x005FA900 ?replace@Spot@@QAEXHHHHHH@Z 0x005FA900-0x005FA956 BYTE_EXACT
 // size      86 bytes
 // prototype void (__thiscall ?replace@Spot@@QAEXHHHHHH@Z)(Spot* this, int position, int type, int left, int top, int length, int width)
 // callers   0   call targets   0

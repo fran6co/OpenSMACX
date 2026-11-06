@@ -94,7 +94,7 @@ Purpose: Take a square and every tile in its footprint for a faction. The
          tiles walked through the shared RadiusOffset tables and wrapped in x by
          xrange; if any tile is already held by another faction the attempt is
          abandoned at that tile.
-// ORIGINAL: 0x0058FE80 ?lock@SquareLock@@QAEHHHHH@Z 0x0058FE80-0x0058FF68
+// ORIGINAL: 0x0058FE80 ?lock@SquareLock@@QAEHHHHH@Z 0x0058FE80-0x0058FF68 BYTE_EXACT
 // size      232 bytes
 // prototype BOOL (__thiscall ?lock@SquareLock@@QAEHHHHH@Z)(SquareLock* this, int factionID, int flags, int xCoord, int yCoord)
 // callers   4   call targets   1

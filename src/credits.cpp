@@ -181,7 +181,7 @@ void __cdecl Credits::timer_callback_daemon(int a1) {
 }
 #pragma optimize("", on)
 
-// ORIGINAL: 0x00428C00 ?draw_credits@Credits@@QAEXXZ 0x00428C00-0x00428D5C
+// ORIGINAL: 0x00428C00 ?draw_credits@Credits@@QAEXXZ 0x00428C00-0x00428D5C BYTE_EXACT
 #pragma optimize("y", off)
 void Credits::draw_credits() {
   graphicWin2_.fill(9);

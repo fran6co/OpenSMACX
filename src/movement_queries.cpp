@@ -24,7 +24,7 @@
 
 /*
 Purpose: Determine whether specified unit can physically reach the destination coordinates.
-// ORIGINAL: 0x0056B320 ?get_there@@YAHHHH@Z 0x0056B320-0x0056B47D
+// ORIGINAL: 0x0056B320 ?get_there@@YAHHHH@Z 0x0056B320-0x0056B47D BYTE_EXACT
 // size      349 bytes
 // prototype int (__cdecl ?get_there@@YAHHHH@Z)(int vehID, int xCoord, int yCoord)
 // callers   1   call targets   5

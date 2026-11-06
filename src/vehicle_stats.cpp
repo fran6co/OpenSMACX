@@ -192,7 +192,7 @@ void __cdecl say_stats_3(LPSTR stat, int proto_id) {
 /*
 Purpose: Generate stats string for specified prototype. List whether prototype is psi, sea or air.
          Replaced existing non-safe strcat with string. Reworked to integrate with existing C code.
-// ORIGINAL: 0x0057D8E0 ?say_stats_2@@YAXPADH@Z 0x0057D8E0-0x0057DA94
+// ORIGINAL: 0x0057D8E0 ?say_stats_2@@YAXPADH@Z 0x0057D8E0-0x0057DA94 BYTE_EXACT
 // TRIED: label_get(196/163/162) calls (25/140); open-coding
 //            StringTable.get((int)*((LPSTR*)Labels.strings_ptr + N)) plus the
 //            off_rating<0/>=99/else branch order got to 58/140. def_rating via

@@ -82,7 +82,7 @@ extern BoxSpriteParams InterfaceStandardPopupBoxStyle;
 // RECOVERY_OBJECT: v2 0x006A7524 0x006A7528 ?ActiveAlphaSave@@3PAVAlphaSave@@A 0x00407BE0
 AlphaSave *ActiveAlphaSave = 0;
 
-// ORIGINAL: 0x004072D0 ?filebox_draw@AlphaSave@@QAAXPAUGraphicWin@@HHHHH@Z 0x004072D0-0x00407348
+// ORIGINAL: 0x004072D0 ?filebox_draw@AlphaSave@@QAAXPAUGraphicWin@@HHHHH@Z 0x004072D0-0x00407348 BYTE_EXACT
 // symbol    ?alpha_save_filebox_draw@@YAXPAVGraphicWin@@HHHHH@Z
 // The catalogue's member spelling would push a seventh, unused receiver.
 // The selected row lives in CurrentListBoxDraw's Dialog virtual base.

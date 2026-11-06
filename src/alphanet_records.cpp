@@ -65,7 +65,7 @@ int AlphaNetStringStruct::on_insert(NetAllocationNode *) { return 0; }
 // RECOVERY_SHARED: v1 0x00404270 0x00404273 ?on_remove@AlphaNetStringStruct@@UAEXPAVNetAllocationNode@@@Z 0x004E2490
 void AlphaNetStringStruct::on_remove(NetAllocationNode *) { }
 
-// ORIGINAL: 0x005D4890 ?on_insert@AlphaNetLedger@@UAEHPAVNetAllocationNode@@@Z 0x005D4890-0x005D498D
+// ORIGINAL: 0x005D4890 ?on_insert@AlphaNetLedger@@UAEHPAVNetAllocationNode@@@Z 0x005D4890-0x005D498D BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Original table 0x66EAE8 slot 0 points here. Insertion 0x401D80 allocates a 0x60 NetAllocationNode, constructs its nested list and invokes this hook; enumeration 0x630C30 supplies DPSESSIONDESC2 fields. Seed extent is retained; this binding makes no matching claim."], "reason": "Recover the session-ledger insertion virtual from its retained seed using the existing allocation-owning payload class."}
 // symbol    ?on_insert@AlphaNetLedger@@UAEHPAVNetAllocationNode@@@Z
 int AlphaNetLedger::on_insert(NetAllocationNode *payload) {
