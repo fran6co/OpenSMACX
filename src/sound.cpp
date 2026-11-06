@@ -29,27 +29,9 @@
 // RECOVERY_IMPORT: v1 __imp__FreeLibrary@4 KERNEL32.dll name:FreeLibrary
 
 // ORIGINAL: 0x004C5E50 ?load_sound_dll@@YAHXZ 0x004C5E50-0x004C5F68 FILE
-// TRIED: do-while ROTATION is the remaining wall. The image keeps the plain
-// bottom-tested loop (back-edge `jl` to the handle reload at 0x4c5e8c, entry
-// `jmp` past it reusing the LoadLibraryA eax - the PRE skip); this tree's cl
-// rotates the same do-while into a peeled first iteration (arg folded to
-// `push 1`, `mov edi,1` after, bottom test inverted to `jge`), +5
-// instructions, best 31/86 at /O2 /Gy /GR- /GX. Tried unchanged: for(;;)+break
-// (canonicalizes to the same rotation), /O1 sets (7/86), /Oy- (10/86),
-// /Ob0, /Oi-. Pointer-VALUE uses of a fixed address must be spelled as the
-// literal - a binding used for its own value compiles a memory read of the
-// binding where the image has the immediate - and the slot-zeroing loop
-// needs one to lower to `rep stosd`. The three kernel32 entrypoints are the
-// image's own imports (tools/iat_names.py: 0x00669120 LoadLibraryA,
-// 0x00669124 GetProcAddress, 0x00669128 FreeLibrary), so the source calls
-// the APIs directly and the IAT operands mask like every relocation. The
-// image hoists the GetProcAddress entry into ebx for the walk (mov 0x4c5e7d,
-// `call ebx` 0x4c5e9c); the direct call landed here emits a fresh
-// `call dword ptr [__imp_GetProcAddress]` per iteration instead - the
-// fn-pointer local that reproduced the hoist measured 33/86 against this
-// spelling's score below.
-// Semantically equivalent: same stores, same calls, same guards, same
-// failure paths.
+// A plain indexed for loop over SoundDllProcs; the failure path is the
+// inlined unload_sound_dll followed by a second guard clear, and the version
+// probe is the inlined get_sound_version.
 // size      280 bytes
 // prototype
 // callers   1   call targets   2
@@ -97,36 +79,17 @@ int __cdecl load_sound_dll() {
         if (SoundDllModule == 0) {
             return 1;
         }
-        void **procs = SoundDllProcs;
-        void **slot = procs;
-        int index = 0;
-        do {
-            void *proc = reinterpret_cast<void *>(GetProcAddress(
-                SoundDllModule, MAKEINTRESOURCEA((index + 1) & 0xffff)));
-            *slot = proc;
-            if (proc == 0) {
-                HMODULE handle = SoundDllModule;
+        for (int index = 0; index < 11; ++index) {
+            SoundDllProcs[index] = reinterpret_cast<void *>(GetProcAddress(
+                SoundDllModule, MAKEINTRESOURCEA(index + 1)));
+            if (SoundDllProcs[index] == 0) {
+                unload_sound_dll();
                 WaveDeviceReleaseGuard = 0;
-                if (handle != 0) {
-                    FreeLibrary(handle);
-                    SoundDllModule = 0;
-                }
-                WaveDeviceReleaseGuard = 0;
-                for (int i = 0; i < 0xb; ++i) {
-                    procs[i] = 0;
-                }
                 return 1;
             }
-            ++slot;
-            ++index;
-        } while (index < 11);
-
-        unsigned int version;
-        if (SoundDllModule == 0) {
-            version = 0;
-        } else {
-            version = SoundXOrdinal11Version()();
         }
+
+        unsigned int version = get_sound_version();
         if ((version & 0xff00) != 0x100) {
             sound_version_warning("The sound header files used in the game do not match "
                        "the ones used in sound.dll. Check all sound.h and "

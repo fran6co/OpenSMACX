@@ -1061,14 +1061,10 @@ int __cdecl change_opening(char *filename) {
     }
     buf.load_pcx(filename, 0, 10, 0xec);
     GraphicWin *window = opening_window();
-    Buffer *surface = window != 0 ? static_cast<Buffer *>(window) : 0;
-    // The original dimensions use GraphicWin itself after the load callback;
-    // only the Buffer copy argument conversion is null-conditional.
-    int c1 = window->dib_.bmiHeader.biWidth;
-    int c2 = -window->dib_.bmiHeader.biHeight;
-    int p1 = buf.dib_.bmiHeader.biWidth;
-    int p2 = -static_cast<int>(buf.dib_.bmiHeader.biHeight);
-    buf.copy(surface, 0, 0, p1, p2, 0, 0, c1, c2);
+    // The dimensions use GraphicWin itself after the load callback; only the
+    // Buffer copy argument conversion is null-conditional.
+    buf.copy(window, 0, 0, buf.pixel_width(), buf.pixel_height(), 0, 0,
+             window->pixel_width(), window->pixel_height());
     opening_window()->on_update();
     return 0;
 }

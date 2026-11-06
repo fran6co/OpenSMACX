@@ -796,12 +796,33 @@ void PrefWin::on_button_clicked(int button_id) {
       prefs_put("Gamma Correction",
           static_cast<int>(PrefWinGammaCorrection * PrefWinGammaScale), 0);
       break;
+    case 0x5E:
+      if (field_A14_ == 2) {
+        field_A18_ = 2;
+        field_A14_ = 6;
+      } else {
+        field_A18_ = 6;
+        field_A14_ = 2;
+      }
+      break;
+    case 0x5C:
+      field_A5C_ = 1;
+      // Accept falls through to the shared close.
+    case 0x5B:
+      destroy();
+      break;
     case 0x5A: // Restore the rule and warning defaults; retain live UI controls.
       prefsBasicPending_ = default_prefs();
-      prefsAdvPending_ = prefsAutoPending_ = prefsAVPending_ = prefsMapPending_ = prefsBasicPending_;
       morePrefsBasicPending_ = default_prefs2();
-      morePrefsAdvPending_ = morePrefsAutoPending_ = morePrefsAVPending_ = morePrefsMapPending_ = morePrefsBasicPending_;
+      prefsAdvPending_ = default_prefs();
+      morePrefsAdvPending_ = default_prefs2();
+      prefsAutoPending_ = default_prefs();
+      morePrefsAutoPending_ = default_prefs2();
+      prefsAVPending_ = default_prefs();
+      morePrefsAVPending_ = default_prefs2();
       warningsPending_ = default_warn();
+      prefsMapPending_ = default_prefs();
+      morePrefsMapPending_ = default_prefs2();
       volumeMainToggle_.set_selected_state(1);
       volumeVoiceToggle_.set_selected_state(1);
       volumeSFXToggle_.set_selected_state(1);
@@ -815,19 +836,6 @@ void PrefWin::on_button_clicked(int button_id) {
       volumeMusicScroll_.set_pos(0x3F);
       if (FactionMusic) FactionMusic->set_volume(0x3F);
       get_preferences();
-      break;
-    case 0x5B:
-      field_A5C_ = 0;
-      destroy();
-      break;
-    case 0x5C:
-      field_A5C_ = 1;
-      destroy();
-      break;
-    case 0x5E:
-      field_A18_ = field_A14_;
-      field_A14_ = field_A14_ == 2 ? 6 : 2;
-      hide_option_buttons();
       break;
   }
   change_volume_button_state(button_id);

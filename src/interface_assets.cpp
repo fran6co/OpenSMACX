@@ -4879,40 +4879,30 @@ Return Value: the restored set_clip verdict
 Status: Coverage transcription - unclaimed body
 */
 int __cdecl def_caption_draw(GraphicWin *window, char *text, Buffer *canvas) {
-    // The historical offset-based access rationale above is superseded by
-    // narrow friendship with the existing owners, not by a guessed layout.
-    // Matching obligation: the pinned climate-window exit at 4554CA leaves
-    // EAX unspecified. This transcription's zero result is not proof of the
-    // original return ABI; redraw_nc_buffer ignores the callback result.
-    if (window == &WorldClimateWorldWin || text == 0) {
-        return 0;
+    // The pinned climate-window and null-text exits jump straight to the
+    // shared epilogue and leave EAX unspecified; redraw_nc_buffer ignores
+    // the callback result. The caption works on Buffer+0x30 (rect2_).
+    if (window != &WorldClimateWorldWin && text != 0) {
+        RECT area = canvas->rect2_;
+        area.left += 0x23 + window->frame_left_->left_offset();
+        area.right -= 0x28;
+        area.top += 0xB + window->frame_top_->top_offset();
+        area.bottom -= 0xC;
+
+        canvas->set_text_color(window->field_104_, window->field_108_,
+                               window->field_10C_, window->field_110_);
+        canvas->set_font(window->field_F8_, 0, 0, 0);
+        canvas->set_clip(&area);
+
+        if ((window->iFlags_ & 0x10000) != 0) {
+            canvas->write_l(text, &area, strlen(text));
+        } else if ((window->iFlags_ & 0x40000) != 0) {
+            canvas->write_right_l(text, &area, strlen(text));
+        } else {
+            canvas->write_cent_l(text, &area, strlen(text));
+        }
+        return canvas->set_clip(&canvas->rect2_);
     }
-
-    // Pinned4554E6 copies Buffer+0x30 before reading the two frame sprites.
-    RECT *const canvas_rect = &canvas->rect1_;
-    RECT area = *canvas_rect;
-    area.right -= 0x28;
-    area.left += 0x23 + window->frame_left_->left_offset();
-    area.top += 0xB + window->frame_top_->top_offset();
-    area.bottom -= 0xC;
-
-    canvas->set_text_color(window->field_104_, window->field_108_,
-                           window->field_10C_, window->field_110_);
-    canvas->set_font(window->field_F8_, 0, 0, 0);
-    canvas->set_clip(&area);
-
-    const unsigned int style = window->iFlags_;
-    const unsigned int len = strlen(text);
-    if ((style & 0x10000) != 0) {
-        canvas->write_l(text, &area, len);
-    } else if ((style & 0x40000) != 0) {
-        canvas->write_right_l(text, &area, len);
-    } else {
-        canvas->write_cent_l(text, &area, len);
-    }
-    // The original final calls pass live Buffer+0x30, not a saved rectangle.
-    // Preserve that alias even when setting the caption clip changed rect1_.
-    return canvas->set_clip(canvas_rect);
 }
 
 // ORIGINAL: 0x00455610 ?load_interface@@YAXH@Z 0x00455610-0x00455E41

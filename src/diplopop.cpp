@@ -254,58 +254,69 @@ void DiploPop::init() {
 
 // ORIGINAL: 0x0043F5F0 ?draw_bioscan@DiploPop@@QAEXXZ 0x0043F5F0-0x0043F784
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/0043f5f0.cpp", "image:terranx_original.exe:0x0043F5F0", "source:src/diplopop.h:DiploPop"], "reason": "Recover the bioscan renderer through DiploPop rectangles, MainInterface buffer, source-owned styles, and borrowed Sprite."}
-void DiploPop::draw_bioscan() {
-    Buffer *canvas = static_cast<Buffer *>(&MainInterfaceGlobal);
-    RECT title = bioscan_title_rect_;
-    canvas->box_sprite(&title, &InterfaceBoxStyles[6]);
-    title.left += 3;
-    title.right -= 3;
-    title.top += 3;
-    title.bottom -= 3;
+// Guarded full-length form of Buffer::write_cent_l(text, rect); the image
+// inlines the null test before strlen at its call site.
+static inline int write_cent_rect(MainInterface &canvas, char *text, RECT *rect) {
+    if (text == 0) {
+        return 0;
+    }
+    return canvas.write_cent_l(text, rect, static_cast<int>(strlen(text)));
+}
 
-    canvas->set_font(&font3_, 0, 0, 0);
-    canvas->set_text_color(0xA0, -1, 1, 1);
+void DiploPop::draw_bioscan() {
+    RECT rect = bioscan_title_rect_;
+    MainInterfaceGlobal.box_sprite(&rect, &InterfaceBoxStyles[6]);
+    rect.left += 3;
+    rect.right -= 3;
+    rect.top += 3;
+    rect.bottom -= 3;
+
+    MainInterfaceGlobal.set_font(&font3_, 0, 0, 0);
+    MainInterfaceGlobal.set_text_color(0xA0, -1, 1, 1);
     StringTemp[0] = '\0';
     strcat(StringTemp, label_get(0xE8C / 4));
     CharUpperA(StringTemp);
-    canvas->write_cent_l(StringTemp, &title,
-                         static_cast<int>(strlen(StringTemp)));
+    write_cent_rect(MainInterfaceGlobal, StringTemp, &rect);
 
-    RECT picture = bioscan_picture_rect_;
-    canvas->box_sprite(&picture, &InterfaceBoxStyles[0]);
-    picture.left += 3;
-    picture.right -= 3;
-    picture.top += 3;
-    picture.bottom -= 3;
+    RECT *picture = &bioscan_picture_rect_;
+    rect = *picture;
+    MainInterfaceGlobal.box_sprite(&rect, &InterfaceBoxStyles[0]);
+    rect.left += 3;
+    rect.right -= 3;
+    rect.top += 3;
+    rect.bottom -= 3;
 
-    const int x = bioscan_picture_rect_.right - frame_sprite_->width() * 2;
-    const int y = bioscan_title_rect_.bottom +
-                  (bioscan_picture_rect_.bottom - frame_sprite_->height() * 2 -
-                   bioscan_title_rect_.bottom) / 2;
-    frame_sprite_->draw(canvas, frame_sprite_->transparent_index(), x, y, 1, 1);
+    frame_sprite_->draw(&MainInterfaceGlobal, frame_sprite_->transparent_index(),
+        bioscan_picture_rect_.right - frame_sprite_->width() * 2,
+        bioscan_picture_rect_.top +
+            (picture->bottom - frame_sprite_->height() - picture->top) / 2,
+        1, 1);
 }
 
 // ORIGINAL: 0x0043F790 ?draw_portrait@DiploPop@@QAEXXZ 0x0043F790-0x0043FA8E
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/0043f790.cpp", "image:terranx_original.exe:0x0043F790", "source:src/diplopop.h:DiploPop"], "reason": "Recover the portrait renderer through typed DiploPop/Faction state and existing text, mood, and repute services."}
+// Guarded full-length form of Buffer::write_l(text, x, y, len); the image
+// inlines the null test before strlen at each call site.
+static inline int write_l_text(MainInterface &canvas, char *text, int x, int y) {
+    if (text == 0) {
+        return 0;
+    }
+    return canvas.write_l(text, x, y, static_cast<int>(strlen(text)));
+}
+
 void DiploPop::draw_portrait() {
-    Buffer *canvas = static_cast<Buffer *>(&MainInterfaceGlobal);
     RECT text = portrait_text_rect_;
-    canvas->box_sprite(&text, &InterfaceBoxStyles[0]);
+    MainInterfaceGlobal.box_sprite(&text, &InterfaceBoxStyles[0]);
+    text.left += 1;
+    text.right -= 1;
+    text.top += 1;
+    text.bottom -= 1;
+    text.top += landscape_sprite_->height();
+    MainInterfaceGlobal.hline(text.left, text.right, text.top,
+        MainInterfaceGlobal.get_pixel(text.left - 1, text.top));
 
-    const int landscape_height = landscape_sprite_->height();
-    const int rule_y = text.top + 1 + landscape_height;
-    const int rule_color = canvas->get_pixel(text.left, rule_y);
-    canvas->hline(text.left + 1, text.right - 1, rule_y, rule_color);
-
-    // Native retains the one-pixel inset and the landscape-height advance
-    // in the same local RECT before applying the later text inset.
-    ++text.left;
-    --text.right;
-    text.top = rule_y;
-    --text.bottom;
-
-    canvas->set_font(&font3_, 0, 0, 0);
-    canvas->set_text_color(0xA0, -1, 1, 1);
+    MainInterfaceGlobal.set_font(&font3_, 0, 0, 0);
+    MainInterfaceGlobal.set_text_color(0xA0, -1, 1, 1);
     text.left += 4;
     text.right -= 4;
     text.top += 4;
@@ -314,37 +325,27 @@ void DiploPop::draw_portrait() {
     StringTemp[0] = '\0';
     strcat(StringTemp, Players[counterpart_faction_].name_leader);
     CharUpperA(StringTemp);
-    canvas->write_l(StringTemp, text.left, text.top,
-                    static_cast<int>(strlen(StringTemp)));
+    write_l_text(MainInterfaceGlobal, StringTemp, text.left, text.top);
     text.top += font_line_advance(font3_);
 
-    canvas->set_font(&font2_, 0, 0, 0);
+    MainInterfaceGlobal.set_font(&font2_, 0, 0, 0);
     StringTemp[0] = '\0';
     strcat(StringTemp, label_get(0xE90 / 4));
     strcat(StringTemp, ": ");
-    int repute = PlayersData[counterpart_faction_].integrity_blemishes;
-    if (repute < 0) {
-        repute = 0;
-    } else if (repute > 7) {
-        repute = 7;
-    }
-    say_special(StringTemp,
-                StringTable.get(Repute[repute]),
-                counterpart_faction_);
-    canvas->write_l(StringTemp, text.left, text.top,
-                    static_cast<int>(strlen(StringTemp)));
+    int faction = counterpart_faction_;
+    char *repute = Repute[range(PlayersData[faction].integrity_blemishes, 0, 7)];
+    say_special(StringTemp, StringTable.get(repute), faction);
+    write_l_text(MainInterfaceGlobal, StringTemp, text.left, text.top);
     text.top += font_line_advance(font2_);
 
     StringTemp[0] = '\0';
     strcat(StringTemp, label_get(0xE94 / 4));
     strcat(StringTemp, ": ");
-    const int local_faction = ConsoleGlobal.faction_id_;
-    const int mood = static_cast<int>(get_mood(
-        PlayersData[counterpart_faction_].diplo_friction[local_faction]));
-    char *mood_text = StringTable.get(Mood[mood]);
-    say_special(StringTemp, mood_text, counterpart_faction_);
-    canvas->write_l(StringTemp, text.left, text.top,
-                    static_cast<int>(strlen(StringTemp)));
+    faction = counterpart_faction_;
+    char *mood =
+        Mood[get_mood(PlayersData[faction].diplo_friction[ConsoleGlobal.faction_id_])];
+    say_special(StringTemp, StringTable.get(mood), faction);
+    write_l_text(MainInterfaceGlobal, StringTemp, text.left, text.top);
 }
 
 // CRT entry 0x0043EFC0 constructs this object and registers 0x0043EFE0,
@@ -643,25 +644,25 @@ void DiploPop::on_iface_button_clicked(int button_id) {
 // TRIED: MISMATCH #7 sub/add, virtual-base offset arithmetic form differs
 // symbol    ?on_iface_group_clicked@DiploPop@@UAEXHHH@Z
 void DiploPop::on_iface_group_clicked(int group, int x_coord, int y_coord) {
-    int selection = y_coord;
-    if (selection > 1000) selection -= 1000;
-    selection -= 6;
+    if (y_coord > 1000) y_coord -= 1000;
 
-    if (selection == 0) {
+    switch (y_coord) {
+    case 6:
         WorldClimateWorldWin.show(0);
-        MapWinTable[1]->show(0);
-        group = 0x3EE;
-    } else if (selection == 1) {
-        WorldClimateWorldWin.hide();
         MapWinTable[1]->hide();
-        group = 0x3EF;
-    } else {
+        MainInterfaceGlobal.button_group(1).set(0x3EE, 0);
+        break;
+    case 7:
+        WorldClimateWorldWin.hide();
+        MapWinTable[1]->show(0);
+        MainInterfaceGlobal.button_group(1).set(0x3EF, 0);
+        break;
+    default:
         on_iface_button_clicked(2);
         draw_hq();
         return;
     }
 
-    MainInterfaceGlobal.button_group(1).set(group, 0);
     flatButtons_[2].set(0);
     draw_hq();
 }
@@ -670,53 +671,46 @@ void DiploPop::on_iface_group_clicked(int group, int x_coord, int y_coord) {
 // ORIGINAL: 0x00440080 ?draw_hq@DiploPop@@QAEXXZ 0x00440080-0x00440291 FILE
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00440080.cpp retained original identity and spans", "recovery/tasks/interface-contract-report-closure.json authorized ownership recovery", "original:0x00440080 complete control/member accesses and concrete interface table"], "reason": "Recover the concrete SubInterface owner operation through genuine window members and source-owned globals. Original table/call evidence identifies the callback receiver; the retained compatible seed supplies its complete original intervals, not an executable-address forwarding implementation."}
 void DiploPop::draw_hq() {
-    Buffer *const canvas = static_cast<Buffer *>(&MainInterfaceGlobal);
-    RECT area = rect1_;
+    RECT area = frame_inset_rect_;
 
     if (flatButtons_[2].selected_state() == 0) {
-        canvas->set_clip(&area);
+        MainInterfaceGlobal.set_clip(&area);
         MainInterfaceGlobal.restore_back(0);
-        canvas->set_clip(MainInterfaceGlobal.buffer_working_rect());
-        MainInterfaceGlobal.soft_update(&rect1_);
+        MainInterfaceGlobal.set_clip(MainInterfaceGlobal.buffer_working_rect());
+        MainInterfaceGlobal.soft_update(&frame_inset_rect_);
         return;
     }
 
     area.bottom -= 4;
-    canvas->box_sprite(&area, &InterfaceBoxStyles[0]);
-
-    const int left = area.left + 1;
-    const int top = area.top + 1;
-    const int right = area.right - 1;
+    MainInterfaceGlobal.box_sprite(&area, &InterfaceBoxStyles[0]);
+    area.left += 1;
+    area.right -= 1;
+    area.top += 1;
     area.bottom -= 1;
-    const int text_top = top + 0x15;
-    area.left = left;
-    area.top = top;
-    area.right = right;
+    RECT text = area;
+    text.bottom = text.top + 0x14;
 
-    int base_id = 0;
     StringTemp[0] = 0;
-    while (base_id < GameDataStateStorage.fields_.base_current_count_) {
+    int base_id;
+    for (base_id = 0; base_id < GameDataStateStorage.fields_.base_current_count_;
+         ++base_id) {
         if (Bases[base_id].faction_id_current == counterpart_faction_
             && has_fac_built(FAC_HEADQUARTERS, base_id)) break;
-        ++base_id;
     }
-
-    const char *heading = base_id == GameDataStateStorage.fields_.base_current_count_
-        ? label_get(0x3A9) : Bases[base_id].name_string;
-    strcat(StringTemp, heading);
+    strcat(StringTemp,
+           base_id == GameDataStateStorage.fields_.base_current_count_
+               ? label_get(0x3A9) : Bases[base_id].name_string);
     CharUpperA(StringTemp);
 
-    canvas->set_font(&font3_, 0, 0, 0);
-    canvas->set_text_color(0xA0, -1, 1, 1);
-    if (StringTemp[0]) {
-        canvas->write_cent_l(StringTemp, &area,
-                             static_cast<int>(strlen(StringTemp)));
-    }
+    MainInterfaceGlobal.set_font(&font3_, 0, 0, 0);
+    MainInterfaceGlobal.set_text_color(0xA0, -1, 1, 1);
+    write_cent_rect(MainInterfaceGlobal, StringTemp, &text);
 
-    area.top = text_top + 1;
-    const int x = (area.right - hq_sprite_->width() - area.left) / 2 + area.left;
-    hq_sprite_->draw(canvas, hq_sprite_->transparent_index(), x, area.top, 1, 1);
-    MainInterfaceGlobal.soft_update(&rect1_);
+    area.top = text.bottom + 1;
+    hq_sprite_->draw(&MainInterfaceGlobal, hq_sprite_->transparent_index(),
+        (area.right - hq_sprite_->width() - area.left) / 2 + area.left,
+        area.top, 1, 1);
+    MainInterfaceGlobal.soft_update(&frame_inset_rect_);
 }
 
 

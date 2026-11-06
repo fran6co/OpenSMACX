@@ -1202,75 +1202,50 @@ void Texture::draw_coast(Buffer * a1, Vert * a2, int * a3, Texture * a4, unsigne
 // calls     0x00628AD0
 
 
-int __cdecl Texture::setup_edge_gouraud(EdgeScan * a1, int a2) {
-  int b = a2;
+int __cdecl Texture::setup_edge_gouraud(EdgeScan *edge, int vertex_index) {
+    int endpoint;
+    for (;;) {
+        if (vertex_index == TextureRasterMaxYIndex) return 0;
+        endpoint = edge->f0 + vertex_index;
+        const int last = TextureRasterVertexCount - 1;
+        if (endpoint > last) endpoint = 0;
+        else if (endpoint < 0) endpoint = last;
 
-  if (b == TextureRasterMaxYIndex) {
-    return 0;
-  }
-
-  int c;
-  for (;;) {
-    c = a1->f0 + b;
-    if (TextureRasterVertexCount - 1 < c) {
-      c = 0;
-    } else if (c < 0) {
-      c = TextureRasterVertexCount - 1;
+        edge->counter = TextureRasterEdgeVerticesB[endpoint].y -
+                        TextureRasterEdgeVerticesB[vertex_index].y;
+        if (edge->counter != 0) break;
+        vertex_index = endpoint;
     }
+    if (edge->counter <= 0) return 0;
 
-    Vert *arrF4 = TextureRasterEdgeVerticesB;
-    int height = arrF4[c].y - arrF4[b].y;
-    a1->counter = height;
+    const int scale = edge->counter << 16;
+    edge->id = endpoint;
+    edge->accumA = (TextureRasterEdgeVerticesA[vertex_index].x << 16) + 0x8000;
+    edge->accumB = (TextureRasterEdgeVerticesA[vertex_index].y << 16) + 0x8000;
+    edge->deltaA = fixed_div(
+        (TextureRasterEdgeVerticesA[endpoint].x << 16) - edge->accumA, scale);
+    edge->deltaB = fixed_div(
+        (TextureRasterEdgeVerticesA[endpoint].y << 16) - edge->accumB, scale);
 
-    if (height != 0) {
-      if (height < 1) {
-        return 0;
-      }
-      a1->id = c;
-      int scaled = height * 0x10000;
-
-      Vert *arr90 = TextureRasterEdgeVerticesA;
-      int x0 = arr90[b].x * 0x10000 + 0x8000;
-      a1->accumA = x0;
-      int x1 = arr90[b].y * 0x10000 + 0x8000;
-      a1->accumB = x1;
-
-      int dxdy0 = fixed_div(arr90[c].x * 0x10000 - x0, scaled);
-      a1->deltaA = dxdy0;
-      int dxdy1 = fixed_div(arr90[c].y * 0x10000 - x1, scaled);
-      a1->deltaB = dxdy1;
-
-      int z0 = arrF4[b].x;
-      a1->accumC = z0;
-      int zdiff = arrF4[c].x - z0;
-      a1->deltaC = zdiff / height;
-
-      int absz = zdiff;
-      if (zdiff < 0) {
-        absz = -zdiff;
-        a1->extraDeltaC = -1;
-        a1->fracAccum = 1 - height;
-      } else {
-        a1->extraDeltaC = 1;
-        a1->fracAccum = 0;
-      }
-      a1->fracSub = height;
-      a1->fracDelta = absz % height;
-
-      int *arrFC = TextureRasterZValues;
-      int base2 = arrFC[b];
-      a1->accumD = base2 * 0x10000;
-      int dz2 = fixed_div(arrFC[c] * 0x10000 - base2 * 0x10000, scaled);
-      a1->deltaD = dz2;
-      return 1;
+    edge->accumC = TextureRasterEdgeVerticesB[vertex_index].x;
+    int dx = TextureRasterEdgeVerticesB[endpoint].x -
+             TextureRasterEdgeVerticesB[vertex_index].x;
+    edge->deltaC = dx / edge->counter;
+    if (dx < 0) {
+        dx = -dx;
+        edge->extraDeltaC = -1;
+        edge->fracAccum = 1 - edge->counter;
+    } else {
+        edge->extraDeltaC = 1;
+        edge->fracAccum = 0;
     }
+    edge->fracDelta = dx % edge->counter;
+    edge->fracSub = edge->counter;
 
-    b = c;
-    if (c == TextureRasterMaxYIndex) {
-      break;
-    }
-  }
-  return 0;
+    const int accum_d = TextureRasterZValues[vertex_index] << 16;
+    edge->accumD = accum_d;
+    edge->deltaD = fixed_div((TextureRasterZValues[endpoint] << 16) - accum_d, scale);
+    return 1;
 }
 
 // ORIGINAL: 0x00624D80 ?setup_edge@Texture@@QAAHPAUEdgeScan@@H@Z 0x00624D80-0x00624EA9
@@ -1288,57 +1263,49 @@ int __cdecl Texture::setup_edge_gouraud(EdgeScan * a1, int a2) {
 // calls     0x00628AD0
 
 
-int __cdecl Texture::setup_edge(EdgeScan *a1, int a2) {
-  if (a2 == TextureRasterMaxYIndex) {
-    return 0;
-  }
-  int base0 = a1->f0;
-  for (;;) {
-    int iVar3 = base0 + a2;
-    if (TextureRasterVertexCount - 1 < iVar3) {
-      iVar3 = 0;
-    } else if (iVar3 < 0) {
-      iVar3 = TextureRasterVertexCount - 1;
+int __cdecl Texture::setup_edge(EdgeScan *edge, int vertex_index) {
+    int endpoint;
+    for (;;) {
+        if (vertex_index == TextureRasterMaxYIndex) return 0;
+        endpoint = edge->f0 + vertex_index;
+        const int last = TextureRasterVertexCount - 1;
+        if (endpoint > last) endpoint = 0;
+        else if (endpoint < 0) endpoint = last;
+
+        edge->counter = TextureRasterEdgeVerticesB[endpoint].y -
+                        TextureRasterEdgeVerticesB[vertex_index].y;
+        if (edge->counter != 0) break;
+        vertex_index = endpoint;
     }
-    Vert *arr4f4 = TextureRasterEdgeVerticesB;
-    int iVar1 = arr4f4[iVar3].y - arr4f4[a2].y;
-    a1->counter = iVar1;
-    if (iVar1 != 0) {
-      if (iVar1 <= 0) {
-        return 0;
-      }
-      a1->id = iVar3;
-      Vert *arr490 = TextureRasterEdgeVerticesA;
-      int scaled = iVar1 << 0x10;
-      a1->accumA = arr490[a2].x << 0x10;
-      a1->accumB = arr490[a2].y << 0x10;
-      a1->deltaA =
-          fixed_div((arr490[iVar3].x << 0x10) - a1->accumA, scaled);
-      a1->deltaB = fixed_div(
-          (arr490[iVar3].y << 0x10) - a1->accumB, scaled);
-      a1->accumC = arr4f4[a2].x;
-      int diff = arr4f4[iVar3].x - arr4f4[a2].x;
-      int quotient;
-      if (diff < 0) {
-        diff = -diff;
-        a1->fracAccum = 1 - a1->counter;
-        a1->extraDeltaC = -1;
-        quotient = -(diff / a1->counter);
-      } else {
-        a1->extraDeltaC = 1;
-        quotient = diff / a1->counter;
-        a1->fracAccum = 0;
-      }
-      a1->deltaC = quotient;
-      a1->fracSub = a1->counter;
-      a1->fracDelta = diff % a1->counter;
-      return 1;
+    if (edge->counter <= 0) return 0;
+
+    const int scale = edge->counter << 16;
+    edge->id = endpoint;
+    edge->accumA = TextureRasterEdgeVerticesA[vertex_index].x << 16;
+    edge->accumB = TextureRasterEdgeVerticesA[vertex_index].y << 16;
+    edge->deltaA = fixed_div(
+        (TextureRasterEdgeVerticesA[endpoint].x << 16) - edge->accumA, scale);
+    edge->deltaB = fixed_div(
+        (TextureRasterEdgeVerticesA[endpoint].y << 16) - edge->accumB, scale);
+
+    edge->accumC = TextureRasterEdgeVerticesB[vertex_index].x;
+    int dx = TextureRasterEdgeVerticesB[endpoint].x -
+             TextureRasterEdgeVerticesB[vertex_index].x;
+    int delta_c;
+    if (dx < 0) {
+        dx = -dx;
+        edge->fracAccum = 1 - edge->counter;
+        edge->extraDeltaC = -1;
+        delta_c = -(dx / edge->counter);
+    } else {
+        edge->extraDeltaC = 1;
+        delta_c = dx / edge->counter;
+        edge->fracAccum = 0;
     }
-    a2 = iVar3;
-    if (iVar3 == TextureRasterMaxYIndex) {
-      return 0;
-    }
-  }
+    edge->deltaC = delta_c;
+    edge->fracDelta = dx % edge->counter;
+    edge->fracSub = edge->counter;
+    return 1;
 }
 
 // Fixed-slot bindings carried from 006198e0.cpp
@@ -3703,108 +3670,90 @@ static int texture_advance_cached_edge(EdgeScan &edge, const Vert *vertices,
 // fixed_div between observable record/edge stores and rereads shared tables.
 
 int __cdecl sub_625080(EdgeScan *edge, int index, TextureStore *cache) {
-    if (index == TextureRasterMaxYIndex) return 0;
-
+    int endpoint;
     for (;;) {
-        const int direction = edge->f0;
-        const int next = static_cast<int>(static_cast<unsigned int>(index) +
-                                          static_cast<unsigned int>(direction));
-        const int last = texture_difference(TextureRasterVertexCount, 1);
-        int endpoint = next;
+        if (index == TextureRasterMaxYIndex) return 0;
+        endpoint = edge->f0 + index;
+        const int last = TextureRasterVertexCount - 1;
         if (endpoint > last) endpoint = 0;
         else if (endpoint < 0) endpoint = last;
 
-        edge->counter = texture_difference(
-            TextureRasterEdgeVerticesB[endpoint].y,
-            TextureRasterEdgeVerticesB[index].y);
-        if (edge->counter != 0) {
-            if (edge->counter <= 0) return 0;
-
-            const int old_slot = cache->next_record_;
-            const int advanced = static_cast<int>(
-                static_cast<unsigned int>(old_slot) + 1u);
-            cache->next_record_ = advanced;
-            if (advanced == 10) cache->next_record_ = 0;
-            EdgeScan *record = &cache->edges_[old_slot];
-
-            edge->id = endpoint;
-            edge->accumA = texture_difference(
-                texture_fixed(TextureRasterEdgeVerticesA[index].x), -0x8000);
-            edge->accumB = texture_difference(
-                texture_fixed(TextureRasterEdgeVerticesA[index].y), -0x8000);
-            const int scale = texture_fixed(edge->counter);
-
-            if (cache->flags_ & 2u) {
-                const int delta_a = fixed_div(
-                    texture_difference(
-                        texture_fixed(TextureRasterEdgeVerticesA[endpoint].x),
-                        edge->accumA), scale);
-                record->deltaA = delta_a;
-                edge->deltaA = delta_a;
-                const int delta_b = fixed_div(
-                    texture_difference(
-                        texture_fixed(TextureRasterEdgeVerticesA[endpoint].y),
-                        edge->accumB), scale);
-                record->deltaB = delta_b;
-                edge->deltaB = delta_b;
-            } else {
-                edge->deltaA = record->deltaA;
-                edge->deltaB = record->deltaB;
-            }
-
-            edge->accumC = TextureRasterEdgeVerticesB[index].x;
-            const int dx = texture_difference(
-                TextureRasterEdgeVerticesB[endpoint].x,
-                TextureRasterEdgeVerticesB[index].x);
-            if (cache->flags_ & 2u) {
-                const int delta_c = dx / edge->counter;
-                record->deltaC = delta_c;
-                edge->deltaC = delta_c;
-                int magnitude = dx;
-                if (dx < 0) {
-                    magnitude = texture_difference(0, dx);
-                    edge->extraDeltaC = -1;
-                    edge->fracAccum = texture_difference(1, edge->counter);
-                } else {
-                    edge->extraDeltaC = 1;
-                    edge->fracAccum = 0;
-                }
-                const int frac_delta = magnitude % edge->counter;
-                record->fracDelta = frac_delta;
-                edge->fracSub = edge->counter;
-                edge->fracDelta = frac_delta;
-            } else {
-                edge->deltaC = record->deltaC;
-                if (dx < 0) {
-                    edge->extraDeltaC = -1;
-                    edge->fracAccum = texture_difference(1, edge->counter);
-                } else {
-                    edge->extraDeltaC = 1;
-                    edge->fracAccum = 0;
-                }
-                edge->fracDelta = record->fracDelta;
-                edge->fracSub = edge->counter;
-            }
-
-            if (cache->flags_ & 1u) {
-                record->accumD = texture_fixed(TextureRasterZValues[index]);
-                edge->accumD = record->accumD;
-                const int delta_d = fixed_div(
-                    texture_difference(
-                        texture_fixed(TextureRasterZValues[endpoint]),
-                        edge->accumD), scale);
-                record->deltaD = delta_d;
-                edge->deltaD = delta_d;
-            } else {
-                edge->accumD = record->accumD;
-                edge->deltaD = record->deltaD;
-            }
-            return 1;
-        }
-
+        edge->counter = TextureRasterEdgeVerticesB[endpoint].y -
+                        TextureRasterEdgeVerticesB[index].y;
+        if (edge->counter != 0) break;
         index = endpoint;
-        if (index == TextureRasterMaxYIndex) return 0;
     }
+    if (edge->counter <= 0) return 0;
+
+    EdgeScan *record = &cache->edges_[cache->next_record_];
+    if (++cache->next_record_ == 10) cache->next_record_ = 0;
+
+    edge->id = endpoint;
+    const int scale = edge->counter << 16;
+    edge->accumA = (TextureRasterEdgeVerticesA[index].x << 16) + 0x8000;
+    edge->accumB = (TextureRasterEdgeVerticesA[index].y << 16) + 0x8000;
+
+    if (cache->flags_ & 2u) {
+        const int delta_a = fixed_div(
+            (TextureRasterEdgeVerticesA[endpoint].x << 16) - edge->accumA,
+            scale);
+        record->deltaA = delta_a;
+        edge->deltaA = delta_a;
+        const int delta_b = fixed_div(
+            (TextureRasterEdgeVerticesA[endpoint].y << 16) - edge->accumB,
+            scale);
+        record->deltaB = delta_b;
+        edge->deltaB = delta_b;
+    } else {
+        edge->deltaA = record->deltaA;
+        edge->deltaB = record->deltaB;
+    }
+
+    edge->accumC = TextureRasterEdgeVerticesB[index].x;
+    int dx = TextureRasterEdgeVerticesB[endpoint].x -
+             TextureRasterEdgeVerticesB[index].x;
+    if (cache->flags_ & 2u) {
+        const int delta_c = dx / edge->counter;
+        record->deltaC = delta_c;
+        edge->deltaC = delta_c;
+        if (dx < 0) {
+            dx = -dx;
+            edge->extraDeltaC = -1;
+            edge->fracAccum = 1 - edge->counter;
+        } else {
+            edge->extraDeltaC = 1;
+            edge->fracAccum = 0;
+        }
+        const int frac_delta = dx % edge->counter;
+        record->fracDelta = frac_delta;
+        edge->fracSub = edge->counter;
+        edge->fracDelta = frac_delta;
+    } else {
+        edge->deltaC = record->deltaC;
+        if (dx < 0) {
+            edge->extraDeltaC = -1;
+            edge->fracAccum = 1 - edge->counter;
+        } else {
+            edge->extraDeltaC = 1;
+            edge->fracAccum = 0;
+        }
+        edge->fracDelta = record->fracDelta;
+        edge->fracSub = edge->counter;
+    }
+
+    if (cache->flags_ & 1u) {
+        const int accum_d = TextureRasterZValues[index] << 16;
+        record->accumD = accum_d;
+        edge->accumD = accum_d;
+        const int delta_d = fixed_div(
+            (TextureRasterZValues[endpoint] << 16) - accum_d, scale);
+        record->deltaD = delta_d;
+        edge->deltaD = delta_d;
+    } else {
+        edge->accumD = record->accumD;
+        edge->deltaD = record->deltaD;
+    }
+    return 1;
 }
 
 // Fixed-slot bindings carried from 00620100.cpp
@@ -3839,63 +3788,52 @@ int __cdecl sub_625080(EdgeScan *edge, int index, TextureStore *cache) {
 // emitter computes declarations; it does not carry lessons.
 
 int __cdecl sub_620100(EdgeScan *edge, int vertex_index) {
-    if (vertex_index == TextureRasterMaxYIndex) {
-        return 0;
-    }
-    int base = edge->f0;
+    int endpoint;
     for (;;) {
-        int idx = base + vertex_index;
-        int bound = TextureRasterVertexCount - 1;
-        if (idx > bound) {
-            idx = 0;
-        } else if (idx < 0) {
-            idx = bound;
-        }
-        Vert *tbl4f4 = TextureRasterEdgeVerticesB;
-        int diff = tbl4f4[idx].y - tbl4f4[vertex_index].y;
-        edge->counter = diff;
-        if (diff != 0) {
-            if (diff <= 0) {
-                return 0;
-            }
-            edge->id = idx;
-            int scale = diff * 0x10000;
-            Vert *tbl490 = TextureRasterEdgeVerticesA;
-            edge->accumA = tbl490[vertex_index].x << 0x10;
-            edge->accumB = tbl490[vertex_index].y << 0x10;
-            tbl490 = TextureRasterEdgeVerticesA;
-            edge->deltaA = fixed_div((tbl490[idx].x << 0x10) - edge->accumA, scale);
-            tbl490 = TextureRasterEdgeVerticesA;
-            edge->deltaB = fixed_div((tbl490[idx].y << 0x10) - edge->accumB, scale);
-            tbl4f4 = TextureRasterEdgeVerticesB;
-            edge->accumC = tbl4f4[vertex_index].x;
-            tbl4f4 = TextureRasterEdgeVerticesB;
-            int deltaY = tbl4f4[idx].x - tbl4f4[vertex_index].x;
-            if (deltaY < 0) {
-                int absDelta = -deltaY;
-                edge->fracAccum = 1 - edge->counter;
-                edge->extraDeltaC = -1;
-                edge->deltaC = -(absDelta / edge->counter);
-                edge->fracDelta = absDelta % edge->counter;
-            } else {
-                edge->extraDeltaC = 1;
-                edge->deltaC = deltaY / edge->counter;
-                edge->fracAccum = 0;
-                edge->fracDelta = deltaY % edge->counter;
-            }
-            edge->fracSub = edge->counter;
-            int *tbl4fc = TextureRasterZValues;
-            int base4fc = tbl4fc[vertex_index];
-            edge->accumD = base4fc * 0x10000;
-            tbl4fc = TextureRasterZValues;
-            edge->deltaD = fixed_div(tbl4fc[idx] * 0x10000 - base4fc * 0x10000, scale);
-            return 1;
-        }
-        vertex_index = idx;
-        if (idx == TextureRasterMaxYIndex) {
-            return 0;
-        }
+        if (vertex_index == TextureRasterMaxYIndex) return 0;
+        endpoint = edge->f0 + vertex_index;
+        const int last = TextureRasterVertexCount - 1;
+        if (endpoint > last) endpoint = 0;
+        else if (endpoint < 0) endpoint = last;
+
+        edge->counter = TextureRasterEdgeVerticesB[endpoint].y -
+                        TextureRasterEdgeVerticesB[vertex_index].y;
+        if (edge->counter != 0) break;
+        vertex_index = endpoint;
     }
+    if (edge->counter <= 0) return 0;
+
+    const int scale = edge->counter << 16;
+    edge->id = endpoint;
+    edge->accumA = TextureRasterEdgeVerticesA[vertex_index].x << 16;
+    edge->accumB = TextureRasterEdgeVerticesA[vertex_index].y << 16;
+    edge->deltaA = fixed_div(
+        (TextureRasterEdgeVerticesA[endpoint].x << 16) - edge->accumA, scale);
+    edge->deltaB = fixed_div(
+        (TextureRasterEdgeVerticesA[endpoint].y << 16) - edge->accumB, scale);
+
+    edge->accumC = TextureRasterEdgeVerticesB[vertex_index].x;
+    int dx = TextureRasterEdgeVerticesB[endpoint].x -
+             TextureRasterEdgeVerticesB[vertex_index].x;
+    int delta_c;
+    if (dx < 0) {
+        dx = -dx;
+        edge->fracAccum = 1 - edge->counter;
+        edge->extraDeltaC = -1;
+        delta_c = -(dx / edge->counter);
+    } else {
+        edge->extraDeltaC = 1;
+        delta_c = dx / edge->counter;
+        edge->fracAccum = 0;
+    }
+    edge->deltaC = delta_c;
+    edge->fracDelta = dx % edge->counter;
+    edge->fracSub = edge->counter;
+
+    const int accum_d = TextureRasterZValues[vertex_index] << 16;
+    edge->accumD = accum_d;
+    edge->deltaD = fixed_div((TextureRasterZValues[endpoint] << 16) - accum_d, scale);
+    return 1;
 }
 
 // ORIGINAL: 0x00620260 sub_620260 0x00620260-0x006202D8 FILE BYTE_EXACT
@@ -3974,101 +3912,79 @@ int __cdecl sub_620260(EdgeScan *edge) {
 // The typed records below are established by EdgeScan's 0x3c layout and the
 // TextureStore cursor/flags plus its ten embedded EdgeScan records.
 
-int __cdecl sub_624eb0(EdgeScan *param_1, int param_2, TextureStore *param_3) {
-  int idx;
-  int delta;
-  int slotBase;
-  int slotIndex;
-  int range;
+int __cdecl sub_624eb0(EdgeScan *edge, int index, TextureStore *cache) {
+    int endpoint;
+    for (;;) {
+        if (index == TextureRasterMaxYIndex) return 0;
+        endpoint = edge->f0 + index;
+        const int last = TextureRasterVertexCount - 1;
+        if (endpoint > last) endpoint = 0;
+        else if (endpoint < 0) endpoint = last;
 
-  if (param_2 == TextureRasterMaxYIndex) {
-    return 0;
-  }
+        edge->counter = TextureRasterEdgeVerticesB[endpoint].y -
+                        TextureRasterEdgeVerticesB[index].y;
+        if (edge->counter != 0) break;
+        index = endpoint;
+    }
+    if (edge->counter <= 0) return 0;
 
-  do {
-    idx = param_1->f0 + param_2;
-    if (TextureRasterVertexCount - 1 < idx) {
-      idx = 0;
-    } else if (idx < 0) {
-      idx = TextureRasterVertexCount - 1;
+    EdgeScan *record = &cache->edges_[cache->next_record_];
+    if (++cache->next_record_ == 10) cache->next_record_ = 0;
+
+    edge->id = endpoint;
+    const int scale = edge->counter << 16;
+    edge->accumA = TextureRasterEdgeVerticesA[index].x << 16;
+    edge->accumB = TextureRasterEdgeVerticesA[index].y << 16;
+
+    if (cache->flags_ & 2u) {
+        const int delta_a = fixed_div(
+            (TextureRasterEdgeVerticesA[endpoint].x << 16) - edge->accumA,
+            scale);
+        record->deltaA = delta_a;
+        edge->deltaA = delta_a;
+        const int delta_b = fixed_div(
+            (TextureRasterEdgeVerticesA[endpoint].y << 16) - edge->accumB,
+            scale);
+        record->deltaB = delta_b;
+        edge->deltaB = delta_b;
+    } else {
+        edge->deltaA = record->deltaA;
+        edge->deltaB = record->deltaB;
     }
 
-    delta = (TextureRasterEdgeVerticesB)[idx].y -
-            (TextureRasterEdgeVerticesB)[param_2].y;
-    param_1->counter = delta;
-    if (delta != 0) {
-      if (delta < 1) {
-        return 0;
-      }
-
-      slotIndex = param_3->next_record_;
-      slotBase = slotIndex + 1;
-      param_3->next_record_ = slotBase;
-      if (slotBase == 10) {
-        param_3->next_record_ = 0;
-      }
-
-      EdgeScan &cached = param_3->edges_[slotIndex];
-      param_1->id = idx;
-      range = param_1->counter;
-      param_1->accumA = (TextureRasterEdgeVerticesA)[param_2].x << 0x10;
-      param_1->accumB = (TextureRasterEdgeVerticesA)[param_2].y << 0x10;
-      if ((param_3->flags_ & 2) == 0) {
-        param_1->deltaA = cached.deltaA;
-        param_1->deltaB = cached.deltaB;
-      } else {
-        int fx = fixed_div(
-            (TextureRasterEdgeVerticesA)[idx].x * 0x10000 - param_1->accumA,
-            range << 0x10);
-        cached.deltaA = fx;
-        param_1->deltaA = fx;
-        range = param_1->counter;
-        int fy = fixed_div(
-            (TextureRasterEdgeVerticesA)[idx].y * 0x10000 - param_1->accumB,
-            range << 0x10);
-        cached.deltaB = fy;
-        param_1->deltaB = fy;
-      }
-
-      param_1->accumC = (TextureRasterEdgeVerticesB)[param_2].x;
-      idx = (TextureRasterEdgeVerticesB)[idx].x -
-            (TextureRasterEdgeVerticesB)[param_2].x;
-      if ((param_3->flags_ & 2) != 0) {
-        range = param_1->counter;
-        cached.deltaC = idx / range;
-        param_1->deltaC = idx / range;
-        if (idx < 0) {
-          idx = -idx;
-          param_1->extraDeltaC = -1;
-          param_1->fracAccum = 1 - param_1->counter;
+    edge->accumC = TextureRasterEdgeVerticesB[index].x;
+    int dx = TextureRasterEdgeVerticesB[endpoint].x -
+             TextureRasterEdgeVerticesB[index].x;
+    if (cache->flags_ & 2u) {
+        const int delta_c = dx / edge->counter;
+        record->deltaC = delta_c;
+        edge->deltaC = delta_c;
+        if (dx < 0) {
+            dx = -dx;
+            edge->extraDeltaC = -1;
+            edge->fracAccum = 1 - edge->counter;
         } else {
-          param_1->extraDeltaC = 1;
-          param_1->fracAccum = 0;
+            edge->extraDeltaC = 1;
+            edge->fracAccum = 0;
         }
-        range = param_1->counter;
-        cached.fracDelta = idx % range;
-        param_1->fracDelta = idx % range;
-        param_1->fracSub = param_1->counter;
+        const int frac_delta = dx % edge->counter;
+        record->fracDelta = frac_delta;
+        edge->fracDelta = frac_delta;
+        edge->fracSub = edge->counter;
         return 1;
-      }
-
-      param_1->deltaC = cached.deltaC;
-      if (idx < 0) {
-        param_1->extraDeltaC = -1;
-        param_1->fracAccum = 1 - param_1->counter;
-      } else {
-        param_1->extraDeltaC = 1;
-        param_1->fracAccum = 0;
-      }
-      param_1->fracDelta = cached.fracDelta;
-      param_1->fracSub = param_1->counter;
-      return 1;
     }
 
-    param_2 = idx;
-  } while (idx != TextureRasterMaxYIndex);
-
-  return 0;
+    edge->deltaC = record->deltaC;
+    if (dx < 0) {
+        edge->extraDeltaC = -1;
+        edge->fracAccum = 1 - edge->counter;
+    } else {
+        edge->extraDeltaC = 1;
+        edge->fracAccum = 0;
+    }
+    edge->fracDelta = record->fracDelta;
+    edge->fracSub = edge->counter;
+    return 1;
 }
 
 // Fixed-slot bindings carried from 0061df60.cpp
