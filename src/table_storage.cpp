@@ -15,7 +15,7 @@ Purpose: Free a table of records holding three pointers each, then the
          unconditional count/word-8 clears are all load-bearing behavior.
 
 // RECOVERY_ROLE: SCAFFOLD Bounded pointer-table cleanup method; original class, producer and complete storage lifetime remain unresolved.
-// ORIGINAL: 0x00616B40 sub_616b40 0x00616B40-0x00616BB6 FILE
+// ORIGINAL: 0x00616B40 sub_616b40 0x00616B40-0x00616BB6 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"reason":"Express the observed table/count/word receiver as an ordinary member cleanup in the table-storage component, preserving callback-visible rereads without asserting VoxInstance, CvrPart or an original class name.","evidence":["pinned:0x00616B40-0x00616BB6 reads receiver+0 table and signed +4 count, frees three pointer positions per twelve-byte row, reloads table per field and count per iteration, then frees the final table and clears +0/+4/+8","source:PointerTripletTable models these accessed receiver words only; producer and complete original allocation remain unknown"]}
 // symbol   ?release_contents@PointerTripletTable@@QAEXXZ
 // size      118 bytes

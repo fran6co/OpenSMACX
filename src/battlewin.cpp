@@ -414,7 +414,7 @@ void BattleWin::pulse_timer() {
 }
 
 // Superseded seed deleted; the seed path below is historical Git provenance.
-// ORIGINAL: 0x004219E0 ?init@BattleWin@@QAEXXZ 0x004219E0-0x00421B1F
+// ORIGINAL: 0x004219E0 ?init@BattleWin@@QAEXXZ 0x004219E0-0x00421B1F BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["pinned image 4219E0..421B1F complete instructions", "historical seed src/recovered/units/004219e0.cpp", "421B0D stores the incoming receiver at 7AE818, slot 10 of InterfaceRegistry at 7AE7F0; BattleWin's SubInterface base is at offset zero"], "reason": "Initialize the genuine BattleWin owner, preserving rectangle arithmetic and automatic Buffer lifetime, then publish its typed interface pointer in the shared registry. The old independent receiver-slot interpretation was incorrect; its original identity is retained beside InterfaceRegistry."}
 // kind      game
 // symbol    ?init@BattleWin@@QAEXXZ

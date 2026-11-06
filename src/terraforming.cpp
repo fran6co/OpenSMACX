@@ -29,7 +29,7 @@
 
 /*
 Purpose: Calculate the credit cost to lower or raise the tile's terrain for the specified faction.
-// ORIGINAL: 0x004C9420 ?terraform_cost@@YAHHHH@Z 0x004C9420-0x004C96D6
+// ORIGINAL: 0x004C9420 ?terraform_cost@@YAHHHH@Z 0x004C9420-0x004C96D6 BYTE_EXACT
 // LEVER: both-base_finds-run the second `base_find` is NOT nested inside
 //   `if (base_id >= 0)`. The image pushes the first call's three arguments and
 //   the second's six back to back and cleans both up with one `add esp, 0x24`
