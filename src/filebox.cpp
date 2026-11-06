@@ -137,22 +137,16 @@ Purpose: Append one label/pattern pair to the double-NUL filter buffer.
 */
 int FileBox::add_filter(char *pattern, char *label) {
     if (pattern != 0 && label != 0) {
-        char *position = filter_cursor_;
-        const unsigned int pattern_length = strlen(pattern);
-        const unsigned int label_length = strlen(label);
-        const int remaining = (0x104 - static_cast<int>(pattern_length))
-                              - static_cast<int>(label_length);
-        const int filter_used = static_cast<int>(position - filter_);
-        if (remaining < filter_used) {
+        if (static_cast<int>(0x104 - strlen(pattern) - strlen(label)) <
+            filter_cursor_ - filter_) {
             return 4;
         }
-        strcat(position, label);
-        position += strlen(position) + 1;
-        *position = 0;
-        strcat(position, pattern);
-        position += strlen(position) + 1;
-        *position = 0;
-        filter_cursor_ = position;
+        strcat(filter_cursor_, label);
+        filter_cursor_ += strlen(filter_cursor_) + 1;
+        *filter_cursor_ = 0;
+        strcat(filter_cursor_, pattern);
+        filter_cursor_ += strlen(filter_cursor_) + 1;
+        *filter_cursor_ = 0;
         return 0;
     }
     return 3;

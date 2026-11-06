@@ -156,26 +156,14 @@ Purpose: Hand out the first sheet-heap block whose free tail fits `size` and
 // kind      game
 // flags     sp_ready;purged_ok
 // calls     0x005D4680
-// TRIED (as src/recovered/units/00635370.cpp, raw pointer walks): the
-//   artifact reached MISMATCH at instruction 3 with a push-ebp frame and two
-//   callee-saved pushes where the image has three and no frame, and its note
-//   ruled out a source-form cause. Homed here on the member spelling get_mem
-//   already measures 26/33 with, the low-16 test written through the Heap
-//   members rather than raw offsets; the frame shape is unchanged by that.
 Status: Promoted from src/recovered/units/00635370.cpp.
 */
 void *TexHeap::get_tex_mem(int size) {
     if (base_ != 0) {
-        int index = 0;
-        int count = static_cast<int>(count_ + 1u);
-        if (count > 0) {
-            Heap **blocks = blocks_;
-            for (; index < count; ++index) {
-                Heap *block = blocks[index];
-                if ((reinterpret_cast<uintptr_t>(block->current_) & 0xffff) == 0 &&
-                    static_cast<int>(block->free_size_) >= size) {
-                    return blocks[index]->get(size);
-                }
+        for (int index = 0; index < static_cast<int>(count_ + 1u); ++index) {
+            if ((reinterpret_cast<uintptr_t>(blocks_[index]->current_) & 0xffff) == 0 &&
+                static_cast<int>(blocks_[index]->free_size_) >= size) {
+                return blocks_[index]->get(size);
             }
         }
     }
@@ -187,23 +175,6 @@ Purpose: Take `size` bytes of sheet memory: walk the heap's block table and
          allocate from the first block whose free tail is large enough.
 // ORIGINAL: 0x006353C0 ?get_mem@TexHeap@@QAEHH@Z 0x006353C0-0x00635402 FILE SEMANTIC
 // symbol    ?get_mem@TexHeap@@QAEPAXH@Z
-// TRIED 2026-09-03, two batches of four: count declared before index, both
-//   for-loop forms (initialiser inside the `for`, index declared outside it),
-//   a named `Heap *block` local instead of the double `blocks[index]` access,
-//   `count_ + 1` without the static_cast, `1 + static_cast<int>(count_)`, an
-//   empty-initialiser `for` over the same pair, and `blocks` hoisted above
-//   the count guard. All eight: 26 of 33 or worse. `blocks` above the guard
-//   is 18 of 33 and the four restructurings are 5 of 33 with 35 instructions
-//   - two MORE than the image, because moving index's initialiser inside the
-//   guard makes VC6 emit a second `xor`.
-// LEVER (not enough): the committed spelling is the only one at the image's
-//   33 instructions, and it is 26 of 33 with MNEMONIC_ONLY 1.000 - the four
-//   divergences are ALL the same register swap, the loop index in eax and
-//   `count_ + 1` in edx where this tree has them the other way round
-//   (`blocks`, `size`, the walking pointer and the block load all agree).
-//   Also swept --all-flags: /O2 /Ob0 /GX and /O2 /Gy /GR- all tie at 26 of
-//   33; /G6 is 2 of 33. Plateau: a pure allocator coin flip on a 66-byte
-//   body, no source relationship left to name.
 // size      66 bytes
 // prototype int (__thiscall ?get_mem@TexHeap@@QAEHH@Z)(#120* this, int)
 // callers   1   call targets   1
@@ -218,15 +189,9 @@ only reaches here when a caller passed a heap at all.
 */
 void *TexHeap::get_mem(int size) {
     if (base_ != 0) {
-        int index = 0;
-        int count = static_cast<int>(count_ + 1u);
-        if (count > 0) {
-            Heap **blocks = blocks_;
-            while (index < count) {
-                if (static_cast<int>(blocks[index]->free_size_) >= size) {
-                    return blocks[index]->get(size);
-                }
-                ++index;
+        for (int index = 0; index < static_cast<int>(count_ + 1u); ++index) {
+            if (static_cast<int>(blocks_[index]->free_size_) >= size) {
+                return blocks_[index]->get(size);
             }
         }
     }

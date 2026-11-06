@@ -58,7 +58,6 @@ BOOL __cdecl can_arty(int proto_id, BOOL sea_triad_retn) {
 Purpose: Calculate the cargo capacity of a unit. It seems Spore Launchers were considered to have
          cargo capacity at one time.
 // ORIGINAL: 0x005C1760 ?veh_cargo@@YAHH@Z 0x005C1760-0x005C17C4
-// TRIED: still MISMATCH (0.853 similar) - the image computes `proto_id*sizeof(VehPrototype)` ONCE and reuses it for both the `carry_capacity` and `weapon_id` field reads (same array element, two fields); this tree recomputes it for the second read under every flag set tried. A local `VehPrototype *proto = &VehPrototypes[proto_id]` used for both field reads did not change the codegen. Also see the `add`-before-`shl` base-folding note on arm_strat (0x0057D270) - same class of divergence on the `carry_capacity` read itself.
 // TRIED: proto_id` (not `uint32_t`/`int`) matches the image, which keeps the 16-bit `proto_id` in `si` for the `< MaxVehProtoFactionNum` and `== BSC_SPORE_LAUNCHER` compares and only does `movsx eax,si` at the array-indexing use sites.
 // size      100 bytes
 // prototype int (__cdecl ?veh_cargo@@YAHH@Z)(int vehID)
@@ -71,7 +70,9 @@ Status: Complete
 */
 int __cdecl veh_cargo(int veh_id) {
     int16_t proto_id = Vehs[veh_id].proto_id;
-    uint32_t cargo = VehPrototypes[proto_id].carry_capacity;
-    return (cargo && proto_id < MaxVehProtoFactionNum && (get_proto_offense_rating(proto_id) < 0
-        || proto_id == BSC_SPORE_LAUNCHER)) ? Vehs[veh_id].morale + 1 : cargo;
+    if (VehPrototypes[proto_id].carry_capacity && proto_id < MaxVehProtoFactionNum && (get_proto_offense_rating(proto_id) < 0
+        || proto_id == BSC_SPORE_LAUNCHER)) {
+        return Vehs[veh_id].morale + 1;
+    }
+    return VehPrototypes[proto_id].carry_capacity;
 }

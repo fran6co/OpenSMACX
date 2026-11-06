@@ -920,6 +920,7 @@ Return Value: filename pointer bits when already wrapped and non-null;
               or the base loader's answer
 Status: Complete
 */
+#pragma optimize("y", off)
 int Midi::load(const char *a1) {
     int result;
     if (device_ == nullptr) {
@@ -927,14 +928,15 @@ int Midi::load(const char *a1) {
             return 1;
         }
         result = SoundXOrdinal1CreateSound()(&device_, a1, 2);
-    } else {
-        result = static_cast<int>(reinterpret_cast<uintptr_t>(a1));
     }
+    // With a device the image tests this never-written local; VC6 homes it
+    // in a1's dead stack slot, so it reads back as the filename pointer.
     if (result != 0) {
         return result;
     }
     return Sound::load(a1);
 }
+#pragma optimize("", on)
 
 /*
 Purpose: Load the MIDI from its remembered filename. With no wrapped

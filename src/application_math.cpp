@@ -168,27 +168,16 @@ Purpose: Bubble-sort one int array descending while applying the identical
 Status: Coverage transcription - unclaimed body
 */
 extern "C" void __cdecl sub_4d5f70(int *parallel, int *values, int count) {
-    int limit = count - 1;
     int swapped;
     do {
         swapped = 0;
-        if (limit < 1) {
-            return;
-        }
-        int *cursor = parallel;
-        int *value = values;
-        int remaining = limit;
-        do {
-            int *next = value + 1;
-            if (*value < *next) {
+        for (int i = 0; i < count - 1; ++i) {
+            if (values[i] < values[i + 1]) {
                 swapped = 1;
-                swap(value, next);
-                swap(cursor, cursor + 1);
+                swap(&values[i], &values[i + 1]);
+                swap(&parallel[i], &parallel[i + 1]);
             }
-            cursor = cursor + 1;
-            remaining = remaining - 1;
-            value = next;
-        } while (remaining != 0);
+        }
     } while (swapped != 0);
 }
 

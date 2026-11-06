@@ -67,8 +67,6 @@ void Spot::init(int count) {
 /*
 Purpose: Search for a specific spot and replace the RECT value.
 // ORIGINAL: 0x005FA900 ?replace@Spot@@QAEXHHHHHH@Z 0x005FA900-0x005FA956
-// LEVER: int-index + one `SpotInternal *const spot = &spots_[i];` local 0/37 (0.805) -> 10/37 (0.987). The image keeps ONE base in a register for the position/type compares AND the four RECT stores, and it needs the signed `jle` entry guard (`int i` against `static_cast<int>(add_count_)`), not the `jb`/`jbe` a `uint32_t i` gives. Direct `spots_[i].` indexing everywhere scores 0/37 (0.829) - VC6 re-reads `[ecx]` before every store.
-// TRIED: `spots_ + i` for `&spots_[i]`; `SpotInternal &spot` reference; `while` loop with `++i`; swapping the compares to `position == spot->position`. All four identical, 10/37 (0.987). Remaining gap is one instruction at the loop head: the image loads `spots_` straight into the result register (`mov eax,[ecx]; add eax,edi`) where VC6 gives us `mov ebp,[ecx]; mov eax,edi; add eax,ebp` - a copy the image does not pay - and the two compares come out operand-mirrored (`cmp [eax+0x10],ebp` vs `cmp ebp,[eax+0x10]`) as a consequence. Register-plan wall, not source form.
 // size      86 bytes
 // prototype void (__thiscall ?replace@Spot@@QAEXHHHHHH@Z)(Spot* this, int position, int type, int left, int top, int length, int width)
 // callers   0   call targets   0
@@ -80,12 +78,12 @@ Status: Complete
 */
 void Spot::replace(int position, int type, int left, int top, int length, int width) {
     for (int i = 0; i < add_count_; i++) {
-        SpotInternal *const spot = &spots_[i];
-        if (spot->position == position && spot->type == type) {
-            spot->rect.left = left;
-            spot->rect.top = top;
-            spot->rect.right = left + length;
-            spot->rect.bottom = top + width;
+        if (position == spots_[i].position && type == spots_[i].type) {
+            RECT *const rect = &spots_[i].rect;
+            rect->left = left;
+            rect->top = top;
+            rect->right = left + length;
+            rect->bottom = top + width;
         }
     }
 }

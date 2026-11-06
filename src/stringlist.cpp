@@ -177,13 +177,11 @@ int StringList::load(LPSTR file_name, LPSTR section_id, int clear_existing,
                 text.close();
                 return 1;
             }
-            if (*line == '#') {
-                if (saw_non_hash) {
-                    text.close();
-                    return 0;
-                }
-            } else {
+            if (*line != '#') {
                 saw_non_hash = true;
+            } else if (saw_non_hash) {
+                text.close();
+                return 0;
             }
             if (*line != '\0') {
                 break;
@@ -200,16 +198,21 @@ int StringList::load(LPSTR file_name, LPSTR section_id, int clear_existing,
         int kind = 0;
         LPSTR value = parse_buffer;
         if (parse_buffer[0] == '^') {
-            if (parse_buffer[1] == '\0') {
-                kind = 3;
-            } else if (parse_buffer[1] == '^') {
-                kind = 2;
-                value = parse_buffer[2] == '^' ? &parse_buffer[3]
-                                                : &parse_buffer[2];
+            if (parse_buffer[1] != '\0') {
+                if (parse_buffer[1] != '^') {
+                    kind = 1;
+                    value = &parse_buffer[1];
+                } else {
+                    if (parse_buffer[2] == '^') {
+                        kind = 2;
+                        value = &parse_buffer[3];
+                    } else {
+                        kind = 2;
+                        value = &parse_buffer[2];
+                    }
+                }
             } else {
-                kind = 1;
-            }
-            if (kind != 2) {
+                kind = 3;
                 value = &parse_buffer[1];
             }
         }
@@ -217,10 +220,9 @@ int StringList::load(LPSTR file_name, LPSTR section_id, int clear_existing,
         pending_text_ = value;
         field_20_ = static_cast<uint32_t>(kind);
         field_24_ = 0;
-        const int add_result = add(0);
         // on_insert copies the text into its payload, but the original keeps
         // this borrowed stack slice, including its expired value after return.
-        if (add_result != 0) {
+        if (add(0) != 0) {
             text.close();
             return 1;
         }

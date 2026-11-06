@@ -86,20 +86,24 @@ AlphaSave *ActiveAlphaSave = 0;
 // symbol    ?alpha_save_filebox_draw@@YAXPAVGraphicWin@@HHHHH@Z
 // The catalogue's member spelling would push a seventh, unused receiver.
 // The selected row lives in CurrentListBoxDraw's Dialog virtual base.
-// The retired seed corrected Ghidra's missing dereference in this vbtable
-// walk; its five default-colour load orderings topped out at 90.7% mnemonic
-// similarity because of VC6 instruction scheduling, not a proven layout
-// difference. This typed source spelling remains an unclaimed mismatch.
+// Two tile calls differing only in the mask: VC6 hoists their shared pushes
+// and branches just before the first argument, as the image does.
+#pragma optimize("y", off)
 void __cdecl alpha_save_filebox_draw(GraphicWin *window, int item_kind,
                                     int item_id, int x, int y, int height) {
     if (CurrentListBoxDraw == 0 || ActiveAlphaSave == 0) {
         return;
     }
-    Buffer *background = CurrentListBoxDraw->Dialog::selected_position_ == item_id
-        ? InterfaceBoxStyles[29].mask_ : InterfaceBoxStyles[0].mask_;
-    window->Buffer::tile(background, x, y, x, y, window->Buffer::pixel_width(), height);
+    if (CurrentListBoxDraw->Dialog::selected_position_ == item_id) {
+        window->Buffer::tile(InterfaceBoxStyles[29].mask_, x, y, x, y,
+                             window->Buffer::pixel_width(), height);
+    } else {
+        window->Buffer::tile(InterfaceBoxStyles[0].mask_, x, y, x, y,
+                             window->Buffer::pixel_width(), height);
+    }
     FileWin::filebox_draw(window, item_kind, item_id, x, y, height);
 }
+#pragma optimize("", on)
 
 void __cdecl scroll_hide(GraphicWin *window, Scroll *scroll);
 void __cdecl scroll_show(GraphicWin *window, Scroll *scroll);

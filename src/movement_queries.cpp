@@ -31,51 +31,37 @@ Purpose: Determine whether specified unit can physically reach the destination c
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     0x004E3A50 0x0050DDC0 0x0050DE50 0x0050E030 0x0050E160
-// TRIED: best 17/147, 0.062 similar (best flag set /O2 /Gy /GR- /Oy-
-//            /GX) - `call_diff` shows this tree making 6 calls against the
-//            image's 7, missing exactly `port_to_port` (0x0050E160). Its
-//            marker (0x0050E160, map.h) already notes the image keeps a REAL
-//            call to port_to_port here (and in veh.cpp's valid_patrol) while
-//            inlining it whole at naval_base/convoy - a genuine per-call-site
-//            split the image itself makes. `port_to_port` is `MEASURED
-//            inline` in map.h because THAT lever is what fixed naval_base and
-//            convoy; at get_there's call site VC6 chooses to inline it too
-//            (confirmed by dumping this tree's own compiled listing - no
-//            `call` opcode for it, and the prologue reserves `sub esp, 0x10`
-//            where the image's is a single `push ecx`, consistent with the
-//            inlined body's extra locals). VC6 6.0 has no
-//            `__declspec(noinline)` to force the split per call site, and
-//            reverting port_to_port to non-inline would regress the
-//            already-recorded naval_base/convoy fixes - out of this batch's
-//            reach without touching shared map.h behavior other claims
-//            depend on. Not chased further.
 Return Value: Can unit reach tile? true/false
 Status: Complete
 */
 BOOL __cdecl get_there(int veh_id, int x_dst, int y_dst) {
-    uint32_t triad = get_triad(veh_id);
+    uint8_t triad = get_triad(veh_id);
     if (triad == TRIAD_AIR) {
         return true;
     }
-    int x_src = Vehs[veh_id].x; 
-    int y_src = Vehs[veh_id].y;
-    uint32_t region_src = region_at(x_src, y_src);
+    uint32_t region_src = region_at(Vehs[veh_id].x, Vehs[veh_id].y);
     uint32_t region_dst = region_at(x_dst, y_dst);
-    if (!triad) { // TRIAD_LAND
-        return (region_src == region_dst);
+    if (triad) {
+        int base_id_src = base_at(Vehs[veh_id].x, Vehs[veh_id].y);
+        int base_id_dst = base_at(x_dst, y_dst);
+        if (base_id_src >= 0) {
+            if (base_id_dst >= 0) {
+                return port_to_port(base_id_src, base_id_dst);
+            }
+        } else if (base_id_dst >= 0) {
+            return base_on_sea(base_id_dst, region_src);
+        }
+        if (!is_ocean(x_dst, y_dst)) {
+            if (base_id_src >= 0) {
+                return port_to_coast(base_id_src, region_dst);
+            }
+            return sea_coast(region_dst, region_src);
+        }
+        if (base_id_src >= 0) {
+            return base_on_sea(base_id_src, region_dst);
+        }
     }
-    int base_id_src = base_at(x_src, y_src);
-    int base_id_dst = base_at(x_dst, y_dst);
-    if (base_id_dst >= 0) {
-        return (base_id_src < 0) ? base_on_sea(base_id_dst, region_src)
-            : port_to_port(base_id_src, base_id_dst);
-    }
-    if (is_ocean(x_dst, y_dst)) {
-        return (base_id_src < 0) ? (region_src == region_dst) 
-            : base_on_sea(base_id_src, region_dst);
-    }
-    return (base_id_src < 0) ? sea_coast(region_dst, region_src)
-        : port_to_coast(base_id_src, region_dst);
+    return (region_src == region_dst);
 }
 
 /*
