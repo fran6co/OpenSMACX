@@ -195,53 +195,62 @@ Status: Complete - testing
 void __cdecl brush(int x, int y, int altitude) {
     BOOL use_draw_radius = false;
     for (int i = 0; i < 4; i++) {
-        if (i != 2) {
-            int x_radius = wrap_map_x(x + RadiusOffsetX[i]);
-            int y_radius = y + RadiusOffsetY[i];
-            if (on_map(x_radius, y_radius) && alt_at(x_radius, y_radius) != altitude) {
-                BOOL skip = false;
-                for (uint32_t j = 0; j < 8; j++) {
-                    int x_rad_base = wrap_map_x(x_radius + VehMoveDeltaX[j]);
-                    int y_rad_base = y_radius + VehMoveDeltaY[j];
-                    if (on_map(x_rad_base, y_rad_base) && !is_ocean(x_rad_base, y_rad_base)
-                        && !region_at(x_rad_base, y_rad_base)) {
+        if (i == 2) {
+            continue;
+        }
+        int x_radius = wrap_map_x(x + RadiusOffsetX[i]);
+        int y_radius = y + RadiusOffsetY[i];
+        if (!on_map(x_radius, y_radius)) {
+            continue;
+        }
+        Map *tile = map_loc(x_radius, y_radius);
+        if ((tile->climate >> 5) == altitude) {
+            continue;
+        }
+        BOOL skip = false;
+        for (uint32_t j = 0; j < 8; j++) {
+            int x_rad_base = wrap_map_x(x_radius + VehMoveDeltaX[j]);
+            int y_rad_base = y_radius + VehMoveDeltaY[j];
+            if (on_map(x_rad_base, y_rad_base) && !is_ocean(x_rad_base, y_rad_base)
+                && !region_at(x_rad_base, y_rad_base)) {
+                skip = true;
+            }
+        }
+        if (skip) {
+            continue;
+        }
+        // Only a shoreline brush checks for a land bridge across a diagonal.
+        if (altitude == ALT_SHORE_LINE) {
+            for (int k = 0; k + 1 <= 7; k += 2) {
+                int x_rad_base = wrap_map_x(x_radius + VehMoveDeltaX[k + 1]);
+                int y_rad_base = y_radius + VehMoveDeltaY[k + 1];
+                if (on_map(x_rad_base, y_rad_base)
+                    && altitude_at(x_rad_base, y_rad_base) == ALT_BIT_SHORE_LINE) {
+                    int x_rad_base2 = wrap_map_x(x_radius + VehMoveDeltaX[(k + 2) & 7]);
+                    int y_rad_base2 = y_radius + VehMoveDeltaY[(k + 2) & 7];
+                    int x_rad_base3 = wrap_map_x(x_radius + VehMoveDeltaX[k & 7]);
+                    int y_rad_base3 = y_radius + VehMoveDeltaY[k & 7];
+                    if (on_map(x_rad_base2, y_rad_base2)
+                        && on_map(x_rad_base3, y_rad_base3)
+                        && is_ocean(x_rad_base2, y_rad_base2)
+                        && is_ocean(x_rad_base3, y_rad_base3)) {
                         skip = true;
-                    }
-                }
-                if (!skip) {
-                    if (altitude != 3) {
-                        for (uint32_t j = 0, k = 0; j < 7; j += 3, k += 2) {
-                            int x_rad_base = wrap_map_x(x_radius + VehMoveDeltaX[k + 1]);
-                            int y_rad_base = y_radius + VehMoveDeltaY[k + 1];
-                            if (on_map(x_rad_base, y_rad_base)
-                                && altitude_at(x_rad_base, y_rad_base) == ALT_BIT_SHORE_LINE) {
-                                int x_rad_base2 = wrap_map_x(x_radius + VehMoveDeltaX[(k + 2) % 8]);
-                                int y_rad_base2 = y_radius + VehMoveDeltaY[(k + 2) % 8];
-                                int x_rad_base3 = wrap_map_x(x_radius + VehMoveDeltaX[k % 8]);
-                                int y_rad_base3 = y_radius + VehMoveDeltaY[k % 8];
-                                if (on_map(x_rad_base2, y_rad_base2) 
-                                    && on_map(x_rad_base3, y_rad_base3)
-                                    && altitude_at(x_rad_base2, y_rad_base2) < ALT_BIT_SHORE_LINE
-                                    && altitude_at(x_rad_base3, y_rad_base3) < ALT_BIT_SHORE_LINE) {
-                                    skip = true;
-                                    break;
-                                }
-                            }
-                        }
-                    }
-                    if (!skip) {
-                        region_set(x_radius, y_radius, 1);
-                        use_draw_radius |= alt_at(x_radius, y_radius) != altitude;
-                        world_alt_set(x_radius, y_radius, altitude, true);
-                        if (GameDataStateStorage.fields_.game_state_ & STATE_OMNISCIENT_VIEW && altitude > 3) {
-                            temp_set(x_radius, y_radius, 1);
-                        }
-                        BrushVal1 += 1;
-                        BrushVal2 += 1;
+                        break;
                     }
                 }
             }
+            if (skip) {
+                continue;
+            }
         }
+        tile->region = 1;
+        use_draw_radius |= alt_at(x_radius, y_radius) != altitude;
+        world_alt_set(x_radius, y_radius, altitude, true);
+        if (GameDataStateStorage.fields_.game_state_ & STATE_OMNISCIENT_VIEW && altitude > 3) {
+            temp_set(x_radius, y_radius, 1);
+        }
+        BrushVal1 += 1;
+        BrushVal2 += 1;
     }
     if (GameDataStateStorage.fields_.game_state_ & STATE_OMNISCIENT_VIEW && use_draw_radius) {
         draw_radius(x, y, 2, 2);
@@ -275,31 +284,19 @@ Return Value: n/a
 Status: Complete - testing
 */
 void __cdecl paint_land(int x, int y, int altitude, int radius) {
+    int i = 0;
     BrushVal2 = 0;
-    for (int i = 0; i < 2000 && BrushVal2 < radius; i++) {
-        int search = -1;
-        uint32_t unk_val = 0;
+    do {
         int x_rad_base = x;
         int y_rad_base = y;
+        int unk_val = 0;
+        int search = -1;
         do {
             brush(x_rad_base, y_rad_base, altitude);
             int offset = rand() % 8 | 1;
             if (offset == search) {
-                // Pinned5C2841 keeps the low dword of IMUL, then5C284C
-                // uses signed JLE on that wrapped product plus two. Large
-                // positive file-loaded settings survive world_build's test.
-                uint32_t coverage = static_cast<uint32_t>(MapLandCoverage);
-                uint32_t square = coverage * coverage;
-                uint32_t threshold_bits = square + 2u;
-                int threshold;
-                memcpy(&threshold, &threshold_bits, sizeof(threshold));
-                ++unk_val;
-                int count;
-                memcpy(&count, &unk_val, sizeof(count));
-                if (count > threshold) {
-                    // Original5C284E..2854 is low-dword SUB/LEA and AND7.
-                    offset = (static_cast<uint32_t>(offset) - square
-                        + unk_val - 2u) & 7u;
+                if (++unk_val > MapLandCoverage * MapLandCoverage + 2) {
+                    offset = (offset - MapLandCoverage * MapLandCoverage + unk_val - 2) & 7;
                 }
             } else {
                 search = offset;
@@ -309,7 +306,8 @@ void __cdecl paint_land(int x, int y, int altitude, int radius) {
             y_rad_base += VehMoveDeltaY[offset];
             i++;
         } while (i < 2000 && on_map(x_rad_base, y_rad_base) && BrushVal2 < radius);
-    }
+        i++;
+    } while (i < 2000 && BrushVal2 < radius);
 }
 
 /*
@@ -336,6 +334,7 @@ Return Value: n/a
 Status: Complete - testing
 */
 void __cdecl build_continent(int size) {
+    int count = 0;
     Map *tile = map_tiles();
     for (int i = 0; i < MapArea; i++) {
         tile->region = 0;
@@ -348,49 +347,36 @@ void __cdecl build_continent(int size) {
     int radius = WorldBuilder.continent_mod * coverage * coverage + WorldBuilder.continent_base;
     int x;
     int y;
-    int count = 0;
     do {
-        int x_bound = MapLongitudeBounds - (MapIsFlat * 8);
-        x = ((x_bound - 1 > 0) ? rand() % x_bound : 0) + MapIsFlat * 4;
+        int x_bound = MapLongitudeBounds - ((MapIsFlat & 1) * 8);
+        x = ((x_bound - 1 <= 0) ? 0 : rand() % x_bound) + (MapIsFlat & 1) * 4;
         int y_bound = MapLatitudeBounds - 8;
-        y = ((y_bound - 1 > 0) ? rand() % y_bound : 0) + 4;
+        y = ((y_bound - 1 <= 0) ? 0 : rand() % y_bound) + 4;
         if (x & 1) {
             x--;
         }
         if (y & 1) {
             x++; // validate whether this should be y and/or reasoning for x
         }
-    } while (++count < 100 && altitude_at(x, y) >= ALT_BIT_SHORE_LINE);
-    if (altitude_at(x, y) < ALT_BIT_SHORE_LINE) {
+    } while (++count < 100 && !is_ocean(x, y));
+    if (alt_at(x, y) < ALT_SHORE_LINE) {
         int ratio = (size * 3200) / MapArea;
         if (ratio > WorldBuilder.cont_size_ratio[4] || BrushVal1 >= WorldBuildVal1) {
             radius /= 4;
             if (BrushVal1 >= WorldBuildVal1 && ratio > WorldBuilder.cont_size_ratio[4]) {
                 radius = rand() % 3 + 1;
             }
-        } else if (ratio <= WorldBuilder.cont_size_ratio[3]) {
-            if (ratio <= WorldBuilder.cont_size_ratio[2]) {
-                if (ratio <= WorldBuilder.cont_size_ratio[1]) {
-                    if (ratio < WorldBuilder.cont_size_ratio[0] && MapLandCoverage > 1) {
-                        radius += radius / 2;
-                    }
-                } else {
-                    uint32_t r_bound_bits = 4u - static_cast<uint32_t>(MapLandCoverage);
-                    int r_bound;
-                    memcpy(&r_bound, &r_bound_bits, sizeof(r_bound));
-                    // Original5C2A9D LEA wraps before TEST/JLE5C2AA0/2.
-                    uint32_t bound_test_bits = r_bound_bits - 1u;
-                    int bound_test;
-                    memcpy(&bound_test, &bound_test_bits, sizeof(bound_test));
-                    if ((bound_test > 0) ? rand() % r_bound : 0) {
-                        radius /= 2;
-                    }
-                }
-            } else {
+        } else if (ratio > WorldBuilder.cont_size_ratio[3]) {
+            radius /= 3;
+        } else if (ratio > WorldBuilder.cont_size_ratio[2]) {
+            radius /= 2;
+        } else if (ratio > WorldBuilder.cont_size_ratio[1]) {
+            int r_bound = 4 - MapLandCoverage;
+            if ((r_bound - 1 <= 0) ? 0 : rand() % r_bound) {
                 radius /= 2;
             }
-        } else {
-            radius /= 3;
+        } else if (ratio < WorldBuilder.cont_size_ratio[0] && MapLandCoverage > 1) {
+            radius += radius / 2;
         }
         if (BrushVal1 < WorldBuildVal1 && radius < 4) {
             radius = 4;
@@ -598,6 +584,7 @@ Purpose: Determine if there are any issues with how the world continents are set
 Return Value: Are there any issues with the world continents? true/false
 Status: Complete - testing
 */
+#pragma auto_inline(off)
 BOOL __cdecl world_validate() {
     Paths.continents();
     int val1 = 0; // rename to better var descriptions
@@ -613,14 +600,14 @@ BOOL __cdecl world_validate() {
             }
         }
     }
-    int threshold;
-    if (MapLandCoverage != 1) {
-        threshold = val2 / 2;
-    } else {
-        threshold = (val2 * 2) / 3;
+    switch (MapLandCoverage) {
+    case 1:
+        return val1 < (val2 * 2) / 3;
+    default:
+        return val1 < val2 / 2;
     }
-    return val1 < threshold;
 }
+#pragma auto_inline(on)
 
 /*
 Purpose: Set up the world temperature.
@@ -1181,69 +1168,54 @@ void __cdecl world_fungus() {
     Fractal fractal;
     fractal.init();
 
-    int y_coord = 0;
     int fungus_level = (static_cast<uint32_t>(MapNativeLifeForms) - 1u) * WorldBuilder.fungus;
 
-    if (MapLatitudeBounds > 0) {
-        do {
-            // Both octaves' scaled coordinates are loop-invariant per row.
+    for (int y_coord = 0; y_coord < MapLatitudeBounds; y_coord++) {
+        for (int x_coord = y_coord & 1; x_coord < MapLongitudeBounds; x_coord += 2) {
+            int coarse_x = x_coord << 4;
             int coarse_y = y_coord << 4;
-            int fine_y = coarse_y << 4;
+            int level = fractal.sample(coarse_x, coarse_y) * 5;
+            level += fractal.sample(coarse_x << 4, coarse_y << 4) * 2;
+            level = range(level * 7 >> 8, 0, 100);
 
-            for (int x_coord = y_coord & 1; x_coord < MapLongitudeBounds;
-                 x_coord += 2) {
-                int coarse_x = x_coord << 4;
-                int level = fractal.sample(coarse_x, coarse_y) * 5
-                            + fractal.sample(coarse_x << 4, fine_y) * 2;
-                level = level * 7 >> 8;
-                if (level < 0) {
-                    level = 0;
-                } else if (level > 100) {
-                    level = 100;
-                }
+            uint32_t bit2 = bit2_at(x_coord, y_coord);
+            if ((bit2 & 0x80000002) == 2 && (int)(bit2 & 0xff000000) < 0x9000000) {
+                continue;
+            }
 
-                Map *tile = map_tiles() + MapLongitude * y_coord
-                            + (x_coord >> 1);
-                if ((tile->bit2 & 0x80000002) == 2
-                    && (tile->bit2 & 0xff000000) < 0x9000000) {
-                    continue;
-                }
-
-                if (level < 20 - fungus_level
-                    || level > fungus_level * 2 + 25) {
-                    if (level < 40 - fungus_level
-                        || level > fungus_level * 2 + 45) {
-                        if (level < 60 - fungus_level
-                            || level > fungus_level * 2 + 65) {
-                            // Only the first and last rows fall through here.
-                            if (y_coord != 0
-                                && y_coord != MapLatitudeBounds - 1) {
-                                continue;
-                            }
-                            if (rand() % 2 == 0) {
-                                continue;
-                            }
+            if (level < 20 - fungus_level
+                || level > fungus_level * 2 + 25) {
+                if (level < 40 - fungus_level
+                    || level > fungus_level * 2 + 45) {
+                    if (level < 60 - fungus_level
+                        || level > fungus_level * 2 + 65) {
+                        // Only the first and last rows fall through here.
+                        if (y_coord != 0
+                            && y_coord != MapLatitudeBounds - 1) {
+                            continue;
+                        }
+                        if (rand() % 2 == 0) {
+                            continue;
                         }
                     }
                 }
-
-                if ((tile->val3 & ~0x1F) >= 0x80
-                    && (tile->climate & ~0x1F) >= 0x60) {
-                    continue;
-                }
-
-                tile->bit |= 0x20;
-                tile->bit &= ~MapTileFlagClearMask;
-
-                if (rand() % 40 == 0 && (tile->climate & ~0x1F) >= 0x60
-                    && ExpansionEnabled != 0) {
-                    veh_init(0x13, 0, x_coord, y_coord);
-                }
             }
 
-            do_all_non_input();
-            y_coord++;
-        } while (y_coord < MapLatitudeBounds);
+            Map *tile = map_loc(x_coord, y_coord);
+            if ((tile->val3 & ~0x3F) >= 0x80 && !is_ocean(x_coord, y_coord)) {
+                continue;
+            }
+
+            map_loc(x_coord, y_coord)->bit |= 0x20;
+            map_loc(x_coord, y_coord)->bit &= ~MapTileFlagClearMask;
+
+            if (rand() % 40 == 0 && !is_ocean(x_coord, y_coord)
+                && ExpansionEnabled != 0) {
+                veh_init(0x13, 0, x_coord, y_coord);
+            }
+        }
+
+        do_all_non_input();
     }
 }
 
@@ -1284,27 +1256,19 @@ void __cdecl world_shorelines() {
             Map *tile = &map_tiles()[tile_index];
             int depth = tile->contour - MapSeaLevel;
 
-            int natural_index = 6;
-            do {
+            for (int natural_index = 6; natural_index >= 0; natural_index--) {
                 if (depth >= static_cast<int32_t>(AltNatural[natural_index])) {
                     altitude = natural_index;
                     break;
                 }
-                natural_index--;
-            } while (natural_index >= 0);
+            }
 
             alt_set(x, y, altitude);
 
             if ((GameDataStateStorage.fields_.game_state_ & STATE_OMNISCIENT_VIEW) != 0
                 && WorldClimateRedrawRequest != 0) {
                 if (altitude >= 3) {
-                    int temperature = altitude - 3;
-                    if (temperature < 0) {
-                        temperature = 0;
-                    } else if (temperature > 2) {
-                        temperature = 2;
-                    }
-                    temp_set(x, y, temperature);
+                    temp_set(x, y, range(altitude - 3, 0, 2));
                 }
                 draw_tile(x, y, 2);
             }
@@ -1515,21 +1479,13 @@ Status: Complete - testing
 void __cdecl world_linearize_contours() {
     for (int y = 0; y < MapLatitudeBounds; y++) {
         for (int x = y & 1; x < MapLongitudeBounds; x += 2) {
-            const int band = alt_natural(x, y);
-            const uint32_t detail = static_cast<uint32_t>(alt_detail_at(x, y));
-            const uint32_t contour = AltContour[band];
-            const uint32_t input_floor = AltNaturalDefault[band];
-            const uint32_t target = AltContour[band
-                + ((band >= ALT_3_LEVELS_ABOVE_SEA) ? 4 : 1)];
-            const int32_t denominator = static_cast<int32_t>(
-                AltNaturalDefault[band + 1] - input_floor);
-            // IMUL wraps before CDQ/IDIV interprets the numerator as signed.
+            int band = alt_natural(x, y);
+            int value = alt_detail_at(x, y) - AltNaturalDefault[band];
+            int contour = AltContour[band];
+            int target = (band < ALT_3_LEVELS_ABOVE_SEA) ? AltContour[band + 1] : AltContour[band + 4];
             // Preserve the original divide faults; there is no zero guard.
-            const int32_t numerator = static_cast<int32_t>(
-                (target - contour) * (detail - input_floor));
-            const uint32_t result = contour
-                + static_cast<uint32_t>(numerator / denominator);
-            alt_put_detail(x, y, static_cast<int32_t>(result));
+            alt_put_detail(x, y, contour + (target - contour) * value
+                / (int)(AltNaturalDefault[band + 1] - AltNaturalDefault[band]));
         }
         do_all_non_input();
     }
@@ -1609,28 +1565,26 @@ void __cdecl world_crater(int x, int y) {
     int loc_attempts = 0;
     if (!on_map(x, y)) {
         do {
-            do {
-                int lat_bounds = MapLatitudeBounds - 16;
-                int rnd_y;
-                if (lat_bounds - 1 <= 0) {
-                    rnd_y = 0;
-                } else {
-                    rnd_y = rand() % lat_bounds;
-                }
-                y = rnd_y + 8;
-                int lon_bounds = MapLongitudeBounds;
-                int x_seed;
-                if (lon_bounds - 1 <= 0) {
-                    x_seed = 0;
-                } else {
-                    x_seed = rand() % lon_bounds;
-                }
-                x = ((x_seed ^ y) & 1) ^ x_seed;
-                if (++loc_attempts >= 1000) {
-                    return;
-                }
-            } while (is_ocean(x, y));
-        } while (near_landmark(x, y));
+            int lat_bounds = MapLatitudeBounds - 16;
+            int rnd_y;
+            if (lat_bounds - 1 <= 0) {
+                rnd_y = 0;
+            } else {
+                rnd_y = rand() % lat_bounds;
+            }
+            y = rnd_y + 8;
+            int lon_bounds = MapLongitudeBounds;
+            int x_seed;
+            if (lon_bounds - 1 <= 0) {
+                x_seed = 0;
+            } else {
+                x_seed = rand() % lon_bounds;
+            }
+            x = ((x_seed ^ y) & 1) ^ x_seed;
+            if (++loc_attempts >= 1000) {
+                return;
+            }
+        } while (is_ocean(x, y) || near_landmark(x, y));
         if (loc_attempts >= 1000) { // redundant check? would have already returned, remove?
             return;
         }
@@ -1650,7 +1604,7 @@ void __cdecl world_crater(int x, int y) {
             code_set(x_radius, y_radius, i);
             if (i < 21) {
                 rocky_set(x_radius, y_radius, ROCKINESS_ROLLING);
-                temp_set(x_radius, y_radius, (uint8_t)temperature);
+                temp_set(x_radius, y_radius, temperature);
             }
         }
     }
@@ -1680,35 +1634,27 @@ Return Value: n/a
 Status: Complete - testing
 */
 void __cdecl world_monsoon(int x, int y) {
-    world_rainfall();
     int loc_attempts = 0;
+    world_rainfall();
     if (!on_map(x, y)) {
+        int land_count;
         do {
-            uint32_t land_count;
-            do {
-                y = MapLatitudeBounds / 2 + rand() % 4 - 2;
-                int lon_bounds = MapLongitudeBounds;
-                int x_seed;
-                if (lon_bounds - 1 <= 0) {
-                    x_seed = 0;
-                } else {
-                    x_seed = rand() % lon_bounds;
+            y = MapLatitudeBounds / 2 + bounded_crt_random(4) - 2;
+            int x_seed = bounded_crt_random(MapLongitudeBounds);
+            x = ((x_seed ^ y) & 1) ^ x_seed;
+            land_count = 0;
+            for (int i = 0; i < 121; i++) {
+                int x_radius = wrap_map_x(x + RadiusOffsetX[i]);
+                int y_radius = y + RadiusOffsetY[i];
+                if (on_map(x_radius, y_radius) && !is_ocean(x_radius, y_radius)) {
+                    land_count++;
                 }
-                x = ((x_seed ^ y) & 1) ^ x_seed;
-                land_count = 0;
-                for (int i = 0; i < 121; i++) {
-                    int x_radius = wrap_map_x(x + RadiusOffsetX[i]);
-                    int y_radius = y + RadiusOffsetY[i];
-                    if (on_map(x_radius, y_radius) && !is_ocean(x_radius, y_radius)) {
-                        land_count++;
-                    }
-                }
-                if (++loc_attempts >= 1000) {
-                    return;
-                }
-            } while (is_ocean(x, y) || !is_coast(x, y, true) || land_count < 40
-                || climate_at(x, y) <= RAINFALL_MOIST);
-        } while (near_landmark(x, y));
+            }
+            if (++loc_attempts >= 1000) {
+                return;
+            }
+        } while (is_ocean(x, y) || !is_coast(x, y, true) || land_count < 40
+            || climate_at(x, y) <= RAINFALL_MOIST || near_landmark(x, y));
         if (loc_attempts >= 1000) { // redundant check? would have already returned, remove?
             return;
         }
@@ -1716,7 +1662,7 @@ void __cdecl world_monsoon(int x, int y) {
     for (int i = 0; i < 121; i++) {
         int x_radius = wrap_map_x(x + RadiusOffsetX[i]);
         int y_radius = y + RadiusOffsetY[i];
-        if (abs(RadiusOffsetY[i]) <= 8 &&  on_map(x_radius, y_radius)) {
+        if ((y_radius - y >= 0 ? y_radius - y : y - y_radius) <= 8 && on_map(x_radius, y_radius)) {
             if (i < 21 && is_ocean(x_radius, y_radius)) {
                 world_alt_set(x_radius, y_radius, ALT_SHORE_LINE, true);
             }
@@ -1751,28 +1697,26 @@ void __cdecl world_sargasso(int x, int y) {
     BOOL has_skipped = false;
     if (!on_map(x, y)) {
         do {
-            do {
-                int lat_bounds = MapLatitudeBounds - 16;
-                int rnd_y;
-                if (lat_bounds - 1 <= 0) {
-                    rnd_y = 0;
-                } else {
-                    rnd_y = rand() % lat_bounds;
-                }
-                y = rnd_y + 8;
-                int lon_bounds = MapLongitudeBounds;
-                int x_seed;
-                if (lon_bounds - 1 <= 0) {
-                    x_seed = 0;
-                } else {
-                    x_seed = rand() % lon_bounds;
-                }
-                x = ((x_seed ^ y) & 1) ^ x_seed;
-                if (++loc_attempts >= 1000) {
-                    return;
-                }
-            } while (!is_ocean(x, y));
-        } while (near_landmark(x, y));
+            int lat_bounds = MapLatitudeBounds - 16;
+            int rnd_y;
+            if (lat_bounds - 1 <= 0) {
+                rnd_y = 0;
+            } else {
+                rnd_y = rand() % lat_bounds;
+            }
+            y = rnd_y + 8;
+            int lon_bounds = MapLongitudeBounds;
+            int x_seed;
+            if (lon_bounds - 1 <= 0) {
+                x_seed = 0;
+            } else {
+                x_seed = rand() % lon_bounds;
+            }
+            x = ((x_seed ^ y) & 1) ^ x_seed;
+            if (++loc_attempts >= 1000) {
+                return;
+            }
+        } while (!is_ocean(x, y) || near_landmark(x, y));
         if (loc_attempts >= 1000) { // redundant check? would have already returned, remove?
             return;
         }
@@ -1821,28 +1765,26 @@ void __cdecl world_ruin(int x, int y) {
     int loc_attempts = 0;
     if (!on_map(x, y)) {
         do {
-            do {
-                int lat_bounds = MapLatitudeBounds - 16;
-                int rnd_y;
-                if (lat_bounds - 1 <= 0) {
-                    rnd_y = 0;
-                } else {
-                    rnd_y = rand() % lat_bounds;
-                }
-                y = rnd_y + 8;
-                int lon_bounds = MapLongitudeBounds;
-                int x_seed;
-                if (lon_bounds - 1 <= 0) {
-                    x_seed = 0;
-                } else {
-                    x_seed = rand() % lon_bounds;
-                }
-                x = ((x_seed ^ y) & 1) ^ x_seed;
-                if (++loc_attempts >= 1000) {
-                    return;
-                }
-            } while (is_ocean(x, y));
-        } while (near_landmark(x, y));
+            int lat_bounds = MapLatitudeBounds - 16;
+            int rnd_y;
+            if (lat_bounds - 1 <= 0) {
+                rnd_y = 0;
+            } else {
+                rnd_y = rand() % lat_bounds;
+            }
+            y = rnd_y + 8;
+            int lon_bounds = MapLongitudeBounds;
+            int x_seed;
+            if (lon_bounds - 1 <= 0) {
+                x_seed = 0;
+            } else {
+                x_seed = rand() % lon_bounds;
+            }
+            x = ((x_seed ^ y) & 1) ^ x_seed;
+            if (++loc_attempts >= 1000) {
+                return;
+            }
+        } while (is_ocean(x, y) || near_landmark(x, y));
         if (loc_attempts >= 1000) { // redundant check? would have already returned, remove?
             return;
         }
@@ -1854,17 +1796,14 @@ void __cdecl world_ruin(int x, int y) {
             if (i < 25 || !is_ocean(x_radius, y_radius)) { // is_ocean check pointless?
                 world_alt_set(x_radius, y_radius, ALT_SHORE_LINE, true);
             }
-            if (is_ocean(x_radius, y_radius)) {
-                if (i && i < 9) {
-                    bit_set(x_radius, y_radius, BIT_MONOLITH, true); // in ocean tiles?
-                }
-            } else {
+            if (!is_ocean(x_radius, y_radius)) {
                 bit_set(x_radius, y_radius, BIT_FUNGUS | BIT_SUPPLY_REMOVE, true);
                 if (!i) {
                     bit_set(x_radius, y_radius, BIT_FUNGUS, false);
-                } else if (i < 9) {
-                    bit_set(x_radius, y_radius, BIT_MONOLITH, true);
                 }
+            }
+            if (i && i < 9) {
+                bit_set(x_radius, y_radius, BIT_MONOLITH, true); // ocean tiles too
             }
             bit2_set(x_radius, y_radius, BIT2_RUINS, true);
             code_set(x_radius, y_radius, i);
@@ -1895,33 +1834,30 @@ Return Value: n/a
 Status: Complete - testing
 */
 void __cdecl world_dune(int x, int y) {
-    world_rainfall();
     int loc_attempts = 0;
-    uint32_t half_vert_bounds = MapLatitudeBounds / 2;
+    world_rainfall();
     if (!on_map(x, y)) {
         do {
-            do {
-                int dune_bounds = half_vert_bounds;
-                int rnd_y;
-                if (dune_bounds - 1 <= 0) {
-                    rnd_y = 0;
-                } else {
-                    rnd_y = rand() % dune_bounds;
-                }
-                y = rnd_y + half_vert_bounds - MapLatitudeBounds / 4;
-                int lon_bounds = MapLongitudeBounds;
-                int x_seed;
-                if (lon_bounds - 1 <= 0) {
-                    x_seed = 0;
-                } else {
-                    x_seed = rand() % lon_bounds;
-                }
-                x = ((x_seed ^ y) & 1) ^ x_seed;
-                if (++loc_attempts >= 1000) {
-                    return;
-                }
-            } while (is_ocean(x, y) || climate_at(x, y) != RAINFALL_ARID);
-        } while (near_landmark(x, y));
+            int dune_bounds = MapLatitudeBounds / 2;
+            int rnd_y;
+            if (dune_bounds - 1 <= 0) {
+                rnd_y = 0;
+            } else {
+                rnd_y = rand() % dune_bounds;
+            }
+            y = rnd_y + MapLatitudeBounds / 2 - MapLatitudeBounds / 4;
+            int lon_bounds = MapLongitudeBounds;
+            int x_seed;
+            if (lon_bounds - 1 <= 0) {
+                x_seed = 0;
+            } else {
+                x_seed = rand() % lon_bounds;
+            }
+            x = ((x_seed ^ y) & 1) ^ x_seed;
+            if (++loc_attempts >= 1000) {
+                return;
+            }
+        } while (is_ocean(x, y) || climate_at(x, y) != RAINFALL_ARID || near_landmark(x, y));
         if (loc_attempts >= 1000) { // redundant check? would have already returned, remove?
             return;
         }
@@ -1964,31 +1900,29 @@ Return Value: n/a
 Status: Complete - testing
 */
 void __cdecl world_diamond(int x, int y) {
-    uint32_t loc_attempts = 0;
+    int loc_attempts = 0;
     if (!on_map(x, y)) {
         do {
-            do {
-                int lat_bounds = MapLatitudeBounds - 16;
-                int rnd_y;
-                if (lat_bounds - 1 <= 0) {
-                    rnd_y = 0;
-                } else {
-                    rnd_y = rand() % lat_bounds;
-                }
-                y = rnd_y + 8;
-                int lon_bounds = MapLongitudeBounds;
-                int x_seed;
-                if (lon_bounds - 1 <= 0) {
-                    x_seed = 0;
-                } else {
-                    x_seed = rand() % lon_bounds;
-                }
-                x = ((x_seed ^ y) & 1) ^ x_seed;
-                if (++loc_attempts >= 1000) {
-                    return;
-                }
-            } while (is_ocean(x, y));
-        } while (near_landmark(x, y));
+            int lat_bounds = MapLatitudeBounds - 16;
+            int rnd_y;
+            if (lat_bounds - 1 <= 0) {
+                rnd_y = 0;
+            } else {
+                rnd_y = rand() % lat_bounds;
+            }
+            y = rnd_y + 8;
+            int lon_bounds = MapLongitudeBounds;
+            int x_seed;
+            if (lon_bounds - 1 <= 0) {
+                x_seed = 0;
+            } else {
+                x_seed = rand() % lon_bounds;
+            }
+            x = ((x_seed ^ y) & 1) ^ x_seed;
+            if (++loc_attempts >= 1000) {
+                return;
+            }
+        } while (is_ocean(x, y) || near_landmark(x, y));
         if (loc_attempts >= 1000) { // redundant check? would have already returned, remove?
             return;
         }
@@ -2038,13 +1972,10 @@ Return Value: n/a
 Status: Complete - testing
 */
 void __cdecl world_fresh(int x, int y) {
+    BOOL has_set_landmark = false;
+    int x_search = -1;
     uint32_t region;
-    if (on_map(x, y)) {
-        region = region_at(x, y);
-        if (!is_ocean(x, y)) {
-            return;
-        }
-    } else {
+    if (!on_map(x, y)) {
         int tile_search = 0;
         int region_search = -1;
         for (uint32_t i = MaxLandmarkNum; i < MaxContinentNum; i++) {
@@ -2058,21 +1989,26 @@ void __cdecl world_fresh(int x, int y) {
             return;
         }
         region = region_search;
+    } else {
+        region = region_at(x, y);
+        if (!is_ocean(x, y)) {
+            return;
+        }
     }
-    int x_search = -1;
-    BOOL has_set_landmark = false;
     for (int y_it = MapLatitudeBounds - 1; y_it >= 0 ; y_it--) {
         for (int x_it = y_it & 1; x_it < MapLongitudeBounds; x_it += 2) {
-            if (region_at(x_it, y_it) == region) {
+            if (region_at(x_it, y_it) != region) {
+                if (!has_set_landmark && x_search >= 0) {
+                    int x_fresh = (x_search + x_it - 2) / 2;
+                    new_landmark(((x_fresh ^ y_it) & 1) ^ x_fresh, y_it,
+                        StringTable.get(Natural[LM_FRESH].name));
+                    has_set_landmark = true;
+                }
+            } else {
                 bit2_set(x_it, y_it, BIT2_FRESH, true);
                 if (x_search < 0) {
                     x_search = x_it;
                 }
-            } else if(!has_set_landmark && x_search >= 0) {
-                int x_fresh = (x_search + x_it - 2) / 2;
-                new_landmark(((x_fresh ^ y_it) & 1) ^ x_fresh, y_it,
-                    StringTable.get(Natural[LM_FRESH].name));
-                has_set_landmark = true;
             }
         }
     }
@@ -2106,28 +2042,26 @@ void __cdecl world_volcano(int x, int y, BOOL is_not_landmark) {
     int loc_attempts = 0;
     if (!on_map(x, y)) {
         do {
-            do {
-                int lat_bounds = MapLatitudeBounds - 16;
-                int rnd_y;
-                if (lat_bounds - 1 <= 0) {
-                    rnd_y = 0;
-                } else {
-                    rnd_y = rand() % lat_bounds;
-                }
-                y = rnd_y + 8;
-                int lon_bounds = MapLongitudeBounds;
-                int x_seed;
-                if (lon_bounds - 1 <= 0) {
-                    x_seed = 0;
-                } else {
-                    x_seed = rand() % lon_bounds;
-                }
-                x = ((x_seed ^ y) & 1) ^ x_seed;
-                if (++loc_attempts >= 1000) {
-                    return;
-                }
-            } while (is_ocean(x, y));
-        } while (near_landmark(x, y));
+            int lat_bounds = MapLatitudeBounds - 16;
+            int rnd_y;
+            if (lat_bounds - 1 <= 0) {
+                rnd_y = 0;
+            } else {
+                rnd_y = rand() % lat_bounds;
+            }
+            y = rnd_y + 8;
+            int lon_bounds = MapLongitudeBounds;
+            int x_seed;
+            if (lon_bounds - 1 <= 0) {
+                x_seed = 0;
+            } else {
+                x_seed = rand() % lon_bounds;
+            }
+            x = ((x_seed ^ y) & 1) ^ x_seed;
+            if (++loc_attempts >= 1000) {
+                return;
+            }
+        } while (is_ocean(x, y) || near_landmark(x, y));
         if (loc_attempts >= 1000) { // redundant check? would have already returned, remove?
             return;
         }
@@ -2187,15 +2121,13 @@ void __cdecl world_borehole(int x, int y) {
     int loc_attempts = 0;
     if (!on_map(x, y)) {
         do {
-            do {
-                y = bounded_crt_random(MapLatitudeBounds - 16) + 8;
-                int x_seed = bounded_crt_random(MapLongitudeBounds);
-                x = ((x_seed ^ y) & 1) ^ x_seed;
-                if (++loc_attempts >= 1000) {
-                    return;
-                }
-            } while (is_ocean(x, y));
-        } while (near_landmark(x, y));
+            y = bounded_crt_random(MapLatitudeBounds - 16) + 8;
+            int x_seed = bounded_crt_random(MapLongitudeBounds);
+            x = ((x_seed ^ y) & 1) ^ x_seed;
+            if (++loc_attempts >= 1000) {
+                return;
+            }
+        } while (is_ocean(x, y) || near_landmark(x, y));
         if (loc_attempts >= 1000) { // redundant check? would have already returned, remove?
             return;
         }
@@ -2235,29 +2167,23 @@ void __cdecl world_borehole(int x, int y) {
             }
         }
     }
-    int x_offset_val1 = wrap_map_x(x + RadiusOffsetX[val1]); // removed from loop
-    int y_offset_val1 = y + RadiusOffsetY[val1]; // removed from loop
     for (i = 0; i < 8; i++) {
-        int x_radius = wrap_map_x(x_offset_val1 + RadiusOffsetX[i + 1]);
-        int y_radius = y_offset_val1 + RadiusOffsetY[i + 1];
+        int x_radius = wrap_map_x(wrap_map_x(x + RadiusOffsetX[val1]) + RadiusOffsetX[i + 1]);
+        int y_radius = y + RadiusOffsetY[val1] + RadiusOffsetY[i + 1];
         if (on_map(x_radius, y_radius) && is_ocean(x_radius, y_radius)) {
             world_alt_set(x_radius, y_radius, ALT_SHORE_LINE, true);
         }
     }
-    int x_offset_val2 = wrap_map_x(x + RadiusOffsetX[val2]); // removed from loop
-    int y_offset_val2 = y + RadiusOffsetY[val2]; // removed from loop
     for (i = 0; i < 8; i++) {
-        int x_radius = wrap_map_x(x_offset_val2 + RadiusOffsetX[i + 1]);
-        int y_radius = y_offset_val2 + RadiusOffsetY[i + 1];
+        int x_radius = wrap_map_x(wrap_map_x(x + RadiusOffsetX[val2]) + RadiusOffsetX[i + 1]);
+        int y_radius = y + RadiusOffsetY[val2] + RadiusOffsetY[i + 1];
         if (on_map(x_radius, y_radius) && is_ocean(x_radius, y_radius)) {
             world_alt_set(x_radius, y_radius, ALT_SHORE_LINE, true);
         }
     }
-    int x_offset_val3 = wrap_map_x(x + RadiusOffsetX[val3]); // removed from loop
-    int y_offset_val3 = y + RadiusOffsetY[val3]; // removed from loop
     for (i = 0; i < 8; i++) {
-        int x_radius = wrap_map_x(x_offset_val3 + RadiusOffsetX[i + 1]);
-        int y_radius = y_offset_val3 + RadiusOffsetY[i + 1];
+        int x_radius = wrap_map_x(wrap_map_x(x + RadiusOffsetX[val3]) + RadiusOffsetX[i + 1]);
+        int y_radius = y + RadiusOffsetY[val3] + RadiusOffsetY[i + 1];
         if (on_map(x_radius, y_radius) && is_ocean(x_radius, y_radius)) {
             world_alt_set(x_radius, y_radius, ALT_SHORE_LINE, true);
         }
@@ -2289,28 +2215,26 @@ void __cdecl world_temple(int x, int y) {
     int loc_attempts = 0;
     if (!on_map(x, y)) {
         do {
-            do {
-                int lat_bounds = MapLatitudeBounds - 16;
-                int rnd_y;
-                if (lat_bounds - 1 <= 0) {
-                    rnd_y = 0;
-                } else {
-                    rnd_y = rand() % lat_bounds;
-                }
-                y = rnd_y + 8;
-                int lon_bounds = MapLongitudeBounds;
-                int x_seed;
-                if (lon_bounds - 1 <= 0) {
-                    x_seed = 0;
-                } else {
-                    x_seed = rand() % lon_bounds;
-                }
-                x = ((x_seed ^ y) & 1) ^ x_seed;
-                if (++loc_attempts >= 1000) {
-                    return;
-                }
-            } while (is_ocean(x, y));
-        } while (near_landmark(x, y));
+            int lat_bounds = MapLatitudeBounds - 16;
+            int rnd_y;
+            if (lat_bounds - 1 <= 0) {
+                rnd_y = 0;
+            } else {
+                rnd_y = rand() % lat_bounds;
+            }
+            y = rnd_y + 8;
+            int lon_bounds = MapLongitudeBounds;
+            int x_seed;
+            if (lon_bounds - 1 <= 0) {
+                x_seed = 0;
+            } else {
+                x_seed = rand() % lon_bounds;
+            }
+            x = ((x_seed ^ y) & 1) ^ x_seed;
+            if (++loc_attempts >= 1000) {
+                return;
+            }
+        } while (is_ocean(x, y) || near_landmark(x, y));
         if (loc_attempts >= 1000) { // redundant check? would have already returned, remove?
             return;
         }
@@ -2353,32 +2277,30 @@ Return Value: n/a
 Status: Complete - testing
 */
 void __cdecl world_unity(int x, int y) {
+    int loc_attempts = 0;
     if (ExpansionEnabled) {
-        int loc_attempts = 0;
         if (!on_map(x, y)) {
             do {
-                do {
-                    int lat_bounds = MapLatitudeBounds - 16;
-                    int rnd_y;
-                    if (lat_bounds - 1 <= 0) {
-                        rnd_y = 0;
-                    } else {
-                        rnd_y = rand() % lat_bounds;
-                    }
-                    y = rnd_y + 8;
-                    int lon_bounds = MapLongitudeBounds;
-                    int x_seed;
-                    if (lon_bounds - 1 <= 0) {
-                        x_seed = 0;
-                    } else {
-                        x_seed = rand() % lon_bounds;
-                    }
-                    x = ((x_seed ^ y) & 1) ^ x_seed;
-                    if (++loc_attempts >= 1000) {
-                        return;
-                    }
-                } while (is_ocean(x, y));
-            } while (near_landmark(x, y));
+                int lat_bounds = MapLatitudeBounds - 16;
+                int rnd_y;
+                if (lat_bounds - 1 <= 0) {
+                    rnd_y = 0;
+                } else {
+                    rnd_y = rand() % lat_bounds;
+                }
+                y = rnd_y + 8;
+                int lon_bounds = MapLongitudeBounds;
+                int x_seed;
+                if (lon_bounds - 1 <= 0) {
+                    x_seed = 0;
+                } else {
+                    x_seed = rand() % lon_bounds;
+                }
+                x = ((x_seed ^ y) & 1) ^ x_seed;
+                if (++loc_attempts >= 1000) {
+                    return;
+                }
+            } while (is_ocean(x, y) || near_landmark(x, y));
             if (loc_attempts >= 1000) { // redundant check? would have already returned, remove?
                 return;
             }
@@ -2453,31 +2375,29 @@ Return Value: n/a
 Status: Complete - testing
 */
 void __cdecl world_fossil(int x, int y) {
-    uint32_t loc_attempts = 0;
+    int loc_attempts = 0;
     if (!on_map(x, y)) {
         do {
-            do {
-                int lat_bounds = MapLatitudeBounds - 16;
-                int rnd_y;
-                if (lat_bounds - 1 <= 0) {
-                    rnd_y = 0;
-                } else {
-                    rnd_y = rand() % lat_bounds;
-                }
-                y = rnd_y + 8;
-                int lon_bounds = MapLongitudeBounds;
-                int x_seed;
-                if (lon_bounds - 1 <= 0) {
-                    x_seed = 0;
-                } else {
-                    x_seed = rand() % lon_bounds;
-                }
-                x = ((x_seed ^ y) & 1) ^ x_seed;
-                if (++loc_attempts >= 1000) {
-                    return;
-                }
-            } while (!is_ocean(x, y));
-        } while (near_landmark(x, y));
+            int lat_bounds = MapLatitudeBounds - 16;
+            int rnd_y;
+            if (lat_bounds - 1 <= 0) {
+                rnd_y = 0;
+            } else {
+                rnd_y = rand() % lat_bounds;
+            }
+            y = rnd_y + 8;
+            int lon_bounds = MapLongitudeBounds;
+            int x_seed;
+            if (lon_bounds - 1 <= 0) {
+                x_seed = 0;
+            } else {
+                x_seed = rand() % lon_bounds;
+            }
+            x = ((x_seed ^ y) & 1) ^ x_seed;
+            if (++loc_attempts >= 1000) {
+                return;
+            }
+        } while (!is_ocean(x, y) || near_landmark(x, y));
         if (loc_attempts >= 1000) { // redundant check? would have already returned, remove?
             return;
         }
@@ -2512,33 +2432,33 @@ void __cdecl world_canyon(int x, int y) {
     int loc_attempts = 0;
     if (!on_map(x, y)) {
         do {
-            do {
-                y = bounded_crt_random(MapLatitudeBounds - 16) + 8;
-                int x_seed = bounded_crt_random(MapLongitudeBounds);
-                x = ((x_seed ^ y) & 1) ^ x_seed;
-                if (++loc_attempts >= 1000) {
-                    return;
-                }
-            } while (is_ocean(x, y));
-        } while (near_landmark(x, y));
+            y = bounded_crt_random(MapLatitudeBounds - 16) + 8;
+            int x_seed = bounded_crt_random(MapLongitudeBounds);
+            x = ((x_seed ^ y) & 1) ^ x_seed;
+            if (++loc_attempts >= 1000) {
+                return;
+            }
+        } while (is_ocean(x, y) || near_landmark(x, y));
         if (loc_attempts >= 1000) { // redundant check? would have already returned, remove?
             return;
         }
     } 
     for (uint32_t i = 0; i < 12; i++) {
-        int x_radius = wrap_map_x(x + RadiusOffsetX[WorldCanyonOffsetValues[i]]);
-        int y_radius = y + RadiusOffsetY[WorldCanyonOffsetValues[i]];
+        uint32_t offset = WorldCanyonOffsetValues[i];
+        int x_radius = wrap_map_x(x + RadiusOffsetX[offset]);
+        int y_radius = y + RadiusOffsetY[offset];
         if (on_map(x_radius, y_radius)) {
             world_alt_set(x_radius, y_radius, ALT_1_LEVEL_ABOVE_SEA, true);
             world_alt_set(x_radius, y_radius, ALT_SHORE_LINE, true);
         }
     }
     for (uint32_t j = 0; j < 12; j++) {
-        int x_radius = wrap_map_x(x + RadiusOffsetX[WorldCanyonOffsetValues[j]]);
-        int y_radius = y + RadiusOffsetY[WorldCanyonOffsetValues[j]];
+        uint32_t offset = WorldCanyonOffsetValues[j];
+        int x_radius = wrap_map_x(x + RadiusOffsetX[offset]);
+        int y_radius = y + RadiusOffsetY[offset];
         if (on_map(x_radius, y_radius)) {
             bit2_set(x_radius, y_radius, BIT2_CANYON, true);
-            code_set(x_radius, y_radius, WorldCanyonOffsetValues[j]);
+            code_set(x_radius, y_radius, offset);
         }
     }
     new_landmark(x, y + 2, StringTable.get(Natural[LM_CANYON].name));
@@ -2567,28 +2487,26 @@ void __cdecl world_mesa(int x, int y) {
     int loc_attempts = 0;
     if (!on_map(x, y)) {
         do {
-            do {
-                int lat_bounds = MapLatitudeBounds - 16;
-                int rnd_y;
-                if (lat_bounds - 1 <= 0) {
-                    rnd_y = 0;
-                } else {
-                    rnd_y = rand() % lat_bounds;
-                }
-                y = rnd_y + 8;
-                int lon_bounds = MapLongitudeBounds;
-                int x_seed;
-                if (lon_bounds - 1 <= 0) {
-                    x_seed = 0;
-                } else {
-                    x_seed = rand() % lon_bounds;
-                }
-                x = ((x_seed ^ y) & 1) ^ x_seed;
-                if (++loc_attempts >= 1000) {
-                    return;
-                }
-            } while (is_ocean(x, y));
-        } while (near_landmark(x, y));
+            int lat_bounds = MapLatitudeBounds - 16;
+            int rnd_y;
+            if (lat_bounds - 1 <= 0) {
+                rnd_y = 0;
+            } else {
+                rnd_y = rand() % lat_bounds;
+            }
+            y = rnd_y + 8;
+            int lon_bounds = MapLongitudeBounds;
+            int x_seed;
+            if (lon_bounds - 1 <= 0) {
+                x_seed = 0;
+            } else {
+                x_seed = rand() % lon_bounds;
+            }
+            x = ((x_seed ^ y) & 1) ^ x_seed;
+            if (++loc_attempts >= 1000) {
+                return;
+            }
+        } while (is_ocean(x, y) || near_landmark(x, y));
         if (loc_attempts >= 1000) { // redundant check? would have already returned, remove?
             return;
         }
@@ -2597,7 +2515,7 @@ void __cdecl world_mesa(int x, int y) {
         int x_radius = wrap_map_x(x + RadiusOffsetX[i]);
         int y_radius = y + RadiusOffsetY[i];
         if (on_map(x_radius, y_radius)) {
-            world_alt_set(x_radius, y_radius, (i < 25) + ALT_SHORE_LINE, true);
+            world_alt_set(x_radius, y_radius, (i < 25 ? 1 : 0) + ALT_SHORE_LINE, true);
             // 5C80F5 supplies the terrain bit, not Natural[]'s landmark id.
             bit2_set(x_radius, y_radius, BIT2_MESA, true);
             code_set(x_radius, y_radius, i);
@@ -2628,48 +2546,48 @@ Status: Complete - testing
 // Historical implementation note: BIT2/code was rolled into the ALT4 loop; the pinned function
 // performs separate 13-entry altitude and mask/code passes using the original offset table.
 void __cdecl world_ridge(int x, int y) {
-    uint32_t loc_attempts = 0;
+    int loc_attempts = 0;
     if (!on_map(x, y)) {
         do {
-            do {
-                int lat_bounds = MapLatitudeBounds - 16;
-                int rnd_y;
-                if (lat_bounds - 1 <= 0) {
-                    rnd_y = 0;
-                } else {
-                    rnd_y = rand() % lat_bounds;
-                }
-                y = rnd_y + 8;
-                int lon_bounds = MapLongitudeBounds;
-                int x_seed;
-                if (lon_bounds - 1 <= 0) {
-                    x_seed = 0;
-                } else {
-                    x_seed = rand() % lon_bounds;
-                }
-                x = ((x_seed ^ y) & 1) ^ x_seed;
-                if (++loc_attempts >= 1000) {
-                    return;
-                }
-            } while (is_ocean(x, y));
-        } while (near_landmark(x, y));
+            int lat_bounds = MapLatitudeBounds - 16;
+            int rnd_y;
+            if (lat_bounds - 1 <= 0) {
+                rnd_y = 0;
+            } else {
+                rnd_y = rand() % lat_bounds;
+            }
+            y = rnd_y + 8;
+            int lon_bounds = MapLongitudeBounds;
+            int x_seed;
+            if (lon_bounds - 1 <= 0) {
+                x_seed = 0;
+            } else {
+                x_seed = rand() % lon_bounds;
+            }
+            x = ((x_seed ^ y) & 1) ^ x_seed;
+            if (++loc_attempts >= 1000) {
+                return;
+            }
+        } while (is_ocean(x, y) || near_landmark(x, y));
         if (loc_attempts >= 1000) { // redundant check? would have already returned, remove?
             return;
         }
     }
     for (uint32_t i = 0; i < 13; i++) {
-        int x_radius = wrap_map_x(x + RadiusOffsetX[world_ridge_offset_val[i]]);
-        int y_radius = y + RadiusOffsetY[world_ridge_offset_val[i]];
+        uint32_t offset = world_ridge_offset_val[i];
+        int x_radius = wrap_map_x(x + RadiusOffsetX[offset]);
+        int y_radius = y + RadiusOffsetY[offset];
         if (on_map(x_radius, y_radius)) {
             world_alt_set(x_radius, y_radius, ALT_1_LEVEL_ABOVE_SEA, true);
         }
     }
     for (uint32_t j = 0; j < 13; j++) {
-        int x_radius = wrap_map_x(x + RadiusOffsetX[world_ridge_offset_val[j]]);
-        int y_radius = y + RadiusOffsetY[world_ridge_offset_val[j]];
+        uint32_t offset = world_ridge_offset_val[j];
+        int x_radius = wrap_map_x(x + RadiusOffsetX[offset]);
+        int y_radius = y + RadiusOffsetY[offset];
         if (on_map(x_radius, y_radius)) {
             bit2_set(x_radius, y_radius, BIT2_RIDGE, true);
-            code_set(x_radius, y_radius, world_ridge_offset_val[j]);
+            code_set(x_radius, y_radius, offset);
         }
     }
     new_landmark(x, y + 2, StringTable.get(Natural[LM_RIDGE].name));
@@ -2695,31 +2613,30 @@ Return Value: n/a
 Status: Complete - testing
 */
 void __cdecl world_geothermal(int x, int y) {
+    BOOL has_skipped = false;
     int loc_attempts = 0;
     if (!on_map(x, y)) {
         do {
-            do {
-                int lat_bounds = MapLatitudeBounds - 16;
-                int rnd_y;
-                if (lat_bounds - 1 <= 0) {
-                    rnd_y = 0;
-                } else {
-                    rnd_y = rand() % lat_bounds;
-                }
-                y = rnd_y + 8;
-                int lon_bounds = MapLongitudeBounds;
-                int x_seed;
-                if (lon_bounds - 1 <= 0) {
-                    x_seed = 0;
-                } else {
-                    x_seed = rand() % lon_bounds;
-                }
-                x = ((x_seed ^ y) & 1) ^ x_seed;
-                if (++loc_attempts >= 1000) {
-                    return;
-                }
-            } while (!is_ocean(x, y));
-        } while (near_landmark(x, y));
+            int lat_bounds = MapLatitudeBounds - 16;
+            int rnd_y;
+            if (lat_bounds - 1 <= 0) {
+                rnd_y = 0;
+            } else {
+                rnd_y = rand() % lat_bounds;
+            }
+            y = rnd_y + 8;
+            int lon_bounds = MapLongitudeBounds;
+            int x_seed;
+            if (lon_bounds - 1 <= 0) {
+                x_seed = 0;
+            } else {
+                x_seed = rand() % lon_bounds;
+            }
+            x = ((x_seed ^ y) & 1) ^ x_seed;
+            if (++loc_attempts >= 1000) {
+                return;
+            }
+        } while (!is_ocean(x, y) || near_landmark(x, y));
         if (loc_attempts >= 1000) { // redundant check? would have already returned, remove?
             return;
         }
@@ -2733,7 +2650,6 @@ void __cdecl world_geothermal(int x, int y) {
     // and walking 0x005C83B0's raw bytes end to end confirmed the single-block shape.
     // The bit2_set argument is BIT2_GEOTHERMAL (0x400), not LM_GEOTHERMAL (10) - the
     // image pushes 0x400.
-    BOOL has_skipped = false;
     for (int i = 0; i < 25; i++) {
         int x_radius = wrap_map_x(x + RadiusOffsetX[i]);
         int y_radius = y + RadiusOffsetY[i];
@@ -2865,25 +2781,15 @@ void __cdecl world_rocky() {
             Map *tile = &map_tiles()[MapLongitude * y + half_x];
             uint32_t flags = tile->bit2;
 
-            if ((flags & 0x80) != 0 && (tile->climate & ~0x1F) <= 0x5f) {
+            if ((flags & 0x80) != 0 && (tile->climate & ~0x1F) < ALT_BIT_SHORE_LINE) {
                 continue;
             }
-
-            unsigned int bitval;
-            if ((tile->climate & ~0x1F) < 0x60) {
-                bitval = 0x10000;
-            } else {
-                if ((flags & 0x80000004) == 4 && rand() % 2 == 0) {
-                    bitval = 0x10000;
-                } else {
-                    int climate = map_tiles()[MapLongitude * y + half_x].climate;
-                    if ((climate & ~0x1F) <= 0x80 && (climate & 0x18) <= 8) {
-                        continue;
-                    }
-                    bitval = 0x20000;
-                }
+            if ((tile->climate & ~0x1F) < ALT_BIT_SHORE_LINE
+                || ((flags & 0x80000004) == 4 && !(rand() % 2))) {
+                bit_set(x, y, 0x10000, true);
+            } else if ((map_loc(x, y)->climate & ~0x1F) > 0x80 || climate_at(x, y) > RAINFALL_MOIST) {
+                bit_set(x, y, 0x20000, true);
             }
-            bit_set(x, y, bitval, 1);
         }
         do_all_non_input();
     }
@@ -3495,39 +3401,27 @@ void __cdecl world_build() {
         WorldClimateRedrawRequest = 1;
         WorldClimateSkipTerritoryReset = 1;
 
-        int *const rule_end = MapStorage.metadata_.planet_rules_ + 7;
-        for (int *rules = MapStorage.metadata_.planet_rules_; rules < rule_end; ++rules) {
-            if (*rules >= 0) {
-                continue;
+        for (int rule = 0; rule < 7; rule++) {
+            if (MapStorage.metadata_.planet_rules_[rule] < 0) {
+                MapStorage.metadata_.planet_rules_[rule] = rand() % 3;
             }
-            *rules = rand() % 3;
         }
 
         map_wipe();
 
+        int builds = 0;
         MapIsFlat = 0;
-        uint32_t land_base_bits = (2u - static_cast<uint32_t>(MapOceanCoverage))
-                                  * WorldBuilder.land_mod + WorldBuilder.land_base;
-        int land_target;
-        memcpy(&land_target, &land_base_bits, sizeof(land_target));
-        uint32_t land_target_bits = static_cast<uint32_t>(land_target)
-                                    * static_cast<uint32_t>(MapArea);
-        memcpy(&land_target, &land_target_bits, sizeof(land_target));
-        land_target /= 3200;
-        uint32_t island_target_bits = static_cast<uint32_t>(WorldBuilder.islands)
-                                      * static_cast<uint32_t>(MapArea);
-        int island_target;
-        memcpy(&island_target, &island_target_bits, sizeof(island_target));
-        island_target /= 3200;
+        // Unsigned builder rules wrap; the quotients are signed.
+        WorldBuildVal1 = static_cast<int>(((2 - MapOceanCoverage) * WorldBuilder.land_mod
+            + WorldBuilder.land_base) * MapArea) / 3200;
+        int island_target = WorldBuilder.islands * MapArea / 3200;
         BrushVal1 = 0;
-        WorldBuildVal1 = land_target;
 
         if ((GameDataStateStorage.fields_.game_state_ & 0x80) != 0) {
             MapWinTable[0]->clear_terrain();
             draw_map(1);
         }
 
-        int builds = 0;
         while (BrushVal1 < WorldBuildVal1 || continent_count < island_target) {
             // The original increments and checks this before calling build_continent;
             // attempt 100 exits, so at most 99 builds are issued.
@@ -3539,22 +3433,13 @@ void __cdecl world_build() {
         }
 
         if (MapErosiveForces >= 1) {
-            uint32_t hills_base_bits = (static_cast<uint32_t>(MapErosiveForces) - 1u)
-                                       * WorldBuilder.hills_mod + WorldBuilder.hills_base;
-            int hills;
-            memcpy(&hills, &hills_base_bits, sizeof(hills));
-            uint32_t hills_bits = static_cast<uint32_t>(hills)
-                                  * static_cast<uint32_t>(MapArea);
-            memcpy(&hills, &hills_bits, sizeof(hills));
-            hills /= 3200;
+            int hills = static_cast<int>(((MapErosiveForces - 1) * WorldBuilder.hills_mod
+                + WorldBuilder.hills_base) * MapArea) / 3200;
             if (MapOceanCoverage == 2) {
-                hills = hills / 2;
+                hills /= 2;
             }
-            if (hills > 0) {
-                do {
-                    build_hills(4);
-                    hills--;
-                } while (hills != 0);
+            for (int h = 0; h < hills; h++) {
+                build_hills(4);
             }
         }
 

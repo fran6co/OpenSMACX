@@ -829,69 +829,40 @@ Status: Coverage transcription - unclaimed body. The original mapping and
         of line; source inlining remains a separate measurement question.
 */
 extern "C" int __cdecl sub_565160(int faction_id, int tile_x, int tile_y) {
+    int found = -1;
     if (bonus_at(tile_x, tile_y, 0) == 3) {
         return 1;
     }
-    int found = -1;
-    unsigned int owner = 0;
-    for (int idx = 0; idx < 8; ++idx) {
-        int x = VehMoveDeltaX[idx] + tile_x;
-        if ((MapIsFlat & 1) == 0) {
-            if (x < 0) {
-                x += MapLongitudeBounds;
-            } else if (x >= MapLongitudeBounds) {
-                x -= MapLongitudeBounds;
+    for (int i = 0; i < 8; i++) {
+        int x = wrap_map_x(tile_x + VehMoveDeltaX[i]);
+        int y = tile_y + VehMoveDeltaY[i];
+        if (on_map(x, y)) {
+            int base_id = base_at(x, y);
+            if (base_id >= 0) {
+                int owner = Bases[base_id].faction_id_current;
+                if (owner == faction_id
+                    || PlayersData[faction_id].diplo_treaties[owner] & DTREATY_PACT) {
+                    found = base_id;
+                    if (owner == faction_id) {
+                        break;
+                    }
+                }
             }
-        }
-        int y = VehMoveDeltaY[idx] + tile_y;
-        if (y < 0 || y >= MapLatitudeBounds || x < 0 || x >= MapLongitudeBounds) {
-            continue;
-        }
-        int base_id = base_at(x, y);
-        if (base_id < 0) {
-            continue;
-        }
-        owner = Bases[base_id].faction_id_current;
-        if (owner != static_cast<unsigned int>(faction_id)) {
-            if ((PlayersData[faction_id].diplo_treaties[owner] & DTREATY_PACT) == 0) {
-                continue;
-            }
-        }
-        found = base_id;
-        if (owner == static_cast<unsigned int>(faction_id)) {
-            break;
         }
     }
-    if (found < 0) {
-        return 0;
-    }
-    short base_x = Bases[found].x;
-    short base_y = Bases[found].y;
-    int no_wrap = MapIsFlat & 1;
-    for (int g = 0; g < 8; ++g) {
-        int x = VehMoveDeltaX[g] + base_x;
-        if (no_wrap == 0) {
-            if (x < 0) {
-                x += MapLongitudeBounds;
-            } else if (x >= MapLongitudeBounds) {
-                x -= MapLongitudeBounds;
-            }
-        }
-        int y = VehMoveDeltaY[g] + base_y;
-        if (x == tile_x && y == tile_y) {
-            continue;
-        }
-        if (y < 0 || y >= MapLatitudeBounds || x < 0 || x >= MapLongitudeBounds) {
-            continue;
-        }
-        const Map *tile = map_tiles() + MapLongitude * y + (x >> 1);
-        int altitude = tile->climate & ~0x1F;
-        if (altitude < ALT_BIT_SHORE_LINE) {
-            if ((tile->bit & BIT_FUNGUS) == 0) {
-                return 1;
-            }
-            if (altitude < ALT_BIT_OCEAN_SHELF) {
-                return 1;
+    if (found >= 0) {
+        int base_x = Bases[found].x;
+        int base_y = Bases[found].y;
+        for (int i = 0; i < 8; i++) {
+            int x = wrap_map_x(base_x + VehMoveDeltaX[i]);
+            int y = base_y + VehMoveDeltaY[i];
+            if ((x != tile_x || y != tile_y) && on_map(x, y)) {
+                Map *tile = map_loc(x, y);
+                int altitude = tile->climate & ~0x1F;
+                if (altitude < ALT_BIT_SHORE_LINE
+                    && (!(tile->bit & BIT_FUNGUS) || altitude < ALT_BIT_OCEAN_SHELF)) {
+                    return 1;
+                }
             }
         }
     }
@@ -1701,10 +1672,17 @@ int __cdecl zoc_sea(int x, int y, int faction_id) {
                 && !(PlayersData[faction_id].diplo_treaties[owner] & DTREATY_PACT)) {
                 for (int veh_id = veh_at(x_radius, y_radius); veh_id >= 0;
                     veh_id = Vehs[veh_id].next_veh_id_stack) {
-                    if (Vehs[veh_id].faction_id != faction_id
-                        && (Vehs[veh_id].visibility & (1 << faction_id)
-                            || (!IsMultiplayerNet && !(Vehs[veh_id].flags & VFLAG_INVISIBLE)))) {
-                        return owner + 1;
+                    if (Vehs[veh_id].faction_id != faction_id) {
+                        if (Vehs[veh_id].visibility & (1 << faction_id)) {
+                            return owner + 1;
+                        }
+                        if (!IsMultiplayerNet) {
+                            const int16_t invisible =
+                                static_cast<int16_t>(Vehs[veh_id].flags & VFLAG_INVISIBLE);
+                            if (invisible == 0) {
+                                return owner + 1;
+                            }
+                        }
                     }
                 }
             }
@@ -2066,39 +2044,34 @@ int __cdecl encrypt_write(void *data, unsigned int size, unsigned int count,
     if (buf == 0) {
         return 0;
     }
-    unsigned char key1 = 0x80;
-    unsigned char key2 = 0x80;
-    unsigned int i = 0;
     unsigned char *src = reinterpret_cast<unsigned char *>(data);
     unsigned char *dst = buf;
-    unsigned int pairs = padded >> 1;
-    if (pairs != 0) {
-        do {
-            key2 = key2 + 1;
-            key1 = key1 - 1;
-            unsigned char byte1 = *src++;
-            unsigned char byte2;
-            if (i < raw_size) {
-                byte2 = *src++;
-            } else {
-                byte2 = 0;
+    unsigned char key1 = 0x80;
+    unsigned char key2 = 0x80;
+    for (unsigned int i = 0; i < padded / 2; ++i) {
+        key2 = key2 + 1;
+        key1 = key1 - 1;
+        unsigned char byte1 = *src++;
+        unsigned char byte2;
+        if (i < raw_size) {
+            byte2 = *src++;
+        } else {
+            byte2 = 0;
+        }
+        if (byte1 != 0) {
+            unsigned char value = byte1 ^ key2;
+            if (value != 0) {
+                byte1 = value;
             }
-            if (byte1 != 0) {
-                unsigned char value = byte1 ^ key2;
-                if (value != 0) {
-                    byte1 = value;
-                }
+        }
+        if (byte2 != 0) {
+            unsigned char value = byte2 ^ key1;
+            if (value != 0) {
+                byte2 = value;
             }
-            if (byte2 != 0) {
-                unsigned char value = byte2 ^ key1;
-                if (value != 0) {
-                    byte2 = value;
-                }
-            }
-            *dst++ = byte2;
-            *dst++ = byte1;
-            ++i;
-        } while (i < pairs);
+        }
+        *dst++ = byte2;
+        *dst++ = byte1;
     }
     int result = fwrite(buf, padded, 1, file);
     free(buf);
@@ -2326,13 +2299,8 @@ void __cdecl proto_sort_2(int faction_id) {
     ProtoSortCount = 0;
     int sort_keys[128];
     for (int index = 0; index < 128; ++index) {
-        int prototype_id;
-        if (index >= MaxVehProtoFactionNum) {
-            prototype_id = faction_id * MaxVehProtoFactionNum;
-        } else {
-            prototype_id = 0;
-        }
-        prototype_id += index % MaxVehProtoFactionNum;
+        int prototype_id = (index >= MaxVehProtoFactionNum ? faction_id * MaxVehProtoFactionNum : 0)
+            + index % MaxVehProtoFactionNum;
         ProtoSortIds[index] = prototype_id;
         if ((VehPrototypes[prototype_id].flags & PROTO_ACTIVE) != 0
             && (prototype_id >= MaxVehProtoFactionNum
