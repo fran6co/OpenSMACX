@@ -36,7 +36,8 @@
 // (see strings.h). The image's ??__E runs the real constructor against it;
 // here the CRT walk does the same, and jackal_init_real's
 // `StringTable.init(0x8000)` populates it.
-// RECOVERY_OBJECT: v1 0x009B90D8 ?StringTable@@3VStrings@@A
+// Its 0x18-byte Strings layout ends before the 0x009B90F8 Labels block.
+// RECOVERY_OBJECT: v2 0x009B90D8 0x009B90F0 ?StringTable@@3VStrings@@A 0x00490140
 Strings StringTable;  // 0x009B90D8
 
 /*
@@ -203,7 +204,8 @@ Strings::~Strings() {}
 // labels_shutdown (0x006169D0) and labels_init (0x00616A00) address the
 // struct in place: `mov eax, dword ptr [0x9B90F8]` (strings_ptr) and
 // `mov dword ptr [0x9B90FC], 0` (count).
-// RECOVERY_OBJECT: v1 0x009B90F8 ?Labels@@3ULabel@@A
+// Its two dwords end where the next mapped object begins at 0x009B9100.
+// RECOVERY_OBJECT: v2 0x009B90F8 0x009B9100 ?Labels@@3ULabel@@A 0x00616A00
 Label Labels;                                       // 0x009B90F8
 
 /*

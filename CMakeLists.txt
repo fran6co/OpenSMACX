@@ -589,6 +589,16 @@ set_source_files_properties(src/scenario_undo.cpp PROPERTIES COMPILE_OPTIONS "/O
 # reference checks consume each production object's own types and relocations.
 set_property(SOURCE
     src/alpha.cpp
+    src/base.cpp
+    src/faction.cpp
+    src/tutwin.cpp
+    src/veh.cpp
+    src/string_table.cpp
+    src/strings.cpp
+    src/sounddevice.cpp
+    src/ambience.cpp
+    src/netmsg.cpp
+    src/reportif.cpp
     src/buffer.cpp
     src/caviar.cpp
     src/caviar_chain.cpp

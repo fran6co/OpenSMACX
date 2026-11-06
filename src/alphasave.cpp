@@ -267,7 +267,7 @@ int AlphaSave::on_key_click(int key, int flags) {
     case 0x22:
     case 0x26:
     case 0x28:
-        return file_win_.list_box().key_down_event(flags);
+        return file_win_.list_box_key_down(flags);
     default:
         file_win_.edit_box().key_down_event(flags);
         return file_win_.edit_box().key_click_event(key, flags);

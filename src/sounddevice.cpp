@@ -54,7 +54,8 @@
 // build; the object and the binding were the same address, so the object now
 // carries the public name and every `WaveDeviceGlobal->` call site reaches it
 // directly, the folded `mov ecx, imm32` receivers relocated.
-// RECOVERY_OBJECT: v1 0x0090D978 ?WaveDeviceGlobal@@3VWave_Device@@A
+// The 0x1A4-byte device ends where SoundChainTail begins at 0x0090DB1C.
+// RECOVERY_OBJECT: v2 0x0090D978 0x0090DB1C ?WaveDeviceGlobal@@3VWave_Device@@A 0x00491380
 Wave_Device WaveDeviceGlobal;  // 0x0090D978
 
 

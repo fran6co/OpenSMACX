@@ -542,7 +542,9 @@ LPSTR VehBattleDisplayTerrain;
 // Zero initialisation IS the image's initialisation: every base below reads
 // ZERO at run time (`image_data.py`, all past the file-backed end of .data),
 // and the alpha.txt / x.txt loaders fill them before use.
-// RECOVERY_OBJECT: v1 0x009AB868 ?VehPrototypes@@3PAUVehPrototype@@A
+// The table ends where the next mapped object, ExitTurnLoop at 0x009B2068,
+// begins: 0x009AB868 + 512 * 0x34 = 0x009B2068.
+// RECOVERY_OBJECT: v2 0x009AB868 0x009B2068 ?VehPrototypes@@3PAUVehPrototype@@A 0x00493AF0
 VehPrototype VehPrototypes[MaxVehProtoNum];  // 0x009AB868
 // The rules loader fills entries0..8; original load_vehicles45446C..4546B4
 // additionally populates sprite metrics in entries9..18 at the same0x90 stride.

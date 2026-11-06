@@ -239,7 +239,9 @@ Purpose: Tear down every sub-object the constructor built, in exactly the
 // Original constructor 0x004AD170 initializes this singleton; its two list
 // receivers at 0x00890208/0x00890D5C are owned +0xA2D0/+0xAE24 members.
 // This start-only binding does not infer a complete original allocation.
-// RECOVERY_OBJECT: v1 0x00885F38 ?ReportIfGlobal@@3VReportIf@@A
+// The 0x20304-byte object ends four bytes before ReportInterfaceStatusReentry
+// at 0x008A6240.
+// RECOVERY_OBJECT: v2 0x00885F38 0x008A623C ?ReportIfGlobal@@3VReportIf@@A 0x004989F0
 ReportIf ReportIfGlobal;  // 0x00885F38
 
 /*

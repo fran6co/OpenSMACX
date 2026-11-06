@@ -166,7 +166,8 @@ RulesBonusName BonusName[MaxBonusNameNum];                  // 0x009461A8
 // beside its extern declaration.
 // RECOVERY_OBJECT: v1 0x00946A50 ?Players@@3PAUPlayer@@A
 Player Players[MaxPlayerNum];                               // 0x00946A50
-// RECOVERY_OBJECT: v1 0x0096C9E0 ?PlayersData@@3PAUPlayerData@@A
+// Eight 0x20CC-byte records end where Bases begins at 0x0097D040.
+// RECOVERY_OBJECT: v2 0x0096C9E0 0x0097D040 ?PlayersData@@3PAUPlayerData@@A 0x00458DC0
 PlayerData PlayersData[MaxPlayerNum];                       // 0x0096C9E0
 // The original loader at 0x5881AB starts at 0x94ADE4 and fills name/name_short
 // at offsets -4/0 with stride8. Terrain consumers read those same pointer slots.

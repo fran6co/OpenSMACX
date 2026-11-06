@@ -24,7 +24,8 @@
 #include "base.h"
 #include "faction.h"
 
-// RECOVERY_OBJECT: v1 0x009B86A0 ?StringTemp@@3PADA
+// The 1032-byte buffer ends where PopupStartCaption begins at 0x009B8AA8.
+// RECOVERY_OBJECT: v2 0x009B86A0 0x009B8AA8 ?StringTemp@@3PADA 0x00500120
 char StringTemp[1032];   // 0x009B86A0
 
 // Clear the first character without disturbing the reusable buffer storage.

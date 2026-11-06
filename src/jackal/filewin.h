@@ -48,6 +48,10 @@ class FileWin {
   EditBox &edit_box() { return edit_box_; }
   FlatButton &cancel_button() { return flat_button1_; }
   FlatButton &ok_button() { return flat_button2_; }
+  // Forward a key to the list's virtual Win base from FileWin's own `this`.
+  // VC6 folds the member's vbptr load into [this+offset] here; through the
+  // reference accessor it materializes the ListBox address first instead.
+  int list_box_key_down(int key) { return list_box_.key_down_event(key); }
 
   // `static`: the image's name ends in `QAA` - a public member declared
   // __cdecl, taking no receiver - and jackal_init_real calls it with no

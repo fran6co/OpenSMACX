@@ -32,7 +32,8 @@
 #include "game.h"
 #include "strings.h"
 
-// RECOVERY_OBJECT: v1 0x0074DAA0 ?FactionMusic@@3PAVFactionAmbience@@A
+// One pointer; the next mapped object, EffectOkPitch, begins at 0x0074DAA8.
+// RECOVERY_OBJECT: v2 0x0074DAA0 0x0074DAA4 ?FactionMusic@@3PAVFactionAmbience@@A 0x00491380
 FactionAmbience *FactionMusic = nullptr;
 // RECOVERY_OBJECT: v1 0x00683BF4 ?LastAmbienceVehicle@@3HA
 int LastAmbienceVehicle = -1;

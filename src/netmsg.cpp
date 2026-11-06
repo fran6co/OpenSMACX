@@ -160,8 +160,9 @@ Status: Complete
 // Definition order follows the original NETMSG1, then NETMSG2 constructors.
 // Static destruction is therefore NETMSG2, then NETMSG1, like the atexit list.
 // Original constructor/teardown47A770/47A790 identify this object.
-// Start-only original binding; complete allocation extent is not claimed.
-// RECOVERY_OBJECT: v1 0x00805338 ?NetMsgPrimary@@3VNetMsg@@A
+// The 0x53B4-byte NetMsg ends four bytes before the next mapped object,
+// NetWinPlanetSizeLabelCount at 0x0080A6F0.
+// RECOVERY_OBJECT: v2 0x00805338 0x0080A6EC ?NetMsgPrimary@@3VNetMsg@@A 0x0047A770
 NetMsg NetMsgPrimary(4096, 8, 0);
 // Original constructor/teardown47A7A0/47A7C0 identify this object.
 // RECOVERY_OBJECT: v1 0x007FFF80 ?NetMsgSecondary@@3VNetMsg@@A
