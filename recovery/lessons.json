@@ -497,6 +497,25 @@
         "A partial recorder publication with exit 3 is not a successful whole request; inspect its diff and confirm winners freshly."
       ],
       "reopen_when": "New native member-body attribution support or actual ownership evidence resolves a pending case; source, compiler or image changes require fresh measurements."
+    },
+    {
+      "id": "preserve-constructor-reset-phase-and-test-typed-array-clears",
+      "category": "candidate_strategy",
+      "evidence": {
+        "witness": "src/credits.cpp Credits::Credits at 0x00428780; pinned primary 0x00428780-0x00428830 and cleanup 0x00653110-0x0065315A; .opensmacx/recovery/credits-order-nov06bc/clear-deck.json; strict-constructor.json; .opensmacx/recovery/array-clear-propagation-nov06bd/game-trial.json and energy-trial.json"
+      },
+      "requires": [
+        "Pinned construction calls and field stores independently establish whether each scalar/array reset occurs before or after nontrivial owned subobject construction.",
+        "Current declarations establish the same complete member layout, real scalar-array extent and zero representation; no raw-storage, inferred-tail, nontrivial-element or volatile-array substitution is involved.",
+        "A fresh production-object comparison localizes the residual; old source comments and historical byte claims are not current mismatch evidence."
+      ],
+      "action": "Keep genuine implicit base/member construction and place scalar resets in the constructor body when the original resets them after construction. Compare a typed indexed array clear with memset under the unchanged production recipe, preserving subsequent store order and every neighbor. Credits constructs its members, clears 512 pointer slots, then resets line_count_ and frame_count_; the indexed form matches both mapped code spans and passes scoped byte/reference verification.",
+      "contraindications": [
+        "Do not reorder members or replace them with raw storage to manipulate initialization order.",
+        "Do not blanket-replace memset: the qualified clear_tamper and energy_compute trials yielded no exact gains; zero-fill opcode similarity is only candidate-screening evidence.",
+        "Do not infer complete vtable contents, linked selection or game acceptance from constructor byte/reference equality. The Credits aggregate strict report still has unresolved generated-table/dependency evidence."
+      ],
+      "reopen_when": "New original store/lifetime evidence, array layout, provider/TU or compiler inputs change the causal hypothesis; a new session alone does not reopen a failed array-clear spelling."
     }
   ],
   "policy": [

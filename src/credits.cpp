@@ -37,13 +37,17 @@ int __cdecl pop_wait();
 
 extern Wave g_CREDITS_WAVE;
 
-// ORIGINAL: 0x00428780 ??0Credits@@QAE@XZ 0x00428780-0x00428830;0x00653110-0x0065315A FILE
+// ORIGINAL: 0x00428780 ??0Credits@@QAE@XZ 0x00428780-0x00428830;0x00653110-0x0065315A FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["retired seed git:024b38ed:src/unrecovered/00428780.cpp records the member construction order and zero-filled line array", "Credits embeds real GraphicWin, Font, Buffer, FlatButton and Time members of the original sizes"], "reason": "Use genuine C++ base and member construction instead of fixed vtable stores and placement-new at raw offsets."}
 // Preserve the original frame-based lifetime/callback emission locally;
 // each restore below returns unrelated definitions to the TU defaults.
 #pragma optimize("y", off)
-Credits::Credits() : frame_count_(0), line_count_(0) {
-  memset(lines_, 0, sizeof(lines_));
+Credits::Credits() {
+  for (int i = 0; i < 512; ++i) {
+    lines_[i] = 0;
+  }
+  line_count_ = 0;
+  frame_count_ = 0;
 }
 #pragma optimize("", on)
 
