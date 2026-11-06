@@ -306,7 +306,7 @@ void move_rect(RECT &rect, int x, int y) {
 
 /*
 Purpose: Move the active window rectangle while preserving its dimensions.
-// ORIGINAL: 0x005ED7D0 ?move@Win@@QAEHHH@Z 0x005ED7D0-0x005ED877
+// ORIGINAL: 0x005ED7D0 ?move@Win@@QAEHHH@Z 0x005ED7D0-0x005ED877 BYTE_EXACT
 // TRIED: reordering the field stores to left,right,top,bottom (matching
 //   the image's actual store order per `store_order.py`) with dy computed
 //   before dx - regressed, 4/43 -> 1/43 (an extra `push edi`/`pop edi`
@@ -2781,7 +2781,7 @@ Purpose: The install-media check `DDInit::report_error` tails into. Scan
          does, LoadLibrary it and run the DirectXSetup entry points it
          exports (`DIRECTXNOVERSION` / `DIRECTXVERSION` popups report how
          that went). Returns 1 only when the setup run completed.
-// ORIGINAL: 0x00628F30 sub_628f30 0x00628F30-0x006290E0 FILE
+// ORIGINAL: 0x00628F30 sub_628f30 0x00628F30-0x006290E0 FILE BYTE_EXACT
 // symbol    ?cd_check@@YAHXZ
 // LEVER: seed find_handle from an unwritten local (`HANDLE seeded;`) and
 //        compare the NOCD pop's answer against `(int)find_handle` rather than
@@ -3241,7 +3241,7 @@ Purpose: Restore the saved screen area and union its rectangle into the
          win.cpp's own, renamed on the way in rather than re-imported as
          addresses.
 */
-// ORIGINAL: 0x005F1750 sub_5f1750 0x005F1750-0x005F1812 FILE
+// ORIGINAL: 0x005F1750 sub_5f1750 0x005F1750-0x005F1812 FILE BYTE_EXACT
 // symbol    ?restore_flip_sprite@@YAXH@Z
 // named     from behaviour at its two call sites (cursor-save restore)
 // size      194 bytes
@@ -3610,7 +3610,7 @@ void Win::close_class() {
 
 // Fixed-slot bindings carried from 005ec800.cpp
 
-// ORIGINAL: 0x005EC800 ?set_mouse_pos@Win@@QAEXHH@Z 0x005EC800-0x005EC89B FILE
+// ORIGINAL: 0x005EC800 ?set_mouse_pos@Win@@QAEXHH@Z 0x005EC800-0x005EC89B FILE BYTE_EXACT
 // TRIED: `a1+client_rect_.left+outer_rect_.left` left-to-right, and `(client_rect_.left+outer_rect_.left)+a1` grouped - both MISMATCH #9 mov/add, a local-store scheduling difference around the x/y pair, not the arithmetic itself.
 // working copy - scaffold materialised by --work
 // size      155 bytes
@@ -4013,7 +4013,7 @@ void Win::on_paint(RECT *area) {
     WinSharedHdc = nullptr;
 }
 
-// ORIGINAL: 0x005F5AD0 ?on_nc_hittest@Win@@QAEHHH@Z 0x005F5AD0-0x005F5BF6
+// ORIGINAL: 0x005F5AD0 ?on_nc_hittest@Win@@QAEHHH@Z 0x005F5AD0-0x005F5BF6 BYTE_EXACT
 // symbol    ?on_nc_hittest@Win@@UAEHHH@Z
 // TRIED: transcribing the nine-way corner/edge ladder as one flat sequence of if-return statements (matching the Ghidra shape, each re-testing x/y against iVar1 and the recomputed client-rect edge) compiles and the byte count comes close (286 vs 294) but the prologue register allocation still diverges at instruction #3 - the original pushes edi before touching it, this form delays that push since it needs one fewer live temporary across the first branch. Landing the closest MISMATCH.
 // size      294 bytes
@@ -4246,7 +4246,7 @@ int Win::on_sys_key(unsigned int vkey, long is_down, int repeat_count,
 // RECOVERY_OBJECT: v2 0x00696E00 0x00696E02 _WinBubblePrefixGlyph 0x005F83D0
 static char WinBubblePrefixGlyph[] = " ";
 
-// ORIGINAL: 0x005F83D0 ?set_bubble_text@Win@@QAEXPADPAURECT@@@Z 0x005F83D0-0x005F84FB FILE
+// ORIGINAL: 0x005F83D0 ?set_bubble_text@Win@@QAEXPADPAURECT@@@Z 0x005F83D0-0x005F84FB FILE BYTE_EXACT
 // symbol    ?set_bubble_text@Win@@QAEXPADPAUtagRECT@@@Z
 // LEVER: `WinBubbleActive`/`WinBubbleCompanion`/`WinBubbleFont`/`WinBubbleRect`
 // (already declared, `WinBubbleCompanion` retyped `Win **` so `this` needs no
@@ -7116,7 +7116,7 @@ lab_default_cursor:
 }
 
 
-// ORIGINAL: 0x005ED5C0 ?center@Win@@QAEHXZ 0x005ED5C0-0x005ED6F7 FILE
+// ORIGINAL: 0x005ED5C0 ?center@Win@@QAEHXZ 0x005ED5C0-0x005ED6F7 FILE BYTE_EXACT
 // kind game
 // TRIED: named `parent` local for win_parent_ (extra register pressure, forces a 4th callee-save + frame pointer); computing both local_8 and local_4 divisions fully inside each if/else branch (extra register); calling screen_to_client() on win_parent_ itself instead of win_parent_->win_parent_ (asm's ecx at the call site is loaded from [win_parent_+0xc4], i.e. the grandparent, reused straight from the preceding null check). Best reached: MISMATCH, edit_count 10/95 mnemonics, 312 bytes vs 311 - a register-colouring difference only (rebuilt keeps `this` in esi where the original keeps it in ebx).
 // LEVER: both divisions per arm AND win_parent_->screen_to_client together;
@@ -7577,7 +7577,7 @@ int Win::set_cursor(HCURSOR *name) {
 
 // ===== homed from src/unrecovered/005ed880.cpp =====
 
-// ORIGINAL: 0x005ED880 ?resize@Win@@QAEHHHH@Z 0x005ED880-0x005ED9B5 FILE
+// ORIGINAL: 0x005ED880 ?resize@Win@@QAEHHHH@Z 0x005ED880-0x005ED9B5 FILE BYTE_EXACT
 // symbol    ?resize@Win@@UAEHHHH@Z
 // Original mapping restored from git:85fc7721f56c2a5cae754b993fe04fcfec74fec1:src/unrecovered/005ed880.cpp
 // The image inlines set_rectangle_dimensions and offset_rect (0x005F8670).
@@ -7714,7 +7714,7 @@ void Win::client_to_nonclient(int * points, int * count) {
 }
 
 // ===== homed from src/unrecovered/005eea90.cpp =====
-// ORIGINAL: 0x005EEA90 ?key_click_event@Win@@QAEHHH@Z 0x005EEA90-0x005EEB81 FILE
+// ORIGINAL: 0x005EEA90 ?key_click_event@Win@@QAEHHH@Z 0x005EEA90-0x005EEB81 FILE BYTE_EXACT
 // provenance (retired seed): git:3cb99d43^:src/unrecovered/005eea90.cpp
 int Win::key_click_event(int key, int flags) {
     int result = 0;

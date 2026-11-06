@@ -259,7 +259,7 @@ void __cdecl brush(int x, int y, int altitude) {
 
 /*
 Purpose: Paint land to assist in the creation of the world terrain.
-// ORIGINAL: 0x005C27F0 ?paint_land@@YAXHHHH@Z 0x005C27F0-0x005C28E6
+// ORIGINAL: 0x005C27F0 ?paint_land@@YAXHHHH@Z 0x005C27F0-0x005C28E6 BYTE_EXACT
 // LEVER: two fixes, 0.849 -> 0.904 similar (9/89). (1) `x_rad_base`/
 //        `y_rad_base` are a CUMULATIVE random walk - the image's inlined
 //        `xrange()` adds `VehMoveDeltaX[offset]` to the PREVIOUS `esi`
@@ -312,7 +312,7 @@ void __cdecl paint_land(int x, int y, int altitude, int radius) {
 
 /*
 Purpose: Build out the map continents.
-// ORIGINAL: 0x005C28F0 ?build_continent@@YAXH@Z 0x005C28F0-0x005C2B3C
+// ORIGINAL: 0x005C28F0 ?build_continent@@YAXH@Z 0x005C28F0-0x005C2B3C BYTE_EXACT
 // LEVER: `osmx calls` shows exactly 2 game calls (paint_land,
 //        do_all_non_input) plus rand() itself - `rnd(bounds, NULL)` is
 //        cross-TU and can never inline, so all three call sites had to be
@@ -557,7 +557,7 @@ next_trial:
 
 /*
 Purpose: Determine if there are any issues with how the world continents are set up.
-// ORIGINAL: 0x005C40F0 ?world_validate@@YAHXZ 0x005C40F0-0x005C416B
+// ORIGINAL: 0x005C40F0 ?world_validate@@YAHXZ 0x005C40F0-0x005C416B BYTE_EXACT
 // LEVER: three fixes, 0.609 -> 0.914 similar (20/52). (1) `val1`/`val2`/
 //        `tile_count` as `int`, not `uint32_t` - the image's final
 //        threshold uses a SIGNED div-by-3 magic-constant `imul` and a
@@ -1138,7 +1138,7 @@ Purpose: Paint xenofungus over the map. A Fractal field is sampled at two
          other flag in MapTileFlagClearMask stripped. On a 1-in-40 roll a
          fungus vehicle is seeded on the tile, which SMACX only (see
          ExpansionEnabled).
-// ORIGINAL: 0x005C3440 ?world_fungus@@YAXXZ 0x005C3440-0x005C3678 FILE
+// ORIGINAL: 0x005C3440 ?world_fungus@@YAXXZ 0x005C3440-0x005C3678 FILE BYTE_EXACT
 // size      568 bytes
 // prototype void (__cdecl ?world_fungus@@YAXXZ)()
 // callers   2   call targets   5
@@ -1225,7 +1225,7 @@ Purpose: Re-cut every land tile's altitude bands from the shore-to-peak
          natural altitude level one step outwards; refresh the visible map
          windows as it goes when the omniscient view is on and the
          regeneration is allowed to redraw.
-// ORIGINAL: 0x005C3F70 ?world_shorelines@@YAXXZ 0x005C3F70-0x005C40E3 FILE
+// ORIGINAL: 0x005C3F70 ?world_shorelines@@YAXXZ 0x005C3F70-0x005C40E3 FILE BYTE_EXACT
 // size      371 bytes
 // prototype void (__cdecl ?world_shorelines@@YAXXZ)()
 // callers   3   call targets   7
@@ -1452,7 +1452,7 @@ void __cdecl world_polar_caps() {
 
 /*
 Purpose: Set up the world contours.
-// ORIGINAL: 0x005C5AE0 ?world_linearize_contours@@YAXXZ 0x005C5AE0-0x005C5BC3
+// ORIGINAL: 0x005C5AE0 ?world_linearize_contours@@YAXXZ 0x005C5AE0-0x005C5BC3 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"reason":"Linearize tile contours from the default input intervals into the real contour target table, preserving the original signed division and final table publication.","evidence":["Pinned5C5B35/4F/58 loadAltContour at68FB20/24/30;5C5B3E/62 loadAltNaturalDefault at68FAF4/68FAF8;CMP6/JGE selects the +4 target.","Pinned5C5B73 IMUL retains low32bits, followed by CDQ/IDIV at5C5B78/79 and wrappedADD at5C5B7B;5C5B80 passes the full result to the byte-writing alt_put_detail owner.","Pinned5C5B98 calls do_all_non_input after each row;5C5BB1..5C5BBB copies11dwords fromAltContour68FB20 toAltNatural68FB4C only after all rows."]}
 // LEVER: BUG IN THIS RECOVERY (not the original): `alt_nat +
 //        (alt_nat >= ALT_3_LEVELS_ABOVE_SEA) ? 4 : 1` - `+` binds tighter
@@ -1534,7 +1534,7 @@ BOOL __cdecl near_landmark(int x, int y) {
 
 /*
 Purpose: Setup the 'Garland Crater' landmark.
-// ORIGINAL: 0x005C5C70 ?world_crater@@YAXHH@Z 0x005C5C70-0x005C5EEF
+// ORIGINAL: 0x005C5C70 ?world_crater@@YAXHH@Z 0x005C5C70-0x005C5EEF BYTE_EXACT
 // size      639 bytes
 // prototype void (__cdecl ?world_crater@@YAXHH@Z)(int xCoord, int yCoord)
 // callers   4   call targets   9
@@ -1613,7 +1613,7 @@ void __cdecl world_crater(int x, int y) {
 
 /*
 Purpose: Setup the 'Monsoon Jungle' landmark.
-// ORIGINAL: 0x005C5EF0 ?world_monsoon@@YAXHH@Z 0x005C5EF0-0x005C6200
+// ORIGINAL: 0x005C5EF0 ?world_monsoon@@YAXHH@Z 0x005C5EF0-0x005C6200 BYTE_EXACT
 // size      784 bytes
 // prototype void (__cdecl ?world_monsoon@@YAXHH@Z)(int xCoord, int yCoord)
 // callers   3   call targets   8
@@ -1675,7 +1675,7 @@ void __cdecl world_monsoon(int x, int y) {
 
 /*
 Purpose: Setup the 'New Sargasso' landmark.
-// ORIGINAL: 0x005C6200 ?world_sargasso@@YAXHH@Z 0x005C6200-0x005C6498
+// ORIGINAL: 0x005C6200 ?world_sargasso@@YAXHH@Z 0x005C6200-0x005C6498 BYTE_EXACT
 // size      664 bytes
 // prototype void (__cdecl ?world_sargasso@@YAXHH@Z)(int xCoord, int yCoord)
 // callers   3   call targets   7
@@ -1744,7 +1744,7 @@ void __cdecl world_sargasso(int x, int y) {
 
 /*
 Purpose: Setup 'The Ruins' landmark.
-// ORIGINAL: 0x005C64A0 ?world_ruin@@YAXHH@Z 0x005C64A0-0x005C6734
+// ORIGINAL: 0x005C64A0 ?world_ruin@@YAXHH@Z 0x005C64A0-0x005C6734 BYTE_EXACT
 // size      660 bytes
 // prototype void (__cdecl ?world_ruin@@YAXHH@Z)(int xCoord, int yCoord)
 // callers   3   call targets   7
@@ -1814,7 +1814,7 @@ void __cdecl world_ruin(int x, int y) {
 
 /*
 Purpose: Setup the 'Great Dunes' landmark.
-// ORIGINAL: 0x005C6740 ?world_dune@@YAXHH@Z 0x005C6740-0x005C69DB
+// ORIGINAL: 0x005C6740 ?world_dune@@YAXHH@Z 0x005C6740-0x005C69DB BYTE_EXACT
 // size      667 bytes
 // prototype void (__cdecl ?world_dune@@YAXHH@Z)(int xCoord, int yCoord)
 // callers   3   call targets   9
@@ -1882,7 +1882,7 @@ void __cdecl world_dune(int x, int y) {
 
 /*
 Purpose: Setup the 'Uranium Flats' landmark.
-// ORIGINAL: 0x005C69E0 ?world_diamond@@YAXHH@Z 0x005C69E0-0x005C6C31
+// ORIGINAL: 0x005C69E0 ?world_diamond@@YAXHH@Z 0x005C69E0-0x005C6C31 BYTE_EXACT
 // size      593 bytes
 // prototype void (__cdecl ?world_diamond@@YAXHH@Z)(int xCoord, int yCoord)
 // callers   3   call targets   8
@@ -2016,7 +2016,7 @@ void __cdecl world_fresh(int x, int y) {
 
 /*
 Purpose: Setup the 'Mount Planet' landmark.
-// ORIGINAL: 0x005C6DB0 ?world_volcano@@YAXHHH@Z 0x005C6DB0-0x005C7016
+// ORIGINAL: 0x005C6DB0 ?world_volcano@@YAXHHH@Z 0x005C6DB0-0x005C7016 BYTE_EXACT
 // size      614 bytes
 // prototype void (__cdecl ?world_volcano@@YAXHHH@Z)(int xCoord, int yCoord, int)
 // callers   4   call targets   8
@@ -2194,7 +2194,7 @@ void __cdecl world_borehole(int x, int y) {
 
 /*
 Purpose: Setup 'The Manifold Nexus' landmark. Added to SMAC in 4.0 patch.
-// ORIGINAL: 0x005C7540 ?world_temple@@YAXHH@Z 0x005C7540-0x005C7749
+// ORIGINAL: 0x005C7540 ?world_temple@@YAXHH@Z 0x005C7540-0x005C7749 BYTE_EXACT
 // size      521 bytes
 // prototype void (__cdecl ?world_temple@@YAXHH@Z)(int xCoord, int yCoord)
 // callers   3   call targets   7
@@ -2254,7 +2254,7 @@ void __cdecl world_temple(int x, int y) {
 
 /*
 Purpose: Setup the 'Unity Wreckage' landmark (SMACX only).
-// ORIGINAL: 0x005C7750 ?world_unity@@YAXHH@Z 0x005C7750-0x005C7A75
+// ORIGINAL: 0x005C7750 ?world_unity@@YAXHH@Z 0x005C7750-0x005C7A75 BYTE_EXACT
 // size      805 bytes
 // prototype void (__cdecl ?world_unity@@YAXHH@Z)(int xCoord, int yCoord)
 // callers   3   call targets   8
@@ -2347,7 +2347,7 @@ void __cdecl world_unity(int x, int y) {
 
 /*
 Purpose: Setup the 'Fossil Ridge' landmark (SMACX only).
-// ORIGINAL: 0x005C7A80 ?world_fossil@@YAXHH@Z 0x005C7A80-0x005C7CA1
+// ORIGINAL: 0x005C7A80 ?world_fossil@@YAXHH@Z 0x005C7A80-0x005C7CA1 BYTE_EXACT
 // HISTORICAL KNOWN DIVERGENCE (now restored): the `if (ExpansionEnabled)`
 //            guard at the top of this body has no counterpart in the image -
 //            0x005C7A80 goes straight into the site search, and the only
@@ -2416,7 +2416,7 @@ void __cdecl world_fossil(int x, int y) {
 
 /*
 Purpose: Setup the 'Nessus Canyon' landmark.
-// ORIGINAL: 0x005C7CB0 ?world_canyon@@YAXHH@Z 0x005C7CB0-0x005C7F38
+// ORIGINAL: 0x005C7CB0 ?world_canyon@@YAXHH@Z 0x005C7CB0-0x005C7F38 BYTE_EXACT
 // size      648 bytes
 // prototype void (__cdecl ?world_canyon@@YAXHH@Z)(int xCoord, int yCoord)
 // callers   1   call targets   6
@@ -2466,7 +2466,7 @@ void __cdecl world_canyon(int x, int y) {
 
 /*
 Purpose: Setup the 'Sunny Mesa' landmark.
-// ORIGINAL: 0x005C7F40 ?world_mesa@@YAXHH@Z 0x005C7F40-0x005C8148
+// ORIGINAL: 0x005C7F40 ?world_mesa@@YAXHH@Z 0x005C7F40-0x005C8148 BYTE_EXACT
 // size      520 bytes
 // prototype void (__cdecl ?world_mesa@@YAXHH@Z)(int xCoord, int yCoord)
 // callers   3   call targets   6
@@ -2595,7 +2595,7 @@ void __cdecl world_ridge(int x, int y) {
 
 /*
 Purpose: Setup the 'Geothermal Shallows' landmark.
-// ORIGINAL: 0x005C83B0 ?world_geothermal@@YAXHH@Z 0x005C83B0-0x005C8627
+// ORIGINAL: 0x005C83B0 ?world_geothermal@@YAXHH@Z 0x005C83B0-0x005C8627 BYTE_EXACT
 // size      631 bytes
 // prototype void (__cdecl ?world_geothermal@@YAXHH@Z)(int xCoord, int yCoord)
 // callers   3   call targets   6
@@ -2715,7 +2715,7 @@ void __cdecl world_landmarks() {
     fixup_landmarks();
 }
 
-// ORIGINAL: 0x005C32A0 ?world_rocky@@YAXXZ 0x005C32A0-0x005C343F FILE
+// ORIGINAL: 0x005C32A0 ?world_rocky@@YAXXZ 0x005C32A0-0x005C343F FILE BYTE_EXACT
 // size      415 bytes
 // prototype 
 // callers   2   call targets   5

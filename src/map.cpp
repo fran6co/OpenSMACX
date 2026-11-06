@@ -809,7 +809,7 @@ Purpose: Return 1 immediately for a unity-bonus tile. Otherwise select the
          other than the input whose altitude is below shore and which either
          lacks fungus or lies below the ocean-shelf altitude; else return 0.
 
-// ORIGINAL: 0x00565160 sub_565160 0x00565160-0x0056531A FILE
+// ORIGINAL: 0x00565160 sub_565160 0x00565160-0x0056531A FILE BYTE_EXACT
 // symbol    _sub_565160
 // TRIED (seed): two-phase radius-table scan (find owning base, then scan
 //            around it) with direct treaty-flags array indexing; reaches #11
@@ -1645,7 +1645,7 @@ int __cdecl zoc_veh(int x, int y, int faction_id) {
 
 /*
 Purpose: Check for unit related zone of control conflicts taking into account land or ocean.
-// ORIGINAL: 0x005C8BA0 ?zoc_sea@@YAHHHH@Z 0x005C8BA0-0x005C8D36
+// ORIGINAL: 0x005C8BA0 ?zoc_sea@@YAHHHH@Z 0x005C8BA0-0x005C8D36 BYTE_EXACT
 // TRIED: 14/133, 0.908 similar - best of every flag set. First
 //            divergence is is_ocean's own known plateau (`xor ecx,ecx`
 //            before the map_tiles() pointer load in the image, this tree
@@ -2022,7 +2022,7 @@ int __cdecl mandate_color(int mandate) {
     }
 }
 
-// ORIGINAL: 0x005A66E0 ?encrypt_write@@YAHPAXIIPAUFILE@@@Z 0x005A66E0-0x005A67A8 FILE
+// ORIGINAL: 0x005A66E0 ?encrypt_write@@YAHPAXIIPAUFILE@@@Z 0x005A66E0-0x005A67A8 FILE BYTE_EXACT
 // symbol    ?encrypt_write@@YAHPAXIIPAU_iobuf@@@Z
 // this tree's FILE is struct _iobuf, so the tag differs from the image's
 // TRIED: nothing ruled out; the [ebp+0xb]/[ebp+0xf]/[ebp+0x13] scratch bytes are stack-slot reuse of the first three parameters' high byte, not real locals - modelled as plain unsigned char key1/key2/byte1/byte2 instead. MISMATCH #3, push vs mov, whole-function frame order
@@ -2293,7 +2293,7 @@ void __cdecl proto_sort(int faction_id) {
 // Order design choices by availability and obsolete status. Original IDs stay
 // in the output table; the added status bands are sorting keys only.
 // Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x005A63D0 ?proto_sort_2@@YAXH@Z 0x005A63D0-0x005A650B
+// ORIGINAL: 0x005A63D0 ?proto_sort_2@@YAXH@Z 0x005A63D0-0x005A650B BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["image:0x005A63D0-0x005A650B", "source:src/recovered/units/005a63d0.cpp", "source:src/faction.h:PlayerData.proto_id_active"], "reason": "Recover design-choice ordering with typed prototype, weapon and faction state and source-owned shared output; original IDs remain separate from status ranking keys."}
 void __cdecl proto_sort_2(int faction_id) {
     ProtoSortCount = 0;

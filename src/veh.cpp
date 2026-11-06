@@ -1175,7 +1175,7 @@ void __cdecl veh_scoot(int veh_id, int tile_x, int tile_y, int direction, int fl
 }
 
 
-// ORIGINAL: 0x005593E0 ?pick_top_veh@@YAHH@Z 0x005593E0-0x005594EB
+// ORIGINAL: 0x005593E0 ?pick_top_veh@@YAHH@Z 0x005593E0-0x005594EB BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Original5593E0..5594EB climbs signed previous links then visits next links, snapshots the Console faction, excludes temporary suppression, prefers eligible selected vehicle and retains the first highest-score entry.", "Original559466 test dh,42 establishes state mask4200, correcting the seed420000. Original ctor/reset member accesses and ConsoleGlobal9156B0 establish faction/cursor/selected/enable ownership, not independent globals. Observed VC6 symbol and original complete seed extent."], "reason": "Recover stack display selection against real vehicle/prototype/chassis records and Console state."}
 int __cdecl pick_top_veh(int veh_id) {
     int best_score = -99;
@@ -2764,7 +2764,7 @@ void __cdecl monolith(int veh_id) {
 }
 
 
-// ORIGINAL: 0x00564B90 ?assemble_passengers@@YAXHHH@Z 0x00564B90-0x00564D90
+// ORIGINAL: 0x00564B90 ?assemble_passengers@@YAXHHH@Z 0x00564B90-0x00564D90 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:99d6e72bcd5ae3be3566222736528cb0dc57935c:src/recovered/units/00564b90.cpp", "pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "recovery/tasks/game-logic-seed-owner-coverage.json; preserve original extents and historical seed lessons. Ordinary owned literals have pinned content provenance, not exact original data-allocation claims."], "reason": "Recover full passenger-goal orchestration with real region_total_bases and unk_77 arrays, vendetta/contiguity tests and colony/defend/attack/scout goal order."}
 void __cdecl assemble_passengers(int base_id, int mode, int priority) {
     const int x = Bases[base_id].x;
@@ -6154,7 +6154,7 @@ int __cdecl veh_at(int x, int y) {
 
 /*
 Purpose: Check whether the prototype has a specific ability.
-// ORIGINAL: 0x005BF1F0 ?has_abil@@YAHHH@Z 0x005BF1F0-0x005BF310
+// ORIGINAL: 0x005BF1F0 ?has_abil@@YAHHH@Z 0x005BF1F0-0x005BF310 BYTE_EXACT
 // TRIED: a negative-proto_id guard clause (with its log_say call) that call_diff flagged as an extra call the image does not make; now 13/109 instructions agree, 0.825 similar (best flags), up from a structurally-unrelated function body before
 // size      288 bytes
 // prototype int (__cdecl ?has_abil@@YAHHH@Z)(int protoID, int abilityID)
@@ -6201,7 +6201,7 @@ BOOL __cdecl has_abil(int proto_id, int ability_id) {
 /*
 Purpose: Temporarily remove the specified unit from its current square and stack in preparation for
          another action such as interacting with the stack, moving or killing it.
-// ORIGINAL: 0x005BFFA0 ?veh_lift@@YAXH@Z 0x005BFFA0-0x005C007F
+// ORIGINAL: 0x005BFFA0 ?veh_lift@@YAXH@Z 0x005BFFA0-0x005C007F BYTE_EXACT
 // TRIED: swapping the x/y local declaration order - the remaining gap is which register (eax/ecx/edx) the allocator picks for x, y and the -1 constant at the join point; both orders produced the identical register assignment, so it isn't source-order controlled here. Plateau at 49/60.
 // TRIED 2026-09-03: NO x/y locals at all - `VehLiftX = Vehs[veh_id].x;` after the four -1 stores. The loads then sit AFTER the stores (VC6 will not hoist a load above a store to the same field), where the image hoists them BEFORE the stores, which needs the locals. 54/60 - better than 49/60, kept; the remaining 6 are the two movsx loads plus which register holds the -1 (ours edx, image eax).
 // TRIED 2026-09-03: `VehDropLiftVehID = veh_id;` hoisted ABOVE the x/y reads (so VC6 sees the global store early) - regressed to 49/60, matching the original note's finding that the image assigns it between reading y and zeroing the fields.
@@ -6589,7 +6589,7 @@ int __cdecl armor_proto(int proto_id, int veh_id_atk, BOOL is_bombard) {
 
 /*
 Purpose: Calculate the speed of the specified prototype on roads.
-// ORIGINAL: 0x005C13B0 ?speed_proto@@YAHH@Z 0x005C13B0-0x005C1532
+// ORIGINAL: 0x005C13B0 ?speed_proto@@YAHH@Z 0x005C13B0-0x005C1532 BYTE_EXACT
 // size      386 bytes
 // prototype int (__cdecl ?speed_proto@@YAHH@Z)(int protoID)
 // callers   12   call targets   1
@@ -7597,7 +7597,7 @@ int VehFindBestDist = 0;
 
 /*
 Purpose: Remove a vehicle from the game entirely.
-// ORIGINAL: 0x005C08C0 ?veh_kill@@YAXH@Z 0x005C08C0-0x005C0AF4
+// ORIGINAL: 0x005C08C0 ?veh_kill@@YAXH@Z 0x005C08C0-0x005C0AF4 BYTE_EXACT
 // size      564 bytes
 // prototype void (__cdecl ?veh_kill@@YAXH@Z)(int vehID)
 // callers   15   call targets   6
@@ -7844,7 +7844,7 @@ void __cdecl action_destruct(int veh_id) {
 
 /*
 Purpose: Report the vehicle the map cursor is nearest to.
-// ORIGINAL: 0x005C0CB0 ?veh_find@@YAHHHHH@Z 0x005C0CB0-0x005C0DA9
+// ORIGINAL: 0x005C0CB0 ?veh_find@@YAHHHHH@Z 0x005C0CB0-0x005C0DA9 BYTE_EXACT
 // size      249 bytes
 // prototype int (__cdecl ?veh_find@@YAHHHHH@Z)(int xCoord, int yCoord, int factionID, int skipVehID)
 // callers   1   call targets   0
@@ -8537,7 +8537,7 @@ void __cdecl add_abil(int *ability_flags, int ability, int faction_id) {
 
 /*
 Purpose: Move a unit along its path, one ORDER_MOVE / ORDER_MOVE_TO leg.
-// ORIGINAL: 0x004CB310 ?action_go_to@@YAXH@Z 0x004CB310-0x004CB57F
+// ORIGINAL: 0x004CB310 ?action_go_to@@YAXH@Z 0x004CB310-0x004CB57F BYTE_EXACT
 // size      623 bytes
 // prototype void (__cdecl ?action_go_to@@YAXH@Z)(int veh_id)
 // callers   2   call targets   8
@@ -23887,7 +23887,7 @@ Purpose: Say whether a convoy-to-nearest-base order is possible from a tile:
          convoy range (the hex distance minus the diamond correction below
          three) has the approach direction bit set in its worked-tile word.
 
-// ORIGINAL: 0x00564D90 ?can_convoy@@YAHHH@Z 0x00564D90-0x00564EAA FILE
+// ORIGINAL: 0x00564D90 ?can_convoy@@YAHHH@Z 0x00564D90-0x00564EAA FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence":["veh.h owns the actual Veh and Base arrays and the vehicle APIs veh_at/stack_check; base.h/map.h own the traversed Base records, map globals, and radius_move API.","console.cpp and enemy.cpp are current source callers and both include veh.h; the duplicate console.h declaration is removed in favor of the actual vehicle API header.","The redundant four abs calls, x-wrap guard, pointer walk, worked-radius test, and early rejection order remain unchanged."],"reason":"Move the complete convoy eligibility helper beside the vehicle owner and expose its existing cdecl API through veh.h without simplifying its distance or call sequence."}
 // TRIED: transcribing Ghidra's redundant double-abs() calls (abs(dx) and abs(abs(dx))) literally rather than simplifying them away, since the original genuinely emits four `_abs` calls per loop iteration, not two. Landed as MISMATCH at 0.78 similarity: the remaining gap starts with the prologue's `push ecx` filler (a one-slot local reserved with a throwaway push instead of `sub esp,4`) that this body's local declaration order does not reproduce.
 // size      282 bytes
