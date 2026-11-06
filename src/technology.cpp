@@ -194,94 +194,46 @@ Status: Complete
 // out of scope for this body.
 //   (STALE: has_tech_call DOES reproduce the image's four `call 0x5b9f20`
 //   now - call_diff agrees on every call this body makes.)
-// LEVER: one shared failure exit - every one of the nine failure paths leaves
-//   through a single `fail: return false;` at the bottom of the function, and
-//   the two `return true;` sites stay inline. Written as nine `return false;`
-//   statements each guard got its own epilogue (VC6 knows eax is already 0
-//   from the has_tech call it just tested, so it never shares those) and the
-//   body ran 146 instructions against the image's 112; with the goto it is
-//   106 and 96/112 agree, 0.963 similar under /O2 /Oy- (was 26/112).
+// LEVER: the nine failure paths share one out-of-line `return false` because
+//   they are `||`-combined conditions (pattern: `if (a || b) return 0;`), not
+//   separate guards or a goto; the two `return true;` sites then stay inline.
 // LEVER: indexed loops, not pointer locals - `Reactor[i].preq_tech`,
 //   `Weapon[i].preq_tech`, `Weapon[i].offense_rating`. The image strength-
 //   reduces each into a field pointer and keeps the weapon counter alive
 //   (`shl esi, 4; movsx ecx, byte ptr [esi + 0x94ae68]`) only because the
 //   body indexes the array again; a `RulesWeapon *weapon` local read the
 //   field off the pointer and lost the call/shl/add/movsx order.
-// TRIED: the last 6 instructions - the image duplicates BOTH `return true`
-//   epilogues (0x0057CF4B and 0x0057CF8D) while VC6 tail-merges ours into one
-//   block reached by `jle` back. No honest spelling of two identical
-//   `return true;` statements stops the merge. `int i` had to move above the
-//   loops: a goto over `for (int i ...)` is C2362 under VC6's leaking
-//   for-scope. `ranking` is cast to int at the compare because the image
-//   tests it SIGNED (`jg`, 0x0057CF65) and faction.h is not this file's.
 BOOL __cdecl valid_tech_leap(int tech_id, int faction_id) {
-    // EACH `&&` IS TWO SEPARATE EARLY RETURNS, not one combined test: the
-    // image tests every has_tech() call on its own `je`, and re-reads
-    // Technology[tech_id].preq_tech_1/2 from the array rather than keeping
-    // an earlier read live across a has_tech()/weapon_budget() call.
-    //
-    // EVERY failure path leaves through ONE shared `return false` at the bottom
-    // of the function - nine `jmp 0x57cf97` sites over a single
-    // `pop edi; pop esi; xor eax,eax; pop ebx; pop ebp; ret` - and the two
-    // `return true` sites are duplicated inline instead. A `return false;` at
-    // each guard compiles to a private epilogue per site (VC6 knows eax is
-    // already 0 there, so it never shares) and the body runs 30 instructions
-    // long; the goto is what puts the block at the end where the image has it.
-    if (Technology[tech_id].preq_tech_1 >= 0) {
-        if (!has_tech(Technology[Technology[tech_id].preq_tech_1].preq_tech_1, faction_id)) {
-            goto fail; // doesn't have 1st prerequisite's 1st prerequisite
-        }
-        if (!has_tech(Technology[Technology[tech_id].preq_tech_1].preq_tech_2, faction_id)) {
-            goto fail; // doesn't have 1st prerequisite's 2nd prerequisite
-        }
+    if (Technology[tech_id].preq_tech_1 >= 0
+        && (!has_tech(Technology[Technology[tech_id].preq_tech_1].preq_tech_1, faction_id)
+            || !has_tech(Technology[Technology[tech_id].preq_tech_1].preq_tech_2, faction_id))) {
+        return false; // missing a prerequisite of the 1st prerequisite
     }
-    if (Technology[tech_id].preq_tech_2 >= 0) {
-        if (!has_tech(Technology[Technology[tech_id].preq_tech_2].preq_tech_1, faction_id)) {
-            goto fail; // doesn't have 2nd prerequisite's 1st prerequisite
-        }
-        if (!has_tech(Technology[Technology[tech_id].preq_tech_2].preq_tech_2, faction_id)) {
-            goto fail; // doesn't have 2nd prerequisite's 2nd prerequisite
-        }
+    if (Technology[tech_id].preq_tech_2 >= 0
+        && (!has_tech(Technology[Technology[tech_id].preq_tech_2].preq_tech_1, faction_id)
+            || !has_tech(Technology[Technology[tech_id].preq_tech_2].preq_tech_2, faction_id))) {
+        return false; // missing a prerequisite of the 2nd prerequisite
     }
-    if (Technology[tech_id].preq_tech_1 <= TechDisabled) {
-        goto fail; // disabled
+    if (Technology[tech_id].preq_tech_1 <= TechDisabled
+        || Technology[tech_id].preq_tech_2 <= TechDisabled) {
+        return false; // disabled
     }
-    if (Technology[tech_id].preq_tech_2 <= TechDisabled) {
-        goto fail; // disabled
-    }
-    // BOTH of these loops are INDEXED in the image - `Reactor[i].preq_tech`,
-    // `Weapon[i].preq_tech`, `Weapon[i].offense_rating` - and not walked with a
-    // pointer local: the image strength-reduces each into a field pointer
-    // (`[eax + 0x952800]`, `shl esi, 4; movsx ecx, byte ptr [esi + 0x94ae68]`)
-    // and keeps the reactor counter dead. A `RulesWeapon *weapon` local costs
-    // the counter AND reads the field off the pointer instead of the index.
-    // `i` cannot be declared in the first for: a goto that skips its
-    // initialisation is C2362 under VC6's leaking for-scope.
-    int i;
-    for (i = 0; i < MaxReactorNum; i++) {
+    for (int i = 0; i < MaxReactorNum; i++) {
         if (tech_id == Reactor[i].preq_tech) {
-            goto fail; // leap not possible for reactor tech
+            return false; // leap not possible for reactor tech
         }
     }
-    for (i = 0; i < MaxWeaponNum; i++) {
-        if (Weapon[i].preq_tech == tech_id) { // may end early if 2 weapons have the same preq
-            // `ranking` is declared uint32_t in faction.h, but the image compares it
-            // SIGNED here - `cmp dword ptr [...], 2; jg` at 0x0057CF65, not `ja`. The
-            // cast is the image's own arithmetic; faction.h is not this file's to change.
-            if ((int)PlayersData[faction_id].ranking > 2) { // lowest two ranking factions
-                goto fail;
-            }
-            // this line is an odd comparison (offensive rating <= best weapon id + 2)
-            // however it might be to prevent leaps for later weapon tech
-            if (Weapon[i].offense_rating > weapon_budget(faction_id, 99, false) + 2) {
-                goto fail;
+    for (int j = 0; j < MaxWeaponNum; j++) {
+        if (Weapon[j].preq_tech == tech_id) { // may end early if 2 weapons have the same preq
+            // `ranking` is compared signed in the image (`jg`).
+            if ((int)PlayersData[faction_id].ranking > 2 // lowest two ranking factions
+                || Weapon[j].offense_rating > weapon_budget(faction_id, 99, false) + 2) {
+                return false;
             }
             return true;
         }
     }
     return true;
-fail:
-    return false;
 }
 
 /*
@@ -682,6 +634,11 @@ int __cdecl tech_colonize(int tech_id) {
 }
 
 
+// Research effect direction (-1, 0, 1); the image tests the loaded value twice.
+static inline int tech_rate_sign(int value) {
+    return value > 0 ? 1 : (value < 0 ? -1 : 0);
+}
+
 /*
 Purpose: Calculate how much researching a tech will cost the specified faction.
 // ORIGINAL: 0x005BE6B0 ?tech_rate@@YAHH@Z 0x005BE6B0-0x005BE931
@@ -741,6 +698,11 @@ Purpose: Calculate how much researching a tech will cost the specified faction.
 //   the two swapped; and the [ebp-4] slot-reuse noted above. Both spellings of
 //   the source express the same arithmetic, so there is nothing left to
 //   rewrite here.
+// LEVER: (0.81 -> 0.887) is_human() re-evaluated per use with diff_lvl as an
+//   if/else (the image tests it three times), the research effect folded through
+//   a sign helper inline in the multiplier, `diff_factor += range(...)` reused as
+//   the final factor, and the second multiply as its own statement. Left: the
+//   final factor lives in esi where the image keeps it in ecx.
 // size      641 bytes
 // prototype int (__cdecl ?tech_rate@@YAHH@Z)(int factionID)
 // callers   6   call targets   0
@@ -768,22 +730,26 @@ int __cdecl tech_rate(int faction_id) {
     }
     player_factor /= 2;
     top_factor /= 2;
-    BOOL is_human_player = is_human(faction_id);
-    int diff_factor = is_human_player ? PlayersData[faction_id].diff_level : GameDataStateStorage.fields_.diff_level_current_;
+    int diff_factor = is_human(faction_id) ? PlayersData[faction_id].diff_level : GameDataStateStorage.fields_.diff_level_current_;
     diff_factor += (diff_factor < DLVL_LIBRARIAN);
-    int diff_lvl = !is_human_player ? GameDataStateStorage.fields_.diff_level_current_ : DLVL_LIBRARIAN;
-    diff_factor = is_human_player ? diff_factor * 4 + 8 : 29 - diff_factor * 3;
+    int diff_lvl;
+    if (is_human(faction_id)) {
+        diff_lvl = DLVL_LIBRARIAN;
+    } else {
+        diff_lvl = GameDataStateStorage.fields_.diff_level_current_;
+    }
+    diff_factor = is_human(faction_id) ? diff_factor * 4 + 8 : 29 - diff_factor * 3;
     diff_factor = range(diff_factor, 12 - player_factor, player_factor + 12);
     int tech_stagnation = GameDataStateStorage.fields_.game_rules_ & RULES_TECH_STAGNATION;
     uint32_t rule_factor = tech_stagnation | 0x40; // 64 or 96
-    int fin_factor = range(
+    diff_factor += range(
         player_factor - (GameDataStateStorage.fields_.turn_current_num_ / static_cast<int>(rule_factor >> 3)),
-        0, (diff_factor * static_cast<int>(rule_factor >> 5)) >> 1) + diff_factor;
-    int resch_base = range(PlayersData[faction_id].soc_effect_base.values_[SocialEffect::RESEARCH], -1, 1);
-    int discovery_rate = (fin_factor
+        0, (diff_factor * static_cast<int>(rule_factor >> 5)) >> 1);
+    int discovery_rate = diff_factor
         - range((top_factor - diff_lvl - player_factor + 7) / (8 - diff_lvl),
-            0, diff_lvl * fin_factor / 10 + 1))
-        * range(player_factor - resch_base, 1, 99999);
+            0, diff_lvl * diff_factor / 10 + 1);
+    discovery_rate *= range(player_factor
+        - tech_rate_sign(PlayersData[faction_id].soc_effect_base.values_[SocialEffect::RESEARCH]), 1, 99999);
     if (Rules.tech_discovery_rate_pct_std != 100) {
         discovery_rate = 100 * discovery_rate
             / static_cast<int>(Rules.tech_discovery_rate_pct_std);
@@ -947,7 +913,7 @@ void __cdecl tech_achieved(int faction_id, int tech_id, int faction_id_with,
             const int first_proto = faction_id * MaxVehProtoFactionNum;
             for (int proto_id = first_proto;
                  proto_id < first_proto + MaxVehProtoFactionNum; ++proto_id) {
-                *reinterpret_cast<unsigned char *>(&VehPrototypes[proto_id].flags) &= 0x3F;
+                VehPrototypes[proto_id].flags &= ~0xC0;
             }
             consider_designs(faction_id);
             if (faction_id == ConsoleGlobal.faction_id_) {

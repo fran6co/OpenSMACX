@@ -3023,18 +3023,9 @@ void __cdecl do_fungal_towers() {
 
         if (rand() % 5 == 0) {
             const int direction = rand() % 8 + 1;
-            int spread_x = x + RadiusOffsetX[direction];
-            if ((MapIsFlat & 1) == 0) {
-                if (spread_x < 0) {
-                    spread_x += MapLongitudeBounds;
-                } else if (spread_x >= MapLongitudeBounds) {
-                    spread_x -= MapLongitudeBounds;
-                }
-            }
+            const int spread_x = wrap_map_x(x + RadiusOffsetX[direction]);
             const int spread_y = y + RadiusOffsetY[direction];
-
-            if (spread_y >= 0 && spread_y < MapLatitudeBounds &&
-                spread_x >= 0 && spread_x < MapLongitudeBounds) {
+            if (on_map(spread_x, spread_y)) {
                 bit_set(spread_x, spread_y, BIT_FUNGUS, 1);
                 // This native mask is 0x0028805C, distinct from the nearby
                 // MapTileFlagClearMask data value (0x00288050).
@@ -3151,6 +3142,10 @@ Purpose: Calculate the lifecycle (morale) of the specified native life unit.
 // ORIGINAL: 0x00501350 ?morale_alien@@YAHHH@Z 0x00501350-0x005014F1
 // TRIED: still MISMATCH (~0.72 similar, up from ~0.46) - most of the remaining divergence is register allocation the compiler picked differently around the atrocities/veh-flags block and the two `range()` call sites, which every flag set tried left in place.
 // TRIED: source had the Fungal Tower special case as the OUTER `if`, guarded by `veh_id >= 0`, with the turn-ladder as its `else` - the image runs the turn-ladder/atrocities/veh-flags computation FIRST, UNCONDITIONALLY, then reads `Vehs[veh_id].x/.y/.proto_id` with NO veh_id guard (an out-of-bounds `Vehs[-1]` read - reproduced deliberately, see the BUG comment at the site) and only THEN branches on proto_id, overwriting `morale` if it is the Fungal Tower. Each branch ends in its OWN `return range(morale, 0, 6);` (not a shared tail after the `if`) - `int x`/`int y` locals (not `int16_t`) match the image's `movsx` at the point of assignment.
+// LEVER: (0.79 -> 0.863) the tower scan walks the eight adjacent offsets
+//   (i = 1..8, constant bounds in the image), tests altitude as `& ~0x1F`
+//   on the tile, and sets morale = count - 2 for the single shared range().
+//   Left: the image keeps a zero in esi for the sign tests and the count.
 // symbol    ?morale_alien@@YAHHH@Z
 // size      417 bytes
 // prototype int (__cdecl ?morale_alien@@YAHHH@Z)(int vehID, int factionIDvsNative)
@@ -3177,8 +3172,8 @@ int __cdecl morale_alien(int veh_id, int faction_id_vs_native) {
         morale = 6;
     }
     if (faction_id_vs_native > 0) {
-        morale += (PlayersData[faction_id_vs_native].major_atrocities != 0)
-            + (TectonicDetonationCount[faction_id_vs_native] != 0);
+        morale += (PlayersData[faction_id_vs_native].major_atrocities != 0);
+        morale += (TectonicDetonationCount[faction_id_vs_native] != 0);
     }
     if (veh_id >= 0) {
         if (Vehs[veh_id].state & VSTATE_MONOLITH_UPGRADED) {
@@ -3197,18 +3192,17 @@ int __cdecl morale_alien(int veh_id, int faction_id_vs_native) {
     int y = Vehs[veh_id].y;
     // Fungal Tower specific code: overrides the morale computed above entirely.
     if (Vehs[veh_id].proto_id == BSC_FUNGAL_TOWER) {
-        morale = 0;
         // similar to is_coast() > except with fungus check + Ocean Shelf included
-        for (int i = RadiusRange[0]; i < RadiusRange[1]; i++) {
+        int fungus_count = 0;
+        for (int i = 1; i < 9; i++) {
             int x_radius = wrap_map_x(x + RadiusOffsetX[i]);
             int y_radius = y + RadiusOffsetY[i];
             if (on_map(x_radius, y_radius) && bit_at(x_radius, y_radius) & BIT_FUNGUS
-                && altitude_at(x_radius, y_radius) >= ALT_BIT_OCEAN_SHELF) {
-                morale++;
+                && (map_loc(x_radius, y_radius)->climate & ~0x1F) >= ALT_BIT_OCEAN_SHELF) {
+                fungus_count++;
             }
         }
-        morale -= 2;
-        return range(morale, 0, 6);
+        morale = fungus_count - 2;
     }
     return range(morale, 0, 6);
 }
@@ -4005,9 +3999,9 @@ Purpose: Determine the best defender in a stack.
 //        image exactly (base_at 1, get_basic_offense 1, battle_compute 1,
 //        stack_check 3, has_abil 3, can_arty 3 = 12) with two calls this
 //        tree made that are not in the image's callee set at all:
-//        veh_top() and proto_power(). veh_top() hand-inlined here, matching
-//        spot_stack's precedent (its own record shows 0 real callers in the
-//        whole image). proto_power() moved to veh.h as `MEASURED inline`
+//        veh_top() and proto_power(). veh_top() is a plain same-TU call that
+//        /Ob2 inlines (a hand copy here scored 0.33, the call 0.43).
+//        proto_power() moved to veh.h as `MEASURED inline`
 //        (see its own ORIGINAL marker) since it was a plain non-`inline`
 //        function and so never an /Ob1 inline candidate at either of its
 //        two callers. Call count now agrees (0 disagree); best flag set's
@@ -4031,18 +4025,7 @@ int __cdecl best_defender(int veh_id_def, int veh_id_atk, BOOL check_artillery) 
     int base_id_def = base_at(x_def, y_def);
     int defender_search = -999;
     int best_def_veh_id = veh_id_def;
-    // veh_top(), hand-inlined - matching spot_stack's precedent: image calls
-    // it 0 times total (both its callers inline it).
-    int top_veh_id;
-    if (veh_id_def < 0) {
-        top_veh_id = -1;
-    } else {
-        top_veh_id = veh_id_def;
-        for (int j = Vehs[top_veh_id].prev_veh_id_stack; j >= 0; j = Vehs[j].prev_veh_id_stack) {
-            top_veh_id = j;
-        }
-    }
-    for (int i = top_veh_id; i >= 0; i = Vehs[i].next_veh_id_stack) {
+    for (int i = veh_top(veh_id_def); i >= 0; i = Vehs[i].next_veh_id_stack) {
         uint32_t proto_id_def = Vehs[i].proto_id;
         if ((get_proto_triad(proto_id_def) != TRIAD_LAND || !is_ocean_def && base_id_def >= 0)
             && (VehPrototypes[Vehs[veh_id_atk].proto_id].plan != PLAN_INFO_WARFARE
@@ -5164,9 +5147,9 @@ Purpose: Reveal the specified base, and the tile it stands on, to the specified
 // LEVER: Historical synch_bit_call spelling retained a real call. The
 //        image CALLS 0x591E50 as this body's one genuine call, and open-coding
 //        the `MEASURED inline` from map.h here cost the frame its spare
-//        registers (5/78 at /O2 /Oy- before the switch). The hand-inlined spot_tile
-//        body is also spelled in spot_tile's own guard-clause shape, which is
-//        what the image's four separate `jl`/`jge` to the shared tail are.
+//        registers (5/78 at /O2 /Oy- before the switch). spot_tile() is now a
+//        direct same-TU call that inlines; with the hand copy gone spot_loc
+//        inlines this function as the image does.
 // size      258 bytes
 // prototype void (__cdecl ?spot_base@@YAXHH@Z)(int baseID, int factionID)
 // callers   8   call targets   1
@@ -5187,24 +5170,7 @@ out of base_at() or a bounded loop.
 void __cdecl spot_base(int base_id, int faction_id) {
     Bases[base_id].visibility |= (uint8_t)(1 << faction_id);
     Bases[base_id].faction_pop_size_intel[faction_id] = Bases[base_id].population_size;
-    int x = Bases[base_id].x;
-    int y = Bases[base_id].y;
-    // spot_tile(), hand-inlined in spot_tile's OWN shape - guard clause first,
-    // the synch_bit call last - so the hand-inline reads exactly like the body
-    // it duplicates, with the real synch_bit API call at the end.
-    if (!(y >= 0 && y < (int)MapLatitudeBounds
-          && x >= 0 && x < (int)MapLongitudeBounds)) {
-        return;
-    }
-    Map *tile = map_tiles() + ((x >> 1) + y * MapLongitude);
-    if (faction_id == ConsoleGlobal.faction_id_ && !(tile->visibility & (1 << faction_id))
-        && !(GameDataStateStorage.fields_.game_state_ & STATE_OMNISCIENT_VIEW)
-        && !(PlayersData[faction_id].flags & PFLAG_MAP_REVEALED)) {
-        tile->bit2 |= 0x400000; // TODO: identify value
-        UnkBitfield1 |= 1; // TODO: identify global + value
-    }
-    tile->visibility |= (uint8_t)(1 << faction_id);
-    synch_bit(x, y, faction_id);
+    spot_tile(Bases[base_id].x, Bases[base_id].y, faction_id);
 }
 
 /*
@@ -5244,65 +5210,18 @@ written out below, and once inside the inlined spot_tile(). It is a pure
 predicate over two globals and the same two coordinates, so the second test
 cannot disagree with the first.
 
-// LEVER: `calls` disagreed (2 here vs the image's 1: synch_bit only) because
-//        spot_tile() and veh_top() were both left as real calls despite the
-//        comment above already establishing both are inlined. spot_tile is
-//        now plain `inline` (its only callers are spot_base/spot_stack/
-//        spot_loc, all in this file); the veh_top climb below is
-//        hand-inlined, matching veh_at's precedent.
-// LEVER: the second `calls` defect - this tree made ZERO calls, the image
-//        one - came from synch_bit() itself being folded in. The outer
-//        on_map() guard was the cause: written as a call it kept synch_bit
-//        out-of-line... no, the reverse. Writing on_map()'s four compares
-//        out at BOTH guard sites (this one and spot_tile's own) is what
-//        leaves synch_bit as the single genuine call; both sides now make
-//        exactly one. Body still MISMATCH - the widened x/y loads and the
-//        `push ecx` frame are allocator choices, not structure.
-// TRIED: calling the `inline` spot_tile() directly - the optimiser did
-// NOT fold it away here (unlike in spot_base), so the call to spot_tile
-// survived and call_diff still reported WRONG CALLEE (spot_tile instead of
-// synch_bit). Hand-inlining spot_tile's body, matching spot_base's own
-// precedent, is what removes the call.
+// LEVER: on_map(), spot_tile() and veh_top() are plain same-TU calls that
+//        /Ob2 inlines once each; the earlier hand-copied bodies (and the
+//        written-out on_map compares) were the mismatch.
 */
 void __cdecl spot_stack(int veh_id, int faction_id) {
-    // The outer on_map() is written out rather than called, as in
-    // spot_tile() itself: the image folds the four compares in here, and a
-    // call to the `MEASURED inline` helper survived the optimiser at this
-    // site. It is still tested twice - once by this guard and once by the
-    // inlined spot_tile() body below.
-    if (veh_id >= 0
-        && Vehs[veh_id].y >= 0 && Vehs[veh_id].y < (int)MapLatitudeBounds
-        && Vehs[veh_id].x >= 0 && Vehs[veh_id].x < (int)MapLongitudeBounds) {
-        // spot_tile(), hand-inlined - see spot_base's precedent above; a call
-        // to `inline` spot_tile survived the optimiser here.
-        int x = Vehs[veh_id].x;
-        int y = Vehs[veh_id].y;
-        if (y >= 0 && y < (int)MapLatitudeBounds
-            && x >= 0 && x < (int)MapLongitudeBounds) {
-            Map *tile = map_tiles() + ((x >> 1) + y * MapLongitude);
-            if (faction_id == ConsoleGlobal.faction_id_ && !(tile->visibility & (1 << faction_id))
-                && !(GameDataStateStorage.fields_.game_state_ & STATE_OMNISCIENT_VIEW)
-                && !(PlayersData[faction_id].flags & PFLAG_MAP_REVEALED)) {
-                tile->bit2 |= 0x400000; // TODO: identify value
-                UnkBitfield1 |= 1; // TODO: identify global + value
-            }
-            tile->visibility |= (uint8_t)(1 << faction_id);
-            synch_bit(x, y, faction_id);
-        }
+    if (veh_id >= 0 && on_map(Vehs[veh_id].x, Vehs[veh_id].y)) {
+        spot_tile(Vehs[veh_id].x, Vehs[veh_id].y, faction_id);
     }
-    int top_veh_id;
-    if (veh_id < 0) {
-        top_veh_id = -1;
-    } else {
-        top_veh_id = veh_id;
-        for (int j = Vehs[top_veh_id].prev_veh_id_stack; j >= 0; j = Vehs[j].prev_veh_id_stack) {
-            top_veh_id = j;
-        }
-    }
-    for (int id = top_veh_id; id >= 0; id = Vehs[id].next_veh_id_stack) {
+    for (int id = veh_top(veh_id); id >= 0; id = Vehs[id].next_veh_id_stack) {
         Vehs[id].visibility |= (uint8_t)(1 << faction_id);
         if (faction_id) {
-            Vehs[id].flags &= (uint16_t)~(VFLAG_LURKER | VFLAG_INVISIBLE);
+            Vehs[id].flags &= ~(VFLAG_LURKER | VFLAG_INVISIBLE);
         }
     }
 }
@@ -5312,15 +5231,10 @@ Purpose: Reveal whatever occupies the specified location - the tile itself, and
          then either the base standing on it or the whole unit stack - to the
          specified faction.
 // ORIGINAL: 0x005B5AD0 ?spot_loc@@YAXHHH@Z 0x005B5AD0-0x005B5E05
-// TRIED: byte-exactness, deliberately - not chased. The image INLINES
-// spot_tile, spot_base and spot_stack whole (only base_at and veh_at
-// survive as real calls), so a body that calls the five source-owned
-// helpers by name - as this one does, on purpose, per the analysis below -
-// diverges from instruction 0 (1/247 agreeing, push ebp/mov ebp,esp vs a
-// register-argument prologue). Re-inlining all five to chase bytes would
-// duplicate spot_tile/spot_base/spot_stack's own already-recovered bodies
-// here; the call-graph transcription is judged the better trade and is
-// left as MISMATCH.
+// LEVER: once spot_base/spot_stack call spot_tile/veh_top instead of
+//   hand copies, /Ob2 inlines all three here as the image does (0.51 ->
+//   0.998). Left: the inlined veh_top climb swaps eax/ecx for top and the
+//   induction variable; a named veh_at local or an else arm did not change it.
 // size      821 bytes
 // prototype void (__cdecl ?spot_loc@@YAXHHH@Z)(int xCoord, int yCoord, int factionID)
 // callers   6   call targets   3
@@ -5529,53 +5443,86 @@ Purpose: Move a stack of units in the same stack as the specified unit to a dest
 // kind      game
 // flags     frame;sp_ready;purged_ok
 // calls     0x005BFFA0 0x005C0080
-// TRIED: `veh_top()`/`veh_put()` as plain calls - both are inline-marked
-// wrappers, but this call site is not one of veh_top's real sites and
-// veh_put did not fold here either, so call_diff reported WRONG CALLEE
-// (veh_put/veh_top instead of veh_lift/veh_drop). Hand-inlining both,
-// matching veh_promote's precedent, is what removes the mismatch.
+// LEVER: veh_top()/veh_put() are direct calls that inline here; veh_top's
+//   sign test must precede its `top = veh_id` copy (see veh_top).
 Return Value: n/a
 Status: Complete
 */
 void __cdecl stack_put(int veh_id, int x, int y) {
-    // veh_top(), hand-inlined - matching veh_promote's precedent (see its own
-    // comment): the image does not call it here.
-    int top_veh_id;
-    if (veh_id < 0) {
-        top_veh_id = -1;
-    } else {
-        top_veh_id = veh_id;
-        for (int16_t j = Vehs[top_veh_id].prev_veh_id_stack; j >= 0; j = Vehs[j].prev_veh_id_stack) {
-            top_veh_id = j;
-        }
-    }
+    int top_veh_id = veh_top(veh_id);
     int veh_id_loop;
     if (top_veh_id >= 0) {
         do {
             veh_id_loop = Vehs[top_veh_id].next_veh_id_stack;
-            // veh_put(), hand-inlined: the image calls veh_lift and veh_drop
-            // Historical source discarded veh_lift's result because that
-            // callee returns its argument. Original5B8B49 instead pushes EAX:
-            // retain the call-result binding and the pre-lift x/y arguments.
-            veh_drop(veh_lift(top_veh_id), x, y);
+            veh_put(top_veh_id, x, y);
             top_veh_id = veh_id_loop;
         } while (veh_id_loop >= 0);
     }
 }
 
 /*
+Purpose: Sort a stack of units with the transports moved to the top.
+// ORIGINAL: 0x005B8B60 ?stack_sort@@YAXH@Z 0x005B8B60-0x005B8C8D BYTE_EXACT
+// TRIED: and `stack_put(veh_id_put, x, y)` were plain calls; call_diff's count-based check missed it (6 calls either way, since {veh_top, stack_put} happened to replace the {2 extra veh_lift/veh_drop} the image gets from inlining stack_put), but the image's actual 6 callees are veh_cargo/has_abil/veh_lift x2/ veh_drop x2 - no veh_top or stack_put. Hand-inlining both, including stack_put's OWN internal veh_top climb (its outer `next_veh_id >= 0` check survives - the image keeps it as a second, separate test after veh_top's own), took 0.627 -> 0.758.
+// LEVER: moved beside stack_put (same TU: veh_top inlines). The first veh_top()
+//   call inlines; the final walk is written out like stack_sort_2's because the
+//   image keeps the dead `id < 0 ? id : next` test that a stack_put() call
+//   lacks, and its climb tests the sign before copying (veh_top copies first).
+// size      301 bytes
+// prototype void (__cdecl ?stack_sort@@YAXH@Z)(int vehID)
+// callers   2   call targets   4
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x005BF1F0 0x005BFFA0 0x005C0080 0x005C1760
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl stack_sort(int veh_id) {
+    int veh_id_put = -1;
+    int x = Vehs[veh_id].x;
+    int y = Vehs[veh_id].y;
+    int next_veh_id = veh_top(veh_id);
+    int veh_id_loop;
+    if (next_veh_id >= 0) {
+        do {
+            // The image keeps this dead sign test inside the walk.
+            veh_id_loop = next_veh_id < 0 ? next_veh_id : Vehs[next_veh_id].next_veh_id_stack;
+            if (veh_cargo(next_veh_id) || has_abil(Vehs[next_veh_id].proto_id, ABL_CARRIER)) {
+                veh_id_put = next_veh_id;
+                veh_put(next_veh_id, -3, -3);
+            }
+            next_veh_id = veh_id_loop;
+        } while (veh_id_loop >= 0);
+        // veh_top()'s climb written out sign-test first; a veh_top() call
+        // schedules the `top = veh_id_put` copy ahead of the test.
+        int top_veh_id;
+        if (veh_id_put < 0) {
+            top_veh_id = -1;
+        } else {
+            top_veh_id = veh_id_put;
+            for (int16_t j = Vehs[top_veh_id].prev_veh_id_stack; j >= 0; j = Vehs[j].prev_veh_id_stack) {
+                top_veh_id = j;
+            }
+        }
+        if (top_veh_id >= 0) {
+            int veh_id_loop2;
+            do {
+                veh_id_loop2 = top_veh_id < 0 ? top_veh_id : Vehs[top_veh_id].next_veh_id_stack;
+                veh_put(top_veh_id, x, y);
+                top_veh_id = veh_id_loop2;
+            } while (veh_id_loop2 >= 0);
+        }
+    }
+}
+
+/*
 Purpose: Sort a stack of units with colony pods at the top followed by combat/offensive units.
 // ORIGINAL: 0x005B8C90 ?stack_sort_2@@YAXH@Z 0x005B8C90-0x005B8E0A BYTE_EXACT
-// LEVER: hand-inlined veh_top()'s climb and stack_put()'s call+its own veh_top()
-//   climb, matching stack_sort's precedent (veh_put() itself stays a real call,
-//   it MEASURED-inlines to veh_lift/veh_drop on its own). Moved veh_id_put's
-//   declaration to the top of the function, matching store order in the image.
-//   The image re-derives `next_veh_id_stack` through a `(id < 0) ? id :
-//   Vehs[id].next_veh_id_stack` ternary even though the guard is provably true
-//   at every use - reproduced verbatim, at all three next_veh_id_stack reads.
-//   The two prev_veh_id_stack climb loops' induction variables are int16_t. not
-//   int: the field is int16_t, and declaring the induction var int forces an
-//   immediate movsx the image defers until the value is used as an array index.
+// LEVER: the first veh_top() call inlines (same TU). The final walk is written
+//   out, not a stack_put() call: the image re-derives `next_veh_id_stack` through a
+//   `(id < 0) ? id : Vehs[id].next_veh_id_stack` ternary at all three reads,
+//   which stack_put's own body does not have. Moved veh_id_put's declaration
+//   to the top of the function, matching store order in the image.
 // size      378 bytes
 // prototype void (__cdecl ?stack_sort_2@@YAXH@Z)(int vehID)
 // callers   2   call targets   3
@@ -5589,17 +5536,7 @@ void __cdecl stack_sort_2(int veh_id) {
     int veh_id_put = -1;
     int x = Vehs[veh_id].x;
     int y = Vehs[veh_id].y;
-    // veh_top(), hand-inlined - matching stack_sort's precedent (see its own
-    // comment): the image does not call it here.
-    int next_veh_id;
-    if (veh_id < 0) {
-        next_veh_id = -1;
-    } else {
-        next_veh_id = veh_id;
-        for (int16_t i = Vehs[next_veh_id].prev_veh_id_stack; i >= 0; i = Vehs[i].prev_veh_id_stack) {
-            next_veh_id = i;
-        }
-    }
+    int next_veh_id = veh_top(veh_id);
     int veh_id_loop;
     if (next_veh_id >= 0) {
         do {
@@ -5625,8 +5562,8 @@ void __cdecl stack_sort_2(int veh_id) {
             next_veh_id = veh_id_loop;
         } while (veh_id_loop >= 0);
     }
-    // stack_put(), hand-inlined - the image inlines this call site too,
-    // including its own inlined veh_top() climb on veh_id_put.
+    // veh_top()'s climb written out sign-test first; a veh_top() call
+    // schedules the `top = veh_id_put` copy ahead of the test.
     int top_veh_id;
     if (veh_id_put < 0) {
         top_veh_id = -1;
@@ -5685,14 +5622,7 @@ int __cdecl stack_fix(int veh_id) {
             stack_sort(veh_id);
         }
     }
-    if (veh_id < 0) {
-        return -1;
-    }
-    int top_veh_id = veh_id;
-    for (int j = Vehs[top_veh_id].prev_veh_id_stack; j >= 0; j = Vehs[j].prev_veh_id_stack) {
-        top_veh_id = j;
-    }
-    return top_veh_id;
+    return veh_top(veh_id);
 }
 
 /*
@@ -5705,6 +5635,8 @@ Purpose: Board the eligible units stacked with the specified transport or carrie
 // TRIED: by 1 (17 vs image's 16) - two `veh_top(veh_id)` calls (the mode-0 refresh loop and the per-pass boarding loop's start index) hand-inlined, matching stack_fix's precedent, and `sleep(i)` forced to a real call via a new `sleep_call` forwarder in veh.h/veh.cpp (its only other reference is the inline body - under /O2 `sleep(i)` folds to 3 field writes, but the image calls it for real at this one site). call_diff now agrees (0 disagreeing, was MORE by 1). This is a 472-instruction function; the remaining gap is per-branch register/scheduling noise not chased further at this budget.
 // SUPERSEDED: sleep now has a separate ordinary mapped owner in
 // vehicle_orders.cpp; stack_veh calls it directly.
+// SUPERSEDED: the two veh_top() climbs are plain calls again; they inline
+// identically to the hand copies.
 // size      1583 bytes
 // prototype int (__cdecl ?stack_veh@@YAHHH@Z)(int vehID, int)
 // callers   10   call targets   7
@@ -5739,13 +5671,7 @@ int __cdecl stack_veh(int veh_id, int mode) {
         }
         stack_sort(veh_id);
     } else {
-        // veh_top(veh_id), hand-inlined - matching stack_fix's precedent
-        // (see its own comment): the image does not call it here.
-        int top_veh_id = veh_id;
-        for (int j = Vehs[top_veh_id].prev_veh_id_stack; j >= 0; j = Vehs[j].prev_veh_id_stack) {
-            top_veh_id = j;
-        }
-        for (int i = top_veh_id; i >= 0; i = Vehs[i].next_veh_id_stack) {
+        for (int i = veh_top(veh_id); i >= 0; i = Vehs[i].next_veh_id_stack) {
             Vehs[i].state &= ~VSTATE_UNK_1; // so this call's boarding flags start clean
         }
     }
@@ -5768,12 +5694,7 @@ int __cdecl stack_veh(int veh_id, int mode) {
         if (mode) {
             i = veh_id;
         } else {
-            // veh_top(veh_id), hand-inlined - matching stack_fix's precedent
-            // (see its own comment): the image does not call it here.
-            i = veh_id;
-            for (int j = Vehs[i].prev_veh_id_stack; j >= 0; j = Vehs[j].prev_veh_id_stack) {
-                i = j;
-            }
+            i = veh_top(veh_id);
         }
         while (i >= 0) {
             if (!cargo_left && !carrier_left) {
@@ -6340,6 +6261,8 @@ Purpose: Move the specified unit to the top of the stack.
 Return Value: n/a
 Status: Complete
 */
+// stack_fix calls this out of line.
+#pragma auto_inline(off)
 void __cdecl veh_promote(int veh_id) {
     // The image expands veh_top's signed-word climb here.
     int veh_id_top = veh_top(veh_id);
@@ -6355,6 +6278,7 @@ void __cdecl veh_promote(int veh_id) {
         veh_drop(veh_id, Vehs[veh_id_top].x, Vehs[veh_id_top].y);
     }
 }
+#pragma auto_inline(on)
 
 /*
 Purpose: Clear the specified unit.
@@ -6725,9 +6649,8 @@ Purpose: Calculate the specified prototype's overall cost to build. Optional out
 // ORIGINAL: 0x005C1850 ?veh_cost@@YAHHHPAH@Z 0x005C1850-0x005C1A1D
 // LEVER: three real structural fixes moved this 0.545 -> 0.854 similar
 // (0/167 in position at the winning `/c /O2 /Gy /GR- /GX`):
-//  (1) `prototype_factor(proto_id)` INLINED rather than called - call_diff
-//      confirmed the image has no call to 0x005C17D0 here, it open-codes
-//      the free-proto/difficulty/triad switch directly;
+//  (1) prototype_factor(proto_id) is a direct same-TU call that /Ob2
+//      inlines (it was previously hand-copied);
 //  (2) the image has one direct call to base_cost (0x005A5D00, callers 1).
 //      The old same-TU `base_cost_call` workaround introduced a synthetic
 //      callee; the mapped owner now lives in vehicle_cost.cpp.
@@ -6737,12 +6660,8 @@ Purpose: Calculate the specified prototype's overall cost to build. Optional out
 //      the image's `(cost*3)/4` and the `/100` scaling both carry the
 //      `cdq`/sign-correction fixup a signed local earns and an unsigned one
 //      does not, even though the values are never negative.
-// TRIED: not chased further. The residual gap is the boolean
-// materialization in `has_fac_built_call`'s `(mask & field) != 0` - the
-// image computes an actual 0/1 via `and/neg/sbb/neg` before testing it
-// (0x005C18B8), where this tree's `&&`-chain folds the AND straight into a
-// `test`. Same result, different instruction selection; not a control-flow
-// difference.
+// LEVER: the prototype branch returns on its own with its own
+//   has_proto_cost store; the fall-through stores false and returns.
 // size      461 bytes
 // prototype int (__cdecl ?veh_cost@@YAHHHPAH@Z)(int protoID, int baseID, int* hasProtoCost)
 // callers   12   call targets   2
@@ -6770,43 +6689,23 @@ int __cdecl veh_cost(int proto_id, int base_id, BOOL *has_proto_cost) {
     if (VehPrototypes[proto_id].plan == PLAN_COLONIZATION && base_id >= 0) {
         cost = range(cost, 1, 999);
     }
-    int proto_cost_first = 0;
     if (proto_id >= MaxVehProtoFactionNum
         && !(VehPrototypes[proto_id].flags & PROTO_TYPED_COMPLETE)) {
-        // `prototype_factor` INLINED, not called - the image has no call to
-        // 0x005C17D0 here, it open-codes the free-proto/difficulty check and
-        // the triad switch directly (0x005C1919-0x005C1986).
-        int faction_id = proto_id / MaxVehProtoFactionNum;
-        int factor;
-        if (Players[faction_id].rule_flags & RFLAG_FREEPROTO
-            || PlayersData[faction_id].diff_level <= DLVL_SPECIALIST) {
-            factor = 0;
-        } else {
-            uint8_t triad = get_proto_triad(proto_id);
-            switch (triad) {
-              case TRIAD_SEA:
-                factor = Rules.extra_pct_cost_proto_sea;
-                break;
-              case TRIAD_AIR:
-                factor = Rules.extra_pct_cost_proto_air;
-                break;
-              case TRIAD_LAND:
-              default:
-                factor = Rules.extra_pct_cost_proto_land;
-                break;
-            }
-        }
+        int factor = prototype_factor(proto_id);
         // `base_cost` IS CALLED UNCONDITIONALLY here in the image, before the
-        // FAC_SKUNKWORKS check - not short-circuited behind it the way a
-        // `cond ? 0 : (factor * base_cost(...) + 50) / 100` ternary would.
-        proto_cost_first = (factor * base_cost(proto_id) + 50) / 100;
+        // FAC_SKUNKWORKS check.
+        int proto_cost_first = (factor * base_cost(proto_id) + 50) / 100;
         if (base_id >= 0 && has_fac(FAC_SKUNKWORKS, base_id, 0)) {
             proto_cost_first = 0;
         }
         cost += proto_cost_first;
+        if (has_proto_cost) {
+            *has_proto_cost = proto_cost_first != 0;
+        }
+        return cost;
     }
     if (has_proto_cost) {
-        *has_proto_cost = proto_cost_first != 0;
+        *has_proto_cost = false;
     }
     return cost;
 }
@@ -6821,24 +6720,25 @@ Purpose: Check if the land unit inside an air transport can disembark. The trans
 // kind      game
 // flags     frame;sp_ready;purged_ok
 // calls     (none)
-// TRIED: splitting the one big && chain into sequential early-return ifs; hoisting
-//   Vehs[veh_id].x/y into locals; mixing split-return with the || form - all measured
-//   worse or equal. Committed form already gets 6/63 agreeing, 0.800 similar; remaining
-//   divergence is register naming only (ecx/edx swapped on otherwise identical opcodes)
+// LEVER: the owner test is base_who() <= 0 (inline), and the transport id is an
+//   int local (the image sign-extends before testing it).
 Return Value: Can the specified unit disembark? true/false
 Status: Complete
 */
+// Every caller in the image calls this out of line.
+#pragma auto_inline(off)
 BOOL __cdecl veh_jail(int veh_id) {
-    if (get_triad(veh_id) == TRIAD_LAND && Vehs[veh_id].order == ORDER_SENTRY_BOARD
-        && Vehs[veh_id].waypoint_x[0] >= 0 && get_triad(Vehs[veh_id].waypoint_x[0]) == TRIAD_AIR
-        && (!(bit_at(Vehs[veh_id].x, Vehs[veh_id].y) & BIT_BASE_IN_TILE)
-            || owner_at(Vehs[veh_id].x, Vehs[veh_id].y) >= 8
-            || owner_at(Vehs[veh_id].x, Vehs[veh_id].y) <= 0)
-        && !(bit_at(Vehs[veh_id].x, Vehs[veh_id].y) & BIT_AIRBASE)) {
-        return true;
+    if (get_triad(veh_id) == TRIAD_LAND && Vehs[veh_id].order == ORDER_SENTRY_BOARD) {
+        int transport_id = Vehs[veh_id].waypoint_x[0]; // sentry/board stores the transport id
+        if (transport_id >= 0 && get_triad(transport_id) == TRIAD_AIR
+            && base_who(Vehs[veh_id].x, Vehs[veh_id].y) <= 0
+            && !(bit_at(Vehs[veh_id].x, Vehs[veh_id].y) & BIT_AIRBASE)) {
+            return true;
+        }
     }
     return false;
 }
+#pragma auto_inline(on)
 
 
 
@@ -7513,6 +7413,8 @@ Status: Complete
 // command family calls it by name.
 void __cdecl veh_kill(int vehID);
 
+// Every caller in the image calls this out of line.
+#pragma auto_inline(off)
 void __cdecl stack_kill(int a1) {
     if (a1 >= 0) {
         short s = Vehs[a1].prev_veh_id_stack;
@@ -7537,6 +7439,7 @@ void __cdecl stack_kill(int a1) {
         } while (a1 >= 0);
     }
 }
+#pragma auto_inline(on)
 
 // ===== veh.cpp, P2 wave 2: the vehicle removal / query verbs =====
 
@@ -7771,63 +7674,43 @@ void __cdecl kill(int veh_id) {
 
 // ORIGINAL: 0x004CD2F0 ?action_destruct@@YAXH@Z 0x004CD2F0-0x004CD4D1 FILE
 // RECOVERY_BINDING: v1 {"evidence": ["git:65b567af55eb22d163bbd28afcc335c340847278:src/recovered/units/004cd2f0.cpp", "recovery/tasks/mapwin-owner-coverage-wave.json", "Pinned instructions 4CD365 and 4CD44E identify reactor_id and PLAN_ALIEN_ARTIFACT, correcting seed cost/class labels."], "reason": "Recover vehicle self-destruction through typed reactor and plan fields, nine radius offsets and real stack lifecycle; original rereads the vehicle prototype after weap_val. Preserve seed identity and original extent without granting a byte claim."}
+// LEVER: (0.84 -> 0.994) range()/wrap_map_x()/on_map() inlines, stack_kill
+//   kept out of line (auto_inline off at its definition), and the kill pass
+//   restarts the stack walk from an outer loop. Left: the post-break `< 0`
+//   test the image threads straight into the kill block.
 void __cdecl action_destruct(int veh_id) {
-    const int x = Vehs[veh_id].x;
-    const int y = Vehs[veh_id].y;
+    int x = Vehs[veh_id].x;
+    int y = Vehs[veh_id].y;
     boom(x, y, 0);
-
-    const int proto_id = Vehs[veh_id].proto_id;
-    const int faction_id = Vehs[veh_id].faction_id;
-    int weapon_value = weap_val(proto_id, faction_id);
-    if (weapon_value >= 1) {
-        if (weapon_value > 20) weapon_value = 20;
-    } else {
-        weapon_value = 1;
-    }
-    const int damage =
-        static_cast<int>(VehPrototypes[Vehs[veh_id].proto_id].reactor_id) * weapon_value / 2;
-
+    int damage = VehPrototypes[Vehs[veh_id].proto_id].reactor_id
+        * range(weap_val(Vehs[veh_id].proto_id, Vehs[veh_id].faction_id), 1, 20) / 2;
     kill(veh_id);
-
-    for (int offset = 0; offset < 9; ++offset) {
-        int tile_x = x + RadiusOffsetX[offset];
-        if ((MapIsFlat & 1) == 0) {
-            if (tile_x < 0) tile_x += MapLongitudeBounds;
-            else if (tile_x >= MapLongitudeBounds) tile_x -= MapLongitudeBounds;
-        }
-        const int tile_y = y + RadiusOffsetY[offset];
-        if (tile_y < 0 || tile_y >= MapLatitudeBounds ||
-            tile_x < 0 || tile_x >= MapLongitudeBounds) {
+    for (int i = 0; i < 9; i++) {
+        int x_radius = wrap_map_x(x + RadiusOffsetX[i]);
+        int y_radius = y + RadiusOffsetY[i];
+        if (!on_map(x_radius, y_radius) || base_at(x_radius, y_radius) >= 0) {
             continue;
         }
-        if (base_at(tile_x, tile_y) >= 0) continue;
-
-        for (int damaged_vehicle_id = veh_at(tile_x, tile_y); damaged_vehicle_id >= 0;
-             damaged_vehicle_id = Vehs[damaged_vehicle_id].next_veh_id_stack) {
-            Vehs[damaged_vehicle_id].dmg_incurred = static_cast<uint8_t>(
-                Vehs[damaged_vehicle_id].dmg_incurred + damage);
+        for (int veh_id_dmg = veh_at(x_radius, y_radius); veh_id_dmg >= 0;
+             veh_id_dmg = Vehs[veh_id_dmg].next_veh_id_stack) {
+            Vehs[veh_id_dmg].dmg_incurred += (uint8_t)damage;
         }
-
-        int vehicle_id = stack_fix(veh_at(tile_x, tile_y));
-        while (vehicle_id >= 0) {
-            const Veh &vehicle = Vehs[vehicle_id];
-            const VehPrototype &prototype = VehPrototypes[vehicle.proto_id];
-            int threshold;
-            if (prototype.plan == PLAN_ALIEN_ARTIFACT) {
-                threshold = 1;
-            } else {
-                int reactor = prototype.reactor_id;
-                if (reactor < 1) reactor = 1;
-                else if (reactor > 100) reactor = 100;
-                threshold = reactor * 10;
+        // A kill reshapes the stack, so the walk restarts from its new top.
+        for (;;) {
+            int veh_id_kill = stack_fix(veh_at(x_radius, y_radius));
+            while (veh_id_kill >= 0) {
+                int threshold = (VehPrototypes[Vehs[veh_id_kill].proto_id].plan == PLAN_ALIEN_ARTIFACT)
+                    ? 1 : range(VehPrototypes[Vehs[veh_id_kill].proto_id].reactor_id, 1, 100) * 10;
+                if (Vehs[veh_id_kill].dmg_incurred >= threshold) {
+                    break;
+                }
+                veh_id_kill = Vehs[veh_id_kill].next_veh_id_stack;
             }
-            if (vehicle.dmg_incurred >= threshold) {
-                stack_veh(vehicle_id, 1);
-                stack_kill(vehicle_id);
-                vehicle_id = stack_fix(veh_at(tile_x, tile_y));
-                continue;
+            if (veh_id_kill < 0) {
+                break;
             }
-            vehicle_id = vehicle.next_veh_id_stack;
+            stack_veh(veh_id_kill, 1);
+            stack_kill(veh_id_kill);
         }
     }
 }
@@ -7895,26 +7778,63 @@ Purpose: Can this vehicle act this turn?
 // HOMED from src/unrecovered/005c1b70.cpp, 2026-09-04, and its
 // pending_bodies.cpp forwarder removed - this definition replaces it. The
 // archive's `extern char g_952828_arr[]` scaffolding is Vehs[].
-// TRIED: separate `if (cond) return 0;` per check - duplicated the epilogue
-//        (245 vs 200 bytes); the nested && chain sharing one `return 0` is
-//        what the image has.
+// LEVER: veh_selectable() and veh_moves() inline here; the image's separate
+//        `return 0` blocks come from those inline boundaries, not a chain.
 Return Value: 1 when the vehicle has moves left and is not jailed.
-Status: MISMATCH #9 - the veh_id * 0x34 multiply lowers through a different
-        lea/shl chain than the image's.
+Status: Complete
 */
+// action_arty calls this out of line.
+#pragma auto_inline(off)
 int __cdecl veh_ready(int veh_id) {
-    if (veh_id >= 0 && on_map(Vehs[veh_id].x, Vehs[veh_id].y) &&
-        Vehs[veh_id].faction_id == ConsoleGlobal.faction_id_ &&
-        ((Vehs[veh_id].flags & 0x40) == 0 || (int16_t)(Vehs[veh_id].flags & 0x400) == 0) &&
-        veh_jail(veh_id) == 0 &&
-        ((Vehs[veh_id].state & 0x4200) != 0 || Vehs[veh_id].order < 1 ||
-         Vehs[veh_id].order > 3)) {
-        const int diff = speed(veh_id, 0) - Vehs[veh_id].moves_expended;
-        if (diff >= 0 && (diff > 0x3e7 || diff != 0)) {
-            return 1;
-        }
+    if (!veh_selectable(veh_id)) {
+        return 0;
     }
-    return 0;
+    if (!(Vehs[veh_id].state & 0x4200)
+        && (Vehs[veh_id].order == 1 || Vehs[veh_id].order == 2 || Vehs[veh_id].order == 3)) {
+        return 0;
+    }
+    // A logical-or normalizes the moves count with branches, as the image
+    // does (`!= 0` or a ternary gives setne).
+    return veh_moves(veh_id) || false;
+}
+#pragma auto_inline(on)
+
+/*
+Purpose: May the player select this vehicle?
+// ORIGINAL: 0x005C1A20 ?veh_selectable@@YAHH@Z 0x005C1A20-0x005C1AAA BYTE_EXACT
+// size      138 bytes
+// prototype int (__cdecl ?veh_selectable@@YAHH@Z)(int vehID)
+// callers   11   call targets   1
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x005C1C40
+// HOMED from src/unrecovered/005c1a20.cpp, 2026-09-04.
+// LEVER: moved beside veh_unmoved/veh_ready (contiguous block; both inline
+//        it). The sprite click handlers call it out of line under
+//        `#pragma inline_depth(0)`.
+// TRIED: nesting the veh_id < 0 guard as `if (veh_id >= 0) { ... }` with a
+//        single fall-through return - same jl polarity either way, /O2
+//        canonicalises both to the same CFG.
+Return Value: 1 when the vehicle is on the map, ours, and not jailed.
+Status: MISMATCH.
+*/
+int __cdecl veh_selectable(int veh_id) {
+    if (veh_id < 0) {
+        return 0;
+    }
+    if (!on_map(Vehs[veh_id].x, Vehs[veh_id].y)) {
+        return 0;
+    }
+    if (Vehs[veh_id].faction_id != ConsoleGlobal.faction_id_) {
+        return 0;
+    }
+    if ((Vehs[veh_id].flags & 0x40) != 0 && static_cast<int16_t>(Vehs[veh_id].flags & 0x400) != 0) {
+        return 0;
+    }
+    if (veh_jail(veh_id)) {
+        return 0;
+    }
+    return 1;
 }
 
 /*
@@ -7927,24 +7847,16 @@ Purpose: Has this vehicle any moves left?
 // flags     frame;sp_ready;purged_ok
 // calls     0x005C1540 0x005C1C40
 // HOMED from src/unrecovered/005c1ab0.cpp, 2026-09-04.
+// LEVER: veh_selectable() and veh_moves() inline here (veh_selectable moved
+//        into this file beside it).
 Return Value: 1 when the vehicle cannot move again this turn.
-Status: MISMATCH.
+Status: Complete
 */
 int __cdecl veh_unmoved(int veh_id) {
-    if (veh_id < 0 || !on_map(Vehs[veh_id].x, Vehs[veh_id].y) ||
-        Vehs[veh_id].faction_id != ConsoleGlobal.faction_id_ ||
-        ((Vehs[veh_id].flags & 0x40) != 0 && (int16_t)(Vehs[veh_id].flags & 0x400) != 0)) {
+    if (!veh_selectable(veh_id)) {
         return 0;
     }
-    if (veh_jail(veh_id) != 0) {
-        return 0;
-    }
-    if (((Vehs[veh_id].state & 0x4000000) == 0 && Vehs[veh_id].order >= 4 &&
-         Vehs[veh_id].order < 0x18) ||
-        range(speed(veh_id, 0) - Vehs[veh_id].moves_expended, 0, 999) != 0) {
-        return 1;
-    }
-    return 0;
+    return ((Vehs[veh_id].state & 0x4000000) == 0 && Vehs[veh_id].order >= 4 && Vehs[veh_id].order < 0x18) || veh_moves(veh_id);
 }
 
 // ===== veh.cpp, P2 wave 2: the prototype-design and battle families =====
@@ -8862,64 +8774,31 @@ Purpose: Find whether a faction can airdrop a unit onto a tile.
 // whether the drop range is the whole map or the airdrop limit. Its `g_00952832`
 // short view is Vehs[].proto_id (+0x0A), so `rec - 0xa` / `rec - 8` are the
 // Vehs[].x/.y of the record being walked and `rec - 6` its state byte.
+// LEVER: has_tech() || has_project(SP_SPACE_ELEVATOR) (inline), x_dist() and
+//        base_who() (inline) with int x/y locals: 0.85 -> 1.0 mnemonic. Left:
+//        ebx/edi swapped between the unit's y and the x distance.
 Return Value: n/a - the image discards the result; the walk is the effect.
 Status: MISMATCH.
 */
 void __cdecl sub_500380(int faction_id, int x, int y) {
-    bool anywhere;
-    if (has_tech(Rules.tech_orb_insert_sans_spc_elev, faction_id)) {
-        anywhere = true;
-    } else if (GameDataStateStorage.fields_.secret_project_.space_elevator() >= 0) {
-        anywhere = Bases[GameDataStateStorage.fields_.secret_project_.space_elevator()].faction_id_current
-            == (uint8_t)faction_id;
-    } else {
-        anywhere = false;
-    }
-
+    // Orbital insertion lets the drop reach anywhere on the map.
     int threshold;
-    if (anywhere) {
-        threshold = MapLongitudeBounds;
-        if (threshold <= MapLatitudeBounds) {
-            threshold = MapLatitudeBounds;
-        }
+    if (has_tech(Rules.tech_orb_insert_sans_spc_elev, faction_id)
+        || has_project(SP_SPACE_ELEVATOR, faction_id)) {
+        threshold = MapLongitudeBounds > MapLatitudeBounds ? MapLongitudeBounds : MapLatitudeBounds;
     } else {
         threshold = Rules.max_airdrop_sans_orb_insert;
     }
-
-    int i = 0;
-    if (GameDataStateStorage.fields_.vehicle_current_count_ > 0) {
-        do {
-            if (Vehs[i].faction_id != faction_id) {
-                continue;
-            }
-            if (!has_abil(Vehs[i].proto_id, 0x10)) {
-                continue;
-            }
-            if (Vehs[i].state & VSTATE_MADE_AIRDROP) {
-                continue;
-            }
-            if (Vehs[i].moves_expended != 0) {
-                continue;
-            }
-            int dx = abs(x - Vehs[i].x);
-            if (!(MapIsFlat & 1) && dx > MapLongitude) {
-                dx = MapLongitudeBounds - dx;
-            }
-            const int dy = abs(y - Vehs[i].y);
-            if ((dy + dx) >> 1 > threshold) {
-                continue;
-            }
-            Map *tile = map_tiles()
-                + ((Vehs[i].x >> 1) + Vehs[i].y * MapLongitude);
-            if (tile->bit & BIT_BASE_IN_TILE) {
-                if ((tile->val2 & 0xf) < 8) {
-                    return;
-                }
-            }
-            if (tile->bit & BIT_AIRBASE) {
+    for (int i = 0; i < GameDataStateStorage.fields_.vehicle_current_count_; i++) {
+        if (Vehs[i].faction_id == faction_id && has_abil(Vehs[i].proto_id, 0x10)
+            && !(Vehs[i].state & VSTATE_MADE_AIRDROP) && !Vehs[i].moves_expended) {
+            int veh_x = Vehs[i].x;
+            int veh_y = Vehs[i].y;
+            if ((x_dist(x, veh_x) + abs(y - veh_y)) >> 1 <= threshold
+                && (base_who(veh_x, veh_y) >= 0 || bit_at(veh_x, veh_y) & BIT_AIRBASE)) {
                 return;
             }
-        } while (++i < GameDataStateStorage.fields_.vehicle_current_count_);
+        }
     }
 }
 
@@ -23931,6 +23810,7 @@ Purpose: The single-click handler for a fleet sprite: in a net game a
 Return Value: 1 when the click only selects the unit, else 0
 Status: Coverage transcription - claim pending re-measurement
 */
+#pragma inline_depth(0)
 int __cdecl veh_sprite_click(int veh_id) {
     if (IsMultiplayerNet != 0 && veh_selectable(veh_id) != 0
         && Vehs[veh_id].order == ORDER_NONE
@@ -23949,6 +23829,7 @@ int __cdecl veh_sprite_click(int veh_id) {
     }
     return 0;
 }
+#pragma inline_depth()
 
 /*
 Purpose: The double-click twin: the same net-select shortcut and INJAIL
@@ -23966,6 +23847,7 @@ Purpose: The double-click twin: the same net-select shortcut and INJAIL
 Return Value: 1 when the double-click takes the unit, else 0
 Status: Coverage transcription - claim pending re-measurement
 */
+#pragma inline_depth(0)
 int __cdecl veh_sprite_double_click(int veh_id) {
     if (IsMultiplayerNet != 0 && veh_selectable(veh_id) != 0
         && Vehs[veh_id].order == ORDER_NONE
@@ -23985,6 +23867,7 @@ int __cdecl veh_sprite_double_click(int veh_id) {
     NetDaemonNet.unlock_veh();
     return 1;
 }
+#pragma inline_depth()
 
 /*
 Purpose: Get the index value of a particular ability's bitfield.
