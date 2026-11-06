@@ -782,7 +782,7 @@ int __cdecl sub_52db70() {
     return GameDataStateStorage.fields_.net_turn_faction_ == ConsoleGlobal.faction_id_;
 }
 
-// ORIGINAL: 0x0052DBA0 ?current_server@@YAHXZ 0x0052DBA0-0x0052DBE6
+// ORIGINAL: 0x0052DBA0 ?current_server@@YAHXZ 0x0052DBA0-0x0052DBE6 BYTE_EXACT
 // The image inlines sub_52db70 here, hence the two spilled registers.
 int __cdecl current_server() {
     if (sub_52db70()) {
@@ -794,7 +794,7 @@ int __cdecl current_server() {
     return static_cast<int>(NetDaemonNet.primary_state_.leading_words_[0]);
 }
 
-// ORIGINAL: 0x0052E050 ?hang_up@NetDaemon@@QAEXXZ 0x0052E050-0x0052E151 FILE
+// ORIGINAL: 0x0052E050 ?hang_up@NetDaemon@@QAEXXZ 0x0052E050-0x0052E151 FILE BYTE_EXACT
 // size      257 bytes
 // prototype void (__thiscall ?hang_up@NetDaemon@@QAEXXZ)(NetDaemon* this)
 // callers   9   call targets   3
@@ -3284,7 +3284,7 @@ private:
     unsigned char *bytes_;
 };
 
-// ORIGINAL: 0x00534330 ?fixup_message@NetDaemon@@QAEHPAD@Z 0x00534330-0x005343FC FILE
+// ORIGINAL: 0x00534330 ?fixup_message@NetDaemon@@QAEHPAD@Z 0x00534330-0x005343FC FILE BYTE_EXACT
 // A switch over the direct packet fields. 0x2403 is a separate (empty) label
 // that falls into the shared body: the image's decision tree tests it alone.
 // working copy - scaffold materialised by --work
