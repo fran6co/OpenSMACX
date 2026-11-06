@@ -329,8 +329,7 @@ void __cdecl mon_secrets_of_tech(int faction_id) {
 // kind      game
 void __cdecl mon_enemy_destroyed(int faction_id, int target_faction) {
     const int year = static_cast<int>(game_year(GameDataStateStorage.fields_.turn_current_num_));
-    MonumentFaction &faction = FactionMonuments[faction_id];
-    MonumentRecord &record = faction.records_[6];
+    MonumentRecord &record = FactionMonuments[faction_id].records_[6];
 
     if ((Players[faction_id].rule_flags & RFLAG_ALIEN) != 0 ||
         record.achieved_ != 0 || target_faction == 0) {
@@ -366,7 +365,7 @@ void __cdecl mon_enemy_destroyed(int faction_id, int target_faction) {
     record.year_ = year;
     record.owner_faction_ = owner_faction;
     record.word_8_ = target_faction;
-    faction.latest_type_ = 6;
+    FactionMonuments[faction_id].latest_type_ = 6;
     if (faction_id == ConsoleGlobal.faction_id_) {
         monument(1);
     }

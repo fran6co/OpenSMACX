@@ -715,7 +715,7 @@ void NetWin::config_players() {
     int row_index = 1;
     do {
         row->owner_ = 0;
-        row->prefix_ = 0xFF;
+        row->prefix_ = -1;
         row->ready_or_occupied_ = 0;
         row->field_2_ = NetWinSessionOptions.fields_.difficulty_;
         row->faction_or_color_ = static_cast<int8_t>(0xFF);
@@ -1342,7 +1342,7 @@ void NetWin::draw_player_names() {
         int ready = lobby_row->ready_or_occupied_ != 0 ? 2 : 0;
         buffer->box_sprite(row_rect, &InterfaceBoxStyles[48 + ready]);
 
-        if (NetWinSessionData.fields_.mode_ == 3 && lobby_row->prefix_ == 0xFF) {
+        if (NetWinSessionData.fields_.mode_ == 3 && lobby_row->prefix_ == -1) {
             continue;
         }
 
@@ -1386,7 +1386,7 @@ void NetWin::draw_player_names() {
         buffer->set_clip(&field);
 
         StringTemp[0] = 0;
-        if (lobby_row->prefix_ == 0xFF) {
+        if (lobby_row->prefix_ == -1) {
             strcat(StringTemp, "Computer");
         } else {
             strcat(StringTemp,
@@ -1647,7 +1647,7 @@ void NetWin::draw_diffs() {
             break;
         }
         Buffer::box_sprite(rect, &InterfaceBoxStyles[0]);
-        if (NetWinSessionData.fields_.mode_ == 3 && row->prefix_ == 0xFF) {
+        if (NetWinSessionData.fields_.mode_ == 3 && row->prefix_ == -1) {
             continue;
         }
 
@@ -1657,7 +1657,7 @@ void NetWin::draw_diffs() {
         int slot = index + 1;
         if (slot == NetDaemonNet.pid_2_idx(NetDaemonNet.local_player_id())
             || (NetDaemonNet.local_player_id() == NetDaemonNet.host_player_id()
-                && row->prefix_ == 0xFF)) {
+                && row->prefix_ == -1)) {
             Sprite &arrow = g_IFACE_MP_COMBO_ARROW_SPRITES[0];
             arrow.draw(this, arrow.transparent_index(),
                        arrow_rect.right - 0xA,
@@ -1712,7 +1712,7 @@ void NetWin::draw_factions() {
             break;
         }
         Buffer::box_sprite(rect, &InterfaceBoxStyles[0]);
-        if (NetWinSessionData.fields_.mode_ == 3 && row->prefix_ == 0xFF) {
+        if (NetWinSessionData.fields_.mode_ == 3 && row->prefix_ == -1) {
             continue;
         }
 
@@ -1721,7 +1721,7 @@ void NetWin::draw_factions() {
         int mode = row->faction_or_color_;
         if (slot == NetDaemonNet.pid_2_idx(NetDaemonNet.local_player_id())
             || (NetDaemonNet.local_player_id() == NetDaemonNet.host_player_id()
-                && row->prefix_ == 0xFF)) {
+                && row->prefix_ == -1)) {
             Sprite &arrow = g_IFACE_MP_COMBO_ARROW_SPRITES[0];
             arrow.draw(this, arrow.transparent_index(),
                        field.right - 0xA,
@@ -1867,7 +1867,7 @@ void NetWin::on_left_click(int x, int y) {
     case 4:
         if (NetDaemonNet.process_slots_[spot_position + 1].pid_ ==
                 static_cast<unsigned long>(NetDaemonNet.local_player_id()) ||
-            (NetWinLobbyRows.rows_[spot_position + 1].prefix_ == 0xFF &&
+            (NetWinLobbyRows.rows_[spot_position + 1].prefix_ == -1 &&
              NetDaemonNet.local_player_id() == NetDaemonNet.host_player_id())) {
             if (spot_type == 3) {
                 pick_faction(spot_position + 1);
@@ -2261,7 +2261,7 @@ void NetWin::pick_map() {
     for (int normalized_row = 0; normalized_row < 7; ++normalized_row) {
         NetWinLobbyRow &row = assigned_packet.rows_[normalized_row];
         row.owner_ = 0;
-        row.prefix_ = 0xFF;
+        row.prefix_ = -1;
         row.ready_or_occupied_ = 0;
         row.field_2_ = 0;
         row.faction_or_color_ = -1;
@@ -2274,7 +2274,7 @@ void NetWin::pick_map() {
         // Native 47DC27..47DC55 copies all seven live rows after the local
         // normalization loop, overwriting those row-field writes on this path.
         memcpy(assigned_packet.rows_, &NetWinLobbyRows.rows_[1], 0xA64);
-        assigned_packet.header_.flags_ |= 0x40;
+        assigned_packet.header_.opcode_ |= 0x4000;
         NetDaemonNet.Net::send(&assigned_packet, sizeof(assigned_packet), 0, 1);
     }
 
@@ -2497,7 +2497,7 @@ int NetWin::exec() {
         // Preserve the original untouched header bytes +2..3 and +C..F.
         // Whole-packet zeroing would deliberately change the wire behavior.
         memcpy(lobby_message.rows_, &NetWinLobbyRows.rows_[1], 0xA64);
-        lobby_message.header_.flags_ |= 0x40;
+        lobby_message.header_.opcode_ |= 0x4000;
         NetDaemonNet.send(&lobby_message, 0xA74, 0, 1);
     }
 
@@ -3240,7 +3240,7 @@ Status: Complete
 */
 NetWinConstructedLobbyRow::NetWinConstructedLobbyRow() {
     payload_.owner_ = 0;
-    payload_.prefix_ = 0xFF;
+    payload_.prefix_ = -1;
     payload_.ready_or_occupied_ = 0;
     payload_.field_2_ = 0;
     payload_.faction_or_color_ = -1;
@@ -3418,7 +3418,7 @@ void NetWin::on_button_clicked(int clicked_id) {
         packet.header_.slot_ = -1;
         packet.header_.field_8_ = 0;
         memcpy(static_cast<void *>(packet.rows_), &NetWinLobbyRows.rows_[1], sizeof(packet.rows_));
-        packet.header_.flags_ |= 0x40;
+        packet.header_.opcode_ |= 0x4000;
         NetDaemonNet.Net::send(&packet, sizeof(packet), 0, 1);
     } else {
         memcpy(&row.payload_, &NetWinLobbyRows.rows_[local_slot], sizeof(row.payload_));
@@ -3527,7 +3527,7 @@ void __cdecl send_all_player_packets(int slot_id) {
     NetWinLobbyRow *row = packet.rows_;
     for (int slot = 7; slot != 0; --slot) {
         row->owner_ = 0;
-        row->prefix_ = 0xFF;
+        row->prefix_ = -1;
         row->ready_or_occupied_ = 0;
         row->field_2_ = 0;
         row->faction_or_color_ = -1;
@@ -3540,11 +3540,11 @@ void __cdecl send_all_player_packets(int slot_id) {
         packet.header_.field_8_ = 0;
         memcpy(packet.rows_, &NetWinLobbyRows.rows_[1], sizeof(packet.rows_));
         if (slot_id < 0) {
-            packet.header_.flags_ |= 0x40;
+            packet.header_.opcode_ |= 0x4000;
             NetDaemonNet.Net::send(&packet, sizeof(packet), 0, 1);
             return;
         }
-        packet.header_.flags_ |= 0x10;
+        packet.header_.opcode_ |= 0x1000;
         NetDaemonNet.Net::send(
             &packet, sizeof(packet), NetDaemonNet.process_slots_[slot_id].pid_, 1);
     }
@@ -3571,7 +3571,7 @@ Status: Coverage transcription - unclaimed body
 */
 void __cdecl sub_47b1d0(int faction_id, void *payload) {
     NetWinLobbySinglePacket packet;
-    packet.row_.prefix_ = 0xFF;
+    packet.row_.prefix_ = -1;
     packet.row_.faction_or_color_ = -1;
     packet.row_.owner_ = 0;
     packet.row_.ready_or_occupied_ = 0;

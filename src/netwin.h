@@ -29,11 +29,11 @@
 // at 0x0090DD14; its seven-row suffix is the 0xA64-byte state payload.
 // The leading row's tail dword is the owner scanned via 0x0090DD10.
 struct NetWinLobbyRow {
-  uint8_t prefix_;                  // +0
+  int8_t prefix_;                   // +0, -1 marks an empty row
   uint8_t ready_or_occupied_;       // +1
   uint8_t field_2_;                 // +2
   int8_t faction_or_color_;         // +3
-  uint8_t field_4_;                 // +4
+  int8_t field_4_;                  // +4
   char leader_name_[0x18];         // +5
   char formal_faction_name_[0x28]; // +0x1D
   char noun_faction_[0x18];        // +0x45
@@ -67,7 +67,7 @@ struct NetWinLobbyRowsStorage {
   NetWinLobbyRowsStorage() {
     for (int row = 0; row < 8; ++row) {
       rows_[row].owner_ = 0;
-      rows_[row].prefix_ = 0xFF;
+      rows_[row].prefix_ = -1;
       rows_[row].ready_or_occupied_ = 0;
       rows_[row].field_2_ = 0;
       rows_[row].faction_or_color_ = -1;
@@ -127,8 +127,9 @@ struct NetWinLobbyPacketHeader {
   void set_opcode(uint16_t value) {
     std::memcpy(this, &value, sizeof(value));
   }
-  uint8_t opcode_;
-  uint8_t flags_;
+  // The 16-bit message word carries routing bits above the opcode, such as
+  // 0x4000 (all players) and 0x1000 (one slot): 0x0F04 | 0x4000 == 0x4F04.
+  uint16_t opcode_;
   uint16_t field_2_;
   int32_t slot_;
   int32_t field_8_;

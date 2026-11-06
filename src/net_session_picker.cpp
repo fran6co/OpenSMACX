@@ -585,11 +585,12 @@ int NetSessionPickerWin::join_selected_session() {
         return 1;
     }
 
-    Dialog &dialog = static_cast<Dialog &>(sessions_view_);
-    sessions_.seek_pos(dialog.selected_position_);
-    NetAllocationNode *session = 0;
+    sessions_.seek_pos(sessions_view_.selected_position_);
+    NetAllocationNode *session;
     if (sessions_.head_ != 0) {
         session = sessions_.current_->payload_;
+    } else {
+        session = 0;
     }
 
     const int result = net_->join_session(
@@ -619,8 +620,7 @@ void NetSessionPickerWin::on_button_clicked(int action) {
       "jackal", "NETCONNECT_JOIN", 0x3c, 0x44, 0);
   if (selection == -1) return;
 
-  Dialog &dialog = static_cast<Dialog &>(sessions_view_);
-  sessions_.seek_pos(dialog.selected_position_);
+  sessions_.seek_pos(sessions_view_.selected_position_);
   NetAllocationNode *session = sessions_.head_ == 0
       ? 0 : sessions_.current_->payload_;
   tail_.action_result_ = net_->join_session(
