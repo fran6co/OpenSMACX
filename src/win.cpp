@@ -63,6 +63,7 @@
 
 typedef signed char int8;  // a scaffold spelling the artifacts use
 #include "scroll.h"
+#include "rectangle_operations.h"
 #include "win.h"
 #include "ddinit.h"
 #include "game.h"
@@ -327,42 +328,20 @@ Purpose: Move the active window rectangle while preserving its dimensions.
 // notes     Runtime redirect installed by DllMain after byte-signature validation
 Status: Complete
 */
+// Out of line at every caller in the image.
+#pragma auto_inline(off)
 int Win::move(int x, int y) {
-    // WRITTEN OUT IN BOTH ARMS, because the image is: 43 instructions with no
-    // call, where a shared helper compiles to 14 and a reference bound to the
-    // ternary compiles to the same. Reaching each rectangle by name is what
-    // gives VC6 the two straight-line arms the image has.
-    //
-    // TRIED: 4 of 43, and computing `dy` before `dx` - the image loads
-    // `[ecx+0x150]` before `[ecx+0x14c]` - changes nothing. The real
-    // divergence is earlier and is register pressure: the image reads its
-    // argument out of the frame BEFORE the branch and needs one callee-saved
-    // register, where this body pushes edi as well and reads the argument
-    // after. Source statement order does not reach that; it is the same
-    // shape as the receiver-spill wall recorded in AGENT_BRIEF.
-//
-// TRIED: the local-reuse lever that made nonclient_to_screen and
-// nonscreen_to_client exact - subtracting into x/y instead of adding
-// `dx`/`dy` - makes this body WORSE, 4 of 43 to 3. Those two have one
-// straight-line tail; this one has two arms and x/y are parameters, so
-// modifying them in an arm costs rather than saves.
+    // Both arms call offset_rect (0x005F8670), which /Ob2 inlines here.
     if (iSomeFlag_ & 2U) {
-        const int dx = x - client_rect_.left;
-        const int dy = y - client_rect_.top;
-        client_rect_.left += dx;
-        client_rect_.top += dy;
-        client_rect_.right += dx;
-        client_rect_.bottom += dy;
+        offset_rect(&client_rect_, x - client_rect_.left,
+                    y - client_rect_.top);
     } else {
-        const int dx = x - outer_rect_.left;
-        const int dy = y - outer_rect_.top;
-        outer_rect_.left += dx;
-        outer_rect_.top += dy;
-        outer_rect_.right += dx;
-        outer_rect_.bottom += dy;
+        offset_rect(&outer_rect_, x - outer_rect_.left,
+                    y - outer_rect_.top);
     }
     return 0;
 }
+#pragma auto_inline(on)
 
 
 
@@ -2817,6 +2796,7 @@ Purpose: The install-media check `DDInit::report_error` tails into. Scan
 //        arm order / do-while bottom test - all 51/139; VC6 keeps the
 //        `dec;test;jne;jmp` shape where the image has `dec;je` falling into a
 //        mid-function shared return-0 epilogue (image 139, ours 141).
+// LEVER: `switch (ConsoleGroupAction) { case 1: continue; }` gives dec;je.
 // size      432 bytes
 // prototype int __cdecl sub_628f30(void)
 // callers   2   call targets   3
@@ -2846,7 +2826,7 @@ int __cdecl cd_check() {
     // -1, which is what keeps find_handle live in esi through that test.
     HANDLE seeded;
     HANDLE find_handle = seeded;
-    int response; // pop answers; also reused for the BaseAtKeyPollFlag reload
+    int response;
     for (;;) {
         root_path[0] = 0;
         strcat(root_path, "A:\\");
@@ -2873,10 +2853,8 @@ int __cdecl cd_check() {
         }
         // the pop system leaves the response in the shared slot at
         // 0x009BC070 (base.cpp's BaseAtKeyPollFlag); rescan while it is 1.
-        // Reuses `response` - the image reloads it into the same register
-        // the pop answer sat in, and never stores the decrement back.
-        response = ConsoleGroupAction;
-        if (--response == 0) {
+        switch (ConsoleGroupAction) {
+        case 1:
             continue;
         }
         return 0;
@@ -3279,15 +3257,11 @@ void __cdecl restore_flip_sprite(int do_flip) {
         Win::drawing_buffer_.copy(
             (&Win::screen_buffer_), 0, 0,
             WinFlipSpriteY, WinFlipSpriteX, WinClipWidth, WinClipHeight);
-        int x = WinFlipSpriteY;
-        int y = WinFlipSpriteX;
         RECT local;
-        local.right = x + WinClipWidth;
-        local.left = x;
-        local.bottom = y + WinClipHeight;
-        local.top = y;
-        UnionRect(&WinDirtyRect,
-                  &WinDirtyRect, &local);
+        UnionRect(&WinDirtyRect, &WinDirtyRect,
+                  set_rectangle_dimensions(&local, WinFlipSpriteY,
+                                           WinFlipSpriteX, WinClipWidth,
+                                           WinClipHeight));
         if (do_flip != 0) {
             Sprite *saved = WinFlipSprite;
             WinFlipSprite = 0;
@@ -3655,24 +3629,9 @@ void Win::close_class() {
 // pair emitted in a different place - twelve differing runs, so the
 // remaining work is the body's shape, not one spelling.
 void Win::set_mouse_pos(int x, int y) {
-    // MEMBERS FIRST, argument last. `+` is left-associative, so `x + left +
-    // outer` groups as `(x + left) + outer`; the image adds the two members
-    // to each other and the argument to that sum (`add eax, edx` then
-    // `add ecx, eax` at 0x005EC80D).
-    int screen_x = client_rect_.left + outer_rect_.left + x;
-    int screen_y = client_rect_.top + outer_rect_.top + y;
-    if (((iFlags_ & 0x20) != 0) && (win_parent_ != 0)) {
-        // THE PARENT'S. `mov ecx, [esi + 0xc4]` / `test ecx, ecx` at
-        // 0x005EC83D puts win_parent_ in the receiver register and calls from
-        // there; and the 0x8000 arm RELOADS it (`mov esi, [esi + 0xc4]` at
-        // 0x005EC861), which is what says no local held it.
-        win_parent_->client_to_screen(&screen_x, &screen_y);
-        if ((iFlags_ & 0x8000) != 0) {
-            screen_x = screen_x - win_parent_->outer_rect_.left;
-            screen_y = screen_y - win_parent_->outer_rect_.top;
-        }
-    }
-    SetCursorPos(screen_x, screen_y);
+    // VC6 inlines the first level of the recursive client_to_screen.
+    client_to_screen(&x, &y);
+    SetCursorPos(x, y);
 }
 
 // Fixed-slot bindings carried from 005ec8a0.cpp
@@ -4072,44 +4031,41 @@ void Win::on_paint(RECT *area) {
 // measures identically - VC6 schedules those two independently of source
 // order. The 13 differing runs are spread through the body, so this one
 // wants a full re-read against the image rather than another spelling.
+// Each test rereads the field: a cached local lets VC6 thread the repeated
+// `x <` tests. The signed compares suggest field_170_ is really an int.
 int Win::on_nc_hittest(int x, int y) {
   if (iSomeFlag_ & 2) {
-    int iVar1 = field_170_;
-    if (x < iVar1) {
-      if (y < iVar1) {
-        return 0xd;
-      }
-      if (client_rect_.bottom - client_rect_.top - iVar1 < y) {
-        return 0x10;
-      }
+    if (x < (int)field_170_ && y < (int)field_170_) {
+      return 0xd;
     }
-    int iVar2 = client_rect_.right - client_rect_.left - iVar1;
-    if (iVar2 < x) {
-      if (y < iVar1) {
-        return 0xe;
-      }
-      if (client_rect_.bottom - client_rect_.top - iVar1 < y) {
-        return 0x11;
-      }
+    if (x < (int)field_170_ && y > client_rect_.bottom - client_rect_.top - (int)field_170_) {
+      return 0x10;
     }
-    if (x < iVar1) {
+    if (x > client_rect_.right - client_rect_.left - (int)field_170_ && y < (int)field_170_) {
+      return 0xe;
+    }
+    if (x > client_rect_.right - client_rect_.left - (int)field_170_ &&
+        y > client_rect_.bottom - client_rect_.top - (int)field_170_) {
+      return 0x11;
+    }
+    if (x < (int)field_170_) {
       return 0xa;
     }
-    if (y < iVar1) {
+    if (y < (int)field_170_) {
       return 0xc;
     }
-    if (iVar2 < x) {
+    if (x > client_rect_.right - client_rect_.left - (int)field_170_) {
       return 0xb;
     }
-    if (client_rect_.bottom - client_rect_.top - iVar1 < y) {
+    if (y > client_rect_.bottom - client_rect_.top - (int)field_170_) {
       return 0xf;
     }
   }
-  if ((iFlags_ & 0x4000010) == 0) {
-    if (iFlags_ & 1) {
+  if (iFlags_ & 0x4000010) {
+    if (field_16C_ != 0 && y < (int)field_16C_) {
       return 2;
     }
-  } else if (field_16C_ != 0 && y < (int)field_16C_) {
+  } else if (iFlags_ & 1) {
     return 2;
   }
   return 0;
@@ -4336,18 +4292,8 @@ static char WinBubblePrefixGlyph[] = " ";
 // context from the first token rather than behind a file read. This
 // emitter computes declarations; it does not carry lessons.
 //
-// MEASURED 2026-08-28 at 43 of 100, instruction-count parity (100 vs 100).
-//            The residual is one register assignment, and it is the whole
-//            gap: the image holds `max_width` in ebp and spills
-//            `prefix_width` to its `push ecx` slot at 0x005F8450, this tree
-//            holds `prefix_width` in ebp and spills `max_width`. Every
-//            differing run downstream is that pair swapped (`cmp eax,ebp`
-//            vs `cmp ebx,eax`, `lea edi,[eax+ebp]` vs `lea edx,[eax+ebx]`).
-// TRIED: writing the test `line_width > max_width` because 0x005F8460 is
-//            `cmp eax, ebp / jle` (new width as the LEFT operand) rather
-//            than this body's `cmp ebx, eax / jge` - 43 of 100 either way,
-//            VC6 canonicalises the operands and the register plan does not
-//            follow the source order.
+// LEVER: the prefix width is an unnamed temporary (VC6 spills it), the loop
+// is a do/while on the caret, and the counter starts at zero.
 
 void Win::set_bubble_text(char * text, RECT * rect) {
     if (text == 0 || rect == 0) {
@@ -4359,35 +4305,35 @@ void Win::set_bubble_text(char * text, RECT * rect) {
         update_screen(&WinBubbleRect, 0);
         flip(&WinBubbleRect);
     }
-    int max_width = 0;
     int line_count = 0;
     char *str = text;
     WinBubbleCompanion = this;
-    for (;;) {
-        char *caret = strchr(str, '^');
+    int max_width = 0;
+    char *caret;
+    do {
+        caret = strchr(str, '^');
         if (caret != 0) {
             *caret = 0;
         }
-        int prefix_width = WinBubbleFont->width(WinBubblePrefixGlyph);
-        int line_width = WinBubbleFont->width(str) + prefix_width * 2;
-        if (max_width < line_width) {
+        int line_width = WinBubbleFont->width(str) +
+                         WinBubbleFont->width(WinBubblePrefixGlyph) * 2;
+        if (line_width > max_width) {
             max_width = line_width;
         }
-        str = caret + 1;
-        if (caret == 0) {
-            break;
+        if (caret != 0) {
+            *caret = '^';
         }
-        *caret = '^';
-        line_count = line_count + 1;
-    }
+        line_count++;
+        str = caret + 1;
+    } while (caret != 0);
     Font *const font = WinBubbleFont;
     int line_height;
-    if (font->unk_1_ < 0) {
-        line_height = font->line_height_;
-    } else {
+    if (font->unk_1_ >= 0) {
         line_height = font->height_ + font->unk_1_;
+    } else {
+        line_height = font->line_height_;
     }
-    line_height = line_height * (line_count + 1);
+    line_height = line_height * line_count;
     int y = rect->top - line_height;
     if (y < 0) {
         y = rect->bottom;
@@ -4395,7 +4341,7 @@ void Win::set_bubble_text(char * text, RECT * rect) {
     int x = ((rect->right - max_width) + rect->left) / 2;
     if (x < 0) {
         x = 0;
-    } else if (WinScreenWidth < x + max_width) {
+    } else if (x + max_width > WinScreenWidth) {
         x = WinScreenWidth - max_width;
     }
     WinBubbleRect.left = x;
@@ -4453,25 +4399,26 @@ void Win::resize_event(int width, int height) {
             scroll_vert_->move(outer_rect_.right - outer_rect_.left, 0);
             Scroll *horizontal = scroll_horz_;
             Scroll *vertical = scroll_vert_;
-            int resize_height;
-            if (horizontal == 0) {
-                resize_height = outer_rect_.bottom - outer_rect_.top;
+            if (horizontal != 0) {
+                vertical->resize(vertical->dib_.bmiHeader.biWidth,
+                                 horizontal->dib_.bmiHeader.biHeight -
+                                     outer_rect_.top + outer_rect_.bottom,
+                                 0);
             } else {
-                resize_height = horizontal->dib_.bmiHeader.biHeight -
-                                outer_rect_.top + outer_rect_.bottom;
+                vertical->resize(vertical->dib_.bmiHeader.biWidth,
+                                 outer_rect_.bottom - outer_rect_.top, 0);
             }
-            vertical->resize(vertical->dib_.bmiHeader.biWidth, resize_height, 0);
         }
         if (scroll_horz_ != 0) {
             scroll_horz_->move(0, outer_rect_.bottom - outer_rect_.top);
             Scroll *vertical = scroll_vert_;
             Scroll *horizontal = scroll_horz_;
-            if (vertical == 0) {
-                horizontal->resize(outer_rect_.right - outer_rect_.left,
-                                   -horizontal->dib_.bmiHeader.biHeight, 0);
-            } else {
+            if (vertical != 0) {
                 horizontal->resize((outer_rect_.right - vertical->dib_.bmiHeader.biWidth) -
                                    outer_rect_.left,
+                                   -horizontal->dib_.bmiHeader.biHeight, 0);
+            } else {
+                horizontal->resize(outer_rect_.right - outer_rect_.left,
                                    -horizontal->dib_.bmiHeader.biHeight, 0);
             }
         }
@@ -6305,33 +6252,14 @@ void Win::show(int visible) {
         }
 
         RECT rect;
-        if ((iSomeFlag_ & 2) == 0) {
-            rect.right = outer_rect_.right - outer_rect_.left;
-            rect.left = 0;
-            rect.bottom = outer_rect_.bottom - outer_rect_.top;
-            rect.top = 0;
-            int x = client_rect_.left + outer_rect_.left;
-            int y = client_rect_.top + outer_rect_.top;
-            if ((iFlags_ & 0x20) != 0 && win_parent_ != 0) {
-                win_parent_->client_to_screen(&x, &y);
-                if (iFlags_ & 0x8000) {
-                    x -= win_parent_->outer_rect_.left;
-                    y -= win_parent_->outer_rect_.top;
-                }
-            }
-            offset_rect(&rect, x, y);
+        if ((iSomeFlag_ & 2) != 0) {
+            rect = client_rect_;
+            offset_rect(&rect, -rect.left, -rect.top);
+            nonclient_to_screen(&rect);
         } else {
-            rect.right = client_rect_.right - client_rect_.left;
-            rect.bottom = client_rect_.bottom - client_rect_.top;
-            rect.left = 0;
-            rect.top = 0;
-            int x = 0;
-            int y = 0;
-            client_to_screen(&x, &y);
-            rect.left += x - outer_rect_.left;
-            rect.right += x - outer_rect_.left;
-            rect.top += y - outer_rect_.top;
-            rect.bottom += y - outer_rect_.top;
+            rect = outer_rect_;
+            offset_rect(&rect, -rect.left, -rect.top);
+            client_to_screen(&rect);
         }
 
         InvalidateRect(HandleMain, &rect, 0);
@@ -7191,37 +7119,24 @@ lab_default_cursor:
 // ORIGINAL: 0x005ED5C0 ?center@Win@@QAEHXZ 0x005ED5C0-0x005ED6F7 FILE
 // kind game
 // TRIED: named `parent` local for win_parent_ (extra register pressure, forces a 4th callee-save + frame pointer); computing both local_8 and local_4 divisions fully inside each if/else branch (extra register); calling screen_to_client() on win_parent_ itself instead of win_parent_->win_parent_ (asm's ecx at the call site is loaded from [win_parent_+0xc4], i.e. the grandparent, reused straight from the preceding null check). Best reached: MISMATCH, edit_count 10/95 mnemonics, 312 bytes vs 311 - a register-colouring difference only (rebuilt keeps `this` in esi where the original keeps it in ebx).
+// LEVER: both divisions per arm AND win_parent_->screen_to_client together;
+// VC6 inlines the first level of the recursive callee (the grandparent call).
 // ===== homed from src/unrecovered/005ed5c0.cpp =====
 
 int Win::center() {
-    int local_8;
-    int local_4;
-    int top;
-    int bottom;
-
+    int x;
+    int y;
     if ((iSomeFlag_ & 2) != 0) {
-        local_8 = (client_rect_.left - client_rect_.right + WinScreenWidth) / 2;
-        bottom = client_rect_.bottom;
-        top = client_rect_.top;
+        x = (client_rect_.left - client_rect_.right + WinScreenWidth) / 2;
+        y = (client_rect_.top - client_rect_.bottom + WinScreenHeight) / 2;
     } else {
-        local_8 = (outer_rect_.left - outer_rect_.right + WinScreenWidth) / 2;
-        bottom = outer_rect_.bottom;
-        top = outer_rect_.top;
+        x = (outer_rect_.left - outer_rect_.right + WinScreenWidth) / 2;
+        y = (outer_rect_.top - outer_rect_.bottom + WinScreenHeight) / 2;
     }
-    local_4 = (top - bottom + WinScreenHeight) / 2;
     if (win_parent_ != 0) {
-        local_8 -= win_parent_->client_rect_.left + win_parent_->outer_rect_.left;
-        local_4 -= win_parent_->client_rect_.top + win_parent_->outer_rect_.top;
-        if ((win_parent_->iFlags_ & 0x20) != 0 && win_parent_->win_parent_ != 0) {
-            win_parent_->win_parent_->screen_to_client(&local_8, &local_4);
-            if ((win_parent_->iFlags_ & 0x8000) != 0) {
-                local_8 += win_parent_->win_parent_->outer_rect_.left;
-                local_4 += win_parent_->win_parent_->outer_rect_.top;
-                return move(local_8, local_4);
-            }
-        }
+        win_parent_->screen_to_client(&x, &y);
     }
-    return move(local_8, local_4);
+    return move(x, y);
 }
 
 // ORIGINAL: 0x005ED700 sub_5ed700 0x005ED700-0x005ED7B4 BYTE_EXACT
@@ -7665,37 +7580,21 @@ int Win::set_cursor(HCURSOR *name) {
 // ORIGINAL: 0x005ED880 ?resize@Win@@QAEHHHH@Z 0x005ED880-0x005ED9B5 FILE
 // symbol    ?resize@Win@@UAEHHHH@Z
 // Original mapping restored from git:85fc7721f56c2a5cae754b993fe04fcfec74fec1:src/unrecovered/005ed880.cpp
+// The image inlines set_rectangle_dimensions and offset_rect (0x005F8670).
 int Win::resize(int width, int height, int repaint) {
     if (repaint != 0) {
         if ((iSomeFlag_ & 2) == 0) {
-            int left = outer_rect_.left;
-            int top = outer_rect_.top;
-            outer_rect_.left = left;
-            outer_rect_.right = left + width;
-            outer_rect_.top = top;
-            outer_rect_.bottom = top + height;
+            set_rectangle_dimensions(&outer_rect_, outer_rect_.left,
+                                     outer_rect_.top, width, height);
             goto shared;
         }
         client_to_nonclient(&width, &height);
     }
-    {
-        int cleft = client_rect_.left;
-        int ctop = client_rect_.top;
-        client_rect_.left = cleft;
-        client_rect_.top = ctop;
-        client_rect_.right = cleft + width;
-        client_rect_.bottom = ctop + height;
-        outer_rect_.left = client_rect_.left;
-        outer_rect_.top = client_rect_.top;
-        outer_rect_.right = client_rect_.right;
-        outer_rect_.bottom = client_rect_.bottom;
-        int negLeft = outer_rect_.left;
-        outer_rect_.left -= negLeft;
-        outer_rect_.right -= negLeft;
-        outer_rect_.bottom -= outer_rect_.top;
-        outer_rect_.top -= outer_rect_.top;
-        nonclient_to_client(&outer_rect_);
-    }
+    set_rectangle_dimensions(&client_rect_, client_rect_.left,
+                             client_rect_.top, width, height);
+    outer_rect_ = client_rect_;
+    offset_rect(&outer_rect_, -outer_rect_.left, -outer_rect_.top);
+    nonclient_to_client(&outer_rect_);
 shared:
     this->set_rects();
     if (poWinBase_ != this) {
@@ -7818,53 +7717,44 @@ void Win::client_to_nonclient(int * points, int * count) {
 // ORIGINAL: 0x005EEA90 ?key_click_event@Win@@QAEHHH@Z 0x005EEA90-0x005EEB81 FILE
 // provenance (retired seed): git:3cb99d43^:src/unrecovered/005eea90.cpp
 int Win::key_click_event(int key, int flags) {
-    Win *const self = this;
-
-    if ((iFlags_ & 0x200000) != 0) {
+    int result = 0;
+    if ((iFlags_ & 0x200000) != 0 || (iSomeFlag_ & 8) != 0) {
         return 0;
     }
-    if ((iSomeFlag_ & 8) != 0) {
-        return 0;
-    }
-
-    {
-        if (flags == 0xd) {
-            this->on_button_clicked(-1);
-        } else if (flags == 0x1b) {
-            this->on_button_clicked(-2);
-        } else if (flags == 0x1000d) {
-            this->on_button_clicked(-1);
-        }
+    switch (flags) {
+    case 0x1b:
+        on_button_clicked(-2);
+        break;
+    case 0xd:
+    case 0x1000d:
+        on_button_clicked(-1);
+        break;
     }
 
     if (list_.count_ != 0) {
-        Win *target = 0;
-        if (list_.head_ != 0) {
-            target = list_.current_->focus_owner_;
-        }
+        Win *target = list_.head_ != 0 ? list_.current_->focus_owner_ : 0;
         if (flags == 9) {
             target->pass_dialog_focus();
         } else {
-            if (target->key_click_event(key, flags) != 0) {
+            result = target->key_click_event(key, flags);
+            if (result != 0) {
                 return 1;
             }
         }
     }
 
-    int result = 0;
-    WinCallbackWindow = self;
-    WinKeyClickCallback callback = field_42C_;
-    if (callback != 0) {
-        result = callback(key, flags);
+    WinCallbackWindow = this;
+    if (field_42C_ != 0) {
+        result = field_42C_(key, flags);
     }
-    int r2 = this->on_key_click(key, flags);
+    result += on_key_click(key, flags);
     Sound *child = val_14_;
     if (child != 0) {
         if (child->is_playing() == 0) {
             child->play();
         }
     }
-    return result + r2;
+    return result;
 }
 
 // ORIGINAL: 0x005F74A0 ?update_window@Win@@QAEHPAURECT@@@Z 0x005F74A0-0x005F757F FILE BYTE_EXACT
@@ -11194,7 +11084,36 @@ Status: Coverage transcription of the retained seed (src/unrecovered/005f2830.cp
 
 int __cdecl Win::display_action(int action) {
     Win *self = WinCallbackWindow;
-    if (action == 0) {
+    switch (action) {
+    case 2: {
+        self->vslot_52();
+        WinDisplayActionHookFn hook = self->field_438_;
+        int result = 0;
+        if (hook != 0) {
+            result = hook();
+        }
+        Sound *child = self->val_35_;
+        if (child != 0) {
+            const int playing = child->is_playing();
+            if (playing != 0) {
+                return playing;
+            }
+            return child->play();
+        }
+        return result;
+    }
+    case 1:
+        WinPointerOwner1 = nullptr;
+        WinPointerOwner2 = nullptr;
+        if (WinPointerOwner3 == self) {
+            WinPointerOwner3 = nullptr;
+            self->on_lose_mouse_capture();
+        }
+        if (WinPointerOwner4 == self) {
+            WinPointerOwner4 = nullptr;
+        }
+        return ShowWindow(HandleMain, SW_MINIMIZE);
+    case 0: {
         const int zoomed = IsZoomed(HandleMain);
         WinPointerOwner1 = nullptr;
         WinPointerOwner2 = nullptr;
@@ -11214,41 +11133,10 @@ int __cdecl Win::display_action(int action) {
         }
         return ShowWindow(HandleMain, SW_MAXIMIZE);
     }
-
-    if (action == 1) {
-        WinPointerOwner1 = nullptr;
-        WinPointerOwner2 = nullptr;
-        if (WinPointerOwner3 == self) {
-            WinPointerOwner3 = nullptr;
-            self->on_lose_mouse_capture();
-        }
-        if (WinPointerOwner4 == self) {
-            WinPointerOwner4 = nullptr;
-        }
-        return ShowWindow(HandleMain, SW_MINIMIZE);
     }
-
-    if (action == 2) {
-        self->vslot_52();
-        WinDisplayActionHookFn hook = self->field_438_;
-        int result = 0;
-        if (hook != 0) {
-            result = hook();
-        }
-        Sound *child = self->val_35_;
-        if (child != 0) {
-            const int playing = child->is_playing();
-            if (playing != 0) {
-                return playing;
-            }
-            return child->play();
-        }
-        return result;
-    }
-
     // The original DEC/DEC dispatch returns the wrapped EAX value for every
     // action other than 0, 1, or 2.
-    return static_cast<int32_t>(static_cast<uint32_t>(action) - 2u);
+    return action - 2;
 }
 
 /*

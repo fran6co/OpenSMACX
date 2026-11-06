@@ -186,6 +186,31 @@ static void apply_prototype_name_collisions(
     }
 }
 
+// map.cpp's vector_dist(int, int), which the image inlines in this file.
+static inline int veh_vector_dist(int x_distance, int y_distance) {
+    x_distance = abs(x_distance);
+    y_distance = abs(y_distance);
+    int largest = x_distance;
+    if (x_distance <= y_distance) {
+        largest = y_distance;
+    }
+    int smallest = x_distance;
+    if (x_distance >= y_distance) {
+        smallest = y_distance;
+    }
+    return largest - ((((y_distance + x_distance) >> 1) - smallest + 1) >> 1);
+}
+
+// has_project with an if/return body: the image materializes the compare
+// (sete/test) where base.h's ternary form folds it. Pending header review.
+static inline BOOL veh_has_project(int project_id, int faction_id) {
+    int base_id = base_project(project_id);
+    if (base_id < 0) {
+        return false;
+    }
+    return Bases[base_id].faction_id_current == faction_id;
+}
+
 // ORIGINAL: 0x0057E040 ?name_proto@@YAXPADHHHHHHH@Z 0x0057E040-0x0057EF95
 // RECOVERY_BINDING: v1 {"evidence": ["git:2f89503ec251ffc8b9ff894998c01944c173a4fb:src/unrecovered/0057e040.cpp;image:0x0057E040-0x0057EF95", "pinned image:0x0057EE10 or esi,-1;0x0057EE13 test edi,edi;0x0057EE1B..0x0057EE35 builds VehPrototypes[-1].veh_name and calls strcmp", "pinned image:0x0057EF67..0x0057EF71 resets ESI after a matched alternate suffix and increments/restarts at zero", "Owned accidental storage:Ability base0x009AB538,stride0x1C,abbreviation+8 =>0x009AB834 = VehPrototypes base0x009AB868-0x34;source:src/veh.h RulesAbility;source:src/alpha.cpp ability loader", "git:2f89503ec251ffc8b9ff894998c01944c173a4fb:src/unrecovered/0057e040.cpp"], "reason": "Complete the original duplicate-name candidate loop, including its unconditional primary-collision restart before the differing-form alternate compare and its alternate-collision restart. The -1 candidate name view points to the source-owned object representation of Ability[27].abbreviation, preserving the native pointer-field-byte comparison instead of resolving the pointed-to rule string. The original unbounded strcmp read extent beyond that member remains unresolved; preserve its unsafe read/overflow behavior as an obligation. Full span and prior source/history remain intact; no byte-exact or runtime acceptance is claimed."}
 
@@ -1153,41 +1178,34 @@ void __cdecl veh_scoot(int veh_id, int tile_x, int tile_y, int direction, int fl
 // ORIGINAL: 0x005593E0 ?pick_top_veh@@YAHH@Z 0x005593E0-0x005594EB
 // RECOVERY_BINDING: v1 {"evidence": ["Original5593E0..5594EB climbs signed previous links then visits next links, snapshots the Console faction, excludes temporary suppression, prefers eligible selected vehicle and retains the first highest-score entry.", "Original559466 test dh,42 establishes state mask4200, correcting the seed420000. Original ctor/reset member accesses and ConsoleGlobal9156B0 establish faction/cursor/selected/enable ownership, not independent globals. Observed VC6 symbol and original complete seed extent."], "reason": "Recover stack display selection against real vehicle/prototype/chassis records and Console state."}
 int __cdecl pick_top_veh(int veh_id) {
-    int best = veh_id;
     int best_score = -99;
-    if (veh_id < 0) {
-        return best;
-    }
-    int index = veh_id;
-    int previous = Vehs[index].prev_veh_id_stack;
-    while (previous >= 0) {
-        index = previous;
-        previous = Vehs[index].prev_veh_id_stack;
-    }
-    if (index < 0) {
-        return best;
-    }
-    const int faction = ConsoleGlobal.faction_id_;
-    do {
-        if (VehDrawSuppressedVehicle == -1 || index != VehDrawSuppressedVehicle) {
-            if (index == ConsoleGlobal.selected_vehicle_
-                && Vehs[index].faction_id == faction
-                && (Vehs[index].state & 0x4200) == 0
-                && ConsoleGlobal.cursor_active_ != 0
-                && ConsoleGlobal.field_23BE4_ != 0) {
-                return index;
-            }
-            const int prototype = Vehs[index].proto_id;
-            const int chassis = VehPrototypes[prototype].chassis_id;
-            const int score = Chassis[chassis].triad
-                + (Vehs[index].faction_id == faction ? 4 : 0);
-            if (score > best_score) {
-                best_score = score;
-                best = index;
-            }
+    int best = veh_id;
+    if (veh_id >= 0) {
+        int index = veh_top(veh_id);
+        if (index >= 0) {
+            const int faction = ConsoleGlobal.faction_id_;
+            do {
+                if (VehDrawSuppressedVehicle == -1 || index != VehDrawSuppressedVehicle) {
+                    if (index == ConsoleGlobal.selected_vehicle_
+                        && Vehs[index].faction_id == faction
+                        && (Vehs[index].state & 0x4200) == 0
+                        && ConsoleGlobal.cursor_active_ != 0
+                        && ConsoleGlobal.field_23BE4_ != 0) {
+                        return index;
+                    }
+                    const int prototype = Vehs[index].proto_id;
+                    const int chassis = VehPrototypes[prototype].chassis_id;
+                    const int score = Chassis[chassis].triad
+                        + (Vehs[index].faction_id == faction ? 4 : 0);
+                    if (score > best_score) {
+                        best_score = score;
+                        best = index;
+                    }
+                }
+                index = Vehs[index].next_veh_id_stack;
+            } while (index >= 0);
         }
-        index = Vehs[index].next_veh_id_stack;
-    } while (index >= 0);
+    }
     return best;
 }
 
@@ -2749,10 +2767,9 @@ void __cdecl monolith(int veh_id) {
 // ORIGINAL: 0x00564B90 ?assemble_passengers@@YAXHHH@Z 0x00564B90-0x00564D90
 // RECOVERY_BINDING: v1 {"evidence": ["git:99d6e72bcd5ae3be3566222736528cb0dc57935c:src/recovered/units/00564b90.cpp", "pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "recovery/tasks/game-logic-seed-owner-coverage.json; preserve original extents and historical seed lessons. Ordinary owned literals have pinned content provenance, not exact original data-allocation claims."], "reason": "Recover full passenger-goal orchestration with real region_total_bases and unk_77 arrays, vendetta/contiguity tests and colony/defend/attack/scout goal order."}
 void __cdecl assemble_passengers(int base_id, int mode, int priority) {
-    Base &base = Bases[base_id];
-    const int x = base.x;
-    const int y = base.y;
-    const int faction_id = base.faction_id_current;
+    const int x = Bases[base_id].x;
+    const int y = Bases[base_id].y;
+    const int faction_id = Bases[base_id].faction_id_current;
     const int region = map_loc(x, y)->region;
     int disconnected_factions = 0;
 
@@ -2772,25 +2789,18 @@ void __cdecl assemble_passengers(int base_id, int mode, int priority) {
         }
     }
 
-    base.state |= BSTATE_UNK_1;
-    base.nerve_staple_turns_left = 2;
+    Bases[base_id].state |= BSTATE_UNK_1;
+    Bases[base_id].nerve_staple_turns_left = 2;
 
     if (mode != 8 || (PlayersData[faction_id].unk_77[region] & 0x0800) != 0) {
-        int requested_colonies = PlayersData[faction_id].ai_growth -
-                                 PlayersData[faction_id].ai_fight -
-                                 GameDataStateStorage.fields_.turn_current_num_ / 100 + 2;
-        if (requested_colonies < 0) {
-            requested_colonies = 0;
-        } else if (requested_colonies > 99) {
-            requested_colonies = 99;
-        }
-
-        if (disconnected_factions < requested_colonies) {
-            const int stack_result = stack_check(veh_at(x, y), 2,
-                                                 AI_GOAL_COLONIZE,
-                                                 faction_id, -1);
-            const int colonize_priority = (stack_result == 0) ? priority : 1;
-            add_goal(faction_id, AI_GOAL_COLONIZE, colonize_priority,
+        if (disconnected_factions <
+            range(PlayersData[faction_id].ai_growth -
+                      PlayersData[faction_id].ai_fight -
+                      GameDataStateStorage.fields_.turn_current_num_ / 100 + 2,
+                  0, 99)) {
+            add_goal(faction_id, AI_GOAL_COLONIZE,
+                     stack_check(veh_at(x, y), 2, AI_GOAL_COLONIZE,
+                                 faction_id, -1) != 0 ? 1 : priority,
                      x, y, -1);
         }
 
@@ -3118,7 +3128,7 @@ int __cdecl defense_value(int faction_id, int x, int y, int veh_id_def,
     uint32_t bit = bit_at(x, y);
     if (bit & BIT_FUNGUS && altitude_at(x, y) >= ALT_BIT_OCEAN_SHELF && veh_id_atk >= 0
         && (!Vehs[veh_id_atk].faction_id
-            || has_project(SP_PHOLUS_MUTAGEN, Vehs[veh_id_atk].faction_id)
+            || veh_has_project(SP_PHOLUS_MUTAGEN, Vehs[veh_id_atk].faction_id)
             || (get_offense_rating(veh_id_atk) < 0
                 && Vehs[veh_id_atk].proto_id < MaxVehProtoFactionNum))) {
                 return 2;
@@ -3130,11 +3140,11 @@ int __cdecl defense_value(int faction_id, int x, int y, int veh_id_def,
         && get_triad(veh_id_def) != TRIAD_AIR) {
         if (veh_id_atk >= 0 && ((get_offense_rating(veh_id_atk) < 0
                 && Vehs[veh_id_atk].proto_id < MaxVehProtoFactionNum)
-            || has_project(SP_PHOLUS_MUTAGEN, Vehs[veh_id_atk].faction_id))) {
+            || veh_has_project(SP_PHOLUS_MUTAGEN, Vehs[veh_id_atk].faction_id))) {
             defense = is_rocky;
         } else {
             VehBattleDisplayTerrain = *(Labels.strings_ptr + 338); // "Fungus"
-            defense = (has_project(SP_PHOLUS_MUTAGEN, faction_id)
+            defense = (veh_has_project(SP_PHOLUS_MUTAGEN, faction_id)
                 || (Vehs[veh_id_def].proto_id < MaxVehProtoFactionNum
                     && get_offense_rating(veh_id_def) < 0)) ? 2 : 1;
         }
@@ -6040,57 +6050,50 @@ Return Value: Does faction want prototype? true/false
 Status: Complete
 */
 BOOL __cdecl wants_prototype(int proto_id, int faction_id) {
-    uint32_t flags = VehPrototypes[proto_id].flags;
-    if (!(flags & PROTO_ACTIVE)) {
+    if (!(VehPrototypes[proto_id].flags & PROTO_ACTIVE)) {
         return false;
     }
-    if (!(flags & PROTO_TYPED_COMPLETE)) {
+    if (!(VehPrototypes[proto_id].flags & PROTO_TYPED_COMPLETE)) {
         return false;
     }
-    uint32_t proto_offset = faction_id * MaxVehProtoFactionNum;
-    uint32_t proto_id_cmp = proto_offset;
-    VehPrototype *proto_cmp = &VehPrototypes[proto_offset];
-    for (uint32_t i = 0; i < MaxVehProtoFactionNum; i++, proto_id_cmp++, proto_cmp++) {
-        uint32_t flags_cmp = proto_cmp->flags;
-        if (!(flags_cmp & PROTO_ACTIVE)) {
+    int proto_id_cmp = faction_id * MaxVehProtoFactionNum;
+    VehPrototype *proto_cmp = &VehPrototypes[faction_id * MaxVehProtoFactionNum];
+    for (int i = 0; i < MaxVehProtoFactionNum; i++, proto_cmp++, proto_id_cmp++) {
+        if (!(proto_cmp->flags & PROTO_ACTIVE)) {
             continue;
         }
-        if (!(flags_cmp & PROTO_TYPED_COMPLETE)) {
+        if (!(proto_cmp->flags & PROTO_TYPED_COMPLETE)) {
             continue;
         }
         if (VehPrototypes[proto_id].plan != proto_cmp->plan) {
             continue;
         }
-        uint8_t chas_cmp = proto_cmp->chassis_id;
-        uint8_t chas = VehPrototypes[proto_id].chassis_id;
-        if (Chassis[chas].triad != Chassis[chas_cmp].triad) {
+        if (Chassis[VehPrototypes[proto_id].chassis_id].triad
+            != Chassis[proto_cmp->chassis_id].triad) {
             continue;
         }
-        uint8_t weap_id_cmp = proto_cmp->weapon_id;
-        uint8_t mode_cmp = Weapon[weap_id_cmp].mode;
-        if (mode_cmp > WPN_MODE_MISSILE) {
-            if (mode_cmp != Weapon[VehPrototypes[proto_id].weapon_id].mode) {
+        if (Weapon[proto_cmp->weapon_id].mode > WPN_MODE_MISSILE) {
+            if (Weapon[proto_cmp->weapon_id].mode
+                != Weapon[VehPrototypes[proto_id].weapon_id].mode) {
                 continue;
             }
-        } else {
-            int8_t off_rating_cmp = Weapon[weap_id_cmp].offense_rating;
-            if (off_rating_cmp < 0) {
-                if (off_rating_cmp != get_proto_offense_rating(proto_id)) {
-                    continue;
-                }
-            } else if (off_rating_cmp < get_proto_offense_rating(proto_id)) {
+        } else if (Weapon[proto_cmp->weapon_id].offense_rating < 0) {
+            if (Weapon[proto_cmp->weapon_id].offense_rating
+                != get_proto_offense_rating(proto_id)) {
                 continue;
             }
+        } else if (Weapon[proto_cmp->weapon_id].offense_rating
+                   < get_proto_offense_rating(proto_id)) {
+            continue;
         }
-        uint8_t arm_id_cmp = proto_cmp->armor_id;
-        if (Armor[arm_id_cmp].defense_rating <= 0) {
-            if (arm_id_cmp != VehPrototypes[proto_id].armor_id) {
+        if (Armor[proto_cmp->armor_id].defense_rating <= 0) {
+            if (proto_cmp->armor_id != VehPrototypes[proto_id].armor_id) {
                 continue;
             }
         } else if (armor_val(proto_id_cmp, faction_id) < armor_val(proto_id, faction_id)) {
             continue;
         }
-        if (Chassis[chas_cmp].speed >= Chassis[chas].speed) {
+        if (Chassis[proto_cmp->chassis_id].speed >= Chassis[VehPrototypes[proto_id].chassis_id].speed) {
             return false;
         }
     }
@@ -6189,7 +6192,7 @@ BOOL __cdecl has_abil(int proto_id, int ability_id) {
         }
     }
     if (VehPrototypes[proto_id].weapon_id == WPN_PROBE_TEAM && ability_id == ABL_ALGO_ENHANCEMENT
-        && has_project(SP_NETHACK_TERMINUS, faction_id)) {
+        && veh_has_project(SP_NETHACK_TERMINUS, faction_id)) {
         return true; // All Probe Teams act as though they have the "Algorithmic Enhancement"
     }
     return false;
@@ -6231,15 +6234,13 @@ int __cdecl veh_lift(int veh_id) {
     } else if (!prev_stack_exists && on_map(Vehs[veh_id].x, Vehs[veh_id].y)) {
         bit_set(Vehs[veh_id].x, Vehs[veh_id].y, BIT_VEH_IN_TILE, false);
     }
-    const int lift_x = Vehs[veh_id].x;
-    const int lift_y = Vehs[veh_id].y;
+    VehLiftX = Vehs[veh_id].x;
+    VehLiftY = Vehs[veh_id].y;
     VehDropLiftVehID = veh_id;
     Vehs[veh_id].x = -1;
     Vehs[veh_id].y = -1;
     Vehs[veh_id].next_veh_id_stack = -1;
     Vehs[veh_id].prev_veh_id_stack = -1;
-    VehLiftX = lift_x;
-    VehLiftY = lift_y;
     return veh_id;
 }
 
@@ -6629,7 +6630,7 @@ int __cdecl speed_proto(int proto_id) {
         if (has_abil(proto_id, ABL_FUEL_NANOCELLS)) {
             speed_val += 2;
         }
-        if (has_project(SP_CLOUDBASE_ACADEMY, proto_id / MaxVehProtoFactionNum)) {
+        if (veh_has_project(SP_CLOUDBASE_ACADEMY, proto_id / MaxVehProtoFactionNum)) {
             speed_val += 2; // bonus from Aerospace Complex
         }
         if (has_abil(proto_id, ABL_AIR_SUPERIORITY)) {
@@ -6662,7 +6663,7 @@ int __cdecl speed(int veh_id, BOOL skip_morale) {
     uint32_t proto_id = Vehs[veh_id].proto_id;
     int speed_val = speed_proto(proto_id);
     uint8_t triad = get_proto_triad(proto_id);
-    if (triad == TRIAD_SEA && has_project(SP_MARITIME_CONTROL_CENTER, Vehs[veh_id].faction_id)) {
+    if (triad == TRIAD_SEA && veh_has_project(SP_MARITIME_CONTROL_CENTER, Vehs[veh_id].faction_id)) {
         speed_val += Rules.move_rate_roads * 2;
     }
     if (morale_veh(veh_id, true, 0) == MORALE_ELITE && !skip_morale
@@ -7474,27 +7475,14 @@ int __cdecl alien_base(int veh_id, int x, int y) {
         } else if (region < MaxRegionLandNum && region != (int)region_at(base.x, base.y)) {
             continue;
         }
-        // Open-coded vector_dist(x_dist(...), abs(...)): the image calls
-        // abs() four times, never vector_dist itself - the same expansion
-        // as black_market (base.cpp, 0x4E4D00-ish) and base_find.
-        int dx = x_dist(x, base.x);
-        int dy = abs(y - base.y);
-        int abs_dx = abs(dx);
-        int abs_dy = abs(dy);
-        int largest = abs_dx;
-        if (abs_dx <= abs_dy) {
-            largest = abs_dy;
-        }
-        int smallest = abs_dx;
-        if (abs_dx >= abs_dy) {
-            smallest = abs_dy;
-        }
-        int value = (largest - ((((abs_dy + abs_dx) >> 1) - smallest + 1) >> 1)) * 32
+        const int base_y = base.y;
+        int value = veh_vector_dist(x_dist(x, base.x), abs(y - base_y)) * 32
             / (base.intake_2[RSC_MINERALS] + base.intake_2[RSC_ENERGY] + 32);
-        if (stack_check(veh_at(base.x, base.y), 2, PLAN_ALIEN_ARTIFACT, -1, -1)) {
+        const int veh_id_at = veh_at(base.x, base.y);
+        if (stack_check(veh_id_at, 2, PLAN_ALIEN_ARTIFACT, -1, -1)) {
             value /= 2;
         }
-        if (Vehs[veh_id].home_base_id == base_id) {
+        if (base_id == Vehs[veh_id].home_base_id) {
             value /= 2;
         }
         if (Vehs[veh_id].order_auto_type != base.faction_id_current
@@ -7507,10 +7495,9 @@ int __cdecl alien_base(int veh_id, int x, int y) {
             base_id_best = base_id;
         }
     }
-    if (base_id_best < 0) {
-        return base_id_best;
+    if (base_id_best >= 0) {
+        BaseFindDist = best_value;
     }
-    BaseFindDist = best_value;
     return base_id_best;
 }
 
@@ -7630,6 +7617,8 @@ Status: MISMATCH #15 - the `xor edx,edx` zero-extending faction_id for log_say
         lands one slot away from the image's; every call, table stride and
         indirect target matches (0.79 past it).
 */
+// The image calls memcpy out of line here.
+#pragma function(memcpy)
 void __cdecl veh_kill(int veh_id) {
     if (veh_id < 0) {
         return;
@@ -7642,19 +7631,14 @@ void __cdecl veh_kill(int veh_id) {
     log_say(VehLogKillingVehicle, veh_id, Vehs[veh_id].faction_id,
             Vehs[veh_id].proto_id);
 
-    const int x = Vehs[veh_id].x;
-    const int home_base_id = Vehs[veh_id].home_base_id;
-    const int y = Vehs[veh_id].y;
-    const int proto_id = Vehs[veh_id].proto_id;
     const int faction_id = Vehs[veh_id].faction_id;
+    const int x = Vehs[veh_id].x;
+    const int y = Vehs[veh_id].y;
+    const int home_base_id = Vehs[veh_id].home_base_id;
+    const int proto_id = Vehs[veh_id].proto_id;
 
     if (VehPrototypes[proto_id].plan <= 7) {
-        uint32_t count_bits;
-        memcpy(&count_bits, &PlayersData[faction_id].total_mil_veh,
-               sizeof(count_bits));
-        --count_bits;
-        memcpy(&PlayersData[faction_id].total_mil_veh, &count_bits,
-               sizeof(count_bits));
+        --PlayersData[faction_id].total_mil_veh;
     }
     --PlayersData[faction_id].proto_id_active[proto_id];
 
@@ -7667,56 +7651,51 @@ void __cdecl veh_kill(int veh_id) {
     if (veh_id < 0x800) {
         --GameDataStateStorage.fields_.vehicle_current_count_;
     }
-    if (GameDataStateStorage.fields_.vehicle_current_count_ > 0) {
-        int count = GameDataStateStorage.fields_.vehicle_current_count_;
-        Veh *rec = &Vehs[0];
-        do {
-            if (veh_id < rec->prev_veh_id_stack) {
-                --rec->prev_veh_id_stack;
+    for (int i = 0; i < GameDataStateStorage.fields_.vehicle_current_count_; i++) {
+        if (Vehs[i].prev_veh_id_stack > veh_id) {
+            --Vehs[i].prev_veh_id_stack;
+        }
+        if (Vehs[i].next_veh_id_stack > veh_id) {
+            --Vehs[i].next_veh_id_stack;
+        }
+        if (Vehs[i].order == 1) {
+            const short transport = Vehs[i].waypoint_x[0];
+            if (transport == veh_id) {
+                Vehs[i].order = 0;
+            } else if (transport > veh_id) {
+                Vehs[i].waypoint_x[0] = transport - 1;
             }
-            if (veh_id < rec->next_veh_id_stack) {
-                --rec->next_veh_id_stack;
-            }
-            if (rec->order == 1) {
-                const short transport = rec->waypoint_x[0];
-                if (transport == veh_id) {
-                    rec->order = 0;
-                } else if (veh_id < transport) {
-                    rec->waypoint_x[0] = transport - 1;
-                }
-            }
-            ++rec;
-        } while (--count != 0);
+        }
     }
 
-    if (ConsoleGlobal.selected_vehicle_ == veh_id) {
+    if (veh_id == ConsoleGlobal.selected_vehicle_) {
         ConsoleGlobal.selected_vehicle_ = -1;
-    } else if (veh_id < ConsoleGlobal.selected_vehicle_) {
+    } else if (ConsoleGlobal.selected_vehicle_ > veh_id) {
         --ConsoleGlobal.selected_vehicle_;
     }
-    if (ConsoleGlobal.focus_vehicle_ == veh_id) {
+    if (veh_id == ConsoleGlobal.focus_vehicle_) {
         ConsoleGlobal.focus_vehicle_ = -1;
-    } else if (veh_id < ConsoleGlobal.focus_vehicle_) {
+    } else if (ConsoleGlobal.focus_vehicle_ > veh_id) {
         --ConsoleGlobal.focus_vehicle_;
     }
-    if (ConsoleStatusWin.hover_vehicle_id_ == veh_id) {
+    if (veh_id == ConsoleStatusWin.hover_vehicle_id_) {
         ConsoleStatusWin.hover_vehicle_id_ = -1;
-    } else if (veh_id < ConsoleStatusWin.hover_vehicle_id_) {
+    } else if (ConsoleStatusWin.hover_vehicle_id_ > veh_id) {
         --ConsoleStatusWin.hover_vehicle_id_;
     }
-    if (ConsoleStatusWin.field_15CC_ == veh_id) {
+    if (veh_id == ConsoleStatusWin.field_15CC_) {
         ConsoleStatusWin.field_15CC_ = -1;
-    } else if (veh_id < ConsoleStatusWin.field_15CC_) {
+    } else if (ConsoleStatusWin.field_15CC_ > veh_id) {
         --ConsoleStatusWin.field_15CC_;
     }
-    if (GameDataStateStorage.fields_.vehicle_selection_follow_limit_ != 0 && veh_id <= GameDataStateStorage.fields_.vehicle_selection_follow_limit_) {
+    if (GameDataStateStorage.fields_.vehicle_selection_follow_limit_ != 0 && GameDataStateStorage.fields_.vehicle_selection_follow_limit_ >= veh_id) {
         --GameDataStateStorage.fields_.vehicle_selection_follow_limit_;
     }
     if (IsMultiplayerNet != 0) {
         int *slot = NetDaemonNet.vehicle_selection_follow();
         if (slot != 0 && slot != &ConsoleGlobal.selected_vehicle_ && slot != &GameDataStateStorage.fields_.vehicle_selection_follow_limit_ &&
             slot != &ConsoleGlobal.focus_vehicle_) {
-            if (veh_id <= *slot) {
+            if (*slot >= veh_id) {
                 --*slot;
             }
         }
@@ -7725,6 +7704,7 @@ void __cdecl veh_kill(int veh_id) {
     TutWinBaseWindow.check_loc(x, y, 0);
     TutWinBaseWindow.check_base(home_base_id);
 }
+#pragma intrinsic(memcpy)
 
 /*
 Purpose: Kill a vehicle, or strip it down to a transport's cargo first.
@@ -7887,32 +7867,18 @@ Return Value: the nearest vehicle's id, -1 when nothing qualified.
 Status: MISMATCH.
 */
 int __cdecl veh_find(int x, int y, int faction_id, int skip_veh_id) {
+    int best_idx = -1;
     int best_dist = 9999;
     VehFindBestDist = best_dist;
-    int best_idx = -1;
     int i = 0;
     if (GameDataStateStorage.fields_.vehicle_current_count_ > 0) {
         do {
             if ((faction_id < 0 || Vehs[i].faction_id == (unsigned)faction_id) &&
                 i != skip_veh_id) {
-                // vector_dist(x, y, veh x, veh y) and its two-argument
-                // overload, expanded inline as in the image.
+                // vector_dist(x, y, veh x, veh y), expanded inline.
                 const int veh_y = Vehs[i].y;
                 const int veh_x = Vehs[i].x;
-                int x_distance = x_dist(x, veh_x);
-                int y_distance = abs(y - veh_y);
-                x_distance = abs(x_distance);
-                y_distance = abs(y_distance);
-                int largest = x_distance;
-                if (x_distance <= y_distance) {
-                    largest = y_distance;
-                }
-                int smallest = x_distance;
-                if (x_distance >= y_distance) {
-                    smallest = y_distance;
-                }
-                const int dist = largest -
-                    ((((y_distance + x_distance) >> 1) - smallest + 1) >> 1);
+                const int dist = veh_vector_dist(x_dist(x, veh_x), abs(y - veh_y));
                 if (dist <= best_dist) {
                     best_dist = dist;
                     best_idx = i;
@@ -7977,19 +7943,15 @@ Status: MISMATCH.
 int __cdecl veh_unmoved(int veh_id) {
     if (veh_id < 0 || !on_map(Vehs[veh_id].x, Vehs[veh_id].y) ||
         Vehs[veh_id].faction_id != ConsoleGlobal.faction_id_ ||
-        ((Vehs[veh_id].flags & 0x40) != 0 && (int16_t)(Vehs[veh_id].flags & 0x400) != 0) ||
-        veh_jail(veh_id) != 0) {
+        ((Vehs[veh_id].flags & 0x40) != 0 && (int16_t)(Vehs[veh_id].flags & 0x400) != 0)) {
         return 0;
     }
-    if ((Vehs[veh_id].state & 0x4000000) == 0 && Vehs[veh_id].order >= 4 &&
-        Vehs[veh_id].order < 0x18) {
-        return 1;
-    }
-    const int diff = speed(veh_id, 0) - Vehs[veh_id].moves_expended;
-    if (diff < 0) {
+    if (veh_jail(veh_id) != 0) {
         return 0;
     }
-    if (diff > 0x3e7 || diff != 0) {
+    if (((Vehs[veh_id].state & 0x4000000) == 0 && Vehs[veh_id].order >= 4 &&
+         Vehs[veh_id].order < 0x18) ||
+        range(speed(veh_id, 0) - Vehs[veh_id].moves_expended, 0, 999) != 0) {
         return 1;
     }
     return 0;
@@ -8482,16 +8444,13 @@ Return Value: n/a
 Status: MISMATCH.
 */
 void __cdecl action_gate(int veh_id, int base_id) {
-    const short veh_x = Vehs[veh_id].x;
-    const short veh_y = Vehs[veh_id].y;
-    const int gate_base = base_at(veh_x, veh_y);
+    const int gate_base = base_at(Vehs[veh_id].x, Vehs[veh_id].y);
     if (gate_base >= 0) {
         Bases[gate_base].state |= 0x20000000;
     }
     Bases[base_id].state |= 0x20000000;
 
-    const int lifted = veh_lift(veh_id);
-    veh_drop(lifted, Bases[base_id].x, Bases[base_id].y);
+    veh_drop(veh_lift(veh_id), Bases[base_id].x, Bases[base_id].y);
 
     if (gate_base >= 0) {
         draw_tile(Bases[gate_base].x, Bases[gate_base].y, 2);
@@ -8623,64 +8582,63 @@ void __cdecl action_go_to(int veh_id) {
         }
     }
 
-    if (move_result < 0) {
+    if (move_result >= 0) {
+        if (IsMultiplayerNet != 0 && ConsoleControlTurnActive == 0) {
+            if (NetDaemonNet.order_veh(veh_id, move_result, 1) != 0) {
+                NetDaemonNet.await_exec(1);
+            }
+            return;
+        }
+
+        if (order_veh(veh_id, move_result, 3) == 0) {
+            return;
+        }
+
+        const uint8_t order = Vehs[veh_id].order;
+        if (order == ORDER_MOVE) {
+            if (Vehs[veh_id].x == Vehs[veh_id].waypoint_x[1]
+                && Vehs[veh_id].y == Vehs[veh_id].waypoint_y[1]) {
+                Vehs[veh_id].order = ORDER_NONE;
+                return;
+            }
+        } else if (order == ORDER_MOVE_TO) {
+            if (Vehs[veh_id].x == Vehs[veh_id].waypoint_x[0]
+                && Vehs[veh_id].y == Vehs[veh_id].waypoint_y[0]) {
+                Vehs[veh_id].order = ORDER_NONE;
+
+                if ((Vehs[veh_id].state & 0x2000200) == 0x2000200
+                    && Vehs[veh_id].patrol_current_point < Vehs[veh_id].waypoint_count) {
+                    for (int i = 0; i < Vehs[veh_id].waypoint_count; ++i) {
+                        Vehs[veh_id].waypoint_x[i] = Vehs[veh_id].waypoint_x[i + 1];
+                        Vehs[veh_id].waypoint_y[i] = Vehs[veh_id].waypoint_y[i + 1];
+                    }
+                    Vehs[veh_id].order = ORDER_MOVE_TO;
+                    Vehs[veh_id].waypoint_count -= 1;
+                    if (Vehs[veh_id].waypoint_count == 0) {
+                        Vehs[veh_id].state &= 0xfdfefdff;
+                    }
+                }
+
+                if (!(GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & (1 << Vehs[veh_id].faction_id))
+                    && Chassis[VehPrototypes[Vehs[veh_id].proto_id].chassis_id].cargo != 0) {
+                    Map *tile = map_tiles()
+                        + ((Vehs[veh_id].x >> 1) + Vehs[veh_id].y * MapLongitude);
+                    if (tile->bit & BIT_BASE_IN_TILE) {
+                        const int rockiness = tile->val2 & 0xf;
+                        if (rockiness < 8 && rockiness >= 0) {
+                            veh_skip(veh_id);
+                            return;
+                        }
+                    }
+                }
+            }
+        }
+    } else {
         Vehs[veh_id].order = ORDER_NONE;
         if (IsMultiplayerNet != 0 && ConsoleControlTurnActive == 0) {
             synch_veh(veh_id);
             NetDaemonNet.await_synch();
             NetDaemonNet.unlock_veh();
-        }
-        return;
-    }
-
-    if (IsMultiplayerNet != 0 && ConsoleControlTurnActive == 0) {
-        if (NetDaemonNet.order_veh(veh_id, move_result, 1) != 0) {
-            NetDaemonNet.await_exec(1);
-        }
-        return;
-    }
-
-    if (order_veh(veh_id, move_result, 3) == 0) {
-        return;
-    }
-
-    const uint8_t order = Vehs[veh_id].order;
-    if (order == ORDER_MOVE) {
-        if (Vehs[veh_id].x == Vehs[veh_id].waypoint_x[1]
-            && Vehs[veh_id].y == Vehs[veh_id].waypoint_y[1]) {
-            Vehs[veh_id].order = ORDER_NONE;
-            return;
-        }
-    } else if (order == ORDER_MOVE_TO) {
-        if (Vehs[veh_id].x == Vehs[veh_id].waypoint_x[0]
-            && Vehs[veh_id].y == Vehs[veh_id].waypoint_y[0]) {
-            Vehs[veh_id].order = ORDER_NONE;
-
-            if ((Vehs[veh_id].state & 0x2000200) == 0x2000200
-                && Vehs[veh_id].patrol_current_point < Vehs[veh_id].waypoint_count) {
-                for (int i = 0; i < Vehs[veh_id].waypoint_count; ++i) {
-                    Vehs[veh_id].waypoint_x[i] = Vehs[veh_id].waypoint_x[i + 1];
-                    Vehs[veh_id].waypoint_y[i] = Vehs[veh_id].waypoint_y[i + 1];
-                }
-                Vehs[veh_id].order = ORDER_MOVE_TO;
-                Vehs[veh_id].waypoint_count -= 1;
-                if (Vehs[veh_id].waypoint_count == 0) {
-                    Vehs[veh_id].state &= 0xfdfefdff;
-                }
-            }
-
-            if (!(GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & (1 << Vehs[veh_id].faction_id))
-                && Chassis[VehPrototypes[Vehs[veh_id].proto_id].chassis_id].cargo != 0) {
-                Map *tile = map_tiles()
-                    + ((Vehs[veh_id].x >> 1) + Vehs[veh_id].y * MapLongitude);
-                if (tile->bit & BIT_BASE_IN_TILE) {
-                    const int rockiness = tile->val2 & 0xf;
-                    if (rockiness >= 0 && rockiness < 8) {
-                        veh_skip(veh_id);
-                        return;
-                    }
-                }
-            }
         }
     }
 }
@@ -23947,42 +23905,21 @@ Purpose: Say whether a convoy-to-nearest-base order is possible from a tile:
 Return Value: 0 impossible, 1 possible
 Status: Coverage transcription - unclaimed body, seed
         git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/00564d90.cpp retained.
+LEVER: veh_at nested in the stack_check call, an indexed Bases[i] loop, and
+        x_dist plus vector_dist(int, int) as inline helpers.
 */
 int __cdecl can_convoy(int x, int y) {
-    int veh_id = veh_at(x, y);
-    if (stack_check(veh_id, 9, 3, -1, -1) != 0) {
+    if (stack_check(veh_at(x, y), 9, 3, -1, -1) != 0) {
         return 0;
     }
-    int count = 0;
-    if (GameDataStateStorage.fields_.base_current_count_ > 0) {
-        const Base *base = Bases;
-        do {
-            const int base_y = base->y;
-            int dx = abs(x - base->x);
-            if (((MapIsFlat & 1) == 0) && MapLongitude < dx) {
-                dx = MapLongitudeBounds - dx;
+    for (int i = 0; i < GameDataStateStorage.fields_.base_current_count_; i++) {
+        const int base_y = Bases[i].y;
+        if (veh_vector_dist(x_dist(x, Bases[i].x), abs(y - base_y)) <= 2) {
+            const int dir = radius_move(Bases[i].x, Bases[i].y, x, y, 0x15);
+            if (dir >= 0 && (Bases[i].resource_sqr_radius & (1 << dir)) != 0) {
+                return 0;
             }
-            int dy = abs(y - base_y);
-            int adx = abs(dx);
-            int ady = abs(dy);
-            int mx = adx;
-            if (adx <= ady) {
-                mx = ady;
-            }
-            int mn = adx;
-            if (ady <= adx) {
-                mn = ady;
-            }
-            if (mx - ((((adx + ady) >> 1) - mn) + 1 >> 1) < 3) {
-                const int dir = radius_move(base->x, base_y, x, y, 0x15);
-                if ((dir >= 0) &&
-                    ((base->resource_sqr_radius & (1 << (dir & 0x1F))) != 0)) {
-                    return 0;
-                }
-            }
-            ++count;
-            ++base;
-        } while (count < GameDataStateStorage.fields_.base_current_count_);
+        }
     }
     return 1;
 }
