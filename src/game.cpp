@@ -17,10 +17,10 @@
  */
 // ORIGINAL: 0x00477E10 _$E26 0x00477E10-0x00477E26 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned CRT slot0x682550 selects original initializer0x477e10..0x477e26, registering fini0x477e30..0x477e3a; complete independent decode establishes exclusive boundaries.", "Source-owned object?MultiWindow@@3VMultiWin@@A identifies original storage0x7fd648. Startup arguments/calls: call 0x47a590; push 0x477e30. Cleanup receiver/calls: mov ecx, 0x7fd648; jmp 0x47a430. Constructor/destructor targets retain their existing class-owned source mappings.", "Fresh physical src/game.cpp COFF selects _$E26 through .CRT$XCU and registers _$E24, both referencing the genuine source global. Original NetMsg argument triples and implicit PlanWin/Console most-derived flags are preserved by the existing declarations; complete virtual-base teardown is compiler-owned, not authored offsets.", "Current local helper symbols interpret present emission, not original debug names or historical TU boundaries. Object starts do not prove allocation extents. This binding establishes neither cross-TU global order, masked-reference correctness, strict linked preservation, dependency-provider equivalence nor runtime/game acceptance; excluded guarded sprite cleanup remains separate."], "reason": "Bind original startup identity to the genuine compiler-generated lifetime of ?MultiWindow@@3VMultiWin@@A in its actual source owner; no manual lifecycle callback is authored."}
-// symbol    _$E25
+// symbol    _$E20
 // ORIGINAL: 0x00477E30 _$E24 0x00477E30-0x00477E3A FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned CRT slot0x682550 selects original initializer0x477e10..0x477e26, registering fini0x477e30..0x477e3a; complete independent decode establishes exclusive boundaries.", "Source-owned object?MultiWindow@@3VMultiWin@@A identifies original storage0x7fd648. Startup arguments/calls: call 0x47a590; push 0x477e30. Cleanup receiver/calls: mov ecx, 0x7fd648; jmp 0x47a430. Constructor/destructor targets retain their existing class-owned source mappings.", "Fresh physical src/game.cpp COFF selects _$E26 through .CRT$XCU and registers _$E24, both referencing the genuine source global. Original NetMsg argument triples and implicit PlanWin/Console most-derived flags are preserved by the existing declarations; complete virtual-base teardown is compiler-owned, not authored offsets.", "Current local helper symbols interpret present emission, not original debug names or historical TU boundaries. Object starts do not prove allocation extents. This binding establishes neither cross-TU global order, masked-reference correctness, strict linked preservation, dependency-provider equivalence nor runtime/game acceptance; excluded guarded sprite cleanup remains separate."], "reason": "Bind original exit identity to the genuine compiler-generated lifetime of ?MultiWindow@@3VMultiWin@@A in its actual source owner; no manual lifecycle callback is authored."}
-// symbol    _$E23
+// symbol    _$E18
 #include "stdafx.h"
 
 // Distinct writable string cells observed at the original call sites.
@@ -185,32 +185,56 @@ char PronounBuffer[256];  // 0x00945838 - see game.h for the naming evidence
 
 // RECOVERY_OBJECT: v1 0x009A6488 ?ExpansionEnabled@@3HA
 BOOL ExpansionEnabled;  // 0x009A6488
-// RECOVERY_OBJECT: v3 0x009A64EC 0x009A650C ?FactionRankings@@3PAIA 0x005AC690 member ?GameDataStateStorage@@3UGameDataStateWindow@@A fields_.faction_rankings_
-// RECOVERY_OBJECT: v3 0x009A6514 0x009A6614 ?SecretProject@@3UBaseSecretProject@@A 0x005002E0 member ?GameDataStateStorage@@3UGameDataStateWindow@@A fields_.secret_project_
-// RECOVERY_OBJECT: v3 0x009A64CC 0x009A64D0 ?BaseCurrentCount@@3HA 0x004E68B0 member ?GameDataStateStorage@@3UGameDataStateWindow@@A fields_.base_current_count_
-// RECOVERY_OBJECT: v3 0x009A6614 0x009A6618 ?GovernorFaction@@3HA 0x00424410 member ?GameDataStateStorage@@3UGameDataStateWindow@@A fields_.governor_faction_
-// RECOVERY_OBJECT: v3 0x009A67DC 0x009A67E0 ?TranscendenceScoreBonus@@3HA 0x005ACBE0 member ?GameDataStateStorage@@3UGameDataStateWindow@@A fields_.transcendence_score_bonus_
-// RECOVERY_OBJECT: v3 0x009A67E0 0x009A6800 ?TranscendenceScoreWeights@@3PAHA 0x005ACBE0 member ?GameDataStateStorage@@3UGameDataStateWindow@@A fields_.transcendence_score_weights_
+// Former bounded member identity: [0x009A64EC, 0x009A650C), evidence 0x005AC690; the bounded parent now covers it.
+// RECOVERY_OBJECT: v3 0x009A64EC ?FactionRankings@@3PAIA member ?GameDataStateStorage@@3UGameDataStateWindow@@A fields_.faction_rankings_
+// Former bounded member identity: [0x009A6514, 0x009A6614), evidence 0x005002E0; the bounded parent now covers it.
+// RECOVERY_OBJECT: v3 0x009A6514 ?SecretProject@@3UBaseSecretProject@@A member ?GameDataStateStorage@@3UGameDataStateWindow@@A fields_.secret_project_
+// Former bounded member identity: [0x009A64CC, 0x009A64D0), evidence 0x004E68B0; the bounded parent now covers it.
+// RECOVERY_OBJECT: v3 0x009A64CC ?BaseCurrentCount@@3HA member ?GameDataStateStorage@@3UGameDataStateWindow@@A fields_.base_current_count_
+// Former bounded member identity: [0x009A6614, 0x009A6618), evidence 0x00424410; the bounded parent now covers it.
+// RECOVERY_OBJECT: v3 0x009A6614 ?GovernorFaction@@3HA member ?GameDataStateStorage@@3UGameDataStateWindow@@A fields_.governor_faction_
+// Former bounded member identity: [0x009A67DC, 0x009A67E0), evidence 0x005ACBE0; the bounded parent now covers it.
+// RECOVERY_OBJECT: v3 0x009A67DC ?TranscendenceScoreBonus@@3HA member ?GameDataStateStorage@@3UGameDataStateWindow@@A fields_.transcendence_score_bonus_
+// Former bounded member identity: [0x009A67E0, 0x009A6800), evidence 0x005ACBE0; the bounded parent now covers it.
+// RECOVERY_OBJECT: v3 0x009A67E0 ?TranscendenceScoreWeights@@3PAHA member ?GameDataStateStorage@@3UGameDataStateWindow@@A fields_.transcendence_score_weights_
 // RECOVERY_OBJECT: v3 0x009A64E0 ?TimeControlsSelection@@3HA member ?GameDataStateStorage@@3UGameDataStateWindow@@A fields_.time_controls_selection_
-// RECOVERY_OBJECT: v3 0x009A6618 0x009A6644 ?CouncilResolutionCount@@3PAHA 0x005B3920 member ?GameDataStateStorage@@3UGameDataStateWindow@@A fields_.council_resolution_count_
-// RECOVERY_OBJECT: v3 0x009A6644 0x009A6670 ?CouncilLastResolutionTurn@@3PAHA 0x005B3920 member ?GameDataStateStorage@@3UGameDataStateWindow@@A fields_.council_last_resolution_turn_
-// RECOVERY_OBJECT: v3 0x009A64D0 0x009A64D4 ?GameSetupResetWord@@3HA 0x005B3920 member ?GameDataStateStorage@@3UGameDataStateWindow@@A fields_.game_setup_reset_word_
-// RECOVERY_OBJECT: v3 0x009A64E4 0x009A64E8 ?TurnControlDurationMilliseconds@@3HA 0x00523C60 member ?GameDataStateStorage@@3UGameDataStateWindow@@A fields_.turn_control_duration_milliseconds_
-// RECOVERY_OBJECT: v3 0x009A6810 0x009A6814 ?SaveDaemonStateWord@@3HA 0x005A94F0 member ?GameDataStateStorage@@3UGameDataStateWindow@@A fields_.save_daemon_state_word_
-// RECOVERY_OBJECT: v3 0x009A6824 0x009A6828 ?EcologyEventAccumulator@@3HA 0x004F67F0 member ?GameDataStateStorage@@3UGameDataStateWindow@@A fields_.ecology_event_accumulator_
+// Former bounded member identity: [0x009A6618, 0x009A6644), evidence 0x005B3920; the bounded parent now covers it.
+// RECOVERY_OBJECT: v3 0x009A6618 ?CouncilResolutionCount@@3PAHA member ?GameDataStateStorage@@3UGameDataStateWindow@@A fields_.council_resolution_count_
+// Former bounded member identity: [0x009A6644, 0x009A6670), evidence 0x005B3920; the bounded parent now covers it.
+// RECOVERY_OBJECT: v3 0x009A6644 ?CouncilLastResolutionTurn@@3PAHA member ?GameDataStateStorage@@3UGameDataStateWindow@@A fields_.council_last_resolution_turn_
+// Former bounded member identity: [0x009A64D0, 0x009A64D4), evidence 0x005B3920; the bounded parent now covers it.
+// RECOVERY_OBJECT: v3 0x009A64D0 ?GameSetupResetWord@@3HA member ?GameDataStateStorage@@3UGameDataStateWindow@@A fields_.game_setup_reset_word_
+// Former bounded member identity: [0x009A64E4, 0x009A64E8), evidence 0x00523C60; the bounded parent now covers it.
+// RECOVERY_OBJECT: v3 0x009A64E4 ?TurnControlDurationMilliseconds@@3HA member ?GameDataStateStorage@@3UGameDataStateWindow@@A fields_.turn_control_duration_milliseconds_
+// Former bounded member identity: [0x009A6810, 0x009A6814), evidence 0x005A94F0; the bounded parent now covers it.
+// RECOVERY_OBJECT: v3 0x009A6810 ?SaveDaemonStateWord@@3HA member ?GameDataStateStorage@@3UGameDataStateWindow@@A fields_.save_daemon_state_word_
+// Former bounded member identity: [0x009A6824, 0x009A6828), evidence 0x004F67F0; the bounded parent now covers it.
+// RECOVERY_OBJECT: v3 0x009A6824 ?EcologyEventAccumulator@@3HA member ?GameDataStateStorage@@3UGameDataStateWindow@@A fields_.ecology_event_accumulator_
 // RECOVERY_OBJECT: v3 0x009A64A4 ?GameInterludeFlags@@3IA member ?GameDataStateStorage@@3UGameDataStateWindow@@A fields_.game_interlude_flags_
-// RECOVERY_OBJECT: v3 0x009A64A0 0x009A64A4 ?GameWireOpaque_9A64A0@@3PAEA 0x00532E00 member ?GameDataStateStorage@@3UGameDataStateWindow@@A fields_.game_wire_opaque_9a64a0_
-// RECOVERY_OBJECT: v3 0x009A64A8 0x009A64AC ?GameWireOpaque_9A64A8@@3PAEA 0x00532E00 member ?GameDataStateStorage@@3UGameDataStateWindow@@A fields_.game_wire_opaque_9a64a8_
-// RECOVERY_OBJECT: v3 0x009A66C9 0x009A67C9 ?LegacyGameSaveName@@3PADA 0x005A6AC0 member ?GameDataStateStorage@@3UGameDataStateWindow@@A fields_.legacy_game_save_name_
-// RECOVERY_OBJECT: v3 0x009A67C9 0x009A67CC ?GameWireOpaque_9A67C9@@3PAEA 0x00532E00 member ?GameDataStateStorage@@3UGameDataStateWindow@@A fields_.game_wire_opaque_9a67c9_
-// RECOVERY_OBJECT: v3 0x009A67CC 0x009A67D0 ?ClimateRiseStep@@3HA 0x00524210 member ?GameDataStateStorage@@3UGameDataStateWindow@@A fields_.climate_rise_step_
-// RECOVERY_OBJECT: v3 0x009A67D0 0x009A67D4 ?ClimateRiseLimit@@3HA 0x00524210 member ?GameDataStateStorage@@3UGameDataStateWindow@@A fields_.climate_rise_limit_
-// RECOVERY_OBJECT: v3 0x009A67D4 0x009A67D8 ?ClimateRiseAccum@@3HA 0x00524210 member ?GameDataStateStorage@@3UGameDataStateWindow@@A fields_.climate_rise_accum_
-// RECOVERY_OBJECT: v3 0x009A67D8 0x009A67DC ?ClimateSeaLevelDelta@@3HA 0x00524210 member ?GameDataStateStorage@@3UGameDataStateWindow@@A fields_.climate_sea_level_delta_
-// RECOVERY_OBJECT: v3 0x009A6670 0x009A66C9 ?GameTechAchieved@@3PAEA 0x004DFAD0 member ?GameDataStateStorage@@3UGameDataStateWindow@@A fields_.game_tech_achieved_
+// Former bounded member identity: [0x009A64A0, 0x009A64A4), evidence 0x00532E00; the bounded parent now covers it.
+// RECOVERY_OBJECT: v3 0x009A64A0 ?GameWireOpaque_9A64A0@@3PAEA member ?GameDataStateStorage@@3UGameDataStateWindow@@A fields_.game_wire_opaque_9a64a0_
+// Former bounded member identity: [0x009A64A8, 0x009A64AC), evidence 0x00532E00; the bounded parent now covers it.
+// RECOVERY_OBJECT: v3 0x009A64A8 ?GameWireOpaque_9A64A8@@3PAEA member ?GameDataStateStorage@@3UGameDataStateWindow@@A fields_.game_wire_opaque_9a64a8_
+// Former bounded member identity: [0x009A66C9, 0x009A67C9), evidence 0x005A6AC0; the bounded parent now covers it.
+// RECOVERY_OBJECT: v3 0x009A66C9 ?LegacyGameSaveName@@3PADA member ?GameDataStateStorage@@3UGameDataStateWindow@@A fields_.legacy_game_save_name_
+// Former bounded member identity: [0x009A67C9, 0x009A67CC), evidence 0x00532E00; the bounded parent now covers it.
+// RECOVERY_OBJECT: v3 0x009A67C9 ?GameWireOpaque_9A67C9@@3PAEA member ?GameDataStateStorage@@3UGameDataStateWindow@@A fields_.game_wire_opaque_9a67c9_
+// Former bounded member identity: [0x009A67CC, 0x009A67D0), evidence 0x00524210; the bounded parent now covers it.
+// RECOVERY_OBJECT: v3 0x009A67CC ?ClimateRiseStep@@3HA member ?GameDataStateStorage@@3UGameDataStateWindow@@A fields_.climate_rise_step_
+// Former bounded member identity: [0x009A67D0, 0x009A67D4), evidence 0x00524210; the bounded parent now covers it.
+// RECOVERY_OBJECT: v3 0x009A67D0 ?ClimateRiseLimit@@3HA member ?GameDataStateStorage@@3UGameDataStateWindow@@A fields_.climate_rise_limit_
+// Former bounded member identity: [0x009A67D4, 0x009A67D8), evidence 0x00524210; the bounded parent now covers it.
+// RECOVERY_OBJECT: v3 0x009A67D4 ?ClimateRiseAccum@@3HA member ?GameDataStateStorage@@3UGameDataStateWindow@@A fields_.climate_rise_accum_
+// Former bounded member identity: [0x009A67D8, 0x009A67DC), evidence 0x00524210; the bounded parent now covers it.
+// RECOVERY_OBJECT: v3 0x009A67D8 ?ClimateSeaLevelDelta@@3HA member ?GameDataStateStorage@@3UGameDataStateWindow@@A fields_.climate_sea_level_delta_
+// Former bounded member identity: [0x009A6670, 0x009A66C9), evidence 0x004DFAD0; the bounded parent now covers it.
+// RECOVERY_OBJECT: v3 0x009A6670 ?GameTechAchieved@@3PAEA member ?GameDataStateStorage@@3UGameDataStateWindow@@A fields_.game_tech_achieved_
 // RECOVERY_OBJECT: v3 0x009A64BC ?TutWinFlags9A64BC@@3HA member ?GameDataStateStorage@@3UGameDataStateWindow@@A fields_.tutwin_flags_9a64bc_
-// RECOVERY_OBJECT: v3 0x009A64DC 0x009A64E0 ?VehSelectionFollowLimit@@3HA 0x005C08C0 member ?GameDataStateStorage@@3UGameDataStateWindow@@A fields_.vehicle_selection_follow_limit_
-// RECOVERY_OBJECT: v1 0x009A6490 ?GameDataStateStorage@@3UGameDataStateWindow@@A
+// Former bounded member identity: [0x009A64DC, 0x009A64E0), evidence 0x005C08C0; the bounded parent now covers it.
+// RECOVERY_OBJECT: v3 0x009A64DC ?VehSelectionFollowLimit@@3HA member ?GameDataStateStorage@@3UGameDataStateWindow@@A fields_.vehicle_selection_follow_limit_
+// game_data transfers exactly 0x398 bytes from 0x009A6490 (0x005A6C24..
+// 0x005A6C9A), ending where the separately bounded Proposal table begins.
+// RECOVERY_OBJECT: v2 0x009A6490 0x009A6828 ?GameDataStateStorage@@3UGameDataStateWindow@@A 0x005A6AC0
 GameDataStateWindow GameDataStateStorage;
 
 uint32_t SystemInterfaceFlags;  // 0x00933420
@@ -1701,16 +1725,11 @@ char SaveNameBuffer[256];
 char ScenarioSaveNameBuffer[256];
 
 // The window the loop paints colour 9 over and hides while the game boots,
-// showing it again for a PBEM session - REAL STORAGE, not the
-// `GraphicWin *const CoverWindow = (GraphicWin *)0x00937118` binding that
-// named terranx.exe data, unmapped in a standalone build. Its class is not
-// recovered - the artifacts reach it as a GraphicWin (fill) and a Win
-// (show/hide), which is what this object's type says. The image names it
-// with `mov ecx, 0x937118` immediates; the object keeps that fold, the
-// displacement relocated. time.cpp's go_reset hides it by name too (its
-// go_cover_window() helper is retired).
-// RECOVERY_OBJECT: v1 0x00937118 ?CoverWindow@@3VGraphicWin@@A
-GraphicWin CoverWindow;  // 0x00937118
+// showing it again for a PBEM session, is ConsoleGlobal.cover_window_: the
+// GraphicWin ??0Console builds at +0x21A68 (0x009156B0 + 0x21A68 =
+// 0x00937118). The image names it with `mov ecx, 0x937118` immediates; the
+// member path keeps that fold. Its historical CoverWindow identity is
+// retained beside ConsoleGlobal in console.cpp.
 
 // The multiplayer window - REAL STORAGE at the image's 0x007FD648, not the
 // `GraphicWin *const MultiWindow` binding (see game.h). Its class is
@@ -1869,11 +1888,11 @@ void __cdecl control_game() {
         lobby_status = 0;
 
         if (IsMultiplayerPBEM != 0) {
-            CoverWindow.fill(0);
-            CoverWindow.Win::show(0);
+            ConsoleGlobal.cover_window_.fill(0);
+            ConsoleGlobal.cover_window_.Win::show(0);
         } else {
-            CoverWindow.fill(9);
-            CoverWindow.Win::hide();
+            ConsoleGlobal.cover_window_.fill(9);
+            ConsoleGlobal.cover_window_.Win::hide();
         }
         if (desktop_init(ControlTurnPhase == 0) != 0) {
             goto close_opening;
@@ -2082,8 +2101,8 @@ int __cdecl desktop_init(int fresh) {
     static_cast<Win &>(MainInterfaceGlobal).Win::show(0);
     static_cast<Win &>(ConsoleGlobal).Win::show(0);
     if (IsMultiplayerPBEM != 0) {
-        CoverWindow.GraphicWin::fill(0);
-        static_cast<Win &>(CoverWindow).Win::show(0);
+        ConsoleGlobal.cover_window_.GraphicWin::fill(0);
+        static_cast<Win &>(ConsoleGlobal.cover_window_).Win::show(0);
     }
     do_all_non_input();
 
@@ -6047,7 +6066,7 @@ int __cdecl display_player_messages(int faction) {
     StringList &messages = MessageWinDeferredBaseMessages[faction];
     for (int index = 0; index < messages.entry_count_; ++index) {
         messages.seek_pos(index);
-        ++MessageWinMessageCount;
+        ++ConsoleGlobal.message_count_;
         const int id = messages.head_ != 0 ? messages.current_->id : 0;
         char *text = messages.head_ != 0 ? messages.current_->string_payload()->text : 0;
         InterfaceMessageWin.listBox_.item(text, id | 0x40000000);
@@ -9873,8 +9892,8 @@ void __cdecl control_turn() {
 
                     MainInterfaceGlobal.update(static_cast<GraphicWin *>(0));
                     ConsoleInfoWin.set_timer_suppression(1);
-                    CoverWindow.fill(0);
-                    CoverWindow.Win::show(0);
+                    ConsoleGlobal.cover_window_.fill(0);
+                    ConsoleGlobal.cover_window_.Win::show(0);
                     do_all_draws();
                     MainInterfaceGlobal.string_box_.clear();
 
@@ -9973,7 +9992,7 @@ void __cdecl control_turn() {
                         }
                     }
 
-                    CoverWindow.Win::hide();
+                    ConsoleGlobal.cover_window_.Win::hide();
                     ConsoleInfoWin.set_timer_suppression(0);
                     ConsoleStatusWin.on_redraw();
                     UnkBitfield1 |= 4;

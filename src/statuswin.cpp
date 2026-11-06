@@ -80,7 +80,7 @@ void __cdecl draw_my_dest(int vehicle_id) {
     if (Vehs[vehicle_id].order != 0x18) {
         return;
     }
-    CoverWindow.fill(9);
+    ConsoleGlobal.cover_window_.fill(9);
     Veh &vehicle = Vehs[vehicle_id];
     const int prototype_id = vehicle.proto_id;
     const int chassis_id = VehPrototypes[prototype_id].chassis_id;
@@ -89,15 +89,15 @@ void __cdecl draw_my_dest(int vehicle_id) {
                             vehicle.waypoint_x[0], vehicle.waypoint_y[0],
                             prototype_id, vehicle.faction_id, route_color,
                             0, 3, 5, 1);
-    CoverWindow.update(static_cast<GraphicWin *>(0));
+    ConsoleGlobal.cover_window_.update(static_cast<GraphicWin *>(0));
     DestinationVehicleId = vehicle_id;
 }
 
 // ORIGINAL: 0x004B4CD0 ?UNK2@StatusWin@@QAEXXZ 0x004B4CD0-0x004B4CE4 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["Pinned original 0x004B4CD0-0x004B4CE4: store -1 at 0x006874C4, set ECX 0x00937118, tail-call Win::hide."], "reason": "Home the destination hide operation over the typed destination vehicle state and CoverWindow."}
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned original 0x004B4CD0-0x004B4CE4: store -1 at 0x006874C4, set ECX 0x00937118, tail-call Win::hide."], "reason": "Home the destination hide operation over the typed destination vehicle state and ConsoleGlobal.cover_window_."}
 void StatusWin::UNK2() {
     DestinationVehicleId = -1;
-    CoverWindow.Win::hide();
+    ConsoleGlobal.cover_window_.Win::hide();
 }
 
 // ORIGINAL: 0x004B9010 ?on_right_click@StatusWin@@QAEXHHH@Z 0x004B9010-0x004B9DF8;0x00659AA0-0x00659BCA
@@ -385,7 +385,9 @@ void __fastcall status_win_redraw_redirect(StatusWin *self, void *) {
 // real StatusWin constructor against it and registers the deleting destructor
 // with atexit; here the same recovered constructor runs through this build's
 // own startup and the destructor closes it at exit.
-// RECOVERY_OBJECT: v1 0x008C5568 ?ConsoleStatusWin@@3VStatusWin@@A
+// The 0x15EC-byte StatusWin ends at 0x008C6B54, a separate word that the
+// free function say_morale (0x004B3FD0) reads and writes absolutely.
+// RECOVERY_OBJECT: v2 0x008C5568 0x008C6B54 ?ConsoleStatusWin@@3VStatusWin@@A 0x004B3FA0
 StatusWin ConsoleStatusWin;  // 0x008C5568
 
 // Fixed-slot bindings carried from 004b6570.cpp
@@ -1284,7 +1286,7 @@ void StatusWin::draw_active(int vehicle_id, int base_id, int add_spot) {
             (GameDataStateStorage.fields_.game_more_preferences_ & MPREF_MAP_HIDE_ACTIVE_VEH_GOTO_PATH) == 0;
         if (show_destination) {
             draw_my_dest(vehicle_id);
-            CoverWindow.Win::show(0);
+            ConsoleGlobal.cover_window_.Win::show(0);
         } else {
             UNK2();
         }

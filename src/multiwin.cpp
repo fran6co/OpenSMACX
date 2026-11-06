@@ -596,10 +596,9 @@ void MultiWin::draw(int draw_type) {
   if (!MultiWindowRedrawSuppressed) soft_update();
 }
 
-// The original show/hide pair publishes its visible state here. The zero
-// initializer and both writers are retained in the pinned image and seeds.
-// RECOVERY_OBJECT: v2 0x007CFF04 0x007CFF08 ?MultiWindowVisibilityState@@3HA 0x00479970
-int MultiWindowVisibilityState;
+// The original show/hide pair publishes its visible state in
+// MainInterfaceGlobal.multiwin_visibility_state_ (0x007CFF04). Its historical
+// object identity is retained beside MainInterfaceGlobal in maininterface.cpp.
 
 // Shared animation frame interval (20 ms in the pinned image). Other window
 // animations also read this original data object.
@@ -706,7 +705,7 @@ void MultiWin::show() {
   if (IsMultiplayerNet != 0) flat_button2_.mark_visible();
 
   if (GameDataStateStorage.fields_.game_preferences_ & 0x400) g_MULTIWIN_WAVE.play();
-  MultiWindowVisibilityState = 2;
+  MainInterfaceGlobal.multiwin_visibility_state_ = 2;
   panel_open_ = 1;
   MultiWindowRedrawSuppressed = 1;
   on_redraw();
@@ -756,7 +755,7 @@ void MultiWin::hide() {
 
   if (GameDataStateStorage.fields_.game_preferences_ & 0x400) g_MULTIWIN_WAVE.play();
   hovered_spot_ = -1;
-  MultiWindowVisibilityState = 0;
+  MainInterfaceGlobal.multiwin_visibility_state_ = 0;
 
   const int width = dib_.bmiHeader.biWidth;
   const int height = -dib_.bmiHeader.biHeight;

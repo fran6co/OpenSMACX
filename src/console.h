@@ -552,11 +552,20 @@ class Console : public MapWin {
   // the dword run the map already names picks up. Declared in the order
   // destruction reverses, so the compiler's teardown runs sprite_a_,
   // sprite_b_, menu_sprites_ (??_M), menu_sprite_, menu_buffer_, menu_,
-  // time_, buffer_, graphic_win_ - ??_DConsole's own order.
-  GraphicWin graphic_win_;  // 0x21A68 - Console's own second GraphicWin,
-                            // beside the virtual base it inherits (whose
-                            // vbtable displacement 0x23D94 is set by these
-                            // very members)
+  // time_, buffer_, cover_window_ - ??_DConsole's own order.
+  //
+  // This member is the former standalone CoverWindow at 0x00937118:
+  // ConsoleGlobal (0x009156B0) + 0x21A68. ??0Console constructs it at
+  // 0x0050F4B3 (`lea ecx,[esi+0x21a68]`, ??0GraphicWin 0x005D4CF0), only
+  // one Console instance exists (initializer 0x0050E850), and no other
+  // initializer constructs 0x00937118. The image's `mov ecx, 0x937118`
+  // users are absolute folds of ConsoleGlobal.cover_window_.
+ public:
+  GraphicWin cover_window_;  // 0x21A68 - Console's own second GraphicWin,
+                             // beside the virtual base it inherits (whose
+                             // vbtable displacement 0x23D94 is set by these
+                             // very members)
+ private:
   Buffer buffer_;           // 0x2247C
   Time time_;               // 0x22A04
   AlphaMenu alpha_menu_;    // 0x22A2C - menu_+buffer_+sprite1_+sprites_[3]
@@ -604,9 +613,11 @@ class Console : public MapWin {
   // survey cycles 0..3; a nonzero mode also suppresses free draw_cursor.
   // RECOVERY_MEMBER: v1 Console survey_mode_ 0x23C00 0x00515450
   uint32_t survey_mode_;  // 0x23C00
- private:
-  uint32_t field_23C04_;  // 0x23C04
  public:
+  // The former standalone Blink2Counter at 0x009392B4 is this member of
+  // ConsoleGlobal: ??0Console clears +0x23C04 at 0x0050F5B6, close() clears
+  // it again, and blink2_timer increments the same absolute word.
+  int blink2_counter_;  // 0x23C04
   // The absolute cursor reads are these members of ConsoleGlobal at
   // 0x9392B8, 0x9392BC, 0x9392C0 and 0x939340. cursor_next compares that
   // object's current position, but appends to its receiver's history.
@@ -634,8 +645,12 @@ class Console : public MapWin {
   int32_t field_23D14_;  // 0x23D14
   uint32_t field_23D18_;  // 0x23D18
   uint32_t field_23D1C_;  // 0x23D1C
-  uint8_t field_23D20_[0x4];  // 0x23D20
  public:
+  // The former standalone MessageWinMessageCount at 0x009393D0 is this word
+  // of ConsoleGlobal, between constructor-initialized +0x23D18 and the
+  // Sprite at +0x23D28. MessageWin's add/clear paths and game_data's
+  // dword clear and 4-byte transfer (0x005A85B2/0x005A85CD) use it.
+  int message_count_;  // 0x23D20
   int game_data_private_word(FILE *file, int write_mode);
  private:
   uint32_t field_23D24_;  // 0x23D24

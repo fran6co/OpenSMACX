@@ -1352,7 +1352,7 @@ void MapWin::set_center(int x, int y, int draw_type) {
             (Vehs[destination].faction_id == ConsoleGlobal.faction_id_ ||
              (GameDataStateStorage.fields_.game_state_ & STATE_OMNISCIENT_VIEW)) &&
             !(GameDataStateStorage.fields_.game_more_preferences_ & 0x2000000)) {
-            CoverWindow.fill(9);
+            ConsoleGlobal.cover_window_.fill(9);
         }
     } else {
         destination = -1;
@@ -1796,7 +1796,7 @@ void MapWin::direct_dest_line(int x1, int y1, int x2, int y2, int triad,
     if (cover != 0) {
         Win::screen_to_client(&pixel_x1, &pixel_y1);
         Win::screen_to_client(&pixel_x2, &pixel_y2);
-        CoverWindow.Buffer::line(pixel_x1, pixel_y1, pixel_x2, pixel_y2, color);
+        ConsoleGlobal.cover_window_.Buffer::line(pixel_x1, pixel_y1, pixel_x2, pixel_y2, color);
     } else {
         const int phase = (pattern_on + pattern_off - 1) & PlanLineCounter;
         // This genuine nine-argument dependency is not omitted: its owning
@@ -2118,7 +2118,7 @@ void MapWin::on_mouse_move(int pixel_x, int pixel_y) {
 
     // 46F0E1 and46F118 go directly to46F601, not the text builder.
     if (field_1DD80_ == 0) {
-        CoverWindow.soft_update();
+        ConsoleGlobal.cover_window_.soft_update();
         return;
     }
     MapMouseFeedbackBusy = 1;
@@ -2126,11 +2126,11 @@ void MapWin::on_mouse_move(int pixel_x, int pixel_y) {
     MapMouseFeedbackBusy = 0;
     if (field_1DE0C_ == static_cast<uint32_t>(tile_x) &&
         feedback_hover_y_ == tile_y) {
-        CoverWindow.soft_update();
+        ConsoleGlobal.cover_window_.soft_update();
         return;
     }
 
-    CoverWindow.fill(9);
+    ConsoleGlobal.cover_window_.fill(9);
     field_1DE0C_ = static_cast<uint32_t>(tile_x);
     feedback_hover_y_ = tile_y;
 
@@ -2222,18 +2222,18 @@ void MapWin::on_mouse_move(int pixel_x, int pixel_y) {
         strcat(StringTemp, number);
     }
 
-    CoverWindow.set_text_color(0x9f, 0x41, 1, 1);
-    CoverWindow.set_font(find_font(12, 1), 0, 0, 0);
+    ConsoleGlobal.cover_window_.set_text_color(0x9f, 0x41, 1, 1);
+    ConsoleGlobal.cover_window_.set_font(find_font(12, 1), 0, 0, 0);
     const int width = ConsoleGlobal.dib_.bmiHeader.biWidth;
-    const int text_width = CoverWindow.text_width(StringTemp);
+    const int text_width = ConsoleGlobal.cover_window_.text_width(StringTemp);
     const int text_x = mouse_feedback_sub(pixel_x,
         mouse_feedback_mul(text_width, pixel_x) / width);
     const int text_y = mouse_feedback_add(
         mouse_feedback_signed(ConsoleGlobal.tile_pixel_height_), pixel_y);
     // 46F5DD tests StringTemp's ADDRESS, not its first character. It is
     // always nonnull for owned storage; empty strings still reach write_l.
-    CoverWindow.write_l(StringTemp, text_x, text_y, static_cast<int>(strlen(StringTemp)));
-    CoverWindow.soft_update();
+    ConsoleGlobal.cover_window_.write_l(StringTemp, text_x, text_y, static_cast<int>(strlen(StringTemp)));
+    ConsoleGlobal.cover_window_.soft_update();
 }
 
 namespace {
@@ -8387,8 +8387,8 @@ void MapWin::on_left_down(int x_coord, int y_coord) {
             WinPointerOwner4 = nullptr;
             WinPointerOwner3 = this;
         }
-        CoverWindow.fill(9);
-        CoverWindow.show(0);
+        ConsoleGlobal.cover_window_.fill(9);
+        ConsoleGlobal.cover_window_.show(0);
         on_mouse_move(x_coord, y_coord);
         return;
     }
@@ -8509,8 +8509,8 @@ void __cdecl go_timer(int selection_mode) {
         WinPointerOwner3 = window;
     }
     ConsoleGlobal.field_23D10_ = mode;
-    CoverWindow.fill(9);
-    CoverWindow.show(0);
+    ConsoleGlobal.cover_window_.fill(9);
+    ConsoleGlobal.cover_window_.show(0);
     window->field_1DD80_ = 1;
     window->field_1DD84_ =
         (ConsoleGlobal.cursor_active_ == 0 && ConsoleGlobal.field_23D1C_ != 0)

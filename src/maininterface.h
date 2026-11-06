@@ -412,7 +412,13 @@ class MainInterface : public GraphicWin, public SubInterface {
   Font font1_;
   Font font2_;
   Font font3_;
-  uint32_t field_216E4_;
+ public:
+  // The former standalone MultiWindowVisibilityState at 0x007CFF04 is this
+  // word of MainInterfaceGlobal (0x007AE820 + 0x216E4). MainInterface::init
+  // clears +0x216E4 at 0x00459710; MultiWin::show/hide store 2/0 to the
+  // same absolute word (0x00479A21/0x00479C65).
+  int multiwin_visibility_state_;  // 0x216E4
+ private:
   uint32_t field_216E8_;
   // 0x216EC. on_iface_mouse_leave tests it against 1, clears it and redraws
   // when it is set, through the SubInterface subobject, where the same dword

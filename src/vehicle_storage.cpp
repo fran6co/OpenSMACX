@@ -10,5 +10,7 @@
 // Original 0x0042A910 selects the record base; best_reactor walks prerequisite fields; no extent claim.
 // RECOVERY_OBJECT: v1 0x009527F8 ?Reactor@@3PAURulesReactor@@A
 RulesReactor Reactor[MaxReactorNum];  // 0x009527F8
-// RECOVERY_OBJECT: v1 0x00952828 ?Vehs@@3PAUVeh@@A
+// 2049 0x34-byte slots (veh_fake uses id 2048) end at 0x0096C85C, which the
+// image indexes as a separate table base (`[edx*4+0x96c85c]` at 0x00449978).
+// RECOVERY_OBJECT: v2 0x00952828 0x0096C85C ?Vehs@@3PAUVeh@@A 0x005C1D50
 Veh Vehs[2049];  // 0x00952828

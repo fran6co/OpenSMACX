@@ -124,7 +124,7 @@ struct Path {PATH_METHOD};
 GLOBALS
 DIRECTIONS
 CALLEES
-MapWin window;GraphicWin CoverWindow;Path Paths;
+MapWin window;struct {GraphicWin cover_window_;} ConsoleGlobal;Path Paths;
 Map map_a[1024],map_b[1024],*active_map=map_a;
 Map *map_tiles(){return active_map;}
 MAP_LOC
@@ -144,7 +144,7 @@ void note(char kind,std::initializer_list<int> args={}){
 int Win::update_cursor(Win *w,int flag){require(w==nullptr&&flag==1);note('U');return 0;}
 void MapWin::tile_to_pixel(int x,int y,int *px,int *py){require(this==&window);note('T',{x,y});*px=x*10;*py=y*10;}
 void Win::screen_to_client(int *x,int *y){require(this==static_cast<Win*>(&window));note('S',{*x,*y});*x+=screen_dx;*y+=screen_dy;}
-void Buffer::line(int x,int y,int xx,int yy,int color){require(this==static_cast<Buffer*>(&CoverWindow));note('L',{x,y,xx,yy,color});}
+void Buffer::line(int x,int y,int xx,int yy,int color){require(this==static_cast<Buffer*>(&ConsoleGlobal.cover_window_));note('L',{x,y,xx,yy,color});}
 void Buffer::line(int x,int y,int xx,int yy,int a,int color,int on,int off,int phase){require(this==static_cast<Buffer*>(&window));note('D',{x,y,xx,yy,a,color,on,off,phase});}
 int Path::find(int x,int y,int xx,int yy,int proto,int faction,int flags,int last){
     require(this==&Paths);note('F',{x,y,xx,yy,proto,faction,flags,last});

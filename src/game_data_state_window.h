@@ -3,7 +3,8 @@
 
 // Included from base.h after BaseSecretProject is complete. This records the
 // exact typed source owner for the 0x009A6490..0x009A6828 game_data window.
-// This records the accessed span, not the original enclosing allocation.
+// game_data transfers exactly these 0x398 bytes from 0x009A6490, and the
+// separately bounded Proposal table begins at 0x009A6828.
 #include <stddef.h>
 #include <stdint.h>
 

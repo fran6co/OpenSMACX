@@ -17,8 +17,8 @@
 // Original 0x0050EE4C/0x0050EE89/0x0050EF19 gate the timer callbacks on this shared value; start only.
 // RECOVERY_OBJECT: v1 0x00915620 ?TimerHoldFlag@@3HA
 int TimerHoldFlag;      // 0x00915620
-// RECOVERY_OBJECT: v1 0x009392B4 ?Blink2Counter@@3HA
-int Blink2Counter;      // 0x009392B4
+// Blink2's counter at 0x009392B4 is ConsoleGlobal.blink2_counter_; its
+// historical object identity is retained beside ConsoleGlobal in console.cpp.
 // RECOVERY_OBJECT: v1 0x00939FD4 ?PlanLineCounter@@3HA
 int PlanLineCounter;    // 0x00939FD4
 // RECOVERY_OBJECT: v1 0x00703DE0 ?TurnRedrawPending@@3HA
@@ -249,7 +249,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl go_reset() {
-    CoverWindow.Win::hide();
+    ConsoleGlobal.cover_window_.Win::hide();
     GoTimer.close();
 
     for (int index = 0; index < static_cast<int>(MapWinTableSlots); ++index) {
@@ -350,7 +350,7 @@ void __cdecl blink2_timer(int a1) {
     if (WorldClimateSkipTerrainClear != 0) {
         return;
     }
-    ++Blink2Counter;
+    ++ConsoleGlobal.blink2_counter_;
     MainInterfaceGlobal.redraw_complete();
 }
 

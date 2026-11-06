@@ -599,6 +599,9 @@ set_property(SOURCE
     src/ambience.cpp
     src/netmsg.cpp
     src/reportif.cpp
+    src/console.cpp
+    src/statuswin.cpp
+    src/vehicle_storage.cpp
     src/buffer.cpp
     src/caviar.cpp
     src/caviar_chain.cpp

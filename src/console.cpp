@@ -624,7 +624,7 @@ Console::Console()
     field_23BF0_ = 0;
     field_23BF4_ = 0;
     survey_mode_ = 0;
-    field_23C04_ = 0;
+    blink2_counter_ = 0;
     field_23BFC_ = 0;
     field_23BF8_ = 0;
     cursor_history_index_ = 0;
@@ -1320,7 +1320,7 @@ void Console::close() {
     field_23BF0_ = 0;
     field_23BF4_ = 0;
     survey_mode_ = 0;
-    field_23C04_ = 0;
+    blink2_counter_ = 0;
     field_23BFC_ = 0;
     field_23BF8_ = 0;
     cursor_history_index_ = 0;
@@ -1359,7 +1359,18 @@ void Console::close() {
 // this constant-initialized source array adds no global constructor.
 // RECOVERY_OBJECT: v2 0x0068A5D0 0x0068A5E0 ?CursorNextDangerMsg1@@3PADA 0x005109B0
 char CursorNextDangerMsg1[16] = "Bad Cursor Move";
-// RECOVERY_OBJECT: v1 0x009156B0 ?ConsoleGlobal@@3VConsole@@A
+// The 0x247A8-byte Console runs to its virtual GraphicWin base's end:
+// ??0Console builds that base at +0x23D94 (0x0050F494) and the 0xA14-byte
+// GraphicWin ends at 0x00939E58. Formerly separate globals inside that
+// extent are Console members, constructed or cleared by ??0Console:
+// CoverWindow (+0x21A68, ??0GraphicWin at 0x0050F4B3), Blink2Counter
+// (+0x23C04, cleared at 0x0050F5B6) and MessageWinMessageCount (+0x23D20,
+// between constructor-initialized +0x23D18 and the +0x23D28 Sprite).
+// RECOVERY_OBJECT: v2 0x009156B0 0x00939E58 ?ConsoleGlobal@@3VConsole@@A 0x0050E850
+// RECOVERY_OBJECT: v3 0x00937118 ?CoverWindow@@3VGraphicWin@@A member ?ConsoleGlobal@@3VConsole@@A cover_window_
+// RECOVERY_OBJECT: v3 0x009392B4 ?Blink2Counter@@3HA member ?ConsoleGlobal@@3VConsole@@A blink2_counter_
+// Former bounded member identity: [0x009393D0, 0x009393D4), evidence 0x00471530; the bounded parent now covers it.
+// RECOVERY_OBJECT: v3 0x009393D0 ?MessageWinMessageCount@@3HA member ?ConsoleGlobal@@3VConsole@@A message_count_
 Console ConsoleGlobal;
 // ===== MANAGED GLOBALS - real objects, homed to their domain =====
 // In the shipped image these live at fixed data addresses and are
@@ -1409,12 +1420,9 @@ Time BlinkTimer,   // 0x00915688
 // Historical seed finding: The former separate per-object declarations did not own the complete original aggregate.
 int Console::game_data_private_word(FILE *file, int write_mode) {
     if (write_mode != 0) {
-        field_23D20_[0] = 0;
-        field_23D20_[1] = 0;
-        field_23D20_[2] = 0;
-        field_23D20_[3] = 0;
+        message_count_ = 0;
     }
-    return game_data_transfer_block(file, field_23D20_, sizeof(field_23D20_));
+    return game_data_transfer_block(file, &message_count_, sizeof(message_count_));
 }
 
 
@@ -5669,8 +5677,8 @@ void Console::init(int) {
     GraphicWin::init(&ConsoleMenuBounds, menu_caption, 0x02400000, 0,
                      &alpha_menu_, 0);
 
-    graphic_win_.init(0, 0, pixel_width(), pixel_height(), 0, 0x01000022,
-                      static_cast<Win *>(this), 0, 0);
+    cover_window_.init(0, 0, pixel_width(), pixel_height(), 0, 0x01000022,
+                        static_cast<Win *>(this), 0, 0);
     Win::set_def_focus(static_cast<Win *>(this));
 
     (void)alpha_menu_.menu_init();

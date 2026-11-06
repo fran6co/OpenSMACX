@@ -74,7 +74,11 @@ Status: Complete
 
 // The hit-test rectangle at 0x007AF50C is this object's +0xCEC member;
 // MapWin::main_caption also selects its complete receiver at 0x007AE820.
-// RECOVERY_OBJECT: v1 0x007AE820 ?MainInterfaceGlobal@@3VMainInterface@@A
+// The 0x25090-byte MainInterface ends after time2_, which its constructor
+// builds at +0x25068 (0x0045F184); 0x007D38B0 is a separately addressed word.
+// RECOVERY_OBJECT: v2 0x007AE820 0x007D38B0 ?MainInterfaceGlobal@@3VMainInterface@@A 0x00459560
+// Former bounded member identity: [0x007CFF04, 0x007CFF08), evidence 0x00479970; the bounded parent now covers it.
+// RECOVERY_OBJECT: v3 0x007CFF04 ?MultiWindowVisibilityState@@3HA member ?MainInterfaceGlobal@@3VMainInterface@@A multiwin_visibility_state_
 // The former independent Console gate identity is this embedded word:
 // 0x007AE820 + 0x1EAC8 = 0x007CD2E8. MainInterface::init clears it at
 // 0x004596CD and Console's Enter/Space paths read it at 0x00517A0B/0x00517A93.
@@ -306,7 +310,7 @@ int MainInterface::init(int) {
     field_4_ = 0;
     register_iface_mode(0, this);
     alert_ = -1;
-    field_216E8_ = iface_redraw_pending_ = field_216E4_ = 0;
+    field_216E8_ = iface_redraw_pending_ = multiwin_visibility_state_ = 0;
     spot_.init(1);
     field_D7C_ = 213;
     SetRect(&rect4_, 4, 56, 245, 252);

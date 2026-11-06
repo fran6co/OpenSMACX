@@ -180,7 +180,7 @@ void __cdecl blink2_timer(int a1);
 void __cdecl line_timer(int a1);
 void __cdecl turn_timer(int a1);
 extern int TimerHoldFlag;      // 0x00915620
-extern int Blink2Counter;      // 0x009392B4
+// Blink2's counter at 0x009392B4 is ConsoleGlobal.blink2_counter_.
 extern int PlanLineCounter;    // 0x00939FD4
 extern int TurnRedrawPending;  // 0x00703DE0
 // 0x0050EF50, homed into time.cpp - it closes GoTimer and sits in the same

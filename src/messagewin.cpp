@@ -52,8 +52,8 @@ inline uint32_t current_message_height(StringList &items) {
 // 0x007F67F8, declared in messagewin.h.
 // RECOVERY_OBJECT: v1 0x007F67F8 ?InterfaceMessageWin@@3VMessageWin@@A
 MessageWin InterfaceMessageWin;  // 0x007F67F8
-// RECOVERY_OBJECT: v2 0x009393D0 0x009393D4 ?MessageWinMessageCount@@3HA 0x00471530
-int MessageWinMessageCount;  // 0x009393D0; initial storage passed both VC6 trials.
+// The 0x009393D0 message counter is ConsoleGlobal.message_count_; its
+// historical object identity is retained beside ConsoleGlobal in console.cpp.
 // RECOVERY_OBJECT: v2 0x007F9F54 0x007F9F58 ?MessageWinMenuBusy@@3HA 0x004718C0
 int MessageWinMenuBusy;  // 0x007F9F54; initial storage passed both trials.
 // 0x0093A7B0 is eight faction-indexed StringList records. The independent
@@ -127,7 +127,7 @@ void MessageWin::on_selected(int code, int) {
     }
 
     if (remove) {
-        --MessageWinMessageCount;
+        --ConsoleGlobal.message_count_;
         remove_selected_message();
         InterfaceMessageWin.listBox_.set_selected_pos(-1, 1);
         InterfaceMessageWin.listBox_.update_changes();
@@ -175,20 +175,20 @@ inline void MessageWin::remove_selected_message() {
 // ORIGINAL: 0x00471530 ?add_message@MessageWin@@QAEXPADH@Z 0x00471530-0x00471794
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/00471530.cpp", "image:0x00471530"], "reason": "The product MessageWin append method implements the archived ListBox and virtual Dialog list walk on the real embedded members."}
 void MessageWin::add_message(char *text, int item_id) {
-    if (MessageWinMessageCount != 0) {
-        listBox_.item_list_.seek_pos(MessageWinMessageCount - 1);
+    if (ConsoleGlobal.message_count_ != 0) {
+        listBox_.item_list_.seek_pos(ConsoleGlobal.message_count_ - 1);
         if (current_message_text(listBox_.item_list_) != 0 && item_id == 0 &&
             strcmp(text, current_message_text(listBox_.item_list_)) == 0) {
             return;
         }
     }
 
-    ++MessageWinMessageCount;
+    ++ConsoleGlobal.message_count_;
     listBox_.item(text, item_id | 0x10000000);
     listBox_.set_selected_pos(-1, 1);
 
-    while (MessageWinMessageCount > 100) {
-        --MessageWinMessageCount;
+    while (ConsoleGlobal.message_count_ > 100) {
+        --ConsoleGlobal.message_count_;
 
         const int first_id = listBox_.pos_to_id(0);
         {
@@ -348,7 +348,7 @@ void MessageWin::add_base(int base_id, char *text, Sprite *source) {
     if (IsMultiplayerNet) {
         ++NetDaemonNet.network_message_count();
     }
-    ++MessageWinMessageCount;
+    ++ConsoleGlobal.message_count_;
     listBox_.item(text, base_id | 0x40000000);
     listBox_.set_selected_pos(-1, 1);
     listBox_.update_changes();
@@ -362,7 +362,7 @@ void MessageWin::add_base(int base_id, char *text, Sprite *source) {
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/00471470.cpp", "image:0x00471470"], "reason": "The archived receiver and list insertion call chain identify this MessageWin variant; its first and last arguments are unused in the seed."}
 int MessageWin::UNK2(int, char *text, int) {
     const int id = BaseIDCurrentSelected | 0x20000000;
-    ++MessageWinMessageCount;
+    ++ConsoleGlobal.message_count_;
     listBox_.item(text, id);
     listBox_.set_selected_pos(-1, 1);
     listBox_.update_changes();
@@ -378,7 +378,7 @@ int MessageWin::UNK2(int, char *text, int) {
 // symbol    ?UNK3@MessageWin@@QAEHHHPADH@Z
 int MessageWin::UNK3(int x, int y, char *text, int) {
     const int id = (MapLongitudeBounds * y + x) | 0x80000000;
-    ++MessageWinMessageCount;
+    ++ConsoleGlobal.message_count_;
     listBox_.item(text, id);
     listBox_.set_selected_pos(-1, 1);
     listBox_.update_changes();
@@ -391,7 +391,7 @@ int MessageWin::UNK3(int x, int y, char *text, int) {
 // RECOVERY_BINDING: v1 {"evidence": ["git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/004717a0.cpp", "image:0x004717A0"], "reason": "The archived MessageWin reset walks the embedded ListBox Dialog entries and clears the same pane state and button group."}
 // TRIED: MISMATCH, closest at 194/196 bytes (mnemonic_similarity 0.99, 1 edit). Same embedded-manager close-and-relink shape as SetupWin::close/Dialog::init, but reached through a vbtable: `listBox_.vbtable_pointer_` (self+0x64) is a pointer to a displacement table, slot 2 (`[vtbl+8]`) is the byte displacement to the virtual base holding the manager - `char *base = self + vbtable[2] + 0x120;` reproduces the `[edx+ebx+0x128]`/`lea esi,[edx+ebx+0x120]` addressing exactly. Only the SECOND vtable-adjustment "deleting dtor" call (vtbl[1] read as a displacement, this-adjusted, that pointer's own vtbl[0] called with arg 1) still diverges by a handful of instructions - the same register-allocator nuance as the second call site in 0x004AD9C0 and 0x00609730, not chased further.
 void MessageWin::clear() {
-    MessageWinMessageCount = 0;
+    ConsoleGlobal.message_count_ = 0;
     listBox_.item_list_.remove_all();
     listBox_.selected_position_ = 0;
     listBox_.field_18_ = 0;
@@ -476,7 +476,7 @@ void MessageWin::init() {
                            &MessageWin::listbox_fill);
     listBox_.Dialog::field_B4_ = 0;
     listBox_.attach(&MainInterfaceGlobal, bounds_.left, bounds_.top, 0x1000000);
-    MessageWinMessageCount = 0;
+    ConsoleGlobal.message_count_ = 0;
 }
 
 // Real MessageWinDeferredBaseMessages array lifecycle, compiler-generated.

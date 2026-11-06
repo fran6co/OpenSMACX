@@ -93,8 +93,8 @@ static_assert(sizeof(MessageWin) == 0x3758,
 // object with a real constructor in the image, so it is declared as one.
 extern MessageWin InterfaceMessageWin;
 
-// The image's message counter at 0x009393D0. Its owner is the desktop message
-// pane; the archive seeds for add_base, add_message, clear and init all use it.
-extern int MessageWinMessageCount;
+// The image's message counter at 0x009393D0 is ConsoleGlobal.message_count_
+// (Console +0x23D20; see console.h). The desktop message pane's add_base,
+// add_message, clear and init paths use it through that member.
 
 extern StringList MessageWinDeferredBaseMessages[8];

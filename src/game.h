@@ -280,8 +280,8 @@ extern int GameRestartQueued;  // 0x0093A948
 extern int ExitTurnLoop;  // 0x009B2068
 extern int EndgameExitReason;
 
-// Shared cover window hidden by go_reset and shown/painted by the main loop.
-extern GraphicWin CoverWindow;  // 0x00937118
+// The shared cover window hidden by go_reset and shown/painted by the main
+// loop is ConsoleGlobal.cover_window_ (0x00937118 = Console +0x21A68).
 // Where control_turn / net_control_turn are in their phase; the main loop
 // reads it to size the desktop before the turn runs, and scenario.cpp gates
 // the end-turn path on it. Formerly scenario.cpp's raw ControlTurnPhaseAddress.
