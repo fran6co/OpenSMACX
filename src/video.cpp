@@ -1,6 +1,7 @@
 #include "video.h"
 #include "wave.h"
 #include "general.h"
+#include "rectangle_operations.h"
 #include <stdio.h>
 
 // Each phase has its own original entry-message object. The process methods
@@ -102,6 +103,9 @@ Video::~Video() {
 // ORIGINAL: 0x006365B0 Video_unk1 0x006365B0-0x00636732 FILE
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned entry-rooted PE flow has103 reachable instructions ending at RET636731, exclusive636732; IDA and Ghidra agree independently. The next reset begins636740 after14NOPs.", "Historical2f1f617d:src/video.cpp assigned6365B0..637310 as an owner run. Later reset/register/load/process/play/stop/seek/rewind identities remain separate, and UNBOUND637190 retains its original identity/span/claim without implementation.", "The removed region also contains independently recognized padding and load636960 switch-target data636F9C..636FB4 referenced at6369D0; preserve that explicit source association, not close code. No C++ bodies, layout, flags or claims change."], "reason": "Bind Video::close to its complete reachable original cleanup body rather than the former multi-entry owner interval."}
 // symbol    ?close@Video@@QAEXXZ
+#if defined(_MSC_VER) && _MSC_VER == 1200
+#pragma function(memset)
+#endif
 void Video::close() {
   int registry_index = 0;
   while (registry_index < 10 && VideoRegistry[registry_index] != this)
@@ -142,12 +146,12 @@ void Video::close() {
     media_file_ = 0;
   }
 
-  memset(&child_chunk_, 0, 0x14);
   buffered_frame_ = 0;
   target_frame_ = 0;
   frame_count_ = 0;
   video_chunk_id_ = 0;
   audio_chunk_id_ = 0;
+  memset(&child_chunk_, 0, 0x14);
   memset(&parent_chunk_, 0, 0x14);
   decode_output_flags_ = 0;
   last_tick_ = 0;
@@ -155,12 +159,12 @@ void Video::close() {
   decode_source_ = 0;
   viewport_x_ = 0;
   viewport_y_ = 0;
-  source_rect_.left = 0;
-  source_rect_.top = 0;
-  source_rect_.right = 0;
-  source_rect_.bottom = 0;
+  set_rectangle_dimensions(&source_rect_, 0, 0, 0, 0);
   output_buffer_.close();
 }
+#if defined(_MSC_VER) && _MSC_VER == 1200
+#pragma intrinsic(memset)
+#endif
 
 // RECOVERY_LITERAL: v1 0x0069887C 0x00698891 ??_C@_0BF@GKCP@decode_frame_process?$AA@ 0x00636FC0
 // RECOVERY_LITERAL: v1 0x006988A0 0x006988B3 ??_C@_0BD@MDIC@read_frame_process?$AA@ 0x00636FC0
@@ -203,12 +207,12 @@ int Video::play() {
     decode_frame(0);
   }
   log_say("play()", "Starting", static_cast<int>(timeGetTime()), 0, 0);
-  if ((static_cast<unsigned char>(flags_) & 1) != 0) {
-    last_tick_ = timeGetTime();
+  if ((static_cast<unsigned char>(flags_) & 1) == 0) {
+    sound_state_.set_target_frame(target_frame_);
     flags_ |= 0x8000;
     return 0;
   }
-  sound_state_.set_target_frame(target_frame_);
+  last_tick_ = timeGetTime();
   flags_ |= 0x8000;
   return 0;
 }
@@ -248,9 +252,7 @@ int Video::advance_frame() {
   if (child_chunk_.ckid != 0 && mmioAscend(media_file_, &child_chunk_, 0) != 0)
     return 1;
   child_chunk_.ckid = 0;
-  for (;;) {
-    if (mmioDescend(media_file_, &child_chunk_, &parent_chunk_, 0) != 0)
-      return 1;
+  while (mmioDescend(media_file_, &child_chunk_, &parent_chunk_, 0) == 0) {
     if (child_chunk_.ckid == video_chunk_id_) {
       ++buffered_frame_;
       log_say("Exiting advance_frame",
@@ -259,25 +261,26 @@ int Video::advance_frame() {
       return 0;
     }
     if (child_chunk_.ckid == audio_chunk_id_) {
-      const int byte_count = static_cast<int>(child_chunk_.cksize);
       log_say("advance_frame()", "Advancing audio.",
-              static_cast<int>(timeGetTime()), byte_count, 0);
+              static_cast<int>(timeGetTime()), child_chunk_.cksize, 0);
       VideoAudioBufferRecord *const record = static_cast<VideoAudioBufferRecord *>(
-          sound_state_.acquire_audio_buffer(byte_count));
-      if (record == 0) {
-        log_say("No mmio!!!",
-                VideoAudioBufferLogContext, 0, 0, 0);
-      } else {
-        const LONG bytes_read = mmioRead(media_file_,
-            reinterpret_cast<HPSTR>(record->data), byte_count);
-        if (bytes_read != byte_count) return 1;
+          sound_state_.acquire_audio_buffer(static_cast<int>(child_chunk_.cksize)));
+      if (record != 0) {
+        const int byte_count = static_cast<int>(child_chunk_.cksize);
+        if (byte_count != mmioRead(media_file_,
+                                   reinterpret_cast<HPSTR>(record->data),
+                                   byte_count)) return 1;
         record->end = record->data + byte_count;
         sound_state_.submit_audio_buffer(record);
+      } else {
+        log_say("No mmio!!!",
+                VideoAudioBufferLogContext, 0, 0, 0);
       }
     }
     if (child_chunk_.ckid != FOURCC_LIST &&
         mmioAscend(media_file_, &child_chunk_, 0) != 0) return 1;
   }
+  return 1;
 }
 
 // ORIGINAL: 0x00637C30 ?read_frame@Video@@QAEHXZ 0x00637C30-0x00637D62 BYTE_EXACT
@@ -565,39 +568,30 @@ int Video::next_key_frame(int frame) {
   if (frame > 0) {
     int remaining = frame;
     do {
-      do { ++record; } while (record->ckid != video_chunk_id_);
+      ++record;
+      while (record->ckid != video_chunk_id_) ++record;
       --remaining;
     } while (remaining != 0);
   }
   while (frame < frame_count_ - 1 && (record->dwFlags & 0x10) == 0) {
-    do { ++record; } while (record->ckid != video_chunk_id_);
+    ++record;
+    while (record->ckid != video_chunk_id_) ++record;
     ++frame;
   }
   if (frame == frame_count_ - 1) {
-    if ((record->dwFlags & 0x10) == 0) return -1;
-  } else if (frame == frame_count_) {
-    return -1;
+    if ((record->dwFlags & 0x10) != 0) {
+      current_index_record_ = record;
+      return frame;
+    }
+  } else if (frame != frame_count_) {
+    current_index_record_ = record;
+    return frame;
   }
-  current_index_record_ = record;
-  return frame;
+  return -1;
 }
 
-// Native registration permits index10. The eleventh dword physically aliases
-// codec origin_x at9BE668, not an eleventh owned registry pointer. This defined
-// bit-copy projection preserves that native corrupting effect rather than
-// clamping it or forming an out-of-bounds C++ pointer store. Coordinator review
-// is still required; this is a private behavior/storage proposal, not publication.
-static inline void video_store_registry_entry(int index, Video *video) {
-  if (index == 10) {
-    // Copy the pointer object representation itself, avoiding signed/integer
-    // conversion. The real x86 header constrains these two storage widths.
-    memcpy(&VideoViewportCodec.origin_x, &video,
-           sizeof VideoViewportCodec.origin_x);
-  } else {
-    VideoRegistry[index] = video;
-  }
-}
-
+// Native registration permits index 10: the eleventh store lands past the
+// ten-entry registry (on codec origin_x at 0x9BE668), as the original does.
 // ORIGINAL: 0x00636850 Video_unk3 0x00636850-0x006368C8 FILE
 // symbol    ?register_window@Video@@QAEHHHPAVGraphicWin@@I@Z
 int Video::register_window(int x, int y, GraphicWin *window,
@@ -608,10 +602,10 @@ int Video::register_window(int x, int y, GraphicWin *window,
   decode_output_ = window;
   viewport_y_ = y;
   flags_ = flags & 0xFFFF7FFFU;
-  if ((flags & 0x20) != 0) flags_ |= 4;
+  if ((flags_ & 0x20) != 0) flags_ |= 4;
   const int count = VideoRegistryCount;
   if (count > 10) return 1;
-  video_store_registry_entry(count, this);
+  VideoRegistry[count] = this;
   VideoRegistryCount = count + 1;
   return 0;
 }
@@ -627,10 +621,10 @@ int Video::register_window_buffer(int x, int y, GraphicWin *window,
   decode_source_ = static_cast<Buffer *>(window);
   viewport_y_ = y;
   flags_ = flags & 0xFFFF7FFFU;
-  if ((flags & 0x20) != 0) flags_ |= 4;
+  if ((flags_ & 0x20) != 0) flags_ |= 4;
   const int count = VideoRegistryCount;
   if (count > 10) return 1;
-  video_store_registry_entry(count, this);
+  VideoRegistry[count] = this;
   VideoRegistryCount = count + 1;
   return 0;
 }
@@ -724,14 +718,16 @@ int Video::seek(int requested_frame) {
 // ORIGINAL: 0x00636740 Video_unk2 0x00636740-0x0063684D FILE
 // symbol    ?reset@Video@@QAEXXZ
 // TRIED: not chased to byte-exact (MISMATCH from instruction 1, 276 vs 269 bytes). Landed for the field-write order and call order, which match the disassembly one-for-one, including the `and ch,0x7f` / `test al,1` pair - a mask-after-copy on the SAME dword (`bit0` read before the 0x8000 bit is cleared).
+#if defined(_MSC_VER) && _MSC_VER == 1200
+#pragma function(memset)
+#endif
 void Video::reset() {
   // Unlike close(), reset preserves registration, coordinates and flags
   // other than the playback bit. This distinction is load-bearing in load().
-  frame_queue_.clear();
   state_4a8_ = 0;
-  const bool had_audio = (flags_ & 1) == 0;
+  frame_queue_.clear();
   flags_ &= 0xFFFF7FFFU;
-  if (had_audio) sound_state_.release();
+  if ((flags_ & 1) == 0) sound_state_.release();
   palette_.close();
   if (frame_index_table_ != 0) {
     free(frame_index_table_);
@@ -747,14 +743,21 @@ void Video::reset() {
     mmioClose(media_file_, MMIO_FHOPEN);
     media_file_ = 0;
   }
-  buffered_frame_ = target_frame_ = frame_count_ = 0;
-  video_chunk_id_ = audio_chunk_id_ = 0;
-  memset(&child_chunk_, 0, sizeof child_chunk_);
-  memset(&parent_chunk_, 0, sizeof parent_chunk_);
-  decode_output_flags_ = last_tick_ = 0;
-  memset(&source_rect_, 0, sizeof source_rect_);
+  buffered_frame_ = 0;
+  target_frame_ = 0;
+  frame_count_ = 0;
+  video_chunk_id_ = 0;
+  audio_chunk_id_ = 0;
+  memset(&child_chunk_, 0, 0x14);
+  memset(&parent_chunk_, 0, 0x14);
+  decode_output_flags_ = 0;
+  last_tick_ = 0;
+  set_rectangle_dimensions(&source_rect_, 0, 0, 0, 0);
   output_buffer_.close();
 }
+#if defined(_MSC_VER) && _MSC_VER == 1200
+#pragma intrinsic(memset)
+#endif
 
 // RECOVERY_ASSOCIATED: v1 switch_targets 0x00636960 0x00636F9C 0x00636FB4 0x006369D0
 // ORIGINAL: 0x00636960 Video_unk5 0x00636960-0x00636F99 FILE

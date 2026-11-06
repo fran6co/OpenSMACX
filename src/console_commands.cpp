@@ -549,45 +549,38 @@ void Console::editor_edit_veh(int vehicle_id) {
 // ORIGINAL: 0x004D2220 ?sentry@Console@@QAEXHH@Z 0x004D2220-0x004D24BB
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned original entry 004D2220; retained seed src/recovered/units/004d2220.cpp", "Native4D245B parameter store is Veh+1C waypoint_y[0], not waypoint_x[2]. Typed Chassis triad, stack links, receiver faction, network locking and mapped tile state preserve original landing/load paths.", "recovery/tasks/console-scenario-owner-wave.json; native scope expansions retain the original task baseline"], "reason": "Recover the complete Console command into its genuine owner using typed state and existing lifecycle/network APIs. Preserve original spans and retained seed evidence; this binding is not a byte, reference or runtime acceptance claim."}
 void Console::sentry(int vehicle_id, int parameter) { // 0x004D2220
-    const Veh &vehicle = Vehs[vehicle_id];
-    const VehPrototype &prototype = VehPrototypes[vehicle.proto_id];
-    const uint8_t triad = Chassis[prototype.chassis_id].triad;
-    Map *const tile = map_loc(vehicle.x, vehicle.y);
-    const int tile_owner = tile->val2 & 0x0F;
-
-    if (triad == TRIAD_AIR &&
-        !(((tile->bit & BIT_BASE_IN_TILE) != 0 && tile_owner < MaxPlayerNum) ||
-          (tile->bit & BIT_AIRBASE) != 0 ||
-          stack_check(vehicle_id, 6, 0x80, -1, -1) != 0)) {
+    if (Chassis[VehPrototypes[Vehs[vehicle_id].proto_id].chassis_id].triad == TRIAD_AIR
+        && base_who(Vehs[vehicle_id].x, Vehs[vehicle_id].y) < 0
+        && (map_loc(Vehs[vehicle_id].x, Vehs[vehicle_id].y)->bit & BIT_AIRBASE) == 0
+        && stack_check(vehicle_id, 6, 0x80, -1, -1) == 0) {
         return;
     }
 
-    const bool empty_air_destination =
-        triad == TRIAD_LAND &&
-        (((tile->bit & BIT_BASE_IN_TILE) == 0 || tile_owner >= MaxPlayerNum) &&
-         (tile->bit & BIT_AIRBASE) == 0);
-    if (empty_air_destination) {
+    if (Chassis[VehPrototypes[Vehs[vehicle_id].proto_id].chassis_id].triad == TRIAD_LAND
+        && base_who(Vehs[vehicle_id].x, Vehs[vehicle_id].y) < 0
+        && (map_loc(Vehs[vehicle_id].x, Vehs[vehicle_id].y)->bit & BIT_AIRBASE) == 0) {
+        // veh_top(vehicle_id), expanded in place by the image.
         int leader_id = vehicle_id;
-        while (Vehs[leader_id].prev_veh_id_stack >= 0) {
-            leader_id = Vehs[leader_id].prev_veh_id_stack;
-        }
-
-        for (int stack_id = leader_id; stack_id >= 0;
-             stack_id = Vehs[stack_id].next_veh_id_stack) {
-            const Veh &stack_vehicle = Vehs[stack_id];
-            const VehPrototype &stack_prototype =
-                VehPrototypes[stack_vehicle.proto_id];
-            if (Chassis[stack_prototype.chassis_id].triad != TRIAD_AIR ||
-                stack_prototype.plan != 7) {
-                continue;
+        if (vehicle_id >= 0) {
+            for (int16_t i = Vehs[leader_id].prev_veh_id_stack; i >= 0;
+                 i = Vehs[i].prev_veh_id_stack) {
+                leader_id = i;
             }
 
-            const bool alien = (Players[faction_id_].rule_flags & RFLAG_ALIEN) != 0;
-            const char *const picture = alien ? "alair_sm.pcx" : "air_sm.pcx";
-            if (!popp(ScriptPopupFile, "AIRLOAD", 0, picture, nullptr)) {
-                return;
+            for (int stack_id = leader_id; stack_id >= 0;
+                 stack_id = Vehs[stack_id].next_veh_id_stack) {
+                if (Chassis[VehPrototypes[Vehs[stack_id].proto_id].chassis_id].triad == TRIAD_AIR
+                    && VehPrototypes[Vehs[stack_id].proto_id].plan == 7) {
+                    if (Players[faction_id_].rule_flags & RFLAG_ALIEN) {
+                        if (!popp(ScriptPopupFile, "AIRLOAD", 0, "alair_sm.pcx", nullptr)) {
+                            return;
+                        }
+                    } else if (!popp(ScriptPopupFile, "AIRLOAD", 0, "air_sm.pcx", nullptr)) {
+                        return;
+                    }
+                    break;
+                }
             }
-            break;
         }
     }
 
@@ -789,38 +782,39 @@ void Console::corner_the_market() { // 0x004E2000
         return;
     }
 
-    const int faction_id = ConsoleGlobal.faction_id_;
-    if (!has_tech(Rules.tech_economic_victory, faction_id)) {
+    if (!has_tech(Rules.tech_economic_victory, ConsoleGlobal.faction_id_)) {
         return;
     }
 
-    bool has_headquarters = false;
+    const int faction_id = ConsoleGlobal.faction_id_;
+    int hq_base_id = -1;
     for (int base_id = 0; base_id < GameDataStateStorage.fields_.base_current_count_; ++base_id) {
-        if (Bases[base_id].faction_id_current == faction_id &&
-            has_fac_built(FAC_HEADQUARTERS, base_id)) {
-            has_headquarters = true;
-            break;
+        if (Bases[base_id].faction_id_current == faction_id) {
+            const int built = has_fac_built(FAC_HEADQUARTERS, base_id);
+            if (built) {
+                hq_base_id = base_id;
+                break;
+            }
         }
     }
-    if (!has_headquarters) {
+    if (hq_base_id < 0) {
         NetMsgPrimary.pop("CORNERNOHQ", 5000, 0, nullptr);
         return;
     }
 
-    PlayerData &faction = PlayersData[faction_id];
     const int amount = corner_market(faction_id);
-    const int proposed_turn = GameDataStateStorage.fields_.turn_current_num_ + Rules.turns_corner_gbl_energy_mrkt;
     parse_num(0, amount);
-    parse_num(1, static_cast<int>(game_year(proposed_turn)));
+    parse_num(1, static_cast<int>(game_year(
+        static_cast<int>(Rules.turns_corner_gbl_energy_mrkt) + GameDataStateStorage.fields_.turn_current_num_)));
 
-    if (faction.corner_market_turn > GameDataStateStorage.fields_.turn_current_num_) {
-        parse_num(0, static_cast<int>(game_year(faction.corner_market_turn)));
+    if (PlayersData[faction_id].corner_market_turn > GameDataStateStorage.fields_.turn_current_num_) {
+        parse_num(0, static_cast<int>(game_year(PlayersData[faction_id].corner_market_turn)));
         NetMsgPrimary.pop("CORNERALREADY", 5000, 0, nullptr);
         return;
     }
 
-    if (faction.energy_reserves < amount) {
-        parse_num(1, faction.energy_reserves);
+    if (PlayersData[faction_id].energy_reserves < amount) {
+        parse_num(1, PlayersData[faction_id].energy_reserves);
         NetMsgPrimary.pop("CORNERNOTYET", 5000, 0, nullptr);
         return;
     }
@@ -832,17 +826,17 @@ void Console::corner_the_market() { // 0x004E2000
         return;
     }
 
-    faction.corner_market_turn =
-        GameDataStateStorage.fields_.turn_current_num_ + Rules.turns_corner_gbl_energy_mrkt;
-    faction.corner_market_active = amount;
-    faction.energy_reserves -= amount;
+    PlayersData[faction_id].corner_market_turn =
+        static_cast<int>(Rules.turns_corner_gbl_energy_mrkt) + GameDataStateStorage.fields_.turn_current_num_;
+    PlayersData[faction_id].corner_market_active = amount;
+    PlayersData[faction_id].energy_reserves -= amount;
     synch_leader(faction_id);
-    message_data(0x244F, 0, faction_id, faction.corner_market_turn, amount, 0);
+    message_data(0x244F, 0, faction_id, PlayersData[faction_id].corner_market_turn, amount, 0);
     diplo_unlock();
     ConsoleGlobal.update_data(0);
 
-    parse_num(0, static_cast<int>(game_year(faction.corner_market_turn)));
-    parse_num(1, faction.corner_market_active);
+    parse_num(0, static_cast<int>(game_year(PlayersData[faction_id].corner_market_turn)));
+    parse_num(1, PlayersData[faction_id].corner_market_active);
     popp(ScriptPopupFile, "CORNERING", 0, "econwin_sm.pcx", nullptr);
 }
 
@@ -1096,35 +1090,31 @@ void Console::road_to(int veh_id, int cursor_mode) {
 // ORIGINAL: 0x004D8A70 ?automate@Console@@QAEXHH@Z 0x004D8A70-0x004D8CC9
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/004d8a70.cpp"], "reason": "Seed 004d8a70 identifies the automation order and extent; typed Veh, prototype, chassis, terrain and NetDaemon owners match its accessed records."}
 void Console::automate(int veh_id, int order) {
-    Veh &vehicle = Vehs[veh_id];
-    const VehPrototype &prototype = VehPrototypes[vehicle.proto_id];
-    const RulesChassis &chassis = Chassis[prototype.chassis_id];
-    const Map &tile = map_tiles()[vehicle.y * MapLongitude + (vehicle.x >> 1)];
-    bool direct_lock = false;
-    if (prototype.plan == 9) {
-        if (order == 1 || order == 2) {
-            if (chassis.triad != TRIAD_LAND || (tile.climate & ~0x1F) < 0x60) {
-                return;
-            }
+    if (VehPrototypes[Vehs[veh_id].proto_id].plan == 9) {
+        if ((order == 2 || order == 1) &&
+            (Chassis[VehPrototypes[Vehs[veh_id].proto_id].chassis_id].triad != TRIAD_LAND ||
+             is_ocean(Vehs[veh_id].x, Vehs[veh_id].y))) {
+            return;
         }
         if (order == 2) {
             if (!has_tech(Terraforming[TERRA_FARM].prerequisite_tech[0],
-                          vehicle.faction_id)) {
+                          Vehs[veh_id].faction_id)) {
                 return;
             }
-            direct_lock = true;
         }
-        if (!direct_lock && (order == 4 || order == 5) &&
-            base_who(vehicle.x, vehicle.y) >= 0) {
+        if ((order == 5 || order == 4) &&
+            base_who(Vehs[veh_id].x, Vehs[veh_id].y) >= 0) {
             return;
         }
     }
-    if (!direct_lock && order == 10) {
-        if (chassis.triad != TRIAD_AIR ||
-            Weapon[prototype.weapon_id].offense_rating == 0) {
+    if (order == 10) {
+        if (Chassis[VehPrototypes[Vehs[veh_id].proto_id].chassis_id].triad != TRIAD_AIR) {
             return;
         }
-        vehicle.order = 0;
+        if (Weapon[VehPrototypes[Vehs[veh_id].proto_id].weapon_id].offense_rating == 0) {
+            return;
+        }
+        Vehs[veh_id].order = 0;
         ConsoleGlobal.cursor_on(0xB, -1);
         return;
     }
@@ -1132,29 +1122,21 @@ void Console::automate(int veh_id, int order) {
         return;
     }
     if (order == 0xB) {
-        Veh &locked_vehicle = Vehs[veh_id];
-        const VehPrototype &locked_prototype =
-            VehPrototypes[locked_vehicle.proto_id];
-        const RulesChassis &locked_chassis = Chassis[locked_prototype.chassis_id];
-        locked_vehicle.waypoint_x[1] = locked_vehicle.x;
-        locked_vehicle.waypoint_y[1] = locked_vehicle.y;
-        if (locked_chassis.range != 0) {
+        Vehs[veh_id].waypoint_x[1] = Vehs[veh_id].x;
+        Vehs[veh_id].waypoint_y[1] = Vehs[veh_id].y;
+        if (Chassis[VehPrototypes[Vehs[veh_id].proto_id].chassis_id].range != 0) {
             action_home(veh_id, 0);
             if (Vehs[veh_id].order == 0x18) {
-                Veh &after_home_vehicle = Vehs[veh_id];
-                after_home_vehicle.waypoint_x[1] =
-                    after_home_vehicle.waypoint_x[0];
-                after_home_vehicle.waypoint_y[1] =
-                    after_home_vehicle.waypoint_y[0];
+                Vehs[veh_id].waypoint_x[1] = Vehs[veh_id].waypoint_x[0];
+                Vehs[veh_id].waypoint_y[1] = Vehs[veh_id].waypoint_y[0];
             }
             Vehs[veh_id].order = 0;
         }
     }
-    Veh &updated_vehicle = Vehs[veh_id];
-    updated_vehicle.order_auto_type = static_cast<uint8_t>(order);
-    updated_vehicle.order = 0;
-    updated_vehicle.state = (updated_vehicle.state & 0xFCFFFFFF) | 0x200;
-    updated_vehicle.waypoint_count = 0;
+    Vehs[veh_id].order_auto_type = static_cast<uint8_t>(order);
+    Vehs[veh_id].order = 0;
+    Vehs[veh_id].state = (Vehs[veh_id].state & 0xFCFFFFFF) | 0x200;
+    Vehs[veh_id].waypoint_count = 0;
     synch_veh(veh_id);
     NetDaemonNet.await_synch();
     NetDaemonNet.unlock_veh();
@@ -1234,33 +1216,30 @@ void Console::disband(int veh_id) {
 
     if (NetDaemonNet.lock_veh(&veh_id, 4, -1, -1, 0)) return;
 
-    Veh &vehicle = Vehs[veh_id];
-    if (vehicle.faction_id != faction_id_ &&
+    if (Vehs[veh_id].faction_id != faction_id_ &&
         (IsMultiplayerNet || !(GameDataStateStorage.fields_.game_state_ & 0x80))) {
         NetDaemonNet.unlock_veh();
         return;
     }
 
-    const int x = vehicle.x;
-    const int y = vehicle.y;
     field_23BE4_ = 0;
-    const int base_id = base_at(x, y);
-    const int display_proto_id = vehicle.proto_id;
-    parse_says(0, VehPrototypes[display_proto_id].veh_name, -1, -1);
+    const int base_id = base_at(Vehs[veh_id].x, Vehs[veh_id].y);
+    parse_says(0, VehPrototypes[Vehs[veh_id].proto_id].veh_name, -1, -1);
     StringTemp[0] = 0;
     strcat(StringTemp, "DISBAND");
     if (base_id < 0) strcat(StringTemp, "2");
 
-    const int console_faction = faction_id_;
-    const bool alien = (Players[console_faction].rule_flags & 0x80) != 0;
-    const int triad = Chassis[VehPrototypes[display_proto_id].chassis_id].triad;
     const char *picture;
-    if (alien) {
-        picture = triad == 2 ? "alair_sm.pcx"
-            : triad == 1 ? "navun_sm.pcx" : "alunit_sm.pcx";
+    if (Players[faction_id_].rule_flags & 0x80) {
+        picture = Chassis[VehPrototypes[Vehs[veh_id].proto_id].chassis_id].triad == 2
+            ? "alair_sm.pcx"
+            : Chassis[VehPrototypes[Vehs[veh_id].proto_id].chassis_id].triad == 1
+                ? "navun_sm.pcx" : "alunit_sm.pcx";
     } else {
-        picture = triad == 2 ? "air_sm.pcx"
-            : triad == 1 ? "navun_sm.pcx" : "unit_sm.pcx";
+        picture = Chassis[VehPrototypes[Vehs[veh_id].proto_id].chassis_id].triad == 2
+            ? "air_sm.pcx"
+            : Chassis[VehPrototypes[Vehs[veh_id].proto_id].chassis_id].triad == 1
+                ? "navun_sm.pcx" : "unit_sm.pcx";
     }
 
     const int answer = popp(ScriptPopupFile, StringTemp, 0, picture, nullptr);
@@ -1270,15 +1249,12 @@ void Console::disband(int veh_id) {
     }
 
     if (base_id >= 0) {
-        const int refund_proto_id = Vehs[veh_id].proto_id;
-        if ((refund_proto_id >= 0x40 ||
-             (Weapon[VehPrototypes[refund_proto_id].weapon_id].offense_rating >= 0 &&
-              refund_proto_id != 15)) && answer != 2) {
-            const int faction = Vehs[veh_id].faction_id;
-            const int factor = cost_factor(faction, 1, -1);
-            const int cost = VehPrototypes[Vehs[veh_id].proto_id].cost;
-            const int refund = factor * cost / 2;
-            Bases[base_id].minerals_accumulated += refund;
+        if ((Vehs[veh_id].proto_id >= 0x40 ||
+             (Weapon[VehPrototypes[Vehs[veh_id].proto_id].weapon_id].offense_rating >= 0 &&
+              Vehs[veh_id].proto_id != 15)) && answer != 2) {
+            Bases[base_id].minerals_accumulated +=
+                cost_factor(Vehs[veh_id].faction_id, 1, -1) *
+                VehPrototypes[Vehs[veh_id].proto_id].cost / 2;
             Bases[base_id].minerals_accumulated_2 =
                 Bases[base_id].minerals_accumulated;
             Bases[base_id].production_id_last = Bases[base_id].queue_production_id[0];
@@ -1318,23 +1294,19 @@ void Console::set_road_to(int veh_id, int x_coord, int y_coord, int order) {
         return;
     }
 
-    Veh &vehicle = Vehs[veh_id];
-    int distance_x = abs(x_coord - vehicle.x);
-    if ((MapIsFlat & 1) == 0 && distance_x > static_cast<int>(MapLongitude)) {
-        distance_x = MapLongitudeBounds - distance_x;
-    }
-    const int distance_y = abs(y_coord - vehicle.y);
-    if (((distance_y + distance_x) & ~1) < 2) {
+    const int veh_y = Vehs[veh_id].y;
+    const int veh_x = Vehs[veh_id].x;
+    if (((x_dist(x_coord, veh_x) + abs(y_coord - veh_y)) & ~1) < 2) {
         return;
     }
 
     const int target_index = MapLongitude * y_coord + (x_coord >> 1);
-    const int origin_index = MapLongitude * vehicle.y + (vehicle.x >> 1);
     if ((map_tiles()[target_index].climate & ~0x1F) < 0x60) {
         NetMsgPrimary.pop(SetRoadToNotInOcean, 5000, 0, 0);
         return;
     }
-    if (map_tiles()[target_index].region != map_tiles()[origin_index].region) {
+    if (map_tiles()[target_index].region !=
+        map_tiles()[MapLongitude * Vehs[veh_id].y + (Vehs[veh_id].x >> 1)].region) {
         return;
     }
 
@@ -1380,14 +1352,17 @@ void Console::hold(int veh_id, int waypoint_y) {
     if (VehPrototypes[Vehs[veh_id].proto_id].plan != PLAN_ALIEN_ARTIFACT) {
         return;
     }
+    // Base-owner test laid out as the image has it (not base_who's shape).
     Map *owner_tile = map_loc(x_coord, y_coord);
     int owner;
     if ((owner_tile->bit & BIT_BASE_IN_TILE) == 0) {
         owner = -1;
     } else {
-        owner = owner_tile->val2 & 0xF;
-        if (owner >= MaxPlayerNum) {
+        const int tile_owner = owner_tile->val2 & 0xF;
+        if (tile_owner >= MaxPlayerNum) {
             owner = -1;
+        } else {
+            owner = tile_owner;
         }
     }
     if (owner == Vehs[veh_id].faction_id) {
@@ -1707,41 +1682,28 @@ void Console::editor_load() {
 
 void Console::editor_generate() {
     auto_undo();
-
-    int count = MapArea;
-    Map *tile = map_tiles();
-
     GameDataStateStorage.fields_.vehicle_current_count_ = 0;
     GameDataStateStorage.fields_.base_current_count_ = 0;
     ConsoleGlobal.cursor_active_ = 0;
     ConsoleGlobal.selected_vehicle_ = -1;
-
-    if (count > 0) {
-        int i = 0;
-        do {
-            i++;
-            tile->bit &= ~(BIT_BASE_IN_TILE | BIT_VEH_IN_TILE);
-            ++tile;
-        } while (i < MapArea);
+    Map *tile = MapTiles;
+    for (int i = 0; i < MapArea; ++i, ++tile) {
+        tile->bit &= ~(BIT_BASE_IN_TILE | BIT_VEH_IN_TILE);
     }
 
     ConsoleGlobal.field_23BF8_ = 0;
-    GameDataStateStorage.fields_.game_state_ = GameDataStateStorage.fields_.game_state_ | 4;
+    GameDataStateStorage.fields_.game_state_ |= 4;
     // 0x004E1033 loads slot zero before accessing the window's +0x1DD98
     // member. The array itself is neither the receiver nor member storage.
     MapWinTable[0]->zoom_offset_ = -14;
     MapWinTable[0]->draw_map(1);
 
-    int flags = GameDataStateStorage.fields_.game_state_;
-    int wasSet = flags & 0x80;
-    flags |= 0x80;
-    GameDataStateStorage.fields_.game_state_ = flags;
+    const int was_set = GameDataStateStorage.fields_.game_state_ & 0x80;
+    GameDataStateStorage.fields_.game_state_ |= 0x80;
     world_build();
     ::draw_map(1);
-    if (wasSet == 0) {
-        int f2 = GameDataStateStorage.fields_.game_state_;
-        f2 &= ~0x80;
-        GameDataStateStorage.fields_.game_state_ = f2;
+    if (was_set == 0) {
+        GameDataStateStorage.fields_.game_state_ &= ~0x80;
         ::draw_map(1);
     }
 
@@ -1856,7 +1818,6 @@ void Console::editor_clear_random() {
     auto_undo();
     if (MapRandSeed == 0) {
         MapRandSeed = random(0, 0x7fff) + 1;
-        ::draw_map(1);
     } else {
         MapRandSeed = 0;
         Map *tile = MapTiles;
@@ -1868,8 +1829,8 @@ void Console::editor_clear_random() {
                 }
             }
         }
-        ::draw_map(1);
     }
+    ::draw_map(1);
 }
 
 // ORIGINAL: 0x004E14A0 ?editor_rockiness@Console@@QAEXXZ 0x004E14A0-0x004E14C8 BYTE_EXACT
@@ -2498,20 +2459,63 @@ void Console::editor_personality() {
     PluralityDefault = Players[faction].is_noun_plural;
     parse_says(2, Players[faction].noun_faction, -1, -1);
 
-    PlayerData &data = PlayersData[faction];
-    unsigned int checks = PopupWriteCheckState;
-    checks = data.ai_growth ? checks | 1u : checks & ~1u;
-    checks = data.ai_tech ? checks | 2u : checks & ~2u;
-    checks = data.ai_wealth ? checks | 4u : checks & ~4u;
-    checks = data.ai_power ? checks | 8u : checks & ~8u;
-    checks = data.ai_fight >= 1 ? checks | 0x10u : checks & ~0x10u;
-    checks = data.ai_fight < 0 ? checks | 0x20u : checks & ~0x20u;
-    checks = (data.flags & 0x00800000u) ? checks | 0x40u : checks & ~0x40u;
-    checks = (data.flags & 0x00400000u) ? checks | 0x80u : checks & ~0x80u;
-    checks = (data.flags & 0x01000000u) ? checks | 0x100u : checks & ~0x100u;
-    checks = (data.flags & 0x02000000u) ? checks | 0x200u : checks & ~0x200u;
-    PopupWriteCheckState = (data.flags_ext & 0x20u) ? checks | 0x400u : checks & ~0x400u;
+    if (PlayersData[faction].ai_growth) {
+        PopupWriteCheckState |= 1;
+    } else {
+        PopupWriteCheckState &= ~1;
+    }
+    if (PlayersData[faction].ai_tech) {
+        PopupWriteCheckState |= 2;
+    } else {
+        PopupWriteCheckState &= ~2;
+    }
+    if (PlayersData[faction].ai_wealth) {
+        PopupWriteCheckState |= 4;
+    } else {
+        PopupWriteCheckState &= ~4;
+    }
+    if (PlayersData[faction].ai_power) {
+        PopupWriteCheckState |= 8;
+    } else {
+        PopupWriteCheckState &= ~8;
+    }
+    if (PlayersData[faction].ai_fight > 0) {
+        PopupWriteCheckState |= 0x10;
+    } else {
+        PopupWriteCheckState &= ~0x10;
+    }
+    if (PlayersData[faction].ai_fight < 0) {
+        PopupWriteCheckState |= 0x20;
+    } else {
+        PopupWriteCheckState &= ~0x20;
+    }
+    if (PlayersData[faction].flags & 0x00800000u) {
+        PopupWriteCheckState |= 0x40;
+    } else {
+        PopupWriteCheckState &= ~0x40;
+    }
+    if (PlayersData[faction].flags & 0x00400000u) {
+        PopupWriteCheckState |= 0x80;
+    } else {
+        PopupWriteCheckState &= ~0x80;
+    }
+    if (PlayersData[faction].flags & 0x01000000u) {
+        PopupWriteCheckState |= 0x100;
+    } else {
+        PopupWriteCheckState &= ~0x100;
+    }
+    if (PlayersData[faction].flags & 0x02000000u) {
+        PopupWriteCheckState |= 0x200;
+    } else {
+        PopupWriteCheckState &= ~0x200;
+    }
+    if (PlayersData[faction].flags_ext & 0x20u) {
+        PopupWriteCheckState |= 0x400;
+    } else {
+        PopupWriteCheckState &= ~0x400;
+    }
 
+    PlayerData &data = PlayersData[faction];
     if (x_pop_short("AIEDITOR", 0x41, nullptr) < 0) {
         return;
     }
@@ -2557,21 +2561,71 @@ void Console::editor_strategy() {
     PluralityDefault = Players[faction].is_noun_plural;
     parse_says(2, Players[faction].noun_faction, -1, -1);
 
-    const unsigned int flags = PlayersData[faction].flags;
-    unsigned int checks = PopupWriteCheckState;
-    checks = (flags & 0x04000000u) ? checks | 1u : checks & ~1u;
-    checks = (flags & 0x08000000u) ? checks | 2u : checks & ~2u;
-    checks = (flags & 0x10000000u) ? checks | 4u : checks & ~4u;
-    checks = (flags & 0x80000000u) ? checks | 8u : checks & ~8u;
-    checks = (flags & 0x40000000u) ? checks | 0x10u : checks & ~0x10u;
-    checks = (flags & 0x20000000u) ? checks | 0x20u : checks & ~0x20u;
-    checks = (flags & 0x00200000u) ? checks | 0x40u : checks & ~0x40u;
-    checks = (PlayersData[faction].flags_ext & 1u) ? checks | 0x80u : checks & ~0x80u;
-    checks = (PlayersData[faction].flags_ext & 2u) ? checks | 0x100u : checks & ~0x100u;
-    checks = (PlayersData[faction].flags_ext & 4u) ? checks | 0x200u : checks & ~0x200u;
-    checks = (PlayersData[faction].flags_ext & 8u) ? checks | 0x400u : checks & ~0x400u;
-    checks = (PlayersData[faction].flags_ext & 0x10u) ? checks | 0x800u : checks & ~0x800u;
-    PopupWriteCheckState = (PlayersData[faction].flags_ext & 0x40u) ? checks | 0x1000u : checks & ~0x1000u;
+    if (PlayersData[faction].flags & 0x04000000u) {
+        PopupWriteCheckState |= 1;
+    } else {
+        PopupWriteCheckState &= ~1;
+    }
+    if (PlayersData[faction].flags & 0x08000000u) {
+        PopupWriteCheckState |= 2;
+    } else {
+        PopupWriteCheckState &= ~2;
+    }
+    if (PlayersData[faction].flags & 0x10000000u) {
+        PopupWriteCheckState |= 4;
+    } else {
+        PopupWriteCheckState &= ~4;
+    }
+    if (PlayersData[faction].flags & 0x80000000u) {
+        PopupWriteCheckState |= 8;
+    } else {
+        PopupWriteCheckState &= ~8;
+    }
+    if (PlayersData[faction].flags & 0x40000000u) {
+        PopupWriteCheckState |= 0x10;
+    } else {
+        PopupWriteCheckState &= ~0x10;
+    }
+    if (PlayersData[faction].flags & 0x20000000u) {
+        PopupWriteCheckState |= 0x20;
+    } else {
+        PopupWriteCheckState &= ~0x20;
+    }
+    if (PlayersData[faction].flags & 0x00200000u) {
+        PopupWriteCheckState |= 0x40;
+    } else {
+        PopupWriteCheckState &= ~0x40;
+    }
+    if (PlayersData[faction].flags_ext & 1u) {
+        PopupWriteCheckState |= 0x80;
+    } else {
+        PopupWriteCheckState &= ~0x80;
+    }
+    if (PlayersData[faction].flags_ext & 2u) {
+        PopupWriteCheckState |= 0x100;
+    } else {
+        PopupWriteCheckState &= ~0x100;
+    }
+    if (PlayersData[faction].flags_ext & 4u) {
+        PopupWriteCheckState |= 0x200;
+    } else {
+        PopupWriteCheckState &= ~0x200;
+    }
+    if (PlayersData[faction].flags_ext & 8u) {
+        PopupWriteCheckState |= 0x400;
+    } else {
+        PopupWriteCheckState &= ~0x400;
+    }
+    if (PlayersData[faction].flags_ext & 0x10u) {
+        PopupWriteCheckState |= 0x800;
+    } else {
+        PopupWriteCheckState &= ~0x800;
+    }
+    if (PlayersData[faction].flags_ext & 0x40u) {
+        PopupWriteCheckState |= 0x1000;
+    } else {
+        PopupWriteCheckState &= ~0x1000;
+    }
 
     const int result = x_pop_short("AIEDITOR2", 0x41, nullptr);
     if (result < 0) {

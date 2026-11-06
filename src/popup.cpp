@@ -148,6 +148,8 @@ void __cdecl popups_normal() {
     BasePop::set_def_string_color2(MessageWinTextColor, -1, 1, 1);
     BasePop::set_def_string_color3(MessageWinTextColor, -1, 1, 1);
     BasePop::set_def_string_color_hyper(2, -1, 1, 1);
+    int bevel_upper = PopupThemeBevelUpper;
+    int bevel_lower = PopupThemeBevelLower;
     BasePopDefaultField31B0[1] = PopupThemeSurfaceColor;
     MenuDefaultSelectionColor = PopupThemeSurfaceColor;
     MenuDefaultSelectionTextColor = MessageWinTextColor;
@@ -155,14 +157,14 @@ void __cdecl popups_normal() {
     WinStaticDefaults[6] = InterfaceBottomBorderThickness;
     WinStaticDefaults[1] = InterfaceCaptionHeight;
     BasePopDefaultField3104[2] = 0;
-    BasePopButtonDefaults.bevel_upper = PopupThemeBevelUpper;
-    BasePopButtonDefaults.bevel_lower = PopupThemeBevelLower;
+    BasePopButtonDefaults.bevel_upper = bevel_upper;
+    BasePopButtonDefaults.bevel_lower = bevel_lower;
     BasePopDefaultField31B0[0] = 0;
     MenuDefaultColor1 = MenuDefaultColor2 = 0;
     WinStaticDefaults[5] = InterfaceBorderThickness;
     DialogDefaults[3] = 2;
-    DialogDefaults[1] = PopupThemeBevelUpper;
-    DialogDefaults[2] = PopupThemeBevelLower;
+    DialogDefaults[1] = bevel_upper;
+    DialogDefaults[2] = bevel_lower;
     BaseButton::set_def_text_color(0, -1, 1, 1);
     DialogDefaults[0] = PopupThemeSurfaceColor;
     BaseButtonA94Default = 0;
@@ -2071,30 +2073,22 @@ Status: Coverage transcription - unclaimed body, seed
 */
 
 int Popup::on_dialog_item_back_draw(GraphicWin *a1, int, int a3, RECT *a4) {
-    if (a1 == 0) {
-        return 0;
-    }
-    if (a4 == 0) {
-        return 0;
-    }
-    if (static_cast<int>(field_30AC_) / 10000 == 1000) {
+    if (a1 == 0 || a4 == 0 ||
+        static_cast<int>(field_30AC_) / 10000 == 1000) {
         return 0;
     }
 
     Buffer *const buffer = static_cast<Buffer *>(a1);
     buffer->restore_clip();
 
-    RECT local_rect;
-    local_rect.left = a4->left;
-    local_rect.top = a4->top;
-    local_rect.right = a4->right;
-    local_rect.bottom = a4->bottom;
+    RECT local_rect = *a4;
 
     if (dialogs_.kind_ == 1) {
-        Sprite *const spr = &g_IFACE_CLOSE_X_SPRITES[a3];
         local_rect.left += 3;
-        const int y = local_rect.top +
-                      (local_rect.bottom - spr->height() - local_rect.top) / 2;
+        const int y = local_rect.top + (local_rect.bottom -
+                                        g_IFACE_CLOSE_X_SPRITES[a3].height() -
+                                        local_rect.top) / 2;
+        Sprite *const spr = &g_IFACE_CLOSE_X_SPRITES[a3];
         spr->draw(buffer, spr->transparent_index(), local_rect.left, y, 1, 1);
         local_rect.left += 0x15;
     }

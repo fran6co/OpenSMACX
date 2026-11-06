@@ -771,9 +771,9 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl owner_set(int x, int y, int faction_id) {
-    // Through a pointer to the field; see `code_set` for why.
-    uint8_t *const field = &map_loc(x, y)->val2;
-    *field = static_cast<uint8_t>((*field & 0xF0) | (faction_id & 0xF));
+    Map *tile = map_loc(x, y);
+    tile->val2 &= 0xF0;
+    tile->val2 |= faction_id & 0xF;
 }
 /*
 Purpose: Set the site for the specified tile.
@@ -1250,9 +1250,9 @@ int __cdecl bonus_at(int x, int y, int UNUSED(unk_val)) {
         }
     }
     int avg = (x + y) >> 1;
-    x -= avg;
-    int chk = (avg & 3) + 4 * (x & 3);
-    if (!has_rsc_bonus && chk != ((-5 * (avg >> 2) - 3 * (x >> 2) + MapRandSeed) & 0xF)) {
+    int x_diff = x - avg;
+    int chk = (avg & 3) + 4 * (x_diff & 3);
+    if (!has_rsc_bonus && chk != ((-5 * (avg >> 2) - 3 * (x_diff >> 2) + MapRandSeed) & 0xF)) {
         return 0;
     }
     if (alt < ALT_OCEAN_SHELF) {
@@ -1596,49 +1596,44 @@ remove_landmark:
 // ORIGINAL: 0x005927D0 ?delete_landmark@@YAXHH@Z 0x005927D0-0x00592938
 // RECOVERY_BINDING: v1 {"evidence": ["git:1fe327399e8313c7d34d3b190f391eeeafdb0c28:src/recovered/units/005927d0.cpp", "pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "recovery/tasks/game-logic-seed-owner-coverage.json"], "reason": "Recover landmark clearing through real Map members, shared source-owned lookup arrays and MapWin callbacks. Preserve the duplicate Flat-table clear, numeric9,999,999 cache sentinel, store-before-clear order and native absence of extra window/bounds guards. Historical mappings and seed lessons are retained; no new byte/layout/runtime/linked-preservation claim."}
 void __cdecl delete_landmark(int x, int y) {
-    Map *tile = map_tiles() + MapLongitude * y + (x >> 1);
-    const uint32_t old_flags = tile->bit2;
+    uint32_t *const field = &map_loc(x, y)->bit2;
+    const uint32_t old_flags = *field;
     if (old_flags == 0) {
         return;
     }
 
-    tile->bit2 = old_flags & ~0x80u;
-    const int type = static_cast<int32_t>(tile->bit2) >> 24;
+    *field = old_flags & ~0x80u;
+    const int type = static_cast<int32_t>(map_loc(x, y)->bit2) >> 24;
     if (type < 0) {
         return;
     }
 
-    const unsigned char *digits = AltDirectionTable + type * 5;
     if ((old_flags & 0x1u) != 0) {
-        for (int i = 0; i < 5; ++i) AltBonusMoist[digits[i]] = 0;
+        for (int i = 0; i < 5; ++i) AltBonusMoist[AltDirectionTable[type * 5 + i]] = 0;
     }
     if ((old_flags & 0x2u) != 0) {
-        for (int i = 0; i < 5; ++i) AltBonusArid[digits[i]] = 0;
+        for (int i = 0; i < 5; ++i) AltBonusArid[AltDirectionTable[type * 5 + i]] = 0;
     }
     if ((old_flags & 0x200u) != 0) {
-        for (int i = 0; i < 5; ++i) AltBonusRainy[digits[i]] = 0;
+        for (int i = 0; i < 5; ++i) AltBonusRainy[AltDirectionTable[type * 5 + i]] = 0;
     }
     if ((old_flags & 0x100u) != 0) {
-        for (int i = 0; i < 5; ++i) AltBonusFlat[digits[i]] = 0;
+        for (int i = 0; i < 5; ++i) AltBonusFlat[AltDirectionTable[type * 5 + i]] = 0;
     }
     if ((old_flags & 0x800u) != 0) {
         // The native 0x59288C arm clears the flat table again. Keep this
         // duplicate rather than assigning a guessed table to the ridge flag.
-        for (int i = 0; i < 5; ++i) AltBonusFlat[digits[i]] = 0;
+        for (int i = 0; i < 5; ++i) AltBonusFlat[AltDirectionTable[type * 5 + i]] = 0;
     }
 
-    const uint32_t encoded_type =
-        (static_cast<uint32_t>(-1 - type) & 0xffu) << 24;
-    tile->bit2 = (tile->bit2 & 0x00ffffffu) | encoded_type;
-    UnkBitfield1 |= 4u;
+    code_set(x, y, -1 - type);
 
-    for (size_t slot = 0; slot < MapWinTableSlots; ++slot) {
-        MapWin *window = MapWinTable[slot];
-        if (window->view_active_ != 0) {
+    for (int slot = 0; slot < static_cast<int>(MapWinTableSlots); ++slot) {
+        if (MapWinTable[slot]->view_active_ != 0) {
             // Native 0x592915 stores immediate 0x0098967F at +8; this is a
             // numeric cache sentinel (9,999,999), not a pointer.
-            window->field_8_ = 0x0098967Fu;
-            window->clear_alt(x, y, 1);
+            MapWinTable[slot]->field_8_ = 0x0098967Fu;
+            MapWinTable[slot]->clear_alt(x, y, 1);
         }
     }
 }
@@ -1688,26 +1683,24 @@ void __cdecl fixup_landmarks() {
 
     for (int y = 0; y < MapLatitudeBounds; y++) {
         for (int x = y & 1; x < MapLongitudeBounds; x += 2) {
-            Map *tile = map_loc(x, y);
-            if (tile->bit2 == 0) {
+            const uint32_t bit2 = map_loc(x, y)->bit2;
+            if (bit2 == 0) {
                 continue;
             }
             // Native5929F3 uses SAR, not an unsigned top-byte extraction.
-            int type = static_cast<int32_t>(tile->bit2) >> 24;
+            int type = static_cast<int32_t>(map_loc(x, y)->bit2) >> 24;
             if (type >= 0) {
                 continue;
             }
             type = -1 - type;
-            const unsigned char *digits = AltDirectionTable + type * 5;
-            if (tile->bit2 & BIT2_VOLCANO) {
+            if (bit2 & BIT2_VOLCANO) {
                 for (int i = 0; i < 5; i++) {
-                    AltBonusArid[digits[i]] = 0;
+                    AltBonusArid[AltDirectionTable[type * 5 + i]] = 0;
                 }
             }
-            if (tile->bit2 & BIT2_CRATER) {
+            if (bit2 & BIT2_CRATER) {
                 for (int i = 0; i < 5; i++) {
-                    // Native592A1D resets EBX before the crater byte stores.
-                    AltBonusMoist[digits[i]] = 0;
+                    AltBonusMoist[AltDirectionTable[type * 5 + i]] = 0;
                 }
             }
         }
@@ -1828,51 +1821,35 @@ void __cdecl clear_dirty() {
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/00592b40.cpp: canonical full559byte original span and retained TRIED evidence", "historical pre-move source:src/map.cpp contained map_init allocation/failure and map read/write lifetime", "source:recovery/tasks/map-allocation-owner-closure.json: coordinator-reviewed producer/reader closure"], "reason": "Original592B40 is the map allocation owners shrink/resample producer: it saves prior allocation/dimensions, obtains new map storage through map_init, copies terrain fields and releases old tiles. Source-owned pointer cells preserve actual allocation and consumer relationships."}
 // symbol    ?map_resample@@YAXHH@Z
 void __cdecl map_resample(int width, int height) {
-    int old_width = MapLongitudeBounds;
-    int old_height = MapLatitudeBounds;
-    MapResamplePreviousWidth = old_width;
-    MapResamplePreviousHeight = old_height;
-    if (width >= old_width || height >= old_height) {
+    MapResamplePreviousWidth = MapLongitudeBounds;
+    MapResamplePreviousHeight = MapLatitudeBounds;
+    if (width >= MapLongitudeBounds || height >= MapLatitudeBounds) {
         return;
     }
-    Map *old_tiles = map_tiles();
-    MapResamplePreviousTiles = old_tiles;
+    MapResamplePreviousTiles = map_tiles();
     map_tiles() = 0;
     MapLongitudeBounds = width;
     MapLatitudeBounds = height;
     // The original does not release the previous abstract allocation here,
     // nor test map_init's result. Preserve that lifecycle and failure path.
     map_init();
-    MapSeaLevelCouncil = 0;
-    MapLandmarkCount = 0;
-    MapSeaLevel = 0;
-    MapRandSeed = random(0, 0x7fff) + 1;
-    Map *new_tiles = map_tiles();
-    for (int i = 0; i < MapArea; ++i) {
-        Map *tile = new_tiles + i;
-        tile->climate = ALT_BIT_OCEAN;
-        tile->contour = 20;
-        tile->val2 = 15;
-        tile->region = 0;
-        tile->visibility = 0;
-        tile->bit = 0;
-        tile->val3 = 0;
-        ZeroMemory(&tile->bit2, sizeof(tile->bit2) + sizeof(tile->bit_visible));
-    }
+    map_wipe();
     for (int y = 0; y < MapLatitudeBounds; ++y) {
         for (int x = y & 1; x < MapLongitudeBounds; x += 2) {
+            int source_x = MapResamplePreviousWidth * x / MapLongitudeBounds;
             int source_y = MapResamplePreviousHeight * y / MapLatitudeBounds;
-            int source_x = (MapResamplePreviousWidth * x / MapLongitudeBounds) >> 1;
-            Map *destination = new_tiles + MapLongitude * y + (x >> 1);
-            Map *source = old_tiles + (old_width >> 1) * source_y + source_x;
-            destination->contour = source->contour;
-            destination->bit = source->bit;
-            destination->bit2 = source->bit2;
-            destination->val3 = source->val3 & 0xc0;
+            map_tiles()[MapLongitude * y + (x >> 1)].contour =
+                MapResamplePreviousTiles[(MapResamplePreviousWidth >> 1) * source_y + (source_x >> 1)].contour;
+            map_tiles()[MapLongitude * y + (x >> 1)].bit =
+                MapResamplePreviousTiles[(MapResamplePreviousWidth >> 1) * source_y + (source_x >> 1)].bit;
+            map_tiles()[MapLongitude * y + (x >> 1)].bit2 =
+                MapResamplePreviousTiles[(MapResamplePreviousWidth >> 1) * source_y + (source_x >> 1)].bit2;
+            map_tiles()[MapLongitude * y + (x >> 1)].val3 =
+                MapResamplePreviousTiles[(MapResamplePreviousWidth >> 1) * source_y + (source_x >> 1)].val3 & 0xc0;
         }
     }
-    if (old_tiles) {
-        free(old_tiles);
+    if (MapResamplePreviousTiles) {
+        free(MapResamplePreviousTiles);
     }
     // The scratch pointer deliberately remains stale after free, as original.
     world_climate();
