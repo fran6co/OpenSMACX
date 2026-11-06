@@ -1,6 +1,32 @@
 # Recovery workflow
 
-This is the active coordinator/worker contract. The old address-only batch,
+## Current mode: lean match loop (supersedes conflicting sections)
+
+On 2026-11-06 the user chose a lean byte-matching loop. Coverage is
+effectively complete, and the remaining work is matching about 1,570 unclaimed
+functions and restoring 42 regressed claims. `AGENTS.md`, "Current mode: lean
+match loop", defines it. In short:
+
+- Iterate per translation unit with `recover measure` and `recover diff`, and
+  bank results only with `recover record`.
+- The byte match is the behavioral test. Add no new host or source-text tests
+  for game functions.
+- Create no per-change task/history JSON, journals, review reports or lessons
+  entries. Use source annotations and commit messages.
+- Each commit builds and links, and `recover check-claims` stays clean. Run the
+  full `check-matches` once per batch.
+- Framework work is frozen unless a measured match is blocked by it.
+- Fix regressions first, then unclaimed functions by TU and similarity.
+
+The ownership-task, campaign, dispatch, independent-review and acceptance
+machinery below remains available but is no longer required for routine
+matching. Where the text below demands tests, task JSON, journals or per-change
+reviewer reports, the lean loop takes precedence. Its rules on faithfulness,
+claim preservation, no machine-code copies and no hand-edited markers still apply.
+
+## Contract (earlier, still applies where not superseded)
+
+This is the coordinator/worker contract. The old address-only batch,
 class-pass variant and overriding agent brief are retired. Compiler experiments
 are hints in `COMPILER_EVIDENCE.md`, never workflow policy. The implementation
 boundary and unfinished capabilities are described in `README.md` here and

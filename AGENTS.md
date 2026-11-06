@@ -5,7 +5,51 @@ framework. Work units are ownership groups; functions and original spans are
 measurement units. Byte-exact code can still have wrong hierarchy, lifetime or
 references. Do not preserve those defects to protect a local similarity score.
 
-The immediate phase is translation-unit discovery and source correspondence:
+## Current mode: lean match loop (user decision, 2026-11-06)
+
+Function coverage is effectively complete (5,606 implemented, 53 pending
+`UNBOUND`). The remaining milestone work is byte matching: on 2026-11-06,
+`recover check-matches` measured 3,938 claims passing, 42 regressed and 56
+unmeasurable, with about 1,570 functions never claimed. Over the preceding two
+weeks most churn went into tests, task/history JSON and framework code rather
+than C++. The user therefore chose this loop, which supersedes conflicting
+guidance below and in `recovery/WORKFLOW.md`:
+
+1. Work one translation unit at a time. Iterate on its unmatched functions with
+   `uv run recover measure <addrs> --image <image>` (seconds) and
+   `uv run recover diff <addr> --image <image>`. Bank exact results only with
+   `uv run recover record`.
+2. The byte match against the pinned original is the behavioral test. Do not add
+   new `recovery/tests/*actual_source*` or other host tests for game functions;
+   keep tests for framework code only. Existing tests stay unless they block a
+   justified source change, in which case update or remove them in the same
+   commit.
+3. Do not create per-change task/history JSON, journals, reviewer reports or
+   lessons entries. Source annotations carry identity and claims; the commit
+   message carries the reasoning.
+4. Run the full `recover check-matches` once per batch, not per change. Each
+   commit must still build and link (`cmake --build build`), and
+   `recover check-claims` must stay clean.
+5. Framework/package work is frozen unless a measured matching problem is
+   blocked by it.
+6. Priority: fix regressed claims first (they were exact before), then
+   unclaimed functions ranked by translation unit and similarity.
+7. Parallel workers each own one source file (conflict domain); the coordinator
+   commits and integrates. Workers may still use isolated worktrees.
+
+Unchanged: faithful bug-for-bug recovery; no `__asm`, `_emit`, copied machine
+code, or fixed-address calls; never hand-edit `ORIGINAL:`/`BYTE_EXACT` markers;
+preserve every historical claim and identity; proprietary bytes stay in ignored
+`.opensmacx/` and `build/`.
+
+Common regression cause to check first: VC6 `/Ob2` inlines a callee defined
+earlier in the same TU. Keep definitions in original address order. A function
+moved after its callee's definition will inline a call the original made out of
+line.
+
+## Earlier guidance (still applies where it does not conflict)
+
+The previous phase was translation-unit discovery and source correspondence:
 identify original contribution candidates and give each a corresponding recovered
 TU. Move existing implementations, mappings, globals and lifetime code together;
 explicit placeholders for unfinished functions are allowed. Do not replace
@@ -22,12 +66,9 @@ This manual regrouping authorization does not weaken native automatic acceptance
 
 First milestone: complete byte-exact source recovery, bug for bug with the pinned
 original. Bug fixes and improvements come afterward; this supersedes earlier
-prospective fix approvals. The immediate priority is complete compiling function
-coverage through large parallel, semantically faithful recovery batches. Do not
-delay a complete implementation for extended byte-matching iterations. Exactness
-is welcome when readily achieved; preserve historical claims and restoration
-obligations for the subsequent matching pass. Coverage is not final milestone
-completion. See `recovery/WORKFLOW.md`, "Milestone order". Preserve original
+prospective fix approvals. Compiling function coverage is effectively complete;
+the immediate priority is now byte matching under the lean loop above. Coverage
+is not final milestone completion. See `recovery/WORKFLOW.md`, "Milestone order". Preserve original
 quirks and evidence; do not silently normalize unsafe/error paths.
 Act on evidence-backed structural discoveries immediately: the coordinator
 expands affected ownership scopes and coordinates dependent workers without
