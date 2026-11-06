@@ -196,7 +196,7 @@ void __cdecl blink_timer(int a1) {
 Purpose: Cancel the go mode: hide the cover window, stop the go timer, then
          reset the mode state and cursor of every live map window and of the
          selected one.
-// ORIGINAL: 0x0050EF50 ?go_reset@@YAXXZ 0x0050EF50-0x0050F166
+// ORIGINAL: 0x0050EF50 ?go_reset@@YAXXZ 0x0050EF50-0x0050F166 BYTE_EXACT
 // size      534 bytes
 // prototype
 // callers   7   call targets   4
