@@ -6022,7 +6022,8 @@ int Buffer::wrap_flying(char * a1) {
 //        through a type that is not there.
 
 int Buffer::write_l(Font * font, char * text, int x, int y, int maxLen) {
-    BufferFontTriple savedFonts = {fonts_[0], fonts_[1], fonts_[2]};
+    BufferFontTriple *const fonts = reinterpret_cast<BufferFontTriple *>(fonts_);
+    BufferFontTriple savedFonts = *fonts;
     int result;
     if (font != 0 && font->font_obj_ != 0) {
         fonts_[0] = font;
@@ -6033,7 +6034,7 @@ int Buffer::write_l(Font * font, char * text, int x, int y, int maxLen) {
 
     if (text == 0) {
         result = x;
-    } else if (fonts_[0] == 0 || fonts_[0]->font_obj_ == 0) {
+    } else if (fonts->primary == 0 || fonts->primary->font_obj_ == 0) {
         result = 3;
     } else {
         if (((int)strlen(text) < len ? (int)strlen(text) : len) < 0) {
@@ -6050,9 +6051,7 @@ nothing_drawn:
         }
     }
 
-    fonts_[0] = savedFonts.primary;
-    fonts_[1] = savedFonts.second;
-    fonts_[2] = savedFonts.third;
+    *fonts = savedFonts;
     return result;
 }
 
@@ -8129,18 +8128,17 @@ int Buffer::copy(Buffer *destination, int src_x, int src_y, int src_w,
 // exactly like its coordinate-vector sibling above: the three writer font
 // slots overridden while the four-argument RECT writer runs.
 int Buffer::write_right_l(Font *font, char *text, RECT *area, int len) {
-    Font *saved_font1 = fonts_[0];
-    Font *saved_font2 = fonts_[1];
-    Font *saved_font3 = fonts_[2];
+    // The three slots are saved and restored as one block through a pointer
+    // to the trio (`lea esi,[this+0x52c]`), as in write_l above.
+    BufferFontTriple *const fonts = reinterpret_cast<BufferFontTriple *>(fonts_);
+    BufferFontTriple savedFonts = *fonts;
     if (font != 0 && font->font_obj_ != 0) {
-        fonts_[0] = font;
+        fonts->primary = font;
         fonts_[1] = 0;
         fonts_[2] = 0;
     }
     int result = write_right_l(text, area, len);
-    fonts_[0] = saved_font1;
-    fonts_[1] = saved_font2;
-    fonts_[2] = saved_font3;
+    *fonts = savedFonts;
     return result;
 }
 

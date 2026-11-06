@@ -866,7 +866,7 @@ void Scroll::on_redraw() {
     fill(field_A64_);
 
     if (border_color_ != -1) {
-        const unsigned char color = static_cast<unsigned char>(border_color_);
+        const int color = static_cast<unsigned char>(border_color_);
         Buffer::box(&rect2_, color, color);
     }
 
@@ -880,12 +880,15 @@ void Scroll::on_redraw() {
     }
 
     if (thumb_sprite_ != nullptr) {
+        // The Buffer base conversion is taken first and held across the
+        // centring arithmetic (`test esi,esi / lea ebx,[esi+0x444]`).
+        Buffer *const target = this;
         const int x = (thumb.right - thumb_sprite_->width() - thumb.left) / 2
                       + thumb.left;
         const int y = (thumb.bottom - thumb_sprite_->height() - thumb.top) / 2
                       + thumb.top;
-        thumb_sprite_->draw(static_cast<Buffer *>(this),
-                            thumb_sprite_->transparent_index(), x, y, 1, 1);
+        thumb_sprite_->draw(target, thumb_sprite_->transparent_index(), x, y,
+                            1, 1);
     }
 
     // Native6067F2/6067FC and60684B use signed comparisons. The stored
@@ -1821,12 +1824,17 @@ void Scroll::on_button_clicked(int button_id) {
     WinCallbackWindow = parent;
     ListBoxGlobalDDC = 0;
 
-    if (button_id == 1) {
+    switch (button_id) {
+    case 1:
         if (position_ > range_minimum_) {
             --position_;
         }
-    } else if (button_id == 2 && position_ < range_maximum_) {
-        ++position_;
+        break;
+    case 2:
+        if (position_ < range_maximum_) {
+            ++position_;
+        }
+        break;
     }
 
     // The original chooses the mapping branch once, before notification.
