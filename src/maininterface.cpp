@@ -268,7 +268,7 @@ MainInterface::MainInterface() {
 
 void __cdecl main_interface_timer_callback(int, void *);
 
-// ORIGINAL: 0x004595C0 ?bung_momma@@YAXXZ 0x004595C0-0x0045967F
+// ORIGINAL: 0x004595C0 ?bung_momma@@YAXXZ 0x004595C0-0x0045967F BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:b84036a86445148d25d4e216ac24c131e108bea8:src/unrecovered/004595c0.cpp", "Pinned4595C0..45967F font7CFEDC is MainInterface7AE820+216BC, its third Font; native title bounds and shared StringBox identify actual members.", "recovery/tasks/startup-desktop-owner-oct5.json", "recovery/tests/test_startup_actual_source.py", "source:src/maininterface.cpp: the sole startup helper initializes MainInterfaceGlobal.tertiary_font(), shared_string_box() and title_bounds() through the actual MainInterface/Console bases."], "reason": "Keep the shared MainInterface message-box setup beside its real MainInterface owner and owned resources; preserve the free __cdecl API and startup call. This current source correspondence does not prove a historical filename."}
 // kind      game
 void __cdecl bung_momma() {
@@ -599,7 +599,7 @@ MainInterface::~MainInterface() {
     // Reverse member/base order supplies ordinary and exceptional teardown.
 }
 
-// ORIGINAL: 0x0045BC50 ?on_redraw@MainInterface@@QAEXXZ 0x0045BC50-0x0045BE7D FILE
+// ORIGINAL: 0x0045BC50 ?on_redraw@MainInterface@@QAEXXZ 0x0045BC50-0x0045BE7D FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["src/maininterface.h", "git:b4601390:recovery/tasks/maininterface-owner-coverage.json", "git:f7bbce35:src/recovered/units/0045bc50.cpp"], "reason": "Original owner calls, secondary interface receiver and ordinary embedded-member lifecycle identify this MainInterface operation; compatible historical seed spans are retained, without a matching claim."}
 // symbol    ?on_redraw@MainInterface@@UAEXXZ
 void MainInterface::on_redraw() {
@@ -646,7 +646,7 @@ void MainInterface::on_redraw() {
     redraw_complete();
 }
 
-// ORIGINAL: 0x0045CA40 ?on_status@MainInterface@@QAEXH@Z 0x0045CA40-0x0045CC78 FILE
+// ORIGINAL: 0x0045CA40 ?on_status@MainInterface@@QAEXH@Z 0x0045CA40-0x0045CC78 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["src/maininterface.h", "git:b4601390:recovery/tasks/maininterface-owner-coverage.json", "git:f7bbce35:src/recovered/units/0045ca40.cpp"], "reason": "Original owner calls, secondary interface receiver and ordinary embedded-member lifecycle identify this MainInterface operation; compatible historical seed spans are retained, without a matching claim."}
 // symbol    ?on_status@MainInterface@@UAEXH@Z
 void MainInterface::on_status(int active) {
@@ -740,7 +740,7 @@ void MainInterface::on_iface_button_clicked(int button) {
     MainInterfaceStatusRedrawFlag = 0;
 }
 
-// ORIGINAL: 0x0045BE80 ?set_date@MainInterface@@QAEXPAD@Z 0x0045BE80-0x0045C0AF FILE
+// ORIGINAL: 0x0045BE80 ?set_date@MainInterface@@QAEXPAD@Z 0x0045BE80-0x0045C0AF FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["src/maininterface.h", "git:b4601390:recovery/tasks/maininterface-owner-coverage.json", "git:f7bbce35:src/recovered/units/0045be80.cpp"], "reason": "Original owner calls, secondary interface receiver and ordinary embedded-member lifecycle identify this MainInterface operation; compatible historical seed spans are retained, without a matching claim."}
 void MainInterface::set_date(char *) {
     const int mode = IfaceIdToSlotStorage[ActiveIfaceIdStorage];
@@ -1108,7 +1108,7 @@ void MainInterface::on_iface_right_click(int x, int y) {
 
 // Group0 dispatches the primary window's virtual on_redraw slot12.
 // Its secondary receiver is adjusted by the declared C++ base, not offsets.
-// ORIGINAL: 0x0045CCB0 ?on_iface_group_clicked@MainInterface@@QAEXHHH@Z 0x0045CCB0-0x0045CD75 FILE
+// ORIGINAL: 0x0045CCB0 ?on_iface_group_clicked@MainInterface@@QAEXHHH@Z 0x0045CCB0-0x0045CD75 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["src/maininterface.h", "git:f7bbce35:src/unrecovered/0045ccb0.cpp"], "reason": "Original secondary interface receiver, spot hit test and mapped owner callbacks identify this MainInterface operation; compatible historical seed and its obligations remain retained."}
 // symbol    ?on_iface_group_clicked@MainInterface@@UAEXHHH@Z
 void MainInterface::on_iface_group_clicked(int group, int, int selected) {
@@ -1172,7 +1172,7 @@ void MainInterface::on_iface_right_down(int a1, int a2) {
     }
 }
 
-// ORIGINAL: 0x0045D000 ?on_iface_mouse_move@MainInterface@@QAEXHH@Z 0x0045D000-0x0045D10F
+// ORIGINAL: 0x0045D000 ?on_iface_mouse_move@MainInterface@@QAEXHH@Z 0x0045D000-0x0045D10F BYTE_EXACT
 // RECOVERY_BINDING: v1 {"reason":"Use the existing StatusWin hover state and embedded hit-test Spot, not executable-address aliases or separate selection storage.","evidence":["ConsoleStatusWin starts8C5568; its existing signed fields+15C4/+15C8 are8C6B2C/30, and Spot+15E0 is8C6B48.","Pinned4BA1F7 constructs Spot at StatusWin this+15E0;45D062 hit-tests8C6B48 and45D07B..45D0C7 updates the hover IDs then invokes draw_active on8C5568.","Pinned veh_kill5C0A58..5C0A6C compacts the same8C6B2C vehicle field; adjacent8C6B34 remains independently unresolved."]}
 // symbol    ?on_iface_mouse_move@MainInterface@@UAEXHH@Z
 // LEVER: 2026-09-05 the receiver map. Both spot_ and iface_redraw_pending_ are
@@ -2784,7 +2784,7 @@ void SubInterface::delete_iface_mode() {
 }
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x0045D310 ?set_iface_mode@SubInterface@@QAEXXZ 0x0045D310-0x0045D37D
+// ORIGINAL: 0x0045D310 ?set_iface_mode@SubInterface@@QAEXXZ 0x0045D310-0x0045D37D BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/0045d310.cpp", "image:terranx_original.exe:0x0045D310", "source:src/maininterface.h:InterfaceRegistry and mode-stack storage; source:src/multiwin.h:owned Sprite offsets; native callback-sensitive mode reload and downward repeated removal", "recovery/tasks/interface-contract-report-closure.json; owner expansion interface-registry-multiwin-small-20261001"], "reason": "Recover the original in its genuine C++ owner using source-owned interface registry and mode stack, real virtual callbacks, or owned MultiWin sprite geometry. Preserve historical seed obligations; this binding grants no current byte or runtime claim."}
 void SubInterface::set_iface_mode() {
     int mode = static_cast<int>(field_4_);

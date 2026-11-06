@@ -588,7 +588,7 @@ extern int TextColourTable[195];
 // Superseded seed deleted; seed paths below are historical Git provenance.
 // Historical seed observations (not fresh measurements or acceptance):
 // TRIED: two separate null-check ifs (worse fit); localRect copy before set_clip (worse fit); closest is buf cached once, single || null check, localRect copied after set_clip - 5-edit MISMATCH
-// ORIGINAL: 0x00443E50 ?on_iface_dialog_item_back_draw@DiploWin@@QAEHPAUGraphicWin@@HHPAURECT@@@Z 0x00443E50-0x00443F0C
+// ORIGINAL: 0x00443E50 ?on_iface_dialog_item_back_draw@DiploWin@@QAEHPAUGraphicWin@@HHPAURECT@@@Z 0x00443E50-0x00443F0C BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned original constructor444FC0 establishes GraphicWin+0, SubInterface+A14 and member construction order; secondary table66B5E0 gives nineteen callback slots and adjusted receivers.", "Redraw4436C0, status443C70 and painter443E50 inspected over declared original spans; source rectangle/control owners preserve native offsets. Palette colors reuse TextColourTable[80-2*item]/[81-2*item]. Localized title producer and full extents remain unknown.", "recovery/tasks/interface-contract-report-closure.json; root coordinator owns import and independent compilation; no current byte, structural or runtime acceptance is implied."], "reason": "Recover the genuine DiploWin GraphicWin/SubInterface owner with typed callbacks and automatic base/member lifetimes; retain independent seed history and restoration obligations."}
 // symbol ?on_iface_dialog_item_back_draw@DiploWin@@UAEHPAVGraphicWin@@HHPAUtagRECT@@@Z
 int DiploWin::on_iface_dialog_item_back_draw(GraphicWin *window, int, int item,
@@ -1979,7 +1979,7 @@ Purpose: Refill one hot-seat chat view: order the two record indices, clear
          newest entries of the record's entry chain into the box - each
          entry's payload text added under its id.
 
-// ORIGINAL: 0x00441100 sub_441100 0x00441100-0x004411EC FILE
+// ORIGINAL: 0x00441100 sub_441100 0x00441100-0x004411EC FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["diplowin.cpp owns the direct DiploWin::exec caller, the shared DiploWindow StringBox/EditBox and the typed DiplomacyTranscriptLists array.", "The original implementation clears both shared controls, normalizes the pair, then reads the last three entries from the selected list in its existing order."], "reason": "Move the complete externally named callback from the catch-all leaf TU into the owning diplomacy TU; retain normalization, clear order, loop bounds and typed list/control behavior."}
 // symbol    _sub_441100
 // TRIED: signature had no params in the fallback head (IDA guessed 2 stack ints, confirmed by [ebp+8]/[ebp+0xc] reads before any push, and no meaningful eax at ret so void not int - both changed). Landed at MISMATCH (90% mnemonic similarity, 11 edits).

@@ -973,7 +973,7 @@ int Datalink::on_dialog_back_draw(GraphicWin *win) {
     return 1;
 }
 
-// ORIGINAL: 0x0042A150 ?on_dialog_item_back_draw@Datalink@@QAEHPAUGraphicWin@@HHPAURECT@@@Z 0x0042A150-0x0042A260
+// ORIGINAL: 0x0042A150 ?on_dialog_item_back_draw@Datalink@@QAEHPAUGraphicWin@@HHPAURECT@@@Z 0x0042A150-0x0042A260 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["image:0x42A150", "git:8e3029104ab590bec35cc6932e637765b2ea4074:src/unrecovered/0042a150.cpp"], "reason": "Recover the seed identity as a typed Datalink member using real window, font, list, and popup lifetimes."}
 // symbol    ?on_dialog_item_back_draw@Datalink@@UAEHPAVGraphicWin@@HHPAUtagRECT@@@Z
 // Historical scaffold experiment, retained from the replaced seed:
@@ -2016,7 +2016,7 @@ Purpose: Push a topic onto the back-history ring UNK5 pops, unless the panel
          that, `0x29e4 + count*4`. Slot 0 of the ring is the facility id, so
          the first store lands at ring[1] and never at ring[0]: that is the
          original's own arithmetic, not a slipped base.
-// ORIGINAL: 0x0042BD80 ?UNK4@Datalink@@QAEXHH@Z 0x0042BD80-0x0042BDFA FILE
+// ORIGINAL: 0x0042BD80 ?UNK4@Datalink@@QAEXHH@Z 0x0042BD80-0x0042BDFA FILE BYTE_EXACT
 // MISMATCH 19/39, first divergence at 6. TRIED: the ring declared as `facilityID_` plus a tail array (two bases where the image's compare and store read `0x29e0+count*4` and `0x29e4+count*4` off one), and the eviction loop as `int *slot = &history_[1]` (which matches).
 //            The image's catalogue name is ours to spell from behaviour:
 //            the catalogue calls this ?UNK4@Datalink@@QAEXHH@Z.

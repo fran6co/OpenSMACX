@@ -331,7 +331,7 @@ int __cdecl vehdraw_turn_start(int veh_id, int direction, int speed, int flags) 
 
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x004BFC70 ?vehdraw_turn@@YAXPAUBuffer@@HHHH@Z 0x004BFC70-0x004BFDFA
+// ORIGINAL: 0x004BFC70 ?vehdraw_turn@@YAXPAUBuffer@@HHHH@Z 0x004BFC70-0x004BFDFA BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Original selects scale, rotates scene from frame/turn increment, computes caption-centred coordinates, resets and assembles the actual vehicle, renders, then reloads its prototype for transparent-armor overlay or buffer clearing.", "Original mapped extent is preserved from the existing unclaimed seed and checked against the pinned executable; catalogue return/type names remain provenance until observed compiler-symbol facts are published."], "reason": "Recover a vehicle turn frame through the real renderer and shared turn state."}
 // symbol    ?vehdraw_turn@@YAXPAVBuffer@@HHHH@Z
 void __cdecl vehdraw_turn(Buffer *buffer, int x, int y, int frame, int zoom) {
@@ -471,7 +471,7 @@ void __cdecl vehdraw_scoot_start(int veh_id, int direction, int steps, int flags
 
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x004C0F50 ?vehdraw_scoot@@YAXPAUBuffer@@HHHH@Z 0x004C0F50-0x004C1296
+// ORIGINAL: 0x004C0F50 ?vehdraw_scoot@@YAXPAUBuffer@@HHHH@Z 0x004C0F50-0x004C1296 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Original chooses first or second normal increment at a strict greater-than half-frame boundary, snapshots light, computes camera and shadow, sets scaling both before and after camera publication, assembles vehicle, increments animation, renders, and reloads armor state.", "Original mapped extent is preserved from the existing unclaimed seed and checked against the pinned executable; catalogue return/type names remain provenance until observed compiler-symbol facts are published."], "reason": "Recover an interpolated vehicle movement frame using real camera, normal, shadow and renderer ownership."}
 // symbol    ?vehdraw_scoot@@YAXPAVBuffer@@HHHH@Z
 void __cdecl vehdraw_scoot(Buffer *buffer, int x, int y, int frame, int zoom) {
