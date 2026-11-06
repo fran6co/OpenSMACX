@@ -163,16 +163,22 @@ void NetSessionPickerWin::draw_frame() {
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned constructor/destructor calls and direct accesses establish the GraphicWin base, ordered Time/Heap/ListBox/PushButton/list members, and observed tail through +0x37A4. The descriptive owner name and complete original allocation remain unproved.", "The integer timer adapter checks nonzero context; the distinct nullary focus member does not. Pinned table 0x670DDC establishes slot 12 at 0x670E0C -> 0x63C9D0 and slot 44 at 0x670E8C -> 0x63C3A0. Automatic owner destruction replaces manual table staging and executable-address forwarding.", "The Net caller retains one automatic picker, original unchecked copies and invalid-node error paths, and password-pointer reloads after modal execution. Indirect event linkage, precise unwind correspondence, historical matching and full linked/runtime fidelity remain obligations."], "reason": "Typed session-picker ownership and its Net receiver-backed caller, preserving the original entries and compiler-generated lifetime identities."}
 // symbol    ?on_redraw@NetSessionPickerWin@@UAEXXZ
 // TRIED: signature __cdecl(void) -> __thiscall member (ecx=this throughout, plain `ret`, class-member wrapper like other anonymous subs). sub_63caa0 called via the scaffold's existing nullary __cdecl decl though the original passes ecx=this too - can't redeclare it (C2733), so that one call is known to diverge. First divergence #0 push/mov, 210 vs 200 B.
+// Guarded label write, inlined at each call: the image keeps its null test.
+static inline void write_label(NetSessionPickerWin *win, char *text,
+                               RECT *rect) {
+  if (text != 0) {
+    win->Buffer::write_l(text, rect, static_cast<int>(std::strlen(text)));
+  }
+}
+
 void NetSessionPickerWin::on_redraw() {
   // These bytes are the pinned UI literals at 0x698C88 and 0x698C9C. Keep
   // their exact display spelling; no external data address is used.
   static char available_sessions[] = "Available Sessions";
   static char current_players[] = "Current Players";
 
-  Buffer::write_l(available_sessions, &tail_.first_label_rect_,
-                  static_cast<unsigned int>(std::strlen(available_sessions)));
-  Buffer::write_l(current_players, &tail_.second_label_rect_,
-                  static_cast<unsigned int>(std::strlen(current_players)));
+  write_label(this, available_sessions, &tail_.first_label_rect_);
+  write_label(this, current_players, &tail_.second_label_rect_);
   draw_selected_rows();
   draw_frame();
 }
@@ -280,15 +286,20 @@ void NetSessionPickerWin::draw_selected_rows() {
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned constructor/destructor calls and direct accesses establish the GraphicWin base, ordered Time/Heap/ListBox/PushButton/list members, and observed tail through +0x37A4. The descriptive owner name and complete original allocation remain unproved.", "The integer timer adapter checks nonzero context; the distinct nullary focus member does not. Pinned table 0x670DDC establishes slot 12 at 0x670E0C -> 0x63C9D0 and slot 44 at 0x670E8C -> 0x63C3A0. Automatic owner destruction replaces manual table staging and executable-address forwarding.", "The Net caller retains one automatic picker, original unchecked copies and invalid-node error paths, and password-pointer reloads after modal execution. Indirect event linkage, precise unwind correspondence, historical matching and full linked/runtime fidelity remain obligations."], "reason": "Typed session-picker ownership and its Net receiver-backed caller, preserving the original entries and compiler-generated lifetime identities."}
 // symbol    ?refresh_player_list@NetSessionPickerWin@@QAEXXZ
 // TRIED: `__thiscall` function-pointer casts for the dynamically adjusted vtable dispatches (C4234, VC6 refuses them) - routed through a second VCall-style shim (VCallSlot0) instead, one per distinct slot/arity pair, matching the brief's guidance. Did not chase the remaining register-allocation divergence (first mismatch at instruction #2) further given the size and structural complexity of this function (three raw vtable adjustor dispatches plus ListBox::attach/item/update_changes).
+// Inline cursor read: the image reloads head_ after it for the step back.
+static inline NetAllocationNode *ledger_current_id(AlphaNetLedger *list) {
+  return list->head_ != 0 ? list->current_->payload_ : 0;
+}
+
 void NetSessionPickerWin::refresh_player_list() {
   // The list implementation owns the observed hook/delete/cursor-reset
   // sequence; it preserves the original callback and allocator protocol.
-  AlphaNetLedger &sessions = sessions_;
-  sessions.remove_all();
+  sessions_.remove_all();
 
   // Direct pinned call 0x62E420: ECX is net_, arguments are this exact ledger
   // and a null password. A nonzero result returns before the UI lists change.
-  if (net_->enumerate_sessions(&sessions, 0) != 0) return;
+  if (net_->enumerate_sessions(&sessions_, 0) != 0) return;
+  ListBox *view = &sessions_view_;
 
   {
     StringList &items = sessions_view_.item_list_;
@@ -303,65 +314,42 @@ void NetSessionPickerWin::refresh_player_list() {
   items.allocator_ = 0;
 
   static char no_sessions[] = "NO SESSIONS (Translate this)";
-  if (sessions.entry_count_ == 0) {
-    sessions_view_.item(no_sessions, 0);
+  if (sessions_.entry_count_ == 0) {
+    view->item(no_sessions, 0);
   } else {
-    if (sessions.entry_count_ - 1 >= -1) {
-      sessions.current_ = sessions.head_;
-      int steps = abs(-1);
-      if (steps <= sessions.entry_count_) {
-        steps = abs(-1);
-        if (steps > 0) {
-          do {
-            --steps;
-            sessions.current_ = sessions.current_->previous_;
-          } while (steps != 0);
-        }
-        sessions.current_position_ = sessions.entry_count_ - 1;
-      }
-    }
+    sessions_.seek_pos(-1);
 
     int index = 0;
-    if (sessions.entry_count_ > 0) {
+    if (sessions_.entry_count_ > 0) {
       do {
-        AlphaNetLedgerEntry *head = sessions.head_;
-        int item_id = 0;
-        if (head != 0) item_id = static_cast<int>(reinterpret_cast<uintptr_t>(
-            sessions.current_->payload_));
-
-        if (head != 0) {
-          sessions.current_ = sessions.current_->previous_;
-          const int position = sessions.current_position_ - 1;
-          sessions.current_position_ = position;
-          if (position == -1) {
-            sessions.current_position_ = sessions.entry_count_ - 1;
+        AlphaNetLedger *list = &sessions_;
+        NetAllocationNode *item_id = ledger_current_id(&sessions_);
+        if (list->head_ != 0) {
+          list->current_ = list->current_->previous_;
+          if (--list->current_position_ == -1) {
+            list->current_position_ = list->entry_count_ - 1;
           }
         }
-
-        AlphaNetLedgerEntry *current = sessions.current_;
-        char *text = 0;
-        if (current != 0) {
-          // The original's null-head/inconsistent-current path reads through
-          // an invalid payload expression; under the actual circular-list
-          // invariant this arm is unreachable. Do not fabricate a fallback
-          // label or repair the list state here.
-          NetAllocationNode *payload = head == 0 ? 0 : current->payload_;
-          text = payload->session_name_;
-        }
-        sessions_view_.item(text, item_id);
+        // The original's null-head/inconsistent-current path reads through
+        // an invalid payload expression; under the actual circular-list
+        // invariant this arm is unreachable. Do not repair it here.
+        char *text = list->current_ != 0
+            ? (list->head_ != 0 ? list->current_->payload_ : 0)->session_name_
+            : 0;
+        view->item(text, static_cast<int>(reinterpret_cast<uintptr_t>(item_id)));
         ++index;
-      } while (index < sessions.entry_count_);
+      } while (index < sessions_.entry_count_);
     }
   }
 
   int result;
-  if (HandleMain != 0) {
-    result = sessions_view_.update_changes();
-  } else {
+  if (HandleMain == 0) {
     // Native63C963 reloads the Dialog coordinates at this late phase;
     // Native63C981 directly calls the real ListBox attachment method.
-    result = sessions_view_.ListBox::attach(
-        this, sessions_view_.window_x_, sessions_view_.window_y_, 0x80000);
+    result = view->ListBox::attach(
+        this, view->window_x_, view->window_y_, 0x80000);
+  } else {
+    result = view->update_changes();
   }
   tail_.action_result_ = result;
   if (result != 0) return;
@@ -540,7 +528,7 @@ int NetSessionPickerWin::connect_session() {
       int faction_count = tail_.rows_visible_;
       char letter = '2';
       for (int i = 2; i < faction_count + 1; ++i) {
-        char label[2];
+        char label[12];  // 12-byte frame slot in the image
         label[0] = letter;
         label[1] = 0;
         popup->dialogs().item(label, i);
@@ -553,12 +541,10 @@ int NetSessionPickerWin::connect_session() {
       if (selected_players != -1) {
         NetAllocationNode *session = net_->create_session(
             ParseStrBuffer[0].str, selected_players, ParseStrBuffer[2].str);
-        if (session != 0) {
-          const int joined = net_->join_session(
-              session, ParseStrBuffer[1].str, 0);
-          return joined == 0;
+        if (session == 0) {
+          return 1;
         }
-        return 1;
+        return net_->join_session(session, ParseStrBuffer[1].str, 0) == 0;
       }
     }
     status = x_pop_caption_value_flags("jackal", "NETCONNECT_CREATE",
@@ -604,28 +590,29 @@ int NetSessionPickerWin::join_selected_session() {
 // symbol    ?on_button_clicked@NetSessionPickerWin@@UAEXH@Z
 // TRIED: IDA guessed 1 stack arg; ecx=esi with no matching stack read confirms a __thiscall receiver, its own minimal class (no catalogued name). The vtable-slot-58 call needs its own dummy-padded virtual class (same reason as 0x5ED880), so this stays FILE mode. `if (a2==-2){A}else if(a2!=-1){...}` compiles the -2 case inline (jne to skip past it); the original places that handler in a separate far block and jumps to it directly (je) - a block-layout difference this source form did not reproduce. Landed at MISMATCH #4.
 void NetSessionPickerWin::on_button_clicked(int action) {
-  if (action == -2) {
+  switch (action) {
+  case 0:
+    if (connect_session() != 0) return;
+    release_modal();
+    return;
+  case -1: {
+    const int selection = x_pop_caption_value_flags(
+        "jackal", "NETCONNECT_JOIN", 0x3c, 0x44, 0);
+    if (selection == -1) return;
+
+    sessions_.seek_pos(sessions_view_.selected_position_);
+    NetAllocationNode *session = sessions_.head_ != 0
+        ? sessions_.current_->payload_ : 0;
+    tail_.action_result_ = net_->join_session(
+        session, ParseStrBuffer[0].str, 0);
+    if (tail_.action_result_ != 0) release_modal();
+    return;
+  }
+  case -2:
     tail_.action_result_ = 0;
     release_modal();
     return;
   }
-  if (action != -1) {
-    if (action != 0) return;
-    if (connect_session() != 0) return;
-    release_modal();
-    return;
-  }
-
-  const int selection = x_pop_caption_value_flags(
-      "jackal", "NETCONNECT_JOIN", 0x3c, 0x44, 0);
-  if (selection == -1) return;
-
-  sessions_.seek_pos(sessions_view_.selected_position_);
-  NetAllocationNode *session = sessions_.head_ == 0
-      ? 0 : sessions_.current_->payload_;
-  tail_.action_result_ = net_->join_session(
-      session, ParseStrBuffer[0].str, 0);
-  if (tail_.action_result_ != 0) release_modal();
 }
 
 namespace {

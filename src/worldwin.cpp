@@ -137,32 +137,33 @@ void WorldWin::right_menu(int x, int y) {
 // Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x004C3D40 ?click@WorldWin@@QAEXHHHH@Z 0x004C3D40-0x004C3E48
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/004c3d40.cpp; original disassembly 0x004C3D40-0x004C3E48; BaseWin+0x40B28 is 0x006E8150."], "reason": "Home the shared world click handler using owned tutorial state and map windows."}
+#pragma optimize("y", off)
 void WorldWin::click(int x, int y, int button, int is_double) {
     TutWinBaseWindow.cancel_zoom_wait();
     if (button != 0) {
         right_menu(x, y);
         return;
     }
-    const bool shift_down = (GetAsyncKeyState(VK_SHIFT) & 0xFF00) != 0;
+    const BYTE shift_down = HIBYTE(GetAsyncKeyState(VK_SHIFT));
     const int detail_click = shift_down ? 1 : is_double;
     int tile_x;
     int tile_y;
     if (pixel_to_tile(x, y, &tile_x, &tile_y) != 0 ||
-        tile_y < 0 || tile_y >= MapLatitudeBounds ||
-        tile_x < 0 || tile_x >= MapLongitudeBounds) {
+        !on_map(tile_x, tile_y)) {
         return;
     }
-    if (detail_click) {
+    if (!detail_click) {
+        MapWinTable[0]->set_center(tile_x, tile_y, 1);
+    } else {
         MapWinTable[1]->set_center(MapWinTable[0]->center_x_,
                                    MapWinTable[0]->center_y_, 1);
         detail_map_selected_ = 1;
         MainInterfaceGlobal.button_group(1).set(1007, 0);
         MapWinTable[1]->show(0);
         WorldClimateWorldWin.Win::hide();
-    } else {
-        MapWinTable[0]->set_center(tile_x, tile_y, 1);
     }
 }
+#pragma optimize("", on)
 
 // 0x004C4230 reads this flag and stores one/zero around the overview rebuild.
 // Its address is adjacent to, but distinct from, MapInputEnabled at 0x0090D938.
@@ -440,112 +441,84 @@ int WorldWin::pixel_to_tile(int pixel_x, int pixel_y, int *tile_x, int *tile_y) 
 // compiler inverted the final upper-bound branch, and a goto attempt caused
 // a redundant lower-bound test to be optimized away. Kept as seed history;
 // the typed body below has not yet been byte-measured.
+#pragma optimize("y", off)
 int WorldWin::tile_to_pixel(int tile_x, int tile_y, int *pixel_x, int *pixel_y) {
-    const int columns = MapLongitudeBounds;
-    if ((MapIsFlat & 1) == 0) {
-        if (tile_x < 0) {
-            tile_x += columns;
-        } else if (tile_x >= columns) {
-            tile_x -= columns;
-        }
-    }
-
-    const int rows = MapLatitudeBounds;
-    const int max_row = rows - 1;
-    int row = tile_y;
-    if (row < 0 || max_row < 0) {
-        row = 0;
-        goto check_upper;
-    }
-    if (row > max_row) {
-        row = max_row;
-    }
-    if (row < 0) {
-        goto fail;
-    }
-check_upper:
-    if (row >= rows || tile_x < 0 || tile_x >= columns) {
-        goto fail;
+    tile_x = wrap_map_x(tile_x);
+    const int row = range(tile_y, 0, MapLatitudeBounds - 1);
+    if (!on_map(tile_x, row)) {
+        return 1;
     }
 
     if (field_239C4_ == 0 && field_239C8_ == 0) {
-        *pixel_x = (Buffer::dib_.bmiHeader.biWidth * tile_x) / columns;
+        *pixel_x = (Buffer::dib_.bmiHeader.biWidth * tile_x) / MapLongitudeBounds;
         *pixel_y = -((Buffer::dib_.bmiHeader.biHeight * row) /
                      MapLatitudeBounds);
         return 0;
     }
 
     *pixel_x = (mapWin_.GraphicWin::dib_.bmiHeader.biWidth * tile_x) /
-                   columns + field_239C4_;
+                   MapLongitudeBounds + field_239C4_;
     *pixel_y = field_239C8_ -
                (mapWin_.GraphicWin::dib_.bmiHeader.biHeight * row) /
                    MapLatitudeBounds;
     return 0;
-
-fail:
-    return 1;
 }
+#pragma optimize("", on)
 
 // ORIGINAL: 0x004C47F0 ?UNK3@WorldWin@@QAEXXZ 0x004C47F0-0x004C499C
 // symbol    ?draw_viewport_outline@WorldWin@@QAEXXZ
+#pragma optimize("y", off)
 void WorldWin::draw_viewport_outline() {
     if (viewport_outline_enabled_ == 0) {
         return;
     }
 
-    MapWin *detail_map = MapWinTable[1];
     RECT rect;
-    int left;
-    int top;
-    int right;
-    int bottom;
-    if (tile_to_pixel(detail_map->field_1DDA4_, detail_map->field_1DDA8_,
-                      &left, &top) != 0) {
+    if (tile_to_pixel(MapWinTable[1]->field_1DDA4_, MapWinTable[1]->field_1DDA8_,
+                      reinterpret_cast<int *>(&rect.left),
+                      reinterpret_cast<int *>(&rect.top)) != 0) {
         return;
     }
-    detail_map = MapWinTable[1];
-    if (tile_to_pixel(detail_map->field_1DDD4_ + detail_map->field_1DDCC_ +
-                          detail_map->field_1DDA4_,
-                      detail_map->field_1DDD8_ + detail_map->field_1DDD0_ +
-                          detail_map->field_1DDA8_,
-                      &right, &bottom) != 0) {
-        return;
-    }
-    rect.left = left;
-    rect.top = top;
-    rect.right = right;
-    rect.bottom = bottom;
-
-    if (rect.left <= rect.right) {
-        Buffer::box(&rect, 0xFB, 0xFB);
+    if (tile_to_pixel(MapWinTable[1]->field_1DDD4_ + MapWinTable[1]->field_1DDCC_ +
+                          MapWinTable[1]->field_1DDA4_,
+                      MapWinTable[1]->field_1DDD8_ + MapWinTable[1]->field_1DDD0_ +
+                          MapWinTable[1]->field_1DDA8_,
+                      reinterpret_cast<int *>(&rect.right),
+                      reinterpret_cast<int *>(&rect.bottom)) != 0) {
         return;
     }
 
-    const int line_top = rect.top;
     const int line_left = rect.left;
     const int line_right = rect.right - 1;
+    const int line_top = rect.top;
     const int line_bottom = rect.bottom - 1;
-    Buffer::hline(field_239C4_, line_right, line_top, 0xFB);
-    Buffer::hline(field_239C4_, line_right - 1, line_bottom, 0xFB);
-    Buffer::vline(line_right, line_top + 1, line_bottom, 0xFB);
+    if (rect.left > rect.right) {
+        Buffer::hline(field_239C4_, line_right, line_top, 0xFB);
+        Buffer::hline(field_239C4_, line_right - 1, line_bottom, 0xFB);
+        Buffer::vline(line_right, line_top + 1, line_bottom, 0xFB);
 
-    const int right_edge = field_239C4_ != 0
-                               ? mapWin_.GraphicWin::dib_.bmiHeader.biWidth +
-                                     field_239C4_ - 1
-                               : Buffer::dib_.bmiHeader.biWidth - 1;
-    Buffer::hline(line_left + 1, right_edge, line_top, 0xFB);
+        const int right_edge = field_239C4_ != 0
+                                   ? mapWin_.GraphicWin::dib_.bmiHeader.biWidth +
+                                         field_239C4_ - 1
+                                   : Buffer::dib_.bmiHeader.biWidth - 1;
+        Buffer::hline(line_left + 1, right_edge, line_top, 0xFB);
 
-    const int bottom_edge = field_239C4_ != 0
-                                ? mapWin_.GraphicWin::dib_.bmiHeader.biWidth +
-                                      field_239C4_ - 1
-                                : Buffer::dib_.bmiHeader.biWidth - 1;
-    Buffer::hline(line_left, bottom_edge, line_bottom, 0xFB);
-    Buffer::vline(line_left, line_top, line_bottom - 1, 0xFB);
+        const int bottom_edge = field_239C4_ != 0
+                                    ? mapWin_.GraphicWin::dib_.bmiHeader.biWidth +
+                                          field_239C4_ - 1
+                                    : Buffer::dib_.bmiHeader.biWidth - 1;
+        Buffer::hline(line_left, bottom_edge, line_bottom, 0xFB);
+        Buffer::vline(line_left, line_top, line_bottom - 1, 0xFB);
+        return;
+    }
+    Buffer::box(&rect, 0xFB, 0xFB);
 }
+#pragma optimize("", on)
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x004C4630 ?draw_box@WorldWin@@QAEXXZ 0x004C4630-0x004C47E7
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/004c4630.cpp; original 0x0093347C is ConsoleGlobal / MapWinTable[0] plus member offset 0x1DDCC."], "reason": "Home the selection outline over the primary MapWin member state and Buffer drawing."}
+#pragma optimize("y", off)
 void WorldWin::draw_box() {
     MapWin *primary_map = &ConsoleGlobal;
     if (primary_map->field_1DDCC_ == 0 ||
@@ -554,46 +527,39 @@ void WorldWin::draw_box() {
         return;
     }
     RECT rect;
-    int left;
-    int top;
-    int right;
-    int bottom;
     if (tile_to_pixel(primary_map->field_1DDA4_, primary_map->field_1DDA8_,
-                      &left, &top) != 0 ||
+                      reinterpret_cast<int *>(&rect.left), reinterpret_cast<int *>(&rect.top)) != 0 ||
         tile_to_pixel(primary_map->field_1DDD4_ + primary_map->field_1DDA4_ +
                           primary_map->field_1DDCC_,
                       primary_map->field_1DDD8_ + primary_map->field_1DDD0_ +
                           primary_map->field_1DDA8_,
-                      &right, &bottom) != 0) {
+                      reinterpret_cast<int *>(&rect.right), reinterpret_cast<int *>(&rect.bottom)) != 0) {
         return;
     }
-    rect.left = left;
-    rect.top = top;
-    rect.right = right;
-    rect.bottom = bottom;
-    if (rect.left <= rect.right) {
-        Buffer::box(&rect, 0xFF, 0xFF);
-        return;
-    }
-    const int line_top = rect.top;
     const int line_left = rect.left;
     const int line_right = rect.right - 1;
+    const int line_top = rect.top;
     const int line_bottom = rect.bottom - 1;
-    Buffer::hline(field_239C4_, line_right, line_top, 0xFF);
-    Buffer::hline(field_239C4_, line_right - 1, line_bottom, 0xFF);
-    Buffer::vline(line_right, line_top + 1, line_bottom, 0xFF);
-    const int edge = field_239C4_ != 0
-                         ? mapWin_.GraphicWin::dib_.bmiHeader.biWidth +
-                               field_239C4_ - 1
-                         : Buffer::dib_.bmiHeader.biWidth - 1;
-    Buffer::hline(line_left + 1, edge, line_top, 0xFF);
-    const int bottom_edge = field_239C4_ != 0
-                                ? mapWin_.GraphicWin::dib_.bmiHeader.biWidth +
-                                      field_239C4_ - 1
-                                : Buffer::dib_.bmiHeader.biWidth - 1;
-    Buffer::hline(line_left, bottom_edge, line_bottom, 0xFF);
-    Buffer::vline(line_left, line_top, line_bottom - 1, 0xFF);
+    if (rect.left > rect.right) {
+        Buffer::hline(field_239C4_, line_right, line_top, 0xFF);
+        Buffer::hline(field_239C4_, line_right - 1, line_bottom, 0xFF);
+        Buffer::vline(line_right, line_top + 1, line_bottom, 0xFF);
+        const int edge = field_239C4_ != 0
+                             ? mapWin_.GraphicWin::dib_.bmiHeader.biWidth +
+                                   field_239C4_ - 1
+                             : Buffer::dib_.bmiHeader.biWidth - 1;
+        Buffer::hline(line_left + 1, edge, line_top, 0xFF);
+        const int bottom_edge = field_239C4_ != 0
+                                    ? mapWin_.GraphicWin::dib_.bmiHeader.biWidth +
+                                          field_239C4_ - 1
+                                    : Buffer::dib_.bmiHeader.biWidth - 1;
+        Buffer::hline(line_left, bottom_edge, line_bottom, 0xFF);
+        Buffer::vline(line_left, line_top, line_bottom - 1, 0xFF);
+        return;
+    }
+    Buffer::box(&rect, 0xFF, 0xFF);
 }
+#pragma optimize("", on)
 
 // The redraw rebuilds the owned MapWin and buffers according to field_239BC_.
 // All receiver offsets in the original are these declared subobjects.
@@ -675,15 +641,18 @@ void WorldWin::on_redraw() {
 
 // ORIGINAL: 0x004C4230 ?UNK2@WorldWin@@QAEXH@Z 0x004C4230-0x004C43F0
 // symbol    ?refresh_world_map@WorldWin@@QAEXH@Z
+#pragma optimize("y", off)
 void WorldWin::refresh_world_map(int resize_buffers) {
     if (WorldWinRebuildBusy != 0) {
         return;
     }
     WorldWinRebuildBusy = 1;
 
-    int scale = 6;
+    int scale;
     if (MapWinCaptionScale > 0) {
         scale = (MapWinCaptionScale * 50) / MapWinCaptionDivisor;
+    } else {
+        scale = 6;
     }
     const int cell_size = ((scale + 1) / 4) * 4;
 
@@ -694,36 +663,29 @@ void WorldWin::refresh_world_map(int resize_buffers) {
         static_cast<uint32_t>(MapLatitudeBounds / 2 - 2) *
         static_cast<uint32_t>(cell_size));
     mapWin_.center_x_ = MapLongitudeBounds / 2;
-    mapWin_.zoom_offset_ = -14;
     mapWin_.center_y_ = MapLatitudeBounds / 2;
+    mapWin_.zoom_offset_ = -14;
     mapWin_.field_1DD70_ = 0x80000000;
 
-    Buffer *map_surface = static_cast<Buffer *>(
-        static_cast<GraphicWin *>(&mapWin_));
     if (resize_buffers != 0) {
         set_dirty();
-        mapWin_.resize(field_A14_,
-                       field_A18_, 1);
-        buffer2_.resize(field_A14_,
-                         field_A18_);
-        buffer1_.resize(field_A14_,
-                         field_A18_);
-        static_cast<GraphicWin &>(mapWin_).fill(0);
+        mapWin_.resize(field_A14_, field_A18_, 1);
+        buffer2_.resize(field_A14_, field_A18_);
+        buffer1_.resize(field_A14_, field_A18_);
+        mapWin_.GraphicWin::fill(0);
     } else {
-        buffer2_.copy(map_surface, 0, 0, 0, 0,
-                      field_A14_,
-                      field_A18_);
+        buffer2_.copy(static_cast<Buffer *>(&mapWin_), 0, 0, 0, 0,
+                      field_A14_, field_A18_);
     }
 
     mapWin_.field_1DD70_ = 0x80000000;
     mapWin_.draw_map(0);
-    map_surface->copy(&buffer2_, 0, 0, 0, 0,
-                      field_A14_,
-                      field_A18_);
+    mapWin_.Buffer::copy(&buffer2_, 0, 0, 0, 0, field_A14_, field_A18_);
 
     clear_dirty();
     WorldWinRebuildBusy = 0;
 }
+#pragma optimize("", on)
 
 // ORIGINAL: 0x004C38E0 sub_4c38e0 0x004C38E0-0x004C3910 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["task:world-map-view-callbacks", "Pinned original004c38e0; ButtonGroup7CD12C = MainInterface7AE820 +1E878 +94; MapWinTable[1]=7D3C40; global WorldWin8E9F60", "historical seed:src/recovered/004c38e0.cpp"], "reason": "Recover the complete global map-view operation through actual source-owned button group and windows. This callback does not change WorldWin selection state; preserve the historical byte obligation independently of current matching."}

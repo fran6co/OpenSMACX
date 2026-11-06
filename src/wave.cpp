@@ -386,14 +386,13 @@ int Wave::is_playing() {
     // 0x004C6B1A: a dword read of the whole flag field, testing bit 4.
     unsigned char release_flags;
     if (device == 0 && ((release_flags = flags_54_ >> 4) & 1)) {
-        if (start_time_ == 0) {
-            return 0;
-        }
-        const uint32_t elapsed = timeGetTime() - start_time_;
         // `cmp ecx, eax` / `jbe`: the length is compared unsigned, so a negative
         // stored length reads as a very long one rather than as already finished.
-        if (static_cast<uint32_t>(ms_length_) <= elapsed) return 0;
-        return 1;
+        if (start_time_ != 0 &&
+            static_cast<uint32_t>(ms_length_) > timeGetTime() - start_time_) {
+            return 1;
+        }
+        return 0;
     }
     // This is an external virtual call through the Sound prefix's slot 23.
     return Sound::is_playing();

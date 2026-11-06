@@ -200,11 +200,21 @@ void Gamma::adjust_palette() {
 // RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/005c9420.cpp records the 236-line palette strip and the gamma label", "src/gamma.h owns rect1_, font_, gamma_ and the Buffer base at their measured offsets", "Original format string at 0x00691E7C is %f"], "reason": "Draw the dialog's colour ramp and current gamma through its actual GraphicWin and Buffer bases, overriding Win's slot 12."}
 // Gamma overrides the existing Win redraw slot; its emitted method is virtual.
 // symbol    ?on_redraw@Gamma@@UAEXXZ
+// Guarded centered write, inlined: the image keeps the null test on the
+// stack buffer before strlen.
+static inline void gamma_write_cent(Gamma *win, char *text, RECT *rect) {
+    if (text != 0) {
+        win->Buffer::write_cent_l(text, rect, strlen(text));
+    }
+}
+
 void Gamma::on_redraw() {
     RECT label_area = rect1_;
     int x = label_area.left;
+    const int top = label_area.top;
+    const int height = label_area.bottom - top;
     for (int color = 10; color < 246; ++color) {
-        Buffer::line(x, label_area.top, x, label_area.bottom, color);
+        Buffer::line(x, top, x, top + height, color);
         ++x;
     }
 
@@ -218,7 +228,7 @@ void Gamma::on_redraw() {
     char value_text[80];
     value_text[0] = 0;
     sprintf(value_text, "%f", gamma_);
-    Buffer::write_cent_l(value_text, &label_area, strlen(value_text));
+    gamma_write_cent(this, value_text, &label_area);
     GraphicWin::soft_update();
 }
 
@@ -286,14 +296,13 @@ void Gamma::adjust_pal(double gamma) {
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/005c93c0.cpp separates button -1 scroll acceptance from button -2 initial-gamma restoration", "src/gamma.h identifies gamma_, initialGamma_ and the embedded Scroll", "Win slot 58 is release_modal, the original indirect target"], "reason": "Apply or cancel the gamma adjustment and close the modal dialog through its real virtual method."}
 // symbol    ?on_button_clicked@Gamma@@UAEXH@Z
 void Gamma::on_button_clicked(int button_id) {
-    if (button_id != -2) {
-        if (button_id == -1) {
-            gamma_ = static_cast<double>(scroll_.position()) * GammaPositionScale;
-            release_modal();
-            return;
-        }
-    } else {
+    switch (button_id) {
+    case -1:
+        gamma_ = static_cast<double>(scroll_.position()) * GammaPositionScale;
+        break;
+    case -2:
         gamma_ = initialGamma_;
+        break;
     }
     release_modal();
 }
