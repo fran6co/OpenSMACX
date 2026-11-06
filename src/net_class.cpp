@@ -537,7 +537,7 @@ Return Value: n/a
 Purpose: Close the network: stop the voice transmitter, reset the timers
          and slot state, and - when a DirectPlay session object exists -
          release it through its interface and drain the player slots.
-// ORIGINAL: 0x0062E010 ?close@Net@@QAEXXZ 0x0062E010-0x0062E24A
+// ORIGINAL: 0x0062E010 ?close@Net@@QAEXXZ 0x0062E010-0x0062E24A BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned PE and independent IDA9/Ghidra extents agree on62E010..62E24A; all570bytes are covered by184entry-reachable instructions ending RET62E249, with no escaping branch.", "The former interval through62E2CF contains6NOPs, independently mapped poll_services62E250..62E299,7NOPs and47bytes of independently mapped join_service62E2A0..62E41C. Neighbor identities/spans and all historical claims remain; former erroneous bounds survive in Git37368691c. No C++ behavior changes."], "reason": "Bound Net::close by its own reachable return; the previous interval consumed two separately mapped methods."}
 // symbol    ?close@Net@@QAEXXZ
 // size      570 bytes
@@ -1763,7 +1763,7 @@ Purpose: Append one player to the callback-selected table: record the original
          GetPlayerData method (slot +0x50), merge in the connection's voice
          bit, copy the DPNAME long text, and publish the id as the polling
          target when the player is local.
-// ORIGINAL: 0x00630C80 ?enum_players@Net@@QAEHKKPBUDPNAME@@KPAX@Z 0x00630C80-0x00630D6B FILE
+// ORIGINAL: 0x00630C80 ?enum_players@Net@@QAEHKKPBUDPNAME@@KPAX@Z 0x00630C80-0x00630D6B FILE BYTE_EXACT
 // size      227 bytes
 // prototype int (__thiscall ?enum_players@Net@@QAEHKKPBUDPNAME@@KPAX@Z)(Net* this, unsigned long, unsigned long, const DPNAME*, unsigned long, void*)
 // callers   0   call targets   2
@@ -2573,7 +2573,7 @@ Purpose: Host a named session: close any live one, size it to two players
          allocation node at 0x700 - the same record the enumeration callback
          fills for received sessions. Leaves the 0x10000 "in a lobby session"
          bit lit.
-// ORIGINAL: 0x0062EAA0 ?create_session@Net@@QAEHPADHPAD@Z 0x0062EAA0-0x0062ED2F FILE
+// ORIGINAL: 0x0062EAA0 ?create_session@Net@@QAEHPADHPAD@Z 0x0062EAA0-0x0062ED2F FILE BYTE_EXACT
 // symbol    ?create_session@Net@@QAEPAVNetAllocationNode@@PADH0@Z
 // size      655 bytes
 // prototype int (__thiscall ?create_session@Net@@QAEHPADHPAD@Z)(Net* this, int8*, int, int8*)
@@ -2858,7 +2858,7 @@ Purpose: Flush Net's whole player table as one packet: when the table's two
          walk reads each record's first word, its name at +0x15 and its
          flags byte at +0x14, exactly as the player record is laid out.
 
-// ORIGINAL: 0x0062D5F0 sub_62d5f0 0x0062D5F0-0x0062D69D
+// ORIGINAL: 0x0062D5F0 sub_62d5f0 0x0062D5F0-0x0062D69D BYTE_EXACT
 // symbol    ?broadcast_player_table@Net@@QAEXXZ
 // TRIED: calling strcat by name inlines it (repne scasb), which the original does not; the pointer-cast call site was a byte-convergence lever, dropped for this coverage landing.
 // Historical emitted-symbol hint: @sub_62d5f0@8

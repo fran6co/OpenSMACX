@@ -209,7 +209,7 @@ void Palette::set_active_window(Win *) {
 
 /*
 Purpose: Drop the animation slot registered under the given key.
-// ORIGINAL: 0x005FE950 ?UNK3@Palette@@QAEXH@Z 0x005FE950-0x005FEAC4
+// ORIGINAL: 0x005FE950 ?UNK3@Palette@@QAEXH@Z 0x005FE950-0x005FEAC4 BYTE_EXACT
 // TRIED: 2026-09-03, the /G6 flag sets added to the ladder after the 2026-08-24 pass give the best INSTRUCTION count here (7/115, 0.757 similar) but score below the plain /c /O2 /Gy /GR- /GX set (5/115, 0.771 similar); the image is not /G6 in this body.
 // TRIED: transcription as a member reading its key normally - the image
 //            opens by reading the key from [esp+4] past a callee-save push
@@ -424,7 +424,7 @@ int Palette::get_pos(int value) {
 /*
 Purpose: Build the process palette and hand it to GDI, replacing whatever
          palette was there before.
-// ORIGINAL: 0x005FEBB0 ?init_palette_class@Palette@@SAXH@Z 0x005FEBB0-0x005FECF0
+// ORIGINAL: 0x005FEBB0 ?init_palette_class@Palette@@SAXH@Z 0x005FEBB0-0x005FECF0 BYTE_EXACT
 // TRIED: 2026-09-03, the /G6 flag sets added to the ladder after the 2026-08-24 pass give the best INSTRUCTION count here (3/99, 0.842 similar) but score below the plain /c /O2 /Gy /GR- /GX set (0/99, 0.881 similar); the image is not /G6 in this body.
 // CORRECTED from ?init_palette_class@Palette@@QAAXH@Z
 //   `QAA` is a public NON-STATIC member declared __cdecl - it takes a `this`
@@ -910,7 +910,7 @@ int Palette::get_nearest_palette_index(unsigned char red, unsigned char green,
     return best_index;
 }
 
-// ORIGINAL: 0x005FF1A0 ?UNK5@Palette@@QAEHHHHH@Z 0x005FF1A0-0x005FF21C FILE
+// ORIGINAL: 0x005FF1A0 ?UNK5@Palette@@QAEHHHHH@Z 0x005FF1A0-0x005FF21C FILE BYTE_EXACT
 // symbol    ?make_remap_table@Palette@@QAEHPAV1@PAEHH@Z
 // working copy - scaffold materialised by --work
 // size      124 bytes
@@ -986,7 +986,7 @@ int Palette::make_remap_table(Palette *source, unsigned char *table, int start,
     return 0;
 }
 
-// ORIGINAL: 0x005FE5C0 ?UNK1@Palette@@QAEHHHH@Z 0x005FE5C0-0x005FE646 FILE
+// ORIGINAL: 0x005FE5C0 ?UNK1@Palette@@QAEHHHH@Z 0x005FE5C0-0x005FE646 FILE BYTE_EXACT
 // TRIED: 2026-09-03, the /G6 flag sets added to the ladder after the 2026-08-24 pass give the best INSTRUCTION count here (13/47, 0.860 similar) but score below the plain /c /O2 /Gy /GR- /GX set (11/47, 0.946 similar); the image is not /G6 in this body.
 // symbol    ?set_rgbquad@Palette@@QAEHPBUtagRGBQUAD@@HH@Z
 // working copy - scaffold materialised by --work
@@ -1033,7 +1033,7 @@ int Palette::set_rgbquad(const RGBQUAD *src, int start, int count) {
     return 0;
 }
 
-// ORIGINAL: 0x005FEE80 ?UNK4@Palette@@QAEHPAXHHHHH@Z 0x005FEE80-0x005FEFE7
+// ORIGINAL: 0x005FEE80 ?UNK4@Palette@@QAEHPAXHHHHH@Z 0x005FEE80-0x005FEFE7 BYTE_EXACT
 // symbol    ?make_blend_table@Palette@@QAEHPBV1@PAEHHHH@Z
 // TRIED: `int i` reused across the two fill loops is a VC6 for-scope leak (C2374), so the loop counters are named `i0`/`i1`. The blend loop's R/G/B channel math and the `get_nearest_palette_index` call are transcribed directly from the Ghidra pseudocode (the CONCAT31 casts there are just "pass the low byte", nothing else). 0.81 mnemonic similarity; first divergence at #3 is in the prologue stack-frame setup for the two 0x400-byte local copies, not chased further.
 // size      359 bytes
@@ -1123,7 +1123,7 @@ int Palette::make_blend_table(const Palette *other, uint8_t *table, int start,
 #pragma intrinsic(memcpy)
 #endif
 
-// ORIGINAL: 0x005FEFF0 ?create_table_from_color@Palette@@QAEHHPAEHHHH@Z 0x005FEFF0-0x005FF19E
+// ORIGINAL: 0x005FEFF0 ?create_table_from_color@Palette@@QAEHHPAEHHHH@Z 0x005FEFF0-0x005FF19E BYTE_EXACT
 // TRIED: MISMATCH #3 test/push - Palette has no named per-field layout (all generic field_XX_), so `this` is treated as a raw unsigned char* (the 256-entry colour table, then the 5-record "special colours" table at +0x40c) rather than named members.
 // size      430 bytes
 // prototype int (__thiscall ?create_table_from_color@Palette@@QAEHHPAEHHHH@Z)(Palette* this, int, unsigned int8*, int, int, int, int)
@@ -1300,7 +1300,7 @@ int Palette::map_to_palette(Palette *dest, int start, int count) {
     return 0;
 }
 
-// ORIGINAL: 0x005FEAD0 ?timer_callback@Palette@@QAAXHH@Z 0x005FEAD0-0x005FEBA8 FILE
+// ORIGINAL: 0x005FEAD0 ?timer_callback@Palette@@QAAXHH@Z 0x005FEAD0-0x005FEBA8 FILE BYTE_EXACT
 // symbol    ?timer_callback@Palette@@SAXHPAX@Z
 // TRIED: 228 vs 216 bytes; the extra named locals (idx/found/entries/ iStartIndex/cEntries/i) push more callee-saved registers before the first `mov ebp,a2`, where the original loads a2 into ebp before any other push. Did not try collapsing to fewer locals given budget.
 // TRIED: 2026-08-24, collapsing WAS tried and it is not the lever - it makes
@@ -1636,7 +1636,7 @@ int Palette::fade_to_entry(int colour_index, int start, int count, int steps,
 #pragma intrinsic(memcpy)
 #endif
 
-// ORIGINAL: 0x00628DB0 ?RGB_to_HSV@@YAXPAUPALETTEENTRY@@PAUHSV@@@Z 0x00628DB0-0x00628F27 FILE
+// ORIGINAL: 0x00628DB0 ?RGB_to_HSV@@YAXPAUPALETTEENTRY@@PAUHSV@@@Z 0x00628DB0-0x00628F27 FILE BYTE_EXACT
 // symbol    ?RGB_to_HSV@@YAXPBUtagPALETTEENTRY@@PAUHSV@@@Z
 // size      375 bytes
 // prototype 
