@@ -1335,7 +1335,7 @@ void __cdecl noun_item(int *gender, int *plurality) {
 
 /*
 Purpose: Parse the #UNITS section inside the alpha(x).txt.
-// ORIGINAL: 0x00587240 ?read_units@@YAHXZ 0x00587240-0x005873B1
+// ORIGINAL: 0x00587240 ?read_units@@YAHXZ 0x00587240-0x005873B1 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned read_units: ability parser call at 0x00587316 proceeds directly to the prototype switch; make_proto call at 0x00587364 receives reactor 1/2/3 for prototypes 16/17/18, default 1.", "Pinned 0x0058736F..0x00587373 tests the signed plan and branches past its byte store on JL.", "Git 11a07309a introduced the optional reactor-token extension; it is preserved in Git for the later improvement milestone."], "reason": "The faithful rules reader consumes no optional reactor token after abilities, derives reactors from prototype IDs, and skips the plan override for every negative plan. Historical TRIED prose below describes the superseded reactor extension, retained as seed history only."}
 // LEVER: 0x00645460 is plain `strcpy` (2 args - confirmed at its call site,
 //        `push name; push &veh_name; call`, no length/size pushed anywhere

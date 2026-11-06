@@ -775,7 +775,7 @@ void Console::assemble() { // 0x004D95F0
 }
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x004E2000 ?corner_the_market@Console@@QAEXXZ 0x004E2000-0x004E2235
+// ORIGINAL: 0x004E2000 ?corner_the_market@Console@@QAEXXZ 0x004E2000-0x004E2235 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned original entry 004E2000; retained seed src/recovered/units/004e2000.cpp", "Native4E20BB..20DA formats amount/deadline before already-cornered and affordability checks. Native4E219F reloads current turn/rules after lock; message and final formatting read source-owned faction state after callbacks.", "recovery/tasks/console-scenario-owner-wave.json; native scope expansions retain the original task baseline"], "reason": "Recover the complete Console command into its genuine owner using typed state and existing lifecycle/network APIs. Preserve original spans and retained seed evidence; this binding is not a byte, reference or runtime acceptance claim."}
 void Console::corner_the_market() { // 0x004E2000
     if ((GameDataStateStorage.fields_.game_rules_ & 4) == 0) {

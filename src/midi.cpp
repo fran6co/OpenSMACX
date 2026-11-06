@@ -1150,7 +1150,7 @@ int Midi::set_mode(uint8_t mode) {
     return 0;
 }
 
-// ORIGINAL: 0x004C8530 ?load@Ambience@@QAEHPBD@Z 0x004C8530-0x004C85EF FILE
+// ORIGINAL: 0x004C8530 ?load@Ambience@@QAEHPBD@Z 0x004C8530-0x004C85EF FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:f7bbce35:src/unrecovered/004c8530.cpp", "src/ambience.h", "src/midi.h"], "reason": "Original audio event tables and compiler-call contracts identify this genuine owner operation; compatible historical seeds and matching obligations remain retained, not an acceptance verdict."}
 // Defined here, not in ambience.cpp: the image inlines set_mode (byte
 // parameter, stored in the dead filename slot) into this body.

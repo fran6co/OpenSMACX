@@ -242,7 +242,7 @@ void BAmbience::hostility() {
     }
 }
 
-// ORIGINAL: 0x00447D20 sub_447d20 0x00447D20-0x00447DA5 FILE
+// ORIGINAL: 0x00447D20 sub_447d20 0x00447D20-0x00447DA5 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned original 0x00447D20..0x00447DA5: virtual calls at offsets 0x118, 0x114 and 0x10C have the argument/return behavior restored by Midi::is_trackset_playing, Midi::xpose_trackset and Midi::play_trackset.", "Pinned original initializes 0x00683C2C to signed -0x4B0; only this function has an observed source writer/use. Source owns a signed int initialized to that value; full original allocation and indirect writers remain unknown.", "Historical settings-checkbox/repaint interpretation is retained as superseded binding history in stringstruct.cpp, not as current behavior."], "reason": "Recover the pinned trackset cascade through the existing Midi status, transpose and play virtual methods. The dynamic subclass, original helper/member distinction, call lifecycle and full allocation of the shared transposition cell remain unproven."}
 // symbol    ?advance_trackset_transposition@Midi@@QAEXXZ
 void Midi::advance_trackset_transposition() {
