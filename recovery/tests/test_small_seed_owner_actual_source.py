@@ -100,8 +100,6 @@ def test_installed_slot24_source_closure_and_mapping_transfer():
     sound_body = body_after(source("src/sound.cpp"), "int Sound::unk_slot24()")
     assert "static_cast<int>(flags_40_ << 31) >> 31" in sound_body
     assert [row.address for row in mapped_records("src/sound.cpp")].count(0x00448380) == 1
-    assert all(row.address != 0x00448380
-               for row in mapped_records("src/unbound_functions.h"))
     for path in ("recovery/tests/sound_lifetime_harness.cpp",
                  "recovery/tests/sound_chain_storage_harness.cpp",
                  "recovery/tests/wave_lifetime_harness.cpp"):

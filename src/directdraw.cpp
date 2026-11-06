@@ -300,6 +300,25 @@ extern "C" int __cdecl sub_62d100() {
     return 0;
 }
 
+// Unreferenced in the pinned image (no call, jump or data reference).
+// Original effect: zero EAX and return; callee stack cleanup 0 bytes.
+// ORIGINAL: 0x0062D140 sub_62d140 0x0062D140-0x0062D143 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"reason": "Bind the unreferenced original leaf as an empty/constant source function in the translation unit whose address band contains it; its original name, prototype and callers remain unknown.", "evidence": ["pinned:terranx_original.exe:0x0062D140-0x0062D143 zero EAX and return; callee stack cleanup 0 bytes", "pinned scan: no rel32 call/jmp and no dword reference to this address anywhere in the image", "address band: nearest mapped neighbours are 0x0062D100 sub_62d100 (src/directdraw.cpp) and 0x0062D160 sub_62d160 (src/directdraw.cpp)"]}
+// symbol    ?sub_62d140@@YAHXZ
+// kind      game
+int __cdecl sub_62d140() {
+    return 0;
+}
+
+// Unreferenced in the pinned image (no call, jump or data reference).
+// Original effect: return without modifying EAX; callee stack cleanup 0 bytes.
+// ORIGINAL: 0x0062D150 nullsub_253 0x0062D150-0x0062D151 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"reason": "Bind the unreferenced original leaf as an empty/constant source function in the translation unit whose address band contains it; its original name, prototype and callers remain unknown.", "evidence": ["pinned:terranx_original.exe:0x0062D150-0x0062D151 return without modifying EAX; callee stack cleanup 0 bytes", "pinned scan: no rel32 call/jmp and no dword reference to this address anywhere in the image", "address band: nearest mapped neighbours are 0x0062D100 sub_62d100 (src/directdraw.cpp) and 0x0062D160 sub_62d160 (src/directdraw.cpp)"]}
+// symbol    ?nullsub_253@@YAXXZ
+// kind      game
+void __cdecl nullsub_253() {
+}
+
 // ORIGINAL: 0x0062D160 sub_62d160 0x0062D160-0x0062D191 BYTE_EXACT
 // symbol    ?sub_62d160@@YAPAUHDC__@@XZ
 // kind game

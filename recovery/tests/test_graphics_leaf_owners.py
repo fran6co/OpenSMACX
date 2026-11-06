@@ -345,30 +345,15 @@ def test_moved_annotations_preserve_full_baseline_metadata_and_file_mode():
 
 
 def test_unresolved_mappings_keep_identity_claims_and_lessons():
-    from dataclasses import replace
-    from match_recovery.source import Mode, Recipe, SourceRole, State
-
     for path, baseline_path, addresses in (
         ("src/texture.cpp", "src/leaf_recoveries.cpp", (0x006252C0,)),
         ("src/table_storage.cpp", "src/leaf_recoveries.cpp", (0x00616B40,)),
         ("src/vendor/zlib.recovery.h", "src/leaf_recoveries.cpp",
          (0x00640A80, 0x00644930)),
-        ("src/unbound_functions.h", "src/field_accessors.cpp",
-         (0x00616D80,)),
-        ("src/buffer.cpp", "src/field_accessors.cpp",
-         (0x005DA6A0, 0x005DA6B0, 0x005E2460, 0x005E2470)),
     ):
         for address in addresses:
             current = actual_record(path, address)
             before = baseline_record(baseline_path, address)
-            if path in ("src/unbound_functions.h", "src/buffer.cpp"):
-                assert current.mode is Mode.UNBOUND
-                assert not current.symbol and not current.region
-                before = replace(before, mode=Mode.UNBOUND,
-                                 state=State.UNBOUND, recipe=Recipe.UNBOUND,
-                                 symbol="", body="", context="", region="",
-                                 source_role=SourceRole.UNCLASSIFIED,
-                                 source_role_reason="", function_fragment=None)
             assert metadata(current) == metadata(before)
 
 
@@ -402,5 +387,3 @@ def test_texture_terminal_fragment_keeps_identity_without_callable_stub():
         "parent_symbol": relation.parent_symbol,
         "reason": relation.reason,
     }
-    assert not any(r.address == 0x0061F785
-                   for r in source.read_file(ROOT / "src/unbound_functions.h"))

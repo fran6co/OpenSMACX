@@ -8406,6 +8406,15 @@ void __cdecl base_support() {
     }
 }
 
+// Unreferenced in the pinned image (no call, jump or data reference).
+// Original effect: return without modifying EAX; callee stack cleanup 0 bytes.
+// ORIGINAL: 0x004E9B60 nullsub_220 0x004E9B60-0x004E9B61 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"reason": "Bind the unreferenced original leaf as an empty/constant source function in the translation unit whose address band contains it; its original name, prototype and callers remain unknown.", "evidence": ["pinned:terranx_original.exe:0x004E9B60-0x004E9B61 return without modifying EAX; callee stack cleanup 0 bytes", "pinned scan: no rel32 call/jmp and no dword reference to this address anywhere in the image", "address band: nearest mapped neighbours are 0x004E9550 ?base_support@@YAXXZ (src/base.cpp) and 0x004E9B70 ?base_nutrient@@YAXXZ (src/base.cpp)"]}
+// symbol    ?nullsub_220@@YAXXZ
+// kind      game
+void __cdecl nullsub_220() {
+}
+
 /*
 Purpose: Calculate nutrients and growth for the current base.
 // ORIGINAL: 0x004E9B70 ?base_nutrient@@YAXXZ 0x004E9B70-0x004E9CAD BYTE_EXACT

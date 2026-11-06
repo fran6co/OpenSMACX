@@ -3843,6 +3843,26 @@ int Buffer::poly(Vert *verts, int count, int color) {
     return polygon(this, verts, count, color);
 }
 
+// Unreferenced in the pinned image (no call, jump or data reference).
+// Original effect: set EAX to 8 and return; callee stack cleanup 12 bytes.
+// ORIGINAL: 0x005DA6A0 sub_5da6a0 0x005DA6A0-0x005DA6A8 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"reason": "Bind the unreferenced original leaf as an empty/constant source function in the translation unit whose address band contains it; its original name, prototype and callers remain unknown.", "evidence": ["pinned:terranx_original.exe:0x005DA6A0-0x005DA6A8 set EAX to 8 and return; callee stack cleanup 12 bytes", "pinned scan: no rel32 call/jmp and no dword reference to this address anywhere in the image", "address band: nearest mapped neighbours are 0x005DA680 ?poly@Buffer@@QAEHPAUVert@@HH@Z (src/buffer.cpp) and 0x005DA6C0 ?tile_mask@Buffer@@QAEHPAVBuffer@@HHHHHHH@Z (src/buffer.cpp)"]}
+// symbol    ?sub_5da6a0@@YGHHHH@Z
+// kind      game
+int __stdcall sub_5da6a0(int, int, int) {
+    return 8;
+}
+
+// Unreferenced in the pinned image (no call, jump or data reference).
+// Original effect: set EAX to 8 and return; callee stack cleanup 16 bytes.
+// ORIGINAL: 0x005DA6B0 sub_5da6b0 0x005DA6B0-0x005DA6B8 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"reason": "Bind the unreferenced original leaf as an empty/constant source function in the translation unit whose address band contains it; its original name, prototype and callers remain unknown.", "evidence": ["pinned:terranx_original.exe:0x005DA6B0-0x005DA6B8 set EAX to 8 and return; callee stack cleanup 16 bytes", "pinned scan: no rel32 call/jmp and no dword reference to this address anywhere in the image", "address band: nearest mapped neighbours are 0x005DA680 ?poly@Buffer@@QAEHPAUVert@@HH@Z (src/buffer.cpp) and 0x005DA6C0 ?tile_mask@Buffer@@QAEHPAVBuffer@@HHHHHHH@Z (src/buffer.cpp)"]}
+// symbol    ?sub_5da6b0@@YGHHHHH@Z
+// kind      game
+int __stdcall sub_5da6b0(int, int, int, int) {
+    return 8;
+}
+
 // ORIGINAL: 0x005DD300 ?write_right_l@Buffer@@QAEHPADHHHH@Z 0x005DD300-0x005DD3A5 FILE
 // LEVER: X BEFORE Y, the reverse of what the note below used to claim. The
 //        image adds `field_width - text_width` to the SECOND parameter and
@@ -6658,6 +6678,26 @@ int Buffer::put_pixel(int a1, int a2, int a3) {
     return 0;
 }
 
+// Unreferenced in the pinned image (no call, jump or data reference).
+// Original effect: set EAX to 8 and return; callee stack cleanup 20 bytes.
+// ORIGINAL: 0x005E2460 sub_5e2460 0x005E2460-0x005E2468 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"reason": "Bind the unreferenced original leaf as an empty/constant source function in the translation unit whose address band contains it; its original name, prototype and callers remain unknown.", "evidence": ["pinned:terranx_original.exe:0x005E2460-0x005E2468 set EAX to 8 and return; callee stack cleanup 20 bytes", "pinned scan: no rel32 call/jmp and no dword reference to this address anywhere in the image", "address band: nearest mapped neighbours are 0x005E2330 ?put_pixel@Buffer@@QAEHHHH@Z (src/buffer.cpp) and 0x005E2480 ?get_pcx_dimensions@Buffer@@QAAHPBDPAHPAH@Z (src/buffer.cpp)"]}
+// symbol    ?sub_5e2460@@YGHHHHHH@Z
+// kind      game
+int __stdcall sub_5e2460(int, int, int, int, int) {
+    return 8;
+}
+
+// Unreferenced in the pinned image (no call, jump or data reference).
+// Original effect: set EAX to 8 and return; callee stack cleanup 20 bytes.
+// ORIGINAL: 0x005E2470 sub_5e2470 0x005E2470-0x005E2478 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"reason": "Bind the unreferenced original leaf as an empty/constant source function in the translation unit whose address band contains it; its original name, prototype and callers remain unknown.", "evidence": ["pinned:terranx_original.exe:0x005E2470-0x005E2478 set EAX to 8 and return; callee stack cleanup 20 bytes", "pinned scan: no rel32 call/jmp and no dword reference to this address anywhere in the image", "address band: nearest mapped neighbours are 0x005E2330 ?put_pixel@Buffer@@QAEHHHH@Z (src/buffer.cpp) and 0x005E2480 ?get_pcx_dimensions@Buffer@@QAAHPBDPAHPAH@Z (src/buffer.cpp)"]}
+// symbol    ?sub_5e2470@@YGHHHHHH@Z
+// kind      game
+int __stdcall sub_5e2470(int, int, int, int, int) {
+    return 8;
+}
+
 // ORIGINAL: 0x005DDBB0 ?wrap_right@Buffer@@QAEHPADHHH@Z 0x005DDBB0-0x005DDC8F FILE BYTE_EXACT
 // TRIED: source order already matches Ghidra's (g=0; field18=0; field14=field10; y=a3); the original's `ebx/ebp` push order ahead of the field writes looks like pure register-scheduling, not reachable by reordering the C statements that produced it.
 // working copy - scaffold materialised by --work
@@ -8166,6 +8206,16 @@ int Buffer::write_bmp(char *filename) {
     free_data(1);
     fclose(file);
     return 0;
+}
+
+// Unreferenced in the pinned image (no call, jump or data reference).
+// Original effect: set EAX to 8 and return; callee stack cleanup 16 bytes.
+// ORIGINAL: 0x005DFB40 sub_5dfb40 0x005DFB40-0x005DFB48 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"reason": "Bind the unreferenced original leaf as an empty/constant source function in the translation unit whose address band contains it; its original name, prototype and callers remain unknown.", "evidence": ["pinned:terranx_original.exe:0x005DFB40-0x005DFB48 set EAX to 8 and return; callee stack cleanup 16 bytes", "pinned scan: no rel32 call/jmp and no dword reference to this address anywhere in the image", "address band: nearest mapped neighbours are 0x005DF910 ?write_bmp@Buffer@@QAEHPAD@Z (src/buffer.cpp) and 0x005DFB50 ?fill@Buffer@@QAEHH@Z (src/buffer.cpp)"]}
+// symbol    ?sub_5dfb40@@YGHHHHH@Z
+// kind      game
+int __stdcall sub_5dfb40(int, int, int, int) {
+    return 8;
 }
 
 // ORIGINAL: 0x005E10C0 ?hline@Buffer@@QAEXHHHHHHHH@Z 0x005E10C0-0x005E134E
@@ -10436,31 +10486,3 @@ int Font::line_advance() const {
     return font_line_advance(*this);
 }
 
-// Pending identities in the inferred Buffer contribution band. Their original
-// prototypes, callers, and source owners remain unresolved; these notes do not
-// claim Buffer class membership or implement any body.
-
-// ORIGINAL: 0x005DA6A0 sub_5da6a0 0x005DA6A0-0x005DA6A8 UNBOUND BYTE_EXACT
-// kind game
-// Original effect: set EAX to 8 and return; callee stack cleanup 12 bytes.
-// Original prototype, callers and real source owner remain unresolved.
-
-// ORIGINAL: 0x005DA6B0 sub_5da6b0 0x005DA6B0-0x005DA6B8 UNBOUND BYTE_EXACT
-// kind game
-// Original effect: set EAX to 8 and return; callee stack cleanup 16 bytes.
-// Original prototype, callers and real source owner remain unresolved.
-
-// ORIGINAL: 0x005DFB40 sub_5dfb40 0x005DFB40-0x005DFB48 UNBOUND
-// kind game
-// Original effect: set EAX to 8 and return; callee stack cleanup 16 bytes.
-// Original prototype, callers and real source owner remain unresolved.
-
-// ORIGINAL: 0x005E2460 sub_5e2460 0x005E2460-0x005E2468 UNBOUND BYTE_EXACT
-// kind game
-// Original effect: set EAX to 8 and return; callee stack cleanup 20 bytes.
-// Original prototype, callers and real source owner remain unresolved.
-
-// ORIGINAL: 0x005E2470 sub_5e2470 0x005E2470-0x005E2478 UNBOUND BYTE_EXACT
-// kind game
-// Original effect: set EAX to 8 and return; callee stack cleanup 20 bytes.
-// Original prototype, callers and real source owner remain unresolved.

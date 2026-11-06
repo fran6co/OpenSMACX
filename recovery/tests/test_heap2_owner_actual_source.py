@@ -114,13 +114,10 @@ def test_heap2_mapping_moves_with_history_and_binding_to_real_owner():
     root = _root()
     heap_cpp_path = root / "src/jackal/heap.cpp"
     heap_header_path = root / "src/jackal/heap.h"
-    unbound_path = root / "src/unbound_functions.h"
     heap_cpp = heap_cpp_path.read_text()
     heap_header = heap_header_path.read_text()
 
-    unbound_records = [row for row in read(unbound_path) if row.address == ADDRESS]
     records = [row for row in read(heap_cpp_path) if row.address == ADDRESS]
-    assert unbound_records == []
     assert len(records) == 1
     record = records[0]
     assert record.name == "Heap::Heap2"

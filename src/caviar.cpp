@@ -282,6 +282,16 @@ VoxInstance::VoxInstance()
       instance_matrix_(0) {
 }
 
+// Unreferenced in the pinned image (no call, jump or data reference).
+// Original effect: zero EAX and return; callee stack cleanup 8 bytes.
+// ORIGINAL: 0x00616B30 sub_616b30 0x00616B30-0x00616B35 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"reason": "Bind the unreferenced original leaf as an empty/constant source function in the translation unit whose address band contains it; its original name, prototype and callers remain unknown.", "evidence": ["pinned:terranx_original.exe:0x00616B30-0x00616B35 zero EAX and return; callee stack cleanup 8 bytes", "pinned scan: no rel32 call/jmp and no dword reference to this address anywhere in the image", "address band: nearest mapped neighbours are 0x00616B20 sub_616b20 (src/caviar.cpp) and 0x00616B40 sub_616b40 (src/table_storage.cpp); caviar.cpp functions continue at 0x00616BC0"]}
+// symbol    ?sub_616b30@@YGHHH@Z
+// kind      game
+int __stdcall sub_616b30(int, int) {
+    return 0;
+}
+
 /*
 Purpose: Initialize the Caviar renderer's object records and default scalar fields.
 // ORIGINAL: 0x00616DA0 ??0Caviar@@QAE@XZ 0x00616DA0-0x00616DD6 SEMANTIC
@@ -6349,4 +6359,23 @@ void CaviarData::release_palette_chunk() {
         // The original reloads the owner's record after the free call.
         record_->field_18_ = 0;
     }
+}
+
+// Unreferenced in the pinned image (no call, jump or data reference).
+// Original effect: zero EAX and return; callee stack cleanup 12 bytes.
+// ORIGINAL: 0x00616D80 sub_616d80 0x00616D80-0x00616D85 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"reason": "Bind the unreferenced original leaf as an empty/constant source function in the translation unit whose address band contains it; its original name, prototype and callers remain unknown.", "evidence": ["pinned:terranx_original.exe:0x00616D80-0x00616D85 zero EAX and return; callee stack cleanup 12 bytes", "pinned scan: no rel32 call/jmp and no dword reference to this address anywhere in the image", "address band: nearest mapped neighbours are 0x00616D40 sub_616d40 (src/caviar.cpp) and 0x00616DA0 ??0Caviar@@QAE@XZ (src/caviar.cpp)"]}
+// symbol    ?sub_616d80@@YGHHHH@Z
+// kind      game
+int __stdcall sub_616d80(int, int, int) {
+    return 0;
+}
+
+// Unreferenced in the pinned image (no call, jump or data reference).
+// Original effect: return without modifying EAX; callee stack cleanup 0 bytes.
+// ORIGINAL: 0x00616D90 nullsub_195 0x00616D90-0x00616D91 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"reason": "Bind the unreferenced original leaf as an empty/constant source function in the translation unit whose address band contains it; its original name, prototype and callers remain unknown.", "evidence": ["pinned:terranx_original.exe:0x00616D90-0x00616D91 return without modifying EAX; callee stack cleanup 0 bytes", "pinned scan: no rel32 call/jmp and no dword reference to this address anywhere in the image", "address band: nearest mapped neighbours are 0x00616D40 sub_616d40 (src/caviar.cpp) and 0x00616DA0 ??0Caviar@@QAE@XZ (src/caviar.cpp)"]}
+// symbol    ?nullsub_195@@YAXXZ
+// kind      game
+void __cdecl nullsub_195() {
 }

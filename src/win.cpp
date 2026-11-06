@@ -3424,6 +3424,16 @@ void __cdecl do_all_tasks() {
     do_net();
 }
 
+// Unreferenced in the pinned image (no call, jump or data reference).
+// Original effect: zero EAX and return; callee stack cleanup 0 bytes.
+// ORIGINAL: 0x005FC9E0 sub_5fc9e0 0x005FC9E0-0x005FC9E3 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"reason": "Bind the unreferenced original leaf as an empty/constant source function in the translation unit whose address band contains it; its original name, prototype and callers remain unknown.", "evidence": ["pinned:terranx_original.exe:0x005FC9E0-0x005FC9E3 zero EAX and return; callee stack cleanup 0 bytes", "pinned scan: no rel32 call/jmp and no dword reference to this address anywhere in the image", "address band: nearest mapped neighbours are 0x005FC8F0 ?do_all_tasks@@YAXXZ (src/win.cpp) and 0x005FC9F0 ?do_all_tasks@@YAXPAUWin@@@Z (src/win.cpp)"]}
+// symbol    ?sub_5fc9e0@@YAHXZ
+// kind      game
+int __cdecl sub_5fc9e0() {
+    return 0;
+}
+
 void __cdecl do_all_chars();
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
@@ -3503,6 +3513,33 @@ void __cdecl flush_mouse() {
     WinPointerOwner1 = nullptr;
     WinPointerOwner2 = nullptr;
     check_net();
+}
+
+// Unreferenced in the pinned image (no call, jump or data reference).
+// Original effect: return without modifying EAX; callee stack cleanup 0 bytes.
+// ORIGINAL: 0x005FD280 nullsub_192 0x005FD280-0x005FD281 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"reason": "Bind the unreferenced original leaf as an empty/constant source function in the translation unit whose address band contains it; its original name, prototype and callers remain unknown.", "evidence": ["pinned:terranx_original.exe:0x005FD280-0x005FD281 return without modifying EAX; callee stack cleanup 0 bytes", "pinned scan: no rel32 call/jmp and no dword reference to this address anywhere in the image", "address band: nearest mapped neighbours are 0x005FD220 ?flush_mouse@@YAXXZ (src/win.cpp) and 0x005FD2B0 ?do_sound@@YAHXZ (src/autosound.cpp); win.cpp functions also follow at 0x005FD2C0..0x005FD360"]}
+// symbol    ?nullsub_192@@YAXXZ
+// kind      game
+void __cdecl nullsub_192() {
+}
+
+// Unreferenced in the pinned image (no call, jump or data reference).
+// Original effect: return without modifying EAX; callee stack cleanup 0 bytes.
+// ORIGINAL: 0x005FD290 nullsub_193 0x005FD290-0x005FD291 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"reason": "Bind the unreferenced original leaf as an empty/constant source function in the translation unit whose address band contains it; its original name, prototype and callers remain unknown.", "evidence": ["pinned:terranx_original.exe:0x005FD290-0x005FD291 return without modifying EAX; callee stack cleanup 0 bytes", "pinned scan: no rel32 call/jmp and no dword reference to this address anywhere in the image", "address band: nearest mapped neighbours are 0x005FD220 ?flush_mouse@@YAXXZ (src/win.cpp) and 0x005FD2B0 ?do_sound@@YAHXZ (src/autosound.cpp); win.cpp functions also follow at 0x005FD2C0..0x005FD360"]}
+// symbol    ?nullsub_193@@YAXXZ
+// kind      game
+void __cdecl nullsub_193() {
+}
+
+// Unreferenced in the pinned image (no call, jump or data reference).
+// Original effect: return without modifying EAX; callee stack cleanup 0 bytes.
+// ORIGINAL: 0x005FD2A0 nullsub_194 0x005FD2A0-0x005FD2A1 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"reason": "Bind the unreferenced original leaf as an empty/constant source function in the translation unit whose address band contains it; its original name, prototype and callers remain unknown.", "evidence": ["pinned:terranx_original.exe:0x005FD2A0-0x005FD2A1 return without modifying EAX; callee stack cleanup 0 bytes", "pinned scan: no rel32 call/jmp and no dword reference to this address anywhere in the image", "address band: nearest mapped neighbours are 0x005FD220 ?flush_mouse@@YAXXZ (src/win.cpp) and 0x005FD2B0 ?do_sound@@YAHXZ (src/autosound.cpp); win.cpp functions also follow at 0x005FD2C0..0x005FD360"]}
+// symbol    ?nullsub_194@@YAXXZ
+// kind      game
+void __cdecl nullsub_194() {
 }
 
 /*

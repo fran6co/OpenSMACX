@@ -42,7 +42,7 @@ def test_native_writer_only_corrects_unclaimed_extent():
     # verify the affected old mapping locally instead of requiring whole-file
     # equality with its historical pre-transport snapshot.
     separate, = (r for r in current if r.address == 0x5DFB40)
-    assert separate.mode is Mode.UNBOUND
+    assert separate.name == "sub_5dfb40"
     assert separate.image_spans == ((0x5DFB40, 0x5DFB48),)
 
 

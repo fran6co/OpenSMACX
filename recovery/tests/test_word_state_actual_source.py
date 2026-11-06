@@ -158,8 +158,6 @@ def test_actual_component_methods_preserve_behavior_offsets_and_order():
     assert "leaf_004c8070_redirect" not in SOURCE.read_text(encoding="utf-8")
     assert "field_accessor_004c8090_redirect" not in source
     assert "field_accessor_004c8100_redirect" not in source
-    unbound = read_source(ROOT / "src/unbound_functions.h")
-    assert not any(row.address in (0x004C8090, 0x004C8100) for row in unbound)
     assert "src/word_state.cpp" in (ROOT / "CMakeLists.txt").read_text()
     for name in ("PrefixFlagState", "NineWordSentinelState", "PairWordState"):
         assert "struct " + name in header

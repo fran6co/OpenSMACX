@@ -532,6 +532,15 @@ RangePrefixInitializationView::RangePrefixInitializationView() {
     unknown_dword_8_ = 0;
     unknown_dword_C_ = 0;
 }
+
+// Unreferenced in the pinned image (no call, jump or data reference).
+// Original effect: return without modifying EAX; callee stack cleanup 0 bytes.
+// ORIGINAL: 0x004C8140 nullsub_223 0x004C8140-0x004C8141 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"reason": "Bind the unreferenced original leaf as an empty/constant source function in the translation unit whose address band contains it; its original name, prototype and callers remain unknown.", "evidence": ["pinned:terranx_original.exe:0x004C8140-0x004C8141 return without modifying EAX; callee stack cleanup 0 bytes", "pinned scan: no rel32 call/jmp and no dword reference to this address anywhere in the image", "address band: nearest mapped neighbours are 0x004C8110 sub_4c8110 (src/time.cpp) and 0x004C8150 sub_4c8150 (src/stringstruct.cpp); band 0x004C8070..0x004C8140 holds the time.cpp/word_state.cpp leaf helpers; owner inferred from the immediately preceding function"]}
+// symbol    ?nullsub_223@@YAXXZ
+// kind      game
+void __cdecl nullsub_223() {
+}
 #if defined(_MSC_VER) && _MSC_VER == 1200
 #pragma intrinsic(memset)
 #endif

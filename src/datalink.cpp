@@ -1654,6 +1654,70 @@ void __cdecl help_tech(int id) {
     DatalinkMain.exec(0xE, id);
 }
 
+// Unreferenced in the pinned image (no call, jump or data reference).
+// Original effect: return without modifying EAX; callee stack cleanup 0 bytes.
+// ORIGINAL: 0x0044C8A0 nullsub_226 0x0044C8A0-0x0044C8A1 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"reason": "Bind the unreferenced original leaf as an empty/constant source function in the translation unit whose address band contains it; its original name, prototype and callers remain unknown.", "evidence": ["pinned:terranx_original.exe:0x0044C8A0-0x0044C8A1 return without modifying EAX; callee stack cleanup 0 bytes", "pinned scan: no rel32 call/jmp and no dword reference to this address anywhere in the image", "address band: nearest mapped neighbours are 0x0044C880 ?help_tech@@YAXH@Z (src/datalink.cpp) and 0x0044C910 ?help_weapon@@YAXH@Z (src/datalink.cpp)"]}
+// symbol    ?nullsub_226@@YAXXZ
+// kind      game
+void __cdecl nullsub_226() {
+}
+
+// Unreferenced in the pinned image (no call, jump or data reference).
+// Original effect: return without modifying EAX; callee stack cleanup 0 bytes.
+// ORIGINAL: 0x0044C8B0 nullsub_227 0x0044C8B0-0x0044C8B1 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"reason": "Bind the unreferenced original leaf as an empty/constant source function in the translation unit whose address band contains it; its original name, prototype and callers remain unknown.", "evidence": ["pinned:terranx_original.exe:0x0044C8B0-0x0044C8B1 return without modifying EAX; callee stack cleanup 0 bytes", "pinned scan: no rel32 call/jmp and no dword reference to this address anywhere in the image", "address band: nearest mapped neighbours are 0x0044C880 ?help_tech@@YAXH@Z (src/datalink.cpp) and 0x0044C910 ?help_weapon@@YAXH@Z (src/datalink.cpp)"]}
+// symbol    ?nullsub_227@@YAXXZ
+// kind      game
+void __cdecl nullsub_227() {
+}
+
+// Unreferenced in the pinned image (no call, jump or data reference).
+// Original effect: zero EAX and return; callee stack cleanup 0 bytes.
+// ORIGINAL: 0x0044C8C0 sub_44c8c0 0x0044C8C0-0x0044C8C3 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"reason": "Bind the unreferenced original leaf as an empty/constant source function in the translation unit whose address band contains it; its original name, prototype and callers remain unknown.", "evidence": ["pinned:terranx_original.exe:0x0044C8C0-0x0044C8C3 zero EAX and return; callee stack cleanup 0 bytes", "pinned scan: no rel32 call/jmp and no dword reference to this address anywhere in the image", "address band: nearest mapped neighbours are 0x0044C880 ?help_tech@@YAXH@Z (src/datalink.cpp) and 0x0044C910 ?help_weapon@@YAXH@Z (src/datalink.cpp)"]}
+// symbol    ?sub_44c8c0@@YAHXZ
+// kind      game
+int __cdecl sub_44c8c0() {
+    return 0;
+}
+
+// Unreferenced in the pinned image (no call, jump or data reference).
+// Original effect: return without modifying EAX; callee stack cleanup 0 bytes.
+// ORIGINAL: 0x0044C8D0 nullsub_229 0x0044C8D0-0x0044C8D1 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"reason": "Bind the unreferenced original leaf as an empty/constant source function in the translation unit whose address band contains it; its original name, prototype and callers remain unknown.", "evidence": ["pinned:terranx_original.exe:0x0044C8D0-0x0044C8D1 return without modifying EAX; callee stack cleanup 0 bytes", "pinned scan: no rel32 call/jmp and no dword reference to this address anywhere in the image", "address band: nearest mapped neighbours are 0x0044C880 ?help_tech@@YAXH@Z (src/datalink.cpp) and 0x0044C910 ?help_weapon@@YAXH@Z (src/datalink.cpp)"]}
+// symbol    ?nullsub_229@@YAXXZ
+// kind      game
+void __cdecl nullsub_229() {
+}
+
+// Unreferenced in the pinned image (no call, jump or data reference).
+// Original effect: return without modifying EAX; callee stack cleanup 0 bytes.
+// ORIGINAL: 0x0044C8E0 nullsub_230 0x0044C8E0-0x0044C8E1 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"reason": "Bind the unreferenced original leaf as an empty/constant source function in the translation unit whose address band contains it; its original name, prototype and callers remain unknown.", "evidence": ["pinned:terranx_original.exe:0x0044C8E0-0x0044C8E1 return without modifying EAX; callee stack cleanup 0 bytes", "pinned scan: no rel32 call/jmp and no dword reference to this address anywhere in the image", "address band: nearest mapped neighbours are 0x0044C880 ?help_tech@@YAXH@Z (src/datalink.cpp) and 0x0044C910 ?help_weapon@@YAXH@Z (src/datalink.cpp)"]}
+// symbol    ?nullsub_230@@YAXXZ
+// kind      game
+void __cdecl nullsub_230() {
+}
+
+// Unreferenced in the pinned image (no call, jump or data reference).
+// Original effect: return without modifying EAX; callee stack cleanup 0 bytes.
+// ORIGINAL: 0x0044C8F0 nullsub_231 0x0044C8F0-0x0044C8F1 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"reason": "Bind the unreferenced original leaf as an empty/constant source function in the translation unit whose address band contains it; its original name, prototype and callers remain unknown.", "evidence": ["pinned:terranx_original.exe:0x0044C8F0-0x0044C8F1 return without modifying EAX; callee stack cleanup 0 bytes", "pinned scan: no rel32 call/jmp and no dword reference to this address anywhere in the image", "address band: nearest mapped neighbours are 0x0044C880 ?help_tech@@YAXH@Z (src/datalink.cpp) and 0x0044C910 ?help_weapon@@YAXH@Z (src/datalink.cpp)"]}
+// symbol    ?nullsub_231@@YAXXZ
+// kind      game
+void __cdecl nullsub_231() {
+}
+
+// Unreferenced in the pinned image (no call, jump or data reference).
+// Original effect: return without modifying EAX; callee stack cleanup 0 bytes.
+// ORIGINAL: 0x0044C900 nullsub_232 0x0044C900-0x0044C901 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"reason": "Bind the unreferenced original leaf as an empty/constant source function in the translation unit whose address band contains it; its original name, prototype and callers remain unknown.", "evidence": ["pinned:terranx_original.exe:0x0044C900-0x0044C901 return without modifying EAX; callee stack cleanup 0 bytes", "pinned scan: no rel32 call/jmp and no dword reference to this address anywhere in the image", "address band: nearest mapped neighbours are 0x0044C880 ?help_tech@@YAXH@Z (src/datalink.cpp) and 0x0044C910 ?help_weapon@@YAXH@Z (src/datalink.cpp)"]}
+// symbol    ?nullsub_232@@YAXXZ
+// kind      game
+void __cdecl nullsub_232() {
+}
+
 /*
 Purpose: Show the weapon help topic for the given id.
 // ORIGINAL: 0x0044C910 ?help_weapon@@YAXH@Z 0x0044C910-0x0044C925 BYTE_EXACT
@@ -1671,6 +1735,15 @@ Status: Complete
 // some call sites and calls it at others, and a .cpp definition is only ever
 // one of those. The marker stays here because that is where the catalogue
 // reads it.
+
+// Unreferenced in the pinned image (no call, jump or data reference).
+// Original effect: return without modifying EAX; callee stack cleanup 0 bytes.
+// ORIGINAL: 0x0044C930 nullsub_233 0x0044C930-0x0044C931 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"reason": "Bind the unreferenced original leaf as an empty/constant source function in the translation unit whose address band contains it; its original name, prototype and callers remain unknown.", "evidence": ["pinned:terranx_original.exe:0x0044C930-0x0044C931 return without modifying EAX; callee stack cleanup 0 bytes", "pinned scan: no rel32 call/jmp and no dword reference to this address anywhere in the image", "address band: nearest mapped neighbours are 0x0044C910 ?help_weapon@@YAXH@Z (src/datalink.cpp) and 0x0044C940 ?help_armor@@YAXH@Z (src/datalink.cpp)"]}
+// symbol    ?nullsub_233@@YAXXZ
+// kind      game
+void __cdecl nullsub_233() {
+}
 
 
 /*
@@ -1691,6 +1764,25 @@ Status: Complete
 // one of those. The marker stays here because that is where the catalogue
 // reads it.
 
+// Unreferenced in the pinned image (no call, jump or data reference).
+// Original effect: return without modifying EAX; callee stack cleanup 0 bytes.
+// ORIGINAL: 0x0044C960 nullsub_234 0x0044C960-0x0044C961 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"reason": "Bind the unreferenced original leaf as an empty/constant source function in the translation unit whose address band contains it; its original name, prototype and callers remain unknown.", "evidence": ["pinned:terranx_original.exe:0x0044C960-0x0044C961 return without modifying EAX; callee stack cleanup 0 bytes", "pinned scan: no rel32 call/jmp and no dword reference to this address anywhere in the image", "address band: nearest mapped neighbours are 0x0044C940 ?help_armor@@YAXH@Z (src/datalink.cpp) and 0x0044C980 ?help_chassis@@YAXH@Z (src/datalink.cpp)"]}
+// symbol    ?nullsub_234@@YAXXZ
+// kind      game
+void __cdecl nullsub_234() {
+}
+
+// Unreferenced in the pinned image (no call, jump or data reference).
+// Original effect: zero EAX and return; callee stack cleanup 0 bytes.
+// ORIGINAL: 0x0044C970 sub_44c970 0x0044C970-0x0044C973 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"reason": "Bind the unreferenced original leaf as an empty/constant source function in the translation unit whose address band contains it; its original name, prototype and callers remain unknown.", "evidence": ["pinned:terranx_original.exe:0x0044C970-0x0044C973 zero EAX and return; callee stack cleanup 0 bytes", "pinned scan: no rel32 call/jmp and no dword reference to this address anywhere in the image", "address band: nearest mapped neighbours are 0x0044C940 ?help_armor@@YAXH@Z (src/datalink.cpp) and 0x0044C980 ?help_chassis@@YAXH@Z (src/datalink.cpp)"]}
+// symbol    ?sub_44c970@@YAHXZ
+// kind      game
+int __cdecl sub_44c970() {
+    return 0;
+}
+
 
 /*
 Purpose: Show the chassis help topic for the given id.
@@ -1709,6 +1801,15 @@ Status: Complete
 // some call sites and calls it at others, and a .cpp definition is only ever
 // one of those. The marker stays here because that is where the catalogue
 // reads it.
+
+// Unreferenced in the pinned image (no call, jump or data reference).
+// Original effect: return without modifying EAX; callee stack cleanup 0 bytes.
+// ORIGINAL: 0x0044C9A0 nullsub_235 0x0044C9A0-0x0044C9A1 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"reason": "Bind the unreferenced original leaf as an empty/constant source function in the translation unit whose address band contains it; its original name, prototype and callers remain unknown.", "evidence": ["pinned:terranx_original.exe:0x0044C9A0-0x0044C9A1 return without modifying EAX; callee stack cleanup 0 bytes", "pinned scan: no rel32 call/jmp and no dword reference to this address anywhere in the image", "address band: nearest mapped neighbours are 0x0044C980 ?help_chassis@@YAXH@Z (src/datalink.cpp) and 0x0044C9B0 ?help_facility@@YAXH@Z (src/datalink.cpp)"]}
+// symbol    ?nullsub_235@@YAXXZ
+// kind      game
+void __cdecl nullsub_235() {
+}
 
 
 /*
@@ -1729,6 +1830,15 @@ Status: Complete
 // one of those. The marker stays here because that is where the catalogue
 // reads it.
 
+// Unreferenced in the pinned image (no call, jump or data reference).
+// Original effect: return without modifying EAX; callee stack cleanup 0 bytes.
+// ORIGINAL: 0x0044C9D0 nullsub_236 0x0044C9D0-0x0044C9D1 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"reason": "Bind the unreferenced original leaf as an empty/constant source function in the translation unit whose address band contains it; its original name, prototype and callers remain unknown.", "evidence": ["pinned:terranx_original.exe:0x0044C9D0-0x0044C9D1 return without modifying EAX; callee stack cleanup 0 bytes", "pinned scan: no rel32 call/jmp and no dword reference to this address anywhere in the image", "address band: nearest mapped neighbours are 0x0044C9B0 ?help_facility@@YAXH@Z (src/datalink.cpp) and 0x0044C9E0 ?help_project@@YAXH@Z (src/datalink.cpp)"]}
+// symbol    ?nullsub_236@@YAXXZ
+// kind      game
+void __cdecl nullsub_236() {
+}
+
 
 /*
 Purpose: Show the secret project/ability help topic for the given id.
@@ -1747,6 +1857,15 @@ Status: Complete
 // some call sites and calls it at others, and a .cpp definition is only ever
 // one of those. The marker stays here because that is where the catalogue
 // reads it.
+
+// Unreferenced in the pinned image (no call, jump or data reference).
+// Original effect: return without modifying EAX; callee stack cleanup 0 bytes.
+// ORIGINAL: 0x0044CA30 nullsub_238 0x0044CA30-0x0044CA31 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"reason": "Bind the unreferenced original leaf as an empty/constant source function in the translation unit whose address band contains it; its original name, prototype and callers remain unknown.", "evidence": ["pinned:terranx_original.exe:0x0044CA30-0x0044CA31 return without modifying EAX; callee stack cleanup 0 bytes", "pinned scan: no rel32 call/jmp and no dword reference to this address anywhere in the image", "address band: nearest mapped neighbours are 0x0044CA10 ?help_abil@@YAXH@Z (src/datalink.cpp) and 0x0044CA40 ?help_social@@YAXH@Z (src/datalink.cpp)"]}
+// symbol    ?nullsub_238@@YAXXZ
+// kind      game
+void __cdecl nullsub_238() {
+}
 
 
 /*
@@ -1767,6 +1886,15 @@ Status: Complete
 // one of those. The marker stays here because that is where the catalogue
 // reads it.
 
+// Unreferenced in the pinned image (no call, jump or data reference).
+// Original effect: return without modifying EAX; callee stack cleanup 0 bytes.
+// ORIGINAL: 0x0044CA60 nullsub_239 0x0044CA60-0x0044CA61 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"reason": "Bind the unreferenced original leaf as an empty/constant source function in the translation unit whose address band contains it; its original name, prototype and callers remain unknown.", "evidence": ["pinned:terranx_original.exe:0x0044CA60-0x0044CA61 return without modifying EAX; callee stack cleanup 0 bytes", "pinned scan: no rel32 call/jmp and no dword reference to this address anywhere in the image", "address band: nearest mapped neighbours are 0x0044CA40 ?help_social@@YAXH@Z (src/datalink.cpp) and 0x0044CA70 ?help_faction@@YAXH@Z (src/datalink.cpp)"]}
+// symbol    ?nullsub_239@@YAXXZ
+// kind      game
+void __cdecl nullsub_239() {
+}
+
 
 /*
 Purpose: Show the faction help topic for the given id.
@@ -1786,6 +1914,15 @@ Status: Complete
 // one of those. The marker stays here because that is where the catalogue
 // reads it.
 
+// Unreferenced in the pinned image (no call, jump or data reference).
+// Original effect: return without modifying EAX; callee stack cleanup 0 bytes.
+// ORIGINAL: 0x0044CAC0 nullsub_240 0x0044CAC0-0x0044CAC1 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"reason": "Bind the unreferenced original leaf as an empty/constant source function in the translation unit whose address band contains it; its original name, prototype and callers remain unknown.", "evidence": ["pinned:terranx_original.exe:0x0044CAC0-0x0044CAC1 return without modifying EAX; callee stack cleanup 0 bytes", "pinned scan: no rel32 call/jmp and no dword reference to this address anywhere in the image", "address band: nearest mapped neighbours are 0x0044CA90 sub_44ca90 (src/popup.cpp) and 0x0044CAD0 ?help_veh@@YAXH@Z (src/datalink.cpp); datalink.cpp help_* functions surround it"]}
+// symbol    ?nullsub_240@@YAXXZ
+// kind      game
+void __cdecl nullsub_240() {
+}
+
 
 /*
 Purpose: Show the vehicle help topic for the given id.
@@ -1804,6 +1941,42 @@ Status: Complete
 // some call sites and calls it at others, and a .cpp definition is only ever
 // one of those. The marker stays here because that is where the catalogue
 // reads it.
+
+// Unreferenced in the pinned image (no call, jump or data reference).
+// Original effect: return without modifying EAX; callee stack cleanup 0 bytes.
+// ORIGINAL: 0x0044CAF0 nullsub_241 0x0044CAF0-0x0044CAF1 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"reason": "Bind the unreferenced original leaf as an empty/constant source function in the translation unit whose address band contains it; its original name, prototype and callers remain unknown.", "evidence": ["pinned:terranx_original.exe:0x0044CAF0-0x0044CAF1 return without modifying EAX; callee stack cleanup 0 bytes", "pinned scan: no rel32 call/jmp and no dword reference to this address anywhere in the image", "address band: nearest mapped neighbours are 0x0044CAD0 ?help_veh@@YAXH@Z (src/datalink.cpp) and 0x0044CB30 ?help_any@@YAXXZ (src/datalink.cpp)"]}
+// symbol    ?nullsub_241@@YAXXZ
+// kind      game
+void __cdecl nullsub_241() {
+}
+
+// Unreferenced in the pinned image (no call, jump or data reference).
+// Original effect: return without modifying EAX; callee stack cleanup 0 bytes.
+// ORIGINAL: 0x0044CB00 nullsub_242 0x0044CB00-0x0044CB01 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"reason": "Bind the unreferenced original leaf as an empty/constant source function in the translation unit whose address band contains it; its original name, prototype and callers remain unknown.", "evidence": ["pinned:terranx_original.exe:0x0044CB00-0x0044CB01 return without modifying EAX; callee stack cleanup 0 bytes", "pinned scan: no rel32 call/jmp and no dword reference to this address anywhere in the image", "address band: nearest mapped neighbours are 0x0044CAD0 ?help_veh@@YAXH@Z (src/datalink.cpp) and 0x0044CB30 ?help_any@@YAXXZ (src/datalink.cpp)"]}
+// symbol    ?nullsub_242@@YAXXZ
+// kind      game
+void __cdecl nullsub_242() {
+}
+
+// Unreferenced in the pinned image (no call, jump or data reference).
+// Original effect: return without modifying EAX; callee stack cleanup 0 bytes.
+// ORIGINAL: 0x0044CB10 nullsub_243 0x0044CB10-0x0044CB11 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"reason": "Bind the unreferenced original leaf as an empty/constant source function in the translation unit whose address band contains it; its original name, prototype and callers remain unknown.", "evidence": ["pinned:terranx_original.exe:0x0044CB10-0x0044CB11 return without modifying EAX; callee stack cleanup 0 bytes", "pinned scan: no rel32 call/jmp and no dword reference to this address anywhere in the image", "address band: nearest mapped neighbours are 0x0044CAD0 ?help_veh@@YAXH@Z (src/datalink.cpp) and 0x0044CB30 ?help_any@@YAXXZ (src/datalink.cpp)"]}
+// symbol    ?nullsub_243@@YAXXZ
+// kind      game
+void __cdecl nullsub_243() {
+}
+
+// Unreferenced in the pinned image (no call, jump or data reference).
+// Original effect: return without modifying EAX; callee stack cleanup 0 bytes.
+// ORIGINAL: 0x0044CB20 nullsub_244 0x0044CB20-0x0044CB21 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"reason": "Bind the unreferenced original leaf as an empty/constant source function in the translation unit whose address band contains it; its original name, prototype and callers remain unknown.", "evidence": ["pinned:terranx_original.exe:0x0044CB20-0x0044CB21 return without modifying EAX; callee stack cleanup 0 bytes", "pinned scan: no rel32 call/jmp and no dword reference to this address anywhere in the image", "address band: nearest mapped neighbours are 0x0044CAD0 ?help_veh@@YAXH@Z (src/datalink.cpp) and 0x0044CB30 ?help_any@@YAXXZ (src/datalink.cpp)"]}
+// symbol    ?nullsub_244@@YAXXZ
+// kind      game
+void __cdecl nullsub_244() {
+}
 
 
 /*
@@ -3369,6 +3542,15 @@ void __cdecl help_project(int project_id) {
     DatalinkMain.exec(0xB, project_id + 0x46);
 }
 
+// Unreferenced in the pinned image (no call, jump or data reference).
+// Original effect: return without modifying EAX; callee stack cleanup 0 bytes.
+// ORIGINAL: 0x0044CA00 nullsub_237 0x0044CA00-0x0044CA01 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"reason": "Bind the unreferenced original leaf as an empty/constant source function in the translation unit whose address band contains it; its original name, prototype and callers remain unknown.", "evidence": ["pinned:terranx_original.exe:0x0044CA00-0x0044CA01 return without modifying EAX; callee stack cleanup 0 bytes", "pinned scan: no rel32 call/jmp and no dword reference to this address anywhere in the image", "address band: nearest mapped neighbours are 0x0044C9E0 ?help_project@@YAXH@Z (src/datalink.cpp) and 0x0044CA10 ?help_abil@@YAXH@Z (src/datalink.cpp)"]}
+// symbol    ?nullsub_237@@YAXXZ
+// kind      game
+void __cdecl nullsub_237() {
+}
+
 // ORIGINAL: 0x00429180 ?exec@Datalink@@QAEXIH@Z 0x00429180-0x004292FC BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["task:datalink-owner-coverage", "pinned:terranx_original.exe:429180..4292FC complete geometry, saved-state, list redraw, modal and restoration sequence", "source:src/reportwin.h:ReportWinGlobal shared_research_focus owns885F30; src/reportif.h existing category/faction fields", "historical seed:src/recovered/units/00429180.cpp"], "reason": "Recover the complete modal Datalink operation through its existing class, embedded text/list controls and real shared ReportWin/ReportIf state; preserve the original identity and seed findings without a new byte claim."}
 void Datalink::exec(unsigned int topic, int index) {
@@ -3421,6 +3603,15 @@ void __cdecl discard_technology_help_text(char *) {
 // symbol    ?technology_help_without_output@@YAXHHH@Z
 void __cdecl technology_help_without_output(int, int technology, int faction) {
     help_tech_info(discard_technology_help_text, technology, faction, -1);
+}
+
+// Unreferenced in the pinned image (no call, jump or data reference).
+// Original effect: return without modifying EAX; callee stack cleanup 0 bytes.
+// ORIGINAL: 0x0044C850 nullsub_191 0x0044C850-0x0044C851 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"reason": "Bind the unreferenced original leaf as an empty/constant source function in the translation unit whose address band contains it; its original name, prototype and callers remain unknown.", "evidence": ["pinned:terranx_original.exe:0x0044C850-0x0044C851 return without modifying EAX; callee stack cleanup 0 bytes", "pinned scan: no rel32 call/jmp and no dword reference to this address anywhere in the image", "address band: nearest mapped neighbours are 0x0044C830 sub_44c830 (src/datalink.cpp) and 0x0044C860 sub_44c860 (src/shared_word.cpp); datalink.cpp functions surround 0x0044C820..0x0044CB80"]}
+// symbol    ?nullsub_191@@YAXXZ
+// kind      game
+void __cdecl nullsub_191() {
 }
 
 // Provisional selected-entry state; pinned7591AC initially contains zero.

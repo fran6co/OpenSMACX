@@ -847,6 +847,42 @@ void __cdecl mapwin_system_shutdown() {
     FarmMapWindow.close();
 }
 
+// Unreferenced in the pinned image (no call, jump or data reference).
+// Original effect: return without modifying EAX; callee stack cleanup 8 bytes.
+// ORIGINAL: 0x00471160 mapwin_nullsub1 0x00471160-0x00471163 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"reason": "Bind the unreferenced original leaf as an empty/constant source function in the translation unit whose address band contains it; its original name, prototype and callers remain unknown.", "evidence": ["pinned:terranx_original.exe:0x00471160-0x00471163 return without modifying EAX; callee stack cleanup 8 bytes", "pinned scan: no rel32 call/jmp and no dword reference to this address anywhere in the image", "address band: nearest mapped neighbours are 0x004710E0 ?mapwin_system_shutdown@@YAXXZ (src/mapwin.cpp) and 0x004711A0 ?terrain_fixup@@YAXPAUMapWin@@@Z (src/mapwin.cpp)"]}
+// symbol    ?mapwin_nullsub1@@YGXHH@Z
+// kind      game
+void __stdcall mapwin_nullsub1(int, int) {
+}
+
+// Unreferenced in the pinned image (no call, jump or data reference).
+// Original effect: return without modifying EAX; callee stack cleanup 8 bytes.
+// ORIGINAL: 0x00471170 mapwin_nullsub2 0x00471170-0x00471173 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"reason": "Bind the unreferenced original leaf as an empty/constant source function in the translation unit whose address band contains it; its original name, prototype and callers remain unknown.", "evidence": ["pinned:terranx_original.exe:0x00471170-0x00471173 return without modifying EAX; callee stack cleanup 8 bytes", "pinned scan: no rel32 call/jmp and no dword reference to this address anywhere in the image", "address band: nearest mapped neighbours are 0x004710E0 ?mapwin_system_shutdown@@YAXXZ (src/mapwin.cpp) and 0x004711A0 ?terrain_fixup@@YAXPAUMapWin@@@Z (src/mapwin.cpp)"]}
+// symbol    ?mapwin_nullsub2@@YGXHH@Z
+// kind      game
+void __stdcall mapwin_nullsub2(int, int) {
+}
+
+// Unreferenced in the pinned image (no call, jump or data reference).
+// Original effect: return without modifying EAX; callee stack cleanup 8 bytes.
+// ORIGINAL: 0x00471180 mapwin_nullsub3 0x00471180-0x00471183 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"reason": "Bind the unreferenced original leaf as an empty/constant source function in the translation unit whose address band contains it; its original name, prototype and callers remain unknown.", "evidence": ["pinned:terranx_original.exe:0x00471180-0x00471183 return without modifying EAX; callee stack cleanup 8 bytes", "pinned scan: no rel32 call/jmp and no dword reference to this address anywhere in the image", "address band: nearest mapped neighbours are 0x004710E0 ?mapwin_system_shutdown@@YAXXZ (src/mapwin.cpp) and 0x004711A0 ?terrain_fixup@@YAXPAUMapWin@@@Z (src/mapwin.cpp)"]}
+// symbol    ?mapwin_nullsub3@@YGXHH@Z
+// kind      game
+void __stdcall mapwin_nullsub3(int, int) {
+}
+
+// Unreferenced in the pinned image (no call, jump or data reference).
+// Original effect: return without modifying EAX; callee stack cleanup 8 bytes.
+// ORIGINAL: 0x00471190 mapwin_nullsub4 0x00471190-0x00471193 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"reason": "Bind the unreferenced original leaf as an empty/constant source function in the translation unit whose address band contains it; its original name, prototype and callers remain unknown.", "evidence": ["pinned:terranx_original.exe:0x00471190-0x00471193 return without modifying EAX; callee stack cleanup 8 bytes", "pinned scan: no rel32 call/jmp and no dword reference to this address anywhere in the image", "address band: nearest mapped neighbours are 0x004710E0 ?mapwin_system_shutdown@@YAXXZ (src/mapwin.cpp) and 0x004711A0 ?terrain_fixup@@YAXPAUMapWin@@@Z (src/mapwin.cpp)"]}
+// symbol    ?mapwin_nullsub4@@YGXHH@Z
+// kind      game
+void __stdcall mapwin_nullsub4(int, int) {
+}
+
 // Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x00471030 ?mapwin_system_init@@YAXH@Z 0x00471030-0x004710DF BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence":["Pinned original 0x00471030-0x004710DF fills 0x007D3C60..0x007D4060, calls compute_lighting_table, clears/reinitializes eight MapWinTable slots, then initializes the FarmMapWindow cache","src/unrecovered/00471030.cpp retains the seed; src/mapwin.cpp owns the table, FarmMapWindow and each called method","Pinned47107F reloads MapWinTable[slot] after clear;4710AA and4710BB reload active/init receivers. Preserve unchecked replacement and null behavior rather than retaining the pre-clear pointer."],"reason":"Recover map-window system startup with typed slot and storage ownership; leave the startup-word table's wider meaning open until consumers are identified."}

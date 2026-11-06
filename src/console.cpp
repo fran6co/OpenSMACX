@@ -644,6 +644,15 @@ Console::Console()
     field_23D84_ = 0;
 }
 
+// Unreferenced in the pinned image (no call, jump or data reference).
+// Original effect: return without modifying EAX; callee stack cleanup 4 bytes.
+// ORIGINAL: 0x0050F640 nullsub_185 0x0050F640-0x0050F643 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"reason": "Bind the unreferenced original leaf as an empty/constant source function in the translation unit whose address band contains it; its original name, prototype and callers remain unknown.", "evidence": ["pinned:terranx_original.exe:0x0050F640-0x0050F643 return without modifying EAX; callee stack cleanup 4 bytes", "pinned scan: no rel32 call/jmp and no dword reference to this address anywhere in the image", "address band: nearest mapped neighbours are 0x0050F630 sub_50f630 (src/statuswin.cpp) and 0x0050F650 ?clear_group@Console@@QAEXXZ (src/console.cpp); Console constructor 0x0050F460 and Console members after it bound the band"]}
+// symbol    ?nullsub_185@@YGXH@Z
+// kind      game
+void __stdcall nullsub_185(int) {
+}
+
 /*
 Purpose: Tear down the game console - its own Buffer/Time/Menu/Sprite
          members, its own extra embedded GraphicWin, then the MapWin
@@ -1472,6 +1481,15 @@ void Console::next_cursor() {
 void Console::toggle_dest() {
     console_map_win()->field_1DD70_ ^= 0x40000;
     ::draw_map(1);
+}
+
+// Unreferenced in the pinned image (no call, jump or data reference).
+// Original effect: return without modifying EAX; callee stack cleanup 0 bytes.
+// ORIGINAL: 0x00515760 nullsub_186 0x00515760-0x00515761 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"reason": "Bind the unreferenced original leaf as an empty/constant source function in the translation unit whose address band contains it; its original name, prototype and callers remain unknown.", "evidence": ["pinned:terranx_original.exe:0x00515760-0x00515761 return without modifying EAX; callee stack cleanup 0 bytes", "pinned scan: no rel32 call/jmp and no dword reference to this address anywhere in the image", "address band: nearest mapped neighbours are 0x00515740 ?toggle_dest@Console@@QAEXXZ (src/console.cpp) and 0x00515770 ?chat@Console@@QAEXH@Z (src/console.cpp)"]}
+// symbol    ?nullsub_186@@YAXXZ
+// kind      game
+void __cdecl nullsub_186() {
 }
 
 // Original .data text inputs, with separate writable owners for each
@@ -5660,6 +5678,24 @@ void Console::init(int) {
     load_cursors();
 
     BasePopDefaultField322C = static_cast<Win *>(this);
+}
+
+// Unreferenced in the pinned image (no call, jump or data reference).
+// Original effect: return without modifying EAX; callee stack cleanup 0 bytes.
+// ORIGINAL: 0x0051D9D0 nullsub_187 0x0051D9D0-0x0051D9D1 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"reason": "Bind the unreferenced original leaf as an empty/constant source function in the translation unit whose address band contains it; its original name, prototype and callers remain unknown.", "evidence": ["pinned:terranx_original.exe:0x0051D9D0-0x0051D9D1 return without modifying EAX; callee stack cleanup 0 bytes", "pinned scan: no rel32 call/jmp and no dword reference to this address anywhere in the image", "address band: nearest mapped neighbours are 0x0051D890 ?init@Console@@QAEXH@Z (src/console.cpp) and 0x0051D9F0 ??1Console@@QAE@XZ (src/console.cpp)"]}
+// symbol    ?nullsub_187@@YAXXZ
+// kind      game
+void __cdecl nullsub_187() {
+}
+
+// Unreferenced in the pinned image (no call, jump or data reference).
+// Original effect: return without modifying EAX; callee stack cleanup 0 bytes.
+// ORIGINAL: 0x0051D9E0 nullsub_188 0x0051D9E0-0x0051D9E1 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"reason": "Bind the unreferenced original leaf as an empty/constant source function in the translation unit whose address band contains it; its original name, prototype and callers remain unknown.", "evidence": ["pinned:terranx_original.exe:0x0051D9E0-0x0051D9E1 return without modifying EAX; callee stack cleanup 0 bytes", "pinned scan: no rel32 call/jmp and no dword reference to this address anywhere in the image", "address band: nearest mapped neighbours are 0x0051D890 ?init@Console@@QAEXH@Z (src/console.cpp) and 0x0051D9F0 ??1Console@@QAE@XZ (src/console.cpp)"]}
+// symbol    ?nullsub_188@@YAXXZ
+// kind      game
+void __cdecl nullsub_188() {
 }
 
 // Publish current screen geometry independently of init's once-only gate.

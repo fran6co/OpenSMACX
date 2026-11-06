@@ -61,8 +61,8 @@ TARGETS = {
 }
 
 # Source identities in the historical overhang and immediately following entry.
-# The 0x637190 leaf remains UNBOUND in unbound_functions.h, not a recovered
-# Video implementation.
+# The 0x637190 leaf is an unreferenced constant-return function bound in
+# video.cpp by address neighbourhood, not a recovered Video member.
 VIDEO_NEIGHBORS = {
     0x00636740: ("Video_unk2", (0x00636740, 0x0063684D)),
     0x00636850: ("Video_unk3", (0x00636850, 0x006368C8)),

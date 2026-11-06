@@ -969,6 +969,15 @@ int GraphicWin::reinitialize(int a1, int a2, int width, int height,
     return result;
 }
 
+// Unreferenced in the pinned image (no call, jump or data reference).
+// Original effect: return without modifying EAX; callee stack cleanup 0 bytes.
+// ORIGINAL: 0x005D5240 nullsub_224 0x005D5240-0x005D5241 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"reason": "Bind the unreferenced original leaf as an empty/constant source function in the translation unit whose address band contains it; its original name, prototype and callers remain unknown.", "evidence": ["pinned:terranx_original.exe:0x005D5240-0x005D5241 return without modifying EAX; callee stack cleanup 0 bytes", "pinned scan: no rel32 call/jmp and no dword reference to this address anywhere in the image", "address band: nearest mapped neighbours are 0x005D50F0 sub_5d50f0 (src/graphicwin.cpp) and 0x005D5250 ?fill@GraphicWin@@QAEXH@Z (src/graphicwin.cpp)"]}
+// symbol    ?nullsub_224@@YAXXZ
+// kind      game
+void __cdecl nullsub_224() {
+}
+
 
 
 /*
@@ -1724,12 +1733,6 @@ int GraphicWin::check_pcx_input_data(PcxInputView *source,
 
 // RECOVERY_IMPORT: v1 __imp__CallWindowProcA@20 USER32.dll name:CallWindowProcA
 // GetWindowLongA remains bound once in win.cpp; it is the shared USER32 import used by both Win and these callbacks.
-
-// Pending inferred-core member: original source owner/prototype/callers remain unresolved.
-// ORIGINAL: 0x005D5240 nullsub_224 0x005D5240-0x005D5241 UNBOUND BYTE_EXACT
-// kind game
-// Original effect: return without modifying EAX; callee stack cleanup 0 bytes.
-// Original prototype, callers and real source owner remain unresolved.
 
 // Transported shared Win-view callbacks in the inferred GraphicWin contribution.
 

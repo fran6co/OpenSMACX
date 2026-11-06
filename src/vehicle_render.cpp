@@ -728,11 +728,14 @@ void __cdecl vehdraw_compute_facet_normals() {
     }
 }
 
-
-// ORIGINAL: 0x004C1D00 vehdraw_nullsub1 0x004C1D00-0x004C1D01 UNBOUND BYTE_EXACT
-// kind game
+// Unreferenced in the pinned image (no call, jump or data reference).
 // Original effect: return without modifying EAX; callee stack cleanup 0 bytes.
-// Original prototype, callers and real source owner remain unresolved.
+// ORIGINAL: 0x004C1D00 vehdraw_nullsub1 0x004C1D00-0x004C1D01 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"reason": "Bind the unreferenced original leaf as an empty/constant source function in the translation unit whose address band contains it; its original name, prototype and callers remain unknown.", "evidence": ["pinned:terranx_original.exe:0x004C1D00-0x004C1D01 return without modifying EAX; callee stack cleanup 0 bytes", "pinned scan: no rel32 call/jmp and no dword reference to this address anywhere in the image", "address band: nearest mapped neighbours are 0x004C1B10 ?vehdraw_compute_facet_normals@@YAXXZ (src/vehicle_render.cpp) and 0x004C1D10 ?vehdraw_setup@@YAXXZ (src/vehicle_render.cpp)"]}
+// symbol    ?vehdraw_nullsub1@@YAXXZ
+// kind      game
+void __cdecl vehdraw_nullsub1() {
+}
 
 // ORIGINAL: 0x004C1D10 ?vehdraw_setup@@YAXXZ 0x004C1D10-0x004C1D15 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned original4C1D10 is a five-byte tail jump to4C1B10; load_voxels451066 calls this entry. No extra renderer initialization or copied thunk bytes."], "reason": "Recover the voxel-loader setup entry as an ordinary call to the existing vehicle facet-normal owner."}
@@ -1173,6 +1176,15 @@ void __cdecl vehdraw_construct_reactor(int faction_id, int chassis, int weapon,
     }
     renderer->add_object(&g_VR_CAVIARDATA[reactor - 1], 0);
     if (abilities & 0x8000u) renderer->add_object(&g_VHR_CAVIARDATA2, 0);
+}
+
+// Unreferenced in the pinned image (no call, jump or data reference).
+// Original effect: return without modifying EAX; callee stack cleanup 0 bytes.
+// ORIGINAL: 0x004C38A0 vehdraw_nullsub2 0x004C38A0-0x004C38A1 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"reason": "Bind the unreferenced original leaf as an empty/constant source function in the translation unit whose address band contains it; its original name, prototype and callers remain unknown.", "evidence": ["pinned:terranx_original.exe:0x004C38A0-0x004C38A1 return without modifying EAX; callee stack cleanup 0 bytes", "pinned scan: no rel32 call/jmp and no dword reference to this address anywhere in the image", "address band: nearest mapped neighbours are 0x004C3800 ?vehdraw_construct_reactor@@YAHHHHHHPAUCaviar@@@Z (src/vehicle_render.cpp) and 0x004C38B0 _$E21 (src/worldwin.cpp); 0x004C38B0 is the worldwin.cpp file-start dynamic initializer, so this is the last function of the vehicle-rendering band"]}
+// symbol    ?vehdraw_nullsub2@@YAXXZ
+// kind      game
+void __cdecl vehdraw_nullsub2() {
 }
 
 

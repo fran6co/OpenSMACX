@@ -217,6 +217,16 @@ int Video::play() {
   return 0;
 }
 
+// Unreferenced in the pinned image (no call, jump or data reference).
+// Original effect: zero EAX and return; callee stack cleanup 8 bytes.
+// ORIGINAL: 0x00637190 Video_unk7 0x00637190-0x00637195 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"reason": "Bind the unreferenced original leaf as an empty/constant source function in the translation unit whose address band contains it; its original name, prototype and callers remain unknown.", "evidence": ["pinned:terranx_original.exe:0x00637190-0x00637195 zero EAX and return; callee stack cleanup 8 bytes", "pinned scan: no rel32 call/jmp and no dword reference to this address anywhere in the image", "address band: nearest mapped neighbours are 0x006370E0 ?play@Video@@QAEHXZ (src/video.cpp) and 0x006371A0 Video_unk8 (src/video.cpp)"]}
+// symbol    ?Video_unk7@@YGHHH@Z
+// kind      game
+int __stdcall Video_unk7(int, int) {
+    return 0;
+}
+
 // ORIGINAL: 0x00637870 ?decode_frame_process@Video@@QAEXXZ 0x00637870-0x006378B0 FILE BYTE_EXACT
 // symbol    ?decode_frame_process@Video@@QAEHXZ
 int Video::decode_frame_process() {

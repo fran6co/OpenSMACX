@@ -1444,6 +1444,24 @@ static int __stdcall net_group_player_callback(unsigned long player_id,
     return 1;
 }
 
+// Unreferenced in the pinned image (no call, jump or data reference).
+// Original effect: return without modifying EAX; callee stack cleanup 0 bytes.
+// ORIGINAL: 0x0062EE80 nullsub_261 0x0062EE80-0x0062EE81 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"reason": "Bind the unreferenced original leaf as an empty/constant source function in the translation unit whose address band contains it; its original name, prototype and callers remain unknown.", "evidence": ["pinned:terranx_original.exe:0x0062EE80-0x0062EE81 return without modifying EAX; callee stack cleanup 0 bytes", "pinned scan: no rel32 call/jmp and no dword reference to this address anywhere in the image", "address band: nearest mapped neighbours are 0x0062EE20 sub_62ee20 (src/net_class.cpp) and 0x0062EEA0 ?send_group@Net@@QAEHPAXHJH@Z (src/net_class.cpp)"]}
+// symbol    ?nullsub_261@@YAXXZ
+// kind      game
+void __cdecl nullsub_261() {
+}
+
+// Unreferenced in the pinned image (no call, jump or data reference).
+// Original effect: return without modifying EAX; callee stack cleanup 0 bytes.
+// ORIGINAL: 0x0062EE90 nullsub_262 0x0062EE90-0x0062EE91 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"reason": "Bind the unreferenced original leaf as an empty/constant source function in the translation unit whose address band contains it; its original name, prototype and callers remain unknown.", "evidence": ["pinned:terranx_original.exe:0x0062EE90-0x0062EE91 return without modifying EAX; callee stack cleanup 0 bytes", "pinned scan: no rel32 call/jmp and no dword reference to this address anywhere in the image", "address band: nearest mapped neighbours are 0x0062EE20 sub_62ee20 (src/net_class.cpp) and 0x0062EEA0 ?send_group@Net@@QAEHPAXHJH@Z (src/net_class.cpp)"]}
+// symbol    ?nullsub_262@@YAXXZ
+// kind      game
+void __cdecl nullsub_262() {
+}
+
 // ORIGINAL: 0x0062ED40 ?create_group@Net@@QAEHPAD@Z 0x0062ED40-0x0062EDA2 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned62ED40..62EDA2; git:b0d788d3e0ebc4d5b4c20acb834cd37455e53c67:src/leaf_recoveries.cpp supplies the former facade mapping and unchanged SDK call contract."], "reason": "Rehome the DirectPlay group constructor from its raw receiver facade to the genuine Net method and SDK IDirectPlay2 interface."}
 int Net::create_group(char *group_name) {
@@ -2297,6 +2315,15 @@ int Net::choose_service() {
     // the source-owned C++ spelling of that lifetime operation.
     delete popup;
     return result;
+}
+
+// Unreferenced in the pinned image (no call, jump or data reference).
+// Original effect: return without modifying EAX; callee stack cleanup 0 bytes.
+// ORIGINAL: 0x00631A10 nullsub_256 0x00631A10-0x00631A11 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"reason": "Bind the unreferenced original leaf as an empty/constant source function in the translation unit whose address band contains it; its original name, prototype and callers remain unknown.", "evidence": ["pinned:terranx_original.exe:0x00631A10-0x00631A11 return without modifying EAX; callee stack cleanup 0 bytes", "pinned scan: no rel32 call/jmp and no dword reference to this address anywhere in the image", "address band: nearest mapped neighbours are 0x00631050 sub_631050 (src/net_session_picker.cpp) and 0x00631A20 ?get_player_name@Net@@QAEPADK@Z (src/net_class.cpp); sub_631050 is bound as Net::session_picker_dialog, so the surrounding band is Net (net_class.cpp)"]}
+// symbol    ?nullsub_256@@YAXXZ
+// kind      game
+void __cdecl nullsub_256() {
 }
 
 // Recognized signed HRESULT branches in the pinned error interpreter bind

@@ -122,8 +122,6 @@ def test_migration_retains_history_and_records_observed_owner_symbol():
                   "semantic", "recipe", "levers", "ruled_out",
                   "unrecoverable", "deferred"):
         assert getattr(current, field) == getattr(historical, field), field
-    assert not any(r.address == ADDRESS
-                   for r in read(root / "src/unbound_functions.h"))
 
     old_envelope = _envelope(historical_text, ADDRESS,
                              "field_accessor_005f05c0_redirect")
