@@ -757,16 +757,14 @@ int TamperRegistryCursor;
 void __cdecl clear_all_offers() {
     for (int row = 0; row < MaxPlayerNum; ++row) {
         for (int column = 0; column < MaxPlayerNum; ++column) {
-            OfferResetCell &flat = OfferResetCells[row][column];
-            OfferResetCell &transposed = OfferResetCells[column][row];
-            flat.count_[0] = 0;
-            flat.count_[1] = 0;
-            transposed.count_[0] = 0;
-            transposed.count_[1] = 0;
-            flat.state_[0] = 0;
-            flat.state_[1] = 0;
-            transposed.state_[0] = 0;
-            transposed.state_[1] = 0;
+            OfferResetCells[row][column].count_[0] = 0;
+            OfferResetCells[row][column].count_[1] = 0;
+            OfferResetCells[column][row].count_[0] = 0;
+            OfferResetCells[column][row].count_[1] = 0;
+            OfferResetCells[row][column].state_[0] = 0;
+            OfferResetCells[row][column].state_[1] = 0;
+            OfferResetCells[column][row].state_[0] = 0;
+            OfferResetCells[column][row].state_[1] = 0;
         }
     }
 }
@@ -1208,25 +1206,23 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl planetfall(int faction_id) {
-    Player &player = Players[faction_id];
-
     PluralityDefault = 0;
-    GenderDefault = player.is_leader_female;
-    parse_says(2, player.title_leader, -1, -1);
+    GenderDefault = Players[faction_id].is_leader_female;
+    parse_says(2, Players[faction_id].title_leader, -1, -1);
 
-    GenderDefault = player.is_leader_female;
+    GenderDefault = Players[faction_id].is_leader_female;
     PluralityDefault = 0;
-    parse_says(3, player.name_leader, -1, -1);
-    parse_says(0, player.adj_name_faction, -1, -1);
+    parse_says(3, Players[faction_id].name_leader, -1, -1);
+    parse_says(0, Players[faction_id].adj_name_faction, -1, -1);
 
-    GenderDefault = player.noun_gender;
-    PluralityDefault = player.is_noun_plural;
-    parse_says(1, player.noun_faction, -1, -1);
+    GenderDefault = Players[faction_id].noun_gender;
+    PluralityDefault = Players[faction_id].is_noun_plural;
+    parse_says(1, Players[faction_id].noun_faction, -1, -1);
 
     StringTemp[0] = 0;
-    strcat(StringTemp, player.filename);
+    strcat(StringTemp, Players[faction_id].filename);
     CharUpperA(StringTemp);
-    if ((player.rule_flags & RFLAG_ALIEN) != 0
+    if ((Players[faction_id].rule_flags & RFLAG_ALIEN) != 0
         && strcmp(StringTemp, "USURPER") == 0) {
         StringTemp[0] = 0;
         strcat(StringTemp, "PLANETFALLX");
@@ -1242,7 +1238,15 @@ void __cdecl planetfall(int faction_id) {
     if (turn != 0) {
         parse_num(0, turn);
         for (int project = 0; project < MaxSecretProjectNum; ++project) {
-            if (has_project(project, faction_id)) {
+            // Open-coded has_project: the image materializes the owner test.
+            int base_id = GameDataStateStorage.fields_.secret_project_.project_base[project];
+            BOOL owned;
+            if (base_id < 0) {
+                owned = false;
+            } else {
+                owned = (Bases[base_id].faction_id_current == faction_id);
+            }
+            if (owned) {
                 parse_say(4, Facility[FacilitySPStart + project].name,
                           -1, -1);
             }
@@ -1996,9 +2000,8 @@ int __cdecl system_init() {
     BasePop::set_def_cancel_text(StringTemp);
 
     // The OK caption, label 101: upper-cased whatever the language.
-    labels = Labels.strings_ptr;
     StringTemp[0] = '\0';
-    strcat(StringTemp, StringTable.get(labels[101]));
+    strcat(StringTemp, label_get(101));
     string_upper(StringTemp);
     BasePop::set_def_ok_text(StringTemp);
 
@@ -2012,8 +2015,8 @@ int __cdecl system_init() {
         MapWinTable[slot] = new MapWin;
     }
 
-    SystemInterfaceFlags &= ~0x8C0u;
     MapWinTable[0] = &ConsoleGlobal;
+    SystemInterfaceFlags &= ~0x8C0u;
 
     MainInterfaceGlobal.init(0);
     g_BattleWin.init();
@@ -2258,15 +2261,15 @@ void __cdecl climactic_changes() {
 
     if (GameDataStateStorage.fields_.climate_sea_level_delta_ != 0) {
         GameDataStateStorage.fields_.climate_rise_accum_ += GameDataStateStorage.fields_.climate_rise_step_;
-        if (GameDataStateStorage.fields_.climate_rise_limit_ <= GameDataStateStorage.fields_.climate_rise_accum_) {
+        if (GameDataStateStorage.fields_.climate_rise_accum_ >= GameDataStateStorage.fields_.climate_rise_limit_) {
             GameDataStateStorage.fields_.climate_rise_accum_ -= GameDataStateStorage.fields_.climate_rise_limit_;
             if (GameDataStateStorage.fields_.climate_sea_level_delta_ > 0) {
                 sign = 1;
             } else {
                 sign = (GameDataStateStorage.fields_.climate_sea_level_delta_ >= 0) - 1;
             }
-            GameDataStateStorage.fields_.climate_sea_level_delta_ -= sign;
             MapSeaLevel += sign;
+            GameDataStateStorage.fields_.climate_sea_level_delta_ -= sign;
             world_climate();
             draw_map(1);
             if (sign > 0) {
@@ -2386,18 +2389,11 @@ int __cdecl next_player_turn() {
     if (turns_assigned() == 0) {
         return 0;
     }
-    int i = GameDataStateStorage.fields_.net_turn_faction_ + 1;
-    if (i < 8) {
-        unsigned int hi_byte = GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_;
-        unsigned char lo_byte = GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_;
-        do {
-            unsigned int bit = 1 << i;
-            if ((bit & hi_byte) != 0 && (static_cast<unsigned char>(bit) & lo_byte) != 0) {
-                message_data(0x4309, 0, i, 0, 0, 0);
-                return 0;
-            }
-            i = i + 1;
-        } while (i < 8);
+    for (int i = GameDataStateStorage.fields_.net_turn_faction_ + 1; i < 8; ++i) {
+        if (is_alive(i) && is_human(i)) {
+            message_data(0x4309, 0, i, 0, 0, 0);
+            return 0;
+        }
     }
     NextTurnReady = 1;
     return 1;
@@ -2461,14 +2457,12 @@ void Demo::redraw() {
 // TRIED: extern "C" __stdcall(int,int) contract (ecx has no matching stack slot, so it is __thiscall); own Obj_5243a0 class (3 embedded RECTs) + VCall slot058 reaches MNEMONIC_ONLY, same 187 bytes, same mnemonics, an operand still differs
 void Demo::on_left_down(int x, int y) {
     selected_link_ = 0;
-    for (int index = 0; index < 3; ++index) {
-        if (in_box(x, y, &splash_rects_[index]) != 0) {
-            selected_link_ = index + 1;
-            release_modal();
-            return;
-        }
-    }
-    if (in_box(x, y, &DemoFourthHotspot) != 0) {
+    if (in_box(x, y, &splash_rects_[0]) != 0) {
+        selected_link_ = 1;
+    } else if (in_box(x, y, &splash_rects_[1]) != 0) {
+        selected_link_ = 2;
+    } else if (in_box(x, y, &splash_rects_[2]) != 0 ||
+               in_box(x, y, &DemoFourthHotspot) != 0) {
         selected_link_ = 3;
     }
     release_modal();
@@ -2865,8 +2859,7 @@ char *__cdecl get_pacts(int faction_id) {
     PluralityDefault = 1;
     int noun = Players[faction_id].is_leader_female;
     GenderDefault = noun;
-    LPSTR *labels = Labels.strings_ptr;
-    return StringTable.get(labels[0xcb + (noun != 0)]);
+    return StringTable.get(Labels.strings_ptr[noun != 0 ? 0xcc : 0xcb]);
 }
 
 // ORIGINAL: 0x0058F9D0 ?get_pact@@YAPADH@Z 0x0058F9D0-0x0058FA19
@@ -2885,8 +2878,7 @@ char *__cdecl get_pact(int faction_id) {
     PluralityDefault = 0;
     int noun = Players[faction_id].is_leader_female;
     GenderDefault = noun;
-    LPSTR *labels = Labels.strings_ptr;
-    return StringTable.get(labels[0xc9 + (noun != 0)]);
+    return StringTable.get(Labels.strings_ptr[noun != 0 ? 0xca : 0xc9]);
 }
 
 // ORIGINAL: 0x0052DBA0 ?current_server@@YAHXZ 0x0052DBA0-0x0052DBE6
@@ -3146,26 +3138,15 @@ extern "C" int __cdecl directplay_install_is_complete() {
 
 char *__cdecl get_pacts(int faction_id, int other_id) {
     int mine = Players[faction_id].is_leader_female;
-    int theirs = 0;
-    if (mine != 0) {
-        theirs = Players[other_id].is_leader_female;
-    }
     int flag;
-    if (mine != 0 && theirs != 0) {
+    if (mine != 0 && Players[other_id].is_leader_female != 0) {
         flag = 1;
     } else {
         flag = 0;
     }
     GenderDefault = flag;
     PluralityDefault = 1;
-    int code = 0xcb;
-    if (mine != 0) {
-        if (Players[other_id].is_leader_female != 0) {
-            code = 0xcc;
-        }
-    }
-    LPSTR *labels = Labels.strings_ptr;
-    return StringTable.get(labels[code]);
+    return label_get((mine != 0 && Players[other_id].is_leader_female != 0) ? 0xcc : 0xcb);
 }
 
 // ORIGINAL: 0x005B0420 ?balance@@YAXXZ 0x005B0420-0x005B0A2C
@@ -3390,9 +3371,7 @@ int __cdecl generators(int faction_id, int *count_out) {
 //         the accumulator in EAX and the label table in ECX.
 
 char *__cdecl get_his_her(int faction_id, int sentence_form) {
-    int code = 0xcf + (Players[faction_id].is_leader_female != 0);
-    LPSTR *labels = Labels.strings_ptr;
-    strcpy(PronounBuffer, StringTable.get(labels[code]));
+    strcpy(PronounBuffer, StringTable.get(Labels.strings_ptr[Players[faction_id].is_leader_female != 0 ? 0xd0 : 0xcf]));
     if (sentence_form != 0) {
         if (sentence_form == 1) {
             char buf[2];
@@ -3416,9 +3395,7 @@ Return Value: PronounBuffer
 Status: Coverage transcription - unclaimed body
 */
 char *__cdecl get_him_her(int faction_id, int sentence_form) {
-    int code = 0; if (Players[faction_id].is_leader_female != 0) { code = 1; } code += 0xC7;
-    LPSTR *labels = Labels.strings_ptr;
-    strcpy(PronounBuffer, StringTable.get(labels[code]));
+    strcpy(PronounBuffer, StringTable.get(Labels.strings_ptr[Players[faction_id].is_leader_female != 0 ? 0xC8 : 0xC7]));
     if (sentence_form != 0) {
         if (sentence_form == 1) {
             char buf[2];
@@ -3454,8 +3431,7 @@ char *__cdecl get_pact_hood(int faction_id, int other_id) {
     } else {
         code = 0xcd;
     }
-    LPSTR *labels = Labels.strings_ptr;
-    return StringTable.get(labels[code]);
+    return label_get(code);
 }
 
 extern int __cdecl tech_advance(int faction_id);
@@ -4548,87 +4524,41 @@ void __cdecl check_tamper() {
         return;
     }
 
-    HKEY key;
-    DWORD value_type;
-    DWORD byte_count;
-    if (RegCreateKeyExA(HKEY_LOCAL_MACHINE, TamperReadApplicationKey, 0,
-                        TamperReadClass, 0, 0xF003F, 0, &key, 0) == ERROR_SUCCESS) {
-        byte_count = 4;
-        RegQueryValueExA(key, TamperReadValueMVM, 0, &value_type,
-                         reinterpret_cast<LPBYTE>(&TamperRegistryCursor),
-                         &byte_count);
-        byte_count = 0x4B0;
-        RegQueryValueExA(key, TamperReadValueMVB, 0, &value_type,
-                         reinterpret_cast<LPBYTE>(TamperRegistryRecords),
-                         &byte_count);
-        RegCloseKey(key);
-    }
+    read_tamper();
 
-    int matching_index = -1;
     for (int index = 0; index < 50; ++index) {
-        TamperRecord &record = TamperRegistryRecords[index];
-        if (record.field_0_ == TamperState93A9AC &&
-            record.field_4_ == TamperState93A9B0 &&
-            record.field_8_ == GameDataStateStorage.fields_.turn_current_num_ &&
-            record.field_C_ == ConsoleGlobal.faction_id_ &&
-            record.field_14_ == TamperState93A9B4) {
-            matching_index = index;
-            break;
-        }
-    }
-
-    if (matching_index >= 0) {
-        TamperRecord &record = TamperRegistryRecords[matching_index];
-        ++record.count_;
-        const int current_faction = ConsoleGlobal.faction_id_;
-        const uint8_t human_mask = GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_;
-        const uint8_t alive_mask = GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_;
-        for (int faction = 1; faction < MaxPlayerNum; ++faction) {
-            if (faction != current_faction) {
-                const uint8_t bit = static_cast<uint8_t>(1u << (faction & 31));
-                if ((human_mask & bit) != 0 && (alive_mask & bit) != 0) {
+        if (TamperState93A9AC == TamperRegistryRecords[index].field_0_ &&
+            TamperState93A9B0 == TamperRegistryRecords[index].field_4_ &&
+            GameDataStateStorage.fields_.turn_current_num_ == TamperRegistryRecords[index].field_8_ &&
+            ConsoleGlobal.faction_id_ == TamperRegistryRecords[index].field_C_ &&
+            TamperState93A9B4 == TamperRegistryRecords[index].field_14_) {
+            const int current_faction = ConsoleGlobal.faction_id_;
+            const int count = ++TamperRegistryRecords[index].count_;
+            for (int faction = 1; faction < MaxPlayerNum; ++faction) {
+                if (faction != current_faction && is_human(faction) && is_alive(faction)) {
                     TamperDialogFaction[faction] = current_faction;
-                    TamperDialogValue[faction] = record.count_;
+                    TamperDialogValue[faction] = count;
                 }
             }
-        }
 
-        if (RegCreateKeyExA(HKEY_LOCAL_MACHINE, TamperWriteApplicationKey, 0,
-                            TamperWriteClass, 0, 0xF003F, 0, &key, 0) == ERROR_SUCCESS) {
-            RegSetValueExA(key, TamperWriteValueMVM, 0, REG_BINARY,
-                           reinterpret_cast<const BYTE *>(&TamperRegistryCursor), 4);
-            RegSetValueExA(key, TamperWriteValueMVB, 0, REG_BINARY,
-                           reinterpret_cast<const BYTE *>(TamperRegistryRecords), 0x4B0);
-            RegCloseKey(key);
+            set_tamper();
+            X_pop(TamperDialogLabel, 0);
+            return;
         }
-        X_pop(TamperDialogLabel, 0);
-        return;
     }
 
     // Native code uses the registry cursor directly as an index before
     // reducing it modulo 50. Keep that corrupt/out-of-range behavior intact.
     const int cursor = TamperRegistryCursor;
-    TamperRecord &record = TamperRegistryRecords[cursor];
-    record.field_0_ = TamperState93A9AC;
-    record.field_4_ = TamperState93A9B0;
-    record.field_8_ = GameDataStateStorage.fields_.turn_current_num_;
-    record.field_C_ = ConsoleGlobal.faction_id_;
-    record.count_ = 0;
-    record.field_14_ = TamperState93A9B4;
-    const uint32_t advanced_bits = static_cast<uint32_t>(cursor) + 1u;
-    const int advanced_cursor = advanced_bits <= 0x7FFFFFFFu
-        ? static_cast<int>(advanced_bits)
-        : -1 - static_cast<int>(0xFFFFFFFFu - advanced_bits);
-    TamperRegistryCursor = advanced_cursor % 50;
+    TamperRegistryRecords[cursor].field_0_ = TamperState93A9AC;
+    TamperRegistryRecords[cursor].field_4_ = TamperState93A9B0;
+    TamperRegistryRecords[cursor].field_8_ = GameDataStateStorage.fields_.turn_current_num_;
+    TamperRegistryRecords[cursor].field_C_ = ConsoleGlobal.faction_id_;
+    TamperRegistryRecords[cursor].count_ = 0;
+    TamperRegistryRecords[cursor].field_14_ = TamperState93A9B4;
+    TamperRegistryCursor = (cursor + 1) % 50;
 
-    if (RegCreateKeyExA(HKEY_LOCAL_MACHINE, TamperWriteApplicationKey, 0,
-                        TamperWriteClass, 0, 0xF003F, 0, &key, 0) == ERROR_SUCCESS) {
-        RegSetValueExA(key, TamperWriteValueMVM, 0, REG_BINARY,
-                       reinterpret_cast<const BYTE *>(&TamperRegistryCursor), 4);
-        RegSetValueExA(key, TamperWriteValueMVB, 0, REG_BINARY,
-                       reinterpret_cast<const BYTE *>(TamperRegistryRecords), 0x4B0);
-        RegCloseKey(key);
-    }
+    set_tamper();
 }
 
 struct MapDataTransferHeader {
@@ -4832,31 +4762,32 @@ int __cdecl load_map_daemon(char *path) {
     const char *expected_header = is_saved_game ? SaveHeaderText : MapHeaderText;
     if (strcmp(header, expected_header) == 0) {
         result = 3;
-        int version = 0;
+        int version;
         if (fread(&version, sizeof(version), 1, file) != 0) {
             const int required_version = is_saved_game ? 0x56 : 5;
             if (version >= required_version) {
                 for (size_t slot = 1; slot < MapWinTableSlots; ++slot) {
-                    MapWin *const window = MapWinTable[slot];
-                    if (window != nullptr && window->view_active_ != 0) {
-                        window->view_active_ = 0;
-                        window->close();
+                    if (MapWinTable[slot] != nullptr
+                        && MapWinTable[slot]->view_active_ != 0) {
+                        MapWinTable[slot]->view_active_ = 0;
+                        MapWinTable[slot]->close();
                     }
                 }
                 ConsoleGlobal.field_23BE4_ = 0;
                 result = 4;
                 if (map_data(file, 0, is_saved_game) == 0) {
-                    ConsoleGlobal.cursor_active_ = 0;
-                    ConsoleGlobal.selected_vehicle_ = -1;
                     GameDataStateStorage.fields_.base_current_count_ = 0;
                     GameDataStateStorage.fields_.vehicle_current_count_ = 0;
+                    ConsoleGlobal.cursor_active_ = 0;
+                    ConsoleGlobal.selected_vehicle_ = -1;
                     // Native5A9D58/5A9D73 use signed JLE/JL tests on the
                     // shared signed map-area word.
+                    Map *tile = MapTiles;
                     for (int map_tile_index = 0;
                          map_tile_index < MapArea;
-                         ++map_tile_index) {
-                        MapTiles[map_tile_index].visibility = 0;
-                        MapTiles[map_tile_index].bit &= ~3U;
+                         ++map_tile_index, ++tile) {
+                        tile->visibility = 0;
+                        tile->bit &= ~3U;
                     }
                     BaseComputedID = -1;
                     for (int contour_index = 0; contour_index < 11; ++contour_index) {
@@ -6071,36 +6002,29 @@ int __cdecl load_map() {
 */
 void __cdecl yearmotize(char *text) {
     char *p = text;
-    if (*p == 0) {
-        return;
-    }
-    char c;
-    ++p;
-    do {
-        char *run = p - 1;
-        if (strlen(run) < 4) {
+    while (*p != 0) {
+        if (strlen(p) < 4) {
             return;
         }
-        if (isdigit(run[0]) &&
-            isdigit(run[1]) &&
-            isdigit(run[2]) &&
-            isdigit(run[3]) &&
-            !isdigit(run[4]) &&
-            (run == text || !isdigit(run[-1]))) {
+        if (isdigit(p[0]) &&
+            isdigit(p[1]) &&
+            isdigit(p[2]) &&
+            isdigit(p[3]) &&
+            !isdigit(p[4]) &&
+            (p == text || !isdigit(p[-1]))) {
             char buf[80];
             char year_str[80];
             buf[0] = 0;
             const int year = static_cast<int>(game_year(GameDataStateStorage.fields_.turn_current_num_));
             _itoa(year, year_str, 10);
             strcat(buf, year_str);
-            run[0] = buf[0];
-            run[1] = buf[1];
-            run[2] = buf[2];
-            run[3] = buf[3];
+            p[0] = buf[0];
+            p[1] = buf[1];
+            p[2] = buf[2];
+            p[3] = buf[3];
         }
-        c = *p;
         ++p;
-    } while (c != 0);
+    }
 }
 
 
@@ -6423,8 +6347,7 @@ void __cdecl alien_start() {
     }
 
     for (int faction_id = 1; faction_id < MaxPlayerNum; ++faction_id) {
-        const uint32_t faction_bit = 1U << faction_id;
-        if ((GameDataStateStorage.fields_.lock_masks_.enable_mask_ & faction_bit) != 0 || IsMultiplayerPBEM != 0 ||
+        if (is_human(faction_id) || IsMultiplayerPBEM != 0 ||
             IsMultiplayerNet != 0) {
             continue;
         }
@@ -6437,9 +6360,8 @@ void __cdecl alien_start() {
             continue;
         }
 
-        GameDataStateStorage.fields_.lock_masks_.enable_mask_ &= ~faction_bit;
-        // The original separately clears byte +1, the alive-faction mask.
-        GameDataStateStorage.fields_.lock_masks_.enable_mask_ &= ~(faction_bit << 8);
+        GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ &= ~(1 << faction_id);
+        GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_ &= ~(1 << faction_id);
 
         for (int base_id = GameDataStateStorage.fields_.base_current_count_ - 1; base_id >= 0; --base_id) {
             if (Bases[base_id].faction_id_current == faction_id) {
@@ -8328,13 +8250,12 @@ void __cdecl clear_offer_pair(int faction_a, int faction_b) {
 void __cdecl clear_tamper_registry() {
     TamperRegistryCursor = 0;
     for (int index = 0; index < 50; ++index) {
-        TamperRecord &record = TamperRegistryRecords[index];
-        record.field_0_ = 0;
-        record.field_4_ = 0;
-        record.field_8_ = 0;
-        record.count_ = 0;
-        record.field_C_ = 0;
-        record.field_14_ = 0;
+        TamperRegistryRecords[index].field_0_ = 0;
+        TamperRegistryRecords[index].field_4_ = 0;
+        TamperRegistryRecords[index].field_8_ = 0;
+        TamperRegistryRecords[index].count_ = 0;
+        TamperRegistryRecords[index].field_C_ = 0;
+        TamperRegistryRecords[index].field_14_ = 0;
     }
 }
 
@@ -8540,71 +8461,60 @@ Status: Coverage transcription - unclaimed body, seed
 */
 int __cdecl net_upkeep_phase(int phase) {
     char number_buffer[0x50];
-    const int faction_id = ConsoleGlobal.faction_id_;
-    const uint32_t faction_bit =
-        1u << (static_cast<unsigned int>(faction_id) & 31u);
     uint32_t &sent_mask = NetDaemonNet.channels_[0].leading_words_[1];
     uint32_t &ack_mask = NetDaemonNet.primary_state_.trailing_words_[7];
 
-    sent_mask |= faction_bit;
+    sent_mask |= 1u << ConsoleGlobal.faction_id_;
     MultiWindow.draw(0);
 
-    const int counter = static_cast<int>(ack_mask);
-    const int turn = GameDataStateStorage.fields_.turn_current_num_;
-    log_say("Upkeep Phase", phase, turn, counter);
+    log_say("Upkeep Phase", phase, GameDataStateStorage.fields_.turn_current_num_,
+            static_cast<int>(ack_mask));
     message_data(0x2303, 0, phase,
                  GameDataStateStorage.fields_.turn_current_num_, 0, 0);
 
     DWORD time_base = timeGetTime();
     int sent_upkeep = phase >= 4 ? 1 : 0;
-    const uint8_t initial_human_mask = static_cast<uint8_t>(
-        GameDataStateStorage.fields_.lock_masks_.enable_mask_);
-    if ((initial_human_mask & ack_mask) != initial_human_mask) {
-        do {
-            if (ExitTurnLoop != 0) return 1;
+    while ((static_cast<uint8_t>(
+                GameDataStateStorage.fields_.lock_masks_.enable_mask_) &
+            ack_mask) != static_cast<uint8_t>(
+                GameDataStateStorage.fields_.lock_masks_.enable_mask_)) {
+        if (ExitTurnLoop != 0) break;
 
-            const DWORD now = timeGetTime();
-            if (now - time_base > 0x3E8) {
-                if (sent_upkeep == 0) {
-                    parse_num(0, static_cast<int>(ack_mask));
-                    parse_num(1, static_cast<uint8_t>(
-                        GameDataStateStorage.fields_.lock_masks_.enable_mask_));
-                    StringTemp[0] = 0;
-                    strcat(StringTemp, "UPKEEP");
-                    _itoa(phase, number_buffer, 10);
-                    strcat(StringTemp, number_buffer);
-                    NetMsgPrimary.pop(StringTemp, 0, 1,
-                                      static_cast<const char *>(0));
-                    sent_upkeep = 1;
-                }
-                time_base = timeGetTime();
+        const DWORD now = timeGetTime();
+        if (now - time_base > 0x3E8) {
+            if (sent_upkeep == 0) {
+                parse_num(0, static_cast<int>(ack_mask));
+                parse_num(1, static_cast<uint8_t>(
+                    GameDataStateStorage.fields_.lock_masks_.enable_mask_));
+                StringTemp[0] = 0;
+                strcat(StringTemp, "UPKEEP");
+                _itoa(phase, number_buffer, 10);
+                strcat(StringTemp, number_buffer);
+                NetMsgPrimary.pop(StringTemp, 0, 1,
+                                  static_cast<const char *>(0));
+                sent_upkeep = 1;
             }
+            time_base = timeGetTime();
+        }
 
-            NetDaemonNet.net_tasks();
-        } while ((static_cast<uint8_t>(
-                      GameDataStateStorage.fields_.lock_masks_.enable_mask_) &
-                  ack_mask) != static_cast<uint8_t>(
-                      GameDataStateStorage.fields_.lock_masks_.enable_mask_));
+        NetDaemonNet.net_tasks();
     }
 
     if (ExitTurnLoop != 0) return 1;
 
-    if (NetDaemonNet.primary_state_.leading_words_[0] == 0) {
-        log_say("Client falling out of upkeep loop", phase, 0, 0);
-    } else {
+    if (NetDaemonNet.primary_state_.leading_words_[0] != 0) {
         log_say("Server sending upkeep message", phase, 0, 0);
         message_data(0x4303, 0, phase,
                      GameDataStateStorage.fields_.turn_current_num_, 0, 0);
         ack_mask = 0;
-        if (static_cast<uint8_t>(
-                GameDataStateStorage.fields_.lock_masks_.enable_mask_) != 0) {
-            do {
-                NetDaemonNet.receive();
-            } while ((static_cast<uint8_t>(
-                          GameDataStateStorage.fields_.lock_masks_.enable_mask_) &
-                      ack_mask) != static_cast<uint8_t>(
-                          GameDataStateStorage.fields_.lock_masks_.enable_mask_));
+        while ((static_cast<uint8_t>(
+                    GameDataStateStorage.fields_.lock_masks_.enable_mask_) &
+                ack_mask) != static_cast<uint8_t>(
+                    GameDataStateStorage.fields_.lock_masks_.enable_mask_)) {
+            NetDaemonNet.receive();
         }
+    } else {
+        log_say("Client falling out of upkeep loop", phase, 0, 0);
     }
 
     NetMsgPrimary.close();
@@ -8989,31 +8899,29 @@ void __cdecl net_end_of_turn() {
     message_data(0x8301, 0, 0, 0, 0, 0);
     {
         const DWORD start_time = timeGetTime();
-        bool sent_finishing = false;
+        int sent_finishing = 0;
         for (;;) {
-            const unsigned int enabled_factions = GameDataStateStorage.fields_.lock_masks_.enable_mask_ & 0xFFu;
-            const bool masks_incomplete =
-                (enabled_factions & NetDaemonNet.factions_waiting_mask()) !=
-                    enabled_factions ||
+            if ((static_cast<uint8_t>(GameDataStateStorage.fields_.lock_masks_.enable_mask_) &
+                 NetDaemonNet.factions_waiting_mask()) ==
+                    static_cast<uint8_t>(GameDataStateStorage.fields_.lock_masks_.enable_mask_) &&
                 (NetDaemonNet.primary_state_.trailing_words_[3] &
-                 enabled_factions) != 0;
-            const bool daemon_pending =
-                NetDaemonNet.primary_state_.leading_words_[0] != 0 &&
-                (NetDaemonNet.locks_.any_locks() != 0 ||
-                 NetDaemonNet.channels_[0].trailing_words_[0] != 0);
-            if (!(masks_incomplete || daemon_pending) || ExitTurnLoop != 0 ||
-                (GameDataStateStorage.fields_.game_state_ & 2u) == 0) {
+                 static_cast<uint8_t>(GameDataStateStorage.fields_.lock_masks_.enable_mask_)) == 0 &&
+                (NetDaemonNet.primary_state_.leading_words_[0] == 0 ||
+                 (NetDaemonNet.locks_.any_locks() == 0 &&
+                  NetDaemonNet.channels_[0].trailing_words_[0] == 0))) {
                 break;
             }
-
-            if (!sent_finishing &&
+            if (ExitTurnLoop != 0 || (GameDataStateStorage.fields_.game_state_ & 2u) == 0) {
+                break;
+            }
+            if (sent_finishing == 0 &&
                 static_cast<DWORD>(timeGetTime() - start_time) > 0x3E8) {
                 NetMsgPrimary.pop(NetEndTurnFinishingTurnLabel, 0, 0, nullptr);
-                sent_finishing = true;
+                sent_finishing = 1;
             }
             NetDaemonNet.net_tasks();
         }
-        if (sent_finishing) {
+        if (sent_finishing != 0) {
             NetMsgPrimary.close();
         }
     }
@@ -9036,9 +8944,6 @@ handle_93e8c0:
             goto after_wait;
         }
         for (;;) {
-            if (NetDaemonNet.player_count_ <= 1) {
-                break;
-            }
             int locked_count = 0;
             // Native begins at 0x93E24C, which is records_[1], and visits
             // slots 1 .. player_count_-1 with the proven 0x1C PlayerLock stride.
