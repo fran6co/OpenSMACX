@@ -3446,7 +3446,7 @@ int DesignGridButtonIndex;
 // RECOVERY_OBJECT: v2 0x00733970 0x00733974 ?DesignWindowSelf@@3PAVDesignWin@@A 0x0043C170
 DesignWin *DesignWindowSelf;
 
-// ORIGINAL: 0x0043E9A0 ?exec@DesignWin@@QAEHHH@Z 0x0043E9A0-0x0043ECAD;0x00654709-0x0065471E FILE
+// ORIGINAL: 0x0043E9A0 ?exec@DesignWin@@QAEHHH@Z 0x0043E9A0-0x0043ECAD;0x00654709-0x0065471E FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["seed:src/unrecovered/0043e9a0.cpp", "image:0x0043e9a0; original call/rectangle/lifetime review"], "reason": "Restore the original ownership-group implementation through real tutorial/editor windows, declared members and normal C++ lifecycle; retained seed extents include the associated exception cleanup where present."}
 // TRIED: a plain `Buffer buf;` local (RAII ctor/dtor, no explicit __try) reproduces the whole SEH prologue/epilogue (fs:[0] chain, the 0x654709/0x654714 unwind funclet) for free - matched through instruction #9 without writing any of that by hand.
 // TRIED: MISMATCH #9 'push' vs 'mov', not chased further (802B, one of the largest bodies in this batch): vtable slot001/slot057 retyped in this file to (int) / (int,int,int) from the call sites' push counts.
@@ -5097,7 +5097,7 @@ void DesignWin::draw_info() {
 }
 
 
-// ORIGINAL: 0x00439F20 ?select_chassis@DesignWin@@QAEXXZ 0x00439F20-0x0043A300;0x006541FC-0x00654281
+// ORIGINAL: 0x00439F20 ?select_chassis@DesignWin@@QAEXXZ 0x00439F20-0x0043A300;0x006541FC-0x00654281 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:caf4963a:src/recovered/units/00439f20.cpp", "RulesChassis in src/veh.h", "DesignWin component members in src/designwin.h", "SelectPartWin::exec homed from git:2c2c407fba69ba73e4556995d5cc2cf85e3e0308:src/selectpartwin.cpp to src/designwin.cpp"], "reason": "Open the chassis picker, translate its eligible-row result into the chassis table, preserve chassis-dependent weapon and ability constraints, and redraw the design preview."}
 void DesignWin::select_chassis() {
     SelectPartWin picker;
@@ -5157,7 +5157,7 @@ void DesignWin::select_chassis() {
     redraw_design_picker_changes(this);
 }
 
-// ORIGINAL: 0x0043A300 ?select_weapon@DesignWin@@QAEXXZ 0x0043A300-0x0043A754;0x00654281-0x00654306
+// ORIGINAL: 0x0043A300 ?select_weapon@DesignWin@@QAEXXZ 0x0043A300-0x0043A754;0x00654281-0x00654306 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:caf4963a:src/recovered/units/0043a300.cpp", "RulesWeapon/RulesArmor in src/veh.h", "DesignWin component members in src/designwin.h", "SelectPartWin::exec homed from git:2c2c407fba69ba73e4556995d5cc2cf85e3e0308:src/selectpartwin.cpp to src/designwin.cpp"], "reason": "Open the weapon picker, apply the selected record's chassis restrictions, update implicit abilities, and redraw the design preview."}
 void DesignWin::select_weapon() {
     SelectPartWin picker;
@@ -5220,7 +5220,7 @@ void DesignWin::select_weapon() {
     redraw_design_picker_changes(this);
 }
 
-// ORIGINAL: 0x0043A760 ?select_armor@DesignWin@@QAEXXZ 0x0043A760-0x0043A9F8;0x00654306-0x0065438B
+// ORIGINAL: 0x0043A760 ?select_armor@DesignWin@@QAEXXZ 0x0043A760-0x0043A9F8;0x00654306-0x0065438B BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:caf4963a:src/recovered/units/0043a760.cpp", "RulesArmor/RulesWeapon in src/veh.h", "DesignWin component members in src/designwin.h", "SelectPartWin::exec homed from git:2c2c407fba69ba73e4556995d5cc2cf85e3e0308:src/selectpartwin.cpp to src/designwin.cpp"], "reason": "Open the armor picker, preserve the armor/weapon compatibility suggestion, and redraw the design preview."}
 void DesignWin::select_armor() {
     SelectPartWin picker;
@@ -5245,7 +5245,7 @@ void DesignWin::select_armor() {
     on_update();
 }
 
-// ORIGINAL: 0x0043AA00 ?select_reactor@DesignWin@@QAEXXZ 0x0043AA00-0x0043AC69;0x0065438B-0x00654410
+// ORIGINAL: 0x0043AA00 ?select_reactor@DesignWin@@QAEXXZ 0x0043AA00-0x0043AC69;0x0065438B-0x00654410 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:caf4963a:src/unrecovered/0043aa00.cpp", "RulesReactor in src/veh.h", "DesignWin component members in src/designwin.h", "SelectPartWin::exec homed from git:2c2c407fba69ba73e4556995d5cc2cf85e3e0308:src/selectpartwin.cpp to src/designwin.cpp"], "reason": "Open the reactor picker, translate its enabled-row result, update the reactor selection, and redraw the design preview."}
 void DesignWin::select_reactor() {
     SelectPartWin picker;
@@ -6225,7 +6225,7 @@ static int workshop_scaled_dimension(int dimension, int numerator,
 }
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x00583CD0 ?hq_list_draw@@YAXPAUGraphicWin@@HHHHH@Z 0x00583CD0-0x00583E2A
+// ORIGINAL: 0x00583CD0 ?hq_list_draw@@YAXPAUGraphicWin@@HHHHH@Z 0x00583CD0-0x00583E2A BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned native583CD0..583E2A: signed scaling and centering, active bit0, shared zoom68F0F4 initial-6 and mutable faction93FC48, fake vehicle5C1D50, obsolete order byte11, Buffer secondary base444, veh_draw5594F0 and unity scale epilogue. Retained src/recovered/units/00583cd0.cpp; recovery/tasks/designwin-owner-coverage.json coupled callback authorization; no original-address aliases."], "reason": "Recover the workshop prototype preview through actual GraphicWin Buffer inheritance, VehPrototype and Veh owners, source-owned zoom/faction storage and sprite scaling. Preserve the seed identity and original span; catalogue struct spelling differs from the actual GraphicWin class symbol. No matching claim is granted."}
 // symbol    ?hq_list_draw@@YAXPAVGraphicWin@@HHHHH@Z
 void __cdecl hq_list_draw(GraphicWin *window, int prototype, int flags,

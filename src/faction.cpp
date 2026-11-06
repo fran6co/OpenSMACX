@@ -1252,7 +1252,7 @@ int __cdecl energy_value(int loan_principal) {
 /*
 Purpose: Pick out the two prototypes of faction_id_with that are worth putting in front of
          faction_id: the strongest one it owns, and the strongest one still worth bragging about.
-// ORIGINAL: 0x0053A4A0 ?scan_prototypes@@YAXHH@Z 0x0053A4A0-0x0053A774
+// ORIGINAL: 0x0053A4A0 ?scan_prototypes@@YAXHH@Z 0x0053A4A0-0x0053A774 BYTE_EXACT
 // TRIED: `call_diff` already agrees (0 disagree) - `weap_strat`/
 // `arm_strat` are called the same number of times the image calls them.
 // MISMATCH is 10/218 at this pass, all register allocation/scheduling
@@ -3501,7 +3501,7 @@ void __cdecl social_ai(int faction_id, int growth_val, int tech_val, int wealth_
 Purpose: Calculate specified faction's best available weapon and armor ratings as well as the
          fastest moving ground Veh chassis. Compare these capabilities to faction's best opponent
          capabilities based on current diplomacy.
-// ORIGINAL: 0x00560DD0 ?enemy_capabilities@@YAXH@Z 0x00560DD0-0x00561076
+// ORIGINAL: 0x00560DD0 ?enemy_capabilities@@YAXH@Z 0x00560DD0-0x00561076 BYTE_EXACT
 // LEVER: call_diff showed this tree FEWER (8 vs 9) - the image calls
 //        veh_avail(BSC_MIND_WORMS,...) TWICE, once for the best_psi_offense
 //        ternary and again for best_psi_defense, rather than caching the
@@ -7072,7 +7072,7 @@ void __cdecl enemies_unpact(int faction_id, int faction_id_with) {
         ~cleared_native_status_bits;
 }
 
-// ORIGINAL: 0x0055D430 ?enemies_trade_tech@@YAXHH@Z 0x0055D430-0x0055D753
+// ORIGINAL: 0x0055D430 ?enemies_trade_tech@@YAXHH@Z 0x0055D430-0x0055D753 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["original:0x0055D430:complete-mapped-spans", "git:13693539:src/unrecovered/0055d430.cpp", "source:src/faction.h:PlayersData-and-diplomacy-interfaces"], "reason": "Recover bilateral and conditional one-way technology transfers using typed player technology-source bytes, treaty and friction rows. The second direction intentionally uses actor source/relation but reloads the peer source for peer friction; repeated has_tech calls and signed wrapped valuation decrement are original behavior."}
 // TRIED: 0x20cc-stride diplomacy tables (0x96cd4c tech-source byte, 0x96c9f8 relation-flags dword, 0x96ca38 tech-level dword, 0x96cd3c tech-rank dword) rederived directly from the lea-chain address math (fac*65,*131,*1049,*2099 -> fac*0x20cc), not from Ghidra's mixed-unit indexing. Matches to #23/803 bytes; the nested-if rewrite of the has_tech/goto-LAB_0055d552 sharing is semantically equivalent but not chased for byte order.
 void __cdecl enemies_trade_tech(int faction_id, int faction_id_with) {
@@ -7618,7 +7618,7 @@ void __cdecl encounter(int faction_id, int faction_id_with, int x, int y,
     enemies_war(faction_id, faction_id_with);
 }
 
-// ORIGINAL: 0x0053A230 ?mention_prototypes@@YAXHH@Z 0x0053A230-0x0053A496
+// ORIGINAL: 0x0053A230 ?mention_prototypes@@YAXHH@Z 0x0053A230-0x0053A496 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"reason":"The complete original diplomacy producer uses the existing faction, prototype, parser and network owners; the global cdecl interface and bounded span retain the seed identity.","evidence":["original:0x53a230","git:46625ff3:src/recovered/units/0053a230.cpp"]}
 // kind      game
 void __cdecl mention_prototypes(int faction_id, int faction_id_with) {
@@ -7847,7 +7847,7 @@ void __cdecl make_treaty(int faction_id, int faction_id_with) {
     }
 }
 
-// ORIGINAL: 0x0053D160 ?pledge_truce@@YAXHHH@Z 0x0053D160-0x0053D351
+// ORIGINAL: 0x0053D160 ?pledge_truce@@YAXHHH@Z 0x0053D160-0x0053D351 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"reason":"The complete original diplomacy producer uses the existing faction, prototype, parser and network owners; the global cdecl interface and bounded span retain the seed identity.","evidence":["original:0x53d160","git:46625ff3:src/recovered/units/0053d160.cpp"]}
 // kind      game
 void __cdecl pledge_truce(int faction_id, int faction_id_with,
@@ -10120,7 +10120,7 @@ void __cdecl major_atrocity(int faction_id, int victim_id) {
     }
 }
 
-// ORIGINAL: 0x0051F200 ?wait_loop@@YAXXZ 0x0051F200-0x0051F2BF
+// ORIGINAL: 0x0051F200 ?wait_loop@@YAXXZ 0x0051F200-0x0051F2BF BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:bb3b3233842b050fb0840e1cc6c226e8f30f7055:src/unrecovered/0051f200.cpp", "pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "recovery/tasks/game-logic-seed-owner-coverage.json"], "reason": "faction.cpp / existing faction.h declaration: typed diplomacy-state loop; reloads ConsoleGlobal.faction_id_ at each loop head and after log_say/open_channel callbacks, and rereads the human-status byte each iteration, matching pinned 0x51F200 instructions. Uses existing NetDaemonNet, Console state, LockEnableMask human-status byte, FactionDiplomacyFlags, log_say and communicate. Complete reviewed source translation; historical claims remain restoration obligations, not proof of current matching, linked preservation or game acceptance."}
 void __cdecl wait_loop() {
     if (IsMultiplayerNet != 0) {
@@ -10906,7 +10906,7 @@ int __cdecl demand_withdrawal(int faction_id, int against_id) {
     return 0;
 }
 
-// ORIGINAL: 0x005401A0 ?buy_tech@@YAHHHHHH@Z 0x005401A0-0x00540626
+// ORIGINAL: 0x005401A0 ?buy_tech@@YAHHHHHH@Z 0x005401A0-0x00540626 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["task:diplomacy-actions-owner-coverage", "Pinned5401A0-540626 complete native instructions;540322/540328 tech_ranking35C;540335-54033B truncating divide4;54059C reloads multiplayer and selected tech after money callback", "historical seed:src/unrecovered/005401a0.cpp", "Pinned540298/5402A0/5402A7: load F800, unguarded byte at GameTechAchieved9A6670+F800, bit_count;5402AF..5402CF: subtract1, clamp1..999, signed divide. Pseudo IDs may read adjacent storage; original runtime effects remain unverified."], "reason": "Recover technology, prototype and commlink purchase as genuine faction C++ with typed faction/global storage and source-owned literal keys. Preserve native pricing, signed technology-rank discounts, live post-callback transfer state and network argument direction, including the original unguarded selected-ID bitmap lookup. Invalid-index runtime effects and complete matching remain obligations."}
 // symbol    ?buy_tech@@YAHHHHHH@Z
 // TRIED: direct transcription of the Ghidra decompile (tech-cost computation, string message build via say_tech/parse_says/ parse_num/strcat, X_pops purchase gate, energy/tech transfer with Console/NetDaemon dispatch); diverges at insn #5 in the prologue register-save order, not in control flow
@@ -13605,7 +13605,7 @@ Purpose: Test whether two factions' territories are contiguous in one map
          bases on same-region land tiles gets a Path::find probe with the
          region/contiguity flags until one connects.
 
-// ORIGINAL: 0x0053A780 ?contiguous@@YAHHHHH@Z 0x0053A780-0x0053A97C
+// ORIGINAL: 0x0053A780 ?contiguous@@YAHHHHH@Z 0x0053A780-0x0053A97C BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["pinned 0x53A780..0x53A97C reads faction regional vehicle counts, Bases, Map tiles and Paths", "source:src/faction.h already declares contiguous; source:src/path.h declares the actual Paths owner", "original seed TRIED prologue ordering is retained; no new byte claim is made"], "reason": "faction territory/path operation"}
 // TRIED: prologue register order (mov ecx,[ebp+0x10] before pushes vs a push earlier) - not chased; while/if structure matches disasm.
 // size      508 bytes
