@@ -934,7 +934,7 @@ void DiploWin::UNK1() {
     editBox_.set_text(0);
 }
 
-// ORIGINAL: 0x004412F0 ?new_chat@DiploWin@@QAEXPADH@Z 0x004412F0-0x004413A7
+// ORIGINAL: 0x004412F0 ?new_chat@DiploWin@@QAEXPADH@Z 0x004412F0-0x004413A7 BYTE_EXACT
 // Historical seed evidence: the faction record is indexed by its 0x59C stride;
 // the seed's remaining register-order difference was not a structural clue.
 void DiploWin::new_chat(char *text, int faction_id) {

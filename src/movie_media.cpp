@@ -1317,7 +1317,7 @@ int __fastcall MediaRuntime::parse_initial_format(int byte_count) {
 // The function is a stream-record dispatcher. This name is a source-owner
 // candidate only; FourCC values and record-kind values stay numeric because
 // no codec/library attribution is established by these branches.
-// ORIGINAL: 0x005C9EC0 sub_5c9ec0 0x005C9EC0-0x005CA230
+// ORIGINAL: 0x005C9EC0 sub_5c9ec0 0x005C9EC0-0x005CA230 BYTE_EXACT
 // symbol    @sub_5c9ec0@4
 // kind      game
 // TRIED: sub_5ca230/5ca310/5ca6c0 are __thiscall members of the object this function receives in ecx (mov ecx,esi before each direct call); the three `// indirect` sites are all the same cached mmioRead(HMMIO,HPSTR,LONG) stdcall pointer loaded from g_0066936c once and called through a register.

@@ -5664,7 +5664,7 @@ void Console::init(int) {
 
 // Publish current screen geometry independently of init's once-only gate.
 // Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x0051D760 sub_51d760 0x0051D760-0x0051D7B5
+// ORIGINAL: 0x0051D760 sub_51d760 0x0051D760-0x0051D7B5 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/0051d760.cpp"], "reason": "Complete genuine Console initialization/shared geometry from original receiver/member/global dataflow; native seed establishes catalogue identity and span. Source uses actual GraphicWin virtual base, AlphaMenu, shared RECT and typed fallback Win pointer. Original seed/claims retained; binding grants no matching or acceptance."}
 // symbol    ?set_screen_geometry@Console@@QAEXXZ
 void Console::set_screen_geometry() {
