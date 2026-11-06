@@ -320,27 +320,15 @@ void SocialWin::on_left_click(int, int) {
 // symbol    ?on_right_click@SocialWin@@UAEXHH@Z
 void SocialWin::on_right_click(int x, int y) {
     TutorialWindow.reset();
-    const int click_y = y;
-    const int click_x = x;
     RECT *category = categoryHeaders_;
     for (int i = 0; i < 4; ++i, ++category) {
-        if (in_box(click_x, click_y, category)) {
-            x = click_y;
-            y = click_x;
-            char *text = label_get(828);
-            client_to_screen(&y, &x);
-            RECT rectangle = {y, x, y, x};
-            Win::set_bubble_text(text, &rectangle);
+        if (in_box(x, y, category)) {
+            bubble_me_elmo2(label_get(828), x, y);
             return;
         }
     }
-    if (in_box(click_x, click_y, &tooltipFactionPower_)) {
-        x = click_y;
-        y = click_x;
-        char *text = label_get(840);
-        client_to_screen(&y, &x);
-        RECT rectangle = {y, x, y, x};
-        Win::set_bubble_text(text, &rectangle);
+    if (in_box(x, y, &tooltipFactionPower_)) {
+        bubble_me_elmo2(label_get(840), x, y);
     }
 }
 
@@ -1134,20 +1122,29 @@ void SocialWin::draw_labs_alloc() {
 
     MainInterfaceGlobal.Buffer::set_font(&font1_, 0, 0, 0);
     MainInterfaceGlobal.Buffer::set_text_color(0x9f, -1, 1, 1);
-    MainInterfaceGlobal.Buffer::write_cent_l(StringTemp, &title, strlen(StringTemp));
-
-    const int top = panel.bottom - energyAllocLock_[0].height();
-    const int left = panel.left + energyAllocLock_[0].width();
-    const int split = left + (panel.right - left) * allocation / 10;
-    int right_split = panel.right;
-    if (split < panel.right) {
-        right_split = split + (allocation != 0);
-        MainInterfaceGlobal.Buffer::tile(&energyAllocSlider_[2], split, top, split, top,
-                     panel.right - split, panel.bottom - top);
+    char *const text = StringTemp;
+    if (text != 0) {
+        MainInterfaceGlobal.Buffer::write_cent_l(text, &title, strlen(text));
     }
-    if (left < right_split) {
-        MainInterfaceGlobal.Buffer::tile(&energyAllocSlider_[3], left, top, left, top,
-                     right_split - left, panel.bottom - top);
+
+    // The title rectangle is reused for the allocated share and the panel
+    // rectangle for the remainder.
+    title.top = panel.bottom - energyAllocLock_[0].height();
+    title.left = panel.left + energyAllocLock_[0].width();
+    title.right = panel.right;
+    title.bottom = panel.bottom;
+    panel.left = title.left + (title.right - title.left) * allocation / 10;
+    panel.top = title.top;
+    if (panel.left < panel.right) {
+        title.right = panel.left + (allocation != 0);
+        MainInterfaceGlobal.Buffer::tile(&energyAllocSlider_[2], panel.left, panel.top,
+                     panel.left, panel.top, panel.right - panel.left,
+                     panel.bottom - panel.top);
+    }
+    if (title.left < title.right) {
+        MainInterfaceGlobal.Buffer::tile(&energyAllocSlider_[3], title.left, title.top,
+                     title.left, title.top, title.right - title.left,
+                     title.bottom - title.top);
     }
 
     MainInterfaceGlobal.soft_update(&tooltipLabs_);
@@ -1261,8 +1258,7 @@ void SocialWin::allocate_energy(int a1, int a2) {
 
     while (static_cast<int32_t>(pendingAlloc_[2] + pendingAlloc_[0] + pendingAlloc_[1]) < 10) {
         int idx = a1 + 1;
-        int attempts = 0;
-        do {
+        for (int attempts = 0; attempts < 3; ++attempts, ++idx) {
             int candidate = idx % 3;
             if (a1 == candidate ||
                 (energyLockButtons_[candidate].checked_ == 0 &&
@@ -1270,15 +1266,12 @@ void SocialWin::allocate_energy(int a1, int a2) {
                 ++pendingAlloc_[candidate];
                 break;
             }
-            ++attempts;
-            ++idx;
-        } while (attempts < 3);
+        }
     }
 
     while (static_cast<int32_t>(pendingAlloc_[2] + pendingAlloc_[0] + pendingAlloc_[1]) > 10) {
         int idx = a1 + 1;
-        int attempts = 0;
-        do {
+        for (int attempts = 0; attempts < 3; ++attempts, ++idx) {
             int candidate = idx % 3;
             if (a1 == candidate ||
                 (energyLockButtons_[candidate].checked_ == 0 &&
@@ -1286,9 +1279,7 @@ void SocialWin::allocate_energy(int a1, int a2) {
                 --pendingAlloc_[candidate];
                 break;
             }
-            ++attempts;
-            ++idx;
-        } while (attempts < 3);
+        }
     }
 }
 
@@ -1303,8 +1294,8 @@ void SocialWin::draw_presets() {
     Buffer::box_sprite(&panel, &InterfaceBoxStyles[3]);
 
     panel.left += 3;
-    panel.top += 3;
     panel.right -= 3;
+    panel.top += 3;
     panel.bottom -= 3;
 
     RECT title = panel;
@@ -1317,7 +1308,11 @@ void SocialWin::draw_presets() {
 
     Buffer::set_font(&font1_, 0, 0, 0);
     Buffer::set_text_color(0x9f, -1, 1, 1);
-    Buffer::write_cent_l(StringTemp, &title, strlen(StringTemp));
+    // The image null-checks the text before measuring it.
+    char *const text = StringTemp;
+    if (text != 0) {
+        Buffer::write_cent_l(text, &title, strlen(text));
+    }
 
     soft_update(&tutRect1_);
     do_sound();
@@ -1511,26 +1506,20 @@ void SocialWin::UNK1(int soc_category, int soc_model) {
 */
 void SocialWin::maximize_effect(int effect_id) {
     effectMaximize_ = effect_id;
-    ButtonGroup *group = buttonGroups_;
     for (int category = 0; category < 4; ++category) {
         int best_score = 0;
         int best_model = 0;
-        int model = 0;
-        int row = 0;
-        do {
-            int avail = society_avail(category, row, factionID_);
-            if (avail != 0 && best_score <
-                SocialCategories[category].model_effect[row].values_[effect_id]) {
+        for (int row = 0; row < 4; ++row) {
+            if (society_avail(category, row, factionID_)
+                && SocialCategories[category].model_effect[row].values_[effect_id]
+                    > best_score) {
                 best_model = row;
                 best_score =
                     SocialCategories[category].model_effect[row].values_[effect_id];
             }
-            model += 0xb;
-            ++row;
-        } while (model < 0x2c);
-        group->set(best_model + category * 4, 1);
+        }
+        buttonGroups_[category].set(best_model + category * 4, 1);
         UNK1(category, best_model);
-        ++group;
     }
     redraw();
     effectMaximize_ = -1;
@@ -1987,58 +1976,60 @@ int SocialWin::on_button_text_draw(GraphicWin *window, char *text, int button_id
         ++effect;
     }
 
-
     // The buffer's own working rectangle (Buffer::rect2_, 0x474).
-    // The original reads window+0x474 before its later destination-null test.
-    // Call the inherited member before the nullable Buffer pointer conversion.
     RECT rect = window->clip_rect();
-    Buffer *win_buffer = static_cast<Buffer *>(window);
-    int line_base = effectIcons_[0].height();
-    int y_center = (rect.bottom - line_base - rect.top) / 2;
+    int y_center = (rect.bottom - effectIcons_[0].height() - rect.top) / 2;
 
-    const FlatButton &button = flatButtons_[button_id];
-    int status = button.field_AB8();
     int flag;
-    if (status == 0) {
+    switch (flatButtons_[button_id].field_AB8()) {
+    case 0:
         flag = 1;
-    } else if (status == 1 || status == 2
-               || button.selected_state() != 0) {
+        break;
+    case 1:
         flag = 0;
-    } else {
-        flag = (button.field_A74() == 0) ? 1 : 0;
+        break;
+    case 2:
+        flag = 0;
+        break;
+    default:
+        if (flatButtons_[button_id].selected_state() != 0) {
+            flag = 0;
+        } else {
+            flag = (flatButtons_[button_id].field_A74() == 0) ? 1 : 0;
+        }
+        break;
     }
 
-    Buffer *icon_buffer = (window != 0) ? win_buffer : 0;
     // Original stride 0x84 is three 0x2C-byte Sprites, not one Sprite.
-    int sprite_index = (button_id - 0x11) * 9 + flag * 3;
-    Sprite *sprite = &effectIcons_[sprite_index];
-    sprite->draw(icon_buffer, sprite->transparent_index(), 5, y_center, 1, 1);
+    effectIcons_[(button_id - 0x11) * 9 + flag * 3].draw(
+        window, effectIcons_[(button_id - 0x11) * 9 + flag * 3].transparent_index(),
+        5, y_center, 1, 1);
 
-    win_buffer->set_text_color(0, -1, 1, 1);
+    window->set_text_color(0, -1, 1, 1);
     rect.left += 0x25;
     if (text != 0) {
-        win_buffer->write_l(text, &rect, strlen(text));
+        window->write_l(text, &rect, strlen(text));
     }
 
-    int current = socEffect_.values_[effect];
-    int stored = PlayersData[factionID_].soc_effect_pending.values_[effect];
-    if (current > stored) {
-        win_buffer->set_text_color(0xfa, -1, 1, 1);
-    } else if (current < stored) {
-        win_buffer->set_text_color(0xf9, -1, 1, 1);
+    if (socEffect_.values_[effect]
+        > PlayersData[factionID_].soc_effect_pending.values_[effect]) {
+        window->set_text_color(0xfa, -1, 1, 1);
+    } else if (socEffect_.values_[effect]
+               < PlayersData[factionID_].soc_effect_pending.values_[effect]) {
+        window->set_text_color(0xf9, -1, 1, 1);
     }
 
     StringTemp[0] = 0;
-    if (current > 0) {
+    if (socEffect_.values_[effect] > 0) {
         strcat(StringTemp, SocialWinButtonCountPlusText);
     }
     char number[80];
-    _itoa(current, number, 10);
+    _itoa(socEffect_.values_[effect], number, 10);
     strcat(StringTemp, number);
 
     rect.right -= 3;
     if (StringTemp != 0) {
-        win_buffer->write_right_l(StringTemp, &rect, strlen(StringTemp));
+        window->write_right_l(StringTemp, &rect, strlen(StringTemp));
     }
     return 1;
 }

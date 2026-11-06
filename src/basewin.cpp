@@ -943,9 +943,10 @@ void BaseWin::draw_support() {
     Buffer::set_clip(&saved);
 }
 
+// base_killed inlines this whole body: the original defined it inline here.
 // ORIGINAL: 0x0041A4C0 ?exit@BaseWin@@QAEXXZ 0x0041A4C0-0x0041A609
 // RECOVERY_BINDING: v1 {"evidence": ["git:a538e0a3:src/recovered/units/0041a4c0.cpp", "source:src/basewin.h", "image:original instruction and dispatch evidence for the BaseWin owner"], "reason": "Recover this original base-window operation through the real BaseWin owner, existing typed members and source-owned shared dependencies; catalogue naming and original intervals remain distinct from current compiler symbols."}
-void BaseWin::exit() {
+inline void BaseWin::exit() {
     const int visible = TutWinBaseWindow.is_visible();
     zoom_wait_pending_ = 0;
     time_.stop();
@@ -957,71 +958,42 @@ void BaseWin::exit() {
     const int horizontal = Vehs[ConsoleGlobal.selected_vehicle_].y;
     int vertical = Vehs[ConsoleGlobal.selected_vehicle_].x;
     const int left = ConsoleGlobal.field_1DDA8_;
-    const int top = ConsoleGlobal.field_1DDA4_;
     int height = MapLongitudeBounds;
     if (horizontal >= 0 && horizontal < MapLatitudeBounds
         && vertical >= 0 && vertical < height) {
-        const unsigned char terrain = map_tiles()[MapLongitude * horizontal + (vertical >> 1)].climate;
-        if ((terrain & 0xE0) > 0x60
-            && horizontal - (terrain >> 5) + 3 < left + 2) {
+        const int terrain = map_tiles()[MapLongitude * horizontal + (vertical >> 1)].climate;
+        if ((terrain & ~0x1F) > 0x60
+            && horizontal - static_cast<int>(static_cast<unsigned>(terrain) >> 5) + 3 < left + 2) {
             ConsoleGlobal.center();
             return;
         }
         height = MapLongitudeBounds;
     }
     if (horizontal < left + 2
-        || horizontal >= ConsoleGlobal.field_1DDD0_ + ConsoleGlobal.field_1DDD8_ + left - 2) {
+        || horizontal >= ConsoleGlobal.field_1DDD8_ + ConsoleGlobal.field_1DDD0_ + left - 2) {
         ConsoleGlobal.center();
         return;
     }
     if (!(MapIsFlat & 1)) {
-        if (vertical < top + 2) vertical += height;
-        if (vertical >= ConsoleGlobal.field_1DDCC_ + ConsoleGlobal.field_1DDD4_ + top - 2)
+        if (vertical < ConsoleGlobal.field_1DDA4_ + 2) vertical += height;
+        if (vertical >= ConsoleGlobal.field_1DDD4_ + ConsoleGlobal.field_1DDCC_ + ConsoleGlobal.field_1DDA4_ - 2)
             vertical -= height;
     }
-    if (vertical < top + 2
-        || vertical >= ConsoleGlobal.field_1DDCC_ + ConsoleGlobal.field_1DDD4_ + top - 2)
+    if (vertical < ConsoleGlobal.field_1DDA4_ + 2
+        || vertical >= ConsoleGlobal.field_1DDD4_ + ConsoleGlobal.field_1DDCC_ + ConsoleGlobal.field_1DDA4_ - 2)
         ConsoleGlobal.center();
 }
 
 // ORIGINAL: 0x0041A620 ?base_killed@BaseWin@@QAEXH@Z 0x0041A620-0x0041A79D
 // RECOVERY_BINDING: v1 {"evidence": ["git:a538e0a3:src/recovered/units/0041a620.cpp", "source:src/basewin.h", "image:original instruction and dispatch evidence for the BaseWin owner"], "reason": "Recover this original base-window operation through the real BaseWin owner, existing typed members and source-owned shared dependencies; catalogue naming and original intervals remain distinct from current compiler symbols."}
 void BaseWin::base_killed(int base_id) {
-    if (!is_visible()) return;
-    if (base_id < static_cast<int>(focusedBaseID_)) {
-        --focusedBaseID_;
-        return;
-    }
-    if (base_id != static_cast<int>(focusedBaseID_)) return;
-    // The original selected-base destruction tail repeats exit's view checks.
-    const int visible = TutWinBaseWindow.is_visible();
-    zoom_wait_pending_ = 0;
-    time_.stop();
-    if (TutWinBaseWindow.is_visible()) TutWinBaseWindow.release_iface_mode();
-    do_all_draws();
-    if (!visible || !ConsoleGlobal.cursor_active_ || ConsoleGlobal.selected_vehicle_ < 0) return;
-    const int x = Vehs[ConsoleGlobal.selected_vehicle_].y;
-    int y = Vehs[ConsoleGlobal.selected_vehicle_].x;
-    const int left = ConsoleGlobal.field_1DDA8_;
-    const int top = ConsoleGlobal.field_1DDA4_;
-    const int height = MapLongitudeBounds;
-    if (x >= 0 && x < MapLatitudeBounds && y >= 0 && y < height) {
-        const unsigned char terrain = map_tiles()[MapLongitude * x + (y >> 1)].climate;
-        if ((terrain & 0xE0) > 0x60 && x - (terrain >> 5) + 3 < left + 2) {
-            ConsoleGlobal.center();
-            return;
+    if (is_visible()) {
+        if (static_cast<int>(focusedBaseID_) > base_id) {
+            --focusedBaseID_;
+        } else if (static_cast<int>(focusedBaseID_) == base_id) {
+            exit();
         }
     }
-    if (x < left + 2 || x >= ConsoleGlobal.field_1DDD0_ + ConsoleGlobal.field_1DDD8_ + left - 2) {
-        ConsoleGlobal.center();
-        return;
-    }
-    if (!(MapIsFlat & 1)) {
-        if (y < top + 2) y += height;
-        if (y >= ConsoleGlobal.field_1DDCC_ + ConsoleGlobal.field_1DDD4_ + top - 2) y -= height;
-    }
-    if (y < top + 2 || y >= ConsoleGlobal.field_1DDCC_ + ConsoleGlobal.field_1DDD4_ + top - 2)
-        ConsoleGlobal.center();
 }
 
 // ORIGINAL: 0x00419A90 ?governor@BaseWin@@QAEHH@Z 0x00419A90-0x0041A010
@@ -2252,26 +2224,20 @@ void BaseWin::prev() {
     int selected = static_cast<int>(focusedBaseID_);
     int nearest = -1;
     for (int candidate = 0; candidate < GameDataStateStorage.fields_.base_current_count_; ++candidate) {
-        if (candidate == static_cast<int>(focusedBaseID_)
-            || Bases[candidate].faction_id_current != Bases[focusedBaseID_].faction_id_current) {
-            continue;
-        }
-        const int comparison = _strcmpi(Bases[candidate].name_string,
-                                         Bases[focusedBaseID_].name_string);
-        if (comparison < 0
-            && (nearest < 0 || _strcmpi(Bases[candidate].name_string,
-                                         Bases[nearest].name_string) > 0)) {
-            nearest = candidate;
-        }
-        if (_strcmpi(Bases[candidate].name_string, Bases[selected].name_string) > 0) {
-            selected = candidate;
+        if (candidate != static_cast<int>(focusedBaseID_)
+            && Bases[candidate].faction_id_current == Bases[focusedBaseID_].faction_id_current) {
+            if (_strcmpi(Bases[candidate].name_string, Bases[focusedBaseID_].name_string) < 0
+                && (nearest < 0 || _strcmpi(Bases[candidate].name_string,
+                                             Bases[nearest].name_string) > 0)) {
+                nearest = candidate;
+            }
+            if (_strcmpi(Bases[candidate].name_string, Bases[selected].name_string) > 0) {
+                selected = candidate;
+            }
         }
     }
-    if (nearest >= 0) {
-        selected = nearest;
-    }
-    focusedBaseID_ = selected;
-    zoom(selected, 0);
+    focusedBaseID_ = nearest >= 0 ? nearest : selected;
+    zoom(focusedBaseID_, 0);
 }
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
@@ -2291,26 +2257,20 @@ void BaseWin::next() {
     int selected = static_cast<int>(focusedBaseID_);
     int nearest = -1;
     for (int candidate = 0; candidate < GameDataStateStorage.fields_.base_current_count_; ++candidate) {
-        if (candidate == static_cast<int>(focusedBaseID_)
-            || Bases[candidate].faction_id_current != Bases[focusedBaseID_].faction_id_current) {
-            continue;
-        }
-        const int comparison = _strcmpi(Bases[candidate].name_string,
-                                         Bases[focusedBaseID_].name_string);
-        if (comparison > 0
-            && (nearest < 0 || _strcmpi(Bases[candidate].name_string,
-                                         Bases[nearest].name_string) < 0)) {
-            nearest = candidate;
-        }
-        if (_strcmpi(Bases[candidate].name_string, Bases[selected].name_string) < 0) {
-            selected = candidate;
+        if (candidate != static_cast<int>(focusedBaseID_)
+            && Bases[candidate].faction_id_current == Bases[focusedBaseID_].faction_id_current) {
+            if (_strcmpi(Bases[candidate].name_string, Bases[focusedBaseID_].name_string) > 0
+                && (nearest < 0 || _strcmpi(Bases[candidate].name_string,
+                                             Bases[nearest].name_string) < 0)) {
+                nearest = candidate;
+            }
+            if (_strcmpi(Bases[candidate].name_string, Bases[selected].name_string) < 0) {
+                selected = candidate;
+            }
         }
     }
-    if (nearest >= 0) {
-        selected = nearest;
-    }
-    focusedBaseID_ = selected;
-    zoom(selected, 0);
+    focusedBaseID_ = nearest >= 0 ? nearest : selected;
+    zoom(focusedBaseID_, 0);
 }
 
 // Queue mutation and its rendered panel use the same typed Base queue and
@@ -2768,84 +2728,68 @@ void BaseWin::add_queue(int production_id, int insert) {
         return;
     }
     if (insert == 0 && BaseCurrent->queue_production_id[index] == production_id
-        && static_cast<int>(BaseCurrent->queue_size) >= index) {
+        && index <= BaseCurrent->queue_size) {
         return;
     }
 
     if (production_id < 0
         && (-production_id < 0x41 || -production_id > 0x44)) {
-        int slot = 1;
-        while (slot < 9) {
+        int slot;
+        for (slot = 1; slot < 9; ++slot) {
             if (BaseCurrent->queue_production_id[slot] == production_id) break;
-            ++slot;
         }
         if (slot < 9) {
-            if (slot < index) {
+            if (index > slot) {
                 selected_queue_slot_ = index - 1;
             }
             --BaseCurrent->queue_size;
             if (slot < 8) {
-                int offset = slot;
-                do {
-                    BaseCurrent->queue_production_id[offset] =
-                        BaseCurrent->queue_production_id[offset + 1];
-                    ++offset;
-                } while (offset < 8);
+                for (; slot < 8; ++slot) {
+                    BaseCurrent->queue_production_id[slot] =
+                        BaseCurrent->queue_production_id[slot + 1];
+                }
             }
         }
     }
 
     if (insert != 0) {
-        int end = 9;
-        if (selected_queue_slot_ < 9) {
-            do {
-                BaseCurrent->queue_production_id[end] =
-                    BaseCurrent->queue_production_id[end - 1];
-                --end;
-            } while (selected_queue_slot_ < end);
+        for (int end = 9; end > selected_queue_slot_; --end) {
+            BaseCurrent->queue_production_id[end] =
+                BaseCurrent->queue_production_id[end - 1];
         }
         if (BaseCurrent->queue_size < 9) {
             ++BaseCurrent->queue_size;
         }
     }
 
-    index = selected_queue_slot_;
-    BaseCurrent->queue_production_id[index] = production_id;
-    if (static_cast<int>(BaseCurrent->queue_size) < index) {
+    BaseCurrent->queue_production_id[selected_queue_slot_] = production_id;
+    if (selected_queue_slot_ > BaseCurrent->queue_size) {
         ++BaseCurrent->queue_size;
     }
 
-    int visited = 0;
     if (insert != 0) {
-        const int count = static_cast<int>(BaseCurrent->queue_size);
+        const int count = BaseCurrent->queue_size;
         field_40B30_ = 0;
         selected_queue_slot_ = count + 1;
     }
 
-    int count = static_cast<int>(BaseCurrent->queue_size);
-    if (count + 1 > 0) {
-        int slot = 0;
-        do {
-            if (BaseCurrent->queue_production_id[slot] == -0x45 && visited < count) {
-                for (int following = slot; following < 9; ++following) {
-                    BaseCurrent->queue_production_id[following] =
-                        BaseCurrent->queue_production_id[following + 1];
-                }
-                --BaseCurrent->queue_size;
-                count = static_cast<int>(BaseCurrent->queue_size);
-                if (count < selected_queue_slot_) {
-                    if (count < 2) {
-                        count = 1;
-                    }
-                    selected_queue_slot_ = count;
-                }
-                draw_queue(1);
+    for (int visited = 0, slot = 0; visited < BaseCurrent->queue_size + 1; ++visited, ++slot) {
+        if (BaseCurrent->queue_production_id[slot] == -0x45 && visited < BaseCurrent->queue_size) {
+            for (int following = slot; following < 9; ++following) {
+                BaseCurrent->queue_production_id[following] =
+                    BaseCurrent->queue_production_id[following + 1];
             }
-            draw_production(1);
-            ++visited;
-            ++slot;
-            count = static_cast<int>(BaseCurrent->queue_size);
-        } while (visited < count + 1);
+            --BaseCurrent->queue_size;
+            if (selected_queue_slot_ > BaseCurrent->queue_size) {
+                int selected = BaseCurrent->queue_size;
+                if (selected <= 1) {
+                    selected = 1;
+                }
+                selected_queue_slot_ = selected;
+            }
+            draw_queue(1);
+        }
+        draw_production(1);
     }
     draw_queue(1);
 }
@@ -2893,6 +2837,22 @@ void BaseWin::check_base(int base_id) {
     }
 }
 
+// The image inlines the 2-arg vector_dist body here (parameter registers);
+// a visible inline copy of vector_dist is the likely original source.
+static inline int check_loc_dist(int x_distance, int y_distance) {
+    x_distance = abs(x_distance);
+    y_distance = abs(y_distance);
+    int largest = x_distance;
+    if (x_distance <= y_distance) {
+        largest = y_distance;
+    }
+    int smallest = x_distance;
+    if (x_distance >= y_distance) {
+        smallest = y_distance;
+    }
+    return largest - ((((y_distance + x_distance) >> 1) - smallest + 1) >> 1);
+}
+
 // Visibility gates every base-coordinate read. Original 0x0041A80A captures
 // the signed y coordinate before computing wrapped x distance. This uses
 // the game's existing hex metric, not square-grid or Euclidean distance.
@@ -2903,19 +2863,7 @@ void BaseWin::check_loc(int x, int y, int radius) {
         const int base_y = Bases[focusedBaseID_].y;
         const int base_x = Bases[focusedBaseID_].x;
         const int dx = x_dist(x, base_x);
-        const int dy = abs(y - base_y);
-        // The original expands the two-argument vector metric at this callsite
-        // and calls abs for its three component distances; keep that local
-        // arithmetic instead of calling the separately emitted map.cpp body.
-        const int distance_x = abs(dx);
-        const int distance_y = abs(dy);
-        int largest = distance_x;
-        if (distance_x <= distance_y) largest = distance_y;
-        int smallest = distance_x;
-        if (distance_x >= distance_y) smallest = distance_y;
-        const int distance = largest -
-            ((((distance_x + distance_y) >> 1) - smallest + 1) >> 1);
-        if (distance <= radius) {
+        if (check_loc_dist(dx, abs(y - base_y)) <= radius) {
             base_compute(1);
             redraw();
             MainInterfaceGlobal.GraphicWin::redraw();
@@ -2948,19 +2896,13 @@ void BaseWin::soft_zoom(int base_id) {
 // ORIGINAL: 0x0041A920 ?zoom@BaseWin@@QAEXHH@Z 0x0041A920-0x0041AE40
 // RECOVERY_BINDING: v1 {"evidence": ["image:0x0041AA4B-0x0041AE03 restores the seven ordered tutorial gates, name parsing, popup/callout dispatch and shared rejoin before the original wait tail", "image:0x0041AA73-0x0041AA9C uses PlayersData[current].current_num_bases and tut_check(2); image:0x0041AB04-0x0041ABD1 uses Base::state/governor and tut_check2(0x10/0x20)", "image:0x0041ABF5-0x0041ACDA uses Base population/surplus, BaseCurrentForcesMaintCost, tut_check2(0x200/0x40), and the current Map tile climate", "image:0x0041AD0F-0x0041ADFE scans Bases[0..GameDataStateStorage.fields_.base_current_count_), tests the existing facilities_built bytes via bitmask, and dispatches the two Base inefficiency callouts", "source:src/base.h:Base,BaseCurrent", "source:src/faction.h:PlayerData::current_num_bases,PlayersData", "source:src/game_data_state_window.h:GameDataStateWindowFields::base_current_count_,GameDataStateStorage", "source:src/tutwin.h:TutWin::base_rect,tut_win,do_base,set_tour_stage,TutorialWindow", "source:src/general.h:parse_says,bitmask", "source:src/map.h:map_loc", "source:src/base.cpp:BaseCurrentForcesMaintCost"], "reason": "Recover the complete original zoom behavior through existing Base, PlayerData, game-data-state, tutorial, map, string-parsing, and base-window owners, retaining branch/callback order and the original wait tail."}
 void BaseWin::zoom(int base_id, int wait) {
+    int x;
+    int y;
     field_40B00_ = -1;
     TutorialWindow.reset();
     focusedBaseID_ = base_id;
     BaseComputedID = -1;
-
-    const int worked_tiles = Bases[focusedBaseID_].resource_sqr_radius;
-    set_base(focusedBaseID_);
-    base_compute(0);
-    if (IsMultiplayerNet && !ConsoleControlTurnActive
-        && worked_tiles != Bases[focusedBaseID_].resource_sqr_radius
-        && NetDaemonNet.lock_base(BaseIDCurrentSelected, 0, -1, -1) == 0) {
-        NetDaemonNet.unlock_base(BaseIDCurrentSelected);
-    }
+    compute_selected_base();
 
     BaseCurrent->state &= ~BSTATE_UNK_10;
     zoom_wait_pending_ = 1;
@@ -2988,25 +2930,15 @@ void BaseWin::zoom(int base_id, int wait) {
         && tut_check(2) != 0) {
         TutorialWindow.set_tour_stage(1);
         parse_says(0, BaseCurrent->name_string, -1, -1);
-        int x;
-        int y;
         TutorialWindow.base_rect(&rect8_, &x, &y);
-        MapWin *const primary = MapWinTable[0];
-        GraphicWin *const owner = primary != nullptr
-            ? static_cast<GraphicWin *>(primary) : nullptr;
-        TutorialWindow.tut_win(owner, "BASECONTROL", x, y, nullptr, 0x100,
+        TutorialWindow.tut_win(MapWinTable[0], "BASECONTROL", x, y, nullptr, 0x100,
                                -1, -1);
     } else if ((BaseCurrent->state & 2u) != 0 && tut_check2(0x10) != 0
         && (BaseCurrent->governor & 0x80000040u) != 0x80000040u) {
         TutorialWindow.set_tour_stage(6);
         parse_says(0, BaseCurrent->name_string, -1, -1);
-        int x;
-        int y;
         TutorialWindow.base_rect(&rect8_, &x, &y);
-        MapWin *const primary = MapWinTable[0];
-        GraphicWin *const owner = primary != nullptr
-            ? static_cast<GraphicWin *>(primary) : nullptr;
-        TutorialWindow.tut_win(owner, "DRONERIOTS", x, y, nullptr, 0x100,
+        TutorialWindow.tut_win(MapWinTable[0], "DRONERIOTS", x, y, nullptr, 0x100,
                                -1, -1);
     } else if (BaseCurrent->nutrient_surplus < 0 && tut_check2(0x20) != 0
         && BaseCurrent->specialist_total != 0
@@ -3014,7 +2946,7 @@ void BaseWin::zoom(int base_id, int wait) {
         parse_says(0, BaseCurrent->name_string, -1, -1);
         TutorialWindow.do_base(&rect1_, "LOWNUTRIENT", 0);
     } else {
-        const int population_size = BaseCurrent->population_size;
+        const int8_t population_size = BaseCurrent->population_size;
         const int mineral_surplus = BaseCurrent->mineral_surplus;
         bool tutorial_popup_opened = false;
         if (mineral_surplus < (population_size + 1) / 2
@@ -3027,7 +2959,7 @@ void BaseWin::zoom(int base_id, int wait) {
         }
 
         if (!tutorial_popup_opened && BaseCurrent->mineral_surplus <= 1) {
-            const int population = BaseCurrent->population_size;
+            const int8_t population = BaseCurrent->population_size;
             if (static_cast<int32_t>(BaseCurrentForcesMaintCost)
                     < population / 2
                 && population >= 3 && tut_check2(0x40) != 0) {
@@ -3045,25 +2977,19 @@ void BaseWin::zoom(int base_id, int wait) {
         if (!tutorial_popup_opened
             && BaseCurrent->energy_inefficiency > BaseCurrent->energy_surplus
             && (BaseCurrent->governor & 0x80000000u) == 0) {
-            bool matching_base_has_facility = false;
+            bool has_headquarters = false;
             for (int index = 0;
                  index < GameDataStateStorage.fields_.base_current_count_;
                  ++index) {
                 if (Bases[index].faction_id_current
-                    != BaseCurrent->faction_id_current) {
-                    continue;
-                }
-                int facility_byte;
-                int facility_bit;
-                bitmask(base_id, &facility_byte, &facility_bit);
-                if ((Bases[index].facilities_built[facility_byte]
-                     & facility_bit) != 0) {
-                    matching_base_has_facility = true;
+                        == BaseCurrent->faction_id_current
+                    && has_fac_built(FAC_HEADQUARTERS, index)) {
+                    has_headquarters = true;
                     break;
                 }
             }
 
-            if (!matching_base_has_facility && tut_check2(0x400) != 0) {
+            if (!has_headquarters && tut_check2(0x400) != 0) {
                 parse_says(0, BaseCurrent->name_string, -1, -1);
                 draw_expenses(2);
                 TutorialWindow.do_base(&expenses_help_rects_[0],
@@ -4986,18 +4912,7 @@ void BaseWin::on_iface_mouse_leave(int, int) {
     if (field_40B00_ >= 0) {
         field_40B00_ = -1;
         field_40B04_ = 0;
-
-        const int worked_tiles = Bases[focusedBaseID_].resource_sqr_radius;
-        set_base(static_cast<int>(focusedBaseID_));
-        base_compute(0);
-
-        if (IsMultiplayerNet != 0 && ConsoleControlTurnActive == 0
-            && worked_tiles != Bases[focusedBaseID_].resource_sqr_radius) {
-            if (NetDaemonNet.lock_base(BaseIDCurrentSelected, 0, -1, -1) == 0) {
-                NetDaemonNet.unlock_base(BaseIDCurrentSelected);
-            }
-        }
-
+        compute_selected_base();
         draw_production(1);
     }
 }
