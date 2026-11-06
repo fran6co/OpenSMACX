@@ -158,21 +158,20 @@ Status: Source-owned member body; behavior retained, exactness not measured
 int ButtonGroup::button_click(int clicked_id) {
     int found_active = 0;
     int found_clicked = 0;
-    int active_index = 0;
-    int clicked_index = 0;
+    int active_index;
+    int clicked_index;
 
     int total = static_cast<int>(count_);
     if (total > 0) {
-        const uint32_t active_id = field_84_;
         for (int index = 0; index < total; ++index) {
             const uint32_t button_id = buttons_[index]->field_A78_;
-            if (button_id == active_id) {
+            if (button_id == field_84_) {
                 active_index = index;
                 found_active = 1;
             }
             if (button_id == static_cast<uint32_t>(clicked_id)) {
-                clicked_index = index;
                 found_clicked = 1;
+                clicked_index = index;
             }
         }
     }
@@ -202,21 +201,14 @@ int ButtonGroup::button_click(int clicked_id) {
             // Original 0x62B9CE follows buttons_[0] to its inherited Win
             // parent member (+0xC4). The public accessor owns that read;
             // preserve the original direct dereference without a null guard.
-            Win *owner = buttons_[0]->parent_window();
-            const int active_id = found_active
-                ? static_cast<int>(buttons_[active_index]->field_A78_) : -1;
-            const int clicked = found_clicked
-                ? static_cast<int>(buttons_[clicked_index]->field_A78_) : -1;
-            owner->on_group_clicked(active_id, clicked);
-
+            buttons_[0]->parent_window()->on_group_clicked(
+                found_active ? static_cast<int>(buttons_[active_index]->field_A78_) : -1,
+                found_clicked ? static_cast<int>(buttons_[clicked_index]->field_A78_) : -1);
             if (count_ != 0) {
-                const int active_again = found_active
-                    ? static_cast<int>(buttons_[active_index]->field_A78_) : -1;
-                const int clicked_again = found_clicked
-                    ? static_cast<int>(buttons_[clicked_index]->field_A78_) : -1;
-                Win *owner_again = buttons_[0]->parent_window();
-                owner_again->on_group_clicked(static_cast<int>(field_8C_),
-                                               active_again, clicked_again);
+                buttons_[0]->parent_window()->on_group_clicked(
+                    static_cast<int>(field_8C_),
+                    found_active ? static_cast<int>(buttons_[active_index]->field_A78_) : -1,
+                    found_clicked ? static_cast<int>(buttons_[clicked_index]->field_A78_) : -1);
             }
         }
     }

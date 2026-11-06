@@ -107,16 +107,7 @@ Status: Complete
 // LEVER: /Oy- is the winning flag set - the doc's own `frame` tag says the
 //   image keeps a real ebp frame. Store order is flag/first/second (not
 //   declaration order first/second/flag - `store_order.py` shows it), and
-//   the loop-count test reads the untouched `flags` parameter rather than
-//   `flag & N`, matching the image's `test bl, 0x10` against the parameter
-//   register instead of the stored member.
-// TRIED: 59/87 (0.977 similar), plateaued. The remaining divergence is
-//   which callee-saved register (eax vs ebx) VC6 assigns to the surviving
-//   `flags` parameter against the OR'd value, and it propagates through the
-//   loop as an eax/ebx or edi/ebx register swap throughout - not a
-//   spelling this tree's source controls. `semantic` refuses at instruction
-//   4 (`mov` against `push`), so it is a real ordering difference, not pure
-//   allocation noise.
+//   the loop-count tests read `flag & 4`/`flag & 8` but `flags & 0x10`.
 */
 int SquareLock::lock(int factionID, int flags, int x, int y) {
     // STORE ORDER: flag, then first, then second - the image writes
@@ -128,13 +119,11 @@ int SquareLock::lock(int factionID, int flags, int x, int y) {
     if (y < 0 || y >= MapLatitudeBounds || x < 0 || x >= MapLongitudeBounds) {
         return 0;
     }
-    // TESTED OFF THE PARAMETER, NOT THE MEMBER. Bits 2, 3 and 4 do not
-    // overlap the `| 1` that went into `flag`, so `flags & N` and
-    // `flag & N` agree here; the image keeps the untouched parameter in a
-    // register (`test bl, 0x10`) instead of re-deriving it from `flag`.
+    // Bits 4 and 8 are read from the stored `flag`; bit 0x10 from the
+    // untouched parameter (`test bl, 0x10`).
     int count;
-    if ((flags & 4) && !(flags & 0x10)) {
-        count = (flags & 8) ? 81 : 25;   // RadiusRange[4] or RadiusRange[2]
+    if ((flag & 4) && !(flags & 0x10)) {
+        count = (flag & 8) ? 81 : 25;   // RadiusRange[4] or RadiusRange[2]
     } else {
         count = 1;
     }

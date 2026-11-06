@@ -545,7 +545,7 @@ Purpose: The full builder every xpops wrapper funnels into. When the label
          expansions being enabled; on success substitute a fixed caption for
          the popup. Either way, fall through to the shared pop builder.
 // ORIGINAL: 0x005BF480 ?X_pop@@YAHPADPBDHPADHP6AHXZ@Z 0x005BF480-0x005BF5C2 SEMANTIC
-// TRIED: MNEMONIC_ONLY 100/127, best across all flag sets. The remaining gap is a pure register-rotation (eax/ecx/edx swapped) at three near-identical pop_full(cap, label, a3, a4, a5, callback) call sites reading [ebp+0xc] (label); caching label in a local, reordering it against the caption expression via separate statements, and reading the two fixed-address caption substitutes through an inline accessor (fixed a genuine double-indirection bug first) all leave the same rotation.
+// NOTE: needs the ebp frame (optimize "y" off) and pop_full args written inline.
 // symbol    ?X_pop@@YAHPADPBDH0HP6AHXZ@Z
 // size      322 bytes
 // prototype int (__cdecl ?X_pop@@YAHPADPBDHPADHP6AHXZ@Z)(int8*, int8*, int length, int8*, int, int (__cdecl *)())
@@ -556,6 +556,7 @@ Purpose: The full builder every xpops wrapper funnels into. When the label
 Return Value: whatever the shared pop builder returns
 Status: Complete
 */
+#pragma optimize("y", off)
 int __cdecl X_pop(char *caption, const char *label, int a3, char *a4, int a5,
                   int (__cdecl *callback)()) {
 // RECOVERY_OBJECT: v1 0x00691C80 _?XPopModCheckString2Text@?1??X_pop@@YAHPADPBDH0HP6AHXZ@Z@4QBDB
@@ -583,9 +584,7 @@ int __cdecl X_pop(char *caption, const char *label, int a3, char *a4, int a5,
                 FILE *const fp = fopen(XPopModCheckFile1Text, XPopModCheckMode1Text);
                 if (fp != nullptr) {
                     fclose(fp);
-                    char *const lbl = label2;
-                    char *const cap = const_cast<char *>(XPopModCheckCaption1());
-                    int const result = pop_full(cap, lbl, a3, a4, a5, callback);
+                    int const result = pop_full(const_cast<char *>(XPopModCheckCaption1()), label2, a3, a4, a5, callback);
                     if (result != -1) {
                         return result;
                     }
@@ -598,9 +597,7 @@ int __cdecl X_pop(char *caption, const char *label, int a3, char *a4, int a5,
             FILE *const fp = fopen(XPopModCheckFile2Text, XPopModCheckMode2Text);
             if (fp != nullptr) {
                 fclose(fp);
-                char *const lbl = label2;
-                char *const cap = const_cast<char *>(XPopModCheckCaption2());
-                int const result = pop_full(cap, lbl, a3, a4, a5, callback);
+                int const result = pop_full(const_cast<char *>(XPopModCheckCaption2()), label2, a3, a4, a5, callback);
                 if (result != -1) {
                     return result;
                 }
@@ -610,6 +607,7 @@ int __cdecl X_pop(char *caption, const char *label, int a3, char *a4, int a5,
     }
     return pop_full(caption, label2, a3, a4, a5, callback);
 }
+#pragma optimize("", on)
 
 /*
 Purpose: The two-argument popup form: caption from the shared buffer, no

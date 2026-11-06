@@ -63,9 +63,11 @@ extern "C" int __cdecl sub_4c99d0(int x_coord, int y_coord) {
         result += 2;
     }
     if ((bits & 0x200000) != 0) {
-        return result + 2;
+        result += 2;
+    } else {
+        result += tile->val3 >> 6;
     }
-    return result + (tile->val3 >> 6);
+    return result;
 }
 
 /*

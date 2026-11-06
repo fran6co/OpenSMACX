@@ -215,8 +215,7 @@ void __cdecl say_stats_2(LPSTR stat, int proto_id) {
     char num_buf[80];
     int8_t off_rating = get_proto_offense_rating(proto_id);
     if (off_rating < 0) {
-        // INLINE: the image open-codes label_get(196) here rather than calling it.
-        strcat(stat, StringTable.get(Labels.strings_ptr[196])); // 'Psi'
+        strcat(stat, label_get(196)); // 'Psi'
     } else if (off_rating >= 99) {
         strcat(stat, "*");
     } else {
@@ -224,7 +223,7 @@ void __cdecl say_stats_2(LPSTR stat, int proto_id) {
     }
     strcat(stat, "-");
     if (get_proto_defense_rating(proto_id) < 0) {
-        strcat(stat, StringTable.get(Labels.strings_ptr[196])); // 'Psi'
+        strcat(stat, label_get(196)); // 'Psi'
     } else {
         say_defense(stat, proto_id);
     }
@@ -234,11 +233,11 @@ void __cdecl say_stats_2(LPSTR stat, int proto_id) {
     strcat(stat, num_buf);
     if (get_proto_triad(proto_id) == TRIAD_SEA) {
         strcat(stat, " ");
-        strcat(stat, StringTable.get(Labels.strings_ptr[163])); // 'Sea'
+        strcat(stat, label_get(163)); // 'Sea'
     }
     if (get_proto_triad(proto_id) == TRIAD_AIR) {
         strcat(stat, " ");
-        strcat(stat, StringTable.get(Labels.strings_ptr[162])); // 'Air'
+        strcat(stat, label_get(162)); // 'Air'
     }
     if (VehPrototypes[proto_id].reactor_id > 1) {
         strcat(stat, "*");

@@ -182,13 +182,11 @@ void __cdecl Credits::timer_callback_daemon(int a1) {
 #pragma optimize("", on)
 
 // ORIGINAL: 0x00428C00 ?draw_credits@Credits@@QAEXXZ 0x00428C00-0x00428D5C
+#pragma optimize("y", off)
 void Credits::draw_credits() {
-  Buffer *canvas = static_cast<Buffer *>(&graphicWin2_);
   graphicWin2_.fill(9);
-
-  const int height = graphicWin2_.dib_.bmiHeader.biHeight;
-  const int width = graphicWin2_.dib_.bmiHeader.biWidth;
-  int y = -(static_cast<int>(frame_count_) + height);
+  int y = -(static_cast<int>(frame_count_) +
+            graphicWin2_.dib_.bmiHeader.biHeight);
   int line_index = 0;
   if (y <= -static_cast<int>(line_height_)) {
     line_index = -(y / static_cast<int>(line_height_));
@@ -198,35 +196,30 @@ void Credits::draw_credits() {
     release_modal();
     return;
   }
-
-  if (y < -height) {
-    int index = line_index;
-    do {
-      if (index >= static_cast<int>(line_count_)) {
-        break;
-      }
-      canvas->set_text_color(0, -1, 1, 1);
-      char *line = lines_[index];
-      if (line != 0) {
-        canvas->write_cent_l(line, 0, y, width, strlen(line));
-      }
-      ++index;
-      y += static_cast<int>(line_height_);
-      ++line_index;
-    } while (y < -height);
+  while (y < -graphicWin2_.dib_.bmiHeader.biHeight &&
+         line_index < static_cast<int>(line_count_)) {
+    graphicWin2_.Buffer::set_text_color(0, -1, 1, 1);
+    const int width = graphicWin2_.dib_.bmiHeader.biWidth;
+    char *line = lines_[line_index];
+    if (line != 0) {
+      graphicWin2_.Buffer::write_cent_l(line, 0, y, width, strlen(line));
+    }
+    y += static_cast<int>(line_height_);
+    ++line_index;
   }
-
   int x = 0;
   int y2 = 0;
-  for (int count = 7; count >= 0; --count) {
-    canvas->change_color(0, x, width, 2, 0, count);
-    const int lower_y = y2 - height - 1;
-    canvas->change_color(0, lower_y, width, 2, 0, count);
+  for (int count = 7; count > -1; --count, y2 -= 2) {
+    graphicWin2_.Buffer::change_color(0, x, graphicWin2_.dib_.bmiHeader.biWidth,
+                                      2, 0, count);
+    graphicWin2_.Buffer::change_color(0, y2 - graphicWin2_.dib_.bmiHeader.biHeight - 1,
+                                      graphicWin2_.dib_.bmiHeader.biWidth, 2, 0,
+                                      count);
     x += 2;
-    y2 -= 2;
   }
   graphicWin2_.on_update();
 }
+#pragma optimize("", on)
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.

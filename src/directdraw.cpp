@@ -170,41 +170,54 @@ int __cdecl sub_62cd50(int bit_depth) {
     DDSURFACEDESC description;
     description.dwSize = 0x6C;
     if (BufferDirectDraw->GetDisplayMode(&description) != 0) {
-        goto failure;
+        BufferDirectDraw->Release();
+        BufferDirectDraw = 0;
+        return 0x12;
     }
     DirectDrawDriverCaps.dwSize = 0x16C;
     DirectDrawEmulationCaps.dwSize = 0x16C;
     if (BufferDirectDraw->GetCaps(&DirectDrawDriverCaps,
                                  &DirectDrawEmulationCaps) != 0) {
-        goto failure;
+        BufferDirectDraw->Release();
+        BufferDirectDraw = 0;
+        return 0x12;
     }
     DirectDrawDensityLimit = (description.dwBackBufferCount + 1u) *
-        static_cast<DWORD>(description.lPitch) * description.dwHeight +
+        description.dwHeight * static_cast<DWORD>(description.lPitch) +
         DirectDrawDriverCaps.dwVidMemFree;
 
     {
-        DWORD selected_width = 0;
+        DWORD selected_width;
         description.dwSize = 0x6C;
         description.dwFlags = 0x1000;
         description.ddpfPixelFormat.dwSize = 0x20;
         description.ddpfPixelFormat.dwFlags = 0x40;
         description.ddpfPixelFormat.dwRGBBitCount = bit_depth;
+        selected_width = 0;
         if (BufferDirectDraw->EnumDisplayModes(0, &description, &selected_width,
                                               sub_62cd10) != 0) {
-            goto failure;
+            BufferDirectDraw->Release();
+            BufferDirectDraw = 0;
+            return 0x12;
         }
         if (selected_width == 0) {
-            goto failure;
+            BufferDirectDraw->Release();
+            BufferDirectDraw = 0;
+            return 0x12;
         }
         if (BufferDirectDraw->SetCooperativeLevel(HandleMain, 0x13) != 0) {
-            goto failure;
+            BufferDirectDraw->Release();
+            BufferDirectDraw = 0;
+            return 0x12;
         }
         // VC6's signed (width * 3) / 4, even if a callback supplied a
         // width outside the ordinary 0..1024 callback range.
         const int product = static_cast<int>(selected_width * 3u);
         if (BufferDirectDraw->SetDisplayMode(selected_width, product / 4,
                                             bit_depth, 0, 0) != 0) {
-            goto failure;
+            BufferDirectDraw->Release();
+            BufferDirectDraw = 0;
+            return 0x12;
         }
         // Reload selected_width after SetDisplayMode: callbacks may change it.
         DirectDrawClipRect.right = selected_width;
@@ -220,12 +233,16 @@ int __cdecl sub_62cd50(int bit_depth) {
         description.ddsCaps.dwCaps = 0x4218;
         description.dwBackBufferCount = 1;
         if (BufferDirectDraw->CreateSurface(&description, &primary, 0) != 0) {
-            goto failure;
+            BufferDirectDraw->Release();
+            BufferDirectDraw = 0;
+            return 0x12;
         }
         DDSCAPS backbuffer_caps;
         backbuffer_caps.dwCaps = 4;
         if (primary->GetAttachedSurface(&backbuffer_caps, &backbuffer) != 0) {
-            goto failure;
+            BufferDirectDraw->Release();
+            BufferDirectDraw = 0;
+            return 0x12;
         }
         primary->QueryInterface(IID_IDirectDrawSurface2,
                                reinterpret_cast<void **>(&DirectDrawSurface));
@@ -237,12 +254,16 @@ int __cdecl sub_62cd50(int bit_depth) {
                 // including a null PaletteActive; no null-this accessor call.
                 4, reinterpret_cast<PALETTEENTRY *>(PaletteActive),
                 &DirectDrawPalette, 0) != 0) {
-            goto failure;
+            BufferDirectDraw->Release();
+            BufferDirectDraw = 0;
+            return 0x12;
         }
         DirectDrawSurface->SetPalette(DirectDrawPalette);
         DirectDrawBackBuffer->SetPalette(DirectDrawPalette);
         if (BufferDirectDraw->CreateClipper(0, &DirectDrawClipper, 0) != 0) {
-            goto failure;
+            BufferDirectDraw->Release();
+            BufferDirectDraw = 0;
+            return 0x12;
         }
         DDActive = 1;
         Win::screen_buffer_.close();
@@ -252,11 +273,6 @@ int __cdecl sub_62cd50(int bit_depth) {
         Win::screen_buffer_.clipper_ = DirectDrawClipper;
     }
     return 0;
-
-failure:
-    BufferDirectDraw->Release();
-    BufferDirectDraw = 0;
-    return 0x12;
 }
 
 // ORIGINAL: 0x0062D0F0 sub_62d0f0 0x0062D0F0-0x0062D0F8 BYTE_EXACT

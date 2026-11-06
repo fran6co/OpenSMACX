@@ -45,11 +45,9 @@ char SetupMenuFileScratch[1024];
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/004ae340.cpp", "image:terranx_original.exe:0x004AE340", "Native4AE349/4AE368 preserves original y in EDI across Spot output mutation; feedback receives incoming coordinate.", "recovery/tasks/interface-contract-report-closure.json; bounded UI-five scope preserves original baseline"], "reason": "Recover the original in its genuine UI owner using actual members, globals and base/virtual calls. Retain seed evidence and historical obligations; this binding does not grant a current matching or runtime claim."}
 // symbol    ?on_left_click@SetupWin@@UAEXHH@Z
 void SetupWin::on_left_click(int x, int y) {
-    // Spot may overwrite its output; the original saves the incoming y in EDI
-    // and passes that saved coordinate to the virtual feedback callback.
-    const int original_y = y;
-    if (spot_.check(x, y, &y, 0) != -1) {
-        on_mouse_move(x, original_y);
+    int position;
+    if (spot_.check(x, y, &position, 0) != -1) {
+        on_mouse_move(x, y);
         release_modal();
     }
 }

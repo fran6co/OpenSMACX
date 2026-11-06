@@ -75,30 +75,8 @@ Purpose: Initialize the class using the font name, height and style.
 //        own bit-extraction order and took it to 110/130. Casting `style`
 //        to `unsigned` for the `>>1`/`>>2` bit extractions gets the image's
 //        `shr` where a plain `int style` compiles `sar` - 112/130.
-// TRIED: the residual gap is the ascent_/internal_leading_/height_
-//        store order - the image defers internal_leading_'s store past
-//        ascent_'s despite reading it earlier. Caching `tm.tmAscent` in a
-//        local, and reordering the source statements to the image's own
-//        store sequence, both compile to the identical 112/130: this is
-//        the optimizer's instruction scheduling, not a source-shape choice
-//        reachable from here.
-// HISTORICAL LEVER (not used by the current body): placing SelectObject
-//        between the height_ and internal_leading_ stores measured 117/130,
-//        up from 112/130. That trial put the API expression before two metric
-//        stores, so it is not the pinned call order: the original stores
-//        height_, internal_leading_ and descent_ at 0x006190A2-0x006190A8,
-//        then calls GetStockObject at 0x006190AB and SelectObject at
-//        0x006190B9. The current body keeps those calls after all five metric
-//        stores, preserving the original order; its checkpoint measurement
-//        remains 112/130 rather than adopting the higher-scoring trial.
-// TRIED: the last 13 - the image reads tmDescent BEFORE it computes height_
-//        (its `mov edx, eax` copy of tmAscent exists only because eax is
-//        already spoken for), so spelling that with an `int descent` local
-//        was the obvious next move. It SPILLS: hoisting the read to just
-//        before `height_` or to the top of the block both compile to
-//        97/130 (compiled 132 - two extra spills). `int leading` alone
-//        stays at 112/130 in the current body, where SelectObject follows
-//        all five metric stores as it does in the pinned instructions.
+// LEVER: metric stores line_height_, height_ (from tm), ascent_,
+//        internal_leading_, descent_ give the exact schedule.
 Return Value: Zero on success, non-zero on error
 Status: Complete
 */
@@ -171,24 +149,11 @@ int Font::init(LPCSTR font_name, int height, int style) {
     SelectObject(FontHDC, font_obj_);
     TEXTMETRIC tm;
     GetTextMetricsA(FontHDC, &tm);
-    // TRIED: the image's remaining STORE order here - line_height_,
-    // ascent_, internal_leading_, height_ - defers internal_leading_'s
-    // store past ascent_'s even though it is read earlier. Both an
-    // `internal_leading_`-first source order and a reordered one matching
-    // the image's store sequence compile to the identical 112/130; this is
-    // the optimizer's own instruction scheduling, not a source-shape one.
-    // An earlier spelling moved SelectObject between the height_ and later
-    // metric stores. It measured 117/130, but changed observable call order:
-    // the image stores all five metrics through 0x006190A8, then calls
-    // GetStockObject at 0x006190AB and SelectObject at 0x006190B9. In that
-    // original sequence, 0x006190A0 is only GetStockObject's argument setup
-    // between `sub edx, ecx` and the height_ store. Keep the call last even
-    // though the 117/130 spelling scored higher; the current order is 112/130.
-    int leading = tm.tmInternalLeading;
+    // Exact with height_ computed from tm before ascent_ is stored.
     line_height_ = tm.tmHeight + tm.tmExternalLeading;
+    height_ = tm.tmAscent - tm.tmInternalLeading;
     ascent_ = tm.tmAscent;
-    height_ = ascent_ - leading;
-    internal_leading_ = leading;
+    internal_leading_ = tm.tmInternalLeading;
     descent_ = tm.tmDescent;
     SelectObject(FontHDC, GetStockObject(SYSTEM_FONT));
     return 0;

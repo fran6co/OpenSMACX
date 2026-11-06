@@ -72,35 +72,29 @@ int AlphaNetLedger::on_insert(NetAllocationNode *payload) {
     if (session_name_ == 0) {
         payload->session_name_ = 0;
     } else {
-        char *copy;
-        if (allocator_ == 0) {
-            copy = static_cast<char *>(mem_get(strlen(session_name_) + 1));
+        if (allocator_ != 0) {
+            payload->session_name_ = static_cast<char *>(allocator_->get(strlen(session_name_) + 1));
         } else {
-            const size_t length = strlen(session_name_) + 1;
-            copy = static_cast<char *>(allocator_->get(length));
+            payload->session_name_ = static_cast<char *>(mem_get(strlen(session_name_) + 1));
         }
-        payload->session_name_ = copy;
-        if (copy == 0) {
+        if (payload->session_name_ == 0) {
             return 4;
         }
-        *copy = 0;
+        *payload->session_name_ = 0;
         strcat(payload->session_name_, session_name_);
     }
     if (password_ == 0) {
         payload->password_ = 0;
     } else {
-        char *copy;
-        if (allocator_ == 0) {
-            copy = static_cast<char *>(mem_get(strlen(password_) + 1));
+        if (allocator_ != 0) {
+            payload->password_ = static_cast<char *>(allocator_->get(strlen(password_) + 1));
         } else {
-            const size_t length = strlen(password_) + 1;
-            copy = static_cast<char *>(allocator_->get(length));
+            payload->password_ = static_cast<char *>(mem_get(strlen(password_) + 1));
         }
-        payload->password_ = copy;
-        if (copy == 0) {
+        if (payload->password_ == 0) {
             return 4;
         }
-        *copy = 0;
+        *payload->password_ = 0;
         strcat(payload->password_, password_);
     }
     payload->instance_guid_ = *instance_guid_;

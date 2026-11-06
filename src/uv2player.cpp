@@ -130,30 +130,31 @@ Purpose: The buffered writer's re-entry half, run as the embedded Buffer's
 Return Value: the x coordinate the last write left off at
 Status: Coverage transcription - unclaimed body
 */
+#pragma optimize("y", off)
 extern "C" int __cdecl uv2_player_writer_redirect(LPSTR text, int x_coord,
                                                   int y_coord, int row_count) {
     UV2Player *const instance = UV2PlayerActive;
-    if (instance == 0) {
-        return 0;
+    if (instance != 0) {
+        instance->buffer_.set_write_raw_callback(0);
+        int x = x_coord;
+        int index = 0;
+        if (row_count > 0) {
+            DWORD(WINAPI *const get_time)() = timeGetTime;
+            do {
+                const unsigned int started = get_time();
+                x = instance->buffer_.write_raw_l(text + index, x,
+                                                  y_coord, 1);
+                while (get_time() - started < instance->write_delay_) {
+                }
+                ++index;
+            } while (index < row_count);
+        }
+        instance->buffer_.set_write_raw_callback(&uv2_player_writer_redirect);
+        return x;
     }
-    Buffer &buffer = instance->buffer_;
-    buffer.set_write_raw_callback(0);
-    int x = x_coord;
-    int index = 0;
-    if (row_count > 0) {
-        DWORD(WINAPI *const get_time)() = timeGetTime;
-        do {
-            const unsigned int started = get_time();
-            x = buffer.write_raw_l(text + index, x,
-                                    y_coord, 1);
-            while (get_time() - started < instance->write_delay_) {
-            }
-            ++index;
-        } while (index < row_count);
-    }
-    buffer.set_write_raw_callback(&uv2_player_writer_redirect);
-    return x;
+    return 0;
 }
+#pragma optimize("", on)
 
 
 /*
@@ -425,6 +426,8 @@ void UV2Player::show_post_movie_text() {
 // Drop this definition into src/uv2player.cpp after reviewing the companion
 // evidence report and the MediaDescriptor +0xB0 union proposal.
 
+#pragma optimize("y", off)
+#pragma function(memset)
 int UV2Player::exec(char *movie_file, int width, int height, int flags) {
     if (movie_file == 0) {
         return 1;
@@ -434,7 +437,11 @@ int UV2Player::exec(char *movie_file, int width, int height, int flags) {
     UV2PlayerActive = this;
     movie_name_[0] = '\0';
     char *slash = strrchr(movie_file, '\\');
-    strcat(movie_name_, slash != 0 ? slash + 1 : movie_file);
+    if (slash != 0) {
+        strcat(movie_name_, slash + 1);
+    } else {
+        strcat(movie_name_, movie_file);
+    }
     char *extension = strrchr(movie_name_, '.');
     if (extension != 0) {
         *extension = '\0';
@@ -492,20 +499,25 @@ int UV2Player::exec(char *movie_file, int width, int height, int flags) {
         MSG message;
         do {
             if (PeekMessageA(&message, 0, 0, 0, 0) != 0) {
-                if (GetMessageA(&message, 0, 0, 0) == 0) {
-                    TranslateMessage(&message);
-                    DispatchMessageA(&message);
-                } else if (message.message == WM_KEYDOWN) {
-                    if (message.wParam == VK_RETURN ||
-                        message.wParam == VK_ESCAPE ||
-                        message.wParam == VK_SPACE) {
+                if (GetMessageA(&message, 0, 0, 0) != 0) {
+                    switch (message.message) {
+                    case WM_KEYDOWN:
+                        if (message.wParam == VK_RETURN ||
+                            message.wParam == VK_ESCAPE ||
+                            message.wParam == VK_SPACE) {
+                            UV2PlayerQuitRequested = 1;
+                            sub_5cb660(media_session_);
+                        }
+                        break;
+                    case WM_LBUTTONDOWN:
+                    case WM_RBUTTONDOWN:
                         UV2PlayerQuitRequested = 1;
                         sub_5cb660(media_session_);
+                        break;
                     }
-                } else if (message.message == WM_LBUTTONDOWN ||
-                           message.message == WM_RBUTTONDOWN) {
-                    UV2PlayerQuitRequested = 1;
-                    sub_5cb660(media_session_);
+                } else {
+                    TranslateMessage(&message);
+                    DispatchMessageA(&message);
                 }
             }
             Sleep(30);
@@ -530,5 +542,7 @@ int UV2Player::exec(char *movie_file, int width, int height, int flags) {
     }
     return 0;
 }
+#pragma intrinsic(memset)
+#pragma optimize("", on)
 
 // RECOVERY_IMPORT: v1 __imp__GetMessageA@16 USER32.dll name:GetMessageA
