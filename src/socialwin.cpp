@@ -264,7 +264,7 @@ void SocialWin::on_iface_left_click(int, int) {
 }
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x004B2220 ?on_iface_right_click@SocialWin@@QAEXHH@Z 0x004B2220-0x004B23FA
+// ORIGINAL: 0x004B2220 ?on_iface_right_click@SocialWin@@QAEXHH@Z 0x004B2220-0x004B23FA BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Original4B2220..4B23FA first resets TutorialWindow then tests interface-relative1E84C/1E85C/1E86C/1E83C, which are complete-object rectangles1F260/1F270/1F280/1F250. Labels.strings_ptr offsetsD24/D28/D2C/D1C select labels841/842/843/839; first match wins.", "Original4B2256/59 swaps argument stack contents before passing their reversed slot addresses to MainInterfaceGlobal.client_to_screen; this preserves logical x/y rather than the swapped coordinates in the seed. Every matching path constructs a degenerate screen rectangle and calls set_bubble_text on7AE820; no match only dismisses the tutorial."], "reason": "Recover social-panel tooltip selection with genuine rectangle members, label storage and the main-interface window receiver."}
 // symbol    ?on_iface_right_click@SocialWin@@UAEXHH@Z
 void SocialWin::on_iface_right_click(int x, int y) {
@@ -315,7 +315,7 @@ void SocialWin::on_left_click(int, int) {
     TutorialWindow.reset();
 }
 
-// ORIGINAL: 0x004B1BC0 ?on_right_click@SocialWin@@QAEXHH@Z 0x004B1BC0-0x004B1CD1 FILE
+// ORIGINAL: 0x004B1BC0 ?on_right_click@SocialWin@@QAEXHH@Z 0x004B1BC0-0x004B1CD1 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["The 0x004B1BC0 body resets TutorialWindow, probes four contiguous category rectangles beginning at +0x1F110 then the faction-power rectangle at +0x1F2A0, and retrieves label slots 828 or 840.", "The existing SocialWin layout has those rectangles and the on_iface_right_click body establishes label_get, client_to_screen and set_bubble_text as the typed tooltip path."], "reason": "Recover the SocialWin right-click tooltip through real rectangle members and source-owned labels."}
 // symbol    ?on_right_click@SocialWin@@UAEXHH@Z
 void SocialWin::on_right_click(int x, int y) {
@@ -1211,7 +1211,7 @@ void SocialWin::draw_faction_basal() {
     do_sound();
 }
 
-// ORIGINAL: 0x004B1FF0 ?allocate_energy@SocialWin@@QAEXHH@Z 0x004B1FF0-0x004B211C FILE
+// ORIGINAL: 0x004B1FF0 ?allocate_energy@SocialWin@@QAEXHH@Z 0x004B1FF0-0x004B211C FILE BYTE_EXACT
 // size      300 bytes
 // prototype void (__thiscall ?allocate_energy@SocialWin@@QAEXHH@Z)(SocialWin* this, int energyAllocID, int energyAllocSet)
 // callers   1   call targets   1

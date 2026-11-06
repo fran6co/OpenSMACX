@@ -214,7 +214,7 @@ void MainInterface::draw_edit_pane() {
     soft_update(&editor_text_rect_);
 }
 
-// ORIGINAL: 0x0045C3A0 ?redraw_complete@MainInterface@@QAEXXZ 0x0045C3A0-0x0045C5AF FILE
+// ORIGINAL: 0x0045C3A0 ?redraw_complete@MainInterface@@QAEXXZ 0x0045C3A0-0x0045C5AF FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["src/maininterface.h", "git:b4601390:recovery/tasks/maininterface-owner-coverage.json", "git:f7bbce35:src/recovered/units/0045c3a0.cpp"], "reason": "Original owner calls, secondary interface receiver and ordinary embedded-member lifecycle identify this MainInterface operation; compatible historical seed spans are retained, without a matching claim."}
 void MainInterface::redraw_complete() {
     if (IfaceIdToSlotStorage[ActiveIfaceIdStorage] != 0
@@ -1286,7 +1286,7 @@ static inline void restore_back_strip(RECT *rect, int widen) {
                                      r.right - r.left, r.bottom - r.top);
 }
 
-// ORIGINAL: 0x0045C290 ?restore_back@MainInterface@@QAEXH@Z 0x0045C290-0x0045C393 FILE
+// ORIGINAL: 0x0045C290 ?restore_back@MainInterface@@QAEXH@Z 0x0045C290-0x0045C393 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"reason":"The receiver owns the six frame RECTs; drawing uses the separate process-global MainInterfaceGlobal Buffer, not the receiver's Buffer.","evidence":["pinned:0x0045C290 reads receiver+D80/D90/DA0/DB0/DC0/DD0","src/maininterface.h:rect4_,right_frame_rect_,info_panel_frame_,lower_frame_rect_,rect1_,lower_animation_bounds_","src/maininterface.h:MainInterfaceGlobal;src/buffer.h:restore_clip uses rect2_; global+444 is Buffer and global+474 is rect2_"]}
 // size      259 bytes
 // prototype void (__thiscall ?restore_back@MainInterface@@QAEXH@Z)(MainInterface* this, int)

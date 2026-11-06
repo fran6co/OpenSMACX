@@ -2208,7 +2208,7 @@ void BaseWin::recompute(int) {
 // case-insensitively.  The first qualifying name in the requested direction
 // wins; the second comparison supplies the wrap-around candidate.
 // Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x0041A010 ?prev@BaseWin@@QAEXXZ 0x0041A010-0x0041A15D
+// ORIGINAL: 0x0041A010 ?prev@BaseWin@@QAEXXZ 0x0041A010-0x0041A15D BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/0041a010.cpp;source:src/base.h;image:0x0041A010-0x0041A15D"], "reason": "Recover previous base selection through the actual Base array, selected-base member, faction context and case-insensitive name order."}
 void BaseWin::prev() {
     set_base(static_cast<int>(focusedBaseID_));
@@ -2241,7 +2241,7 @@ void BaseWin::prev() {
 }
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x0041A160 ?next@BaseWin@@QAEXXZ 0x0041A160-0x0041A2AD
+// ORIGINAL: 0x0041A160 ?next@BaseWin@@QAEXXZ 0x0041A160-0x0041A2AD BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/0041a160.cpp;source:src/base.h;image:0x0041A160-0x0041A2AD"], "reason": "Recover next base selection through the actual Base array, selected-base member, faction context and case-insensitive name order."}
 void BaseWin::next() {
     set_base(static_cast<int>(focusedBaseID_));
@@ -2720,7 +2720,7 @@ void BaseWin::draw_production(int update_mode) {
     MainInterfaceGlobal.set_clip(&saved_clip);
 }
 
-// ORIGINAL: 0x00416DE0 ?add_queue@BaseWin@@QAEXHH@Z 0x00416DE0-0x00416FA8 FILE
+// ORIGINAL: 0x00416DE0 ?add_queue@BaseWin@@QAEXHH@Z 0x00416DE0-0x00416FA8 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["image:0x00416DE0-0x00416FA8 queue index/count and production-id accesses", "source:src/base.h:Base::queue_size", "source:src/base.h:Base::queue_production_id", "source:src/basewin.h:BaseWin queue selection fields"], "reason": "Apply the original queue insert/replace, sentinel removal and redraw sequence through typed Base queue storage; drawing remains an explicit unfinished dependency."}
 void BaseWin::add_queue(int production_id, int insert) {
     int index = selected_queue_slot_;
