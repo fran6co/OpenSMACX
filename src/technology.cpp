@@ -166,7 +166,7 @@ void __cdecl say_tech(int tech_id, BOOL category_lvl) {
 
 /*
 Purpose: Determine whether a faction is able to jump up the tech tree for the specified tech.
-// ORIGINAL: 0x0057CE50 ?valid_tech_leap@@YAHHH@Z 0x0057CE50-0x0057CF9E
+// ORIGINAL: 0x0057CE50 ?valid_tech_leap@@YAHHH@Z 0x0057CE50-0x0057CF9E BYTE_EXACT
 // size      334 bytes
 // prototype int (__cdecl ?valid_tech_leap@@YAHHH@Z)(int techID, int factionID)
 // callers   1   call targets   2

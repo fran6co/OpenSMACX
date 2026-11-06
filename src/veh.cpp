@@ -5176,7 +5176,7 @@ void __cdecl spot_base(int base_id, int faction_id) {
 /*
 Purpose: Reveal the whole of the specified unit's stack, and the tile it stands
          on, to the specified faction.
-// ORIGINAL: 0x005B58E0 ?spot_stack@@YAXHH@Z 0x005B58E0-0x005B5A61
+// ORIGINAL: 0x005B58E0 ?spot_stack@@YAXHH@Z 0x005B58E0-0x005B5A61 BYTE_EXACT
 // size      385 bytes
 // prototype void (__cdecl ?spot_stack@@YAXHH@Z)(int vehID, int factionID)
 // callers   2   call targets   1
@@ -6646,7 +6646,7 @@ int __cdecl prototype_factor(int proto_id) {
 /*
 Purpose: Calculate the specified prototype's overall cost to build. Optional output parameter
          whether there is an associated 1st time prototype cost (true) or just the base (false).
-// ORIGINAL: 0x005C1850 ?veh_cost@@YAHHHPAH@Z 0x005C1850-0x005C1A1D
+// ORIGINAL: 0x005C1850 ?veh_cost@@YAHHHPAH@Z 0x005C1850-0x005C1A1D BYTE_EXACT
 // LEVER: three real structural fixes moved this 0.545 -> 0.854 similar
 // (0/167 in position at the winning `/c /O2 /Gy /GR- /GX`):
 //  (1) prototype_factor(proto_id) is a direct same-TU call that /Ob2
@@ -6713,7 +6713,7 @@ int __cdecl veh_cost(int proto_id, int base_id, BOOL *has_proto_cost) {
 /*
 Purpose: Check if the land unit inside an air transport can disembark. The transport must be in
          either a base or an airbase to do so.
-// ORIGINAL: 0x005C1C40 ?veh_jail@@YAHH@Z 0x005C1C40-0x005C1D16
+// ORIGINAL: 0x005C1C40 ?veh_jail@@YAHH@Z 0x005C1C40-0x005C1D16 BYTE_EXACT
 // size      214 bytes
 // prototype int (__cdecl ?veh_jail@@YAHH@Z)(int vehID)
 // callers   8   call targets   0
@@ -7768,7 +7768,7 @@ int __cdecl veh_find(int x, int y, int faction_id, int skip_veh_id) {
 
 /*
 Purpose: Can this vehicle act this turn?
-// ORIGINAL: 0x005C1B70 ?veh_ready@@YAHH@Z 0x005C1B70-0x005C1C38
+// ORIGINAL: 0x005C1B70 ?veh_ready@@YAHH@Z 0x005C1B70-0x005C1C38 BYTE_EXACT
 // size      200 bytes
 // prototype int (__cdecl ?veh_ready@@YAHH@Z)(int vehID)
 // callers   14   call targets   2
@@ -7839,7 +7839,7 @@ int __cdecl veh_selectable(int veh_id) {
 
 /*
 Purpose: Has this vehicle any moves left?
-// ORIGINAL: 0x005C1AB0 ?veh_unmoved@@YAHH@Z 0x005C1AB0-0x005C1B6F
+// ORIGINAL: 0x005C1AB0 ?veh_unmoved@@YAHH@Z 0x005C1AB0-0x005C1B6F BYTE_EXACT
 // size      191 bytes
 // prototype int (__cdecl ?veh_unmoved@@YAHH@Z)(int vehID)
 // callers   1   call targets   2
