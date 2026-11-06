@@ -7966,13 +7966,7 @@ void Win::set_caption(char * text) {
         field_E0_[0] = 0;
         strcat(field_E0_, text);
     }
-    if (iSomeFlag_ & 1) {
-        Win *other = win_parent_;
-        if (other != 0) {
-            if (!other->is_visible()) {
-                return;
-            }
-        }
+    if (is_visible()) {
         this->on_nc_paint(0, -1);
     }
 }
@@ -8133,16 +8127,9 @@ int Win::update_window(RECT * area) {
     if (area == 0) {
         return update_screen(0, this);
     }
-    int x = client_rect_.left + outer_rect_.left;
-    int y = client_rect_.top + outer_rect_.top;
-    if ((iFlags_ & 0x20) != 0 &&
-        win_parent_ != 0) {
-        win_parent_->client_to_screen(&x, &y);
-        if ((iFlags_ & 0x8000) != 0) {
-            x -= win_parent_->outer_rect_.left;
-            y -= win_parent_->outer_rect_.top;
-        }
-    }
+    int x = 0;
+    int y = 0;
+    client_to_screen(&x, &y);
     RECT r = *area;
     r.left += x;
     r.right += x;
@@ -11639,20 +11626,9 @@ void Win::get_mouse_pos(int * x, int * y) {
         GetCursorPos(&pt);
         *x = pt.x;
         *y = pt.y;
-        *x -= client_rect_.left + outer_rect_.left;
-        *y -= client_rect_.top + outer_rect_.top;
-        if ((iFlags_ & 0x20) != 0 && win_parent_ != 0) {
-            // THE PARENT'S, not this window's. The image loads win_parent_
-            // into ECX - the receiver register - and calls from there:
-            // `mov ecx, [esi + 0xc4]` / `test ecx, ecx` straight into the
-            // call. Calling it on `this` compiled the same load into EAX and
-            // then an extra `mov ecx, esi` to set the receiver back.
-            win_parent_->screen_to_client(x, y);
-            if ((iFlags_ & 0x8000) != 0) {
-                *x += win_parent_->outer_rect_.left;
-                *y += win_parent_->outer_rect_.top;
-            }
-        }
+        // The original calls screen_to_client here; VC6 inlines it one
+        // level, leaving the recursive parent call out of line at 0x005ED2D0.
+        screen_to_client(x, y);
     }
 }
 
@@ -11857,15 +11833,9 @@ void Win::screen_to_client(RECT * rect) {
     if (rect == 0) {
         return;
     }
-    int dx = -(client_rect_.left + outer_rect_.left);
-    int dy = -(client_rect_.top + outer_rect_.top);
-    if ((iFlags_ & 0x20) && win_parent_ != 0) {
-        win_parent_->screen_to_client(&dx, &dy);
-        if (iFlags_ & 0x8000) {
-            dx += win_parent_->outer_rect_.left;
-            dy += win_parent_->outer_rect_.top;
-        }
-    }
+    int dx = 0;
+    int dy = 0;
+    screen_to_client(&dx, &dy);
     rect->left += dx;
     rect->right += dx;
     rect->top += dy;
@@ -11889,21 +11859,9 @@ void Win::client_to_screen(RECT * rect) {
     if (rect == 0) {
         return;
     }
-    int xAdj = client_rect_.left + outer_rect_.left;
-    int yAdj = client_rect_.top + outer_rect_.top;
-    // NO `owner` LOCAL. The image tests win_parent_ in ECX - the receiver
-    // register - and calls straight from there; binding it to a local put it
-    // in EBX and cost a `push ebx` plus a `mov ecx, ebx` at the call. And the
-    // image RELOADS it afterwards (`mov esi, [esi + 0xc4]` at 0x005ED044)
-    // rather than keeping it live, so the local was not what the original
-    // wrote either.
-    if ((iFlags_ & 0x20U) != 0 && win_parent_ != 0) {
-        win_parent_->client_to_screen(&xAdj, &yAdj);
-        if ((iFlags_ & 0x8000U) != 0) {
-            xAdj -= win_parent_->outer_rect_.left;
-            yAdj -= win_parent_->outer_rect_.top;
-        }
-    }
+    int xAdj = 0;
+    int yAdj = 0;
+    client_to_screen(&xAdj, &yAdj);
     rect->left += xAdj;
     rect->right += xAdj;
     rect->top += yAdj;
@@ -11935,34 +11893,12 @@ void Win::client_to_screen(RECT * rect) {
 // the guard to an early return - the form that made client_to_screen exact -
 // does not move it, so the difference is downstream of source shape.
 void Win::nonscreen_to_client(RECT * rect) {
-    // EARLY RETURN, matching the sibling client_to_screen that measures
-    // exact. The image loads `rect` into EDI and `this` into ESI;
-    // wrapping the body in `if (rect != 0)` swapped that assignment.
     if (rect == 0) {
         return;
     }
-    int localX = -(client_rect_.left + outer_rect_.left);
-    int localY = -(client_rect_.top + outer_rect_.top);
-    if ((iFlags_ & 0x20) != 0 && win_parent_ != 0) {
-        // THE PARENT'S, not this window's: the image loads win_parent_
-        // into ECX - the receiver register - and calls from there
-        // (`mov ecx, [esi + 0xc4]` / `test ecx, ecx` at 0x005ED0E5),
-        // exactly as its sibling client_to_screen does.
-        win_parent_->screen_to_client(&localX, &localY);
-        // NESTED, not a sibling test. The image's `test ah, 0x80` at
-        // 0x005ED104 sits between the call and the `jmp 0x5ed135` that
-        // rejoins the 0x20 test's own `je` target - so it only runs when
-        // the parent walk did. Its sibling client_to_screen nests it the
-        // same way.
-        if ((iFlags_ & 0x8000) != 0) {
-            localX = localX + win_parent_->outer_rect_.left;
-            localY = localY + win_parent_->outer_rect_.top;
-        }
-    }
-    // Reuse localX/localY rather than adding `dx`/`dy` - the lever that made
-    // the sibling nonclient_to_screen exact: two extra locals held one value
-    // too many live and the compiler swapped `this` and `rect` between esi
-    // and edi for the whole body.
+    int localX = 0;
+    int localY = 0;
+    screen_to_client(&localX, &localY);
     localX += outer_rect_.left;
     localY += outer_rect_.top;
     rect->left = rect->left + localX;
@@ -11985,22 +11921,9 @@ void Win::nonclient_to_screen(RECT * rect) {
     if (rect == 0) {
         return;
     }
-    int x = client_rect_.left + outer_rect_.left;
-    int y = client_rect_.top + outer_rect_.top;
-    if ((iFlags_ & 0x20) != 0 && win_parent_ != 0) {
-        // THE PARENT'S: `mov ecx, [esi + 0xc4]` / `test ecx, ecx` at
-        // 0x005ED1B1 puts win_parent_ in the receiver register.
-        win_parent_->client_to_screen(&x, &y);
-        if ((iFlags_ & 0x8000) != 0) {
-            x -= win_parent_->outer_rect_.left;
-            y -= win_parent_->outer_rect_.top;
-        }
-    }
-    // LEVER: reuse x and y, do NOT introduce `dx`/`dy`. Two extra locals
-    // held one value too many live and the compiler swapped `this` and
-    // `rect` between esi and edi for the whole body - 39 of 62 with every
-    // instruction otherwise in place. Subtracting into x/y and adding those
-    // is the same arithmetic with one fewer live value, and it is exact.
+    int x = 0;
+    int y = 0;
+    client_to_screen(&x, &y);
     x -= outer_rect_.left;
     y -= outer_rect_.top;
     rect->left += x;
@@ -12096,16 +12019,7 @@ void Win::nonclient_to_screen(int * x, int * y) {
 // flags     hidden;sp_ready;purged_ok
 // calls     0x005ED2D0
 void Win::screen_to_nonclient(int * x, int * y) {
-    *x -= client_rect_.left + outer_rect_.left;
-    *y -= client_rect_.top + outer_rect_.top;
-    if ((iFlags_ & 0x20) != 0 &&
-        win_parent_ != 0) {
-        (win_parent_)->screen_to_client(x, y);
-        if ((iFlags_ & 0x8000) != 0) {
-            *x += win_parent_->outer_rect_.left;
-            *y += win_parent_->outer_rect_.top;
-        }
-    }
+    screen_to_client(x, y);
     *x += outer_rect_.left;
     *y += outer_rect_.top;
 }
@@ -12149,11 +12063,8 @@ void __cdecl Win::OnKey(void * hwnd, unsigned int key, long flags, int repeat, u
 
     if (chosen != nullptr) {
         Win *const inner = chosen->poWinBase_;
-        if (inner != nullptr && (inner->iSomeFlag_ & 1U) != 0) {
-            Win *const parent = inner->win_parent_;
-            int visible = 1;
-            if (parent != nullptr) visible = parent->is_visible();
-            if (visible != 0) inner->on_key(key, flags, repeat, scan);
+        if (inner != nullptr && inner->is_visible()) {
+            inner->on_key(key, flags, repeat, scan);
         }
     }
 
@@ -12202,12 +12113,8 @@ void __cdecl OnChar(void *hwnd, char ch, int flags) {
     WinActiveWindow = active;
     if (active != nullptr) {
         Win *const base_window = active->poWinBase_;
-        if (base_window != nullptr
-            && (base_window->iSomeFlag_ & 1U) != 0) {
-            Win *const parent = base_window->win_parent_;
-            if (parent == nullptr || parent->is_visible() != 0) {
-                base_window->on_char(ch, flags);
-            }
+        if (base_window != nullptr && base_window->is_visible()) {
+            base_window->on_char(ch, flags);
         }
     }
 }
@@ -12254,16 +12161,8 @@ void __cdecl OnSysKey(void *hwnd, unsigned int key, long flags, int repeat,
 // owns a position - a third witness after Win::construct storing `this`
 // there and Win::get_mouse_window returning it.
         Win *owner = active->poWinBase_;
-        if (owner != 0) {
-            if (owner->iSomeFlag_ & 1) {
-                Win *inner = owner->win_parent_;
-                if (inner != 0) {
-                    if (!inner->is_visible()) {
-                        return;
-                    }
-                }
-                owner->on_sys_key(key, flags, repeat, scan);
-            }
+        if (owner != 0 && owner->is_visible()) {
+            owner->on_sys_key(key, flags, repeat, scan);
         }
     }
 }

@@ -42,10 +42,12 @@ code, or fixed-address calls; never hand-edit `ORIGINAL:`/`BYTE_EXACT` markers;
 preserve every historical claim and identity; proprietary bytes stay in ignored
 `.opensmacx/` and `build/`.
 
-Common regression cause to check first: VC6 `/Ob2` inlines a callee defined
-earlier in the same TU. Keep definitions in original address order. A function
-moved after its callee's definition will inline a call the original made out of
-line.
+Common regression cause to check first is a hand-copied callee body. Older
+recoveries often wrote a callee's first level out by hand, typically a
+recursive helper such as `Win::is_visible` or `screen_to_client`, because the
+callee lived in another file. Once the callee shares the TU, VC6 `/Ob2` (in any
+definition order) inlines the copy's inner call one level further. The fix is
+to restore the original direct call and let the compiler inline it once.
 
 ## Earlier guidance (still applies where it does not conflict)
 
