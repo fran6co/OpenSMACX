@@ -125,7 +125,7 @@ SpriteBox::SpriteBox() {
 /*
 Purpose: Close the control, then let the compiler destroy its owned list and
          Spot, and its virtual bases through the appropriate destructor entry.
-// ORIGINAL: 0x00610120 ??1SpriteBox@@QAE@XZ 0x00610120-0x00610274;0x00662FFA-0x0066301A
+// ORIGINAL: 0x00610120 ??1SpriteBox@@QAE@XZ 0x00610120-0x00610274;0x00662FFA-0x0066301A BYTE_EXACT
 // symbol    ??1SpriteBox@@UAE@XZ
 // TRIED: 35 compiled instructions against the image's 99, and the image opens
 //   an SEH frame (`push -1 / push 0x663010 / mov eax, fs:[0] / push eax /
@@ -638,7 +638,7 @@ void SpriteBox::draw_item(int position) {
 // Superseded seed deleted; seed paths below are historical Git provenance.
 // Historical seed observations (not fresh measurements or acceptance):
 // TRIED: `this` is offset by TWO different constants for two different base sub-objects (this-0x7c for Spot::check, this-0x8c for the SpriteBox proper, whose field_0_ IS *(this-0x8c)); modelled with raw char*-adjusted casts rather than real inheritance. `a2` is an in/out param aliased via `&a2` into check(). Gets to instruction 25 of ~90 before diverging on push/mov ordering around the `push ebp; push esi` callee-save point.
-// ORIGINAL: 0x00611060 ?on_left_click@SpriteBox@@QAEXHH@Z 0x00611060-0x0061114A FILE
+// ORIGINAL: 0x00611060 ?on_left_click@SpriteBox@@QAEXHH@Z 0x00611060-0x0061114A FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/00611060.cpp retained original identity, full spans and prior recovery evidence", "recovery/tasks/dialog-control-coverage-wave.json authorized coupled control ownership", "original:0x611060 complete control/data-access review and src/spritebox.h genuine declaration; cross-owner discoveries preserved in task history"], "reason": "Complete Dialog-control behavior belongs to this genuine control owner, with real inherited members, embedded controls, Win receivers and callback dispatch rather than fixed executable calls. Compatible seed identity and historical evidence remain retained; catalogue decorations and emitted ABI are separate facts."}
 // symbol    ?on_left_click@SpriteBox@@UAEXHH@Z
 void SpriteBox::on_left_click(int x, int y) {
@@ -711,7 +711,7 @@ int SpriteBox::on_key_down(int key) {
 }
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x00610280 ?close@SpriteBox@@QAEXXZ 0x00610280-0x00610416 FILE
+// ORIGINAL: 0x00610280 ?close@SpriteBox@@QAEXXZ 0x00610280-0x00610416 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00610280.cpp retained original identity, full spans and prior recovery evidence", "recovery/tasks/dialog-control-coverage-wave.json authorized coupled control ownership", "original:0x610280 complete control/data-access review and src/spritebox.h genuine declaration; cross-owner discoveries preserved in task history"], "reason": "Complete Dialog-control behavior belongs to this genuine control owner, with real inherited members, embedded controls, Win receivers and callback dispatch rather than fixed executable calls. Compatible seed identity and historical evidence remain retained; catalogue decorations and emitted ABI are separate facts."}
 // symbol    ?close@SpriteBox@@QAEXXZ
 void SpriteBox::close() {
@@ -1305,7 +1305,7 @@ void SpriteList::close() {
 // Native writer transport intent: move the existing 0x00611730 identity and
 // its complete historical record to this genuine virtual-base destructor
 // body. Do not create a second identity or hand-author a claim/symbol fact.
-// ORIGINAL: 0x00611730 sub_611730 0x00611730-0x006117C3 FILE
+// ORIGINAL: 0x00611730 sub_611730 0x00611730-0x006117C3 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:bfba7856bfc5f41b1118cfb67d83a35108f698d9:src/spritebox.cpp", "pinned:SpriteList tables6708A0/6708A4;6116E0 calls611730 with virtual-baseview+28", "pinned:SpriteListBase tables66943C/669438 and ring fields +8..+18; StringStruct independently uses 6693A4/6693A0", "pinned:SpriteBox constructor stages 66943C/669438 then 6708A4/6708A0", "source:src/spritebox.h;src/stringstruct.h", "source:recovery/tests/test_spritelist_base_lifetime.py", "historical-source:recovery/tests/test_sprite_list_lifecycle_actual_source.py"], "reason": "Retain the complete pinned ring-cleanup identity on the SpriteList lifecycle owner. The original list owner is modeled as a sibling ring type with the same entry/allocation-base layout as StringStruct; combined constructor and destructor table-stage evidence supports this model, while transient constructor-stage elision remains possible. Current SpriteListBase owns the no-op-hook cleanup stage, SpriteList adds the sprite hook and payload lifecycle, and ordinary close remains a separate cleanup path. Preserve historical identities, spans, claims, seed findings and unresolved hook-return obligation."}
 // symbol    ??1SpriteList@@UAE@XZ
 // Historical seed finding: historical two-vtable census and private-class conclusion, now explicitly superseded but retained

@@ -127,7 +127,7 @@ static const char ReplaySaveName[] = "Alpha Centauri Autosave 1";
 static const char ReplaySaveFile[] = "Alpha Centauri Autosave 1.SAV";
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x005ADBF0 ?show_replay@@YAXXZ 0x005ADBF0-0x005ADE7B;0x00662240-0x00662355
+// ORIGINAL: 0x005ADBF0 ?show_replay@@YAXXZ 0x005ADBF0-0x005ADE7B;0x00662240-0x00662355 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/005adbf0.cpp retains the SHARED_TAIL seed and construction sequence", "image strings at 0x00691408 and 0x00691424 name the save and reload paths", "src/map.cpp owns WorldClimateSkipTerrainClear at 0x0068F21C", "src/game.cpp owns GameState at 0x009A64C0", "src/replaywin.h models the GraphicWin, MapWin, FlatButton and Time subobjects"], "reason": "Run the replay through a real local ReplayWin lifetime and typed game/climate state instead of a manually patched vtable and fixed executable addresses; retain the seed's unmodeled temporary objects as restoration work."}
 // symbol    ?show_replay@@YAXXZ
 void __cdecl show_replay() {
@@ -146,7 +146,7 @@ void __cdecl show_replay() {
 }
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x005ADF10 ??1ReplayWin@@QAE@XZ 0x005ADF10-0x005AE0A8;0x00662360-0x0066244C
+// ORIGINAL: 0x005ADF10 ??1ReplayWin@@QAE@XZ 0x005ADF10-0x005AE0A8;0x00662360-0x0066244C BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["image:0x005ADBF0 constructs GraphicWin, MapWin, FlatButton and Time at offsets 0, 0x2320, 0x247A0 and 0x252EC", "image:0x005ADF32 destructs Time at 0x252EC before FlatButton at 0x247A0", "git:d7a40721:src/recovered/units/005adf10.cpp", "src/replaywin.h declares all three complete subobjects"], "reason": "Let C++ destroy ReplayWin's real members in reverse construction order instead of forwarding the complete destructor to original image code."}
 // symbol    ??1ReplayWin@@UAE@XZ
 // The implicit virtual destructor follows the typed member/base lifetime.
