@@ -6321,7 +6321,7 @@ int CaviarData::init(char *name) {
 }
 
 // Original616C80. The second stack argument is present but unused.
-// ORIGINAL: 0x00616C80 sub_616c80 0x00616C80-0x00616D33
+// ORIGINAL: 0x00616C80 sub_616c80 0x00616C80-0x00616D33 BYTE_EXACT
 // symbol    ?apply_palette@CaviarData@@QAEHPAVPalette@@H@Z
 // kind      game
 int CaviarData::apply_palette(Palette *destination, int) {

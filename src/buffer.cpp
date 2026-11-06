@@ -2050,7 +2050,7 @@ int Buffer::load_pcx(const char *filename, Palette *palette, int tgl, int height
 // the regular PCX decoder above. The original three-argument cdecl callers
 // and receiver-free body establish a static utility; the old catalogue
 // spelling is retained separately from the current compiler symbol.
-// ORIGINAL: 0x005E2480 ?get_pcx_dimensions@Buffer@@QAAHPBDPAHPAH@Z 0x005E2480-0x005E2690;0x00662C11-0x00662C26
+// ORIGINAL: 0x005E2480 ?get_pcx_dimensions@Buffer@@QAAHPBDPAHPAH@Z 0x005E2480-0x005E2690;0x00662C11-0x00662C26 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/005e2480.cpp", "pinned-image:0x00696BF8,0x00696CFC,0x00696D04,0x00696D0C"], "reason": "Home PCX header dimension decoding in Buffer using its Filemap lifecycle and source-owned format literals"}
 // symbol    ?get_pcx_dimensions@Buffer@@SAHPBDPAH1@Z
 
@@ -5229,7 +5229,7 @@ void Buffer::dotted_box(int left, int top, int right, int bottom, int color) {
     dotted_vline(right, top + 1, bottom, color);
 }
 
-// ORIGINAL: 0x005E32F3 ?dotted_box@Buffer@@QAEHPAURECT@@H@Z 0x005E32F3-0x005E3370 FILE
+// ORIGINAL: 0x005E32F3 ?dotted_box@Buffer@@QAEHPAURECT@@H@Z 0x005E32F3-0x005E3370 FILE BYTE_EXACT
 // symbol    ?dotted_box@Buffer@@QAEHPAUtagRECT@@H@Z
 // working copy - scaffold materialised by --work
 // size      125 bytes
@@ -5249,7 +5249,7 @@ int Buffer::dotted_box(RECT * a1, int a2) {
 
 // Fixed-slot bindings carried from 005dd450.cpp
 
-// ORIGINAL: 0x005DD450 ?write_right_l@Buffer@@QAEHPADPAURECT@@H@Z 0x005DD450-0x005DD52B FILE
+// ORIGINAL: 0x005DD450 ?write_right_l@Buffer@@QAEHPADPAURECT@@H@Z 0x005DD450-0x005DD52B FILE BYTE_EXACT
 // symbol    ?write_right_l@Buffer@@QAEHPADPAUtagRECT@@H@Z
 // TRIED: bare `strlen` (MSVC inlines it as `repne scasb`, needs `#pragma function(strlen)` to force the real call). With the pragma the structure and call sequence match, but the register allocator puts a1/this in different registers than the original (ebp/esi here vs ebx/edi there); not reproduced. 78/85 shared.
 // working copy - scaffold materialised by --work
@@ -5285,7 +5285,7 @@ int Buffer::write_right_l(char *text, RECT *area, int len) {
     return 0;
 }
 
-// ORIGINAL: 0x005DB6C0 ?write_cent_l@Buffer@@QAEHPAVFont@@PADHHHH@Z 0x005DB6C0-0x005DB71E FILE
+// ORIGINAL: 0x005DB6C0 ?write_cent_l@Buffer@@QAEHPAVFont@@PADHHHH@Z 0x005DB6C0-0x005DB71E FILE BYTE_EXACT
 // TRIED: direct transcription only tried once; diverges at #0 (push vs mov) in the prologue register-save pattern
 // working copy - scaffold materialised by --work
 // size      94 bytes
@@ -5309,7 +5309,7 @@ int Buffer::write_cent_l(Font * font, char * text, int x_coord, int y_coord,
     return result;
 }
 
-// ORIGINAL: 0x005DB870 ?write_right_l@Buffer@@QAEHPAVFont@@PADHHHH@Z 0x005DB870-0x005DB8CE FILE
+// ORIGINAL: 0x005DB870 ?write_right_l@Buffer@@QAEHPAVFont@@PADHHHH@Z 0x005DB870-0x005DB8CE FILE BYTE_EXACT
 // TRIED: named-local save/restore and raw-pointer-triple save/restore both match control flow and the call, but VC6 schedules the three register saves (ebx/ebp/esi) differently than the original at #0 (push vs mov) - register allocation, not logic
 // working copy - scaffold materialised by --work
 // size      94 bytes
@@ -5577,7 +5577,7 @@ int Buffer::wrap_cent(char * text, RECT * rect) {
     return yPos;
 }
 
-// ORIGINAL: 0x005DB9E0 ?wrap_cent@Buffer@@QAEHPAVFont@@PADHHH@Z 0x005DB9E0-0x005DBAF5
+// ORIGINAL: 0x005DB9E0 ?wrap_cent@Buffer@@QAEHPAVFont@@PADHHH@Z 0x005DB9E0-0x005DBAF5 BYTE_EXACT
 // TRIED: only one source-form tried; original starts with `sub esp,0xc` for locals before its register pushes (no frame pointer at all - ebp is a plain callee-saved register here), which this form doesn't reproduce. Landing the closest structural translation (mnemonic_similarity 0.712).
 // size      277 bytes
 // prototype int (__thiscall ?wrap_cent@Buffer@@QAEHPAVFont@@PADHHH@Z)(Buffer* this, Font*, int8*, int, int, int)
@@ -6036,7 +6036,7 @@ nothing_drawn:
     return result;
 }
 
-// ORIGINAL: 0x005DBC50 ?wrap_right@Buffer@@QAEHPAVFont@@PADHHH@Z 0x005DBC50-0x005DBCA9 FILE
+// ORIGINAL: 0x005DBC50 ?wrap_right@Buffer@@QAEHPAVFont@@PADHHH@Z 0x005DBC50-0x005DBCA9 FILE BYTE_EXACT
 // TRIED: save/swap/restore of the triple at this+0x52c is right (matches Ghidra's field layout and the 4-arg wrap_right overload target); divergence is register-allocation scheduling in the push/pop prologue, not semantics - mnemonic_similarity 0.91, first divergence at insn #0.
 // working copy - scaffold materialised by --work
 // size      89 bytes
@@ -6060,7 +6060,7 @@ int Buffer::wrap_right(Font *font_override, char *text, int x_coord,
     return result;
 }
 
-// ORIGINAL: 0x005DBCB0 ?wrap_right@Buffer@@QAEHPAVFont@@PADH@Z 0x005DBCB0-0x005DBCFF
+// ORIGINAL: 0x005DBCB0 ?wrap_right@Buffer@@QAEHPAVFont@@PADH@Z 0x005DBCB0-0x005DBCFF BYTE_EXACT
 // symbol    ?wrap_right@Buffer@@QAEHPAVFont@@PADPAUtagRECT@@@Z
 // size      79 bytes
 // prototype int (__thiscall ?wrap_right@Buffer@@QAEHPAVFont@@PADH@Z)(Buffer* this, Font*, int8*, int)
@@ -6089,7 +6089,7 @@ int Buffer::wrap_right(Font *font, char *text, RECT *area) {
     return result;
 }
 
-// ORIGINAL: 0x005DB810 ?write_cent_l@Buffer@@QAEHPAVFont@@PADHHH@Z 0x005DB810-0x005DB869 FILE
+// ORIGINAL: 0x005DB810 ?write_cent_l@Buffer@@QAEHPAVFont@@PADHHH@Z 0x005DB810-0x005DB869 FILE BYTE_EXACT
 // TRIED: save/override font1_-3_ around the 4-arg overload, then restore
 // working copy - scaffold materialised by --work
 // size      89 bytes
@@ -6113,7 +6113,7 @@ int Buffer::write_cent_l(Font *font_override, char *text, int x_coord,
     return result;
 }
 
-// ORIGINAL: 0x005DB8D0 ?write_right_l@Buffer@@QAEHPAVFont@@PADHHH@Z 0x005DB8D0-0x005DB929 FILE
+// ORIGINAL: 0x005DB8D0 ?write_right_l@Buffer@@QAEHPAVFont@@PADHHH@Z 0x005DB8D0-0x005DB929 FILE BYTE_EXACT
 // TRIED: nothing beyond the direct save/swap/delegate/restore transcription; diverges at #0 (push vs mov), likely register/local allocation order
 // working copy - scaffold materialised by --work
 // size      89 bytes
@@ -6137,7 +6137,7 @@ int Buffer::write_right_l(Font *font, char *text, int x_coord, int y_coord,
     return result;
 }
 
-// ORIGINAL: 0x005DB780 ?write_cent_l@Buffer@@QAEHPAVFont@@PADHHHHH@Z 0x005DB780-0x005DB806 FILE
+// ORIGINAL: 0x005DB780 ?write_cent_l@Buffer@@QAEHPAVFont@@PADHHHHH@Z 0x005DB780-0x005DB806 FILE BYTE_EXACT
 // working copy - scaffold materialised by --work
 // size      134 bytes
 // prototype int (__thiscall ?write_cent_l@Buffer@@QAEHPAVFont@@PADHHHHH@Z)(Buffer* this, Font*, int8*, int, int, int, int, int)
@@ -6220,7 +6220,7 @@ int Buffer::write_cent_l(char *a1, int a2, int a3, int a4, int a5, int a6) {
 }
 
 
-// ORIGINAL: 0x005DB660 ?write_l@Buffer@@QAEHPAVFont@@PADPAURECT@@H@Z 0x005DB660-0x005DB6B4 FILE
+// ORIGINAL: 0x005DB660 ?write_l@Buffer@@QAEHPAVFont@@PADPAURECT@@H@Z 0x005DB660-0x005DB6B4 FILE BYTE_EXACT
 // symbol    ?write_l@Buffer@@QAEHPAVFont@@PADPAUtagRECT@@H@Z
 // size      84 bytes
 // prototype int (__thiscall ?write_l@Buffer@@QAEHPAVFont@@PADPAURECT@@H@Z)(Buffer* this, Font*, int8*, RECT*, int)
@@ -6296,7 +6296,7 @@ int Buffer::write_l(Font *a1, char *a2, RECT *a3, int a4) {
     return result;
 }
 
-// ORIGINAL: 0x005DB720 ?write_cent_l@Buffer@@QAEHPAVFont@@PADPAURECT@@H@Z 0x005DB720-0x005DB774 FILE
+// ORIGINAL: 0x005DB720 ?write_cent_l@Buffer@@QAEHPAVFont@@PADPAURECT@@H@Z 0x005DB720-0x005DB774 FILE BYTE_EXACT
 // symbol    ?write_cent_l@Buffer@@QAEHPAVFont@@PADPAUtagRECT@@H@Z
 // size      84 bytes
 // prototype int (__thiscall ?write_cent_l@Buffer@@QAEHPAVFont@@PADPAURECT@@H@Z)(Buffer* this, Font*, char *, RECT*, int)
@@ -6371,7 +6371,7 @@ int Buffer::write_cent_l(Font *font, char *text, RECT *area, int len) {
     return result;
 }
 
-// ORIGINAL: 0x005DBC00 ?wrap_cent@Buffer@@QAEHPAVFont@@PADPAURECT@@@Z 0x005DBC00-0x005DBC4F FILE
+// ORIGINAL: 0x005DBC00 ?wrap_cent@Buffer@@QAEHPAVFont@@PADPAURECT@@@Z 0x005DBC00-0x005DBC4F FILE BYTE_EXACT
 // symbol    ?wrap_cent@Buffer@@QAEHPAVFont@@PADPAUtagRECT@@@Z
 // size      79 bytes
 // prototype int (__thiscall ?wrap_cent@Buffer@@QAEHPAVFont@@PADPAURECT@@@Z)(Buffer* this, Font*, char *, RECT*)
@@ -6447,7 +6447,7 @@ int Buffer::wrap_cent(Font *font_override, char *text, RECT *area) {
     return result;
 }
 
-// ORIGINAL: 0x005DB990 ?wrap@Buffer@@QAEHPAVFont@@PADPAURECT@@@Z 0x005DB990-0x005DB9DF FILE
+// ORIGINAL: 0x005DB990 ?wrap@Buffer@@QAEHPAVFont@@PADPAURECT@@@Z 0x005DB990-0x005DB9DF FILE BYTE_EXACT
 // symbol    ?wrap@Buffer@@QAEHPAVFont@@PADPAUtagRECT@@@Z
 // size      79 bytes
 // prototype int (__thiscall ?wrap@Buffer@@QAEHPAVFont@@PADPAURECT@@@Z)(Buffer* this, Font*, int8*, RECT*)
@@ -9072,7 +9072,7 @@ extern int BufferFlyingX;
 extern int BufferFlyingY;
 extern int BufferFlyingWidth;
 
-// ORIGINAL: 0x005DB400 sub_5db400 0x005DB400-0x005DB44F FILE
+// ORIGINAL: 0x005DB400 sub_5db400 0x005DB400-0x005DB44F FILE BYTE_EXACT
 // symbol    ?write_vertical@Buffer@@QAEHPAVFont@@PADPAUtagRECT@@@Z
 // size      79 bytes
 // prototype 
@@ -9361,7 +9361,7 @@ char *__cdecl get_special_link(char *text, int *remaining) {
     return text;
 }
 
-// ORIGINAL: 0x005DE2E0 sub_5de2e0 0x005DE2E0-0x005DE31A FILE
+// ORIGINAL: 0x005DE2E0 sub_5de2e0 0x005DE2E0-0x005DE31A FILE BYTE_EXACT
 // symbol    ?wrap_cent_flying@Buffer@@QAEHPADHHH@Z
 // size      58 bytes
 // prototype 

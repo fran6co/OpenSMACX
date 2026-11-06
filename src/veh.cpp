@@ -6337,7 +6337,7 @@ void __cdecl veh_demote(int veh_id) {
 
 /*
 Purpose: Move the specified unit to the top of the stack.
-// ORIGINAL: 0x005C0260 ?veh_promote@@YAXH@Z 0x005C0260-0x005C02CE
+// ORIGINAL: 0x005C0260 ?veh_promote@@YAXH@Z 0x005C0260-0x005C02CE BYTE_EXACT
 // TRIED: a `veh_id_top >= 0` guard after the hand-inlined veh_top - the image has none (see BUG note below). TRIED: seeding `veh_id_top = veh_id` before vs. inside the `if` - same codegen either way. The remaining gap is the compiler proving the `prev_veh_id_stack < 0` (zero-iteration) case makes `veh_id_top != veh_id` tautologically false and skipping straight to the epilogue, where the image still materializes and compares it; not reachable by reordering statements. Plateau at 3/40.
 // TRIED: CALLEE - the tree called `veh_top()`/`veh_put()`, both inline-marked wrappers, but this call site is not one of veh_top's two real sites and veh_put did not inline here either. Hand- inlining both (veh_top's loop, and veh_put's `veh_lift(id); veh_drop(id, x, y)` - dropping veh_lift's unused return since it always returns its own argument) took call_diff from WRONG CALLEE to 0 disagreeing and 0.657 -> 0.773 similar.
 // size      110 bytes
@@ -8996,7 +8996,7 @@ void __cdecl base_kill(int base_id);
 
 /*
 Purpose: Obliterate a base and report it to every faction that can hear.
-// ORIGINAL: 0x004CD4E0 ?action_oblit@@YAXHH@Z 0x004CD4E0-0x004CD69D
+// ORIGINAL: 0x004CD4E0 ?action_oblit@@YAXHH@Z 0x004CD4E0-0x004CD69D BYTE_EXACT
 // RECOVERY_BINDING: v1 {"reason":"The historical 0x004CD6F9 extent crossed padding and the separate valid_patrol entry; action_oblit ends at its own terminal RET. Preserve the complete original behavior and identity without attributing another function's bytes to this body.","evidence":["pinned:0x004CD4E0-0x004CD69D complete instruction decode; terminal RET at 0x004CD69C and no branch leaves this body","pinned:0x004CD69D-0x004CD6A0 NOP padding; independent valid_patrol starts at 0x004CD6A0 and has separately mapped callers","source:src/veh.cpp valid_patrol owns 0x004CD6A0-0x004CDA23; both IDA and Ghidra catalogues agree on the separate entries"]}
 // size      445 bytes
 // prototype void (__cdecl ?action_oblit@@YAXHH@Z)(int veh_id, int base_id)
@@ -9074,7 +9074,7 @@ void __cdecl action_oblit(int veh_id, int base_id) {
 }
 
 // Orbital combat uses the four source-owned faction satellite counters.
-// ORIGINAL: 0x004CF480 ?action_sat_attack@@YAXHHHH@Z 0x004CF480-0x004CF73E
+// ORIGINAL: 0x004CF480 ?action_sat_attack@@YAXHHHH@Z 0x004CF480-0x004CF73E BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:a538e0a3:src/recovered/units/004cf480.cpp", "image:0x004CF480-0x004CF73E complete instructions and outcome literals", "source:src/faction.h:PlayerData satellite array", "source:src/reportif.h", "source:src/maininterface.h"], "reason": "Recover orbital attack effects in the vehicle-action domain using real faction diplomacy, grammar, indexed satellite counters and report state. Original CRT randomness, parsing order, unchecked satellite indexing and popup outcomes are retained; existing popup and diplomacy seams remain separate obligations."}
 void __cdecl action_sat_attack(int attacker, int target, int type, int base_id) {
     if (!(PlayersData[attacker].diplo_treaties[target] & 0x10))

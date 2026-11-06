@@ -3002,7 +3002,7 @@ Purpose: Walk one root window's subtree in z-order, appending every visible
 // image opens `push ecx` and reads its argument at [esp+N] (the FPO-style
 // prologue of the RECEIVER-SPILL WALL in docs/recovery/AGENT_BRIEF.md),
 // which no source spelling reaches here.
-// ORIGINAL: 0x005F4EC0 ?recurse_zorder@@YAXPAUWin@@@Z 0x005F4EC0-0x005F5013 FILE
+// ORIGINAL: 0x005F4EC0 ?recurse_zorder@@YAXPAUWin@@@Z 0x005F4EC0-0x005F5013 FILE BYTE_EXACT
 // symbol    ?recurse_zorder@@YAXPAVWin@@@Z
 // notes     PAV, not the catalogue's PAU: the catalogue guessed `struct
 //           Win`, the tree declares a class. Same function, and
@@ -3405,7 +3405,7 @@ void __cdecl wait_task() {
     }
 }
 
-// ORIGINAL: 0x005FC8F0 ?do_all_tasks@@YAXXZ 0x005FC8F0-0x005FC9DE
+// ORIGINAL: 0x005FC8F0 ?do_all_tasks@@YAXXZ 0x005FC8F0-0x005FC9DE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/005fc8f0.cpp", "image:terranx_original.exe:0x005FC8F0", "Pinned5FC74A..757 and5FC83A..847 both poll0xF..0xF. Only high-range402 messages route ActiveNet.handle_sys_msg; null network consumes them. do_all_tasks continues until empty and calls do_net after final MsgStatus=0.", "Coordinator-owned core-pump-secret-owner-20261001 scope; preserved original seeds and historical obligations, no matching/runtime claim from binding"], "reason": "Recover the native message pump using SDK MSG/USER32, existing MsgStatus and ActiveNet storage. Preserve paint-first and low/high queue priority, helper order and dedicated network notification dispatch."}
 // TRIED: PeekMessageA/TranslateMessage/DispatchMessageA are resolved
 // TRIED: could not reproduce the original's frameless, purely
@@ -3678,7 +3678,7 @@ void Win::set_mouse_pos(int x, int y) {
 // Fixed-slot bindings carried from 005ec8a0.cpp
 
 
-// ORIGINAL: 0x005ECB60 ?remove_parent_dialog@Win@@QAEXXZ 0x005ECB60-0x005ECC40 FILE
+// ORIGINAL: 0x005ECB60 ?remove_parent_dialog@Win@@QAEXXZ 0x005ECB60-0x005ECC40 FILE BYTE_EXACT
 // working copy - scaffold materialised by --work
 // size      224 bytes
 // prototype void (__thiscall ?remove_parent_dialog@Win@@QAEXXZ)(Win* this)
@@ -4943,7 +4943,7 @@ typedef int int32_t;
 typedef unsigned char uint8_t;
 typedef void(__stdcall *ThreeArgFn)(int, int, int);
 
-// ORIGINAL: 0x005EDCD0 ?hide@Win@@QAEXXZ 0x005EDCD0-0x005EDE56
+// ORIGINAL: 0x005EDCD0 ?hide@Win@@QAEXXZ 0x005EDCD0-0x005EDE56 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git3cb99d431fb928d698e7eb29afee4ac2fc664027 deleted src/recovered/units/005edcd0.cpp and homed this body without its mapping. The parent has canonical symbol?hide@Win@@QAEXXZ and complete390-byte span0x005EDCD0-0x005EDE56 with a MISMATCH note, not an exact claim. The current body retains the homed-from heading and genuine Win declaration; original WorldWin::set_detail_map tail-calls this exact entry on the distinct WorldClimateWorldWin global."], "reason": "Restore the original identity lost when the existing Win::hide implementation was homed. Preserve its historically unclaimed state; the catalogue nonvirtual spelling is provenance, while the actual product declaration is virtual."}
 // symbol    ?hide@Win@@UAEXXZ
 // `inline` here only: Win::on_char (0x005F5FB0) expands this whole body,
@@ -5010,7 +5010,7 @@ inline void Win::hide() {
 // not the getter result, for the subsequent hit test and link callback.
 // GraphicWin's Buffer base is444; its spot4B0 and owned text4BC therefore
 // explain8F4 and900. Win is Buffer's friend, so these are real members.
-// ORIGINAL: 0x005F63C0 ?on_l_button_down@Win@@UAEXJHHIH@Z 0x005F63C0-0x005F654E FILE
+// ORIGINAL: 0x005F63C0 ?on_l_button_down@Win@@UAEXJHHIH@Z 0x005F63C0-0x005F654E FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Historical3cb99d43^:src/recovered/units/005f63c0.cpp recorded unclaimed FILE398-byte5F63C0..5F654E under catalogue ?on_l_button_down@Win@@QAEXJHHIH@Z. Commit3cb99d431fb928d698e7eb29afee4ac2fc664027 deleted the seed without its source binding. No exact claim is inferred.", "Original Win-family tables place5F63C0 at slot81; observed actual compiler emits virtual UAEXJHHIH. Use that evidence-backed virtual name interpretation instead of retaining the old plain-method catalogue guess. Full original endsRET20 at5F654B; next two bytes are padding before5F6550.", "Original5F6442 fifth argument selects both capture owner and slot28/38; fourth WPARAM is unused. Pushes5F64B0/B1 and5F64D4/D5 deliver x,y; original seed had both coordinate reversals and wrong fourth-argument selector. Preserve live parent/related receiver reloads and virtual admission as predicate only.", "GraphicWin owns Buffer at444, Spot4B0 and link texts4BC. Original5F6523 loads this+900+4*index; slot88 on_link_clicked result controls left_down_event fallback. This binding does not verify every original-address service, class lifetime or full GUI."], "reason": "Restore original identity lost during Win rehoming; recover full left-down argument routing and genuine GraphicWin link dispatch."}
 void Win::on_l_button_down(long double_click, int x, int y, unsigned int, int from_parent) {
     Win *child = win_parent_;
@@ -5084,7 +5084,7 @@ void Win::on_l_button_down(long double_click, int x, int y, unsigned int, int fr
 
 // ===== homed from src/recovered/units/005f6550.cpp =====
 
-// ORIGINAL: 0x005F6550 ?on_l_button_up@Win@@QAEXHHIH@Z 0x005F6550-0x005F670D FILE
+// ORIGINAL: 0x005F6550 ?on_l_button_up@Win@@QAEXHHIH@Z 0x005F6550-0x005F670D FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned terranx_original.exe SHA-256 01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf: Win primary virtual table slot 82 at cell 0x0066FF18 selects original entry 0x005F6550.", "src/win.h declares the corresponding Win virtual contract and slot; the unique typed definition in src/win.cpp is the source owner: Win::on_l_button_up is the slot-82 Win virtual.", "The complete preserved seed identity, span, formal facts, claim state, and useful historical notes are restored from 3cb99d431^:src/recovered/units/005f6550.cpp; see the digest-bound inert archive below.", "The existing typed Win body is retained unchanged. This restores source identity and evidence only; it grants no byte/semantic claim or original-TU provenance."], "reason": "Restore the preserved original Win method identity to its existing genuine Win definition using the observed current compiler symbol; retain the old source evidence and claims unchanged."}
 // symbol    ?on_l_button_up@Win@@UAEXHHIH@Z
 // size      445 bytes
@@ -5267,7 +5267,7 @@ LRESULT Win::on_window_pos_changed(WINDOWPOS* pos) {
 
 // ===== homed from src/recovered/units/005f4ab0.cpp =====
 
-// ORIGINAL: 0x005F4AB0 ?bring_to_top@Win@@QAEXXZ 0x005F4AB0-0x005F4C24 FILE
+// ORIGINAL: 0x005F4AB0 ?bring_to_top@Win@@QAEXXZ 0x005F4AB0-0x005F4C24 FILE BYTE_EXACT
 // symbol    ?bring_to_top@Win@@QAEXXZ
 // kind game
 void Win::bring_to_top() {
@@ -6021,7 +6021,7 @@ void Win::on_nc_paint(RECT * area, int flags) {
 
 // ===== homed from src/recovered/units/005f5270.cpp =====
 
-// ORIGINAL: 0x005F5270 ?remove_child@Win@@QAEXPAUWin@@@Z 0x005F5270-0x005F52D1 FILE
+// ORIGINAL: 0x005F5270 ?remove_child@Win@@QAEXPAUWin@@@Z 0x005F5270-0x005F52D1 FILE BYTE_EXACT
 // symbol    ?remove_child@Win@@QAEXPAV1@@Z
 // kind game
 void Win::remove_child(Win *child) {
@@ -6042,7 +6042,7 @@ void Win::remove_child(Win *child) {
 
 // ===== homed from src/recovered/units/005f6880.cpp =====
 
-// ORIGINAL: 0x005F6880 ?on_r_button_up@Win@@QAEXHHIH@Z 0x005F6880-0x005F6A21 FILE
+// ORIGINAL: 0x005F6880 ?on_r_button_up@Win@@QAEXHHIH@Z 0x005F6880-0x005F6A21 FILE BYTE_EXACT
 // symbol    ?on_r_button_up@Win@@UAEXHHIH@Z
 // kind game
 void Win::on_r_button_up(int x, int y, unsigned int keys, int dbl) {
@@ -6221,7 +6221,7 @@ void Win::set_caption_height(int height) {
     }
 }
 
-// ORIGINAL: 0x005F6A50 ?get_key_window@Win@@QAGHXZ 0x005F6A50-0x005F6AB0 FILE
+// ORIGINAL: 0x005F6A50 ?get_key_window@Win@@QAGHXZ 0x005F6A50-0x005F6AB0 FILE BYTE_EXACT
 // kind game
 // symbol    ?get_key_window@Win@@SAPAV1@XZ
 // TRIED: direct transcription only tried once; diverges at #0 (push vs mov) in the prologue register-save pattern
@@ -6442,7 +6442,7 @@ after_offset_fixup:;
     }
 }
 
-// ORIGINAL: 0x005EE190 ?set_modal@Win@@QAEHHP6AHXZPAVWin@@@Z 0x005EE190-0x005EE27B FILE
+// ORIGINAL: 0x005EE190 ?set_modal@Win@@QAEHHP6AHXZPAVWin@@@Z 0x005EE190-0x005EE27B FILE BYTE_EXACT
 // kind game
 // symbol    ?set_modal@Win@@UAEHHP6AHXZPAV1@@Z
 // TRIED: 0.90 mnemonic similarity - the original keeps a register pinned to 0 across the whole function (xor ebx,ebx once, reused for every zero-store and the two early-return `xor eax,eax`s); writing plain `0` literals throughout lets the compiler re-derive zero per site instead, which is a register-allocation choice not reachable from source form.
@@ -7732,7 +7732,7 @@ void Win::set_caption(char * text) {
 
 // ===== homed from src/unrecovered/005f5140.cpp =====
 
-// ORIGINAL: 0x005F5140 ?bring_parent_to_top@Win@@QAAXPAVWin@@@Z 0x005F5140-0x005F51F7
+// ORIGINAL: 0x005F5140 ?bring_parent_to_top@Win@@QAAXPAVWin@@@Z 0x005F5140-0x005F51F7 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git show 3cb99d43^:src/unrecovered/005f5140.cpp preserves this identity and span. Original entry loads the sole argument from the stack, never consumes incoming ECX and returns with plain ret; show at0x5EDA3E and on_r_button_down at0x5F672A each push the window and reclaim four bytes. Static versus free historical spelling is not established."], "reason": "Restore the unclaimed original mapping omitted during homing; model the receiver-free root-order operation as a static Win member. The catalogued name is not the recovered calling convention."}
 // symbol    ?bring_parent_to_top@Win@@SAXPAV1@@Z
 void __cdecl Win::bring_parent_to_top(Win * window) {
@@ -7888,7 +7888,7 @@ int Win::update_window(RECT * area) {
     return update_screen(&r, this);
 }
 
-// ORIGINAL: 0x005F52E0 ?bring_child_to_top@Win@@QAEXPAVWin@@@Z 0x005F52E0-0x005F539C FILE
+// ORIGINAL: 0x005F52E0 ?bring_child_to_top@Win@@QAEXPAVWin@@@Z 0x005F52E0-0x005F539C FILE BYTE_EXACT
 // kind game
 // symbol    ?bring_child_to_top@Win@@QAEXPAV1@@Z
 // TRIED: MISMATCH, closest at 193/188 bytes (mnemonic_similarity 0.90). An extra `push ebx` appears (register pressure from 4 live locals in the z-order loop: entry/cur/j plus the 'this'-Win receiver) that the original avoids; tried both a direct `(*entry)->iSomeFlag_ & 1` and a cached `Win *w = *entry;` form, no difference. `g_win_zorder_list` as its own `extern Win *[]` (not the fixed-address alias) for the indexed array walk, per the indexed-table-base lever.
@@ -8354,7 +8354,7 @@ typedef short(__stdcall *GetKeyStateFn)(int);
 typedef int(__stdcall *PeekMessageFn)(MsgT *, void *, unsigned int, unsigned int, unsigned int);
 typedef int(__stdcall *Fn1)(void *);
 
-// ORIGINAL: 0x005F5D10 ?on_key@Win@@QAEXIJHI@Z 0x005F5D10-0x005F5F53
+// ORIGINAL: 0x005F5D10 ?on_key@Win@@QAEXIJHI@Z 0x005F5D10-0x005F5F53 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:3cb99d43^:src/recovered/units/005f5d10.cpp:1; src/win.h slot 78; pinned original 0x005F5D4F-0x005F5DE0 reads the active Net and calls its two voice-start overloads and stop_voice"], "reason": "Restore the unclaimed original identity lost when this existing Win::on_key body was homed; retain the catalogue name separately from its current virtual emitted symbol. Original instruction decoding confirms entry and ret 0x10 at 0x005F5F50; the historical extent ends at 0x005F5F53."}
 // symbol    ?on_key@Win@@UAEXIJHI@Z
 void Win::on_key(unsigned int key, long flags, int repeat, unsigned int scan) {
@@ -11315,7 +11315,7 @@ void Win::get_mouse_pos(int * x, int * y) {
     }
 }
 
-// ORIGINAL: 0x005ECDC0 ?UNK2@Win@@QAEHH@Z 0x005ECDC0-0x005ECE15 FILE
+// ORIGINAL: 0x005ECDC0 ?UNK2@Win@@QAEHH@Z 0x005ECDC0-0x005ECE15 FILE BYTE_EXACT
 // compile_context src/win.cpp
 // symbol    ?is_descendant_of@Win@@QAEHPAV1@@Z
 // notes     PAV1@, not PAVWin@@: MSVC back-references the enclosing class
@@ -11405,7 +11405,7 @@ int Win::is_descendant_of(Win *ancestor) {
 Purpose: Report whether a window is anywhere below this one in the child
          tree, searching depth first. A direct child counts, and so does any
          descendant of one.
-// ORIGINAL: 0x005ECE20 ?is_descendant@Win@@QAEHPAVWin@@@Z 0x005ECE20-0x005ECE73
+// ORIGINAL: 0x005ECE20 ?is_descendant@Win@@QAEHPAVWin@@@Z 0x005ECE20-0x005ECE73 BYTE_EXACT
 // compile_context src/win.cpp
 // symbol    ?is_descendant@Win@@QAEHPAV1@@Z
 // size      83 bytes
@@ -12022,7 +12022,7 @@ void __cdecl Win::update_zorder() {
 #pragma auto_inline(on)
 // ===== homed from src/unrecovered/005f5fb0.cpp =====
 
-// ORIGINAL: 0x005F5FB0 sub_5f5fb0 0x005F5FB0-0x005F622B
+// ORIGINAL: 0x005F5FB0 sub_5f5fb0 0x005F5FB0-0x005F622B BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:85fc7721f56c2a5cae754b993fe04fcfec74fec1:src/unrecovered/005f5fb0.cpp", "Pinned original5F5FB0..5F622B; direct global accesses5F60DD..5F619C"], "reason": "Restore the lost homing identity for the existing Win keyboard handler; its receiver, scroll dispatch and two stack words identify this method, not the separate string matcher at5F5F60."}
 // symbol    ?on_char@Win@@UAEXDH@Z
 // TRIED: extern "C" __stdcall(int,int) free function per IDA's guess - the spilled ecx is read back later ([esp+0x10] resolves to the "push ecx" slot itself, not a caller stack arg) and used as a Win* (scroll_vert_/scroll_horz_/key_click_event), so this is landed as Win::sub_5f5fb0(char, int) __thiscall instead; the unused 2nd stack dword explains `ret 8` with only 1 real read.

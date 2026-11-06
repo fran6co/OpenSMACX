@@ -863,7 +863,7 @@ BOOL __cdecl great_beelzebub(int faction_id, BOOL is_aggressive) {
 /*
 Purpose: Determine if the specified faction is considered a threat based on the game state and
          ranking.
-// ORIGINAL: 0x00539C00 ?great_satan@@YAHHH@Z 0x00539C00-0x00539D3B
+// ORIGINAL: 0x00539C00 ?great_satan@@YAHHH@Z 0x00539C00-0x00539D3B BYTE_EXACT
 // LEVER: the open-coded great_beelzebub prefix is /Ob2 inlining of the
 //        preceding same-TU definition; calling it is byte-exact. Earlier
 //        hand-inlined spellings (see Git history) stalled at register choice.
@@ -1032,7 +1032,7 @@ BOOL __cdecl climactic_battle() {
 
 /*
 Purpose: Determine if the specified AI faction is at the game climax based on certain conditions.
-// ORIGINAL: 0x00539EF0 ?at_climax@@YAHH@Z 0x00539EF0-0x0053A022
+// ORIGINAL: 0x00539EF0 ?at_climax@@YAHH@Z 0x00539EF0-0x0053A022 BYTE_EXACT
 // LEVER: the first loop's corner_market_turn/has_treaty check read
 //        `PlayersData[faction_id].corner_market_turn`, a loop-invariant that
 //        made the image's per-i pointer walk (add ecx,0x20cc each iteration,
@@ -2051,7 +2051,7 @@ int __cdecl guard_check(int faction_id, int region) {
 
 /*
 Purpose: Add the specific goal to the faction's goals for the specified tile. Optional base param.
-// ORIGINAL: 0x00579A30 ?add_goal@@YAXHHHHHH@Z 0x00579A30-0x00579B64
+// ORIGINAL: 0x00579A30 ?add_goal@@YAXHHHHHH@Z 0x00579A30-0x00579B64 BYTE_EXACT
 // LEVER: declaring `priority_search`/`goal_id` before the first loop (matching
 //        their eventual use right after it, not right before the second loop)
 //        moved 5/104 -> 11/104 agreeing. TRIED: rewriting the `Goal&`
@@ -2119,7 +2119,7 @@ void __cdecl add_goal(int faction_id, int type, int priority, int x, int y, int 
 
 /*
 Purpose: Add the specific site to the faction's site goals for the specified tile.
-// ORIGINAL: 0x00579B70 ?add_site@@YAXHHHHH@Z 0x00579B70-0x00579CB5
+// ORIGINAL: 0x00579B70 ?add_site@@YAXHHHHH@Z 0x00579B70-0x00579CB5 BYTE_EXACT
 // TRIED: hoisting priority_search/site_id before the first loop (the lever
 //            that helped add_goal) made this WORSE (7/116, two spilled locals
 //            instead of one); reverted. Separate loop counters (i for the
@@ -2271,7 +2271,7 @@ void __cdecl wipe_goals(int faction_id) {
 
 /*
 Purpose: Initialize all goals for the specified faction.
-// ORIGINAL: 0x00579E00 ?init_goals@@YAXH@Z 0x00579E00-0x00579E66 SEMANTIC
+// ORIGINAL: 0x00579E00 ?init_goals@@YAXH@Z 0x00579E00-0x00579E66 BYTE_EXACT
 // LEVER: a `Goal &` local anchored the loop pointer at the wrong field;
 //        direct PlayersData[...].goals[i] indexing anchors at priority.
 // size      102 bytes
@@ -2321,7 +2321,7 @@ static inline int del_site_dist(int x_distance, int y_distance) {
 
 /*
 Purpose: Delete sites of the specified type within proximity of the tile along with related goals.
-// ORIGINAL: 0x00579E70 ?del_site@@YAXHHHHH@Z 0x00579E70-0x00579F73
+// ORIGINAL: 0x00579E70 ?del_site@@YAXHHHHH@Z 0x00579E70-0x00579F73 BYTE_EXACT
 // LEVER: the image never calls vector_dist - `calls 0x00644F3A` is abs() alone,
 //        called 4 times. vector_dist(x,y,sites.x,sites.y) is fully open-coded
 //        as x_dist(x,sites.x) [inline, one abs inside] then abs(y-sites.y),
@@ -5676,7 +5676,7 @@ void __cdecl diplomacy_ends(int faction_id, int faction_id_with) {
 }
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x005399A0 ?diplomacy_caption@@YAXHH@Z 0x005399A0-0x00539B6B
+// ORIGINAL: 0x005399A0 ?diplomacy_caption@@YAXHH@Z 0x005399A0-0x00539B6B BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned5399A0..539B6B; existing inactive diplomacy-presentation task evidence retained; counterpart Player noun fields and PlayerData20CC treaty strides independently decoded; literal68D594 is the bounded separator. Host source-body controls cover mood thresholds, bidirectional pact/surrender and post-parse visibility."], "reason": "Recover complete diplomacy caption in its faction owner with genuine treaty/noun/mood/scratch data and the actual visible-popup draw operation. Preserve native friction clamp, label predicate, parse defaults and redraw ordering."}
 void __cdecl diplomacy_caption(int faction_id, int faction_id_with) {
     int mood = 0;
@@ -5974,7 +5974,7 @@ int DiplomacyMapTransferChanged;
 // RECOVERY_OBJECT: v2 0x0093FAB0 0x0093FAB4 ?DiplomacyProposalMode@@3HA 0x0054DCF0
 int DiplomacyProposalMode;
 // Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x00543A20 ?trade_maps@@YAXHH@Z 0x00543A20-0x00543BC0
+// ORIGINAL: 0x00543A20 ?trade_maps@@YAXHH@Z 0x00543A20-0x00543BC0 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00543a20.cpp retains original identity/spans and contradictory scaffold history.", "Pinned full-span review and genuine Player/PlayerData/Base/Veh/Map declarations own the field interpretation; Popup uses the real C++ lifecycle.", "Related intervention50BA50/pact_withdraw53C370 bodies own the coupled helper behavior. Shared proposal cell93FAB0 and map outcome93FAD8 have native producer/consumer evidence; seed-only workflow producers remain explicit obligations."], "reason": "Recover this original diplomacy identity in its genuine faction owner, preserving typed game records, shared-state lifetimes and every seed obligation. This binding is not a byte or runtime claim."}
 void __cdecl trade_maps(int faction_id, int other_faction_id) {
     DiplomacyMapTransferChanged = 0;
@@ -7026,7 +7026,7 @@ void __cdecl enemies_war(int faction_id, int faction_id_with) {
     }
 }
 
-// ORIGINAL: 0x0055CE20 ?enemies_unpact@@YAXHH@Z 0x0055CE20-0x0055D031
+// ORIGINAL: 0x0055CE20 ?enemies_unpact@@YAXHH@Z 0x0055CE20-0x0055D031 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["original:0x0055CE20:complete-mapped-spans", "git:13693539:src/recovered/units/0055ce20.cpp", "source:src/faction.h:PlayersData-and-diplomacy-interfaces"], "reason": "Recover pact withdrawal through genuine player rows, pact_unpact calls and the existing Empath Guild project/base ownership. Preserve directional calls, protected-notice bit 0x1000, and both-direction treaty clearing mask 0x01100001."}
 void __cdecl enemies_unpact(int faction_id, int faction_id_with) {
     if ((PlayersData[faction_id].diplo_treaties[faction_id_with]
@@ -9751,7 +9751,7 @@ int __cdecl diplo_lock(int patience) {
     return 0;
 }
 
-// ORIGINAL: 0x0053E5C0 ?renounce_pact@@YAXHH@Z 0x0053E5C0-0x0053E7F8
+// ORIGINAL: 0x0053E5C0 ?renounce_pact@@YAXHH@Z 0x0053E5C0-0x0053E7F8 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["task:multiwin-contact-owner", "historical seed:src/recovered/units/0053e5c0.cpp", "pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf:complete original mapped span and native call/branch order", "native:478500 subtracts item ID1; jump-table indices7..10 select items8renounce,9withdrawal,10contact,11chat; withdrawal arguments local then clicked", "source:existing typed subobjects, faction/player/parser/network and separate bounded contact-state storage; automatic PullDown/Buffer lifetime"], "reason": "Recover the complete original in its genuine MultiWin or diplomacy C++ owner, retaining identity, auxiliary spans and historical seed findings; no current match or runtime claim."}
 void __cdecl renounce_pact(int faction_id, int faction_id_with) {
     PopupDialogFactionID = faction_id_with;
@@ -9836,7 +9836,7 @@ static inline int major_atrocity_add_wrapped32(int value, int amount) {
     return value;
 }
 
-// ORIGINAL: 0x00428350 ?council@@YAXHHH@Z 0x00428350-0x0042854E
+// ORIGINAL: 0x00428350 ?council@@YAXHHH@Z 0x00428350-0x0042854E BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["historical retired seed src/recovered/units/00428350.cpp", "recovery/tasks/council-atrocity-owner-oct5.json", "complete pinned native instruction/argument review and current compiler-observed function symbol", "actual-product-source host parser/directed-row/wrap controls; prior fixed-address scaffold mismatches retained as Git provenance"], "reason": "Complete semantic policy recovery through genuine source-owned window/player/global APIs, directed field relations, fresh callback reads and native parser/default ordering. Historical byte restoration and runtime acceptance remain unfinished."}
 // symbol    ?council@@YAXHHH@Z
 void __cdecl council(int faction_id, int proposal, int target_faction) {
@@ -10707,7 +10707,7 @@ void __cdecl demands_withdrawal(int faction_id, int faction_id_with) {
         break;
     }
 }
-// ORIGINAL: 0x005589E0 ?commlink_attempter@@YAHHH@Z 0x005589E0-0x00558C55
+// ORIGINAL: 0x005589E0 ?commlink_attempter@@YAHHH@Z 0x005589E0-0x00558C55 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence":["Pinned native instructions at 0x005589E0..0x00558C55: vendetta parser fields, key-state route, network waiting mask, CommlinkPending/CommlinkFaction selection and final channel-2 latch.","source:src/netdaemon.h CommlinkFaction/CommlinkPending and NetDaemonNet.lock_state_[2].payload_.flags; source:src/diplowin.h DiploWindow."],"reason":"Recover the complete commlink response gate in faction.cpp through typed player, daemon, console and DiploWindow owners; keep selected-faction reloads after parser callbacks and preserve the original seed history."}
 // TRIED: straightforward translation matches from instr #3 on (prologue push/frame-pointer order); did not chase further given the three parse_says(chan, ptr, -1, -1) call sites and the shared 9bbfec/9bbff0 globals already reproduce the control flow.
 int __cdecl commlink_attempter(int faction_id, int contact_flags) {

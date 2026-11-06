@@ -256,7 +256,7 @@ finish_button:
     }
 }
 
-// ORIGINAL: 0x004BE650 ?tut_map@TutWin@@QAEHPBDHHHPAUSprite@@HHH@Z 0x004BE650-0x004BE7C6 FILE
+// ORIGINAL: 0x004BE650 ?tut_map@TutWin@@QAEHPBDHHHPAUSprite@@HHH@Z 0x004BE650-0x004BE7C6 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["seed:src/unrecovered/004be650.cpp", "image:0x004be650; original call/rectangle/lifetime review"], "reason": "Restore the original ownership-group implementation through real tutorial/editor windows, declared members and normal C++ lifecycle; retained seed extents include the associated exception cleanup where present."}
 // TRIED: separate `int x = -1; int y = -1;` locals instead of the original's shared `or eax,0xffffffff` init (#3 mismatch, 'or' vs 'mov'); combined declaration compiled the same way.
 // symbol    ?tut_map@TutWin@@QAEHPBDHHHPAVSprite@@HHH@Z
@@ -1222,7 +1222,7 @@ tour7_cleanup:
 }
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x004BB380 ?tour5@TutWin@@QAEXXZ 0x004BB380-0x004BB791 FILE
+// ORIGINAL: 0x004BB380 ?tour5@TutWin@@QAEXXZ 0x004BB380-0x004BB791 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["seed:src/recovered/units/004bb380.cpp", "image:0x004bb380; original call/rectangle/lifetime review"], "reason": "Restore the original ownership-group implementation through real tutorial/editor windows, declared members and normal C++ lifecycle; retained seed extents include the associated exception cleanup where present."}
 void TutWin::tour5() {
     const int was_visible = TutWinSocWindow.is_visible();
@@ -1326,7 +1326,7 @@ tour5_cleanup:
 }
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x004BAA70 ?tour6@TutWin@@QAEXXZ 0x004BAA70-0x004BAF12 FILE
+// ORIGINAL: 0x004BAA70 ?tour6@TutWin@@QAEXXZ 0x004BAA70-0x004BAF12 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["seed:src/recovered/units/004baa70.cpp", "image:0x004baa70; original call/rectangle/lifetime review"], "reason": "Restore the original ownership-group implementation through real tutorial/editor windows, declared members and normal C++ lifecycle; retained seed extents include the associated exception cleanup where present."}
 void TutWin::tour6() {
     if (!TutWinBaseWindow.is_visible()) {
@@ -1372,7 +1372,7 @@ void TutWin::tour6() {
     }
 }
 
-// ORIGINAL: 0x004BB7A0 ?tour1@TutWin@@QAEXXZ 0x004BB7A0-0x004BC591 FILE
+// ORIGINAL: 0x004BB7A0 ?tour1@TutWin@@QAEXXZ 0x004BB7A0-0x004BC591 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["seed:src/unrecovered/004bb7a0.cpp", "image:0x004bb7a0; original call/rectangle/lifetime review"], "reason": "Restore the original ownership-group implementation through real tutorial/editor windows, declared members and normal C++ lifecycle; retained seed extents include the associated exception cleanup where present."}
 // TRIED: inline-casting the 0x6a7628/0x6c0df4/0x7ae820 receivers at every call site (no cached local pointer) matches from #0; remaining divergence is that /O2 and /O1 both hoist the ebx/edi push for the zoom-search loop into the true prologue, while the original defers it to just inside the `!is_visible()` branch and pops it back out before the giant guard-clause chain. Tried plain casts, reordering locals (count/target/rec/idx) to match register assignment order - none moved the push. Flat guard-clause control flow (if(!x) return;) reproduces the CFG; all ~30 repeated tut_win/iface_rect/base_rect/client_to_screen blocks and the ALLOC/ALLOC2 branch and do_iface/do_base tail are transcribed directly from the disassembly.
 // Callouts reload the primary map owner after each coordinate conversion;
@@ -1976,7 +1976,7 @@ void TutWin::des_rect(RECT *rect, int *x, int *y) {
 /*
 Purpose: Centre the rectangle, convert it through the base window, and
          show the tutorial text there against the primary map window.
-// ORIGINAL: 0x004BA870 ?do_base@TutWin@@QAEXPAURECT@@PBDH@Z 0x004BA870-0x004BA8EB SEMANTIC
+// ORIGINAL: 0x004BA870 ?do_base@TutWin@@QAEXPAURECT@@PBDH@Z 0x004BA870-0x004BA8EB BYTE_EXACT
 // LEVER: two levers stacked, 4/56 -> 45/56 MNEMONIC_ONLY. (1) plain `left + (right - left) / 2` signed division instead of the unsigned-with-sign-carried trick, same as `iface_rect`. (2) `primary` read BEFORE `window` is given any value, and its null-check written `if (primary == nullptr) { window = nullptr; } else { ...compute... }` (primary-first declaration order, and the null case as the FIRST arm) - the image reads the global first and only zeroes the result register on the branch that skips the vtable dereference, both of which a `window = nullptr;`-then-test body reorders.
 // TRIED: 45/56 plateau - the remainder is a consistent eax/ecx role swap through the vbtable-dereference block and the final argument push order, tried: `uint8_t *` instead of `void *` for `window`, and folding the `vbtable` local into the expression directly - neither changes it. VC6 register allocation, not a source-form lever found here.
 // symbol    ?do_base@TutWin@@QAEHPAUtagRECT@@PBDH@Z
@@ -2012,7 +2012,7 @@ int TutWin::do_base(RECT *rect, const char *text, int flag) {
 /*
 Purpose: Centre the rectangle, convert it through the iface window, and
          show the tutorial text there against the primary map window.
-// ORIGINAL: 0x004BA8F0 ?do_iface@TutWin@@QAEXPAURECT@@PBDH@Z 0x004BA8F0-0x004BA96B SEMANTIC
+// ORIGINAL: 0x004BA8F0 ?do_iface@TutWin@@QAEXPAURECT@@PBDH@Z 0x004BA8F0-0x004BA96B BYTE_EXACT
 // LEVER: same two levers as `do_base` (see that marker) - plain signed division, and `primary` read/null-checked before `window` is given any value. 4/56 -> 45/56 MNEMONIC_ONLY.
 // TRIED: same 45/56 plateau as `do_base` - a consistent eax/ecx register swap through the vbtable block; see that marker for what was tried.
 // symbol    ?do_iface@TutWin@@QAEHPAUtagRECT@@PBDH@Z
@@ -2048,7 +2048,7 @@ int TutWin::do_iface(RECT *rect, const char *text, int flag) {
 /*
 Purpose: Centre the rectangle, convert it through the soc window, and
          show the tutorial text there against the primary map window.
-// ORIGINAL: 0x004BA970 ?do_soc@TutWin@@QAEXPAURECT@@PBDH@Z 0x004BA970-0x004BA9EB SEMANTIC
+// ORIGINAL: 0x004BA970 ?do_soc@TutWin@@QAEXPAURECT@@PBDH@Z 0x004BA970-0x004BA9EB BYTE_EXACT
 // LEVER: same two levers as `do_base` (see that marker) - plain signed division, and `primary` read/null-checked before `window` is given any value. 4/56 -> 45/56 MNEMONIC_ONLY.
 // TRIED: same 45/56 plateau as `do_base` - a consistent eax/ecx register swap through the vbtable block; see that marker for what was tried.
 // symbol    ?do_soc@TutWin@@QAEHPAUtagRECT@@PBDH@Z
@@ -2084,7 +2084,7 @@ int TutWin::do_soc(RECT *rect, const char *text, int flag) {
 /*
 Purpose: Centre the rectangle, convert it through the des window, and
          show the tutorial text there against the primary map window.
-// ORIGINAL: 0x004BA9F0 ?do_des@TutWin@@QAEXPAURECT@@PBDH@Z 0x004BA9F0-0x004BAA6B SEMANTIC
+// ORIGINAL: 0x004BA9F0 ?do_des@TutWin@@QAEXPAURECT@@PBDH@Z 0x004BA9F0-0x004BAA6B BYTE_EXACT
 // LEVER: same two levers as `do_base` (see that marker) - plain signed division, and `primary` read/null-checked before `window` is given any value. 4/56 -> 45/56 MNEMONIC_ONLY.
 // TRIED: same 45/56 plateau as `do_base` - a consistent eax/ecx register swap through the vbtable block; see that marker for what was tried.
 // symbol    ?do_des@TutWin@@QAEHPAUtagRECT@@PBDH@Z

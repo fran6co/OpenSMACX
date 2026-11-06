@@ -8071,7 +8071,7 @@ int MapWin::pixel_to_tile(int x_pixel, int y_pixel, int *out_tile_x,
 // `mov eax,edx` ahead of the y compare).
 /*
 Purpose: Repaint the map tile under the terrain cursor.
-// ORIGINAL: 0x0046AD60 ?draw_cursor@MapWin@@QAEXXZ 0x0046AD60-0x0046ADF1 FILE
+// ORIGINAL: 0x0046AD60 ?draw_cursor@MapWin@@QAEXXZ 0x0046AD60-0x0046ADF1 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Original46AD60..46ADF1; retired seed git:117282ee:src/unrecovered/0046ad60.cpp records the same identity and spans with its table-addressing TRIED note kept below.", "The receiver is mapwin.h's own window: the view fields 0x1DDA4..0x1DDD8 are declared members and draw_radius is declared beside them; 0x0094988C is map.cpp's MapIsFlat and 0x00949870 its MapLongitudeBounds.", "The cursor index and parallel x/y arrays at 0x009392B8/0x009392C0/0x00939340 are ConsoleGlobal members, as declared in console.h."], "reason": "Coverage transcription of terrain cursor repaint on the typed MapWin receiver using the Console owner for cursor history."}
 Status: Coverage transcription - unclaimed body
 */
@@ -8095,7 +8095,7 @@ void MapWin::draw_cursor() {
     }
 }
 
-// ORIGINAL: 0x0046AE00 ?draw_cursor@@YAXXZ 0x0046AE00-0x0046AEED FILE
+// ORIGINAL: 0x0046AE00 ?draw_cursor@@YAXXZ 0x0046AE00-0x0046AEED FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"reason":"Use full map longitude bounds for viewport seam adjustments while retaining cursor gating and arrow dispatch.","evidence":["Pinned46AE80 adds949870 MapLongitudeBounds to tile X;46AE9A subtracts the same full-width object.68FAF0 MapLongitude is a different half-width row stride."]}
 // NOTE ON THE HANDOFF: this was queued as "declare it on MapWin", but the
 // image's mangled name is ?draw_cursor@@YAXXZ - a FREE function taking

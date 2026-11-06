@@ -798,7 +798,7 @@ Purpose: Place a faction-killed faction's shared monument: scan the six
 Return Value: n/a
 Status: Coverage transcription - unclaimed body
 */
-// ORIGINAL: 0x00477A60 ?mon_killed_faction@@YAXHH@Z 0x00477A60-0x00477B0F
+// ORIGINAL: 0x00477A60 ?mon_killed_faction@@YAXHH@Z 0x00477A60-0x00477B0F BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence":["Pinned original entry 0x00477A60 and its complete recorded span identify mon_killed_faction.","src/game.h defines MonumentRecord/MonumentFaction and the shared FactionMonuments[8] object; the body uses those typed record/faction owners rather than a second table view.","Existing src/game.cpp milestone producers already own neighboring records 0,1,2,4,5,6,7,12; this event family fills record types 3,8,9,10,11,13,14,15..20 on the same owner.","Actual callers remain in src/base.cpp (build/turn events), src/faction.cpp (faction death), and src/game.cpp (unification); notification calls resolve through the existing monument UI API.","Historical seed comments and unclaimed/non-byte-exact status are retained; no new byte or semantic claim is made."],"reason":"Keep this milestone producer with the existing source-owned FactionMonuments event family. Retain the exact branch order, record writes, unchecked faction indices, current-local-faction notification timing, and original matching/restoration obligations."}
 // TRIED: the flag byte needs its own extern beside the scaffold's int-typed binding (C2373), and the three table bases need masked relocations; the spill of `year` to an extra frame slot stayed a 0.86-similarity MISMATCH.
 // kind game

@@ -628,7 +628,7 @@ int __cdecl alt_natural(int x, int y) {
 /*
 Purpose: Set both the altitude and natural altitude for the specified tile. The altitude_natural
          parameter can be between 0 to 9.
-// ORIGINAL: 0x005918F0 ?alt_set_both@@YAXHHH@Z 0x005918F0-0x005919C0
+// ORIGINAL: 0x005918F0 ?alt_set_both@@YAXHHH@Z 0x005918F0-0x005919C0 BYTE_EXACT
 // LEVER: historical call_diff work found the image calls `alt_natural`
 //   from world_linearize_contours but expands its scan here. This is a
 //   historical compiler observation; the current caller is in world.cpp,
@@ -658,7 +658,7 @@ void __cdecl alt_set_both(int x, int y, int altitude_natural) {
 }
 /*
 Purpose: Calculate the elevation of the specified tile.
-// ORIGINAL: 0x005919C0 ?elev_at@@YAHHH@Z 0x005919C0-0x00591A77
+// ORIGINAL: 0x005919C0 ?elev_at@@YAHHH@Z 0x005919C0-0x00591A77 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned5919D6 loads68FB2C, AltContour[3];591A13 compares against68FB20+4*(climate>>5) with signed591A1A JLE.", "Current src/map_grid.cpp owns AltContour at68FB20..68FB4C; the former ElevDetail header array was duplicate storage, not an independent original object."], "reason": "Read the genuine shared contour target table rather than a header-local copy of its initial values."}
 // LEVER: two fixes got this from 37/67 to 57/67 (0.985 similar). (1) A
 //        shared `Map *tile` read once for both `contour` and `climate`,
@@ -831,7 +831,7 @@ void __cdecl region_set(int x, int y, int region) {
 }
 /*
 Purpose: Set the rockiness for the specified tile.
-// ORIGINAL: 0x00591BC0 ?rocky_set@@YAXHHH@Z 0x00591BC0-0x00591C0E
+// ORIGINAL: 0x00591BC0 ?rocky_set@@YAXHHH@Z 0x00591BC0-0x00591C0E BYTE_EXACT
 // LEVER: `uint8_t *const field = &tile->val3;` plus a local for the masked read, same idiom
 //            as owner_set/site_set - the image reads `val3` and masks it BEFORE it evaluates
 //            `rocky << 6`, where `tile->val3 = (tile->val3 & 0x3F) | (rocky << 6)` in one
@@ -1270,7 +1270,7 @@ int __cdecl bonus_at(int x, int y, int UNUSED(unk_val)) {
 }
 /*
 Purpose: Determine if the tile has a supply pod and if so what type.
-// ORIGINAL: 0x00592140 ?goody_at@@YAHHH@Z 0x00592140-0x00592248
+// ORIGINAL: 0x00592140 ?goody_at@@YAHHH@Z 0x00592140-0x00592248 BYTE_EXACT
 // TRIED: --all-flags's winner (39/114, the default set) already beats every other set
 //            by a wide margin; the divergence is in the prologue - the image delays
 //            loading x (`mov esi,[ebp+8]`) until after the `y * MapLongitude` multiply and

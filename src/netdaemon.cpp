@@ -192,7 +192,7 @@ static inline void reset_lobby_row(NetWinLobbyRow *row) {
     row->field_4_ = 2;
 }
 
-// ORIGINAL: 0x0052E160 ?on_player_added@NetDaemon@@UAEXPADK@Z 0x0052E160-0x0052E364
+// ORIGINAL: 0x0052E160 ?on_player_added@NetDaemon@@UAEXPADK@Z 0x0052E160-0x0052E364 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned52E160..52E364 and52E370..52E8FD; retained recovered seeds are hints, not mandatory C++.", "The not-found delete tail still runs and decrements count. Slot8 identity/status bytes belong to the real ledger; lobby prefix/name writes are byte views wholly inside the existing168-byte session object. Keep both session object lifetimes and their original bindings.", "PlayerLock::active return controls notification; process identity offsets are not doubled. Two label_get calls remain independent, and prefix writes depend on live phase below2.", "Source-owned NextTurnReady, NetUpkeepPhase and NetHostChangeSlot replace private address aliases. Upkeep producer remains unfinished; ledger-derived lock index domain remains unproven.", "recovery/tasks/netdaemon-player-lifecycle-recovery.json; actual-source host damage controls and native compilation required", "git:293937ab6f3be75999e0c0a4c9c110c02930624c:src/recovered/units/0052e160.cpp", "Historical seed spelling ?on_player_added@NetDaemon@@QAEXPADK@Z; current source mapping ?on_player_added@NetDaemon@@UAEXPADK@Z; emitted symbol ?on_player_added@NetDaemon@@UAEXPADK@Z."], "reason": "Recover the complete derived network player lifecycle callback through actual AlphaNet records, PlayerLock behavior, NetWin storage and shared turn state. Preserve its original identity and useful seed findings; no exact, runtime or full acceptance claim is implied. Superseded seed retired after owner review; original spans, existing claims and useful seed findings remain in source. This cleanup grants no new match or acceptance claim."}
 void NetDaemon::on_player_added(char *name, unsigned long id) {
     const int same_host = (local_player_id() == host_player_id());
@@ -2314,7 +2314,7 @@ int NetDaemon::lock_veh(int *veh_id, int target, int payload_1C,
     return 1;
 }
 
-// ORIGINAL: 0x00531150 ?automated_lock@NetDaemon@@QAEHPAHH@Z 0x00531150-0x005312F6
+// ORIGINAL: 0x00531150 ?automated_lock@NetDaemon@@QAEHPAHH@Z 0x00531150-0x005312F6 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/00531150.cpp; image:0x00531150-0x005312F6", "Native5311A8 owns this+1BB4 in existing lock_state_[2].dword_[4]; warning5311EF uses initial time while polling531230 uses moving retry time."], "reason": "Recover automated vehicle locking through the genuine NetDaemon owner: native calls identify vehicle-ID pointer forwarding, separate initial-warning and retry timers, message pumping and balanced busy/state lifetimes."}
 // TRIED: MISMATCH #26 mov/add - NetDaemon has no known field layout, so the `locked` flag at this+0x1BB4 and the embedded Lock at this+0x14A0 are raw offsets rather than named members; close past instruction 26 but register allocation in the retry loop still differs.
 int NetDaemon::automated_lock(int *veh_id, int target) {
@@ -2478,7 +2478,7 @@ int NetDaemon::wait(char * message, uint32_t * state, int value, int timeout) {
 
 // Fixed-slot bindings carried from 005304a0.cpp
 
-// ORIGINAL: 0x005304A0 ?open_channel@NetDaemon@@QAEHHH@Z 0x005304A0-0x005305FF FILE
+// ORIGINAL: 0x005304A0 ?open_channel@NetDaemon@@QAEHHH@Z 0x005304A0-0x005305FF FILE BYTE_EXACT
 // TRIED: 0x00669368 is a function-pointer variable (timeGetTime's IAT slot), called indirectly rather than declared as a normal extern function - matches the disassembly's `call ebx` after `mov ebx,[0x669368]`. Net/NetMsg objects at 0x93cd90/0x805338 are fixed-address singletons. Landed at 0.85 mnemonic similarity.
 // working copy - scaffold materialised by --work
 // size      351 bytes
@@ -2549,7 +2549,7 @@ int NetDaemon::open_channel(int payload_10, int payload_14) {
 
 // Fixed-slot bindings carried from 00530630.cpp
 
-// ORIGINAL: 0x00530630 ?lock@NetDaemon@@QAEHHHHHHH@Z 0x00530630-0x0053091E FILE
+// ORIGINAL: 0x00530630 ?lock@NetDaemon@@QAEHHHHHHH@Z 0x00530630-0x0053091E FILE BYTE_EXACT
 // TRIED: MISMATCH #2 'push' vs 'mov' - prologue register-save order (ebx/esi/edi) differs from a straight `mov esi, ecx` first statement; did not chase further given function size (750B, 4 nested wait-loops). Body reproduces both wait-for-lock loops (do/while + break on the global abort flag), the target/scratch/x/y stack-slot reuse as scratch locals matching the disassembly's post-use reuse, and the merged final NOLOCK/NOLOCKGLOBAL warning-pop path.
 // working copy - scaffold materialised by --work
 // size      750 bytes
@@ -2669,7 +2669,7 @@ int NetDaemon::lock(int target, int x, int y, int payload_18, int payload_1C, in
 
 // Fixed-slot bindings carried from 00530920.cpp
 
-// ORIGINAL: 0x00530920 ?add_lock@NetDaemon@@QAEHHHH@Z 0x00530920-0x00530A91 FILE
+// ORIGINAL: 0x00530920 ?add_lock@NetDaemon@@QAEHHHH@Z 0x00530920-0x00530A91 FILE BYTE_EXACT
 // TRIED: reordering the initial `IsMultiplayerNet==0` / `field_1BAC_==0` guards; the mismatch (#5) is deeper, in how the two early returns and the ebx-lazy-save prologue are scheduled.
 // size      369 bytes
 // prototype int (__thiscall ?add_lock@NetDaemon@@QAEHHHH@Z)(NetDaemon* this, int, int, int)
@@ -2734,7 +2734,7 @@ int NetDaemon::add_lock(int target, int x, int y) {
 
 // Fixed-slot bindings carried from 00530aa0.cpp
 
-// ORIGINAL: 0x00530AA0 ?add_global@NetDaemon@@QAEHXZ 0x00530AA0-0x00530CFF FILE
+// ORIGINAL: 0x00530AA0 ?add_global@NetDaemon@@QAEHXZ 0x00530AA0-0x00530CFF FILE BYTE_EXACT
 // TRIED: translated the Ghidra hypothesis directly (two near-identical wait-for-global-lock phases, each: warn-once via NetMsg::pop after a timeGetTime() timeout, Net::get()/process_message() poll loop, Lock::check_global()+check_spock(), then NetMsg::close() if warned). MISMATCH #5 xor/mov - looks like register allocation for the ebx=0 constant, not a structural difference; body compiles and follows the disasm's two-phase shape and final NOLOCK/NOLOCKGLOBAL message selection exactly.
 // working copy - scaffold materialised by --work
 // size      607 bytes
@@ -2831,7 +2831,7 @@ int NetDaemon::add_global() {
 
 // Fixed-slot bindings carried from 00530e50.cpp
 
-// ORIGINAL: 0x00530E50 ?unlock_base@NetDaemon@@QAEXH@Z 0x00530E50-0x0053101F FILE
+// ORIGINAL: 0x00530E50 ?unlock_base@NetDaemon@@QAEXH@Z 0x00530E50-0x0053101F FILE BYTE_EXACT
 // size      463 bytes
 // prototype void (__thiscall ?unlock_base@NetDaemon@@QAEXH@Z)(NetDaemon* this, int)
 // callers   26   call targets   10
@@ -2933,7 +2933,7 @@ void NetDaemon::unlock_base(int base_id) {
 
 // Fixed-slot bindings carried from 00531300.cpp
 
-// ORIGINAL: 0x00531300 ?await_exec@NetDaemon@@QAEXH@Z 0x00531300-0x00531477 FILE
+// ORIGINAL: 0x00531300 ?await_exec@NetDaemon@@QAEXH@Z 0x00531300-0x00531477 FILE BYTE_EXACT
 // size      375 bytes
 // prototype void (__thiscall ?await_exec@NetDaemon@@QAEXH@Z)(NetDaemon* this, int)
 // callers   17   call targets   9
@@ -3030,7 +3030,7 @@ void NetDaemon::await_exec(int opcode) {
     channels_[1].leading_words_[3] = 0;
 }
 
-// ORIGINAL: 0x00531480 ?await_synch@NetDaemon@@QAEXXZ 0x00531480-0x005315B6 FILE
+// ORIGINAL: 0x00531480 ?await_synch@NetDaemon@@QAEXXZ 0x00531480-0x005315B6 FILE BYTE_EXACT
 // size      310 bytes
 // prototype void (__thiscall ?await_synch@NetDaemon@@QAEXXZ)(NetDaemon* this)
 // callers   22   call targets   8
@@ -3123,7 +3123,7 @@ void NetDaemon::await_synch() {
 
 // Fixed-slot bindings carried from 005315c0.cpp
 
-// ORIGINAL: 0x005315C0 ?await_diplo@NetDaemon@@QAEXH@Z 0x005315C0-0x005316F9 FILE
+// ORIGINAL: 0x005315C0 ?await_diplo@NetDaemon@@QAEXH@Z 0x005315C0-0x005316F9 FILE BYTE_EXACT
 // size      313 bytes
 // prototype void (__thiscall ?await_diplo@NetDaemon@@QAEXH@Z)(NetDaemon* this, int)
 // callers   35   call targets   8

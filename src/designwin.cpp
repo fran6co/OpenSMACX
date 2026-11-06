@@ -522,7 +522,7 @@ void SelectPartWin::on_mouse_move(int x, int y) {
 // 0x00433940 on_left_up: release the pointer capture and modal state after
 // forwarding the point through the real inherited feedback virtual.
 // Historical seed: git:08336bcc:src/unrecovered/00433940.cpp.
-// ORIGINAL: 0x00433940 ?vslot_21@SelectPartWin@@UAEXHH@Z 0x00433940-0x004339BF
+// ORIGINAL: 0x00433940 ?vslot_21@SelectPartWin@@UAEXHH@Z 0x00433940-0x004339BF BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Original seed at git:08336bcc:src/unrecovered/00433940.cpp; its original spans and historical obligations are retained.", "SelectPartWin constructor 0x004328B0 establishes GraphicWin, Scroll+0xA14, Caviar+0x2B9C, Buffer+0x406C and Font members+0x45F4/+0x461C."], "reason": "The SelectPartWin primary vtable at 0x0066B2B8 selects this original body in slot 21; the real GraphicWin-derived override retains its provisional inherited name."}
 // symbol    ?on_left_up@SelectPartWin@@UAEXHH@Z
 void SelectPartWin::on_left_up(int x, int y) {
@@ -3870,7 +3870,7 @@ static void redraw_design_picker_changes(DesignWin *window) {
 
 // check_abil uses the class's named selection state and the project Rules
 // object rather than reproducing the seed's byte-offset view.
-// ORIGINAL: 0x00439C00 ?check_abil@DesignWin@@QAEXXZ 0x00439C00-0x00439D24
+// ORIGINAL: 0x00439C00 ?check_abil@DesignWin@@QAEXXZ 0x00439C00-0x00439D24 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["DesignWin selection members in src/designwin.h", "abil_cond in src/veh.cpp and bit_count in src/general.cpp", "Rules.tech_two_spec_abilities in src/alpha.h"], "reason": "Validate each selected ability against the current chassis/weapon/armor and maintain the two displayed ability slots."}
 void DesignWin::check_abil() {
     if (Chassis[protoChassisType_].missile != 0) {

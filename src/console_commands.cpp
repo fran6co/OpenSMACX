@@ -606,7 +606,7 @@ void Console::sentry(int vehicle_id, int parameter) { // 0x004D2220
 }
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x004D5D30 ?oblit@Console@@QAEXH@Z 0x004D5D30-0x004D5F64
+// ORIGINAL: 0x004D5D30 ?oblit@Console@@QAEXH@Z 0x004D5D30-0x004D5F64 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned original entry 004D5D30; retained seed src/recovered/units/004d5d30.cpp", "Native4D5D44 captures vehicle faction/coordinates; post-lock lookup rechecks ownership. Original post-lock disappearance/mismatch returns without unlocking; cancellation unlocks; network and local obliteration paths remain distinct.", "recovery/tasks/console-scenario-owner-wave.json; native scope expansions retain the original task baseline"], "reason": "Recover the complete Console command into its genuine owner using typed state and existing lifecycle/network APIs. Preserve original spans and retained seed evidence; this binding is not a byte, reference or runtime acceptance claim."}
 void Console::oblit(int vehicle_id) { // 0x004D5D30
     const int faction_id = Vehs[vehicle_id].faction_id;
@@ -1455,7 +1455,7 @@ void Console::unload(int veh_id) {
 // Historical direct-address callers are retired now that action_destroy and
 // the BaseWin methods have typed source-owned implementations.
 
-// ORIGINAL: 0x004DBB40 ?editor_reset_faction@Console@@QAEXXZ 0x004DBB40-0x004DBC32 FILE
+// ORIGINAL: 0x004DBB40 ?editor_reset_faction@Console@@QAEXXZ 0x004DBB40-0x004DBC32 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned4DBB70..4DBC25 and faction.h PlayerData stride0x20CC: +324/+328 se_alloc_psych/labs; +228/+238 pending/active models; +1D8 then+1D4 major_atrocities then atrocities; +124 integrity_blemishes.", "Pinned4DBBC7..4DBBE3 reads Base faction byte+4, masks governor+38 and clears queue_size+4C, not queue items. Pinned4DBBF4..4DBC0E reads Veh faction+E, clears order+11 and masks state+4.", "Pinned4DBB8D/90 alternates active then pending category stores. Base count is sampled after social_upkeep; vehicle count is sampled once after base traversal. Seven faction iterations retain TectonicDetonationCount words1..7 and every original mask."], "reason": "Reset faction editor state through existing PlayerData, SocialCategory, Base and Veh owners instead of raw interior-pointer walks; preserve dialog, modifier/upkeep calls and subsequent count snapshots."}
 // TRIED: nothing yet - MISMATCH #16 mov/push (94% mnemonic sim), a push/store reordering around the `compute_faction_modifiers` call; not chased further. `this` is unused throughout (thiscall receiver never touched).
 // size      242 bytes
@@ -1563,7 +1563,7 @@ void Console::editor_date() {
 
 // Fixed-slot bindings carried from 004dbc40.cpp
 
-// ORIGINAL: 0x004DBC40 ?editor_reset_tech@Console@@QAEXXZ 0x004DBC40-0x004DBD18 FILE
+// ORIGINAL: 0x004DBC40 ?editor_reset_tech@Console@@QAEXXZ 0x004DBC40-0x004DBD18 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["PlayersData96C9E0 stride20CC, rank35C:96EE08 is faction1 rank; seven advances reach97D39C, so faction0 remains untouched.", "Shared GameDataStateStorage9A6490 bitmap+1E0 is9A6670, exactly89 bytes; prototype9AB868 stride34 obsolete2C/flags30,512 records with flag-bit clearing only for IDs64..511.", "Vehs952828 stride34 signed proto_id+0A is952832; Console selected_vehicle_+23BDC is reread/decremented after veh_kill, which may clear selection and stop the walk at-2.", "Bases97D040 stride134 queue_size4C is97D08C, next dword is queue_production_id[0]; snapshot base count after the vehicle walk, clear queue_size then replace it with bit patternFFFFFFBB only for a signed queue item>=40.", "Pinned complete body4DBC40..4DBD18: popup acceptance precedes all resets; faction ranks,89-byte bitmap,512 prototypes,vehicle walk,base walk,draw_map(1) occur in that order.", "Pinned prototype loop clears flags bit0 with a byte-width AND; the named uint16_t flags expression preserves its final bits, while physical access width remains a strict compiler/matching obligation."], "reason": "Reset technology through genuine faction, shared game-state, prototype, vehicle and base owners. Preserve signed prototype tests, the kill callback's live selected-vehicle mutation, the post-kill base-count snapshot and original queue-size sentinel."}
 // TRIED: `field_23BDC_` named field is WRONG - it lands at 0x245f0, not 0x23bdc (raw `self+0x23bdc` cast is correct, per the "scaffold's named fields can be wrong" caution). `reinterpret_cast<int>` on the three pointer loop bounds gets `jl` instead of `jb` (pointer `<` compiles unsigned). Landed at MNEMONIC_ONLY: the one remaining diff is the `*p=0` store and the `p[1]` load at the very last loop swapped order (compiler schedules the independent load before the store regardless of source order) - tried a named temp, a ternary store, and an if/else split; none reproduced store-then-load.
 // working copy - scaffold materialised by --work
@@ -1998,7 +1998,7 @@ void Console::editor_fungus() {
     }
 }
 
-// ORIGINAL: 0x004E1F70 ?editor_lock2@Console@@QAEXXZ 0x004E1F70-0x004E1FF6 FILE
+// ORIGINAL: 0x004E1F70 ?editor_lock2@Console@@QAEXXZ 0x004E1F70-0x004E1FF6 FILE BYTE_EXACT
 // TRIED: straightforward if/else on the bit-test, reusing the already declared NetMsg::pop / MainInterface::draw_edit_pane / this member set_view(1). MISMATCH #0 'push' vs 'mov' remains open (register allocation for `this`/esi differs from the start).
 // size      134 bytes
 // prototype void (__thiscall ?editor_lock2@Console@@QAEXXZ)(Console* this)

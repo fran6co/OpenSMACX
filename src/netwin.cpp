@@ -1630,7 +1630,7 @@ Purpose: Paint the difficulty rows: one framed row per base faction record
          early while the eighth slot word says 3 and the faction-record
          block's count byte covers fewer rows, and a 0xFF-prefixed record
          keeps its frame but no content.
-// ORIGINAL: 0x00480180 ?draw_diffs@NetWin@@QAEXXZ 0x00480180-0x0048036F FILE
+// ORIGINAL: 0x00480180 ?draw_diffs@NetWin@@QAEXXZ 0x00480180-0x0048036F FILE BYTE_EXACT
 // size      495 bytes
 // prototype void (__thiscall ?draw_diffs@NetWin@@QAEXXZ)(NetWin* this)
 // callers   1   call targets   13
@@ -2800,7 +2800,7 @@ Purpose: The modal pump's callback: drain the daemon's receive queue (one
          virtual so the waiting panel repaints, and - if the readiness scan
          has not already passed - walk the static faction records looking for
          an empty slot and answer whether the wait should end.
-// ORIGINAL: 0x00483190 ?modal_callback@NetWin@@QAEHXZ 0x00483190-0x00483234 FILE
+// ORIGINAL: 0x00483190 ?modal_callback@NetWin@@QAEHXZ 0x00483190-0x00483234 FILE BYTE_EXACT
 // size      164 bytes
 // prototype int (__thiscall ?modal_callback@NetWin@@QAEHXZ)(NetWin* this)
 // callers   2   call targets   2
@@ -2842,7 +2842,7 @@ Purpose: The fixed dialog's twin of modal_callback: the same daemon drain and
          slot-12 dispatch, with the readiness scan and the answer running
          through NetWinDialog's own 0x7614/0x7618 words (the image's fixed
          0x811D0C/0x811D10 slots) instead of the receiver's.
-// ORIGINAL: 0x00483240 ?modal_callback_daemon@NetWin@@QAAHXZ 0x00483240-0x004832CF FILE
+// ORIGINAL: 0x00483240 ?modal_callback_daemon@NetWin@@QAAHXZ 0x00483240-0x004832CF FILE BYTE_EXACT
 // symbol    ?modal_callback_daemon@NetWin@@SAHXZ
 // size      143 bytes
 // prototype int (__thiscall ?modal_callback_daemon@NetWin@@QAAHXZ)(NetWin* this)
@@ -3545,7 +3545,7 @@ Purpose: Broadcast one faction's 0x2F04 data packet to the other player:
          image writes the prefix before the copy overwrites it), and hand
          it to the Net sender sized at one target.
 
-// ORIGINAL: 0x0047B1D0 sub_47b1d0 0x0047B1D0-0x0047B25C FILE
+// ORIGINAL: 0x0047B1D0 sub_47b1d0 0x0047B1D0-0x0047B25C FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["The helper sends through NetDaemonNet to NetDaemonNet.host_player_id() and uses the same 0x17C lobby payload/0x18C message contract as the neighboring NetWin packet senders.", "No direct mapped caller is known; this transfer retains the externally callable identity and does not infer a caller."], "reason": "Move this source-owned packet helper alongside its established NetWin senders; retain prefix-before-copy ordering, positive-faction/null-payload guard and the original unclaimed caller status."}
 // symbol    ?sub_47b1d0@@YAXHPAX@Z
 // size      140 bytes

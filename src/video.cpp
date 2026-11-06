@@ -280,7 +280,7 @@ int Video::advance_frame() {
   }
 }
 
-// ORIGINAL: 0x00637C30 ?read_frame@Video@@QAEHXZ 0x00637C30-0x00637D62
+// ORIGINAL: 0x00637C30 ?read_frame@Video@@QAEHXZ 0x00637C30-0x00637D62 BYTE_EXACT
 // symbol    ?read_frame@Video@@QAEHXZ
 // TRIED: original pushes an extra callee-saved register (ecx-slot, ebx, esi, edi - 4 total) this body's control flow only needed 3 of (no ebx); not chased further. `sub_63e6e0` is called here as the scaffold's plain __stdcall(int,int,int,int), dropping the `lea ecx,[esi+0xa5c]` receiver the disassembly sets right before the call - Ghidra's own decompile drops the same thing (`the decompiler drops the this pointer on __thiscall functions`), so it reads as a genuine 5th (thiscall) param this body does not reproduce.
 int Video::read_frame() {
@@ -532,7 +532,7 @@ int Video::size_buffer(int width, int height) {
   return 0;
 }
 
-// ORIGINAL: 0x00638090 Video_unk14 0x00638090-0x00638128 FILE
+// ORIGINAL: 0x00638090 Video_unk14 0x00638090-0x00638128 FILE BYTE_EXACT
 // symbol    ?previous_key_frame@Video@@QAEHH@Z
 // TRIED: MISMATCH #0 mov/push, prologue register choice differs; the receiver is the Video object (ecx reads with no stack slot).
 int Video::previous_key_frame(int frame) {
@@ -635,7 +635,7 @@ int Video::register_window_buffer(int x, int y, GraphicWin *window,
   return 0;
 }
 
-// ORIGINAL: 0x00636300 ?do_video@@YAXXZ 0x00636300-0x006363EE FILE
+// ORIGINAL: 0x00636300 ?do_video@@YAXXZ 0x00636300-0x006363EE FILE BYTE_EXACT
 // symbol    ?do_video@@YAXXZ
 // TRIED: nothing yet - MISMATCH #2 mov/push, mnemonic similarity 0.908. for-loop and do/while shaped identically; not chased further.
 void __cdecl do_video() {
