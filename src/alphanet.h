@@ -92,6 +92,11 @@ class AlphaNetStringStruct : public virtual StringAllocationBase {
       entry_count_ = 0;
     }
   }
+  // Destructor cleanup; same inline split as ServiceProviderList::close.
+  void close() {
+    remove_all();
+    current_position_ = 0;
+  }
   int seek_pos(int position);
   NetAllocationNode *next_entry();
   AlphaNetLedgerEntry *head_;     // +0x08 - the five the constructor zeroes
@@ -102,7 +107,7 @@ class AlphaNetStringStruct : public virtual StringAllocationBase {
   Heap *allocator_;
 
   inline AlphaNetStringStruct();
-  ~AlphaNetStringStruct() { remove_all(); current_position_ = 0; }
+  ~AlphaNetStringStruct() { close(); }
 
  private:
   // At original 0x005D4AB8, sort_sessions sets ECX from its saved ESI
@@ -144,7 +149,7 @@ class AlphaNetLedger : public AlphaNetStringStruct {
   // RECOVERY_GENERATED: v1 vtable 0x0066EAE8 0x0066EAF0 ??_7AlphaNetLedger@@6BAlphaNetStringStruct@@@ 0x004E2490
   virtual int on_insert(NetAllocationNode *payload);
   virtual void on_remove(NetAllocationNode *payload);
-  ~AlphaNetLedger() { remove_all(); current_position_ = 0; }
+  ~AlphaNetLedger() { close(); }
 
   // Original enumeration 0x00630C30 passes DPSESSIONDESC2's name, instance
   // GUID, flags, maximum/current player counts and password at these offsets.

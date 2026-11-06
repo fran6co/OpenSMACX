@@ -136,49 +136,6 @@ static const GUID NetLobbyAppGuid = {
 AlphaNetLedger *SessionEnumTarget;
 BOOL __stdcall enumerate_session_callback(LPCDPSESSIONDESC2, LPDWORD, DWORD, LPVOID);
 namespace {
-// Complete destructor cleanup, including the unconditional position reset.
-// These overloads use the actual list types and link members; the compiler
-// retains each destructor's normal vptr staging and base destruction.
-inline void destroy_owned_list_entries(ServiceProviderList *list) {
-    if (list->head_ != 0) {
-        for (int removed = 0; removed < list->entry_count_; ++removed) {
-            list->current_ = list->head_->next_;
-            ServiceStruct *payload = list->head_->payload_;
-            list->on_remove(payload);
-            delete payload;
-            list->head_->payload_ = 0;
-            delete list->head_;
-            list->head_ = list->current_;
-        }
-        list->head_ = 0;
-        list->current_position_ = 0;
-        list->entry_count_ = 0;
-    }
-    list->current_position_ = 0;
-}
-
-inline void destroy_owned_list_entries(NetTextListBase *list) {
-    if (list->head_ != 0) {
-        int index = 0;
-        if (list->entry_count_ > 0) {
-            do {
-                list->current_ = list->head_->next;
-                NetTextPayload *const payload = list->head_->payload;
-                list->on_remove(payload);
-                delete payload;
-                list->head_->payload = 0;
-                delete list->head_;
-                list->head_ = list->current_;
-                ++index;
-            } while (index < list->entry_count_);
-        }
-        list->head_ = 0;
-        list->current_position_ = 0;
-        list->entry_count_ = 0;
-    }
-    list->current_position_ = 0;
-}
-
 // Source-only typed algorithms shared by genuine list owners. They own no
 // executable identity. Each instantiated body/reference requires measurement;
 // sharing source does not prove the original compiler folded any particular pair.
@@ -285,8 +242,8 @@ static const GUID KeptServiceProviderGuid = {
 // protocol and callback definitions in this recovered TU omit the frame. The
 // local settings reproduce that distinction without asserting original TU
 // boundaries; each empty-option restore returns to command-line optimization.
-// `inline` lets /Ob2 expand it in Net::close (0x0062E010) while the
-// out-of-line copy stays emitted.
+// `inline` lets /Ob2 expand it in Net::close (0x0062E010) and the receiver's
+// generated destructors; MEASURED keeps the out-of-line copy emitted.
 #pragma optimize("y", off)
 inline void JackalVoiceRx::clear() {
     if (head_) {
@@ -644,7 +601,9 @@ void Net::close() {
 // symbol    ??1Net@@QAE@XZ
 // LEVER: call_diff said MORE, 8 calls against the image's 7, and all three causes were real defects rather than encoding ones. (1) `voice_tx_.VoiceTx::~VoiceTx()` was written out in the body of a REAL destructor whose `voice_tx_` is a REAL member, so VC6 emitted the destruction TWICE - once here and once after the body, where the image has it. (2) 0x004E3529 `call 0x402970` is StringStruct::remove_all entered on the list at sub1 - 0x24, and (3) 0x004E353A `call 0x401be0` is leaf_recoveries.cpp's sub_401be0 on sub1 - 8. Both went through no-argument `NetVectorTeardownHelper*()` forwarders, which is an indirect call the image does not make AND a receiver it does pass. call_diff is now clean.
 // TRIED: 12 of 110 even so, and the ceiling is not spelling. THE IMAGE'S BODY IS COMPILER-GENERATED MEMBER TEARDOWN, and this tree writes it out by hand. The image carries EIGHT EH state stores into [ebp - 4] - 5 before `Net::close`, 6 before remove_all, 4 before sub_401be0, then 3, 2, 1 for the three NetFifos, 0 for the container at 0xB0 and -1 at the end - and VC6 emits those ONLY for members it is destroying itself. The order is exactly reverse declaration order, which is the evidence: the objects in the 0x72C..0x750 region go first, then the fifos at 0x130, 0x10C, 0xE8, then the 0xB0 container, then `voice_tx_` at 0x58. `field_E8_[0x6C]` is precisely three 0x24-byte NetFifos, so the three explicit `reinterpret_cast<NetFifo *>(self + N)->~NetFifo()` calls in this body are the compiler's job; so is the 0xB0 walk and the 0x72C list. Declaring those members - and dropping the matching explicit construction from Net::Net, which double_construction.py will then flag - is what this body needs, and it is a layout job rather than a spelling one.
+#pragma optimize("y", off)
 Net::~Net() { close(); }
+#pragma optimize("", on)
 
 /*
 Purpose: Unknown; the legacy implementation is a constant return that returns 1.
@@ -1085,6 +1044,37 @@ uint32_t NetReapBusy;
 #endif
 uint32_t NetKeepAliveBusy;
 
+// The voice receiver loses one player's entry: walk from the cursor, unlink,
+// hand the payload to the removal hook, delete it and the node. Inlined by
+// Net::drop_player (0x00632350).
+inline void JackalVoiceRx::remove_id(unsigned long id) {
+    if (head_ != 0) {
+        for (int scanned = 0; scanned < count_; ++scanned) {
+            if (cursor_->id_ == id) {
+                cursor_->next_->previous_ = cursor_->previous_;
+                cursor_->previous_->next_ = cursor_->next_;
+                VoiceReceiverEntry *const entry = cursor_;
+                if (entry == head_) {
+                    head_ = entry->next_;
+                }
+                cursor_ = entry->next_;
+                Sound *payload = entry->payload_;
+                on_remove(payload);
+                delete payload;
+                entry->payload_ = 0;
+                delete entry;
+                --count_;
+                break;
+            }
+            cursor_ = cursor_->next_;
+        }
+        if (count_ == 0) {
+            head_ = 0;
+        }
+        cursor_index_ = count_ - 1;
+    }
+}
+
 /*
 Purpose: Cut one player out of the session by id, or everyone when the caller
          hands 0xFFFFFFFF. The interactive half (reason 0) asks first: the
@@ -1117,7 +1107,7 @@ Status: Coverage transcription - unclaimed body
 */
 int Net::drop_player(unsigned long key, int reason) {
     int index = 0;
-    while (index < 0x10 && players_[index].field_0_ != key) {
+    while (index < 0x10 && key != players_[index].field_0_) {
         ++index;
     }
     if (index == 0x10) {
@@ -1133,32 +1123,29 @@ int Net::drop_player(unsigned long key, int reason) {
             int answer = pop_caption_value_title(
                 const_cast<char *>("jackal"),
                 const_cast<char *>("NET_OKTODROPHOSTS"), 1, 0, 0);
-            if (answer == 0) {
+            switch (answer) {
+            case 0:
                 ExitTurnLoop = 1;
                 return 1;
-            }
-            if (answer != 2) {
-                return 0;
-            }
-            // answer 2: the tolerance popup, then no cut.
-            int tolerance = pop_caption(
-                const_cast<char *>("jackal"),
-                const_cast<char *>("NET_ADJUSTTOLERANCE"), 0);
-            switch (tolerance) {
-            case 0:
-                poll_timeout_E0_ = 5000;
-                break;
             case 1:
-                poll_timeout_E0_ = 10000;
-                break;
+                return 0;
             case 2:
-                poll_timeout_E0_ = 20000;
-                break;
-            case 3:
-                poll_timeout_E0_ = 30000;
-                break;
-            default:
-                break;
+                switch (pop_caption(const_cast<char *>("jackal"),
+                                    const_cast<char *>("NET_ADJUSTTOLERANCE"), 0)) {
+                case 0:
+                    poll_timeout_E0_ = 5000;
+                    return 0;
+                case 1:
+                    poll_timeout_E0_ = 10000;
+                    return 0;
+                case 2:
+                    poll_timeout_E0_ = 20000;
+                    return 0;
+                case 3:
+                    poll_timeout_E0_ = 30000;
+                    break;
+                }
+                return 0;
             }
             return 0;
         }
@@ -1169,32 +1156,28 @@ int Net::drop_player(unsigned long key, int reason) {
             : const_cast<char *>("NET_OKTODROPHOST");
         int answer = pop_caption_value_title(
             const_cast<char *>("jackal"), caption, 1, 0, 0);
-        if (answer == 1) {
+        switch (answer) {
+        case 1:
             return 0;
-        }
-        if (answer == 2) {
-            int tolerance = pop_caption(
-                const_cast<char *>("jackal"),
-                const_cast<char *>("NET_ADJUSTTOLERANCE"), 0);
-            switch (tolerance) {
+        case 2:
+            switch (pop_caption(const_cast<char *>("jackal"),
+                                const_cast<char *>("NET_ADJUSTTOLERANCE"), 0)) {
             case 0:
                 poll_timeout_E0_ = 5000;
-                break;
+                return 0;
             case 1:
                 poll_timeout_E0_ = 10000;
-                break;
+                return 0;
             case 2:
                 poll_timeout_E0_ = 20000;
-                break;
+                return 0;
             case 3:
                 poll_timeout_E0_ = 30000;
-                break;
-            default:
                 break;
             }
             return 0;
         }
-        // The confirming answer (0) falls through to the cut.
+        // Any other answer (the confirming 0) falls through to the cut.
     }
 
     // The removal. The name rides the frame for the on_player_deleted notice,
@@ -1203,14 +1186,15 @@ int Net::drop_player(unsigned long key, int reason) {
     name[0] = 0;
     // 63259C repeats the ID search after the modal callbacks. The original
     // presence check's index is not the row subsequently copied/shifted.
-    index = 0;
-    while (index < 0x10 && players_[index].field_0_ != key) ++index;
-    if (index != 0x10) {
-        strcat(name, players_[index].name_and_tail_);
-        // Close the slot: every later record shifts down one. The image does
-        // not clear the top slot, so its data stays duplicated behind.
-        for (int moved = index; moved < 0xF; ++moved) {
-            players_[moved] = players_[moved + 1];
+    for (index = 0; index < 0x10; ++index) {
+        if (players_[index].field_0_ == key) {
+            strcat(name, players_[index].name_and_tail_);
+            // Close the slot: every later record shifts down one. The image
+            // does not clear the top slot, so its data stays duplicated behind.
+            for (int moved = index; moved < 0xF; ++moved) {
+                players_[moved] = players_[moved + 1];
+            }
+            break;
         }
     }
 
@@ -1227,39 +1211,7 @@ int Net::drop_player(unsigned long key, int reason) {
     // unlink, hand the departing payload to the removal hook, delete it through
     // Sound's own deleting destructor, and free the node through its virtual
     // base - the vbase-adjusted call the image makes.
-    if (jackal_voice_rx_.head_ != 0) {
-        const int count = jackal_voice_rx_.count_;
-        int scanned = 0;
-        while (scanned < count
-               && jackal_voice_rx_.cursor_->id_ != key) {
-            jackal_voice_rx_.cursor_ = jackal_voice_rx_.cursor_->next_;
-            ++scanned;
-        }
-        if (scanned < count) {
-            VoiceReceiverEntry *entry = jackal_voice_rx_.cursor_;
-            entry->next_->previous_ = entry->previous_;
-            entry->previous_->next_ = entry->next_;
-            if (entry == jackal_voice_rx_.head_) {
-                jackal_voice_rx_.head_ = entry->next_;
-            }
-            jackal_voice_rx_.cursor_ = entry->next_;
-            Sound *payload = entry->payload_;
-            jackal_voice_rx_.on_remove(payload);
-            if (payload != 0) {
-                delete payload;
-            }
-            entry->payload_ = 0;
-            if (entry != 0) {
-                StringAllocationBase *node = entry;
-                delete node;
-            }
-            --jackal_voice_rx_.count_;
-        }
-        if (jackal_voice_rx_.count_ == 0) {
-            jackal_voice_rx_.head_ = 0;
-        }
-        jackal_voice_rx_.cursor_index_ = jackal_voice_rx_.count_ - 1;
-    }
+    jackal_voice_rx_.remove_id(key);
 
     if (reason == 0) {
         // 6326F4's stack address is the original first argument, not a fresh
@@ -3553,7 +3505,7 @@ class SubBase401be0 { public:
 
 #pragma optimize("y", off)
 NetTextListBase::~NetTextListBase() {
-    destroy_owned_list_entries(this); // also when empty; current_ is NOT cleared
+    close(); // also when empty; current_ is NOT cleared
 }
 #pragma optimize("", on)
 
@@ -3565,7 +3517,7 @@ NetTextListBase::~NetTextListBase() {
 
 #pragma optimize("y", off)
 NetUnk72C::~NetUnk72C() {
-    destroy_owned_list_entries(this);
+    close();
     // Natural base destruction supplies the distinct second list stage.
 }
 #pragma optimize("", on)
@@ -3857,24 +3809,6 @@ int ServiceProviderList::on_insert(ServiceStruct *) { return 0; }
 
 void ServiceProviderList::on_remove(ServiceStruct *) { }
 
-void ServiceProviderList::remove_all() {
-    if (head_ != 0) {
-        for (int removed = 0; removed < entry_count_; ++removed) {
-            current_ = head_->next_;
-            Payload *payload = head_->payload_;
-            on_remove(payload);
-            delete payload;
-            // These are intentionally RE-READS after callback and destruction.
-            head_->payload_ = 0;
-            delete head_;
-            head_ = current_;
-        }
-        head_ = 0;
-        current_position_ = 0;
-        entry_count_ = 0;
-    }
-}
-
 int ServiceProviderList::seek_pos(int position) { return seek_owned_list(this, position); }
 
 ServiceStruct *ServiceProviderList::next_entry() { return next_owned_list(this); }
@@ -3926,7 +3860,7 @@ int ServiceProviderList::add(int id) {
 
 #pragma optimize("y", off)
 ServiceProviderList::~ServiceProviderList() {
-    destroy_owned_list_entries(this);
+    close();
 }
 #pragma optimize("", on)
 
@@ -3940,7 +3874,7 @@ void ServiceList::on_remove(ServiceStruct *payload) {
 
 #pragma optimize("y", off)
 ServiceList::~ServiceList() {
-    destroy_owned_list_entries(this);
+    close();
 }
 #pragma optimize("", on)
 
@@ -4060,18 +3994,10 @@ Purpose: The this-8 teardown one StringStruct-shaped container owner runs:
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     0x00402970
 // symbol   ??1NetAllocationNode@@UAE@XZ
-Status: Coverage transcription - unclaimed body; the remove_all step now
-        goes through the tree's own StringStruct::remove_all (the image's
-        0x00402970), and the SEH-frame divergence the seed documents
-        stands.
+Status: Compiler-generated. NetAllocationNode declares no destructor; the
+        implicit one destroys entries_ without restaging the node's own
+        table, as the image does.
 */
-#pragma optimize("y", off)
-NetAllocationNode::~NetAllocationNode() {
-    // Genuine empty user body: entries_, then own virtual allocation base,
-    // destroy naturally. Session strings are handled by the ledger hook,
-    // not this destructor; adding frees here would duplicate ownership.
-}
-#pragma optimize("", on)
 
 
 

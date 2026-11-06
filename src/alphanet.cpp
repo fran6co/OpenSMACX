@@ -323,15 +323,12 @@ int AlphaNet::create() {
     strcpy(ParseStrBuffer[0].str, TextBufferGetPtr);
     prefs_get("Net Name", "---", 0);
     strcpy(ParseStrBuffer[1].str, TextBufferGetPtr);
-    int selected = x_pop_caption_value_flags(AlphaNetCreateScript, "NETCONNECT_CREATE", 0x1F, 0x44, 0);
-    while (selected != -1) {
+    for (;;) {
+        if (x_pop_caption_value_flags(AlphaNetCreateScript, "NETCONNECT_CREATE", 0x1F, 0x44, 0) == -1) return 0;
         if (ParseStrBuffer[0].str[0] == 0) X_pop(AlphaNetMissingSessionScript, "NETCONNECT_NEED_SESSION", 0);
         else if (ParseStrBuffer[1].str[0] == 0) X_pop(AlphaNetMissingPlayerScript, "NETCONNECT_NEED_PLAYER", 0);
         else break;
-        selected = x_pop_caption_value_flags(AlphaNetCreateScript, "NETCONNECT_CREATE", 0x1F, 0x44, 0);
-    }
-    if (selected == -1) return 0;
-    prefs_put("Net Session", ParseStrBuffer[0].str);
+    }    prefs_put("Net Session", ParseStrBuffer[0].str);
     prefs_put("Net Name", ParseStrBuffer[1].str);
     // Proposed correction of the existing pointer-return declaration preserves the actual native answer,
     // rather than truncating a host pointer through the current catalogue int.

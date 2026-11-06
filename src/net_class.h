@@ -110,23 +110,22 @@ class JackalVoiceRx : public virtual StringAllocationBase {
  public:
   // Body assignments preserve the original table-then-state initialization
   // order under VC6; member initializers put these stores before its vfptr.
-  JackalVoiceRx() {
-    head_ = 0;
-    cursor_ = 0;
-    count_ = 0;
-    cursor_index_ = 0;
-    entries_heap_ = 0;
-  }
+  inline JackalVoiceRx();
   // Original Net teardown drains the receiver after the queues, resets its
   // cursor index even when empty, then publishes the virtual base's owner.
   // Member destruction owns this sequence; containing classes must not repeat it.
-  ~JackalVoiceRx() {
+  inline ~JackalVoiceRx();
+  // Same inline split as ServiceProviderList::close.
+  void close() {
     clear();
     cursor_index_ = 0;
   }
   virtual int on_insert(void *payload);
   virtual void on_remove(void *payload);
-  void clear();
+  // Inlined by Net::close and the generated destructors; MEASURED keeps
+  // the standalone 0x00538EC0 copy that ~AlphaNet/~NetDaemon call.
+  MEASURED void clear();
+  void remove_id(unsigned long id);
   int add_player(int player_id); // original sub_633180
 
  private:
@@ -145,6 +144,21 @@ class JackalVoiceRx : public virtual StringAllocationBase {
   // RECOVERY_MEMBER: v3 JackalVoiceRx entries_heap_ Heap* 0x18 0x0062D6A0
   Heap *entries_heap_;          // 0x18
 };
+
+// Defined under frame retention so the generated deleting and vbase
+// destructors (0x004E3900, 0x004E3660) keep their ebp frames.
+#pragma optimize("y", off)
+inline JackalVoiceRx::JackalVoiceRx() {
+  head_ = 0;
+  cursor_ = 0;
+  count_ = 0;
+  cursor_index_ = 0;
+  entries_heap_ = 0;
+}
+inline JackalVoiceRx::~JackalVoiceRx() {
+  close();
+}
+#pragma optimize("", on)
 
 // The list subobject at Net+0x72C, not the receiver at Net+0xB0.
 // Net construction (0x0062D788..0x0062D7FD) installs its vbptr at +4;
@@ -193,6 +207,11 @@ class NetTextListBase : public virtual StringAllocationBase {
       entry_count_ = 0;
     }
   }
+  // Destructor cleanup; same inline split as ServiceProviderList::close.
+  void close() {
+    remove_all();
+    current_position_ = 0;
+  }
   int seek_pos(int position);
   int current_id();
   Payload *current_entry();
@@ -232,7 +251,8 @@ class NetAllocationNode : public virtual StringAllocationBase {
   friend class NetSessionPickerWin;
  public:
   NetAllocationNode();
-  virtual ~NetAllocationNode();
+  // No user destructor: the implicit one (0x00402DD0) does not restage
+  // this node's table before destroying entries_.
   // RECOVERY_MEMBER: v1 NetAllocationNode session_name_ 0x4 0x005D4890
   char *session_name_;           // +04, caller hook owns string cleanup
   // RECOVERY_MEMBER: v1 NetAllocationNode password_ 0x8 0x005D4890
@@ -346,7 +366,29 @@ class ServiceProviderList : public virtual StringAllocationBase {
     ServiceProviderList();
     virtual ~ServiceProviderList();
     int add(int id);
-    void remove_all();
+    void remove_all() {
+        if (head_ != 0) {
+            for (int removed = 0; removed < entry_count_; ++removed) {
+                current_ = head_->next_;
+                Payload *payload = head_->payload_;
+                on_remove(payload);
+                delete payload;
+                // These are intentionally RE-READS after callback and destruction.
+                head_->payload_ = 0;
+                delete head_;
+                head_ = current_;
+            }
+            head_ = 0;
+            current_position_ = 0;
+            entry_count_ = 0;
+        }
+    }
+    // Destructor cleanup. The deleting destructors (0x00402A60) inline this
+    // one level and call remove_all out of line; ??1 inlines both.
+    void close() {
+        remove_all();
+        current_position_ = 0;
+    }
     int seek_pos(int position);
     ServiceStruct *next_entry();
     ServiceListEntry *head_;      // +8
