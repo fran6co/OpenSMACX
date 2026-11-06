@@ -251,7 +251,7 @@ void Menu::adjust() {
 }
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x005FBC20 ?on_left_down@Menu@@QAEXHH@Z 0x005FBC20-0x005FBDAB
+// ORIGINAL: 0x005FBC20 ?on_left_down@Menu@@QAEXHH@Z 0x005FBC20-0x005FBDAB BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/005fbc20.cpp", "image:Menu6700B0/AlphaMenu66ED88/PullDown66FF40 constructor-selected primary tables; Buffer secondary subobject+444", "recovery/tasks/popup-font-configuration-owner-closure.json"], "reason": "Recover this complete operation in its genuine Menu/PullDown owner, using native constructor-selected virtual dispatch, real members and shared source-owned dependencies; preserve original identity, retained seed and historical restoration obligations."}
 // symbol    ?on_left_down@Menu@@UAEXHH@Z
 // Native close arms save &entries_[current].pull_down at 5FBC76/CF and reload
@@ -294,7 +294,7 @@ hide_menu:
 }
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x005FBDB0 ?mouse_move@Menu@@QAEXHH@Z 0x005FBDB0-0x005FBEFD
+// ORIGINAL: 0x005FBDB0 ?mouse_move@Menu@@QAEXHH@Z 0x005FBDB0-0x005FBEFD BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/005fbdb0.cpp", "image:Menu6700B0/AlphaMenu66ED88/PullDown66FF40 constructor-selected primary tables; Buffer secondary subobject+444", "recovery/tasks/popup-font-configuration-owner-closure.json"], "reason": "Recover this complete operation in its genuine Menu/PullDown owner, using native constructor-selected virtual dispatch, real members and shared source-owned dependencies; preserve original identity, retained seed and historical restoration obligations."}
 // symbol    ?mouse_move@Menu@@QAEXHH@Z
 void Menu::mouse_move(int x, int y) {
@@ -1721,7 +1721,7 @@ void Menu::hide_menus() {
     do_all_tasks(this);
 }
 
-// ORIGINAL: 0x005FBAC0 ?on_left_up@Menu@@QAEXHH@Z 0x005FBAC0-0x005FBC1A
+// ORIGINAL: 0x005FBAC0 ?on_left_up@Menu@@QAEXHH@Z 0x005FBAC0-0x005FBC1A BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Retained 0x005FBAC0 seed, typed MenuEntry and PullDown item storage, Spot, callback, window parent and task helpers"], "reason": "Home the Menu release and selected-item dispatch in its owner translation unit"}
 // symbol    ?on_left_up@Menu@@UAEXHH@Z
 void Menu::on_left_up(int xCoord, int yCoord) {

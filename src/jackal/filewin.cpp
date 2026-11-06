@@ -307,7 +307,7 @@ restore_dialog_focus:
             : static_cast<Win *>(&list_box_));
 }
 
-// ORIGINAL: 0x00613D50 ?save@FileWin@@QAEXXZ 0x00613D50-0x00613F5C
+// ORIGINAL: 0x00613D50 ?save@FileWin@@QAEXXZ 0x00613D50-0x00613F5C BYTE_EXACT
 // symbol    ?save@FileWin@@QAEPADXZ
 // The sibling load path differs in its action code and filename fallback.
 // Both use FileWin's real directory, suffix and control subobjects instead

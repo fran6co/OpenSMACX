@@ -1411,7 +1411,7 @@ void __cdecl kill_auto_save() {
 
 /*
 Purpose: Handle the creation and management of the auto-save game files.
-// ORIGINAL: 0x005ABD20 ?auto_save@@YAXXZ 0x005ABD20-0x005ABE39
+// ORIGINAL: 0x005ABD20 ?auto_save@@YAXXZ 0x005ABD20-0x005ABE39 BYTE_EXACT
 // TRIED (2026-09-03, probed against cl 12.00.8168 in isolation): the
 //   image's split cleanup - a batched `add esp, 0x1c` covering the seven
 //   `remove` calls and then `pop ecx` for the trailing `save_daemon`, so 0x1c

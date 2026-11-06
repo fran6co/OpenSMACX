@@ -470,7 +470,7 @@ Purpose: The third pronoun fetcher beside game.cpp's get_his_her/get_him_her:
          table's text into the shared pronoun buffer, and uppercase it in
          place when the sentence form asks.
 
-// ORIGINAL: 0x0058FCE0 ?get_he_she@@YAPADHH@Z 0x0058FCE0-0x0058FD6B FILE
+// ORIGINAL: 0x0058FCE0 ?get_he_she@@YAPADHH@Z 0x0058FCE0-0x0058FD6B FILE BYTE_EXACT
 // size      139 bytes
 // prototype char* (__cdecl ?get_he_she@@YAPADHH@Z)(int, int)
 // callers   6   call targets   2

@@ -1456,7 +1456,7 @@ void StatusWin::on_left_click(int x, int y) {
     }
 }
 
-// ORIGINAL: 0x004B4A20 ?set_title@StatusWin@@QAEXH@Z 0x004B4A20-0x004B4BE3 FILE
+// ORIGINAL: 0x004B4A20 ?set_title@StatusWin@@QAEXH@Z 0x004B4A20-0x004B4BE3 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/004b4a20.cpp", "StringTemp, label_get and vehicle/console declarations in src/", "StatusWin tile members in src/statuswin.h"], "reason": "Recover title assembly using source-owned string, label, console and vehicle state."}
 #pragma optimize("y", off)
 void StatusWin::set_title(int title_id) {

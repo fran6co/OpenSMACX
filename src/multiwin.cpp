@@ -688,7 +688,7 @@ void MultiWin::on_button_clicked(int button_id) {
 // 0x00479970. The panel is redrawn into its owned buffer and optionally
 // slides upward over the screen before Win publishes it in solo play.
 // Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x00479970 ?show@MultiWin@@QAEXXZ 0x00479970-0x00479BF1;0x006563F5-0x0065640A
+// ORIGINAL: 0x00479970 ?show@MultiWin@@QAEXXZ 0x00479970-0x00479BF1;0x006563F5-0x0065640A BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00479970.cpp; src/multiwin.h; src/faction.h; src/console.h; src/wave.cpp"], "reason": "The original show uses MultiWin's owned controls and GraphicWin buffer, the local Console faction, Player rule flags, process window animation state, and the source-owned wave, screen, visibility and frame-delay objects."}
 #pragma optimize("y", off)
 void MultiWin::show() {
@@ -823,7 +823,7 @@ void MultiWin::hide() {
 // RECOVERY_OBJECT: v2 0x007FFF74 0x007FFF78 ?MultiWindowContactStatusMask@@3HA 0x00477F30
 int MultiWindowContactStatusMask;
 
-// ORIGINAL: 0x00477F30 ?on_left_click@MultiWin@@QAEXHH@Z 0x00477F30-0x00478148
+// ORIGINAL: 0x00477F30 ?on_left_click@MultiWin@@QAEXHH@Z 0x00477F30-0x00478148 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["task:multiwin-contact-owner", "historical seed:src/recovered/units/00477f30.cpp", "pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf:complete original mapped span and native call/branch order", "native:478500 subtracts item ID1; jump-table indices7..10 select items8renounce,9withdrawal,10contact,11chat; withdrawal arguments local then clicked", "source:existing typed subobjects, faction/player/parser/network and separate bounded contact-state storage; automatic PullDown/Buffer lifetime"], "reason": "Recover the complete original in its genuine MultiWin or diplomacy C++ owner, retaining identity, auxiliary spans and historical seed findings; no current match or runtime claim."}
 // symbol    ?on_left_click@MultiWin@@UAEXHH@Z
 #pragma optimize("y", off)

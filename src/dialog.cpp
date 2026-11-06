@@ -259,7 +259,7 @@ Purpose: Initialize the dialog's absolute geometry and optional embedded
          item-list heap. A failed Heap::init returns 4; success reconnects the
          list allocator to Dialog's own Heap, while a zero size clears it.
 */
-// ORIGINAL: 0x00609300 ?init@Dialog@@QAEHHHHHH@Z 0x00609300-0x00609465
+// ORIGINAL: 0x00609300 ?init@Dialog@@QAEHHHHHH@Z 0x00609300-0x00609465 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned recover inspect 0x00609300: calls Dialog::close before writing left/top/right/bottom at +0x24/+0x28/+0x2c/+0x30, ORs style bits 3, stores heap_size at +0x1c, then calls Heap::init on this+4 only for nonzero size. The test at 0x00609350 branches to success on zero; nonzero returns 4.", "Pinned recover inspect 0x00609360-0x006093e1 confirms successful nonzero setup clears the item list, stores the embedded Heap pointer to StringList::allocator_, resets current_position_, and returns 0; the zero-size branch also clears the list and allocator."], "reason": "Recover the five-integer Dialog initializer as a typed member using the real embedded Heap and StringList. The image reuses a stack slot as EDI only when the list teardown loop runs, yielding the original left argument as allocator; close() already empties this list before the repeated clear, so preserve the owning &heap_ reference rather than the stale-register artifact."}
 // TRIED: the two branches each inline the SAME list-teardown loop; the field at list+0x18 is set to `a1` in the `a5 != 0` branch (matching Ghidra) since the stale-register case is not expressible from source. 0.89 mnemonic similarity.
 // Historical redirect emitted symbol: ?dialog_init_six_redirect@@YIHPAX0HHHHH@Z
@@ -295,7 +295,7 @@ int Dialog::init(int left, int top, int right, int bottom, int heap_size) {
 Purpose: Initialize a dialog from an absolute rectangle and caller-owned
          heap, copying the rectangle before close() resets dialog state.
 */
-// ORIGINAL: 0x006097F0 ?init@Dialog@@QAEHPAURECT@@PAUHeap@@@Z 0x006097F0-0x006098C8 FILE
+// ORIGINAL: 0x006097F0 ?init@Dialog@@QAEHPAURECT@@PAUHeap@@@Z 0x006097F0-0x006098C8 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned recover inspect 0x006097F0 rejects a null RECT with 3, snapshots left/top/right/bottom before calling Dialog::close, computes width=right-left and height=bottom-top, then stores left/top/width/height at +0x24/+0x28/+0x2c/+0x30 and the supplied Heap* at +0x18.", "Pinned recover inspect 0x00609841-0x006098c5 confirms item-list removal, current_position_ reset, allocator_ set to the supplied heap, and return 0."], "reason": "Recover the rectangle-and-heap overload on Dialog using its typed geometry, heap pointer, and embedded StringList members."}
 // symbol    ?init@Dialog@@QAEHPAUtagRECT@@PAVHeap@@@Z
 // TRIED: separate width/height locals vs `right -= left; bottom -= top;` in place - both diverge at the same instruction (the field_2c/30 store). This is the "this-adjusting thunk" shape (vtbl[1] holds a byte offset, not a function pointer) modelled with a single-virtual-slot shim plus raw pointer chasing.
@@ -994,7 +994,7 @@ void Dialog::UNK2(int window, int message, int wparam, int lparam) {
 
 // Initialize using the already requested size; unlike init(int), the negative
 // size path returns before clearing entries or closing the dialog.
-// ORIGINAL: 0x00609150 ?init@Dialog@@QAEHXZ 0x00609150-0x006092FB
+// ORIGINAL: 0x00609150 ?init@Dialog@@QAEHXZ 0x00609150-0x006092FB BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["pinned original decorated identity is ?init@Dialog@@QAEHXZ, with requested size at Dialog+0x1c, Heap at +0x4 and StringList at +0xbc", "src/dialog.h already declares those typed Dialog members; src/dialog.cpp owns the sibling overloads", "the recovered body has only StringList on_remove/deleting-destructor dispatches and Heap::init; no Win callback slot is involved", "the historical emitted redirect spelling ?dialog_init_redirect@@YIHPAX0@Z is retained only in this packet's audit history, not as the moved owner's symbol"], "reason": "Home the zero-argument initializer on Dialog and use its declared field_1C_, heap_, and item_list_ members. Preserve the original negative-size check, three explicit teardown sites, heap-init timing, returns, and allocator writes; do not substitute the non-equivalent init(int) overload."}
 //            redefined dispatch shim for the notify/destroy virtual calls;
 //            stack frame layout differs from instruction 1 on.
@@ -1040,7 +1040,7 @@ Purpose: Dialog's one-int init: reset the live dialog through close(), store
          image inlines it (see StringStruct::remove_all in stringstruct.h and the
          sibling Dialog::init overloads above).
 
-// ORIGINAL: 0x006095F0 ?init@Dialog@@QAEHH@Z 0x006095F0-0x00609730 FILE
+// ORIGINAL: 0x006095F0 ?init@Dialog@@QAEHH@Z 0x006095F0-0x00609730 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence":["src/dialog.h declares this original Dialog overload and dialog.cpp owns the sibling init/close methods.","The body uses actual Dialog/Heap/StringStruct members; its explicit list-entry teardown and branch order are retained unchanged."],"reason":"Move the complete existing Dialog member body and original annotation to its declared owner. This records source ownership only; its historical span/claim and explicit list lifecycle remain obligations."}
 // TRIED: the scaffold-provided nullary `VCall` shim's slots could not be re-parameterised from the body, so the seed declared its own shim class for the two per-entry virtual calls; the real C++ spelling below reaches the same dispatches through the list's on_remove hook and the entries' deleting destructors. Testing heap_size == 0 first vs the non-zero branch first scored the latter higher in the seed.
 // size      320 bytes

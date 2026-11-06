@@ -1110,7 +1110,7 @@ int Path::move(int veh_id, int faction_id) {
 
 /*
  Purpose: Populate the abstract map with the radial region value.
-// ORIGINAL: 0x0059C200 ?make_abstract@Path@@QAEXXZ 0x0059C200-0x0059C33F
+// ORIGINAL: 0x0059C200 ?make_abstract@Path@@QAEXXZ 0x0059C200-0x0059C33F BYTE_EXACT
 // HISTORICAL LEVER (superseded): `abstract_set_call` restored an apparent
 //   call and frame shape when abstract_set was still header-inline. The real
 //   mapped owner now provides the original call boundary directly.

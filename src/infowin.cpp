@@ -649,7 +649,7 @@ RECT InfoPanelBounds;
 // The original compares the cached interface width at 0x00939E5C, not the
 // live Win screen width, and reads the GraphicWin virtual base's DIB height
 // through ConsoleGlobal. `pixel_height()` handles its top-down sign.
-// ORIGINAL: 0x00458D60 ?UNK4@InfoWin@@QAEXXZ 0x00458D60-0x00458DBB
+// ORIGINAL: 0x00458D60 ?UNK4@InfoWin@@QAEXXZ 0x00458D60-0x00458DBB BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["image:0x00458D60-0x00458DBB compares the cached interface-width object at 0x00939E5C", "git:3a14c197:src/recovered/units/00458d60.cpp", "source:src/game.h:IfaceScreenWidth", "source:src/console.h:GraphicWin virtual base", "source:src/buffer.h:Dib"], "reason": "The original stores one RECT at 0x00939EF8, selecting its extent from IfaceScreenWidth and the Console GraphicWin Buffer DIB height; the source name describes the observed behavior, not the catalog placeholder UNK4."}
 // symbol    ?configure_panel_bounds@InfoWin@@QAEXXZ
 void InfoWin::configure_panel_bounds() {

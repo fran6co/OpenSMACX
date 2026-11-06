@@ -954,7 +954,7 @@ void CouncWin::hide() {
 // scaffolds. These bodies keep their receiver as the declared CouncWin and
 // express the embedded windows, fonts, Spot, and local faction by owner.
 
-// ORIGINAL: 0x004271C0 ?arrived@CouncWin@@QAEXH@Z 0x004271C0-0x0042722D
+// ORIGINAL: 0x004271C0 ?arrived@CouncWin@@QAEXH@Z 0x004271C0-0x0042722D BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["src/councwin.h CouncWin::field_A44_; src/time.h TurnRedrawPending; src/faction.h LockEnableMask; src/graphicwin.h GraphicWin::redraw; src/netmsg.h NetMsgPrimary; image data at 0x00683228 identifies the label VOTINGOPEN"], "reason": "Track faction arrival on the CouncWin receiver, redraw through GraphicWin, and signal the voting-open label when all active humans have arrived."}
 void CouncWin::arrived(int faction_id) {
     field_A44_ |= (1 << faction_id);
@@ -1907,7 +1907,7 @@ int CouncWin::on_iface_dialog_item_back_draw(GraphicWin *, int, int, RECT *) {
 // The native front-table slot 25 selects the Council keyboard handler.
 // Keep it an override of Win's existing event, not an extra virtual slot.
 // Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x00425BA0 ?on_key_click@CouncWin@@QAEHHH@Z 0x00425BA0-0x00425D8D
+// ORIGINAL: 0x00425BA0 ?on_key_click@CouncWin@@QAEHHH@Z 0x00425BA0-0x00425D8D BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/00425ba0.cpp", "src/win.h", "recovery/tests/test_key_event_hierarchy.py"], "reason": "Recover the complete Council keyboard operation through its existing Win slot25 override, genuine buttons/fonts and Council state. Pinned fronttable66AAE8 slot25 targets425BA0; nonvirtual declaration made the earlier source unreachable by keyboard dispatch. Preserve native vote completion, modal release and redraw/proposal effects."}
 // symbol    ?on_key_click@CouncWin@@UAEHHH@Z
 int CouncWin::on_key_click(int, int key) {

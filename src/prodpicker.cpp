@@ -266,7 +266,7 @@ void ProdPicker::draw_item(int item, int update) {
     }
 }
 
-// ORIGINAL: 0x004941C0 ?on_left_click@ProdPicker@@QAEXHH@Z 0x004941C0-0x0049422F
+// ORIGINAL: 0x004941C0 ?on_left_click@ProdPicker@@QAEXHH@Z 0x004941C0-0x0049422F BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/004941c0.cpp", "source:src/prodpicker.h", "source:src/prodpicker.cpp"], "reason": "Apply the click-to-grid selection through the picker’s measured geometry and redraw both changed cells through draw_item and GraphicWin."}
 // symbol    ?on_left_click@ProdPicker@@UAEXHH@Z
 void ProdPicker::on_left_click(int x, int y) {
