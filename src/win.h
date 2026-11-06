@@ -140,7 +140,7 @@ class Win : public AutoSound {
   // argument-offset shift that made OnPaletteChanged, init_class and
   // set_display_mode statics above.
   static void __cdecl OnPaint(HWND hwnd);
-  static int __cdecl display_action(int action);
+  static void __cdecl display_action(int action);
 
  public:
   // homed from 005ee330.cpp
@@ -499,7 +499,7 @@ class Win : public AutoSound {
   RECT client_rect_;
   RECT cached_outer_rect_;
   uint32_t field_16C_;
-  uint32_t field_170_;
+  int32_t field_170_;
   uint32_t field_174_;
   uint32_t field_178_;
   uint32_t field_17C_;

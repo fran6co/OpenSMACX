@@ -642,23 +642,14 @@ void SpriteBox::draw_item(int position) {
 // RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/00611060.cpp retained original identity, full spans and prior recovery evidence", "recovery/tasks/dialog-control-coverage-wave.json authorized coupled control ownership", "original:0x611060 complete control/data-access review and src/spritebox.h genuine declaration; cross-owner discoveries preserved in task history"], "reason": "Complete Dialog-control behavior belongs to this genuine control owner, with real inherited members, embedded controls, Win receivers and callback dispatch rather than fixed executable calls. Compatible seed identity and historical evidence remain retained; catalogue decorations and emitted ABI are separate facts."}
 // symbol    ?on_left_click@SpriteBox@@UAEXHH@Z
 void SpriteBox::on_left_click(int x, int y) {
-    int item_id = 0;
+    int callback_result = 0;
+    int item_id;  // not initialized by the original; it lives in y's slot
     if (spots_.check(x, y, &item_id, 0) == -1) return;
 
-    int callback_result = 0;
     if (field_68_ != 0) callback_result = field_68_(item_id);
 
     const int previous = Dialog::selected_position_;
-    if (list_.head_ != 0) {
-        list_.current_position_ = 0;
-        list_.current_ = list_.head_;
-        for (int index = 0; index < list_.entry_count_; ++index) {
-            if (list_.current_->id == item_id) break;
-            ++list_.current_position_;
-            list_.current_ = list_.current_->next;
-        }
-    }
-    Dialog::selected_position_ = list_.current_position_;
+    Dialog::selected_position_ = id_to_pos(item_id);
     draw_item(previous);
     draw_item(Dialog::selected_position_);
     on_update();
@@ -743,8 +734,7 @@ void SpriteBox::close() {
     double_click_callback_ = 0;
     right_double_click_callback_ = 0;
 
-    list_.remove_all();
-    list_.current_position_ = 0;
+    list_.clear();
 
     spots_.shutdown();
     field_8_ = SpriteBoxDefaultField8;

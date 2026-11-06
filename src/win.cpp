@@ -4032,32 +4032,32 @@ void Win::on_paint(RECT *area) {
 // order. The 13 differing runs are spread through the body, so this one
 // wants a full re-read against the image rather than another spelling.
 // Each test rereads the field: a cached local lets VC6 thread the repeated
-// `x <` tests. The signed compares suggest field_170_ is really an int.
+// `x <` tests.
 int Win::on_nc_hittest(int x, int y) {
   if (iSomeFlag_ & 2) {
-    if (x < (int)field_170_ && y < (int)field_170_) {
+    if (x < field_170_ && y < field_170_) {
       return 0xd;
     }
-    if (x < (int)field_170_ && y > client_rect_.bottom - client_rect_.top - (int)field_170_) {
+    if (x < field_170_ && y > client_rect_.bottom - client_rect_.top - field_170_) {
       return 0x10;
     }
-    if (x > client_rect_.right - client_rect_.left - (int)field_170_ && y < (int)field_170_) {
+    if (x > client_rect_.right - client_rect_.left - field_170_ && y < field_170_) {
       return 0xe;
     }
-    if (x > client_rect_.right - client_rect_.left - (int)field_170_ &&
-        y > client_rect_.bottom - client_rect_.top - (int)field_170_) {
+    if (x > client_rect_.right - client_rect_.left - field_170_ &&
+        y > client_rect_.bottom - client_rect_.top - field_170_) {
       return 0x11;
     }
-    if (x < (int)field_170_) {
+    if (x < field_170_) {
       return 0xa;
     }
-    if (y < (int)field_170_) {
+    if (y < field_170_) {
       return 0xc;
     }
-    if (x > client_rect_.right - client_rect_.left - (int)field_170_) {
+    if (x > client_rect_.right - client_rect_.left - field_170_) {
       return 0xb;
     }
-    if (y > client_rect_.bottom - client_rect_.top - (int)field_170_) {
+    if (y > client_rect_.bottom - client_rect_.top - field_170_) {
       return 0xf;
     }
   }
@@ -11064,7 +11064,7 @@ Purpose: The main-window display dispatch behind the interface's
 // ORIGINAL: 0x005F2830 sub_5f2830 0x005F2830-0x005F293B FILE
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/win.cpp WinCallbackWindow and WinPointerOwner1..4 owners", "source:src/win.h Win::on_lose_mouse_capture and vslot_52 declarations", "source:src/win.cpp field_438_ zero writers in Win construction and close", "source:src/sound.h Sound::is_playing slot 23 and Sound::play slot 7", "source:src/autosound.cpp AutoSoundDefaults[34] copied into AutoSound offset 0x8C", "pinned original 0x005F2830 leaves branch-dependent EAX values; mapped caller inspection has no resolved edges", "pinned 0x005F2830 action 0 ends with ShowWindow(HandleMain, 3), whose EAX survives the common epilogue; action 1 ends with ShowWindow(HandleMain, 6) and returns the same result", "pinned action 2 calls Win slot 52, loads/calls field +0x438 if nonzero, then returns Sound slot 23's nonzero result or Sound slot 7's result; with no child, the hook-call EAX or loaded zero survives", "pinned unknown action leaves the unsigned 32-bit EAX value action-2 after two DEC instructions", "Win owns WinCallbackWindow, pointer-owner globals, field_438_ and the Sound child; the existing Sound declarations expose int results for slots 7 and 23", "field_438_ has no known nonzero source writer and no mapped direct caller is established; this binding does not invent either"], "reason": "Return the original EAX path from the genuine Win owner. Type the callback return as int only to expose the machine-level register result that escapes when action 2 has no child; its semantic meaning and any external caller remain unresolved. Remove the scaffold because the source now represents all observed result paths as well as the retained side effects."}
 // Historical emitted source symbol (void API): ?display_action@Win@@SAXH@Z
-// symbol    ?display_action@Win@@SAHH@Z
+// symbol    ?display_action@Win@@SAXH@Z
 // size      267 bytes
 // Deleted seed provenance: git:1ed59304110fc2098fb1dd11457fa5b0074169bd:src/unrecovered/005f2830.cpp
 Status: Coverage transcription of the retained seed (src/unrecovered/005f2830.cpp,
@@ -11082,25 +11082,21 @@ Status: Coverage transcription of the retained seed (src/unrecovered/005f2830.cp
         267-byte original instead of byte-shaped.
 */
 
-int __cdecl Win::display_action(int action) {
+void __cdecl Win::display_action(int action) {
     Win *self = WinCallbackWindow;
     switch (action) {
     case 2: {
         self->vslot_52();
-        WinDisplayActionHookFn hook = self->field_438_;
-        int result = 0;
-        if (hook != 0) {
-            result = hook();
+        if (self->field_438_ != 0) {
+            self->field_438_();
         }
         Sound *child = self->val_35_;
         if (child != 0) {
-            const int playing = child->is_playing();
-            if (playing != 0) {
-                return playing;
+            if (child->is_playing() == 0) {
+                child->play();
             }
-            return child->play();
         }
-        return result;
+        break;
     }
     case 1:
         WinPointerOwner1 = nullptr;
@@ -11112,31 +11108,34 @@ int __cdecl Win::display_action(int action) {
         if (WinPointerOwner4 == self) {
             WinPointerOwner4 = nullptr;
         }
-        return ShowWindow(HandleMain, SW_MINIMIZE);
-    case 0: {
-        const int zoomed = IsZoomed(HandleMain);
-        WinPointerOwner1 = nullptr;
-        WinPointerOwner2 = nullptr;
-        if (zoomed != 0) {
+        ShowWindow(HandleMain, SW_MINIMIZE);
+        break;
+    case 0:
+        if (IsZoomed(HandleMain) != 0) {
+            WinPointerOwner1 = nullptr;
+            WinPointerOwner2 = nullptr;
             if (WinPointerOwner3 == self) {
                 WinPointerOwner3 = nullptr;
                 self->on_lose_mouse_capture();
             }
+            if (WinPointerOwner4 == self) {
+                WinPointerOwner4 = nullptr;
+            }
+            ShowWindow(HandleMain, SW_MAXIMIZE);
         } else {
+            WinPointerOwner1 = nullptr;
+            WinPointerOwner2 = nullptr;
             if (WinPointerOwner3 == self) {
                 WinPointerOwner3 = nullptr;
                 self->on_lose_mouse_capture();
             }
+            if (WinPointerOwner4 == self) {
+                WinPointerOwner4 = nullptr;
+            }
+            ShowWindow(HandleMain, SW_MAXIMIZE);
         }
-        if (WinPointerOwner4 == self) {
-            WinPointerOwner4 = nullptr;
-        }
-        return ShowWindow(HandleMain, SW_MAXIMIZE);
+        break;
     }
-    }
-    // The original DEC/DEC dispatch returns the wrapped EAX value for every
-    // action other than 0, 1, or 2.
-    return action - 2;
 }
 
 /*

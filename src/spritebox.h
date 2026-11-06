@@ -80,6 +80,9 @@ class SpriteListBase : public virtual StringAllocationBase {
     allocator_ = 0;
   }
   virtual ~SpriteListBase() {
+    clear();
+  }
+  void clear() {
     remove_all();
     current_position_ = 0;
   }
@@ -133,8 +136,8 @@ class SpriteListBase : public virtual StringAllocationBase {
         delete payload;
         head_->payload = nullptr;
         delete head_;
-        ++index;
         head_ = current_;
+        ++index;
       } while (index < entry_count_);
     }
     head_ = 0;

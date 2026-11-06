@@ -6,6 +6,7 @@ struct Matrix3TransformResult {
   float x_;
   float y_;
   float z_;
+  ~Matrix3TransformResult() {}
 };
 
 // A mathematical nine-float view supported by this address family. This
@@ -13,6 +14,7 @@ struct Matrix3TransformResult {
 // allocation, lifetime, callers, or translation unit.
 struct Matrix3 {
   float cells[9];
+  ~Matrix3() {}
 
   Matrix3 *identity();
   void reset_identity();

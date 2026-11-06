@@ -149,8 +149,7 @@ void __cdecl show_replay() {
 // ORIGINAL: 0x005ADF10 ??1ReplayWin@@QAE@XZ 0x005ADF10-0x005AE0A8;0x00662360-0x0066244C
 // RECOVERY_BINDING: v1 {"evidence": ["image:0x005ADBF0 constructs GraphicWin, MapWin, FlatButton and Time at offsets 0, 0x2320, 0x247A0 and 0x252EC", "image:0x005ADF32 destructs Time at 0x252EC before FlatButton at 0x247A0", "git:d7a40721:src/recovered/units/005adf10.cpp", "src/replaywin.h declares all three complete subobjects"], "reason": "Let C++ destroy ReplayWin's real members in reverse construction order instead of forwarding the complete destructor to original image code."}
 // symbol    ??1ReplayWin@@UAE@XZ
-ReplayWin::~ReplayWin() {
-}
+// The implicit virtual destructor follows the typed member/base lifetime.
 
 // ORIGINAL: 0x005AD610 ?on_redraw@ReplayWin@@QAEXXZ 0x005AD610-0x005AD71F BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:d7a40721:src/recovered/units/005ad610.cpp", "image:0x005AD610-0x005AD71F", "src/replaywin.h map_win_ and year_label_", "src/buffer.h InterfaceBoxStyles[9] and [6]", "src/maininterface.h MainInterfaceGlobal.font1_ at original 0x007CFE8C", "git:b20012dad66f767e0e5f05b7aea45b88bd63a09d:src/recovered/units/005ad610.cpp"], "reason": "Paint the replay title through real GraphicWin/Buffer bases, shared style and font owners, then dispatch the embedded MapWin's virtual redraw; retain the exact seed for byte restoration. Superseded scaffold retired at user request; historical claims and seed findings are transferred, not freshly granted. Current matching/restoration and any documented unfinished stages remain obligations."}
