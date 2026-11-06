@@ -468,7 +468,7 @@ if (Chassis[selected_proto.chassis_id].missile != 0 &&
 }
 
 const int selected_base = base_at(selected_veh.x, selected_veh.y);
-if (selected_base >= 0 && has_fac_built(0x21, selected_base)) {
+if (selected_base >= 0 && has_fac(0x21, selected_base, 0)) {
     show_menu_item(3, 0x310);
 } else {
     hide_menu_item(3, 0x310);

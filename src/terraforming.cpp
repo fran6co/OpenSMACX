@@ -270,9 +270,10 @@ Bug note: both fungus-removal paths read Terraforming[TERRA_REMOVE_FUNGUS].preq_
 terraform.txt gives Remove Fungus the same technology for both, so it is invisible in a default
 game and visible in a mod that splits them. Transcribed as written.
 */
+#pragma optimize("y", off)
 int __cdecl can_terraform(int faction_id, int x, int y, int force_improve, int base_id) {
     Map *tile = map_loc(x, y);
-    if (tile->bit & BIT_BASE_IN_TILE) {
+    if (map_loc(x, y)->bit & BIT_BASE_IN_TILE) {
         int owner = (int)owner_at(x, y);
         if (owner < 8 && owner >= 0) {
             return ORDER_NONE;
@@ -303,10 +304,10 @@ int __cdecl can_terraform(int faction_id, int x, int y, int force_improve, int b
         // `has_fac_built_call` (base.h) is for. Plain `has_fac_built` inlines
         // `MEASURED inline bitmask` and this body then makes 26 calls against
         // the image's 28.
-        if (has_fac_built(FAC_TREE_FARM, base_id)) {
+        if (has_fac(FAC_TREE_FARM, base_id, 0)) {
             forest_value++;
         }
-        if (has_fac_built(FAC_HYBRID_FOREST, base_id)) {
+        if (has_fac(FAC_HYBRID_FOREST, base_id, 0)) {
             forest_value += 2;
         }
     }
@@ -337,7 +338,7 @@ int __cdecl can_terraform(int faction_id, int x, int y, int force_improve, int b
             return terrain_avail(TERRA_RAISE_LAND, true, faction_id)
                 ? ORDER_TERRAFORM_UP : ORDER_NONE;
         }
-        if (bit & BIT_THERMAL_BORE) {
+        if (terrain_tile->bit & BIT_THERMAL_BORE) {
             return ORDER_NONE;
         }
         if (!has_farm
@@ -617,3 +618,4 @@ int __cdecl can_terraform(int faction_id, int x, int y, int force_improve, int b
     }
     return result;
 }
+#pragma optimize("", on)

@@ -2982,7 +2982,7 @@ void BaseWin::zoom(int base_id, int wait) {
                  ++index) {
                 if (Bases[index].faction_id_current
                         == BaseCurrent->faction_id_current
-                    && has_fac_built(FAC_HEADQUARTERS, index)) {
+                    && has_fac(FAC_HEADQUARTERS, index, 0)) {
                     has_headquarters = true;
                     break;
                 }

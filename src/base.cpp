@@ -1232,30 +1232,15 @@ Status: Coverage transcription - unclaimed body; the seed
         definition measures fresh BYTE_EXACT.
 */
 void __cdecl bases_reset(int region_id, int faction_id, int skip_occupied) {
-    int mask = 1 << faction_id;
-    if (((unsigned char)mask &
-         GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_) == 0) {
-        const int count = GameDataStateStorage.fields_.base_current_count_;
-        int i = 0;
-        if (count > 0) {
-            Map *tiles = map_tiles();
-            int mult = static_cast<int>(MapLongitude);
-            Base *base = Bases;
-            do {
-                if ((base->faction_id_current == faction_id) &&
-                    (region_id < 0 ||
-                     tiles[base->y * mult + (base->x >> 1)].region == region_id) &&
-                    (skip_occupied == 0 || veh_who(base->x, base->y) < 0) &&
-                    (((unsigned char)mask &
-                      GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_) == 0 ||
-                     (BaseCurrent->state & 0x80000000) == 0)) {
-                    base_reset(i, 0);
-                    tiles = map_tiles();
-                    mult = static_cast<int>(MapLongitude);
-                }
-                ++i;
-                ++base;
-            } while (i < GameDataStateStorage.fields_.base_current_count_);
+    if (is_human(faction_id)) {
+        return;
+    }
+    for (int i = 0; i < GameDataStateStorage.fields_.base_current_count_; i++) {
+        if (Bases[i].faction_id_current == faction_id
+            && (region_id < 0 || region_at(Bases[i].x, Bases[i].y) == region_id)
+            && (!skip_occupied || veh_who(Bases[i].x, Bases[i].y) < 0)
+            && (!is_human(faction_id) || !(BaseCurrent->state & 0x80000000))) {
+            base_reset(i, 0);
         }
     }
 }
@@ -5912,7 +5897,7 @@ int __cdecl base_find(int x, int y, int faction_id, int region, int faction_id_2
     for (int i = 0; i < GameDataStateStorage.fields_.base_current_count_; i++, base++) {
         if (region < 0 || region_at(base->x, base->y) == (uint32_t)region) {
             if (faction_id >= 0) {
-                if (faction_id != base->faction_id_current) {
+                if (base->faction_id_current != faction_id) {
                     if (faction_id_2 == -2) {
                         if (!(PlayersData[faction_id].diplo_treaties[base->faction_id_current] & DTREATY_PACT)) {
                             continue;
@@ -5926,23 +5911,9 @@ int __cdecl base_find(int x, int y, int faction_id, int region, int faction_id_2
             }
             if (faction_id_3 < 0 || base->faction_id_current == faction_id_3
                 || ((1 << faction_id_3) & base->visibility)) {
-                // Open-coded vector_dist(x, y, base->x, base->y): the
-                // image calls abs() four times, never vector_dist itself -
-                // see del_site (0x00579E70) and base_find(x,y) (0x004E3B80)
-                // for the same expansion.
-                int dx = x_dist(x, base->x);
-                int dy = abs(y - base->y);
-                int abs_dx = abs(dx);
-                int abs_dy = abs(dy);
-                int largest = abs_dx;
-                if (abs_dx <= abs_dy) {
-                    largest = abs_dy;
-                }
-                int smallest = abs_dx;
-                if (abs_dx >= abs_dy) {
-                    smallest = abs_dy;
-                }
-                int dist = largest - ((((abs_dy + abs_dx) >> 1) - smallest + 1) >> 1);
+                // Inlined vector_dist(x, y, base->x, base->y): the image calls
+                // abs() four times, never vector_dist itself.
+                int dist = base_find_dist(x, y, base->x, base->y);
                 if (dist <= proximity) {
                     proximity = dist;
                     base_id = i;
@@ -7242,35 +7213,27 @@ void __cdecl base_research() {
         return;
     }
 
-    Base *base = BaseCurrent;
-    const int faction_id = base->faction_id_current;
-    const int research_bonus = base->labs_total;
-    int points = research_bonus;
-    if (has_fac_built(FAC_PUNISHMENT_SPHERE)) {
-        points = research_bonus / 2;
+    const int faction_id = BaseCurrent->faction_id_current;
+    int points = BaseCurrent->labs_total;
+    if (has_fac(FAC_PUNISHMENT_SPHERE, BaseIDCurrentSelected, 0)) {
+        points /= 2;
     }
-    PlayerData &player = PlayersData[faction_id];
-    if (GameDataStateStorage.fields_.turn_current_num_ < base_yield_mul(-5, player.soc_effect_pending.values_[SocialEffect::RESEARCH])) {
+    if (GameDataStateStorage.fields_.turn_current_num_
+        < -5 * PlayersData[faction_id].soc_effect_pending.values_[SocialEffect::RESEARCH]) {
         points = 0;
     }
-    if (GameDataStateStorage.fields_.turn_current_num_ < 5 && player.diff_level < 2) {
+    if (GameDataStateStorage.fields_.turn_current_num_ < 5 && PlayersData[faction_id].diff_level < 2) {
         points = 0;
     }
+    PlayersData[faction_id].labs_total += points;
 
-    player.labs_total = base_yield_add(player.labs_total, points);
-
-    const int research_rate = range(
-        player.soc_effect_pending.values_[SocialEffect::RESEARCH], -5, 5);
-
-    int scaled = base_yield_mul(
-        base_yield_mul(base_yield_add(research_rate, 10), points), 10);
-    const int remainder = base_yield_add(player.net_random_event, scaled % 100);
-    player.net_random_event = remainder;
-    if (remainder >= 100) {
-        scaled = base_yield_add(scaled, 100);
-        player.net_random_event = base_yield_sub(remainder, 100);
+    int scaled = (range(PlayersData[faction_id].soc_effect_pending.values_[SocialEffect::RESEARCH],
+                        -5, 5) + 10) * points * 10;
+    PlayersData[faction_id].net_random_event += scaled % 100;
+    if (PlayersData[faction_id].net_random_event >= 100) {
+        PlayersData[faction_id].net_random_event -= 100;
+        scaled += 100;
     }
-
     tech_research(faction_id, scaled / 100);
 }
 
@@ -7296,16 +7259,14 @@ Status: Complete
 */
 void __cdecl set_fac(int facility_id, int base_id, BOOL set) {
     int mask;
-    // The image hands bitmask() THIS parameter's own slot as the offset
-    // out-param: facility_id is dead after the call, and its stack slot
-    // holds the offset both subscripts below read. A separate `int offset`
-    // local lands at [ebp-4] instead and pushes mask out of the frame -
-    // measured 3/32 against 32/32 for this spelling.
-    bitmask(facility_id, &facility_id, &mask);
+    // An ordinary offset local: VC6 places it in the dead facility_id slot
+    // here, and base_maint's inlined copy needs it separate.
+    int offset;
+    bitmask(facility_id, &offset, &mask);
     if (set) {
-        Bases[base_id].facilities_built[facility_id] |= mask;
+        Bases[base_id].facilities_built[offset] |= mask;
     } else {
-        Bases[base_id].facilities_built[facility_id] &= ~mask;
+        Bases[base_id].facilities_built[offset] &= ~mask;
     }
 }
 
@@ -7445,21 +7406,25 @@ Status: Complete
 */
 int __cdecl morale_mod(int base_id, int faction_id, int triad) {
     int morale_modifier = 0;
-    if (triad == TRIAD_LAND) {
+    switch (triad) {
+    case TRIAD_LAND:
         if (has_fac(FAC_COMMAND_CENTER, base_id, 0)
             || has_project(SP_COMMAND_NEXUS, faction_id)) {
             morale_modifier = 2;
         }
-    } else if (triad == TRIAD_SEA) {
+        break;
+    case TRIAD_SEA:
         if (has_fac(FAC_NAVAL_YARD, base_id, 0)
             || has_project(SP_MARITIME_CONTROL_CENTER, faction_id)) {
             morale_modifier = 2;
         }
-    } else if (triad == TRIAD_AIR) {
+        break;
+    case TRIAD_AIR:
         if (has_fac(FAC_AEROSPACE_COMPLEX, base_id, 0)
             || has_project(SP_CLOUDBASE_ACADEMY, faction_id)) {
             morale_modifier = 2;
         }
+        break;
     }
     if (has_fac(FAC_BIOENHANCEMENT_CENTER, base_id, 0)
         || has_project(SP_CYBORG_FACTORY, faction_id)) {
@@ -7647,8 +7612,9 @@ int __cdecl crop_yield(int faction_id, int base_id, int x, int y,
                        BOOL assume_improved) {
     Map *tile = yield_tile(x, y);
     uint32_t bit = tile->bit;
-    BOOL is_ocean_tile = (tile->climate & 0xE0) < ALT_BIT_SHORE_LINE;
-    BOOL has_base_in_tile = yield_tile_owner(tile) >= 0;
+    BOOL is_ocean_tile = (tile->climate & ~0x1F) < ALT_BIT_SHORE_LINE;
+    // Re-addressed: the image re-reads tile->bit here instead of reusing `bit`.
+    BOOL has_base_in_tile = yield_tile_owner(yield_tile(x, y)) >= 0;
     // Bonus id 1 is the nutrient bonus.
     BOOL has_nutrient_bonus = bonus_at(x, y, 0) == 1;
     tile = yield_tile(x, y);
@@ -7660,8 +7626,8 @@ int __cdecl crop_yield(int faction_id, int base_id, int x, int y,
     // of referencing the earlier local.
     BOOL landmark_bonus =
         (((tile->bit2 & (BIT2_UNK_80000000 | BIT2_JUNGLE)) == BIT2_JUNGLE)
-            && (tile->climate & 0xE0) >= ALT_BIT_SHORE_LINE)
-        || ((tile->bit2 & BIT2_FRESH) && (tile->climate & 0xE0) < ALT_BIT_SHORE_LINE);
+            && (tile->climate & ~0x1F) >= ALT_BIT_SHORE_LINE)
+        || ((tile->bit2 & BIT2_FRESH) && (tile->climate & ~0x1F) < ALT_BIT_SHORE_LINE);
     int crop;
 
     if (has_base_in_tile) {
@@ -7697,9 +7663,9 @@ int __cdecl crop_yield(int faction_id, int base_id, int x, int y,
             crop++;
         }
     } else if ((bit & BIT_FUNGUS) && !assume_improved
-               && (tile->climate & 0xE0) >= ALT_BIT_OCEAN_SHELF) {
+               && (tile->climate & ~0x1F) >= ALT_BIT_OCEAN_SHELF) {
         int planet = PlayersData[faction_id].soc_effect_pending.values_[SocialEffect::PLANET];
-        int planet_mod = (planet < -3) ? -3 : ((planet > 0) ? 0 : planet);
+        int planet_mod = (planet >= -3) ? ((planet > 0) ? 0 : planet) : -3;
         crop = range(PlayersData[faction_id].tech_fungus_[RSC_NUTRIENTS] + planet_mod,
                      0, 99);
         if (has_project(SP_MANIFOLD_HARMONICS, faction_id) && planet > 0) {
@@ -7714,15 +7680,13 @@ int __cdecl crop_yield(int faction_id, int base_id, int x, int y,
             if (landmark_bonus) {
                 crop++;
             }
-            if ((tile->climate & 0xE0) == ALT_BIT_OCEAN_SHELF
+            if ((tile->climate & ~0x1F) == ALT_BIT_OCEAN_SHELF
                 || ExpansionEnabled) {
                 // A kelp farm.
                 if (bit & BIT_FARM) {
                     crop += ResourceInfo[RSCINFO_IMPROVED_SEA].nutrients;
                     // Legacy: unguarded for base_id < 0, exactly as 0x004E7150.
-                    // Bases[(uint32_t)-1] and Bases[-1] are the same address on
-                    // 32-bit x86, so this reproduces the original's read.
-                    if (has_fac_built(FAC_AQUAFARM, (uint32_t)base_id)) {
+                    if (has_fac(FAC_AQUAFARM, base_id, 0)) {
                         crop++;
                     }
                 }
@@ -7731,10 +7695,8 @@ int __cdecl crop_yield(int faction_id, int base_id, int x, int y,
                 }
             }
         } else if (bit & BIT_FOREST) {
-            crop = ResourceInfo[RSCINFO_FOREST_SQ].nutrients;
-            if (has_nutrient_bonus) {
-                crop += ResourceInfo[RSCINFO_BONUS_SQ].nutrients;
-            }
+            crop = (has_nutrient_bonus ? ResourceInfo[RSCINFO_BONUS_SQ].nutrients : 0)
+                   + ResourceInfo[RSCINFO_FOREST_SQ].nutrients;
             if (base_id >= 0) {
                 if (has_fac(FAC_HYBRID_FOREST, base_id, 0)) {
                     crop++;
@@ -7772,7 +7734,7 @@ int __cdecl crop_yield(int faction_id, int base_id, int x, int y,
         if (bit & BIT_SOIL_ENRICHER) {
             crop += crop / 2;
         }
-        BOOL has_condenser = (bit & BIT_CONDENSER) != 0;
+        uint32_t has_condenser = bit & BIT_CONDENSER;
         if (has_condenser) {
             crop += crop / 2;
         }
@@ -7841,13 +7803,13 @@ at sea, and suppresses the roadless-mine mineral limit.
 int __cdecl mine_yield(int faction_id, int base_id, int x, int y,
                        BOOL assume_improved) {
     Map *tile = yield_tile(x, y);
+    uint32_t bit = tile->bit; // declared first: the image loads it into edx
     // Landmark sequence code, signed exactly as `sar edi, 0x18`. Bit 31 of bit2
     // is required clear by every test below, so the sign only decides branches
     // that are not taken. Read directly off tile->bit2, not a cached local:
     // the image re-reads bit2 from memory for the landmark_bonus mask below,
     // rather than keeping this value live across the bonus_at() call.
     int code = (int)tile->bit2 >> 24;
-    uint32_t bit = tile->bit;
     // Bonus id 2 is the mineral bonus.
     BOOL has_mineral_bonus = bonus_at(x, y, 0) == 2;
     tile = yield_tile(x, y);
@@ -7891,16 +7853,16 @@ int __cdecl mine_yield(int faction_id, int base_id, int x, int y,
         // Unlike crop_yield's borehole arm, this one does reach the restriction.
         restrict_yield = true;
     } else if ((bit & BIT_FUNGUS)
-               && (tile->climate & 0xE0) >= ALT_BIT_OCEAN_SHELF) {
+               && (tile->climate & ~0x1F) >= ALT_BIT_OCEAN_SHELF) {
         // Note there is no assume_improved suppressor here; crop_yield has one.
         int planet = PlayersData[faction_id].soc_effect_pending.values_[SocialEffect::PLANET];
-        int planet_mod = (planet < -3) ? -3 : ((planet > 0) ? 0 : planet);
+        int planet_mod = (planet >= -3) ? ((planet > 0) ? 0 : planet) : -3;
         mineral = range(PlayersData[faction_id].tech_fungus_[RSC_MINERALS] + planet_mod,
                         0, 99);
         if (has_project(SP_MANIFOLD_HARMONICS, faction_id) && planet > 1) {
             mineral++;
         }
-    } else if ((tile->climate & 0xE0) < ALT_BIT_SHORE_LINE) {
+    } else if ((tile->climate & ~0x1F) < ALT_BIT_SHORE_LINE) {
         // Not hoisted: the image computes this test lazily, right here, rather
         // than caching it in a local up front (unlike crop_yield/energy_yield,
         // which read climate for is_ocean_tile before this branch chain).
@@ -7910,17 +7872,17 @@ int __cdecl mine_yield(int faction_id, int base_id, int x, int y,
         // faction_id, and is unguarded for base_id < 0 (0x004E75E2).
         int base_owner = Bases[base_id].faction_id_current;
         if ((Players[base_owner].rule_flags & RFLAG_AQUATIC)
-            && (tile->climate & 0xE0) == ALT_BIT_OCEAN_SHELF) {
+            && (tile->climate & ~0x1F) == ALT_BIT_OCEAN_SHELF) {
             mineral++;
         }
-        if ((tile->climate & 0xE0) == ALT_BIT_OCEAN_SHELF || ExpansionEnabled) {
+        if ((tile->climate & ~0x1F) == ALT_BIT_OCEAN_SHELF || ExpansionEnabled) {
             if ((bit & BIT_MINE) || assume_improved) {
                 mineral += ResourceInfo[RSCINFO_IMPROVED_SEA].minerals;
                 if (has_tech(Rules.tech_mining_platform_bonus, faction_id)) {
                     mineral++;
                 }
                 // Legacy: unguarded for base_id < 0, exactly as 0x004E765F.
-                if (has_fac_built(FAC_SUBSEA_TRUNKLINE, (uint32_t)base_id)) {
+                if (has_fac(FAC_SUBSEA_TRUNKLINE, base_id, 0)) {
                     mineral++;
                 }
             }
@@ -8019,6 +7981,7 @@ do, not a transcription slip.
 */
 int __cdecl energy_yield(int faction_id, int base_id, int x, int y,
                          BOOL assume_improved) {
+    int energy = 0;
     Map *tile = yield_tile(x, y);
     uint32_t bit = tile->bit;
     // Not cached: bit2 is read directly off tile->bit2 at both use sites
@@ -8027,8 +7990,8 @@ int __cdecl energy_yield(int faction_id, int base_id, int x, int y,
     // pre-shift value live across the bonus_at() call - same shape as
     // mine_yield's borehole/landmark computation.
     int code = (int)tile->bit2 >> 24;
-    BOOL is_ocean_tile = (tile->climate & 0xE0) < ALT_BIT_SHORE_LINE;
-    BOOL has_base_in_tile = yield_tile_owner(tile) >= 0;
+    BOOL is_ocean_tile = (tile->climate & ~0x1F) < ALT_BIT_SHORE_LINE;
+    BOOL has_base_in_tile = yield_tile_owner(yield_tile(x, y)) >= 0;
     // Bonus id 3 is the energy bonus.
     BOOL has_energy_bonus = bonus_at(x, y, 0) == 3;
     tile = yield_tile(x, y);
@@ -8038,41 +8001,33 @@ int __cdecl energy_yield(int faction_id, int base_id, int x, int y,
         || ((tile->bit2 & (BIT2_UNK_80000000 | BIT2_URANIUM)) == BIT2_URANIUM)
         || ((tile->bit2 & (BIT2_UNK_80000000 | BIT2_GEOTHERMAL)) == BIT2_GEOTHERMAL)
         || ((tile->bit2 & (BIT2_UNK_80000000 | BIT2_RIDGE)) == BIT2_RIDGE);
-    int energy = 0;
     BOOL skip_shared_tail = false;
 
     if (has_base_in_tile) {
         energy = ResourceInfo[RSCINFO_BASE_SQ].energy;
         // Legacy: read BEFORE the base_id sign check at 0x004E7896, so a base_id
         // of -1 reads one Base entry below the array, exactly as the original.
-        if (has_fac_built(FAC_HEADQUARTERS, (uint32_t)base_id)) {
+        if (has_fac(FAC_HEADQUARTERS, base_id, 0)) {
             energy++;
         }
-        int golden_age = 0;
-        if (base_id >= 0) {
-            if (has_fac(FAC_RECYCLING_TANKS, base_id, 0)
-                || has_fac(FAC_PRESSURE_DOME, base_id, 0)) {
-                energy += ResourceInfo[RSCINFO_RECYCLING_TANKS].energy;
-            }
-            if (Bases[base_id].state & BSTATE_GOLDEN_AGE_ACTIVE) {
-                golden_age = 1;
-            }
+        if (base_id >= 0
+            && (has_fac(FAC_RECYCLING_TANKS, base_id, 0)
+                || has_fac(FAC_PRESSURE_DOME, base_id, 0))) {
+            energy += ResourceInfo[RSCINFO_RECYCLING_TANKS].energy;
         }
         int economy = PlayersData[faction_id].soc_effect_pending.values_[SocialEffect::ECONOMY]
-                      + golden_age;
+                      + ((base_id >= 0 && (Bases[base_id].state & BSTATE_GOLDEN_AGE_ACTIVE))
+                             ? 1 : 0);
         if (economy < 0) {
             // The original asks for Headquarters again here rather than reusing
             // the answer above.
-            if (!has_fac_built(FAC_HEADQUARTERS, (uint32_t)base_id)
+            if (!has_fac(FAC_HEADQUARTERS, base_id, 0)
                 || economy < -1
                 || PlayersData[faction_id].current_num_bases == 1u) {
                 economy++;
             }
         } else if (economy > 1) {
-            if (economy > 4) {
-                economy = 4;
-            }
-            economy = economy * 2 - 4;
+            economy = range(economy, 2, 4) * 2 - 4;
         }
         energy += economy;
         if (GameDataStateStorage.fields_.governor_faction_ == faction_id) {
@@ -8092,9 +8047,9 @@ int __cdecl energy_yield(int faction_id, int base_id, int x, int y,
     } else if (bit & BIT_THERMAL_BORE) {
         energy = ResourceInfo[RSCINFO_BOREHOLE_SQ].energy;
     } else if ((bit & BIT_FUNGUS)
-               && (tile->climate & 0xE0) >= ALT_BIT_OCEAN_SHELF) {
+               && (tile->climate & ~0x1F) >= ALT_BIT_OCEAN_SHELF) {
         int planet = PlayersData[faction_id].soc_effect_pending.values_[SocialEffect::PLANET];
-        int planet_mod = (planet < -3) ? -3 : ((planet > 0) ? 0 : planet);
+        int planet_mod = (planet >= -3) ? ((planet > 0) ? 0 : planet) : -3;
         energy = range(PlayersData[faction_id].tech_fungus_[RSC_ENERGY] + planet_mod,
                        0, 99);
         if (has_project(SP_MANIFOLD_HARMONICS, faction_id)) {
@@ -8107,13 +8062,12 @@ int __cdecl energy_yield(int faction_id, int base_id, int x, int y,
         }
         skip_shared_tail = true;
     } else if (is_ocean_tile) {
-        if ((tile->climate & 0xE0) == ALT_BIT_OCEAN_SHELF || ExpansionEnabled) {
+        if ((tile->climate & ~0x1F) == ALT_BIT_OCEAN_SHELF || ExpansionEnabled) {
             energy = ResourceInfo[RSCINFO_OCEAN_SQ].energy;
             if ((bit & BIT_SOLAR_TIDAL) || assume_improved) {
                 energy += ResourceInfo[RSCINFO_IMPROVED_SEA].energy;
                 // Legacy: unguarded for base_id < 0, exactly as 0x004E7B19.
-                if (has_fac_built(FAC_THERMOCLINE_TRANSDUCER,
-                                  (uint32_t)base_id)) {
+                if (has_fac(FAC_THERMOCLINE_TRANSDUCER, base_id, 0)) {
                     energy++;
                 }
             }
@@ -8129,13 +8083,9 @@ int __cdecl energy_yield(int faction_id, int base_id, int x, int y,
     } else {
         // Altitude levels above 2.
         int solar = (tile->climate >> 5) - 2;
-        if (solar < 0) {
-            solar = 0;
-        }
-        if ((bit & (BIT_SOLAR_TIDAL | BIT_ECH_MIRROR | BIT_THERMAL_BORE))
-            || assume_improved) {
-            energy = solar;
-        }
+        solar = (solar < 0) ? 0 : solar;
+        energy = ((bit & (BIT_SOLAR_TIDAL | BIT_ECH_MIRROR | BIT_THERMAL_BORE))
+                  || assume_improved) ? solar : 0;
         if (bit & BIT_SOLAR_TIDAL) {
             // Each adjacent echelon mirror belonging to the current base's
             // faction reflects one more energy onto this collector. The x wrap
@@ -8182,16 +8132,12 @@ int __cdecl energy_yield(int faction_id, int base_id, int x, int y,
         if (landmark_bonus) {
             energy++;
         }
-        int golden_age = 0;
-        if (base_id >= 0) {
-            if (GameDataStateStorage.fields_.secret_project_.merchant_exchange() == base_id) {
-                energy++;
-            }
-            if (Bases[base_id].state & BSTATE_GOLDEN_AGE_ACTIVE) {
-                golden_age = 1;
-            }
+        if (base_id >= 0
+            && GameDataStateStorage.fields_.secret_project_.merchant_exchange() == base_id) {
+            energy++;
         }
-        if (PlayersData[faction_id].soc_effect_pending.values_[SocialEffect::ECONOMY] + golden_age
+        if (PlayersData[faction_id].soc_effect_pending.values_[SocialEffect::ECONOMY]
+                + ((base_id >= 0 && (Bases[base_id].state & BSTATE_GOLDEN_AGE_ACTIVE)) ? 1 : 0)
             >= 2) {
             energy++;
         }
@@ -8729,19 +8675,7 @@ int __cdecl black_market(int energy) {
             // times, never vector_dist itself - see base_find (0x004E3D50)
             // for the same expansion. (BaseCurrent())->x/y are re-read here,
             // not hoisted, matching the image reading the global fresh.
-            int dx = x_dist(Bases[i].x, BaseCurrent->x);
-            int dy = abs(Bases[i].y - BaseCurrent->y);
-            int abs_dx = abs(dx);
-            int abs_dy = abs(dy);
-            int largest = abs_dx;
-            if (abs_dx <= abs_dy) {
-                largest = abs_dy;
-            }
-            int smallest = abs_dx;
-            if (abs_dx >= abs_dy) {
-                smallest = abs_dy;
-            }
-            int dist = largest - ((((abs_dy + abs_dx) >> 1) - smallest + 1) >> 1);
+            int dist = base_find_dist(Bases[i].x, Bases[i].y, BaseCurrent->x, BaseCurrent->y);
             if (dist < dist_hq) {
                 dist_hq = dist;
             }
@@ -8752,17 +8686,13 @@ int __cdecl black_market(int energy) {
     } else if (dist_hq == 0) {
         return 0;
     }
-    BOOL has_creche = has_fac(FAC_CHILDREN_CRECHE, BaseIDCurrentSelected, 0);
     if (BaseUpkeepStage == 1) {
-        for (int i = 0, j = 0; i >= -64; i -= 8, j++) {
-            int ineff;
-            int factor;
-            if (has_creche) {
+        for (int i = 0, j = 0; i >= -64; j++, i -= 8) {
+            int ineff = j;
+            int factor = i;
+            if (has_fac(FAC_CHILDREN_CRECHE, BaseIDCurrentSelected, 0)) {
                 ineff = j - 2; // +2 on efficiency scale
                 factor = i + 16; // ?
-            } else {
-                ineff = j;
-                factor = i;
             }
             if (ineff >= 8) {
                 PlayersData[faction_id].unk_46[j] += energy;
@@ -8772,7 +8702,7 @@ int __cdecl black_market(int energy) {
         }
     }
     int ineffciency = 4 - PlayersData[faction_id].soc_effect_pending.values_[SocialEffect::EFFICIENCY];
-    if (has_creche) {
+    if (has_fac(FAC_CHILDREN_CRECHE, BaseIDCurrentSelected, 0)) {
         ineffciency -= 2; // +2 on efficiency scale
     }
     if (ineffciency >= 8) {
@@ -9322,12 +9252,10 @@ Status: Complete
 void __cdecl base_maint() {
     uint32_t faction_id = BaseCurrent->faction_id_current;
     for (int fac = 1; fac < FacilitySPStart; fac++) {
-        if (has_fac_built(fac)) {
+        if (has_fac(fac, BaseIDCurrentSelected, 0)) {
             int maint = fac_maint(fac, faction_id);
             if (has_project(SP_SELF_AWARE_COLONY, faction_id)) {
-                if (PlayersData[faction_id].flags & PFLAG_SELF_AWARE_COLONY_LOST_MAINT) {
-                    maint = base_yield_add(maint, 1); // retain the native carry and dword wrap
-                }
+                maint += (PlayersData[faction_id].flags & PFLAG_SELF_AWARE_COLONY_LOST_MAINT) != 0;
                 if (maint & 1) {
                     PlayersData[faction_id].flags |= PFLAG_SELF_AWARE_COLONY_LOST_MAINT;
                 } else {
@@ -9335,18 +9263,18 @@ void __cdecl base_maint() {
                 }
                 maint /= 2;
             }
-            PlayersData[faction_id].energy_reserves = base_yield_sub(
-                PlayersData[faction_id].energy_reserves, maint);
+            PlayersData[faction_id].energy_reserves -= maint;
             PlayersData[faction_id].maint_cost_total += maint;
             if (PlayersData[faction_id].energy_reserves < 0) {
-                if (PlayersData[faction_id].diff_level <= DLVL_SPECIALIST
-                    || BaseCurrent->queue_production_id[0] == -fac) {
+                if (PlayersData[faction_id].diff_level <= DLVL_SPECIALIST) {
+                    PlayersData[faction_id].energy_reserves = 0;
+                } else if (BaseCurrent->queue_production_id[0] == -fac) {
                     PlayersData[faction_id].energy_reserves = 0;
                 } else {
                     set_fac(fac, BaseIDCurrentSelected, false);
                     PlayersData[faction_id].energy_reserves
-                        = base_yield_mul(cost_factor(BaseCurrent->faction_id_current,
-                            RSC_MINERALS, -1), Facility[fac].cost);
+                        = cost_factor(BaseCurrent->faction_id_current, RSC_MINERALS, -1)
+                          * Facility[fac].cost;
                     parse_say(1, Facility[fac].name, -1, -1);
                     popb("POWERSHORT", 0x10000, 14, "genwarning_sm.pcx", NULL);
                 }
@@ -9901,41 +9829,6 @@ BOOL __cdecl is_port(int base_id, BOOL is_base_radius) {
 }
 
 /*
-Purpose: Calculate how vulnerable the coordinates are for the specified faction based on how far
-         away this tile is from the faction's Headquarters.
-// ORIGINAL: 0x0059E980 ?vulnerable@@YAHHHH@Z 0x0059E980-0x0059EA73
-// size      243 bytes
-// prototype int (__cdecl ?vulnerable@@YAHHHH@Z)(int factionID, int xCoord, int yCoord)
-// callers   1   call targets   2
-// kind      game
-// flags     frame;hidden;sp_ready;purged_ok
-// calls     0x0050BA00 0x00644F3A
-// LEVER: open-coded the vector_dist(x, y, Bases[i].x, Bases[i].y) call as the
-//        x_dist()+abs()x4 expansion (same shape as base_find). Best
-//        similarity moved 0.595 -> 0.805 (/c /O2 /Oi- /Gy /GR- /Oy- /GX).
-//        The bitmask side of the evidence (has_fac_built(FAC_HEADQUARTERS,i)
-//        folding away the image's real bitmask() call) is the documented
-//        systemic gap - TRIED on has_fac base.cpp:104 - and not
-//        addressed here.
-// LEVER: that note is superseded - the FAC_HEADQUARTERS test has a LITERAL
-//        facility id, so routing it through has_fac_built_call (general.h
-//        bitmask_call) reaches the image's real `call 0x50ba00`. Compiled
-//        body 78 -> 92 instructions against the image's 96, differing runs
-//        21 -> 17 (listing_diff, /c /O2 /Oi- /Gy /GR- /Oy- /GX).
-Return Value: Radial distance between coordinates and faction's HQ or 12 if no HQ/bases
-Status: Complete
-*/
-int __cdecl vulnerable(int faction_id, int x, int y) {
-    for (int i = 0; i < GameDataStateStorage.fields_.base_current_count_; i++) {
-        if (Bases[i].faction_id_current == faction_id && has_fac(FAC_HEADQUARTERS, i, 0)) {
-            // The image inlines vector_dist(x, y, Bases[i].x, Bases[i].y).
-            return base_find_dist(x, y, Bases[i].x, Bases[i].y);
-        }
-    }
-    return 12; // no bases or no HQ
-}
-
-/*
 Purpose: Determine whether the specified base is considered an objective.
 // ORIGINAL: 0x005AC060 ?is_objective@@YAHH@Z 0x005AC060-0x005AC10B BYTE_EXACT
 // TRIED: the image still boolifies the `facilities_built[offset] & mask` test with a `neg/sbb/neg` 0-or-1 materialization into the old base_id stack slot before the final `je`, where this tree emits a plain `test`; hoisting `has_fac_built_call(...)` into its own named `BOOL` local before the `if` did not reproduce it (same 43/64, 0.927) - VC6 still proves the value is only used for one branch and drops the materialization.
@@ -10423,9 +10316,7 @@ int __cdecl upgrade_cost(int faction_id, int proto_id_init, int proto_id_upg) {
         chassis_diff = 0;
     }
     cost += weapon_diff + armor_diff + chassis_diff;
-    int nano_factory_base = base_project(SP_NANO_FACTORY);
-    if (nano_factory_base >= 0
-        && Bases[nano_factory_base].faction_id_current == faction_id) {
+    if (has_project(SP_NANO_FACTORY, faction_id)) {
         cost /= 2;
     }
     return cost;
@@ -10697,72 +10588,37 @@ int __cdecl get_rating(int faction_id, int arg2) {
 void __cdecl draw_map(int draw_type);
 
 void __cdecl do_upgrade(int faction_id, int proto_id_new, int proto_id_old) {
-    int cost = upgrade_cost(faction_id, proto_id_new, proto_id_old);
-    int product = cost * PlayersData[faction_id].proto_id_active[proto_id_old] * 10;
-    PlayersData[faction_id].energy_reserves -= product;
-
-    if (GameDataStateStorage.fields_.vehicle_current_count_ > 0) {
-        int i = 0;
-        do {
-            if (Vehs[i].faction_id == faction_id && Vehs[i].proto_id == proto_id_old) {
-                PlayersData[faction_id].proto_id_active[proto_id_old]--;
-                uint8_t new_count = PlayersData[faction_id].proto_id_active[proto_id_new];
-                ++new_count;
-                Vehs[i].proto_id = proto_id_new;
-                PlayersData[faction_id].proto_id_active[proto_id_new] = new_count;
-                if (has_abil(proto_id_new, ABL_TRAINED) != 0
-                    && has_abil(proto_id_old, ABL_TRAINED) == 0) {
-                    int morale = Vehs[i].morale + 1;
-                    if (morale < 0) {
-                        morale = 0;
-                    } else if (morale > 6) {
-                        morale = 6;
-                    }
-                    Vehs[i].morale = morale;
-                }
-                if (has_abil(proto_id_new, ABL_TRAINED) == 0
-                    && has_abil(proto_id_old, ABL_TRAINED) != 0) {
-                    int morale = Vehs[i].morale - 1;
-                    if (morale < 0) {
-                        morale = 0;
-                    } else if (morale > 6) {
-                        morale = 6;
-                    }
-                    Vehs[i].morale = morale;
+    int cost = upgrade_cost(faction_id, proto_id_new, proto_id_old)
+        * PlayersData[faction_id].proto_id_active[proto_id_old] * 10;
+    PlayersData[faction_id].energy_reserves -= cost;
+    for (int i = 0; i < GameDataStateStorage.fields_.vehicle_current_count_; i++) {
+        if (Vehs[i].faction_id == faction_id && Vehs[i].proto_id == proto_id_old) {
+            PlayersData[faction_id].proto_id_active[proto_id_old]--;
+            PlayersData[faction_id].proto_id_active[proto_id_new]++;
+            Vehs[i].proto_id = (int16_t)proto_id_new;
+            if (has_abil(proto_id_new, ABL_TRAINED) && !has_abil(proto_id_old, ABL_TRAINED)) {
+                Vehs[i].morale = (uint8_t)range(Vehs[i].morale + 1, 0, 6);
+            }
+            if (!has_abil(proto_id_new, ABL_TRAINED) && has_abil(proto_id_old, ABL_TRAINED)) {
+                Vehs[i].morale = (uint8_t)range(Vehs[i].morale - 1, 0, 6);
+            }
+        }
+    }
+    for (int j = 0; j < GameDataStateStorage.fields_.base_current_count_; j++) {
+        if (Bases[j].faction_id_current == faction_id) {
+            for (int k = 0; k <= Bases[j].queue_size; k++) {
+                if (Bases[j].queue_production_id[k] == proto_id_old) {
+                    Bases[j].queue_production_id[k] = proto_id_new;
                 }
             }
-            i++;
-        } while (i < GameDataStateStorage.fields_.vehicle_current_count_);
+        }
     }
-
-    if (GameDataStateStorage.fields_.base_current_count_ > 0) {
-        Base *base = Bases;
-        int j = GameDataStateStorage.fields_.base_current_count_;
-        do {
-            if (base->faction_id_current == faction_id) {
-                int queue_size = base->queue_size;
-                if (queue_size >= 0) {
-                    int k = 0;
-                    do {
-                        if (base->queue_production_id[k] == proto_id_old) {
-                            base->queue_production_id[k] = proto_id_new;
-                        }
-                        k++;
-                    } while (k <= queue_size);
-                }
-            }
-            base++;
-            j--;
-        } while (j != 0);
-    }
-
-    if (proto_id_new > 0x3f && product != 0) {
+    if (proto_id_new >= MaxVehProtoFactionNum && cost) {
         VehPrototypes[proto_id_new].flags |= 4;
     }
-    if (proto_id_old > 0x3f) {
+    if (proto_id_old >= MaxVehProtoFactionNum) {
         VehPrototypes[proto_id_old].flags &= ~PROTO_ACTIVE;
     }
-
     if ((GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & (1 << faction_id)) != 0) {
         draw_map(1);
     }
