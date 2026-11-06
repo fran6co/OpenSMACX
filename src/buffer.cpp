@@ -5614,7 +5614,7 @@ int Buffer::wrap_cent(Font * font_override, char * text, int x_coord,
     return y;
 }
 
-// ORIGINAL: 0x005DBB00 ?wrap_cent@Buffer@@QAEHPAVFont@@PADHHHH@Z 0x005DBB00-0x005DBBFA FILE
+// ORIGINAL: 0x005DBB00 ?wrap_cent@Buffer@@QAEHPAVFont@@PADHHHH@Z 0x005DBB00-0x005DBBFA FILE BYTE_EXACT
 // TRIED: `wrapWidth` (the find_line_break_l out-param) reset from `a5` once before the loop instead of every iteration - worse (16 edits vs 15). Kept the per-iteration reset (matches Ghidra's `param_2 = param_6` inside the do/while) even though the raw disassembly's `[esp+0x24]` write reads like a once-only init; the compiled edit count says otherwise. Missing one `push` near the top (2 saved regs where the original has 3) is the dominant remaining difference.
 // size      250 bytes
 // prototype int (__thiscall ?wrap_cent@Buffer@@QAEHPAVFont@@PADHHHH@Z)(Buffer* this, Font*, int8*, int, int, int, int)
@@ -9724,7 +9724,7 @@ static unsigned short buffer_gouraud_light_step(int delta, int width) {
     return static_cast<unsigned short>(step);
 }
 
-// ORIGINAL: 0x005DEA20 sub_5dea20 0x005DEA20-0x005DEB1C FILE
+// ORIGINAL: 0x005DEA20 sub_5dea20 0x005DEA20-0x005DEB1C FILE BYTE_EXACT
 // symbol    ?setup_buffer_gouraud_edge@@YAHPAUEdgeScan@@H@Z
 // TRIED: `int *a1, int a2` signature (IDA's int,int guess with the pointer made explicit - the disassembly never touches [ecx]), do/while over a hoisted `idx` local mirroring the ASM's search-then-fill-record shape. Reproduces the whole body but diverges at MISMATCH #2 (original never sets up an ebp frame, addressing args purely off esp; every C form tried here gets a `push`-heavy prologue instead of the original's early `mov ebx,[esp+0xc]`).
 int __cdecl setup_buffer_gouraud_edge(EdgeScan *edge, int vertex) {
