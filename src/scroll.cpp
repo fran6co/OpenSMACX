@@ -188,7 +188,7 @@ Purpose: Construct a Scroll: run the GraphicWin base construction, install
          order. The two FlatButton members construct through the compiler's
          own base-then-member sequencing rather than an explicit placement
          call.
-// ORIGINAL: 0x006051D0 ??0Scroll@@QAE@XZ 0x006051D0-0x00605367;0x00662E30-0x00662E50
+// ORIGINAL: 0x006051D0 ??0Scroll@@QAE@XZ 0x006051D0-0x00605367;0x00662E30-0x00662E50 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned Scroll constructor 0x6051D0 calls GraphicWin construction at 0x6051EE before its two FlatButton member constructors at 0x6051FF and 0x60520F.", "The current GraphicWin is a real direct base with an implicit constructor; C++ runs that base before Scroll's FlatButton members, so removing empty ScrollGraphicWin preserves the observed order without adding a type, storage, or manual call.", "The existing sizeof(Scroll) == 0x214C assertion remains the source layout guard. Historical LEVER/TRIED notes about the former workaround remain as provenance, not current hierarchy claims."], "reason": "Express Scroll's original base-before-member lifetime through its real GraphicWin base; the constructor-only intermediary is unnecessary now that GraphicWin has a genuine C++ constructor."}
 // TRIED: hoisting the four source runs of the 0xA7C/0xA88/0xA94/0xAA0 loop
 //   into `const uint32_t *const d5 = dynamic + 5;` and friends, to make
@@ -333,7 +333,7 @@ Scroll::Scroll() {
 Purpose: Reset Scroll-owned state from the process defaults, close the two
          embedded FlatButtons through their virtual close slots, then close
          the source-owned GraphicWin base.
-// ORIGINAL: 0x00605370 ?close@Scroll@@QAEXXZ 0x00605370-0x006054CE
+// ORIGINAL: 0x00605370 ?close@Scroll@@QAEXXZ 0x00605370-0x006054CE BYTE_EXACT
 // LEVER: `fixed`/`dynamic` were reinterpret_cast<...>(ScrollCloseStaticDefaults)
 //   - casting the VALUE stored in the global to a pointer, an indirect load the
 //   image never does. `&ScrollCloseStaticDefaults`/`&ScrollCloseDynamicDefaults`
@@ -1863,7 +1863,7 @@ void Scroll::on_button_clicked(int button_id) {
     redraw();
 }
 
-// ORIGINAL: 0x006069A0 ?on_button_pressed@Scroll@@QAEXH@Z 0x006069A0-0x00606B14
+// ORIGINAL: 0x006069A0 ?on_button_pressed@Scroll@@QAEXH@Z 0x006069A0-0x00606B14 BYTE_EXACT
 // symbol    ?on_button_pressed@Scroll@@UAEHH@Z
 int Scroll::on_button_pressed(int button_id) {
     // All original exits converge on 0x00606B08, whose epilogue sets EAX=1.
