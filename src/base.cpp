@@ -1404,7 +1404,7 @@ Purpose: Bubble-sort an id list into base-name order: repeatedly walk the
          swapping neighbours whose names order backwards, until a pass
          makes no swap.
 
-// ORIGINAL: 0x004D5FF0 sub_4d5ff0 0x004D5FF0-0x004D606E FILE
+// ORIGINAL: 0x004D5FF0 sub_4d5ff0 0x004D5FF0-0x004D606E FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence":["The pinned routine repeatedly compares Bases[id].name_string using case-insensitive string comparison and swaps neighboring entries in the caller-owned id list.","The current Base array/count are source-owned in base.h/base.cpp; the global address-derived identity remains sub_4d5ff0, not a newly named Base method.","The one-element/negative-count early return, repeated bubble passes, comparator polarity, and caller-list mutation are preserved."],"reason":"Move the existing base-name id sort to the owner of its genuine Base storage while retaining the original global identity and exact comparison/swap control flow."}
 // symbol    _sub_4d5ff0
 // size      126 bytes
@@ -5819,7 +5819,7 @@ static inline int base_find_dist(int x_point_a, int y_point_a, int x_point_b, in
 
 /*
 Purpose: Find the base id closest to the specified coordinates.
-// ORIGINAL: 0x004E3B80 ?base_find@@YAHHH@Z 0x004E3B80-0x004E3C5F
+// ORIGINAL: 0x004E3B80 ?base_find@@YAHHH@Z 0x004E3B80-0x004E3C5F BYTE_EXACT
 // size      223 bytes
 // prototype int (__cdecl ?base_find@@YAHHH@Z)(int xCoord, int yCoord)
 // callers   23   call targets   1
@@ -5857,7 +5857,7 @@ int __cdecl base_find(int x, int y) {
 
 /*
 Purpose: Find the base id closest to the specified coordinates owned by faction.
-// ORIGINAL: 0x004E3C60 ?base_find@@YAHHHH@Z 0x004E3C60-0x004E3D4B
+// ORIGINAL: 0x004E3C60 ?base_find@@YAHHHH@Z 0x004E3C60-0x004E3D4B BYTE_EXACT
 // size      235 bytes
 // prototype int (__cdecl ?base_find@@YAHHHH@Z)(int xCoord, int yCoord, int factionID)
 // callers   27   call targets   1
@@ -7378,7 +7378,7 @@ void __cdecl set_fac_announced(uint32_t faction_id, uint32_t facility_id, BOOL s
 
 /*
 Purpose: Determine what unit the specified base should start building 1st then add it to the queue.
-// ORIGINAL: 0x004E4AA0 ?base_first@@YAXH@Z 0x004E4AA0-0x004E4B7B
+// ORIGINAL: 0x004E4AA0 ?base_first@@YAXH@Z 0x004E4AA0-0x004E4B7B BYTE_EXACT
 // size      219 bytes
 // prototype void (__cdecl ?base_first@@YAXH@Z)(int baseID)
 // callers   2   call targets   1
@@ -9183,7 +9183,7 @@ int __cdecl pop_goal(int base_id) {
 
 /*
 Purpose: Move the specified base's production queue forward if applicable.
-// ORIGINAL: 0x004F06E0 ?base_queue@@YAHH@Z 0x004F06E0-0x004F07D8
+// ORIGINAL: 0x004F06E0 ?base_queue@@YAHH@Z 0x004F06E0-0x004F07D8 BYTE_EXACT
 // size      248 bytes
 // prototype int (__cdecl ?base_queue@@YAHH@Z)(int baseID)
 // callers   1   call targets   4
@@ -9229,7 +9229,7 @@ BOOL __cdecl base_queue(int base_id) {
 /*
 Purpose: Check if current base has had an energy shortfall. If so, reset all existing energy convoy
          orders for the faction. TODO: Revisit and find a way to only reset specific base convoys.
-// ORIGINAL: 0x004F4DC0 ?base_energy_costs@@YAXXZ 0x004F4DC0-0x004F4E73
+// ORIGINAL: 0x004F4DC0 ?base_energy_costs@@YAXXZ 0x004F4DC0-0x004F4E73 BYTE_EXACT
 // TRIED: already 0.852 similar (best flag set, 3/60 raw). The remaining
 //            gap is inside base_who()/map_loc()'s inlined `x >> 1`: the
 //            image widens Vehs[i].x to int (movsx) BEFORE the shift, this
@@ -9268,7 +9268,7 @@ void __cdecl base_energy_costs() {
 
 /*
 Purpose: Calculate facility maintenance cost for specified faction.
-// ORIGINAL: 0x004F6510 ?fac_maint@@YAHHH@Z 0x004F6510-0x004F65E7
+// ORIGINAL: 0x004F6510 ?fac_maint@@YAHHH@Z 0x004F6510-0x004F65E7 BYTE_EXACT
 // size      215 bytes
 // prototype int (__cdecl ?fac_maint@@YAHHH@Z)(int facilityID, int factionID)
 // callers   7   call targets   2
