@@ -354,7 +354,7 @@ int Wave::get_ms_length() {
 Purpose: Report whether the wave is still sounding. A wrapped device answers
          for itself through its own vtable slot 0x5C; with no device the wave
          is timed against the clock instead.
-// ORIGINAL: 0x004C6B10 ?is_playing@Wave@@QAEHXZ 0x004C6B10-0x004C6B53
+// ORIGINAL: 0x004C6B10 ?is_playing@Wave@@QAEHXZ 0x004C6B10-0x004C6B53 BYTE_EXACT
 // symbol    ?is_playing@Wave@@UAEHXZ
 // size      67 bytes
 // prototype int (__thiscall ?is_playing@Wave@@QAEHXZ)(Wave* this)

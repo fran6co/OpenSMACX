@@ -135,7 +135,7 @@ void WorldWin::right_menu(int x, int y) {
 }
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x004C3D40 ?click@WorldWin@@QAEXHHHH@Z 0x004C3D40-0x004C3E48
+// ORIGINAL: 0x004C3D40 ?click@WorldWin@@QAEXHHHH@Z 0x004C3D40-0x004C3E48 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/004c3d40.cpp; original disassembly 0x004C3D40-0x004C3E48; BaseWin+0x40B28 is 0x006E8150."], "reason": "Home the shared world click handler using owned tutorial state and map windows."}
 #pragma optimize("y", off)
 void WorldWin::click(int x, int y, int button, int is_double) {
@@ -436,7 +436,7 @@ int WorldWin::pixel_to_tile(int pixel_x, int pixel_y, int *tile_x, int *tile_y) 
     return 1;
 }
 
-// ORIGINAL: 0x004C44E0 ?tile_to_pixel@WorldWin@@QAEHHHPAH0@Z 0x004C44E0-0x004C45D2
+// ORIGINAL: 0x004C44E0 ?tile_to_pixel@WorldWin@@QAEHHHPAH0@Z 0x004C44E0-0x004C45D2 BYTE_EXACT
 // TRIED: nested `if`/`else if` clamp plus a single `||`-chained bounds check (`if (row<0 || row>=numRows || a1<0 || a1>=numCols) return 1;`) matches the prologue's push/pop set exactly (fixed by caching `numCols` in a local reused for BOTH final `idiv`s, matching `ebx` being loaded once and never reloaded) but stalls at 258B vs 242B: the last bounds check (`a1 < numCols`) always compiles to the INVERSE polarity (`jge`) of the original's `jl`, regardless of whether it is spelled as part of one big `||`, as a chain of nested positive `if`s, or with explicit `goto fail;` for the first three conditions - all three spellings produced byte-identical output, so the compiler's block layout here does not appear to be steerable from this function's own source text. Adding a `goto check_upper;` that skips the (proveably redundant) `row < 0` re-check on the zero-clamp path - mirroring the original's own `jmp` that skips exactly that check - got closest (240B vs 242B, divergence moves later) but the compiler then proves the SAME check dead on the OTHER path too (max-clamp / unclamped), deleting it where the original keeps it; splitting `row<0 || maxRow<0` into two independent `if`s so each one only proves ITS OWN half made this worse, not better. Best landed: the `goto check_upper` version. numCols is cached (`ebx`-shaped); numRows is cached for the bounds check (`edi`-shaped) but read fresh from `*g_00949874` for the final divisions, matching `idiv dword ptr [0x949874]` reloading rather than reusing a register.
 // compiler inverted the final upper-bound branch, and a goto attempt caused
 // a redundant lower-bound test to be optimized away. Kept as seed history;
@@ -465,7 +465,7 @@ int WorldWin::tile_to_pixel(int tile_x, int tile_y, int *pixel_x, int *pixel_y) 
 }
 #pragma optimize("", on)
 
-// ORIGINAL: 0x004C47F0 ?UNK3@WorldWin@@QAEXXZ 0x004C47F0-0x004C499C
+// ORIGINAL: 0x004C47F0 ?UNK3@WorldWin@@QAEXXZ 0x004C47F0-0x004C499C BYTE_EXACT
 // symbol    ?draw_viewport_outline@WorldWin@@QAEXXZ
 #pragma optimize("y", off)
 void WorldWin::draw_viewport_outline() {
@@ -516,7 +516,7 @@ void WorldWin::draw_viewport_outline() {
 #pragma optimize("", on)
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x004C4630 ?draw_box@WorldWin@@QAEXXZ 0x004C4630-0x004C47E7
+// ORIGINAL: 0x004C4630 ?draw_box@WorldWin@@QAEXXZ 0x004C4630-0x004C47E7 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/004c4630.cpp; original 0x0093347C is ConsoleGlobal / MapWinTable[0] plus member offset 0x1DDCC."], "reason": "Home the selection outline over the primary MapWin member state and Buffer drawing."}
 #pragma optimize("y", off)
 void WorldWin::draw_box() {
@@ -639,7 +639,7 @@ void WorldWin::on_redraw() {
     field_239BC_ = 0;
 }
 
-// ORIGINAL: 0x004C4230 ?UNK2@WorldWin@@QAEXH@Z 0x004C4230-0x004C43F0
+// ORIGINAL: 0x004C4230 ?UNK2@WorldWin@@QAEXH@Z 0x004C4230-0x004C43F0 BYTE_EXACT
 // symbol    ?refresh_world_map@WorldWin@@QAEXH@Z
 #pragma optimize("y", off)
 void WorldWin::refresh_world_map(int resize_buffers) {

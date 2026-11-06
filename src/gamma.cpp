@@ -196,7 +196,7 @@ void Gamma::adjust_palette() {
 // Superseded seed deleted; seed paths below are historical Git provenance.
 // Historical seed observations (not fresh measurements or acceptance):
 // TRIED: `RECT rect = *(RECT*)(self+0xa14);` (struct assignment through one base pointer, not 4 independent offset loads - the latter drops the original's `lea`+shared-`ecx` shape entirely) gets every field store byte-exact through the loop setup. The y2 = (bottom-top)+top redundant identity the ASM computes (sub ecx,eax; add ecx,eax) is always constant-folded to a plain `bottom` by every /O flag combination tried, whether written inline or through a named `height` temp - MISMATCH #19 is that fold, not a missed field.
-// ORIGINAL: 0x005C9420 ?on_redraw@Gamma@@QAEXXZ 0x005C9420-0x005C951D
+// ORIGINAL: 0x005C9420 ?on_redraw@Gamma@@QAEXXZ 0x005C9420-0x005C951D BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/005c9420.cpp records the 236-line palette strip and the gamma label", "src/gamma.h owns rect1_, font_, gamma_ and the Buffer base at their measured offsets", "Original format string at 0x00691E7C is %f"], "reason": "Draw the dialog's colour ramp and current gamma through its actual GraphicWin and Buffer bases, overriding Win's slot 12."}
 // Gamma overrides the existing Win redraw slot; its emitted method is virtual.
 // symbol    ?on_redraw@Gamma@@UAEXXZ
@@ -292,7 +292,7 @@ void Gamma::adjust_pal(double gamma) {
 // symbol    ??1Gamma@@UAE@XZ
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x005C93C0 ?on_button_clicked@Gamma@@QAEXH@Z 0x005C93C0-0x005C9406
+// ORIGINAL: 0x005C93C0 ?on_button_clicked@Gamma@@QAEXH@Z 0x005C93C0-0x005C9406 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/005c93c0.cpp separates button -1 scroll acceptance from button -2 initial-gamma restoration", "src/gamma.h identifies gamma_, initialGamma_ and the embedded Scroll", "Win slot 58 is release_modal, the original indirect target"], "reason": "Apply or cancel the gamma adjustment and close the modal dialog through its real virtual method."}
 // symbol    ?on_button_clicked@Gamma@@UAEXH@Z
 void Gamma::on_button_clicked(int button_id) {
