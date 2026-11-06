@@ -58,7 +58,7 @@ void wait_for_animation_frame(DWORD started) {
 // The compiler destroys sprites_[2..0], sprite1_, buffer_, then the Menu
 // base in the order observed at 0x0051DC10. Keep this as C++ ownership,
 // not a manual walk over the object bytes.
-// ORIGINAL: 0x0051DC10 ??1AlphaMenu@@QAE@XZ 0x0051DC10-0x0051DC86;0x0065D220-0x0065D24E FILE
+// ORIGINAL: 0x0051DC10 ??1AlphaMenu@@QAE@XZ 0x0051DC10-0x0051DC86;0x0065D220-0x0065D24E FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/0051dc10.cpp"], "reason": "C++ AlphaMenu owns Menu, Buffer and Sprite members whose reverse lifetime order follows the original destructor and exception-unwind trace."}
 // compile_context src/console.cpp
 // TRIED: computed that AlphaMenu : public Menu (Menu ends at exactly 0xB64, where Buffer buffer_ starts, which ends at exactly 0x10EC, where Sprite sprite_ starts, ending at 0x1118 where Sprite sprites_[3] starts) - a real member layout that would let the SEH prologue emerge automatically, but AlphaMenu is the fixed scaffold class and cannot carry real members here. Explicit dtor calls at the right offsets/order compile and are structurally faithful; the SEH frame (push -1/handler, unwind funclets) is not reproduced - same open item as 0x00629D60 (Flic::Flic) and 0047acf0.cpp.
@@ -433,7 +433,7 @@ void AlphaMenu::on_mouse_move(int x, int y) {
 // symbol    ??_GAlphaMenu@@UAEPAXI@Z
 // kind game
 
-// ORIGINAL: 0x0051DF70 ??_GAlphaMenu@@WEEE@AEPAXI@Z 0x0051DF70-0x0051DF7B FILE
+// ORIGINAL: 0x0051DF70 ??_GAlphaMenu@@WEEE@AEPAXI@Z 0x0051DF70-0x0051DF7B FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["historical source:src/deleting_thunks.cpp; preserved full original span 0x0051DF70-0x0051DF7B and its original scalar-adjustor identity.", "pinned Console constructor 0x0050F535 stores AlphaMenu Buffer-view table 0x0066ED80 at alpha_menu_+0x444; table slot 0 is exactly 0x0051DF70. Primary view at +0 stores table 0x0066ED88 with slot 0 = 0x0051DC90.", "pinned 0x0051DF70 subtracts 0x444 from ECX and jumps to scalar ??_GAlphaMenu at 0x0051DC90 without changing the flags argument.", "the prior retained AlphaMenu COFF showed its table relocation selecting ??_EAlphaMenu@@WEEE@AEPAXI@Z; that thunk subtracts 0x444 and jumps to weak primary E, whose mode-2 fallback is exactly ??_GAlphaMenu@@UAEPAXI@Z. The prior linked Buffer-view slot 0 selected that thunk; this is historical evidence, not current qualification or a new vector-deleting original identity.", "the source class's GraphicWin/Buffer secondary view and pinned +0x444 store explain this receiver adjustment; do not generalize the E/G alias to other classes without their own relocation and table proof.", "the byte-exact claim is historical and remains a restoration obligation; no current equality or whole-application acceptance is asserted."], "reason": "Bind AlphaMenu's original Buffer-view scalar deleting adjustor to the compiler-emitted secondary E thunk because the pinned view relationship and prior physical snapshot show its mode-2 weak fallback resolving to the generated scalar primary G body; fresh current-build qualification remains pending."}
 // compile_context src/console.cpp
 // symbol    ??_EAlphaMenu@@WEEE@AEPAXI@Z
