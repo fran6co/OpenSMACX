@@ -84,6 +84,7 @@ FontQueue::~FontQueue() {
 // ORIGINAL: 0x005592D0 ?get_zoom@FontQueue@@QAEHHHHH@Z 0x005592D0-0x005593D9
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned5592D0..5593D9 computes signed scale and height in two division stages, substitutes11 for10, and reads the shared691E6C/70 override only when its numerator is positive. The constructor559290 establishes three Font objects of stride28 followed by height/style/order arrays at78/84/90.", "Original559334..559374 rotates the oldest slot, publishes keys before calling actual Font::init618F40 with the source-owned DefaultFontFace, ignores the status result and returns the same Font pointer. Original559382..5593D9 promotes a cache hit without initialization; missing order entries leave the order unchanged. Retain the unclaimed seed and catalogue signature as historical evidence."], "reason": "Recover the three-slot font-height/style LRU as the existing FontQueue owner, returning its actual Font member rather than a synthetic integer address."}
 // symbol    ?get_zoom@FontQueue@@QAEPAVFont@@HHHH@Z
+#pragma optimize("y", off)
 Font *FontQueue::get_zoom(int zoom, int numerator, int denominator, int style) {
     int scale;
     if (MapWinCaptionScale > 0) {
@@ -98,14 +99,18 @@ Font *FontQueue::get_zoom(int zoom, int numerator, int denominator, int style) {
 
     for (int slot = 0; slot < 3; ++slot) {
         if (heights_[slot] == height && styles_[slot] == style) {
+            int found = -1;
             for (int position = 0; position < 3; ++position) {
                 if (lru_slots_[position] == slot) {
-                    for (int next = position; next < 2; ++next) {
-                        lru_slots_[next] = lru_slots_[next + 1];
-                    }
-                    lru_slots_[2] = slot;
+                    found = position;
                     break;
                 }
+            }
+            if (found >= 0) {
+                for (int next = found; next < 2; ++next) {
+                    lru_slots_[next] = lru_slots_[next + 1];
+                }
+                lru_slots_[2] = slot;
             }
             return &fonts_[slot];
         }
@@ -124,6 +129,7 @@ Font *FontQueue::get_zoom(int zoom, int numerator, int denominator, int style) {
     font->init(DefaultFontFace, height, style);
     return font;
 }
+#pragma optimize("", on)
 
 // ===== MANAGED GLOBALS - real objects, homed to their domain =====
 // In the shipped image these live at fixed data addresses and are

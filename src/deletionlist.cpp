@@ -136,34 +136,27 @@ Purpose: Convert a vehicle id across the deletion list's queued deletions.
 // RECOVERY_BINDING: v1 {"evidence": ["Original52DDC0..52DE65; retired seed git:117282ee:src/unrecovered/0052ddc0.cpp records the same identity and spans.", "The records are deletionlist.h's own 0x3C-stride entries with the occupancy mask lock.h's LockEnableMask (0x009A64E8), the owner count at +0x5A0 and the per-record id run at +0xA; the log_say format is the image's DelConverted string bound beside this body."], "reason": "Coverage transcription of the id conversion on the typed DeletionList receiver with the subtract-below walk exactly as the seed orders it."}
 Status: Coverage transcription - unclaimed body
 */
-int DeletionList::convert(int original_id, int new_owner) {
-    int result = original_id;
-    int search = new_owner + 1;
-    const int total = current_owner_;
-    if (search <= total) {
-        do {
-            const int slot = find_owner_slot(search);
-            if (slot >= 0) {
-                const DeletionRecord &record = records_[slot];
-                int count = record.count_;
-                if (count > 0) {
-                    for (int index = 0; index < count; ++index) {
-                        const int deleted_id = record.vehicle_ids_[index];
-                        if (deleted_id == result) {
-                            result = -1;
-                        } else if (deleted_id < result) {
-                            result--;
-                        }
-                    }
+int DeletionList::convert(int veh_id, int new_owner) {
+    const int original_id = veh_id;
+    for (int search = new_owner + 1; search <= current_owner_; search++) {
+        const int slot = find_owner_slot(search);
+        if (slot >= 0) {
+            const DeletionRecord &record = records_[slot];
+            int count = record.count_;
+            for (int index = 0; index < count; ++index) {
+                const int deleted_id = record.vehicle_ids_[index];
+                if (deleted_id == veh_id) {
+                    veh_id = -1;
+                } else if (deleted_id < veh_id) {
+                    veh_id--;
                 }
             }
-            search++;
-        } while (search <= total);
-        if (original_id != result) {
-            log_say(StrDelConvertedIndex, original_id, result, 0);
         }
     }
-    return result;
+    if (original_id != veh_id) {
+        log_say(StrDelConvertedIndex, original_id, veh_id, 0);
+    }
+    return veh_id;
 }
 
 // DeletionList::add_deletion, 0x0052DE70. Enqueue one multiplayer deletion:

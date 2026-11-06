@@ -93,12 +93,15 @@ int AlphaMenu::init(Win *parent) {
   field_A28_ = 5;
 
   int result;
+  int frame_y;
+  Sprite *frame;
+  int remaining;
   if (WinScreenWidth == 0x320) {
     result = sheet.load_pcx("menu.pcx", nullptr, 10, 0xEC);
     sprite1_.extract(&sheet, WinFillColour, 1, 1, 0x8A, 6, nullptr);
-    int frame_y = 8;
-    Sprite *frame = sprites_;
-    for (int remaining = 3; remaining != 0; --remaining) {
+    frame_y = 8;
+    frame = sprites_;
+    for (remaining = 3; remaining != 0; --remaining) {
       frame->extract(&sheet, WinFillColour, 1, frame_y, 0x8A, 0x12,
                      nullptr);
       frame_y += 0x13;
@@ -107,9 +110,9 @@ int AlphaMenu::init(Win *parent) {
   } else {
     result = sheet.load_pcx("menu2.pcx", nullptr, 10, 0xEC);
     sprite1_.extract(&sheet, WinFillColour, 1, 1, 0x8B, 6, nullptr);
-    int frame_y = 8;
-    Sprite *frame = sprites_;
-    for (int remaining = 3; remaining != 0; --remaining) {
+    frame_y = 8;
+    frame = sprites_;
+    for (remaining = 3; remaining != 0; --remaining) {
       frame->extract(&sheet, WinFillColour, 1, frame_y, 0x8B, 0x12,
                      nullptr);
       frame_y += 0x13;
@@ -124,7 +127,7 @@ int AlphaMenu::init(Win *parent) {
       nullptr, nullptr);
   if (init_result != 0) return init_result;
 
-  static_cast<Buffer *>(this)->set_markup_enabled(0);
+  Buffer::set_markup_enabled(0);
   adjust();
   return 0;
 }
@@ -159,22 +162,25 @@ void AlphaMenu::compute() {
   const int row_height = sprites_[0].height();
   spot_.init(count_);
 
-  int top = sprite1_.height();
+  RECT top_rect;
+  RECT bottom_rect;
+  top_rect.top = sprite1_.height();
   const int width = sprites_[0].width();
-  int top_end = top + row_height;
-  int bottom = (count_ - 1) * row_height + top;
-  int bottom_end = bottom + row_height;
+  top_rect.bottom = top_rect.top + row_height;
+  bottom_rect.top = (count_ - 1) * row_height + top_rect.top;
+  bottom_rect.bottom = bottom_rect.top + row_height;
 
   for (int i = 0; i < count_; ++i) {
     if ((entries_[i].flags & 1) == 0) continue;
     if (entries_[i].flags & 4) {
-      spot_.add(i, 0, 0, bottom, width, bottom_end - bottom);
-      bottom -= row_height;
-      bottom_end -= row_height;
+      spot_.add(i, 0, 0, bottom_rect.top, width, bottom_rect.bottom - bottom_rect.top);
+      int dy = -row_height;
+      bottom_rect.top += dy;
+      bottom_rect.bottom += dy;
     } else {
-      spot_.add(i, 0, 0, top, width, top_end - top);
-      top += row_height;
-      top_end += row_height;
+      spot_.add(i, 0, 0, top_rect.top, width, top_rect.bottom - top_rect.top);
+      top_rect.top += row_height;
+      top_rect.bottom += row_height;
     }
   }
 }
@@ -233,40 +239,43 @@ int __cdecl AlphaMenu::fill_func(GraphicWin *target, int mode, RECT *clip) {
   return 1;
 }
 
+// Draws one menu sprite at the left edge with its own transparent key.
+static inline void draw_menu_sprite(Sprite *sprite, Buffer *destination, int y) {
+  sprite->draw(destination, sprite->transparent_index(), 0, y, 1, 1);
+}
+
 // Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x00403340 ?on_redraw@AlphaMenu@@QAEXXZ 0x00403340-0x00403544 FILE
 // RECOVERY_BINDING: v1 {"evidence": ["Retired seed provenance: src/unrecovered/00402f40.cpp,004032a0.cpp,00403af0.cpp and src/recovered/units/00403340.cpp,00403680.cpp,00403830.cpp; pinned original callback style27/29, positive hide height, branch-only clip restoration and actual caller dispatch audited by coordinator."], "reason": "Recover AlphaMenu owner behavior through existing Menu/GraphicWin/Buffer inheritance and owned Sprite lifetimes; historical seed identity and extents remain obligations, not measurement claims."}
 // symbol    ?on_redraw@AlphaMenu@@UAEXXZ
 void AlphaMenu::on_redraw() {
   GraphicWin::fill(9);
-  sprite1_.draw(static_cast<Buffer *>(this),
-                sprite1_.transparent_index(), 0, 0, 1, 1);
+  draw_menu_sprite(&sprite1_, this, 0);
   Buffer::set_font(PopupMenuBoldFont, nullptr, nullptr, nullptr);
 
   int y = sprite1_.height();
-  for (int sprite_index = 0; sprite_index < count_; ++sprite_index) {
-    Sprite *sprite = &sprites_[0];
-    if (sprite_index == field_A24_) {
-      sprite = &sprites_[2];
-    } else if (sprite_index == MenuSelection) {
-      sprite = &sprites_[1];
+  int i;
+  for (i = 0; i < count_; ++i) {
+    if (i == field_A24_) {
+      draw_menu_sprite(&sprites_[2], this, y);
+    } else if (i == MenuSelection) {
+      draw_menu_sprite(&sprites_[1], this, y);
+    } else {
+      draw_menu_sprite(&sprites_[0], this, y);
     }
-    sprite->draw(static_cast<Buffer *>(this),
-                 sprite->transparent_index(), 0, y, 1, 1);
     y += sprites_[0].height();
   }
 
-  for (int label_index = 0; label_index < count_; ++label_index) {
-    const uint8_t flags = entries_[label_index].flags;
-    if ((flags & 1) == 0) continue;
+  for (i = 0; i < count_; ++i) {
+    if ((entries_[i].flags & 1) == 0) continue;
 
-    if (label_index == field_A24_) {
-      if (flags & 2)
+    if (i == field_A24_) {
+      if (entries_[i].flags & 2)
         Buffer::set_text_color(TextColourTable[34], TextColourTable[35], 1, 1);
       else
         Buffer::set_text_color(TextColourTable[30], TextColourTable[31], 1, 1);
     } else {
-      if (flags & 2)
+      if (entries_[i].flags & 2)
         Buffer::set_text_color(TextColourTable[36], TextColourTable[37], 1, 1);
       else
         Buffer::set_text_color(TextColourTable[32], TextColourTable[33], 1, 1);
@@ -274,13 +283,16 @@ void AlphaMenu::on_redraw() {
 
     char text[256];
     text[0] = '\0';
-    strcat(text, entries_[label_index].text);
+    strcat(text, entries_[i].text);
     RECT row;
-    spot_.get_rect_at(label_index, &row);
+    spot_.get_rect_at(i, &row);
     row.left += 8;
     row.right -= 8;
     CharUpperA(text);
-    Buffer::write_l(text, &row, strlen(text));
+    char *label = text;
+    if (label != 0) {
+      Buffer::write_l(label, &row, strlen(label));
+    }
   }
 }
 

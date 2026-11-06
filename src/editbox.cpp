@@ -164,17 +164,23 @@ int EditBox::text_fits() {
         masked[0] = 0;
         strcat(masked, text_);
         for (char *p = masked; *p; ++p) *p = '*';
-        if (field_B3C_ & 2) {
-            int available = dib_.bmiHeader.biWidth;
-            int width = Buffer::text_width(masked,
-                static_cast<int>(field_B44_ - field_B18_));
-            return width < available - static_cast<int>(field_B34_) * 2;
+    }
+    if (field_B3C_ & 2) {
+        int available = dib_.bmiHeader.biWidth;
+        int width = Buffer::text_width(masked,
+            static_cast<int>(field_B44_ - field_B18_));
+        if (width >= available - static_cast<int>(field_B34_) * 2) {
+            return 0;
+        }
+    } else {
+        int available = dib_.bmiHeader.biWidth;
+        int width = Buffer::text_width(text_ + static_cast<int>(field_B18_),
+            static_cast<int>(field_B44_ - field_B18_));
+        if (width >= available - static_cast<int>(field_B34_) * 2) {
+            return 0;
         }
     }
-    int available = dib_.bmiHeader.biWidth;
-    int width = Buffer::text_width(text_ + static_cast<int>(field_B18_),
-        static_cast<int>(field_B44_ - field_B18_));
-    return width < available - static_cast<int>(field_B34_) * 2;
+    return 1;
 }
 
 // 615630. No invented bounds clamp: preserve the original selection cases.

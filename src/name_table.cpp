@@ -82,11 +82,7 @@ void NameTable::clear() {
 void NameTable::install(const NameTableEntry *entry) {
     const unsigned int low = entry->low_index_;
     const unsigned int high = entry->high_index_;
-    NameTableEntry *allocation = new NameTableEntry;
-    NameTableEntry *clone = 0;
-    if (allocation != 0) {
-        clone = allocation;
-    }
+    NameTableEntry *clone = new NameTableEntry;
 
     // Deliberately unconditional, including the original allocation-failure
     // path where clone is null.
@@ -96,30 +92,20 @@ void NameTable::install(const NameTableEntry *entry) {
         clone->high_index_ = low;
     }
     clone->low_index_ = low;
-    if (high < low) {
+    if (low > high) {
         clone->low_index_ = high;
     }
     clone->high_index_ = high;
     clone->status_ = entry->status_;
 
-    unsigned int slot_index = low;
-    if (low <= high) {
-        do {
-            NameTableEntry *record = slots_[slot_index];
-            if (record != 0) {
-                slot_index = remove_range(record);
-            }
-            ++slot_index;
-        } while (slot_index <= high);
-    }
-    if (low <= high) {
-        NameTableEntry **slot = slots_ + low;
-        unsigned int count = high - low + 1;
-        while (count != 0) {
-            *slot = clone;
-            ++slot;
-            --count;
+    unsigned int slot_index;
+    for (slot_index = low; slot_index <= high; ++slot_index) {
+        if (slots_[slot_index] != 0) {
+            slot_index = remove_range(slots_[slot_index]);
         }
+    }
+    for (slot_index = low; slot_index <= high; ++slot_index) {
+        slots_[slot_index] = clone;
     }
 }
 // ORIGINAL: 0x004C74B0 sub_4c74b0 0x004C74B0-0x004C74F0 BYTE_EXACT

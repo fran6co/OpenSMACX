@@ -245,51 +245,29 @@ void StringBox::on_redraw() {
         text_width -= scroll_.bar_thickness_;
     }
 
-    int position = static_cast<int>(top_line_);
-    if (position <= list.entry_count_ - 1) {
-        list.current_ = list.head_;
-        if (position < 0) {
-            int steps = abs(position);
-            if (steps <= list.entry_count_) {
-                while (steps-- > 0) {
-                    list.current_ = list.current_->previous;
-                }
-                position += list.entry_count_;
-                list.current_position_ = position;
-            }
-        } else {
-            int steps = position;
-            while (steps-- > 0) {
-                list.current_ = list.current_->next;
-            }
-            list.current_position_ = position;
-        }
-    }
+    list.seek_pos(static_cast<int>(top_line_));
 
     if (per_line_draw_ == 0) {
         write_strings(&list, 0, 0, text_width, 2);
         return;
     }
     int remaining = -dib_.bmiHeader.biHeight;
-    for (int index = 0; index < list.entry_count_ && remaining > 0; ++index) {
-        StringStructPayload *payload = list.head_ != 0
-                                           ? list.current_->string_payload() : 0;
-        char *text = payload != 0 ? payload->text : 0;
-        remaining -= wrap_height(text, text_width);
+    int index = 0;
+    while (remaining > 0 && index++ < list.entry_count_) {
+        remaining -= wrap_height(
+            list.head_ != 0 ? list.current_->string_payload()->text : 0,
+            text_width);
         if (remaining < 0) {
             break;
         }
-        if (payload == 0 || (payload->field_8_ & 2) == 0) {
-            wrap(text, 0, remaining, text_width);
+        if ((list.head_ != 0 ? list.current_->string_payload()->field_8_ : 0) & 2) {
+            wrap_cent(list.head_ != 0 ? list.current_->string_payload()->text : 0,
+                      0, remaining, text_width);
         } else {
-            wrap_cent(text, 0, remaining, text_width);
+            wrap(list.head_ != 0 ? list.current_->string_payload()->text : 0,
+                 0, remaining, text_width);
         }
-        if (list.head_ != 0) {
-            list.current_ = list.current_->next;
-            if (++list.current_position_ == list.entry_count_) {
-                list.current_position_ = 0;
-            }
-        }
+        list.next_entry();
     }
 }
 

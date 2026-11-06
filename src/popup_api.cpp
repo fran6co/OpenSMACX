@@ -556,10 +556,7 @@ static int PopupSavedLocY = 0x2000;  // 0x006973E0
 // origin, field_30BC_/_30C0_ a width and height added to that origin to
 // close the rectangle. Inferred from the arithmetic pattern alone.
 // Zero-initialised .bss in the image at 0x009BC058..0x009BC064.
-static int PopupCloseRectLeft;    // 0x009BC058
-static int PopupCloseRectTop;     // 0x009BC05C
-static int PopupCloseRectRight;   // 0x009BC060
-static int PopupCloseRectBottom;  // 0x009BC064
+static RECT PopupCloseRect;  // 0x009BC058
 /*
 // ORIGINAL: 0x006276A0 ?pops@@YAHPADPADHPADHPAUSprite@@HHP6AHXZ@Z 0x006276A0-0x006277F9
 // TRIED: the pending_bodies scaffold this replaces had the two start()/sprite() success checks inverted (`== 0` where the image's `je` jumps to the CONTINUE label when the callee returns 0, i.e. success is 0 and only a nonzero result is an error), and folded read_check()'s return value into the *(self+0x3100) store instead of keeping them as the two separate globals (0x9BC06C and 0x9BC070) the image writes.
@@ -641,12 +638,10 @@ int __cdecl pops(char *caption, char *label, int value, char *override_text,
         // store Left, Bottom, and finally Right - sunk past the pops. The
         // mutate-in-place spelling computed w+x last and commuted the add
         // into x's register.
-        PopupCloseRectTop = y;
-        const int closeRectRight = w + x;
-        const int closeRectBottom = y + h;
-        PopupCloseRectLeft = x;
-        PopupCloseRectBottom = closeRectBottom;
-        PopupCloseRectRight = closeRectRight;
+        PopupCloseRect.top = y;
+        PopupCloseRect.right = x + w;
+        PopupCloseRect.left = x;
+        PopupCloseRect.bottom = y + h;
         return execResult;
     }
 

@@ -34,8 +34,7 @@ void __cdecl intervention(int target_faction, int actor_faction) {
         if (candidate == target_faction || candidate == actor_faction) continue;
 
         // LockEnableMask byte +1 (native 0x009A64E9) is the faction-alive mask.
-        const uint8_t alive = static_cast<uint8_t>(GameDataStateStorage.fields_.lock_masks_.enable_mask_ >> 8);
-        if ((alive & (1u << candidate)) == 0) continue;
+        if ((GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_ & (1 << candidate)) == 0) continue;
         if ((PlayersData[candidate].diplo_treaties[target_faction] & 1u) == 0) continue;
         if ((PlayersData[candidate].diplo_treaties[actor_faction] & 0x11u) != 0) continue;
 
@@ -68,18 +67,17 @@ void __cdecl intervention(int target_faction, int actor_faction) {
         parse_says(6, Players[actor_faction].noun_faction, -1, -1);
 
         const uint32_t human_mask = GameDataStateStorage.fields_.lock_masks_.enable_mask_ & 0xFFu;
-        if ((human_mask & (1u << target_faction)) != 0 ||
-            (human_mask & (1u << actor_faction)) != 0) {
-            if ((human_mask & (1u << actor_faction)) != 0) {
+        if (((1u << actor_faction) & human_mask) != 0 || (human_mask & (1u << target_faction)) != 0) {
+            if (((1u << actor_faction) & human_mask) != 0) {
                 PlayersData[actor_faction].diplo_spoke[candidate] = GameDataStateStorage.fields_.turn_current_num_;
             }
             treaty_on(candidate, actor_faction, 0x80000018);
             set_treaty(candidate, actor_faction, 0x40, TRUE);
         }
 
-        if (ConsoleGlobal.faction_id_ == actor_faction) {
+        if (actor_faction == ConsoleGlobal.faction_id_) {
             X_pop("AIDSTHEM", 0);
-        } else if (ConsoleGlobal.faction_id_ == target_faction) {
+        } else if (target_faction == ConsoleGlobal.faction_id_) {
             X_pop("AIDSUS", 0);
         }
     }
@@ -90,16 +88,13 @@ void __cdecl intervention(int target_faction, int actor_faction) {
 // TRIED: MISMATCH #6 'push' vs 'mov'. Tried both `if (n>0){...}` and the inverted `if (n<=0) return 0;` early-out for the outer guard; neither reproduces the original's push-esi-before-branch / xor+cmp zero-reuse pattern. veh_lift/veh_drop's second push (used as the leftover eax arg to the paired veh_drop call) is reproduced by calling veh_lift(i); veh_drop(i, x, y) as two independent statements rather than chaining a return value, since veh_lift is declared void in this unit.
 int __cdecl do_withdrawal(int faction_id, int other_faction_id) {
     int result = 0;
-    if (GameDataStateStorage.fields_.vehicle_current_count_ <= 0) return 0;
-
     for (int veh_id = 0; veh_id < GameDataStateStorage.fields_.vehicle_current_count_; ++veh_id) {
-        Veh &veh = Vehs[veh_id];
-        if (veh.faction_id != other_faction_id) continue;
-        const int proto_id = veh.proto_id;
+        if (Vehs[veh_id].faction_id != other_faction_id) continue;
+        const int proto_id = Vehs[veh_id].proto_id;
         if (VehPrototypes[proto_id].armor_id == 0x0B) continue;
 
-        const int x = veh.x;
-        const int y = veh.y;
+        const int x = Vehs[veh_id].x;
+        const int y = Vehs[veh_id].y;
         Map &tile = MapTiles[MapLongitude * y + (x >> 1)];
         if ((tile.climate & ~0x1F) < ALT_BIT_SHORE_LINE) continue;
         if (tile.territory != faction_id) continue;
@@ -135,9 +130,9 @@ int __cdecl do_withdrawal(int faction_id, int other_faction_id) {
                 }
 
                 veh_drop(veh_lift(veh_id), dest_x, dest_y);
-                veh.visibility = 0;
-                veh.order = ORDER_NONE;
-                veh.state &= 0xFCFFBDFF;
+                Vehs[veh_id].visibility = 0;
+                Vehs[veh_id].order = ORDER_NONE;
+                Vehs[veh_id].state &= 0xFCFFBDFF;
                 draw_tiles(x, y, 2);
                 ++result;
             }
@@ -148,10 +143,10 @@ int __cdecl do_withdrawal(int faction_id, int other_faction_id) {
             const int dest_x = Bases[base_id].x;
             const int dest_y = Bases[base_id].y;
             veh_drop(veh_lift(veh_id), dest_x, dest_y);
-            veh.visibility = 0;
-            veh.order = ORDER_NONE;
-            veh.state &= 0xFCFFBDFF;
-            const int ability = has_abil(veh.proto_id, 2);
+            Vehs[veh_id].visibility = 0;
+            Vehs[veh_id].order = ORDER_NONE;
+            Vehs[veh_id].state &= 0xFCFFBDFF;
+            const int ability = has_abil(Vehs[veh_id].proto_id, 2);
             draw_tile_fixup(x, y, ability, 2);
             ++result;
         }

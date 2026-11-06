@@ -56,6 +56,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl stack_sort(int veh_id) {
+    int veh_id_put = -1;
     int x = Vehs[veh_id].x;
     int y = Vehs[veh_id].y;
     // veh_top(), hand-inlined - matching stack_fix's precedent (see its own
@@ -65,15 +66,15 @@ void __cdecl stack_sort(int veh_id) {
         next_veh_id = -1;
     } else {
         next_veh_id = veh_id;
-        for (int i = Vehs[next_veh_id].prev_veh_id_stack; i >= 0; i = Vehs[i].prev_veh_id_stack) {
+        for (int16_t i = Vehs[next_veh_id].prev_veh_id_stack; i >= 0; i = Vehs[i].prev_veh_id_stack) {
             next_veh_id = i;
         }
     }
-    int veh_id_put = -1;
     int veh_id_loop;
     if (next_veh_id >= 0) {
         do {
-            veh_id_loop = Vehs[next_veh_id].next_veh_id_stack; // removed redundant < 0 check
+            // The image keeps this dead sign test inside the walk.
+            veh_id_loop = next_veh_id < 0 ? next_veh_id : Vehs[next_veh_id].next_veh_id_stack;
             if (veh_cargo(next_veh_id) || has_abil(Vehs[next_veh_id].proto_id, ABL_CARRIER)) {
                 veh_id_put = next_veh_id;
                 veh_put(next_veh_id, -3, -3);
@@ -87,14 +88,14 @@ void __cdecl stack_sort(int veh_id) {
             top_veh_id = -1;
         } else {
             top_veh_id = veh_id_put;
-            for (int j = Vehs[top_veh_id].prev_veh_id_stack; j >= 0; j = Vehs[j].prev_veh_id_stack) {
+            for (int16_t j = Vehs[top_veh_id].prev_veh_id_stack; j >= 0; j = Vehs[j].prev_veh_id_stack) {
                 top_veh_id = j;
             }
         }
         if (top_veh_id >= 0) {
             int veh_id_loop2;
             do {
-                veh_id_loop2 = Vehs[top_veh_id].next_veh_id_stack;
+                veh_id_loop2 = top_veh_id < 0 ? top_veh_id : Vehs[top_veh_id].next_veh_id_stack;
                 veh_put(top_veh_id, x, y);
                 top_veh_id = veh_id_loop2;
             } while (veh_id_loop2 >= 0);

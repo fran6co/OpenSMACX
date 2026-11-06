@@ -418,6 +418,7 @@ void BattleWin::pulse_timer() {
 // RECOVERY_BINDING: v1 {"evidence": ["pinned image 4219E0..421B1F complete instructions", "historical seed src/recovered/units/004219e0.cpp", "421B0D stores the incoming receiver at 7AE818, slot 10 of InterfaceRegistry at 7AE7F0; BattleWin's SubInterface base is at offset zero"], "reason": "Initialize the genuine BattleWin owner, preserving rectangle arithmetic and automatic Buffer lifetime, then publish its typed interface pointer in the shared registry. The old independent receiver-slot interpretation was incorrect; its original identity is retained beside InterfaceRegistry."}
 // kind      game
 // symbol    ?init@BattleWin@@QAEXXZ
+#pragma optimize("y", off)
 void BattleWin::init() {
     // The original constructs and tears down this temporary Buffer even though
     // it does not use it. Keep that lifetime visible to C++ and to unwind.
@@ -429,39 +430,33 @@ void BattleWin::init() {
     field_70_ = frame;
     field_90_ = layout;
 
-    const int left1 = layout.left + 4;
-    const int top1 = layout.top + 4;
-    const int right1 = (layout.right - left1 - 1) / 2 - 3 + left1;
-    const int bottom1 = layout.bottom - 4;
-    battle_rects_[0].left = left1;
-    battle_rects_[0].top = top1;
-    battle_rects_[0].right = right1;
-    battle_rects_[0].bottom = bottom1;
+    RECT pane = layout;
+    pane.left += 4;
+    pane.top += 4;
+    pane.right -= 4;
+    pane.bottom -= 4;
+    pane.right = (pane.right - pane.left + 3) / 2 + pane.left - 3;
+    battle_rects_[0] = pane;
+    const int delta = pane.right - pane.left + 3;
+    pane.left += delta;
+    pane.right += delta;
+    battle_rects_[1] = pane;
 
-    const int delta1 = right1 - left1 + 3;
-    battle_rects_[1].left = left1 + delta1;
-    battle_rects_[1].top = top1;
-    battle_rects_[1].right = right1 + delta1;
-    battle_rects_[1].bottom = bottom1;
-
-    const int left2 = frame.left + 4;
-    const int top2 = frame.top + 4;
-    const int right2 = (frame.right - left2 - 1) / 2 - 3 + left2;
-    const int bottom2 = frame.bottom - 4;
-    battle_rects_[2].left = left2;
-    battle_rects_[2].top = top2;
-    battle_rects_[2].right = right2;
-    battle_rects_[2].bottom = bottom2;
-
+    pane = frame;
+    pane.left += 4;
+    pane.top += 4;
+    pane.right -= 4;
+    pane.bottom -= 4;
+    pane.right = (pane.right - pane.left + 3) / 2 + pane.left - 3;
+    battle_rects_[2] = pane;
+    pane.left = pane.right + 3;
+    pane.right = frame.right - 4;
+    battle_rects_[3] = pane;
     field_4_ = 10;
-
-    battle_rects_[3].left = right2 + 3;
-    battle_rects_[3].top = top2;
-    battle_rects_[3].right = frame.right - 4;
-    battle_rects_[3].bottom = bottom2;
 
     InterfaceRegistry[10] = this;
 }
+#pragma optimize("", on)
 
 // ORIGINAL: 0x00421B40 ?stop_timer@BattleWin@@QAEXXZ 0x00421B40-0x00421B48 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["The image's 0x00421B40 adds eight to the receiver and tail-jumps to Time::stop.", "BattleWin's constructor and destructor establish a real Time member at +8."], "reason": "Home the timer stop through BattleWin's typed Time member."}

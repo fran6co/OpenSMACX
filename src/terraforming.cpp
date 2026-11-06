@@ -78,6 +78,7 @@ Purpose: Calculate the credit cost to lower or raise the tile's terrain for the 
 Return Value: Credit cost
 Status: Complete
 */
+#pragma optimize("y", off)
 int __cdecl terraform_cost(int x, int y, int faction_id) {
     Map *const tile = map_loc(x, y);
     const uint32_t climate = tile->climate;
@@ -116,9 +117,8 @@ int __cdecl terraform_cost(int x, int y, int faction_id) {
                     Bases[base_id_prox].faction_id_current] & DTREATY_PACT) == 0) {
             const int numerator_y = Bases[base_id].y;
             const int numerator_x = Bases[base_id].x;
-            const int numerator_distance =
-                (x_dist(x, numerator_x) + abs(y - numerator_y)) >> 1;
-            int num_prox = (numerator_distance * (Bases[base_id_prox].population_size + 2)) / 3;
+            int num_prox = (((x_dist(x, numerator_x) + abs(y - numerator_y)) >> 1)
+                * (Bases[base_id_prox].population_size + 2)) / 3;
             const int denominator_y = Bases[base_id_prox].y;
             const int denominator_x = Bases[base_id_prox].x;
             int denom_prox = (((x_dist(x, denominator_x) + abs(y - denominator_y)) >> 1)
@@ -134,6 +134,7 @@ int __cdecl terraform_cost(int x, int y, int faction_id) {
     cost /= 2;
     return range(cost, 1, 30000);
 }
+#pragma optimize("", on)
 
 /*
 Purpose: Wrap an x coordinate on a round map, as can_terraform() wraps it.

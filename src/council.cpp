@@ -574,6 +574,7 @@ Return Value: 1 the council may be called, 0 not
 Status: Coverage transcription - unclaimed body, seed
         git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/0052c670.cpp retained.
 */
+#pragma optimize("y", off)
 int __cdecl can_call_council(int faction_id, int announce) {
     if ((Players[faction_id].rule_flags & 0x80) != 0) {
         return 0;
@@ -589,7 +590,7 @@ int __cdecl can_call_council(int faction_id, int announce) {
 
     if (GameDataStateStorage.fields_.sunspot_duration_ > 0) {
         if (announce != 0 && faction_id == ConsoleGlobal.faction_id_ &&
-            ((1 << (faction_id & 0x1F)) &
+            ((1 << faction_id) &
              GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_) != 0) {
             NetMsgPrimary.pop(CouncilSunspotLabel, 0xffffec78, 0,
                              CouncilSunspotPcx);
@@ -599,7 +600,7 @@ int __cdecl can_call_council(int faction_id, int announce) {
 
     if (IsMultiplayerPBEM != 0 && CouncilPbemGate != 0) {
         if (announce != 0 && faction_id == ConsoleGlobal.faction_id_ &&
-            ((1 << (faction_id & 0x1F)) &
+            ((1 << faction_id) &
              GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_) != 0) {
             NetMsgPrimary.pop(CouncilPbemLabel, 0xffffec78, 0,
                              static_cast<const char *>(0));
@@ -608,15 +609,18 @@ int __cdecl can_call_council(int faction_id, int announce) {
     }
 
     const int spy_index = GameDataStateStorage.fields_.secret_project_.empath_guild();
-    if (spy_index >= 0 &&
-        Bases[spy_index].faction_id_current == faction_id) {
+    int has_empath = 0;
+    if (spy_index >= 0) {
+        has_empath = (Bases[spy_index].faction_id_current == faction_id);
+    }
+    if (has_empath) {
         return 1;
     }
 
     {
         for (int i = 1; i < 8; ++i) {
             if ((Players[i].rule_flags & 0x80) == 0) {
-                const unsigned int bit_i = 1u << (i & 0x1F);
+                const unsigned int bit_i = 1u << i;
                 if ((GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_ &
                      static_cast<unsigned char>(bit_i)) != 0 &&
                     i != faction_id) {
@@ -624,7 +628,7 @@ int __cdecl can_call_council(int faction_id, int announce) {
                         bool check_more = true;
                         if ((static_cast<unsigned char>(GameDataStateStorage.fields_.game_state_) & 0x80) !=
                             0) {
-                            const unsigned int bit_a1 = 1u << (faction_id & 0x1F);
+                            const unsigned int bit_a1 = 1u << faction_id;
                             if ((GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ &
                                  bit_a1) != 0) {
                                 if (faction_id == ConsoleGlobal.faction_id_) {
@@ -639,11 +643,11 @@ int __cdecl can_call_council(int faction_id, int announce) {
                             const unsigned int mask =
                                 GameDataStateStorage.fields_.lock_masks_.enable_mask_ & 0xFF;
                             const unsigned int bit_a1b =
-                                1u << (faction_id & 0x1F);
+                                1u << faction_id;
                             if ((mask & bit_a1b) == 0) {
                                 goto blocked;
                             }
-                            if ((mask & bit_i) == 0) {
+                            if ((bit_i & mask) == 0) {
                                 goto blocked;
                             }
                         }
@@ -655,13 +659,14 @@ int __cdecl can_call_council(int faction_id, int announce) {
     blocked:
         if (announce != 0 && faction_id == ConsoleGlobal.faction_id_ &&
             (GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ &
-             (1 << (faction_id & 0x1F))) != 0) {
+             (1 << faction_id)) != 0) {
             NetMsgPrimary.pop(CouncilBlockedLabel, 0xffffec78, 0,
                              CouncilBlockedPcx);
         }
         return 0;
     }
 }
+#pragma optimize("", on)
 
 /*
 Purpose: Score one council proposal for a faction: proposal 0 (propose
@@ -691,6 +696,7 @@ Status: Coverage transcription - unclaimed body; the seed
         git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/0052be60.cpp is retained until this product
         definition measures fresh BYTE_EXACT.
 */
+#pragma optimize("y", off)
 int __cdecl council_get_vote(int faction, int proposal, int target_faction) {
     int result;
 
@@ -707,11 +713,8 @@ int __cdecl council_get_vote(int faction, int proposal, int target_faction) {
             ++i;
         } while (i < 8);
 
-        if (PlayersData[faction].unk_29[0] == 0) {
-            return target_faction;
-        }
-        result = PlayersData[faction].unk_30[0];
-        if ((PlayersData[faction].diplo_treaties[result] & 0x40c30) != 0) {
+        if (PlayersData[faction].unk_29[proposal] == 0 ||
+            (PlayersData[faction].diplo_treaties[result = PlayersData[faction].unk_30[proposal]] & 0x40c30) != 0) {
             return target_faction;
         }
     } else {
@@ -740,6 +743,7 @@ int __cdecl council_get_vote(int faction, int proposal, int target_faction) {
     }
     return result;
 }
+#pragma optimize("", on)
 
 static int wants_prop_signed_difference(int left, uint32_t right) {
     const uint32_t bits = static_cast<uint32_t>(left) - right;

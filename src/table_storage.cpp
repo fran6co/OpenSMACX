@@ -28,35 +28,23 @@ Return Value: n/a
 Status: Complete
 */
 void PointerTripletTable::release_contents() {
-    volatile PointerTripletTable *const receiver = this;
-    if (receiver->table_ != 0) {
-        if (0 < receiver->count_) {
-            int index = 0;
-            do {
-                volatile PointerTriplet *row = receiver->table_ + index;
-                void *const first = row->first_;
-                if (first != 0) {
-                    free(first);
-                }
-                row = receiver->table_ + index;
-                void *const second = row->second_;
-                if (second != 0) {
-                    free(second);
-                }
-                row = receiver->table_ + index;
-                void *const third = row->third_;
-                if (third != 0) {
-                    free(third);
-                }
-                ++index;
-            } while (index < receiver->count_);
+    if (table_ != 0) {
+        for (int index = 0; index < count_; ++index) {
+            if (table_[index].first_ != 0) {
+                free(table_[index].first_);
+            }
+            if (table_[index].second_ != 0) {
+                free(table_[index].second_);
+            }
+            if (table_[index].third_ != 0) {
+                free(table_[index].third_);
+            }
         }
-        PointerTriplet *const table = receiver->table_;
-        if (table != 0) {
-            free(table);
+        if (table_ != 0) {
+            free(table_);
         }
-        receiver->table_ = 0;
+        table_ = 0;
     }
-    receiver->count_ = 0;
-    receiver->field_08_ = 0;
+    count_ = 0;
+    field_08_ = 0;
 }

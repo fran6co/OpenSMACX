@@ -84,9 +84,9 @@ void MessageWin::on_selected(int code, int) {
     ConsoleGlobal.get_mouse_pos(&mouse_x, &mouse_y);
     ConsoleGlobal.client_to_screen(&mouse_x, &mouse_y);
     menu.init(0);
-    menu.add_item(1, StringTable.get(Labels.strings_ptr[0x44C]));
-    menu.add_item(2, StringTable.get(Labels.strings_ptr[0x44D]));
-    menu.add_item(3, StringTable.get(Labels.strings_ptr[0x44E]));
+    menu.add_item(1, label_get(0x44C));
+    menu.add_item(2, label_get(0x44D));
+    menu.add_item(3, label_get(0x44E));
     menu.show(mouse_x, mouse_y, 0);
     const int selected = menu.get_selected();
     const int action = selected < 64 ? menu.item_id(selected) : -1;
@@ -99,11 +99,9 @@ void MessageWin::on_selected(int code, int) {
             const unsigned int base_id = code & 0xBFFFFFFF;
             if (static_cast<int>(base_id) >= 0 &&
                 Bases[base_id].faction_id_current == ConsoleGlobal.faction_id_) {
-                const int x = Bases[base_id].x;
-                const int y = Bases[base_id].y;
-                ConsoleGlobal.set_center(x, y, 1);
+                ConsoleGlobal.set_center(Bases[base_id].x, Bases[base_id].y, 1);
                 if (!ConsoleGlobal.cursor_active_) {
-                    ConsoleGlobal.set_cursor(x, y);
+                    ConsoleGlobal.set_cursor(Bases[base_id].x, Bases[base_id].y);
                 }
                 TutWinBaseWindow.zoom(base_id, 0);
             }
@@ -450,7 +448,11 @@ int __cdecl MessageWin::listbox_write(GraphicWin *target, int item_id, int,
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/00471d50.cpp", "image:0x00471D50"], "reason": "The archived constructor-stage method initializes MessageWin font, pane bounds, embedded ListBox Dialog and callback slots."}
 void MessageWin::init() {
     Buffer scratch;
-    font_.init(DefaultFontFace, 12, 0);
+    if (WinScreenWidth == 800) {
+        font_.init(DefaultFontFace, 12, 0);
+    } else {
+        font_.init(DefaultFontFace, 12, 0);
+    }
     scratch.close();
 
     bounds_ = MainInterfaceGlobal.message_bounds_;
