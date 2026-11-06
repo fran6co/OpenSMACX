@@ -39,11 +39,11 @@
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/004023a0.cpp: retained original spans and historical seed interpretation", "Pinned original receiver/table/call sequence reviewed in the Alpha ownership binding decision.", "Current C++ class/lifetime source owns the separately observed emitted symbol; this binding is unclaimed and preserves the independent historical exact seed."], "reason": "Receiver-24, stages nested-derived66941C/669418, runs removal walk then base6693F4/6693F0; primary plus650580 EH span."}
 // symbol    ??1NetUnk72C@@UAE@XZ
 // Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x00402A60 ServiceStruct::dt 0x00402A60-0x00402AC6 FILE
+// ORIGINAL: 0x00402A60 ServiceStruct::dt 0x00402A60-0x00402AC6 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00402a60.cpp: retained original spans and historical seed interpretation", "Pinned original receiver/table/call sequence reviewed in the Alpha ownership binding decision.", "Current C++ class/lifetime source owns the separately observed emitted symbol; this binding is unclaimed and preserves the independent historical exact seed."], "reason": "Receiver-1C, stages provider-base tables, clear402970, zero cursor, owner publication then bit1/free."}
 // symbol    ??_GServiceProviderList@@UAEPAXI@Z
 // Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x00402AD0 sub_402ad0 0x00402AD0-0x00402B36 FILE
+// ORIGINAL: 0x00402AD0 sub_402ad0 0x00402AD0-0x00402B36 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00402ad0.cpp: retained original spans and historical seed interpretation", "Pinned original receiver/table/call sequence reviewed in the Alpha ownership binding decision.", "Current C++ class/lifetime source owns the separately observed emitted symbol; this binding is unclaimed and preserves the independent historical exact seed."], "reason": "Receiver-1C, stages nested-base6693F4/6693F0, clear402970, owner publication then bit1/free."}
 // symbol    ??_GNetTextListBase@@UAEPAXI@Z
 // Superseded seed deleted; seed paths below are historical Git provenance.
@@ -54,7 +54,7 @@
 // ORIGINAL: 0x00402D80 sub_402d80 0x00402D80-0x00402DC2 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00402d80.cpp: retained original spans and historical seed interpretation", "Pinned original receiver/table/call sequence reviewed in the Alpha ownership binding decision.", "Current C++ class/lifetime source owns the separately observed emitted symbol; this binding is unclaimed and preserves the independent historical exact seed."], "reason": "Provider add401760 installs payload table6693E4, whose scalar slot points402D80; receiver-18 and saved-owner publication/free. Not unseen NetTextPayload nominal proof."}
 // symbol    ??_GServiceStruct@@UAEPAXI@Z
-// ORIGINAL: 0x004E3660 sub_4e3660 0x004E3660-0x004E370C FILE
+// ORIGINAL: 0x004E3660 sub_4e3660 0x004E3660-0x004E370C FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:293937ab6f3be75999e0c0a4c9c110c02930624c:src/unrecovered/004e3660.cpp: retained original spans and historical seed interpretation", "Pinned original receiver/table/call sequence reviewed in the Alpha ownership binding decision.", "Current C++ class/lifetime source owns the separately observed emitted symbol; this binding is unclaimed and preserves the transferred historical seed findings and complete original spans.", "git:293937ab6f3be75999e0c0a4c9c110c02930624c:src/unrecovered/004e3660.cpp", "Historical seed spelling sub_4e3660; current source mapping sub_4e3660; emitted symbol ??_DJackalVoiceRx@@QAEXXZ."], "reason": "Complete receiver stages66EAFC/66EAF8, walk then allocation-owner publication, no delete flag/free. Already genuine Voice-associated class behavior. Superseded seed retired after owner review; original spans, existing claims and useful seed findings remain in source. This cleanup grants no new match or acceptance claim."}
 // TRIED: [ecx+N] reads with no stack args -> a thiscall receiver (Obj4e3660), not the given nullary __cdecl. 0.91 mnemonic sim; remaining diff is the prologue's `push ecx` stack-slot local vs a register-kept loop counter, and one lea/add adjustor-call addressing mode (same shape as 0x0051E480's) - not chased.
 // symbol    ??_DJackalVoiceRx@@QAEXXZ
@@ -69,7 +69,7 @@
 // RECOVERY_BINDING: v1 {"evidence": ["git:b20012dad66f767e0e5f05b7aea45b88bd63a09d:src/recovered/units/004e3890.cpp: retained original spans and historical seed interpretation", "Pinned original receiver/table/call sequence reviewed in the Alpha ownership binding decision.", "Current C++ class/lifetime source owns the separately observed emitted symbol; this binding is unclaimed and preserves the independent historical exact seed.", "Genuine declared C++ destructor emits the independently named generated COFF body; original receiver/table/lifetime interpretation and current emitted ABI remain separate from the historical byte obligation."], "reason": "Receiver-24 calls4E3730 then saved-owner publication and bit1/free. Superseded scaffold retired after observing this independently emitted generated body; historical claims and findings transfer without a new matching or linked-preservation claim."}
 // compile_context src/alphanet.cpp
 // symbol    ??_GServiceList@@UAEPAXI@Z
-// ORIGINAL: 0x004E3900 sub_4e3900 0x004E3900-0x004E39CF FILE
+// ORIGINAL: 0x004E3900 sub_4e3900 0x004E3900-0x004E39CF FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:293937ab6f3be75999e0c0a4c9c110c02930624c:src/unrecovered/004e3900.cpp: retained original spans and historical seed interpretation", "Pinned original receiver/table/call sequence reviewed in the Alpha ownership binding decision.", "Current C++ class/lifetime source owns the separately observed emitted symbol; this binding is unclaimed and preserves the transferred historical seed findings and complete original spans.", "git:293937ab6f3be75999e0c0a4c9c110c02930624c:src/unrecovered/004e3900.cpp", "Historical seed spelling sub_4e3900; current source mapping sub_4e3900; emitted symbol ??_GJackalVoiceRx@@UAEPAXI@Z."], "reason": "Receiver-1C stagesVoiceRx tables, walk, allocation-owner publication and bit1/free. Not a new handwritten body. Superseded seed retired after owner review; original spans, existing claims and useful seed findings remain in source. This cleanup grants no new match or acceptance claim."}
 // TRIED: register-save push order (ebx/esi/edi prologue) drifts from a struct-model body; single-level VCall casts used for the three argument-taking slots. 207 vs 197 rebuilt bytes.
 // symbol    ??_GJackalVoiceRx@@UAEPAXI@Z
@@ -596,7 +596,7 @@ void Net::close() {
 
 
 
-// ORIGINAL: 0x004E34D0 ??1Net@@QAE@XZ 0x004E34D0-0x004E365C;0x0065C810-0x0065C876
+// ORIGINAL: 0x004E34D0 ??1Net@@QAE@XZ 0x004E34D0-0x004E365C;0x0065C810-0x0065C876 BYTE_EXACT
 // kind      game
 // symbol    ??1Net@@QAE@XZ
 // LEVER: call_diff said MORE, 8 calls against the image's 7, and all three causes were real defects rather than encoding ones. (1) `voice_tx_.VoiceTx::~VoiceTx()` was written out in the body of a REAL destructor whose `voice_tx_` is a REAL member, so VC6 emitted the destruction TWICE - once here and once after the body, where the image has it. (2) 0x004E3529 `call 0x402970` is StringStruct::remove_all entered on the list at sub1 - 0x24, and (3) 0x004E353A `call 0x401be0` is leaf_recoveries.cpp's sub_401be0 on sub1 - 8. Both went through no-argument `NetVectorTeardownHelper*()` forwarders, which is an indirect call the image does not make AND a receiver it does pass. call_diff is now clean.
@@ -3985,7 +3985,7 @@ Purpose: The this-8 teardown one StringStruct-shaped container owner runs:
          own slot-1 notify and slot-0 deleting dispatch, then hand the
          saved heap head back to 0x009B3374.
 
-// ORIGINAL: 0x00402DD0 sub_402dd0 0x00402DD0-0x00402ED2;0x006505A0-0x006505B5 FILE
+// ORIGINAL: 0x00402DD0 sub_402dd0 0x00402DD0-0x00402ED2;0x006505A0-0x006505B5 FILE BYTE_EXACT
 // TRIED: this is the "StringStruct-shaped member destructor" wall this project already documents (see 0x00421100's ProdPicker dtor and 0x004E3300's ClassX::sub_4e3300, both same idiom): a this-adjusted (`this-8`) inline teardown of an embedded container - vtable-patch, walk entries calling two indirect "scalar deleting destructor" style virtual calls per entry (slot001(payload) on the node's own patched vtable, then slot000(1) through a this-adjustor delta read from each item's own vtable+4) - followed by restoring the outer object's vtable. The BODY-mode scaffold's auto-generated `VCall` shim is nullary and can't carry the arguments these calls need, so this is landed FILE-mode with `VCall` edited to `slot000(int)`/`slot001(void*)`. Not expected exact: the compiler-synthesized SEH try-frame (fs:[0] chain, `push -1; push handler`) that protects partial teardown is not reproduced by a call-by-call translation over raw pointers with no real local object for the compiler to protect (mnemonic_similarity 0.81, 204 vs 258 primary-span bytes).
 // size      279 bytes
 // prototype
