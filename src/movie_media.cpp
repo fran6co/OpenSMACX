@@ -1335,17 +1335,18 @@ extern "C" int __fastcall sub_5c9ec0(MediaRuntime *runtime) {
   }
   if (read == -1 || read != 8) return -2;
 
+  // Both header words are assembled least-significant byte first.
   DWORD payload_bytes =
-      ((DWORD)header_and_payload[4] << 24) |
-      ((DWORD)header_and_payload[5] << 16) |
-      ((DWORD)header_and_payload[6] << 8) |
-      (DWORD)header_and_payload[7];
+      ((DWORD)header_and_payload[7] << 24) |
+      ((DWORD)header_and_payload[6] << 16) |
+      ((DWORD)header_and_payload[5] << 8) |
+      (DWORD)header_and_payload[4];
   payload_bytes -= 8;
   DWORD type =
-      ((DWORD)header_and_payload[0] << 24) |
-      ((DWORD)header_and_payload[1] << 16) |
-      ((DWORD)header_and_payload[2] << 8) |
-      (DWORD)header_and_payload[3];
+      ((DWORD)header_and_payload[3] << 24) |
+      ((DWORD)header_and_payload[2] << 16) |
+      ((DWORD)header_and_payload[1] << 8) |
+      (DWORD)header_and_payload[0];
 
   switch (type) {
   case 0x66325655: // bytes: 66 32 56 55
@@ -1363,13 +1364,14 @@ extern "C" int __fastcall sub_5c9ec0(MediaRuntime *runtime) {
   case 0x6656554d:
   case 0x54475170:
     return runtime->sub_5ca230((int)payload_bytes, 3);
+  case 0x684e5331:
+    return runtime->parse_initial_format((int)payload_bytes);
   case 0x6b564754:
   case 0x5447566b:
     return runtime->sub_5ca230((int)payload_bytes, 1);
   case 0x6d44414d:
   case 0x4d41446d:
     return runtime->sub_5ca230((int)payload_bytes, 6);
-  case 0x684e5331:
   case 0x6c484353:
   case 0x5343486c:
     return runtime->parse_initial_format((int)payload_bytes);
@@ -1691,41 +1693,41 @@ int MediaRuntime::setup_sound_device() {
   MediaDescriptor *entry_descriptor = descriptor;
   if ((entry_descriptor->flags & 0x00800000) == 0) return 0;
 
-  if (entry_descriptor->sound_device == 0) {
+  IDirectSound **device = &entry_descriptor->sound_device;
+  if (*device == 0) {
     release_sound_device = 1;
-    if (DirectSoundCreate(0, &entry_descriptor->sound_device, 0) != DS_OK) {
-      entry_descriptor->sound_device = 0;
-    } else if (entry_descriptor->sound_device->SetCooperativeLevel(
-                   entry_descriptor->window, DSSCL_PRIORITY) != DS_OK) {
-      entry_descriptor->sound_device->Release();
-      entry_descriptor->sound_device = 0;
+    HWND window = entry_descriptor->window;
+    if (DirectSoundCreate(0, device, 0) != DS_OK) {
+      *device = 0;
+    } else if ((*device)->SetCooperativeLevel(window, DSSCL_PRIORITY) != DS_OK) {
+      (*device)->Release();
+      *device = 0;
     }
   }
 
   MediaDescriptor *current_descriptor = descriptor;
-  if (current_descriptor->sound_device == 0) {
-    current_descriptor->source_buffer_58 = 0;
+  if (current_descriptor->sound_device != 0) {
+    DSCAPS device_caps;
+    memset(&device_caps, 0, 0x60);
+    device_caps.dwSize = 0x60;
+    descriptor->sound_device->GetCaps(&device_caps);
+    emulated_device = (device_caps.dwFlags & DSCAPS_EMULDRIVER) != 0;
+
+    if ((descriptor->flags & 0x00400000) != 0) {
+      IDirectSoundBuffer *source_buffer = descriptor->source_buffer_58;
+      if (source_buffer != 0) {
+        DSBCAPS source_caps;
+        memset(&source_caps, 0, 0x14);
+        source_caps.dwSize = 0x14;
+        source_buffer->GetCaps(&source_caps);
+        source_buffer_bytes = source_caps.dwBufferBytes;
+        return 0;
+      }
+    }
+    source_buffer_bytes = 0x8000;
     return 0;
   }
-
-  DSCAPS device_caps;
-  memset(&device_caps, 0, 0x60);
-  device_caps.dwSize = 0x60;
-  current_descriptor = descriptor;
-  current_descriptor->sound_device->GetCaps(&device_caps);
-  emulated_device = (device_caps.dwFlags & DSCAPS_EMULDRIVER) != 0;
-
-  current_descriptor = descriptor;
-  IDirectSoundBuffer *source_buffer = current_descriptor->source_buffer_58;
-  if ((current_descriptor->flags & 0x00400000) != 0 && source_buffer != 0) {
-    DSBCAPS source_caps;
-    memset(&source_caps, 0, 0x14);
-    source_caps.dwSize = 0x14;
-    source_buffer->GetCaps(&source_caps);
-    source_buffer_bytes = source_caps.dwBufferBytes;
-  } else {
-    source_buffer_bytes = 0x8000;
-  }
+  current_descriptor->source_buffer_58 = 0;
   return 0;
 }
 

@@ -462,81 +462,76 @@ void DiploWin::exec(int faction_id, int faction_id_with) {
 void DiploWin::on_redraw() {
   MainInterfaceGlobal.restore_back(1);
 
-  Buffer &interface_buffer = static_cast<Buffer &>(MainInterfaceGlobal);
   RECT area = MainInterfaceGlobal.right_frame_rect();
   area.left += 4;
-  area.top += 4;
   area.right -= 4;
+  area.top += 4;
   area.bottom -= 4;
-  interface_buffer.box_sprite(&area, &InterfaceBoxStyles[3]);
+  MainInterfaceGlobal.Buffer::box_sprite(&area, &InterfaceBoxStyles[3]);
 
   area = MainInterfaceGlobal.main_frame_rect();
   area.left += 4;
   area.top += 4;
   area.right -= 4;
   area.bottom -= 4;
-  interface_buffer.box_sprite(&area, &InterfaceBoxStyles[3]);
+  MainInterfaceGlobal.Buffer::box_sprite(&area, &InterfaceBoxStyles[3]);
 
   UnionRect(&area, &portrait_rect_[0], &portrait_rect_[1]);
-  UnionRect(&area, &area, &rect_F4C_);
+  RECT *f4c = &rect_F4C_;
+  UnionRect(&area, &area, f4c);
   area.left -= 3;
   area.right += 3;
-  area.bottom += 3;
   area.top -= 3;
+  area.bottom += 3;
 
-  Buffer &canvas = static_cast<Buffer &>(*this);
-  canvas.box_sprite(&area, &InterfaceBoxStyles[3]);
+  Buffer::box_sprite(&area, &InterfaceBoxStyles[3]);
 
   UnionRect(&area, &button_rects_[2], &button_rects_[3]);
   UnionRect(&area, &area, &button_rects_[4]);
-  area.right += 3;
   area.left -= 3;
-  area.bottom += 3;
+  area.right += 3;
   area.top -= 3;
-  canvas.box_sprite(&area, &InterfaceBoxStyles[3]);
+  area.bottom += 3;
+  Buffer::box_sprite(&area, &InterfaceBoxStyles[3]);
 
   area = rect_F9C_;
-  canvas.box_sprite(&area, &InterfaceBoxStyles[6]);
+  Buffer::box_sprite(&area, &InterfaceBoxStyles[6]);
   area.left += 3;
   area.right -= 3;
   area.top += 3;
   area.bottom -= 3;
-  canvas.set_font(find_font(14, 1), 0, 0, 0);
-  canvas.set_text_color(0x99, -1, 1, 1);
+  Buffer::set_font(find_font(14, 1), 0, 0, 0);
+  Buffer::set_text_color(0x99, -1, 1, 1);
 
   LPSTR title = Language == 0 ? const_cast<char *>("TRADE")
                               : &DiploLocalizedTradeTitle;
-  if (title != 0) {
-    canvas.write_cent_l(title, &area, static_cast<int>(strlen(title)));
-  }
+  Buffer::write_cent_l(title, &area);
 
   area = rect_FAC_;
-  canvas.box_sprite(&area, &InterfaceBoxStyles[3]);
+  Buffer::box_sprite(&area, &InterfaceBoxStyles[3]);
 
   area = rect_FBC_;
-  canvas.box_sprite(&area, &InterfaceBoxStyles[6]);
+  Buffer::box_sprite(&area, &InterfaceBoxStyles[6]);
   area.left += 3;
   area.right -= 3;
   area.top += 3;
   area.bottom -= 3;
   title = Language == 0 ? const_cast<char *>("DIPLOMACY")
                         : &DiploLocalizedDiplomacyTitle;
-  if (title != 0) {
-    canvas.write_cent_l(title, &area, static_cast<int>(strlen(title)));
-  }
+  Buffer::write_cent_l(title, &area);
 
   area = rect_FCC_;
-  canvas.box_sprite(&area, &InterfaceBoxStyles[3]);
+  Buffer::box_sprite(&area, &InterfaceBoxStyles[3]);
 
-  area.top = rect_F4C_.top;
-  area.left = rect_F4C_.left;
-  area.right = rect_F4C_.right;
-  area.bottom = rect_F4C_.bottom;
-  canvas.box_sprite(&area, &InterfaceBoxStyles[6]);
+  area.left = f4c->left;
+  area.top = f4c->top;
+  area.right = f4c->right;
+  area.bottom = f4c->bottom;
+  Buffer::box_sprite(&area, &InterfaceBoxStyles[6]);
   area.left += 3;
   area.right -= 3;
-  area.bottom -= 3;
   area.top += 3;
+  area.bottom -= 3;
 
   StringTemp[0] = 0;
   strcat(StringTemp, label_get(0x748 / 4));
@@ -549,33 +544,29 @@ void DiploWin::on_redraw() {
 
   const uint32_t treaties =
       PlayersData[faction_id_].diplo_treaties[faction_id_with_];
-  int relation_label;
-  int color_code;
   if ((treaties & 1) != 0) {
-    relation_label = 0x34C / 4;
-    color_code = 0xFA;
+    strcat(StringTemp, label_get(0x34C / 4));
+    Buffer::set_text_color2(0xFA, -1, 1, 1);
   } else if ((treaties & 2) != 0) {
-    relation_label = 0x350 / 4;
-    color_code = 0xFA;
+    strcat(StringTemp, label_get(0x350 / 4));
+    Buffer::set_text_color2(0xFA, -1, 1, 1);
   } else if ((treaties & 4) != 0) {
-    relation_label = 0x354 / 4;
-    color_code = 0xFA;
+    strcat(StringTemp, label_get(0x354 / 4));
+    Buffer::set_text_color2(0xFA, -1, 1, 1);
   } else if ((treaties & 0x10) != 0) {
-    relation_label = 0x358 / 4;
-    color_code = 0xF9;
+    strcat(StringTemp, label_get(0x358 / 4));
+    Buffer::set_text_color2(0xF9, -1, 1, 1);
   } else {
-    relation_label = 0x784 / 4;
-    color_code = 0xFB;
+    strcat(StringTemp, label_get(0x784 / 4));
+    Buffer::set_text_color2(0xFB, -1, 1, 1);
   }
-  strcat(StringTemp, label_get(relation_label));
-  canvas.set_text_color2(color_code, -1, 1, 1);
   strcat(StringTemp, "}");
   strcat(StringTemp, ")");
-  canvas.write_cent_l(StringTemp, &area, static_cast<int>(strlen(StringTemp)));
+  Buffer::write_cent_l(StringTemp, &area);
 
   if (MainInterfaceTileFlag != 0) {
-    interface_buffer.box_sprite(&rect_F3C_, &InterfaceBoxStyles[0]);
-    interface_buffer.box_sprite(&rect_F2C_, &InterfaceBoxStyles[0]);
+    MainInterfaceGlobal.Buffer::box_sprite(&rect_F3C_, &InterfaceBoxStyles[0]);
+    MainInterfaceGlobal.Buffer::box_sprite(&rect_F2C_, &InterfaceBoxStyles[0]);
   }
 
   draw_who();
@@ -949,8 +940,8 @@ void DiploWin::UNK1() {
 void DiploWin::new_chat(char *text, int faction_id) {
     char line[256];
     line[0] = 0;
-    PluralityDefault = 0;
     GenderDefault = Players[faction_id].is_leader_female;
+    PluralityDefault = 0;
     strcat(line, Players[faction_id].name_leader);
     CharUpperA(line);
     strcat(line, ": ");
@@ -1962,8 +1953,8 @@ extern "C" void __cdecl sub_441040(int a1, int a2) {
     for (int i = loopBound - 3; i < loopBound; ++i) {
         if (i >= 0) {
             source.seek_pos(i);
-            int f1 = source.head_ ? source.current_->id : 0;
-            char *f2 = source.head_ ? source.current_->string_payload()->text : 0;
+            int f1 = transcript_current_id(&source);
+            char *f2 = transcript_current_text(&source);
             StringList *entry = &DiplomacyTranscriptLists[a1][a2];
             entry->pending_text_ = f2;
             entry->field_20_ = 0;

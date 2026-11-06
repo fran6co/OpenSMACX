@@ -5636,7 +5636,7 @@ void Console::init(int) {
 
     if ((~StatusFlags & 1u) != 0) {
         field_23BCC_ = WinScreenWidth;
-        IfaceScreenWidth = WinScreenWidth;
+        IfaceScreenWidth = field_23BCC_;
         field_23BD0_ = WinScreenHeight - MainInterfaceGlobal.panel_height();
         IfaceScreenHeight = field_23BD0_;
 
@@ -5668,15 +5668,11 @@ void Console::init(int) {
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/0051d760.cpp"], "reason": "Complete genuine Console initialization/shared geometry from original receiver/member/global dataflow; native seed establishes catalogue identity and span. Source uses actual GraphicWin virtual base, AlphaMenu, shared RECT and typed fallback Win pointer. Original seed/claims retained; binding grants no matching or acceptance."}
 // symbol    ?set_screen_geometry@Console@@QAEXXZ
 void Console::set_screen_geometry() {
-    const int width = WinScreenWidth;
-    field_23BCC_ = width;
-    const int screen_height = WinScreenHeight;
-    IfaceScreenWidth = width;
-
-    const int height = screen_height - MainInterfaceGlobal.panel_height();
+    field_23BCC_ = WinScreenWidth;
+    IfaceScreenWidth = field_23BCC_;
+    const int height = WinScreenHeight - MainInterfaceGlobal.panel_height();
     field_23BD0_ = height;
     IfaceScreenHeight = height;
-
     ConsoleMenuBounds.left = 0;
     ConsoleMenuBounds.top = 0;
     ConsoleMenuBounds.right = IfaceScreenWidth;

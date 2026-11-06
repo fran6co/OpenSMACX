@@ -1103,7 +1103,7 @@ void Datalink::draw_tech() {
     // inline technology case (0x42C1A7..0x42C1AE) test the buffer ADDRESS,
     // not its first byte. StringTemp has real storage, so even an empty
     // technology title reaches write_cent_l.
-    write_cent_l(StringTemp, &title_rect_, strlen(StringTemp));
+    write_cent_l(StringTemp, &title_rect_);
     ReportWinGlobal.reset();
     ReportWinGlobal.shared_research_focus() = history_[0];
     ReportIfGlobal.field_8_ = 2;
@@ -3859,7 +3859,8 @@ void __cdecl tech_heck(void (__cdecl *a1)(char *), int a2) {
                 strcat(StringTemp, TechnologyHelpSeparatorText);
                 strcat(StringTemp, label_get(0x7C8 / 4));
                 strcat(StringTemp, ": ");
-                strcat(StringTemp, StringTable.get(Proposal[proposal].name));
+                LPSTR name = Proposal[proposal].name;
+                strcat(StringTemp, StringTable.get(name));
                 strcpy(TextBufferGetPtr, StringTemp);
                 emit_help(a1);
             }
