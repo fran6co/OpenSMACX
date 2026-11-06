@@ -1137,15 +1137,16 @@ int Path::move(int veh_id, int faction_id) {
  Return Value: n/a
  Status: Complete
 */
+#pragma optimize("y", off)
 void Path::make_abstract() {
     for (int y = 0; y < (int)MapAbstractLatBounds; y++) {
         for (int x = y & 1; x < (int)MapAbstractLongBounds; x += 2) {
-            uint8_t region = 0;
-            for (int i = 0; i < RadiusRange[1]; i++) {
+            int region = 0;
+            for (int i = 0; i < 9; i++) { // RadiusRange[1], a literal bound in the image
                 int x_radius = wrap_map_x(x * 5 + RadiusOffsetX[i]);
                 int y_radius = y * 5 + RadiusOffsetY[i];
                 if (on_map(x_radius, y_radius) && !is_ocean(x_radius, y_radius)) {
-                    region = (uint8_t)region_at(x_radius, y_radius);
+                    region = region_at(x_radius, y_radius);
                     break;
                 }
             }
@@ -1153,6 +1154,7 @@ void Path::make_abstract() {
         }
     }
 }
+#pragma optimize("", on)
 
 /*
  Purpose: Merge the old region into the new region.

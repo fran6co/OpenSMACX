@@ -358,8 +358,9 @@ char *FileWin::save() {
             FindClose(handle);
         } else {
             edit_box_.set_text(file_name_);
-            edit_box_.select_all_text();
-            edit_box_.redraw();
+            EditBox *box = &edit_box_;
+            box->select_all_text();
+            box->redraw();
         }
     }
 

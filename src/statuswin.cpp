@@ -1458,32 +1458,29 @@ void StatusWin::on_left_click(int x, int y) {
 
 // ORIGINAL: 0x004B4A20 ?set_title@StatusWin@@QAEXH@Z 0x004B4A20-0x004B4BE3 FILE
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/004b4a20.cpp", "StringTemp, label_get and vehicle/console declarations in src/", "StatusWin tile members in src/statuswin.h"], "reason": "Recover title assembly using source-owned string, label, console and vehicle state."}
+#pragma optimize("y", off)
 void StatusWin::set_title(int title_id) {
-    static const char *const SpaceText = " ";
-    static const char *const ColonSpaceText = ": ";
     const unsigned int flags = static_cast<unsigned int>(title_id);
     StringTemp[0] = '\0';
 
     if (flags != 0) {
-        int label_offset;
         if (flags & 1) {
-            label_offset = 0x6B4;
+            strcat(StringTemp, label_get(0x6B4 / 4));
         } else if (flags & 0x10) {
-            label_offset = 0x6F8;
+            strcat(StringTemp, label_get(0x6F8 / 4));
         } else if (flags & 8) {
-            label_offset = 0x6FC;
+            strcat(StringTemp, label_get(0x6FC / 4));
         } else if (flags & 2) {
-            label_offset = 0x6B8;
+            strcat(StringTemp, label_get(0x6B8 / 4));
         } else {
-            label_offset = 0x250;
+            strcat(StringTemp, label_get(0x250 / 4));
         }
-        strcat(StringTemp, label_get(label_offset / 4));
         return;
     }
 
     strcat(StringTemp, label_get(0x8C / 4));
     if (GameDataStateStorage.fields_.turn_current_num_ != 0) {
-        strcat(StringTemp, ColonSpaceText);
+        strcat(StringTemp, ": ");
         int x;
         int y;
         if (ConsoleGlobal.cursor_active_ == 0) {
@@ -1492,22 +1489,22 @@ void StatusWin::set_title(int title_id) {
             y = iTileY_;
         } else {
             strcat(StringTemp, label_get(8 / 4));
-            const int veh_id = ConsoleGlobal.selected_vehicle_;
-            if (veh_id < 0) {
+            if (ConsoleGlobal.selected_vehicle_ < 0) {
                 return;
             }
-            strcat(StringTemp, SpaceText);
-            const Veh &veh = Vehs[veh_id];
-            x = veh.x;
-            y = veh.y;
-            strcat(StringTemp, VehPrototypes[veh.proto_id].veh_name);
-            strcat(StringTemp, SpaceText);
+            strcat(StringTemp, " ");
+            x = Vehs[ConsoleGlobal.selected_vehicle_].x;
+            y = Vehs[ConsoleGlobal.selected_vehicle_].y;
+            strcat(StringTemp,
+                   VehPrototypes[Vehs[ConsoleGlobal.selected_vehicle_].proto_id].veh_name);
+            strcat(StringTemp, " ");
         }
-        strcat(StringTemp, SpaceText);
+        strcat(StringTemp, " ");
         say_loc(StringTemp, x, y, ConsoleGlobal.cursor_active_,
                 ConsoleGlobal.cursor_active_ == 0, ConsoleGlobal.cursor_active_);
     }
 }
+#pragma optimize("", on)
 
 // ORIGINAL: 0x004B4970 ?say_orders@@YAXH@Z 0x004B4970-0x004B4987 BYTE_EXACT
 // LEVER: 2026-09-05 homed from 004b4970.cpp. StringTemp (strings.h,

@@ -662,10 +662,11 @@ void InfoWin::configure_panel_bounds() {
         panel_width = 200;
         panel_height = 180;
     }
+    int top = ConsoleGlobal.pixel_height();
     InfoPanelBounds.left = 0;
     InfoPanelBounds.right = panel_width;
-    InfoPanelBounds.top = ConsoleGlobal.pixel_height();
-    InfoPanelBounds.bottom = InfoPanelBounds.top + panel_height;
+    InfoPanelBounds.top = top;
+    InfoPanelBounds.bottom = top + panel_height;
     StatusFlags |= 4;
 }
 

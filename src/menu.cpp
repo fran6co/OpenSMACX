@@ -258,48 +258,38 @@ void Menu::adjust() {
 // it after redraw/flush at 5FBC9D/FF; retain that cell across the callouts.
 void Menu::on_left_down(int x, int y) {
     MenuSelection = -1;
-    int new_index = 0;
-    const int hit = spot_.check(x, y, &new_index, 0);
-    int current = field_A24_;
-    if (hit == -1) {
-        if (current == -1) return;
-    } else if (current != new_index) {
-        if (current != -1) {
-            PullDown **old_menu_slot = &entries_[current].pull_down;
-            (*old_menu_slot)->hide();
-            field_A24_ = -1;
-            MenuSelection = -1;
-            redraw();
-            flush_input();
-            do_all_tasks(*old_menu_slot);
-            do_all_tasks(this);
-        }
+    int new_index;
+    if (spot_.check(x, y, &new_index, 0) == -1) {
+        if (field_A24_ == -1) return;
+    } else if (field_A24_ == new_index) {
+        // A successful Spot::check can name no open menu; that path skips
+        // the close and joins the hide test.
+        if (field_A24_ == -1) goto hide_menu;
+    } else {
+        hide_menus();
         field_A24_ = new_index;
-        RECT spot_rect;
-        spot_.get_rect_at(new_index, &spot_rect);
-        x = spot_rect.left - text_width(MenuLeftDownMargin);
-        y = -pixel_height();
+        x = spot_.get_rect_at(new_index).left - text_width(MenuLeftDownMargin);
+        y = pixel_height();
         client_to_screen(&x, &y);
         redraw();
         MenuPullDownInputOrigin = 0;
         on_adjust_pulldown_pos(&x, &y); // native Menu slot 94
         entries_[field_A24_].pull_down->show(x, y, 0);
         return;
-    } else if (current == -1) {
-        // The native hit can name no menu despite a successful Spot::check.
-        // It joins the common close/hide tail without indexing entries_.
-        if ((field_A28_ & 4) == 0) hide();
-        return;
     }
 
-    PullDown **old_menu_slot = &entries_[current].pull_down;
-    (*old_menu_slot)->hide();
-    field_A24_ = -1;
-    MenuSelection = -1;
-    redraw();
-    flush_input();
-    do_all_tasks(*old_menu_slot);
-    do_all_tasks(this);
+    {
+        // hide_menus() without its guard: every path here has a menu open.
+        PullDown **old_menu_slot = &entries_[field_A24_].pull_down;
+        (*old_menu_slot)->hide();
+        field_A24_ = -1;
+        MenuSelection = -1;
+        redraw();
+        flush_input();
+        do_all_tasks(*old_menu_slot);
+        do_all_tasks(this);
+    }
+hide_menu:
     if ((field_A28_ & 4) == 0) hide();
 }
 
@@ -317,23 +307,21 @@ void Menu::mouse_move(int x, int y) {
     point.x = x;
     point.y = y;
     ScreenToClient(HandleMain, &point);
-    int new_index = 0;
+    int new_index;
     if (spot_.check(point.x, point.y, &new_index, 0) == -1 ||
         field_A24_ == new_index || (field_A28_ & 1) != 0)
         return;
 
     entries_[field_A24_].pull_down->hide();
     field_A24_ = new_index;
-    RECT spot_rect;
-    spot_.get_rect_at(new_index, &spot_rect);
-    point.x = spot_rect.left - text_width(MenuMouseMoveMargin);
-    point.y = -pixel_height();
+    point.x = spot_.get_rect_at(new_index).left - text_width(MenuMouseMoveMargin);
+    point.y = pixel_height();
     ClientToScreen(HandleMain, &point);
     redraw();
-    int left = point.x;
-    int top = point.y;
-    on_adjust_pulldown_pos(&left, &top); // native Menu slot 94
-    entries_[field_A24_].pull_down->show(left, top, 0);
+    x = point.x;
+    y = point.y;
+    on_adjust_pulldown_pos(&x, &y); // native Menu slot 94
+    entries_[field_A24_].pull_down->show(x, y, 0);
 }
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
@@ -1752,14 +1740,17 @@ void Menu::on_left_up(int xCoord, int yCoord) {
     // The original keeps this entry cell across get_selected and reloads its
     // current PullDown* afterward (0x005FBB54, 0x005FBB5B, 0x005FBB71).
     PullDown **pull_down_slot = &entries_[highlighted].pull_down;
-    const int selected = (*pull_down_slot)->get_selected();
-    if (selected == -1) {
+    // The original reuses the y parameter for the selection.
+    yCoord = (*pull_down_slot)->get_selected();
+    if (yCoord == -1) {
         return;
     }
 
-    int selected_id = -1;
-    if (selected < 0x40) {
-        selected_id = (*pull_down_slot)->items_[selected].id;
+    int selected_id;
+    if (yCoord < 0x40) {
+        selected_id = (*pull_down_slot)->items_[yCoord].id;
+    } else {
+        selected_id = -1;
     }
 
     hide_menus();

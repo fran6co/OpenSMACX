@@ -1457,7 +1457,6 @@ void __cdecl auto_save() {
             remove("saves\\auto\\Alpha Centauri Autosave 4.SAV");
             remove("saves\\auto\\Alpha Centauri Autosave 3.SAV");
             remove("saves\\auto\\Alpha Centauri Autosave 2.SAV");
-            save_daemon(const_cast<char *>("saves\\auto\\Alpha Centauri Autosave 1"));
         } else { // standard auto saves
             if (!(GameDataStateStorage.fields_.turn_current_num_ % 10)) {
                 remove("saves\\auto\\Alpha Centauri Autosave 30.SAV");
@@ -1476,8 +1475,8 @@ void __cdecl auto_save() {
                 "saves\\auto\\Alpha Centauri Autosave 3.SAV");
             rename("saves\\auto\\Alpha Centauri Autosave 1.SAV",
                 "saves\\auto\\Alpha Centauri Autosave 2.SAV");
-            save_daemon(const_cast<char *>("saves\\auto\\Alpha Centauri Autosave 1"));
         }
+        save_daemon(const_cast<char *>("saves\\auto\\Alpha Centauri Autosave 1"));
     }
 }
 

@@ -273,13 +273,21 @@ int Dialog::init(int left, int top, int right, int bottom, int heap_size) {
     field_20_ |= 3U;
     field_1C_ = static_cast<uint32_t>(heap_size);
 
-    if (heap_size != 0 && heap_.init(static_cast<size_t>(heap_size))) {
-        return 4;
+    if (heap_size != 0) {
+        Heap *heap = &heap_;
+        if (heap->init(static_cast<size_t>(heap_size))) {
+            return 4;
+        }
+        StringList *list = &item_list_;
+        list->remove_all();
+        list->current_position_ = 0;
+        list->allocator_ = heap;
+        return 0;
     }
-
-    item_list_.remove_all();
-    item_list_.current_position_ = 0;
-    item_list_.allocator_ = heap_size == 0 ? 0 : &heap_;
+    StringList *list = &item_list_;
+    list->remove_all();
+    list->current_position_ = 0;
+    list->allocator_ = 0;
     return 0;
 }
 
@@ -296,10 +304,10 @@ int Dialog::init(RECT *rect, Heap *heap) {
         return 3;
     }
 
-    const int left = rect->left;
     const int top = rect->top;
-    const int width = rect->right - left;
+    const int left = rect->left;
     const int height = rect->bottom - top;
+    const int width = rect->right - left;
 
     close();
 
@@ -310,9 +318,10 @@ int Dialog::init(RECT *rect, Heap *heap) {
     field_20_ |= 3U;
     heap_ptr_ = heap;
 
-    item_list_.remove_all();
-    item_list_.current_position_ = 0;
-    item_list_.allocator_ = heap;
+    StringList *list = &item_list_;
+    list->remove_all();
+    list->current_position_ = 0;
+    list->allocator_ = heap;
     return 0;
 }
 
@@ -959,7 +968,8 @@ Status: Complete
 // RECOVERY_BINDING: v1 {"reason":"Recover the complete body in its genuine C++ owner, with real embedded members, shared virtual bases, lifecycle and parent operations. Compiler-generated overrides/adjustors replace executable-address or vbtable stand-ins; no current matching claim is granted.","evidence":["git:de91fffe:src/recovered/units/00609bf0.cpp","image:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf","recovery/tasks/ui-eight-owner-coverage.json","Original entry 0x00609bf0; physical VC6 COFF emitted symbol ?UNK2@Dialog@@QAEXHHHH@Z."]}
 void Dialog::UNK2(int window, int message, int wparam, int lparam) {
     HWND hwnd = reinterpret_cast<HWND>(static_cast<LONG_PTR>(window));
-    if (message == WM_SETFOCUS || message == WM_KILLFOCUS) {
+    if (static_cast<UINT>(message) >= WM_SETFOCUS &&
+        static_cast<UINT>(message) <= WM_KILLFOCUS) {
         if (!IsChild(hwnd,
                      reinterpret_cast<HWND>(static_cast<LONG_PTR>(wparam)))) {
             Win *owner = reinterpret_cast<Win *>(
@@ -999,101 +1009,25 @@ void Dialog::UNK2(int window, int message, int wparam, int lparam) {
 // historical Status: Complete
 // TRIED: the three inlined entry-list clears written out with a locally redefined dispatch shim for the notify/destroy virtual calls; stack frame layout differs from instruction 1 on.
 int Dialog::init() {
-    StringList *const list = &item_list_;
-    Heap *const heap = &heap_;
     if (static_cast<int32_t>(field_1C_) < 0) {
         return 1;
     }
-
-    // The same inlined teardown the image repeats between its decisions -
-    // see StringStruct::remove_all in stringstruct.h for the shared shape.
-    if (list->head_ != 0) {
-        int index = 0;
-        if (0 < list->entry_count_) {
-            do {
-                StringStructEntry *const entry = list->head_;
-                list->current_ = entry->next;
-                StringStructPayload *const payload = entry->string_payload();
-                list->on_remove(payload);
-                if (payload != 0) {
-                    delete payload;
-                }
-                list->head_->payload = 0;
-                StringStructEntry *const head = list->head_;
-                if (head != 0) {
-                    delete head;
-                }
-                ++index;
-                list->head_ = list->current_;
-            } while (index < list->entry_count_);
-        }
-        list->head_ = 0;
-        list->current_position_ = 0;
-        list->entry_count_ = 0;
-    }
+    StringList *list = &item_list_;
+    list->remove_all();
     list->current_position_ = 0;
-
-    const int32_t requested = static_cast<int32_t>(field_1C_);
-    if (requested == 0) {
-        if (list->head_ != 0) {
-            int index = 0;
-            if (0 < list->entry_count_) {
-                do {
-                    StringStructEntry *const entry = list->head_;
-                    list->current_ = entry->next;
-                    StringStructPayload *const payload = entry->string_payload();
-                    list->on_remove(payload);
-                    if (payload != 0) {
-                        delete payload;
-                    }
-                    list->head_->payload = 0;
-                    StringStructEntry *const head = list->head_;
-                    if (head != 0) {
-                        delete head;
-                    }
-                    ++index;
-                    list->head_ = list->current_;
-                } while (index < list->entry_count_);
-            }
-            list->head_ = 0;
-            list->current_position_ = 0;
-            list->entry_count_ = 0;
+    if (field_1C_ != 0) {
+        Heap *heap = &heap_;
+        if (heap->init(static_cast<size_t>(field_1C_))) {
+            return 4;
         }
+        list->remove_all();
+        list->allocator_ = heap;
         list->current_position_ = 0;
-        list->allocator_ = 0;
         return 0;
     }
-
-    if (heap->init(static_cast<size_t>(requested)) != 0) {
-        return 4;
-    }
-
-    if (list->head_ != 0) {
-        int index = 0;
-        if (0 < list->entry_count_) {
-            do {
-                StringStructEntry *const entry = list->head_;
-                list->current_ = entry->next;
-                StringStructPayload *const payload = entry->string_payload();
-                list->on_remove(payload);
-                if (payload != 0) {
-                    delete payload;
-                }
-                list->head_->payload = 0;
-                StringStructEntry *const head = list->head_;
-                if (head != 0) {
-                    delete head;
-                }
-                ++index;
-                list->head_ = list->current_;
-            } while (index < list->entry_count_);
-        }
-        list->head_ = 0;
-        list->current_position_ = 0;
-        list->entry_count_ = 0;
-    }
-    list->allocator_ = heap;
+    list->remove_all();
     list->current_position_ = 0;
+    list->allocator_ = 0;
     return 0;
 }
 
@@ -1122,35 +1056,20 @@ int Dialog::init(int heap_size) {
     close();
     field_1C_ = static_cast<uint32_t>(heap_size);
     if (heap_size != 0) {
-        if (heap_.init(static_cast<size_t>(heap_size)) != 0) {
+        Heap *heap = &heap_;
+        if (heap->init(static_cast<size_t>(heap_size))) {
             return 4;
         }
+        StringList *list = &item_list_;
+        list->remove_all();
+        list->current_position_ = 0;
+        list->allocator_ = heap;
+        return 0;
     }
-    if (item_list_.head_ != 0) {
-        int index = 0;
-        if (0 < item_list_.entry_count_) {
-            do {
-                item_list_.current_ = item_list_.head_->next;
-                StringStructPayload *const payload = item_list_.head_->string_payload();
-                item_list_.on_remove(payload);
-                if (payload != 0) {
-                    delete payload;
-                }
-                item_list_.head_->payload = 0;
-                StringStructEntry *const head = item_list_.head_;
-                if (head != 0) {
-                    delete head;
-                }
-                ++index;
-                item_list_.head_ = item_list_.current_;
-            } while (index < item_list_.entry_count_);
-        }
-        item_list_.head_ = 0;
-        item_list_.current_position_ = 0;
-        item_list_.entry_count_ = 0;
-    }
-    item_list_.allocator_ = (heap_size != 0) ? &heap_ : 0;
-    item_list_.current_position_ = 0;
+    StringList *list = &item_list_;
+    list->remove_all();
+    list->current_position_ = 0;
+    list->allocator_ = 0;
     return 0;
 }
 

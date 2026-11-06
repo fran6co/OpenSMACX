@@ -489,9 +489,7 @@ Purpose: The third pronoun fetcher beside game.cpp's get_his_her/get_him_her:
 Status: Coverage transcription - unclaimed body
 */
 char *__cdecl get_he_she(int faction_id, int sentence_form) {
-    const int code = 0xd1 + (Players[faction_id].is_leader_female != 0);
-    LPSTR *labels = Labels.strings_ptr;
-    strcpy(PronounBuffer, StringTable.get(labels[code]));
+    strcpy(PronounBuffer, StringTable.get(Labels.strings_ptr[Players[faction_id].is_leader_female != 0 ? 0xd2 : 0xd1]));
     if (sentence_form != 0) {
         if (sentence_form == 1) {
             char buf[2];

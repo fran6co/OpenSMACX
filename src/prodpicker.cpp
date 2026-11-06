@@ -270,13 +270,9 @@ void ProdPicker::draw_item(int item, int update) {
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/004941c0.cpp", "source:src/prodpicker.h", "source:src/prodpicker.cpp"], "reason": "Apply the click-to-grid selection through the picker’s measured geometry and redraw both changed cells through draw_item and GraphicWin."}
 // symbol    ?on_left_click@ProdPicker@@UAEXHH@Z
 void ProdPicker::on_left_click(int x, int y) {
-    const int row = y / row_height_;
     const uint32_t oldSelection = field_A774_;
-    const int column = x / cell_width_;
-    uint32_t newSelection = row;
-    newSelection = newSelection * column_count_ + field_A77C_ + column;
-    field_A774_ = newSelection;
-    if (oldSelection != newSelection) {
+    field_A774_ = field_A77C_ + (y / row_height_ * column_count_ + x / cell_width_);
+    if (oldSelection != field_A774_) {
         field_B64_ = 0;
         draw_item(static_cast<int>(oldSelection), 0);
         draw_item(static_cast<int>(field_A774_), 0);

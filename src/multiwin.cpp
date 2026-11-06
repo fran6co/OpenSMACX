@@ -690,6 +690,7 @@ void MultiWin::on_button_clicked(int button_id) {
 // Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x00479970 ?show@MultiWin@@QAEXXZ 0x00479970-0x00479BF1;0x006563F5-0x0065640A
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00479970.cpp; src/multiwin.h; src/faction.h; src/console.h; src/wave.cpp"], "reason": "The original show uses MultiWin's owned controls and GraphicWin buffer, the local Console faction, Player rule flags, process window animation state, and the source-owned wave, screen, visibility and frame-delay objects."}
+#pragma optimize("y", off)
 void MultiWin::show() {
   Buffer background;
   if (IsMultiplayerNet == 0 && panel_open_ != 0) return;
@@ -710,9 +711,7 @@ void MultiWin::show() {
   on_redraw();
   MultiWindowRedrawSuppressed = 0;
 
-  const int width = dib_.bmiHeader.biWidth;
-  const int height = -dib_.bmiHeader.biHeight;
-  background.resize(width, height);
+  background.resize(pixel_width(), pixel_height());
   background.fill(WinFillColour);
   update_window_to_buffer(&background);
 
@@ -742,6 +741,7 @@ void MultiWin::show() {
   if (GameDataStateStorage.fields_.game_preferences_ & 0x400) g_MULTIWIN_WAVE.fade(50);
   if (IsMultiplayerNet == 0) Win::show(3);
 }
+#pragma optimize("", on)
 
 // 0x00479C00. The Win slot-2 override hides the multi-player panel, restores
 // its background and runs the original optional slide-out animation.
@@ -826,12 +826,13 @@ int MultiWindowContactStatusMask;
 // ORIGINAL: 0x00477F30 ?on_left_click@MultiWin@@QAEXHH@Z 0x00477F30-0x00478148
 // RECOVERY_BINDING: v1 {"evidence": ["task:multiwin-contact-owner", "historical seed:src/recovered/units/00477f30.cpp", "pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf:complete original mapped span and native call/branch order", "native:478500 subtracts item ID1; jump-table indices7..10 select items8renounce,9withdrawal,10contact,11chat; withdrawal arguments local then clicked", "source:existing typed subobjects, faction/player/parser/network and separate bounded contact-state storage; automatic PullDown/Buffer lifetime"], "reason": "Recover the complete original in its genuine MultiWin or diplomacy C++ owner, retaining identity, auxiliary spans and historical seed findings; no current match or runtime claim."}
 // symbol    ?on_left_click@MultiWin@@UAEXHH@Z
+#pragma optimize("y", off)
 void MultiWin::on_left_click(int x, int y) {
     ConsoleInfoWin.reset();
     ConsoleStatusWin.reset();
 
-    int faction = -1;
-    int kind = -1;
+    int faction;
+    int kind;
     if (spot_.check(x, y, &faction, &kind) < 0) return;
 
     if (!is_alive(static_cast<uint32_t>(faction))) {
@@ -854,11 +855,11 @@ void MultiWin::on_left_click(int x, int y) {
     if (kind == 2) {
         ConsoleInfoWin.reset();
         ConsoleStatusWin.reset();
-        if (faction == 0) {
+        switch (faction) {
+        case 0:
             ConsoleGlobal.time_controls();
             return;
-        }
-        if (faction == 3) {
+        case 3:
             ConsoleGlobal.use_time_bonus();
             return;
         }
@@ -879,6 +880,7 @@ void MultiWin::on_left_click(int x, int y) {
         draw(0);
     }
 }
+#pragma optimize("", on)
 
 // ORIGINAL: 0x00478150 ?on_right_click@MultiWin@@QAEXHH@Z 0x00478150-0x004785FA;0x006563E0-0x006563F5
 // RECOVERY_BINDING: v1 {"evidence": ["task:multiwin-contact-owner", "historical seed:src/recovered/units/00478150.cpp", "pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf:complete original mapped span and native call/branch order", "native:478500 subtracts item ID1; jump-table indices7..10 select items8renounce,9withdrawal,10contact,11chat; withdrawal arguments local then clicked", "source:existing typed subobjects, faction/player/parser/network and separate bounded contact-state storage; automatic PullDown/Buffer lifetime"], "reason": "Recover the complete original in its genuine MultiWin or diplomacy C++ owner, retaining identity, auxiliary spans and historical seed findings; no current match or runtime claim."}

@@ -960,10 +960,10 @@ void CouncWin::arrived(int faction_id) {
     field_A44_ |= (1 << faction_id);
     if (TurnRedrawPending != 0) {
         static_cast<GraphicWin *>(this)->redraw();
-        const uint32_t status = GameDataStateStorage.fields_.lock_masks_.enable_mask_;
-        const uint8_t humans = static_cast<uint8_t>(status);
-        const uint8_t alive = static_cast<uint8_t>(status >> 8);
-        if (((alive & humans) & field_A44_) == humans) {
+        const int status = GameDataStateStorage.fields_.lock_masks_.enable_mask_;
+        const int humans = status & 0xFF;
+        const int alive = (status >> 8) & 0xFF;
+        if ((alive & humans & field_A44_) == humans) {
             NetMsgPrimary.pop("VOTINGOPEN", 1000, 1, 0);
         }
     }
@@ -1914,11 +1914,9 @@ int CouncWin::on_key_click(int, int key) {
     if (key != 0x1b && key != 0x0d) return 1;
 
     const int local_faction = ConsoleGlobal.faction_id_;
-    const uint8_t human_factions = GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_;
-    const uint8_t local_bit = static_cast<uint8_t>(1u << (local_faction & 0x1f));
     // Original 425BD4 tests GameState at the existing window's +0x30.
     const bool can_close =
-        (human_factions & local_bit) == 0 ||
+        (GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & (1 << local_faction)) == 0 ||
         ((GameDataStateStorage.fields_.game_state_ & 0x40) != 0 &&
          (GameDataStateStorage.fields_.game_state_ & 0x1000) != 0 && !IsMultiplayerPBEM) ||
         field_A24_ != 0;
@@ -1940,9 +1938,8 @@ int CouncWin::on_key_click(int, int key) {
             return 1;
         }
         for (int faction = 0; faction < MaxPlayerNum; ++faction) {
-            const uint8_t current_humans = GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_;
             if (leader_label_kind_[faction] == 0 &&
-                (current_humans & (1u << (faction & 0x1f))) == 0) {
+                (GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & (1 << faction)) == 0) {
                 leader_label_kind_[faction] = static_cast<uint32_t>(council_get_vote(
                     faction, static_cast<int>(field_A1C_), static_cast<int>(field_A20_)));
             }
