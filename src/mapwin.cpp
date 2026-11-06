@@ -194,28 +194,31 @@ Status: Coverage transcription - unclaimed body, seed
         git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/0046fa20.cpp retained.
 */
 void MapWin::UNK5(int panel) {
-    Buffer &canvas = ConsoleGlobal;
     if (panel != 0) {
-        const int width = canvas.dib_.bmiHeader.biWidth;
-        const int height = canvas.dib_.bmiHeader.biHeight;
-        MapPanelRects[panel].top = 0;
+        MapPanelRect *const rect = &MapPanelRects[panel];
+        const int width = ConsoleGlobal.dib_.bmiHeader.biWidth;
+        const int bottom = (MapPanelGeometryWord008EA0B0 -
+                            ConsoleGlobal.dib_.bmiHeader.biHeight -
+                            MapPanelGeometryWord008EA0B8) / 2;
+        rect->top = 0;
         const int three_quarters = (width * 3) / 4;
-        MapPanelRects[panel].left = three_quarters;
-        MapPanelRects[panel].right = width / 4 + three_quarters;
-        MapPanelRects[panel].bottom =
-            (MapPanelGeometryWord008EA0B0 - height - MapPanelGeometryWord008EA0B8) / 2;
+        rect->left = three_quarters;
+        rect->right = width / 4 + three_quarters;
+        rect->bottom = bottom;
     } else {
+        int right;
         if (IsMultiplayerNet != 0) {
-            MapPanelRects[0].right =
-                (canvas.dib_.bmiHeader.biWidth * 3) / 4;
+            right = (ConsoleGlobal.dib_.bmiHeader.biWidth * 3) / 4;
         } else {
-            MapPanelRects[0].right = canvas.dib_.bmiHeader.biWidth;
+            right = ConsoleGlobal.dib_.bmiHeader.biWidth;
         }
-        MapPanelRects[0].bottom = MapPanelGeometryWord008EA0B0 -
-                             canvas.dib_.bmiHeader.biHeight -
-                             MapPanelGeometryWord008EA0B8;
+        const int bottom = MapPanelGeometryWord008EA0B0 -
+                           ConsoleGlobal.dib_.bmiHeader.biHeight -
+                           MapPanelGeometryWord008EA0B8;
         MapPanelRects[0].left = 0;
         MapPanelRects[0].top = 0;
+        MapPanelRects[0].right = right;
+        MapPanelRects[0].bottom = bottom;
     }
     MapPanelDirtyMask |= 1 << panel;
 }
@@ -1712,6 +1715,7 @@ int map_dest_distance(int x1, int y1, int x2, int y2) {
 // RECOVERY_BINDING: v1 {"evidence": ["Original4672C0..46742C; retired seed git:b55fcf8b:src/recovered/units/004672c0.cpp records this identity and exact span.", "Original467388 uses source Y as the default color; both tile conversions precede center-offset reads, and cover rendering performs both screen-to-client conversions."], "reason": "MapWin projects both endpoints and draws the route edge on either CoverWindow or its own Buffer. Preserve both target branches and the original phase/color selection; the patterned Buffer dependency remains explicitly unfinished."}
 void MapWin::direct_dest_line(int x1, int y1, int x2, int y2, int triad,
                              int pattern_on, int pattern_off, int cover) {
+    int color;
     Win::update_cursor(0, 1);
     int pixel_x1;
     int pixel_y1;
@@ -1720,14 +1724,13 @@ void MapWin::direct_dest_line(int x1, int y1, int x2, int y2, int triad,
     tile_to_pixel(x1, y1, &pixel_x1, &pixel_y1);
     tile_to_pixel(x2, y2, &pixel_x2, &pixel_y2);
     // Both center offsets are read after BOTH conversions, then reused.
-    const int center_x = map_dest_signed(field_1DDBC_);
-    const int center_y = map_dest_signed(field_1DDC0_);
-    pixel_x1 = mapwin_dest_add(pixel_x1, center_x);
-    pixel_y1 = mapwin_dest_add(pixel_y1, center_y);
-    pixel_x2 = mapwin_dest_add(pixel_x2, center_x);
-    pixel_y2 = mapwin_dest_add(pixel_y2, center_y);
+    const int center_x = field_1DDBC_;
+    const int center_y = field_1DDC0_;
+    pixel_x1 += center_x;
+    pixel_y1 += center_y;
+    pixel_x2 += center_x;
+    pixel_y2 += center_y;
 
-    int color;
     switch (triad) {
     case 0:
         color = 0xfa;
@@ -1735,24 +1738,22 @@ void MapWin::direct_dest_line(int x1, int y1, int x2, int y2, int triad,
     case 1:
         color = 0xfe;
         if (cover == 0) {
-            pixel_x1 = mapwin_dest_add(pixel_x1, 1);
-            pixel_x2 = mapwin_dest_add(pixel_x2, 1);
-            pixel_y1 = mapwin_dest_add(pixel_y1, 1);
-            pixel_y2 = mapwin_dest_add(pixel_y2, 1);
+            pixel_x1++;
+            pixel_x2++;
+            pixel_y1++;
+            pixel_y2++;
         }
         break;
     case 2:
         color = 0xf9;
         if (cover == 0) {
-            pixel_y1 = mapwin_dest_sub(pixel_y1, 1);
-            pixel_y2 = mapwin_dest_sub(pixel_y2, 1);
+            pixel_y1--;
+            pixel_y2--;
         }
         break;
-    default:
-        // Original467388 loads the original source Y argument, not triad.
-        color = y1;
-        break;
     }
+    // BUG IN THE ORIGINAL: no default; any other triad leaves color unset
+    // (the image reads its dead y1 home slot at 467388).
     if (field_1DD84_ != 0) {
         color = 0xfb;
     }
@@ -1762,9 +1763,7 @@ void MapWin::direct_dest_line(int x1, int y1, int x2, int y2, int triad,
         Win::screen_to_client(&pixel_x2, &pixel_y2);
         CoverWindow.Buffer::line(pixel_x1, pixel_y1, pixel_x2, pixel_y2, color);
     } else {
-        const int phase = map_dest_signed(
-            static_cast<uint32_t>(mapwin_dest_sub(mapwin_dest_add(pattern_on, pattern_off), 1)) &
-            static_cast<uint32_t>(PlanLineCounter));
+        const int phase = (pattern_on + pattern_off - 1) & PlanLineCounter;
         // This genuine nine-argument dependency is not omitted: its owning
         // Buffer implementation is a separate, explicit recovery obligation.
         Buffer::line(pixel_x1, pixel_y1, pixel_x2, pixel_y2,
@@ -2039,11 +2038,12 @@ void mouse_feedback_store_y(MapWin &window, int index, int value) {
 // symbol    ?on_nc_hittest@MapWin@@UAEHHH@Z
 // TRIED (retired seed git:b55fcf8b:src/unrecovered/0046f660.cpp): the seed's int return was contradicted by its standalone scaffold's void declaration (C2556/C2371); keeping void dropped the mov eax,1 custom-hit result. Its remaining MISMATCH #6 ('mov' vs 'push') concerns instruction scheduling around the in_box/RECT stores.
 int MapWin::on_nc_hittest(int x, int y) {
-    RECT title_strip;
-    title_strip.left = client_rect_.right - client_rect_.left - 0x5b;
-    title_strip.top = 0xe;
-    title_strip.right = title_strip.left + 0x50;
-    title_strip.bottom = 0x1f;
+    RECT title_strip = {0, 0xe, 0x50, 0x1f};
+    const RECT &client = client_rect();
+    int diff = client.right - client.left;
+    diff -= 0x5b;
+    title_strip.left = diff;
+    title_strip.right = diff + 0x50;
     if (in_box(x, y, &title_strip)) {
         return 1;
     }
@@ -2234,35 +2234,31 @@ int map_radius_half_width(int extent, int row) {
 // TRIED (retired seed git:b55fcf8b:src/unrecovered/004216f0.cpp): the synthetic Obj4216F0 __thiscall receiver was rejected because disassembly reads [ecx+0x1ddaN] without loading ecx from the stack; this is the this-not-a-parameter signal, so IDA's guessed __stdcall(int,int,int) was wrong (a proposal, not a catalogue fact; no mangled name survives). The seed landed at 0.74 similarity: its tile-pointer expression collapsed arithmetic that the original keeps as an explicit zeroed accumulator beside imul, a register-allocation difference that plain restatement did not move.
 // symbol    ?tile_in_view@MapWin@@QAEHHHH@Z
 int MapWin::tile_in_view(int x, int y, int margin) {
-    if (margin != 0 && map_radius_valid(x, y)) {
-        const int climate = map_loc(x, y)->climate;
-        if ((climate & 0xe0) > 0x60 &&
-            mapwin_dest_add(mapwin_dest_sub(y, climate >> 5), 3) <
-                mapwin_dest_add(field_1DDA8_, margin)) {
+    if (margin != 0 && y >= 0 && y < MapLatitudeBounds && x >= 0 &&
+        x < MapLongitudeBounds) {
+        if (alt_at(x, y) > 3 &&
+            y - alt_at(x, y) + 3 < field_1DDA8_ + margin) {
             return 0;
         }
     }
-    const int top = field_1DDA8_;
-    if (y < mapwin_dest_add(top, margin)) {
+    if (y < field_1DDA8_ + margin) {
         return 0;
     }
-    const int bottom = mapwin_dest_add(
-        mapwin_dest_sub(mapwin_dest_add(field_1DDD8_, field_1DDD0_), margin), top);
-    if (y >= bottom) {
+    if (y >= field_1DDD8_ + field_1DDD0_ - margin + field_1DDA8_) {
         return 0;
     }
-    const int left = mapwin_dest_add(field_1DDA4_, margin);
-    const int right = mapwin_dest_add(
-        mapwin_dest_sub(mapwin_dest_add(field_1DDD4_, field_1DDCC_), margin), field_1DDA4_);
     if ((MapIsFlat & 1) == 0) {
-        if (x < left) {
-            x = mapwin_dest_add(x, MapLongitudeBounds);
+        if (x < field_1DDA4_ + margin) {
+            x += MapLongitudeBounds;
         }
-        if (x >= right) {
-            x = mapwin_dest_sub(x, MapLongitudeBounds);
+        if (x >= field_1DDD4_ + field_1DDCC_ - margin + field_1DDA4_) {
+            x -= MapLongitudeBounds;
         }
     }
-    return x >= left && x < right;
+    if (x < field_1DDA4_ + margin) {
+        return 0;
+    }
+    return x < field_1DDD4_ + field_1DDCC_ - margin + field_1DDA4_;
 }
 
 
@@ -2402,68 +2398,57 @@ draw_target:
 // ORIGINAL: 0x00468F90 ?draw_vehicles@MapWin@@QAEXHHHH@Z 0x00468F90-0x00469183
 // RECOVERY_BINDING: v1 {"evidence": ["Original468F90..469183; retired seed git:b55fcf8b:src/recovered/units/00468f90.cpp records this identity and exact span; the original vehicle scan caps extension at10, unlike terrain and overlay scans."], "reason": "The four-argument MapWin overload scans a clipped radius and calls the distinct five-argument tile renderer. It preserves the capped upward extension, asymmetric rows and live viewport/center reads."}
 void MapWin::draw_vehicles(int x, int y, int radius, int faction) {
-    int span = mapwin_dest_add(mapwin_dest_mul(radius, 2), 2);
+    int span = radius * 2 + 2;
+    RECT viewport = current_clip();
     int upper_tile_y = 32000;
     int ignored_x;
-    const RECT &viewport = current_clip();
-    pixel_to_tile(viewport.left, viewport.top,
-                  &ignored_x, &upper_tile_y);
-    while (upper_tile_y < mapwin_dest_sub(y, span) && span < 10) {
-        span = mapwin_dest_add(span, 2);
+    pixel_to_tile(viewport.left, viewport.top, &ignored_x, &upper_tile_y);
+    while (upper_tile_y < y - span && span < 10) {
+        span += 2;
     }
-    const int extent = mapwin_dest_add(span, 2);
-    if (extent < 0) {
+    span += 2;
+    const int extent = span;
+    if (span < 0) {
         return;
     }
     for (int row = -extent; row <= extent + 1; ++row) {
-        int half_width = map_radius_half_width(extent, row);
+        // Not a symmetric diamond: negative rows narrow by distance,
+        // positive rows by parity.
+        int half_width =
+            extent - (row <= 0 ? (row < 0 ? -row : row) : (row & 1));
+        const int tile_y = y + row;
         if (radius == 0) {
-            half_width = mapwin_dest_add(half_width, 2);
+            half_width += 2;
         }
-        const int tile_y = mapwin_dest_add(y, row);
         for (int column = -half_width; column <= half_width; column += 2) {
-            const int tile_x = map_radius_wrap_x(mapwin_dest_add(x, column));
-            if (map_radius_valid(tile_x, tile_y)) {
+            const int column_x = x + column;
+            int tile_x;
+            if (MapIsFlat & 1) {
+                tile_x = column_x;
+            } else if (column_x < 0) {
+                tile_x = column_x + MapLongitudeBounds;
+            } else if (column_x >= MapLongitudeBounds) {
+                tile_x = column_x - MapLongitudeBounds;
+            } else {
+                tile_x = column_x;
+            }
+            if (tile_y >= 0 && tile_y < MapLatitudeBounds && tile_x >= 0 &&
+                tile_x < MapLongitudeBounds) {
                 bool tile_visible = false;
-                const int viewport_top = field_1DDA8_;
-                if (tile_y >= viewport_top) {
-                    const int viewport_bottom = mapwin_dest_add(
-                        mapwin_dest_add(field_1DDD8_, field_1DDD0_), viewport_top);
-                    if (tile_y < viewport_bottom) {
-                        if ((MapIsFlat & 1) != 0) {
-                            const int viewport_left = field_1DDA4_;
-                            if (tile_x >= viewport_left) {
-                                const int viewport_right = mapwin_dest_add(
-                                    mapwin_dest_add(field_1DDD4_, field_1DDCC_),
-                                    viewport_left);
-                                if (tile_x < viewport_right) {
-                                    tile_visible = true;
-                                }
-                            }
-                        } else {
-                            const int viewport_left = field_1DDA4_;
-                            int viewport_x = tile_x;
-                            if (viewport_x < viewport_left) {
-                                viewport_x = mapwin_dest_add(
-                                    viewport_x, MapLongitudeBounds);
-                            }
-                            const int viewport_right = mapwin_dest_add(
-                                mapwin_dest_add(field_1DDD4_, field_1DDCC_),
-                                viewport_left);
-                            if (viewport_x >= viewport_right) {
-                                viewport_x = mapwin_dest_sub(
-                                    viewport_x, MapLongitudeBounds);
-                            }
-                            const int final_viewport_left = field_1DDA4_;
-                            if (viewport_x >= final_viewport_left) {
-                                const int final_viewport_right = mapwin_dest_add(
-                                    mapwin_dest_add(field_1DDD4_, field_1DDCC_),
-                                    final_viewport_left);
-                                if (viewport_x < final_viewport_right) {
-                                    tile_visible = true;
-                                }
-                            }
+                int viewport_x = tile_x;
+                if (tile_y >= field_1DDA8_ &&
+                    tile_y < field_1DDD8_ + field_1DDD0_ + field_1DDA8_) {
+                    if ((MapIsFlat & 1) == 0) {
+                        if (tile_x < field_1DDA4_) {
+                            viewport_x = tile_x + MapLongitudeBounds;
                         }
+                        if (viewport_x >= field_1DDD4_ + field_1DDCC_ + field_1DDA4_) {
+                            viewport_x -= MapLongitudeBounds;
+                        }
+                    }
+                    if (viewport_x >= field_1DDA4_ &&
+                        viewport_x < field_1DDD4_ + field_1DDCC_ + field_1DDA4_) {
+                        tile_visible = true;
                     }
                 }
                 if (tile_visible) {
@@ -2471,7 +2456,7 @@ void MapWin::draw_vehicles(int x, int y, int radius, int faction) {
                     int pixel_y;
                     tile_to_pixel(tile_x, tile_y, &pixel_x, &pixel_y);
                     draw_vehicles(tile_x, tile_y, pixel_x,
-                                  mapwin_dest_sub(pixel_y, field_1DDC0_), faction);
+                                  pixel_y - field_1DDC0_, faction);
                 }
             }
         }
@@ -2481,93 +2466,113 @@ void MapWin::draw_vehicles(int x, int y, int radius, int faction) {
 // Original469190..469718, not the register/goto seed's rectangle arguments.
 // ORIGINAL: 0x00469190 ?gen_radius@MapWin@@QAEXHHHHH@Z 0x00469190-0x00469718
 // RECOVERY_BINDING: v1 {"evidence": ["Original469190..469718; retired seed git:b55fcf8b:src/recovered/units/00469190.cpp records this identity and exact span.", "Original469333..469355 converts left/top then right/top, not the transposed seed arguments;4691FB fills via the genuine GraphicWin receiver. Radius-zero scan widening does not apply to the overlay scan."], "reason": "MapWin owns clipped terrain, vehicle and overlay generation. The original scan is asymmetric; top-left and top-right clip conversions determine terrain extension, while overlays later recompute from the left conversion."}
+#pragma inline_depth(0)
 void MapWin::gen_radius(int x, int y, int radius, int faction, int skip_terrain) {
     RECT clip;
     if (compute_clip(x, y, radius, &clip) == 0) {
         return;
     }
-    Buffer *const canvas = static_cast<Buffer *>(this);
-    canvas->set_clip(&clip);
+    Buffer::set_clip(&clip);
     if (radius == 0 && skip_terrain == 0) {
         if ((field_1DD70_ & 0x10000000U) == 0) {
             GraphicWin::fill(&clip, 0x41);
         }
-        const int tile_y = mapwin_dest_sub(y, 3);
-        for (int side = -1; side <= 1; side += 2) {
-            const int tile_x = map_radius_wrap_x(mapwin_dest_add(x, side));
-            if (map_radius_valid(tile_x, tile_y)) {
+        {
+            const int column_x = x - 1;
+            int tile_x;
+            if (MapIsFlat & 1) {
+                tile_x = column_x;
+            } else if (column_x < 0) {
+                tile_x = column_x + MapLongitudeBounds;
+            } else if (column_x >= MapLongitudeBounds) {
+                tile_x = column_x - MapLongitudeBounds;
+            } else {
+                tile_x = column_x;
+            }
+            const int tile_y = y - 3;
+            if (tile_y >= 0 && tile_y < MapLatitudeBounds && tile_x >= 0 &&
+                tile_x < MapLongitudeBounds) {
                 int pixel_x;
                 int pixel_y;
                 tile_to_pixel(tile_x, tile_y, &pixel_x, &pixel_y);
-                gen_terrain_poly(canvas, this, zoom_offset_, faction, -1,
+                gen_terrain_poly(this, this, zoom_offset_, faction, -1,
+                                 field_1DD70_, tile_x, tile_y, pixel_x, pixel_y);
+                on_map(tile_x, tile_y);
+            }
+        }
+        {
+            const int column_x = x + 1;
+            int tile_x;
+            if (MapIsFlat & 1) {
+                tile_x = column_x;
+            } else if (column_x < 0) {
+                tile_x = column_x + MapLongitudeBounds;
+            } else if (column_x >= MapLongitudeBounds) {
+                tile_x = column_x - MapLongitudeBounds;
+            } else {
+                tile_x = column_x;
+            }
+            const int tile_y = y - 3;
+            if (tile_y >= 0 && tile_y < MapLatitudeBounds && tile_x >= 0 &&
+                tile_x < MapLongitudeBounds) {
+                int pixel_x;
+                int pixel_y;
+                tile_to_pixel(tile_x, tile_y, &pixel_x, &pixel_y);
+                gen_terrain_poly(this, this, zoom_offset_, faction, -1,
                                  field_1DD70_, tile_x, tile_y, pixel_x, pixel_y);
                 on_map(tile_x, tile_y);
             }
         }
     }
 
-    const int initial_span = mapwin_dest_add(mapwin_dest_mul(radius, 2), 2);
-    int span = initial_span;
+    int span = radius * 2 + 2;
     int upper_left_y = 32000;
     int upper_right_y = 32000;
     int ignored_x;
     pixel_to_tile(clip.left, clip.top, &ignored_x, &upper_left_y);
     pixel_to_tile(clip.right, clip.top, &ignored_x, &upper_right_y);
-    const int upper_y = upper_left_y < upper_right_y ? upper_left_y : upper_right_y;
-    while (upper_y < mapwin_dest_sub(y, span)) {
-        span = mapwin_dest_add(span, 2);
+    upper_left_y = upper_right_y < upper_left_y ? upper_right_y : upper_left_y;
+    while (upper_left_y < y - span) {
+        span += 2;
     }
-    const int terrain_extent = mapwin_dest_add(span, 2);
+    span += 2;
     if (skip_terrain == 0) {
-        for (int row = -terrain_extent; row <= terrain_extent + 1; ++row) {
-            int half_width = map_radius_half_width(terrain_extent, row);
+        for (int row = -span; row <= span + 1; ++row) {
+            int half_width = span -
+                (row <= 0 ? (row < 0 ? -row : row) : (row & 1));
             if (radius == 0) {
-                half_width = mapwin_dest_add(half_width, 2);
+                half_width += 2;
             }
-            const int tile_y = mapwin_dest_add(y, row);
+            const int tile_y = y + row;
             for (int column = -half_width; column <= half_width; column += 2) {
-                const int tile_x = map_radius_wrap_x(mapwin_dest_add(x, column));
-                if (map_radius_valid(tile_x, tile_y)) {
+                const int column_x = x + column;
+                int tile_x;
+                if (MapIsFlat & 1) {
+                    tile_x = column_x;
+                } else if (column_x < 0) {
+                    tile_x = column_x + MapLongitudeBounds;
+                } else if (column_x >= MapLongitudeBounds) {
+                    tile_x = column_x - MapLongitudeBounds;
+                } else {
+                    tile_x = column_x;
+                }
+                if (tile_y >= 0 && tile_y < MapLatitudeBounds && tile_x >= 0 &&
+                    tile_x < MapLongitudeBounds) {
                     bool tile_visible = false;
-                    const int viewport_top = field_1DDA8_;
-                    if (tile_y >= viewport_top) {
-                        const int viewport_bottom = mapwin_dest_add(
-                            mapwin_dest_add(field_1DDD8_, field_1DDD0_), viewport_top);
-                        if (tile_y < viewport_bottom) {
-                            if ((MapIsFlat & 1) != 0) {
-                                const int viewport_left = field_1DDA4_;
-                                if (tile_x >= viewport_left) {
-                                    const int viewport_right = mapwin_dest_add(
-                                        mapwin_dest_add(field_1DDD4_, field_1DDCC_),
-                                        viewport_left);
-                                    if (tile_x < viewport_right) {
-                                        tile_visible = true;
-                                    }
-                                }
-                            } else {
-                                const int viewport_left = field_1DDA4_;
-                                int viewport_x = tile_x;
-                                if (viewport_x < viewport_left) {
-                                    viewport_x = mapwin_dest_add(
-                                        viewport_x, MapLongitudeBounds);
-                                }
-                                const int viewport_right = mapwin_dest_add(
-                                    mapwin_dest_add(field_1DDD4_, field_1DDCC_),
-                                    viewport_left);
-                                if (viewport_x >= viewport_right) {
-                                    viewport_x = mapwin_dest_sub(
-                                        viewport_x, MapLongitudeBounds);
-                                }
-                                const int final_viewport_left = field_1DDA4_;
-                                if (viewport_x >= final_viewport_left) {
-                                    const int final_viewport_right = mapwin_dest_add(
-                                        mapwin_dest_add(field_1DDD4_, field_1DDCC_),
-                                        final_viewport_left);
-                                    if (viewport_x < final_viewport_right) {
-                                        tile_visible = true;
-                                    }
-                                }
+                    int viewport_x = tile_x;
+                    if (tile_y >= field_1DDA8_ &&
+                        tile_y < field_1DDD8_ + field_1DDD0_ + field_1DDA8_) {
+                        if ((MapIsFlat & 1) == 0) {
+                            if (tile_x < field_1DDA4_) {
+                                viewport_x = tile_x + MapLongitudeBounds;
                             }
+                            if (viewport_x >= field_1DDD4_ + field_1DDCC_ + field_1DDA4_) {
+                                viewport_x -= MapLongitudeBounds;
+                            }
+                        }
+                        if (viewport_x >= field_1DDA4_ &&
+                            viewport_x < field_1DDD4_ + field_1DDCC_ + field_1DDA4_) {
+                            tile_visible = true;
                         }
                     }
                     if (tile_visible) {
@@ -2587,27 +2592,51 @@ void MapWin::gen_radius(int x, int y, int radius, int faction, int skip_terrain)
     draw_base_names();
     if ((field_1DD70_ & 0x2000) != 0) {
         if (radius == 0) {
-            const int tile_y = mapwin_dest_sub(y, 3);
+            const int tile_y = y - 3;
             for (int side = -1; side <= 1; side += 2) {
-                const int tile_x = map_radius_wrap_x(mapwin_dest_add(x, side));
-                if (map_radius_valid(tile_x, tile_y)) {
+                const int column_x = x + side;
+                int tile_x;
+                if (MapIsFlat & 1) {
+                    tile_x = column_x;
+                } else if (column_x < 0) {
+                    tile_x = column_x + MapLongitudeBounds;
+                } else if (column_x >= MapLongitudeBounds) {
+                    tile_x = column_x - MapLongitudeBounds;
+                } else {
+                    tile_x = column_x;
+                }
+                if (tile_y >= 0 && tile_y < MapLatitudeBounds && tile_x >= 0 &&
+                    tile_x < MapLongitudeBounds) {
                     gen_overlays(tile_x, tile_y);
                 }
             }
         }
-        span = initial_span;
+        span = radius * 2 + 2;
         upper_left_y = 32000;
         pixel_to_tile(clip.left, clip.top, &ignored_x, &upper_left_y);
-        while (upper_left_y < mapwin_dest_sub(y, span)) {
-            span = mapwin_dest_add(span, 2);
+        while (upper_left_y < y - span) {
+            span += 2;
         }
-        const int overlay_extent = mapwin_dest_add(span, 2);
+        span += 2;
+        const int overlay_extent = span;
         for (int row = -overlay_extent; row <= overlay_extent + 1; ++row) {
-            const int half_width = map_radius_half_width(overlay_extent, row);
-            const int tile_y = mapwin_dest_add(y, row);
+            const int half_width = overlay_extent -
+                (row <= 0 ? (row < 0 ? -row : row) : (row & 1));
+            const int tile_y = y + row;
             for (int column = -half_width; column <= half_width; column += 2) {
-                const int tile_x = map_radius_wrap_x(mapwin_dest_add(x, column));
-                if (map_radius_valid(tile_x, tile_y) && tile_in_view(tile_x, tile_y, 0)) {
+                const int column_x = x + column;
+                int tile_x;
+                if (MapIsFlat & 1) {
+                    tile_x = column_x;
+                } else if (column_x < 0) {
+                    tile_x = column_x + MapLongitudeBounds;
+                } else if (column_x >= MapLongitudeBounds) {
+                    tile_x = column_x - MapLongitudeBounds;
+                } else {
+                    tile_x = column_x;
+                }
+                if (tile_y >= 0 && tile_y < MapLatitudeBounds && tile_x >= 0 &&
+                    tile_x < MapLongitudeBounds && tile_in_view(tile_x, tile_y, 0)) {
                     gen_overlays(tile_x, tile_y);
                 }
             }
@@ -2616,8 +2645,9 @@ void MapWin::gen_radius(int x, int y, int radius, int faction, int skip_terrain)
     if ((field_1DD70_ & 0x20000) != 0) {
         draw_legend();
     }
-    canvas->restore_clip();
+    Buffer::restore_clip();
 }
+#pragma inline_depth(8)
 
 // Original46A2A0..46A496. This consumes the SAME copied vertices produced
 // by gen_terrain_poly, never a detached radius-local copy or address alias.
@@ -2633,63 +2663,42 @@ void MapWin::draw_radius(int x, int y, int radius, int draw_type) {
             (ConsoleGlobal.field_23BF8_ != 0 || ConsoleGlobal.survey_mode_ != 0) &&
             (ConsoleGlobal.field_23BE4_ != 0 || (network != 0 && (GameDataStateStorage.fields_.game_state_ & 2) != 0)) &&
             (map_view_index_ == 0 || (field_1DD70_ & 0x80000000U) != 0)) {
-            const int history = ConsoleGlobal.cursor_history_index_;
-            const int cursor_y = ConsoleGlobal.cursor_history_y_[history];
-            const int cursor_x = ConsoleGlobal.cursor_history_x_[history];
+            const int cursor_y =
+                ConsoleGlobal.cursor_history_y_[ConsoleGlobal.cursor_history_index_];
+            int cursor_x =
+                ConsoleGlobal.cursor_history_x_[ConsoleGlobal.cursor_history_index_];
             bool cursor_visible = false;
-            const int viewport_top = field_1DDA8_;
-            if (cursor_y >= viewport_top) {
-                const int viewport_bottom = mapwin_dest_add(
-                    mapwin_dest_add(field_1DDD8_, field_1DDD0_), viewport_top);
-                if (cursor_y < viewport_bottom) {
-                    if ((MapIsFlat & 1) != 0) {
-                        const int viewport_left = field_1DDA4_;
-                        if (cursor_x >= viewport_left) {
-                            const int viewport_right = mapwin_dest_add(
-                                mapwin_dest_add(field_1DDD4_, field_1DDCC_),
-                                viewport_left);
-                            if (cursor_x < viewport_right) {
-                                cursor_visible = true;
-                            }
-                        }
-                    } else {
-                        const int viewport_left = field_1DDA4_;
-                        int viewport_x = cursor_x;
-                        if (viewport_x < viewport_left) {
-                            viewport_x = mapwin_dest_add(
-                                viewport_x, MapLongitudeBounds);
-                        }
-                        const int viewport_right = mapwin_dest_add(
-                            mapwin_dest_add(field_1DDD4_, field_1DDCC_),
-                            viewport_left);
-                        if (viewport_x >= viewport_right) {
-                            viewport_x = mapwin_dest_sub(
-                                viewport_x, MapLongitudeBounds);
-                        }
-                        const int final_viewport_left = field_1DDA4_;
-                        if (viewport_x >= final_viewport_left) {
-                            const int final_viewport_right = mapwin_dest_add(
-                                mapwin_dest_add(field_1DDD4_, field_1DDCC_),
-                                final_viewport_left);
-                            if (viewport_x < final_viewport_right) {
-                                cursor_visible = true;
-                            }
-                        }
+            if (cursor_y >= field_1DDA8_ &&
+                cursor_y < field_1DDD8_ + field_1DDD0_ + field_1DDA8_) {
+                if ((MapIsFlat & 1) == 0) {
+                    if (cursor_x < field_1DDA4_) {
+                        cursor_x += MapLongitudeBounds;
                     }
+                    if (cursor_x >= field_1DDD4_ + field_1DDCC_ + field_1DDA4_) {
+                        cursor_x -= MapLongitudeBounds;
+                    }
+                }
+                if (cursor_x >= field_1DDA4_ &&
+                    cursor_x < field_1DDD4_ + field_1DDCC_ + field_1DDA4_) {
+                    cursor_visible = true;
                 }
             }
             if (cursor_visible) {
-                Texture &texture = zoom_offset_ <= -8
-                                       ? g_RADIUS2_TEXTURE : g_RADIUS1_TEXTURE;
-                texture.draw_trans(static_cast<Buffer *>(this), MapCornerCopy, 0);
+                if (zoom_offset_ <= -8) {
+                    g_RADIUS2_TEXTURE.draw_trans(this, MapCornerCopy, 0);
+                } else {
+                    g_RADIUS1_TEXTURE.draw_trans(this, MapCornerCopy, 0);
+                }
             }
         }
     }
     if (draw_type != 0) {
         RECT clip;
         if (compute_clip(x, y, radius, &clip) != 0) {
-            GraphicWin::soft_update(&clip);
-            if (draw_type >= 2) {
+            if (draw_type < 2) {
+                GraphicWin::soft_update(&clip);
+            } else {
+                GraphicWin::soft_update(&clip);
                 do_all_draws();
             }
         }
@@ -6024,7 +6033,6 @@ void MapWin::draw_legend() {
     Font legend_font;
     legend_font.init(DefaultFontFace,
                      (tile_pixel_height_ * 2) / 3, 1);
-    Buffer *const canvas = static_cast<Buffer *>(this);
     // The image's 0x90-byte local frame holds this 0x50-byte conversion
     // buffer immediately before its 0x28-byte Font object (0x469746/0x46976d).
     char direction_text[0x50];
@@ -6054,8 +6062,8 @@ void MapWin::draw_legend() {
         StringTemp[0] = '\0';
         _itoa(MapDirectionPermutation[direction], direction_text, 10);
         strcat(StringTemp, direction_text);
-        canvas->set_text_color(0xFF, 0, 1, 1);
-        canvas->write_cent_l(&legend_font, StringTemp, pixel_x, pixel_y,
+        Buffer::set_text_color(0xFF, 0, 1, 1);
+        Buffer::write_cent_l(&legend_font, StringTemp, pixel_x, pixel_y,
                              tile_pixel_width_,
                              tile_pixel_height_,
                              static_cast<int>(strlen(StringTemp)));
@@ -7152,9 +7160,8 @@ merge:
 // 0x00462F95 reloads the original x argument for the out-of-view fallback.
 // The four altitude samples use the unwrapped input coordinates, in4..1 order.
 // LEVER: wrapped_x is seeded from tile_x before the width load and the seam
-// add is width + tile_x (the image's `mov edx,eax / lea eax,[ebx+edx]`):
-// 109 of 119. TRIED: `altitude >>= 2` as its own statement (17) and
-// `altitude / 4` (103); the residual is where `sar ebx,2` is scheduled.
+// add is width + tile_x (the image's `mov edx,eax / lea eax,[ebx+edx]`).
+// Exact once the four samples are summed and shifted in one expression.
 void MapWin::tile_to_pixel(int tile_x, int tile_y, int *pixel_x, int *pixel_y) {
     int wrapped_x = tile_x;
     int map_width = MapLongitudeBounds;
@@ -7194,12 +7201,10 @@ void MapWin::tile_to_pixel(int tile_x, int tile_y, int *pixel_x, int *pixel_y) {
         }
     }
     *pixel_x = field_1DDBC_ * (relative_x - 1) + field_1DDAC_;
-    int altitude = get_alt(tile_x, tile_y, 4);
-    altitude += get_alt(tile_x, tile_y, 3);
-    altitude += get_alt(tile_x, tile_y, 2);
-    altitude += get_alt(tile_x, tile_y, 1);
+    int altitude = (get_alt(tile_x, tile_y, 4) + get_alt(tile_x, tile_y, 3) +
+                    get_alt(tile_x, tile_y, 2) + get_alt(tile_x, tile_y, 1)) >> 2;
     *pixel_y = (tile_y - field_1DDA8_ - 1) * field_1DDC0_ +
-               field_1DDB0_ - (altitude >> 2);
+               field_1DDB0_ - altitude;
 }
 
 // ORIGINAL: 0x004711A0 ?terrain_fixup@@YAXPAUMapWin@@@Z 0x004711A0-0x0047123B FILE BYTE_EXACT
@@ -7427,12 +7432,8 @@ int MapWin::get_relative_alt(int x, int y, int detail) {
 // members (console.h) and the tree's
 // MapLongitudeBounds / MapLatitudeBounds (map.h), and `g_00939e5c` is the new
 // IfaceScreenWidth binding above. Measured in the tree: 8/65.
-// TRIED: `g_939340`/`g_9392c0` as the scaffold's `int *const` globals - the address does work (indexed by `*g_009392b8`), so switched to `extern int name[]`. Landed at 97.7%: the original loads `*g_00939e5c` into a register before comparing it to 1000, where this source's compiler folds the load into `cmp dword ptr[addr],1000` directly - tried both an inline dereference and a named local holding the read first; the compiler made the same choice either way. The `((t<1000)-1)&6` then `-6` also comes out as `sub eax,6` here against the original's `add eax,-6` (same value, different opcode).
-// TRIED: `int *volatile const IfaceScreenWidth` - volatile on the pointee to
-// force the image's `mov edx,[0x939e5c]` ahead of the `cmp` - measured no
-// change at all (still 8/65, still the folded memory-operand `cmp`): VC6
-// folds a volatile read into a compare operand just as it folds a plain one,
-// so volatile buys nothing at this site. Reverted.
+// Exact with the `? 0 : -6` ternary, zoom before field_1DD70_, and the
+// cursor index read directly.
 // working copy - scaffold materialised by --work
 // size      233 bytes
 // prototype void (__thiscall ?clear@MapWin@@QAEXH@Z)(MapWin* this, int)
@@ -7443,8 +7444,8 @@ int MapWin::get_relative_alt(int x, int y, int detail) {
 
 void MapWin::clear(int index) {
     map_view_index_ = index;
+    zoom_offset_ = IfaceScreenWidth >= 1000 ? 0 : -6;
     field_1DD70_ = 0;
-    zoom_offset_ = (((IfaceScreenWidth < 1000) - 1) & 6) - 6;
     view_active_ = (index == 0);
 
     int halfHeight = MapLatitudeBounds / 2;
@@ -7453,9 +7454,8 @@ void MapWin::clear(int index) {
     center_x_ = (halfWidth ^ halfHeight) & 1 ^ halfWidth;
 
     if (index == 0) {
-        int player = ConsoleGlobal.cursor_history_index_;
-        int cy = ConsoleGlobal.cursor_history_y_[player];
-        int cx = ConsoleGlobal.cursor_history_x_[player];
+        int cy = ConsoleGlobal.cursor_history_y_[ConsoleGlobal.cursor_history_index_];
+        int cx = ConsoleGlobal.cursor_history_x_[ConsoleGlobal.cursor_history_index_];
         if (cy >= 0 && cy < MapLatitudeBounds && cx >= 0 && cx < MapLongitudeBounds) {
             center_x_ = cx;
             center_y_ = ConsoleGlobal.cursor_history_y_[ConsoleGlobal.cursor_history_index_];
@@ -7665,21 +7665,22 @@ int MapWin::get_point_light(int x, int y, int corner) {
     int localLight = 0;
 
     unsigned int rec = map_tiles()[static_cast<int>(MapLongitude) * y + (x >> 1)].bit2;
-    int shade = static_cast<int>(rec) >> 0x18;
-
-    if ((rec & 1) == 0) {
-        if ((rec & 2) == 0) {
-            if ((rec & 0x200) != 0 && shade >= 0) {
-                unsigned char idx = AltDirectionTable[corner + shade * 5];
-                localLight = AltLightBit200[idx];
-            }
-        } else if (shade >= 0) {
-            unsigned char idx = AltDirectionTable[corner + shade * 5];
-            localLight = TerrainLandmarkStorageWindowData.alt_light_bit2[idx];
+    if (rec & 1) {
+        const int shade = static_cast<int>(rec) >> 0x18;
+        if (shade >= 0) {
+            localLight = AltLightBit1[AltDirectionTable[corner + shade * 5]];
         }
-    } else if (shade >= 0) {
-        unsigned char idx = AltDirectionTable[corner + shade * 5];
-        localLight = AltLightBit1[idx];
+    } else if (rec & 2) {
+        const int shade = static_cast<int>(rec) >> 0x18;
+        if (shade >= 0) {
+            localLight = TerrainLandmarkStorageWindowData
+                             .alt_light_bit2[AltDirectionTable[corner + shade * 5]];
+        }
+    } else if (rec & 0x200) {
+        const int shade = static_cast<int>(rec) >> 0x18;
+        if (shade >= 0) {
+            localLight = AltLightBit200[AltDirectionTable[corner + shade * 5]];
+        }
     }
 
     if (corner == 0) {
@@ -7689,29 +7690,11 @@ int MapWin::get_point_light(int x, int y, int corner) {
         return (total >> 2) + localLight;
     }
 
-    const int (*corner_x)[4] = CornerOffsetX + corner - 1;
-    const int (*corner_y)[4] = CornerOffsetY + corner - 1;
     for (int j = 0; j < 4; ++j) {
-        int px = x + (*corner_x)[j];
-        if ((MapIsFlat & 1) == 0) {
-            if (px < 0) {
-                px += MapLongitudeBounds;
-            } else if (px >= MapLongitudeBounds) {
-                px -= MapLongitudeBounds;
-            }
-        }
-        int py = y + (*corner_y)[j];
-        total += get_brighting(px, py, (j + 1) & 3);
-
-        px = x + (*corner_x)[j];
-        if ((MapIsFlat & 1) == 0) {
-            if (px < 0) {
-                px += MapLongitudeBounds;
-            } else if (px >= MapLongitudeBounds) {
-                px -= MapLongitudeBounds;
-            }
-        }
-        total += get_brighting(px, py, (j + 2) & 3);
+        total += get_brighting(wrap_map_x(x + CornerOffsetX[corner - 1][j]),
+                               y + CornerOffsetY[corner - 1][j], (j - 3) & 3);
+        total += get_brighting(wrap_map_x(x + CornerOffsetX[corner - 1][j]),
+                               y + CornerOffsetY[corner - 1][j], (j - 2) & 3);
     }
 
     return (total >> 3) + localLight;
@@ -8367,7 +8350,7 @@ void MapWin::on_left_down(int x_coord, int y_coord) {
         field_1DD80_ = 1;
         if (WinPointerOwner3 == nullptr) {
             WinPointerOwner4 = nullptr;
-            WinPointerOwner3 = static_cast<Win *>(this);
+            WinPointerOwner3 = this;
         }
         CoverWindow.fill(9);
         CoverWindow.show(0);
@@ -8396,7 +8379,7 @@ check_undo:
         field_1DD90_ = -1;
         if (WinPointerOwner3 == nullptr) {
             WinPointerOwner4 = nullptr;
-            WinPointerOwner3 = static_cast<Win *>(this);
+            WinPointerOwner3 = this;
         }
         on_mouse_move(x_coord, y_coord);
         return;
@@ -8440,55 +8423,55 @@ void __cdecl go_timer(int selection_mode) {
     GoTimer.close();
     if (MapWinSelectedSlot < 0 || TimerHoldFlag != 0) return;
 
-    MapWin *const window = MapWinTable[MapWinSelectedSlot];
+    MapWin *&window = MapWinTable[MapWinSelectedSlot];
     int mouse_x;
     int mouse_y;
-    static_cast<Win *>(window)->get_mouse_pos(&mouse_x, &mouse_y);
+    window->get_mouse_pos(&mouse_x, &mouse_y);
 
-    const bool control_down =
-        (static_cast<uint16_t>(GetAsyncKeyState(VK_CONTROL)) & 0xFF00) != 0;
+    const uint8_t control_down = static_cast<uint8_t>(
+        static_cast<uint16_t>(GetAsyncKeyState(VK_CONTROL)) >> 8);
     // The key branch defaults to cursor 1. With Control held and no active
     // cursor, a clear 0x23D1C selects cursor 9; map-wait mode also forces 9.
     int mode = control_down && ConsoleGlobal.cursor_active_ == 0 &&
                ConsoleGlobal.field_23D1C_ == 0 ? 9 : 1;
 
-    int new_vehicle = ConsoleGlobal.selected_vehicle_;
-    const int history = ConsoleGlobal.cursor_history_index_;
     if ((window->field_1DD70_ & 0x40000U) == 0) {
-        const bool must_reselect =
-            mode == 1 && ConsoleGlobal.cursor_active_ == 0 &&
-            ConsoleGlobal.field_23D1C_ == 0 &&
-            (new_vehicle < 0 ||
-             Vehs[new_vehicle].x != ConsoleGlobal.cursor_history_x_[history] ||
-             Vehs[new_vehicle].y != ConsoleGlobal.cursor_history_y_[history] ||
-             veh_selectable(new_vehicle) == 0 || Vehs[new_vehicle].order != 0 ||
-             (Vehs[new_vehicle].state & 0x4200U) != 0);
-        if (must_reselect) {
-            new_vehicle = veh_find(ConsoleGlobal.cursor_history_x_[history],
-                                   ConsoleGlobal.cursor_history_y_[history],
-                                   ConsoleGlobal.faction_id_, -1);
-            if (new_vehicle < 0 || veh_selectable(new_vehicle) == 0 ||
-                Vehs[new_vehicle].order != 0 ||
-                (Vehs[new_vehicle].state & 0x200U) != 0 ||
-                (Vehs[new_vehicle].state & 0x4000U) == 0) {
-                go_reset();
-                return;
+        if (mode == 1 && ConsoleGlobal.cursor_active_ == 0 &&
+            ConsoleGlobal.field_23D1C_ == 0) {
+            int vehicle = ConsoleGlobal.selected_vehicle_;
+            if (vehicle < 0 ||
+                Vehs[vehicle].x != ConsoleGlobal.cursor_history_x_[ConsoleGlobal.cursor_history_index_] ||
+                Vehs[vehicle].y != ConsoleGlobal.cursor_history_y_[ConsoleGlobal.cursor_history_index_] ||
+                veh_selectable(vehicle) == 0 || Vehs[vehicle].order != 0 ||
+                (Vehs[vehicle].state & 0x4200U) != 0) {
+                vehicle = veh_find(
+                    ConsoleGlobal.cursor_history_x_[ConsoleGlobal.cursor_history_index_],
+                    ConsoleGlobal.cursor_history_y_[ConsoleGlobal.cursor_history_index_],
+                    ConsoleGlobal.faction_id_, -1);
+                if (vehicle < 0 || veh_selectable(vehicle) == 0 ||
+                    Vehs[vehicle].order != 0 ||
+                    (Vehs[vehicle].state & 0x200U) != 0 ||
+                    (Vehs[vehicle].state & 0x4000U) == 0) {
+                    go_reset();
+                    return;
+                }
+                ConsoleGlobal.selected_vehicle_ = vehicle;
             }
         }
     } else {
         mode = 9;
     }
 
-    ConsoleGlobal.selected_vehicle_ = new_vehicle;
+    MapWin *const target = window;
     Sprite *const cursor = &g_CURSOR_SPRITES[mode];
-    if (window->cursor_sprite_ != cursor) {
-        window->set_cursor(cursor, CursorHotspotX[mode], CursorHotspotY[mode]);
-        window->cursor_sprite_ = cursor;
+    if (target->cursor_sprite_ != cursor) {
+        target->set_cursor(cursor, CursorHotspotX[mode], CursorHotspotY[mode]);
+        target->cursor_sprite_ = cursor;
     }
 
     if (WinPointerOwner3 == nullptr) {
         WinPointerOwner4 = nullptr;
-        WinPointerOwner3 = static_cast<Win *>(window);
+        WinPointerOwner3 = window;
     }
     CoverWindow.fill(9);
     CoverWindow.show(0);
@@ -8533,8 +8516,8 @@ void MapWin::on_nc_left_down(int x_coord, int y_coord) {
         return;
     }
 
-    rect.right = rect.right + 0x15;
     rect.left = rect.left + 0x15;
+    rect.right = rect.right + 0x15;
     if (in_box(x_coord, y_coord, &rect)) {
         on_button_clicked(1);
         return;
@@ -8565,12 +8548,15 @@ void MapWin::clear_terrain() {
                 owned_[entry].brightness[corner] = 0xFF;
             }
         }
-        if (owned_ != 0) {
-            for (int altitude_entry = 0; altitude_entry < MapArea;
-                 ++altitude_entry) {
-                for (int slot = 0; slot < 5; ++slot) {
-                    owned_[altitude_entry].altitude[slot] = -1;
-                }
+    }
+    if (owned_ != 0) {
+        for (int altitude_entry = 0; altitude_entry < MapArea;
+             ++altitude_entry) {
+            // An unsigned 0xFF byte store; a signed -1 is hoisted into a
+            // register.
+            for (int slot = 0; slot < 5; ++slot) {
+                reinterpret_cast<unsigned char *>(
+                    owned_[altitude_entry].altitude)[slot] = 0xFF;
             }
         }
     }
@@ -8667,21 +8653,19 @@ Status: Coverage transcription - unclaimed body (direct transcription of
         yet, so the body stands on its own disassembly).
 */
 extern "C" int __cdecl sub_4468f0(int a1) {
-    int base =
-        MapWinTable[0]->center_x_;
-    int iVar1 = base / 2;
-    int n = MapLongitudeBounds;
-    int iVar3 = n / 4;
-    int iVar2 = iVar3 + iVar1;
-    if (n / 2 < iVar2) {
-        iVar2 = iVar2 - n / 2;
+    const int center = MapWinTable[0]->center_x_ / 2;
+    const int quarter = MapLongitudeBounds / 4;
+    const int half_width = MapLongitudeBounds / 2;
+    const int half = a1 / 2;
+    int limit = quarter + center;
+    if (limit > half_width) {
+        limit -= half_width;
     }
-    int half = a1 / 2;
-    if (iVar1 < iVar3) {
-        if (half <= iVar1 || iVar2 <= half) {
+    if (center < quarter) {
+        if (half <= center || half >= limit) {
             return -1;
         }
-    } else if (half < iVar1 && iVar2 < half) {
+    } else if (half < center && half > limit) {
         return -1;
     }
     return 1;

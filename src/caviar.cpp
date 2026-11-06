@@ -5158,17 +5158,14 @@ int Caviar::set_buffer(Buffer *buffer) {
     if (buffer == 0) {
         return 0x10;
     }
-    // The assignment order is the image's store order (0xED, 0xF1, 0xF5,
-    // 0xF9, then the Buffer, then 0xFD, 0x101): VC6 materialises each
-    // constant into edx/eax as it reaches it and slides the Buffer store
-    // between the two 0xff stores, which is exactly the interleaving the
-    // image shows.
+    // VC6 schedules the Buffer store between the 0xff stores when it is
+    // written after the first 0x100 bound.
     camera_view_.bounds_.values_[0] = 0;
     camera_view_.bounds_.values_[1] = 0;
     camera_view_.bounds_.values_[2] = 0xff;
     camera_view_.bounds_.values_[3] = 0xff;
-    buffer_ = buffer;
     camera_view_.bounds_.values_[4] = 0x100;
+    buffer_ = buffer;
     camera_view_.bounds_.values_[5] = 0x100;
     return 0;
 }
