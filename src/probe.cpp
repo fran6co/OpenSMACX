@@ -66,7 +66,7 @@ static inline int probe_vector_dist(int x_point_a, int y_point_a, int x_point_b,
 /*
 Purpose: Calculate how vulnerable the coordinates are for the specified faction based on how far
          away this tile is from the faction's Headquarters.
-// ORIGINAL: 0x0059E980 ?vulnerable@@YAHHHH@Z 0x0059E980-0x0059EA73
+// ORIGINAL: 0x0059E980 ?vulnerable@@YAHHHH@Z 0x0059E980-0x0059EA73 BYTE_EXACT
 // size      243 bytes
 // prototype int (__cdecl ?vulnerable@@YAHHHH@Z)(int factionID, int xCoord, int yCoord)
 // callers   1   call targets   2

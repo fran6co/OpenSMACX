@@ -2892,7 +2892,7 @@ void BaseWin::soft_zoom(int base_id) {
 }
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x0041A920 ?zoom@BaseWin@@QAEXHH@Z 0x0041A920-0x0041AE40
+// ORIGINAL: 0x0041A920 ?zoom@BaseWin@@QAEXHH@Z 0x0041A920-0x0041AE40 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["image:0x0041AA4B-0x0041AE03 restores the seven ordered tutorial gates, name parsing, popup/callout dispatch and shared rejoin before the original wait tail", "image:0x0041AA73-0x0041AA9C uses PlayersData[current].current_num_bases and tut_check(2); image:0x0041AB04-0x0041ABD1 uses Base::state/governor and tut_check2(0x10/0x20)", "image:0x0041ABF5-0x0041ACDA uses Base population/surplus, BaseCurrentForcesMaintCost, tut_check2(0x200/0x40), and the current Map tile climate", "image:0x0041AD0F-0x0041ADFE scans Bases[0..GameDataStateStorage.fields_.base_current_count_), tests the existing facilities_built bytes via bitmask, and dispatches the two Base inefficiency callouts", "source:src/base.h:Base,BaseCurrent", "source:src/faction.h:PlayerData::current_num_bases,PlayersData", "source:src/game_data_state_window.h:GameDataStateWindowFields::base_current_count_,GameDataStateStorage", "source:src/tutwin.h:TutWin::base_rect,tut_win,do_base,set_tour_stage,TutorialWindow", "source:src/general.h:parse_says,bitmask", "source:src/map.h:map_loc", "source:src/base.cpp:BaseCurrentForcesMaintCost"], "reason": "Recover the complete original zoom behavior through existing Base, PlayerData, game-data-state, tutorial, map, string-parsing, and base-window owners, retaining branch/callback order and the original wait tail."}
 void BaseWin::zoom(int base_id, int wait) {
     int x;

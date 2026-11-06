@@ -7205,7 +7205,7 @@ void __cdecl base_check_support() {
 }
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x004F4E80 ?base_research@@YAXXZ 0x004F4E80-0x004F4FAB
+// ORIGINAL: 0x004F4E80 ?base_research@@YAXXZ 0x004F4E80-0x004F4FAB BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/004f4e80.cpp", "recovery/tasks/base-colony-economy-coverage-wave.json", "recovery/tests/test_base_colony_economy.py", "Pinned original 01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf; complete original extent reviewed against native instructions and measured VC6 owner layouts.", "Superseded interpretation, retained verbatim: Original4F4E80..4F4FAB reads Base.labs_total(+108), PlayerData.soc_effect_pending.research and net_random_event; faction-indexed Base bitset and signed remainder are intentional retained behavior.", "Superseded reason, retained verbatim: Recover the complete base laboratory contribution, scenario/early-turn gates and signed fractional research dispatch with native 32-bit wrap. Preserve original Bases[faction_id] facility lookup rather than silently correcting its behavior. Seed retained; no matching or game claim.", "Pinned 4F4E9F loads the faction into EBX; 4F4EA2 independently loads selected base index 689370 into ESI, used by 4F4EBE..4F4ED7 for Bases facilities. set_base 4E39D0..4E39F3 stores its base_id at 689370 and publishes Bases[base_id] as BaseCurrent. The prior faction-index interpretation is disproved.", "Pinned 4F4ED9..4F4EDF materializes the has_fac_built boolean before halving labs; 4F4F3D..4F4F55 uses the existing signed range operation with bounds -5 and 5."], "reason": "Recover the complete base laboratory contribution, scenario/early-turn gates and signed fractional research dispatch with native 32-bit wrap. The facility test uses BaseIDCurrentSelected, independently of the faction used for PlayerData; retain the existing facility boolean operation and signed range clamp. No game acceptance claim."}
 // symbol    ?base_research@@YAXXZ
 void __cdecl base_research() {
@@ -7570,7 +7570,7 @@ static __forceinline int yield_tile_owner(const Map *tile) {
 
 /*
 Purpose: Calculate the nutrients produced by a single map square.
-// ORIGINAL: 0x004E6E50 ?crop_yield@@YAHHHHHH@Z 0x004E6E50-0x004E7306
+// ORIGINAL: 0x004E6E50 ?crop_yield@@YAHHHHHH@Z 0x004E6E50-0x004E7306 BYTE_EXACT
 // TRIED: caching bit2 to a named local before the landmark_bonus jungle/
 //            fresh check (image re-reads tile->climate twice there instead
 //            of the cached is_ocean_tile - now written that way, but score
@@ -7761,7 +7761,7 @@ int __cdecl crop_yield(int faction_id, int base_id, int x, int y,
 
 /*
 Purpose: Calculate the minerals produced by a single map square.
-// ORIGINAL: 0x004E7310 ?mine_yield@@YAHHHHHH@Z 0x004E7310-0x004E7748
+// ORIGINAL: 0x004E7310 ?mine_yield@@YAHHHHHH@Z 0x004E7310-0x004E7748 BYTE_EXACT
 // LEVER: bit2 was cached to a named local and read once; the image reads
 //        tile->bit2 fresh at each of the two use sites (code=bit2>>24, then
 //        again for the landmark_bonus mask) because it does not survive the
@@ -9228,7 +9228,7 @@ int __cdecl fac_maint(int facility_id, int faction_id) {
 
 /*
 Purpose: Calculate overall maintenance cost for the currently selected base.
-// ORIGINAL: 0x004F65F0 ?base_maint@@YAXXZ 0x004F65F0-0x004F67E3
+// ORIGINAL: 0x004F65F0 ?base_maint@@YAXXZ 0x004F65F0-0x004F67E3 BYTE_EXACT
 // TRIED: the image's own call list has ONE call to bitmask() (0x50BA00);
 //            this tree's compile makes TWO, so `set_fac(fac,
 //            BaseIDCurrentSelected, false)` - a BYTE_EXACT standalone
@@ -10546,7 +10546,7 @@ int __cdecl get_rating(int faction_id, int arg2) {
     return (rating + 6) * arg2 / 0xa0;
 }
 
-// ORIGINAL: 0x004EFB50 ?do_upgrade@@YAXHHH@Z 0x004EFB50-0x004EFD4A FILE
+// ORIGINAL: 0x004EFB50 ?do_upgrade@@YAXHHH@Z 0x004EFB50-0x004EFD4A FILE BYTE_EXACT
 // LEVER: every fixed address the archive bound is a named model member -
 //        0x0096D238 is veh.cpp's FactionProtoSeenCount, 0x0096CC00 is
 //        faction.h's PlayersData[].energy_reserves, 0x009A64C8 is console.h's
