@@ -3094,16 +3094,8 @@ int edge_int(uint32_t bits) {
 /*
 Purpose: Fill one horizontal run of pixels, clipped to the buffer's rectangle.
 // ORIGINAL: 0x005E1A80 ?hline@Buffer@@QAEXHHHH@Z 0x005E1A80-0x005E1BF0
-// TRIED: the second null check on the computed destination address
-// (`add eax, edx; test eax, eax; je`, which the image keeps at 0x005E1B83
-// even though the sum of a non-null base and offset cannot be null).
-// Written as a plain sum through a named `char *const dest`, `== 0`,
-// `!dest`, or with the offset hoisted into its own `const int` - four
-// spellings, all byte-identical - VC6 always folds the redundant `test`
-// into the preceding `add`'s own flags. Best reached is 0.996 similar
-// (69/131 agreeing at `/c /O2 /Oi- /Gy /GR- /GX`), one instruction short in
-// 131; nothing shy of a barrier keeps the dead test and that would cost
-// more than the instruction is worth. Do not re-derive this.
+// LEVER: the image's dead second null test survives when the address is a
+// ternary on the acquire result; a plain sum folds it into the add's flags.
 // size      368 bytes
 // prototype void (__thiscall ?hline@Buffer@@QAEXHHHH@Z)(Buffer* this, int, int, int, int)
 // kind      game
@@ -3156,29 +3148,10 @@ void Buffer::hline(int x1, int x2, int y, int color) {
     if (y >= -dib_.bmiHeader.biHeight) {
         return;
     }
-    if (acquire_pixels() == 0) {
-        return;
-    }
-    // TWO NULL CHECKS, NOT ONE. The image tests the acquired pointer at
-    // 0x005E1B6F and tests the COMPUTED ADDRESS again at 0x005E1B83 - a
-    // second `test eax, eax; je`, four bytes, which is exactly what this
-    // body was short by. The sum of a non-null base and an offset cannot be
-    // null, so the check is unreachable; it is in the shipped bytes.
-    // TRIED: the check IS here and VC6 still folds it away. The image
-    // emits `add eax, edx; test eax, eax; je`, keeping a `test` that the add's
-    // own flags already answer; ours emits `add eax, edx; je`. One instruction
-    // in 131, and the body is otherwise identical - 0.996 similar, the only
-    // other difference being edx against ecx, which is allocation.
-    //
-    // Four spellings measured, all byte-identical to each other: the sum in two
-    // steps through a named base, `== 0`, `!dest`, and the offset hoisted into
-    // its own `const int`. VC6 folds the comparison into the add's flags every
-    // time, because it is a dead null test on a sum it can see is non-null.
-    // Nothing short of a barrier would keep it, and that would cost more than
-    // the instruction is worth. Do not re-derive this.
-    // THE BASE IS ADDED LAST - `imul eax, ebp; add eax, ebx; add eax, edx` -
-    // so the offsets sum first and the pointer joins at the end.
-    char *const dest = stride_ * y + x1 + static_cast<char *>(locked_bits_);
+    // The address is formed only for acquired bits and then tested again:
+    // the join keeps the image's second `test eax, eax`.
+    char *const dest = acquire_pixels() != 0
+        ? stride_ * y + x1 + static_cast<char *>(locked_bits_) : 0;
     if (dest == nullptr) {
         return;
     }
@@ -5758,7 +5731,8 @@ int Buffer::wrap_height_flying_flush() {
 }
 
 // ORIGINAL: 0x005DDDE0 ?wrap_height_flying@Buffer@@QAEHPAD@Z 0x005DDDE0-0x005DDEEA
-// TRIED: the `_strlen` no-arg-extern + function-pointer-cast idiom (see 0x006141C0) to avoid /O2's strlen intrinsic did not move the divergence - it is register-allocation, not a call shape. The original pushes ebx/esi/edi all in the shared prologue, before the `param_2==0` early return; this source form (an `if` straight after the first branch) defers the `push edi` past that early return since edi is unused on it. Not chased further; landing the closest structural match.
+// Early returns (not nested ifs) and a `while (text)` loop: VC6 folds its
+// redundant test into the back-edge jmp, and pushes edi in the prologue.
 // size      266 bytes
 // prototype int (__thiscall ?wrap_height_flying@Buffer@@QAEHPAD@Z)(Buffer* this, int8*)
 // callers   3   call targets   3
@@ -5767,41 +5741,37 @@ int Buffer::wrap_height_flying_flush() {
 // calls     0x005DC410 0x005DC7C0 0x006453E0
 
 
-int Buffer::wrap_height_flying(char *input_text) {
+int Buffer::wrap_height_flying(char *text) {
     if (BufferFlyingWidth == 0) {
         return 0;
     }
-    if (input_text != 0) {
-        if (fonts_[0] == 0) {
-            fonts_[0] = FontDefault;
-        }
-        char *text = input_text;
-        if (*text != '\0') {
-            do {
-                int length = static_cast<int>(strlen(text));
-                int remaining = BufferFlyingWidth - BufferStrHeight;
-                char *next = find_line_break_l(text, &remaining, length);
-                if (next == 0) {
-                    break;
-                }
-                field_18_ = field_18_ + 1;
-                int lineAdvance = text_line_height();
-                BufferStrHeight = 0;
-                BufferFlyingY = BufferFlyingY + lineAdvance;
-                if (field_14_ != 0) {
-                    BufferFlyingWidth = BufferFlyingWidth - field_14_;
-                    field_14_ = 0;
-                }
-                text = next;
-            } while (true);
-            char *prompt = const_cast<char *>(BufferMeasureSpace);
-            if (prompt != 0) {
-                unsigned int len = strlen(prompt);
-                int width = text_width(prompt, (int)len);
-                BufferStrHeight = BufferStrHeight + width;
-            }
-        }
+    if (text == 0) {
+        return BufferFlyingY;
     }
+    if (fonts_[0] == 0) {
+        fonts_[0] = FontDefault;
+    }
+    if (*text == '\0') {
+        return BufferFlyingY;
+    }
+    while (text != 0) {
+        int length = static_cast<int>(strlen(text));
+        int remaining = BufferFlyingWidth - BufferStrHeight;
+        char *next = find_line_break_l(text, &remaining, length);
+        if (next == 0) {
+            break;
+        }
+        field_18_ = field_18_ + 1;
+        int lineAdvance = text_line_height();
+        BufferStrHeight = 0;
+        BufferFlyingY = BufferFlyingY + lineAdvance;
+        if (field_14_ != 0) {
+            BufferFlyingWidth = BufferFlyingWidth - field_14_;
+            field_14_ = 0;
+        }
+        text = next;
+    }
+    BufferStrHeight += text_width(const_cast<char *>(BufferMeasureSpace));
     return BufferFlyingY;
 }
 
@@ -5892,7 +5862,8 @@ int Buffer::wrap_flying_flush() {
 }
 
 // ORIGINAL: 0x005DDFB0 ?wrap_flying@Buffer@@QAEHPAD@Z 0x005DDFB0-0x005DE1C8 FILE
-// TRIED: MISMATCH #2 'push' vs 'sub' - the original reserves its EH/this-save slot with `push ecx` before the other pushes; not chased further. Dropped the `mov eax,0x696cdc; test eax,eax; je` guard entirely (Ghidra already resolved it as always-true and folded it away; a compile-time-nonzero address literal risked our own compiler eliding the branch differently).
+// The image inlines text_width(LPSTR) and write_multi_font_raw; strlen is
+// evaluated before the available width, as in the bytes.
 // working copy - scaffold materialised by --work
 // size      536 bytes
 // prototype int (__thiscall ?wrap_flying@Buffer@@QAEHPAD@Z)(Buffer* this, int8*)
@@ -5901,87 +5872,49 @@ int Buffer::wrap_flying_flush() {
 // flags     hidden;sp_ready;purged_ok
 // calls     0x005DC410 0x005DC7C0 0x005DCAE0 0x006453E0 0x00645470 0x00645930
 
-int Buffer::wrap_flying(char * a1) {
-    
+int Buffer::wrap_flying(char *text) {
     if (BufferFlyingWidth == 0) {
         return 0;
     }
-    if (a1 == 0) {
+    if (text == 0) {
         return BufferFlyingY;
     }
-    if (*a1 == 0) {
+    if (*text == 0) {
         return BufferFlyingY;
     }
-
-    char *cur = a1;
-    char *buf = BufferFlyingText;
     for (;;) {
-        if (buf[0] != 0) {
-            strcat(buf, BufferJoinSpace);
-            unsigned int len = strlen(BufferWriteSpace);
-            int w = this->text_width((char *)BufferWriteSpace, len);
-            BufferStrHeight += w;
+        if (BufferFlyingText[0] != 0) {
+            strcat(BufferFlyingText, BufferJoinSpace);
+            BufferStrHeight += text_width(const_cast<char *>(BufferWriteSpace));
         }
-
-        char *brk = cur;
+        char *next;
         if (BufferStrHeight < BufferFlyingWidth) {
-            unsigned int len2 = strlen(cur);
+            int length = static_cast<int>(strlen(text));
             int avail = BufferFlyingWidth - BufferStrHeight;
-            brk = this->find_line_break_l(cur, &avail, len2);
+            next = find_line_break_l(text, &avail, length);
+        } else {
+            next = text;
         }
-        if (brk == 0) {
+        if (next == 0) {
             break;
         }
-
-        unsigned int buflen = strlen(buf);
-        memcpy(buf + buflen, cur, brk - cur);
-        buf[buflen + (brk - cur)] = 0;
-
-        int saved_94 = BufferFlyingY;
-        int saved_90 = BufferFlyingX;
-        unsigned int flen = strlen(buf);
-
-        if (fonts_[0] != 0 && fonts_[0]->font_obj_ != 0) {
-            unsigned int a = strlen(buf);
-            unsigned int b = flen;
-            if ((int)a < (int)b) {
-                b = strlen(buf);
-            }
-            if ((int)b >= 0) {
-                unsigned int c = strlen(buf);
-                if ((int)c < (int)flen) {
-                    flen = strlen(buf);
-                }
-                if (flen != 0) {
-                    this->write_multi_font_raw_l(buf, saved_90, saved_94, flen);
-                }
-            }
-        }
-
-        buf[0] = 0;
+        // Append the line's run to the pending flying text and draw it.
+        char *end = BufferFlyingText + strlen(BufferFlyingText);
+        memcpy(end, text, next - text);
+        end[next - text] = 0;
+        write_multi_font_raw(BufferFlyingText, BufferFlyingX, BufferFlyingY);
+        BufferFlyingText[0] = 0;
         BufferStrHeight = 0;
-        field_18_ += 1;
-        if (fonts_[0] == 0) {
-            fonts_[0] = FontDefault;
-        }
-        Font *rec = fonts_[0];
-        int add;
-        if (rec->unk_1_ < 0) {
-            add = rec->line_height_;
-        } else {
-            add = rec->height_ + rec->unk_1_;
-        }
-        BufferFlyingY += add;
-
-        cur = brk;
+        field_18_ = field_18_ + 1;
+        BufferFlyingY = BufferFlyingY + text_line_height();
         if (field_14_ != 0) {
-            BufferFlyingWidth -= field_14_;
-            BufferFlyingX += field_14_;
+            BufferFlyingWidth = BufferFlyingWidth - field_14_;
+            BufferFlyingX = BufferFlyingX + field_14_;
             field_14_ = 0;
         }
+        text = next;
     }
-
-    strcat(buf, cur);
+    strcat(BufferFlyingText, text);
     return BufferFlyingY;
 }
 
@@ -6568,9 +6501,9 @@ int Buffer::wrap_height_flying(char *a1, int a2) {
     field_18_ = 0;
     field_14_ = value;
     markup_pending_ = 0;
+    BufferFlyingWidth = a2;
     BufferFlyingY = 0;
     BufferStrHeight = 0;
-    BufferFlyingWidth = a2;
     return wrap_height_flying(a1);
 }
 
@@ -6823,7 +6756,6 @@ int Buffer::wrap_right(char *text, int x_coord, int y_coord, int max_width) {
 // calls     0x005DC410 0x005DCAE0 0x006453E0
 
 int Buffer::wrap(char * a1, RECT * a2) {
-    
     if (a1 != 0 && a2 != 0) {
         BufferStrHeight = 0;
         field_18_ = 0;
@@ -6836,69 +6768,25 @@ int Buffer::wrap(char * a1, RECT * a2) {
         char *nextStr;
 
         do {
-            // Original 0x005DD584/607/69C returns current x when no glyphs
-            // are drawn; this is not an uninitialized result path.
-            int lineResult = x;
+            // Each line goes through the inlined write_l, whose empty-draw
+            // result is the current x.
             if (str == 0) {
                 nextStr = 0;
+                BufferLastWrapWriteResult = x;
             } else {
-                BufferStrHeight = 0;
                 int breakPos = width;
-                nextStr = this->find_line_break_l(str, &breakPos, static_cast<int>(strlen(str)));
-
-                Font *font = fonts_[0];
-                bool hasFont = (font != 0) && (font->font_obj_ != 0);
-
-                if (nextStr == 0) {
-                    unsigned int len = strlen(str);
-                    if (!hasFont) {
-                        lineResult = 3;
-                    } else {
-                        unsigned int a = strlen(str);
-                        unsigned int b = len;
-                        if (static_cast<int>(a) < static_cast<int>(len))
-                            b = strlen(str);
-                        if (static_cast<int>(b) >= 0) {
-                            b = strlen(str);
-                            if (static_cast<int>(b) < static_cast<int>(len))
-                                len = strlen(str);
-                            if (len != 0)
-                                lineResult = this->write_multi_font_raw_l(str, x, y, len);
-                        }
-                    }
+                BufferStrHeight = 0;
+                nextStr = find_line_break_l(str, &breakPos, static_cast<int>(strlen(str)));
+                if (nextStr != 0) {
+                    BufferLastWrapWriteResult =
+                        write_l(str, x, y, static_cast<int>(nextStr - str));
                 } else {
-                    unsigned int len = static_cast<unsigned int>(nextStr - str);
-                    if (!hasFont) {
-                        BufferLastWrapWriteResult = 3;
-                        lineResult = BufferLastWrapWriteResult;
-                    } else {
-                        unsigned int a = strlen(str);
-                        unsigned int b = len;
-                        if (static_cast<int>(a) < static_cast<int>(len))
-                            b = strlen(str);
-                        if (static_cast<int>(b) >= 0) {
-                            b = strlen(str);
-                            if (static_cast<int>(b) < static_cast<int>(len))
-                                len = strlen(str);
-                            if (len != 0)
-                                lineResult = this->write_multi_font_raw_l(str, x, y, len);
-                        }
-                    }
+                    BufferLastWrapWriteResult =
+                        write_l(str, x, y, static_cast<int>(strlen(str)));
                 }
             }
 
-            BufferLastWrapWriteResult = lineResult;
-
-            if (fonts_[0] == 0)
-                fonts_[0] = FontDefault;
-
-            Font *fontData = fonts_[0];
-            int lineHeight;
-            if (fontData->unk_1_ < 0)
-                lineHeight = fontData->line_height_;
-            else
-                lineHeight = fontData->height_ + fontData->unk_1_;
-            y += lineHeight;
+            y += text_line_height();
 
             int carry = field_14_;
             field_18_++;
@@ -7482,103 +7370,50 @@ int Buffer::map_colors(RECT *area, unsigned char *table) {
 // calls     0x005DC410 0x005DCAE0 0x006453E0
 
 
-int Buffer::wrap(char * a1, int a2, int a3, int a4) {
-    
-    if (a1 == 0 || a4 == 0) {
-        return a3;
+int Buffer::wrap(char *text, int x, int y, int width) {
+    if (text == 0 || width == 0) {
+        return y;
     }
 
     BufferStrHeight = 0;
     field_18_ = 0;
     field_14_ = field_10_;
 
-    char *cur = a1;
-    for (;;) {
-        char *nextLine;
-        int wrapResult;
-        int wrapLen = a4;
-
-        if (cur == 0) {
-            nextLine = 0;
-            wrapResult = a2;
+    char *str = text;
+    char *nextStr;
+    do {
+        // Each line goes through the inlined write_l, whose empty-draw
+        // result is the current x.
+        int breakPos = width;
+        int result;
+        if (str == 0) {
+            nextStr = 0;
+            result = x;
         } else {
             BufferStrHeight = 0;
-            unsigned int len = strlen(cur);
-            char *brk = find_line_break_l(cur, &wrapLen, (int)len);
-            nextLine = brk;
-            if (brk == 0) {
-                unsigned int len2 = strlen(cur);
-                if (fonts_[0] == 0 || fonts_[0]->font_obj_ == 0) {
-                    wrapResult = 3;
-                } else {
-                    unsigned int lenA = strlen(cur);
-                    unsigned int lenB = len2;
-                    if ((int)lenA < (int)len2) {
-                        lenB = strlen(cur);
-                    }
-                    wrapResult = a2;
-                    if ((int)lenB >= 0) {
-                        unsigned int lenC = strlen(cur);
-                        if ((int)lenC < (int)len2) {
-                            len2 = strlen(cur);
-                        }
-                        wrapResult = a2;
-                        if (len2 != 0) {
-                            wrapResult = write_multi_font_raw_l(cur, a2, a3, (int)len2);
-                        }
-                    }
-                }
+            nextStr = find_line_break_l(str, &breakPos, static_cast<int>(strlen(str)));
+            if (nextStr != 0) {
+                result =
+                    write_l(str, x, y, static_cast<int>(nextStr - str));
             } else {
-                unsigned int segLen = (unsigned int)(brk - cur);
-                if (fonts_[0] == 0 || fonts_[0]->font_obj_ == 0) {
-                    BufferLastWrapWriteResult = 3;
-                    wrapResult = BufferLastWrapWriteResult;
-                } else {
-                    unsigned int lenA = strlen(cur);
-                    unsigned int lenB = segLen;
-                    if ((int)lenA < (int)segLen) {
-                        lenB = strlen(cur);
-                    }
-                    if ((int)lenB >= 0) {
-                        unsigned int lenC = strlen(cur);
-                        if ((int)lenC < (int)segLen) {
-                            segLen = strlen(cur);
-                        }
-                        if (segLen != 0) {
-                            wrapResult = write_multi_font_raw_l(cur, a2, a3, (int)segLen);
-                            goto after_wrap;
-                        }
-                    }
-                    BufferLastWrapWriteResult = a2;
-                    wrapResult = BufferLastWrapWriteResult;
-                }
+                result =
+                    write_l(str, x, y, static_cast<int>(strlen(str)));
             }
         }
-after_wrap:
-        BufferLastWrapWriteResult = wrapResult;
-        if (fonts_[0] == 0) {
-            fonts_[0] = FontDefault;
-        }
-        Font *rec = fonts_[0];
-        int adj;
-        if (rec->unk_1_ < 0) {
-            adj = rec->line_height_;
-        } else {
-            adj = rec->height_ + rec->unk_1_;
-        }
-        a3 = a3 + adj;
+        BufferLastWrapWriteResult = result;
+        y += text_line_height();
+
         int carry = field_14_;
-        field_18_ = field_18_ + 1;
+        field_18_++;
         if (carry != 0) {
-            a4 = a4 - carry;
-            a2 = a2 + carry;
+            width -= carry;
+            x += carry;
             field_14_ = 0;
         }
-        cur = nextLine;
-        if (nextLine == 0) {
-            return a3;
-        }
-    }
+
+        str = nextStr;
+    } while (str != 0);
+    return y;
 }
 
 // ORIGINAL: 0x005D8A30 ?draw_dest@Buffer@@QAEHPAVBuffer@@HHHH@Z 0x005D8A30-0x005D8B1E BYTE_EXACT
@@ -8299,11 +8134,16 @@ int Buffer::write_pcx(char *filename) {
 // then the rows bottom-up (`biHeight` is stored negative). 1 reports a file
 // that would not open.
 int Buffer::write_bmp(char *filename) {
-    char name[0xB0];
-    name[0] = '\0';
-    strcat(name, filename);
-    strcat(name, ".bmp");
-    FILE *file = env_open(name, "w+b");
+    // Block-scoped so its slot overlaps the inlined Lock descriptor; the
+    // 0xC0 size is inferred from the image's 0xF8 frame.
+    FILE *file;
+    {
+        char name[0xC0];
+        name[0] = '\0';
+        strcat(name, filename);
+        strcat(name, ".bmp");
+        file = env_open(name, "w+b");
+    }
     if (file == 0) {
         return 1;
     }
@@ -8318,7 +8158,7 @@ int Buffer::write_bmp(char *filename) {
 
     BITMAPFILEHEADER file_header;
     BITMAPINFOHEADER info_header;
-    file_header.bfType = 0x4d42;  // 'B','M'
+    file_header.bfType = *reinterpret_cast<const WORD *>("BM");
     file_header.bfSize = static_cast<DWORD>(0x436 - stride_ * height);
     file_header.bfReserved1 = 0;
     file_header.bfReserved2 = 0;
@@ -9921,16 +9761,16 @@ static unsigned short buffer_gouraud_light_step(int delta, int width) {
 // symbol    ?setup_buffer_gouraud_edge@@YAHPAUEdgeScan@@H@Z
 // TRIED: `int *a1, int a2` signature (IDA's int,int guess with the pointer made explicit - the disassembly never touches [ecx]), do/while over a hoisted `idx` local mirroring the ASM's search-then-fill-record shape. Reproduces the whole body but diverges at MISMATCH #2 (original never sets up an ebp frame, addressing args purely off esp; every C form tried here gets a `push`-heavy prologue instead of the original's early `mov ebx,[esp+0xc]`).
 int __cdecl setup_buffer_gouraud_edge(EdgeScan *edge, int vertex) {
-    if (vertex == BufferGouraudBottomVertex) return 0;
-    const int direction = edge->f0;
-    int next;
-    do {
+    while (vertex != BufferGouraudBottomVertex) {
+        const int direction = edge->f0;
+        int next;
         next = vertex + direction;
         if (next > BufferGouraudCount - 1) next = 0;
         else if (next < 0) next = BufferGouraudCount - 1;
         edge->counter = BufferGouraudVertices[next].y - BufferGouraudVertices[vertex].y;
         if (edge->counter != 0) {
             if (edge->counter < 0) return 0;
+            const int fixed_rows = buffer_gouraud_fixed(edge->counter);
             edge->id = next;
             edge->accumC = BufferGouraudVertices[vertex].x;
             int delta = BufferGouraudVertices[next].x - BufferGouraudVertices[vertex].x;
@@ -9941,19 +9781,19 @@ int __cdecl setup_buffer_gouraud_edge(EdgeScan *edge, int vertex) {
                 edge->deltaC = -(delta / edge->counter);
             } else {
                 edge->extraDeltaC = 1;
-                edge->deltaC = delta / edge->counter;
                 edge->fracAccum = 0;
+                edge->deltaC = delta / edge->counter;
             }
-            edge->fracSub = edge->counter;
             edge->fracDelta = delta % edge->counter;
+            edge->fracSub = edge->counter;
             edge->accumD = buffer_gouraud_fixed(BufferGouraudLights[vertex]);
             edge->deltaD = fixed_div(buffer_gouraud_difference(
                 buffer_gouraud_fixed(BufferGouraudLights[next]), edge->accumD),
-                buffer_gouraud_fixed(edge->counter));
+                fixed_rows);
             return 1;
         }
         vertex = next;
-    } while (vertex != BufferGouraudBottomVertex);
+    }
     return 0;
 }
 
@@ -10214,39 +10054,40 @@ Status: Coverage transcription - unclaimed body
 // records its one-space neighbours 0x00696CD8/0x00696CDC. socialwin.cpp's
 // SpaceText names the other space string this family joins with.
 int Buffer::wrap_cent_flying(char *text) {
-    if (BufferFlyingWidth == 0) return 0;
-    if (text == 0 || *text == 0) return BufferFlyingY;
+    if (BufferFlyingWidth == 0) {
+        return 0;
+    }
+    if (text == 0) {
+        return BufferFlyingY;
+    }
+    if (*text == 0) {
+        return BufferFlyingY;
+    }
     for (;;) {
         if (BufferFlyingText[0] != 0) {
             strcat(BufferFlyingText, BufferJoinSpace);
-            int length = static_cast<int>(strlen(BufferCenteredSpace));
-            int measured = text_width(const_cast<char *>(BufferCenteredSpace), length);
-            BufferStrHeight += measured;
+            BufferStrHeight += text_width(const_cast<char *>(BufferCenteredSpace));
         }
-        char *next = text;
+        char *next;
         if (BufferStrHeight < BufferFlyingWidth) {
-            // Native strlen occurs before BOTH live width reads. A service
-            // callback may alter the accumulator/available width meanwhile.
+            // Native strlen occurs before BOTH live width reads.
             int length = static_cast<int>(strlen(text));
             int available = BufferFlyingWidth - BufferStrHeight;
             next = find_line_break_l(text, &available, length);
+        } else {
+            next = text;
         }
-        if (next == 0) break;
-        int prefix = static_cast<int>(strlen(BufferFlyingText));
-        int count = static_cast<int>(next - text);
-        memcpy(BufferFlyingText + prefix, text, count);
-        BufferFlyingText[prefix + count] = 0;
-        // Coordinates are captured before the following strlen callback.
-        int width = BufferFlyingWidth;
-        int y = BufferFlyingY;
-        int x = BufferFlyingX;
-        int length = static_cast<int>(strlen(BufferFlyingText));
-        write_cent_l(BufferFlyingText, x, y, width, length);
+        if (next == 0) {
+            break;
+        }
+        char *end = BufferFlyingText + strlen(BufferFlyingText);
+        memcpy(end, text, next - text);
+        end[next - text] = 0;
+        write_cent(BufferFlyingText, BufferFlyingX, BufferFlyingY, BufferFlyingWidth);
         BufferFlyingText[0] = 0;
         BufferStrHeight = 0;
-        ++field_18_;
-        int advance = text_line_height();
-        BufferFlyingY += advance;
+        field_18_ = field_18_ + 1;
+        BufferFlyingY += text_line_height();
         text = next;
     }
     strcat(BufferFlyingText, text);
