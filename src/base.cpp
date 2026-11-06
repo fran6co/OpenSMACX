@@ -6270,7 +6270,7 @@ int __cdecl cost_factor(int faction_id, int rsc_type, int base_id) {
 
 /*
 Purpose: Determine if the specified base has any restrictions around production item retooling.
-// ORIGINAL: 0x004E4700 ?base_making@@YAHHH@Z 0x004E4700-0x004E4802
+// ORIGINAL: 0x004E4700 ?base_making@@YAHHH@Z 0x004E4700-0x004E4802 BYTE_EXACT
 // size      258 bytes
 // prototype int (__cdecl ?base_making@@YAHHH@Z)(int productionID, int baseID)
 // callers   4   call targets   1
@@ -7533,7 +7533,7 @@ inline int __cdecl breed_mod(int base_id, int faction_id) {
 
 /*
 Purpose: Calculate the count of lifecycle/psi bonuses that are provided by a base and faction.
-// ORIGINAL: 0x004E6740 ?worm_mod@@YAHHH@Z 0x004E6740-0x004E68AB
+// ORIGINAL: 0x004E6740 ?worm_mod@@YAHHH@Z 0x004E6740-0x004E68AB BYTE_EXACT
 // size      363 bytes
 // prototype int (__cdecl ?worm_mod@@YAHHH@Z)(int baseID, int factionID)
 // callers   1   call targets   1
@@ -8462,7 +8462,7 @@ void __cdecl base_support() {
 
 /*
 Purpose: Calculate nutrients and growth for the current base.
-// ORIGINAL: 0x004E9B70 ?base_nutrient@@YAXXZ 0x004E9B70-0x004E9CAD
+// ORIGINAL: 0x004E9B70 ?base_nutrient@@YAXXZ 0x004E9B70-0x004E9CAD BYTE_EXACT
 // LEVER: the image's single call is bitmask() with two ebp-relative
 //   out-params (the has_fac_built(FAC_CHILDREN_CRECHE,...) shape - an
 //   ebp-based frame exists ONLY to hold those two locals). Under this
@@ -9094,7 +9094,7 @@ int __cdecl base_rank(int faction_id, int rank_position) {
 /*
 Purpose: Check what facility (if any) a base needs for additional population growth. Stand alone
          function unused in original game and likely optimized out.
-// ORIGINAL: 0x004EEF80 ?pop_goal_fac@@YAHH@Z 0x004EEF80-0x004EF087
+// ORIGINAL: 0x004EEF80 ?pop_goal_fac@@YAHH@Z 0x004EEF80-0x004EF087 BYTE_EXACT
 // size      263 bytes
 // prototype int (__cdecl ?pop_goal_fac@@YAHH@Z)(int baseID)
 // callers   0   call targets   1
@@ -10477,7 +10477,7 @@ void __cdecl upgrade_any_prototypes(int faction_id) {
     }
 }
 
-// ORIGINAL: 0x004F0460 ?upgrade_prototypes@@YAXHH@Z 0x004F0460-0x004F064F FILE
+// ORIGINAL: 0x004F0460 ?upgrade_prototypes@@YAXHH@Z 0x004F0460-0x004F064F FILE BYTE_EXACT
 // LEVER: every table the archive bound by address is a named model record -
 //        0x009AB868+0x24..0x30 is VehPrototypes[] chassis/weapon/armor/plan/
 //        unk_1/obsolete_factions/flags, 0x0094AE68 Weapon[].offense_rating,

@@ -2281,7 +2281,7 @@ void __cdecl climactic_changes() {
     }
 }
 
-// ORIGINAL: 0x0052A980 sub_52a980 0x0052A980-0x0052A9A5 FILE
+// ORIGINAL: 0x0052A980 sub_52a980 0x0052A980-0x0052A9A5 FILE BYTE_EXACT
 // symbol    ?sub_52a980@@YAHXZ
 // size      37 bytes
 // prototype
@@ -3294,7 +3294,7 @@ void __cdecl balance() {
     }
 }
 
-// ORIGINAL: 0x005247B0 ?generators@@YAHHPAH@Z 0x005247B0-0x00524862
+// ORIGINAL: 0x005247B0 ?generators@@YAHHPAH@Z 0x005247B0-0x00524862 BYTE_EXACT
 // The generator threshold at 0x00949864 is Rules.size_base_subspace_gen,
 // one of RulesBasic's last three fields, not a separate global in a gap.
 // The original walk reads Players[].rule_flags and Bases[] ownership,

@@ -1304,7 +1304,7 @@ int __cdecl compass_move(int x_src, int y_src, int x_dst, int y_dst) {
 
 /*
 Purpose: Check whether there is a sensor available in the specified tile.
-// ORIGINAL: 0x005BF010 ?is_sensor@@YAHHH@Z 0x005BF010-0x005BF12D
+// ORIGINAL: 0x005BF010 ?is_sensor@@YAHHH@Z 0x005BF010-0x005BF12D BYTE_EXACT
 // LEVER: a prior pass's comment read "removed unnecessary duplicate calculation of distX",
 //        caching `x_dist(x, Bases[base_id].x)` into a local before the `!dist_x || dist_x
 //        == 2` check. The image calls `x_dist` (0x00644F3A, abs()) TWICE - once per side of

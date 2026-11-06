@@ -1786,7 +1786,7 @@ void DesignWin::on_redraw() {
     Buffer::box_sprite(&caption, &InterfaceBoxStyles[3]);
 }
 
-// ORIGINAL: 0x0043E490 ?setup_veh@DesignWin@@QAEXHH@Z 0x0043E490-0x0043E952
+// ORIGINAL: 0x0043E490 ?setup_veh@DesignWin@@QAEXHH@Z 0x0043E490-0x0043E952 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["image:0x43E496,0x43E6D1;git:3f6ab06bdf3b791aa23454e19f71b4e8b5935caf:src/recovered/units/0043e490.cpp"], "reason": "Original first argument is the prototype and second enables automatic component selection; real prototype records, component tables and shared design state preserve each branch."}
 // Exact once VehPrototype::flags is a signed 16-bit field: the image narrows
 // every `flags &= ~bit` to a byte `and` (0x0043E4E4, 0x0043E687, 0x0043E909).
