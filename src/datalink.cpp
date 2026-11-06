@@ -980,13 +980,23 @@ int Datalink::on_dialog_back_draw(GraphicWin *win) {
 // TRIED: computing width/height/x/y once and branching only on the `tile()` colour argument folds the compiler's output to 187 bytes (vs 272) - VC6 does not hoist a same-polarity guard's body out of line (see 0x0042A100's sibling note), so each of the three `a3` cases needs its own fully-duplicated width/height/x/y/call block. That form (cand2, below) reaches 0.834 mnemonic similarity but still differs on the exact ebx/esi/edi register allocation the original chose; landing the closest.
 int Datalink::on_dialog_item_back_draw(GraphicWin *win, int id, int mode,
                                       RECT *rect) {
-    const RECT &outer = win->outer_rect();
-    int style = mode == 2 ? 28 : (mode == 1 ? 27 : 0);
-    win->tile(InterfaceBoxStyles[style].mask_, outer.left + rect->left,
-              outer.top + rect->top, rect->left, rect->top,
-              rect->right - rect->left, rect->bottom - rect->top);
+    const int left = rect->left;
+    const int top = rect->top;
+    if (mode == 2) {
+        win->tile(InterfaceBoxStyles[28].mask_, win->outer_rect().left + left,
+                  win->outer_rect().top + top, left, top,
+                  rect->right - left, rect->bottom - top);
+    } else if (mode == 1) {
+        win->tile(InterfaceBoxStyles[27].mask_, win->outer_rect().left + left,
+                  win->outer_rect().top + top, left, top,
+                  rect->right - left, rect->bottom - top);
+    } else {
+        win->tile(InterfaceBoxStyles[0].mask_, win->outer_rect().left + left,
+                  win->outer_rect().top + top, left, top,
+                  rect->right - left, rect->bottom - top);
+    }
     if (field_29DC_ == 12) {
-        win->set_text_color(255 - (id % 10000) / 5, -1, 1, 1);
+        win->set_text_color(255 - (id - id / 10000 * 10000) / 5, -1, 1, 1);
     }
     return 1;
 }
@@ -2032,17 +2042,15 @@ void Datalink::push_history(int category, int index) {
         return;
     }
 
-    int *slot = &history_[1];
     if (count == 0x14) {
         for (int i = 0; i < 0x13; ++i) {
-            slot[i] = slot[i + 1];
+            history_[1 + i] = history_[2 + i];
         }
         --field_2A34_;
-        count = field_2A34_;
     }
 
-    slot[count] = topic;
-    field_2A34_ = count + 1;
+    history_[field_2A34_ + 1] = topic;
+    ++field_2A34_;
 }
 
 /*
@@ -3831,15 +3839,12 @@ void __cdecl tech_heck(void (__cdecl *a1)(char *), int a2) {
 
     {
         for (int row = 0; row < MaxTerrainNum - 1; ++row) {
-            for (int i = 0; i < 2; ++i) {
-                const RulesTerraforming &terraform = Terraforming[row];
-                const int prerequisite = i == 0 ? terraform.prerequisite_tech[0]
-                                                : terraform.prerequisite_tech[1];
-                if (a2 == prerequisite &&
-                    (i != 1 || terraform.prerequisite_tech[0] != terraform.prerequisite_tech[1])) {
-                    LPSTR order = i == 0 ? Order[4 + row].order
-                                         : Order[4 + row].order_sea;
-                    parse_say(0, order, -1, -1);
+            for (int i = 0; i <= 1; ++i) {
+                if (a2 == Terraforming[row].prerequisite_tech[i] &&
+                    (i != 1 || Terraforming[row].prerequisite_tech[0]
+                                   != Terraforming[row].prerequisite_tech[1])) {
+                    // order and order_sea are read as a two-entry run.
+                    parse_say(0, (&Order[4 + row].order)[i], -1, -1);
                     parse_string(StringTemp, TextBufferGetPtr);
                     emit_help(a1);
                 }

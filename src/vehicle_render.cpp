@@ -144,7 +144,9 @@ static float vehdraw_scale(int zoom) {
     if (MapWinCaptionScale > 0) {
         return MapWinCaptionScale * 0.07f / MapWinCaptionDivisor;
     }
-    return (zoom + 16) * 0.07f * 0.0625f;
+    float scale = (zoom + 16) * 0.07f;
+    scale *= 0.0625f;
+    return scale;
 }
 
 
@@ -158,11 +160,11 @@ static int vehdraw_centre_offset(int numerator, int zoom) {
 
 static bool vehdraw_uses_terrain(int veh_id, int x, int y) {
     const Map *tiles = map_tiles();
-    if ((tiles[y * MapLongitude + (x >> 1)].climate & 0xE0) < 0x60) {
+    if ((tiles[y * MapLongitude + (x >> 1)].climate & ~0x1F) < 0x60) {
         return false;
     }
-    const VehPrototype &prototype = VehPrototypes[Vehs[veh_id].proto_id];
-    return prototype.chassis_id != 0 || Weapon[prototype.weapon_id].mode >= 3;
+    return VehPrototypes[Vehs[veh_id].proto_id].chassis_id != 0
+        || Weapon[VehPrototypes[Vehs[veh_id].proto_id].weapon_id].mode >= 3;
 }
 
 
@@ -187,11 +189,12 @@ static void vehdraw_average_facets(int index, VOX_Vect *normal) {
 
 static void vehdraw_finish_frame(Buffer *buffer, int veh_id, int x, int y, int flags) {
     // Rendering can change the selected prototype; fetch it after render.
-    const VehPrototype &prototype = VehPrototypes[Vehs[veh_id].proto_id];
-    if (prototype.armor_id == 5) {
+    if (VehPrototypes[Vehs[veh_id].proto_id].armor_id == 5) {
         g_VEHDRAW_CAVIAR.reset_objects();
-        vehdraw_construct_armor(Vehs[veh_id].faction_id, prototype.chassis_id,
-                               prototype.weapon_id, 5, 1, &g_VEHDRAW_CAVIAR);
+        vehdraw_construct_armor(Vehs[veh_id].faction_id,
+                               VehPrototypes[Vehs[veh_id].proto_id].chassis_id,
+                               VehPrototypes[Vehs[veh_id].proto_id].weapon_id,
+                               5, 1, &g_VEHDRAW_CAVIAR);
         g_VEHDRAW_CAVIAR.render_multi_table_dest(buffer, x, y, 24,
             ArmorTransparentColorTables, flags);
     } else {
@@ -338,12 +341,12 @@ void __cdecl vehdraw_turn(Buffer *buffer, int x, int y, int frame, int zoom) {
         frame * VehDrawTurnIncrement + VehDrawTurnAngle - VehDrawCameraAngles.values[0],
         0.0f, 0.0f);
     const int numerator = MapWinCaptionScale;
-    x += vehdraw_centre_offset(numerator, zoom);
-    y += vehdraw_centre_offset(numerator, zoom);
+    const int draw_x = x + vehdraw_centre_offset(numerator, zoom);
+    const int draw_y = y + vehdraw_centre_offset(numerator, zoom);
     g_VEHDRAW_CAVIAR.reset_objects();
     vehdraw_construct_vehicle(veh_id, &g_VEHDRAW_CAVIAR);
-    g_VEHDRAW_CAVIAR.render(buffer, x, y, 1);
-    vehdraw_finish_frame(buffer, veh_id, x, y, 0);
+    g_VEHDRAW_CAVIAR.render(buffer, draw_x, draw_y, 1);
+    vehdraw_finish_frame(buffer, veh_id, draw_x, draw_y, 0);
 }
 
 
@@ -475,32 +478,31 @@ void __cdecl vehdraw_scoot(Buffer *buffer, int x, int y, int frame, int zoom) {
     const int half = VehDrawScootSteps >> 1;
     const VOX_Vect light = VehLightDirMap;
     const VOX_Vect shadow_direction = {{-0.57735f, 0.57735f, 0.57735f}};
-    VOX_Vect base, increment, normal;
+    // One scratch vector holds the base, then the shadow, then the position.
+    VOX_Vect scratch, increment, normal;
+    VOX_Matrix camera, inverse;
     if (frame > half) {
         frame -= half;
-        base = VehDrawScootNormalMid;
+        scratch = VehDrawScootNormalMid;
         increment = VehDrawScootSecondIncrement;
     } else {
-        base = VehDrawScootNormalStart;
+        scratch = VehDrawScootNormalStart;
         increment = VehDrawScootFirstIncrement;
     }
     vec3_scale(increment.values, (float)frame, increment.values);
-    vector_add(increment.values, base.values, normal.values);
+    vector_add(increment.values, scratch.values, normal.values);
     vox_normalise_vector(normal.values, normal.values);
-    VOX_Matrix camera, inverse;
     compute_camera(&normal, &camera);
     g_VEHDRAW_CAVIAR.light_vector() = light;
     vox_matrix_inverse(camera.values, inverse.values);
-    VOX_Vect shadow;
-    vox_matrix_vector_mul(inverse.values, shadow_direction.values, shadow.values);
-    g_VEHDRAW_CAVIAR.shadow_vector() = shadow;
+    vox_matrix_vector_mul(inverse.values, shadow_direction.values, scratch.values);
+    g_VEHDRAW_CAVIAR.shadow_vector() = scratch;
     g_VEHDRAW_CAVIAR.set_shadow_table(ShadowColorTable);
-    VOX_Vect position;
-    position.values[0] = camera.values[2][0] * -10000.0f;
-    position.values[1] = camera.values[2][1] * -10000.0f;
-    position.values[2] = camera.values[2][2] * -10000.0f;
+    scratch.values[0] = camera.values[2][0] * -10000.0f;
+    scratch.values[1] = camera.values[2][1] * -10000.0f;
+    scratch.values[2] = camera.values[2][2] * -10000.0f;
     g_VEHDRAW_CAVIAR.set_scaling(vehdraw_scale(zoom));
-    g_VEHDRAW_CAVIAR.set_camera_direct(&position, &camera);
+    g_VEHDRAW_CAVIAR.set_camera_direct(&scratch, &camera);
     // This second scale operation and fresh global reads occur in the image.
     g_VEHDRAW_CAVIAR.set_scaling(vehdraw_scale(zoom));
     g_VEHDRAW_CAVIAR.set_scene_rotation(
@@ -509,10 +511,10 @@ void __cdecl vehdraw_scoot(Buffer *buffer, int x, int y, int frame, int zoom) {
     vehdraw_construct_vehicle(veh_id, &g_VEHDRAW_CAVIAR);
     ++VehDrawAnimationStep;
     const int numerator = MapWinCaptionScale;
-    x += vehdraw_centre_offset(numerator, zoom);
-    y += vehdraw_centre_offset(numerator, zoom);
-    g_VEHDRAW_CAVIAR.render(buffer, x, y, 1);
-    vehdraw_finish_frame(buffer, veh_id, x, y, 0);
+    const int draw_x = x + vehdraw_centre_offset(numerator, zoom);
+    const int draw_y = y + vehdraw_centre_offset(numerator, zoom);
+    g_VEHDRAW_CAVIAR.render(buffer, draw_x, draw_y, 1);
+    vehdraw_finish_frame(buffer, veh_id, draw_x, draw_y, 0);
 }
 
 
@@ -522,9 +524,9 @@ void __cdecl vehdraw_scoot(Buffer *buffer, int x, int y, int frame, int zoom) {
 // symbol    ?vehdraw_draw@@YAXPAVBuffer@@HHHHHH@Z
 void __cdecl vehdraw_draw(Buffer *buffer, int veh_id, int x, int y, int flags,
                           int zoom, int terrain) {
+    const VOX_Vect shadow_direction = {{-0.57735f, 0.57735f, 0.57735f}};
     if (!buffer) return;
     const VOX_Vect light = VehLightDirMap;
-    const VOX_Vect shadow_direction = {{-0.57735f, 0.57735f, 0.57735f}};
     if (flags & 1) veh_id = pick_top_veh(veh_id);
     int tile_x = VehDrawPositionX;
     int tile_y;
@@ -551,24 +553,25 @@ void __cdecl vehdraw_draw(Buffer *buffer, int veh_id, int x, int y, int flags,
     compute_camera(&normal, &camera);
     g_VEHDRAW_CAVIAR.light_vector() = light;
     vox_matrix_inverse(camera.values, inverse.values);
-    VOX_Vect shadow;
-    vox_matrix_vector_mul(inverse.values, shadow_direction.values, shadow.values);
-    g_VEHDRAW_CAVIAR.shadow_vector() = shadow;
+    // The normal's storage is reused for the shadow and then the position.
+    vox_matrix_vector_mul(inverse.values, shadow_direction.values, normal.values);
+    g_VEHDRAW_CAVIAR.shadow_vector() = normal;
     g_VEHDRAW_CAVIAR.set_shadow_table(ShadowColorTable);
-    VOX_Vect position;
-    position.values[0] = camera.values[2][0] * -10000.0f;
-    position.values[1] = camera.values[2][1] * -10000.0f;
-    position.values[2] = camera.values[2][2] * -10000.0f;
+    normal.values[0] = camera.values[2][0] * -10000.0f;
+    normal.values[1] = camera.values[2][1] * -10000.0f;
+    normal.values[2] = camera.values[2][2] * -10000.0f;
     g_VEHDRAW_CAVIAR.set_scaling(vehdraw_scale(zoom));
-    g_VEHDRAW_CAVIAR.set_camera_direct(&position, &camera);
+    g_VEHDRAW_CAVIAR.set_camera_direct(&normal, &camera);
     vehdraw_construct_vehicle(veh_id, &g_VEHDRAW_CAVIAR);
     g_VEHDRAW_CAVIAR.set_scene_rotation(
         ((facing - 3) & 7) * 0.785375f - VehDrawCameraAngles.values[0], 0.0f, 0.0f);
     const int numerator = MapWinCaptionScale;
-    x += vehdraw_centre_offset(numerator, zoom);
-    y += vehdraw_centre_offset(numerator, zoom);
-    g_VEHDRAW_CAVIAR.render(buffer, x, y, ((flags >> 12) & 2) | 1);
-    vehdraw_finish_frame(buffer, veh_id, x, y, (flags >> 12) & 2);
+    const int draw_x = x + vehdraw_centre_offset(numerator, zoom);
+    const int draw_y = y + vehdraw_centre_offset(numerator, zoom);
+    g_VEHDRAW_CAVIAR.render(buffer, draw_x, draw_y,
+        ((static_cast<unsigned int>(flags) >> 12) & 2) | 1);
+    vehdraw_finish_frame(buffer, veh_id, draw_x, draw_y,
+        (static_cast<unsigned int>(flags) >> 12) & 2);
 }
 
 

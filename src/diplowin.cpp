@@ -606,10 +606,10 @@ int DiploWin::on_iface_dialog_item_back_draw(GraphicWin *window, int, int item,
   canvas.set_text_color(TextColourTable[80 - 2 * item],
                         TextColourTable[81 - 2 * item], 1, 1);
   if (item == 0) {
-    window->fill(rect, 0);
-    return 1;
+    window->fill(rect, item);
+  } else {
+    canvas.box_sprite(&local, &InterfaceBoxStyles[27 + item]);
   }
-  canvas.box_sprite(&local, &InterfaceBoxStyles[27 + item]);
   return 1;
 }
 
@@ -1383,10 +1383,10 @@ void DiploWin::kill_offer(int a1, int a2) {
     }
     int count = offer_count_[a1];
     if (a2 < count) {
+        int idx = a2;
         if (a2 < count - 1) {
             int *type = &offer_type_[a1][a2];
             int *value = &offer_value_[a1][a2];
-            int idx = a2;
             do {
                 idx = idx + 1;
                 *type = type[1];
@@ -1945,6 +1945,14 @@ Status: Coverage transcription - unclaimed body; the walk now goes through
         the tree's own StringStruct::add and the general.h swap, whose
         measured bodies are the image's 0x00401100 and 0x00628A50.
 */
+// The image reads the list head separately for each of these two values.
+static inline int transcript_current_id(StringList *list) {
+  return list->head_ ? list->current_->id : 0;
+}
+static inline char *transcript_current_text(StringList *list) {
+  return list->head_ ? list->current_->string_payload()->text : 0;
+}
+
 extern "C" void __cdecl sub_441040(int a1, int a2) {
     StringList &source = DiploWindow.shared_string_box().strings();
     if (a1 > a2) {
@@ -1953,37 +1961,9 @@ extern "C" void __cdecl sub_441040(int a1, int a2) {
     int loopBound = source.entry_count_;
     for (int i = loopBound - 3; i < loopBound; ++i) {
         if (i >= 0) {
-            int curCount = source.entry_count_;
-            StringStructEntry *const head = source.head_;
-            StringStructEntry *node;
-            if (i <= curCount - 1) {
-                node = head;
-                // The image stores the head and each reached node in
-                // current_. Retain that sequence; effects on a faulting
-                // invalid chain still require observed target code, not
-                // a guarantee from undefined C++ pointer dereferences.
-                source.current_ = node;
-                if (i > 0) {
-                    int n = i;
-                    do {
-                        node = node->next;
-                        source.current_ = node;
-                        --n;
-                    } while (n != 0);
-                }
-                source.current_position_ = i;
-            } else {
-                node = source.current_;
-            }
-            int f1;
-            char *f2;
-            if (head == 0) {
-                f1 = 0;
-                f2 = 0;
-            } else {
-                f1 = node->id;
-                f2 = node->string_payload()->text;
-            }
+            source.seek_pos(i);
+            int f1 = source.head_ ? source.current_->id : 0;
+            char *f2 = source.head_ ? source.current_->string_payload()->text : 0;
             StringList *entry = &DiplomacyTranscriptLists[a1][a2];
             entry->pending_text_ = f2;
             entry->field_20_ = 0;
@@ -2021,20 +2001,13 @@ extern "C" void __cdecl sub_441100(int faction_id, int faction_id_with) {
     swap(&faction_id, &faction_id_with);
   DiploWindow.shared_string_box().clear();
   DiploWindow.shared_edit_box().set_text(0);
-  StringList &saved =
-      DiplomacyTranscriptLists[faction_id][faction_id_with];
-  const int saved_count = saved.entry_count_;
+  const int saved_count =
+      DiplomacyTranscriptLists[faction_id][faction_id_with].entry_count_;
   for (int index = saved_count - 3; index < saved_count; ++index) {
     if (index < 0) continue;
-    if (index <= saved.entry_count_ - 1)
-      saved.seek_pos(index);
-    int id = 0;
-    char *text = 0;
-    if (saved.head_ != 0) {
-      StringStructEntry *const current = saved.current_;
-      id = current->id;
-      text = current->string_payload()->text;
-    }
+    DiplomacyTranscriptLists[faction_id][faction_id_with].seek_pos(index);
+    int id = transcript_current_id(&DiplomacyTranscriptLists[faction_id][faction_id_with]);
+    char *text = transcript_current_text(&DiplomacyTranscriptLists[faction_id][faction_id_with]);
     DiploWindow.shared_string_box().add(text, id, 1);
   }
 }

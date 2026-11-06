@@ -219,19 +219,19 @@ void MainInterface::draw_edit_pane() {
 void MainInterface::redraw_complete() {
     if (IfaceIdToSlotStorage[ActiveIfaceIdStorage] != 0
         && MainInterfaceGlobal.field_4_ != 10) return;
-    Buffer &canvas = MainInterfaceGlobal;
     char text[256];
     RECT button_rect;
-    canvas.set_text_color(0x65, -1, 1, 1);
+    MainInterfaceGlobal.set_text_color(0x65, -1, 1, 1);
     text[0] = 0;
     strcat(text, label_get(0x68 / 4));
     CharUpperA(text);
     spot_.get_rect(5, 0, &button_rect);
-    canvas.set_font(&font1_, 0, 0, 0);
-    const uint32_t ready = NetDaemonNet.primary_state_.trailing_words_[6];
+    MainInterfaceGlobal.set_font(&font1_, 0, 0, 0);
     if ((GameDataStateStorage.fields_.game_state_ & 2) && (!IsMultiplayerNet
         || !(GameDataStateStorage.fields_.net_turn_flags_ & 0x10) || GameDataStateStorage.fields_.net_turn_faction_ == ConsoleGlobal.faction_id_)
-        && (ConsoleGlobal.field_23BE4_ || (IsMultiplayerNet && ready != 0xFF && ready != 0))) {
+        && (ConsoleGlobal.field_23BE4_ || (IsMultiplayerNet
+            && NetDaemonNet.primary_state_.trailing_words_[6] != 0xFF
+            && NetDaemonNet.primary_state_.trailing_words_[6] != 0))) {
         flic2_.decode_stored_frame();
         MainInterfaceEndTurnAnimation = 1;
     } else {
@@ -239,16 +239,24 @@ void MainInterface::redraw_complete() {
         flic2_.decode_stored_frame();
         MainInterfaceEndTurnAnimation = 0;
     }
-    const uint32_t label_ready = NetDaemonNet.primary_state_.trailing_words_[6];
-    const int label = !IsMultiplayerNet || !(GameDataStateStorage.fields_.game_state_ & 2) || (GameDataStateStorage.fields_.net_turn_flags_ & 0x10)
-        || label_ready == 0xFF || !(label_ready & (1u << ConsoleGlobal.faction_id_))
-        ? 0x68 / 4 : 0x3FC / 4;
-    text[0] = 0;
-    strcat(text, label_get(label));
+    LPSTR label;
+    if (IsMultiplayerNet && (GameDataStateStorage.fields_.game_state_ & 2)
+        && !(GameDataStateStorage.fields_.net_turn_flags_ & 0x10)
+        && NetDaemonNet.primary_state_.trailing_words_[6] != 0xFF
+        && (NetDaemonNet.primary_state_.trailing_words_[6] & (1u << ConsoleGlobal.faction_id_))) {
+        text[0] = 0;
+        label = Labels.strings_ptr[0x3FC / 4];
+    } else {
+        text[0] = 0;
+        label = Labels.strings_ptr[0x68 / 4];
+    }
+    // RESIDUAL: the image holds the label in ECX and Labels in EAX here.
+    strcat(text, StringTable.get(label));
     ++MainInterfaceRedrawCount;
     CharUpperA(text);
-    canvas.set_text_color(0x65, -1, 1, 1);
-    canvas.write_cent_l(text, &button_rect, strlen(text));
+    MainInterfaceGlobal.set_text_color(0x65, -1, 1, 1);
+    // Same null test of the buffer address before strlen as set_date.
+    if (text) MainInterfaceGlobal.write_cent_l(text, &button_rect, strlen(text));
     MainInterfaceGlobal.soft_update(&button_rect);
 }
 
@@ -268,9 +276,9 @@ void __cdecl bung_momma() {
     const int box_width = screen_width - 0x140;
     Font *const font = MainInterfaceGlobal.tertiary_font();
     const int font_mode = font->unk_1_;
-    const int rows = font_mode < 0
-        ? font->line_height()
-        : font_mode + font->pixel_height();
+    const int rows = font_mode >= 0
+        ? font_mode + font->pixel_height()
+        : font->line_height();
     const int box_height = rows * 4;
     const int box_x = (screen_width - box_width) / 2;
     const int box_y = MainInterfaceGlobal.title_bounds().bottom - box_height;
@@ -281,9 +289,8 @@ void __cdecl bung_momma() {
     box.set_draw_mode(1);
     box.set_visible_rows(4);
 
-    Buffer &buffer = static_cast<Buffer &>(box);
-    buffer.set_font(font, 0, 0, 0);
-    buffer.set_text_color(0x5F, -1, 1, 1);
+    box.set_font(font, 0, 0, 0);
+    box.set_text_color(0x5F, -1, 1, 1);
     box.clear();
     static_cast<Win &>(box).Win::show(0);
 }
@@ -596,43 +603,44 @@ MainInterface::~MainInterface() {
 // RECOVERY_BINDING: v1 {"evidence": ["src/maininterface.h", "git:b4601390:recovery/tasks/maininterface-owner-coverage.json", "git:f7bbce35:src/recovered/units/0045bc50.cpp"], "reason": "Original owner calls, secondary interface receiver and ordinary embedded-member lifecycle identify this MainInterface operation; compatible historical seed spans are retained, without a matching claim."}
 // symbol    ?on_redraw@MainInterface@@UAEXXZ
 void MainInterface::on_redraw() {
-    if (IfaceIdToSlotStorage[ActiveIfaceIdStorage] == 0) {
-        restore_back(1);
-        RECT rect = info_panel_frame_;
-        const int state = button_group_[0].field_84_;
-        Buffer &canvas = *this;
-        switch (state) {
-        case 1000:
-        case 1001: {
-            rect.left += 4; rect.top += 4;
-            rect.right -= 4; rect.bottom -= 4;
-            canvas.box_sprite(&rect, &InterfaceBoxStyles[3]);
-            if (state == 1000) {
-                InterfaceMessageWin.listBox_.show(0);
-            } else {
-                canvas.box_sprite(&ConsoleInfoWin.pane_rects_[0], &InterfaceBoxStyles[18]);
-                canvas.box_sprite(&ConsoleInfoWin.pane_rects_[1], &InterfaceBoxStyles[18]);
-                ConsoleInfoWin.reset();
-                InterfaceMessageWin.listBox_.hide();
-                ConsoleInfoWin.timer_.start();
-            }
-            for (int button = 11; button < 42; ++button) flat_button_[button].hide();
-            break;
+    if (IfaceIdToSlotStorage[ActiveIfaceIdStorage] != 0) return;
+    restore_back(1);
+    RECT rect = info_panel_frame_;
+    switch (button_group_[0].field_84_ - 1000) {
+    case 0: {
+        rect.left += 4; rect.right -= 4;
+        rect.top += 4; rect.bottom -= 4;
+        box_sprite(&rect, &InterfaceBoxStyles[3]);
+        ConsoleInfoWin.timer_.stop();
+        InterfaceMessageWin.listBox_.show(0);
+        for (int button = 11; button < 42; ++button) flat_button_[button].hide();
+        break;
+    }
+    case 1: {
+        rect.left += 4; rect.right -= 4;
+        rect.top += 4; rect.bottom -= 4;
+        box_sprite(&rect, &InterfaceBoxStyles[3]);
+        box_sprite(&ConsoleInfoWin.pane_rects_[0], &InterfaceBoxStyles[18]);
+        box_sprite(&ConsoleInfoWin.pane_rects_[1], &InterfaceBoxStyles[18]);
+        ConsoleInfoWin.reset();
+        InterfaceMessageWin.listBox_.hide();
+        ConsoleInfoWin.timer_.start();
+        for (int button = 11; button < 42; ++button) flat_button_[button].hide();
+        break;
+    }
+    case 2: {
+        box_sprite(&editor_panel_rect_, &InterfaceBoxStyles[3]);
+        if (WinScreenWidth != 800)
+            box_sprite(&editor_tools_rect_, &InterfaceBoxStyles[3]);
+        InterfaceMessageWin.listBox_.hide();
+        ConsoleInfoWin.timer_.stop();
+        for (int button = 11; button < 42; ++button) {
+            if (WinScreenWidth == 800 && button == 36) break;
+            flat_button_[button].show(0);
         }
-        case 1002: {
-            canvas.box_sprite(&editor_panel_rect_, &InterfaceBoxStyles[3]);
-            if (WinScreenWidth != 800)
-                canvas.box_sprite(&editor_tools_rect_, &InterfaceBoxStyles[3]);
-            InterfaceMessageWin.listBox_.hide();
-            ConsoleInfoWin.timer_.stop();
-            for (int button = 11; button < 42; ++button) {
-                if (WinScreenWidth == 800 && button == 36) break;
-                flat_button_[button].show(0);
-            }
-            draw_edit_pane();
-            break;
-        }
-        }
+        draw_edit_pane();
+        break;
+    }
     }
     ConsoleGlobal.update_data(1);
     redraw_complete();
@@ -663,13 +671,18 @@ void MainInterface::on_status(int active) {
     } else {
         flic2_.rewind();
         for (int button = 0; button < 42; ++button) {
-            if (button == 2) {
-                if ((GameDataStateStorage.fields_.game_state_ & 0xC0) == 0xC0) flat_button_[button].show(0);
-            } else if (button >= 8 && button <= 10) {
+            if (button == 2 && !((GameDataStateStorage.fields_.game_state_ & 0x80)
+                    && (GameDataStateStorage.fields_.game_state_ & 0x40)))
+                continue;
+            if (button >= 8 && button <= 10) {
                 flat_button_[button].hide();
-            } else if (button < 11 || button > 41 || button_group_[0].field_84_ == 1002) {
-                flat_button_[button].show(0);
-            } else flat_button_[button].hide();
+                continue;
+            }
+            if (button >= 11 && button < 42 && button_group_[0].field_84_ != 1002) {
+                flat_button_[button].hide();
+                continue;
+            }
+            flat_button_[button].show(0);
         }
         on_redraw();
         ConsoleStatusWin.on_redraw();
@@ -733,33 +746,35 @@ void MainInterface::set_date(char *) {
     const int mode = IfaceIdToSlotStorage[ActiveIfaceIdStorage];
     if (mode != 0 && mode != 10
         && !(mode == 5 && (ReportIfGlobal.field_8_ == 4 || ReportIfGlobal.field_8_ == 5))) return;
-    Buffer &canvas = *this;
-    canvas.set_font(&font2_, 0, 0, 0);
-    canvas.set_text_color(MessageWinTextColor, MessageWinTextBackground, 1, 1);
-    RECT outline;
-    UnionRect(&outline, &date_rect_, &rect3_);
-    outline.left -= 3; outline.top -= 3;
-    outline.right += 3; outline.bottom += 3;
-    Buffer &global_canvas = MainInterfaceGlobal;
-    global_canvas.box_sprite(&outline, &InterfaceBoxStyles[21]);
-    global_canvas.box_sprite(&date_rect_, &InterfaceBoxStyles[18]);
-    const int x = date_rect_.left + 3;
-    int y = date_rect_.top + 3;
+    set_font(&font2_, 0, 0, 0);
+    set_text_color(MessageWinTextColor, MessageWinTextBackground, 1, 1);
+    RECT rect;
+    UnionRect(&rect, &date_rect_, &rect3_);
+    rect.left -= 3; rect.right += 3;
+    rect.top -= 3; rect.bottom += 3;
+    MainInterfaceGlobal.box_sprite(&rect, &InterfaceBoxStyles[21]);
+    RECT outline = rect;
+    MainInterfaceGlobal.box_sprite(&date_rect_, &InterfaceBoxStyles[18]);
+    rect = date_rect_;
+    rect.left += 3; rect.top += 3;
+    rect.right -= 3; rect.bottom -= 3;
+    const int x = rect.left;
+    int y = rect.top;
     StringTemp[0] = 0;
     strcat(StringTemp, label_get(0));
     strcat(StringTemp, " ");
     say_year(StringTemp);
-    canvas.write_l(StringTemp, x, y, strlen(StringTemp));
-    y += canvas.text_line_height();
+    // The image keeps a null test of the StringTemp address before strlen.
+    if (StringTemp) write_l(StringTemp, x, y, strlen(StringTemp));
+    y += text_line_height();
     StringTemp[0] = 0;
     strcat(StringTemp, label_get(0x90 / 4));
     strcat(StringTemp, ": ");
     char number[80];
-    const PlayerData &player = PlayersData[ConsoleGlobal.faction_id_];
-    _itoa(static_cast<int>(static_cast<uint32_t>(player.energy_reserves)
-          - player.hurry_cost_total), number, 10);
+    _itoa(static_cast<int>(static_cast<uint32_t>(PlayersData[ConsoleGlobal.faction_id_].energy_reserves)
+          - PlayersData[ConsoleGlobal.faction_id_].hurry_cost_total), number, 10);
     strcat(StringTemp, number);
-    canvas.write_l(StringTemp, x, y, strlen(StringTemp));
+    if (StringTemp) write_l(StringTemp, x, y, strlen(StringTemp));
     soft_update(&outline);
 }
 
@@ -1101,12 +1116,14 @@ void MainInterface::on_iface_group_clicked(int group, int, int selected) {
     selected -= 1000;
     if (group == 0) { on_redraw(); return; }
     if (group == 2) {
+        int tool;
         if (selected >= 17) {
-            int tool = selected - 17;
+            tool = selected - 17;
             for (int index = 0; index < MaxTerrainNum; ++index)
                 if (!Terraforming[index].bit && tool >= index) ++tool;
-            ConsoleGlobal.editor_paints(tool + 6);
-        } else ConsoleGlobal.editor_paints(selected - 11);
+            tool += 6;
+        } else tool = selected - 11;
+        ConsoleGlobal.editor_paints(tool);
         return;
     }
     if (group == 3) {
@@ -1169,12 +1186,11 @@ void MainInterface::on_iface_right_down(int a1, int a2) {
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     0x005FAB00 0x004B4CF0 0x0045C3A0 0x004B6530
 void MainInterface::on_iface_mouse_move(int a1, int a2) {
-    // The first hit-test writes both output values back through the argument
-    // slots. The original then retries the status-bar Spot with the entry
-    // coordinates still held in registers, not those overwritten outputs.
-    const int original_x = a1;
-    const int original_y = a2;
-    if (spot_.check(a1, a2, &a2, &a1) != -1 && a2 == 5) {
+    // VC6 packs the two Spot outputs into the dead parameter slots while the
+    // coordinates stay in registers for the second hit-test.
+    int type;
+    int id;
+    if (spot_.check(a1, a2, &type, &id) != -1 && type == 5) {
         if (iface_redraw_pending_ != 0) {
             return;
         }
@@ -1183,18 +1199,18 @@ void MainInterface::on_iface_mouse_move(int a1, int a2) {
         return;
     }
 
-    int check2 = ConsoleStatusWin.spot_.check(original_x, original_y, &a2, &a1);
-    if (check2 >= 0 && a1 == 0xb) {
-        if (a2 != ConsoleStatusWin.hover_base_id_) {
-            ConsoleStatusWin.hover_base_id_ = a2;
+    int check2 = ConsoleStatusWin.spot_.check(a1, a2, &type, &id);
+    if (check2 >= 0 && id == 0xb) {
+        if (type != ConsoleStatusWin.hover_base_id_) {
+            ConsoleStatusWin.hover_base_id_ = type;
             ConsoleStatusWin.hover_vehicle_id_ = -1;
-            ConsoleStatusWin.draw_active(-1, a2, 0);
+            ConsoleStatusWin.draw_active(-1, type, 0);
         }
-    } else if (check2 >= 0 && a1 == 0) {
-        if (a2 != ConsoleStatusWin.hover_vehicle_id_) {
+    } else if (check2 >= 0 && id == 0) {
+        if (type != ConsoleStatusWin.hover_vehicle_id_) {
             ConsoleStatusWin.hover_base_id_ = -1;
-            ConsoleStatusWin.hover_vehicle_id_ = a2;
-            ConsoleStatusWin.draw_active(a2, -1, 0);
+            ConsoleStatusWin.hover_vehicle_id_ = type;
+            ConsoleStatusWin.draw_active(type, -1, 0);
         }
     } else {
         ConsoleStatusWin.reset_active();
@@ -2771,25 +2787,29 @@ void SubInterface::delete_iface_mode() {
 // ORIGINAL: 0x0045D310 ?set_iface_mode@SubInterface@@QAEXXZ 0x0045D310-0x0045D37D
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/0045d310.cpp", "image:terranx_original.exe:0x0045D310", "source:src/maininterface.h:InterfaceRegistry and mode-stack storage; source:src/multiwin.h:owned Sprite offsets; native callback-sensitive mode reload and downward repeated removal", "recovery/tasks/interface-contract-report-closure.json; owner expansion interface-registry-multiwin-small-20261001"], "reason": "Recover the original in its genuine C++ owner using source-owned interface registry and mode stack, real virtual callbacks, or owned MultiWin sprite geometry. Preserve historical seed obligations; this binding grants no current byte or runtime claim."}
 void SubInterface::set_iface_mode() {
-    int depth = ActiveIfaceIdStorage;
     int mode = static_cast<int>(field_4_);
-    const int current = IfaceIdToSlotStorage[depth];
-    if (current != mode && (mode != 10 || current == 0)) {
+    const int current = IfaceIdToSlotStorage[ActiveIfaceIdStorage];
+    if (current == mode) {
+        return;
+    }
+    if (mode == 10 && current != 0) {
+        return;
+    }
+    // The image repeats the mode/current comparison here.
+    if (static_cast<int>(field_4_) != current) {
         SubInterface *previous = InterfaceRegistry[current];
-        ++depth;
-        ActiveIfaceIdStorage = depth;
-        mode = static_cast<int>(field_4_);
-        IfaceIdToSlotStorage[depth] = mode;
+        ++ActiveIfaceIdStorage;
+        IfaceIdToSlotStorage[ActiveIfaceIdStorage] = static_cast<int>(field_4_);
         if (previous != 0) {
             previous->on_status(0);
         }
-        MainInterfaceGlobal.set_clip(MainInterfaceGlobal.buffer_working_rect());
-        // Both callbacks may change the receiver's mode or registry entry.
-        mode = static_cast<int>(field_4_);
-        SubInterface *next = InterfaceRegistry[mode];
-        if (next != 0) {
-            next->on_status(1);
-        }
+    }
+    MainInterfaceGlobal.set_clip(MainInterfaceGlobal.buffer_working_rect());
+    // Both callbacks may change the receiver's mode or registry entry.
+    mode = static_cast<int>(field_4_);
+    SubInterface *next = InterfaceRegistry[mode];
+    if (next != 0) {
+        next->on_status(1);
     }
 }
 

@@ -473,9 +473,8 @@ int *Sprite::get_clipped_x_table_shrink(RECT *full, RECT *clipped, int *destinat
     }
     *source_count = 0;
     for (int i = 0; i < extent; ++i) {
-        const int step = SpriteScalingSteps[index + i];
-        SpriteClippedXSteps[i] = step;
-        *source_count += step;
+        SpriteClippedXSteps[i] = SpriteScalingSteps[i + index];
+        *source_count += SpriteScalingSteps[i + index];
     }
     return SpriteClippedXSteps;
 }
@@ -499,9 +498,8 @@ int *Sprite::get_clipped_y_table_shrink(RECT *full, RECT *clipped, int *destinat
     }
     *source_count = 0;
     for (int i = 0; i < extent; ++i) {
-        const int step = SpriteScalingSteps[index + i];
-        SpriteClippedYSteps[i] = step;
-        *source_count += step;
+        SpriteClippedYSteps[i] = SpriteScalingSteps[i + index];
+        *source_count += SpriteScalingSteps[i + index];
     }
     return SpriteClippedYSteps;
 }
