@@ -4173,7 +4173,7 @@ void __cdecl Win::OnPaletteChanged(void * hwnd, void * lparam) {
 // icon first, not `== 0` with the maximise icon first.
 void Win::redo_caption_buttons() {
     int w = field_128_;
-    int x = client_rect_.right - (w << 1) - client_rect_.left -
+    int x = client_rect_.right - w * 2 - client_rect_.left -
             border_thickness_ - caption_height_ - 2;
     if (close_button_ != 0) {
         close_button_->move(x, w);

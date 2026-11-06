@@ -508,64 +508,57 @@ void ListBox::on_mouse_leave(int a1, int a2) {
 // ORIGINAL: 0x0060A020 ?set_selected_pos@ListBox@@QAEXHH@Z 0x0060A020-0x0060A1DD
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/0060a020.cpp", "source:src/listbox.h", "source:src/dialog.h", "source:src/win.h", "source:src/autosound.h", "pinned 0x0060A020 reads AutoSound +0x90 and calls Sound slots 23/7"], "reason": "Recover ListBox selection, viewport and notify-gated item callbacks through its typed Dialog and GraphicWin owners. The child at AutoSound +0x90 is a Sound interface view, not a Win* field; preserve the original seed and historical claim."}
 void ListBox::set_selected_pos(int position, int notify) {
-    if (Dialog::selected_position_ == position && field_8_ == 0) {
-        redraw();
+    int moved = 0;
+    // An unchanged position with no pending change returns without redraw.
+    if (position == Dialog::selected_position_ && field_8_ == 0) {
         return;
     }
 
     Dialog::selected_position_ = position;
     if (position >= 0) {
-        const int page_size = static_cast<int>(field_1C_);
-        const int item_count = Dialog::item_list_.entry_count_;
-        const int step = Dialog::column_count_ < 2
-            ? 1 : Dialog::row_count_;
-        int scroll_position = static_cast<int>(field_18_);
-        bool moved_up = false;
-        bool update_scrollbar = false;
-
-        while (Dialog::selected_position_ < scroll_position) {
-            scroll_position -= step;
-            if (scroll_position < 0) {
-                scroll_position = 0;
+        // The scroll position is updated in place; the step is re-read
+        // every iteration.
+        while (Dialog::selected_position_ < static_cast<int>(field_18_)) {
+            moved = 1;
+            field_18_ -= Dialog::column_count_ > 1 ? Dialog::row_count_ : 1;
+            if (static_cast<int>(field_18_) < 0) {
+                field_18_ = 0;
             }
-            moved_up = true;
         }
-
-        if (page_size < item_count) {
-            while (Dialog::selected_position_ >= scroll_position + page_size) {
-                scroll_position += step;
-            }
-            update_scrollbar = true;
+        if (Dialog::item_list_.entry_count_ <= static_cast<int>(field_1C_)) {
+            field_18_ = 0;
         } else {
-            scroll_position = 0;
-            update_scrollbar = moved_up;
-        }
-
-        field_18_ = static_cast<uint32_t>(scroll_position);
-        if (update_scrollbar) {
-            Win *window = static_cast<GraphicWin *>(this);
-            if (Dialog::column_count_ < 2) {
-                window->set_vert_pos(scroll_position);
-            } else {
-                window->set_horz_pos(scroll_position);
+            while (Dialog::selected_position_ >=
+                   static_cast<int>(field_18_ + field_1C_)) {
+                field_18_ += Dialog::column_count_ > 1 ? Dialog::row_count_ : 1;
+                moved = 1;
             }
         }
 
-        if (double_click_callback_ != 0) {
-            double_click_callback_(Dialog::get_selected_id());
+        if (moved != 0 &&
+            Dialog::item_list_.entry_count_ > static_cast<int>(field_1C_)) {
+            if (Dialog::column_count_ > 1) {
+                set_horz_pos(static_cast<int>(field_18_));
+            } else {
+                set_vert_pos(static_cast<int>(field_18_));
+            }
+        }
+
+        if (selection_callback_ != 0) {
+            selection_callback_(Dialog::get_selected_id());
         }
         if (notify != 0) {
-            Win *parent = static_cast<GraphicWin *>(this)->parent_window();
+            Win *parent = parent_window();
             if (parent != 0) {
                 parent->on_selected(Dialog::pos_to_id(position));
             }
 
-            parent = static_cast<GraphicWin *>(this)->parent_window();
+            parent = parent_window();
             if (parent != 0) {
                 parent->on_selected(Dialog::pos_to_id(position), 0);
             }
 
-            parent = static_cast<GraphicWin *>(this)->parent_window();
+            parent = parent_window();
             if (parent != 0) {
                 Sound *child = parent->legacy_sound_36();
                 if (child != 0 && child->is_playing() == 0) {
@@ -575,8 +568,6 @@ void ListBox::set_selected_pos(int position, int notify) {
         }
     }
 
-    // The seed's final call is Win virtual slot 62 on the GraphicWin base;
-    // this is the inherited typed redraw operation.
     redraw();
 }
 
@@ -1550,65 +1541,62 @@ int ListBox::update_changes() {
         return 7;
     }
 
-    GraphicWin *graphic = static_cast<GraphicWin *>(this);
-    Win *window = graphic;
-    Dialog *dialog = static_cast<Dialog *>(this);
-    int was_visible = window->is_visible();
+    // Every base access converts `this` directly; hoisted base pointers
+    // would add null-checked conversions the image does not have.
+    int was_visible = is_visible();
 
-    dialog->get_selected_id();
+    Dialog::get_selected_id();
 
     int old_child_count = field_C_;
-    int old_selected = dialog->selected_position_;
+    int old_selected = Dialog::selected_position_;
     calculate_dimensions();
 
-    if (old_child_count == field_C_) {
-        set_selected_pos(old_selected, 1);
-    } else {
-        int a4 = static_cast<int>(iFlags_);
-        GraphicWin *a1 = static_cast<GraphicWin *>(window->parent_window());
-        int a2 = dialog->window_x_;
-        int a3 = dialog->window_y_;
+    if (old_child_count != field_C_) {
+        int flags = static_cast<int>(iFlags_);
+        GraphicWin *parent = static_cast<GraphicWin *>(parent_window());
         int result = this->ListBox::attach(
-            a1, a2, a3, a4);
+            parent, Dialog::window_x_, Dialog::window_y_, flags);
         if (result != 0) {
             return result;
         }
-        set_selected_pos((old_selected == -1) ? -1 : 0, 1);
+        if (old_selected == -1) {
+            set_selected_pos(-1, 1);
+        } else {
+            set_selected_pos(0, 1);
+        }
         ::ReleaseCapture();
         if (was_visible != 0) {
-            window->Win::show(0);
+            Win::show(0);
         }
+    } else {
+        set_selected_pos(old_selected, 1);
     }
 
     {
         unsigned int win_flags = iFlags_;
         if (win_flags & 8) {
-            window->set_vert_range(0, dialog->item_list_.entry_count_ - 1);
-            window->set_vert_paging(dialog->row_count_ - 1);
+            set_vert_range(0, Dialog::item_list_.entry_count_ - 1);
+            set_vert_paging(Dialog::row_count_ - 1);
         } else if (win_flags & 4) {
-            window->set_horz_range(0,
-                dialog->item_list_.entry_count_
-                    / dialog->row_count_ - 1);
-            window->set_horz_paging(dialog->column_count_);
+            set_horz_range(0,
+                Dialog::item_list_.entry_count_ / Dialog::row_count_ - 1);
+            set_horz_paging(Dialog::column_count_);
         }
     }
 
-    {
-        WinNotificationCallback cb = selection_callback_;
-        if (cb != 0) {
-            cb(dialog->get_selected_id());
-        }
+    if (selection_callback_ != 0) {
+        selection_callback_(Dialog::get_selected_id());
     }
 
     {
-        Win *target = window->parent_window();
+        Win *target = parent_window();
         if (target != 0) {
-            target->on_selected(dialog->get_selected_id());
+            target->on_selected(Dialog::get_selected_id());
         }
     }
 
     {
-        Win *target = window->parent_window();
+        Win *target = parent_window();
         if (target != 0) {
             // The pinned child sequence is Sound slots 23/7 at AutoSound
             // offset 0x90; Win slot 23 has a different coordinate signature.
@@ -1622,7 +1610,7 @@ int ListBox::update_changes() {
     }
 
     if (was_visible != 0) {
-        static_cast<GraphicWin *>(this)->redraw();
+        redraw();
     }
 
     return 0;
@@ -2060,17 +2048,13 @@ void ListBox::set_selected_id(int id) {
         const int count = items.entry_count_;
         items.current_position_ = 0;
         items.current_ = items.head_;
-        if (count > 0) {
-            int index = 0;
-            do {
-                StringStructEntry *entry = items.current_;
-                if (entry->id == id) {
-                    goto found;
-                }
-                ++index;
-                items.current_position_ = items.current_position_ + 1;
-                items.current_ = entry->next;
-            } while (index < count);
+        for (int index = 0; index < count; index++) {
+            StringStructEntry *entry = items.current_;
+            if (entry->id == id) {
+                goto found;
+            }
+            items.current_position_++;
+            items.current_ = entry->next;
         }
     }
     set_selected_pos(-1, 1);
@@ -2151,36 +2135,23 @@ int ListBox::UNK2(char *text) {
 
     int result = -1;
     int position = Dialog::item_list_.current_position_;
-    int n = 0;
-    if (Dialog::item_list_.entry_count_ > 0) {
-        do {
-            StringList &items = Dialog::item_list_;
-            StringStructEntry *head = items.head_;
-            if (head != 0) {
-                StringStructEntry *current = items.current_;
-                current = current->next;
-                items.current_ = current;
-                int pos = items.current_position_ + 1;
-                items.current_position_ = pos;
-                if (pos == items.entry_count_) {
-                    items.current_position_ = 0;
-                }
+    for (int n = 0; n < Dialog::item_list_.entry_count_; ++n) {
+        StringList &items = Dialog::item_list_;
+        StringStructEntry *head = items.head_;
+        if (head != 0) {
+            items.current_ = items.current_->next;
+            if (++items.current_position_ == items.entry_count_) {
+                items.current_position_ = 0;
             }
-            char *name;
-            if (items.current_ == 0) {
-                name = 0;
-            } else {
-                // Retain the original null-payload text read when head is null.
-                StringStructPayload *payload = head == 0
-                    ? 0 : items.current_->string_payload();
-                name = payload->text;
-            }
-            if (_strcmpi(name, text) == 0) {
-                result = Dialog::item_list_.current_position_;
-                break;
-            }
-            ++n;
-        } while (n < Dialog::item_list_.entry_count_);
+        }
+        // Retain the original null-payload text read when head is null.
+        char *name = items.current_ != 0
+            ? (head != 0 ? items.current_->string_payload() : 0)->text
+            : 0;
+        if (_strcmpi(name, text) == 0) {
+            result = Dialog::item_list_.current_position_;
+            break;
+        }
     }
 
     Dialog::item_list_.seek_pos(position);

@@ -77,7 +77,7 @@ class Dialog {
   virtual int attach(GraphicWin *a1, int a2, int a3, int a4) { return 0; }
   virtual void on_redraw() { ; }
   void attach_at_stored_position(GraphicWin *window, int flags);
-  void UNK2(int window, int message, int wparam, int lparam);
+  int UNK2(int window, int message, int wparam, int lparam);
   // 0x00608F50: reusable, non-virtual reset. The control families call this
   // directly; it clears entries before resetting their heap and settings.
   void close();
@@ -187,6 +187,7 @@ class Dialog {
   // there - no Dialog member function could emit that walk. Access is
   // compile-time only; the static_assert below still pins the layout.
   uint32_t field_20_;
+  void set_style_bits(uint32_t mask) { field_20_ |= mask; }
   int window_x_;
   int window_y_;
   // These shared dimensions and spacing/count operands are signed in the

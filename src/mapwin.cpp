@@ -195,16 +195,15 @@ Status: Coverage transcription - unclaimed body, seed
 */
 void MapWin::UNK5(int panel) {
     if (panel != 0) {
-        MapPanelRect *const rect = &MapPanelRects[panel];
         const int width = ConsoleGlobal.dib_.bmiHeader.biWidth;
         const int bottom = (MapPanelGeometryWord008EA0B0 -
                             ConsoleGlobal.dib_.bmiHeader.biHeight -
                             MapPanelGeometryWord008EA0B8) / 2;
-        rect->top = 0;
+        MapPanelRects[panel].top = 0;
         const int three_quarters = (width * 3) / 4;
-        rect->left = three_quarters;
-        rect->right = width / 4 + three_quarters;
-        rect->bottom = bottom;
+        MapPanelRects[panel].left = three_quarters;
+        MapPanelRects[panel].right = width / 4 + three_quarters;
+        MapPanelRects[panel].bottom = bottom;
     } else {
         int right;
         if (IsMultiplayerNet != 0) {
@@ -2039,8 +2038,7 @@ void mouse_feedback_store_y(MapWin &window, int index, int value) {
 // TRIED (retired seed git:b55fcf8b:src/unrecovered/0046f660.cpp): the seed's int return was contradicted by its standalone scaffold's void declaration (C2556/C2371); keeping void dropped the mov eax,1 custom-hit result. Its remaining MISMATCH #6 ('mov' vs 'push') concerns instruction scheduling around the in_box/RECT stores.
 int MapWin::on_nc_hittest(int x, int y) {
     RECT title_strip = {0, 0xe, 0x50, 0x1f};
-    const RECT &client = client_rect();
-    int diff = client.right - client.left;
+    int diff = client_width();
     diff -= 0x5b;
     title_strip.left = diff;
     title_strip.right = diff + 0x50;
@@ -5257,7 +5255,8 @@ void MapWin::gen_tile(int x, int y, int a3, int a4) {
     const int tile_x = x;
     const int tile_y = y;
     tile_to_pixel(x, y, &x, &y);
-    gen_terrain_poly(this, this, zoom_offset_, a3, -1, field_1DD70_,
+    const int flags = field_1DD70_;
+    gen_terrain_poly(this, this, zoom_offset_, a3, -1, flags,
                      tile_x, tile_y, x, y);
     if (tile_y >= 0 && tile_y < MapLatitudeBounds &&
         tile_x >= 0 && tile_x < MapLongitudeBounds && a4 != 0) {
@@ -8473,6 +8472,7 @@ void __cdecl go_timer(int selection_mode) {
         WinPointerOwner4 = nullptr;
         WinPointerOwner3 = window;
     }
+    ConsoleGlobal.field_23D10_ = mode;
     CoverWindow.fill(9);
     CoverWindow.show(0);
     window->field_1DD80_ = 1;
@@ -8499,8 +8499,7 @@ void __cdecl go_timer(int selection_mode) {
 void MapWin::on_nc_left_down(int x_coord, int y_coord) {
     RECT rect = {0, 0xe, 0x11, 0x1f};
 
-    const RECT &client = client_rect();
-    int diff = client.right - client.left;
+    int diff = client_width();
     diff -= 0x5b;
     rect.left = diff;
     rect.right = diff + 0x11;

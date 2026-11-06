@@ -94,6 +94,7 @@ class Win : public AutoSound {
   typedef void (__cdecl *ScrollCallback)(int, int);
 
   const RECT &client_rect() const { return client_rect_; }
+  int client_width() const { return client_rect_.right - client_rect_.left; }
   const RECT &cached_outer_rect() const { return cached_outer_rect_; }
 
  public:
@@ -399,7 +400,9 @@ class Win : public AutoSound {
   static void release_hdc();
   void client_to_screen(int *x, int *y);
   Win *parent_window() const { return win_parent_; }
-  bool has_dialog_focus_flag() const { return (iFlags_ & 0x1000) != 0; }
+  // Drops pointer ownership held by this window.
+  void release_pointer();
+  int has_dialog_focus_flag() const { return iFlags_ & 0x1000; }
   // ListBox row painting tests this existing Win flag to select parent-surface copying.
   bool has_listbox_backfill_flag() const { return (iFlags_ & 0x80000u) != 0; }
   // ?client_to_screen@Win@@QAEXPAURECT@@@Z at 0x005ECFE0 - the RECT
@@ -1013,6 +1016,16 @@ extern Win *WinPointerOwner1;  // 0x009B7ACC
 extern Win *WinPointerOwner2;  // 0x009B7AD0
 extern Win *WinPointerOwner3;  // 0x009B7ABC
 extern Win *WinPointerOwner4;  // 0x009B7AC0
+
+inline void Win::release_pointer() {
+  if (WinPointerOwner3 == this) {
+    WinPointerOwner3 = 0;
+    on_lose_mouse_capture();
+  }
+  if (WinPointerOwner4 == this) {
+    WinPointerOwner4 = 0;
+  }
+}
 
 int __cdecl do_char();
 int __cdecl do_task();

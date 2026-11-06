@@ -2117,7 +2117,7 @@ BasePop::BasePop() {
         if (default_loc_b_ != 0x2000) {
             loc_b_ = default_loc_b_;
         }
-        dialogs_.Dialog::field_20_ |= 3;
+        dialogs_.set_style_bits(3);
     }
 
 }
@@ -2330,7 +2330,7 @@ void BasePop::close() {
             loc_b_ = default_loc_b_;
         }
 
-        dialogs_.Dialog::field_20_ |= 3;
+        dialogs_.set_style_bits(3);
     }
 
     // Native60159F calls005D4580 on this+0xA28. The same reset body is
@@ -2631,7 +2631,7 @@ void BasePop::set_external_window(GraphicWin *external_window, int loc_x,
         if (loc_y != 0x2000) {
             loc_b_ = loc_y;
         }
-        dialogs_.Dialog::field_20_ |= 3;
+        dialogs_.set_style_bits(3);
     }
 }
 
@@ -2718,7 +2718,7 @@ int BasePop::init(int flags, long heap_base) {
         if (default_loc_b_ != 0x2000) {
             loc_b_ = default_loc_b_;
         }
-        dialogs_.Dialog::field_20_ |= 3;
+        dialogs_.set_style_bits(3);
     }
 
     if (flags & 0x1000) {
@@ -3910,7 +3910,7 @@ int BasePop::calculate_dimensions() {
         if (default_loc_b_ != 0x2000) {
             loc_b_ = default_loc_b_;
         }
-        dialogs_.Dialog::field_20_ |= 3;
+        dialogs_.set_style_bits(3);
         if (external_window_ != 0) {
             field_30BC_ = dialog_width_;
             field_30C0_ = dialog_height_;

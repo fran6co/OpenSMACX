@@ -268,17 +268,9 @@ void __cdecl go_reset() {
             (*slot)->field_1DD84_ = 0;
             (*slot)->field_1DE0C_ = -1;
 
-            // Capture-loss dispatch may replace the slot. Owner4 is still
-            // compared with the old base, but the next dispatch reloads it
-            // (50EFF9 versus 50F007 in the original).
-            Win *const base = static_cast<GraphicWin *>(*slot);
-            if (WinPointerOwner3 == base) {
-                WinPointerOwner3 = nullptr;
-                base->on_lose_mouse_capture();
-            }
-            if (WinPointerOwner4 == base) {
-                WinPointerOwner4 = nullptr;
-            }
+            // Capture-loss dispatch may replace the slot; the next dispatch
+            // reloads it (50EFF9 versus 50F007 in the original).
+            (*slot)->release_pointer();
             (*slot)->on_update();
             ConsoleStatusWin.set_title(0);
         }
@@ -299,11 +291,9 @@ void __cdecl go_reset() {
         MapWin *const window = MapWinTable[MapWinSelectedSlot];
         MapWin **const slot = &MapWinTable[MapWinSelectedSlot];
         // Only the two go-mode cursor sprites are replaced by the default.
-        // The sprite value is loaded once for the two equality tests, but
-        // the dead `!= 0` arm re-reads the FIELD from memory (0x0050F0A5
-        // compares [edi + 0x1ef4c] again, not the register) - the same
-        // re-read-the-lvalue shape as the reset stores below. Reproduced.
-        Sprite *const cursor_sprite = window->cursor_sprite_;
+        // The sprite tests read it through the table expression, so the
+        // dead `!= 0` arm re-reads the field (0x0050F0A5) instead of CSE.
+        Sprite *const cursor_sprite = MapWinTable[MapWinSelectedSlot]->cursor_sprite_;
         if ((cursor_sprite == &g_CURSOR_SPRITES[1] ||
              cursor_sprite == &g_CURSOR_SPRITES[9]) &&
             (window->cursor_sprite_ != 0 || window->cursor_resource_id_ != 0x7F00)) {
@@ -317,14 +307,7 @@ void __cdecl go_reset() {
         (*slot)->field_1DD84_ = 0;
         (*slot)->field_1DE0C_ = -1;
 
-        Win *const base = static_cast<GraphicWin *>(*slot);
-        if (WinPointerOwner3 == base) {
-            WinPointerOwner3 = nullptr;
-            base->on_lose_mouse_capture();
-        }
-        if (WinPointerOwner4 == base) {
-            WinPointerOwner4 = nullptr;
-        }
+        (*slot)->release_pointer();
         (*slot)->on_update();
         ConsoleStatusWin.set_title(0);
         MapWinSelectedSlot = -1;
