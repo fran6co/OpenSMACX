@@ -1752,18 +1752,16 @@ void DesignWin::on_redraw() {
     MainInterfaceGlobal.Buffer::box_sprite(&frame_rect_, &InterfaceBoxStyles[3]);
     RECT caption = caption_rect_;
     MainInterfaceGlobal.Buffer::box_sprite(&caption, &InterfaceBoxStyles[6]);
-    caption.bottom -= 3;
+    caption.left += 3;
     caption.right -= 3;
     caption.top += 3;
-    caption.left += 3;
+    caption.bottom -= 3;
     StringTemp[0] = 0;
     MainInterfaceGlobal.Buffer::set_font(MainInterfaceGlobal.primary_font(), 0, 0, 0);
     strcat(StringTemp, label_get(0xA70 / 4));
     MainInterfaceGlobal.Buffer::set_text_color(0xF0, -1, 1, 1);
     CharUpperA(StringTemp);
-    // The image inlines the null-checked two-argument write_cent_l here
-    // (0x00437AA7 test/je before strlen); needs a header inline to match.
-    MainInterfaceGlobal.Buffer::write_cent_l(StringTemp, &caption, strlen(StringTemp));
+    MainInterfaceGlobal.Buffer::write_cent_l(StringTemp, &caption);
     check_abil();
     draw_chassis(0);
     draw_weapon(0);
@@ -1779,10 +1777,10 @@ void DesignWin::on_redraw() {
     UnionRect(&caption, &lower_panel_rows_[lower_panel_cancel],
               &lower_panel_rows_[lower_panel_done]);
     UnionRect(&caption, &caption, &lower_panel_rows_[lower_panel_rename]);
-    caption.bottom += 3;
+    caption.left -= 3;
     caption.right += 3;
     caption.top -= 3;
-    caption.left -= 3;
+    caption.bottom += 3;
     Buffer::box_sprite(&caption, &InterfaceBoxStyles[3]);
 }
 
@@ -4369,8 +4367,7 @@ void DesignWin::draw_special_1(int redraw) {
     if (protoAbilityIDs_[0] < 0) {
         StringTemp[0] = 0;
         strcat(StringTemp, label_get(0x64 / 4));
-        Buffer::write_cent_l(StringTemp, &area,
-                             static_cast<int>(strlen(StringTemp)));
+        Buffer::write_cent_l(StringTemp, &area);
         return;
     }
 
@@ -4422,8 +4419,7 @@ void DesignWin::draw_special_2(int redraw) {
     if (protoAbilityIDs_[1] < 0) {
         StringTemp[0] = 0;
         strcat(StringTemp, label_get(0x64 / 4));
-        Buffer::write_cent_l(StringTemp, &area,
-                             static_cast<int>(strlen(StringTemp)));
+        Buffer::write_cent_l(StringTemp, &area);
         return;
     }
 

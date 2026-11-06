@@ -57,6 +57,7 @@ Purpose: Register the multiplayer time-bonus hotspot and draw its caret markers.
 // SUPERSEDED_BINDING_HISTORY: v1 {"evidence": ["Original479270..47932C; retired seed git:117282ee:src/unrecovered/00479270.cpp records the same identity and spans.", "The receiver's Spot subobject at +0x28AC (spot.h's own add/3,2 overload) and the +0x444 Buffer (write_cent_l is buffer.h's own) carry the walk; the difficulty table is the 0x833-dword PlayerData stride faction.h pins, read at the +0x2054 record offset through the local-faction slot 0x00939284.", "The caret row is built into strings.h's StringTemp (0x009B86A0) from the one-space and caret .rdata strings exactly as the seed strcat-walks them."], "reason": "Coverage transcription of the multiplayer spot label with the receiver spelled explicitly because MultiWin has no header declaration yet."}
 Status: Coverage transcription - unclaimed body
 */
+#pragma optimize("y", off)
 void MultiWin::draw_time_bonus_markers(RECT *rect) {
     const int top = rect->top;
     const int height = rect->bottom - top;
@@ -70,14 +71,14 @@ void MultiWin::draw_time_bonus_markers(RECT *rect) {
         if (carets != 0) {
             StringTemp[0] = 0;
             strcat(StringTemp, BufferJoinSpace);
-            for (; carets != 0; --carets) {
+            for (; carets > 0; --carets) {
                 strcat(StringTemp, CaretSeparator);
             }
-            const unsigned int len = strlen(StringTemp);
-            static_cast<Buffer *>(this)->write_cent_l(StringTemp, rect, len);
+            Buffer::write_cent_l(StringTemp, rect);
         }
     }
 }
+#pragma optimize("", on)
 
 
 

@@ -249,6 +249,12 @@ void draw_dest_unk1(Buffer *, int, int, int, int, unsigned char *);
   // The RECT overload: same right-aligned text, one rectangle instead of
   // four coordinates. Called by the homed caption painters.
   int write_right_l(char *text, RECT *area, int len);
+  int write_right_l(char *text, RECT *area) {
+    if (text == 0) {
+      return 0;
+    }
+    return write_right_l(text, area, static_cast<int>(strlen(text)));
+  }
 
  public:
   // 0x00626620 stores the third argument as the vertex count and uses the
@@ -393,9 +399,25 @@ void draw_dest_unk1(Buffer *, int, int, int, int, unsigned char *);
   // THE ADAPTER THE RAW-ADDRESS CALLERS STILL NEED. `DipEdit::init` passes
   int write_l(LPSTR text, int x_coord, int y_coord, int len);
   int write_l(LPSTR text, RECT *rect, int len);
+  // Guarded full-length forms; callers inline the null test before strlen.
+  // A null text returns the pen x unchanged.
+  int write_l(LPSTR text, int x_coord, int y_coord) {
+    if (text == 0) {
+      return x_coord;
+    }
+    return write_l(text, x_coord, y_coord, static_cast<int>(strlen(text)));
+  }
+  int write_l(LPSTR text, RECT *rect) {
+    if (text == 0) {
+      return 0;
+    }
+    return write_l(text, rect, static_cast<int>(strlen(text)));
+  }
   int write_cent_l(LPSTR text, int x_coord, int y_coord, int width, int len);
   int write_cent_l(LPSTR text, RECT *rect, int len);
-  int write_cent_l(LPSTR text, RECT *rect);
+  // 0x0047A720. Header inline: callers expand the null test before strlen;
+  // MEASURED keeps the emitted copy. Body after the class.
+  MEASURED inline int write_cent_l(LPSTR text, RECT *rect);
   void close();
   // Surface setup and image blits. Declared so the recovered window
   // initialization bodies (Win::init_class and the per-control init_class
@@ -494,6 +516,15 @@ void draw_dest_unk1(Buffer *, int, int, int, int, unsigned char *);
   int write_cent_l(Font *font, char *text, RECT *area, int len);
   int write_cent_l(Font *font, char *text, int x_coord, int y_coord, int width,
                    int height, int len);
+  // Guarded full-length form; the six-argument write_cent_l slot is taken.
+  int write_cent(Font *font, char *text, int x_coord, int y_coord, int width,
+                 int height) {
+    if (text == 0) {
+      return x_coord;
+    }
+    return write_cent_l(font, text, x_coord, y_coord, width, height,
+                        static_cast<int>(strlen(text)));
+  }
   int write_cent_l(char *text, int x_coord, int y_coord, int width, int height, int len);
   int write_cent_l(char *text, int x_coord, int y_coord, int width);
   int write_right_l(Font *font, char *text, int x_coord, int y_coord,
@@ -511,8 +542,9 @@ void draw_dest_unk1(Buffer *, int, int, int, int, unsigned char *);
                 int line_advance);
   int wrap_cent(char *text, RECT *area);
   int wrap_cent(char *text, int x_coord, int y_coord, int width);
-  int wrap_cent(char *text, int x_coord, int y_coord, int width,
-                int line_step);
+  // 0x005DDA00: no direct callers; the Font overload expands it in place.
+  MEASURED inline int wrap_cent(char *text, int x_coord, int y_coord,
+                                int width, int line_step);
   int wrap_right(Font *font, char *text, int x_coord, int y_coord, int width);
   int wrap_right(Font *font, char *text, RECT *area);
   int wrap_right(Font *font, char *text, int x_coord, int len);
@@ -800,6 +832,16 @@ void draw_dest_unk1(Buffer *, int, int, int, int, unsigned char *);
 };
 
 static_assert(sizeof(Buffer) == 0x588, "Buffer layout must match the original executable");
+
+// The emitted copy at 0x0047A720 keeps an ebp frame.
+#pragma optimize("y", off)
+inline int Buffer::write_cent_l(LPSTR text, RECT *rect) {
+    if (text == 0) {
+        return 0;
+    }
+    return write_cent_l(text, rect, static_cast<int>(strlen(text)));
+}
+#pragma optimize("", on)
 
 // 0x00696C58 / 0x00696C60 / 0x00696C68, and 0x00696C70 / 0x00696C78 behind
 // them - the per-language graphics-file extensions `load_tga` and `load_bmp`

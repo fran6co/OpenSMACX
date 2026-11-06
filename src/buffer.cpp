@@ -5380,7 +5380,7 @@ int Buffer::write_cent_l(char *text, int x_coord, int y_coord, int len) {
 // flags     hidden;sp_ready;purged_ok
 // calls     0x005DC410 0x005DD020 0x006453E0
 
-int Buffer::wrap_cent(char *text, int x_coord, int y_coord, int width,
+inline int Buffer::wrap_cent(char *text, int x_coord, int y_coord, int width,
                       int line_advance) {
     if (text == 0) {
         return y_coord;
@@ -5627,42 +5627,14 @@ int Buffer::wrap_cent(Font *font_override, char *text, int x_coord, int y_coord,
                       int width, int line_advance) {
     BufferFontTriple *const fonts = reinterpret_cast<BufferFontTriple *>(fonts_);
     BufferFontTriple savedFonts = *fonts;
-
     if (font_override != 0 && font_override->font_obj_ != 0) {
         fonts_[0] = font_override;
         fonts_[1] = 0;
         fonts_[2] = 0;
     }
-
-    int y = y_coord;
-    if (text != 0) {
-        BufferStrHeight = 0;
-        field_18_ = 0;
-        char *str = text;
-        char *brk;
-        int wrapWidth;
-        do {
-            wrapWidth = width;
-            if (str == 0) {
-                brk = 0;
-            } else {
-                BufferStrHeight = 0;
-                brk = find_line_break_l(str, &wrapWidth, strlen(str));
-                if (brk != 0) {
-                    write_cent_l(str, x_coord, y, width,
-                                 static_cast<int>(brk - str));
-                } else {
-                    write_cent_l(str, x_coord, y, width, strlen(str));
-                }
-            }
-            field_18_ = field_18_ + 1;
-            y += line_advance;
-            str = brk;
-        } while (brk != 0);
-    }
-
+    int result = wrap_cent(text, x_coord, y_coord, width, line_advance);
     *fonts = savedFonts;
-    return y;
+    return result;
 }
 
 // ORIGINAL: 0x005DC360 ?wrap_height@Buffer@@QAEHPADH@Z 0x005DC360-0x005DC40A FILE BYTE_EXACT
@@ -6762,28 +6734,27 @@ int Buffer::wrap(char * a1, RECT * a2) {
         field_14_ = field_10_;
 
         int x = a2->left;
+        int width = a2->right - x;
         int y = a2->top;
-        int width = a2->right - a2->left;
         char *str = a1;
         char *nextStr;
 
         do {
             // Each line goes through the inlined write_l, whose empty-draw
-            // result is the current x.
+            // result is the current x; a null line takes the guarded
+            // write_l's early return.
             if (str == 0) {
                 nextStr = 0;
-                BufferLastWrapWriteResult = x;
             } else {
                 int breakPos = width;
                 BufferStrHeight = 0;
                 nextStr = find_line_break_l(str, &breakPos, static_cast<int>(strlen(str)));
-                if (nextStr != 0) {
-                    BufferLastWrapWriteResult =
-                        write_l(str, x, y, static_cast<int>(nextStr - str));
-                } else {
-                    BufferLastWrapWriteResult =
-                        write_l(str, x, y, static_cast<int>(strlen(str)));
-                }
+            }
+            if (nextStr != 0) {
+                BufferLastWrapWriteResult =
+                    write_l(str, x, y, static_cast<int>(nextStr - str));
+            } else {
+                BufferLastWrapWriteResult = write_l(str, x, y);
             }
 
             y += text_line_height();
@@ -7383,36 +7354,32 @@ int Buffer::wrap(char *text, int x, int y, int width) {
     char *nextStr;
     do {
         // Each line goes through the inlined write_l, whose empty-draw
-        // result is the current x.
+        // result is the current x; a null line takes the guarded
+        // write_l's early return.
         int breakPos = width;
-        int result;
         if (str == 0) {
             nextStr = 0;
-            result = x;
         } else {
             BufferStrHeight = 0;
             nextStr = find_line_break_l(str, &breakPos, static_cast<int>(strlen(str)));
-            if (nextStr != 0) {
-                result =
-                    write_l(str, x, y, static_cast<int>(nextStr - str));
-            } else {
-                result =
-                    write_l(str, x, y, static_cast<int>(strlen(str)));
-            }
         }
-        BufferLastWrapWriteResult = result;
+        if (nextStr != 0) {
+            BufferLastWrapWriteResult =
+                write_l(str, x, y, static_cast<int>(nextStr - str));
+        } else {
+            BufferLastWrapWriteResult = write_l(str, x, y);
+        }
         y += text_line_height();
 
-        int carry = field_14_;
         field_18_++;
-        if (carry != 0) {
-            width -= carry;
-            x += carry;
+        if (field_14_ != 0) {
+            width -= field_14_;
+            x += field_14_;
             field_14_ = 0;
         }
 
         str = nextStr;
-    } while (str != 0);
+    } while (nextStr != 0);
     return y;
 }
 
@@ -9761,40 +9728,42 @@ static unsigned short buffer_gouraud_light_step(int delta, int width) {
 // symbol    ?setup_buffer_gouraud_edge@@YAHPAUEdgeScan@@H@Z
 // TRIED: `int *a1, int a2` signature (IDA's int,int guess with the pointer made explicit - the disassembly never touches [ecx]), do/while over a hoisted `idx` local mirroring the ASM's search-then-fill-record shape. Reproduces the whole body but diverges at MISMATCH #2 (original never sets up an ebp frame, addressing args purely off esp; every C form tried here gets a `push`-heavy prologue instead of the original's early `mov ebx,[esp+0xc]`).
 int __cdecl setup_buffer_gouraud_edge(EdgeScan *edge, int vertex) {
-    while (vertex != BufferGouraudBottomVertex) {
-        const int direction = edge->f0;
-        int next;
-        next = vertex + direction;
-        if (next > BufferGouraudCount - 1) next = 0;
-        else if (next < 0) next = BufferGouraudCount - 1;
-        edge->counter = BufferGouraudVertices[next].y - BufferGouraudVertices[vertex].y;
-        if (edge->counter != 0) {
-            if (edge->counter < 0) return 0;
-            const int fixed_rows = buffer_gouraud_fixed(edge->counter);
-            edge->id = next;
-            edge->accumC = BufferGouraudVertices[vertex].x;
-            int delta = BufferGouraudVertices[next].x - BufferGouraudVertices[vertex].x;
-            if (delta < 0) {
-                delta = -delta;
-                edge->fracAccum = 1 - edge->counter;
-                edge->extraDeltaC = -1;
-                edge->deltaC = -(delta / edge->counter);
-            } else {
-                edge->extraDeltaC = 1;
-                edge->fracAccum = 0;
-                edge->deltaC = delta / edge->counter;
-            }
-            edge->fracDelta = delta % edge->counter;
-            edge->fracSub = edge->counter;
-            edge->accumD = buffer_gouraud_fixed(BufferGouraudLights[vertex]);
-            edge->deltaD = fixed_div(buffer_gouraud_difference(
-                buffer_gouraud_fixed(BufferGouraudLights[next]), edge->accumD),
-                fixed_rows);
-            return 1;
-        }
-        vertex = next;
+    // Tail-recursive in the original: VC6 turns the self call into the
+    // back edge, keeping a separate failure exit for a negative count.
+    if (vertex == BufferGouraudBottomVertex) {
+        return 0;
     }
-    return 0;
+    const int direction = edge->f0;
+    int next;
+    next = vertex + direction;
+    if (next > BufferGouraudCount - 1) next = 0;
+    else if (next < 0) next = BufferGouraudCount - 1;
+    edge->counter = BufferGouraudVertices[next].y - BufferGouraudVertices[vertex].y;
+    if (edge->counter == 0) {
+        return setup_buffer_gouraud_edge(edge, next);
+    }
+    if (edge->counter < 0) return 0;
+    const int fixed_rows = buffer_gouraud_fixed(edge->counter);
+    edge->id = next;
+    edge->accumC = BufferGouraudVertices[vertex].x;
+    int delta = BufferGouraudVertices[next].x - BufferGouraudVertices[vertex].x;
+    if (delta < 0) {
+        delta = -delta;
+        edge->fracAccum = 1 - edge->counter;
+        edge->extraDeltaC = -1;
+        edge->deltaC = -(delta / edge->counter);
+    } else {
+        edge->extraDeltaC = 1;
+        edge->fracAccum = 0;
+        edge->deltaC = delta / edge->counter;
+    }
+    edge->fracDelta = delta % edge->counter;
+    edge->fracSub = edge->counter;
+    edge->accumD = buffer_gouraud_fixed(BufferGouraudLights[vertex]);
+    edge->deltaD = fixed_div(buffer_gouraud_difference(
+        buffer_gouraud_fixed(BufferGouraudLights[next]), edge->accumD),
+        fixed_rows);
+    return 1;
 }
 
 // ORIGINAL: 0x005DEB20 sub_5deb20 0x005DEB20-0x005DEF8F FILE
@@ -10026,10 +9995,7 @@ int Buffer::write_vertical(char *text, RECT *area) {
     one_character[1] = 0;
     while (*text != 0) {
         one_character[0] = *text++;
-        if (one_character != 0) {
-            write_cent_l(one_character, x, y, width,
-                         static_cast<int>(strlen(one_character)));
-        }
+        write_cent_text(one_character, x, y, width);
         y += advance;
     }
     set_clip(&saved);
@@ -10093,17 +10059,11 @@ int Buffer::wrap_cent_flying(char *text) {
     strcat(BufferFlyingText, text);
     return BufferFlyingY;
 }
-#pragma optimize("y", off)
 // ORIGINAL: 0x0047A720 ?UNK4@MultiWin@@QAEHPADPAURECT@@@Z 0x0047A720-0x0047A752 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["task:rectangle-owner-overloads", "pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf:0x47a720", "seed:src/recovered/units/0047a720.cpp all identity/spans/claims and parsed discoveries retained; seed retirement requires fresh verification.", "source:src/multiwin.h caller receiver evidence and existing genuine Spot/Buffer interfaces."], "reason": "Recover genuine existing-owner rectangle convenience method. Original catalog MultiWin attribution is contradicted by unchanged receiver forwarding and typed Spot/Buffer callee evidence; original identity and historical obligations are retained, not renamed or newly banked."}
 // symbol    ?write_cent_l@Buffer@@QAEHPADPAUtagRECT@@@Z
-int Buffer::write_cent_l(LPSTR text, RECT *rect) {
-    if (text == 0) {
-        return 0;
-    }
-    return write_cent_l(text, rect, static_cast<int>(strlen(text)));
-}
-#pragma optimize("", on)
+// body      src/buffer.h
+// BODY IN buffer.h, as `MEASURED inline`.
 // ORIGINAL: 0x005D7AE0 sub_5d7ae0 0x005D7AE0-0x005D7B1D BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["task:graphicwin-buffer-input-owner", "pinned:5D54A0/5D54D0 adjust GraphicWin receiver to Buffer at +444; 5D7AE0 forwards unchanged receiver to load_pcx.", "pinned:5D5590 virtual Win resize slot3, failure return, then move and Buffer palette synchronization in that order.", "pinned:5D7AE0 input fields +C/+10 only; PcxInputView is an accessed-prefix description, not a proven complete allocation or original name.", "historical seed:src/recovered/005d7ae0.cpp; original mappings and parsed findings preserved."], "reason": "Rehome the original operation into genuine GraphicWin/Buffer inheritance and methods, preserving historical identity, spans, claims and findings."}
 // symbol    ?load_pcx_from_source@Buffer@@QAEHPAUPcxInputView@@PAVPalette@@HH@Z

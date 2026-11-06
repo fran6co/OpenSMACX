@@ -254,15 +254,6 @@ void DiploPop::init() {
 
 // ORIGINAL: 0x0043F5F0 ?draw_bioscan@DiploPop@@QAEXXZ 0x0043F5F0-0x0043F784 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/0043f5f0.cpp", "image:terranx_original.exe:0x0043F5F0", "source:src/diplopop.h:DiploPop"], "reason": "Recover the bioscan renderer through DiploPop rectangles, MainInterface buffer, source-owned styles, and borrowed Sprite."}
-// Guarded full-length form of Buffer::write_cent_l(text, rect); the image
-// inlines the null test before strlen at its call site.
-static inline int write_cent_rect(MainInterface &canvas, char *text, RECT *rect) {
-    if (text == 0) {
-        return 0;
-    }
-    return canvas.write_cent_l(text, rect, static_cast<int>(strlen(text)));
-}
-
 void DiploPop::draw_bioscan() {
     RECT rect = bioscan_title_rect_;
     MainInterfaceGlobal.box_sprite(&rect, &InterfaceBoxStyles[6]);
@@ -276,7 +267,7 @@ void DiploPop::draw_bioscan() {
     StringTemp[0] = '\0';
     strcat(StringTemp, label_get(0xE8C / 4));
     CharUpperA(StringTemp);
-    write_cent_rect(MainInterfaceGlobal, StringTemp, &rect);
+    MainInterfaceGlobal.write_cent_l(StringTemp, &rect);
 
     RECT *picture = &bioscan_picture_rect_;
     rect = *picture;
@@ -704,7 +695,7 @@ void DiploPop::draw_hq() {
 
     MainInterfaceGlobal.set_font(&font3_, 0, 0, 0);
     MainInterfaceGlobal.set_text_color(0xA0, -1, 1, 1);
-    write_cent_rect(MainInterfaceGlobal, StringTemp, &text);
+    MainInterfaceGlobal.write_cent_l(StringTemp, &text);
 
     area.top = text.bottom + 1;
     hq_sprite_->draw(&MainInterfaceGlobal, hq_sprite_->transparent_index(),
