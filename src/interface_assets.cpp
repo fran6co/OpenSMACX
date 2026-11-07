@@ -4121,43 +4121,41 @@ void __cdecl load_faction_art(int faction_id) {
     ChatItemIdTable[faction_id] = canvas.get_pixel(4, 0x2F3);
     ChatShadowColors[faction_id] = canvas.get_pixel(4, 0x2FB);
 
-    FactionArt &art = FactionsArt[faction_id];
+    int code_x = 1;
     int code_y = 1;
     for (int set = 0; set < 2; ++set) {
         for (int column = 0; column < 3; ++column) {
-            int code_x = 1;
             for (int row = 0; row < 4; ++row) {
-                art.base[set][row][column].extract(
+                FactionsArt[faction_id].base[set][row][column].extract(
                     &canvas, 9, code_x, code_y, 0x64, 0x4B, nullptr);
                 code_x += 0x65;
             }
             code_y += 0x4C;
+            code_x = 1;
         }
     }
 
     code_y = 0x1C9;
     for (int council_logo_index = 0; council_logo_index < 2;
          ++council_logo_index) {
-        art.council_logo[council_logo_index].extract(
+        FactionsArt[faction_id].council_logo[council_logo_index].extract(
             &canvas, 9, 1, code_y, 0x56, 0x48, nullptr);
         code_y += 0x49;
     }
-    art.council_small.extract(&canvas, 9, 0x58, 0x1C9, 0x60, 0x73, nullptr);
-    art.council_big.extract(&canvas, 9, 0xB9, 0x1C9, 0x76, 0x90, nullptr);
-    art.diplomacy.extract(&canvas, 9, 0x130, 0x1C9, 0x83, 0x9D, nullptr);
-    art.diplomacy_logo.extract(&canvas, 9, 0x1B4, 0x1C9, 0x41, 0x32, nullptr);
-    art.diplomacy_landscape.extract(&canvas, 9, 0x1F6, 0x1C9,
+    FactionsArt[faction_id].council_small.extract(&canvas, 9, 0x58, 0x1C9, 0x60, 0x73, nullptr);
+    FactionsArt[faction_id].council_big.extract(&canvas, 9, 0xB9, 0x1C9, 0x76, 0x90, nullptr);
+    FactionsArt[faction_id].diplomacy.extract(&canvas, 9, 0x130, 0x1C9, 0x83, 0x9D, nullptr);
+    FactionsArt[faction_id].diplomacy_logo.extract(&canvas, 9, 0x1B4, 0x1C9, 0x41, 0x32, nullptr);
+    FactionsArt[faction_id].diplomacy_landscape.extract(&canvas, 9, 0x1F6, 0x1C9,
                                     0xE9, 0x7C, nullptr);
-    art.datalink.extract(&canvas, 9, 0x213, 1, 0xA4, 0xC6, nullptr);
-    art.report_logo[0].extract(&canvas, 9, 0x2BD, 1, 0x46, 0x46, nullptr);
-    art.report_logo[1].extract(&canvas, 9, 0x2BD, 0x48, 0x46, 0x46, nullptr);
+    FactionsArt[faction_id].datalink.extract(&canvas, 9, 0x213, 1, 0xA4, 0xC6, nullptr);
+    FactionsArt[faction_id].report_logo[0].extract(&canvas, 9, 0x2BD, 1, 0x46, 0x46, nullptr);
+    FactionsArt[faction_id].report_logo[1].extract(&canvas, 9, 0x2BD, 0x48, 0x46, 0x46, nullptr);
 
     code_y = 1;
-    for (int report_logo_index = 0; report_logo_index < 3;
-         ++report_logo_index) {
-        art.report_logo_small[report_logo_index].extract(
-            &canvas, 9, 0x304, code_y, 0x25, 0x1D, nullptr);
-        code_y += 0x1E;
+    Sprite *logo = FactionsArt[faction_id].report_logo_small;
+    for (; code_y < 0x5B; code_y += 0x1E, ++logo) {
+        logo->extract(&canvas, 9, 0x304, code_y, 0x25, 0x1D, nullptr);
     }
 
     canvas.close();
@@ -4218,9 +4216,10 @@ void __cdecl load_box_sprites() {
         extract_interface_box_sprite(g_IFACE_MP_COMBO_ARROW_SPRITES[arrow], 534 + arrow * 8, 537, 7, 13);
     }
 
-    for (int style = 0; style < 51; ++style) {
-        const int x = 33 + (style % 3) * 39;
-        const int y = 229 + (style / 3) * 39;
+    // Seventeen rows of three columns; the style index runs across both.
+    int style = 0;
+    for (int y = 229; style < 51; y += 39) {
+    for (int x = 33; x < 150; x += 39, ++style) {
         extract_interface_box_sprite(g_IFACE_BOX_SPRITES1[style], x - 32, y, 6, 6);
         extract_interface_box_sprite(g_IFACE_BOX_SPRITES2[style], x, y, 6, 6);
         extract_interface_box_sprite(g_IFACE_BOX_SPRITES3[style], x - 32, y + 32, 6, 6);
@@ -4250,6 +4249,7 @@ void __cdecl load_box_sprites() {
             InterfaceBoxStyles[style].mask_ = &mask;
         }
         InterfaceBoxStyles[style].mask_color_ = 7;
+    }
     }
 
     extract_interface_box_sprite(g_IFACE_STD_POPUPS_TOP_LEFT_SPRITE, 296, 711, 61, 44);

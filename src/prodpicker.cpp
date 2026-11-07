@@ -359,6 +359,7 @@ void ProdPicker::on_button_clicked(int button_id) {
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/00493cb0.cpp", "source:src/prodpicker.h", "source:src/buffer.h", "source:src/win.h", "pinned original own table 0x0066A250, pointer word at +0xC0, identifies original entry 0x00493CB0", "source:src/win.h inherited virtual interface; actual emitted method ?vslot_48@ProdPicker@@UAEXHH@Z in primary Win table ??_7ProdPicker@@6BWin@@@"], "reason": "Scroll the displayed item window using measured picker geometry, its real Buffer blit operation, draw_item, and inherited redraw virtual. The original own Win table binds this entry as virtual slot 48. Use genuine member dispatch, not an opaque redirect; retain the catalogued original spelling as historical evidence. The previous on_scrolled definition is the class slot-48 target; renaming connects the unchanged body to its real virtual slot."}
 // symbol    ?on_scrolled@ProdPicker@@UAEXHH@Z
 void ProdPicker::on_scrolled(int, int position) {
+    RECT rect;
     const int pageSize = column_count_;
     const int oldPosition = static_cast<int>(field_A77C_);
     // Native IMUL/SUB/JNS/reverse-SUB keeps the low word. In particular,
@@ -382,7 +383,6 @@ void ProdPicker::on_scrolled(int, int position) {
 
     if (newPosition < oldPosition) {
         set_clip(&rect2_);
-        RECT rect;
         set_rectangle_dimensions(&rect, 0x15, 4,
                                  cell_width_ * column_count_ + 2,
                                  (static_cast<int>(field_A814_) - 1) * row_height_);
@@ -397,7 +397,6 @@ void ProdPicker::on_scrolled(int, int position) {
         }
     } else if (newPosition != oldPosition) {
         set_clip(&rect2_);
-        RECT rect;
         set_rectangle_dimensions(&rect, 0x15, 4,
                                  cell_width_ * column_count_ + 2,
                                  (static_cast<int>(field_A814_) - 1) * row_height_);
