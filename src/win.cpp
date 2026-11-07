@@ -10412,7 +10412,7 @@ void __cdecl win_window_moved(HWND hwnd, int x, int y) {
 }
 
 // Superseded seed deleted; binding references retain historical provenance.
-// ORIGINAL: 0x005F13B0 sub_5f13b0 0x005F13B0-0x005F141B
+// ORIGINAL: 0x005F13B0 sub_5f13b0 0x005F13B0-0x005F141B BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["task:win-message-adapter-owner-extension original identity/spans, claims and useful findings retained from src/unrecovered/005f13b0.cpp", "pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf:0x5f13b0 full native body and API/vcall sequence.", "source:src/win.h actual slots16,70,71,74,85; original helper names and caller/registration routes remain unknown."], "reason": "Recover the complete Win userdata adapter with existing typed virtual methods and Windows APIs; preserve native payload ordering, null guards and paint lifetime. Anonymous generated seed return declarations are not evidence of an original integer contract for void callbacks."}
 // symbol    ?win_window_nc_paint@@YAXPAUHWND__@@@Z
 // kind      game
