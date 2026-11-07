@@ -195,15 +195,16 @@ Status: Coverage transcription - unclaimed body, seed
 */
 void MapWin::UNK5(int panel) {
     if (panel != 0) {
-        const int width = ConsoleGlobal.dib_.bmiHeader.biWidth;
         const int bottom = (MapPanelGeometryWord008EA0B0 -
                             ConsoleGlobal.dib_.bmiHeader.biHeight -
                             MapPanelGeometryWord008EA0B8) / 2;
-        MapPanelRects[panel].top = 0;
+        const int width = ConsoleGlobal.dib_.bmiHeader.biWidth;
+        MapPanelRect *rect = &MapPanelRects[panel];
+        rect->top = 0;
         const int three_quarters = (width * 3) / 4;
-        MapPanelRects[panel].left = three_quarters;
-        MapPanelRects[panel].right = width / 4 + three_quarters;
-        MapPanelRects[panel].bottom = bottom;
+        rect->left = three_quarters;
+        rect->right = width / 4 + three_quarters;
+        rect->bottom = bottom;
     } else {
         int right;
         if (IsMultiplayerNet != 0) {
@@ -1334,7 +1335,7 @@ void MapWin::set_center(int x, int y, int draw_type) {
     if (this == static_cast<MapWin *>(&ConsoleGlobal)) {
         destination = DestinationVehicleId;
         if (destination >= 0 &&
-            (ConsoleGlobal.faction_id_ == Vehs[destination].faction_id ||
+            (Vehs[destination].faction_id == ConsoleGlobal.faction_id_ ||
              (GameDataStateStorage.fields_.game_state_ & STATE_OMNISCIENT_VIEW)) &&
             !(GameDataStateStorage.fields_.game_more_preferences_ & 0x2000000)) {
             ConsoleGlobal.cover_window_.fill(9);
@@ -6012,8 +6013,7 @@ void MapWin::draw_wars() {
     int max_width = character_width;
 
     for (int faction = 1; faction < MaxPlayerNum; ++faction) {
-        GenderDefault = Players[faction].noun_gender;
-        PluralityDefault = Players[faction].is_noun_plural;
+        parse_set(Players[faction].noun_gender, Players[faction].is_noun_plural);
         StringTemp[0] = '\0';
         strcat(StringTemp, Players[faction].noun_faction);
         strcat(StringTemp, ": ");
@@ -6023,11 +6023,13 @@ void MapWin::draw_wars() {
         if (max_width <= width) {
             max_width = width;
         }
-        y += font_line_advance(*font);
+        // Loop advances read font_b_ fields straight off this.
+        y += (font_b_.unk_1_ >= 0 ? font_b_.pixel_height() + font_b_.unk_1_ : font_b_.line_height());
     }
 
-    char letter = '-';
-    y = font_line_advance(*font);
+    // The image never initialises letter before the grid loop.
+    char letter;
+    y = (font_b_.unk_1_ >= 0 ? font_b_.pixel_height() + font_b_.unk_1_ : font_b_.line_height());
     for (int row = 1; row < MaxPlayerNum; ++row) {
         int x = max_width;
         for (int column = 1; column < MaxPlayerNum; ++column) {
@@ -6049,7 +6051,7 @@ void MapWin::draw_wars() {
             Buffer::write_l(StringTemp, x, y);
             x += character_width;
         }
-        y += font_line_advance(*font);
+        y += (font_b_.unk_1_ >= 0 ? font_b_.pixel_height() + font_b_.unk_1_ : font_b_.line_height());
     }
 }
 
@@ -6367,8 +6369,9 @@ void MapWin::draw_base_dest(int draw_type) {
             if (Bases[base_id].faction_id_current != ConsoleGlobal.faction_id_) {
                 continue;
             }
-            for (int direction = 0; direction < 3; ++direction) {
-                const int16_t destination = Bases[base_id].auto_forward_slots[direction];
+            const int16_t *slot = Bases[base_id].auto_forward_slots;
+            for (int direction = 0; direction < 3; ++direction, ++slot) {
+                const int16_t destination = *slot;
                 if (destination < 0) {
                     continue;
                 }
@@ -6381,7 +6384,11 @@ void MapWin::draw_base_dest(int draw_type) {
                     int line_type;
                     switch (direction) {
                     case 0:
+                        line_type = 10;
+                        break;
                     case 1:
+                        line_type = 10;
+                        break;
                     case 2:
                         line_type = 10;
                         break;
@@ -7119,10 +7126,9 @@ void MapWin::clear_alt(int x, int y, int radius) {
                 if (dy >= 0 && dy < MapLatitudeBounds && dx >= 0 && dx < width) {
                     TerrainCacheEntry &cell =
                         owned_[(width >> 1) * dy + (dx >> 1)];
-                    const int32_t unknown_altitude = -1;
-                    memcpy(cell.altitude, &unknown_altitude,
-                           sizeof(unknown_altitude));
-                    cell.altitude[4] = -1;
+                    for (int k = 0; k < 5; k++) {
+                        cell.altitude[k] = -1;
+                    }
                     // The original reloads width only after a valid store.
                     width = MapLongitudeBounds;
                 }

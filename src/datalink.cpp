@@ -226,7 +226,7 @@ void Datalink::draw_unit() {
     // Original reloads the selected prototype id at 0x42CAEC, not fake id2048.
     strcat(StringTemp, unit.veh_name);
     CharUpperA(StringTemp);
-    write_cent_l(StringTemp, &title_rect_, strlen(StringTemp));
+    write_cent_l(StringTemp, &title_rect_);
     const int left = description_rect_.left + 9
                    + illustration_rect_.right - illustration_rect_.left;
     description.remove_all();
@@ -313,7 +313,7 @@ void Datalink::draw_chassis() {
     StringTemp[0] = 0;
     strcat(StringTemp, StringTable.get(chassis.offsv_1_name));
     CharUpperA(StringTemp);
-    write_cent_l(StringTemp, &title_rect_, strlen(StringTemp));
+    write_cent_l(StringTemp, &title_rect_);
     const int left = description_rect_.left + 9
                    + illustration_rect_.right - illustration_rect_.left;
     description.remove_all();
@@ -382,7 +382,7 @@ void Datalink::draw_reactor() {
     StringTemp[0] = 0;
     strcat(StringTemp, StringTable.get(reactor.name));
     CharUpperA(StringTemp);
-    write_cent_l(StringTemp, &title_rect_, strlen(StringTemp));
+    write_cent_l(StringTemp, &title_rect_);
     const int left = description_rect_.left + 9
                    + illustration_rect_.right - illustration_rect_.left;
     parse_num(0, id);
@@ -432,7 +432,7 @@ void Datalink::draw_weapon() {
     StringTemp[0] = 0;
     strcat(StringTemp, StringTable.get(weapon.name));
     CharUpperA(StringTemp);
-    write_cent_l(StringTemp, &title_rect_, strlen(StringTemp));
+    write_cent_l(StringTemp, &title_rect_);
     const int left = description_rect_.left + 12
                    + illustration_rect_.right - illustration_rect_.left;
     StringTemp[0] = 0;
@@ -502,7 +502,7 @@ void Datalink::draw_defense() {
     StringTemp[0] = 0;
     strcat(StringTemp, StringTable.get(armor.name));
     CharUpperA(StringTemp);
-    write_cent_l(StringTemp, &title_rect_, strlen(StringTemp));
+    write_cent_l(StringTemp, &title_rect_);
     text.left += illustration_rect_.right - illustration_rect_.left + 3;
     StringTemp[0] = 0;
     const LPSTR mode_name = armor.defense_rating < 0
@@ -547,7 +547,7 @@ void Datalink::draw_ability() {
     StringTemp[0] = 0;
     strcat(StringTemp, StringTable.get(ability.name));
     CharUpperA(StringTemp);
-    write_cent_l(StringTemp, &title_rect_, strlen(StringTemp));
+    write_cent_l(StringTemp, &title_rect_);
     StringTemp[0] = 0;
     if (ability.cost_factor >= 0) {
         char number[80];
@@ -675,7 +675,7 @@ void Datalink::draw_terraform() {
     const RulesOrder &order = Order[action + 4];
     strcat(StringTemp, StringTable.get(land ? order.order : order.order_sea));
     CharUpperA(StringTemp);
-    write_cent_l(StringTemp, &title_rect_, strlen(StringTemp));
+    write_cent_l(StringTemp, &title_rect_);
     const RulesTerraforming &terraform = Terraforming[action];
     const int technology = land ? terraform.prerequisite_tech[0] : terraform.prerequisite_tech[1];
     parse_says(1, tech_name(technology, 0), -1, -1);
@@ -720,20 +720,21 @@ void Datalink::draw_terraform() {
 void Datalink::draw_facility() {
     Popup popup;
     int id = history_[0];
-    int left = description_rect_.left + 3;
-    int top = description_rect_.top + 3;
-    int right = description_rect_.right - 3;
+    RECT rect = description_rect_;
+    rect.left += 3;
+    rect.top += 3;
+    rect.right -= 3;
     set_font(&font1_, 0, 0, 0);
     set_text_color(0xE0, -1, 1, 1);
     StringTemp[0] = 0;
     strcat(StringTemp, StringTable.get(Facility[id].name));
     CharUpperA(StringTemp);
-    write_cent_l(StringTemp, &title_rect_, strlen(StringTemp));
+    write_cent_l(StringTemp, &title_rect_);
     Sprite &icon = g_FACILITY_ICON_SPRITES[id];
-    int image_width = illustration_rect_.right - illustration_rect_.left;
     icon.draw(this, icon.transparent_index(), illustration_rect_.left,
-              illustration_rect_.top, image_width, icon.width());
-    left += image_width + 6;
+              illustration_rect_.top,
+              illustration_rect_.right - illustration_rect_.left, icon.width());
+    rect.left += illustration_rect_.right - illustration_rect_.left + 6;
     parse_num(0, cost_factor(ConsoleGlobal.faction_id_, 1, -1) * Facility[id].cost);
     parse_num(1, fac_maint(id, ConsoleGlobal.faction_id_));
     int technology = Facility[id].preq_tech;
@@ -742,25 +743,26 @@ void Datalink::draw_facility() {
     StringTemp[0] = 0;
     strcat(StringTemp, "HELPFAC");
     popup.start(DatalinkHelpFile, StringTemp, -1, 0, 0, 0);
-    set_font(&body_font_, 0, 0, technology >= 0 ? &link_font_ : 0);
+    set_font(&body_font_, 0, 0, Facility[id].preq_tech >= 0 ? &link_font_ : 0);
     set_text_color(0x98, -1, 1, 1);
     set_text_color2(0x96, -1, 1, 1);
     set_text_color_hyper(0x96, -1, 1, 1);
-    write_strings(&popup.unit_ids_, left, top, right - left, 0);
+    write_strings(&popup.unit_ids_, rect.left, rect.top, rect.right - rect.left, 0);
     StringTemp[0] = 0;
     strcat(StringTemp, "HELPFAC");
     char number[80];
     _itoa(id, number, 10);
     strcat(StringTemp, number);
     popup.start(DatalinkHelpFile, StringTemp, -1, 0, 0, 0);
-    set_font(&body_font_, 0, 0, technology >= 0 ? &link_font_ : 0);
+    set_font(&body_font_, 0, 0, Facility[id].preq_tech >= 0 ? &link_font_ : 0);
     set_text_color(0x98, -1, 1, 1);
     set_text_color2(0x96, -1, 1, 1);
     set_text_color_hyper(0x96, -1, 1, 1);
-    left = lower_description_rect_.left + 3;
-    top = lower_description_rect_.top + 3;
-    right = lower_description_rect_.right - 3;
-    write_strings(&popup.unit_ids_, left, top, right - left, 0);
+    rect = lower_description_rect_;
+    rect.left += 3;
+    rect.top += 3;
+    rect.right -= 3;
+    write_strings(&popup.unit_ids_, rect.left, rect.top, rect.right - rect.left, 0);
     StringTemp[0] = 0;
     strcat(StringTemp, "HELPFAC");
     _itoa(id, number, 10);
@@ -787,7 +789,7 @@ void Datalink::draw_project() {
     StringTemp[0] = 0;
     strcat(StringTemp, StringTable.get(Facility[id].name));
     CharUpperA(StringTemp);
-    write_cent_l(StringTemp, &title_rect_, strlen(StringTemp));
+    write_cent_l(StringTemp, &title_rect_);
     Sprite &icon = g_SECRET_PROJECT_ICON_SPRITES[id - 70];
     int image_width = illustration_rect_.right - illustration_rect_.left;
     // 42FBEC loads the first project sprite's +0x18, without indexing it.
@@ -847,7 +849,7 @@ void Datalink::draw_social() {
     char *name = model < 0 ? SocialCategories[category].type : SocialCategories[category].name[model];
     strcat(StringTemp, StringTable.get(name));
     CharUpperA(StringTemp);
-    write_cent_l(StringTemp, &title_rect_, strlen(StringTemp));
+    write_cent_l(StringTemp, &title_rect_);
     if (model >= 0) {
         int technology = SocialCategories[category].preq_tech[model];
         parse_says(0, tech_name(technology, 0), -1, -1);
@@ -927,7 +929,7 @@ void Datalink::draw_faction() {
     StringTemp[0] = 0;
     strcat(StringTemp, Players[faction].formal_name_faction);
     CharUpperA(StringTemp);
-    write_cent_l(StringTemp, &title_rect_, strlen(StringTemp));
+    write_cent_l(StringTemp, &title_rect_);
     Sprite &portrait = FactionsArt[faction].datalink;
     portrait.draw(this, portrait.transparent_index(), left, top, 1, 1);
     left += portrait.width() + 5;
@@ -1024,7 +1026,7 @@ void Datalink::draw_concept() {
     strcat(StringTemp, listBox_.item_list_.head_ != 0
         ? listBox_.item_list_.current_->string_payload()->text : 0);
     CharUpperA(StringTemp);
-    write_cent_l(StringTemp, &title_rect_, strlen(StringTemp));
+    write_cent_l(StringTemp, &title_rect_);
     StringTemp[0] = 0;
     strcat(StringTemp, "CONCEPT");
     char number[80];
@@ -1048,7 +1050,7 @@ void Datalink::draw_adv_concept() {
     strcat(StringTemp, listBox_.item_list_.head_ != 0
         ? listBox_.item_list_.current_->string_payload()->text : 0);
     CharUpperA(StringTemp);
-    write_cent_l(StringTemp, &title_rect_, strlen(StringTemp));
+    write_cent_l(StringTemp, &title_rect_);
     StringTemp[0] = 0;
     strcat(StringTemp, "ADVCONCEPT");
     char number[80];
@@ -1065,30 +1067,31 @@ void Datalink::draw_adv_concept() {
 // RECOVERY_BINDING: v1 {"evidence": ["image:0x430770", "git:8e3029104ab590bec35cc6932e637765b2ea4074:src/recovered/units/00430770.cpp"], "reason": "Recover the preserved topic drawer with source-owned state and real popup/window lifetimes."}
 void Datalink::draw_effect() {
     Popup popup;
+    RECT rect = description_rect_;
+    rect.left += 3;
+    rect.top += 3;
+    rect.right -= 3;
+    const int entry = history_[0];
     set_font(&font1_, 0, 0, 0);
     set_text_color(0xE0, -1, 1, 1);
     StringTemp[0] = 0;
-    strcat(StringTemp, SocialEffects[history_[0]].set2);
+    strcat(StringTemp, SocialEffects[entry].set2);
     CharUpperA(StringTemp);
-    write_cent_l(StringTemp, &title_rect_, strlen(StringTemp));
+    write_cent_l(StringTemp, &title_rect_);
     StringTemp[0] = 0;
     strcat(StringTemp, "HELPEFFECT");
     char number[80];
-    _itoa(history_[0], number, 10);
+    _itoa(entry, number, 10);
     strcat(StringTemp, number);
     popup.start(DatalinkHelpFile, StringTemp, -1, 0, 0, 0);
     set_font(&body_font_, 0, 0, &link_font_);
     set_text_color(0x98, -1, 1, 1);
     set_text_color2(0x96, -1, 1, 1);
     set_text_color_hyper(0x96, -1, 1, 1);
-    // The original Popup starts at [ebp-0x53F0] (0x430797/0x4308A3).
-    // 0x430909 passes [ebp-0x3270] to Buffer::write_strings: exactly
-    // Popup+0x2180, BasePop's constructed unit_ids_ text list. BasePop::start
-    // appends parsed ordinary lines to that list; no separate local list
-    // is constructed here.
-    write_strings(&popup.unit_ids_, description_rect_.left + 3,
-                  description_rect_.top + 3,
-                  description_rect_.right - description_rect_.left - 6, 0);
+    // [ebp-0x3270] is Popup+0x2180, BasePop's unit_ids_ text list that
+    // BasePop::start fills; no separate local list is constructed here.
+    write_strings(&popup.unit_ids_, rect.left, rect.top,
+                  rect.right - rect.left, 0);
 }
 
 // ORIGINAL: 0x00430B30 ?draw_tech@Datalink@@QAEXXZ 0x00430B30-0x00430C76
@@ -1167,7 +1170,7 @@ void Datalink::draw_entry() {
         StringTemp[0] = 0;
         strcat(StringTemp, StringTable.get(Technology[history_[0]].name));
         CharUpperA(StringTemp);
-        write_cent_l(StringTemp, &title_rect_, strlen(StringTemp));
+        write_cent_l(StringTemp, &title_rect_);
         ReportWinGlobal.reset();
         ReportIfGlobal.field_8_ = 2;
         ReportWinGlobal.shared_research_focus() = history_[0];
@@ -3008,9 +3011,9 @@ void Datalink::set_cat_adv_concept() {
         return;
     }
 
+    int index = 0;
     text_get();
-    for (int index = 0;
-         TextBufferGetPtr != 0 && strlen(TextBufferGetPtr) != 0; ++index) {
+    for (; TextBufferGetPtr != 0 && strlen(TextBufferGetPtr) != 0;) {
         StringTemp[0] = '\0';
         strcat(StringTemp, TextBufferGetPtr);
         if ((GameDataStateStorage.fields_.game_state_ & 0x1000) != 0) {
@@ -3019,7 +3022,7 @@ void Datalink::set_cat_adv_concept() {
             _itoa(index + 10000, digits, 10);
             strcat(StringTemp, digits);
         }
-        listBox_.item(StringTemp, index + 10000);
+        listBox_.item(StringTemp, index++ + 10000);
         text_get();
     }
     text_close();
@@ -3235,39 +3238,36 @@ Return Value: n/a
 Status: Complete
 */
 void Datalink::set_cat_terraform() {
-    int terraform_index = 0;
-    for (int category = 90020; category - 90020 < 0x14;
-         ++category, ++terraform_index) {
-        const RulesTerraforming &terraform = Terraforming[terraform_index];
-        const RulesOrder &order = Order[4 + terraform_index];
-        if (terraform.prerequisite_tech[0] >= -1) {
+    int id = 90020;
+    for (int i = 0; i < 0x14; ++i, ++id) {
+        if (Terraforming[i].prerequisite_tech[0] >= -1) {
             StringTemp[0] = '\0';
-            strcat(StringTemp, StringTable.get(order.order));
+            strcat(StringTemp, StringTable.get(Order[i + 4].order));
             if ((GameDataStateStorage.fields_.game_state_ & 0x1000) != 0) {
                 strcat(StringTemp, DatalinkTerraformIdSeparator);
                 char digits[80];
-                _itoa(category - 20, digits, 10);
+                _itoa(id - 20, digits, 10);
                 strcat(StringTemp, digits);
             }
-            listBox_.item(StringTemp, category - 20);
+            listBox_.item(StringTemp, id - 20);
         }
 
-        if (category == 90036 || category == 90037) {
+        if (i == 16 || i == 17) {
             continue;
         }
-        if (terraform.prerequisite_tech[1] < -1) {
+        if (Terraforming[i].prerequisite_tech[1] < -1) {
             continue;
         }
 
         StringTemp[0] = '\0';
-        strcat(StringTemp, StringTable.get(order.order_sea));
+        strcat(StringTemp, StringTable.get(Order[i + 4].order_sea));
         if ((GameDataStateStorage.fields_.game_state_ & 0x1000) != 0) {
             strcat(StringTemp, DatalinkTerraformSecondSeparator);
             char digits[80];
-            _itoa(category, digits, 10);
+            _itoa(id, digits, 10);
             strcat(StringTemp, digits);
         }
-        listBox_.item(StringTemp, category);
+        listBox_.item(StringTemp, id);
     }
 
     RECT rect = category_rect_;

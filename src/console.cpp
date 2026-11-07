@@ -3057,10 +3057,10 @@ void Console::on_post_redraw_nc_buffer(Buffer *buffer, int which) {
         Sprite *const handle = &sprite_a_;
         handle->draw(buffer, handle->transparent_index(),
                      field_23D80_ - handle->width() / 2 + border_thickness_,
-                     -(buffer->dib_.bmiHeader.biHeight + handle->height()), 1, 1);
+                     -(handle->height() + buffer->dib_.bmiHeader.biHeight), 1, 1);
         handle->draw(buffer, handle->transparent_index(),
                      field_23D84_ - handle->width() / 2 + border_thickness_,
-                     -(buffer->dib_.bmiHeader.biHeight + handle->height()), 1, 1);
+                     -(handle->height() + buffer->dib_.bmiHeader.biHeight), 1, 1);
     }
 }
 
