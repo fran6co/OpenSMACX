@@ -7055,7 +7055,7 @@ static int texture_keyed_wrap_add(int value, unsigned int delta) {
     return static_cast<int>(static_cast<unsigned int>(value) + delta);
 }
 
-// ORIGINAL: 0x0061F800 sub_61f800 0x0061F800-0x0061FA24 FILE
+// ORIGINAL: 0x0061F800 sub_61f800 0x0061F800-0x0061FA24 FILE BYTE_EXACT
 // symbol    ?sub_61f800@@YAXPAUEdgeScan@@0@Z
 // TRIED: the catalogued 1158-byte span is really TWO machine-code functions back to back, each with its OWN complete "push ebp; mov ebp,esp; sub esp,0x24; push ebx/esi/edi" prologue and its own "ret" - a single C++ function cannot emit two prologues, so only the FIRST (0x61F800-0x61FA23, plain per-pixel copy, no colour key) is reproduced; the second (0x61FA30 on, adds a *blit_light_threshold colour-key skip and writes *blit_slot_51c) is a distinct unnamed function the catalogue's size measurement folded into this one.
 // SPAN CORRECTED 2026-08-14, from 1158 bytes to 548. The catalogued span was
@@ -7412,7 +7412,7 @@ static void texture_draw_keyed_edge_span(EdgeScan *left, EdgeScan *right,
 
 // The offset-derived name does not invent a caller or a Texture receiver:
 // the entry takes two stack EdgeScan pointers and reads shared raster slots.
-// ORIGINAL: 0x0061FA30 sub_61fa30 0x0061FA30-0x0061FC86 FILE
+// ORIGINAL: 0x0061FA30 sub_61fa30 0x0061FA30-0x0061FC86 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned image SHA-256 01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf; raw 61FA30 prologue, 61FC85 RET and alignment through 61FC8F, next mapped entry 61FC90.", "Raw entry loads two stack EdgeScan records at offsets 0C/10/1C and uses shared clip, source, destination, key and packed-step storage; original source ownership and reachability remain unknown.", "Full raw dataflow preserves wrapped shifted divisor, clipped multiply, low-word source-row product, initial lookup before signed-pitch NEG/NOT transformation, both packed U-direction loops and scratch publications. Exceptional IDIV and native fault timing remain restoration work."], "reason": "Distinct two-stack-edge keyed raster entry has an independent prologue and RET between the preceding completed span and the next Gouraud edge setup entry. Its offset-derived name and source home expose shared raster dependencies without claiming a Texture receiver, historical TU or original caller."}
 // symbol    ?sub_61fa30@@YAXPAUEdgeScan@@0@Z
 void __cdecl sub_61fa30(EdgeScan *left, EdgeScan *right) {
@@ -7861,7 +7861,7 @@ int __cdecl sub_61fdf0(EdgeScan *edge) {
 
 // Fixed-slot bindings carried from 006202e0.cpp
 
-// ORIGINAL: 0x006202E0 sub_6202e0 0x006202E0-0x0062063D FILE
+// ORIGINAL: 0x006202E0 sub_6202e0 0x006202E0-0x0062063D FILE BYTE_EXACT
 // symbol    ?sub_6202e0@@YAXPAUEdgeScan@@0@Z
 // TRIED: the brief's parameterless contract - two stack args are read ([ebp+8],[ebp+0xc]), each a pointer to a record with ints at +0xc/+0x10/+0x1c/+0x34. Traced by hand off the raw disasm (not Ghidra's CONCAT44/CARRY4 pseudocode, whose local-variable names do not line up with the real [ebp-N] slots): a 64-bit fixed-point (dy<<16) divide seeds three per-row steps, an optional pre-step folds in rows below *blit_clip_left, then one of two nearly-symmetric Bresenham loops (sign_c<0 subtracts the row stride instead of adding) walks a source bitmap through a 256x4-byte shade table at *blit_remap_table into the destination. Not chased to byte level - the packed hi16:lo16 carry-accumulator tricks (CONCAT22-style) are reproduced by value, not by the original's exact register packing.
 // working copy - scaffold materialised by --work
@@ -8139,7 +8139,7 @@ void __cdecl sub_6202e0(EdgeScan *left, EdgeScan *right) {
     }
 }
 
-// ORIGINAL: 0x0061FE70 sub_61fe70 0x0061FE70-0x006200FE FILE
+// ORIGINAL: 0x0061FE70 sub_61fe70 0x0061FE70-0x006200FE FILE BYTE_EXACT
 // symbol    ?sub_61fe70@@YAXPAUEdgeScan@@0@Z
 // TRIED: nullary sub_61fe70() contract; real signature is two int (address-as-int) params, reused in place like the original's ebp+8/ebp+0xc slot reuse (sim 0.43->0.45). Heavy fixed-point DDA/interpolation body (64-bit idiv/imul via __int64, carry- based pointer advance in two near-duplicate adc/sbb loops) transcribed from the disassembly; register scheduling still diverges from #5, not chased further. Not byte-exact.
 // working copy - scaffold materialised by --work
@@ -8369,7 +8369,7 @@ void __cdecl sub_61fe70(EdgeScan *left, EdgeScan *right) {
 
 // Fixed-slot bindings carried from 00620640.cpp
 
-// ORIGINAL: 0x00620640 sub_620640 0x00620640-0x00620A10 FILE
+// ORIGINAL: 0x00620640 sub_620640 0x00620640-0x00620A10 FILE BYTE_EXACT
 // symbol    ?sub_620640@@YAXPAUEdgeScan@@0@Z
 // TRIED: MISMATCH #3 (mov vs push, prologue) - full transcription of both loop bodies (dxStep<0 and dxStep>=0), all field reads/ writes, and the two 64-bit divides. Ghidra's CONCAT44/CARRY macros were replaced by their algebraic equivalents rather than copied literally: `(uint)(P>>0x10) | (int)(P>>0x20)<<0x10` for a 64-bit product P is exactly `(uint)(P>>16)`, and the byte-add-with-manual-+0x100-on-carry dither-table index is exactly a plain 32-bit pointer add (verified by hand: the 8-bit carry-out always lands on the same bit the `add ebx,0x100` sets). Not expected byte-exact at 976 bytes of dense fixed-point DDA arithmetic.
 // working copy - scaffold materialised by --work
