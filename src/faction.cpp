@@ -7291,7 +7291,7 @@ evaluate_existing_state:
     treaty_on(faction_id, faction_id_with, DTREATY_TREATY);
 }
 
-// ORIGINAL: 0x0055E370 ?encounter@@YAXHHHHHH@Z 0x0055E370-0x0055EB7A
+// ORIGINAL: 0x0055E370 ?encounter@@YAXHHHHHH@Z 0x0055E370-0x0055EB7A BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["original:0x0055E370:complete-mapped-spans", "git:13693539:src/unrecovered/0055e370.cpp", "source:src/faction.h:PlayersData-and-diplomacy-interfaces"], "reason": "Recover human/alien contact, tutorial notifications and AI treaty/war routing in the genuine faction owner. Coordinate checks use full MapLongitudeBounds/MapLatitudeBounds. Preserve short-circuit technology queries, the independent peer classification after actor interludes, console reloads, and classification after parser callbacks. Actor-local and peer-local tutorial paths each retain their human/alien masks and labels; two alien factions suppress all AI responses. Use the existing owned TutorialWindow."}
 // TRIED: full structured transcription (verified every call-argument order and jump target against raw disasm) reaches MISMATCH #3 'push' vs 'mov' - a prologue register-allocation divergence (push ebx order), not a logic error; not chased further given function size (2058 bytes).
 void __cdecl encounter(int faction_id, int faction_id_with, int x, int y,

@@ -809,6 +809,44 @@ set_target_properties(OpenSMACX PROPERTIES
 # in this build needs it pinned, because nothing imports by name.
 target_compile_options(OpenSMACX PRIVATE $<$<COMPILE_LANGUAGE:CXX>:/W4>)
 
+# Optimized C++ profile, per source. The original pooled strings (/Gf, implied
+# by /O2) in some units and not in others: the explicit /O2-minus-/Gf list
+# reproduces /O2 on every function /Gf does not touch, while these units'
+# measured functions (faction's encounter, console_commands'
+# corner_the_market) match only unpooled. VC6 has no /Gf-, so /O2 cannot be
+# global. Their recovery recipes already keep /Oy-, so /Oy is not listed.
+# The profile is prepended so each unit's own options (/Oy-, /Oi-, /Ob1, /Z7)
+# still follow it; /Ob2 follows the profile because /O2 alone means /Ob1.
+set(OPENSMACX_UNPOOLED_SOURCES
+    src/faction.cpp
+    src/console_commands.cpp)
+function(opensmacx_apply_optimization target)
+    get_target_property(target_sources ${target} SOURCES)
+    get_target_property(target_dir ${target} SOURCE_DIR)
+    set(optimized "$<CONFIG:Release,RelWithDebInfo>")
+    foreach(source IN LISTS target_sources)
+        if(NOT source MATCHES "\\.cpp$")
+            continue()
+        endif()
+        cmake_path(ABSOLUTE_PATH source BASE_DIRECTORY "${target_dir}" OUTPUT_VARIABLE absolute)
+        cmake_path(RELATIVE_PATH absolute BASE_DIRECTORY "${PROJECT_SOURCE_DIR}" OUTPUT_VARIABLE relative)
+        if(relative IN_LIST OPENSMACX_UNPOOLED_SOURCES)
+            set(profile /Og /Oi /Ot /Gs /Gy /Ob2)
+        else()
+            set(profile /O2 /Ob2)
+        endif()
+        set(options)
+        foreach(flag IN LISTS profile)
+            list(APPEND options "$<${optimized}:${flag}>")
+        endforeach()
+        get_property(existing SOURCE "${absolute}" TARGET_DIRECTORY ${target} PROPERTY COMPILE_OPTIONS)
+        set_property(SOURCE "${absolute}" TARGET_DIRECTORY ${target}
+            PROPERTY COMPILE_OPTIONS ${options} ${existing})
+    endforeach()
+endfunction()
+opensmacx_apply_optimization(OpenSMACX)
+opensmacx_apply_optimization(jackal)
+
 
 
 install(TARGETS OpenSMACX

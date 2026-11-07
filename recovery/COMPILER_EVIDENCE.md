@@ -52,6 +52,16 @@ policy is in `WORKFLOW.md`; no spelling trick overrides that policy.
   production-policy decision. Do not bind a pooled symbol to one original
   cell when independent uses establish several, or count an unresolved
   initializer-to-wrapper edge as an exact original Sprite-constructor call.
+- String pooling varied per original TU (2026-11-07). A whole-program run
+  under the explicit unpooled profile verified 4675 functions against 4680
+  under `/O2`, so neither setting fits every unit. Adding `/Gf` back to the
+  explicit profile reproduced the `/O2` bytes on all 7 functions the switch
+  changed, so the profile differs from `/O2` only in pooling. `src/faction.cpp`
+  and `src/console_commands.cpp` are pinned unpooled (`/Og /Oi /Ot /Gs /Gy
+  /Ob2` with their existing `/Oy-`) in both the recipes and the linked build
+  (`OPENSMACX_UNPOOLED_SOURCES` in CMakeLists.txt): `encounter` (0x0055E370)
+  and `Console::corner_the_market` (0x004E2000) match only unpooled, and no
+  claim in either unit is lost. Other units keep `/O2`.
 - Ordinary class-static objects explain a guarded lifetime pattern without
   hand-written storage wrappers: VC6 emits direct constructor/atexit roots and
   guarded finalizers, sharing a byte with successive masks. A two-class,

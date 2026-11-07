@@ -152,13 +152,15 @@ set(CMAKE_C_DEPFILE_FORMAT gcc)
 # assume a compiler that can share a PDB; this one cannot.
 # /Oy- keeps frame pointers: without them (/O2 implies /Oy) gdb and winedbg
 # cannot walk a backtrace, which is the whole point of the debug profile.
-# Pin the measured optimized C++ inlining policy instead of inheriting a modern
-# CMake MSVC default. Standalone recovery profiles must request /Ob2 too:
-# VC6's /O2 alone retains its older /Ob1 behavior.
-set(CMAKE_CXX_FLAGS_RELEASE "/O2 /Ob2 /DNDEBUG" CACHE STRING "" FORCE)
+# The optimized C++ profile is NOT here: CMakeLists.txt applies it per source
+# (OPENSMACX_UNPOOLED_SOURCES), because the original enabled string pooling
+# (/Gf, implied by /O2) in some units only and VC6 has no /Gf- to undo a global
+# /O2. It pins /Ob2 after the profile instead of inheriting a modern CMake MSVC
+# default; VC6's /O2 alone retains its older /Ob1 behavior.
+set(CMAKE_CXX_FLAGS_RELEASE "/DNDEBUG" CACHE STRING "" FORCE)
 set(CMAKE_CXX_FLAGS_DEBUG "/Z7 /Ob0 /Od /Oy- /GZ" CACHE STRING "" FORCE)
 set(CMAKE_C_FLAGS_DEBUG "/Z7 /Ob0 /Od /GZ" CACHE STRING "" FORCE)
-set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "/Z7 /O2 /Ob2" CACHE STRING "" FORCE)
+set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "/Z7" CACHE STRING "" FORCE)
 set(CMAKE_C_FLAGS_RELWITHDEBINFO "/Z7 /O2" CACHE STRING "" FORCE)
 
 # `/Zm200`, NOT the `/Zm1000` CMake picks for us.
