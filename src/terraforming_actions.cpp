@@ -72,7 +72,7 @@ extern "C" int __cdecl sub_4c99d0(int x_coord, int y_coord) {
 
 /*
 Purpose: Calculate the Former rate to perform terrain enhancements.
-// ORIGINAL: 0x004C9A50 ?contribution@@YAHHH@Z 0x004C9A50-0x004C9AFB
+// ORIGINAL: 0x004C9A50 ?contribution@@YAHHH@Z 0x004C9A50-0x004C9AFB BYTE_EXACT
 // size      171 bytes
 // prototype int (__cdecl ?contribution@@YAHHH@Z)(int vehID, int terraformID)
 // callers   1   call targets   1
