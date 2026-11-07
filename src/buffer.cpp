@@ -123,14 +123,17 @@ int Buffer::copy(Buffer *buffer, int xCoord, int yCoord, int wx, int wy,
         yCoord = 0;
     }
     // `biHeight` is stored negative, so `-biHeight` is the row count.
-    if (xCoord > dib_.bmiHeader.biWidth || yCoord > -dib_.bmiHeader.biHeight) {
+    if (xCoord > pixel_width()) {
         return 0;
     }
-    if (xCoord + width > dib_.bmiHeader.biWidth) {
-        width = dib_.bmiHeader.biWidth - xCoord;
+    if (yCoord > pixel_height()) {
+        return 0;
     }
-    if (yCoord + height > -dib_.bmiHeader.biHeight) {
-        height = -(yCoord + dib_.bmiHeader.biHeight);
+    if (xCoord + width > pixel_width()) {
+        width = pixel_width() - xCoord;
+    }
+    if (yCoord + height > pixel_height()) {
+        height = pixel_height() - yCoord;
     }
     RECT clipped;
     clipped.left = wx;
@@ -2974,97 +2977,54 @@ Status: Coverage transcription of the retained seed (src/unrecovered/005e07a0.cp
 
 
 int Buffer::fill_line(int x1, int y1, int x2, int y2, char fill_colour) {
-    IDirectDrawSurface2 *const surface = surface_;
-    unsigned char *locked;
-
-    if (surface == 0) {
-        locked = static_cast<unsigned char *>(dib_bits_);  // dib_bits_
-        locked_bits_ = locked;  // locked_bits_
-        if (locked == 0) {
-            return 0;
-        }
-        surface_lock_count_ += 1;  // surface_lock_count_
-    } else if (locked_bits_ == 0) {
-        // DDSURFACEDESC-shaped lock descriptor: dwSize at +0, lPitch at
-        // +0x10, lpSurface at +0x24 - sizeof == 0x6c, the constant stored
-        // into the first dword before the call.
-        DDSURFACEDESC lock_desc;
-        lock_desc.dwSize = 0x6c;
-        int lock_result = surface->Lock(nullptr, &lock_desc, DDLOCK_WAIT, nullptr);
-        if (lock_result != 0) {
-            return lock_result;
-        }
-        surface_lock_count_ += 1;
-        stride_ =
-            lock_desc.lPitch;  // stride_
-        locked = static_cast<unsigned char *>(lock_desc.lpSurface);
-        locked_bits_ = locked;
-    } else {
-        surface_lock_count_ += 1;
-        locked = static_cast<unsigned char *>(locked_bits_);
-    }
-
-    if (locked != 0) {
-        int hi_x = x1;
-        int lo_x = x2;
+    int error = 0;
+    // No return statement anywhere: the caller sees whatever EAX holds.
+    if (acquire_pixels() != 0) {
+        RECT clip = rect1_;
+        // Only a downward segment is clipped; the far edges are inclusive.
         if (x1 < x2) {
-            hi_x = x2;
-            lo_x = x1;
+            if (y1 < y2 && (x1 < clip.left || y1 < clip.top || x2 > clip.right || y2 > clip.bottom
+                            || y2 < clip.top || y1 > clip.bottom)) {
+                goto done;
+            }
+        } else if (y1 < y2 && (x2 < clip.left || y1 < clip.top || x1 > clip.right
+                               || y2 > clip.bottom || y2 < clip.top || y1 > clip.bottom)) {
+            goto done;
         }
-
-        // rect1_, the buffer's working rectangle, as four ints at 0x20.
-        const int clip_left = rect1_.left;
-        const int clip_top = rect1_.top;
-        const int clip_right = rect1_.right;
-        const int clip_bottom = rect1_.bottom;
-        if ((y2 <= y1) ||
-            (clip_left <= lo_x && clip_top <= y1 && hi_x <= clip_right &&
-             y2 <= clip_bottom && clip_top <= y2 && y1 <= clip_bottom)) {
+        {
             int run = x2 - x1;
+            int height = y2 - y1;
             int step_x;
-            if (run < 0) {
+            if (run >= 0) {
+                step_x = 1;
+            } else {
                 step_x = -1;
                 run = -run;
+            }
+            const int stride = static_cast<int>(stride_);
+            int row_step;
+            if (height >= 0) {
+                row_step = stride;
             } else {
-                step_x = 1;
-            }
-
-            const int stride =
-                static_cast<int>(stride_);  // stride_
-            int row_step = stride;
-            int height = y2 - y1;
-            if (height < 0) {
-                height = -height;
                 row_step = -stride;
+                height = -height;
             }
-
-            unsigned char *dest = locked + stride * y1 + x1;
-
-            if (height < run) {
-                if (height >= 0) {
-                    int quotient = run / height;
-                    int rows = height + 1;
-                    do {
-                        if (quotient >= 0) {
-                            int span = quotient + 1;
-                            do {
-                                if (dest != 0) {
-                                    *dest = (unsigned char)fill_colour;
-                                    dest++;
-                                }
-                                span--;
-                            } while (span != 0);
+            unsigned char *dest = static_cast<unsigned char *>(locked_bits_)
+                + stride_ * y1 + x1;
+            if (run > height) {
+                const int quotient = run / height;
+                for (int row = 0; row <= height; ++row) {
+                    for (int column = 0; column <= quotient; ++column) {
+                        if (dest != 0) {
+                            *dest++ = static_cast<unsigned char>(fill_colour);
                         }
-                        dest += row_step;
-                        rows--;
-                    } while (rows != 0);
+                    }
+                    dest += row_step;
                 }
-            } else if (height >= 0) {
-                int rows = height + 1;
-                int error = 0;
-                do {
+            } else {
+                for (int row = 0; row <= height; ++row) {
                     if (dest != 0) {
-                        *dest = (unsigned char)fill_colour;
+                        *dest = static_cast<unsigned char>(fill_colour);
                     }
                     error += run;
                     if (error > 0) {
@@ -3072,36 +3032,12 @@ int Buffer::fill_line(int x1, int y1, int x2, int y2, char fill_colour) {
                         dest += step_x;
                     }
                     dest += row_step;
-                    rows--;
-                } while (rows != 0);
+                }
             }
         }
+    done:
+        free_data(1);
     }
-
-    IDirectDrawSurface2 *const surface_at_end = surface_;
-    if (surface_at_end == 0) {
-        int holders = surface_lock_count_ - 1;
-        surface_lock_count_ = holders;
-        if (holders <= 0) {
-            locked_bits_ = 0;
-            surface_lock_count_ = 0;
-        }
-        return 0;
-    }
-
-    int holders = surface_lock_count_ - 1;
-    surface_lock_count_ = holders;
-    void *current = locked_bits_;
-    if (current == 0) {
-        return 0;
-    }
-    if (holders > 0) {
-        return reinterpret_cast<int>(current);
-    }
-    int unlock_result = surface_at_end->Unlock(current);
-    locked_bits_ = 0;
-    surface_lock_count_ = 0;
-    return unlock_result;
 }
 
 
@@ -3958,14 +3894,11 @@ int Buffer::write_cent_l(LPSTR text, int x_coord, int y_coord, int width,
     fail:
         return x_coord;
     }
-    const int drawn = text_width(text, limit);
     // PLAIN INT ARITHMETIC, because that is what the image emits: `sub`,
     // then `cdq; sub eax, edx; sar edx, 1` - a signed halving that truncates
-    // toward zero - then `add`. The `edge_bits`/`edge_int` round trip is a
-    // pair of calls VC6 declines to inline, and five of them were the whole
-    // difference in this tail.
-    const int centred = x_coord + (width - drawn) / 2;
-    return write_multi_font_raw_l(text, centred, y_coord, limit);
+    // toward zero - then `add`. The pen moves in place (`x_coord += ...`).
+    x_coord += (width - text_width(text, limit)) / 2;
+    return write_multi_font_raw_l(text, x_coord, y_coord, limit);
 }
 
 
@@ -4174,12 +4107,10 @@ int Buffer::write_right_l(char *text, int x_coord, int y_coord, int field_width,
         return x_coord;
     }
 
-    // THE OFFSET IS A LOCAL, not part of the argument expression: hoisting
-    // `field_width - width` out of the call is what makes VC6 load the field
-    // first and subtract the measured width, in the image's own order.
-    int width = text_width(text, len);
-    int offset = field_width - width;
-    return write_multi_font_raw_l(text, x_coord + offset, y_coord, len);
+    // The pen moves in place: `x_coord += ...` keeps the image's x + offset
+    // operand order.
+    x_coord += field_width - text_width(text, len);
+    return write_multi_font_raw_l(text, x_coord, y_coord, len);
 }
 
 // All buffer blitters borrow the same Sprite descriptor. Its real object
@@ -4571,7 +4502,8 @@ int Buffer::tile(Buffer *source, int src_x, int src_y, int x, int y, int w,
     RECT selfRect = rect1_;
     int rectRight = w + x;
     clipRect.right = rectRight;
-    clipRect.bottom = h + y;
+    int rectBottom = h + y;
+    clipRect.bottom = rectBottom;
 
     if (IntersectRect(&clipRect, &clipRect, &selfRect)) {
         set_clip(&clipRect);
@@ -4592,32 +4524,22 @@ int Buffer::tile(Buffer *source, int src_x, int src_y, int x, int y, int w,
             }
 
             int startX = x - src_x % tileWidth;
-            int startY = y - src_y % tileHeight;
+            y -= src_y % tileHeight;
 
             if (tilesX * tileWidth + startX < rectRight) {
                 tilesX++;
             }
-            if (tilesY * tileHeight + startY < h + y) {
+            if (tilesY * tileHeight + y < rectBottom) {
                 tilesY++;
             }
 
-            int rowsLeft = tilesY;
-            if (rowsLeft > 0) {
-                int rowY = startY;
-                do {
-                    int colsLeft = tilesX;
-                    if (colsLeft > 0) {
-                        int colX = startX;
-                        do {
-                            source->copy(this, 0, 0, colX, rowY, tileWidth,
-                                         tileHeight);
-                            colsLeft--;
-                            colX += tileWidth;
-                        } while (colsLeft != 0);
-                    }
-                    rowY += tileHeight;
-                    rowsLeft--;
-                } while (rowsLeft != 0);
+            for (int row = 0; row < tilesY; ++row) {
+                x = startX;
+                for (int column = 0; column < tilesX; ++column) {
+                    source->copy(this, 0, 0, x, y, tileWidth, tileHeight);
+                    x += tileWidth;
+                }
+                y += tileHeight;
             }
 
             set_clip(&selfRect);
@@ -4889,11 +4811,11 @@ int Buffer::tile_mask(Buffer *mask, int src_x, int src_y, int x, int y, int w,
     RECT clipRect;
     clipRect.left = x;
     clipRect.top = y;
+    RECT selfRect = rect1_;
     const int rectRight = w + x;
     clipRect.right = rectRight;
-    clipRect.bottom = h + y;
-
-    RECT selfRect = rect1_;
+    const int rectBottom = h + y;
+    clipRect.bottom = rectBottom;
 
     if (IntersectRect(&clipRect, &clipRect, &selfRect)) {
         set_clip(&clipRect);
@@ -4912,32 +4834,22 @@ int Buffer::tile_mask(Buffer *mask, int src_x, int src_y, int x, int y, int w,
             }
 
             const int startX = x - src_x % tileWidth;
-            const int startY = y - src_y % tileHeight;
+            y -= src_y % tileHeight;
 
             if (tilesX * tileWidth + startX < rectRight) {
                 tilesX++;
             }
-            if (tilesY * tileHeight + startY < h + y) {
+            if (tilesY * tileHeight + y < rectBottom) {
                 tilesY++;
             }
 
-            int rowsLeft = tilesY;
-            if (rowsLeft > 0) {
-                int rowY = startY;
-                do {
-                    int colsLeft = tilesX;
-                    if (colsLeft > 0) {
-                        int colX = startX;
-                        do {
-                            mask->copy_mask(this, 0, 0, colX, rowY, tileWidth,
-                                            tileHeight, color);
-                            colsLeft--;
-                            colX += tileWidth;
-                        } while (colsLeft != 0);
-                    }
-                    rowY += tileHeight;
-                    rowsLeft--;
-                } while (rowsLeft != 0);
+            for (int row = 0; row < tilesY; ++row) {
+                x = startX;
+                for (int column = 0; column < tilesX; ++column) {
+                    mask->copy_mask(this, 0, 0, x, y, tileWidth, tileHeight, color);
+                    x += tileWidth;
+                }
+                y += tileHeight;
             }
 
             set_clip(&selfRect);
@@ -4976,11 +4888,11 @@ int Buffer::tile(Sprite *sprite, int src_x, int src_y, int x, int y, int w,
     RECT clipRect;
     clipRect.left = x;
     clipRect.top = y;
+    RECT selfRect = rect1_;
     const int rectRight = w + x;
     clipRect.right = rectRight;
-    clipRect.bottom = y + h;
-
-    RECT selfRect = rect1_;
+    const int rectBottom = y + h;
+    clipRect.bottom = rectBottom;
 
     if (IntersectRect(&clipRect, &clipRect, &selfRect)) {
         set_clip(&clipRect);
@@ -4999,32 +4911,22 @@ int Buffer::tile(Sprite *sprite, int src_x, int src_y, int x, int y, int w,
             }
 
             const int startX = x - src_x % tileWidth;
-            const int startY = y - src_y % tileHeight;
+            y -= src_y % tileHeight;
 
             if (tilesX * tileWidth + startX < rectRight) {
                 tilesX++;
             }
-            if (tilesY * tileHeight + startY < y + h) {
+            if (tilesY * tileHeight + y < rectBottom) {
                 tilesY++;
             }
 
-            int rowsLeft = tilesY;
-            if (rowsLeft > 0) {
-                int rowY = startY;
-                do {
-                    int colsLeft = tilesX;
-                    if (colsLeft > 0) {
-                        int colX = startX;
-                        do {
-                            sprite->draw(this, sprite->cTransparentIndex_,
-                                         colX, rowY, 1, 1);
-                            colsLeft--;
-                            colX += tileWidth;
-                        } while (colsLeft != 0);
-                    }
-                    rowY += tileHeight;
-                    rowsLeft--;
-                } while (rowsLeft != 0);
+            for (int row = 0; row < tilesY; ++row) {
+                x = startX;
+                for (int column = 0; column < tilesX; ++column) {
+                    sprite->draw(this, sprite->cTransparentIndex_, x, y, 1, 1);
+                    x += tileWidth;
+                }
+                y += tileHeight;
             }
 
             set_clip(&selfRect);
@@ -7092,23 +6994,16 @@ int Buffer::wrap(char * a1, RECT * a2) {
         field_18_ = 0;
         field_14_ = field_10_;
 
+        int width = a2->right - a2->left;
         int x = a2->left;
-        int width = a2->right - x;
         int y = a2->top;
         char *str = a1;
         char *nextStr;
 
         do {
-            // Each line goes through the inlined write_l, whose empty-draw
-            // result is the current x; a null line takes the guarded
-            // write_l's early return.
-            if (str == 0) {
-                nextStr = 0;
-            } else {
-                int breakPos = width;
-                BufferStrHeight = 0;
-                nextStr = find_line_break_l(str, &breakPos, static_cast<int>(strlen(str)));
-            }
+            // Each line goes through the inlined find_line_break and
+            // write_l; a null line takes the guarded write_l's early return.
+            nextStr = find_line_break(str, width);
             if (nextStr != 0) {
                 BufferLastWrapWriteResult =
                     write_l(str, x, y, static_cast<int>(nextStr - str));
@@ -7348,7 +7243,7 @@ inline int Buffer::change_color(int a1, int a2, int a3, int a4, int a5, int a6) 
     if (IntersectRect(&rect, &rect1_, &rect)) {
         const int top = rect.top;
         const int left = rect.left;
-        if (rect.left < dib_.bmiHeader.biWidth && rect.top < -dib_.bmiHeader.biHeight) {
+        if (left < dib_.bmiHeader.biWidth && top < -dib_.bmiHeader.biHeight) {
             char *pixel = acquire_pixels() != 0
                 ? stride_ * top + static_cast<char *>(locked_bits_) + left : 0;
             if (pixel == 0) {
@@ -7412,37 +7307,52 @@ int Buffer::map_colors(int left, int top, int right, int bottom,
     clipped.top = top;
     clipped.right = right;
     clipped.bottom = bottom;
-    if (!IntersectRect(&clipped, &clipped, &rect1_)) {
-        return 0;
-    }
-    int rows = clipped.bottom - clipped.top;
-    const int width = clipped.right - clipped.left;
-    const int row_gap = static_cast<int>(stride_) - width;
-    if (clipped.left >= dib_.bmiHeader.biWidth
-        || clipped.top >= -dib_.bmiHeader.biHeight) {
+    if (IntersectRect(&clipped, &clipped, &rect1_)) {
+        const int width = clipped.right - clipped.left;
+        const int rows = clipped.bottom - clipped.top;
+        const int row_gap = static_cast<int>(stride_) - width;
+        const int y = clipped.top;
+        const int x = clipped.left;
+        if (x < dib_.bmiHeader.biWidth && y < -dib_.bmiHeader.biHeight) {
+            unsigned char *pixel = acquire_pixels() != 0
+                ? stride_ * y + static_cast<unsigned char *>(locked_bits_) + x : 0;
+            if (pixel == 0) {
+                return 7;
+            }
+            // Hand-written assembly: explicit esi/edi saves, EBP borrowed as
+            // the column counter, the table read live for each pixel.
+            __asm {
+                push esi
+                push edi
+                mov edi, pixel
+                mov esi, table
+                mov ebx, row_gap
+                mov edx, rows
+                mov eax, width
+                push ebp
+                mov ebp, eax
+                xor eax, eax
+            next_row:
+                mov ecx, ebp
+            next_pixel:
+                mov al, [edi]
+                mov al, [esi + eax]
+                mov [edi], al
+                inc edi
+                dec ecx
+                jne next_pixel
+                add edi, ebx
+                dec edx
+                jne next_row
+                pop ebp
+                pop edi
+                pop esi
+            }
+            free_data(1);
+            return 0;
+        }
         return 7;
     }
-    if (acquire_pixels() == 0) {
-        return 7;
-    }
-    uintptr_t address = reinterpret_cast<uintptr_t>(locked_bits_)
-        + static_cast<uintptr_t>(static_cast<int>(stride_))
-            * static_cast<uintptr_t>(clipped.top)
-        + static_cast<uintptr_t>(clipped.left);
-    if (address == 0) {
-        return 7;
-    }
-    do {
-        int remaining = width;
-        do {
-            unsigned char *pixel = reinterpret_cast<unsigned char *>(address);
-            // Do not snapshot the table: it may alias the output pixels.
-            *pixel = table[*pixel];
-            ++address;
-        } while (--remaining != 0);
-        address += static_cast<uintptr_t>(row_gap);
-    } while (--rows != 0);
-    free_data(1);
     return 0;
 }
 
@@ -7467,97 +7377,57 @@ int Buffer::map_colors(RECT *area, unsigned char *table) {
     if (table == nullptr) {
         return 16;
     }
-
-    RECT clipped = *area;
-    --clipped.right;
-    --clipped.bottom;
-    if (!IntersectRect(&clipped, &clipped, &rect1_)) {
-        return 0;
-    }
-
-    int rows = clipped.bottom - clipped.top;
-    const int width = clipped.right - clipped.left;
-    const int row_gap = static_cast<int>(stride_) - width;
-    if (clipped.left >= dib_.bmiHeader.biWidth
-        || clipped.top >= -dib_.bmiHeader.biHeight) {
-        return 7;
-    }
-
-    // The image inlines this acquisition and its release. Keep each state
-    // transition visible here instead of forwarding to the coordinate
-    // overload or to out-of-line free_data(). The successful-null surface
-    // path intentionally increments before the zero-address check below.
-    if (surface_ == nullptr) {
-        locked_bits_ = dib_bits_;
-        if (dib_bits_ == nullptr) {
-            return 7;
-        }
-        ++surface_lock_count_;
-    } else if (locked_bits_ != nullptr) {
-        ++surface_lock_count_;
-    } else {
-        DDSURFACEDESC description;
-        description.dwSize = sizeof(description);
-        if (surface_->Lock(nullptr, &description, DDLOCK_WAIT, nullptr) != 0) {
-            return 7;
-        }
-        const int acquired_lock_count = surface_lock_count_ + 1;
-        stride_ = static_cast<uint32_t>(description.lPitch);
-        surface_lock_count_ = acquired_lock_count;
-        locked_bits_ = description.lpSurface;
-    }
-
-    // The native path rejects a null acquired base before calculating an
-    // offset. In particular, a nonzero clipped origin must not turn null
-    // storage into a dereferenceable-looking low address. It still leaves
-    // the successful Lock's published count/state untouched on this return.
-    if (locked_bits_ == nullptr) {
-        return 7;
-    }
-
-    // Keep target-width modular pointer arithmetic and the native zero test.
-    // A zero result returns without undoing a successful acquisition.
-    uintptr_t address = reinterpret_cast<uintptr_t>(locked_bits_)
-        + static_cast<uintptr_t>(static_cast<int>(stride_))
-            * static_cast<uintptr_t>(clipped.top)
-        + static_cast<uintptr_t>(clipped.left);
-    if (address == 0) {
-        return 7;
-    }
-
-    do {
-        int remaining = width;
-        do {
-            unsigned char *pixel = reinterpret_cast<unsigned char *>(address);
-            // Read the translation byte at the moment it is used; table may
-            // alias pixels being updated by this same traversal.
-            *pixel = table[*pixel];
-            ++address;
-        } while (--remaining != 0);
-        address += static_cast<uintptr_t>(row_gap);
-    } while (--rows != 0);
-
-    // Do not cache surface_ across the pixel writes: the original reloads it
-    // for cleanup after processing. Keep cleanup inline and after all writes.
-    if (surface_ == nullptr) {
-        const int remaining_locks = surface_lock_count_ - 1;
-        surface_lock_count_ = remaining_locks;
-        if (remaining_locks > 0) {
+    // The rectangle is inclusive: its far edges come in one pixel short.
+    RECT clipped;
+    clipped.left = area->left;
+    clipped.top = area->top;
+    clipped.right = area->right - 1;
+    clipped.bottom = area->bottom - 1;
+    if (IntersectRect(&clipped, &clipped, &rect1_)) {
+        const int width = clipped.right - clipped.left;
+        const int rows = clipped.bottom - clipped.top;
+        const int row_gap = static_cast<int>(stride_) - width;
+        const int y = clipped.top;
+        const int x = clipped.left;
+        if (x < dib_.bmiHeader.biWidth && y < -dib_.bmiHeader.biHeight) {
+            unsigned char *pixel = acquire_pixels() != 0
+                ? stride_ * y + static_cast<unsigned char *>(locked_bits_) + x : 0;
+            if (pixel == 0) {
+                return 7;
+            }
+            // Hand-written assembly: as in the coordinate overload.
+            __asm {
+                push esi
+                push edi
+                mov edi, pixel
+                mov esi, table
+                mov ebx, row_gap
+                mov edx, rows
+                mov eax, width
+                push ebp
+                mov ebp, eax
+                xor eax, eax
+            next_row:
+                mov ecx, ebp
+            next_pixel:
+                mov al, [edi]
+                mov al, [esi + eax]
+                mov [edi], al
+                inc edi
+                dec ecx
+                jne next_pixel
+                add edi, ebx
+                dec edx
+                jne next_row
+                pop ebp
+                pop edi
+                pop esi
+            }
+            free_data(1);
             return 0;
         }
-        locked_bits_ = nullptr;
-        surface_lock_count_ = 0;
-        return 0;
+        return 7;
     }
-
-    const int remaining_locks = surface_lock_count_ - 1;
-    surface_lock_count_ = remaining_locks;
-    if (locked_bits_ == nullptr || remaining_locks > 0) {
-        return 0;
-    }
-    surface_->Unlock(locked_bits_);
-    locked_bits_ = nullptr;
-    surface_lock_count_ = 0;
     return 0;
 }
 
@@ -7582,16 +7452,9 @@ int Buffer::wrap(char *text, int x, int y, int width) {
     char *str = text;
     char *nextStr;
     do {
-        // Each line goes through the inlined write_l, whose empty-draw
-        // result is the current x; a null line takes the guarded
-        // write_l's early return.
-        int breakPos = width;
-        if (str == 0) {
-            nextStr = 0;
-        } else {
-            BufferStrHeight = 0;
-            nextStr = find_line_break_l(str, &breakPos, static_cast<int>(strlen(str)));
-        }
+        // Each line goes through the inlined find_line_break and write_l;
+        // a null line takes the guarded write_l's early return.
+        nextStr = find_line_break(str, width);
         if (nextStr != 0) {
             BufferLastWrapWriteResult =
                 write_l(str, x, y, static_cast<int>(nextStr - str));
