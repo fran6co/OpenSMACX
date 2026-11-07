@@ -2,7 +2,7 @@
 # _SELFMOD kernels at 0x00664000), archived separately from the game-side
 # Caviar class (src/caviar.cpp, 0x00616AA0..0x00618E9E). The original was a
 # separately built library: its C translation units were compiled by Visual
-# C++ 5.0 (CL 11.00.7022) at /O2 - recovery/COMPILER_EVIDENCE.md, "Caviar
+# C++ 5.0 (CL 11.00.7022) at /O2 /Ob1 - recovery/COMPILER_EVIDENCE.md, "Caviar
 # library compiler" - while the hand-written MASM modules are assembled by ML
 # 6.11d like the application's. The linker stays LINK 6.00.
 #
@@ -54,7 +54,10 @@ set(CAVIAR_VC5_SOURCES
     caviar_record.cpp
     caviar_error.cpp
     caviar_raster.cpp caviar_scene.cpp)
-set_property(SOURCE ${CAVIAR_VC5_SOURCES} APPEND PROPERTY COMPILE_OPTIONS "--compiler=vc5")
+# The library was built without automatic inlining (/Ob1): the image calls
+# small helpers out of line where /Ob2 would inline them. /Ob1 follows the
+# directory-wide /O2 /Ob2 profile, so it wins.
+set_property(SOURCE ${CAVIAR_VC5_SOURCES} APPEND PROPERTY COMPILE_OPTIONS "--compiler=vc5" "$<$<CONFIG:Release,RelWithDebInfo>:/Ob1>")
 
 # Native member-reference verification needs these owners' CodeView types.
 set_property(SOURCE caviar_chain.cpp caviar_scene.cpp caviar_raster.cpp caviar_loader.cpp

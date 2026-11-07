@@ -379,7 +379,17 @@ The choice is measured per unit:
   17->51 and 106->182, and nothing regressed.
 - caviar_cpu.cpp stays VC6, because VC5's inline assembler does not know
   `cpuid` (C2400).
-- /Ob2 beats /Ob1 on the loader: vox_read_part is exact only at /Ob2.
+- Inlining: the library was built without automatic inlining. Every VC5
+  unit compiles with /Ob1 (2026-11-07). The loader's out-of-line
+  vox_read_dword/vox_read_length_field calls from vox_load_record forced
+  this. The earlier "vox_read_part is exact only at /Ob2" came from an
+  invented chunk-payload helper; with that helper removed, the whole loader
+  matches at /Ob1 and the `#pragma auto_inline(off)` stand-in is gone.
+  Across the other units, /Ob1 matched every claim /Ob2 matched, except where
+  invented helpers had relied on /Ob2 inlining. Those now carry the
+  expansion in the caller, as the image shows: raster's rounding is a macro
+  in 0x63FA80, and scene's floor/float-copy helpers are written out in
+  0x6396A0. 0x628220 still calls vec3_length; see "Symbol state" below.
 
 On the 145 annotated addresses in the moved and affected files, the move took
 the count from 98 pass / 42 fail / 5 unknown to 105 / 34 / 6. Every earlier
@@ -391,16 +401,33 @@ pass still passes.
   the call now out of line, the EH measurement refuses with an "unsupported
   cleanup action".
 
-Open questions:
-- C vs C++. Compiled as C, the plain left-to-right vox_matrix_vector_mul
-  matches. The same text as /TP C++ does not, and neither does this tree's
-  VC6-era regrouped spelling. This is evidence that the library was plain C.
-  Converting it needs a C-compatible VOX header split out of caviar.h. It also
-  conflicts with the C++-mangled names that the existing `ORIGINAL:` markers
-  carry, which is a coordinator decision.
-- Operand order. A one-SIB-byte wall remains, e.g. `[ecx+esi]` vs the image's
-  `[esi+ecx]` at 0x638717. It persists under VC5 RTM and SP3, as C and as C++,
-  across the spellings tried.
+Symbol state (2026-11-07). VC5 orders the operands of `[reg+reg]` (the SIB
+base/index choice) and of commutative x87 operations by translation-unit
+symbol state, not by the expression's spelling. A geometry control: unused
+`extern int f(int);` declarations put just before vox_cross_product flip its
+operand order (14 differing bytes) to exact and back, in bands about eight
+declarations long. The names do not matter. The count does, and so does the
+shape: `f(int, int, int)` and `int q;` shift the state by different amounts.
+Unused declarations at the top of the file shift vox_matrix_vector_mul and
+vector_add with their own periods. So any declaration earlier in the file,
+including what a header pulls in, can flip a later body. Local variables do
+not move it, but a call does: replacing 0x628220's vec3_length call by the
+written-out sum, which the image shows and which makes 0x628220 itself
+exact, flips 0x628290. No single or paired standard include (40 single, 342
+paired tried) restores all three of 0x6280E0, 0x628150 and 0x628290, so
+0x628220 keeps the call for now. Consequences:
+- Re-measure the whole file after any kept edit. An edit can flip a later
+  function that has not changed.
+- A SIB or operand-order wall on one body is not by itself evidence about
+  that body's spelling. The x87 case above was measured directly. The SIB
+  case was observed when 802fb262f matched the loader. The old `[ecx+esi]`
+  vs `[esi+ecx]` wall at 0x638717 closed there with a real spelling change
+  (writing through the struct field). Try spellings first, then the state.
+- The geometry include (`<float.h>`) was chosen for the state it produces.
+  The library's real include set is unknown.
+- The earlier "C vs C++" open question was this effect. vox_matrix_vector_mul
+  matched as C only because the C compile changed the file's symbol state.
+  There is no systematic C advantage, and the C++ units match.
 
 ## Shared frames and private helper boundaries
 

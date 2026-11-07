@@ -88,13 +88,6 @@ extern const float CaviarProjectionShadowAxisScaleY;
 extern VOX_Matrix CaviarProjectionShadowBasis;
 extern CaviarSceneProjectionScratchCandidate CaviarSceneProjectionScratch;
 
-static int caviar_projection_floor(float value) {
-    return static_cast<int>(floor(static_cast<double>(value)));
-}
-
-static void caviar_projection_copy_float_bits(float value, float *out) {
-    memcpy(out, &value, sizeof(value));
-}
 
 
 // ORIGINAL: 0x006396A0 sub_6396a0 0x006396A0-0x00639E54
@@ -196,13 +189,13 @@ float __cdecl vox_stage_scene(
         context->state_.scale_ * scratch.projected_scale_;
     scratch.viewport_aspect_ =
         context->state_.scale_ * scratch.viewport_aspect_;
-    scratch.part_clip_.left_ = caviar_projection_floor(
+    scratch.part_clip_.left_ = (int)floor(
         static_cast<float>(camera->bounds_.values_[0]) * context->projection_scale_);
-    scratch.part_clip_.top_ = caviar_projection_floor(
+    scratch.part_clip_.top_ = (int)floor(
         static_cast<float>(camera->bounds_.values_[1]) * context->projection_scale_);
-    scratch.part_clip_.right_ = caviar_projection_floor(
+    scratch.part_clip_.right_ = (int)floor(
         static_cast<float>(camera->bounds_.values_[4] + 1) * context->projection_scale_) + 1;
-    scratch.part_clip_.bottom_ = caviar_projection_floor(
+    scratch.part_clip_.bottom_ = (int)floor(
         static_cast<float>(camera->bounds_.values_[5] + 1) * context->projection_scale_) + 1;
     scratch.part_clip_.width_ = scratch.part_clip_.left_ - 1 +
                                 scratch.part_clip_.right_;
@@ -215,12 +208,10 @@ float __cdecl vox_stage_scene(
             CaviarProjectionZero <= shadow_z) {
             if (CaviarProjectionZero <= shadow_z &&
                 shadow_z < CaviarProjectionNearPositiveEpsilon) {
-                caviar_projection_copy_float_bits(
-                    CaviarProjectionNearPositiveEpsilon, &shadow_z);
+                shadow_z = CaviarProjectionNearPositiveEpsilon;
             }
         } else {
-            caviar_projection_copy_float_bits(
-                CaviarProjectionNearNegativeEpsilon, &shadow_z);
+            shadow_z = CaviarProjectionNearNegativeEpsilon;
         }
 
         const float inverse_shadow_z = CaviarProjectionOne / shadow_z;
@@ -283,13 +274,13 @@ float __cdecl vox_stage_scene(
         *output_a = scratch.shadow_radius_x_;
         *output_b = scratch.shadow_radius_y_;
 
-        scratch.shadow_clip_.left_ = caviar_projection_floor(
+        scratch.shadow_clip_.left_ = (int)floor(
             static_cast<float>(camera->bounds_.values_[0]) * context->shadow_scale_x_);
-        scratch.shadow_clip_.top_ = caviar_projection_floor(
+        scratch.shadow_clip_.top_ = (int)floor(
             static_cast<float>(camera->bounds_.values_[1]) * context->shadow_scale_y_);
-        scratch.shadow_clip_.right_ = caviar_projection_floor(
+        scratch.shadow_clip_.right_ = (int)floor(
             static_cast<float>(camera->bounds_.values_[4] + 1) * context->shadow_scale_x_) + 1;
-        scratch.shadow_clip_.bottom_ = caviar_projection_floor(
+        scratch.shadow_clip_.bottom_ = (int)floor(
             static_cast<float>(camera->bounds_.values_[5] + 1) * context->shadow_scale_y_) + 1;
         scratch.shadow_clip_.width_ = scratch.shadow_clip_.left_ - 1 +
                                       scratch.shadow_clip_.right_;

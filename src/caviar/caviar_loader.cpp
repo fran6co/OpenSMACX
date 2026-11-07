@@ -21,12 +21,10 @@
 #include <stddef.h>
 #include <string.h>
 
-// The library was built without automatic inlining: the image calls
-// vox_read_dword and vox_read_length_field out of line from
-// vox_load_record, which /Ob2 would inline, and every other body here
-// measures the same either way. strlen expands inline (repne scasb at
-// 0x6383F7) where stdafx.h turns the intrinsic off for the game.
-#pragma auto_inline(off)
+// The library was built at /Ob1 (src/caviar/CMakeLists.txt): the image
+// calls vox_read_dword and vox_read_length_field out of line from
+// vox_load_record. strlen expands inline (repne scasb at 0x6383F7) where
+// stdafx.h turns the intrinsic off for the game.
 #pragma intrinsic(strlen)
 
 // ---------------------------------------------------------------------------
@@ -853,10 +851,12 @@ int __cdecl vox_expand_palette(int fd, uint8_t *palette) {
     if (vox_read_exact(fd, palette + 2, 0x300) != 0) return -1;
     if (vox_read_exact(fd, shades, sizeof(shades)) != 0) return -1;
 
+    uint8_t *column_out = palette + 0x302;
     for (int column = 0; column < 0x100; ++column) {
+        uint8_t *out = column_out++;
         for (int shade = 0; shade < 0x30; shade += 2) {
-            palette[0x302 + (shade / 2) * 0x100 + column] =
-                shades[(shade / 3) * 0x100 + column];
+            *out = shades[(shade / 3) * 0x100 + column];
+            out += 0x100;
         }
     }
     return 0;

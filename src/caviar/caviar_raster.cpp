@@ -29,12 +29,11 @@ static const char vox_msg_no_address_tables[] = "No room for address tables";
 // Native 63F86C/63ECF3/63F344: a record's bit 0 selects either three bytes
 // per item or a byte extent stored at the payload start. That dword remains
 // part of the callback payload and need not be aligned. No padding is added.
-static uint32_t caviar_raster_payload_extent(const CvrRasterItemHeaderCandidate *item) {
-    if ((item->flags_ & 1) == 0) return item->item_count_ * 3u;
-    uint32_t extent;
-    memcpy(&extent, item->inline_payload_, sizeof(extent));
-    return extent;
-}
+// The image computes it in line at each site (the library is /Ob1).
+#define VOX_PAYLOAD_EXTENT(item) \
+    (((item)->flags_ & 1) \
+         ? *(const uint32_t *)(item)->inline_payload_ \
+         : (item)->item_count_ * 3u)
 
 
 #include "caviar_raster_kernels.inc"
@@ -141,7 +140,7 @@ void __cdecl vox_draw_part(
             }
         }
         visited_items += item->item_count_;
-        const uint32_t extent = caviar_raster_payload_extent(item);
+        const uint32_t extent = VOX_PAYLOAD_EXTENT(item);
         item = reinterpret_cast<const CvrRasterItemHeaderCandidate *>(
             item->inline_payload_ + extent);
     } while (visited_items < shape->item_count_);
@@ -241,7 +240,7 @@ void __cdecl vox_draw_shadow(
             }
         }
         visited_items += item->item_count_;
-        const uint32_t extent = caviar_raster_payload_extent(item);
+        const uint32_t extent = VOX_PAYLOAD_EXTENT(item);
         item = reinterpret_cast<const CvrRasterItemHeaderCandidate *>(
             item->inline_payload_ + extent);
     } while (visited_items < shape->item_count_);
@@ -377,7 +376,7 @@ void __cdecl caviar_clip_shape(VoxRenderRecord *record,
             }
 
             visited_items += item->item_count_;
-            const uint32_t payload_size = caviar_raster_payload_extent(item);
+            const uint32_t payload_size = VOX_PAYLOAD_EXTENT(item);
             item = reinterpret_cast<const CvrRasterItemHeaderCandidate *>(
                 item->inline_payload_ + payload_size);
         } while (visited_items < shape->item_count_);
@@ -504,16 +503,15 @@ Status: the four .rdata words stay bindings rather than literals. The
         int words rounded beside them, 0x009C0A7C the float scratch, and
         0x009C0AC4/0x009C0AC8 the two trailing words this body zeroes.
 */
-namespace {
 // 63FAB3 and each sibling compare select 671040 (-0.5) when x87 C0
 // is set, otherwise 671044 (+0.5). The old address aliases had these
 // two names/polarities reversed; this follows the pinned instruction edges.
-int round_view_scaled(float value) {
-    return (int)(value + (value < CaviarProjectionRoundThreshold
-                              ? CaviarProjectionRoundBelow
-                              : CaviarProjectionRoundAbove));
-}
-}  // namespace
+// The image rounds each word in line (the library is /Ob1), so this is a
+// macro rather than a function.
+#define ROUND_VIEW_SCALED(value) \
+    ((int)((value) + ((value) < CaviarProjectionRoundThreshold \
+                          ? CaviarProjectionRoundBelow \
+                          : CaviarProjectionRoundAbove)))
 
 extern "C" void __cdecl sub_63fa80(const VOX_Matrix *sources) {
     // Two walking pointers; VC5 itself forms the image's one moving pointer
@@ -524,19 +522,20 @@ extern "C" void __cdecl sub_63fa80(const VOX_Matrix *sources) {
         *out++ = *cursor++ * CaviarProjectionDirectionScale;
     }
 
-    CaviarFixedPointProjection.word_00_ = (short)round_view_scaled(CaviarProjectionScaledMatrix[0]);
-    CaviarFixedPointProjection.word_02_ = (short)round_view_scaled(CaviarProjectionScaledMatrix[1]);
-    CaviarFixedPointProjection.word_04_ = (short)round_view_scaled(CaviarProjectionScaledMatrix[2]);
-    CaviarFixedPointProjection.word_06_ = (short)round_view_scaled(CaviarProjectionScaledMatrix[3]);
-    CaviarFixedPointProjection.word_08_ = (short)round_view_scaled(CaviarProjectionScaledMatrix[4]);
-    CaviarFixedPointProjection.word_0A_ = (short)round_view_scaled(CaviarProjectionScaledMatrix[5]);
-    CaviarFixedPointProjection.dword_0C_ = round_view_scaled(CaviarProjectionScaledMatrix[6]);
-    CaviarFixedPointProjection.dword_10_ = round_view_scaled(CaviarProjectionScaledMatrix[7]);
-    CaviarFixedPointProjection.dword_14_ = round_view_scaled(CaviarProjectionScaledMatrix[8]);
+    CaviarFixedPointProjection.word_00_ = (short)ROUND_VIEW_SCALED(CaviarProjectionScaledMatrix[0]);
+    CaviarFixedPointProjection.word_02_ = (short)ROUND_VIEW_SCALED(CaviarProjectionScaledMatrix[1]);
+    CaviarFixedPointProjection.word_04_ = (short)ROUND_VIEW_SCALED(CaviarProjectionScaledMatrix[2]);
+    CaviarFixedPointProjection.word_06_ = (short)ROUND_VIEW_SCALED(CaviarProjectionScaledMatrix[3]);
+    CaviarFixedPointProjection.word_08_ = (short)ROUND_VIEW_SCALED(CaviarProjectionScaledMatrix[4]);
+    CaviarFixedPointProjection.word_0A_ = (short)ROUND_VIEW_SCALED(CaviarProjectionScaledMatrix[5]);
+    CaviarFixedPointProjection.dword_0C_ = ROUND_VIEW_SCALED(CaviarProjectionScaledMatrix[6]);
+    CaviarFixedPointProjection.dword_10_ = ROUND_VIEW_SCALED(CaviarProjectionScaledMatrix[7]);
+    CaviarFixedPointProjection.dword_14_ = ROUND_VIEW_SCALED(CaviarProjectionScaledMatrix[8]);
 
     vox_projection_render_stage_ = 0;
     vox_projection_prepared_ = 0;
 }
+#undef ROUND_VIEW_SCALED
 
 
 
@@ -580,11 +579,11 @@ void __cdecl caviar_direction_to_projection_index(
             -CaviarProjectionDirectionCandidate.values[2];
     }
 
-    double polar_angle = CaviarProjectionDirectionCandidate.values[2] >= CaviarProjectionAngleLimit
+    float polar_angle = CaviarProjectionDirectionCandidate.values[2] >= CaviarProjectionAngleLimit
         ? CaviarProjectionRoundThreshold
         : acos(CaviarProjectionDirectionCandidate.values[2]);
 
-    double azimuth_angle = atan2(CaviarProjectionDirectionCandidate.values[1],
+    float azimuth_angle = atan2(CaviarProjectionDirectionCandidate.values[1],
                                  CaviarProjectionDirectionCandidate.values[0]);
     if (azimuth_angle < CaviarProjectionRoundThreshold) {
         azimuth_angle -= CaviarProjectionAngleWrap;
@@ -925,139 +924,86 @@ Status: Coverage transcription of the retained seed (src/unrecovered/006401b0.cp
         row 1 on its y axis, so the extent products are named per axis
         (extentN_x for the row-0 product, extentN_y for the row-1 one).
 */
-// The Status paragraph above retains the retired seed's measurements. Current
-// production uses /O2 /Ob2 /Z7 without /Oy-. The pinned reduction also has the
-// sign-dependent bias recovered below; unconditional +0x80 was incomplete.
-namespace {
-
-// The original bias depends on the wrapped input's sign, before addition.
-// Six extent results later narrow to signed short; both centers stay full32.
-static int32_t caviar_i32_from_bits(uint32_t bits) {
-    if (bits <= 0x7fffffffu) return (int32_t)bits;
-    return -1 - (int32_t)(0xffffffffu - bits);
-}
-
-// SETNS/SETGE, DEC and clear-low-byte select +128 or -128. Preserve the
-// unsigned addition even when that bias crosses the signed32 boundary.
-static uint32_t caviar_sar8_bits(uint32_t bits) {
-    const uint32_t bias = (int32_t)bits < 0 ? 0xffffff80u : 0x80u;
-    const uint32_t biased = bits + bias;
-    return (uint32_t)((int32_t)biased >> 8);
-}
-
-// Extent reductions are written through AX in the original. Center reductions
-// use the full EAX/EDX value and must not pass through this low-word helper.
-static int32_t caviar_fixed8_low16(uint32_t bits) {
-    return (int16_t)caviar_sar8_bits(bits);
-}
-
-static int32_t caviar_add_i32(int32_t a, int32_t b) {
-    return caviar_i32_from_bits((uint32_t)a + (uint32_t)b);
-}
-
-static int32_t caviar_sub_i32(int32_t a, int32_t b) {
-    return caviar_i32_from_bits((uint32_t)a - (uint32_t)b);
-}
-
-int32_t fixed8(uint32_t value_bits) {
-    return caviar_fixed8_low16(value_bits);
-}
-
-}
+// Rewritten from the image (2026-11-07). The 8.8 reduction rounds half away
+// from zero: SETNS/SETGE, DEC and a clear-low-byte select +0x80 or -0x80.
+// The extents narrow to signed short before the corner walk.
+#define VOX_FIX8(v) ((((v) < 0 ? -0x80 : 0x80) + (v)) >> 8)
+#define VOX_GROW(x, y) \
+    if ((x) < out_rect[0]) out_rect[0] = (x); \
+    if ((x) > out_rect[2]) out_rect[2] = (x); \
+    if ((y) < out_rect[1]) out_rect[1] = (y); \
+    if ((y) > out_rect[3]) out_rect[3] = (y)
 
 extern "C" void __cdecl sub_6401b0(const short *centre, const short *extent,
                                    int *out_rect) {
-    uint32_t x_centre_bits =
-        (uint32_t)((int32_t)CaviarFixedPointProjection.word_00_ * (int32_t)centre[0]);
-    x_centre_bits += (uint32_t)((int32_t)CaviarFixedPointProjection.word_04_ * (int32_t)centre[2]);
-    x_centre_bits += (uint32_t)((int32_t)CaviarFixedPointProjection.word_02_ * (int32_t)centre[1]);
-    int x_walk;
-    uint32_t y_centre_bits =
-        (uint32_t)((int32_t)CaviarFixedPointProjection.word_06_ * (int32_t)centre[0]);
-    y_centre_bits += (uint32_t)((int32_t)CaviarFixedPointProjection.word_0A_ * (int32_t)centre[2]);
-    y_centre_bits += (uint32_t)((int32_t)CaviarFixedPointProjection.word_08_ * (int32_t)centre[1]);
-    int y_walk;
-    int extent0_x = (int)extent[0] * (int)CaviarFixedPointProjection.word_00_;
-    int extent0_y = (int)extent[0] * (int)CaviarFixedPointProjection.word_06_;
-    int extent1_x = (int)extent[1] * (int)CaviarFixedPointProjection.word_02_;
-    int extent1_y = (int)extent[1] * (int)CaviarFixedPointProjection.word_08_;
-    int extent2_x = (int)extent[2] * (int)CaviarFixedPointProjection.word_04_;
-    int extent2_y = (int)extent[2] * (int)CaviarFixedPointProjection.word_0A_;
+    int x, y, t;
+    short a[3], b[3], c[3];
 
-    extent0_y = fixed8((uint32_t)extent0_y);
+    t = CaviarFixedPointProjection.word_00_ * centre[0] +
+        CaviarFixedPointProjection.word_04_ * centre[2] +
+        CaviarFixedPointProjection.word_02_ * centre[1];
+    x = VOX_FIX8(t);
+    t = CaviarFixedPointProjection.word_06_ * centre[0] +
+        CaviarFixedPointProjection.word_0A_ * centre[2] +
+        CaviarFixedPointProjection.word_08_ * centre[1];
+    y = VOX_FIX8(t);
+    t = extent[0] * CaviarFixedPointProjection.word_00_;
+    a[0] = (short)VOX_FIX8(t);
+    t = extent[0] * CaviarFixedPointProjection.word_06_;
+    a[1] = (short)VOX_FIX8(t);
+    t = extent[1] * CaviarFixedPointProjection.word_02_;
+    b[0] = (short)VOX_FIX8(t);
+    t = extent[1] * CaviarFixedPointProjection.word_08_;
+    b[1] = (short)VOX_FIX8(t);
+    t = extent[2] * CaviarFixedPointProjection.word_04_;
+    c[0] = (short)VOX_FIX8(t);
+    t = extent[2] * CaviarFixedPointProjection.word_0A_;
+    c[1] = (short)VOX_FIX8(t);
+
     out_rect[4] = 0;
     out_rect[5] = 0;
-    extent0_x = fixed8((uint32_t)extent0_x);
-    x_walk = caviar_add_i32(caviar_i32_from_bits(caviar_sar8_bits(x_centre_bits)), extent0_x);
-    y_walk = caviar_add_i32(caviar_i32_from_bits(caviar_sar8_bits(y_centre_bits)), extent0_y);
+    x += a[0];
+    y += a[1];
     out_rect[0] = 0x7fff;
     out_rect[1] = 0x7fff;
     out_rect[2] = -0x7fff;
     out_rect[3] = -0x7fff;
-    if (x_walk < 0x7fff) out_rect[0] = x_walk;
-    if (-0x7fff < x_walk) out_rect[2] = x_walk;
-    if (y_walk < 0x7fff) out_rect[1] = y_walk;
-    if (-0x7fff < y_walk) out_rect[3] = y_walk;
-    extent1_x = fixed8((uint32_t)extent1_x);
-    extent1_y = fixed8((uint32_t)extent1_y);
-    x_walk = caviar_add_i32(x_walk, extent1_x);
-    y_walk = caviar_add_i32(y_walk, extent1_y);
-    if (x_walk < out_rect[0]) out_rect[0] = x_walk;
-    if (out_rect[2] < x_walk) out_rect[2] = x_walk;
-    if (y_walk < out_rect[1]) out_rect[1] = y_walk;
-    if (out_rect[3] < y_walk) out_rect[3] = y_walk;
-    x_walk = caviar_sub_i32(x_walk, extent0_x);
-    y_walk = caviar_sub_i32(y_walk, extent0_y);
-    if (x_walk < out_rect[0]) out_rect[0] = x_walk;
-    if (out_rect[2] < x_walk) out_rect[2] = x_walk;
-    if (y_walk < out_rect[1]) out_rect[1] = y_walk;
-    if (out_rect[3] < y_walk) out_rect[3] = y_walk;
-    y_walk = caviar_sub_i32(y_walk, extent1_y);
-    x_walk = caviar_sub_i32(x_walk, extent1_x);
-    if (x_walk < out_rect[0]) out_rect[0] = x_walk;
-    if (out_rect[2] < x_walk) out_rect[2] = x_walk;
-    if (y_walk < out_rect[1]) out_rect[1] = y_walk;
-    if (out_rect[3] < y_walk) out_rect[3] = y_walk;
-    x_walk = caviar_add_i32(x_walk, fixed8((uint32_t)extent2_x));
-    y_walk = caviar_add_i32(y_walk, fixed8((uint32_t)extent2_y));
-    if (x_walk < out_rect[0]) out_rect[0] = x_walk;
-    if (out_rect[2] < x_walk) out_rect[2] = x_walk;
-    if (y_walk < out_rect[1]) out_rect[1] = y_walk;
-    if (out_rect[3] < y_walk) out_rect[3] = y_walk;
-    x_walk = caviar_add_i32(x_walk, extent0_x);
-    y_walk = caviar_add_i32(y_walk, extent0_y);
-    if (x_walk < out_rect[0]) out_rect[0] = x_walk;
-    if (out_rect[2] < x_walk) out_rect[2] = x_walk;
-    if (y_walk < out_rect[1]) out_rect[1] = y_walk;
-    if (out_rect[3] < y_walk) out_rect[3] = y_walk;
-    x_walk = caviar_add_i32(x_walk, extent1_x);
-    y_walk = caviar_add_i32(y_walk, extent1_y);
-    if (x_walk < out_rect[0]) out_rect[0] = x_walk;
-    if (out_rect[2] < x_walk) out_rect[2] = x_walk;
-    if (y_walk < out_rect[1]) out_rect[1] = y_walk;
-    if (out_rect[3] < y_walk) out_rect[3] = y_walk;
-    x_walk = caviar_sub_i32(x_walk, extent0_x);
-    y_walk = caviar_sub_i32(y_walk, extent0_y);
-    if (x_walk < out_rect[0]) out_rect[0] = x_walk;
-    if (out_rect[2] < x_walk) out_rect[2] = x_walk;
-    if (y_walk < out_rect[1]) out_rect[1] = y_walk;
-    if (out_rect[3] < y_walk) out_rect[3] = y_walk;
+    VOX_GROW(x, y);
+    x += b[0];
+    y += b[1];
+    VOX_GROW(x, y);
+    x -= a[0];
+    y -= a[1];
+    VOX_GROW(x, y);
+    y -= b[1];
+    x -= b[0];
+    VOX_GROW(x, y);
+    x += c[0];
+    y += c[1];
+    VOX_GROW(x, y);
+    x += a[0];
+    y += a[1];
+    VOX_GROW(x, y);
+    x += b[0];
+    y += b[1];
+    VOX_GROW(x, y);
+    x -= a[0];
+    y -= a[1];
+    VOX_GROW(x, y);
 
-    x_walk = out_rect[0];
-    y_walk = out_rect[1];
-    out_rect[0] = caviar_sub_i32(x_walk, 2);
-    out_rect[1] = caviar_sub_i32(y_walk, 2);
-    int bottom = caviar_add_i32(out_rect[3], 2);
-    int right = caviar_add_i32(out_rect[2], 2);
-    out_rect[3] = bottom;
-    out_rect[2] = right;
-    if ((-1 < right) && (-1 < bottom)) {
-        out_rect[4] = (right - (x_walk - 2)) + 1;
-        out_rect[5] = (bottom - (y_walk - 2)) + 1;
+    out_rect[0] -= 2;
+    out_rect[1] -= 2;
+    out_rect[3] += 2;
+    out_rect[2] += 2;
+    if (out_rect[2] >= 0 && out_rect[3] >= 0) {
+        out_rect[4] = out_rect[2] - out_rect[0] + 1;
+        out_rect[5] = out_rect[3] - out_rect[1] + 1;
         return;
     }
     out_rect[4] = 0;
     out_rect[5] = 0;
 }
+#undef VOX_GROW
+#undef VOX_FIX8
 
 

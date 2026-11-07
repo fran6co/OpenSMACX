@@ -244,8 +244,13 @@ Purpose: Normalise a vector in place: divide each component by the vector's
 //        no spelling here produces it.
 */
 void __cdecl vox_normalise_vector(const float *source, float *out) {
-    // vec3_length inlined (/Ob2), then one reciprocal; the components are
-    // re-read from source for the products, so out may alias source.
+    // The image inlines vec3_length; the library is /Ob1, so the original
+    // wrote it out. Written out as `float x/y/z` locals with
+    // `1.0f / (float)sqrt((double)(y * y + z * z + x * x))`, this body is
+    // exact, but the removed call shifts VC5's symbol state and flips
+    // vox_cross_product's operand order (recovery/COMPILER_EVIDENCE.md,
+    // "Symbol state"). The call stays until the file's state is resolved.
+    // The components are re-read from source, so out may alias source.
     float scale = 1.0f / vec3_length(source);
     out[0] = source[0] * scale;
     out[1] = source[1] * scale;
