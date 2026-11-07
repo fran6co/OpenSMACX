@@ -1431,14 +1431,11 @@ static int __stdcall net_group_player_callback(unsigned long player_id,
                                                unsigned long,
                                                const DPNAME *, unsigned long,
                                                void *) {
-    NetPlayer *const players = NetPlayerTable;
-    if (players == 0) return 0;
+    if (!NetPlayerTable) return 0;
     for (int index = 0; index < 16; ++index) {
-        if (players[index].field_0_ == player_id) {
-            if ((players[index].flags_14_ & 2) != 0) {
-                players[index].field_8_ = 1;
-            }
-            return 1;
+        if (NetPlayerTable[index].field_0_ == player_id) {
+            if (NetPlayerTable[index].flags_14_ & 2) NetPlayerTable[index].field_8_ = 1;
+            break;
         }
     }
     return 1;
@@ -2813,12 +2810,16 @@ void Net::receive_directplay_messages(int player_id) {
         do {
             // The native loop restores the input player id before each call,
             // even though Receive writes through this same local.
-            working_id = static_cast<DPID>(player_id);
-            DPID counterpart = local_player_id_;
             DWORD size = field_6E4_;
-            result = NetDirectPlay->Receive(
-                &working_id, &counterpart, (player_id != 0) ? 6 : 3,
-                NetGetScratch, &size);
+            DPID counterpart = local_player_id_;
+            working_id = static_cast<DPID>(player_id);
+            if (player_id == 0) {
+                result = NetDirectPlay->Receive(&working_id, &counterpart, 3,
+                                                NetGetScratch, &size);
+            } else {
+                result = NetDirectPlay->Receive(&working_id, &counterpart, 6,
+                                                NetGetScratch, &size);
+            }
         } while (result == 0);
     }
 }
@@ -2952,11 +2953,12 @@ int Net::check_message(unsigned long player, unsigned long stamp) {
     if (slot == 0x10) {
         return 0;
     }
-    if (stamp <= record->field_4_) {
-        return 1;
+    uint32_t *last = &players_[slot].field_4_;
+    if (stamp > *last) {
+        *last = stamp;
+        return 0;
     }
-    record->field_4_ = stamp;
-    return 0;
+    return 1;
 }
 
 // ORIGINAL: 0x00632300 ?set_polling@Net@@QAEXH@Z 0x00632300-0x0063234F BYTE_EXACT

@@ -733,10 +733,10 @@ void __cdecl mon_winning_unify(int faction_id, int counterpart) {
     if (record.achieved_ != 0) {
         return;
     }
-    record.year_ = year;
-    record.owner_faction_ = faction_id;
     record.word_14_ = 1;
     record.achieved_ = 1;
+    record.year_ = year;
+    record.owner_faction_ = faction_id;
     record.word_8_ = counterpart;
     FactionMonuments[faction_id].latest_type_ = 0xD;
     if (faction_id == ConsoleGlobal.faction_id_) {
@@ -771,10 +771,10 @@ void __cdecl mon_winning_trans(int faction_id, int counterpart) {
     if (record.achieved_ != 0) {
         return;
     }
-    record.year_ = year;
-    record.owner_faction_ = faction_id;
     record.word_14_ = 1;
     record.achieved_ = 1;
+    record.year_ = year;
+    record.owner_faction_ = faction_id;
     record.word_8_ = counterpart;
     FactionMonuments[faction_id].latest_type_ = 0xE;
     if (faction_id == ConsoleGlobal.faction_id_) {

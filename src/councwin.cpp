@@ -1032,59 +1032,83 @@ void __cdecl slide_hide(GraphicWin *window, int mode);   // 0x0045D970
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/00426aa0.cpp", "image:terranx_original.exe:0x00426AA0", "Council interface/window declarations identify embedded fonts/buttons, voting arrays and existing MainInterface/Console owners; original instructions determine call and state order."], "reason": "Recover the original in its genuine UI owner using typed members, real globals and declared operations. Retain seed spans and evidence; no current matching or runtime claim."}
 // symbol    ?on_redraw@CouncWin@@UAEXXZ
 void CouncWin::on_redraw() {
-    Buffer &buffer = static_cast<Buffer &>(*this);
     MainInterfaceGlobal.restore_clip();
-    buffer.restore_clip();
+    Buffer::restore_clip();
     MainInterfaceGlobal.restore_back(1);
 
+    // One RECT serves the whole frame. The first inset frame is drawn on
+    // the main interface, the rest on this window.
     RECT rect = MainInterfaceGlobal.info_frame_rect();
     rect.left += 4;
     rect.top += 4;
     rect.right -= 4;
     rect.bottom -= 4;
-    buffer.box_sprite(&rect, &InterfaceBoxStyles[3]);
+    MainInterfaceGlobal.box_sprite(&rect, &InterfaceBoxStyles[3]);
 
     rect.left = 0x17;
     rect.top = 0;
     rect.right = static_cast<int>(dib_.bmiHeader.biWidth) - 0x37;
     rect.bottom = 1 - static_cast<int>(dib_.bmiHeader.biHeight);
-    buffer.box_sprite(&rect, &InterfaceBoxStyles[9]);
+    Buffer::box_sprite(&rect, &InterfaceBoxStyles[9]);
+    // The image insets only left, top and right here; bottom is untouched.
     rect.left += 4;
-    rect.top += 4;
     rect.right -= 4;
-    rect.bottom -= 4;
-    buffer.box_sprite(&rect, &InterfaceBoxStyles[3]);
+    rect.top += 4;
+    Buffer::box_sprite(&rect, &InterfaceBoxStyles[3]);
 
     draw_info();
     for (int faction = 1; faction < MaxPlayerNum; ++faction) {
         draw_leader(faction);
     }
 
-    const int result_state = static_cast<int>(field_A24_);
-    if (result_state == 0) {
+    if (field_A24_ == 0) {
         return;
     }
 
-    RECT message_rect = {
-        static_cast<LONG>(field_BA4_), static_cast<LONG>(field_BA8_),
-        static_cast<LONG>(field_BAC_), static_cast<LONG>(field_BB0_)
-    };
-    buffer.box_sprite(&message_rect, &InterfaceBoxStyles[0]);
-    message_rect.right -= 3;
-    message_rect.left += 3;
-    message_rect.top += 4;
-    message_rect.bottom -= 2;
+    rect = *reinterpret_cast<RECT *>(&field_BA4_);
+    Buffer::box_sprite(&rect, &InterfaceBoxStyles[0]);
     StringTemp[0] = '\0';
+    rect.right -= 3;
+    rect.top += 3;
+    rect.left += 3;
+    rect.bottom -= 3;
+    ++rect.top;
+    ++rect.bottom;
 
-    const int proposal = static_cast<int>(field_A1C_);
-    if (result_state == -2) {
-        buffer.set_text_color(0xf9, -1, 1, 1);
-        strcat(StringTemp, label_get(0x7e4 / 4));
-    } else if (result_state == -1) {
-        buffer.set_text_color(0xf9, -1, 1, 1);
-        if (proposal != 0) {
+    switch (static_cast<int>(field_A24_)) {
+    case 1:
+        if (field_A1C_ != 0) {
+            Buffer::set_text_color(0xfa, -1, 1, 1);
+        } else {
+            Buffer::set_text_color(ChatItemIdTable[field_A20_], -1, 1, 1);
+        }
+        if (field_A1C_ != 0) {
+            if (field_A1C_ == 1) {
+                strcat(StringTemp, label_get(0xe10 / 4));
+                strcat(StringTemp, ": ");
+                const int faction = field_A20_;
+                parse_set(Players[faction].is_leader_female, 0);
+                strcat(StringTemp, Players[faction].name_leader);
+                strcat(StringTemp, "!!!");
+                Buffer::set_text_color(ChatItemIdTable[field_A20_], -1, 1, 1);
+            } else {
+                strcat(StringTemp, label_get(0x7dc / 4));
+            }
+        } else {
+            const int faction = field_A20_;
+            parse_set(Players[faction].is_leader_female, 0);
+            strcat(StringTemp, Players[faction].name_leader);
+            strcat(StringTemp, " ");
+            strcat(StringTemp, label_get(
+                GameDataStateStorage.fields_.governor_faction_ == static_cast<int>(field_A28_)
+                    ? 0x200 : 0x1fd));
+        }
+        break;
+    case -1:
+        Buffer::set_text_color(0xf9, -1, 1, 1);
+        if (field_A1C_ != 0) {
             strcat(StringTemp, label_get(0x7e0 / 4));
-            if (proposal == 1) {
+            if (field_A1C_ == 1) {
                 strcat(StringTemp, " ");
                 strcat(StringTemp, "(");
                 strcat(StringTemp, label_get(0xe6c / 4));
@@ -1093,35 +1117,16 @@ void CouncWin::on_redraw() {
         } else {
             strcat(StringTemp, label_get(0x804 / 4));
         }
-    } else if (result_state == 1) {
-        const int faction = static_cast<int>(field_A20_);
-        Player &player = Players[faction];
-        if (proposal == 0) {
-            buffer.set_text_color(ChatItemIdTable[faction], -1, 1, 1);
-            GenderDefault = player.is_leader_female;
-            PluralityDefault = 0;
-            strcat(StringTemp, player.name_leader);
-            strcat(StringTemp, " ");
-            const int label_index = GameDataStateStorage.fields_.governor_faction_ == static_cast<int>(field_A28_)
-                ? 0x200 : 0x1fd;
-            strcat(StringTemp, label_get(label_index));
-        } else if (proposal == 1) {
-            strcat(StringTemp, label_get(0xe10 / 4));
-            strcat(StringTemp, ": ");
-            GenderDefault = player.is_leader_female;
-            PluralityDefault = 0;
-            strcat(StringTemp, player.name_leader);
-            strcat(StringTemp, " ");
-            buffer.set_text_color(ChatItemIdTable[faction], -1, 1, 1);
-        } else {
-            buffer.set_text_color(0xfa, -1, 1, 1);
-            strcat(StringTemp, label_get(0x7dc / 4));
-        }
+        break;
+    case -2:
+        Buffer::set_text_color(0xf9, -1, 1, 1);
+        strcat(StringTemp, label_get(0x7e4 / 4));
+        break;
     }
 
-    buffer.set_font(&font6_, 0, 0, 0);
+    Buffer::set_font(&font6_, 0, 0, 0);
     CharUpperA(StringTemp);
-    buffer.wrap_cent(StringTemp, &message_rect);
+    Buffer::wrap_cent(StringTemp, &rect);
 }
 
 // Slot 44 of the front vtable - the catalogue's
