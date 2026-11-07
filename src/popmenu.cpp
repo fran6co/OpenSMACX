@@ -23,7 +23,7 @@
 
 // Popup and PullDown are nonvirtual bases at +0 and +0x537C. Their reverse
 // base destruction order matches the pinned PopMenu teardown sequence.
-// ORIGINAL: 0x00421400 ??1PopMenu@@QAE@XZ 0x00421400-0x00421634;0x00652AB0-0x00652B9F
+// ORIGINAL: 0x00421400 ??1PopMenu@@QAE@XZ 0x00421400-0x00421634;0x00652AB0-0x00652B9F BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["image:0x421400"], "reason": "Recover the full original operation using owned C++ members and base lifetimes; retain all original branches and expose unresolved callees instead of executing original-address forwarders."}
 // body src/popmenu.h
 // symbol    ??1PopMenu@@UAE@XZ

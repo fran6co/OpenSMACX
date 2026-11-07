@@ -112,3 +112,29 @@ def test_snapshot_resolver_never_reopens_a_single_line_snapshot(monkeypatch):
                           symbol_format="none")
     assert result.status == "candidate"
     assert result.line == 1
+
+
+def test_in_class_and_implicit_member_bodies_resolve_without_compiler_claims():
+    header = ("class Widget : public Base {\n"
+              " public:\n"
+              "  ~Widget() { close(); }\n"
+              "  void close();\n"
+              "};\n"
+              "struct Plain {\n"
+              "  int value_;\n"
+              "};\n")
+    texts = {"src/widget.h": header}
+    found = resolve_body(mapping("??1Widget@@UAE@XZ"), marker_path="src/owner.cpp",
+                         source_texts=texts)
+    assert (found.status, found.form, found.line, found.body) == (
+        "candidate", "in_class", 3, "  ~Widget() { close(); }")
+    declared = resolve_body(mapping("?close@Widget@@QAEXXZ"), marker_path="src/owner.cpp",
+                            source_texts=texts)
+    assert declared.status == "unresolved" and "without an in-class definition" in declared.reason
+    implicit = resolve_body(mapping("??1Plain@@QAE@XZ"), marker_path="src/owner.cpp",
+                            source_texts=texts)
+    assert (implicit.status, implicit.form, implicit.line, implicit.end_line, implicit.body) == (
+        "implicit", "implicit", 6, 8, "")
+    absent = resolve_body(mapping("??1Missing@@QAE@XZ"), marker_path="src/owner.cpp",
+                          source_texts=texts)
+    assert absent.status == "unresolved"

@@ -1529,7 +1529,7 @@ Purpose: Destroy the popup infrastructure: close the window, then the
          members in reverse declaration order - Spot at +0x3098, the Dialogs
          slab at +0x21d0, unit_ids_ and item_ids_, sprite_, the two
          FlatButtons, heap_ - and finally the GraphicWin base.
-// ORIGINAL: 0x004064D0 ??1BasePop@@QAE@XZ 0x004064D0-0x0040666F;0x006508D0-0x00650978
+// ORIGINAL: 0x004064D0 ??1BasePop@@QAE@XZ 0x004064D0-0x0040666F;0x006508D0-0x00650978 BYTE_EXACT
 // compile_context src/alphanet.cpp
 // body      src/basepop.h
 // symbol    ??1BasePop@@UAE@XZ

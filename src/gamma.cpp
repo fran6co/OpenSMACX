@@ -280,7 +280,7 @@ void Gamma::adjust_pal(double gamma) {
 }
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x00456110 ??1Gamma@@QAE@XZ 0x00456110-0x00456275;0x00655190-0x00655240 FILE
+// ORIGINAL: 0x00456110 ??1Gamma@@QAE@XZ 0x00456110-0x00456275;0x00655190-0x00655240 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00456110.cpp shows a Gamma::close call followed by reverse subobject teardown", "src/gamma.h declares the real member order and GraphicWin base", "C++ destruction emits subobject and EH cleanup without writing historical vtable addresses", "Pinned PrefWin::on_button_clicked 0x491400 and load_palette 0x451A10 normal cleanup expand the Gamma close and reverse member/base lifetime at the actual Gamma receiver.", "Both pinned cold EH cleanups call the standalone destructor at 0x456110; keep that independent exceptional entry and all original spans/claims.", "The current Gamma header owns the actual typed members and GraphicWin base; Gamma::close remains the unchanged mapped body at 0x5C9330.", "Current physical production-recipe screening observed a complete matching destructor copy in both real consumers; src/interface_palette.cpp is a measured current compile context only, not an assertion about original TU ownership."], "reason": "Retain Gamma’s standalone destructor identity in its original owner while exposing the unchanged class lifetime to the measured real consumer; the normal consumer paths inline Gamma::close and member/base teardown, while the original cold EH path enters this emitted destructor. Current compile_context names a present emitting TU, not the original translation unit."}
 // compile_context src/interface_assets.cpp
 // body src/gamma.h

@@ -33,6 +33,12 @@ class BodyResolution:
     identity_evidence: str
     context_evidence: str
     reason: str
+    # ``qualified`` for an out-of-class/free definition spelled with its full
+    # name; ``in_class`` for a member defined inside its unique global class
+    # body (the form the ``body`` header pointer exists for). ``implicit``
+    # (status ``implicit``, no body) is a destructor the class never
+    # declares: the compiler generates it, and line/end_line span the class.
+    form: str = "qualified"
 
 
 def has_placeholder_body(record, *, marker_path, source_texts, symbol_format='msvc'):
@@ -96,6 +102,12 @@ def resolve_body(record, *, marker_path: str,
     try:
         first = reader.function_line(text + "\n", name)
     except ValueError as error:
+        if str(error) == f"{name}: 0 definitions found":
+            in_class = _in_class_definition(text, name)
+            if isinstance(in_class, BodyResolution):
+                return replace(in_class, path=target)
+            if in_class:
+                error = ValueError(f"{error}; in-class: {in_class}")
         return BodyResolution("unresolved", target, None, None, "", "unproven",
                               "unproven", f"unique lexical definition unresolved: {error}")
     lines = text.splitlines()
@@ -127,4 +139,103 @@ def resolve_body(record, *, marker_path: str,
         "qualified-name-only; emitted symbol and full signature unproven",
         "compile-context/include closure unproven",
         "one lexical definition matches the supported source spelling; independent compiler and context evidence is still required",
+    )
+
+
+_CLASS_HEAD = re.compile(r"^\s*(?:class|struct)\s+([A-Za-z_]\w*)\b(?:\s*:[^;{]*)?\s*(?:\{.*)?$")
+
+
+def _in_class_definition(text: str, name: str):
+    """One member definition written inside its unique global class body.
+
+    ``Owner::member`` (exactly one scope level) resolves only when ``Owner``
+    has exactly one global-scope class/struct definition in ``text`` and
+    ``member`` occurs exactly once at member level there, as a definition.
+    A member that is merely declared, overloaded, nested in another scope or
+    absent stays unresolved. Returns a candidate, or a refusal string, or ""
+    when no class of that name is defined here.
+    A destructor with no member-level occurrence at all, in a class free of
+    preprocessor directives and macro-like member declarations, resolves as
+    ``implicit``: no user declaration exists, so the compiler generates it.
+    """
+    owner, separator, member = name.partition("::")
+    if not separator or "::" in member or not owner.isidentifier():
+        return ""
+    destructor = member.startswith("~")
+    spelled = member[1:] if destructor else member
+    if not spelled.isidentifier() or (destructor and spelled != owner):
+        return ""
+    pattern = re.compile((r"(?<![\w:])~\s*" if destructor else r"(?<![\w:~])")
+                         + re.escape(spelled) + r"\s*\(")
+    lines = text.splitlines()
+    depth, in_block, classes, current = 0, False, [], None
+    for index, line in enumerate(lines):
+        state = in_block
+        code = reader._brace_delta(line, state)[3]
+        in_block = reader._block_state_after(line, state)
+        if code.lstrip().startswith("#"):
+            if current is not None and current["opened"]:
+                current["preprocessor"] = True
+            continue
+        if current is None and depth == 0:
+            head = _CLASS_HEAD.match(code)
+            if head is not None and head.group(1) == owner and not code.rstrip().endswith(";"):
+                current = {"start": index, "opened": False, "members": [], "code": [],
+                           "preprocessor": False}
+        for position, char in enumerate(code):
+            if current is not None and current["opened"] and depth == 1:
+                match = pattern.match(code, position)
+                if match is not None:
+                    current["members"].append((index, state, match))
+            if char == "{":
+                depth += 1
+                if current is not None:
+                    current["opened"] = True
+            elif char == "}":
+                depth -= 1
+                if current is not None and current["opened"] and depth == 0:
+                    current["end"] = index
+                    classes.append(current)
+                    current = None
+        if current is not None:
+            current["code"].append(code)
+        elif classes and classes[-1].get("end") == index:
+            classes[-1]["code"].append(code)
+        if current is not None and not current["opened"] and code.rstrip().endswith(";"):
+            current = None
+    if not classes:
+        return ""
+    if len(classes) != 1:
+        return f"{owner}: {len(classes)} class definitions found"
+    members = classes[0]["members"]
+    if destructor and not members:
+        from ..generated_member_source import _unsupported_member_macro
+        if classes[0]["preprocessor"]:
+            return f"{name}: class body has preprocessor-controlled members"
+        if _unsupported_member_macro(classes[0]["code"], owner):
+            return f"{name}: class body has macro-like member declarations"
+        start, end = classes[0]["start"], classes[0]["end"]
+        return BodyResolution(
+            "implicit", "", start + 1, end + 1, "",
+            "class declares no destructor; compiler-generated member, emitted symbol unproven",
+            "compile-context/include closure unproven",
+            "the unique owner class declares no destructor, so the compiler generates it; independent compiler evidence is still required",
+            "implicit",
+        )
+    if len(members) != 1:
+        return f"{name}: {len(members)} member-level occurrences found"
+    index, state, match = members[0]
+    if index == classes[0]["start"]:
+        return f"{name}: member shares its class head line"
+    if not reader._is_definition(lines, index, state, match):
+        return f"{name}: declared in its class without an in-class definition"
+    end_index = reader._region_end(lines, index, name="")
+    if end_index is None or end_index < index:
+        return f"{name}: in-class definition has no bounded body"
+    return BodyResolution(
+        "candidate", "", index + 1, end_index + 1, "\n".join(lines[index:end_index + 1]),
+        "in-class member spelling only; emitted symbol and full signature unproven",
+        "compile-context/include closure unproven",
+        "one in-class member definition matches the supported source spelling; independent compiler and context evidence is still required",
+        "in_class",
     )

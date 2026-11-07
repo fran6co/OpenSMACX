@@ -176,3 +176,159 @@ def test_renamed_definition_must_be_present_in_overlay(tmp_path):
     compiler = FakeOverlay(tmp_path, snapshot, mode="no-renamed-definition")
     with pytest.raises(ValueError, match="expected one defined COFF function"):
         _qualify(tmp_path, snapshot, compiler)
+
+
+# In-class member definitions: the ``body`` header pointer's own form. A
+# destructor cannot be renamed, so the control removes its body instead.
+MEMBER = "??1Widget@@QAE@XZ"
+MEMBER_HEADER = ("class Widget {\n"
+                 " public:\n"
+                 "  void close();\n"
+                 "  ~Widget() { close(); }\n"
+                 "};\n")
+MEMBER_BASE = object_bytes([(MEMBER, b"\xc3", ()), ("_other", b"\xc3", ())],
+                           undefined=("?close@Widget@@QAEXXZ",))
+
+
+def _member_snapshot(root, header):
+    snapshot = _snapshot(root, header)
+    unit_text = (f"// ORIGINAL: 0x00401000 {MEMBER} 0x00401000-0x00401006\n"
+                 f"// body {HEADER}\n")
+    (root / UNIT).write_text(unit_text)
+    snapshot["files"][UNIT] = {"content_base64": base64.b64encode(unit_text.encode()).decode()}
+    snapshot["source_configuration"]["symbol_format"] = "msvc"
+    return snapshot
+
+
+class MemberOverlay:
+    def __init__(self, header, *, retain=False):
+        self.header, self.retain, self.calls = header.encode(), retain, []
+
+    def overlay(self, source, replacements, arguments, flags):
+        self.calls.append(dict(replacements))
+        if replacements[HEADER] == self.header:
+            return MEMBER_BASE
+        functions = [("_other", b"\xc3", ())]
+        if self.retain:
+            functions.append((MEMBER, b"\xc3", ()))
+        return object_bytes(functions, undefined=(MEMBER,))
+
+
+def _qualify_member(root, snapshot, compiler):
+    attribution = BodyAttribution(root, snapshot)
+    record = attribution.record("entity-0")
+    return attribution, attribution.qualify(record, Coff(MEMBER_BASE), unit=UNIT, arguments=(),
+                                            flags=(), compiler=compiler)
+
+
+def test_in_class_destructor_resolves_and_qualifies_by_body_removal(tmp_path):
+    snapshot = _member_snapshot(tmp_path, MEMBER_HEADER)
+    compiler = MemberOverlay(MEMBER_HEADER)
+    attribution, result = _qualify_member(tmp_path, snapshot, compiler)
+    assert result["result"] == "pass" and result["line"] == 4 and result["end_line"] == 4
+    assert result["evidence"].endswith("in-class body removal/disappearance")
+    assert attribution.compile_attempts == 2
+    edited = compiler.calls[1][HEADER].decode()
+    assert "  ~Widget();\n" in edited and "void close();" in edited
+    assert edited.replace("  ~Widget();\n", "  ~Widget() { close(); }\n") == MEMBER_HEADER
+
+
+def test_in_class_removal_that_keeps_the_definition_refuses(tmp_path):
+    snapshot = _member_snapshot(tmp_path, MEMBER_HEADER)
+    with pytest.raises(ValueError, match="removal did not remove the selected function definition"):
+        _qualify_member(tmp_path, snapshot, MemberOverlay(MEMBER_HEADER, retain=True))
+
+
+@pytest.mark.parametrize("header, reason", [
+    # A user-declared destructor whose definition is missing.
+    ("class Widget {\n public:\n  ~Widget();\n};\n", "declared in its class without"),
+    # Two definitions of the owner class are ambiguous.
+    ("class Widget {\n  ~Widget() {}\n};\nclass Widget {\n  ~Widget() {}\n};\n",
+     "2 class definitions found"),
+    # A nested same-named class is not the global owner.
+    ("struct Outer {\n  class Widget {\n    ~Widget() {}\n  };\n};\n", "0 definitions found"),
+])
+def test_in_class_resolution_refusals(tmp_path, header, reason):
+    snapshot = _member_snapshot(tmp_path, header)
+    with pytest.raises(ValueError, match=reason):
+        _qualify_member(tmp_path, snapshot, MemberOverlay(header))
+
+
+def test_in_class_ordinary_member_requires_one_member_level_occurrence():
+    from match_recovery.source.body import _in_class_definition
+    text = ("struct Widget : public Base {\n"
+            "  int get() const { return value_; }\n"
+            "  int get(int index) { return index; }\n"
+            "  void close() {\n"
+            "    if (value_) { value_ = 0; }\n"
+            "  }\n"
+            "  int value_;\n"
+            "};\n")
+    assert "2 member-level occurrences" in _in_class_definition(text, "Widget::get")
+    found = _in_class_definition(text, "Widget::close")
+    assert (found.form, found.line, found.end_line) == ("in_class", 4, 6)
+    assert _in_class_definition(text, "Other::close") == ""
+
+
+IMPLICIT_HEADER = ("class Widget : public Base {\n"
+                   " public:\n"
+                   "  void close();\n"
+                   "  Member member_;\n"
+                   "};\n")
+
+
+def test_implicit_destructor_qualifies_when_a_user_declaration_drops_it(tmp_path):
+    snapshot = _member_snapshot(tmp_path, IMPLICIT_HEADER)
+    compiler = MemberOverlay(IMPLICIT_HEADER)
+    _, result = _qualify_member(tmp_path, snapshot, compiler)
+    assert result["result"] == "pass" and result["form"] == "implicit"
+    assert (result["line"], result["end_line"]) == (1, 5)
+    assert result["evidence"].endswith("user destructor declaration/disappearance")
+    assert compiler.calls[1][HEADER].decode() == IMPLICIT_HEADER.replace(
+        "};\n", " public:\n  ~Widget();\n};\n")
+
+
+def test_implicit_destructor_that_stays_generated_refuses(tmp_path):
+    snapshot = _member_snapshot(tmp_path, IMPLICIT_HEADER)
+    with pytest.raises(ValueError, match="declaration did not remove"):
+        _qualify_member(tmp_path, snapshot, MemberOverlay(IMPLICIT_HEADER, retain=True))
+
+
+@pytest.mark.parametrize("header, reason", [
+    ("class Widget {\n  DECLARE_LIFETIME(Widget);\n};\n", "macro-like member"),
+    ("class Widget {\n#ifdef X\n  int extra_;\n#endif\n};\n", "preprocessor-controlled"),
+])
+def test_implicit_destructor_refuses_hidden_member_declarations(tmp_path, header, reason):
+    snapshot = _member_snapshot(tmp_path, header)
+    with pytest.raises(ValueError, match=reason):
+        _qualify_member(tmp_path, snapshot, MemberOverlay(header))
+
+
+def test_out_of_class_destructor_qualifies_by_definition_removal(tmp_path):
+    header = ("class Widget {\n public:\n  ~Widget();\n  void close();\n};\n"
+              "inline Widget::~Widget() {\n  close();\n}\n")
+    snapshot = _member_snapshot(tmp_path, header)
+    compiler = MemberOverlay(header)
+    _, result = _qualify_member(tmp_path, snapshot, compiler)
+    assert result["form"] == "qualified" and (result["line"], result["end_line"]) == (6, 8)
+    assert compiler.calls[1][HEADER].decode() == header.split("inline Widget")[0]
+
+
+def test_out_of_class_ordinary_member_still_refuses(tmp_path):
+    header = "class Widget {\n  int get();\n};\ninline int Widget::get() { return 1; }\n"
+    snapshot = _member_snapshot(tmp_path, header)
+    attribution = BodyAttribution(tmp_path, snapshot)
+    record = replace(attribution.record("entity-0"), symbol="?get@Widget@@QAEHXZ")
+    with pytest.raises(ValueError, match="supports ordinary free functions"):
+        attribution.qualify(record, Coff(object_bytes([("?get@Widget@@QAEHXZ", b"\xc3", ())])),
+                            unit=UNIT, arguments=(), flags=(), compiler=MemberOverlay(header))
+
+
+def test_typo_owner_or_member_never_borrows_another_body(tmp_path):
+    snapshot = _member_snapshot(tmp_path, MEMBER_HEADER)
+    attribution = BodyAttribution(tmp_path, snapshot)
+    for symbol in ("??1Widgte@@QAE@XZ", "?clsoe@Widget@@QAEXXZ"):
+        record = replace(attribution.record("entity-0"), symbol=symbol)
+        with pytest.raises(ValueError, match="declared source body unresolved"):
+            attribution.qualify(record, Coff(object_bytes([(symbol, b"\xc3", ())])),
+                                unit=UNIT, arguments=(), flags=(), compiler=MemberOverlay(MEMBER_HEADER))

@@ -633,7 +633,16 @@ supported ordinary free functions with fresh compiler overlays: an unchanged
 overlay must reproduce the ordinary object, then renaming the declared definition
 must remove the exact original emitted symbol and produce its renamed counterpart
 with the same ABI decoration. Controls are batched per TU and compiler trial and
-never supply matching bytes or alter tracked source. Unsupported member/declarator
+never supply matching bytes or alter tracked source. Members cannot be renamed,
+so three member forms instead get a per-member removal control (the unchanged
+overlay must still reproduce the ordinary object, and the edit must remove the
+emitted definition): a member defined inside its unique global class body, whose
+name occurs once at member level (`~Gamma() { close(); }` becomes `~Gamma();`);
+an out-of-class destructor definition, which is deleted; and an implicit
+destructor of a unique global class that declares none and has no
+preprocessor-controlled or macro-like members, which gains a `~Owner();`
+declaration. A declared-only member, a typo'd owner or member, an ambiguous
+class and other out-of-class members remain unresolved. Unsupported member/declarator
 forms or compiler clients remain unknown. This establishes current compilation
 attribution, not historical TU boundaries, linked selection or runtime acceptance.
 Diagnostic measurement and assembly diffs retain their ordinary compiler trials:

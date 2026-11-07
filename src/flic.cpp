@@ -103,7 +103,7 @@ Flic::Flic() {
 Purpose: Close the file, then tear down the embedded Palette and Buffer in
          reverse declaration order - both automatic, no explicit statement
          but the `close()` call.
-// ORIGINAL: 0x004327A0 ??1Flic@@QAE@XZ 0x004327A0-0x004327F8;0x00653420-0x00653443 FILE
+// ORIGINAL: 0x004327A0 ??1Flic@@QAE@XZ 0x004327A0-0x004327F8;0x00653420-0x00653443 FILE BYTE_EXACT
 // compile_context src/datalink.cpp
 // body src/flic.h
 // size      88 bytes

@@ -49,7 +49,7 @@
 Purpose: Tear down a FileWin: close it, then destroy the ListBox, EditBox and
          two FlatButton members in reverse declaration order. C++ owns the
          member/base destruction and partial-construction unwind.
-// ORIGINAL: 0x00407F00 ??1FileWin@@QAE@XZ 0x00407F00-0x00408003;0x00650C80-0x00650CE8 FILE
+// ORIGINAL: 0x00407F00 ??1FileWin@@QAE@XZ 0x00407F00-0x00408003;0x00650C80-0x00650CE8 FILE BYTE_EXACT
 // body src/jackal/filewin.h
 // size      363 bytes
 // prototype void (__thiscall ??1FileWin@@QAE@XZ)(FileWin* this)
@@ -221,7 +221,7 @@ void AlphaSave::init() {
 AlphaSave::AlphaSave() {
 }
 
-// ORIGINAL: 0x00408170 ??1AlphaSave@@QAE@XZ 0x00408170-0x00408383;0x00650D10-0x00650E20
+// ORIGINAL: 0x00408170 ??1AlphaSave@@QAE@XZ 0x00408170-0x00408383;0x00650D10-0x00650E20 BYTE_EXACT
 // body src/alphasave.h
 // symbol    ??1AlphaSave@@UAE@XZ
 // TRIED: plain reinterpret_cast pointer-offset calls into close()/dtors in disasm order; no local subobjects so no SEH frame is generated (diverges at #1, the missing try/finally prologue)

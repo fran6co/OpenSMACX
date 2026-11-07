@@ -5815,7 +5815,7 @@ void Console::editor_kill_vehicles() {
 }
 
 /*
-// ORIGINAL: 0x004E2240 ??1DipEdit@@QAE@XZ 0x004E2240-0x004E23BA;0x0065C570-0x0065C60C
+// ORIGINAL: 0x004E2240 ??1DipEdit@@QAE@XZ 0x004E2240-0x004E23BA;0x0065C570-0x0065C60C BYTE_EXACT
 // body      src/dipedit.h
 // symbol    ??1DipEdit@@UAE@XZ
 //   the catalogue spells the plain dtor `QAE`; this compiler emits it

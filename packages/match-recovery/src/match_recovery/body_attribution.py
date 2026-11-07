@@ -104,6 +104,74 @@ def _definition_edit(text, candidate, name, probe):
     return first, end, declaration + replacement
 
 
+
+def _in_class_removal_edit(text, candidate, name):
+    """Turn one in-class member definition into its own declaration.
+
+    Members cannot be renamed without changing their class (and special
+    members cannot be renamed at all), so the causal control removes the
+    body: ``~Owner() { ... }`` becomes ``~Owner();``. The class keeps the
+    declaration, so the emitted symbol must lose its definition.
+    """
+    from .source_quality import _mask_non_code
+    member = name.partition('::')[2]
+    lines = text.splitlines(keepends=True)
+    first = sum(map(len, lines[:candidate.line - 1]))
+    end = sum(map(len, lines[:candidate.end_line]))
+    code = _mask_non_code(text)[first:end]
+    if member.startswith('~'):
+        head = r'(?<![\w:])~\s*' + re.escape(member[1:]) + r'\s*\('
+    else:
+        head = r'(?<![\w:~])' + re.escape(member) + r'\s*\('
+    matches = list(re.finditer(head, code))
+    if len(matches) != 1 or '\n' in code[:matches[0].start()]:
+        raise ValueError('in-class definition head is not unique on its resolved line')
+    at, depth = matches[0].end(), 1
+    while at < len(code) and depth:
+        depth += {'(': 1, ')': -1}.get(code[at], 0)
+        at += 1
+    if depth:
+        raise ValueError('definition parameter list is unbounded')
+    opening = at + re.match(r'\s*(?:const\b\s*)?', code[at:]).end()
+    if code[opening:opening + 1] != '{':
+        raise ValueError('unsupported in-class definition head for attribution')
+    close, depth = opening + 1, 1
+    while close < len(code) and depth:
+        depth += {'{': 1, '}': -1}.get(code[close], 0)
+        close += 1
+    if depth:
+        raise ValueError('in-class definition body is unbounded')
+    return first, end, text[first:first + at] + code[at:opening].rstrip() + ';' + text[first + close:end]
+
+
+
+def _member_control_edit(text, candidate, name):
+    """The source edit whose compilation must drop the selected member.
+
+    In-class definitions become their own declaration; an out-of-class
+    destructor definition is deleted (its in-class declaration remains); an
+    implicit destructor gains a user declaration before its class closes, so
+    the compiler stops generating it. Returns the complete edited text.
+    """
+    from .source_quality import _mask_non_code
+    if candidate.form == 'in_class':
+        first, end, replacement = _in_class_removal_edit(text, candidate, name)
+        return text[:first] + replacement + text[end:]
+    lines = text.splitlines(keepends=True)
+    first = sum(map(len, lines[:candidate.line - 1]))
+    end = sum(map(len, lines[:candidate.end_line]))
+    member = name.partition('::')[2]
+    if candidate.form == 'implicit':
+        closing = sum(map(len, lines[:candidate.end_line - 1]))
+        if _mask_non_code(text)[closing:end].strip() != '};':
+            raise ValueError('implicit member class does not close on its own line')
+        return text[:closing] + ' public:\n  ' + member + '();\n' + text[closing:]
+    if candidate.form == 'qualified' and member.startswith('~'):
+        return text[:first] + text[end:]
+    raise ValueError('compiler body attribution supports ordinary free functions, '
+                     'in-class members, destructors and implicit destructors only')
+
+
 class BodyAttribution:
     """Invocation-local controls; never replay saved attribution reports."""
 
@@ -141,14 +209,23 @@ class BodyAttribution:
     def _candidate(self, record):
         candidate = resolve_body(record, marker_path=record.path.relative_to(self.root).as_posix(),
                                  source_texts=self.texts, symbol_format=self.symbol_format)
+        symbol = record.symbol or record.name
+        if candidate.status == 'implicit':
+            if self.symbol_format != 'msvc' or not symbol.startswith('??1'):
+                raise ValueError('implicit declared body requires an MSVC complete destructor symbol')
+            return candidate, qualified_name(symbol)
         if candidate.status != 'candidate':
             raise ValueError('declared source body unresolved: ' + candidate.reason)
         if _is_placeholder_region(candidate.body):
             raise ValueError('declared source body is an unfinished placeholder')
         symbol = record.symbol or record.name
         name = qualified_name(symbol) if self.symbol_format == 'msvc' else identifier(symbol)
+        if name and '::' in name and (candidate.form == 'in_class'
+                                      or name.partition('::')[2].startswith('~')):
+            return candidate, name
         if not name or not name.isidentifier():
-            raise ValueError('compiler body attribution currently supports ordinary free functions only')
+            raise ValueError('compiler body attribution currently supports ordinary free functions '
+                             'and in-class member definitions only')
         return candidate, name
 
     def is_placeholder(self, record):
@@ -168,6 +245,8 @@ class BodyAttribution:
             record = self.record(entity_id)
             try:
                 candidate, name = self._candidate(record)
+                if '::' in name:
+                    continue
                 symbol = record.symbol or record.name
                 obj.function(symbol)
                 probe = 'match_recovery_body_probe_' + secrets.token_hex(12)
@@ -194,21 +273,54 @@ class BodyAttribution:
             for first, end, replacement in reversed(ordered):
                 text = text[:first] + replacement + text[end:]
             replacements[path] = text.encode('utf-8')
-        self.compile_attempts += 1
-        unchanged = Coff(overlay(self.root / unit, originals, tuple(arguments), tuple(flags)))
-        if compare_outside_functions(obj, unchanged, {}, {})['result'] != 'pass':
-            raise ValueError('unchanged source overlay differs from ordinary compiler output')
+        self._unchanged_control(unit, obj, originals, arguments, flags, overlay)
         self.compile_attempts += 1
         changed = Coff(overlay(self.root / unit, replacements, tuple(arguments), tuple(flags)))
         return changed, probes
 
+    def _unchanged_control(self, unit, obj, originals, arguments, flags, overlay):
+        self.compile_attempts += 1
+        unchanged = Coff(overlay(self.root / unit, originals, tuple(arguments), tuple(flags)))
+        if compare_outside_functions(obj, unchanged, {}, {})['result'] != 'pass':
+            raise ValueError('unchanged source overlay differs from ordinary compiler output')
+
+    def _removal_trial(self, record, candidate, name, unit, obj, arguments, flags, compiler):
+        """Per-member control: removing its in-class body removes its definition.
+
+        Run alone so that one member's removal cannot change whether another
+        selected inline definition is emitted.
+        """
+        overlay = getattr(compiler, 'overlay', None)
+        if not callable(overlay):
+            raise ValueError('configured compiler client has no source-overlay capability')
+        original = self.bytes[candidate.path]
+        try:
+            text = original.decode('utf-8')
+        except UnicodeError as error:
+            raise ValueError('declared body is not UTF-8 source') from error
+        removed = _member_control_edit(text, candidate, name).encode('utf-8')
+        self._unchanged_control(unit, obj, {candidate.path: original}, arguments, flags, overlay)
+        self.compile_attempts += 1
+        return Coff(overlay(self.root / unit, {candidate.path: removed}, tuple(arguments), tuple(flags)))
+
     def qualify(self, record, obj, *, unit, arguments, flags, compiler):
         if self.is_placeholder(record):
             raise ValueError('declared body or marker-owned definition is an unfinished placeholder')
-        candidate, _name = self._candidate(record)
+        candidate, name = self._candidate(record)
         symbol = record.symbol or record.name
         obj.function(symbol)
         key = (unit, tuple(arguments), tuple(flags), hashlib.sha256(obj.raw_data).hexdigest())
+        if '::' in name:
+            changed = self._removal_trial(record, candidate, name, unit, obj, arguments, flags, compiler)
+            control = {'in_class': 'in-class body removal', 'implicit': 'user destructor declaration',
+                       'qualified': 'out-of-class definition removal'}[candidate.form]
+            if any(item.name == symbol and item.section > 0 for item in changed.symbols.values()):
+                raise ValueError(control + ' did not remove the selected function definition')
+            return {'result': 'pass', 'path': candidate.path, 'line': candidate.line,
+                    'end_line': candidate.end_line, 'symbol': symbol, 'unit': unit, 'form': candidate.form,
+                    'evidence': 'unchanged-overlay equivalence and ' + control + '/disappearance',
+                    'ordinary_object_sha256': key[-1],
+                    'limitations': ['current configured compilation only; no original-TU, linked-selection or runtime proof']}
         if key not in self.trials:
             try:
                 self.trials[key] = self._trial(unit, obj, arguments, flags, compiler)

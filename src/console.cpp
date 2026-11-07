@@ -645,7 +645,7 @@ Purpose: Tear down the game console - its own Buffer/Time/Menu/Sprite
          members, its own extra embedded GraphicWin, then the MapWin
          fields it holds directly (no separate call into MapWin's own
          destructor).
-// ORIGINAL: 0x0051D9F0 ??1Console@@QAE@XZ 0x0051D9F0-0x0051DC10;0x0065D0E0-0x0065D220
+// ORIGINAL: 0x0051D9F0 ??1Console@@QAE@XZ 0x0051D9F0-0x0051DC10;0x0065D0E0-0x0065D220 BYTE_EXACT
 // symbol    ??1Console@@UAE@XZ
 // body      src/console.h
 //

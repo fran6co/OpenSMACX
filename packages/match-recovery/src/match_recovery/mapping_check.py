@@ -289,7 +289,12 @@ def check_mappings(root: Path) -> dict:
                 body_hosts[host] = {item.line: item for item in read_text(body_texts[host], root / host)}
             candidate = resolve_body(body_hosts[host][record['line']], marker_path=host,
                                      source_texts=body_texts, symbol_format=source.symbol_format)
-            if candidate.status != 'candidate':
+            if candidate.status == 'implicit':
+                body_references.append({**row, 'definition_line': None, 'definition_end_line': None,
+                                        'class_line': candidate.line, 'class_end_line': candidate.end_line,
+                                        'evidence': 'implicit destructor of a class declaring none; '
+                                                    'compiler identity/context unproven'})
+            elif candidate.status != 'candidate':
                 errors.append({**row, 'reason': candidate.reason})
             else:
                 body_references.append({**row, 'definition_line': candidate.line,
