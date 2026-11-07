@@ -1199,7 +1199,7 @@ void Path::merge(int region_old, int region_new) {
 /*
  Purpose: Build the pathing tables using the provided coordinates to radiate outward for connected 
           land tiles owned by the specified faction.
-// ORIGINAL: 0x0059C3C0 ?territory@Path@@QAEXHHHH@Z 0x0059C3C0-0x0059C51B
+// ORIGINAL: 0x0059C3C0 ?territory@Path@@QAEXHHHH@Z 0x0059C3C0-0x0059C51B BYTE_EXACT
 // LEVER: the loop cursors are `int`, not `int16_t`. The image reads
 //   `movsx edx, word ptr [edx + eax*2]` and keeps a 32-bit value; `int16_t`
 //   locals give `mov dx, word ptr [...]` and defer the widening to a later
@@ -1290,7 +1290,7 @@ void Path::territory(int x, int y, int UNUSED(region), int faction_id) {
 
 /*
  Purpose: Populate the continent and path table for the specified tile and region.
-// ORIGINAL: 0x0059C520 ?continent@Path@@QAEXHHH@Z 0x0059C520-0x0059C781
+// ORIGINAL: 0x0059C520 ?continent@Path@@QAEXHHH@Z 0x0059C520-0x0059C781 BYTE_EXACT
 // HISTORICAL LEVER (superseded): `region_set_call` restored apparent call
 //   counts, but introduced a synthetic callee. The mapped owner is now an
 //   ordinary definition in map.cpp, so these sites call it directly.
@@ -1375,7 +1375,7 @@ void Path::continent(int x, int y, int region) {
 
 /*
  Purpose: Populate and set up all the continents and path tables.
-// ORIGINAL: 0x0059C790 ?continents@Path@@QAEXXZ 0x0059C790-0x0059CC9D
+// ORIGINAL: 0x0059C790 ?continents@Path@@QAEXXZ 0x0059C790-0x0059CC9D BYTE_EXACT
 // LEVER: MERGE IS INLINED HERE, THREE TIMES - this was the whole gap. The
 //   image's own `?merge@Path@@QAEXHH@Z` has zero callers because `continents`
 //   expands all three of its merge calls in place (0x0059C88B-0x0059C9E6),
