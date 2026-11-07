@@ -486,7 +486,7 @@ restore_done:
 
 /*
 Purpose: Restore an explicit list position and return its item ID.
-// ORIGINAL: 0x00609B50 ?pos_to_id@Dialog@@QAEHH@Z 0x00609B50-0x00609BEA
+// ORIGINAL: 0x00609B50 ?pos_to_id@Dialog@@QAEHH@Z 0x00609B50-0x00609BEA BYTE_EXACT
 // LEVER: dropped a dead `int count = entry_count_;` first line (unused,
 //        scored no differently either way) - not the defect. `/Oi-` is:
 //        the DEFAULT flag set lets VC6 expand `abs()` as an intrinsic bit

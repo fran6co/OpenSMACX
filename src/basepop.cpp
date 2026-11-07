@@ -2616,7 +2616,7 @@ void BasePop::set_external_window(GraphicWin *external_window, int loc_x,
 }
 
 
-// ORIGINAL: 0x006015B0 ?init@BasePop@@QAEHHJ@Z 0x006015B0-0x0060179A FILE
+// ORIGINAL: 0x006015B0 ?init@BasePop@@QAEHHJ@Z 0x006015B0-0x0060179A FILE BYTE_EXACT
 // size      490 bytes
 // prototype int (__thiscall ?init@BasePop@@QAEHHJ@Z)(BasePop* this, int, int)
 // callers   9   call targets   6
