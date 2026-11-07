@@ -1127,7 +1127,7 @@ void NetDaemon::send_rules() {
 }
 
 
-// ORIGINAL: 0x0052F8E0 ?game_checksum@NetDaemon@@QAEXPAH@Z 0x0052F8E0-0x0053031E FILE
+// ORIGINAL: 0x0052F8E0 ?game_checksum@NetDaemon@@QAEXPAH@Z 0x0052F8E0-0x0053031E FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence":["pinned:0x0052F8E0..0x0053031E and sole mapped caller 0x0051E760..0x0051F0A7", "src/net_checksum_report.h: observed 47-word output groups and offsets; 21-word common prefix, conditional 26-word diagnostic suffix", "The mapped caller leaves the report uninitialized, copies only its 0x54-byte prefix, and reads the diagnostic suffix even for the original type-4/debug-off path; preserve that behavior."],"reason":"Give the checksum producer and its mapped consumer a genuine typed output report while retaining the original function span, traversal and conditional initialization behavior; this is an observed output contract, not a recovered original type name or allocation claim."}
 // TRIED: full instruction-order transcription of all ~150 checksum() calls (verified offsets/strides/seed-chaining against raw disasm, not Ghidra scaling); diverges at insn #53, likely register-alloc (lea vs mov) in the bit_count loop or header prologue, not logic.
 // LEVER: one walking output cursor, indexed Vehs/Bases loops, counters
