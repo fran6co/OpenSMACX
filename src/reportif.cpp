@@ -3974,10 +3974,10 @@ void __cdecl sat_edit(int report_faction_id, int target_faction_id, int satellit
             // The original compares the signed result of a wrapping 32-bit
             // subtraction, not the two unsigned counters.
             if (satellite_type == 3
-                && (int)(PlayersData[target_faction_id].satellites_[satellite_type]
+                && (int)(PlayersData[target_faction_id].satellites_[3]
                     - PlayersData[target_faction_id].sat_odp_deployed) < 0) {
                 PlayersData[target_faction_id].sat_odp_deployed =
-                    PlayersData[target_faction_id].satellites_[satellite_type];
+                    PlayersData[target_faction_id].satellites_[3];
                 see_map_check();
                 ReportWinGlobal.redraw();
                 return;

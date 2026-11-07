@@ -10332,7 +10332,8 @@ void Win::fill_palette_color_rect(int x, int y, int width, int height,
 // ORIGINAL: 0x005F37C0 sub_5f37c0 0x005F37C0-0x005F3B73 FILE
 // RECOVERY_BINDING: v1 {"evidence": ["git:f2a0fa1952cef53f4a2c6a5e60a8bea9bff9c3aa:src/unrecovered/005f37c0.cpp", "pinned:terranx_original:0x5f37c0", "source:src/win.h", "source:src/graphicwin.h"], "reason": "Native Win receiver and Buffer/x/y inputs, top-down DIB damage and source-relative to destination-relative copy geometry. Source names are descriptive, not recovered historical spellings. Preserve all original spans and historical findings; no new matching or full acceptance claim."}
 // symbol    ?copy_edges_to_buffer@Win@@QAEXPAVBuffer@@HH@Z
-// TRIED: signature is __thiscall(int,int,int) returning void, not the brief's __stdcall(int,int,int) - ecx used as `this` throughout, ret 0xc pops 3 stack args. Ghidra's pseudocode (IsRectEmpty/ IntersectRect/copy over 4 edge buffers + a GetWindowRect case) checked against the raw disassembly's ESP-relative RECT layout and used as the translation basis (sim 0.75 at /O2 no-Oy-). slot061 retyped `int` (thiscall, nullary, tested against 0). First divergence at #12 is prologue register scheduling, not chased further. Not byte-exact.
+// Damage rect via set_rectangle_dimensions; edges via offset_rect on a
+// copied client RECT.
 void Win::copy_edges_to_buffer(Buffer *target, int x, int y) {
     if (target == 0) {
         return;
@@ -10341,26 +10342,19 @@ void Win::copy_edges_to_buffer(Buffer *target, int x, int y) {
     RECT damage;
     RECT source_rect;
     RECT intersection;
-    damage.top = y;
-    damage.bottom = y - target->dib_.bmiHeader.biHeight;
-    damage.right = target->dib_.bmiHeader.biWidth + x;
-    damage.left = x;
+    set_rectangle_dimensions(&damage, x, y, target->dib_.bmiHeader.biWidth,
+                             -target->dib_.bmiHeader.biHeight);
     if (IsRectEmpty(&damage)) {
         return;
     }
 
     if ((iSomeFlag_ & 2) != 0) {
-        const RECT client = client_rect_;
-        const int left = client.left;
-        const int top = client.top;
-        const int right = client.right;
-        const int bottom = client.bottom;
-        Buffer *edge = buffer1_;
-        source_rect = edge->rect2_;
-        source_rect.left += left;
-        source_rect.right += left;
-        source_rect.bottom += top;
-        source_rect.top += top;
+        RECT client = client_rect_;
+        int left = client.left;
+        int top = client.top;
+
+        source_rect = buffer1_->rect2_;
+        offset_rect(&source_rect, left, top);
         if (IntersectRect(&intersection, &source_rect, &damage)) {
             buffer1_->copy(target, intersection.left - source_rect.left,
                        intersection.top - source_rect.top,
@@ -10370,13 +10364,8 @@ void Win::copy_edges_to_buffer(Buffer *target, int x, int y) {
                        intersection.bottom - intersection.top);
         }
 
-        edge = buffer3_;
-        source_rect = edge->rect2_;
-        const int bottom_base = top - buffer1_->dib_.bmiHeader.biHeight;
-        source_rect.left += left;
-        source_rect.bottom += bottom_base;
-        source_rect.right += left;
-        source_rect.top += bottom_base;
+        source_rect = buffer3_->rect2_;
+        offset_rect(&source_rect, left, top - buffer1_->dib_.bmiHeader.biHeight);
         if (IntersectRect(&intersection, &source_rect, &damage)) {
             buffer3_->copy(target, intersection.left - source_rect.left,
                        intersection.top - source_rect.top,
@@ -10386,13 +10375,8 @@ void Win::copy_edges_to_buffer(Buffer *target, int x, int y) {
                        intersection.bottom - intersection.top);
         }
 
-        edge = buffer4_;
-        source_rect = edge->rect2_;
-        const int right_top = edge->dib_.bmiHeader.biHeight + bottom;
-        source_rect.right += left;
-        source_rect.bottom += right_top;
-        source_rect.left += left;
-        source_rect.top += right_top;
+        source_rect = buffer4_->rect2_;
+        offset_rect(&source_rect, left, buffer4_->dib_.bmiHeader.biHeight + client.bottom);
         if (IntersectRect(&intersection, &source_rect, &damage)) {
             buffer4_->copy(target, intersection.left - source_rect.left,
                        intersection.top - source_rect.top,
@@ -10402,14 +10386,9 @@ void Win::copy_edges_to_buffer(Buffer *target, int x, int y) {
                        intersection.bottom - intersection.top);
         }
 
-        edge = buffer2_;
-        source_rect = edge->rect2_;
-        const int left_top = top - buffer1_->dib_.bmiHeader.biHeight;
-        const int left_edge = right - edge->dib_.bmiHeader.biWidth;
-        source_rect.right += left_edge;
-        source_rect.left += left_edge;
-        source_rect.bottom += left_top;
-        source_rect.top += left_top;
+        source_rect = buffer2_->rect2_;
+        offset_rect(&source_rect, client.right - buffer2_->dib_.bmiHeader.biWidth,
+                    top - buffer1_->dib_.bmiHeader.biHeight);
         if (IntersectRect(&intersection, &source_rect, &damage)) {
             buffer2_->copy(target, intersection.left - source_rect.left,
                        intersection.top - source_rect.top,
@@ -10440,7 +10419,8 @@ void Win::copy_edges_to_buffer(Buffer *target, int x, int y) {
 // ORIGINAL: 0x005F3B80 sub_5f3b80 0x005F3B80-0x005F4AA7 FILE
 // RECOVERY_BINDING: v1 {"evidence": ["git:f2a0fa1952cef53f4a2c6a5e60a8bea9bff9c3aa:src/unrecovered/005f3b80.cpp", "pinned:terranx_original:0x5f3b80", "source:src/win.h", "source:src/graphicwin.h"], "reason": "Native current Win source and target Win receiver distinction, chained edge rectangles, clip/mode gates and distinct inherited versus allocated GraphicWin buffers. Source names are descriptive, not recovered historical spellings. Preserve all original spans and historical findings; no new matching or full acceptance claim."}
 // symbol    ?copy_border_buffers_to_window@Win@@QAEXPAV1@PAUtagRECT@@H@Z
-// TRIED: IDA's `__stdcall(int,RECT*,int)` guess with no receiver - ecx is dereferenced immediately with no matching stack slot, so this is a __thiscall member (class EdgeWin here) over IDA's 3 args. The screen-relative pass's destination buffer (5th TRY5 call) isn't resolved past this point in the disassembly given; reused the top-edge buffer field there as the least-wrong guess. sim 0.56-0.74 across flag sets.
+// Copy offsets are relative to the unclipped edge rect; the screen pass
+// reuses edge_rect for GetWindowRect. Edge offsets go through offset_rect.
 void Win::copy_border_buffers_to_window(Win *target, RECT *clip, int mode) {
     if (target == 0 || (target->iSomeFlag_ & 2) == 0 ||
         (target->iFlags_ & 0x10000000) == 0) {
@@ -10452,6 +10432,9 @@ void Win::copy_border_buffers_to_window(Win *target, RECT *clip, int mode) {
     }
     GraphicWin *target_graphic = 0;
     RECT screen_rect;
+    RECT edge_rect;
+    RECT clipped;
+    RECT hit;
     if (clip != 0 && IsRectEmpty(clip)) {
         return;
     }
@@ -10486,12 +10469,8 @@ void Win::copy_border_buffers_to_window(Win *target, RECT *clip, int mode) {
 
     target_edge = target->buffer2_;
     left_rect = target_edge->rect2_;
-    const int left_right_base =
-        (left_rect.left - left_rect.right) + top_rect.right;
-    left_rect.left += left_right_base;
-    left_rect.right += left_right_base;
-    left_rect.bottom += top_rect.bottom;
-    left_rect.top += top_rect.bottom;
+    offset_rect(&left_rect, (left_rect.left - left_rect.right) + top_rect.right,
+                top_rect.bottom);
 
     if (target->get_graphic_win() != 0 &&
         (target->iFlags_ & 0x40000000) != 0) {
@@ -10499,43 +10478,42 @@ void Win::copy_border_buffers_to_window(Win *target, RECT *clip, int mode) {
         GetWindowRect(HandleMain, &screen_rect);
     }
 
-#define COPY_EDGE_TO_TARGET(destination, edge_rect)                              \
+#define COPY_EDGE_TO_TARGET(destination, edge_rect)                                  \
     do {                                                                         \
-        RECT clipped = edge_rect;                                                \
-        RECT hit;                                                                \
+        clipped = edge_rect;                                                     \
         if (clip == 0 || IntersectRect(&clipped, &edge_rect, clip) != 0) {       \
             if (IntersectRect(&hit, &clipped, &top_rect) != 0 &&                 \
                 (mode == -1 || mode == 0)) {                                     \
                 (destination)->copy(target->buffer1_,                            \
-                    hit.left - clipped.left, hit.top - clipped.top,              \
+                    hit.left - edge_rect.left, hit.top - edge_rect.top,              \
                     hit.left - top_rect.left, hit.top - top_rect.top,            \
                     hit.right - hit.left, hit.bottom - hit.top);                 \
             }                                                                    \
             if (IntersectRect(&hit, &clipped, &bottom_rect) != 0 &&              \
                 (mode == -1 || mode == 3)) {                                     \
                 (destination)->copy(target->buffer3_,                            \
-                    hit.left - clipped.left, hit.top - clipped.top,              \
+                    hit.left - edge_rect.left, hit.top - edge_rect.top,              \
                     hit.left - bottom_rect.left, hit.top - bottom_rect.top,      \
                     hit.right - hit.left, hit.bottom - hit.top);                 \
             }                                                                    \
             if (IntersectRect(&hit, &clipped, &left_rect) != 0 &&                \
                 (mode == -1 || mode == 1)) {                                     \
                 (destination)->copy(target->buffer2_,                            \
-                    hit.left - clipped.left, hit.top - clipped.top,              \
+                    hit.left - edge_rect.left, hit.top - edge_rect.top,              \
                     hit.left - left_rect.left, hit.top - left_rect.top,          \
                     hit.right - hit.left, hit.bottom - hit.top);                 \
             }                                                                    \
             if (IntersectRect(&hit, &clipped, &right_rect) != 0 &&               \
                 (mode == -1 || mode == 2)) {                                     \
                 (destination)->copy(target->buffer4_,                            \
-                    hit.left - clipped.left, hit.top - clipped.top,              \
+                    hit.left - edge_rect.left, hit.top - edge_rect.top,              \
                     hit.left - right_rect.left, hit.top - right_rect.top,        \
                     hit.right - hit.left, hit.bottom - hit.top);                 \
             }                                                                    \
             if (target_graphic != 0 && mode == -1 &&                            \
                 IntersectRect(&hit, &clipped, &screen_rect) != 0) {              \
                 (destination)->copy(target_graphic->owned_buffer(),               \
-                    hit.left - clipped.left, hit.top - clipped.top,              \
+                    hit.left - edge_rect.left, hit.top - edge_rect.top,              \
                     hit.left - screen_rect.left, hit.top - screen_rect.top,      \
                     hit.right - hit.left, hit.bottom - hit.top);                 \
             }                                                                    \
@@ -10543,54 +10521,32 @@ void Win::copy_border_buffers_to_window(Win *target, RECT *clip, int mode) {
     } while (0)
 
     if ((iSomeFlag_ & 2) != 0) {
-        const RECT client = client_rect_;
-        const int left = client.left;
-        const int top = client.top;
-        const int right = client.right;
-        const int bottom = client.bottom;
-        RECT edge_rect;
-        target_edge = buffer1_;
-        edge_rect = target_edge->rect2_;
-        edge_rect.left += left;
-        edge_rect.right += left;
-        edge_rect.top += top;
-        edge_rect.bottom += top;
+        RECT client = client_rect_;
+        int left = client.left;
+        int top = client.top;
+        edge_rect = buffer1_->rect2_;
+        offset_rect(&edge_rect, left, top);
         COPY_EDGE_TO_TARGET(buffer1_, edge_rect);
 
-        target_edge = buffer3_;
-        edge_rect = target_edge->rect2_;
-        const int bottom_base = top - buffer1_->dib_.bmiHeader.biHeight;
-        edge_rect.left += left;
-        edge_rect.right += left;
-        edge_rect.top += bottom_base;
-        edge_rect.bottom += bottom_base;
+        edge_rect = buffer3_->rect2_;
+        offset_rect(&edge_rect, left, top - buffer1_->dib_.bmiHeader.biHeight);
         COPY_EDGE_TO_TARGET(buffer3_, edge_rect);
 
-        target_edge = buffer4_;
-        edge_rect = target_edge->rect2_;
-        const int right_base = target_edge->dib_.bmiHeader.biHeight + bottom;
-        edge_rect.left += left;
-        edge_rect.right += left;
-        edge_rect.top += right_base;
-        edge_rect.bottom += right_base;
+        edge_rect = buffer4_->rect2_;
+        offset_rect(&edge_rect, left, buffer4_->dib_.bmiHeader.biHeight + client.bottom);
         COPY_EDGE_TO_TARGET(buffer4_, edge_rect);
 
-        target_edge = buffer2_;
-        edge_rect = target_edge->rect2_;
-        const int left_bottom_base = top - buffer1_->dib_.bmiHeader.biHeight;
-        const int left_base = right - target_edge->dib_.bmiHeader.biWidth;
-        edge_rect.left += left_base;
-        edge_rect.right += left_base;
-        edge_rect.top += left_bottom_base;
-        edge_rect.bottom += left_bottom_base;
+        edge_rect = buffer2_->rect2_;
+        offset_rect(&edge_rect, client.right - buffer2_->dib_.bmiHeader.biWidth,
+                    top - buffer1_->dib_.bmiHeader.biHeight);
         COPY_EDGE_TO_TARGET(buffer2_, edge_rect);
     }
 
     GraphicWin *graphic = get_graphic_win();
     if (graphic != 0) {
-        GetWindowRect(HandleMain, &screen_rect);
+        GetWindowRect(HandleMain, &edge_rect);
         // Native uses this+Buffer-base, independently of the getter result.
-        COPY_EDGE_TO_TARGET(static_cast<Buffer *>(static_cast<GraphicWin *>(this)), screen_rect);
+        COPY_EDGE_TO_TARGET(static_cast<GraphicWin *>(this), edge_rect);
     }
 #undef COPY_EDGE_TO_TARGET
 }

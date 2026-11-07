@@ -7635,7 +7635,7 @@ int MapWin::pixel_to_tile(int x_pixel, int y_pixel, int *out_tile_x,
     if (x_pixel < 0 || y_pixel < 0) {
         return 1;
     }
-    const int column =
+    int column =
         wrap_map_x(field_1DDA4_ + (x_pixel / tile_pixel_width_) * 2 + 1);
     int row = field_1DDA8_ + (y_pixel / tile_pixel_height_) * 2 + 1;
     const int half_width = field_1DDBC_;
@@ -7644,7 +7644,8 @@ int MapWin::pixel_to_tile(int x_pixel, int y_pixel, int *out_tile_x,
     if (wrap_map_x(field_1DDA4_ +
                    ((x_pixel - half_width) / tile_pixel_width_) * 2 + 1) ==
         column) {
-        tile_x = column + 1;
+        // The column itself advances: the corner offsets below use it.
+        tile_x = ++column;
         row--;
         upper = 1;
     } else {
