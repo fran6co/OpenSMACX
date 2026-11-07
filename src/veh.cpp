@@ -2191,7 +2191,14 @@ the six survivors are dead code or equivalences rather than untested behaviour.
   - `moves_left > 999` against `>= 999` differ only at 999, where the clamp writes the 999 that
     is already there.
 */
+// Inlined: the doubled vector_dist halved once.
+static inline int patrol_dist(int x_a, int y_a, int x_b, int y_b) {
+    return (x_dist(x_a, x_b) + abs(y_a - y_b)) >> 1;
+}
+
 int __cdecl valid_patrol(int veh_id, int x, int y) {
+    // One local: the sea base id and the air start-is-landing flag share a slot.
+    int base_veh;
     if (x == Vehs[veh_id].x && y == Vehs[veh_id].y) {
         return false;
     }
@@ -2204,7 +2211,7 @@ int __cdecl valid_patrol(int veh_id, int x, int y) {
             return false;
         }
     } else if (triad == TRIAD_SEA) {
-        int base_veh = base_at(Vehs[veh_id].x, Vehs[veh_id].y);
+        base_veh = base_at(Vehs[veh_id].x, Vehs[veh_id].y);
         int base_dst = base_at(x, y);
         if (base_veh >= 0) {
             if (base_dst >= 0) {
@@ -2223,33 +2230,26 @@ int __cdecl valid_patrol(int veh_id, int x, int y) {
         }
     } else if (triad == TRIAD_AIR
                && Chassis[VehPrototypes[Vehs[veh_id].proto_id].chassis_id].range) {
-        int landing_veh;
-        if (base_at(Vehs[veh_id].x, Vehs[veh_id].y)) {
-            landing_veh = 1;
+        if (base_at(Vehs[veh_id].x, Vehs[veh_id].y) || map_loc(Vehs[veh_id].x, Vehs[veh_id].y)->bit & BIT_AIRBASE) {
+            base_veh = 1;
         } else {
-            landing_veh = 0;
-            if (map_loc(Vehs[veh_id].x, Vehs[veh_id].y)->bit & BIT_AIRBASE) {
-                landing_veh = 1;
-            }
+            base_veh = 0;
         }
         int landing_dst;
-        if (base_at(x, y)) {
+        if (base_at(x, y) || map_loc(x, y)->bit & BIT_AIRBASE) {
             landing_dst = 1;
         } else {
             landing_dst = 0;
-            if (map_loc(x, y)->bit & BIT_AIRBASE) {
-                landing_dst = 1;
-            }
         }
-        if (landing_veh < 0 && landing_dst < 0) {
+        if (base_veh < 0 && landing_dst < 0) {
             return false;
         }
         int reach = (speed(veh_id, false)
             * (Chassis[VehPrototypes[Vehs[veh_id].proto_id].chassis_id].range
                - Vehs[veh_id].terraforming_turns - 1)
             + veh_moves(veh_id)) / Rules.move_rate_roads;
-        int dist = (x_dist(x, Vehs[veh_id].x) + abs(y - Vehs[veh_id].y)) >> 1;
-        if (landing_veh && landing_dst) {
+        int dist = patrol_dist(x, y, Vehs[veh_id].x, Vehs[veh_id].y);
+        if (base_veh && landing_dst) {
             if (dist > reach) {
                 return false;
             }
@@ -2870,14 +2870,16 @@ int __cdecl interceptor(int faction_id, int opposing_faction,
             && (base_who(Vehs[vehicle_id].x, Vehs[vehicle_id].y) >= 0
                 || bit_at(Vehs[vehicle_id].x, Vehs[vehicle_id].y) & BIT_AIRBASE
                 || stack_check(vehicle_id, 6, ABL_CARRIER, -1, -1))
-            && ((x_dist(Vehs[vehicle_id].x, target_x) + abs(Vehs[vehicle_id].y - target_y)) & ~1) <= 4) {
+            && patrol_dist(Vehs[vehicle_id].x, Vehs[vehicle_id].y, target_x, target_y) <= 2) {
             int weight = 1;
-            const int8_t offense = get_offense_rating(vehicle_id);
+            const int proto_id = Vehs[vehicle_id].proto_id;
+            const int8_t offense = get_proto_offense_rating(proto_id);
             if (offense >= 1) {
                 weight = offense;
             }
-            const int score =
-                weight * range(proto_power(vehicle_id) - Vehs[vehicle_id].dmg_incurred, 0, 9999);
+            const int power = VehPrototypes[proto_id].plan == PLAN_ALIEN_ARTIFACT
+                ? 1 : range(VehPrototypes[proto_id].reactor_id, 1, 100) * 10;
+            const int score = weight * range(power - Vehs[vehicle_id].dmg_incurred, 0, 9999);
             if (score >= best_score) {
                 best_score = score;
                 best_vehicle = vehicle_id;
@@ -2895,7 +2897,7 @@ int __cdecl interceptor(int faction_id, int opposing_faction,
         ConsoleGlobal.focus(x, y, faction_id);
         NetMsgPrimary.pop("AIRSCRAMBLE", 5000, 0, 0);
         // Animate the interceptor one step at a time toward the target.
-        while ((x_dist(x, target_x) + abs(y - target_y)) & ~1) {
+        while (patrol_dist(x, y, target_x, target_y)) {
             int best_direction = -1;
             int best_distance = 999;
             int next_x;
@@ -2904,7 +2906,7 @@ int __cdecl interceptor(int faction_id, int opposing_faction,
                 const int x_step = wrap_map_x(VehMoveDeltaX[direction] + x);
                 const int y_step = VehMoveDeltaY[direction] + y;
                 if (on_map(x_step, y_step)) {
-                    const int distance = (x_dist(x_step, target_x) + abs(y_step - target_y)) >> 1;
+                    const int distance = patrol_dist(x_step, y_step, target_x, target_y);
                     if (distance < best_distance) {
                         best_distance = distance;
                         best_direction = direction;
@@ -10774,90 +10776,89 @@ dispatch_event:
 // ORIGINAL: 0x004CEDE0 ?action_give@@YAXHH@Z 0x004CEDE0-0x004CF379
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned entry 004CEDE0; retained seed src/recovered/units/004cede0.cpp", "recovery/tasks/vehicle-special-actions-coverage.json; native scope expansion preserves task baseline", "Native4CE326/4CE7F0 kill precedes announcement; fungal EBX retains initial combat faction while later slot reads observe compacted storage;580B51/580BF7 are mask immediates, not globals."], "reason": "Typed transfer or terrain action preserves native parser, kill, interception and post-call vehicle-slot read order; retained seed remains evidence, not executable backing."}
 void __cdecl action_give(int vehicle_id, int faction_id) {
-    const int y = Vehs[vehicle_id].y;
-    const int x = Vehs[vehicle_id].x;
     const int original_owner = Vehs[vehicle_id].faction_id;
-    if (vehicle_id >= 0) {
-        // Hand over the unit and everything it carries.
-        for (int i = veh_top(vehicle_id); i >= 0; i = Vehs[i].next_veh_id_stack) {
-            if (i != vehicle_id
-                && (Vehs[i].order != ORDER_SENTRY_BOARD || Vehs[i].waypoint_x[0] != vehicle_id)) {
-                continue;
-            }
-            int proto_id;
-            if (Vehs[i].proto_id < MaxVehProtoFactionNum) {
-                proto_id = Vehs[i].proto_id;
-            } else {
-                // Find or design an equivalent prototype for the recipient.
-                proto_id = -1;
-                for (int j = 0; j < MaxVehProtoFactionNum; j++) {
-                    const int id = faction_id * MaxVehProtoFactionNum + j;
-                    if (VehPrototypes[id].flags & PROTO_ACTIVE
-                        && VehPrototypes[id].chassis_id == VehPrototypes[Vehs[i].proto_id].chassis_id
-                        && VehPrototypes[id].weapon_id == VehPrototypes[Vehs[i].proto_id].weapon_id
-                        && VehPrototypes[id].armor_id == VehPrototypes[Vehs[i].proto_id].armor_id
-                        && VehPrototypes[id].ability_flags == VehPrototypes[Vehs[i].proto_id].ability_flags
-                        && VehPrototypes[id].reactor_id == VehPrototypes[Vehs[i].proto_id].reactor_id) {
-                        proto_id = id;
-                        break;
-                    }
+    const int x = Vehs[vehicle_id].x;
+    const int y = Vehs[vehicle_id].y;
+    int id;
+    // Hand over the unit and everything it carries.
+    for (int i = veh_top(vehicle_id); i >= 0; i = Vehs[i].next_veh_id_stack) {
+        if (i != vehicle_id
+            && (Vehs[i].order != ORDER_SENTRY_BOARD || Vehs[i].waypoint_x[0] != vehicle_id)) {
+            continue;
+        }
+        int proto_id;
+        if (Vehs[i].proto_id >= MaxVehProtoFactionNum) {
+            // Find or design an equivalent prototype for the recipient.
+            proto_id = -1;
+            for (int j = 0; j < MaxVehProtoFactionNum; j++) {
+                id = faction_id * MaxVehProtoFactionNum + j;
+                if (VehPrototypes[id].flags & PROTO_ACTIVE
+                    && VehPrototypes[id].chassis_id == VehPrototypes[Vehs[i].proto_id].chassis_id
+                    && VehPrototypes[id].weapon_id == VehPrototypes[Vehs[i].proto_id].weapon_id
+                    && VehPrototypes[id].armor_id == VehPrototypes[Vehs[i].proto_id].armor_id
+                    && VehPrototypes[id].ability_flags == VehPrototypes[Vehs[i].proto_id].ability_flags
+                    && VehPrototypes[id].reactor_id == VehPrototypes[Vehs[i].proto_id].reactor_id) {
+                    proto_id = id;
+                    break;
                 }
+            }
+            if (proto_id < 0) {
+                proto_id = propose_proto(faction_id,
+                    VehPrototypes[Vehs[i].proto_id].chassis_id,
+                    VehPrototypes[Vehs[i].proto_id].weapon_id,
+                    VehPrototypes[Vehs[i].proto_id].armor_id,
+                    VehPrototypes[Vehs[i].proto_id].ability_flags,
+                    VehPrototypes[Vehs[i].proto_id].reactor_id,
+                    (uint8_t)VehPrototypes[Vehs[i].proto_id].unk_1, nullptr);
                 if (proto_id < 0) {
-                    proto_id = propose_proto(faction_id,
-                        VehPrototypes[Vehs[i].proto_id].chassis_id,
-                        VehPrototypes[Vehs[i].proto_id].weapon_id,
-                        VehPrototypes[Vehs[i].proto_id].armor_id,
-                        VehPrototypes[Vehs[i].proto_id].ability_flags,
-                        VehPrototypes[Vehs[i].proto_id].reactor_id,
-                        VehPrototypes[Vehs[i].proto_id].unk_1, nullptr);
+                    for (int j = 0; j < MaxVehProtoFactionNum; j++) {
+                        id = faction_id * MaxVehProtoFactionNum + j;
+                        if (VehPrototypes[id].flags & PROTO_ACTIVE
+                            && VehPrototypes[id].chassis_id == VehPrototypes[Vehs[i].proto_id].chassis_id
+                            && VehPrototypes[id].weapon_id == VehPrototypes[Vehs[i].proto_id].weapon_id
+                            && VehPrototypes[id].armor_id == VehPrototypes[Vehs[i].proto_id].armor_id) {
+                            proto_id = id;
+                            break;
+                        }
+                    }
                     if (proto_id < 0) {
                         for (int j = 0; j < MaxVehProtoFactionNum; j++) {
-                            const int id = faction_id * MaxVehProtoFactionNum + j;
+                            id = faction_id * MaxVehProtoFactionNum + j;
                             if (VehPrototypes[id].flags & PROTO_ACTIVE
-                                && VehPrototypes[id].chassis_id == VehPrototypes[Vehs[i].proto_id].chassis_id
-                                && VehPrototypes[id].weapon_id == VehPrototypes[Vehs[i].proto_id].weapon_id
-                                && VehPrototypes[id].armor_id == VehPrototypes[Vehs[i].proto_id].armor_id) {
+                                && VehPrototypes[id].plan == VehPrototypes[Vehs[i].proto_id].plan) {
                                 proto_id = id;
                                 break;
                             }
                         }
                         if (proto_id < 0) {
                             for (int j = 0; j < MaxVehProtoFactionNum; j++) {
-                                const int id = faction_id * MaxVehProtoFactionNum + j;
+                                id = faction_id * MaxVehProtoFactionNum + j;
                                 if (VehPrototypes[id].flags & PROTO_ACTIVE
-                                    && VehPrototypes[id].plan == VehPrototypes[Vehs[i].proto_id].plan) {
+                                    && VehPrototypes[id].chassis_id
+                                        == VehPrototypes[Vehs[i].proto_id].chassis_id) {
                                     proto_id = id;
                                     break;
                                 }
                             }
                             if (proto_id < 0) {
-                                for (int j = 0; j < MaxVehProtoFactionNum; j++) {
-                                    const int id = faction_id * MaxVehProtoFactionNum + j;
-                                    if (VehPrototypes[id].flags & PROTO_ACTIVE
-                                        && VehPrototypes[id].chassis_id
-                                            == VehPrototypes[Vehs[i].proto_id].chassis_id) {
-                                        proto_id = id;
-                                        break;
-                                    }
-                                }
-                                if (proto_id < 0) {
-                                    proto_id = get_proto_triad(Vehs[i].proto_id) == TRIAD_SEA
-                                        ? BSC_TRANSPORT_FOIL : BSC_SCOUT_PATROL;
-                                }
+                                proto_id = get_proto_triad(Vehs[i].proto_id) == TRIAD_SEA
+                                    ? BSC_TRANSPORT_FOIL : BSC_SCOUT_PATROL;
                             }
                         }
                     }
                 }
             }
-            Vehs[i].faction_id = static_cast<uint8_t>(faction_id);
-            Vehs[i].proto_id = static_cast<int16_t>(proto_id);
-            Vehs[i].order = ORDER_NONE;
-            Vehs[i].state &= 0xFCFFBDFF;
-            const int home_base_id = base_find(x, y, faction_id);
-            Vehs[i].home_base_id = static_cast<int16_t>(home_base_id >= 0 ? home_base_id : -1);
-            if (base_who(x, y) < 0) {
-                owner_set(x, y, faction_id);
-            }
+        } else {
+            proto_id = Vehs[i].proto_id;
+        }
+        Vehs[i].faction_id = static_cast<uint8_t>(faction_id);
+        Vehs[i].proto_id = static_cast<int16_t>(proto_id);
+        Vehs[i].order = ORDER_NONE;
+        Vehs[i].state &= 0xFCFFBDFF;
+        const int home_base_id = base_find(x, y, faction_id);
+        Vehs[i].home_base_id = static_cast<int16_t>(home_base_id >= 0 ? home_base_id : -1);
+        if (base_who(x, y) < 0) {
+            owner_set(x, y, faction_id);
         }
     }
     draw_radius(x, y, 3, 2);
