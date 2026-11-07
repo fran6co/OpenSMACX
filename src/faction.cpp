@@ -6556,7 +6556,7 @@ static inline BOOL allocate_energy_riot_found(int faction_id) {
     return false;
 }
 
-// ORIGINAL: 0x005267B0 ?allocate_energy@@YAXH@Z 0x005267B0-0x00526E63
+// ORIGINAL: 0x005267B0 ?allocate_energy@@YAXH@Z 0x005267B0-0x00526E63 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["original:0x005267B0-0x00526E63", "git:38853a3f:src/unrecovered/005267b0.cpp", "source:src/faction.h", "source:src/base.h", "source:src/veh.h"], "reason": "Recover the complete faction energy allocation operation through real PlayerData, Base, Console and VehPrototype owners. Preserve the original first scan of global BaseCurrent without selecting each base, the later severe-police selection/recompute sequence, signed allocation arithmetic and callback order; historical spelling notes are not fresh measurements."}
 // TRIED: direct register-mirroring transcription (eax/ebx/.../var_4/var_c/var_10 locals) compiles and matches control flow/offsets faithfully but the extra scratch locals (vs the original's 6-int 0x18 frame) shift register allocation from instr #4; sim 0.68 framed. Not retried with fewer locals given size (1715 bytes).
 void __cdecl allocate_energy(int faction_id) {
