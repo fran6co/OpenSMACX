@@ -2438,11 +2438,10 @@ int Console::editor_who(int default_faction, int first_faction) {
     PopupModalState = 6;
     popup.start(PopupStartCaption, ConsoleStrEditorWhoListTitle, -1, 0, 0x40, nullptr);
 
-    for (int faction = first_faction < 0 ? 0 : first_faction;
-         faction < MaxPlayerNum; ++faction) {
-        GenderDefault = Players[faction].noun_gender;
-        PluralityDefault = Players[faction].is_noun_plural;
-        popup.dialogs().item(Players[faction].noun_faction, faction);
+    for (; first_faction < MaxPlayerNum; ++first_faction) {
+        parse_set(Players[first_faction].noun_gender,
+                  Players[first_faction].is_noun_plural);
+        popup.dialogs().item(Players[first_faction].noun_faction, first_faction);
     }
     if (default_faction >= 0) {
         popup.set_value(default_faction);
@@ -2806,15 +2805,18 @@ void Console::editor_diff() {
     auto_undo();
     popup.start(PopupStartCaption, "EDITORDIFF", -1, nullptr, 0x40, nullptr);
     for (int i = 0; i < MaxDiffNum; ++i) {
-        popup.dialogs().item(StringTable.get(Difficulty[i]), i);
+        StringTemp[0] = 0;
+        strcat(StringTemp, StringTable.get(Difficulty[i]));
+        popup.dialogs().item(StringTemp, i);
     }
     popup.set_value(GameDataStateStorage.fields_.diff_level_current_);
     const int selected = popup.exec(0, nullptr);
-    if (selected >= 0) {
-        GameDataStateStorage.fields_.diff_level_current_ = selected;
-        for (int faction = 0; faction < MaxPlayerNum; ++faction) {
-            PlayersData[faction].diff_level = selected;
-        }
+    if (selected < 0) {
+        return;
+    }
+    GameDataStateStorage.fields_.diff_level_current_ = selected;
+    for (int faction = 0; faction < MaxPlayerNum; ++faction) {
+        PlayersData[faction].diff_level = selected;
     }
 }
 
@@ -2826,26 +2828,22 @@ void Console::editor_reload() {
     PopupModalState = 6;
     popup.start(PopupStartCaption, "EDITORWHO", -1, nullptr, 0x40, nullptr);
     for (int faction_entry = 1; faction_entry < MaxPlayerNum; ++faction_entry) {
-        Player &row = Players[faction_entry];
-        const int plurality = row.is_noun_plural;
-        const int gender = row.noun_gender;
-        PluralityDefault = plurality;
-        GenderDefault = gender;
-        popup.dialogs().item(row.noun_faction, faction_entry);
+        parse_set(Players[faction_entry].noun_gender,
+                  Players[faction_entry].is_noun_plural);
+        popup.dialogs().item(Players[faction_entry].noun_faction, faction_entry);
     }
     const int faction = popup.exec(0, nullptr);
     PopupModalState = 0;
     if (faction < 0) {
         return;
     }
-    const int answer = X_pop_ask("RELOADFAC", 0x50, Players[faction].filename,
-                                 nullptr, 0);
-    if (answer == 0) {
-        strcpy(Players[faction].filename, ParseStrBuffer[0].str);
-        strcpy(Players[faction].search_key, ParseStrBuffer[0].str);
-        read_faction(faction);
-        compute_faction_modifiers(faction);
+    if (X_pop_ask("RELOADFAC", 0x50, Players[faction].filename, nullptr, 0)) {
+        return;
     }
+    strcpy(Players[faction].filename, ParseStrBuffer[0].str);
+    strcpy(Players[faction].search_key, ParseStrBuffer[0].str);
+    read_faction(faction);
+    compute_faction_modifiers(faction);
 }
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
@@ -2857,12 +2855,9 @@ void Console::editor_eliminate() {
     PopupModalState = 6;
     popup.start(PopupStartCaption, "EDITORWHO", -1, nullptr, 0x40, nullptr);
     for (int faction_entry = 1; faction_entry < MaxPlayerNum; ++faction_entry) {
-        Player &row = Players[faction_entry];
-        const int plurality = row.is_noun_plural;
-        const int gender = row.noun_gender;
-        PluralityDefault = plurality;
-        GenderDefault = gender;
-        popup.dialogs().item(row.noun_faction, faction_entry);
+        parse_set(Players[faction_entry].noun_gender,
+                  Players[faction_entry].is_noun_plural);
+        popup.dialogs().item(Players[faction_entry].noun_faction, faction_entry);
     }
     const int faction = popup.exec(0, nullptr);
     PopupModalState = 0;
@@ -3562,6 +3557,14 @@ void Console::go_home(int veh_id) {
     }
 }
 
+// Only the last field goes through this helper: the image's /Ob2 budget
+// leaves the early-return Popup teardown's StringList dtors out of line.
+static inline void parse_say_num(int index, int value) {
+    StringTemp[0] = 0;
+    say_num(value);
+    parse_says(index, StringTemp, -1, -1);
+}
+
 /*
 Purpose: Edit the seven scenario victory parameters on one SCENPARAM popup and
          re-parse the edited fields back into the game's objective globals.
@@ -3581,18 +3584,29 @@ void Console::editor_scen_param() {
 
     auto_undo();
 
-    parse_field_number(0, ScenarioSave.objective_req_victory);
-    parse_field_number(1, ScenarioSave.objectives_sudden_death_victory);
-    parse_field_number(2, ScenarioSave.objective_achieve_points);
-    parse_field_number(3, ScenarioSave.victory_achieve_bonus_points);
-    parse_field_number(4, ScenarioSave.starting_mission_year);
-    parse_field_number(5, ScenarioSave.ending_mission_year);
-    parse_field_number(6, GameDataStateStorage.fields_.sunspot_duration_);
+    StringTemp[0] = 0;
+    say_num(ScenarioSave.objective_req_victory);
+    parse_says(0, StringTemp, -1, -1);
+    StringTemp[0] = 0;
+    say_num(ScenarioSave.objectives_sudden_death_victory);
+    parse_says(1, StringTemp, -1, -1);
+    StringTemp[0] = 0;
+    say_num(ScenarioSave.objective_achieve_points);
+    parse_says(2, StringTemp, -1, -1);
+    StringTemp[0] = 0;
+    say_num(ScenarioSave.victory_achieve_bonus_points);
+    parse_says(3, StringTemp, -1, -1);
+    StringTemp[0] = 0;
+    say_num(ScenarioSave.starting_mission_year);
+    parse_says(4, StringTemp, -1, -1);
+    StringTemp[0] = 0;
+    say_num(ScenarioSave.ending_mission_year);
+    parse_says(5, StringTemp, -1, -1);
+    parse_say_num(6, GameDataStateStorage.fields_.sunspot_duration_);
 
     popup.start(PopupStartCaption, ConsoleStrScenParam, -1, nullptr, 0x44, nullptr);
 
     if (popup.exec(0, 0) < 0) {
-        popup.close();
         return;
     }
 
@@ -3605,8 +3619,6 @@ void Console::editor_scen_param() {
     ScenarioSave.starting_mission_year = atoi(ParseStrBuffer[4].str);
     ScenarioSave.ending_mission_year = atoi(ParseStrBuffer[5].str);
     GameDataStateStorage.fields_.sunspot_duration_ = atoi(ParseStrBuffer[6].str);
-
-    popup.close();
 }
 
 /*
@@ -5069,38 +5081,31 @@ void Console::use_ability(int vehicle_id) {
 // RECOVERY_BINDING: v1 {"evidence": ["git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/004cf7c0.cpp", "image:terranx_original.exe:0x004CF7C0"], "reason": "Recover settlement creation through the actual Console receiver, typed vehicle/map/base/faction owners and genuine diplomacy contact. Native invalid-tile guards precede base_at, and ready_search uses this while update_data uses ConsoleGlobal."}
 // TRIED: structural transcription following the Ghidra shape (validation checks each calling NetMsg::pop and returning; territory-scan loop; diplomacy/build-base wizard), corrected against the raw asm's confirmed 0x34 stride for the 0x952828/0x9AB892 unit-position tables (Ghidra showed 0x1a, a known 2-byte-stride bug) and fixed `ready_search` to use the saved `this` rather than the fixed Console singleton (only `update_data` uses 0x9156B0). Diverges at instr #8.
 void Console::new_base(int vehicle_id) { // 0x004CF7C0
-    // The native entry checks the selected prototype and target tile before
-    // opening any diplomacy or naming UI. Keep these guards in native order.
-    const Veh &vehicle = Vehs[vehicle_id];
-    const VehPrototype &prototype = VehPrototypes[vehicle.proto_id];
-    if (prototype.plan != PLAN_COLONIZATION) {
+    int drones;
+    int talents;
+    int x = Vehs[vehicle_id].x;
+    int y = Vehs[vehicle_id].y;
+    int faction_id = Vehs[vehicle_id].faction_id;
+    if (VehPrototypes[Vehs[vehicle_id].proto_id].plan != PLAN_COLONIZATION) {
         NetMsgPrimary.pop("NEEDCOLONISTS", 5000, 0, nullptr);
         return;
     }
-
-    const int x = vehicle.x;
-    const int y = vehicle.y;
-    const int faction_id = vehicle.faction_id;
-    const uint32_t altitude = climate_at(x, y) & 0xE0;
-    const bool sea_chassis =
-        Chassis[prototype.chassis_id].triad == TRIAD_SEA;
-    if ((altitude < 0x60) != sea_chassis) {
+    if (is_ocean(x, y) != (get_triad(vehicle_id) == TRIAD_SEA)) {
         NetMsgPrimary.pop("NOTINTRIAD", 5000, 0, nullptr);
         return;
     }
-
-    const Map *const tile = map_loc(x, y);
-    if ((tile->bit & BIT_FUNGUS) != 0 && altitude >= 0x40) {
+    if ((map_loc(x, y)->bit & BIT_FUNGUS) &&
+        (map_loc(x, y)->climate & ~0x1F) >= 0x40) {
         NetMsgPrimary.pop("FUNGUSDANGUS", 5000, 0, nullptr);
         return;
     }
-    if ((tile->bit & BIT_MONOLITH) != 0) {
+    if (map_loc(x, y)->bit & BIT_MONOLITH) {
         NetMsgPrimary.pop("NOTONMONOLITH", 5000, 0, nullptr);
         return;
     }
-    const int existing_base = base_at(x, y);
-    if ((tile->val3 & 0xC0) > 0x40 && altitude >= 0x60 &&
-        existing_base < 0) {
+    int base_id = base_at(x, y);
+    if ((map_loc(x, y)->val3 & ~0x3F) > 0x40 && (map_loc(x, y)->climate & ~0x1F) >= 0x60 &&
+        base_id < 0) {
         NetMsgPrimary.pop("NOTONROCKY", 5000, 0, nullptr);
         return;
     }
@@ -5113,328 +5118,239 @@ void Console::new_base(int vehicle_id) { // 0x004CF7C0
         return;
     }
 
-    if (existing_base < 0) {
-        bool adjacent_base = false;
-        for (int direction = 0; direction < 8; ++direction) {
-            int adjacent_x = x + VehMoveDeltaX[direction];
-            const int adjacent_y = y + VehMoveDeltaY[direction];
-            if ((MapIsFlat & 1) == 0) {
-                if (adjacent_x < 0) {
-                    adjacent_x += MapLongitudeBounds;
-                } else if (adjacent_x >= MapLongitudeBounds) {
-                    adjacent_x -= MapLongitudeBounds;
+    if (base_id < 0) {
+        for (int i = 0; i < 8; i++) {
+            int x2 = wrap_map_x(x + VehMoveDeltaX[i]);
+            int y2 = y + VehMoveDeltaY[i];
+            if (on_map(x2, y2) && base_who(x2, y2) >= 0) {
+                NetMsgPrimary.pop("BASETOONEAR", 5000, 0, nullptr);
+                return;
+            }
+        }
+        int other_id = whose_territory(faction_id, x, y, nullptr, nullptr);
+        if (PlayersData[faction_id].current_num_bases && other_id >= 0 &&
+            other_id != faction_id &&
+            !(PlayersData[faction_id].diplo_treaties[other_id] &
+              DTREATY_VENDETTA)) {
+            GenderDefault = Players[faction_id].is_leader_female;
+            PluralityDefault = 0;
+            parse_says(0, Players[faction_id].title_leader, -1, -1);
+            parse_says(1, get_pact_hood(faction_id, other_id), -1, -1);
+            GenderDefault = Players[other_id].noun_gender;
+            PluralityDefault = Players[other_id].is_noun_plural;
+            parse_says(2, Players[other_id].noun_faction, -1, -1);
+            parse_says(3, Players[other_id].adj_name_faction, -1, -1);
+            GenderDefault = Players[other_id].is_leader_female;
+            PluralityDefault = 0;
+            parse_says(5, Players[other_id].title_leader, -1, -1);
+            GenderDefault = Players[other_id].is_leader_female;
+            PluralityDefault = 0;
+            parse_says(6, Players[other_id].name_leader, -1, -1);
+            if (PlayersData[faction_id].diplo_treaties[other_id] & DTREATY_PACT) {
+                NetMsgPrimary.pop((map_loc(x, y)->climate & ~0x1F) < 0x60 ? "TERRPACT2"
+                                                            : "TERRPACT",
+                                  5000, 0, nullptr);
+                return;
+            }
+            if (PlayersData[faction_id].diplo_treaties[other_id] &
+                DTREATY_TREATY) {
+                if (!X_pop((map_loc(x, y)->climate & ~0x1F) < 0x60 ? "TERRTREATY2"
+                                                     : "TERRTREATY",
+                           nullptr)) {
+                    return;
                 }
-            }
-            if (adjacent_y < 0 || adjacent_y >= MapLatitudeBounds ||
-                adjacent_x < 0 || adjacent_x >= MapLongitudeBounds) {
-                continue;
-            }
-            const Map *const adjacent = map_loc(adjacent_x, adjacent_y);
-            if ((adjacent->bit & BIT_BASE_IN_TILE) != 0 &&
-                (adjacent->val2 & 0x0F) < MaxPlayerNum) {
-                adjacent_base = true;
-                break;
-            }
-        }
-        if (adjacent_base) {
-            NetMsgPrimary.pop("BASETOONEAR", 5000, 0, nullptr);
-            return;
-        }
-    }
-
-    if (existing_base < 0) {
-    const int other_faction =
-        whose_territory(faction_id, x, y, nullptr, nullptr);
-    uint32_t relation = other_faction >= 0
-                            ? PlayersData[faction_id]
-                                  .diplo_treaties[other_faction]
-                            : 0;
-    const int32_t base_count = static_cast<int32_t>(
-        PlayersData[faction_id].current_num_bases);
-    if (base_count != 0 &&
-        other_faction >= 0 && other_faction != faction_id &&
-        (relation & DTREATY_VENDETTA) == 0) {
-        if (!IsMultiplayerNet) {
-            DiplomacyEndState = 8;
-            wants_to_speak(faction_id, other_faction);
-        }
-        GenderDefault = Players[faction_id].is_leader_female;
-        PluralityDefault = 0;
-        parse_says(0, Players[faction_id].title_leader, -1, -1);
-        parse_says(1, get_pact_hood(faction_id, other_faction), -1, -1);
-        GenderDefault = Players[other_faction].noun_gender;
-        PluralityDefault = Players[other_faction].is_noun_plural;
-        parse_says(2, Players[other_faction].noun_faction, -1, -1);
-        parse_says(3, Players[other_faction].adj_name_faction, -1, -1);
-        GenderDefault = Players[other_faction].is_leader_female;
-        PluralityDefault = 0;
-        parse_says(5, Players[other_faction].title_leader, -1, -1);
-        GenderDefault = Players[other_faction].is_leader_female;
-        PluralityDefault = 0;
-        parse_says(6, Players[other_faction].name_leader, -1, -1);
-
-        relation = other_faction >= 0
-                       ? PlayersData[faction_id].diplo_treaties[other_faction]
-                       : 0;
-        if ((relation & DTREATY_PACT) != 0) {
-            NetMsgPrimary.pop((climate_at(x, y) & 0xE0) >= 0x60
-                                 ? "TERRPACT" : "TERRPACT2",
-                             5000, 0, nullptr);
-            return;
-        }
-        if ((relation & DTREATY_TREATY) == 0) {
-            if (!IsMultiplayerNet) {
-                parse_says(0, Players[other_faction].adj_name_faction, -1, -1);
+            } else if (IsMultiplayerNet) {
+                if (!X_pop((map_loc(x, y)->climate & ~0x1F) < 0x60 ? "TERRTRUCE2"
+                                                     : "TERRTRUCE",
+                           nullptr)) {
+                    return;
+                }
+            } else {
+                DiplomacyEndState = 8;
+                wants_to_speak(faction_id, other_id);
+                parse_says(0, Players[other_id].adj_name_faction, -1, -1);
                 GenderDefault = Players[faction_id].is_leader_female;
                 PluralityDefault = 0;
                 parse_says(1, Players[faction_id].title_leader, -1, -1);
-                parse_says(2, Players[faction_id].name_leader, -1, -1);
-                parse_says(3, Players[faction_id].adj_faction, -1, -1);
-                const char *const land_prompt =
-                    (climate_at(x, y) & 0xE0) >= 0x60
-                        ? "THISLANDISMYLAND" : "THISLANDISMYLAND2";
-                Sprite *const portrait = FactionDiplomacyPortraits[other_faction];
-                if (x_pops_minimal(land_prompt, portrait, nullptr) == 0) {
-                    diplomacy_ends(faction_id, other_faction);
-                    return;
-                }
-
                 GenderDefault = Players[faction_id].is_leader_female;
                 PluralityDefault = 0;
+                parse_says(2, Players[faction_id].name_leader, -1, -1);
+                parse_says(3, Players[faction_id].adj_insult_faction, -1, -1);
+                if (!x_pops_minimal((map_loc(x, y)->climate & ~0x1F) < 0x60
+                                        ? "THISLANDISMYLAND2"
+                                        : "THISLANDISMYLAND",
+                                    FactionDiplomacyPortraits[other_id],
+                                    nullptr)) {
+                    diplomacy_ends(faction_id, other_id);
+                    return;
+                }
                 StringTemp[0] = 0;
+                GenderDefault = Players[faction_id].is_leader_female;
+                PluralityDefault = 0;
                 parse_says(0, Players[faction_id].title_leader, -1, -1);
                 GenderDefault = Players[faction_id].is_leader_female;
                 PluralityDefault = 0;
                 parse_says(1, Players[faction_id].name_leader, -1, -1);
-                GenderDefault = Players[faction_id].is_leader_female;
-                PluralityDefault = 0;
-                parse_says(2, Players[faction_id].adj_faction, -1, -1);
-                GenderDefault = Players[faction_id].is_leader_female;
-                PluralityDefault = 0;
-                parse_says(3, Players[faction_id].adj_insult_faction, -1, -1);
-                parse_says(4, get_phrase(other_faction, 0x0D), -1, -1);
+                parse_says(2, Players[faction_id].adj_insult_faction, -1, -1);
+                parse_says(3, Players[faction_id].adj_leader, -1, -1);
+                parse_says(4, get_phrase(other_id, 13), -1, -1);
                 parse_says(5, get_noun_phrase(faction_id, 10), -1, -1);
                 strcat(StringTemp, "BULLY");
-                char random_text[16];
-                std::sprintf(random_text, "%u", random(0, 7));
-                strcat(StringTemp, random_text);
-                x_pops_minimal(StringTemp,
-                               FactionDiplomacyPortraits[other_faction], nullptr);
-                diplomacy_ends(faction_id, other_faction);
-            } else {
-                if (X_pop((climate_at(x, y) & 0xE0) >= 0x60
-                              ? "TERRTRUCE" : "TERRTRUCE2",
-                          nullptr) == 0) {
-                    return;
-                }
+                say_num(random(0, 7));
+                x_pops_minimal(StringTemp, FactionDiplomacyPortraits[other_id],
+                               nullptr);
+                diplomacy_ends(faction_id, other_id);
             }
-        } else if (X_pop((climate_at(x, y) & 0xE0) >= 0x60
-                             ? "TERRTREATY" : "TERRTREATY2",
-                         nullptr) == 0) {
-            return;
         }
-    }
-
-    int drones = 0;
-    int talents = 0;
-    psych_check(faction_id, &drones, &talents);
-    const int32_t post_psych_base_count = static_cast<int32_t>(
-        PlayersData[faction_id].current_num_bases);
-    if (post_psych_base_count != 0 && post_psych_base_count % drones == 0) {
-        parse_num(0, drones);
-        const int32_t prompt_base_count = static_cast<int32_t>(
-            PlayersData[faction_id].current_num_bases);
-        const char *const prompt = prompt_base_count == drones
-                                       ? "BUREAUCRACY"
-                                       : "BUREAUCRACY2";
-        if (popp(ScriptPopupFile, prompt, 0x40, "bureau_sm.pcx", nullptr) < 0) {
-            return;
+        psych_check(faction_id, &drones, &talents);
+        if (PlayersData[faction_id].current_num_bases &&
+            !(PlayersData[faction_id].current_num_bases % talents)) {
+            parse_num(0, talents);
+            if (popp(ScriptPopupFile,
+                     PlayersData[faction_id].current_num_bases == talents
+                         ? "BUREAUCRACY" : "BUREAUCRACY2",
+                     0x40, "bureau_sm.pcx", nullptr) < 0) {
+                return;
+            }
         }
-    }
     }
 
     char base_name[256];
     base_name[0] = 0;
-    name_base(faction_id, base_name, 0, altitude < 0x60);
-    if (existing_base < 0) {
+    name_base(faction_id, base_name, 0, is_ocean(x, y));
+    if (base_id < 0) {
         MapFocusX = x;
         MapFocusY = y;
-        if ((GameDataStateStorage.fields_.game_preferences_ & 0x200) != 0) {
+        if (GameDataStateStorage.fields_.game_preferences_ & 0x200) {
             ::draw_map(1);
         }
-        const int answer =
-            X_pop_ask("NEWBASE", 0x17, base_name, nullptr, 0);
+        int answer = X_pop_ask("NEWBASE", 0x17, base_name, nullptr, 0);
         MapFocusY = -99;
         MapFocusX = -99;
-        if (answer != 0) {
-            if ((GameDataStateStorage.fields_.game_preferences_ & 0x200) == 0) {
-                return;
+        if (answer) {
+            if (GameDataStateStorage.fields_.game_preferences_ & 0x200) {
+                ::draw_map(1);
             }
-            ::draw_map(1);
             return;
         }
-        std::strcpy(base_name, ParseStrBuffer[0].str);
+        strcpy(base_name, ParseStrBuffer[0].str);
     }
 
     ambience(0xD1);
     if (not_my_turn()) {
-        NetMsgPrimary.pop("NEEDCOLONISTS", 5000, 0, nullptr);
-        if ((GameDataStateStorage.fields_.game_preferences_ & 0x200) == 0) {
-            return;
+        NetMsgPrimary.pop("SIMULNO", 5000, 0, nullptr);
+        if (GameDataStateStorage.fields_.game_preferences_ & 0x200) {
+            ::draw_map(1);
         }
-        ::draw_map(1);
         return;
     }
-
-    int locked_vehicle_id = vehicle_id;
-    if (NetDaemonNet.lock_veh(&locked_vehicle_id, 4, -1, -1, 0) != 0) {
-        if ((GameDataStateStorage.fields_.game_preferences_ & 0x200) == 0) {
-            return;
+    if (NetDaemonNet.lock_veh(&vehicle_id, 4, -1, -1, 0)) {
+        if (GameDataStateStorage.fields_.game_preferences_ & 0x200) {
+            ::draw_map(1);
         }
-        ::draw_map(1);
         return;
     }
-
-    const Veh &locked_vehicle = Vehs[locked_vehicle_id];
-    const VehPrototype &locked_prototype =
-        VehPrototypes[locked_vehicle.proto_id];
-    if (locked_prototype.plan != PLAN_COLONIZATION) {
+    if (VehPrototypes[Vehs[vehicle_id].proto_id].plan != PLAN_COLONIZATION) {
         NetDaemonNet.unlock_veh();
         NetMsgPrimary.pop("NEEDCOLONISTS", 5000, 0, nullptr);
-        if ((GameDataStateStorage.fields_.game_preferences_ & 0x200) == 0) {
-            return;
+        if (GameDataStateStorage.fields_.game_preferences_ & 0x200) {
+            ::draw_map(1);
         }
-        ::draw_map(1);
         return;
     }
-
-    const uint32_t locked_altitude = climate_at(x, y) & 0xE0;
-    const bool locked_sea_chassis =
-        Chassis[locked_prototype.chassis_id].triad == TRIAD_SEA;
-    if ((locked_altitude < 0x60) != locked_sea_chassis) {
+    if (is_ocean(x, y) != (get_triad(vehicle_id) == TRIAD_SEA)) {
         NetDaemonNet.unlock_veh();
         NetMsgPrimary.pop("NOTINTRIAD", 5000, 0, nullptr);
-        if ((GameDataStateStorage.fields_.game_preferences_ & 0x200) == 0) {
-            return;
+        if (GameDataStateStorage.fields_.game_preferences_ & 0x200) {
+            ::draw_map(1);
         }
-        ::draw_map(1);
         return;
     }
-    const Map *const locked_tile = map_loc(x, y);
-    if ((locked_tile->bit & BIT_FUNGUS) != 0 && locked_altitude >= 0x40) {
+    if ((map_loc(x, y)->bit & BIT_FUNGUS) &&
+        (map_loc(x, y)->climate & ~0x1F) >= 0x40) {
         NetDaemonNet.unlock_veh();
         NetMsgPrimary.pop("FUNGUSDANGUS", 5000, 0, nullptr);
-        if ((GameDataStateStorage.fields_.game_preferences_ & 0x200) == 0) {
-            return;
+        if (GameDataStateStorage.fields_.game_preferences_ & 0x200) {
+            ::draw_map(1);
         }
-        ::draw_map(1);
         return;
     }
-    if ((locked_tile->bit & BIT_MONOLITH) != 0) {
+    if (map_loc(x, y)->bit & BIT_MONOLITH) {
         NetDaemonNet.unlock_veh();
         NetMsgPrimary.pop("NOTONMONOLITH", 5000, 0, nullptr);
-        if ((GameDataStateStorage.fields_.game_preferences_ & 0x200) == 0) {
-            return;
+        if (GameDataStateStorage.fields_.game_preferences_ & 0x200) {
+            ::draw_map(1);
         }
-        ::draw_map(1);
         return;
     }
-    if (!veh_ready(locked_vehicle_id)) {
+    if (!veh_ready(vehicle_id)) {
         NetDaemonNet.unlock_veh();
         NetMsgPrimary.pop("UNITMOVED", 5000, 0, nullptr);
-        if ((GameDataStateStorage.fields_.game_preferences_ & 0x200) == 0) {
-            return;
+        if (GameDataStateStorage.fields_.game_preferences_ & 0x200) {
+            ::draw_map(1);
         }
-        ::draw_map(1);
         return;
     }
-
-    const int locked_base = base_at(x, y);
-    if (locked_base >= 0) {
-        ++Bases[locked_base].population_size;
-        synch_base(locked_base);
+    base_id = base_at(x, y);
+    if (base_id >= 0) {
+        ++Bases[base_id].population_size;
+        synch_base(base_id);
         if (IsMultiplayerNet) {
-            message_veh(0x2407, locked_vehicle_id, 0, 0);
+            message_veh(0x2407, vehicle_id, 0, 0);
         } else {
-            kill(locked_vehicle_id);
+            kill(vehicle_id);
         }
-        TutWinBaseWindow.check_base(locked_base);
+        TutWinBaseWindow.check_base(base_id);
         NetDaemonNet.await_exec(1);
         return;
     }
-
-    bool locked_adjacent_base = false;
-    for (int direction = 0; direction < 8; ++direction) {
-        int adjacent_x = x + VehMoveDeltaX[direction];
-        const int adjacent_y = y + VehMoveDeltaY[direction];
-        if ((MapIsFlat & 1) == 0) {
-            if (adjacent_x < 0) {
-                adjacent_x += MapLongitudeBounds;
-            } else if (adjacent_x >= MapLongitudeBounds) {
-                adjacent_x -= MapLongitudeBounds;
+    for (int i = 0; i < 8; i++) {
+        int x2 = wrap_map_x(x + VehMoveDeltaX[i]);
+        int y2 = y + VehMoveDeltaY[i];
+        if (on_map(x2, y2) && base_who(x2, y2) >= 0) {
+            NetDaemonNet.unlock_veh();
+            NetMsgPrimary.pop("BASETOONEAR", 5000, 0, nullptr);
+            if (GameDataStateStorage.fields_.game_preferences_ & 0x200) {
+                ::draw_map(1);
             }
-        }
-        if (adjacent_y < 0 || adjacent_y >= MapLatitudeBounds ||
-            adjacent_x < 0 || adjacent_x >= MapLongitudeBounds) {
-            continue;
-        }
-        const Map *const adjacent = map_loc(adjacent_x, adjacent_y);
-        if ((adjacent->bit & BIT_BASE_IN_TILE) != 0 &&
-            (adjacent->val2 & 0x0F) < MaxPlayerNum) {
-            locked_adjacent_base = true;
-            break;
-        }
-    }
-    if (locked_adjacent_base) {
-        NetDaemonNet.unlock_veh();
-        NetMsgPrimary.pop("BASETOONEAR", 5000, 0, nullptr);
-        if ((GameDataStateStorage.fields_.game_preferences_ & 0x200) == 0) {
             return;
         }
-        ::draw_map(1);
-        return;
     }
-
-    int new_base_id;
-    if (!IsMultiplayerNet) {
-        log_say("Manually building base", 0, 0, 0);
-        new_base_id = action_build(locked_vehicle_id, base_name);
-        if (new_base_id < 0) {
-            return;
-        }
-    } else {
-        log_say("Sending BUILD BASE message", base_name, locked_vehicle_id,
+    if (IsMultiplayerNet) {
+        log_say("Sending BUILD BASE message", base_name, vehicle_id,
                 faction_id, 0);
-        message_base(0x2408, locked_vehicle_id, base_name, 0);
+        message_base(0x2408, vehicle_id, base_name, 0);
         NetDaemonNet.await_exec(1);
-        new_base_id = base_at(x, y);
+        base_id = base_at(x, y);
+    } else {
+        log_say("Manually building base", 0, 0, 0);
+        base_id = action_build(vehicle_id, base_name);
+        if (base_id < 0) {
+            return;
+        }
     }
-
     if (ready_search(-1) < 0) {
         GameDataStateStorage.fields_.game_state_ |= 4;
     }
-    parse_says(0, Bases[new_base_id].name_string, -1, -1);
+    parse_says(0, Bases[base_id].name_string, -1, -1);
     parse_num(0, GameDataStateStorage.fields_.mission_year_current_);
-
-    if (!IsMultiplayerNet) {
-        const bool alien = (Players[faction_id].rule_flags & RFLAG_ALIEN) != 0;
-        const uint32_t founded_altitude = climate_at(x, y) & 0xE0;
-        const char *const picture = alien
-                                        ? (founded_altitude >= 0x60
-                                               ? "al_col_sm.pcx"
-                                               : "seabas_sm.pcx")
-                                        : (founded_altitude >= 0x60
-                                               ? "colfoun_sm.pcx"
-                                               : "seabas_sm.pcx");
-        popp(ScriptPopupFile, "BASEFOUNDED", 0, picture, nullptr);
-    } else {
+    if (IsMultiplayerNet) {
         NetMsgPrimary.pop("BASEFOUNDED", 5000, 0, nullptr);
+    } else if (Players[faction_id].rule_flags & RFLAG_ALIEN) {
+        popp(ScriptPopupFile, "BASEFOUNDED", 0,
+             (map_loc(x, y)->climate & ~0x1F) < 0x60 ? "seabas_sm.pcx" : "al_col_sm.pcx",
+             nullptr);
+    } else {
+        popp(ScriptPopupFile, "BASEFOUNDED", 0,
+             (map_loc(x, y)->climate & ~0x1F) < 0x60 ? "seabas_sm.pcx" : "colfoun_sm.pcx",
+             nullptr);
     }
     if (!IsMultiplayerNet) {
-        TutWinBaseWindow.zoom(new_base_id, 1);
+        TutWinBaseWindow.zoom(base_id, 1);
     }
     ConsoleGlobal.update_data(1);
 }
+
 
 // ORIGINAL: 0x004D3470 ?terraform@Console@@QAEXHH@Z 0x004D3470-0x004D5277;0x0065A559-0x0065AB02 FILE
 // RECOVERY_BINDING: v1 {"evidence": ["git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/004d3470.cpp", "image:terranx_original.exe:0x004D3470", "image:terranx_original.exe:0x004D4973,0x004D4CA6"], "reason": "Recover terraforming through the Console receiver, Map bit storage, typed order descriptors and real vehicle/network lock lifecycle. Native lock failure refunds without unlocking; conflict names distinguish sea and land. Popup owns teardown, not handwritten vtable cleanup."}
