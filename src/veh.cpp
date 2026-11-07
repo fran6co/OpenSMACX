@@ -5861,7 +5861,7 @@ int __cdecl action(int veh_id) {
 
 /*
 Purpose: Find whether a faction can airdrop a unit onto a tile.
-// ORIGINAL: 0x00500380 sub_500380 0x00500380-0x005004EA
+// ORIGINAL: 0x00500380 sub_500380 0x00500380-0x005004EA BYTE_EXACT
 // size      362 bytes
 // prototype void (__cdecl sub_500380)(int faction_id, int x, int y)
 // callers   0   call targets   3

@@ -9904,7 +9904,7 @@ char LogEnemyVehicleAction[] = "Enemy Vehicle ACTION";
 // RECOVERY_OBJECT: v2 0x0068EB28 0x0068EB36 ?LogEnemyVehicle@@3PADA 0x00579240
 char LogEnemyVehicle[] = "Enemy Vehicle";
 
-// ORIGINAL: 0x00579240 ?enemy_veh@@YAHH@Z 0x00579240-0x005794C8
+// ORIGINAL: 0x00579240 ?enemy_veh@@YAHH@Z 0x00579240-0x005794C8 BYTE_EXACT
 // LEVER (2026-11-07, enemy TU): byte-exact once (1) the faction is an int
 //        local passed through two identity switches before zoc_any - the
 //        image's two jump tables at 0x5794C8/0x5794E8 are exactly what VC6
@@ -10142,7 +10142,7 @@ uint32_t __cdecl rnd(int bounds, LPSTR UNUSED(input)) {
 
 /*
 Purpose: Calculate the distance between two x coordinates with handling for round maps.
-// ORIGINAL: 0x00579790 ?x_dist@@YAHHH@Z 0x00579790-0x005797C7
+// ORIGINAL: 0x00579790 ?x_dist@@YAHHH@Z 0x00579790-0x005797C7 BYTE_EXACT
 // body      src/map.h
 // size      55 bytes
 // prototype 
