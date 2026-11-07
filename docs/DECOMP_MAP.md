@@ -272,6 +272,11 @@ the child must name the direct parent's emitted symbol, with no target alias. Th
 narrow case does not relax bounded-span overlap checks or permit a second same-start
 identity. The ordinary member-layout and parent-base checks still apply.
 
+A bounded v3/v5 member that starts after its bounded direct parent's start may
+also lie entirely inside that parent's extent (same unit and original, no target
+alias). Such nested members must not overlap each other. An offset-zero member
+keeps the unbounded same-start rule above. Any other overlap still refuses.
+
 For a bounded v3 record, initial bytes are compared with exactly the resolved
 member slice. A root-array index selects pointer storage only; it never follows
 or dereferences that pointer. A relocation wholly inside that slice is rebased against the parent
@@ -478,6 +483,16 @@ freshness, independent correspondence review and guarded on-disk publication.
 Removing, moving or rebinding a declaration retains its historical obligations;
 variant decks cannot change it. No instruction operand under test or repeated-content
 search may establish this source correspondence.
+
+`// RECOVERY_LITERAL: v2 merged <start> <exclusive-end> <emitted-symbol> <evidence-address>`
+declares the same TU-private reference to a constant the linker folded with
+other units' copies (for example a VC6 `__real@8@...` double). Several merged
+literals, each in its own unit, may name one exact extent, and one may share it
+with another unit's object binding that starts there (bounded objects must have
+the same extent); that object's emitted name may equal the literal's. A v1
+literal stays exclusive, and partial overlaps, generated tables, same-unit
+objects and differing extents still refuse. The literal resolves first in its
+own unit; it never borrows the object's target.
 
 ## Shared original function bodies
 

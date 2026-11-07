@@ -106,6 +106,16 @@ def _is_intergroup_hotpatch_gap(original: bytes, candidate: bytes, left: int, ri
             and left % 4 == 2 and right % 4 == 0)
 
 
+def _is_intergroup_lea_identity_gap(original: bytes, candidate: bytes, left: int, right: int,
+                                    selector_ends: set[int], table_starts: set[int]) -> bool:
+    """Accept one exact three-byte LEA identity only between a map and the next table."""
+    return (len(original) == 3
+            and _is_canonical_lea_identity_padding(original)
+            and candidate == original
+            and left in selector_ends and right in table_starts
+            and right - left == 3 and right % 4 == 0)
+
+
 def _symbol_target(obj: Coff, section_number: int, section_data: bytes, offset: int):
     """Resolve one physical ABS32 field to a local same-section symbol."""
     rows = [(site, index, kind) for site, index, kind in obj.sections[section_number - 1].relocations
@@ -684,13 +694,17 @@ def compare_associated_code(obj: Coff, subject: Symbol, span: Span, image: PeIma
             original_gap, candidate_gap, left, right,
             {row[0].span.end for row in selector_rows},
             {row[0].span.start for row in table_rows})
+        intergroup_lea_alignment = _is_intergroup_lea_identity_gap(
+            original_gap, candidate_gap, left, right,
+            {row[0].span.end for row in selector_rows},
+            {row[0].span.start for row in table_rows})
         lea_identity_alignment = (
             left == span.end and right == first_table
             and len(original_gap) == 3
             and (span.end + len(original_gap)) % 4 == 0
             and first_table % 4 == 0
             and _is_canonical_lea_identity_padding(original_gap)
-        )
+        ) or intergroup_lea_alignment
         if candidate_gap == original_gap and lea_identity_alignment:
             # The candidate is classified only when it preserves the exact
             # original instruction bytes. If it differs, keep the original

@@ -135,3 +135,102 @@ def test_literal_cannot_relabel_another_declared_object_or_table(tmp_path, annot
     (root / "code/b.cc").write_text(annotation + "\n")
     with pytest.raises(ValueError, match="overlaps another"):
         read_literals(root, PIN)
+
+
+MERGED = "// RECOVERY_LITERAL: v2 merged 0x1000 0x1003 local_literal 0x2000"
+
+
+def merged(**changes):
+    item, = parse_literals(MERGED, "code/a.cc", PIN, address_space="custom:offset")
+    return replace(item, **changes)
+
+
+def test_merged_literal_parses_and_keeps_v1_identities_unchanged():
+    item = merged()
+    assert item.merged and not binding().merged
+    assert item.interpretation == {**binding().interpretation, "linker_merged": True}
+    assert item.interpretation_id != binding().interpretation_id
+    assert "linker_merged" not in binding().interpretation
+
+
+@pytest.mark.parametrize("annotation", [
+    "v2 merge 0x1000 0x1003 local_literal 0x2000", "v2 merged 0x1000 local_literal 0x2000",
+    "v1 merged 0x1000 0x1003 local_literal 0x2000",
+    "v2 merged 0x1000 0x1003 local_literal 0x2000 extra",
+])
+def test_malformed_merged_annotations_refuse(annotation):
+    with pytest.raises(ValueError):
+        parse_literals("// RECOVERY_LITERAL: " + annotation, "code/a.cc", PIN, address_space="custom:offset")
+
+
+def test_merged_literals_in_distinct_units_share_one_exact_extent():
+    first = merged()
+    second = merged(unit="code/b.cc", symbol="other_literal")
+    third = merged(unit="code/c.cc")
+    assert validate_literals([first, second, third]) == (first, second, third)
+
+
+@pytest.mark.parametrize("changes,reason", [
+    ({"unit": "code/b.cc", "merged": False}, "same original start"),  # one claimant is exclusive
+    ({"unit": "code/b.cc", "span": Span(0x1000, 0x1004)}, "same original start"),  # extents differ
+    ({"symbol": "other_literal"}, "same original start"),  # one unit, two names
+    ({"unit": "code/b.cc", "origin": Origin(PIN, "custom:offset", 0x1002),
+      "span": Span(0x1002, 0x1005)}, "overlap"),  # merged never admits partial overlap
+])
+def test_merged_literal_populations_stay_unambiguous(changes, reason):
+    first = merged()
+    with pytest.raises(ValueError, match=reason):
+        validate_literals((first, replace(first, **changes)))
+
+
+def test_exclusive_literal_still_refuses_a_merged_peer_at_its_start():
+    with pytest.raises(ValueError, match="same original start"):
+        validate_literals((binding(), merged(unit="code/b.cc")))
+
+
+@pytest.mark.parametrize("annotation", [
+    "// RECOVERY_OBJECT: v1 0x1000 _g",
+    "// RECOVERY_OBJECT: v2 0x1000 0x1003 _g 0x2000",
+])
+def test_merged_literal_may_share_a_folded_constant_with_another_units_object(tmp_path, annotation):
+    root = project(tmp_path)
+    (root / "code/a.cc").write_text(MERGED)
+    (root / "code/b.cc").write_text(annotation + "\n")
+    assert read_literals(root, PIN) == (merged(),)
+
+
+@pytest.mark.parametrize("unit,annotation", [
+    ("code/b.cc", "// RECOVERY_OBJECT: v1 0x1001 _g"),  # interior start
+    ("code/b.cc", "// RECOVERY_OBJECT: v2 0x1000 0x1004 _g 0x2000"),  # different extent
+    ("code/b.cc", "// RECOVERY_OBJECT: v2 0x0fff 0x1001 _g 0x2000"),  # partial overlap
+    ("code/b.cc", "// RECOVERY_GENERATED: v1 vtable 0x1000 ? ??_7Table@@6B@ 0x2000"),  # table
+    ("code/a.cc", "// RECOVERY_OBJECT: v1 0x1000 _g"),  # same unit
+])
+def test_merged_literal_never_relabels_any_other_object_or_table(tmp_path, unit, annotation):
+    root = project(tmp_path)
+    (root / "code/a.cc").write_text(MERGED + "\n" + (annotation + "\n" if unit == "code/a.cc" else ""))
+    if unit != "code/a.cc":
+        (root / unit).write_text(annotation + "\n")
+    with pytest.raises(ValueError, match="overlaps another"):
+        read_literals(root, PIN)
+
+
+def test_exclusive_literal_still_refuses_a_same_start_object(tmp_path):
+    root = project(tmp_path)
+    (root / "code/b.cc").write_text("// RECOVERY_OBJECT: v1 0x1000 _g\n")
+    with pytest.raises(ValueError, match="overlaps another"):
+        read_literals(root, PIN)
+
+
+def test_only_same_address_merged_aliases_release_an_object_name():
+    from match_recovery.literal_source import object_reserved_literal_symbols
+    from match_recovery.object_source import parse_objects
+    same, = parse_objects("// RECOVERY_OBJECT: v1 0x1000 local_literal", "code/b.cc", PIN,
+                          address_space="custom:offset")
+    moved, = parse_objects("// RECOVERY_OBJECT: v1 0x1003 local_literal", "code/b.cc", PIN,
+                           address_space="custom:offset")
+    assert object_reserved_literal_symbols([merged()], [same]) == frozenset()
+    assert object_reserved_literal_symbols([binding()], [same]) == {"local_literal"}
+    assert object_reserved_literal_symbols([merged()], [moved]) == {"local_literal"}
+    assert object_reserved_literal_symbols([merged()], [same, moved]) == {"local_literal"}
+    assert object_reserved_literal_symbols([merged()], []) == {"local_literal"}

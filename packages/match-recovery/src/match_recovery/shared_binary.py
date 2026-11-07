@@ -8,7 +8,8 @@ from .bound_objects import FunctionBinding, check_objects
 from .model import Result
 
 
-def check_shared(bindings, objects, image, external_targets, *, import_targets=None, literal_targets=None, errors=None):
+def check_shared(bindings, objects, image, external_targets, *, import_targets=None, literal_targets=None, errors=None,
+                 merged_literal_names=()):
     symbols = {item.symbol for item in bindings}
     if len(symbols) != len(bindings) or symbols & (external_targets.keys() | (import_targets or {}).keys()):
         raise ValueError("conflicting shared function symbol bindings")
@@ -35,7 +36,8 @@ def check_shared(bindings, objects, image, external_targets, *, import_targets=N
                     proof, = check_objects(
                         [FunctionBinding(binding.origin, (binding.span,), binding.symbol, unit)],
                         objects, image, external_targets={**external_targets, **targets},
-                        import_targets=import_targets, literal_targets=literal_targets, errors=errors)
+                        import_targets=import_targets, literal_targets=literal_targets, errors=errors,
+                        merged_literal_names=merged_literal_names)
                     copy_proofs.append({key: value for key, value in proof.items()
                                         if key not in {"interpretation_id", "entity_id", "symbol"}})
                 except ValueError as error:

@@ -42,7 +42,7 @@ def _record(binding: LiteralBinding, *, path: str, pin: str,
     evidence = Origin(binding.evidence.image_sha256,
                       binding.evidence.address_space, binding.evidence.address)
     LiteralBinding(origin, span, binding.symbol,
-                   binding.unit, binding.line, evidence)
+                   binding.unit, binding.line, evidence, binding.merged)
     if binding.unit != path:
         raise ValueError("literal binding belongs to another source unit")
     if ((binding.origin.image_sha256, binding.origin.address_space)
@@ -54,13 +54,13 @@ def _record(binding: LiteralBinding, *, path: str, pin: str,
 
 def _identity(binding: LiteralBinding) -> tuple:
     return (binding.origin, binding.span, binding.symbol, binding.unit,
-            binding.evidence)
+            binding.evidence, binding.merged)
 
 
 def _marker(binding: LiteralBinding) -> bytes:
     return (
-        "// RECOVERY_LITERAL: v1 "
-        f"0x{binding.span.start:08X} 0x{binding.span.end:08X} "
+        ("// RECOVERY_LITERAL: v2 merged " if binding.merged else "// RECOVERY_LITERAL: v1 ")
+        + f"0x{binding.span.start:08X} 0x{binding.span.end:08X} "
         f"{binding.symbol} 0x{binding.evidence.address:08X}"
     ).encode("ascii")
 

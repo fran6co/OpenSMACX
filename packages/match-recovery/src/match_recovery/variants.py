@@ -16,7 +16,7 @@ from .generated_source import read_generated
 from .measurement import Measurement
 from .model import Origin, Result, Span, digest, require_digest, require_text
 from .object_source import read_objects, referenced_object_units, require_disjoint_object_symbols
-from .literal_source import read_literals
+from .literal_source import object_reserved_literal_symbols, read_literals
 from .associated_source import parse_associated, read_associated, validate_associated
 from .import_source import read_imports, parse_imports
 from .ownership_source import class_hint, project_view
@@ -339,7 +339,7 @@ def measure_variants(root: Path, task_name: str, image_path: Path, deck: dict, *
         data_bindings, set(externals) | {item.symbol for item in bindings},
         {item.symbol for item in generated},
         {item.symbol for item in imports}, {item.symbol for item in shared},
-        {item.symbol for item in literal_bindings}))
+        object_reserved_literal_symbols(literal_bindings, data_bindings)))
     validate_shared_bindings(shared, view, reserved=[*object_symbols, *[item.symbol for item in (*generated, *imports)]])
     if (object_symbols & set(externals)
             or {item.symbol for item in generated} & (set(externals) | object_symbols)):

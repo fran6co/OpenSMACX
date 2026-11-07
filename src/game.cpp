@@ -185,53 +185,31 @@ char PronounBuffer[256];  // 0x00945838 - see game.h for the naming evidence
 
 // RECOVERY_OBJECT: v1 0x009A6488 ?ExpansionEnabled@@3HA
 BOOL ExpansionEnabled;  // 0x009A6488
-// Former bounded member identity: [0x009A64EC, 0x009A650C), evidence 0x005AC690; the bounded parent now covers it.
-// RECOVERY_OBJECT: v3 0x009A64EC ?FactionRankings@@3PAIA member ?GameDataStateStorage@@3UGameDataStateWindow@@A fields_.faction_rankings_
-// Former bounded member identity: [0x009A6514, 0x009A6614), evidence 0x005002E0; the bounded parent now covers it.
-// RECOVERY_OBJECT: v3 0x009A6514 ?SecretProject@@3UBaseSecretProject@@A member ?GameDataStateStorage@@3UGameDataStateWindow@@A fields_.secret_project_
-// Former bounded member identity: [0x009A64CC, 0x009A64D0), evidence 0x004E68B0; the bounded parent now covers it.
-// RECOVERY_OBJECT: v3 0x009A64CC ?BaseCurrentCount@@3HA member ?GameDataStateStorage@@3UGameDataStateWindow@@A fields_.base_current_count_
-// Former bounded member identity: [0x009A6614, 0x009A6618), evidence 0x00424410; the bounded parent now covers it.
-// RECOVERY_OBJECT: v3 0x009A6614 ?GovernorFaction@@3HA member ?GameDataStateStorage@@3UGameDataStateWindow@@A fields_.governor_faction_
-// Former bounded member identity: [0x009A67DC, 0x009A67E0), evidence 0x005ACBE0; the bounded parent now covers it.
-// RECOVERY_OBJECT: v3 0x009A67DC ?TranscendenceScoreBonus@@3HA member ?GameDataStateStorage@@3UGameDataStateWindow@@A fields_.transcendence_score_bonus_
-// Former bounded member identity: [0x009A67E0, 0x009A6800), evidence 0x005ACBE0; the bounded parent now covers it.
-// RECOVERY_OBJECT: v3 0x009A67E0 ?TranscendenceScoreWeights@@3PAHA member ?GameDataStateStorage@@3UGameDataStateWindow@@A fields_.transcendence_score_weights_
+// RECOVERY_OBJECT: v3 0x009A64EC 0x009A650C ?FactionRankings@@3PAIA 0x005AC690 member ?GameDataStateStorage@@3UGameDataStateWindow@@A fields_.faction_rankings_
+// RECOVERY_OBJECT: v3 0x009A6514 0x009A6614 ?SecretProject@@3UBaseSecretProject@@A 0x005002E0 member ?GameDataStateStorage@@3UGameDataStateWindow@@A fields_.secret_project_
+// RECOVERY_OBJECT: v3 0x009A64CC 0x009A64D0 ?BaseCurrentCount@@3HA 0x004E68B0 member ?GameDataStateStorage@@3UGameDataStateWindow@@A fields_.base_current_count_
+// RECOVERY_OBJECT: v3 0x009A6614 0x009A6618 ?GovernorFaction@@3HA 0x00424410 member ?GameDataStateStorage@@3UGameDataStateWindow@@A fields_.governor_faction_
+// RECOVERY_OBJECT: v3 0x009A67DC 0x009A67E0 ?TranscendenceScoreBonus@@3HA 0x005ACBE0 member ?GameDataStateStorage@@3UGameDataStateWindow@@A fields_.transcendence_score_bonus_
+// RECOVERY_OBJECT: v3 0x009A67E0 0x009A6800 ?TranscendenceScoreWeights@@3PAHA 0x005ACBE0 member ?GameDataStateStorage@@3UGameDataStateWindow@@A fields_.transcendence_score_weights_
 // RECOVERY_OBJECT: v3 0x009A64E0 ?TimeControlsSelection@@3HA member ?GameDataStateStorage@@3UGameDataStateWindow@@A fields_.time_controls_selection_
-// Former bounded member identity: [0x009A6618, 0x009A6644), evidence 0x005B3920; the bounded parent now covers it.
-// RECOVERY_OBJECT: v3 0x009A6618 ?CouncilResolutionCount@@3PAHA member ?GameDataStateStorage@@3UGameDataStateWindow@@A fields_.council_resolution_count_
-// Former bounded member identity: [0x009A6644, 0x009A6670), evidence 0x005B3920; the bounded parent now covers it.
-// RECOVERY_OBJECT: v3 0x009A6644 ?CouncilLastResolutionTurn@@3PAHA member ?GameDataStateStorage@@3UGameDataStateWindow@@A fields_.council_last_resolution_turn_
-// Former bounded member identity: [0x009A64D0, 0x009A64D4), evidence 0x005B3920; the bounded parent now covers it.
-// RECOVERY_OBJECT: v3 0x009A64D0 ?GameSetupResetWord@@3HA member ?GameDataStateStorage@@3UGameDataStateWindow@@A fields_.game_setup_reset_word_
-// Former bounded member identity: [0x009A64E4, 0x009A64E8), evidence 0x00523C60; the bounded parent now covers it.
-// RECOVERY_OBJECT: v3 0x009A64E4 ?TurnControlDurationMilliseconds@@3HA member ?GameDataStateStorage@@3UGameDataStateWindow@@A fields_.turn_control_duration_milliseconds_
-// Former bounded member identity: [0x009A6810, 0x009A6814), evidence 0x005A94F0; the bounded parent now covers it.
-// RECOVERY_OBJECT: v3 0x009A6810 ?SaveDaemonStateWord@@3HA member ?GameDataStateStorage@@3UGameDataStateWindow@@A fields_.save_daemon_state_word_
-// Former bounded member identity: [0x009A6824, 0x009A6828), evidence 0x004F67F0; the bounded parent now covers it.
-// RECOVERY_OBJECT: v3 0x009A6824 ?EcologyEventAccumulator@@3HA member ?GameDataStateStorage@@3UGameDataStateWindow@@A fields_.ecology_event_accumulator_
+// RECOVERY_OBJECT: v3 0x009A6618 0x009A6644 ?CouncilResolutionCount@@3PAHA 0x005B3920 member ?GameDataStateStorage@@3UGameDataStateWindow@@A fields_.council_resolution_count_
+// RECOVERY_OBJECT: v3 0x009A6644 0x009A6670 ?CouncilLastResolutionTurn@@3PAHA 0x005B3920 member ?GameDataStateStorage@@3UGameDataStateWindow@@A fields_.council_last_resolution_turn_
+// RECOVERY_OBJECT: v3 0x009A64D0 0x009A64D4 ?GameSetupResetWord@@3HA 0x005B3920 member ?GameDataStateStorage@@3UGameDataStateWindow@@A fields_.game_setup_reset_word_
+// RECOVERY_OBJECT: v3 0x009A64E4 0x009A64E8 ?TurnControlDurationMilliseconds@@3HA 0x00523C60 member ?GameDataStateStorage@@3UGameDataStateWindow@@A fields_.turn_control_duration_milliseconds_
+// RECOVERY_OBJECT: v3 0x009A6810 0x009A6814 ?SaveDaemonStateWord@@3HA 0x005A94F0 member ?GameDataStateStorage@@3UGameDataStateWindow@@A fields_.save_daemon_state_word_
+// RECOVERY_OBJECT: v3 0x009A6824 0x009A6828 ?EcologyEventAccumulator@@3HA 0x004F67F0 member ?GameDataStateStorage@@3UGameDataStateWindow@@A fields_.ecology_event_accumulator_
 // RECOVERY_OBJECT: v3 0x009A64A4 ?GameInterludeFlags@@3IA member ?GameDataStateStorage@@3UGameDataStateWindow@@A fields_.game_interlude_flags_
-// Former bounded member identity: [0x009A64A0, 0x009A64A4), evidence 0x00532E00; the bounded parent now covers it.
-// RECOVERY_OBJECT: v3 0x009A64A0 ?GameWireOpaque_9A64A0@@3PAEA member ?GameDataStateStorage@@3UGameDataStateWindow@@A fields_.game_wire_opaque_9a64a0_
-// Former bounded member identity: [0x009A64A8, 0x009A64AC), evidence 0x00532E00; the bounded parent now covers it.
-// RECOVERY_OBJECT: v3 0x009A64A8 ?GameWireOpaque_9A64A8@@3PAEA member ?GameDataStateStorage@@3UGameDataStateWindow@@A fields_.game_wire_opaque_9a64a8_
-// Former bounded member identity: [0x009A66C9, 0x009A67C9), evidence 0x005A6AC0; the bounded parent now covers it.
-// RECOVERY_OBJECT: v3 0x009A66C9 ?LegacyGameSaveName@@3PADA member ?GameDataStateStorage@@3UGameDataStateWindow@@A fields_.legacy_game_save_name_
-// Former bounded member identity: [0x009A67C9, 0x009A67CC), evidence 0x00532E00; the bounded parent now covers it.
-// RECOVERY_OBJECT: v3 0x009A67C9 ?GameWireOpaque_9A67C9@@3PAEA member ?GameDataStateStorage@@3UGameDataStateWindow@@A fields_.game_wire_opaque_9a67c9_
-// Former bounded member identity: [0x009A67CC, 0x009A67D0), evidence 0x00524210; the bounded parent now covers it.
-// RECOVERY_OBJECT: v3 0x009A67CC ?ClimateRiseStep@@3HA member ?GameDataStateStorage@@3UGameDataStateWindow@@A fields_.climate_rise_step_
-// Former bounded member identity: [0x009A67D0, 0x009A67D4), evidence 0x00524210; the bounded parent now covers it.
-// RECOVERY_OBJECT: v3 0x009A67D0 ?ClimateRiseLimit@@3HA member ?GameDataStateStorage@@3UGameDataStateWindow@@A fields_.climate_rise_limit_
-// Former bounded member identity: [0x009A67D4, 0x009A67D8), evidence 0x00524210; the bounded parent now covers it.
-// RECOVERY_OBJECT: v3 0x009A67D4 ?ClimateRiseAccum@@3HA member ?GameDataStateStorage@@3UGameDataStateWindow@@A fields_.climate_rise_accum_
-// Former bounded member identity: [0x009A67D8, 0x009A67DC), evidence 0x00524210; the bounded parent now covers it.
-// RECOVERY_OBJECT: v3 0x009A67D8 ?ClimateSeaLevelDelta@@3HA member ?GameDataStateStorage@@3UGameDataStateWindow@@A fields_.climate_sea_level_delta_
-// Former bounded member identity: [0x009A6670, 0x009A66C9), evidence 0x004DFAD0; the bounded parent now covers it.
-// RECOVERY_OBJECT: v3 0x009A6670 ?GameTechAchieved@@3PAEA member ?GameDataStateStorage@@3UGameDataStateWindow@@A fields_.game_tech_achieved_
+// RECOVERY_OBJECT: v3 0x009A64A0 0x009A64A4 ?GameWireOpaque_9A64A0@@3PAEA 0x00532E00 member ?GameDataStateStorage@@3UGameDataStateWindow@@A fields_.game_wire_opaque_9a64a0_
+// RECOVERY_OBJECT: v3 0x009A64A8 0x009A64AC ?GameWireOpaque_9A64A8@@3PAEA 0x00532E00 member ?GameDataStateStorage@@3UGameDataStateWindow@@A fields_.game_wire_opaque_9a64a8_
+// RECOVERY_OBJECT: v3 0x009A66C9 0x009A67C9 ?LegacyGameSaveName@@3PADA 0x005A6AC0 member ?GameDataStateStorage@@3UGameDataStateWindow@@A fields_.legacy_game_save_name_
+// RECOVERY_OBJECT: v3 0x009A67C9 0x009A67CC ?GameWireOpaque_9A67C9@@3PAEA 0x00532E00 member ?GameDataStateStorage@@3UGameDataStateWindow@@A fields_.game_wire_opaque_9a67c9_
+// RECOVERY_OBJECT: v3 0x009A67CC 0x009A67D0 ?ClimateRiseStep@@3HA 0x00524210 member ?GameDataStateStorage@@3UGameDataStateWindow@@A fields_.climate_rise_step_
+// RECOVERY_OBJECT: v3 0x009A67D0 0x009A67D4 ?ClimateRiseLimit@@3HA 0x00524210 member ?GameDataStateStorage@@3UGameDataStateWindow@@A fields_.climate_rise_limit_
+// RECOVERY_OBJECT: v3 0x009A67D4 0x009A67D8 ?ClimateRiseAccum@@3HA 0x00524210 member ?GameDataStateStorage@@3UGameDataStateWindow@@A fields_.climate_rise_accum_
+// RECOVERY_OBJECT: v3 0x009A67D8 0x009A67DC ?ClimateSeaLevelDelta@@3HA 0x00524210 member ?GameDataStateStorage@@3UGameDataStateWindow@@A fields_.climate_sea_level_delta_
+// RECOVERY_OBJECT: v3 0x009A6670 0x009A66C9 ?GameTechAchieved@@3PAEA 0x004DFAD0 member ?GameDataStateStorage@@3UGameDataStateWindow@@A fields_.game_tech_achieved_
 // RECOVERY_OBJECT: v3 0x009A64BC ?TutWinFlags9A64BC@@3HA member ?GameDataStateStorage@@3UGameDataStateWindow@@A fields_.tutwin_flags_9a64bc_
-// Former bounded member identity: [0x009A64DC, 0x009A64E0), evidence 0x005C08C0; the bounded parent now covers it.
-// RECOVERY_OBJECT: v3 0x009A64DC ?VehSelectionFollowLimit@@3HA member ?GameDataStateStorage@@3UGameDataStateWindow@@A fields_.vehicle_selection_follow_limit_
+// RECOVERY_OBJECT: v3 0x009A64DC 0x009A64E0 ?VehSelectionFollowLimit@@3HA 0x005C08C0 member ?GameDataStateStorage@@3UGameDataStateWindow@@A fields_.vehicle_selection_follow_limit_
 // game_data transfers exactly 0x398 bytes from 0x009A6490 (0x005A6C24..
 // 0x005A6C9A), ending where the separately bounded Proposal table begins.
 // RECOVERY_OBJECT: v2 0x009A6490 0x009A6828 ?GameDataStateStorage@@3UGameDataStateWindow@@A 0x005A6AC0

@@ -2912,7 +2912,10 @@ the check will compare. The annotation is an interpretation, not a measured clai
 
 The library keys these identities by `(translation unit, emitted symbol)`, separately
 from globals/imports. Identical names in different TUs may have different originals;
-overlapping literal/object/table ownership refuses. No bare-symbol binding leaks
+overlapping literal/object/table ownership refuses, except that a
+`// RECOVERY_LITERAL: v2 merged ...` record (same fields) may share one exact
+linker-folded extent with other units' merged literals and with another unit's
+object binding starting there. No bare-symbol binding leaks
 across TUs, places a whole data section, or proves link-time COMDAT selection.
 The i386 backend verifies dedicated independent MSVC literal COMDATs, with exact
 section-definition/key metadata, complete raw or zero-fill extent and no relocations.

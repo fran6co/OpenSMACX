@@ -151,7 +151,13 @@ def select_evidence(functions, selected, objects, object_bindings, generated_bin
         reference_rows.append({"unit": unit, "symbol": symbol,
                                "storage_class": storage, "source": source})
 
+    literal_keys = {(item.unit, item.symbol) for item in all_literals}
+
     def object_matches(unit, symbol, storage):
+        if (unit, symbol) in literal_keys:
+            # A declared TU literal resolves first in its own unit, exactly as
+            # check_objects does; a same-name merged object is not borrowed.
+            return []
         return [item for item in all_objects if item.emitted_symbol == symbol
                 and ((storage == 2 and not item.target_local)
                      or (storage == 3 and item.unit == unit))]

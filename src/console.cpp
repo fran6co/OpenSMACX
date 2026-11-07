@@ -1369,8 +1369,7 @@ char CursorNextDangerMsg1[16] = "Bad Cursor Move";
 // RECOVERY_OBJECT: v2 0x009156B0 0x00939E58 ?ConsoleGlobal@@3VConsole@@A 0x0050E850
 // RECOVERY_OBJECT: v3 0x00937118 ?CoverWindow@@3VGraphicWin@@A member ?ConsoleGlobal@@3VConsole@@A cover_window_
 // RECOVERY_OBJECT: v3 0x009392B4 ?Blink2Counter@@3HA member ?ConsoleGlobal@@3VConsole@@A blink2_counter_
-// Former bounded member identity: [0x009393D0, 0x009393D4), evidence 0x00471530; the bounded parent now covers it.
-// RECOVERY_OBJECT: v3 0x009393D0 ?MessageWinMessageCount@@3HA member ?ConsoleGlobal@@3VConsole@@A message_count_
+// RECOVERY_OBJECT: v3 0x009393D0 0x009393D4 ?MessageWinMessageCount@@3HA 0x00471530 member ?ConsoleGlobal@@3VConsole@@A message_count_
 Console ConsoleGlobal;
 // ===== MANAGED GLOBALS - real objects, homed to their domain =====
 // In the shipped image these live at fixed data addresses and are

@@ -379,6 +379,66 @@ def test_source_reader_accepts_only_one_offset_zero_child_for_bounded_parent(tmp
         read_objects(tmp_path, PIN)
 
 
+def _extent_rows(*lines):
+    from match_recovery.object_source import validate_object_extent_ownership
+    rows = parse_objects("\n".join(lines), "src/owner.cc", PIN, address_space="pe:va")
+    validate_object_extent_ownership(rows)
+    return rows
+
+
+PARENT_V2 = "// RECOVERY_OBJECT: v2 0x401000 0x401010 _parent 0x402000"
+
+
+def test_bounded_members_may_nest_inside_their_bounded_direct_parent():
+    rows = _extent_rows(
+        PARENT_V2,
+        "// RECOVERY_OBJECT: v3 0x401004 0x401008 old_a 0x402004 member _parent a",
+        "// RECOVERY_OBJECT: v3 0x401008 0x401010 old_b 0x402008 member _parent b",
+        "// RECOVERY_OBJECT: v3 0x401000 old_c member _parent c",
+        "// RECOVERY_OBJECT: v3 0x40100C old_d member _parent d",
+        "// RECOVERY_OBJECT: v2 0x401010 0x401014 _next 0x402010",
+    )
+    assert [row.span for row in rows if row.parent_symbol] == [
+        Span(0x401004, 0x401008), Span(0x401008, 0x401010), None, None]
+
+
+@pytest.mark.parametrize("lines,reason", [
+    # The member escapes its parent's extent.
+    (("// RECOVERY_OBJECT: v3 0x40100C 0x401014 old_a 0x402004 member _parent a",), "overlap"),
+    # Bounded siblings inside one parent still may not overlap.
+    (("// RECOVERY_OBJECT: v3 0x401004 0x40100C old_a 0x402004 member _parent a",
+      "// RECOVERY_OBJECT: v3 0x401008 0x401010 old_b 0x402008 member _parent b"), "overlap"),
+    # Another parent's member is not nested here.
+    (("// RECOVERY_OBJECT: v3 0x401004 0x401008 old_a 0x402004 member _other a",), "overlap"),
+    # A member never restates its whole parent extent.
+    (("// RECOVERY_OBJECT: v3 0x401000 0x401010 old_a 0x402004 member _parent a",), "same original start"),
+    # An offset-zero member stays unbounded; a bounded one is not nested.
+    (("// RECOVERY_OBJECT: v3 0x401000 0x401004 old_a 0x402004 member _parent a",), "same original start"),
+])
+def test_nested_member_extent_damage_refuses(lines, reason):
+    with pytest.raises(ValueError, match=reason):
+        _extent_rows(PARENT_V2, *lines)
+
+
+def test_member_of_unbounded_or_alias_parent_is_not_nested():
+    with pytest.raises(ValueError, match="overlap"):
+        _extent_rows("// RECOVERY_OBJECT: v1 0x401000 _parent",
+                     "// RECOVERY_OBJECT: v2 0x400FF0 0x401010 _outer 0x402000",
+                     "// RECOVERY_OBJECT: v3 0x401004 0x401008 old_a 0x402004 member _parent a")
+    with pytest.raises(ValueError):
+        _extent_rows("// RECOVERY_OBJECT: v4 0x401000 0x401010 _parent 0x402000 target _real",
+                     "// RECOVERY_OBJECT: v3 0x401004 0x401008 old_a 0x402004 member _parent a")
+
+
+def test_nested_member_in_another_unit_is_not_nested():
+    from match_recovery.object_source import validate_object_extent_ownership
+    parent, = parse_objects(PARENT_V2, "src/owner.cc", PIN, address_space="pe:va")
+    member, = parse_objects("// RECOVERY_OBJECT: v3 0x401004 0x401008 old_a 0x402004 member _parent a",
+                            "src/other.cc", PIN, address_space="pe:va")
+    with pytest.raises(ValueError, match="overlap"):
+        validate_object_extent_ownership((parent, member))
+
+
 def test_rebound_direct_parent_and_member_bindings_still_require_one_verified_base():
     obj, _ = owner_object(inherited=True)
     parent = ObjectBinding(Origin(PIN, "pe:va", 0x401000), "old_parent", UNIT, 1,

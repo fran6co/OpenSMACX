@@ -17,7 +17,7 @@ from match_recovery.model import Origin, Result, Span, digest
 from match_recovery.object_source import (emitted_object_symbols, object_targets, local_object_targets,
                                           require_disjoint_object_symbols,
                                           read_objects, referenced_object_units)
-from .literal_source import read_literals, validate_literals
+from .literal_source import object_reserved_literal_symbols, read_literals, validate_literals
 from .associated_source import read_associated
 from .literal_data import check_literals
 from match_recovery.pe_coff import Coff, PeImage
@@ -62,15 +62,19 @@ def _validate_compiled_namespaces(bindings, object_bindings, generated_bindings,
         {item.symbol for item in generated_bindings},
         {item.symbol for item in import_bindings},
         {item.symbol for item in shared_bindings},
-        {item.symbol for item in literal_bindings}))
+        object_reserved_literal_symbols(literal_bindings, object_bindings)))
     namespaces = [declared_functions, object_symbols,
                   {item.symbol for item in generated_bindings},
                   {item.symbol for item in import_bindings},
                   {item.symbol for item in shared_bindings}]
     if any(group & other for index, group in enumerate(namespaces) for other in namespaces[:index]):
         raise ValueError("conflicting function/object/generated/import/shared symbol also has another binding")
+    # A merged literal may share its name with the object binding of the same
+    # folded constant; its TU-qualified target is resolved first in its unit.
     literal_symbols = {item.symbol for item in literal_bindings}
-    if literal_symbols & set.union(*namespaces):
+    non_object = set.union(*(namespace for index, namespace in enumerate(namespaces) if index != 1))
+    if (literal_symbols & non_object
+            or object_reserved_literal_symbols(literal_bindings, object_bindings) & object_symbols):
         raise ValueError("literal target also has a global function/object/import binding")
 
 
@@ -587,6 +591,13 @@ def select_fragment_bindings(view: dict, selected: frozenset[str], bindings: lis
     return list(expanded.values()), fragments, support, refused
 
 
+def _merged_literal_names(literal_bindings, object_bindings) -> frozenset[str]:
+    """Literal names released as same-address aliases of a declared object."""
+    literal_bindings = validate_literals(literal_bindings)
+    return frozenset({item.symbol for item in literal_bindings}
+                     - object_reserved_literal_symbols(literal_bindings, object_bindings))
+
+
 def check_compiled(bindings, object_bindings, generated_bindings, objects, image, externals, *, errors=None,
                    import_bindings=(), shared_bindings=(), literal_bindings=(), fragments=(),
                    associated_bindings=(), _weak_scope=None):
@@ -624,7 +635,8 @@ def _compiled_evidence(bindings, object_bindings, generated_bindings, objects, i
     generated_targets, checked_generated = check_generated(generated_bindings, objects, image, {**externals, **data_targets})
     shared_targets, checked_shared = check_shared(shared_bindings, objects, image,
         {**externals, **data_targets, **generated_targets}, import_targets=imports,
-        literal_targets=literal_targets, errors=errors)
+        literal_targets=literal_targets, errors=errors,
+        merged_literal_names=_merged_literal_names(literal_bindings, object_bindings))
     externals = {**externals, **shared_targets}
     if shared_bindings:
         generated_targets, checked_generated = check_generated(generated_bindings, objects, image, {**externals, **data_targets})
@@ -645,7 +657,9 @@ def _compiled_evidence(bindings, object_bindings, generated_bindings, objects, i
                              if item.target_local),
                          import_targets=imports, literal_targets=literal_targets, errors=errors,
                          fragments=fragments, associated_bindings=associated_bindings,
-                         support_bindings=function_support_bindings, _weak_scope=_weak_scope)
+                         support_bindings=function_support_bindings,
+                         merged_literal_names=_merged_literal_names(literal_bindings, object_bindings),
+                         _weak_scope=_weak_scope)
     if context_checks:
         for row in rows:
             names = {item["symbol"] for item in row.get("diagnostic", {}).get("emitted_references", ())}
@@ -1059,7 +1073,8 @@ def _verify_selection(root: Path, selected: frozenset[str], image_path: Path, *,
                     observation["measurement"], = check_objects(
                         [binding], {binding.unit: probe}, image,
                         external_targets=product_targets, import_targets=product_imports,
-                        literal_targets=probe_literals, associated_bindings=associated_bindings)
+                        literal_targets=probe_literals, associated_bindings=associated_bindings,
+                        merged_literal_names=_merged_literal_names(literal_bindings, object_bindings))
                 retained_observations.append(observation)
         def stamped(item):
             unit = item.get("unit")

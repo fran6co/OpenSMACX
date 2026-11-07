@@ -693,3 +693,22 @@ def test_selected_generated_and_shared_references_schedule_only_their_typed_owne
     assert selection.units == {"code/caller.cc", "data/shared.cc", "data/widget.cc"}
     assert selection.shared == (shared,)
     assert selection.generated == (generated,)
+
+
+def test_same_unit_merged_literal_resolves_before_a_same_name_object():
+    from match_recovery.selected_evidence import select_evidence
+
+    origin, function, data, objects, image = _observation_fixture()
+    # Root the objects elsewhere so only the code reference can select them.
+    elsewhere_origin = replace(origin, address=0x401100)
+    data = tuple(replace(item, evidence=elsewhere_origin) for item in data)
+    literal = LiteralBinding(data[0].origin, data[0].span, "_g", function.unit, 1, origin,
+                             merged=True)
+    selected = {origin.entity_id}
+    evidence = select_evidence((function,), selected, objects, data, (), (), (), (literal,))
+    assert evidence.literals == (literal,)
+    assert not evidence.object_contents and not evidence.object_targets
+    # Another unit's literal does not shadow this unit's object reference.
+    elsewhere = replace(literal, unit="code/other.cc", evidence=elsewhere_origin)
+    evidence = select_evidence((function,), selected, objects, data, (), (), (), (elsewhere,))
+    assert data[0] in evidence.object_contents and not evidence.literals

@@ -331,3 +331,32 @@ def test_legacy_string_initial_zero_tail_behavior_is_unchanged():
     targets, rows = check_literals([literal], objects, image)
     assert rows[0]["definition"] == rows[0]["content"] == "pass"
     assert targets == {(literal.unit, literal.symbol): BoundedTarget(literal.span)}
+
+
+def test_merged_literal_name_may_coincide_only_with_its_own_folded_object_target():
+    literal, function, objects, image = fixture()
+    targets, rows = check_literals([literal], objects, image)
+    assert rows[0]["content"] == "pass"
+    # Without a caller-validated merge, a same-name global still refuses.
+    with pytest.raises(ValueError, match="also has a global"):
+        check_objects([function], objects, image, external_targets={NAME: 0x402000},
+                      literal_targets=targets)
+    row, = check_objects([function], objects, image, external_targets={NAME: 0x402000},
+                         literal_targets=targets, merged_literal_names=(NAME,))
+    assert row["result"] == "pass", row
+    # A released name must still agree with the object's placement.
+    with pytest.raises(ValueError, match="also has a global"):
+        check_objects([function], objects, image, external_targets={NAME: 0x402003},
+                      literal_targets=targets, merged_literal_names=(NAME,))
+    # Function and import namespaces are never released.
+    with pytest.raises(ValueError, match="also has a global"):
+        check_objects([function], objects, image, import_targets={NAME: 0x402000},
+                      literal_targets=targets, merged_literal_names=(NAME,))
+
+
+def test_unproved_merged_literal_never_borrows_the_object_target():
+    literal, function, objects, image = fixture(target=0x402003)
+    unresolved = {(literal.unit, NAME): None}
+    row, = check_objects([function], objects, image, external_targets={NAME: 0x402003},
+                         literal_targets=unresolved, merged_literal_names=(NAME,))
+    assert row["result"] != "pass" and row["references"] != "pass", row

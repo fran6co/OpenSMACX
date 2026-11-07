@@ -113,6 +113,7 @@ def check_objects(bindings: Sequence[FunctionBinding], objects: Mapping[str, Cof
                   section_bases: Mapping[tuple[str, int], int] | None = None,
                   fragments: Sequence[FunctionFragmentBinding] = (),
                   associated_bindings=(), support_bindings: Sequence[FunctionBinding] = (),
+                  merged_literal_names: Sequence[str] = (),
                   _weak_scope=None) -> list[dict]:
     """One report per selected binding, including missing objects and symbols.
 
@@ -120,7 +121,9 @@ def check_objects(bindings: Sequence[FunctionBinding], objects: Mapping[str, Cof
     adapter. Static symbol names never leak across translation units. Defined
     symbols resolve through their own mappings too, not only undefined imports.
     ``support_bindings`` contribute validated target identities and COFF
-    placements without producing measurement rows.
+    placements without producing measurement rows. ``merged_literal_names``
+    are literal names the caller validated as aliases of a same-address
+    object binding (see ``literal_source.object_reserved_literal_symbols``).
     Pinned archive members may name plain code sections; their binding carries
     the identity that a product object's COMDAT boundary would prove.
     """
@@ -193,8 +196,18 @@ def check_objects(bindings: Sequence[FunctionBinding], objects: Mapping[str, Cof
         relative_path(key[0])
         if value is not None:
             BoundedTarget.__post_init__(value)
-    if {key[1] for key in literals} & (externals.keys() | imports.keys() | {item.symbol for item in all_bindings}):
+    merged_literal_names = frozenset(merged_literal_names)
+    if {key[1] for key in literals} & (imports.keys() | {item.symbol for item in all_bindings}):
         raise ValueError("literal target also has a global function/object/import binding")
+    for (_unit, name), value in literals.items():
+        # A caller-validated linker-merged literal may share its name with the
+        # global object target of the same folded constant; its own unit
+        # resolves the literal first. A proved literal must still agree with
+        # that object's placement. Every other name collision refuses.
+        if name in externals and not (
+                name in merged_literal_names and type(externals[name]) is int
+                and (value is None or externals[name] == value.span.start)):
+            raise ValueError("literal target also has a global function/object/import binding")
     if any(not isinstance(key, str) or not key or type(value) not in (int, AbsoluteConstant)
            for key, value in externals.items()) or any(
             not isinstance(key, str) or not key or type(value) is not int
@@ -371,7 +384,8 @@ def check_objects(bindings: Sequence[FunctionBinding], objects: Mapping[str, Cof
                         local_data_targets=local_data, errors=errors,
                         member_functions=member_functions, section_bases=section_bases,
                         associated_bindings=associated_bindings,
-                        support_bindings=tuple(item for item in all_bindings if item is not fallback_binding))
+                        support_bindings=tuple(item for item in all_bindings if item is not fallback_binding),
+                        merged_literal_names=merged_literal_names)
                     fallback_row, = fallback_rows
                     if fallback_row.get("result") != Result.PASS:
                         raise ValueError("weak fallback does not strictly compare PASS against its pinned source body")

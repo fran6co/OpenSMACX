@@ -204,14 +204,44 @@ def _same_start_parent_member(rows: tuple[ObjectBinding, ...]) -> bool:
     )
 
 
+def _nested_member_parent(row: ObjectBinding, rows: tuple[ObjectBinding, ...]):
+    """Return the bounded direct parent that wholly contains a bounded member.
+
+    Only a member-backed binding qualifies, and only inside the one bounded,
+    non-alias direct parent bound from the same unit and original. Anything
+    else is an ordinary top-level extent.
+    """
+    if row.parent_symbol is None or row.span is None:
+        return None
+    parents = [item for item in rows if item.parent_symbol is None
+               and item.symbol == row.parent_symbol]
+    if len(parents) != 1:
+        return None
+    parent = parents[0]
+    if (parent.span is None or parent.target_symbol is not None or parent.target_local
+            or parent.emitted_symbol != row.parent_symbol or parent.unit != row.unit
+            or (parent.origin.image_sha256, parent.origin.address_space)
+            != (row.origin.image_sha256, row.origin.address_space)):
+        return None
+    # Strictly interior start: an offset-zero member keeps the narrower
+    # unbounded same-start rule, so it never restates the parent's identity.
+    if not parent.span.start < row.span.start < row.span.end <= parent.span.end:
+        return None
+    return parent
+
+
 def validate_object_extent_ownership(bindings) -> None:
-    """Validate bounded extents and member starts, narrowly allowing offset zero.
+    """Validate bounded extents and member starts, narrowly allowing nesting.
 
     One explicit, unbounded v3 child may share a start with a bounded direct
-    parent only when that child is the parent's offset-zero member. All other
-    duplicate starts and bounded-span overlaps remain invalid.
+    parent only when that child is the parent's offset-zero member. A bounded
+    member starting after its bounded direct parent's start may lie entirely
+    inside that parent's extent; such members must not overlap each other.
+    All other duplicate starts and bounded-span overlaps remain invalid.
     """
     rows = tuple(bindings)
+    nested = {id(row): parent for row in rows
+              if (parent := _nested_member_parent(row, rows)) is not None}
     starts = {}
     for row in rows:
         starts.setdefault(row.origin.entity_id, []).append(row)
@@ -219,9 +249,17 @@ def validate_object_extent_ownership(bindings) -> None:
         if len(same_start) > 1 and not _same_start_parent_member(tuple(same_start)):
             raise ValueError("multiple objects claim the same original start address")
 
-    spans = sorted(row.span for row in rows if row.span is not None)
+    spans = sorted(row.span for row in rows if row.span is not None and id(row) not in nested)
     if any(left.end > right.start for left, right in zip(spans, spans[1:])):
         raise ValueError("original object extents overlap")
+    by_parent = {}
+    for row in rows:
+        if id(row) in nested:
+            by_parent.setdefault(id(nested[id(row)]), []).append(row.span)
+    for members in by_parent.values():
+        members.sort()
+        if any(left.end > right.start for left, right in zip(members, members[1:])):
+            raise ValueError("original object extents overlap")
 
 
 def read_objects(root: Path, pin: str, *, inputs=None) -> tuple[ObjectBinding, ...]:

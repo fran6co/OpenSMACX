@@ -14,7 +14,7 @@ from .model import Result, digest
 from .object_data import check_initial_data, referenced_initial_object_units
 from .object_source import (object_targets, read_objects, referenced_object_units,
                             require_disjoint_object_symbols, local_object_targets)
-from .literal_source import read_literals
+from .literal_source import object_reserved_literal_symbols, read_literals
 from .literal_data import check_literals
 from .ownership_source import project_view
 from .pe_coff import Coff, PeImage
@@ -117,7 +117,9 @@ def check_data(root: Path, image_path: Path, *, symbols=None, compiler=None):
         active_shared = [item for item in shared if item.object_unit in objects
                          or item.object_unit in errors or item.context_error is not None]
         shared_targets, checked_shared = check_shared(active_shared, objects, image,
-            {**resolved_functions, **targets, **tables}, import_targets=imported, literal_targets=local_targets, errors=errors)
+            {**resolved_functions, **targets, **tables}, import_targets=imported, literal_targets=local_targets, errors=errors,
+            merged_literal_names=frozenset({b.symbol for b in literals})
+            - object_reserved_literal_symbols(literals, bindings))
         shared_checks.extend({**row, "flags": list(effective(row["unit"], flags)), "graph_flags": list(flags)}
                              for row in checked_shared)
         measured = check_initial_data(selected, objects, image,

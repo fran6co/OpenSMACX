@@ -8,7 +8,7 @@ import pytest
 from match_recovery.associated_binary import compare_associated_code
 from match_recovery.associated_binary import (
     _ENGINE, _guard_for_dispatch, _is_canonical_lea_identity_padding,
-    _is_intergroup_hotpatch_gap,
+    _is_intergroup_hotpatch_gap, _is_intergroup_lea_identity_gap,
     _memory_operand, _prove_dispatch_extent,
 )
 from match_recovery.associated_source import AssociatedDataBinding
@@ -183,7 +183,7 @@ def multi_fixture(*, groups=2, original_change=None, candidate_change=None,
                   retarget_candidate=False, wrong_selector_anchor=False,
                   candidate_cell_targets=None, candidate_selector_values=None,
                   extra_tail=b"", extra_relocation=False,
-                  unknown_indirect=False, call_target=None):
+                  unknown_indirect=False, call_target=None, gap2=None):
     """Build two or more independently guarded selector/table groups."""
     if groups not in (2, 4):
         raise ValueError("synthetic multi-dispatch fixture supports two or four groups")
@@ -221,6 +221,12 @@ def multi_fixture(*, groups=2, original_change=None, candidate_change=None,
         if group + 1 < groups:
             next_table = (cursor + 3) & ~3
             gap = b"\x90" * (next_table - cursor)
+            if group == 0 and gap2 is not None:
+                # Pinned original spelling of the first inter-group gap; the
+                # candidate reuses it unless candidate_gap2 mutates it.
+                if len(gap2) != len(gap):
+                    raise ValueError("gap2 must preserve the fixture extent")
+                gap = gap2
             if group == 0 and candidate_gap2 is not None:
                 # Candidate gap spelling is a same-length mutation of this
                 # first inter-group gap; original source data stays pinned.
@@ -715,6 +721,46 @@ def test_intergroup_hotpatch_gap_requires_exact_position_bytes_and_alignment():
     for original, candidate, left, right, selectors, tables in damage:
         assert not _is_intergroup_hotpatch_gap(original, candidate, left, right,
                                                selectors, tables)
+
+
+def test_intergroup_lea_identity_gap_requires_exact_position_bytes_and_alignment():
+    lea = bytes.fromhex("8d 49 00")
+    assert _is_intergroup_lea_identity_gap(lea, lea, 0x1005, 0x1008, {0x1005}, {0x1008})
+    damage = [
+        (bytes.fromhex("8d 49 01"), bytes.fromhex("8d 49 01"), 0x1005, 0x1008, {0x1005}, {0x1008}),  # nonzero disp
+        (bytes.fromhex("8d 4a 00"), bytes.fromhex("8d 4a 00"), 0x1005, 0x1008, {0x1005}, {0x1008}),  # not identity
+        (lea, bytes.fromhex("8d 40 00"), 0x1005, 0x1008, {0x1005}, {0x1008}),  # candidate byte
+        (lea, b"\x90\x90\x90", 0x1005, 0x1008, {0x1005}, {0x1008}),  # candidate NOP fill
+        (lea, lea, 0x1005, 0x1008, {0x1004}, {0x1008}),  # left is not a selector end
+        (lea, lea, 0x1005, 0x1008, {0x1005}, {0x100c}),  # right is not a table start
+        (lea, lea, 0x1006, 0x1009, {0x1006}, {0x1009}),  # unaligned table
+        (lea + b"\x90", lea + b"\x90", 0x1004, 0x1008, {0x1004}, {0x1008}),  # extra fill
+    ]
+    for original, candidate, left, right, selectors, tables in damage:
+        assert not _is_intergroup_lea_identity_gap(original, candidate, left, right,
+                                                   selectors, tables)
+
+
+def test_intergroup_lea_identity_gap_between_selector_and_table_compares_exactly():
+    lea = bytes.fromhex("8d 49 00")
+    obj, subject, span, image, bindings, targets = multi_fixture(gap2=lea)
+    report = compare_associated_code(obj, subject, span, image, bindings, targets)
+    assert report["result"] == Result.PASS, (report.get("bytes"), report.get("references"))
+    assert report["comparison_span"] == {"start": BASE, "end": BASE + 57}
+
+
+@pytest.mark.parametrize("candidate_gap", [bytes.fromhex("8d 40 00"), b"\x90\x90\x90"])
+def test_intergroup_lea_identity_gap_candidate_mutation_never_passes(candidate_gap):
+    obj, subject, span, image, bindings, targets = multi_fixture(
+        gap2=bytes.fromhex("8d 49 00"), candidate_gap2=candidate_gap)
+    with pytest.raises(ValueError, match="not a supported alignment form"):
+        compare_associated_code(obj, subject, span, image, bindings, targets)
+
+
+def test_intergroup_noncanonical_lea_gap_refuses():
+    obj, subject, span, image, bindings, targets = multi_fixture(gap2=bytes.fromhex("8d 49 01"))
+    with pytest.raises(ValueError, match="not a supported alignment form"):
+        compare_associated_code(obj, subject, span, image, bindings, targets)
 
 
 @pytest.mark.parametrize("omit", [(2, 3), (6, 7)])
