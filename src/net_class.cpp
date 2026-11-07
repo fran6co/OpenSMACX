@@ -381,6 +381,34 @@ void Net::on_host_changed() { }
 // "C" __fastcall); no header declares it, so this file restates the link
 // shape the same way designwin.cpp restates slide_show.
 
+// stand-in: local copy of AlphaNetStringStruct::seek_pos whose volatile
+// head_/entry_count_ reads force the image's load order (0x0062E4F4/F7) and
+// keep the count in EDI across abs(); the header body reloads it after.
+static inline int seek_ledger_pos(AlphaNetStringStruct *list, int position) {
+    AbsFnT abs_fn = &abs;
+    if (position > list->entry_count_ - 1) return 0;
+    AlphaNetLedgerEntry *head = *(AlphaNetLedgerEntry *volatile *)&list->head_;
+    const int count = *(volatile int *)&list->entry_count_;
+    list->current_ = head;
+    if (position < 0) {
+        if (abs_fn(position) > count) return 0;
+        int remaining = abs_fn(position);
+        while (remaining > 0) {
+            --remaining;
+            list->current_ = list->current_->previous_;
+        }
+        position += list->entry_count_;
+    } else {
+        int remaining = position;
+        while (remaining > 0) {
+            --remaining;
+            list->current_ = list->current_->next_;
+        }
+    }
+    list->current_position_ = position;
+    return 1;
+}
+
 /*
 Purpose: Run one lobby enumeration for the setup dialog's player-added path:
          guard the handed-in list, scan the session list through DirectPlay's
@@ -428,7 +456,7 @@ int Net::enumerate_sessions(AlphaNetLedger *ledger, const char *password) {
     ledger->sort_sessions();
     if (result != 0) return 1;
 
-    ledger->seek_pos(-1);
+    seek_ledger_pos(ledger, -1);
     return 0;
 }
 

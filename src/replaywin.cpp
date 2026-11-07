@@ -310,7 +310,9 @@ void ReplayWin::make_bases() {
         next_base->y = static_cast<int16_t>(site.y);
         next_base->population_size = 1;
         next_base->faction_id_current = static_cast<uint8_t>(site.faction_id);
-        bit_set(next_base->x, next_base->y, 1, 1);
+        // volatile: stand-in for the image's reload of the stored y at
+        // 0x005AD5C2; no plain spelling found.
+        bit_set(next_base->x, *(volatile int16_t *)&next_base->y, 1, 1);
         owner_set(next_base->x, next_base->y, next_base->faction_id_current);
         ++next_base;
         ++GameDataStateStorage.fields_.base_current_count_;
