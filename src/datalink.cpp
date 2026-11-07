@@ -55,6 +55,7 @@
 #include "council.h"  // source-owned Proposal table and its original eleven-entry bound
 #include "terraforming.h"
 #include "texture.h"
+#include "font_metrics.h"
 
 extern int MainInterfaceTileFlag;
 // RECOVERY_OBJECT: v2 0x00691B60 0x00691B66 ?DatalinkHelpFileText@@3PADA 0x00430770
@@ -921,18 +922,19 @@ void Datalink::draw_social() {
 void Datalink::draw_faction() {
     Popup popup;
     int faction = history_[0];
-    int left = panel_rect_.left + 5;
-    int top = panel_rect_.top + 5;
-    int right = panel_rect_.right - 5;
+    RECT rect = panel_rect_;
+    rect.left += 5;
+    rect.top += 5;
+    rect.right -= 5;
     set_font(&font1_, 0, 0, 0);
     set_text_color(0xE0, -1, 1, 1);
     StringTemp[0] = 0;
     strcat(StringTemp, Players[faction].formal_name_faction);
     CharUpperA(StringTemp);
     write_cent_l(StringTemp, &title_rect_);
-    Sprite &portrait = FactionsArt[faction].datalink;
-    portrait.draw(this, portrait.transparent_index(), left, top, 1, 1);
-    left += portrait.width() + 5;
+    Sprite *portrait = &FactionsArt[faction].datalink;
+    portrait->draw(this, portrait->transparent_index(), rect.left, rect.top, 1, 1);
+    rect.left += FactionsArt[faction].datalink.width() + 5;
     char *file = Players[faction].filename;
     popup.start(file, "DATALINKS1", -1, 0, 0, 0);
     set_font(&body_font_, 0, 0, 0);
@@ -940,8 +942,9 @@ void Datalink::draw_faction() {
     set_text_color(0x98, -1, 1, 1);
     set_text_color2(0x96, -1, 1, 1);
     set_text_color_hyper(0xFE, -1, 1, 1);
-    int width = right - left;
-    top = write_strings(&popup.unit_ids_, left, top, width, 0) + body_font_.line_advance();
+    int width = rect.right - rect.left;
+    rect.top = write_strings(&popup.unit_ids_, rect.left, rect.top, width, 0);
+    rect.top += font_line_advance(body_font_);
     if (WinScreenWidth == 800) {
         set_wrap_width(0);
         stringBox_.clear();
@@ -952,16 +955,11 @@ void Datalink::draw_faction() {
     } else {
         popup.start(file, "DATALINKS2", -1, 0, 0, 0);
         set_font(&secondary_body_font_, 0, 0, 0);
-        write_strings(&popup.unit_ids_, left, top, width, 0);
+        write_strings(&popup.unit_ids_, rect.left, rect.top, width, 0);
         set_wrap_width(0);
     }
     popup.start(file, "BLURB", -1, 0, 0, 0);
-    if (MainInterfaceTileFlag) {
-        blurb_box_.clear();
-        blurb_box_.strings().load(file, "BLURB", 1, 0);
-        blurb_box_.add_fixup();
-        blurb_box_.show(0);
-    }
+    UNK7(file, "BLURB");
 }
 
 // ORIGINAL: 0x0042A100 ?on_dialog_back_draw@Datalink@@QAEHPAUGraphicWin@@@Z 0x0042A100-0x0042A150 BYTE_EXACT
@@ -1015,16 +1013,21 @@ void Datalink::UNK7(char *file, char *section) {
     }
 }
 
+// The image tests the list through a computed list pointer.
+static inline char *dl_current_text(StringList *list) {
+    return list->head_ != 0 ? list->current_->string_payload()->text : 0;
+}
+
 // ORIGINAL: 0x0042C2E0 ?draw_concept@Datalink@@QAEXXZ 0x0042C2E0-0x0042C64D;0x0065358E-0x00653650
 // RECOVERY_BINDING: v1 {"evidence": ["image:0x42C2E0", "git:8e3029104ab590bec35cc6932e637765b2ea4074:src/recovered/units/0042c2e0.cpp"], "reason": "Recover the seed identity as a typed Datalink member using real window, font, list, and popup lifetimes."}
 void Datalink::draw_concept() {
     Popup popup;
+    int id = history_[0];
     set_font(&font1_, 0, 0, 0);
     set_text_color(0xE0, -1, 1, 1);
     StringTemp[0] = 0;
-    listBox_.item_list_.seek_id(history_[0]);
-    strcat(StringTemp, listBox_.item_list_.head_ != 0
-        ? listBox_.item_list_.current_->string_payload()->text : 0);
+    listBox_.item_list_.seek_id(id);
+    strcat(StringTemp, dl_current_text(&listBox_.item_list_));
     CharUpperA(StringTemp);
     write_cent_l(StringTemp, &title_rect_);
     StringTemp[0] = 0;
@@ -1043,12 +1046,12 @@ void Datalink::draw_concept() {
 // RECOVERY_BINDING: v1 {"evidence": ["image:0x42C650", "git:8e3029104ab590bec35cc6932e637765b2ea4074:src/recovered/units/0042c650.cpp"], "reason": "Recover the seed identity as a typed Datalink member using real window, font, list, and popup lifetimes."}
 void Datalink::draw_adv_concept() {
     Popup popup;
+    int id = history_[0] + 10000;
     set_font(&font1_, 0, 0, 0);
     set_text_color(0xE0, -1, 1, 1);
     StringTemp[0] = 0;
-    listBox_.item_list_.seek_id(history_[0] + 10000);
-    strcat(StringTemp, listBox_.item_list_.head_ != 0
-        ? listBox_.item_list_.current_->string_payload()->text : 0);
+    listBox_.item_list_.seek_id(id);
+    strcat(StringTemp, dl_current_text(&listBox_.item_list_));
     CharUpperA(StringTemp);
     write_cent_l(StringTemp, &title_rect_);
     StringTemp[0] = 0;
