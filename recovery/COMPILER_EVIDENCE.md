@@ -326,6 +326,21 @@ retained trials before requeueing; a changed aggregate TU hash alone is not
 evidence of a new hypothesis. None of these diagnostics changes production
 compiler policy or grants a byte claim.
 
+## Assembler identity
+
+The original's MASM modules (the ten Caviar `_SELFMOD` contributions and the uV
+decoder's kernels) were assembled by Microsoft ML 6.11d. A 2026-11-07 control
+assembled the plain sources with ML 6.11, 6.11a, 6.11d, 6.12 and 6.13: 6.11d
+reproduced every module byte for byte, including the `_SELFMOD` section flags
+(0xE0000020 after `/SECTION:_SELFMOD,ERW`) and `UVA_DATA`'s 4-byte alignment.
+6.12 and 6.13 differ in their code-segment `ALIGN` fill. The earlier UASM 2.57r
+route needed a hand-written fill macro and forced jump sizes; ML sizes jumps
+itself and takes the first register of `[reg + reg]` as the index, so the
+sources spell `[ecx + ebx]` where the original encodes ecx as the index. ML
+6.11d also refuses source lines over 512 characters; the wrapper assembles a
+copy with long full-line comments reduced to `;`. The binary is pinned by
+`~/opt/masm/6.11d/PROVENANCE.md`.
+
 ## Shared frames and private helper boundaries
 
 Normalize addresses against the owning caller's frame before translating a

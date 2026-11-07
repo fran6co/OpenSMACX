@@ -49,8 +49,9 @@ project(OpenSMACX VERSION 0.2.3 LANGUAGES CXX C)
 
 # ASM_MASM for the routines the original wrote as MASM modules and VC6 inline
 # asm cannot express (AGENTS.md, "Inline assembly"; user decision 2026-11-07).
-# The toolchain points it at UASM under the same wine wrapper as cl. C/C++-only
-# options below are scoped with COMPILE_LANGUAGE so they never reach it.
+# The toolchain points it at ML 6.11d under the same wine wrapper as cl.
+# C/C++-only options below are scoped with COMPILE_LANGUAGE so they never
+# reach it.
 enable_language(ASM_MASM)
 
 # The original allocator includes the static multithreaded CRT's lock and

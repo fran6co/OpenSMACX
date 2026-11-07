@@ -4,8 +4,8 @@
 ; and the patcher that stores the current draw's buffers, steps and tables
 ; into the renderer's own immediates and displacements before it runs.
 ; The image pads between contributions with int3 and no reference crosses
-; one, so each is its own module and segment. Assembled by UASM (MASM 6
-; syntax); the linker marks _SELFMOD writable (/SECTION:_SELFMOD,ERW).
+; one, so each is its own module and segment. Assembled by Microsoft ML
+; 6.11d; the linker marks _SELFMOD writable (/SECTION:_SELFMOD,ERW).
 
         .386
         .model flat
@@ -13,7 +13,6 @@
         include caviar_selfmod.inc
 
 _SELFMOD SEGMENT PARA PUBLIC 'CODE'
-selfmod_segment_base LABEL BYTE
 
 ; Contained-shadow callback: the pinned CFG reaches its common return at
 ; 0x0066714D; the terminal jump ends at exclusive 0x0066731C, where the
@@ -33,32 +32,32 @@ selfmod_segment_base LABEL BYTE
           mov eax, dword ptr [esp + 24h]
           mov dl, byte ptr [caviar_kernel_projection_window + 1DCh]
           test eax, 10h
-          je near ptr L667273
+          je L667273
           mov dword ptr [caviar_output_message_window + 1C4h], esi
           mov dword ptr [caviar_output_message_window + 1C8h], ebp
           and eax, 1
-          jne near ptr L66714E
+          jne L66714E
 L667010:  mov eax, dword ptr [edi]
           and eax, dword ptr [vox_projection_octant_mask]
-          je short L667030
+          je L667030
           xor ebx, ebx
           mov bl, byte ptr [edi + 8]
           and bl, 1Fh
           cmp bl, 1Ah
-          jge short L667050
+          jge L667050
           shl ebx, 3
-          jmp near ptr L6670F0
-        MASM6_ALIGN 16
+          jmp L6670F0
+        ALIGN 16
 L667030:  mov al, byte ptr [edi + 8]
           and al, 80h
-          jne near ptr L667143
+          jne L667143
           xor eax, eax
           mov al, byte ptr [edi + 4]
           lea eax, [eax + eax*2 + 0Ch]
           add edi, eax
           mov ebx, dword ptr [vox_projection_octant_mask]
           and ebx, dword ptr [edi]
-          je short L667030
+          je L667030
 L667050:  movsx eax, byte ptr [edi + 5]
           mov dword ptr [caviar_kernel_projection_window + 1E0h], eax
           fild dword ptr [caviar_kernel_projection_window + 1E0h]
@@ -96,8 +95,8 @@ L667050:  movsx eax, byte ptr [edi + 5]
           fstp st(0)
           fstp st(0)
           fstp st(0)
-          jmp short L6670F3
-        MASM6_ALIGN 16
+          jmp L6670F3
+        ALIGN 16
 L6670F0:  add edi, 9
 L6670F3:  add esi, dword ptr [ebx*2 + caviar_kernel_projection_window]
           mov ecx, esi
@@ -114,8 +113,8 @@ L667123:: mov byte ptr [ecx + 1020304h], dl
 L667129:: mov byte ptr [ecx + 1020304h], dl
 L66712F:: mov byte ptr [ecx + 1020304h], dl
           cmp ebx, 0D0h
-          jl short L6670F3
-          jne near ptr L667010
+          jl L6670F3
+          jne L667010
 L667143:  mov esp, dword ptr [caviar_kernel_projection_window + 1D4h]
           pop ebx
           pop edi
@@ -124,25 +123,25 @@ L667143:  mov esp, dword ptr [caviar_kernel_projection_window + 1D4h]
           ret
 L66714E:  mov eax, dword ptr [edi]
           and eax, dword ptr [vox_projection_octant_mask]
-          je short L667170
+          je L667170
           xor ebx, ebx
           mov bl, byte ptr [edi + 8]
           and bl, 1Fh
           cmp bl, 1Ah
-          jge short L66718C
+          jge L66718C
           shl ebx, 3
           add edi, 9
-          jmp near ptr L667230
+          jmp L667230
 L667170:  mov al, byte ptr [edi + 8]
           and al, 80h
-          jne short L667143
+          jne L667143
           xor eax, eax
           mov al, byte ptr [edi + 4]
           lea eax, [eax + eax*2 + 0Ch]
           add edi, eax
           mov ebx, dword ptr [vox_projection_octant_mask]
           and ebx, dword ptr [edi]
-          je short L667170
+          je L667170
 L66718C:  movsx eax, byte ptr [edi + 5]
           mov dword ptr [caviar_kernel_projection_window + 1E0h], eax
           fild dword ptr [caviar_kernel_projection_window + 1E0h]
@@ -180,8 +179,8 @@ L66718C:  movsx eax, byte ptr [edi + 5]
           fstp st(0)
           fstp st(0)
           fstp st(0)
-          jmp short L667230
-        MASM6_ALIGN 16
+          jmp L667230
+        ALIGN 16
 L667230:  add esi, dword ptr [ebx*2 + caviar_kernel_projection_window]
           mov ecx, esi
           add ebp, dword ptr [ebx*2 + caviar_kernel_projection_window + 4h]
@@ -194,15 +193,15 @@ L667248:: add ecx, dword ptr [eax*4 + 1020304h]
           and ebx, 0F8h
 L66725A:: mov byte ptr [ecx + 1020304h], dl
           cmp ebx, 0D0h
-          jl short L667230
-          jne near ptr L66714E
-          jmp near ptr L667143
+          jl L667230
+          jne L66714E
+          jmp L667143
 L667273:  mov esp, dword ptr [esp + 1Ch]
           test eax, 20h
-          je short L66727F
+          je L66727F
           dec esp
 L66727F:  and eax, 1
-          jne short L6672D9
+          jne L6672D9
           xor eax, eax
           xor ebx, ebx
 L667288:  mov al, byte ptr [edi]
@@ -222,8 +221,8 @@ L6672C2:: mov byte ptr [ecx + 1020304h], dl
 L6672C8:: mov byte ptr [ecx + 1020304h], dl
           add edi, 3
           dec esp
-          jne short L667288
-          jmp near ptr L667143
+          jne L667288
+          jmp L667143
 L6672D9:  xor eax, eax
           xor ebx, ebx
 L6672DD:  mov al, byte ptr [edi]
@@ -240,8 +239,8 @@ L667302:: mov ebx, dword ptr [ebx*4 + 1020304h]
 L66730B:: mov byte ptr [ecx + 1020304h], dl
           add edi, 3
           dec esp
-          jne short L6672DD
-          jmp near ptr L667143
+          jne L6672DD
+          jmp L667143
 ?caviar_original_666fd0@@YAXHHIPBEH@Z ENDP
 
 ; 0x0066731C-0x00667375: the contained-shadow patcher. Its bytes are the

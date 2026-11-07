@@ -32,15 +32,17 @@ from pathlib import Path
 
 VC6_ROOT = Path(os.environ.get("VC6_ROOT", Path.home() / "opt" / "vc6"))
 VC6_PREFIX = Path(os.environ.get("VC6_PREFIX", VC6_ROOT / ".wineprefix"))
-TOOLS = {"cl": "CL.EXE", "link": "LINK.EXE", "lib": "LIB.EXE", "uasm": "uasm32.exe"}
-# MASM-dialect sources (user decision, 2026-11-07) go through UASM, an
-# open-source MASM-compatible assembler, run under the same Wine prefix as CL.
-# It is a separate install beside VC6; ~/opt/uasm/<version>/PROVENANCE.md pins it.
-UASM_ROOT = Path(os.environ.get("UASM_ROOT", Path.home() / "opt" / "uasm" / "2.57r"))
+TOOLS = {"cl": "CL.EXE", "link": "LINK.EXE", "lib": "LIB.EXE", "ml": "ML.EXE"}
+# MASM-dialect sources (user decision, 2026-11-07) go through Microsoft ML
+# 6.11d, run under the same Wine prefix as CL. It reproduces the original
+# _SELFMOD modules and uV decoder byte for byte, ALIGN fill and section flags
+# included; 6.12 and 6.13 fill ALIGN differently. It is a separate install
+# beside VC6; ~/opt/masm/<version>/PROVENANCE.md pins it.
+ML_ROOT = Path(os.environ.get("ML_ROOT", Path.home() / "opt" / "masm" / "6.11d"))
 
 
 def tool_executable(tool: str) -> Path:
-    return (UASM_ROOT if tool == "uasm" else VC6_ROOT / "BIN") / TOOLS[tool]
+    return (ML_ROOT / "bin" if tool == "ml" else VC6_ROOT / "BIN") / TOOLS[tool]
 
 
 def preprocessing_diagnostics(stdout: bytes, stderr: bytes) -> str:
@@ -90,7 +92,8 @@ def preprocessing_diagnostics(stdout: bytes, stderr: bytes) -> str:
     return rendered if len(rendered) <= 4000 else rendered[:3960] + "\n[diagnostic output truncated]"
 
 
-def run_tool(command: list, *, cwd=None, binary=False, explicit_compiler=False) -> subprocess.CompletedProcess:
+def run_tool(command: list, *, cwd=None, binary=False, explicit_compiler=False,
+             explicit_assembler=False) -> subprocess.CompletedProcess:
     """Wait for the tool, not EOF from background Wine services.
 
     Wine services can inherit captured pipes and keep them open after CL exits.
@@ -104,6 +107,11 @@ def run_tool(command: list, *, cwd=None, binary=False, explicit_compiler=False) 
         child_environment = {key: value for key, value in child_environment.items()
                              if key.upper() not in ("CL", "_CL_")}
         child_environment.update(CL="", _CL_="")
+    if explicit_assembler:
+        # ML prepends options from its ML variable; the recipe must be argv only.
+        child_environment = {key: value for key, value in child_environment.items()
+                             if key.upper() != "ML"}
+        child_environment.update(ML="")
     with tempfile.TemporaryFile(**options) as stdout, tempfile.TemporaryFile(**options) as stderr:
         finished = subprocess.run(command, env=child_environment, stdout=stdout, stderr=stderr,
                                   **({"cwd": cwd} if cwd is not None else {}))
@@ -377,23 +385,67 @@ def write_depfile(executable, arguments: list, path: str, target: str) -> None:
     Path(path).write_text(f"{target}:{body}\n")
 
 
-# UASM echoes one summary line per source; diagnostics follow on their own lines.
-ASSEMBLER_SUMMARY = re.compile(r"^.*: \d+ lines, \d+ passes, \d+ ms, \d+ warnings, \d+ errors$")
+# ML echoes ` Assembling: <file>` per source; diagnostics follow on their own lines.
+ASSEMBLER_SUMMARY = re.compile(r"^Assembling: ")
+# ML 6.11d refuses source lines longer than 512 characters (A1009). Only
+# full-line comments carrying annotations (RECOVERY_BINDING JSON) exceed it.
+ASSEMBLER_LINE_LIMIT = 512
+
+
+def assembler_source_copy(source: Path, directory: Path) -> Path:
+    """Copy `source` with every over-long full-line `;` comment reduced to `;`.
+
+    The copy keeps the basename and the line count, so ML's diagnostics still
+    name the right file and line. Code lines are never rewritten: an over-long
+    instruction is a source error ML must report.
+    """
+    lines = source.read_bytes().split(b"\n")
+    shortened = [b";" + (b"\r" if line.endswith(b"\r") else b"")
+                 if len(line.rstrip(b"\r")) > ASSEMBLER_LINE_LIMIT and line.lstrip().startswith(b";")
+                 else line for line in lines]
+    copy = directory / source.name
+    copy.write_bytes(b"\n".join(shortened))
+    return copy
 
 
 def assemble(executable: Path, arguments: list) -> int:
-    """Run UASM with the CL wrapper's path translation and environment.
+    """Run ML with the CL wrapper's path translation and environment.
 
     No depfile, compiler frontend, reproducibility root or diagnostics capture:
     those are CL protocols. An assembler source that names one is a build
-    configuration error, not something to drop silently.
+    configuration error, not something to drop silently. CMake's `-Fo <obj>`
+    is joined into ML's `/Fo<obj>`, and `-X` options are spelled `/X` so
+    absolute include paths get the same translation as CL's.
     """
     unsupported = [word for word in arguments if word.startswith("--")]
     if unsupported:
         print("unsupported assembler wrapper option: " + " ".join(unsupported), file=sys.stderr)
         return 3
-    translated = [translate(a) for a in arguments]
-    finished = run_tool(["wine32", str(executable), *translated])
+    words, iterator = [], iter(arguments)
+    for word in iterator:
+        if word.startswith("-") and len(word) > 1:
+            word = "/" + word[1:]
+        if word in ("/Fo", "/I"):
+            word += next(iterator, "")
+        words.append(word)
+    sources = [index for index, word in enumerate(words)
+               if not word.startswith("/") or Path(word).is_file()]
+    sources = [index for index in sources if words[index].lower().endswith(".asm")]
+    objects = [word[3:] for word in words if word.startswith("/Fo")]
+    if len(sources) != 1 or len(objects) != 1:
+        print("the assembler wrapper needs exactly one .asm source and one /Fo object",
+              file=sys.stderr)
+        return 3
+    source = Path(words[sources[0]]).resolve()
+    output_directory = Path(objects[0]).parent.resolve()
+    output_directory.mkdir(parents=True, exist_ok=True)
+    with tempfile.TemporaryDirectory(prefix="ml-source-", dir=output_directory) as temporary:
+        words[sources[0]] = str(assembler_source_copy(source, Path(temporary)))
+        # The copy lives elsewhere, so name the original directory first: ML
+        # searches the source's own directory, then /I directories in order.
+        words.insert(0, "/I" + str(source.parent))
+        translated = [translate(word) for word in words]
+        finished = run_tool(["wine32", str(executable), *translated], explicit_assembler=True)
     for line in finished.stdout.splitlines():
         if line.strip() and not ASSEMBLER_SUMMARY.match(line.strip()):
             print(line)
@@ -417,10 +469,10 @@ def main(argv: list) -> int:
 
     executable = tool_executable(tool)
     if not executable.is_file():
-        print(f"{executable} not found; set {'UASM_ROOT' if tool == 'uasm' else 'VC6_ROOT'}",
+        print(f"{executable} not found; set {'ML_ROOT' if tool == 'ml' else 'VC6_ROOT'}",
               file=sys.stderr)
         return 127
-    if tool == "uasm":
+    if tool == "ml":
         return assemble(executable, expand_responses(arguments))
 
     # BEFORE ANYTHING READS THE ARGUMENTS. Both the depfile extraction below

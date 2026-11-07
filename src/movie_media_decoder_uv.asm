@@ -2,8 +2,8 @@
 ;
 ; These routines were written in assembly in the original (AGENTS.md, "Inline
 ; assembly"): private esi/edi/ebp register conventions, no prologue, and
-; encodings or data VC6 inline asm cannot reproduce. Assembled by UASM in MASM
-; 6 mode (-coff); see cmake/toolchains/vc6.cmake and recovery/environment/wine.py.
+; encodings or data VC6 inline asm cannot reproduce. Assembled by Microsoft ML
+; 6.11d (-coff); see cmake/toolchains/vc6.cmake and recovery/environment/wine.py.
 ;
 ; The C++ declarations that callers use name these procedures by their
 ; mangled spellings, so the procedures are declared with exactly those names.

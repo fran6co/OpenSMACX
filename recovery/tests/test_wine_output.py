@@ -4,6 +4,7 @@ import os
 import signal
 import subprocess
 import sys
+from pathlib import Path
 
 import pytest
 
@@ -156,3 +157,41 @@ def test_wrapper_captures_unfiltered_link_log_without_losing_exit_status(tmp_pat
     output = capsys.readouterr()
     assert "warning LNK9999" in output.out and output.err == "stderr preserved\n"
     assert ("Start Pass1" in output.out) == (code != 0)
+
+
+def test_assembler_wrapper_shortens_only_long_comments_and_names_the_source_directory(
+        monkeypatch, tmp_path):
+    source_directory = tmp_path / "src"
+    source_directory.mkdir()
+    long_comment = "; RECOVERY_BINDING: v1 " + "x" * 600
+    long_code = "        db " + ", ".join(["0"] * 200)
+    source = source_directory / "unit.asm"
+    source.write_bytes(f"; short\r\n{long_comment}\r\n{long_code}\r\n        end\r\n".encode())
+    (tmp_path / "ML.EXE").write_bytes(b"")
+    seen = {}
+
+    def assembled(command, **kwargs):
+        seen["command"], seen["kwargs"] = command, kwargs
+        copy = next(Path(word[len("Z:"):].replace("\\", "/")) for word in command
+                    if word.endswith("unit.asm"))
+        seen["copy"] = copy.read_bytes()
+        return subprocess.CompletedProcess(command, 0, " Assembling: unit.asm\nwarning\n", "")
+
+    monkeypatch.setattr(wine, "run_tool", assembled)
+    monkeypatch.chdir(tmp_path)
+    assert wine.assemble(tmp_path / "ML.EXE", ["-nologo", "-coff", "-c", "-Fo", "out/unit.obj",
+                                               str(source)]) == 0
+    lines = seen["copy"].split(b"\r\n")
+    assert lines == [b"; short", b";", long_code.encode(), b"        end", b""]
+    arguments = seen["command"][2:]
+    assert arguments[0] == "/IZ:" + str(source_directory).replace("/", "\\")
+    assert arguments[1:5] == ["/nologo", "/coff", "/c", "/Foout/unit.obj"]
+    assert seen["kwargs"] == {"explicit_assembler": True}
+    assert not list((tmp_path / "out").iterdir())
+
+
+def test_assembler_environment_clears_ml_options(monkeypatch):
+    monkeypatch.setenv("ML", "/Zi")
+    result = wine.run_tool([sys.executable, "-c", "import os; print(repr(os.environ.get('ML')))"],
+                           explicit_assembler=True)
+    assert result.stdout.strip() == "''"

@@ -121,7 +121,7 @@
       "VC6_ROOT",
       "VC6_INCLUDE",
       "VC6_LIB",
-      "UASM_ROOT"
+      "ML_ROOT"
     ]
   },
   "compiler": {
@@ -145,7 +145,7 @@
       "recovery/environment/intrinsics.py",
       "recovery/environment/frontends.json",
       "recovery/environment/command_paths.py",
-      "recovery/environment/uasm"
+      "recovery/environment/ml"
     ],
     "environment": [
       "VC6_PREFIX",
@@ -159,7 +159,7 @@
       "CPATH",
       "C_INCLUDE_PATH",
       "CPLUS_INCLUDE_PATH",
-      "UASM_ROOT"
+      "ML_ROOT"
     ]
   },
   "measurement": {

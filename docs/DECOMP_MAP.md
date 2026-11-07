@@ -671,7 +671,7 @@ comments end in this spelling and are not map entries.
 
 ## Assembler sources
 
-A MASM-dialect `.asm` source (assembled by UASM; see README "Building") carries
+A MASM-dialect `.asm` source (assembled by ML 6.11d; see README "Building") carries
 the same grammar with `;` comments: `; ORIGINAL: ...`, `; symbol    ...`,
 `; TRIED: ...` mean exactly their `//` spellings. The reader respells each `;`
 comment as `//` line for line before parsing, and the claim writer respells

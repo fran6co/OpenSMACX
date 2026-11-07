@@ -4,8 +4,8 @@
 ; and the patcher that stores the current draw's buffers, steps and tables
 ; into the renderer's own immediates and displacements before it runs.
 ; The image pads between contributions with int3 and no reference crosses
-; one, so each is its own module and segment. Assembled by UASM (MASM 6
-; syntax); the linker marks _SELFMOD writable (/SECTION:_SELFMOD,ERW).
+; one, so each is its own module and segment. Assembled by Microsoft ML
+; 6.11d; the linker marks _SELFMOD writable (/SECTION:_SELFMOD,ERW).
 
         .386
         .model flat
@@ -13,7 +13,6 @@
         include caviar_selfmod.inc
 
 _SELFMOD SEGMENT PARA PUBLIC 'CODE'
-selfmod_segment_base LABEL BYTE
 
 ; SEED HISTORY (prior excluded record): 0x00665640 sub_665640 0x00665640-0x00665BA1 EXCLUDED S2d; hidden;sp_ready;purged_ok
 ; ORIGINAL: 0x00665640 sub_665640 0x00665640-0x00665BA1 BYTE_EXACT
@@ -32,34 +31,34 @@ selfmod_segment_base LABEL BYTE
           mov eax, dword ptr [esp + 28h]
           shl edx, 8
           test eax, 10h
-          je near ptr L665A48
+          je L665A48
           mov dword ptr [caviar_output_message_window + 1C4h], esi
           mov dword ptr [caviar_output_message_window + 1C8h], ebp
           mov dword ptr [caviar_output_message_window + 1CCh], edx
           mov esp, dword ptr [vox_projection_selected_angle]
           and eax, 1
-          jne near ptr L6658A2
+          jne L6658A2
 L66568D:  mov eax, dword ptr [edi]
           and eax, dword ptr [vox_projection_octant_mask]
-          je short L6656B0
+          je L6656B0
           xor ebx, ebx
           mov bl, byte ptr [edi + 8]
           and bl, 1Fh
           cmp bl, 1Ah
-          jge short L6656D0
+          jge L6656D0
           shl ebx, 3
-          jmp near ptr L6657D0
-        MASM6_ALIGN 16
+          jmp L6657D0
+        ALIGN 16
 L6656B0:  mov al, byte ptr [edi + 8]
           and al, 80h
-          jne near ptr L665897
+          jne L665897
           xor eax, eax
           mov al, byte ptr [edi + 4]
           lea eax, [eax + eax*2 + 0Ch]
           add edi, eax
           mov ebx, dword ptr [vox_projection_octant_mask]
           and ebx, dword ptr [edi]
-          je short L6656B0
+          je L6656B0
 L6656D0:  movsx eax, byte ptr [edi + 5]
           mov dword ptr [caviar_kernel_projection_window + 1E0h], eax
           fild dword ptr [caviar_kernel_projection_window + 1E0h]
@@ -120,15 +119,15 @@ L6656D0:  movsx eax, byte ptr [edi + 5]
           add ebp, esi
           rol edx, 10h
           and edx, 0FF00FFFFh
-          jmp short L6657D3
-        MASM6_ALIGN 16
+          jmp L6657D3
+        ALIGN 16
 L6657D0:  add edi, 9
 L6657D3:  add ecx, dword ptr [ebx*2 + caviar_output_message_window + 20h]
           mov ah, byte ptr [edi]
           adc ebp, dword ptr [ebx*2 + caviar_output_message_window + 24h]
           mov al, byte ptr [edi + 1]
           test ch, ch
-          je short L6657F2
+          je L6657F2
           xor ch, ch
 L6657EC:: add ebp, 1020304h
 L6657F2:  and eax, 7FFh
@@ -138,29 +137,29 @@ L6657F2:  and eax, 7FFh
           mov bh, byte ptr [esp + eax]
           add edi, 3
 L66580A:: cmp dx, word ptr [ebp*2 + 1020304h]
-          jbe short L665828
+          jbe L665828
 L665814:: mov word ptr [ebp*2 + 1020304h], dx
 L66581C:: mov al, byte ptr [ebx + 1020304h]
 L665822:: mov byte ptr [ebp + 1020304h], al
 L665828:: mov al, byte ptr [ebx + 1020304h]
           mov bl, byte ptr [edi - 3]
 L665831:: cmp dx, word ptr [ebp*2 + 1020304h]
-          jbe short L665849
+          jbe L665849
 L66583B:: mov word ptr [ebp*2 + 1020304h], dx
 L665843:: mov byte ptr [ebp + 1020304h], al
 L665849:: cmp dx, word ptr [ebp*2 + 1020304h]
-          jbe short L665861
+          jbe L665861
 L665853:: mov word ptr [ebp*2 + 1020304h], dx
 L66585B:: mov byte ptr [ebp + 1020304h], al
 L665861:: cmp dx, word ptr [ebp*2 + 1020304h]
-          jbe short L665879
+          jbe L665879
 L66586B:: mov word ptr [ebp*2 + 1020304h], dx
 L665873:: mov byte ptr [ebp + 1020304h], al
 L665879:  and ebx, 0F8h
           and edx, 0FF00FFFFh
           cmp ebx, 0D0h
-          jl near ptr L6657D3
-          jne near ptr L66568D
+          jl L6657D3
+          jne L66568D
 L665897:  mov esp, dword ptr [caviar_kernel_projection_window + 1D4h]
           pop ebx
           pop edi
@@ -169,26 +168,26 @@ L665897:  mov esp, dword ptr [caviar_kernel_projection_window + 1D4h]
           ret
 L6658A2:  mov eax, dword ptr [edi]
           and eax, dword ptr [vox_projection_octant_mask]
-          je short L6658D0
+          je L6658D0
           xor ebx, ebx
           mov bl, byte ptr [edi + 8]
           and bl, 1Fh
           cmp bl, 1Ah
-          jge short L6658EC
+          jge L6658EC
           shl ebx, 3
           add edi, 9
-          jmp near ptr L6659D0
-        MASM6_ALIGN 16
+          jmp L6659D0
+        ALIGN 16
 L6658D0:  mov al, byte ptr [edi + 8]
           and al, 80h
-          jne short L665897
+          jne L665897
           xor eax, eax
           mov al, byte ptr [edi + 4]
           lea eax, [eax + eax*2 + 0Ch]
           add edi, eax
           mov ebx, dword ptr [vox_projection_octant_mask]
           and ebx, dword ptr [edi]
-          je short L6658D0
+          je L6658D0
 L6658EC:  movsx eax, byte ptr [edi + 5]
           mov dword ptr [caviar_kernel_projection_window + 1E0h], eax
           fild dword ptr [caviar_kernel_projection_window + 1E0h]
@@ -239,8 +238,8 @@ L6658EC:  movsx eax, byte ptr [edi + 5]
           fstp st(0)
           fstp st(0)
           add edx, dword ptr [caviar_kernel_projection_window + 1E0h]
-          jmp short L6659D0
-        MASM6_ALIGN 16
+          jmp L6659D0
+        ALIGN 16
 L6659D0:  add esi, dword ptr [ebx*2 + caviar_kernel_projection_window]
           mov ah, byte ptr [edi]
           add ebp, dword ptr [ebx*2 + caviar_kernel_projection_window + 4h]
@@ -260,20 +259,20 @@ L665A09:: mov al, byte ptr [ebx + 1020304h]
           add edi, 3
           and ebx, 0F8h
 L665A1A:: cmp dx, word ptr [ecx*2 + 1020304h]
-          jbe short L665A32
+          jbe L665A32
 L665A24:: mov word ptr [ecx*2 + 1020304h], dx
 L665A2C:: mov byte ptr [ecx + 1020304h], al
 L665A32:  rol edx, 10h
           cmp ebx, 0D0h
-          jl short L6659D0
-          jne near ptr L6658A2
-          jmp near ptr L665897
+          jl L6659D0
+          jne L6658A2
+          jmp L665897
 L665A48:  mov esp, dword ptr [esp + 20h]
           test eax, 20h
-          je short L665A54
+          je L665A54
           dec esp
 L665A54:  and eax, 1
-          jne near ptr L665B28
+          jne L665B28
           xor eax, eax
           xor ebx, ebx
 L665A61:  mov al, byte ptr [edi]
@@ -283,7 +282,7 @@ L665A61:  mov al, byte ptr [edi]
           and eax, 0F8h
           add esi, dword ptr [eax*2 + caviar_kernel_projection_window]
           and ebx, 7FFh
-          mov bh, byte ptr [ebx + ecx]
+          mov bh, byte ptr [ecx + ebx]
           mov bl, byte ptr [edi + 2]
           add ebp, dword ptr [eax*2 + caviar_kernel_projection_window + 4h]
           add edx, dword ptr [eax*2 + caviar_kernel_projection_window + 8h]
@@ -297,26 +296,26 @@ L665A94:: mov al, byte ptr [ebx + 1020304h]
 L665AAD:: mov ebx, dword ptr [ebx*4 + 1020304h]
           add ecx, ebx
 L665AB6:: cmp dx, word ptr [ecx*2 + 1020304h]
-          jbe short L665ACE
+          jbe L665ACE
 L665AC0:: mov word ptr [ecx*2 + 1020304h], dx
 L665AC8:: mov byte ptr [ecx + 1020304h], al
 L665ACE:: cmp dx, word ptr [ecx*2 + 1020304h]
-          jbe short L665AE6
+          jbe L665AE6
 L665AD8:: mov word ptr [ecx*2 + 1020304h], dx
 L665AE0:: mov byte ptr [ecx + 1020304h], al
 L665AE6:: cmp dx, word ptr [ecx*2 + 1020304h]
-          jbe short L665AFE
+          jbe L665AFE
 L665AF0:: mov word ptr [ecx*2 + 1020304h], dx
 L665AF8:: mov byte ptr [ecx + 1020304h], al
 L665AFE:: cmp dx, word ptr [ecx*2 + 1020304h]
-          jbe short L665B16
+          jbe L665B16
 L665B08:: mov word ptr [ecx*2 + 1020304h], dx
 L665B10:: mov byte ptr [ecx + 1020304h], al
 L665B16:  rol edx, 10h
           add edi, 3
           dec esp
-          jne near ptr L665A61
-          jmp near ptr L665897
+          jne L665A61
+          jmp L665897
 L665B28:  xor eax, eax
           xor ebx, ebx
 L665B2C:  mov al, byte ptr [edi]
@@ -326,7 +325,7 @@ L665B2C:  mov al, byte ptr [edi]
           and eax, 0F8h
           add esi, dword ptr [eax*2 + caviar_kernel_projection_window]
           and ebx, 7FFh
-          mov bh, byte ptr [ebx + ecx]
+          mov bh, byte ptr [ecx + ebx]
           mov bl, byte ptr [edi + 2]
           add ebp, dword ptr [eax*2 + caviar_kernel_projection_window + 4h]
           add edx, dword ptr [eax*2 + caviar_kernel_projection_window + 8h]
@@ -339,14 +338,14 @@ L665B5F:: mov al, byte ptr [ebx + 1020304h]
 L665B72:: mov ebx, dword ptr [ebx*4 + 1020304h]
           add ecx, ebx
 L665B7B:: cmp dx, word ptr [ecx*2 + 1020304h]
-          jbe short L665B93
+          jbe L665B93
 L665B85:: mov word ptr [ecx*2 + 1020304h], dx
 L665B8D:: mov byte ptr [ecx + 1020304h], al
 L665B93:  rol edx, 10h
           add edi, 3
           dec esp
-          jne short L665B2C
-          jmp near ptr L665897
+          jne L665B2C
+          jmp L665897
 ?caviar_original_665640@@YAXHHHIPBEH@Z ENDP
 
 ; SEED HISTORY: former 0x00665BA1 record sub_665ba1 was BODY/EXCLUDED S2d; flags=hidden;sp_ready;purged_ok; kind=game; span=0x00665BA1..0x00665C93; 242-byte seed; catalogued direct callers=1, call targets=none; no BYTE_EXACT or SEMANTIC claim. The old exclusion note called these EH funclets; the pinned bodies return normally. Measurement still refuses for undocumented _SELFMOD range 0x00664000..0x00669000. The setup writes executable-page immediates; the replacement publishes typed state instead.

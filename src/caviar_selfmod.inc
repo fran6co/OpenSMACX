@@ -1,37 +1,7 @@
 ; CAVIAR_SELFMOD.INC - shared declarations of the Caviar _SELFMOD modules.
 ;
 ; Every module includes this after `.model flat`. It names the C++ data the
-; renderers read and their patchers copy, and supplies MASM6_ALIGN.
-
-; ---------------------------------------------------------------- MASM6_ALIGN
-;
-; MASM 6's padding convention, not program logic. The original modules were
-; assembled by MASM 6, whose code-segment ALIGN fills the gap with `2E 8B C0`
-; (mov eax,eax with a CS prefix) repeated, then `8B C0` or `90` for a two- or
-; one-byte remainder. These fills sit after an unconditional jmp/ret inside
-; the renderers and never execute. UASM's own ALIGN pads with different no-op
-; encodings and has no option to change them, and MASM syntax cannot spell a
-; segment prefix on a register-only instruction, so this macro emits the
-; MASM 6 fill bytes for the modules' `ALIGN n` (user decision, 2026-11-07).
-; It assumes the module defines `selfmod_segment_base` at the start of its
-; paragraph-aligned segment, so offsets from it are segment offsets.
-; Use it only in the Caviar _SELFMOD modules, in place of ALIGN.
-; UASM settles a macro's expansion in its first pass, before forward jumps
-; are sized, so the modules spell every jump's size (`short` / `near ptr`,
-; exactly the original encodings) and the offsets this macro reads are final.
-MASM6_ALIGN MACRO n:REQ
-    LOCAL pad
-    pad = (n - (($ - selfmod_segment_base) MOD n)) MOD n
-    WHILE pad GE 3
-        db 2Eh, 8Bh, 0C0h
-        pad = pad - 3
-    ENDM
-    IF pad EQ 2
-        mov eax, eax
-    ELSEIF pad EQ 1
-        nop
-    ENDIF
-ENDM
+; renderers read and their patchers copy.
 
 ; ----------------------------------------------------------- the shared data
 ;

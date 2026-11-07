@@ -12,12 +12,12 @@ def ordinary_frontend(monkeypatch, tmp_path):
     # must not discover a compiler that their project has not registered.
     monkeypatch.setattr(intrinsics, "registration",
                         lambda: {"enabled": False, "compiler": "unregistered-tool"})
-    # The assembler is always a declared input, wherever UASM_ROOT points.
-    monkeypatch.setattr(wine, "UASM_ROOT", tmp_path / "uasm")
+    # The assembler is always a declared input, wherever ML_ROOT points.
+    monkeypatch.setattr(wine, "ML_ROOT", tmp_path / "masm")
 
 
 def assembler(tmp_path):
-    return {"assembler": str(tmp_path / "uasm" / "uasm32.exe")}
+    return {"assembler": str(tmp_path / "masm" / "bin" / "ML.EXE")}
 
 
 def test_disabled_frontend_never_discovers_intrinsic_tools(monkeypatch, tmp_path):
