@@ -1349,7 +1349,7 @@ void MapWin::set_center(int x, int y, int draw_type) {
     if (this == static_cast<MapWin *>(&ConsoleGlobal)) {
         destination = DestinationVehicleId;
         if (destination >= 0 &&
-            (Vehs[destination].faction_id == ConsoleGlobal.faction_id_ ||
+            (ConsoleGlobal.faction_id_ == Vehs[destination].faction_id ||
              (GameDataStateStorage.fields_.game_state_ & STATE_OMNISCIENT_VIEW)) &&
             !(GameDataStateStorage.fields_.game_more_preferences_ & 0x2000000)) {
             ConsoleGlobal.cover_window_.fill(9);
@@ -1385,14 +1385,16 @@ void MapWin::gen_bases_only() {
                 Map *tile = map_loc(wrapped_x, tile_y);
                 if ((tile->bit & 1) != 0) {
                     const int owner = tile->val2 & 0xF;
-                    if (owner >= 0 && owner < 8) {
-                        int pixel_x;
-                        int pixel_y;
-                        tile_to_pixel(wrapped_x, tile_y, &pixel_x, &pixel_y);
-                        const int faction = (GameDataStateStorage.fields_.game_state_ & STATE_OMNISCIENT_VIEW)
-                                                ? -1 : ConsoleGlobal.faction_id_;
-                        draw_bases(wrapped_x, tile_y, pixel_x,
-                                   pixel_y - field_1DDC0_, faction);
+                    if (owner < 8) {
+                        if (owner >= 0) {
+                            int pixel_x;
+                            int pixel_y;
+                            tile_to_pixel(wrapped_x, tile_y, &pixel_x, &pixel_y);
+                            const int faction = (GameDataStateStorage.fields_.game_state_ & STATE_OMNISCIENT_VIEW)
+                                                    ? -1 : ConsoleGlobal.faction_id_;
+                            draw_bases(wrapped_x, tile_y, pixel_x,
+                                       pixel_y - field_1DDC0_, faction);
+                        }
                     }
                 }
             }
@@ -8374,62 +8376,78 @@ void MapWin::on_left_down(int x_coord, int y_coord) {
         return;
     }
 
-    const bool shift_down =
-        (static_cast<uint16_t>(GetAsyncKeyState(VK_SHIFT)) & 0xFF00) != 0;
-    if (!shift_down &&
-        (static_cast<uint16_t>(GetAsyncKeyState(VK_CONTROL)) & 0xFF00) != 0) {
-        goto check_undo;
-    }
-    if (!(GetKeyState(VK_SCROLL) & 1)) {
-        goto after_undo;
-    }
-    if ((static_cast<uint16_t>(GetAsyncKeyState(VK_CONTROL)) & 0xFF00) != 0) {
-        goto after_undo;
-    }
+    {
+        KeyStateFn get_key_state = &::GetAsyncKeyState;
+
+        uint8_t shift_down = 0;
+        shift_down = static_cast<uint8_t>(static_cast<uint16_t>(get_key_state(0x10)) >> 8);
+        if (shift_down) {
+            uint8_t ctrl_down = 0;
+            ctrl_down = static_cast<uint8_t>(static_cast<uint16_t>(get_key_state(0x11)) >> 8);
+            if (ctrl_down) {
+                goto check_undo;
+            }
+        }
+
+        if (!(::GetKeyState(0x91) & 1)) {
+            goto after_undo;
+        }
+
+        {
+            uint8_t ctrl_down2 = 0;
+            ctrl_down2 = static_cast<uint8_t>(static_cast<uint16_t>(get_key_state(0x11)) >> 8);
+            if (ctrl_down2) {
+                goto after_undo;
+            }
+        }
 
 check_undo:
-    if ((GameDataStateStorage.fields_.game_state_ & 0x40) != 0) {
-        auto_undo();
-        field_1DD8C_ = 1;
-        field_1DD94_ = -1;
-        field_1DD90_ = -1;
-        if (WinPointerOwner3 == nullptr) {
-            WinPointerOwner4 = nullptr;
-            WinPointerOwner3 = this;
-        }
-        on_mouse_move(x_coord, y_coord);
-        return;
-    }
-
-after_undo:
-    if ((static_cast<uint16_t>(GetAsyncKeyState(VK_CONTROL)) & 0xFF00) != 0)
-        return;
-    if (ConsoleGlobal.edit_lock() != 0) return;
-
-    int tile_x = 0;
-    int tile_y = 0;
-    if (ConsoleGlobal.cursor_active_ == 0 || (field_1DD70_ & 0x40000U) != 0) {
-        if (pixel_to_tile(x_coord, y_coord, &tile_x, &tile_y) != 0 ||
-            tile_x < 0 || tile_x >= static_cast<int>(MapLongitudeBounds) ||
-            tile_y < 0 || tile_y >= static_cast<int>(MapLatitudeBounds)) {
+        if ((GameDataStateStorage.fields_.game_state_ & 0x40) != 0) {
+            auto_undo();
+            field_1DD8C_ = 1;
+            field_1DD94_ = -1;
+            field_1DD90_ = -1;
+            if (WinPointerOwner3 == nullptr) {
+                WinPointerOwner4 = nullptr;
+                WinPointerOwner3 = this;
+            }
+            on_mouse_move(x_coord, y_coord);
             return;
         }
-        if ((field_1DD70_ & 0x40000U) != 0) {
-            field_1DE24_ = base_find(tile_x, tile_y, ConsoleGlobal.faction_id_);
-            if (field_1DE24_ < 0) return;
+
+after_undo:
+        uint8_t ctrl_down3 = 0;
+        ctrl_down3 = static_cast<uint8_t>(static_cast<uint16_t>(get_key_state(0x11)) >> 8);
+        if (ctrl_down3) return;
+    }
+    if (ConsoleGlobal.edit_lock() != 0) return;
+
+    int tile_x;
+    int tile_y;
+    if (ConsoleGlobal.cursor_active_ == 0 || (field_1DD70_ & 0x40000U) != 0) {
+        if (pixel_to_tile(x_coord, y_coord, &tile_x, &tile_y) != 0 ||
+            tile_y < 0 || tile_y >= static_cast<int>(MapLatitudeBounds) ||
+            tile_x < 0 || tile_x >= static_cast<int>(MapLongitudeBounds)) {
+            return;
         }
+    }
+    if ((field_1DD70_ & 0x40000U) != 0) {
+        field_1DE24_ = base_find(tile_x, tile_y, ConsoleGlobal.faction_id_);
+        if (field_1DE24_ < 0) return;
     }
 
     MapWinSelectedSlot = static_cast<int>(map_view_index_);
-    if ((static_cast<uint16_t>(GetAsyncKeyState(VK_SHIFT)) & 0xFF00) != 0 &&
-        (GameDataStateStorage.fields_.game_state_ & 0x40) == 0) {
-        go_timer(3);
-        return;
+    {
+        uint8_t shift_down2 = 0;
+        shift_down2 = static_cast<uint8_t>(static_cast<uint16_t>(GetAsyncKeyState(VK_SHIFT)) >> 8);
+        if (shift_down2 && (GameDataStateStorage.fields_.game_state_ & 0x40) == 0) {
+            go_timer(3);
+            return;
+        }
     }
 
-    const int guard = ConsoleGlobal.cursor_active_ != 0 ? -1 : 0;
-    const int timer_parameter = (guard & 0xFFFFFD65) + 0x3E8;
-    GoTimer.start(go_timer, 3, timer_parameter, 5);
+    GoTimer.start(go_timer, 3,
+                  ((ConsoleGlobal.cursor_active_ != 0 ? -1 : 0) & 0xFFFFFD65) + 0x3E8, 5);
 }
 
 // Superseded seed deleted; seed paths below are historical Git provenance.

@@ -195,42 +195,42 @@ int EditBox::on_key_click(int character, int) {
         return 1;
     }
     char ch = static_cast<char>(character);
-    if (field_B40_ == field_B44_) {
+    if (field_B40_ != field_B44_) {
+        if (static_cast<int>(field_B40_) < static_cast<int>(field_B44_)) {
+            text_[static_cast<int>(field_B40_)] = ch;
+            if (static_cast<int>(field_B44_ - field_B40_) > 1) {
+                memmove(text_ + static_cast<int>(field_B40_) + 1,
+                    text_ + static_cast<int>(field_B44_),
+                    strlen(text_ + static_cast<int>(field_B44_)) + 1);
+            }
+            field_B40_ = field_B44_ = field_B40_ + 1;
+        } else {
+            text_[static_cast<int>(field_B44_)] = ch;
+            if (static_cast<int>(field_B40_ - field_B44_) > 1) {
+                memmove(text_ + static_cast<int>(field_B44_) + 1,
+                    text_ + static_cast<int>(field_B40_),
+                    strlen(text_ + static_cast<int>(field_B40_)) + 1);
+            }
+            field_B40_ = field_B44_ = field_B44_ + 1;
+        }
+    } else {
         if (strlen(text_) == 255) {
             MessageBeep(0);
             return 1;
         }
-        int position = static_cast<int>(field_B44_);
-        if (text_[position]) {
-            memmove(text_ + position + 1, text_ + position, strlen(text_ + position) + 1);
+        if (text_[field_B44_]) {
+            memmove(text_ + field_B44_ + 1, text_ + field_B44_,
+                    strlen(text_ + field_B44_) + 1);
         } else {
-            text_[position + 1] = 0;
+            text_[field_B44_ + 1] = 0;
         }
-        text_[position] = ch;
-        field_B44_ = position + 1;
+        text_[field_B44_] = ch;
+        ++field_B44_;
         ++field_B40_;
         // Only collapsed insertion reaches 615803's text_fits loop.
         // Both nonempty-selection branches jump straight to 615824/redraw;
         // the preserved seed incorrectly placed this loop after all branches.
         while (!text_fits()) ++field_B18_;
-    } else if (static_cast<int>(field_B40_) < static_cast<int>(field_B44_)) {
-        text_[static_cast<int>(field_B40_)] = ch;
-        if (static_cast<int>(field_B44_ - field_B40_) > 1) {
-            memmove(text_ + static_cast<int>(field_B40_) + 1,
-                text_ + static_cast<int>(field_B44_),
-                strlen(text_ + static_cast<int>(field_B44_)) + 1);
-        }
-        field_B44_ = field_B40_ + 1;
-        ++field_B40_;
-    } else {
-        text_[static_cast<int>(field_B44_)] = ch;
-        if (static_cast<int>(field_B40_ - field_B44_) > 1) {
-            memmove(text_ + static_cast<int>(field_B44_) + 1,
-                text_ + static_cast<int>(field_B40_),
-                strlen(text_ + static_cast<int>(field_B40_)) + 1);
-        }
-        ++field_B44_;
-        field_B40_ = field_B44_;
     }
     redraw();
     return 1;
