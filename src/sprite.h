@@ -89,8 +89,8 @@ class Sprite {
   // Source remap; the historical four-row expansion maps destination instead.
   int draw(Buffer *destination, int transparent, int x, int y,
            unsigned char *table);
-  // Terrain painters pass the stored unsigned palette key to draw().
-  unsigned char transparent_index() const { return cTransparentIndex_; }
+  // Callers receive the palette key widened to int (image: movzx/and 0xff, no byte spill).
+  int transparent_index() const { return cTransparentIndex_; }
   // Presence only; it does not establish complete loading or lifetime.
   bool has_pixel_pointer() const { return pcBits_ != 0; }
   int width() const { return iWidth_; }
