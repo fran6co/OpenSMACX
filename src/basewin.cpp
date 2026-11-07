@@ -444,9 +444,10 @@ void BaseWin::queue_click(int row, int x, int y, int right) {
 // does not retest possession or the one-sale-per-turn bit. Preserve both.
 // ORIGINAL: 0x0040C070 ?facilities_click@BaseWin@@QAEHHHHH@Z 0x0040C070-0x0040C842
 // RECOVERY_BINDING: v1 {"evidence": ["git:a538e0a3:src/unrecovered/0040c070.cpp", "source:src/basewin.h", "image:0x40c070"], "reason": "Recover the complete original operation through genuine owning C++ classes, members and natural lifetimes; preserve retained seed evidence and historical restoration obligations separately from fresh matching."}
-int BaseWin::facilities_click(int facility, int, int, int) {
+// symbol    ?facilities_click@BaseWin@@QAEXHHHH@Z
+void BaseWin::facilities_click(int facility, int, int, int) {
     // The original returns no value: each exit leaves EAX as the last call's
-    // result and the only caller ignores it (a void signature would match).
+    // result and the only caller ignores it, so the signature is void.
     const int faction = BaseCurrent->faction_id_current;
     if (faction == ConsoleGlobal.faction_id_ || (GameDataStateStorage.fields_.game_state_ & STATE_OMNISCIENT_VIEW)) {
         parse_says(0, BaseCurrent->name_string, -1, -1);
@@ -461,41 +462,51 @@ int BaseWin::facilities_click(int facility, int, int, int) {
             if (selection == 1) {
                 if (facility >= 70) {
                     help_topic(11, facility);
-                    return selection;
+                    return;
                 }
                 help_topic(10, facility);
-                return selection;
+                return;
             }
             if (facility >= 70) {
-                return popp(ScriptPopupFile, "NOTPROJECT", 0, "secproj_sm.pcx", 0);
+                popp(ScriptPopupFile, "NOTPROJECT", 0, "secproj_sm.pcx", 0);
+                return;
             }
             if (!has_fac(facility, BaseIDCurrentSelected, 0)) {
                 if (Players[faction].rule_flags & 0x80) {
-                    return popp(ScriptPopupFile, "DONTHAVEFAC", 0, "alfacblt_sm.pcx", 0);
+                    popp(ScriptPopupFile, "DONTHAVEFAC", 0, "alfacblt_sm.pcx", 0);
+                    return;
                 }
-                return popp(ScriptPopupFile, "DONTHAVEFAC", 0, "facblt_sm.pcx", 0);
+                popp(ScriptPopupFile, "DONTHAVEFAC", 0, "facblt_sm.pcx", 0);
+                return;
             }
             if (ConsoleControlTurnActive && IsMultiplayerNet) {
-                return X_pop("DURINGUPKEEP", 0);
+                X_pop("DURINGUPKEEP", 0);
+                return;
             }
             if ((BaseCurrent->state & BSTATE_FACILITY_SCRAPPED) && !(GameDataStateStorage.fields_.game_state_ & STATE_OMNISCIENT_VIEW)) {
                 parse_says(0, BaseCurrent->name_string, -1, -1);
                 if (Players[faction].rule_flags & 0x80) {
-                    return popp(ScriptPopupFile, "ONERECYCLE", 0, "alfacblt_sm.pcx", 0);
+                    popp(ScriptPopupFile, "ONERECYCLE", 0, "alfacblt_sm.pcx", 0);
+                    return;
                 }
-                return popp(ScriptPopupFile, "ONERECYCLE", 0, "facblt_sm.pcx", 0);
+                popp(ScriptPopupFile, "ONERECYCLE", 0, "facblt_sm.pcx", 0);
+                return;
             }
             if (facility == 1) {
                 if (Players[faction].rule_flags & 0x80) {
-                    return popp(ScriptPopupFile, "HQRECYCLE", 0, "alfacblt_sm.pcx", 0);
+                    popp(ScriptPopupFile, "HQRECYCLE", 0, "alfacblt_sm.pcx", 0);
+                    return;
                 }
-                return popp(ScriptPopupFile, "HQRECYCLE", 0, "facblt_sm.pcx", 0);
+                popp(ScriptPopupFile, "HQRECYCLE", 0, "facblt_sm.pcx", 0);
+                return;
             }
             if (facility == 26 && (map_tiles()[BaseCurrent->y * MapLongitude + (BaseCurrent->x >> 1)].climate & ~0x1F) < 0x60) {
                 if (Players[faction].rule_flags & 0x80) {
-                    return popp(ScriptPopupFile, "PRESSURERECYCLE", 0, "alfacblt_sm.pcx", 0);
+                    popp(ScriptPopupFile, "PRESSURERECYCLE", 0, "alfacblt_sm.pcx", 0);
+                    return;
                 }
-                return popp(ScriptPopupFile, "PRESSURERECYCLE", 0, "facblt_sm.pcx", 0);
+                popp(ScriptPopupFile, "PRESSURERECYCLE", 0, "facblt_sm.pcx", 0);
+                return;
             }
             for (int bonus = 0; bonus < Players[faction].faction_bonus_count; ++bonus) {
                 if ((Players[faction].faction_bonus_id[bonus] == 2
@@ -504,9 +515,11 @@ int BaseWin::facilities_click(int facility, int, int, int) {
                     && facility == Players[faction].faction_bonus_val1[bonus]) {
                     parse_say(1, Facility[facility].name, -1, -1);
                     if (Players[faction].rule_flags & 0x80) {
-                        return popp(ScriptPopupFile, "FREERECYCLE", 0, "alfacblt_sm.pcx", 0);
+                        popp(ScriptPopupFile, "FREERECYCLE", 0, "alfacblt_sm.pcx", 0);
+                        return;
                     }
-                    return popp(ScriptPopupFile, "FREERECYCLE", 0, "facblt_sm.pcx", 0);
+                    popp(ScriptPopupFile, "FREERECYCLE", 0, "facblt_sm.pcx", 0);
+                    return;
                 }
             }
             if (!NetDaemonNet.lock_base(BaseIDCurrentSelected, selection == 3 ? 2 : 0, -1, -1)) {
@@ -543,13 +556,13 @@ int BaseWin::facilities_click(int facility, int, int, int) {
                         BaseComputedID = -1;
                         base_compute(0);
                         NetDaemonNet.unlock_base(BaseIDCurrentSelected);
-                        return 0;
+                        return;
                     }
                 } else if (!popp(ScriptPopupFile, StringTemp, 0, "facblt_sm.pcx", 0)) {
                     BaseComputedID = -1;
                     base_compute(0);
                     NetDaemonNet.unlock_base(BaseIDCurrentSelected);
-                    return 0;
+                    return;
                 }
                 if (selection == 3) {
                     for (int base = 0; base < GameDataStateStorage.fields_.base_current_count_; ++base) {
@@ -577,7 +590,6 @@ int BaseWin::facilities_click(int facility, int, int, int) {
             }
         }
     }
-    return 0;
 }
 
 

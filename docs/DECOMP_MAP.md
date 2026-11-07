@@ -580,6 +580,13 @@ on 2026-08-19 for the records the build compiles. Every reader goes through
 `match_recovery.source`, which reads this fact, and an annotation without one is simply a
 piece whose emitted name is its `name`.
 
+For a signature correction of one mapping (return type, calling convention or
+static storage), use `recover correct-symbol <address> --in <file> --to
+<decorated> --source-sha256 <digest> --reason <text>`. It requires fresh
+compiler emission of the new symbol without the old one and writes only this
+fact, leaving the `ORIGINAL` marker and its claims intact. See the package
+README.
+
 For a compiler-observed symbol change, `match_recovery.source.write_symbol`
 prepares an explicit fact update from original bytes and a fresh reader record.
 `write_symbols(raw, updates)` applies a one-file batch of `(record, symbol)`

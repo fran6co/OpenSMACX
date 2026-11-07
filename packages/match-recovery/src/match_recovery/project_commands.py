@@ -56,6 +56,15 @@ def register(commands):
     binding.add_argument("--span", dest="spans", action="append", required=True, help="Explicit original start-end (exclusive), e.g. 0x401000-0x401020")
     binding.add_argument("--reason", required=True, help="Non-derivable rationale for the name and original extent interpretation")
     binding.add_argument("--evidence", action="append", required=True, help="Source/manual/external evidence reference; stored beside the mapping")
+    correction = commands.add_parser("correct-symbol", help="Correct a mapping's current emitted-symbol fact from fresh compiler emission; keeps the ORIGINAL identity and claims")
+    correction.add_argument("address", type=lambda value: int(value, 0))
+    correction.add_argument("--root", type=Path, default=Path.cwd())
+    correction.add_argument("--in", dest="source", required=True, help="Exact project-relative mapping host")
+    correction.add_argument("--to", dest="symbol", required=True, help="Corrected decorated symbol the current source emits")
+    correction.add_argument("--source-sha256", required=True, help="Expected current host digest, not a stored verdict")
+    correction.add_argument("--reason", required=True, help="Image evidence for the signature correction; reported for the commit message")
+    correction.add_argument("--allow-identity-change", action="store_true",
+                            help="Also accept a name, access, virtual, this-qualifier or argument change after explicit review")
     survey = commands.add_parser("survey", help="Derive executable starting hints and source correlations; never infer function or TU extents")
     survey.add_argument("--root", type=Path, default=Path.cwd())
     survey.add_argument("--image", type=Path, required=True)
@@ -344,6 +353,10 @@ def invoke_project(root: Path, arguments: dict) -> tuple[int, object]:
             spans.append(Span(*(int(part, 0) for part in parts)))
         return 0, bind(root, image=arguments["image"], spans=spans, mode=arguments.get("mode", "body"),
                        **{key: arguments[key] for key in ("address", "name", "source", "line", "source_sha256", "reason", "evidence")})
+    if arguments.get("command") == "correct-symbol":
+        from .symbol_correction import correct_symbol
+        return 0, correct_symbol(root, allow_identity_change=arguments.get("allow_identity_change", False),
+                                 **{key: arguments[key] for key in ("address", "source", "symbol", "source_sha256", "reason")})
     if arguments.get("command") == "throughput":
         from .throughput import throughput_report
         path = Path(arguments["observations"])

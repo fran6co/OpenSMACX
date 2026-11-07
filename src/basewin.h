@@ -164,7 +164,7 @@ class BaseWin : public GraphicWin, public SubInterface {
   void queue_click(int a1, int a2, int a3, int a4);     // 0x00409200
   void farm_click(int a1, int a2, int a3);              // 0x0040A1D0
   void pop_click(int a1, int a2, int a3, int a4);       // 0x0040A880
-  int facilities_click(int a1, int a2, int a3, int a4); // 0x0040C070
+  void facilities_click(int a1, int a2, int a3, int a4); // 0x0040C070
   void draw_flash(int a1);                              // 0x0040D250
   void draw_production(int a1);                         // 0x0040E360
   void draw_farm(int a1);                               // 0x0040F0F0

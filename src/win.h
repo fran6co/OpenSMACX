@@ -373,7 +373,7 @@ class Win : public AutoSound {
   static Win *get_key_window();                    // 005F6A50
   static Win *get_mouse_window(int *x, int *y);    // 005F6F10
   static int update_cursor(Win *window, int tgl);  // 005F1820
-  static int update_screen(RECT *area, Win *window);  // 005F7320
+  static void update_screen(RECT *area, Win *window);  // 005F7320
   void do_tracking(int x, int y);                  // 005F7580
 
   // The window procedure `init_class` registers. `static` and `__stdcall`
@@ -421,9 +421,9 @@ class Win : public AutoSound {
   // a pending_bodies forwarder.
   void client_to_screen(RECT *area);
   void screen_to_client(int *x, int *y);  // 005ED2D0
-  // ?update_window@Win@@QAEHPAURECT@@@Z at 0x005F74A0. Not yet recovered,
-  // a pending_bodies forwarder.
-  int update_window(RECT *area);
+  // 0x005F74A0. Returns nothing: it ends in the void update_screen call,
+  // and every caller ignores EAX.
+  void update_window(RECT *area);
   int get_vert_pos();
   int get_horz_pos();
   void set_vert_paging(int paging);

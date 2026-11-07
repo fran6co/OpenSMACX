@@ -4523,7 +4523,6 @@ void __cdecl wait_task();
 // Homed below; the signature is the one its TRIED note measured -
 // `void __cdecl restore_flip_sprite(int)`, from the [esp+0x14] stack read.
 void __cdecl restore_flip_sprite(int);
-extern "C" int __cdecl update_screen(RECT *, Win *);
 
 
 typedef int (__stdcall *NetCreateGroupFn)(Net *, int *, void *, int, int, int);
@@ -7675,13 +7674,14 @@ int Win::key_click_event(int key, int flags) {
 
 // ORIGINAL: 0x005F74A0 ?update_window@Win@@QAEHPAURECT@@@Z 0x005F74A0-0x005F757F FILE BYTE_EXACT
 // kind game
-// symbol    ?update_window@Win@@QAEHPAUtagRECT@@@Z
+// symbol    ?update_window@Win@@QAEXPAUtagRECT@@@Z
 // TRIED: `if (a1 != 0) { big-block } return simple();` puts the branches in the wrong order (`je` skipping the block where the original has `jne` falling into the simple case first) - an early-return guard `if (a1 == 0) return simple(); big-block;` fixes that. update_screen is __cdecl per win.h (func_win_update_screen), not the scaffold's implicit-thiscall class member, so it's called through a separately-declared `extern "C"` free function of the real signature. Remaining: the original spends two extra callee-saved registers (ebx, ebp) holding self[0x140]/self[0x13c] before the adds; this form only needed one (ebx). 62/73 shared.
 // ===== homed from src/unrecovered/005f74a0.cpp =====
 
-int Win::update_window(RECT * area) {
+void Win::update_window(RECT * area) {
     if (area == 0) {
-        return update_screen(0, this);
+        update_screen(0, this);
+        return;
     }
     int x = 0;
     int y = 0;
@@ -7691,7 +7691,7 @@ int Win::update_window(RECT * area) {
     r.right += x;
     r.top += y;
     r.bottom += y;
-    return update_screen(&r, this);
+    update_screen(&r, this);
 }
 
 // ORIGINAL: 0x005F52E0 ?bring_child_to_top@Win@@QAEXPAVWin@@@Z 0x005F52E0-0x005F539C FILE BYTE_EXACT
@@ -8075,11 +8075,11 @@ void Win::sub_5ef1e0(int x1, int y1, int x2, int y2, void *pen, int unused6) {
 
 // ORIGINAL: 0x005F7320 ?update_screen@Win@@QAAHPAURECT@@PAVWin@@@Z 0x005F7320-0x005F749F FILE
 // kind game
-// symbol    ?update_screen@Win@@SAHPAUtagRECT@@PAV1@@Z
+// symbol    ?update_screen@Win@@SAXPAUtagRECT@@PAV1@@Z
 // TRIED: none confirmed byte-exact; MISMATCH #9 'test' vs 'mov' - the [0x669338] seam is modelled as a raw IntersectRect-shaped __stdcall function pointer with a guessed (dest, src1, src2) argument order; the real signature at that seam is unconfirmed, and the down-counting child-window loop's register pressure does not match the original's.
 // ===== homed from src/unrecovered/005f7320.cpp =====
 
-int __cdecl Win::update_screen(RECT *area, Win *window) {
+void __cdecl Win::update_screen(RECT *area, Win *window) {
     if (WinZOrderCount != 0) {
         if (WinZOrderWindow == 0) {
             window = 0;
@@ -8123,7 +8123,7 @@ int __cdecl Win::update_screen(RECT *area, Win *window) {
             rectangle.bottom = WinFlipSpriteX + WinClipHeight;
             // IAT 669338 is USER32!IntersectRect.
             if (area == 0 || IntersectRect(&rectangle, &rectangle, area) != 0) {
-                return Win::screen_buffer_.copy(
+                Win::screen_buffer_.copy(
                     &Win::drawing_buffer_, rectangle.left, rectangle.top,
                     rectangle.left - WinFlipSpriteY,
                     rectangle.top - WinFlipSpriteX,

@@ -1200,6 +1200,32 @@ or the explicit scope-expansion workflow. Recheck the affected TU. Only `record`
 can bank freshly measured historical byte claims; successful binding is not a
 measurement or acceptance result.
 
+## Correcting an emitted symbol
+
+A catalogued decoration can be wrong about a signature: an `H` return over a
+body that never sets EAX, or `QAA` over what is really a static `SA` member.
+The `ORIGINAL` name stays the historical identity. After changing the C++
+declaration, record what the source now emits as the mapping's `symbol` fact:
+
+```sh
+recover correct-symbol 0x401000 --in src/owner.cpp --to '?method@Owner@@QAEXH@Z' \
+  --source-sha256 <current-file-sha256> --reason 'Image evidence for the signature'
+```
+
+The command compiles the mapping's emitting TU (its `compile_context`, or the
+marker host) under its configured trials. It requires the corrected symbol to be
+a defined executable function and the previous emitted symbol to be wholly
+absent there. The decorated difference may change only the return type, calling
+convention, or ordinary/static member storage. A name, access, virtual,
+`this`-qualifier or argument change is refused unless you pass
+`--allow-identity-change`. So is a return-type change whose spelling enters the
+name back-reference table, because identical argument text could then name
+different types. Writing goes through the native symbol writer and guarded
+publication. Address, spans, historical claims, lessons and bindings are
+verified unchanged, so `check-claims` continuity holds. The reason is reported
+for the commit message, not stored. This is emission evidence only: measure the
+mapping afterwards and bank an exact result with `record`.
+
 ## Non-callable terminal fragments
 
 Source may preserve a separately catalogued terminal instruction span without

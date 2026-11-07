@@ -301,3 +301,136 @@ def arity(mangled: str) -> int | None:
     if arguments == ["X"]:
         return 0                       # `void` is no arguments
     return len(arguments)
+
+
+# SIGNATURE PARTS, for one question only: does a corrected emitted symbol
+# differ from the current one in nothing but return type, calling convention
+# or static storage? Still not a demangler. The argument list is compared as
+# text, which is sound only when the return types put no NAME into MSVC's
+# name back-reference table (and no callback argument into the argument
+# table): a written-out `PAVFoo@@` return shifts every later `V2@` in the
+# arguments. Those returns are reported as unsound, never compared.
+_MEMBER_ACCESS = {**{code: "private" for code in "ABCDEF"},
+                  **{code: "protected" for code in "IJKLMN"},
+                  **{code: "public" for code in "QRSTUV"}}
+_MEMBER_KIND = ("normal", "normal", "static", "static", "virtual", "virtual")
+_CONVENTIONS = {"A": "__cdecl", "C": "__pascal", "E": "__thiscall",
+                "G": "__stdcall", "I": "__fastcall"}
+# A return type whose spelling enters nothing into either back-reference
+# table: primitives and pointer/reference chains to primitives or to an
+# already-numbered name, optionally as a by-value `?A` class return.
+_TABLE_NEUTRAL_RETURN = re.compile(
+    r"(?:\?[AB])?(?:[PQRSAB][ABCD])*(?:[XDCEFGHIJKMNOZ]|_[A-Z]|[UVT][0-9]@)")
+_PLAIN_DECORATION = re.compile(
+    r"(?P<prefix>[_@]?)(?P<name>[A-Za-z_$][\w$]*?)(?:@(?P<bytes>\d+))?")
+
+
+def signature_parts(mangled: str) -> dict | None:
+    """Split a decorated function name into comparable parts, or None.
+
+    Unknown forms (templates, operators other than the special members,
+    far/based members, thunks, data) return None, which callers must read as
+    "cannot tell", never as "equal".
+    """
+    mangled = (mangled or "").strip()
+    if not mangled.startswith("?"):
+        plain = _PLAIN_DECORATION.fullmatch(mangled)
+        if plain is None:
+            return None
+        prefix, size = plain["prefix"], plain["bytes"]
+        if prefix == "@":
+            if size is None:
+                return None
+            convention = "__fastcall"
+        elif size is not None:
+            if prefix != "_":
+                return None
+            convention = "__stdcall"
+        else:
+            convention = "__cdecl" if prefix == "_" else "undecorated"
+        return {"form": "c", "qualified": plain["name"], "access": "global",
+                "kind": "global", "this_cv": None, "convention": convention,
+                "returns": None, "return_neutral": True,
+                "parameters": None if size is None else f"@{size}"}
+    if "?$" in mangled:
+        return None
+    head = _HEAD.match(mangled)
+    qualified = qualified_name(mangled)
+    if head is None or not qualified or not mangled.endswith("Z"):
+        return None
+    tail = mangled[head.end():]
+    if len(tail) < 3:
+        return None
+    code, index = tail[0], 1
+    if code == "Y":
+        access, kind = "global", "global"
+    elif code in _MEMBER_ACCESS:
+        offset = "ABCDEFIJKLMNQRSTUV".index(code) % 6
+        if offset % 2:
+            return None                 # far members: not this toolchain
+        access, kind = _MEMBER_ACCESS[code], _MEMBER_KIND[offset]
+    else:
+        return None
+    this_cv = None
+    if kind in ("normal", "virtual"):
+        this_cv = tail[index]
+        if this_cv not in "ABCD":
+            return None
+        index += 1
+    convention = _CONVENTIONS.get(tail[index])
+    if convention is None:
+        return None
+    index += 1
+    if tail[index:index + 1] == "@":
+        returns, after = "", index + 1          # constructor/destructor
+    else:
+        start = index
+        if tail[index:index + 2] in ("?A", "?B"):
+            index += 2
+        after = _end_of_type(tail, index)
+        if after is None:
+            return None
+        returns = tail[start:after]
+    parameters = tail[after:]
+    if not parameters or arity(mangled) is None:
+        return None
+    return {"form": "c++", "qualified": qualified, "access": access, "kind": kind,
+            "this_cv": this_cv, "convention": convention, "returns": returns,
+            "return_neutral": returns == "" or bool(_TABLE_NEUTRAL_RETURN.fullmatch(returns)),
+            "parameters": parameters}
+
+
+# Differences a signature correction may make without an explicit identity
+# override. `kind` only between ordinary and static members; `this_cv` only
+# as the consequence of that change (a static member has no `this`).
+CORRECTABLE_PARTS = ("returns", "convention", "kind")
+
+
+def signature_differences(old: str, new: str) -> dict:
+    """Classify how `new` differs from `old`.
+
+    Returns {"parts": [...changed part names...], "identity": [...changes
+    outside return type / convention / static storage...], "readable": bool}.
+    An unreadable or table-unsound pair reports everything as an identity
+    difference so that only an explicit override can accept it.
+    """
+    left, right = signature_parts(old), signature_parts(new)
+    if left is None or right is None:
+        return {"readable": False, "parts": [], "identity": ["unreadable decoration"]}
+    parts = [key for key in ("form", "qualified", "access", "kind", "this_cv", "convention",
+                             "returns", "parameters") if left[key] != right[key]]
+    identity = [key for key in parts if key not in CORRECTABLE_PARTS + ("this_cv",)]
+    if "kind" in parts and {left["kind"], right["kind"]} != {"normal", "static"}:
+        identity.append("kind")
+    if "this_cv" in parts and "kind" not in parts:
+        identity.append("this_cv")
+    if ("returns" in parts and not (left["return_neutral"] and right["return_neutral"])
+            and "parameters" not in identity):
+        # The argument text cannot be trusted to mean the same types.
+        identity.append("parameters")
+    if (left["form"] == right["form"] == "c" and "parameters" in parts
+            and None in (left["parameters"], right["parameters"])):
+        # Only stdcall/fastcall C decorations carry an argument size, so a
+        # convention change from or to cdecl reveals no argument change.
+        identity.remove("parameters")
+    return {"readable": True, "parts": parts, "identity": sorted(set(identity))}
