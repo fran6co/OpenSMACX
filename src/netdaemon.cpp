@@ -7272,13 +7272,15 @@ airdrop:
         if (IsMultiplayerNet != 0) {
             log_say("Client waiting for acknowledgement",
                     ConsoleGlobal.faction_id_, 0, 0);
-            const int saved_action_mode = NetDaemonNet.channels_[0].leading_words_[3];
+            // Native reuses the dead coordinate parameters for the saved
+            // action mode and the wait start time.
+            y = NetDaemonNet.channels_[0].leading_words_[3];
             ++NetBusyCount;
-            const DWORD start_time = timeGetTime();
+            x = timeGetTime();
             int showed_wait_popup = 0;
             while (channels_[1].leading_words_[3] == 1) {
                 if (ExitTurnLoop != 0) break;
-                if (!showed_wait_popup && timeGetTime() - start_time > 2000) {
+                if (!showed_wait_popup && timeGetTime() - x > 2000) {
                     showed_wait_popup = 1;
                     NetMsgPrimary.pop("AWAITEXEC", 0, 2, nullptr);
                 }
@@ -7288,7 +7290,7 @@ airdrop:
                 check_spock();
             }
             if (showed_wait_popup) NetMsgPrimary.close();
-            NetDaemonNet.channels_[0].leading_words_[3] = saved_action_mode;
+            NetDaemonNet.channels_[0].leading_words_[3] = y;
             --NetBusyCount;
             log_say("Client received acknowledgement",
                     ConsoleGlobal.faction_id_, 0, 0);

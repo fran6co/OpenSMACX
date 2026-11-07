@@ -832,32 +832,30 @@ static int __stdcall net_group_player_callback(unsigned long player_id, unsigned
 int Net::send_group_flagged(void *data, int size, long target,
                             unsigned short type, unsigned int flags) {
     HANDLE wait_handles[2];
+    DWORD sent_at[16];
+    int pending[16];
+    DWORD retry_delay[16];
+    int index;
     wait_handles[0] = thread_info_.events_[0];
     wait_handles[1] = thread_info_.events_[1];
 
-    if (NetDirectPlay == 0) return 0;
-    if (size < 0) return 0;
-    if (static_cast<int>(field_6E4_) < size) return 0;
-
+    if (NetDirectPlay == 0 || size < 0 || size > static_cast<int>(field_6E4_)) {
+        return 0;
+    }
     check_polling();
 
     if ((type & 0xFFF0) == 0 &&
-        ((static_cast<unsigned char>(voice_flags_D8_) & 1) != 0 ||
-         (flags & 4) != 0)) {
-        const long host = static_cast<long>(local_player_id_);
-        if (target == host) {
+        ((voice_flags_D8_ & 1) != 0 || (flags & 4) != 0)) {
+        if (target == static_cast<long>(local_player_id_)) {
             queue_10c_.add(data, static_cast<unsigned long>(size),
-                           static_cast<unsigned long>(host), 0,
-                           static_cast<unsigned long>(-1));
+                           local_player_id_, 0, 0xFFFFFFFFUL);
             return static_cast<int>(field_E4_);
         }
         if (target == 0) {
             queue_10c_.add(data, static_cast<unsigned long>(size),
-                           static_cast<unsigned long>(host), 0,
-                           static_cast<unsigned long>(-1));
-            if (static_cast<int>(field_6DC_) < 2) {
+                           local_player_id_, target, 0xFFFFFFFFUL);
+            if (static_cast<int>(field_6DC_) < 2)
                 return static_cast<int>(field_E4_);
-            }
         }
     }
 
@@ -868,168 +866,147 @@ int Net::send_group_flagged(void *data, int size, long target,
 
     NetPacketEnvelope *const header =
         reinterpret_cast<NetPacketEnvelope *>(packet);
-    const unsigned int reliable = flags & 1U;
-    if (reliable == 0) {
-        header->sequence_4_ = 0;
+    const int reliable = flags & 1;
+    if (reliable != 0) {
+        header->sequence_4_ = ++field_E4_;
     } else {
-        ++field_E4_;
-        header->sequence_4_ = field_E4_;
+        header->sequence_4_ = 0;
     }
-    if (data != 0) memcpy(packet + 8, data, static_cast<unsigned int>(size));
+    if (data != 0) memcpy(packet + 8, data, static_cast<size_t>(size));
 
-    if (reliable == 0 || (voice_flags_D8_ & 0x10000000U) != 0) {
-        header->type_flags_ = type;
-        if (NetDirectPlay != 0 &&
-            NetDirectPlay->Send(local_player_id_, static_cast<DPID>(target),
-                                reliable, packet,
-                                static_cast<DWORD>(allocation_size)) != 0) {
-            free(packet);
-            return 0;
+    if (reliable != 0 && (voice_flags_D8_ & 0x10000000U) == 0) {
+        // Unconfirmed reliable send. The callback marks only group members
+        // whose NetPlayer flags include bit 1. NetPlayerTable is shared
+        // callback context, published exactly as native.
+        header->type_flags_ = static_cast<WORD>(type | 4);
+        for (index = 0; index < 16; ++index) {
+            players_[index].field_8_ = 0;
         }
-        free(packet);
-        return static_cast<int>(field_E4_);
-    }
-
-    header->type_flags_ =
-        static_cast<unsigned short>(type | 4);
-    for (int clear_index = 0; clear_index < 16; ++clear_index)
-        players_[clear_index].field_8_ = 0;
-    NetPlayerTable = players_;
-    if (NetDirectPlay == 0) {
-        free(packet);
-        return 0;
-    }
-    NetDirectPlay->EnumGroupPlayers(static_cast<DPID>(target), 0,
-                                   net_group_player_callback, 0, 0);
-
-    DWORD wait_timeout = 0xFFFFFFFFU;
-    int selected = -1;
-    for (int first_index = 0; first_index < 16; ++first_index) {
-        if (players_[first_index].field_0_ != 0) {
-            selected = first_index;
-            break;
-        }
-    }
-    if (selected < 0) {
-        free(packet);
-        return static_cast<int>(field_E4_);
-    }
-
-    int pending[16];
-    DWORD retry_delay[16];
-    DWORD base_time[16];
-    // Preserve the original stack behavior: only `selected` is initialized in
-    // these three arrays. The scan below reads all sixteen pending values, so
-    // non-selected slots retain the image's indeterminate-stack hazard.
-    pending[selected] = 1;
-    retry_delay[selected] = players_[selected].field_C_;
-    if (retry_delay[selected] != 0xFFFFFFFFU) {
-        wait_timeout = retry_delay[selected];
-    }
-
-    for (;;) {
+        NetPlayerTable = players_;
         if (NetDirectPlay == 0) {
             free(packet);
             return 0;
         }
-        const DWORD now = timeGetTime();
-        for (int slot_index = 0; slot_index < 16; ++slot_index)
-            base_time[slot_index] = now;
+        NetDirectPlay->EnumGroupPlayers(static_cast<DPID>(target), 0,
+            net_group_player_callback, 0, 0);
 
-        if (NetDirectPlay->Send(local_player_id_, static_cast<DPID>(target), 0,
-                                packet, static_cast<DWORD>(allocation_size)) != 0) {
-            free(packet);
-            return 0;
+        DWORD wait_timeout = 0xFFFFFFFFU;
+        for (index = 0; index < 16; ++index) {
+            if (players_[index].field_0_ != 0) break;
+        }
+        if (index == 16) goto done;
+
+        // Original 0x62F06E..0x62F080 initializes only the selected row,
+        // although the retry loop later reads every pending/retry slot.
+        pending[index] = 1;
+        retry_delay[index] = players_[index].field_C_;
+        if (retry_delay[index] < wait_timeout) {
+            wait_timeout = retry_delay[index];
         }
 
-        const DWORD start = timeGetTime();
-        DWORD elapsed = timeGetTime() - start;
-        int any_pending = 0;
-        while (elapsed < 20000U) {
-            ResetEvent(wait_handles[1]);
-            ResetEvent(wait_handles[0]);
-            const DWORD waited = WaitForMultipleObjects(
-                2, wait_handles, FALSE, wait_timeout);
-            if (waited == WAIT_OBJECT_0 + 1) handle_sys_msg();
-
-            any_pending = 0;
-            for (int pending_index = 0; pending_index < 16; ++pending_index) {
-                if (pending[pending_index] != 0) {
-                    NetPlayer &peer = players_[pending_index];
-                    if (peer.field_0_ == 0) {
-                        pending[pending_index] = 0;
-                    } else if (peer.field_8_ == 0) {
-                        const DWORD tick = timeGetTime();
-                        pending[pending_index] = 0;
-                        peer.field_C_ =
-                            (tick + 0x14U +
-                             (peer.field_C_ - base_time[pending_index])) >> 1;
+        while (NetDirectPlay != 0) {
+            sent_at[0] = timeGetTime();
+            for (index = 1; index < 16; ++index) sent_at[index] = sent_at[0];
+            if (NetDirectPlay->Send(local_player_id_, static_cast<DPID>(target),
+                                    0, packet,
+                                    static_cast<DWORD>(allocation_size)) != DP_OK) {
+                free(packet);
+                return 0;
+            }
+            const DWORD interval_start = timeGetTime();
+            while (timeGetTime() - interval_start < 20000) {
+                ResetEvent(thread_info_.events_[1]);
+                ResetEvent(thread_info_.events_[0]);
+                if (WaitForMultipleObjects(2, wait_handles, FALSE,
+                                           wait_timeout) == WAIT_OBJECT_0 + 1)
+                    handle_sys_msg();
+                const DWORD now = timeGetTime();
+                int still_pending = 0;
+                for (index = 0; index < 16; ++index) {
+                    if (pending[index] == 0) continue;
+                    if (players_[index].field_0_ == 0) {
+                        pending[index] = 0;
+                    } else if (players_[index].field_8_ == 0) {
+                        const DWORD ack_tick = timeGetTime();
+                        pending[index] = 0;
+                        players_[index].field_C_ = (ack_tick +
+                            players_[index].field_C_ - sent_at[index] + 0x14) >> 1;
                     } else {
-                        if (retry_delay[pending_index] <
-                            static_cast<DWORD>(timeGetTime() -
-                                               base_time[pending_index])) {
-                            retry_delay[pending_index] =
-                                (retry_delay[pending_index] * 3U) >> 1;
+                        if (now - sent_at[index] > retry_delay[index]) {
+                            retry_delay[index] = (retry_delay[index] * 3) >> 1;
                             if (NetDirectPlay == 0) {
                                 free(packet);
                                 return 0;
                             }
-                            const DWORD resend_id = peer.field_0_;
-                            base_time[pending_index] = timeGetTime();
-                            if (NetDirectPlay->Send(
-                                    local_player_id_, static_cast<DPID>(resend_id), 0,
-                                    packet, static_cast<DWORD>(allocation_size)) != 0) {
+                            sent_at[index] = timeGetTime();
+                            if (NetDirectPlay->Send(local_player_id_,
+                                    players_[index].field_0_, 0, packet,
+                                    static_cast<DWORD>(allocation_size)) != DP_OK) {
                                 MessageBoxA(0, "Oh no!! Send failed!",
                                             "Message from the Net Underworld", 0);
                                 free(packet);
                                 return 0;
                             }
                         }
-                        any_pending = 1;
+                        still_pending = 1;
                     }
                 }
+                if (still_pending == 0) goto done;
             }
-            if (!any_pending) {
-                free(packet);
-                return static_cast<int>(field_E4_);
-            }
-            elapsed = timeGetTime() - start;
-        }
 
-        StringTemp[0] = 0;
-        int first = 1;
-        for (int peer_index = 0; peer_index < 16; ++peer_index) {
-            if (players_[peer_index].field_8_ != 0) {
-                int found = -1;
-                for (int candidate_index = 0; candidate_index < 16;
-                     ++candidate_index) {
-                    if (players_[candidate_index].field_0_ ==
-                        players_[peer_index].field_0_) {
-                        found = candidate_index;
+            // Timeout notification uses the canonical shared StringTemp.
+            StringTemp[0] = 0;
+            int first_name = 1;
+            for (index = 0; index < 16; ++index) {
+                if (players_[index].field_8_ == 0) continue;
+                int name_index;
+                for (name_index = 0; name_index < 16; ++name_index) {
+                    if (players_[name_index].field_0_ == players_[index].field_0_)
                         break;
-                    }
                 }
-                const char *name = found < 0
-                    ? static_cast<const char *>(0)
-                    : players_[found].name_and_tail_;
-                strcat(StringTemp, name);
-                if (!first) {
+                // The native not-found path passes null to strcat.
+                strcat(StringTemp, name_index == 16
+                    ? 0 : players_[name_index].name_and_tail_);
+                if (!first_name) {
                     strcat(StringTemp, ", ");
                     strcat(StringTemp, " ");
                 }
-                first = 0;
+                first_name = 0;
             }
+            strcat(StringTemp, ".");
+            parse_says(0, StringTemp, -1, -1);
+            switch (pop_caption(const_cast<char *>("jackal"),
+                                const_cast<char *>("NET_SENDTIMEDOUT"), 0)) {
+            case 0:
+                continue;
+            case 1:
+                close();
+                break;
+            case 2:
+                ExitTurnLoop = 1;
+                break;
+            }
+            free(packet);
+            return 0;
         }
-        strcat(StringTemp, ".");
-        parse_says(0, StringTemp, -1, -1);
-        const int choice = pop_caption(const_cast<char *>("jackal"),
-                                       const_cast<char *>("NET_SENDTIMEDOUT"), 0);
-        if (choice == 0) continue;
-        if (choice == 1) close();
-        else if (choice == 2) ExitTurnLoop = 1;
         free(packet);
         return 0;
+    } else {
+        header->type_flags_ = type;
+        if (NetDirectPlay == 0) {
+            free(packet);
+            return 0;
+        }
+        if (NetDirectPlay->Send(local_player_id_, static_cast<DPID>(target),
+                                reliable != 0, packet,
+                                static_cast<DWORD>(allocation_size)) != DP_OK) {
+            free(packet);
+            return 0;
+        }
     }
+done:
+    free(packet);
+    return static_cast<int>(field_E4_);
 }
 
 // 0x009BE5FC, four dwords below ActiveNet: the outgoing host_player_id_ the host
@@ -1481,27 +1458,30 @@ int Net::create_group(char *group_name) {
 #pragma function(memcpy)
 #endif
 int Net::send_group(void *data, int size, long group_id, int flags) {
-    int index;
     HANDLE wait_handles[2];
+    DWORD sent_at[16];
+    int pending[16];
+    DWORD retry_delay[16];
+    int index;
     wait_handles[0] = thread_info_.events_[0];
     wait_handles[1] = thread_info_.events_[1];
 
-    if (NetDirectPlay == 0) return 0;
-    if (size < 0) return 0;
-    if (static_cast<int>(field_6E4_) < size) return 0;
-
+    if (NetDirectPlay == 0 || size < 0 || size > static_cast<int>(field_6E4_)) {
+        return 0;
+    }
     check_polling();
 
-    if ((voice_flags_D8_ & 1U) != 0 || (flags & 4) != 0) {
+    if ((voice_flags_D8_ & 1) != 0 || (flags & 4) != 0) {
         if (group_id == static_cast<long>(local_player_id_)) {
             queue_10c_.add(data, static_cast<unsigned long>(size),
-                           local_player_id_, 0, static_cast<unsigned long>(-1));
+                           local_player_id_, 0, 0xFFFFFFFFUL);
             return static_cast<int>(field_E4_);
         }
         if (group_id == 0) {
             queue_10c_.add(data, static_cast<unsigned long>(size),
-                           local_player_id_, 0, static_cast<unsigned long>(-1));
-            if (field_6DC_ < 2) return static_cast<int>(field_E4_);
+                           local_player_id_, group_id, 0xFFFFFFFFUL);
+            if (static_cast<int>(field_6DC_) < 2)
+                return static_cast<int>(field_E4_);
         }
     }
 
@@ -1510,176 +1490,149 @@ int Net::send_group(void *data, int size, long group_id, int flags) {
         static_cast<unsigned char *>(mem_get(allocation_size));
     if (packet == 0) return 0;
 
-    const unsigned int reliable = static_cast<unsigned int>(flags) & 1U;
-    uint32_t packet_sequence;
-    if (reliable == 0) {
-        packet_sequence = 0;
-    } else {
-        field_E4_ += 1;
-        packet_sequence = field_E4_;
-    }
     NetPacketEnvelope *const header =
         reinterpret_cast<NetPacketEnvelope *>(packet);
-    header->sequence_4_ = packet_sequence;
+    const int reliable = flags & 1;
+    if (reliable != 0) {
+        header->sequence_4_ = ++field_E4_;
+    } else {
+        header->sequence_4_ = 0;
+    }
     if (data != 0) memcpy(packet + 8, data, static_cast<size_t>(size));
 
-    if (reliable == 0 || (voice_flags_D8_ & 0x10000000U) != 0) {
-        const uint16_t packet_type = 1;
-        header->type_flags_ = packet_type;
-        const HRESULT sent = NetDirectPlay->Send(
-            local_player_id_, static_cast<DPID>(group_id), reliable, packet,
-            static_cast<DWORD>(allocation_size));
-        free(packet);
-        return sent == 0 ? static_cast<int>(field_E4_) : 0;
-    }
-
-    // Unconfirmed reliable send. The callback marks only group members whose
-    // NetPlayer flags include bit 1. NetPlayerTable is shared callback context
-    // and remains published exactly as native; it is not a local scratch copy.
-    const uint16_t packet_type = 4;
-    header->type_flags_ = packet_type;
-    for (index = 0; index < 16; ++index) {
-        players_[index].field_8_ = 0;
-    }
-    NetPlayerTable = players_;
-    if (NetDirectPlay == 0) {
-        free(packet);
-        return 0;
-    }
-    NetDirectPlay->EnumGroupPlayers(static_cast<DPID>(group_id), 0,
-        net_group_player_callback, 0, 0);
-
-    const unsigned long no_deadline = 0xFFFFFFFFUL;
-    unsigned long wait_timeout = no_deadline;
-    for (index = 0; index < 16; ++index) {
-        if (players_[index].field_0_ != 0) break;
-    }
-    if (index == 16) {
-        free(packet);
-        return static_cast<int>(field_E4_);
-    }
-
-    int pending[16];
-    unsigned long retry_delay[16];
-    unsigned long base_time[16];
-    // Original 0x62F06E..0x62F080 initializes only the selected row, although
-    // the retry loop later reads every pending/retry slot. Do not manufacture
-    // defaults for those indeterminate words during bug-for-bug recovery.
-    pending[index] = 1;
-    retry_delay[index] = players_[index].field_C_;
-    if (retry_delay[index] < wait_timeout) {
-        wait_timeout = retry_delay[index];
-    }
-
-    for (;;) {
+    if (reliable != 0 && (voice_flags_D8_ & 0x10000000U) == 0) {
+        // Unconfirmed reliable send. The callback marks only group members
+        // whose NetPlayer flags include bit 1. NetPlayerTable is shared
+        // callback context, published exactly as native.
+        header->type_flags_ = 4;
+        for (index = 0; index < 16; ++index) {
+            players_[index].field_8_ = 0;
+        }
+        NetPlayerTable = players_;
         if (NetDirectPlay == 0) {
             free(packet);
             return 0;
         }
+        NetDirectPlay->EnumGroupPlayers(static_cast<DPID>(group_id), 0,
+            net_group_player_callback, 0, 0);
 
-        const unsigned long initial_tick = timeGetTime();
+        DWORD wait_timeout = 0xFFFFFFFFU;
         for (index = 0; index < 16; ++index) {
-            base_time[index] = initial_tick;
+            if (players_[index].field_0_ != 0) break;
+        }
+        if (index == 16) goto done;
+
+        // Original 0x62F06E..0x62F080 initializes only the selected row,
+        // although the retry loop later reads every pending/retry slot.
+        pending[index] = 1;
+        retry_delay[index] = players_[index].field_C_;
+        if (retry_delay[index] < wait_timeout) {
+            wait_timeout = retry_delay[index];
         }
 
-        const HRESULT resent = NetDirectPlay->Send(
-            local_player_id_, static_cast<DPID>(group_id), 0, packet,
-            static_cast<DWORD>(allocation_size));
-        if (resent != 0) {
-            free(packet);
-            return 0;
-        }
-
-        const unsigned long interval_start = timeGetTime();
-        unsigned long elapsed = timeGetTime() - interval_start;
-        int any_pending = 0;
-        while (elapsed < 20000UL) {
-            ResetEvent(wait_handles[1]);
-            ResetEvent(wait_handles[0]);
-            const DWORD waited = WaitForMultipleObjects(
-                2, wait_handles, FALSE, wait_timeout);
-            if (waited == WAIT_OBJECT_0 + 1) handle_sys_msg();
-
-            const unsigned long now = timeGetTime();
-            any_pending = 0;
-            for (index = 0; index < 16; ++index) {
-                if (pending[index] == 0) continue;
-                NetPlayer &player = players_[index];
-                if (player.field_0_ == 0) {
-                    pending[index] = 0;
-                } else if (player.field_8_ == 0) {
-                    const unsigned long tick = timeGetTime();
-                    pending[index] = 0;
-                    player.field_C_ = (tick + 0x14UL +
-                        (player.field_C_ - base_time[index])) >> 1;
-                } else {
-                    if (retry_delay[index] < now - base_time[index]) {
-                        retry_delay[index] = (retry_delay[index] * 3UL) >> 1;
-                        if (NetDirectPlay == 0) {
-                            free(packet);
-                            return 0;
-                        }
-                        const unsigned long resend_id = player.field_0_;
-                        base_time[index] = timeGetTime();
-                        const HRESULT retried = NetDirectPlay->Send(
-                            local_player_id_, static_cast<DPID>(resend_id), 0, packet,
-                            static_cast<DWORD>(allocation_size));
-                        if (retried != 0) {
-                            MessageBoxA(0, "Oh no!! Send failed!",
-                                        "Message from the Net Underworld", 0);
-                            free(packet);
-                            return 0;
-                        }
-                    }
-                    any_pending = 1;
-                }
-            }
-            if (any_pending == 0) {
+        while (NetDirectPlay != 0) {
+            sent_at[0] = timeGetTime();
+            for (index = 1; index < 16; ++index) sent_at[index] = sent_at[0];
+            if (NetDirectPlay->Send(local_player_id_, static_cast<DPID>(group_id),
+                                    0, packet,
+                                    static_cast<DWORD>(allocation_size)) != DP_OK) {
                 free(packet);
-                return static_cast<int>(field_E4_);
+                return 0;
             }
-            elapsed = timeGetTime() - interval_start;
-        }
-
-        // Timeout notification uses the application's canonical shared
-        // StringTemp, with the original nested id lookup and append ordering.
-        StringTemp[0] = 0;
-        int first_name = 1;
-        for (index = 0; index < 16; ++index) {
-            if (players_[index].field_8_ != 0) {
-                int found_index = -1;
-                for (int search = 0; search < 16; ++search) {
-                    if (players_[search].field_0_ == players_[index].field_0_) {
-                        found_index = search;
-                        break;
+            const DWORD interval_start = timeGetTime();
+            while (timeGetTime() - interval_start < 20000) {
+                ResetEvent(thread_info_.events_[1]);
+                ResetEvent(thread_info_.events_[0]);
+                if (WaitForMultipleObjects(2, wait_handles, FALSE,
+                                           wait_timeout) == WAIT_OBJECT_0 + 1)
+                    handle_sys_msg();
+                const DWORD now = timeGetTime();
+                int still_pending = 0;
+                for (index = 0; index < 16; ++index) {
+                    if (pending[index] == 0) continue;
+                    if (players_[index].field_0_ == 0) {
+                        pending[index] = 0;
+                    } else if (players_[index].field_8_ == 0) {
+                        const DWORD ack_tick = timeGetTime();
+                        pending[index] = 0;
+                        players_[index].field_C_ = (ack_tick +
+                            players_[index].field_C_ - sent_at[index] + 0x14) >> 1;
+                    } else {
+                        if (now - sent_at[index] > retry_delay[index]) {
+                            retry_delay[index] = (retry_delay[index] * 3) >> 1;
+                            if (NetDirectPlay == 0) {
+                                free(packet);
+                                return 0;
+                            }
+                            sent_at[index] = timeGetTime();
+                            if (NetDirectPlay->Send(local_player_id_,
+                                    players_[index].field_0_, 0, packet,
+                                    static_cast<DWORD>(allocation_size)) != DP_OK) {
+                                MessageBoxA(0, "Oh no!! Send failed!",
+                                            "Message from the Net Underworld", 0);
+                                free(packet);
+                                return 0;
+                            }
+                        }
+                        still_pending = 1;
                     }
                 }
-                // The native not-found path passes null to strcat; preserve
-                // that original error-path behavior.
-                char *name = found_index < 0
-                    ? 0
-                    : players_[found_index].name_and_tail_;
-                strcat(StringTemp, name);
+                if (still_pending == 0) goto done;
+            }
+
+            // Timeout notification uses the canonical shared StringTemp.
+            StringTemp[0] = 0;
+            int first_name = 1;
+            for (index = 0; index < 16; ++index) {
+                if (players_[index].field_8_ == 0) continue;
+                int name_index;
+                for (name_index = 0; name_index < 16; ++name_index) {
+                    if (players_[name_index].field_0_ == players_[index].field_0_)
+                        break;
+                }
+                // The native not-found path passes null to strcat.
+                strcat(StringTemp, name_index == 16
+                    ? 0 : players_[name_index].name_and_tail_);
                 if (!first_name) {
                     strcat(StringTemp, ", ");
                     strcat(StringTemp, " ");
                 }
                 first_name = 0;
             }
-        }
-        strcat(StringTemp, ".");
-        parse_says(0, StringTemp, -1, -1);
-        const int answer = pop_caption(const_cast<char *>("jackal"),
-                               const_cast<char *>("NET_SENDTIMEDOUT"), 0);
-        if (answer == 0) continue;
-        if (answer == 1) {
-            close();
-        } else if (answer == 2) {
-            ExitTurnLoop = 1;
+            strcat(StringTemp, ".");
+            parse_says(0, StringTemp, -1, -1);
+            switch (pop_caption(const_cast<char *>("jackal"),
+                                const_cast<char *>("NET_SENDTIMEDOUT"), 0)) {
+            case 0:
+                continue;
+            case 1:
+                close();
+                break;
+            case 2:
+                ExitTurnLoop = 1;
+                break;
+            }
+            free(packet);
+            return 0;
         }
         free(packet);
         return 0;
+    } else {
+        header->type_flags_ = 1;
+        if (NetDirectPlay == 0) {
+            free(packet);
+            return 0;
+        }
+        if (NetDirectPlay->Send(local_player_id_, static_cast<DPID>(group_id),
+                                reliable != 0, packet,
+                                static_cast<DWORD>(allocation_size)) != DP_OK) {
+            free(packet);
+            return 0;
+        }
     }
+done:
+    free(packet);
+    return static_cast<int>(field_E4_);
 }
 #if defined(_MSC_VER) && _MSC_VER == 1200
 #pragma intrinsic(memcpy)
@@ -3146,114 +3099,56 @@ int __cdecl internal_receive(NetThreadInfo *thread_info) {
     // the record's buffer member while filling the originally supplied block.
     unsigned char *const bytes = static_cast<unsigned char *>(thread_info->buffer_);
     DWORD from = 0;
-    DWORD to = net->local_player_id_;
     DWORD size = net->field_6E4_;
+    DWORD to = net->local_player_id_;
     const HRESULT receive_result = thread_info->direct_play_->Receive(
         &from, &to, 3, bytes, &size);
-    if (receive_result != DP_OK) return 0;
-
-    if (from == 0 || (bytes[0] & 0x80) != 0) {
-        net->queue_130_.add(bytes, size, from, 0,
-                            static_cast<unsigned long>(-1));
-        PostThreadMessageA(thread_info->thread_id_, 0x402, 0, 0);
-        SetEvent(thread_info->events_[1]);
-        return 1;
-    }
-
-    size -= 0x0C;
-    NetPacketEnvelope *const packet =
-        reinterpret_cast<NetPacketEnvelope *>(bytes);
-    const WORD message_type = packet->type_flags_ & 0xFFFB;
-
-    if (message_type == 0x20) {
-        for (int player_index = 0; player_index != 16; ++player_index) {
-            if (net->players_[player_index].field_0_ == from) {
-                net->players_[player_index].stamp_10_ = timeGetTime();
-                break;
-            }
-        }
-    } else if (message_type == 1) {
-        if (static_cast<int32_t>(net->queue_10c_.count_) < 0xC8) {
-            net->queue_10c_.add(bytes + 8, size, from, 0,
+    if (receive_result == DP_OK) {
+        if (from == 0 || (bytes[0] & 0x80) != 0) {
+            net->queue_130_.add(bytes, size, from, 0,
                                 static_cast<unsigned long>(-1));
-            SetEvent(thread_info->events_[4]);
+            PostThreadMessageA(thread_info->thread_id_, 0x402, 0, 0);
+            SetEvent(thread_info->events_[1]);
+            return receive_result == DP_OK;
         }
-    } else if (message_type == 0x10) {
-        net->queue_130_.add(bytes, size + 0x0C, from, 0,
-                            static_cast<unsigned long>(-1));
-        PostThreadMessageA(thread_info->thread_id_, 0x402, 0, 0);
-        SetEvent(thread_info->events_[1]);
-    } else if (message_type == 0x100) {
-        MMIOINFO voice_packet;
-        memset(&voice_packet, 0, sizeof(voice_packet));
-        voice_packet.cchBuffer = static_cast<LONG>(size);
-        voice_packet.pchBuffer = reinterpret_cast<HPSTR>(bytes + 8);
-        voice_packet.pchNext = reinterpret_cast<HPSTR>(bytes + 8);
-        voice_packet.pchEndRead =
-            reinterpret_cast<HPSTR>(bytes + 8 + size);
 
+        size -= 0x0C;
+        NetPacketEnvelope *const packet =
+            reinterpret_cast<NetPacketEnvelope *>(bytes);
         JackalVoiceRx &receivers = net->jackal_voice_rx_;
-        if (receivers.head_ != 0) {
-            const int count = receivers.count_;
-            receivers.cursor_index_ = 0;
-            receivers.cursor_ = receivers.head_;
-            if (count > 0) {
-                int found = 0;
-                for (int voice_index = 0; voice_index < count; ++voice_index) {
-                    if (receivers.cursor_->id_ == static_cast<int>(from)) {
-                        found = 1;
-                        break;
-                    }
-                    ++receivers.cursor_index_;
-                    receivers.cursor_ = receivers.cursor_->next_;
-                }
-                if (found) {
-                    VoiceRxAllocation *voice = 0;
-                    if (receivers.head_ != 0) voice = receivers.cursor_->payload_;
-                    // Original rechecks head, then still calls through a null
-                    // payload if that recheck fails; this is not a safe fallback.
-                    const int level = voice->get_nbuffers();
-                    const uint32_t queued_load = (net->field_6DC_ - 1U)
-                        * static_cast<uint32_t>(level);
-                    if (static_cast<int32_t>(queued_load) < 0xC8) {
-                        voice->add_buffer(&voice_packet);
-                    }
-                    const int sound_version = get_sound_version();
-                    const int min_level = (sound_version & 1) != 0 ? 5 : 0x10;
-                    if (level >= min_level && voice->is_playing() == 0) {
-                        voice->start();
-                    }
-                }
+        int index;
+        switch (packet->type_flags_ & 0xFFFB) {
+        case 0x10:
+            net->queue_130_.add(bytes, size + 0x0C, from, 0,
+                                static_cast<unsigned long>(-1));
+            PostThreadMessageA(thread_info->thread_id_, 0x402, 0, 0);
+            SetEvent(thread_info->events_[1]);
+            break;
+        case 1:
+            if (static_cast<int32_t>(net->queue_10c_.count_) < 0xC8) {
+                net->queue_10c_.add(bytes + 8, size, from, 0,
+                                    static_cast<unsigned long>(-1));
+                SetEvent(thread_info->events_[4]);
             }
-        }
-    } else if (message_type == 0x200) {
-        const DWORD sequence = packet->sequence_4_;
-        int sequence_player_index = 0;
-        while (sequence_player_index < 16
-               && net->players_[sequence_player_index].field_0_ != from)
-            ++sequence_player_index;
-        int accept = 1;
-        if (sequence_player_index != 16) {
-            if (net->players_[sequence_player_index].field_4_ >= sequence)
-                accept = 0;
-            else net->players_[sequence_player_index].field_4_ = sequence;
-        }
-        if (accept) {
-            net->voice_flags_D8_ &= 0xBFFFFFFF;
-            JackalVoiceRx &receivers = net->jackal_voice_rx_;
-            if (receivers.head_ != 0) {
-                const int count = receivers.count_;
-                receivers.cursor_index_ = 0;
-                receivers.cursor_ = receivers.head_;
-                if (count > 0) {
-                    for (int entry = 0; entry < count; ++entry) {
+            break;
+        case 0x20:
+            for (index = 0; index < 16; ++index) {
+                if (net->players_[index].field_0_ == from) break;
+            }
+            if (index != 16) net->players_[index].stamp_10_ = timeGetTime();
+            break;
+        case 0x200:
+            if (net->check_message(from, packet->sequence_4_) == 0) {
+                net->voice_flags_D8_ &= 0xBFFFFFFF;
+                if (receivers.head_ != 0) {
+                    receivers.cursor_index_ = 0;
+                    receivers.cursor_ = receivers.head_;
+                    for (index = 0; index < receivers.count_; ++index) {
                         if (receivers.cursor_->id_ == static_cast<int>(from)) {
-                            VoiceRxAllocation *voice = 0;
-                            if (receivers.head_ != 0)
-                                voice = receivers.cursor_->payload_;
                             // Incoming 0x200 calls slot +88 (start), not the
-                            // Sound stop slot +20, despite clearing this flag.
-                            voice->start();
+                            // Sound stop slot, despite clearing this flag.
+                            (receivers.head_ != 0
+                                ? receivers.cursor_->payload_ : 0)->start();
                             break;
                         }
                         ++receivers.cursor_index_;
@@ -3261,53 +3156,75 @@ int __cdecl internal_receive(NetThreadInfo *thread_info) {
                     }
                 }
             }
+            break;
+        case 0x100: {
+            MMIOINFO voice_packet;
+            memset(&voice_packet, 0, sizeof(voice_packet));
+            voice_packet.cchBuffer = static_cast<LONG>(size);
+            voice_packet.pchBuffer = reinterpret_cast<HPSTR>(bytes + 8);
+            voice_packet.pchNext = reinterpret_cast<HPSTR>(bytes + 8);
+            voice_packet.pchEndRead =
+                reinterpret_cast<HPSTR>(bytes + 8 + size);
+            if (receivers.head_ != 0) {
+                receivers.cursor_index_ = 0;
+                receivers.cursor_ = receivers.head_;
+                for (index = 0; index < receivers.count_; ++index) {
+                    if (receivers.cursor_->id_ == static_cast<int>(from)) {
+                        // Original rechecks head, then still calls through a
+                        // null payload if that recheck fails.
+                        VoiceRxAllocation *const voice = receivers.head_ != 0
+                            ? receivers.cursor_->payload_ : 0;
+                        const int level = voice->get_nbuffers();
+                        if (static_cast<int>((net->field_6DC_ - 1) * level) < 0xC8) {
+                            voice->add_buffer(&voice_packet);
+                        }
+                        if ((get_sound_version() & 1) != 0) {
+                            if (level > 4 && voice->is_playing() == 0) {
+                                voice->start();
+                            }
+                        } else if (level > 15 && voice->is_playing() == 0) {
+                            voice->start();
+                        }
+                        break;
+                    }
+                    ++receivers.cursor_index_;
+                    receivers.cursor_ = receivers.cursor_->next_;
+                }
+            }
+            break;
         }
-    }
+        }
 
-    const WORD type_flags = packet->type_flags_;
-    const WORD selection = type_flags & 6;
-    if (selection == 2) {
-        if (packet->sequence_4_ == net->field_E4_) {
-        for (int clear_index = 0; clear_index != 16; ++clear_index) {
-            if (net->players_[clear_index].field_0_ == from) {
-                net->players_[clear_index].field_8_ = 0;
-                    break;
+        switch (packet->type_flags_ & 6) {
+        case 2:
+            if (packet->sequence_4_ == net->field_E4_) {
+                for (index = 0; index < 16; ++index) {
+                    if (from == net->players_[index].field_0_) break;
                 }
-            }
-            int any_pending = 0;
-            for (int pending_index = 0; pending_index != 16; ++pending_index) {
-                if (net->players_[pending_index].field_0_ != 0
-                    && net->players_[pending_index].field_8_ != 0) {
-                    any_pending = 1;
-                    break;
+                if (index < 16) net->players_[index].field_8_ = 0;
+                for (index = 0; index < 16; ++index) {
+                    if (net->players_[index].field_0_ != 0 &&
+                        net->players_[index].field_8_ != 0) {
+                        return receive_result == DP_OK;
+                    }
                 }
+                SetEvent(thread_info->events_[0]);
             }
-            if (!any_pending) SetEvent(thread_info->events_[0]);
-        }
-    } else if (selection == 4) {
-        if ((type_flags & 0xFFF0) == 0) {
-            const DWORD sequence = packet->sequence_4_;
-            int ack_player_index = 0;
-            while (ack_player_index < 16
-                   && net->players_[ack_player_index].field_0_ != from)
-                ++ack_player_index;
-            int accept = 1;
-            if (ack_player_index != 16) {
-                if (net->players_[ack_player_index].field_4_ >= sequence)
-                    accept = 0;
-                else net->players_[ack_player_index].field_4_ = sequence;
-            }
-            if (accept) {
-                const DWORD queued_at = timeGetTime();
-                net->queue_10c_.add(bytes + 8, size, from, 0, queued_at);
+            break;
+        case 4:
+            if ((packet->type_flags_ & 0xFFF0) == 0 &&
+                net->check_message(from, packet->sequence_4_) == 0) {
+                net->queue_10c_.add(bytes + 8, size, from, 0, timeGetTime());
                 SetEvent(thread_info->events_[4]);
             }
+            // Queue publication/event callbacks can alter the shared packet WORD.
+            packet->type_flags_ = (packet->type_flags_ & 0xFFFB) | 2;
+            thread_info->direct_play_->Send(net->local_player_id_, to, 0,
+                                            bytes, 0x0C);
+            return receive_result == DP_OK;
         }
-        // Queue publication/event callbacks can alter the shared packet WORD.
-        packet->type_flags_ = (packet->type_flags_ & 0xFFFB) | 2;
-        thread_info->direct_play_->Send(net->local_player_id_, to, 0, bytes, 0x0C);
     }
-    return 1;
+    return receive_result == DP_OK;
 }
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
@@ -4055,8 +3972,11 @@ void cleanup_failed_net_construction(void *memory) {
 #endif
 int Net::send_packet_type(void *data, int data_size, unsigned long target,
                           int packet_type, int flags) {
-    int index;
     HANDLE wait_handles[2];
+    DWORD sent_at[16];
+    DWORD retry_delay[16];
+    int pending[16];
+    int index;
     wait_handles[0] = thread_info_.events_[0];
     wait_handles[1] = thread_info_.events_[1];
 
@@ -4066,11 +3986,7 @@ int Net::send_packet_type(void *data, int data_size, unsigned long target,
     }
     check_polling();
 
-    const uint16_t type = static_cast<uint16_t>(packet_type);
-    const unsigned int ack_requested = static_cast<unsigned int>(flags);
-    // The queue predicate consumes the original 32-bit argument. Only the
-    // wire header is narrowed to WORD below.
-    if ((packet_type & 0xFFF0) == 0 && (ack_requested & 4U) != 0) {
+    if ((packet_type & 0xFFF0) == 0 && (flags & 4) != 0) {
         if (target == local_player_id_) {
             queue_10c_.add(data, static_cast<unsigned long>(data_size),
                            local_player_id_, 0, 0xFFFFFFFFUL);
@@ -4078,72 +3994,147 @@ int Net::send_packet_type(void *data, int data_size, unsigned long target,
         }
         if (target == 0) {
             queue_10c_.add(data, static_cast<unsigned long>(data_size),
-                           local_player_id_, 0, 0xFFFFFFFFUL);
+                           local_player_id_, target, 0xFFFFFFFFUL);
             if (static_cast<int>(field_6DC_) < 2)
                 return static_cast<int>(field_E4_);
         }
     }
 
-    // Native LEA adds the overhead in a DWORD, including signed-size wrap.
-    const int allocation_size = static_cast<int32_t>(
-        static_cast<uint32_t>(data_size) + 0x0CU);
+    const int allocation_size = data_size + 0x0C;
     unsigned char *const packet =
         static_cast<unsigned char *>(mem_get(allocation_size));
     if (packet == 0) return 0;
 
     NetPacketEnvelope *const header =
         reinterpret_cast<NetPacketEnvelope *>(packet);
-    const unsigned int reliable = ack_requested & 1U;
-    const uint32_t sequence = reliable != 0 ? ++field_E4_ : 0;
-    header->sequence_4_ = sequence;
+    if ((flags & 1) != 0) {
+        header->sequence_4_ = ++field_E4_;
+    } else {
+        header->sequence_4_ = 0;
+    }
     if (data != 0) memcpy(packet + 8, data, static_cast<size_t>(data_size));
 
-    if (reliable == 0 || (voice_flags_D8_ & 0x10000000U) != 0) {
-        header->type_flags_ = type;
-        if (NetDirectPlay == 0 ||
-            NetDirectPlay->Send(local_player_id_, static_cast<DPID>(target),
-                                reliable, packet,
-                                static_cast<DWORD>(allocation_size)) != DP_OK) {
-            free(packet);
-            return 0;
-        }
-        free(packet);
-        return static_cast<int>(field_E4_);
-    }
-
-    const uint16_t reliable_type = static_cast<uint16_t>(type | 4U);
-    header->type_flags_ = reliable_type;
-
-    if (target == 0) {
-        int waiting[16];
-        unsigned int retry_delay[16];
-        DWORD sent_at[16];
-        unsigned int wait_timeout = 0xFFFFFFFFU;
-        int any_waiting = 0;
-        for (index = 0; index < 16; ++index) {
-            NetPlayer &peer = players_[index];
-            if (peer.field_0_ == 0 || peer.field_0_ == local_player_id_ ||
-                (((peer.flags_14_ & 2U) == 0) && (type & 0x10U) == 0)) {
-                peer.field_8_ = 0;
-                waiting[index] = 0;
-                continue;
+    if ((flags & 1) != 0 && (voice_flags_D8_ & 0x10000000U) == 0) {
+        header->type_flags_ = static_cast<WORD>(packet_type | 4);
+        DWORD wait_timeout;
+        DWORD interval_start;
+        if (target != 0) {
+            wait_timeout = 0xFFFFFFFFU;
+            int found = 0;
+            int selected;
+            for (index = 0; index < 16; ++index) {
+                if (players_[index].field_0_ == target &&
+                    ((players_[index].flags_14_ & 2) != 0 ||
+                     (packet_type & 0x10) != 0)) {
+                    retry_delay[index] = players_[index].field_C_;
+                    found = 1;
+                    players_[index].field_8_ = 1;
+                    selected = index;
+                    if (players_[index].field_C_ < wait_timeout)
+                        wait_timeout = players_[index].field_C_;
+                } else {
+                    players_[index].field_8_ = 0;
+                }
             }
-            peer.field_8_ = 1;
-            waiting[index] = 1;
-            retry_delay[index] = peer.field_C_;
-            if (retry_delay[index] < wait_timeout) {
-                wait_timeout = retry_delay[index];
-            }
-            any_waiting = 1;
-        }
+            if (found == 0) goto done;
 
-        while (any_waiting != 0) {
-            if (NetDirectPlay == 0) {
+            sent_at[selected] = timeGetTime();
+            if (NetDirectPlay->Send(local_player_id_, static_cast<DPID>(target), 0,
+                                    packet, static_cast<DWORD>(allocation_size)) != DP_OK) {
+                MessageBoxA(0, "Oh no!! Send failed!",
+                            "Message from the Net Underworld", 0);
                 free(packet);
                 return 0;
             }
-            const DWORD first_tick = timeGetTime();
-            for (index = 0; index < 16; ++index) sent_at[index] = first_tick;
+            for (;;) {
+                interval_start = timeGetTime();
+                while (timeGetTime() - interval_start < 20000) {
+                    ResetEvent(thread_info_.events_[1]);
+                    ResetEvent(thread_info_.events_[0]);
+                    if (WaitForMultipleObjects(2, wait_handles, FALSE,
+                                               wait_timeout) == WAIT_OBJECT_0 + 1)
+                        handle_sys_msg();
+                    if (players_[selected].field_8_ == 0 ||
+                        players_[selected].field_0_ == 0) {
+                        players_[selected].field_C_ = (timeGetTime() +
+                            players_[selected].field_C_ - sent_at[selected] + 0x14) >> 1;
+                        goto done;
+                    }
+                    if (timeGetTime() - sent_at[selected] > retry_delay[selected]) {
+                        retry_delay[selected] = (retry_delay[selected] * 3) >> 1;
+                        if (NetDirectPlay == 0) { free(packet); return 0; }
+                        sent_at[selected] = timeGetTime();
+                        if (NetDirectPlay->Send(local_player_id_,
+                                players_[selected].field_0_, 0, packet,
+                                static_cast<DWORD>(allocation_size)) != DP_OK) {
+                            MessageBoxA(0, "Oh no!! Send failed!",
+                                        "Message from the Net Underworld", 0);
+                            free(packet);
+                            return 0;
+                        }
+                    }
+                }
+
+                StringTemp[0] = 0;
+                int name_index;
+                for (name_index = 0; name_index < 16; ++name_index) {
+                    if (players_[name_index].field_0_ == players_[selected].field_0_)
+                        break;
+                }
+                // The native failed lookup passes null to strcat.
+                strcat(StringTemp, name_index == 16
+                    ? 0 : players_[name_index].name_and_tail_);
+                strcat(StringTemp, ".");
+                parse_says(0, StringTemp, -1, -1);
+                switch (pop_caption(const_cast<char *>("jackal"),
+                                    const_cast<char *>("NET_SENDTIMEDOUT"), 0)) {
+                case 0:
+                    break;
+                case 1:
+                    close();
+                    free(packet);
+                    return 0;
+                case 2:
+                    ExitTurnLoop = 1;
+                    free(packet);
+                    return 0;
+                default:
+                    free(packet);
+                    return 0;
+                }
+                sent_at[selected] = timeGetTime();
+                if (NetDirectPlay->Send(local_player_id_, static_cast<DPID>(target), 0,
+                                        packet, static_cast<DWORD>(allocation_size)) != DP_OK) {
+                    MessageBoxA(0, "Oh no!! Send failed!",
+                            "Message from the Net Underworld", 0);
+                free(packet);
+                return 0;
+                }
+            }
+        }
+
+        int any_pending = 0;
+        wait_timeout = 0xFFFFFFFFU;
+        for (index = 0; index < 16; ++index) {
+            if (players_[index].field_0_ != 0 &&
+                players_[index].field_0_ != local_player_id_ &&
+                ((players_[index].flags_14_ & 2) != 0 || (packet_type & 0x10) != 0)) {
+                players_[index].field_8_ = 1;
+                pending[index] = 1;
+                retry_delay[index] = players_[index].field_C_;
+                any_pending = 1;
+                if (players_[index].field_C_ < wait_timeout)
+                    wait_timeout = players_[index].field_C_;
+            } else {
+                players_[index].field_8_ = 0;
+                pending[index] = 0;
+            }
+        }
+        if (any_pending == 0) goto done;
+
+        while (NetDirectPlay != 0) {
+            sent_at[0] = timeGetTime();
+            for (index = 1; index < 16; ++index) sent_at[index] = sent_at[0];
             if (NetDirectPlay->Send(local_player_id_, 0, 0, packet,
                                     static_cast<DWORD>(allocation_size)) != DP_OK) {
                 MessageBoxA(0, "Oh no!! Send failed!",
@@ -4151,69 +4142,55 @@ int Net::send_packet_type(void *data, int data_size, unsigned long target,
                 free(packet);
                 return 0;
             }
-
-            const DWORD interval_start = timeGetTime();
-            DWORD elapsed = timeGetTime() - interval_start;
-            while (elapsed < 20000U) {
+            interval_start = timeGetTime();
+            while (timeGetTime() - interval_start < 20000) {
                 ResetEvent(thread_info_.events_[1]);
                 ResetEvent(thread_info_.events_[0]);
-                const DWORD waited = WaitForMultipleObjects(
-                    2, wait_handles, FALSE, wait_timeout);
-                if (waited == WAIT_OBJECT_0 + 1) handle_sys_msg();
-
+                if (WaitForMultipleObjects(2, wait_handles, FALSE,
+                                           wait_timeout) == WAIT_OBJECT_0 + 1)
+                    handle_sys_msg();
                 const DWORD now = timeGetTime();
-                int still_waiting = 0;
+                int still_pending = 0;
                 for (index = 0; index < 16; ++index) {
-                    if (waiting[index] == 0) continue;
-                    NetPlayer &peer = players_[index];
-                    if (peer.field_0_ == 0) {
-                        waiting[index] = 0;
-                    } else if (peer.field_8_ == 0) {
+                    if (pending[index] == 0) continue;
+                    if (players_[index].field_0_ == 0) {
+                        pending[index] = 0;
+                    } else if (players_[index].field_8_ == 0) {
                         const DWORD ack_tick = timeGetTime();
-                        waiting[index] = 0;
-                        peer.field_C_ = (ack_tick + 0x14U +
-                            (peer.field_C_ - sent_at[index])) >> 1;
+                        pending[index] = 0;
+                        players_[index].field_C_ = (ack_tick +
+                            players_[index].field_C_ - sent_at[index] + 0x14) >> 1;
                     } else {
-                        if (retry_delay[index] < now - sent_at[index]) {
-                            retry_delay[index] = (retry_delay[index] * 3U) >> 1;
-                            if (NetDirectPlay == 0) {
-                                free(packet);
-                                return 0;
-                            }
+                        if (now - sent_at[index] > retry_delay[index]) {
+                            retry_delay[index] = (retry_delay[index] * 3) >> 1;
+                            if (NetDirectPlay == 0) { free(packet); return 0; }
                             sent_at[index] = timeGetTime();
-                            const DPID peer_id = static_cast<DPID>(peer.field_0_);
-                            if (NetDirectPlay->Send(local_player_id_, peer_id, 0,
-                                    packet, static_cast<DWORD>(allocation_size))
-                                != DP_OK) {
+                            if (NetDirectPlay->Send(local_player_id_,
+                                    players_[index].field_0_, 0, packet,
+                                    static_cast<DWORD>(allocation_size)) != DP_OK) {
                                 MessageBoxA(0, "Oh no!! Send failed!",
                                             "Message from the Net Underworld", 0);
                                 free(packet);
                                 return 0;
                             }
                         }
-                        still_waiting = 1;
+                        still_pending = 1;
                     }
                 }
-                if (still_waiting == 0) {
-                    free(packet);
-                    return static_cast<int>(field_E4_);
-                }
-                elapsed = timeGetTime() - interval_start;
+                if (still_pending == 0) goto done;
             }
 
             StringTemp[0] = 0;
             int first_name = 1;
             for (index = 0; index < 16; ++index) {
                 if (players_[index].field_8_ == 0) continue;
-                int name_index = 0;
-                while (name_index < 16 &&
-                       players_[name_index].field_0_ != players_[index].field_0_) {
-                    ++name_index;
+                int name_index;
+                for (name_index = 0; name_index < 16; ++name_index) {
+                    if (players_[name_index].field_0_ == players_[index].field_0_)
+                        break;
                 }
-                // Preserve the original null source on a failed peer lookup.
-                const char *const peer_name = name_index == 16
-                    ? 0 : players_[name_index].name_and_tail_;
-                strcat(StringTemp, peer_name);
+                strcat(StringTemp, name_index == 16
+                    ? 0 : players_[name_index].name_and_tail_);
                 if (!first_name) {
                     strcat(StringTemp, ", ");
                     strcat(StringTemp, " ");
@@ -4222,126 +4199,36 @@ int Net::send_packet_type(void *data, int data_size, unsigned long target,
             }
             strcat(StringTemp, ".");
             parse_says(0, StringTemp, -1, -1);
-            const int choice = pop_caption(const_cast<char *>("jackal"),
-                const_cast<char *>("NET_SENDTIMEDOUT"), 0);
-            if (choice != 0) {
-                if (choice == 1) close();
-                else if (choice == 2) ExitTurnLoop = 1;
-                MessageBoxA(0, "Oh no!! Send failed after many tries!",
-                            "Message from the Net Underworld", 0);
-                free(packet);
-                return 0;
+            switch (pop_caption(const_cast<char *>("jackal"),
+                                const_cast<char *>("NET_SENDTIMEDOUT"), 0)) {
+            case 0:
+                continue;
+            case 1:
+                close();
+                break;
+            case 2:
+                ExitTurnLoop = 1;
+                break;
             }
-            any_waiting = 0;
-            for (index = 0; index < 16; ++index) {
-                if (waiting[index] != 0) any_waiting = 1;
-            }
+            MessageBoxA(0, "Oh no!! Send failed after many tries!",
+                        "Message from the Net Underworld", 0);
+            break;
         }
-        free(packet);
-        return static_cast<int>(field_E4_);
-    }
-
-    int selected = -1;
-    unsigned int retry_delay = 0xFFFFFFFFU;
-    unsigned int wait_timeout = 0xFFFFFFFFU;
-    for (index = 0; index < 16; ++index) {
-        NetPlayer &peer = players_[index];
-        if (peer.field_0_ == target &&
-            ((peer.flags_14_ & 2U) != 0 || (type & 0x10U) != 0)) {
-            selected = index;
-            retry_delay = peer.field_C_;
-            if (peer.field_C_ < wait_timeout) wait_timeout = peer.field_C_;
-            peer.field_8_ = 1;
-        } else {
-            peer.field_8_ = 0;
-        }
-    }
-    if (selected < 0) {
-        free(packet);
-        return static_cast<int>(field_E4_);
-    }
-
-    DWORD sent_at = timeGetTime();
-    // Native targeted send dereferences the live interface without a second
-    // null guard after timeGetTime; a disappearing provider is not normalized.
-    if (NetDirectPlay->Send(local_player_id_,
-            static_cast<DPID>(target), 0, packet,
-            static_cast<DWORD>(allocation_size)) != DP_OK) {
-        MessageBoxA(0, "Oh no!! Send failed!",
-                            "Message from the Net Underworld", 0);
         free(packet);
         return 0;
-    }
-    for (;;) {
-        // 62FA55 captures the minimum eligible RTT once. The last matching
-        // row supplies retry state, not this wait interval; send() differs.
-        const DWORD interval_start = timeGetTime();
-        DWORD elapsed = timeGetTime() - interval_start;
-        while (elapsed < 20000U) {
-            ResetEvent(thread_info_.events_[1]);
-            ResetEvent(thread_info_.events_[0]);
-            const DWORD waited = WaitForMultipleObjects(
-                2, wait_handles, FALSE, wait_timeout);
-            if (waited == WAIT_OBJECT_0 + 1) handle_sys_msg();
-
-            NetPlayer &peer = players_[selected];
-            if (peer.field_0_ == 0 || peer.field_8_ == 0) {
-                const DWORD ack_tick = timeGetTime();
-                peer.field_C_ = (ack_tick + 0x14U +
-                                 (peer.field_C_ - sent_at)) >> 1;
-                free(packet);
-                return static_cast<int>(field_E4_);
-            }
-            const DWORD now = timeGetTime();
-            if (retry_delay < now - sent_at) {
-                retry_delay = (retry_delay * 3U) >> 1;
-                if (NetDirectPlay == 0) {
-                    free(packet);
-                    return 0;
-                }
-                sent_at = timeGetTime();
-                const DPID live_peer = static_cast<DPID>(peer.field_0_);
-                if (NetDirectPlay->Send(local_player_id_, live_peer, 0, packet,
-                        static_cast<DWORD>(allocation_size)) != DP_OK) {
-                    MessageBoxA(0, "Oh no!! Send failed!",
-                                "Message from the Net Underworld", 0);
-                    free(packet);
-                    return 0;
-                }
-            }
-            elapsed = timeGetTime() - interval_start;
-        }
-
-        StringTemp[0] = 0;
-        int name_index = 0;
-        while (name_index < 16 &&
-               players_[name_index].field_0_ != players_[selected].field_0_) {
-            ++name_index;
-        }
-        // Preserve the original null source on a failed peer lookup.
-        const char *const peer_name = name_index == 16
-            ? 0 : players_[name_index].name_and_tail_;
-        strcat(StringTemp, peer_name);
-        strcat(StringTemp, ".");
-        parse_says(0, StringTemp, -1, -1);
-        const int choice = pop_caption(const_cast<char *>("jackal"),
-            const_cast<char *>("NET_SENDTIMEDOUT"), 0);
-        if (choice != 0) {
-            if (choice == 1) close();
-            else if (choice == 2) ExitTurnLoop = 1;
-            free(packet);
-            return 0;
-        }
-        sent_at = timeGetTime();
-        if (NetDirectPlay->Send(local_player_id_,
-                static_cast<DPID>(target), 0, packet,
-                static_cast<DWORD>(allocation_size)) != DP_OK) {
-            MessageBoxA(0, "Oh no!! Send failed!",
-                        "Message from the Net Underworld", 0);
+    } else {
+        header->type_flags_ = static_cast<WORD>(packet_type);
+        if (NetDirectPlay == 0) { free(packet); return 0; }
+        if (NetDirectPlay->Send(local_player_id_, static_cast<DPID>(target),
+                                (flags & 1) != 0, packet,
+                                static_cast<DWORD>(allocation_size)) != DP_OK) {
             free(packet);
             return 0;
         }
     }
+    done:
+    free(packet);
+    return static_cast<int>(field_E4_);
 }
 #if defined(_MSC_VER) && _MSC_VER == 1200
 #pragma intrinsic(memcpy)
@@ -4355,23 +4242,25 @@ int Net::send_packet_type(void *data, int data_size, unsigned long target,
 #pragma function(memcpy)
 #endif
 int Net::send(void *data, int data_size, unsigned long target, int flags) {
+    HANDLE wait_handles[2];
+    DWORD sent_at[16];
+    DWORD retry_delay[16];
+    int pending[16];
     int index;
     // Native snapshots the wait array at function entry.
-    HANDLE wait_handles[2];
     wait_handles[0] = thread_info_.events_[0];
     wait_handles[1] = thread_info_.events_[1];
     if (data == 0 || NetDirectPlay == 0) {
         MessageBoxA(0, "Oh no! NULL pointer!!", "Net::send", 0);
         return 0;
     }
-    if (data_size < 1 || data_size > static_cast<int>(field_6E4_)) {
+    if (data_size <= 0 || data_size > static_cast<int>(field_6E4_)) {
         MessageBoxA(0, "Oh no! data_size is weird!", "Net::send", 0);
         return 0;
     }
     check_polling();
 
-    if ((voice_flags_D8_ & 1U) != 0 ||
-        (static_cast<unsigned int>(flags) & 4U) != 0) {
+    if ((voice_flags_D8_ & 1) != 0 || (flags & 4) != 0) {
         if (target == local_player_id_) {
             queue_10c_.add(data, static_cast<unsigned long>(data_size),
                            local_player_id_, 0, 0xFFFFFFFFUL);
@@ -4379,7 +4268,7 @@ int Net::send(void *data, int data_size, unsigned long target, int flags) {
         }
         if (target == 0) {
             queue_10c_.add(data, static_cast<unsigned long>(data_size),
-                           local_player_id_, 0, 0xFFFFFFFFUL);
+                           local_player_id_, target, 0xFFFFFFFFUL);
             if (static_cast<int>(field_6DC_) < 2)
                 return static_cast<int>(field_E4_);
         }
@@ -4391,67 +4280,138 @@ int Net::send(void *data, int data_size, unsigned long target, int flags) {
     if (packet == 0) return 0;
     NetPacketEnvelope *const header =
         reinterpret_cast<NetPacketEnvelope *>(packet);
-    const unsigned int reliable = static_cast<unsigned int>(flags) & 1U;
-    const uint32_t sequence = reliable != 0 ? ++field_E4_ : 0;
-    header->sequence_4_ = sequence;
+    if ((flags & 1) != 0) {
+        header->sequence_4_ = ++field_E4_;
+    } else {
+        header->sequence_4_ = 0;
+    }
     memcpy(packet + 8, data, static_cast<size_t>(data_size));
 
-    if (reliable == 0 || (voice_flags_D8_ & 0x10000000U) != 0) {
-        const uint16_t packet_type = 1;
-        header->type_flags_ = packet_type;
-        if (NetDirectPlay == 0) {
-            free(packet);
-            return 0;
-        }
-        if (NetDirectPlay->Send(local_player_id_, static_cast<DPID>(target),
-                                reliable, packet,
-                                static_cast<DWORD>(allocation_size)) != DP_OK) {
-            MessageBoxA(0, "Oh no!! Send failed!",
-                        "Message from the Net Underworld", 0);
-            free(packet);
-            return 0;
-        }
-        free(packet);
-        return static_cast<int>(field_E4_);
-    }
-
-    const uint16_t packet_type = 4;
-    header->type_flags_ = packet_type;
-
-    if (target == 0) {
-        int active[16];
-        unsigned int retry_delay[16];
-        unsigned int retry_epoch[16];
-        unsigned int wait_timeout = 0xFFFFFFFFU;
-        int any_active = 0;
-
-        for (index = 0; index < 16; ++index) {
-            NetPlayer &peer = players_[index];
-            if (peer.field_0_ == 0 || peer.field_0_ == local_player_id_ ||
-                (peer.flags_14_ & 2U) == 0) {
-                peer.field_8_ = 0;
-                active[index] = 0;
-            } else {
-                peer.field_8_ = 1;
-                active[index] = 1;
-                retry_delay[index] = peer.field_C_;
-                if (retry_delay[index] < wait_timeout)
-                    wait_timeout = retry_delay[index];
-                any_active = 1;
+    if ((flags & 1) != 0 && (voice_flags_D8_ & 0x10000000U) == 0) {
+        header->type_flags_ = 4;
+        DWORD wait_timeout;
+        DWORD interval_start;
+        if (target != 0) {
+            int found = 0;
+            int selected;
+            for (index = 0; index < 16; ++index) {
+                if (players_[index].field_0_ == target &&
+                    (players_[index].flags_14_ & 2) != 0) {
+                    retry_delay[index] = players_[index].field_C_;
+                    selected = index;
+                    players_[index].field_8_ = 1;
+                    found = 1;
+                } else {
+                    players_[index].field_8_ = 0;
+                }
             }
-        }
+            if (found == 0) {
+                goto done;
+            }
 
-        while (any_active != 0) {
-            if (NetDirectPlay == 0) {
+            sent_at[selected] = timeGetTime();
+            if (NetDirectPlay->Send(local_player_id_, static_cast<DPID>(target), 0,
+                                    packet, static_cast<DWORD>(allocation_size)) != DP_OK) {
+                MessageBoxA(0, "Oh no!! Send failed!",
+                            "Message from the Net Underworld", 0);
                 free(packet);
                 return 0;
             }
-            const DWORD first_tick = timeGetTime();
-            for (index = 0; index < 16; ++index) {
-                // Native initializes all sixteen deadline words from one
-                // sampled tick, including inactive rows.
-                retry_epoch[index] = first_tick;
+            for (;;) {
+                wait_timeout = players_[selected].field_C_;
+                interval_start = timeGetTime();
+                while (timeGetTime() - interval_start < 20000) {
+                    ResetEvent(thread_info_.events_[1]);
+                    ResetEvent(thread_info_.events_[0]);
+                    if (WaitForMultipleObjects(2, wait_handles, FALSE,
+                                               wait_timeout) == WAIT_OBJECT_0 + 1)
+                        handle_sys_msg();
+                    if (players_[selected].field_8_ == 0 ||
+                        players_[selected].field_0_ == 0) {
+                        players_[selected].field_C_ = (timeGetTime() +
+                            players_[selected].field_C_ - sent_at[selected] + 0x14) >> 1;
+                        goto done;
+                    }
+                    if (timeGetTime() - sent_at[selected] > retry_delay[selected]) {
+                        retry_delay[selected] = (retry_delay[selected] * 3) >> 1;
+                        if (NetDirectPlay == 0) {
+                            free(packet);
+                            return 0;
+                        }
+                        sent_at[selected] = timeGetTime();
+                        if (NetDirectPlay->Send(local_player_id_,
+                                players_[selected].field_0_, 0, packet,
+                                static_cast<DWORD>(allocation_size)) != DP_OK) {
+                            MessageBoxA(0, "Oh no!! Send failed!",
+                                        "Message from the Net Underworld", 0);
+                            free(packet);
+                            return 0;
+                        }
+                    }
+                }
+
+                StringTemp[0] = 0;
+                int name_index;
+                for (name_index = 0; name_index < 16; ++name_index) {
+                    if (players_[name_index].field_0_ == players_[selected].field_0_)
+                        break;
+                }
+                // The native failed lookup passes null to strcat.
+                strcat(StringTemp, name_index == 16
+                    ? 0 : players_[name_index].name_and_tail_);
+                strcat(StringTemp, ".");
+                parse_says(0, StringTemp, -1, -1);
+                switch (pop_caption(const_cast<char *>("jackal"),
+                                    const_cast<char *>("NET_SENDTIMEDOUT"), 0)) {
+                case 0:
+                    break;
+                case 1:
+                    close();
+                    free(packet);
+                    return 0;
+                case 2:
+                    ExitTurnLoop = 1;
+                    free(packet);
+                    return 0;
+                default:
+                    free(packet);
+                    return 0;
+                }
+                sent_at[selected] = timeGetTime();
+                if (NetDirectPlay->Send(local_player_id_, static_cast<DPID>(target), 0,
+                                        packet, static_cast<DWORD>(allocation_size)) != DP_OK) {
+                    MessageBoxA(0, "Oh no!! Send failed!",
+                                "Message from the Net Underworld", 0);
+                    free(packet);
+                    return 0;
+                }
             }
+        }
+
+        int any_pending = 0;
+        wait_timeout = 0xFFFFFFFFU;
+        for (index = 0; index < 16; ++index) {
+            if (players_[index].field_0_ != 0 &&
+                players_[index].field_0_ != local_player_id_ &&
+                (players_[index].flags_14_ & 2) != 0) {
+                players_[index].field_8_ = 1;
+                pending[index] = 1;
+                retry_delay[index] = players_[index].field_C_;
+                any_pending = 1;
+                if (players_[index].field_C_ < wait_timeout)
+                    wait_timeout = players_[index].field_C_;
+            } else {
+                players_[index].field_8_ = 0;
+                pending[index] = 0;
+            }
+        }
+        if (any_pending == 0) {
+            goto done;
+        }
+
+        while (NetDirectPlay != 0) {
+            sent_at[0] = timeGetTime();
+            for (index = 1; index < 16; ++index) sent_at[index] = sent_at[0];
             if (NetDirectPlay->Send(local_player_id_, 0, 0, packet,
                                     static_cast<DWORD>(allocation_size)) != DP_OK) {
                 MessageBoxA(0, "Oh no!! Send failed!",
@@ -4459,71 +4419,60 @@ int Net::send(void *data, int data_size, unsigned long target, int flags) {
                 free(packet);
                 return 0;
             }
-
-            const DWORD interval_start = timeGetTime();
-            DWORD elapsed = timeGetTime() - interval_start;
-            int any_pending = 0;
-            while (elapsed < 20000U) {
+            interval_start = timeGetTime();
+            while (timeGetTime() - interval_start < 20000) {
                 ResetEvent(thread_info_.events_[1]);
                 ResetEvent(thread_info_.events_[0]);
-                const DWORD waited = WaitForMultipleObjects(
-                    2, wait_handles, FALSE, wait_timeout);
-                if (waited == WAIT_OBJECT_0 + 1) handle_sys_msg();
-
+                if (WaitForMultipleObjects(2, wait_handles, FALSE,
+                                           wait_timeout) == WAIT_OBJECT_0 + 1)
+                    handle_sys_msg();
                 const DWORD now = timeGetTime();
-                any_pending = 0;
+                int still_pending = 0;
                 for (index = 0; index < 16; ++index) {
-                    if (active[index] == 0) continue;
-                    NetPlayer &peer = players_[index];
-                    if (peer.field_0_ == 0) {
-                        active[index] = 0;
-                    } else if (peer.field_8_ == 0) {
+                    if (pending[index] == 0) continue;
+                    if (players_[index].field_0_ == 0) {
+                        pending[index] = 0;
+                    } else if (players_[index].field_8_ == 0) {
                         const DWORD ack_tick = timeGetTime();
-                        active[index] = 0;
-                        peer.field_C_ = (ack_tick + 0x14U +
-                            (peer.field_C_ - retry_epoch[index])) >> 1;
+                        pending[index] = 0;
+                        players_[index].field_C_ = (ack_tick +
+                            players_[index].field_C_ - sent_at[index] + 0x14) >> 1;
                     } else {
-                        if (retry_delay[index] < now - retry_epoch[index]) {
-                            retry_delay[index] = (retry_delay[index] * 3U) >> 1;
+                        if (now - sent_at[index] > retry_delay[index]) {
+                            retry_delay[index] = (retry_delay[index] * 3) >> 1;
                             if (NetDirectPlay == 0) {
                                 free(packet);
                                 return 0;
                             }
-                            retry_epoch[index] = timeGetTime();
-                            const DPID peer_id = static_cast<DPID>(peer.field_0_);
-                            if (NetDirectPlay->Send(local_player_id_, peer_id, 0,
-                                    packet, static_cast<DWORD>(allocation_size))
-                                != DP_OK) {
+                            sent_at[index] = timeGetTime();
+                            if (NetDirectPlay->Send(local_player_id_,
+                                    players_[index].field_0_, 0, packet,
+                                    static_cast<DWORD>(allocation_size)) != DP_OK) {
                                 MessageBoxA(0, "Oh no!! Send failed!",
                                             "Message from the Net Underworld", 0);
                                 free(packet);
                                 return 0;
                             }
                         }
-                        any_pending = 1;
+                        still_pending = 1;
                     }
                 }
-                if (any_pending == 0) break;
-                elapsed = timeGetTime() - interval_start;
-            }
-            if (any_pending == 0) {
-                free(packet);
-                return static_cast<int>(field_E4_);
+                if (still_pending == 0) {
+                    goto done;
+                }
             }
 
             StringTemp[0] = 0;
             int first_name = 1;
             for (index = 0; index < 16; ++index) {
                 if (players_[index].field_8_ == 0) continue;
-                int name_index = 0;
-                while (name_index < 16 &&
-                       players_[name_index].field_0_ != players_[index].field_0_) {
-                    ++name_index;
+                int name_index;
+                for (name_index = 0; name_index < 16; ++name_index) {
+                    if (players_[name_index].field_0_ == players_[index].field_0_)
+                        break;
                 }
-                // Preserve the original null source on a failed peer lookup.
-                const char *const peer_name = name_index == 16
-                    ? 0 : players_[name_index].name_and_tail_;
-                strcat(StringTemp, peer_name);
+                strcat(StringTemp, name_index == 16
+                    ? 0 : players_[name_index].name_and_tail_);
                 if (!first_name) {
                     strcat(StringTemp, ", ");
                     strcat(StringTemp, " ");
@@ -4532,122 +4481,43 @@ int Net::send(void *data, int data_size, unsigned long target, int flags) {
             }
             strcat(StringTemp, ".");
             parse_says(0, StringTemp, -1, -1);
-            const int choice = pop_caption(const_cast<char *>("jackal"),
-                const_cast<char *>("NET_SENDTIMEDOUT"), 0);
-            if (choice != 0) {
-                if (choice == 1) close();
-                else if (choice == 2) ExitTurnLoop = 1;
+            switch (pop_caption(const_cast<char *>("jackal"),
+                                const_cast<char *>("NET_SENDTIMEDOUT"), 0)) {
+            case 0:
+                break;
+            case 1:
+                close();
+                free(packet);
+                return 0;
+            case 2:
+                ExitTurnLoop = 1;
+                free(packet);
+                return 0;
+            default:
                 free(packet);
                 return 0;
             }
-            any_active = 0;
-            for (index = 0; index < 16; ++index) {
-                if (active[index] != 0) any_active = 1;
-            }
         }
         free(packet);
-        return static_cast<int>(field_E4_);
+        return 0;
     }
 
-    int selected = -1;
-    unsigned int selected_rtt = 0;
-    for (index = 0; index < 16; ++index) {
-        NetPlayer &peer = players_[index];
-        if (peer.field_0_ == static_cast<uint32_t>(target) &&
-            (peer.flags_14_ & 2U) != 0) {
-            selected = index;
-            selected_rtt = peer.field_C_;
-            peer.field_8_ = 1;
-        } else {
-            peer.field_8_ = 0;
-        }
-    }
-    if (selected < 0) {
+    header->type_flags_ = 1;
+    if (NetDirectPlay == 0) {
         free(packet);
-        return static_cast<int>(field_E4_);
+        return 0;
     }
-
-    unsigned int wait_timeout = selected_rtt;
-    unsigned int retry_epoch = timeGetTime();
-    if (NetDirectPlay == 0 || NetDirectPlay->Send(local_player_id_,
-            static_cast<DPID>(target), 0, packet,
-            static_cast<DWORD>(allocation_size)) != DP_OK) {
+    if (NetDirectPlay->Send(local_player_id_, static_cast<DPID>(target),
+                            (flags & 1) != 0, packet,
+                            static_cast<DWORD>(allocation_size)) != DP_OK) {
         MessageBoxA(0, "Oh no!! Send failed!",
                     "Message from the Net Underworld", 0);
         free(packet);
         return 0;
     }
-    for (;;) {
-        // Native reloads the current selected peer RTT before each outer
-        // wait interval, including after a timeout prompt and resend.
-        wait_timeout = players_[selected].field_C_;
-        const DWORD interval_start = timeGetTime();
-        DWORD elapsed = timeGetTime() - interval_start;
-        while (elapsed < 20000U) {
-            ResetEvent(thread_info_.events_[1]);
-            ResetEvent(thread_info_.events_[0]);
-            const DWORD waited = WaitForMultipleObjects(
-                2, wait_handles, FALSE, wait_timeout);
-            if (waited == WAIT_OBJECT_0 + 1) handle_sys_msg();
-
-            NetPlayer &peer = players_[selected];
-            if (peer.field_8_ == 0 || peer.field_0_ == 0) {
-                const DWORD ack_tick = timeGetTime();
-                peer.field_C_ = (ack_tick + 0x14U +
-                    (peer.field_C_ - retry_epoch)) >> 1;
-                free(packet);
-                return static_cast<int>(field_E4_);
-            }
-            const DWORD now = timeGetTime();
-            if (selected_rtt < now - retry_epoch) {
-                selected_rtt = (selected_rtt * 3U) >> 1;
-                if (NetDirectPlay == 0) {
-                    free(packet);
-                    return 0;
-                }
-                retry_epoch = timeGetTime();
-                const DPID live_peer = static_cast<DPID>(peer.field_0_);
-                if (NetDirectPlay->Send(local_player_id_, live_peer, 0, packet,
-                        static_cast<DWORD>(allocation_size)) != DP_OK) {
-                    MessageBoxA(0, "Oh no!! Send failed!",
-                                "Message from the Net Underworld", 0);
-                    free(packet);
-                    return 0;
-                }
-            }
-            elapsed = timeGetTime() - interval_start;
-        }
-
-        StringTemp[0] = 0;
-        int name_index = 0;
-        while (name_index < 16 && players_[name_index].field_0_ !=
-               players_[selected].field_0_) {
-            ++name_index;
-        }
-        // Preserve the original null source on a failed peer lookup.
-        const char *const peer_name = name_index == 16
-            ? 0 : players_[name_index].name_and_tail_;
-        strcat(StringTemp, peer_name);
-        strcat(StringTemp, ".");
-        parse_says(0, StringTemp, -1, -1);
-        const int choice = pop_caption(const_cast<char *>("jackal"),
-            const_cast<char *>("NET_SENDTIMEDOUT"), 0);
-        if (choice != 0) {
-            if (choice == 1) close();
-            else if (choice == 2) ExitTurnLoop = 1;
-            free(packet);
-            return 0;
-        }
-        retry_epoch = timeGetTime();
-        if (NetDirectPlay == 0 || NetDirectPlay->Send(local_player_id_,
-                static_cast<DPID>(target), 0, packet,
-                static_cast<DWORD>(allocation_size)) != DP_OK) {
-            MessageBoxA(0, "Oh no!! Send failed!",
-                        "Message from the Net Underworld", 0);
-            free(packet);
-            return 0;
-        }
-    }
+    done:
+    free(packet);
+    return static_cast<int>(field_E4_);
 }
 #if defined(_MSC_VER) && _MSC_VER == 1200
 #pragma intrinsic(memcpy)

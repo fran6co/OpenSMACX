@@ -1722,11 +1722,7 @@ static void pick_send_packet(NetWinSessionOptionsPacket *packet) {
 }
 
 static void pick_send_state() {
-    NetDaemonNet.pid_2_idx(NetDaemonNet.local_player_id());
-    NetWinSessionOptionsPacket packet;
-    packet.options_ = NetWinSessionOptions.fields_;
-    packet.opcode_ = 0x2F02;
-    pick_send_packet(&packet);
+    send_session_packet(NetDaemonNet.pid_2_idx(NetDaemonNet.local_player_id()), 0);
 }
 
 // Number/planet pickers and rule clicks load the destination before copying
@@ -1775,19 +1771,34 @@ void NetWin::on_left_click(int x, int y) {
 
     switch (spot_type) {
     case 0:
-        if (NetDaemonNet.primary_state_.leading_words_[0] == 0) {
-            return;
-        }
         switch (spot_position) {
-        case 0: pick_map(); return;
-        case 1: pick_num_players(); return;
-        case 2: pick_global_diff(); return;
-        case 3: pick_time(); return;
-        case 4: pick_planet_size(); return;
-        case 5: pick_ocean(); return;
-        case 6: pick_erosion(); return;
-        case 7: pick_native(); return;
-        case 8: pick_clouds(); return;
+        case 3:
+            if (NetDaemonNet.primary_state_.leading_words_[0] != 0) pick_time();
+            return;
+        case 0:
+            if (NetDaemonNet.primary_state_.leading_words_[0] != 0) pick_map();
+            return;
+        case 1:
+            if (NetDaemonNet.primary_state_.leading_words_[0] != 0) pick_num_players();
+            return;
+        case 2:
+            if (NetDaemonNet.primary_state_.leading_words_[0] != 0) pick_global_diff();
+            return;
+        case 4:
+            if (NetDaemonNet.primary_state_.leading_words_[0] != 0) pick_planet_size();
+            return;
+        case 5:
+            if (NetDaemonNet.primary_state_.leading_words_[0] != 0) pick_ocean();
+            return;
+        case 6:
+            if (NetDaemonNet.primary_state_.leading_words_[0] != 0) pick_erosion();
+            return;
+        case 7:
+            if (NetDaemonNet.primary_state_.leading_words_[0] != 0) pick_native();
+            return;
+        case 8:
+            if (NetDaemonNet.primary_state_.leading_words_[0] != 0) pick_clouds();
+            return;
         }
         return;
     case 1:
@@ -1795,6 +1806,7 @@ void NetWin::on_left_click(int x, int y) {
             return;
         }
         switch (spot_position) {
+        case 100: NetWinSessionOptions.fields_.rule_bits_c_ ^= 0x10; break;
         case 0: NetWinSessionOptions.fields_.rule_bits_a_ ^= 0x800; break;
         case 1: NetWinSessionOptions.fields_.rule_bits_a_ ^= 0x2; break;
         case 2: NetWinSessionOptions.fields_.rule_bits_a_ ^= 0x8; break;
@@ -1812,11 +1824,16 @@ void NetWin::on_left_click(int x, int y) {
         case 14: NetWinSessionOptions.fields_.rule_bits_a_ ^= 0x80; break;
         case 16: NetWinSessionOptions.fields_.rule_bits_b_ ^= 0x800000; break;
         case 17: NetWinSessionOptions.fields_.rule_bits_b_ ^= 0x1000000; break;
-        case 100: NetWinSessionOptions.fields_.rule_bits_c_ ^= 0x10; break;
-        // Native 47B8BA and selector slot18 join the unchanged-options send.
-        default: break;
         }
+        // Unknown selectors still send the unchanged options.
         pick_send_state_with_captured_target();
+        return;
+    case 5:
+        if ((NetWinSessionData.fields_.mode_ == 0 || NetWinSessionData.fields_.mode_ == 1) &&
+            NetDaemonNet.process_slots_[spot_position + 1].pid_ ==
+                static_cast<unsigned long>(NetDaemonNet.local_player_id())) {
+            pick_pass(0);
+        }
         return;
     case 2:
         if (NetDaemonNet.process_slots_[spot_position + 1].pid_ ==
@@ -1825,23 +1842,19 @@ void NetWin::on_left_click(int x, int y) {
         }
         return;
     case 3:
+        if (NetDaemonNet.process_slots_[spot_position + 1].pid_ ==
+                static_cast<unsigned long>(NetDaemonNet.local_player_id()) ||
+            (NetWinLobbyRows.rows_[spot_position + 1].prefix_ == -1 &&
+             NetDaemonNet.local_player_id() == NetDaemonNet.host_player_id())) {
+            pick_faction(spot_position + 1);
+        }
+        return;
     case 4:
         if (NetDaemonNet.process_slots_[spot_position + 1].pid_ ==
                 static_cast<unsigned long>(NetDaemonNet.local_player_id()) ||
             (NetWinLobbyRows.rows_[spot_position + 1].prefix_ == -1 &&
              NetDaemonNet.local_player_id() == NetDaemonNet.host_player_id())) {
-            if (spot_type == 3) {
-                pick_faction(spot_position + 1);
-            } else {
-                pick_diff(spot_position + 1);
-            }
-        }
-        return;
-    case 5:
-        if ((NetWinSessionData.fields_.mode_ == 0 || NetWinSessionData.fields_.mode_ == 1) &&
-            NetDaemonNet.process_slots_[spot_position + 1].pid_ ==
-                static_cast<unsigned long>(NetDaemonNet.local_player_id())) {
-            pick_pass(0);
+            pick_diff(spot_position + 1);
         }
         return;
     }
@@ -2278,10 +2291,12 @@ void NetWin::pick_clouds() {
     PopMenu pop_menu;
     pop_menu.init();
     Dialogs &dialogs = pop_menu.dialogs();
-    dialogs.item(label_get(0xFE4 / 4), 0);
-    int index = 1;
-    for (int slot = 0xF84 / 4; slot < 0xF90 / 4; ++slot) {
-        dialogs.item(label_get(slot), index++);
+    int index = 0;
+    char *label = label_get(0xFE4 / 4);
+    dialogs.item(label, index);
+    for (int slot = 0; slot < 3; ++slot) {
+        label = label_get(slot + 0xF84 / 4);
+        dialogs.item(label, slot + 1);
     }
     int x;
     int y;
@@ -2312,10 +2327,12 @@ void NetWin::pick_ocean() {
     PopMenu pop_menu;
     pop_menu.init();
     Dialogs &dialogs = pop_menu.dialogs();
-    dialogs.item(label_get(0xFE4 / 4), 0);
-    int index = 1;
-    for (int slot = 0xF60 / 4; slot < 0xF6C / 4; ++slot) {
-        dialogs.item(label_get(slot), index++);
+    int index = 0;
+    char *label = label_get(0xFE4 / 4);
+    dialogs.item(label, index);
+    for (int slot = 0; slot < 3; ++slot) {
+        label = label_get(slot + 0xF60 / 4);
+        dialogs.item(label, slot + 1);
     }
     int x;
     int y;
@@ -2346,10 +2363,12 @@ void NetWin::pick_erosion() {
     PopMenu pop_menu;
     pop_menu.init();
     Dialogs &dialogs = pop_menu.dialogs();
-    dialogs.item(label_get(0xFE4 / 4), 0);
-    int index = 1;
-    for (int slot = 0xF6C / 4; slot < 0xF78 / 4; ++slot) {
-        dialogs.item(label_get(slot), index++);
+    int index = 0;
+    char *label = label_get(0xFE4 / 4);
+    dialogs.item(label, index);
+    for (int slot = 0; slot < 3; ++slot) {
+        label = label_get(slot + 0xF6C / 4);
+        dialogs.item(label, slot + 1);
     }
     int x;
     int y;
@@ -2380,10 +2399,12 @@ void NetWin::pick_native() {
     PopMenu pop_menu;
     pop_menu.init();
     Dialogs &dialogs = pop_menu.dialogs();
-    dialogs.item(label_get(0xFE4 / 4), 0);
-    int index = 1;
-    for (int slot = 0xF90 / 4; slot < 0xF9C / 4; ++slot) {
-        dialogs.item(label_get(slot), index++);
+    int index = 0;
+    char *label = label_get(0xFE4 / 4);
+    dialogs.item(label, index);
+    for (int slot = 0; slot < 3; ++slot) {
+        label = label_get(slot + 0xF90 / 4);
+        dialogs.item(label, slot + 1);
     }
     int x;
     int y;
