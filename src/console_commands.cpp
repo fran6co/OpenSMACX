@@ -3568,7 +3568,7 @@ static inline void parse_say_num(int index, int value) {
 /*
 Purpose: Edit the seven scenario victory parameters on one SCENPARAM popup and
          re-parse the edited fields back into the game's objective globals.
-// ORIGINAL: 0x004DCCC0 ?editor_scen_param@Console@@QAEXXZ 0x004DCCC0-0x004DD1A1;0x0065B6A4-0x0065B7B0 FILE
+// ORIGINAL: 0x004DCCC0 ?editor_scen_param@Console@@QAEXXZ 0x004DCCC0-0x004DD1A1;0x0065B6A4-0x0065B7B0 FILE BYTE_EXACT
 // TRIED (seed history): mirrors the recovered AlphaNet::create/join siblings -
 //        a stack `Popup popup;` gives the SEH frame/alloca/dtor cascade for
 //        free; inlining all seven itoa/strcat/parse_says triples drops the
