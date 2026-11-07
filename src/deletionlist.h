@@ -70,10 +70,6 @@ class DeletionList {
 
  private:
   friend class NetDaemon;
-  // NetDaemon's native constructor initializes this member after clearing
-  // its locks. This path starts its lifetime without duplicating those writes.
-  struct Uninitialized {};
-  explicit DeletionList(Uninitialized) {}
 };
 
 static_assert(offsetof(DeletionList, current_owner_) == 0x5A0,

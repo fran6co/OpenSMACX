@@ -146,6 +146,241 @@ extern int BaseAtDebugPopupFlag;  // 0x0093A94C, defined in base.cpp
 // window hierarchy just for this scalar declaration.
 extern int ConsoleControlTurnActive;
 
+// ORIGINAL: 0x0052DBF0 ?next_player_turn@@YAHXZ 0x0052DBF0-0x0052DC68 FILE BYTE_EXACT
+// TRIED: do-while loop over i=[NetTurnFaction+1, 8) with hi/lo byte reads hoisted before the loop, matching the Ghidra hypothesis closely; diverges at instr #14 (original 'lea' vs rebuilt 'inc'), a register/addressing-mode choice around the `+1`.
+// working copy - scaffold materialised by --work
+// size      120 bytes
+// prototype
+// callers   2   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00592EE0
+
+// This is NetDaemonNet.lock_state_[0].leading_words_[1] at +0x1B30.
+// Keep the unsigned owner storage and recover the original signed int view
+// only at the two functions whose ABI returns/compares it as int.
+static int turns_assigned() {
+    return static_cast<int>(NetDaemonNet.primary_state_.leading_words_[0]);
+}
+
+// net_control_turn calls this out of line.
+#pragma auto_inline(off)
+int __cdecl next_player_turn() {
+    if ((GameDataStateStorage.fields_.net_turn_flags_ & 0x10) == 0) {
+        return 0;
+    }
+    if (turns_assigned() == 0) {
+        return 0;
+    }
+    for (int i = GameDataStateStorage.fields_.net_turn_faction_ + 1; i < 8; ++i) {
+        if (is_alive(i) && is_human(i)) {
+            message_data(0x4309, 0, i, 0, 0, 0);
+            return 0;
+        }
+    }
+    NextTurnReady = 1;
+    return 1;
+}
+#pragma auto_inline(on)
+
+/*
+Purpose: Determine whether the turn currently belongs to another faction in a
+         networked game, which is what gates local input.
+// ORIGINAL: 0x0052DC70 ?not_my_turn@@YAHXZ 0x0052DC70-0x0052DC9C BYTE_EXACT
+// body      src/netdaemon.cpp
+// size      44 bytes
+// prototype
+// callers   8   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+Return Value: TRUE only in a net game that is handing the turn around and whose
+              active faction is not the local one
+Status: Complete
+*/
+// HISTORICAL: BODY IN game.h, as `MEASURED inline`: the image writes it out at
+// HISTORICAL: some call sites and calls it at others, and a .cpp definition is only ever
+// HISTORICAL: one of those. The marker stays here because that is where the catalogue
+// HISTORICAL: reads it.
+BOOL __cdecl not_my_turn() {
+    // Both guards return before the comparison, so a non-net game and a net
+    // game that is not currently passing the turn are both "my turn".
+    if (!IsMultiplayerNet) {
+        return false;
+    }
+    if (!(GameDataStateStorage.fields_.net_turn_flags_ & 0x10)) {
+        return false;
+    }
+    // `cmp ecx, edx` / `setne al`: the result is the inequality itself, not a
+    // normalised flag, and the faction identity is what decides it.
+    return GameDataStateStorage.fields_.net_turn_faction_ != ConsoleGlobal.faction_id_;
+}
+
+namespace {
+// The .rdata strings the deletion paths hand to log_say, read out of the
+// image beside the bindings the same family already carries in veh.cpp.
+// Original starts identify the read-only strings, not pointer cells or
+// enclosing allocations. log_say takes LPCSTR and borrows these bytes.
+// RECOVERY_OBJECT: v1 0x0068C134 _StrDeletingVehicle
+static const char StrDeletingVehicle[] = "Deleting vehicle";
+// RECOVERY_OBJECT: v1 0x0068C120 _StrDelConvertedIndex
+static const char StrDelConvertedIndex[] = "DelConverted index";
+}
+
+/*
+Purpose: Initialize the 24 deletion records and the current owner. The image
+         leaves each record's owner, padding and vehicle-id storage untouched.
+// ORIGINAL: 0x0052DCA0 ??0DeletionList@@QAE@XZ 0x0052DCA0-0x0052DCC1 FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"reason":"The original body initializes exactly the DeletionList receiver's 24 record headers and trailing owner field, so the source constructor must own it rather than an unused leaf redirect.","evidence":["Original 0x0052DCA0-0x0052DCC1 writes the dword at +0x5A0, then byte +0 and word +8 across 24 records at 0x3C stride.","The historical exact redirect and its width analysis remain at git:dd29f605:src/leaf_recoveries.cpp; Historical src/veh.cpp defined a separate DeletionList global at 0x0093E31C; pinned veh_kill5C08C0 and NetDaemon::fixup_message534330 establish the current NetDaemonNet.deletion_list_ receiver at that address."]}
+*/
+DeletionList::DeletionList() {
+    current_owner_ = 0;
+    for (int slot = 0; slot < 24; ++slot) {
+        records_[slot].acknowledgements_ = 0xFF;
+        records_[slot].count_ = 0;
+    }
+}
+
+/*
+Purpose: Reset one deletion-list entry to its empty state - an 0xFF marker byte
+         and a zeroed word - at the record stride of 0x3C.
+// ORIGINAL: 0x0052DCD0 ?clear@DeletionList@@QAEXH@Z 0x0052DCD0-0x0052DCEC BYTE_EXACT
+// size      28 bytes
+// prototype void (__thiscall ?clear@DeletionList@@QAEXH@Z)(DeletionList* this, int)
+// callers   1   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
+Return Value: n/a
+Status: Complete
+*/
+void DeletionList::clear(int index) {
+    records_[index].acknowledgements_ = 0xFF;
+    records_[index].count_ = 0;
+}
+
+/*
+Purpose: Find a reusable deletion record. The image returns slot zero if all
+         24 slots are occupied, rather than reporting an error.
+// ORIGINAL: 0x0052DCF0 ?UNK1@DeletionList@@QAEHXZ 0x0052DCF0-0x0052DD10 FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"reason":"The seed's unnamed member scans the deletion-record acknowledgement bytes for a slot whose active-faction bits are all set.","evidence":["Original 0x0052DCF0-0x0052DD10 reads 0x009A64E8, advances the receiver by 0x3C and tests exactly 24 entries; git:bdab0bfb:src/recovered/0052dcf0.cpp preserves the historical exact spelling.","src/lock.cpp binds 0x009A64E8 as LockEnableMask; DeletionList's neighboring methods use the same record stride and mask."]}
+// symbol    ?find_free_slot@DeletionList@@QAEHXZ
+*/
+int DeletionList::find_free_slot() {
+    int slot = 0;
+    DeletionRecord *record = records_;
+    const unsigned char mask = static_cast<unsigned char>(GameDataStateStorage.fields_.lock_masks_.enable_mask_);
+    for (; slot < 24; ) {
+        if ((record->acknowledgements_ & mask) == mask) {
+            return slot;
+        }
+        ++slot;
+        ++record;
+    }
+    return 0;
+}
+
+/*
+Purpose: Find the occupied deletion record for an owner, or return -1.
+// Superseded seed deleted; seed paths below are historical Git provenance.
+// ORIGINAL: 0x0052DD10 ?UNK2@DeletionList@@QAEHH@Z 0x0052DD10-0x0052DD4B FILE
+// RECOVERY_BINDING: v1 {"reason":"The seed's unnamed member scans occupied 0x3C-byte records and compares the owner word at +4 with its argument.","evidence":["Original 0x0052DD10-0x0052DD4B scans 24 entries, tests the 0x009A64E8 acknowledgement mask, compares +4 with its argument and returns -1 on exhaustion.","src/recovered/units/0052dd10.cpp retains the earlier candidate and its failed standalone compilation evidence."]}
+// symbol    ?find_owner_slot@DeletionList@@QAEHH@Z
+*/
+int DeletionList::find_owner_slot(int owner) {
+    const unsigned char mask = static_cast<unsigned char>(GameDataStateStorage.fields_.lock_masks_.enable_mask_);
+    for (int slot = 0; slot < 24; ++slot) {
+        const DeletionRecord &record = records_[slot];
+        if ((record.acknowledgements_ & mask) != mask && record.owner_ == owner) {
+            return slot;
+        }
+    }
+    return -1;
+}
+
+/*
+Purpose: Mark a faction's acknowledgement for an owner's pending deletions;
+         free the record once every active faction has acknowledged it.
+// Superseded seed deleted; seed paths below are historical Git provenance.
+// ORIGINAL: 0x0052DD50 ?ack@DeletionList@@QAEXHH@Z 0x0052DD50-0x0052DDB5 FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"reason":"The owner/mask search and flag update in the seed are one acknowledgement operation over the typed deletion records.","evidence":["Original 0x0052DD50-0x0052DDB5 scans 24 records, compares owner at +4, sets a faction bit in byte zero and writes 0xFF when active bits are complete.","src/recovered/units/0052dd50.cpp preserves the earlier candidate; src/lock.cpp owns the active-faction mask at 0x009A64E8."]}
+*/
+void DeletionList::ack(int owner, int faction) {
+    const int slot = find_owner_slot(owner);
+    if (slot < 0) {
+        return;
+    }
+    DeletionRecord &record = records_[slot];
+    // Preserve the pinned VC6 byte shift by CL, including its original count behavior.
+    // The selected compiler output, rather than portable out-of-range C++ shifts, is the evidence.
+    record.acknowledgements_ |= static_cast<unsigned char>(1u << faction);
+    const unsigned char mask = static_cast<unsigned char>(GameDataStateStorage.fields_.lock_masks_.enable_mask_);
+    if ((record.acknowledgements_ & mask) == mask) {
+        record.acknowledgements_ = 0xFF;
+    }
+}
+
+// DeletionList::convert, 0x0052DDC0. Multiplayer id conversion: remap a
+// vehicle id across the deletion list's occupied records, walking every
+// record between the old and new owner and subtracting each queued id below
+// the value; both paths report through log_say.
+/*
+Purpose: Convert a vehicle id across the deletion list's queued deletions.
+// ORIGINAL: 0x0052DDC0 ?convert@DeletionList@@QAEHHH@Z 0x0052DDC0-0x0052DE65 FILE
+// RECOVERY_BINDING: v1 {"evidence": ["Original52DDC0..52DE65; retired seed git:117282ee:src/unrecovered/0052ddc0.cpp records the same identity and spans.", "The records are deletionlist.h's own 0x3C-stride entries with the occupancy mask lock.h's LockEnableMask (0x009A64E8), the owner count at +0x5A0 and the per-record id run at +0xA; the log_say format is the image's DelConverted string bound beside this body."], "reason": "Coverage transcription of the id conversion on the typed DeletionList receiver with the subtract-below walk exactly as the seed orders it."}
+Status: Coverage transcription - unclaimed body
+*/
+int DeletionList::convert(int veh_id, int new_owner) {
+    const int original_id = veh_id;
+    for (int search = new_owner + 1; search <= current_owner_; search++) {
+        const int slot = find_owner_slot(search);
+        if (slot >= 0) {
+            const DeletionRecord &record = records_[slot];
+            int count = record.count_;
+            for (int index = 0; index < count; ++index) {
+                const int deleted_id = record.vehicle_ids_[index];
+                if (deleted_id == veh_id) {
+                    veh_id = -1;
+                } else if (deleted_id < veh_id) {
+                    veh_id--;
+                }
+            }
+        }
+    }
+    if (original_id != veh_id) {
+        log_say(StrDelConvertedIndex, original_id, veh_id, 0);
+    }
+    return veh_id;
+}
+
+// DeletionList::add_deletion, 0x0052DE70. Enqueue one multiplayer deletion:
+// report the vehicle's position, find its record by owner (falling back to
+// the first free record), and append the id to that record's run.
+/*
+Purpose: Queue one vehicle deletion against its owner's deletion record.
+// ORIGINAL: 0x0052DE70 ?add_deletion@DeletionList@@QAEHH@Z 0x0052DE70-0x0052DF2E FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Original52DE70..52DF2E; retired seed git:117282ee:src/unrecovered/0052de70.cpp records the same identity and spans with its raw-offset TRIED note kept below.", "The vehicles are veh.h's own Vehs (0x00952828, 0x34 stride) whose x/y words open the record; the occupancy mask is lock.h's LockEnableMask and the owner count sits at +0x5A0. The original uses 0x1E shorts as each 0x3C-byte record stride; 25 shorts fit after its 0xA-byte header."], "reason": "Coverage transcription of the deletion enqueue on the typed DeletionList receiver with Vehs and LockEnableMask named from their owners."}
+Status: Coverage transcription - unclaimed body
+*/
+int DeletionList::add_deletion(int veh_id) {
+    log_say(StrDeletingVehicle, veh_id, Vehs[veh_id].x, Vehs[veh_id].y);
+
+    int slot = find_owner_slot(current_owner_);
+    if (slot < 0) {
+        slot = find_free_slot();
+        records_[slot].acknowledgements_ = 0xFF;
+        records_[slot].count_ = 0;
+        records_[slot].owner_ = current_owner_;
+        records_[slot].acknowledgements_ = 0;
+    }
+
+    const int old_count = records_[slot].count_;
+    records_[slot].vehicle_ids_[old_count] = static_cast<short>(veh_id);
+    ++records_[slot].count_;
+    return static_cast<int>(records_[slot].count_) - 1;
+}
+
+
 // ORIGINAL: 0x00530D50 ?lock_base@NetDaemon@@QAEHHHHH@Z 0x00530D50-0x00530E48 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["image:0x00530D50-0x00530E48"], "reason": "Recover the base-menu network guard through real Base records, shared turn state and NetDaemon lock-state members; original calls establish argument forwarding and log strings."}
 // Pinned arguments identify these NUL-terminated keys in the original;
@@ -473,22 +708,10 @@ are still opaque storage (see the class declaration), so the eight
 PlayerLocks and the 0x18-entry lock table reach their elements by raw
 offset rather than through invented array members.
 */
-NetDaemon::NetDaemon() : AlphaNet(), deletion_list_(DeletionList::Uninitialized()) {
-    // The eight per-player locks (0x14A0, 0x1C stride), then the embedded
-    // Lock of the first one cleared directly - the image calls the Lock
-    // version explicitly, twice (here and again after the table below).
-    for (int32_t n = 0; n < 8; ++n) {
-        locks_.records_[n].clear();
-    }
-    locks_.clear();
-
-    // Native 0x538A53 clears the shared deletion owner once; the backedge
-    // at 0x538A64 targets 0x538A59, after this store.
-    deletion_list_.current_owner_ = 0;
-    for (int32_t m = 0; m < 0x18; ++m) {
-        deletion_list_.records_[m].acknowledgements_ = 0xFF;
-        deletion_list_.records_[m].count_ = 0;
-    }
+NetDaemon::NetDaemon() : AlphaNet() {
+    // Member construction does the first lock pass and the deletion table:
+    // locks_ (eight PlayerLock::clear calls, then Lock::clear) and
+    // deletion_list_ (DeletionList's constructor, inlined from this TU).
 
     primary_state_.leading_words_[0] = 0;
     primary_state_.leading_words_[1] = 0;
@@ -530,30 +753,15 @@ NetDaemon::NetDaemon() : AlphaNet(), deletion_list_(DeletionList::Uninitialized(
     AlphaNet::close();
 }
 
-// ORIGINAL: 0x00592DE0 sub_592de0 0x00592DE0-0x00592E0E BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["task:short-network-popup-owner", "historical seed:src/recovered/00592de0.cpp", "pinned:592DE0 increment/send/decrement;51DCC0 two stack arguments and masked x86 SHL count with set/clear behavior", "source:existing NetBusyCount, NetDaemonNet.send_message and PopupWriteCheckState; no new storage or executable calls"], "reason": "Recover the original helper in its existing typed storage owner, preserving historical identity, complete span and byte obligation; descriptive source name is not original debug evidence."}
-// symbol    ?netdaemon_send_message_counted@@YAXPADKH@Z
-void __cdecl netdaemon_send_message_counted(char *message,
-                                          unsigned long length,
-                                          int target) {
-    ++NetBusyCount;
-    NetDaemonNet.send_message(message, length, target);
-    --NetBusyCount;
+// The original closes transport before destroying Heap, ledger, then Net.
+// The members/base own those lifetimes; NetDaemon must not repeat them.
+// Superseded seed deleted; seed paths below are historical Git provenance.
+// ORIGINAL: 0x00538B60 ??1AlphaNet@@QAE@XZ 0x00538B60-0x00538D0E;0x0065DF70-0x0065E005
+// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00538b60.cpp: existing identity and complete recorded spans", "Original AlphaNet destruction closes transport, then destroys Heap at +0x148C and ledger at +0x144C before Net; normal members now own this chain."], "reason": "Adopt the retained destructor seed identity for the real AlphaNet owner. Existing shared cleanup spans are preserved, not newly inferred or claimed exact; the native one-entry/new-binding route deliberately does not infer overlapping ownership."}
+AlphaNet::~AlphaNet() {
+    close();
 }
 
-// ORIGINAL: 0x00593370 sub_593370 0x00593370-0x0059338C BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["git:5167ec56aaa9031de73f42c05fbc3bdd0bad0201:src/recovered/00593370.cpp", "pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf:0x593370 complete original body; independent source-owner review.", "source:src/netdaemon.cpp and corresponding header own real receiver/dependencies; count-zero copy underflow is intentionally unchanged."], "reason": "Complete typed application helper; retain original call ordering, argument contract and historical obligation."}
-// symbol    ?sub_593370@@YAXXZ
-void __cdecl sub_593370() {
-    NetDaemonNet.synch(1, 0, 0, 0, 0, 1, 0x2101);
-}
-
-// ORIGINAL: 0x00593480 sub_593480 0x00593480-0x005934A2 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["git:5167ec56aaa9031de73f42c05fbc3bdd0bad0201:src/recovered/00593480.cpp", "pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf:0x593480 complete original body; independent source-owner review.", "source:src/netdaemon.cpp and corresponding header own real receiver/dependencies; count-zero copy underflow is intentionally unchanged."], "reason": "Complete typed application helper; retain original call ordering, argument contract and historical obligation."}
-// symbol    ?sub_593480@@YAXH@Z
-void __cdecl sub_593480(int value) {
-    NetDaemonNet.synch(0x17, value, 0, 0, 0, 1, 0x2101);
-}
 
 /*
 Purpose: Tear down a network daemon through its lock members and the
@@ -1496,70 +1704,7 @@ int NetDaemon::end_of_event(int faction_id, int turn_value) {
 }
 
 
-// ---------------------------------------------------------------------------
-// The message builders. Every sender in the family packs its record on the
-// stack, stamps the three leading fields the transport owns - the opcode
-// (short), the local faction and the wall-clock stamp - then hands the record
-// to NetDaemon::send_message with NetBusyCount held for the duration. Only
-// the payload fields differ.
-//
-// The sequence stamp is 0x0093E8BC, the current_owner field at offset 0x5A0
-// of NetDaemonNet.deletion_list_ (NetDaemonNet + 0x158C). The native
-// net_end_of_turn (0x00529F30) advances it once per turn. The stamp comes from
-// the SDK timeGetTime import; its original import-slot identity is bound
-// beside the other audio clock consumers.
-//
-// Payload parameters are named for the record offset they land at, which is
-// the one thing about them the bodies prove.
-// ---------------------------------------------------------------------------
-
 #include "netdaemon_message_record.h"
-
-struct MessageBaseTextRecord {
-    int16_t opcode_;
-    unsigned char unresolved_2_[2];
-    int32_t faction_;
-    uint32_t time_;
-    int32_t sequence_;
-    int32_t payload_10_;
-    char text_[24];
-};
-
-static_assert(sizeof(MessageBaseTextRecord) == 0x2C,
-              "base text message native transmitted extent");
-static_assert(offsetof(MessageBaseTextRecord, faction_) == 0x04,
-              "base text message faction offset");
-static_assert(offsetof(MessageBaseTextRecord, time_) == 0x08,
-              "base text message timestamp offset");
-static_assert(offsetof(MessageBaseTextRecord, sequence_) == 0x0C,
-              "base text message sequence offset");
-static_assert(offsetof(MessageBaseTextRecord, payload_10_) == 0x10,
-              "base text message payload offset");
-static_assert(offsetof(MessageBaseTextRecord, text_) == 0x14,
-              "base text message text offset");
-
-// ORIGINAL: 0x00592E70 ?message_base@@YAXHHPADH@Z 0x00592E70-0x00592EDA BYTE_EXACT
-// size      106 bytes
-// prototype void (__cdecl ?message_base@@YAXHHPADH@Z)(int, int, char *, int)
-// callers   1   call targets   1
-// kind      game
-// flags     frame;hidden;sp_ready;purged_ok
-// calls     0x00532940 0x00645460
-void __cdecl message_base(int opcode, int payload_10, char *text, int target) {
-    MessageBaseTextRecord message;
-
-    message.opcode_ = static_cast<short>(opcode);
-    message.faction_ = ConsoleGlobal.faction_id_;
-    message.time_ = timeGetTime();
-    message.sequence_ = NetDaemonNet.deletion_list_.sequence_bits();
-    message.payload_10_ = payload_10;
-    strcpy(message.text_, text);
-
-    NetBusyCount++;
-    NetDaemonNet.send_message(reinterpret_cast<char *>(&message), 0x2c,
-                              target);
-    NetBusyCount--;
-}
 
 // Borrowed wire view over the layout already owned by message_data's sender.
 // Read one field at a time: MOVE packets have only two payload words, while
@@ -1774,42 +1919,6 @@ private:
 };
 
 
-// Native automatic wire records. Bytes 2..3 remain unwritten in all three
-// builders; the raw bulk sender also leaves data_[8..31] unwritten. These
-// objects must not be value-initialized merely to make the wire deterministic.
-struct MessageBigDataRecord {
-    int16_t opcode_;
-    unsigned char unresolved_2_[2];
-    int faction_;
-    uint32_t timestamp_;
-    int sequence_;
-    int data_[32];
-};
-
-struct MessageLandmarkRecord {
-    int16_t opcode_;
-    unsigned char unresolved_2_[2];
-    int faction_;
-    uint32_t timestamp_;
-    int sequence_;
-    int payload_10_;
-    int payload_14_;
-    int payload_18_;
-    int payload_1C_;
-    char text_[32];
-};
-
-static_assert(sizeof(MessageBigDataRecord) == 0x90,
-              "bulk-data native transmitted extent");
-static_assert(offsetof(MessageBigDataRecord, faction_) == 0x04,
-              "bulk-data faction word");
-static_assert(offsetof(MessageBigDataRecord, timestamp_) == 0x08,
-              "bulk-data clock word");
-static_assert(offsetof(MessageBigDataRecord, sequence_) == 0x0C,
-              "bulk-data sequence word");
-static_assert(offsetof(MessageBigDataRecord, data_) == 0x10,
-              "bulk-data thirty-two-word payload");
-
 class MessageBigDataView {
 public:
     explicit MessageBigDataView(const unsigned char *bytes) : bytes_(bytes) {}
@@ -1829,98 +1938,6 @@ public:
 private:
     const unsigned char *bytes_;
 };
-
-static_assert(sizeof(MessageLandmarkRecord) == 0x40,
-              "landmark native transmitted extent");
-static_assert(offsetof(MessageLandmarkRecord, faction_) == 0x04,
-              "landmark faction word");
-static_assert(offsetof(MessageLandmarkRecord, timestamp_) == 0x08,
-              "landmark clock word");
-static_assert(offsetof(MessageLandmarkRecord, sequence_) == 0x0C,
-              "landmark sequence word");
-static_assert(offsetof(MessageLandmarkRecord, payload_10_) == 0x10,
-              "landmark first payload word");
-static_assert(offsetof(MessageLandmarkRecord, payload_14_) == 0x14,
-              "landmark second payload word");
-static_assert(offsetof(MessageLandmarkRecord, payload_18_) == 0x18,
-              "landmark third payload word");
-static_assert(offsetof(MessageLandmarkRecord, payload_1C_) == 0x1C,
-              "landmark fourth payload word");
-static_assert(offsetof(MessageLandmarkRecord, text_) == 0x20,
-              "landmark optional text start");
-
-// ORIGINAL: 0x00592F50 sub_592f50 0x00592F50-0x00592FE9 BYTE_EXACT
-// symbol    ?send_raw_data@@YAXHHHHHHHHHH@Z
-// size      153 bytes
-// callers   0   call targets   1
-// kind      game
-// flags     frame;hidden;sp_ready;purged_ok
-// calls     0x00532940
-// The catalogue has no symbol for this address. It is message_big_data's own
-// record spelled with the eight payload words taken as parameters instead of
-// copied from an array, and nothing in the image calls it.
-void __cdecl send_raw_data(int opcode, int target, int payload_10,
-                           int payload_14, int payload_18, int payload_1C,
-                           int payload_20, int payload_24, int payload_28,
-                           int payload_2C) {
-    MessageBigDataRecord message;
-
-    message.opcode_ = static_cast<int16_t>(opcode);
-    message.faction_ = ConsoleGlobal.faction_id_;
-    message.timestamp_ = timeGetTime();
-    message.sequence_ = NetDaemonNet.deletion_list_.sequence_bits();
-    message.data_[0] = payload_10;
-    message.data_[1] = payload_14;
-    message.data_[2] = payload_18;
-    message.data_[3] = payload_1C;
-    message.data_[4] = payload_20;
-    message.data_[5] = payload_24;
-    message.data_[6] = payload_28;
-    message.data_[7] = payload_2C;
-
-    NetBusyCount++;
-    NetDaemonNet.send_message(reinterpret_cast<char *>(&message), 0x90, target);
-    NetBusyCount--;
-}
-
-// ORIGINAL: 0x00592FF0 ?message_big_data@@YAXHHPAHH@Z 0x00592FF0-0x00593089 BYTE_EXACT
-// size      153 bytes
-// prototype void (__cdecl ?message_big_data@@YAXHHPAHH@Z)(int, int, int *, int)
-// callers   1   call targets   1
-// kind      game
-// flags     frame;hidden;sp_ready;purged_ok
-// calls     0x00532940
-// TRIED: assigning `filled = count` AFTER the copy loop instead of before it -
-//        the image emits `mov eax,edx` before `pop esi`, which the assignment
-//        at the top of the block reproduces, and moving it back agreed on
-//        FEWER instructions (25 of 47 against 27). Leave it where it is.
-// TRIED: naming a `fill_count` local for the zero-fill (`0x20 - filled`) and
-//        spelling the bound inline - both leave VC6 guarding its own
-//        `rep stosd` with `test ecx,ecx / jle 0x593058`, two instructions the
-//        image does not have because it never re-tests. That test is the
-//        residual: 27 of 47 agree, and no spelling of the loop took it out.
-void __cdecl message_big_data(int opcode, int target, int *payload,
-                              int count) {
-    MessageBigDataRecord message;
-    int i;
-
-    message.opcode_ = static_cast<int16_t>(opcode);
-    message.faction_ = ConsoleGlobal.faction_id_;
-    message.timestamp_ = timeGetTime();
-    message.sequence_ = NetDaemonNet.deletion_list_.sequence_bits();
-
-    for (i = 0; i < count; ++i) {
-        message.data_[i] = payload[i];
-    }
-    for (; i < 0x20; ++i) {
-        message.data_[i] = 0;
-    }
-
-    NetBusyCount++;
-    NetDaemonNet.send_message(reinterpret_cast<char *>(&message), 0x90,
-                              target);
-    NetBusyCount--;
-}
 
 class MessageLockView {
 public:
@@ -1966,70 +1983,6 @@ private:
     const unsigned char *bytes_;
 };
 
-
-// ORIGINAL: 0x00593110 ?message_landmark@@YAXHHPADHHHH@Z 0x00593110-0x00593190 BYTE_EXACT
-// size      128 bytes
-// prototype void (__cdecl ?message_landmark@@YAXHHPADHHHH@Z)(int, int, char *, int, int, int, int)
-// callers   1   call targets   2
-// kind      game
-// flags     frame;sp_ready;purged_ok
-// calls     0x00532940 0x00645460
-// Native payload stores are +0x10, +0x1C, sequence, +0x14, +0x18.
-// Null text leaves the entire text area unwritten; strcpy remains unchecked.
-void __cdecl message_landmark(int opcode, int target, char *text,
-                              int payload_10, int payload_14, int payload_18,
-                              int payload_1C) {
-    MessageLandmarkRecord message;
-
-    message.opcode_ = static_cast<int16_t>(opcode);
-    message.faction_ = ConsoleGlobal.faction_id_;
-    message.timestamp_ = timeGetTime();
-    message.sequence_ = NetDaemonNet.deletion_list_.sequence_bits();
-    message.payload_10_ = payload_10;
-    message.payload_14_ = payload_14;
-    message.payload_18_ = payload_18;
-    message.payload_1C_ = payload_1C;
-    if (text) {
-        strcpy(message.text_, text);
-    }
-
-    NetBusyCount++;
-    NetDaemonNet.send_message(reinterpret_cast<char *>(&message), 0x40, target);
-    NetBusyCount--;
-}
-
-// ORIGINAL: 0x00593190 ?message_chat@@YAXHHPAD@Z 0x00593190-0x00593215 BYTE_EXACT
-// size      133 bytes
-// prototype void (__cdecl ?message_chat@@YAXHHPAD@Z)(int, int, char *)
-// callers   3   call targets   2
-// kind      game
-// flags     frame;sp_ready;purged_ok
-// calls     0x00532940 0x00645E90
-// The image calls strncpy for an unbounded 0x100 and only then NUL-terminates
-// the last byte - a BUG IN THE ORIGINAL, preserved: a text of 0x100 bytes
-// with no terminator walks off the buffer.
-void __cdecl message_chat(int opcode, int target, char *text) {
-    struct Message {
-        short opcode_;
-        short pad_02_;
-        int faction_;
-        unsigned long time_;
-        int turn_;
-        char text_[0x100];
-    } message;
-
-    message.opcode_ = static_cast<short>(opcode);
-    message.faction_ = ConsoleGlobal.faction_id_;
-    message.time_ = timeGetTime();
-    message.turn_ = NetDaemonNet.deletion_list_.sequence_bits();
-    strncpy(message.text_, text, 0x100);
-
-    NetBusyCount++;
-    message.text_[0xff] = 0;
-    NetDaemonNet.send_message(reinterpret_cast<char *>(&message), 0x110,
-                              target);
-    NetBusyCount--;
-}
 
 // Fixed-slot bindings carried from 00532940.cpp
 
@@ -2178,6 +2131,179 @@ int NetDaemon::send_message(char *message, unsigned long length, int target) {
         result = Net::send(message, length, target, 1);
     }
     return result;
+}
+
+
+/*
+Purpose: Rebuild the Map's unit related values.
+// ORIGINAL: 0x00532A90 ?rebuild_vehicle_bits@@YAXXZ 0x00532A90-0x00532B63 BYTE_EXACT
+// TRIED: bit_set/bit_at/owner_set with (x,y) never spilled a 3rd stack
+//            slot (image is `sub esp, 0xc`) - a raw `Map *tile` walked by
+//            sizeof(Map), re-reading tile->bit at each of its three sites
+//            rather than caching it in a local, reaches the same frame size
+//            and 27/74 agreeing. A cached `int bit`/`uint32_t bit` local
+//            reused across the sites undersizes the frame to `sub esp, 8`
+//            and drops to 3/74 - the image does NOT cache this value in a
+//            register across the veh_id search loop. Remaining mismatch
+//            past instruction 3 is the same eax/ecx invariant-load swap as
+//            0x00532B70 (tried y-before-tile, no change) - register
+//            allocation, not a source shape.
+// size      211 bytes
+// prototype 
+// callers   3   call targets   0
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     (none)
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl rebuild_vehicle_bits() {
+    Map *tile = map_tiles();
+    for (int y = 0; y < MapLatitudeBounds; y++) {
+        for (int x = y & 1; x < MapLongitudeBounds; x += 2, tile++) {
+            tile->bit &= ~BIT_VEH_IN_TILE;
+            for (int veh_id = 0; veh_id < GameDataStateStorage.fields_.vehicle_current_count_; veh_id++) {
+                if (Vehs[veh_id].x == x && Vehs[veh_id].y == y) {
+                    tile->bit |= BIT_VEH_IN_TILE;
+                    if (!(tile->bit & BIT_BASE_IN_TILE)) {
+                        tile->val2 &= 0xF0;
+                        tile->val2 |= Vehs[veh_id].faction_id & 0xF;
+                    }
+                    break;
+                }
+            }
+        }
+    }
+}
+
+/*
+Purpose: Rebuild the Map's base related values.
+// ORIGINAL: 0x00532B70 ?rebuild_base_bits@@YAXXZ 0x00532B70-0x00532C2B BYTE_EXACT
+// TRIED: bit_set/owner_set called with (x,y) recomputed map_loc each time
+//            and never reduced to the image's single walking pointer (0/66
+//            agreeing). A raw `Map *tile` incremented by `sizeof(Map)` once
+//            per x-step - since consecutive same-parity tiles are contiguous
+//            and a row boundary lands on the next tile exactly - reaches
+//            22/66: the whole body matches except the first two invariant
+//            loads (MapLatitudeBounds, MapTiles) landing in eax/ecx swapped
+//            from the image's ecx/eax. Tried: y declared before tile, a
+//            named `int lat = MapLatitudeBounds` local, and a while-loop in
+//            place of the for - none change which register either load gets.
+//            Register-allocation plateau, not a source shape.
+// size      187 bytes
+// prototype
+// callers   3   call targets   0
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     (none)
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl rebuild_base_bits() {
+    Map *tile = map_tiles();
+    for (int y = 0; y < MapLatitudeBounds; y++) {
+        for (int x = y & 1; x < MapLongitudeBounds; x += 2, tile++) {
+            tile->bit &= ~BIT_BASE_IN_TILE;
+            for (int base_id = 0; base_id < GameDataStateStorage.fields_.base_current_count_; base_id++) {
+                if (Bases[base_id].x == x && Bases[base_id].y == y) {
+                    tile->bit |= BIT_BASE_IN_TILE;
+                    tile->val2 &= 0xF0;
+                    tile->val2 |= Bases[base_id].faction_id_current & 0xF;
+                    break;
+                }
+            }
+        }
+    }
+}
+
+// RECOVERY_ASSOCIATED: v1 switch_targets 0x00532C30 0x00532DA4 0x00532DC0 0x00532C47
+// RECOVERY_ASSOCIATED: v1 switch_selector 0x00532C30 0x00532DC0 0x00532DF1 0x00532C41
+// RECOVERY_LITERAL: v1 0x0068C594 0x0068C5A5 ??_C@_0BB@FLMC@SYNCHINGPLAYERS2?$AA@ 0x00532C30
+// RECOVERY_LITERAL: v1 0x0068C5C8 0x0068C5DA ??_C@_0BC@LNPH@SYNCHINGVEHICLES2?$AA@ 0x00532C30
+// RECOVERY_LITERAL: v1 0x0068C584 0x0068C592 ??_C@_0O@JLII@SYNCHINGGAME2?$AA@ 0x00532C30
+// RECOVERY_LITERAL: v1 0x0068C5A8 0x0068C5B7 ??_C@_0P@CDNP@SYNCHINGWORLD2?$AA@ 0x00532C30
+// RECOVERY_LITERAL: v1 0x0068C5B8 0x0068C5C7 ??_C@_0P@IJEI@SYNCHINGWORLD3?$AA@ 0x00532C30
+// RECOVERY_LITERAL: v1 0x0068C5DC 0x0068C5EB ??_C@_0P@JHAF@SYNCHINGBASES2?$AA@ 0x00532C30
+// ORIGINAL: 0x00532C30 ?synch_display@@YAXHHHH@Z 0x00532C30-0x00532DA2 FILE BYTE_EXACT
+// size      370 bytes
+// prototype 
+// callers   1   call targets   3
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x0047A890 0x005FCBB0 0x00625E30
+// PRESERVED UNIT - measured MISMATCH.
+//
+// Kept for COVERAGE. This directory IS on the ratchet: every file here
+// carries an ORIGINAL marker, `decomp_status.py` compiles and measures
+// it, and 336 of the 1,108 now carry a BYTE_EXACT claim - better than a
+// quarter of the project's total. It is still in no build; the earlier
+// header said "on no ratchet", which stopped being true when the map
+// moved into src/ and was still being written into new files.
+//
+// address        0x00532C30
+// measured tier  MISMATCH
+// divergence     124
+//
+// The WHOLE unit as measured, scaffolding included: for the units
+// that are byte-exact yet refuse extraction, the agent tuned the
+// emitted scaffolding and the body alone will not reproduce the
+// verdict. To resume, copy everything below back over
+//   build/byte-match/00532c30/unit.cpp
+// and score it with tools/agent_brief.py.
+// GENERATED SKELETON - tools/emit_translation_unit.py
+// subject: ?synch_display@@YAXHHHH@Z  at 0x00532C30  (370 bytes)
+//
+// A VERIFICATION ARTIFACT, not product source: classes are opaque and
+// globals are bound to fixed addresses, because both are byte-visible
+// and both differ from the style src/ is written in.
+//
+// The VC6 dialect limits and the source-form rules used to live here.
+// They are knowledge, not scaffolding, so they now live in the agent
+// system prompt (mizuchi.yaml, plugins.claude-runner.systemPrompt),
+// where they can be edited without regenerating anything and are in
+// context from the first token rather than behind a file read. This
+// emitter computes declarations; it does not carry lessons.
+void __cdecl synch_display(int stage, int arg1, int arg2, int arg3) {
+    switch (stage) {
+    case 0:
+        parse_num(0, arg1);
+        parse_num(1, arg2);
+        NetMsgPrimary.pop("SYNCHINGGAME2", 0, 1, 0);
+        do_all_draws();
+        return;
+    case 6:
+        parse_num(0, arg1);
+        parse_num(1, arg2);
+        parse_num(2, arg3);
+        NetMsgPrimary.pop("SYNCHINGPLAYERS2", 0, 1, 0);
+        do_all_draws();
+        return;
+    case 4:
+        parse_num(0, arg1);
+        parse_num(1, arg2);
+        NetMsgPrimary.pop("SYNCHINGWORLD2", 0, 1, 0);
+        do_all_draws();
+        return;
+    case 0x30:
+        parse_num(0, arg1);
+        parse_num(1, arg2);
+        parse_num(2, arg3);
+        NetMsgPrimary.pop("SYNCHINGWORLD3", 0, 1, 0);
+        do_all_draws();
+        return;
+    case 0x12:
+        parse_num(0, arg1);
+        parse_num(1, arg2);
+        NetMsgPrimary.pop("SYNCHINGVEHICLES2", 0, 1, 0);
+        do_all_draws();
+        return;
+    case 0x14:
+        parse_num(0, arg1);
+        parse_num(1, arg2);
+        NetMsgPrimary.pop("SYNCHINGBASES2", 0, 1, 0);
+        do_all_draws();
+        break;
+    }
 }
 
 

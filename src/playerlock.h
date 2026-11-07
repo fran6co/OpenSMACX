@@ -29,6 +29,9 @@
   */
 class PlayerLock {
  public:
+  // NetDaemon's constructor walks the eight records calling clear() once
+  // each (0x005389F0 loop at 0x538A2A) before Lock's own clear().
+  PlayerLock() { clear(); }
   void clear();
   int lock(int factionID, int flags, int x1, int y1, int flags2, int x2, int y2);
   int add_lock(int factionID, int flags, int x, int y);

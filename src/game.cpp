@@ -1112,39 +1112,6 @@ void __cdecl reset_territory() {
     }
 }
 
-/*
-Purpose: Determine whether the turn currently belongs to another faction in a
-         networked game, which is what gates local input.
-// ORIGINAL: 0x0052DC70 ?not_my_turn@@YAHXZ 0x0052DC70-0x0052DC9C BYTE_EXACT
-// body      src/game.cpp
-// size      44 bytes
-// prototype
-// callers   8   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: TRUE only in a net game that is handing the turn around and whose
-              active faction is not the local one
-Status: Complete
-*/
-// HISTORICAL: BODY IN game.h, as `MEASURED inline`: the image writes it out at
-// HISTORICAL: some call sites and calls it at others, and a .cpp definition is only ever
-// HISTORICAL: one of those. The marker stays here because that is where the catalogue
-// HISTORICAL: reads it.
-BOOL __cdecl not_my_turn() {
-    // Both guards return before the comparison, so a non-net game and a net
-    // game that is not currently passing the turn are both "my turn".
-    if (!IsMultiplayerNet) {
-        return false;
-    }
-    if (!(GameDataStateStorage.fields_.net_turn_flags_ & 0x10)) {
-        return false;
-    }
-    // `cmp ecx, edx` / `setne al`: the result is the inequality itself, not a
-    // normalised flag, and the faction identity is what decides it.
-    return GameDataStateStorage.fields_.net_turn_faction_ != ConsoleGlobal.faction_id_;
-}
-
 
 /*
 Purpose: Handle creation of pop-up message on Planetfall.
@@ -2285,43 +2252,6 @@ int __cdecl sub_52a980() {
     return 0;
 }
 
-
-// ORIGINAL: 0x0052DBF0 ?next_player_turn@@YAHXZ 0x0052DBF0-0x0052DC68 FILE BYTE_EXACT
-// TRIED: do-while loop over i=[NetTurnFaction+1, 8) with hi/lo byte reads hoisted before the loop, matching the Ghidra hypothesis closely; diverges at instr #14 (original 'lea' vs rebuilt 'inc'), a register/addressing-mode choice around the `+1`.
-// working copy - scaffold materialised by --work
-// size      120 bytes
-// prototype
-// callers   2   call targets   1
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     0x00592EE0
-
-// This is NetDaemonNet.lock_state_[0].leading_words_[1] at +0x1B30.
-// Keep the unsigned owner storage and recover the original signed int view
-// only at the two functions whose ABI returns/compares it as int.
-static int turns_assigned() {
-    return static_cast<int>(NetDaemonNet.primary_state_.leading_words_[0]);
-}
-
-// net_control_turn calls this out of line.
-#pragma auto_inline(off)
-int __cdecl next_player_turn() {
-    if ((GameDataStateStorage.fields_.net_turn_flags_ & 0x10) == 0) {
-        return 0;
-    }
-    if (turns_assigned() == 0) {
-        return 0;
-    }
-    for (int i = GameDataStateStorage.fields_.net_turn_faction_ + 1; i < 8; ++i) {
-        if (is_alive(i) && is_human(i)) {
-            message_data(0x4309, 0, i, 0, 0, 0);
-            return 0;
-        }
-    }
-    NextTurnReady = 1;
-    return 1;
-}
-#pragma auto_inline(on)
 
 // The original class spelling, complete object extent and allocation/lifetime
 // owner are not established. This private role name groups the receiver
@@ -10302,11 +10232,3 @@ int __cdecl load_game(int mode, int load_argument) {
     }
     return result;
 }
-
-
-
-
-
-
-
-

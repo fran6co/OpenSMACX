@@ -268,7 +268,6 @@ set(OPENSMACX_SOURCES
     src/net_session_picker.cpp
     src/node.cpp
     src/squarelock.cpp
-    src/deletionlist.cpp
     src/lock.cpp
     src/texture.cpp
     src/menu.cpp
@@ -534,7 +533,6 @@ set_source_files_properties(
 # Mixed or non-improving owners retain their measured default recipes.
 set_source_files_properties(
     src/ambience.cpp
-    src/deletionlist.cpp
     src/factionprofilewin.cpp
     src/interlude.cpp
     src/netmsg.cpp

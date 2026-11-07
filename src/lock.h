@@ -32,6 +32,9 @@
   */
 class Lock {
  public:
+  // Constructed only as NetDaemon::locks_: the records' constructors run,
+  // then one Lock::clear() (0x005389F0 call at 0x538A43).
+  Lock() { clear(); }
   void reset_map();
   void clear();
   int any_locks();

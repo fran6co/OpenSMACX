@@ -107,3 +107,81 @@ static_assert(offsetof(MessageLockRecord, field_20_) == 0x20,
               "lock message fifth payload offset");
 static_assert(offsetof(MessageLockRecord, field_24_) == 0x24,
               "lock message sixth payload offset");
+
+struct MessageBaseTextRecord {
+    int16_t opcode_;
+    unsigned char unresolved_2_[2];
+    int32_t faction_;
+    uint32_t time_;
+    int32_t sequence_;
+    int32_t payload_10_;
+    char text_[24];
+};
+
+static_assert(sizeof(MessageBaseTextRecord) == 0x2C,
+              "base text message native transmitted extent");
+static_assert(offsetof(MessageBaseTextRecord, faction_) == 0x04,
+              "base text message faction offset");
+static_assert(offsetof(MessageBaseTextRecord, time_) == 0x08,
+              "base text message timestamp offset");
+static_assert(offsetof(MessageBaseTextRecord, sequence_) == 0x0C,
+              "base text message sequence offset");
+static_assert(offsetof(MessageBaseTextRecord, payload_10_) == 0x10,
+              "base text message payload offset");
+static_assert(offsetof(MessageBaseTextRecord, text_) == 0x14,
+              "base text message text offset");
+
+// Native automatic wire records. Bytes 2..3 remain unwritten in all three
+// builders; the raw bulk sender also leaves data_[8..31] unwritten. These
+// objects must not be value-initialized merely to make the wire deterministic.
+struct MessageBigDataRecord {
+    int16_t opcode_;
+    unsigned char unresolved_2_[2];
+    int faction_;
+    uint32_t timestamp_;
+    int sequence_;
+    int data_[32];
+};
+
+struct MessageLandmarkRecord {
+    int16_t opcode_;
+    unsigned char unresolved_2_[2];
+    int faction_;
+    uint32_t timestamp_;
+    int sequence_;
+    int payload_10_;
+    int payload_14_;
+    int payload_18_;
+    int payload_1C_;
+    char text_[32];
+};
+
+static_assert(sizeof(MessageBigDataRecord) == 0x90,
+              "bulk-data native transmitted extent");
+static_assert(offsetof(MessageBigDataRecord, faction_) == 0x04,
+              "bulk-data faction word");
+static_assert(offsetof(MessageBigDataRecord, timestamp_) == 0x08,
+              "bulk-data clock word");
+static_assert(offsetof(MessageBigDataRecord, sequence_) == 0x0C,
+              "bulk-data sequence word");
+static_assert(offsetof(MessageBigDataRecord, data_) == 0x10,
+              "bulk-data thirty-two-word payload");
+
+static_assert(sizeof(MessageLandmarkRecord) == 0x40,
+              "landmark native transmitted extent");
+static_assert(offsetof(MessageLandmarkRecord, faction_) == 0x04,
+              "landmark faction word");
+static_assert(offsetof(MessageLandmarkRecord, timestamp_) == 0x08,
+              "landmark clock word");
+static_assert(offsetof(MessageLandmarkRecord, sequence_) == 0x0C,
+              "landmark sequence word");
+static_assert(offsetof(MessageLandmarkRecord, payload_10_) == 0x10,
+              "landmark first payload word");
+static_assert(offsetof(MessageLandmarkRecord, payload_14_) == 0x14,
+              "landmark second payload word");
+static_assert(offsetof(MessageLandmarkRecord, payload_18_) == 0x18,
+              "landmark third payload word");
+static_assert(offsetof(MessageLandmarkRecord, payload_1C_) == 0x1C,
+              "landmark fourth payload word");
+static_assert(offsetof(MessageLandmarkRecord, text_) == 0x20,
+              "landmark optional text start");
