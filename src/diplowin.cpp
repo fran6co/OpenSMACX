@@ -1379,8 +1379,7 @@ void DiploWin::kill_offer(int a1, int a2) {
         }
         offer_count_[a1]--;
         DiploOffersDirty = 1;
-        offer_state_[0] = 0;
-        offer_state_[1] = 0;
+        UNK2();
         redraw();
     }
 }
@@ -1458,8 +1457,7 @@ found:
     {
         offer_type_[a1][i] = a2;
         offer_value_[a1][i] = a3;
-        offer_state_[0] = 0;
-        offer_state_[1] = 0;
+        UNK2();
         if (a1 == 0) {
             message_data(0x1506, faction_id_with_,
                         a2, a3, a1, a1);
@@ -1929,6 +1927,13 @@ static inline char *transcript_current_text(StringList *list) {
   return list->head_ ? list->current_->string_payload()->text : 0;
 }
 
+static inline void transcript_add(StringList *list, char *text, int id) {
+  list->pending_text_ = text;
+  list->field_20_ = 0;
+  list->field_24_ = 0;
+  list->add(id);
+}
+
 extern "C" void __cdecl sub_441040(int a1, int a2) {
     StringList &source = DiploWindow.shared_string_box().strings();
     if (a1 > a2) {
@@ -1938,13 +1943,9 @@ extern "C" void __cdecl sub_441040(int a1, int a2) {
     for (int i = loopBound - 3; i < loopBound; ++i) {
         if (i >= 0) {
             source.seek_pos(i);
-            int f1 = transcript_current_id(&source);
-            char *f2 = transcript_current_text(&source);
-            StringList *entry = &DiplomacyTranscriptLists[a1][a2];
-            entry->pending_text_ = f2;
-            entry->field_20_ = 0;
-            entry->field_24_ = 0;
-            entry->add(f1);
+            transcript_add(&DiplomacyTranscriptLists[a1][a2],
+                           transcript_current_text(&source),
+                           transcript_current_id(&source));
         }
     }
 }

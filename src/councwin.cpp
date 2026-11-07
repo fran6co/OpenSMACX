@@ -269,10 +269,9 @@ void CouncWin::set_vote(int faction_id, int vote) {
     leader_label_kind_[faction_id] = static_cast<uint32_t>(vote);
 
     GameDataLockMaskView status = GameDataStateStorage.fields_.lock_masks_;
-    const uint32_t human_mask = status.enable_mask_ & 0xff;
     int calculate_computer_votes = 1;
     for (int faction = 0; faction < MaxPlayerNum; ++faction) {
-        if ((human_mask & (1u << faction)) != 0 &&
+        if ((status.bytes_.human_mask_ & (1 << faction)) != 0 &&
             leader_label_kind_[faction] != 0) {
             calculate_computer_votes = 0;
         }
@@ -460,89 +459,95 @@ void CouncWin::draw_info() {
 // RECOVERY_BINDING: v1 {"evidence": ["git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/00424410.cpp", "image:terranx_original.exe:0x00424410", "Council interface/window declarations identify embedded fonts/buttons, voting arrays and existing MainInterface/Console owners; original instructions determine call and state order."], "reason": "Recover the original in its genuine UI owner using typed members, real globals and declared operations. Retain seed spans and evidence; no current matching or runtime claim."}
 // TRIED: full Ghidra-faithful translation compiles and matches control flow (do/while record scan, max-index tie-break, vtable slot 001/002/062 calls); diverges at instr #0 (prologue shape), not yet chased further - large function, landed at MISMATCH.
 int CouncWin::make_resolution(int resolve) {
-    int vote_total = 0;
     int votes_for = 0;
     int votes_other = 0;
+    int vote_total = 0;
     int governor_objection = 0;
-    int option_votes[MaxPlayerNum] = {0};
-    const uint8_t live_factions = GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_;
-    const int proposal = static_cast<int>(field_A1C_);
+    int option_votes[MaxPlayerNum];
+    for (int i = 0; i < MaxPlayerNum; ++i) {
+        option_votes[i] = 0;
+    }
 
     for (int faction = 1; faction < MaxPlayerNum; ++faction) {
         if ((Players[faction].rule_flags & RFLAG_ALIEN) != 0) {
             continue;
         }
-        const int vote = static_cast<int>(leader_label_kind_[faction]);
-        if (vote == 0) {
+        if (static_cast<int>(leader_label_kind_[faction]) == 0) {
             return 0;
         }
-        if (vote >= -2 && (live_factions & (1u << (faction & 0x1f))) != 0) {
-            const int weight = proposal < 2 ? leader_tech_[faction] : 1;
-            vote_total += weight;
-            if (vote == -1) {
-                votes_for += weight;
-            } else {
-                votes_other += weight;
-                if (vote > 0) {
-                    option_votes[vote] += weight;
-                }
-                if (faction == GameDataStateStorage.fields_.governor_faction_ && proposal > 1) {
-                    governor_objection = 1;
-                }
+        if (static_cast<int>(leader_label_kind_[faction]) < -2) {
+            continue;
+        }
+        if (((1 << faction) & GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_) == 0) {
+            continue;
+        }
+        vote_total += static_cast<int>(field_A1C_) > 1 ? 1 : leader_tech_[faction];
+        if (static_cast<int>(leader_label_kind_[faction]) == -1) {
+            votes_for += static_cast<int>(field_A1C_) > 1 ? 1 : leader_tech_[faction];
+        } else {
+            votes_other += static_cast<int>(field_A1C_) > 1 ? 1 : leader_tech_[faction];
+            if (faction == GameDataStateStorage.fields_.governor_faction_ &&
+                static_cast<int>(field_A1C_) > 1) {
+                governor_objection = 1;
             }
+        }
+        if (static_cast<int>(leader_label_kind_[faction]) > 0) {
+            option_votes[static_cast<int>(leader_label_kind_[faction])] += leader_tech_[faction];
         }
     }
 
+    if (governor_objection != 0 && votes_for == vote_total - 1) {
+        governor_objection = 0;
+    }
+
     if (resolve != 0) {
-        if (proposal == 0) {
+        if (field_A1C_ == 0) {
             int greatest = 0;
             for (int offset = 0; offset < MaxPlayerNum; ++offset) {
-                unsigned int candidate =
-                    (static_cast<unsigned int>(GameDataStateStorage.fields_.turn_current_num_ + offset) & 0x80000007u);
-                if (static_cast<int>(candidate) < 0) {
-                    candidate = ((candidate - 1u) | 0xfffffff8u) + 1u;
-                }
+                const int candidate = (GameDataStateStorage.fields_.turn_current_num_ + offset) % 8;
                 if (candidate != 0) {
                     const int count = option_votes[candidate];
-                    if (greatest <= count) {
-                        if (greatest == count &&
-                            static_cast<int>(candidate) != GameDataStateStorage.fields_.governor_faction_) {
+                    if (count >= greatest) {
+                        if (count == greatest &&
+                            GameDataStateStorage.fields_.governor_faction_ != candidate) {
                             if (GameDataStateStorage.fields_.governor_faction_ != static_cast<int>(field_A20_)) {
                                 field_A20_ = 0;
                             }
                         } else {
-                            field_A20_ = candidate;
                             greatest = count;
+                            field_A20_ = candidate;
                         }
                     }
                 }
             }
-            field_A24_ = field_A20_ != 0 ? 1u : static_cast<uint32_t>(-1);
-        } else if (votes_other < votes_for &&
-                   (proposal != 1 ||
-                    (vote_total * 3 + ((vote_total * 3 >> 31) & 3)) / 4 <= votes_for)) {
-            field_A24_ = governor_objection != 0 ? static_cast<uint32_t>(-2) : 1u;
-        } else {
+            field_A24_ = field_A20_ != 0 ? 1 : -1;
+        } else if (votes_other >= votes_for ||
+                   (field_A1C_ == 1 && votes_for < vote_total * 3 / 4)) {
             field_A24_ = static_cast<uint32_t>(-1);
+        } else if (governor_objection != 0) {
+            field_A24_ = static_cast<uint32_t>(-2);
+        } else {
+            field_A24_ = 1;
         }
 
         CouncilPbemGate = 0;
         if (IsMultiplayerPBEM) {
-            const uint8_t human_factions = static_cast<uint8_t>(GameDataStateStorage.fields_.lock_masks_.enable_mask_);
+            const int human_factions = GameDataStateStorage.fields_.lock_masks_.enable_mask_ & 0xff;
+            const int console_faction = ConsoleGlobal.faction_id_;
             for (int faction = 1; faction < MaxPlayerNum; ++faction) {
-                if ((human_factions & (1u << (faction & 0x1f))) != 0 &&
-                    faction != ConsoleGlobal.faction_id_) {
-                    CouncilNotifyFormSlots[faction - 1] = proposal;
+                if ((human_factions & (1 << faction)) != 0 &&
+                    faction != console_faction) {
+                    CouncilNotifyFormSlots[faction - 1] = static_cast<int>(field_A1C_);
                     CouncilNotifyPluralSlots[faction - 1] = static_cast<int>(field_A24_);
                 }
             }
         }
 
         redraw();
-        GameDataStateStorage.fields_.council_last_resolution_turn_[proposal] = GameDataStateStorage.fields_.turn_current_num_;
+        GameDataStateStorage.fields_.council_last_resolution_turn_[static_cast<int>(field_A1C_)] = GameDataStateStorage.fields_.turn_current_num_;
         for (int faction = 1; faction < MaxPlayerNum; ++faction) {
-            PlayersData[faction].unk_29[proposal] = 0;
-            PlayersData[faction].unk_30[proposal] = 0;
+            PlayersData[faction].unk_29[static_cast<int>(field_A1C_)] = 0;
+            PlayersData[faction].unk_30[static_cast<int>(field_A1C_)] = 0;
         }
         for (int button = 0; button < 6; ++button) {
             buttons_[button].hide();
@@ -550,12 +555,12 @@ int CouncWin::make_resolution(int resolve) {
         }
 
         if (field_A24_ == 1) {
-            if (proposal == 0) {
+            if (static_cast<int>(field_A1C_) == 0) {
                 GameDataStateStorage.fields_.governor_faction_ = static_cast<int>(field_A20_);
                 redraw();
             }
             if (IsMultiplayerNet) {
-                council_action(proposal, static_cast<int>(field_A20_));
+                council_action(static_cast<int>(field_A1C_), static_cast<int>(field_A20_));
             }
         }
     }

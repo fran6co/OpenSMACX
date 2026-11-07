@@ -130,97 +130,102 @@ void set_specialist_at(Base &base, int position, int type) {
 // ORIGINAL: 0x0040A1D0 ?farm_click@BaseWin@@QAEXHHH@Z 0x0040A1D0-0x0040A87F
 // RECOVERY_BINDING: v1 {"evidence": ["git:a538e0a3:src/unrecovered/0040a1d0.cpp", "source:src/basewin.h", "image:0x40a1d0"], "reason": "Recover the complete original operation through genuine owning C++ classes, members and natural lifetimes; preserve retained seed evidence and historical restoration obligations separately from fresh matching."}
 void BaseWin::farm_click(int x, int y, int) {
+    int previous = -1;
     compute_selected_base();
     const int faction = BaseCurrent->faction_id_current;
     if ((faction != ConsoleGlobal.faction_id_ && !(GameDataStateStorage.fields_.game_state_ & STATE_OMNISCIENT_VIEW))
         || field_40AFC_) return;
-    int previous = field_40B4C_ == 0 ? farm_get(field_40B44_, field_40B48_) : -1;
+    if (field_40B4C_ == 0) previous = farm_get(field_40B44_, field_40B48_);
     const int position = farm_get(x, y);
     if (previous == position) previous = -1;
     else if (previous == 0) return;
     if (position < 0 || NetDaemonNet.lock_base(BaseIDCurrentSelected, 0, -1, -1)) return;
     log_say("Farm Click", BaseCurrent->name_string, position, 0, 0);
-    BaseCurrent->governor &= ~0x40u;
-    const unsigned bit = 1u << position;
-    bool changed = false;
+    if (BaseCurrent->governor & 0x40u) BaseCurrent->governor &= ~0x40u;
+    unsigned bit;
     if (field_40B4C_ == 1) {
-        if (!(BaseCurrent->resource_sqr_radius & bit)) {
-            BaseCurrent->resource_sqr_radius |= bit;
-            for (int i = field_40B50_; i < BaseCurrent->specialist_total; ++i) {
-                const int next = i + 1;
-                const int type = next < 16 ? specialist_at(*BaseCurrent, next) : best_specialist();
-                if (next < 17) set_specialist_at(*BaseCurrent, i, type);
+        bit = 1u << position;
+        if (BaseCurrent->resource_sqr_radius & bit) goto unchanged;
+        BaseCurrent->resource_sqr_radius |= bit;
+        for (int i = field_40B50_; i < BaseCurrent->specialist_total; ++i) {
+            const int next = i + 1;
+            const int type = next >= 16 ? best_specialist()
+                : (static_cast<int>(BaseCurrent->spec[next >> 3]) >> ((next & 7) * 4)) & 15;
+            if (next < 17) {
+                BaseCurrent->spec[i >> 3] &= ~(15 << ((i & 7) * 4));
+                BaseCurrent->spec[i >> 3] |= type << ((i & 7) * 4);
             }
-            if (BaseCurrent->specialist_total) --BaseCurrent->specialist_total;
-            changed = true;
         }
+        if (BaseCurrent->specialist_total) --BaseCurrent->specialist_total;
     } else if (previous > 0) {
         const unsigned old_bit = 1u << previous;
-        if ((BaseCurrent->resource_sqr_radius & old_bit) && !(BaseCurrent->resource_sqr_radius & bit)) {
-            BaseCurrent->resource_sqr_radius &= ~old_bit;
-            BaseCurrent->resource_sqr_radius |= bit;
-            changed = true;
-        }
+        if (!(BaseCurrent->resource_sqr_radius & old_bit)) goto unchanged;
+        if (BaseCurrent->resource_sqr_radius & (1u << position)) goto unchanged;
+        BaseCurrent->resource_sqr_radius &= ~old_bit;
+        BaseCurrent->resource_sqr_radius |= 1u << position;
     } else if (position == 0) {
         BaseCurrent->resource_sqr_radius = 0;
         BaseCurrent->specialist_total = 0;
         BaseCurrent->specialist_unk_1 = 0;
-        changed = true;
-    } else if (BaseCurrent->resource_sqr_radius & bit) {
-        BaseCurrent->resource_sqr_radius &= ~bit;
-        const int type = best_specialist();
-        if (BaseCurrent->specialist_total < 16)
-            set_specialist_at(*BaseCurrent, BaseCurrent->specialist_total, type);
-        ++BaseCurrent->specialist_total;
-        changed = true;
-    } else if (!FarmStatus[position]) {
-        bool available = BaseCurrent->specialist_total != 0;
-        if (available) --BaseCurrent->specialist_total;
-        else {
-            int fight, growth, tech, wealth, power;
-            if ((GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & (1u << faction))
-                && (BaseCurrent->governor & 0x80000000u)) {
-                growth = (BaseCurrent->governor >> 24) & 1;
-                tech = (BaseCurrent->governor >> 25) & 1;
-                wealth = (BaseCurrent->governor >> 26) & 1;
-                power = (BaseCurrent->governor >> 27) & 1;
-                fight = power ? 1 : growth ? 0 : (!tech && !wealth ? PlayersData[faction].ai_fight : -1);
-            } else {
-                fight = PlayersData[faction].ai_fight;
-                growth = PlayersData[faction].ai_growth;
-                tech = PlayersData[faction].ai_tech;
-                wealth = PlayersData[faction].ai_wealth;
-                power = PlayersData[faction].ai_power;
+    } else {
+        bit = 1u << position;
+        if (BaseCurrent->resource_sqr_radius & bit) {
+            BaseCurrent->resource_sqr_radius &= ~bit;
+            const int type = best_specialist();
+            const int total = BaseCurrent->specialist_total;
+            if (total < 16) {
+                BaseCurrent->spec[total >> 3] &= ~(15 << ((total & 7) * 4));
+                BaseCurrent->spec[total >> 3] |= type << ((total & 7) * 4);
             }
-            int worst_score = 999, worst_position = 0;
-            for (int i = 1; i <= 20; ++i) {
-                int tile_x = BaseCurrent->x + RadiusOffsetX[i];
-                if (!(MapIsFlat & 1)) {
-                    if (tile_x < 0) tile_x += MapLongitudeBounds;
-                    else if (tile_x >= MapLongitudeBounds) tile_x -= MapLongitudeBounds;
+            ++BaseCurrent->specialist_total;
+        } else {
+            if (FarmStatus[position]) goto unchanged;
+            if (BaseCurrent->specialist_total == 0) {
+                int fight, growth, tech, wealth, power;
+                if ((GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & (1u << faction))
+                    && (BaseCurrent->governor & 0x80000000u)) {
+                    growth = (BaseCurrent->governor >> 24) & 1;
+                    tech = (BaseCurrent->governor >> 25) & 1;
+                    wealth = (BaseCurrent->governor >> 26) & 1;
+                    power = (BaseCurrent->governor >> 27) & 1;
+                    fight = power ? 1 : growth ? 0 : (!tech && !wealth ? PlayersData[faction].ai_fight : -1);
+                } else {
+                    growth = PlayersData[faction].ai_growth;
+                    tech = PlayersData[faction].ai_tech;
+                    wealth = PlayersData[faction].ai_wealth;
+                    power = PlayersData[faction].ai_power;
+                    fight = PlayersData[faction].ai_fight;
                 }
-                const int tile_y = BaseCurrent->y + RadiusOffsetY[i];
-                if (tile_x < 0 || tile_x >= MapLongitudeBounds || tile_y < 0 || tile_y >= MapLatitudeBounds
-                    || !(BaseCurrent->resource_sqr_radius & (1u << i))) continue;
-                const int nutrient_divisor = range(BaseCurrent->intake_2[RSC_NUTRIENTS]
-                    - BaseCurrent->population_size * static_cast<int>(Rules.nutrient_req_citizen), 1, 99);
-                int score = resource_yield(0, faction, BaseIDCurrentSelected, tile_x, tile_y)
-                    * (growth + 3) * 4 / nutrient_divisor;
-                const int mineral_divisor = range(BaseCurrent->intake_2[RSC_MINERALS]
-                    - static_cast<int>(BaseCurrentForcesMaintCost), 1, 99);
-                score += resource_yield(1, faction, BaseIDCurrentSelected, tile_x, tile_y)
-                    * (fight + 4 + power) * BaseCurrent->population_size / mineral_divisor;
-                score += resource_yield(2, faction, BaseIDCurrentSelected, tile_x, tile_y)
-                    * BaseCurrent->population_size * (wealth + tech + 2)
-                    / range(BaseCurrent->intake_2[RSC_ENERGY], 1, 99);
-                if (score < worst_score) { worst_score = score; worst_position = i; }
-            }
-            if (worst_position) {
+                int worst_score = 999, worst_position = 0;
+                for (int i = 1; i < 21; ++i) {
+                    int tile_x = BaseCurrent->x + RadiusOffsetX[i];
+                    if (!(MapIsFlat & 1)) {
+                        if (tile_x < 0) tile_x += MapLongitudeBounds;
+                        else if (tile_x >= MapLongitudeBounds) tile_x -= MapLongitudeBounds;
+                    }
+                    const int tile_y = BaseCurrent->y + RadiusOffsetY[i];
+                    if (tile_y < 0 || tile_y >= MapLatitudeBounds || tile_x < 0 || tile_x >= MapLongitudeBounds
+                        || !(BaseCurrent->resource_sqr_radius & (1u << i))) continue;
+                    const int nutrient_divisor = range(BaseCurrent->intake_2[RSC_NUTRIENTS]
+                        - BaseCurrent->population_size * static_cast<int>(Rules.nutrient_req_citizen), 1, 99);
+                    int score = resource_yield(0, faction, BaseIDCurrentSelected, tile_x, tile_y)
+                        * (growth + 3) * 4 / nutrient_divisor;
+                    const int mineral_divisor = range(BaseCurrent->intake_2[RSC_MINERALS]
+                        - static_cast<int>(BaseCurrentForcesMaintCost), 1, 99);
+                    score += resource_yield(1, faction, BaseIDCurrentSelected, tile_x, tile_y)
+                        * (fight + power + 4) * BaseCurrent->population_size / mineral_divisor;
+                    const int energy_divisor = range(BaseCurrent->intake_2[RSC_ENERGY], 1, 99);
+                    score += resource_yield(2, faction, BaseIDCurrentSelected, tile_x, tile_y)
+                        * BaseCurrent->population_size * (wealth + tech + 2) / energy_divisor;
+                    if (score < worst_score) { worst_score = score; worst_position = i; }
+                }
+                if (!worst_position) goto unchanged;
                 BaseCurrent->resource_sqr_radius &= ~(1u << worst_position);
-                available = true;
+            } else {
+                --BaseCurrent->specialist_total;
             }
+            BaseCurrent->resource_sqr_radius |= bit;
         }
-        if (available) { BaseCurrent->resource_sqr_radius |= bit; changed = true; }
     }
     if (is_visible()) {
         set_base(focusedBaseID_);
@@ -228,7 +233,16 @@ void BaseWin::farm_click(int x, int y, int) {
         redraw();
         MainInterfaceGlobal.redraw();
     }
-    if (changed) log_say("BASE: changed farming locations", BaseIDCurrentSelected, 0, 0);
+    log_say("BASE: changed farming locations", BaseIDCurrentSelected, 0, 0);
+    NetDaemonNet.unlock_base(BaseIDCurrentSelected);
+    return;
+unchanged:
+    if (is_visible()) {
+        set_base(focusedBaseID_);
+        base_compute(1);
+        redraw();
+        MainInterfaceGlobal.redraw();
+    }
     NetDaemonNet.unlock_base(BaseIDCurrentSelected);
 }
 
@@ -4848,22 +4862,22 @@ void BaseWin::on_iface_mouse_move(int a1, int a2) {
         draw_production(1);
         return;
     }
-    if (field_40B54_ < 0) {
-        if (type == 6 || type == 7) {
+    const int previous = field_40B54_;
+    if (previous < 0) {
+        if (type != 6 && type != 7) {
+            if (field_40B00_ < 0) return;
+            field_40B00_ = -1;
+            field_40B04_ = 0;
+            compute_selected_base();
+            draw_production(1);
+        } else {
             if (field_40B00_ == position) return;
             field_40B00_ = position;
             field_40B04_ = type == 7;
             compute_selected_base();
             draw_flash(1);
-            return;
         }
-        if (field_40B00_ < 0) return;
-        field_40B00_ = -1;
-        field_40B04_ = 0;
-        compute_selected_base();
-        draw_production(1);
     } else if (field_40B4C_ == 0 || field_40B4C_ == 1) {
-        const int previous = field_40B54_;
         int cursor = 1;
         if (field_40B4C_ != type) {
             field_40B54_ = 2;
@@ -4877,24 +4891,30 @@ void BaseWin::on_iface_mouse_move(int a1, int a2) {
         if (field_40B4C_ == 1) {
             const int specialist = field_40B50_;
             if (specialist >= 0) {
-                if (specialist >= 16) {
-                    cursor = best_specialist() + 4;
-                } else {
-                    cursor = ((static_cast<int>(BaseCurrent->spec[specialist >> 3]) >> ((specialist & 7) * 4)) & 15) + 4;
-                }
+                cursor = (specialist >= 16 ? best_specialist()
+                    : (static_cast<int>(BaseCurrent->spec[specialist >> 3]) >> ((specialist & 7) * 4)) & 15) + 4;
                 if (cursor < 4) cursor = 1;
             }
         }
-        Sprite *sprite;
         if (ExpansionEnabled && (Players[BaseCurrent->faction_id_current].rule_flags & 0x80)) {
-            sprite = cursor >= 4 ? &g_AL_SPECIALIST_LG_CURSOR_SPRITES[cursor - 4]
-                                 : &g_AL_CITIZEN_LG_CURSOR_SPRITES[cursor];
+            if (cursor >= 4) {
+                Sprite *sprite = &g_AL_SPECIALIST_LG_CURSOR_SPRITES[cursor - 4];
+                set_cursor(sprite, 19, 24);
+                MainInterfaceGlobal.set_cursor(sprite, 19, 24);
+            } else {
+                Sprite *sprite = &g_AL_CITIZEN_LG_CURSOR_SPRITES[cursor];
+                set_cursor(sprite, 19, 24);
+                MainInterfaceGlobal.set_cursor(sprite, 19, 24);
+            }
+        } else if (cursor >= 4) {
+            Sprite *sprite = &g_SPECIALIST_LG_CURSOR_SPRITES[cursor - 4];
+            set_cursor(sprite, 19, 24);
+            MainInterfaceGlobal.set_cursor(sprite, 19, 24);
         } else {
-            sprite = cursor >= 4 ? &g_SPECIALIST_LG_CURSOR_SPRITES[cursor - 4]
-                                 : &g_CITIZEN_LG_CURSOR_SPRITES[cursor + 4];
+            Sprite *sprite = &g_CITIZEN_LG_CURSOR_SPRITES[cursor + 4];
+            set_cursor(sprite, 19, 24);
+            MainInterfaceGlobal.set_cursor(sprite, 19, 24);
         }
-        set_cursor(sprite, 19, 24);
-        MainInterfaceGlobal.set_cursor(sprite, 19, 24);
     }
 }
 

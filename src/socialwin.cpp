@@ -1140,6 +1140,11 @@ void SocialWin::draw_labs_alloc() {
     do_sound();
 }
 
+// Draws one effect icon; the image converts the destination before indexing.
+static inline void social_draw_icon(Sprite *sprite, Buffer *dest, int x, int y) {
+    sprite->draw(dest, sprite->transparent_index(), x, y, 1, 1);
+}
+
 // Paint the faction power strip from its owning Player name and base effects.
 // ORIGINAL: 0x004AF8C0 ?draw_faction_basal@SocialWin@@QAEXXZ 0x004AF8C0-0x004AFB5D
 // RECOVERY_BINDING: v1 {"evidence": ["git:seed:src/recovered/units/004af8c0.cpp; source:src/socialwin.h:tooltipFactionPower_,effectIcons_,font1_; source:src/faction.h:Player.noun_faction,noun_gender,is_noun_plural,PlayerData.soc_effect_base; image:0x004AF8C0-0x004AFB5D"], "reason": "Recover the faction-power panel on SocialWin typed rectangle, inherited Buffer, effect sprites, and Player records, including the noun-format defaults consumed by faction text rendering."}
@@ -1154,8 +1159,9 @@ void SocialWin::draw_faction_basal() {
     Buffer::box_sprite(&title, &InterfaceBoxStyles[6]);
 
     StringTemp[0] = '\0';
-    parse_set(Players[factionID_].noun_gender, Players[factionID_].is_noun_plural);
-    strcat(StringTemp, Players[factionID_].noun_faction);
+    const int faction = factionID_;
+    parse_set(Players[faction].noun_gender, Players[faction].is_noun_plural);
+    strcat(StringTemp, Players[faction].noun_faction);
     CharUpperA(StringTemp);
     Buffer::set_font(&font1_, 0, 0, 0);
     Buffer::set_text_color(0x9f, -1, 1, 1);
@@ -1182,9 +1188,8 @@ void SocialWin::draw_faction_basal() {
         for (int effect = 0; effect < MaxSocialEffectNum; ++effect) {
             const int value = PlayersData[factionID_].soc_effect_base.values_[effect];
             for (int icon = 0; icon < (value < 0 ? -value : value); ++icon) {
-                effectIcons_[6 + (effect < 3 ? effect : effect - 1) * 9 + (value >= 1) + 1].draw(
-                    this, effectIcons_[6 + (effect < 3 ? effect : effect - 1) * 9 + (value >= 1) + 1]
-                        .transparent_index(), x, y, 1, 1);
+                social_draw_icon(&effectIcons_[6 + (effect < 3 ? effect : effect - 1) * 9 + (value >= 1 ? 2 : 1)],
+                                 this, x, y);
                 x += step;
             }
         }
@@ -1978,9 +1983,7 @@ int SocialWin::on_button_text_draw(GraphicWin *window, char *text, int button_id
     }
 
     // Original stride 0x84 is three 0x2C-byte Sprites, not one Sprite.
-    effectIcons_[(button_id - 0x11) * 9 + flag * 3].draw(
-        window, effectIcons_[(button_id - 0x11) * 9 + flag * 3].transparent_index(),
-        5, y_center, 1, 1);
+    social_draw_icon(&effectIcons_[(button_id - 0x11) * 9 + flag * 3], window, 5, y_center);
 
     window->set_text_color(0, -1, 1, 1);
     rect.left += 0x25;
