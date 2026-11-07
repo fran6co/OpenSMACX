@@ -1189,7 +1189,7 @@ void ReportWin::reset() {
 // RECOVERY_ASSOCIATED: v1 switch_targets 0x00496D00 0x00496DE4 0x00496E08 0x00496D35
 /*
 Purpose: Repaint the report window's selected page inside the topic panel.
-// ORIGINAL: 0x00496D00 ?on_redraw@ReportWin@@QAEXXZ 0x00496D00-0x00496DE4 FILE
+// ORIGINAL: 0x00496D00 ?on_redraw@ReportWin@@QAEXXZ 0x00496D00-0x00496DE4 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Original496D00..496DE4; retired seed git:117282ee:src/unrecovered/00496d00.cpp records the same identity and spans with its switch fold TRIED note kept below.", "The receiver is reportwin.h's own window: reset() is declared there (0x00496BB0), the +0x444 Buffer (set_clip is buffer.h's own) carries the topic rectangle at +0x5974, and the page selector is 0x00885F40.", "The eight page drawers are the seed's measured call targets 0x00498B30/0x0049BCD0/0x0049D540/0x0049EB10/0x0049F350/0x004A08E0/0x004A1140/0x004A2210, unrecovered members reached at their original addresses until declarations land."], "reason": "Coverage transcription of the report repaint with the page dispatch kept at the measured switch shape."}
 // symbol    ?on_redraw@ReportWin@@UAEXXZ
 // TRIED (seed): a switch on the 9 cases reproduces the disassembly's eight

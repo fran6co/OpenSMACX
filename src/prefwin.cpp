@@ -871,7 +871,7 @@ void PrefWin::redraw_volume() {
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
 // RECOVERY_ASSOCIATED: v1 switch_targets 0x004918C0 0x004919E0 0x004919F0 0x004918D5
-// ORIGINAL: 0x004918C0 ?change_volume_button_text@PrefWin@@QAEXH@Z 0x004918C0-0x004919DD FILE
+// ORIGINAL: 0x004918C0 ?change_volume_button_text@PrefWin@@QAEXH@Z 0x004918C0-0x004919DD FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/004918c0.cpp", "recovery/tasks/prefwin-owner-coverage-wave.json", "Original control parent 8578D8; ctor/destructor member order, 800-pixel branch, checkbox text-context and callback order independently reviewed."], "reason": "Recover the complete PrefWin ownership group through a genuine GraphicWin base and compiler-owned embedded control lifetimes; preserve seed identity, original spans and unresolved discoveries without granting byte claims."}
 void PrefWin::change_volume_button_text(int button_id) {
   switch (button_id) {

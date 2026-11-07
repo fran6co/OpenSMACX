@@ -1712,7 +1712,7 @@ void DesignWin::bubble_me_elmo2(char *a1, int a2, int a3) {
 }
 
 // RECOVERY_ASSOCIATED: v1 switch_targets 0x00439700 0x00439948 0x00439960 0x00439745
-// ORIGINAL: 0x00439700 ?on_right_click@DesignWin@@QAEXHH@Z 0x00439700-0x00439948
+// ORIGINAL: 0x00439700 ?on_right_click@DesignWin@@QAEXHH@Z 0x00439700-0x00439948 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:3f6ab06bdf3b791aa23454e19f71b4e8b5935caf:src/recovered/units/00439700.cpp"], "reason": "Spot palette categories select localized help labels; the two ability categories share a label."}
 // symbol    ?on_right_click@DesignWin@@UAEXHH@Z
 void DesignWin::on_right_click(int x, int y) {
