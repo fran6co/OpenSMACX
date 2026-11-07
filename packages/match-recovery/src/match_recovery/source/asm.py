@@ -1583,12 +1583,28 @@ def compare_unit(records, exe: Path | str, source: Path | str,
                     strict_attempts.append(tuple(attempt))
                 else:
                     raise ValueError("compiler flag trial must be a string or an array of argument tokens")
-            strict = verify_records(
-                root, selected_associated, Path(exe), compiler=shared_compile,
-                command_for=strict_command_for,
-                flag_sets=tuple(strict_attempts),
-            )
+
+            def strict_for(selection):
+                return verify_records(
+                    root, selection, Path(exe), compiler=shared_compile,
+                    command_for=strict_command_for,
+                    flag_sets=tuple(strict_attempts),
+                )
+
+            # A selection's evidence closure is the union of its roots'
+            # closures and its checks are not attributed to roots. A passing
+            # union therefore covers every member, but a non-passing one says
+            # nothing about a member whose own closure is complete. Re-verify
+            # each owner alone then, so its verdict never depends on which
+            # file-mates the caller happened to select.
+            grouped = strict_for(selected_associated)
+            strict_by_record = {}
             for record in selected_associated:
+                strict_by_record[key(record)] = (
+                    grouped if grouped.get("result") == Result.PASS or len(selected_associated) == 1
+                    else strict_for([record]))
+            for record in selected_associated:
+                strict = strict_by_record[key(record)]
                 row = next((candidate for candidate in strict.get("functions", [])
                             if int(candidate.get("address", "0"), 16) == record.address), None)
                 result = row.get("result") if row else None

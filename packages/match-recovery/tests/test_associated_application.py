@@ -430,6 +430,52 @@ def test_associated_refusal_keeps_selected_dependency_reason(tmp_path, monkeypat
     assert observed.diagnostic == "transitive object _g has no bound extent"
 
 
+def test_associated_owner_verdict_does_not_depend_on_selected_file_mates(tmp_path, monkeypatch):
+    from match_recovery.source import asm
+
+    root, _task, _raw = project(tmp_path)
+    _binding, _objects, _original, associated = context()
+    source = root / "code/unit.cc"
+    shift = 0x80
+    mate = tuple(replace(row, unit="code/unit.cc",
+                         owner=replace(row.owner, address=row.owner.address + shift),
+                         span=Span(row.span.start + shift, row.span.end + shift),
+                         evidence=replace(row.evidence, address=row.evidence.address + shift))
+                 for row in associated)
+    owner = associated[0].owner.address + shift
+    source.write_text(source.read_text() + "\n" + comments(mate)
+                      + f"// ORIGINAL: 0x{owner:X} _mate 0x{owner:X}-0x{owner + 0x16:X}\n")
+    claimed, unclaimed = read_file(source)
+    calls = []
+
+    def selection_wide(_root, selection, *_args, **_kwargs):
+        # The unclaimed mate's closure refuses; the claimed owner's own
+        # closure is complete. Like the native verifier, checks carry no root.
+        selection = tuple(selection)
+        calls.append(tuple(record.address for record in selection))
+        blocked = any(record.address == unclaimed.address for record in selection)
+        return {"result": Result.UNKNOWN if blocked else Result.PASS,
+                "functions": [{"address": f"{record.address:08X}", "result": Result.PASS}
+                              for record in selection],
+                "selected_evidence": {"checks": [{"result": Result.UNKNOWN,
+                                                   "reason": "mate object has no bound extent"}]
+                                      if blocked else []}}
+
+    monkeypatch.setattr(asm, "verify_records", selection_wide)
+    measure = lambda rows: dict((record.address, observed) for record, observed in compare_unit(
+        rows, root / "image.exe", source, (), (("first",),), compiler=lambda *_: _raw,
+        root=root, strict_command_for=lambda _path: ()).results)
+    alone = measure((claimed,))
+    together = measure((claimed, unclaimed))
+    assert alone[claimed.address].verdict is Tier.BYTE_EXACT
+    assert together[claimed.address] == alone[claimed.address]
+    # The blocked mate keeps its own refusal and reason.
+    assert together[unclaimed.address].verdict is Tier.REFUSED
+    assert together[unclaimed.address].diagnostic == "mate object has no bound extent"
+    assert calls == [(claimed.address,), (claimed.address, unclaimed.address),
+                     (claimed.address,), (unclaimed.address,)]
+
+
 def test_ordinary_rooted_comparison_does_not_scan_other_source_files(tmp_path):
     root, _task, raw = project(tmp_path)
     source = root / "code/unit.cc"
