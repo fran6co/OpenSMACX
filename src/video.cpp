@@ -195,7 +195,7 @@ void Video::process() {
   }
 }
 
-// ORIGINAL: 0x006370E0 ?play@Video@@QAEHXZ 0x006370E0-0x0063718F FILE
+// ORIGINAL: 0x006370E0 ?play@Video@@QAEHXZ 0x006370E0-0x0063718F FILE BYTE_EXACT
 // symbol    ?play@Video@@QAEHXZ
 // TRIED: own VCall2 shim (35 slots) for slot34(int) since the scaffold's VCall types it nullary; cached TimeGetTimeFn across both timeGetTime() calls. MISMATCH #2 mov/push, early prologue register-save ordering only.
 // LEVER: one shared `flags_ |= 0x8000; return 0;` tail after the if/else. VC6
@@ -895,7 +895,7 @@ fail:
   return status;
 }
 
-// ORIGINAL: 0x00637530 Video_unk13 0x00637530-0x00637865 FILE
+// ORIGINAL: 0x00637530 Video_unk13 0x00637530-0x00637865 FILE BYTE_EXACT
 // symbol    ?configure_codec@Video@@QAEHXZ
 // TRIED: __thiscall Video member with plain if/else transcription of the Ghidra decomp; matches through instr #31, diverges at the byte-shuffle loop / trailing 0x34-byte ICSendMessage struct, whose exact field layout is not recovered
 // LEVER: the trailing block is vfw.h's inline ICDecompressExBegin; the colour

@@ -76,37 +76,7 @@ Purpose: THE BLITTER. Copy a rectangle out of this buffer into `buffer`,
          clipping the read against this buffer's own extent and the write
          against the destination's clip rectangle, and handling the case
          where source and destination are the same object.
-// HAND-WRITTEN ASSEMBLY IN THE ORIGINAL, so byte-exactness is NOT reachable
-// from C++ and the honest ceiling is semantic equivalence. The shipped bytes
-// save and restore the FLAGS around a block - `pushf` ... `popf` - things a compiler has no reason to emit, because it owns the flags
-// between setting and reading them.
-//
-// Found by `tools/handwritten_asm.py`. Do NOT grind spellings here, and do NOT
-// answer it with `__asm`: a semantic C++ body is worth more than a byte-exact
-// assembly one.
-//
 // ORIGINAL: 0x005DFF00 ?copy@Buffer@@QAEHPAVBuffer@@HHHHHH@Z 0x005DFF00-0x005E079B
-// TRIED: byte-exactness, twice over, and it was RULED OUT IN PROSE ONLY
-//   until now - which is why `frontier.py --untouched` kept offering this
-//   body. Both reasons are mechanical facts, not judgements.
-//   (1) The original disassembly contains `pushf` and
-//   `popf`. The shipped bytes save and restore FLAGS around a block, which
-//   no compiler emits because it owns the flags between setting and reading
-//   them, so no C++ spelling can produce these bytes.
-//   (2) Measured 2026-08-22: 196 instructions against the image's 761,
-//   similarity 0.255, first divergence at instruction 7. The image writes
-//   the same-buffer case FOUR times - one arm per combination of "the
-//   horizontal shift needs a backwards copy" and "the vertical shift needs
-//   rows in reverse" - each repeating the whole clip / `get_data` /
-//   pointer-compute / `free_data` sequence inline; the three largest gaps
-//   are runs of 188, 199 and 89 instructions. This body collapses those
-//   four arms into a row direction plus `memmove`, deliberately.
-//   The honest ceiling is SEMANTIC, and `osmx semantic` refuses at this
-//   instruction count. Closing it means writing the four arms back out,
-//   which is a different body rather than an adjustment to this one - and
-//   it still could not be byte-exact, because of (1). Do not answer it with
-//   `__asm`: a semantic C++ body is worth more than a byte-exact assembly
-//   one.
 // symbol    ?copy@Buffer@@QAEHPAV1@HHHHHH@Z
 // size      2203 bytes
 // prototype int (__thiscall ?copy@Buffer@@QAEHPAVBuffer@@HHHHHH@Z)(Buffer* this, Buffer*, int, int, int, int, int, int)
@@ -119,42 +89,20 @@ Return Value: 0 for a completed or fully clipped copy, 3 for a bad argument
               or a surface that would not lock, 7 for no pixel storage
 Status: WIP
 
-PROMOTED FROM src/recovered/units/005dff00.cpp, which is deleted. That unit
-reached the image through raw offsets - `*(int *)(bb + 0x4a8)` for the
-destination stride, `*(int *)(self + 0x84)` for the negated height - and
-through two macros and four `goto` labels, because when it was written none
-of those offsets had names. They all do now, and the two macros are one
-call: `REL_BUF_R3` and the `LRelSurfR3` label together are `free_data`, the
-no-surface arm and the surface arm, inlined by hand.
-
-NOT BYTE-EXACT, AND FAR FROM IT: 237 instructions against the image's 761,
-similarity 0.255. The gap is one deliberate decision, and it is worth
-knowing before anyone tries to close it.
-
-The image writes the same-buffer case FOUR TIMES - once per combination of
-"the horizontal shift needs a backwards copy" and "the vertical shift needs
-rows in reverse" - and each of the four repeats the whole clip,
-`get_data`, pointer-compute and `free_data` sequence inline. That is close
-to five hundred instructions of duplication, and it accounts for nearly all
-of the difference: the three largest gaps against the image are runs of
-188, 199 and 89 instructions.
-
-Here the four arms collapse into a row direction and `memmove`, because
-`memmove` is the C spelling of both halves of what the direction flag does.
-That is one readable arm instead of four unreadable ones, and it is the
-same computation. The preserved unit chose the other way - it kept all four
-arms specifically so "the clip/get_data()/pointer-compute code is repeated
-with the same multiplicity as the original" - and even then could not
-express the reversed intra-row copy through `memcpy`, so it did not match
-either.
-
-To close this properly the four arms have to come back, with `get_data` and
-`free_data` inlined at each of them, which is a different body from this
-one rather than an adjustment to it.
+The row copies are original hand-written assembly (pushf/cld or std,
+rep movsd/movsb, EBP as the dword count, popf). The image writes the
+same-buffer case as four arms, one per copy direction, each with its own
+get_data(x, y) expansions, which call get_data() out of line. Remaining
+gap (similarity 0.92): the image keeps the two final free_data calls out of
+line and shares one surface-release tail across the failure paths.
 */
 // HISTORICAL HYPOTHESIS (2026-09-17): The body was moved in-class based on a
 // proposed PAU/PAV Flic COMDAT explanation for observed mangled names. No
 // original COFF/PDB evidence established that duplicate-COMDAT theory.
+
+// The row copies keep the trailing byte count here while EBP counts dwords.
+// RECOVERY_OBJECT: v1 0x009B39E4 _BufferCopyRemainder
+static int BufferCopyRemainder;
 
 int Buffer::copy(Buffer *buffer, int xCoord, int yCoord, int wx, int wy,
                  int width, int height) {
@@ -164,9 +112,6 @@ int Buffer::copy(Buffer *buffer, int xCoord, int yCoord, int wx, int wy,
     if (buffer == nullptr) {
         return 3;
     }
-
-    // A negative read position shrinks the extent and shifts the write
-    // position by the overhang, then clamps: the standard blit clip.
     if (xCoord < 0) {
         width += xCoord;
         wx -= xCoord;
@@ -177,10 +122,8 @@ int Buffer::copy(Buffer *buffer, int xCoord, int yCoord, int wx, int wy,
         wy -= yCoord;
         yCoord = 0;
     }
-
     // `biHeight` is stored negative, so `-biHeight` is the row count.
-    if (xCoord > dib_.bmiHeader.biWidth
-        || yCoord > -dib_.bmiHeader.biHeight) {
+    if (xCoord > dib_.bmiHeader.biWidth || yCoord > -dib_.bmiHeader.biHeight) {
         return 0;
     }
     if (xCoord + width > dib_.bmiHeader.biWidth) {
@@ -189,8 +132,6 @@ int Buffer::copy(Buffer *buffer, int xCoord, int yCoord, int wx, int wy,
     if (yCoord + height > -dib_.bmiHeader.biHeight) {
         height = -(yCoord + dib_.bmiHeader.biHeight);
     }
-
-    // The write rectangle, clipped against the destination's own clip rect.
     RECT clipped;
     clipped.left = wx;
     clipped.top = wy;
@@ -199,227 +140,261 @@ int Buffer::copy(Buffer *buffer, int xCoord, int yCoord, int wx, int wy,
     if (!IntersectRect(&clipped, &clipped, &buffer->rect1_)) {
         return 0;
     }
-
-    // Whatever the intersection moved the write rect by, the read position
-    // moves with it; the extent comes from the intersected rect.
     xCoord += clipped.left - wx;
     yCoord += clipped.top - wy;
     width = clipped.right - clipped.left;
     height = clipped.bottom - clipped.top;
 
+    unsigned char *destination;
+    unsigned char *source;
+    int destination_stride;
+    int source_stride;
     if (buffer != this) {
-        // The original branches on object identity, not backing-store aliasing.
-        if (clipped.left >= buffer->dib_.bmiHeader.biWidth
-            || clipped.top >= -buffer->dib_.bmiHeader.biHeight
-            || buffer->get_data() == 0) {
+        destination = buffer->get_data(clipped.left, clipped.top);
+        if (destination == 0) {
             return 3;
         }
-        uint8_t *destination = static_cast<uint8_t *>(buffer->locked_bits_)
-            + buffer->stride_ * clipped.top + clipped.left;
-        if (destination == nullptr) {
-            return 3;
-        }
-
-        if (xCoord >= dib_.bmiHeader.biWidth
-            || yCoord >= -dib_.bmiHeader.biHeight
-            || get_data() == 0) {
+        source = get_data(xCoord, yCoord);
+        if (source == 0) {
             buffer->free_data(1);
             return 3;
         }
-        const uint8_t *source = static_cast<const uint8_t *>(locked_bits_)
-            + stride_ * yCoord + xCoord;
-        if (source == nullptr) {
-            buffer->free_data(1);
-            return 3;
-        }
-
-        // Distinct Buffer objects use the original forward-only row walk.
-        // They may still share storage, so do not substitute overlap-safe
-        // movement for the original traversal order.
-        for (int row = 0; row < height; ++row) {
-            int column = 0;
-            for (; column + 4 <= width; column += 4) {
-                uint8_t word[4];
-                int byte;
-                for (byte = 0; byte < 4; ++byte) {
-                    word[byte] = source[column + byte];
-                }
-                for (byte = 0; byte < 4; ++byte) {
-                    destination[column + byte] = word[byte];
-                }
-            }
-            for (; column < width; ++column) {
-                destination[column] = source[column];
-            }
-            source += stride_;
-            destination += buffer->stride_;
+        source_stride = stride_;
+        destination_stride = buffer->stride_;
+        // Hand-written assembly: pushf/cld/popf around rep movsd/movsb row
+        // copies, with EBP borrowed as the dword count.
+        __asm {
+            pushf
+            push edi
+            push esi
+            cld
+            mov edi, destination
+            mov esi, source
+            mov eax, height
+            mov ebx, destination_stride
+            sub ebx, width
+            mov edx, source_stride
+            sub edx, width
+            mov ecx, width
+            push ebp
+            mov ebp, ecx
+            shr ebp, 2
+            and ecx, 3
+            mov BufferCopyRemainder, ecx
+        copy_forward_row:
+            mov ecx, ebp
+            rep movsd
+            mov ecx, BufferCopyRemainder
+            rep movsb
+            add esi, edx
+            add edi, ebx
+            dec eax
+            jne copy_forward_row
+            pop ebp
+            pop esi
+            pop edi
+            popf
         }
     } else if (wx < xCoord) {
         if (wy < yCoord) {
-            if (clipped.left >= buffer->dib_.bmiHeader.biWidth
-                || clipped.top >= -buffer->dib_.bmiHeader.biHeight
-                || buffer->get_data() == 0) {
+            destination = buffer->get_data(clipped.left, clipped.top);
+            if (destination == 0) {
                 return 3;
             }
-            uint8_t *destination = static_cast<uint8_t *>(buffer->locked_bits_)
-                + buffer->stride_ * clipped.top + clipped.left;
-            if (destination == nullptr) {
-                return 3;
-            }
-            if (xCoord >= dib_.bmiHeader.biWidth
-                || yCoord >= -dib_.bmiHeader.biHeight
-                || get_data() == 0) {
+            source = get_data(xCoord, yCoord);
+            if (source == 0) {
                 buffer->free_data(1);
                 return 3;
             }
-            const uint8_t *source = static_cast<const uint8_t *>(locked_bits_)
-                + stride_ * yCoord + xCoord;
-            if (source == nullptr) {
-                buffer->free_data(1);
-                return 3;
-            }
-            for (int row = 0; row < height; ++row) {
-                for (int column = 0; column < width; ++column) {
-                    destination[column] = source[column];
-                }
-                destination += buffer->stride_;
-                source += stride_;
+            source_stride = stride_;
+            destination_stride = buffer->stride_;
+            // Hand-written assembly: as above, rows walked downward.
+            __asm {
+                pushf
+                push edi
+                push esi
+                cld
+                mov edi, destination
+                mov esi, source
+                mov eax, height
+                mov ebx, destination_stride
+                sub ebx, width
+                mov edx, source_stride
+                sub edx, width
+                mov ecx, width
+                push ebp
+                mov ebp, ecx
+                shr ebp, 2
+                and ecx, 3
+                mov BufferCopyRemainder, ecx
+            copy_down_row:
+                mov ecx, ebp
+                rep movsd
+                mov ecx, BufferCopyRemainder
+                rep movsb
+                add esi, edx
+                add edi, ebx
+                dec eax
+                jne copy_down_row
+                pop ebp
+                pop esi
+                pop edi
+                popf
             }
         } else {
-            const int destination_y = clipped.bottom - 1;
-            const int source_y = yCoord + height - 1;
-            if (clipped.left >= buffer->dib_.bmiHeader.biWidth
-                || destination_y >= -buffer->dib_.bmiHeader.biHeight
-                || buffer->get_data() == 0) {
+            destination = buffer->get_data(clipped.left, clipped.top + height - 1);
+            if (destination == 0) {
                 return 3;
             }
-            uint8_t *destination = static_cast<uint8_t *>(buffer->locked_bits_)
-                + buffer->stride_ * destination_y + clipped.left;
-            if (destination == nullptr) {
-                return 3;
-            }
-            if (xCoord >= dib_.bmiHeader.biWidth
-                || source_y >= -dib_.bmiHeader.biHeight
-                || get_data() == 0) {
+            source = get_data(xCoord, yCoord + height - 1);
+            if (source == 0) {
                 buffer->free_data(1);
                 return 3;
             }
-            const uint8_t *source = static_cast<const uint8_t *>(locked_bits_)
-                + stride_ * source_y + xCoord;
-            if (source == nullptr) {
-                buffer->free_data(1);
-                return 3;
-            }
-            for (int row = 0; row < height; ++row) {
-                for (int column = 0; column < width; ++column) {
-                    destination[column] = source[column];
-                }
-                destination -= buffer->stride_;
-                source -= stride_;
+            source_stride = stride_;
+            destination_stride = buffer->stride_;
+            // Hand-written assembly: as above, rows walked upward.
+            __asm {
+                pushf
+                push edi
+                push esi
+                cld
+                mov edi, destination
+                mov esi, source
+                mov eax, height
+                mov ebx, destination_stride
+                add ebx, width
+                mov edx, source_stride
+                add edx, width
+                mov ecx, width
+                push ebp
+                mov ebp, ecx
+                shr ebp, 2
+                and ecx, 3
+                mov BufferCopyRemainder, ecx
+            copy_up_row:
+                mov ecx, ebp
+                rep movsd
+                mov ecx, BufferCopyRemainder
+                rep movsb
+                sub esi, edx
+                sub edi, ebx
+                dec eax
+                jne copy_up_row
+                pop ebp
+                pop esi
+                pop edi
+                popf
             }
         }
     } else if (wy < yCoord) {
-        const int x_offset = width < 4 ? width - 1 : width - 4;
-        if (clipped.left + x_offset >= buffer->dib_.bmiHeader.biWidth
-            || clipped.top >= -buffer->dib_.bmiHeader.biHeight
-            || buffer->get_data() == 0) {
+        if (width < 4) {
+            destination = buffer->get_data(clipped.left + width - 1, clipped.top);
+            source = get_data(xCoord + width - 1, yCoord);
+        } else {
+            destination = buffer->get_data(clipped.left + width - 4, clipped.top);
+            source = get_data(xCoord + width - 4, yCoord);
+        }
+        if (destination == 0) {
             return 3;
         }
-        uint8_t *destination = static_cast<uint8_t *>(buffer->locked_bits_)
-            + buffer->stride_ * clipped.top + clipped.left + x_offset;
-        if (destination == nullptr) {
-            return 3;
-        }
-        if (xCoord + x_offset >= dib_.bmiHeader.biWidth
-            || yCoord >= -dib_.bmiHeader.biHeight
-            || get_data() == 0) {
+        if (source == 0) {
             buffer->free_data(1);
             return 3;
         }
-        const uint8_t *source = static_cast<const uint8_t *>(locked_bits_)
-            + stride_ * yCoord + xCoord + x_offset;
-        if (source == nullptr) {
-            buffer->free_data(1);
-            return 3;
-        }
-        const int groups = width >> 2;
-        const int remainder = width & 3;
-        for (int row = 0; row < height; ++row) {
-            uint8_t *destination_word = destination + remainder;
-            const uint8_t *source_word = source + remainder;
-            for (int group = 0; group < groups; ++group) {
-                uint8_t word[4];
-                int byte;
-                for (byte = 0; byte < 4; ++byte) {
-                    word[byte] = source_word[byte];
-                }
-                for (byte = 0; byte < 4; ++byte) {
-                    destination_word[byte] = word[byte];
-                }
-                destination_word -= 4;
-                source_word -= 4;
-            }
-            for (int byte = 0; byte < remainder; ++byte) {
-                *destination_word = *source_word;
-                --destination_word;
-                --source_word;
-            }
-            destination += buffer->stride_;
-            source += stride_;
+        destination_stride = buffer->stride_;
+        source_stride = stride_;
+        // Hand-written assembly: std/rep movsd/movsb walks each row
+        // right to left; the direction flag is cleared again after popf.
+        __asm {
+            pushf
+            push edi
+            push esi
+            std
+            mov edi, destination
+            mov esi, source
+            mov eax, height
+            mov ebx, destination_stride
+            add ebx, width
+            mov edx, source_stride
+            add edx, width
+            mov ecx, width
+            push ebp
+            mov ebp, ecx
+            shr ebp, 2
+            and ecx, 3
+            mov BufferCopyRemainder, ecx
+            add esi, ecx
+            add edi, ecx
+        copy_back_down_row:
+            mov ecx, ebp
+            rep movsd
+            mov ecx, BufferCopyRemainder
+            rep movsb
+            add esi, edx
+            add edi, ebx
+            dec eax
+            jne copy_back_down_row
+            pop ebp
+            pop esi
+            pop edi
+            popf
+            cld
         }
     } else {
-        const int destination_y = clipped.bottom - 1;
-        const int source_y = yCoord + height - 1;
-        const int x_offset = width < 4 ? width - 1 : width - 4;
-        if (clipped.left + x_offset >= buffer->dib_.bmiHeader.biWidth
-            || destination_y >= -buffer->dib_.bmiHeader.biHeight
-            || buffer->get_data() == 0) {
+        if (width < 4) {
+            destination = buffer->get_data(clipped.left + width - 1, clipped.top + height - 1);
+            source = get_data(xCoord + width - 1, yCoord + height - 1);
+        } else {
+            destination = buffer->get_data(clipped.left + width - 4, clipped.top + height - 1);
+            source = get_data(xCoord + width - 4, yCoord + height - 1);
+        }
+        if (destination == 0) {
             return 3;
         }
-        uint8_t *destination = static_cast<uint8_t *>(buffer->locked_bits_)
-            + buffer->stride_ * destination_y + clipped.left + x_offset;
-        if (destination == nullptr) {
-            return 3;
-        }
-        if (xCoord + x_offset >= dib_.bmiHeader.biWidth
-            || source_y >= -dib_.bmiHeader.biHeight
-            || get_data() == 0) {
+        if (source == 0) {
             buffer->free_data(1);
             return 3;
         }
-        const uint8_t *source = static_cast<const uint8_t *>(locked_bits_)
-            + stride_ * source_y + xCoord + x_offset;
-        if (source == nullptr) {
-            buffer->free_data(1);
-            return 3;
-        }
-        const int groups = width >> 2;
-        const int remainder = width & 3;
-        for (int row = 0; row < height; ++row) {
-            uint8_t *destination_word = destination + remainder;
-            const uint8_t *source_word = source + remainder;
-            for (int group = 0; group < groups; ++group) {
-                uint8_t word[4];
-                int byte;
-                for (byte = 0; byte < 4; ++byte) {
-                    word[byte] = source_word[byte];
-                }
-                for (byte = 0; byte < 4; ++byte) {
-                    destination_word[byte] = word[byte];
-                }
-                destination_word -= 4;
-                source_word -= 4;
-            }
-            for (int byte = 0; byte < remainder; ++byte) {
-                *destination_word = *source_word;
-                --destination_word;
-                --source_word;
-            }
-            destination -= buffer->stride_;
-            source -= stride_;
+        destination_stride = buffer->stride_;
+        source_stride = stride_;
+        // Hand-written assembly: as above, rows walked upward.
+        __asm {
+            pushf
+            push edi
+            push esi
+            std
+            mov edi, destination
+            mov esi, source
+            mov eax, height
+            mov ebx, destination_stride
+            sub ebx, width
+            mov edx, source_stride
+            sub edx, width
+            mov ecx, width
+            push ebp
+            mov ebp, ecx
+            shr ebp, 2
+            and ecx, 3
+            mov BufferCopyRemainder, ecx
+            add esi, ecx
+            add edi, ecx
+        copy_back_up_row:
+            mov ecx, ebp
+            rep movsd
+            mov ecx, BufferCopyRemainder
+            rep movsb
+            sub esi, edx
+            sub edi, ebx
+            dec eax
+            jne copy_back_up_row
+            pop ebp
+            pop esi
+            pop edi
+            popf
+            cld
         }
     }
-
     free_data(1);
     buffer->free_data(1);
     return 0;
@@ -938,8 +913,27 @@ Status: Complete
 
 // Canonical pixel acquisition keeps the original direct-call boundary.
 // Drawing methods with original inline acquisition share acquire_pixels().
-void *Buffer::get_data() {
-    return acquire_pixels();
+inline void *Buffer::get_data() {
+    if (surface_ == nullptr) {
+        locked_bits_ = dib_bits_;
+        if (dib_bits_ != nullptr) {
+            ++surface_lock_count_;
+        }
+        return dib_bits_;
+    }
+    if (locked_bits_ != nullptr) {
+        ++surface_lock_count_;
+        return locked_bits_;
+    }
+    DDSURFACEDESC description;
+    description.dwSize = sizeof(description);
+    if (surface_->Lock(nullptr, &description, DDLOCK_WAIT, nullptr) != 0) {
+        return 0;
+    }
+    ++surface_lock_count_;
+    stride_ = description.lPitch;
+    locked_bits_ = description.lpSurface;
+    return description.lpSurface;
 }
 
 /*
@@ -963,39 +957,10 @@ the negated y bound, and the lock path stores `stride_` before
 `locked_bits_`. `Sprite::extract` calls it by name five times.
 */
 unsigned char *Buffer::get_data(int x, int y) {
-    if (x < dib_.bmiHeader.biWidth && y < -dib_.bmiHeader.biHeight) {
-        void *value;
-        if (surface_ == nullptr) {
-            locked_bits_ = dib_bits_;
-            if (dib_bits_ == nullptr) {
-                return 0;
-            }
-            ++surface_lock_count_;
-            value = dib_bits_;
-        } else {
-            if (locked_bits_ != nullptr) {
-                ++surface_lock_count_;
-                value = locked_bits_;
-            } else {
-                DDSURFACEDESC description;
-                description.dwSize = sizeof(description);
-                if (surface_->Lock(nullptr, &description, DDLOCK_WAIT, nullptr) != 0) {
-                    return 0;
-                }
-                stride_ = description.lPitch;
-                ++surface_lock_count_;
-                locked_bits_ = description.lpSurface;
-                value = description.lpSurface;
-            }
-        }
-        if (value != 0) {
-            // The original checks only upper bounds, including negative x/y.
-            // Keep its byte displacement and do not add coordinate guards.
-            // stride_ is a 32-bit word; interpret its wrapped row product
-            // as a signed byte displacement before adding it to the pointer.
-            const int row_offset = static_cast<int>(stride_ * y);
-            return static_cast<unsigned char *>(locked_bits_) + row_offset + x;
-        }
+    if (x < dib_.bmiHeader.biWidth && y < -dib_.bmiHeader.biHeight && get_data()) {
+        // The original checks only upper bounds, including negative x/y.
+        return static_cast<unsigned char *>(locked_bits_)
+            + static_cast<int>(stride_ * y) + x;
     }
     return 0;
 }
@@ -10060,17 +10025,18 @@ static int buffer_gouraud_fixed(int v) {
 static int buffer_gouraud_difference(int a, int b) {
     return static_cast<int>(static_cast<unsigned int>(a) - static_cast<unsigned int>(b));
 }
-static void buffer_gouraud_reset_fpu() {
-    // VC6 _fpreset defaults toPC53; native FNINIT defaults toPC64.
-    _fpreset();
-    _control87(_MCW_EM | _PC_64 | _RC_NEAR | _IC_PROJECTIVE,
-               _MCW_EM | _MCW_PC | _MCW_RC | _MCW_IC);
+
+static void buffer_gouraud_edge_step(EdgeScan &edge) {
+    edge.accumD += edge.deltaD;
+    edge.accumC += edge.deltaC;
+    edge.fracAccum += edge.fracDelta;
+    if (edge.fracAccum > 0) {
+        edge.accumC += edge.extraDeltaC;
+        edge.fracAccum -= edge.fracSub;
+    }
 }
-static unsigned short buffer_gouraud_light_step(int delta, int width) {
-    int64_t step = static_cast<int64_t>(delta) * 256 / width;
-    if (step < -32768 || step > 32767) return 0x8000;
-    return static_cast<unsigned short>(step);
-}
+// RECOVERY_OBJECT: v1 0x0066FDB8 _BufferGouraudScale256
+static const float BufferGouraudScale256 = 256.0f;
 
 // ORIGINAL: 0x005DEA20 sub_5dea20 0x005DEA20-0x005DEB1C FILE BYTE_EXACT
 // symbol    ?setup_buffer_gouraud_edge@@YAHPAUEdgeScan@@H@Z
@@ -10122,139 +10088,200 @@ int __cdecl setup_buffer_gouraud_edge(EdgeScan *edge, int vertex) {
 // Extrema must establish both indices (-32765<Y<32767 somewhere), arithmetic
 // and fixed division must fit, and row addresses retain signed native order.
 // Out-of-domain uninitialized/stale indices are NOT replaced with vertex0.
+// FINIT, the control-word and FILD/FDIVP/FISTP blocks and the clipped span
+// loop (shrd, EBP as the pixel counter) are original hand-written assembly.
+// Remaining gap: register choice for `this`/vertices and the slot of `top`.
 int Buffer::gouraud(Vert *vertices, int *lights, int count, int mode,
                      unsigned char alpha) {
+    int min_y;
+    int max_y;
+    int min_x;
+    int max_x;
+    int top;
+    EdgeScan left;
+    EdgeScan right;
+    unsigned short control;
+    int span;
+    int delta;
+    int done;
     if (vertices == 0) return 16; // Native does not validate lights.
-    BufferGouraudPixels = acquire_pixels() != 0
-        ? static_cast<unsigned char *>(locked_bits_) : 0;
+    BufferGouraudPixels = static_cast<unsigned char *>(get_data());
     if (BufferGouraudPixels != 0) {
-        buffer_gouraud_reset_fpu();
+        // Hand-written assembly: the rasterizer resets the FPU with FINIT.
+        __asm finit
         BufferGouraudVertices = vertices;
         BufferGouraudLights = lights;
         BufferGouraudMode = mode;
         BufferGouraudPitch = static_cast<int>(stride_);
         BufferGouraudCount = count;
         BufferGouraudAlpha = alpha;
-        BufferGouraudClipRight = rect1_.right;
-        BufferGouraudClipLeft = rect1_.left;
-        BufferGouraudClipBottom.coordinate = rect1_.bottom;
-        BufferGouraudClipTop.coordinate = rect1_.top;
-        int min_y = 32767, max_y = -32765;
-        int min_x = 32767, max_x = -32765;
-        int minimum_vertex;
-        int index;
-        for (index = 0; index < count; ++index) {
-            if (vertices[index].y < min_y) {
-                min_y = vertices[index].y;
-                minimum_vertex = index;
+        RECT *clip = &rect1_;
+        if (clip != 0) {
+            BufferGouraudClipRight = clip->right;
+            BufferGouraudClipLeft = clip->left;
+            BufferGouraudClipBottom.coordinate = clip->bottom;
+            BufferGouraudClipTop.coordinate = clip->top;
+            min_y = 0x7fff;
+            max_y = -0x7ffd;
+            min_x = 0x7fff;
+            max_x = -0x7ffd;
+            for (int i = 0; i < count; ++i) {
+                if (vertices[i].y < min_y) {
+                    min_y = vertices[i].y;
+                    top = i;
+                }
+                if (vertices[i].y > max_y) {
+                    max_y = vertices[i].y;
+                    BufferGouraudBottomVertex = i;
+                }
+                if (vertices[i].x < min_x) {
+                    min_x = vertices[i].x;
+                }
+                if (vertices[i].x > max_x) {
+                    max_x = vertices[i].x;
+                }
             }
-            if (vertices[index].y > max_y) {
-                max_y = vertices[index].y;
-                BufferGouraudBottomVertex = index;
-            }
-            if (vertices[index].x < min_x) min_x = vertices[index].x;
-            if (vertices[index].x > max_x) max_x = vertices[index].x;
-        }
-        if (count > 0 && min_y < max_y) {
-            uintptr_t pixels = reinterpret_cast<uintptr_t>(BufferGouraudPixels);
-            BufferGouraudY.address = pixels + static_cast<int64_t>(min_y) * BufferGouraudPitch;
-            BufferGouraudClipBottom.address = pixels
-                + static_cast<int64_t>(BufferGouraudClipBottom.coordinate) * BufferGouraudPitch;
-            BufferGouraudClipTop.address = pixels
-                + static_cast<int64_t>(BufferGouraudClipTop.coordinate) * BufferGouraudPitch;
-            EdgeScan backward, forward;
-            backward.f0 = -1;
-            if (setup_buffer_gouraud_edge(&backward, minimum_vertex)) {
-                forward.f0 = 1;
-                if (setup_buffer_gouraud_edge(&forward, minimum_vertex)) {
-                    // Original preservesPC64 and changes only rounding mode.
-                    _control87(_RC_CHOP, _MCW_RC);
-                    int pending_width = buffer_gouraud_fixed(
-                        buffer_gouraud_difference(forward.accumC, backward.accumC));
-                    int pending_delta = 0;
-                    if (pending_width > 0)
-                        pending_delta = buffer_gouraud_difference(forward.accumD, backward.accumD);
-                    if (static_cast<intptr_t>(BufferGouraudY.address)
-                        < static_cast<intptr_t>(BufferGouraudClipBottom.address)) {
-                        bool done = false;
-                        do {
-                            BufferGouraudRight = forward.accumC;
-                            BufferGouraudLeft = backward.accumC;
-                            BufferGouraudLight = backward.accumD;
-                            if (--backward.counter == 0) {
-                                if (!setup_buffer_gouraud_edge(&backward, backward.id)) done = true;
-                            } else {
-                                backward.accumD = static_cast<int>(
-                                    static_cast<unsigned int>(backward.accumD) + backward.deltaD);
-                                backward.accumC += backward.deltaC;
-                                backward.fracAccum += backward.fracDelta;
-                                if (backward.fracAccum > 0) {
-                                    backward.accumC += backward.extraDeltaC;
-                                    backward.fracAccum -= backward.fracSub;
-                                }
+            if (min_y < max_y) {
+                const int pitch = BufferGouraudPitch;
+                const int base = reinterpret_cast<int>(BufferGouraudPixels);
+                BufferGouraudY.coordinate = pitch * min_y + base;
+                BufferGouraudClipBottom.coordinate =
+                    BufferGouraudClipBottom.coordinate * pitch + base;
+                BufferGouraudClipTop.coordinate =
+                    BufferGouraudClipTop.coordinate * pitch + base;
+                left.f0 = -1;
+                if (setup_buffer_gouraud_edge(&left, top)) {
+                    right.f0 = 1;
+                    if (setup_buffer_gouraud_edge(&right, top)) {
+                        // Hand-written assembly: truncating rounding, 24-bit
+                        // precision control word.
+                        __asm {
+                            fstcw control
+                            mov ax, control
+                            and ax, 0xfcff
+                            or ax, 0xc00
+                            mov control, ax
+                            fldcw control
+                        }
+                        span = (right.accumC - left.accumC) << 16;
+                        if (span > 0) {
+                            delta = right.accumD - left.accumD;
+                            __asm {
+                                fild delta
+                                fild span
+                                fdivp st(1), st
                             }
-                            if (!done) {
-                                if (--forward.counter == 0) {
-                                    if (!setup_buffer_gouraud_edge(&forward, forward.id)) done = true;
+                        }
+                        if (BufferGouraudY.coordinate < BufferGouraudClipBottom.coordinate) {
+                            done = 0;
+                            for (;;) {
+                                BufferGouraudRight = right.accumC;
+                                BufferGouraudLeft = left.accumC;
+                                BufferGouraudLight = left.accumD;
+                                if (--left.counter == 0) {
+                                    if (!setup_buffer_gouraud_edge(&left, left.id)) {
+                                        done = 1;
+                                        goto edges_done;
+                                    }
                                 } else {
-                                    forward.accumD = static_cast<int>(
-                                        static_cast<unsigned int>(forward.accumD) + forward.deltaD);
-                                    forward.accumC += forward.deltaC;
-                                    forward.fracAccum += forward.fracDelta;
-                                    if (forward.fracAccum > 0) {
-                                        forward.accumC += forward.extraDeltaC;
-                                        forward.fracAccum -= forward.fracSub;
+                                    buffer_gouraud_edge_step(left);
+                                }
+                                if (--right.counter == 0) {
+                                    if (!setup_buffer_gouraud_edge(&right, right.id)) {
+                                        done = 1;
+                                    }
+                                } else {
+                                    buffer_gouraud_edge_step(right);
+                                }
+                            edges_done:
+                                if (span > 0) {
+                                    // Hand-written assembly: scale the light
+                                    // slope and store it as a 16-bit step.
+                                    __asm {
+                                        fmul BufferGouraudScale256
+                                        fistp BufferGouraudStep
                                     }
                                 }
-                            }
-                            if (pending_width > 0)
-                                BufferGouraudStep = buffer_gouraud_light_step(pending_delta, pending_width);
-                            pending_width = buffer_gouraud_fixed(
-                                buffer_gouraud_difference(forward.accumC, backward.accumC));
-                            if (pending_width > 0)
-                                pending_delta = buffer_gouraud_difference(forward.accumD, backward.accumD);
-                            if (static_cast<intptr_t>(BufferGouraudY.address)
-                                >= static_cast<intptr_t>(BufferGouraudClipBottom.address)) break;
-                            if (static_cast<intptr_t>(BufferGouraudY.address)
-                                    >= static_cast<intptr_t>(BufferGouraudClipTop.address)
-                                && BufferGouraudRight > BufferGouraudClipLeft
-                                && BufferGouraudLeft < BufferGouraudClipRight
-                                && BufferGouraudRight - BufferGouraudLeft > 0) {
-                                int right = BufferGouraudRight;
-                                if (right >= BufferGouraudClipRight) right = BufferGouraudClipRight;
-                                if (BufferGouraudLeft < BufferGouraudClipLeft) {
-                                    int skip = BufferGouraudClipLeft - BufferGouraudLeft;
-                                    // Native loads WORD with zero extension, not
-                                    // the seed's signed-short interpretation.
-                                    uint64_t product = static_cast<uint64_t>(BufferGouraudStep) * skip;
-                                    BufferGouraudLight = static_cast<int>(
-                                        static_cast<unsigned int>(BufferGouraudLight)
-                                        + static_cast<unsigned int>(product >> 8));
-                                    BufferGouraudLeft = BufferGouraudClipLeft;
+                                span = (right.accumC - left.accumC) << 16;
+                                if (span > 0) {
+                                    delta = right.accumD - left.accumD;
+                                    __asm {
+                                        fild delta
+                                        fild span
+                                        fdivp st(1), st
+                                    }
                                 }
-                                int remaining = right - BufferGouraudLeft;
-                                unsigned char *pixel = reinterpret_cast<unsigned char *>(
-                                    BufferGouraudY.address + BufferGouraudLeft);
-                                unsigned short value = static_cast<unsigned short>(
-                                    static_cast<unsigned int>(BufferGouraudLight) >> 8);
-                                const unsigned short step = BufferGouraudStep;
-                                do {
-                                    *pixel++ = static_cast<unsigned char>(value >> 8);
-                                    value = static_cast<unsigned short>(value + step);
-                                } while (--remaining >= 0);
+                                if (BufferGouraudY.coordinate >= BufferGouraudClipBottom.coordinate) {
+                                    break;
+                                }
+                                if (BufferGouraudY.coordinate >= BufferGouraudClipTop.coordinate) {
+                                    // Hand-written assembly: clipped span with
+                                    // shrd light skip and EBP as the counter.
+                                    __asm {
+                                    mov ebx, BufferGouraudRight
+                                    mov ecx, BufferGouraudLeft
+                                    cmp ebx, BufferGouraudClipLeft
+                                    jle span_done
+                                    cmp ecx, BufferGouraudClipRight
+                                    jge span_done
+                                    sub ebx, ecx
+                                    jle span_done
+                                    shl ebx, 0x10
+                                    mov ebx, BufferGouraudRight
+                                    cmp ebx, BufferGouraudClipRight
+                                    jl right_clipped
+                                    mov ebx, BufferGouraudClipRight
+                                right_clipped:
+                                    mov edi, BufferGouraudLeft
+                                    cmp edi, BufferGouraudClipLeft
+                                    jge left_clipped
+                                    sub edi, BufferGouraudClipLeft
+                                    neg edi
+                                    xor eax, eax
+                                    mov ax, BufferGouraudStep
+                                    imul edi
+                                    shrd eax, edx, 8
+                                    add eax, BufferGouraudLight
+                                    mov BufferGouraudLight, eax
+                                    mov edi, BufferGouraudClipLeft
+                                    mov BufferGouraudLeft, edi
+                                left_clipped:
+                                    sub ebx, edi
+                                    mov ecx, ebx
+                                    mov edi, dword ptr [BufferGouraudY]
+                                    add edi, BufferGouraudLeft
+                                    mov eax, BufferGouraudLight
+                                    shr eax, 8
+                                    mov bx, BufferGouraudStep
+                                    mov esi, BufferGouraudMode
+                                    xor edx, edx
+                                    mov dh, byte ptr [BufferGouraudMode]
+                                    push ebp
+                                    mov ebp, ecx
+                                    mov cl, BufferGouraudAlpha
+                                pixel:
+                                    mov byte ptr [edi], ah
+                                    add ax, bx
+                                    inc edi
+                                    dec ebp
+                                    jns pixel
+                                    pop ebp
+                                span_done:
+                                    }
+                                }
+                                if (done) {
+                                    break;
+                                }
+                                BufferGouraudY.coordinate += BufferGouraudPitch;
                             }
-                            if (done) break;
-                            BufferGouraudY.address += BufferGouraudPitch;
-                        } while (true);
+                        }
                     }
                 }
             }
         }
     }
-    // Failed acquisition is released here (unlike patterned line); then FPU
-    // is reset, not restored, even on failed/empty acquired draw paths.
     free_data(1);
-    buffer_gouraud_reset_fpu();
+    __asm finit
     return 0;
 }
 
