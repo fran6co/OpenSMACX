@@ -644,7 +644,7 @@ void PrefWin::update_pref_buttons() {
   }
 }
 
-// ORIGINAL: 0x00490350 ?set_preferences@PrefWin@@QAEXXZ 0x00490350-0x00490AFA FILE
+// ORIGINAL: 0x00490350 ?set_preferences@PrefWin@@QAEXXZ 0x00490350-0x00490AFA FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/00490350.cpp", "recovery/tasks/prefwin-owner-coverage-wave.json", "Original control parent 8578D8; ctor/destructor member order, 800-pixel branch, checkbox text-context and callback order independently reviewed."], "reason": "Recover the complete PrefWin ownership group through a genuine GraphicWin base and compiler-owned embedded control lifetimes; preserve seed identity, original spans and unresolved discoveries without granting byte claims."}
 // TRIED: declared each CheckBox* group pointer lazily, right before its first get_state_id() call (matching the original's `lea edi, [esi+OFFSET]` sitting immediately before that group's first push), instead of all six upfront. Moved divergence #1(sim0.98)->#63 on the frameless build (original prologue is `push esi; mov esi,ecx; push edi` with no `push ebp`, so that is the row that matters, not the framed one the ranking line shows). Not chased further given size (1962 bytes / ~71 mechanical get_state_id calls).
 void PrefWin::set_preferences() {
