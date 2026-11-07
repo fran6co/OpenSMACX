@@ -4095,7 +4095,7 @@ unsigned char TerrainCoastPalette[12];
 
 
 
-// ORIGINAL: 0x00453710 ?load_faction_art@@YAXH@Z 0x00453710-0x00453A17
+// ORIGINAL: 0x00453710 ?load_faction_art@@YAXH@Z 0x00453710-0x00453A17 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["historical retired seed src/unrecovered/00453710.cpp", "recovery/tasks/ambience-faction-art-owner-oct5.json", "pinned complete original spans; fresh native owner compilation and actual-source behavior controls"], "reason": "Complete semantic recovery through genuine source-owned members, globals and lifetime operations; retain original defects and historical obligations. Current byte restoration remains unfinished."}
 // symbol    ?load_faction_art@@YAXH@Z
 // Historical forwarder discovery (Git b295f309, pending_bodies.cpp):
