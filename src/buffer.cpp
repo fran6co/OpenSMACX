@@ -3809,7 +3809,7 @@ int Buffer::write_l(LPSTR text, RECT *rect, int len) {
 /*
 Purpose: Draw at most `len` characters of a string horizontally centred in a
          span of `width` pixels starting at an explicit pen position.
-// ORIGINAL: 0x005DD020 ?write_cent_l@Buffer@@QAEHPADHHHH@Z 0x005DD020-0x005DD0D2
+// ORIGINAL: 0x005DD020 ?write_cent_l@Buffer@@QAEHPADHHHH@Z 0x005DD020-0x005DD0D2 BYTE_EXACT
 // size      178 bytes
 // prototype int (__thiscall ?write_cent_l@Buffer@@QAEHPADHHHH@Z)(Buffer* this, int8*, int, int, int, int)
 // callers   30   call targets   3
@@ -4039,7 +4039,7 @@ int __stdcall sub_5da6b0(int, int, int, int) {
     return 8;
 }
 
-// ORIGINAL: 0x005DD300 ?write_right_l@Buffer@@QAEHPADHHHH@Z 0x005DD300-0x005DD3A5 FILE
+// ORIGINAL: 0x005DD300 ?write_right_l@Buffer@@QAEHPADHHHH@Z 0x005DD300-0x005DD3A5 FILE BYTE_EXACT
 // LEVER: X BEFORE Y, the reverse of what the note below used to claim. The
 //        image adds `field_width - text_width` to the SECOND parameter and
 //        passes that as write_multi_font_raw_l's second argument, and its
@@ -6977,7 +6977,7 @@ int Buffer::wrap_right(char *text, int x_coord, int y_coord, int max_width) {
     return current_y;
 }
 
-// ORIGINAL: 0x005DD530 ?wrap@Buffer@@QAEHPADPAURECT@@@Z 0x005DD530-0x005DD730 FILE
+// ORIGINAL: 0x005DD530 ?wrap@Buffer@@QAEHPADPAURECT@@@Z 0x005DD530-0x005DD730 FILE BYTE_EXACT
 // symbol    ?wrap@Buffer@@QAEHPADPAUtagRECT@@@Z
 // TRIED: MISMATCH #2 'push' vs 'sub' - direct transcription of the Ghidra do-while, using font1_ (0x52C) and its font_obj_ (+8); the entry-block stack-frame allocation shape diverges from the original almost immediately, not chased further.
 // working copy - scaffold materialised by --work
@@ -7295,7 +7295,7 @@ inline int Buffer::change_color(int a1, int a2, int a3, int a4, int a5, int a6) 
 // Geometry differences fit signed integers. Numeric address arithmetic
 // preserves native pointer-width wrap and the original zero-address check.
 // Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x005DA330 ?map_colors@Buffer@@QAEHHHHHPAE@Z 0x005DA330-0x005DA4C1 FILE
+// ORIGINAL: 0x005DA330 ?map_colors@Buffer@@QAEHHHHHPAE@Z 0x005DA330-0x005DA4C1 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["5DA330..5DA4C1 has five explicit stack arguments;5DA39B snapshots stride-width before Lock,5DA41A computes first pixel using post-Lock pitch,5DA455..45A translates live indexed bytes, and only completed painting reaches5DA46D release. Failure returns7 without release; null table returns16."], "reason": "The coordinate colour remapper owns Buffer pixel acquisition and release; it reads the supplied translation table live for each byte in the exclusive clipped rectangle."}
 int Buffer::map_colors(int left, int top, int right, int bottom,
                        unsigned char *table) {
@@ -7356,7 +7356,7 @@ int Buffer::map_colors(int left, int top, int right, int bottom,
     return 0;
 }
 
-// ORIGINAL: 0x005DA4D0 ?map_colors@Buffer@@QAEHPAURECT@@PAE@Z 0x005DA4D0-0x005DA67D
+// ORIGINAL: 0x005DA4D0 ?map_colors@Buffer@@QAEHPAURECT@@PAE@Z 0x005DA4D0-0x005DA67D BYTE_EXACT
 // symbol    ?map_colors@Buffer@@QAEHPAUtagRECT@@PAE@Z
 //           windows.h typedefs RECT to struct tagRECT, so the pointer mangles
 //           with the real tag.
