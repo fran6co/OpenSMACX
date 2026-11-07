@@ -47,7 +47,7 @@
 
 /*
 Purpose: Handle setting the world altitude.
-// ORIGINAL: 0x005C2020 ?world_alt_set@@YAXHHHH@Z 0x005C2020-0x005C2374
+// ORIGINAL: 0x005C2020 ?world_alt_set@@YAXHHHH@Z 0x005C2020-0x005C2374 BYTE_EXACT
 // LEVER: the image inlines anything_at here (no call; bit&3 then val2&0xF<8).
 //   With anything_at as a `MEASURED inline` in map.h this body is BYTE_EXACT.
 // size      852 bytes
