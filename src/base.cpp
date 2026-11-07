@@ -5265,91 +5265,72 @@ void __cdecl base_change(int base_id, int production_id) {
 
 // ORIGINAL: 0x004E5FE0 ?base_reset@@YAXHH@Z 0x004E5FE0-0x004E62FB
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/004e5fe0.cpp", "source:src/base.h", "source:src/base.cpp:BaseSiteClaimX/BaseSiteClaimY are the four 0x0090EA44/54 site-output arrays", "source:src/base.h:Base.location is the 0x130 field read as 0x0097D090 + base_id*0x134", "pinned image:0x00689484 contains secproj_sm.pcx;0x00689494 contains GOVPROJECT"], "reason": "Recover the base reset/site selection operation using the typed Base and faction state, four source-owned site claims, and source-owned popup text. Preserve the existing seed and mismatch obligation; base_build/base_change remain explicit link-only dependencies."}
+// The governor prompt's result is popp's return (the image keeps it in esi
+// across the help loop), not parse_say's.
 void __cdecl base_reset(int base_id, int force) {
-    const uint8_t faction = Bases[base_id].faction_id_current;
-    const uint8_t faction_bit = static_cast<uint8_t>(1u << faction);
-    const uint8_t active_mask = GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_;
-    uint32_t state = Bases[base_id].state;
-
-    if ((faction_bit & active_mask) != 0
-        && (state & BSTATE_UNK_8000000000) != 0 && force != 0) {
-        int loop_count = 0;
+    int loop_count = 0;
+    int faction = Bases[base_id].faction_id_current;
+    if (((1 << faction) & GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_)
+        && (Bases[base_id].state & BSTATE_UNK_8000000000) && force) {
+        uint32_t state = Bases[base_id].state;
         for (int site = 0; site < 4; ++site) {
-            BaseSiteClaimX[site] = 0;
             BaseSiteClaimY[site] = 999999;
+            BaseSiteClaimX[site] = 0;
         }
-
-        if ((state & 0x0F000000u) != 0) {
+        if (state & 0x0F000000u) {
             for (;;) {
-                Bases[base_id].state = (Bases[base_id].state & 0xF1FFFFFFu)
-                    | BSTATE_UNK_1000000;
+                Bases[base_id].state = (Bases[base_id].state & 0xF1FFFFFFu) | BSTATE_UNK_1000000;
                 BaseSiteClaimX[0] = base_build(base_id, 0, 0, &BaseSiteClaimY[0]);
-                Bases[base_id].state = (Bases[base_id].state & 0xF2FFFFFFu)
-                    | BSTATE_UNK_2000000;
+                Bases[base_id].state = (Bases[base_id].state & 0xF2FFFFFFu) | BSTATE_UNK_2000000;
                 BaseSiteClaimX[1] = base_build(base_id, 0, 0, &BaseSiteClaimY[1]);
-                if (BaseSiteClaimX[0] == BaseSiteClaimX[1]) {
-                    ++loop_count;
-                    if (loop_count < 8) continue;
+                if (BaseSiteClaimX[0] == BaseSiteClaimX[1] && ++loop_count < 8) {
+                    continue;
                 }
-
-                Bases[base_id].state = (Bases[base_id].state & 0xF4FFFFFFu)
-                    | BSTATE_UNK_4000000;
+                Bases[base_id].state = (Bases[base_id].state & 0xF4FFFFFFu) | BSTATE_UNK_4000000;
                 BaseSiteClaimX[2] = base_build(base_id, 0, 0, &BaseSiteClaimY[2]);
-                if ((BaseSiteClaimX[0] != BaseSiteClaimX[2]
-                     && BaseSiteClaimX[1] != BaseSiteClaimX[2])
-                    || (++loop_count, loop_count > 7)) {
-                    Bases[base_id].state = (Bases[base_id].state & 0xF8FFFFFFu)
-                        | BSTATE_UNK_8000000;
-                    BaseSiteClaimX[3] = base_build(base_id, 0, 0, &BaseSiteClaimY[3]);
-                    if ((BaseSiteClaimX[0] != BaseSiteClaimX[3]
-                         && BaseSiteClaimX[1] != BaseSiteClaimX[3]
-                         && BaseSiteClaimX[2] != BaseSiteClaimX[3])
-                        || (++loop_count, loop_count > 7)) {
-                        Bases[base_id].state = state;
-                        break;
-                    }
+                if ((BaseSiteClaimX[0] == BaseSiteClaimX[2] || BaseSiteClaimX[1] == BaseSiteClaimX[2])
+                    && ++loop_count < 8) {
+                    continue;
                 }
+                Bases[base_id].state = (Bases[base_id].state & 0xF8FFFFFFu) | BSTATE_UNK_8000000;
+                BaseSiteClaimX[3] = base_build(base_id, 0, 0, &BaseSiteClaimY[3]);
+                if ((BaseSiteClaimX[0] == BaseSiteClaimX[3] || BaseSiteClaimX[1] == BaseSiteClaimX[3]
+                     || BaseSiteClaimX[2] == BaseSiteClaimX[3])
+                    && ++loop_count < 8) {
+                    continue;
+                }
+                break;
             }
+            Bases[base_id].state = state;
         }
-
-        const int production = base_build(base_id, 0, 0, &loop_count);
-        base_change(base_id, production);
+        base_change(base_id, base_build(base_id, 0, 0, &loop_count));
         return;
     }
-
-    const int location = Bases[base_id].location;
-    int production = base_build(base_id, 0, 0, 0);
-    base_change(base_id, production);
-
-    const uint8_t current_active_mask = GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_;
-    if ((faction_bit & current_active_mask) == 0) return;
-    if ((Bases[base_id].state & BSTATE_UNK_8000000000) == 0) return;
-    if (location <= -0x46) return;
-    if (Bases[base_id].location > -0x46) return;
-    if (IsMultiplayerNet != 0) return;
-    if ((GameDataStateStorage.fields_.game_state_ & STATE_UNK_1) != 0) return;
-
-    const int absolute_location = location < 0 ? -location : location;
-    const char *const base_name = Bases[base_id].name_string;
-    int say_result;
-    for (;;) {
-        parse_says(0, base_name, -1, -1);
-        say_result = parse_say(1, Facility[absolute_location].name, -1, -1);
-        // These two original .data slots contain these NUL-terminated strings
-        // in the pinned PE; use application-owned literals in the rebuilt tree.
-        if (popp(ScriptPopupFile, "GOVPROJECT", 0,
-                 "secproj_sm.pcx", 0) != 3) {
-            break;
-        }
-        help_topic(0x0B, absolute_location);
+    int location = Bases[base_id].location;
+    base_change(base_id, base_build(base_id, 0, 0, 0));
+    if (!((1 << faction) & GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_)) return;
+    if (!(Bases[base_id].state & BSTATE_UNK_8000000000)) return;
+    if (location <= -70) return;
+    if (Bases[base_id].location > -70) return;
+    if (IsMultiplayerNet) return;
+    if (GameDataStateStorage.fields_.game_state_ & STATE_UNK_1) return;
+    if (Bases[base_id].location >= 0) {
+        location = Bases[base_id].location;
+    } else {
+        location = -Bases[base_id].location;
     }
-
-    if (say_result == 0) return;
-
-    production = base_build(-1 - base_id, 0, 0, 0);
-    base_change(base_id, production);
-    if (say_result <= 1) return;
-
+    int choice = 3;
+    while (choice == 3) {
+        parse_says(0, Bases[base_id].name_string, -1, -1);
+        parse_say(1, Facility[location].name, -1, -1);
+        choice = popp(ScriptPopupFile, "GOVPROJECT", 0, "secproj_sm.pcx", 0);
+        if (choice == 3) {
+            help_topic(0x0B, location);
+        }
+    }
+    if (!choice) return;
+    base_change(base_id, base_build(-1 - base_id, 0, 0, 0));
+    if (choice <= 1) return;
     BaseCurrent->governor &= ~0x00040000u;
     PlayersData[faction].flags &= ~0x00040000u;
 }
@@ -5657,10 +5638,12 @@ Purpose: Set the current base globals.
 Return Value: n/a
 Status: Complete
 */
+#pragma auto_inline(off)
 void __cdecl set_base(int base_id) {
     BaseIDCurrentSelected = base_id;
     BaseCurrent = &Bases[base_id];
 }
+#pragma auto_inline(on)
 
 
 /*
@@ -5823,6 +5806,7 @@ Purpose: Find the base id closest to the specified coordinates owned by faction.
 Return Value: Base id or -1 if not found
 Status: Complete
 */
+#pragma auto_inline(off)
 int __cdecl base_find(int x, int y, int faction_id) {
     int proximity = 9999;
     int base_id = -1;
@@ -5840,6 +5824,7 @@ int __cdecl base_find(int x, int y, int faction_id) {
     }
     return base_id;
 }
+#pragma auto_inline(on)
 
 /*
 Purpose: Find the base id closest to the specified coordinates meeting various conditional checks.
@@ -9392,17 +9377,11 @@ Status: Complete
 /*
 Purpose: Suggest the base the specified pair of factions should agree to attack together.
 // ORIGINAL: 0x0054ACC0 ?suggest_plan@@YAHHH@Z 0x0054ACC0-0x0054AF9D
-// TRIED: `call_diff` flags this MORE (9 calls vs the image's 8: extra
-// `region_at`/`vector_dist`, missing `_abs`) but it is a KNOWN, MEASURED
-// trade-off, not an unexamined gap - see the full "Verification note" /
-// "TRIED" prose in the Purpose block below (kept where it was written;
-// a marker-position scan does not reach prose after `Return Value:`, which
-// is why this address kept reading as untouched). Open-coding the
-// x_target/y_target `vector_dist` call as the `x_dist()+abs()x4` expansion
-// that the image's callee list implies measured WORSE here (best similarity
-// 0.728 -> 0.689 across all flag sets, same agreeing-instruction count), so
-// the real `vector_dist(...)` call is kept deliberately even though it
-// disagrees with `call_diff`.
+// LEVER: nested ifs (not continue) with the visibility test re-reading
+//        Bases[i].faction_id_current keep the image's dead owner compare;
+//        the map.h vector_dist inline; base_find(x,y,faction) is kept
+//        out of line with auto_inline(off). Remaining gap: ebx holds
+//        faction_id across the distance block in the image (spills there).
 // size      733 bytes
 // prototype
 // callers   1   call targets   3
@@ -9443,22 +9422,9 @@ the six-argument base_find does, but the loop already skipped that base at 0x005
 because it is what the image does, and it is still covered: inverting the comparison stops the
 body skipping bases faction_id cannot see, which the fixtures observe.
 
-Verification note: three sites the image inlines are written here as calls, each of which is
-instruction-for-instruction the standalone body in the image - x_dist (0x00579790) and the
-two-argument vector_dist (0x004F8090), reached together through the four-argument vector_dist, and
-region_at (0x00500220), which the original expands three separate times. The inlined map_loc
-halves x with SAR where the exported region_at takes uint32_t and would use SHR; the two agree for
-every non-negative coordinate, which is all a base or a target tile can hold.
+Verification note: the image inlines the four-argument vector_dist (x_dist plus the two-argument
+form, four abs calls) and region_at three times; the map.h vector_dist inline reproduces the former.
 
-// TRIED: open-coding the x_target/y_target vector_dist call as the
-//            x_dist()+abs()x4 expansion (the same shape that works on
-//            base_find and black_market) measured WORSE here: best
-//            similarity across all flag sets dropped from 0.728
-//            (/c /O2 /Gy /GR- /Oy- /GX, 6/233 agreeing) to 0.689
-//            (/c /O2 /Ob0 /Gy /GR- /Oy- /GX, 6/233 agreeing) - same
-//            agreeing count, lower similarity, and the default-flags
-//            similarity at the SAME flag set collapsed to 0.354. Left as a
-//            real vector_dist(...) call.
 */
 int __cdecl suggest_plan(int faction_id, int faction_id_2) {
     PopupDialogFactionID = faction_id_2;
@@ -9466,43 +9432,41 @@ int __cdecl suggest_plan(int faction_id, int faction_id_2) {
     int base_id_best = -1;
     for (int i = 0; i < GameDataStateStorage.fields_.base_current_count_; i++) {
         int faction_id_base = Bases[i].faction_id_current;
-        if (faction_id_base == faction_id || faction_id_base == faction_id_2) {
-            continue;
-        }
-        if (!(PlayersData[faction_id].diplo_treaties[faction_id_base] & DTREATY_VENDETTA)
-            || !(PlayersData[faction_id_2].diplo_treaties[faction_id_base] & DTREATY_VENDETTA)) {
-            continue;
-        }
-        if (faction_id_base != faction_id && !((1 << faction_id) & Bases[i].visibility)) {
-            continue;
-        }
-        int cost = 0;
-        if (PlayersData[faction_id].x_target >= 0) {
-            int x_target = PlayersData[faction_id].x_target;
-            int y_target = PlayersData[faction_id].y_target;
-            cost = 2 * vector_dist(x_target, y_target, Bases[i].x, Bases[i].y);
-            if (region_at(Bases[i].x, Bases[i].y) != region_at(x_target, y_target)) {
-                cost += 512;
+        if (faction_id_base != faction_id && faction_id_base != faction_id_2
+            && (PlayersData[faction_id].diplo_treaties[faction_id_base] & DTREATY_VENDETTA)
+            && (PlayersData[faction_id_2].diplo_treaties[faction_id_base] & DTREATY_VENDETTA)) {
+            if (Bases[i].faction_id_current == faction_id || ((1 << faction_id) & Bases[i].visibility)) {
+                int cost = 0;
+                if (PlayersData[faction_id].x_target >= 0) {
+                    cost = 2 * vector_dist(PlayersData[faction_id].x_target,
+                                              PlayersData[faction_id].y_target, Bases[i].x,
+                                              Bases[i].y);
+                    if (region_at(Bases[i].x, Bases[i].y)
+                        != region_at(PlayersData[faction_id].x_target,
+                                     PlayersData[faction_id].y_target)) {
+                        cost += 512;
+                    }
+                }
+                if (base_find(Bases[i].x, Bases[i].y, faction_id,
+                              region_at(Bases[i].x, Bases[i].y), -1, -1) < 0) {
+                    base_find(Bases[i].x, Bases[i].y, faction_id);
+                    BaseFindDist += 1024;
+                }
+                cost += BaseFindDist * ((PlayersData[faction_id].x_target >= 0) ? 2 : 1);
+                if (base_find(Bases[i].x, Bases[i].y, faction_id_2,
+                              region_at(Bases[i].x, Bases[i].y), -1, -1) < 0) {
+                    base_find(Bases[i].x, Bases[i].y, faction_id_2);
+                    BaseFindDist += 256;
+                }
+                cost += BaseFindDist;
+                if (PlayersData[faction_id].base_id_atk_target == i) {
+                    return i;
+                }
+                if (cost < lowest_cost) {
+                    lowest_cost = cost;
+                    base_id_best = i;
+                }
             }
-        }
-        if (base_find(Bases[i].x, Bases[i].y, faction_id, region_at(Bases[i].x, Bases[i].y),
-                      -1, -1) < 0) {
-            base_find(Bases[i].x, Bases[i].y, faction_id);
-            BaseFindDist += 1024;
-        }
-        cost += BaseFindDist * ((PlayersData[faction_id].x_target >= 0) ? 2 : 1);
-        if (base_find(Bases[i].x, Bases[i].y, faction_id_2, region_at(Bases[i].x, Bases[i].y),
-                      -1, -1) < 0) {
-            base_find(Bases[i].x, Bases[i].y, faction_id_2);
-            BaseFindDist += 256;
-        }
-        cost += BaseFindDist;
-        if (PlayersData[faction_id].base_id_atk_target == i) {
-            return i;
-        }
-        if (cost < lowest_cost) {
-            lowest_cost = cost;
-            base_id_best = i;
         }
     }
     return base_id_best;
@@ -9528,37 +9492,19 @@ Return Value: Base id to attack from or 0
 Status: Complete
 */
 int __cdecl attack_from(int base_id_to_atk, int faction_id) {
-    uint32_t region_src = region_at(Bases[base_id_to_atk].x, Bases[base_id_to_atk].y);
-    int base_id_atk_from = 0; // TODO: eventually change this to -1 and add handling to the return
     int search = 9999;        // value to prevent the edge case of base id 0 being incorrect target
+    int base_id_atk_from = 0; // TODO: eventually change this to -1 and add handling to the return
+    uint32_t region_src = region_at(Bases[base_id_to_atk].x, Bases[base_id_to_atk].y);
     for (int i = 0; i < GameDataStateStorage.fields_.base_current_count_; i++) {
         if (Bases[i].faction_id_current == faction_id) {
-            int x = Bases[i].x;
-            int y = Bases[i].y;
-            int compare;
-            if (x == PlayersData[faction_id].x_target && y == PlayersData[faction_id].y_target) {
+            // Inlined vector_dist: the image calls abs() four times.
+            int compare = vector_dist(Bases[i].x, Bases[i].y, Bases[base_id_to_atk].x,
+                                         Bases[base_id_to_atk].y);
+            if (Bases[i].x == PlayersData[faction_id].x_target
+                && Bases[i].y == PlayersData[faction_id].y_target) {
                 compare = 0;
-            } else {
-                // Open-coded vector_dist(x, y, Bases[base_id_to_atk].x,
-                // Bases[base_id_to_atk].y): the image calls abs() four
-                // times, never vector_dist itself - see del_site
-                // (0x00579E70) and base_find (0x004E3B80) for the same
-                // expansion.
-                int dx = x_dist(x, Bases[base_id_to_atk].x);
-                int dy = abs(y - Bases[base_id_to_atk].y);
-                int abs_dx = abs(dx);
-                int abs_dy = abs(dy);
-                int largest = abs_dx;
-                if (abs_dx <= abs_dy) {
-                    largest = abs_dy;
-                }
-                int smallest = abs_dx;
-                if (abs_dx >= abs_dy) {
-                    smallest = abs_dy;
-                }
-                compare = largest - ((((abs_dy + abs_dx) >> 1) - smallest + 1) >> 1);
             }
-            if (region_at(x, y) != region_src) {
+            if (region_at(Bases[i].x, Bases[i].y) != region_src) {
                 compare += 1000;
             }
             if (compare <= search) {
@@ -9595,46 +9541,51 @@ Purpose: Determine the value of the specified base between the requester and the
 // kind      game
 // flags     frame;sp_ready;purged_ok
 // calls     0x004E3A50 0x0050BA00 0x0059E980 0x005AC060 0x005B8E10 0x005BFE90 0x00645660
-// TRIED: widening `value`, `base_pop_factor`, `res_base_count_region`,
-//            `req_base_count_region` and `facil_count` from uint32_t to int
-//            (to get signed cdq/sar and jge/jl instead of shr/jae) measured
-//            WORSE at every flag set - best case dropped from 9/337 agreeing
-//            (0.226 similar, /c /O2 /Gy /GR- /Oy- /GX) to 5/337 (0.218
-//            similar). Left as uint32_t; the "Bug fix: treat value as
-//            unsigned" comment stays.
+// LEVER: plain int arithmetic (no wrap helpers), x/y re-read from Bases,
+//        region_at inside each owner branch, uint8 region counts read in
+//        place, and an inlined veh_top copy. Remaining gap: the image walks
+//        the secret-project loop with a pointer and keeps base_id unloaded.
 Return Value: Value of base or -1 for invalid requests
 Status: Complete - testing
 */
+// The image inlines veh_top here (no call to 0x00579920).
+static inline int value_of_base_veh_top(int veh_id) {
+    int top_veh_id = veh_id;
+    if (veh_id < 0) {
+        return -1;
+    }
+    for (int16_t i = Vehs[top_veh_id].prev_veh_id_stack; i >= 0; i = Vehs[i].prev_veh_id_stack) {
+        top_veh_id = i;
+    }
+    return top_veh_id;
+}
+
 int __cdecl value_of_base(int base_id, int faction_id_req, int faction_id_res,
                           int overmatch_deg, BOOL tgl) {
     if (base_id < 0) {
         return -1;
     }
-    int x = Bases[base_id].x;
-    int y = Bases[base_id].y;
-    int dist_factor = vulnerable(faction_id_req, x, y);
+    int dist_factor = vulnerable(faction_id_req, Bases[base_id].x, Bases[base_id].y);
     if (dist_factor <= 0) {
         return -1;
     }
-    uint32_t region_base = region_at(x, y);
-    for (int i = 1; i < RadiusRange[6]; i++) {
-        int x_radius = wrap_map_x(x + RadiusOffsetX[i]);
-        int y_radius = y + RadiusOffsetY[i];
+    int region_base = region_at(Bases[base_id].x, Bases[base_id].y);
+    for (int i = 1; i < 169; i++) { // RadiusRange[6], a literal in the image
+        int x_radius = wrap_map_x(Bases[base_id].x + RadiusOffsetX[i]);
+        int y_radius = Bases[base_id].y + RadiusOffsetY[i];
         if (on_map(x_radius, y_radius)) {
             int base_id_found = base_at(x_radius, y_radius);
             if (base_id_found >= 0) {
-                uint32_t faction_id_base = Bases[base_id_found].faction_id_current;
-                uint32_t region_found = region_at(x_radius, y_radius);
+                int faction_id_base = Bases[base_id_found].faction_id_current;
                 if (faction_id_base != faction_id_req) {
-                    if (region_base == region_found) {
-                        if (faction_id_base == faction_id_res) {
-                            dist_factor++;
-                        } else {
+                    if (region_base == region_at(x_radius, y_radius)) {
+                        if (faction_id_base != faction_id_res) {
                             break;
                         }
+                        dist_factor++;
                     }
                 } else {
-                    if (region_base == region_found) {
+                    if (region_base == region_at(x_radius, y_radius)) {
                         dist_factor--;
                     }
                     break;
@@ -9642,66 +9593,62 @@ int __cdecl value_of_base(int base_id, int faction_id_req, int faction_id_res,
             }
         }
     }
-    int veh_id = stack_fix(veh_at(x, y)); // reason to define here rather than below?
-    int most_reserves = PlayersData[faction_id_res].energy_reserves;
-    if (PlayersData[faction_id_req].energy_reserves > most_reserves) {
-        most_reserves = PlayersData[faction_id_req].energy_reserves;
-    }
-    int base_pop_factor = Bases[base_id].population_size;
-    if (base_pop_factor < 3) {
+    int veh_id = stack_fix(veh_at(Bases[base_id].x, Bases[base_id].y));
+    int most_reserves = (PlayersData[faction_id_req].energy_reserves
+                         > PlayersData[faction_id_res].energy_reserves)
+        ? PlayersData[faction_id_req].energy_reserves
+        : PlayersData[faction_id_res].energy_reserves;
+    int base_pop_factor;
+    if (Bases[base_id].population_size < 3) {
         base_pop_factor = 3;
+    } else {
+        base_pop_factor = Bases[base_id].population_size;
     }
-    const uint32_t numerator_bits = static_cast<uint32_t>(most_reserves) + 1000u;
-    const uint32_t denominator_bits = static_cast<uint32_t>(dist_factor) + 4u;
-    const int quotient = base_yield_signed_bits(numerator_bits) /
-                         base_yield_signed_bits(denominator_bits);
-    uint32_t value = static_cast<uint32_t>(quotient) *
-                     static_cast<uint32_t>(base_pop_factor);
-    if (base_yield_signed_bits(value) < 100) {
+    int value = (most_reserves + 1000) / (dist_factor + 4) * base_pop_factor;
+    if (value < 100) {
         value = 100;
     }
-    if (veh_who(x, y) < 0) {
-        value = static_cast<uint32_t>(base_yield_signed_bits(value) / 2);
+    if (veh_who(Bases[base_id].x, Bases[base_id].y) < 0) {
+        value /= 2;
     }
-    uint32_t res_base_count_region = PlayersData[faction_id_res].region_total_bases[region_base];
-    if (!res_base_count_region) {
+    if (!PlayersData[faction_id_res].region_total_bases[region_base]) {
         value *= 2;
     }
-    uint32_t req_base_count_region = PlayersData[faction_id_req].region_total_bases[region_base];
-    if (req_base_count_region == 1) {
-        if (!res_base_count_region) {
+    if (PlayersData[faction_id_req].region_total_bases[region_base] == 1) {
+        if (!PlayersData[faction_id_res].region_total_bases[region_base]) {
             value *= 2;
         }
-        if (res_base_count_region == 1) {
+        if (PlayersData[faction_id_res].region_total_bases[region_base] == 1) {
             value *= 2;
         }
     }
     if (tgl) {
         value *= 4;
     }
-    if (res_base_count_region && req_base_count_region) {
-        if (res_base_count_region >= req_base_count_region * 5) {
-            value = static_cast<uint32_t>(base_yield_signed_bits(value) / 2);
+    if (PlayersData[faction_id_res].region_total_bases[region_base]
+        && PlayersData[faction_id_req].region_total_bases[region_base]) {
+        if (PlayersData[faction_id_res].region_total_bases[region_base]
+            >= PlayersData[faction_id_req].region_total_bases[region_base] * 5) {
+            value /= 2;
         }
         if (overmatch_deg) {
-            value = static_cast<uint32_t>(base_yield_signed_bits(value) / 2);
+            value /= 2;
         }
     }
-    uint32_t facil_count = 0;
-    for (uint32_t fac = 1; fac < FacilitySPStart; fac++) {
-        if (fac < FacilityRepStart && has_fac(fac, base_id, 0)) {
-            facil_count++;
-            value += (Facility[fac].cost * facil_count);
+    int facil_count = 0;
+    for (int fac = 1; fac < FacilitySPStart; fac++) {
+        if (has_fac(fac, base_id, 0)) {
+            value += Facility[fac].cost * ++facil_count;
         }
     }
-    for (uint32_t proj = 0; proj < MaxSecretProjectNum; proj++) {
+    for (int proj = 0; proj < MaxSecretProjectNum; proj++) {
         if (base_project(proj) == base_id) {
-            value += static_cast<uint32_t>(Facility[FacilitySPStart + proj].cost) * 25u;
+            value += Facility[FacilitySPStart + proj].cost * 25;
         }
     }
-    for (i = veh_top(veh_id); i >= 0; i = Vehs[i].next_veh_id_stack) {
-        if (Vehs[i].faction_id == faction_id_req) {
-            value += static_cast<uint32_t>(VehPrototypes[Vehs[i].proto_id].cost) * 2u;
+    for (int veh = value_of_base_veh_top(veh_id); veh >= 0; veh = Vehs[veh].next_veh_id_stack) {
+        if (Vehs[veh].faction_id == faction_id_req) {
+            value += VehPrototypes[Vehs[veh].proto_id].cost * 2;
         }
     }
     if (!_stricmp(Players[faction_id_req].filename, "BELIEVE")) {
@@ -9710,7 +9657,7 @@ int __cdecl value_of_base(int base_id, int faction_id_req, int faction_id_res,
     if (is_objective(base_id)) {
         value *= 4;
     }
-    return base_yield_signed_bits(value);
+    return value;
 }
 
 /*
@@ -10102,30 +10049,46 @@ Purpose: Determine if the facility is redundant due to a Secret Project counting
 //        while the identical `static __forceinline` has_fac_built_call IS
 //        honoured in is_objective - the twin's own body calls a `MEASURED
 //        inline` (dllexport) function, which the other does not.
+// MATCH: `if (has_project(...)) return TRUE;` per arm, falling through to
+//        `return false`, produces the shared test/je/mov eax,1 tail.
 Return Value: Is facility redundant? true/false
 Status: Complete
 */
 BOOL __cdecl redundant(int facility_id, int faction_id) {
     if (facility_id == FAC_NAVAL_YARD) {
-        return has_project(SP_MARITIME_CONTROL_CENTER, faction_id);
+        if (has_project(SP_MARITIME_CONTROL_CENTER, faction_id)) {
+            return TRUE;
+        }
     }
     if (facility_id == FAC_PERIMETER_DEFENSE) {
-        return has_project(SP_CITIZENS_DEFENSE_FORCE, faction_id);
+        if (has_project(SP_CITIZENS_DEFENSE_FORCE, faction_id)) {
+            return TRUE;
+        }
     }
     if (facility_id == FAC_COMMAND_CENTER) {
-        return has_project(SP_COMMAND_NEXUS, faction_id);
+        if (has_project(SP_COMMAND_NEXUS, faction_id)) {
+            return TRUE;
+        }
     }
     if (facility_id == FAC_BIOENHANCEMENT_CENTER) {
-        return has_project(SP_CYBORG_FACTORY, faction_id);
+        if (has_project(SP_CYBORG_FACTORY, faction_id)) {
+            return TRUE;
+        }
     }
     if (facility_id == FAC_QUANTUM_CONVERTER) {
-        return has_project(SP_SINGULARITY_INDUCTOR, faction_id);
+        if (has_project(SP_SINGULARITY_INDUCTOR, faction_id)) {
+            return TRUE;
+        }
     }
     if (facility_id == FAC_AEROSPACE_COMPLEX) {
-        return has_project(SP_CLOUDBASE_ACADEMY, faction_id);
+        if (has_project(SP_CLOUDBASE_ACADEMY, faction_id)) {
+            return TRUE;
+        }
     }
     if (facility_id == FAC_ENERGY_BANK) {
-        return has_project(SP_PLANETARY_ENERGY_GRID, faction_id);
+        if (has_project(SP_PLANETARY_ENERGY_GRID, faction_id)) {
+            return TRUE;
+        }
     }
     return false;
 }
@@ -10284,29 +10247,29 @@ int __cdecl upgrade_cost(int faction_id, int proto_id_init, int proto_id_upg) {
     int upg_slot = proto_id_upg;
     int cost = VehPrototypes[init_slot].cost;
     if (init_slot >= 0x40 && (VehPrototypes[init_slot].flags & 4) == 0) {
-        int half = (cost + 1) / 2;
-        int scaled = cost + half;
-        cost = (scaled + 1) * scaled;
+        cost += (cost + 1) / 2;
+        cost = (cost + 1) * cost;
     }
     // Native 004EFDC7/004EFDF9/004EFE36 uses positive second-minus-third
     // component costs. Callers pass the new prototype second and old third;
     // the retained init/upg parameter names above are historical.
-    int weapon_diff = Weapon[VehPrototypes[init_slot].weapon_id].cost
-                      - Weapon[VehPrototypes[upg_slot].weapon_id].cost;
-    if (weapon_diff < 0) {
-        weapon_diff = 0;
-    }
-    int armor_diff = Armor[VehPrototypes[init_slot].armor_id].cost
-                     - Armor[VehPrototypes[upg_slot].armor_id].cost;
-    if (armor_diff < 0) {
-        armor_diff = 0;
-    }
-    int chassis_diff = Chassis[VehPrototypes[init_slot].chassis_id].speed
-                       - Chassis[VehPrototypes[upg_slot].chassis_id].speed;
-    if (chassis_diff < 0) {
-        chassis_diff = 0;
-    }
-    cost += weapon_diff + armor_diff + chassis_diff;
+    // Each clamp is written on the difference itself (sub; sets; dec; and).
+    int part_diff = (Weapon[VehPrototypes[init_slot].weapon_id].cost
+                     - Weapon[VehPrototypes[upg_slot].weapon_id].cost < 0)
+        ? 0
+        : Weapon[VehPrototypes[init_slot].weapon_id].cost
+              - Weapon[VehPrototypes[upg_slot].weapon_id].cost;
+    part_diff += (Armor[VehPrototypes[init_slot].armor_id].cost
+                  - Armor[VehPrototypes[upg_slot].armor_id].cost < 0)
+        ? 0
+        : Armor[VehPrototypes[init_slot].armor_id].cost
+              - Armor[VehPrototypes[upg_slot].armor_id].cost;
+    int chassis_diff = (Chassis[VehPrototypes[init_slot].chassis_id].speed
+                        - Chassis[VehPrototypes[upg_slot].chassis_id].speed < 0)
+        ? 0
+        : Chassis[VehPrototypes[init_slot].chassis_id].speed
+              - Chassis[VehPrototypes[upg_slot].chassis_id].speed;
+    cost += part_diff + chassis_diff;
     if (has_project(SP_NANO_FACTORY, faction_id)) {
         cost /= 2;
     }
@@ -10625,20 +10588,17 @@ void __cdecl do_upgrade(int faction_id, int proto_id_new, int proto_id_old) {
 // Historical object identity moved to GameDataStateStorage; see the transport manifest.
 
 
-static int score_word_add(int left, int right) {
-    return static_cast<int>(static_cast<uint32_t>(left) + static_cast<uint32_t>(right));
-}
-static int score_word_sub(int left, int right) {
-    return static_cast<int>(static_cast<uint32_t>(left) - static_cast<uint32_t>(right));
-}
-static int score_word_mul(int left, int right) {
-    return static_cast<int>(static_cast<uint32_t>(left) * static_cast<uint32_t>(right));
-}
-
 // ORIGINAL: 0x005ACBE0 ?compute_score@@YAXHPAHPAHH@Z 0x005ACBE0-0x005AD3AD
 // RECOVERY_BINDING: v1 {"evidence": ["git:a538e0a3:src/unrecovered/005acbe0.cpp", "source:src/faction.h", "image:complete original instructions and independent storage/lifecycle evidence"], "reason": "Recover all original faction-score branches, recursive updates and publication in the base/objective domain through genuine Base, PlayerData and Rules fields; original signed population, word wrapping, bonus order and malformed-state paths remain explicit."}
 // symbol    ?compute_score@@YAXHPAH0H@Z
+// LEVER: plain int arithmetic; owner != faction branch first; set_base kept
+//        out of line (auto_inline off); has_project for both project scans;
+//        commerce `+= cond ? receipt : 0`; *total read once at the end.
+//        Remaining gap: pointer-induction register choice in the commerce
+//        and transcendence loops, index (not pointer) project walk.
 void __cdecl compute_score(int faction, int *total, int *items, int recursive) {
+    int other_items[9];
+    int other_total;
     if ((GameDataStateStorage.fields_.game_state_ & 8) && !recursive) return;
     if (!total) total = &PlayersData[faction].unk_109;
     if (!items) items = PlayersData[faction].score_items_;
@@ -10648,39 +10608,42 @@ void __cdecl compute_score(int faction, int *total, int *items, int recursive) {
 
     for (int base = 0; base < GameDataStateStorage.fields_.base_current_count_; ++base) {
         const int owner = Bases[base].faction_id_current;
-        if (owner == faction) {
-            items[0] = score_word_add(items[0], Bases[base].population_size);
+        if (owner != faction) {
+            if (!(PlayersData[faction].flags & 0x60000)) {
+                const uint32_t treaty = PlayersData[owner].diplo_treaties[faction];
+                if (treaty & 0x2000000) {
+                    if (treaty & 1) items[0] += Bases[base].population_size;
+                } else if ((treaty & 1) && (GameDataStateStorage.fields_.game_rules_ & 0x1000)) {
+                    items[0] += Bases[base].population_size / 2;
+                }
+            } else if ((PlayersData[faction].diplo_treaties[owner] & 1)
+                       && (GameDataStateStorage.fields_.game_rules_ & 0x1000)) {
+                items[0] += Bases[base].population_size;
+            } else {
+                items[0] += Bases[base].population_size / 2;
+            }
+        } else {
+            items[0] += Bases[base].population_size;
             set_base(base);
             base_compute(0);
             for (int other = 1; other < 8; ++other) {
                 // Original tests raw rule flags, not ExpansionEnabled.
                 if (!(Players[faction].rule_flags & 0x80) && !(Players[other].rule_flags & 0x80)) {
-                    if (!PlayersData[faction].sanction_turns && !PlayersData[other].sanction_turns)
-                        items[1] = score_word_add(items[1], BaseCommerceReceipts[other - 1]);
-                    else items[1] = score_word_add(items[1], 0);
+                    items[1] += (!PlayersData[faction].sanction_turns
+                                 && !PlayersData[other].sanction_turns)
+                        ? BaseCommerceReceipts[other - 1] : 0;
                 }
             }
-        } else if (!(PlayersData[faction].flags & 0x60000)) {
-            const uint32_t treaty = PlayersData[owner].diplo_treaties[faction];
-            if (treaty & 0x2000000) {
-                if (treaty & 1) items[0] = score_word_add(items[0], Bases[base].population_size);
-            } else if ((treaty & 1) && (GameDataStateStorage.fields_.game_rules_ & 0x1000)) {
-                items[0] = score_word_add(items[0], Bases[base].population_size / 2);
-            }
-        } else if (!(PlayersData[faction].diplo_treaties[owner] & 1) || !(GameDataStateStorage.fields_.game_rules_ & 0x1000)) {
-            items[0] = score_word_add(items[0], Bases[base].population_size / 2);
-        } else items[0] = score_word_add(items[0], Bases[base].population_size);
+        }
     }
     for (int technology = 0; technology < 89; ++technology)
-        if (has_tech(technology, faction)) items[2] = score_word_add(items[2], 1);
-    items[3] = score_word_mul(PlayersData[faction].theory_of_everything, 10);
+        if (has_tech(technology, faction)) items[2]++;
+    items[3] = PlayersData[faction].theory_of_everything * 10;
     int objective_points = static_cast<int>(ScenarioSave.objective_achieve_points);
     if (objective_points < 1) objective_points = 1;
-    items[6] = score_word_mul(num_objectives(faction, GameDataStateStorage.fields_.game_rules_ & 0x1000), objective_points);
+    items[6] = num_objectives(faction, GameDataStateStorage.fields_.game_rules_ & 0x1000) * objective_points;
     for (int project = 0; project < 64; ++project) {
-        const int base = base_project(project);
-        if (base >= 0 && Bases[base].faction_id_current == faction)
-            items[4] = score_word_add(items[4], 25);
+        if (has_project(project, faction)) items[4] += 25;
     }
 
     GameDataStateStorage.fields_.transcendence_score_bonus_ = 0;
@@ -10688,77 +10651,80 @@ void __cdecl compute_score(int faction, int *total, int *items, int recursive) {
     const int transcendence_base = GameDataStateStorage.fields_.secret_project_.ascent_to_transcendence();
     if (transcendence_base >= 0) {
         GameDataStateStorage.fields_.transcendence_score_bonus_ = 300;
-        const int scaled = score_word_mul(score_word_sub(1000, GameDataStateStorage.fields_.turn_current_num_), 2);
+        const int scaled = (1000 - GameDataStateStorage.fields_.turn_current_num_) * 2;
         if (scaled >= 300) GameDataStateStorage.fields_.transcendence_score_bonus_ = scaled;
-        int own_weight = 0;
         int aggregate = 0;
+        int own_weight = 0;
         int leader = -1;
         for (int candidate = 1; candidate < 8; ++candidate) {
-            if (Bases[transcendence_base].faction_id_current == candidate) {
+            if (has_project(SP_ASCENT_TO_TRANSCENDENCE, candidate)) {
                 leader = candidate;
-                aggregate = score_word_mul(PlayersData[candidate].pop_total, 2);
-                GameDataStateStorage.fields_.transcendence_score_weights_[candidate] = aggregate;
-                if (candidate == faction) own_weight = aggregate;
                 break;
             }
+        }
+        if (leader >= 0) {
+            aggregate = PlayersData[leader].pop_total * 2;
+            GameDataStateStorage.fields_.transcendence_score_weights_[leader] = aggregate;
+            if (leader == faction) own_weight = aggregate;
         }
         for (int other = 1; other < 8; ++other) {
             // Invalid/no leader leaves index -1, as in the original. Do not
             // hide that malformed-state access or the possible zero divisor.
-            if (other != leader && (PlayersData[other].diplo_treaties[leader] & 1)) {
+            if (leader != other && (PlayersData[other].diplo_treaties[leader] & 1)) {
                 const int weight = PlayersData[other].pop_total;
-                aggregate = score_word_add(aggregate, weight);
+                aggregate += weight;
                 GameDataStateStorage.fields_.transcendence_score_weights_[other] = weight;
-                if (other == faction) own_weight = score_word_add(own_weight, weight);
+                if (other == faction) own_weight += weight;
             }
         }
-        items[6] = score_word_mul(GameDataStateStorage.fields_.transcendence_score_bonus_, own_weight) / aggregate;
+        items[6] = (GameDataStateStorage.fields_.transcendence_score_bonus_ * own_weight) / aggregate;
         // Original publishes aggregate only AFTER the signed division.
         GameDataStateStorage.fields_.transcendence_score_weights_[0] = aggregate;
     }
 
-    int diplomatic_bonus = score_word_mul(score_word_sub(500, GameDataStateStorage.fields_.turn_current_num_), 2);
-    items[7] = diplomatic_bonus < 0 ? 0 : diplomatic_bonus;
+    // Clamp written on the expression itself (sub; shl; sets; dec; and).
+    items[7] = ((500 - GameDataStateStorage.fields_.turn_current_num_) * 2 < 0)
+        ? 0 : (500 - GameDataStateStorage.fields_.turn_current_num_) * 2;
     if (!(GameDataStateStorage.fields_.game_rules_ & 2)) items[7] = 0;
     if ((GameDataStateStorage.fields_.game_state_ & 0x2000) && (GameDataStateStorage.fields_.game_rules_ & 2) && items[7]) {
         int matching_population = 0;
         int total_population = 0;
         for (int base = 0; base < GameDataStateStorage.fields_.base_current_count_; ++base) {
             const int population = Bases[base].population_size;
-            total_population = score_word_add(total_population, population);
+            total_population += population;
             const int owner = Bases[base].faction_id_current;
             if (owner == faction || ((PlayersData[owner].diplo_treaties[faction] & 1)
                 && (PlayersData[owner].diplo_treaties[faction] & 0x2000000)))
-                matching_population = score_word_add(matching_population, population);
+                matching_population += population;
         }
         if (total_population)
-            items[7] = score_word_mul(PlayersData[faction].score_items_[7], matching_population) / total_population;
+            items[7] = (PlayersData[faction].score_items_[7] * matching_population) / total_population;
     } else {
         items[7] = 0;
         const uint32_t flags = PlayersData[faction].flags;
         if (flags & 0x20000) {
-            int bonus = score_word_mul(score_word_sub(600, GameDataStateStorage.fields_.turn_current_num_), 2);
+            int bonus = (600 - GameDataStateStorage.fields_.turn_current_num_) * 2;
             if (bonus < 200) bonus = 200;
             items[7] = bonus;
         } else if (flags & 0x40000) {
-            int bonus = score_word_mul(score_word_sub(600, GameDataStateStorage.fields_.turn_current_num_), 2);
+            int bonus = (600 - GameDataStateStorage.fields_.turn_current_num_) * 2;
             if (bonus < 200) bonus = 200;
             items[7] = bonus;
         } else if (flags & 0x100000) {
-            int bonus = score_word_mul(score_word_sub(1000, GameDataStateStorage.fields_.turn_current_num_), 2);
+            int bonus = (1000 - GameDataStateStorage.fields_.turn_current_num_) * 2;
             if (bonus < 300) bonus = 300;
             items[7] = bonus;
         } else {
             for (int other = 1; other < 8; ++other) {
                 if (PlayersData[other].flags & 0x20000) {
                     if ((PlayersData[faction].diplo_treaties[other] & 1) && (GameDataStateStorage.fields_.game_rules_ & 0x1000)) {
-                        int bonus = score_word_sub(600, GameDataStateStorage.fields_.turn_current_num_);
+                        int bonus = 600 - GameDataStateStorage.fields_.turn_current_num_;
                         if (bonus < 100) bonus = 100;
                         items[7] = bonus;
                     }
                 } else if (PlayersData[other].flags & 0x40000) {
                     if ((PlayersData[faction].diplo_treaties[other] & 1) && (GameDataStateStorage.fields_.game_rules_ & 0x1000)) {
-                        int bonus = score_word_sub(600, GameDataStateStorage.fields_.turn_current_num_);
+                        int bonus = 600 - GameDataStateStorage.fields_.turn_current_num_;
                         if (bonus < 100) bonus = 100;
                         items[7] = bonus;
                     }
@@ -10766,7 +10732,7 @@ void __cdecl compute_score(int faction, int *total, int *items, int recursive) {
             }
         }
     }
-    if (!(GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_ & (1u << (faction & 31)))) {
+    if (!(GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_ & (1 << faction))) {
         items[7] = 0;
         items[8] = 0;
     }
@@ -10793,18 +10759,16 @@ void __cdecl compute_score(int faction, int *total, int *items, int recursive) {
         }
     }
     for (int total_item = 0; total_item < 9; ++total_item)
-        *total = score_word_add(*total, items[total_item]);
+        *total += items[total_item];
     if (MapNativeLifeForms != 1 && !(GameDataStateStorage.fields_.game_state_ & 0x10)) {
-        const int difference = score_word_mul(score_word_sub(static_cast<int>(MapNativeLifeForms), 1), *total) / 4;
+        const int difference = (static_cast<int>(MapNativeLifeForms) - 1) * *total / 4;
         items[5] = difference;
-        *total = score_word_add(*total, difference);
+        *total += difference;
     }
     if (GameDataStateStorage.fields_.game_state_ & 0x80000) {
         if (recursive) return;
         int best = 0;
-        int other_total;
         for (int other = 1; other < 8; ++other) {
-            int other_items[9];
             compute_score(other, &other_total, other_items, 1);
             if (other_total > best) best = other_total;
         }
@@ -10814,9 +10778,10 @@ void __cdecl compute_score(int faction, int *total, int *items, int recursive) {
             items[7] = bonus; // Original does NOT add this late bonus to total.
         }
     } else if (recursive) return;
-    PlayersData[faction].unk_107 = *total;
+    const int score = *total;
+    PlayersData[faction].unk_107 = score;
     if ((GameDataStateStorage.fields_.game_rules_ & 0x400) && !(GameDataStateStorage.fields_.game_state_ & 0x20))
-        PlayersData[faction].unk_107 = score_word_mul(*total, 2);
+        PlayersData[faction].unk_107 = score * 2;
 }
 
 // Base capture owns faction transfer, project notices and territorial updates.
@@ -14139,29 +14104,23 @@ int BaseProductionZoomRequested = 0;
 // RECOVERY_OBJECT: v2 0x0090EA40 0x0090EA44 ?BaseProductionUnitCreationDisabled@@3HA 0x004F07E0
 int BaseProductionUnitCreationDisabled = 0;
 
-static int base_upkeep_wrap_signed_bits(uint32_t bits) {
-    return bits <= 0x7FFFFFFFu ? static_cast<int>(bits)
-        : -1 - static_cast<int>(0xFFFFFFFFu - bits);
-}
-
-static int base_upkeep_wrap_add(int left, int right) {
-    return base_upkeep_wrap_signed_bits(static_cast<uint32_t>(left) +
-                                      static_cast<uint32_t>(right));
-}
-
 // ORIGINAL: 0x004F79C0 ?base_upkeep@@YAHH@Z 0x004F79C0-0x004F7FDA
 // RECOVERY_BINDING: v1 {"evidence":["original:0x004F79C0-0x004F7FDA:pinned Base upkeep span","original:0x004F7D9E,0x004F7DDC,0x004F7E1D:BaseCurrent is reloaded at the native parser/climate callback boundaries","original:0x004F7BF6-0x004F7C01:actor and partner rule-flags use distinct faction indexes","source:src/base.h:Base, Bases, BaseCurrent, and the canonical Base-upkeep call surface","source:src/faction.h:Player and PlayerData arrays distinguish actor, partner, loans, energy and sanctions"],"reason":"Recover Base upkeep with native callback reloads and independently indexed actor/partner commerce state through the existing Base, Player and PlayerData owners."}
-// TRIED: faithful port using the real Base struct (src/base.h offsets, cross-checked field-by-field against the disassembly: state@0x30, minerals_accumulated@0x40, production_id_last@0x44, resource_sqr_radius @0x78, minerals_accumulated_2@0x9C, economy_total@0x100, name_string@ 0x13, assimilation/nerve_staple/faction fields@4-8) plus raw pointer arithmetic for the five 0x59c-stride and 0x20cc-stride per-faction tables (946f58/9474f4/946d34/946d4c/946d50 and 96e35c/96cdbc/96d1d4/ 96cc00/96caa0/96cce8/96eb6c). Compiles and matches through instr #4 (prologue); diverges at #5 on register-save ordering, driven by local variable count/order. Not chased further; 1562-byte function with many distinct call sites.
+// LEVER: set_base-like prologue with a local &Bases[base_id] (reused when
+//        BaseCurrent is restored), plain int accumulation, signed /8 %8 bit
+//        test, project walk through a local project_base pointer, and the
+//        focus/rename visibility tests written inline. Remaining gap: the
+//        commerce loop's three pointer inductions take different registers.
 int __cdecl base_upkeep(int base_id) {
     // Native event/log text remains inline: "al_col_sm.pcx" 0x689EA4..0x689EB2, "RENAMEBASE" 0x689EB4..0x689EBF and 0x689ED0..0x689EDB, "colfoun_sm.pcx" 0x689EC0..0x689ECF, "UPKEEP zoom-to-base" 0x689EDC..0x689EF0, and "FINISHED zoom-to-base" 0x689EF0..0x689F06.
 
     BaseIDCurrentSelected = base_id;
-    BaseComputedID = base_id;
-    BaseCurrent = &Bases[base_id];
+    Base *base = &Bases[base_id];
+    BaseCurrent = base;
     const int faction_id = BaseCurrent->faction_id_current;
     BaseProductionZoomRequested = 0;
-
-    BaseCurrent->state &= 0xDFFFFDFFu;
+    BaseComputedID = base_id;
+    Bases[base_id].state &= 0xDFFFFDFFu;
     base_support();
     base_yield();
     base_nutrient();
@@ -14183,17 +14142,15 @@ int __cdecl base_upkeep(int base_id) {
     base_minerals();
     base_energy();
 
-    Base &stage_one_base = *BaseCurrent;
-    const int tile_index = static_cast<int>(stage_one_base.y) *
-        static_cast<int>(MapLongitude) + (static_cast<int>(stage_one_base.x) >> 1);
-    const uint8_t resource_class = PlayersData[faction_id].unk_83[
-        MapTiles[tile_index].region];
-    const int tile_weight = resource_class == 7 &&
-        PlayersData[faction_id].soc_effect_base.values_[SocialEffect::TALENT] < 1
-        ? 4 : (resource_class != 2) + 1;
-    PlayersData[faction_id].unk_47 = base_upkeep_wrap_add(
-        PlayersData[faction_id].unk_47,
-        bit_count(stage_one_base.resource_sqr_radius) * tile_weight);
+    int tile_weight;
+    int region = region_at(BaseCurrent->x, BaseCurrent->y);
+    if (PlayersData[faction_id].unk_83[region] == 7
+        && PlayersData[faction_id].soc_effect_base.values_[SocialEffect::TALENT] < 1) {
+        tile_weight = 4;
+    } else {
+        tile_weight = (PlayersData[faction_id].unk_83[region] != 2) + 1;
+    }
+    PlayersData[faction_id].unk_47 += bit_count(BaseCurrent->resource_sqr_radius) * tile_weight;
 
     BaseUpkeepStage = 2;
     if (GameDataStateStorage.fields_.turn_current_num_ > 1) {
@@ -14208,7 +14165,7 @@ int __cdecl base_upkeep(int base_id) {
     }
 
     BaseIDCurrentSelected = base_id;
-    BaseCurrent = &Bases[base_id];
+    BaseCurrent = base;
     if (BaseComputedID != base_id) {
         BaseComputedID = base_id;
         base_support();
@@ -14218,60 +14175,42 @@ int __cdecl base_upkeep(int base_id) {
         base_energy();
     }
     base_ecology();
-    PlayersData[faction_id].energy_reserves = base_upkeep_wrap_add(
-        PlayersData[faction_id].energy_reserves, BaseCurrent->economy_total);
+    PlayersData[faction_id].energy_reserves += BaseCurrent->economy_total;
 
-    // The first flag read is indexed by ESI=faction_id (the actor). The
-    // independent EAX pointer walk begins at Players[1].rule_flags and is
-    // partner-indexed by the original loop. Keep both role tests separate.
+    // Actor and partner rule flags use distinct faction indexes.
     for (int other_faction = 1; other_faction < MaxPlayerNum; ++other_faction) {
-        const int actor_rule_flags = Players[faction_id].rule_flags;
-        const int partner_rule_flags = Players[other_faction].rule_flags;
-        if (other_faction == faction_id ||
-            (actor_rule_flags & 0x80) != 0 ||
-            (partner_rule_flags & 0x80) != 0) {
-            continue;
+        if (other_faction != faction_id && !(Players[faction_id].rule_flags & 0x80)
+            && !(Players[other_faction].rule_flags & 0x80)) {
+            PlayersData[faction_id].turn_commerce_income +=
+                (PlayersData[faction_id].sanction_turns == 0
+                 && PlayersData[other_faction].sanction_turns == 0)
+                ? BaseCommerceReceipts[other_faction - 1] : 0;
         }
-        int commerce = 0;
-        if (PlayersData[faction_id].sanction_turns == 0 &&
-            PlayersData[other_faction].sanction_turns == 0) {
-            commerce = BaseCommerceReceipts[other_faction - 1];
-        }
-        PlayersData[faction_id].turn_commerce_income = base_upkeep_wrap_add(
-            PlayersData[faction_id].turn_commerce_income, commerce);
     }
 
     if ((Players[faction_id].rule_flags & 0x80) != 0) {
         int count = 0;
         for (int facility_id = 0; facility_id < 0x46; ++facility_id) {
-            if ((BaseCurrent->facilities_built[facility_id >> 3] &
-                 static_cast<uint8_t>(1u << (facility_id & 7))) != 0) {
+            if (BaseCurrent->facilities_built[facility_id / 8] & (1 << (facility_id % 8))) {
                 ++count;
             }
         }
+        const int *projects = GameDataStateStorage.fields_.secret_project_.project_base;
         for (int project = 0; project < MaxSecretProjectNum; ++project) {
-            if (base_project(project) == base_id) count += 5;
+            if (projects[project] == base_id) count += 5;
         }
         int alien_commerce = count / 2;
         if (PlayersData[faction_id].sanction_turns != 0) alien_commerce = 0;
-        PlayersData[faction_id].turn_commerce_income = base_upkeep_wrap_add(
-            PlayersData[faction_id].turn_commerce_income, alien_commerce);
+        PlayersData[faction_id].turn_commerce_income += alien_commerce;
     }
 
     if (GameDataStateStorage.fields_.turn_current_num_ > 1) base_maint();
     base_terraform(0);
     if ((BaseCurrent->state & 0x10000u) != 0 && (rand() % 3) == 0 &&
         (GameDataStateStorage.fields_.game_state_ & STATE_UNK_1) == 0) {
-        // Keep each native BaseCurrent reload across its callback boundary.
-        // 0x4F7D69 supplies focus coordinates; 0x4F7D86 reloads for draw_tiles.
-        const int focus_x = BaseCurrent->x;
-        const int focus_y = BaseCurrent->y;
-        const Base &owner_before_focus = Bases[BaseIDCurrentSelected];
-        const uint32_t local_faction_bit = 1u << (ConsoleGlobal.faction_id_ & 0x1F);
-        if (owner_before_focus.faction_id_current == ConsoleGlobal.faction_id_ ||
-            (owner_before_focus.visibility & local_faction_bit) != 0) {
-            if (ConsoleGlobal.focus(focus_x, focus_y,
-                                    ConsoleGlobal.faction_id_) == 0) {
+        if (Bases[BaseIDCurrentSelected].faction_id_current == ConsoleGlobal.faction_id_
+            || ((1 << ConsoleGlobal.faction_id_) & Bases[BaseIDCurrentSelected].visibility)) {
+            if (!ConsoleGlobal.focus(BaseCurrent->x, BaseCurrent->y, ConsoleGlobal.faction_id_)) {
                 draw_tiles(BaseCurrent->x, BaseCurrent->y, 2);
             }
         }
@@ -14289,18 +14228,13 @@ int __cdecl base_upkeep(int base_id) {
         name_base(faction_id, climate_base.name_string, 1, final_name);
         // 0x4F7E1D reloads after name_base before parsing the renamed phrase.
         parse_says(2, BaseCurrent->name_string, -1, -1);
-        const int local_faction = ConsoleGlobal.faction_id_;
-        const Base &visible_base = Bases[BaseIDCurrentSelected];
-        const uint32_t visible_faction_bit = 1u << (local_faction & 0x1F);
-        if (visible_base.faction_id_current == local_faction ||
-            (visible_base.visibility & visible_faction_bit) != 0) {
+        if (Bases[BaseIDCurrentSelected].faction_id_current == ConsoleGlobal.faction_id_
+            || ((1 << ConsoleGlobal.faction_id_) & Bases[BaseIDCurrentSelected].visibility)) {
             draw_map(1);
-            if ((Players[faction_id].rule_flags & 0x80) == 0) {
-                popp(ScriptPopupFile, "RENAMEBASE", 0,
-                     "colfoun_sm.pcx", 0);
+            if (Players[faction_id].rule_flags & 0x80) {
+                popp(ScriptPopupFile, "RENAMEBASE", 0, "al_col_sm.pcx", 0);
             } else {
-                popp(ScriptPopupFile, "RENAMEBASE", 0,
-                     "al_col_sm.pcx", 0);
+                popp(ScriptPopupFile, "RENAMEBASE", 0, "colfoun_sm.pcx", 0);
             }
         }
         BaseCurrent->state &= ~0x10000u;
@@ -14333,8 +14267,9 @@ int __cdecl base_upkeep(int base_id) {
     }
     if (BaseCurrent->nerve_staple_turns_left != 0) --BaseCurrent->nerve_staple_turns_left;
     BaseCurrent->state &= 0xFFDFFFF7u;
-    if ((base_upkeep_wrap_add(BaseIDCurrentSelected,
-            GameDataStateStorage.fields_.turn_current_num_) & 7) == 0) BaseCurrent->state &= 0xFFEFFFFFu;
+    if (((GameDataStateStorage.fields_.turn_current_num_ + BaseIDCurrentSelected) & 7) == 0) {
+        BaseCurrent->state &= 0xFFEFFFFFu;
+    }
     return 0;
 }
 // Native 0x009A658C is SecretProject.telepathic_matrix (SP_TELEPATHIC_MATRIX).
