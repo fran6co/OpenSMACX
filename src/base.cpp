@@ -9442,7 +9442,7 @@ int __cdecl suggest_plan(int faction_id, int faction_id_2) {
 
 /*
 Purpose: Determine the faction's best base to attack the specified base from.
-// ORIGINAL: 0x0054AFA0 ?attack_from@@YAHHH@Z 0x0054AFA0-0x0054B137
+// ORIGINAL: 0x0054AFA0 ?attack_from@@YAHHH@Z 0x0054AFA0-0x0054B137 BYTE_EXACT
 // size      407 bytes
 // prototype int (__cdecl ?attack_from@@YAHHH@Z)(int baseID, int factionID)
 // callers   2   call targets   1
@@ -14039,7 +14039,7 @@ int BaseProductionZoomRequested = 0;
 // RECOVERY_OBJECT: v2 0x0090EA40 0x0090EA44 ?BaseProductionUnitCreationDisabled@@3HA 0x004F07E0
 int BaseProductionUnitCreationDisabled = 0;
 
-// ORIGINAL: 0x004F79C0 ?base_upkeep@@YAHH@Z 0x004F79C0-0x004F7FDA
+// ORIGINAL: 0x004F79C0 ?base_upkeep@@YAHH@Z 0x004F79C0-0x004F7FDA BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence":["original:0x004F79C0-0x004F7FDA:pinned Base upkeep span","original:0x004F7D9E,0x004F7DDC,0x004F7E1D:BaseCurrent is reloaded at the native parser/climate callback boundaries","original:0x004F7BF6-0x004F7C01:actor and partner rule-flags use distinct faction indexes","source:src/base.h:Base, Bases, BaseCurrent, and the canonical Base-upkeep call surface","source:src/faction.h:Player and PlayerData arrays distinguish actor, partner, loans, energy and sanctions"],"reason":"Recover Base upkeep with native callback reloads and independently indexed actor/partner commerce state through the existing Base, Player and PlayerData owners."}
 // LEVER: set_base-like prologue with a local &Bases[base_id] (reused when
 //        BaseCurrent is restored), plain int accumulation, signed /8 %8 bit
