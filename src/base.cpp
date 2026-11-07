@@ -1209,7 +1209,7 @@ Purpose: Reset every base of one faction: the faction's bases are visited in
          with the occupancy flag the tile must be free of vehicles or without
          a current owner.
 
-// ORIGINAL: 0x004E6300 ?bases_reset@@YAXHHH@Z 0x004E6300-0x004E63FC FILE
+// ORIGINAL: 0x004E6300 ?bases_reset@@YAXHHH@Z 0x004E6300-0x004E63FC FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence":["src/base.h declares bases_reset and owns the actual Base array and BaseCurrent; its Base members x/y/faction_id_current/state have RECOVERY_MEMBER evidence.","The pinned map-record stride is 0x2C; src/map.h's Map is size 0x2C with climate/contour/val2/region at +0..+3 and bit at +8. Typed indexing preserves the original field reads.","The body keeps both live enable-mask reads, the original short-circuit order, the base_reset callback, and the post-callback MapTiles/MapLongitude reload. No alias or manual table is introduced."],"reason":"Move the existing reset loop into the Base owner and express its already-established Base/Map storage through actual members while preserving branch, callback, reload, and unsafe-input behavior."}
 // TRIED: single AND-chained `if` (faction==a2 && (a1<0||idx_byte==a1) && (a3==0||bits check) && (mask flag||special)) reproduces the loop body; `int mask`/`unsigned char mask` both leave the divergence at MISMATCH #2 (original reserves the one local with `push ecx` right after `mov ebp,esp`; every C form tried here gets `sub esp,4` instead) - same prologue-reservation wall as the mon_* family (0x00477840).
 // size      252 bytes
@@ -9502,7 +9502,7 @@ void __cdecl battle_routine(int base_id) {
 /*
 Purpose: Determine the value of the specified base between the requester and the respondent faction.
          This valuation could be triggered either from a gift, a threat or a base swap.
-// ORIGINAL: 0x0054CB50 ?value_of_base@@YAHHHHHH@Z 0x0054CB50-0x0054CF39
+// ORIGINAL: 0x0054CB50 ?value_of_base@@YAHHHHHH@Z 0x0054CB50-0x0054CF39 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["pinned:0x54CD1A-0x54CD30 signed population compare and MOVSX; Base.population_size is signed byte at +6", "pinned:0x54CD33-0x54CD4F wrapped numerator, signed IDIV and signed valuation clamp at100", "pinned:0x54CD8F-0x54CD96,0x54CDE4-0x54CDEB,0x54CDF4-0x54CDFB use CDQ/SUB/SAR for signed half toward zero", "historical TRIED unsigned spelling remains experiment history, not current behavior policy"], "reason": "Restore original signed population, valuation clamps and truncating halves while preserving modulo-32-bit accumulation. This corrects a prior unsigned behavior change, not an original game bug. Exceptional signed division faults, runtime reachability and complete matching remain unverified."}
 // size      1001 bytes
 // prototype int (__cdecl ?value_of_base@@YAHHHHHH@Z)(int baseID, int factionIDReq, int factionIDRes, int baseIDCounter, int tgl)
@@ -14236,7 +14236,7 @@ static const char BaseDronesAlienGoldenAgeLabel[] = "GOLDENAGE";
 static const char BaseDronesAlienGoldenAgeOverLabel[] = "GOLDENAGEOVER";
 static const char BaseDronesAlienRiotsOverLabel[] = "DRONERIOTSOVER";
 
-// ORIGINAL: 0x004F5CE0 ?base_drones@@YAXXZ 0x004F5CE0-0x004F5F25
+// ORIGINAL: 0x004F5CE0 ?base_drones@@YAXXZ 0x004F5CE0-0x004F5F25 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence":["original:0x004F5CE0-0x004F5F25:pinned base drone/riot lifecycle body","original:0x009A658C:SecretProject index 30 owns the telepathic-matrix faction id","source:src/alpha.h:SecretProject and SP_TELEPATHIC_MATRIX provide the typed project owner","source:src/base.h:BaseCurrent and Base-owned drone, talent, governor and state members","source:src/faction.h:Players owns faction rule_flags; LockEnableMask owns human-faction bits"],"reason":"Recover base drone state transitions using the existing Base, SecretProject, Player, and lock owners; retain native callback reloads and the separate drone-riot call."}
 void __cdecl base_drones() {
     // Native popup literals remain ordinary C++ literals: "Alopdir.pcx" occurs at 0x689C78..0x689C84, 0x689CAC..0x689CB8, 0x689CE8..0x689CF4 and 0x689D04..0x689D10; the "GOLDENAGE", "GOLDENAGEOVER", "DRONERIOTSOVER" and "DRONERIOTSOVER2" keys and "talent_sm.pcx" have separate pinned call-site extents.
