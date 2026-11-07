@@ -3080,6 +3080,9 @@ Purpose: Calculate how defensive the specified tile is to the defending unit bas
 //        MISMATCH: the image writes an unidentified global (0x90f550, from
 //        [0x9b90f8]+0x16c or +0x548 depending on branch) that this tree's
 //        source has no equivalent for - not a call-count question, left open.
+// LEVER: exact with separate early returns, bit_at/map_loc re-read at each
+//   test (no `bit` local), the "Rocky" label stored before the rocky test,
+//   and `defense` assigned first with `is_rocky` copied from it.
 // size      655 bytes
 // prototype int (__cdecl ?defense_value@@YAHHHHHH@Z)(int factionID, int xCoord, int yCoord, int vehIDDef, int vehIDAtk)
 // callers   2   call targets   0
@@ -3091,34 +3094,39 @@ Status: Complete
 */
 int __cdecl defense_value(int faction_id, int x, int y, int veh_id_def,
                           int veh_id_atk) {
-    if (is_ocean(x, y) || base_who(x, y) >= 0) {
+    if (is_ocean(x, y)) {
         return 2;
     }
-    uint32_t bit = bit_at(x, y);
-    if (bit & BIT_FUNGUS && altitude_at(x, y) >= ALT_BIT_OCEAN_SHELF && veh_id_atk >= 0
+    if (base_who(x, y) >= 0) {
+        return 2;
+    }
+    if (bit_at(x, y) & BIT_FUNGUS && (map_loc(x, y)->climate & ~0x1F) >= ALT_BIT_OCEAN_SHELF && veh_id_atk >= 0
         && (!Vehs[veh_id_atk].faction_id
             || has_project(SP_PHOLUS_MUTAGEN, Vehs[veh_id_atk].faction_id)
             || (get_offense_rating(veh_id_atk) < 0
                 && Vehs[veh_id_atk].proto_id < MaxVehProtoFactionNum))) {
                 return 2;
     }
-    uint32_t is_rocky = rocky_at(x, y) > TERRAIN_BIT_ROLLING;
     VehBattleDisplayTerrain = *(Labels.strings_ptr + 91); // "Rocky"
-    uint32_t defense = is_rocky;
-    if (bit & BIT_FUNGUS && altitude_at(x, y) >= ALT_BIT_OCEAN_SHELF && !defense
+    int defense = (map_loc(x, y)->val3 & ~0x3F) > TERRAIN_BIT_ROLLING;
+    int is_rocky = defense;
+    if (bit_at(x, y) & BIT_FUNGUS && (map_loc(x, y)->climate & ~0x1F) >= ALT_BIT_OCEAN_SHELF && !defense
         && get_triad(veh_id_def) != TRIAD_AIR) {
         if (veh_id_atk >= 0 && ((get_offense_rating(veh_id_atk) < 0
                 && Vehs[veh_id_atk].proto_id < MaxVehProtoFactionNum)
             || has_project(SP_PHOLUS_MUTAGEN, Vehs[veh_id_atk].faction_id))) {
             defense = is_rocky;
         } else {
-            VehBattleDisplayTerrain = *(Labels.strings_ptr + 338); // "Fungus"
-            defense = (has_project(SP_PHOLUS_MUTAGEN, faction_id)
+            defense = 1;
+            if (has_project(SP_PHOLUS_MUTAGEN, faction_id)
                 || (Vehs[veh_id_def].proto_id < MaxVehProtoFactionNum
-                    && get_offense_rating(veh_id_def) < 0)) ? 2 : 1;
+                    && get_offense_rating(veh_id_def) < 0)) {
+                defense = 2;
+            }
+            VehBattleDisplayTerrain = *(Labels.strings_ptr + 338); // "Fungus"
         }
     }
-    if (bit & BIT_FOREST && !defense && (veh_id_atk < 0 || get_triad(veh_id_atk) == TRIAD_LAND)) {
+    if (bit_at(x, y) & BIT_FOREST && !defense && (veh_id_atk < 0 || get_triad(veh_id_atk) == TRIAD_LAND)) {
         VehBattleDisplayTerrain = *(Labels.strings_ptr + 291); // "Forest"
         defense = 1;
     }
@@ -4107,10 +4115,8 @@ void __cdecl invasions(int base_id) {
         uint32_t veh_faction_id = Vehs[i].faction_id;
         if (veh_faction_id && !is_human(veh_faction_id) && veh_faction_id != faction_id_base
             && !(PlayersData[veh_faction_id].diplo_treaties[faction_id_base] & DTREATY_TREATY)) {
-            int veh_x = Vehs[i].x;
-            int veh_y = Vehs[i].y;
-            if (is_ocean(veh_x, veh_y) && veh_cargo(i) && stack_check(i, 3, TRIAD_LAND, -1, -1)) {
-                int proximity = vector_dist(base_x, base_y, veh_x, veh_y);
+            if (is_ocean(Vehs[i].x, Vehs[i].y) && veh_cargo(i) && stack_check(i, 3, TRIAD_LAND, -1, -1)) {
+                int proximity = vector_dist(base_x, base_y, Vehs[i].x, Vehs[i].y);
                 if (proximity <= (int)speed(i, false)) {
                     Vehs[i].order = ORDER_MOVE_TO;
                     Vehs[i].waypoint_x[0] = base_x;
@@ -6562,32 +6568,31 @@ Return Value: Speed
 Status: Complete
 */
 int __cdecl speed(int veh_id, BOOL skip_morale) {
-    uint32_t proto_id = Vehs[veh_id].proto_id;
-    int speed_val = speed_proto(proto_id);
-    uint8_t triad = get_proto_triad(proto_id);
-    if (triad == TRIAD_SEA && has_project(SP_MARITIME_CONTROL_CENTER, Vehs[veh_id].faction_id)) {
+    int speed_val = speed_proto(Vehs[veh_id].proto_id);
+    if (get_triad(veh_id) == TRIAD_SEA && has_project(SP_MARITIME_CONTROL_CENTER, Vehs[veh_id].faction_id)) {
         speed_val += Rules.move_rate_roads * 2;
     }
     if (morale_veh(veh_id, true, 0) == MORALE_ELITE && !skip_morale
-        && (proto_id >= MaxVehProtoFactionNum || get_proto_offense_rating(proto_id) >= 0)) {
+        && (Vehs[veh_id].proto_id >= MaxVehProtoFactionNum || get_offense_rating(veh_id) >= 0)) {
         speed_val += Rules.move_rate_roads;
     }
-    if (Vehs[veh_id].dmg_incurred && triad != TRIAD_AIR) {
-        int moves = speed_val / Rules.move_rate_roads;
-        int reactor_fac;
-        if (VehPrototypes[proto_id].plan == PLAN_ALIEN_ARTIFACT) {
-            speed_val = reactor_fac = 1;
-        } else {
-            reactor_fac = range(VehPrototypes[proto_id].reactor_id, 1, 100) * 10;
-            speed_val = range(reactor_fac, 1, 99);
+    if (Vehs[veh_id].dmg_incurred) {
+        int proto_id = Vehs[veh_id].proto_id;
+        uint8_t triad = Chassis[VehPrototypes[proto_id].chassis_id].triad;
+        if (triad != TRIAD_AIR) {
+            // proto_power()'s body, written against this block's proto_id
+            // twice: the image shares one prototype address across the
+            // triad, plan and reactor reads, which proto_power(veh_id) breaks.
+            int power = range((VehPrototypes[proto_id].plan == PLAN_ALIEN_ARTIFACT)
+                ? 1 : range(VehPrototypes[proto_id].reactor_id, 1, 100) * 10, 1, 99);
+            int moves = speed_val / Rules.move_rate_roads;
+            speed_val = (moves * range(((VehPrototypes[proto_id].plan == PLAN_ALIEN_ARTIFACT)
+                ? 1 : range(VehPrototypes[proto_id].reactor_id, 1, 100) * 10)
+                - Vehs[veh_id].dmg_incurred, 0, 9999) + power - 1) / power;
+            speed_val = range(speed_val, (triad == TRIAD_SEA) ? 2 : 1, 999) * Rules.move_rate_roads;
         }
-        speed_val = (moves
-            * range(reactor_fac - Vehs[veh_id].dmg_incurred, 0, 9999) + speed_val - 1) / speed_val;
-        speed_val = range(speed_val, (triad == TRIAD_SEA) ? 2 : 1, 999)
-            * Rules.move_rate_roads;
     }
-    if (proto_id == BSC_FUNGAL_TOWER) return 0;
-    return speed_val;
+    return (Vehs[veh_id].proto_id != BSC_FUNGAL_TOWER) ? speed_val : 0;
 }
 
 /*
