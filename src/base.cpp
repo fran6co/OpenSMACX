@@ -1059,14 +1059,10 @@ int base_doctors_best_specialist() {
 
 void base_doctors_add_specialist() {
     const int best = base_doctors_best_specialist();
-    Base *base = BaseCurrent;
-    const int slot = base->specialist_total++;
+    const int slot = BaseCurrent->specialist_total++;
     if (slot < 16) {
-        const unsigned int shift = (static_cast<unsigned int>(slot) & 7u) * 4;
-        const int word_index = slot >> 3;
-        uint32_t &word = base->spec[word_index];
-        word = (word & ~(15u << shift))
-             | (static_cast<uint32_t>(best) << shift);
+        BaseCurrent->spec[slot >> 3] &= ~(15 << ((slot & 7) * 4));
+        BaseCurrent->spec[slot >> 3] |= best << ((slot & 7) * 4);
     }
 }
 
@@ -1079,75 +1075,44 @@ void base_doctors_add_specialist() {
 void __cdecl base_doctors() {
     Base *base = BaseCurrent;
     const int faction = base->faction_id_current;
-    int riot_doctor_adjustment = 0;
-
-    if ((base->state & BSTATE_DRONE_RIOTS_ACTIVE) != 0) {
-        const int brood_pit = selected_base_has_fac(FAC_BROOD_PIT) ? 1 : 0;
-        const int police = PlayersData[faction].soc_effect_pending.values_[SocialEffect::POLICE]
-                         + brood_pit * 2;
-        if (police < -1) {
-            if (!pop_goal_fac(BaseIDCurrentSelected)) {
-                const int cloning_vats_owner = base_project(SP_CLONING_VATS);
-                const bool cloning_vats_for_faction = cloning_vats_owner >= 0
-                    && Bases[cloning_vats_owner].faction_id_current == faction;
-                bool eligible = false;
-                if ((cloning_vats_for_faction || BaseCurrentGrowthRate > 5)
-                    && Rules.nutrient_req_citizen != 0
-                    && static_cast<int>(Rules.nutrient_req_citizen)
-                        <= BaseCurrent->nutrient_surplus) {
-                    eligible = true;
-                    base = BaseCurrent;
-                } else {
-                    const int nutrient_cost = cost_factor(
-                        faction, 0, BaseIDCurrentSelected);
-                    base = BaseCurrent;
-                    if (nutrient_cost * (static_cast<int>(base->population_size) + 1)
-                        <= base->nutrients_accumulated + base->nutrient_surplus) {
-                        eligible = true;
-                    }
-                }
-                if (eligible) riot_doctor_adjustment = 1;
-            }
-        }
+    int riot_doctor_adjustment;
+    if ((base->state & BSTATE_DRONE_RIOTS_ACTIVE) != 0
+        && PlayersData[faction].soc_effect_pending.values_[SocialEffect::POLICE]
+               + selected_base_has_fac(FAC_BROOD_PIT) * 2 < -1
+        && !pop_goal_fac(BaseIDCurrentSelected)
+        && (((has_project(SP_CLONING_VATS, faction) || BaseCurrentGrowthRate >= 6)
+             && Rules.nutrient_req_citizen != 0
+             && BaseCurrent->nutrient_surplus >= static_cast<int>(Rules.nutrient_req_citizen))
+            || BaseCurrent->nutrient_surplus + BaseCurrent->nutrients_accumulated
+                   >= cost_factor(faction, 0, BaseIDCurrentSelected)
+                          * (BaseCurrent->population_size + 1))) {
+        riot_doctor_adjustment = 1;
+    } else {
+        riot_doctor_adjustment = 0;
     }
     // Native branch setup reloads the current Base after each callback-bearing
-    // riot path, including the failed-pressure and failed-facility branches.
+    // riot path.
     base = BaseCurrent;
 
-    const unsigned int faction_bit = 1u << (static_cast<unsigned int>(faction) & 0x1Fu);
-    if ((GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_
-         & faction_bit) != 0
-        && (base->governor & (GOV_MANAGES_CITIZENS_SPECS | GOV_ACTIVE))
-            != (GOV_MANAGES_CITIZENS_SPECS | GOV_ACTIVE)) {
-        return;
-    }
-
-    int loop_counter = 1;
-    for (;;) {
+    const int faction_bit = 1 << faction;
+    for (int loop_counter = 1; ; ) {
         if ((GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_
              & faction_bit) != 0) {
             if ((base->governor & GOV_MANAGES_CITIZENS_SPECS) == 0) return;
             if ((base->governor & GOV_ACTIVE) == 0) return;
         }
 
-        const int matrix_owner = base_project(SP_TELEPATHIC_MATRIX);
-        const bool matrix_for_faction = matrix_owner >= 0
-            && Bases[matrix_owner].faction_id_current == faction;
         if (BaseNutrientAdequate == 0
             || base->drone_total + riot_doctor_adjustment <= base->talent_total
-            || matrix_for_faction) {
+            || has_project(SP_TELEPATHIC_MATRIX, faction)) {
             const int old_specialist_total = base->specialist_total;
-            if (old_specialist_total == base->specialist_unk_1
-                || old_specialist_total - base->specialist_unk_1 < 0) return;
+            if (old_specialist_total - base->specialist_unk_1 <= 0) return;
             if ((base->state & BSTATE_DRONE_RIOTS_ACTIVE) != 0) return;
-
             if (base->drone_total != 0
-                && base->talent_total <= base->drone_total + riot_doctor_adjustment) {
-                const int removal_matrix_owner = base_project(SP_TELEPATHIC_MATRIX);
-                if (removal_matrix_owner < 0
-                    || Bases[removal_matrix_owner].faction_id_current != faction) return;
+                && base->drone_total + riot_doctor_adjustment >= base->talent_total
+                && !has_project(SP_TELEPATHIC_MATRIX, faction)) {
+                return;
             }
-
             base->specialist_total = old_specialist_total - 1;
             BaseComputedID = BaseIDCurrentSelected;
             base_support();
@@ -1156,10 +1121,8 @@ void __cdecl base_doctors() {
             base_minerals();
             base_energy();
             base = BaseCurrent;
-            const int post_removal_matrix_owner = base_project(SP_TELEPATHIC_MATRIX);
             if (base->drone_total + riot_doctor_adjustment > base->talent_total
-                && (post_removal_matrix_owner < 0
-                    || Bases[post_removal_matrix_owner].faction_id_current != faction)) {
+                && !has_project(SP_TELEPATHIC_MATRIX, faction)) {
                 base_doctors_add_specialist();
                 return;
             }
@@ -1173,7 +1136,6 @@ void __cdecl base_doctors() {
             base_minerals();
             base_energy();
             base = BaseCurrent;
-
             if (base->drone_total + riot_doctor_adjustment <= base->talent_total) {
                 if (UnkGlobal0093A934 == 0) return;
                 if (faction != ConsoleGlobal.faction_id_) return;
@@ -1182,11 +1144,7 @@ void __cdecl base_doctors() {
                 const int production = base->queue_production_id[0];
                 if (production == -6 || production == -11 || production == -12
                     || production == -17 || production == -18) return;
-                if (production == 8) {
-                    const int virtual_world_owner = base_project(SP_VIRTUAL_WORLD);
-                    if (virtual_world_owner >= 0
-                        && Bases[virtual_world_owner].faction_id_current == faction) return;
-                }
+                if (production == 8 && has_project(SP_VIRTUAL_WORLD, faction)) return;
                 if ((Players[faction].rule_flags & RFLAG_ALIEN) != 0) {
                     popb("PSYCHREQUEST", 0, -1, "Alopdir.pcx", 0);
                 } else {
@@ -1196,8 +1154,7 @@ void __cdecl base_doctors() {
             }
         }
 
-        ++loop_counter;
-        if (loop_counter > 9) return;
+        if (++loop_counter >= 10) return;
     }
 }
 
@@ -5166,92 +5123,95 @@ int __cdecl has_fac_built(int facility_id) {
 void __cdecl base_change(int base_id, int production_id) {
     if (production_id == 99999) return;
 
-    Base &base = Bases[base_id];
-    const int previous = base.queue_production_id[0];
-    base.queue_production_id[0] = production_id;
-    if (previous == production_id) return;
-    PlayerData &faction = PlayersData[base.faction_id_current];
-    if (previous >= 0) --faction.proto_id_queue[previous];
-    if (production_id >= 0) ++faction.proto_id_queue[production_id];
+    const int previous = Bases[base_id].queue_production_id[0];
+    Bases[base_id].queue_production_id[0] = production_id;
+    if (production_id == previous) return;
+    const int faction = Bases[base_id].faction_id_current;
+    if (previous >= 0) --PlayersData[faction].proto_id_queue[previous];
+    if (production_id >= 0) ++PlayersData[faction].proto_id_queue[production_id];
 
     // Switching production applies the rule's retool penalty to the stored
     // minerals, while keeping the unpenalized turn total for later accounting.
-    // base_lose_minerals already owns the matching classification and arithmetic.
-    int loss = 0;
+    int loss;
     if (Rules.retool_pct_pen_prod_chg
-        && (GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_
-            & (1u << base.faction_id_current))
-        && base_making(base.production_id_last, base_id)
-            != base_making(production_id, base_id)
-        && base.minerals_accumulated_2 > static_cast<int>(Rules.retool_exemption)) {
-        const int exempt = static_cast<int>(Rules.retool_exemption);
-        const int penalty = static_cast<int>(Rules.retool_pct_pen_prod_chg);
-        loss = base.minerals_accumulated_2
-             - (base.minerals_accumulated_2 - exempt) * (100 - penalty) / 100
-             - exempt;
+        && (GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & (1 << faction))
+        && base_making(Bases[base_id].production_id_last, base_id)
+            != base_making(Bases[base_id].queue_production_id[0], base_id)
+        && Bases[base_id].minerals_accumulated_2 > static_cast<int>(Rules.retool_exemption)) {
+        loss = Bases[base_id].minerals_accumulated_2
+             - (Bases[base_id].minerals_accumulated_2 - static_cast<int>(Rules.retool_exemption))
+                   * (100 - static_cast<int>(Rules.retool_pct_pen_prod_chg)) / 100
+             - static_cast<int>(Rules.retool_exemption);
+    } else {
+        loss = 0;
     }
-    base.minerals_accumulated = base.minerals_accumulated_2 - loss;
-    draw_radius(base.x, base.y, 2, 2);
-    const int owner = base.faction_id_current;
-    if (owner == ConsoleGlobal.faction_id_ || AiResearchBatchActive) return;
-    const int next = base.queue_production_id[0];
-    const bool new_unbuilt = next <= -70 && base_project(-next - 70) == -1;
-    bool old_relevant = false;
+    Bases[base_id].minerals_accumulated = Bases[base_id].minerals_accumulated_2 - loss;
+    draw_radius(Bases[base_id].x, Bases[base_id].y, 2, 2);
+    if (faction == ConsoleGlobal.faction_id_ || AiResearchBatchActive) return;
+
+    const int next = Bases[base_id].queue_production_id[0];
+    int new_unbuilt;
+    if (next <= -70 && base_project(-next - 70) == -1) {
+        new_unbuilt = 1;
+    } else {
+        new_unbuilt = 0;
+    }
+    int old_relevant;
     if (previous <= -70 && (new_unbuilt || base_project(-previous - 70) == -1)) {
-        old_relevant = true;
-        const int project_base = base_project(-previous - 70);
-        if (project_base >= 0 && Bases[project_base].faction_id_current == owner)
-            old_relevant = false;
+        old_relevant = 1;
+        if (has_project((previous < 0 ? -previous : previous) - 70, faction)) old_relevant = 0;
+    } else {
+        old_relevant = 0;
     }
-    if ((!new_unbuilt && !old_relevant) || ((GameDataStateStorage.fields_.game_state_ & 1) && !(GameDataStateStorage.fields_.game_state_ & 8))) return;
-    const int facility = abs(next);
+    if (!new_unbuilt && !old_relevant) return;
+    if ((GameDataStateStorage.fields_.game_state_ & 1) && !(GameDataStateStorage.fields_.game_state_ & 8)) return;
+    const int facility = (next < 0 ? -next : next);
     const int project = facility - 70;
     int word, mask;
-    bitmask(new_unbuilt ? project : abs(previous) - 70, &word, &mask);
+    if (new_unbuilt) {
+        bitmask(project, &word, &mask);
+    } else {
+        bitmask((previous < 0 ? -previous : previous) - 70, &word, &mask);
+    }
     int old_count = 0, new_count = 0;
     int other;
     for (other = 0; other < GameDataStateStorage.fields_.base_current_count_; ++other) {
-        if (Bases[other].faction_id_current == base.faction_id_current && other != base_id) {
+        if (Bases[other].faction_id_current == Bases[base_id].faction_id_current && other != base_id) {
             if (Bases[other].queue_production_id[0] == previous) ++old_count;
-            if (Bases[other].queue_production_id[0] == base.queue_production_id[0]) ++new_count;
+            if (Bases[other].queue_production_id[0] == Bases[base_id].queue_production_id[0]) ++new_count;
         }
     }
     if (!new_unbuilt || new_count) return;
-    Player &player = Players[owner];
     if (old_relevant && (!old_count || base_project(-previous - 70) != -1)) {
         for (other = 0; other < GameDataStateStorage.fields_.base_current_count_; ++other)
-            if (Bases[other].faction_id_current == owner
+            if (Bases[other].faction_id_current == faction
                 && Bases[other].queue_production_id[0] == previous)
-                Bases[other].queue_production_id[0] = base.queue_production_id[0];
+                Bases[other].queue_production_id[0] = Bases[base_id].queue_production_id[0];
         if (GameDataStateStorage.fields_.sunspot_duration_ > 0) return;
-        parse_says(0, player.adj_name_faction, -1, -1);
+        parse_says(0, Players[faction].adj_name_faction, -1, -1);
         // RulesFacility's existing name field is already an LPSTR.
-        parse_say(1, Facility[abs(previous)].name, -1, -1);
-        GenderDefault = player.noun_gender;
-        PluralityDefault = player.is_noun_plural;
-        parse_says(2, player.noun_faction, -1, -1);
+        parse_say(1, Facility[(previous < 0 ? -previous : previous)].name, -1, -1);
+        parse_set(Players[faction].noun_gender, Players[faction].is_noun_plural);
+        parse_says(2, Players[faction].noun_faction, -1, -1);
         parse_say(3, Facility[facility].name, -1, -1);
         popp(ScriptPopupFile, "CHANGEPROJECT", 0, "secproj_sm.pcx", 0);
-        faction.secret_project_intel[word] |= mask;
-        bitmask(abs(previous) - 70, &word, &mask);
-        faction.secret_project_intel[word] &= ~mask;
+        PlayersData[faction].secret_project_intel[word] |= mask;
+        bitmask((previous < 0 ? -previous : previous) - 70, &word, &mask);
+        PlayersData[faction].secret_project_intel[word] &= ~mask;
         return;
     }
-    if (!(faction.secret_project_intel[word] & mask)) {
+    if (!(PlayersData[faction].secret_project_intel[word] & mask)) {
         if (GameDataStateStorage.fields_.sunspot_duration_ > 0 && project != 31) return;
-        GenderDefault = player.is_leader_female;
-        PluralityDefault = 0;
-        parse_says(0, player.title_leader, -1, -1);
-        GenderDefault = player.is_leader_female;
-        PluralityDefault = 0;
-        parse_says(1, player.name_leader, -1, -1);
-        GenderDefault = player.noun_gender;
-        PluralityDefault = player.is_noun_plural;
-        parse_says(2, player.noun_faction, -1, -1);
+        parse_set(Players[faction].is_leader_female, 0);
+        parse_says(0, Players[faction].title_leader, -1, -1);
+        parse_set(Players[faction].is_leader_female, 0);
+        parse_says(1, Players[faction].name_leader, -1, -1);
+        parse_set(Players[faction].noun_gender, Players[faction].is_noun_plural);
+        parse_says(2, Players[faction].noun_faction, -1, -1);
         parse_say(3, Facility[facility].name, -1, -1);
-        wave_it((PlayersData[ConsoleGlobal.faction_id_].diplo_treaties[owner] & 1) ? 36 : 38);
+        wave_it((PlayersData[ConsoleGlobal.faction_id_].diplo_treaties[faction] & 1) ? 36 : 38);
         popp(ScriptPopupFile, "BEGINPROJECT", 0, "secproj_sm.pcx", 0);
-        faction.secret_project_intel[word] |= mask;
+        PlayersData[faction].secret_project_intel[word] |= mask;
     }
     if (project == 31) {
         interlude(11, 0, 1, 0);
@@ -7307,19 +7267,19 @@ int __cdecl morale_mod(int base_id, int faction_id, int triad) {
     case TRIAD_LAND:
         if (has_fac(FAC_COMMAND_CENTER, base_id, 0)
             || has_project(SP_COMMAND_NEXUS, faction_id)) {
-            morale_modifier = 2;
+            morale_modifier += 2;
         }
         break;
     case TRIAD_SEA:
         if (has_fac(FAC_NAVAL_YARD, base_id, 0)
             || has_project(SP_MARITIME_CONTROL_CENTER, faction_id)) {
-            morale_modifier = 2;
+            morale_modifier += 2;
         }
         break;
     case TRIAD_AIR:
         if (has_fac(FAC_AEROSPACE_COMPLEX, base_id, 0)
             || has_project(SP_CLOUDBASE_ACADEMY, faction_id)) {
-            morale_modifier = 2;
+            morale_modifier += 2;
         }
         break;
     }
@@ -8565,17 +8525,15 @@ int __cdecl black_market(int energy) {
         return 0;
     }
     if (BaseUpkeepStage == 1) {
-        for (int i = 0, j = 0; i >= -64; j++, i -= 8) {
+        for (int j = 0; j <= 8; j++) {
             int ineff = j;
-            int factor = i;
             if (has_fac(FAC_CHILDREN_CRECHE, BaseIDCurrentSelected, 0)) {
-                ineff = j - 2; // +2 on efficiency scale
-                factor = i + 16; // ?
+                ineff -= 2; // +2 on efficiency scale
             }
             if (ineff >= 8) {
                 PlayersData[faction_id].unk_46[j] += energy;
             } else {
-                PlayersData[faction_id].unk_46[j] += energy * dist_hq / (factor + 64);
+                PlayersData[faction_id].unk_46[j] += energy * dist_hq / ((8 - ineff) * 8);
             }
         }
     }

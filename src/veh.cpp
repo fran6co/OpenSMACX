@@ -2831,14 +2831,13 @@ int __cdecl battle_kill(int vehicle_id, int *attacker_count_out,
         }
         if (base_id >= 0) {
             PluralityDefault = 0;
-            const int killer_faction = Vehs[killer_id].faction_id;
             Bases[base_id].state |= 0x40000;
-            PlayersData[killer_faction].flags |= 0x1000;
-            GenderDefault = Players[killer_faction].is_leader_female;
-            parse_says(6, Players[killer_faction].name_leader, -1, -1);
-            GenderDefault = Players[killer_faction].noun_gender;
-            PluralityDefault = Players[killer_faction].is_noun_plural;
-            parse_says(7, Players[killer_faction].noun_faction, -1, -1);
+            PlayersData[Vehs[killer_id].faction_id].flags |= 0x1000;
+            GenderDefault = Players[Vehs[killer_id].faction_id].is_leader_female;
+            parse_says(6, Players[Vehs[killer_id].faction_id].name_leader, -1, -1);
+            parse_set(Players[Vehs[killer_id].faction_id].noun_gender,
+                      Players[Vehs[killer_id].faction_id].is_noun_plural);
+            parse_says(7, Players[Vehs[killer_id].faction_id].noun_faction, -1, -1);
             interlude(6, Bases[base_id].name_string, 1, 0);
         }
     }
