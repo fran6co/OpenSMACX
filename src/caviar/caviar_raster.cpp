@@ -493,7 +493,7 @@ Purpose: The isometric view-matrix builder: take the caller's nine source
 // The three mapped callers supply VOX_Matrix owners at 63F611, 63E95C and
 // 63F00C. Native x87 exceptional conversion behavior and complete executable
 // caller/reference qualification remain explicit fidelity obligations.
-// ORIGINAL: 0x0063FA80 sub_63fa80 0x0063FA80-0x0063FC92
+// ORIGINAL: 0x0063FA80 sub_63fa80 0x0063FA80-0x0063FC92 BYTE_EXACT
 // symbol    _sub_63fa80
 // size      530 bytes
 // Deleted seed provenance: git:1ed59304110fc2098fb1dd11457fa5b0074169bd:src/unrecovered/0063fa80.cpp
@@ -610,7 +610,7 @@ void __cdecl caviar_direction_to_projection_index(
 //           push) then `mov cl, byte ptr [eax]` - a pointer, not a plain
 //           int, matching IDA's one-argument guess; no explicit `mov eax,`
 //           before `ret` (see the sibling 0x0063FFE0's identical tail).
-// ORIGINAL: 0x0063FE00 sub_63fe00 0x0063FE00-0x0063FFDD
+// ORIGINAL: 0x0063FE00 sub_63fe00 0x0063FE00-0x0063FFDD BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned original entry and seed span transported by the native source writer; current symbol observed from the VC6 source overlay.", "The four-helper closure uses real shared Caviar projection storage and existing vector/matrix owners, not executable-address aliases.", "The projection builder at 0x640A27 advances its cursor before storing: packed rows begin at 0x9C0BA0, with fields at offsets0/4/8 and stride16, disjoint from callbacks at 0x9C0B80..0x9C0B94. This supersedes the earlier overlapping-output interpretation.", "Source arrays describe accessed windows, not proven original allocation bounds or original class names; remaining draw/setup callers are still unfinished."], "reason": "Complete typed Caviar helper in the existing renderer owner; preserve native branch/store order and historical restoration obligations."}
 // symbol    ?vox_direction_to_octant@@YAXPBUVoxRenderRecord@@@Z
 // TRIED: near-duplicate of 0x0063FFE0 past the preamble (same 628220/6281b0/round-to-nearest/octant/ratio tail) - only the first block differs, negating all three floats when `*param_1 & 1` instead of calling sub_627f50. The three round-to-nearest computations are inlined at each call site rather than factored into a shared helper: a free-function helper ahead of the definition compiles to zero external .text symbols in body-mode extraction (only a helper CLASS is special-cased). Landing the closest control-flow-faithful form (divergence starts at instruction #2, on the flag test).
@@ -690,7 +690,7 @@ void __cdecl vox_direction_to_octant(const VoxRenderRecord *render_record) {
 //           and Ghidra's one-argument guess, and there is no explicit `mov
 //           eax,` before `ret` - the value in eax at return is the `shl`
 //           result incidentally, not a deliberate return.
-// ORIGINAL: 0x0063FFE0 sub_63ffe0 0x0063FFE0-0x006401A8
+// ORIGINAL: 0x0063FFE0 sub_63ffe0 0x0063FFE0-0x006401A8 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned original entry and seed span transported by the native source writer; current symbol observed from the VC6 source overlay.", "The four-helper closure uses real shared Caviar projection storage and existing vector/matrix owners, not executable-address aliases.", "The projection builder at 0x640A27 advances its cursor before storing: packed rows begin at 0x9C0BA0, with fields at offsets0/4/8 and stride16, disjoint from callbacks at 0x9C0B80..0x9C0B94. This supersedes the earlier overlapping-output interpretation.", "Source arrays describe accessed windows, not proven original allocation bounds or original class names; remaining draw/setup callers are still unfinished."], "reason": "Complete typed Caviar helper in the existing renderer owner; preserve native branch/store order and historical restoration obligations."}
 // symbol    ?vox_inverse_direction_to_octant@@YAXPBUVOX_Matrix@@@Z
 // TRIED: the three callees (sub_627f50/sub_628220/sub_6281b0) are catalogued nullary, so they are reached through explicit cdecl function-pointer casts rather than by name. The first round-to-nearest computation tests the sign of localC[0] (the sub_628220 output) but rounds local18 (the sub_6281b0 output) - an asymmetry the disassembly shows plainly and this keeps, even though axes 1 and 2 are self-referential. A shared `round_nearest` free-function helper ahead of the definition compiled to zero external .text symbols (body-mode extraction only special-cases a helper CLASS, not a helper free function) - inlined the three round computations instead. Landing the closest control-flow-faithful form (divergence starts at instruction #12, inside the float-copy preamble).

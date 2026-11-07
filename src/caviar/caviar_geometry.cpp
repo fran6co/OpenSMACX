@@ -114,7 +114,7 @@ void __cdecl vox_matrix_inverse(const float (*matrix)[3], float (*out)[3]) {
 
 // 0x006280E0. A 3x3 times a vector: three rows of three multiplies and a
 // store, 107 bytes, no calls of its own.
-// ORIGINAL: 0x006280E0 ?vox_matrix_vector_mul@@YAXPAY02$$CBMPBMPAM@Z 0x006280E0-0x0062814B
+// ORIGINAL: 0x006280E0 ?vox_matrix_vector_mul@@YAXPAY02$$CBMPBMPAM@Z 0x006280E0-0x0062814B BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Original 0x006280E0-0x0062814B loads three matrix rows, computes each dot product with its distinct x87 grouping, and stores output components at0x00628108,0x00628127,0x00628147 before reading the next row. Complete extent agrees with src/unrecovered/006280e0.cpp.", "Existing vox_draw_scene and vox_transform_camera call sites supply VOX_Matrix::values, a float[3][3], not a nine-element inner row. Pointer-to-row parameters preserve that C++ object boundary without changing pointer ABI."], "reason": "Multiply a VOX matrix by a three-float vector using actual row ownership, original dot-product grouping and sequential stores. Reload inputs between results to preserve observed overlap behavior."}
 void __cdecl vox_matrix_vector_mul(const float (*matrix)[3], const float *vector,
                                   float *out) {
@@ -176,7 +176,7 @@ void __cdecl vec3_scale(const float *source, float scale,
 
 // Historical body note: the original stores y/z scratch slots before reloading them;
 // the LEVER annotation below retains the measured register/spill exploration.
-// ORIGINAL: 0x006281E0 sub_6281e0 0x006281E0-0x00628217
+// ORIGINAL: 0x006281E0 sub_6281e0 0x006281E0-0x00628217 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence":["pinned image 01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf: complete original body 006281E0 is a cdecl three-float vector operation; see its preserved ORIGINAL span and instruction claim","prior transitional source spelling ?leaf_006281e0_redirect@@YAMPBM@Z is retained here as history only, not asserted as an original debug symbol","pinned direct E8 callsites span vehicle setup/drawing and Caviar projection; source counterparts pass float[3]/VOX_Vect::values buffers rather than Vector objects","src/vector.cpp already owns 0x00628150 vector_add with the same cdecl float-array shape; this is module co-location, not a claim of original TU or historical source name","the selected body keeps component/store order and existing overlap behavior; the scale locals preserve source-before-store aliasing; the length expression retains the original extended-precision accumulation order"],"reason":"Rehome the mapped free Vec3 operation into the existing vector-array module. The operation-derived API name does not assert an original class or source spelling; this binding records current ownership evidence only."}
 // symbol    ?vec3_length@@YAMPBM@Z
 // kind      game
@@ -254,7 +254,7 @@ void __cdecl vox_normalise_vector(const float *source, float *out) {
 
 // Each component is stored before the next one's input reads; retain that
 // order when an output vector overlaps an input vector.
-// ORIGINAL: 0x00628290 ?vox_cross_product@@YAXPBM0PAM@Z 0x00628290-0x006282D1
+// ORIGINAL: 0x00628290 ?vox_cross_product@@YAXPBM0PAM@Z 0x00628290-0x006282D1 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned original body, complete seed extent, and fresh VC6 symbol observation; recovery/tests/test_caviar_geometry.py checks original expression trees and bounded host behavior.", "Inverse snapshots cofactor inputs before stores and has no singular guard; cross preserves sequential overlapping writes; rotation uses scoped x87 intrinsics and reads all angles before stores. Numerical spill precision is not established by these structural bindings."], "reason": "Source-owned voxel geometry with typed matrix rows and original arithmetic/store ordering."}
 void __cdecl vox_cross_product(const float *left, const float *right, float *out) {
     out[0] = left[1] * right[2] - right[1] * left[2];

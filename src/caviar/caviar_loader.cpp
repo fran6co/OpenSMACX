@@ -118,7 +118,7 @@ static const float vox_threshold_seven = 7.0f;   // 0x00670FEC
 
 
 // Failures return without releasing partially built records, as in the image.
-// ORIGINAL: 0x006381F0 ?vox_load_record@@YAPAUCvrRecord@@H@Z 0x006381F0-0x00638425
+// ORIGINAL: 0x006381F0 ?vox_load_record@@YAPAUCvrRecord@@H@Z 0x006381F0-0x00638425 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Original 006381F0..00638425: preserve existing seed extent; pinned decode independently checks terminal return, dispatch callees and relevant field/callback behavior. Fresh VC6 output establishes current emitted symbol.", "Original638230 allocates44 bytes;638353 writes user_length at40. Palette storage is a pointer, parts/steps/shadows are typed allocations with callback-observable failure and release ordering.", "Patch639090 uses prefix+4 displacement,42-byte prefix and overlap-capable original6474E0 copy; standard memmove preserves the observed backward-copy behavior without undefined overlapping memcpy. Host controls are bounded and not full-game or malformed-file acceptance."], "reason": "Recover typed CVR record loading and nested chunk ownership in the genuine Caviar loader closure."}
 CvrRecord *__cdecl vox_load_record(int fd) {
     CvrChunkHeader header;
@@ -345,7 +345,7 @@ Purpose: Allocate (length - 8) + 1 bytes into the record's slot at +0xc, read
          that many bytes into it and NUL-terminate: the CVR loader's reader
          for the chunks it keeps as text (vox_read_chunks' 0x1010000 case
          is the same code against +0x10 instead of +0xc).
-// ORIGINAL: 0x006386D0 sub_6386d0 0x006386D0-0x0063871D FILE
+// ORIGINAL: 0x006386D0 sub_6386d0 0x006386D0-0x0063871D FILE BYTE_EXACT
 // symbol    _vox_read_length_field
 // size      77 bytes
 // callers   2   call targets   0
@@ -383,7 +383,7 @@ Purpose: Walk a CVR record's chunk list. Each chunk is an 8-byte {tag,
          terminated text field, into +0x10), 0x1020000 (the palette, into
          +0x14, expanded in place when the record's float at +8 is under 7),
          0x1030000 (into +0x18) - and anything else is seeked past.
-// ORIGINAL: 0x00638720 sub_638720 0x00638720-0x006388B2
+// ORIGINAL: 0x00638720 sub_638720 0x00638720-0x006388B2 BYTE_EXACT
 // TRIED: chunked-record reader (tag/length header, three named chunk tags 0x1010000/0x1020000/0x1030000 plus a default skip through the indirect callback at g_009c0b90) - diverges at #3 with the loop-entry `lea` vs `push`, register/stack layout differs from here on; landed at 0.73 similarity.
 // symbol    _vox_read_chunks
 // size      402 bytes
@@ -475,7 +475,7 @@ extern "C" int __cdecl vox_read_chunks(int fd, CvrRecord *record, int size) {
 }
 
 
-// ORIGINAL: 0x006388C0 ?vox_read_parts@@YAHHPAUCvrRecord@@H@Z 0x006388C0-0x00638AC2
+// ORIGINAL: 0x006388C0 ?vox_read_parts@@YAHHPAUCvrRecord@@H@Z 0x006388C0-0x00638AC2 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Original 006388C0..00638AC2: preserve existing seed extent; pinned decode independently checks terminal return, dispatch callees and relevant field/callback behavior. Fresh VC6 output establishes current emitted symbol.", "Original638230 allocates44 bytes;638353 writes user_length at40. Palette storage is a pointer, parts/steps/shadows are typed allocations with callback-observable failure and release ordering.", "Patch639090 uses prefix+4 displacement,42-byte prefix and overlap-capable original6474E0 copy; standard memmove preserves the observed backward-copy behavior without undefined overlapping memcpy. Host controls are bounded and not full-game or malformed-file acceptance."], "reason": "Recover typed CVR record loading and nested chunk ownership in the genuine Caviar loader closure."}
 int __cdecl vox_read_parts(int fd, CvrRecord *record, int size) {
     uint32_t remaining = (uint32_t)size - 8u;
@@ -675,7 +675,7 @@ Purpose: Read a CVR record's geometry chunks. Three tags name the three
          0x4040303 into slots[2] (count*36 bytes, 9 dwords per element) -
          and anything else is seeked past. The whole block spans `size`
          bytes and `count` is the element count the chunk headers repeat.
-// ORIGINAL: 0x00638DE0 sub_638de0 0x00638DE0-0x00638F2A
+// ORIGINAL: 0x00638DE0 sub_638de0 0x00638DE0-0x00638F2A BYTE_EXACT
 // TRIED: calling sub_638620/sub_638650/sub_639390 by name - all three are catalogued unmangled with no CRT_SIGNATURES entry, so declfix leaves them nullary (C2660 direct, C2733 if redeclared); routed through function-pointer casts. The fallback branch's indirect call goes through `*(int*)0x9c0b90`, a stored function pointer value (not a vtable), called the same way. Sharing ONE `sub_638650` call site between the 0x4040302/0x4040303 cases via goto (matching the disassembly's single shared call at 0x638e99) was not attempted - the two branches' locals would cross the jump into each other's scope, which C++ refuses; each case is expanded with its own call instead. Best reached: MISMATCH, edit_count 17, 315 bytes vs 330, mnemonic similarity ~0.67.
 // symbol    _vox_read_geometry_chunks
 // size      330 bytes
@@ -748,7 +748,7 @@ extern "C" int __cdecl vox_read_geometry_chunks(int fd, CvrPart *slots, int size
     return 0;
 }
 
-// ORIGINAL: 0x00638F30 ?vox_read_shadow@@YAHHPAUCvrRecord@@HH@Z 0x00638F30-0x00639086
+// ORIGINAL: 0x00638F30 ?vox_read_shadow@@YAHHPAUCvrRecord@@HH@Z 0x00638F30-0x00639086 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Original 00638F30..00639086: preserve existing seed extent; pinned decode independently checks terminal return, dispatch callees and relevant field/callback behavior. Fresh VC6 output establishes current emitted symbol.", "Original638230 allocates44 bytes;638353 writes user_length at40. Palette storage is a pointer, parts/steps/shadows are typed allocations with callback-observable failure and release ordering.", "Patch639090 uses prefix+4 displacement,42-byte prefix and overlap-capable original6474E0 copy; standard memmove preserves the observed backward-copy behavior without undefined overlapping memcpy. Host controls are bounded and not full-game or malformed-file acceptance."], "reason": "Recover typed CVR record loading and nested chunk ownership in the genuine Caviar loader closure."}
 int __cdecl vox_read_shadow(int fd, CvrRecord *record, int index, int size) {
     if (record->shadows_ == 0) {
@@ -790,7 +790,7 @@ int __cdecl vox_read_shadow(int fd, CvrRecord *record, int index, int size) {
 }
 
 
-// ORIGINAL: 0x00639090 ?vox_read_shape_patches@@YAHHPAUCvrRecord@@H@Z 0x00639090-0x006391E6
+// ORIGINAL: 0x00639090 ?vox_read_shape_patches@@YAHHPAUCvrRecord@@H@Z 0x00639090-0x006391E6 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Original 00639090..006391E6: preserve existing seed extent; pinned decode independently checks terminal return, dispatch callees and relevant field/callback behavior. Fresh VC6 output establishes current emitted symbol.", "Original638230 allocates44 bytes;638353 writes user_length at40. Palette storage is a pointer, parts/steps/shadows are typed allocations with callback-observable failure and release ordering.", "Patch639090 uses prefix+4 displacement,42-byte prefix and overlap-capable original6474E0 copy; standard memmove preserves the observed backward-copy behavior without undefined overlapping memcpy. Host controls are bounded and not full-game or malformed-file acceptance."], "reason": "Recover typed CVR record loading and nested chunk ownership in the genuine Caviar loader closure."}
 int __cdecl vox_read_shape_patches(int fd, CvrRecord *record, int size) {
     uint32_t remaining = (uint32_t)size - 8u;
