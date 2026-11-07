@@ -9933,7 +9933,7 @@ void __cdecl battle_plans(int faction_a, int faction_b) {
     PlanWindow.close();
 }
 
-// ORIGINAL: 0x00526E70 ?production_phase@@YAXH@Z 0x00526E70-0x00527285
+// ORIGINAL: 0x00526E70 ?production_phase@@YAXH@Z 0x00526E70-0x00527285 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence":["original:0x00526E70-0x00527285:the full pinned function span is the production-phase body","original:0x00526F0E:the first indexed rule-flags access uses the actor faction id","original:0x00526F43:loan credit is written to the partner PlayerData energy_reserves field","source:src/faction.h:Players, PlayersData, Player.rule_flags, PlayerData.loan_balance, loan_payment, sanction_turns, energy_reserves","source:src/base.h:Base ownership and the declared base-upkeep interface","source:src/technology.h:technology effects and technology progression owners"],"reason":"Recover the production-phase identity in faction.cpp using the existing Player/PlayerData, Base and technology owners while retaining the pinned actor/partner commerce roles and native callback order."}
 void __cdecl production_phase(int faction_id) {
     PlayersData[faction_id].unk_28 = 0;
