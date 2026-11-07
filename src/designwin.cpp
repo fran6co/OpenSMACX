@@ -585,71 +585,51 @@ Return Value: 1 the cell was drawn or tiled, 0 the index was past the table
 Status: Coverage transcription - unclaimed body; historical seed at
         git:08336bcc:src/unrecovered/00433d60.cpp.
 */
+#pragma optimize("y", off)
 int SelectPartWin::draw_part(int a1, int a2) {
-    const int base = field_2B60_;
-
-    if (a1 >= base && a1 < base + field_2B64_) {
-        const int rel = a1 - base;
-        const int per_row = field_2B6C_;
-        const int col = rel / per_row;
-        const int row = rel % per_row;
-
-        // The seed's own axis naming: the row-scaled pair lands in the
-        // rect's left/right slots and the col-scaled pair in top/bottom.
-        const int x0 = row * 0x6C + 0x1B;
-        const int x1 = row * 0x6C + 0x84;
-        const int y0 = col * 0x5E + 4;
-        const int y1 = col * 0x5E + 0x5F;
-
-        if (a1 < field_2B74_) {
-            RECT rect;
-            rect.left = x0;
-            rect.top = y0;
-            rect.right = x1;
-            rect.bottom = y1;
-
-            Buffer *const buf = static_cast<Buffer *>(this);
-            Buffer::set_clip(&rect);
-
-            Buffer::box_sprite(
-                &rect, &InterfaceBoxStyles[2 * (a2 != 0 ? 1 : 0)]);
-
-            rect.left += 3;
-            rect.top += 3;
-            rect.right -= 3;
-            rect.bottom -= 3;
-
-            int result;
-            switch (part_kind_) {
-                case 0:
-                    result = draw_chassis(a1, &rect,
-                                                        a2);
-                    break;
-                case 1:
-                    result = draw_weapon(a1, &rect,
-                                                       a2);
-                    break;
-                case 2:
-                    result = draw_armor(a1, &rect,
-                                                      a2);
-                    break;
-                case 3:
-                    result = draw_reactor(a1, &rect,
-                                                        a2);
-                    break;
-                default:
-                    Buffer::restore_clip();
-                    return reinterpret_cast<int>(buf);
-            }
-            Buffer::restore_clip();
-            return result;
+    if (a1 >= field_2B60_ && a1 < field_2B60_ + field_2B64_) {
+        int row = (a1 - field_2B60_) / field_2B6C_;
+        int column = (a1 - field_2B60_) % field_2B6C_;
+        int top = row * 94 + 4;
+        int x = column * 108 + 4;
+        RECT rect;
+        rect.top = top;
+        rect.bottom = top + 91;
+        rect.left = x + 23;
+        rect.right = x + 128;
+        if (a1 >= field_2B74_) {
+            Buffer::tile(&TutWinBaseWindow.sprite6_, rect.left, rect.top,
+                         rect.left, rect.top, rect.right - rect.left,
+                         rect.bottom - rect.top);
+            return 1;
         }
-
-        Buffer::tile(&TutWinBaseWindow.sprite6_, x0, y0, x0,
-                   y0, 0x69, 0x5B);
+        Buffer::set_clip(&rect);
+        Buffer::box_sprite(&rect, &InterfaceBoxStyles[a2 ? 2 : 0]);
+        rect.left += 3;
+        rect.right -= 3;
+        rect.top += 3;
+        rect.bottom -= 3;
+        int result;  // left uninitialised for an unknown part_kind_, as in the image
+        switch (part_kind_) {
+            case 0:
+                result = draw_chassis(a1, &rect, a2);
+                break;
+            case 1:
+                result = draw_weapon(a1, &rect, a2);
+                break;
+            case 2:
+                result = draw_armor(a1, &rect, a2);
+                break;
+            case 3:
+                result = draw_reactor(a1, &rect, a2);
+                break;
+        }
+        Buffer::restore_clip();
+        return result;
     }
     return 1;
 }
+#pragma optimize("", on)
 
 /*
 Purpose: Draw one chassis entry's label and render: find the a1'th enabled
@@ -674,97 +654,62 @@ Return Value: 1 the entry was drawn, 0 the index ran past the table
 Status: Coverage transcription - unclaimed body; historical seed at
         git:08336bcc:src/unrecovered/004329b0.cpp.
 */
+#pragma optimize("y", off)
 int SelectPartWin::draw_chassis(int a1, RECT *a2, int a3) {
-
-    // Walk the nine ordinary chassis records whose signed prerequisite
-    // is eligible (>= -1) until the a1'th entry.
-    const RulesChassis *entry = Chassis;
-    int idx = 0;
+    int has_tech_failed = 0;
+    int valid_count = 0;
     int slot = 0;
-    int has_all_tech_flag = 0;
-
-    for (;;) {
-        if (entry->preq_tech >= -1) {
-            if (idx == a1) {
-                const int tech_id = entry->preq_tech;
-                if (has_tech(tech_id,
-                             faction_id_) == 0) {
-                    has_all_tech_flag = 1;
+    for (int i = 0; i < MaxChassisNum; ++i, ++slot) {
+        if (Chassis[i].preq_tech >= -1) {
+            if (valid_count == a1) {
+                if (!has_tech(Chassis[slot].preq_tech, faction_id_)) {
+                    has_tech_failed = 1;
                 }
                 break;
             }
-            idx++;
-        }
-        ++entry;
-        slot++;
-        if (!(entry < Chassis + MaxChassisNum)) {
-            break;
+            ++valid_count;
         }
     }
-
-    if (slot == 9) {
+    if (slot == MaxChassisNum) {
         return 0;
     }
 
     caviar_.reset_objects();
-    vehdraw_construct_chassis(faction_id_, slot,
-                              0, 0, reactor_id_,
-                              &caviar_);
+    vehdraw_construct_chassis(faction_id_, slot, 0, 0, reactor_id_, &caviar_);
     caviar_.set_scaling(0.06f);
-
-
-    if (has_all_tech_flag != 0) {
-        caviar_.render_mono(static_cast<Buffer *>(this),
-                            (a2->right + a2->left) / 2,
+    if (has_tech_failed) {
+        caviar_.render_mono(this, (a2->right + a2->left) / 2,
                             (a2->bottom + a2->top) / 2, 0xB9, 6);
-        return has_all_tech_flag == 0;
+    } else {
+        caviar_.render(this, (a2->right + a2->left) / 2,
+                       (a2->bottom + a2->top) / 2, 6);
+
+        Buffer::set_text_color(TextColourTable[158], TextColourTable[159], 1, 1);
+        RECT rect = *a2;
+        rect.bottom = rect.top + font_line_advance(font1_);
+        StringTemp[0] = 0;
+        strcat(StringTemp, StringTable.get(Chassis[slot].offsv_1_name));
+        CharUpperA(StringTemp);
+        Buffer::wrap_cent(&font1_, StringTemp, &rect);
+
+        Buffer::set_text_color(TextColourTable[160], TextColourTable[161], 1, 1);
+        rect = *a2;
+        rect.top = rect.bottom - font_line_advance(font1_);
+        StringTemp[0] = 0;
+        strcat(StringTemp, StringTable.get(Triad[Chassis[slot].triad]));
+        Buffer::set_font(&font1_, 0, 0, 0);
+        Buffer::write_l(StringTemp, &rect);
+
+        char itoa_buf[80];
+        StringTemp[0] = 0;
+        _itoa(Chassis[slot].speed, itoa_buf, 10);
+        strcat(StringTemp, itoa_buf);
+        Buffer::set_font(&font2_, 0, 0, 0);
+        Buffer::write_right_l(StringTemp, &rect);
     }
-
-    caviar_.render(static_cast<Buffer *>(this),
-                   (a2->right + a2->left) / 2,
-                   (a2->bottom + a2->top) / 2, 6);
-
-    Buffer::set_text_color(TextColourTable[158], TextColourTable[159], 1, 1);
-
-    Font *const font1 = &font1_;
-    Font *const font2 = &font2_;
-    RECT temp;
-
-    temp.left = a2->left;
-    temp.right = a2->right;
-    temp.top = a2->top;
-    temp.bottom = a2->top + font_line_advance(*font1);
-
-    StringTemp[0] = 0;
-    strcat(StringTemp, StringTable.get(Chassis[slot].offsv_1_name));
-    CharUpperA(StringTemp);
-    Buffer::wrap_cent(font1, StringTemp, &temp);
-
-    Buffer::set_text_color(TextColourTable[160], TextColourTable[161], 1, 1);
-
-    temp.left = a2->left;
-    temp.right = a2->right;
-    temp.bottom = a2->bottom;
-    temp.top = a2->bottom - font_line_advance(*font1);
-
-    StringTemp[0] = 0;
-    strcat(StringTemp, StringTable.get(Triad[Chassis[slot].triad]));
-
-    Buffer::set_font(font1, 0, 0, 0);
-    Buffer::write_l(StringTemp, &temp,
-                 static_cast<int>(strlen(StringTemp)));
-
-    char itoa_buf[80];
-    _itoa(Chassis[slot].speed, itoa_buf, 10);
-    StringTemp[0] = 0;
-    strcat(StringTemp, itoa_buf);
-
-    Buffer::set_font(font2, 0, 0, 0);
-    Buffer::write_right_l(StringTemp, &temp,
-                       static_cast<int>(strlen(StringTemp)));
-
-    return has_all_tech_flag == 0;
+    return !has_tech_failed;
 }
+#pragma optimize("", on)
 
 // The reactor walk runs on veh.h's Reactor[] itself: the enable test reads
 // Reactor[i].preq_tech, and the tech-id and name reads sit one record back
@@ -794,90 +739,63 @@ Return Value: 1 the entry was drawn, 0 the index ran past the table
 Status: Coverage transcription - unclaimed body; historical seed at
         git:08336bcc:src/unrecovered/00433520.cpp.
 */
+#pragma optimize("y", off)
 int SelectPartWin::draw_reactor(int a1, RECT *a2, int a3) {
-
-    int slot = 1;
     int valid_count = 0;
     int has_tech_failed = 0;
-    int i;
-    for (i = 0; i < 4; ++i) {
+    int slot = 1;
+    for (int i = 0; i < 4; ++i, ++slot) {
         if (Reactor[i].preq_tech >= -1) {
             if (valid_count == a1) {
-                const short tech_id = Reactor[slot - 1].preq_tech;
-                if (!has_tech(tech_id,
-                              faction_id_)) {
+                if (!has_tech(Reactor[slot - 1].preq_tech, faction_id_)) {
                     has_tech_failed = 1;
                 }
                 break;
             }
             ++valid_count;
         }
-        ++slot;
     }
-
     if (slot == 5) {
         return 0;
     }
 
     caviar_.reset_objects();
-    vehdraw_construct_reactor(ConsoleGlobal.faction_id_,
-                              chassis_id_,
-                              weapon_id_, slot,
-                              ability_flags_,
-                              &caviar_);
+    vehdraw_construct_reactor(ConsoleGlobal.faction_id_, chassis_id_,
+                              weapon_id_, slot, ability_flags_, &caviar_);
     caviar_.set_scaling(0.2f);
-
-
-    if (has_tech_failed != 0) {
-        caviar_.render_mono(static_cast<Buffer *>(this),
-                            (a2->right + a2->left) / 2,
+    if (has_tech_failed) {
+        caviar_.render_mono(this, (a2->right + a2->left) / 2,
                             (a2->bottom + a2->top) / 2, 0xB9, 6);
-        return has_tech_failed == 0;
+    } else {
+        caviar_.render(this, (a2->right + a2->left) / 2,
+                       (a2->bottom + a2->top) / 2, 6);
+
+        Buffer::set_text_color(TextColourTable[158], TextColourTable[159], 1, 1);
+        RECT rect = *a2;
+        rect.bottom = rect.top + font_line_advance(font1_);
+        Buffer::set_font(&font1_, 0, 0, 0);
+        StringTemp[0] = 0;
+        strcat(StringTemp, StringTable.get(Reactor[slot - 1].name));
+        CharUpperA(StringTemp);
+        Buffer::wrap_cent(StringTemp, &rect);
+
+        Buffer::set_text_color(TextColourTable[160], TextColourTable[161], 1, 1);
+        rect = *a2;
+        rect.top = rect.bottom - font_line_advance(font1_);
+        StringTemp[0] = 0;
+        strcat(StringTemp, label_get(0x1E4 / 4));
+        Buffer::write_l(StringTemp, &rect);
+
+        Buffer::set_font(&font2_, 0, 0, 0);
+        char itoa_buf[80];
+        StringTemp[0] = 0;
+        _itoa(slot, itoa_buf, 10);
+        strcat(StringTemp, itoa_buf);
+        Buffer::write_right_l(StringTemp, &rect);
     }
-
-    caviar_.render(static_cast<Buffer *>(this),
-                   (a2->right + a2->left) / 2,
-                   (a2->bottom + a2->top) / 2, 6);
-
-    Buffer::set_text_color(TextColourTable[158], TextColourTable[159], 1, 1);
-
-    Font *const font1 = &font1_;
-    RECT rect1;
-    rect1.left = a2->left;
-    rect1.top = a2->top;
-    rect1.right = a2->right;
-    rect1.bottom = a2->top + font_line_advance(*font1);
-    Buffer::set_font(font1, 0, 0, 0);
-
-    StringTemp[0] = 0;
-    strcat(StringTemp, StringTable.get(Reactor[slot - 1].name));
-    CharUpperA(StringTemp);
-    Buffer::wrap_cent(StringTemp, &rect1);
-
-    Buffer::set_text_color(TextColourTable[160], TextColourTable[161], 1, 1);
-
-    RECT rect2;
-    rect2.left = a2->left;
-    rect2.right = a2->right;
-    rect2.bottom = a2->bottom;
-    rect2.top = rect2.bottom - font_line_advance(*font1);
-
-    StringTemp[0] = 0;
-    strcat(StringTemp, StringTable.get(Labels.strings_ptr[0x1E4 / 4]));
-    Buffer::write_l(StringTemp, &rect2,
-                 static_cast<int>(strlen(StringTemp)));
-
-    Buffer::set_font(&font2_, 0, 0, 0);
-
-    char itoa_buf[80];
-    StringTemp[0] = 0;
-    _itoa(slot, itoa_buf, 10);
-    strcat(StringTemp, itoa_buf);
-    Buffer::write_right_l(StringTemp, &rect2,
-                       static_cast<int>(strlen(StringTemp)));
-
-    return has_tech_failed == 0;
+    return !has_tech_failed;
 }
+#pragma optimize("", on)
 
 // Armor availability is RulesChassis::missile. The armor prerequisite walk
 // uses the existing 14-record Armor[] owner and its preq_tech member.
@@ -904,135 +822,86 @@ Return Value: 1 the entry was drawn, 0 the index ran past the table
 Status: Coverage transcription - unclaimed body; historical seed at
         git:08336bcc:src/unrecovered/00433170.cpp.
 */
+#pragma optimize("y", off)
 int SelectPartWin::draw_armor(int a1, RECT *a2, int a3) {
-    Caviar *const cav2b9c = &caviar_;
-
+    int has_tech_failed = 0;
     int slot;
-    int noTechFlag = 0;
-    RECT rectScratch;
-
-    const int chassis = chassis_id_;
-    const unsigned char flagByte = Chassis[chassis].missile;
-
-    if (flagByte != 0) {
+    if (Chassis[chassis_id_].missile) {
         slot = 0;
     } else {
-        const int target = a1;
-        int idx = 0;
-        int activeCount = 0;
-        const RulesArmor *entry = Armor;
-        bool matched = false;
-        for (;;) {
-            if (entry->preq_tech > -2) {
-                if (activeCount == target) {
-                    slot = idx;
-                    const short techShort = entry->preq_tech;
-                    if (has_tech(techShort,
-                                 faction_id_) ==
-                        0) {
-                        noTechFlag = 1;
+        int valid_count = 0;
+        slot = 0;
+        for (int i = 0; i < MaxArmorNum; ++i, ++slot) {
+            if (Armor[i].preq_tech >= -1) {
+                if (valid_count == a1) {
+                    if (!has_tech(Armor[slot].preq_tech, faction_id_)) {
+                        has_tech_failed = 1;
                     }
-                    matched = true;
                     break;
                 }
-                activeCount++;
-            }
-            ++entry;
-            idx++;
-            if (entry >= Armor + MaxArmorNum) {
-                break;
+                ++valid_count;
             }
         }
-        if (!matched) {
-            slot = idx;
+        if (slot == MaxArmorNum) {
+            return 0;
         }
-    }
-
-    if (slot == 0xE) {
-        return 0;
-    }
-
-    if (slot != 0) {
-        const int v2b8c = weapon_id_;
-        const int v2b88 = chassis_id_;
-        caviar_.reset_objects();
-        vehdraw_construct_armor(ConsoleGlobal.faction_id_, v2b88, v2b8c, slot, 1,
-                                cav2b9c);
-        cav2b9c->set_scaling(0.1f);
-    }
-
-    if (noTechFlag != 0) {
         if (slot != 0) {
-            const int midY = (a2->bottom + a2->top) / 2;
-            const int midX = (a2->right + a2->left) / 2;
-            cav2b9c->render_mono(static_cast<Buffer *>(this), midX, midY, 0xB9, 6);
-            return noTechFlag == 0;
-        }
-    } else if (slot != 0) {
-        const int midY = (a2->bottom + a2->top) / 2;
-        const int midX = (a2->right + a2->left) / 2;
-        if (slot == 5) {
-            cav2b9c->render_multi_table_dest(static_cast<Buffer *>(this), midX, midY, 0x18,
-                ArmorTransparentColorTables, 6);
-        } else {
-            cav2b9c->render(static_cast<Buffer *>(this), midX, midY, 6);
+            caviar_.reset_objects();
+            vehdraw_construct_armor(ConsoleGlobal.faction_id_, chassis_id_,
+                                    weapon_id_, slot, 1, &caviar_);
+            caviar_.set_scaling(0.1f);
         }
     }
+    if (has_tech_failed) {
+        if (slot != 0) {
+            caviar_.render_mono(this, (a2->right + a2->left) / 2,
+                                (a2->bottom + a2->top) / 2, 0xB9, 6);
+        }
+    } else {
+        if (slot != 0) {
+            if (slot == 5) {
+                caviar_.render_multi_table_dest(
+                    this, (a2->right + a2->left) / 2,
+                    (a2->bottom + a2->top) / 2, 0x18,
+                    ArmorTransparentColorTables, 6);
+            } else {
+                caviar_.render(this, (a2->right + a2->left) / 2,
+                               (a2->bottom + a2->top) / 2, 6);
+            }
+        }
 
-    Buffer::set_text_color(TextColourTable[158], TextColourTable[159], 1, 1);
-    {
-        Font *const font45f4 = &font1_;
-        rectScratch.left = a2->left;
-        rectScratch.top = a2->top;
-        rectScratch.right = a2->right;
-        rectScratch.bottom = a2->bottom;
-        rectScratch.bottom = rectScratch.top + font_line_advance(*font45f4);
-        Buffer::set_font(0, 0, 0, font45f4);
-    }
-    {
-        const int slot16 = slot << 4;
+        Buffer::set_text_color(TextColourTable[158], TextColourTable[159], 1, 1);
+        RECT rect = *a2;
+        rect.bottom = rect.top + font_line_advance(font1_);
+        Buffer::set_font(&font1_, 0, 0, 0);
         StringTemp[0] = 0;
-        strcat(StringTemp,
-               StringTable.get(Armor[slot].name));
+        strcat(StringTemp, StringTable.get(Armor[slot].name));
         CharUpperA(StringTemp);
-        Buffer::wrap_cent(StringTemp, &rectScratch);
+        Buffer::wrap_cent(StringTemp, &rect);
+
         Buffer::set_text_color(TextColourTable[160], TextColourTable[161], 1, 1);
-
-        Font *const font45f4b = &font1_;
-        rectScratch.left = a2->left;
-        rectScratch.top = a2->top;
-        rectScratch.right = a2->right;
-        rectScratch.bottom = a2->bottom;
-        rectScratch.top =
-            a2->bottom - font_line_advance(*font45f4b);
-
-        const unsigned char flag2 = Armor[slot].mode;
-        if (flag2 < 3) {
-            strcat(StringTemp,
-                   StringTable.get(Labels.strings_ptr[0x1F8 / 4]));
-        }
-        Buffer::write_l(StringTemp, &rectScratch,
-                        static_cast<int>(strlen(StringTemp)));
-
-        const signed char armLevel = Armor[slot].defense_rating;
+        rect = *a2;
+        rect.top = rect.bottom - font_line_advance(font1_);
         StringTemp[0] = 0;
-        if (armLevel < 0) {
-            strcat(StringTemp,
-                   StringTable.get(Labels.strings_ptr[0x310 / 4]));
-        } else {
-            char itoaBuf[32];
-            _itoa(armLevel, itoaBuf, 10);
-            strcat(StringTemp, itoaBuf);
+        if (Armor[slot].mode < 3) {
+            strcat(StringTemp, label_get(0x1F8 / 4));
         }
+        Buffer::write_l(StringTemp, &rect);
 
-        Buffer::set_font(0, 0, 0,
-                         &font2_);
-        Buffer::write_right_l(StringTemp, &rectScratch,
-                              static_cast<int>(strlen(StringTemp)));
+        StringTemp[0] = 0;
+        if (Armor[slot].defense_rating < 0) {
+            strcat(StringTemp, label_get(0x310 / 4));
+        } else {
+            char itoa_buf[80];
+            _itoa(Armor[slot].defense_rating, itoa_buf, 10);
+            strcat(StringTemp, itoa_buf);
+        }
+        Buffer::set_font(&font2_, 0, 0, 0);
+        Buffer::write_right_l(StringTemp, &rect);
     }
-
-    return noTechFlag == 0;
+    return !has_tech_failed;
 }
+#pragma optimize("", on)
 
 // Pinned 0x00432E63 uses MOVSX to read the signed byte at 0x009AB9CE.
 // VehPrototypes starts at 0x009AB868 with 0x34-byte rows; +6*0x34+0x2E
@@ -1063,141 +932,124 @@ Return Value: 1 the entry was drawn, 0 the index ran past the table
 Status: Coverage transcription - unclaimed body; historical seed at
         git:08336bcc:src/unrecovered/00432cc0.cpp.
 */
+#pragma optimize("y", off)
 int SelectPartWin::draw_weapon(int a1, RECT *a2, int a3) {
-    int visibleCount = 0;
-    int weaponMissing = 0;
-    int idx = 0;
-
-    do {
-        if (Weapon[idx].preq_tech > -2) {
-            if (visibleCount == a1) {
-                visibleCount =
-                    has_tech(Weapon[idx].preq_tech,
-                             faction_id_)
-                        ? 1
-                        : 0;
-                if (visibleCount == 0) {
-                    weaponMissing = 1;
+    int has_tech_failed = 0;
+    int valid_count = 0;
+    int slot = 0;
+    for (int i = 0; i < MaxWeaponNum; ++i, ++slot) {
+        if (Weapon[i].preq_tech >= -1) {
+            if (valid_count == a1) {
+                if (!has_tech(Weapon[slot].preq_tech, faction_id_)) {
+                    has_tech_failed = 1;
                 }
                 break;
             }
-            visibleCount = visibleCount + 1;
+            ++valid_count;
         }
-        idx = idx + 1;
-    } while (idx < 0x1A);
-    if (idx == 0x1A) {
+    }
+    if (slot == MaxWeaponNum) {
         return 0;
     }
 
     caviar_.reset_objects();
-    Caviar *const caviar = &caviar_;
-    float scale_imm;
-    if (idx == 0) {
-        caviar->add_object(&g_VW00_CAVIARDATA, 0);
-        scale_imm = 0.2f;
-    } else if (idx == 0x10) {
-        caviar->add_object(&g_VM13_CAVIARDATA, 0);
-        scale_imm = 0.06f;
-    } else if (idx == 0x17) {
-        caviar->add_object(&g_VM_CAVIARDATA, 0);
-        scale_imm = 0.06f;
-    } else if (idx == 0x18) {
-        caviar->add_object(&g_VM_CAVIARDATA, 0);
-        caviar->add_object(&g_TECLOAD_CAVIARDATA, 0);
-        scale_imm = 0.06f;
-    } else if (idx == 0x19) {
-        caviar->add_object(&g_VM_CAVIARDATA, 0);
-        caviar->add_object(&g_FUNLOAD_CAVIARDATA, 0);
-        scale_imm = 0.06f;
+    if (slot == 0) {
+        caviar_.add_object(&g_VW00_CAVIARDATA, 0);
+        caviar_.set_scaling(0.2f);
+    } else if (slot == 0x10) {
+        caviar_.add_object(&g_VM13_CAVIARDATA, 0);
+        caviar_.set_scaling(0.06f);
+    } else if (slot == 0x17) {
+        caviar_.add_object(&g_VM_CAVIARDATA, 0);
+        caviar_.set_scaling(0.06f);
+    } else if (slot == 0x18) {
+        caviar_.add_object(&g_VM_CAVIARDATA, 0);
+        caviar_.add_object(&g_TECLOAD_CAVIARDATA, 0);
+        caviar_.set_scaling(0.06f);
+    } else if (slot == 0x19) {
+        caviar_.add_object(&g_VM_CAVIARDATA, 0);
+        caviar_.add_object(&g_FUNLOAD_CAVIARDATA, 0);
+        caviar_.set_scaling(0.06f);
     } else {
-        vehdraw_construct_weapon(faction_id_, -1,
-                                 idx, caviar);
-        const unsigned char weapon_class = Weapon[idx].mode;
-        if (weapon_class < 3) {
-            scale_imm = 0.2f;
-        } else if (weapon_class == 9) {
-            scale_imm = 0.08f;
-        } else if (weapon_class == 0xB) {
-            scale_imm = 0.2f;
+        vehdraw_construct_weapon(faction_id_, -1, slot, &caviar_);
+        if (Weapon[slot].mode < 3) {
+            caviar_.set_scaling(0.2f);
+        } else if (Weapon[slot].mode == 9) {
+            caviar_.set_scaling(0.08f);
+        } else if (Weapon[slot].mode == 0xB) {
+            caviar_.set_scaling(0.2f);
         } else {
-            scale_imm = 0.1f;
+            caviar_.set_scaling(0.1f);
         }
     }
-    caviar->set_scaling(scale_imm);
 
-    const unsigned char cat_byte = Weapon[idx].mode;
-    int sprite_idx = -1;
-    bool have_sprite_idx = false;
-    if (cat_byte == 8 || cat_byte == 9) {
-        sprite_idx = Weapon[idx].icon;
-        have_sprite_idx = true;
-    } else if (cat_byte == 0xB) {
-        sprite_idx = VehPrototypes[6].icon_offset;
-        have_sprite_idx = true;
+    int sprite_idx;
+    int icon_mode = Weapon[slot].mode;
+    switch (icon_mode) {
+        case 8:
+            sprite_idx = Weapon[slot].icon;
+            break;
+        case 9:
+            sprite_idx = Weapon[slot].icon;
+            break;
+        case 0xB:
+            sprite_idx = VehPrototypes[6].icon_offset;
+            break;
+        default:
+            sprite_idx = -1;
+            break;
     }
-    if (have_sprite_idx && sprite_idx >= 0) {
-        Buffer *const buf_target = static_cast<Buffer *>(this);
-        Sprite *const spr = &g_VEH_SPRITES[72 + sprite_idx * 8];
-        const int x_coord = ((a2->right - a2->left) - 100) / 2 + a2->left;
-        const int y_coord = ((a2->bottom - a2->top) - 0x4B) / 2 + a2->top;
-        spr->draw(buf_target, spr->transparent_index(), x_coord, y_coord);
+    if (sprite_idx >= 0) {
+        Buffer *buffer = this;
+        Sprite *sprite = &g_VEH_SPRITES[72 + sprite_idx * 8];
+        sprite->draw(
+            buffer, sprite->transparent_index(),
+            ((a2->right - a2->left) - 100) / 2 + a2->left,
+            ((a2->bottom - a2->top) - 0x4B) / 2 + a2->top);
     }
 
-    if (weaponMissing != 0) {
-        Buffer *const buf_target = static_cast<Buffer *>(this);
-        caviar->render_mono(buf_target, (a2->right + a2->left) / 2,
+    if (has_tech_failed) {
+        caviar_.render_mono(this, (a2->right + a2->left) / 2,
                             (a2->bottom + a2->top) / 2, 0xB9, 6);
-        return weaponMissing == 0;
-    }
-
-    caviar->render(static_cast<Buffer *>(this),
-                   (a2->right + a2->left) / 2, (a2->bottom + a2->top) / 2, 6);
-
-    Buffer::set_text_color(TextColourTable[158], TextColourTable[159], 1, 1);
-
-    Font *const font45f4 = &font1_;
-    RECT tmp_rect;
-    tmp_rect.left = a2->left;
-    tmp_rect.top = a2->top;
-    tmp_rect.right = a2->right;
-    tmp_rect.bottom = a2->top + font_line_advance(*font45f4);
-    StringTemp[0] = 0;
-    strcat(StringTemp, StringTable.get(Weapon[idx].name));
-    Buffer::set_font(font45f4, 0, 0, 0);
-    CharUpperA(StringTemp);
-    Buffer::wrap_cent(StringTemp, &tmp_rect);
-    Buffer::set_text_color(TextColourTable[160], TextColourTable[161], 1, 1);
-
-    tmp_rect.left = a2->left;
-    tmp_rect.right = a2->right;
-    tmp_rect.bottom = a2->bottom;
-    tmp_rect.top = tmp_rect.bottom - font_line_advance(*font45f4);
-    StringTemp[0] = 0;
-    strcat(StringTemp,
-           StringTable.get(Labels.strings_ptr[
-               (cat_byte < 3 ? 0x204 : 0x200) / 4]));
-    Buffer::write_l(StringTemp, &tmp_rect,
-                       static_cast<int>(strlen(StringTemp)));
-
-    Buffer::set_font(&font2_, 0, 0, 0);
-    signed char count_char = Weapon[idx].offense_rating;
-    StringTemp[0] = 0;
-    if (count_char == -1) {
-        strcat(StringTemp,
-               StringTable.get(Labels.strings_ptr[0x310 / 4]));
     } else {
-        char num_buf[80];
-        if (cat_byte > 2) {
-            count_char = Weapon[idx].cost;
-        }
-        _itoa(count_char, num_buf, 10);
-        strcat(StringTemp, num_buf);
-    }
-    Buffer::write_right_l(StringTemp, &tmp_rect,
-                             static_cast<int>(strlen(StringTemp)));
+        caviar_.render(this, (a2->right + a2->left) / 2,
+                       (a2->bottom + a2->top) / 2, 6);
 
-    return weaponMissing == 0;
+        Buffer::set_text_color(TextColourTable[158], TextColourTable[159], 1, 1);
+        RECT rect = *a2;
+        rect.bottom = rect.top + font_line_advance(font1_);
+        StringTemp[0] = 0;
+        strcat(StringTemp, StringTable.get(Weapon[slot].name));
+        Buffer::set_font(&font1_, 0, 0, 0);
+        CharUpperA(StringTemp);
+        Buffer::wrap_cent(StringTemp, &rect);
+
+        Buffer::set_text_color(TextColourTable[160], TextColourTable[161], 1, 1);
+        rect = *a2;
+        rect.top = rect.bottom - font_line_advance(font1_);
+        int mode = Weapon[slot].mode;
+        StringTemp[0] = 0;
+        strcat(StringTemp, StringTable.get(
+            mode < 3 ? Labels.strings_ptr[0x204 / 4]
+                     : Labels.strings_ptr[0x200 / 4]));
+        Buffer::write_l(StringTemp, &rect);
+
+        Buffer::set_font(&font2_, 0, 0, 0);
+        StringTemp[0] = 0;
+        if (Weapon[slot].offense_rating == -1) {
+            strcat(StringTemp, StringTable.get(Labels.strings_ptr[0x310 / 4]));
+        } else {
+            char num_buf[80];
+            _itoa(mode < 3 ? (unsigned char)Weapon[slot].offense_rating
+                           : Weapon[slot].cost,
+                  num_buf, 10);
+            strcat(StringTemp, num_buf);
+        }
+        Buffer::write_right_l(StringTemp, &rect);
+    }
+    return !has_tech_failed;
 }
+#pragma optimize("", on)
 
 // These mappings describe the compiler-generated deletion and secondary-base
 // adjustment for the real class above; no handwritten thunk is installed.
@@ -3815,13 +3667,14 @@ int DesignWin::on_key_click(int a1, int a2) {
 // (prototype_stack_start_) so that entry sits five rows from the top.
 void DesignWin::center_stack(int proto_id, int redraw) {
     proto_sort_2(factionID_);
+    int count = ProtoSortCount;
     for (int scan = prototype_stack_start_;
-         scan < prototype_stack_start_ + ProtoSortCount; ++scan) {
-        const int rem = scan % ProtoSortCount;
+         scan < prototype_stack_start_ + count; scan++) {
+        int rem = scan % count;
         if (proto_id == ProtoSortIds[rem]) {
-            const int old = prototype_stack_start_;
-            prototype_stack_start_ = (rem + ProtoSortCount - 5) % ProtoSortCount;
-            if (redraw != 0 && prototype_stack_start_ != old) {
+            int old = prototype_stack_start_;
+            prototype_stack_start_ = (rem + count - 5) % count;
+            if (redraw && prototype_stack_start_ != old) {
                 draw_stack();
             }
             return;
@@ -5192,7 +5045,18 @@ void DesignWin::select_weapon() {
             suggest_abil(0x20000);
         }
     }
-    redraw_design_picker_changes(this);
+    // Unlike select_chassis, the image redraws the vehicle before the weapon.
+    check_abil();
+    draw_chassis(0);
+    draw_armor(0);
+    draw_reactor(0);
+    draw_vehicle(0);
+    draw_weapon(0);
+    draw_special_1(0);
+    draw_special_2(0);
+    draw_flash();
+    draw_info();
+    on_update();
 }
 
 // ORIGINAL: 0x0043A760 ?select_armor@DesignWin@@QAEXXZ 0x0043A760-0x0043A9F8;0x00654306-0x0065438B BYTE_EXACT

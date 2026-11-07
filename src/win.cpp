@@ -3754,46 +3754,13 @@ void Win::remove_parent_dialog() {
 // flags     hidden;sp_ready;purged_ok
 // calls     0x005ECDC0
 
-// TRIED: 3 of 43, and the gap is a test VC6 REFUSES TO EMIT TWICE. The image
-// loads WinFocusWindow once and tests it for null at 0x005ECEC8 and AGAIN at
-// 0x005ECED3, with `cmp eax, ebp` between them, so the original wrote the
-// null check twice. Splitting `w == 0 || w == this` into separate guard
-// clauses buys one instruction and no more: the compiler still knows w is
-// non-null at the third test and elides it, leaving 36 instructions against
-// the image's 43. Also tried: caching `&w->child_count_` the way the image
-// does (`lea ebx, [eax+0x3fc]`, re-read through ebx each iteration) - no
-// change, so that lea is a consequence of the register pressure the missing
-// tests would create, not a cause.
+// RESOLVED: the second null test is is_descendant_of's own guard, inlined
+// once; the hand-copied loop had VC6 inline one level deeper.
 int Win::is_in_focus_chain() {
-    Win *w = WinFocusWindow;
-    // THREE SEPARATE TESTS, and the third is redundant ON PURPOSE. The image
-    // loads WinFocusWindow once and tests it TWICE - `test eax, eax` at
-    // 0x005ECEC8 and again at 0x005ECED3 with `cmp eax, ebp` between - so
-    // the original wrote the null check twice. Folding them into
-    // `w == 0 || w == this` lets VC6 elide the second, and this body came
-    // out eight instructions short of the image.
-    if (w == 0) {
+    // The image's loop is is_descendant_of's first level, inlined once.
+    if (WinFocusWindow == 0 || WinFocusWindow == this ||
+        is_descendant_of(WinFocusWindow)) {
         return 1;
-    }
-    if (w == this) {
-        return 1;
-    }
-    if (w != 0) {
-        int count = w->child_count_;
-        if (count > 0) {
-            int j = 0;
-            Win **child_ptr = w->children_;
-            do {
-                if (*child_ptr == this) {
-                    return 1;
-                }
-                if (is_descendant_of(*child_ptr)) {
-                    return 1;
-                }
-                j++;
-                child_ptr++;
-            } while (j < w->child_count_);
-        }
     }
     return 0;
 }
@@ -4994,6 +4961,7 @@ inline void Win::hide() {
 // explain8F4 and900. Win is Buffer's friend, so these are real members.
 // ORIGINAL: 0x005F63C0 ?on_l_button_down@Win@@UAEXJHHIH@Z 0x005F63C0-0x005F654E FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Historical3cb99d43^:src/recovered/units/005f63c0.cpp recorded unclaimed FILE398-byte5F63C0..5F654E under catalogue ?on_l_button_down@Win@@QAEXJHHIH@Z. Commit3cb99d431fb928d698e7eb29afee4ac2fc664027 deleted the seed without its source binding. No exact claim is inferred.", "Original Win-family tables place5F63C0 at slot81; observed actual compiler emits virtual UAEXJHHIH. Use that evidence-backed virtual name interpretation instead of retaining the old plain-method catalogue guess. Full original endsRET20 at5F654B; next two bytes are padding before5F6550.", "Original5F6442 fifth argument selects both capture owner and slot28/38; fourth WPARAM is unused. Pushes5F64B0/B1 and5F64D4/D5 deliver x,y; original seed had both coordinate reversals and wrong fourth-argument selector. Preserve live parent/related receiver reloads and virtual admission as predicate only.", "GraphicWin owns Buffer at444, Spot4B0 and link texts4BC. Original5F6523 loads this+900+4*index; slot88 on_link_clicked result controls left_down_event fallback. This binding does not verify every original-address service, class lifetime or full GUI."], "reason": "Restore original identity lost during Win rehoming; recover full left-down argument routing and genuine GraphicWin link dispatch."}
+#pragma inline_depth(0)
 void Win::on_l_button_down(long double_click, int x, int y, unsigned int, int from_parent) {
     Win *child = win_parent_;
     if (child != 0) {
@@ -5063,6 +5031,7 @@ void Win::on_l_button_down(long double_click, int x, int y, unsigned int, int fr
         this->left_down_event(x, y, from_parent);
     }
 }
+#pragma inline_depth()
 
 // ===== homed from src/recovered/units/005f6550.cpp =====
 
@@ -6251,24 +6220,7 @@ void Win::show(int visible) {
             }
         }
 
-        int32_t count = WinRootCount;
-        WinZOrderCount = 0;
-        if (count > 0) {
-            Win *cur = WinZOrderWindow;
-            int32_t i = 0;
-            do {
-                Win *w = WinRootWindows[i];
-                if (cur != 0 && cur == w) {
-                    WinZOrderCount = 0;
-                    WinZOrderFlag = 0;
-                }
-                if (w->iSomeFlag_ & 1) {
-                    recurse_zorder(w);
-                    cur = WinZOrderWindow;
-                }
-                ++i;
-            } while (i < WinRootCount);
-        }
+        update_zorder();
 
         if ((visible & 2) == 0) {
             resize_event(outer_rect_.right - outer_rect_.left, outer_rect_.bottom - outer_rect_.top);
@@ -11874,8 +11826,7 @@ int __stdcall win_reparent_window(HWND hwnd, int unused) {
 // where they can be edited without regenerating anything and are in
 // context from the first token rather than behind a file read. This
 // emitter computes declarations; it does not carry lessons.
-// The image calls this out of line from on_l_button_down.
-#pragma auto_inline(off)
+// Win::show inlines this; on_l_button_down (inline_depth(0)) calls it.
 void __cdecl Win::update_zorder() {
     int i = 0;
     int n = WinRootCount;
@@ -11896,7 +11847,6 @@ void __cdecl Win::update_zorder() {
         } while (i < WinRootCount);
     }
 }
-#pragma auto_inline(on)
 // ===== homed from src/unrecovered/005f5fb0.cpp =====
 
 // ORIGINAL: 0x005F5FB0 sub_5f5fb0 0x005F5FB0-0x005F622B BYTE_EXACT
