@@ -25,6 +25,7 @@
 #include "basepop.h"
 #include "stringstruct.h"  // StringAllocationHeap; the staged vbtable constants
 #include "prodpicker.h"
+#include "rectangle_operations.h"
 #include "general.h"  // range used by veh.h's inline helpers
 #include "veh.h"
 #include "alpha.h"    // label_get
@@ -381,30 +382,33 @@ void ProdPicker::on_scrolled(int, int position) {
 
     if (newPosition < oldPosition) {
         set_clip(&rect2_);
-        copy(this, 0x15, 4, 0x15, row_height_ + 4,
-             cell_width_ * column_count_ + 4,
-             (static_cast<int>(field_A814_) - 1) * row_height_
-                 + 4 + row_height_ - (row_height_ + 4));
+        RECT rect;
+        set_rectangle_dimensions(&rect, 0x15, 4,
+                                 cell_width_ * column_count_ + 2,
+                                 (static_cast<int>(field_A814_) - 1) * row_height_);
+        rect.right += 2;
+        rect.bottom += row_height_;
+        copy(this, 0x15, 4, rect.left, rect.top + row_height_,
+             rect.right - rect.left, rect.bottom - (rect.top + row_height_));
 
-        int item = static_cast<int>(field_A77C_);
-        while (item < static_cast<int>(field_A77C_
-                                      + static_cast<uint32_t>(column_count_))) {
+        for (int item = field_A77C_; item < column_count_ + field_A77C_;
+             ++item) {
             draw_item(item, 0);
-            ++item;
         }
     } else if (newPosition != oldPosition) {
         set_clip(&rect2_);
-        copy(this, 0x15, row_height_ + 4, 0x15, 4,
-             cell_width_ * column_count_ + 4,
-             (static_cast<int>(field_A814_) - 1) * row_height_);
+        RECT rect;
+        set_rectangle_dimensions(&rect, 0x15, 4,
+                                 cell_width_ * column_count_ + 2,
+                                 (static_cast<int>(field_A814_) - 1) * row_height_);
+        rect.right += 2;
+        copy(this, rect.left, rect.top + row_height_, 0x15, 4,
+             rect.right - rect.left, rect.bottom - rect.top);
 
         const int first = (static_cast<int>(field_A814_) - 1) * column_count_
-            + static_cast<int>(field_A77C_);
-        int item = first;
-        while (item < static_cast<int>(static_cast<uint32_t>(first)
-                                      + static_cast<uint32_t>(column_count_))) {
+            + field_A77C_;
+        for (int item = first; item < first + column_count_; ++item) {
             draw_item(item, 0);
-            ++item;
         }
     }
     soft_update();
@@ -1237,10 +1241,13 @@ Purpose: Close the picker - clear the field at 0xA14 that marks it live, then
 Return Value: n/a
 Status: Complete
 */
+// Both image callers (the destructor among them) call this out of line.
+#pragma auto_inline(off)
 void ProdPicker::close() {
     field_A14_ = 0;
     GraphicWin::close();
 }
+#pragma auto_inline(on)
 
 
 /*

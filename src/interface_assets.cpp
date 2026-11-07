@@ -3696,13 +3696,15 @@ void __cdecl load_voxels() {
     scratch.init("AVGMTGUN.CVR");
     {
         const CvrRecord *record = scratch.record();
-        if (!record) {
+        if (record) {
+            if (record->step_count_ == 2) {
+                const VOX_Vect *vectors = record->parts_[0].vectors_;
+                vec3_subtract(vectors[1].values, vectors[0].values, VehGunMountOffset.values);
+            }
+        } else {
             VehGunMountOffset.values[0] = 0.0f;
             VehGunMountOffset.values[1] = 0.0f;
             VehGunMountOffset.values[2] = 0.0f;
-        } else if (record->step_count_ == 2) {
-            const VOX_Vect *vectors = record->parts_[0].vectors_;
-            vec3_subtract(vectors[1].values, vectors[0].values, VehGunMountOffset.values);
         }
     }
     scratch.close();
@@ -3711,13 +3713,15 @@ void __cdecl load_voxels() {
     scratch.init("adroper.cvr");
     {
         const CvrRecord *record = scratch.record();
-        if (!record) {
+        if (record) {
+            if (record->step_count_ == 2) {
+                const VOX_Vect *vectors = record->parts_[0].vectors_;
+                vec3_subtract(vectors[1].values, vectors[0].values, VehDropOffset.values);
+            }
+        } else {
             VehDropOffset.values[0] = 0.0f;
             VehDropOffset.values[1] = 0.0f;
             VehDropOffset.values[2] = 0.0f;
-        } else if (record->step_count_ == 2) {
-            const VOX_Vect *vectors = record->parts_[0].vectors_;
-            vec3_subtract(vectors[1].values, vectors[0].values, VehDropOffset.values);
         }
     }
     scratch.close();
@@ -3740,25 +3744,29 @@ void __cdecl load_voxels() {
     scratch.init("AVHT-GunReposition.cvr");
     {
         const CvrRecord *record = scratch.record();
-        if (!record) {
+        if (record) {
+            if (record->step_count_ == 2) {
+                const VOX_Vect *vectors = record->parts_[0].vectors_;
+                vec3_subtract(vectors[1].values, vectors[0].values, VehHoverGunOffset.values);
+            }
+        } else {
             VehHoverGunOffset.values[0] = 0.0f;
             VehHoverGunOffset.values[1] = 0.0f;
             VehHoverGunOffset.values[2] = 0.0f;
-        } else if (record->step_count_ == 2) {
-            const VOX_Vect *vectors = record->parts_[0].vectors_;
-            vec3_subtract(vectors[1].values, vectors[0].values, VehHoverGunOffset.values);
         }
     }
     scratch.init("AVHT-LightsReposition.cvr");
     {
         const CvrRecord *record = scratch.record();
-        if (!record) {
+        if (record) {
+            if (record->step_count_ == 2) {
+                const VOX_Vect *vectors = record->parts_[0].vectors_;
+                vec3_subtract(vectors[1].values, vectors[0].values, VehHoverLightsOffset.values);
+            }
+        } else {
             VehHoverLightsOffset.values[0] = 0.0f;
             VehHoverLightsOffset.values[1] = 0.0f;
             VehHoverLightsOffset.values[2] = 0.0f;
-        } else if (record->step_count_ == 2) {
-            const VOX_Vect *vectors = record->parts_[0].vectors_;
-            vec3_subtract(vectors[1].values, vectors[0].values, VehHoverLightsOffset.values);
         }
     }
     g_VFL_CAVIARDATA.init("VFL.cvr");
@@ -3799,7 +3807,7 @@ void __cdecl load_voxels() {
     // The original signed divide-by-24 advances its numerator by 24 per row.
     for (int row = 0; row < 24; ++row) {
         for (int color = 0; color < 256; ++color) {
-            VoxelRowColorTables[row][color] = (unsigned char)row;
+            VoxelRowColorTables[row][color] = (unsigned char)(row * 24 / 24);
         }
     }
 }

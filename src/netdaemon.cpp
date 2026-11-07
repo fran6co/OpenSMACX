@@ -1486,18 +1486,16 @@ int NetDaemon::end_of_event(int faction_id, int turn_value) {
     if (primary_state_.leading_words_[0] == 0) {
         deletion_list_.set_sequence_bits(turn_value);
     }
-    int result = ConsoleGlobal.faction_id_;
-    if (faction_id == result) {
-        result = channels_[1].trailing_words_[2];
-        if (result != 0) {
+    if (faction_id == ConsoleGlobal.faction_id_) {
+        if (channels_[1].trailing_words_[2] != 0) {
             log_say("Remaining Locked2", 0, 0, 0);
             channels_[1].trailing_words_[2] = 0;
-            result = message_data(0x2214, 0, 0, 0, 0, 0);
-        } else {
-            channels_[1].leading_words_[3] = 0;
+            return message_data(0x2214, 0, 0, 0, 0, 0);
         }
+        channels_[1].leading_words_[3] = 0;
     }
-    return result;
+    // No return statement here in the original (C4715): EAX keeps the
+    // last value loaded on each path.
 }
 
 

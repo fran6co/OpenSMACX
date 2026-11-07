@@ -331,31 +331,7 @@ Return Value: the item id at the requested position, or 0 when the list is
 Status: Complete
 */
 int SpriteBox::pos_to_id(int position) {
-    if (position <= list_.entry_count_ - 1) {
-        list_.current_ = list_.head_;
-        if (position < 0) {
-            // `abs` CALLED TWICE, the count re-read between the calls - a
-            // MIN-style macro over abs(position), not a local. See
-            // Dialog::pos_to_id for the same shape.
-            if (abs(position) > list_.entry_count_) {
-                goto restore_done;
-            }
-            int distance = abs(position);
-            while (distance > 0) {
-                list_.current_ = list_.current_->previous;
-                distance--;
-            }
-            position += list_.entry_count_;
-        } else {
-            int distance = position;
-            while (distance > 0) {
-                list_.current_ = list_.current_->next;
-                distance--;
-            }
-        }
-        list_.current_position_ = position;
-    }
-restore_done:
+    list_.seek_pos(position);
     return list_.head_ ? list_.current_->id : 0;
 }
 

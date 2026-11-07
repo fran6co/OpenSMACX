@@ -268,28 +268,27 @@ void CouncWin::set_vote(int faction_id, int vote) {
 
     leader_label_kind_[faction_id] = static_cast<uint32_t>(vote);
 
-    const uint32_t faction_status = GameDataStateStorage.fields_.lock_masks_.enable_mask_;
-    const uint32_t human_mask = faction_status & 0xff;
-    bool calculate_computer_votes = true;
+    GameDataLockMaskView status = GameDataStateStorage.fields_.lock_masks_;
+    const uint32_t human_mask = status.enable_mask_ & 0xff;
+    int calculate_computer_votes = 1;
     for (int faction = 0; faction < MaxPlayerNum; ++faction) {
         if ((human_mask & (1u << faction)) != 0 &&
             leader_label_kind_[faction] != 0) {
-            calculate_computer_votes = false;
+            calculate_computer_votes = 0;
         }
     }
 
     if (calculate_computer_votes) {
         int rounds = 3;
         do {
-            uint32_t live_status = GameDataStateStorage.fields_.lock_masks_.enable_mask_;
             for (int faction = 0; faction < MaxPlayerNum; ++faction) {
                 const uint32_t bit = 1u << faction;
-                if (((live_status >> 8) & bit) != 0 &&
-                    (live_status & bit) == 0) {
+                if ((status.bytes_.alive_mask_ & bit) != 0 &&
+                    (status.bytes_.human_mask_ & bit) == 0) {
                     leader_label_kind_[faction] = static_cast<uint32_t>(
                         council_get_vote(faction, static_cast<int>(field_A1C_),
                                          static_cast<int>(field_A20_)));
-                    live_status = GameDataStateStorage.fields_.lock_masks_.enable_mask_;
+                    status = GameDataStateStorage.fields_.lock_masks_;
                 }
             }
             --rounds;
@@ -297,11 +296,13 @@ void CouncWin::set_vote(int faction_id, int vote) {
     }
 
     static_cast<GraphicWin *>(this)->redraw();
-    if (IsMultiplayerNet == 0) {
+    if (IsMultiplayerNet != 0) {
+        if (NetDaemonNet.primary_state_.leading_words_[0] != 0 &&
+            make_resolution(0) != 0) {
+            message_data(0x2603, 0, 0, 0, 0, 0);
+        }
+    } else {
         make_resolution(1);
-    } else if (NetDaemonNet.primary_state_.leading_words_[0] != 0 &&
-               make_resolution(0) != 0) {
-        message_data(0x2603, 0, 0, 0, 0, 0);
     }
 
     if (IsMultiplayerPBEM != 0 && faction_id == ConsoleGlobal.faction_id_) {

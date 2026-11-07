@@ -155,11 +155,10 @@ int PullDown::on_key_click(int key_input, int key) {
 void PullDown::mouse_move(int, int y) {
   const int old_selected = selected_;
   const int relative_y = y - PullDownBorderPadding;
-  const int row = relative_y / font_line_advance(*PullDownDefaultFont);
-  selected_ = row;
+  selected_ = relative_y / font_line_advance(*PullDownDefaultFont);
 
   int found;
-  if (row < 0) {
+  if (selected_ < 0) {
     found = item_count_;
   } else {
     int visible_item = -1;
@@ -181,7 +180,7 @@ void PullDown::mouse_move(int, int y) {
     selected_ = -1;
   } else {
     selected_ = found;
-    if ((items_[found].flags & 4u) != 0) {
+    if ((items_[selected_].flags & 4u) != 0) {
       selected_ = -1;
     }
   }
@@ -872,12 +871,18 @@ PullDown *ActivePullDown;
 int PullDown::show(int x, int y, int (*poll)()) {
     poll_ = poll;
     if (dirty_) {
-        int width = width_ + 2 * (PullDownBorderPadding + PullDownTextPadding);
-        int height = visible_count_ * PullDownDefaultFont->line_advance()
+        int width = width_ + 2 * (PullDownTextPadding + PullDownBorderPadding);
+        int height = visible_count_ * font_line_advance(*PullDownDefaultFont)
                    + 2 * PullDownBorderPadding;
         if (width != dib_.bmiHeader.biWidth || height != -dib_.bmiHeader.biHeight) {
             GraphicWin::resize(width, height, 0);
+            selected_ = -1;
         }
+        selected_ = -1;
+    } else if (selected_ != -1) {
+        // The image keeps these repeated deselect stores (0x005F91ED..0x005F920C).
+        selected_ = -1;
+        selected_ = -1;
     }
     selected_ = -1;
     if (win_parent_) {
@@ -917,7 +922,8 @@ int PullDown::show(int x, int y, int (*poll)()) {
     Win::hide();
     do_all_draws();
     if (selected_ != -1 && menu_ && !(items_[selected_].flags & 2)) {
-        menu_->menu_event(selected_ < 64 ? items_[selected_].id : -1);
+        const int selected = selected_;
+        menu_->menu_event(selected < 64 ? items_[selected].id : -1);
     }
     return selected_;
 }
@@ -1135,80 +1141,31 @@ int PullDown::compute_length(char *text) {
 
     if (text != nullptr) {
         char *separator = strchr(text, '|');
-        if (separator == nullptr) {
-            const int current = width_;
-            int measured = PullDownDefaultFont->width(text);
-            if (current <= measured) {
-                measured = PullDownDefaultFont->width(text);
-            } else {
-                measured = current;
-            }
-            width_ = measured;
-            return width_;
+        if (separator != nullptr) {
+            width_ = max(width_,
+                         PullDownDefaultFont->width(text, separator - text)
+                         + 2 * PullDownDefaultFont->width("  ")
+                         + PullDownDefaultFont->width(separator + 1));
+        } else {
+            return width_ = max(width_, PullDownDefaultFont->width(text));
         }
-
-        const int previous = width_;
-        int left_width = PullDownDefaultFont->width(text, separator - text);
-        int separator_width = PullDownDefaultFont->width("  ");
-        int right_width = PullDownDefaultFont->width(separator + 1);
-        int total = static_cast<int32_t>(static_cast<uint32_t>(left_width)
-                    + 2U * static_cast<uint32_t>(separator_width)
-                    + static_cast<uint32_t>(right_width));
-        if (previous > total) {
-            width_ = previous;
-            return width_;
-        }
-        separator_width = PullDownDefaultFont->width("  ");
-        left_width = PullDownDefaultFont->width(text, separator - text);
-        right_width = PullDownDefaultFont->width(separator + 1);
-        width_ = static_cast<int32_t>(static_cast<uint32_t>(left_width)
-                 + 2U * static_cast<uint32_t>(separator_width)
-                 + static_cast<uint32_t>(right_width));
-        // 0x005F9DF9 leaves the final right-side measurement in EAX.
-        // This is deliberately not the aggregate stored in width_.
-        return right_width;
     } else {
         width_ = 0;
         for (int i = 0; i < 64; ++i) {
-            char *const item_text = items_[i].text;
-            if (item_text == nullptr) {
-                continue;
-            }
-            char *const first_right_text = items_[i].right_text;
-            const int current = width_;
-            if (first_right_text == nullptr) {
-                int measured = PullDownDefaultFont->width(item_text);
-                if (current <= measured) {
-                    measured = PullDownDefaultFont->width(items_[i].text);
+            if (items_[i].text != nullptr) {
+                if (items_[i].right_text != nullptr) {
+                    width_ = max(width_,
+                                 2 * PullDownDefaultFont->width("  ")
+                                 + PullDownDefaultFont->width(items_[i].text)
+                                 + PullDownDefaultFont->width(items_[i].right_text));
                 } else {
-                    measured = current;
+                    width_ = max(width_, PullDownDefaultFont->width(items_[i].text));
                 }
-                width_ = measured;
-            } else {
-                int separator_width = PullDownDefaultFont->width("  ");
-                int left_width = PullDownDefaultFont->width(items_[i].text);
-                int right_width = PullDownDefaultFont->width(first_right_text);
-                int total = static_cast<int32_t>(2U * static_cast<uint32_t>(separator_width)
-                            + static_cast<uint32_t>(left_width)
-                            + static_cast<uint32_t>(right_width));
-                if (current > total) {
-                    total = current;
-                } else {
-                    separator_width = PullDownDefaultFont->width("  ");
-                    right_width = PullDownDefaultFont->width(items_[i].right_text);
-                    left_width = PullDownDefaultFont->width(items_[i].text);
-                    total = static_cast<int32_t>(2U * static_cast<uint32_t>(separator_width)
-                            + static_cast<uint32_t>(left_width)
-                            + static_cast<uint32_t>(right_width));
-                }
-                width_ = total;
             }
         }
     }
-
-    // 0x005F9F21 exhausts the 64-entry loop counter in EAX before RET.
-    // Encode the emitted result instead of falling off an int function.
-    return 0;
+    // The other paths have no return statement in the original (C4715):
+    // EAX keeps the last measurement or the exhausted loop count.
 }
 
 
@@ -1369,17 +1326,14 @@ void PullDown::on_left_down(int x, int y) {
 // RECOVERY_BINDING: v1 {"evidence": ["Original5F9480..5F9563; retired seed git:117282ee:src/unrecovered/005f9480.cpp retains original identity and spans.", "Pinned PullDown constructor5F8800 installs66FF40: slot21 points5F9480, slot2 hide5F93A0, slot62 GraphicWin redraw5D5A70.", "Current PullDown owns items_ at+A18 with0x14-byte rows; PullDownItem flags at+C gives the original+A24+i*14 test address. Constructor/add/redraw and native emitted member accesses agree; this is not a text-pointer tag test.", "Pinned release uses flag masks1/4, signed line-height division, count+F20 and selected+F28; preserve zero/negative counts, empty redraw and selected hide order without added guards."], "reason": "The original release selector belongs to PullDown Win slot 21; express its existing item flags and callbacks through the real owner, preserving the original count/error paths."}
 // symbol    ?on_left_up@PullDown@@UAEXHH@Z
 void PullDown::on_left_up(int x, int y) {
-    const RECT rect = *buffer_working_rect();
     const POINT pt = {x, y};
+    const RECT rect = *buffer_working_rect();
     if (PtInRect(&rect, pt) != 0) {
-        const int relative_y = y - PullDownBorderPadding;
-        Font *const font = PullDownDefaultFont;
-        const int line_height = font_line_advance(*font);
-        const int count = item_count_;
-        selected_ = relative_y / line_height;
+        y -= PullDownBorderPadding;
+        selected_ = y / font_line_advance(*PullDownDefaultFont);
+        int enabled = -1;
         int index = 0;
-        if (count > 0) {
-            int enabled = -1;
+        if (item_count_ > 0) {
             do {
                 if ((items_[index].flags & 1) != 0) {
                     enabled++;
@@ -1388,13 +1342,13 @@ void PullDown::on_left_up(int x, int y) {
                     break;
                 }
                 index++;
-            } while (index < count);
+            } while (index < item_count_);
         }
-        if (index == count) {
+        if (index == item_count_) {
             selected_ = -1;
         } else {
             selected_ = index;
-            if ((items_[index].flags & 4) != 0) {
+            if ((items_[selected_].flags & 4) != 0) {
                 selected_ = -1;
             }
         }

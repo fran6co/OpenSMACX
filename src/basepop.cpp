@@ -1,3 +1,5 @@
+// The original TU calls StringStruct::remove_all out of line (BasePop::init).
+#define STRINGSTRUCT_REMOVE_ALL_OUT_OF_LINE
 /*
  * OpenSMACX - an open source clone of Sid Meier's Alpha Centauri.
  * Copyright (C) 2013-2021 Brendan Casey
@@ -1981,21 +1983,17 @@ BasePop::BasePop() {
         // one turn per column. The earlier spelling here walked row*3+column
         // against column*8+row over eight rows: twenty-four of the twenty-
         // seven slots, scrambled, and the last one never written.
-        Sprite **dst = default_block_;
-        int column = 0;
-        do {
-            dst[0] = BasePopDefaultBlock31B8[column];
-            dst[3] = BasePopDefaultBlock31B8[column + 3];
-            dst[6] = BasePopDefaultBlock31B8[column + 6];
-            dst[9] = BasePopDefaultBlock31B8[column + 9];
-            dst[12] = BasePopDefaultBlock31B8[column + 12];
-            dst[15] = BasePopDefaultBlock31B8[column + 15];
-            dst[18] = BasePopDefaultBlock31B8[column + 18];
-            dst[21] = BasePopDefaultBlock31B8[column + 21];
-            dst[24] = BasePopDefaultBlock31B8[column + 24];
-            dst += 1;
-            column += 1;
-        } while (column < 3);
+        for (int column = 0; column < 3; ++column) {
+            default_block_[column + 0] = BasePopDefaultBlock31B8[column + 0];
+            default_block_[column + 3] = BasePopDefaultBlock31B8[column + 3];
+            default_block_[column + 6] = BasePopDefaultBlock31B8[column + 6];
+            default_block_[column + 9] = BasePopDefaultBlock31B8[column + 9];
+            default_block_[column + 12] = BasePopDefaultBlock31B8[column + 12];
+            default_block_[column + 15] = BasePopDefaultBlock31B8[column + 15];
+            default_block_[column + 18] = BasePopDefaultBlock31B8[column + 18];
+            default_block_[column + 21] = BasePopDefaultBlock31B8[column + 21];
+            default_block_[column + 24] = BasePopDefaultBlock31B8[column + 24];
+        }
     }
 
     field_21C8_ = 0;
@@ -2008,8 +2006,11 @@ BasePop::BasePop() {
     field_30A8_ = 0;
     field_30AC_ = 0;
     value_ = -1;
-    // Eight contiguous dwords: the image fills them with one `rep stosd`.
-    memset(item_buttons_, 0, sizeof(item_buttons_));
+    // Eight contiguous dwords: VC6 turns this loop into the image's
+    // `rep stosd` (a memset call schedules the edi setup differently).
+    for (int i = 0; i < 8; ++i) {
+        item_buttons_[i] = 0;
+    }
     owned_text_ = 0;
     field_21B8_ = BasePopDefaultField21B0[3];
     field_21BC_ = BasePopDefaultField21B0[2];
@@ -2111,12 +2112,7 @@ BasePop::BasePop() {
         }
         dialogs_.Dialog::field_30_ = height;
 
-        if (default_loc_a_ != 0x2000) {
-            loc_a_ = default_loc_a_;
-        }
-        if (default_loc_b_ != 0x2000) {
-            loc_b_ = default_loc_b_;
-        }
+        set_loc(default_loc_a_, default_loc_b_);
         dialogs_.set_style_bits(3);
     }
 
@@ -2668,42 +2664,43 @@ int BasePop::init(int flags, long heap_base) {
         dialogs_.kind_ = 0x10;
     }
 
-    if (heap_base != 0) {
-        if (heap_.init(heap_base)) {
-            return 4;
+    if (heap_base != 0 && heap_.init(heap_base)) {
+        return 4;
+    }
+    if (heap_base != 0 && (flags & 0x40000) == 0) {
+        {
+            StringList *list = &unit_ids_;
+            list->StringStruct::remove_all();
+            list->current_position_ = 0;
+            list->allocator_ = &heap_;
         }
-        if ((flags & 0x40000) == 0) {
-            unit_ids_.StringStruct::remove_all();
-            unit_ids_.current_position_ = 0;
-            unit_ids_.allocator_ = &heap_;
-            item_ids_.StringStruct::remove_all();
-            item_ids_.current_position_ = 0;
-            item_ids_.allocator_ = &heap_;
-            dialogs_.init(&heap_);
-        } else {
-            unit_ids_.StringStruct::remove_all();
-            unit_ids_.current_position_ = 0;
-            unit_ids_.allocator_ = 0;
-            item_ids_.StringStruct::remove_all();
-            item_ids_.current_position_ = 0;
-            item_ids_.allocator_ = 0;
-            dialogs_.init(0);
+        {
+            StringList *list = &item_ids_;
+            list->StringStruct::remove_all();
+            list->current_position_ = 0;
+            list->allocator_ = &heap_;
         }
+        dialogs_.init(&heap_);
     } else {
-        unit_ids_.StringStruct::remove_all();
-        unit_ids_.current_position_ = 0;
-        unit_ids_.allocator_ = 0;
-        item_ids_.StringStruct::remove_all();
-        item_ids_.current_position_ = 0;
-        item_ids_.allocator_ = 0;
+        {
+            StringList *list = &unit_ids_;
+            list->StringStruct::remove_all();
+            list->current_position_ = 0;
+            list->allocator_ = 0;
+        }
+        {
+            StringList *list = &item_ids_;
+            list->StringStruct::remove_all();
+            list->current_position_ = 0;
+            list->allocator_ = 0;
+        }
         dialogs_.init(0);
     }
 
     field_30A8_ = flags;
     if (external_window_ == 0) {
         dialogs_.Dialog::field_20_ &= ~3u;
-        loc_a_ = 0x1000;
-        loc_b_ = 0x1000;
+        set_loc(0x1000, 0x1000);
     } else {
         dialogs_.Dialog::field_2C_ = dialog_width_;
         int height = dialog_height_;
@@ -2712,18 +2709,12 @@ int BasePop::init(int flags, long heap_base) {
             height = (height * 3) / 2;
         }
         dialogs_.Dialog::field_30_ = height;
-        if (default_loc_a_ != 0x2000) {
-            loc_a_ = default_loc_a_;
-        }
-        if (default_loc_b_ != 0x2000) {
-            loc_b_ = default_loc_b_;
-        }
+        set_loc(default_loc_a_, default_loc_b_);
         dialogs_.set_style_bits(3);
     }
 
     if (flags & 0x1000) {
-        loc_a_ = 0x1000;
-        loc_b_ = 0x1000;
+        set_loc(0x1000, 0x1000);
     }
 
     spot_.init(0xa);
@@ -3156,18 +3147,28 @@ int BasePop::UNK2() {
     int max_width = 0;
 
     if ((field_30A8_ & 0x10000) == 0) {
-        int width = button_font1_->width(ok_text_ != 0 ? ok_text_
-                  : (BasePopDefaultOkText != 0 ? BasePopDefaultOkText : "OK"));
+        int width;
+        if (ok_text_ != 0) {
+            width = button_font1_->width(ok_text_);
+        } else if (BasePopDefaultOkText != 0) {
+            width = button_font1_->width(BasePopDefaultOkText);
+        } else {
+            width = button_font1_->width("OK");
+        }
         if (width > 0) {
             max_width = width;
         }
     }
 
     if ((field_30A8_ & 0x40) != 0) {
-        int width = button_font1_->width(
-                cancel_text_ != 0 ? cancel_text_
-                  : (BasePopDefaultCancelText != 0 ? BasePopDefaultCancelText
-                                                   : "Cancel"));
+        int width;
+        if (cancel_text_ != 0) {
+            width = button_font1_->width(cancel_text_);
+        } else if (BasePopDefaultCancelText != 0) {
+            width = button_font1_->width(BasePopDefaultCancelText);
+        } else {
+            width = button_font1_->width("Cancel");
+        }
         if (width > max_width) {
             max_width = width;
         }
