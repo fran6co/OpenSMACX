@@ -1035,7 +1035,7 @@ void __cdecl reset_territory() {
     }
     Map *tile = map_tiles();
     for (int y = 0; y < MapLatitudeBounds; y++) {
-        for (int x = y & 1; x < MapLongitudeBounds; x += 2, tile++) {
+        for (int x = y & 1; x < MapLongitudeBounds; tile++, x += 2) {
             int region = tile->region;
             for (int faction_id = 1; faction_id < MaxPlayerNum; faction_id++) {
                 uint32_t flags = PlayersData[faction_id].flags;
@@ -1116,18 +1116,15 @@ void __cdecl reset_territory() {
                     site_set(x, y, site);
                 }
             }
-            // ONE pointer to the region's Continent, reused by both the
-            // unk_3 store here and the pods increment below. The image
-            // computes `region * 28` once into EDI and addresses both fields
-            // as `[edi + 0x9AA738]` / `[edi + 0x9AA73C]`; writing
-            // `Continents[region].field` at each site made VC6 recompute the
-            // whole `lea/sub/shl` chain for the second one.
-            Continent *const continent = &Continents[region];
-            int region_best = (int)continent->unk_3;
+            // `Continents[region]` indexed at each site: the image keeps
+            // `region * 28` in EDI as an index (`[edi + 0x9AA738]`). Earlier
+            // a `Continent *` beat this; with the loop/BaseFindDist fixes the
+            // direct index measures better (0.868 -> 0.974).
+            int region_best = (int)Continents[region].unk_3;
             if (site > region_best) {
                 region_best = site;
             }
-            continent->unk_3 = (uint32_t)region_best;
+            Continents[region].unk_3 = (uint32_t)region_best;
             if (owner) {
                 int owner_best = PlayersData[owner].unk_82[region];
                 if (site > owner_best) {
@@ -1138,7 +1135,7 @@ void __cdecl reset_territory() {
             if (!goody_at(x, y)) {
                 continue;
             }
-            continent->pods++;
+            Continents[region].pods++;
             PlayersData[owner].unk_83[region]++;
             if (owner) {
                 if (tile->visibility & (1 << owner)
@@ -1161,8 +1158,10 @@ void __cdecl reset_territory() {
                 if (base_find(x, y, faction_id, region, -1, -1) < 0) {
                     continue;
                 }
+                // BaseFindDist loads first in the image.
+                int dist = BaseFindDist;
                 int limit = (int)Rules.territory_max_dist_base;
-                if (BaseFindDist < limit || BaseFindDist > limit + limit) {
+                if (dist < limit || dist > limit + limit) {
                     continue;
                 }
                 add_site(faction_id, 3, 1, x, y);
@@ -2072,44 +2071,37 @@ int __cdecl desktop_init(int fresh) {
     ReportIfGlobal.init();
     ConsolePrefWin.init();
 
-    // Keep both native stores: the first value is immediately replaced.
+    // Both native stores survive: the virtual-base width read sits between
+    // them, so VC6 cannot drop the first one.
     ConsoleGlobal.field_23D80_ = 10;
-    const RECT &menu_client = ConsoleGlobal.alpha_menu_.client_rect();
-    ConsoleGlobal.field_23D80_ = static_cast<int>(
-        static_cast<uint32_t>(menu_client.right) -
-        static_cast<uint32_t>(menu_client.left) + 10u);
-
-    ConsoleGlobal.field_23D84_ = static_cast<int>(
-        static_cast<uint32_t>(ConsoleGlobal.dib_.bmiHeader.biWidth) - 10u);
-    if (IsMultiplayerNet != 0) {
-        const RECT &multi_client = MultiWindow.client_rect();
-        ConsoleGlobal.field_23D84_ = static_cast<int>(
-            static_cast<uint32_t>(ConsoleGlobal.field_23D84_) +
-            static_cast<uint32_t>(multi_client.left) -
-            static_cast<uint32_t>(multi_client.right));
+    ConsoleGlobal.field_23D84_ = ConsoleGlobal.dib_.bmiHeader.biWidth - 10;
+    ConsoleGlobal.field_23D80_ = ConsoleGlobal.alpha_menu_.client_rect().right
+        - ConsoleGlobal.alpha_menu_.client_rect().left + 10;
+    if (IsMultiplayerNet) {
+        ConsoleGlobal.field_23D84_ += MultiWindow.client_rect().left
+            - MultiWindow.client_rect().right;
     }
-
     ConsoleGlobal.field_23D88_ = 10;
-    ConsoleGlobal.field_23D8C_ = static_cast<int>(
-        static_cast<uint32_t>(-10) -
-        static_cast<uint32_t>(ConsoleGlobal.dib_.bmiHeader.biHeight));
+    ConsoleGlobal.field_23D8C_ = -10 - ConsoleGlobal.dib_.bmiHeader.biHeight;
 
-    if (GameDataStateStorage.fields_.turn_current_num_ != 0) {
+    if (GameDataStateStorage.fields_.turn_current_num_) {
         draw_map(1);
     }
 
-    static_cast<Win &>(MainInterfaceGlobal).Win::show(0);
-    static_cast<Win &>(ConsoleGlobal).Win::show(0);
-    if (IsMultiplayerPBEM != 0) {
+    MainInterfaceGlobal.Win::show(0);
+    ConsoleGlobal.Win::show(0);
+    if (IsMultiplayerPBEM) {
         ConsoleGlobal.cover_window_.GraphicWin::fill(0);
-        static_cast<Win &>(ConsoleGlobal.cover_window_).Win::show(0);
+        ConsoleGlobal.cover_window_.Win::show(0);
     }
     do_all_non_input();
 
-    BasePopDefaultField322C = static_cast<Win *>(&ConsoleGlobal);
+    // A named conversion keeps the null-checked value in one register and
+    // stops VC6 caching zero in ESI for the whole function.
+    Win *default_parent = static_cast<Win *>(&ConsoleGlobal);
+    BasePopDefaultField322C = default_parent;
     if (OpeningWindow != 0) {
-        GraphicWin *const opening = OpeningWindow;
-        delete opening;
+        delete OpeningWindow;
         OpeningWindow = 0;
     }
     do_all_non_input();
@@ -6061,26 +6053,29 @@ void __cdecl clear_player_messages(int faction) {
 // RECOVERY_BINDING: v1 {"evidence": ["git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/0051e530.cpp", "Pinned original01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "recovery/tests/test_player_message_state_behavior.py"], "reason": "Recover the complete player-message display_player_messages operation through existing StringList/MessageWin owners and eight faction combat-summary counters. Preserve deletion hooks, live count reloads, reset/display order and retained original seed; no new measured claim."}
 // symbol    ?display_player_messages@@YAHH@Z
 // TRIED: char* record-base arithmetic (self+0x30*a1 relative to 0x93a7b0) with adjustor-thunk VCall dispatch (slot000/slot001) for the two destroy-list virtual calls; reaches #13
+// The id and text lookups are separate inline phases: head_ is reloaded.
+static inline int deferred_message_id(StringList &items) {
+    return items.head_ != 0 ? items.current_->id : 0;
+}
+static inline char *deferred_message_text(StringList &items) {
+    return items.head_ != 0 ? items.current_->string_payload()->text : 0;
+}
+
 int __cdecl display_player_messages(int faction) {
     InterfaceMessageWin.clear();
-    StringList &messages = MessageWinDeferredBaseMessages[faction];
-    for (int index = 0; index < messages.entry_count_; ++index) {
-        messages.seek_pos(index);
+    for (int index = 0; index < MessageWinDeferredBaseMessages[faction].entry_count_; ++index) {
+        MessageWinDeferredBaseMessages[faction].seek_pos(index);
         ++ConsoleGlobal.message_count_;
-        const int id = messages.head_ != 0 ? messages.current_->id : 0;
-        char *text = messages.head_ != 0 ? messages.current_->string_payload()->text : 0;
+        const int id = deferred_message_id(MessageWinDeferredBaseMessages[faction]);
+        char *text = deferred_message_text(MessageWinDeferredBaseMessages[faction]);
         InterfaceMessageWin.listBox_.item(text, id | 0x40000000);
         InterfaceMessageWin.listBox_.set_selected_pos(-1, 1);
     }
-    const int displayed_count = messages.entry_count_;
+    const int displayed_count = MessageWinDeferredBaseMessages[faction].entry_count_;
     if (displayed_count != 0) {
         InterfaceMessageWin.listBox_.update_changes();
     }
-    messages.remove_all();
-    messages.current_position_ = 0;
-    messages.allocator_ = 0;
-    FactionTurnCombatLosses[faction] = 0;
-    FactionTurnCombatWins[faction] = 0;
+    clear_player_messages(faction);
     return displayed_count;
 }
 
@@ -8113,77 +8108,54 @@ void __cdecl random_events(int mode) {
 // RECOVERY_BINDING: v1 {"evidence": ["git:8b0da75894c71ec098213e7e12cc29fb1dfc01f3:src/recovered/units/00529c00.cpp", "pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "recovery/tasks/game-logic-seed-owner-coverage.json; complete typed owner migration, preserve original spans and seed lessons. Literal content provenance does not assert original allocation or game acceptance."], "reason": "Native aircraft attrition: vehicle movement spent at+0x28 controls eligibility; damage at+0x10 accumulates reactor-derived attrition; terraforming turns at+0x25 clears on survival. Prototype+0x2A is plan, chassis+0x4A is range; preserve post-focus/boom prototype reads."}
 void __cdecl mash_planes() {
     for (int veh_id = GameDataStateStorage.fields_.vehicle_current_count_ - 1; veh_id >= 0; --veh_id) {
-        Veh &veh = Vehs[veh_id];
-        const int initial_proto_id = veh.proto_id;
-        const int initial_chassis_id = VehPrototypes[initial_proto_id].chassis_id;
-        const RulesChassis &initial_chassis = Chassis[initial_chassis_id];
-        if (initial_chassis.triad != TRIAD_AIR || initial_chassis.range == 0) {
+        const int initial_chassis_id = VehPrototypes[Vehs[veh_id].proto_id].chassis_id;
+        if (Chassis[initial_chassis_id].triad != TRIAD_AIR || Chassis[initial_chassis_id].range == 0) {
             continue;
         }
-
-        const int remaining_speed = speed(veh_id, false) - veh.moves_expended;
-        if (remaining_speed <= 0) {
+        if (!range(speed(veh_id, false) - Vehs[veh_id].moves_expended, 0, 999)) {
             continue;
         }
-
-        Map *const tile = map_loc(veh.x, veh.y);
-        if ((tile->bit & BIT_BASE_IN_TILE) != 0 && (tile->val2 & 0x0F) < 8) {
+        if (base_who(Vehs[veh_id].x, Vehs[veh_id].y) >= 0) {
             continue;
         }
-        if ((tile->bit & 0x00040000u) != 0 ||
+        if ((bit_at(Vehs[veh_id].x, Vehs[veh_id].y) & 0x00040000) != 0 ||
             stack_check(veh_id, 6, 0x80, -1, -1) != 0) {
             continue;
         }
 
-        const int viewer = ConsoleGlobal.faction_id_;
-        bool focused = false;
-        if (veh.faction_id == viewer ||
-            (veh.visibility & static_cast<uint8_t>(1u << (viewer & 31))) != 0) {
-            ConsoleGlobal.focus(veh.x, veh.y, veh.faction_id);
-            focused = true;
+        int focused = 0;
+        const int owner = Vehs[veh_id].faction_id;
+        if (owner == ConsoleGlobal.faction_id_ ||
+            Vehs[veh_id].visibility & (1 << ConsoleGlobal.faction_id_)) {
+            ConsoleGlobal.focus(Vehs[veh_id].x, Vehs[veh_id].y, owner);
+            focused = 1;
         }
-        veh.state |= 0x4;
+        Vehs[veh_id].state |= 0x4;
         if (focused) {
-            boom(veh.x, veh.y, 0x80);
+            boom(Vehs[veh_id].x, Vehs[veh_id].y, 0x80);
         }
 
         // Native 0x529D43 begins a fresh prototype lookup after both possible
         // callbacks. They may replace the selected vehicle's design.
         const int growth_proto_id = Vehs[veh_id].proto_id;
-        const int growth_chassis_id = VehPrototypes[growth_proto_id].chassis_id;
-        const RulesChassis &growth_chassis = Chassis[growth_chassis_id];
-        uint8_t point_delta;
-        if (growth_chassis.range == 1 && growth_chassis_id == 6) {
-            point_delta = static_cast<uint8_t>(
-                VehPrototypes[growth_proto_id].reactor_id * 3u);
+        if (Chassis[VehPrototypes[growth_proto_id].chassis_id].range == 1
+            && VehPrototypes[growth_proto_id].chassis_id == 6) {
+            Vehs[veh_id].dmg_incurred = static_cast<uint8_t>(Vehs[veh_id].dmg_incurred
+                + VehPrototypes[growth_proto_id].reactor_id * 3);
         } else {
-            int target = VehPrototypes[growth_proto_id].plan == PLAN_ALIEN_ARTIFACT
-                ? 1 : static_cast<int>(VehPrototypes[growth_proto_id].reactor_id);
-            if (target < 1) target = 1;
-            else if (target > 100) target = 100;
-            if (VehPrototypes[growth_proto_id].plan != PLAN_ALIEN_ARTIFACT) target *= 10;
-            int increase = target - veh.dmg_incurred;
-            if (increase < 0) increase = 0;
-            else if (increase > 9999) increase = 9999;
-            point_delta = static_cast<uint8_t>(increase);
+            // proto_power's body, on the prototype already selected above.
+            Vehs[veh_id].dmg_incurred = static_cast<uint8_t>(Vehs[veh_id].dmg_incurred + range(
+                (VehPrototypes[growth_proto_id].plan == PLAN_ALIEN_ARTIFACT
+                    ? 1 : range(VehPrototypes[growth_proto_id].reactor_id, 1, 100) * 10)
+                - Vehs[veh_id].dmg_incurred, 0, 9999));
         }
-        veh.dmg_incurred = static_cast<uint8_t>(veh.dmg_incurred + point_delta);
 
         // The terminal check has another native prototype reload at 0x529DD9.
-        const int terminal_proto_id = Vehs[veh_id].proto_id;
-        int threshold = 1;
-        if (VehPrototypes[terminal_proto_id].plan != PLAN_ALIEN_ARTIFACT) {
-            threshold = static_cast<int>(VehPrototypes[terminal_proto_id].reactor_id);
-            if (threshold < 1) threshold = 1;
-            else if (threshold > 100) threshold = 100;
-            threshold *= 10;
-        }
-        const int remaining = threshold - veh.dmg_incurred;
-        if (remaining <= 0) {
+        if (range(proto_power(veh_id) - Vehs[veh_id].dmg_incurred, 0, 9999) <= 0) {
             kill(veh_id);
         } else {
-            veh.terraforming_turns = 0;
-            draw_tile(veh.x, veh.y, 2);
+            Vehs[veh_id].terraforming_turns = 0;
+            draw_tile(Vehs[veh_id].x, Vehs[veh_id].y, 2);
         }
     }
 }
@@ -8286,31 +8258,30 @@ int GameSessionActive;
 // ORIGINAL: 0x00523C60 ?set_time_controls@@YAXXZ 0x00523C60-0x00523DC9
 // RECOVERY_BINDING: v1 {"evidence": ["task:time-control-calculation-and-dialog", "historical seed:src/recovered/units/00523c60.cpp", "Pinned original native instructions and existing typed source layout; seed aliases independently reconciled."], "reason": "Recover complete turn-duration calculation through typed rules, faction and vehicle records and actual NetDaemon state; preserve the native bonus-update order and state predicates."}
 void __cdecl set_time_controls() {
-    RulesTimeControl &control = TimeControl[GameDataStateStorage.fields_.time_controls_selection_];
-    const unsigned int active_mask = GameDataStateStorage.fields_.lock_masks_.enable_mask_ & 0xFF;
+    const int selection = GameDataStateStorage.fields_.time_controls_selection_;
     int active_factions = 0;
     int eligible_vehicle_support = 0;
     int weighted_base_count = 0;
-    int seconds = control.turn;
+    int seconds = TimeControl[selection].turn;
+    const unsigned int active_mask = GameDataStateStorage.fields_.lock_masks_.enable_mask_ & 0xFF;
 
     for (int faction_id = 1; faction_id < MaxPlayerNum; ++faction_id) {
-        PlayerData &faction = PlayersData[faction_id];
-
         if (ConsoleControlTurnActive != 0 && ControlTurnPhase == 0 &&
-            control.refresh != 0 && GameDataStateStorage.fields_.turn_current_num_ % control.refresh == 0) {
-            int next_bonus = faction.time_bonus_count + 1;
-            if (next_bonus >= control.accumulated) {
-                next_bonus = control.accumulated;
+            TimeControl[selection].refresh != 0 &&
+            GameDataStateStorage.fields_.turn_current_num_ % TimeControl[selection].refresh == 0) {
+            int next_bonus = PlayersData[faction_id].time_bonus_count + 1;
+            if (next_bonus >= TimeControl[selection].accumulated) {
+                next_bonus = TimeControl[selection].accumulated;
             }
-            faction.time_bonus_count = next_bonus;
+            PlayersData[faction_id].time_bonus_count = next_bonus;
         }
 
         if ((active_mask & (1u << faction_id)) == 0) {
             continue;
         }
 
-        weighted_base_count += control.base *
-            faction.current_num_bases;
+        weighted_base_count += TimeControl[selection].base *
+            PlayersData[faction_id].current_num_bases;
         ++active_factions;
 
         for (int vehicle_id = 0; vehicle_id < GameDataStateStorage.fields_.vehicle_current_count_; ++vehicle_id) {
@@ -8324,20 +8295,20 @@ void __cdecl set_time_controls() {
                 (vehicle.state & 0x4000u) != 0) {
                 continue;
             }
-            eligible_vehicle_support += control.unit;
+            eligible_vehicle_support += TimeControl[selection].unit;
         }
     }
 
     if (active_factions != 0) {
         const int candidate =
             (eligible_vehicle_support + weighted_base_count) / active_factions +
-            control.event * static_cast<int>(
+            TimeControl[selection].event * static_cast<int>(
                 NetDaemonNet.channels_[1].trailing_words_[8]);
         if (seconds <= candidate) {
             seconds = candidate;
         }
     }
-    if (GameDataStateStorage.fields_.turn_current_num_ < 6) {
+    if (GameDataStateStorage.fields_.turn_current_num_ <= 5) {
         seconds *= 2;
     }
     GameDataStateStorage.fields_.turn_control_duration_milliseconds_ = seconds * 1000;

@@ -2305,6 +2305,11 @@ void __cdecl init_goals(int faction_id) {
 }
 
 
+// The 4-arg vector_dist body, inlined the same way (pact_withdraw).
+static inline int del_site_dist(int x_point_a, int y_point_a, int x_point_b, int y_point_b) {
+    return vector_dist(x_dist(x_point_a, x_point_b), abs(y_point_a - y_point_b));
+}
+
 /*
 Purpose: Delete sites of the specified type within proximity of the tile along with related goals.
 // ORIGINAL: 0x00579E70 ?del_site@@YAXHHHHH@Z 0x00579E70-0x00579F73 BYTE_EXACT
@@ -6546,51 +6551,40 @@ void __cdecl pact_ends(int faction_id, int partner_id) {
 int __cdecl pact_withdraw(int faction_id, int faction_id_with) {
     int lifted_count = 0;
     for (int vehicle_id = 0; vehicle_id < GameDataStateStorage.fields_.vehicle_current_count_; ++vehicle_id) {
-        Veh &vehicle = Vehs[vehicle_id];
-        if (vehicle.faction_id != faction_id) continue;
+        if (faction_id != Vehs[vehicle_id].faction_id) continue;
 
-        const int base_at_vehicle = base_find(vehicle.x, vehicle.y);
+        const int base_at_vehicle = base_find(Vehs[vehicle_id].x, Vehs[vehicle_id].y);
         if (base_at_vehicle < 0) continue;
 
         if (Bases[base_at_vehicle].faction_id_current != faction_id_with &&
-            whose_territory(faction_id, vehicle.x, vehicle.y, 0, 0) != faction_id_with) {
+            whose_territory(faction_id, Vehs[vehicle_id].x, Vehs[vehicle_id].y, 0, 0) != faction_id_with) {
             continue;
         }
 
         int best_base = -1;
         int best_distance = 9999;
         for (int base_id = 0; base_id < GameDataStateStorage.fields_.base_current_count_; ++base_id) {
-            Base &base = Bases[base_id];
-            if (base.faction_id_current != faction_id) continue;
+            if (Bases[base_id].faction_id_current != faction_id) continue;
 
-            const int chassis_id_for_coast = VehPrototypes[vehicle.proto_id].chassis_id;
-            if (Chassis[chassis_id_for_coast].triad == TRIAD_SEA) {
+            if (get_proto_triad(Vehs[vehicle_id].proto_id) == TRIAD_SEA) {
                 // Preserve the original's coordinate-as-index bug exactly:
                 // native uses base.x as a Bases[] index and base.y as the
-                // is_coast boolean, rather than using base_id / TRUE.
-                const Base &coastal_probe = Bases[base.x];
-                if (!is_coast(coastal_probe.x, coastal_probe.y, base.y)) continue;
+                // is_coast boolean, rather than using base_id / TRUE. The
+                // two named locals reproduce the image's load order.
+                const int probe = Bases[base_id].x;
+                const int probe_flag = Bases[base_id].y;
+                if (!is_coast(Bases[probe].x, Bases[probe].y, probe_flag)) continue;
             }
 
-            const int chassis_id_for_sea_region =
-                VehPrototypes[vehicle.proto_id].chassis_id;
-            if (Chassis[chassis_id_for_sea_region].triad == TRIAD_SEA) {
-                const Map *tile = map_loc(vehicle.x, vehicle.y);
+            if (get_proto_triad(Vehs[vehicle_id].proto_id) == TRIAD_SEA) {
+                const Map *tile = map_loc(Vehs[vehicle_id].x, Vehs[vehicle_id].y);
                 if ((tile->climate & ~0x1F) < 0x60 &&
                     !base_on_sea(base_id, tile->region)) {
                     continue;
                 }
             }
 
-            int dx = abs(base.x - vehicle.x);
-            if ((MapIsFlat & 1) == 0 && static_cast<int>(MapLongitude) < dx) {
-                dx = static_cast<int>(MapLongitudeBounds) - dx;
-            }
-            dx = abs(dx);
-            const int dy = abs(base.y - vehicle.y);
-            const int maximum = (dx > dy) ? dx : dy;
-            const int minimum = (dx < dy) ? dx : dy;
-            const int distance = maximum - (((dx + dy) / 2 - minimum + 1) / 2);
+            const int distance = del_site_dist(Bases[base_id].x, Bases[base_id].y, Vehs[vehicle_id].x, Vehs[vehicle_id].y);
             if (distance < best_distance) {
                 best_distance = distance;
                 best_base = base_id;
@@ -6599,22 +6593,18 @@ int __cdecl pact_withdraw(int faction_id, int faction_id_with) {
 
         if (best_base < 0) continue;
 
-        const int destination_x = Bases[best_base].x;
-        const int destination_y = Bases[best_base].y;
-        const int lifted_vehicle = veh_lift(vehicle_id);
-        veh_drop(lifted_vehicle, destination_x, destination_y);
-        vehicle.order = 0;
-        vehicle.state &= 0xFCFFBDFFu;
+        veh_drop(veh_lift(vehicle_id), Bases[best_base].x, Bases[best_base].y);
+        Vehs[vehicle_id].order = 0;
+        Vehs[vehicle_id].state &= 0xFCFFBDFFu;
 
-        const int chassis_id_after_move = VehPrototypes[vehicle.proto_id].chassis_id;
         // Native receiver points at Veh.y (+2); its byte +0x23 is the
         // terraforming counter (+0x25), not the adjacent morale byte.
-        if (Chassis[chassis_id_after_move].triad == TRIAD_AIR)
-            vehicle.terraforming_turns = 0;
+        if (get_proto_triad(Vehs[vehicle_id].proto_id) == TRIAD_AIR)
+            Vehs[vehicle_id].terraforming_turns = 0;
 
         ++lifted_count;
         if (ConsoleGlobal.cursor_active_ != 0 &&
-            vehicle_id == ConsoleGlobal.selected_vehicle_) {
+            ConsoleGlobal.selected_vehicle_ == vehicle_id) {
             ConsoleGlobal.set_move(1);
         }
     }
@@ -13446,17 +13436,15 @@ int __cdecl dont_withdrawal(int faction_id, int against_id) {
         return 0;
     }
     for (int index = 0; index < GameDataStateStorage.fields_.vehicle_current_count_; ++index) {
-        const Veh &veh = Vehs[index];
-        if (veh.faction_id != against_id) {
+        if (Vehs[index].faction_id != against_id) {
             continue;
         }
-        if (VehPrototypes[veh.proto_id].plan == 0xB) {
+        if (VehPrototypes[Vehs[index].proto_id].plan == 0xB) {
             continue;
         }
-        const int x = veh.x;
-        const int y = veh.y;
-        const Map *tile = map_tiles() + MapLongitude * y + (x >> 1);
-        if ((tile->climate & ~0x1F) < 0x60) {
+        const int x = Vehs[index].x;
+        const int y = Vehs[index].y;
+        if ((map_loc(x, y)->climate & ~0x1F) < 0x60) {
             continue;
         }
         const int base_idx = base_find(x, y, faction_id);
@@ -13471,11 +13459,11 @@ int __cdecl dont_withdrawal(int faction_id, int against_id) {
         if (whose_territory(faction_id, x, y, 0, 0) != against_id) {
             continue;
         }
-        if (veh.order != ORDER_MOVE_TO) {
+        if (Vehs[index].order != ORDER_MOVE_TO) {
             continue;
         }
-        const int waypoint_x = veh.waypoint_x[0];
-        const int waypoint_y = veh.waypoint_y[0];
+        const int waypoint_x = Vehs[index].waypoint_x[0];
+        const int waypoint_y = Vehs[index].waypoint_y[0];
         const int base2 = base_at(waypoint_x, waypoint_y);
         if (base2 < 0) {
             continue;
