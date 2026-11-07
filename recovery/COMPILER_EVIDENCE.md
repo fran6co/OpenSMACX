@@ -384,3 +384,14 @@ For runtime investigations, use the same working directory, game assets and
 display/Wine conditions for original and candidate controls. A crash caused by
 launch conditions is not evidence of a decompilation defect. Runtime acceptance
 is not yet wired into the supplied recovery driver.
+
+- VC6 /Ob2 inline budget (2026-11-07 experiment on NetDaemon::veh_drop and
+  five other units): the budget is per caller, scales with the caller's own
+  size, and is spent on call sites in source order. Explicit `inline` is
+  subject to the same budget, and definition order has no effect. A
+  callee's cost depends on its source spelling, not only on its emitted
+  code. Per-unit /Ob1 loses claims in every unit tried, and inline_depth
+  3-4 changes nothing. The SP3 (build 8447) backend makes identical inline
+  decisions. Where the image calls a callee out of line late in a caller,
+  the original budget ran out there; that is a source question about
+  statement order, caller size or callee spelling, not a flag question.
