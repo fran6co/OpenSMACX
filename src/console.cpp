@@ -364,18 +364,19 @@ void Console::governor_directives() { // 0x00516DA0
     }
 
     const int directive = x_pop_short("GOVERNORCONTROL", 0x40, 0);
-    if (directive < 0 || GameDataStateStorage.fields_.base_current_count_ <= 0) {
+    if (directive < 0) {
         return;
     }
 
-    int first_owned_base = -1;
-    for (int base_id = 0; base_id < GameDataStateStorage.fields_.base_current_count_; ++base_id) {
-        if (Bases[base_id].faction_id_current == ConsoleGlobal.faction_id_) {
-            first_owned_base = base_id;
+    int first_owned_base;
+    for (first_owned_base = 0;
+         first_owned_base < GameDataStateStorage.fields_.base_current_count_;
+         ++first_owned_base) {
+        if (Bases[first_owned_base].faction_id_current == ConsoleGlobal.faction_id_) {
             break;
         }
     }
-    if (first_owned_base < 0) {
+    if (first_owned_base >= GameDataStateStorage.fields_.base_current_count_) {
         return;
     }
 
@@ -390,41 +391,48 @@ void Console::governor_directives() { // 0x00516DA0
     }
 
     StringTemp[0] = 0;
+    // The image mutates BaseCurrent, the selected-base pointer, while
+    // walking the owner's base records; it does not retarget it per record.
     for (int owned_base_id = 0; owned_base_id < GameDataStateStorage.fields_.base_current_count_; ++owned_base_id) {
-        if (Bases[owned_base_id].faction_id_current != ConsoleGlobal.faction_id_) {
-            continue;
+        if (Bases[owned_base_id].faction_id_current == ConsoleGlobal.faction_id_) {
+            switch (directive) {
+            case 0:
+                BaseCurrent->governor &= 0x7FFFFFFFu;
+                BaseCurrent->governor &= 0xF0FFFFFFu;
+                strcat(StringTemp, label_get(0xAF8 / 4));
+                break;
+            case 1:
+            case 2:
+            case 3:
+            case 4:
+                BaseCurrent->governor |= 0x80000000u;
+                BaseCurrent->governor &= 0xF0FFFFFFu;
+                switch (directive) {
+                case 1:
+                    BaseCurrent->governor |= 0x01000000u;
+                    strcat(StringTemp, label_get(0x824 / 4));
+                    break;
+                case 2:
+                    BaseCurrent->governor |= 0x02000000u;
+                    strcat(StringTemp, label_get(0x828 / 4));
+                    break;
+                case 3:
+                    BaseCurrent->governor |= 0x04000000u;
+                    strcat(StringTemp, label_get(0x82C / 4));
+                    break;
+                case 4:
+                    BaseCurrent->governor |= 0x08000000u;
+                    strcat(StringTemp, label_get(0x830 / 4));
+                    break;
+                }
+                break;
+            case 5:
+                BaseCurrent->governor = static_cast<uint32_t>(
+                    PlayersData[faction_id_].base_governor_adv);
+                strcat(StringTemp, label_get(0xAFC / 4));
+                break;
+            }
         }
-
-        // The image mutates BaseCurrent, the selected-base pointer, while
-        // walking the owner's base records. It does not retarget that pointer
-        // to each matching record inside this loop.
-        Base &base = *BaseCurrent;
-
-        int label_offset;
-        switch (directive) {
-        case 0:
-            base.governor &= 0x7FFFFFFFu;
-            base.governor &= 0xF0FFFFFFu;
-            label_offset = 0xAF8 / 4;
-            break;
-        case 1:
-        case 2:
-        case 3:
-        case 4:
-            base.governor |= 0x80000000u;
-            base.governor &= 0xF0FFFFFFu;
-            base.governor |= static_cast<uint32_t>(1u << (23 + directive));
-            label_offset = (0x824 + (directive - 1) * 4) / 4;
-            break;
-        case 5:
-            base.governor = static_cast<uint32_t>(
-                PlayersData[faction_id_].base_governor_adv);
-            label_offset = 0xAFC / 4;
-            break;
-        default:
-            continue;
-        }
-        strcat(StringTemp, label_get(label_offset));
     }
 
     parse_says(0, StringTemp, -1, -1);
@@ -1565,61 +1573,51 @@ int CursorHotspotX[12] = {0};  // 0x0093AA10, defined here
 // RECOVERY_OBJECT: v2 0x0093AA40 0x0093AA70 ?CursorHotspotY@@3PAHA 0x00454FC0
 int CursorHotspotY[12] = {0};  // 0x0093AA40, defined here
 
-namespace {
-int selecting_signed(uint32_t value) {
-    return value <= 0x7fffffffU ? static_cast<int>(value)
-                              : -1 - static_cast<int>(0xffffffffU - value);
-}
-}
 
 // ORIGINAL: 0x005105C0 ?selecting@Console@@QAEHHH@Z 0x005105C0-0x005107D5
 // RECOVERY_BINDING: v1 {"evidence": ["Original 0x005105C0..0x005107D5 and its retired transcription preserved in Git history.", "Original early mode1/mode0 returns skip pumping. Ordinary cursor mode is captured after valid_patrol; each called receiver is retained for cache writeback while subsequent table slots and hotspots are read live.", "Original68FAF0 is MapLongitude, the half-width used by the wrap test; valid initialized vehicle/window state and representable coordinate arithmetic are required by the original."], "reason": "Console owns selection-mode admission and the shared map-window cursor update. Recover genuine receivers and cursor globals; the range and patrol refusals both select loaded sprite5."}
-int Console::selecting(int tile_x, int tile_y) {
-    const uint32_t initial_mode = field_23D10_;
-    if (initial_mode == 1) {
-        return 1;
-    }
-    if (initial_mode == 0) {
-        return 0;
-    }
-
-    bool forbidden = false;
-    if (field_23D14_ >= 0) {
-        const int vehicle = selected_vehicle_;
-        const int vehicle_x = Vehs[vehicle].x;
-        const int vehicle_y = Vehs[vehicle].y;
-        int dx = abs(tile_x - vehicle_x);
-        if ((MapIsFlat & 1) == 0 && dx > MapLongitude) {
-            dx = MapLongitudeBounds - dx;
-        }
-        const int distance_sum = dx + abs(tile_y - vehicle_y);
-        // Map coordinates have representable differences and sums. The
-        // original SAR floors negative odd sums rather than truncating.
-        const int distance = distance_sum >> 1;
-        forbidden = distance > field_23D14_;
-    }
-    if (!forbidden && field_23D10_ == 8) {
-        forbidden = valid_patrol(selected_vehicle_, tile_x, tile_y) == 0;
-    }
-
-    // Both refusals select sprite5. Capture an ordinary mode after the
-    // patrol call; preserve that choice through the window callbacks.
-    const int shape = forbidden ? 5 : selecting_signed(field_23D10_);
+// The image repeats this map-window cursor walk at each of selecting's
+// three exits, each followed by do_non_input.
+static inline void selecting_cursor(int shape) {
     for (int slot = 0; slot < static_cast<int>(MapWinTableSlots); ++slot) {
         MapWin *const window = MapWinTable[slot];
-        if (window != 0 && (slot == 0 || window->view_active_ != 0)) {
+        if (window != nullptr && (slot == 0 || window->view_active_ != 0)) {
             Sprite *const sprite = &g_CURSOR_SPRITES[shape];
             if (window->cursor_sprite_ != sprite) {
                 window->GraphicWin::set_cursor(sprite,
                     CursorHotspotX[shape], CursorHotspotY[shape]);
-                // Write back to the called receiver, even if its callback
-                // replaced the table slot. Subsequent slots are read live.
                 window->cursor_sprite_ = sprite;
             }
         }
     }
     do_non_input();
-    return 1;
+}
+
+int Console::selecting(int tile_x, int tile_y) {
+    if (field_23D10_ == 1) {
+        return 1;
+    }
+    if (field_23D10_ != 0) {
+        if (field_23D14_ >= 0) {
+            const int vehicle_y = Vehs[selected_vehicle_].y;
+            const int vehicle_x = Vehs[selected_vehicle_].x;
+            const int abs_dx = abs(tile_x - vehicle_x);
+            const int dx = ((MapIsFlat & 1) == 0 && abs_dx > MapLongitude)
+                ? MapLongitudeBounds - abs_dx : abs_dx;
+            // The original SAR floors negative odd sums rather than truncating.
+            if ((dx + abs(tile_y - vehicle_y)) >> 1 > field_23D14_) {
+                selecting_cursor(5);
+                return 1;
+            }
+        }
+        if (field_23D10_ == 8 && !valid_patrol(selected_vehicle_, tile_x, tile_y)) {
+            selecting_cursor(5);
+            return 1;
+        }
+        selecting_cursor(field_23D10_);
+        return 1;
+    }
+    return 0;
 }
 
 // The editor's landmark removal command. The original uses the current
@@ -3011,78 +3009,72 @@ void Console::time_controls() {
 // RECOVERY_BINDING: v1 {"evidence": ["The original 0x0050F680..0x0050F951 disassembly exits return EAX values 1 or 0; its retired transcription is preserved in Git history."], "reason": "Translate the Console non-client hit-test into its existing virtual method; the disassembly exits return EAX values 1 or 0, correcting the seed-only void prototype."}
 // symbol    ?on_nc_hittest@Console@@UAEHHH@Z
 int Console::on_nc_hittest(int x_coord, int y_coord) {
-    // The original exits with EAX=1 while any split line is armed.  The
-    // archived unit's catalogued void prototype was therefore incomplete;
-    // the virtual slot and the product declaration both return int.
+    // The original exits with EAX=1 while any split line is armed, and
+    // otherwise returns 1 only over a caption box or a splitter handle.
     if (field_23D80_ == -1 || field_23D84_ == -1 ||
         field_23D88_ == -1 || field_23D8C_ == -1) {
         return 1;
     }
 
-    RECT caption_box;
-    caption_box.top = 0xE;
-    caption_box.bottom = 0x1F;
+    RECT caption_box = {0, 0xE, 0x26, 0x1F};
     caption_box.left = client_rect_.right - client_rect_.left - 0x5b;
     caption_box.right = caption_box.left + 0x26;
     if (in_box(x_coord, y_coord, &caption_box)) {
         return 1;
     }
 
-    const int width = client_rect_.right - client_rect_.left;
-    const int height = client_rect_.bottom - client_rect_.top;
-    const int border = border_thickness_;
-    const int bottom_border = bottom_border_thickness_ >= 0
-        ? bottom_border_thickness_ : border_thickness_;
-    const int sprite_a_width = sprite_a_.width();
-    const int sprite_b_height = sprite_b_.height();
+    // track_top: the client height above the bottom outer frame.
+    if (x_coord > client_rect_.right - client_rect_.left - border_thickness_) {
+        const int track_top = client_rect_.bottom - client_rect_.top -
+                              outer_rect_.bottom - caption_height_ + outer_rect_.top;
+        if (y_coord < track_top - (bottom_border_thickness_ >= 0
+                ? bottom_border_thickness_ : border_thickness_) + caption_height_) {
+            return 0;
+        }
+        if (y_coord > client_rect_.bottom - client_rect_.top -
+                (bottom_border_thickness_ >= 0 ? bottom_border_thickness_
+                                               : border_thickness_)) {
+            return 0;
+        }
+        if (y_coord < track_top - (bottom_border_thickness_ >= 0
+                ? bottom_border_thickness_ : border_thickness_) -
+                sprite_b_.height() + static_cast<int>(field_23D88_) + caption_height_ ||
+            y_coord > track_top - (bottom_border_thickness_ >= 0
+                ? bottom_border_thickness_ : border_thickness_) +
+                static_cast<int>(field_23D88_) + caption_height_ + sprite_b_.height()) {
+            if (y_coord < track_top - (bottom_border_thickness_ >= 0
+                    ? bottom_border_thickness_ : border_thickness_) -
+                    sprite_b_.height() + static_cast<int>(field_23D8C_) + caption_height_) {
+                return 0;
+            }
+            if (y_coord > track_top - (bottom_border_thickness_ >= 0
+                    ? bottom_border_thickness_ : border_thickness_) +
+                    static_cast<int>(field_23D8C_) + caption_height_ + sprite_b_.height()) {
+                return 0;
+            }
+        }
+        return 1;
+    }
 
-    if (x_coord <= width - border) {
-        if (y_coord <= height - bottom_border || x_coord < bottom_border ||
-            x_coord > width - border) {
-            return 1;
-        }
-        const int first_left = static_cast<int>(field_23D80_) -
-                               sprite_a_width + border;
-        const int first_right = static_cast<int>(field_23D80_) +
-                                border + sprite_a_width;
-        if (x_coord >= first_left && x_coord <= first_right) {
-            return 1;
-        }
-        const int second_left = static_cast<int>(field_23D84_) -
-                                sprite_a_width + border;
-        if (x_coord < second_left) {
-            return 1;
-        }
-        const int second_right = static_cast<int>(field_23D84_) +
-                                 border + sprite_a_width;
-        if (x_coord > second_right) {
-            return 1;
-        }
+    if (y_coord <= client_rect_.bottom - client_rect_.top -
+            (bottom_border_thickness_ >= 0 ? bottom_border_thickness_
+                                           : border_thickness_)) {
         return 0;
     }
-
-    // These are the bottom non-client track limits expressed in Win's real
-    // client/outer rectangles. The two handles use the shared drag slots.
-    const int track_top = height - (outer_rect_.bottom - outer_rect_.top) -
-                          bottom_border;
-    if (y_coord < track_top || y_coord > height - bottom_border) {
-        return 1;
+    if (x_coord < border_thickness_ ||
+        x_coord > client_rect_.right - client_rect_.left - border_thickness_) {
+        return 0;
     }
-    const int first_top = track_top - sprite_b_height +
-                          static_cast<int>(field_23D88_);
-    const int first_bottom = track_top + static_cast<int>(field_23D88_) +
-                             sprite_b_height;
-    if (y_coord >= first_top && y_coord <= first_bottom) {
-        return 1;
+    if (x_coord < static_cast<int>(field_23D80_) - sprite_a_.width() + border_thickness_ ||
+        x_coord > static_cast<int>(field_23D80_) + border_thickness_ + sprite_a_.width()) {
+        if (x_coord < static_cast<int>(field_23D84_) - sprite_a_.width() + border_thickness_) {
+            return 0;
+        }
+        if (x_coord > static_cast<int>(field_23D84_) + border_thickness_ + sprite_a_.width()) {
+            return 0;
+        }
     }
-    const int second_top = track_top - sprite_b_height +
-                           static_cast<int>(field_23D8C_);
-    if (y_coord < second_top) {
-        return 1;
-    }
-    const int second_bottom = track_top + static_cast<int>(field_23D8C_) +
-                              sprite_b_height;
-    return y_coord > second_bottom ? 1 : 0;
+    return 1;
 }
 
 // ORIGINAL: 0x0050F960 ?on_post_redraw_nc_buffer@Console@@QAEXPAUBuffer@@H@Z 0x0050F960-0x0050FB08
@@ -3557,42 +3549,45 @@ void Console::new_game() {
 // ORIGINAL: 0x005162A0 ?name_landmark@Console@@QAEXHH@Z 0x005162A0-0x0051648F
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/005162a0.cpp: original identity and complete spans", "source:src/console.h: Console owner declarations and layout", "source:src/console.cpp: coupled navigation, selection and lifecycle caller relationships"], "reason": "The original Console operation is expressed by the corresponding real Console owner definition, using its recovered members and source-owned callees rather than the retained seed scaffold."}
 void Console::name_landmark(int x, int y) {
-    if (x < 0 || x >= MapLongitudeBounds || y < 0 || y >= MapLatitudeBounds) {
-        const int i = ConsoleGlobal.cursor_history_index_;
-        x = ConsoleGlobal.cursor_history_x_[i];
-        y = ConsoleGlobal.cursor_history_y_[i];
+    if (!on_map(x, y)) {
+        x = ConsoleGlobal.cursor_history_x_[ConsoleGlobal.cursor_history_index_];
+        y = ConsoleGlobal.cursor_history_y_[ConsoleGlobal.cursor_history_index_];
     }
     const int landmark = find_landmark(x, y, 1);
     if (!(GameDataStateStorage.fields_.game_state_ & 0x80)) {
-        const int valid = landmark < 0 ? valid_landmark(x, y, ConsoleGlobal.faction_id_)
-            : valid_landmark(MapLandmark[landmark].x, MapLandmark[landmark].y,
-                             ConsoleGlobal.faction_id_);
+        const int valid = landmark >= 0
+            ? valid_landmark(MapLandmark[landmark].x, MapLandmark[landmark].y,
+                             ConsoleGlobal.faction_id_)
+            : valid_landmark(x, y, ConsoleGlobal.faction_id_);
         if (!valid) {
             NetMsgPrimary.pop("LANDMARKNO", 5000, 0, nullptr);
             return;
         }
     }
-    char *const previous = landmark < 0 ? LandmarkDefaultName : MapLandmark[landmark].name;
-    if (X_pop_ask("LANDMARK", 31, previous, nullptr, 0)) return;
-    char *const name = ParseStrBuffer[0].str;
-    purge_spaces(name);
-    if (!strlen(name)) return;
-    if (landmark < 0) {
+    if (landmark >= 0) {
+        if (X_pop_ask("LANDMARK", 31, MapLandmark[landmark].name, nullptr, 0)) return;
+        purge_spaces(ParseStrBuffer[0].str);
+        if (!strlen(ParseStrBuffer[0].str)) return;
         if (IsMultiplayerNet) {
-            message_landmark(0x2e01, 0, name, x, y, 0, 0);
+            message_landmark(0x2e03, 0, ParseStrBuffer[0].str,
+                MapLandmark[landmark].x, MapLandmark[landmark].y, 0, 0);
             return;
         }
-        if (new_landmark(x, y, name) < 0) {
+        strcpy(MapLandmark[landmark].name, ParseStrBuffer[0].str);
+        ::draw_map(1);
+    } else {
+        if (X_pop_ask("LANDMARK", 31, LandmarkDefaultName, nullptr, 0)) return;
+        purge_spaces(ParseStrBuffer[0].str);
+        if (!strlen(ParseStrBuffer[0].str)) return;
+        if (IsMultiplayerNet) {
+            message_landmark(0x2e01, 0, ParseStrBuffer[0].str, x, y, 0, 0);
+            return;
+        }
+        if (new_landmark(x, y, ParseStrBuffer[0].str) < 0) {
             parse_num(0, 64);
             NetMsgPrimary.pop("LANDMARKTOOMANY", 5000, 0, nullptr);
         }
         ::draw_map(1);
-    } else if (!IsMultiplayerNet) {
-        strcpy(MapLandmark[landmark].name, name);
-        ::draw_map(1);
-    } else {
-        message_landmark(0x2e03, 0, name,
-            MapLandmark[landmark].x, MapLandmark[landmark].y, 0, 0);
     }
 }
 
@@ -3806,156 +3801,122 @@ int Console::veh_turn() { // 0x00513B90
 
         flag10 = 1;
         if (field_23BF0_ == 2) {
-            field_23BF0_ = 0;
             field_23BE4_ = Vehs[selected_vehicle_].order == 0x18;
+            field_23BF0_ = 0;
         }
 
         // Native reads 0x0093E8E0 here: NetDaemon + 0x1B50, the already
         // typed lock_state_[0].dword_[9]. Its wider semantic role is unknown.
         if (NetDaemonNet.primary_state_.trailing_words_[3] != 0) {
-            if (ConsoleGlobal.cursor_active_ == 0) {
-                goto wait_for_vehicle;
+            if (ConsoleGlobal.cursor_active_ != 0) {
+                ambience(0x1E);
+                cursor_active_ = 0;
+                field_23BF8_ = 1;
+                field_23BFC_ = 1;
+                if (survey_mode_ != 0) {
+                    survey_mode_ = 0;
+                    MapWinTable[0]->draw_map(1);
+                }
+                ::draw_cursor();
+                ConsoleInfoWin.change(0);
+                ConsoleStatusWin.redraw();
+                MapWinTable[0]->main_caption();
+                alpha_menu_.check(selected_vehicle_);
+                continue;
             }
-            ambience(0x1E);
-            cursor_active_ = 0;
-            field_23BF8_ = 1;
-            field_23BFC_ = 1;
-            if (survey_mode_ != 0) {
-                survey_mode_ = 0;
-                MapWinTable[0]->draw_map(1);
-            }
-            ::draw_cursor();
-            ConsoleInfoWin.change(0);
-            ConsoleStatusWin.redraw();
-            MapWinTable[0]->main_caption();
-            alpha_menu_.check(selected_vehicle_);
+            result = 1;
+            wait_loop();
             continue;
         }
-        goto update_vehicle;
 
-    wait_for_vehicle:
-        result = 1;
-        wait_loop();
-        continue;
+        if (field_23D24_ != 0 &&
+            (Vehs[selected_vehicle_].state & 0x200u) == 0 &&
+            (Vehs[selected_vehicle_].state & 0x01000200u) != 0x01000200u &&
+            (Vehs[selected_vehicle_].state & 0x4000u) == 0 &&
+            Vehs[selected_vehicle_].order == 0) {
+            goto clear_auto_order;
+        }
 
-    update_vehicle:
-        if (field_23D24_ != 0) {
-            const Veh &vehicle = Vehs[selected_vehicle_];
-            const bool skip_auto_order_check =
-                (vehicle.state & 0x200u) != 0 ||
-                (vehicle.state & 0x01000200u) == 0x01000200u ||
-                (vehicle.state & 0x4000u) != 0;
-            if (!skip_auto_order_check && vehicle.order == 0) {
-                field_23D24_ = 0;
+        if (ConsoleGlobal.cursor_active_ != 0) {
+            if (veh_ready(selected_vehicle_) != 0) {
+                if (TutWinBaseWindow.is_visible() == 0 &&
+                    ReportWinGlobal.is_visible() == 0) {
+                    if ((Vehs[selected_vehicle_].state & 0x4200u) == 0) {
+                        const uint8_t order = Vehs[selected_vehicle_].order;
+                        if (order == 0) {
+                            n = 0;
+                        } else if (++n > (order == 0x18 ? 100 : 20)) {
+                            if (order == 0x18) {
+                                Vehs[selected_vehicle_].order = 0;
+                            } else {
+                                veh_skip(selected_vehicle_);
+                            }
+                            if (IsMultiplayerNet != 0) {
+                                synch_veh(selected_vehicle_);
+                                NetDaemonNet.await_synch();
+                                NetDaemonNet.unlock_veh();
+                            }
+                            continue;
+                        }
+                        if (NetDaemonNet.action(selected_vehicle_, 0) != 0) {
+                            continue;
+                        }
+                        Vehs[selected_vehicle_].state |= 0x04000000u;
+                    } else {
+                        // Native target 0x00531150 is NetDaemon::automated_lock(int *, int).
+                        if (NetDaemonNet.automated_lock(&selected_vehicle_, 4) != 0) {
+                            goto finish_turn;
+                        }
+                        ++NetBusyCount;
+                        if (++n > 20) {
+                            veh_skip(selected_vehicle_);
+                            if (IsMultiplayerNet != 0) {
+                                synch_veh(selected_vehicle_);
+                                NetDaemonNet.await_synch();
+                                NetDaemonNet.unlock_veh();
+                            }
+                            --NetBusyCount;
+                            continue;
+                        }
+                        if (enemy_veh(selected_vehicle_) != 0) {
+                            goto enemy_vehicle_found;
+                        }
+                        --NetBusyCount;
+                        continue;
+                    }
+                }
+            } else if (Vehs[selected_vehicle_].order != 0 ||
+                       (Vehs[selected_vehicle_].state & 0x4200u) != 0) {
                 goto selected_vehicle_unavailable;
             }
         }
 
-        if (ConsoleGlobal.cursor_active_ == 0) {
-            goto wait_and_tour;
-        }
-        if (veh_ready(selected_vehicle_) == 0) {
-            goto check_auto_order;
-        }
-        if (TutWinBaseWindow.is_visible() != 0 ||
-            ReportWinGlobal.is_visible() != 0) {
-            goto wait_and_tour;
-        }
-
-        {
-            const Veh &vehicle = Vehs[selected_vehicle_];
-            if ((vehicle.state & 0x4200u) != 0) {
-                goto acquire_auto_lock;
-            }
-            const uint8_t order = vehicle.order;
-            if (order == 0) {
-                n = 0;
-            } else {
-                ++n;
-                if (n <= (order == 0x18 ? 100 : 20)) {
-                    goto issue_auto_action;
-                }
-                if (order == 0x18) {
-                    Vehs[selected_vehicle_].order = 0;
-                } else {
-                    veh_skip(selected_vehicle_);
-                }
-                if (IsMultiplayerNet != 0) {
-                    synch_veh(selected_vehicle_);
-                    NetDaemonNet.await_synch();
-                    NetDaemonNet.unlock_veh();
-                }
-                continue;
-            }
-
-        issue_auto_action:
-            if (NetDaemonNet.action(selected_vehicle_, 0) != 0) {
-                continue;
-            }
-            Vehs[selected_vehicle_].state |= 0x04000000u;
-            goto wait_and_tour;
-        }
-
-    acquire_auto_lock:
-        // Native target 0x00531150 is NetDaemon::automated_lock(int *, int);
-        // its product declaration/body remains an outside-owner dependency.
-        if (NetDaemonNet.automated_lock(&selected_vehicle_, 4) != 0) {
-            goto finish_turn;
-        }
-        ++NetBusyCount;
-        ++n;
-        if (n <= 20) {
-            goto check_enemy_vehicle;
-        }
-        veh_skip(selected_vehicle_);
-        if (IsMultiplayerNet != 0) {
-            synch_veh(selected_vehicle_);
-            NetDaemonNet.await_synch();
-            NetDaemonNet.unlock_veh();
-        }
-        --NetBusyCount;
-        continue;
-
-    check_enemy_vehicle:
-        if (enemy_veh(selected_vehicle_) != 0) {
-            if (IsMultiplayerNet != 0) {
-                NetDaemonNet.unlock_veh();
-                selected_vehicle_ = -1;
-            }
-            --NetBusyCount;
-            goto finish_turn;
-        }
-        --NetBusyCount;
-        continue;
-
-    check_auto_order:
-        if (Vehs[selected_vehicle_].order != 0 ||
-            (Vehs[selected_vehicle_].state & 0x4200u) != 0) {
-            goto selected_vehicle_unavailable;
-        }
-
-        goto wait_and_tour;
-
-    selected_vehicle_unavailable:
-        selected_vehicle_ = -1;
-        goto finish_turn;
-
-    wait_and_tour:
         result = 1;
         wait_loop();
         if (TutWinTourPending != 0) {
             TutWinTourPending = 0;
             TutorialWindow.tour();
         }
-        continue;
     }
 
+clear_auto_order:
+    field_23D24_ = 0;
+selected_vehicle_unavailable:
+    selected_vehicle_ = -1;
 finish_turn:
     field_23BE4_ = 0;
     if (flag10 == 0) {
         selected_vehicle_ = -1;
     }
     return result;
+
+enemy_vehicle_found:
+    if (IsMultiplayerNet != 0) {
+        NetDaemonNet.unlock_veh();
+        selected_vehicle_ = -1;
+    }
+    --NetBusyCount;
+    goto finish_turn;
 }
 
 static int give_hints_wrap_x(int x) {
@@ -4798,26 +4759,16 @@ void Console::human_turn() {
             GameDataStateStorage.fields_.game_state_ |= 1u;
         }
 
-        bool keep_selection = false;
-        const int selected = selected_vehicle_;
-        const bool cursor_active = ConsoleGlobal.cursor_active_ != 0;
-        if (!cursor_active) {
-            if (selected >= 0 && GameDataStateStorage.fields_.vehicle_current_count_ == previous_vehicle_count) {
-                keep_selection = field_23BEC_ == 0
-                    ? veh_ready(selected) != 0
-                    : veh_selectable(selected) != 0;
-            }
-        } else if (selected >= 0 &&
-                   GameDataStateStorage.fields_.vehicle_current_count_ == previous_vehicle_count &&
-                   (field_23BEC_ == 0 ? veh_ready(selected) != 0
-                                      : veh_selectable(selected) != 0)) {
-            keep_selection = true;
-            if (field_23BF4_ == 0) {
+        if (ConsoleGlobal.cursor_active_ != 0) {
+            if (selected_vehicle_ < 0 ||
+                GameDataStateStorage.fields_.vehicle_current_count_ != previous_vehicle_count ||
+                (field_23BEC_ ? !veh_selectable(selected_vehicle_) : !veh_ready(selected_vehicle_))) {
+                ready();
+            } else if (field_23BF4_ == 0) {
                 // The helper can run callbacks; native reloads the selection
                 // after the eligibility callback and before reading its tile.
-                const int selected_for_cursor = selected_vehicle_;
-                const int x = Vehs[selected_for_cursor].x;
-                const int y = Vehs[selected_for_cursor].y;
+                const int y = Vehs[selected_vehicle_].y;
+                const int x = Vehs[selected_vehicle_].x;
                 field_23BF8_ = 0;
                 if (survey_mode_ != 0) {
                     survey_mode_ = 0;
@@ -4827,20 +4778,18 @@ void Console::human_turn() {
                 cursor_next(x, y);
                 // cursor_next may dispatch callbacks that change the live
                 // selection; native reloads selected_vehicle_ afterward.
-                const int current_selected = selected_vehicle_;
-                if (field_23BF0_ == 0 || Vehs[current_selected].order != 0x18) {
-                    const int focus_x = Vehs[current_selected].x;
-                    const int focus_y = Vehs[current_selected].y;
-                    const int focus_faction = Vehs[current_selected].faction_id;
-                    focus(focus_x, focus_y, focus_faction);
+                if (field_23BF0_ == 0 || Vehs[selected_vehicle_].order != 0x18) {
+                    focus(Vehs[selected_vehicle_].x, Vehs[selected_vehicle_].y,
+                          Vehs[selected_vehicle_].faction_id);
                     ConsoleInfoWin.change(0);
                     ConsoleStatusWin.redraw();
                     MapWinTable[0]->main_caption();
                     alpha_menu_.check(selected_vehicle_);
                 }
             }
-        }
-        if (!keep_selection) {
+        } else if (selected_vehicle_ < 0 ||
+                   GameDataStateStorage.fields_.vehicle_current_count_ != previous_vehicle_count ||
+                   (field_23BEC_ ? !veh_selectable(selected_vehicle_) : !veh_ready(selected_vehicle_))) {
             ready();
         }
 
@@ -4866,7 +4815,7 @@ void Console::human_turn() {
                 } else if ((GameDataStateStorage.fields_.game_preferences_ & PREF_BSC_PAUSE_END_TURN) == 0 ||
                            IsMultiplayerNet != 0) {
                     parse_num(0, static_cast<int>(game_year(GameDataStateStorage.fields_.turn_current_num_)));
-                    NetMsgPrimary.pop(flush_cache != 0 ? "ENDOFTURN" : "ENDOFTURN1",
+                    NetMsgPrimary.pop(flush_cache == 0 ? "ENDOFTURN1" : "ENDOFTURN",
                                      0x1388, 0, nullptr);
                 }
             }
@@ -5658,7 +5607,7 @@ void Console::init(int) {
         StatusFlags |= 1u;
     }
 
-    char *const menu_caption = label_get(0x1C);
+    char *const menu_caption = StringTable.get(Labels.strings_ptr[0x1C]);
     GraphicWin::init(&ConsoleMenuBounds, menu_caption, 0x02400000, 0,
                      &alpha_menu_, 0);
 
@@ -5670,7 +5619,8 @@ void Console::init(int) {
     alpha_menu_.set_menu_proc(&Console::menu_daemon);
     load_cursors();
 
-    BasePopDefaultField322C = static_cast<Win *>(this);
+    Win *const window = this;
+    BasePopDefaultField322C = window;
 }
 
 // Unreferenced in the pinned image (no call, jump or data reference).
