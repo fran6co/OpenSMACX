@@ -659,7 +659,7 @@ void DiploPop::on_iface_group_clicked(int group, int x_coord, int y_coord) {
 }
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x00440080 ?draw_hq@DiploPop@@QAEXXZ 0x00440080-0x00440291 FILE
+// ORIGINAL: 0x00440080 ?draw_hq@DiploPop@@QAEXXZ 0x00440080-0x00440291 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00440080.cpp retained original identity and spans", "recovery/tasks/interface-contract-report-closure.json authorized ownership recovery", "original:0x00440080 complete control/member accesses and concrete interface table"], "reason": "Recover the concrete SubInterface owner operation through genuine window members and source-owned globals. Original table/call evidence identifies the callback receiver; the retained compatible seed supplies its complete original intervals, not an executable-address forwarding implementation."}
 void DiploPop::draw_hq() {
     RECT area = frame_inset_rect_;

@@ -189,7 +189,7 @@ static inline int plan_horizontal_midpoint(int left, int right) {
 }
 
 // Center the view between two horizontal pairs and their vertical spans.
-// ORIGINAL: 0x0048B450 ?find_view@PlanWin@@QAEXHHHHHHHH@Z 0x0048B450-0x0048B629
+// ORIGINAL: 0x0048B450 ?find_view@PlanWin@@QAEXHHHHHHHH@Z 0x0048B450-0x0048B629 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["image:0x0048B450-0x0048B629;git:a899c9ea:src/recovered/units/0048b450.cpp", "source:src/map.h:MapLongitudeBounds,MapIsFlat;source:src/mapwin.h:center_x_,center_y_"], "reason": "The eight-argument PlanWin member selects the horizontal center of two map-view pairs and their vertical midpoint using inherited MapWin view fields."}
 void PlanWin::find_view(int x1, int y1, int x2, int y2,
                         int x3, int y3, int x4, int y4) {

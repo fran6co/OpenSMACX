@@ -66,7 +66,7 @@ extern int MenuDefaultSelectionTextColor;
 /*
 Purpose: Size and initialise the menu bar window against its owner.
 */
-// ORIGINAL: 0x005FADD0 ?init@Menu@@QAEHPAUWin@@@Z 0x005FADD0-0x005FAE69
+// ORIGINAL: 0x005FADD0 ?init@Menu@@QAEHPAUWin@@@Z 0x005FADD0-0x005FAE69 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:5190d27f:src/stringstruct.cpp:Menu_init", "image:5FAE14..5FAE3F uses parent RECT.left/top/right at13C/140/144, subtracts twice font height from top, and propagates GraphicWin init status", "image:Menu6700B0 slots90/93 and Win slot1; inherited Buffer markup cell+964", "recovery/tasks/popup-font-configuration-owner-closure.json"], "reason": "Recover the genuine virtual Menu initializer through the parent frame, borrowed default font and Buffer base. Retire the raw receiver facade without preserving its incorrectly named bottom coordinate or discarded initialization status; original identity and seed history remain obligations."}
 // symbol    ?init@Menu@@UAEHPAVWin@@@Z
 int Menu::init(Win *owner) {
@@ -150,7 +150,7 @@ int Menu::add_menu(int menu_id, char *text, int left_justified) {
 }
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x005FB5A0 ?UNK10@Menu@@QAEHHPAD@Z 0x005FB5A0-0x005FB6FD
+// ORIGINAL: 0x005FB5A0 ?UNK10@Menu@@QAEHHPAD@Z 0x005FB5A0-0x005FB6FD BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/005fb5a0.cpp", "image:Menu6700B0/AlphaMenu66ED88/PullDown66FF40 constructor-selected primary tables; Buffer secondary subobject+444", "recovery/tasks/popup-font-configuration-owner-closure.json"], "reason": "Recover this complete operation in its genuine Menu/PullDown owner, using native constructor-selected virtual dispatch, real members and shared source-owned dependencies; preserve original identity, retained seed and historical restoration obligations."}
 // symbol    ?UNK10@Menu@@QAEHHPAD@Z
 // TRIED: the vtable call at [vtable]+0x170 (ordinal 92, nullary) has no auto-emitted VCall shim for this address, so a small local shim (VCall92) declares the 93 ordinals it needs by position; a bare __thiscall function-pointer cast is C4234 on VC6. Landed at 0.57 mnemonic similarity - the mnemonic- for-mnemonic transcription of the ampersand/mnemonic-marker string logic is right, register scheduling around the reused ebx/ebp/edi is not.

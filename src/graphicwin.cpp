@@ -1299,7 +1299,7 @@ void GraphicWin::load_all_nc_sprites_from_defs() {
 
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x005D7030 ?compute_min_size@GraphicWin@@QAEXXZ 0x005D7030-0x005D7140
+// ORIGINAL: 0x005D7030 ?compute_min_size@GraphicWin@@QAEXXZ 0x005D7030-0x005D7140 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Complete original5D7030..5D7140 has no callees. Flag0x10 selects caption or noncaption top corners; bottom corners are shared. Every selected pointer must exist before either previous minimum changes.", "OriginalSprite displayed width18/height1C accesses and signed greater-than branches establish independent horizontal and vertical corner-sum maxima. Preserve low32-bit addition before signed comparison, real Sprite accessors and existing Win minimum members. Seed Buffer receiver casts are incorrect; remove the product pending forwarder without changing the historical unclaimed identity."], "reason": "Recover genuine GraphicWin frame behavior required by the interface asset loader, retaining its original seed identity."}
 // symbol    ?compute_min_size@GraphicWin@@QAEXXZ
 void GraphicWin::compute_min_size() {
@@ -1475,7 +1475,7 @@ void GraphicWin::on_paint(RECT *area) {
 
 
 // Superseded seed deleted; binding references retain historical provenance.
-// ORIGINAL: 0x005D68C0 sub_5d68c0 0x005D68C0-0x005D6A42
+// ORIGINAL: 0x005D68C0 sub_5d68c0 0x005D68C0-0x005D6A42 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["task:graphicwin-frame-sprite-owner original identity/spans and all seed lessons retained from src/unrecovered/005d68c0.cpp", "pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf:5D68C0..5D6A42 complete native stores, guards and signed jg/equality joins.", "source:src/graphicwin.h existing NCSprites and frame fields; Sprite width18/height1C and Win minima134/138; compute_min_size5D7030 corroborates selection and wrap semantics."], "reason": "Recover complete instance frame-sprite publication in genuine GraphicWin with existing NCSprites, Sprite accessors and Win minimum members. apply_frame_sprites is a provisional semantic name; preserve source input order, caption-bit selection, null guards and low32-bit sums before signed comparison."}
 // symbol    ?apply_frame_sprites@GraphicWin@@QAEXPBUNCSprites@@@Z
 // kind      game

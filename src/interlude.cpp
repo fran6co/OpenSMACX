@@ -34,7 +34,7 @@ int __cdecl X_pop(char *caption, const char *label,
 // TRIED: reproducing the `push -1/push handler/mov fs:[0]` SEH frame and the two unwind funclets (~GraphicWin, and a tail call into sub_406820 on `this+0xa24`) - explicit placement-new / raw pointer-cast statements in an ordinary function body do not make MSVC emit member-initializer-list unwind protection, so this is landed without it (same call as 0x004849D0).
 Interlude::Interlude() {}
 // Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x0045F740 ??1Interlude@@QAE@XZ 0x0045F740-0x0045F905;0x00655820-0x00655859
+// ORIGINAL: 0x0045F740 ??1Interlude@@QAE@XZ 0x0045F740-0x0045F905;0x00655820-0x00655859 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/0045f740.cpp: original identity, complete spans and retained seed history", "source:src/interlude.h: genuine GraphicWin base and embedded member lifetime", "source:recovery/tasks/interlude-lifetime-owner-closure.json: bounded coordinator authorization"], "reason": "Original destructor45F740 and cold cleanup establish real member/base teardown; declare genuine virtual lifecycle so compiler owns deleting destructors and receiver adjustments."}
 // symbol    ??1Interlude@@UAE@XZ
 Interlude::~Interlude() { close(); }
