@@ -137,47 +137,43 @@ void StringBox::add_fixup() {
     if (line_height == 0) {
         line_height = 12;
     }
-    StringList &list = list_override_ != 0 ? *list_override_ : stringList_;
-    const int width = dib_.bmiHeader.biWidth;
-    const int text_width = (scroll_.iSomeFlag_ & WinFlagVisible) != 0
-                               ? width - scroll_.bar_thickness_ : width;
+    StringList *list = list_override_ != 0 ? list_override_ : &stringList_;
 
     if (static_cast<int>(visible_rows_) > 0) {
-        int measured = write_strings_height(&list, text_width, 0);
-        while (measured / line_height > static_cast<int>(visible_rows_)) {
-            if (list.entry_count_ > 0) {
-                list.current_ = list.head_;
-                list.current_position_ = 0;
-            }
-            if (list.head_ != 0) {
-                list.current_->next->previous = list.current_->previous;
-                list.current_->previous->next = list.current_->next;
-                StringStructEntry *const entry = list.current_;
-                if (entry == list.head_) {
-                    list.head_ = entry->next;
+        int text_width = dib_.bmiHeader.biWidth;
+        if ((scroll_.iSomeFlag_ & WinFlagVisible) != 0) {
+            text_width -= scroll_.bar_thickness_;
+        }
+        while (write_strings_height(list, text_width, 0) / line_height >
+               static_cast<int>(visible_rows_)) {
+            list->seek_pos(0);
+            if (list->head_ != 0) {
+                list->current_->next->previous = list->current_->previous;
+                list->current_->previous->next = list->current_->next;
+                StringStructEntry *const entry = list->current_;
+                if (entry == list->head_) {
+                    list->head_ = entry->next;
                 }
-                list.current_ = entry->next;
-                StringStructPayload *const payload = entry->string_payload();
-                list.on_remove(payload);
+                list->current_ = list->current_->next;
+                ListPayloadBase *const payload = entry->payload;
+                list->on_remove(payload);
                 delete payload;
                 entry->payload = 0;
                 delete entry;
-                --list.entry_count_;
-                if (list.entry_count_ == 0) {
-                    list.head_ = 0;
+                if (--list->entry_count_ == 0) {
+                    list->head_ = 0;
                 }
-                if (list.current_position_ > list.entry_count_ - 1) {
-                    list.current_position_ = list.entry_count_ - 1;
+                if (list->current_position_ > list->entry_count_ - 1) {
+                    list->current_position_ = list->entry_count_ - 1;
                 }
             }
-            measured = write_strings_height(&list, text_width, 0);
         }
     }
 
-    scroll_.range_maximum_ = list.entry_count_;
+    scroll_.range_maximum_ = list->entry_count_;
     scroll_.paging_ = -1 - (dib_.bmiHeader.biHeight / line_height);
     if ((scroll_.iSomeFlag_ & WinFlagVisible) == 0) {
-        if (write_strings_height(&list, width, 0) > -dib_.bmiHeader.biHeight) {
+        if (write_strings_height(list, dib_.bmiHeader.biWidth, 0) > -dib_.bmiHeader.biHeight) {
             scroll_.show(0);
         } else {
             scroll_.hide();
@@ -186,26 +182,24 @@ void StringBox::add_fixup() {
 
     if (is_visible() != 0) {
         if ((scroll_.iSomeFlag_ & WinFlagVisible) != 0) {
-            if (list.entry_count_ > 0) {
-                list.current_ = list.head_;
-                list.current_position_ = 0;
-            }
+            list->seek_pos(0);
             if (-(text_line_height() + dib_.bmiHeader.biHeight) >= 0) {
                 int measured = 0;
                 do {
-                    if (list.head_ != 0) {
-                        list.current_ = list.current_->previous;
-                        if (--list.current_position_ == -1) {
-                            list.current_position_ = list.entry_count_ - 1;
+                    int width = dib_.bmiHeader.biWidth;
+                    if (list->head_ != 0) {
+                        list->current_ = list->current_->previous;
+                        if (--list->current_position_ == -1) {
+                            list->current_position_ = list->entry_count_ - 1;
                         }
                     }
-                    char *text = list.current_ != 0
-                                     ? list.current_entry()->text : 0;
+                    char *text = list->current_ != 0
+                                     ? list->current_entry()->text : 0;
                     measured += wrap_height(text, width);
                 } while (measured <= -(text_line_height() + dib_.bmiHeader.biHeight));
             }
-            list.next_entry();
-            scroll_.set_pos(list.current_position_);
+            list->next_entry();
+            scroll_.set_pos(list->current_position_);
             top_line_ = scroll_.position_;
         }
         redraw();

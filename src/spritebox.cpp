@@ -520,24 +520,23 @@ int SpriteBox::calculate_dimensions() {
 // Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x00610C50 ?draw_item@SpriteBox@@QAEXH@Z 0x00610C50-0x0061103B FILE
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00610c50.cpp retained original identity, full spans and prior recovery evidence", "recovery/tasks/dialog-control-coverage-wave.json authorized coupled control ownership", "original:0x610c50 complete control/data-access review and src/spritebox.h genuine declaration; cross-owner discoveries preserved in task history"], "reason": "Complete Dialog-control behavior belongs to this genuine control owner, with real inherited members, embedded controls, Win receivers and callback dispatch rather than fixed executable calls. Compatible seed identity and historical evidence remain retained; catalogue decorations and emitted ABI are separate facts."}
+// The image reads the current entry's sprite through a head_ test at each use.
+static inline Sprite *current_list_sprite(SpriteList &list) {
+    return list.head_ ? list.current_->sprite_payload()->sprite_ : 0;
+}
+
 void SpriteBox::draw_item(int position) {
     Win *const parent = win_parent_;
     if (parent == 0) return;
     const int columns = Dialog::row_count_;
     const int column = position / columns;
-    const int row = position % columns;
     int x = (static_cast<int>(Dialog::field_64_) +
              static_cast<int>(Dialog::field_44_)) * column;
-    int y = row * static_cast<int>(Dialog::field_68_) +
+    int y = (position - columns * column) * static_cast<int>(Dialog::field_68_) +
             (static_cast<int>(Dialog::field_44_) >> 1);
 
-    if (position > list_.entry_count_ - 1) return;
     if (!list_.seek_pos(position)) return;
-    SpriteStruct *const sprite_payload = list_.current_ == 0
-        ? 0 : list_.current_->sprite_payload();
-    Sprite *const sprite = sprite_payload == 0 ? 0 : sprite_payload->sprite_;
     if (!Dialog::item_list_.seek_pos(position)) return;
-    const int item_id = list_.current_ == 0 ? 0 : list_.current_->id;
 
     RECT area;
     area.left = static_cast<int>(field_54_) + x + 4;
@@ -545,70 +544,44 @@ void SpriteBox::draw_item(int position) {
     area.right = static_cast<int>(Dialog::field_64_) + x;
     area.bottom = static_cast<int>(Dialog::field_68_) + y;
 
-    GraphicWin *const parent_graphic = static_cast<GraphicWin *>(parent);
-    Buffer *const parent_buffer = static_cast<Buffer *>(parent_graphic);
-    Buffer *const control_buffer = static_cast<Buffer *>(
-        static_cast<GraphicWin *>(this));
-    Buffer *const buffer = control_buffer;
-    parent_buffer->copy(
-        control_buffer,
-        static_cast<int32_t>(static_cast<uint32_t>(Dialog::window_x_) +
-                             static_cast<uint32_t>(x)),
-        static_cast<int32_t>(static_cast<uint32_t>(Dialog::window_y_) +
-                             static_cast<uint32_t>(y)),
-        x, y,
-                        Dialog::field_64_, Dialog::field_68_);
+    static_cast<Buffer *>(static_cast<GraphicWin *>(parent))->copy(
+        static_cast<Buffer *>(static_cast<GraphicWin *>(this)),
+        static_cast<int32_t>(Dialog::window_x_) + x,
+        static_cast<int32_t>(Dialog::window_y_) + y,
+        x, y, Dialog::field_64_, Dialog::field_68_);
 
     const int scale_numerator = static_cast<int>(field_1C_);
     const int scale_denominator = static_cast<int>(field_20_);
-    const int sprite_height = sprite->height() * scale_numerator / scale_denominator;
-    const int sprite_width = sprite->width() * scale_numerator / scale_denominator;
-    int sprite_x = x + (static_cast<int>(field_54_) - sprite_width) / 2;
-    int sprite_y = y + (static_cast<int>(Dialog::field_68_) - sprite_height) / 2;
+    y += (static_cast<int>(Dialog::field_68_) -
+          current_list_sprite(list_)->height() * scale_numerator / scale_denominator) / 2;
+    x += (static_cast<int>(field_54_) -
+          current_list_sprite(list_)->width() * scale_numerator / scale_denominator) / 2;
     if (redraw_callback_ == 0) {
-        sprite->draw(static_cast<Buffer *>(static_cast<GraphicWin *>(this)),
-                     sprite->transparent_index(), sprite_x, sprite_y,
-                     scale_numerator, scale_denominator);
+        current_list_sprite(list_)->draw(static_cast<Buffer *>(static_cast<GraphicWin *>(this)),
+                               current_list_sprite(list_)->transparent_index(), x, y,
+                               scale_numerator, scale_denominator);
     } else {
         SpriteScaleNumerator = scale_numerator;
         SpriteScaleDenominator = scale_denominator;
-        redraw_callback_(sprite, static_cast<GraphicWin *>(this), item_id,
-                        sprite_x, sprite_y);
-        buffer->set_text_color(text_color_a_, text_color_b_,
-                               text_color_c_, text_color_d_);
-        buffer->set_text_color2(text_color_2a_, text_color_2b_,
-                                text_color_2c_, text_color_2d_);
-        buffer->set_text_color3(text_color_3a_, text_color_3b_,
-                                text_color_3c_, text_color_3d_);
-        buffer->set_font(Dialog::font1_, Dialog::font2_, Dialog::font3_, 0);
+        redraw_callback_(current_list_sprite(list_), static_cast<GraphicWin *>(this),
+                         list_.head_ ? list_.current_->id : 0, x, y);
+        set_text_color(text_color_a_, text_color_b_, text_color_c_, text_color_d_);
+        set_text_color2(text_color_2a_, text_color_2b_, text_color_2c_, text_color_2d_);
+        set_text_color3(text_color_3a_, text_color_3b_, text_color_3c_, text_color_3d_);
+        set_font(Dialog::font1_, Dialog::font2_, Dialog::font3_, 0);
     }
 
     if (Dialog::selected_position_ == position && field_4_ != 0) {
-        SpriteStruct *const outline_payload = list_.current_ == 0
-            ? 0 : list_.current_->sprite_payload();
-        Sprite *const outline_sprite = outline_payload == 0
-            ? 0 : outline_payload->sprite_;
-        const int outline_scale_numerator = static_cast<int>(field_1C_);
-        const int outline_scale_denominator = static_cast<int>(field_20_);
-        const int outline_height = outline_sprite->height()
-                                 * outline_scale_numerator / outline_scale_denominator;
-        const int outline_width = outline_sprite->width()
-                                * outline_scale_numerator / outline_scale_denominator;
-        int outline_x = x + (static_cast<int>(field_54_) - outline_width) / 2;
-        int outline_y = y + (static_cast<int>(Dialog::field_68_) - outline_height) / 2;
-        ++outline_y;
-        static_cast<Buffer *>(static_cast<GraphicWin *>(this))->box(
-            outline_x, outline_y, outline_x + outline_width - 1,
-            static_cast<int>(Dialog::field_68_) + outline_y - 3,
+        ++y;
+        box(x, y, x + current_list_sprite(list_)->width() * static_cast<int>(field_1C_) /
+                          static_cast<int>(field_20_) - 1,
+            static_cast<int>(Dialog::field_68_) + y - 3,
             static_cast<int>(field_8_), static_cast<int>(field_8_));
     }
 
-    char *const label = Dialog::item_list_.head_ != 0
-        ? Dialog::item_list_.current_->string_payload()->text : 0;
-    if (label != 0) {
-        static_cast<Buffer *>(static_cast<GraphicWin *>(this))->write_l(
-            label, &area, strlen(label));
-    }
+    write_l(Dialog::item_list_.head_ != 0
+                ? Dialog::item_list_.current_->string_payload()->text : 0,
+            &area);
 }
 
 // Superseded seed deleted; seed paths below are historical Git provenance.

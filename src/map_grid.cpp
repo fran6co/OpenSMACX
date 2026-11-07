@@ -430,164 +430,121 @@ void __cdecl alt_set(int x, int y, int altitude) {
     static char submerged_title[] = "BASESUBMERGED";
     static char submerged_lost_title[] = "BASESUBMERGED2";
 
-    Map *const tile = map_loc(x, y);
-
-    // The original turn-zero branch skips gameplay consequences only.
-    // Its common altitude write and dirty flag remain unconditional.
+    // The turn-zero path skips gameplay consequences only; the altitude
+    // write and dirty flag below are unconditional.
     if (GameDataStateStorage.fields_.turn_current_num_ != 0) {
-        const int old_altitude = (tile->climate & 0xE0) >> 5;
-        const int was_water = old_altitude < ALT_SHORE_LINE;
-        const int becomes_water = altitude < ALT_SHORE_LINE;
-
+        int old_altitude = alt_at(x, y);
         if (altitude != old_altitude) {
             delete_landmark(x, y);
-
-            if (was_water != becomes_water) {
-                tile->bit2 &= 0x7E1377A3u;
-                for (int faction = 0; faction < 7; ++faction) {
-                    tile->bit_visible[faction] = tile->bit;
-                }
-
-                if (GameDataStateStorage.fields_.turn_current_num_ != 0 &&
-                    WorldClimateSkipTerritoryReset == 0 && becomes_water) {
-                    const int base_id = base_at(x, y);
-                    if (base_id >= 0 &&
-                        !has_fac_built(FAC_PRESSURE_DOME, base_id)) {
-                        Base &base = Bases[base_id];
-                        const int faction_id = base.faction_id_current;
-
-                        const int pressure_cost = (rand() % 3) + 2;
-                        const int half_population =
-                            static_cast<int>(base.population_size) / 2;
-                        int population_loss;
-                        if (half_population < pressure_cost ||
-                            pressure_cost > 10) {
-                            population_loss = pressure_cost;
-                        } else if (half_population <= 10) {
-                            population_loss = half_population;
-                        } else {
-                            population_loss = 10;
-                        }
-                        base.population_size = static_cast<int8_t>(
-                            base.population_size - population_loss);
-
-                        set_fac(FAC_PRESSURE_DOME, base_id, 1);
-                        ++MapBaseSubmergedCount[faction_id];
-                        // The native writer sets this neutral PlayerData flag;
-                        // no semantic flag name is established in the owner.
-                        PlayersData[faction_id].flags |= 0x00080000u;
-
-                        if (is_objective(base_id) && base.population_size <= 0) {
-                            base.population_size = 1;
-                        }
-
-                        if (base.population_size <= 0) {
-                            if (PlayersData[faction_id].current_num_bases <= 1) {
-                                base.population_size = 1;
-                                if (VehBattleUnkTgl == 0) {
-                                    const int local_faction =
-                                        ConsoleGlobal.faction_id_;
-                                    if (faction_id == local_faction) {
-                                        ConsoleGlobal.focus(base.x, base.y,
-                                                            local_faction);
-                                        parse_says(0, base.name_string, -1, -1);
-                                        X_pop(submerged_title,
-                                                            "subbase_sm.pcx", 0);
-                                    } else if (base.visibility &
-                                               (1u << (local_faction & 0x1F))) {
-                                        ConsoleGlobal.focus(base.x, base.y,
-                                                            local_faction);
-                                        parse_says(0, base.name_string, -1, -1);
-                                        parse_says(1,
-                                            Players[faction_id].adj_name_faction,
-                                            -1, -1);
-                                        X_pop(submerged_lost_title,
-                                                            "subbase_sm.pcx", 0);
-                                    }
-                                }
-                            } else {
-                                if ((!IsMultiplayerNet ||
-                                     ConsoleControlTurnActive != 0) &&
-                                    VehBattleUnkTgl == 0) {
-                                    const int local_faction =
-                                        ConsoleGlobal.faction_id_;
-                                    if (faction_id == local_faction) {
-                                        ConsoleGlobal.focus(base.x, base.y,
-                                                            local_faction);
-                                        parse_says(0, base.name_string, -1, -1);
-                                        popp(ScriptPopupFile, "BASESUBMERGED1", 0,
-                                             "subbase_sm.pcx", 0);
-                                    } else if (base.visibility &
-                                               (1u << (local_faction & 0x1F))) {
-                                        ConsoleGlobal.focus(base.x, base.y,
-                                                            local_faction);
-                                        parse_says(0, base.name_string, -1, -1);
-                                        parse_says(1,
-                                            Players[faction_id].adj_name_faction,
-                                            -1, -1);
-                                        popp(ScriptPopupFile, "BASESUBMERGED3", 0,
-                                             "subbase_sm.pcx", 0);
-                                    }
-                                }
-
-                                base_kill(base_id);
-
-                                int vehicle_id = stack_fix(veh_at(x, y));
-                                while (vehicle_id >= 0) {
-                                    Veh &vehicle = Vehs[vehicle_id];
-                                    int next_vehicle = vehicle.next_veh_id_stack;
-                                    const int triad = Chassis[
-                                        VehPrototypes[vehicle.proto_id].chassis_id
-                                    ].triad;
-                                    if (triad != TRIAD_AIR &&
-                                        (vehicle.flags & 0x20u) == 0 &&
-                                        ((triad == TRIAD_SEA) != becomes_water)) {
-                                        const int vehicle_faction =
-                                            vehicle.faction_id;
-                                        MapBaseIdClosestSubmergedVeh[vehicle_faction] =
-                                            base_find(x, y, vehicle_faction);
-                                        veh_kill(vehicle_id);
-                                        if (next_vehicle > vehicle_id) {
-                                            --next_vehicle;
-                                        }
-                                    }
-                                    vehicle_id = next_vehicle;
-                                }
-                            }
-                        }
-                    }
+        }
+        int is_water = altitude < ALT_SHORE_LINE;
+        int was_water = old_altitude < ALT_SHORE_LINE;
+        if (was_water != is_water) {
+            map_loc(x, y)->bit &= 0x7E1377A3u;
+            for (int i = 1; i < 8; i++) {
+                if (i != 0) {
+                    Map *tile = map_loc(x, y);
+                    tile->bit_visible[i - 1] = tile->bit;
                 }
             }
-
-            // Land emerging from the sea can gain one rocky level; a land tile
-            // that is lowered can lose one. The probability divisors and the
-            // asymmetric altitude bounds follow the two native branches.
-            if (!becomes_water) {
-                const int rockiness = tile->val3 >> 6;
-                if (altitude > old_altitude) {
-                    if (rockiness < ROCKINESS_ROCKY &&
-                        rockiness + 1 <= altitude - ALT_SHORE_LINE) {
-                        const int divisor = rockiness + 4;
-                        if (divisor <= 1 || rand() % divisor == 0) {
-                            tile->val3 = static_cast<uint8_t>(
-                                ((rockiness + 1) << 6) | (tile->val3 & 0x3F));
-                            UnkBitfield1 |= 1;
+            if (GameDataStateStorage.fields_.turn_current_num_ == 0 ||
+                WorldClimateSkipTerritoryReset != 0) {
+                goto done;
+            }
+            int base_id = base_at(x, y);
+            if (base_id >= 0) {
+                if (!is_water || has_fac(FAC_PRESSURE_DOME, base_id, 0)) {
+                    goto done;
+                }
+                int loss = rand() % 3 + 2;
+                int half = Bases[base_id].population_size / 2;
+                Bases[base_id].population_size -= (half < loss || loss > 10)
+                    ? loss : (half > 10 ? 10 : half);
+                set_fac(FAC_PRESSURE_DOME, base_id, 1);
+                int faction_id = Bases[base_id].faction_id_current;
+                // Neutral PlayerData flag; no semantic name is established.
+                PlayersData[faction_id].flags |= 0x00080000u;
+                MapBaseSubmergedCount[faction_id]++;
+                if (is_objective(base_id)) {
+                    Bases[base_id].population_size = static_cast<int8_t>(
+                        Bases[base_id].population_size < 1
+                            ? 1 : Bases[base_id].population_size);
+                }
+                if (Bases[base_id].population_size > 0) {
+                    goto done;
+                }
+                if (PlayersData[faction_id].current_num_bases > 1 &&
+                    (!IsMultiplayerNet || ConsoleControlTurnActive)) {
+                    if (!VehBattleUnkTgl) {
+                        int local = ConsoleGlobal.faction_id_;
+                        if (faction_id == local) {
+                            ConsoleGlobal.focus(Bases[base_id].x, Bases[base_id].y, local);
+                            parse_says(0, Bases[base_id].name_string, -1, -1);
+                            popp(ScriptPopupFile, "BASESUBMERGED1", 0, "subbase_sm.pcx", 0);
+                        } else if (Bases[base_id].faction_id_current == local ||
+                                   Bases[base_id].visibility & (1 << local)) {
+                            ConsoleGlobal.focus(Bases[base_id].x, Bases[base_id].y, local);
+                            parse_says(0, Bases[base_id].name_string, -1, -1);
+                            parse_says(1, Players[Bases[base_id].faction_id_current].adj_name_faction, -1, -1);
+                            popp(ScriptPopupFile, "BASESUBMERGED3", 0, "subbase_sm.pcx", 0);
                         }
                     }
-                } else if (rockiness > ROCKINESS_FLAT &&
-                           rockiness > altitude - ALT_SHORE_LINE) {
-                    const int divisor = rockiness + 1;
-                    if (divisor > 1 && rand() % divisor != 0) {
-                        tile->val3 = static_cast<uint8_t>(
-                            ((rockiness + 3) << 6) | (tile->val3 & 0x3F));
-                        UnkBitfield1 |= 1;
+                    base_kill(base_id);
+                } else {
+                    Bases[base_id].population_size = 1;
+                    if (!VehBattleUnkTgl) {
+                        int local = ConsoleGlobal.faction_id_;
+                        if (faction_id == local) {
+                            ConsoleGlobal.focus(Bases[base_id].x, Bases[base_id].y, local);
+                            parse_says(0, Bases[base_id].name_string, -1, -1);
+                            X_pop(submerged_title, "subbase_sm.pcx", 0);
+                        } else if (Bases[base_id].faction_id_current == local ||
+                                   Bases[base_id].visibility & (1 << local)) {
+                            ConsoleGlobal.focus(Bases[base_id].x, Bases[base_id].y, local);
+                            parse_says(0, Bases[base_id].name_string, -1, -1);
+                            parse_says(1, Players[Bases[base_id].faction_id_current].adj_name_faction, -1, -1);
+                            X_pop(submerged_lost_title, "subbase_sm.pcx", 0);
+                        }
                     }
+                    goto done;
+                }
+            }
+            for (int veh_id = stack_fix(veh_at(x, y)); veh_id >= 0;) {
+                int next_veh_id = Vehs[veh_id].next_veh_id_stack;
+                uint8_t triad = Chassis[VehPrototypes[Vehs[veh_id].proto_id].chassis_id].triad;
+                if (triad != TRIAD_AIR && !(Vehs[veh_id].flags & 0x20) &&
+                    (triad == TRIAD_SEA) != is_water) {
+                    MapBaseIdClosestSubmergedVeh[Vehs[veh_id].faction_id] =
+                        base_find(x, y, Vehs[veh_id].faction_id);
+                    veh_kill(veh_id);
+                    if (next_veh_id > veh_id) {
+                        next_veh_id--;
+                    }
+                }
+                veh_id = next_veh_id;
+            }
+        } else if (!is_water) {
+            // Raised land can gain one rocky level; lowered land can lose one.
+            if (altitude > old_altitude) {
+                int rocky = map_loc(x, y)->val3 >> 6;
+                if (rocky < ROCKINESS_ROCKY &&
+                    rocky + 1 <= altitude - ALT_SHORE_LINE &&
+                    !bounded_crt_random(rocky + 4)) {
+                    rocky_set(x, y, rocky + 1);
+                }
+            } else if (altitude < old_altitude) {
+                int rocky = map_loc(x, y)->val3 >> 6;
+                if (rocky != ROCKINESS_FLAT &&
+                    rocky > altitude - ALT_SHORE_LINE &&
+                    bounded_crt_random(rocky + 1)) {
+                    rocky_set(x, y, rocky - 1);
                 }
             }
         }
     }
-    tile->climate = static_cast<uint8_t>((tile->climate & 0x1F) |
-                                         (static_cast<uint32_t>(altitude) << 5));
+done:
+    map_loc(x, y)->climate = static_cast<uint8_t>((map_loc(x, y)->climate & 0x1F) |
+                                                  (altitude << 5));
     UnkBitfield1 |= 4;
 }
 // Semantic owner for shared altitude operations: current world-generation

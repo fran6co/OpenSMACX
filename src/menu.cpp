@@ -464,71 +464,65 @@ search_menu_mnemonics:
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/005fc290.cpp", "image:Menu6700B0/AlphaMenu66ED88/PullDown66FF40 constructor-selected primary tables; Buffer secondary subobject+444", "recovery/tasks/popup-font-configuration-owner-closure.json"], "reason": "Recover this complete operation in its genuine Menu/PullDown owner, using native constructor-selected virtual dispatch, real members and shared source-owned dependencies; preserve original identity, retained seed and historical restoration obligations."}
 // symbol    ?on_redraw@Menu@@UAEXXZ
 void Menu::on_redraw() {
-    Font *font = MenuDefaultFont;
-    if (!font) {
-        font = FontDefault;
-        MenuDefaultFont = font;
+    if (!MenuDefaultFont) {
+        MenuDefaultFont = FontDefault;
+        if (!FontDefault) return;
     }
-    if (!font) return;
 
-    // Native entry 5FC2B3 fills the window before measuring the one-space
-    // inset; every later drawing operation is through the real Buffer base.
+    // Entries are laid out across the bar: left-justified ones advance the
+    // left edge, right-justified ones pull the right edge in.
     fill(MenuDefaultColor1);
-    const int margin = text_width(MenuRedrawMargin);
-    RECT text_area = clip_rect();
-    text_area.left += margin;
-    text_area.right -= margin;
-    set_font(font, 0, 0, 0);
+    int margin = text_width(MenuRedrawMargin);
+    int inset = -margin;
+    RECT rect = clip_rect();
+    rect.left -= inset;
+    rect.right += inset;
+    set_font(MenuDefaultFont, 0, 0, 0);
 
-    for (int index = 0; index < count_; ++index) {
-        MenuEntry &entry = entries_[index];
-        if ((entry.flags & 1) == 0) continue;
-
-        RECT spot_rect;
-        spot_.get_rect_at(index, &spot_rect);
-        RECT row = text_area;
-        if ((entry.flags & 4) != 0) row.right = spot_rect.right;
-        else row.left = spot_rect.left;
-        const bool selected = field_A24_ == index;
-        int text_color;
-        if (selected) {
-            text_color = (entry.flags & 2) ? MenuDefaultColor1 : MenuDefaultColor2;
-        } else {
-            text_color = (entry.flags & 2) ? MenuDefaultColor3
-                                           : MenuDefaultSelectionTextColor;
-        }
-        set_text_color(text_color, -1, 1, 1);
-        if (selected) {
-            fill(spot_rect.left, text_area.top, spot_rect.right,
-                 text_area.bottom, MenuDefaultSelectionColor);
-        }
-
-        if (entry.text) {
-            const int text_length = static_cast<int>(strlen(entry.text));
-            const int rendered_width = text_width(entry.text);
-            if ((entry.flags & 4) != 0)
-                write_right_l(entry.text, &row, text_length);
-            else
-                write_l(entry.text, &row, text_length);
-
-            if (entry.mnemonic) {
-                const int underline_bottom = row.bottom;
-                const int underline_height = row.bottom - row.top;
-                const int underline_color = foreground_color();
-                const int leading = font->internal_leading();
-                const int letter_width = text_width(entry.mnemonic, 1);
-                const int rendered_height = text_height();
-                const int underline_y =
-                    underline_bottom - ((underline_height - rendered_height) / 2)
-                    - leading;
-                const int prefix_width = text_width(
-                    entry.text, static_cast<int>(entry.mnemonic - entry.text));
-                const int underline_left = (entry.flags & 4)
-                    ? row.right - rendered_width + prefix_width
-                    : row.left + prefix_width;
-                hline(underline_left, underline_left + letter_width,
-                      underline_y, underline_color);
+    for (int i = 0; i < count_; ++i) {
+        if (!(entries_[i].flags & 1)) continue;
+        char *text = entries_[i].text;
+        char *mnemonic = entries_[i].mnemonic;
+        int width = text_width(text);
+        if (i == field_A24_) {
+            if (entries_[i].flags & 2) {
+                set_text_color(MenuDefaultColor1, -1, 1, 1);
+            } else {
+                set_text_color(MenuDefaultColor2, -1, 1, 1);
             }
+            fill(spot_.get_rect_at(field_A24_).left - margin, 0, width,
+                 rect.bottom - rect.top, MenuDefaultSelectionColor);
+        } else {
+            if (entries_[i].flags & 2) {
+                set_text_color(MenuDefaultColor3, -1, 1, 1);
+            } else {
+                set_text_color(MenuDefaultSelectionTextColor, -1, 1, 1);
+            }
+        }
+        if (entries_[i].flags & 4) {
+            write_right_l(text, &rect);
+            rect.right -= width;
+            if (mnemonic) {
+                int height = rect.bottom - rect.top;
+                int color = foreground_color();
+                int leading = MenuDefaultFont->internal_leading();
+                int letter_width = text_width(mnemonic, 1);
+                int y = rect.bottom - (height + leading - text_height()) / 2;
+                int x = text_width(text, static_cast<int>(mnemonic - text)) + rect.right;
+                hline(x, x + letter_width, y, color);
+            }
+        } else {
+            write_l(entries_[i].text, &rect);
+            if (entries_[i].mnemonic) {
+                int height = rect.bottom - rect.top;
+                int color = foreground_color();
+                int leading = MenuDefaultFont->internal_leading();
+                int letter_width = text_width(mnemonic, 1);
+                int y = rect.bottom - (height + leading - text_height()) / 2;
+                int x = text_width(text, static_cast<int>(mnemonic - text)) + rect.left;
+                hline(x, x + letter_width, y, color);
+            }
+            rect.left += width;
         }
     }
 }

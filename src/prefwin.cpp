@@ -107,9 +107,8 @@ struct CheckEntry {
   bool inverted;
 };
 
-// Dialog ids and preference words are kept together so that the two
-// directions use one correspondence table.  Group numbers select the
-// preference words in PrefWin rather than raw receiver-relative storage.
+// Dialog ids and preference words for the dialog builders. The pinned
+// set_preferences/get_preferences spell each correspondence out inline.
 const CheckEntry kBasic[] = {
     {7, PREF_BSC_TUTORIAL_MSGS, 0, false},
     {8, PREF_BSC_AUTO_DESIGN_VEH, 0, false},
@@ -128,11 +127,11 @@ const CheckEntry kAdvanced[] = {
     {19, PREF_ADV_FAST_BATTLE_RESOLUTION, 2, false},
     {28, MPREF_ADV_QUICK_MOVE_VEH_ORDERS, 3, false},
     {20, MPREF_ADV_QUICK_MOVE_ALL_VEH, 3, false},
-    {21, MPREF_ADV_ZOOM_BASE_NO_RECENTER_MAP, 3, false},
-    {23, MPREF_ADV_RIGHT_CLICK_POPS_UP_MENU, 3, false},
+    {21, PREF_ADV_NO_CENTER_VEH_ORDERS, 2, false},
+    {23, MPREF_ADV_ZOOM_BASE_NO_RECENTER_MAP, 3, false},
     {24, MPREF_ADV_DETAIL_MAIN_MENUS, 3, false},
     {25, MPREF_ADV_DETAIL_RIGHT_CLICK_MENUS, 3, false},
-    {26, MPREF_AV_SLIDING_SCROLLBARS, 3, false},
+    {26, MPREF_ADV_RIGHT_CLICK_POPS_UP_MENU, 3, false},
 };
 const CheckEntry kAutomation[] = {
     {29, PREF_AUTO_AIR_VEH_RET_HOME_FUEL_RNG, 4, false},
@@ -149,28 +148,6 @@ const CheckEntry kAutomation[] = {
     {39, PREF_AUTO_DONT_END_MOVE_DIFF_TRIAD, 4, false},
     {40, PREF_AUTO_WAKE_VEH_TRANS_REACH_LAND, 4, false},
     {41, MPREF_AUTO_ALWAYS_INSPECT_MONOLITH, 5, false},
-};
-const CheckEntry kAudioVisual[] = {
-    {0x40, MPREF_AV_VOICEOVER_STOP_CLOSE_POPUP, 7, false},
-    {0x41, PREF_AV_SECRET_PROJECT_MOVIES, 6, false},
-    {0x42, PREF_AV_INTERLUDES_DISABLED, 6, true},
-    {0x47, MPREF_AV_MONUMENTS_DISABLED, 7, true},
-    {0x43, PREF_AV_MAP_ANIMATIONS, 6, false},
-    {0x44, PREF_AV_SLIDING_WINDOWS, 6, false},
-    {0x45, MPREF_AV_SLIDING_SCROLLBARS, 7, false},
-    {0x16, MPREF_AV_WHOLE_VEH_BLINKS, 7, false},
-};
-// get_preferences' pinned dispatch order differs from set_preferences and
-// from the UI row order: 43..45, 16 precede 47 there.
-const CheckEntry kAudioVisualRead[] = {
-    {0x40, MPREF_AV_VOICEOVER_STOP_CLOSE_POPUP, 7, false},
-    {0x41, PREF_AV_SECRET_PROJECT_MOVIES, 6, false},
-    {0x42, PREF_AV_INTERLUDES_DISABLED, 6, true},
-    {0x43, PREF_AV_MAP_ANIMATIONS, 6, false},
-    {0x44, PREF_AV_SLIDING_WINDOWS, 6, false},
-    {0x45, MPREF_AV_SLIDING_SCROLLBARS, 7, false},
-    {0x16, MPREF_AV_WHOLE_VEH_BLINKS, 7, false},
-    {0x47, MPREF_AV_MONUMENTS_DISABLED, 7, true},
 };
 const CheckEntry kMap[] = {
     {0x48, MPREF_MAP_SHOW_FOG_WAR, 9, false},
@@ -208,38 +185,6 @@ const CheckEntry kAudioDialog[] = {
     {0x47, 0, 10, false}, {0x43, 0, 10, false}, {0x44, 0, 10, false},
     {0x45, 0, 10, false}, {0x16, 0, 10, false},
 };
-
-uint32_t &pref_word(PrefWin *self, unsigned int group) {
-  switch (group) {
-    case 0: return self->prefsBasicPending_;
-    case 1: return self->morePrefsBasicPending_;
-    case 2: return self->prefsAdvPending_;
-    case 3: return self->morePrefsAdvPending_;
-    case 4: return self->prefsAutoPending_;
-    case 5: return self->morePrefsAutoPending_;
-    case 6: return self->prefsAVPending_;
-    case 7: return self->morePrefsAVPending_;
-    case 8: return self->prefsMapPending_;
-    default: return self->morePrefsMapPending_;
-  }
-}
-
-void read_controls(PrefWin *self, CheckBox &box, const CheckEntry *items,
-                   unsigned int count) {
-  for (unsigned int i = 0; i < count; ++i) {
-    const bool set = (pref_word(self, items[i].group) & items[i].bit) != 0;
-    box.set_state_id(items[i].id, (set != items[i].inverted) ? 1 : 0);
-  }
-}
-
-void write_controls(PrefWin *self, CheckBox &box, const CheckEntry *items,
-                    unsigned int count) {
-  for (unsigned int i = 0; i < count; ++i) {
-    const bool set = box.get_state_id(items[i].id) != 0;
-    if (set != items[i].inverted)
-      pref_word(self, items[i].group) |= items[i].bit;
-  }
-}
 
 void add_dialog_items(CheckBox &box, const CheckEntry *items,
                       unsigned int count, const int *label_offsets) {
@@ -703,71 +648,369 @@ void PrefWin::update_pref_buttons() {
 // RECOVERY_BINDING: v1 {"evidence": ["git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/00490350.cpp", "recovery/tasks/prefwin-owner-coverage-wave.json", "Original control parent 8578D8; ctor/destructor member order, 800-pixel branch, checkbox text-context and callback order independently reviewed."], "reason": "Recover the complete PrefWin ownership group through a genuine GraphicWin base and compiler-owned embedded control lifetimes; preserve seed identity, original spans and unresolved discoveries without granting byte claims."}
 // TRIED: declared each CheckBox* group pointer lazily, right before its first get_state_id() call (matching the original's `lea edi, [esi+OFFSET]` sitting immediately before that group's first push), instead of all six upfront. Moved divergence #1(sim0.98)->#63 on the frameless build (original prologue is `push esi; mov esi,ecx; push edi` with no `push ebp`, so that is the row that matters, not the framed one the ranking line shows). Not chased further given size (1962 bytes / ~71 mechanical get_state_id calls).
 void PrefWin::set_preferences() {
-  prefsBasicPending_ = morePrefsBasicPending_ = 0;
-  prefsAdvPending_ = morePrefsAdvPending_ = 0;
-  prefsAutoPending_ = morePrefsAutoPending_ = 0;
-  prefsAVPending_ = morePrefsAVPending_ = 0;
-  prefsMapPending_ = morePrefsMapPending_ = 0;
+  prefsBasicPending_ = 0;
+  morePrefsBasicPending_ = 0;
+  prefsAdvPending_ = 0;
+  morePrefsAdvPending_ = 0;
+  prefsAutoPending_ = 0;
+  morePrefsAutoPending_ = 0;
+  prefsAVPending_ = 0;
+  morePrefsAVPending_ = 0;
   warningsPending_ = 0;
-  write_controls(this, bscPrefCheckBox_, kBasic, sizeof(kBasic) / sizeof(kBasic[0]));
-  write_controls(this, advPrefCheckBox_, kAdvanced, sizeof(kAdvanced) / sizeof(kAdvanced[0]));
-  write_controls(this, autoPrefCheckBox_, kAutomation, sizeof(kAutomation) / sizeof(kAutomation[0]));
-  // The original probes these IDs even though init builds only the eight
-  // ordinary audio/visual rows.  CheckBox's missing-ID cursor therefore
-  // reads the one-past-end selected-position bit for each probe.
-  if (audioVisPrefCheckBox_.get_state_id(0x3D))
-    prefsAVPending_ |= PREF_AV_VOLUME_MUSIC_TOGGLE;
-  if (audioVisPrefCheckBox_.get_state_id(0x3E))
-    prefsAVPending_ |= PREF_AV_VOLUME_SFX_TOGGLE;
-  if (audioVisPrefCheckBox_.get_state_id(0x3F))
-    morePrefsAVPending_ |= MPREF_AV_VOICEOVER_TECH_FAC;
-  write_controls(this, audioVisPrefCheckBox_, kAudioVisual, sizeof(kAudioVisual) / sizeof(kAudioVisual[0]));
-  if (volumeVoiceToggle_.selected_state())
-    morePrefsAVPending_ |= MPREF_AV_VOICEOVER_TECH_FAC;
-  if (volumeSFXToggle_.selected_state())
-    prefsAVPending_ |= PREF_AV_VOLUME_SFX_TOGGLE;
-  if (volumeMusicToggle_.selected_state())
-    prefsAVPending_ |= PREF_AV_VOLUME_MUSIC_TOGGLE;
-  for (unsigned int warning_index = 0;
-       warning_index < sizeof(kWarnings) / sizeof(kWarnings[0]); ++warning_index)
-    if (warnPrefCheckBox_.get_state_id(kWarnings[warning_index].id))
-      warningsPending_ |= kWarnings[warning_index].bit;
-  if (warnPrefCheckBox_.get_state_id(0x35)) warningsPending_ |= 0x100;
-  for (unsigned int continue_index = 0;
-       continue_index < sizeof(kWarningContinue) / sizeof(kWarningContinue[0]); ++continue_index)
-    if (warnContPrefCheckBox_.get_state_id(kWarningContinue[continue_index].id))
-      warningsPending_ |= kWarningContinue[continue_index].bit;
-  write_controls(this, mapPrefCheckBox_, kMap, sizeof(kMap) / sizeof(kMap[0]));
+  prefsMapPending_ = 0;
+  morePrefsMapPending_ = 0;
+  if (bscPrefCheckBox_.get_state_id(7)) prefsBasicPending_ |= PREF_BSC_TUTORIAL_MSGS;
+  if (bscPrefCheckBox_.get_state_id(8)) prefsBasicPending_ |= PREF_BSC_AUTO_DESIGN_VEH;
+  if (bscPrefCheckBox_.get_state_id(9)) morePrefsBasicPending_ |= MPREF_BSC_AUTO_PRUNE_OBS_VEH;
+  if (bscPrefCheckBox_.get_state_id(10)) prefsBasicPending_ |= PREF_BSC_MOUSE_EDGE_SCROLL_VIEW;
+  if (bscPrefCheckBox_.get_state_id(11)) prefsBasicPending_ |= PREF_BSC_AUTOSAVE_EACH_TURN;
+  if (bscPrefCheckBox_.get_state_id(12)) prefsBasicPending_ |= PREF_BSC_PAUSE_END_TURN;
+  if (!bscPrefCheckBox_.get_state_id(13)) prefsBasicPending_ |= PREF_BSC_DONT_QUICK_MOVE_ENEMY_VEH;
+  if (!bscPrefCheckBox_.get_state_id(14)) prefsBasicPending_ |= PREF_BSC_DONT_QUICK_MOVE_ALLY_VEH;
+  if (!advPrefCheckBox_.get_state_id(15)) prefsAdvPending_ |= PREF_ADV_RADIO_BTN_NOT_SEL_SING_CLK;
+  if (advPrefCheckBox_.get_state_id(0x10)) morePrefsAdvPending_ |= MPREF_ADV_CLICK_VEH_CANCELS_ORDERS;
+  if (advPrefCheckBox_.get_state_id(0x11)) morePrefsAdvPending_ |= MPREF_ADV_CONFIRM_ODDS_BF_ATTACKING;
+  if (advPrefCheckBox_.get_state_id(0x12)) morePrefsAdvPending_ |= MPREF_ADV_PAUSE_AFTER_BATTLES;
+  if (advPrefCheckBox_.get_state_id(0x13)) prefsAdvPending_ |= PREF_ADV_FAST_BATTLE_RESOLUTION;
+  if (advPrefCheckBox_.get_state_id(0x1C)) morePrefsAdvPending_ |= MPREF_ADV_QUICK_MOVE_VEH_ORDERS;
+  if (advPrefCheckBox_.get_state_id(0x14)) morePrefsAdvPending_ |= MPREF_ADV_QUICK_MOVE_ALL_VEH;
+  if (advPrefCheckBox_.get_state_id(0x15)) prefsAdvPending_ |= PREF_ADV_NO_CENTER_VEH_ORDERS;
+  if (advPrefCheckBox_.get_state_id(0x17)) morePrefsAdvPending_ |= MPREF_ADV_ZOOM_BASE_NO_RECENTER_MAP;
+  if (advPrefCheckBox_.get_state_id(0x18)) morePrefsAdvPending_ |= MPREF_ADV_DETAIL_MAIN_MENUS;
+  if (advPrefCheckBox_.get_state_id(0x19)) morePrefsAdvPending_ |= MPREF_ADV_DETAIL_RIGHT_CLICK_MENUS;
+  if (advPrefCheckBox_.get_state_id(0x1A)) morePrefsAdvPending_ |= MPREF_ADV_RIGHT_CLICK_POPS_UP_MENU;
+  if (autoPrefCheckBox_.get_state_id(0x1D)) prefsAutoPending_ |= PREF_AUTO_AIR_VEH_RET_HOME_FUEL_RNG;
+  if (autoPrefCheckBox_.get_state_id(0x1E)) prefsAutoPending_ |= PREF_AUTO_FORMER_PLANT_FORESTS;
+  if (autoPrefCheckBox_.get_state_id(0x1F)) prefsAutoPending_ |= PREF_AUTO_FORMER_RAISE_LWR_TERRAIN;
+  if (autoPrefCheckBox_.get_state_id(0x20)) prefsAutoPending_ |= PREF_AUTO_FORMER_BUILD_ADV;
+  if (!autoPrefCheckBox_.get_state_id(0x2A)) morePrefsAutoPending_ |= MPREF_AUTO_FORMER_CANT_BUILD_ROADS;
+  if (autoPrefCheckBox_.get_state_id(0x21)) morePrefsAutoPending_ |= MPREF_AUTO_FORMER_REMOVE_FUNGUS;
+  if (autoPrefCheckBox_.get_state_id(0x22)) morePrefsAutoPending_ |= MPREF_AUTO_FORMER_BUILD_SENSORS;
+  if (autoPrefCheckBox_.get_state_id(0x23)) prefsAutoPending_ |= PREF_AUTO_END_MOVE_SPOT_VEH_PACT;
+  if (autoPrefCheckBox_.get_state_id(0x24)) prefsAutoPending_ |= PREF_AUTO_END_MOVE_SPOT_VEH_TREATY;
+  if (autoPrefCheckBox_.get_state_id(0x25)) prefsAutoPending_ |= PREF_AUTO_END_MOVE_SPOT_VEH_TRUCE;
+  if (autoPrefCheckBox_.get_state_id(0x26)) prefsAutoPending_ |= PREF_AUTO_END_MOVE_SPOT_VEH_WAR;
+  if (autoPrefCheckBox_.get_state_id(0x27)) prefsAutoPending_ |= PREF_AUTO_DONT_END_MOVE_DIFF_TRIAD;
+  if (autoPrefCheckBox_.get_state_id(0x28)) prefsAutoPending_ |= PREF_AUTO_WAKE_VEH_TRANS_REACH_LAND;
+  if (autoPrefCheckBox_.get_state_id(0x29)) morePrefsAutoPending_ |= MPREF_AUTO_ALWAYS_INSPECT_MONOLITH;
+  if (audioVisPrefCheckBox_.get_state_id(0x3D)) prefsAVPending_ |= PREF_AV_VOLUME_MUSIC_TOGGLE;
+  if (audioVisPrefCheckBox_.get_state_id(0x3E)) prefsAVPending_ |= PREF_AV_VOLUME_SFX_TOGGLE;
+  if (audioVisPrefCheckBox_.get_state_id(0x3F)) morePrefsAVPending_ |= MPREF_AV_VOLUME_VOICE_TOGGLE;
+  if (audioVisPrefCheckBox_.get_state_id(0x40)) morePrefsAVPending_ |= MPREF_AV_VOICEOVER_STOP_CLOSE_POPUP;
+  if (audioVisPrefCheckBox_.get_state_id(0x41)) prefsAVPending_ |= PREF_AV_SECRET_PROJECT_MOVIES;
+  if (!audioVisPrefCheckBox_.get_state_id(0x42)) prefsAVPending_ |= PREF_AV_INTERLUDES_DISABLED;
+  if (!audioVisPrefCheckBox_.get_state_id(0x47)) morePrefsAVPending_ |= MPREF_AV_MONUMENTS_DISABLED;
+  if (audioVisPrefCheckBox_.get_state_id(0x43)) prefsAVPending_ |= PREF_AV_MAP_ANIMATIONS;
+  if (audioVisPrefCheckBox_.get_state_id(0x44)) prefsAVPending_ |= PREF_AV_SLIDING_WINDOWS;
+  if (audioVisPrefCheckBox_.get_state_id(0x45)) morePrefsAVPending_ |= MPREF_AV_SLIDING_SCROLLBARS;
+  if (audioVisPrefCheckBox_.get_state_id(0x16)) morePrefsAVPending_ |= MPREF_AV_WHOLE_VEH_BLINKS;
+  if (volumeVoiceToggle_.selected_state()) morePrefsAVPending_ |= MPREF_AV_VOLUME_VOICE_TOGGLE;
+  if (volumeSFXToggle_.selected_state()) prefsAVPending_ |= PREF_AV_VOLUME_SFX_TOGGLE;
+  if (volumeMusicToggle_.selected_state()) prefsAVPending_ |= PREF_AV_VOLUME_MUSIC_TOGGLE;
+  if (warnPrefCheckBox_.get_state_id(0x2B)) warningsPending_ |= WARN_STOP_NEW_FAC_BUILT;
+  if (warnPrefCheckBox_.get_state_id(0x2C)) warningsPending_ |= WARN_STOP_NON_COMBAT_VEH_BUILT;
+  if (warnPrefCheckBox_.get_state_id(0x2D)) warningsPending_ |= WARN_STOP_COMBAT_VEH_BUILT;
+  if (warnPrefCheckBox_.get_state_id(0x2E)) warningsPending_ |= WARN_STOP_PROTOTYPE_COMPLETE;
+  if (warnPrefCheckBox_.get_state_id(0x2F)) warningsPending_ |= WARN_STOP_BUILT_VIA_GOV_QUEUE;
+  if (warnPrefCheckBox_.get_state_id(0x30)) warningsPending_ |= WARN_STOP_DRONE_RIOTS;
+  if (warnPrefCheckBox_.get_state_id(0x31)) warningsPending_ |= WARN_STOP_DRONE_RIOTS_END;
+  if (warnPrefCheckBox_.get_state_id(0x32)) warningsPending_ |= WARN_STOP_GOLDEN_AGE;
+  if (warnPrefCheckBox_.get_state_id(0x33)) warningsPending_ |= WARN_STOP_GOLDEN_AGE_END;
+  if (warnPrefCheckBox_.get_state_id(0x34)) warningsPending_ |= WARN_STOP_NUTRIENT_SHORTAGE;
+  if (warnPrefCheckBox_.get_state_id(0x35)) warningsPending_ |= WARN_STOP_UNK_100;
+  if (warnPrefCheckBox_.get_state_id(0x36)) warningsPending_ |= WARN_STOP_BUILD_OUT_OF_DATE;
+  if (warnPrefCheckBox_.get_state_id(0x37)) warningsPending_ |= WARN_STOP_POP_LIMIT_REACHED;
+  if (warnPrefCheckBox_.get_state_id(0x38)) warningsPending_ |= WARN_STOP_DELAY_IN_TRANSCEND;
+  if (warnContPrefCheckBox_.get_state_id(0x39)) warningsPending_ |= WARN_STOP_STARVATION;
+  if (warnContPrefCheckBox_.get_state_id(0x3A)) warningsPending_ |= WARN_STOP_MINERAL_SHORTAGE;
+  if (warnContPrefCheckBox_.get_state_id(0x3B)) warningsPending_ |= WARN_STOP_ENERGY_SHORTAGE;
+  if (warnContPrefCheckBox_.get_state_id(0x3C)) warningsPending_ |= WARN_STOP_RANDOM_EVENT;
+  if (mapPrefCheckBox_.get_state_id(0x48)) morePrefsMapPending_ |= MPREF_MAP_SHOW_FOG_WAR;
+  if (mapPrefCheckBox_.get_state_id(0x49)) prefsMapPending_ |= PREF_MAP_SHOW_GRID;
+  if (mapPrefCheckBox_.get_state_id(0x4A)) prefsMapPending_ |= PREF_MAP_SHOW_BASE_GRID;
+  if (mapPrefCheckBox_.get_state_id(0x4B)) morePrefsMapPending_ |= MPREF_MAP_SHOW_BASE_NAMES;
+  if (mapPrefCheckBox_.get_state_id(0x4C)) morePrefsMapPending_ |= MPREF_MAP_SHOW_PROD_WITH_BASE_NAMES;
+  if (mapPrefCheckBox_.get_state_id(0x4D)) morePrefsMapPending_ |= MPREF_MAP_SHOW_FLAT_TERRAIN;
+  if (mapPrefCheckBox_.get_state_id(0x4E)) morePrefsMapPending_ |= MPREF_MAP_SHOW_GRID_OCEAN_SQ;
+  if (!mapPrefCheckBox_.get_state_id(0x4F)) morePrefsMapPending_ |= MPREF_MAP_HIDE_ACTIVE_VEH_GOTO_PATH;
 }
 
 // ORIGINAL: 0x00490B00 ?get_preferences@PrefWin@@QAEXXZ 0x00490B00-0x004911FD FILE
 // RECOVERY_BINDING: v1 {"evidence": ["git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/00490b00.cpp", "recovery/tasks/prefwin-owner-coverage-wave.json", "Original control parent 8578D8; ctor/destructor member order, 800-pixel branch, checkbox text-context and callback order independently reviewed."], "reason": "Recover the complete PrefWin ownership group through a genuine GraphicWin base and compiler-owned embedded control lifetimes; preserve seed identity, original spans and unresolved discoveries without granting byte claims."}
 // TRIED: 7 do/while loops over switch(i){id,flag} pairs calling CheckBox::set_state_id, matching Ghidra's structure; the three byte-indexed jump-table dispatches (0x490DCE/0x490F03, whose table bytes are not in the brief) were simplified to a uniform field test per loop, dropping the change_volume_button_text special cases - MISMATCH #2 (prologue) not chased further.
 void PrefWin::get_preferences() {
-  read_controls(this, bscPrefCheckBox_, kBasic, sizeof(kBasic) / sizeof(kBasic[0]));
-  read_controls(this, advPrefCheckBox_, kAdvanced, sizeof(kAdvanced) / sizeof(kAdvanced[0]));
-  read_controls(this, autoPrefCheckBox_, kAutomation, sizeof(kAutomation) / sizeof(kAutomation[0]));
-  // The original reads these three volume controls separately; they are
-  // not items in the eight-entry audio/visual CheckBox.
-  volumeVoiceToggle_.set_selected_state(
-      (morePrefsAVPending_ & MPREF_AV_VOICEOVER_TECH_FAC) != 0);
-  change_volume_button_text(0x57);
-  volumeSFXToggle_.set_selected_state(
-      (prefsAVPending_ & PREF_AV_VOLUME_SFX_TOGGLE) != 0);
-  change_volume_button_text(0x56);
-  volumeMusicToggle_.set_selected_state(
-      (prefsAVPending_ & PREF_AV_VOLUME_MUSIC_TOGGLE) != 0);
-  change_volume_button_text(0x58);
-  read_controls(this, audioVisPrefCheckBox_, kAudioVisualRead, sizeof(kAudioVisualRead) / sizeof(kAudioVisualRead[0]));
-  for (unsigned int warning_index = 0;
-       warning_index < sizeof(kWarnings) / sizeof(kWarnings[0]); ++warning_index)
-    warnPrefCheckBox_.set_state_id(kWarnings[warning_index].id,
-        (warningsPending_ & kWarnings[warning_index].bit) != 0);
-  for (unsigned int continue_index = 0;
-       continue_index < sizeof(kWarningContinue) / sizeof(kWarningContinue[0]); ++continue_index)
-    warnContPrefCheckBox_.set_state_id(kWarningContinue[continue_index].id,
-        (warningsPending_ & kWarningContinue[continue_index].bit) != 0);
-  read_controls(this, mapPrefCheckBox_, kMap, sizeof(kMap) / sizeof(kMap[0]));
+  int id = 0;
+  uint32_t bit = 0;
+  int i;
+  for (i = 0; i < 8; i++) {
+    uint32_t prefs = prefsBasicPending_;
+    uint32_t more = morePrefsBasicPending_;
+    switch (i) {
+      case 0: id = 7; bit = PREF_BSC_TUTORIAL_MSGS; break;
+      case 1: id = 8; bit = PREF_BSC_AUTO_DESIGN_VEH; break;
+      case 2: id = 10; bit = PREF_BSC_MOUSE_EDGE_SCROLL_VIEW; break;
+      case 3: id = 11; bit = PREF_BSC_AUTOSAVE_EACH_TURN; break;
+      case 4: id = 12; bit = PREF_BSC_PAUSE_END_TURN; break;
+      case 5: id = 13; bit = PREF_BSC_DONT_QUICK_MOVE_ENEMY_VEH; break;
+      case 6: id = 14; bit = PREF_BSC_DONT_QUICK_MOVE_ALLY_VEH; break;
+      case 7: id = 9; bit = MPREF_BSC_AUTO_PRUNE_OBS_VEH; break;
+    }
+    switch (id) {
+      case 9:
+        if (more & bit) {
+          bscPrefCheckBox_.set_state_id(id, 1);
+        } else {
+          bscPrefCheckBox_.set_state_id(id, 0);
+        }
+        break;
+      case 13:
+      case 14:
+        if (prefs & bit) {
+          bscPrefCheckBox_.set_state_id(id, 0);
+        } else {
+          bscPrefCheckBox_.set_state_id(id, 1);
+        }
+        break;
+      default:
+        if (prefs & bit) {
+          bscPrefCheckBox_.set_state_id(id, 1);
+        } else {
+          bscPrefCheckBox_.set_state_id(id, 0);
+        }
+        break;
+    }
+  }
+  for (i = 0; i < 12; i++) {
+    uint32_t prefs = prefsAdvPending_;
+    uint32_t more = morePrefsAdvPending_;
+    switch (i) {
+      case 0: id = 15; bit = PREF_ADV_RADIO_BTN_NOT_SEL_SING_CLK; break;
+      case 1: id = 0x10; bit = MPREF_ADV_CLICK_VEH_CANCELS_ORDERS; break;
+      case 2: id = 0x11; bit = MPREF_ADV_CONFIRM_ODDS_BF_ATTACKING; break;
+      case 3: id = 0x12; bit = MPREF_ADV_PAUSE_AFTER_BATTLES; break;
+      case 4: id = 0x13; bit = PREF_ADV_FAST_BATTLE_RESOLUTION; break;
+      case 5: id = 0x1C; bit = MPREF_ADV_QUICK_MOVE_VEH_ORDERS; break;
+      case 6: id = 0x14; bit = MPREF_ADV_QUICK_MOVE_ALL_VEH; break;
+      case 7: id = 0x15; bit = PREF_ADV_NO_CENTER_VEH_ORDERS; break;
+      case 8: id = 0x18; bit = MPREF_ADV_DETAIL_MAIN_MENUS; break;
+      case 9: id = 0x17; bit = MPREF_ADV_ZOOM_BASE_NO_RECENTER_MAP; break;
+      case 10: id = 0x19; bit = MPREF_ADV_DETAIL_RIGHT_CLICK_MENUS; break;
+      case 11: id = 0x1A; bit = MPREF_ADV_RIGHT_CLICK_POPS_UP_MENU; break;
+    }
+    switch (id) {
+      default:
+        if (more & bit) {
+          advPrefCheckBox_.set_state_id(id, 1);
+        } else {
+          advPrefCheckBox_.set_state_id(id, 0);
+        }
+        break;
+      case 15:
+      case 0x13:
+      case 0x15:
+        if (prefs & bit) {
+          advPrefCheckBox_.set_state_id(id, 1);
+        } else {
+          advPrefCheckBox_.set_state_id(id, 0);
+        }
+        if (id == 15) {
+          advPrefCheckBox_.flip_state_id(id);
+        }
+        break;
+    }
+  }
+  for (i = 0; i < 14; i++) {
+    uint32_t prefs = prefsAutoPending_;
+    uint32_t more = morePrefsAutoPending_;
+    switch (i) {
+      case 0: id = 0x1D; bit = PREF_AUTO_AIR_VEH_RET_HOME_FUEL_RNG; break;
+      case 1: id = 0x1E; bit = PREF_AUTO_FORMER_PLANT_FORESTS; break;
+      case 2: id = 0x1F; bit = PREF_AUTO_FORMER_RAISE_LWR_TERRAIN; break;
+      case 3: id = 0x20; bit = PREF_AUTO_FORMER_BUILD_ADV; break;
+      case 4: id = 0x21; bit = MPREF_AUTO_FORMER_REMOVE_FUNGUS; break;
+      case 5: id = 0x22; bit = MPREF_AUTO_FORMER_BUILD_SENSORS; break;
+      case 6: id = 0x23; bit = PREF_AUTO_END_MOVE_SPOT_VEH_PACT; break;
+      case 7: id = 0x24; bit = PREF_AUTO_END_MOVE_SPOT_VEH_TREATY; break;
+      case 8: id = 0x25; bit = PREF_AUTO_END_MOVE_SPOT_VEH_TRUCE; break;
+      case 9: id = 0x26; bit = PREF_AUTO_END_MOVE_SPOT_VEH_WAR; break;
+      case 10: id = 0x27; bit = PREF_AUTO_DONT_END_MOVE_DIFF_TRIAD; break;
+      case 11: id = 0x28; bit = PREF_AUTO_WAKE_VEH_TRANS_REACH_LAND; break;
+      case 12: id = 0x29; bit = MPREF_AUTO_ALWAYS_INSPECT_MONOLITH; break;
+      case 13: id = 0x2A; bit = MPREF_AUTO_FORMER_CANT_BUILD_ROADS; break;
+    }
+    switch (id) {
+      case 0x21:
+      case 0x22:
+      case 0x29:
+        if (more & bit) {
+          autoPrefCheckBox_.set_state_id(id, 1);
+        } else {
+          autoPrefCheckBox_.set_state_id(id, 0);
+        }
+        break;
+      case 0x2A:
+        if (more & bit) {
+          autoPrefCheckBox_.set_state_id(id, 0);
+        } else {
+          autoPrefCheckBox_.set_state_id(id, 1);
+        }
+        break;
+      default:
+        if (prefs & bit) {
+          autoPrefCheckBox_.set_state_id(id, 1);
+        } else {
+          autoPrefCheckBox_.set_state_id(id, 0);
+        }
+        break;
+    }
+  }
+  for (i = 0; i < 11; i++) {
+    uint32_t prefs = prefsAVPending_;
+    switch (i) {
+      case 0: id = 0x3D; bit = PREF_AV_VOLUME_MUSIC_TOGGLE; break;
+      case 1: id = 0x3E; bit = PREF_AV_VOLUME_SFX_TOGGLE; break;
+      case 2: id = 0x3F; bit = MPREF_AV_VOLUME_VOICE_TOGGLE; break;
+      case 3: id = 0x40; bit = MPREF_AV_VOICEOVER_STOP_CLOSE_POPUP; break;
+      case 4: id = 0x41; bit = PREF_AV_SECRET_PROJECT_MOVIES; break;
+      case 5: id = 0x42; bit = PREF_AV_INTERLUDES_DISABLED; break;
+      case 6: id = 0x43; bit = PREF_AV_MAP_ANIMATIONS; break;
+      case 7: id = 0x44; bit = PREF_AV_SLIDING_WINDOWS; break;
+      case 8: id = 0x45; bit = MPREF_AV_SLIDING_SCROLLBARS; break;
+      case 9: id = 0x16; bit = MPREF_AV_WHOLE_VEH_BLINKS; break;
+      case 10: id = 0x47; bit = MPREF_AV_MONUMENTS_DISABLED; break;
+    }
+    switch (id) {
+      case 0x3F:
+        if (morePrefsAVPending_ & bit) {
+          volumeVoiceToggle_.set_selected_state(1);
+        } else {
+          volumeVoiceToggle_.set_selected_state(0);
+        }
+        change_volume_button_text(0x57);
+        break;
+      case 0x3E:
+        if (prefs & bit) {
+          volumeSFXToggle_.set_selected_state(1);
+        } else {
+          volumeSFXToggle_.set_selected_state(0);
+        }
+        change_volume_button_text(0x56);
+        break;
+      case 0x3D:
+        if (prefs & bit) {
+          volumeMusicToggle_.set_selected_state(1);
+        } else {
+          volumeMusicToggle_.set_selected_state(0);
+        }
+        change_volume_button_text(0x58);
+        break;
+      case 0x42:
+        if (prefs & bit) {
+          audioVisPrefCheckBox_.set_state_id(id, 0);
+        } else {
+          audioVisPrefCheckBox_.set_state_id(id, 1);
+        }
+        break;
+      case 0x47:
+        if (morePrefsAVPending_ & bit) {
+          audioVisPrefCheckBox_.set_state_id(id, 0);
+        } else {
+          audioVisPrefCheckBox_.set_state_id(id, 1);
+        }
+        break;
+      case 0x16:
+      case 0x40:
+      case 0x45:
+        if (morePrefsAVPending_ & bit) {
+          audioVisPrefCheckBox_.set_state_id(id, 1);
+        } else {
+          audioVisPrefCheckBox_.set_state_id(id, 0);
+        }
+        break;
+      default:
+        if (prefs & bit) {
+          audioVisPrefCheckBox_.set_state_id(id, 1);
+        } else {
+          audioVisPrefCheckBox_.set_state_id(id, 0);
+        }
+        break;
+    }
+  }
+  for (i = 0; i < 13; i++) {
+    uint32_t prefs = warningsPending_;
+    switch (i) {
+      case 0: id = 0x2B; bit = WARN_STOP_NEW_FAC_BUILT; break;
+      case 1: id = 0x2C; bit = WARN_STOP_NON_COMBAT_VEH_BUILT; break;
+      case 2: id = 0x2D; bit = WARN_STOP_COMBAT_VEH_BUILT; break;
+      case 3: id = 0x2E; bit = WARN_STOP_PROTOTYPE_COMPLETE; break;
+      case 4: id = 0x2F; bit = WARN_STOP_BUILT_VIA_GOV_QUEUE; break;
+      case 5: id = 0x30; bit = WARN_STOP_DRONE_RIOTS; break;
+      case 6: id = 0x31; bit = WARN_STOP_DRONE_RIOTS_END; break;
+      case 7: id = 0x32; bit = WARN_STOP_GOLDEN_AGE; break;
+      case 8: id = 0x33; bit = WARN_STOP_GOLDEN_AGE_END; break;
+      case 9: id = 0x34; bit = WARN_STOP_NUTRIENT_SHORTAGE; break;
+      case 10: id = 0x36; bit = WARN_STOP_BUILD_OUT_OF_DATE; break;
+      case 11: id = 0x37; bit = WARN_STOP_POP_LIMIT_REACHED; break;
+      case 12: id = 0x38; bit = WARN_STOP_DELAY_IN_TRANSCEND; break;
+    }
+    if (prefs & bit) {
+      warnPrefCheckBox_.set_state_id(id, 1);
+    } else {
+      warnPrefCheckBox_.set_state_id(id, 0);
+    }
+  }
+  for (i = 0; i < 4; i++) {
+    // The pinned table pairs index 0 with 0x3A and index 3 with 0x39.
+    switch (i) {
+      case 0: id = 0x3A; bit = WARN_STOP_MINERAL_SHORTAGE; break;
+      case 1: id = 0x3B; bit = WARN_STOP_ENERGY_SHORTAGE; break;
+      case 2: id = 0x3C; bit = WARN_STOP_RANDOM_EVENT; break;
+      case 3: id = 0x39; bit = WARN_STOP_STARVATION; break;
+    }
+    if (warningsPending_ & bit) {
+      warnContPrefCheckBox_.set_state_id(id, 1);
+    } else {
+      warnContPrefCheckBox_.set_state_id(id, 0);
+    }
+  }
+  for (i = 0; i < 8; i++) {
+    uint32_t prefs = prefsMapPending_;
+    uint32_t more = morePrefsMapPending_;
+    switch (i) {
+      case 0: id = 0x48; bit = MPREF_MAP_SHOW_FOG_WAR; break;
+      case 1: id = 0x49; bit = PREF_MAP_SHOW_GRID; break;
+      case 2: id = 0x4A; bit = PREF_MAP_SHOW_BASE_GRID; break;
+      case 3: id = 0x4B; bit = MPREF_MAP_SHOW_BASE_NAMES; break;
+      case 4: id = 0x4C; bit = MPREF_MAP_SHOW_PROD_WITH_BASE_NAMES; break;
+      case 5: id = 0x4D; bit = MPREF_MAP_SHOW_FLAT_TERRAIN; break;
+      case 6: id = 0x4E; bit = MPREF_MAP_SHOW_GRID_OCEAN_SQ; break;
+      case 7: id = 0x4F; bit = MPREF_MAP_HIDE_ACTIVE_VEH_GOTO_PATH; break;
+    }
+    switch (id) {
+      case 0x49:
+      case 0x4A:
+        if (prefs & bit) {
+          mapPrefCheckBox_.set_state_id(id, 1);
+        } else {
+          mapPrefCheckBox_.set_state_id(id, 0);
+        }
+        break;
+      case 0x4F:
+        if (more & bit) {
+          mapPrefCheckBox_.set_state_id(id, 0);
+        } else {
+          mapPrefCheckBox_.set_state_id(id, 1);
+        }
+        break;
+      default:
+        if (more & bit) {
+          mapPrefCheckBox_.set_state_id(id, 1);
+        } else {
+          mapPrefCheckBox_.set_state_id(id, 0);
+        }
+        break;
+    }
+  }
 }
 
 // Superseded seed deleted; seed paths below are historical Git provenance.

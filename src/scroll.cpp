@@ -467,14 +467,17 @@ int Scroll::init(int x, int y, int width, int height, Win *parent,
     field_A18_ = static_cast<uint32_t>(setting);
     range_minimum_ = 0;
 
-    const bool horizontal = width > height;
-    if (horizontal) {
+    Sprite **first_icons;
+    Sprite **second_icons;
+    if (width > height) {
         bar_thickness_ = height;
         make_rect(&thumb_rect_, 0, 0, height, height);
         if (border_color_ != -1) {
             expand_rect(&thumb_rect_, -1, -1);
         }
         range_maximum_ = width - 2 * height;
+        first_icons = sprite_left_;
+        second_icons = sprite_right_;
     } else {
         bar_thickness_ = width;
         make_rect(&thumb_rect_, 0, 0, width, width);
@@ -482,32 +485,39 @@ int Scroll::init(int x, int y, int width, int height, Win *parent,
             expand_rect(&thumb_rect_, -1, -1);
         }
         range_maximum_ = height - 2 * width;
+        first_icons = sprite_up_;
+        second_icons = sprite_down_;
     }
 
-    int flags = (field_A14_ & 1U) != 0U ? 0x80000 : 0;
-    flags |= ScrollNonClientInit != 0 ? 0x9020 : 0x1020;
-    int result = GraphicWin::init(x, y, width, height, nullptr, flags,
+    int flags = 0;
+    if (field_A14_ & 1U) {
+        flags = 0x80000;
+    }
+    int result;
+    if (ScrollNonClientInit != 0) {
+        result = GraphicWin::init(x, y, width, height, nullptr, flags | 0x9020,
                                   parent, nullptr, nullptr);
+    } else {
+        result = GraphicWin::init(x, y, width, height, nullptr, flags | 0x1020,
+                                  parent, nullptr, nullptr);
+    }
     if (result != 0) {
         return result;
     }
 
     if ((field_A14_ & 2U) == 0U) {
-        const int inset = border_color_ != -1 ? 1 : 0;
-        const int button_size = bar_thickness_ - 2 * inset;
-        result = flat_button_left_.init(nullptr, 1, inset, inset,
-                                        button_size, button_size, this, 0);
+        if (border_color_ != -1) {
+            result = flat_button_left_.init(nullptr, 1, 1, 1, bar_thickness_ - 2,
+                                            bar_thickness_ - 2, this, 0);
+        } else {
+            result = flat_button_left_.init(nullptr, 1, 0, 0, bar_thickness_,
+                                            bar_thickness_, this, 0);
+        }
         if (result != 0) {
             return result;
         }
-
-        if (horizontal) {
-            flat_button_left_.set_scroll_icons(sprite_left_[0], sprite_left_[1],
-                                                sprite_left_[2]);
-        } else {
-            flat_button_left_.set_scroll_icons(sprite_up_[0], sprite_up_[1],
-                                                sprite_up_[2]);
-        }
+        flat_button_left_.set_scroll_icons(first_icons[0], first_icons[1],
+                                           first_icons[2]);
         flat_button_left_.color_ = color_;
         flat_button_left_.bevel_thickness_ = bevel_thickness_;
         flat_button_left_.bevel_upper_ = bevel_upper_;
@@ -516,25 +526,24 @@ int Scroll::init(int x, int y, int width, int height, Win *parent,
         flat_button_left_.field_A44_ = 0x32;
         flat_button_left_.redraw();
 
-        const int second_x = horizontal
-                                 ? dib_.bmiHeader.biWidth - bar_thickness_ + inset
-                                 : inset;
-        const int second_y = horizontal
-                                 ? inset
-                                 : -dib_.bmiHeader.biHeight - bar_thickness_ + inset;
-        result = flat_button_right_.init(nullptr, 2, second_x, second_y,
-                                         button_size, button_size, this, 0);
+        if (border_color_ == -1) {
+            result = flat_button_right_.init(
+                nullptr, 2,
+                width > height ? dib_.bmiHeader.biWidth - bar_thickness_ : 0,
+                width > height ? 0 : -(dib_.bmiHeader.biHeight + bar_thickness_),
+                bar_thickness_, bar_thickness_, this, 0);
+        } else {
+            result = flat_button_right_.init(
+                nullptr, 2,
+                width > height ? dib_.bmiHeader.biWidth - bar_thickness_ + 1 : 1,
+                width > height ? 1 : 1 - dib_.bmiHeader.biHeight - bar_thickness_,
+                bar_thickness_ - 2, bar_thickness_ - 2, this, 0);
+        }
         if (result != 0) {
             return result;
         }
-
-        if (horizontal) {
-            flat_button_right_.set_scroll_icons(sprite_right_[0], sprite_right_[1],
-                                                 sprite_right_[2]);
-        } else {
-            flat_button_right_.set_scroll_icons(sprite_down_[0], sprite_down_[1],
-                                                 sprite_down_[2]);
-        }
+        flat_button_right_.set_scroll_icons(second_icons[0], second_icons[1],
+                                            second_icons[2]);
         flat_button_right_.color_ = color_;
         flat_button_right_.bevel_thickness_ = bevel_thickness_;
         flat_button_right_.bevel_upper_ = bevel_upper_;
