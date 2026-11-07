@@ -805,8 +805,7 @@ void Console::corner_the_market() { // 0x004E2000
     int hq_base_id = -1;
     for (int base_id = 0; base_id < GameDataStateStorage.fields_.base_current_count_; ++base_id) {
         if (Bases[base_id].faction_id_current == faction_id) {
-            const int built = has_fac(FAC_HEADQUARTERS, base_id, 0);
-            if (built) {
+            if (has_fac(FAC_HEADQUARTERS, base_id, 0)) {
                 hq_base_id = base_id;
                 break;
             }
@@ -820,7 +819,7 @@ void Console::corner_the_market() { // 0x004E2000
     const int amount = corner_market(faction_id);
     parse_num(0, amount);
     // Unsigned sum straight into the call: the image adds into ECX.
-    parse_num(1, game_year(Rules.turns_corner_gbl_energy_mrkt + GameDataStateStorage.fields_.turn_current_num_));
+    parse_num(1, game_year(GameDataStateStorage.fields_.turn_current_num_ + Rules.turns_corner_gbl_energy_mrkt));
 
     if (PlayersData[faction_id].corner_market_turn > GameDataStateStorage.fields_.turn_current_num_) {
         parse_num(0, static_cast<int>(game_year(PlayersData[faction_id].corner_market_turn)));
@@ -842,7 +841,7 @@ void Console::corner_the_market() { // 0x004E2000
     }
 
     PlayersData[faction_id].corner_market_turn =
-        GameDataStateStorage.fields_.turn_current_num_ + static_cast<int>(Rules.turns_corner_gbl_energy_mrkt);
+        static_cast<int>(Rules.turns_corner_gbl_energy_mrkt) + GameDataStateStorage.fields_.turn_current_num_;
     PlayersData[faction_id].corner_market_active = amount;
     PlayersData[faction_id].energy_reserves -= amount;
     synch_leader(faction_id);
@@ -1113,7 +1112,7 @@ void Console::automate(int veh_id, int order) {
             return;
         }
         if (order == 2) {
-            if (!has_tech(Terraforming[TERRA_FARM].prerequisite_tech[0],
+            if (!has_tech(Terraforming[TERRA_MAGTUBE].prerequisite_tech[0],
                           Vehs[veh_id].faction_id)) {
                 return;
             }
@@ -2423,6 +2422,32 @@ void Console::editor_set_brush() {
     }
 }
 
+// The faction picker list shared by the EDITORWHO popups. These small
+// shared helpers also reproduce the original's /Ob2 inline budget, which
+// sets each Popup teardown's inline depth.
+static inline void popup_faction_items(Popup &popup, int first_faction) {
+    for (int faction = first_faction; faction < MaxPlayerNum; ++faction) {
+        parse_set(Players[faction].noun_gender, Players[faction].is_noun_plural);
+        popup.dialogs().item(Players[faction].noun_faction, faction);
+    }
+}
+
+// Sets or clears one popup check-state bit; shared by the editor dialogs.
+static inline void popup_check(unsigned int flags, unsigned int mask, int bit) {
+    if (flags & mask) {
+        PopupWriteCheckState |= bit;
+    } else {
+        PopupWriteCheckState &= ~bit;
+    }
+}
+
+// Copies one accepted check-state bit back into a rules/state word.
+static inline void popup_accept(unsigned int accepted, unsigned int bit, uint32_t &field, uint32_t flag) {
+    if (accepted & bit) {
+        field |= flag;
+    }
+}
+
 // 0x004D9AD0 ?editor_who@Console@@QAEHHH@Z - which faction/personality the
 // scenario editor is working on. The catalogue, the partition and
 // editor_energy's own call list all name this address (span
@@ -2440,12 +2465,7 @@ int Console::editor_who(int default_faction, int first_faction) {
     Popup popup;
     PopupModalState = 6;
     popup.start(PopupStartCaption, ConsoleStrEditorWhoListTitle, -1, 0, 0x40, nullptr);
-
-    for (; first_faction < MaxPlayerNum; ++first_faction) {
-        parse_set(Players[first_faction].noun_gender,
-                  Players[first_faction].is_noun_plural);
-        popup.dialogs().item(Players[first_faction].noun_faction, first_faction);
-    }
+    popup_faction_items(popup, first_faction);
     if (default_faction >= 0) {
         popup.set_value(default_faction);
     }
@@ -2830,11 +2850,7 @@ void Console::editor_reload() {
     Popup popup;
     PopupModalState = 6;
     popup.start(PopupStartCaption, "EDITORWHO", -1, nullptr, 0x40, nullptr);
-    for (int faction_entry = 1; faction_entry < MaxPlayerNum; ++faction_entry) {
-        parse_set(Players[faction_entry].noun_gender,
-                  Players[faction_entry].is_noun_plural);
-        popup.dialogs().item(Players[faction_entry].noun_faction, faction_entry);
-    }
+    popup_faction_items(popup, 1);
     const int faction = popup.exec(0, nullptr);
     PopupModalState = 0;
     if (faction < 0) {
@@ -2857,11 +2873,7 @@ void Console::editor_eliminate() {
     auto_undo();
     PopupModalState = 6;
     popup.start(PopupStartCaption, "EDITORWHO", -1, nullptr, 0x40, nullptr);
-    for (int faction_entry = 1; faction_entry < MaxPlayerNum; ++faction_entry) {
-        parse_set(Players[faction_entry].noun_gender,
-                  Players[faction_entry].is_noun_plural);
-        popup.dialogs().item(Players[faction_entry].noun_faction, faction_entry);
-    }
+    popup_faction_items(popup, 1);
     const int faction = popup.exec(0, nullptr);
     PopupModalState = 0;
     if (faction < 0) {
@@ -2919,104 +2931,43 @@ void Console::editor_terrain() {
 void Console::editor_scen_rules() {
     Popup popup;
     auto_undo();
-    if (GameDataStateStorage.fields_.game_rules_ & 0x200000u) {
-        PopupWriteCheckState |= 0x1;
-    } else {
-        PopupWriteCheckState &= ~0x1;
-    }
-    if (GameDataStateStorage.fields_.game_rules_ & 0x400000u) {
-        PopupWriteCheckState |= 0x2;
-    } else {
-        PopupWriteCheckState &= ~0x2;
-    }
-    if (GameDataStateStorage.fields_.game_rules_ & 0x800000u) {
-        PopupWriteCheckState |= 0x4;
-    } else {
-        PopupWriteCheckState &= ~0x4;
-    }
-    if (GameDataStateStorage.fields_.game_rules_ & 0x4000000u) {
-        PopupWriteCheckState |= 0x8;
-    } else {
-        PopupWriteCheckState &= ~0x8;
-    }
-    if (GameDataStateStorage.fields_.game_rules_ & 0x2000000u) {
-        PopupWriteCheckState |= 0x10;
-    } else {
-        PopupWriteCheckState &= ~0x10;
-    }
-    if (GameDataStateStorage.fields_.game_rules_ & 0x80000000u) {
-        PopupWriteCheckState |= 0x20;
-    } else {
-        PopupWriteCheckState &= ~0x20;
-    }
-    if (GameDataStateStorage.fields_.game_rules_ & 0x40000u) {
-        PopupWriteCheckState |= 0x40;
-    } else {
-        PopupWriteCheckState &= ~0x40;
-    }
-    if (GameDataStateStorage.fields_.game_rules_ & 0x20000u) {
-        PopupWriteCheckState |= 0x80;
-    } else {
-        PopupWriteCheckState &= ~0x80;
-    }
-    if (GameDataStateStorage.fields_.game_rules_ & 0x10000u) {
-        PopupWriteCheckState |= 0x100;
-    } else {
-        PopupWriteCheckState &= ~0x100;
-    }
-    if (GameDataStateStorage.fields_.net_turn_flags_ & 0x1u) {
-        PopupWriteCheckState |= 0x200;
-    } else {
-        PopupWriteCheckState &= ~0x200;
-    }
-    if (GameDataStateStorage.fields_.net_turn_flags_ & 0x2u) {
-        PopupWriteCheckState |= 0x400;
-    } else {
-        PopupWriteCheckState &= ~0x400;
-    }
-    if (GameDataStateStorage.fields_.game_rules_ & 0x1000000u) {
-        PopupWriteCheckState |= 0x800;
-    } else {
-        PopupWriteCheckState &= ~0x800;
-    }
-    if (GameDataStateStorage.fields_.game_rules_ & 0x100000u) {
-        PopupWriteCheckState |= 0x1000;
-    } else {
-        PopupWriteCheckState &= ~0x1000;
-    }
-    if (GameDataStateStorage.fields_.net_turn_flags_ & 0x4u) {
-        PopupWriteCheckState |= 0x2000;
-    } else {
-        PopupWriteCheckState &= ~0x2000;
-    }
-    if (GameDataStateStorage.fields_.net_turn_flags_ & 0x8u) {
-        PopupWriteCheckState |= 0x4000;
-    } else {
-        PopupWriteCheckState &= ~0x4000;
-    }
+    popup_check(GameDataStateStorage.fields_.game_rules_, 0x200000u, 0x1);
+    popup_check(GameDataStateStorage.fields_.game_rules_, 0x400000u, 0x2);
+    popup_check(GameDataStateStorage.fields_.game_rules_, 0x800000u, 0x4);
+    popup_check(GameDataStateStorage.fields_.game_rules_, 0x4000000u, 0x8);
+    popup_check(GameDataStateStorage.fields_.game_rules_, 0x2000000u, 0x10);
+    popup_check(GameDataStateStorage.fields_.game_rules_, 0x80000000u, 0x20);
+    popup_check(GameDataStateStorage.fields_.game_rules_, 0x40000u, 0x40);
+    popup_check(GameDataStateStorage.fields_.game_rules_, 0x20000u, 0x80);
+    popup_check(GameDataStateStorage.fields_.game_rules_, 0x10000u, 0x100);
+    popup_check(GameDataStateStorage.fields_.net_turn_flags_, 0x1u, 0x200);
+    popup_check(GameDataStateStorage.fields_.net_turn_flags_, 0x2u, 0x400);
+    popup_check(GameDataStateStorage.fields_.game_rules_, 0x1000000u, 0x800);
+    popup_check(GameDataStateStorage.fields_.game_rules_, 0x100000u, 0x1000);
+    popup_check(GameDataStateStorage.fields_.net_turn_flags_, 0x4u, 0x2000);
+    popup_check(GameDataStateStorage.fields_.net_turn_flags_, 0x8u, 0x4000);
 
     if (x_pop_short("SCENRULES", 0x41, nullptr) < 0) {
         return;
     }
 
-    const unsigned int accepted = PopupWriteCheckState;
     GameDataStateStorage.fields_.game_rules_ &= 0x7808FFFFu;
     GameDataStateStorage.fields_.net_turn_flags_ &= 0xFFFFFFF0u;
-    if (accepted & 0x0001u) GameDataStateStorage.fields_.game_rules_ |= 0x00200000u;
-    if (accepted & 0x0002u) GameDataStateStorage.fields_.game_rules_ |= 0x00400000u;
-    if (accepted & 0x0004u) GameDataStateStorage.fields_.game_rules_ |= 0x00800000u;
-    if (accepted & 0x0008u) GameDataStateStorage.fields_.game_rules_ |= 0x04000000u;
-    if (accepted & 0x0010u) GameDataStateStorage.fields_.game_rules_ |= 0x02000000u;
-    if (accepted & 0x0020u) GameDataStateStorage.fields_.game_rules_ |= 0x80000000u;
-    if (accepted & 0x0040u) GameDataStateStorage.fields_.game_rules_ |= 0x00040000u;
-    if (accepted & 0x0080u) GameDataStateStorage.fields_.game_rules_ |= 0x00020000u;
-    if (accepted & 0x0100u) GameDataStateStorage.fields_.game_rules_ |= 0x00010000u;
-    if (accepted & 0x0200u) GameDataStateStorage.fields_.net_turn_flags_ |= 1u;
-    if (accepted & 0x0400u) GameDataStateStorage.fields_.net_turn_flags_ |= 2u;
-    if (accepted & 0x0800u) GameDataStateStorage.fields_.game_rules_ |= 0x01000000u;
-    if (accepted & 0x1000u) GameDataStateStorage.fields_.game_rules_ |= 0x00100000u;
-    if (accepted & 0x2000u) GameDataStateStorage.fields_.net_turn_flags_ |= 4u;
-    if (accepted & 0x4000u) GameDataStateStorage.fields_.net_turn_flags_ |= 8u;
+    popup_accept(PopupWriteCheckState, 0x0001u, GameDataStateStorage.fields_.game_rules_, 0x00200000u);
+    popup_accept(PopupWriteCheckState, 0x0002u, GameDataStateStorage.fields_.game_rules_, 0x00400000u);
+    popup_accept(PopupWriteCheckState, 0x0004u, GameDataStateStorage.fields_.game_rules_, 0x00800000u);
+    popup_accept(PopupWriteCheckState, 0x0008u, GameDataStateStorage.fields_.game_rules_, 0x04000000u);
+    popup_accept(PopupWriteCheckState, 0x0010u, GameDataStateStorage.fields_.game_rules_, 0x02000000u);
+    popup_accept(PopupWriteCheckState, 0x0020u, GameDataStateStorage.fields_.game_rules_, 0x80000000u);
+    popup_accept(PopupWriteCheckState, 0x0040u, GameDataStateStorage.fields_.game_rules_, 0x00040000u);
+    popup_accept(PopupWriteCheckState, 0x0080u, GameDataStateStorage.fields_.game_rules_, 0x00020000u);
+    popup_accept(PopupWriteCheckState, 0x0100u, GameDataStateStorage.fields_.game_rules_, 0x00010000u);
+    popup_accept(PopupWriteCheckState, 0x0200u, GameDataStateStorage.fields_.net_turn_flags_, 1u);
+    popup_accept(PopupWriteCheckState, 0x0400u, GameDataStateStorage.fields_.net_turn_flags_, 2u);
+    popup_accept(PopupWriteCheckState, 0x0800u, GameDataStateStorage.fields_.game_rules_, 0x01000000u);
+    popup_accept(PopupWriteCheckState, 0x1000u, GameDataStateStorage.fields_.game_rules_, 0x00100000u);
+    popup_accept(PopupWriteCheckState, 0x2000u, GameDataStateStorage.fields_.net_turn_flags_, 4u);
+    popup_accept(PopupWriteCheckState, 0x4000u, GameDataStateStorage.fields_.net_turn_flags_, 8u);
 }
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
@@ -3025,100 +2976,47 @@ void Console::editor_scen_rules() {
 void Console::editor_scen_victory() {
     Popup popup;
     auto_undo();
-    if (GameDataStateStorage.fields_.game_rules_ & 0x08000000u) {
-        PopupWriteCheckState |= 0x1;
-    } else {
-        PopupWriteCheckState &= ~0x1;
-    }
-    if (GameDataStateStorage.fields_.game_rules_ & 0x10000000u) {
-        PopupWriteCheckState |= 0x2;
-    } else {
-        PopupWriteCheckState &= ~0x2;
-    }
-    if (GameDataStateStorage.fields_.game_state_ & 0x00040000u) {
-        PopupWriteCheckState |= 0x4;
-    } else {
-        PopupWriteCheckState &= ~0x4;
-    }
-    if (GameDataStateStorage.fields_.game_rules_ & 0x40000000u) {
-        PopupWriteCheckState |= 0x8;
-    } else {
-        PopupWriteCheckState &= ~0x8;
-    }
-    if (GameDataStateStorage.fields_.game_rules_ & 0x20000000u) {
-        PopupWriteCheckState |= 0x10;
-    } else {
-        PopupWriteCheckState &= ~0x10;
-    }
-    if (GameDataStateStorage.fields_.game_state_ & 0x02000000u) {
-        PopupWriteCheckState |= 0x20;
-    } else {
-        PopupWriteCheckState &= ~0x20;
-    }
-    if (GameDataStateStorage.fields_.game_state_ & 0x04000000u) {
-        PopupWriteCheckState |= 0x40;
-    } else {
-        PopupWriteCheckState &= ~0x40;
-    }
-    if (GameDataStateStorage.fields_.game_state_ & 0x00008000u) {
-        PopupWriteCheckState |= 0x80;
-    } else {
-        PopupWriteCheckState &= ~0x80;
-    }
-    if (GameDataStateStorage.fields_.game_state_ & 0x80000000u) {
-        PopupWriteCheckState |= 0x100;
-    } else {
-        PopupWriteCheckState &= ~0x100;
-    }
-    if (GameDataStateStorage.fields_.game_state_ & 0x20000000u) {
-        PopupWriteCheckState |= 0x200;
-    } else {
-        PopupWriteCheckState &= ~0x200;
-    }
-    if (GameDataStateStorage.fields_.game_state_ & 0x40000000u) {
-        PopupWriteCheckState |= 0x400;
-    } else {
-        PopupWriteCheckState &= ~0x400;
-    }
-    if (GameDataStateStorage.fields_.game_rules_ & 0x00080000u) {
-        PopupWriteCheckState |= 0x800;
-    } else {
-        PopupWriteCheckState &= ~0x800;
-    }
-    if (GameDataStateStorage.fields_.game_state_ & 0x00080000u) {
-        PopupWriteCheckState |= 0x1000;
-    } else {
-        PopupWriteCheckState &= ~0x1000;
-    }
+    popup_check(GameDataStateStorage.fields_.game_rules_, 0x08000000u, 0x1);
+    popup_check(GameDataStateStorage.fields_.game_rules_, 0x10000000u, 0x2);
+    popup_check(GameDataStateStorage.fields_.game_state_, 0x00040000u, 0x4);
+    popup_check(GameDataStateStorage.fields_.game_rules_, 0x40000000u, 0x8);
+    popup_check(GameDataStateStorage.fields_.game_rules_, 0x20000000u, 0x10);
+    popup_check(GameDataStateStorage.fields_.game_state_, 0x02000000u, 0x20);
+    popup_check(GameDataStateStorage.fields_.game_state_, 0x04000000u, 0x40);
+    popup_check(GameDataStateStorage.fields_.game_state_, 0x00008000u, 0x80);
+    popup_check(GameDataStateStorage.fields_.game_state_, 0x80000000u, 0x100);
+    popup_check(GameDataStateStorage.fields_.game_state_, 0x20000000u, 0x200);
+    popup_check(GameDataStateStorage.fields_.game_state_, 0x40000000u, 0x400);
+    popup_check(GameDataStateStorage.fields_.game_rules_, 0x00080000u, 0x800);
+    popup_check(GameDataStateStorage.fields_.game_state_, 0x00080000u, 0x1000);
 
     if (x_pop_short("SCENVICTORY", 0x41, nullptr) < 0) {
         return;
     }
 
-    const unsigned int accepted = PopupWriteCheckState;
     GameDataStateStorage.fields_.game_rules_ &= 0x87F7FFFFu;
     GameDataStateStorage.fields_.game_state_ &= 0x19F37FFFu;
-    if (accepted & 0x001u) GameDataStateStorage.fields_.game_rules_ |= 0x08000000u;
-    if (accepted & 0x002u) GameDataStateStorage.fields_.game_rules_ |= 0x10000000u;
-    if (accepted & 0x004u) GameDataStateStorage.fields_.game_state_ |= 0x00040000u;
-    if (accepted & 0x008u) GameDataStateStorage.fields_.game_rules_ |= 0x40000000u;
-    if (accepted & 0x010u) GameDataStateStorage.fields_.game_rules_ |= 0x20000000u;
-    if (accepted & 0x020u) GameDataStateStorage.fields_.game_state_ |= 0x02000000u;
-    if (accepted & 0x040u) GameDataStateStorage.fields_.game_state_ |= 0x04000000u;
-    if (accepted & 0x080u) GameDataStateStorage.fields_.game_state_ |= 0x00008000u;
-    if (accepted & 0x100u) GameDataStateStorage.fields_.game_state_ |= 0x80000000u;
-    if (accepted & 0x200u) GameDataStateStorage.fields_.game_state_ |= 0x20000000u;
-    if (accepted & 0x400u) GameDataStateStorage.fields_.game_state_ |= 0x40000000u;
-    if (accepted & 0x800u) GameDataStateStorage.fields_.game_rules_ |= 0x00080000u;
-    if (accepted & 0x1000u) GameDataStateStorage.fields_.game_state_ |= 0x00080000u;
+    popup_accept(PopupWriteCheckState, 0x001u, GameDataStateStorage.fields_.game_rules_, 0x08000000u);
+    popup_accept(PopupWriteCheckState, 0x002u, GameDataStateStorage.fields_.game_rules_, 0x10000000u);
+    popup_accept(PopupWriteCheckState, 0x004u, GameDataStateStorage.fields_.game_state_, 0x00040000u);
+    popup_accept(PopupWriteCheckState, 0x008u, GameDataStateStorage.fields_.game_rules_, 0x40000000u);
+    popup_accept(PopupWriteCheckState, 0x010u, GameDataStateStorage.fields_.game_rules_, 0x20000000u);
+    popup_accept(PopupWriteCheckState, 0x020u, GameDataStateStorage.fields_.game_state_, 0x02000000u);
+    popup_accept(PopupWriteCheckState, 0x040u, GameDataStateStorage.fields_.game_state_, 0x04000000u);
+    popup_accept(PopupWriteCheckState, 0x080u, GameDataStateStorage.fields_.game_state_, 0x00008000u);
+    popup_accept(PopupWriteCheckState, 0x100u, GameDataStateStorage.fields_.game_state_, 0x80000000u);
+    popup_accept(PopupWriteCheckState, 0x200u, GameDataStateStorage.fields_.game_state_, 0x20000000u);
+    popup_accept(PopupWriteCheckState, 0x400u, GameDataStateStorage.fields_.game_state_, 0x40000000u);
+    popup_accept(PopupWriteCheckState, 0x800u, GameDataStateStorage.fields_.game_rules_, 0x00080000u);
+    popup_accept(PopupWriteCheckState, 0x1000u, GameDataStateStorage.fields_.game_state_, 0x00080000u);
 
     if (GameDataStateStorage.fields_.game_state_ & 0x04000000u) {
         popup.start(PopupStartCaption, "FACOBJ", -1, nullptr, 0, nullptr);
-        for (int facility = 1; facility <= 64; ++facility) {
-            popup.dialogs().item(
-                StringTable.get(Facility[facility].name),
-                facility);
+        for (int facility = 1; facility < FacilityRepStart; ++facility) {
+            char *name = StringTable.get(Facility[facility].name);
+            popup.dialogs().item(name, facility);
         }
+        popup.set_value(GameDataStateStorage.fields_.scenario_victory_facility_);
         GameDataStateStorage.fields_.scenario_victory_facility_ = static_cast<uint32_t>(popup.exec(0, nullptr));
     }
 }
@@ -3134,21 +3032,29 @@ void Console::editor_view() {
         if ((GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_ & (1u << faction)) == 0) {
             continue;
         }
-        char text[256];
-        text[0] = 0;
-        strcat(text, Players[faction].formal_name_faction);
-        strcat(text, "(");
-        strcat(text, Players[faction].noun_faction);
-        strcat(text, ")");
-        GenderDefault = Players[faction].noun_gender;
-        PluralityDefault = Players[faction].is_noun_plural;
-        popup.dialogs().item(text, faction);
+        parse_set(Players[faction].noun_gender, Players[faction].is_noun_plural);
+        StringTemp[0] = 0;
+        strcat(StringTemp, Players[faction].formal_name_faction);
+        strcat(StringTemp, "(");
+        parse_set(Players[faction].noun_gender, Players[faction].is_noun_plural);
+        strcat(StringTemp, Players[faction].noun_faction);
+        strcat(StringTemp, ")");
+        popup.dialogs().item(StringTemp, faction);
         if (faction == ConsoleGlobal.faction_id_) {
             popup.set_value(faction);
         }
     }
-    const char *mode = Language == 1 ? "TOUS" : Language == 2 ? "ALLE" : "ALL";
-    popup.dialogs().item(const_cast<char *>(mode), 0x63);
+    switch (Language) {
+    case 1:
+        popup.dialogs().item("TOUS", 0x63);
+        break;
+    case 2:
+        popup.dialogs().item("ALLE", 0x63);
+        break;
+    default:
+        popup.dialogs().item("ALL", 0x63);
+        break;
+    }
     const int selected = popup.exec(0, nullptr);
     PopupModalState = 0;
     if (selected < 0) {
@@ -3177,8 +3083,7 @@ void Console::editor_view() {
         MainInterfaceGlobal.flat_button_[2].hide();
     }
     if ((GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & (1u << selected)) == 0) {
-        GenderDefault = Players[selected].noun_gender;
-        PluralityDefault = Players[selected].is_noun_plural;
+        parse_set(Players[selected].noun_gender, Players[selected].is_noun_plural);
         parse_says(0, Players[selected].noun_faction, -1, -1);
         PopupModalState = 6;
         const int answer = X_pop("EDITORCONTROL", nullptr);
@@ -3885,29 +3790,7 @@ void Console::custom_my_faction() {
 
     const unsigned char state = static_cast<unsigned char>(GameDataStateStorage.fields_.game_state_);
     if ((state & 0x40) != 0 && (state & 0x80) != 0) {
-        const int saved_faction = ConsoleGlobal.faction_id_;
-        {
-            Popup popup2;
-            PopupModalState = 6;
-            popup2.start(PopupStartCaption, ConsoleStrEditorWhoListTitle,
-                         -1, nullptr, 0x40, nullptr);
-            // The who list walks factions 1..7 by noun record: each item's
-            // text is the faction's noun, with its gender/plurality feeding
-            // the parser defaults.
-            for (int idx = 1; idx < MaxPlayerNum; ++idx) {
-                Player &row = Players[idx];
-                const int plurality = row.is_noun_plural;
-                const int gender = row.noun_gender;
-                PluralityDefault = plurality;
-                GenderDefault = gender;
-                popup2.dialogs().item(row.noun_faction, idx);
-            }
-            if (saved_faction >= 0) {
-                popup2.set_value(saved_faction);
-            }
-            faction_idx = popup2.exec(0, 0);
-            PopupModalState = 0;
-        }
+        faction_idx = editor_who(ConsoleGlobal.faction_id_, 1);
         if (faction_idx < 0) {
             return;
         }
@@ -3932,13 +3815,13 @@ void Console::custom_my_faction() {
     char *const f5 = player.title_leader;
     char *const f6 = player.adj_leader;
 
-    popup.dialogs().edit(StringTable.get(label_keys[0x2B8 / 4]), f1, 0x17);
-    popup.dialogs().edit(StringTable.get(label_keys[0x2BC / 4]), f2, 0x27);
-    popup.dialogs().edit(StringTable.get(label_keys[0x2C0 / 4]), f3, 0x17);
-    popup.dialogs().edit(StringTable.get(label_keys[0x2C4 / 4]), f4, 0x17);
-    popup.dialogs().edit(StringTable.get(label_keys[0x78C / 4]), f5, 0x17);
-    popup.dialogs().edit(StringTable.get(label_keys[0x790 / 4]), f6, 0x17);
-    popup.dialogs().edit(StringTable.get(label_keys[0x794 / 4]), name_buf, 0x17);
+    popup.dialogs().edit(label_get(0x2B8 / 4), f1, 0x17);
+    popup.dialogs().edit(label_get(0x2BC / 4), f2, 0x27);
+    popup.dialogs().edit(label_get(0x2C0 / 4), f3, 0x17);
+    popup.dialogs().edit(label_get(0x2C4 / 4), f4, 0x17);
+    popup.dialogs().edit(label_get(0x78C / 4), f5, 0x17);
+    popup.dialogs().edit(label_get(0x790 / 4), f6, 0x17);
+    popup.dialogs().edit(label_get(0x794 / 4), name_buf, 0x17);
 
     const int result = popup.exec(0, 0);
     if (result < 0) {
@@ -3954,7 +3837,7 @@ void Console::custom_my_faction() {
 
     // The entered leader name counts as female when its first letter matches
     // the female wording of the question.
-    const char *const match_name = StringTable.get(label_keys[0x2E3]);
+    const char *const match_name = label_get(0x2E3);
     const int cmp = _strnicmp(name_buf, match_name, 1);
     player.is_leader_female = (cmp == 0) ? 1 : 0;
 
