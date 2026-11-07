@@ -1353,7 +1353,7 @@ void MapWin::set_center(int x, int y, int draw_type) {
 // The binder recorded the formerly unfinished state; the tile walker is now
 // source-owned. base_draw remains the explicit unfinished rendering callee.
 // Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x00469B40 ?gen_bases_only@MapWin@@QAEXXZ 0x00469B40-0x00469C9F
+// ORIGINAL: 0x00469B40 ?gen_bases_only@MapWin@@QAEXXZ 0x00469B40-0x00469C9F BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00469b40.cpp retains the complete tile-walk seed; MapWin fields at 0x1DDA4..0x1DDD8 and map_loc determine the source-owned traversal."], "reason": "Home the base-only tile traversal reached by WorldWin redraw; base_draw remains an explicitly unfinished rendering dependency."}
 void MapWin::gen_bases_only() {
     for (int row = 0; row < field_1DDD0_ + field_1DDD8_ + 1; ++row) {
@@ -7898,7 +7898,7 @@ void __cdecl draw_tile_fixup(int x_coord, int y_coord, int second_x_coord,
 
 typedef short (__stdcall *KeyStateFn)(int);
 
-// ORIGINAL: 0x0046EC10 ?on_right_down@MapWin@@QAEXHH@Z 0x0046EC10-0x0046ED21 FILE
+// ORIGINAL: 0x0046EC10 ?on_right_down@MapWin@@QAEXHH@Z 0x0046EC10-0x0046ED21 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned46EC10 has five indirect key-state API calls and one Win-slot17 callback at46ED0C, not six virtual calls.", "Win::on_mouse_move(int,int) is slot17; MapWin overrides it and on_left_down already uses the same typed operation.", "Fresh VC6 candidate calculates Win view through the real vbtable, publishes WinPointerOwner4=0 then WinPointerOwner3 only when null, reloads view/vptr and calls +44 with original x/y. No caching across callback or owner publication."], "reason": "Recover right-button input through existing MapWin/Win members and virtual dispatch rather than an invented slot class or integer-vtable receiver. Preserve original key polling, state stores, global owner publication, arguments and early exits."}
 // symbol    ?on_right_down@MapWin@@UAEXHH@Z
 // size      273 bytes
@@ -7970,7 +7970,7 @@ abort:
 }
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x0046ED30 ?on_left_down@MapWin@@QAEXHH@Z 0x0046ED30-0x0046EFE1 FILE
+// ORIGINAL: 0x0046ED30 ?on_left_down@MapWin@@QAEXHH@Z 0x0046ED30-0x0046EFE1 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/0046ed30.cpp", "Pinned original image review controls route precedence, cursor sprite dispatch, signed zoom, actual API imports and original member/data dependencies. Bounded compile and host controls do not establish game acceptance."], "reason": "Recover the genuine MapWin/Console owner operation using typed members, actual shared storage, virtual base APIs and full original branch evidence; keep seed and historical obligations."}
 // symbol    ?on_left_down@MapWin@@UAEXHH@Z
 void MapWin::on_left_down(int x_coord, int y_coord) {
