@@ -5444,7 +5444,7 @@ uint32_t FarmUnavailableMask;
 // Requires the original game's valid faction, base, tile and vehicle indices
 // and well-formed vehicle chains. Keep the entry coordinates/faction separate
 // from the later BaseCurrent reload used to select nearby competing bases.
-// ORIGINAL: 0x004E68B0 ?farm_compute@@YAXXZ 0x004E68B0-0x004E6E4E
+// ORIGINAL: 0x004E68B0 ?farm_compute@@YAXXZ 0x004E68B0-0x004E6E4E BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["4E68B6 loads BaseCurrent pointer before signedshort x/y and unsignedbyte faction.4E68E3/4E6BA5 establish25 DWORD outputs, with final4 set1;4E6E23..43 reduce onlyfirst21 into90EA00.4E6C7A tests Base+78 worked mask, not seed+3C.", "4E6966/4E69C4/4E6B99 reload row stride after calls; map-pointer loads4E697C/4E6A0A/4E6A46 must remain live.4E6B38 exhausts vehicle iterator before territory check4E6B7C.4E6BE7 reloads BaseCurrent for neighbor admission, while inner radius matching retains entry coordinates."], "reason": "This no-argument resource pass computes shared per-radius availability from the selected Base, typed map/vehicle/diplomacy state and neighboring worked squares; it owns25 status words and a separate21-position mask."}
 void __cdecl farm_compute() {
     int base_x = BaseCurrent->x;
@@ -5941,7 +5941,7 @@ uint32_t  __cdecl best_specialist() {
 /*
 Purpose: Generate a base name. Added some minor randomization for sea bases and ensuring offset gets
          increased for default base name. TODO: Eventually improve base name shuffling.
-// ORIGINAL: 0x004E4090 ?name_base@@YAXHPADHH@Z 0x004E4090-0x004E4350
+// ORIGINAL: 0x004E4090 ?name_base@@YAXHPADHH@Z 0x004E4090-0x004E4350 BYTE_EXACT
 // size      704 bytes
 // prototype void (__cdecl ?name_base@@YAXHPADHH@Z)(int factionID, LPSTR nameOut, BOOL isFinal, BOOL isSeaBase)
 // callers   3   call targets   9
@@ -8932,7 +8932,7 @@ int __cdecl pop_goal_fac(int base_id) {
 
 /*
 Purpose: Calculate population goal for a base.
-// ORIGINAL: 0x004EF090 ?pop_goal@@YAHH@Z 0x004EF090-0x004EF1B2
+// ORIGINAL: 0x004EF090 ?pop_goal@@YAHH@Z 0x004EF090-0x004EF1B2 BYTE_EXACT
 // size      290 bytes
 // prototype int (__cdecl ?pop_goal@@YAHH@Z)(int baseID)
 // callers   1   call targets   1
