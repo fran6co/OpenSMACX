@@ -6700,7 +6700,7 @@ void ReportIf::draw_security() {
     int inset = field_1E230_ ? 0x4C : 0;
     field_C_ = inset + field_50_.left;
     field_10_ = field_50_.top;
-    field_14_ = report_rect_width(&field_50_) - inset;
+    field_14_ = report_rect_width(&field_50_) - (field_1E230_ ? 0x4C : 0);
     field_18_ = report_rect_height(&field_50_);
     StringTemp[0] = 0;
     MainInterfaceGlobal.Buffer::set_font(field_1E190_, field_1E194_, field_1E198_, nullptr);
@@ -6774,7 +6774,7 @@ void ReportIf::draw_score() {
     int left_inset = field_1E230_ != 0 ? 0x4C : 0;
     field_C_ = field_50_.left + left_inset;
     field_10_ = field_50_.top;
-    field_14_ = report_rect_width(&field_50_) - left_inset;
+    field_14_ = report_rect_width(&field_50_) - (field_1E230_ != 0 ? 0x4C : 0);
     field_18_ = report_rect_height(&field_50_);
 
     StringTemp[0] = 0;
@@ -6883,7 +6883,7 @@ void ReportIf::draw_intel() {
     int inset = field_1E230_ ? 0x4C : 0;
     field_C_ = inset + field_50_.left;
     field_10_ = field_50_.top;
-    field_14_ = report_rect_width(&field_50_) - inset;
+    field_14_ = report_rect_width(&field_50_) - (field_1E230_ ? 0x4C : 0);
     field_18_ = report_rect_height(&field_50_);
     StringTemp[0] = 0;
     MainInterfaceGlobal.Buffer::set_font(field_1E190_, field_1E194_, field_1E198_, 0);

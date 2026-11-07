@@ -7066,8 +7066,8 @@ void __cdecl base_check_support() {
                 || (state & 0x1000200) == 0x1000200
                 || ((state & 0x2000200) == 0x2000200
                     && Vehs[veh_id].patrol_current_point < Vehs[veh_id].waypoint_count)
-                || Vehs[veh_id].order_auto_type == ORDERA_BOMBING_RUN
                 || Vehs[veh_id].order_auto_type == ORDERA_ON_ALERT
+                || Vehs[veh_id].order_auto_type == ORDERA_BOMBING_RUN
                 || Vehs[veh_id].order_auto_type) {
                 continue;
             }
@@ -7076,9 +7076,13 @@ void __cdecl base_check_support() {
         if (divisor - 1 > 0 && rand() % divisor) {
             continue;
         }
-        int dx = x_dist(Vehs[veh_id].x, BaseCurrent->x);
+        int vx = Vehs[veh_id].x;
+        int vy = Vehs[veh_id].y;
+        int bx = BaseCurrent->x;
+        int by = BaseCurrent->y;
+        int dx = x_dist(vx, bx);
         int cost = range(VehPrototypes[Vehs[veh_id].proto_id].cost, 1, 99);
-        int score = ((dx + abs(Vehs[veh_id].y - BaseCurrent->y)) >> 1) * 100 / cost;
+        int score = ((dx + abs(vy - by)) >> 1) * 100 / cost;
         uint8_t plan = VehPrototypes[Vehs[veh_id].proto_id].plan;
         if (plan == PLAN_DEFENSIVE) {
             score += score;
