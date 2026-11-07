@@ -1371,7 +1371,7 @@ void __cdecl POP3(const char *section, const char *unused, int recipient,
                   int x, int y) {
     (void)unused;
     Popup popup;
-    popup.start(PopupStartCaption, section, -1, 0, 0, 0);
+    popup.start(section);
 
     StringList &history = popup.unit_ids_;
     const int history_count = history.entry_count_;
@@ -1382,36 +1382,49 @@ void __cdecl POP3(const char *section, const char *unused, int recipient,
         if (history_index != 0) {
             strcat(StringTemp, " ");
         }
-        StringStructPayload *const history_payload = history.next_entry();
-        char *const history_text = history_payload != 0
-            ? history_payload->text : 0;
+        history.next_entry();
+        const char *history_text;
+        StringStructEntry *const entry = history.current_;
+        if (entry == 0) {
+            history_text = 0;
+        } else if (history.head_ == 0) {
+            // The image reads payload+4 even without a list head.
+            StringStructPayload *payload = 0;
+            history_text = payload->text;
+        } else {
+            history_text = entry->string_payload()->text;
+        }
         strcat(StringTemp, history_text);
     }
 
-    if (IsMultiplayerPBEM == 0) {
-        MainInterfaceGlobal.set_message(StringTemp, 0x5F, 0, 1, 1);
-    } else if (recipient < 1) {
-        for (int faction = 1; faction < 8; ++faction) {
-            const unsigned int faction_mask = 1u << faction;
-            const int alive = (GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_ & faction_mask) != 0;
-            const int human = (GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & faction_mask) != 0;
-            if (alive && human && y >= 0 && y < MapLatitudeBounds &&
-                x >= 0 && x < MapLongitudeBounds) {
-                StringList &pending = MessageWinDeferredBaseMessages[faction];
+    if (IsMultiplayerPBEM != 0) {
+        if (recipient > 0) {
+            if (y >= 0 && y < MapLatitudeBounds && x >= 0 &&
+                x < MapLongitudeBounds) {
+                StringList &pending = MessageWinDeferredBaseMessages[recipient];
                 pending.pending_text_ = StringTemp;
                 pending.field_20_ = 0;
                 pending.field_24_ = 0;
                 pending.add((MapLongitudeBounds * y + x) | 0x80000000);
             }
+        } else {
+            for (int faction = 1; faction < 8; ++faction) {
+                const unsigned char bit = static_cast<unsigned char>(1 << faction);
+                if ((GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_ & bit) != 0 &&
+                    (GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & bit) != 0 &&
+                    y >= 0 && y < MapLatitudeBounds &&
+                    x >= 0 && x < MapLongitudeBounds) {
+                    StringList &pending = MessageWinDeferredBaseMessages[faction];
+                    pending.pending_text_ = StringTemp;
+                    pending.field_20_ = 0;
+                    pending.field_24_ = 0;
+                    pending.add((MapLongitudeBounds * y + x) | 0x80000000);
+                }
+            }
         }
-    } else if (y >= 0 && y < MapLatitudeBounds && x >= 0 &&
-               x < MapLongitudeBounds) {
-        StringList &pending = MessageWinDeferredBaseMessages[recipient];
-        pending.pending_text_ = StringTemp;
-        pending.field_20_ = 0;
-        pending.field_24_ = 0;
-        pending.add((MapLongitudeBounds * y + x) | 0x80000000);
+        return;
     }
+    MainInterfaceGlobal.set_message(StringTemp, 0x5F, 0, 1, 1);
 }
 
 // This overload calls the CRT length routine in the original, rather than

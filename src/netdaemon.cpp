@@ -2916,11 +2916,7 @@ void NetDaemon::await_exec(int opcode) {
             }
         }
         wait_task();
-        unsigned long p1, p2;
-        void *r = NetDaemonNet.Net::get(&p1, &p2);
-        if (r != 0) {
-            process_message(static_cast<char *>(r), p2, p1);
-        }
+        receive();
         locks_.check_global();
         check_spock();
     }
@@ -2933,16 +2929,7 @@ void NetDaemon::await_exec(int opcode) {
     log_say("Client received acknowledgement", ConsoleGlobal.faction_id_, 0, 0);
 
     if (opcode != 0) {
-        if (IsMultiplayerNet != 0) {
-            log_say("Client releasing lock", ConsoleGlobal.faction_id_, 0, 0);
-            message_data(0x2212, 0, 0, 0, 0, 0);
-            channels_[1].leading_words_[3] = 0;
-            channels_[1].leading_words_[2] = 0;
-            channels_[1].trailing_words_[5] = 0;
-            channels_[1].trailing_words_[4] = 0;
-        }
-        channels_[0].payload_.vehicle_selection_follow = 0;
-        channels_[1].trailing_words_[3] = 0;
+        unlock_veh();
     }
     channels_[1].leading_words_[3] = 0;
 }
@@ -7261,13 +7248,14 @@ int NetDaemon::veh_drop(int veh_id, int x, int y) {
                     *acknowledged = 0;
                 }
             }
-            goto release_vehicle;
+            unlock_veh();
+            return 0;
         }
     }
 
 airdrop:
     if (action_airdrop(veh_id, x, y, 1) != 0
-        && range(speed(veh_id, 0) - Vehs[veh_id].moves_expended, 0, 999) != 0) {
+        && veh_moves(veh_id) != 0) {
         message_data(0x2403, 0, veh_id, x, y, 0);
         if (IsMultiplayerNet != 0) {
             log_say("Client waiting for acknowledgement",
@@ -7300,7 +7288,6 @@ airdrop:
         return 1;
     }
 
-release_vehicle:
     unlock_veh();
     return 0;
 }
