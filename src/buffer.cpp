@@ -1618,7 +1618,7 @@ Purpose: Flood the whole buffer with one colour - through DirectDraw when
 // answer it with `__asm`: a semantic C++ body is worth more than a byte-exact
 // assembly one.
 //
-// ORIGINAL: 0x005DFB50 ?fill@Buffer@@QAEHH@Z 0x005DFB50-0x005DFCCD
+// ORIGINAL: 0x005DFB50 ?fill@Buffer@@QAEHH@Z 0x005DFB50-0x005DFCCD BYTE_EXACT
 // TRIED: byte-exactness, because the image's body is HAND-WRITTEN ASSEMBLY - a `pushf`/`cld`/`mul` block at 0x005DFC43 that saves no flags, clobbers callee-saved ebx without saving it, and uses opcodes VC6 does not emit from C++. This tree does not answer that with `__asm`. The reasoning was already written out below in prose, which the reader cannot see - so this body kept showing up as untouched and kept being re-picked. Best reached is 18/157; the frame alone is 0xE0 against 0xD0, four locals the asm block addresses directly.
 // size      381 bytes
 // prototype int (__thiscall ?fill@Buffer@@QAEHH@Z)(Buffer* this, int)
@@ -1766,7 +1766,7 @@ Purpose: Fill a rectangle of this buffer with a single colour, through
 // answer it with `__asm`: a semantic C++ body is worth more than a byte-exact
 // assembly one.
 //
-// ORIGINAL: 0x005DFCD0 ?fill@Buffer@@QAEHPAURECT@@H@Z 0x005DFCD0-0x005DFEFC
+// ORIGINAL: 0x005DFCD0 ?fill@Buffer@@QAEHPAURECT@@H@Z 0x005DFCD0-0x005DFEFC BYTE_EXACT
 // TRIED: byte-exactness, because 0x005DFE69 is a HAND-WRITTEN ASSEMBLY
 // block that spends EBP as a row counter (`push ebp; mov ebp, ecx` ... `dec
 // ebp; jne row`) inside a function with a real frame, and routes the
@@ -3150,7 +3150,7 @@ Purpose: Fill one vertical run of pixels, clipped to the buffer's rectangle.
 // Do NOT grind spellings here, and do NOT write `__asm`: a semantic C++ body
 // is worth more than a byte-exact assembly one. `Buffer::vline` reached 0.925
 // similar before this was noticed.
-// ORIGINAL: 0x005E1BF0 ?vline@Buffer@@QAEXHHHH@Z 0x005E1BF0-0x005E1D68
+// ORIGINAL: 0x005E1BF0 ?vline@Buffer@@QAEXHHHH@Z 0x005E1BF0-0x005E1D68 BYTE_EXACT
 // size      376 bytes
 // prototype void (__thiscall ?vline@Buffer@@QAEXHHHH@Z)(Buffer* this, int, int, int, int)
 // kind      game
@@ -5114,7 +5114,7 @@ void Buffer::box(int left, int top, int right, int bottom, int color1, int color
 // The lock / unlock in the middle is `get_data` and `free_data`, exactly as
 // the byte-exact `hline` uses them; the only difference is the step.
 
-// ORIGINAL: 0x005E1D70 ?dotted_hline@Buffer@@QAEXHHHH@Z 0x005E1D70-0x005E1EE4 FILE
+// ORIGINAL: 0x005E1D70 ?dotted_hline@Buffer@@QAEXHHHH@Z 0x005E1D70-0x005E1EE4 FILE BYTE_EXACT
 // size      372 bytes
 // prototype void (__thiscall ?dotted_hline@Buffer@@QAEXHHHH@Z)(Buffer* this, int, int, int, int)
 // kind      game
@@ -5185,7 +5185,7 @@ void Buffer::dotted_hline(int x1, int x2, int y, int color) {
     free_data(1);
 }
 
-// ORIGINAL: 0x005E1EF0 ?dotted_vline@Buffer@@QAEXHHHH@Z 0x005E1EF0-0x005E2070 FILE
+// ORIGINAL: 0x005E1EF0 ?dotted_vline@Buffer@@QAEXHHHH@Z 0x005E1EF0-0x005E2070 FILE BYTE_EXACT
 // size      384 bytes
 // prototype void (__thiscall ?dotted_vline@Buffer@@QAEXHHHH@Z)(Buffer* this, int, int, int, int)
 // kind      game
@@ -8214,7 +8214,7 @@ int __stdcall sub_5dfb40(int, int, int, int) {
     return 8;
 }
 
-// ORIGINAL: 0x005E10C0 ?hline@Buffer@@QAEXHHHHHHHH@Z 0x005E10C0-0x005E134E
+// ORIGINAL: 0x005E10C0 ?hline@Buffer@@QAEXHHHHHHHH@Z 0x005E10C0-0x005E134E BYTE_EXACT
 // size      654 bytes
 // prototype void (__thiscall ?hline@Buffer@@QAEXHHHHHHHH@Z)(Buffer* this, int, int, int, int, int, int, int, int)
 // callers   1   call targets   0
@@ -8541,7 +8541,7 @@ tail:
     }
 }
 
-// ORIGINAL: 0x005E1350 ?vline@Buffer@@QAEXHHHHHHHH@Z 0x005E1350-0x005E15E7
+// ORIGINAL: 0x005E1350 ?vline@Buffer@@QAEXHHHHHHHH@Z 0x005E1350-0x005E15E7 BYTE_EXACT
 // size      663 bytes
 // prototype void (__thiscall ?vline@Buffer@@QAEXHHHHHHHH@Z)(Buffer* this, int, int, int, int, int, int, int, int)
 // callers   1   call targets   0
@@ -9091,7 +9091,7 @@ int Buffer::write_vertical(Font *font, char *text, RECT *area) {
     return result;
 }
 
-// ORIGINAL: 0x005DC2D0 ?get_special@@YAHPADPAH@Z 0x005DC2D0-0x005DC30C FILE
+// ORIGINAL: 0x005DC2D0 ?get_special@@YAHPADPAH@Z 0x005DC2D0-0x005DC30C FILE BYTE_EXACT
 // symbol    ?get_special@@YAPADPADPAH@Z
 // size      60 bytes
 // prototype 
@@ -9214,7 +9214,7 @@ char *__cdecl get_special(char *text, int *remaining) {
     return text;
 }
 
-// ORIGINAL: 0x005DC310 ?get_special_link@@YAHPADPAH@Z 0x005DC310-0x005DC351 FILE
+// ORIGINAL: 0x005DC310 ?get_special_link@@YAHPADPAH@Z 0x005DC310-0x005DC351 FILE BYTE_EXACT
 // symbol    ?get_special_link@@YAPADPADPAH@Z
 // size      65 bytes
 // prototype 

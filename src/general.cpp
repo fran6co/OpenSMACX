@@ -1062,7 +1062,7 @@ LPSTR __cdecl filefind_get(LPCSTR file_name) {
 
 /*
 Purpose: Count the number of unsigned bits set. Replaced the original code with Brian Kernighan's 
-// ORIGINAL: 0x0050BA30 ?bit_count@@YAHH@Z 0x0050BA30-0x0050BA4E
+// ORIGINAL: 0x0050BA30 ?bit_count@@YAHH@Z 0x0050BA30-0x0050BA4E BYTE_EXACT
 // TRIED (2026-09-03, probed against cl 12.00.8168 directly): the image's
 //   `shr ebx, 1 / adc eax, 0` carry-chain fusion is NOT producible from VC6
 //   C++, so this is a second case of hand-written assembly that
@@ -1188,7 +1188,7 @@ Status: Complete
 /*
 Purpose: Shift the numerator to the left by 16 then divide by the denominator. NOTE: the shipped
          code has no divide-by-zero guard; see the BUG comment on the body below.
-// ORIGINAL: 0x00628AD0 ?fixed_div@@YAHJJ@Z 0x00628AD0-0x00628AEC
+// ORIGINAL: 0x00628AD0 ?fixed_div@@YAHJJ@Z 0x00628AD0-0x00628AEC BYTE_EXACT
 // symbol    ?fixed_div@@YAHHH@Z
 // size      28 bytes
 // prototype 
@@ -1240,7 +1240,7 @@ int __cdecl fixed_div(int numerator, int denominator) {
 Purpose: Reverse string search for the last occurrence of the specified character. Replaced the
          original searching logic with strrchr() that does same thing. The end parameter can be 
          removed in the future.
-// ORIGINAL: 0x00628AF0 ?memrchr@@YAHPBX0H@Z 0x00628AF0-0x00628B23
+// ORIGINAL: 0x00628AF0 ?memrchr@@YAHPBX0H@Z 0x00628AF0-0x00628B23 BYTE_EXACT
 // LEVER: `calls (none)` in the annotation, and the image proves it - a
 // hand-rolled backward byte scan (`cmp byte ptr [eax], bl; je found; dec
 // eax; dec ecx; jne loop`), never a call to `strrchr`. The old body called
@@ -1356,7 +1356,7 @@ Purpose: Calculate a basic XOR checksum for the data buffer.
 // Investigated VC6 C++ recipes emit a different loop; matching remains open.
 // Preserve the original traversal/count semantics in ordinary C++, without
 // inline assembly or source changes made solely to imitate instruction length.
-// ORIGINAL: 0x00539090 ?checksum@@YAEPADHE@Z 0x00539090-0x005390B4
+// ORIGINAL: 0x00539090 ?checksum@@YAEPADHE@Z 0x00539090-0x005390B4 BYTE_EXACT
 // size      36 bytes
 // prototype
 // callers   2   call targets   0
@@ -1394,7 +1394,7 @@ Purpose: Calculate a basic XOR checksum for a password string.
 // Investigated VC6 C++ recipes emit a different loop; matching remains open.
 // Preserve the original traversal/count semantics in ordinary C++, without
 // inline assembly or source changes made solely to imitate instruction length.
-// ORIGINAL: 0x005390C0 ?checksum_password@@YAHPAD@Z 0x005390C0-0x00539157
+// ORIGINAL: 0x005390C0 ?checksum_password@@YAHPAD@Z 0x005390C0-0x00539157 BYTE_EXACT
 // symbol    ?checksum_password@@YAIPBD@Z
 // size      151 bytes
 // prototype
@@ -1716,7 +1716,7 @@ int __cdecl trig_init() {
 // Original pushad/popad restores volatile caller registers too; ordinary
 // C++ does not promise that stronger behavior. The conversion and I/O order
 // have a C++ owner; native exactness and extra register preservation stay open.
-// ORIGINAL: 0x005D4240 sub_5d4240 0x005D4240-0x005D427C
+// ORIGINAL: 0x005D4240 sub_5d4240 0x005D4240-0x005D427C BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf:0x005D4240-0x005D427C: complete60-byte listing performs cli, selects DAC index0, writes256 RGB triplets from four-byte-spaced input, then sti", "build/recovery/palette-intrinsic-control-oct6.cpp: VC6 pragma intrinsic control has no unresolved helpers and emits physical cli/out/sti; it does not execute privileged I/O", "src/general.h: existing free __cdecl sub_5d4240(unsigned char*) declaration; source preserves that ABI rather than fabricating a Palette receiver or caller", "src/general.cpp: existing DOS/conio includes were specifically retained for this hardware routine"], "reason": "Own the original VGA DAC operation in the existing general hardware-helper TU. Preserve index selection, 256 four-byte-stride RGB conversions, output order and interrupt enable; retain the original full span/history while explicitly leaving pushad/popad volatile-register restoration as a native exactness obligation. No hardware port access is run by the host control."}
 // symbol    ?sub_5d4240@@YAXPAE@Z
 // Hand-written assembly routine: pushad/cli/out to the VGA DAC/sti/popad/leave.
@@ -1867,7 +1867,7 @@ void __cdecl HSV_to_RGB(HSV *hsv_in, PALETTEENTRY *entry_out) {
 }
 
 
-// ORIGINAL: 0x00538FE0 ?checksum_file@@YAEPAD@Z 0x00538FE0-0x0053908F;0x0065E450-0x0065E462 FILE
+// ORIGINAL: 0x00538FE0 ?checksum_file@@YAEPAD@Z 0x00538FE0-0x0053908F;0x0065E450-0x0065E462 FILE BYTE_EXACT
 // working copy - scaffold materialised by --work
 // size      193 bytes
 // prototype 

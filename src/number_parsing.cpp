@@ -114,7 +114,7 @@ int __cdecl stoi(LPCSTR str) {
 
 /*
 Purpose: Locates the first number in a string.
-// ORIGINAL: 0x00628B30 ?findnum@@YAHPAD@Z 0x00628B30-0x00628B69
+// ORIGINAL: 0x00628B30 ?findnum@@YAHPAD@Z 0x00628B30-0x00628B69 BYTE_EXACT
 // LEVER: the image reads its digit bounds from memory - `mov dl, byte ptr
 // [0x670c1c]` / `mov dh, byte ptr [0x670c1d]`, an .rdata pair holding '0'
 // and '9' - not immediates, so `*str < '0' || *str > '9'` (a pure literal
