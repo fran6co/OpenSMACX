@@ -1560,7 +1560,7 @@ int Palette::init_cycle(int key, int first, int count, unsigned long interval) {
 #pragma intrinsic(memcpy)
 #endif
 
-// ORIGINAL: 0x005FFB10 ?UNK9@Palette@@QAEHHHHHH@Z 0x005FFB10-0x005FFD7F FILE
+// ORIGINAL: 0x005FFB10 ?UNK9@Palette@@QAEHHHHHH@Z 0x005FFB10-0x005FFD7F FILE BYTE_EXACT
 // symbol    ?fade_to_entry@Palette@@QAEHHHHHH@Z
 // TRIED: flipping the outer if/else polarity to test BufferDirectDraw != nullptr first (matching the disasm's fall-through order literally) moved the divergence from #13 (a lone je/jne polarity swap) to #0 (a different prologue entirely - no `sub esp,0x428`), so the `== 0`-first form below is the better body. Full control flow, field offsets and the interpolation formula (backup*stepsRemaining + target*progressCounter)/a4 were hand-traced from the raw disasm stack-offset arithmetic, not from Ghidra's decompile, which mis-simplifies the backup-buffer pointer trick.
 // working copy - scaffold materialised by --work

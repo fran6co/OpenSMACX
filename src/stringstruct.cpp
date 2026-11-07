@@ -899,7 +899,7 @@ void PathRecord::set_directory(char *directory) {
     }
 }
 
-// ORIGINAL: 0x004C8290 sub_4c8290 0x004C8290-0x004C8348
+// ORIGINAL: 0x004C8290 sub_4c8290 0x004C8290-0x004C8348 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["task:path-record-owner", "Pinned4C8150 initializes0x28 bytes;4C8190 frees1C/24 without clearing or freeing20;4C81C0 calls4C8290 on its receiver;4C8290/83A0 replace owned path/name strings.", "historical source:src/stringstruct.cpp"], "reason": "Recover demonstrated path/directory/name pointer operations as genuine members under a provisional record name; initializer/close identity does not prove a constructor/destructor or historical TU. Preserve original storage and cleanup omissions."}
 // symbol    ?set_path@PathRecord@@QAEXPAD@Z
 void PathRecord::set_path(char *path) {
