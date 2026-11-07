@@ -673,7 +673,7 @@ static inline int cursor_step_dist(int x_point_a, int y_point_a,
 }
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x004D95F0 ?assemble@Console@@QAEXXZ 0x004D95F0-0x004D9970
+// ORIGINAL: 0x004D95F0 ?assemble@Console@@QAEXXZ 0x004D95F0-0x004D9970 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned original entry 004D95F0; retained seed src/recovered/units/004d95f0.cpp", "Native4D9775..4D97D0 filters Chassis[prototype.chassis_id].triad, not chassis ID. Existing PopupWriteCheckState owns9BC06C; receiver faction filters vehicles while global cursor history supplies destinations.", "recovery/tasks/console-scenario-owner-wave.json; native scope expansions retain the original task baseline"], "reason": "Recover the complete Console command into its genuine owner using typed state and existing lifecycle/network APIs. Preserve original spans and retained seed evidence; this binding is not a byte, reference or runtime acceptance claim."}
 void Console::assemble() { // 0x004D95F0
     const int stored_filters = prefs_get("Vehicle Groups", 7, 0);
@@ -1100,7 +1100,7 @@ void Console::road_to(int veh_id, int cursor_mode) {
 
 // Assign an automated order while holding the vehicle's network lock.
 // Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x004D8A70 ?automate@Console@@QAEXHH@Z 0x004D8A70-0x004D8CC9
+// ORIGINAL: 0x004D8A70 ?automate@Console@@QAEXHH@Z 0x004D8A70-0x004D8CC9 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/004d8a70.cpp"], "reason": "Seed 004d8a70 identifies the automation order and extent; typed Veh, prototype, chassis, terrain and NetDaemon owners match its accessed records."}
 void Console::automate(int veh_id, int order) {
     if (VehPrototypes[Vehs[veh_id].proto_id].plan == 9) {
@@ -1208,7 +1208,7 @@ void Console::convoy(int veh_id) {
     NetDaemonNet.unlock_veh();
 }
 
-// ORIGINAL: 0x004D2AC0 ?disband@Console@@QAEXH@Z 0x004D2AC0-0x004D2DDC FILE
+// ORIGINAL: 0x004D2AC0 ?disband@Console@@QAEXH@Z 0x004D2AC0-0x004D2DDC FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"reason":"Recover the disband order through typed Console, vehicle, base, tutorial-window and NetDaemon owners; pinned branches establish editor/network refusal, no-base dialog selection, custom-prototype refunds and queue bookkeeping.","evidence":["image:0x004D2AC0-0x004D2DDC","source:src/veh.cpp:action_destruct","source:src/base.h","source:src/tutwin.h","recovery/tasks/console-owner-coverage.json"]}
 // size      796 bytes
 // prototype void (__thiscall ?disband@Console@@QAEXH@Z)(Console* this, int vehID)
@@ -1487,7 +1487,7 @@ void Console::editor_reset_faction() {
     }
 }
 
-// ORIGINAL: 0x004E1300 ?editor_clear_vehicles@Console@@QAEXXZ 0x004E1300-0x004E137F FILE
+// ORIGINAL: 0x004E1300 ?editor_clear_vehicles@Console@@QAEXXZ 0x004E1300-0x004E137F FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned4E1300..4E137F reads MapArea then MapTiles after auto_undo and before resetting editor globals. Initial JLE and loop-end JL compare signed32-bit tile counts; the loop reloads MapArea.", "Pinned4E1343..4E1366 identifies Map record+8 bit maskedFFFFFFFC, seven copies from bit to+10..+28 bit_visible, and stride2C; bit2 at+C is not changed. map.h declares these members and map_init allocates MapArea*sizeof(Map)."], "reason": "Use the genuine Map allocation and bit/visibility members for the editor reset, preserving original signed count checks and callback/reset/redraw order."}
 // working copy - scaffold materialised by --work
 // size      127 bytes
@@ -2666,7 +2666,7 @@ void Console::editor_strategy() {
 }
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x004DC230 ?editor_rules@Console@@QAEXXZ 0x004DC230-0x004DC515
+// ORIGINAL: 0x004DC230 ?editor_rules@Console@@QAEXXZ 0x004DC230-0x004DC515 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/004dc230.cpp records the original entry and full body/unwind spans; retained seed is not accepted source structure.", "Task console-scenario-owner-wave and its native grants authorize the thirteen owner methods, typed persistent editor state, existing Popup item sorting, and genuine technology-bit storage. Original instructions resolve callee argument roles and field ownership; dual configured compiler trials and host controls are diagnostics, not acceptance."], "reason": "Recover the selected scenario-editor operation in its existing typed Console owner, retaining its original spans, seed provenance and historical obligations."}
 void Console::editor_rules() {
     auto_undo();
@@ -4221,7 +4221,7 @@ finish:
 }
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x004D92D0 ?group@Console@@QAEXH@Z 0x004D92D0-0x004D95E7
+// ORIGINAL: 0x004D92D0 ?group@Console@@QAEXH@Z 0x004D92D0-0x004D95E7 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/004d92d0.cpp: original identity and complete spans", "source:src/console.h: Console owner declarations and layout", "source:src/console.cpp: coupled navigation, selection and lifecycle caller relationships"], "reason": "The original Console operation is expressed by the corresponding real Console owner definition, using its recovered members and source-owned callees rather than the retained seed scaffold."}
 void Console::group(int vehicle_id) {
     const int faction = Vehs[vehicle_id].faction_id;
@@ -4392,7 +4392,7 @@ static const char GiveVehAlienLabel[] = "CANGIVE";
 static const char GiveVehAlienNavalPicture[] = "navun_sm.pcx";
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x004D26A0 ?give_veh@Console@@QAEXH@Z 0x004D26A0-0x004D2ABC
+// ORIGINAL: 0x004D26A0 ?give_veh@Console@@QAEXH@Z 0x004D26A0-0x004D2ABC BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned original 004D26A0; retained seed src/recovered/units/004d26a0.cpp", "Native4D270F observes receiver faction after whose_territory;4D2889/296C reload vehicle prototype after the first parser;4D298F..4D2A28 reload receiver flags and current chassis after the second parser. Retain local action_give versus message2416 and original unlock/cancel paths.", "recovery/tasks/console-scenario-owner-wave.json; native scope decisions preserve the original baseline"], "reason": "Recover the complete Console command in its genuine owner, retaining original spans and seed evidence. Typed state and lifecycle/network APIs replace seed address arithmetic; this source binding is not byte, reference, structure or runtime acceptance."}
 void Console::give_veh(int vehicle_id) { // 0x004D26A0
     if (NetDaemonNet.lock_veh(&vehicle_id, 4, -1, -1, 0) != 0) {
