@@ -5837,7 +5837,7 @@ int __cdecl base_find(int x, int y, int faction_id, int region, int faction_id_2
 
 /*
 Purpose: Check who owns a tile. Optional parameter to get closest base.
-// ORIGINAL: 0x004E3EF0 ?whose_territory@@YAHHHHPAHH@Z 0x004E3EF0-0x004E3F9D
+// ORIGINAL: 0x004E3EF0 ?whose_territory@@YAHHHHPAHH@Z 0x004E3EF0-0x004E3F9D BYTE_EXACT
 // TRIED: hoisting `Map *tile = map_loc(x, y)` before the territory read
 //            (compiler already CSEs it, identical bytes); flattening the
 //            nested owner==faction_id check into an early-return guard
