@@ -1333,7 +1333,7 @@ void __cdecl win_forward_size(HWND hwnd, unsigned int flags, int width, int heig
 void __cdecl win_forward_mouse_move(HWND hwnd, int x, int y, unsigned int keys);
 int __cdecl win_forward_set_cursor(HWND hwnd, void *cursor, unsigned int hit, unsigned int message);
 void __cdecl win_window_moved(HWND hwnd, int x, int y);
-int __cdecl win_window_nc_paint(HWND hwnd);
+void __cdecl win_window_nc_paint(HWND hwnd);
 
 
 // Win message-pump API and state. Original mappings and historical lessons are in win.cpp.

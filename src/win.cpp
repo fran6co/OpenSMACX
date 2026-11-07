@@ -10414,22 +10414,17 @@ void __cdecl win_window_moved(HWND hwnd, int x, int y) {
 // Superseded seed deleted; binding references retain historical provenance.
 // ORIGINAL: 0x005F13B0 sub_5f13b0 0x005F13B0-0x005F141B
 // RECOVERY_BINDING: v1 {"evidence": ["task:win-message-adapter-owner-extension original identity/spans, claims and useful findings retained from src/unrecovered/005f13b0.cpp", "pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf:0x5f13b0 full native body and API/vcall sequence.", "source:src/win.h actual slots16,70,71,74,85; original helper names and caller/registration routes remain unknown."], "reason": "Recover the complete Win userdata adapter with existing typed virtual methods and Windows APIs; preserve native payload ordering, null guards and paint lifetime. Anonymous generated seed return declarations are not evidence of an original integer contract for void callbacks."}
-// symbol    ?win_window_nc_paint@@YAHPAUHWND__@@@Z
+// symbol    ?win_window_nc_paint@@YAXPAUHWND__@@@Z
 // kind      game
-// TRIED: zero-arg contract (disasm reads one stack arg -> HWND); reusing the auto-generated nullary `VCall::slot074` (own `PaintVCall` class instead, real signature). Register allocation in the prologue still MISMATCHes.
-int __cdecl win_window_nc_paint(HWND hwnd) {
-  LONG result = GetWindowLongA(hwnd, GWL_USERDATA);
-  Win *const owner = reinterpret_cast<Win *>(result);
-  if (owner != 0) {
-    PAINTSTRUCT paint;
-    result = reinterpret_cast<LONG>(BeginPaint(hwnd, &paint));
-    if (result != 0) {
-      RECT painted = paint.rcPaint;
-      owner->on_nc_paint(&painted, -1);
-      result = EndPaint(hwnd, &paint);
-    }
-  }
-  return result;
+// A void callback: the image's early exits leave EAX unset.
+void __cdecl win_window_nc_paint(HWND hwnd) {
+  Win *owner = reinterpret_cast<Win *>(GetWindowLongA(hwnd, GWL_USERDATA));
+  if (owner == 0) return;
+  PAINTSTRUCT paint;
+  if (BeginPaint(hwnd, &paint) == 0) return;
+  RECT painted = paint.rcPaint;
+  owner->on_nc_paint(&painted, -1);
+  EndPaint(hwnd, &paint);
 }
 
 // Superseded seed removed; complete operation now belongs to Win.
