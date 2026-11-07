@@ -916,21 +916,16 @@ void BaseWin::draw_support() {
     const int width = mapWin_.pixel_width();
     const int height = mapWin_.pixel_height();
     mapWin_.field_1DD70_ = 0x200402;
-    int zoom = 2;
-    int width_step = 900;
-    int height_step = 450;
-    do {
+    int zoom;
+    for (zoom = 2; zoom > -15; --zoom) {
         const int horizontal = MapWinCaptionScale > 0
-            ? MapWinCaptionScale * 50 / MapWinCaptionDivisor : width_step / 16;
+            ? MapWinCaptionScale * 50 / MapWinCaptionDivisor : (zoom + 16) * 50 / 16;
         if ((MapLongitudeBounds / 2) * horizontal <= width) {
             const int vertical = MapWinCaptionScale > 0
-                ? MapWinCaptionScale * 25 / MapWinCaptionDivisor : height_step / 16;
+                ? MapWinCaptionScale * 25 / MapWinCaptionDivisor : (zoom + 16) * 25 / 16;
             if ((MapLatitudeBounds / 2) * vertical <= height) break;
         }
-        --zoom;
-        width_step -= 50;
-        height_step -= 25;
-    } while (width_step > 50);
+    }
     mapWin_.zoom_offset_ = zoom;
     mapWin_.center_x_ = BaseCurrent->x;
     mapWin_.center_y_ = BaseCurrent->y;
@@ -1128,46 +1123,6 @@ void BaseWin::staple_the_bastards() {
     NetDaemonNet.unlock_base(BaseIDCurrentSelected);
 }
 
-void BaseWin::update_drag_cursor(int spot_type, int spot_pos, int x, int y, int large) {
-    const int previous = field_40B54_;
-    if (field_40B4C_ != 0 && field_40B4C_ != 1) return;
-    if (previous < 0) return;
-    if (field_40B4C_ == spot_type) {
-        if (field_40B4C_ == 0) {
-            if (farm_get(field_40B44_, field_40B48_) >= 0) {
-                const int current = farm_get(x, y);
-                field_40B54_ = (farm_get(field_40B44_, field_40B48_) != current) + 1;
-            }
-        } else {
-            field_40B54_ = (spot_pos != field_40B50_) + 1;
-        }
-    } else field_40B54_ = 2;
-    if (field_40B54_ <= 0 || previous != 0) return;
-    int cursor = 1;
-    if (field_40B4C_ == 1 && field_40B50_ >= 0) {
-        const int specialist = field_40B50_;
-        cursor = (specialist < 16
-            ? (BaseCurrent->spec[specialist >> 3] >> ((specialist & 7) * 4)) & 15
-            : best_specialist()) + 4;
-        if (large && cursor < 4) cursor = 1;
-    }
-    const bool alien = ExpansionEnabled && (Players[BaseCurrent->faction_id_current].rule_flags & 0x80);
-    Sprite *sprite;
-    if (cursor < 4) {
-        Sprite *citizens = large
-            ? (alien ? g_AL_CITIZEN_LG_CURSOR_SPRITES : g_CITIZEN_LG_CURSOR_SPRITES + 4)
-            : (alien ? g_AL_CITIZEN_SM_CURSOR_SPRITES : g_CITIZEN_SM_CURSOR_SPRITES + 4);
-        sprite = citizens + cursor;
-    } else {
-        Sprite *specialists = large
-            ? (alien ? g_AL_SPECIALIST_LG_CURSOR_SPRITES : g_SPECIALIST_LG_CURSOR_SPRITES)
-            : (alien ? g_AL_SPECIALIST_SM_CURSOR_SPRITES : g_SPECIALIST_SM_CURSOR_SPRITES);
-        sprite = specialists + cursor - 4;
-    }
-    set_cursor(sprite, large ? 19 : 7, large ? 24 : 9);
-    MainInterfaceGlobal.set_cursor(sprite, large ? 19 : 7, large ? 24 : 9);
-}
-
 // ORIGINAL: 0x0041B1F0 ?on_mouse_move@BaseWin@@QAEXHH@Z 0x0041B1F0-0x0041B491
 // RECOVERY_BINDING: v1 {"evidence": ["git:a538e0a3:src/recovered/units/0041b1f0.cpp", "source:src/basewin.h", "image:original instruction and dispatch evidence for the BaseWin owner"], "reason": "Recover this original base-window operation through the real BaseWin owner, existing typed members and source-owned shared dependencies; catalogue naming and original intervals remain distinct from current compiler symbols."}
 // symbol    ?on_mouse_move@BaseWin@@UAEXHH@Z
@@ -1184,7 +1139,41 @@ void BaseWin::on_mouse_move(int x, int y) {
     if ((field_40B4C_ != 0 && field_40B4C_ != 1) || field_40B54_ < 0) return;
     int position, type;
     if (spot2_.check(x, y, &position, &type) < 0) return;
-    update_drag_cursor(type, position, x, y, 0);
+    // The drag-cursor update is written out here and in on_iface_mouse_move:
+    // the image addresses it through each caller's own frame and this.
+    const int previous = field_40B54_;
+    int cursor = 1;
+    if (field_40B4C_ != type) {
+        field_40B54_ = 2;
+    } else if (field_40B4C_ == 0 && farm_get(field_40B44_, field_40B48_) >= 0) {
+        const int current = farm_get(x, y);
+        field_40B54_ = (farm_get(field_40B44_, field_40B48_) != current) + 1;
+    } else if (field_40B4C_ == 1) {
+        field_40B54_ = (position != field_40B50_) + 1;
+    }
+    if (field_40B54_ <= 0 || previous != 0) return;
+    if (field_40B4C_ == 1) {
+        const int specialist = field_40B50_;
+        if (specialist >= 0) {
+            if (specialist >= 16) {
+                cursor = best_specialist() + 4;
+            } else {
+                cursor = ((static_cast<int>(BaseCurrent->spec[specialist >> 3]) >> ((specialist & 7) * 4)) & 15) + 4;
+            }
+        } else {
+            cursor = 1;
+        }
+    }
+    Sprite *sprite;
+    if (ExpansionEnabled && (Players[BaseCurrent->faction_id_current].rule_flags & 0x80)) {
+        sprite = cursor >= 4 ? &g_AL_SPECIALIST_SM_CURSOR_SPRITES[cursor - 4]
+                             : &g_AL_CITIZEN_SM_CURSOR_SPRITES[cursor];
+    } else {
+        sprite = cursor >= 4 ? &g_SPECIALIST_SM_CURSOR_SPRITES[cursor - 4]
+                             : &g_CITIZEN_SM_CURSOR_SPRITES[cursor + 4];
+    }
+    set_cursor(sprite, 7, 9);
+    MainInterfaceGlobal.set_cursor(sprite, 7, 9);
 }
 
 void BaseWin::show_panel_help(int x, int y, int label_offset, Win *window) {
@@ -1374,23 +1363,20 @@ void BaseWin::psych_row(int x, int y, int width, int sprite_width,
 // RECOVERY_BINDING: v1 {"evidence": ["image:0x00408B20-0x00408E93 complete body and 0x00651579-0x0065158B Font cleanup funclet.", "image:0x00408B51 addresses panel RECT at BaseWin+0x40B8C; 0x00408B70 addresses inherited Buffer+0x444; 0x00408B4B saves its clip at BaseWin+0x464.", "image:0x00408BBF reads Sprite height+0x1C and 0x00408E21 reads width+0x18. 0x00408E32-0x00408E35 passes half-panel width minus4, not y.", "image:0x00408B20-0x00408E93 sets caption overrides before set_font, resets them to minus1, and restores clip before local Font destruction. It does not restore the borrowed font pointer; subsequent caller lifetime closure remains unproved."], "reason": "Display the shared five psych-stage histories with a genuine local Font and inherited Buffer, retaining label decisions, duplicate-stage skipping and original restoration/lifetime behavior."}
 void BaseWin::draw_psych() {
     Font font;
-    Buffer *const canvas = this;
-    RECT saved_clip = canvas->current_clip();
-    canvas->set_clip(&rect1_);
+    RECT saved_clip = Buffer::current_clip();
+    Buffer::set_clip(&rect1_);
     GraphicWin::fill(0);
     font.init(DefaultFontFace, 12, 1);
 
     const int faction = BaseCurrent->faction_id_current;
-    const int left = rect1_.left;
-    const int top = rect1_.top;
-    const int right = rect1_.right;
-    const int panel_width = psych_display_sub(right, left);
-    const int row_pitch = psych_display_add(g_CITIZEN_SM_CURSOR_SPRITES[0].height(), 1);
+    RECT panel = rect1_;
+    const int panel_width = panel.right - panel.left;
+    const int row_pitch = g_CITIZEN_SM_CURSOR_SPRITES[0].height() + 1;
     MapWinCaptionScale = 30;
     MapWinCaptionDivisor = 38;
-    canvas->set_font(&font, 0, 0, 0);
-    const int text_offset = psych_display_sub(row_pitch / 2, font.pixel_height() / 2);
-    int y = psych_display_add(top, 2);
+    Buffer::set_font(&font, 0, 0, 0);
+    const int text_offset = row_pitch / 2 - font.pixel_height() / 2;
+    int y = panel.top + 2;
     int stage = 0;
     for (int row = 0; row < 5; ++row) {
         if (stage != 0) {
@@ -1403,48 +1389,49 @@ void BaseWin::draw_psych() {
         }
         if (stage < 5) {
             StringTemp[0] = 0;
-            const int half_width = psych_display_sub(panel_width / 2, 4);
-            const int caption_x = psych_display_sub(psych_display_sub(right, half_width), 2);
-            int label;
+            const int half_width = panel_width / 2 - 4;
+            const int caption_x = panel.right - half_width - 2;
             switch (stage) {
-            case 0: {
-                const Base *const base = BaseCurrent;
-                if (base->assimilation_turns_left != 0 && base->faction_id_former != base->faction_id_current)
-                    label = 970;
-                else label = base->nerve_staple_turns_left != 0 ? 971 : 322;
+            case 0:
+                if (BaseCurrent->assimilation_turns_left > 0
+                    && BaseCurrent->faction_id_former != BaseCurrent->faction_id_current) {
+                    strcat(StringTemp, label_get(970));
+                } else if (BaseCurrent->nerve_staple_turns_left != 0) {
+                    strcat(StringTemp, label_get(971));
+                } else {
+                    strcat(StringTemp, label_get(322));
+                }
+                break;
+            case 1:
+                strcat(StringTemp, label_get(323));
+                break;
+            case 2:
+                strcat(StringTemp, label_get(324));
+                break;
+            case 3:
+                strcat(StringTemp, label_get(325
+                    + (PlayersData[faction].soc_effect_pending.values_[SocialEffect::POLICE]
+                        + has_fac_built(FAC_BROOD_PIT, BaseIDCurrentSelected) * 2 <= -2)));
+                break;
+            case 4:
+                strcat(StringTemp, label_get(327));
                 break;
             }
-            case 1: label = 323; break;
-            case 2: label = 324; break;
-            case 3: {
-                const int selected = BaseIDCurrentSelected;
-                int byte_index;
-                int mask;
-                bitmask(FAC_BROOD_PIT, &byte_index, &mask);
-                const bool brood_pit = (Bases[selected].facilities_built[byte_index]
-                    & static_cast<unsigned char>(mask)) != 0;
-                const int police = psych_display_add(PlayersData[faction].soc_effect_pending.values_[SocialEffect::POLICE],
-                    brood_pit ? 2 : 0);
-                label = police <= -2 ? 326 : 325;
-                break;
+            Buffer::set_text_color(TextColourTable[114], TextColourTable[115], 1, 1);
+            char *const text = StringTemp;
+            if (text != 0) {
+                Buffer::write_cent_l(text, caption_x, y + text_offset - 2, half_width,
+                    static_cast<int>(strlen(text)));
             }
-            default: label = 327; break;
-            }
-            strcat(StringTemp, label_get(label));
-            canvas->set_text_color(TextColourTable[114], TextColourTable[115], 1, 1);
-            const int text_y = psych_display_sub(psych_display_add(text_offset, y), 2);
-            canvas->write_cent_l(StringTemp, caption_x, text_y, half_width,
-                static_cast<int>(strlen(StringTemp)));
-            psych_row(psych_display_add(left, 2), y, half_width,
-                psych_display_add(g_CITIZEN_SM_CURSOR_SPRITES[0].width(), 1),
+            psych_row(panel.left + 2, y, half_width, g_CITIZEN_SM_CURSOR_SPRITES[0].width() + 1,
                 BasePsychTalents[stage], BasePsychDrones[stage], BasePsychSuperDrones[stage]);
         }
-        y = psych_display_add(y, row_pitch);
+        y += row_pitch;
         ++stage;
     }
     MapWinCaptionScale = -1;
     MapWinCaptionDivisor = -1;
-    canvas->set_clip(&saved_clip);
+    Buffer::set_clip(&saved_clip);
 }
 
 namespace {
@@ -4856,23 +4843,54 @@ void BaseWin::on_iface_mouse_move(int a1, int a2) {
         draw_production(1);
         return;
     }
-    if (field_40B54_ >= 0) {
-        update_drag_cursor(type, position, a1, a2, 1);
-        return;
-    }
-    if (type == 6 || type == 7) {
-        if (field_40B00_ == position) return;
-        field_40B00_ = position;
-        field_40B04_ = type == 7;
+    if (field_40B54_ < 0) {
+        if (type == 6 || type == 7) {
+            if (field_40B00_ == position) return;
+            field_40B00_ = position;
+            field_40B04_ = type == 7;
+            compute_selected_base();
+            draw_flash(1);
+            return;
+        }
+        if (field_40B00_ < 0) return;
+        field_40B00_ = -1;
+        field_40B04_ = 0;
         compute_selected_base();
-        draw_flash(1);
-        return;
+        draw_production(1);
+    } else if (field_40B4C_ == 0 || field_40B4C_ == 1) {
+        const int previous = field_40B54_;
+        int cursor = 1;
+        if (field_40B4C_ != type) {
+            field_40B54_ = 2;
+        } else if (field_40B4C_ == 0 && farm_get(field_40B44_, field_40B48_) >= 0) {
+            const int current = farm_get(a1, a2);
+            field_40B54_ = (farm_get(field_40B44_, field_40B48_) != current) + 1;
+        } else if (field_40B4C_ == 1) {
+            field_40B54_ = (position != field_40B50_) + 1;
+        }
+        if (field_40B54_ <= 0 || previous != 0) return;
+        if (field_40B4C_ == 1) {
+            const int specialist = field_40B50_;
+            if (specialist >= 0) {
+                if (specialist >= 16) {
+                    cursor = best_specialist() + 4;
+                } else {
+                    cursor = ((static_cast<int>(BaseCurrent->spec[specialist >> 3]) >> ((specialist & 7) * 4)) & 15) + 4;
+                }
+                if (cursor < 4) cursor = 1;
+            }
+        }
+        Sprite *sprite;
+        if (ExpansionEnabled && (Players[BaseCurrent->faction_id_current].rule_flags & 0x80)) {
+            sprite = cursor >= 4 ? &g_AL_SPECIALIST_LG_CURSOR_SPRITES[cursor - 4]
+                                 : &g_AL_CITIZEN_LG_CURSOR_SPRITES[cursor];
+        } else {
+            sprite = cursor >= 4 ? &g_SPECIALIST_LG_CURSOR_SPRITES[cursor - 4]
+                                 : &g_CITIZEN_LG_CURSOR_SPRITES[cursor + 4];
+        }
+        set_cursor(sprite, 19, 24);
+        MainInterfaceGlobal.set_cursor(sprite, 19, 24);
     }
-    if (field_40B00_ < 0) return;
-    field_40B00_ = -1;
-    field_40B04_ = 0;
-    compute_selected_base();
-    draw_production(1);
 }
 
 /*

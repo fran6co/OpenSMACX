@@ -1144,7 +1144,6 @@ void SocialWin::draw_labs_alloc() {
 // ORIGINAL: 0x004AF8C0 ?draw_faction_basal@SocialWin@@QAEXXZ 0x004AF8C0-0x004AFB5D
 // RECOVERY_BINDING: v1 {"evidence": ["git:seed:src/recovered/units/004af8c0.cpp; source:src/socialwin.h:tooltipFactionPower_,effectIcons_,font1_; source:src/faction.h:Player.noun_faction,noun_gender,is_noun_plural,PlayerData.soc_effect_base; image:0x004AF8C0-0x004AFB5D"], "reason": "Recover the faction-power panel on SocialWin typed rectangle, inherited Buffer, effect sprites, and Player records, including the noun-format defaults consumed by faction text rendering."}
 void SocialWin::draw_faction_basal() {
-    Buffer *buffer = static_cast<Buffer *>(static_cast<GraphicWin *>(this));
     RECT panel = tooltipFactionPower_;
     Buffer::set_clip(&panel);
     Buffer::box_sprite(&panel, &InterfaceBoxStyles[3]);
@@ -1162,35 +1161,35 @@ void SocialWin::draw_faction_basal() {
     CharUpperA(StringTemp);
     Buffer::set_font(&font1_, 0, 0, 0);
     Buffer::set_text_color(0x9f, -1, 1, 1);
-    Buffer::write_cent_l(StringTemp, &title, strlen(StringTemp));
+    char *const text = StringTemp;
+    if (text != 0) {
+        Buffer::write_cent_l(text, &title, strlen(text));
+    }
 
     title = panel;
     title.top = title.bottom - 0x14;
     Buffer::box_sprite(&title, &InterfaceBoxStyles[6]);
-    const SocialEffect &effects = PlayersData[factionID_].soc_effect_base;
+    panel = title;
     int total = 0;
     for (int effect = 0; effect < MaxSocialEffectNum; ++effect) {
         if (effect != 3) {
-            const int value = social_effect_value(effects, effect);
+            const int value = PlayersData[factionID_].soc_effect_base.values_[effect];
             total += value < 0 ? -value : value;
         }
     }
 
     if (total != 0) {
+        // BUG IN THE ORIGINAL: the total skips effect 3, the drawing loop
+        // does not (it reuses row 2 for it).
         const int step = effectIcons_[0].width() + 2;
         int x = (title.right - step * total - title.left) / 2 + title.left;
-        int y = (title.bottom - effectIcons_[0].height() - title.top) / 2 + title.top;
+        const int y = (title.bottom - effectIcons_[0].height() - title.top) / 2 + title.top;
         for (int effect = 0; effect < MaxSocialEffectNum; ++effect) {
-            if (effect == 3) {
-                continue;
-            }
-            const int value = social_effect_value(effects, effect);
-            const int count = value < 0 ? -value : value;
-            const int row = effect > 2 ? effect - 1 : effect;
-            const int sprite_index = 6 + row * 9 + (value > 0 ? 2 : 1);
-            for (int icon = 0; icon < count; ++icon) {
-                Sprite &sprite = effectIcons_[sprite_index];
-                sprite.draw(buffer, sprite.transparent_index(), x, y, 1, 1);
+            const int value = PlayersData[factionID_].soc_effect_base.values_[effect];
+            for (int icon = 0; icon < (value < 0 ? -value : value); ++icon) {
+                effectIcons_[6 + (effect < 3 ? effect : effect - 1) * 9 + (value >= 1) + 1].draw(
+                    this, effectIcons_[6 + (effect < 3 ? effect : effect - 1) * 9 + (value >= 1) + 1]
+                        .transparent_index(), x, y, 1, 1);
                 x += step;
             }
         }
@@ -1351,8 +1350,7 @@ void __cdecl energy_compute(int faction_id, int recompute_bases) {
     int discount_carry = 0;
     for (int base_id = 0; base_id < GameDataStateStorage.fields_.base_current_count_; ++base_id) {
         EnergyBaseMaintenance[base_id] = 0;
-        Base &base = Bases[base_id];
-        if (base.faction_id_current != faction_id) continue;
+        if (Bases[base_id].faction_id_current != faction_id) continue;
         if (recompute_bases) {
             set_base(base_id);
             base_compute(1);
@@ -1360,14 +1358,12 @@ void __cdecl energy_compute(int faction_id, int recompute_bases) {
 
         int maintenance = 0;
         for (int facility = 0; facility < 70; ++facility) {
-            if (facility < 65 && has_fac_built(facility, base_id)) {
+            if (has_fac(facility, base_id, 0)) {
                 ++EnergyFacilityCounts[facility];
                 maintenance += fac_maint(facility, faction_id);
             }
         }
-        if (GameDataStateStorage.fields_.secret_project_.self_aware_colony() >= 0 &&
-            GameDataStateStorage.fields_.secret_project_.self_aware_colony() < GameDataStateStorage.fields_.base_current_count_ &&
-            Bases[GameDataStateStorage.fields_.secret_project_.self_aware_colony()].faction_id_current == faction_id) {
+        if (has_project(SP_SELF_AWARE_COLONY, faction_id)) {
             // The image carries the odd half-maintenance remainder across
             // bases; keep its order rather than rounding each base alone.
             if (discount_carry) ++maintenance;
@@ -1376,24 +1372,23 @@ void __cdecl energy_compute(int faction_id, int recompute_bases) {
         }
 
         EnergyBaseMaintenance[base_id] = maintenance;
-        EnergyLabsTotal += base.labs_total;
-        EnergyEconomyTotal += base.economy_total;
-        NetIncomeGlobal += base.economy_total - maintenance;
+        EnergyLabsTotal += Bases[base_id].labs_total;
+        NetIncomeGlobal += Bases[base_id].economy_total - maintenance;
         EnergyMaintenanceTotal += maintenance;
+        EnergyEconomyTotal += Bases[base_id].economy_total;
     }
 
     const int research_cost = tech_rate(faction_id);
-    int research_level = PlayersData[faction_id].soc_effect_pending.values_[SocialEffect::RESEARCH];
-    if (research_level < -5) research_level = -5;
-    if (research_level > 5) research_level = 5;
-    EnergyLabsTotal = (research_level + 10) * EnergyLabsTotal * 10;
-    BreakthroughTurnsGlobal = EnergyLabsTotal <= 0 ? 9999
-        : (EnergyLabsTotal - 1 + research_cost * 100) / EnergyLabsTotal;
+    EnergyLabsTotal = (range(PlayersData[faction_id].soc_effect_pending.values_[SocialEffect::RESEARCH], -5, 5)
+        + 10) * EnergyLabsTotal * 10;
+    if (EnergyLabsTotal > 0) {
+        BreakthroughTurnsGlobal = (EnergyLabsTotal - 1 + research_cost * 100) / EnergyLabsTotal;
+    } else {
+        BreakthroughTurnsGlobal = 9999;
+    }
 
-    const unsigned int alive = (GameDataStateStorage.fields_.lock_masks_.enable_mask_ >> 8) & 0xffu;
     for (int other = 1; other < 8; ++other) {
-        if (other == faction_id ||
-            !(alive & (1u << other)) || !(alive & (1u << faction_id)) ||
+        if (other == faction_id || !is_alive(other) || !is_alive(faction_id) ||
             (PlayersData[faction_id].diplo_treaties[other] & 0x10u)) continue;
 
         if (PlayersData[faction_id].loan_balance[other] &&
