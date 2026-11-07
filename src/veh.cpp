@@ -5218,7 +5218,7 @@ void __cdecl spot_stack(int veh_id, int faction_id) {
 Purpose: Reveal whatever occupies the specified location - the tile itself, and
          then either the base standing on it or the whole unit stack - to the
          specified faction.
-// ORIGINAL: 0x005B5AD0 ?spot_loc@@YAXHHH@Z 0x005B5AD0-0x005B5E05
+// ORIGINAL: 0x005B5AD0 ?spot_loc@@YAXHHH@Z 0x005B5AD0-0x005B5E05 BYTE_EXACT
 // LEVER: once spot_base/spot_stack call spot_tile/veh_top instead of
 //   hand copies, /Ob2 inlines all three here as the image does (0.51 ->
 //   0.998). Left: the inlined veh_top climb swaps eax/ecx for top and the
@@ -5357,7 +5357,7 @@ static inline int wake_stack_base_owner(Map *tile) {
 
 /*
 Purpose: Wake up units meeting specific conditions from the stack where specified unit is located.
-// ORIGINAL: 0x005B6060 ?wake_stack@@YAXH@Z 0x005B6060-0x005B619A
+// ORIGINAL: 0x005B6060 ?wake_stack@@YAXH@Z 0x005B6060-0x005B619A BYTE_EXACT
 // LEVER: veh_top() is called at only 2 real sites in the image (see its own
 //        comment on veh_top); here it is inlined, matching veh_at above. The
 //        climb's induction variable is int16_t (prev_veh_id_stack's own type),
@@ -5562,7 +5562,7 @@ void __cdecl stack_sort_2(int veh_id) {
 
 /*
 Purpose: Refresh and fix the stack. Used by DirectPlay multiplayer only.
-// ORIGINAL: 0x005B8E10 ?stack_fix@@YAHH@Z 0x005B8E10-0x005B8ED9
+// ORIGINAL: 0x005B8E10 ?stack_fix@@YAHH@Z 0x005B8E10-0x005B8ED9 BYTE_EXACT
 // TRIED: frame pointer - the image keeps ebp (a `push ecx` local-space idiom) and duplicate non-merged epilogues; no flag set in the harness reproduces both at once here - /Oy- restores ebp but the two early returns cross-jump to one shared tail instead of duplicating, unlike the image. Plateau at 0.758 (/O2 /Gy /GR- /GX).
 // TRIED: is called at only 2 real sites in the image (see its own comment on veh_top); here it is inlined, matching veh_at above.
 // TRIED: combined `if (a || b || c) return veh_id;` compiled to one merged block; the image duplicates the epilogue three times (three separate early returns, each its own `jge`). Splitting into three sequential `if`s took similarity 0.627 -> 0.758 (best flag set has 0 raw agree but is the closest shape - see BUG note below for the loop, which is the bulk of the remaining gap).
@@ -6305,7 +6305,7 @@ void __cdecl veh_clear(int veh_id, int proto_id, int faction_id) {
 /*
 Purpose: Calculate a unit's morale. TODO: Determine if 2nd param is a toggle for display vs actual
          morale.
-// ORIGINAL: 0x005C0E40 ?morale_veh@@YAHHHH@Z 0x005C0E40-0x005C1143
+// ORIGINAL: 0x005C0E40 ?morale_veh@@YAHHHH@Z 0x005C0E40-0x005C1143 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["pinned:5C10DF-5C1100 checks riot flag, faction/home base and morale exemption", "pinned:5C1101-5C1112 decrements/clamps modifier0..6;5C1114-5C1142 then adds vehicle morale and clamps total0..6"], "reason": "Restore the original drone-riot modifier clamp before adding stored vehicle morale, retaining the separate final clamp. Noneligible and morale-exempt paths do not gain this intermediate clamp; complete matching and runtime remain obligations."}
 // TRIED: call_diff FEWER (2 vs image's 4: morale_alien, has_tech, and
 //        `bitmask` TWICE) - the two `has_fac_built(FAC_CHILDREN_CRECHE/
@@ -7589,7 +7589,7 @@ static inline int kill_veh_cargo(int veh_id) {
 
 /*
 Purpose: Kill a vehicle, or strip it down to a transport's cargo first.
-// ORIGINAL: 0x005C0B00 ?kill@@YAXH@Z 0x005C0B00-0x005C0CB0
+// ORIGINAL: 0x005C0B00 ?kill@@YAXH@Z 0x005C0B00-0x005C0CB0 BYTE_EXACT
 // size      432 bytes
 // prototype void (__cdecl ?kill@@YAXH@Z)(int vehID)
 // callers   25   call targets   9
@@ -12539,7 +12539,7 @@ int __cdecl veh_init(int prototype, int faction, int x, int y) {
     return vehicle_id;
 }
 
-// ORIGINAL: 0x0057CFA0 ?study_artifact@@YAHH@Z 0x0057CFA0-0x0057D1E8
+// ORIGINAL: 0x0057CFA0 ?study_artifact@@YAHH@Z 0x0057CFA0-0x0057D1E8 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"reason":"Consume the actual vehicle after snapshotting its location/faction, preserve the translator-base bypass and artifact link state, then choose eligible technology through genuine faction/Technology owners. No byte/reference or runtime claim is granted.","evidence":["git:0de05de6:src/unrecovered/0057cfa0.cpp","image:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf","recovery/tasks/scenario-artifact-unity-owner-coverage.json","Original full span and native physical COFF emitted symbol ?study_artifact@@YAHH@Z; existing source owns all referenced storage and services."]}
 // TRIED: direct pointer-cast field reads/multiply-based offsets instead of the lea-chain scaling; diverges at instr #3 (prologue push/save order)
 // Exact: rewritten from the image (direct Vehs/Bases indexing, flags ternary,
@@ -23605,7 +23605,7 @@ Purpose: Test whether one ability is legal for a chassis/weapon/armor
          ExpansionEnabled, and the remaining flags gate psi ratings and
          single-mode chassis.
 
-// ORIGINAL: 0x00584B50 ?abil_cond@@YAHHHHH@Z 0x00584B50-0x00584CFF FILE
+// ORIGINAL: 0x00584B50 ?abil_cond@@YAHHHHH@Z 0x00584B50-0x00584CFF FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence":["src/veh.h owns the declared Ability, Chassis, Weapon, and Armor record arrays and their field layouts consumed by this body.","designwin.cpp is the existing caller and includes veh.h; the proposal centralizes its declaration in veh.h instead of retaining a caller-local prototype.","All original ability-bit tests, expansion gates, signed ratings, and mode/speed branches are moved as written; no safety or mask normalization is added."],"reason":"Move the existing cdecl ability eligibility routine beside its actual vehicle-record owners and publish its single header declaration; do not alter its historical masks or branch order."}
 // TRIED: extern-array field access for the a1*7 flags table and a2*0x90/a3*0x10 lookups; diverges at #5 (prologue register order), not the field math
 // size      431 bytes
