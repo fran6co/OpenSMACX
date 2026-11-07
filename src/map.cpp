@@ -210,16 +210,8 @@ int __cdecl base_territory(int faction_id, int x, int y) {
 /*
 Purpose: For the specified tile, calculate the quality of the terrain.
 // ORIGINAL: 0x004ECB90 ?crappy@@YAHHH@Z 0x004ECB90-0x004ECBE1
-// TRIED (2026-09-03): the two tile reads as `uint8_t` locals (the image's
-//            `and dl,0x18` / `and al,0xc0` are BYTE forms, and a `uint32_t`
-//            local turns them into dword `and edx,0x18` / `and ecx,0xc0`) -
-//            kept, though the agreeing count does not move. Also measured:
-//            `int` poor_quality, both reads up front, `register`, explicit
-//            `poor_quality = poor_quality + 1`, and binding `poor_quality`
-//            from the first comparison - all 4/32 or worse. The image holds
-//            `poor_quality` in ESI (`push esi` in the prologue) with the
-//            rainfall byte in dl and the rocky byte in al; this tree keeps
-//            it in eax and cannot be pushed onto the callee-saved register.
+// LEVER: every test re-reads map_loc() (VC6 CSEs the pointer), rocky as
+//         `& ~0x3F` (byte and, dword cmp), rainfall cast to uint8_t.
 // size      81 bytes
 // prototype int (__cdecl ?crappy@@YAHHH@Z)(int xCoord, int yCoord)
 // callers   0   call targets   0
@@ -230,15 +222,15 @@ Return Value: Quality of terrain, lower is better (0-2)
 Status: Complete
 */
 int __cdecl crappy(int x, int y) {
-    uint32_t poor_quality = 0;
-    uint32_t rainfall = climate_at(x, y);
-    if (rainfall == RAINFALL_ARID) {
+    int poor_quality = 0;
+    if (!(map_loc(x, y)->climate & (RAINFALL_RAINY | RAINFALL_MOIST))) {
         poor_quality = 1; // neither moist or rainy
     }
-    uint32_t rocky = rocky_at(x, y);
-    if (rocky == TERRAIN_BIT_ROCKY) {
+    if ((map_loc(x, y)->val3 & ~0x3F) == TERRAIN_BIT_ROCKY) {
         poor_quality++; // rocky
-    } else if (rocky == ROCKINESS_FLAT && rainfall < RAINFALL_RAINY) {
+    }
+    if ((map_loc(x, y)->val3 & ~0x3F) == ROCKINESS_FLAT
+        && (uint8_t)(map_loc(x, y)->climate & (RAINFALL_RAINY | RAINFALL_MOIST)) < RAINFALL_RAINY) {
         poor_quality++; // flat, moist or arid
     }
     return poor_quality;
@@ -1305,6 +1297,9 @@ Status: Complete
 TRIED: wrap_map_x in both loops, base_who, and the shift forms of the rocky and
 altitude tests make the shape exact apart from the first loop's x_radius register
 (edi in the image) and its flat-map block order. has_tech stays a real call.
+LEVER: the first loop's wrap as a flat-first ternary gives the image's block order
+(MNEMONIC_ONLY 240/242). Left: the reload order of faction/y/x before the last
+whose_territory call (image ebx, esi, edi).
 
 Three questions in order, and every one of them can answer no on its own.
 
@@ -1368,7 +1363,10 @@ int __cdecl good_sensor(int faction_id, int x, int y) {
     }
     int reasons = 0;
     for (int i = 0; i < 25; i++) {
-        int x_radius = wrap_map_x(x + RadiusOffsetX[i]);
+        int x_raw = x + RadiusOffsetX[i];
+        int x_radius = (MapIsFlat & 1) ? x_raw
+            : (x_raw < 0 ? x_raw + MapLongitudeBounds
+               : (x_raw >= (int)MapLongitudeBounds ? x_raw - MapLongitudeBounds : x_raw));
         int y_radius = y + RadiusOffsetY[i];
         if (!on_map(x_radius, y_radius)) {
             continue;

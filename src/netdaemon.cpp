@@ -1130,6 +1130,10 @@ void NetDaemon::send_rules() {
 // ORIGINAL: 0x0052F8E0 ?game_checksum@NetDaemon@@QAEXPAH@Z 0x0052F8E0-0x0053031E FILE
 // RECOVERY_BINDING: v1 {"evidence":["pinned:0x0052F8E0..0x0053031E and sole mapped caller 0x0051E760..0x0051F0A7", "src/net_checksum_report.h: observed 47-word output groups and offsets; 21-word common prefix, conditional 26-word diagnostic suffix", "The mapped caller leaves the report uninitialized, copies only its 0x54-byte prefix, and reads the diagnostic suffix even for the original type-4/debug-off path; preserve that behavior."],"reason":"Give the checksum producer and its mapped consumer a genuine typed output report while retaining the original function span, traversal and conditional initialization behavior; this is an observed output contract, not a recovered original type name or allocation claim."}
 // TRIED: full instruction-order transcription of all ~150 checksum() calls (verified offsets/strides/seed-chaining against raw disasm, not Ghidra scaling); diverges at insn #53, likely register-alloc (lea vs mov) in the bit_count loop or header prologue, not logic.
+// LEVER: one walking output cursor, indexed Vehs/Bases loops, counters
+//        zeroed before their count tests and one shared map/faction counter
+//        reach 882/886. Left: the image ends with `xor eax, eax`, so the
+//        original returns int (0); the header declares void.
 // working copy - scaffold materialised by --work
 // symbol    ?game_checksum@NetDaemon@@QAEXPAUNetChecksumReport@@@Z
 // size      2622 bytes
@@ -1140,7 +1144,10 @@ void NetDaemon::send_rules() {
 // calls     0x0050BA30 0x00539090
 
 void NetDaemon::game_checksum(NetChecksumReport *results) {
+    // The image walks one output cursor through the report's dwords.
+    int *out = reinterpret_cast<int *>(results);
     unsigned char cs;
+    int i; // one slot: the map walk, then the vehicle faction loop
 
     cs = checksum((char *)&GameDataStateStorage.fields_.game_rules_, 4, 0);
     cs = checksum((char *)&GameDataStateStorage.fields_.vehicle_current_count_, 0x10, cs);
@@ -1157,7 +1164,7 @@ void NetDaemon::game_checksum(NetChecksumReport *results) {
             cs = (unsigned char)(cs ^ al);
         }
     }
-    results->common[0] = cs;
+    *out++ = cs;
     cs = 0;
 
     {
@@ -1184,14 +1191,14 @@ void NetDaemon::game_checksum(NetChecksumReport *results) {
             cs = checksum((char *)&player.integrity_blemishes, 4, cs);
         }
     }
-    results->common[1] = cs;
+    *out++ = cs;
     cs = 0;
 
     {
         int countA = MapArea;
+        Map *tile = MapTiles;
+        i = 0;
         if (countA > 0) {
-            Map *tile = MapTiles;
-            int idxA = 0;
             do {
                 cs = checksum((char *)&tile->climate, 1, cs);
                 cs = checksum((char *)&tile->region, 1, cs);
@@ -1202,70 +1209,64 @@ void NetDaemon::game_checksum(NetChecksumReport *results) {
                 cs = checksum((char *)&tile->bit2, 1, cs);
                 countA = MapArea;
                 ++tile;
-                idxA++;
-            } while (idxA < countA);
+                i++;
+            } while (i < countA);
         }
     }
-    results->common[2] = cs;
+    *out++ = cs;
     cs = 0;
 
     {
-        int idx2;
         int countB = GameDataStateStorage.fields_.vehicle_current_count_;
-        for (idx2 = 0; idx2 < 8; ++idx2) {
+        for (i = 0; i < 8; ++i) {
+            int idxB = 0;
             if (countB > 0) {
-                Veh *vehicle = Vehs;
-                int idxB = 0;
                 do {
-                    if (vehicle->faction_id == idx2) {
-                        cs = checksum((char *)&vehicle->x, 2, cs);
-                        cs = checksum((char *)&vehicle->y, 2, cs);
-                        cs = checksum((char *)&vehicle->proto_id, 2, cs);
-                        cs = checksum((char *)&vehicle->faction_id, 1, cs);
-                        cs = checksum((char *)&vehicle->dmg_incurred, 1, cs);
-                        cs = checksum((char *)&vehicle->morale, 1, cs);
-                        cs = checksum((char *)&vehicle->moves_expended, 1, cs);
-                        cs = checksum((char *)&vehicle->home_base_id, 2, cs);
+                    if (Vehs[idxB].faction_id == i) {
+                        cs = checksum((char *)&Vehs[idxB].x, 2, cs);
+                        cs = checksum((char *)&Vehs[idxB].y, 2, cs);
+                        cs = checksum((char *)&Vehs[idxB].proto_id, 2, cs);
+                        cs = checksum((char *)&Vehs[idxB].faction_id, 1, cs);
+                        cs = checksum((char *)&Vehs[idxB].dmg_incurred, 1, cs);
+                        cs = checksum((char *)&Vehs[idxB].morale, 1, cs);
+                        cs = checksum((char *)&Vehs[idxB].moves_expended, 1, cs);
+                        cs = checksum((char *)&Vehs[idxB].home_base_id, 2, cs);
                         countB = GameDataStateStorage.fields_.vehicle_current_count_;
                     }
-                    ++vehicle;
                     idxB++;
                 } while (idxB < countB);
             }
         }
     }
-    results->common[3] = cs;
+    *out++ = cs;
     cs = 0;
 
     {
         int countC = GameDataStateStorage.fields_.base_current_count_;
+        int idxC = 0;
         if (countC > 0) {
-            Base *base = Bases;
-            int idxC = 0;
             do {
                 // Original prefix excludes assimilation_turns_left; the
                 // facilities checksum deliberately selects only nine bytes.
-                cs = checksum((char *)base, 7, cs);
-                cs = checksum((char *)&base->nutrients_accumulated, 4, cs);
-                cs = checksum((char *)&base->minerals_accumulated, 4, cs);
-                cs = checksum((char *)&base->queue_size, 4, cs);
-                cs = checksum((char *)&base->queue_production_id[0], 4, cs);
-                cs = checksum((char *)&base->resource_sqr_radius, 4, cs);
-                cs = checksum((char *)base->spec, 8, cs);
-                cs = checksum((char *)base->facilities_built, 9, cs);
+                cs = checksum((char *)&Bases[idxC], 7, cs);
+                cs = checksum((char *)&Bases[idxC].nutrients_accumulated, 4, cs);
+                cs = checksum((char *)&Bases[idxC].minerals_accumulated, 4, cs);
+                cs = checksum((char *)&Bases[idxC].queue_size, 4, cs);
+                cs = checksum((char *)&Bases[idxC].queue_production_id[0], 4, cs);
+                cs = checksum((char *)&Bases[idxC].resource_sqr_radius, 4, cs);
+                cs = checksum((char *)Bases[idxC].spec, 8, cs);
+                cs = checksum((char *)Bases[idxC].facilities_built, 9, cs);
                 countC = GameDataStateStorage.fields_.base_current_count_;
                 idxC++;
-                ++base;
             } while (idxC < countC);
         }
     }
-    results->common[4] = cs;
+    *out++ = cs;
     cs = 0;
 
     {
-        int rawVal = MapLatitudeBounds;
-        int div = (rawVal + ((rawVal >> 31) & 0xf)) >> 4;
-        int remainder = rawVal - (div << 4);
+        int div = MapLatitudeBounds / 16;
+        int remainder = MapLatitudeBounds - (div << 4);
         int k;
         for (k = 0; k < 0x10; ++k) {
             int recIdx = k * div;
@@ -1275,7 +1276,7 @@ void NetDaemon::game_checksum(NetChecksumReport *results) {
             cs = 0;
             {
                 int innerCount = (MapLongitudeBounds >> 1) * div;
-                if (div != 0 && innerCount > 0) {
+                if (div != 0) {
                     Map *tile = MapTiles + MapLongitude * recIdx;
                     int idxE;
                     for (idxE = 0; idxE < innerCount; ++idxE) {
@@ -1288,16 +1289,16 @@ void NetDaemon::game_checksum(NetChecksumReport *results) {
                     }
                 }
             }
-            results->map_sections[k] = cs;
+            *out++ = cs;
         }
     }
 
     if (BaseAtDebugPopupFlag != 0) {
         cs = checksum((char *)&GameDataStateStorage.fields_.game_rules_, 4, 0);
         cs = checksum((char *)&GameDataStateStorage.fields_.vehicle_current_count_, 0x10, cs);
-        results->diagnostic_aggregates[0] = checksum(
+        *out++ = checksum(
             (char *)&GameDataStateStorage.fields_.lock_masks_.enable_mask_, 2, cs);
-        results->diagnostic_aggregates[1] = checksum(
+        *out++ = checksum(
             (char *)&GameDataStateStorage.fields_.secret_project_, 0x100, 0);
         cs = 0;
 
@@ -1311,7 +1312,7 @@ void NetDaemon::game_checksum(NetChecksumReport *results) {
                 cs = (unsigned char)(cs ^ al);
             }
         }
-        results->diagnostic_aggregates[2] = cs;
+        *out++ = cs;
 
         {
             for (int faction = 1; faction < MaxPlayerNum; ++faction) {
@@ -1332,7 +1333,7 @@ void NetDaemon::game_checksum(NetChecksumReport *results) {
                 cs = checksum((char *)player.diplo_spoke, 0x20, cs);
                 cs = checksum((char *)player.diplo_wrongs, 0x20, cs);
                 cs = checksum((char *)&player.integrity_blemishes, 4, cs);
-                results->faction_values[faction - 1] = cs;
+                *out++ = cs;
             }
         }
         cs = 0;
@@ -1347,7 +1348,7 @@ void NetDaemon::game_checksum(NetChecksumReport *results) {
                 ++tile;
             }
         }
-        results->map_values[0] = cs;
+        *out++ = cs;
         cs = 0;
 
         {
@@ -1360,7 +1361,7 @@ void NetDaemon::game_checksum(NetChecksumReport *results) {
                 ++tile;
             }
         }
-        results->map_values[1] = cs;
+        *out++ = cs;
         cs = 0;
 
         {
@@ -1373,7 +1374,7 @@ void NetDaemon::game_checksum(NetChecksumReport *results) {
                 ++tile;
             }
         }
-        results->map_values[2] = cs;
+        *out++ = cs;
         cs = 0;
 
         {
@@ -1386,7 +1387,7 @@ void NetDaemon::game_checksum(NetChecksumReport *results) {
                 ++tile;
             }
         }
-        results->map_values[3] = cs;
+        *out++ = cs;
         cs = 0;
 
         {
@@ -1399,7 +1400,7 @@ void NetDaemon::game_checksum(NetChecksumReport *results) {
                 ++tile;
             }
         }
-        results->map_values[4] = cs;
+        *out++ = cs;
         cs = 0;
 
         {
@@ -1412,9 +1413,9 @@ void NetDaemon::game_checksum(NetChecksumReport *results) {
                 ++tile;
             }
         }
-        results->map_values[5] = cs;
+        *out++ = cs;
 
-        results->map_values[6] = checksum((char *)&MapSizePlanet, 0x1c, 0);
+        *out++ = checksum((char *)&MapSizePlanet, 0x1c, 0);
 
         cs = 0;
         {
@@ -1422,51 +1423,47 @@ void NetDaemon::game_checksum(NetChecksumReport *results) {
             for (idx2b = 0; idx2b < 8; ++idx2b) {
                 int countB2 = GameDataStateStorage.fields_.vehicle_current_count_;
                 cs = 0;
+                int idxBb = 0;
                 if (countB2 > 0) {
-                    Veh *vehicle = Vehs;
-                    int idxBb = 0;
                     do {
-                        if (vehicle->faction_id == idx2b) {
-                            cs = checksum((char *)&vehicle->x, 2, cs);
-                            cs = checksum((char *)&vehicle->y, 2, cs);
+                        if (Vehs[idxBb].faction_id == idx2b) {
+                            cs = checksum((char *)&Vehs[idxBb].x, 2, cs);
+                            cs = checksum((char *)&Vehs[idxBb].y, 2, cs);
                             // Original three-byte range includes the low
                             // byte of unk_1, beyond the two-byte proto_id.
-                            cs = checksum((char *)vehicle + offsetof(Veh, proto_id), 3, cs);
-                            cs = checksum((char *)&vehicle->morale, 1, cs);
-                            cs = checksum((char *)&vehicle->moves_expended, 1, cs);
-                            cs = checksum((char *)&vehicle->home_base_id, 2, cs);
+                            cs = checksum((char *)&Vehs[idxBb] + offsetof(Veh, proto_id), 3, cs);
+                            cs = checksum((char *)&Vehs[idxBb].morale, 1, cs);
+                            cs = checksum((char *)&Vehs[idxBb].moves_expended, 1, cs);
+                            cs = checksum((char *)&Vehs[idxBb].home_base_id, 2, cs);
                         }
                         countB2 = GameDataStateStorage.fields_.vehicle_current_count_;
-                        ++vehicle;
                         idxBb++;
                     } while (idxBb < countB2);
                 }
-                results->vehicles_by_faction[idx2b] = cs;
+                *out++ = cs;
             }
         }
 
         cs = 0;
         {
             int countC2 = GameDataStateStorage.fields_.base_current_count_;
+            int idxC2 = 0;
             if (countC2 > 0) {
-                Base *base = Bases;
-                int idxC2 = 0;
                 do {
-                    cs = checksum((char *)base, 7, cs);
-                    cs = checksum((char *)&base->nutrients_accumulated, 4, cs);
-                    cs = checksum((char *)&base->minerals_accumulated, 4, cs);
-                    cs = checksum((char *)&base->queue_size, 4, cs);
-                    cs = checksum((char *)&base->queue_production_id[0], 4, cs);
-                    cs = checksum((char *)&base->resource_sqr_radius, 4, cs);
-                    cs = checksum((char *)base->spec, 8, cs);
-                    cs = checksum((char *)base->facilities_built, 9, cs);
+                    cs = checksum((char *)&Bases[idxC2], 7, cs);
+                    cs = checksum((char *)&Bases[idxC2].nutrients_accumulated, 4, cs);
+                    cs = checksum((char *)&Bases[idxC2].minerals_accumulated, 4, cs);
+                    cs = checksum((char *)&Bases[idxC2].queue_size, 4, cs);
+                    cs = checksum((char *)&Bases[idxC2].queue_production_id[0], 4, cs);
+                    cs = checksum((char *)&Bases[idxC2].resource_sqr_radius, 4, cs);
+                    cs = checksum((char *)Bases[idxC2].spec, 8, cs);
+                    cs = checksum((char *)Bases[idxC2].facilities_built, 9, cs);
                     countC2 = GameDataStateStorage.fields_.base_current_count_;
                     idxC2++;
-                    ++base;
                 } while (idxC2 < countC2);
             }
         }
-        results->base_value = cs;
+        *out++ = cs;
     }
 }
 
@@ -7309,16 +7306,18 @@ release_vehicle:
 // ORIGINAL: 0x00532570 ?action@NetDaemon@@QAEHHH@Z 0x00532570-0x005328BA
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned532570..5328BA; retained git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/00532570.cpp is a conflicting historical hint, not the product ABI.", "Entry signed order classification is distinct from the post-automated_lock vehicle/order reload. Absolute93E904 timing storage belongs to NetDaemonNet.lock_state_[1].dword_[3], while wait flags and Lock remain receiver-relative.", "Pinned NUL log/popup literals68C2DC,68C390,68C3B4,68C3C0,68C4AC,68C4C8,68C4F4,68C510,68C530,68C544,68C554; ExitTurnLoop is game owner9B2068."], "reason": "Recover the full multiplayer vehicle-order action through the real NetDaemon, vehicle and transport owners; retain its original seed identity and complete span without a matching or runtime claim."}
 // TRIED: g_00669368 is a cached stdcall function pointer (timeGetTime), called twice through the same loaded pointer - matches the two `// indirect` sites.
-// TRIED: nothing else tried; landed at MISMATCH #7 (original compares several fields against a zero register cached once via `xor ebx,ebx` and reused, rebuilt re-derives `== 0` per comparison; similarity 0.886).
+// LEVER: the tail is a switch on the branch with the road case first and
+//        await last; branch is assigned only in the in-range arm, and the
+//        range test is `>= 0x18`.
 int NetDaemon::action(int veh_id, int mode) {
     if (IsMultiplayerNet == 0) return ::action(veh_id);
 
     const int8_t action_type = Vehs[veh_id].order;
-    int category = 0;
+    int category;
     enum Branch { await_exec, go_to, road_to };
-    Branch branch = await_exec;
+    Branch branch;
 
-    if (action_type < 4 || action_type > 0x17) {
+    if (action_type < 4 || action_type >= 0x18) {
         if (action_type == ORDER_MOVE_TO || action_type == ORDER_AI_MOVE_TO) {
             category = 4;
             branch = go_to;
@@ -7343,13 +7342,23 @@ int NetDaemon::action(int veh_id, int mode) {
             return 0;
         }
     } else {
+        branch = await_exec;
         category = (action_type == 0x14 || action_type == 0x15) ? 0xC : 0;
     }
 
     channels_[1].trailing_words_[3] = 1;
     if (mode == 0 && automated_lock(&veh_id, category) != 0) return 0;
 
-    if (branch == await_exec) {
+    switch (branch) {
+    case road_to:
+        log_say("Net.Action Road", 0, 0, 0);
+        action_road_to(veh_id);
+        break;
+    case go_to:
+        log_say("Net.Action Go to", veh_id, 0, 0);
+        action_go_to(veh_id);
+        break;
+    case await_exec:
         log_say("Net.Action Sending ACTION message to server", veh_id,
                 Vehs[veh_id].order, 0);
         message_veh(0x2404, veh_id, 0, 0);
@@ -7395,12 +7404,7 @@ int NetDaemon::action(int veh_id, int mode) {
             channels_[1].leading_words_[3] = 0;
         }
         log_say("Net.Action Finished awaiting", 0, 0, 0);
-    } else if (branch == go_to) {
-        log_say("Net.Action Go to", veh_id, 0, 0);
-        action_go_to(veh_id);
-    } else {
-        log_say("Net.Action Road", 0, 0, 0);
-        action_road_to(veh_id);
+        break;
     }
     log_say("Falling out of Net.Action", 0, 0, 0);
     return 1;

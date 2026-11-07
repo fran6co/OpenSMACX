@@ -418,6 +418,8 @@ extern "C" int __cdecl sub_5cd2d0(DWORD *destination, int quality) {
 // symbol    @sub_5cc860@20
 // kind      game
 // TRIED: __stdcall(int,int,int) per IDA's guess - entry reads ecx/edx directly with no matching stack slot, so this is __fastcall with param_1/param_2 in ecx/edx. The three vtable-style calls push their receiver as an explicit stack arg rather than loading it into ecx, so they are plain function-pointer calls through *(vtable+off), not C++ virtual dispatch; exact stack slot reuse for the WSA-shaped struct (0x6c/0x1007/0x80/0x20/4) not nailed down byte-for-byte.
+// LEVER: both failures share one Release tail and the result local; the
+//        color key flag is DDCKEY_DESTOVERLAY (push 4), not SRCBLT.
 extern "C" int __fastcall sub_5cc860(IDirectDraw2 *provider,
                                      IDirectDrawSurface2 **output,
                                      int width, int height, int fourcc) {
@@ -434,26 +436,26 @@ extern "C" int __fastcall sub_5cc860(IDirectDraw2 *provider,
 
   IDirectDrawSurface2 *queried;
   IDirectDrawSurface *created;
-  if (provider->CreateSurface(&description, &created, 0) != DD_OK) return 1;
-
-  if (created->QueryInterface(IID_IDirectDrawSurface2,
-                              (void **)&queried) != DD_OK) {
+  int result;
+  if (provider->CreateSurface(&description, &created, 0) == DD_OK) {
+    result = 1;
+    if (created->QueryInterface(IID_IDirectDrawSurface2,
+                                (void **)&queried) == DD_OK) {
+      DDCOLORKEY color_key;
+      color_key.dwColorSpaceLowValue = result;
+      color_key.dwColorSpaceHighValue = result;
+      if (queried->SetColorKey(DDCKEY_DESTOVERLAY, &color_key) == DD_OK) {
+        *output = queried;
+        return 0;
+      }
+    }
+    // Both failures release the original CreateSurface result, not the
+    // queried Surface2 pointer; preserve that observed reference choice.
     created->Release();
-    return 1;
+  } else {
+    result = 1;
   }
-
-  DDCOLORKEY color_key;
-  color_key.dwColorSpaceLowValue = 1;
-  color_key.dwColorSpaceHighValue = 1;
-  if (queried->SetColorKey(DDCKEY_SRCBLT, &color_key) != DD_OK) {
-    // The native failure path releases the original CreateSurface result,
-    // not the queried Surface2 pointer. Preserve that observed reference
-    // choice; do not normalize it to a more conventional COM cleanup.
-    created->Release();
-    return 1;
-  }
-  *output = queried;
-  return 0;
+  return result;
 }
 
 int __fastcall sub_5cdad0(IDirectDraw2 *, IDirectDrawSurface2 **, int, int, int);
@@ -955,54 +957,61 @@ int __fastcall media_component_mask_bits_31(uint32_t value) {
 // symbol    ?sub_5cbe30@MediaRuntime@@QAEXXZ
 // kind      game
 // TRIED: MISMATCH #9 lea/push - thiscall member with local array frame layout differs from the original's; register/stack allocation for the two 91-int DDCAPS scratch buffers does not reproduce the original's `sub esp, 0x364` + rep-stosd shape byte-for-byte.
+// LEVER: `descriptor->` re-read at each use except one cached pointer for the
+//        pixel-format block; red/green counts written out, the helper called
+//        for blue (so this caller must not inline it), signed shift masks.
+//        Left: the image passes this runtime in EDX to sub_5cc450, which the
+//        header declares as a plain thiscall.
+#pragma inline_depth(0)
 void MediaRuntime::sub_5cbe30() {
-  MediaDescriptor *d = descriptor;
-  if (d->stream_gate_80 != 0) return;
+  if (descriptor->stream_gate_80 != 0) return;
 
-  if (d->draw_device_10 == 0 && d->draw_query_interface_0c != 0) {
+  if (descriptor->draw_device_10 == 0 && descriptor->draw_query_interface_0c != 0) {
     release_interface_10 = 1;
-    d->draw_query_interface_0c->QueryInterface(
-        IID_IDirectDraw2, (void **)&d->draw_device_10);
+    descriptor->draw_query_interface_0c->QueryInterface(
+        IID_IDirectDraw2, (void **)&descriptor->draw_device_10);
   }
 
-  d = descriptor;
 
-  int result_kind = 1;
-  if ((d->flags & 0x00000200) != 0) {
+  int result_kind;
+  if ((descriptor->flags & 0x00000200) != 0) {
     DDCAPS caps_a;
     DDCAPS caps_b;
     memset(&caps_a, 0, sizeof(caps_a));
     memset(&caps_b, 0, sizeof(caps_b));
     caps_a.dwSize = 0x16c;
     caps_b.dwSize = 0x16c;
-    int caps_result = d->draw_device_10->GetCaps(&caps_a, &caps_b);
-    d = descriptor;
-    if (caps_result == DD_OK) {
-      if ((d->capability_options_08 & 2) != 0 &&
+    if (descriptor->draw_device_10->GetCaps(&caps_a, &caps_b) == DD_OK) {
+      if ((descriptor->capability_options_08 & 2) != 0 &&
           (caps_a.dwCaps & 0x2000) != 0 && (caps_a.dwCaps & 0x4000) != 0) {
         result_kind = 2;
-      } else if ((d->capability_options_08 & 4) != 0 &&
+      } else if ((descriptor->capability_options_08 & 4) != 0 &&
                  (caps_a.dwCaps & 0x100) != 0 &&
                  (caps_a.dwCaps & 0x200) != 0) {
         result_kind = 4;
+      } else {
+        result_kind = 1;
       }
+    } else {
+      result_kind = 1;
     }
+  } else {
+    result_kind = 1;
   }
-  d = descriptor;
   queue_record_kind = result_kind;
-  d->surface_1c = 0;
-  d->surface_20 = 0;
+  descriptor->surface_1c = 0;
+  descriptor->surface_20 = 0;
 
-  if ((d->flags & 0x00000800) == 0) {
+  if ((descriptor->flags & 0x00000800) == 0) {
     DDSURFACEDESC surface_description;
     memset(&surface_description, 0, sizeof(surface_description));
     surface_description.dwSize = sizeof(surface_description);
-    if (d->surface_14->GetSurfaceDesc(&surface_description) == DD_OK) {
+    if (descriptor->surface_14->GetSurfaceDesc(&surface_description) == DD_OK) {
       surface_width_004 = surface_description.dwWidth;
       surface_height_008 = surface_description.dwHeight;
     }
 
-    d = descriptor;
+    MediaDescriptor *d = descriptor;
     if (d->surface_14 != 0) {
       DDPIXELFORMAT pixel_format;
       memset(&pixel_format, 0, sizeof(pixel_format));
@@ -1012,19 +1021,23 @@ void MediaRuntime::sub_5cbe30() {
       if (pixel_format.dwRGBBitCount == 8) {
         d->pixel_format.total_component_bits = 8;
       } else {
+        int bit;
         int red_bits = 0;
-        int green_bits = 0;
-        for (int bit = 0; bit < 0x1f; ++bit) {
+        for (bit = 0; bit < 0x1f; ++bit) {
           if ((pixel_format.dwRBitMask & (1U << bit)) != 0) ++red_bits;
-          if ((pixel_format.dwGBitMask & (1U << bit)) != 0) ++green_bits;
         }
         d->pixel_format.red_bits = red_bits;
+        int green_bits = 0;
+        for (bit = 0; bit < 0x1f; ++bit) {
+          if ((pixel_format.dwGBitMask & (1U << bit)) != 0) ++green_bits;
+        }
         d->pixel_format.green_bits = green_bits;
         d->pixel_format.blue_bits =
             (DWORD)media_component_mask_bits_31(pixel_format.dwBBitMask);
 
+        // Signed masks: the image shifts them with `sar`.
         int red_shift = 0;
-        DWORD red_mask = pixel_format.dwRBitMask;
+        int red_mask = (int)pixel_format.dwRBitMask;
         while ((red_mask & 1) == 0) {
           red_mask >>= 1;
           ++red_shift;
@@ -1032,7 +1045,7 @@ void MediaRuntime::sub_5cbe30() {
         d->pixel_format.red_shift = red_shift;
 
         int green_shift = 0;
-        DWORD green_mask = pixel_format.dwGBitMask;
+        int green_mask = (int)pixel_format.dwGBitMask;
         while ((green_mask & 1) == 0) {
           green_mask >>= 1;
           ++green_shift;
@@ -1040,7 +1053,7 @@ void MediaRuntime::sub_5cbe30() {
         d->pixel_format.green_shift = green_shift;
 
         int blue_shift = 0;
-        DWORD blue_mask = pixel_format.dwBBitMask;
+        int blue_mask = (int)pixel_format.dwBBitMask;
         while ((blue_mask & 1) == 0) {
           blue_mask >>= 1;
           ++blue_shift;
@@ -1056,37 +1069,30 @@ void MediaRuntime::sub_5cbe30() {
       }
     }
 
-    d = descriptor;
-    if (d->pixel_format.total_component_bits == 8 &&
-        (d->flags & 0x04000000) == 0) {
-      d->palette_entries_28 = (BYTE *)malloc(0x400);
-      d = descriptor;
-      d->draw_device_10->CreatePalette(
-          0x44, (LPPALETTEENTRY)d->palette_entries_28, &d->palette_24, 0);
-      d = descriptor;
-      memset(d->palette_entries_28, 0, 0x400);
-      d = descriptor;
-      d->surface_14->SetPalette(d->palette_24);
+    if (descriptor->pixel_format.total_component_bits == 8 &&
+        (descriptor->flags & 0x04000000) == 0) {
+      descriptor->palette_entries_28 = (BYTE *)malloc(0x400);
+      descriptor->draw_device_10->CreatePalette(
+          0x44, (LPPALETTEENTRY)descriptor->palette_entries_28, &descriptor->palette_24, 0);
+      memset(descriptor->palette_entries_28, 0, 0x400);
+      descriptor->surface_14->SetPalette(descriptor->palette_24);
     }
   }
 
-  d = descriptor;
-  if ((d->flags & 0x00100000) == 0) d->setup_value_78 = 100;
+  if ((descriptor->flags & 0x00100000) == 0) descriptor->setup_value_78 = 100;
 
-  d = descriptor;
-  if (d->pixel_format.total_component_bits == 0x10 ||
-      d->pixel_format.total_component_bits == 0x0f) {
-    sub_5cc150(0xff, (int)d->pixel_format.red_bits,
-               (int)d->pixel_format.green_bits,
-               (int)d->pixel_format.blue_bits,
-               (int)d->pixel_format.red_shift,
-               (int)d->pixel_format.green_shift,
-               (int)d->pixel_format.blue_shift);
+  if (descriptor->pixel_format.total_component_bits == 0x10 ||
+      descriptor->pixel_format.total_component_bits == 0x0f) {
+    sub_5cc150(0xff, (int)descriptor->pixel_format.red_bits,
+               (int)descriptor->pixel_format.green_bits,
+               (int)descriptor->pixel_format.blue_bits,
+               (int)descriptor->pixel_format.red_shift,
+               (int)descriptor->pixel_format.green_shift,
+               (int)descriptor->pixel_format.blue_shift);
   } else {
     sub_5cc2b0(0xff);
   }
-  d = descriptor;
-  d->pixel_format.sub_5cc450();
+  descriptor->pixel_format.sub_5cc450();
 
   for (int input = -0x200; input < 0x200; ++input) {
     int clamped = input;
@@ -1098,6 +1104,7 @@ void MediaRuntime::sub_5cbe30() {
   }
   teardown_gate_3c = 1;
 }
+#pragma inline_depth(8)
 
 // Caller/native receiver evidence identifies this as a MediaRuntime method.
 // ORIGINAL: 0x005CE2B0 sub_5ce2b0 0x005CE2B0-0x005CE2F0 BYTE_EXACT
@@ -1135,85 +1142,84 @@ int MediaRuntime::sub_5ce2f0() {
 // symbol    _sub_5cdfa0
 // kind      game
 // TRIED: the brief's parameterless contract - disasm reads one cdecl stack arg at entry+4 (matches IDA's void*) and never touches ecx, so this takes a void* param, not zero args. COM slots 4/11/19/20 on the interface at *(*self+0x5c) are exactly IDirectSoundBuffer::GetCurrentPosition/Lock/Unlock/Restore; ignored Ghidra's InterlockedExchange/Increment/Decrement names for the four 0x6690xx/0x669100 calls - those are wrong guesses at an unresolved fixed address, not real symbols.
+// The worker re-reads every shared cursor at each use (the image reloads a
+// field straight after storing it), so it sees the runtime as volatile;
+// the COM calls go through a plain alias (their loads schedule freely).
+// Cursor comparisons and the modulo are signed.
 extern "C" void __cdecl sub_5cdfa0(void *argument) {
-  MediaRuntime *r = (MediaRuntime *)argument;
+  volatile MediaRuntime *r = (volatile MediaRuntime *)argument;
+  MediaRuntime *self = (MediaRuntime *)argument;
   Sleep(10);
-  if (InterlockedExchange(&r->sync_word_3b0, 1) != 0) {
+  if (InterlockedExchange(const_cast<LONG *>(&r->sync_word_3b0), 1) != 0) {
     do {
       if (r->buffer_setup_finished != 0) {
         DWORD write_position;
         if (r->synthetic_cursor_mode != 0) {
           r->synthetic_playback_cursor += 0x372;
-          if (r->synthetic_playback_cursor >= r->playback_buffer_bytes)
+          if ((LONG)r->synthetic_playback_cursor >= (LONG)r->playback_buffer_bytes)
             r->synthetic_playback_cursor -= r->playback_buffer_bytes;
           write_position = r->synthetic_playback_cursor;
         } else {
-          DWORD play_position, safe_write_position;
-          r->descriptor->play_buffer->GetCurrentPosition(&play_position,
-                                            &safe_write_position);
-          write_position = play_position;
+          DWORD safe_write_position;
+          self->descriptor->play_buffer->GetCurrentPosition(&write_position,
+                                                         &safe_write_position);
         }
 
         LONG available;
-        if (r->playback_cursor < write_position)
+        if ((LONG)r->playback_cursor < (LONG)write_position)
           available = (LONG)(write_position - r->playback_cursor);
         else
           available = (LONG)(write_position - r->playback_cursor +
                              r->playback_buffer_bytes);
-        MediaQueueRecord &record =
-            r->output_records[r->output_consumer_cursor % 24];
-        if (available >= (LONG)record.field_04) {
+        if (available >= (LONG)((MediaQueueRecord *)r->output_records)[r->output_consumer_cursor % 24].field_04) {
+          volatile MediaQueueRecord *record =
+              &r->output_records[r->output_consumer_cursor % 24];
+          LPVOID first, second;
+          DWORD first_bytes, second_bytes;
           if (r->pending_output_records != 0) {
             if (r->synthetic_cursor_mode == 0) {
-              LPVOID first, second;
-              DWORD first_bytes, second_bytes;
-              HRESULT result = r->descriptor->play_buffer->Lock(
-                  r->playback_cursor, record.field_04, &first, &first_bytes,
+              HRESULT result = self->descriptor->play_buffer->Lock(
+                  r->playback_cursor, record->field_04, &first, &first_bytes,
                   &second, &second_bytes, 0);
               while (result != DS_OK) {
-                r->descriptor->play_buffer->Restore();
-                result = r->descriptor->play_buffer->Lock(
-                    r->playback_cursor, record.field_04, &first, &first_bytes,
+                self->descriptor->play_buffer->Restore();
+                result = self->descriptor->play_buffer->Lock(
+                    r->playback_cursor, record->field_04, &first, &first_bytes,
                     &second, &second_bytes, 0);
               }
-              memcpy(first, record.payload, first_bytes);
+              memcpy(first, record->payload, first_bytes);
               if (second_bytes != 0)
-                memcpy(second, record.payload + first_bytes, second_bytes);
-              r->descriptor->play_buffer->Unlock(first, first_bytes, second, second_bytes);
+                memcpy(second, record->payload + first_bytes, second_bytes);
+              self->descriptor->play_buffer->Unlock(first, first_bytes, second, second_bytes);
             }
             r->playback_cursor =
-                (LONG)(r->playback_cursor + record.field_04) %
+                (LONG)(r->playback_cursor + record->field_04) %
                 (LONG)r->playback_buffer_bytes;
-            InterlockedIncrement(&r->output_consumer_cursor);
-            InterlockedExchange(&r->output_lock_word, (LONG)record.field_08);
-            InterlockedDecrement(&r->pending_output_records);
-            record.payload = 0;
-            record.field_04 = 0;
-          } else if (r->synthetic_cursor_mode == 0) {
-            LPVOID first, second;
-            DWORD first_bytes, second_bytes;
-            if (r->descriptor->play_buffer->Lock(r->playback_cursor, (DWORD)available,
-                                    &first, &first_bytes, &second,
-                                    &second_bytes, 0) == DS_OK) {
+            InterlockedIncrement(const_cast<LONG *>(&r->output_consumer_cursor));
+            InterlockedExchange(const_cast<LONG *>(&r->output_lock_word),
+                                (LONG)record->field_08);
+            InterlockedDecrement(const_cast<LONG *>(&r->pending_output_records));
+            record->payload = 0;
+            record->field_04 = 0;
+          } else {
+            if (r->synthetic_cursor_mode == 0
+                && self->descriptor->play_buffer->Lock(
+                       r->playback_cursor, (DWORD)available, &first,
+                       &first_bytes, &second, &second_bytes, 0) == DS_OK) {
               memset(first, 0, first_bytes);
               if (second_bytes != 0) memset(second, 0, second_bytes);
-              r->descriptor->play_buffer->Unlock(first, first_bytes, second, second_bytes);
+              self->descriptor->play_buffer->Unlock(first, first_bytes, second, second_bytes);
             }
             r->playback_cursor =
                 (LONG)(r->playback_cursor + (DWORD)available) %
                 (LONG)r->playback_buffer_bytes;
-            InterlockedIncrement(&r->output_lock_word);
-          } else {
-            r->playback_cursor =
-                (LONG)(r->playback_cursor + (DWORD)available) %
-                (LONG)r->playback_buffer_bytes;
-            InterlockedIncrement(&r->output_lock_word);
+            InterlockedIncrement(const_cast<LONG *>(&r->output_lock_word));
           }
         }
       }
-      InterlockedIncrement(&r->worker_wakeup_counter);
+      InterlockedIncrement(const_cast<LONG *>(&r->worker_wakeup_counter));
       Sleep(10);
-    } while (InterlockedExchange(&r->sync_word_3b0, 1) != 0);
+    } while (InterlockedExchange(const_cast<LONG *>(&r->sync_word_3b0), 1) != 0);
   }
   _endthread();
 }
@@ -1455,10 +1461,10 @@ extern "C" int __fastcall sub_5c9ec0(MediaRuntime *runtime) {
 // the existing general.cpp IMA delta table. All are views into the one
 // source-owned MediaAdpcmTables POD declared in general.h; never duplicate
 // the initial 20 words or read the executable's fixed addresses.
-static int *const media_decoder_lookup_a =
-    MediaAdpcmTables.lookup_and_delta_words;
-static int *const media_decoder_lookup_b =
-    MediaAdpcmTables.lookup_and_delta_words + 4;
+// Macros, not `int *const` locals: VC6 reads such a pointer from storage
+// where the image indexes the table address directly.
+#define media_decoder_lookup_a (MediaAdpcmTables.lookup_and_delta_words)
+#define media_decoder_lookup_b (MediaAdpcmTables.lookup_and_delta_words + 4)
 
 // ORIGINAL: 0x005CDB90 sub_5cdb90 0x005CDB90-0x005CDD0C
 // symbol    _sub_5cdb90
@@ -1481,8 +1487,8 @@ extern "C" void __cdecl sub_5cdb90(int count, int *cursor, int *predictor,
       int coefficient_a = media_decoder_lookup_b[code];
       int coefficient_b = media_decoder_lookup_a[code];
       short *end = output + 0x38;
-      do {
-        ++input;
+      ++input;
+      while (output < end) {
         value = (((int)((unsigned int)(*input >> 4) << 0x1c) >> shift) +
                  coefficient_a * value + 0x80 + coefficient_b * previous) >> 8;
         if (value < -0x8000) value = -0x8000;
@@ -1496,7 +1502,8 @@ extern "C" void __cdecl sub_5cdb90(int count, int *cursor, int *predictor,
         output[2] = (short)previous;
         output[3] = (short)previous;
         output += 4;
-      } while (output < end);
+        ++input;
+      }
       --blocks;
     } while (blocks != 0);
   }
@@ -1510,64 +1517,65 @@ extern "C" void __cdecl sub_5cdb90(int count, int *cursor, int *predictor,
 // kind      game
 // TRIED: homed into general.cpp (its real TU) 2026-09-03 and reverted for one reason:
 // TRIED: literal Ghidra-shaped transcription (8 int/ptr params, void return, do/while outer + for inner, saturating clamps) compiles and is logically faithful but MISMATCHes at instruction #0: original has no `push ebp; mov ebp,esp` frame (ebp is a plain register-allocated variable across the whole function, /Oy-style), so register allocation diverges from the very first instruction. Not chased further - large heavily-optimized leaf arithmetic function, register scheduling not source-form.
+// Each block is a two-byte header (filter codes, then shifts) and 14 byte
+// pairs; a pair's first byte holds the first left/right samples (high/low
+// nibble), its second byte the next two. Arguments 3/4 are the left
+// channel's (predictor, accumulator), 5/6 the right's, as for sub_5cdb90.
 extern "C" void __cdecl sub_5cdd10(int count, int *cursor,
-                                   int *left_predictor, int *right_predictor,
-                                   int *left_accumulator, int *right_accumulator,
+                                   int *left_predictor, int *left_accumulator,
+                                   int *right_predictor, int *right_accumulator,
                                    int input_base, unsigned int *output_cursor) {
-  short *output = (short *)*output_cursor;
   BYTE *input = (BYTE *)(input_base + (*cursor * 30) / 28);
-  int left_predictor_state = *left_predictor;
-  int right_predictor_state = *right_predictor;
-  int left_accumulator_state = *left_accumulator;
-  int right_accumulator_state = *right_accumulator;
+  short *output = (short *)*output_cursor;
+  int left_prev = *left_predictor;
+  int left_last = *left_accumulator;
+  int right_prev = *right_predictor;
+  int right_last = *right_accumulator;
   if (count > 0) {
     unsigned int blocks = ((unsigned int)count + 0x1b) / 0x1c;
     do {
       *cursor += 0x1c;
-      unsigned int hi = *input >> 4, lo = *input & 0xf;
+      input += 2;
+      unsigned int hi = input[-2] >> 4, lo = input[-2] & 0xf;
       int hi_a = media_decoder_lookup_a[hi], hi_b = media_decoder_lookup_b[hi];
       int lo_a = media_decoder_lookup_a[lo], lo_b = media_decoder_lookup_b[lo];
-      int shift_hi = (input[1] >> 4) + 8, shift_lo = (input[1] & 0xf) + 8;
+      int shift_lo = (input[-1] & 0xf) + 8, shift_hi = (input[-1] >> 4) + 8;
       short *end = output + 0x38;
-      do {
-        ++input;
-        int sample_left = (((int)((*input & 0xf0) << 0x18) >> shift_hi) +
-                           hi_b * left_accumulator_state + 0x80 +
-                           hi_a * left_predictor_state) >> 8;
+      while (output < end) {
+        int sample_left = ((((int)((*input & 0xf0) << 0x18)) >> shift_hi) +
+                           hi_b * left_last + hi_a * left_prev + 0x80) >> 8;
         int sample_right = (((int)((unsigned int)*input << 0x1c) >> shift_lo) +
-                            lo_b * right_accumulator_state + 0x80 +
-                            lo_a * right_predictor_state) >> 8;
+                            lo_b * right_last + lo_a * right_prev + 0x80) >> 8;
         if (sample_left < -0x8000) sample_left = -0x8000;
         else if (sample_left > 0x7fff) sample_left = 0x7fff;
         if (sample_right < -0x8000) sample_right = -0x8000;
         else if (sample_right > 0x7fff) sample_right = 0x7fff;
-        int next_left = (((int)((input[1] & 0xf0) << 0x18) >> shift_hi) +
-                         sample_left * hi_a + 0x80 +
-                         hi_b * left_predictor_state) >> 8;
+        output[0] = (short)sample_left;
+        output[1] = (short)sample_right;
+        left_last = sample_left;
+        right_last = sample_right;
+        int next_left = ((((int)((input[1] & 0xf0) << 0x18)) >> shift_hi) +
+                         sample_left * hi_a + hi_b * left_prev + 0x80) >> 8;
         int next_right = (((int)((unsigned int)input[1] << 0x1c) >> shift_lo) +
-                          sample_right * lo_a + 0x80 +
-                          lo_b * right_predictor_state) >> 8;
+                          sample_right * lo_a + lo_b * right_prev + 0x80) >> 8;
         if (next_left < -0x8000) next_left = -0x8000;
         else if (next_left > 0x7fff) next_left = 0x7fff;
         if (next_right < -0x8000) next_right = -0x8000;
         else if (next_right > 0x7fff) next_right = 0x7fff;
-        output[0] = (short)sample_left;
-        output[1] = (short)sample_right;
+        left_prev = next_left;
         output[2] = (short)next_left;
         output[3] = (short)next_right;
-        left_predictor_state = next_left;
-        right_predictor_state = next_right;
-        left_accumulator_state = sample_left;
-        right_accumulator_state = sample_right;
         output += 4;
-      } while (output < end);
+        input += 2;
+        right_prev = next_right;
+      }
       --blocks;
     } while (blocks != 0);
   }
-  *left_predictor = left_predictor_state;
-  *right_predictor = right_predictor_state;
-  *left_accumulator = left_accumulator_state;
-  *right_accumulator = right_accumulator_state;
+  *left_predictor = left_prev;
+  *left_accumulator = left_last;
+  *right_predictor = right_prev;
+  *right_accumulator = right_last;
   *output_cursor = (unsigned int)output;
 }
 
@@ -1769,29 +1777,28 @@ int MediaRuntime::setup_sound_device() {
 // TRIED: `ecx` does real work with no stack access at entry (reads `[ecx]` before any `[ebp+..]`), so this is a __thiscall member - written as `ClassX::sub_5ce4b0()`, same precedent as 0x004E3300's ClassX::sub_4e3300. The six indirect calls are DirectDraw-COM-shaped (self pushed explicitly alongside the args, not via ECX), spelled with `__stdcall` function-pointer typedefs per call site rather than a shared VCall shim, since two calls land on offset 0xc through DIFFERENT vtables (one via `[this+0x54]`, two via `this->[0]->0x5c`) with different arities (4 args vs 2). Local DDSURFACEDESC/DDPIXELFORMAT-like scratch structs are modelled as plain structs, not the overlapping/self-referential stack layout the original build (a nested pointer field pointing back into the same frame) - not chased further. 0.83 mnemonic similarity; first divergence at #3 is the prologue register-save order, which follows from local-variable layout this body does not reproduce.
 int MediaRuntime::create_playback_buffer() {
   if (descriptor->sound_device != 0) {
-    WAVEFORMATEX format;
-    memset(&format, 0, sizeof(format));
-    format.wFormatTag = WAVE_FORMAT_PCM;
-    format.nChannels = 2;
-    format.nSamplesPerSec = playback_frequency;
-    format.nAvgBytesPerSec = playback_frequency << 2;
-    format.nBlockAlign = 4;
-    format.wBitsPerSample = 16;
-
     DSBUFFERDESC buffer_desc;
     memset(&buffer_desc, 0, 0x14);
     buffer_desc.dwSize = 0x14;
     buffer_desc.dwFlags = 0x000100e0;
     buffer_desc.dwBufferBytes = source_buffer_bytes;
-    buffer_desc.dwReserved = 0;
+
+    WAVEFORMATEX format;
     buffer_desc.lpwfxFormat = &format;
+    memset(&format, 0, sizeof(format));
+    format.wFormatTag = WAVE_FORMAT_PCM;
+    format.nChannels = 2;
+    format.nSamplesPerSec = playback_frequency;
+    format.nBlockAlign = 4;
+    format.nAvgBytesPerSec = playback_frequency << 2;
+    format.wBitsPerSample = 16;
     if (descriptor->sound_device->CreateSoundBuffer(&buffer_desc, &descriptor->play_buffer, 0) == DS_OK) {
       descriptor->play_buffer->SetFrequency(playback_frequency);
-      if ((descriptor->flags & 0x2000) != 0) descriptor->play_buffer->SetVolume(descriptor->volume_argument);
 
       DSBCAPS created_caps;
       memset(&created_caps, 0, 0x14);
       created_caps.dwSize = 0x14;
+      if ((descriptor->flags & 0x2000) != 0) descriptor->play_buffer->SetVolume(descriptor->volume_argument);
       if (descriptor->play_buffer->GetCaps(&created_caps) == DS_OK) {
         synthetic_cursor_mode = 0;
         playback_buffer_bytes = created_caps.dwBufferBytes;
@@ -2603,26 +2610,23 @@ Status: Coverage transcription - unclaimed body (the entry `push ecx` dummy
         seed TRIED).
 */
 int __fastcall MediaRuntime::sub_5ca230(int size, int kind) {
-  const DWORD current = static_cast<DWORD>(reinterpret_cast<uintptr_t>(input_ring_current));
-  const DWORD base = static_cast<DWORD>(reinterpret_cast<uintptr_t>(input_ring_base));
-  if (static_cast<DWORD>(current + static_cast<DWORD>(size)) >=
-      static_cast<DWORD>(base + 1200000U)) input_ring_current = input_ring_base;
+  if (input_ring_current + size >= input_ring_base + 1200000)
+    input_ring_current = input_ring_base;
 
   const LONG read = mmioRead(descriptor->stream,
                              reinterpret_cast<HPSTR>(input_ring_current), size);
   if (read == 0) { stream_eof = 1; return -1; }
   if (read == -1) return -2;
 
-  const int slot = read_producer_cursor % 0x18;
-  read_records[slot].payload = input_ring_current;
-  read_records[slot].field_0c = static_cast<DWORD>(kind);
-  read_records[slot].field_08 = static_cast<DWORD>(read_counter);
-  input_ring_current = reinterpret_cast<BYTE *>(
-      static_cast<uintptr_t>(static_cast<DWORD>(
-          reinterpret_cast<uintptr_t>(input_ring_current) + static_cast<DWORD>(size))));
-  InterlockedIncrement(&read_producer_cursor);
+  LONG *cursor = &read_producer_cursor;
+  read_records[*cursor % 0x18].payload = input_ring_current;
+  read_records[*cursor % 0x18].field_0c = static_cast<DWORD>(kind);
+  LONG *counter = &read_counter;
+  read_records[*cursor % 0x18].field_08 = static_cast<DWORD>(*counter);
+  input_ring_current += size;
+  InterlockedIncrement(cursor);
   InterlockedIncrement(&pending_read_records);
-  InterlockedIncrement(&read_counter);
+  InterlockedIncrement(counter);
   return 1;
 }
 

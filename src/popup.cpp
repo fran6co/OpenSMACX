@@ -1679,12 +1679,14 @@ int Popup::on_draw_background() {
       window->write_cent_l(owned_text_, &title);
     }
 
-    const int x = field_30F0_ + field_30D8_ + field_21C8_ + field_30E0_;
-    const int y = field_30E8_ + field_30E0_;
+    int x = field_30F0_ + field_30D8_ + field_21C8_ + field_30E0_;
+    int y = field_30E8_ + field_30E0_;
     anchor.right = outer.right - 10;
-    anchor.left = x - 3;
+    anchor.left = x;
     anchor.bottom = field_30D4_ + y;
-    anchor.top = y - 3;
+    anchor.top = y;
+    anchor.left -= 3;
+    anchor.top -= 3;
     anchor.right += 3;
     if (field_30D4_ != 0) {
       window->box_sprite(&anchor, &InterfaceBoxStyles[0]);
