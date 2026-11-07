@@ -199,7 +199,7 @@ class MapWin : public virtual GraphicWin {
   // Win slot13, through generated MapWin/PlanWin/Console vtordisp thunks.
   virtual void on_resize(int width, int height);
   void on_redraw();
-  // 0x00467970, route painter. line_timer (time.cpp) calls it
+  // 0x00467970, route painter. line_timer (console.cpp) calls it
   // per live map-window slot with the literal 1.
   void draw_base_dest(int draw_type);
   // 0x0046A550: scroll the cached image and regenerate exposed tile regions.

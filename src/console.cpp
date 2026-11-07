@@ -76,6 +76,7 @@ static char EraseLandmarkDeniedKey[] = "LANDMARKNO";
 #include "statuswin.h"
 #include "reportwin.h"  // veh_turn observes the real report window's visibility
 #include "win.h"
+#include "win_pointer.h"  // go_timer inlines Win::grab_pointer
 #include "fx.h"
 #include "graphicwin.h"
 #include "spritebox.h"
@@ -99,6 +100,7 @@ static char EraseLandmarkDeniedKey[] = "LANDMARKNO";
 #include "alpha.h"  // AlphaIniPrefs - the toggles mirror the prefs into it
 #include "terraforming.h"  // Terraforming rules drive the scenario terrain picker
 #include "planwin.h"
+#include "councwin.h"  // CouncilWindow - turn_timer redraws it
 #include <cstdlib>
 #include <cstring>
 
@@ -565,6 +567,557 @@ extern WorldWin WorldClimateWorldWin;  // 0x008E9F60
 // THE CURSOR SPRITE ARRAY sprite.cpp owns. Declared here because
 // Console::cursor_on hands its elements to Win::set_cursor by address; the
 // definition and the 0x2c stride comment live in src/sprite.cpp.
+
+// The timer callbacks' shared state; declarations in time.h beside the
+// callbacks themselves. All four are zero-initialised .data in the image.
+// Original 0x0050EE4C/0x0050EE89/0x0050EF19 gate the timer callbacks on this shared value; start only.
+// RECOVERY_OBJECT: v1 0x00915620 ?TimerHoldFlag@@3HA
+int TimerHoldFlag;      // 0x00915620
+// Blink2's counter at 0x009392B4 is ConsoleGlobal.blink2_counter_; its
+// historical object identity is retained beside ConsoleGlobal in console.cpp.
+// RECOVERY_OBJECT: v1 0x00939FD4 ?PlanLineCounter@@3HA
+int PlanLineCounter;    // 0x00939FD4
+// RECOVERY_OBJECT: v1 0x00703DE0 ?TurnRedrawPending@@3HA
+int TurnRedrawPending;  // 0x00703DE0
+
+// ORIGINAL: 0x0050EA40 ?blink_timer@@YAXH@Z 0x0050EA40-0x0050EE25 FILE
+// RECOVERY_BINDING: v1 {"evidence": ["git:371deca46d2a09538c2887fcf5c729de7add0065:src/recovered/units/0050ea40.cpp: full original identity/spans and historical source-form findings", "Independent full seed/native semantic review; original three USER32 IAT targets resolve GetAsyncKeyState/GetFocus/GetWindowLongA with GWL_HINSTANCE.", "Win primary virtual slot12 is on_redraw; PlanWin::blink now uses genuine virtual dispatch, not manual vbase/table indexing.", "recovery/tasks/blink-timer-owner-oct5.json", "recovery/tests/test_blink_timer_actual_source.py"], "reason": "Complete timer callback through existing genuine tutorial/Plan/MainInterface/Console/MapWin owners and USER32 APIs. Preserve original guards, parity/wrap geometry, half-open bounds and cursor update ordering. Source family home is not asserted original TU ownership."}
+void __cdecl blink_timer(int a1) {
+    (void)a1;
+    if (WorldClimateSkipTerrainClear != 0) return;
+    if (TimerHoldFlag != 0) return;
+
+    if (TutWinBaseWindow.is_visible() != 0) {
+        TutorialWindow.draw_arrow();
+        return;
+    }
+    if (TutWinSocWindow.is_visible() != 0) {
+        TutorialWindow.draw_arrow();
+        return;
+    }
+
+    PlanWindow.blink();
+    MainInterfaceGlobal.string_box_.clip_ids(0x96);
+
+    // One clear-and-return exit serves both the idle and the turn-exit tests
+    // (0x0050EADF stores the immediate zero once).
+    if ((ConsoleGlobal.field_23BE8_ == 0
+         && (IsMultiplayerNet == 0 || (GameDataStateStorage.fields_.game_state_ & 2) == 0))
+        || ExitTurnLoop != 0) {
+        ConsoleGlobal.field_23BFC_ = 0;
+        return;
+    }
+    if (ConsoleGlobal.field_23BE4_ == 0
+        && (IsMultiplayerNet == 0 || (GameDataStateStorage.fields_.game_state_ & 2) == 0)) {
+        return;
+    }
+
+    ConsoleGlobal.field_23BF8_ = ConsoleGlobal.field_23BF8_ == 0 ? 1 : 0;
+    draw_cursor();
+
+    const int blink_col = HIBYTE(GetAsyncKeyState(1));
+    if (reinterpret_cast<HINSTANCE>(GetWindowLongA(GetFocus(), GWL_HINSTANCE))
+        != WinInstance) {
+        return;
+    }
+    if (TutorialWindow.is_visible() != 0) return;
+    if (ConsoleGlobal.field_23D80_ == -1) return;
+    if (ConsoleGlobal.field_23D84_ == -1) return;
+    if (ConsoleGlobal.field_23D88_ == -1) return;
+    if (ConsoleGlobal.field_23D8C_ == -1) return;
+
+    if ((GameDataStateStorage.fields_.game_preferences_ & 0x1000) == 0 && blink_col == 0
+        && WinModalDepth == 0) {
+        return;
+    }
+
+    // The walk keeps the slot pointer (0x007D3C3C..0x007D3C5C) and re-reads
+    // the window through it after every call.
+    for (MapWin **slot = &MapWinTable[0]; slot < &MapWinTable[MapWinTableSlots]; ++slot) {
+        if (*slot == 0) continue;
+        int col = blink_col;
+
+        if (slot != &MapWinTable[0] && (*slot)->view_active_ == 0) continue;
+        if (col != 0 && (*slot)->field_1DD80_ == 0) continue;
+        if ((*slot)->field_1DDD4_ + (*slot)->field_1DDCC_ >= MapLongitudeBounds) {
+            continue;
+        }
+
+        int row = (*slot)->center_y_;
+        col = (*slot)->center_x_;
+
+        int mouse_x;
+        int mouse_y;
+        (*slot)->get_mouse_pos(&mouse_x, &mouse_y);
+        (*slot)->client_to_screen(&mouse_x, &mouse_y);
+
+        if (mouse_x == 0) {
+            col -= ((*slot)->field_1DDCC_ + 2) / 3;
+            if ((MapIsFlat & 1) == 0) {
+                if (col < 0) {
+                    col += MapLongitudeBounds;
+                } else if (col >= MapLongitudeBounds) {
+                    col -= MapLongitudeBounds;
+                }
+            }
+        }
+
+        if (mouse_x >= WinScreenWidth - 0xA
+            && mouse_x < WinScreenWidth + 0xA) {
+            int next_col = ((*slot)->field_1DDCC_ + 2) / 3 + col;
+            if ((MapIsFlat & 1) == 0) {
+                if (next_col < 0) {
+                    next_col += MapLongitudeBounds;
+                } else if (next_col >= MapLongitudeBounds) {
+                    next_col -= MapLongitudeBounds;
+                }
+            }
+            col = next_col;
+        }
+
+        if (mouse_y == 0 && (*slot)->field_1DDA8_ > -2) {
+            const int max_shift = (*slot)->field_1DDA8_ + 2;
+            const int requested = ((*slot)->field_1DDD0_ + 2) / 3;
+            int delta;
+            if (requested < 0 || max_shift < 0) {
+                delta = 0;
+            } else if (requested <= max_shift) {
+                delta = requested;
+            } else {
+                delta = max_shift;
+            }
+            row -= delta;
+        }
+
+        if (mouse_y >= WinScreenHeight - 0xA
+            && mouse_y < WinScreenHeight + 0xA) {
+            const int count = (*slot)->field_1DDD8_;
+            const int start = (*slot)->field_1DDA8_;
+            if (start + count * 2 - 2 < MapLatitudeBounds + 2) {
+                const int max_shift = (2 - count) * 2 - start
+                                    + MapLatitudeBounds;
+                const int requested = ((*slot)->field_1DDD0_ + 2) / 3;
+                int delta;
+                if (requested < 0 || max_shift < 0) {
+                    delta = 0;
+                } else if (requested > max_shift) {
+                    delta = max_shift;
+                } else {
+                    delta = requested;
+                }
+                row += delta;
+            }
+        }
+
+        if ((col & 1) != 0) col -= 1;
+        if ((row & 1) != 0) col += 1;
+
+        if (col == (*slot)->center_x_
+            && row == (*slot)->center_y_) {
+            continue;
+        }
+        if (row < 0) continue;
+        if (row >= MapLatitudeBounds) continue;
+        if (col < 0) continue;
+        if (col >= MapLongitudeBounds) continue;
+
+        if (*slot == static_cast<MapWin *>(&ConsoleGlobal)) {
+            (*slot)->field_21A44_ = 1;
+        }
+        (*slot)->set_center(col, row, 1);
+        (*slot)->field_21A44_ = 0;
+    }
+}
+
+// PlanWindow's virtual GraphicWin base begins at the timer's historical
+// receiver 0x00856DC0. The real PlanWin object owns that base and lifetime.
+// The MultiWin the turn timer redraws (`mov ecx, 0x7fd648`) is the REAL
+// object MultiWindow in game.cpp; game.cpp closes its GraphicWin front for
+// desktop_close - the same fixed address, one object.
+
+
+
+// global
+
+/*
+Purpose: Blink timer tick: skip while any window is up or the game holds the
+         timers, then advance the blink counter and repaint the interface.
+// ORIGINAL: 0x0050EE30 ?blink2_timer@@YAXH@Z 0x0050EE30-0x0050EE7D BYTE_EXACT
+// LEVER: byte-exact on promotion from the 0050ee30 archive unit. Five
+//   sequential early-return `if`s (NOT one chained `&&`): the image jumps to a
+//   SHARED `ret` epilogue from every test. The counter increment and the
+//   MainInterface receiver load interleave in the image (`mov eax,[ctr]; mov
+//   ecx,0x7ae820; inc; mov [ctr],eax`) exactly as the two-statement spelling
+//   schedules, and the redraw_complete call is the last statement, which VC6
+//   tail-jumps (`jmp 0x45c3a0`).
+// size      77 bytes
+// prototype
+// callers   0   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005F7E90
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl blink2_timer(int a1) {
+    if (TutWinBaseWindow.is_visible() != 0) {
+        return;
+    }
+    if (TutWinSocWindow.is_visible() != 0) {
+        return;
+    }
+    if (TimerHoldFlag != 0) {
+        return;
+    }
+    if (ExitTurnLoop != 0) {
+        return;
+    }
+    if (WorldClimateSkipTerrainClear != 0) {
+        return;
+    }
+    ++ConsoleGlobal.blink2_counter_;
+    MainInterfaceGlobal.redraw_complete();
+}
+
+/*
+Purpose: Plan-line timer tick: count the line counter down and repaint the
+         plan lines on every live map window.
+// ORIGINAL: 0x0050EE80 ?line_timer@@YAXH@Z 0x0050EE80-0x0050EF01 BYTE_EXACT
+// LEVER: byte-exact on promotion from the 0050ee80 archive unit. The slot
+//   walk is a POINTER walk (`slot < &MapWinTable[8]`), not an index loop -
+//   the image keeps the slot pointer in esi (`cmp esi, 0x7d3c5c; jl`), and
+//   "slot == &MapWinTable[0]" is the primary-window exemption
+//   (`cmp esi, 0x7d3c3c; je`), as in draw_tile. The PlanWin::on_redraw call
+//   sits between the counter store and the loop with the receiver loaded as
+//   an immediate; the two flag reads are plain (non-volatile) dwords off the
+//   window pointer, which VC6 keeps in ecx across the guards.
+// The pinned loop bounds 0x007D3C3C..0x007D3C5C and four-byte stride
+//   identify eight ordered slots. A signed index preserves the live table
+//   walk without converting its slot pointers to integers.
+// size      129 bytes
+// prototype
+// callers   0   call targets   3
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00467970 0x0048AF30 0x005F7E90
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl line_timer(int a1) {
+    if (WorldClimateSkipTerrainClear != 0) {
+        return;
+    }
+    if (TimerHoldFlag != 0) {
+        return;
+    }
+    if (TutWinBaseWindow.is_visible() != 0) {
+        return;
+    }
+    if (TutWinSocWindow.is_visible() != 0) {
+        return;
+    }
+    --PlanLineCounter;
+    // The image makes this a DIRECT call (0x50EEBF -> 0x48AF30
+    // ?on_redraw@PlanWin@@QAEXXZ), not a slot-12 dispatch; the qualified
+    // spelling suppresses the virtual call the shared name now implies.
+    PlanWindow.PlanWin::on_redraw();
+
+    for (int slot = 0; slot < static_cast<int>(MapWinTableSlots); ++slot) {
+        MapWin *const window = MapWinTable[slot];
+        if (window == nullptr) {
+            continue;
+        }
+        if (slot != 0) {
+            const uint32_t active = window->view_active_;
+            if (active == 0) {
+                continue;
+            }
+        }
+        const uint32_t draw_flags = window->field_1DD70_;
+        if ((draw_flags & 0xC40000) != 0) {
+            window->draw_base_dest(1);
+        }
+    }
+}
+
+/*
+Purpose: Network turn timer tick: pulse the turn window while a multiplayer
+         game is running and the timers are not held.
+// ORIGINAL: 0x0050EF10 ?turn_timer@@YAXH@Z 0x0050EF10-0x0050EF42 BYTE_EXACT
+// LEVER: byte-exact on promotion from the 0050ef10 archive unit. Three
+//   nested `if`s, not chained conditions - the image tests each in turn with
+//   its own jump to the shared `ret`. MultiWindow.draw(1) is the
+//   last statement, so VC6 tails it after loading the receiver immediate.
+// size      50 bytes
+// prototype
+// callers   0   call targets   2
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00479330 0x005D5A70
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl turn_timer(int a1) {
+    if (IsMultiplayerNet != 0) {
+        if (TimerHoldFlag == 0) {
+            if (TurnRedrawPending != 0) {
+                CouncilWindow.GraphicWin::redraw();
+            }
+            MultiWindow.draw(1);
+        }
+    }
+}
+
+
+/*
+Purpose: Cancel the go mode: hide the cover window, stop the go timer, then
+         reset the mode state and cursor of every live map window and of the
+         selected one.
+// ORIGINAL: 0x0050EF50 ?go_reset@@YAXXZ 0x0050EF50-0x0050F166 BYTE_EXACT
+// size      534 bytes
+// prototype
+// callers   7   call targets   4
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x004B4A20 0x005EC7C0 0x005EDCD0 0x00616780
+// indirect  0x0050EFF6 0x0050F014 0x0050F126 0x0050F144
+// MEASURED 2026-08-29: /O2 best at 10/137 (0.842 similar). Image
+//   instructions 0..7 agree - prologue, the cover window and
+//   its direct `call Win::hide`. The counted divergence is the catalogued
+//   MEASURED-inline ceiling: `GoTimer->close()` is inlined here in full
+//   (stop()'s two kill branches plus the nine field clears, writing
+//   0x939E60..0x939E84 directly) where the image makes one plain
+//   `call 0x616780`. time.h keeps close() in-class BECAUSE ~Time must
+//   inline it, so an out-of-line spelling would regress that claim; VC6
+//   honours no per-site noinline. Everything after is that block's
+//   register-allocation shadow (the walking cursor lands in edi instead of
+//   esi), not a spelling defect this file can reach.
+// TRIED: the dead cursor guard as a cached local (`cursor_sprite != 0`)
+//   - same 10/137. The image loads the sprite value once for the two
+//   equality compares (3D imm at 0x0050F097/0x0050F09E) but re-reads the
+//   FIELD for the dead arm (39 at 0x0050F0A5), so the body re-reads it.
+// MEASURED 2026-09-03, after the four start/pulse ladders landed: now
+//   9/137 (0.864) at /O2. Re-derived the ceiling from scratch and it holds,
+//   with one new fact - the image DOES inline other helpers into this body
+//   (`go_cover_window()` folds to `mov ecx, 0x937118` at 0x0050EF57, and
+//   `TutWinBaseWindow.is_visible()` expands inline in every caller), so
+//   VC6's refusal here is specific to `Time::close`, not a general
+//   no-inlining TU. The shape that explains all four sites - close()
+//   inlined into ~Time, called out-of-line from stop_timers AND from here -
+//   is that go_reset's original .cpp never saw close()'s body. This tree
+//   merged the two units into src/time.cpp, so the body is always visible
+//   and VC6 always expands it (+34 instructions, 155 against 137).
+// TRIED: `#pragma inline_depth(0)` ahead of go_reset - it suppressed the
+//   close() expansion all right but is a per-function switch, so it also
+//   un-inlined go_cover_window() (the folded `mov ecx, 0x937118` became a
+//   real call pair) and every is_visible() expansion, landing at 3/137.
+//   Not a per-site lever, and not source. Reverted.
+// TRIED: making close() an out-of-line member defined below go_reset in
+//   this file - would hide the body from go_reset while leaving it visible
+//   to ~Time, but it also hides it from console.cpp:875 and netmsg.cpp:77,
+//   which are not mine to regress, and it does nothing for the prologue
+//   below. Not taken.
+//   The second, independent wall is the prologue: the image opens
+//   `push ebp / mov ebp, esp / push ecx` (catalogue flag `frame`) and this
+//   build's /O2 omits the frame pointer, so instructions 0..1 differ before
+//   anything else. No flag set in the axis reaches both - the /Oy- sets fix
+//   the prologue and lose the body (17/137 best).
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl go_reset() {
+    ConsoleGlobal.cover_window_.Win::hide();
+    GoTimer.close();
+
+    for (int index = 0; index < static_cast<int>(MapWinTableSlots); ++index) {
+        MapWin **const slot = &MapWinTable[index];
+        MapWin *const window = *slot;
+        if (window != nullptr &&
+            (index == 0 || window->view_active_ != 0) &&
+            index != MapWinSelectedSlot &&
+            window->field_1DD80_ != 0) {
+            // The FIRST store runs off the window the tests loaded; the rest
+            // re-read the slot each time, as the image re-reads [esi] for
+            // every store after the first (0x0050EFB6 on).
+            window->field_1DD88_ = 1;
+            (*slot)->field_1DD80_ = 0;
+            (*slot)->field_1DD8C_ = 0;
+            (*slot)->field_1DD84_ = 0;
+            (*slot)->field_1DE0C_ = -1;
+
+            // Capture-loss dispatch may replace the slot; the next dispatch
+            // reloads it (50EFF9 versus 50F007 in the original).
+            (*slot)->release_pointer();
+            (*slot)->on_update();
+            ConsoleStatusWin.set_title(0);
+        }
+    }
+
+    // Slot 0's cursor first, unconditionally.
+    MapWin *const primary = MapWinTable[0];
+    if (primary->cursor_sprite_ != 0 || primary->cursor_resource_id_ != 0x7F00) {
+        primary->GraphicWin::set_cursor(0x7F00);
+        primary->cursor_resource_id_ = 0x7F00;
+        primary->cursor_sprite_ = 0;
+    }
+
+    if (MapWinSelectedSlot >= 0) {
+        // The slot walks two registers in the image - the window loaded once
+        // for the cursor work, the slot's own address kept for the reset
+        // stores below (`lea esi, [eax*4 + 0x7d3c3c]` at 0x0050F08A).
+        MapWin *const window = MapWinTable[MapWinSelectedSlot];
+        MapWin **const slot = &MapWinTable[MapWinSelectedSlot];
+        // Only the two go-mode cursor sprites are replaced by the default.
+        // The sprite tests read it through the table expression, so the
+        // dead `!= 0` arm re-reads the field (0x0050F0A5) instead of CSE.
+        Sprite *const cursor_sprite = MapWinTable[MapWinSelectedSlot]->cursor_sprite_;
+        if ((cursor_sprite == &g_CURSOR_SPRITES[1] ||
+             cursor_sprite == &g_CURSOR_SPRITES[9]) &&
+            (window->cursor_sprite_ != 0 || window->cursor_resource_id_ != 0x7F00)) {
+            window->GraphicWin::set_cursor(0x7F00);
+            window->cursor_resource_id_ = 0x7F00;
+            window->cursor_sprite_ = 0;
+        }
+        (*slot)->field_1DD88_ = 1;
+        (*slot)->field_1DD80_ = 0;
+        (*slot)->field_1DD8C_ = 0;
+        (*slot)->field_1DD84_ = 0;
+        (*slot)->field_1DE0C_ = -1;
+
+        (*slot)->release_pointer();
+        (*slot)->on_update();
+        ConsoleStatusWin.set_title(0);
+        MapWinSelectedSlot = -1;
+    }
+}
+
+
+// Superseded seed deleted; seed paths below are historical Git provenance.
+// ORIGINAL: 0x0050F170 ?go_timer@@YAXH@Z 0x0050F170-0x0050F3C4 FILE
+// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/0050f170.cpp", "Pinned original image review controls route precedence, cursor sprite dispatch, signed zoom, actual API imports and original member/data dependencies. Bounded compile and host controls do not establish game acceptance."], "reason": "Recover the genuine MapWin/Console owner operation using typed members, actual shared storage, virtual base APIs and full original branch evidence; keep seed and historical obligations."}
+void __cdecl go_timer(int selection_mode) {
+    GoTimer.close();
+    if (MapWinSelectedSlot < 0 || TimerHoldFlag != 0) return;
+
+    MapWin *&window = MapWinTable[MapWinSelectedSlot];
+    int mouse_x;
+    int mouse_y;
+    window->get_mouse_pos(&mouse_x, &mouse_y);
+
+    const uint8_t control_down = static_cast<uint8_t>(
+        static_cast<uint16_t>(GetAsyncKeyState(VK_CONTROL)) >> 8);
+    // The key branch defaults to cursor 1. With Control held and no active
+    // cursor, a clear 0x23D1C selects cursor 9; map-wait mode also forces 9.
+    int mode = control_down && ConsoleGlobal.cursor_active_ == 0 &&
+               ConsoleGlobal.field_23D1C_ == 0 ? 9 : 1;
+
+    if ((window->field_1DD70_ & 0x40000U) == 0) {
+        if (mode == 1 && ConsoleGlobal.cursor_active_ == 0 &&
+            ConsoleGlobal.field_23D1C_ == 0) {
+            int vehicle = ConsoleGlobal.selected_vehicle_;
+            if (vehicle < 0 ||
+                ConsoleGlobal.cursor_history_x_[ConsoleGlobal.cursor_history_index_] != Vehs[vehicle].x ||
+                Vehs[vehicle].y != ConsoleGlobal.cursor_history_y_[ConsoleGlobal.cursor_history_index_] ||
+                veh_selectable(vehicle) == 0 || Vehs[vehicle].order != 0 ||
+                (Vehs[vehicle].state & 0x4200U) != 0) {
+                vehicle = veh_find(
+                    ConsoleGlobal.cursor_history_x_[ConsoleGlobal.cursor_history_index_],
+                    ConsoleGlobal.cursor_history_y_[ConsoleGlobal.cursor_history_index_],
+                    ConsoleGlobal.faction_id_, -1);
+                if (vehicle >= 0 && veh_selectable(vehicle) != 0 &&
+                    Vehs[vehicle].order == 0 &&
+                    (Vehs[vehicle].state & 0x200U) == 0 &&
+                    (Vehs[vehicle].state & 0x4000U) != 0) {
+                    ConsoleGlobal.selected_vehicle_ = vehicle;
+                } else {
+                    go_reset();
+                    return;
+                }
+            }
+        }
+    } else {
+        mode = 9;
+    }
+
+    MapWin *const target = window;
+    Sprite *const cursor = &g_CURSOR_SPRITES[mode];
+    if (target->cursor_sprite_ != cursor) {
+        target->set_cursor(cursor, CursorHotspotX[mode], CursorHotspotY[mode]);
+        target->cursor_sprite_ = cursor;
+    }
+
+    window->grab_pointer();
+    ConsoleGlobal.field_23D10_ = mode;
+    ConsoleGlobal.cover_window_.fill(9);
+    ConsoleGlobal.cover_window_.show(0);
+    window->field_1DD80_ = 1;
+    window->field_1DD84_ =
+        (ConsoleGlobal.cursor_active_ == 0 && ConsoleGlobal.field_23D1C_ != 0)
+            ? 1U : 0U;
+    window->on_mouse_move(mouse_x, mouse_y);
+}
+
+/*
+Purpose: Start global timers.
+// ORIGINAL: 0x0050F3D0 ?start_timers@@YAXXZ 0x0050F3D0-0x0050F431 BYTE_EXACT
+// size      97 bytes
+// prototype 
+// callers   3   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00616350
+// LEVER (2026-08-29, timer conversion): the six timers are real `Time`
+// objects (time.h/time.cpp) instead of `Time *const` bindings into their
+// image addresses - the image's own receivers are the objects' ADDRESSES
+// (`mov ecx, 0x915688` here), which `BlinkTimer.start(...)` on a real
+// object reproduces; the claim re-measured BYTE_EXACT after, as did
+// stop_timers, the three timer callbacks and game.cpp's inlined stop
+// expansions.
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl start_timers() {
+    BlinkTimer.start(blink_timer, 1, 150, 150);
+    Blink2Timer.start(blink2_timer, 2, 100, 100);
+    LineTimer.start(line_timer, 3, 100, 100);
+    TurnTimer.start(turn_timer, 4, 500, 500);
+}
+
+/*
+Purpose: Stop global timers.
+// ORIGINAL: 0x0050F440 ?stop_timers@@YAXXZ 0x0050F440-0x0050F45E BYTE_EXACT
+// body      src/console.cpp
+// size      30 bytes
+// prototype 
+// callers   6   call targets   1
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     0x00616780
+Return Value: n/a
+Status: Complete
+*/
+// Historical: an inline definition plus a third-TU forwarder once matched
+// selected caller boundaries. The canonical implementation now lives here.
+// LEVER: the `time_close_call` forwarder (declared in time.h, defined in
+//   flatbutton.cpp). 0 of 6 agreeing, 90 instructions against the image's 6,
+//   because close()'s in-class body was expanded at all three sites - the
+//   image emits three `mov ecx, <addr>` + `call Time::close`, the last a tail
+//   `jmp`. The body is in a header, so it is the same tokens in time.cpp and
+//   in game.cpp, and the image wants the two OPPOSITE things from those two
+//   units: `call` here, `expand` in system_init 0x58F040 and game_reload
+//   0x58F450. No declaration of close() can give both - moving close()'s
+//   definition out of the class into this .cpp (TRIED, see 0x00616780) left
+//   this unit still able to see it and changed nothing here. A forwarder
+//   whose body lives in a THIRD unit breaks the symmetry: this COMDAT emits
+//   the real `call`, and the two game.cpp sites are unchanged by it (35 of
+//   135 and 19 of 44 agreeing, before and after). Historical result: 6 of 6,
+//   BYTE_EXACT.
+void __cdecl stop_timers() {
+    Blink2Timer.close();
+    BlinkTimer.close();
+    LineTimer.close();
+    // missing MP TurnTimer. TODO: In future determine if timer should be closed on stop
+}
 
 /*
 Purpose: Build the game console - its virtual GraphicWin base, its MapWin

@@ -174,7 +174,8 @@ extern Time ConsoleTimer; // 0x00939E88
 
 void __cdecl start_timers();
 void __cdecl flush_timer();
-// Original global timer callbacks and their shared state, all owned by time.cpp.
+// Original global timer callbacks and their shared state, all owned by console.cpp (the Console TU,
+// 0x0050EA40..0x0050F45E between its startup thunks and Console::Console).
 void __cdecl blink_timer(int a1);
 void __cdecl blink2_timer(int a1);
 void __cdecl line_timer(int a1);
@@ -183,7 +184,7 @@ extern int TimerHoldFlag;      // 0x00915620
 // Blink2's counter at 0x009392B4 is ConsoleGlobal.blink2_counter_.
 extern int PlanLineCounter;    // 0x00939FD4
 extern int TurnRedrawPending;  // 0x00703DE0
-// 0x0050EF50, homed into time.cpp - it closes GoTimer and sits in the same
+// 0x0050EF50, homed into console.cpp - it closes GoTimer and sits in the same
 // original address run as the timer family (0x50EE30 blink2_timer,
 // 0x50EE80 line_timer, 0x50EF10 turn_timer, then this, then start_timers
 // at 0x50F3D0 and stop_timers at 0x50F440). Declared here because
