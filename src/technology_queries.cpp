@@ -23,6 +23,7 @@
 #include "designwin.h"
 #include "fx.h"
 #include "interlude.h"
+#include "picktech.h"
 #include "spritebox.h"
 #include "log.h"
 
@@ -845,4 +846,18 @@ after_advance:
             || IsMultiplayerPBEM == 0)) {
         PlayersData[faction].tech_id_researching = tech_selection(faction);
     }
+}
+
+// Native 5BEB8F..95 constructs the complete local PickTech; 5BEBB7 calls pick.
+// The 484B60 close and reverse Font/base cleanup at 5BEBDF..5BEC27 are the
+// caller-inlined complete destructor. Do not add a second explicit close.
+// EH action662A1E calls complete PickTech::~PickTech (488690).
+// ORIGINAL: 0x005BEB70 ?tech_pick@@YAHHHHPAD@Z 0x005BEB70-0x005BEC3D;0x00662A1E-0x00662A64
+// RECOVERY_BINDING: v1 {"evidence": ["image:5BEB70-5BEC3D and662A1E-662A64; retired seed provenance git:820312f0:src/unrecovered/005beb70.cpp; historical FILE/TRIED lessons retained.", "image:5BEB8F constructor484AC0, 5BEBB7 pick486510, 5BEBDF close484B60 and reverse Fonts/base cleanup are the inlined complete destructor; EH state0 action662A1E calls destructor488690.", "Historical symbol tech_pick PAD is mutable char*; both current product callers pass null. Authoritative declaration removes stale const overloads without changing arguments."], "reason": "Real automatic PickTech owns complete construction, modal pick and cleanup; close belongs to its destructor, not an extra caller operation."}
+// symbol    ?tech_pick@@YAHHHHPAD@Z
+// LEVER: technology TU (after tech_research); ~PickTech is inline in
+//        picktech.h so it inlines here, while close stays out of line.
+int __cdecl tech_pick(int faction, int mode, int count, char *section) {
+    PickTech picker;
+    return picker.pick(faction, mode, count, section);
 }

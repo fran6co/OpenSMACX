@@ -1601,11 +1601,11 @@ int Palette::fade_to_entry(int colour_index, int start, int count, int steps,
     set();
 
     int frame = 0;
-    int weight = steps;
     if (frame < steps + 1) {
+        int end = start + count;
+        int weight = steps;
         do {
             DWORD t0 = timeGetTime();
-            int end = start + count;
             for (int k = start; k < end; ++k) {
                     entries_[k].peRed = static_cast<unsigned char>(
                         (backup[k].peRed * weight + target.peRed * frame) / steps);
@@ -1779,8 +1779,8 @@ void __cdecl RGB_to_HSV(const PALETTEENTRY *entry, HSV *out) {
 
 static __forceinline double hsv_sq_distance(const HSV *a, const HSV *b) {
     double dv = a->v - b->v;
-    double chroma_square = (((double(__cdecl *)(double))sin)(a->h * hsv_deg_to_rad) * a->s - ((double(__cdecl *)(double))sin)(b->h * hsv_deg_to_rad) * b->s) * (((double(__cdecl *)(double))sin)(a->h * hsv_deg_to_rad) * a->s - ((double(__cdecl *)(double))sin)(b->h * hsv_deg_to_rad) * b->s)
-        + (((double(__cdecl *)(double))cos)(a->h * hsv_deg_to_rad) * a->s - ((double(__cdecl *)(double))cos)(b->h * hsv_deg_to_rad) * b->s) * (((double(__cdecl *)(double))cos)(a->h * hsv_deg_to_rad) * a->s - ((double(__cdecl *)(double))cos)(b->h * hsv_deg_to_rad) * b->s);
+    double chroma_square = (((double(__cdecl *)(double))sin)(a->h * 0.017453292519444445) * a->s - ((double(__cdecl *)(double))sin)(b->h * 0.017453292519444445) * b->s) * (((double(__cdecl *)(double))sin)(a->h * 0.017453292519444445) * a->s - ((double(__cdecl *)(double))sin)(b->h * 0.017453292519444445) * b->s)
+        + (((double(__cdecl *)(double))cos)(a->h * 0.017453292519444445) * a->s - ((double(__cdecl *)(double))cos)(b->h * 0.017453292519444445) * b->s) * (((double(__cdecl *)(double))cos)(a->h * 0.017453292519444445) * a->s - ((double(__cdecl *)(double))cos)(b->h * 0.017453292519444445) * b->s);
     return chroma_square + dv * dv;
 }
 
@@ -1795,14 +1795,12 @@ int Palette::get_nearest_palette_index(const HSV *query, const HSV *hsv_block,
         return 7;
     }
     if (skip_animated == 0) {
-        const HSV *arr = hsv_block;
         for (i = 0; i < 0x100; i++) {
-            double d = hsv_sq_distance(query, arr);
+            double d = hsv_sq_distance(query, &hsv_block[i]);
             if (d < best) {
                 best = d;
                 best_index = i;
             }
-            arr++;
         }
         return best_index;
     }
@@ -1812,27 +1810,21 @@ int Palette::get_nearest_palette_index(const HSV *query, const HSV *hsv_block,
     }
     for (i = 0; i < 5; i++) {
         if (internal_[i].key != 0xffffffff) {
-            unsigned int start = internal_[i].first;
-            unsigned int len = internal_[i].count;
-            unsigned int end = start + len;
-            if (start < end) {
-                unsigned int j;
-                for (j = start; j < end; j++) {
-                    used[j] = 1;
-                }
+            int start = internal_[i].first;
+            int end = start + internal_[i].count;
+            for (int j = start; j < end; j++) {
+                used[j] = 1;
             }
         }
     }
-    const HSV *arr = hsv_block + 10;
     for (i = 10; i < 0xf6; i++) {
         if (used[i] == 0) {
-            double d = hsv_sq_distance(query, arr);
+            double d = hsv_sq_distance(query, &hsv_block[i]);
             if (d < best) {
                 best = d;
                 best_index = i;
             }
         }
-        arr++;
     }
     return best_index;
 }

@@ -907,25 +907,25 @@ void PathRecord::set_path(char *path) {
         ::operator delete(path_);
     }
     path_ = 0;
-
-    if (path != 0) {
-        char buffer[256];
-        if (directory_ != 0) {
-            strcpy(buffer, directory_);
-            char *slash = strrchr(path, '\\');
-            if (slash != 0) {
-                strcat(buffer, slash + 1);
-            } else {
-                strcat(buffer, path);
-            }
-        } else {
-            strcpy(buffer, path);
-        }
-        const unsigned int length = strlen(buffer);
-        char *fresh = static_cast<char *>(::operator new(length + 1));
-        path_ = fresh;
-        strcpy(fresh, buffer);
+    if (path == 0) {
+        path_ = 0;  // pinned 4C82BB repeats the clear on this exit
+        return;
     }
+    char buffer[256];
+    if (directory_ != 0) {
+        strcpy(buffer, directory_);
+        char *slash = strrchr(path, '\\');
+        if (slash == 0) {
+            slash = path;
+        } else {
+            ++slash;
+        }
+        strcat(buffer, slash);
+    } else {
+        strcpy(buffer, path);
+    }
+    path_ = static_cast<char *>(::operator new(strlen(buffer) + 1));
+    strcpy(path_, buffer);
 }
 
 // ORIGINAL: 0x004C83A0 sub_4c83a0 0x004C83A0-0x004C83EB BYTE_EXACT

@@ -9,7 +9,11 @@
 class PickTech : public GraphicWin {
 public:
     PickTech();
-    virtual ~PickTech();
+    // Inline: tech_pick (technology TU) inlines it but calls close out of line.
+    virtual ~PickTech() {
+        // Native4886C9..4886DB clears the four picker fields before base close.
+        close();
+    }
     void close();
 
     void on_mouse_move(int x, int y);

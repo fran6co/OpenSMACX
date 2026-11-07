@@ -780,6 +780,7 @@ void FameWin::on_left_click(int x, int y) {
 // Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x0044AC10 ?demote@FameWin@@QAEXH@Z 0x0044AC10-0x0044AE42;0x00654EBA-0x00654ECF FILE
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/0044ac10.cpp", "Pinned original owner review: original clip resets and absent-record branches, CharUpperA import, difficulty-label capitalization and exact demote tail copying."], "reason": "Recover FameWin owner behavior through existing GraphicWin/Buffer bases, owned buttons and sprites, and typed HallOfFame/Player records; retain historical seed identity and extents without a measurement claim."}
+#pragma optimize("y", off)
 void FameWin::demote(int rank) {
   Buffer buffer;
   if (rank >= 4) return;
@@ -805,9 +806,10 @@ void FameWin::demote(int rank) {
   strcat(StringTemp, ".pcx");
   buffer.write_pcx(StringTemp);
 
-  const int old_index = static_cast<int>(factionID_) * 5 - 5 + rank;
-  const HallOfFameRecord &source = HallOfFameRecords[old_index];
-  HallOfFameRecord &destination = HallOfFameRecords[old_index + 1];
+  const HallOfFameRecord &source =
+      HallOfFameRecords[static_cast<int>(factionID_) * 5 + rank - 5];
+  HallOfFameRecord &destination =
+      HallOfFameRecords[static_cast<int>(factionID_) * 5 + rank - 4];
   destination.present = source.present;
   destination.award_flags = source.award_flags;
   destination.year = source.year;
@@ -825,8 +827,12 @@ void FameWin::demote(int rank) {
           sizeof(destination.leader_name));
   strncpy(destination.faction_noun, source.faction_noun,
           sizeof(destination.faction_noun));
-  memcpy(destination.unknown_6A + 2, source.unknown_6A + 2, 0x20);
+  for (int i = 0; i < 8; i++) {
+    reinterpret_cast<int *>(destination.unknown_6A + 2)[i] =
+        reinterpret_cast<const int *>(source.unknown_6A + 2)[i];
+  }
 }
+#pragma optimize("", on)
 
 // ORIGINAL: 0x0044A660 ?try_to_add_me@FameWin@@QAEXXZ 0x0044A660-0x0044AC05 FILE
 // RECOVERY_BINDING: v1 {"evidence": ["git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/0044a660.cpp", "Pinned original owner review: original clip resets and absent-record branches, CharUpperA import, difficulty-label capitalization and exact demote tail copying."], "reason": "Recover FameWin owner behavior through existing GraphicWin/Buffer bases, owned buttons and sprites, and typed HallOfFame/Player records; retain historical seed identity and extents without a measurement claim."}
