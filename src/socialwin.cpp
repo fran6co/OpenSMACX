@@ -703,6 +703,40 @@ void SocialWin::bubble_me_elmo2(char *text, int x, int y) {
 // Historical SocBaseIdProbe/Compare at 0x009A6568/0x009A6574 are
 // SecretProject.network_backbone/cloning_vats, not independent selectors.
 
+static inline RECT *social_expand_rect(RECT *rect, int horizontal, int vertical) {
+    rect->left -= horizontal;
+    rect->right += horizontal;
+    rect->top -= vertical;
+    rect->bottom += vertical;
+    return rect;
+}
+
+static inline void social_draw_icon(Sprite *sprite, Buffer *dest, int x, int y) {
+    sprite->draw(dest, sprite->transparent_index(), x, y, 1, 1);
+}
+
+// Text writes with the image's null test on the text.
+static inline void social_write_cent(char *text, RECT *rect) {
+    if (text != 0) {
+        MainInterfaceGlobal.Buffer::write_cent_l(text, rect, strlen(text));
+    }
+}
+static inline void social_write_l(char *text, RECT *rect) {
+    if (text != 0) {
+        MainInterfaceGlobal.Buffer::write_l(text, rect, strlen(text));
+    }
+}
+
+static inline void social_write_l_at(char *text, int x, int y) {
+    if (text != 0) {
+        MainInterfaceGlobal.Buffer::write_l(text, x, y, strlen(text));
+    }
+}
+
+// Operand-twice magnitude, as the image re-derives it at each use.
+#define SOCIAL_ABS(x) ((x) < 0 ? -(x) : (x))
+// The same magnitude with the opposite branch polarity (draw_info).
+#define SOCIAL_MAGNITUDE(x) ((x) >= 0 ? (x) : -(x))
 // ORIGINAL: 0x004AF310 ?draw_social@SocialWin@@QAEXH@Z 0x004AF310-0x004AF8BC FILE
 // TRIED: transcribed directly from the disassembly (Ghidra's own decompilation agreed on the control flow and formulas once its confusing overlapping-stack-slot local numbering was resolved against the raw ebp-relative offsets) - the header/derived RECT pair, the per-row avail==0 header-only path, the count-then- draw two-pass loop over the fixed 11-entry table at 0x94b2cc (index 3 excluded), and the `this!=0 ? obj : 0` guard before each Sprite::draw. Draw receivers are the big/small Sprite sub-objects themselves (`bigIcon->draw(buffer, ...)`), not the Buffer - an early draft called the wrong receiver and was fixed before landing. MISMATCH #0 (`push`/`sub` prologue) on a 1452-byte function with a deeply nested sign-magnitude classification loop - not chased to byte-exactness, this is a structural transcription.
 // working copy - scaffold materialised by --work
@@ -718,156 +752,122 @@ void SocialWin::bubble_me_elmo2(char *text, int x, int y) {
 static int social_effect_value(const SocialEffect &effect, int index);
 
 void SocialWin::draw_social(int a1) {
-    Buffer *buffer = static_cast<Buffer *>(static_cast<GraphicWin *>(this));
-
-    RECT *headerSlot = &categoryHeaders_[a1];
-    RECT rect1 = *headerSlot;
-    buffer->set_clip(&rect1);
-    buffer->box_sprite(&rect1, &InterfaceBoxStyles[3]);
-
-    RECT rect2;
-    rect2.left = rect1.left + 3;
-    rect2.top = rect1.top + 3;
-    rect2.right = rect1.right - 3;
-    rect2.bottom = rect1.top + 3 + 0x14;
-    buffer->box_sprite(&rect2, &InterfaceBoxStyles[6]);
+    RECT *header = &categoryHeaders_[a1];
+    RECT rect = *header;
+    Buffer::set_clip(&rect);
+    Buffer::box_sprite(&rect, &InterfaceBoxStyles[3]);
+    social_expand_rect(&rect, -3, -3);
+    RECT title = rect;
+    title.bottom = title.top + 20;
+    Buffer::box_sprite(&title, &InterfaceBoxStyles[6]);
 
     StringTemp[0] = 0;
-    char *name = StringTable.get(SocialCategories[a1].type);
-    strcat(StringTemp, name);
-    buffer->set_text_color(0x9f, -1, 1, 1);
-    buffer->set_font(&font1_, (Font *)0, (Font *)0, (Font *)0);
+    char *name = SocialCategories[a1].type;
+    strcat(StringTemp, StringTable.get(name));
+    Buffer::set_text_color(0x9f, -1, 1, 1);
+    Buffer::set_font(&font1_, 0, 0, 0);
     CharUpperA(StringTemp);
     char *heading = StringTemp;
     if (heading != 0) {
-        unsigned int len = strlen(heading);
-        buffer->write_cent_l(heading, &rect2, len);
+        Buffer::write_cent_l(heading, &title, strlen(heading));
     }
 
-    for (int row = 0; row < 4; row++) {
-        RECT *slot = &modelRects_[a1 * 4 + row];
+    for (int row = 0; row < 4; ++row) {
         if (society_avail(a1, row, factionID_) == 0) {
-            RECT hdr = *slot;
-            buffer->box_sprite(&hdr, &InterfaceBoxStyles[6]);
-            hdr.top += 0x16;
-            hdr.bottom += 0x16;
-            buffer->box_sprite(&hdr, &InterfaceBoxStyles[6]);
+            title = modelRects_[a1 * 4 + row];
+            Buffer::box_sprite(&title, &InterfaceBoxStyles[6]);
+            title.top += 0x16;
+            title.bottom += 0x16;
+            Buffer::box_sprite(&title, &InterfaceBoxStyles[6]);
             continue;
         }
 
-        RECT body = *slot;
-        body.top += 0x16;
-        body.bottom += 0x16;
-        buffer->box_sprite(&body, &InterfaceBoxStyles[6]);
+        rect = modelRects_[a1 * 4 + row];
+        rect.top += 0x16;
+        rect.bottom += 0x16;
+        Buffer::box_sprite(&rect, &InterfaceBoxStyles[6]);
 
-        int countNonzero = 0;
-        int countBig = 0;
-        const int *const social_effect_row =
-            SocialCategories[3].model_effect[1].values_;
-        for (int effect_index = 0; effect_index < MaxSocialEffectNum; ++effect_index) {
-            if (effect_index != 3) {
-                bool skip = false;
-                if (GameDataStateStorage.fields_.secret_project_.cloning_vats() >= 0 &&
-                    (unsigned int)Bases[GameDataStateStorage.fields_.secret_project_.cloning_vats()].faction_id_current == (unsigned int)factionID_) {
-                    if (a1 == 2) {
-                        if (row == 1) {
-                            if (SocialCategories[a1].model_effect[row].values_[effect_index] < 0) {
-                                skip = true;
-                            }
-                        }
-                    } else if (a1 == 3 && row == 3) {
-                        if (SocialCategories[a1].model_effect[row].values_[effect_index] < 0) {
-                            skip = true;
-                        }
-                    }
-                }
-                if (!skip) {
-                    if (!((GameDataStateStorage.fields_.secret_project_.network_backbone() < 0) ||
-                          ((unsigned int)Bases[GameDataStateStorage.fields_.secret_project_.network_backbone()].faction_id_current != (unsigned int)factionID_) ||
-                          (a1 != 3) ||
-                          ((row != 1) || (social_effect_row[effect_index] >= 0)))) {
-                        skip = true;
-                    }
-                }
-                if (!skip) {
-                    int v = SocialCategories[a1].model_effect[row].values_[effect_index];
-                    int mag = (v < 0) ? -v : v;
-                    countNonzero += (mag != 0) ? 1 : 0;
-                    countBig += (v < 0 ? -v : v) > 1 ? 1 : 0;
-                }
+        int icon_count = 0;
+        int number_count = 0;
+        int effect;
+        for (effect = 0; effect < MaxSocialEffectNum; ++effect) {
+            if (effect == 3) {
+                continue;
             }
+            // Cloning Vats and the Network Backbone remove the penalties of
+            // the models they neutralise.
+            if (has_project(SP_CLONING_VATS, factionID_)
+                && ((a1 == 2 && row == 1) || (a1 == 3 && row == 3))
+                && SocialCategories[a1].model_effect[row].values_[effect] < 0) {
+                continue;
+            }
+            if (has_project(SP_NETWORK_BACKBONE, factionID_) && a1 == 3 && row == 1
+                && SocialCategories[3].model_effect[1].values_[effect] < 0) {
+                continue;
+            }
+            const int value = SocialCategories[a1].model_effect[row].values_[effect];
+            icon_count += SOCIAL_ABS(value) != 0;
+            number_count += SOCIAL_ABS(value) > 1;
         }
-        if (countNonzero < 1) {
-            countNonzero = 1;
+        if (icon_count < 1) {
+            icon_count = 1;
         }
 
-        int drawX = (body.right - (effectIcons_[0].width() + 1) * countNonzero -
-                     socEngModifierNums_[0].source_width() * countBig - body.left) / 2 + body.left;
-        int drawYBase = (body.bottom - effectIcons_[0].width() - body.top) / 2 + body.top;
+        int x = (rect.right - (effectIcons_[0].width() + 1) * icon_count
+                 - socEngModifierNums_[0].source_width() * number_count - rect.left) / 2
+                + rect.left;
+        const int y = (rect.bottom - effectIcons_[0].width() - rect.top) / 2 + rect.top;
 
-        int drawX2 = drawX;
-        for (int phase = 0; phase < 3; phase++) {
-            for (int effect_index = 0; effect_index < MaxSocialEffectNum; ++effect_index) {
-                if (effect_index != 3) {
-                    bool skip = false;
-                    if (GameDataStateStorage.fields_.secret_project_.cloning_vats() >= 0 &&
-                        (unsigned int)Bases[GameDataStateStorage.fields_.secret_project_.cloning_vats()].faction_id_current == (unsigned int)factionID_) {
-                        if (a1 == 2) {
-                            if (row == 1) {
-                                if (SocialCategories[a1].model_effect[row].values_[effect_index] < 0) {
-                                    skip = true;
-                                }
-                            }
-                        } else if (a1 == 3 && row == 3) {
-                            if (SocialCategories[a1].model_effect[row].values_[effect_index] < 0) {
-                                skip = true;
-                            }
-                        }
-                    }
-                    if (!skip) {
-                        if (!((GameDataStateStorage.fields_.secret_project_.network_backbone() < 0) ||
-                              ((unsigned int)Bases[GameDataStateStorage.fields_.secret_project_.network_backbone()].faction_id_current != (unsigned int)factionID_) ||
-                              (a1 != 3) ||
-                              ((row != 1) || (social_effect_row[effect_index] >= 0)))) {
-                            skip = true;
-                        }
-                    }
-                    if (!skip) {
-                        int v = SocialCategories[a1].model_effect[row].values_[effect_index];
-                        int mag = (v < 0) ? -v : v;
-                        bool draw = false;
-                        if (phase == 0) {
-                            draw = (v >= 2);
-                        } else if (phase == 1) {
-                            draw = (v == 1);
-                        } else {
-                            draw = (v < 0);
-                        }
-                        if (draw) {
-                            Buffer *bufOrNull = (this != 0) ? buffer : (Buffer *)0;
-                            if (mag > 1) {
-                                int bigSpriteIndex = (v < 1 ? 1 : 0) + mag * 2 - 4;
-                                Sprite *bigSprite = &socEngModifierNums_[bigSpriteIndex];
-                                int y = body.bottom - bigSprite->height();
-                                bigSprite->draw(bufOrNull, bigSprite->transparent_index(), drawX2, y, 1, 1);
-                                drawX2 = drawX2 + 1 + socEngModifierNums_[0].source_width();
-                            }
-                            int icon_effect_index = effect_index;
-                            if (icon_effect_index >= 3) {
-                                --icon_effect_index;
-                            }
-                            int small_icon_index = 6 + icon_effect_index * 9 + (v >= 1 ? 2 : 1);
-                            Sprite *smallSprite = &effectIcons_[small_icon_index];
-                            smallSprite->draw(bufOrNull, smallSprite->transparent_index(), drawX2, drawYBase, 1, 1);
-                            drawX2 = drawX2 + 1 + effectIcons_[0].width();
-                        }
-                    }
+        // Larger bonuses first, then +1 effects, then penalties.
+        for (int phase = 0; phase < 3; ++phase) {
+            for (effect = 0; effect < MaxSocialEffectNum; ++effect) {
+                if (effect == 3) {
+                    continue;
                 }
+                if (has_project(SP_CLONING_VATS, factionID_)
+                    && ((a1 == 2 && row == 1) || (a1 == 3 && row == 3))
+                    && SocialCategories[a1].model_effect[row].values_[effect] < 0) {
+                    continue;
+                }
+                if (has_project(SP_NETWORK_BACKBONE, factionID_) && a1 == 3 && row == 1
+                    && SocialCategories[3].model_effect[1].values_[effect] < 0) {
+                    continue;
+                }
+                const int value = SocialCategories[a1].model_effect[row].values_[effect];
+                switch (phase) {
+                case 0:
+                    if (value < 2) {
+                        continue;
+                    }
+                    break;
+                case 1:
+                    if (value != 1) {
+                        continue;
+                    }
+                    break;
+                case 2:
+                    if (value >= 0) {
+                        continue;
+                    }
+                    break;
+                }
+                if (SOCIAL_ABS(value) == 0) {
+                    continue;
+                }
+                if (SOCIAL_ABS(value) > 1) {
+                    Sprite *number = &socEngModifierNums_[(value <= 0) + SOCIAL_ABS(value) * 2 - 4];
+                    social_draw_icon(number, this, x, rect.bottom - number->height());
+                    x += socEngModifierNums_[0].source_width() + 1;
+                }
+                social_draw_icon(&effectIcons_[6 + (effect < 3 ? effect : effect - 1) * 9
+                                               + (value >= 1 ? 2 : 1)],
+                                 this, x, y);
+                x += effectIcons_[0].width() + 1;
             }
         }
     }
 
-    soft_update(headerSlot);
+    soft_update(header);
     do_sound();
 }
 
@@ -877,13 +877,6 @@ void SocialWin::draw_social(int a1) {
 // RECOVERY_OBJECT: v1 0x00682EA0 _PercentText
 static const char PercentText[] = "%";
 
-static inline RECT *social_expand_rect(RECT *rect, int horizontal, int vertical) {
-    rect->left -= horizontal;
-    rect->right += horizontal;
-    rect->top -= vertical;
-    rect->bottom += vertical;
-    return rect;
-}
 
 typedef void (__cdecl *SoundHookFn)(char *);
 
@@ -1141,9 +1134,6 @@ void SocialWin::draw_labs_alloc() {
 }
 
 // Draws one effect icon; the image converts the destination before indexing.
-static inline void social_draw_icon(Sprite *sprite, Buffer *dest, int x, int y) {
-    sprite->draw(dest, sprite->transparent_index(), x, y, 1, 1);
-}
 
 // Paint the faction power strip from its owning Player name and base effects.
 // ORIGINAL: 0x004AF8C0 ?draw_faction_basal@SocialWin@@QAEXXZ 0x004AF8C0-0x004AFB5D BYTE_EXACT
@@ -1695,60 +1685,63 @@ void SocialWin::on_button_passover(int a1, int a2) {
     do_all_draws();
 }
 
-// The section key remains a distinct textual value from the SOC path prefix.
-static const char *const SocialOverviewSection = "SOCIO";
+// Right-aligned label write with the image's null test on the text.
+static inline void social_write_right(char *text, int x, int y) {
+    if (text != 0) {
+        MainInterfaceGlobal.Buffer::write_right_l(text, x, y, strlen(text));
+    }
+}
+
 // ORIGINAL: 0x004B0410 ?draw_overview@SocialWin@@QAEXXZ 0x004B0410-0x004B089A
 // RECOVERY_BINDING: v1 {"evidence": ["image:0x004B0410-0x004B089A draws the effects overview, skips the reserved fourth row, loads each SocialEffects section and repaints the selected/comparison rows", "source:src/socialwin.h: tooltipEffects_, effectMaximize_, socEffect_, font1_ and font7_ are the corresponding declared members", "source:src/faction.h: SocialEffect and RulesSocialEffect define the eleven live rows and their section names"], "reason": "Home the overview painter on the SocialWin-owned rectangles, effects, fonts and rules records; preserve its original identity while replacing the seed's opaque object accesses with the product model."}
 void SocialWin::draw_overview() {
-    Buffer *buffer = static_cast<Buffer *>(&MainInterfaceGlobal);
-    int selected = effect_hover_button_id_;
-    int selected_effect = -1;
-    if (selected >= 0) {
-        selected_effect = selected - 0x11;
-        if (selected_effect > 2) {
-            selected_effect = selected - 0x10;
+    int selected_effect;
+    if (effect_hover_button_id_ < 0) {
+        selected_effect = -1;
+    } else {
+        selected_effect = effect_hover_button_id_ - 0x11;
+        if (selected_effect >= 3) {
+            ++selected_effect;
         }
     }
 
-    buffer->restore_clip();
-    buffer->set_wrap_width(5);
+    MainInterfaceGlobal.Buffer::restore_clip();
+    MainInterfaceGlobal.Buffer::set_wrap_width(5);
 
     RECT panel = tooltipEffects_;
-    buffer->box_sprite(&panel, &InterfaceBoxStyles[3]);
+    MainInterfaceGlobal.Buffer::box_sprite(&panel, &InterfaceBoxStyles[3]);
     panel.left += 3;
     panel.top += 3;
     panel.right -= 3;
     panel.bottom -= 3;
     RECT title_rect = panel;
     title_rect.bottom = title_rect.top + 20;
-    buffer->box_sprite(&title_rect, &InterfaceBoxStyles[6]);
+    MainInterfaceGlobal.Buffer::box_sprite(&title_rect, &InterfaceBoxStyles[6]);
 
-    buffer->set_font(&font1_, 0, 0, 0);
-    buffer->set_text_color(0x9f, -1, 1, 1);
+    MainInterfaceGlobal.Buffer::set_font(&font1_, 0, 0, 0);
+    MainInterfaceGlobal.Buffer::set_text_color(0x9f, -1, 1, 1);
 
-    char *title = label_get(0x2e4);
+    char *title = StringTable.get(Labels.strings_ptr[0x2e4]);
     if (title != 0) {
-        buffer->write_cent_l(title, &title_rect, strlen(title));
+        MainInterfaceGlobal.Buffer::write_cent_l(title, &title_rect, strlen(title));
     }
 
     panel.top = title_rect.bottom + 2;
-    buffer->box_sprite(&panel, &InterfaceBoxStyles[0]);
-    buffer->set_font(&font7_, 0, 0, 0);
+    MainInterfaceGlobal.Buffer::box_sprite(&panel, &InterfaceBoxStyles[0]);
+    MainInterfaceGlobal.Buffer::set_font(&font7_, 0, 0, 0);
 
     panel.left += 20;
     const int number_x = panel.left - 5;
     panel.right -= 3;
     int row_pitch_cursor = panel.top;
-    const int available_width = panel.right - panel.left;
     char descriptions[MaxSocialEffectNum][256];
     int content_height = 0;
     int last_description_length;
 
-    text_open(AlphaxFileID, SocialOverviewSection);
+    text_open(AlphaxFileID, "SOCIO");
 
-    // Each rules entry names one SOCIAL section. The fourth entry is the
-    // reserved slot at index 3 and has no section, as shown by the seed's
-    // 0x009466B8 skip (three 0x68-byte records after SocialEffects).
+    // Each rules entry names one SOCIAL section; index 3 is the reserved
+    // slot with no section.
     int effect;
     for (effect = 0; effect < MaxSocialEffectNum; ++effect) {
         if (effect == 3) {
@@ -1767,7 +1760,7 @@ void SocialWin::draw_overview() {
         text_get();
         int row = text_item_number();
         strcpy(descriptions[effect], text_item());
-        while (row < social_effect_value(socEffect_, effect)) {
+        while (row < socEffect_.values_[effect]) {
             text_get();
             if (strlen(TextBufferGetPtr) == 0) {
                 break;
@@ -1776,7 +1769,8 @@ void SocialWin::draw_overview() {
             strcpy(descriptions[effect], text_item());
         }
         last_description_length = strlen(descriptions[effect]);
-        content_height += buffer->wrap_height(descriptions[effect], available_width);
+        content_height += MainInterfaceGlobal.Buffer::wrap_height(
+            descriptions[effect], panel.right - panel.left);
     }
     text_close();
 
@@ -1786,50 +1780,43 @@ void SocialWin::draw_overview() {
             continue;
         }
         if (selected_effect == effect) {
-            buffer->set_text_color(0xff, -1, 1, 1);
+            MainInterfaceGlobal.Buffer::set_text_color(0xff, -1, 1, 1);
+        } else if (effectMaximize_ == effect) {
+            MainInterfaceGlobal.Buffer::set_text_color(0x9c, -1, 1, 1);
+        } else if (socEffect_.values_[effect]
+                   == PlayersData[factionID_].soc_effect_pending.values_[effect]) {
+            MainInterfaceGlobal.Buffer::set_text_color(0xa0, -1, 1, 1);
+        } else if (socEffect_.values_[effect]
+                   > PlayersData[factionID_].soc_effect_pending.values_[effect]) {
+            MainInterfaceGlobal.Buffer::set_text_color(0xfa, -1, 1, 1);
         } else {
-            int color;
-            if (effectMaximize_ == effect) {
-                color = 0x9c;
-            } else if (social_effect_value(socEffect_, effect)
-                       == social_effect_value(PlayersData[factionID_].soc_effect_pending, effect)) {
-                color = 0xa0;
-            } else if (social_effect_value(PlayersData[factionID_].soc_effect_pending, effect)
-                       < social_effect_value(socEffect_, effect)) {
-                color = 0xfa;
-            } else {
-                color = 0xf9;
-            }
-            buffer->set_text_color(color, -1, 1, 1);
+            MainInterfaceGlobal.Buffer::set_text_color(0xf9, -1, 1, 1);
         }
 
         StringTemp[0] = 0;
-        const int value = social_effect_value(socEffect_, effect);
-        if (value > 0) {
+        if (socEffect_.values_[effect] > 0) {
             strcat(StringTemp, SocialWinOverviewPlusText);
         }
         char number[80];
-        _itoa(value, number, 10);
+        _itoa(socEffect_.values_[effect], number, 10);
         strcat(StringTemp, number);
-        buffer->set_font(&font7_, 0, 0, 0);
-        buffer->write_right_l(StringTemp, number_x, panel.top, strlen(StringTemp));
+        MainInterfaceGlobal.Buffer::set_font(&font7_, 0, 0, 0);
+        social_write_right(StringTemp, number_x, panel.top);
         socEffectOrig_.values_[effect] =
             PlayersData[factionID_].soc_effect_pending.values_[effect];
 
         // The original reuses the final parsed description's length for
-        // every row. Preserve this quirk, including skipping all wraps when
-        // that last description is empty.
+        // every row, skipping all wraps when that last description is empty.
         if (last_description_length != 0) {
-            buffer->set_font(&font7_, 0, 0, 0);
-            panel.top = buffer->wrap(descriptions[effect], &panel);
+            MainInterfaceGlobal.Buffer::set_font(&font7_, 0, 0, 0);
+            panel.top = MainInterfaceGlobal.Buffer::wrap(descriptions[effect], &panel);
         }
-        // This separate native cursor does not replace the wrapping RECT's
-        // top. Its metric depends on Font state, never the social effect.
+        // A separate cursor that never feeds the wrapping RECT's top.
         row_pitch_cursor += font_line_advance(font7_);
     }
 
-    buffer->set_wrap_width(5);
-    soft_update(&tooltipEffects_);
+    MainInterfaceGlobal.Buffer::set_wrap_width(5);
+    MainInterfaceGlobal.soft_update(&tooltipEffects_);
     do_sound();
 }
 
@@ -2035,181 +2022,143 @@ int SocialWin::on_button_text_draw(GraphicWin *window, char *text, int button_id
 // indirect  0x004B1162 0x004B12CA
 */
 void SocialWin::draw_mouseover() {
-    Buffer *buf = static_cast<Buffer *>(&MainInterfaceGlobal);
+    MainInterfaceGlobal.Buffer::restore_clip();
 
-    buf->restore_clip();
+    RECT rect = tutRect9_;
+    MainInterfaceGlobal.Buffer::box_sprite(&rect, &InterfaceBoxStyles[3]);
+    rect.left += 3;
+    rect.top += 3;
+    rect.right -= 3;
+    rect.bottom -= 3;
+    RECT title = rect;
+    title.bottom = title.top + 20;
+    MainInterfaceGlobal.Buffer::box_sprite(&title, &InterfaceBoxStyles[6]);
 
-    RECT *header_rect = &tutRect9_;
-    RECT rect1 = *header_rect;
-
-    buf->box_sprite(&rect1, &InterfaceBoxStyles[3]);
-
-    RECT rect2;
-    rect2.left = rect1.left + 3;
-    rect2.top = rect1.top + 3;
-    rect2.right = rect1.right - 3;
-    rect2.bottom = rect1.top + 0x17;
-    rect1 = rect2;
-
-    buf->box_sprite(&rect2, &InterfaceBoxStyles[6]);
-
-    int mode = hover_selection_;
-    int cat_idx = 0;
-    int row_idx = 0;
-
-    if (mode != -1) {
-        LPSTR table_text;
-        if (mode == -2) {
-            table_text = Labels.strings_ptr[0xB94 / 4];
+    // The image leaves these unset on the -2 path and still reads them in
+    // the drawing pass's project tests.
+    int category;
+    int model;
+    if (hover_selection_ != -1) {
+        if (hover_selection_ == -2) {
+            StringTemp[0] = 0;
+            strcat(StringTemp, label_get(0xB94 / 4));
+            CharUpperA(StringTemp);
+            MainInterfaceGlobal.Buffer::set_font(&font1_, 0, 0, 0);
+            MainInterfaceGlobal.Buffer::set_text_color(0x9f, -1, 1, 1);
+            social_write_cent(StringTemp, &title);
         } else {
-            cat_idx = mode / 4;
-            row_idx = mode % 4;
-            // Original 0x94B014 is RulesSocialCategory::name + 0x14;
-            // rows advance by sizeof(RulesSocialCategory) == 0xD4.
-            table_text = SocialCategories[cat_idx].name[row_idx];
+            category = hover_selection_ / 4;
+            model = hover_selection_ % 4;
+            StringTemp[0] = 0;
+            char *name = SocialCategories[category].name[model];
+            strcat(StringTemp, StringTable.get(name));
+            CharUpperA(StringTemp);
+            MainInterfaceGlobal.Buffer::set_font(&font1_, 0, 0, 0);
+            MainInterfaceGlobal.Buffer::set_text_color(0x9f, -1, 1, 1);
+            social_write_cent(StringTemp, &title);
         }
-        StringTemp[0] = 0;
-        strcat(StringTemp, StringTable.get(table_text));
-        CharUpperA(StringTemp);
-        buf->set_font(&font1_, NULL, NULL, NULL);
-        buf->set_text_color(0x9f, -1, 1, 1);
-        buf->write_cent_l(StringTemp, &rect1, strlen(StringTemp));
     }
 
-    rect1.top = rect2.bottom + 2;
-    buf->box_sprite(&rect1, &InterfaceBoxStyles[0]);
+    rect.top = title.bottom + 2;
+    MainInterfaceGlobal.Buffer::box_sprite(&rect, &InterfaceBoxStyles[0]);
 
     if (hover_selection_ != -1) {
-        rect1.left += 3;
-        rect1.right -= 3;
-        rect1.top += 3;
-        rect1.bottom -= 3;
+        rect.left += 3;
+        rect.right -= 3;
+        rect.top += 3;
+        rect.bottom -= 3;
 
         int count = 0;
-        int self_faction = factionID_;
-
-        for (int i = 0; i < 11; ++i) {
-            if (i == 3) {
+        int effect;
+        for (effect = 0; effect < MaxSocialEffectNum; ++effect) {
+            if (effect == 3) {
                 continue;
             }
-            int v;
+            int value;
             if (hover_selection_ == -2) {
-                // Original 0x96CCB0 is PlayersData::soc_effect_base at +0x2D0;
-                // PlayerData rows have the measured 0x20CC stride.
-                v = PlayersData[self_faction].soc_effect_base.values_[i];
+                value = PlayersData[factionID_].soc_effect_base.values_[effect];
             } else {
-                bool skip = false;
-                if (GameDataStateStorage.fields_.secret_project_.cloning_vats() >= 0 &&
-                    Bases[GameDataStateStorage.fields_.secret_project_.cloning_vats()].faction_id_current ==
-                        static_cast<unsigned int>(self_faction)) {
-                    if ((cat_idx == 2 && row_idx == 1) || (cat_idx == 3 && row_idx == 3)) {
-                        if (SocialCategories[cat_idx].model_effect[row_idx]
-                                .values_[i] < 0) {
-                            skip = true;
-                        }
-                    }
-                }
-                if (!skip && GameDataStateStorage.fields_.secret_project_.network_backbone() >= 0 &&
-                    Bases[GameDataStateStorage.fields_.secret_project_.network_backbone()].faction_id_current ==
-                        static_cast<unsigned int>(self_faction) &&
-                    cat_idx == 3 && row_idx == 1 &&
-                    SocialCategories[3].model_effect[1].values_[i] < 0) {
-                    skip = true;
-                }
-                if (skip) {
+                if (has_project(SP_CLONING_VATS, factionID_)
+                    && ((category == 2 && model == 1) || (category == 3 && model == 3))
+                    && SocialCategories[category].model_effect[model].values_[effect] < 0) {
                     continue;
                 }
-                v = SocialCategories[cat_idx].model_effect[row_idx].values_[i];
+                if (has_project(SP_NETWORK_BACKBONE, factionID_) && category == 3 && model == 1
+                    && SocialCategories[3].model_effect[1].values_[effect] < 0) {
+                    continue;
+                }
+                value = SocialCategories[category].model_effect[model].values_[effect];
             }
-            if (v < 0) {
-                v = -v;
-            }
-            if (v != 0) {
-                ++count;
-            }
+            count += SOCIAL_ABS(value) != 0;
         }
 
-        int line_height = effectIcons_[0].height();
-        buf->set_font(&font3_, NULL, NULL, NULL);
+        const int line_height = effectIcons_[0].height();
+        MainInterfaceGlobal.Buffer::set_font(&font3_, 0, 0, 0);
+        rect.top += ((rect.bottom - line_height * count) - rect.top) / 2;
+        rect.left += 3;
+        rect.bottom = line_height + rect.top;
 
-        rect1.top += ((rect1.bottom - line_height * count) - rect1.top) / 2;
-        rect1.left += 3;
-        rect1.bottom = line_height + rect1.top;
-
+        // Bonuses first, then penalties.
         for (int pass = 0; pass < 2; ++pass) {
-            for (int i = 0; i < 11; ++i) {
-                if (i == 3) {
+            for (effect = 0; effect < MaxSocialEffectNum; ++effect) {
+                if (effect == 3) {
                     continue;
                 }
-                if (GameDataStateStorage.fields_.secret_project_.cloning_vats() >= 0 &&
-                    Bases[GameDataStateStorage.fields_.secret_project_.cloning_vats()].faction_id_current ==
-                        static_cast<unsigned int>(self_faction)) {
-                    if ((cat_idx == 2 && row_idx == 1) || (cat_idx == 3 && row_idx == 3)) {
-                        if (SocialCategories[cat_idx].model_effect[row_idx]
-                                .values_[i] < 0) {
-                            continue;
-                        }
-                    }
-                }
-                if (GameDataStateStorage.fields_.secret_project_.network_backbone() >= 0 &&
-                    Bases[GameDataStateStorage.fields_.secret_project_.network_backbone()].faction_id_current ==
-                        static_cast<unsigned int>(self_faction) &&
-                    cat_idx == 3 && row_idx == 1 &&
-                    SocialCategories[3].model_effect[1].values_[i] < 0) {
+                if (has_project(SP_CLONING_VATS, factionID_)
+                    && ((category == 2 && model == 1) || (category == 3 && model == 3))
+                    && SocialCategories[category].model_effect[model].values_[effect] < 0) {
                     continue;
                 }
-
-                int v2;
+                if (has_project(SP_NETWORK_BACKBONE, factionID_) && category == 3 && model == 1
+                    && SocialCategories[3].model_effect[1].values_[effect] < 0) {
+                    continue;
+                }
+                int value;
                 if (hover_selection_ == -2) {
-                    v2 = PlayersData[self_faction].soc_effect_base.values_[i];
+                    value = PlayersData[factionID_].soc_effect_base.values_[effect];
                 } else {
-                    v2 = SocialCategories[cat_idx].model_effect[row_idx].values_[i];
+                    value = SocialCategories[category].model_effect[model].values_[effect];
                 }
-
-                if (v2 == 0) {
+                if (value == 0) {
                     continue;
                 }
-                bool draw = (pass == 0) ? (v2 >= 0) : (v2 < 0);
-                if (!draw) {
+                if (pass == 0) {
+                    if (value < 0) {
+                        continue;
+                    }
+                } else if (value > 0) {
                     continue;
                 }
 
                 StringTemp[0] = 0;
-                int color_id;
-                if (v2 < 0) {
+                if (value < 0) {
                     strcat(StringTemp, SocialWinMouseoverMinusText);
-                    color_id = 0x67;
+                    MainInterfaceGlobal.Buffer::set_text_color(0x67, -1, 1, 1);
                 } else {
                     strcat(StringTemp, SocialWinMouseoverPlusText);
-                    color_id = 0x98;
+                    MainInterfaceGlobal.Buffer::set_text_color(0x98, -1, 1, 1);
                 }
-                buf->set_text_color(color_id, -1, 1, 1);
-
-                int magnitude = (v2 < 0) ? -v2 : v2;
                 char number[80];
-                _itoa(magnitude, number, 10);
+                _itoa(SOCIAL_ABS(value), number, 10);
                 strcat(StringTemp, number);
-                buf->write_l(StringTemp, &rect1, strlen(StringTemp));
+                social_write_l(StringTemp, &rect);
 
-                int icon_row = i + (v2 >= 0 ? 2 : 1);
-                Sprite *icon = &effectIcons_[6 + icon_row];
-                unsigned char frame = icon->transparent_index();
-                icon->draw(buf, frame, rect1.left + 0x10, rect1.top, 1, 1);
+                social_draw_icon(&effectIcons_[6 + (effect < 3 ? effect : effect - 1) * 9
+                                               + (value >= 0 ? 2 : 1)],
+                                 &MainInterfaceGlobal, rect.left + 0x10, rect.top);
 
                 StringTemp[0] = 0;
-                rect1.left = rect1.left + 0x10 + effectIcons_[0].width();
-                // Original 0x946598 is SocialEffects::set2 at +0x18;
-                // RulesSocialEffect rows advance by 0x68.
-                strcat(StringTemp, SocialEffects[i].set2);
-                buf->write_l(StringTemp, &rect1, strlen(StringTemp));
-                rect1.left = rect1.left - 0x10 - effectIcons_[0].width();
-                rect1.top += line_height;
-                rect1.bottom += line_height;
+                rect.left = rect.left + 0x10 + effectIcons_[0].width();
+                strcat(StringTemp, SocialEffects[effect].set2);
+                social_write_l(StringTemp, &rect);
+                rect.left = rect.left - 0x10 - effectIcons_[0].width();
+                rect.top += line_height;
+                rect.bottom += line_height;
             }
         }
     }
 
-    GraphicWin::soft_update(header_rect);
+    MainInterfaceGlobal.soft_update(&tutRect9_);
     do_sound();
 }
 
@@ -2238,53 +2187,35 @@ void SocialWin::draw_mouseover() {
 // calls     0x005B4550 0x005D5930 0x005D8000 0x005DAC70 0x005DACB0 0x005DCEA0 0x005DD130 0x005E2DD3 0x005FD2B0 0x006169A0 0x006453E0 0x00645470 0x0064FC88
 */
 void SocialWin::draw_info() {
-    Buffer *own_buffer = static_cast<Buffer *>(static_cast<GraphicWin *>(this));
-    Buffer *buf = static_cast<Buffer *>(&MainInterfaceGlobal);
-
-    own_buffer->set_clip(&tutRect14_);
-
-    RECT header;
-    header.left = tutRect14_.left;
-    header.top = tutRect14_.top;
-    header.right = tutRect14_.right;
-    header.bottom = tutRect14_.bottom;
-
-    RECT title;
-    title.left = header.left;
-    title.top = header.top;
-    title.bottom = header.top + 0x14;
-    title.right = header.right;
-    buf->box_sprite(&title, &InterfaceBoxStyles[6]);
+    RECT rect = tutRect14_;
+    Buffer::set_clip(&tutRect14_);
+    RECT title = rect;
+    title.bottom = rect.top + 20;
+    MainInterfaceGlobal.Buffer::box_sprite(&title, &InterfaceBoxStyles[6]);
 
     StringTemp[0] = 0;
     strcat(StringTemp, label_get(0x2BB));
     CharUpperA(StringTemp);
+    MainInterfaceGlobal.Buffer::set_font(&font1_, 0, 0, 0);
+    MainInterfaceGlobal.Buffer::set_text_color(0x9c, -1, 1, 1);
+    social_write_cent(StringTemp, &title);
 
-    buf->set_font(&font1_, 0, 0, 0);
-    buf->set_text_color(0x9c, -1, 1, 1);
-    buf->write_cent_l(StringTemp, &title, strlen(StringTemp));
+    rect.top = title.bottom + 2;
+    MainInterfaceGlobal.Buffer::box_sprite(&rect, &InterfaceBoxStyles[0]);
+    social_expand_rect(&rect, -3, -3);
+    MainInterfaceGlobal.Buffer::set_font(&font5_, 0, 0, 0);
 
-    int text_top = title.bottom + 2;
-    buf->box_sprite(&tutRect14_, &InterfaceBoxStyles[0]);
-    tutRect14_.right -= 3;
-    tutRect14_.bottom -= 3;
-    int text_left = tutRect14_.left + 3;
-    text_top += 3;
-    buf->set_font(&font6_, 0, 0, 0);
+    // Original 0x96CC28 is PlayersData::soc_upheaval_cost_paid at +0x248.
+    const int upheaval = static_cast<int>(social_upheaval(factionID_, &socCategory_))
+        - PlayersData[factionID_].soc_upheaval_cost_paid;
 
-    int upheaval = static_cast<int>(social_upheaval(
-        factionID_, &socCategory_));
-    // Original 0x96CC28 is PlayersData::soc_upheaval_cost_paid at +0x248,
-    // with the measured 0x20CC PlayerData stride.
-    upheaval -= PlayersData[factionID_].soc_upheaval_cost_paid;
-
+    int x = rect.left;
     int text_y;
     int row_y;
     if (WinScreenWidth == 800) {
-        text_y = font_line_advance(font6_) + text_top;
+        text_y = font_line_advance(font5_) + rect.top;
     } else {
-        text_y = ((tutRect14_.bottom + font_line_advance(font6_) * -2) - text_top) / 2
-            + text_top;
+        text_y = ((rect.bottom - font_line_advance(font5_) * 2) - rect.top) / 2 + rect.top;
         row_y = text_y;
     }
 
@@ -2294,11 +2225,10 @@ void SocialWin::draw_info() {
     char number[80];
     _itoa(NetIncomeGlobal, number, 10);
     strcat(StringTemp, number);
-    buf->set_text_color(0xa0, -1, 1, 1);
-    buf->write_l(StringTemp, text_left, text_y, strlen(StringTemp));
+    MainInterfaceGlobal.Buffer::set_text_color(0xa0, -1, 1, 1);
+    social_write_l_at(StringTemp, x, text_y);
 
-    row_y = text_y + font_line_advance(font6_);
-
+    text_y += font_line_advance(font5_);
     StringTemp[0] = 0;
     strcat(StringTemp, label_get(150));
     strcat(StringTemp, SocialWinColonSpaceText);
@@ -2306,123 +2236,83 @@ void SocialWin::draw_info() {
     strcat(StringTemp, number);
     strcat(StringTemp, BufferJoinSpace);
     strcat(StringTemp, label_get(49));
-    buf->write_l(StringTemp, text_left, row_y, strlen(StringTemp));
+    social_write_l_at(StringTemp, x, text_y);
 
     if (WinScreenWidth == 800) {
-        row_y += font_line_advance(font6_);
+        row_y = text_y + font_line_advance(font5_);
     } else {
-        text_left += (tutRect14_.right - tutRect14_.left) / 2;
-        row_y -= font_line_advance(font6_);
+        x += (rect.right - rect.left) / 2;
+        row_y = text_y - font_line_advance(font5_);
     }
 
-    int imbalance = PlayersData[factionID_].se_alloc_psych - 10
-        + PlayersData[factionID_].se_alloc_labs * 2;
+    int imbalance = PlayersData[factionID_].se_alloc_psych
+        + PlayersData[factionID_].se_alloc_labs * 2 - 10;
     if (imbalance < 0) {
         imbalance = (5 - PlayersData[factionID_].se_alloc_labs) * 2
             - PlayersData[factionID_].se_alloc_psych;
     }
-    int model_shift = socEffect_.values_[SocialEffect::EFFICIENCY];
     imbalance /= 2;
-    int clamped_shift;
-    if (model_shift < -4) {
-        clamped_shift = -4;
-    } else {
-        clamped_shift = model_shift;
-        if (4 < model_shift) {
-            clamped_shift = 4;
-        }
-    }
-    int shift_side;
-    if (clamped_shift - 4 < 0) {
-        if (model_shift < -4) {
-            model_shift = -4;
-        } else if (4 < model_shift) {
-            model_shift = 4;
-        }
-        shift_side = 4 - model_shift;
-    } else {
-        if (model_shift < -4) {
-            model_shift = -4;
-        } else if (4 < model_shift) {
-            model_shift = 0;
-            goto scaled;
-        }
-        model_shift = model_shift - 4;
-    }
-scaled:
-    shift_side *= 2;
+    const int shift = SOCIAL_MAGNITUDE(range(socEffect_.values_[1], -4, 4) - 4) * 2;
 
-    if (imbalance != 0 && shift_side != 0) {
+    if (imbalance != 0 && shift != 0) {
         StringTemp[0] = 0;
-        int reserve = PlayersData[factionID_].se_alloc_labs;
-        if ((10 - PlayersData[factionID_].se_alloc_psych) - reserve < reserve) {
-            int percent = shift_side * imbalance;
-            int shown = (percent < 0) ? 0 : ((0x28 < percent) ? 0x28 : percent);
-            _itoa(-shown, number, 10);
+        if (PlayersData[factionID_].se_alloc_labs
+            > 10 - PlayersData[factionID_].se_alloc_psych - PlayersData[factionID_].se_alloc_labs) {
+            _itoa(-range(shift * imbalance, 0, 0x28), number, 10);
             strcat(StringTemp, number);
             strcat(StringTemp, SocialWinPercentSpaceTextA);
             strcat(StringTemp, label_get(60));
-
-            if (10 - PlayersData[factionID_].se_alloc_psych != reserve) {
+            if (10 - PlayersData[factionID_].se_alloc_psych - PlayersData[factionID_].se_alloc_labs != 0) {
                 strcat(StringTemp, SocialWinCommaSpaceText);
-                int percent2 = shift_side * imbalance * 2;
-                percent2 = (percent2 < 0) ? 0 : ((0x50 < percent2) ? 0x50 : percent2);
-                _itoa(-percent2, number, 10);
+                _itoa(-range(shift * imbalance * 2, 0, 0x50), number, 10);
                 strcat(StringTemp, number);
                 strcat(StringTemp, SocialWinPercentSpaceTextB);
                 strcat(StringTemp, label_get(169));
             }
         } else {
-            if (reserve != 0) {
-                int percent = shift_side * imbalance * 2;
-                percent = (percent < 0) ? 0 : ((0x50 < percent) ? 0x50 : percent);
-                _itoa(-percent, number, 10);
+            if (PlayersData[factionID_].se_alloc_labs != 0) {
+                _itoa(-range(shift * imbalance * 2, 0, 0x50), number, 10);
                 strcat(StringTemp, number);
                 strcat(StringTemp, SocialWinPercentSpaceTextC);
                 strcat(StringTemp, label_get(60));
                 strcat(StringTemp, SocialWinCommaSpaceText);
             }
-            int percent = shift_side * imbalance;
-            percent = (percent < 0) ? 0 : ((0x28 < percent) ? 0x28 : percent);
-            _itoa(-percent, number, 10);
+            _itoa(-range(shift * imbalance, 0, 0x28), number, 10);
             strcat(StringTemp, number);
             strcat(StringTemp, SocialWinPercentSpaceTextD);
             strcat(StringTemp, label_get(169));
         }
-
-        buf->set_text_color(0xf9, -1, 1, 1);
-        buf->write_l(StringTemp, text_left, row_y, strlen(StringTemp));
-
-        row_y += font_line_advance(font6_);
+        MainInterfaceGlobal.Buffer::set_text_color(0xf9, -1, 1, 1);
+        social_write_l_at(StringTemp, x, row_y);
+        row_y += font_line_advance(font5_);
     }
 
     if (upheaval < 0) {
         StringTemp[0] = 0;
-        strcat(StringTemp, label_get(222));
+        strcat(StringTemp, label_get(350));
         strcat(StringTemp, SocialWinColonSpaceText);
         strcat(StringTemp, SocialWinUpheavalPlusText);
         _itoa(-upheaval, number, 10);
         strcat(StringTemp, number);
         strcat(StringTemp, BufferJoinSpace);
-        strcat(StringTemp, label_get(230));
-        buf->set_text_color(0xa0, -1, 1, 1);
-    } else if (upheaval >= 1) {
-        buf->set_text_color(0xf9, -1, 1, 1);
+        strcat(StringTemp, label_get(351));
+        MainInterfaceGlobal.Buffer::set_text_color(0xa0, -1, 1, 1);
+        social_write_l_at(StringTemp, x, row_y);
+    } else if (upheaval > 0) {
+        MainInterfaceGlobal.Buffer::set_text_color(0xf9, -1, 1, 1);
         StringTemp[0] = 0;
-        strcat(StringTemp, label_get(221));
+        strcat(StringTemp, label_get(349));
         strcat(StringTemp, SocialWinColonSpaceText);
         _itoa(upheaval, number, 10);
         strcat(StringTemp, number);
         strcat(StringTemp, BufferJoinSpace);
-        strcat(StringTemp, label_get(230));
-    }
-    if (upheaval != 0) {
-        buf->write_l(StringTemp, text_left, row_y, strlen(StringTemp));
+        strcat(StringTemp, label_get(351));
+        social_write_l_at(StringTemp, x, row_y);
     }
 
     MainInterfaceGlobal.soft_update(&tutRect14_);
     do_sound();
-    own_buffer->restore_clip();
+    Buffer::restore_clip();
 }
 
 

@@ -312,147 +312,155 @@ void CouncWin::set_vote(int faction_id, int vote) {
     }
 }
 
+// field_BB4_..field_BC0_ hold the panel RECT; the image copies it whole.
+static inline RECT &council_area(CouncWin *win) {
+    return *reinterpret_cast<RECT *>(&win->field_BB4_);
+}
+
+// Totals-line writes with the image's null test on the text.
+static inline void council_write_cent(char *text, RECT *rect) {
+    if (text != 0) {
+        MainInterfaceGlobal.Buffer::write_cent_l(text, rect, strlen(text));
+    }
+}
+static inline void council_write_l(char *text, RECT *rect) {
+    if (text != 0) {
+        MainInterfaceGlobal.Buffer::write_l(text, rect, strlen(text));
+    }
+}
+static inline void council_write_right(char *text, RECT *rect) {
+    if (text != 0) {
+        MainInterfaceGlobal.Buffer::write_right_l(text, rect, strlen(text));
+    }
+}
+
 // ORIGINAL: 0x00426470 ?draw_info@CouncWin@@QAEXXZ 0x00426470-0x00426A95 FILE
 // RECOVERY_BINDING: v1 {"evidence": ["git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/00426470.cpp", "image:terranx_original.exe:0x00426470", "Council interface/window declarations identify embedded fonts/buttons, voting arrays and existing MainInterface/Console owners; original instructions determine call and state order."], "reason": "Recover the original in its genuine UI owner using typed members, real globals and declared operations. Retain seed spans and evidence; no current matching or runtime claim."}
 // TRIED: field-offset `__thiscall` rewrite (two RECT locals reused positionally across the function, verified push/pop order and branch polarity against the raw disassembly rather than trusting Ghidra's dropped thiscall receivers) compiles and follows the retry-loop/goto-restart structure faithfully, but diverges at instruction #3 (stack-frame shape: an 80-byte itoa scratch buffer vs the original's exact 0x7c-byte frame).
 void CouncWin::draw_info() {
-    Buffer &buffer = MainInterfaceGlobal;
-    const int proposal = static_cast<int>(field_A1C_);
-    const int target_faction = static_cast<int>(field_A20_);
-    int category = 0;
-    const int passes = proposal == 0 ? 2 : 1;
-    RECT outer;
-    for (int pass = 0; pass < passes; ++pass) {
-    buffer.set_clip(MainInterfaceGlobal.buffer_working_rect());
-
-    outer.left = static_cast<LONG>(field_BB4_);
-    outer.top = static_cast<LONG>(field_BB8_);
-    outer.right = static_cast<LONG>(field_BBC_);
-    outer.bottom = static_cast<LONG>(field_BC0_);
-    RECT inner = {outer.left, outer.top, outer.right, outer.bottom};
-    RECT heading = inner;
-    heading.bottom = heading.top + 0x14;
-    buffer.box_sprite(&heading, &InterfaceBoxStyles[6]);
-    buffer.set_font(&font2_, 0, 0, 0);
-    buffer.set_text_color(0xa0, -1, 1, 1);
-    if (proposal == 1) {
-        buffer.set_text_color(ChatItemIdTable[target_faction], -1, 1, 1);
+    int column = 0;
+redraw:
+    MainInterfaceGlobal.Buffer::set_clip(MainInterfaceGlobal.buffer_working_rect());
+    RECT inner = council_area(this);
+    RECT line = council_area(this);
+    line.bottom = line.top + 20;
+    MainInterfaceGlobal.Buffer::box_sprite(&line, &InterfaceBoxStyles[6]);
+    MainInterfaceGlobal.Buffer::set_font(&font2_, 0, 0, 0);
+    MainInterfaceGlobal.Buffer::set_text_color(0xa0, -1, 1, 1);
+    if (field_A1C_ == 1) {
+        MainInterfaceGlobal.Buffer::set_text_color(ChatItemIdTable[field_A20_], -1, 1, 1);
     }
 
     StringTemp[0] = '\0';
     strcat(StringTemp, label_get(0x7c8 / 4));
     CharUpperA(StringTemp);
-    if (StringTemp[0] != '\0') {
-        buffer.write_cent_l(StringTemp, &heading, static_cast<int>(strlen(StringTemp)));
-    }
+    council_write_cent(StringTemp, &line);
 
-    inner.top = heading.bottom + 2;
-    buffer.box_sprite(&inner, &InterfaceBoxStyles[0]);
+    inner.top = line.bottom + 2;
+    MainInterfaceGlobal.Buffer::box_sprite(&inner, &InterfaceBoxStyles[0]);
     inner.left += 3;
     inner.right -= 3;
     inner.top += 3;
     inner.bottom -= 3;
     StringTemp[0] = '\0';
-    strcat(StringTemp, StringTable.get(Proposal[proposal].name));
+    char *name = Proposal[field_A1C_].name;
+    strcat(StringTemp, StringTable.get(name));
     CharUpperA(StringTemp);
-    int wrapped_height = buffer.wrap_height(StringTemp, inner.right - inner.left);
-    buffer.wrap_cent(StringTemp, &inner);
-    inner.top += wrapped_height;
-    inner.bottom += wrapped_height;
+    const int height = MainInterfaceGlobal.Buffer::wrap_height(StringTemp, inner.right - inner.left);
+    MainInterfaceGlobal.Buffer::wrap_cent(StringTemp, &inner);
+    inner.top += height;
+    inner.bottom += height;
 
-    if (proposal != 0) {
+    if (field_A1C_ != 0) {
         StringTemp[0] = '\0';
-        if (proposal == 1) {
+        if (field_A1C_ == 1) {
             strcat(StringTemp, label_get(0xe10 / 4));
             strcat(StringTemp, ": ");
-            GenderDefault = Players[target_faction].is_leader_female;
-            PluralityDefault = 0;
-            strcat(StringTemp, Players[target_faction].name_leader);
+            const int leader = static_cast<int>(field_A20_);
+            parse_set(Players[leader].is_leader_female, 0);
+            strcat(StringTemp, Players[leader].name_leader);
         } else {
-            strcat(StringTemp, StringTable.get(Proposal[proposal].description));
+            char *description = Proposal[field_A1C_].description;
+            strcat(StringTemp, StringTable.get(description));
         }
-        buffer.wrap_cent(StringTemp, &inner);
+        MainInterfaceGlobal.Buffer::wrap_cent(StringTemp, &inner);
     }
 
-    RECT totals = {outer.left + 2, outer.top, outer.right - 2, outer.bottom};
-    const int totals_height = font_line_advance(font2_);
-    totals.top = totals.bottom - totals_height;
+    line = council_area(this);
+    line.top = line.bottom - font_line_advance(font2_);
+    line.left += 2;
+    line.right -= 2;
 
-    if (proposal != 0) {
-        int votes_for = 0;
-        int votes_against = 0;
+    if (field_A1C_ == 0) {
+        // Up to three candidates share the totals line; more than fit
+        // restarts the panel with the line suppressed.
         for (int faction = 1; faction < MaxPlayerNum; ++faction) {
-            if ((Players[faction].rule_flags & RFLAG_ALIEN) == 0) {
-                const int vote = static_cast<int>(leader_label_kind_[faction]);
-                const int weight = proposal < 2 ? leader_tech_[faction] : 1;
-                if (vote == -1) votes_for += weight;
-                if (vote == -2) votes_against += weight;
+            if (!eligible(faction)) {
+                continue;
+            }
+            StringTemp[0] = '\0';
+            parse_set(Players[faction].is_leader_female, 0);
+            strcat(StringTemp, Players[faction].name_leader);
+            strcat(StringTemp, ": ");
+            int votes = 0;
+            for (int voter = 1; voter < MaxPlayerNum; ++voter) {
+                if ((Players[voter].rule_flags & RFLAG_ALIEN) == 0
+                    && static_cast<int>(leader_label_kind_[voter]) == faction) {
+                    votes += leader_tech_[voter];
+                }
+            }
+            say_num(votes);
+            MainInterfaceGlobal.Buffer::set_text_color(ChatItemIdTable[faction], -1, 1, 1);
+            if (column < 20) {
+                if (column > 2) {
+                    column = 20;
+                    goto redraw;
+                }
+                if (column > 1) {
+                    if (WinScreenWidth < 0x400) {
+                        column = 20;
+                        goto redraw;
+                    }
+                    council_write_cent(StringTemp, &line);
+                } else if (column != 0) {
+                    council_write_right(StringTemp, &line);
+                } else {
+                    council_write_l(StringTemp, &line);
+                }
+            }
+            ++column;
+        }
+    } else {
+        int votes = 0;
+        for (int voter = 1; voter < MaxPlayerNum; ++voter) {
+            if ((Players[voter].rule_flags & RFLAG_ALIEN) == 0
+                && static_cast<int>(leader_label_kind_[voter]) == -1) {
+                votes += static_cast<int>(field_A1C_) > 1 ? 1 : leader_tech_[voter];
             }
         }
-
-        buffer.set_text_color(0xfa, -1, 1, 1);
+        MainInterfaceGlobal.Buffer::set_text_color(0xfa, -1, 1, 1);
         StringTemp[0] = '\0';
         strcat(StringTemp, label_get(0x7bc / 4));
         strcat(StringTemp, ": ");
-        say_num(votes_for);
-        if (StringTemp[0] != '\0') {
-            buffer.write_l(StringTemp, &totals, static_cast<int>(strlen(StringTemp)));
-        }
+        say_num(votes);
+        council_write_l(StringTemp, &line);
 
-        buffer.set_text_color(0xf9, -1, 1, 1);
+        votes = 0;
+        for (voter = 1; voter < MaxPlayerNum; ++voter) {
+            if ((Players[voter].rule_flags & RFLAG_ALIEN) == 0
+                && static_cast<int>(leader_label_kind_[voter]) == -2) {
+                votes += static_cast<int>(field_A1C_) > 1 ? 1 : leader_tech_[voter];
+            }
+        }
+        MainInterfaceGlobal.Buffer::set_text_color(0xf9, -1, 1, 1);
         StringTemp[0] = '\0';
         strcat(StringTemp, label_get(0x7c0 / 4));
         strcat(StringTemp, ": ");
-        say_num(votes_against);
-        if (StringTemp[0] != '\0') {
-            buffer.write_right_l(StringTemp, &totals, static_cast<int>(strlen(StringTemp)));
-        }
-    } else {
-        if (category < 0x14) {
-            for (int faction = 1; faction < MaxPlayerNum; ++faction) {
-                if (eligible(faction) == 0) {
-                    continue;
-                }
-                GenderDefault = Players[faction].is_leader_female;
-                PluralityDefault = 0;
-                StringTemp[0] = '\0';
-                strcat(StringTemp, Players[faction].name_leader);
-                strcat(StringTemp, ": ");
-                int total_votes = 0;
-                for (int voter = 1; voter < MaxPlayerNum; ++voter) {
-                    if ((Players[voter].rule_flags & RFLAG_ALIEN) == 0 &&
-                        static_cast<int>(leader_label_kind_[voter]) == faction) {
-                        total_votes += leader_tech_[voter];
-                    }
-                }
-                say_num(total_votes);
-                buffer.set_text_color(ChatItemIdTable[faction], -1, 1, 1);
-                if (category > 2) {
-                    break;
-                }
-                if (category < 2) {
-                    if (category == 0) {
-                        buffer.write_l(StringTemp, &totals, static_cast<int>(strlen(StringTemp)));
-                    } else {
-                        buffer.write_right_l(StringTemp, &totals, static_cast<int>(strlen(StringTemp)));
-                    }
-                } else {
-                    if (WinScreenWidth < 0x400) {
-                        break;
-                    }
-                    buffer.write_cent_l(StringTemp, &totals, static_cast<int>(strlen(StringTemp)));
-                }
-                ++category;
-            }
-        }
+        say_num(votes);
+        council_write_right(StringTemp, &line);
     }
 
-    if (proposal == 0 && pass == 0) {
-        category = 0x14;
-    }
-    }
-
-    static_cast<GraphicWin &>(MainInterfaceGlobal).soft_update(&outer);
+    MainInterfaceGlobal.soft_update(&council_area(this));
 }
 
 // ORIGINAL: 0x00424410 ?make_resolution@CouncWin@@QAEHH@Z 0x00424410-0x0042471F FILE
