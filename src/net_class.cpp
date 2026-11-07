@@ -1424,7 +1424,7 @@ void Net::process_voice() {
     }
 }
 
-// ORIGINAL: 0x0062EE20 sub_62ee20 0x0062EE20-0x0062EE71
+// ORIGINAL: 0x0062EE20 sub_62ee20 0x0062EE20-0x0062EE71 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned62EE20..62EE71; flags bit2 and field8 on sixteen 58-byte NetPlayer records; shared object9BE4BC.", "git:b0d788d3e0ebc4d5b4c20acb834cd37455e53c67:src/recovered/units/0062ee20.cpp"], "reason": "Recover the SDK group enumeration callback against the same source-owned NetPlayerTable used by player enumeration; mark genuine matching NetPlayer records."}
 // symbol    ?net_group_player_callback@@YGHKKPBUDPNAME@@KPAX@Z
 static int __stdcall net_group_player_callback(unsigned long player_id,
@@ -2790,7 +2790,7 @@ Purpose: Pump DirectPlay receives until one fails: the reader loop the
          when it is not; the size slot starts from Net+0x6E4's capacity
          and is handed by address so the callee can shrink it.
 
-// ORIGINAL: 0x00630B80 sub_630b80 0x00630B80-0x00630BE3
+// ORIGINAL: 0x00630B80 sub_630b80 0x00630B80-0x00630BE3 BYTE_EXACT
 // symbol    ?receive_directplay_messages@Net@@QAEXH@Z
 // Historical emitted-symbol hint: @sub_630b80@12
 // size      99 bytes

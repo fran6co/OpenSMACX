@@ -1028,7 +1028,7 @@ void __cdecl slide_hide(GraphicWin *window, int mode);   // 0x0045D970
 // with `mov edx,[ecx-0xa14] / call [edx+0x30]`, a live dispatch through the
 // front's own table, so the entry has to be CouncWin's.
 // Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x00426AA0 ?on_redraw@CouncWin@@QAEXXZ 0x00426AA0-0x00426EA1 FILE
+// ORIGINAL: 0x00426AA0 ?on_redraw@CouncWin@@QAEXXZ 0x00426AA0-0x00426EA1 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/00426aa0.cpp", "image:terranx_original.exe:0x00426AA0", "Council interface/window declarations identify embedded fonts/buttons, voting arrays and existing MainInterface/Console owners; original instructions determine call and state order."], "reason": "Recover the original in its genuine UI owner using typed members, real globals and declared operations. Retain seed spans and evidence; no current matching or runtime claim."}
 // symbol    ?on_redraw@CouncWin@@UAEXXZ
 void CouncWin::on_redraw() {
