@@ -999,7 +999,7 @@ static int texture_coast_advance_edge(EdgeScan &edge) {
     return 1;
 }
 
-// ORIGINAL: 0x0061EAD0 ?draw_coast@Texture@@QAEXPAUBuffer@@PAUVert@@PAHPAUTexture@@PAEH1@Z 0x0061EAD0-0x0061F0C6 FILE
+// ORIGINAL: 0x0061EAD0 ?draw_coast@Texture@@QAEXPAUBuffer@@PAUVert@@PAHPAUTexture@@PAEH1@Z 0x0061EAD0-0x0061F0C6 FILE BYTE_EXACT
 // symbol    ?draw_coast@Texture@@QAEXPAVBuffer@@PAUVert@@PAHPAV1@PAEH1@Z
 //            the image spells `Buffer` and `Texture` as structs (PAU) and the
 //            two setups as `QAA`, a __cdecl member taking no receiver; this tree
@@ -2254,7 +2254,7 @@ int TextureLightFloor = -256;
 // RECOVERY_OBJECT: v2 0x006972D0 0x006972D4 ?TextureLightCeiling@@3HA 0x00621870
 int TextureLightCeiling = 256;
 
-// ORIGINAL: 0x0061B1F0 ?draw@Texture@@QAEXPAUBuffer@@PAUVert@@PAHHPAUVert@@@Z 0x0061B1F0-0x0061B778 FILE
+// ORIGINAL: 0x0061B1F0 ?draw@Texture@@QAEXPAUBuffer@@PAUVert@@PAHHPAUVert@@@Z 0x0061B1F0-0x0061B778 FILE BYTE_EXACT
 // symbol    ?draw@Texture@@QAEXPAVBuffer@@PAUVert@@PAHH1@Z
 //            the image spells `Buffer` and `Texture` as structs (PAU) and the
 //            two setups as `QAA`, a __cdecl member taking no receiver; this tree
@@ -2529,7 +2529,7 @@ void Texture::draw(Buffer *buffer, Vert *vertices, int *zvals, int count, Vert *
     __asm finit
 }
 
-// ORIGINAL: 0x0061C090 ?draw_trans@Texture@@QAEXPAUBuffer@@PAUVert@@PAHHPAUVert@@@Z 0x0061C090-0x0061C622 FILE
+// ORIGINAL: 0x0061C090 ?draw_trans@Texture@@QAEXPAUBuffer@@PAUVert@@PAHHPAUVert@@@Z 0x0061C090-0x0061C622 FILE BYTE_EXACT
 // symbol    ?draw_trans@Texture@@QAEXPAVBuffer@@PAUVert@@PAHH1@Z
 //            the image spells `Buffer` and `Texture` as structs (PAU) and the
 //            two setups as `QAA`, a __cdecl member taking no receiver; this tree
@@ -2847,7 +2847,7 @@ struct EdgeScanBuf {
     int marker;
 };
 
-// ORIGINAL: 0x0061E540 ?draw_mask_dest@Texture@@QAEXPAUBuffer@@PAUVert@@PAEPAEHPAUVert@@@Z 0x0061E540-0x0061EACE FILE
+// ORIGINAL: 0x0061E540 ?draw_mask_dest@Texture@@QAEXPAUBuffer@@PAUVert@@PAEPAEHPAUVert@@@Z 0x0061E540-0x0061EACE FILE BYTE_EXACT
 // symbol    ?draw_mask_dest@Texture@@QAEXPAVBuffer@@PAUVert@@PAE2H1@Z
 //            the image spells `Buffer` and `Texture` as structs (PAU) and the
 //            two setups as `QAA`, a __cdecl member taking no receiver; this tree
@@ -3164,7 +3164,7 @@ void Texture::draw_mask_dest(Buffer *buffer, Vert *vertices,
 
 // Fixed-slot bindings carried from 006233c0.cpp
 
-// ORIGINAL: 0x006233C0 ?draw@Texture@@QAEXPAUBuffer@@PAUVert@@PAHHPAUVert@@H@Z 0x006233C0-0x006239AB FILE
+// ORIGINAL: 0x006233C0 ?draw@Texture@@QAEXPAUBuffer@@PAUVert@@PAHHPAUVert@@H@Z 0x006233C0-0x006239AB FILE BYTE_EXACT
 // symbol    ?draw@Texture@@QAEXPAVBuffer@@PAUVert@@PAHH1H@Z
 //            the image spells `Buffer` and `Texture` as structs (PAU) and the
 //            two setups as `QAA`, a __cdecl member taking no receiver; this tree
@@ -3463,7 +3463,7 @@ void Texture::draw(Buffer *buffer, Vert *vertices, int *zvals, int count,
 // (draw_coast at 0x00623F80) does on its register pairs. They live with the
 // rest of the family's helpers at the top of this unit.
 
-// ORIGINAL: 0x00623F80 ?draw_coast@Texture@@QAEXPAUBuffer@@PAUVert@@PAHPAUTexture@@PAEHPAUVert@@H@Z 0x00623F80-0x00624626 FILE
+// ORIGINAL: 0x00623F80 ?draw_coast@Texture@@QAEXPAUBuffer@@PAUVert@@PAHPAUTexture@@PAEHPAUVert@@H@Z 0x00623F80-0x00624626 FILE BYTE_EXACT
 // symbol    ?draw_coast@Texture@@QAEXPAVBuffer@@PAUVert@@PAHPAV1@PAEH1H@Z
 //            the image spells `Buffer` and `Texture` as structs (PAU) and the
 //            two setups as `QAA`, a __cdecl member taking no receiver; this tree
@@ -4790,7 +4790,7 @@ static unsigned char *texture_sub61df60_page_address(void *base,
         (base_bits & ~static_cast<uintptr_t>(0xffffu)) | offset);
 }
 
-// ORIGINAL: 0x0061DF60 sub_61df60 0x0061DF60-0x0061E538 FILE
+// ORIGINAL: 0x0061DF60 sub_61df60 0x0061DF60-0x0061E538 FILE BYTE_EXACT
 // symbol    ?sub_61df60@Texture@@QAEXPAVBuffer@@PAUVert@@PAHPAV1@PAEH1H4@Z
 // Historical synthetic seed symbol: ?sub_61df60@Texture@@QAEHHHHHHHHHH@Z
 // ECX receiver and RET 24h establish nine stack arguments. Buffer/Vert/light,
@@ -5108,7 +5108,7 @@ static unsigned short texture_light_step(int delta, int width);
 // order. Each span retains the original next-texel load after source advance,
 // including the final load even when the key/cutoff suppresses a store. Shared
 // scratch observations and FPU status during release callbacks are unproved.
-// ORIGINAL: 0x0061AC60 Texture::draw 0x0061AC60-0x0061B1E2 FILE
+// ORIGINAL: 0x0061AC60 Texture::draw 0x0061AC60-0x0061B1E2 FILE BYTE_EXACT
 // symbol    ?draw_below_cutoff@Texture@@QAEXPAVBuffer@@PAUVert@@PAHH1H@Z
 // TRIED: MISMATCH #4. Same ESP-as-pixel-counter inner blitter as 0x006239E0's sibling - not reproducible without __asm. Body adds the gouraud light channel on top of that function's template: e1[13]/e1[14] confirmed as the light accumulator/step by hand-tracing the extra unconditional "e1[13]+=e1[14]" pair in the per-scanline update block (absent from the non-gouraud rasterizer), and the third fmul/fistp-to-word pair (scaled by 0x670a88 instead of 0x670a84) confirmed as the per-pixel light step feeding DAT_009bb52c.
 // size      1410 bytes
@@ -5393,7 +5393,7 @@ finish:
     __asm finit
 }
 
-// ORIGINAL: 0x006212B0 sub_6212b0 0x006212B0-0x00621868 FILE
+// ORIGINAL: 0x006212B0 sub_6212b0 0x006212B0-0x00621868 FILE BYTE_EXACT
 // symbol    ?sub_6212b0@Texture@@QAEXPAVBuffer@@PAUVert@@PAHH1PAVTextureStore@@@Z
 // TRIED: MISMATCH #5. Same ESP-as-counter inner blitter family as 0x006239E0/0x0061AC60/0x00622810 - not reproducible without __asm. This variant has no zval-vs-threshold guard scan (unlike 0x00622810's sibling); instead it clamps every zvals[i] into [DAT_006972cc, DAT_006972d0] before the min/max-vertex scan, and DAT_009bb514 (the per-pixel light threshold) comes from the global DAT_009bb548 rather than a call argument.
 // working copy - scaffold materialised by --work
@@ -5678,7 +5678,7 @@ void Texture::sub_6212b0(Buffer *buffer, Vert *vertices, int *zvals, int count,
     }
 }
 
-// ORIGINAL: 0x00622810 sub_622810 0x00622810-0x00622DAE FILE
+// ORIGINAL: 0x00622810 sub_622810 0x00622810-0x00622DAE FILE BYTE_EXACT
 // symbol    ?sub_622810@Texture@@QAEXPAVBuffer@@PAUVert@@PAHH1HPAVTextureStore@@@Z
 // TRIED: MISMATCH #6. Same ESP-as-counter inner blitter family as 0x006239E0/0x0061AC60 - not reproducible without __asm. Confirmed sub_625080 is a free function (EdgeScan*, int, int*), not a Texture member, from the missing `mov ecx, this` before its call sites; confirmed the min/max-vertex scan reuses a2/a4/a5/a6's own stack slots as min_x/min_y_idx/max_x/ max_y scratch, same pattern as the other two rasterizers.
 // working copy - scaffold materialised by --work
@@ -5971,7 +5971,7 @@ finish:
     }
 }
 
-// ORIGINAL: 0x00622200 sub_622200 0x00622200-0x0062280C FILE
+// ORIGINAL: 0x00622200 sub_622200 0x00622200-0x0062280C FILE BYTE_EXACT
 // symbol    ?sub_622200@Texture@@QAEXPAVBuffer@@PAUVert@@PAHPAV1@PAEH1PAVTextureStore@@@Z
 // TRIED: __thiscall-receiver rewrite of Ghidra's decode (guard chain, bbox min/max scan, sub_625080 edge-walk setup, then a plain-C long-double port of the FPU gradient section and a byte-macro (concat31/21/22/11, carry4) port of the CONCAT/CARRY inner pixel-blend loop) compiles but diverges at instruction #0 (push vs sub - no local-var-count/register-allocation match is plausible for a function this size without a register-literal transcription of all ~470 instructions, not attempted here).
 // working copy - scaffold materialised by --work
@@ -6262,7 +6262,7 @@ void Texture::sub_622200(Buffer *buffer, Vert *vertices, int *zvals,
     }
 }
 
-// ORIGINAL: 0x0061C630 sub_61c630 0x0061C630-0x0061CB4E FILE
+// ORIGINAL: 0x0061C630 sub_61c630 0x0061C630-0x0061CB4E FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"reason":"Recover geometry and UV arrays as Vert pointers; the final argument is consumed, not unused.","evidence":["Pinned61C630 publishes its second/final arguments into geometry/UV pointer cells9BB4F4/9BB490 and walks signed coordinates at eight-byte stride. Typed edge setup consumes both channels.","The real623F50sentinel wrapper forwards both values unchanged. Seed-generated integer signatures do not establish original types; producer-side callers outside this closure remain unobserved."]}
 // symbol    ?sub_61c630@Texture@@QAEXPAVBuffer@@PAUVert@@PAV1@PAEH1@Z
 // working copy - scaffold materialised by --work
@@ -6606,7 +6606,7 @@ static void texture_draw_shade_span(unsigned char *destination,
     }
 }
 
-// ORIGINAL: 0x0061D990 sub_61d990 0x0061D990-0x0061DF5C FILE
+// ORIGINAL: 0x0061D990 sub_61d990 0x0061D990-0x0061DF5C FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"reason":"Recover the shaded rasterizer's geometry as Vert pointers while keeping its separate per-vertex int light array.","evidence":["Pinned61D990 publishes geometry to9BB4F4, scans x/y at offsets0/+4 with eight-byte stride, and separately publishes the light pointer to9BB4FC. Existing typed edge consumers distinguish these channels.","Seed-generated decorated symbols are not original type evidence; guards, release order and unknown external producer contracts remain unchanged."]}
 // symbol    ?sub_61d990@Texture@@QAEXPAVBuffer@@PAUVert@@PAHPAV1@PAEH@Z
 // Historical synthetic seed symbol: ?sub_61d990@Texture@@QAEHPAVBuffer@@PAHHPAV1@PAEH@Z
@@ -6914,7 +6914,7 @@ static int texture_raster_step_gouraud(EdgeScan &edge, Texture *texture) {
     return 1;
 }
 
-// ORIGINAL: 0x0061B780 sub_61b780 0x0061B780-0x0061C08E FILE
+// ORIGINAL: 0x0061B780 sub_61b780 0x0061B780-0x0061C08E FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"reason":"Recover separate Vert geometry and int light-array pointer contracts in the Gouraud rasterizer.","evidence":["Pinned61B780 publishes arguments to geometry cell9BB4F4 and light cell9BB4FC; coordinate traversal has eight-byte x/y stride, whereas the light edge consumer indexes independent int values.","No upstream source producer is established. These are use-derived contracts, not original source spelling; existing row/pixel traversal and restoration obligations are retained."]}
 // CURRENT BODY STATUS: multirow/pixel DDA restored; x87 status and
 // exact packed carry spelling remain restoration debt.
@@ -7923,7 +7923,7 @@ void Texture::sub_620a10(Buffer *buffer, Vert *vertices, int count, Vert *uv,
 // MEMBER RECOVERY: ECX receiver + four explicit arguments; full row/pixel
 // traversal uses no-key Gouraud byte addition. x87 and packed-carry
 // bit equivalence remains a restoration obligation.
-// ORIGINAL: 0x0061D090 sub_61d090 0x0061D090-0x0061D98A FILE
+// ORIGINAL: 0x0061D090 sub_61d090 0x0061D090-0x0061D98A FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"reason":"Recover the no-key Gouraud rasterizer's geometry pointer as Vert rather than reinterpreting int pairs.","evidence":["Pinned61D090 and its existing typed row helper use geometry pointer9BB4F4 with eight-byte coordinate stride and the separate int light pointer9BB4FC. The original receiver and four stack arguments remain unchanged.","Historical seed symbols were inferred; producer contracts and exact x87/packed-carry restoration remain separate obligations."]}
 // symbol    ?sub_61d090@Texture@@QAEXPAVBuffer@@PAUVert@@PAHI@Z
 // TRIED: this is a perspective/gouraud scanline texture blitter using x87 80-bit stack state Ghidra itself could not track (extraout_ST*) plus hand-written 64-bit carry-chain fixed point (ADC/SBB/SHRD). Landed the bounding-box setup, the edge-stepping loop shape and the two setup_edge_gouraud@Texture call sites faithfully, but the innermost per-pixel blit (the two ADC/SBB loops at 0x61D54B/0x61D7BD) is NOT reproduced - only the step-size math is computed and discarded. This is a real behavioral gap, not just a byte gap: no pixels are written by this body.
@@ -9018,7 +9018,7 @@ void __cdecl sub_61fa30(EdgeScan *left, EdgeScan *right) {
     }
 }
 
-// ORIGINAL: 0x0061CB50 sub_61cb50 0x0061CB50-0x0061D08F FILE
+// ORIGINAL: 0x0061CB50 sub_61cb50 0x0061CB50-0x0061D08F FILE BYTE_EXACT
 // Historical synthetic seed symbol: ?sub_61cb50@Texture@@QAEHHHHHH@Z
 // symbol    ?sub_61cb50@Texture@@QAEXPAVBuffer@@PAUVert@@PAV1@PAEH@Z
 // The entry receives this Texture plus Buffer, Vert, second Texture, remap
@@ -11221,7 +11221,7 @@ static unsigned short texture_light_step(int delta, int width) {
 // the final textured pixel. These volatile reads retain their fault/alias
 // order even when a fill row never otherwise consumes the initial texel.
 // The sentinel delegates to 0x0061AC60's shaded-every-row counterpart above.
-// ORIGINAL: 0x00624670 Texture::draw2 0x00624670-0x00624C6D FILE
+// ORIGINAL: 0x00624670 Texture::draw2 0x00624670-0x00624C6D FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["624676..62469D identify seventh-argument minus-one forwarding; 6246B0 acquires the Buffer; 624BA8 reads the current texture byte before 624BAB selects lit versus fill; 624B99..624BE9 select row parity and perform light-tested sampling; 61FC90 supplies the Gouraud edge interpretation. Bounded geometry and ordered source-read obligations are documented beside the source body."], "reason": "This Texture member alternates opaque fill rows with cutoff-tested lit texture rows, consuming real Buffer, vertex, depth and UV arrays. Original callers ignore EAX; the ordinary path has no meaningful return value."}
 // symbol    ?draw2@Texture@@QAEXPAVBuffer@@PAUVert@@PAHH1HH@Z
 void Texture::draw2(Buffer *buffer, Vert *vertices, int *zvals, int count,
@@ -11521,7 +11521,7 @@ finish:
     __asm finit
 }
 
-// ORIGINAL: 0x00621870 ?sub_621870@Texture@@QAEHPAVBuffer@@PAUVert@@PAHHH2@Z 0x00621870-0x006221F1
+// ORIGINAL: 0x00621870 ?sub_621870@Texture@@QAEHPAVBuffer@@PAUVert@@PAHHH2@Z 0x00621870-0x006221F1 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Coordinator investigation_deferred 2026-09-19 (run-z7f3353q): sub_624cd0 trial bytes=unknown references=unknown with exactly one emitted reference ?sub_621870@Texture@@QAEHPAVBuffer@@PAUVert@@PAHHH2@Z at offset 38 binding_address null; sibling sub_624c70 passes because its callee sub_6212b0 is defined in src/texture.cpp:6515-6520 - the cause is the cross-TU callee, not the wrapper spelling; the masked measure (16 instructions, 4 masked bytes) proves every other byte correct.", "Seed src/unrecovered/00621870.cpp line 1 catalogues ORIGINAL 0x00621870 sub_621870 0x00621870-0x006221F1 FILE; the forwarder at src/pending_bodies.cpp:2225-2231 emits the member symbol via its C++ definition and the task record preserves the already-exact caller sub_624ca0 untouched."], "reason": "The pending_bodies.cpp forwarder at the annotated line is the only compiled definition of Texture::sub_621870 (its comment records that it is reached by name by Texture::sub_624cd0); the extent is the seed's catalogue adopted verbatim so the by-name reference resolves against the original identity without homing the x87 body."}
 // Deleted seed provenance: git:25c0645e742c23f149e0895c391a9ba79ad744cb:src/unrecovered/00621870.cpp
 // symbol    ?draw_cached_lit@Texture@@QAEXPAVBuffer@@PAUVert@@PAHH1PAVTextureStore@@@Z
