@@ -5263,7 +5263,7 @@ void __cdecl base_change(int base_id, int production_id) {
     }
 }
 
-// ORIGINAL: 0x004E5FE0 ?base_reset@@YAXHH@Z 0x004E5FE0-0x004E62FB
+// ORIGINAL: 0x004E5FE0 ?base_reset@@YAXHH@Z 0x004E5FE0-0x004E62FB BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/004e5fe0.cpp", "source:src/base.h", "source:src/base.cpp:BaseSiteClaimX/BaseSiteClaimY are the four 0x0090EA44/54 site-output arrays", "source:src/base.h:Base.location is the 0x130 field read as 0x0097D090 + base_id*0x134", "pinned image:0x00689484 contains secproj_sm.pcx;0x00689494 contains GOVPROJECT"], "reason": "Recover the base reset/site selection operation using the typed Base and faction state, four source-owned site claims, and source-owned popup text. Preserve the existing seed and mismatch obligation; base_build/base_change remain explicit link-only dependencies."}
 // The governor prompt's result is popp's return (the image keeps it in esi
 // across the help loop), not parse_say's.
@@ -9376,7 +9376,7 @@ Status: Complete
 
 /*
 Purpose: Suggest the base the specified pair of factions should agree to attack together.
-// ORIGINAL: 0x0054ACC0 ?suggest_plan@@YAHHH@Z 0x0054ACC0-0x0054AF9D
+// ORIGINAL: 0x0054ACC0 ?suggest_plan@@YAHHH@Z 0x0054ACC0-0x0054AF9D BYTE_EXACT
 // LEVER: nested ifs (not continue) with the visibility test re-reading
 //        Bases[i].faction_id_current keep the image's dead owner compare;
 //        the map.h vector_dist inline; base_find(x,y,faction) is kept
@@ -10015,7 +10015,7 @@ BOOL __cdecl transcending(int faction_id) {
 
 /*
 Purpose: Determine if the facility is redundant due to a Secret Project counting as that facility.
-// ORIGINAL: 0x005BA030 ?redundant@@YAHHH@Z 0x005BA030-0x005BA0DD
+// ORIGINAL: 0x005BA030 ?redundant@@YAHHH@Z 0x005BA030-0x005BA0DD BYTE_EXACT
 // size      173 bytes
 // prototype int (__cdecl ?redundant@@YAHHH@Z)(int facilityID, int factionID)
 // callers   1   call targets   0
@@ -10197,7 +10197,7 @@ int __cdecl most_objectives(int *faction_id_out, int *pact_count_out) {
 }
 
 
-// ORIGINAL: 0x004EFD50 ?upgrade_cost@@YAHHHH@Z 0x004EFD50-0x004EFE7F FILE
+// ORIGINAL: 0x004EFD50 ?upgrade_cost@@YAHHHH@Z 0x004EFD50-0x004EFE7F FILE BYTE_EXACT
 // TRIED: original establishes a true EBP frame (flags: frame) because it spills the reassigned `protoIDInit` parameter to its own stack slot; several transliterations (ternary vs if/else for the augmentation, ternary vs branch for the three clamps, B-then-A vs A-then-B table read order) all landed the value in a GP register (ebp used as scratch, no `mov ebp, esp`) instead. Landed at MISMATCH #3 (first diff is the missing frame prologue); the rest of the instruction stream already lines up closely (same table indices, same clamp-via-mask shape for two of three diffs).
 // LEVER: the four fixed-address tables the artifact bound are modelled rules
 //        records - 0x009AB868+0x29/.30/.25/.26/.24 is VehPrototypes[]
