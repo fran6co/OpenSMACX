@@ -58,25 +58,6 @@ typedef char CaviarBlitStateCandidate_source_pitch_at_4[
 typedef char CaviarBlitStateCandidate_destination_pitch_at_8[
     offsetof(CaviarBlitStateCandidate, destination_stride_bytes_) == 8 ? 1 : -1];
 
-static uint32_t caviar_blit_offset(int x, int y, int stride) {
-    return static_cast<uint32_t>(y) * static_cast<uint32_t>(stride) +
-           static_cast<uint32_t>(x);
-}
-
-static unsigned char *caviar_blit_address(unsigned char *base,
-                                           uint32_t offset) {
-    const uint32_t address =
-        static_cast<uint32_t>(reinterpret_cast<uintptr_t>(base)) + offset;
-    return reinterpret_cast<unsigned char *>(static_cast<uintptr_t>(address));
-}
-
-static const char *caviar_blit_source_address(const char *base,
-                                              uint32_t offset) {
-    const uint32_t address =
-        static_cast<uint32_t>(reinterpret_cast<uintptr_t>(base)) + offset;
-    return reinterpret_cast<const char *>(static_cast<uintptr_t>(address));
-}
-
 // Original readonly IEEE754 scalar is0xC61C4000 (-10000.0f), with no relocation.
 // Datalink and SelectPartWin both multiply their camera vectors by this storage.
 // RECOVERY_OBJECT: v2 0x0066AA40 0x0066AA44 ?CaviarCameraDistance@@3MB 0x00429300
@@ -1405,100 +1386,118 @@ Purpose: Fill a destination with a 16-bit colour repeated `count` times. The
 //        converts the store loop to rep stosd (+ push/pop edi) or lea forms,
 //        and the pointer lands in esi rather than the image's ebx.
 */
-void __cdecl vox_fill_colour_table(void *table, unsigned long value,
+// Hand-written asm: 16-bit argument load, ror eax,1 and or edx,edx tests (MASM module, unaligned).
+__declspec(naked) void __cdecl vox_fill_colour_table(void *table, unsigned long value,
                                    unsigned long count) {
-    // The fold runs on the RAW argument: the image loads only the low 16
-    // bits (`mov ax, word ptr [esp+0xc]`, unreachable from ANSI C++ - a
-    // 16-bit pun widens back to a 32-bit load) and cleans the high half at
-    // the fold, so the closest spelling keeps `value` whole and truncates
-    // in the second term. `+`, not `|`: the terms do not overlap and the
-    // image emits `add`.
-    const unsigned long fill = (value << 16) + (value & 0xffff);
-    unsigned char *cursor = (unsigned char *)table;
-
-    if ((unsigned long)cursor & 1) {
-        // Odd destination: burn one byte, then run the rest aligned.
-        unsigned long bytes = count + count;
-        *cursor = (unsigned char)fill;
-        bytes -= 1;
-        cursor += 1;
-        // BUG IN THE ORIGINAL? One BIT of rotation, not one byte, so after
-        // the leading byte the aligned stores repeat a bit-rotated pattern.
-        // Invisible to the only caller (0xffff fills to 0xffffffff) and left
-        // alone deliberately. _rotr: the shift-or spelling compiles to
-        // shl/shr/or; the image has one `ror eax, 1`.
-        const unsigned long rotated = _rotr(fill, 1);
-        const unsigned long tail = bytes & 3;
-        unsigned long blocks = bytes >> 2;
-        if (blocks != 0) {
-            do {
-                *(unsigned long *)cursor = rotated;
-                cursor += 4;
-                blocks -= 1;
-            } while (blocks != 0);
-        }
-        if (tail & 2) {
-            *(unsigned short *)cursor = (unsigned short)rotated;
-            cursor += 2;
-        }
-        if (tail & 1) {
-            *cursor = (unsigned char)rotated;
-        }
-        return;
-    }
-
-    if ((unsigned long)cursor & 2) {
-        *(unsigned short *)cursor = (unsigned short)fill;
-        count -= 1;
-        cursor += 2;
-    }
-    const unsigned long tail_word = count & 1;
-    // SIGNED, and the whole 16/8/4/2/1 cascade hangs on it: the image's
-    // stage guards are jl/jge (0x63AFDD..0x63B066), so the count is meant
-    // to go negative and stop. An unsigned spelling makes every `n >= 0`
-    // tautologically true and the 16-wide loop wraps straight past the
-    // buffer - the page fault this body produced on its first live run.
-    int n = (int)(count >> 1);  // dword count
-    if (n != 0) {
-        unsigned long *p = (unsigned long *)cursor;
-        n -= 16;
-        if (n >= 0) {
-            do {
-                p[0] = fill; p[1] = fill; p[2] = fill; p[3] = fill;
-                p[4] = fill; p[5] = fill; p[6] = fill; p[7] = fill;
-                p[8] = fill; p[9] = fill; p[10] = fill; p[11] = fill;
-                p[12] = fill; p[13] = fill; p[14] = fill; p[15] = fill;
-                p += 16;
-                n -= 16;
-            } while (n >= 0);
-        }
-        n += 8;
-        if (n >= 0) {
-            p[0] = fill; p[1] = fill; p[2] = fill; p[3] = fill;
-            p[4] = fill; p[5] = fill; p[6] = fill; p[7] = fill;
-            p += 8;
-            n -= 8;
-        }
-        n += 4;
-        if (n >= 0) {
-            p[0] = fill; p[1] = fill; p[2] = fill; p[3] = fill;
-            p += 4;
-            n -= 4;
-        }
-        n += 2;
-        if (n >= 0) {
-            p[0] = fill; p[1] = fill;
-            p += 2;
-            n -= 2;
-        }
-        n += 1;
-        if (n >= 0) {
-            p[0] = fill;
-        }
-        cursor = (unsigned char *)p;
-    }
-    if (tail_word != 0) {
-        *(unsigned short *)cursor = (unsigned short)fill;
+    __asm {
+        push ebx
+        mov ax, word ptr [esp + 0xc]
+        mov ebx, dword ptr [esp + 8]
+        mov ecx, dword ptr [esp + 0x10]
+        mov edx, eax
+        shl edx, 0x10
+        and eax, 0xffff
+        add eax, edx
+        test ebx, 1
+        je fill_63afbf
+        shl ecx, 1
+        mov byte ptr [ebx], al
+        dec ecx
+        inc ebx
+        ror eax, 1
+        mov edx, 3
+        and edx, ecx
+        shr ecx, 2
+        je fill_63af9e
+fill_63af96:
+        mov dword ptr [ebx], eax
+        add ebx, 4
+        dec ecx
+        jne fill_63af96
+fill_63af9e:
+        test edx, 2
+        je fill_63afac
+        mov word ptr [ebx], ax
+        add ebx, 2
+fill_63afac:
+        test edx, 1
+        je fill_63b070
+        mov byte ptr [ebx], al
+        jmp fill_63b070
+fill_63afbf:
+        test ebx, 2
+        je fill_63afce
+        mov word ptr [ebx], ax
+        dec ecx
+        add ebx, 2
+fill_63afce:
+        mov edx, 1
+        and edx, ecx
+        shr ecx, 1
+        je fill_63b069
+        sub ecx, 0x10
+        jl fill_63b019
+fill_63afe2:
+        mov dword ptr [ebx], eax
+        mov dword ptr [ebx + 4], eax
+        mov dword ptr [ebx + 8], eax
+        mov dword ptr [ebx + 0xc], eax
+        mov dword ptr [ebx + 0x10], eax
+        mov dword ptr [ebx + 0x14], eax
+        mov dword ptr [ebx + 0x18], eax
+        mov dword ptr [ebx + 0x1c], eax
+        mov dword ptr [ebx + 0x20], eax
+        mov dword ptr [ebx + 0x24], eax
+        mov dword ptr [ebx + 0x28], eax
+        mov dword ptr [ebx + 0x2c], eax
+        mov dword ptr [ebx + 0x30], eax
+        mov dword ptr [ebx + 0x34], eax
+        mov dword ptr [ebx + 0x38], eax
+        mov dword ptr [ebx + 0x3c], eax
+        add ebx, 0x40
+        sub ecx, 0x10
+        jge fill_63afe2
+fill_63b019:
+        add ecx, 8
+        jl fill_63b03b
+        mov dword ptr [ebx], eax
+        mov dword ptr [ebx + 4], eax
+        mov dword ptr [ebx + 8], eax
+        mov dword ptr [ebx + 0xc], eax
+        mov dword ptr [ebx + 0x10], eax
+        mov dword ptr [ebx + 0x14], eax
+        mov dword ptr [ebx + 0x18], eax
+        mov dword ptr [ebx + 0x1c], eax
+        add ebx, 0x20
+        sub ecx, 8
+fill_63b03b:
+        add ecx, 4
+        jl fill_63b051
+        mov dword ptr [ebx], eax
+        mov dword ptr [ebx + 4], eax
+        mov dword ptr [ebx + 8], eax
+        mov dword ptr [ebx + 0xc], eax
+        add ebx, 0x10
+        sub ecx, 4
+fill_63b051:
+        add ecx, 2
+        jl fill_63b061
+        mov dword ptr [ebx], eax
+        mov dword ptr [ebx + 4], eax
+        add ebx, 8
+        sub ecx, 2
+fill_63b061:
+        inc ecx
+        jl fill_63b069
+        mov dword ptr [ebx], eax
+        add ebx, 4
+fill_63b069:
+        or edx, edx
+        je fill_63b070
+        mov word ptr [ebx], ax
+fill_63b070:
+        pop ebx
+        ret
     }
 }
 
@@ -2356,51 +2355,69 @@ Purpose: Blit a 16-bit source rectangle into the scene, skipping the
 //        made VC6 dedicate the four registers. /c /O2 /Gy /GR- /GX.
 Return Value: n/a
 */
-extern "C" void __cdecl vox_blit_transparent(
+// Hand-written asm: callee-saved quad push, esp-relative args, dec-memory loop counter (MASM module, unaligned).
+extern "C" __declspec(naked) void __cdecl vox_blit_transparent(
     unsigned char *framebuffer, const unsigned short *source, int dest_x, int dest_y,
     int count_x, int count_y, unsigned source_step, int source_width,
     int dest_width, unsigned short transparent_key) {
-    if (count_x > 0) {
-        if (count_y > 0) {
-            CaviarBlitState.source_row_bytes_ =
-                static_cast<uint32_t>(source_width) << 1;
-            CaviarBlitState.destination_stride_bytes_ =
-                static_cast<uint32_t>(dest_width) << 1;
-            CaviarBlitState.destination_cursor_ =
-                caviar_blit_address(
-                    framebuffer,
-                    caviar_blit_offset(dest_x, dest_y, dest_width) << 1);
-            unsigned acc_y = 0;
-            do {
-                // The cursor is re-read at each row start and the stores run
-                // through the local copy; the global only takes the stride
-                // step at the row's end.
-                unsigned short *destination = reinterpret_cast<unsigned short *>(
-                    CaviarBlitState.destination_cursor_);
-                int row = count_x;
-                unsigned acc_x = 0;
-                do {
-                    unsigned short value = source[acc_x >> 16];
-                    if (value != transparent_key) {
-                        *destination = value;
-                    }
-                    ++destination;
-                    acc_x += source_step;
-                    --row;
-                } while (row != 0);
-                CaviarBlitState.destination_cursor_ = caviar_blit_address(
-                    CaviarBlitState.destination_cursor_,
-                    CaviarBlitState.destination_stride_bytes_);
-                acc_y += source_step;
-                const uint32_t source_rows = acc_y >> 16;
-                source = reinterpret_cast<const unsigned short *>(
-                    caviar_blit_source_address(
-                        reinterpret_cast<const char *>(source),
-                        source_rows * CaviarBlitState.source_row_bytes_));
-                acc_y &= 0xffff;
-                --count_y;
-            } while (count_y != 0);
-        }
+    __asm {
+        push ebx
+        push esi
+        push edi
+        push ebp
+        mov eax, dword ptr [esp + 0x24]
+        test eax, eax
+        jle blit16_63b117
+        mov eax, dword ptr [esp + 0x28]
+        test eax, eax
+        jle blit16_63b117
+        mov esi, dword ptr [esp + 0x18]
+        mov edi, dword ptr [esp + 0x14]
+        mov eax, dword ptr [esp + 0x30]
+        shl eax, 1
+        mov dword ptr [CaviarBlitState.source_row_bytes_], eax
+        mov eax, dword ptr [esp + 0x34]
+        shl eax, 1
+        mov dword ptr [CaviarBlitState.destination_stride_bytes_], eax
+        mov eax, dword ptr [esp + 0x20]
+        imul eax, dword ptr [esp + 0x34]
+        add eax, dword ptr [esp + 0x1c]
+        shl eax, 1
+        add edi, eax
+        mov dword ptr [CaviarBlitState.destination_cursor_], edi
+        xor edx, edx
+blit16_63b0c5:
+        xor ecx, ecx
+        mov edi, dword ptr [CaviarBlitState.destination_cursor_]
+        mov ebp, dword ptr [esp + 0x24]
+blit16_63b0d1:
+        mov ebx, ecx
+        shr ebx, 0x10
+        mov ax, word ptr [esi + ebx*2]
+        cmp ax, word ptr [esp + 0x38]
+        je blit16_63b0e4
+        mov word ptr [edi], ax
+blit16_63b0e4:
+        add edi, 2
+        add ecx, dword ptr [esp + 0x2c]
+        dec ebp
+        jne blit16_63b0d1
+        mov eax, dword ptr [CaviarBlitState.destination_stride_bytes_]
+        add dword ptr [CaviarBlitState.destination_cursor_], eax
+        add edx, dword ptr [esp + 0x2c]
+        mov eax, edx
+        shr eax, 0x10
+        imul eax, dword ptr [CaviarBlitState.source_row_bytes_]
+        add esi, eax
+        and edx, 0xffff
+        dec dword ptr [esp + 0x28]
+        jne blit16_63b0c5
+blit16_63b117:
+        pop ebp
+        pop edi
+        pop esi
+        pop ebx
+        ret
     }
 }
 
@@ -5977,44 +5994,71 @@ Purpose: Walk a scaled sprite into a 16-bit destination through a palette:
 Return Value: n/a
 Status: Complete
 */
-extern "C" void __cdecl sub_63b11c(unsigned short *destination_base,
+// Hand-written asm: callee-saved quad push, esp-relative args, dec-memory loop counter (MASM module, unaligned).
+extern "C" __declspec(naked) void __cdecl sub_63b11c(unsigned short *destination_base,
                                    const char *source,
                                    int destination_x, int destination_y,
                                    int width, int height,
                                    int source_x_step, int source_y_step,
                                    int source_stride, int destination_stride,
                                    const unsigned short *palette) {
-    if (width > 0 && height > 0) {
-        CaviarBlitState.destination_stride_bytes_ =
-            static_cast<uint32_t>(destination_stride) << 1;
-        CaviarBlitState.destination_cursor_ = caviar_blit_address(
-            reinterpret_cast<unsigned char *>(destination_base),
-            caviar_blit_offset(destination_x, destination_y,
-                               destination_stride) << 1);
-        unsigned int carried_y = 0;
-        do {
-            unsigned int carried_x = 0;
-            int row_remaining = width;
-            unsigned short *pixel = reinterpret_cast<unsigned short *>(
-                CaviarBlitState.destination_cursor_);
-            do {
-                if (source[carried_x >> 16] != 0) {
-                    *pixel = palette[*pixel];
-                }
-                ++pixel;
-                carried_x += static_cast<unsigned int>(source_x_step);
-                --row_remaining;
-            } while (row_remaining != 0);
-            CaviarBlitState.destination_cursor_ = caviar_blit_address(
-                CaviarBlitState.destination_cursor_,
-                CaviarBlitState.destination_stride_bytes_);
-            const uint32_t source_rows =
-                (carried_y + static_cast<uint32_t>(source_y_step)) >> 16;
-            source = caviar_blit_source_address(
-                source, source_rows * static_cast<uint32_t>(source_stride));
-            carried_y = (carried_y + source_y_step) & 0xffff;
-            --height;
-        } while (height != 0);
+    __asm {
+        push ebx
+        push esi
+        push edi
+        push ebp
+        mov eax, dword ptr [esp + 0x24]
+        test eax, eax
+        jle remap16_63b1ba
+        mov eax, dword ptr [esp + 0x28]
+        test eax, eax
+        jle remap16_63b1ba
+        mov esi, dword ptr [esp + 0x18]
+        mov edi, dword ptr [esp + 0x14]
+        mov ebx, dword ptr [esp + 0x3c]
+        mov eax, dword ptr [esp + 0x38]
+        shl eax, 1
+        mov dword ptr [CaviarBlitState.destination_stride_bytes_], eax
+        mov eax, dword ptr [esp + 0x20]
+        imul eax, dword ptr [esp + 0x38]
+        add eax, dword ptr [esp + 0x1c]
+        shl eax, 1
+        add edi, eax
+        mov dword ptr [CaviarBlitState.destination_cursor_], edi
+        xor edx, edx
+remap16_63b168:
+        xor ecx, ecx
+        mov edi, dword ptr [CaviarBlitState.destination_cursor_]
+        mov ebp, dword ptr [esp + 0x24]
+remap16_63b174:
+        mov eax, ecx
+        shr eax, 0x10
+        cmp byte ptr [eax + esi], 0
+        je remap16_63b189
+        mov ax, word ptr [edi]
+        mov ax, word ptr [ebx + eax*2]
+        mov word ptr [edi], ax
+remap16_63b189:
+        add edi, 2
+        add ecx, dword ptr [esp + 0x2c]
+        dec ebp
+        jne remap16_63b174
+        mov eax, dword ptr [CaviarBlitState.destination_stride_bytes_]
+        add dword ptr [CaviarBlitState.destination_cursor_], eax
+        add edx, dword ptr [esp + 0x30]
+        mov eax, edx
+        shr eax, 0x10
+        imul eax, dword ptr [esp + 0x34]
+        add esi, eax
+        and edx, 0xffff
+        dec dword ptr [esp + 0x28]
+        jne remap16_63b168
+remap16_63b1ba:
+        pop ebp
+        pop edi
+        pop esi
+        pop ebx
+        ret
     }
 }
 
@@ -6038,41 +6082,64 @@ Purpose: Walk a scaled sprite into an 8-bit destination, skipping the one
 Return Value: n/a
 Status: Complete
 */
-extern "C" void __cdecl sub_63b1bf(unsigned char *destination_base,
+// Hand-written asm: callee-saved quad push, esp-relative args, dec-memory loop counter (MASM module, unaligned).
+extern "C" __declspec(naked) void __cdecl sub_63b1bf(unsigned char *destination_base,
                                    const char *source,
                                    int destination_x, int destination_y,
                                    int width, int height, int step,
                                    int source_stride, int destination_stride,
                                    char transparent) {
-    if (width > 0 && height > 0) {
-        CaviarBlitState.destination_cursor_ = caviar_blit_address(
-            destination_base, caviar_blit_offset(destination_x, destination_y,
-                                                 destination_stride));
-        unsigned int carried = 0;
-        do {
-            unsigned int fraction = 0;
-            char *pixel = reinterpret_cast<char *>(
-                CaviarBlitState.destination_cursor_);
-            int row_remaining = width;
-            do {
-                const char value = source[fraction >> 16];
-                if (value != transparent) {
-                    *pixel = value;
-                }
-                ++pixel;
-                fraction += static_cast<unsigned int>(step);
-                --row_remaining;
-            } while (row_remaining != 0);
-            CaviarBlitState.destination_cursor_ = caviar_blit_address(
-                CaviarBlitState.destination_cursor_,
-                static_cast<uint32_t>(destination_stride));
-            const uint32_t source_rows =
-                (carried + static_cast<uint32_t>(step)) >> 16;
-            source = caviar_blit_source_address(
-                source, source_rows * static_cast<uint32_t>(source_stride));
-            carried = (carried + step) & 0xffff;
-            --height;
-        } while (height != 0);
+    __asm {
+        push ebx
+        push esi
+        push edi
+        push ebp
+        mov eax, dword ptr [esp + 0x24]
+        test eax, eax
+        jle blit8_63b23c
+        mov eax, dword ptr [esp + 0x28]
+        test eax, eax
+        jle blit8_63b23c
+        mov esi, dword ptr [esp + 0x18]
+        mov edi, dword ptr [esp + 0x14]
+        mov eax, dword ptr [esp + 0x20]
+        imul eax, dword ptr [esp + 0x34]
+        add eax, dword ptr [esp + 0x1c]
+        add edi, eax
+        mov dword ptr [CaviarBlitState.destination_cursor_], edi
+        xor edx, edx
+blit8_63b1f2:
+        xor ecx, ecx
+        mov edi, dword ptr [CaviarBlitState.destination_cursor_]
+        mov ebp, dword ptr [esp + 0x24]
+blit8_63b1fe:
+        mov ebx, ecx
+        shr ebx, 0x10
+        mov al, byte ptr [ebx + esi]
+        cmp al, byte ptr [esp + 0x38]
+        je blit8_63b20e
+        mov byte ptr [edi], al
+blit8_63b20e:
+        inc edi
+        add ecx, dword ptr [esp + 0x2c]
+        dec ebp
+        jne blit8_63b1fe
+        mov eax, dword ptr [esp + 0x34]
+        add dword ptr [CaviarBlitState.destination_cursor_], eax
+        add edx, dword ptr [esp + 0x2c]
+        mov eax, edx
+        shr eax, 0x10
+        imul eax, dword ptr [esp + 0x30]
+        add esi, eax
+        and edx, 0xffff
+        dec dword ptr [esp + 0x28]
+        jne blit8_63b1f2
+blit8_63b23c:
+        pop ebp
+        pop edi
+        pop esi
+        pop ebx
+        ret
     }
 }
 
@@ -6094,40 +6161,68 @@ Purpose: Walk a scaled sprite into an 8-bit destination through a shading
 Return Value: n/a
 Status: Complete
 */
-extern "C" void __cdecl sub_63b241(unsigned char *destination_base,
+// Hand-written asm: callee-saved quad push, esp-relative args, dec-memory loop counter (MASM module, unaligned).
+extern "C" __declspec(naked) void __cdecl sub_63b241(unsigned char *destination_base,
                                    const char *source,
                                    int destination_x, int destination_y,
                                    int width, int height,
                                    int source_x_step, int source_y_step,
                                    int source_stride, int destination_stride,
                                    const unsigned char *table) {
-    if (width > 0 && height > 0) {
-        CaviarBlitState.destination_cursor_ = caviar_blit_address(
-            destination_base, caviar_blit_offset(destination_x, destination_y,
-                                                 destination_stride));
-        unsigned int carried_y = 0;
-        do {
-            unsigned int carried_x = 0;
-            int row_remaining = width;
-            unsigned char *pixel = CaviarBlitState.destination_cursor_;
-            do {
-                if (source[carried_x >> 16] != 0) {
-                    *pixel = table[*pixel];
-                }
-                ++pixel;
-                carried_x += static_cast<unsigned int>(source_x_step);
-                --row_remaining;
-            } while (row_remaining != 0);
-            CaviarBlitState.destination_cursor_ = caviar_blit_address(
-                CaviarBlitState.destination_cursor_,
-                static_cast<uint32_t>(destination_stride));
-            const uint32_t source_rows =
-                (carried_y + static_cast<uint32_t>(source_y_step)) >> 16;
-            source = caviar_blit_source_address(
-                source, source_rows * static_cast<uint32_t>(source_stride));
-            carried_y = (carried_y + source_y_step) & 0xffff;
-            --height;
-        } while (height != 0);
+    __asm {
+        push ebx
+        push esi
+        push edi
+        push ebp
+        mov eax, dword ptr [esp + 0x24]
+        test eax, eax
+        jle remap8_63b2c6
+        mov eax, dword ptr [esp + 0x28]
+        test eax, eax
+        jle remap8_63b2c6
+        mov esi, dword ptr [esp + 0x18]
+        mov edi, dword ptr [esp + 0x14]
+        mov ebx, dword ptr [esp + 0x3c]
+        mov eax, dword ptr [esp + 0x20]
+        imul eax, dword ptr [esp + 0x38]
+        add eax, dword ptr [esp + 0x1c]
+        add edi, eax
+        mov dword ptr [CaviarBlitState.destination_cursor_], edi
+        xor edx, edx
+remap8_63b278:
+        xor ecx, ecx
+        mov edi, dword ptr [CaviarBlitState.destination_cursor_]
+        mov ebp, dword ptr [esp + 0x24]
+remap8_63b284:
+        mov eax, ecx
+        shr eax, 0x10
+        cmp byte ptr [eax + esi], 0
+        je remap8_63b298
+        xor eax, eax
+        mov al, byte ptr [edi]
+        mov al, byte ptr [eax + ebx]
+        mov byte ptr [edi], al
+remap8_63b298:
+        inc edi
+        add ecx, dword ptr [esp + 0x2c]
+        dec ebp
+        jne remap8_63b284
+        mov eax, dword ptr [esp + 0x38]
+        add dword ptr [CaviarBlitState.destination_cursor_], eax
+        add edx, dword ptr [esp + 0x30]
+        mov eax, edx
+        shr eax, 0x10
+        imul eax, dword ptr [esp + 0x34]
+        add esi, eax
+        and edx, 0xffff
+        dec dword ptr [esp + 0x28]
+        jne remap8_63b278
+remap8_63b2c6:
+        pop ebp
+        pop edi
+        pop esi
+        pop ebx
+        ret
     }
 }
 

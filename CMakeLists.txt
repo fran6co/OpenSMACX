@@ -656,10 +656,6 @@ set_source_files_properties(src/application_math.cpp src/application_text.cpp
     PROPERTIES COMPILE_OPTIONS "/Oy-")
 # Terraforming providers and actions retain their pinned EBP-based frames.
 set_property(SOURCE src/terraforming.cpp src/terraforming_actions.cpp APPEND PROPERTY COMPILE_OPTIONS "/Oy-")
-# Only the CPU register probe uses the explicitly registered intrinsic frontend.
-# The rest of Caviar and the application continue to use their VC6 recipes.
-set_source_files_properties(src/caviar_cpu.cpp
-    PROPERTIES COMPILE_OPTIONS "--frontend=intrinsics-i386-no-debug")
 add_executable(OpenSMACX ${OPENSMACX_SOURCES})
 
 # Terrain, media decoder and GraphicWin lookup data remain local derivatives of

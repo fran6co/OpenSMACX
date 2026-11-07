@@ -1255,15 +1255,98 @@ void __cdecl OutputPixelRow16(MediaConversionTableStorage &tables,
 // RECOVERY_BINDING: v1 {"evidence": ["recovery/tasks/movie-decoder-owner-oct5.json", "pinned caller/body and shared-storage review; fresh VC6 public symbol", "Preserve the 16-call source-row and output-pitch progression while calling the mapped C++ 5CEB12 implementation for every row; do not inline a second lookup algorithm."], "reason": "Faithful semantic media decoder owner recovery with normalized custom-register helper interfaces. Original identities, spans and historical findings retained; no matching, runtime or game acceptance granted."}
 // symbol    ?sub_5cea09@@YAXPBE0PAEH@Z
 // TRIED: byte-exactness is not reachable in standard C++ here - the 16 calls to sub_5ceb12() take NO explicit arguments; the original threads state between them entirely through the callee-saved registers esi/edi/ebp (incremented by 0x40/ 0x20/a caller-stack value between calls), which is a register-level calling convention no C++ source can express without __asm (forbidden). Landed as 16 unrolled calls with `void` return (the disassembly never sets eax before `ret`, contradicting the `int` in the given contract head) and the 4 IDA-guessed int parameters, unused since nothing in valid C++ can route them into esi/edi/ebp for the callee.
-void __cdecl sub_5cea09(const BYTE *component_rows,
+// Hand-written asm (EA uV decoder module): saves ecx/edx, passes esi/edi/ebp to a register-convention callee.
+__declspec(naked) void __cdecl sub_5cea09(const BYTE *component_rows,
                         const BYTE *chroma_rows,
                         BYTE *destination, int row_pitch_bytes) {
-  for (int row = 0; row < 16; ++row) {
-    sub_5ceb12(component_rows + row * 0x40,
-               chroma_rows + (row / 2) * 0x20,
-               reinterpret_cast<unsigned int *>(
-                   destination + row * row_pitch_bytes));
-  }
+    __asm {
+        push ebx
+        push ecx
+        push edx
+        push esi
+        push edi
+        push ebp
+        mov esi, dword ptr [esp + 0x1c]
+        mov edi, dword ptr [esp + 0x20]
+        mov ebp, dword ptr [esp + 0x24]
+        xor ecx, ecx
+        xor edx, edx
+        call sub_5ceb12
+        mov eax, dword ptr [esp + 0x28]
+        add esi, 0x40
+        add ebp, eax
+        call sub_5ceb12
+        mov eax, dword ptr [esp + 0x28]
+        add esi, 0x40
+        add edi, 0x20
+        add ebp, eax
+        call sub_5ceb12
+        mov eax, dword ptr [esp + 0x28]
+        add esi, 0x40
+        add ebp, eax
+        call sub_5ceb12
+        mov eax, dword ptr [esp + 0x28]
+        add esi, 0x40
+        add edi, 0x20
+        add ebp, eax
+        call sub_5ceb12
+        mov eax, dword ptr [esp + 0x28]
+        add esi, 0x40
+        add ebp, eax
+        call sub_5ceb12
+        mov eax, dword ptr [esp + 0x28]
+        add esi, 0x40
+        add edi, 0x20
+        add ebp, eax
+        call sub_5ceb12
+        mov eax, dword ptr [esp + 0x28]
+        add esi, 0x40
+        add ebp, eax
+        call sub_5ceb12
+        mov eax, dword ptr [esp + 0x28]
+        add esi, 0x40
+        add edi, 0x20
+        add ebp, eax
+        call sub_5ceb12
+        mov eax, dword ptr [esp + 0x28]
+        add esi, 0x40
+        add ebp, eax
+        call sub_5ceb12
+        mov eax, dword ptr [esp + 0x28]
+        add esi, 0x40
+        add edi, 0x20
+        add ebp, eax
+        call sub_5ceb12
+        mov eax, dword ptr [esp + 0x28]
+        add esi, 0x40
+        add ebp, eax
+        call sub_5ceb12
+        mov eax, dword ptr [esp + 0x28]
+        add esi, 0x40
+        add edi, 0x20
+        add ebp, eax
+        call sub_5ceb12
+        mov eax, dword ptr [esp + 0x28]
+        add esi, 0x40
+        add ebp, eax
+        call sub_5ceb12
+        mov eax, dword ptr [esp + 0x28]
+        add esi, 0x40
+        add edi, 0x20
+        add ebp, eax
+        call sub_5ceb12
+        mov eax, dword ptr [esp + 0x28]
+        add esi, 0x40
+        add ebp, eax
+        call sub_5ceb12
+        pop ebp
+        pop edi
+        pop esi
+        pop edx
+        pop ecx
+        pop ebx
+        ret
+    }
 }
 
 void __cdecl OutputPixelRow(int *destination,
@@ -1343,36 +1426,6 @@ Purpose: One 8-point inverse DCT row, the butterfly half of the movie codec's
          dwords are what feed the integer butterfly.
 */
 
-static int *movie_media_idct_output_pointer() {
-    return movie_media_idct_storage.current_output_pointer;
-}
-
-static void movie_media_idct_set_output_pointer(int *value) {
-    movie_media_idct_storage.current_output_pointer = value;
-}
-
-static float movie_media_idct_float_constant(int index) {
-    float value;
-    std::memcpy(&value, &movie_media_idct_storage.constant_words[index],
-                sizeof(value));
-    return value;
-}
-
-static movie_decoder_idct::IdctConstants movie_media_idct_constants() {
-    movie_decoder_idct::IdctConstants values;
-    std::memcpy(&values.rotation_multiplier,
-                &movie_media_idct_storage.constant_words[0], sizeof(LONG));
-    std::memcpy(&values.first_difference_scale,
-                &movie_media_idct_storage.constant_words[1], sizeof(float));
-    std::memcpy(&values.second_difference_scale,
-                &movie_media_idct_storage.constant_words[2], sizeof(float));
-    std::memcpy(&values.cross_scale,
-                &movie_media_idct_storage.constant_words[3], sizeof(float));
-    std::memcpy(&values.bias, &movie_media_idct_storage.constant_words[4],
-                sizeof(float));
-    return values;
-}
-
 
 
 /*
@@ -1391,97 +1444,85 @@ Status: Coverage transcription - unclaimed body (explicit-source spelling;
         seed's TRIED note; the fstp-qword/low-dword scratch reuse is
         reproduced, not truncated).
 */
-void __cdecl sub_5cee80(int *src) {
-    int *dst;
-    int sum_lo;
-    int sum_hi;
-    int diff_a;
-    int diff_b;
-    double diff_a_fp;
-    double diff_b_fp;
-    double mid;
-    int rot;
-    int out_a;
-    int out_b;
-    int src_two;
-    int src_six;
-
-    sum_lo = movie_media_add32(src[3], src[5]);
-    sum_hi = movie_media_add32(src[7], src[1]);
-    diff_a = movie_media_sub32(src[5], src[3]);
-    diff_b = movie_media_sub32(src[1], src[7]);
-    movie_media_idct_storage.butterfly_fp_scratch_words[0] =
-        movie_media_int_bits(diff_a);
-    movie_media_idct_storage.butterfly_fp_scratch_words[1] =
-        movie_media_int_bits(diff_b);
-    diff_a_fp = static_cast<double>(diff_a);
-    diff_b_fp = static_cast<double>(diff_b);
-    mid = (diff_b_fp + diff_a_fp) * movie_media_idct_float_constant(3);
-    rot = movie_media_mul2(movie_media_signed_high_product(
-        movie_media_sub32(sum_hi, sum_lo),
-        movie_media_signed32(movie_media_idct_storage.constant_words[0])));
-    // The image rounds these two sums to double inside the x87 stack and
-    // fstp qword's them into the scratch slots; the INTEGER pipeline then
-    // re-reads the slots' LOW dwords, so the bit pattern - not the numeric
-    // value - is what flows into the eight writes.
-    const double scratch_a = static_cast<double>(
-        diff_a_fp * movie_media_idct_float_constant(1) + mid +
-        movie_media_idct_float_constant(4));
-    const double scratch_b = static_cast<double>(
-        (diff_b_fp * movie_media_idct_float_constant(2) - mid) +
-        movie_media_idct_float_constant(4));
-    src_two = src[2];
-    src_six = src[6];
-    std::memcpy(&movie_media_idct_storage.butterfly_fp_scratch_words[2],
-                &scratch_b, sizeof(scratch_b));
-    std::memcpy(&movie_media_idct_storage.butterfly_fp_scratch_words[0],
-                &scratch_a, sizeof(scratch_a));
-    out_a = movie_media_signed32(
-        movie_media_idct_storage.butterfly_fp_scratch_words[0]);
-    out_b = movie_media_signed32(
-        movie_media_idct_storage.butterfly_fp_scratch_words[2]);
-    int sum_lo2;
-    int diff_c;
-    int rot2;
-    int rot2x2;
-    int sum_hi2;
-    int diff_d;
-    int diff_e;
-    int tail_a;
-    int tail_b;
-    int half_a;
-
-    half_a = movie_media_add32(out_a, rot);
-    rot = movie_media_add32(rot, out_b);
-    out_b = movie_media_add32(movie_media_add32(out_b, sum_lo), sum_hi);
-    movie_media_idct_storage.butterfly_fp_scratch_words[1] =
-        movie_media_int_bits(half_a);
-    movie_media_idct_storage.butterfly_fp_scratch_words[2] =
-        movie_media_int_bits(rot);
-    movie_media_idct_storage.butterfly_fp_scratch_words[3] =
-        movie_media_int_bits(out_b);
-
-    sum_lo2 = movie_media_add32(src[4], src[0]);
-    diff_c = movie_media_sub32(src[0], src[4]);
-    rot2 = movie_media_signed_high_product(
-        movie_media_sub32(src_two, src_six),
-        movie_media_signed32(movie_media_idct_storage.constant_words[0]));
-    rot2x2 = movie_media_mul2(rot2);
-    dst = movie_media_idct_output_pointer();
-    sum_hi2 = movie_media_add32(movie_media_add32(src_six, src_two), rot2x2);
-    diff_d = movie_media_add32(rot2x2, diff_c);
-    diff_e = movie_media_sub32(diff_c, movie_media_mul2(rot2));
-    tail_a = movie_media_add32(sum_hi2, sum_lo2);
-    tail_b = movie_media_sub32(sum_lo2, sum_hi2);
-
-    dst[2] = movie_media_add32(diff_e, half_a);
-    dst[5] = movie_media_sub32(diff_e, half_a);
-    dst[3] = movie_media_add32(tail_b, out_a);
-    dst[4] = movie_media_sub32(tail_b, out_a);
-    dst[0] = movie_media_add32(tail_a, out_b);
-    dst[1] = movie_media_add32(rot, diff_d);
-    dst[6] = movie_media_sub32(diff_d, rot);
-    dst[7] = movie_media_sub32(tail_a, out_b);
+// Hand-written asm (EA uV decoder module): no prologue, esi/edi register inputs.
+__declspec(naked) void __cdecl sub_5cee80(int *src) {
+    __asm {
+        mov ebx, dword ptr [esi + 0x14]
+        mov eax, dword ptr [esi + 0xc]
+        mov ecx, dword ptr [esi + 4]
+        mov edx, dword ptr [esi + 0x1c]
+        lea edi, [eax + ebx]
+        sub ebx, eax
+        lea eax, [edx + ecx]
+        sub ecx, edx
+        mov dword ptr [movie_media_idct_storage + 0x8], ebx
+        mov dword ptr [movie_media_idct_storage + 0xc], ecx
+        lea ebp, [edi + eax]
+        sub eax, edi
+        fild dword ptr [movie_media_idct_storage + 0x8]
+        fild dword ptr [movie_media_idct_storage + 0xc]
+        fld st(0)
+        fmul dword ptr [movie_media_idct_storage + 0x20]
+        fxch st(2)
+        fadd st(1), st(0)
+        fmul dword ptr [movie_media_idct_storage + 0x1c]
+        fxch st(1)
+        fmul dword ptr [movie_media_idct_storage + 0x24]
+        imul dword ptr [movie_media_idct_storage + 0x18]
+        fadd st(1), st(0)
+        fsubp st(2), st
+        fadd dword ptr [movie_media_idct_storage + 0x28]
+        fxch st(1)
+        fadd dword ptr [movie_media_idct_storage + 0x28]
+        mov eax, dword ptr [esi + 8]
+        mov ebx, dword ptr [esi + 0x18]
+        shl edx, 1
+        fstp qword ptr [movie_media_idct_storage + 0x10]
+        fstp qword ptr [movie_media_idct_storage + 0x8]
+        mov ecx, dword ptr [movie_media_idct_storage + 0x8]
+        mov edi, dword ptr [movie_media_idct_storage + 0x10]
+        add ecx, edx
+        add edx, edi
+        add edi, ebp
+        mov dword ptr [movie_media_idct_storage + 0xc], ecx
+        mov dword ptr [movie_media_idct_storage + 0x10], edx
+        mov dword ptr [movie_media_idct_storage + 0x14], edi
+        mov ecx, dword ptr [esi]
+        mov edx, dword ptr [esi + 0x10]
+        lea esi, [ebx + eax]
+        sub eax, ebx
+        lea ebx, [edx + ecx]
+        sub ecx, edx
+        imul dword ptr [movie_media_idct_storage + 0x18]
+        shl edx, 1
+        mov edi, dword ptr [movie_media_idct_storage + 0x4]
+        add esi, edx
+        mov ebp, dword ptr [movie_media_idct_storage + 0xc]
+        lea eax, [edx + ecx]
+        sub ecx, edx
+        lea edx, [esi + ebx]
+        sub ebx, esi
+        lea esi, [ecx + ebp]
+        sub ecx, ebp
+        mov ebp, dword ptr [movie_media_idct_storage + 0x8]
+        mov dword ptr [edi + 8], esi
+        mov esi, dword ptr [movie_media_idct_storage + 0x10]
+        mov dword ptr [edi + 0x14], ecx
+        lea ecx, [ebx + ebp]
+        sub ebx, ebp
+        mov ebp, dword ptr [movie_media_idct_storage + 0x14]
+        mov dword ptr [edi + 0xc], ecx
+        mov dword ptr [edi + 0x10], ebx
+        lea ebx, [esi + eax]
+        sub eax, esi
+        lea ecx, [edx + ebp]
+        sub edx, ebp
+        mov dword ptr [edi], ecx
+        mov dword ptr [edi + 4], ebx
+        mov dword ptr [edi + 0x18], eax
+        mov dword ptr [edi + 0x1c], edx
+        ret
+    }
 }
 
 
@@ -1508,31 +1549,97 @@ Status: Coverage transcription - unclaimed body (hidden-ESI callees reached
         with their table channels made explicit; the ESI loads are the one
         deliberate divergence, seed TRIED 0.51).
 */
-void __cdecl sub_5cef8a(unsigned char *row_base, int stride_arg) {
-    movie_media_idct_storage.output_pitch_bytes =
-        static_cast<DWORD>(stride_arg) << 2;
-    for (int column = 0; column != 8; ++column) {
-        int *const destination =
-            &movie_media_idct_storage.intermediate_words[column];
-        movie_media_idct_set_output_pointer(destination);
-        int *const input =
-            movie_media_decoder_tables.decoded_coefficient_words + column * 8;
-        sub_5ced1d(input);
-    }
-
-    movie_media_idct_set_output_pointer(reinterpret_cast<int *>(row_base));
-    for (int row = 0; row != 8; ++row) {
-        int *const source =
-            &movie_media_idct_storage.intermediate_words[row * 9];
-        sub_5cee80(source);
-        // Pinned 5CF052..5CF111 advances only between row calls. The final
-        // call at 5CF111 returns directly to the epilogue at 5CF116, leaving
-        // shared output storage pointing at row seven, not beyond the block.
-        if (row != 7) {
-            BYTE *destination = reinterpret_cast<BYTE *>(movie_media_idct_output_pointer());
-            destination += movie_media_idct_storage.output_pitch_bytes;
-            movie_media_idct_set_output_pointer(reinterpret_cast<int *>(destination));
-        }
+// Hand-written asm (EA uV decoder module): saves ecx/edx, passes esi/edi to register-convention callees.
+__declspec(naked) void __cdecl sub_5cef8a(unsigned char *row_base, int stride_arg) {
+    __asm {
+        push ebx
+        push ecx
+        push edx
+        push esi
+        push edi
+        push ebp
+        mov eax, dword ptr [esp + 0x1c]
+        mov edx, dword ptr [esp + 0x20]
+        shl edx, 2
+        mov dword ptr [movie_media_idct_storage], edx
+        push eax
+        mov esi, offset movie_media_decoder_tables
+        mov dword ptr [movie_media_idct_storage + 0x4], offset movie_media_idct_storage + 0x2c
+        call sub_5ced1d
+        mov esi, offset movie_media_decoder_tables + 0x20
+        mov dword ptr [movie_media_idct_storage + 0x4], offset movie_media_idct_storage + 0x30
+        call sub_5ced1d
+        mov esi, offset movie_media_decoder_tables + 0x40
+        mov dword ptr [movie_media_idct_storage + 0x4], offset movie_media_idct_storage + 0x34
+        call sub_5ced1d
+        mov esi, offset movie_media_decoder_tables + 0x60
+        mov dword ptr [movie_media_idct_storage + 0x4], offset movie_media_idct_storage + 0x38
+        call sub_5ced1d
+        mov esi, offset movie_media_decoder_tables + 0x80
+        mov dword ptr [movie_media_idct_storage + 0x4], offset movie_media_idct_storage + 0x3c
+        call sub_5ced1d
+        mov esi, offset movie_media_decoder_tables + 0xa0
+        mov dword ptr [movie_media_idct_storage + 0x4], offset movie_media_idct_storage + 0x40
+        call sub_5ced1d
+        mov esi, offset movie_media_decoder_tables + 0xc0
+        mov dword ptr [movie_media_idct_storage + 0x4], offset movie_media_idct_storage + 0x44
+        call sub_5ced1d
+        mov esi, offset movie_media_decoder_tables + 0xe0
+        mov dword ptr [movie_media_idct_storage + 0x4], offset movie_media_idct_storage + 0x48
+        call sub_5ced1d
+        pop eax
+        mov esi, offset movie_media_idct_storage + 0x2c
+        mov dword ptr [movie_media_idct_storage + 0x4], eax
+        call sub_5cee80
+        mov eax, dword ptr [movie_media_idct_storage + 0x4]
+        mov edx, dword ptr [movie_media_idct_storage]
+        add eax, edx
+        mov esi, offset movie_media_idct_storage + 0x50
+        mov dword ptr [movie_media_idct_storage + 0x4], eax
+        call sub_5cee80
+        mov eax, dword ptr [movie_media_idct_storage + 0x4]
+        mov edx, dword ptr [movie_media_idct_storage]
+        add eax, edx
+        mov esi, offset movie_media_idct_storage + 0x74
+        mov dword ptr [movie_media_idct_storage + 0x4], eax
+        call sub_5cee80
+        mov eax, dword ptr [movie_media_idct_storage + 0x4]
+        mov edx, dword ptr [movie_media_idct_storage]
+        add eax, edx
+        mov esi, offset movie_media_idct_storage + 0x98
+        mov dword ptr [movie_media_idct_storage + 0x4], eax
+        call sub_5cee80
+        mov eax, dword ptr [movie_media_idct_storage + 0x4]
+        mov edx, dword ptr [movie_media_idct_storage]
+        add eax, edx
+        mov esi, offset movie_media_idct_storage + 0xbc
+        mov dword ptr [movie_media_idct_storage + 0x4], eax
+        call sub_5cee80
+        mov eax, dword ptr [movie_media_idct_storage + 0x4]
+        mov edx, dword ptr [movie_media_idct_storage]
+        add eax, edx
+        mov esi, offset movie_media_idct_storage + 0xe0
+        mov dword ptr [movie_media_idct_storage + 0x4], eax
+        call sub_5cee80
+        mov eax, dword ptr [movie_media_idct_storage + 0x4]
+        mov edx, dword ptr [movie_media_idct_storage]
+        add eax, edx
+        mov esi, offset movie_media_idct_storage + 0x104
+        mov dword ptr [movie_media_idct_storage + 0x4], eax
+        call sub_5cee80
+        mov eax, dword ptr [movie_media_idct_storage + 0x4]
+        mov edx, dword ptr [movie_media_idct_storage]
+        add eax, edx
+        mov esi, offset movie_media_idct_storage + 0x128
+        mov dword ptr [movie_media_idct_storage + 0x4], eax
+        call sub_5cee80
+        pop ebp
+        pop edi
+        pop esi
+        pop edx
+        pop ecx
+        pop ebx
+        ret
     }
 }
 
@@ -1558,23 +1665,108 @@ Status: Typed semantic body present through the shared column transform.
         External ESI-only entry ABI, x87 precision, exact output and linked
         storage/reference behavior remain unverified; preserve those debts.
 */
-void __cdecl sub_5ced1d(int *esi_ptr) {
-    movie_decoder_idct::IdctConstants constants = movie_media_idct_constants();
-    int32_t transformed[8];
-    const bool dc_only = movie_decoder_idct::transform_idct_column_values(
-        reinterpret_cast<const int32_t *>(esi_ptr), transformed, constants,
-        reinterpret_cast<int32_t *>(movie_media_idct_storage.butterfly_fp_scratch_words));
-    int32_t *const dst = movie_media_idct_output_pointer();
-    if (dc_only) {
-        for (int row = 0; row != 8; ++row) {
-            dst[row * 9] = transformed[row];
-        }
-    } else {
-        const int store_order[8] = {2, 5, 3, 4, 0, 1, 6, 7};
-        for (int index = 0; index != 8; ++index) {
-            const int row = store_order[index];
-            dst[row * 9] = transformed[row];
-        }
+// Hand-written asm (EA uV decoder module): no prologue, esi/edi register inputs.
+__declspec(naked) void __cdecl sub_5ced1d(int *esi_ptr) {
+    __asm {
+        mov ebx, dword ptr [esi + 0x14]
+        mov eax, dword ptr [esi + 0xc]
+        mov ecx, dword ptr [esi + 4]
+        mov edx, dword ptr [esi + 0x1c]
+        or ecx, ebx
+        or edx, eax
+        mov edi, dword ptr [esi + 8]
+        mov ebp, dword ptr [esi + 0x18]
+        or edx, ecx
+        or edi, ebp
+        mov ecx, dword ptr [esi + 0x10]
+        or edx, edi
+        or edx, ecx
+        je m5ced1d_5cee54
+        mov ecx, dword ptr [esi + 4]
+        mov edx, dword ptr [esi + 0x1c]
+        lea edi, [eax + ebx]
+        sub ebx, eax
+        lea eax, [edx + ecx]
+        sub ecx, edx
+        mov dword ptr [movie_media_idct_storage + 0x8], ebx
+        mov dword ptr [movie_media_idct_storage + 0xc], ecx
+        lea ebp, [edi + eax]
+        sub eax, edi
+        fild dword ptr [movie_media_idct_storage + 0x8]
+        fild dword ptr [movie_media_idct_storage + 0xc]
+        fld st(0)
+        fmul dword ptr [movie_media_idct_storage + 0x20]
+        fxch st(2)
+        fadd st(1), st(0)
+        fmul dword ptr [movie_media_idct_storage + 0x1c]
+        fxch st(1)
+        fmul dword ptr [movie_media_idct_storage + 0x24]
+        imul dword ptr [movie_media_idct_storage + 0x18]
+        fadd st(1), st(0)
+        fsubp st(2), st
+        fadd dword ptr [movie_media_idct_storage + 0x28]
+        fxch st(1)
+        fadd dword ptr [movie_media_idct_storage + 0x28]
+        mov eax, dword ptr [esi + 8]
+        mov ebx, dword ptr [esi + 0x18]
+        shl edx, 1
+        fstp qword ptr [movie_media_idct_storage + 0x10]
+        fstp qword ptr [movie_media_idct_storage + 0x8]
+        mov ecx, dword ptr [movie_media_idct_storage + 0x8]
+        mov edi, dword ptr [movie_media_idct_storage + 0x10]
+        add ecx, edx
+        add edx, edi
+        add edi, ebp
+        mov dword ptr [movie_media_idct_storage + 0xc], ecx
+        mov dword ptr [movie_media_idct_storage + 0x10], edx
+        mov dword ptr [movie_media_idct_storage + 0x14], edi
+        mov ecx, dword ptr [esi]
+        mov edx, dword ptr [esi + 0x10]
+        lea esi, [ebx + eax]
+        sub eax, ebx
+        lea ebx, [edx + ecx]
+        sub ecx, edx
+        imul dword ptr [movie_media_idct_storage + 0x18]
+        shl edx, 1
+        mov edi, dword ptr [movie_media_idct_storage + 0x4]
+        add esi, edx
+        mov ebp, dword ptr [movie_media_idct_storage + 0xc]
+        lea eax, [edx + ecx]
+        sub ecx, edx
+        lea edx, [esi + ebx]
+        sub ebx, esi
+        lea esi, [ecx + ebp]
+        sub ecx, ebp
+        mov ebp, dword ptr [movie_media_idct_storage + 0x8]
+        mov dword ptr [edi + 0x48], esi
+        mov esi, dword ptr [movie_media_idct_storage + 0x10]
+        mov dword ptr [edi + 0xb4], ecx
+        lea ecx, [ebx + ebp]
+        sub ebx, ebp
+        mov ebp, dword ptr [movie_media_idct_storage + 0x14]
+        mov dword ptr [edi + 0x6c], ecx
+        mov dword ptr [edi + 0x90], ebx
+        lea ebx, [esi + eax]
+        sub eax, esi
+        lea ecx, [edx + ebp]
+        sub edx, ebp
+        mov dword ptr [edi], ecx
+        mov dword ptr [edi + 0x24], ebx
+        mov dword ptr [edi + 0xd8], eax
+        mov dword ptr [edi + 0xfc], edx
+        ret
+m5ced1d_5cee54:
+        mov eax, dword ptr [esi]
+        mov edi, dword ptr [movie_media_idct_storage + 0x4]
+        mov dword ptr [edi], eax
+        mov dword ptr [edi + 0x24], eax
+        mov dword ptr [edi + 0x48], eax
+        mov dword ptr [edi + 0x6c], eax
+        mov dword ptr [edi + 0x90], eax
+        mov dword ptr [edi + 0xb4], eax
+        mov dword ptr [edi + 0xd8], eax
+        mov dword ptr [edi + 0xfc], eax
+        ret
     }
 }
 
@@ -1625,21 +1817,46 @@ typedef unsigned char uint8;
 // attempts (26 mnemonics / 0.73 similarity, vs 34-43 / 0.58-0.6 for the
 // splat versions) even though it stores 8 bytes individually rather
 // than 2 dwords.
-extern "C" void __cdecl sub_5d271d(unsigned int *src, unsigned char *dst,
+// Hand-written asm (EA uV decoder module): saves ecx/edx, private register use.
+extern "C" __declspec(naked) void __cdecl sub_5d271d(unsigned int *src, unsigned char *dst,
                                     int count) {
-    do {
-        unsigned int word = *src;
-        ++src;
-        unsigned char b0 = static_cast<unsigned char>(word);
-        unsigned char b1 = static_cast<unsigned char>(word >> 8);
-        dst[0] = b0; dst[1] = b0; dst[2] = b1; dst[3] = b1;
-        word >>= 16;
-        unsigned char b2 = static_cast<unsigned char>(word);
-        unsigned char b3 = static_cast<unsigned char>(word >> 8);
-        dst[4] = b2; dst[5] = b2; dst[6] = b3; dst[7] = b3;
-        dst += 8;
-        count -= 4;
-    } while (count != 0);
+    __asm {
+        push ebx
+        push ecx
+        push edx
+        push esi
+        push edi
+        push ebp
+        mov esi, dword ptr [esp + 0x1c]
+        mov edi, dword ptr [esp + 0x20]
+        mov ecx, dword ptr [esp + 0x24]
+m5d271d_5d272f:
+        mov eax, dword ptr [esi]
+        add esi, 4
+        mov bl, ah
+        mov bh, ah
+        shl ebx, 0x10
+        mov bl, al
+        mov bh, al
+        mov dword ptr [edi], ebx
+        shr eax, 0x10
+        mov bl, ah
+        mov bh, ah
+        shl ebx, 0x10
+        mov bl, al
+        mov bh, al
+        mov dword ptr [edi + 4], ebx
+        add edi, 8
+        sub ecx, 4
+        jne m5d271d_5d272f
+        pop ebp
+        pop edi
+        pop esi
+        pop edx
+        pop ecx
+        pop ebx
+        ret
+    }
 }
 
 // ORIGINAL: 0x005D2D20 sub_5d2d20 0x005D2D20-0x005D2DF2 FILE
@@ -1788,130 +2005,135 @@ extern "C" void __fastcall sub_5d3f50(MediaRuntime *runtime) {
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     (none)
 
-extern "C" int __cdecl sub_5d427c(unsigned short *samples, unsigned char *steps,
+// Hand-written asm (EA uV decoder module): pushad/popad + leave, cld/rep movsb.
+extern "C" __declspec(naked) int __cdecl sub_5d427c(unsigned short *samples, unsigned char *steps,
                                   int a3) {
-  unsigned short *param_3 = samples;
-  unsigned char *param_4 = steps;
-  int param_5 = a3;
-
-  unsigned int uVar4;
-  unsigned int uVar2;
-  int iVar3;
-  signed char cVar5;
-  unsigned char bVar6;
-  unsigned char uVar1;
-  unsigned char *puVar8;
-  unsigned char *puVar9;
-
-  if (param_3 != 0) {
-    unsigned char *puVar7 = (unsigned char *)(param_3 + 1);
-    if (*param_3 & 1) {
-      puVar7 = (unsigned char *)param_3 + 5;
+    __asm {
+        push ebp
+        mov ebp, esp
+        add esp, -4
+        push esi
+        push edi
+        pushad
+        cld
+        mov ecx, dword ptr [ebp + 0x10]
+        mov ebx, dword ptr [ebp + 8]
+        mov edi, dword ptr [ebp + 0xc]
+        mov dword ptr [ebp - 4], 0
+        or ebx, ebx
+        je m5d427c_5d4352
+        mov ax, word ptr [ebx]
+        lea ebx, [ebx + 2]
+        and al, 1
+        je m5d427c_5d42ab
+        lea ebx, [ebx + 3]
+m5d427c_5d42ab:
+        xor eax, eax
+        mov al, byte ptr [ebx]
+        shl eax, 0x10
+        mov ah, byte ptr [ebx + 1]
+        mov al, byte ptr [ebx + 2]
+        lea ebx, [ebx + 3]
+        mov dword ptr [ebp - 4], eax
+        cmp ecx, 0
+        je m5d427c_5d4352
+        xor ecx, ecx
+        jmp m5d427c_5d42ee
+        nop
+m5d427c_5d42cc:
+        and ecx, 3
+        lea esi, [ebx + 2]
+        rep movsb
+        mov ebx, esi
+        mov ch, dl
+        mov cl, dh
+        and edx, 0x1c
+        shr ch, 5
+        shr edx, 2
+        neg ecx
+        lea esi, [ecx + edi - 1]
+        lea ecx, [edx + 3]
+        rep movsb
+m5d427c_5d42ee:
+        mov edx, dword ptr [ebx]
+        or cl, dl
+        jns m5d427c_5d42cc
+m5d427c_5d42f4:
+        add cl, cl
+        js m5d427c_5d4328
+        mov cl, dh
+        shr ecx, 6
+        and ecx, 3
+        lea esi, [ebx + 3]
+        rep movsb
+        mov ebx, esi
+        mov ecx, edx
+        shr ecx, 0x10
+        mov ch, dh
+        and ch, 0x3f
+        neg ecx
+        lea esi, [ecx + edi - 1]
+        and edx, 0x3f
+        lea ecx, [edx + 4]
+        rep movsb
+        mov edx, dword ptr [ebx]
+        or cl, dl
+        jns m5d427c_5d42cc
+        jmp m5d427c_5d42f4
+        nop
+m5d427c_5d4328:
+        add cl, cl
+        jns m5d427c_5d435c
+        cmp dl, 0xfc
+        jae m5d427c_5d4348
+        and edx, 0x1f
+        lea ecx, [edx + 1]
+        lea esi, [ebx + 1]
+        rep movsd
+        mov ebx, esi
+        mov edx, dword ptr [ebx]
+        or cl, dl
+        jns m5d427c_5d42cc
+        jmp m5d427c_5d42f4
+        mov eax, eax
+m5d427c_5d4348:
+        mov ecx, edx
+        and ecx, 3
+        lea esi, [ebx + 1]
+        rep movsb
+m5d427c_5d4352:
+        mov eax, dword ptr [ebp - 4]
+        popad
+        pop edi
+        pop esi
+        leave
+        ret
+        mov eax, eax
+m5d427c_5d435c:
+        mov ecx, edx
+        and ecx, 3
+        lea esi, [ebx + 4]
+        rep movsb
+        mov ebx, esi
+        mov ecx, edx
+        and ecx, 0x10
+        shl ecx, 0xc
+        mov eax, edx
+        shr eax, 8
+        mov cl, ah
+        mov ch, al
+        neg ecx
+        lea esi, [ecx + edi - 1]
+        rol edx, 8
+        shr dh, 2
+        and edx, 0x3ff
+        lea ecx, [edx + 5]
+        rep movsb
+        mov edx, dword ptr [ebx]
+        or cl, dl
+        jns m5d427c_5d42cc
+        jmp m5d427c_5d42f4
     }
-    puVar8 = puVar7 + 3;
-    if (param_5 != 0) {
-      do {
-        uVar4 = *(unsigned int *)puVar8;
-        cVar5 = (signed char)uVar4;
-        while (uVar2 = uVar4 & 0xff, cVar5 < 0) {
-          for (;;) {
-            bVar6 = (unsigned char)(uVar4 >> 8);
-            uVar1 = (unsigned char)(uVar4 >> 0x10);
-            if ((signed char)((signed char)uVar2 * 2) >= 0) {
-              break;
-            }
-            if ((signed char)((signed char)uVar2 << 2) < 0) {
-              if ((unsigned char)uVar4 > 0xfb) {
-                unsigned int n = uVar4 & 3;
-                puVar8 = puVar8 + 1;
-                while (n != 0) {
-                  *param_4 = *puVar8;
-                  param_4 = param_4 + 1;
-                  puVar8 = puVar8 + 1;
-                  n = n - 1;
-                }
-                goto label_5d4352;
-              }
-              puVar8 = puVar8 + 1;
-              for (iVar3 = (int)(uVar4 & 0x1f) + 1; iVar3 != 0; iVar3 = iVar3 - 1) {
-                *(unsigned int *)param_4 = *(unsigned int *)puVar8;
-                puVar8 = puVar8 + 4;
-                param_4 = param_4 + 4;
-              }
-              uVar4 = *(unsigned int *)puVar8;
-              cVar5 = (signed char)uVar4;
-            } else {
-              puVar8 = puVar8 + 4; // Original 0x005D4361: literals follow the four-byte command.
-              for (uVar2 = uVar4 & 3; uVar2 != 0; uVar2 = uVar2 - 1) {
-                *param_4 = *puVar8;
-                puVar8 = puVar8 + 1;
-                param_4 = param_4 + 1;
-              }
-              {
-                unsigned int bit4 = (uVar4 & 0x10) >> 4;
-                unsigned int dist16 = (unsigned int)((bVar6 << 8) | uVar1);
-                unsigned int distance = (bit4 << 0x10) | dist16;
-                puVar9 = (param_4 - 1) - distance;
-              }
-              iVar3 = (int)((((unsigned char)uVar4 >> 2) << 8) |
-                             (unsigned char)(uVar4 >> 0x18)) &
-                          0x3ff;
-              iVar3 = iVar3 + 5;
-              for (; iVar3 != 0; iVar3 = iVar3 - 1) {
-                *param_4 = *puVar9;
-                puVar9 = puVar9 + 1;
-                param_4 = param_4 + 1;
-              }
-              uVar4 = *(unsigned int *)puVar8;
-              cVar5 = (signed char)uVar4;
-            }
-            uVar2 = uVar4 & 0xff;
-            if (cVar5 >= 0) {
-              goto label_5d42cc;
-            }
-          }
-          puVar8 = puVar8 + 3;
-          for (uVar2 = (unsigned int)(bVar6 >> 6); uVar2 != 0; uVar2 = uVar2 - 1) {
-            *param_4 = *puVar8;
-            puVar8 = puVar8 + 1;
-            param_4 = param_4 + 1;
-          }
-          {
-            unsigned int concat16 = (unsigned int)((bVar6 << 8) | uVar1);
-            unsigned int distance = concat16 & 0xffff3fff;
-            puVar9 = (param_4 - 1) - distance;
-          }
-          for (iVar3 = (int)(uVar4 & 0x3f) + 4; iVar3 != 0; iVar3 = iVar3 - 1) {
-            *param_4 = *puVar9;
-            puVar9 = puVar9 + 1;
-            param_4 = param_4 + 1;
-          }
-          uVar4 = *(unsigned int *)puVar8;
-          cVar5 = (signed char)uVar4;
-        }
-      label_5d42cc:
-        puVar8 = puVar8 + 2;
-        for (uVar2 = uVar2 & 3; uVar2 != 0; uVar2 = uVar2 - 1) {
-          *param_4 = *puVar8;
-          puVar8 = puVar8 + 1;
-          param_4 = param_4 + 1;
-        }
-        {
-          unsigned int concat16 =
-              (unsigned int)((((unsigned char)uVar4 >> 5) << 8) |
-                             (unsigned char)(uVar4 >> 8));
-          puVar9 = (param_4 - 1) - concat16;
-        }
-        for (iVar3 = (int)((uVar4 & 0x1c) >> 2) + 3; iVar3 != 0; iVar3 = iVar3 - 1) {
-          *param_4 = *puVar9;
-          puVar9 = puVar9 + 1;
-          param_4 = param_4 + 1;
-        }
-      } while (true);
-    }
-  }
-label_5d4352:
-  return 0;
 }
 
 // ORIGINAL: 0x005D439F sub_5d439f 0x005D439F-0x005D4448 FILE
@@ -1929,61 +2151,84 @@ label_5d4352:
 // The old integer-only prototype was a disassembler guess. Callers pass two
 // buffers and two counts in four dword stack slots, with no ecx receiver;
 // the tail supplies no return value.
-static unsigned int media_rotate_right_32(unsigned int value, unsigned int count) {
-    count &= 0x1fu;
-    return (value >> count) | (value << ((0u - count) & 0x1fu));
-}
-
-extern "C" void __cdecl sub_5d439f(unsigned int *index_words,
+// Hand-written asm (EA uV decoder module): saves ecx/edx, shrd.
+extern "C" __declspec(naked) void __cdecl sub_5d439f(unsigned int *index_words,
                                     const unsigned char *compressed,
                                     int word_count, int bit_width) {
-    unsigned int bitpos;
-    unsigned int mask;
-    unsigned char width;
-    unsigned char shift;
-    unsigned int word;
-
-    bitpos = 0;
-    width = (unsigned char)bit_width;
-    mask = (1u << (width & 0x1f)) - 1u;
-    // The native counter starts at word_count - 4 with 32-bit wrap, then
-    // branches on its signed value. Keep that order even for negative counts
-    // whose subtraction wraps into the nonnegative range.
-    unsigned int remaining_bits = static_cast<unsigned int>(word_count) - 4u;
-    int remaining;
-    memcpy(&remaining, &remaining_bits, sizeof(remaining));
-    while (remaining >= 0) {
-        shift = (unsigned char)bitpos & 7;
-        memcpy(&word, compressed + (bitpos >> 3), sizeof(word));
-        word = media_rotate_right_32(word, shift);
-        *index_words = word & mask;
-        index_words[1] = media_rotate_right_32(word, width) & mask;
-
-        const unsigned int second_bitpos = bitpos +
-                                           static_cast<unsigned int>(bit_width) * 2u;
-        shift = static_cast<unsigned char>(second_bitpos) & 7;
-        memcpy(&word, compressed + (second_bitpos >> 3), sizeof(word));
-        word = media_rotate_right_32(word, shift);
-        index_words[2] = word & mask;
-        index_words[3] = media_rotate_right_32(word, width) & mask;
-
-        index_words += 4;
-        remaining_bits -= 4u;
-        memcpy(&remaining, &remaining_bits, sizeof(remaining));
-        bitpos += static_cast<unsigned int>(bit_width) * 4u;
-    }
-    remaining_bits += 3u;
-    memcpy(&remaining, &remaining_bits, sizeof(remaining));
-    if (remaining >= 0) {
-        do {
-            shift = (unsigned char)bitpos & 7;
-            memcpy(&word, compressed + (bitpos >> 3), sizeof(word));
-            *index_words = media_rotate_right_32(word, shift) & mask;
-            bitpos += static_cast<unsigned int>(bit_width);
-            remaining_bits -= 1u;
-            memcpy(&remaining, &remaining_bits, sizeof(remaining));
-            index_words++;
-        } while (remaining >= 0);
+    __asm {
+        push esi
+        push edi
+        push ebp
+        push ebx
+        push ecx
+        push edx
+        mov ebx, 0
+        mov ecx, dword ptr [esp + 0x28]
+        mov edx, dword ptr [esp + 0x24]
+        mov edi, dword ptr [esp + 0x1c]
+        mov esi, dword ptr [esp + 0x20]
+        push ecx
+        mov eax, 1
+        shl eax, cl
+        sub edx, 4
+        lea ebp, [eax - 1]
+        jl m5d439f_5d441a
+m5d439f_5d43ca:
+        mov eax, ebx
+        mov ecx, ebx
+        shr eax, 3
+        and ecx, 7
+        mov eax, dword ptr [eax + esi]
+        shrd eax, eax, cl
+        mov ecx, eax
+        and ecx, ebp
+        mov dword ptr [edi], ecx
+        mov ecx, dword ptr [esp]
+        shrd eax, eax, cl
+        and eax, ebp
+        mov dword ptr [edi + 4], eax
+        lea eax, [ebx + ecx*2]
+        lea ecx, [ebx + ecx*2]
+        shr eax, 3
+        and ecx, 7
+        mov eax, dword ptr [eax + esi]
+        shrd eax, eax, cl
+        mov ecx, eax
+        and ecx, ebp
+        mov dword ptr [edi + 8], ecx
+        mov ecx, dword ptr [esp]
+        shrd eax, eax, cl
+        and eax, ebp
+        mov dword ptr [edi + 0xc], eax
+        add edi, 0x10
+        sub edx, 4
+        lea ebx, [ebx + ecx*4]
+        jge m5d439f_5d43ca
+m5d439f_5d441a:
+        add edx, 3
+        jl m5d439f_5d443e
+m5d439f_5d441f:
+        mov eax, ebx
+        mov ecx, ebx
+        shr eax, 3
+        and ecx, 7
+        mov eax, dword ptr [eax + esi]
+        shrd eax, eax, cl
+        and eax, ebp
+        mov dword ptr [edi], eax
+        add ebx, dword ptr [esp]
+        sub edx, 1
+        lea edi, [edi + 4]
+        jge m5d439f_5d441f
+m5d439f_5d443e:
+        add esp, 4
+        pop edx
+        pop ecx
+        pop ebx
+        pop ebp
+        pop edi
+        pop esi
+        ret
     }
 }
 
@@ -2000,78 +2245,91 @@ extern "C" void __cdecl sub_5d439f(unsigned int *index_words,
 
 // The unsigned index allocation is consumed as signed native indices; memcpy
 // preserves the original bit patterns and signed comparisons without aligned typed loads.
-extern "C" void __cdecl sub_5d4448(
+// Hand-written asm (EA uV decoder module): pushad/popad + leave.
+extern "C" __declspec(naked) void __cdecl sub_5d4448(
     const unsigned int *index_words, unsigned char *previous_frame,
     unsigned char *current_frame, int run_limit, int *motion_offsets,
     MediaDecodedPixelBlock4x4 *block_scratch, int pitch, int run_count,
     int height_groups)
-{
-    const int saved_count = run_count;
-    const uintptr_t base8 = reinterpret_cast<uintptr_t>(block_scratch) -
-                            (static_cast<uintptr_t>(run_limit) << 4);
-    const uintptr_t base_c = reinterpret_cast<uintptr_t>(previous_frame) -
-                             reinterpret_cast<uintptr_t>(current_frame);
-    const unsigned int stride = static_cast<unsigned int>(pitch);
-    const unsigned int stride3 = stride * 3u;
-    unsigned char *dst = current_frame;
-    int count;
-
-    do {
-        count = saved_count;
-        for (;;) {
-            int idx;
-            memcpy(&idx, index_words, sizeof(idx));
-            index_words += 1;
-            if (idx < run_limit) {
-                do {
-                    const uintptr_t entry = base_c +
-                        reinterpret_cast<uintptr_t>(dst) +
-                        static_cast<intptr_t>(motion_offsets[idx]);
-                    const unsigned char *source =
-                        reinterpret_cast<const unsigned char *>(entry);
-                    unsigned int row_word;
-                    memcpy(&row_word, source, sizeof(row_word));
-                    memcpy(dst, &row_word, sizeof(row_word));
-                    memcpy(&row_word, source + stride, sizeof(row_word));
-                    memcpy(dst + stride, &row_word, sizeof(row_word));
-                    memcpy(&row_word, source + stride * 2u, sizeof(row_word));
-                    memcpy(dst + stride * 2u, &row_word, sizeof(row_word));
-                    memcpy(&row_word, source + stride3, sizeof(row_word));
-                    memcpy(dst + stride3, &row_word, sizeof(row_word));
-                    dst += 4;
-                    count -= 1;
-                    if (count <= 0) goto end_of_run;
-                    memcpy(&idx, index_words, sizeof(idx));
-                    index_words += 1;
-                } while (idx < run_limit);
-            }
-            {
-                const uintptr_t entry2 = base8 +
-                    (static_cast<uintptr_t>(idx) << 4);
-                const MediaDecodedPixelBlock4x4 *block =
-                    reinterpret_cast<const MediaDecodedPixelBlock4x4 *>(entry2);
-                const unsigned char *source_row = block->pixels + 0;
-                unsigned int row_word;
-                memcpy(&row_word, source_row, sizeof(row_word));
-                memcpy(dst, &row_word, sizeof(row_word));
-                source_row = block->pixels + 4;
-                memcpy(&row_word, source_row, sizeof(row_word));
-                memcpy(dst + stride, &row_word, sizeof(row_word));
-                source_row = block->pixels + 8;
-                memcpy(&row_word, source_row, sizeof(row_word));
-                memcpy(dst + stride * 2u, &row_word, sizeof(row_word));
-                source_row = block->pixels + 12;
-                memcpy(&row_word, source_row, sizeof(row_word));
-                memcpy(dst + stride3, &row_word, sizeof(row_word));
-                dst += 4;
-                count -= 1;
-            }
-            if (count <= 0) break;
-        }
-    end_of_run:
-        dst += stride3;
-            height_groups -= 1;
-    } while (height_groups > 0);
+ {
+    __asm {
+        push ebp
+        mov ebp, esp
+        add esp, -0xc
+        push ebx
+        push esi
+        push edi
+        pushad
+        mov eax, dword ptr [ebp + 0x24]
+        mov dword ptr [ebp - 4], eax
+        mov eax, dword ptr [ebp + 0x1c]
+        mov ebx, dword ptr [ebp + 0x14]
+        shl ebx, 4
+        sub eax, ebx
+        mov dword ptr [ebp - 8], eax
+        mov eax, dword ptr [ebp + 0xc]
+        sub eax, dword ptr [ebp + 0x10]
+        mov dword ptr [ebp - 0xc], eax
+        mov edx, dword ptr [ebp + 0x20]
+        lea ecx, [edx + edx*2]
+        mov esi, dword ptr [ebp + 8]
+        mov edi, dword ptr [ebp + 0x10]
+m5d4448_5d447b:
+        mov eax, dword ptr [ebp - 4]
+        mov dword ptr [ebp + 0x24], eax
+        jmp m5d4448_5d4484
+        nop
+m5d4448_5d4484:
+        mov eax, dword ptr [esi]
+        add esi, 4
+        cmp eax, dword ptr [ebp + 0x14]
+        jge m5d4448_5d44c2
+m5d4448_5d448e:
+        mov ebx, dword ptr [ebp + 0x18]
+        mov ebx, dword ptr [ebx + eax*4]
+        add ebx, dword ptr [ebp - 0xc]
+        add ebx, edi
+        mov eax, dword ptr [ebx]
+        mov dword ptr [edi], eax
+        mov eax, dword ptr [edx + ebx]
+        mov dword ptr [edx + edi], eax
+        mov eax, dword ptr [ebx + edx*2]
+        mov dword ptr [edi + edx*2], eax
+        mov eax, dword ptr [ecx + ebx]
+        mov dword ptr [ecx + edi], eax
+        add edi, 4
+        sub dword ptr [ebp + 0x24], 1
+        jle m5d4448_5d44ee
+        mov eax, dword ptr [esi]
+        add esi, 4
+        cmp eax, dword ptr [ebp + 0x14]
+        jl m5d4448_5d448e
+m5d4448_5d44c2:
+        mov ebx, dword ptr [ebp - 8]
+        lea eax, [eax*8]
+        lea ebx, [ebx + eax*2]
+        mov eax, dword ptr [ebx]
+        mov dword ptr [edi], eax
+        mov eax, dword ptr [ebx + 4]
+        mov dword ptr [edx + edi], eax
+        mov eax, dword ptr [ebx + 8]
+        mov dword ptr [edi + edx*2], eax
+        mov eax, dword ptr [ebx + 0xc]
+        mov dword ptr [ecx + edi], eax
+        add edi, 4
+        sub dword ptr [ebp + 0x24], 1
+        jg m5d4448_5d4484
+m5d4448_5d44ee:
+        add edi, ecx
+        sub dword ptr [ebp + 0x28], 1
+        jg m5d4448_5d447b
+        popad
+        pop edi
+        pop esi
+        pop ebx
+        leave
+        ret
+    }
 }
 
 // The 3x3 numerical member bodies are consolidated in src/matrix3.cpp.
@@ -2198,13 +2456,6 @@ MediaAdpcmStorage MediaAdpcmTables = {
 //     three magnitude bits of an IMA nibble. 89 rows of 16 dwords.
 // Preserve the native byte-offset interpretation, including unaligned input
 // offsets, without an unaligned int dereference. This is not a bounds waiver.
-static int media_adpcm_delta(int step_byte_offset, unsigned int nibble) {
-    int delta;
-    memcpy(&delta, reinterpret_cast<const unsigned char *>(MediaAdpcmTables.lookup_and_delta_words + 8) +
-           step_byte_offset + nibble * sizeof(int), sizeof(delta));
-    return delta;
-}
-
 
 // ORIGINAL: 0x005CE640 sub_5ce640 0x005CE640-0x005CE6E3 FILE
 // symbol    ?sub_5ce640@@YAXHPAEPAFHPAH2@Z
@@ -2231,51 +2482,77 @@ static int media_adpcm_delta(int step_byte_offset, unsigned int nibble) {
 // TRIED: byte-exactness is out of reach here - the image's fourth instruction
 // is `pushal` (0x60), which VC6 never emits for any C++ body; this is a
 // handwritten_asm finding, so the ceiling is semantic equivalence.
-void __cdecl sub_5ce640(int first_sample, unsigned char *codes, short *samples,
+// Hand-written asm (EA uV decoder module): pushad/popad + leave.
+__declspec(naked) void __cdecl sub_5ce640(int first_sample, unsigned char *codes, short *samples,
                         int sample_total, int *predictor, int *step_index) {
-    int count;
-    unsigned char *src;
-    short *dst;
-    int step;
-    int predicted;
-    unsigned char nibble;
-
-    count = 0;
-    count += first_sample;
-    sample_total += first_sample;
-    step = *step_index;
-    predicted = (short)*predictor;
-    src = codes;
-    dst = samples;
-
-    do {
-        nibble = *src;
-        if ((count & 1) == 0) {
-            nibble >>= 4;
-        } else {
-            nibble &= 0xF;
-            src++;
-        }
-        predicted += media_adpcm_delta(step, nibble);
-        if (predicted > 0x7FFF) {
-            predicted = 0x7FFF;
-        } else if (predicted < (int)0xFFFF8000) {
-            predicted = (int)0xFFFF8000;
-        }
-        *dst = (short)predicted;
-        dst++;
-        count++;
-        nibble &= 7;
-        step += MediaAdpcmTables.index_adjust[nibble];
-        if (step > 0x1600) {
-            step = 0x1600;
-        } else if (step < 0) {
-            step = 0;
-        }
-    } while (count < sample_total);
-
-    *predictor = predicted;
-    *step_index = step;
+    __asm {
+        push ebp
+        mov ebp, esp
+        pushad
+        xor ecx, ecx
+        add ecx, dword ptr [ebp + 8]
+        mov eax, dword ptr [ebp + 8]
+        add dword ptr [ebp + 0x14], eax
+        mov eax, dword ptr [ebp + 0x1c]
+        mov eax, dword ptr [eax]
+        mov edx, dword ptr [ebp + 0x18]
+        mov edx, dword ptr [edx]
+        movsx edx, dx
+        mov esi, dword ptr [ebp + 0xc]
+        mov edi, dword ptr [ebp + 0x10]
+        xor ebx, ebx
+m5ce640_5ce664:
+        mov bl, byte ptr [esi]
+        test ecx, 1
+        jne m5ce640_5ce673
+        shr bl, 4
+        jmp m5ce640_5ce677
+m5ce640_5ce673:
+        and bl, 0xf
+        inc esi
+m5ce640_5ce677:
+        add edx, dword ptr [eax + ebx*4 + MediaAdpcmTables + 0x20]
+        cmp edx, 0x7fff
+        jg m5ce640_5ce6d5
+        cmp edx, 0xffff8000
+        jl m5ce640_5ce6dc
+m5ce640_5ce68e:
+        mov word ptr [edi], dx
+        add edi, 2
+        inc ecx
+        and bl, 7
+        add eax, dword ptr [ebx*4 + MediaAdpcmTables + 0x1660]
+        cmp eax, 0x1600
+        jg m5ce640_5ce6bd
+        cmp eax, 0
+        jl m5ce640_5ce6c9
+        cmp ecx, dword ptr [ebp + 0x14]
+        jl m5ce640_5ce664
+m5ce640_5ce6b0:
+        mov ecx, dword ptr [ebp + 0x18]
+        mov dword ptr [ecx], edx
+        mov ecx, dword ptr [ebp + 0x1c]
+        mov dword ptr [ecx], eax
+        popad
+        leave
+        ret
+m5ce640_5ce6bd:
+        mov eax, 0x1600
+        cmp ecx, dword ptr [ebp + 0x14]
+        jl m5ce640_5ce664
+        jmp m5ce640_5ce6b0
+m5ce640_5ce6c9:
+        mov eax, 0
+        cmp ecx, dword ptr [ebp + 0x14]
+        jl m5ce640_5ce664
+        jmp m5ce640_5ce6b0
+m5ce640_5ce6d5:
+        mov edx, 0x7fff
+        jmp m5ce640_5ce68e
+m5ce640_5ce6dc:
+        mov edx, 0xffff8000
+        jmp m5ce640_5ce68e
+    }
 }
 
 // THE MOVIE CODEC'S RUNTIME-FILLED LOOKUP TABLES. All four are zero in the
@@ -2400,17 +2677,148 @@ int __fastcall sub_5d3df0(MediaRuntime *runtime, unsigned char *frame_base) {
 // calls     (none)
 
 
-int __cdecl sub_5ceb12(const unsigned char *srcA, const unsigned char *srcB, unsigned int *dst) {
-    for (int i = 0; i < 8; ++i) {
-        int aIdx1 = 2 + i * 8;
-        int aIdx2 = aIdx1 + 4;
-        int bIdx1 = 2 + i * 4;
-        int bIdx2 = bIdx1 + 0x100;
-        unsigned int hi = (static_cast<unsigned int>(MovieByteRemapLut[srcA[aIdx1]]) << 8) | MovieByteRemapLut[srcA[aIdx2]];
-        unsigned int lo = (static_cast<unsigned int>(MovieByteRemapLut[srcB[bIdx1]]) << 8) | MovieByteRemapLut[srcB[bIdx2]];
-        dst[i] = (hi << 0x10) | lo;
+// Hand-written asm (EA uV decoder module): no prologue, esi/edi/ebp register inputs.
+__declspec(naked) int __cdecl sub_5ceb12(const unsigned char *srcA, const unsigned char *srcB, unsigned int *dst) {
+    __asm {
+        xor ebx, ebx
+        xor eax, eax
+        mov al, byte ptr [esi + 2]
+        mov bl, byte ptr [edi + 2]
+        mov cl, byte ptr [esi + 6]
+        mov dl, byte ptr [edi + 0x102]
+        mov al, byte ptr [eax + movie_media_conversion_tables + 0x70c]
+        mov bl, byte ptr [ebx + movie_media_conversion_tables + 0x70c]
+        shl eax, 8
+        mov cl, byte ptr [ecx + movie_media_conversion_tables + 0x70c]
+        shl ebx, 8
+        mov dl, byte ptr [edx + movie_media_conversion_tables + 0x70c]
+        or eax, ecx
+        or ebx, edx
+        shl eax, 0x10
+        or eax, ebx
+        xor ebx, ebx
+        mov dword ptr [ebp], eax
+        xor eax, eax
+        mov al, byte ptr [esi + 0xa]
+        mov bl, byte ptr [edi + 6]
+        mov cl, byte ptr [esi + 0xe]
+        mov dl, byte ptr [edi + 0x106]
+        mov al, byte ptr [eax + movie_media_conversion_tables + 0x70c]
+        mov bl, byte ptr [ebx + movie_media_conversion_tables + 0x70c]
+        shl eax, 8
+        mov cl, byte ptr [ecx + movie_media_conversion_tables + 0x70c]
+        shl ebx, 8
+        mov dl, byte ptr [edx + movie_media_conversion_tables + 0x70c]
+        or eax, ecx
+        or ebx, edx
+        shl eax, 0x10
+        or eax, ebx
+        xor ebx, ebx
+        mov dword ptr [ebp + 4], eax
+        xor eax, eax
+        mov al, byte ptr [esi + 0x12]
+        mov bl, byte ptr [edi + 0xa]
+        mov cl, byte ptr [esi + 0x16]
+        mov dl, byte ptr [edi + 0x10a]
+        mov al, byte ptr [eax + movie_media_conversion_tables + 0x70c]
+        mov bl, byte ptr [ebx + movie_media_conversion_tables + 0x70c]
+        shl eax, 8
+        mov cl, byte ptr [ecx + movie_media_conversion_tables + 0x70c]
+        shl ebx, 8
+        mov dl, byte ptr [edx + movie_media_conversion_tables + 0x70c]
+        or eax, ecx
+        or ebx, edx
+        shl eax, 0x10
+        or eax, ebx
+        xor ebx, ebx
+        mov dword ptr [ebp + 8], eax
+        xor eax, eax
+        mov al, byte ptr [esi + 0x1a]
+        mov bl, byte ptr [edi + 0xe]
+        mov cl, byte ptr [esi + 0x1e]
+        mov dl, byte ptr [edi + 0x10e]
+        mov al, byte ptr [eax + movie_media_conversion_tables + 0x70c]
+        mov bl, byte ptr [ebx + movie_media_conversion_tables + 0x70c]
+        shl eax, 8
+        mov cl, byte ptr [ecx + movie_media_conversion_tables + 0x70c]
+        shl ebx, 8
+        mov dl, byte ptr [edx + movie_media_conversion_tables + 0x70c]
+        or eax, ecx
+        or ebx, edx
+        shl eax, 0x10
+        or eax, ebx
+        xor ebx, ebx
+        mov dword ptr [ebp + 0xc], eax
+        xor eax, eax
+        mov al, byte ptr [esi + 0x22]
+        mov bl, byte ptr [edi + 0x12]
+        mov cl, byte ptr [esi + 0x26]
+        mov dl, byte ptr [edi + 0x112]
+        mov al, byte ptr [eax + movie_media_conversion_tables + 0x70c]
+        mov bl, byte ptr [ebx + movie_media_conversion_tables + 0x70c]
+        shl eax, 8
+        mov cl, byte ptr [ecx + movie_media_conversion_tables + 0x70c]
+        shl ebx, 8
+        mov dl, byte ptr [edx + movie_media_conversion_tables + 0x70c]
+        or eax, ecx
+        or ebx, edx
+        shl eax, 0x10
+        or eax, ebx
+        xor ebx, ebx
+        mov dword ptr [ebp + 0x10], eax
+        xor eax, eax
+        mov al, byte ptr [esi + 0x2a]
+        mov bl, byte ptr [edi + 0x16]
+        mov cl, byte ptr [esi + 0x2e]
+        mov dl, byte ptr [edi + 0x116]
+        mov al, byte ptr [eax + movie_media_conversion_tables + 0x70c]
+        mov bl, byte ptr [ebx + movie_media_conversion_tables + 0x70c]
+        shl eax, 8
+        mov cl, byte ptr [ecx + movie_media_conversion_tables + 0x70c]
+        shl ebx, 8
+        mov dl, byte ptr [edx + movie_media_conversion_tables + 0x70c]
+        or eax, ecx
+        or ebx, edx
+        shl eax, 0x10
+        or eax, ebx
+        xor ebx, ebx
+        mov dword ptr [ebp + 0x14], eax
+        xor eax, eax
+        mov al, byte ptr [esi + 0x32]
+        mov bl, byte ptr [edi + 0x1a]
+        mov cl, byte ptr [esi + 0x36]
+        mov dl, byte ptr [edi + 0x11a]
+        mov al, byte ptr [eax + movie_media_conversion_tables + 0x70c]
+        mov bl, byte ptr [ebx + movie_media_conversion_tables + 0x70c]
+        shl eax, 8
+        mov cl, byte ptr [ecx + movie_media_conversion_tables + 0x70c]
+        shl ebx, 8
+        mov dl, byte ptr [edx + movie_media_conversion_tables + 0x70c]
+        or eax, ecx
+        or ebx, edx
+        shl eax, 0x10
+        or eax, ebx
+        xor ebx, ebx
+        mov dword ptr [ebp + 0x18], eax
+        xor eax, eax
+        mov al, byte ptr [esi + 0x3a]
+        mov bl, byte ptr [edi + 0x1e]
+        mov cl, byte ptr [esi + 0x3e]
+        mov dl, byte ptr [edi + 0x11e]
+        mov al, byte ptr [eax + movie_media_conversion_tables + 0x70c]
+        mov bl, byte ptr [ebx + movie_media_conversion_tables + 0x70c]
+        shl eax, 8
+        mov cl, byte ptr [ecx + movie_media_conversion_tables + 0x70c]
+        shl ebx, 8
+        mov dl, byte ptr [edx + movie_media_conversion_tables + 0x70c]
+        or eax, ecx
+        or ebx, edx
+        shl eax, 0x10
+        or eax, ebx
+        xor ebx, ebx
+        mov dword ptr [ebp + 0x1c], eax
+        ret
     }
-    return 0;
 }
 
 // Volatile accesses preserve the pinned order on unchecked indices. On the
@@ -2511,17 +2919,75 @@ void __cdecl sub_5d2037(int *data_row, int *selector_pair,
 
 // The observed row-pack callers use a void callback and ignore any result;
 // the original source-level prototype remains unproven.
-void __cdecl sub_5d2761(unsigned int *src, unsigned int *dst, int count) {
-    do {
-        unsigned int w = *src;
-        unsigned int sum1 = MovieColourTableByte1[(w & 0xff00) >> 8] + MovieColourTableByte3[w >> 24] + MovieColourTableByte0[w & 0xff];
-        unsigned int sum2 = MovieColourTableByte3[((unsigned char *)src)[2]] + MovieColourTableByte0[w & 0xff] + MovieColourTableByte1[(w & 0xff00) >> 8];
-        count = count - 1;
-        *dst = ((MovieBlendTableHi[sum2 >> 0x17] + MovieBlendTableLow[sum2 & 0x1ff] + MovieBlendTableMid[(sum2 & 0xff800) >> 0xb]) & 0xffff0000)
-             | ((MovieBlendTableHi[sum1 >> 0x17] + MovieBlendTableMid[(sum1 & 0xff800) >> 0xb] + MovieBlendTableLow[sum1 & 0x1ff]) & 0xffff);
-        dst++;
-        src++;
-    } while (count != 0);
+// Hand-written asm (EA uV decoder module): saves ecx/edx, private register use.
+__declspec(naked) void __cdecl sub_5d2761(unsigned int *src, unsigned int *dst, int count) {
+    __asm {
+        push ebx
+        push ecx
+        push edx
+        push esi
+        push edi
+        push ebp
+        mov esi, dword ptr [esp + 0x1c]
+        mov edx, dword ptr [esp + 0x20]
+m5d2761_5d276f:
+        mov eax, dword ptr [esi]
+        xor ebx, ebx
+        mov bl, al
+        mov edi, eax
+        shr edi, 0x18
+        and eax, 0xff00
+        shr eax, 8
+        mov ebp, dword ptr [ebx*4 + movie_media_conversion_tables + 0x270c]
+        mov edi, dword ptr [edi*4 + movie_media_conversion_tables + 0x170c]
+        add esi, 4
+        mov eax, dword ptr [eax*4 + movie_media_conversion_tables + 0x1f0c]
+        add edi, ebp
+        add ebp, eax
+        add eax, edi
+        mov ecx, eax
+        mov edi, eax
+        shr eax, 0x17
+        and ecx, 0xff800
+        shr ecx, 0xb
+        and edi, 0x1ff
+        mov eax, dword ptr [eax*4 + movie_media_conversion_tables + 0x2f0c]
+        mov bl, byte ptr [esi - 2]
+        mov ecx, dword ptr [ecx*4 + movie_media_conversion_tables + 0x33d4]
+        mov edi, dword ptr [edi*4 + movie_media_conversion_tables + 0x37ec]
+        add eax, ecx
+        mov ebx, dword ptr [ebx*4 + movie_media_conversion_tables + 0x170c]
+        add eax, edi
+        add ebx, ebp
+        mov ebp, eax
+        mov eax, ebx
+        mov edi, ebx
+        and ebx, 0xff800
+        shr eax, 0x17
+        and edi, 0x1ff
+        shr ebx, 0xb
+        mov ecx, dword ptr [esp + 0x24]
+        mov eax, dword ptr [eax*4 + movie_media_conversion_tables + 0x2f0c]
+        mov edi, dword ptr [edi*4 + movie_media_conversion_tables + 0x37ec]
+        mov ebx, dword ptr [ebx*4 + movie_media_conversion_tables + 0x33d4]
+        add eax, edi
+        add eax, ebx
+        and ebp, 0xffff
+        and eax, 0xffff0000
+        or eax, ebp
+        dec ecx
+        mov dword ptr [edx], eax
+        lea edx, [edx + 4]
+        mov dword ptr [esp + 0x24], ecx
+        jne m5d2761_5d276f
+        pop ebp
+        pop edi
+        pop esi
+        pop edx
+        pop ecx
+        pop ebx
+        ret
+    }
 }
 
 // Fixed-slot bindings carried from 005d2834.cpp
@@ -2538,27 +3004,74 @@ void __cdecl sub_5d2761(unsigned int *src, unsigned int *dst, int count) {
 // calls     (none)
 
 
-int __cdecl sub_5d2834(unsigned int *param_1, int *param_2, int param_3) {
-    unsigned int uVar1;
-    unsigned int uVar2;
-
-    do {
-        uVar2 = *param_1;
-        uVar1 = MovieColourTableByte1[(uVar2 & 0xff00) >> 8] +
-                MovieColourTableByte3[uVar2 >> 0x18] +
-                MovieColourTableByte0[uVar2 & 0xff];
-        uVar2 = MovieColourTableByte3[*(unsigned char *)((int)param_1 + 2)] +
-                MovieColourTableByte0[uVar2 & 0xff] +
-                MovieColourTableByte1[(uVar2 & 0xff00) >> 8];
-        *param_2 = MovieBlendTableHi[uVar1 >> 0x17] + MovieBlendTableMid[(uVar1 & 0xff800) >> 0xb] +
-                   MovieBlendTableLow[uVar1 & 0x1ff];
-        param_3 = param_3 + -1;
-        param_2[1] = MovieBlendTableHi[uVar2 >> 0x17] + MovieBlendTableLow[uVar2 & 0x1ff] +
-                     MovieBlendTableMid[(uVar2 & 0xff800) >> 0xb];
-        param_2 = param_2 + 2;
-        param_1 = param_1 + 1;
-    } while (param_3 != 0);
-    return 0;
+// Hand-written asm (EA uV decoder module): saves ecx/edx, private register use.
+__declspec(naked) int __cdecl sub_5d2834(unsigned int *param_1, int *param_2, int param_3) {
+    __asm {
+        push ebx
+        push ecx
+        push edx
+        push esi
+        push edi
+        push ebp
+        mov eax, dword ptr [esp + 0x1c]
+        mov edx, dword ptr [esp + 0x20]
+        mov ebx, dword ptr [esp + 0x24]
+        mov esi, eax
+m5d2834_5d2848:
+        mov eax, dword ptr [esi]
+        xor ebx, ebx
+        mov bl, al
+        mov edi, eax
+        shr edi, 0x18
+        and eax, 0xff00
+        shr eax, 8
+        mov ebp, dword ptr [ebx*4 + movie_media_conversion_tables + 0x270c]
+        mov edi, dword ptr [edi*4 + movie_media_conversion_tables + 0x170c]
+        add esi, 4
+        mov eax, dword ptr [eax*4 + movie_media_conversion_tables + 0x1f0c]
+        add edi, ebp
+        add ebp, eax
+        add eax, edi
+        mov ecx, eax
+        mov edi, eax
+        shr eax, 0x17
+        and ecx, 0xff800
+        shr ecx, 0xb
+        and edi, 0x1ff
+        mov eax, dword ptr [eax*4 + movie_media_conversion_tables + 0x2f0c]
+        mov bl, byte ptr [esi - 2]
+        mov ecx, dword ptr [ecx*4 + movie_media_conversion_tables + 0x33d4]
+        mov edi, dword ptr [edi*4 + movie_media_conversion_tables + 0x37ec]
+        add eax, ecx
+        mov ebx, dword ptr [ebx*4 + movie_media_conversion_tables + 0x170c]
+        add eax, edi
+        add ebx, ebp
+        mov dword ptr [edx], eax
+        mov eax, ebx
+        mov edi, ebx
+        and ebx, 0xff800
+        shr eax, 0x17
+        and edi, 0x1ff
+        shr ebx, 0xb
+        mov ecx, dword ptr [esp + 0x24]
+        mov eax, dword ptr [eax*4 + movie_media_conversion_tables + 0x2f0c]
+        mov edi, dword ptr [edi*4 + movie_media_conversion_tables + 0x37ec]
+        mov ebx, dword ptr [ebx*4 + movie_media_conversion_tables + 0x33d4]
+        add eax, edi
+        add eax, ebx
+        dec ecx
+        mov dword ptr [edx + 4], eax
+        lea edx, [edx + 8]
+        mov dword ptr [esp + 0x24], ecx
+        jne m5d2834_5d2848
+        pop ebp
+        pop edi
+        pop esi
+        pop edx
+        pop ecx
+        pop ebx
+        ret
+    }
 }
 
 // ORIGINAL: 0x005D2901 sub_5d2901 0x005D2901-0x005D29E1 FILE
@@ -2574,35 +3087,80 @@ int __cdecl sub_5d2834(unsigned int *param_1, int *param_2, int param_3) {
 // calls     (none)
 
 
-int __cdecl sub_5d2901(int *param_1, int *param_2, int *param_3, int param_4) {
-    unsigned int uVar3;
-    unsigned int uVar4;
-    unsigned int uVar5;
-
-    do {
-        int iVar1 = *param_1;
-        int iVar2 = *param_2;
-        param_1 = param_1 + 1;
-        // Original ADD wraps at 32 bits before logical SHR, including overflow.
-        uVar3 = (static_cast<unsigned int>(iVar1) +
-                 static_cast<unsigned int>(iVar2)) >> 1;
-        param_2 = param_2 + 1;
-        uVar4 = uVar3 & 0x7f7f7f7f;
-
-        uVar5 = MovieColourTableByte0[uVar4 & 0xff] + MovieColourTableByte1[(uVar4 >> 8) & 0xff] +
-                MovieColourTableByte3[uVar4 >> 0x18];
-        uVar3 = MovieColourTableByte0[uVar4 & 0xff] + MovieColourTableByte1[(uVar4 >> 8) & 0xff] +
-                MovieColourTableByte3[(uVar4 >> 0x10) & 0xff];
-
-        *param_3 = MovieBlendTableLow[uVar5 & 0x1ff] + MovieBlendTableHi[uVar5 >> 0x17] +
-                   MovieBlendTableMid[(uVar5 >> 0xb) & 0x1ff];
-        param_4 = param_4 - 1;
-        param_3[1] = MovieBlendTableMid[(uVar3 >> 0xb) & 0x1ff] +
-                     MovieBlendTableHi[uVar3 >> 0x17] + MovieBlendTableLow[uVar3 & 0x1ff];
-        param_3 = param_3 + 2;
-    } while (param_4 != 0);
-
-    return 0;
+// Hand-written asm (EA uV decoder module): saves ecx/edx, private register use.
+__declspec(naked) int __cdecl sub_5d2901(int *param_1, int *param_2, int *param_3, int param_4) {
+    __asm {
+        push ebx
+        push ecx
+        push edx
+        push esi
+        push edi
+        push ebp
+        mov esi, dword ptr [esp + 0x1c]
+        mov edi, dword ptr [esp + 0x20]
+        mov ebx, dword ptr [esp + 0x24]
+m5d2901_5d2913:
+        mov eax, dword ptr [esi]
+        mov edx, dword ptr [edi]
+        add eax, edx
+        add esi, 4
+        shr eax, 1
+        add edi, 4
+        and eax, 0x7f7f7f7f
+        xor edx, edx
+        mov ecx, eax
+        mov ebp, eax
+        shr ecx, 8
+        mov dl, al
+        shr ebp, 0x10
+        and ecx, 0xff
+        shr eax, 0x18
+        mov edx, dword ptr [edx*4 + movie_media_conversion_tables + 0x270c]
+        and ebp, 0xff
+        mov ecx, dword ptr [ecx*4 + movie_media_conversion_tables + 0x1f0c]
+        add edx, ecx
+        mov eax, dword ptr [eax*4 + movie_media_conversion_tables + 0x170c]
+        add eax, edx
+        mov ebp, dword ptr [ebp*4 + movie_media_conversion_tables + 0x170c]
+        add ebp, edx
+        mov edx, eax
+        shr edx, 0x17
+        mov ecx, eax
+        shr ecx, 0xb
+        and eax, 0x1ff
+        mov edx, dword ptr [edx*4 + movie_media_conversion_tables + 0x2f0c]
+        and ecx, 0x1ff
+        mov eax, dword ptr [eax*4 + movie_media_conversion_tables + 0x37ec]
+        add ebx, 8
+        mov ecx, dword ptr [ecx*4 + movie_media_conversion_tables + 0x33d4]
+        add eax, edx
+        add eax, ecx
+        mov edx, ebp
+        shr edx, 0x17
+        mov dword ptr [ebx - 8], eax
+        mov eax, ebp
+        and ebp, 0x1ff
+        shr eax, 0xb
+        mov edx, dword ptr [edx*4 + movie_media_conversion_tables + 0x2f0c]
+        and eax, 0x1ff
+        mov ebp, dword ptr [ebp*4 + movie_media_conversion_tables + 0x37ec]
+        add edx, ebp
+        mov ecx, dword ptr [esp + 0x28]
+        mov eax, dword ptr [eax*4 + movie_media_conversion_tables + 0x33d4]
+        add eax, edx
+        dec ecx
+        nop
+        mov dword ptr [esp + 0x28], ecx
+        mov dword ptr [ebx - 4], eax
+        jne m5d2901_5d2913
+        pop ebp
+        pop edi
+        pop esi
+        pop edx
+        pop ecx
+        pop ebx
+        ret
+    }
 }
 
 
@@ -3026,58 +3584,115 @@ void __cdecl sub_5d2536(DWORD *coefficient_row, DWORD *selector_pair,
 // calls     (none)
 
 
-void __cdecl sub_5ce6e3(unsigned char *codes, short *samples, int sample_total, int *predictor_pair, int *step_index_pair) {
-    int iVar2 = 0;
-    MediaAdpcmTables.step_index_left = (int)(short)*step_index_pair;
-    MediaAdpcmTables.step_index_right = (int)(short)(*reinterpret_cast<unsigned int *>(step_index_pair) >> 16);
-    MediaAdpcmTables.predictor_left = (int)(short)*predictor_pair;
-    MediaAdpcmTables.predictor_right = (int)(short)(*reinterpret_cast<unsigned int *>(predictor_pair) >> 16);
-    do {
-        unsigned char bVar1 = *codes;
-        MediaAdpcmTables.predictor_left += media_adpcm_delta(MediaAdpcmTables.step_index_left, bVar1 >> 4);
-        if (MediaAdpcmTables.predictor_left < 0x8000) {
-            if (MediaAdpcmTables.predictor_left < -0x8000) {
-                MediaAdpcmTables.predictor_left = -0x8000;
-            }
-        } else {
-            MediaAdpcmTables.predictor_left = 0x7fff;
-        }
-        *reinterpret_cast<short *>(reinterpret_cast<char *>(samples) + iVar2 * 4) =
-            static_cast<short>(MediaAdpcmTables.predictor_left);
-        MediaAdpcmTables.step_index_left += MediaAdpcmTables.index_adjust[(bVar1 >> 4) & 7];
-        if (MediaAdpcmTables.step_index_left < 0x1601) {
-            if (MediaAdpcmTables.step_index_left < 0) {
-                MediaAdpcmTables.step_index_left = 0;
-            }
-        } else {
-            MediaAdpcmTables.step_index_left = 0x1600;
-        }
-        bVar1 = *codes;
-        MediaAdpcmTables.predictor_right += media_adpcm_delta(MediaAdpcmTables.step_index_right, bVar1 & 0x0f);
-        if (MediaAdpcmTables.predictor_right < 0x8000) {
-            if (MediaAdpcmTables.predictor_right < -0x8000) {
-                MediaAdpcmTables.predictor_right = -0x8000;
-            }
-        } else {
-            MediaAdpcmTables.predictor_right = 0x7fff;
-        }
-        *reinterpret_cast<short *>(reinterpret_cast<char *>(samples) + 2 + iVar2 * 4) =
-            static_cast<short>(MediaAdpcmTables.predictor_right);
-        MediaAdpcmTables.step_index_right += MediaAdpcmTables.index_adjust[bVar1 & 0x07];
-        if (MediaAdpcmTables.step_index_right < 0x1601) {
-            if (MediaAdpcmTables.step_index_right < 0) {
-                MediaAdpcmTables.step_index_right = 0;
-            }
-        } else {
-            MediaAdpcmTables.step_index_right = 0x1600;
-        }
-        iVar2 = iVar2 + 1;
-        codes = codes + 1;
-    } while (iVar2 < sample_total);
-    *predictor_pair = ((MediaAdpcmTables.predictor_right & 0xffff) << 16) |
-                      (MediaAdpcmTables.predictor_left & 0xffff);
-    *step_index_pair = ((MediaAdpcmTables.step_index_right & 0xffff) << 16) |
-                       (MediaAdpcmTables.step_index_left & 0xffff);
+// Hand-written asm (EA uV decoder module): pushad/popad + leave.
+__declspec(naked) void __cdecl sub_5ce6e3(unsigned char *codes, short *samples, int sample_total, int *predictor_pair, int *step_index_pair) {
+    __asm {
+        push ebp
+        mov ebp, esp
+        pushad
+        xor ecx, ecx
+        mov edx, dword ptr [ebp + 0x18]
+        mov edx, dword ptr [edx]
+        movsx eax, dx
+        mov dword ptr [MediaAdpcmTables + 0x1688], eax
+        shr edx, 0x10
+        movsx eax, dx
+        mov dword ptr [MediaAdpcmTables + 0x168c], eax
+        mov edx, dword ptr [ebp + 0x14]
+        mov edx, dword ptr [edx]
+        movsx eax, dx
+        mov dword ptr [MediaAdpcmTables + 0x1680], eax
+        shr edx, 0x10
+        movsx eax, dx
+        mov dword ptr [MediaAdpcmTables + 0x1684], eax
+        mov esi, dword ptr [ebp + 8]
+        mov edi, dword ptr [ebp + 0xc]
+        xor ebx, ebx
+m5ce6e3_5ce721:
+        mov bl, byte ptr [esi]
+        shr bl, 4
+        mov eax, dword ptr [MediaAdpcmTables + 0x1688]
+        mov edx, dword ptr [MediaAdpcmTables + 0x1680]
+        add edx, dword ptr [eax + ebx*4 + MediaAdpcmTables + 0x20]
+        cmp edx, 0x7fff
+        jg m5ce6e3_5ce824
+        cmp edx, 0xffff8000
+        jl m5ce6e3_5ce82e
+m5ce6e3_5ce750:
+        mov word ptr [edi + ecx*4], dx
+        mov dword ptr [MediaAdpcmTables + 0x1680], edx
+        and bl, 7
+        add eax, dword ptr [ebx*4 + MediaAdpcmTables + 0x1660]
+        cmp eax, 0x1600
+        jg m5ce6e3_5ce810
+        cmp eax, 0
+        jl m5ce6e3_5ce81a
+m5ce6e3_5ce778:
+        mov dword ptr [MediaAdpcmTables + 0x1688], eax
+        mov bl, byte ptr [esi]
+        and bl, 0xf
+        mov eax, dword ptr [MediaAdpcmTables + 0x168c]
+        mov edx, dword ptr [MediaAdpcmTables + 0x1684]
+        add edx, dword ptr [eax + ebx*4 + MediaAdpcmTables + 0x20]
+        cmp edx, 0x7fff
+        jg m5ce6e3_5ce846
+        cmp edx, 0xffff8000
+        jl m5ce6e3_5ce850
+m5ce6e3_5ce7ac:
+        mov word ptr [edi + ecx*4 + 2], dx
+        mov dword ptr [MediaAdpcmTables + 0x1684], edx
+        and bl, 7
+        add eax, dword ptr [ebx*4 + MediaAdpcmTables + 0x1660]
+        cmp eax, 0x1600
+        jg m5ce6e3_5ce838
+        cmp eax, 0
+        jl m5ce6e3_5ce83f
+m5ce6e3_5ce7cd:
+        mov dword ptr [MediaAdpcmTables + 0x168c], eax
+        add ecx, 1
+        inc esi
+        cmp ecx, dword ptr [ebp + 0x10]
+        jl m5ce6e3_5ce721
+        mov edx, dword ptr [MediaAdpcmTables + 0x1684]
+        shl edx, 0x10
+        mov ecx, dword ptr [MediaAdpcmTables + 0x1680]
+        mov dx, cx
+        mov ecx, dword ptr [ebp + 0x14]
+        mov dword ptr [ecx], edx
+        mov edx, dword ptr [MediaAdpcmTables + 0x168c]
+        shl edx, 0x10
+        mov ecx, dword ptr [MediaAdpcmTables + 0x1688]
+        mov dx, cx
+        mov ecx, dword ptr [ebp + 0x18]
+        mov dword ptr [ecx], edx
+        popad
+        leave
+        ret
+m5ce6e3_5ce810:
+        mov eax, 0x1600
+        jmp m5ce6e3_5ce778
+m5ce6e3_5ce81a:
+        mov eax, 0
+        jmp m5ce6e3_5ce778
+m5ce6e3_5ce824:
+        mov edx, 0x7fff
+        jmp m5ce6e3_5ce750
+m5ce6e3_5ce82e:
+        mov edx, 0xffff8000
+        jmp m5ce6e3_5ce750
+m5ce6e3_5ce838:
+        mov eax, 0x1600
+        jmp m5ce6e3_5ce7cd
+m5ce6e3_5ce83f:
+        mov eax, 0
+        jmp m5ce6e3_5ce7cd
+m5ce6e3_5ce846:
+        mov edx, 0x7fff
+        jmp m5ce6e3_5ce7ac
+m5ce6e3_5ce850:
+        mov edx, 0xffff8000
+        jmp m5ce6e3_5ce7ac
+    }
 }
 
 

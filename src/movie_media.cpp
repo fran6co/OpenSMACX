@@ -83,7 +83,23 @@ extern "C" void __cdecl sub_5cdfa0(void *runtime);
 // 128-DWORD color banks. The remap table follows those banks exactly.
 // RECOVERY_OBJECT: v2 0x009C5820 0x009C9594 ?movie_media_conversion_tables@@3UMediaConversionTableStorage@@A 0x005CC940
 MediaConversionTableStorage movie_media_conversion_tables;
-static int media_rounded_high_word(int value, int multiplier);
+
+// Hand-written 16.16 fixed multiply with carry rounding (imul; shl/shr; adc),
+// inlined from an asm helper that returns EAX.
+#pragma warning(disable : 4035)
+inline int media_fixed_mul(int factor, int value) {
+  __asm {
+    push edx
+    mov edx, factor
+    mov eax, value
+    imul edx
+    shl edx, 16
+    shr eax, 16
+    adc eax, edx
+    pop edx
+  }
+}
+#pragma warning(default : 4035)
 
 // Minimum source table read by native builders 5CC940 and 5CD2D0. Their
 // indexed accesses cover 64 DWORDs at 0x691F4C..0x69204B; this does not claim
@@ -191,47 +207,32 @@ combine_components:
 // symbol    @sub_5cc150@28
 // kind      game
 // TRIED: catalogue head is stdcall(a1..a5) but the body reads ecx/edx directly as real values at entry (mov ebx,edx; mov edi,ecx) - PROPOSAL: __fastcall(ecxArg, edxArg, a1..a5); ret 0x14 cleans exactly the 5 stack ints, consistent with fastcall. Call-site argument order for the 2nd/3rd loops was cross-checked against the ghidra decompile's param_1..param_7 (fastcall) naming, which also confirms two of the fixed-point angle computations per loop are dead (computed, never read by the callee).
+// The original sets no return value (EAX keeps the last result); callers
+// ignore it. The shared declaration stays int.
+#pragma warning(disable : 4716)
 extern "C" int __fastcall sub_5cc150(int ecx_arg, int edx_arg, int a1,
                                      int a2, int a3, int a4, int a5) {
-  int result = 0;
-  signed char index = 0;
-  DWORD *out = movie_media_conversion_tables.packed_component_words;
-  do {
+  DWORD *words = movie_media_conversion_tables.packed_component_words;
+  int index;
+  for (index = 0; index < 128; ++index) {
     int angle = (int)(signed char)((index << 1) + 1) + 0x80;
-    result = sub_5cbc00(angle, angle, angle, ecx_arg, edx_arg,
+    words[index] = (DWORD)sub_5cbc00(angle, angle, angle, ecx_arg, edx_arg,
                         a1, a2, a3, a4, a5);
-    *out++ = (DWORD)result;
-    ++index;
-  } while ((out - movie_media_conversion_tables.packed_component_words) < 128);
-
-  index = 0;
-  out = movie_media_conversion_tables.packed_component_words + 256;
-  do {
-    signed char scaled = (signed char)((index << 1) + 1);
-    int angle = (int)(((__int64)scaled * 116129) >> 16);
-    result = sub_5cbc00(0, angle, angle, 0, edx_arg,
+  }
+  for (index = 0; index < 128; ++index) {
+    int first = media_fixed_mul(-0x5816, (signed char)((index << 1) + 1));
+    int second = media_fixed_mul(0x1c5a1, (signed char)((index << 1) + 1));
+    words[256 + index] = (DWORD)sub_5cbc00(0, first, second, 0, edx_arg,
                         a1, a2, a3, a4, a5);
-    *out++ = (DWORD)result;
-    ++index;
-  } while ((out - (movie_media_conversion_tables.packed_component_words + 256)) < 128);
-
-  index = 0;
-  out = movie_media_conversion_tables.packed_component_words + 128;
-  do {
-    signed char scaled = (signed char)((index << 1) + 1);
-    int angle = media_rounded_high_word((int)scaled, -0xb6cf);
-    result = sub_5cbc00(0, angle, angle, 0, edx_arg,
+  }
+  for (index = 0; index < 128; ++index) {
+    int first = media_fixed_mul(0x166e9, (signed char)((index << 1) + 1));
+    int second = media_fixed_mul(-0xb6cf, (signed char)((index << 1) + 1));
+    words[128 + index] = (DWORD)sub_5cbc00(first, second, 0, 0, edx_arg,
                         a1, a2, a3, a4, a5);
-    *out++ = (DWORD)result;
-    ++index;
-  } while ((out - (movie_media_conversion_tables.packed_component_words + 128)) < 128);
-  return result;
+  }
 }
-
-static int media_rounded_high_word(int value, int multiplier) {
-  __int64 product = (__int64)value * multiplier;
-  return (int)((product + 0x8000) >> 16);
-}
+#pragma warning(default : 4716)
 
 // Rebuilds the same three 128-word banks with the descriptor-selected value.
 // ORIGINAL: 0x005CC2B0 sub_5cc2b0 0x005CC2B0-0x005CC42C
@@ -239,55 +240,50 @@ static int media_rounded_high_word(int value, int multiplier) {
 // kind      game
 // TRIED: `__int64` product + `(x+0x8000)>>16` for the imul/shr-5 rounded-highword idiom, instead of the raw edx:eax add/adc sequence; #1 mismatch is in the fastcall-arg-to-local store.
 extern "C" void __fastcall sub_5cc2b0(int selected_component) {
-  DWORD *out = movie_media_conversion_tables.packed_component_words;
-  signed char index = 0;
-  do {
-    int signed_value = (int)(signed char)(index * 2 + 1);
+  DWORD *words = movie_media_conversion_tables.packed_component_words;
+  int i;
+  for (i = 0; i < 128; ++i) {
+    int signed_value = (int)(signed char)(i * 2 + 1);
     unsigned int first = (unsigned int)(signed_value + 0x80);
     unsigned int second = first;
     unsigned int third = first;
     int selected = selected_component;
     if ((int)first < 0) {
-      second = (unsigned int)(signed_value + 0x7f);
+      second = first - 1;
       if ((int)second < 0) third = second;
       if ((int)third < 0) selected = selected_component - 1;
     }
-    *out++ = ((((third & 0xff) | ((unsigned int)selected << 8)) << 8 |
-               (second & 0xff)) << 8) | (first & 0xff);
-    ++index;
-  } while ((out - movie_media_conversion_tables.packed_component_words) < 128);
+    words[i] = ((((third & 0xff) | ((unsigned int)selected << 8)) << 8 |
+                     (second & 0xff)) << 8) | (first & 0xff);
+  }
 
-  index = 0;
-  out = movie_media_conversion_tables.packed_component_words + 256;
-  do {
-    int scaled = (int)(signed char)(index * 2 + 1);
-    unsigned int first = (unsigned int)media_rounded_high_word(scaled, -0x5816);
-    unsigned int second = (unsigned int)media_rounded_high_word(scaled, 0x1c5a1);
+  int j;
+  for (j = 0; j < 128; ++j) {
+    unsigned int first = (unsigned int)media_fixed_mul(-0x5816, (signed char)(j * 2 + 1));
+    unsigned int second = (unsigned int)media_fixed_mul(0x1c5a1, (signed char)(j * 2 + 1));
     int selected = 0;
     unsigned int third = 0;
-    if ((int)second < 0) --first;
-    if ((int)first < 0) {
+    unsigned int adjusted = first;
+    if ((int)second < 0) adjusted = first - 1;
+    if ((int)adjusted < 0) {
       third = 0xffffffffU;
       selected = -1;
     }
-    *out++ = ((((third & 0xff) | ((unsigned int)selected << 8)) << 8 |
-               (first & 0xff)) << 8) | (second & 0xff);
-    ++index;
-  } while ((out - (movie_media_conversion_tables.packed_component_words + 256)) < 128);
+    words[256 + j] = ((((third & 0xff) | ((unsigned int)selected << 8)) << 8 |
+                           (adjusted & 0xff)) << 8) | (second & 0xff);
+  }
 
-  index = 0;
-  out = movie_media_conversion_tables.packed_component_words + 128;
-  do {
-    int scaled = (int)(signed char)(index * 2 + 1);
-    unsigned int first = (unsigned int)media_rounded_high_word(scaled, 0x166e9);
-    unsigned int second = (unsigned int)media_rounded_high_word(scaled, -0xb6cf);
+  int k;
+  for (k = 0; k < 128; ++k) {
+    signed char scaled = (signed char)(k * 2 + 1);
+    unsigned int first = (unsigned int)media_fixed_mul(0x166e9, scaled);
+    unsigned int second = (unsigned int)media_fixed_mul(-0xb6cf, scaled);
     int selected = 0;
     if ((int)second < 0) --first;
     if ((int)first < 0) selected = -1;
-    *out++ = ((((first & 0xff) | ((unsigned int)selected << 8)) << 8 |
-               (second & 0xff)) << 8);
-    ++index;
-  } while ((out - (movie_media_conversion_tables.packed_component_words + 128)) < 128);
+    words[128 + k] = ((((first & 0xff) | ((unsigned int)selected << 8)) << 8 |
+                           (second & 0xff)) << 8);
+  }
 }
 
 // The receiver is the embedded MediaPixelFormat subobject at descriptor +2C.
@@ -386,6 +382,9 @@ static const DWORD media_block_quant_order[64] = {
 // kind      game
 // TRIED: homed into general.cpp (its real TU) 2026-09-03 and reverted for one reason:
 // TRIED: `long long` (VC6 has none, use __int64); flat 64-iter loop instead of nested 8x8 do/while counted down
+// The original sets no return value (EAX keeps the last result); callers
+// ignore it. The shared declaration stays int.
+#pragma warning(disable : 4716)
 extern "C" int __cdecl sub_5cd2d0(DWORD *destination, int quality) {
   if (quality == 100) {
     quality = 8;
@@ -393,28 +392,23 @@ extern "C" int __cdecl sub_5cd2d0(DWORD *destination, int quality) {
     const DWORD *weights = media_block_transform_weights;
     do {
       for (int column = 0; column != 8; ++column)
-      {
-        const __int64 product = (__int64)(int)*weights++ * 0x80000;
-        *output++ = (DWORD)((product >> 16) + ((product >> 15) & 1));
-      }
+        *output++ = (DWORD)media_fixed_mul(0x80000, (int)*weights++);
     } while (--quality);
   } else {
-    const float scale = (107.0f - (float)quality) * 0.0625f;
-    for (int row = 0; row != 8; ++row) {
+    const float scale = (float)(107.0 - quality) * 0.0625f;
+    for (int row = 0; row < 8; ++row) {
       for (int column = 0; column != 8; ++column) {
         const int index = row * 8 + column;
-        const int quantized = (int)((double)media_block_quant_order[index] *
-                                    (double)scale * 65536.0);
-        const __int64 product = (__int64)(int)media_block_transform_weights[index] *
-                                quantized;
-        destination[index] = (DWORD)((product >> 16) + ((product >> 15) & 1));
+        destination[index] = (DWORD)media_fixed_mul(
+            (int)((int)media_block_quant_order[index] * scale * 65536.0f),
+            (int)media_block_transform_weights[index]);
       }
     }
   }
-  const __int64 product = (__int64)(int)media_block_transform_weights[0] * 0x80000;
-  destination[0] = (DWORD)((product >> 16) + ((product >> 15) & 1));
-  return (int)destination[0];
+  destination[0] = (DWORD)media_fixed_mul(
+      0x80000, (int)media_block_transform_weights[0]);
 }
+#pragma warning(default : 4716)
 
 // ECX is IDirectDraw2*, EDX is the caller's surface output slot; the three
 // stack arguments are width, height and FourCC. Native creates a FourCC
@@ -482,26 +476,6 @@ extern "C" void __fastcall sub_5d3f50(MediaRuntime *);
 // Native 16-bit block writer. Its scale/bank reads are views into the color
 // setup owner: scale[0], packed bank 0, and packed banks 1/2. It indexes 128
 // entries in each packed bank and writes four 16-byte-wide, eight-row blocks.
-static int media_scale_signed_component(signed char component) {
-  const __int64 product =
-      (__int64)(int)movie_media_conversion_tables.block_scale_entries[0] * (int)component;
-  // Native SHL/SHR/ADC adds product bit 15 before the caller's SAR 1.
-  return (int)(product >> 16) + (int)((product >> 15) & 1);
-}
-
-static void media_write_16bit_block(unsigned int pitch, BYTE *destination,
-                                    unsigned short pixel) {
-  const DWORD packed = ((DWORD)pixel << 16) | pixel;
-  const unsigned int row_advance = (pitch & ~1U) - 0x10;
-  for (int row = 0; row != 8; ++row) {
-    memcpy(destination + 0x00, &packed, sizeof(packed));
-    memcpy(destination + 0x04, &packed, sizeof(packed));
-    memcpy(destination + 0x08, &packed, sizeof(packed));
-    memcpy(destination + 0x0c, &packed, sizeof(packed));
-    destination += 0x10 + row_advance;
-  }
-}
-
 // ORIGINAL: 0x005CD560 sub_5cd560 0x005CD560-0x005CD74D
 // symbol    _sub_5cd560
 // kind      game
@@ -511,26 +485,84 @@ extern "C" void __cdecl sub_5cd560(
     signed char component0, signed char component1, signed char component2,
     signed char component3, signed char component4, signed char component5,
     int *destination_words, unsigned int pitch) {
-  DWORD *const bank0 = movie_media_conversion_tables.packed_component_words;
-  DWORD *const bank1 = bank0 + 128;
-  DWORD *const bank2 = bank0 + 256;
-  const int index5 = (media_scale_signed_component(component5) >> 1) & 0x7f;
-  const int index4 = (media_scale_signed_component(component4) >> 1) & 0x7f;
-  const int baseline = (int)bank1[index5] + (int)bank2[index4];
-  BYTE *const base = (BYTE *)destination_words;
+    DWORD *const words = movie_media_conversion_tables.packed_component_words;
+    const int chroma =
+        words[256 + ((media_fixed_mul(component4,
+                      movie_media_conversion_tables.block_scale_entries[0]) >> 1) & 0x7f)] +
+        words[128 + ((media_fixed_mul(component5,
+                      movie_media_conversion_tables.block_scale_entries[0]) >> 1) & 0x7f)];
+    unsigned short *const base = (unsigned short *)destination_words;
+    union {
+        DWORD word;
+        unsigned short half;
+    } packed;
+    int fill;
+    unsigned short *row;
+    int outer;
 
-  const int index0 = (media_scale_signed_component(component0) >> 1) & 0x7f;
-  const int index1 = (media_scale_signed_component(component1) >> 1) & 0x7f;
-  const int index2 = (media_scale_signed_component(component2) >> 1) & 0x7f;
-  const int index3 = (media_scale_signed_component(component3) >> 1) & 0x7f;
-  media_write_16bit_block(pitch, base,
-      (unsigned short)(bank0[index0] + baseline));
-  media_write_16bit_block(pitch, base + 0x10,
-      (unsigned short)(bank0[index1] + baseline));
-  media_write_16bit_block(pitch, base + pitch * 8,
-      (unsigned short)(bank0[index2] + baseline));
-  media_write_16bit_block(pitch, base + pitch * 8 + 0x10,
-      (unsigned short)(bank0[index3] + baseline));
+    fill = words[(media_fixed_mul(component0,
+                  movie_media_conversion_tables.block_scale_entries[0]) >> 1) & 0x7f] + chroma;
+    row = base;
+    for (outer = 8; outer != 0; --outer) {
+        DWORD *const cells = (DWORD *)row;
+        row += 8;
+        packed.half = (unsigned short)fill;
+        packed.word <<= 16;
+        packed.half = (unsigned short)fill;
+        cells[0] = packed.word;
+        cells[1] = packed.word;
+        cells[2] = packed.word;
+        cells[3] = packed.word;
+        row += pitch / 2 - 8;
+    }
+
+    fill = words[(media_fixed_mul(component1,
+                  movie_media_conversion_tables.block_scale_entries[0]) >> 1) & 0x7f] + chroma;
+    row = base + 8;
+    for (outer = 8; outer != 0; --outer) {
+        DWORD *const cells = (DWORD *)row;
+        row += 8;
+        packed.half = (unsigned short)fill;
+        packed.word <<= 16;
+        packed.half = (unsigned short)fill;
+        cells[0] = packed.word;
+        cells[1] = packed.word;
+        cells[2] = packed.word;
+        cells[3] = packed.word;
+        row += pitch / 2 - 8;
+    }
+
+    fill = words[(media_fixed_mul(component2,
+                  movie_media_conversion_tables.block_scale_entries[0]) >> 1) & 0x7f] + chroma;
+    row = base + pitch * 4;
+    for (outer = 8; outer != 0; --outer) {
+        DWORD *const cells = (DWORD *)row;
+        row += 8;
+        packed.half = (unsigned short)fill;
+        packed.word <<= 16;
+        packed.half = (unsigned short)fill;
+        cells[0] = packed.word;
+        cells[1] = packed.word;
+        cells[2] = packed.word;
+        cells[3] = packed.word;
+        row += pitch / 2 - 8;
+    }
+
+    fill = words[(media_fixed_mul(component3,
+                  movie_media_conversion_tables.block_scale_entries[0]) >> 1) & 0x7f] + chroma;
+    row = base + pitch * 4 + 8;
+    for (outer = 8; outer != 0; --outer) {
+        DWORD *const cells = (DWORD *)row;
+        row += 8;
+        packed.half = (unsigned short)fill;
+        packed.word <<= 16;
+        packed.half = (unsigned short)fill;
+        cells[0] = packed.word;
+        cells[1] = packed.word;
+        cells[2] = packed.word;
+        cells[3] = packed.word;
+        row += pitch / 2 - 8;
+    }
 }
 
 static int media_divide_toward_zero(int numerator, int denominator) {
@@ -2617,117 +2649,45 @@ Status: Coverage transcription - unclaimed body (register allocation for the
 void __cdecl sub_5cd3b0(char param_1, char param_2, char param_3, char param_4,
                         char param_5, char param_6, int *plane,
                         unsigned int stride_arg) {
-    MediaConversionTableStorage &conversion_tables =
-        movie_media_conversion_tables;
-    const int scale = conversion_tables.block_scale_entries[0];
-    __int64 product;
-    int chroma_a;
-    int chroma_b;
-    int chroma;
-    unsigned int row_step;
-    int luma_1;
-    int luma_2;
-    int luma_3;
-    int luma_4;
+    DWORD *const words = movie_media_conversion_tables.packed_component_words;
+    const int chroma =
+        words[256 + ((media_fixed_mul(param_5,
+                      movie_media_conversion_tables.block_scale_entries[0]) >> 1) & 0x7f)] +
+        words[128 + ((media_fixed_mul(param_6,
+                      movie_media_conversion_tables.block_scale_entries[0]) >> 1) & 0x7f)];
+    int fill;
+    int *row;
+    int outer;
 
-    // The image's scale idiom rounds half up before the sar 1: add bit 15
-    // of the product to the shifted-down word.
-    product = static_cast<__int64>(scale) *
-              static_cast<__int64>(static_cast<int>(param_6));
-    chroma_a = ((static_cast<int>(product >> 16) +
-                 static_cast<int>((product >> 15) & 1)) >>
-                1);
-    product = static_cast<__int64>(scale) *
-              static_cast<__int64>(static_cast<int>(param_5));
-    chroma_b = ((static_cast<int>(product >> 16) +
-                 static_cast<int>((product >> 15) & 1)) >>
-                1);
-    chroma = conversion_tables.packed_component_words[128 + (chroma_a & 0x7f)] +
-             conversion_tables.packed_component_words[256 + (chroma_b & 0x7f)];
-
-    row_step = stride_arg & 0xfffffffcu;
-
-    product = static_cast<__int64>(scale) *
-              static_cast<__int64>(static_cast<int>(param_1));
-    luma_1 = conversion_tables.packed_component_words[((static_cast<int>(product >> 16) +
-                                                   static_cast<int>((product >> 15) & 1)) >>
-                                                  1) &
-                                                 0x7f];
-    {
-        int *row = plane;
-        int outer = 8;
-        do {
-            int *out = row;
-            for (int inner = 8; inner != 0; --inner) {
-                *out = luma_1 + chroma;
-                ++out;
-            }
-            row = reinterpret_cast<int *>(reinterpret_cast<char *>(row) +
-                                          row_step);
-            --outer;
-        } while (outer != 0);
+    fill = words[(media_fixed_mul(param_1,
+                  movie_media_conversion_tables.block_scale_entries[0]) >> 1) & 0x7f] + chroma;
+    row = plane;
+    for (outer = 8; outer != 0; --outer) {
+        for (int inner = 8; inner != 0; --inner) *row++ = fill;
+        row += stride_arg / 4 - 8;
     }
 
-    product = static_cast<__int64>(scale) *
-              static_cast<__int64>(static_cast<int>(param_2));
-    luma_2 = conversion_tables.packed_component_words[((static_cast<int>(product >> 16) +
-                                                   static_cast<int>((product >> 15) & 1)) >>
-                                                  1) &
-                                                 0x7f];
-    {
-        int *row = plane + 8;
-        int outer = 8;
-        do {
-            int *out = row;
-            for (int inner = 8; inner != 0; --inner) {
-                *out = luma_2 + chroma;
-                ++out;
-            }
-            row = reinterpret_cast<int *>(reinterpret_cast<char *>(row) +
-                                          row_step);
-            --outer;
-        } while (outer != 0);
+    fill = words[(media_fixed_mul(param_2,
+                  movie_media_conversion_tables.block_scale_entries[0]) >> 1) & 0x7f] + chroma;
+    row = plane + 8;
+    for (outer = 8; outer != 0; --outer) {
+        for (int inner = 8; inner != 0; --inner) *row++ = fill;
+        row += stride_arg / 4 - 8;
     }
 
-    product = static_cast<__int64>(scale) *
-              static_cast<__int64>(static_cast<int>(param_3));
-    luma_3 = conversion_tables.packed_component_words[((static_cast<int>(product >> 16) +
-                                                   static_cast<int>((product >> 15) & 1)) >>
-                                                  1) &
-                                                 0x7f];
-    {
-        int *row = plane + stride_arg * 2;
-        int outer = 8;
-        do {
-            int *out = row;
-            for (int inner = 8; inner != 0; --inner) {
-                *out = luma_3 + chroma;
-                ++out;
-            }
-            row = reinterpret_cast<int *>(reinterpret_cast<char *>(row) +
-                                          row_step);
-            --outer;
-        } while (outer != 0);
+    fill = words[(media_fixed_mul(param_3,
+                  movie_media_conversion_tables.block_scale_entries[0]) >> 1) & 0x7f] + chroma;
+    row = plane + stride_arg * 2;
+    for (outer = 8; outer != 0; --outer) {
+        for (int inner = 8; inner != 0; --inner) *row++ = fill;
+        row += stride_arg / 4 - 8;
     }
 
-    product = static_cast<__int64>(scale) *
-              static_cast<__int64>(static_cast<int>(param_4));
-    luma_4 = conversion_tables.packed_component_words[((static_cast<int>(product >> 16) +
-                                                   static_cast<int>((product >> 15) & 1)) >>
-                                                  1) &
-                                                 0x7f];
-    {
-        int *row = plane + stride_arg * 2 + 8;
-        int outer = 8;
-        do {
-            int *out = row;
-            for (int inner = 8; inner != 0; --inner) {
-                *out = luma_4 + chroma;
-                ++out;
-            }
-            row = reinterpret_cast<int *>(reinterpret_cast<char *>(row) +
-                                          row_step);
-            --outer;
-        } while (outer != 0);
+    fill = words[(media_fixed_mul(param_4,
+                  movie_media_conversion_tables.block_scale_entries[0]) >> 1) & 0x7f] + chroma;
+    row = plane + stride_arg * 2 + 8;
+    for (outer = 8; outer != 0; --outer) {
+        for (int inner = 8; inner != 0; --inner) *row++ = fill;
+        row += stride_arg / 4 - 8;
     }
 }
