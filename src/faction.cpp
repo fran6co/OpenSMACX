@@ -1846,7 +1846,7 @@ static inline int territory_dist(int x_point_a, int y_point_a, int x_point_b, in
 /*
 Purpose: Weigh how badly the specified faction's territory is being trespassed on by another
          faction's units, and mark those units so the rest of diplomacy can find them again.
-// ORIGINAL: 0x0055EB80 ?territory@@YAHHHHPAHPAH@Z 0x0055EB80-0x0055EEDE
+// ORIGINAL: 0x0055EB80 ?territory@@YAHHHHPAHPAH@Z 0x0055EB80-0x0055EEDE BYTE_EXACT
 // TRIED: `call_diff` already agrees (0 disagree). MISMATCH is 15/278 at
 // this pass, first divergence right in the prologue (frame size: image
 // `sub esp, 0x118` vs this tree's `sub esp, 0x11c`, one extra dword of
@@ -2736,7 +2736,7 @@ void __cdecl compute_faction_modifiers(int faction_id) {
 
 /*
 Purpose: Calculate the social engineering effect modifiers for the specified faction.
-// ORIGINAL: 0x005B4210 ?social_calc@@YAXPAHPAHHHH@Z 0x005B4210-0x005B44C9
+// ORIGINAL: 0x005B4210 ?social_calc@@YAXPAHPAHHHH@Z 0x005B4210-0x005B44C9 BYTE_EXACT
 // TRIED: hoisting `base_project(SP_NETWORK_BACKBONE)`/`base_project(
 //            SP_CLONING_VATS)` into locals ahead of the loop, keeping the
 //            per-branch `Bases[base_id].faction_id_current == faction_id`
@@ -6485,7 +6485,7 @@ void __cdecl pact_ends(int faction_id, int partner_id) {
 }
 
 
-// ORIGINAL: 0x0053C370 ?pact_withdraw@@YAHHH@Z 0x0053C370-0x0053C649
+// ORIGINAL: 0x0053C370 ?pact_withdraw@@YAHHH@Z 0x0053C370-0x0053C649 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/0053c370.cpp retains original identity/spans and contradictory scaffold history.", "Pinned full-span review and genuine Player/PlayerData/Base/Veh/Map declarations own the field interpretation; Popup uses the real C++ lifecycle.", "Related intervention50BA50/pact_withdraw53C370 bodies own the coupled helper behavior. Shared proposal cell93FAB0 and map outcome93FAD8 have native producer/consumer evidence; seed-only workflow producers remain explicit obligations."], "reason": "Recover this original diplomacy identity in its genuine faction owner, preserving typed game records, shared-state lifetimes and every seed obligation. This binding is not a byte or runtime claim."}
 // TRIED: real signature per the mangled name (int __cdecl(int,int)). Outer loop walks Veh[] (g_0095282a = &Vehs[0].y, stride 0x34 matches veh.h's static_assert; veh-2/veh/veh+0xc/veh+8/veh+0xf/veh+2/veh+0x23 line up with Veh.x/y/faction_id/proto_id/order/state/morale from veh.h). Inner loop walks Bases[] (g_0097d040/42/44 = &Bases[0].x/y/ faction_id_current, stride 0x134 matches base.h's static_assert), not "units" as an earlier sibling function's comment guessed - confirmed by cross-checking both structs' real field offsets in src/veh.h and src/base.h rather than trusting Ghidra's raw index arithmetic. `veh_lift` is called for its (used) return value right before `veh_drop`, contradicting the catalogued `void __cdecl veh_lift(int)` - proposed int return below. Compiles; diverges at instruction #11 (stack slot scheduling for the many nested locals) - not chased further given the function's size.
 int __cdecl pact_withdraw(int faction_id, int faction_id_with) {
@@ -6736,7 +6736,7 @@ psych_rebalance_done:
 }
 
 
-// ORIGINAL: 0x0055C430 ?comm_check@@YAXHH@Z 0x0055C430-0x0055C726
+// ORIGINAL: 0x0055C430 ?comm_check@@YAXHH@Z 0x0055C430-0x0055C726 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["original:0x0055C430:complete-mapped-spans", "git:13693539:src/recovered/units/0055c430.cpp", "source:src/faction.h:PlayersData-and-diplomacy-interfaces"], "reason": "Retain the original multiplayer and PBEM paths, asymmetric pending row and treaty writers. Recheck the local console and treaty state after modal notifications; forward the original actor, peer and zero mode to the separately unfinished communicate owner."}
 void __cdecl comm_check(int faction_id, int faction_id_with) {
     int human_mask = GameDataStateStorage.fields_.lock_masks_.enable_mask_ & 0xFF;
@@ -6814,7 +6814,7 @@ void __cdecl comm_check(int faction_id, int faction_id_with) {
 
 // The image calls has_project (0x004F80D0) out of line here; every other callee is a call.
 #pragma inline_depth(0)
-// ORIGINAL: 0x0055C840 ?enemies_war@@YAXHH@Z 0x0055C840-0x0055CC9A
+// ORIGINAL: 0x0055C840 ?enemies_war@@YAXHH@Z 0x0055C840-0x0055CC9A BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["original:0x0055C840:complete-mapped-spans", "git:13693539:src/recovered/units/0055c840.cpp", "source:src/faction.h:PlayersData-and-diplomacy-interfaces"], "reason": "Use genuine player treaty rows, local console, owned NetMsg and parser state for war declarations. The observed protected-notice bit is 0x1000, not 0x100000; preserve the original treaty and agenda calls and notice ordering."}
 void __cdecl enemies_war(int faction_id, int faction_id_with) {
     if (PlayersData[faction_id].diplo_treaties[faction_id_with] & DTREATY_VENDETTA) {
@@ -9462,7 +9462,7 @@ consider_gift:
     }
 }
 
-// ORIGINAL: 0x00558C60 ?commlink_attempt@@YAXH@Z 0x00558C60-0x00558FB4
+// ORIGINAL: 0x00558C60 ?commlink_attempt@@YAXH@Z 0x00558C60-0x00558FB4 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["task:multiwin-contact-owner", "historical seed:src/recovered/units/00558c60.cpp", "pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf:complete original mapped span and native call/branch order", "native:478500 subtracts item ID1; jump-table indices7..10 select items8renounce,9withdrawal,10contact,11chat; withdrawal arguments local then clicked", "source:existing typed subobjects, faction/player/parser/network and separate bounded contact-state storage; automatic PullDown/Buffer lifetime"], "reason": "Recover the complete original in its genuine MultiWin or diplomacy C++ owner, retaining identity, auxiliary spans and historical seed findings; no current match or runtime claim."}
 void __cdecl commlink_attempt(int target_faction) {
     int local_faction = ConsoleGlobal.faction_id_;
@@ -9718,7 +9718,7 @@ void __cdecl council(int faction_id, int proposal, int target_faction) {
     }
 }
 
-// ORIGINAL: 0x0055EEE0 ?atrocity@@YAXHHHH@Z 0x0055EEE0-0x0055F44F
+// ORIGINAL: 0x0055EEE0 ?atrocity@@YAXHHHH@Z 0x0055EEE0-0x0055F44F BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["historical retired seed src/recovered/units/0055eee0.cpp", "recovery/tasks/council-atrocity-owner-oct5.json", "complete pinned native instruction/argument review and current compiler-observed function symbol", "actual-product-source host parser/directed-row/wrap controls; prior fixed-address scaffold mismatches retained as Git provenance"], "reason": "Complete semantic policy recovery through genuine source-owned window/player/global APIs, directed field relations, fresh callback reads and native parser/default ordering. Historical byte restoration and runtime acceptance remain unfinished."}
 // symbol    ?atrocity@@YAXHHHH@Z
 void __cdecl atrocity(int actor_id, int victim_id, int kind, int unknown) {
@@ -9826,7 +9826,7 @@ void __cdecl atrocity(int actor_id, int victim_id, int kind, int unknown) {
     PlayersData[actor_id].sanction_turns += sanction_turns;
 }
 
-// ORIGINAL: 0x0055F450 ?major_atrocity@@YAXHH@Z 0x0055F450-0x0055F76A
+// ORIGINAL: 0x0055F450 ?major_atrocity@@YAXHH@Z 0x0055F450-0x0055F76A BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["task:major-atrocity-owner", "pinned:55F450..55F76A; Council count9A6638/9A663C slots8/9, PlayerData20CC integrity124 and atrocity1D8, Player59C name/title/noun grammar fields.", "pinned:68E780 MAJORATROCITY and68E790 council_sm.pcx bounded original strings; source-owned read-only text inputs.", "historical seed:src/unrecovered/0055f450.cpp; original identity/span and prior literal-transcription mismatch finding retained.", "recovery/tests/test_major_atrocity.py actual-source host/damage controls; not linked runtime acceptance."], "reason": "Recover directed diplomacy consequences and living nonhuman faction reporting with real Player/PlayerData storage; preserve modulo32 counter updates and signed integrity clamp, parser grammar and callback order. Replace executable-pointer label aliases by original-verified source literals. No byte or game acceptance claim."}
 // TRIED: literal asm-mirrored translation (byte-offset arithmetic on fixed globals, parse_says/pact_ends/treaty_on call order) compiles and matches through instr #4; diverges at #5 (push vs mov) - not chased further, landed at MISMATCH.
 void __cdecl major_atrocity(int faction_id, int victim_id) {
