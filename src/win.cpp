@@ -9409,7 +9409,7 @@ static inline int win_focus_seek(WinNodeList *list, Win *window) {
     return 0;
 }
 
-// ORIGINAL: 0x005ECC40 ?set_dialog_focus@Win@@QAEXPAVWin@@@Z 0x005ECC40-0x005ECD1B FILE
+// ORIGINAL: 0x005ECC40 ?set_dialog_focus@Win@@QAEXPAVWin@@@Z 0x005ECC40-0x005ECD1B FILE BYTE_EXACT
 // kind game
 // symbol    ?set_dialog_focus@Win@@UAEXPAV1@@Z
 // TRIED: for(;;)/break loop shape for the list search instead of a do/while counted against field_D4_
