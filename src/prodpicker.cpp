@@ -1012,26 +1012,27 @@ int ProdPicker::exec(Base *base, int factionId, GraphicWin *owner, int modal) {
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00493ea0.cpp", "Pinned original coordinator review: actual label-pointer dereference, camera word3F48F5C3, static cdecl callback ABI, row-end clamps and modal-parent/button suppression order."], "reason": "Recover ProdPicker owner behavior through existing window bases, owned StringLists/controls and typed Base/Caviar camera state; preserve historical seed identity and extents as restoration obligations, not current match claims."}
 // symbol    ?on_right_click@ProdPicker@@UAEXHH@Z
 void ProdPicker::on_right_click(int x, int y) {
+    PullDown menu;
     on_left_click(x, y);
     client_to_screen(&x, &y);
 
-    int productionId = -1;
-    if (field_A774_ <= prod_a_.entry_count_ - 1) {
-        prod_a_.seek_pos(field_A774_);
-        const uint32_t flags = prod_a_.head_ != 0
-            ? prod_a_.current_->string_payload()->field_8_ : 0;
-        if ((flags & 0x20) != 0)
-            productionId = prod_a_.head_ != 0 ? prod_a_.current_->id : 0;
-    }
+    // The seek result is ignored: a failed bound leaves the cursor where it
+    // was and the flag test still reads it.
+    prod_a_.seek_pos(field_A774_);
+    const uint32_t flags = prod_a_.head_ != 0
+        ? prod_a_.current_->string_payload()->field_8_ : 0;
+    const int productionId = (flags & 0x20) != 0
+        ? (prod_a_.head_ != 0 ? prod_a_.current_->id : 0) : -1;
 
-    PullDown menu;
     menu.init();
     if (field_B68_ == 0)
         menu.add_item(5, label_get(0x1148 / 4));
     menu.add_item(4, label_get(0x1144 / 4));
-    if (productionId >= 0 && productionId < 0x40
-        && Weapon[VehPrototypes[productionId].weapon_id].offense_rating >= 0
-        && productionId != 0x0F) {
+    // Faction-designed prototypes (id >= 0x40) always offer the obsolete row.
+    if (productionId >= 0
+        && (productionId >= 0x40
+            || (Weapon[VehPrototypes[productionId].weapon_id].offense_rating >= 0
+                && productionId != 0x0F))) {
         menu.add_item(1, label_get(0xE40 / 4));
     }
     if (!IsMultiplayerNet)
@@ -1040,16 +1041,10 @@ void ProdPicker::on_right_click(int x, int y) {
     menu.show(x, y, 0);
 
     const int selectedItem = menu.get_selected();
-    uint32_t action = 0xffffffffU;
-    if (selectedItem < 0x40) {
-        // Native's signed upper-bound check admits cancellation (-1).
-        // items_[-1].id lands on GraphicWin's caption callback at +0xA0C:
-        // 0xA18 - sizeof(PullDownItem) + offsetof(PullDownItem, id).
-        // Read that named word, not an item outside the array. Other
-        // indices retain the original unchecked item access.
-        action = selectedItem == -1 ? menu.field_A0C_value()
-            : static_cast<uint32_t>(menu.item_id(selectedItem));
-    }
+    // Native's signed upper-bound check admits cancellation (-1), whose
+    // items_[-1].id is GraphicWin's word at +0xA0C (original behaviour).
+    const uint32_t action = selectedItem < 0x40
+        ? static_cast<uint32_t>(menu.item_id(selectedItem)) : 0xffffffffU;
 
     // Original SUB EAX,1 wraps for every 32-bit callback/item word.
     switch (action - 1U) {
@@ -1068,12 +1063,10 @@ void ProdPicker::on_right_click(int x, int y) {
         break;
     case 2:
     {
-        const int faction = BaseCurrent->faction_id_current;
-        const uint8_t factionMask = static_cast<uint8_t>(1U << faction);
         for (int proto = 0; proto < MaxVehProtoNum; ++proto) {
             if (VehPrototypes[proto].flags & PROTO_ACTIVE)
-                VehPrototypes[proto].obsolete_factions &=
-                    static_cast<uint8_t>(~factionMask);
+                VehPrototypes[proto].obsolete_factions &= static_cast<uint8_t>(
+                    ~(1U << BaseCurrent->faction_id_current));
         }
         calculate();
         redraw();

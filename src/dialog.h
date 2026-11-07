@@ -188,6 +188,7 @@ class Dialog {
   // compile-time only; the static_assert below still pins the layout.
   uint32_t field_20_;
   void set_style_bits(uint32_t mask) { field_20_ |= mask; }
+  void clear_style_bits(uint32_t mask) { field_20_ &= ~mask; }
   int window_x_;
   int window_y_;
   // These shared dimensions and spacing/count operands are signed in the

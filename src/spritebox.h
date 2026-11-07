@@ -98,25 +98,20 @@ class SpriteListBase : public virtual StringAllocationBase {
         return 0;
       }
       int i = abs_fn(a1);
-      if (i > 0) {
-        do {
-          i--;
-          current_ = current_->previous;
-        } while (i != 0);
+      while (i > 0) {
+        --i;
+        current_ = current_->previous;
       }
-      current_position_ = a1 + entry_count_;
-      return 1;
+      a1 += entry_count_;
     } else {
-      if (a1 > 0) {
-        int i = a1;
-        do {
-          i--;
-          current_ = current_->next;
-        } while (i != 0);
+      int i = a1;
+      while (i > 0) {
+        --i;
+        current_ = current_->next;
       }
-      current_position_ = a1;
-      return 1;
     }
+    current_position_ = a1;
+    return 1;
   }
 
   void remove_all() {

@@ -223,34 +223,34 @@ int Dialog::init(RECT *rect, int heap_size) {
         return 3;
     }
 
-    const int left = rect->left;
     const int top = rect->top;
-    const int right = rect->right;
-    const int bottom = rect->bottom;
+    const int left = rect->left;
+    const int height = rect->bottom - top;
+    const int width = rect->right - left;
 
     close();
 
     window_x_ = left;
     window_y_ = top;
-    field_2C_ = right - left;
-    field_30_ = bottom - top;
+    field_2C_ = width;
+    field_30_ = height;
     field_20_ |= 3U;
     field_1C_ = static_cast<uint32_t>(heap_size);
 
-    if (heap_size == 0) {
-        item_list_.remove_all();
-        item_list_.current_position_ = 0;
-        item_list_.allocator_ = 0;
-        return 0;
+    if (heap_size != 0) {
+        if (heap_.init(static_cast<size_t>(heap_size))) {
+            return 4;
+        }
+        StringList *list = &item_list_;
+        list->remove_all();
+        list->allocator_ = &heap_;
+        list->current_position_ = 0;
+    } else {
+        StringList *list = &item_list_;
+        list->remove_all();
+        list->current_position_ = 0;
+        list->allocator_ = 0;
     }
-
-    if (heap_.init(static_cast<size_t>(heap_size))) {
-        return 4;
-    }
-
-    item_list_.remove_all();
-    item_list_.allocator_ = &heap_;
-    item_list_.current_position_ = 0;
     return 0;
 }
 
@@ -535,50 +535,38 @@ Purpose: Restore an explicit list position and return its item ID.
 Return Value: Item ID at the requested position, or zero when the list head is null
 Status: Complete
 */
-int Dialog::pos_to_id(int position) {
-    // `position <= count - 1`, WHICH IS NOT `position < count`. The image
-    // decrements the count and compares - `dec eax; cmp edi, eax; jg` - and
-    // for count == INT_MIN that decrement WRAPS, which is the whole reason
-    // this tree carried an explicit INT_MIN test beside the comparison. The
-    // wrap is the semantics; the test is a second read of it.
-    if (position <= item_list_.entry_count_ - 1) {
-        item_list_.current_ = item_list_.head_;
-        if (position < 0) {
-            // `abs`, CALLED TWICE, and the count RE-READ between them: the
-            // image is `push edi; call 0x644F3A; mov ecx, [esi+0xcc];
-            // cmp eax, ecx; jg` and then `push edi; call 0x644F3A` again.
-            // That is a MIN-style macro over `abs(position)`, not a local -
-            // and `abs(INT_MIN)` returning INT_MIN is what the hand-rolled
-            // ternary here was standing in for.
-            // INVERTED, and out of the arm by way of the label - see the
-            // note at the store below, and get_selected_id above for the
-            // same shape in the sibling.
-            if (abs(position) > item_list_.entry_count_) {
-                goto restore_done;
-            }
-            int distance = abs(position);
-            while (distance > 0) {
-                item_list_.current_ = item_list_.current_->previous;
-                distance--;
-            }
-            // The member again, not a local - see the note above the
-            // guard. Plain `int` addition: the image is one `add`, and
-            // the uint32 round trip through memcpy is a bit-cast VC6
-            // will not inline away.
-            position += item_list_.entry_count_;
-        } else {
-            int distance = position;
-            while (distance > 0) {
-                item_list_.current_ = item_list_.current_->next;
-                distance--;
-            }
-        }
-        // ONE STORE FOR BOTH ARMS. The image's negative arm ends
-        // `mov eax,[esi+0xcc]; add eax,edi` and jumps STRAIGHT to the store
-        // the positive arm falls into - `jmp` with no `mov` before it.
-        item_list_.current_position_ = position;
+// StringStruct::seek_pos in the single-tail form the image uses (one
+// current_position_ store after both arms). Replace with
+// item_list_.seek_pos() once stringstruct.h adopts that form.
+static inline int dialog_seek_pos(StringStruct *list, int a1) {
+    AbsFnT abs_fn = reinterpret_cast<AbsFnT>(&abs);
+    if (a1 > list->entry_count_ - 1) {
+        return 0;
     }
-restore_done:
+    list->current_ = list->head_;
+    if (a1 < 0) {
+        if (abs_fn(a1) > list->entry_count_) {
+            return 0;
+        }
+        int i = abs_fn(a1);
+        while (i > 0) {
+            --i;
+            list->current_ = list->current_->previous;
+        }
+        a1 += list->entry_count_;
+    } else {
+        int i = a1;
+        while (i > 0) {
+            --i;
+            list->current_ = list->current_->next;
+        }
+    }
+    list->current_position_ = a1;
+    return 1;
+}
+
+int Dialog::pos_to_id(int position) {
+    dialog_seek_pos(&item_list_, position);
     return item_list_.head_ ? item_list_.current_->id : 0;
 }
 

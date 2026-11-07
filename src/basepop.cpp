@@ -2103,14 +2103,8 @@ BasePop::BasePop() {
     if (external_window_ != 0) {
         // Dialogs is already a compiler-constructed member in the observed
         // base/member order above; the old omission rationale is superseded.
-        dialogs_.Dialog::field_2C_ = dialog_width_;
-
-        int height = static_cast<int>(dialog_height_);
-        if (external_window_ == 0 && (field_30A8_ & 0x400) == 0 &&
-            WinScreenWidth >= 0x400) {
-            height = (height * 3) / 2;
-        }
-        dialogs_.Dialog::field_30_ = height;
+        set_width(dialog_width_);
+        set_height(dialog_height_);
 
         set_loc(default_loc_a_, default_loc_b_);
         dialogs_.set_style_bits(3);
@@ -2164,10 +2158,15 @@ void BasePop::close() {
     // All nine rows therefore copy the same source/destination column;
     // interpreting those later loads before the increment shifted rows by one.
     for (int column = 0; column < 3; ++column) {
-        for (int group = 0; group < 9; ++group) {
-            default_block_[group * 3 + column] =
-                BasePopDefaultBlock31B8[group * 3 + column];
-        }
+        default_block_[column + 0] = BasePopDefaultBlock31B8[column + 0];
+        default_block_[column + 3] = BasePopDefaultBlock31B8[column + 3];
+        default_block_[column + 6] = BasePopDefaultBlock31B8[column + 6];
+        default_block_[column + 9] = BasePopDefaultBlock31B8[column + 9];
+        default_block_[column + 12] = BasePopDefaultBlock31B8[column + 12];
+        default_block_[column + 15] = BasePopDefaultBlock31B8[column + 15];
+        default_block_[column + 18] = BasePopDefaultBlock31B8[column + 18];
+        default_block_[column + 21] = BasePopDefaultBlock31B8[column + 21];
+        default_block_[column + 24] = BasePopDefaultBlock31B8[column + 24];
     }
 
     dialogs_.ListBox::close();
@@ -2177,8 +2176,8 @@ void BasePop::close() {
     dialogs_.EditGroup::close();
     GraphicWin::close();
 
-    sprite_.close();
     field_20F4_ = 0;
+    sprite_.close();
     caller_sprite_ = 0;
     selected_id_ = 0;
     value_ = -1;
@@ -2194,21 +2193,18 @@ void BasePop::close() {
     flat_button1_.close();
     flat_button2_.close();
 
-    // THE TWO LIST TEARDOWNS. The image inlines StringStruct::remove_all at
-    // both - same guard on head_, same do/while over entry_count_, same three
-    // tail stores - so the source is the call, and the whole entry walk with
-    // its two virtual dispatches is that one function's body. Inlining it
-    // here needs the definition visible in this TU (stringstruct.cpp holds
-    // it), which is a handoff, not a rewrite.
-    if (unit_ids_.head_ != 0) {
-        unit_ids_.remove_all();
+    // The two list teardowns: inlined StringList::remove_all, then the
+    // cursor reset through the same list pointer (no head_ guard here).
+    {
+        StringList *list = &unit_ids_;
+        list->remove_all();
+        list->current_position_ = 0;
     }
-    unit_ids_.current_position_ = 0;
-
-    if (item_ids_.head_ != 0) {
-        item_ids_.remove_all();
+    {
+        StringList *list = &item_ids_;
+        list->remove_all();
+        list->current_position_ = 0;
     }
-    item_ids_.current_position_ = 0;
 
 
     for (i = 0; i < 8; i++) {
@@ -2299,6 +2295,7 @@ void BasePop::close() {
     field_31B4_ = BasePopDefaultField31B0[1];
     field_214C_ = BasePopDefaultField2148[1];
     field_2148_ = BasePopDefaultField2148[0];
+    fallback_parent_window_ = 0;
     fallback_parent_window_ = BasePopDefaultField322C;
     field_31A0_ = BasePopButtonDefaults.button_color;
 
@@ -2309,22 +2306,9 @@ void BasePop::close() {
     dialog_height_ = BasePopDefaultDialogSize[1];
 
     if (external_window_ != 0) {
-        dialogs_.Dialog::field_2C_ = dialog_width_;
-
-        int height = static_cast<int>(dialog_height_);
-        if (external_window_ == 0) {
-            if ((field_30A8_ & 0x400) == 0 && WinScreenWidth >= 0x400) {
-                height = (height * 3) / 2;
-            }
-        }
-        dialogs_.Dialog::field_30_ = height;
-
-        if (default_loc_a_ != 0x2000) {
-            loc_a_ = default_loc_a_;
-        }
-        if (default_loc_b_ != 0x2000) {
-            loc_b_ = default_loc_b_;
-        }
+        set_width(dialog_width_);
+        set_height(dialog_height_);
+        set_loc(default_loc_a_, default_loc_b_);
 
         dialogs_.set_style_bits(3);
     }
@@ -2699,16 +2683,11 @@ int BasePop::init(int flags, long heap_base) {
 
     field_30A8_ = flags;
     if (external_window_ == 0) {
-        dialogs_.Dialog::field_20_ &= ~3u;
+        dialogs_.clear_style_bits(3);
         set_loc(0x1000, 0x1000);
     } else {
-        dialogs_.Dialog::field_2C_ = dialog_width_;
-        int height = dialog_height_;
-        if (external_window_ == 0 && (field_30A8_ & 0x400) == 0 &&
-            WinScreenWidth >= 0x400) {
-            height = (height * 3) / 2;
-        }
-        dialogs_.Dialog::field_30_ = height;
+        set_width(dialog_width_);
+        set_height(dialog_height_);
         set_loc(default_loc_a_, default_loc_b_);
         dialogs_.set_style_bits(3);
     }
