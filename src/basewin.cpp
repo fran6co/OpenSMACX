@@ -916,16 +916,15 @@ void BaseWin::draw_support() {
     const int width = mapWin_.pixel_width();
     const int height = mapWin_.pixel_height();
     mapWin_.field_1DD70_ = 0x200402;
-    const int caption_scale = MapWinCaptionScale;
     int zoom = 2;
     int width_step = 900;
     int height_step = 450;
     do {
-        const int horizontal = caption_scale > 0
-            ? caption_scale * 50 / MapWinCaptionDivisor : width_step / 16;
+        const int horizontal = MapWinCaptionScale > 0
+            ? MapWinCaptionScale * 50 / MapWinCaptionDivisor : width_step / 16;
         if ((MapLongitudeBounds / 2) * horizontal <= width) {
-            const int vertical = caption_scale > 0
-                ? caption_scale * 25 / MapWinCaptionDivisor : height_step / 16;
+            const int vertical = MapWinCaptionScale > 0
+                ? MapWinCaptionScale * 25 / MapWinCaptionDivisor : height_step / 16;
             if ((MapLatitudeBounds / 2) * vertical <= height) break;
         }
         --zoom;
@@ -936,9 +935,9 @@ void BaseWin::draw_support() {
     mapWin_.center_x_ = BaseCurrent->x;
     mapWin_.center_y_ = BaseCurrent->y;
     mapWin_.redraw();
-    mapWin_.copy(this, 0, 0,
-        area.left + (area.right - area.left) / 2 - width / 2,
-        area.top + (area.bottom - area.top) / 2 - height / 2, width, height);
+    int x = (area.right - area.left) / 2 - width / 2 + area.left;
+    int y = (area.bottom - area.top) / 2 - height / 2 + area.top;
+    mapWin_.copy(this, 0, 0, x, y, width, height);
     soft_update(&rect1_);
     Buffer::set_clip(&saved);
 }
@@ -4943,62 +4942,39 @@ void BaseWin::on_redraw() {
 // is 2099 dwords, the established 0x20CC-byte PlayerData stride.
 void BaseWin::update_gov_buttons() {
     const int faction = BaseCurrent->faction_id_current;
-    const unsigned int initial_governor = BaseCurrent->governor;
-    flatButtons_[8].set((initial_governor & GOV_ACTIVE) != 0);
-
-    // Each following decision reloads the human byte and, on the human path,
-    // the current base's governor after the prior button cleanup redraw.
-    bool explore_priority;
-    if ((GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ &
-         (1u << faction)) != 0) {
-        const unsigned int governor = BaseCurrent->governor;
-        explore_priority =
-            (governor & (GOV_ACTIVE | GOV_PRIORITY_EXPLORE)) ==
-            (GOV_ACTIVE | GOV_PRIORITY_EXPLORE);
+    flatButtons_[8].set((BaseCurrent->governor & GOV_ACTIVE) != 0);
+    if ((GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & (1u << faction)) != 0
+            ? (BaseCurrent->governor & GOV_PRIORITY_EXPLORE) != 0 && (BaseCurrent->governor & GOV_ACTIVE) != 0
+            : PlayersData[faction].ai_growth != 0) {
+        flatButtons_[4].set(1);
     } else {
-        explore_priority = PlayersData[faction].ai_growth != 0;
+        flatButtons_[4].set(0);
+        flatButtons_[4].clear_auxiliary_state_for_disabled_button();
     }
-    flatButtons_[4].set(explore_priority);
-    if (!explore_priority) flatButtons_[4].clear_auxiliary_state_for_disabled_button();
-
-    bool discover_priority;
-    if ((GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ &
-         (1u << faction)) != 0) {
-        const unsigned int governor = BaseCurrent->governor;
-        discover_priority =
-            (governor & (GOV_ACTIVE | GOV_PRIORITY_DISCOVER)) ==
-            (GOV_ACTIVE | GOV_PRIORITY_DISCOVER);
+    if ((GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & (1u << faction)) != 0
+            ? (BaseCurrent->governor & GOV_PRIORITY_DISCOVER) != 0 && (BaseCurrent->governor & GOV_ACTIVE) != 0
+            : PlayersData[faction].ai_tech != 0) {
+        flatButtons_[5].set(1);
     } else {
-        discover_priority = PlayersData[faction].ai_tech != 0;
+        flatButtons_[5].set(0);
+        flatButtons_[5].clear_auxiliary_state_for_disabled_button();
     }
-    flatButtons_[5].set(discover_priority);
-    if (!discover_priority) flatButtons_[5].clear_auxiliary_state_for_disabled_button();
-
-    bool build_priority;
-    if ((GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ &
-         (1u << faction)) != 0) {
-        const unsigned int governor = BaseCurrent->governor;
-        build_priority =
-            (governor & (GOV_ACTIVE | GOV_PRIORITY_BUILD)) ==
-            (GOV_ACTIVE | GOV_PRIORITY_BUILD);
+    if ((GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & (1u << faction)) != 0
+            ? (BaseCurrent->governor & GOV_PRIORITY_BUILD) != 0 && (BaseCurrent->governor & GOV_ACTIVE) != 0
+            : PlayersData[faction].ai_wealth != 0) {
+        flatButtons_[6].set(1);
     } else {
-        build_priority = PlayersData[faction].ai_wealth != 0;
+        flatButtons_[6].set(0);
+        flatButtons_[6].clear_auxiliary_state_for_disabled_button();
     }
-    flatButtons_[6].set(build_priority);
-    if (!build_priority) flatButtons_[6].clear_auxiliary_state_for_disabled_button();
-
-    bool conquer_priority;
-    if ((GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ &
-         (1u << faction)) != 0) {
-        const unsigned int governor = BaseCurrent->governor;
-        conquer_priority =
-            (governor & (GOV_ACTIVE | GOV_PRIORITY_CONQUER)) ==
-            (GOV_ACTIVE | GOV_PRIORITY_CONQUER);
+    if ((GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & (1u << faction)) != 0
+            ? (BaseCurrent->governor & GOV_PRIORITY_CONQUER) != 0 && (BaseCurrent->governor & GOV_ACTIVE) != 0
+            : PlayersData[faction].ai_power != 0) {
+        flatButtons_[7].set(1);
     } else {
-        conquer_priority = PlayersData[faction].ai_power != 0;
+        flatButtons_[7].set(0);
+        flatButtons_[7].clear_auxiliary_state_for_disabled_button();
     }
-    flatButtons_[7].set(conquer_priority);
-    if (!conquer_priority) flatButtons_[7].clear_auxiliary_state_for_disabled_button();
 }
 // ORIGINAL: 0x00412AA0 ?draw_expenses@BaseWin@@QAEXH@Z 0x00412AA0-0x00414B38;0x00651B61-0x00651B76
 // RECOVERY_BINDING: v1 {"evidence": ["image:0x00412AA0; original spans remain load-bearing.", "Retired seed provenance git:1432fed4:src/unrecovered/00412aa0.cpp; historical transcription conflicts remain evidence, not runtime targets.", "image:41E8D0 owns panel geometry; source:src/basewin.h owns real GraphicWin/Buffer and existing Base/Player/Veh/Rules receivers."], "reason": "Recover the complete BaseWin draw_expenses panel using genuine owned rectangles, automatic Font lifetime and existing application globals, retaining original branch/call order and unchecked input obligations."}
@@ -7653,6 +7629,12 @@ void BaseWin::on_scrolling(int code, int position) {
   on_scrolled(code, position);
 }
 
+// Descriptive recovery operation; this name does not identify an original
+// entry. farm_get's copied rect1_.left register needs the inline boundary.
+static inline int basewin_rect_width(const RECT *rect) {
+    return rect->right - rect->left;
+}
+
 /*
 Purpose: Map a click on the base screen's farm panel back to the tile it
          picks: unproject the 0x60-by-0x30 half-scale sprite pixel through
@@ -7671,24 +7653,16 @@ Status: Coverage transcription of the retained seed
         The original unchecked indexing is retained.
 */
 int BaseWin::farm_get(int a1, int a2) {
-    const int right = rect1_.right;
-    const int left = rect1_.left;
-    const int top = rect1_.top;
-
-    int y = a1 + ((0xc0 - (right - left) / 2) - left);
-    if (y >= 0 && y < 0x180) {
-        int x = a2 - top;
-        if (x >= 0 && x < 0xc0) {
-            int col = (y / 0x60) * 2 - 3;
-            int row = (x / 0x30) * 2 - 3;
-            int p = buffer2_.get_pixel(y % 0x60,
-                            x % 0x30);
-            int idx = (p - 10) / 16;
+    a1 += 0xc0 - basewin_rect_width(&rect1_) / 2 - rect1_.left;
+    if (a1 >= 0 && a1 < 0x180) {
+        a2 -= rect1_.top;
+        if (a2 >= 0 && a2 < 0xc0) {
+            int col = (a1 / 0x60) * 2 - 3;
+            int row = (a2 / 0x30) * 2 - 3;
+            int idx = (buffer2_.get_pixel(a1 % 0x60, a2 % 0x30) - 10) / 16;
             if (idx != 0) {
-                return radius_move(
-                    col + RiverStepX[idx - 1],
-                    row + RiverStepY[idx - 1],
-                    0x15);
+                col += RiverStepX[idx - 1];
+                row += RiverStepY[idx - 1];
             }
             return radius_move(col, row, 0x15);
         }

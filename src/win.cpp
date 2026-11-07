@@ -8761,29 +8761,13 @@ void Win::paint_tiled(Buffer *tile, int x_origin, int y_origin, int clip_left,
         return;
     }
 
-    if (WinHdcRefCount == 0) {
-        if (DirectDrawSurface == 0) {
-            WinSharedHdc = GetDC(
-                HandleMain);
-        } else {
-            DirectDrawSurface->GetDC(&WinSharedHdc);
-        }
-        if (WinSharedHdc == 0) {
-            return;
-        }
-        WinHdcRefCount = 1;
-    } else {
-        WinHdcRefCount = WinHdcRefCount + 1;
-    }
-
-    if (WinSharedHdc == 0) {
+    if (Win::get_hdc() == 0) {
         return;
     }
+    sync_palette();
 
-    if (palette_seed_cache_ != PaletteActive->seed_) {
-        Palette::set_active_window(this);
-        palette_seed_cache_ = PaletteActive->seed_;
-    }
+    int tile_width = static_cast<int>(tile->dib_.bmiHeader.biWidth);
+    int neg_tile_height = -static_cast<int>(tile->dib_.bmiHeader.biHeight);
 
     RECT clip_rect;
     clip_rect.left = clip_left;
@@ -8796,50 +8780,43 @@ void Win::paint_tiled(Buffer *tile, int x_origin, int y_origin, int clip_left,
     }
     SelectClipRgn(WinSharedHdc, clip_region);
 
-    int tile_width = static_cast<int>(tile->dib_.bmiHeader.biWidth);
-    int neg_tile_height = -static_cast<int>(tile->dib_.bmiHeader.biHeight);
-
     int mod_x = x_origin % tile_width;
     int mod_y = y_origin % neg_tile_height;
 
-    int cols = (mod_x != 0) ? 1 : 0;
-    cols += (clip_width - mod_x) / tile_width;
-    if ((clip_width - mod_x) % tile_width != 0) {
+    int cols = 0;
+    int rows = 0;
+    if (mod_x != 0) {
+        cols = 1;
+    }
+    if (mod_y != 0) {
+        rows = 1;
+    }
+    int span_x = clip_width - mod_x;
+    cols += span_x / tile_width;
+    int span_y = clip_height - mod_y;
+    rows += span_y / neg_tile_height;
+    if (span_x % tile_width != 0) {
         ++cols;
     }
-
-    int rows = (mod_y != 0) ? 1 : 0;
-    rows += (clip_height - mod_y) / neg_tile_height;
-    if ((clip_height - mod_y) % neg_tile_height != 0) {
+    if (span_y % neg_tile_height != 0) {
         ++rows;
     }
 
-    int start_x = clip_left - mod_x;
+    const int start_x = clip_left - mod_x;
+    int cur_x = start_x;
     int cur_y = clip_top - mod_y;
-
-    if (rows > 0) {
-        for (int r = rows; r != 0; --r) {
-            if (cols > 0) {
-                int cur_x = start_x;
-                for (int c = cols; c != 0; --c) {
-                    tile->copy_to_window(this, 0, 0, cur_x, cur_y, static_cast<int>(tile->dib_.bmiHeader.biWidth), -static_cast<int>(tile->dib_.bmiHeader.biHeight));
-                    cur_x += tile_width;
-                }
-            }
-            cur_y += neg_tile_height;
+    for (int r = 0; r < rows; ++r) {
+        for (int c = 0; c < cols; ++c) {
+            tile->copy_to_window(this, 0, 0, cur_x, cur_y,
+                                 static_cast<int>(tile->dib_.bmiHeader.biWidth),
+                                 -static_cast<int>(tile->dib_.bmiHeader.biHeight));
+            cur_x += tile_width;
         }
+        cur_x = start_x;
+        cur_y += neg_tile_height;
     }
 
-    if (--WinHdcRefCount == 0) {
-        if (DirectDrawSurface != 0) {
-            DirectDrawSurface->ReleaseDC(WinSharedHdc);
-            WinSharedHdc = 0;
-            return;
-        }
-        ReleaseDC(
-            HandleMain, WinSharedHdc);
-        WinSharedHdc = 0;
-    }
+    Win::release_hdc();
 }
 
 // ORIGINAL: 0x005ECD20 ?pass_dialog_focus@Win@@QAEXXZ 0x005ECD20-0x005ECDBA FILE BYTE_EXACT
@@ -9413,6 +9390,25 @@ int __cdecl Win::OnQueryNewPalette(void * hwnd) {
     return 0;
 }
 
+// Descriptive recovery operation; this name does not identify an original
+// entry. Its inline boundary keeps VC6 from folding the later count_ reread.
+static inline int win_focus_seek(WinNodeList *list, Win *window) {
+    if (list->head_ == 0) {
+        return 0;
+    }
+    int count = list->count_;
+    list->tail_ = 0;
+    list->current_ = list->head_;
+    for (int idx = 0; idx < count; ++idx) {
+        if (list->current_->focus_owner_ == window) {
+            return 1;
+        }
+        list->tail_ = list->tail_ + 1;
+        list->current_ = list->current_->next_;
+    }
+    return 0;
+}
+
 // ORIGINAL: 0x005ECC40 ?set_dialog_focus@Win@@QAEXPAVWin@@@Z 0x005ECC40-0x005ECD1B FILE
 // kind game
 // symbol    ?set_dialog_focus@Win@@UAEXPAV1@@Z
@@ -9440,25 +9436,14 @@ void Win::set_dialog_focus(Win * window) {
 
     WinPendingFocus = newFocus;
 
-    if (list_.head_ == 0) {
+    if (!win_focus_seek(&list_, window)) {
         return;
     }
-
-    int count = list_.count_;
-    list_.tail_ = 0;
-    list_.current_ = list_.head_;
-    for (int idx = 0; idx < count; ++idx) {
-        if (list_.current_->focus_owner_ == window) {
-            if (newFocus != 0 && list_.count_ > 1) {
-                newFocus->on_dialog_focus(0);
-            }
-            if (list_.head_ != 0 && list_.current_->focus_owner_ != 0) {
-                list_.current_->focus_owner_->on_dialog_focus(1);
-            }
-            return;
-        }
-        list_.tail_ = list_.tail_ + 1;
-        list_.current_ = list_.current_->next_;
+    if (newFocus != 0 && list_.count_ > 1) {
+        newFocus->on_dialog_focus(0);
+    }
+    if (list_.head_ != 0 && list_.current_->focus_owner_ != 0) {
+        list_.current_->focus_owner_->on_dialog_focus(1);
     }
 }
 

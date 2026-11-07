@@ -996,50 +996,37 @@ void SocialWin::draw_psych_alloc() {
     box_rect.bottom = box_rect.top + 0x14;
     MainInterfaceGlobal.Buffer::box(&box_rect, 0xbc, 0xbc);
 
-    StringTemp[0] = 0;
     const int allocation = PlayersData[factionID_].se_alloc_psych;
+    StringTemp[0] = '\0';
     strcat(StringTemp, label_get(318));
     strcat(StringTemp, BufferJoinSpace);
-
-    char numbuf[80];
-    _itoa(allocation * 10, numbuf, 10);
-    strcat(StringTemp, numbuf);
+    char number[80];
+    _itoa(allocation * 10, number, 10);
+    strcat(StringTemp, number);
     strcat(StringTemp, PercentText);
-
     CharUpperA(StringTemp);
 
     MainInterfaceGlobal.Buffer::set_font(&font1_, 0, 0, 0);
     MainInterfaceGlobal.Buffer::set_text_color(0x9f, -1, 1, 1);
-
-    char *buf_str = StringTemp;
-    if (buf_str) {
-        int len = strlen(buf_str);
-        MainInterfaceGlobal.Buffer::write_cent_l(buf_str, &box_rect, len);
+    char *const text = StringTemp;
+    if (text != 0) {
+        MainInterfaceGlobal.Buffer::write_cent_l(text, &box_rect, strlen(text));
     }
 
-    int row_height = local_rect.bottom - energyAllocLock_[0].height();
-    int start_x = local_rect.left + energyAllocLock_[0].width();
-    int avail_width = local_rect.right - start_x;
-    // Pinned 0x004B0E17 loads allocation into EBX; 0x004B0EF7 multiplies
-    // it by avail_width, then 0x004B0EFD..0x004B0F0F applies signed
-    // division by ten via 0x66666667, SAR and sign correction.
-    int scaled = (avail_width * allocation) / 10;
-    int end_x = start_x + scaled;
-
-    int adjusted_end_x = box_rect.right;
-    if (end_x < local_rect.right) {
-        adjusted_end_x = end_x + (allocation != 0 ? 1 : 0);
-        int remaining_w = local_rect.right - end_x;
-        int remaining_h = local_rect.bottom - row_height;
-        MainInterfaceGlobal.Buffer::tile(&energyAllocSlider_[4], end_x, row_height, end_x, row_height,
-                  remaining_w, remaining_h);
+    local_rect.top = local_rect.bottom - energyAllocLock_[0].height();
+    local_rect.left += energyAllocLock_[0].width();
+    box_rect = local_rect;
+    local_rect.left += (local_rect.right - local_rect.left) * allocation / 10;
+    if (local_rect.left < local_rect.right) {
+        box_rect.right = local_rect.left + (allocation != 0);
+        MainInterfaceGlobal.Buffer::tile(&energyAllocSlider_[4], local_rect.left, local_rect.top,
+                     local_rect.left, local_rect.top, local_rect.right - local_rect.left,
+                     local_rect.bottom - local_rect.top);
     }
-
-    if (start_x < adjusted_end_x) {
-        int width2 = adjusted_end_x - start_x;
-        int height2 = box_rect.bottom - row_height;
-        MainInterfaceGlobal.Buffer::tile(&energyAllocSlider_[5], start_x, row_height, start_x, row_height,
-                  width2, height2);
+    if (box_rect.left < box_rect.right) {
+        MainInterfaceGlobal.Buffer::tile(&energyAllocSlider_[5], box_rect.left, box_rect.top,
+                     box_rect.left, box_rect.top, box_rect.right - box_rect.left,
+                     box_rect.bottom - box_rect.top);
     }
 
     MainInterfaceGlobal.soft_update(&tooltipPsych_);
@@ -1062,8 +1049,7 @@ void SocialWin::draw_economy_alloc() {
     title.bottom = title.top + 0x14;
     MainInterfaceGlobal.Buffer::box(&title, 0xbc, 0xbc);
 
-    const PlayerData &player = PlayersData[factionID_];
-    const int remaining = 10 - player.se_alloc_psych - player.se_alloc_labs;
+    const int remaining = 10 - PlayersData[factionID_].se_alloc_psych - PlayersData[factionID_].se_alloc_labs;
     StringTemp[0] = '\0';
     strcat(StringTemp, label_get(366));
     strcat(StringTemp, BufferJoinSpace);
@@ -1075,20 +1061,25 @@ void SocialWin::draw_economy_alloc() {
 
     MainInterfaceGlobal.Buffer::set_font(&font1_, 0, 0, 0);
     MainInterfaceGlobal.Buffer::set_text_color(0x9f, -1, 1, 1);
-    MainInterfaceGlobal.Buffer::write_cent_l(StringTemp, &title, strlen(StringTemp));
-
-    const int top = panel.bottom - energyAllocLock_[0].height();
-    const int left = panel.left + energyAllocLock_[0].width();
-    const int split = left + (panel.right - left) * remaining / 10;
-    int right_split = panel.right;
-    if (split < panel.right) {
-        right_split = split + (remaining != 0);
-        MainInterfaceGlobal.Buffer::tile(&energyAllocSlider_[0], split, top, split, top,
-                     panel.right - split, panel.bottom - top);
+    char *const text = StringTemp;
+    if (text != 0) {
+        MainInterfaceGlobal.Buffer::write_cent_l(text, &title, strlen(text));
     }
-    if (left < right_split) {
-        MainInterfaceGlobal.Buffer::tile(&energyAllocSlider_[1], left, top, left, top,
-                     right_split - left, panel.bottom - top);
+
+    panel.top = panel.bottom - energyAllocLock_[0].height();
+    panel.left += energyAllocLock_[0].width();
+    title = panel;
+    panel.left += (panel.right - panel.left) * remaining / 10;
+    if (panel.left < panel.right) {
+        title.right = panel.left + (remaining != 0);
+        MainInterfaceGlobal.Buffer::tile(&energyAllocSlider_[0], panel.left, panel.top,
+                     panel.left, panel.top, panel.right - panel.left,
+                     panel.bottom - panel.top);
+    }
+    if (title.left < title.right) {
+        MainInterfaceGlobal.Buffer::tile(&energyAllocSlider_[1], title.left, title.top,
+                     title.left, title.top, title.right - title.left,
+                     title.bottom - title.top);
     }
 
     MainInterfaceGlobal.soft_update(&tooltipEconomy_);
@@ -1129,12 +1120,10 @@ void SocialWin::draw_labs_alloc() {
 
     // The title rectangle is reused for the allocated share and the panel
     // rectangle for the remainder.
-    title.top = panel.bottom - energyAllocLock_[0].height();
-    title.left = panel.left + energyAllocLock_[0].width();
-    title.right = panel.right;
-    title.bottom = panel.bottom;
+    panel.top = panel.bottom - energyAllocLock_[0].height();
+    panel.left += energyAllocLock_[0].width();
+    title = panel;
     panel.left = title.left + (title.right - title.left) * allocation / 10;
-    panel.top = title.top;
     if (panel.left < panel.right) {
         title.right = panel.left + (allocation != 0);
         MainInterfaceGlobal.Buffer::tile(&energyAllocSlider_[2], panel.left, panel.top,
