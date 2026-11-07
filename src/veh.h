@@ -719,7 +719,6 @@ void __cdecl battle_compute(int veh_id_atk, int veh_id_def, int *offense_out,
 int __cdecl best_defender(int veh_id_def, int veh_id_atk, BOOL check_artillery);
 void __cdecl invasions(int base_id);
 void __cdecl set_course(int veh_id, char type, int x, int y);
-int __cdecl veh_top(int veh_id);
 BOOL __cdecl want_monolith(int veh_id);
 int __cdecl arm_strat(int armor_id, int faction_id);
 int __cdecl weap_strat(int weapon_id, int faction_id);
@@ -830,6 +829,17 @@ MEASURED inline int __cdecl veh_moves(int veh_id) {
 }
 
 int __cdecl abil_index(int ability_id);
+
+MEASURED inline int __cdecl veh_top(int veh_id) {
+    int top_veh_id = veh_id;
+    if (veh_id < 0) {
+        return -1;
+    }
+    while (Vehs[top_veh_id].prev_veh_id_stack >= 0) {
+        top_veh_id = Vehs[top_veh_id].prev_veh_id_stack;
+    }
+    return top_veh_id;
+}
 
 MEASURED inline void __cdecl veh_put(int veh_id, int x, int y) {
     veh_drop(veh_lift(veh_id), x, y);

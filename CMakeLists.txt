@@ -321,6 +321,7 @@ set(OPENSMACX_SOURCES
     src/timer_messages.cpp
     src/enemy.cpp
     src/veh.cpp
+    src/veh_stack.cpp
     src/vehicle_render.cpp
     src/veh_queries.cpp
     src/vehicle_storage.cpp
@@ -463,6 +464,7 @@ set_source_files_properties(
     src/faction_dialogue.cpp
     src/faction_network.cpp
     src/veh.cpp
+    src/veh_stack.cpp
     src/vehicle_render.cpp
     src/veh_queries.cpp
     src/prototype_history.cpp
@@ -613,6 +615,7 @@ set_property(SOURCE
     src/faction.cpp
     src/tutwin.cpp
     src/veh.cpp
+    src/veh_stack.cpp
     src/string_table.cpp
     src/strings.cpp
     src/sounddevice.cpp
