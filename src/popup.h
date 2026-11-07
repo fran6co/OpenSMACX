@@ -88,7 +88,12 @@ class Popup : public BasePop {
   // file if the alien-script redirect fails.
   int start(char *a1, const char *a2, int a3, char *a4, int a5,
              GraphicWin *owner);
-  void start(char *a1, const char *a2, int a3, char *a4, int a5);
+  // MEASURED inline (0x0043EF70): custom_my_faction's inlined editor_who copy
+  // calls this out of line while standalone editor_who calls the six-argument
+  // start directly - only a budget-limited header inline gives both.
+  MEASURED void start(char *a1, const char *a2, int a3, char *a4, int a5) {
+    start(a1, a2, a3, a4, a5, nullptr);
+  }
   void start(const char *label);
   void start(const char *label, int value);
   int on_dialog_back_draw(::GraphicWin *window) override;

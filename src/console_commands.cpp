@@ -419,7 +419,7 @@ void Console::editor_edit_veh(int vehicle_id) {
     update_then_redraw_vehicle_editor_tile(vehicle);
 
     if (ConsoleGroupAction == 1) {
-        popup.start(PopupStartCaption, "EDITMORALE", -1, nullptr, 0x40, nullptr);
+        popup.start(PopupStartCaption, "EDITMORALE", -1, nullptr, 0x40);
         for (int morale_id = 0; morale_id < MaxMoraleNum; ++morale_id) {
             LPSTR name = Morale[morale_id].name;
             const VehPrototype &listed_prototype = VehPrototypes[vehicle.proto_id];
@@ -490,7 +490,7 @@ void Console::editor_edit_veh(int vehicle_id) {
         const uint8_t dialog_range =
             Chassis[VehPrototypes[vehicle.proto_id].chassis_id].range;
         const char *dialog = dialog_range <= 1 ? "EDITVEH2" : "EDITVEH2A";
-        popup.start(PopupStartCaption, dialog, -1, nullptr, 0x44, nullptr);
+        popup.start(PopupStartCaption, dialog, -1, nullptr, 0x44);
         if (popup.exec(0, nullptr) < 0) {
             return;
         }
@@ -505,7 +505,7 @@ void Console::editor_edit_veh(int vehicle_id) {
     }
 
     if (ConsoleGroupAction == 3) {
-        popup.start(PopupStartCaption, "EDITVEHWHO", -1, nullptr, 0x42, nullptr);
+        popup.start(PopupStartCaption, "EDITVEHWHO", -1, nullptr, 0x42);
         for (int faction_id = 0; faction_id < MaxPlayerNum; ++faction_id) {
             PluralityDefault = Players[faction_id].is_noun_plural;
             StringTemp[0] = '\0';
@@ -525,7 +525,7 @@ void Console::editor_edit_veh(int vehicle_id) {
     }
 
     if (ConsoleGroupAction == 4) {
-        popup.start(PopupStartCaption, "EDITVEHHOME", -1, nullptr, 0x42, nullptr);
+        popup.start(PopupStartCaption, "EDITVEHHOME", -1, nullptr, 0x42);
         StringTemp[0] = '\0';
         ::strcat(StringTemp, label_get(25));
         popup.dialogs().item(StringTemp, 9999);
@@ -2465,7 +2465,7 @@ static inline void popup_accept(unsigned int accepted, unsigned int bit, uint32_
 int Console::editor_who(int default_faction, int first_faction) {
     Popup popup;
     PopupModalState = 6;
-    popup.start(PopupStartCaption, ConsoleStrEditorWhoListTitle, -1, 0, 0x40, nullptr);
+    popup.start(PopupStartCaption, ConsoleStrEditorWhoListTitle, -1, 0, 0x40);
     popup_faction_items(popup, first_faction);
     if (default_faction >= 0) {
         popup.set_value(default_faction);
@@ -2828,7 +2828,7 @@ void Console::editor_rules() {
 void Console::editor_diff() {
     Popup popup;
     auto_undo();
-    popup.start(PopupStartCaption, "EDITORDIFF", -1, nullptr, 0x40, nullptr);
+    popup.start(PopupStartCaption, "EDITORDIFF", -1, nullptr, 0x40);
     for (int i = 0; i < MaxDiffNum; ++i) {
         StringTemp[0] = 0;
         strcat(StringTemp, StringTable.get(Difficulty[i]));
@@ -2851,8 +2851,12 @@ void Console::editor_diff() {
 void Console::editor_reload() {
     Popup popup;
     PopupModalState = 6;
-    popup.start(PopupStartCaption, "EDITORWHO", -1, nullptr, 0x40, nullptr);
-    popup_faction_items(popup, 1);
+    popup.start(PopupStartCaption, "EDITORWHO", -1, nullptr, 0x40);
+    for (int faction_entry = 1; faction_entry < MaxPlayerNum; ++faction_entry) {
+        parse_set(Players[faction_entry].noun_gender,
+                  Players[faction_entry].is_noun_plural);
+        popup.dialogs().item(Players[faction_entry].noun_faction, faction_entry);
+    }
     const int faction = popup.exec(0, nullptr);
     PopupModalState = 0;
     if (faction < 0) {
@@ -2874,8 +2878,12 @@ void Console::editor_eliminate() {
     Popup popup;
     auto_undo();
     PopupModalState = 6;
-    popup.start(PopupStartCaption, "EDITORWHO", -1, nullptr, 0x40, nullptr);
-    popup_faction_items(popup, 1);
+    popup.start(PopupStartCaption, "EDITORWHO", -1, nullptr, 0x40);
+    for (int faction_entry = 1; faction_entry < MaxPlayerNum; ++faction_entry) {
+        parse_set(Players[faction_entry].noun_gender,
+                  Players[faction_entry].is_noun_plural);
+        popup.dialogs().item(Players[faction_entry].noun_faction, faction_entry);
+    }
     const int faction = popup.exec(0, nullptr);
     PopupModalState = 0;
     if (faction < 0) {
@@ -2905,7 +2913,7 @@ void Console::editor_eliminate() {
 void Console::editor_terrain() {
     Popup popup;
     PopupModalState = 6;
-    popup.start(PopupStartCaption, "EDITORTERRAIN", -1, nullptr, 0, nullptr);
+    popup.start(PopupStartCaption, "EDITORTERRAIN", -1, nullptr, 0);
     for (int index = 0; index < MaxTerrainNum; ++index) {
         if (Terraforming[index].bit == 0) {
             continue;
@@ -3013,7 +3021,7 @@ void Console::editor_scen_victory() {
     popup_accept(PopupWriteCheckState, 0x1000u, GameDataStateStorage.fields_.game_state_, 0x00080000u);
 
     if (GameDataStateStorage.fields_.game_state_ & 0x04000000u) {
-        popup.start(PopupStartCaption, "FACOBJ", -1, nullptr, 0, nullptr);
+        popup.start(PopupStartCaption, "FACOBJ", -1, nullptr, 0);
         for (int facility = 1; facility < FacilityRepStart; ++facility) {
             char *name = StringTable.get(Facility[facility].name);
             popup.dialogs().item(name, facility);
@@ -3029,7 +3037,7 @@ void Console::editor_scen_victory() {
 void Console::editor_view() {
     Popup popup;
     PopupModalState = 6;
-    popup.start(PopupStartCaption, "EDITORWHO", -1, nullptr, 0x40, nullptr);
+    popup.start(PopupStartCaption, "EDITORWHO", -1, nullptr, 0x40);
     for (int faction = 1; faction < MaxPlayerNum; ++faction) {
         if (!is_alive(faction)) {
             continue;
@@ -3116,7 +3124,7 @@ void Console::editor_natural(int place) {
     Popup popup;
     auto_undo();
     popup.start(PopupStartCaption, place != 0 ? "NATPLACE" : "NATUNPLACE",
-                -1, nullptr, 0x40, nullptr);
+                -1, nullptr, 0x40);
     for (int natural = 0; natural < MaxNaturalNum; ++natural) {
         popup.dialogs().item(
             StringTable.get(Natural[natural].name), natural);
@@ -3422,7 +3430,7 @@ void Console::editor_veh() {
     if (ScenarioVehicleFaction < 0) ScenarioVehicleFaction = ConsoleGlobal.faction_id_;
 
     for (;;) {
-        popup.start(PopupStartCaption, "EDITORUNIT", -1, nullptr, 0x40, nullptr);
+        popup.start(PopupStartCaption, "EDITORUNIT", -1, nullptr, 0x40);
         for (int proto_idx = 0; proto_idx < MaxVehProtoNum; ++proto_idx) {
             const VehPrototype &entry = VehPrototypes[proto_idx];
             if ((entry.flags & 1u) == 0) continue;
@@ -3620,7 +3628,7 @@ void Console::editor_scen_param() {
     parse_says(5, StringTemp, -1, -1);
     parse_say_num(6, GameDataStateStorage.fields_.sunspot_duration_);
 
-    popup.start(PopupStartCaption, ConsoleStrScenParam, -1, nullptr, 0x44, nullptr);
+    popup.start(PopupStartCaption, ConsoleStrScenParam, -1, nullptr, 0x44);
 
     if (popup.exec(0, 0) < 0) {
         return;
@@ -3714,7 +3722,7 @@ void Console::destroy(int veh_id) {
     const uint32_t tile_flags = tile->bit;
     const char *title = (triad == 2) ? ConsoleStrDestroyBomb : ConsoleStrDestroy;
     // Native4D57E9 passes -1, not the tile flags used by the option filter.
-    popup.start(PopupStartCaption, title, -1, nullptr, 0x40, nullptr);
+    popup.start(PopupStartCaption, title, -1, nullptr, 0x40);
 
     Dialogs &dialogs = popup.dialogs();
     int item_count = 0;
@@ -3812,7 +3820,7 @@ void Console::custom_my_faction() {
         ? label_keys[0x2E3] : label_keys[0x2E2];
     strcpy(name_buf, StringTable.get(key));
 
-    popup.start(PopupStartCaption, ConsoleStrCustomNames, -1, nullptr, 0x44, nullptr);
+    popup.start(PopupStartCaption, ConsoleStrCustomNames, -1, nullptr, 0x44);
 
     char *const f1 = player.name_leader;
     char *const f2 = player.formal_name_faction;
@@ -3978,7 +3986,7 @@ void Console::go_to(int subject, int order, int grouped) {
             ::draw_map(1);
         }
         parse_says(0, base.name_string, -1, -1);
-        popup.start(PopupStartCaption, "DESTTRIAD", -1, nullptr, 0x40, nullptr);
+        popup.start(PopupStartCaption, "DESTTRIAD", -1, nullptr, 0x40);
         for (int i = 0; i < 3; ++i) {
             const int destination = i == 0 ? base.auto_forward_slots[Base::AutoForwardLand]
                 : i == 1 ? base.auto_forward_slots[Base::AutoForwardSea]
@@ -4059,7 +4067,7 @@ void Console::go_to(int subject, int order, int grouped) {
         else if (order == 28) title = "TUBETO";
         else if (order == 128) title = "BOMBTO";
         strcpy(StringTemp, title);
-        popup.start(PopupStartCaption, StringTemp, -1, nullptr, 0x42, nullptr);
+        popup.start(PopupStartCaption, StringTemp, -1, nullptr, 0x42);
         popup.button(label_get(0x70c / 4)); popup.button(label_get(0x710 / 4)); popup.button(label_get(0x714 / 4));
         popup.set_loc(-10, -10);
         if (order == -2) popup.button(label_get(0x718 / 4));

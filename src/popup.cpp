@@ -321,6 +321,7 @@ void Popup::close() {
 Purpose: The five-argument start form, forwarding to the six-argument one with
          no parent graphic window.
 // ORIGINAL: 0x0043EF70 ?start@Popup@@QAEXPADPBDHPADH@Z 0x0043EF70-0x0043EF92 BYTE_EXACT
+// body src/popup.h
 // symbol    ?start@Popup@@QAEXPADPBDH0H@Z
 // size      34 bytes
 // prototype void (__thiscall ?start@Popup@@QAEXPADPBDHPADH@Z)(Popup* this, int8* srcFileID, int8* sectionID, int, int8*, int)
@@ -331,10 +332,8 @@ Purpose: The five-argument start form, forwarding to the six-argument one with
 Return Value: n/a
 Status: Complete
 */
-void Popup::start(char *text_file, const char *text_label, int value,
-                  char *override_text, int flags) {
-    start(text_file, text_label, value, override_text, flags, nullptr);
-}
+// BODY IN popup.h, as `MEASURED inline`: custom_my_faction's inlined
+// editor_who copy calls 0x0043EF70, and it is a real body.
 
 
 // Start's mod-redirection data (popup.h has the role note). These current
