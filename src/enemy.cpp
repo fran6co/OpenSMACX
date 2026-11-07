@@ -14,8 +14,5132 @@
 #include "terraforming.h"
 #include "veh.h"
 #include "xpops.h"
+#include "popup.h"
+#include "council.h"
+#include "enemy_pb_policy.h"
+#include "log.h"
+#include "netmsg.h"
+#include "crt_random.h"
+#include "crt_random_inline.h"
 #include <stddef.h>
 #include <string.h>
+
+/*
+Purpose: Direct the unit to start moving automatically towards the specified tile.
+// ORIGINAL: 0x00560AD0 ?go_to@@YAXHDHH@Z 0x00560AD0-0x00560B25 BYTE_EXACT
+// size      85 bytes
+// prototype void (__cdecl ?go_to@@YAXHDHH@Z)(int vehID, int8 type, int xCoord, int yCoord)
+// callers   1   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
+Return Value: n/a
+Status: Complete
+*/
+// BODY IN veh.h, as `MEASURED inline`: set_course's two calls to go_to are
+// both inlined in the image (its own `calls` list has neither), while
+// scenario.cpp's single call stays real - `osmx calls` on set_course names
+// no go_to among its targets. LEVER: matches bitmask/battle_init above.
+
+/*
+Purpose: Determine ideal non-offense (defense, combat, recon) unit count for the specified base.
+// ORIGINAL: 0x00560B30 ?garrison_check@@YAHH@Z 0x00560B30-0x00560D30 BYTE_EXACT
+// size      512 bytes
+// prototype int (__cdecl ?garrison_check@@YAHH@Z)(int baseID)
+// callers   4   call targets   3
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x0050BA00 0x005AC060 0x005C8BA0
+// LEVER: deleted the `BOOL is_obj = is_objective(base_id);` local and wrote
+//        is_objective(base_id) at both use sites - the image calls
+//        0x5AC060 (is_objective) twice, not once with a cached result. Best
+//        similarity 0.763 -> 0.809; agreeing count unchanged at 4/170. The
+//        bitmask() half of the evidence (has_fac_built folding to a byte
+//        test) is the documented systemic gap - TRIED on has_fac
+//        base.cpp:104 - and not fixable here.
+// LEVER: that gap IS fixable here, for this one site - the FAC_HEADQUARTERS
+//        test has a LITERAL facility id, so routing it through
+//        has_fac_built_call forces the real `call 0x50ba00` the image makes
+//        (base_making/pop_goal/pop_goal_fac's lever). Compiled body
+//        159 -> 167 instructions against the image's 170, differing runs
+//        26 -> 19. NOTE the same lever is the WRONG way round in
+//        value_of_base (0x0054CB50): its `has_fac_built(fac, base_id)` has
+//        a RUNTIME fac, and forcing the call there costs 3 instructions and
+//        5 more differing runs - reverted.
+Return Value: Amount of non-offensive units needed (1-10)
+Status: Complete
+*/
+int __cdecl garrison_check(int base_id) {
+    uint32_t faction_id = Bases[base_id].faction_id_current;
+    int region = region_at(Bases[base_id].x, Bases[base_id].y);
+    int sp_count = 0;
+    for (int project = 0; project < MaxSecretProjectNum; project++) {
+        if (GameDataStateStorage.fields_.secret_project_.project_base[project] == base_id) {
+            sp_count++;
+        }
+    }
+    int garrison = (sp_count + 2) / 3 + (Bases[base_id].population_size + 1) / 4 + 1;
+    if (has_fac(FAC_HEADQUARTERS, base_id, 0)
+        || bit_at(Bases[base_id].x, Bases[base_id].y) & BIT_UNK_40000000
+        || is_objective(base_id)) {
+        garrison++;
+    }
+    if (is_objective(base_id) && PlayersData[faction_id].flags & PFLAG_STRAT_DEF_OBJECTIVES) {
+        garrison++;
+    }
+    if (PlayersData[faction_id].region_base_plan[region] == PLAN_COLONIZATION) {
+        garrison--;
+    }
+    int faction_id_sea = zoc_sea(Bases[base_id].x, Bases[base_id].y, faction_id) - 1;
+    if (faction_id_sea > 0
+        && ((PlayersData[faction_id].diplo_treaties[faction_id_sea]
+             & (DTREATY_VENDETTA | DTREATY_WANT_REVENGE))
+        || (PlayersData[faction_id_sea].diplo_treaties[faction_id] & DTREATY_WANT_REVENGE)
+        || PlayersData[faction_id_sea].integrity_blemishes >= 4)) {
+        garrison++;
+    }
+    int support = PlayersData[faction_id].soc_effect_pending.values_[SocialEffect::SUPPORT];
+    if (support <= -4) {
+        garrison--;
+    }
+    if (support <= -3 && garrison > 2) {
+        garrison--;
+    }
+    return range(garrison, 1, 10);
+}
+
+/*
+Purpose: Determine the number of defensive units needed to protect the specified base.
+// ORIGINAL: 0x00560D30 ?defensive_check@@YAHH@Z 0x00560D30-0x00560D4D BYTE_EXACT
+// size      29 bytes
+// prototype int (__cdecl ?defensive_check@@YAHH@Z)(int baseID)
+// callers   2   call targets   1
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x00560B30
+Return Value: Amount of defensive units needed (1-8)
+Status: Complete
+*/
+int __cdecl defensive_check(int base_id) {
+    int defenses = garrison_check(base_id);
+    if (defenses > 5) {
+        defenses--;
+    }
+    if (defenses > 2) {
+        defenses--;
+    }
+    return defenses;
+}
+
+/*
+Purpose: Determine the ideal unit count to protect a faction's bases in the specified land region.
+// ORIGINAL: 0x00560D50 ?guard_check@@YAHHH@Z 0x00560D50-0x00560DC3 BYTE_EXACT
+// LEVER: `plan_region` as `uint32_t` forced the image's byte load into a
+//        zero-extend (`xor edx,edx; mov dl,...`) followed by 32-bit `cmp edx,N`;
+//        the field is `uint8_t region_base_plan[128]`, and typing the local
+//        `uint8_t` drops the `xor` and compares `dl` directly, matching the
+//        image byte-for-byte. Also needed `--flags` with `/Oy-` to see the kept
+//        frame pointer - the tool's own default flag set omits it.
+// size      115 bytes
+// prototype int (__cdecl ?guard_check@@YAHHH@Z)(int factionID, int region)
+// callers   1   call targets   0
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     (none)
+Return Value: Amount of non-offensive units needed to guard region
+Status: Complete
+*/
+int __cdecl guard_check(int faction_id, int region) {
+    if (region >= MaxRegionLandNum) {
+        return 0;
+    }
+    int factor = 2 - PlayersData[faction_id].ai_fight;
+    uint8_t plan_region = PlayersData[faction_id].region_base_plan[region];
+    if (plan_region == PLAN_COLONIZATION) {
+        factor += 2;
+    } else if (plan_region == PLAN_DEFENSIVE) {
+        factor = 1; // 1-1 unit per base ratio
+    }
+    if (PlayersData[faction_id].flags & PFLAG_STRAT_DEF_OBJECTIVES) {
+        factor = 1; // 1-1 unit per base ratio
+    }
+    return (PlayersData[faction_id].region_total_bases[region] + factor - 1) / factor;
+}
+
+/*
+Purpose: Calculate specified faction's best available weapon and armor ratings as well as the
+         fastest moving ground Veh chassis. Compare these capabilities to faction's best opponent
+         capabilities based on current diplomacy.
+// ORIGINAL: 0x00560DD0 ?enemy_capabilities@@YAXH@Z 0x00560DD0-0x00561076 BYTE_EXACT
+// LEVER: call_diff showed this tree FEWER (8 vs 9) - the image calls
+//        veh_avail(BSC_MIND_WORMS,...) TWICE, once for the best_psi_offense
+//        ternary and again for best_psi_defense, rather than caching the
+//        result in one `has_worms` local and reusing it. Un-cached both call
+//        sites to match. Also every "keep the running max" comparison in the
+//        function compiles non-strict in the image (`jl`/`jg` skip-the-store,
+//        i.e. store on >=/<=) where this tree had strict `>`/`<`: fixed
+//        weap_val/best_psi_offense, weap_val/best_weapon_value, arm_val/
+//        best_psi_defense, arm_val/best_armor_value, Chassis[i].speed/
+//        best_land_speed, and all five enemy_best_X vs PlayersData[j].best_X
+//        comparisons in the closing loop (storing the same value back on a
+//        tie is behaviourally inert, so this only affects codegen). Moved
+//        0.430 -> 0.606 similar at the winning flag set. Remaining
+//        divergence is the closing loop's has_treaty(i,j,*) reuse: the image
+//        loads `PlayersData[i].diplo_treaties[j]` ONCE and reuses the byte
+//        for all four DTREATY_* bit tests plus a `+=4`-per-j pointer walk;
+//        this tree's O2 recomputes the address per has_treaty() call site -
+//        register/CSE allocation, not chased per the no-register-only rule.
+// LEVER (2026-09-03): both of those "register/CSE" residuals were the two
+//        inlined helpers, and both closed. 18/210 (0.711 at the recorded
+//        /O1 set) -> 133/210 at the DEFAULT /O2 /Gy /GR- /Oy- /GX:
+//        (1) has_tech_call in all three loops - the image CALLS 0x005B9F20
+//        three times, and technology.h's MEASURED inline was open-coded at
+//        every site (measured 133/210 under /Ob0 /O2 BEFORE the switch,
+//        which is what named the inline as the defect); (2) the closing
+//        loop's four has_treaty() calls are now ONE read of
+//        `PlayersData[i].diplo_treaties[j]` into a local with the DTREATY_*
+//        tests applied to it, which is exactly what the image's single load
+//        and byte reuse is. First divergence moved from instruction 4 to
+//        126. Remaining: the closing loop's register roles and the
+//        `+=4`-per-j pointer walk.
+// size      678 bytes
+// prototype void (__cdecl ?enemy_capabilities@@YAXH@Z)(int factionID)
+// callers   3   call targets   4
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x0057D270 0x0057D2E0 0x005B9F20 0x005BA910
+Return Value: n/a
+Status: Complete - testing / WIP
+*/
+void __cdecl enemy_capabilities(int faction_id) {
+    PlayersData[faction_id].best_psi_offense = veh_avail(BSC_MIND_WORMS, faction_id, -1)
+        ? weap_strat(WPN_PSI_ATTACK, faction_id) : 0;
+    PlayersData[faction_id].best_weapon_value = 1;
+    // has_tech_call, not has_tech, in all three loops: the image CALLS
+    // 0x005B9F20 at 0x00560E2F / 0x00560EC1 / 0x00560F20 rather than
+    // open-coding the preq walk, so /Ob0 (which stops technology.h's
+    // MEASURED inline) agrees with the image on 133 of 210 instructions
+    // where plain /O2 manages 33.
+    for (int i = 0; i < MaxWeaponNum; i++) {
+        if (has_tech(Weapon[i].preq_tech, faction_id) && Weapon[i].offense_rating < 99) {
+            int weap_val = weap_strat(i, faction_id);
+            if (Weapon[i].offense_rating < 0 && weap_val
+                >= PlayersData[faction_id].best_psi_offense) {
+                PlayersData[faction_id].best_psi_offense = weap_val;
+            }
+            if (weap_val >= PlayersData[faction_id].best_weapon_value) {
+                PlayersData[faction_id].best_weapon_value = weap_val;
+            }
+        }
+    }
+    PlayersData[faction_id].best_psi_defense = veh_avail(BSC_MIND_WORMS, faction_id, -1)
+        ? arm_strat(ARM_PSI_DEFENSE, faction_id) : 0;
+    PlayersData[faction_id].best_armor_value = 1;
+    for (i = 0; i < MaxArmorNum; i++) {
+        if (has_tech(Armor[i].preq_tech, faction_id)) {
+            int arm_val = arm_strat(i, faction_id);
+            if (Armor[i].defense_rating < 0 && arm_val >= PlayersData[faction_id].best_psi_defense) {
+                PlayersData[faction_id].best_psi_defense = arm_val;
+            }
+            if (arm_val >= PlayersData[faction_id].best_armor_value) {
+                PlayersData[faction_id].best_armor_value = arm_val;
+            }
+        }
+    }
+    PlayersData[faction_id].best_land_speed = 1;
+    for (i = 0; i < MaxChassisNum; i++) {
+        if (has_tech(Chassis[i].preq_tech, faction_id) && Chassis[i].triad == TRIAD_LAND) {
+            if (Chassis[i].speed >= PlayersData[faction_id].best_land_speed) {
+                PlayersData[faction_id].best_land_speed = Chassis[i].speed;
+            }
+        }
+    }
+    PlayersData[faction_id].enemy_best_land_speed = 0;
+    PlayersData[faction_id].enemy_best_armor_value = 0;
+    PlayersData[faction_id].enemy_best_weapon_value = 0;
+    PlayersData[faction_id].enemy_best_psi_defense = 0;
+    PlayersData[faction_id].enemy_best_psi_offense = 0;
+    for (int pass = 0; pass < 4 && !PlayersData[faction_id].enemy_best_weapon_value; pass++) {
+        // 1st pass: vendetta, no treaty, has commlink
+        // 2nd pass: no treaty, has commlink
+        // 3rd pass: has commlink
+        // 4th pass: any non-pact faction
+        for (int j = 1; j < MaxPlayerNum; j++) {
+            if (j == faction_id) continue;
+            // Read the faction_id's treaty word once, then apply each pass filter.
+            uint32_t treaties = PlayersData[faction_id].diplo_treaties[j];
+            if (treaties & DTREATY_PACT) continue;
+            if (pass == 0 && (treaties & DTREATY_VENDETTA) == 0) continue;
+            if (pass <= 1 && (treaties & DTREATY_TREATY) != 0) continue;
+            if (pass <= 2 && (treaties & DTREATY_COMMLINK) == 0) continue;
+            {
+                int best = PlayersData[faction_id].enemy_best_weapon_value;
+                const int other = PlayersData[j].best_weapon_value;
+                if (best <= other) best = other;
+                PlayersData[faction_id].enemy_best_weapon_value = best;
+            }
+            {
+                int best = PlayersData[faction_id].enemy_best_armor_value;
+                const int other = PlayersData[j].best_armor_value;
+                if (best <= other) best = other;
+                PlayersData[faction_id].enemy_best_armor_value = best;
+            }
+            {
+                int best = PlayersData[faction_id].enemy_best_land_speed;
+                const int other = PlayersData[j].best_land_speed;
+                if (best <= other) best = other;
+                PlayersData[faction_id].enemy_best_land_speed = best;
+            }
+            {
+                int best = PlayersData[faction_id].enemy_best_psi_offense;
+                const int other = PlayersData[j].best_psi_offense;
+                if (best <= other) best = other;
+                PlayersData[faction_id].enemy_best_psi_offense = best;
+            }
+            {
+                int best = PlayersData[faction_id].enemy_best_psi_defense;
+                const int other = PlayersData[j].best_psi_defense;
+                if (best <= other) best = other;
+                PlayersData[faction_id].enemy_best_psi_defense = best;
+            }
+        }
+    }
+}
+
+// ORIGINAL: 0x00561080 ?enemy_strategy@@YAXH@Z 0x00561080-0x00564888
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned 0x00561080..0x00564888 instructions drive genuine PlayersData, Base, Veh, Map, Goal and Continent accesses; preserve original arithmetic, branch ordering and state mutations.", "The entry reset does not clear region_total_offensive_vehs; the later region 1..127 clear leaves index zero intact. Preserve the original prior-value behavior.", "Historical seed caution about scaled pointer indices remains above; former UNBLOCKER: cross-check indexed/scaled fields against pinned address and relocation evidence, not decompiler index arithmetic. No exactness or full-game acceptance claim."], "reason": "Complete typed faction strategy owner; source separation does not assert an original translation-unit boundary."}
+// DEFERRED: this is the AI military-planning engine (single `int factionID` param), not a UI or I/O function - 4239 instructions, 1875 Ghidra lines, frame 0x288 bytes (moderate: real locals, no giant embedded C++ object graph the way the Popup/Dialogs-heavy addresses in this batch have). Its call list is the opposite shape from goody_box/game_data: LOW repetition, many DISTINCT one- or two-off calls (?stack_check@@ 17x is the only high-frequency one; ?add_goal@@ 7x; then base_at/veh_at/weap_val/veh_cargo/is_coast/ has_abil/garrison_check/zoc_sea/weap_strat/wants_to_attack/ veh_kill/terraform_cost/stack_fix/planet_buster/kill/contiguous/ bitmask each 1-5x, plus 20x _abs). That is the same risk profile as tech_achieved (0x005BB000, deferred earlier in this batch for a confirmed hand-arithmetic error on scaled-pointer-index field offsets) rather than game_data's or goody_box's - bespoke per-site reasoning, not a mechanically repeatable pattern, so the same caution applies: a first hand pass is exactly where a wrong PlayersData/base/veh field offset would compile clean and be wrong.
+void __cdecl enemy_strategy(int faction_id) {
+    PlayerData &faction_data = PlayersData[faction_id];
+
+    // 0x00561080..0x00561152: reset the faction's turn-local totals and
+    // indexed planning state before scanning the live bases and vehicles.
+    faction_data.total_mil_veh = 0;
+    faction_data.current_num_bases = 0;
+    faction_data.mil_strength_1 = 0;
+    faction_data.mil_strength_2 = 0;
+    faction_data.pop_total = 0;
+    faction_data.unk_70 = 0;
+    faction_data.planet_busters = 0;
+    faction_data.unk_71 = 0;
+    faction_data.unk_72 = 0;
+
+    const int turn_faction = GameDataStateStorage.fields_.turn_current_num_ + faction_id;
+    const uint16_t retained_region_planning_bits =
+        ((turn_faction & 0x0F) != 0) ? 0x0008 : 0;
+    for (int reset_region = 0; reset_region < 128; ++reset_region) {
+        faction_data.region_total_combat_vehs[reset_region] = 0;
+        faction_data.region_total_bases[reset_region] = 0;
+        faction_data.region_force_rating[reset_region] = 0;
+        faction_data.unk_77[reset_region] &= retained_region_planning_bits;
+    }
+    for (int proto_id = 0; proto_id < 512; ++proto_id) {
+        faction_data.proto_id_active[proto_id] = 0;
+        faction_data.proto_id_queue[proto_id] = 0;
+    }
+
+    const uint32_t faction_bit = 1u << (static_cast<uint32_t>(faction_id) & 31u);
+
+    // The 0x561168 walk treats foreign bases first, adding colonize/scout
+    // opportunities for unclaimed or fungus locations and an attack goal for
+    // visible bases selected by the current diplomacy predicates. The
+    // 0x561459 edge is the distinct own-base update path.
+    for (int base_id = 0; base_id < GameDataStateStorage.fields_.base_current_count_; ++base_id) {
+        Base &base = Bases[base_id];
+        const int x = base.x;
+        const int y = base.y;
+        const int owner = base.faction_id_current;
+
+        if (owner != faction_id) {
+            const uint8_t visibility_bit = static_cast<uint8_t>(faction_bit);
+            if ((base.visibility & visibility_bit) == 0) continue;
+
+            const uint32_t relationship = faction_data.diplo_treaties[owner];
+            if ((relationship & 0x0C10u) == 0
+                || (relationship & 0x0001u) != 0) continue;
+
+            int attack_priority = 1;
+            const Map *tile = map_loc(x, y);
+            if ((tile->bit & 0x00000002u) == 0
+                || (tile->val2 & 0x0Fu) >= 8) {
+                add_goal(faction_id, AI_GOAL_DEFEND, 2, x, y, -1);
+                add_goal(faction_id, AI_GOAL_SCOUT, 2, x, y, -1);
+            }
+
+            const int region = tile->region;
+            if (base.faction_id_former == faction_id) {
+                ++attack_priority;
+            }
+            if (faction_data.region_total_bases[region] != 0) {
+                ++attack_priority;
+            }
+
+            int facility_offset = 0;
+            int facility_mask = 0;
+            bitmask(4, &facility_offset, &facility_mask);
+            if ((base.facilities_built[facility_offset] & facility_mask) == 0) {
+                ++attack_priority;
+            }
+            if (base.queue_production_id[0] == -102) {
+                attack_priority *= 4;
+            }
+
+            bitmask(1, &facility_offset, &facility_mask);
+            if ((base.facilities_built[facility_offset] & facility_mask) != 0) {
+                ++attack_priority;
+                if ((faction_data.flags & 0x00200000u) != 0) {
+                    attack_priority *= 2;
+                }
+                if (GameDataStateStorage.fields_.turn_current_num_ < PlayersData[owner].corner_market_turn) {
+                    attack_priority <<= 3;
+                }
+            }
+
+            if (faction_data.base_id_atk_target != base_id
+                || (faction_data.diplo_treaties[owner] & 0x10u) == 0) {
+                if (is_objective(base_id)) {
+                    attack_priority = 4;
+                }
+            } else {
+                attack_priority <<= 2;
+            }
+            add_goal(faction_id, AI_GOAL_ATTACK, attack_priority, x, y, -1);
+
+            const int target_x = base.unk_x;
+            const int target_y = base.unk_y;
+            if (target_y >= 0 && target_y < MapLatitudeBounds
+                && target_x >= 0 && target_x < MapLongitudeBounds) {
+                const int target_base = base_find(target_x, target_y);
+                if (target_base >= 0
+                    && Bases[target_base].faction_id_current == owner
+                    && terraform_cost(target_x, target_y, faction_id)
+                        <= ((faction_data.energy_reserves
+                            + (faction_data.energy_reserves >> 31 & 7)) >> 3)) {
+                    add_goal(faction_id, 41, 2, target_x, target_y, -1);
+                }
+            }
+            continue;
+        }
+
+        base.state &= 0xF3FFFFFFu;
+        if (base.nerve_staple_turns_left != 0) {
+            base.nerve_staple_turns_left = static_cast<uint8_t>(
+                base.nerve_staple_turns_left - 1u);
+        }
+        ++faction_data.current_num_bases;
+        faction_data.pop_total += static_cast<int>(base.population_size);
+
+        const int stack = stack_fix(veh_at(x, y));
+        if (!stack_check(stack, 0x0E, faction_id, -1, -1)
+            && !stack_check(stack, 2, 3, faction_id, -1)) {
+            add_goal(faction_id, AI_GOAL_DEFEND, 4, x, y, -1);
+        }
+
+        for (int queue_index = 0; queue_index <= base.queue_size; ++queue_index) {
+            const int queued_id = base.queue_production_id[queue_index];
+            if (queued_id >= 0) {
+                ++faction_data.proto_id_queue[queued_id];
+            }
+        }
+
+        const int tile_region = map_loc(x, y)->region;
+        ++faction_data.region_total_bases[tile_region];
+        if (is_coast(x, y, 0)) {
+            faction_data.unk_77[tile_region] |= 0x0080;
+        }
+        if (((GameDataStateStorage.fields_.turn_current_num_ + base_id) & 3) == 0) {
+            base.event &= 0xFFFFFF00u;
+        }
+    }
+
+    // 0x005615D9..0x00561622: reset flagged bases for factions whose turn is
+    // not locked to a human, preserving the native sentinel test in queue[0].
+    if ((GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & faction_bit) == 0) {
+        for (int reset_base_id = 0; reset_base_id < GameDataStateStorage.fields_.base_current_count_;
+             ++reset_base_id) {
+            Base &reset_base = Bases[reset_base_id];
+            if (reset_base.faction_id_current == faction_id
+                && reset_base.queue_production_id[0] == -69) {
+                base_reset(reset_base_id, 0);
+            }
+        }
+    }
+
+    int region_plan_count[128];
+    for (int region_index = 0; region_index < 128; ++region_index) {
+        region_plan_count[region_index] = 0;
+    }
+
+    enemy_capabilities(faction_id);
+    faction_data.unk_64 = 0;
+    faction_data.unk_65 = 0;
+    faction_data.unk_66 = 0;
+    faction_data.unk_68 = 0;
+    faction_data.unk_105 = 0;
+    faction_data.unk_106 = 0;
+    int carrier_count = 0;
+    int maximum_carrier_cargo = 2;
+    int invalid_target_vehicle_count = 0;
+
+    for (int vehicle_id = GameDataStateStorage.fields_.vehicle_current_count_ - 1; vehicle_id >= 0; --vehicle_id) {
+        Veh &vehicle = Vehs[vehicle_id];
+        const int prototype_id = vehicle.proto_id;
+        const VehPrototype &prototype = VehPrototypes[prototype_id];
+        const int unit_owner = vehicle.faction_id;
+
+        if (unit_owner != faction_id) {
+            const uint32_t relationship = faction_data.diplo_treaties[unit_owner];
+            if ((relationship & 0x8u) != 0
+                && ((relationship & 0x3u) == 0 || (relationship & 0x0C20u) != 0)) {
+                if (prototype.plan == 7) {
+                    ++faction_data.unk_64;
+                }
+                if (prototype.plan == 6) {
+                    faction_data.unk_65 += prototype.carry_capacity;
+                }
+
+                const int chassis_id = prototype.chassis_id;
+                const RulesChassis &chassis = Chassis[chassis_id];
+                if (chassis.triad == TRIAD_SEA) {
+                    if (prototype.plan == 0 && chassis.missile == 0
+                        && weap_val(prototype_id, faction_id)
+                            >= faction_data.best_weapon_value) {
+                        ++faction_data.unk_66;
+                    }
+                    if (chassis.missile != 0 && planet_buster(vehicle_id) == 0) {
+                        ++faction_data.unk_68;
+                    }
+                }
+
+                // Native 0x56178D..0x561863 adds the special goal only for
+                // plan-9 sea vehicles. It operates on ocean tiles and rejects
+                // a base-in-tile whose owner nibble is below eight. The
+                // visibility byte is tested against this actor's bit only on
+                // the two native move-marker/state paths that reach it.
+                if (prototype.plan == 9 && chassis.triad == TRIAD_SEA) {
+                    const Map *tile = map_loc(vehicle.x, vehicle.y);
+                    const bool ocean_tile = (tile->climate & 0xE0u) < 0x60u;
+                    const bool owned_base_tile_rejected =
+                        (tile->bit & BIT_BASE_IN_TILE) != 0
+                        && (tile->val2 & 0x0Fu) < 8;
+                    const bool bypass_visibility =
+                        vehicle.move_to_ai_type == faction_id
+                        && (vehicle.state & 0x00000440u) != 0x00000440u;
+                    const bool visible_to_actor =
+                        (vehicle.visibility
+                         & static_cast<uint8_t>(faction_bit)) != 0;
+                    if (ocean_tile && !owned_base_tile_rejected
+                        && (bypass_visibility || visible_to_actor)) {
+                        const int priority =
+                            (faction_data.flags & 0x00080000u) != 0 ? 4 : 2;
+                        add_goal(faction_id, 6, priority,
+                                 vehicle.x, vehicle.y, -1);
+                    }
+                }
+            }
+            continue;
+        }
+
+        ++faction_data.proto_id_active[prototype_id];
+        if (vehicle.year_end_lurking != 0) {
+            --vehicle.year_end_lurking;
+            if (vehicle.year_end_lurking == 0) {
+                vehicle.flags &= 0xFBBFu;
+            }
+        }
+
+        int upgrade_result = 1;
+        if ((GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & faction_bit) == 0
+            && (prototype.obsolete_factions & static_cast<int8_t>(faction_bit)) != 0) {
+            // A successful upgrade skips only the obsolete-design subpath;
+            // the native body still processes this vehicle's current state.
+            upgrade_result = ConsoleGlobal.upgrade(vehicle_id);
+        }
+
+        // 0x0056193F..0x00561C41: stale-design and sea-zone checks. The
+        // native code rereads the vehicle after upgrade(), which may replace
+        // its design or otherwise alter the record.
+        Veh &current_vehicle = Vehs[vehicle_id];
+        const int current_prototype_id = current_vehicle.proto_id;
+        const VehPrototype &current_prototype = VehPrototypes[current_prototype_id];
+        const int current_chassis_id = current_prototype.chassis_id;
+        const RulesChassis &current_chassis = Chassis[current_chassis_id];
+        const int current_x = current_vehicle.x;
+        const int current_y = current_vehicle.y;
+        const Map *current_tile = map_loc(current_x, current_y);
+            int current_region = current_tile->region;
+        const int current_triad = current_chassis.triad;
+        const int current_plan = current_prototype.plan;
+        // Native 0x561D01 masks the altitude class and compares it with the
+        // shore-line value. In the source map encoding this predicate means
+        // ocean (altitude class below shore), not land.
+        const bool is_ocean_tile = (current_tile->climate & 0xE0u) < 0x60u;
+
+        if (upgrade_result == 0
+            && (GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & faction_bit) == 0
+            && ((GameDataStateStorage.fields_.turn_current_num_ + vehicle_id) & 3) != 0
+            && GameDataStateStorage.fields_.turn_current_num_ >= 0x1A
+            && current_triad == TRIAD_LAND
+            && (current_vehicle.move_to_ai_type != 'F'
+                && current_vehicle.move_to_ai_type != '1'
+                && current_vehicle.move_to_ai_type != '2')
+            && current_plan > 0 && current_plan <= 7
+            && (current_plan != 1
+                || faction_data.region_base_plan[current_region] > 3)
+            && (current_plan == faction_data.region_base_plan[current_region]
+                || (current_plan != 3
+                    || faction_data.region_base_plan[current_region] != 8
+                    || current_vehicle.order == 2))) {
+            const bool shallow_fungus = (current_tile->bit & 1u) != 0
+                && (current_tile->climate & 0x0Fu) < 8;
+            if ((!shallow_fungus
+                 || stack_check(vehicle_id, 0x0E, faction_id, -1, -1) > 1)
+                && (current_tile->climate & 0xE0u) >= 0x60u
+                && faction_data.region_base_plan[current_region] != 2
+                && zoc_sea(current_x, current_y, faction_id) == 0
+                && current_vehicle.move_to_ai_type != '1') {
+                bool outclassed_by_available_design = false;
+                for (int candidate_proto_id = faction_id * 64;
+                     candidate_proto_id < faction_id * 64 + 64;
+                     ++candidate_proto_id) {
+                    const VehPrototype &candidate = VehPrototypes[candidate_proto_id];
+                    if ((candidate.flags & 1u) == 0
+                        || (candidate.obsolete_factions & faction_bit) != 0
+                        || candidate.plan != current_plan
+                        || Chassis[candidate.chassis_id].triad != current_triad) {
+                        continue;
+                    }
+                    if (current_triad <= TRIAD_SEA) {
+                        if (arm_val(candidate_proto_id, faction_id)
+                            > arm_val(current_prototype_id, faction_id)) {
+                            outclassed_by_available_design = true;
+                            break;
+                        }
+                    } else if (weap_val(candidate_proto_id, faction_id)
+                               > weap_val(current_prototype_id, faction_id)) {
+                        outclassed_by_available_design = true;
+                        break;
+                    }
+                }
+                if (!outclassed_by_available_design
+                    && (current_vehicle.state & 0x20u) == 0) {
+                    kill(vehicle_id);
+                    continue;
+                }
+            }
+        }
+
+        current_vehicle.state &= 0xCFFFFFDBu;
+
+        // 0x561D5E..0x561DF4: order 1 is cleared unless this is a land-triad
+        // unit and the current tile's native shore-line predicate is ocean.
+        // The later ocean/land branches also run when the lock mask bypasses
+        // this order-byte update.
+        if ((GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & faction_bit) == 0 && current_vehicle.order == 1) {
+            if (current_triad != TRIAD_LAND || !is_ocean_tile) {
+                current_vehicle.order = 0;
+            }
+        }
+
+        if (is_ocean_tile && current_triad == TRIAD_LAND) {
+            const bool shallow_fungus = (current_tile->bit & 1u) != 0
+                && (current_tile->climate & 0x0Fu) < 8;
+            if (!shallow_fungus) {
+                const int stack_result =
+                    stack_check(vehicle_id, 2, 7, -1, -1);
+                if (stack_result == 0) {
+                    if ((current_vehicle.flags & 0x20u) == 0) {
+                        veh_kill(vehicle_id);
+                        continue;
+                    }
+                } else if (current_vehicle.order != 1) {
+                    sleep(vehicle_id);
+                }
+            }
+        } else if (!is_ocean_tile && current_triad == TRIAD_SEA) {
+            const bool shallow_fungus = (current_tile->bit & 1u) != 0
+                && (current_tile->climate & 0x0Fu) < 8;
+            if (!shallow_fungus && (current_vehicle.flags & 0x20u) == 0) {
+                veh_kill(vehicle_id);
+                continue;
+            }
+        }
+
+        // Native 0x561E65..0x561F2E applies the garrison check only to
+        // prototype plans 0/1 and when state bit 0x40000 is clear. The home
+        // base fallback is used only for the native 'F' move marker.
+        if (current_plan <= 1 && (current_vehicle.state & 0x00040000u) == 0) {
+            int selected_base = base_at(current_x, current_y);
+            if (selected_base < 0 && current_vehicle.move_to_ai_type == 'F') {
+                selected_base = current_vehicle.home_base_id;
+            }
+            if (selected_base >= 0) {
+                const int original_garrison = garrison_check(selected_base);
+                int capped_garrison = garrison_check(selected_base);
+                if (capped_garrison >= 6) --capped_garrison;
+                if (capped_garrison >= 3) --capped_garrison;
+                const Base &garrison_base = Bases[selected_base];
+                const int base_stack = veh_at(garrison_base.x, garrison_base.y);
+                const int protected_stack = stack_check(
+                    base_stack, 0x0B, 0x10000000, 0x10000000, faction_id);
+                if (protected_stack + capped_garrison < original_garrison) {
+                    current_vehicle.state |= 0x10000000u;
+                }
+            }
+        }
+
+        // Plan-specific per-vehicle summaries and owner-side cleanup.
+        if (current_vehicle.move_to_ai_type != 'F') {
+            if (current_plan == 2 && current_vehicle.home_base_id >= 0) {
+                const Base &home = Bases[current_vehicle.home_base_id];
+                if (home.x != current_x || home.y != current_y) {
+                    Bases[current_vehicle.home_base_id].state |= 0x04000000u;
+                }
+            } else if (current_plan == 3) {
+                const bool is_shallow_ocean = (current_tile->bit & 1u) != 0
+                    && (current_tile->climate & 0x0Fu) < 8;
+                if (!is_shallow_ocean) {
+                    faction_data.unk_77[current_region] |= 0x20u;
+                }
+            } else if (current_plan == 8) {
+                uint16_t &region_flags = faction_data.unk_77[current_region];
+                region_flags |= (region_flags & 2u) != 0 ? 0x0800u : 2u;
+            } else if (current_plan == 9) {
+                current_vehicle.probe_action &= 0xF7u;
+                ++region_plan_count[current_region];
+                const int home_base_id = current_vehicle.home_base_id;
+                // Native uses one of two discrete state masks here. The
+                // original selection is from the current chassis triad:
+                // sea uses 0x80000; land/air use 0x20.
+                const uint32_t relocation_base_mask =
+                    current_triad == TRIAD_SEA ? 0x00080000u : 0x00000020u;
+                if (home_base_id >= 0
+                    && (Bases[home_base_id].state & relocation_base_mask) != 0
+                    && (GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & faction_bit) == 0) {
+                    int nearest_base_id = -1;
+                    int nearest_distance = 9999;
+                    for (int candidate_id = 0;
+                         candidate_id < GameDataStateStorage.fields_.base_current_count_; ++candidate_id) {
+                        if (candidate_id == home_base_id) continue;
+                        const Base &candidate = Bases[candidate_id];
+                        if (map_loc(candidate.x, candidate.y)->region != current_region
+                            || (candidate.state & relocation_base_mask) != 0) continue;
+                        // Native reads the unaligned dword at Base+0xD2.
+                        // Express the same little-endian word from the two
+                        // typed adjacent source members rather than an offset
+                        // alias: high 16 bits of nutrient_surplus, then low
+                        // 16 bits of mineral_surplus.
+                        const uint32_t relocation_value_bits =
+                            (static_cast<uint32_t>(candidate.nutrient_surplus) >> 16)
+                            | (static_cast<uint32_t>(candidate.mineral_surplus) << 16);
+                        int32_t relocation_value;
+                        memcpy(&relocation_value, &relocation_value_bits,
+                               sizeof(relocation_value));
+                        if (relocation_value >= 2) continue;
+                        const int distance = vector_dist(
+                            x_dist(current_x, candidate.x),
+                            current_y - candidate.y);
+                        if (distance < nearest_distance) {
+                            nearest_distance = distance;
+                            nearest_base_id = candidate_id;
+                        }
+                    }
+                    if (nearest_base_id >= 0) {
+                        Bases[nearest_base_id].state |= relocation_base_mask;
+                        current_vehicle.home_base_id =
+                            static_cast<int16_t>(nearest_base_id);
+                    }
+                }
+            } else if (current_plan == 0x0B) {
+                faction_data.unk_77[current_region] |= 0x10u;
+            }
+        }
+
+        // The native common-count block at 0x56226B..0x562284 is reached only
+        // for plans 0..7; plan 8/9/11 routes leave via 0x56216D first.
+        if (current_plan <= 7) {
+            ++faction_data.total_mil_veh;
+            // The local native altitude predicate is an ocean test. Native
+            // counts this land-triad vehicle when that predicate is false.
+            if (current_region >= 0 && current_triad == TRIAD_LAND
+                && !is_ocean_tile) {
+                ++faction_data.region_total_combat_vehs[current_region];
+            }
+        }
+        if (current_triad == TRIAD_SEA) {
+            ++faction_data.unk_70;
+        } else if (current_triad == TRIAD_AIR) {
+            if (current_plan == 0) ++faction_data.unk_105;
+            else if (current_plan == 4) ++faction_data.unk_106;
+        }
+
+        if (current_plan == 7) {
+            ++carrier_count;
+            const int cargo_count = veh_cargo(vehicle_id);
+            if (cargo_count > maximum_carrier_cargo) {
+                maximum_carrier_cargo = cargo_count;
+            }
+        }
+
+        // Native 0x562326 tests planet_buster first. A buster increments its
+        // counter and jumps straight to 0x5624BC, skipping strategy scoring
+        // AND the subsequent 0x562405 target-state accounting. Keep those
+        // statements on the non-buster edge: zero-filling the native skipped
+        // stack locals would invent target-state behavior for busters.
+        if (planet_buster(vehicle_id) != 0) {
+            ++faction_data.planet_busters;
+        } else {
+            const int weapon_strategy = weap_strat(
+                current_prototype.weapon_id, faction_id);
+            const int armor_strategy = arm_strat(
+                current_prototype.armor_id, faction_id);
+            const int morale = morale_veh(vehicle_id, 0, 0) + 6;
+            const int force = (weapon_strategy + armor_strategy) * morale;
+            faction_data.mil_strength_1 +=
+                (force + (force >> 31 & 7)) >> 3;
+            if (armor_strategy < weapon_strategy || current_vehicle.order != 2) {
+                const int offense = morale * weapon_strategy;
+                const int rounded_offense =
+                    (offense + (offense >> 31 & 7)) >> 3;
+                faction_data.mil_strength_2 += rounded_offense;
+                faction_data.proto_id_lost[current_prototype_id] =
+                    static_cast<int16_t>(faction_data.proto_id_lost[current_prototype_id]
+                                         + rounded_offense);
+                if (current_region >= 0 && current_region < 128) {
+                    // Native 0x5623FA performs a word add at
+                    // PlayerData+0x127C + region*2: region_force_rating.
+                    faction_data.region_force_rating[current_region] =
+                        static_cast<uint16_t>(faction_data.region_force_rating[current_region]
+                                              + rounded_offense);
+                }
+            }
+            // Native 0x562405..0x5624BC accounts for vehicles carrying one
+            // of the target-assignment state combinations. These are
+            // PlayerData.x_target/y_target, distinct from base_id_atk_target.
+            const uint32_t target_state = current_vehicle.state & 0x00060000u;
+            if (target_state == 0x00040000u) {
+                const int target_x = faction_data.x_target;
+                const int target_y = faction_data.y_target;
+                bool target_is_in_vehicle_region = false;
+                if (target_x >= 0 && target_x < MapLongitudeBounds
+                    && target_y >= 0 && target_y < MapLatitudeBounds) {
+                    target_is_in_vehicle_region =
+                        map_loc(target_x, target_y)->region == current_region;
+                }
+                if (!target_is_in_vehicle_region) {
+                    current_vehicle.state |= 0x00020000u;
+                } else {
+                    ++faction_data.unk_71;
+                    if (current_plan == 0x0B) {
+                        faction_data.unk_72 |= 2;
+                    } else if (armor_strategy > weapon_strategy) {
+                        faction_data.unk_72 |= 1;
+                    }
+                }
+            } else if (target_state == 0x00060000u) {
+                ++invalid_target_vehicle_count;
+            }
+            // The private actual-body harness snapshots this point to
+            // distinguish native buster skips from ordinary vehicles.
+            // ENEMY_STRATEGY_TARGET_STATE_TEST_TAP
+        }
+    }
+
+    // Native consumes this local count in the region planner at 0x563557.
+    (void)invalid_target_vehicle_count;
+
+    faction_data.unk_70 += ((maximum_carrier_cargo * 0x800 + carrier_count) << 11);
+
+    int strongest_unpacted_enemy_navy = 0;
+    for (int other = 1; other < MaxPlayerNum; ++other) {
+        if (other == faction_id) continue;
+        const uint32_t relationship = faction_data.diplo_treaties[other];
+        if ((relationship & 0x0008u) == 0 || (relationship & 0x0001u) != 0) {
+            continue;
+        }
+        const int naval_total = PlayersData[other].unk_70;
+        const int scaled_total = (naval_total
+            + (naval_total >> 31 & 0x003FFFFF)) >> 22;
+        if (scaled_total > strongest_unpacted_enemy_navy) {
+            strongest_unpacted_enemy_navy = scaled_total;
+        }
+    }
+    faction_data.unk_64 += strongest_unpacted_enemy_navy * 0x800;
+
+    if (carrier_count >= 2) {
+        for (int vehicle_id = 0; vehicle_id < GameDataStateStorage.fields_.vehicle_current_count_; ++vehicle_id) {
+            Veh &vehicle = Vehs[vehicle_id];
+            if (vehicle.faction_id != faction_id) continue;
+            const VehPrototype &prototype = VehPrototypes[vehicle.proto_id];
+            if (Chassis[prototype.chassis_id].triad == TRIAD_SEA
+                && prototype.plan == 7
+                && (vehicle.proto_id == 13
+                    || faction_data.proto_id_active[vehicle.proto_id] >= 2)) {
+                vehicle.state |= 0x20000000u;
+                break;
+            }
+        }
+    }
+
+    for (int coastal_vehicle_id = 0; coastal_vehicle_id < GameDataStateStorage.fields_.vehicle_current_count_; ++coastal_vehicle_id) {
+        Veh &vehicle = Vehs[coastal_vehicle_id];
+        if (vehicle.faction_id != faction_id
+            || VehPrototypes[vehicle.proto_id].plan != 9) continue;
+        const int region = map_loc(vehicle.x, vehicle.y)->region;
+        if (region <= 0x3F && region_plan_count[region] >= 3
+            && faction_data.region_total_bases[region] >= 3) {
+            // Native 0x562663 ORs 0x0800 into the word immediately before
+            // Veh.proto_id (Veh.flags at +0x30); this is not probe_action.
+            vehicle.flags |= 0x0800u;
+            if (vehicle.home_base_id >= 0) {
+                Bases[vehicle.home_base_id].state &= ~0x20u;
+            }
+            region_plan_count[region] = 0;
+        }
+    }
+
+    // Native 0x56269A..0x56294A retains or invalidates the prior movement
+    // target before region planning. The decision uses the saved x/y target,
+    // the stack actually at that tile, and this faction's target-region
+    // counters; it is separate from base_id_atk_target.
+    const uint32_t human_turn_bit =
+        static_cast<uint32_t>(GameDataStateStorage.fields_.lock_masks_.enable_mask_) & 0xFFu & faction_bit;
+    bool reset_target = false;
+    int old_attack_target_region = 0;
+    if (faction_data.y_target >= 0) {
+        const int target_x = faction_data.x_target;
+        const int target_y = faction_data.y_target;
+        const Map *target_tile = map_loc(target_x, target_y);
+        const int target_region = target_tile->region;
+        old_attack_target_region = target_region;
+        const int target_base_id = base_at(target_x, target_y);
+        if (target_base_id >= 0
+            && Bases[target_base_id].faction_id_current == faction_id) {
+            const Base &target_base = Bases[target_base_id];
+            const int target_stack = stack_fix(veh_at(target_base.x, target_base.y));
+            if (target_stack >= 0) {
+                const int protected_target_units = stack_check(
+                    target_stack, 0x0B, 0x00060000, 0x00040000, -1);
+                int required_target_units =
+                    static_cast<int>(faction_data.region_total_bases[target_region]) * 2 / 3;
+                if (required_target_units < 3) required_target_units = 3;
+                else if (required_target_units > 8) required_target_units = 8;
+                if (required_target_units
+                    <= protected_target_units - bit_count(faction_data.unk_72)) {
+                    reset_target = true;
+                }
+
+                const uint8_t target_region_plan =
+                    faction_data.region_base_plan[target_region];
+                if (target_region_plan == 2
+                    || (faction_data.unk_77[target_region] & 0x4200u) != 0) {
+                    reset_target = true;
+                }
+                if (target_region_plan > 2
+                    && stack_check(target_stack, 2, 7, -1, -1) != 0) {
+                    const int naval_requirement =
+                        ((faction_data.unk_70
+                          + (faction_data.unk_70 >> 31 & 0x003FFFFF)) >> 22) * 2;
+                    if (protected_target_units >= naval_requirement) {
+                        reset_target = true;
+                    }
+                    const int target_sea_units =
+                        stack_check(target_stack, 2, 7, -1, -1);
+                    if (target_sea_units > 1) {
+                        const int air_units = stack_check(target_stack, 8, -1, -1, -1);
+                        const int non_air_units = stack_check(target_stack, 3, 0, -1, -1);
+                        if (air_units + non_air_units <= protected_target_units) {
+                            reset_target = true;
+                        }
+                    }
+                }
+            }
+        }
+
+        // The two target-region branches at 0x5628D6 and 0x5628E5 jump
+        // directly to region planning and deliberately bypass cleanup.
+        if (human_turn_bit != 0 || reset_target) {
+            reset_target = true;
+        } else {
+            const uint8_t target_region_plan =
+                faction_data.region_base_plan[target_region];
+            if (target_region_plan <= 2) {
+                GameDataStateStorage.fields_.game_state_ &= ~0x00000800u;
+            } else if (target_region_plan != 8
+                       && is_coast(target_x, target_y, 0)) {
+                GameDataStateStorage.fields_.game_state_ |= 0x00000800u;
+            } else {
+                reset_target = true;
+            }
+        }
+    } else if (human_turn_bit != 0) {
+        reset_target = true;
+    }
+
+    if (reset_target) {
+        for (int vehicle_id = 0; vehicle_id < GameDataStateStorage.fields_.vehicle_current_count_; ++vehicle_id) {
+            Veh &vehicle = Vehs[vehicle_id];
+            if (vehicle.faction_id == faction_id
+                && (vehicle.state & 0x00040000u) != 0) {
+                vehicle.state |= 0x00020000u;
+            }
+        }
+        faction_data.x_target = -1;
+        faction_data.y_target = -1;
+        faction_data.unk_71 = 0;
+        faction_data.unk_72 = 0;
+    }
+
+    // Native 0x56294B..0x563A63 plans regions. At 0x562963 the byte at
+    // PlayerData+0x11FC (the per-region byte cleared here) is zeroed. The
+    // short-circuit at 0x562973..0x562992 assigns plan 8 and jumps to 0x5634C5
+    // (the loop increment) for regions whose low six bits are 0 or 0x3F and
+    // whose region_total_bases entry is zero. This is a continue, not a jump
+    // into a shared bases_reset path.
+    //
+    // The per-region state machine below follows 0x56294B..0x5634D5. In
+    // particular, the native aggregates include the current faction where
+    // noted, and the two contiguous() modes are ordered/short-circuited.
+    int best_region_score = 0;
+    int selected_attack_region = -1;
+    for (int region = 1; region < 128; ++region) {
+        // The original store at 0x562963 is PlayerData+0x11FC, the byte
+        // region_total_offensive_vehs[region], not the later unk_83 array.
+        faction_data.region_total_offensive_vehs[region] = 0;
+        const uint8_t previous_region_plan =
+            faction_data.region_base_plan[region];
+        const int region_class = region & 0x3F;
+        if (((region_class == 0 || region_class == 0x3F)
+             && faction_data.region_total_bases[region] == 0)) {
+            faction_data.region_base_plan[region] = 8;
+            continue;
+        }
+
+        uint16_t &planning_flags = faction_data.unk_77[region];
+        const int own_bases = faction_data.region_total_bases[region];
+        const int own_combat = faction_data.region_total_combat_vehs[region];
+        const int own_force = faction_data.region_force_rating[region];
+        int factions_with_bases = 0;
+        int no_base_or_mode0_count = 0;
+        int no_base_or_either_mode_count = 0;
+        int passing_hostile_count = 0;
+        int failing_hostile_count = 0;
+        int attack_flags = 0;
+
+        // The native iterates faction IDs 1..7, including self for the broad
+        // aggregates and base-presence flags. It skips self only after the
+        // early combat/force gate.
+        for (int other = 1; other < MaxPlayerNum; ++other) {
+            const PlayerData &other_data = PlayersData[other];
+            const uint8_t other_bases = other_data.region_total_bases[region];
+            const uint16_t other_combat =
+                other_data.region_total_combat_vehs[region];
+            const uint16_t other_force = other_data.region_force_rating[region];
+            const uint32_t treaty = faction_data.diplo_treaties[other];
+
+            if (other_bases != 0) {
+                ++factions_with_bases;
+                planning_flags |= other == faction_id ? 0x0010u : 0x0020u;
+                if ((treaty & 0x10u) != 0) planning_flags |= 0x0040u;
+            }
+
+            if (other_combat == 0 && own_force > 5 * other_force) continue;
+            if (other == faction_id) continue;
+            if ((treaty & 1u) != 0 || (treaty & 8u) == 0) continue;
+
+            bool mode0_or_no_bases = false;
+            bool either_mode_or_no_bases = false;
+            if (GameDataStateStorage.fields_.turn_current_num_ > 1) {
+                const int continent_size = Continents[region].tile_count;
+                const bool large_continent = continent_size >= 500;
+                const bool large_combined_base_count =
+                    static_cast<int>(other_bases) * own_bases >= 50;
+                if (large_continent || large_combined_base_count) {
+                    const int cycle = continent_size >= 1000
+                        ? (GameDataStateStorage.fields_.turn_current_num_ + other * 2) & 0x0F
+                        : (GameDataStateStorage.fields_.turn_current_num_ + other) & 7;
+                    if (cycle != 0 && other_bases != 0
+                        && other_data.region_base_plan[region] > 2) {
+                        mode0_or_no_bases = false;
+                        either_mode_or_no_bases = false;
+                    } else {
+                        mode0_or_no_bases = true;
+                        either_mode_or_no_bases = true;
+                    }
+                } else {
+                    mode0_or_no_bases = other_bases == 0
+                        || contiguous(faction_id, other, region, 0) != 0;
+                    either_mode_or_no_bases = mode0_or_no_bases;
+                    if (!either_mode_or_no_bases) {
+                        either_mode_or_no_bases =
+                            contiguous(faction_id, other, region, 1) != 0;
+                    }
+                    if (other_bases == 0) {
+                        mode0_or_no_bases = true;
+                        either_mode_or_no_bases = true;
+                    }
+                }
+            } else {
+                mode0_or_no_bases = other_bases == 0
+                    || contiguous(faction_id, other, region, 0) != 0;
+                either_mode_or_no_bases = mode0_or_no_bases;
+                if (!either_mode_or_no_bases) {
+                    either_mode_or_no_bases =
+                        contiguous(faction_id, other, region, 1) != 0;
+                }
+                if (other_bases == 0) {
+                    mode0_or_no_bases = true;
+                    either_mode_or_no_bases = true;
+                }
+            }
+
+            if ((treaty & 0x0C10u) != 0) {
+                if (either_mode_or_no_bases) ++no_base_or_either_mode_count;
+                if (mode0_or_no_bases) {
+                    ++no_base_or_mode0_count;
+                    if (no_base_or_mode0_count > 1) planning_flags |= 0x0200u;
+                }
+
+                const bool passes_force_test =
+                    own_force <= static_cast<int>(other_combat)
+                    || own_force <= static_cast<int>(other_force);
+                const bool passes_pressure_test =
+                    own_combat <= static_cast<int>(other_force)
+                    && passes_force_test && own_bases != 0
+                    && either_mode_or_no_bases;
+                if (passes_pressure_test) ++passing_hostile_count;
+                else ++failing_hostile_count;
+
+                // Native 0x562C05..0x562C26 sets this additional movement
+                // flag for sufficiently strong opponents with a larger
+                // regional base count and an available contiguous mode.
+                const int pressure_threshold = (3 * own_force) / 2;
+                if (static_cast<int>(other_force) >= pressure_threshold
+                    && own_bases > other_bases
+                    && either_mode_or_no_bases) {
+                    planning_flags |= 0x4000u;
+                }
+
+            } else if (own_bases != 0 && (treaty & 0x20u) != 0
+                       && other_force > own_combat) {
+                const bool weaker_than_double_own_force =
+                    static_cast<int>(other_force) < 2 * own_force;
+                const bool own_force_exceeds_other_combat =
+                    own_force > static_cast<int>(other_combat);
+                const bool other_bases_are_present = other_bases != 0;
+                if (own_force_exceeds_other_combat && other_bases_are_present
+                    && weaker_than_double_own_force) {
+                    attack_flags |= 2;
+                } else {
+                    attack_flags |= either_mode_or_no_bases ? 1 : 2;
+                }
+            }
+
+            // The native's human-faction branch checks actual unit presence
+            // only for factions with a lock bit and at least one successful
+            // contiguity/no-base mode. This is distinct from the later
+            // wants_to_attack() flag below.
+            const uint8_t other_lock_bit = static_cast<uint8_t>(
+                1u << (static_cast<uint32_t>(other) & 7u));
+            if ((treaty & 0x0C10u) != 0
+                && (GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & other_lock_bit) != 0
+                && (mode0_or_no_bases || either_mode_or_no_bases)) {
+                for (int vehicle_id = 0; vehicle_id < GameDataStateStorage.fields_.vehicle_current_count_;
+                     ++vehicle_id) {
+                    const Veh &vehicle = Vehs[vehicle_id];
+                    if (vehicle.faction_id == other
+                        && map_loc(vehicle.x, vehicle.y)->region == region) {
+                        planning_flags |= 0x0004u;
+                        break;
+                    }
+                }
+            }
+
+            if ((treaty & 3u) != 0
+                && (wants_to_attack(faction_id, other, 0)
+                    || wants_to_attack(other, faction_id, 0))) {
+                planning_flags |= 0x0004u;
+            }
+        }
+
+        // 0x562D61 computes the region threshold from the planet's highest
+        // faction ranking, this region's unk_82 byte, current globals, and
+        // the self-inclusive faction count. These are source-owned fields;
+        // arithmetic order mirrors the native integer instructions.
+        const int regional_threshold = great_satan(GameDataStateStorage.fields_.faction_rankings_[7], 0)
+            + (faction_data.unk_82[region] < 4 ? 1 : 0)
+            - static_cast<int>((GameDataStateStorage.fields_.game_state_ >> 7) & 2u)
+            + (GameDataStateStorage.fields_.diff_level_current_ > 4 ? 1 : 0)
+            + (MapArea > 3200 ? 1 : 0)
+            + (GameDataStateStorage.fields_.turn_current_num_ > 75 ? 1 : 0)
+            + 3 + factions_with_bases;
+
+        bool priority_region = false;
+        if (own_bases != 0) {
+            priority_region = faction_data.unk_82[region] < 2;
+            const int controlled_area = faction_data.unk_80[region];
+            const int area_delta = controlled_area - faction_data.unk_81[region];
+            priority_region = priority_region
+                || (planning_flags & 8u) != 0
+                || own_bases >= 20
+                || area_delta < 4;
+            if (2 * own_bases
+                    * (faction_data.ai_growth - faction_data.ai_wealth
+                       + regional_threshold)
+                > 2 * controlled_area) {
+                const int half_bases = (own_bases + 1) / 2;
+                if (area_delta / half_bases + faction_data.unk_82[region]
+                    < 2 * regional_threshold) {
+                    priority_region = true;
+                }
+            }
+        }
+        if (priority_region) planning_flags |= 1u;
+
+        int region_plan = no_base_or_either_mode_count == 0 ? 8 : 7;
+        if (no_base_or_either_mode_count == 0 && own_bases != 0) {
+            planning_flags |= 0x0100u;
+        } else {
+            int local_plan_flags = attack_flags;
+            if (failing_hostile_count != 0) local_plan_flags = 0;
+            if ((local_plan_flags & 2) != 0) region_plan = 0;
+            if (passing_hostile_count == 0 && (local_plan_flags & 1) != 0) {
+                region_plan = 2;
+            }
+        }
+        if (region >= 0x40) region_plan = 7;
+        faction_data.region_base_plan[region] =
+            static_cast<uint8_t>(region_plan);
+
+        if (region < 0x40 && human_turn_bit == 0 &&
+            region == old_attack_target_region &&
+            no_base_or_mode0_count >= 2) {
+            for (int group_id = 0; group_id < GameDataStateStorage.fields_.vehicle_current_count_; ++group_id) {
+                Veh &group_vehicle = Vehs[group_id];
+                if (group_vehicle.faction_id == faction_id
+                    && (group_vehicle.state & 0x00040000u) != 0) {
+                    group_vehicle.state |= 0x00020000u;
+                }
+            }
+            faction_data.x_target = -1;
+            faction_data.y_target = -1;
+            faction_data.unk_71 = 0;
+            faction_data.unk_72 = 0;
+        }
+
+        // Native 0x562F93..0x563092 picks a region only when the prior x/y
+        // target is absent and this faction is not locked. Low plans prefer
+        // regions with a +1000 bias, subject to the native counters/flag;
+        // plan 7 uses the raw regional base count. Strict comparisons retain
+        // the first region on ties.
+        if (region < 0x40 && !reset_target && faction_data.x_target < 0
+            && (GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & faction_bit) == 0) {
+            if (region_plan < 2 && no_base_or_mode0_count < 2
+                && (planning_flags & 0x4000u) == 0) {
+                const int candidate_score = own_bases + 1000;
+                if (candidate_score > best_region_score) {
+                    best_region_score = candidate_score;
+                    selected_attack_region = region;
+                }
+            } else if (region_plan == 7 && own_bases > best_region_score) {
+                best_region_score = own_bases;
+                selected_attack_region = region;
+            }
+        }
+
+        if (region < 0x40 && ((((GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & faction_bit) == 0)
+             || (faction_id == ConsoleGlobal.faction_id_
+                 && (GameDataStateStorage.fields_.game_preferences_ & 0x00020000u) != 0))
+            && own_bases != 0
+            && (region_plan == 7
+                || (region_plan == 8 && Continents[region].tile_count < 0x96)))) {
+            // Native 0x56310D..0x563433 scans every matching abstract
+            // cell. For each outer neighbor direction, a same-region
+            // neighbor subtracts one; otherwise it adds two and independently
+            // probes all eight full-resolution radius starts, walking each
+            // candidate ray in the outer direction.
+            int best_site_score = 0;
+            int best_site_x = -1;
+            int best_site_y = -1;
+            for (int abstract_y = 0;
+                 abstract_y < static_cast<int>(MapAbstractLatBounds);
+                 ++abstract_y) {
+                for (int abstract_x = abstract_y & 1;
+                     abstract_x < MapAbstractLongBounds;
+                     abstract_x += 2) {
+                    if (abstract_at(abstract_x, abstract_y) != region) continue;
+
+                    int cell_score = 0;
+                    int cell_site_x = -1;
+                    int cell_site_y = -1;
+                    for (int outer_direction = 0; outer_direction < 8;
+                         ++outer_direction) {
+                        int neighbor_x =
+                            abstract_x + VehMoveDeltaX[outer_direction];
+                        const int neighbor_y =
+                            abstract_y + VehMoveDeltaY[outer_direction];
+                        if ((MapIsFlat & 1) == 0) {
+                            if (neighbor_x < 0) {
+                                neighbor_x += MapAbstractLongBounds;
+                            } else if (neighbor_x >= MapAbstractLongBounds) {
+                                neighbor_x -= MapAbstractLongBounds;
+                            }
+                        }
+                        if (neighbor_x >= 0
+                            && neighbor_x < MapAbstractLongBounds
+                            && neighbor_y >= 0
+                            && neighbor_y < static_cast<int>(MapAbstractLatBounds)
+                            && abstract_at(neighbor_x, neighbor_y) == region) {
+                            --cell_score;
+                            continue;
+                        }
+
+                        cell_score += 2;
+                        for (int inner_direction = 0; inner_direction < 8;
+                             ++inner_direction) {
+                            int site_x = abstract_x * 5
+                                + VehMoveDeltaX[inner_direction];
+                            const int site_y = abstract_y * 5
+                                + VehMoveDeltaY[inner_direction];
+                            if ((MapIsFlat & 1) == 0) {
+                                if (site_x < 0) site_x += MapLongitudeBounds;
+                                else if (site_x >= MapLongitudeBounds) {
+                                    site_x -= MapLongitudeBounds;
+                                }
+                            }
+                            if (site_x < 0 || site_x >= MapLongitudeBounds
+                                || site_y < 0 || site_y >= MapLatitudeBounds) {
+                                continue;
+                            }
+                            if ((map_loc(site_x, site_y)->climate & 0xE0u) < 0x60u) {
+                                continue;
+                            }
+
+                            int ray_x = site_x;
+                            int ray_y = site_y;
+                            int land_steps = 1;
+                            int edge_x = -1;
+                            int edge_y = -1;
+                            for (; land_steps < 100; ++land_steps) {
+                                int next_x =
+                                    ray_x + VehMoveDeltaX[outer_direction];
+                                const int next_y =
+                                    ray_y + VehMoveDeltaY[outer_direction];
+                                if ((MapIsFlat & 1) == 0) {
+                                    if (next_x < 0) next_x += MapLongitudeBounds;
+                                    else if (next_x >= MapLongitudeBounds) {
+                                        next_x -= MapLongitudeBounds;
+                                    }
+                                }
+                                if (next_y < 0 || next_y >= MapLatitudeBounds
+                                    || next_x < 0 || next_x >= MapLongitudeBounds
+                                    || (map_loc(next_x, next_y)->climate & 0xE0u) < 0x60u) {
+                                    edge_x = ray_x;
+                                    edge_y = ray_y;
+                                    break;
+                                }
+                                ray_x = next_x;
+                                ray_y = next_y;
+                            }
+                            if (land_steps >= 100 || edge_x < 0) continue;
+
+                            const Map *edge_tile = map_loc(edge_x, edge_y);
+                            if ((edge_tile->bit & 1u) != 0
+                                && (edge_tile->val2 & 0x0Fu) < 8u) {
+                                continue;
+                            }
+                            cell_score += 6;
+                            if (Continents[region].tile_count >= 0x28) {
+                                cell_score += 2;
+                            }
+                            cell_site_x = edge_x;
+                            cell_site_y = edge_y;
+                        }
+                    }
+                    if (cell_site_x >= 0 && cell_score > best_site_score) {
+                        best_site_score = cell_score;
+                        best_site_x = cell_site_x;
+                        best_site_y = cell_site_y;
+                    }
+                }
+            }
+            if (best_site_score >= 1 && best_site_x >= 0
+                && terraform_cost(best_site_x, best_site_y, faction_id)
+                    <= ((faction_data.energy_reserves
+                        + (faction_data.energy_reserves >> 31 & 7)) >> 3)) {
+                add_goal(faction_id, AI_GOAL_LANDING_SITE, 2,
+                         best_site_x, best_site_y, -1);
+            }
+        }
+        // Native 0x5634A5 calls bases_reset only after the optional landing
+        // site search/goal insertion, and only on the unlocked-faction edge.
+        if (region < 0x40 && (GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & faction_bit) == 0) {
+            bases_reset(region, faction_id,
+                        region_plan == previous_region_plan);
+        }
+    }
+
+    // Native 0x5634D5..0x563A05 chooses a regional opponent, a movement
+    // target, and up to eight nearby attacking vehicles. This is separate
+    // from base_id_atk_target: it writes the x/y movement target and the
+    // 0x800 strategy flag.
+    int regional_enemy = -1;
+    int regional_enemy_score = -1;
+    const int selected_region = selected_attack_region;
+    if (selected_region > 0 && selected_region < 0x3F
+        && reset_target == false
+        && (GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & faction_bit) == 0
+        && (faction_data.flags & 0x20000000u) == 0) {
+        int current_rank = -1;
+        for (int other = 1; other < MaxPlayerNum; ++other) {
+                if (other == faction_id) continue;
+                const uint32_t treaty = faction_data.diplo_treaties[other];
+                if ((treaty & 0x0C14u) == 0) continue;
+                if ((treaty & 0x0810u) == 0
+                    && (invalid_target_vehicle_count > 3
+                        || PlayersData[other].region_total_bases[selected_region] == 0)) {
+                    continue;
+                }
+                const int score = ((treaty & 0x10u) << 7)
+                    + PlayersData[other].region_total_bases[selected_region];
+                if (score > current_rank) {
+                    current_rank = score;
+                    regional_enemy = other;
+                    regional_enemy_score = score;
+                }
+        }
+
+        if (regional_enemy >= 0) {
+            const bool regional_special_case = regional_enemy_score == 0x800;
+            int nearest_target_vehicle = -1;
+            int nearest_target_distance = 9999;
+            for (int vehicle_id = 0; vehicle_id < GameDataStateStorage.fields_.vehicle_current_count_; ++vehicle_id) {
+                const Veh &vehicle = Vehs[vehicle_id];
+                if (vehicle.faction_id != faction_id) continue;
+                const Map *tile = map_loc(vehicle.x, vehicle.y);
+                if ((tile->climate & 0xE0u) < 0x60u
+                    || tile->region != selected_region) {
+                    continue;
+                }
+                if (regional_special_case
+                    && !is_coast(vehicle.x, vehicle.y, 0)) {
+                    continue;
+                }
+
+                int distance = 9999;
+                const int designated_base = faction_data.base_id_atk_target;
+                if (designated_base >= 0) {
+                    const Base &target_base = Bases[designated_base];
+                    const int target_owner = target_base.faction_id_current;
+                    if ((faction_data.diplo_treaties[target_owner] & 0x0810u) != 0
+                        && map_loc(target_base.x, target_base.y)->region
+                            == selected_region) {
+                        distance = vector_dist(
+                            x_dist(vehicle.x, target_base.x),
+                            vehicle.y - target_base.y);
+                        BaseFindDist = distance;
+                    }
+                }
+                if (distance == 9999) {
+                    const int found_base = base_find(
+                        vehicle.x, vehicle.y, regional_enemy, selected_region,
+                        -1, -1);
+                    if (found_base >= 0) {
+                        distance = BaseFindDist;
+                    } else {
+                        base_find(vehicle.x, vehicle.y, regional_enemy);
+                        distance = BaseFindDist * 2;
+                    }
+                }
+                if (distance < nearest_target_distance) {
+                    nearest_target_distance = distance;
+                    nearest_target_vehicle = vehicle_id;
+                }
+            }
+
+            if (nearest_target_vehicle >= 0) {
+                const Veh &target_vehicle = Vehs[nearest_target_vehicle];
+                faction_data.x_target = target_vehicle.x;
+                faction_data.y_target = target_vehicle.y;
+                if (regional_special_case) faction_data.flags |= 0x00000800u;
+                else faction_data.flags &= ~0x00000800u;
+
+                int assigned_attackers = 0;
+                const int32_t twice_naval_total = static_cast<int32_t>(
+                    static_cast<uint32_t>(faction_data.unk_70) << 1);
+                const int special_case_cap =
+                    (twice_naval_total + (twice_naval_total >> 31 & 0x003FFFFF)) >> 22;
+                for (int vehicle_id = 0; vehicle_id < GameDataStateStorage.fields_.vehicle_current_count_;
+                     ++vehicle_id) {
+                    Veh &vehicle = Vehs[vehicle_id];
+                    if (vehicle.faction_id != faction_id
+                        || (vehicle.state & 0x00060000u) != 0) {
+                        continue;
+                    }
+                    const VehPrototype &prototype =
+                        VehPrototypes[vehicle.proto_id];
+                    if (prototype.plan > 2
+                        || Chassis[prototype.chassis_id].triad != TRIAD_LAND) {
+                        continue;
+                    }
+                    const Map *tile = map_loc(vehicle.x, vehicle.y);
+                    if ((tile->climate & 0xE0u) < 0x60u
+                        || tile->region != selected_region) {
+                        continue;
+                    }
+                    if (vehicle.order != 0 && vehicle.order != 0x18) continue;
+
+                    const int nearby_base = base_find(
+                        vehicle.x, vehicle.y, regional_enemy);
+                    if (nearby_base < 0) continue;
+                    const int target_distance = vector_dist(
+                        x_dist(vehicle.x, faction_data.x_target),
+                        vehicle.y - faction_data.y_target);
+                    if (BaseFindDist <= target_distance) continue;
+
+                    const int weapon_value =
+                        weap_strat(prototype.weapon_id, faction_id);
+                    const int armor_value =
+                        arm_strat(prototype.armor_id, faction_id);
+                    if (weapon_value < armor_value
+                        && ((faction_data.unk_72 & 1) != 0
+                            || regional_special_case)) {
+                        continue;
+                    }
+                    vehicle.state &= ~0x00020000u;
+                    vehicle.state |= 0x00040000u;
+                    ++faction_data.unk_71;
+                    ++assigned_attackers;
+                    if (weapon_value < armor_value) faction_data.unk_72 |= 1;
+                    if (assigned_attackers >= 8
+                        || (regional_special_case
+                            && assigned_attackers >= special_case_cap)) {
+                        break;
+                    }
+                }
+            }
+        }
+    }
+
+    // Native 0x563A64..0x564858 runs only for a nonzero turn and nonzero
+    // faction. It clears the 75 goal-use counters, converts this faction's
+    // prior move marker '1' to the retry marker '2', then performs two
+    // descending passes (the first only processes marker '2').
+    if (GameDataStateStorage.fields_.turn_current_num_ != 0 && faction_id != 0) {
+      int goal_assignments[75];
+      for (int goal_id = 0; goal_id < 75; ++goal_id) {
+          goal_assignments[goal_id] = 0;
+      }
+      for (int vehicle_id = GameDataStateStorage.fields_.vehicle_current_count_ - 1; vehicle_id >= 0; --vehicle_id) {
+          Veh &vehicle = Vehs[vehicle_id];
+          if (vehicle.faction_id == faction_id && vehicle.move_to_ai_type == '1') {
+              vehicle.move_to_ai_type = '2';
+          }
+      }
+      for (int planning_pass = 0; planning_pass < 2; ++planning_pass) {
+        for (int vehicle_id = GameDataStateStorage.fields_.vehicle_current_count_ - 1; vehicle_id >= 0; --vehicle_id) {
+            Veh &vehicle = Vehs[vehicle_id];
+            if (vehicle.faction_id != faction_id) continue;
+            if (planning_pass == 0 && vehicle.move_to_ai_type != '2') continue;
+
+            const int prototype_id = vehicle.proto_id;
+            const VehPrototype &prototype = VehPrototypes[prototype_id];
+            const int plan = prototype.plan;
+            const int x = vehicle.x;
+            const int y = vehicle.y;
+            const Map *current_tile = map_loc(x, y);
+            int region = current_tile->region;
+            int region_plan = faction_data.region_base_plan[region];
+            const int current_triad = Chassis[prototype.chassis_id].triad;
+
+            if (planning_pass == 0) {
+                // Native 0x563B14..0x563B47 restricts the retry pass to
+                // marker '2', excludes plan 9 unconditionally, and also
+                // excludes plans 0..2 when the region plan is at most 2.
+                if (vehicle.move_to_ai_type != '2' || plan == 9
+                    || (region_plan <= 2 && plan <= 2)) {
+                    continue;
+                }
+            }
+
+            // Native 0x563B4A clears this flag after the first-pass filters,
+            // but before the order and locked-human filters below.
+            vehicle.state &= ~0x40000000u;
+
+            if (vehicle.order > 3 && vehicle.order < 0x18) continue;
+            const bool human_controlled = (GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & faction_bit) != 0;
+            if (human_controlled) {
+                if ((vehicle.state & 0x200u) == 0) continue;
+                if (plan == 9 && vehicle.probe_action != 0) continue;
+                // Native 0x563BB2 rejects the exact pair of state bits
+                // 0x1000200.  The following 0x563BC6 test is a different
+                // two-bit case and compares the native adjacent vehicle
+                // byte pair; these are not one generic "human unit" gate.
+                if ((vehicle.state & 0x1000200u) == 0x1000200u) continue;
+                if ((vehicle.state & 0x2000200u) == 0x2000200u
+                    && vehicle.patrol_current_point < vehicle.waypoint_count) {
+                    continue;
+                }
+            }
+
+            int movement_class = plan;
+
+            const uint32_t movement_target_state = vehicle.state & 0x00060000u;
+            const bool has_both_target_state_bits =
+                movement_target_state == 0x00060000u;
+            if ((vehicle.state & 0x10000000u) != 0) {
+                // 0x563C20 increments the BYTE region_total_offensive_vehs
+                // counter and routes this unit as movement class 2.
+                ++faction_data.region_total_offensive_vehs[region];
+                movement_class = 2;
+            } else if (region < 0x40 && movement_class <= 1
+                       && region_plan <= 2) {
+                // Native 0x563C29..0x563D42 balances offensive units against
+                // a per-region capacity. The divisor begins at 2-ai_fight,
+                // then plan 8 adds two, plan 2 selects one, and the late-game
+                // GameState bit selects one. The original signed divide is
+                // `(bases + divisor - 1) / divisor`.
+                int divisor = 2 - faction_data.ai_fight;
+                if (region_plan == 8) divisor += 2;
+                else if (region_plan == 2) divisor = 1;
+                if ((GameDataStateStorage.fields_.game_state_ & 0x40000000u) != 0) divisor = 1;
+                const int regional_capacity =
+                    (static_cast<int>(faction_data.region_total_bases[region])
+                     + divisor - 1) / divisor;
+                if (regional_capacity > 0) {
+                    const Map *tile = map_loc(x, y);
+                    int tile_climate = -1;
+                    if ((tile->bit & 1u) != 0) {
+                        const int climate = tile->climate & 0x0F;
+                        if (climate < 8) tile_climate = climate;
+                    }
+                    if (tile_climate == faction_id
+                        && (region_plan == 2
+                            || (faction_data.unk_77[region] & 0x40u) != 0)
+                        && stack_check(vehicle_id, 0x0B, 0x10000000,
+                                       0x10000000, -1) < 1) {
+                        if (movement_target_state == 0
+                            && faction_data.region_total_offensive_vehs[region]
+                                   < regional_capacity) {
+                            ++faction_data.region_total_offensive_vehs[region];
+                            vehicle.state |= 0x10000000u;
+                            movement_class = 2;
+                        }
+                    }
+                }
+            }
+            // 0x563D45..0x563E69 compares the current tile's water predicate
+            // with whether the region record is class 1. On a mismatch it
+            // gates on the fungus bit and owner nibble, then runs an
+            // eight-offset local search. The search's success comparison
+            // repeats the same saved water/class pair used by the mismatch
+            // gate, without changing either value inside the loop; its success
+            // edge is therefore unreachable. The native block has no global
+            // side effects, so keep the observable edge (reject non-fungus or
+            // owner IDs outside 0..7) and continue planning in the original
+            // region.
+            if (current_triad != TRIAD_AIR) {
+                const bool current_is_ocean =
+                    (current_tile->climate & 0xE0u) < 0x60u;
+                const bool chassis_is_sea = current_triad == TRIAD_SEA;
+                if (current_is_ocean != chassis_is_sea) {
+                    const int tile_owner = current_tile->val2 & 0x0F;
+                    if ((current_tile->bit & 1u) == 0 || tile_owner >= 8) {
+                        continue;
+                    }
+                }
+            }
+            // Native's class-1 remap uses the original tile region: the
+            // apparent neighbor-region assignment above cannot execute.
+            if (movement_class == 1) {
+                if (region_plan == 2 || region_plan == 8) movement_class = 2;
+                else movement_class = 0;
+            }
+
+            // The target-state shortcut follows terrain transition and its
+            // region-plan remap, before class-7 cargo and goal processing.
+            if (movement_target_state == 0x00040000u
+                && faction_data.x_target >= 0) {
+                vehicle.order = 0x18;
+                vehicle.move_to_ai_type = '0';
+                vehicle.waypoint_x[0] = static_cast<int16_t>(faction_data.x_target);
+                vehicle.waypoint_y[0] = static_cast<int16_t>(faction_data.y_target);
+                if (plan == 8) vehicle.probe_sabotage_id = 0;
+                continue;
+            }
+            if (has_both_target_state_bits) {
+                movement_class = 0;
+            }
+            // At 0x563EFB..0x563F19 the native rejects an under-filled
+            // carrier before visiting any goal. Keep this ahead of the goal
+            // loop: the loop can delete invalid sites, so a post-selection
+            // cargo test would have observably different side effects.
+            if (movement_class == 7
+                && stack_check(vehicle_id, 8, -1, -1, -1)
+                    < veh_cargo(vehicle_id)) {
+                continue;
+            }
+            // Native checks the 'F' move marker only after its class-7 cargo
+            // validation, and suppresses this unit's goal search when its
+            // resulting class is 2.
+            if (vehicle.move_to_ai_type == 'F' && movement_class == 2) {
+                continue;
+            }
+            // Native 0x563F61..0x564017 tests a marked advance through
+            // fungus only after the class-7 cargo and 'F'/class-2 gates.
+            // Keep its two independent stack queries and base garrison
+            // fallback in native order.
+            if (vehicle.move_to_ai_type == '2' && !has_both_target_state_bits
+                && (current_tile->bit & 1u) != 0
+                && (current_tile->climate & 0x0Fu) <= 7) {
+                const int class_c_stack = stack_check(
+                    vehicle_id, 0x0C, -1, -1, -1);
+                const int all_stack = stack_check(
+                    vehicle_id, 1, -1, -1, -1);
+                if (all_stack - class_c_stack <= 1) continue;
+                if (movement_class == 1 || movement_class == 2
+                    || movement_class == 3) {
+                    const int current_base = base_at(x, y);
+                    const int fortification_stack = stack_check(
+                        vehicle_id, 0x10, -1, -1, -1);
+                    if (fortification_stack < garrison_check(current_base)) {
+                        continue;
+                    }
+                }
+            }
+            // The native skips the complete goal walk for class-9 vehicles
+            // carrying the 0x0800 flag in the word at Veh+0x30.
+            if (movement_class == 9 && (vehicle.flags & 0x0800u) != 0) {
+                continue;
+            }
+
+            int best_goal = -1;
+            int best_cost = 99999;
+            for (int goal_id = 0; goal_id < 75; ++goal_id) {
+                Goal &goal = faction_data.goals[goal_id];
+                // Native 0x564057 filters on the positive priority word,
+                // then separately rejects negative goal types at 0x56406C.
+                // Type zero (attack) is a valid goal and must remain eligible.
+                if (goal.priority <= 0 || goal.type < 0) continue;
+                const int goal_kind = goal.type & 0x0F;
+                if (goal_kind != movement_class
+                    && !(goal.type == AI_GOAL_SCOUT && !has_both_target_state_bits
+                         && movement_class <= 3
+                         && vehicle.move_to_ai_type != '2')
+                    && !(goal_kind == AI_GOAL_LANDING_SITE && plan == 9)) {
+                    continue;
+                }
+                // Native validates coordinates only after the goal-type /
+                // movement-class compatibility gates (0x564057..0x5640D8).
+                // Invalid coordinates are reset as a side effect at that
+                // point; a type-incompatible goal is left untouched.
+                if (goal.x < 0 || goal.x >= MapLongitudeBounds
+                    || goal.y < 0 || goal.y >= MapLatitudeBounds) {
+                    goal.x = -1;
+                    goal.y = -1;
+                    continue;
+                }
+                const int goal_region = map_loc(goal.x, goal.y)->region;
+                const RulesChassis &movement_chassis = Chassis[prototype.chassis_id];
+                if (movement_chassis.triad == TRIAD_AIR) continue;
+                const bool goal_is_ocean =
+                    (map_loc(goal.x, goal.y)->climate & 0xE0u) < 0x60u;
+                if (goal_is_ocean != (movement_chassis.triad == TRIAD_SEA)) {
+                    continue;
+                }
+                if (prototype.unk_1 == 0x15) continue;
+                if (goal_region != region) continue;
+
+                if (movement_class == 0 && goal.type == AI_GOAL_ATTACK
+                    && (map_loc(goal.x, goal.y)->bit & 0x00002000u) != 0) {
+                    if (!want_monolith(vehicle_id) || has_both_target_state_bits
+                        || goal_assignments[goal_id] != 0) {
+                        continue;
+                    }
+                }
+                if (goal.type == AI_GOAL_SCOUT
+                    && has_abil(prototype_id, 0x0800)) {
+                    continue;
+                }
+                const int dx = x_dist(x, goal.x);
+                const int dy = y - goal.y;
+                int scaled_distance = vector_dist(dx, dy) * 0x100;
+                if (goal.type == AI_GOAL_COLONIZE
+                    && base_territory(faction_id, goal.x, goal.y) >= 0) {
+                    del_site(faction_id, AI_GOAL_COLONIZE, goal.x, goal.y, 0);
+                    continue;
+                }
+
+                // A landing-site goal's native priority is multiplied by
+                // its cached site rank. If the cache is zero, the original
+                // computes and stores world_site on this goal tile; the
+                // 0x1000 bit in Map::bit2 is the native forced-minimum case.
+                int landing_site_rank = 1;
+                if (goal.type == AI_GOAL_COLONIZE) {
+                    Map *landing_tile = map_loc(goal.x, goal.y);
+                    if ((landing_tile->bit & 0x00001000u) == 0) {
+                        landing_site_rank = (landing_tile->val2 >> 4) & 0x0F;
+                        if (landing_site_rank == 0) {
+                            landing_site_rank = world_site(goal.x, goal.y, 0);
+                            site_set(goal.x, goal.y, landing_site_rank);
+                        }
+                        if (landing_site_rank < 1) landing_site_rank = 1;
+                        else if (landing_site_rank >= 16) landing_site_rank = 15;
+                    }
+                }
+
+                // Native 0x5644BD..0x56450B applies this only to units whose
+                // state already has 0x10000000, and queries the stack at the
+                // goal coordinate. The one-unit allowance comes from the
+                // scaled distance being zero (the vehicle is already there),
+                // not from its movement class.
+                if ((vehicle.state & 0x10000000u) != 0) {
+                    const int goal_stack = veh_at(goal.x, goal.y);
+                    if (goal_stack >= 0) {
+                        const int protected_goal_units = stack_check(
+                            goal_stack, 0x0B, 0x10000000, 0x10000000,
+                            faction_id);
+                        const int stack_allowance = scaled_distance == 0 ? 1 : 0;
+                        if (protected_goal_units > stack_allowance) continue;
+                    }
+                }
+
+                const int goal_base_id = base_at(goal.x, goal.y);
+                const int goal_record_base_id = goal.base_id;
+                int prior_assignments = goal_assignments[goal_id];
+                if (has_both_target_state_bits
+                    || (goal_base_id >= 0
+                        && Bases[goal_base_id].faction_id_current == faction_id
+                        && Bases[goal_base_id].nerve_staple_turns_left != 0)) {
+                    prior_assignments = 0;
+                }
+                const int remaining_priority =
+                    (static_cast<int>(goal.priority) - prior_assignments)
+                    * landing_site_rank;
+                if (remaining_priority <= 0) continue;
+
+                // Native 0x56451F..0x564553 tests the candidate goal record's
+                // base state, then applies the 3x cost only when this unit's
+                // home base is a different ID. It does not read the current
+                // unit's home-base state for this first surcharge.
+                if (goal.type == AI_GOAL_TERRAFORM_LAND
+                    && goal_record_base_id >= 0
+                    && (Bases[goal_record_base_id].state & 0x20u) != 0
+                    && vehicle.home_base_id != goal_record_base_id) {
+                    scaled_distance *= 3;
+                }
+                const int territory_owner =
+                    whose_territory(faction_id, goal.x, goal.y, 0, 0);
+                if (territory_owner >= 0 && territory_owner != faction_id) {
+                    const uint32_t territory_relation =
+                        faction_data.diplo_treaties[territory_owner];
+                    // 0x5646E1..0x5646FD leaves 0xC10 and treaty bit 0 at
+                    // the unmodified-distance edge, rejects 0x00100000 or
+                    // treaty bit 1, and doubles only when none apply.
+                    if ((territory_relation & 0x00100000u) != 0) {
+                        continue;
+                    }
+                    if ((territory_relation & 0x00000002u) != 0) {
+                        continue;
+                    }
+                    if ((territory_relation & (0x00000C10u | 0x00000001u)) == 0) {
+                        scaled_distance *= 2;
+                    }
+                }
+                if (goal.type == AI_GOAL_PRIORITY_COMBAT) {
+                    if (!has_abil(prototype_id, 0x8000)
+                        || movement_chassis.triad != TRIAD_LAND) {
+                        continue;
+                    }
+                    // Native uses CDQ / SUB sign / SAR at 0x56474A..0x56474F;
+                    // this is signed division by two rounded toward zero.
+                    scaled_distance /= 2;
+                }
+                // Native 0x564511 gates this scan on the current goal record's
+                // type 9 (terraform-land), not on this vehicle's plan. It
+                // reads this goal's base_id and compares the current vehicle
+                // against other friendly plan-9 vehicles using that base's
+                // relocation state.
+                if (goal.type == AI_GOAL_TERRAFORM_LAND) {
+                    bool closer_plan9_unit = false;
+                    for (int other_vehicle_id = 0;
+                         other_vehicle_id < GameDataStateStorage.fields_.vehicle_current_count_;
+                         ++other_vehicle_id) {
+                        if (other_vehicle_id == vehicle_id) continue;
+                        const Veh &other_vehicle = Vehs[other_vehicle_id];
+                        if (other_vehicle.faction_id != faction_id
+                            || VehPrototypes[other_vehicle.proto_id].plan != 9) {
+                            continue;
+                        }
+                        int other_distance = vector_dist(
+                            x_dist(other_vehicle.x, goal.x),
+                            other_vehicle.y - goal.y) * 0x100;
+                        if (goal_record_base_id >= 0
+                            && (Bases[goal_record_base_id].state & 0x20u) != 0
+                            && other_vehicle.home_base_id != goal_record_base_id) {
+                            other_distance *= 3;
+                        }
+                        if (other_distance < scaled_distance) {
+                            closer_plan9_unit = true;
+                            break;
+                        }
+                    }
+                    if (closer_plan9_unit) continue;
+                }
+                const int cost = scaled_distance / remaining_priority;
+                if (cost < best_cost) {
+                    best_cost = cost;
+                    best_goal = goal_id;
+                }
+            }
+
+            if (best_goal < 0) continue;
+            Goal &goal = faction_data.goals[best_goal];
+            const int target_base = base_at(goal.x, goal.y);
+            const uint8_t previous_move_marker = vehicle.move_to_ai_type;
+            vehicle.order = 0x18;
+            vehicle.move_to_ai_type = '1';
+            vehicle.waypoint_x[0] = static_cast<int16_t>(goal.x);
+            vehicle.waypoint_y[0] = static_cast<int16_t>(goal.y);
+            if (previous_move_marker < 0x33 || previous_move_marker >= 0x36) {
+                ++goal_assignments[best_goal];
+            }
+            if (plan == 8) vehicle.probe_sabotage_id = 0;
+            if (goal.type == 3) vehicle.state |= 0x40000000u;
+            if (goal.type == 2 && target_base >= 0
+                && Bases[target_base].faction_id_current == faction_id) {
+                Bases[target_base].state |= 0x08000000u;
+                if ((GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & faction_bit) == 0) {
+                    base_reset(target_base, 0);
+                }
+            }
+        }
+      }
+        wipe_goals(faction_id);
+    }
+}
+
+
+/*
+Purpose: Wrap an x coordinate on a round map, as set_course does it.
+Original Offset: n/a
+Return Value: Wrapped x
+Status: Complete
+
+xrange() at 0048BEE0 cannot stand in, for one bit: it tests the whole of MapIsFlat while
+set_course reads the low BYTE and tests bit zero (`mov cl, byte ptr [94988Ch] / test cl, 1`),
+the same reading valid_patrol above and reset_territory use. The two agree on the 0 and 1 the
+game stores there and disagree on everything else.
+*/
+static inline int course_xrange(int x) {
+    if (!(MapIsFlat & 1)) {
+        if (x >= 0) {
+            if (x >= MapLongitudeBounds) {
+                x -= MapLongitudeBounds;
+            }
+        } else {
+            x += MapLongitudeBounds;
+        }
+    }
+    return x;
+}
+
+/*
+Purpose: Send the unit toward the given tile the long way round - by water - choosing the anchorage
+         next to it that fronts the most of the destination's own landmass.
+// ORIGINAL: 0x00564890 ?set_course@@YAXHDHH@Z 0x00564890-0x00564B82
+// TRIED: call structure already matches (`osmx calls --all` lists only
+//            base_at and base_on_sea, same as the image's own `calls` list),
+//            so the gap is register/control-flow noise across a 754-byte,
+//            21-candidate scoring loop, not a missing inline or a wrong
+//            callee. Best flag set /O2 /Ob0 /Gy /GR- /Oy- /GX, 0.558
+//            similar. Not chased further in this pass - the semantic content
+//            is already verified (mutant sweep kills 28/30, two equivalent).
+// size      754 bytes
+// prototype void (__cdecl ?set_course@@YAXHDHH@Z)(int vehID, int8 type, int xCoord, int yCoord)
+// callers   2   call targets   2
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x004E3A50 0x0050DE50
+Return Value: n/a
+Status: Complete
+
+The direct answer comes first and is narrow: only when the destination is in the SAME region as
+the unit AND the unit is itself afloat - its own tile below ALT_BIT_SHORE_LINE - does this hand
+the coordinates straight to go_to. Anything else is a crossing, and the rest of the body picks
+where to cross to.
+
+The candidates are the 21 tiles of the destination's base radius, and each must be water. Which
+water is decided by what the unit is sitting in: a unit inside a base asks base_on_sea whether
+that base touches the candidate's sea region, and a unit at sea requires the candidate to be in
+its own region. That is the reachability test, and it is the only one - nothing here checks
+distance or fuel.
+
+Each surviving candidate is then scored by FRONTAGE: how many of its eight neighbours are land,
+belong to the DESTINATION's region, and hold no base. Land is the same ALT_BIT_SHORE_LINE line
+read the other way round, the region is the destination's rather than the candidate's, and the
+base test is base_who() - which answers -1 both for an empty tile and for a base tile whose owner
+nibble is 0xF, so only a real faction-owned base takes a neighbour out of the count.
+
+The best frontage wins, and the starting bar depends on the destination itself: zero when the
+destination is land, minus one when it is water. A water destination therefore accepts an
+anchorage that fronts NOTHING, which is what lets a unit be sent to open sea at all; a land
+destination will not move the unit unless some anchorage fronts at least one tile of it.
+
+Ties keep the earlier candidate, and every improvement re-issues the order, so the unit ends up
+aimed at the last candidate that strictly beat everything before it.
+
+The x wrap is the shared wrap_map_x inline (x < 0 tested first, as the image does).
+
+Verification note: the sweep against recovery-gameplay-tests kills 28 of 30 valid mutants twice
+over, and both survivors are equivalences rather than untested behaviour.
+
+  - Widening the neighbour loop to nine reaches RadiusBase entry 8, which is (0, 0) - the
+    anchorage itself. Three lines earlier the anchorage was required to be below
+    ALT_BIT_SHORE_LINE, and a neighbour is required to be at or above it, so that iteration can
+    never reach the count no matter what the map holds.
+  - Swapping `best_frontage = frontage;` with the go_to call behind it. go_to writes Veh fields
+    and reads Vehs and VehPrototypes; the assignment reads a local the callee cannot name and
+    writes a local the callee cannot see. Neither statement observes the other's effect, in
+    either order.
+*/
+void __cdecl set_course(int veh_id, char type, int x, int y) {
+    Veh &veh = Vehs[veh_id];
+    int veh_region = map_loc(veh.x, veh.y)->region;
+    int base_id = base_at(veh.x, veh.y);
+    Map *destination = map_loc(x, y);
+    int dst_region = destination->region;
+    if (veh_region == dst_region
+        && (map_loc(veh.x, veh.y)->climate & ~0x1F) < ALT_BIT_SHORE_LINE) {
+        go_to(veh_id, type, x, y);
+        return;
+    }
+    int best_frontage = ((destination->climate & ~0x1F) >= ALT_BIT_SHORE_LINE) ? 0 : -1;
+    for (int i = 0; i < 21; i++) {   // the destination's own base radius
+        int x_radius = wrap_map_x(x + RadiusOffsetX[i]);
+        int y_radius = y + RadiusOffsetY[i];
+        if (!on_map(x_radius, y_radius)) {
+            continue;
+        }
+        Map *anchorage = map_loc(x_radius, y_radius);
+        if ((anchorage->climate & ~0x1F) >= ALT_BIT_SHORE_LINE) {
+            continue;
+        }
+        if (base_id >= 0) {
+            if (!base_on_sea(base_id, anchorage->region)) {
+                continue;
+            }
+        } else if (anchorage->region != veh_region) {
+            continue;
+        }
+        int frontage = 0;
+        for (int j = 0; j < 8; j++) {
+            int x_adj = wrap_map_x(x_radius + VehMoveDeltaX[j]);
+            int y_adj = y_radius + VehMoveDeltaY[j];
+            if (!on_map(x_adj, y_adj)) {
+                continue;
+            }
+            Map *shore = map_loc(x_adj, y_adj);
+            if ((shore->climate & ~0x1F) < ALT_BIT_SHORE_LINE) {
+                continue;
+            }
+            if (shore->region != dst_region) {
+                continue;
+            }
+            if (base_who(x_adj, y_adj) >= 0) {
+                continue;
+            }
+            frontage++;
+        }
+        if (frontage > best_frontage) {
+            best_frontage = frontage;
+            go_to(veh_id, type, x_radius, y_radius);
+        }
+    }
+}
+
+// ORIGINAL: 0x00564B90 ?assemble_passengers@@YAXHHH@Z 0x00564B90-0x00564D90 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["git:99d6e72bcd5ae3be3566222736528cb0dc57935c:src/recovered/units/00564b90.cpp", "pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "recovery/tasks/game-logic-seed-owner-coverage.json; preserve original extents and historical seed lessons. Ordinary owned literals have pinned content provenance, not exact original data-allocation claims."], "reason": "Recover full passenger-goal orchestration with real region_total_bases and unk_77 arrays, vendetta/contiguity tests and colony/defend/attack/scout goal order."}
+void __cdecl assemble_passengers(int base_id, int mode, int priority) {
+    const int x = Bases[base_id].x;
+    const int y = Bases[base_id].y;
+    const int faction_id = Bases[base_id].faction_id_current;
+    const int region = map_loc(x, y)->region;
+    int disconnected_factions = 0;
+
+    for (int other_faction = 1; other_faction < MaxPlayerNum; ++other_faction) {
+        if (other_faction == faction_id) {
+            continue;
+        }
+
+        if ((PlayersData[faction_id].diplo_treaties[other_faction] &
+             DTREATY_VENDETTA) == 0) {
+            continue;
+        }
+
+        if (PlayersData[other_faction].region_total_bases[region] == 0 ||
+            contiguous(other_faction, faction_id, region, 1) == 0) {
+            ++disconnected_factions;
+        }
+    }
+
+    Bases[base_id].state |= BSTATE_UNK_1;
+    Bases[base_id].unk_1 = 2;
+
+    if (mode != 8 || (PlayersData[faction_id].unk_77[region] & 0x0800) != 0) {
+        if (disconnected_factions <
+            range(PlayersData[faction_id].ai_growth -
+                      PlayersData[faction_id].ai_fight -
+                      GameDataStateStorage.fields_.turn_current_num_ / 100 + 2,
+                  0, 99)) {
+            add_goal(faction_id, AI_GOAL_COLONIZE,
+                     stack_check(veh_at(x, y), 2, AI_GOAL_COLONIZE,
+                                 faction_id, -1) != 0 ? 1 : priority,
+                     x, y, -1);
+        }
+
+        if (mode <= 2) {
+            goto scout_goal;
+        }
+    }
+
+    add_goal(faction_id, AI_GOAL_DEFEND, priority, x, y, -1);
+    add_goal(faction_id, AI_GOAL_ATTACK, priority, x, y, -1);
+    add_goal(faction_id, AI_GOAL_UNK_3, priority, x, y, -1);
+scout_goal:
+    if (mode == 7) {
+        add_goal(faction_id, AI_GOAL_SCOUT, 1, x, y, -1);
+    }
+}
+
+/*
+Purpose: Say whether a convoy-to-nearest-base order is possible from a tile:
+         reject occupied-enemy stacks, then walk the base array - wrapping
+         the x distance on a wrapping map - and reject when any base within
+         convoy range (the hex distance minus the diamond correction below
+         three) has the approach direction bit set in its worked-tile word.
+
+// ORIGINAL: 0x00564D90 ?can_convoy@@YAHHH@Z 0x00564D90-0x00564EAA FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence":["veh.h owns the actual Veh and Base arrays and the vehicle APIs veh_at/stack_check; base.h/map.h own the traversed Base records, map globals, and radius_move API.","console.cpp and enemy.cpp are current source callers and both include veh.h; the duplicate console.h declaration is removed in favor of the actual vehicle API header.","The redundant four abs calls, x-wrap guard, pointer walk, worked-radius test, and early rejection order remain unchanged."],"reason":"Move the complete convoy eligibility helper beside the vehicle owner and expose its existing cdecl API through veh.h without simplifying its distance or call sequence."}
+// TRIED: transcribing Ghidra's redundant double-abs() calls (abs(dx) and abs(abs(dx))) literally rather than simplifying them away, since the original genuinely emits four `_abs` calls per loop iteration, not two. Landed as MISMATCH at 0.78 similarity: the remaining gap starts with the prologue's `push ecx` filler (a one-slot local reserved with a throwaway push instead of `sub esp,4`) that this body's local declaration order does not reproduce.
+// size      282 bytes
+// prototype int (__cdecl ?can_convoy@@YAHHH@Z)(int32 xCoord, int32 yCoord)
+// callers   2   call targets   4
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x005A65D0 0x005B9580 0x005BFE90 0x00644F3A
+// notes     Seed provenance (TRIED): the image's four _abs calls per
+//           iteration are kept (including the redundant re-abs of the
+//           already-wrapped dx) and the walk stays a pointer walk over the
+//           0x134-byte base records. The surviving divergence is the
+//           prologue's one-slot local reserved by a throwaway `push ecx`
+//           (the mon_* family wall), so the body is not measured exact.
+Return Value: 0 impossible, 1 possible
+Status: Coverage transcription - unclaimed body, seed
+        git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/00564d90.cpp retained.
+LEVER: veh_at nested in the stack_check call, an indexed Bases[i] loop, and
+        x_dist plus vector_dist(int, int) as inline helpers.
+*/
+int __cdecl can_convoy(int x, int y) {
+    if (stack_check(veh_at(x, y), 9, 3, -1, -1) != 0) {
+        return 0;
+    }
+    for (int i = 0; i < GameDataStateStorage.fields_.base_current_count_; i++) {
+        const int base_y = Bases[i].y;
+        if (vector_dist(x_dist(x, Bases[i].x), abs(y - base_y)) <= 2) {
+            const int dir = radius_move(Bases[i].x, Bases[i].y, x, y, 0x15);
+            if (dir >= 0 && (Bases[i].resource_sqr_radius & (1 << dir)) != 0) {
+                return 0;
+            }
+        }
+    }
+    return 1;
+}
+
+/*
+Purpose: Check whether a sensor array is worth building on the specified tile.
+// ORIGINAL: 0x00564EB0 ?good_sensor@@YAHHHH@Z 0x00564EB0-0x00565157
+// size      679 bytes
+// prototype int (__cdecl ?good_sensor@@YAHHHH@Z)(int factionID, int xCoord, int yCoord)
+// callers   2   call targets   5
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x004E3A50 0x004E3EF0 0x00592030 0x005B9F20 0x005BF010
+Return Value: Is the tile a good sensor site? true/false
+Status: Complete
+
+TRIED: wrap_map_x in both loops, base_who, and the shift forms of the rocky and
+altitude tests make the shape exact apart from the first loop's x_radius register
+(edi in the image) and its flat-map block order. has_tech stays a real call.
+LEVER: the first loop's wrap as a flat-first ternary gives the image's block order
+(MNEMONIC_ONLY 240/242). Left: the reload order of faction/y/x before the last
+whose_territory call (image ebx, esi, edi).
+
+Three questions in order, and every one of them can answer no on its own.
+
+WHO OWNS IT. The tile must already be the faction's own territory, and if it is fungus at
+ALT_BIT_OCEAN_SHELF or above the faction must hold Rules.tech_improve_fungus_sqr - the same
+technology that lets it work a fungus square at all, at offset 0x3C of RulesBasic.
+
+IS IT WANTED. The 25 tiles of the surrounding radius are scanned. Any one of them that already
+carries a sensor standing on the faction's own territory answers no outright, which is what stops
+sensors being stacked on top of each other. Then, for the NINE innermost tiles only, three
+independent reasons to want one are collected as bits of a mask:
+
+  1 - the tile is not the faction's own territory. A sensor on the border is worth having.
+  2 - one of the nine holds a base of this faction.
+  4 - that base has no sensor anywhere in its own 25-tile radius.
+
+A mask of zero answers no. Nothing here weighs the three against each other; any one will do, and
+2 without 4 is reachable because the base's radius is larger than the nine tiles just searched.
+
+Note that bit 2 is set once per qualifying base and bit 4 is decided per base, so a second base
+without cover sets 4 even when the first one had it. The original tests the flags only for being
+nonzero, so this is a distinction without a difference, and it is reproduced as written.
+
+IS THE TILE FREE. A resource bonus, a base, a monolith, a condenser, a thermal borehole, a mine or
+a solar collector each answer no, because the sensor would displace something already there. What
+is left answers yes when it is ROCKY, or when it is arid - neither RAINFALL_RAINY nor
+RAINFALL_MOIST - which are the tiles worth least as terrain. Anything else answers yes only if it
+is fungus at ALT_BIT_OCEAN_SHELF or above, and no otherwise.
+
+Verification note: the sweep against recovery-gameplay-tests kills 23 of 31 valid mutants twice
+over, and the eight survivors are two proven equivalences rather than untested behaviour.
+
+BIT 4 CANNOT CHANGE THE ANSWER, and neither can the 25-tile search that decides it. Seven
+survivors are that one fact: the `25 -> 0`, `0 -> 1` and `< -> <=` mutants of the inner loop, the
+inverted territory comparison inside it, the dropped `base_covered = true`, the dropped
+`reasons |= 4` and its `4 -> 0`. The proof is short. `reasons` is written in exactly three places
+and read in exactly one, `if (!reasons)`. Bit 4 is set only inside the block that has already
+executed `reasons |= 2` two statements earlier, so every state in which bit 4 could be set is
+already nonzero, and nothing distinguishes 6 from 2. The whole cover search is therefore dead as
+far as the return value goes - in the original as much as here, since this is a transcription of
+what 0x00564FEE through 0x00565076 does.
+
+It is kept because it is what the original executes, and because it is not quite side-effect
+free: is_sensor falls through to base_find, which writes BaseFindDist. That write is overwritten
+again by every later on-map iteration of the OUTER loop, so it survives the call only when the
+base sits in the inner nine and every remaining radius tile is off the map - which no fixture
+here builds and which changes nothing this function returns either way.
+
+The eighth survivor is bonus_at's third argument. The parameter is declared UNUSED in
+map_grid.cpp:00592030's recovery and read nowhere in its body, so 0 and 1 are the same call. The
+original passes 0 and so does this.
+*/
+int __cdecl good_sensor(int faction_id, int x, int y) {
+    if (whose_territory(faction_id, x, y, NULL, false) != faction_id) {
+        return false;
+    }
+    Map *tile = map_loc(x, y);
+    if (tile->bit & BIT_FUNGUS && (tile->climate & ~0x1F) >= ALT_BIT_OCEAN_SHELF
+        && !has_tech(Rules.tech_improve_fungus_sqr, faction_id)) {
+        return false;
+    }
+    int reasons = 0;
+    for (int i = 0; i < 25; i++) {
+        int x_raw = x + RadiusOffsetX[i];
+        int x_radius = (MapIsFlat & 1) ? x_raw
+            : (x_raw < 0 ? x_raw + MapLongitudeBounds
+               : (x_raw >= (int)MapLongitudeBounds ? x_raw - MapLongitudeBounds : x_raw));
+        int y_radius = y + RadiusOffsetY[i];
+        if (!on_map(x_radius, y_radius)) {
+            continue;
+        }
+        if (is_sensor(x_radius, y_radius)
+            && whose_territory(faction_id, x_radius, y_radius, NULL, false) == faction_id) {
+            return false;
+        }
+        if (i >= 9) {   // the inner ring only, from here down
+            continue;
+        }
+        int base_id = base_at(x_radius, y_radius);
+        if (base_id >= 0 && Bases[base_id].faction_id_current == faction_id) {
+            reasons |= 2;
+            BOOL base_covered = false;
+            for (int j = 0; j < 25; j++) {
+                int x_base = wrap_map_x(x_radius + RadiusOffsetX[j]);
+                int y_base = y_radius + RadiusOffsetY[j];
+                if (!on_map(x_base, y_base)) {
+                    continue;
+                }
+                if (is_sensor(x_base, y_base)
+                    && whose_territory(faction_id, x_base, y_base, NULL, false) == faction_id) {
+                    base_covered = true;
+                    break;
+                }
+            }
+            if (!base_covered) {
+                reasons |= 4;
+            }
+        }
+        if (whose_territory(faction_id, x_radius, y_radius, NULL, false) != faction_id) {
+            reasons |= 1;
+        }
+    }
+    if (!reasons || bonus_at(x, y, 0) || base_who(x, y) >= 0) {
+        return false;
+    }
+    Map *site = map_loc(x, y);
+    uint32_t bit = site->bit;
+    if (bit & (BIT_MONOLITH | BIT_CONDENSER | BIT_THERMAL_BORE)
+        || bit & (BIT_MINE | BIT_SOLAR_TIDAL)) {
+        return false;
+    }
+    if ((site->val3 >> 6) > 1 || !(site->climate & (RAINFALL_RAINY | RAINFALL_MOIST))) {
+        return true;   // rocky or arid
+    }
+    return (bit & BIT_FUNGUS) && (site->climate >> 5) >= ALT_OCEAN_SHELF;
+}
+
+
+/*
+Purpose: Return 1 immediately for a unity-bonus tile. Otherwise select the
+         last pact or own base in the eight-neighbor movement table, stopping
+         early on an own base. Return 1 if that base has an adjacent tile
+         other than the input whose altitude is below shore and which either
+         lacks fungus or lies below the ocean-shelf altitude; else return 0.
+
+// ORIGINAL: 0x00565160 sub_565160 0x00565160-0x0056531A FILE BYTE_EXACT
+// symbol    _sub_565160
+// TRIED (seed): two-phase radius-table scan (find owning base, then scan
+//            around it) with direct treaty-flags array indexing; reaches #11
+//            before the second bonus_at-style helper call ordering
+// size      442 bytes
+// prototype
+// callers   0   call targets   2
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x004E3A50 0x00592030
+Return Value: 1 for the bonus or a qualifying neighbor, 0 otherwise.
+Status: Coverage transcription - unclaimed body. The original mapping and
+        seed evidence remain in git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/00565160.cpp without a
+        BYTE_EXACT claim. VehMoveDeltaX/Y provide the scan order, Bases
+        provide the x/y/owner triple, PlayersData owns the pact flags, and
+        Map owns the climate and fungus bits. The image calls bonus_at out
+        of line; source inlining remains a separate measurement question.
+*/
+extern "C" int __cdecl sub_565160(int faction_id, int tile_x, int tile_y) {
+    int found = -1;
+    if (bonus_at(tile_x, tile_y, 0) == 3) {
+        return 1;
+    }
+    for (int i = 0; i < 8; i++) {
+        int x = wrap_map_x(tile_x + VehMoveDeltaX[i]);
+        int y = tile_y + VehMoveDeltaY[i];
+        if (on_map(x, y)) {
+            int base_id = base_at(x, y);
+            if (base_id >= 0) {
+                int owner = Bases[base_id].faction_id_current;
+                if (owner == faction_id
+                    || PlayersData[faction_id].diplo_treaties[owner] & DTREATY_PACT) {
+                    found = base_id;
+                    if (owner == faction_id) {
+                        break;
+                    }
+                }
+            }
+        }
+    }
+    if (found >= 0) {
+        int base_x = Bases[found].x;
+        int base_y = Bases[found].y;
+        for (int i = 0; i < 8; i++) {
+            int x = wrap_map_x(base_x + VehMoveDeltaX[i]);
+            int y = base_y + VehMoveDeltaY[i];
+            if ((x != tile_x || y != tile_y) && on_map(x, y)) {
+                Map *tile = map_loc(x, y);
+                int altitude = tile->climate & ~0x1F;
+                if (altitude < ALT_BIT_SHORE_LINE
+                    && (!(tile->bit & BIT_FUNGUS) || altitude < ALT_BIT_OCEAN_SHELF)) {
+                    return 1;
+                }
+            }
+        }
+    }
+    return 0;
+}
+
+/*
+Purpose: Wrap an x coordinate on a round map, as can_terraform() wraps it.
+Original Offset: n/a
+Return Value: Wrapped x
+Status: Complete
+
+The third private copy of this, after map.cpp's site_xrange() and game.cpp's
+territory_xrange(), and for the same reason: the exported xrange() at 0048BEE0
+tests the whole of MapIsFlat while can_terraform's base-radius census reads the
+low BYTE and tests bit zero (`mov ebx, [94988Ch] / and ebx, 1`). The two agree
+on the 0 and 1 the game stores there and disagree on everything else, and the
+difference is in the original rather than in the transcription.
+*/
+static int terraform_xrange(int x) {
+    if (!(MapIsFlat & 1)) {
+        if (x >= 0) {
+            if (x >= MapLongitudeBounds) {
+                x -= MapLongitudeBounds;
+            }
+        } else {
+            x += MapLongitudeBounds;
+        }
+    }
+    return x;
+}
+
+/*
+Purpose: Decide which Former order, if any, should be issued on the specified tile.
+// ORIGINAL: 0x00565320 ?can_terraform@@YAHHHHHH@Z 0x00565320-0x00565F1E
+// LEVER: real-bitmask-calls the two facility checks in the forest-value block
+//   are `has_fac_built_call` (base.h), not `has_fac_built`. The image CALLS
+//   `bitmask` at 0x0050BA00 twice, from 0x00565449 and 0x00565487; the plain
+//   spelling folds `MEASURED inline bitmask` into a shift/and and this body
+//   then made 26 calls against the image's 28 - `call_diff` FEWER. With the
+//   forwarder the counts agree, 28 against 28, and best similarity moved
+//   0.168 -> 0.207 at `/c /O2 /Gy /GR- /Oy- /GX`. That is a call the image
+//   really makes, so the fix stands on its own regardless of the tier.
+// TRIED: not attempted to byte-exactness this pass - out of budget, and
+//   said so rather than half-ground. Measured 2026-08-22 over all ten flag
+//   sets: best 0.214 at `/c /O2 /Ob0 /Gy /GR- /Oy- /GX`, 15 of 1113
+//   instructions. The gap is SIZE, not one lever: this tree compiles 1,566
+//   instructions against the image's 1,113, a 40% excess, across 51 differing
+//   runs, and that shape says the image leaves out-of-line what this tree
+//   inlines somewhere in the accessor chain rather than that any one
+//   expression is spelled wrong. The divergence opens at instruction 3, on
+//   the `map_loc` index: the image reads MapLongitude at the fixed 0x0068FAF0
+//   while this tree reads it as a linker symbol, and the base-in-tile test
+//   arrives as `mov ecx, 1; test cl, bl` instead of a folded memory-operand
+//   test. Anyone picking this up should start from `osmx calls` plus
+//   `inline_candidates.py` on the accessors this body reaches, not from the
+//   listing: with 453 instructions of excess, the first divergence is not
+//   where the cause is.
+// size      3070 bytes
+// prototype int (__cdecl ?can_terraform@@YAHHHHHH@Z)(int factionID, int xCoord, int yCoord, int, int baseID)
+// callers   3   call targets   6
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x004E3EF0 0x004E6E50 0x0050BA00 0x00592030 0x005B9F20 0x005BAB40
+Return Value: The ORDER_* to issue, or ORDER_NONE for none
+Status: Complete
+
+THE NAME IS A PREDICATE AND THE FUNCTION IS NOT ONE. It returns an OrderType id from veh.h -
+ORDER_FARM, ORDER_MINE, ORDER_SOLAR_COLLECTOR, ORDER_PLANT_FOREST, ORDER_REMOVE_FUNGUS,
+ORDER_PLANT_FUNGUS, ORDER_TERRAFORM_UP - or ORDER_NONE. ORDER_x is TERRA_x + 4, the same offset
+contribution() above already uses, and every returned constant is guarded by the matching
+Terraforming[] prerequisite: 4 by TERRA_FARM's, 6 by TERRA_MINE's, 7 by TERRA_SOLAR_TIDAL's,
+8 by TERRA_FOREST's, 14 by TERRA_REMOVE_FUNGUS's, 15 by TERRA_PLANT_FUNGUS's, and 20 by
+terrain_avail(TERRA_RAISE_LAND). Console::give_hints reads the answer as a value rather than a
+truth, comparing it against 4 at 00513311.
+
+ORDER_FARM covers the soil enricher as well as the farm: in this game the enricher is built by
+issuing "build farm" on a tile that already has one, so the two share order 4.
+
+WHERE IT SPLITS. A tile that already holds somebody's base is refused outright. Everything after
+that divides on the tile's own altitude at ALT_BIT_SHORE_LINE.
+
+BELOW THE SHORE LINE. Deep water - anything under ALT_BIT_OCEAN_SHELF - is only ever raised.
+On the shelf, fungus is removed if the faction's fungus yield is worth less than 4 and the human
+player has asked for automatic fungus removal; bare shelf gets a kelp farm, and failing that a
+mining platform or a tidal harness chosen by censusing the owning base's own 21-tile radius for
+mines and harnesses already standing on water. A shelf tile that already has a farm and not yet
+an enricher gets order 4 again.
+
+ABOVE IT. Foreign territory without a pact refuses. Fungus is removed unless the base's
+eco-damage-adjusted terrain value says the fungus is worth more. A monolith refuses; so does an
+existing forest that is worth more than the terrain. What is left runs a cascade of
+solar / mine / farm / enricher rules over crop yield, rockiness, rainfall, elevation, resource
+bonus and the owning base's three planning bits, and then asks two closing questions: is a
+forest worth more than the terrain, and after that is fungus worth more than the forest.
+
+force_improve is the fourth parameter and it is the AI's "I already want this tile improved"
+flag - base_terraform passes 1, Console::give_hints passes 0, and enemy_move passes
+at_goal(faction_id, AI_GOAL_TERRAFORM_LAND, x, y). Each of its four reads turns a marginal tile
+into a definite order.
+
+Verification note: five kinds of unreachable code are transcribed as written rather than
+deleted, and a mutation sweep will report them as survivors.
+
+  1. elev CANNOT BE ZERO here. The land tail is entered only when (climate & 0xE0) >=
+     ALT_BIT_SHORE_LINE, which is alt_at(x, y) >= 3, and elev is alt_at(x, y) - 2 floored at
+     zero, so elev >= 1 always. That makes `!elev` at the solar rule and at the rolling-mine
+     rule, `elev == 0` in the plant_value adjustment, and the `elev != 0` forest rejection all
+     constant. The last one is the one that matters: it means a tile that already has a farm can
+     never be forested, and the rainfall and is_human tests behind it are unreachable. True of
+     the original at 00565A23, 00565ADC, 00565B64, 00565DC5 and 00565E4C, not just of this
+     transcription.
+
+  2. `rockiness < ROCKINESS_ROCKY` inside the BSTATE_UNK_2000 mine rule is reached only after
+     `rockiness > ROCKINESS_ROLLING` has already been excluded (00565BB2), so it is constant.
+
+  3. The owner nibble is masked to 0xF before `owner >= 0` is asked (0056535A), so that half of
+     the base guard is constant.
+
+  4. A DEAD COMPARISON, collapsed rather than transcribed. At 00565A7B the original computes
+     `(crop >= has_farm) + 2` and branches on the result being zero; the value is 2 or 3, so the
+     branch is never taken and both arms of the enclosing `if (crop)` reach order = ORDER_MINE.
+     The block therefore is `if (bonus == 2 || rockiness == ROCKINESS_ROCKY) order = ORDER_MINE`,
+     which is what is written below. The comparison has no side effect - only flags - so unlike
+     a dead call there is nothing to preserve. Its shape shows the intent: has_farm is the RAW
+     `bit & BIT_FARM`, 0 or 0x8000, so `crop >= has_farm` was meant to be the
+     `crop >= (has_farm ? 2 : 1)` used three times elsewhere in this function.
+
+  5. Two calls whose results the original throws away, kept because they are what it executes
+     and because deleting one is a purity claim about another translation unit:
+     bonus_at(x, y, 0) on the sea path (005655FD, EAX overwritten at 00565609) and
+     has_tech(Terraforming[TERRA_FARM].preq_tech, faction_id) on the land path (005659F3, EAX
+     overwritten at 005659F8 and the same question asked again for real at 00565BF1).
+
+Bug note: both fungus-removal paths read Terraforming[TERRA_REMOVE_FUNGUS].preq_tech_SEA
+(006919C4). On the sea path that is right. On the land path (0056596A) it should be preq_tech at
+006919C0, and every other land/sea pair in the function is correctly discriminated. Stock
+terraform.txt gives Remove Fungus the same technology for both, so it is invisible in a default
+game and visible in a mod that splits them. Transcribed as written.
+*/
+#pragma optimize("y", off)
+int __cdecl can_terraform(int faction_id, int x, int y, int force_improve, int base_id) {
+    Map *tile = map_loc(x, y);
+    if (map_loc(x, y)->bit & BIT_BASE_IN_TILE) {
+        int owner = (int)owner_at(x, y);
+        if (owner < 8 && owner >= 0) {
+            return ORDER_NONE;
+        }
+    }
+    uint32_t bit = tile->bit;
+    // Fungus in deep water does not count: the altitude is the tile's own.
+    BOOL has_fungus = (bit & BIT_FUNGUS)
+        && static_cast<int>(static_cast<uint32_t>(tile->climate) & ~0x1Fu)
+            >= ALT_BIT_OCEAN_SHELF;
+    uint32_t has_mine = bit & BIT_MINE;
+    uint32_t has_solar = bit & BIT_SOLAR_TIDAL;
+    uint32_t has_farm = bit & BIT_FARM;
+    uint32_t has_soil_enricher = bit & BIT_SOIL_ENRICHER;
+    uint32_t has_forest = bit & BIT_FOREST;
+    BOOL is_special = (bit & (BIT_CONDENSER | BIT_ECH_MIRROR | BIT_THERMAL_BORE))
+        || (((tile->bit2 & (BIT2_UNK_80000000 | BIT2_VOLCANO)) == BIT2_VOLCANO)
+            && !(tile->bit2 & 0xFF000000));  // landmark code zero, ie. the volcano's own tile
+    int fungus_value = PlayersData[faction_id].tech_fungus_[RSC_NUTRIENTS]
+        + PlayersData[faction_id].tech_fungus_[RSC_MINERALS]
+        + PlayersData[faction_id].tech_fungus_[RSC_ENERGY];
+    int forest_value = ResourceInfo[RSCINFO_FOREST_SQ].nutrients
+        + ResourceInfo[RSCINFO_FOREST_SQ].minerals
+        + ResourceInfo[RSCINFO_FOREST_SQ].energy;
+    if (base_id >= 0) {
+        // REAL bitmask() CALLS, not the folded shift/and: the image calls
+        // 0x0050BA00 twice, at 0x00565449 and 0x00565487, which is what
+        // `has_fac_built_call` (base.h) is for. Plain `has_fac_built` inlines
+        // `MEASURED inline bitmask` and this body then makes 26 calls against
+        // the image's 28.
+        if (has_fac(FAC_TREE_FARM, base_id, 0)) {
+            forest_value++;
+        }
+        if (has_fac(FAC_HYBRID_FOREST, base_id, 0)) {
+            forest_value += 2;
+        }
+    }
+    if (PlayersData[faction_id].ai_growth && !PlayersData[faction_id].ai_power
+        && !PlayersData[faction_id].ai_wealth && !PlayersData[faction_id].ai_tech
+        && PlayersData[faction_id].ai_fight < 0 && !is_human(faction_id)) {
+        forest_value++;   // a growth-only AI plan likes forest one point more
+    }
+    // 56550A..56551E: resolve this phase after the facility queries; the
+    // land arm retains this same climate byte and tile for rainfall/rockiness.
+    Map *const terrain_tile = map_loc(x, y);
+    const uint32_t terrain_climate = terrain_tile->climate;
+    int altitude = static_cast<int>(terrain_climate & ~0x1F);
+    if (altitude < ALT_BIT_SHORE_LINE) {
+        // ---- water ---------------------------------------------------------
+        if (has_fungus) {
+            if (fungus_value >= 4) {
+                return ORDER_NONE;
+            }
+            if (is_human(faction_id)
+                && !(GameDataStateStorage.fields_.game_more_preferences_ & MPREF_AUTO_FORMER_REMOVE_FUNGUS)) {
+                return ORDER_NONE;
+            }
+            return has_tech(Terraforming[TERRA_REMOVE_FUNGUS].prerequisite_tech[1], faction_id)
+                ? ORDER_REMOVE_FUNGUS : ORDER_NONE;
+        }
+        if (altitude < ALT_BIT_OCEAN_SHELF) {
+            return terrain_avail(TERRA_RAISE_LAND, true, faction_id)
+                ? ORDER_TERRAFORM_UP : ORDER_NONE;
+        }
+        if (terrain_tile->bit & BIT_THERMAL_BORE) {
+            return ORDER_NONE;
+        }
+        if (!has_farm
+            && has_tech(Terraforming[TERRA_FARM].prerequisite_tech[1], faction_id)) {
+            return ORDER_FARM;   // kelp farm
+        }
+        if (!has_solar && !has_mine && !is_special) {
+            bonus_at(x, y, 0);   // result discarded by the original, see the note above
+            if (base_id >= 0) {
+                if ((Bases[base_id].state & BSTATE_UNK_2000)
+                    && has_tech(Terraforming[TERRA_MINE].prerequisite_tech[1], faction_id)) {
+                    return ORDER_MINE;
+                }
+                if ((Bases[base_id].state & BSTATE_UNK_1000)
+                    && has_tech(Terraforming[TERRA_SOLAR_TIDAL].prerequisite_tech[1], faction_id)) {
+                    return ORDER_SOLAR_COLLECTOR;
+                }
+                if (((Bases[base_id].state & BSTATE_UNK_4000)
+                        || Bases[base_id].nutrient_surplus < 2)
+                    && has_tech(Terraforming[TERRA_SOLAR_TIDAL].prerequisite_tech[1], faction_id)
+                    && Rules.tgl_nutrient_effect_with_mine < 0) {
+                    return ORDER_SOLAR_COLLECTOR;
+                }
+                // Census the base's own radius for water improvements already standing.
+                int mine_count = (Rules.tgl_nutrient_effect_with_mine < 0) ? 1 : 0;
+                int solar_count = 0;
+                int base_x = Bases[base_id].x;
+                int base_y = Bases[base_id].y;
+                for (int i = 0; i < 21; i++) {
+                    int x_radius = terraform_xrange(base_x + RadiusOffsetX[i]);
+                    int y_radius = base_y + RadiusOffsetY[i];
+                    if (!on_map(x_radius, y_radius)) {
+                        continue;
+                    }
+                    Map *radius_tile = map_loc(x_radius, y_radius);
+                    if ((radius_tile->climate & 0xE0) >= ALT_BIT_SHORE_LINE) {
+                        continue;   // land
+                    }
+                    if (radius_tile->bit & BIT_MINE) {
+                        mine_count++;
+                    }
+                    if (radius_tile->bit & BIT_SOLAR_TIDAL) {
+                        solar_count++;
+                    }
+                }
+                if (mine_count
+                        + (has_tech(Terraforming[TERRA_MINE].prerequisite_tech[1], faction_id) ? 0 : 1)
+                        > solar_count
+                    && has_tech(Terraforming[TERRA_SOLAR_TIDAL].prerequisite_tech[1], faction_id)) {
+                    return ORDER_SOLAR_COLLECTOR;
+                }
+            }
+            if (has_tech(Terraforming[TERRA_MINE].prerequisite_tech[1], faction_id)
+                && (Rules.tgl_nutrient_effect_with_mine >= 0
+                    || (base_id >= 0 && Bases[base_id].nutrient_surplus > 1
+                        && !(Bases[base_id].state & BSTATE_UNK_4000)))) {
+                return ORDER_MINE;
+            }
+        }
+        if (has_farm && !has_soil_enricher
+            && has_tech(Terraforming[TERRA_SOIL_ENR].prerequisite_tech[1], faction_id)) {
+            return ORDER_FARM;   // upgrade the kelp farm to an enricher
+        }
+        return ORDER_NONE;
+    }
+    // ---- land --------------------------------------------------------------
+    // Rainfall runs arid, moist, rainy.
+    int rainfall = (terrain_climate >> 3) & 3;
+    int rockiness = terrain_tile->val3 >> 6;           // ROCKINESS_FLAT / ROLLING / ROCKY
+    int order = ORDER_NONE;
+    int crop = crop_yield(faction_id, -1, x, y, 0);
+    // 565872/565880: elevation retains the same pre-crop climate snapshot.
+    int elev = static_cast<int>(terrain_climate >> 5) - 2;
+    if (elev < 0) {
+        elev = 0;
+    }
+    // The bonus runs none, nutrient, mineral, energy.
+    int bonus = bonus_at(x, y, 0);
+    int value = elev + rainfall + rockiness + 1;
+    if (has_tech(Terraforming[TERRA_SOIL_ENR].prerequisite_tech[0], faction_id) && has_farm) {
+        value++;
+    }
+    int territory = whose_territory(faction_id, x, y, NULL, false);
+    if (territory >= 0 && territory != faction_id
+        && !(PlayersData[faction_id].diplo_treaties[territory] & DTREATY_PACT)) {
+        return ORDER_NONE;
+    }
+    if (has_fungus) {
+        if (base_id >= 0 && Bases[base_id].eco_damage / 2 + value <= fungus_value) {
+            return ORDER_NONE;   // the fungus is worth more than the terrain under it
+        }
+        if (is_human(faction_id)
+            && !(GameDataStateStorage.fields_.game_more_preferences_ & MPREF_AUTO_FORMER_REMOVE_FUNGUS)) {
+            return ORDER_NONE;
+        }
+        return has_tech(Terraforming[TERRA_REMOVE_FUNGUS].prerequisite_tech[1], faction_id)
+            ? ORDER_REMOVE_FUNGUS : ORDER_NONE;
+    }
+    // 565987..5659A4: read the tile again after the intervening queries.
+    if (bit_at(x, y) & BIT_MONOLITH) {
+        return ORDER_NONE;
+    }
+    if (has_forest && value <= forest_value) {
+        return ORDER_NONE;
+    }
+    BOOL mine_tech = has_tech(Terraforming[TERRA_MINE].prerequisite_tech[0], faction_id);
+    BOOL solar_tech = has_tech(Terraforming[TERRA_SOLAR_TIDAL].prerequisite_tech[0], faction_id);
+    has_tech(Terraforming[TERRA_FARM].prerequisite_tech[0], faction_id);   // result discarded, see above
+    if (!has_mine && !has_solar && !is_special) {
+        if (solar_tech && elev
+            && (((rockiness == ROCKINESS_ROLLING || elev >= 2)
+                    && crop >= (has_farm ? 2 : 1))
+                || force_improve)) {
+            order = ORDER_SOLAR_COLLECTOR;
+        }
+        if (mine_tech) {
+            if (bonus == 2 /* mineral */ || rockiness == ROCKINESS_ROCKY) {
+                order = ORDER_MINE;
+            }
+            BOOL rolling_rule = false;
+            BOOL farm_rule = false;
+            if (bonus == 2 && rockiness == ROCKINESS_ROCKY) {
+                farm_rule = true;
+            } else if (rockiness == ROCKINESS_ROCKY
+                       || Rules.tgl_nutrient_effect_with_mine >= 0) {
+                rolling_rule = true;
+            } else {
+                int worked = crop + (has_farm ? 0 : 1);
+                if (worked <= 1) {
+                    rolling_rule = true;
+                } else if (rockiness == ROCKINESS_FLAT && worked > 2) {
+                    farm_rule = true;
+                }
+            }
+            if (rolling_rule) {
+                if (rockiness == ROCKINESS_ROLLING && !elev) {
+                    order = ORDER_MINE;
+                }
+                if (bonus == 3 /* energy */) {
+                    order = ORDER_MINE;
+                }
+                farm_rule = true;
+            }
+            if (farm_rule && force_improve && has_farm && !order) {
+                order = ORDER_MINE;
+            }
+        }
+        if (force_improve && has_farm && !order && elev && solar_tech) {
+            order = ORDER_SOLAR_COLLECTOR;
+        }
+        if (base_id >= 0) {
+            uint32_t state = Bases[base_id].state;
+            if ((state & BSTATE_UNK_1000) && solar_tech && elev
+                && (crop >= (has_farm ? 2 : 1) || elev > 1)) {
+                order = ORDER_SOLAR_COLLECTOR;
+            }
+            if ((state & BSTATE_UNK_2000) && mine_tech) {
+                if (crop >= (has_farm ? 3 : 2)) {
+                    order = ORDER_MINE;
+                }
+                BOOL wants_mine = rockiness > ROCKINESS_ROLLING || bonus == 2
+                    || (rainfall != 0 && rockiness < ROCKINESS_ROCKY && elev < 2);
+                if (wants_mine && (has_farm || crop >= 2)) {
+                    order = ORDER_MINE;
+                }
+            }
+        }
+    }
+    if (has_tech(Terraforming[TERRA_FARM].prerequisite_tech[0], faction_id) && !has_farm
+        && rockiness < ROCKINESS_ROCKY) {
+        // 565C15..565C59: one fresh tile and bit snapshot for these guards.
+        Map *const farm_tile = map_loc(x, y);
+        const uint32_t farm_bits = farm_tile->bit;
+        if (!(farm_bits & BIT_THERMAL_BORE)
+            && (farm_tile->bit2 & (BIT2_UNK_80000000 | BIT2_VOLCANO)) != BIT2_VOLCANO
+            && !(farm_bits & BIT_ECH_MIRROR)
+            && (crop < 2 || has_tech(Rules.tech_three_nutrients_sqr, faction_id)
+                || bonus == 1 /* nutrient */)) {
+            if (has_solar || has_mine) {
+                order = ORDER_FARM;
+            }
+            BOOL forced_farm = false;
+            if (base_id >= 0 && (Bases[base_id].state & BSTATE_UNK_4000)) {
+                order = ORDER_FARM;
+            } else if (order == ORDER_SOLAR_COLLECTOR) {
+                if (crop < 2) {
+                    order = ORDER_FARM;
+                }
+            } else if (order == ORDER_NONE) {
+                forced_farm = true;
+            }
+            if (forced_farm || rainfall < 2) {
+                order = ORDER_FARM;
+            }
+        }
+    }
+    if (has_tech(Terraforming[TERRA_SOIL_ENR].prerequisite_tech[0], faction_id) && has_farm
+        && !has_soil_enricher) {
+        BOOL enrich = false;
+        if (crop > 1
+            && (crop != 2 || has_tech(Rules.tech_three_nutrients_sqr, faction_id))) {
+            if (has_solar || has_mine) {
+                order = ORDER_FARM;
+            }
+            if (base_id >= 0 && (Bases[base_id].state & BSTATE_UNK_4000)) {
+                enrich = true;
+            }
+        }
+        if (!enrich && order == ORDER_NONE && (force_improve || crop > 1)) {
+            enrich = true;
+        }
+        if (enrich) {
+            order = ORDER_FARM;
+        }
+    }
+    // What the terrain would be worth if it were planted, scored separately from `value`.
+    int plant_value = elev + rainfall + rockiness + 1;
+    if (has_tech(Terraforming[TERRA_SOIL_ENR].prerequisite_tech[0], faction_id) && has_farm) {
+        plant_value++;
+    }
+    if (base_id >= 0) {
+        uint32_t state = Bases[base_id].state;
+        if (state & BSTATE_UNK_4000) {
+            if (rainfall > 1) {
+                plant_value++;
+            }
+            if (rainfall == 0) {
+                plant_value--;
+            }
+        }
+        if (state & BSTATE_UNK_1000) {
+            if (elev > 1) {
+                plant_value++;
+            }
+            if (elev == 0) {
+                plant_value--;
+            }
+        }
+        if (state & BSTATE_UNK_2000) {
+            if (rockiness == ROCKINESS_FLAT) {
+                plant_value--;
+            }
+        }
+        if (!(state & (BSTATE_UNK_2000 | BSTATE_UNK_4000))) {
+            if (has_solar) {
+                plant_value++;
+            }
+        }
+    }
+    if (rainfall && elev && rockiness == ROCKINESS_ROLLING && GameDataStateStorage.fields_.turn_current_num_ < 50) {
+        plant_value++;
+    }
+    int result = order;
+    if (has_tech(Terraforming[TERRA_FOREST].prerequisite_tech[0], faction_id)
+        && rockiness < ROCKINESS_ROCKY && !has_mine && !has_forest
+        && (!has_farm || (!elev && rainfall < 2 && !is_human(faction_id)))
+        && !is_special
+        // 565E6A..565E90: a fresh lookup at the final forest predicate.
+        && (bit2_at(x, y) & (BIT2_UNK_80000000 | BIT2_VOLCANO)) != BIT2_VOLCANO
+        && plant_value < forest_value
+        && (!is_human(faction_id)
+            || (faction_id == ConsoleGlobal.faction_id_
+                && (GameDataStateStorage.fields_.game_preferences_ & PREF_AUTO_FORMER_PLANT_FORESTS)))) {
+        result = ORDER_PLANT_FOREST;
+    }
+    if (has_tech(Terraforming[TERRA_PLANT_FUNGUS].prerequisite_tech[0], faction_id)
+        && !is_human(faction_id)) {
+        if (rockiness == ROCKINESS_ROCKY) {
+            plant_value += has_mine ? 2 : 1;
+        }
+        if (!is_special) {
+            plant_value++;
+            if (plant_value < fungus_value) {
+                result = ORDER_PLANT_FUNGUS;
+            }
+        }
+    }
+    return result;
+}
+#pragma optimize("", on)
+
+/*
+Purpose: Weight the raw odds of an attack by how badly the faction's AI wants that particular
+         stack dead. The odds arrive already computed by battle_fight; everything here is a
+         strategic multiplier on top of them.
+// ORIGINAL: 0x00565F20 ?compute_odds@@YAHHHHHH@Z 0x00565F20-0x005665CC
+// TRIED: call structure already matches exactly (`osmx calls --all`'s 15
+//            call sites resolve to the same 5 targets as the image's own
+//            `calls` list: base_at, at_goal, stack_check x9, has_abil,
+//            veh_at x2), so the 123/572 (0.540 best, /O2 /Gy /GR- /Oy- /GX)
+//            gap is register/control-flow noise across a 1708-byte function,
+//            not a missing inline or wrong callee. Not chased further in
+//            this pass - too large for the budget available here.
+// size      1708 bytes
+// prototype int (__cdecl ?compute_odds@@YAHHHHHH@Z)(int, int factionID, int vehID1, int vehID2, int)
+// callers   2   call targets   5
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x004E3A50 0x00579CC0 0x005B9580 0x005BF1F0 0x005BFE90
+Return Value: Weighted attack odds
+Status: Complete
+
+THE BASIS is what the target is worth divided by what the attacker costs. Out in the field the
+defender's own prototype cost counts in full and the rest of its stack counts at ONE FIFTH, so a
+stack of ten is worth roughly three of them; an Alien Artifact anywhere in that stack adds half
+again. On a base tile the stack is ignored and only the defender's own cost is used, because the
+garrison gets its own rule below. Either way the result is divided by the attacker's prototype
+cost, which is what makes this a cost-effectiveness number rather than a value.
+
+EVERYTHING AFTER THAT IS A DOUBLING, and they compose:
+
+  x2   the defender's plan is PLAN_NAVAL_TRANSPORT or later, i.e. it cannot fight back
+  x3/2 an offensive or combat LAND attacker, on a region this faction has no base plan for
+  x2   the attacker's domain matches the tile - a sea unit over water or a land unit over land,
+       never an air unit - but only for a base tile or a declared AI_GOAL_ATTACK goal
+  x2   a base tile whose garrison is one real combat unit or fewer (total minus the ones with no
+       offense rating); mutually exclusive with the domain bonus, which returns first
+  x4   the unit carries VFLAG_IS_OBJECTIVE
+
+then one of two branches on the attacker's triad.
+
+AN AIR ATTACKER additionally gets x2 for a missile aimed at open water away from a base; and, if
+the stack is TERRAFORMING, x2 for not being a missile, x2 over water when the faction carries
+player flag 0x80000, and x2 again for each of the two terraform orders. On a base tile it looks
+at the eight neighbours for a friendly stack containing LAND units - something already in place
+to take the base - and doubles once for the first one it finds. Then, if the garrison is no
+larger than a tenth of the faction's active count of this attacker's prototype plus one, it
+scans this faction's sixty-four prototype slots for an active, typed, in-service design with
+ABL_DROP_POD, and doubles for it - twice if the attacker is a missile.
+
+ANY OTHER ATTACKER on a base tile counts LAND units across all eight neighbouring friendly
+stacks and doubles once per whole garrison's worth of them, stopping at a million.
+
+THE TAIL undoes some of it. An air-superiority attacker aimed at something that is neither
+airborne nor armed is worth HALF; a plain PLAN_OFFENSIVE air unit that is not a missile is worth
+a THIRD, or two thirds where the region's base plan is 2, because it is expected to be doing
+something else.
+
+Bug notes, reproduced rather than corrected:
+
+  - veh_at() answers -1 for an empty tile. Both original neighbour loops read
+    byte[52*id + 0x952836] before comparing the faction (0x566308/0x566498).
+    For -1 that is 0x952802, the low byte of Reactor[0].power at offset 0xA.
+    The source arrays have independent storage, so indexing before Vehs does
+    not preserve this alias. Read the named reactor field for exactly -1;
+    retain other indices, the comparison, and stack_check(-1) when it agrees.
+    This preserves the original defective lookup, not a safe fallback.
+  - The division by the attacker's prototype cost is a bare idiv with no zero guard.
+  - The two terraform-order tests are two independent ifs in the original, not an else-if. They
+    are mutually exclusive in practice because `order` holds one value, so this is a shape
+    difference only, and it is transcribed as written.
+  - The `while` below terminates only because `defenders` is known nonzero; the guard is the
+    original's, not an addition.
+
+The x wrap is course_xrange() rather than xrange(), for the one bit that separates them: the
+original reads the low BYTE of MapIsFlat and tests bit zero (`mov cl, byte ptr [94988Ch] /
+test cl, 1`), exactly as set_course and reset_territory do.
+
+Verification note: eighteen mutants survive the sweep and every one is an equivalence that can be
+read off another recovered body.
+
+SIXTEEN ARE ARGUMENTS stack_check DOES NOT LOOK AT. Its recovered switch takes cond1, cond2 and
+cond3 but each arm reads only some of them, and the -1 in an unread slot is therefore free:
+type 1, type 16 and type 19 read cond1 alone, so their cond2 and cond3 are dead - two survivors
+each at the stack cost, the two thin-garrison censuses, the drop-pod censuses and the defender
+count; type 2 and type 3 read cond1 and cond2, so their cond3 is dead - one survivor each at the
+artifact test, the terraforming test and the two neighbour counts. The original passes -1 in all
+of them and so does this, because the call is the same call.
+
+THE OTHER TWO ARE THE NINTH RADIUSBASE ENTRY. Both neighbour loops stop at eight, and mutating
+`i < 8` to `i <= 8` adds entry eight, which is (0,0) - the tile under attack. The stack there is
+the defender's, and a tile in this game holds one faction's units, so
+Vehs[veh_at(x_def, y_def)].faction_id is the defender's faction and the loop's
+`!= faction_id` skips it for any caller that is attacking rather than reinforcing. Every other
+tile of the ring is separately covered, including entry 0, which the first sweep found untested.
+
+A NOTE ON THE SWEEP ITSELF, because it cost a pass to work out: the mutation harness perturbs
+digits inside trailing comments as well as in code. A `// RadiusBase entry 8 is (0,0) ...` note
+on the `for` line produced four unkillable survivors that read exactly like real coverage holes.
+The comment is now on its own line and carries no digits.
+*/
+int __cdecl compute_odds(int odds, int faction_id, int veh_id_atk, int veh_id_def, int base_id) {
+    const int x_def = Vehs[veh_id_def].x;
+    const int y_def = Vehs[veh_id_def].y;
+    const int triad_atk = Chassis[VehPrototypes[Vehs[veh_id_atk].proto_id].chassis_id].triad;
+    const int plan_atk = VehPrototypes[Vehs[veh_id_atk].proto_id].plan;
+    if (base_id < -1) {
+        // Strictly below -1 asks for the lookup; -1 asserts there is no base here.
+        base_id = base_at(x_def, y_def);
+    }
+    const int region_plan =
+        PlayersData[faction_id].region_base_plan[map_loc(x_def, y_def)->region];
+
+    int value;
+    if (base_id < 0) {
+        const int cost_def = VehPrototypes[Vehs[veh_id_def].proto_id].cost;
+        // The rest of the stack counts at one fifth; the defender itself counts in full.
+        value = ((stack_check(veh_id_def, 7, -1, -1, -1) - cost_def) / 5 + cost_def) * odds;
+        if (stack_check(veh_id_def, 2, PLAN_ALIEN_ARTIFACT, -1, -1)) {
+            value = value * 3 / 2;
+        }
+    } else {
+        value = VehPrototypes[Vehs[veh_id_def].proto_id].cost * odds;
+    }
+    value /= VehPrototypes[Vehs[veh_id_atk].proto_id].cost;
+
+    if (VehPrototypes[Vehs[veh_id_def].proto_id].plan >= PLAN_NAVAL_TRANSPORT) {
+        value *= 2;   // it cannot fight back
+    }
+    if (plan_atk <= PLAN_COMBAT && !region_plan && triad_atk == TRIAD_LAND) {
+        value = value * 3 / 2;
+    }
+    if (base_id >= 0 || at_goal(faction_id, AI_GOAL_ATTACK, x_def, y_def)) {
+        if ((triad_atk == TRIAD_SEA) == (is_ocean(x_def, y_def) != 0) && triad_atk != TRIAD_AIR) {
+            value *= 2;   // the attacker's own domain, and this returns before the next rule
+        } else if (base_id >= 0) {
+            const int noncombat = stack_check(veh_id_def, 19, -1, -1, -1);
+            const int total = stack_check(veh_id_def, 1, -1, -1, -1);
+            if (total - noncombat <= 1) {
+                value *= 2;   // one real defender or none
+            }
+        }
+    }
+    if (Vehs[veh_id_def].flags & VFLAG_IS_OBJECTIVE) {
+        value *= 4;
+    }
+
+    if (triad_atk == TRIAD_AIR) {
+        if (is_proto_missile(Vehs[veh_id_atk].proto_id)
+            && is_ocean(x_def, y_def) && base_id < 0) {
+            value *= 2;
+        }
+        if (stack_check(veh_id_def, 2, PLAN_TERRAFORMING, -1, -1)) {
+            if (!is_proto_missile(Vehs[veh_id_atk].proto_id)) {
+                value *= 2;
+            }
+            if (is_ocean(x_def, y_def) && (PlayersData[faction_id].flags & 0x80000)) {
+                value *= 2;   // unnamed player flag; PlayerFlagsBitfield skips this bit
+            }
+            // Two separate tests in the original, not an else-if; `order` cannot be both.
+            if (Vehs[veh_id_def].order == ORDER_TERRAFORM_UP) {
+                value *= 2;
+            }
+            if (Vehs[veh_id_def].order == ORDER_TERRAFORM_DOWN) {
+                value *= 2;
+            }
+        }
+        if (base_id >= 0) {
+            for (int i = 0; i < 8; i++) {
+                // The ninth RadiusBase entry is the tile itself and is never reached.
+                const int x_radius = course_xrange(x_def + VehMoveDeltaX[i]);
+                const int y_radius = y_def + VehMoveDeltaY[i];
+                if (!on_map(x_radius, y_radius)) {
+                    continue;
+                }
+                const int veh_id = veh_at(x_radius, y_radius);
+                // Original empty-lookup alias is the low byte of Reactor[0].power.
+                if ((veh_id == -1 ? static_cast<uint8_t>(Reactor[0].power) : Vehs[veh_id].faction_id) != faction_id) {
+                    continue;
+                }
+                if (stack_check(veh_id, 3, TRIAD_LAND, -1, -1)) {
+                    value *= 2;   // somebody is already on the ground next to it
+                    break;
+                }
+            }
+            const int noncombat = stack_check(veh_id_def, 19, -1, -1, -1);
+            const int total = stack_check(veh_id_def, 1, -1, -1, -1);
+            const int proto_atk = Vehs[veh_id_atk].proto_id;
+            if (total - noncombat
+                <= PlayersData[faction_id].proto_id_active[proto_atk] / 10 + 1) {
+                for (int i = 0; i < MaxVehProtoFactionNum; i++) {
+                    const int proto_id = faction_id * MaxVehProtoFactionNum + i;
+                    if (!(VehPrototypes[proto_id].flags & PROTO_ACTIVE)) {
+                        continue;
+                    }
+                    if (!(VehPrototypes[proto_id].flags & PROTO_TYPED_COMPLETE)) {
+                        continue;
+                    }
+                    if (!PlayersData[faction_id].proto_id_active[proto_id]) {
+                        continue;
+                    }
+                    if (!has_abil(proto_id, ABL_DROP_POD)) {
+                        continue;
+                    }
+                    value *= 2;
+                    if (is_proto_missile(Vehs[veh_id_atk].proto_id)) {
+                        value *= 2;
+                    }
+                    break;
+                }
+            }
+        }
+    } else if (base_id >= 0) {
+        int attackers = 0;
+        for (int i = 0; i < 8; i++) {
+            const int x_radius = course_xrange(x_def + VehMoveDeltaX[i]);
+            const int y_radius = y_def + VehMoveDeltaY[i];
+            if (!on_map(x_radius, y_radius)) {
+                continue;
+            }
+            const int veh_id = veh_at(x_radius, y_radius);
+            // Keep the same Reactor field alias in the ground-unit loop.
+            if ((veh_id == -1 ? static_cast<uint8_t>(Reactor[0].power) : Vehs[veh_id].faction_id) != faction_id) {
+                continue;
+            }
+            attackers += stack_check(veh_id, 3, TRIAD_LAND, -1, -1);
+        }
+        const int defenders = stack_check(veh_id_def, 16, -1, -1, -1);
+        if (defenders) {   // without this the subtraction below never terminates
+            while (attackers > defenders && value < 1000000) {
+                value *= 2;
+                attackers -= defenders;
+            }
+        }
+    }
+
+    if (plan_atk == PLAN_AIR_SUPERIORITY) {
+        const int proto_def = Vehs[veh_id_def].proto_id;
+        if (Chassis[VehPrototypes[proto_def].chassis_id].triad == TRIAD_AIR) {
+            return value;   // an interceptor doing its job
+        }
+        if (!Weapon[VehPrototypes[proto_def].weapon_id].offense_rating) {
+            return value;   // nothing there to intercept anything
+        }
+        return value / 2;
+    }
+    if (triad_atk == TRIAD_AIR && plan_atk == PLAN_OFFENSIVE
+        && !is_proto_missile(Vehs[veh_id_atk].proto_id)) {
+        if (region_plan == 2) {
+            return value * 2 / 3;
+        }
+        return value / 3;
+    }
+    return value;
+}
+
+/*
+Purpose: Choose which base a native life form standing on the specified tile should head for.
+// ORIGINAL: 0x005665D0 ?alien_base@@YAHHHH@Z 0x005665D0-0x00566802
+// size      562 bytes
+// prototype int (__cdecl ?alien_base@@YAHHHH@Z)(int vehID, int xCoord, int yCoord)
+// callers   1   call targets   4
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x0050DE50 0x005B9580 0x005BFE90 0x00644F3A
+Return Value: Base id of the most attractive target, or -1 when there is none
+Status: Complete
+
+WHAT THE SCORE MEANS. The comparison variable is a cost, not a merit: the loop keeps the LOWEST
+value, seeded at 9999, and the winner is published in BaseFindDist for the caller. The cost is the
+radiating distance from the unit to the base, scaled by 32 and then divided by that base's own
+mineral plus energy intake plus 32, so a productive base pulls a worm from further away. Three
+adjustments follow, each of which the original applies as a whole doubling or halving:
+
+  - an Alien Artifact standing in the base halves the cost. stack_check type 2 counts units in the
+    tile's stack whose prototype PLAN is PLAN_ALIEN_ARTIFACT, so this is literally "something is
+    sitting there that Planet wants back".
+  - the unit's own home base halves it again. Native life gets a home base when a faction breeds
+    it, and this is what makes a bred worm drift back toward the base that made it.
+  - a base whose owner runs a positive PLANET rating and has no eco damage DOUBLES it. That is the
+    in-game promise that a green faction is left alone, expressed as a cost the worm has to pay.
+
+Verification note: the third test compares Veh+0x26 against the base's owner. veh.h names that
+byte order_auto_type, and on this path the original is reading it as a faction id rather than as
+an order type - base.cpp reads the same byte as a resource id for convoys, so the field is already
+known to be multi-purpose. Transcribed as the original reads it rather than corrected.
+
+REACHABILITY. The region test only applies to a native standing on LAND. Water bodies are numbered
+from MaxRegionLandNum upward (see the region notes in map.h), so a unit already at sea reaches
+every base and the test is skipped - which is the whole reason it is written as a bound and not as
+an equality. On land, the base has to share the unit's region, except for a Sealurk - prototype
+14, the only native the loop names - which may also take a base that merely touches the region it
+is standing in, and base_on_sea answers that.
+
+Verification note: stack_check's fifth argument survives a mutation sweep and always will. Type 2
+reads cond1 and cond2 and never looks at cond3, so the -1 the original pushes for it cannot be
+observed by any fixture. The fourth argument is observable and is covered - the artifact unit in
+the fixture carries a non-zero faction precisely so that turning that -1 into 0 changes the count.
+
+The original inlines region_at (0x00500220), x_dist (0x00579790) and the two-argument vector_dist
+(0x004F8090); each inlined copy is instruction-for-instruction the standalone body, so they are
+called here. One consequence is visible in the disassembly and worth recording: the inlined
+map_loc halves x with SAR, while the exported map_loc that region_at reaches takes uint32_t and
+would halve it with SHR. The two agree on every non-negative x, and alien_move at 0x005668A0 -
+the only caller - passes a unit's own sign-extended coordinates.
+
+// LEVER: FEWER (6 calls vs image's 7) - the image calls `abs()` FOUR times
+//        here and never calls vector_dist(int,int) itself (0x4F8090 is not
+//        in its `calls` list, despite being a real, `callers 5`-elsewhere
+//        function). Open-coded the `vector_dist(x_dist(...), abs(...))`
+//        call as the abs()/largest/smallest expansion vector_dist's own
+//        body performs - the same pattern base.cpp's black_market and
+//        base_find already use for the 4-arg form. Call count now agrees
+//        (0 disagree); best flag set's similarity 0.782 -> 0.883
+//        (/O2 /Oi- /GR- /Oy- /GX).
+*/
+int __cdecl alien_base(int veh_id, int x, int y) {
+    int best_value = 9999;
+    BaseFindDist = 9999;
+    int base_id_best = -1;
+    const int region = region_at(x, y);
+    for (int base_id = 0; base_id < GameDataStateStorage.fields_.base_current_count_; base_id++) {
+        if (Vehs[veh_id].proto_id == BSC_SEALURK) {
+            if (region < MaxRegionLandNum && region != (int)region_at(Bases[base_id].x, Bases[base_id].y)
+                && !base_on_sea(base_id, region)) {
+                continue;
+            }
+        } else if (region < MaxRegionLandNum && region != (int)region_at(Bases[base_id].x, Bases[base_id].y)) {
+            continue;
+        }
+        const int base_y = Bases[base_id].y;
+        int value = vector_dist(x_dist(x, Bases[base_id].x), abs(y - base_y)) * 32
+            / (Bases[base_id].intake_2[RSC_MINERALS] + Bases[base_id].intake_2[RSC_ENERGY] + 32);
+        const int veh_id_at = veh_at(Bases[base_id].x, Bases[base_id].y);
+        if (stack_check(veh_id_at, 2, PLAN_ALIEN_ARTIFACT, -1, -1)) {
+            value /= 2;
+        }
+        if (base_id == Vehs[veh_id].home_base_id) {
+            value /= 2;
+        }
+        int owner = Bases[base_id].faction_id_current;
+        if (Vehs[veh_id].order_auto_type != owner
+            && PlayersData[owner].soc_effect_active.values_[SocialEffect::PLANET] > 0
+            && !Bases[base_id].eco_damage) {
+            value *= 2;
+        }
+        if (value <= best_value) {
+            best_value = value;
+            base_id_best = base_id;
+        }
+    }
+    if (base_id_best >= 0) {
+        BaseFindDist = best_value;
+    }
+    return base_id_best;
+}
+
+static int alien_move_wrap_x(int x) {
+    if ((MapIsFlat & 1) == 0) {
+        if (x < 0) x += MapLongitudeBounds;
+        else if (x >= MapLongitudeBounds) x -= MapLongitudeBounds;
+    }
+    return x;
+}
+
+static bool alien_move_in_map(int x, int y) {
+    return x >= 0 && x < MapLongitudeBounds &&
+           y >= 0 && y < MapLatitudeBounds;
+}
+
+static void alien_move_native_no_base_coordinates(int &x, int &y) {
+    // Native 0x566914 reads signed words at Base[-1].x/.y. The verified
+    // PlayerData layout places those exact bytes in the last faction's
+    // sites[14].base_id object: PlayerData::sites at 0x1EAC, Goal::base_id
+    // at 0x0C, and site 14 at 0x1F98. Preserve both live 16-bit loads without
+    // inventing a Base object or reading through an invalid Base pointer.
+    const int &site_base_id = PlayersData[7].sites[14].base_id;
+    int16_t x_word;
+    int16_t y_word;
+    const unsigned char *const bytes =
+        reinterpret_cast<const unsigned char *>(&site_base_id);
+    memcpy(&x_word, bytes, sizeof(x_word));
+    memcpy(&y_word, bytes + sizeof(x_word), sizeof(y_word));
+    x = x_word;
+    y = y_word;
+}
+
+// ORIGINAL: 0x00566810 ?alien_move@@YAHH@Z 0x00566810-0x005678B9
+// RECOVERY_BINDING: v1 {"evidence": ["historical retired seed src/unrecovered/00566810.cpp", "recovery/tasks/alien-buster-owner-oct5.json", "pinned full native instruction/argument and directed-field review; compiler-observed current function symbol", "PlayerData sites[14].base_id alias: native addresses and compiler offsetof witness; original policy order checked by actual-product controls"], "reason": "Full vehicle-owner semantic recovery with actual Base, PlayerData, vehicle, map and callback relationships. Preserve original no-base adjacent-storage reads, native radius exits and uninitialized launch scratch; byte restoration and runtime fidelity remain unfinished."}
+// symbol    ?alien_move@@YAHH@Z
+// TRIED: near-direct Ghidra transcription (clean decompile, no extraout/jumptable warnings). Per-vehicle/per-target table fields were unified onto two byte offsets (vehOff = a1*0x34, iVar18v = target*0x134) since every DAT_xxx family the disassembly touches shares that stride; a few element widths (e.g. DAT_0096da3c as byte vs int) were guessed rather than confirmed against the raw bytes.
+int __cdecl alien_move(int veh_id) {
+    Veh &vehicle = Vehs[veh_id];
+    int selected_direction = -1;
+    const int movement = static_cast<int>(speed(veh_id, 0));
+    const int remaining = movement - vehicle.moves_expended;
+    if (remaining < 0 || (remaining <= 999 && movement == vehicle.moves_expended)) {
+        return 0;
+    }
+
+    if ((vehicle.flags & 0x440u) != 0 || vehicle.proto_id == 12) {
+        veh_skip(veh_id);
+        return 0;
+    }
+
+    const int x = vehicle.x;
+    const int y = vehicle.y;
+    const int base_id = alien_base(veh_id, x, y);
+    if (base_id < 0 && zoc_any(x, y, 0) == 0) {
+        kill(veh_id);
+        return 1;
+    }
+
+    // Keep the native local target faction and path-state effects.
+    int target_faction = 0;
+    int target_x;
+    int target_y;
+    if (base_id >= 0) {
+        const Base &target = Bases[base_id];
+        target_faction = target.faction_id_current;
+        target_x = target.x;
+        target_y = target.y;
+    } else {
+        BaseFindDist = 99;
+        alien_move_native_no_base_coordinates(target_x, target_y);
+    }
+    const uint8_t target_region = map_loc(target_x, target_y)->region;
+    const int faction = target_faction;
+    ++vehicle.terraforming_turns;
+
+    if (veh_cargo(veh_id) != 0 && stack_check(veh_id, 3, 0, -1, -1) != 0) {
+        if (vehicle.terraforming_turns > 24) {
+            kill(veh_id);
+            return 1;
+        }
+
+        for (int direction = 0; direction < 8; ++direction) {
+            int next_x = alien_move_wrap_x(x + VehMoveDeltaX[direction]);
+            const int next_y = y + VehMoveDeltaY[direction];
+            if (!alien_move_in_map(next_x, next_y)) continue;
+
+            Map *tile = map_loc(next_x, next_y);
+            const int land_kind = tile->val2 & 0x0f;
+            if ((tile->bit & 2u) == 0 || land_kind > 7 || land_kind == 0) {
+                if ((tile->climate & 0xe0u) <= 0x5f ||
+                    tile->region != target_region) continue;
+
+                bool too_far = false;
+                if (base_id >= 0) {
+                    int dx = abs(next_x - target_x);
+                    if ((MapIsFlat & 1) == 0 && dx > MapLongitude) {
+                        dx = MapLongitudeBounds - dx;
+                    }
+                    const int dy = abs(next_y - target_y);
+                    too_far = ((dx + dy) & ~1) > 12;
+                }
+                if (too_far) continue;
+
+                // Native stack walk clears status on each linked unit and
+                // propagates tile visibility along the same stack links.
+                int stack_head = veh_id;
+                while (Vehs[stack_head].prev_veh_id_stack >= 0) {
+                    stack_head = Vehs[stack_head].prev_veh_id_stack;
+                }
+                for (int member = stack_head; member >= 0;
+                     member = Vehs[member].next_veh_id_stack) {
+                    Vehs[member].order = 0;
+                    Vehs[member].visibility |= tile->visibility;
+                }
+
+                veh_skip(veh_id);
+                if (faction != ConsoleGlobal.faction_id_) return 0;
+                if ((vehicle.faction_id != ConsoleGlobal.faction_id_ ||
+                     (vehicle.flags & 0x440u) == 0x440u) &&
+                    ((tile->visibility & (1u << (ConsoleGlobal.faction_id_ & 31))) == 0)) {
+                    return 0;
+                }
+
+                if (ConsoleGlobal.focus(next_x, next_y, ConsoleGlobal.faction_id_) == 0)
+                    draw_tile(next_x, next_y, 2);
+                if (base_id >= 0)
+                    parse_says(0, Bases[base_id].name_string, -1, -1);
+                if (IsMultiplayerNet == 0) {
+                    if (vehicle.proto_id != 15) {
+                        popp("SCRIPT", "MINDWORMSWARM", 0, "mindworm_sm.pcx", 0);
+                    } else {
+                        popp("SCRIPT", "SPORELAUNCHSWARM", 0, "sporlnch_sm.pcx", 0);
+                    }
+                } else if (vehicle.proto_id != 15) {
+                    NetMsgPrimary.pop("MINDWORMSWARM", 3000, 0, 0);
+                } else {
+                    NetMsgPrimary.pop("SPORELAUNCHSWARM", 3000, 0, 0);
+                }
+                return 0;
+            }
+
+            if ((tile->bit & 2u) != 0 && land_kind <= 7 &&
+                (tile->climate & 0xe0u) < 0x60u) {
+                // Original falls into the common retreat selector at the
+                // current direction, before normal movement scoring.
+                selected_direction = direction;
+                goto retreat_eval;
+            }
+        }
+
+        set_course(veh_id, 99, target_x, target_y);
+        if (vehicle.order != 0x18) return 0;
+        const int waypoint_x = vehicle.waypoint_x[0];
+        const int waypoint_y = vehicle.waypoint_y[0];
+        if ((map_loc(waypoint_x, waypoint_y)->climate & 0xe0u) < 0x60) return 0;
+        int dx = abs(x - waypoint_x);
+        if ((MapIsFlat & 1) == 0 && dx > MapLongitude) {
+            dx = MapLongitudeBounds - dx;
+        }
+        if (((abs(y - waypoint_y) + dx) & ~1) > 2) return 0;
+        veh_skip(veh_id);
+        return 0;
+    }
+
+    // Normal movement scoring selects either the stored waypoint or the
+    // actual Paths owner, then performs artillery search and retreat scoring.
+    {
+    if ((BaseFindDist > 7 || map_loc(x, y)->region != target_region) &&
+        zoc_any(x, y, 0) == 0) {
+        const int chassis = VehPrototypes[vehicle.proto_id].chassis_id;
+        const int triad = Chassis[chassis].triad;
+        const int turns = (triad != 0 ? 16 : 6);
+        if (turns < vehicle.terraforming_turns &&
+            ((GameDataStateStorage.fields_.turn_current_num_ + veh_id) & 7) == 0) {
+            kill(veh_id);
+            return 1;
+        }
+    }
+
+    int move_result;
+    if (base_id < 0 || PlayersData[faction].current_num_bases < 3 ||
+        GameDataStateStorage.fields_.turn_current_num_ < 0x33 ||
+        (vehicle.order_auto_type != faction &&
+         PlayersData[faction].soc_effect_active.values_[SocialEffect::PLANET] > 0 && vehicle.proto_id != 14)) {
+        move_result = static_cast<int8_t>(vehicle.facing);
+    } else {
+        vehicle.waypoint_x[0] = static_cast<int16_t>(target_x);
+        vehicle.waypoint_y[0] = static_cast<int16_t>(target_y);
+        move_result = Paths.move(veh_id, 0);
+    }
+
+    if (can_arty(vehicle.proto_id, 1) != 0) {
+        int best_score = 0;
+        int best_offset = -1;
+        for (int offset = 0; offset < 25; ++offset) {
+            int candidate_x = x + RadiusOffsetX[offset];
+            if ((MapIsFlat & 1) == 0) {
+                if (candidate_x < 0) candidate_x += MapLongitudeBounds;
+                else if (candidate_x >= MapLongitudeBounds) candidate_x -= MapLongitudeBounds;
+            }
+            const int candidate_y = y + RadiusOffsetY[offset];
+            if (!alien_move_in_map(candidate_x, candidate_y)) continue;
+            Map *tile = map_loc(candidate_x, candidate_y);
+            if ((tile->bit & 3u) == 0 || (tile->val2 & 0x0f) > 7) {
+                if ((tile->climate & 0xe0u) > 0x5f &&
+                    (tile->bit & 0x81208854u) != 0) {
+                    int score = (tile->bit & 0x80000000u) != 0 ? 0x20 : 2;
+                    if (offset == 0) score = 0;
+                    if (score > best_score) { best_score = score; best_offset = offset; }
+                }
+            } else {
+                const int occupant = stack_fix(veh_at(candidate_x, candidate_y));
+                if (occupant >= 0) {
+                    int score = (stack_check(occupant, 2, 6, -1, -1) +
+                                 stack_check(occupant, 6, 0x8000, -1, -1)) * 8;
+                    if (zoc_veh(x, y, 0) == 0 || offset < 9) {
+                        score += stack_check(occupant, 4, -1, -1, -1);
+                    }
+                    int dx = abs(x - candidate_x);
+                    if ((MapIsFlat & 1) == 0 && dx > MapLongitude) {
+                        dx = MapLongitudeBounds - dx;
+                    }
+                    if (((abs(y - candidate_y) + dx) >> 1) > Rules.artillery_max_rng && score > 1) score = 1;
+                    if (offset == 0) score = 0;
+                    if (score > best_score) { best_score = score; best_offset = offset; }
+                }
+            }
+        }
+
+        if (best_offset < 0) {
+            (void)stack_check(veh_id, 0x0f, -1, -1, -1);
+        } else {
+            int target_x = x + RadiusOffsetX[best_offset];
+            if ((MapIsFlat & 1) == 0) {
+                if (target_x < 0) target_x += MapLongitudeBounds;
+                else if (target_x >= MapLongitudeBounds) target_x -= MapLongitudeBounds;
+            }
+            const int target_y = y + RadiusOffsetY[best_offset];
+            int dx = abs(x - target_x);
+            if ((MapIsFlat & 1) == 0 && dx > MapLongitude) dx = MapLongitudeBounds - dx;
+            if (((abs(y - target_y) + dx) >> 1) <= Rules.artillery_max_rng) {
+                Map *target = map_loc(target_x, target_y);
+                if ((target->bit & 3u) == 0 || (target->val2 & 0x0f) > 7) {
+                    log_say("Enemy doing ARTY DESTROY 2", veh_id, target_x, target_y);
+                    action_destroy(veh_id, 0, target_x, target_y);
+                    for (int faction_id = 1; faction_id < 8; ++faction_id)
+                        synch_bit(target_x, target_y, faction_id);
+                    draw_tile(target_x, target_y, 2);
+                    return 1;
+                }
+                if (best_offset > 8) {
+                    log_say("Enemy doing ARTY DESTROY 2", veh_id, best_offset, 0);
+                    (void)battle_fight(veh_id, best_offset, 1, 1, 0);
+                    return 1;
+                }
+            }
+        }
+    }
+
+    int best_retreat_score = 0;
+    const int alien_morale = static_cast<int>(morale_alien(-1, 0));
+    for (int direction = 0; direction < 8; ++direction) {
+        int next_x = alien_move_wrap_x(x + VehMoveDeltaX[direction]);
+        const int next_y = y + VehMoveDeltaY[direction];
+        if (!alien_move_in_map(next_x, next_y)) continue;
+        Map *tile = map_loc(next_x, next_y);
+        bool can_score = false;
+        int score = 0;
+        const int triad = Chassis[VehPrototypes[vehicle.proto_id].chassis_id].triad;
+        if ((tile->climate & 0xe0u) < 0x60) {
+            can_score = triad != 0;
+        } else {
+            if (triad == 1) {
+                if (vehicle.proto_id != 14 || base_at(next_x, next_y) < 0) continue;
+                score = 0x3039;
+            }
+            if (score == 0x3039 || (map_loc(x, y)->climate & 0xe0u) > 0x5f ||
+                triad != 0 || (tile->bit & 2u) == 0 ||
+                (tile->val2 & 0x0f) > 7 || (tile->val2 & 0x0f) == 0) {
+                can_score = true;
+            }
+        }
+        if (!can_score) continue;
+
+        if (score != 0x3039) score = 0;
+        const int occupant = veh_at(next_x, next_y);
+        if (((tile->bit & 1u) == 0 || (tile->val2 & 0x0f) > 7 ||
+             (tile->val2 & 0x0f) == 0) && occupant >= 0 &&
+            Vehs[occupant].visibility != 0) {
+            const Veh &other = Vehs[occupant];
+            const int other_chassis = VehPrototypes[other.proto_id].chassis_id;
+            if ((other.proto_id < 0x40 && Weapon[VehPrototypes[other.proto_id].weapon_id].offense_rating < 0) ||
+                (Chassis[other_chassis].triad == 2 &&
+                 Chassis[VehPrototypes[vehicle.proto_id].chassis_id].triad != 2)) continue;
+            score += 999;
+        } else {
+            score += 9999;
+        }
+        const uint32_t terrain_bits = tile->bit;
+        score += bit_count(static_cast<int>(terrain_bits & 0x80208054u)) * 4;
+        if (GameDataStateStorage.fields_.diff_level_current_ > 2 && (terrain_bits & 0x2000u) != 0 &&
+            (vehicle.state & 0x100u) == 0) score += 8;
+
+        unsigned int random_bits = static_cast<unsigned int>(rand()) & 7u;
+        const unsigned int direction_distance =
+            ((static_cast<unsigned int>(move_result) ^ 0xfffffffcu) - direction) & 7u;
+        const unsigned int turn_cost = direction_distance > 4 ? 8 - direction_distance : direction_distance;
+        score += static_cast<int>(random_bits) + (alien_morale + 1) * static_cast<int>(turn_cost);
+        if (direction == move_result) score += alien_morale * alien_morale;
+        if (score > best_retreat_score) {
+            selected_direction = direction;
+            best_retreat_score = score;
+        }
+    }
+
+    unsigned int retreat_factor = alien_morale == 0 ? 0 : (alien_morale == 1 ? 1 : (alien_morale == 2 ? 2 : 4));
+    if (vehicle.dmg_incurred != 0) retreat_factor *= 2;
+    if ((GameDataStateStorage.fields_.lock_masks_.enable_mask_ & (1u << (faction & 31))) != 0 && retreat_factor != 0) {
+        const unsigned int roll = static_cast<unsigned int>(rand()) & 3u;
+        if (static_cast<int>(roll) < ((best_retreat_score < 999) ? 2 : 1)) {
+            int remaining_moves = movement - vehicle.moves_expended;
+            if (remaining_moves < 0) remaining_moves = 0;
+            else if (remaining_moves > 999) remaining_moves = 999;
+            if (remaining_moves <= Rules.move_rate_roads &&
+                Chassis[VehPrototypes[vehicle.proto_id].chassis_id].triad != 2) {
+                int pressure = (GameDataStateStorage.fields_.game_rules_ & 0x40u) == 0
+                    ? PlayersData[faction].diff_level : 5;
+                if (pressure > 0 && rand() % (pressure + 1) != 0 &&
+                    (map_loc(x, y)->bit & 0x80e88058u) != 0) {
+                    action_destroy(veh_id, 0, -1, -1);
+                    return 0;
+                }
+            }
+        }
+    }
+
+    if (best_retreat_score < 999 && vehicle.moves_expended == 0 &&
+        vehicle.dmg_incurred != 0) {
+        Map *current_tile = map_loc(x, y);
+        if ((current_tile->bit & 0x20u) == 0 || (current_tile->climate & 0xe0u) < 0x40)
+            retreat_factor = (retreat_factor + 1) / 2;
+        if (retreat_factor != 0 && rand() % static_cast<int>(retreat_factor + 1) != 0)
+            selected_direction = -1;
+    }
+
+    if (best_retreat_score < 99 && veh_cargo(veh_id) != 0 &&
+        stack_check(veh_id, 3, 0, -1, -1) == 0) {
+        kill(veh_id);
+        return 1;
+    }
+
+    }
+retreat_eval:
+    if (selected_direction < 0) {
+        vehicle.order = 0;
+        vehicle.state &= ~0x10000u;
+        veh_skip(veh_id);
+        return 0;
+    }
+    int destination_x = alien_move_wrap_x(x + VehMoveDeltaX[selected_direction]);
+    vehicle.order = 0x58;
+    vehicle.waypoint_x[0] = static_cast<int16_t>(destination_x);
+    vehicle.waypoint_y[0] = static_cast<int16_t>(y + VehMoveDeltaY[selected_direction]);
+    return 0;
+}
+
+// Aircraft/missile movement and target selection, preserving the five-argument ABI.
+
+// ORIGINAL: 0x005678C0 ?air_power@@YAHHHHPAH0@Z 0x005678C0-0x0056A89E
+// RECOVERY_BINDING: v1 {"evidence": ["git:846a0ba2a949fc3692ce8bc7ccb7f5020f9e0d9f:src/unrecovered/005678c0.cpp complete original identity/span and historical lessons", "pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf:0x005678C0-0x0056A89E full native body and independently reviewed field/callback/branch evidence.", "source:src/veh.cpp and existing veh/map/base/game/netdaemon declarations; existing TU-local seven-argument battle_fight overload, no fake wrapper or executable-address dependency."], "reason": "Complete aircraft and missile movement/target selection through actual vehicle, map, player and base owners; original nullness, callbacks and range/ordering behavior retained."}
+// TRIED: MISMATCH #4 mov/push at prologue; full-body transcription from Ghidra hypothesis, corrected against raw disasm for: veh_at (declared 2-arg, several call sites showed 6 - a dangling outer push for the immediately-following stack_check(int,int,int,int,int) 5-arg call), veh_lift/veh_drop split (PROPOSAL: veh_lift should be `int veh_lift(int)`, its mangled YAX return hides a real value the caller forwards into veh_drop's first arg), and the VEH struct field widths (short at 0x952828/2a/3c/3e/44/46, byte at 0x952836/38/39/4d/4e/4f/50/51/53) recovered from `movsx word/byte ptr [reg+ADDR]` on every g_009528xx access, since the scaffold's g_ globals are declared int* uniformly.
+int __cdecl air_power(int a1, int a2, int a3, int *a4, int *a5) {
+    int live_iVar10 = 0;
+    int live_iVar11 = 0;
+    int requested_region = -1;
+    int result = -3;
+    uint32_t bombing_auto_state = 0;
+
+    Veh &attacker = Vehs[a1];
+    if (attacker.order == ORDER_MOVE_TO &&
+        (attacker.waypoint_x[0] != *a4 ||
+         attacker.waypoint_y[0] != *a5)) {
+        if (a3 == 0 ||
+            VehPrototypes[attacker.proto_id].plan == PLAN_AIR_SUPERIORITY) {
+            return -2;
+        }
+        return -1;
+    }
+
+    requested_region = map_loc(*a4, *a5)->region;
+    {
+    const int chassis_id = VehPrototypes[attacker.proto_id].chassis_id;
+    const int range = Chassis[chassis_id].range;
+    const int road_rate = Rules.move_rate_roads;
+    if (range == 0) {
+        const int unit_speed = speed(a1, 0);
+        live_iVar11 = unit_speed * 6;
+        live_iVar10 = unit_speed * 6;
+    } else if (range == 1) {
+        live_iVar10 = speed(a1, 0) - attacker.moves_expended;
+        if (live_iVar10 < 0) live_iVar10 = 0;
+        else if (live_iVar10 > 999) live_iVar10 = 999;
+        live_iVar11 = live_iVar10;
+        if (attacker.dmg_incurred == 0)
+            live_iVar11 = speed(a1, 0) + live_iVar10;
+    } else {
+        live_iVar11 = speed(a1, 0) - attacker.moves_expended;
+        if (live_iVar11 < 0) live_iVar11 = 0;
+        else if (live_iVar11 > 999) live_iVar11 = 999;
+        live_iVar10 = speed(a1, 0);
+        live_iVar11 = live_iVar10 * (range - attacker.dmg_incurred - 1)
+            + live_iVar11;
+        live_iVar10 = live_iVar11;
+    }
+    live_iVar11 /= road_rate;
+    live_iVar10 /= road_rate;
+
+    if (range != 0 && attacker.terraforming_turns != 0) {
+        action_home(a1, 4);
+        if (attacker.order == ORDER_MOVE_TO) return -2;
+    }
+
+    if ((attacker.state & VSTATE_UNK_200) != 0 &&
+        attacker.order_auto_type == ORDERA_ON_ALERT) {
+        if (attacker.dmg_incurred != 0) {
+            action_home(a1, 0);
+            return -2;
+        }
+    } else if ((attacker.state & VSTATE_UNK_200) != 0) {
+        if (attacker.order_auto_type == ORDERA_AUTOMATE_AIR_DEFENSE) {
+            if (attacker.dmg_incurred != 0) {
+                action_home(a1, 0);
+                return -2;
+            }
+        } else if (attacker.order_auto_type == ORDERA_BOMBING_RUN) {
+            bombing_auto_state = attacker.state;
+            goto air_power_bombing;
+        }
+    }
+
+    {
+        const int faction_id = attacker.faction_id;
+        const int relocation_region = map_loc(*a4, *a5)->region;
+        const bool forced_relocation = (attacker.state & 0x4000u) != 0;
+        const bool terraform_region_relocation =
+            (map_loc(*a4, *a5)->climate & 0xE0u) > 0x5Fu
+            && PlayersData[faction_id]
+                   .region_base_plan[relocation_region + 32] == 8;
+        if (forced_relocation || terraform_region_relocation) {
+            int best_x = -1;
+            int best_y = -1;
+            int best_visibility_count = 0;
+            for (int direction = 0; direction < 8; ++direction) {
+                int candidate_x = VehMoveDeltaX[direction] * (live_iVar10 / 2)
+                    + *a4;
+                if ((MapIsFlat & 1) == 0) {
+                    if (candidate_x < 0) candidate_x += MapLongitudeBounds;
+                    else if (candidate_x >= MapLongitudeBounds)
+                        candidate_x -= MapLongitudeBounds;
+                }
+                const int candidate_y = VehMoveDeltaY[direction]
+                    * (live_iVar10 / 2) + *a5;
+                if (candidate_x < 0 || candidate_x >= MapLongitudeBounds
+                    || candidate_y < 0 || candidate_y >= MapLatitudeBounds)
+                    continue;
+
+                int visibility_count = 0;
+                for (int neighbor = 0; neighbor < 9; ++neighbor) {
+                    int neighbor_x = VehMoveDeltaX[neighbor] + candidate_x;
+                    if ((MapIsFlat & 1) == 0) {
+                        if (neighbor_x < 0) neighbor_x += MapLongitudeBounds;
+                        else if (neighbor_x >= MapLongitudeBounds)
+                            neighbor_x -= MapLongitudeBounds;
+                    }
+                    const int neighbor_y = VehMoveDeltaY[neighbor] + candidate_y;
+                    if (neighbor_x < 0 || neighbor_x >= MapLongitudeBounds
+                        || neighbor_y < 0 || neighbor_y >= MapLatitudeBounds
+                        || (PlayersData[faction_id].flags & 0x200u) != 0)
+                        continue;
+                    const uint8_t faction_bit = static_cast<uint8_t>(
+                        1U << (faction_id & 0x1F));
+                    if ((map_loc(neighbor_x, neighbor_y)->visibility
+                         & faction_bit) == 0)
+                        ++visibility_count;
+                }
+                if (best_visibility_count < visibility_count) {
+                    best_visibility_count = visibility_count;
+                    best_x = candidate_x;
+                    best_y = candidate_y;
+                }
+            }
+
+            if (best_x >= 0) {
+                attacker.order = ORDER_MOVE_TO;
+                attacker.move_to_ai_type = 0x61;
+                attacker.waypoint_x[0] = static_cast<int16_t>(best_x);
+                attacker.waypoint_y[0] = static_cast<int16_t>(best_y);
+                if (VehPrototypes[attacker.proto_id].plan == PLAN_COLONIZATION)
+                    attacker.terraforming_turns = 0;
+                return -2;
+            }
+
+            int best_base_id = -1;
+            int best_random_distance = -1;
+            for (int base_id = 0;
+                 base_id < GameDataStateStorage.fields_.base_current_count_;
+                 ++base_id) {
+                const Base &base = Bases[base_id];
+                if (base.faction_id_current != faction_id) continue;
+                int dx = abs(*a4 - base.x);
+                if ((MapIsFlat & 1) == 0 && MapLongitude < dx)
+                    dx = static_cast<int>(MapLongitudeBounds) - dx;
+                const int dy = abs(*a5 - base.y);
+                const int distance = (dx + dy) >> 1;
+                if (distance <= live_iVar10) {
+                    const int random_distance = distance < 1
+                        ? 0 : rand() % (distance + 1);
+                    if (best_random_distance < random_distance) {
+                        best_base_id = base_id;
+                        best_random_distance = random_distance;
+                    }
+                }
+            }
+            if (best_base_id >= 0) {
+                const Base &base = Bases[best_base_id];
+                attacker.order = ORDER_MOVE_TO;
+                attacker.move_to_ai_type = 0x63;
+                attacker.waypoint_x[0] = static_cast<int16_t>(base.x);
+                attacker.waypoint_y[0] = static_cast<int16_t>(base.y);
+                if (VehPrototypes[attacker.proto_id].plan == PLAN_COLONIZATION)
+                    attacker.terraforming_turns = 0;
+                return -2;
+            }
+            if (forced_relocation) return -3;
+        }
+    }
+
+    const int post_relocation_chassis =
+        VehPrototypes[attacker.proto_id].chassis_id;
+    if (Chassis[post_relocation_chassis].missile != 0) {
+        const uint32_t faction_bit =
+            1U << (attacker.faction_id & 0x1F);
+        if ((GameDataStateStorage.fields_.lock_masks_.enable_mask_ & faction_bit) != 0 && IsMultiplayerNet)
+            return -3;
+// Original missile-goal, selector, route-commit and fallback effects stay
+// in this mapped owner; branch and callback ordering are unchanged.
+{
+    const int missile_plan = VehPrototypes[attacker.proto_id].plan;
+    int missile_selected_x = -1;
+    int missile_selected_y = -1;
+
+    if (missile_plan == 13) {
+        const int faction_id = attacker.faction_id;
+        const int actor_plan = missile_plan;
+        int best_x = -1;
+        int best_y = -1;
+        int best_score = 0;
+        int goal_index;
+
+        for (goal_index = 0; goal_index < 75; ++goal_index) {
+            const Goal &goal = PlayersData[faction_id].goals[goal_index];
+            if (goal.type == 0x29) {
+                const int distance = cursor_dist(*a4, *a5, goal.x, goal.y);
+                const int move_limit = speed(a1, 0) / Rules.move_rate_roads
+                                     - Rules.move_rate_roads;
+                int score = (int)goal.priority * 8;
+                if (move_limit < distance) score /= 2;
+                const Map *tile = map_loc(goal.x, goal.y);
+                if (((tile->bit & 3) == 0 || (tile->val2 & 0x0F) > 7)
+                    && (tile->climate & 0xE0) > 0x5F
+                    && best_score < score) {
+                    best_x = goal.x;
+                    best_y = goal.y;
+                    best_score = score;
+                }
+            }
+        }
+
+        int base_id;
+        for (base_id = 0;
+             base_id < GameDataStateStorage.fields_.base_current_count_;
+             ++base_id) {
+            const Base &base = Bases[base_id];
+            const Map *base_tile;
+            int score;
+            int approach_x;
+            if (base.faction_id_current != faction_id) continue;
+            base_tile = map_loc(base.x, base.y);
+            if ((base_tile->climate & 0xE0) <= 0x5F) continue;
+            if (PlayersData[faction_id].region_total_bases[base_tile->region] != 0) {
+                base_find(base.x, base.y, faction_id);
+                if (BaseFindDist <= 9) continue;
+            }
+            // Base::population_size is the original signed low-byte value;
+            // retain its signed division/promotion behavior here.
+            score = ((int)base.population_size + 4) / 5 * 8;
+            approach_x = wrap_map_x((int)base.x + 4);
+            if (base.y < 0 || base.y >= (int)MapLatitudeBounds
+                || approach_x < 0 || approach_x >= (int)MapLongitudeBounds)
+                continue;
+            base_tile = map_loc(approach_x, base.y);
+            if ((base_tile->bit & 3) != 0 && (base_tile->val2 & 0x0F) <= 7)
+                continue;
+            {
+                const int distance = cursor_dist(*a4, *a5, approach_x, base.y);
+                if (speed(a1, 0) / Rules.move_rate_roads
+                        - Rules.move_rate_roads < distance)
+                    score /= 2;
+            }
+            if (best_score < score) {
+                best_x = approach_x;
+                best_y = base.y;
+                best_score = score;
+            }
+        }
+
+        if (best_x >= 0) {
+            missile_selected_x = best_x;
+            missile_selected_y = best_y;
+            const int distance = cursor_dist(*a4, *a5, best_x, best_y);
+            if (distance <= speed(a1, 0) / Rules.move_rate_roads
+                               - Rules.move_rate_roads) {
+                attacker.order = ORDER_MOVE_TO;
+                attacker.move_to_ai_type = 0x6D;
+                attacker.waypoint_x[0] = (int16_t)best_x;
+                attacker.waypoint_y[0] = (int16_t)best_y;
+                if (actor_plan == 8) attacker.terraforming_turns = 0;
+            } else {
+                int closest_base_distance = 9999;
+                for (base_id = 0;
+                     base_id < GameDataStateStorage.fields_.base_current_count_;
+                     ++base_id) {
+                    const Base &base = Bases[base_id];
+                    const int base_faction = base.faction_id_current;
+                    if (base_faction == faction_id
+                        || (PlayersData[faction_id].diplo_treaties[base_faction] & 1) != 0) {
+                        const int distance_from_target = cursor_dist(
+                            *a4, *a5, base.x, base.y);
+                        if (distance_from_target
+                            <= speed(a1, 0) / Rules.move_rate_roads
+                                 - Rules.move_rate_roads) {
+                            const int distance = cursor_dist(best_x, best_y,
+                                                             base.x, base.y);
+                            if (distance < closest_base_distance) {
+                                attacker.order = ORDER_MOVE_TO;
+                                attacker.move_to_ai_type = 0x4D;
+                                attacker.waypoint_x[0] = base.x;
+                                attacker.waypoint_y[0] = base.y;
+                                closest_base_distance = distance;
+                                if (actor_plan == 8)
+                                    attacker.terraforming_turns = 0;
+                            }
+                        }
+                    }
+                }
+            }
+            return -3;
+        }
+    } else if (missile_plan == 14) {
+        const int faction_id = attacker.faction_id;
+        int best_score = 0;
+        int base_id;
+        missile_selected_x = -1;
+        missile_selected_y = -1;
+        for (base_id = 0;
+             base_id < GameDataStateStorage.fields_.base_current_count_;
+             ++base_id) {
+            const Base &base = Bases[base_id];
+            const Map *base_tile;
+            int base_score;
+            int offset_index;
+            if (base.faction_id_current == faction_id) continue;
+            if ((PlayersData[faction_id].diplo_treaties[base.faction_id_current]
+                 & 0x10) == 0)
+                continue;
+            if (PlayersData[base.faction_id_current]
+                    .soc_effect_pending.values_[SocialEffect::PLANET] < 1)
+                continue;
+            base_tile = map_loc(base.x, base.y);
+            if (PlayersData[faction_id].region_total_bases[base_tile->region] != 0) {
+                base_find(base.x, base.y, faction_id);
+                if (BaseFindDist <= 4) continue;
+            }
+            base_score = (int)base.population_size * 8;
+            for (offset_index = 0; offset_index < 21; ++offset_index) {
+                const int x = wrap_map_x((int)base.x + RadiusOffsetX[offset_index]);
+                const int y = (int)base.y + RadiusOffsetY[offset_index];
+                const Map *tile;
+                int score = base_score;
+                if (y < 0 || y >= (int)MapLatitudeBounds
+                    || x < 0 || x >= (int)MapLongitudeBounds)
+                    continue;
+                tile = map_loc(x, y);
+                if ((tile->bit & 0x20) != 0 && (tile->climate & 0xE0) >= 0x40)
+                    continue;
+                if ((tile->bit & 3) != 0 && (tile->val2 & 0x0F) <= 7)
+                    continue;
+                {
+                    const int distance = cursor_dist(*a4, *a5, x, y);
+                    if (speed(a1, 0) / Rules.move_rate_roads
+                            - Rules.move_rate_roads < distance)
+                        score /= 2;
+                }
+                score += bit_count((int)(tile->bit & 0x01E8881C));
+                if (best_score < score) {
+                    missile_selected_x = x;
+                    missile_selected_y = y;
+                    best_score = score;
+                }
+            }
+        }
+
+        if (missile_selected_x >= 0) {
+            const int distance = cursor_dist(*a4, *a5,
+                                             missile_selected_x,
+                                             missile_selected_y);
+            if (distance <= speed(a1, 0) / Rules.move_rate_roads
+                               - Rules.move_rate_roads) {
+                attacker.order = ORDER_MOVE_TO;
+                attacker.move_to_ai_type = 0x6D;
+                attacker.waypoint_x[0] = (int16_t)missile_selected_x;
+                attacker.waypoint_y[0] = (int16_t)missile_selected_y;
+                if (VehPrototypes[attacker.proto_id].plan == 8)
+                    attacker.terraforming_turns = 0;
+            } else {
+                int closest_base_distance = 9999;
+                for (base_id = 0;
+                     base_id < GameDataStateStorage.fields_.base_current_count_;
+                     ++base_id) {
+                    const Base &base = Bases[base_id];
+                    if (base.faction_id_current == faction_id) {
+                        const int distance_from_target = cursor_dist(
+                            *a4, *a5, base.x, base.y);
+                        if (distance_from_target
+                            <= speed(a1, 0) / Rules.move_rate_roads
+                                 - Rules.move_rate_roads) {
+                            const int distance = cursor_dist(
+                                missile_selected_x, missile_selected_y,
+                                base.x, base.y);
+                            if (distance < closest_base_distance) {
+                                attacker.order = ORDER_MOVE_TO;
+                                attacker.move_to_ai_type = 0x4D;
+                                attacker.waypoint_x[0] = base.x;
+                                attacker.waypoint_y[0] = base.y;
+                                closest_base_distance = distance;
+                                if (VehPrototypes[attacker.proto_id].plan == 8)
+                                    attacker.terraforming_turns = 0;
+                            }
+                        }
+                    }
+                }
+            }
+        } else {
+            missile_selected_x = -1;
+        }
+    } else {
+        // The original 64-iteration tally advances the prototype id by the
+        // actor faction id, not by one; preserve this observed odd stride.
+        const int tally_faction_id = attacker.faction_id;
+        int proto_active_count = 0;
+        int proto_id = 64;
+        int remaining = 64;
+        while (remaining != 0) {
+            if ((VehPrototypes[proto_id].flags & 1) != 0
+                && has_abil(proto_id, 0x10))
+                proto_active_count += PlayersData[tally_faction_id]
+                    .proto_id_active[proto_id];
+            proto_id += tally_faction_id;
+            --remaining;
+        }
+        int best_score = (int)VehPrototypes[attacker.proto_id].cost << 4;
+        int best_vehicle = -1;
+        int best_distance = 9999;
+        int candidate_id;
+        live_iVar10 = 0;
+
+        for (candidate_id = 0;
+             candidate_id < GameDataStateStorage.fields_.vehicle_current_count_;
+             ++candidate_id) {
+            Veh &candidate = Vehs[candidate_id];
+            const int faction_id = attacker.faction_id;
+            const int candidate_faction = candidate.faction_id;
+            const int candidate_triad =
+                Chassis[VehPrototypes[candidate.proto_id].chassis_id].triad;
+            const uint8_t faction_bit = (uint8_t)(1U << (faction_id & 0x1F));
+            const int base_id = base_at(candidate.x, candidate.y);
+            bool colony = false;
+            if (candidate_faction == faction_id
+                || (PlayersData[faction_id]
+                        .diplo_treaties[candidate_faction] & 0x10) == 0)
+                continue;
+            if (candidate.order == 0x15) {
+                const Map *candidate_tile = map_loc(candidate.x, candidate.y);
+                if ((candidate_tile->climate & 0xE0) < 0x60) {
+                    const int nearby_base = base_find(candidate.x, candidate.y,
+                                                      faction_id);
+                    if (nearby_base >= 0) {
+                        const Base &base = Bases[nearby_base];
+                        const int dx = x_dist(candidate.x, base.x);
+                        const int dy = abs((int)candidate.y - (int)base.y);
+                        if (4 >= ((dx + dy) & 0xFFFFFFFE)) colony = true;
+                    }
+                }
+            }
+            if (!colony
+                && ((candidate_faction != faction_id
+                     || (candidate.flags & 0x440) == 0x440)
+                    && (candidate.visibility & faction_bit) == 0)
+                && (base_id < 0
+                    || (Bases[base_id].faction_id_current != faction_id
+                        && (Bases[base_id].visibility & faction_bit) == 0)))
+                continue;
+            if (candidate_triad == 2 && base_id < 0) continue;
+
+            const int battle = battle_fight(a1, 0, candidate.x, candidate.y,
+                                            0, 0, 0);
+            int odds = compute_odds(battle, faction_id, a1,
+                                    candidate_id, -2);
+            int strategic_weight;
+            if (base_id < 0) {
+                odds /= 2;
+                strategic_weight = 4;
+                if (stack_check(candidate_id, 2, 7, -1, -1) == 0
+                    && (stack_check(candidate_id, 2, 9, -1, -1) == 0
+                        || (map_loc(candidate.x, candidate.y)->climate & 0xE0) > 0x5F)
+                    && whose_territory(faction_id, candidate.x,
+                                       candidate.y, 0, 0) != faction_id) {
+                    strategic_weight = 2;
+                    odds /= 2;
+                } else {
+                    ++proto_active_count;
+                }
+            } else if (proto_active_count == 0) {
+                bool friendly_vehicle_in_radius = false;
+                int radius_index;
+                for (radius_index = 0; radius_index < 25; ++radius_index) {
+                    const int x = wrap_map_x((int)Bases[base_id].x
+                                         + RadiusOffsetX[radius_index]);
+                    const int y = (int)Bases[base_id].y
+                                + RadiusOffsetY[radius_index];
+                    if (y < 0 || y >= (int)MapLatitudeBounds
+                        || x < 0 || x >= (int)MapLongitudeBounds)
+                        continue;
+                    const Map *tile = map_loc(x, y);
+                    if ((tile->bit & 2) != 0 && (tile->val2 & 0x0F) <= 7
+                        && (tile->val2 & 0x0F) == faction_id) {
+                        proto_active_count = 1;
+                        friendly_vehicle_in_radius = true;
+                        break;
+                    }
+                }
+                if (friendly_vehicle_in_radius) {
+                    strategic_weight = 16;
+                } else {
+                    strategic_weight = 4;
+                    odds /= 2;
+                }
+            } else {
+                strategic_weight = 16;
+            }
+
+            const int noncombat_count = stack_check(candidate_id, 0x13,
+                                                     -1, -1, -1);
+            const int total_count = stack_check(candidate_id, 1, -1, -1, -1);
+            const int sea_combat_count = stack_check(candidate_id, 3, 2, -1, -1);
+            if (total_count - noncombat_count <= sea_combat_count) {
+                odds *= 2;
+                strategic_weight *= 2;
+                ++proto_active_count;
+            }
+            if (proto_active_count != 0) {
+                if ((GameDataStateStorage.fields_.lock_masks_.enable_mask_
+                     & (1U << (candidate_faction & 0x1F))) != 0)
+                    strategic_weight *= 2;
+                if (PlayersData[candidate_faction].ranking == 7)
+                    strategic_weight *= 2;
+            }
+            if (colony) odds <<= 3;
+
+            int distance = cursor_dist(*a4, *a5, candidate.x, candidate.y);
+            if (speed(a1, 0) / Rules.move_rate_roads
+                    - Rules.move_rate_roads < distance)
+                strategic_weight /= 2;
+            if (7 >= odds / 2) continue;
+
+            const int score = (odds / 2) * strategic_weight;
+            if (best_score <= score) {
+                best_vehicle = candidate_id;
+                best_score = score;
+                best_distance = distance;
+                const int route_distance = cursor_dist(
+                    *a4, *a5, candidate.x, candidate.y);
+                if (route_distance > speed(a1, 0) / Rules.move_rate_roads
+                                         - Rules.move_rate_roads) {
+                    int closest_base_distance = 9999;
+                    int base_index;
+                    for (base_index = 0;
+                         base_index < GameDataStateStorage.fields_.base_current_count_;
+                         ++base_index) {
+                        const Base &base = Bases[base_index];
+                        const int base_faction = base.faction_id_current;
+                        if (base_faction != faction_id
+                            && (PlayersData[base_faction]
+                                    .diplo_treaties[faction_id] & 1) == 0)
+                            continue;
+                        const int target_to_base = cursor_dist(
+                            *a4, *a5, base.x, base.y);
+                        if (target_to_base > speed(a1, 0) / Rules.move_rate_roads
+                                                 - Rules.move_rate_roads)
+                            continue;
+                        const int candidate_to_base = cursor_dist(
+                            candidate.x, candidate.y, base.x, base.y);
+                        if (candidate_to_base < closest_base_distance) {
+                            attacker.order = ORDER_MOVE_TO;
+                            attacker.move_to_ai_type = 0x4D;
+                            attacker.waypoint_x[0] = base.x;
+                            attacker.waypoint_y[0] = base.y;
+                            closest_base_distance = candidate_to_base;
+                            if (VehPrototypes[attacker.proto_id].plan == 8)
+                                attacker.terraforming_turns = 0;
+                        }
+                    }
+                } else {
+                    attacker.order = ORDER_MOVE_TO;
+                    attacker.move_to_ai_type = 0x6D;
+                    attacker.waypoint_x[0] = candidate.x;
+                    attacker.waypoint_y[0] = candidate.y;
+                    if (VehPrototypes[attacker.proto_id].plan == 8)
+                        attacker.terraforming_turns = 0;
+                }
+            }
+        }
+        (void)best_vehicle;
+        (void)best_distance;
+    }
+
+    if (missile_plan != 13
+        && (missile_plan != 14 || missile_selected_x >= 0)
+        && attacker.order == ORDER_MOVE_TO) {
+        const int route_plan = VehPrototypes[attacker.proto_id].plan;
+        const int route_x = attacker.waypoint_x[0];
+        const int route_y = attacker.waypoint_y[0];
+        const Map *route_tile = map_loc(route_x, route_y);
+        if ((route_tile->bit & BIT_BASE_IN_TILE) != 0
+            && (route_tile->val2 & 0x0F) == attacker.faction_id) {
+            *a4 = route_x;
+            *a5 = route_y;
+            attacker.order = 0;
+            attacker.visibility = 0;
+            const int lifted = veh_lift(a1);
+            veh_drop(lifted, *a4, *a5);
+            return -3;
+        }
+
+        attacker.order = 0;
+        if (route_plan == 13) {
+            const int lifted = veh_lift(a1);
+            veh_drop(lifted, missile_selected_x, missile_selected_y);
+            action_tectonic(a1, missile_selected_x, missile_selected_y);
+            return -5;
+        }
+        if (route_plan == 14) {
+            const int lifted = veh_lift(a1);
+            veh_drop(lifted, missile_selected_x, missile_selected_y);
+            action_fungal(a1, missile_selected_x, missile_selected_y);
+            return -5;
+        }
+
+        int direction;
+        for (direction = 0; direction < 8; ++direction) {
+            const int x = wrap_map_x(route_x + VehMoveDeltaX[direction]);
+            const int y = route_y + VehMoveDeltaY[direction];
+            if (y < 0 || y >= (int)MapLatitudeBounds
+                || x < 0 || x >= (int)MapLongitudeBounds)
+                continue;
+            const Map *tile = map_loc(x, y);
+            if ((tile->bit & 3) != 0 && (tile->val2 & 0x0F) <= 7)
+                continue;
+            *a4 = x;
+            *a5 = y;
+            attacker.visibility = 0;
+            const int lifted = veh_lift(a1);
+            veh_drop(lifted, x, y);
+            attacker.facing = (int8_t)direction;
+            return direction ^ 4;
+        }
+        attacker.order = 0;
+    }
+
+    {
+        const int actor_stack = stack_check(a1, 0x0D, -1, -1, -1);
+        if (actor_stack >= 2) {
+            int base_id;
+            for (base_id = 0;
+                 base_id < GameDataStateStorage.fields_.base_current_count_;
+                 ++base_id) {
+                const Base &base = Bases[base_id];
+                if (base.faction_id_current == attacker.faction_id) {
+                    const int occupying_vehicle = veh_at(base.x, base.y);
+                    const int base_stack = stack_check(occupying_vehicle, 0x0D,
+                                                       -1, -1, -1);
+                    if (base_stack < actor_stack) {
+                        const int distance = cursor_dist(*a4, *a5,
+                                                         base.x, base.y);
+                        if (distance <= speed(a1, 0) / Rules.move_rate_roads
+                                            - Rules.move_rate_roads) {
+                            const int lifted = veh_lift(a1);
+                            veh_drop(lifted, base.x, base.y);
+                            attacker.visibility = 0;
+                            *a4 = base.x;
+                            *a5 = base.y;
+                            return -3;
+                        }
+                    }
+                }
+            }
+        }
+    }
+    return -3;
+}
+    }
+
+    int live_cVar21 =
+        VehPrototypes[attacker.proto_id].plan;
+    result = -3;
+    {
+        const int faction_id = attacker.faction_id;
+        const int attacker_plan =
+            VehPrototypes[attacker.proto_id].plan;
+        live_cVar21 = attacker_plan;
+        const bool scan_enabled = attacker_plan == PLAN_AIR_SUPERIORITY
+            || ((attacker.state & VSTATE_UNK_200) != 0
+                && attacker.order_auto_type == ORDERA_AUTOMATE_AIR_DEFENSE)
+            || attacker_plan == PLAN_OFFENSIVE;
+
+        if (scan_enabled) {
+            int best_vehicle_id = -1;
+            int best_cost = 9999;
+            int best_distance = 9999;
+            best_vehicle_id = -1;
+            best_distance = 9999;
+            best_cost = 9999;
+            const int attacker_triad =
+                Chassis[VehPrototypes[attacker.proto_id].chassis_id].triad;
+            const uint8_t faction_bit = static_cast<uint8_t>(
+                1U << (faction_id & 0x1F));
+
+            for (int candidate_id = 0;
+                 candidate_id < GameDataStateStorage.fields_.vehicle_current_count_;
+                 ++candidate_id) {
+                const Veh &candidate = Vehs[candidate_id];
+                const int candidate_faction = candidate.faction_id;
+                const int candidate_plan =
+                    VehPrototypes[candidate.proto_id].plan;
+                const int candidate_chassis =
+                    VehPrototypes[candidate.proto_id].chassis_id;
+                const int candidate_triad = Chassis[candidate_chassis].triad;
+                const int x = candidate.x;
+                const int y = candidate.y;
+                const Map *tile = map_loc(x, y);
+                bool near_base_exception = false;
+
+                if (candidate_faction == faction_id) {
+                    if (attacker_plan == PLAN_AIR_SUPERIORITY
+                        && attacker_triad != TRIAD_SEA
+                        && (((tile->bit & 1u) == 0)
+                            || ((tile->val2 & 0x0Fu) >= 8))
+                        && (tile->bit & 0x40000u) == 0
+                        && stack_check(candidate_id, 6, 0x80, -1, -1) == 0) {
+                        const int candidate_speed = speed(candidate_id, 0);
+                        const int remaining_moves = candidate_speed
+                            - candidate.moves_expended;
+                        if ((remaining_moves < 0
+                             || (remaining_moves < 1000
+                                 && candidate_speed ==
+                                        candidate.moves_expended))
+                            && stack_check(candidate_id, 2, 4, -1, -1) == 0
+                            && ((candidate_triad == TRIAD_AIR
+                                 && candidate_plan != PLAN_AIR_SUPERIORITY)
+                                || candidate_plan == PLAN_NAVAL_TRANSPORT)) {
+                            int dx = abs(*a4 - x);
+                            if ((MapIsFlat & 1) == 0 && MapLongitude < dx)
+                                dx = static_cast<int>(MapLongitudeBounds) - dx;
+                            const int dy = abs(*a5 - y);
+                            const int distance = (dx + dy) >> 1;
+                            int cost = distance * 2 + 1;
+                            if (speed(a1, 0) / Rules.move_rate_roads < distance)
+                                cost *= 4;
+                            cost /= stack_check(candidate_id, 1, -1, -1, -1) + 1;
+                            if (cost <= best_cost) {
+                                best_vehicle_id = candidate_id;
+                                best_cost = cost;
+                                best_distance = distance;
+                            }
+                        }
+                    }
+                    continue;
+                }
+
+                if (candidate.order == ORDER_TERRAFORM_DOWN) {
+                    if ((tile->climate & 0xE0u) > 0x5Fu)
+                        goto ordinary_target_filter;
+                    const int base_id = base_find(x, y, faction_id);
+                    if (base_id < 0) goto ordinary_target_filter;
+                    int dx = abs(x - Bases[base_id].x);
+                    if ((MapIsFlat & 1) == 0 && MapLongitude < dx)
+                        dx = static_cast<int>(MapLongitudeBounds) - dx;
+                    const int dy = abs(y - Bases[base_id].y);
+                    if (((dx + dy) & ~1) > 4)
+                        goto ordinary_target_filter;
+                    near_base_exception = true;
+                } else {
+ordinary_target_filter:
+                    if (((candidate_faction != faction_id
+                          || (candidate.flags & 0x440u) == 0x440u)
+                         && (candidate.visibility & faction_bit) == 0))
+                        continue;
+                }
+
+                if ((PlayersData[faction_id]
+                         .diplo_treaties[candidate_faction] & 7u) != 0)
+                    continue;
+
+                if (candidate_triad == TRIAD_AIR) {
+                    if (attacker_plan == PLAN_AIR_SUPERIORITY
+                        && (((tile->bit & 1u) == 0)
+                            || ((tile->val2 & 0x0Fu) >= 8))
+                        && (tile->bit & 0x40000u) == 0)
+                        goto ordinary_defensive_candidate;
+                } else if (attacker_plan != PLAN_AIR_SUPERIORITY
+                           || (attacker.state & VSTATE_UNK_200) == 0
+                           || attacker.order_auto_type
+                                  != ORDERA_AUTOMATE_AIR_DEFENSE) {
+                    const bool base_at_target =
+                        (tile->bit & 1u) != 0 && (tile->val2 & 0x0Fu) < 8;
+                    const int defender_chassis =
+                        VehPrototypes[candidate.proto_id].chassis_id;
+                    const bool run_combat = attacker_plan != 4
+                        || (attacker.state & VSTATE_UNK_200) == 0
+                        || attacker.order_auto_type
+                               != ORDERA_AUTOMATE_AIR_DEFENSE;
+                    if (run_combat &&
+                        !(Chassis[defender_chassis].triad == TRIAD_AIR
+                          && !base_at_target)) {
+                        const int battle = battle_fight(
+                            a1, 0, candidate.x, candidate.y, 0, 0, 0);
+                        int odds = compute_odds(battle, attacker.faction_id,
+                                                a1, candidate_id, -2);
+                        const Map *defender_tile = map_loc(candidate.x,
+                                                           candidate.y);
+                        if ((defender_tile->bit & 1u) != 0 &&
+                            (defender_tile->val2 & 0x0Fu) < 8) {
+                            if (attacker_plan != 0) {
+                                const int defenders = stack_check(
+                                    candidate_id, 0x13, -1, -1, -1);
+                                const int units = stack_check(
+                                    candidate_id, 1, -1, -1, -1);
+                                if (units - defenders != 1) odds /= 2;
+                            } else {
+                                continue;
+                            }
+                        }
+                        int combat_score = (odds * 2) / 3;
+                        if (near_base_exception) combat_score *= 8;
+                        if (attacker_plan != 4
+                            || (attacker.state & VSTATE_UNK_200) == 0
+                            || attacker.order_auto_type
+                                   != ORDERA_AUTOMATE_AIR_DEFENSE)
+                            combat_score /= 2;
+                        if (combat_score > 7)
+                            goto ordinary_defensive_candidate;
+                    }
+                }
+                continue;
+
+ordinary_defensive_candidate:
+                if (!(PlayersData[faction_id].unk_67 == 0
+                      || PlayersData[faction_id].unk_67 * 2
+                             <= PlayersData[faction_id].unk_105
+                      || whose_territory(faction_id, x, y, 0, 0)
+                             == faction_id)) {
+                    const int base_id = base_find(x, y);
+                    if (base_id >= 0 &&
+                        Bases[base_id].faction_id_current != faction_id)
+                        continue;
+                }
+
+                if ((attacker.state & VSTATE_UNK_200) != 0 &&
+                    attacker.order_auto_type == ORDERA_AUTOMATE_AIR_DEFENSE) {
+                    if ((tile->climate & 0xE0u) < 0x60u) {
+                        base_find(x, y, faction_id);
+                        if (BaseFindDist >= 3) continue;
+                    } else if (whose_territory(faction_id, x, y, 0, 0)
+                               != faction_id) {
+                        continue;
+                    }
+                }
+
+                int dx = abs(*a4 - x);
+                if ((MapIsFlat & 1) == 0 && MapLongitude < dx)
+                    dx = static_cast<int>(MapLongitudeBounds) - dx;
+                const int dy = abs(*a5 - y);
+                const int distance = (dx + dy) >> 1;
+                int cost;
+                if (live_iVar11 / 2 < distance) {
+                    cost = distance * 2;
+                } else {
+                    const int region = map_loc(x, y)->region;
+                    if (PlayersData[faction_id].region_base_plan[
+                            region + 32] == 2) {
+                        cost = (distance - ((dx + dy) >> 31)) >> 1;
+                    } else {
+                        cost = distance;
+                        if (PlayersData[faction_id]
+                                .region_total_bases[region] == 0)
+                            cost = distance * 2;
+                    }
+                    if (near_base_exception) cost = 0;
+                }
+
+                if (cost <= best_cost) {
+                    best_cost = cost;
+                    best_distance = near_base_exception ? 0 : distance;
+                    best_vehicle_id = candidate_id;
+                }
+            }
+
+            if (best_vehicle_id >= 0) {
+                if (Vehs[best_vehicle_id].faction_id == faction_id)
+                    best_distance = (best_distance - 8) / 2;
+
+                if (best_distance <= live_iVar11 / 2) {
+                    attacker.order = ORDER_MOVE_TO;
+                    attacker.move_to_ai_type = 0x61;
+                    attacker.waypoint_x[0] = Vehs[best_vehicle_id].x;
+                    attacker.waypoint_y[0] = Vehs[best_vehicle_id].y;
+                    if (VehPrototypes[attacker.proto_id].plan
+                        == PLAN_COLONIZATION)
+                        attacker.terraforming_turns = 0;
+                    if (*a4 != Vehs[best_vehicle_id].x ||
+                        *a5 != Vehs[best_vehicle_id].y)
+                        return -2;
+                    return -1;
+                }
+
+                const bool try_allied_base =
+                    (((attacker.state & VSTATE_UNK_200) == 0)
+                     || attacker.order_auto_type != ORDERA_ON_ALERT)
+                    && (VehPrototypes[attacker.proto_id].plan
+                            != PLAN_OFFENSIVE
+                        || ((attacker.state & VSTATE_UNK_200) != 0
+                            && attacker.order_auto_type
+                                   == ORDERA_AUTOMATE_AIR_DEFENSE));
+                if (try_allied_base) {
+                    const int selected_x = Vehs[best_vehicle_id].x;
+                    const int selected_y = Vehs[best_vehicle_id].y;
+                    for (int base_id = 0;
+                         base_id < GameDataStateStorage.fields_.base_current_count_;
+                         ++base_id) {
+                        const Base &base = Bases[base_id];
+                        const int base_faction = base.faction_id_current;
+                        if (base_faction != faction_id
+                            && (PlayersData[base_faction]
+                                    .diplo_treaties[faction_id] & 1u) == 0)
+                            continue;
+
+                        int dx = abs(selected_x - base.x);
+                        if ((MapIsFlat & 1) == 0 && MapLongitude < dx)
+                            dx = static_cast<int>(MapLongitudeBounds) - dx;
+                        const int dy = abs(selected_y - base.y);
+                        const int distance = (dx + dy) >> 1;
+                        if (distance <= live_iVar10 &&
+                            distance < best_distance) {
+                            attacker.order = ORDER_MOVE_TO;
+                            attacker.move_to_ai_type = 0x61;
+                            attacker.waypoint_x[0] = base.x;
+                            attacker.waypoint_y[0] = base.y;
+                            best_distance = distance;
+                            if (VehPrototypes[attacker.proto_id].plan
+                                == PLAN_COLONIZATION)
+                                attacker.terraforming_turns = 0;
+                        }
+                    }
+                    if (attacker.order == ORDER_MOVE_TO) return -2;
+                }
+            }
+
+            live_cVar21 = 0;
+            if (VehPrototypes[attacker.proto_id].plan != PLAN_OFFENSIVE) {
+                if (a2 == 0) return -3;
+                action_home(a1, 0);
+                return -2;
+            }
+        }
+    }
+
+    if ((attacker.state & VSTATE_UNK_200) != 0
+        && attacker.order_auto_type == ORDERA_ON_ALERT) {
+        if ((live_cVar21 == 0 || live_cVar21 == 6)
+            && attacker.order != ORDER_MOVE_TO) {
+            const int scan_count = live_iVar11 < 2 ? 8 : 24;
+            int best_offense = 0;
+            const int faction_id = attacker.faction_id;
+            for (int offset = 1; offset <= scan_count; ++offset) {
+                const int attacker_triad = Chassis[
+                    VehPrototypes[attacker.proto_id].chassis_id].triad;
+                int x = *a4 + RadiusOffsetX[offset];
+                if ((MapIsFlat & 1) == 0) {
+                    if (x < 0) x += MapLongitudeBounds;
+                    else if (x >= MapLongitudeBounds) x -= MapLongitudeBounds;
+                }
+                const int y = *a5 + RadiusOffsetY[offset];
+                if (x < 0 || x >= MapLongitudeBounds
+                    || y < 0 || y >= MapLatitudeBounds)
+                    continue;
+
+                const int stack = veh_at(x, y);
+                const int defender_id = stack_fix(stack);
+                if (defender_id < 0) continue;
+                const Veh &defender = Vehs[defender_id];
+                const int defender_faction = defender.faction_id;
+                if (defender_faction == faction_id
+                    || (PlayersData[defender_faction]
+                            .diplo_treaties[faction_id] & 0x10) == 0)
+                    continue;
+                const int defender_chassis =
+                    VehPrototypes[defender.proto_id].chassis_id;
+                const int defender_triad = Chassis[defender_chassis].triad;
+                if (defender_triad == TRIAD_AIR) continue;
+
+                const Map *tile = map_loc(x, y);
+                const uint8_t faction_bit = static_cast<uint8_t>(
+                    1U << (faction_id & 0x1F));
+                const bool attacker_has_full_map =
+                    (PlayersData[faction_id].flags & 0x200u) != 0;
+                const bool tile_known = (tile->visibility & faction_bit) != 0;
+                const bool visible_target =
+                    (((tile->bit & 1u) != 0 && (tile->val2 & 0x0Fu) < 8)
+                     || (defender.visibility & faction_bit) != 0);
+                const bool triad_terrain_match =
+                    (((tile->climate & 0xE0u) < 0x60u)
+                     == (attacker_triad == TRIAD_SEA));
+                if (attacker_triad != TRIAD_AIR
+                    && !((attacker_has_full_map || tile_known)
+                         && visible_target && triad_terrain_match))
+                    continue;
+
+                int offense = offense_proto(defender_chassis, -1, 0);
+                if (defender_triad == TRIAD_LAND) offense *= 3;
+                int score = offense;
+                if ((tile->climate & 0xE0u) < 0x60u
+                    && stack_check(defender_id, 2, 9, -1, -1) != 0) {
+                    score = offense * 2;
+                    if ((PlayersData[faction_id].flags & 0x80000u) != 0)
+                        score = offense * 4;
+                }
+
+                if (best_offense < score) {
+                    attacker.order = ORDER_MOVE_TO;
+                    attacker.move_to_ai_type = 0x4C;
+                    attacker.waypoint_x[0] = static_cast<int16_t>(x);
+                    attacker.waypoint_y[0] = static_cast<int16_t>(y);
+                    best_offense = score;
+                    if (VehPrototypes[attacker.proto_id].plan == 8)
+                        attacker.terraforming_turns = 0;
+                }
+            }
+
+            if (attacker.order == ORDER_MOVE_TO)
+                return (a3 != 0) - 2;
+        }
+
+        if (attacker.order != ORDER_MOVE_TO
+            && (attacker.x != attacker.waypoint_x[1]
+                || attacker.y != attacker.waypoint_y[1])) {
+            attacker.order = ORDER_MOVE_TO;
+            attacker.move_to_ai_type = 0x6C;
+            attacker.waypoint_x[0] = attacker.waypoint_x[1];
+            attacker.waypoint_y[0] = attacker.waypoint_y[1];
+            if (VehPrototypes[attacker.proto_id].plan == 8)
+                attacker.terraforming_turns = 0;
+            return -2;
+        }
+        return -4;
+    }
+
+    bombing_auto_state = attacker.state;
+    }
+
+air_power_bombing: ;
+    const int faction_id = attacker.faction_id;
+    const uint8_t faction_bit = static_cast<uint8_t>(
+        1U << (attacker.faction_id & 0x1F));
+    const uint8_t auto_bombing = ORDERA_BOMBING_RUN;
+    const int attack_range = live_iVar10;
+    const int search_range = live_iVar11;
+    const int param_3_value = a3 != 0 ? 1 : 0;
+    int best_base_x = -1;
+    int best_base_y = -1;
+    int best_score = 0;
+    int best_base_route_state = 0;
+
+    if (VehPrototypes[attacker.proto_id].plan == 0
+        || ((bombing_auto_state & 0x200u) != 0
+            && attacker.order_auto_type == auto_bombing)) {
+        for (int enemy_base_id = 0;
+             enemy_base_id < GameDataStateStorage.fields_.base_current_count_;
+             ++enemy_base_id) {
+            const Base &base = Bases[enemy_base_id];
+            const int base_faction = base.faction_id_current;
+            if (base_faction == faction_id
+                || (PlayersData[faction_id].diplo_treaties[base_faction] & 7)
+                       != 0)
+                continue;
+            if (((bombing_auto_state & 0x200u) == 0
+                 || attacker.order_auto_type != auto_bombing)
+                && (base.x != attacker.waypoint_x[1]
+                    || base.y != attacker.waypoint_y[1]))
+                continue;
+
+            const int defender_stack = veh_at(base.x, base.y);
+            const int defender_id = stack_fix(defender_stack);
+            if (defender_id < 0) continue;
+            if ((bombing_auto_state & 0x200u) == 0
+                || attacker.order_auto_type != auto_bombing) {
+                const int battle = battle_fight(a1, 0,
+                    Vehs[defender_id].x, Vehs[defender_id].y, 0, 0, 0);
+                int odds = compute_odds(battle, faction_id, a1,
+                                        defender_id, -2);
+                const Map *defender_tile = map_loc(Vehs[defender_id].x,
+                                                   Vehs[defender_id].y);
+                if ((defender_tile->bit & 1U) == 0
+                    || (defender_tile->val2 & 0x0F) >= 8) {
+                    odds /= 2;
+                } else {
+                    const int defender_count = stack_check(
+                        defender_id, 0x13, -1, -1, -1);
+                    const int stack_count = stack_check(
+                        defender_id, 1, -1, -1, -1);
+                    if (stack_count - defender_count != 1) odds /= 2;
+                }
+                if (odds < 8) continue;
+            }
+
+            const Map *base_tile = map_loc(base.x, base.y);
+            const int region = base_tile->region;
+            const int population_and_region_bases =
+                static_cast<int>(base.population_size)
+                + PlayersData[faction_id].region_total_bases[region] * 2;
+            int score = population_and_region_bases * 0x20;
+            bool has_nearby_friendly_base = false;
+            for (int neighbor = 1; neighbor < 9; ++neighbor) {
+                int neighbor_x = base.x + RadiusOffsetX[neighbor];
+                if ((MapIsFlat & 1) == 0) {
+                    if (neighbor_x < 0) neighbor_x += MapLongitudeBounds;
+                    else if (neighbor_x >= MapLongitudeBounds)
+                        neighbor_x -= MapLongitudeBounds;
+                }
+                const int neighbor_y = base.y + RadiusOffsetY[neighbor];
+                if (neighbor_x < 0 || neighbor_x >= MapLongitudeBounds
+                    || neighbor_y < 0 || neighbor_y >= MapLatitudeBounds)
+                    continue;
+                const Map *neighbor_tile = map_loc(neighbor_x, neighbor_y);
+                if (neighbor_tile->region == region
+                    && (neighbor_tile->bit & 2U) != 0
+                    && (neighbor_tile->val2 & 0x0F) <= 7
+                    && (neighbor_tile->val2 & 0x0F) == faction_id) {
+                    has_nearby_friendly_base = true;
+                    score = population_and_region_bases * 0x40 + 1;
+                    break;
+                }
+            }
+
+            int support_needs_halving = 0;
+            if (!has_nearby_friendly_base
+                && ((bombing_auto_state & 0x200u) == 0
+                    || attacker.order_auto_type != auto_bombing)) {
+                const int base_stack = veh_at(base.x, base.y);
+                const int stack_count = stack_check(base_stack, 1,
+                                                    -1, -1, -1);
+                support_needs_halving =
+                    PlayersData[faction_id].unk_105 < stack_count * 2;
+                const int preq_tech = Ability[abil_index(0x10)].preq_tech;
+                if (!has_tech(preq_tech, faction_id)) {
+                    support_needs_halving = 1;
+                } else if (support_needs_halving == 0) {
+                    goto air_power_bombing_v2_scored_base;
+                }
+                score = (score + ((score >> 31) & 7)) >> 3;
+            }
+air_power_bombing_v2_scored_base:
+            if ((base.event & faction_bit) != 0) score *= 4;
+            if ((base.state & 8U) != 0) score *= 3;
+            if ((base.state & 0x100000U) != 0) score *= 2;
+            if (enemy_base_id == PlayersData[faction_id].base_id_atk_target)
+                score *= 2;
+            if (region == requested_region) score *= 2;
+            if (PlayersData[faction_id].region_base_plan[region + 32] < 3)
+                score <<= 2;
+
+            int x_distance = abs(*a4 - base.x);
+            if ((MapIsFlat & 1) == 0 && MapLongitude < x_distance)
+                x_distance = MapLongitudeBounds - x_distance;
+            const int y_distance = abs(*a5 - base.y);
+            int travel_limit = attack_range / 2;
+            if (travel_limit < 1) travel_limit = 1;
+            else if (travel_limit > 99) travel_limit = 99;
+            const int denominator =
+                (((x_distance + y_distance) >> 1) - 1) / travel_limit + 1;
+            score /= denominator;
+            if (best_score <= score) {
+                best_base_route_state = support_needs_halving;
+                best_base_x = base.x;
+                best_base_y = base.y;
+                best_score = score;
+            }
+        }
+
+        if (best_base_y >= 0 && best_base_y < MapLatitudeBounds
+            && best_base_x >= 0 && best_base_x < MapLongitudeBounds) {
+            int x_distance = abs(*a4 - best_base_x);
+            if ((MapIsFlat & 1) == 0 && MapLongitude < x_distance)
+                x_distance = MapLongitudeBounds - x_distance;
+            const int y_distance = abs(*a5 - best_base_y);
+            if (attack_range / 2 < ((x_distance + y_distance) >> 1)) {
+                int nearest_friendly_base_distance = 9999;
+                for (int friendly_base_id = 0;
+                     friendly_base_id < GameDataStateStorage.fields_.base_current_count_;
+                     ++friendly_base_id) {
+                    const Base &base = Bases[friendly_base_id];
+                    const int base_faction = base.faction_id_current;
+                    if (base_faction != faction_id
+                        && (PlayersData[faction_id]
+                                .diplo_treaties[base_faction] & 1) == 0)
+                        continue;
+                    int distance_x = abs(best_base_x - base.x);
+                    if ((MapIsFlat & 1) == 0 && MapLongitude < distance_x)
+                        distance_x = MapLongitudeBounds - distance_x;
+                    const int distance_y = abs(best_base_y - base.y);
+                    const int distance = (distance_x + distance_y) >> 1;
+                    if (distance <= search_range
+                        && distance < nearest_friendly_base_distance) {
+                        attacker.order = ORDER_MOVE_TO;
+                        attacker.move_to_ai_type = 0x61;
+                        attacker.waypoint_x[0] = base.x;
+                        attacker.waypoint_y[0] = base.y;
+                        nearest_friendly_base_distance = distance;
+                        if (VehPrototypes[attacker.proto_id].plan == 8)
+                            attacker.terraforming_turns = 0;
+                    }
+                }
+            } else if (best_base_route_state == 0) {
+                attacker.order = ORDER_MOVE_TO;
+                attacker.move_to_ai_type = 0x61;
+                attacker.waypoint_x[0] = static_cast<int16_t>(best_base_x);
+                attacker.waypoint_y[0] = static_cast<int16_t>(best_base_y);
+                if (VehPrototypes[attacker.proto_id].plan == 8)
+                    attacker.terraforming_turns = 0;
+            }
+        }
+    }
+
+    if (attacker.order == ORDER_MOVE_TO) {
+        if (param_3_value != 0
+            && ((bombing_auto_state & 0x200u) == 0
+                || attacker.order_auto_type != auto_bombing))
+            return -1;
+        return -2;
+    }
+    return -3;
+}
+
+struct EnemyPlanetBusterClimaxQuery {
+    int faction_id;
+    bool operator()() const { return at_climax(faction_id) != 0; }
+};
+
+// ORIGINAL: 0x0056A8A0 ?enemy_planet_buster@@YAHH@Z 0x0056A8A0-0x0056B31A
+// RECOVERY_BINDING: v1 {"evidence": ["historical retired seed src/unrecovered/0056a8a0.cpp", "recovery/tasks/alien-buster-owner-oct5.json", "pinned full native instruction/argument and directed-field review; compiler-observed current function symbol", "PlayerData sites[14].base_id alias: native addresses and compiler offsetof witness; original policy order checked by actual-product controls"], "reason": "Full vehicle-owner semantic recovery with actual Base, PlayerData, vehicle, map and callback relationships. Preserve original no-base adjacent-storage reads, native radius exits and uninitialized launch scratch; byte restoration and runtime fidelity remain unfinished."}
+// symbol    ?enemy_planet_buster@@YAHH@Z
+// TRIED: full-fidelity register-level transcription; direct struct fields (Vehs/Bases/VehPrototypes/Weapon layouts confirmed via src/veh.h, src/base.h) instead of raw address casts didn't close the divergence either; prologue shape differs (#0 push vs sub) from local/frame layout, not from any single wrong op.
+int __cdecl enemy_planet_buster(int vehicle_id) {
+    Veh &vehicle = Vehs[vehicle_id];
+    const int faction_id = vehicle.faction_id;
+    const uint32_t faction_bit = 1u << faction_id;
+
+    if ((GameDataStateStorage.fields_.lock_masks_.enable_mask_ & faction_bit) != 0) return -1;
+
+    int heavy_production_bases = 0;
+    for (int base_id = 0; base_id < GameDataStateStorage.fields_.base_current_count_; ++base_id) {
+        const int prototype_id = Bases[base_id].queue_production_id[0];
+        if (Bases[base_id].faction_id_current == faction_id
+            && prototype_id >= 0
+            && get_proto_offense_rating(static_cast<uint32_t>(prototype_id)) > 'b') {
+            ++heavy_production_bases;
+        }
+    }
+
+    int carried_heavy_vehicles = 0;
+    for (int other_id = 0; other_id < GameDataStateStorage.fields_.vehicle_current_count_; ++other_id) {
+        const Veh &other = Vehs[other_id];
+        if (other.faction_id == faction_id
+            && get_offense_rating(static_cast<uint32_t>(other_id)) > 'b') {
+            ++carried_heavy_vehicles;
+        }
+    }
+
+    const int blast_radius = RadiusRange[planet_buster(vehicle_id)];
+    int pass = 0;
+    int best_score = 0;
+    int best_target_base = -1;
+    int best_launch_base = 0;
+    // Native local_58 is assigned only by the reachable-own-base scan below.
+    // A winning foreign candidate can read it first; preserve that uninitialized
+    // scratch rather than imposing a replacement value. That execution path
+    // has no deterministic source-level result and remains an explicit
+    // behavior/runtime obligation.
+    int previous_launch_base;
+
+    do {
+        best_score = 0;
+        best_target_base = -1;
+        best_launch_base = 0;
+
+        for (int candidate_base_id = 0;
+             candidate_base_id < GameDataStateStorage.fields_.base_current_count_; ++candidate_base_id) {
+            const Base &candidate_base = Bases[candidate_base_id];
+            const int candidate_faction = candidate_base.faction_id_current;
+            const int candidate_difficulty = PlayersData[candidate_faction].diff_level;
+            int score = 0;
+            int launch_base_id = 0;
+
+            if (candidate_faction != faction_id) {
+                const uint32_t treaty = PlayersData[faction_id].diplo_treaties[candidate_faction];
+                EnemyPlanetBusterClimaxQuery climax_query;
+                climax_query.faction_id = faction_id;
+                if (!enemy_pb_policy::treaty_shape_allows_target(treaty, climax_query)) {
+                    continue;
+                }
+
+                if (pass == 0) {
+                    int x_distance = abs(static_cast<int>(vehicle.x) - candidate_base.x);
+                    if (!(MapIsFlat & 1) && MapLongitude < x_distance) {
+                        x_distance = MapLongitudeBounds - x_distance;
+                    }
+                    const int y_distance = abs(static_cast<int>(vehicle.y) - candidate_base.y);
+                    const int moves = static_cast<int>(speed(vehicle_id, 0))
+                        / static_cast<int>(Rules.move_rate_roads);
+                    if (((x_distance + y_distance) >> 1) > moves) continue;
+                }
+
+            } else {
+                int reachable = 0;
+                int qualifying_ownership_history = 0;
+                for (int friendly_base_id = 0;
+                     friendly_base_id < GameDataStateStorage.fields_.base_current_count_; ++friendly_base_id) {
+                    const Base &friendly_base = Bases[friendly_base_id];
+                    if (friendly_base.faction_id_current == faction_id) {
+                        int x_distance = abs(static_cast<int>(friendly_base.x)
+                            - candidate_base.x);
+                        if (!(MapIsFlat & 1) && MapLongitude < x_distance) {
+                            x_distance = MapLongitudeBounds - x_distance;
+                        }
+                        const int y_distance = abs(static_cast<int>(friendly_base.y)
+                            - candidate_base.y);
+                        const int moves = static_cast<int>(speed(vehicle_id, 0))
+                            / static_cast<int>(Rules.move_rate_roads);
+                        if (((x_distance + y_distance) >> 1) <= moves) {
+                            reachable = 1;
+                            launch_base_id = enemy_pb_policy::remember_reachable_launch_base(
+                                launch_base_id, friendly_base_id, true);
+                            previous_launch_base = launch_base_id;
+                        }
+                    }
+                    if (friendly_base.faction_id_current == candidate_faction
+                        && friendly_base.faction_id_former == faction_id) {
+                        ++qualifying_ownership_history;
+                    }
+                }
+                if (!reachable) continue;
+                score = qualifying_ownership_history;
+            }
+
+            // The seed's shared label applies this political pressure after
+            // either the foreign-target reach check or the owned-source scan.
+            const uint32_t treaty = PlayersData[faction_id].diplo_treaties[candidate_faction];
+            if (at_climax(faction_id) != 0) score += 2;
+            if (!(treaty & DTREATY_WANT_REVENGE)
+                && !(PlayersData[faction_id].flags & PFLAG_COMMIT_ATROCIT_WANTONLY)) {
+                const int threshold_difficulty = (GameDataStateStorage.fields_.game_rules_ & RULES_INTENSE_RIVALRY)
+                    ? 6 : candidate_difficulty;
+                if (score < 9 - threshold_difficulty
+                    && ((GameDataStateStorage.fields_.lock_masks_.enable_mask_ & (1u << candidate_faction)) == 0
+                        || (!(GameDataStateStorage.fields_.game_rules_ & RULES_INTENSE_RIVALRY)
+                            && (GameDataStateStorage.fields_.council_resolution_count_[PROP_REPEAL_UN_CHARTER]
+                                <= GameDataStateStorage.fields_.council_resolution_count_[PROP_REINSTATE_UN_CHARTER]
+                                || PlayersData[faction_id].ai_fight < 1))
+                        || PlayersData[candidate_faction].ranking
+                            < PlayersData[faction_id].ranking
+                        || reputation(candidate_faction, faction_id) == 0)) {
+                    continue;
+                }
+            }
+
+            if (at_climax(faction_id) == 0 || PlayersData[faction_id].ai_fight < 0
+                || !(GameDataStateStorage.fields_.game_rules_ & RULES_INTENSE_RIVALRY)) {
+                if (!(treaty & DTREATY_UNK_80000)) {
+                    if (!(PlayersData[faction_id].flags
+                            & PFLAG_COMMIT_ATROCIT_WANTONLY)) {
+                        const int aggression = PlayersData[candidate_faction].ai_fight
+                            + enemy_pb_policy::charter_balance(
+                                GameDataStateStorage.fields_.council_resolution_count_[PROP_REPEAL_UN_CHARTER],
+                                GameDataStateStorage.fields_.council_resolution_count_[PROP_REINSTATE_UN_CHARTER])
+                            + candidate_difficulty + score;
+                        if (aggression < 11
+                            || (PlayersData[candidate_faction].mil_strength_1
+                                    <= PlayersData[faction_id].mil_strength_1 * 2
+                                && (score < 4
+                                    || PlayersData[candidate_faction].ranking
+                                        < PlayersData[faction_id].ranking))) {
+                            continue;
+                        }
+                    }
+                } else if (PlayersData[candidate_faction].major_atrocities
+                               <= PlayersData[faction_id].major_atrocities
+                           && PlayersData[candidate_faction].mil_strength_1
+                               <= PlayersData[faction_id].mil_strength_1 * 2
+                           && at_climax(faction_id) == 0
+                           && ((score < 4
+                                && GameDataStateStorage.fields_.council_resolution_count_[PROP_REPEAL_UN_CHARTER]
+                                   <= GameDataStateStorage.fields_.council_resolution_count_[PROP_REINSTATE_UN_CHARTER])
+                               || PlayersData[candidate_faction].ranking
+                                   < PlayersData[faction_id].ranking)) {
+                    continue;
+                }
+            }
+
+            // Qualification scratch affects admission only, not blast scoring.
+            score = 0;
+            for (int offset = 0; offset < blast_radius; ++offset) {
+                int x = candidate_base.x + RadiusOffsetX[offset];
+                if (!(MapIsFlat & 1)) {
+                    if (x < 0) x = MapLongitudeBounds + x;
+                    else if (MapLongitudeBounds <= x) x -= MapLongitudeBounds;
+                }
+                const int y = candidate_base.y + RadiusOffsetY[offset];
+                if (y < 0 || y >= MapLatitudeBounds
+                    || x < 0 || x >= MapLongitudeBounds) {
+                    continue;
+                }
+
+                const int city_id = base_at(x, y);
+                if (city_id >= 0) {
+                    const Base &city = Bases[city_id];
+                    const int city_faction = city.faction_id_current;
+                    const uint32_t city_treaty =
+                        PlayersData[faction_id].diplo_treaties[city_faction];
+                    if (enemy_pb_policy::city_blocks_blast(
+                            static_cast<unsigned int>(city_faction),
+                            static_cast<unsigned int>(faction_id), city_treaty)) {
+                        score = -9999;
+                        break;
+                    }
+
+                    int owned_projects = 0;
+                    for (int project_id = 0;
+                         project_id < MaxSecretProjectNum; ++project_id) {
+                        if (base_project(project_id) == city_id) ++owned_projects;
+                    }
+                    score = enemy_pb_policy::add_city_pressure(
+                        score, static_cast<int>(PlayersData[city_faction].ranking),
+                        static_cast<int>(city.population_size),
+                        has_fac(FAC_HEADQUARTERS, city_id, 0),
+                        GameDataStateStorage.fields_.turn_current_num_ < PlayersData[city_faction].corner_market_turn,
+                        city.queue_production_id[0] == -FAC_ASCENT_TO_TRANSCENDENCE,
+                        city.minerals_accumulated,
+                        base_project(SP_HUNTER_SEEKER_ALGO) == city_id,
+                        base_project(SP_CLONING_VATS) == city_id,
+                        static_cast<int>(PlayersData[city_faction].ranking), owned_projects);
+                }
+
+                const int occupant = stack_fix(veh_at(x, y));
+                if (occupant < 0) {
+                    if (offset == 0) {
+                        score = -9999;
+                        break;
+                    }
+                } else if (Vehs[occupant].faction_id == faction_id) {
+                    score -= enemy_pb_policy::ranked_stack_pressure(
+                        stack_check(occupant, 7, -1, -1, -1),
+                        static_cast<int>(PlayersData[faction_id].ranking));
+                } else {
+                    int stack_score = enemy_pb_policy::ranked_stack_pressure(
+                        stack_check(occupant, 7, -1, -1, -1),
+                        static_cast<int>(PlayersData[
+                            Vehs[occupant].faction_id].ranking));
+                    const uint8_t region = map_loc(Vehs[occupant].x,
+                        Vehs[occupant].y)->region;
+                    if (region < 0x40) {
+                        stack_score = enemy_pb_policy::region_stack_pressure(
+                            0, stack_score,
+                            PlayersData[faction_id].region_base_plan[region],
+                            PlayersData[faction_id].region_total_bases[region]);
+                    }
+                    score += stack_score;
+                }
+            }
+
+            const int defense_available = PlayersData[candidate_faction].satellites_[3]
+                - PlayersData[candidate_faction].sat_odp_deployed;
+            score = enemy_pb_policy::discount_for_orbital_defense(
+                score, carried_heavy_vehicles, defense_available,
+                heavy_production_bases);
+
+            if (best_score < score) {
+                best_score = score;
+                best_target_base = candidate_base_id;
+                best_launch_base = candidate_faction == faction_id
+                    ? launch_base_id : previous_launch_base;
+            }
+        }
+
+        if (pass == 0) {
+            const int threshold = static_cast<int>(VehPrototypes[vehicle.proto_id].cost)
+                * static_cast<int>(PlayersData[faction_id].ranking);
+            if (threshold <= best_score && best_target_base >= 0) {
+                const Base &target = Bases[best_target_base];
+                for (int direction = 0; direction < 8; ++direction) {
+                    int x = target.x + VehMoveDeltaX[direction];
+                    if (!(MapIsFlat & 1)) {
+                        if (x < 0) x = MapLongitudeBounds + x;
+                        else if (MapLongitudeBounds <= x) x -= MapLongitudeBounds;
+                    }
+                    const int y = target.y + VehMoveDeltaY[direction];
+                    if (y < 0 || y >= MapLatitudeBounds
+                        || x < 0 || x >= MapLongitudeBounds) continue;
+                    const Map *tile = map_loc(x, y);
+                    if ((tile->bit & 3u) == 0 || (tile->val2 & 0x0F) > 7) {
+                        (void)veh_lift(vehicle_id);
+                        (void)veh_drop(vehicle_id, x, y);
+                        vehicle.visibility = 0;
+                        return direction ^ 4;
+                    }
+                }
+            }
+        } else if (best_launch_base >= 0
+            && Bases[best_launch_base].faction_id_current == faction_id) {
+            const Base &launch = Bases[best_launch_base];
+            (void)veh_lift(vehicle_id);
+            (void)veh_drop(vehicle_id, launch.x, launch.y);
+            vehicle.visibility = 0;
+        }
+        ++pass;
+    } while (pass < 2);
+
+    return -1;
+}
+
+/*
+Purpose: Determine whether specified unit can physically reach the destination coordinates.
+// ORIGINAL: 0x0056B320 ?get_there@@YAHHHH@Z 0x0056B320-0x0056B47D BYTE_EXACT
+// size      349 bytes
+// prototype int (__cdecl ?get_there@@YAHHHH@Z)(int vehID, int xCoord, int yCoord)
+// callers   1   call targets   5
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x004E3A50 0x0050DDC0 0x0050DE50 0x0050E030 0x0050E160
+Return Value: Can unit reach tile? true/false
+Status: Complete
+*/
+BOOL __cdecl get_there(int veh_id, int x_dst, int y_dst) {
+    uint8_t triad = get_triad(veh_id);
+    if (triad == TRIAD_AIR) {
+        return true;
+    }
+    uint32_t region_src = region_at(Vehs[veh_id].x, Vehs[veh_id].y);
+    uint32_t region_dst = region_at(x_dst, y_dst);
+    if (triad) {
+        int base_id_src = base_at(Vehs[veh_id].x, Vehs[veh_id].y);
+        int base_id_dst = base_at(x_dst, y_dst);
+        if (base_id_src >= 0) {
+            if (base_id_dst >= 0) {
+                return port_to_port(base_id_src, base_id_dst);
+            }
+        } else if (base_id_dst >= 0) {
+            return base_on_sea(base_id_dst, region_src);
+        }
+        if (!is_ocean(x_dst, y_dst)) {
+            if (base_id_src >= 0) {
+                return port_to_coast(base_id_src, region_dst);
+            }
+            return sea_coast(region_dst, region_src);
+        }
+        if (base_id_src >= 0) {
+            return base_on_sea(base_id_src, region_dst);
+        }
+    }
+    return (region_src == region_dst);
+}
+
+/*
+Purpose: Return the first neighboring tile index that satisfies the coast/border checks, or 0.
+         Earlier recovery prose treated the point-B comparison and integer result as unnecessary;
+         the pinned function reads both regions and returns the successful neighbor index.
+// ORIGINAL: 0x0056B480 ?coast_or_border@@YAHHHHHH@Z 0x0056B480-0x0056B5A9 BYTE_EXACT
+// size      297 bytes
+// prototype int (__cdecl ?coast_or_border@@YAHHHHHH@Z)(int xCoordPtA, int yCoordPtA, int xCoordPtB, int yCoordPtB, int factionID)
+// callers   1   call targets   1
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x004E3EF0
+Return Value: First qualifying neighbor index (1..8), or zero if none qualifies.
+Status: Complete
+*/
+// Historical TRIED hypothesis below is contradicted by the pinned assembly: it checks ownership
+// before rereading point A's region.
+// TRIED: best 7/110, 0.826 similar (best flag set /O2 /Gy /GR- /GX; call
+//            count already matches the image at 2, both to whose_territory).
+//            The remaining gap looks like the `region_a != region_b` OR-term
+//            being evaluated ahead of the `whose_territory(...)` call in the
+//            image (a cheap loop-invariant compare scheduled before an
+//            expensive call) - swapping the source's OR order to match
+//            scored WORSE (0.780), so that is not the lever. Same
+//            xrange/on_map/is_ocean-loop register-scheduling plateau as the
+//            rest of this file otherwise. Not chased further.
+int __cdecl coast_or_border(int x_point_a, int y_point_a, int x_point_b,
+                            int y_point_b, int faction_id) {
+    if (whose_territory(faction_id, x_point_a, y_point_a, NULL, false) != (int)faction_id) {
+        return 0; // faction doesn't control point A
+    }
+    uint32_t region_b = region_at(x_point_b, y_point_b);
+    for (int i = 1; i < 9; i++) {
+        int x_radius = wrap_map_x(x_point_a + RadiusOffsetX[i]);
+        int y_radius = y_point_a + RadiusOffsetY[i];
+        if (on_map(x_radius, y_radius) && (is_ocean(x_radius, y_radius)
+                || whose_territory(faction_id, x_radius, y_radius, NULL, false) != (int)faction_id
+                || region_at(x_point_a, y_point_a) != region_b)) {
+            return i;
+        }
+    }
+    return 0;
+}
+
 // One source-owned automatic frame; only native proven stores initialize it.
 // Semantic helper views bind references to these words without reading them.
 struct EnemyMoveFullFrame {
@@ -4761,4 +9885,466 @@ label_578f46:
     }
     return 0;
     }
+}
+
+// ---------------------------------------------------------------------------
+// THE ENEMY AI MOVE DRIVER (0x00579240 / 0x00579510), homed 2026-09-06 in
+// general.cpp and moved beside enemy_move, its translation unit, 2026-11-07.
+//
+// enemy_turn sweeps the vehicle table ten times, once per priority band, and
+// hands each of the faction's vehicles to enemy_veh; enemy_veh drives one
+// vehicle's move and reports whether the turn moved on.
+// ---------------------------------------------------------------------------
+
+// Original direct-address writable .data strings passed to the logging calls.
+// RECOVERY_OBJECT: v2 0x0068EAFC 0x0068EB0F ?LogEnemyVehicleDone@@3PADA 0x00579240
+char LogEnemyVehicleDone[] = "Enemy Vehicle DONE";
+// RECOVERY_OBJECT: v2 0x0068EB10 0x0068EB25 ?LogEnemyVehicleAction@@3PADA 0x00579240
+char LogEnemyVehicleAction[] = "Enemy Vehicle ACTION";
+// RECOVERY_OBJECT: v2 0x0068EB28 0x0068EB36 ?LogEnemyVehicle@@3PADA 0x00579240
+char LogEnemyVehicle[] = "Enemy Vehicle";
+
+// ORIGINAL: 0x00579240 ?enemy_veh@@YAHH@Z 0x00579240-0x005794C8
+// LEVER (2026-11-07, enemy TU): byte-exact once (1) the faction is an int
+//        local passed through two identity switches before zoc_any - the
+//        image's two jump tables at 0x5794C8/0x5794E8 are exactly what VC6
+//        emits for `switch (f) { case 0: f = 0; break; ... case 7: f = 7; }`
+//        written twice; (2) the moves test is `!veh_moves(veh_id)`, the
+//        clamped 0..999 inline; (3) the local-turn branch and the AI branch
+//        are an if/else falling into one `return 0`; (4) the action and state
+//        logs share one 8-byte buffer.
+// TRIED: `Veh *veh = &Vehs[veh_id]` - the image never materialises the array
+//        base, it folds 0x9528xx into every access displacement and keeps only
+//        `unit_id * sizeof(Veh)` live in edi; a pointer local puts the base in
+//        the register and the field offset in the displacement instead, so
+//        every member access disagrees. The array spelling `Vehs[unit_id].f`
+//        is what is here.
+// TRIED: reassigning the parameter (the image reuses [ebp+8] for the
+//        local-faction flag, so it must have done) - no change, still 4/208
+//        with the same push/mov order, so the readable named local stays.
+// LEVER: not reproduced - the image's two jump tables on the faction id are
+//        32 instructions that both map 0..7 onto themselves (identity, so no
+//        source computes anything) and this body has nothing where they are.
+//        Everything else is register placement: image `mov ebx,[ebp+8]` /
+//        ours `push esi; push edi; mov edi,[ebp+8]`, and the base-fold above.
+int __cdecl enemy_veh(int veh_id) {
+    int faction_id = Vehs[veh_id].faction_id;
+    BOOL is_local_turn;
+    if (faction_id == ConsoleGlobal.faction_id_ && IsMultiplayerNet != 0) {
+        is_local_turn = true;
+    } else {
+        is_local_turn = false;
+    }
+
+    if (IsMultiplayerNet != 0) {
+        NetDaemonNet.channels_[0].leading_words_[3] = 3;
+    }
+
+    do_all_non_input();
+
+    // Two identity switches on the faction, as the image's two jump tables
+    // at 0x005794C8 and 0x005794E8 have them. Nothing is computed.
+    switch (faction_id) {
+    case 0: faction_id = 0; break;
+    case 1: faction_id = 1; break;
+    case 2: faction_id = 2; break;
+    case 3: faction_id = 3; break;
+    case 4: faction_id = 4; break;
+    case 5: faction_id = 5; break;
+    case 6: faction_id = 6; break;
+    case 7: faction_id = 7; break;
+    }
+    switch (faction_id) {
+    case 0: faction_id = 0; break;
+    case 1: faction_id = 1; break;
+    case 2: faction_id = 2; break;
+    case 3: faction_id = 3; break;
+    case 4: faction_id = 4; break;
+    case 5: faction_id = 5; break;
+    case 6: faction_id = 6; break;
+    case 7: faction_id = 7; break;
+    }
+
+    if (Vehs[veh_id].moves_expended != 0
+            && Vehs[veh_id].order == ORDER_MOVE_TO
+            && VehPrototypes[Vehs[veh_id].proto_id].plan != 7
+            && !(Vehs[veh_id].state & VSTATE_EXPLORE)) {
+        if (zoc_any(Vehs[veh_id].x, Vehs[veh_id].y, faction_id) == 0) {
+            goto after_move;  // blocked by a zone of control
+        }
+    }
+
+    if (enemy_move(veh_id) != 0) {
+        return 1;
+    }
+
+    if (!veh_moves(veh_id)) {
+        if (IsMultiplayerNet != 0) {
+            log_say(LogEnemyVehicleDone, veh_id, 0, 0);
+        }
+        if (is_local_turn) {
+            synch_veh(veh_id);
+            NetDaemonNet.await_synch();
+            NetDaemonNet.unlock_veh();
+        }
+        return 1;
+    }
+
+after_move:
+    if (is_local_turn) {
+        synch_veh(veh_id);
+        NetDaemonNet.await_synch();
+        if (NetDaemonNet.action(veh_id, 1) != 0) {
+            return 1;
+        }
+    } else {
+        char message[8];
+        if (IsMultiplayerNet != 0) {
+            char number_text[0x50];
+            message[0] = 0;
+            _itoa(veh_id, number_text, 10);
+            strcat(message, number_text);
+            log_say(LogEnemyVehicleAction, message, Vehs[veh_id].order,
+                    Vehs[veh_id].waypoint_x[0], Vehs[veh_id].waypoint_y[0]);
+        }
+
+        if (action(veh_id) == 0) {
+            veh_skip(veh_id);
+        }
+
+        if (IsMultiplayerNet != 0) {
+            message[0] = Vehs[veh_id].move_to_ai_type;
+            message[1] = 0;
+            log_say(LogEnemyVehicle, message, veh_id, Vehs[veh_id].x,
+                    Vehs[veh_id].y);
+        }
+    }
+
+    return 0;
+}
+
+// ORIGINAL: 0x00579510 ?enemy_turn@@YAHH@Z 0x00579510-0x00579769
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned 0x00579643-0x00579687 routes priorities7..9 around the DROP_POD, plan4 and unk_1==0x15 filters used by priorities0..6; priority8 alone then requires plan7 and nonzero faction at0x0057968A-0x005796A5.", "Original rejected priority8 paths jump0x005795A7 to decrement the vehicle index and pointer; the for-loop increment clause preserves this tail for continue as well as ordinary completion."], "reason": "Preserve original enemy-turn early-band filters, late-band bypass and common descending-vehicle tail."}
+// symbol    ?enemy_turn@@YAXH@Z
+// LEVER: void, not the catalogue's int - the body's only `ret` leaves eax
+//        holding whatever the last address calculation left there
+//        (`faction_id * 0x20CC`, from the PlayersData store), not a return
+//        value. See the same recast on 0x00579510's archived transcription.
+// TRIED: `bool matched` locals - the image has no such variable. Each band
+//        ends in two bare jumps (one to the matched point 0x579648, one to the
+//        next-vehicle tail), with no setcc and no store, so a `matched`
+//        local costs a `setne al; test al,al` pair the image does not have.
+//        Faithful source here would be goto-per-band, which this pass did not
+//        spend the budget on: the body is 12/184 on register placement alone.
+// TRIED: `Veh *veh` across the sweep - the image keeps exactly one such
+//        pointer (esi, `sub esi,0x34`), this tree spills a second to
+//        [ebp-0xc], so the frame is 0xc against the image's 8.
+// LEVER (2026-11-07, enemy TU): 0.77 -> 0.854 with `continue` per band (no
+//        `matched`), Vehs[veh_id] instead of a pointer, `!veh_moves(veh_id)`
+//        for the moves test, and turns_spent declared before the
+//        `veh_id >= 0` test, which gives the image's registers (veh_id ebx,
+//        priority and turns_spent in the frame). Left: the image places the
+//        next-vehicle tail and the epilogue right after band 1 and the rest of
+//        the body after them; a switch on priority and goto-per-band do not
+//        give that layout.
+void __cdecl enemy_turn(int faction_id) {
+    for (int priority = 0; priority < 10; priority++) {
+        for (int veh_id = GameDataStateStorage.fields_.vehicle_current_count_ - 1;
+                veh_id >= 0; veh_id--) {
+            if (veh_id >= GameDataStateStorage.fields_.vehicle_current_count_
+                    || Vehs[veh_id].faction_id != faction_id) {
+                continue;
+            }
+            if (priority == 0) {
+                if (!can_arty(Vehs[veh_id].proto_id, 1)) {
+                    continue;
+                }
+            } else if (priority == 1) {
+                if (VehPrototypes[Vehs[veh_id].proto_id].plan != 2) {
+                    if (VehPrototypes[Vehs[veh_id].proto_id].plan != 7
+                            || !stack_check(veh_id, 3, 0, -1, -1)) {
+                        continue;
+                    }
+                }
+            } else if (priority == 2) {
+                if (Chassis[VehPrototypes[Vehs[veh_id].proto_id].chassis_id].triad
+                        != priority
+                        || VehPrototypes[Vehs[veh_id].proto_id].plan == 4) {
+                    continue;
+                }
+            } else if (priority == 3) {
+                if (VehPrototypes[Vehs[veh_id].proto_id].plan != 1) {
+                    continue;
+                }
+            } else if (priority == 4) {
+                if (Vehs[veh_id].dmg_incurred) {
+                    continue;
+                }
+            }
+            if (priority < 7) {
+                if (has_abil(Vehs[veh_id].proto_id, ABL_DROP_POD)
+                        || VehPrototypes[Vehs[veh_id].proto_id].plan == 4
+                        || VehPrototypes[Vehs[veh_id].proto_id].unk_1 == 0x15) {
+                    continue;
+                }
+            }
+            if (priority == 8
+                    && (VehPrototypes[Vehs[veh_id].proto_id].plan != 7 || !faction_id)) {
+                continue;
+            }
+            int turns_spent = 0;
+            if (veh_id >= 0) {
+                while (Vehs[veh_id].order != ORDER_SENTRY_BOARD) {
+                    if ((priority != 8 || turns_spent != 0) && !veh_moves(veh_id)) {
+                        break;
+                    }
+                    const int veh_count_before = GameDataStateStorage.fields_.vehicle_current_count_;
+                    if (enemy_veh(veh_id) != 0
+                            || veh_count_before != GameDataStateStorage.fields_.vehicle_current_count_) {
+                        break;
+                    }
+                    if (Vehs[veh_id].order != ORDER_MOVE_TO
+                            && Chassis[VehPrototypes[Vehs[veh_id].proto_id].chassis_id].triad != 2) {
+                        turns_spent++;
+                    }
+                    turns_spent++;
+                    if (turns_spent > 0x20) {
+                        veh_skip(veh_id);
+                    }
+                }
+            }
+        }
+    }
+
+    PlayersData[faction_id].flags &= ~PFLAG_UNK_10000;
+}
+
+/*
+Purpose: Calculate a random value within the provided bounds. The unused 2nd parameter was possibly 
+         meant to have the random value append to it.
+// ORIGINAL: 0x00579770 ?rnd@@YAHHPAD@Z 0x00579770-0x00579790 BYTE_EXACT
+// LEVER: ternary flipped to a guard-clause `if (bounds - 1 <= 0) return 0;`
+//        then fall through to `return rand() % bounds;` - the image jumps
+//        TO the rand() work and falls through to the early return.
+// symbol    ?rnd@@YAIHPAD@Z
+// size      32 bytes
+// prototype int (__cdecl ?rnd@@YAHHPAD@Z)(int seed, int8*)
+// callers   2   call targets   1
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x0064601D
+Return Value: Bounded random value
+Status: Complete
+*/
+uint32_t __cdecl rnd(int bounds, LPSTR UNUSED(input)) {
+    return bounded_crt_random(bounds);
+}
+
+/*
+Purpose: Calculate the distance between two x coordinates with handling for round maps.
+// ORIGINAL: 0x00579790 ?x_dist@@YAHHH@Z 0x00579790-0x005797C7
+// body      src/map.h
+// size      55 bytes
+// prototype 
+// callers   1   call targets   1
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x00644F3A
+Return Value: Distance
+Status: Complete
+*/
+// BODY IN map.h, as `MEASURED inline`: the image writes it out at
+// some call sites and calls it at others, and a .cpp definition is only ever
+// one of those. The marker stays here because that is where the catalogue
+// reads it.
+// LEVER: `!(MapIsFlat & 1)`, not `!MapIsFlat` - same idiom as xrange
+//        (0x0048BEE0) - took the best flag set (/O2 /Oi- /Gy /GR- /Oy- /GX)
+//        from 14/21 to 16/21 (still 0.923 similar - the raw count moved, the
+//        rounded ratio didn't).
+// TRIED: remaining gap (best flag set, 18 instructions here vs the
+//            image's 21) is a trailing `mov ecx, eax` the image emits right
+//            before `pop ebp; ret` that this tree's `return dist;` never
+//            produces - same register-caching family as vector_dist
+//            (0x005A5910)'s note on this same function. Not chased further.
+// LEVER (2026-11-07): the round-map arm as a ternary,
+//        `return dist > (int)MapLongitude ? MapLongitudeBounds - dist : dist;`
+//        inside `if (!(MapIsFlat & 1))`, gives the trailing `mov ecx, eax`
+//        and is byte-exact; it also made sub_500380 exact and no x_dist
+//        caller in the 17 files that use it lost a match.
+
+// ORIGINAL: 0x005797D0 ?site_at@@YAHHHH@Z 0x005797D0-0x00579832 FILE BYTE_EXACT
+// TRIED: single combined expression and explicit temp reads of the first two parameters both match 44 of 46 mnemonics at 98 of 98 bytes; VC6 interleaves the push/mov prologue differently (push, push, mov, mov instead) - register scheduling, not logic
+// working copy - scaffold materialised by --work
+// size      98 bytes
+// prototype 
+// callers   1   call targets   2
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x00591B50 0x005C4FD0
+int __cdecl site_at(int x, int y, int is_ocean_site) {
+    Map *tile = map_loc(x, y);
+    if (tile->bit & BIT_BASE_RADIUS) {
+        return 0;
+    }
+    int site = tile->val2 >> 4;
+    if (site != 0) {
+        return site;
+    }
+    const int generated = world_site(x, y, is_ocean_site);
+    site_set(x, y, generated);
+    return generated;
+}
+
+/*
+Purpose: Check whether a faction can see the specified tile.
+// ORIGINAL: 0x00579840 ?is_known@@YAHHHH@Z 0x00579840-0x00579896 BYTE_EXACT
+// size      86 bytes
+// prototype int (__cdecl ?is_known@@YAHHHH@Z)(int xCoord, int yCoord, int factionID)
+// callers   1   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
+// TRIED: 16 of 30 at the best flag set (/O2 /Gy /GR- /Oy- /GX), 32
+//            compiled instructions against the image's 30. The two extra are
+//            `push ebx`/`pop ebx`: the image computes `1 << faction_id` AFTER
+//            the tile-index `lea` chain, when edx is dead, and reuses ecx for
+//            map_tiles() (`mov edx, 1; shl edx, cl; mov ecx, [0x94a30c];
+//            test byte ptr [ecx + eax*4 + 4], dl`); VC6 here hoists the shift
+//            ahead of that chain, where eax/ecx/edx are all live, so the mask
+//            lands in a callee-saved register and costs the save/restore.
+// TRIED: nothing moves that scheduling decision. Measured, all 16 of 30
+//            and all 32 instructions: a `mask`/`vis`/`tile`/`flags` local, a
+//            `(uint8_t)` cast on either operand, `!!(...)`, an explicit
+//            `!= 0`, extra parentheses, and swapping the `&` operands
+//            (`(1 << faction_id) & ...->visibility`).
+// TRIED: splitting the `||` is WORSE, not better - the mirror of
+//            map_write/map_read. A guard clause (`if (A) return true; return
+//            B;`) scores 0 of 30, and so does the ternary form; the image
+//            shares one `mov eax, 1; pop ebp; ret` tail between both tests
+//            and falls through to `xor eax, eax` only once.
+// TRIED: the equivalent bit test `(map_loc(x, y)->visibility >>
+//            faction_id) & 1` scores HIGHER, 25 of 30 with the instruction
+//            count matching at 30, because `shr al, cl; test al, 1` needs no
+//            second register - but it emits a shift of the VALUE where the
+//            image shifts the MASK, so it trades one divergence for another
+//            and still reaches no tier. Left as the image's own mask test.
+Return Value: Is tile visible/known to faction? true/false
+Status: Complete
+*/
+BOOL __cdecl is_known(int x, int y, int faction_id) {
+    return (PlayersData[faction_id].flags & PFLAG_MAP_REVEALED
+        || map_loc(x, y)->visibility & (1 << faction_id));
+}
+
+/*
+Purpose: If a base exists, get the owner of the specified tile.
+// ORIGINAL: 0x005798A0 ?base_who@@YAHHH@Z 0x005798A0-0x005798D8 BYTE_EXACT
+// body      src/map.h
+// size      56 bytes
+// prototype 
+// callers   2   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
+Return Value: Owner (faction id) or -1
+Status: Complete
+*/
+// BODY IN map.h, as `MEASURED inline`: six bodies call it where the image
+// calls nothing - `call_diff` names it - and 0x005798A0 is a real body.
+
+/*
+Purpose: If a base or unit exists, get the owner of the specified tile.
+// ORIGINAL: 0x005798E0 ?anything_at@@YAHHH@Z 0x005798E0-0x00579918 BYTE_EXACT
+// body      src/map.h
+// size      56 bytes
+// prototype int (__cdecl ?anything_at@@YAHHH@Z)(int xCoord, int yCoord)
+// callers   1   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
+Return Value: Owner (faction id) or -1
+Status: Complete
+*/
+// BODY IN map.h, as `MEASURED inline`: world_alt_set and action_fungal inline
+// it, and 0x005798E0 is a real body.
+
+/*
+Purpose: Get the unit on the top of the stack.
+// ORIGINAL: 0x00579920 ?veh_top@@YAHH@Z 0x00579920-0x0057995A BYTE_EXACT
+// body src/veh.h
+// LEVER: the climb rereads Vehs[top].prev_veh_id_stack in a while loop (no
+//   int16_t induction local); that spelling also matches the inlined copies in
+//   stack_fix and spot_loc.
+// size      58 bytes
+// prototype int (__cdecl ?veh_top@@YAHH@Z)(int vehID)
+// callers   2   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
+Return Value: Unit id if found, otherwise -1
+Status: Complete
+*/
+// BODY IN veh.h, as `MEASURED inline`: the image expands it in spot_stack,
+// spot_loc and stack_fix (veh_stack.cpp), veh_at and veh_promote
+// (veh_queries.cpp) and other TUs, and calls this copy only from enemy_move
+// and spot_all. The marker stays here because that is where the catalogue
+// reads it.
+
+/*
+Purpose: Get the current moves left for the specified unit.
+// ORIGINAL: 0x00579960 ?veh_moves@@YAHH@Z 0x00579960-0x00579998 BYTE_EXACT
+// body      src/veh.h
+// size      56 bytes
+// prototype int (__cdecl ?veh_moves@@YAHH@Z)(int vehID)
+// callers   1   call targets   1
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x005C1540
+Return Value: Remaining moves
+Status: Complete
+*/
+// BODY IN veh.h, as `MEASURED inline`: the image writes it out at
+// some call sites and calls it at others, and a .cpp definition is only ever
+// one of those. The marker stays here because that is where the catalogue
+// reads it.
+
+/*
+Purpose: Get the specified unit's reactor power value from its prototype.
+// ORIGINAL: 0x005799A0 ?proto_power@@YAHH@Z 0x005799A0-0x005799F9 BYTE_EXACT
+// body      src/veh.h
+// LEVER: neither of its two callers (best_defender 0x5044D0, action_home
+//        0x4CBAA0) has it in their `calls` list - both inline it - but this
+//        tree defined it as a plain (non-`inline`) function, so under /Ob1
+//        (the default for every flag set but /Ob0) it was never a candidate
+//        and both callers paid a real call the image does not make. `MEASURED
+//        inline` keeps this address's own BYTE_EXACT claim measurable
+//        (the /Ob0 flag sets still force it real for that purpose).
+// size      89 bytes
+// prototype int (__cdecl ?proto_power@@YAHH@Z)(int vehID)
+// callers   1   call targets   0
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     (none)
+Return Value: Power
+Status: Complete
+*/
+// BODY IN veh.h, as `MEASURED inline`: the image writes it out at
+// some call sites and calls it at others, and a .cpp definition is only ever
+// one of those. The marker stays here because that is where the catalogue
+// reads it.
+
+/*
+Purpose: Determine if base is a port.
+// ORIGINAL: 0x00579A00 ?is_port@@YAHHH@Z 0x00579A00-0x00579A30 BYTE_EXACT
+// size      48 bytes
+// prototype int (__cdecl ?is_port@@YAHHH@Z)(int baseID, int isBaseRadius)
+// callers   2   call targets   1
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x004E49D0
+Return Value: Is base a port? true/false
+Status: Complete
+*/
+BOOL __cdecl is_port(int base_id, BOOL is_base_radius) {
+    return is_coast(Bases[base_id].x, Bases[base_id].y, is_base_radius);
 }

@@ -130,7 +130,6 @@ set(OPENSMACX_SOURCES
     src/console_menu_policy.cpp
     src/alpha.cpp
     src/alphasave.cpp
-    src/faction_strategy.cpp
     src/factionprofilewin.cpp
     src/main.cpp
     src/multiwin.cpp
@@ -194,8 +193,6 @@ set(OPENSMACX_SOURCES
     src/worldwin.cpp
     src/map.cpp
     src/map_grid.cpp
-    src/movement_queries.cpp
-    src/map_sites.cpp
     src/territory.cpp
     src/world.cpp
     src/mapwin.cpp
@@ -438,8 +435,6 @@ set_source_files_properties(src/sound.cpp src/sound_type.cpp PROPERTIES COMPILE_
 set_source_files_properties(
     src/map.cpp
     src/map_grid.cpp
-    src/movement_queries.cpp
-    src/map_sites.cpp
     src/territory.cpp
     src/world.cpp
     src/faction.cpp
@@ -453,6 +448,7 @@ set_source_files_properties(
     src/vehicle_render.cpp
     src/veh_queries.cpp
     src/prototype_history.cpp
+    src/enemy.cpp
     PROPERTIES COMPILE_OPTIONS "/Oy-")
 # Preserve the mapped frame-based vehicle owners after their source split.
 # Their original translation-unit names are unknown; other veh.cpp code stays
@@ -598,6 +594,7 @@ set_property(SOURCE
     src/tutwin.cpp
     src/veh.cpp
     src/veh_stack.cpp
+    src/enemy.cpp
     src/string_table.cpp
     src/strings.cpp
     src/sounddevice.cpp
@@ -618,8 +615,6 @@ set_property(SOURCE
     src/maininterface.cpp
     src/map.cpp
     src/map_grid.cpp
-    src/movement_queries.cpp
-    src/map_sites.cpp
     src/mapwin.cpp
     src/mapwin_terrain.cpp
     src/netdaemon.cpp
@@ -815,6 +810,7 @@ target_compile_options(OpenSMACX PRIVATE $<$<COMPILE_LANGUAGE:CXX>:/W4>)
 set(OPENSMACX_UNPOOLED_SOURCES
     src/faction.cpp
     src/faction_treaty.cpp
+    src/enemy.cpp
     src/console_commands.cpp)
 function(opensmacx_apply_optimization target)
     get_target_property(target_sources ${target} SOURCES)

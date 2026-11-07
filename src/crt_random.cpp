@@ -45,24 +45,4 @@ void __cdecl my_srand(int reseed) {
     srand(reseed);
 }
 
-/*
-Purpose: Calculate a random value within the provided bounds. The unused 2nd parameter was possibly 
-         meant to have the random value append to it.
-// ORIGINAL: 0x00579770 ?rnd@@YAHHPAD@Z 0x00579770-0x00579790 BYTE_EXACT
-// LEVER: ternary flipped to a guard-clause `if (bounds - 1 <= 0) return 0;`
-//        then fall through to `return rand() % bounds;` - the image jumps
-//        TO the rand() work and falls through to the early return.
-// symbol    ?rnd@@YAIHPAD@Z
-// size      32 bytes
-// prototype int (__cdecl ?rnd@@YAHHPAD@Z)(int seed, int8*)
-// callers   2   call targets   1
-// kind      game
-// flags     frame;sp_ready;purged_ok
-// calls     0x0064601D
-Return Value: Bounded random value
-Status: Complete
-*/
-uint32_t __cdecl rnd(int bounds, LPSTR UNUSED(input)) {
-    return bounded_crt_random(bounds);
-}
 
