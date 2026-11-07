@@ -926,10 +926,7 @@ int PickTech::pick(int faction, int mode, int count, char *section_id) {
     for (int item = 0; item < item_count_; ++item)
         draw_item(item, item == selected_index_);
     show(0);
-    if (WinPointerOwner3 == 0) {
-        WinPointerOwner3 = this;
-        WinPointerOwner4 = 0;
-    }
+    grab_pointer();
     set_modal(1, 0, 0);
     hide();
     do_all_draws();

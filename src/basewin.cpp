@@ -4227,10 +4227,7 @@ void BaseWin::on_left_down(int xCoord, int yCoord) {
     field_40B44_ = xCoord;
     field_40B48_ = yCoord;
     if (is_visible() != 0 && (IsMultiplayerNet == 0 || NetDaemonNet.primary_state_.leading_words_[2] == 0)) {
-        if (WinPointerOwner3 == 0) {
-            WinPointerOwner3 = this;
-            WinPointerOwner4 = 0;
-        }
+        grab_pointer();
         if (spot2_.check(xCoord, yCoord, &spot_pos, &spot_type) >= 0) {
             field_40B4C_ = spot_type;
             field_40B50_ = spot_pos;
@@ -4346,10 +4343,7 @@ void BaseWin::on_iface_left_down(int xCoord, int yCoord) {
     field_40B48_ = yCoord;
 
     if (is_visible() != 0 && (IsMultiplayerNet == 0 || NetDaemonNet.primary_state_.leading_words_[2] == 0)) {
-        if (WinPointerOwner3 == 0) {
-            WinPointerOwner3 = this;
-            WinPointerOwner4 = 0;
-        }
+        grab_pointer();
         if (spot1_.check(xCoord, yCoord, &spot_pos, &spot_type) >= 0) {
             field_40B4C_ = spot_type;
             field_40B50_ = spot_pos;

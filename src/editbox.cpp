@@ -60,10 +60,7 @@ void EditBox::on_dialog_focus(int focused) {
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00615e60.cpp", "Pinned original EditBox table66A038 and direct call/branch evidence"], "reason": "EditBox owns this table override or its direct text helper: pinned primary table66A038 slots12,17,20,21,25,26,51,64 and original direct-call receivers establish ownership. Use existing Win slot signatures without changing their order; text_position returns the EAX index consumed by callers despite the catalogue void label."}
 // symbol    ?on_left_down@EditBox@@UAEXHH@Z
 void EditBox::on_left_down(int x, int) {
-    if (WinPointerOwner3 == 0) {
-        WinPointerOwner3 = this;
-        WinPointerOwner4 = 0;
-    }
+    grab_pointer();
     field_B44_ = text_position(x);
     if ((GetAsyncKeyState(VK_SHIFT) & 0x8000) == 0) {
         field_B40_ = field_B44_;

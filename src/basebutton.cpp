@@ -737,10 +737,7 @@ void BaseButton::on_right_click(int a, int b) {
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/006075c0.cpp retained original identity, full spans and prior recovery evidence", "recovery/tasks/dialog-control-coverage-wave.json authorized coupled control ownership", "original:0x6075c0 complete control/data-access review and src/basebutton.h genuine declaration; cross-owner discoveries preserved in task history"], "reason": "Complete Dialog-control behavior belongs to this genuine control owner, with real inherited members, embedded controls, Win receivers and callback dispatch rather than fixed executable calls. Compatible seed identity and historical evidence remain retained; catalogue decorations and emitted ABI are separate facts."}
 // symbol    ?on_left_down@BaseButton@@UAEXHH@Z
 void BaseButton::on_left_down(int, int) {
-    if (WinPointerOwner3 == 0) {
-        WinPointerOwner3 = this;
-        WinPointerOwner4 = 0;
-    }
+    grab_pointer();
     Win::clear_bubble_text();
 
     if (field_A9C_ == 0) {

@@ -412,6 +412,7 @@ class Win : public AutoSound {
   void release_pointer();
   // Takes pointer ownership; callers test that no window holds it.
   void take_pointer();
+  void grab_pointer();
   int has_dialog_focus_flag() const { return iFlags_ & 0x1000; }
   // ListBox row painting tests this existing Win flag to select parent-surface copying.
   bool has_listbox_backfill_flag() const { return (iFlags_ & 0x80000u) != 0; }
@@ -1033,6 +1034,15 @@ inline void Win::release_pointer() {
     on_lose_mouse_capture();
   }
   if (WinPointerOwner4 == this) {
+    WinPointerOwner4 = 0;
+  }
+}
+
+// Claim the pointer when nobody holds it. Inlined as a Win member, so a
+// virtual-base caller converts `this` without a null check.
+inline void Win::grab_pointer() {
+  if (WinPointerOwner3 == 0) {
+    WinPointerOwner3 = this;
     WinPointerOwner4 = 0;
   }
 }

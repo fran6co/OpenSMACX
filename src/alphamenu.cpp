@@ -412,9 +412,8 @@ void AlphaMenu::hide() {
 void AlphaMenu::on_mouse_move(int x, int y) {
     if (field_A24_ != -1) {
         Menu::on_mouse_move(x, y);
-    } else if (WinPointerOwner3 == 0) {
-        WinPointerOwner3 = this;
-        WinPointerOwner4 = 0;
+    } else {
+        grab_pointer();
     }
 
     // Spot writes the position on every hit; the miss path never reads it.

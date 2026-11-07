@@ -1627,10 +1627,7 @@ void Scroll::on_left_down(int x, int y) {
         }
     }
 
-    if (WinPointerOwner3 == 0) {
-        WinPointerOwner3 = this;
-        WinPointerOwner4 = 0;
-    }
+    grab_pointer();
 }
 
 // ORIGINAL: 0x006062C0 ?on_left_up@Scroll@@QAEXHH@Z 0x006062C0-0x00606304 FILE BYTE_EXACT

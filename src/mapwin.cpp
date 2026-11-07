@@ -1360,9 +1360,8 @@ void MapWin::gen_bases_only() {
         const int tile_y = field_1DDA8_ + row;
         const int start_x = field_1DDA4_ + (row & 1);
         const int count = (row & 1) ? field_1DDCC_ : field_1DDD4_;
-        int tile_x = start_x;
         for (int i = 0; i < count; ++i) {
-            const int wrapped_x = wrap_map_x(tile_x);
+            const int wrapped_x = wrap_map_x(start_x + i * 2);
             if (on_map(wrapped_x, tile_y)) {
                 Map *tile = map_loc(wrapped_x, tile_y);
                 if ((tile->bit & 1) != 0) {
@@ -1380,7 +1379,6 @@ void MapWin::gen_bases_only() {
                     }
                 }
             }
-            tile_x += 2;
         }
     }
 }
@@ -6014,8 +6012,8 @@ void MapWin::draw_wars() {
         strcat(StringTemp, Players[faction].noun_faction);
         strcat(StringTemp, ": ");
         Buffer::set_text_color(InfoFactionTextColors[faction], 0, 1, 1);
-        const int width = Buffer::write_l(
-            StringTemp, character_width, y);
+        int width = character_width;
+        width = Buffer::write_l(StringTemp, width, y);
         if (max_width <= width) {
             max_width = width;
         }
@@ -6025,7 +6023,11 @@ void MapWin::draw_wars() {
 
     // The image never initialises letter before the grid loop.
     char letter;
-    y = (font_b_.unk_1_ >= 0 ? font_b_.pixel_height() + font_b_.unk_1_ : font_b_.line_height());
+    if (font_b_.unk_1_ >= 0) {
+        y = font_b_.pixel_height() + font_b_.unk_1_;
+    } else {
+        y = font_b_.line_height();
+    }
     for (int row = 1; row < MaxPlayerNum; ++row) {
         int x = max_width;
         for (int column = 1; column < MaxPlayerNum; ++column) {
@@ -7958,10 +7960,7 @@ check_flag:
         this->field_1DD94_ = -1;
         this->field_1DD90_ = -1;
 
-        if (WinPointerOwner3 == nullptr) {
-            WinPointerOwner4 = nullptr;
-            WinPointerOwner3 = static_cast<Win *>(this);
-        }
+        grab_pointer();
         on_mouse_move(x_coord, y_coord);
         return;
     }
@@ -7993,10 +7992,7 @@ void MapWin::on_left_down(int x_coord, int y_coord) {
             return;
         }
         field_1DD80_ = 1;
-        if (WinPointerOwner3 == nullptr) {
-            WinPointerOwner4 = nullptr;
-            WinPointerOwner3 = &static_cast<Win &>(*this);
-        }
+        grab_pointer();
         ConsoleGlobal.cover_window_.fill(9);
         ConsoleGlobal.cover_window_.show(0);
         on_mouse_move(x_coord, y_coord);
@@ -8010,10 +8006,7 @@ void MapWin::on_left_down(int x_coord, int y_coord) {
             field_1DD8C_ = 1;
             field_1DD94_ = -1;
             field_1DD90_ = -1;
-            if (WinPointerOwner3 == nullptr) {
-                WinPointerOwner4 = nullptr;
-                WinPointerOwner3 = &static_cast<Win &>(*this);
-            }
+            grab_pointer();
             on_mouse_move(x_coord, y_coord);
             return;
         }
@@ -8101,10 +8094,7 @@ void __cdecl go_timer(int selection_mode) {
         target->cursor_sprite_ = cursor;
     }
 
-    if (WinPointerOwner3 == nullptr) {
-        WinPointerOwner4 = nullptr;
-        WinPointerOwner3 = window;
-    }
+    window->grab_pointer();
     ConsoleGlobal.field_23D10_ = mode;
     ConsoleGlobal.cover_window_.fill(9);
     ConsoleGlobal.cover_window_.show(0);
