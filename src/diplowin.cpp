@@ -64,7 +64,7 @@ char DiploLocalizedDiplomacyTitle;
 // body has no separate unregister or global-state operation; C++ performs
 // reverse-order member/base destruction after this body.
 // Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x00444DB0 ??1DiploWin@@QAE@XZ 0x00444DB0-0x00444FB2;0x00654920-0x006549F0
+// ORIGINAL: 0x00444DB0 ??1DiploWin@@QAE@XZ 0x00444DB0-0x00444FB2;0x00654920-0x006549F0 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00444db0.cpp", "Pinned444DB0 cleanup sequence and654920 unwind funclets; existing typed members match their native receiver offsets and thirteen-element FlatButton array."], "reason": "Recover complete DiploWin destruction through genuine automatic reverse-order member/base lifetimes; pinned teardown contains no additional DiploWin unregister. Replace only executable-address forwarder and preserve seed history, no exactness claim."}
 // symbol ??1DiploWin@@UAE@XZ
 // The destructor is compiler-generated: no declaration, no body.
