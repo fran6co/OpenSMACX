@@ -21,6 +21,14 @@
 #include <stddef.h>
 #include <string.h>
 
+// The library was built without automatic inlining: the image calls
+// vox_read_dword and vox_read_length_field out of line from
+// vox_load_record, which /Ob2 would inline, and every other body here
+// measures the same either way. strlen expands inline (repne scasb at
+// 0x6383F7) where stdafx.h turns the intrinsic off for the game.
+#pragma auto_inline(off)
+#pragma intrinsic(strlen)
+
 // ---------------------------------------------------------------------------
 // The voxel engine's own entry points, called by init_class above through
 // caviar.h's declarations. None is a Caviar member; they are the engine
@@ -107,11 +115,6 @@ extern const float vox_sqrt_two = 1.4142f;       // 0x00670FE8
 static const float vox_threshold_seven = 7.0f;   // 0x00670FEC
 
 
-// Chunk lengths are 32-bit file words. Keep the original wrapping subtraction
-// before its signed-result test, without signed-overflow arithmetic in C++.
-static int32_t vox_chunk_payload(int32_t length) {
-    return (int32_t)((uint32_t)length - 8u);
-}
 
 
 // Failures return without releasing partially built records, as in the image.
@@ -124,14 +127,14 @@ CvrRecord *__cdecl vox_load_record(int fd) {
         vox_stage_error(vox_msg_bad_file_format);
         return 0;
     }
-    uint32_t remaining = (uint32_t)header.length - 8u;
+    int remaining = header.length - 8;
     CvrRecord *record;
     if (vox_alloc_typed(sizeof(CvrRecord), &record) != 0) return 0;
     memset(record, 0, sizeof(*record));
     while (remaining != 0) {
         if (vox_read_exact(fd, &header, sizeof(header)) != 0) return 0;
-        remaining -= (uint32_t)header.length;
-        if ((remaining & 0x80000000u) != 0) {
+        remaining -= header.length;
+        if (remaining < 0) {
             vox_stage_error(vox_msg_bad_file_format);
             return 0;
         }
@@ -152,7 +155,7 @@ CvrRecord *__cdecl vox_load_record(int fd) {
             vox_user_chunk_fn callback = vox_user_chunk;
             CaviarOutputMessageWindow.message_[0] = 0;
             if (callback == 0) {
-                if (vox_seek_slot((unsigned long)fd, vox_chunk_payload(header.length), 1) < 0) {
+                if (vox_seek_slot((unsigned long)fd, header.length - 8, 1) < 0) {
                     vox_stage_error(vox_msg_bad_file_format);
                     return 0;
                 }
@@ -163,12 +166,12 @@ CvrRecord *__cdecl vox_load_record(int fd) {
                 }
                 // The callback may rewrite the header; remaining was already
                 // decremented, but this stored payload length is a fresh read.
-                record->user_length_ = vox_chunk_payload(header.length);
+                record->user_length_ = header.length - 8;
             }
             break;
         }
         default:
-            if (vox_seek_slot((unsigned long)fd, vox_chunk_payload(header.length), 1) < 0) {
+            if (vox_seek_slot((unsigned long)fd, header.length - 8, 1) < 0) {
                 vox_stage_error(vox_msg_bad_file_format);
                 return 0;
             }
@@ -340,9 +343,8 @@ extern "C" int __cdecl vox_read_dword(int fd, CvrRecord *record) {
 /*
 Purpose: Allocate (length - 8) + 1 bytes into the record's slot at +0xc, read
          that many bytes into it and NUL-terminate: the CVR loader's reader
-         for the chunks it keeps as text. Its callers inline it
-         (vox_read_chunks' 0x1010000 case is this body verbatim against
-         +0x10 instead of +0xc).
+         for the chunks it keeps as text (vox_read_chunks' 0x1010000 case
+         is the same code against +0x10 instead of +0xc).
 // ORIGINAL: 0x006386D0 sub_6386d0 0x006386D0-0x0063871D FILE
 // symbol    _vox_read_length_field
 // size      77 bytes
@@ -355,14 +357,6 @@ Return Value: 0 when the field is read and terminated, -1 on either failure.
 */
 extern "C" int __cdecl vox_read_length_field(int fd, CvrRecord *record,
                                              int length) {
-    // Three statements, in this order. The image reads the record into eax
-    // first (0x6386D0), the payload count into esi second (0x6386D5..DA) and
-    // only then forms the slot address in edi (0x6386DD) - so `base` has to
-    // be its own local or the first load lands on the wrong argument, and
-    // `payload` has to precede `slot` or the two registers swap (measured:
-    // 11 of 36 either way round without the base local). Subtracting in
-    // place gives the image's `sub esi,8` on the reloaded argument (31 of
-    // 36); the residual is `or eax,-1` scheduled ahead of `pop edi`.
     CvrRecord *base = record;
     length -= 8;
     // The slot lives at +0xc of the record the caller hands over - the same
@@ -374,7 +368,9 @@ extern "C" int __cdecl vox_read_length_field(int fd, CvrRecord *record,
     if (vox_read_exact(fd, (void *)*slot, length) != 0) {
         return -1;
     }
-    (*slot)[length] = 0;
+    // Through the field, not the slot: `(*slot)[length]` gives [ecx+esi]
+    // where the image has [esi+ecx].
+    base->description_[length] = 0;
     return 0;
 }
 
@@ -411,23 +407,11 @@ Purpose: Walk a CVR record's chunk list. Each chunk is an 8-byte {tag,
 //        values; only > 7.0 takes the newer payload path. No overflow is
 //        checked. Payload lengths survive the allocator/reader callbacks.
 Return Value: 0 when the walk consumed the block, -1 on any failure.
-// TRIED: the image loads the record pointer (ebx) and the fd (ebp) into
-//        callee-saved registers before the loop; this tree dedicates ebp
-//        only and re-loads the record inside each case, 29 of 144 at /O2
-//        (first divergence at instruction 3). No spelling tried - a local
-//        for the record, a pointer walked by case, per-case casts - made
-//        VC6 dedicate ebx here. /c /O2 /Gy /GR- /GX.
-// LEVER: 0x1030000 is spelled before 0x1020000 so its arm jumps into the
-//        palette arm's shared read call, as the image does (112 of 151).
 */
 extern "C" int __cdecl vox_read_chunks(int fd, CvrRecord *record, int size) {
-    struct ChunkHeader {
-        int tag;
-        int length;
-    };
     int remaining = size - 8;
     while (remaining != 0) {
-        ChunkHeader header;
+        CvrChunkHeader header;
         if (vox_read_exact(fd, &header, 8) != 0) {
             return -1;
         }
@@ -439,27 +423,13 @@ extern "C" int __cdecl vox_read_chunks(int fd, CvrRecord *record, int size) {
         switch (header.tag) {
         case 0x1010000: {
             const int payload = header.length - 8;
-            if (vox_alloc_typed(payload + 1,
-                                &record->palette_name_) != 0) {
+            if (vox_alloc_typed(payload + 1, &record->palette_name_) != 0) {
                 return -1;
             }
-            if (vox_read_exact(fd, record->palette_name_,
-                               payload) != 0) {
+            if (vox_read_exact(fd, record->palette_name_, payload) != 0) {
                 return -1;
             }
             record->palette_name_[payload] = 0;
-            break;
-        }
-        case 0x1030000: {
-            const int payload = header.length - 8;
-            if (vox_alloc_typed(payload,
-                                &record->field_18_) != 0) {
-                return -1;
-            }
-            if (vox_read_exact(fd, record->field_18_,
-                               payload) != 0) {
-                return -1;
-            }
             break;
         }
         case 0x1020000: {
@@ -472,14 +442,24 @@ extern "C" int __cdecl vox_read_chunks(int fd, CvrRecord *record, int size) {
                     return -1;
                 }
             } else {
-                if (vox_alloc_typed(payload,
-                                    &record->palette_) != 0) {
+                if (vox_alloc_typed(payload, &record->palette_) != 0) {
                     return -1;
                 }
-                if (vox_read_exact(fd, record->palette_,
-                                   payload) != 0) {
+                if (vox_read_exact(fd, record->palette_, payload) != 0) {
                     return -1;
                 }
+            }
+            break;
+        }
+        case 0x1030000: {
+            // VC5 cross-jumps this arm's read call into the palette arm's
+            // (0x6387BF) only with the cases in ascending order.
+            const int payload = header.length - 8;
+            if (vox_alloc_typed(payload, &record->field_18_) != 0) {
+                return -1;
+            }
+            if (vox_read_exact(fd, record->field_18_, payload) != 0) {
+                return -1;
             }
             break;
         }
@@ -513,7 +493,7 @@ int __cdecl vox_read_parts(int fd, CvrRecord *record, int size) {
         }
         switch (header.tag) {
         case 0x04010000: {
-            int payload = vox_chunk_payload(header.length);
+            int payload = header.length - 8;
             if (vox_alloc_typed((uint32_t)payload + 1u, &record->parts_name_) != 0) return -1;
             if (vox_read_exact(fd, record->parts_name_, payload) != 0) return -1;
             record->parts_name_[payload] = 0;
@@ -526,9 +506,9 @@ int __cdecl vox_read_parts(int fd, CvrRecord *record, int size) {
             memset(record->slot_table_, 0, names_bytes);
             uint32_t parts_bytes = (uint32_t)expected_count * sizeof(*record->parts_);
             if (vox_alloc_typed(parts_bytes, &record->parts_) != 0) return -1;
-            index = 0;
             memset(record->parts_, 0, parts_bytes);
             record->part_count_ = expected_count;
+            index = 0;
             break;
         }
         case 0x04030000:
@@ -542,7 +522,7 @@ int __cdecl vox_read_parts(int fd, CvrRecord *record, int size) {
             if (vox_read_shape_patches(fd, record, header.length) != 0) return -1;
             break;
         default:
-            if (vox_seek_slot((unsigned long)fd, vox_chunk_payload(header.length), 1) < 0) {
+            if (vox_seek_slot((unsigned long)fd, header.length - 8, 1) < 0) {
                 vox_stage_error(vox_msg_bad_file_format);
                 return -1;
             }
@@ -571,7 +551,7 @@ int __cdecl vox_read_part(int fd, CvrRecord *record, int index, int size) {
         }
         switch (header.tag) {
         case 0x04040100: {
-            int payload = vox_chunk_payload(header.length);
+            int payload = header.length - 8;
             if (vox_alloc_typed((uint32_t)payload + 1u, &record->slot_table_[index]) != 0) return -1;
             if (vox_read_exact(fd, record->slot_table_[index], payload) != 0) return -1;
             record->slot_table_[index][payload] = 0;
@@ -598,7 +578,7 @@ int __cdecl vox_read_part(int fd, CvrRecord *record, int index, int size) {
             if (vox_read_shadow(fd, record, index, header.length) != 0) return -1;
             break;
         default:
-            if (vox_seek_slot((unsigned long)fd, vox_chunk_payload(header.length), 1) < 0) {
+            if (vox_seek_slot((unsigned long)fd, header.length - 8, 1) < 0) {
                 vox_stage_error(vox_msg_bad_file_format);
                 return -1;
             }
@@ -712,16 +692,8 @@ Purpose: Read a CVR record's geometry chunks. Three tags name the three
 //        je / dec eax / je / dec eax / je, which only sequential case values
 //        produce (0x00638720's non-sequential tags compare with cmp/je).
 Return Value: 0 when the walk consumed the block, -1 on any failure.
-// TRIED: the image loads the element count (edi) and the fd (ebp) before
-//        the loop; this tree defers the count to the 0x4040302/0x4040303
-//        arms where it is first used, so the prologue is one load short and
-//        everything after shifts (75 of 134 at /O2, first divergence at
-//        instruction 8). Same callee-save wall as vox_read_chunks and
-//        vox_read_colour_chunks. /c /O2 /Gy /GR- /GX.
-// LEVER: 0x4040303 is spelled before 0x4040302 so the matrices arm jumps
-//        into the vectors arm's shared read call, as the image does (98 of
-//        133). TRIED: `goto fail` for the read failures to keep the image's
-//        separate -1 and 0 epilogues unmerged - no change.
+// LEVER: under VC5 the cases in ascending order give the image's shared
+//        read call (the matrices arm jumps into the vectors arm's).
 */
 extern "C" int __cdecl vox_read_geometry_chunks(int fd, CvrPart *slots, int size,
                                                 int count) {
@@ -749,19 +721,19 @@ extern "C" int __cdecl vox_read_geometry_chunks(int fd, CvrPart *slots, int size
                 return -1;
             }
             break;
-        case 0x4040303:
-            if (vox_alloc_typed(count * sizeof(VOX_Matrix), &slots->matrices_) != 0) {
-                return -1;
-            }
-            if (vox_read_exact(fd, slots->matrices_, count * sizeof(VOX_Matrix)) != 0) {
-                return -1;
-            }
-            break;
         case 0x4040302:
             if (vox_alloc_typed(count * sizeof(VOX_Vect), &slots->vectors_) != 0) {
                 return -1;
             }
             if (vox_read_exact(fd, slots->vectors_, count * sizeof(VOX_Vect)) != 0) {
+                return -1;
+            }
+            break;
+        case 0x4040303:
+            if (vox_alloc_typed(count * sizeof(VOX_Matrix), &slots->matrices_) != 0) {
+                return -1;
+            }
+            if (vox_read_exact(fd, slots->matrices_, count * sizeof(VOX_Matrix)) != 0) {
                 return -1;
             }
             break;
@@ -793,18 +765,18 @@ int __cdecl vox_read_shadow(int fd, CvrRecord *record, int index, int size) {
             vox_stage_error(vox_msg_bad_file_format);
             return -1;
         }
-        int payload = vox_chunk_payload(header.length);
+        int payload = header.length - 8;
         switch (header.tag) {
         case 0x04040401:
             if (vox_read_exact(fd, entry, payload) != 0) return -1;
             break;
-        case 0x04040403:
-            if (vox_alloc_typed(payload, &entry->field_8_) != 0) return -1;
-            if (vox_read_exact(fd, entry->field_8_, payload) != 0) return -1;
-            break;
         case 0x04040402:
             if (vox_alloc_typed(payload, &entry->field_4_) != 0) return -1;
             if (vox_read_exact(fd, entry->field_4_, payload) != 0) return -1;
+            break;
+        case 0x04040403:
+            if (vox_alloc_typed(payload, &entry->field_8_) != 0) return -1;
+            if (vox_read_exact(fd, entry->field_8_, payload) != 0) return -1;
             break;
         default:
             if (vox_seek_slot((unsigned long)fd, payload, 1) < 0) {
@@ -833,7 +805,7 @@ int __cdecl vox_read_shape_patches(int fd, CvrRecord *record, int size) {
             vox_stage_error(vox_msg_bad_file_format);
             return -1;
         }
-        const int payload = vox_chunk_payload(header.length);
+        const int payload = header.length - 8;
         switch (header.tag) {
         case 0x04050001:
             if (vox_read_exact(fd, &index, payload) != 0) return -1;
@@ -846,8 +818,9 @@ int __cdecl vox_read_shape_patches(int fd, CvrRecord *record, int size) {
             CvrShape prefix;
             const uint32_t prefix_bytes = offsetof(CvrShape, item_stream_);
             if (vox_read_exact(fd, &prefix, prefix_bytes) != 0) return -1;
+            // The new size first, read from the field (image: lea edx,[ecx+eax]).
+            uint32_t new_size = shape->byte_size_ + prefix.byte_size_;
             uint32_t old_size = shape->byte_size_;
-            uint32_t new_size = prefix.byte_size_ + old_size;
             unsigned char *bytes = reinterpret_cast<unsigned char *>(shape);
             // The original CRT target copies backward when these ranges
             // overlap; the patch prefix need not exceed the old shape size.

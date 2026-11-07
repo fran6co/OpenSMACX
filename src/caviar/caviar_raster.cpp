@@ -497,17 +497,8 @@ Purpose: The isometric view-matrix builder: take the caller's nine source
 // symbol    _sub_63fa80
 // size      530 bytes
 // Deleted seed provenance: git:1ed59304110fc2098fb1dd11457fa5b0074169bd:src/unrecovered/0063fa80.cpp
-Status: Coverage transcription of the retained seed (src/unrecovered/0063fa80.cpp,
-        plain FILE). The seed's two TRIED walls stand: the do/while keeps the
-        original's single moving source pointer with the fixed scratch delta
-        (the image threads both arrays through `eax` plus one constant
-        displacement), and the four .rdata words stay bindings rather than
-        literals - their bit patterns were never read, so writing 0.5 into
-        the source would invent a value. The whole-image measurement stays a
-        documented MISMATCH for a structural reason the seed did not have to
-        face: the original is frameless (`mov eax, [esp+4]` at 0x0063FA80)
-        while this TU compiles /Oy-, so the frame and spill shape differ
-        from the prologue on. The words they feed are named from
+Status: the four .rdata words stay bindings rather than literals. The
+        words they feed are named from
         the two bodies' use of the cluster: 0x009C0A40..0x4A are the six
         matrix words 0x006401B0 multiplies by, 0x009C0A4C..0x54 the three
         int words rounded beside them, 0x009C0A7C the float scratch, and
@@ -518,20 +509,20 @@ namespace {
 // is set, otherwise 671044 (+0.5). The old address aliases had these
 // two names/polarities reversed; this follows the pinned instruction edges.
 int round_view_scaled(float value) {
-    return (int)(value + (value >= CaviarProjectionRoundThreshold
-                              ? CaviarProjectionRoundAbove
-                              : CaviarProjectionRoundBelow));
+    return (int)(value + (value < CaviarProjectionRoundThreshold
+                              ? CaviarProjectionRoundBelow
+                              : CaviarProjectionRoundAbove));
 }
 }  // namespace
 
 extern "C" void __cdecl sub_63fa80(const VOX_Matrix *sources) {
+    // Two walking pointers; VC5 itself forms the image's one moving pointer
+    // plus fixed delta.
     const float *cursor = &sources->values[0][0];
-    int delta = (int)((char *)CaviarProjectionScaledMatrix - (char *)cursor);
-    int n = 9;
-    do {
-        *(float *)((char *)cursor + delta) = *cursor * CaviarProjectionDirectionScale;
-        cursor++;
-    } while (--n);
+    float *out = CaviarProjectionScaledMatrix;
+    for (int i = 0; i < 9; ++i) {
+        *out++ = *cursor++ * CaviarProjectionDirectionScale;
+    }
 
     CaviarFixedPointProjection.word_00_ = (short)round_view_scaled(CaviarProjectionScaledMatrix[0]);
     CaviarFixedPointProjection.word_02_ = (short)round_view_scaled(CaviarProjectionScaledMatrix[1]);
@@ -589,17 +580,13 @@ void __cdecl caviar_direction_to_projection_index(
             -CaviarProjectionDirectionCandidate.values[2];
     }
 
-    double polar_angle;
-    if (!(CaviarProjectionDirectionCandidate.values[2] >=
-          CaviarProjectionAngleLimit)) {
-        polar_angle = acos(CaviarProjectionDirectionCandidate.values[2]);
-    } else {
-        polar_angle = CaviarProjectionRoundThreshold;
-    }
+    double polar_angle = CaviarProjectionDirectionCandidate.values[2] >= CaviarProjectionAngleLimit
+        ? CaviarProjectionRoundThreshold
+        : acos(CaviarProjectionDirectionCandidate.values[2]);
 
     double azimuth_angle = atan2(CaviarProjectionDirectionCandidate.values[1],
                                  CaviarProjectionDirectionCandidate.values[0]);
-    if (!(azimuth_angle >= CaviarProjectionRoundThreshold)) {
+    if (azimuth_angle < CaviarProjectionRoundThreshold) {
         azimuth_angle -= CaviarProjectionAngleWrap;
     }
 
@@ -650,18 +637,16 @@ void __cdecl vox_direction_to_octant(const VoxRenderRecord *render_record) {
     vec3_scale(unit, 256.0f, vector);
 
     // The original tests x87 C0: unordered follows the below branch too.
-    const float add_x = vector[0] >= CaviarProjectionRoundThreshold
-                            ? CaviarProjectionRoundAbove
-                            : CaviarProjectionRoundBelow;
-    vox_projection_component_[0] = static_cast<int>(vector[0] + add_x);
-    const float add_y = vector[1] >= CaviarProjectionRoundThreshold
-                            ? CaviarProjectionRoundAbove
-                            : CaviarProjectionRoundBelow;
-    vox_projection_component_[1] = static_cast<int>(vector[1] + add_y);
-    const float add_z = vector[2] >= CaviarProjectionRoundThreshold
-                            ? CaviarProjectionRoundAbove
-                            : CaviarProjectionRoundBelow;
-    vox_projection_component_[2] = static_cast<int>(vector[2] + add_z);
+    // Store the globals first and read them back (VC5 register choice).
+    vox_projection_component_[0] = static_cast<int>(vector[0] + (vector[0] < CaviarProjectionRoundThreshold
+                                                    ? CaviarProjectionRoundBelow
+                                                    : CaviarProjectionRoundAbove));
+    vox_projection_component_[1] = static_cast<int>(vector[1] + (vector[1] < CaviarProjectionRoundThreshold
+                                                    ? CaviarProjectionRoundBelow
+                                                    : CaviarProjectionRoundAbove));
+    vox_projection_component_[2] = static_cast<int>(vector[2] + (vector[2] < CaviarProjectionRoundThreshold
+                                                    ? CaviarProjectionRoundBelow
+                                                    : CaviarProjectionRoundAbove));
 
     const int x = vox_projection_component_[0];
     const int y = vox_projection_component_[1];
@@ -673,12 +658,12 @@ void __cdecl vox_direction_to_octant(const VoxRenderRecord *render_record) {
     const float ratio = CaviarProjectionDirectionScale / (float)sum;
 
     int octant;
-    if (vox_projection_component_[1] < 1) {
-        octant = (vox_projection_component_[0] > 0) + 2;
+    if (y > 0) {
+        octant = x <= 0;
     } else {
-        octant = vox_projection_component_[0] < 1;
+        octant = (x > 0) + 2;
     }
-    if (vox_projection_component_[2] < 0) {
+    if (z < 0) {
         octant += 4;
     }
 
@@ -714,25 +699,23 @@ void __cdecl vox_inverse_direction_to_octant(const VOX_Matrix *source) {
     float vector[3];
     vector[0] = vox_projection_matrix_.values[0][2];
     vector[1] = vox_projection_matrix_.values[1][2];
-    vector[2] = vox_projection_matrix_.values[2][2];
     vox_projection_render_stage_ = 1;
+    vector[2] = vox_projection_matrix_.values[2][2];
     float unit[3];
     vox_normalise_vector(vector, unit);
     vec3_scale(unit, 256.0f, vector);
 
     // The original tests x87 C0: unordered follows the below branch too.
-    const float add_x = vector[0] >= CaviarProjectionRoundThreshold
-                            ? CaviarProjectionRoundAbove
-                            : CaviarProjectionRoundBelow;
-    vox_projection_component_[0] = static_cast<int>(vector[0] + add_x);
-    const float add_y = vector[1] >= CaviarProjectionRoundThreshold
-                            ? CaviarProjectionRoundAbove
-                            : CaviarProjectionRoundBelow;
-    vox_projection_component_[1] = static_cast<int>(vector[1] + add_y);
-    const float add_z = vector[2] >= CaviarProjectionRoundThreshold
-                            ? CaviarProjectionRoundAbove
-                            : CaviarProjectionRoundBelow;
-    vox_projection_component_[2] = static_cast<int>(vector[2] + add_z);
+    // Store the globals first and read them back (VC5 register choice).
+    vox_projection_component_[0] = static_cast<int>(vector[0] + (vector[0] < CaviarProjectionRoundThreshold
+                                                    ? CaviarProjectionRoundBelow
+                                                    : CaviarProjectionRoundAbove));
+    vox_projection_component_[1] = static_cast<int>(vector[1] + (vector[1] < CaviarProjectionRoundThreshold
+                                                    ? CaviarProjectionRoundBelow
+                                                    : CaviarProjectionRoundAbove));
+    vox_projection_component_[2] = static_cast<int>(vector[2] + (vector[2] < CaviarProjectionRoundThreshold
+                                                    ? CaviarProjectionRoundBelow
+                                                    : CaviarProjectionRoundAbove));
 
     const int x = vox_projection_component_[0];
     const int y = vox_projection_component_[1];
@@ -744,12 +727,12 @@ void __cdecl vox_inverse_direction_to_octant(const VOX_Matrix *source) {
     const float ratio = CaviarProjectionDirectionScale / (float)sum;
 
     int octant;
-    if (vox_projection_component_[1] < 1) {
-        octant = (vox_projection_component_[0] > 0) + 2;
+    if (y > 0) {
+        octant = x <= 0;
     } else {
-        octant = vox_projection_component_[0] < 1;
+        octant = (x > 0) + 2;
     }
-    if (vox_projection_component_[2] < 0) {
+    if (z < 0) {
         octant += 4;
     }
 

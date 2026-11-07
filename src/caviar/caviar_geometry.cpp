@@ -14,6 +14,10 @@
 #include "vector.h"
 #include <math.h>
 #include <cmath>
+// VC5 orders commutative x87 operands by translation-unit symbol state.
+// With float.h included, vox_matrix_vector_mul and vox_cross_product take the
+// image's operand order; the library's real include set is not known.
+#include <float.h>
 
 // ---------------------------------------------------------------------------
 // The VOX library's vector/matrix math, 0x00627D00..0x00628377 in the image,
@@ -176,19 +180,18 @@ void __cdecl vec3_scale(const float *source, float scale,
 // RECOVERY_BINDING: v1 {"evidence":["pinned image 01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf: complete original body 006281E0 is a cdecl three-float vector operation; see its preserved ORIGINAL span and instruction claim","prior transitional source spelling ?leaf_006281e0_redirect@@YAMPBM@Z is retained here as history only, not asserted as an original debug symbol","pinned direct E8 callsites span vehicle setup/drawing and Caviar projection; source counterparts pass float[3]/VOX_Vect::values buffers rather than Vector objects","src/vector.cpp already owns 0x00628150 vector_add with the same cdecl float-array shape; this is module co-location, not a claim of original TU or historical source name","the selected body keeps component/store order and existing overlap behavior; the scale locals preserve source-before-store aliasing; the length expression retains the original extended-precision accumulation order"],"reason":"Rehome the mapped free Vec3 operation into the existing vector-array module. The operation-derived API name does not assert an original class or source spelling; this binding records current ownership evidence only."}
 // symbol    ?vec3_length@@YAMPBM@Z
 // kind      game
-// LEVER: NAMED LOCALS FOR y AND z, rather than `vector[1]`/`vector[2]` read twice each: the image loads both as raw ints into ecx/edx and writes them to a two-slot scratch on the stack (reusing the argument's own slot, since __cdecl leaves it dead once the pointer is in eax) before reloading each from memory for its square - a local-variable spill, not a re-read through the pointer. `vector[1]`/`vector[2]` written out scored 0/21; these two locals reach 7/21 (0.818), the ceiling found - the two scratch SLOTS still land swapped ([esp]/[esp+8]) no matter which of y/z is declared or summed first (measured, six spellings).
+// LEVER: under VC5, plain x/y/z locals summed y*y + z*z + x*x match; VC5
+//        itself spills y and z to [esp] and the dead argument slot.
 #if defined(_MSC_VER) && _MSC_VER <= 1200
 // The pinned free operation uses inline fsqrt; Vector::normalize keeps the
 // translation unit's CRT sqrt policy before and after this one definition.
 #pragma intrinsic(sqrt)
 #endif
 float __cdecl vec3_length(const float *vector) {
-    const float y = vector[1];
-    const float z = vector[2];
-    const long double sum = static_cast<long double>(y) * y
-                          + static_cast<long double>(z) * z
-                          + static_cast<long double>(vector[0]) * vector[0];
-    return static_cast<float>(std::sqrt(sum));
+    float x = vector[0];
+    float y = vector[1];
+    float z = vector[2];
+    return (float)sqrt(y * y + z * z + x * x);
 }
 
 /*
@@ -241,16 +244,9 @@ Purpose: Normalise a vector in place: divide each component by the vector's
 //        no spelling here produces it.
 */
 void __cdecl vox_normalise_vector(const float *source, float *out) {
-    float x = source[0];
-    float y = source[1];
-    float z = source[2];
-    double length = sqrt(static_cast<double>(y) * y
-                       + static_cast<double>(z) * z
-                       + static_cast<double>(x) * x);
-    // The original stores this reciprocal to an m32 stack slot before using it.
-    // Volatile preserves that observed float32 conversion without narrowing the
-    // preceding square root or changing the sequential source rereads below.
-    volatile float scale = 1.0f / length;
+    // vec3_length inlined (/Ob2), then one reciprocal; the components are
+    // re-read from source for the products, so out may alias source.
+    float scale = 1.0f / vec3_length(source);
     out[0] = source[0] * scale;
     out[1] = source[1] * scale;
     out[2] = source[2] * scale;
