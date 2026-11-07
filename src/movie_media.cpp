@@ -203,7 +203,7 @@ combine_components:
 }
 
 // Native caller passes ECX, EDX and five stack dwords; writes all three banks.
-// ORIGINAL: 0x005CC150 sub_5cc150 0x005CC150-0x005CC2A9
+// ORIGINAL: 0x005CC150 sub_5cc150 0x005CC150-0x005CC2A9 BYTE_EXACT
 // symbol    @sub_5cc150@28
 // kind      game
 // TRIED: catalogue head is stdcall(a1..a5) but the body reads ecx/edx directly as real values at entry (mov ebx,edx; mov edi,ecx) - PROPOSAL: __fastcall(ecxArg, edxArg, a1..a5); ret 0x14 cleans exactly the 5 stack ints, consistent with fastcall. Call-site argument order for the 2nd/3rd loops was cross-checked against the ghidra decompile's param_1..param_7 (fastcall) naming, which also confirms two of the fixed-point angle computations per loop are dead (computed, never read by the callee).
@@ -2635,7 +2635,7 @@ Purpose: Fill one 8x8-block-pair frame fragment with the flat color the six
 
 // Typed owner implementation; native ABI/output, original reference targets
 // and exceptional behavior remain restoration obligations, not owner stubs.
-// ORIGINAL: 0x005CD3B0 sub_5cd3b0 0x005CD3B0-0x005CD556
+// ORIGINAL: 0x005CD3B0 sub_5cd3b0 0x005CD3B0-0x005CD556 BYTE_EXACT
 // symbol    ?sub_5cd3b0@@YAXDDDDDDPAHI@Z
 // size      422 bytes
 // prototype void (__cdecl sub_5cd3b0)(char, char, char, char, char, char, int *, unsigned int)

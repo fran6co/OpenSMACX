@@ -14,7 +14,7 @@ unsigned long vox_vendor_intel[3] = {0x756e6547, 0x49656e69, 0x6c65746e};
 // RECOVERY_OBJECT: v1 0x00698DE4 ?vox_vendor_amd@@3PAKA
 unsigned long vox_vendor_amd[3] = {0x68747541, 0x69746e65, 0x444d4163};
 
-// ORIGINAL: 0x0063E860 sub_63e860 0x0063E860-0x0063E94E FILE
+// ORIGINAL: 0x0063E860 sub_63e860 0x0063E860-0x0063E94E FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned0x63E860-0x63E94E preserves EAX/EBX/ECX/EDX/ESI/EDI; AC and ID full-word comparison gates, ordered output stores, signed leaf0 limit, vendor words, base-family/MMX ranks and no final flags restoration.", "Pinned0x639330 ignores incoming EAX after the call and reads rank9C0830. Full indirect caller and final condition-flag effects remain obligations; no new matching or acceptance claim.", "task:caviar-cpu-probe-oct11; preserve original identity/spans and historical VC6 limitation as seed evidence, not a reason to retain rank1 fallback."], "reason": "Recover the original CPU flags and CPUID classification in its register-preserving intrinsic owner, sharing genuine byte storage with preferences and renderer consumers."}
 // symbol    ?vox_detect_cpu@@YAXXZ
 // Hand-written asm: pushfd/popfd AC and ID toggling plus cpuid, saving

@@ -1251,7 +1251,7 @@ void __cdecl OutputPixelRow16(MediaConversionTableStorage &tables,
 
 // 005CEB12 owns byte-lane lookup and packing. Keep 005CEA09 as its mapped
 // sixteen-call wrapper with independently advanced source rows and pitch.
-// ORIGINAL: 0x005CEA09 sub_5cea09 0x005CEA09-0x005CEB12
+// ORIGINAL: 0x005CEA09 sub_5cea09 0x005CEA09-0x005CEB12 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["recovery/tasks/movie-decoder-owner-oct5.json", "pinned caller/body and shared-storage review; fresh VC6 public symbol", "Preserve the 16-call source-row and output-pitch progression while calling the mapped C++ 5CEB12 implementation for every row; do not inline a second lookup algorithm."], "reason": "Faithful semantic media decoder owner recovery with normalized custom-register helper interfaces. Original identities, spans and historical findings retained; no matching, runtime or game acceptance granted."}
 // symbol    ?sub_5cea09@@YAXPBE0PAEH@Z
 // TRIED: byte-exactness is not reachable in standard C++ here - the 16 calls to sub_5ceb12() take NO explicit arguments; the original threads state between them entirely through the callee-saved registers esi/edi/ebp (incremented by 0x40/ 0x20/a caller-stack value between calls), which is a register-level calling convention no C++ source can express without __asm (forbidden). Landed as 16 unrolled calls with `void` return (the disassembly never sets eax before `ret`, contradicting the `int` in the given contract head) and the 4 IDA-guessed int parameters, unused since nothing in valid C++ can route them into esi/edi/ebp for the callee.
@@ -1431,7 +1431,7 @@ Purpose: One 8-point inverse DCT row, the butterfly half of the movie codec's
 /*
 // Typed owner implementation; native ABI/output, original reference targets
 // and exceptional behavior remain restoration obligations, not owner stubs.
-// ORIGINAL: 0x005CEE80 sub_5cee80 0x005CEE80-0x005CEF8A
+// ORIGINAL: 0x005CEE80 sub_5cee80 0x005CEE80-0x005CEF8A BYTE_EXACT
 // symbol    ?sub_5cee80@@YAXPAH@Z
 // size      266 bytes
 // prototype void (__cdecl sub_5cee80)(int *src)
@@ -1537,7 +1537,7 @@ Purpose: Build one 8x8 coefficient block for the movie decoder: eight
 
 // Typed owner implementation; native ABI/output, original reference targets
 // and exceptional behavior remain restoration obligations, not owner stubs.
-// ORIGINAL: 0x005CEF8A sub_5cef8a 0x005CEF8A-0x005CF11D
+// ORIGINAL: 0x005CEF8A sub_5cef8a 0x005CEF8A-0x005CF11D BYTE_EXACT
 // symbol    ?sub_5cef8a@@YAXPAEH@Z
 // size      403 bytes
 // prototype void (__cdecl sub_5cef8a)(int, int)
@@ -1655,7 +1655,7 @@ Purpose: Apply the first IDCT pass to one 8-coefficient vector. In the
          nine-dword-stride intermediate block.
 // Typed owner implementation; native ABI/output, original reference targets
 // and exceptional behavior remain restoration obligations, not owner stubs.
-// ORIGINAL: 0x005CED1D sub_5ced1d 0x005CED1D-0x005CEE80
+// ORIGINAL: 0x005CED1D sub_5ced1d 0x005CED1D-0x005CEE80 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"reason":"The historical 0x005CEF8A bound included the complete separate sub_5cee80 transform. End this transform at its terminal RET; preserve both identities and their independently implemented behavior and unresolved ABI/precision obligations.","evidence":["pinned:0x005CED1D-0x005CEE80 complete instruction decode ending with RET at 0x005CEE7F; no branch leaves this body","pinned:independent sub_5cee80 begins exactly at 0x005CEE80, with its own complete 0x005CEE80-0x005CEF8A mapping","source:src/movie_media_decoder.cpp separate transform bodies; IDA and Ghidra agree on both entry/return boundaries"]}
 // symbol    ?sub_5ced1d@@YAXPAH@Z
 // size      355 bytes
@@ -1772,7 +1772,7 @@ m5ced1d_5cee54:
 
 // Decoder providers share their typed storage and callers here. This is a
 // recovered ownership cohort, not proof of one historical source module.
-// ORIGINAL: 0x005D271D sub_5d271d 0x005D271D-0x005D2761 FILE
+// ORIGINAL: 0x005D271D sub_5d271d 0x005D271D-0x005D2761 FILE BYTE_EXACT
 // symbol    _sub_5d271d
 // size      68 bytes
 // prototype
@@ -1996,7 +1996,7 @@ extern "C" void __fastcall sub_5d3f50(MediaRuntime *runtime) {
 }
 
 
-// ORIGINAL: 0x005D427C sub_5d427c 0x005D427C-0x005D439F
+// ORIGINAL: 0x005D427C sub_5d427c 0x005D427C-0x005D439F BYTE_EXACT
 // symbol    _sub_5d427c
 // TRIED: entry uses pushal/popal (all eight registers saved and restored) around the whole body with cld and only rep movsb/ rep movsd inside, which VC6 never emits for ordinary compiled C++ - this is very likely inline assembly in the original source, which the rules here bar reproducing. Transcribed Ghidra's decompilation (already a faithful read of the byte stream) into plain C++ instead: a byte-oriented decoder that walks a control word one bit at a time, alternating literal dword/byte copies from the source with back-reference copies from already-written output, matching an LZ-style unpacker. No `__asm`; this compiles but will not reach the original's register-saving shape.
 // size      291 bytes
@@ -2136,7 +2136,7 @@ m5d427c_5d435c:
     }
 }
 
-// ORIGINAL: 0x005D439F sub_5d439f 0x005D439F-0x005D4448 FILE
+// ORIGINAL: 0x005D439F sub_5d439f 0x005D439F-0x005D4448 FILE BYTE_EXACT
 // symbol    _sub_5d439f
 // working copy - scaffold materialised by --work
 // size      169 bytes
@@ -2232,7 +2232,7 @@ m5d439f_5d443e:
     }
 }
 
-// ORIGINAL: 0x005D4448 sub_5d4448 0x005D4448-0x005D44FC FILE
+// ORIGINAL: 0x005D4448 sub_5d4448 0x005D4448-0x005D44FC FILE BYTE_EXACT
 // symbol    _sub_5d4448
 // TRIED: byte-exact - `pushal`/`popal` at entry has no C++ spelling (documented wall). Landed the nested do/while-with-goto gather loop structurally instead: 9 stack args, an outer per-run counter reset from a saved [ebp+0x24] and an inner index-table lookup vs a direct 16-byte-stride struct-array fallback.
 // working copy - scaffold materialised by --work
@@ -2457,7 +2457,7 @@ MediaAdpcmStorage MediaAdpcmTables = {
 // Preserve the native byte-offset interpretation, including unaligned input
 // offsets, without an unaligned int dereference. This is not a bounds waiver.
 
-// ORIGINAL: 0x005CE640 sub_5ce640 0x005CE640-0x005CE6E3 FILE
+// ORIGINAL: 0x005CE640 sub_5ce640 0x005CE640-0x005CE6E3 FILE BYTE_EXACT
 // symbol    ?sub_5ce640@@YAXHPAEPAFHPAH2@Z
 // size      163 bytes
 // prototype
@@ -2895,7 +2895,7 @@ void __cdecl sub_5d2037(int *data_row, int *selector_pair,
     }
 }
 
-// ORIGINAL: 0x005D2761 sub_5d2761 0x005D2761-0x005D2834 FILE
+// ORIGINAL: 0x005D2761 sub_5d2761 0x005D2761-0x005D2834 FILE BYTE_EXACT
 // symbol    ?sub_5d2761@@YAXPAI0H@Z
 // LEVER: the four tbl_ globals are four of EIGHT 0x400-byte tables laid
 //         end to end at 0x009C672C + k*0x400 for k = 0..7, all ZERO in the
@@ -2992,7 +2992,7 @@ m5d2761_5d276f:
 
 // Fixed-slot bindings carried from 005d2834.cpp
 
-// ORIGINAL: 0x005D2834 sub_5d2834 0x005D2834-0x005D2901 FILE
+// ORIGINAL: 0x005D2834 sub_5d2834 0x005D2834-0x005D2901 FILE BYTE_EXACT
 // symbol    ?sub_5d2834@@YAHPAIPAHH@Z
 // TRIED: literal Ghidra-order locals (uVar1/uVar2) and inline expr order both produce a tight 191-byte body without the 6-register push prologue the original has; register pressure not reproduced.
 // working copy - scaffold materialised by --work
@@ -3074,7 +3074,7 @@ m5d2834_5d2848:
     }
 }
 
-// ORIGINAL: 0x005D2901 sub_5d2901 0x005D2901-0x005D29E1 FILE
+// ORIGINAL: 0x005D2901 sub_5d2901 0x005D2901-0x005D29E1 FILE BYTE_EXACT
 // symbol    ?sub_5d2901@@YAHPAH00H@Z
 // TRIED: extern int name[] for the six indexed lookup tables (same tables as the sibling sub_5d2834 at 0x005D2834), not the given `static int *const` - these are used as `table[idx]`, an indexed base. Signature widened to the IDA-guessed 4 params (int*,int*,int*,int) since the given head has none.
 // TRIED: could not reproduce the 6-register push prologue (push ebx,ecx,edx,esi,edi,ebp - ecx/edx pushed as scratch stack slots, not preservation); same wall the sibling function at 0x005D2834 hit. Hoisting the shared table_7f2c+table_772c subexpression into named locals `a`/`b` (to force it live across both blend computations, matching the original's edx reuse) made similarity slightly worse (0.61 -> 0.60), not better.
@@ -3563,7 +3563,7 @@ void __cdecl sub_5d2536(DWORD *coefficient_row, DWORD *selector_pair,
     }
 }
 
-// ORIGINAL: 0x005CE6E3 sub_5ce6e3 0x005CE6E3-0x005CE85A FILE
+// ORIGINAL: 0x005CE6E3 sub_5ce6e3 0x005CE6E3-0x005CE85A FILE BYTE_EXACT
 // symbol    ?sub_5ce6e3@@YAXPAEPAFHPAH2@Z
 // TRIED: earlier homed into general.cpp (original TU unproved) 2026-09-03 and reverted for one reason:
 // its fixed-address bindings have no naming evidence. image_data.py reads
