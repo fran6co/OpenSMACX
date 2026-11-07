@@ -5258,7 +5258,7 @@ Purpose: Render one map tile - terrain first, then vehicles and overlays.
          select around that walk itself (measured on a standalone probe:
          every spelling of the plain `Buffer *surface = this;` upcast
          produces the test/jne/xor-jmp/lea shape the image carries).
-// ORIGINAL: 0x00468C20 ?gen_tile@MapWin@@QAEXHHHH@Z 0x00468C20-0x00468CC5 FILE
+// ORIGINAL: 0x00468C20 ?gen_tile@MapWin@@QAEXHHHH@Z 0x00468C20-0x00468CC5 FILE BYTE_EXACT
 // size      165 bytes
 // prototype void (__thiscall ?gen_tile@MapWin@@QAEXHHHH@Z)(MapWin* this, int, int, int, int)
 // callers   0   call targets   4
@@ -6044,7 +6044,7 @@ void MapWin::right_menu(int tile_x, int tile_y, int screen_x, int screen_y) {
 // Original0x00469720 labels the eight neighboring tiles around the current
 // console cursor using the original keypad order and this window's map scale.
 // Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x00469720 ?draw_legend@MapWin@@QAEXXZ 0x00469720-0x004698C8;0x00655932-0x00655944 FILE
+// ORIGINAL: 0x00469720 ?draw_legend@MapWin@@QAEXXZ 0x00469720-0x004698C8;0x00655932-0x00655944 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00469720.cpp", "Pinned original image review controls route precedence, cursor sprite dispatch, signed zoom, actual API imports and original member/data dependencies. Bounded compile and host controls do not establish game acceptance."], "reason": "Recover the genuine MapWin/Console owner operation using typed members, actual shared storage, virtual base APIs and full original branch evidence; keep seed and historical obligations."}
 void MapWin::draw_legend() {
     Font legend_font;
