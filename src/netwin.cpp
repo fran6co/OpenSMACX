@@ -735,148 +735,103 @@ void NetWin::prepare_game() {
     Random random;
     random.reseed(1000);
 
-    NetWinFactionRecord *const faction_records =
-        static_cast<NetWinFactionRecord *>(faction_records_);
-    const int faction_count = faction_records[0].record_count_;
     unsigned int used_mask = 0;
-
-    for (int unused_faction = 0; unused_faction < faction_count;
-         ++unused_faction) {
-        if (faction_records[unused_faction].active_ == 0) {
-            used_mask |=
-                1u << (static_cast<unsigned int>(unused_faction) & 31u);
-        }
-    }
-    for (int used_seat = 1; used_seat < 8; ++used_seat) {
-        const int existing_faction =
-            NetWinLobbyRows.rows_[used_seat].faction_or_color_;
-        if (existing_faction != -1) {
-            used_mask |=
-                1u << (static_cast<unsigned int>(existing_faction) & 31u);
-        }
-    }
-
-    int needed = 0;
-    for (int needed_faction = 0; needed_faction < faction_count;
-         ++needed_faction) {
-        if (faction_records[needed_faction].active_ != 0 &&
-            (used_mask &
-             (1u << (static_cast<unsigned int>(needed_faction) & 31u))) == 0) {
-            ++needed;
-        }
-    }
-
     unsigned int hidden_mask = 0;
-    int remaining = needed;
-    for (int assign_seat = 1; assign_seat < 8; ++assign_seat) {
-        int8_t &assigned_faction =
-            NetWinLobbyRows.rows_[assign_seat].faction_or_color_;
-        if (assigned_faction == -1) {
-            hidden_mask |= 1u << assign_seat;
+    const int faction_count = faction_records_[0].record_count_;
+    int i;
+    for (i = 0; i < faction_count; i++) {
+        if (faction_records_[i].active_ == 0) {
+            used_mask |= 1u << i;
+        }
+    }
+    int seat;
+    for (seat = 1; seat < 8; seat++) {
+        if (NetWinLobbyRows.rows_[seat].faction_or_color_ != -1) {
+            used_mask |= 1u << NetWinLobbyRows.rows_[seat].faction_or_color_;
+        }
+    }
+    int needed = 0;
+    for (i = 0; i < faction_count; i++) {
+        if (faction_records_[i].active_ != 0 && !(used_mask & (1u << i))) {
+            needed++;
+        }
+    }
+    for (seat = 1; seat < 8; seat++) {
+        if (NetWinLobbyRows.rows_[seat].faction_or_color_ == -1) {
+            hidden_mask |= 1u << seat;
             unsigned int picked;
-            if (remaining == 0) {
-                picked = random.get(0, faction_count);
-            } else {
+            if (needed) {
                 do {
                     picked = random.get(0, faction_count);
-                } while ((used_mask & (1u << (picked & 31u))) != 0);
-                --remaining;
+                } while (used_mask & (1u << picked));
+                needed--;
+            } else {
+                picked = random.get(0, faction_count);
             }
-            assigned_faction = static_cast<int8_t>(picked);
-            used_mask |= 1u << (picked & 31u);
+            NetWinLobbyRows.rows_[seat].faction_or_color_ = static_cast<int8_t>(picked);
+            used_mask |= 1u << picked;
         }
     }
 
-    const int mode = NetWinSessionData.fields_.mode_;
-    if (mode == 0 || mode == 1) {
-        for (int player_slot_index = 0; player_slot_index < 8;
-             ++player_slot_index) {
-            AlphaNetProcessSlot &slot =
-                NetDaemonNet.process_slots_[player_slot_index];
-            const NetWinLobbyRow &row = NetWinLobbyRows.rows_[player_slot_index];
-            slot.identity_ = static_cast<int8_t>(row.prefix_);
-            slot.field_25_ = row.ready_or_occupied_;
-            slot.field_26_ = row.field_2_;
-            slot.field_27_ = row.faction_or_color_;
-            memcpy(slot.status_bytes_,
-                   reinterpret_cast<const uint8_t *>(&row) + 4, 0x172);
-            slot.identity_ = static_cast<int8_t>(player_slot_index);
+    // Each process slot receives the leading 0x176 row bytes at its identity.
+    if (NetWinSessionData.fields_.mode_ != 0 && NetWinSessionData.fields_.mode_ != 1) {
+        for (i = 0; i < 8; i++) {
+            memcpy(&NetDaemonNet.process_slots_[i].identity_, &NetWinLobbyRows.rows_[i], 0x176);
+            NetDaemonNet.process_slots_[i].identity_ =
+                NetWinLobbyRows.rows_[i].faction_or_color_ == -1
+                ? 0 : NetWinLobbyRows.rows_[i].faction_or_color_;
         }
     } else {
-        for (int faction_slot_index = 0; faction_slot_index < 8;
-             ++faction_slot_index) {
-            int chosen_faction =
-                NetWinLobbyRows.rows_[faction_slot_index].faction_or_color_;
-            if (chosen_faction == -1) {
-                chosen_faction = 0;
-            }
-            AlphaNetProcessSlot &slot =
-                NetDaemonNet.process_slots_[faction_slot_index];
-            const NetWinLobbyRow &row = NetWinLobbyRows.rows_[faction_slot_index];
-            slot.identity_ = static_cast<int8_t>(row.prefix_);
-            slot.field_25_ = row.ready_or_occupied_;
-            slot.field_26_ = row.field_2_;
-            slot.field_27_ = row.faction_or_color_;
-            memcpy(slot.status_bytes_,
-                   reinterpret_cast<const uint8_t *>(&row) + 4, 0x172);
-            slot.identity_ = static_cast<int8_t>(chosen_faction);
+        for (i = 0; i < 8; i++) {
+            memcpy(&NetDaemonNet.process_slots_[i].identity_, &NetWinLobbyRows.rows_[i], 0x176);
+            NetDaemonNet.process_slots_[i].identity_ = static_cast<int8_t>(i);
         }
     }
 
-    if (mode == 0 || mode == 1) {
-        for (int duplicate_seat = 2; duplicate_seat < 8; ++duplicate_seat) {
-            char *const leader_name =
-                NetWinLobbyRows.rows_[duplicate_seat].leader_name_;
-            int duplicate_count = 0;
-            for (int earlier_seat = 1; earlier_seat < duplicate_seat;
-                 ++earlier_seat) {
-                if (strcmp(leader_name,
-                           NetWinLobbyRows.rows_[earlier_seat].leader_name_) == 0) {
-                    ++duplicate_count;
+    if (NetWinSessionData.fields_.mode_ != 0 && NetWinSessionData.fields_.mode_ != 1) {
+        if (NetDaemonNet.local_player_id() != NetDaemonNet.host_player_id()) {
+            for (i = 1; i < 8; i++) {
+                strcpy(Players[i].filename, faction_records_[i].filename_);
+                load_faction_art(i);
+            }
+        }
+    } else {
+        for (seat = 2; seat < 8; seat++) {
+            char *const leader_name = NetWinLobbyRows.rows_[seat].leader_name_;
+            int duplicates = 0;
+            for (int earlier = 1; earlier < seat; earlier++) {
+                if (!strcmp(leader_name, NetWinLobbyRows.rows_[earlier].leader_name_)) {
+                    duplicates++;
                 }
             }
-            if (duplicate_count != 0) {
+            if (duplicates) {
                 char suffix[80];
-                _itoa(duplicate_count, suffix, 10);
+                _itoa(duplicates, suffix, 10);
                 strcat(leader_name, suffix);
             }
         }
-
-        for (int filename_seat = 1; filename_seat < 8; ++filename_seat) {
-            const int filename_faction =
-                NetWinLobbyRows.rows_[filename_seat].faction_or_color_;
-            const char *const faction_file =
-                faction_records[filename_faction].filename_;
-            strcpy(Players[filename_seat].filename, faction_file);
-            strcpy(Players[filename_seat].search_key, faction_file);
-            read_faction(filename_seat);
-            compute_faction_modifiers(filename_seat);
+        for (i = 1; i < 8; i++) {
+            strcpy(Players[i].filename,
+                   faction_records_[NetWinLobbyRows.rows_[i].faction_or_color_].filename_);
+            strcpy(Players[i].search_key,
+                   faction_records_[NetWinLobbyRows.rows_[i].faction_or_color_].filename_);
+            read_faction(i);
+            compute_faction_modifiers(i);
         }
-
-        for (int player_seat = 1; player_seat < 8; ++player_seat) {
-            AlphaNetProcessSlot &slot_record =
-                NetDaemonNet.process_slots_[player_seat];
-            const int player_faction = slot_record.identity_;
-            const NetWinLobbyRow &row = NetWinLobbyRows.rows_[player_seat];
-            PlayersData[player_faction].diff_level =
-                static_cast<int8_t>(slot_record.field_26_);
-            if ((hidden_mask & (1u << player_seat)) == 0) {
-                strcpy(Players[player_faction].name_leader, row.leader_name_);
-                strcpy(Players[player_faction].formal_name_faction,
-                       row.formal_faction_name_);
-                strcpy(Players[player_faction].noun_faction, row.noun_faction_);
-                strcpy(Players[player_faction].adj_faction,
-                       row.adjective_faction_);
-                strcpy(Players[player_faction].title_leader, row.leader_title_);
-                strcpy(Players[player_faction].adj_leader, row.adjective_leader_);
-                Players[player_faction].is_leader_female = row.tail_[0];
+        for (seat = 1; seat < 8; seat++) {
+            const int faction = NetDaemonNet.process_slots_[seat].identity_;
+            PlayersData[faction].diff_level =
+                static_cast<int8_t>(NetDaemonNet.process_slots_[seat].field_26_);
+            if (!(hidden_mask & (1u << seat))) {
+                const NetWinLobbyRow &row = NetWinLobbyRows.rows_[seat];
+                strcpy(Players[faction].name_leader, row.leader_name_);
+                strcpy(Players[faction].formal_name_faction, row.formal_faction_name_);
+                strcpy(Players[faction].noun_faction, row.noun_faction_);
+                strcpy(Players[faction].adj_faction, row.adjective_faction_);
+                strcpy(Players[faction].title_leader, row.leader_title_);
+                strcpy(Players[faction].adj_leader, row.adjective_leader_);
+                Players[faction].is_leader_female = row.tail_[0];
             }
-        }
-    } else if (NetDaemonNet.local_player_id() != NetDaemonNet.host_player_id()) {
-        for (int art_faction = 1; art_faction < 8; ++art_faction) {
-            strcpy(Players[art_faction].filename,
-                   faction_records[art_faction].filename_);
-            load_faction_art(art_faction);
         }
     }
 

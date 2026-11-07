@@ -1347,8 +1347,8 @@ void BaseWin::psych_row(int x, int y, int width, int sprite_width,
             x += spacing;
         }
         for (i = 0; i < BaseCurrent->specialist_total; i++) {
-            Sprite &sprite = g_AL_SPECIALIST_SM_CURSOR_SPRITES[i < 16
-                ? (static_cast<int>(BaseCurrent->spec[i >> 3]) >> ((i & 7) * 4)) & 15 : best_specialist()];
+            Sprite &sprite = g_AL_SPECIALIST_SM_CURSOR_SPRITES[i >= 16
+                ? best_specialist() : (static_cast<int>(BaseCurrent->spec[i >> 3]) >> ((i & 7) * 4)) & 15];
             sprite.draw(this, sprite.transparent_index(), x, y);
             x += spacing;
         }
@@ -1371,8 +1371,8 @@ void BaseWin::psych_row(int x, int y, int width, int sprite_width,
             x += spacing;
         }
         for (i = 0; i < BaseCurrent->specialist_total; i++) {
-            Sprite &sprite = g_SPECIALIST_SM_CURSOR_SPRITES[i < 16
-                ? (static_cast<int>(BaseCurrent->spec[i >> 3]) >> ((i & 7) * 4)) & 15 : best_specialist()];
+            Sprite &sprite = g_SPECIALIST_SM_CURSOR_SPRITES[i >= 16
+                ? best_specialist() : (static_cast<int>(BaseCurrent->spec[i >> 3]) >> ((i & 7) * 4)) & 15];
             sprite.draw(this, sprite.transparent_index(), x, y);
             x += spacing;
         }
@@ -6307,65 +6307,103 @@ void BaseWin::draw_pop(int update_mode) {
     Random random;
     random.reseed(timeGetTime());
 
-    Buffer *canvas = static_cast<Buffer *>(&MainInterfaceGlobal);
-    RECT saved_clip = canvas->current_clip();
-    RECT inner = population_rect_;
-    canvas->set_clip(&inner);
-    canvas->box_sprite(&population_rect_, &InterfaceBoxStyles[3]);
+    RECT *const rect = &population_rect_;
+    RECT inner = *rect;
+    RECT saved_clip = MainInterfaceGlobal.current_clip();
+    MainInterfaceGlobal.set_clip(&inner);
+    MainInterfaceGlobal.box_sprite(rect, &InterfaceBoxStyles[3]);
+    // Per-type specialist tally; filled below and never read.
+    int specialist_counts[7];
+    memset(specialist_counts, 0, sizeof(specialist_counts));
     font.init(DefaultFontFace, 9, 1);
     spot1_.kill_type(1);
 
-    inner.left += 3;
-    inner.top += 3;
-    inner.right -= 3;
-    inner.bottom -= 3;
-    canvas->set_clip(&inner);
+    RECT panel;
+    panel.left = rect->left + 3;
+    panel.top = rect->top + 3;
+    panel.right = rect->right - 3;
+    panel.bottom = rect->bottom - 3;
+    MainInterfaceGlobal.set_clip(&panel);
 
-    const int height = inner.bottom - inner.top;
-    const int width = inner.right - inner.left;
     const int population = BaseCurrent->population_size;
-    int spacing = height;
-    if (population > 1) {
-        spacing = (width - height) / (population - 1);
-        if (spacing < 1 || height < 1) spacing = 1;
-        else if (spacing > height) spacing = height;
-    }
-
-    const int faction = BaseCurrent->faction_id_current;
-    const bool alien = ExpansionEnabled != 0
-        && (Players[faction].rule_flags & 0x80) != 0;
-    Sprite *citizens = alien ? g_AL_CITIZEN_LG_CURSOR_SPRITES
-                             : g_CITIZEN_LG_CURSOR_SPRITES;
-    Sprite *specialists = alien ? g_AL_SPECIALIST_LG_CURSOR_SPRITES
-                                : g_SPECIALIST_LG_CURSOR_SPRITES;
-    int x = inner.left;
-    for (int i = 0; i < BaseCurrent->population_size; ++i) {
-        const Base *base = BaseCurrent;
-        const int citizen_count = base->population_size - base->specialist_total;
-        const int y = inner.top + (height - 48) / 2;
-        if (i < citizen_count) {
-            int mood = i >= base->talent_total ? 1 : 0;
-            if (i >= citizen_count - base->drone_total) mood = 2;
-            if (i >= citizen_count - base->super_drone_total) mood = 3;
-            const int variant = alien ? 0 : static_cast<int>(random.get(0, 2));
-            Sprite &sprite = citizens[variant * 4 + mood];
-            sprite.draw(canvas, sprite.transparent_index(), x, y, 1, 1);
-            spot1_.add(-1, 1, x, inner.top, height, height);
-        } else {
-            const int specialist = i - citizen_count;
-            const int type = specialist < 16
-                ? (base->spec[specialist >> 3] >> ((specialist & 7) * 4)) & 15
-                : best_specialist();
-            Sprite &sprite = specialists[type];
-            sprite.draw(canvas, sprite.transparent_index(), x, y, 1, 1);
-            spot1_.add(specialist, 1, x, inner.top, height, height);
+    const int top = panel.top;
+    const int height = panel.bottom - top;
+    int spacing;
+    if (population <= 1) {
+        spacing = height;
+    } else {
+        spacing = (panel.right - panel.left - height) / (population - 1);
+        if (spacing < 1 || height < 1) {
+            spacing = 1;
+        } else if (spacing > height) {
+            spacing = height;
         }
-        x += spacing;
     }
 
-    if (update_mode == 0) MainInterfaceGlobal.soft_update(&population_rect_);
-    else MainInterfaceGlobal.update(&population_rect_, nullptr);
-    canvas->set_clip(&saved_clip);
+    int left = panel.left;
+    const int bottom = top + height;
+    int right = left + height;
+    int i;
+    if (ExpansionEnabled && (Players[BaseCurrent->faction_id_current].rule_flags & 0x80)) {
+        for (i = 0; i < BaseCurrent->population_size; i++) {
+            if (i < BaseCurrent->population_size - BaseCurrent->specialist_total) {
+                int mood = 0;
+                if (i >= BaseCurrent->talent_total) mood = 1;
+                if (i >= BaseCurrent->population_size - BaseCurrent->drone_total
+                        - BaseCurrent->specialist_total) mood = 2;
+                if (i >= BaseCurrent->population_size - BaseCurrent->super_drone_total
+                        - BaseCurrent->specialist_total) mood = 3;
+                g_AL_CITIZEN_LG_CURSOR_SPRITES[mood].draw(&MainInterfaceGlobal,
+                    g_AL_CITIZEN_LG_CURSOR_SPRITES[mood].transparent_index(),
+                    left, top + (bottom - top - 48) / 2, 1, 1);
+                spot1_.add(-1, 1, left, top, right - left, bottom - top);
+            } else {
+                const int specialist = i - (BaseCurrent->population_size - BaseCurrent->specialist_total);
+                const int type = specialist >= 16 ? best_specialist()
+                    : (static_cast<int>(BaseCurrent->spec[specialist >> 3]) >> ((specialist & 7) * 4)) & 15;
+                specialist_counts[type]++;
+                g_AL_SPECIALIST_LG_CURSOR_SPRITES[type].draw(&MainInterfaceGlobal,
+                    g_AL_SPECIALIST_LG_CURSOR_SPRITES[type].transparent_index(),
+                    left, top + (bottom - top - 48) / 2, 1, 1);
+                spot1_.add(specialist, 1, left, top, right - left, bottom - top);
+            }
+            right += spacing;
+            left += spacing;
+        }
+    } else {
+        for (i = 0; i < BaseCurrent->population_size; i++) {
+            if (i < BaseCurrent->population_size - BaseCurrent->specialist_total) {
+                int mood = 0;
+                if (i >= BaseCurrent->talent_total) mood = 1;
+                if (i >= BaseCurrent->population_size - BaseCurrent->drone_total
+                        - BaseCurrent->specialist_total) mood = 2;
+                if (i >= BaseCurrent->population_size - BaseCurrent->super_drone_total
+                        - BaseCurrent->specialist_total) mood = 3;
+                Sprite &sprite = g_CITIZEN_LG_CURSOR_SPRITES[random.get(0, 2) * 4 + mood];
+                sprite.draw(&MainInterfaceGlobal, sprite.transparent_index(),
+                    left, top + (bottom - top - 48) / 2, 1, 1);
+                spot1_.add(-1, 1, left, top, right - left, bottom - top);
+            } else {
+                const int specialist = i - (BaseCurrent->population_size - BaseCurrent->specialist_total);
+                const int type = specialist >= 16 ? best_specialist()
+                    : (static_cast<int>(BaseCurrent->spec[specialist >> 3]) >> ((specialist & 7) * 4)) & 15;
+                specialist_counts[type]++;
+                g_SPECIALIST_LG_CURSOR_SPRITES[type].draw(&MainInterfaceGlobal,
+                    g_SPECIALIST_LG_CURSOR_SPRITES[type].transparent_index(),
+                    left, top + (bottom - top - 48) / 2, 1, 1);
+                spot1_.add(specialist, 1, left, top, right - left, bottom - top);
+            }
+            right += spacing;
+            left += spacing;
+        }
+    }
+
+    if (update_mode) {
+        MainInterfaceGlobal.update(rect, 0);
+    } else {
+        MainInterfaceGlobal.soft_update(rect);
+    }
+    MainInterfaceGlobal.set_clip(&saved_clip);
 }
 // ORIGINAL: 0x00410870 ?draw_commerce@BaseWin@@QAEXH@Z 0x00410870-0x00411235;0x00651B22-0x00651B37
 // RECOVERY_BINDING: v1 {"evidence": ["image:0x004108CC-0x00410A95 copies/clips three BaseWin rectangles, initializes a Font, draws the title and sets the report palette", "image:0x00410B3C-0x00410D54 counts the first 70 Base facility bits and 64 SecretProject homes at the current base, weights projects five, then formats the alien score or sanction warning", "image:0x00410D54-0x0041111C selects partner rows and formats receipts, pact/treaty status, unequal exchanges and sanctions from Base/PlayerData fields", "image:0x004111DE-0x00411211 updates the outer rectangle and restores the clip"], "reason": "Recover the commerce panel's alien score and normal-faction partner rows through owned BaseWin rectangles, typed Base/SecretProject/diplomacy state and source-owned commerce ledgers; original compiler/reference/runtime proof remains separate."}

@@ -24,35 +24,8 @@
   */
 class Random {
  public:
-/*
-// ORIGINAL: 0x00625730 ??0Random@@QAE@XZ 0x00625730-0x00625739 BYTE_EXACT
-// compile_context src/random.cpp
-// size      9 bytes
-// prototype void (__thiscall ??0Random@@QAE@XZ)(Random* this)
-// callers   5   call targets   0
-// kind
-// flags
-// calls     (none)
-// notes     Staged hybrid export redirect calls the source-owned constructor
-*/
-  MEASURED Random() : seed_(0) {
-  } // 00625730
-  // A PLAIN STORE. This carried a `volatile` cast to force the write - the
-  // image is `mov dword ptr [ecx], 0; ret` and the fear was that VC6 would
-  // elide a store to a member that is about to die. It does not: the plain
-  // assignment is byte exact.
-/*
-// ORIGINAL: 0x00625740 ??1Random@@QAE@XZ 0x00625740-0x00625747 BYTE_EXACT
-// compile_context src/random.cpp
-// size      7 bytes
-// prototype void (__thiscall ??1Random@@QAE@XZ)(Random* this)
-// callers   5   call targets   0
-// kind
-// flags
-// calls     (none)
-// notes     Staged hybrid export redirect calls the source-owned destructor
-*/
-  MEASURED ~Random() { seed_ = 0; }   // 00625740
+  Random();    // 00625730
+  ~Random();   // 00625740
 
   // The optimization notes below record historical inline trials. These
   // methods now have ordinary declaration-only interfaces here and sole

@@ -30,6 +30,38 @@
 
 
 /*
+// ORIGINAL: 0x00625730 ??0Random@@QAE@XZ 0x00625730-0x00625739 BYTE_EXACT
+// compile_context src/random.cpp
+// size      9 bytes
+// prototype void (__thiscall ??0Random@@QAE@XZ)(Random* this)
+// callers   5   call targets   0
+// kind
+// flags
+// calls     (none)
+// notes     Staged hybrid export redirect calls the source-owned constructor
+*/
+Random::Random() : seed_(0) {
+}
+
+// A PLAIN STORE. This carried a `volatile` cast to force the write - the
+// image is `mov dword ptr [ecx], 0; ret` and the fear was that VC6 would
+// elide a store to a member that is about to die. It does not: the plain
+// assignment is byte exact.
+/*
+// ORIGINAL: 0x00625740 ??1Random@@QAE@XZ 0x00625740-0x00625747 BYTE_EXACT
+// compile_context src/random.cpp
+// size      7 bytes
+// prototype void (__thiscall ??1Random@@QAE@XZ)(Random* this)
+// callers   5   call targets   0
+// kind
+// flags
+// calls     (none)
+// notes     Staged hybrid export redirect calls the source-owned destructor
+*/
+Random::~Random() { seed_ = 0; }
+
+
+/*
 Purpose: Update the seed value, by the xor-swap with the argument that the image spells out.
 // ORIGINAL: 0x00625750 ?reseed@Random@@QAEXK@Z 0x00625750-0x00625763 BYTE_EXACT
 // LEVER: BYTE_EXACT 8/8. The body IS the xor-swap - `seed_ ^= n; n ^= seed_; seed_ ^= n;` - but written PLAINLY, VC6 recognises the idiom and folds the whole thing to the one `mov dword ptr [ecx], eax` the previous `seed_ = new_seed;` already emitted (measured: 3 instructions against the image's 8). Taking the ADDRESS of the parameter and xoring through it, `uint32_t *const b = &new_seed;`, denies VC6 the non-aliasing that algebra needs, and it then emits the image's four xors and two stores exactly. The same one change also took 0x006257E0 byte-exact.
