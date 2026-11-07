@@ -150,7 +150,7 @@ int PullDown::on_key_click(int key_input, int key) {
   }
 }
 
-// ORIGINAL: 0x005F9590 ?mouse_move@PullDown@@QAEXHH@Z 0x005F9590-0x005F9631
+// ORIGINAL: 0x005F9590 ?mouse_move@PullDown@@QAEXHH@Z 0x005F9590-0x005F9631 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned5F9590..5F9631; prior mapping in src/stringstruct.cpp; seed git:117282ee:src/unrecovered/005f9590.cpp", "Items at+A18, flags+0C, count+F20, selected+F28; Font line advance and border drive visible row scan. Verbatim FILE wrapper becomes BODY mapping on the actual member, with identical original spans and no claim change.", "recovery/tasks/interface-contract-report-closure.json four-method ownership closure; src/pulldown.cpp pulldown_update replaces original-address call"], "reason": "Rehome the complete hover tracker into its genuine PullDown owner, replacing raw receiver offsets and the fixed executable callee with members and the recovered pulldown_update. Preserve original identity and seed provenance; no current matching or runtime claim."}
 void PullDown::mouse_move(int, int y) {
   const int old_selected = selected_;
@@ -866,7 +866,7 @@ int PullDownState009B7B74;
 // RECOVERY_OBJECT: v2 0x009B7B78 0x009B7B7C ?ActivePullDown@@3PAVPullDown@@A 0x005F9170
 PullDown *ActivePullDown;
 
-// ORIGINAL: 0x005F9170 ?show@PullDown@@QAEHHHP6AHXZ@Z 0x005F9170-0x005F9397
+// ORIGINAL: 0x005F9170 ?show@PullDown@@QAEHHHP6AHXZ@Z 0x005F9170-0x005F9397 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["image:0x005F9170-0x005F9397"], "reason": "Original modal menu behavior expressed through the GraphicWin base, item members and typed callback."}
 int PullDown::show(int x, int y, int (*poll)()) {
     poll_ = poll;
@@ -1322,7 +1322,7 @@ void PullDown::on_left_down(int x, int y) {
     }
 }
 
-// ORIGINAL: 0x005F9480 ?on_left_up@PullDown@@QAEXHH@Z 0x005F9480-0x005F9563 FILE
+// ORIGINAL: 0x005F9480 ?on_left_up@PullDown@@QAEXHH@Z 0x005F9480-0x005F9563 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Original5F9480..5F9563; retired seed git:117282ee:src/unrecovered/005f9480.cpp retains original identity and spans.", "Pinned PullDown constructor5F8800 installs66FF40: slot21 points5F9480, slot2 hide5F93A0, slot62 GraphicWin redraw5D5A70.", "Current PullDown owns items_ at+A18 with0x14-byte rows; PullDownItem flags at+C gives the original+A24+i*14 test address. Constructor/add/redraw and native emitted member accesses agree; this is not a text-pointer tag test.", "Pinned release uses flag masks1/4, signed line-height division, count+F20 and selected+F28; preserve zero/negative counts, empty redraw and selected hide order without added guards."], "reason": "The original release selector belongs to PullDown Win slot 21; express its existing item flags and callbacks through the real owner, preserving the original count/error paths."}
 // symbol    ?on_left_up@PullDown@@UAEXHH@Z
 void PullDown::on_left_up(int x, int y) {
