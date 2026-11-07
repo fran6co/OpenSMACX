@@ -214,187 +214,147 @@ static MediaTransformRegisterContinuation movie_media_transform_return(
 // RECOVERY_BINDING: v1 {"evidence": ["pinned terranx_original.exe SHA-256 01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf; mapped span 005CF150-005CF2F0", "pinned dispatch table at 009C9AA8 targets 005CF1CE/239/1AC/26A/1DB/226/1BC/26A; run arms read distinct A8/A4/A0 windows", "both native exits write ESI/EBP/ECX to 009C5920/28/24 and return EDI without restoring it; 5CF2F0 consumes those outputs after five calls", "existing movie_media_decoder.cpp shared workspace, scale and transform-bit-state owners; stack workspace pushes are cleaned by callers and not read in the 416-byte body", "historical leaf source comments preserved verbatim immediately before this mapping; new C++ wrapper/helper does not claim a measured symbol or ABI"], "reason": "Source-owned full implementation of the mapped 5CF150 transform; its normalized return carries the original post-call register state to the six-step 5CF2F0 decoder. This is not native custom-register ABI evidence."}
 // symbol    ?sub_5cf150@@YA?AUMediaTransformRegisterContinuation@@XZ
 // TRIED: The old leaf source transcript was not register-faithful. The mapped function now owns the full eight-way implementation; its C++ result normalizes the native ESI/EBP/ECX/EDI continuation and does not claim the unknown external custom-register ABI.
-MediaTransformRegisterContinuation
-__cdecl sub_5cf150() {
-    MediaCoefficientTableStorage &transform_constants =
-        movie_media_coefficient_tables;
-    MediaConversionTableStorage &conversion_tables =
-        movie_media_conversion_tables;
-    MediaTransformBitState &reader = conversion_tables.transform_bit_state;
-    const BYTE *cursor = reader.cursor;
-    DWORD accumulator = reader.accumulator;
-    LONG available_bits = reader.available_bits;
-    DWORD index_bits = 0x3f;
-
-    // 5CF150's initial signed-byte DC term and refill, in the same register
-    // widths as EBP/ESI/ECX. Its IMUL/SHR/ADC sequence is product >> 16.
-    const int dc = static_cast<signed char>(static_cast<BYTE>(accumulator));
-    const __int64 dc_product = static_cast<__int64>(dc) *
-        static_cast<__int64>(movie_media_signed32(
-            conversion_tables.block_scale_entries[0]));
-    movie_media_raw_workspace_store(0,
-        movie_media_int_bits(movie_media_low32(dc_product)));
-    accumulator >>= 8;
-    {
-        const BYTE byte = *cursor++;
-        available_bits = movie_media_add_ecx(available_bits, -8);
-        accumulator |= static_cast<DWORD>(byte) <<
-            (static_cast<unsigned int>(available_bits) & 31);
-        available_bits = movie_media_add_ecx(available_bits, 8);
-    }
-
-    for (;;) {
-        const unsigned int code = accumulator & 7;
-        const DWORD slot = movie_media_raw_word_at(
-            transform_constants.words + 5, index_bits);
-        switch (code) {
-        case 0:
-            movie_media_raw_workspace_store(slot, 0);
-            break;
-        case 1: {
-            unsigned int run = (accumulator & 0xff) >> 3;
-            // The key-1 run reads three distinct table windows: A8[i] is
-            // the first destination, A4[i] is the next destination, and
-            // A0[i] becomes the next live EBX-derived destination.
-            DWORD run_slot = slot;
-            do {
-                movie_media_raw_workspace_store(run_slot, 0);
-                movie_media_raw_workspace_store(movie_media_raw_word_at(
-                    transform_constants.words + 4, index_bits), 0);
-                run_slot = movie_media_raw_word_at(
-                    transform_constants.words + 3, index_bits);
-                index_bits -= 2;
-                --run;
-            } while (run != 0);
-            ++index_bits;
-
-            accumulator >>= 8;
-            {
-                const BYTE byte = *cursor++;
-                available_bits = movie_media_add_ecx(available_bits, -8);
-                accumulator |= static_cast<DWORD>(byte) <<
-                    (static_cast<unsigned int>(available_bits) & 31);
-                available_bits = movie_media_add_ecx(available_bits, 8);
-            }
-            --index_bits;
-            if (movie_media_signed32(index_bits) <= 0)
-                return movie_media_transform_return(
-                    reader, cursor, accumulator, available_bits,
-                    movie_media_signed32(index_bits));
-            continue;
-        }
-        case 2:
-            movie_media_raw_workspace_store(slot,
-                movie_media_raw_word_at(
-                    conversion_tables.block_scale_entries, slot));
-            break;
-        case 3:
-        case 7: {
-            if ((accumulator & 0xfc) == 0xfc) {
-                accumulator >>= 8;
-                const BYTE byte = *cursor++;
-                available_bits = movie_media_add_ecx(available_bits, -8);
-                accumulator |= static_cast<DWORD>(byte) <<
-                    (static_cast<unsigned int>(available_bits) & 31);
-                available_bits = movie_media_add_ecx(available_bits, 8);
-                const int amplitude = static_cast<signed char>(
-                    static_cast<BYTE>(accumulator));
-                const __int64 product = static_cast<__int64>(amplitude) *
-                    static_cast<__int64>(movie_media_signed32(
-                        movie_media_raw_word_at(
-                            conversion_tables.block_scale_entries, slot)));
-                movie_media_raw_workspace_store(slot,
-                    movie_media_int_bits(movie_media_low32(product)));
-            } else {
-                const int signed_code = static_cast<signed char>(
-                    static_cast<BYTE>(accumulator & 0xfc));
-                const int amplitude = signed_code * 0x4000;
-                const __int64 product = static_cast<__int64>(amplitude) *
-                    static_cast<__int64>(movie_media_signed32(
-                        movie_media_raw_word_at(
-                            conversion_tables.block_scale_entries, slot)));
-                movie_media_raw_workspace_store(slot, movie_media_int_bits(
-                    movie_media_low32_after_arithmetic_shift16(product)));
-            }
-
-            accumulator >>= 8;
-            {
-                const BYTE byte = *cursor++;
-                available_bits = movie_media_add_ecx(available_bits, -8);
-                accumulator |= static_cast<DWORD>(byte) <<
-                    (static_cast<unsigned int>(available_bits) & 31);
-                available_bits = movie_media_add_ecx(available_bits, 8);
-            }
-            --index_bits;
-            if (movie_media_signed32(index_bits) <= 0)
-                return movie_media_transform_return(
-                    reader, cursor, accumulator, available_bits,
-                    movie_media_signed32(index_bits));
-            continue;
-        }
-        case 4: {
-            movie_media_raw_workspace_store(slot, 0);
-            const DWORD next_slot = movie_media_raw_word_at(
-                transform_constants.words + 4, index_bits);
-            --index_bits;
-            movie_media_raw_workspace_store(next_slot, 0);
-            break;
-        }
-        case 5: {
-            // Key 5's target 226 path differs from key 1: clear A8[i], load
-            // A4[i], and pre-decrement EDI before the first run iteration.
-            movie_media_raw_workspace_store(slot, 0);
-            DWORD run_slot = movie_media_raw_word_at(
-                transform_constants.words + 4, index_bits);
-            --index_bits;
-            unsigned int run = (accumulator & 0xff) >> 3;
-            do {
-                movie_media_raw_workspace_store(run_slot, 0);
-                movie_media_raw_workspace_store(movie_media_raw_word_at(
-                    transform_constants.words + 4, index_bits), 0);
-                run_slot = movie_media_raw_word_at(
-                    transform_constants.words + 3, index_bits);
-                index_bits -= 2;
-                --run;
-            } while (run != 0);
-            ++index_bits;
-
-            accumulator >>= 8;
-            {
-                const BYTE byte = *cursor++;
-                available_bits = movie_media_add_ecx(available_bits, -8);
-                accumulator |= static_cast<DWORD>(byte) <<
-                    (static_cast<unsigned int>(available_bits) & 31);
-                available_bits = movie_media_add_ecx(available_bits, 8);
-            }
-            --index_bits;
-            if (movie_media_signed32(index_bits) <= 0)
-                return movie_media_transform_return(
-                    reader, cursor, accumulator, available_bits,
-                    movie_media_signed32(index_bits));
-            continue;
-        }
-        case 6:
-            movie_media_raw_workspace_store(slot, movie_media_int_bits(
-                movie_media_negate32(movie_media_signed32(
-                    movie_media_raw_word_at(
-                        conversion_tables.block_scale_entries, slot)))));
-            break;
-        }
-
-        accumulator >>= 3;
-        available_bits = movie_media_add_ecx(available_bits, -3);
-        if (available_bits < 8) {
-            const BYTE byte = *cursor++;
-            accumulator |= static_cast<DWORD>(byte) <<
-                (static_cast<unsigned int>(available_bits) & 31);
-            available_bits = movie_media_add_ecx(available_bits, 8);
-        }
-        --index_bits;
-        if (movie_media_signed32(index_bits) <= 0)
-            return movie_media_transform_return(
-                reader, cursor, accumulator, available_bits,
-                movie_media_signed32(index_bits));
+// Hand-written asm (EA uV decoder module): no prologue, clobbers esi/ebp unsaved, register-convention outputs, imul/shl/shr/adc rounding.
+__declspec(naked) MediaTransformRegisterContinuation __cdecl sub_5cf150() {
+    __asm {
+        mov eax, dword ptr [movie_media_conversion_tables + 0x108]
+        mov esi, dword ptr [movie_media_conversion_tables + 0x100]
+        shl eax, 0x18
+        mov ebp, dword ptr [movie_media_conversion_tables + 0x108]
+        sar eax, 8
+        mov ecx, dword ptr [movie_media_conversion_tables + 0x104]
+        imul dword ptr [movie_media_conversion_tables]
+        shl edx, 0x10
+        xor ebx, ebx
+        shr eax, 0x10
+        mov edi, 0x3f
+        adc eax, edx
+        mov dword ptr [movie_media_transform_workspace + 0x600], eax
+        xor eax, eax
+        shr ebp, 8
+        mov al, byte ptr [esi]
+        inc esi
+        sub ecx, 8
+        shl eax, cl
+        add ecx, 8
+        or ebp, eax
+m5cf150_5cf199:
+        mov eax, ebp
+        mov ebx, dword ptr [edi*4 + movie_media_coefficient_tables + 0x14]
+        and eax, 7
+        // The original dispatches through an 8-entry code-pointer table at
+        // 0x9C9AA8 (jmp [eax*4+table]); VC6 inline asm cannot emit a table of
+        // label addresses, so the same eight targets are selected by compares.
+        cmp eax, 1
+        jb m5cf150_5cf1ce
+        je m5cf150_5cf239
+        cmp eax, 3
+        jb m5cf150_5cf1ac
+        je m5cf150_5cf26a
+        cmp eax, 5
+        jb m5cf150_5cf1db
+        je m5cf150_5cf226
+        cmp eax, 6
+        je m5cf150_5cf1bc
+        jmp m5cf150_5cf26a
+m5cf150_5cf1ac:
+        mov eax, dword ptr [ebx*4 + movie_media_conversion_tables]
+        mov dword ptr [ebx*4 + movie_media_transform_workspace + 0x600], eax
+        jmp m5cf150_5cf1f9
+m5cf150_5cf1bc:
+        mov eax, dword ptr [ebx*4 + movie_media_conversion_tables]
+        neg eax
+        mov dword ptr [ebx*4 + movie_media_transform_workspace + 0x600], eax
+        jmp m5cf150_5cf1f9
+m5cf150_5cf1ce:
+        mov dword ptr [ebx*4 + movie_media_transform_workspace + 0x600], 0
+        jmp m5cf150_5cf1f9
+m5cf150_5cf1db:
+        mov dword ptr [ebx*4 + movie_media_transform_workspace + 0x600], 0
+        mov ebx, dword ptr [edi*4 + movie_media_coefficient_tables + 0x10]
+        dec edi
+        mov dword ptr [ebx*4 + movie_media_transform_workspace + 0x600], 0
+m5cf150_5cf1f9:
+        shr ebp, 3
+        sub ecx, 3
+        cmp ecx, 8
+        jge m5cf150_5cf210
+        xor eax, eax
+        mov al, byte ptr [esi]
+        inc esi
+        shl eax, cl
+        add ecx, 8
+        or ebp, eax
+m5cf150_5cf210:
+        dec edi
+        jg m5cf150_5cf199
+        mov dword ptr [movie_media_conversion_tables + 0x100], esi
+        mov dword ptr [movie_media_conversion_tables + 0x108], ebp
+        mov dword ptr [movie_media_conversion_tables + 0x104], ecx
+        ret
+m5cf150_5cf226:
+        mov dword ptr [ebx*4 + movie_media_transform_workspace + 0x600], 0
+        mov ebx, dword ptr [edi*4 + movie_media_coefficient_tables + 0x10]
+        dec edi
+m5cf150_5cf239:
+        mov eax, ebp
+        xor edx, edx
+        and eax, 0xff
+        shr eax, 3
+m5cf150_5cf245:
+        mov dword ptr [ebx*4 + movie_media_transform_workspace + 0x600], edx
+        mov ebx, dword ptr [edi*4 + movie_media_coefficient_tables + 0x10]
+        mov dword ptr [ebx*4 + movie_media_transform_workspace + 0x600], edx
+        mov ebx, dword ptr [edi*4 + movie_media_coefficient_tables + 0xc]
+        sub edi, 2
+        dec eax
+        jne m5cf150_5cf245
+        inc edi
+        jmp m5cf150_5cf2c4
+m5cf150_5cf26a:
+        mov eax, ebp
+        and eax, 0xfc
+        cmp eax, 0xfc
+        je m5cf150_5cf296
+        shl eax, 0x18
+        sar eax, 0xa
+        imul dword ptr [ebx*4 + movie_media_conversion_tables]
+        shl edx, 0x10
+        shr eax, 0x10
+        adc eax, edx
+        mov dword ptr [ebx*4 + movie_media_transform_workspace + 0x600], eax
+        jmp m5cf150_5cf2c4
+m5cf150_5cf296:
+        shr ebp, 8
+        mov al, byte ptr [esi]
+        inc esi
+        sub ecx, 8
+        shl eax, cl
+        add ecx, 8
+        or ebp, eax
+        mov eax, ebp
+        shl eax, 0x18
+        sar eax, 8
+        imul dword ptr [ebx*4 + movie_media_conversion_tables]
+        shl edx, 0x10
+        shr eax, 0x10
+        adc eax, edx
+        mov dword ptr [ebx*4 + movie_media_transform_workspace + 0x600], eax
+m5cf150_5cf2c4:
+        shr ebp, 8
+        xor eax, eax
+        mov al, byte ptr [esi]
+        inc esi
+        sub ecx, 8
+        shl eax, cl
+        add ecx, 8
+        or ebp, eax
+        dec edi
+        jg m5cf150_5cf199
+        mov dword ptr [movie_media_conversion_tables + 0x100], esi
+        mov dword ptr [movie_media_conversion_tables + 0x108], ebp
+        mov dword ptr [movie_media_conversion_tables + 0x104], ecx
+        ret
     }
 }
 
@@ -410,81 +370,259 @@ __cdecl sub_5cf150() {
 // into the next iteration; do not keep the entry values live across a call.
 // Original entry convention: no prologue; inputs arrive in EBP/EDI/ESI;
 // this source signature is semantic normalization, not original-ABI evidence.
-MediaTransformRegisterContinuation __cdecl sub_5cf2f0(
+// Hand-written asm (EA uV decoder module): no prologue, esi/edi/ebx/ebp register inputs.
+__declspec(naked) MediaTransformRegisterContinuation __cdecl sub_5cf2f0(
     const BYTE *bit_buffer, DWORD bit_position,
                         MediaDecoderContext &context) {
-  // The initial receiver is typed because the normal owner/caller provides
-  // this MediaDecoderContext. After the first 5CF150 call, however, ESI is
-  // replaced with that helper's cursor and the original performs raw
-  // dword accesses at ESI+100/104/108. Do not claim those derived addresses
-  // are another live MediaDecoderContext allocation.
-  BYTE *context_bytes = reinterpret_cast<BYTE *>(&context);
-  const BYTE *const luma_delta_table = movie_media_luma_delta_entries();
-  const BYTE *const chroma_delta_table = movie_media_chroma_delta_entries();
-
-  // The native caller pushes workspace addresses 9C5000/5020/5200/5220 and
-  // widths 0x40, then 9C5400/5500 and widths 0x20. 5CF150 reads no stack
-  // arguments but does overwrite ESI/EBP/EDI from its real shared state. The
-  // typed result exposes those live outputs rather than incorrectly retaining
-  // this body's old bit buffer, context, and cursor.
-  MediaTransformRegisterContinuation continuation;
-  DWORD predictor_word;
-  std::memcpy(&predictor_word, context_bytes + 0x100, sizeof(predictor_word));
-  predictor_word += static_cast<DWORD>(movie_media_decode_predictor_delta(
-      bit_buffer, bit_position, luma_delta_table, 0x19));
-  std::memcpy(context_bytes + 0x100, &predictor_word, sizeof(predictor_word));
-  continuation = sub_5cf150();
-  bit_buffer = reinterpret_cast<const BYTE *>(
-      static_cast<size_t>(continuation.ebp_accumulator));
-  bit_position = static_cast<DWORD>(continuation.edi_coefficient_index);
-  context_bytes = const_cast<BYTE *>(continuation.esi_cursor);
-
-  std::memcpy(&predictor_word, context_bytes + 0x100, sizeof(predictor_word));
-  predictor_word += static_cast<DWORD>(movie_media_decode_predictor_delta(
-      bit_buffer, bit_position, luma_delta_table, 0x19));
-  std::memcpy(context_bytes + 0x100, &predictor_word, sizeof(predictor_word));
-  continuation = sub_5cf150();
-  bit_buffer = reinterpret_cast<const BYTE *>(
-      static_cast<size_t>(continuation.ebp_accumulator));
-  bit_position = static_cast<DWORD>(continuation.edi_coefficient_index);
-  context_bytes = const_cast<BYTE *>(continuation.esi_cursor);
-
-  std::memcpy(&predictor_word, context_bytes + 0x100, sizeof(predictor_word));
-  predictor_word += static_cast<DWORD>(movie_media_decode_predictor_delta(
-      bit_buffer, bit_position, luma_delta_table, 0x19));
-  std::memcpy(context_bytes + 0x100, &predictor_word, sizeof(predictor_word));
-  continuation = sub_5cf150();
-  bit_buffer = reinterpret_cast<const BYTE *>(
-      static_cast<size_t>(continuation.ebp_accumulator));
-  bit_position = static_cast<DWORD>(continuation.edi_coefficient_index);
-  context_bytes = const_cast<BYTE *>(continuation.esi_cursor);
-
-  std::memcpy(&predictor_word, context_bytes + 0x100, sizeof(predictor_word));
-  predictor_word += static_cast<DWORD>(movie_media_decode_predictor_delta(
-      bit_buffer, bit_position, luma_delta_table, 0x19));
-  std::memcpy(context_bytes + 0x100, &predictor_word, sizeof(predictor_word));
-  continuation = sub_5cf150();
-  bit_buffer = reinterpret_cast<const BYTE *>(
-      static_cast<size_t>(continuation.ebp_accumulator));
-  bit_position = static_cast<DWORD>(continuation.edi_coefficient_index);
-  context_bytes = const_cast<BYTE *>(continuation.esi_cursor);
-
-  std::memcpy(&predictor_word, context_bytes + 0x104, sizeof(predictor_word));
-  predictor_word += static_cast<DWORD>(movie_media_decode_predictor_delta(
-      bit_buffer, bit_position, chroma_delta_table, 0x18));
-  std::memcpy(context_bytes + 0x104, &predictor_word, sizeof(predictor_word));
-  continuation = sub_5cf150();
-  bit_buffer = reinterpret_cast<const BYTE *>(
-      static_cast<size_t>(continuation.ebp_accumulator));
-  bit_position = static_cast<DWORD>(continuation.edi_coefficient_index);
-  context_bytes = const_cast<BYTE *>(continuation.esi_cursor);
-
-  std::memcpy(&predictor_word, context_bytes + 0x108, sizeof(predictor_word));
-  predictor_word += static_cast<DWORD>(movie_media_decode_predictor_delta(
-      bit_buffer, bit_position, chroma_delta_table, 0x18));
-  std::memcpy(context_bytes + 0x108, &predictor_word, sizeof(predictor_word));
-  continuation = sub_5cf150();
-  return continuation;
+    __asm {
+        mov edx, edi
+        shr edx, 5
+        mov ecx, edi
+        mov eax, dword ptr [ebp + edx*4]
+        mov edx, dword ptr [ebp + edx*4 + 4]
+        shld eax, edx, cl
+        shr eax, 0x19
+        movzx ebx, byte ptr [eax + movie_media_coefficient_tables + 0x394]
+        mov edx, ebx
+        shr ebx, 4
+        and edx, 0xf
+        xor eax, eax
+        add edi, edx
+        cmp ebx, 0
+        je m5cf2f0_5cf34c
+        mov edx, edi
+        mov ecx, edi
+        shr edx, 5
+        mov eax, dword ptr [ebp + edx*4]
+        mov edx, dword ptr [ebp + edx*4 + 4]
+        shld eax, edx, cl
+        mov ecx, 0x20
+        sub ecx, ebx
+        add edi, ebx
+        shr eax, cl
+        mov ecx, ebx
+        dec ebx
+        bt eax, ebx
+        jb m5cf2f0_5cf34c
+        mov edx, 1
+        shl edx, cl
+        dec edx
+        sub eax, edx
+m5cf2f0_5cf34c:
+        mov ebx, dword ptr [esi + 0x100]
+        add eax, ebx
+        mov dword ptr [esi + 0x100], eax
+        push 0x40
+        push offset movie_media_transform_workspace
+        call sub_5cf150
+        add esp, 8
+        mov edx, edi
+        shr edx, 5
+        mov ecx, edi
+        mov eax, dword ptr [ebp + edx*4]
+        mov edx, dword ptr [ebp + edx*4 + 4]
+        shld eax, edx, cl
+        shr eax, 0x19
+        movzx ebx, byte ptr [eax + movie_media_coefficient_tables + 0x394]
+        mov edx, ebx
+        shr ebx, 4
+        and edx, 0xf
+        xor eax, eax
+        add edi, edx
+        cmp ebx, 0
+        je m5cf2f0_5cf3c5
+        mov edx, edi
+        mov ecx, edi
+        shr edx, 5
+        mov eax, dword ptr [ebp + edx*4]
+        mov edx, dword ptr [ebp + edx*4 + 4]
+        shld eax, edx, cl
+        mov ecx, 0x20
+        sub ecx, ebx
+        add edi, ebx
+        shr eax, cl
+        mov ecx, ebx
+        dec ebx
+        bt eax, ebx
+        jb m5cf2f0_5cf3c5
+        mov edx, 1
+        shl edx, cl
+        dec edx
+        sub eax, edx
+m5cf2f0_5cf3c5:
+        mov ebx, dword ptr [esi + 0x100]
+        add eax, ebx
+        mov dword ptr [esi + 0x100], eax
+        push 0x40
+        push offset movie_media_transform_workspace + 0x20
+        call sub_5cf150
+        add esp, 8
+        mov edx, edi
+        shr edx, 5
+        mov ecx, edi
+        mov eax, dword ptr [ebp + edx*4]
+        mov edx, dword ptr [ebp + edx*4 + 4]
+        shld eax, edx, cl
+        shr eax, 0x19
+        movzx ebx, byte ptr [eax + movie_media_coefficient_tables + 0x394]
+        mov edx, ebx
+        shr ebx, 4
+        and edx, 0xf
+        xor eax, eax
+        add edi, edx
+        cmp ebx, 0
+        je m5cf2f0_5cf43e
+        mov edx, edi
+        mov ecx, edi
+        shr edx, 5
+        mov eax, dword ptr [ebp + edx*4]
+        mov edx, dword ptr [ebp + edx*4 + 4]
+        shld eax, edx, cl
+        mov ecx, 0x20
+        sub ecx, ebx
+        add edi, ebx
+        shr eax, cl
+        mov ecx, ebx
+        dec ebx
+        bt eax, ebx
+        jb m5cf2f0_5cf43e
+        mov edx, 1
+        shl edx, cl
+        dec edx
+        sub eax, edx
+m5cf2f0_5cf43e:
+        mov ebx, dword ptr [esi + 0x100]
+        add eax, ebx
+        mov dword ptr [esi + 0x100], eax
+        push 0x40
+        push offset movie_media_transform_workspace + 0x200
+        call sub_5cf150
+        add esp, 8
+        mov edx, edi
+        shr edx, 5
+        mov ecx, edi
+        mov eax, dword ptr [ebp + edx*4]
+        mov edx, dword ptr [ebp + edx*4 + 4]
+        shld eax, edx, cl
+        shr eax, 0x19
+        movzx ebx, byte ptr [eax + movie_media_coefficient_tables + 0x394]
+        mov edx, ebx
+        shr ebx, 4
+        and edx, 0xf
+        xor eax, eax
+        add edi, edx
+        cmp ebx, 0
+        je m5cf2f0_5cf4b7
+        mov edx, edi
+        mov ecx, edi
+        shr edx, 5
+        mov eax, dword ptr [ebp + edx*4]
+        mov edx, dword ptr [ebp + edx*4 + 4]
+        shld eax, edx, cl
+        mov ecx, 0x20
+        sub ecx, ebx
+        add edi, ebx
+        shr eax, cl
+        mov ecx, ebx
+        dec ebx
+        bt eax, ebx
+        jb m5cf2f0_5cf4b7
+        mov edx, 1
+        shl edx, cl
+        dec edx
+        sub eax, edx
+m5cf2f0_5cf4b7:
+        mov ebx, dword ptr [esi + 0x100]
+        add eax, ebx
+        mov dword ptr [esi + 0x100], eax
+        push 0x40
+        push offset movie_media_transform_workspace + 0x220
+        call sub_5cf150
+        add esp, 8
+        mov edx, edi
+        shr edx, 5
+        mov ecx, edi
+        mov eax, dword ptr [ebp + edx*4]
+        mov edx, dword ptr [ebp + edx*4 + 4]
+        shld eax, edx, cl
+        shr eax, 0x18
+        movzx ebx, byte ptr [eax + movie_media_coefficient_tables + 0x414]
+        mov edx, ebx
+        shr ebx, 4
+        and edx, 0xf
+        xor eax, eax
+        add edi, edx
+        cmp ebx, 0
+        je m5cf2f0_5cf530
+        mov edx, edi
+        mov ecx, edi
+        shr edx, 5
+        mov eax, dword ptr [ebp + edx*4]
+        mov edx, dword ptr [ebp + edx*4 + 4]
+        shld eax, edx, cl
+        mov ecx, 0x20
+        sub ecx, ebx
+        add edi, ebx
+        shr eax, cl
+        mov ecx, ebx
+        dec ebx
+        bt eax, ebx
+        jb m5cf2f0_5cf530
+        mov edx, 1
+        shl edx, cl
+        dec edx
+        sub eax, edx
+m5cf2f0_5cf530:
+        mov ebx, dword ptr [esi + 0x104]
+        add eax, ebx
+        mov dword ptr [esi + 0x104], eax
+        push 0x20
+        push offset movie_media_transform_workspace + 0x400
+        call sub_5cf150
+        add esp, 8
+        mov edx, edi
+        shr edx, 5
+        mov ecx, edi
+        mov eax, dword ptr [ebp + edx*4]
+        mov edx, dword ptr [ebp + edx*4 + 4]
+        shld eax, edx, cl
+        shr eax, 0x18
+        movzx ebx, byte ptr [eax + movie_media_coefficient_tables + 0x414]
+        mov edx, ebx
+        shr ebx, 4
+        and edx, 0xf
+        xor eax, eax
+        add edi, edx
+        cmp ebx, 0
+        je m5cf2f0_5cf5a9
+        mov edx, edi
+        mov ecx, edi
+        shr edx, 5
+        mov eax, dword ptr [ebp + edx*4]
+        mov edx, dword ptr [ebp + edx*4 + 4]
+        shld eax, edx, cl
+        mov ecx, 0x20
+        sub ecx, ebx
+        add edi, ebx
+        shr eax, cl
+        mov ecx, ebx
+        dec ebx
+        bt eax, ebx
+        jb m5cf2f0_5cf5a9
+        mov edx, 1
+        shl edx, cl
+        dec edx
+        sub eax, edx
+m5cf2f0_5cf5a9:
+        mov ebx, dword ptr [esi + 0x108]
+        add eax, ebx
+        mov dword ptr [esi + 0x108], eax
+        push 0x20
+        push offset movie_media_transform_workspace + 0x500
+        call sub_5cf150
+        add esp, 8
+        ret
+    }
 }
 
 static DWORD movie_media_coefficient_entry(DWORD code) {
@@ -549,72 +687,110 @@ static int movie_media_idct_biased_low_dword(const double &value) {
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 // calls     (none)
-extern "C" void __cdecl sub_5d29e1(int *src, int *dst) {
-    int iVar2, iVar3, iVar4, iVar5, iVar6, iVar7, iVar8;
-    double d1, d2;
-    int local_1c, local_14;
-    double fVar1;
-
-    iVar7 = src[5];
-    iVar6 = src[3];
-    iVar5 = src[1];
-    iVar3 = src[7];
-    if (src[6] || iVar6 || iVar3 || src[2] || iVar7 || iVar5 || src[4]) {
-        fVar1 = (static_cast<double>(movie_media_sub32(iVar5, iVar3))
-                 + static_cast<double>(movie_media_sub32(iVar7, iVar6)))
-            * static_cast<double>(movie_media_idct_coefficient_float(3));
-        iVar4 = movie_media_mul2(movie_media_signed_high_product(
-            movie_media_sub32(
-                movie_media_sub32(movie_media_add32(iVar3, iVar5), iVar6),
-                iVar7), movie_media_idct_coefficient_integer(0)));
-        d1 = static_cast<double>(movie_media_sub32(iVar7, iVar6))
-                * static_cast<double>(movie_media_idct_coefficient_float(1))
-            + fVar1
-            + static_cast<double>(movie_media_idct_coefficient_float(4));
-        local_1c = movie_media_idct_biased_low_dword(d1);
-        d2 = static_cast<double>(movie_media_sub32(iVar5, iVar3))
-                * static_cast<double>(movie_media_idct_coefficient_float(2))
-            - fVar1
-            + static_cast<double>(movie_media_idct_coefficient_float(4));
-        local_14 = movie_media_idct_biased_low_dword(d2);
-        iVar2 = movie_media_add32(local_1c, iVar4);
-        iVar4 = movie_media_add32(iVar4, local_14);
-        local_14 = movie_media_add32(
-            movie_media_add32(
-                movie_media_add32(movie_media_add32(local_14, iVar6), iVar7),
-                iVar3), iVar5);
-        iVar7 = movie_media_add32(src[4], src[0]);
-        iVar3 = movie_media_sub32(src[0], src[4]);
-        iVar5 = movie_media_signed_high_product(
-            movie_media_sub32(src[2], src[6]),
-            movie_media_idct_coefficient_integer(0));
-        iVar6 = movie_media_mul2(iVar5);
-        iVar8 = movie_media_add32(
-            movie_media_add32(src[6], src[2]), iVar6);
-        iVar6 = movie_media_add32(iVar6, iVar3);
-        iVar3 = movie_media_sub32(iVar3, movie_media_mul2(iVar5));
-        iVar5 = movie_media_add32(iVar8, iVar7);
-        iVar7 = movie_media_sub32(iVar7, iVar8);
-        dst[0x12] = movie_media_add32(iVar3, iVar2);
-        dst[0x2d] = movie_media_sub32(iVar3, iVar2);
-        dst[0x1b] = movie_media_add32(iVar7, local_1c);
-        dst[0x24] = movie_media_sub32(iVar7, local_1c);
-        dst[0] = movie_media_add32(iVar5, local_14);
-        dst[9] = movie_media_add32(iVar4, iVar6);
-        dst[0x36] = movie_media_sub32(iVar6, iVar4);
-        dst[0x3f] = movie_media_sub32(iVar5, local_14);
-        return;
+// Hand-written asm (EA uV decoder module): no prologue, esi/edi/ebx/ebp register inputs.
+extern "C" __declspec(naked) void __cdecl sub_5d29e1(int *src, int *dst) {
+    __asm {
+        push edi
+        mov ebx, dword ptr [esi + 0x14]
+        mov eax, dword ptr [esi + 0xc]
+        mov ecx, dword ptr [esi + 4]
+        mov edx, dword ptr [esi + 0x1c]
+        mov edi, dword ptr [esi + 8]
+        mov ebp, dword ptr [esi + 0x18]
+        or edi, ebx
+        or ebp, eax
+        or edi, ecx
+        or ebp, edx
+        or ebp, edi
+        mov edi, dword ptr [esi + 0x10]
+        or ebp, edi
+        je m5d29e1_5d2af9
+        sub esp, 0x20
+        lea edi, [eax + ebx]
+        sub ebx, eax
+        lea eax, [edx + ecx]
+        sub ecx, edx
+        mov dword ptr [esp + 8], ebx
+        mov dword ptr [esp + 0xc], ecx
+        lea ebp, [edi + eax]
+        sub eax, edi
+        fild dword ptr [esp + 8]
+        fild dword ptr [esp + 0xc]
+        fld st(0)
+        fmul dword ptr [movie_media_coefficient_tables + 0x8]
+        fxch st(2)
+        fadd st(1), st(0)
+        fmul dword ptr [movie_media_coefficient_tables + 0x4]
+        fxch st(1)
+        fmul dword ptr [movie_media_coefficient_tables + 0xc]
+        imul dword ptr [movie_media_coefficient_tables]
+        fadd st(1), st(0)
+        fsubp st(2), st
+        fadd dword ptr [movie_media_coefficient_tables + 0x10]
+        fxch st(1)
+        fadd dword ptr [movie_media_coefficient_tables + 0x10]
+        mov eax, dword ptr [esi + 8]
+        mov ebx, dword ptr [esi + 0x18]
+        shl edx, 1
+        fstp qword ptr [esp + 0x10]
+        fstp qword ptr [esp + 8]
+        mov ecx, dword ptr [esp + 8]
+        mov edi, dword ptr [esp + 0x10]
+        add ecx, edx
+        add edx, edi
+        add edi, ebp
+        mov dword ptr [esp + 0xc], ecx
+        mov dword ptr [esp + 0x10], edx
+        mov dword ptr [esp + 0x14], edi
+        mov ecx, dword ptr [esi]
+        mov edx, dword ptr [esi + 0x10]
+        lea esi, [ebx + eax]
+        sub eax, ebx
+        lea ebx, [edx + ecx]
+        sub ecx, edx
+        imul dword ptr [movie_media_coefficient_tables]
+        shl edx, 1
+        mov edi, dword ptr [esp + 0x20]
+        add esi, edx
+        mov ebp, dword ptr [esp + 0xc]
+        lea eax, [edx + ecx]
+        sub ecx, edx
+        lea edx, [esi + ebx]
+        sub ebx, esi
+        lea esi, [ecx + ebp]
+        sub ecx, ebp
+        mov ebp, dword ptr [esp + 8]
+        mov dword ptr [edi + 0x48], esi
+        mov esi, dword ptr [esp + 0x10]
+        mov dword ptr [edi + 0xb4], ecx
+        lea ecx, [ebx + ebp]
+        sub ebx, ebp
+        mov ebp, dword ptr [esp + 0x14]
+        add esp, 0x24
+        mov dword ptr [edi + 0x6c], ecx
+        mov dword ptr [edi + 0x90], ebx
+        lea ebx, [esi + eax]
+        sub eax, esi
+        lea ecx, [edx + ebp]
+        sub edx, ebp
+        mov dword ptr [edi], ecx
+        mov dword ptr [edi + 0x24], ebx
+        mov dword ptr [edi + 0xd8], eax
+        mov dword ptr [edi + 0xfc], edx
+        ret
+m5d29e1_5d2af9:
+        pop edi
+        mov eax, dword ptr [esi]
+        mov dword ptr [edi], eax
+        mov dword ptr [edi + 0x24], eax
+        mov dword ptr [edi + 0x48], eax
+        mov dword ptr [edi + 0x6c], eax
+        mov dword ptr [edi + 0x90], eax
+        mov dword ptr [edi + 0xb4], eax
+        mov dword ptr [edi + 0xd8], eax
+        mov dword ptr [edi + 0xfc], eax
+        ret
     }
-    iVar7 = src[0];
-    dst[0] = iVar7;
-    dst[9] = iVar7;
-    dst[0x12] = iVar7;
-    dst[0x1b] = iVar7;
-    dst[0x24] = iVar7;
-    dst[0x2d] = iVar7;
-    dst[0x36] = iVar7;
-    dst[0x3f] = iVar7;
-    return;
 }
 
 // ORIGINAL: 0x005D2B20 sub_5d2b20 0x005D2B20-0x005D2C0A FILE
@@ -628,49 +804,85 @@ extern "C" void __cdecl sub_5d29e1(int *src, int *dst) {
 // flags
 // calls     (none)
 // working copy - scaffold materialised by --work
-extern "C" void __cdecl sub_5d2b20(int *dst, int *src) {
-    int iVar9 = movie_media_add32(src[3], src[5]);
-    int iVar8 = movie_media_add32(src[7], src[1]);
-    double fVar2 = static_cast<double>(movie_media_sub32(src[5], src[3]));
-    double fVar3 = static_cast<double>(movie_media_sub32(src[1], src[7]));
-    double fVar1 = (fVar3 + fVar2) *
-        static_cast<double>(movie_media_idct_coefficient_float(3));
-    int iVar6 = movie_media_mul2(movie_media_signed_high_product(
-        movie_media_sub32(iVar8, iVar9),
-        movie_media_idct_coefficient_integer(0)));
-    const double biased_first =
-        fVar2 * static_cast<double>(movie_media_idct_coefficient_float(1))
-        + fVar1
-        + static_cast<double>(movie_media_idct_coefficient_float(4));
-    const double biased_second =
-        (fVar3 * static_cast<double>(movie_media_idct_coefficient_float(2))
-         - fVar1)
-        + static_cast<double>(movie_media_idct_coefficient_float(4));
-    int iStack8 = movie_media_idct_biased_low_dword(biased_first);
-    int iStack10 = movie_media_idct_biased_low_dword(biased_second);
-    int iVar4 = movie_media_add32(iStack8, iVar6);
-    iVar6 = movie_media_add32(iVar6, iStack10);
-    iStack10 = movie_media_add32(movie_media_add32(iStack10, iVar9), iVar8);
-    iVar9 = movie_media_add32(src[4], src[0]);
-    int iVar5 = movie_media_sub32(src[0], src[4]);
-    int iVar7 = movie_media_signed_high_product(
-        movie_media_sub32(src[2], src[6]),
-        movie_media_idct_coefficient_integer(0));
-    iVar8 = movie_media_mul2(iVar7);
-    int iVar10 = movie_media_add32(
-        movie_media_add32(src[6], src[2]), iVar8);
-    iVar8 = movie_media_add32(iVar8, iVar5);
-    iVar5 = movie_media_sub32(iVar5, movie_media_mul2(iVar7));
-    iVar7 = movie_media_add32(iVar10, iVar9);
-    iVar9 = movie_media_sub32(iVar9, iVar10);
-    dst[2] = movie_media_add32(iVar5, iVar4);
-    dst[5] = movie_media_sub32(iVar5, iVar4);
-    dst[3] = movie_media_add32(iVar9, iStack8);
-    dst[4] = movie_media_sub32(iVar9, iStack8);
-    dst[0] = movie_media_add32(iVar7, iStack10);
-    dst[1] = movie_media_add32(iVar6, iVar8);
-    dst[6] = movie_media_sub32(iVar8, iVar6);
-    dst[7] = movie_media_sub32(iVar7, iStack10);
+// Hand-written asm (EA uV decoder module): no prologue, esi/edi/ebx/ebp register inputs.
+extern "C" __declspec(naked) void __cdecl sub_5d2b20(int *dst, int *src) {
+    __asm {
+        mov ebx, dword ptr [esi + 0x14]
+        mov eax, dword ptr [esi + 0xc]
+        mov ecx, dword ptr [esi + 4]
+        mov edx, dword ptr [esi + 0x1c]
+        lea edi, [eax + ebx]
+        sub ebx, eax
+        lea eax, [edx + ecx]
+        sub ecx, edx
+        mov dword ptr [esp + 8], ebx
+        mov dword ptr [esp + 0xc], ecx
+        lea ebp, [edi + eax]
+        sub eax, edi
+        fild dword ptr [esp + 8]
+        fild dword ptr [esp + 0xc]
+        fld st(0)
+        fmul dword ptr [movie_media_coefficient_tables + 0x8]
+        fxch st(2)
+        fadd st(1), st(0)
+        fmul dword ptr [movie_media_coefficient_tables + 0x4]
+        fxch st(1)
+        fmul dword ptr [movie_media_coefficient_tables + 0xc]
+        imul dword ptr [movie_media_coefficient_tables]
+        fadd st(1), st(0)
+        fsubp st(2), st
+        fadd dword ptr [movie_media_coefficient_tables + 0x10]
+        fxch st(1)
+        fadd dword ptr [movie_media_coefficient_tables + 0x10]
+        mov eax, dword ptr [esi + 8]
+        mov ebx, dword ptr [esi + 0x18]
+        shl edx, 1
+        fstp qword ptr [esp + 0x10]
+        fstp qword ptr [esp + 8]
+        mov ecx, dword ptr [esp + 8]
+        mov edi, dword ptr [esp + 0x10]
+        add ecx, edx
+        add edx, edi
+        add edi, ebp
+        mov dword ptr [esp + 0xc], ecx
+        mov dword ptr [esp + 0x10], edx
+        mov dword ptr [esp + 0x14], edi
+        mov ecx, dword ptr [esi]
+        mov edx, dword ptr [esi + 0x10]
+        lea esi, [ebx + eax]
+        sub eax, ebx
+        lea ebx, [edx + ecx]
+        sub ecx, edx
+        imul dword ptr [movie_media_coefficient_tables]
+        shl edx, 1
+        mov edi, dword ptr [esp + 4]
+        add esi, edx
+        mov ebp, dword ptr [esp + 0xc]
+        lea eax, [edx + ecx]
+        sub ecx, edx
+        lea edx, [esi + ebx]
+        sub ebx, esi
+        lea esi, [ecx + ebp]
+        sub ecx, ebp
+        mov ebp, dword ptr [esp + 8]
+        mov dword ptr [edi + 8], esi
+        mov esi, dword ptr [esp + 0x10]
+        mov dword ptr [edi + 0x14], ecx
+        lea ecx, [ebx + ebp]
+        sub ebx, ebp
+        mov ebp, dword ptr [esp + 0x14]
+        mov dword ptr [edi + 0xc], ecx
+        mov dword ptr [edi + 0x10], ebx
+        lea ebx, [esi + eax]
+        sub eax, esi
+        lea ecx, [edx + ebp]
+        sub edx, ebp
+        mov dword ptr [edi], ecx
+        mov dword ptr [edi + 4], ebx
+        mov dword ptr [edi + 0x18], eax
+        mov dword ptr [edi + 0x1c], edx
+        ret
+    }
 }
 
 // ORIGINAL: 0x005D2C0A sub_5d2c0a 0x005D2C0A-0x005D2D13
@@ -683,57 +895,96 @@ extern "C" void __cdecl sub_5d2b20(int *dst, int *src) {
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 // calls     (none)
-extern "C" void __cdecl sub_5d2c0a(int *dst, int *src) {
-    int iVar9 = movie_media_add32(src[3], src[5]);
-    int iVar8 = movie_media_add32(src[7], src[1]);
-    double fVar2 = static_cast<double>(movie_media_sub32(src[5], src[3]));
-    double fVar3 = static_cast<double>(movie_media_sub32(src[1], src[7]));
-    double fVar1 = (fVar3 + fVar2) *
-        static_cast<double>(movie_media_idct_coefficient_float(3));
-    int iVar6 = movie_media_mul2(movie_media_signed_high_product(
-        movie_media_sub32(iVar8, iVar9),
-        movie_media_idct_coefficient_integer(0)));
-    const double biased_first =
-        fVar2 * static_cast<double>(movie_media_idct_coefficient_float(1))
-        + fVar1
-        + static_cast<double>(movie_media_idct_coefficient_float(4));
-    const double biased_second =
-        (fVar3 * static_cast<double>(movie_media_idct_coefficient_float(2))
-         - fVar1)
-        + static_cast<double>(movie_media_idct_coefficient_float(4));
-    int local_1c = movie_media_idct_biased_low_dword(biased_first);
-    int local_14 = movie_media_idct_biased_low_dword(biased_second);
-    int iVar4 = movie_media_add32(local_1c, iVar6);
-    iVar6 = movie_media_add32(iVar6, local_14);
-    local_14 = movie_media_add32(movie_media_add32(local_14, iVar9), iVar8);
-    iVar9 = movie_media_add32(src[4], src[0]);
-    int iVar5 = movie_media_sub32(src[0], src[4]);
-    int iVar7 = movie_media_signed_high_product(
-        movie_media_sub32(src[2], src[6]),
-        movie_media_idct_coefficient_integer(0));
-    iVar8 = movie_media_mul2(iVar7);
-    int iVar10 = movie_media_add32(
-        movie_media_add32(src[6], src[2]), iVar8);
-    iVar8 = movie_media_add32(iVar8, iVar5);
-    iVar5 = movie_media_sub32(iVar5, movie_media_mul2(iVar7));
-    iVar7 = movie_media_add32(iVar10, iVar9);
-    iVar9 = movie_media_sub32(iVar9, iVar10);
-    dst[2] = movie_media_sar17(movie_media_int_bits(
-        movie_media_add32(iVar5, iVar4)));
-    dst[5] = movie_media_sar17(movie_media_int_bits(
-        movie_media_sub32(iVar5, iVar4)));
-    dst[3] = movie_media_sar17(movie_media_int_bits(
-        movie_media_add32(iVar9, local_1c)));
-    dst[4] = movie_media_sar17(movie_media_int_bits(
-        movie_media_sub32(iVar9, local_1c)));
-    dst[0] = movie_media_sar17(movie_media_int_bits(
-        movie_media_add32(iVar7, local_14)));
-    dst[1] = movie_media_sar17(movie_media_int_bits(
-        movie_media_add32(iVar6, iVar8)));
-    dst[6] = movie_media_sar17(movie_media_int_bits(
-        movie_media_sub32(iVar8, iVar6)));
-    dst[7] = movie_media_sar17(movie_media_int_bits(
-        movie_media_sub32(iVar7, local_14)));
+// Hand-written asm (EA uV decoder module): no prologue, esi/edi/ebx/ebp register inputs.
+extern "C" __declspec(naked) void __cdecl sub_5d2c0a(int *dst, int *src) {
+    __asm {
+        push edi
+        mov ebx, dword ptr [esi + 0x14]
+        mov eax, dword ptr [esi + 0xc]
+        mov ecx, dword ptr [esi + 4]
+        mov edx, dword ptr [esi + 0x1c]
+        sub esp, 0x20
+        lea edi, [eax + ebx]
+        sub ebx, eax
+        lea eax, [edx + ecx]
+        sub ecx, edx
+        mov dword ptr [esp + 8], ebx
+        mov dword ptr [esp + 0xc], ecx
+        lea ebp, [edi + eax]
+        sub eax, edi
+        fild dword ptr [esp + 8]
+        fild dword ptr [esp + 0xc]
+        fld st(0)
+        fmul dword ptr [movie_media_coefficient_tables + 0x8]
+        fxch st(2)
+        fadd st(1), st(0)
+        fmul dword ptr [movie_media_coefficient_tables + 0x4]
+        fxch st(1)
+        fmul dword ptr [movie_media_coefficient_tables + 0xc]
+        imul dword ptr [movie_media_coefficient_tables]
+        fadd st(1), st(0)
+        fsubp st(2), st
+        fadd dword ptr [movie_media_coefficient_tables + 0x10]
+        fxch st(1)
+        fadd dword ptr [movie_media_coefficient_tables + 0x10]
+        mov eax, dword ptr [esi + 8]
+        mov ebx, dword ptr [esi + 0x18]
+        shl edx, 1
+        fstp qword ptr [esp + 0x10]
+        fstp qword ptr [esp + 8]
+        mov ecx, dword ptr [esp + 8]
+        mov edi, dword ptr [esp + 0x10]
+        add ecx, edx
+        add edx, edi
+        add edi, ebp
+        mov dword ptr [esp + 0xc], ecx
+        mov dword ptr [esp + 0x10], edx
+        mov dword ptr [esp + 0x14], edi
+        mov ecx, dword ptr [esi]
+        mov edx, dword ptr [esi + 0x10]
+        lea esi, [ebx + eax]
+        sub eax, ebx
+        lea ebx, [edx + ecx]
+        sub ecx, edx
+        imul dword ptr [movie_media_coefficient_tables]
+        shl edx, 1
+        mov edi, dword ptr [esp + 0x20]
+        add esi, edx
+        mov ebp, dword ptr [esp + 0xc]
+        lea eax, [edx + ecx]
+        sub ecx, edx
+        lea edx, [esi + ebx]
+        sub ebx, esi
+        lea esi, [ecx + ebp]
+        sub ecx, ebp
+        sar esi, 0x11
+        mov ebp, dword ptr [esp + 8]
+        sar ecx, 0x11
+        mov dword ptr [edi + 8], esi
+        mov esi, dword ptr [esp + 0x10]
+        mov dword ptr [edi + 0x14], ecx
+        lea ecx, [ebx + ebp]
+        sub ebx, ebp
+        sar ecx, 0x11
+        mov ebp, dword ptr [esp + 0x14]
+        sar ebx, 0x11
+        add esp, 0x24
+        mov dword ptr [edi + 0xc], ecx
+        mov dword ptr [edi + 0x10], ebx
+        lea ebx, [esi + eax]
+        sub eax, esi
+        lea ecx, [edx + ebp]
+        sar ecx, 0x11
+        sub edx, ebp
+        sar ebx, 0x11
+        mov dword ptr [edi], ecx
+        sar eax, 0x11
+        mov dword ptr [edi + 4], ebx
+        sar edx, 0x11
+        mov dword ptr [edi + 0x18], eax
+        mov dword ptr [edi + 0x1c], edx
+        ret
+    }
 }
 
 // Normalized typed body for the block decoder at 005D0D82. The original
@@ -764,89 +1015,359 @@ extern "C" void __cdecl sub_5d2c0a(int *dst, int *src) {
 // Huffman/range-coded bitstream decoder over a 64-entry int weight table -
 // the DCT-coefficient stage of the movie codec, to judge by the table shapes
 // and the 64-int output.
-DWORD __cdecl sub_5d0d82(
+// Hand-written asm (EA uV decoder module): no prologue, esi/edi/ebx/ebp register inputs.
+__declspec(naked) DWORD __cdecl sub_5d0d82(
     MediaDecoderContext *context, DWORD predictor_value, const BYTE *input,
     BYTE *destination, int row_pitch_bytes, DWORD bit_position) {
-  // The transforms consume signed words. Retain the entire uninitialized
-  // native 0x300-byte reservation as one array, including unchecked indexed
-  // coefficient writes, and preserve producer bits through signed32 conversion.
-  // DWORD is unsigned long on VC6, not int's corresponding unsigned type.
-  int local_storage_words[0x300 / sizeof(int)];
-  static_assert(sizeof(int) == 4, "native transform words occupy four bytes");
-  int *const coefficients = local_storage_words;
-  const DWORD dc = predictor_value * context->block_transform_weights[0];
-  coefficients[0] = movie_media_signed32(dc);
-  for (int i = 1; i != 64; ++i) coefficients[i] = 0;
-
-  const DWORD *const weights = context->block_transform_weights;
-  BYTE run_position = 0x3f;
-  for (;;) {
-    const DWORD code_word = movie_media_read_bits32(input, bit_position) >> 15;
-    if (code_word < 0x20) break;
-
-    const DWORD entry = movie_media_coefficient_entry(code_word);
-    const DWORD code_length = entry >> 16;
-    const BYTE category = (BYTE)(entry >> 8);
-    DWORD amplitude;
-    bit_position += code_length;
-
-    if (category == 0x41) break;
-    if (category > 0x41) {
-      const DWORD escape_window =
-          movie_media_read_bits32(input, bit_position) >> 18;
-      bit_position += 14;
-      run_position = (BYTE)(run_position - category - 1);
-      amplitude = escape_window & 0xff;
-      if (amplitude == 0) {
-        amplitude = movie_media_read_bits32(input, bit_position) >> 24;
-        bit_position += 8;
-        if (amplitude == 0x80) {
-          amplitude = movie_media_read_bits32(input, bit_position) >> 24;
-          bit_position += 8;
-          amplitude -= 0x100;
-        } else if ((int)amplitude > 0) {
-          amplitude -= 0x100;
-        }
-      }
-    } else {
-      run_position = (BYTE)(run_position - category);
-      amplitude = entry & 0xff;
-      const unsigned sign_index = (16 - code_length) & 31;
-      if (((code_word >> sign_index) & 1) == 0)
-        amplitude = 0u - amplitude;
-      ++bit_position;
+    __asm {
+        push ecx
+        push edx
+        sub esp, 0x300
+        xor ebx, ebx
+        mov edx, dword ptr [esi]
+        lea ecx, [esp]
+        imul edx
+        mov dword ptr [ecx + 4], ebx
+        mov dword ptr [ecx + 8], ebx
+        mov dword ptr [ecx + 0xc], ebx
+        mov dword ptr [ecx + 0x10], ebx
+        mov dword ptr [ecx + 0x14], ebx
+        mov dword ptr [ecx + 0x18], ebx
+        mov dword ptr [ecx + 0x1c], ebx
+        mov dword ptr [ecx + 0x20], ebx
+        mov dword ptr [ecx + 0x24], ebx
+        mov dword ptr [ecx + 0x28], ebx
+        mov dword ptr [ecx + 0x2c], ebx
+        mov dword ptr [ecx + 0x30], ebx
+        mov dword ptr [ecx + 0x34], ebx
+        mov dword ptr [ecx + 0x38], ebx
+        mov dword ptr [ecx + 0x3c], ebx
+        mov dword ptr [ecx + 0x40], ebx
+        mov dword ptr [ecx + 0x44], ebx
+        mov dword ptr [ecx + 0x48], ebx
+        mov dword ptr [ecx + 0x4c], ebx
+        mov dword ptr [ecx + 0x50], ebx
+        mov dword ptr [ecx + 0x54], ebx
+        mov dword ptr [ecx + 0x58], ebx
+        mov dword ptr [ecx + 0x5c], ebx
+        mov dword ptr [ecx + 0x60], ebx
+        mov dword ptr [ecx + 0x64], ebx
+        mov dword ptr [ecx + 0x68], ebx
+        mov dword ptr [ecx + 0x6c], ebx
+        mov dword ptr [ecx + 0x70], ebx
+        mov dword ptr [ecx + 0x74], ebx
+        mov dword ptr [ecx + 0x78], ebx
+        mov dword ptr [ecx + 0x7c], ebx
+        mov dword ptr [ecx + 0x80], ebx
+        mov dword ptr [ecx + 0x84], ebx
+        mov dword ptr [ecx + 0x88], ebx
+        mov dword ptr [ecx + 0x8c], ebx
+        mov dword ptr [ecx + 0x90], ebx
+        mov dword ptr [ecx + 0x94], ebx
+        mov dword ptr [ecx + 0x98], ebx
+        mov dword ptr [ecx + 0x9c], ebx
+        mov dword ptr [ecx + 0xa0], ebx
+        mov dword ptr [ecx + 0xa4], ebx
+        mov dword ptr [ecx + 0xa8], ebx
+        mov dword ptr [ecx + 0xac], ebx
+        mov dword ptr [ecx + 0xb0], ebx
+        mov dword ptr [ecx + 0xb4], ebx
+        mov dword ptr [ecx + 0xb8], ebx
+        mov dword ptr [ecx + 0xbc], ebx
+        mov dword ptr [ecx + 0xc0], ebx
+        mov dword ptr [ecx + 0xc4], ebx
+        mov dword ptr [ecx + 0xc8], ebx
+        mov dword ptr [ecx + 0xcc], ebx
+        mov dword ptr [ecx + 0xd0], ebx
+        mov dword ptr [ecx + 0xd4], ebx
+        mov dword ptr [ecx + 0xd8], ebx
+        mov dword ptr [ecx + 0xdc], ebx
+        mov dword ptr [ecx + 0xe0], ebx
+        mov dword ptr [ecx + 0xe4], ebx
+        mov dword ptr [ecx + 0xe8], ebx
+        mov dword ptr [ecx + 0xec], ebx
+        mov dword ptr [ecx + 0xf0], ebx
+        mov dword ptr [ecx + 0xf4], ebx
+        mov dword ptr [ecx + 0xf8], ebx
+        mov dword ptr [ecx + 0xfc], ebx
+        mov dword ptr [ecx], eax
+        mov bl, 0x3f
+        mov edx, edi
+        shr edx, 5
+        mov ecx, edi
+        mov eax, dword ptr [ebp + edx*4]
+        mov edx, dword ptr [ebp + edx*4 + 4]
+        shld eax, edx, cl
+        shr eax, 0xf
+        mov ecx, eax
+        cmp eax, 0x8000
+        jl m5d0d82_5d0f34
+m5d0d82_5d0ed2:
+        shr eax, 0xd
+        mov edx, dword ptr [eax*4 + movie_media_coefficient_tables + 0x104]
+m5d0d82_5d0edc:
+        mov eax, edx
+        shr edx, 0x10
+        add edi, edx
+        cmp ah, 0x41
+        je m5d0d82_5d1040
+        ja m5d0d82_5d0fc7
+        neg edx
+        sub bl, ah
+        add edx, 0x10
+        and eax, 0xff
+        inc edi
+        bt ecx, edx
+        jae m5d0d82_5d0f06
+        neg eax
+m5d0d82_5d0f06:
+        mov ecx, dword ptr [ebx*4 + movie_media_coefficient_tables + 0x18]
+        mov edx, dword ptr [esi + ecx*4]
+        imul eax, edx
+        mov dword ptr [esp + ecx*4], eax
+        mov edx, edi
+        shr edx, 5
+        mov ecx, edi
+        mov eax, dword ptr [ebp + edx*4]
+        mov edx, dword ptr [ebp + edx*4 + 4]
+        shld eax, edx, cl
+        shr eax, 0xf
+        mov ecx, eax
+        cmp eax, 0x8000
+        jge m5d0d82_5d0ed2
+m5d0d82_5d0f34:
+        cmp eax, 0x800
+        jl m5d0d82_5d0f47
+        shr eax, 9
+        mov edx, dword ptr [eax*4 + movie_media_coefficient_tables + 0x134]
+        jmp m5d0d82_5d0edc
+m5d0d82_5d0f47:
+        cmp eax, 0x400
+        jl m5d0d82_5d0f5a
+        shr eax, 7
+        mov edx, dword ptr [eax*4 + movie_media_coefficient_tables + 0x214]
+        jmp m5d0d82_5d0edc
+m5d0d82_5d0f5a:
+        cmp eax, 0x200
+        jl m5d0d82_5d0f70
+        shr eax, 5
+        mov edx, dword ptr [eax*4 + movie_media_coefficient_tables + 0x214]
+        jmp m5d0d82_5d0edc
+m5d0d82_5d0f70:
+        cmp eax, 0x100
+        jl m5d0d82_5d0f86
+        shr eax, 4
+        mov edx, dword ptr [eax*4 + movie_media_coefficient_tables + 0x254]
+        jmp m5d0d82_5d0edc
+m5d0d82_5d0f86:
+        cmp eax, 0x80
+        jl m5d0d82_5d0f9c
+        shr eax, 3
+        mov edx, dword ptr [eax*4 + movie_media_coefficient_tables + 0x294]
+        jmp m5d0d82_5d0edc
+m5d0d82_5d0f9c:
+        cmp eax, 0x40
+        jl m5d0d82_5d0fb0
+        shr eax, 2
+        mov edx, dword ptr [eax*4 + movie_media_coefficient_tables + 0x2d4]
+        jmp m5d0d82_5d0edc
+m5d0d82_5d0fb0:
+        cmp eax, 0x20
+        jl m5d0d82_5d1040
+        shr eax, 1
+        mov edx, dword ptr [eax*4 + movie_media_coefficient_tables + 0x314]
+        jmp m5d0d82_5d0edc
+m5d0d82_5d0fc7:
+        mov edx, edi
+        mov ecx, edi
+        shr edx, 5
+        mov eax, dword ptr [ebp + edx*4]
+        mov edx, dword ptr [ebp + edx*4 + 4]
+        shld eax, edx, cl
+        shr eax, 0x12
+        add edi, 0xe
+        sub bl, ah
+        dec bl
+        and eax, 0xff
+        jne m5d0d82_5d1007
+        mov edx, edi
+        mov ecx, edi
+        shr edx, 5
+        mov eax, dword ptr [ebp + edx*4]
+        mov edx, dword ptr [ebp + edx*4 + 4]
+        shld eax, edx, cl
+        shr eax, 0x18
+        add edi, 8
+        jmp m5d0d82_5d0f06
+m5d0d82_5d1007:
+        cmp eax, 0x80
+        jne m5d0d82_5d1030
+        mov edx, edi
+        mov ecx, edi
+        shr edx, 5
+        mov eax, dword ptr [ebp + edx*4]
+        mov edx, dword ptr [ebp + edx*4 + 4]
+        shld eax, edx, cl
+        shr eax, 0x18
+        add edi, 8
+        sub eax, 0x100
+        jmp m5d0d82_5d0f06
+m5d0d82_5d1030:
+        jle m5d0d82_5d0f06
+        sub eax, 0x100
+        jmp m5d0d82_5d0f06
+m5d0d82_5d1040:
+        cmp bl, 0x3f
+        je m5d0d82_5d1193
+        push esi
+        push ebp
+        push edi
+        lea esi, [esp + 0xc]
+        lea edi, [esp + 0x10c]
+        call sub_5d29e1
+        lea esi, [esp + 0x2c]
+        lea edi, [esp + 0x110]
+        call sub_5d29e1
+        lea esi, [esp + 0x4c]
+        lea edi, [esp + 0x114]
+        call sub_5d29e1
+        lea esi, [esp + 0x6c]
+        lea edi, [esp + 0x118]
+        call sub_5d29e1
+        lea esi, [esp + 0x8c]
+        lea edi, [esp + 0x11c]
+        call sub_5d29e1
+        lea esi, [esp + 0xac]
+        lea edi, [esp + 0x120]
+        call sub_5d29e1
+        lea esi, [esp + 0xcc]
+        lea edi, [esp + 0x124]
+        call sub_5d29e1
+        lea esi, [esp + 0xec]
+        lea edi, [esp + 0x128]
+        call sub_5d29e1
+        mov edi, dword ptr [esp + 0x30c]
+        lea esi, [esp + 0x10c]
+        call sub_5d2c0a
+        mov eax, dword ptr [esp + 0x310]
+        add edi, eax
+        lea esi, [esp + 0x130]
+        call sub_5d2c0a
+        mov eax, dword ptr [esp + 0x310]
+        add edi, eax
+        lea esi, [esp + 0x154]
+        call sub_5d2c0a
+        mov eax, dword ptr [esp + 0x310]
+        add edi, eax
+        lea esi, [esp + 0x178]
+        call sub_5d2c0a
+        mov eax, dword ptr [esp + 0x310]
+        add edi, eax
+        lea esi, [esp + 0x19c]
+        call sub_5d2c0a
+        mov eax, dword ptr [esp + 0x310]
+        add edi, eax
+        lea esi, [esp + 0x1c0]
+        call sub_5d2c0a
+        mov eax, dword ptr [esp + 0x310]
+        add edi, eax
+        lea esi, [esp + 0x1e4]
+        call sub_5d2c0a
+        mov eax, dword ptr [esp + 0x310]
+        add edi, eax
+        lea esi, [esp + 0x208]
+        call sub_5d2c0a
+        mov eax, dword ptr [esp + 0x310]
+        add edi, eax
+        pop edi
+        pop ebp
+        pop esi
+        add esp, 0x300
+        pop edx
+        pop ecx
+        ret
+m5d0d82_5d1193:
+        mov eax, dword ptr [esp]
+        mov edx, dword ptr [esp + 0x300]
+        sar eax, 0x11
+        mov ebx, dword ptr [esp + 0x304]
+        mov dword ptr [edx], eax
+        mov dword ptr [edx + 4], eax
+        mov dword ptr [edx + 8], eax
+        mov dword ptr [edx + 0xc], eax
+        mov dword ptr [edx + 0x10], eax
+        mov dword ptr [edx + 0x14], eax
+        mov dword ptr [edx + 0x18], eax
+        mov dword ptr [edx + 0x1c], eax
+        add edx, ebx
+        mov dword ptr [edx], eax
+        mov dword ptr [edx + 4], eax
+        mov dword ptr [edx + 8], eax
+        mov dword ptr [edx + 0xc], eax
+        mov dword ptr [edx + 0x10], eax
+        mov dword ptr [edx + 0x14], eax
+        mov dword ptr [edx + 0x18], eax
+        mov dword ptr [edx + 0x1c], eax
+        add edx, ebx
+        mov dword ptr [edx], eax
+        mov dword ptr [edx + 4], eax
+        mov dword ptr [edx + 8], eax
+        mov dword ptr [edx + 0xc], eax
+        mov dword ptr [edx + 0x10], eax
+        mov dword ptr [edx + 0x14], eax
+        mov dword ptr [edx + 0x18], eax
+        mov dword ptr [edx + 0x1c], eax
+        add edx, ebx
+        mov dword ptr [edx], eax
+        mov dword ptr [edx + 4], eax
+        mov dword ptr [edx + 8], eax
+        mov dword ptr [edx + 0xc], eax
+        mov dword ptr [edx + 0x10], eax
+        mov dword ptr [edx + 0x14], eax
+        mov dword ptr [edx + 0x18], eax
+        mov dword ptr [edx + 0x1c], eax
+        add edx, ebx
+        mov dword ptr [edx], eax
+        mov dword ptr [edx + 4], eax
+        mov dword ptr [edx + 8], eax
+        mov dword ptr [edx + 0xc], eax
+        mov dword ptr [edx + 0x10], eax
+        mov dword ptr [edx + 0x14], eax
+        mov dword ptr [edx + 0x18], eax
+        mov dword ptr [edx + 0x1c], eax
+        add edx, ebx
+        mov dword ptr [edx], eax
+        mov dword ptr [edx + 4], eax
+        mov dword ptr [edx + 8], eax
+        mov dword ptr [edx + 0xc], eax
+        mov dword ptr [edx + 0x10], eax
+        mov dword ptr [edx + 0x14], eax
+        mov dword ptr [edx + 0x18], eax
+        mov dword ptr [edx + 0x1c], eax
+        add edx, ebx
+        mov dword ptr [edx], eax
+        mov dword ptr [edx + 4], eax
+        mov dword ptr [edx + 8], eax
+        mov dword ptr [edx + 0xc], eax
+        mov dword ptr [edx + 0x10], eax
+        mov dword ptr [edx + 0x14], eax
+        mov dword ptr [edx + 0x18], eax
+        mov dword ptr [edx + 0x1c], eax
+        add edx, ebx
+        mov dword ptr [edx], eax
+        mov dword ptr [edx + 4], eax
+        mov dword ptr [edx + 8], eax
+        mov dword ptr [edx + 0xc], eax
+        mov dword ptr [edx + 0x10], eax
+        mov dword ptr [edx + 0x14], eax
+        mov dword ptr [edx + 0x18], eax
+        mov dword ptr [edx + 0x1c], eax
+        add edx, ebx
+        add esp, 0x300
+        pop edx
+        pop ecx
+        ret
     }
-
-    const DWORD coefficient_index =
-        movie_media_coefficient_tables.words[6 + run_position];
-    coefficients[coefficient_index] =
-        movie_media_signed32(amplitude * weights[coefficient_index]);
-  }
-  if (run_position == 0x3f) {
-    const int fill_value = movie_media_sar17(dc);
-    for (int row = 0; row != 8; ++row) {
-      int *const output = reinterpret_cast<int *>(
-          destination + row * row_pitch_bytes);
-      for (int column = 0; column != 8; ++column)
-        output[column] = fill_value;
-    }
-    return bit_position;
-  }
-
-  // The native row transforms write a 9-DWORD-spaced intermediate matrix;
-  // the column transforms consume its columns and advance output by pitch.
-  // At 0x5D1049..0x5D104B three saved registers lower ESP by twelve bytes.
-  // Thus the subsequent ESP+0x0C/ESP+0x10C addresses are scratch+0/scratch+0x100,
-  // not offsets from the scratch allocation's original ESP.
-  for (int row = 0; row != 8; ++row) {
-    sub_5d29e1(local_storage_words + row * 8,
-               local_storage_words + 64 + row);
-  }
-  for (int column = 0; column != 8; ++column) {
-    sub_5d2c0a(reinterpret_cast<int *>(destination + column * row_pitch_bytes),
-               local_storage_words + 64 + column * 9);
-  }
-  return bit_position;
 }
 
 // Normalized source body for the six predictor/transform sequence beginning
@@ -857,40 +1378,251 @@ DWORD __cdecl sub_5d0d82(
 // RECOVERY_BINDING: v1 {"evidence": ["recovery/tasks/movie-decoder-owner-oct5.json", "Caller 0x5D127E reserves 0x800 bytes at S, then CALL 0x5D0AAB at 0x5D1297 pushes its return address. The producer has no stack prologue, so its ESP is S-4.", "Producer LEAs ESP+4,+0x24,+0x204,+0x224,+0x404,+0x504 address caller word offsets 0,8,128,136,256,320. Its first four row pitches are 0x40 bytes and the last two are 0x20 bytes.", "Consumer 0x5D12A9 starts at S and 0x5D253E reads its first word. Original transform/fill paths write that word; the former source +1 displacement was a frame-translation error, not original uninitialized behavior. Existing local DC product/store and scratch extent remain unchanged."], "reason": "Normalize the six output destinations against the caller-owned scratch frame, accounting for the CALL return address. Retain predictor updates, captured input/cursor and the sixth original fallthrough as an explicit normalized source call."}
 // symbol    ?sub_5d0aab@@YAKPAUMediaDecoderContext@@PAKPBEK@Z
 // TRIED: no prologue/epilogue in the original (falls into 0x5D0D82, no ret) - edi/esi/ebp are register-passed by one caller sharing its frame; no standalone C parameter list can receive that, so byte-exactness is not reachable here. Modelled as static globals a companion routine would set instead.
-DWORD __cdecl sub_5d0aab(
+// Hand-written asm (EA uV decoder module): no prologue, esi/edi/ebx/ebp register inputs.
+__declspec(naked) DWORD __cdecl sub_5d0aab(
     MediaDecoderContext *context, DWORD *scratch_words, const BYTE *input,
     DWORD bit_position) {
-  const BYTE *const lookup_a = reinterpret_cast<const BYTE *>(
-      movie_media_coefficient_tables.words) + 0x394;
-  const BYTE *const lookup_b = reinterpret_cast<const BYTE *>(
-      movie_media_coefficient_tables.words) + 0x414;
-  const DWORD output_offsets[6] = {0, 8, 128, 136, 256, 320};
-
-  for (int block = 0; block != 6; ++block) {
-    DWORD *predictor;
-    const BYTE *lookup;
-    unsigned lookup_shift;
-    if (block < 4) {
-      predictor = &context->predictor_4f8;
-      lookup = lookup_a;
-      lookup_shift = 25;
-    } else if (block == 4) {
-      predictor = &context->predictor_4fc;
-      lookup = lookup_b;
-      lookup_shift = 24;
-    } else {
-      predictor = &context->predictor_500;
-      lookup = lookup_b;
-      lookup_shift = 24;
+    __asm {
+        mov edx, edi
+        shr edx, 5
+        mov ecx, edi
+        mov eax, dword ptr [ebp + edx*4]
+        mov edx, dword ptr [ebp + edx*4 + 4]
+        shld eax, edx, cl
+        shr eax, 0x19
+        movzx ebx, byte ptr [eax + movie_media_coefficient_tables + 0x394]
+        mov edx, ebx
+        shr ebx, 4
+        and edx, 0xf
+        xor eax, eax
+        add edi, edx
+        cmp ebx, 0
+        je m5d0aab_5d0b07
+        mov edx, edi
+        mov ecx, edi
+        shr edx, 5
+        mov eax, dword ptr [ebp + edx*4]
+        mov edx, dword ptr [ebp + edx*4 + 4]
+        shld eax, edx, cl
+        mov ecx, 0x20
+        sub ecx, ebx
+        add edi, ebx
+        shr eax, cl
+        mov ecx, ebx
+        dec ebx
+        bt eax, ebx
+        jb m5d0aab_5d0b07
+        mov edx, 1
+        shl edx, cl
+        dec edx
+        sub eax, edx
+m5d0aab_5d0b07:
+        mov ebx, dword ptr [esi + 0x100]
+        add eax, ebx
+        mov dword ptr [esi + 0x100], eax
+        mov ecx, 0x40
+        lea edx, [esp + 4]
+        call sub_5d0d82
+        mov edx, edi
+        shr edx, 5
+        mov ecx, edi
+        mov eax, dword ptr [ebp + edx*4]
+        mov edx, dword ptr [ebp + edx*4 + 4]
+        shld eax, edx, cl
+        shr eax, 0x19
+        movzx ebx, byte ptr [eax + movie_media_coefficient_tables + 0x394]
+        mov edx, ebx
+        shr ebx, 4
+        and edx, 0xf
+        xor eax, eax
+        add edi, edx
+        cmp ebx, 0
+        je m5d0aab_5d0b7f
+        mov edx, edi
+        mov ecx, edi
+        shr edx, 5
+        mov eax, dword ptr [ebp + edx*4]
+        mov edx, dword ptr [ebp + edx*4 + 4]
+        shld eax, edx, cl
+        mov ecx, 0x20
+        sub ecx, ebx
+        add edi, ebx
+        shr eax, cl
+        mov ecx, ebx
+        dec ebx
+        bt eax, ebx
+        jb m5d0aab_5d0b7f
+        mov edx, 1
+        shl edx, cl
+        dec edx
+        sub eax, edx
+m5d0aab_5d0b7f:
+        mov ebx, dword ptr [esi + 0x100]
+        add eax, ebx
+        mov dword ptr [esi + 0x100], eax
+        mov ecx, 0x40
+        lea edx, [esp + 0x24]
+        call sub_5d0d82
+        mov edx, edi
+        shr edx, 5
+        mov ecx, edi
+        mov eax, dword ptr [ebp + edx*4]
+        mov edx, dword ptr [ebp + edx*4 + 4]
+        shld eax, edx, cl
+        shr eax, 0x19
+        movzx ebx, byte ptr [eax + movie_media_coefficient_tables + 0x394]
+        mov edx, ebx
+        shr ebx, 4
+        and edx, 0xf
+        xor eax, eax
+        add edi, edx
+        cmp ebx, 0
+        je m5d0aab_5d0bf7
+        mov edx, edi
+        mov ecx, edi
+        shr edx, 5
+        mov eax, dword ptr [ebp + edx*4]
+        mov edx, dword ptr [ebp + edx*4 + 4]
+        shld eax, edx, cl
+        mov ecx, 0x20
+        sub ecx, ebx
+        add edi, ebx
+        shr eax, cl
+        mov ecx, ebx
+        dec ebx
+        bt eax, ebx
+        jb m5d0aab_5d0bf7
+        mov edx, 1
+        shl edx, cl
+        dec edx
+        sub eax, edx
+m5d0aab_5d0bf7:
+        mov ebx, dword ptr [esi + 0x100]
+        add eax, ebx
+        mov dword ptr [esi + 0x100], eax
+        mov ecx, 0x40
+        lea edx, [esp + 0x204]
+        call sub_5d0d82
+        mov edx, edi
+        shr edx, 5
+        mov ecx, edi
+        mov eax, dword ptr [ebp + edx*4]
+        mov edx, dword ptr [ebp + edx*4 + 4]
+        shld eax, edx, cl
+        shr eax, 0x19
+        movzx ebx, byte ptr [eax + movie_media_coefficient_tables + 0x394]
+        mov edx, ebx
+        shr ebx, 4
+        and edx, 0xf
+        xor eax, eax
+        add edi, edx
+        cmp ebx, 0
+        je m5d0aab_5d0c72
+        mov edx, edi
+        mov ecx, edi
+        shr edx, 5
+        mov eax, dword ptr [ebp + edx*4]
+        mov edx, dword ptr [ebp + edx*4 + 4]
+        shld eax, edx, cl
+        mov ecx, 0x20
+        sub ecx, ebx
+        add edi, ebx
+        shr eax, cl
+        mov ecx, ebx
+        dec ebx
+        bt eax, ebx
+        jb m5d0aab_5d0c72
+        mov edx, 1
+        shl edx, cl
+        dec edx
+        sub eax, edx
+m5d0aab_5d0c72:
+        mov ebx, dword ptr [esi + 0x100]
+        add eax, ebx
+        mov dword ptr [esi + 0x100], eax
+        mov ecx, 0x40
+        lea edx, [esp + 0x224]
+        call sub_5d0d82
+        mov edx, edi
+        shr edx, 5
+        mov ecx, edi
+        mov eax, dword ptr [ebp + edx*4]
+        mov edx, dword ptr [ebp + edx*4 + 4]
+        shld eax, edx, cl
+        shr eax, 0x18
+        movzx ebx, byte ptr [eax + movie_media_coefficient_tables + 0x414]
+        mov edx, ebx
+        shr ebx, 4
+        and edx, 0xf
+        xor eax, eax
+        add edi, edx
+        cmp ebx, 0
+        je m5d0aab_5d0ced
+        mov edx, edi
+        mov ecx, edi
+        shr edx, 5
+        mov eax, dword ptr [ebp + edx*4]
+        mov edx, dword ptr [ebp + edx*4 + 4]
+        shld eax, edx, cl
+        mov ecx, 0x20
+        sub ecx, ebx
+        add edi, ebx
+        shr eax, cl
+        mov ecx, ebx
+        dec ebx
+        bt eax, ebx
+        jb m5d0aab_5d0ced
+        mov edx, 1
+        shl edx, cl
+        dec edx
+        sub eax, edx
+m5d0aab_5d0ced:
+        mov ebx, dword ptr [esi + 0x104]
+        add eax, ebx
+        mov dword ptr [esi + 0x104], eax
+        mov ecx, 0x20
+        lea edx, [esp + 0x404]
+        call sub_5d0d82
+        mov edx, edi
+        shr edx, 5
+        mov ecx, edi
+        mov eax, dword ptr [ebp + edx*4]
+        mov edx, dword ptr [ebp + edx*4 + 4]
+        shld eax, edx, cl
+        shr eax, 0x18
+        movzx ebx, byte ptr [eax + movie_media_coefficient_tables + 0x414]
+        mov edx, ebx
+        shr ebx, 4
+        and edx, 0xf
+        xor eax, eax
+        add edi, edx
+        cmp ebx, 0
+        je m5d0aab_5d0d68
+        mov edx, edi
+        mov ecx, edi
+        shr edx, 5
+        mov eax, dword ptr [ebp + edx*4]
+        mov edx, dword ptr [ebp + edx*4 + 4]
+        shld eax, edx, cl
+        mov ecx, 0x20
+        sub ecx, ebx
+        add edi, ebx
+        shr eax, cl
+        mov ecx, ebx
+        dec ebx
+        bt eax, ebx
+        jb m5d0aab_5d0d68
+        mov edx, 1
+        shl edx, cl
+        dec edx
+        sub eax, edx
+m5d0aab_5d0d68:
+        mov ebx, dword ptr [esi + 0x108]
+        add eax, ebx
+        mov dword ptr [esi + 0x108], eax
+        mov ecx, 0x20
+        lea edx, [esp + 0x504]
     }
-    *predictor += movie_media_decode_predictor_delta(
-        input, bit_position, lookup, lookup_shift);
-    bit_position = sub_5d0d82(
-        context, *predictor, input,
-        reinterpret_cast<BYTE *>(scratch_words + output_offsets[block]),
-        block < 4 ? 0x40 : 0x20, bit_position);
-  }
-  return bit_position;
 }
 
 void movie_media_decode_six_coefficient_blocks(
@@ -906,102 +1638,528 @@ void movie_media_decode_six_coefficient_blocks(
 // RECOVERY_BINDING: v1 {"evidence": ["recovery/tasks/movie-decoder-owner-oct5.json", "pinned caller/body and shared-storage review; fresh VC6 public symbol", "Store the advanced +0x204 cursor after composed decode, then execute sixteen 5D2037 output calls using the saved stack pitch/output arguments."], "reason": "Faithful semantic media decoder owner recovery with normalized custom-register helper interfaces. Original identities, spans and historical findings retained; no matching, runtime or game acceptance granted."}
 // symbol    ?sub_5d1466@@YAXPAEHPAUMediaDecoderContext@@@Z
 // TRIED: callee (sub_5d2037) takes its args in esi/edi/ebp with no stack push before `call` - no cdecl/fastcall signature the compiler can be told to use reproduces that register setup without __asm, which is barred. Landed with plausible field offsets and call count/order; prologue register save order and the per-call register loads do not match.
-void __cdecl sub_5d1466(BYTE *base, int stride, MediaDecoderContext *context) {
-  DWORD scratch_words[512];
-  const BYTE *const input = context->compressed_input_200;
-  const DWORD initial_bit_position = context->bit_position_204;
-  const DWORD bit_position = sub_5d0aab(
-      context, scratch_words, input, initial_bit_position);
-  context->bit_position_204 = bit_position;
-  for (int row = 0; row != 16; ++row) {
-    int *const source = reinterpret_cast<int *>(
-        reinterpret_cast<BYTE *>(scratch_words) + row * 0x40);
-    int *const tables = reinterpret_cast<int *>(
-        reinterpret_cast<BYTE *>(scratch_words) + 0x400 + (row / 2) * 0x20);
-    sub_5d2037(source, tables,
-               reinterpret_cast<unsigned int *>(base + row * stride));
-  }
+// Hand-written asm (EA uV decoder module): saves ecx/edx with the callee-saved set, register-convention callees.
+__declspec(naked) void __cdecl sub_5d1466(BYTE *base, int stride, MediaDecoderContext *context) {
+    __asm {
+        push ebx
+        push ecx
+        push edx
+        push esi
+        push edi
+        push ebp
+        sub esp, 0x800
+        mov esi, dword ptr [esp + 0x824]
+        mov ebp, dword ptr [esi + 0x200]
+        mov edi, dword ptr [esi + 0x204]
+        call sub_5d0aab
+        mov dword ptr [esi + 0x204], edi
+        mov ebp, dword ptr [esp + 0x81c]
+        lea esi, [esp]
+        lea edi, [esp + 0x400]
+        call sub_5d2037
+        mov eax, dword ptr [esp + 0x820]
+        lea esi, [esp + 0x40]
+        lea edi, [esp + 0x400]
+        add ebp, eax
+        call sub_5d2037
+        mov eax, dword ptr [esp + 0x820]
+        lea esi, [esp + 0x80]
+        lea edi, [esp + 0x420]
+        add ebp, eax
+        call sub_5d2037
+        mov eax, dword ptr [esp + 0x820]
+        lea esi, [esp + 0xc0]
+        lea edi, [esp + 0x420]
+        add ebp, eax
+        call sub_5d2037
+        mov eax, dword ptr [esp + 0x820]
+        lea esi, [esp + 0x100]
+        lea edi, [esp + 0x440]
+        add ebp, eax
+        call sub_5d2037
+        mov eax, dword ptr [esp + 0x820]
+        lea esi, [esp + 0x140]
+        lea edi, [esp + 0x440]
+        add ebp, eax
+        call sub_5d2037
+        mov eax, dword ptr [esp + 0x820]
+        lea esi, [esp + 0x180]
+        lea edi, [esp + 0x460]
+        add ebp, eax
+        call sub_5d2037
+        mov eax, dword ptr [esp + 0x820]
+        lea esi, [esp + 0x1c0]
+        lea edi, [esp + 0x460]
+        add ebp, eax
+        call sub_5d2037
+        mov eax, dword ptr [esp + 0x820]
+        lea esi, [esp + 0x200]
+        lea edi, [esp + 0x480]
+        add ebp, eax
+        call sub_5d2037
+        mov eax, dword ptr [esp + 0x820]
+        lea esi, [esp + 0x240]
+        lea edi, [esp + 0x480]
+        add ebp, eax
+        call sub_5d2037
+        mov eax, dword ptr [esp + 0x820]
+        lea esi, [esp + 0x280]
+        lea edi, [esp + 0x4a0]
+        add ebp, eax
+        call sub_5d2037
+        mov eax, dword ptr [esp + 0x820]
+        lea esi, [esp + 0x2c0]
+        lea edi, [esp + 0x4a0]
+        add ebp, eax
+        call sub_5d2037
+        mov eax, dword ptr [esp + 0x820]
+        lea esi, [esp + 0x300]
+        lea edi, [esp + 0x4c0]
+        add ebp, eax
+        call sub_5d2037
+        mov eax, dword ptr [esp + 0x820]
+        lea esi, [esp + 0x340]
+        lea edi, [esp + 0x4c0]
+        add ebp, eax
+        call sub_5d2037
+        mov eax, dword ptr [esp + 0x820]
+        lea esi, [esp + 0x380]
+        lea edi, [esp + 0x4e0]
+        add ebp, eax
+        call sub_5d2037
+        mov eax, dword ptr [esp + 0x820]
+        lea esi, [esp + 0x3c0]
+        lea edi, [esp + 0x4e0]
+        add ebp, eax
+        call sub_5d2037
+        add esp, 0x800
+        pop ebp
+        pop edi
+        pop esi
+        pop edx
+        pop ecx
+        pop ebx
+        ret
+    }
 }
 
 // ORIGINAL: 0x005D1842 sub_5d1842 0x005D1842-0x005D1A30
 // RECOVERY_BINDING: v1 {"evidence": ["recovery/tasks/movie-decoder-owner-oct5.json", "pinned caller/body and shared-storage review; fresh VC6 public symbol", "Store the advanced +0x204 cursor after six-block decode, then execute sixteen 5CF852 row outputs."], "reason": "Faithful semantic media decoder owner recovery with normalized custom-register helper interfaces. Original identities, spans and historical findings retained; no matching, runtime or game acceptance granted."}
 // symbol    ?sub_5d1842@@YAXPAEHPAUMediaDecoderContext@@@Z
 // TRIED: callee (OutputPixelRow16) takes its args in esi/edi/ebp with no stack push before `call` - no cdecl/fastcall signature the compiler can be told to use reproduces that register setup without __asm, which is barred. Landed with plausible field offsets and call count/order; prologue register save order and the per-call register loads do not match.
-void __cdecl sub_5d1842(BYTE *base, int stride, MediaDecoderContext *context) {
-  DWORD scratch_words[512];
-  const BYTE *const input = context->compressed_input_200;
-  const DWORD initial_bit_position = context->bit_position_204;
-  const DWORD bit_position = sub_5d0aab(
-      context, scratch_words, input, initial_bit_position);
-  context->bit_position_204 = bit_position;
-  for (int row = 0; row != 16; ++row) {
-    unsigned int *const component = reinterpret_cast<unsigned int *>(
-        reinterpret_cast<BYTE *>(scratch_words) + row * 0x40);
-    unsigned int *const chroma = reinterpret_cast<unsigned int *>(
-        reinterpret_cast<BYTE *>(scratch_words) + 0x400 + (row / 2) * 0x20);
-    OutputPixelRow16(reinterpret_cast<short *>(base + row * stride),
-                     component, chroma);
-  }
+// Hand-written asm (EA uV decoder module): saves ecx/edx with the callee-saved set, register-convention callees.
+__declspec(naked) void __cdecl sub_5d1842(BYTE *base, int stride, MediaDecoderContext *context) {
+    __asm {
+        push ebx
+        push ecx
+        push edx
+        push esi
+        push edi
+        push ebp
+        sub esp, 0x800
+        mov esi, dword ptr [esp + 0x824]
+        mov ebp, dword ptr [esi + 0x200]
+        mov edi, dword ptr [esi + 0x204]
+        call sub_5d0aab
+        mov dword ptr [esi + 0x204], edi
+        mov edi, dword ptr [esp + 0x81c]
+        lea esi, [esp]
+        lea ebx, [esp + 0x400]
+        call OutputPixelRow16
+        mov eax, dword ptr [esp + 0x820]
+        lea esi, [esp + 0x40]
+        lea ebx, [esp + 0x400]
+        add edi, eax
+        call OutputPixelRow16
+        mov eax, dword ptr [esp + 0x820]
+        lea esi, [esp + 0x80]
+        lea ebx, [esp + 0x420]
+        add edi, eax
+        call OutputPixelRow16
+        mov eax, dword ptr [esp + 0x820]
+        lea esi, [esp + 0xc0]
+        lea ebx, [esp + 0x420]
+        add edi, eax
+        call OutputPixelRow16
+        mov eax, dword ptr [esp + 0x820]
+        lea esi, [esp + 0x100]
+        lea ebx, [esp + 0x440]
+        add edi, eax
+        call OutputPixelRow16
+        mov eax, dword ptr [esp + 0x820]
+        lea esi, [esp + 0x140]
+        lea ebx, [esp + 0x440]
+        add edi, eax
+        call OutputPixelRow16
+        mov eax, dword ptr [esp + 0x820]
+        lea esi, [esp + 0x180]
+        lea ebx, [esp + 0x460]
+        add edi, eax
+        call OutputPixelRow16
+        mov eax, dword ptr [esp + 0x820]
+        lea esi, [esp + 0x1c0]
+        lea ebx, [esp + 0x460]
+        add edi, eax
+        call OutputPixelRow16
+        mov eax, dword ptr [esp + 0x820]
+        lea esi, [esp + 0x200]
+        lea ebx, [esp + 0x480]
+        add edi, eax
+        call OutputPixelRow16
+        mov eax, dword ptr [esp + 0x820]
+        lea esi, [esp + 0x240]
+        lea ebx, [esp + 0x480]
+        add edi, eax
+        call OutputPixelRow16
+        mov eax, dword ptr [esp + 0x820]
+        lea esi, [esp + 0x280]
+        lea ebx, [esp + 0x4a0]
+        add edi, eax
+        call OutputPixelRow16
+        mov eax, dword ptr [esp + 0x820]
+        lea esi, [esp + 0x2c0]
+        lea ebx, [esp + 0x4a0]
+        add edi, eax
+        call OutputPixelRow16
+        mov eax, dword ptr [esp + 0x820]
+        lea esi, [esp + 0x300]
+        lea ebx, [esp + 0x4c0]
+        add edi, eax
+        call OutputPixelRow16
+        mov eax, dword ptr [esp + 0x820]
+        lea esi, [esp + 0x340]
+        lea ebx, [esp + 0x4c0]
+        add edi, eax
+        call OutputPixelRow16
+        mov eax, dword ptr [esp + 0x820]
+        lea esi, [esp + 0x380]
+        lea ebx, [esp + 0x4e0]
+        add edi, eax
+        call OutputPixelRow16
+        mov eax, dword ptr [esp + 0x820]
+        lea esi, [esp + 0x3c0]
+        lea ebx, [esp + 0x4e0]
+        add edi, eax
+        call OutputPixelRow16
+        add esp, 0x800
+        pop ebp
+        pop edi
+        pop esi
+        pop edx
+        pop ecx
+        pop ebx
+        ret
+    }
 }
 
 // ORIGINAL: 0x005D1654 sub_5d1654 0x005D1654-0x005D1842
 // RECOVERY_BINDING: v1 {"evidence": ["recovery/tasks/movie-decoder-owner-oct5.json", "pinned caller/body and shared-storage review; fresh VC6 public symbol", "Store the advanced +0x204 cursor after six-block decode, then execute sixteen 5D1B88 output calls."], "reason": "Faithful semantic media decoder owner recovery with normalized custom-register helper interfaces. Original identities, spans and historical findings retained; no matching, runtime or game acceptance granted."}
 // symbol    ?sub_5d1654@@YAXPAEHPAUMediaDecoderContext@@@Z
 // TRIED: callee (sub_5d1b88) takes its args in esi/edi/ebp with no stack push before `call` - no cdecl/fastcall signature the compiler can be told to use reproduces that register setup without __asm, which is barred. Landed with plausible field offsets and call count/order; prologue register save order and the per-call register loads do not match.
-void __cdecl sub_5d1654(BYTE *base, int stride, MediaDecoderContext *context) {
-  DWORD scratch_words[512];
-  const BYTE *const input = context->compressed_input_200;
-  const DWORD initial_bit_position = context->bit_position_204;
-  const DWORD bit_position = sub_5d0aab(
-      context, scratch_words, input, initial_bit_position);
-  context->bit_position_204 = bit_position;
-  for (int row = 0; row != 16; ++row) {
-    int *const source = reinterpret_cast<int *>(
-        reinterpret_cast<BYTE *>(scratch_words) + row * 0x40);
-    int *const tables = reinterpret_cast<int *>(
-        reinterpret_cast<BYTE *>(scratch_words) + 0x400 + (row / 2) * 0x20);
-    sub_5d1b88(reinterpret_cast<unsigned int *>(base + row * stride),
-               source, tables);
-  }
+// Hand-written asm (EA uV decoder module): saves ecx/edx with the callee-saved set, register-convention callees.
+__declspec(naked) void __cdecl sub_5d1654(BYTE *base, int stride, MediaDecoderContext *context) {
+    __asm {
+        push ebx
+        push ecx
+        push edx
+        push esi
+        push edi
+        push ebp
+        sub esp, 0x800
+        mov esi, dword ptr [esp + 0x824]
+        mov ebp, dword ptr [esi + 0x200]
+        mov edi, dword ptr [esi + 0x204]
+        call sub_5d0aab
+        mov dword ptr [esi + 0x204], edi
+        mov ebp, dword ptr [esp + 0x81c]
+        lea esi, [esp]
+        lea edi, [esp + 0x400]
+        call sub_5d1b88
+        mov eax, dword ptr [esp + 0x820]
+        lea esi, [esp + 0x40]
+        lea edi, [esp + 0x400]
+        add ebp, eax
+        call sub_5d1b88
+        mov eax, dword ptr [esp + 0x820]
+        lea esi, [esp + 0x80]
+        lea edi, [esp + 0x420]
+        add ebp, eax
+        call sub_5d1b88
+        mov eax, dword ptr [esp + 0x820]
+        lea esi, [esp + 0xc0]
+        lea edi, [esp + 0x420]
+        add ebp, eax
+        call sub_5d1b88
+        mov eax, dword ptr [esp + 0x820]
+        lea esi, [esp + 0x100]
+        lea edi, [esp + 0x440]
+        add ebp, eax
+        call sub_5d1b88
+        mov eax, dword ptr [esp + 0x820]
+        lea esi, [esp + 0x140]
+        lea edi, [esp + 0x440]
+        add ebp, eax
+        call sub_5d1b88
+        mov eax, dword ptr [esp + 0x820]
+        lea esi, [esp + 0x180]
+        lea edi, [esp + 0x460]
+        add ebp, eax
+        call sub_5d1b88
+        mov eax, dword ptr [esp + 0x820]
+        lea esi, [esp + 0x1c0]
+        lea edi, [esp + 0x460]
+        add ebp, eax
+        call sub_5d1b88
+        mov eax, dword ptr [esp + 0x820]
+        lea esi, [esp + 0x200]
+        lea edi, [esp + 0x480]
+        add ebp, eax
+        call sub_5d1b88
+        mov eax, dword ptr [esp + 0x820]
+        lea esi, [esp + 0x240]
+        lea edi, [esp + 0x480]
+        add ebp, eax
+        call sub_5d1b88
+        mov eax, dword ptr [esp + 0x820]
+        lea esi, [esp + 0x280]
+        lea edi, [esp + 0x4a0]
+        add ebp, eax
+        call sub_5d1b88
+        mov eax, dword ptr [esp + 0x820]
+        lea esi, [esp + 0x2c0]
+        lea edi, [esp + 0x4a0]
+        add ebp, eax
+        call sub_5d1b88
+        mov eax, dword ptr [esp + 0x820]
+        lea esi, [esp + 0x300]
+        lea edi, [esp + 0x4c0]
+        add ebp, eax
+        call sub_5d1b88
+        mov eax, dword ptr [esp + 0x820]
+        lea esi, [esp + 0x340]
+        lea edi, [esp + 0x4c0]
+        add ebp, eax
+        call sub_5d1b88
+        mov eax, dword ptr [esp + 0x820]
+        lea esi, [esp + 0x380]
+        lea edi, [esp + 0x4e0]
+        add ebp, eax
+        call sub_5d1b88
+        mov eax, dword ptr [esp + 0x820]
+        lea esi, [esp + 0x3c0]
+        lea edi, [esp + 0x4e0]
+        add ebp, eax
+        call sub_5d1b88
+        add esp, 0x800
+        pop ebp
+        pop edi
+        pop esi
+        pop edx
+        pop ecx
+        pop ebx
+        ret
+    }
 }
 
 // ORIGINAL: 0x005D1A30 sub_5d1a30 0x005D1A30-0x005D1B88
 // RECOVERY_BINDING: v1 {"evidence": ["recovery/tasks/movie-decoder-owner-oct5.json", "pinned caller/body and shared-storage review; fresh VC6 public symbol", "Store the advanced +0x204 cursor after six-block decode, then execute sixteen 5CF5C7 row outputs."], "reason": "Faithful semantic media decoder owner recovery with normalized custom-register helper interfaces. Original identities, spans and historical findings retained; no matching, runtime or game acceptance granted."}
 // symbol    ?sub_5d1a30@@YAXPAEHPAUMediaDecoderContext@@@Z
 // TRIED: OutputPixelRow (0x005CF5C7) is itself unrecovered and takes its row source/dest through esi/ebx/edi set by the caller before each call - a register-argument convention with no C++ expression that isn't __asm. Transcribed as 16 nullary calls in source order, matching call count/topology, not the per-call register setup.
-void __cdecl sub_5d1a30(BYTE *base, int stride, MediaDecoderContext *context) {
-  DWORD scratch_words[512];
-  const BYTE *const input = context->compressed_input_200;
-  const DWORD initial_bit_position = context->bit_position_204;
-  const DWORD bit_position = sub_5d0aab(
-      context, scratch_words, input, initial_bit_position);
-  context->bit_position_204 = bit_position;
-  for (int row = 0; row != 16; ++row) {
-    unsigned int *const component = reinterpret_cast<unsigned int *>(
-        reinterpret_cast<BYTE *>(scratch_words) + row * 0x40);
-    unsigned int *const chroma = reinterpret_cast<unsigned int *>(
-        reinterpret_cast<BYTE *>(scratch_words) + 0x400 + (row / 2) * 0x20);
-    OutputPixelRow(reinterpret_cast<int *>(base + row * stride),
-                   component, chroma);
-  }
+// Hand-written asm (EA uV decoder module): saves ecx/edx with the callee-saved set, register-convention callees.
+__declspec(naked) void __cdecl sub_5d1a30(BYTE *base, int stride, MediaDecoderContext *context) {
+    __asm {
+        push ebx
+        push ecx
+        push edx
+        push esi
+        push edi
+        push ebp
+        mov esi, dword ptr [esp + 0x24]
+        mov ebp, dword ptr [esi + 0x200]
+        mov edi, dword ptr [esi + 0x204]
+        call sub_5d0aab
+        mov dword ptr [esi + 0x204], edi
+        mov edi, dword ptr [esp + 0x1c]
+        mov esi, offset movie_media_transform_workspace
+        mov ebx, offset movie_media_transform_workspace + 0x400
+        call OutputPixelRow
+        add edi, dword ptr [esp + 0x20]
+        mov esi, offset movie_media_transform_workspace + 0x40
+        mov ebx, offset movie_media_transform_workspace + 0x400
+        call OutputPixelRow
+        add edi, dword ptr [esp + 0x20]
+        mov esi, offset movie_media_transform_workspace + 0x80
+        mov ebx, offset movie_media_transform_workspace + 0x420
+        call OutputPixelRow
+        add edi, dword ptr [esp + 0x20]
+        mov esi, offset movie_media_transform_workspace + 0xc0
+        mov ebx, offset movie_media_transform_workspace + 0x420
+        call OutputPixelRow
+        add edi, dword ptr [esp + 0x20]
+        mov esi, offset movie_media_transform_workspace + 0x100
+        mov ebx, offset movie_media_transform_workspace + 0x440
+        call OutputPixelRow
+        add edi, dword ptr [esp + 0x20]
+        mov esi, offset movie_media_transform_workspace + 0x140
+        mov ebx, offset movie_media_transform_workspace + 0x440
+        call OutputPixelRow
+        add edi, dword ptr [esp + 0x20]
+        mov esi, offset movie_media_transform_workspace + 0x180
+        mov ebx, offset movie_media_transform_workspace + 0x460
+        call OutputPixelRow
+        add edi, dword ptr [esp + 0x20]
+        mov esi, offset movie_media_transform_workspace + 0x1c0
+        mov ebx, offset movie_media_transform_workspace + 0x460
+        call OutputPixelRow
+        add edi, dword ptr [esp + 0x20]
+        mov esi, offset movie_media_transform_workspace + 0x200
+        mov ebx, offset movie_media_transform_workspace + 0x480
+        call OutputPixelRow
+        add edi, dword ptr [esp + 0x20]
+        mov esi, offset movie_media_transform_workspace + 0x240
+        mov ebx, offset movie_media_transform_workspace + 0x480
+        call OutputPixelRow
+        add edi, dword ptr [esp + 0x20]
+        mov esi, offset movie_media_transform_workspace + 0x280
+        mov ebx, offset movie_media_transform_workspace + 0x4a0
+        call OutputPixelRow
+        add edi, dword ptr [esp + 0x20]
+        mov esi, offset movie_media_transform_workspace + 0x2c0
+        mov ebx, offset movie_media_transform_workspace + 0x4a0
+        call OutputPixelRow
+        add edi, dword ptr [esp + 0x20]
+        mov esi, offset movie_media_transform_workspace + 0x300
+        mov ebx, offset movie_media_transform_workspace + 0x4c0
+        call OutputPixelRow
+        add edi, dword ptr [esp + 0x20]
+        mov esi, offset movie_media_transform_workspace + 0x340
+        mov ebx, offset movie_media_transform_workspace + 0x4c0
+        call OutputPixelRow
+        add edi, dword ptr [esp + 0x20]
+        mov esi, offset movie_media_transform_workspace + 0x380
+        mov ebx, offset movie_media_transform_workspace + 0x4e0
+        call OutputPixelRow
+        add edi, dword ptr [esp + 0x20]
+        mov esi, offset movie_media_transform_workspace + 0x3c0
+        mov ebx, offset movie_media_transform_workspace + 0x4e0
+        call OutputPixelRow
+        pop ebp
+        pop edi
+        pop esi
+        pop edx
+        pop ecx
+        pop ebx
+        ret
+    }
 }
 
 // ORIGINAL: 0x005D1278 sub_5d1278 0x005D1278-0x005D1466
 // RECOVERY_BINDING: v1 {"evidence": ["recovery/tasks/movie-decoder-owner-oct5.json", "Pinned input is the runtime+0x3F8 decoder context. Capture input/cursor once, decode the six blocks, publish context+0x204, then emit sixteen rows through 0x5D2536.", "The source DWORD scratch rows at offsets row*16 and 256+(row/2)*8 reproduce the existing byte offsets without cross-type pointer casts. Retain 512 words and original byte pitch; the source interface is not a recovered private register ABI."], "reason": "Use direct raw-word rows and a byte destination for the existing packed-row helper while preserving bitstream capture/commit and the original sixteen-row conversion sequence."}
 // symbol    ?sub_5d1278@@YAXPAEHPAUMediaDecoderContext@@@Z
 // TRIED: sub_5d2536/sub_5d0aab take no C-expressible params (register- implicit edi/esi/ebp with no prologue); the esi/edi/ebp setup before each bare call cannot be threaded through a normal argument list without __asm, so the calls below are faithful in COUNT and ORDER, not operands.
-void __cdecl sub_5d1278(BYTE *base, int stride, MediaDecoderContext *context) {
-  DWORD scratch_words[512];
-  const BYTE *const input = context->compressed_input_200;
-  const DWORD initial_bit_position = context->bit_position_204;
-  const DWORD bit_position = sub_5d0aab(
-      context, scratch_words, input, initial_bit_position);
-  context->bit_position_204 = bit_position;
-  for (int row = 0; row != 16; ++row) {
-    DWORD *const source = scratch_words + row * 0x10;
-    DWORD *const tables = scratch_words + 0x100 + (row / 2) * 8;
-    sub_5d2536(source, tables, base + row * stride);
-  }
+// Hand-written asm (EA uV decoder module): saves ecx/edx with the callee-saved set, register-convention callees.
+__declspec(naked) void __cdecl sub_5d1278(BYTE *base, int stride, MediaDecoderContext *context) {
+    __asm {
+        push ebx
+        push ecx
+        push edx
+        push esi
+        push edi
+        push ebp
+        sub esp, 0x800
+        mov esi, dword ptr [esp + 0x824]
+        mov ebp, dword ptr [esi + 0x200]
+        mov edi, dword ptr [esi + 0x204]
+        call sub_5d0aab
+        mov dword ptr [esi + 0x204], edi
+        mov ebp, dword ptr [esp + 0x81c]
+        lea esi, [esp]
+        lea edi, [esp + 0x400]
+        call sub_5d2536
+        mov eax, dword ptr [esp + 0x820]
+        lea esi, [esp + 0x40]
+        lea edi, [esp + 0x400]
+        add ebp, eax
+        call sub_5d2536
+        mov eax, dword ptr [esp + 0x820]
+        lea esi, [esp + 0x80]
+        lea edi, [esp + 0x420]
+        add ebp, eax
+        call sub_5d2536
+        mov eax, dword ptr [esp + 0x820]
+        lea esi, [esp + 0xc0]
+        lea edi, [esp + 0x420]
+        add ebp, eax
+        call sub_5d2536
+        mov eax, dword ptr [esp + 0x820]
+        lea esi, [esp + 0x100]
+        lea edi, [esp + 0x440]
+        add ebp, eax
+        call sub_5d2536
+        mov eax, dword ptr [esp + 0x820]
+        lea esi, [esp + 0x140]
+        lea edi, [esp + 0x440]
+        add ebp, eax
+        call sub_5d2536
+        mov eax, dword ptr [esp + 0x820]
+        lea esi, [esp + 0x180]
+        lea edi, [esp + 0x460]
+        add ebp, eax
+        call sub_5d2536
+        mov eax, dword ptr [esp + 0x820]
+        lea esi, [esp + 0x1c0]
+        lea edi, [esp + 0x460]
+        add ebp, eax
+        call sub_5d2536
+        mov eax, dword ptr [esp + 0x820]
+        lea esi, [esp + 0x200]
+        lea edi, [esp + 0x480]
+        add ebp, eax
+        call sub_5d2536
+        mov eax, dword ptr [esp + 0x820]
+        lea esi, [esp + 0x240]
+        lea edi, [esp + 0x480]
+        add ebp, eax
+        call sub_5d2536
+        mov eax, dword ptr [esp + 0x820]
+        lea esi, [esp + 0x280]
+        lea edi, [esp + 0x4a0]
+        add ebp, eax
+        call sub_5d2536
+        mov eax, dword ptr [esp + 0x820]
+        lea esi, [esp + 0x2c0]
+        lea edi, [esp + 0x4a0]
+        add ebp, eax
+        call sub_5d2536
+        mov eax, dword ptr [esp + 0x820]
+        lea esi, [esp + 0x300]
+        lea edi, [esp + 0x4c0]
+        add ebp, eax
+        call sub_5d2536
+        mov eax, dword ptr [esp + 0x820]
+        lea esi, [esp + 0x340]
+        lea edi, [esp + 0x4c0]
+        add ebp, eax
+        call sub_5d2536
+        mov eax, dword ptr [esp + 0x820]
+        lea esi, [esp + 0x380]
+        lea edi, [esp + 0x4e0]
+        add ebp, eax
+        call sub_5d2536
+        mov eax, dword ptr [esp + 0x820]
+        lea esi, [esp + 0x3c0]
+        lea edi, [esp + 0x4e0]
+        add ebp, eax
+        call sub_5d2536
+        add esp, 0x800
+        pop ebp
+        pop edi
+        pop esi
+        pop edx
+        pop ecx
+        pop ebx
+        ret
+    }
 }
 
 // Existing product helper is defined below in this decoder owner.
@@ -1167,40 +2325,192 @@ static DWORD movie_pixel_read_dword_at(const void *base, DWORD byte_offset) {
 // symbol    ?OutputPixelRow@@YAXAAUMediaConversionTableStorage@@PAHPBI2@Z
 // TRIED: earlier homed into general.cpp (original TU unproved) 2026-09-03 and reverted for one reason:
 // TRIED: zero-arg contract head - the body has no prologue and reads esi/edi/ebx as pre-loaded pointers with no load from any fixed address, i.e. a register-passing convention no standard C signature reproduces without __asm; recast as three explicit pointer params (diverges at instr #1, a normal push-args prologue vs none)
-void __cdecl OutputPixelRow(MediaConversionTableStorage &tables,
+// Hand-written asm (EA uV decoder module): no prologue, esi/edi/ebx/ebp register inputs.
+__declspec(naked) void __cdecl OutputPixelRow(MediaConversionTableStorage &tables,
                             int *destination,
                             const uint32_t *component_source,
                             const uint32_t *chroma_source) {
-  const DWORD *component = tables.packed_component_words;
-  const DWORD *selector_zero = tables.packed_component_words + 256;
-  const DWORD *selector_one = tables.packed_component_words + 128;
-  for (int pair = 0; pair < 8; ++pair) {
-    if (pair == 0 || pair == 4) {
-      const DWORD discarded_destination = movie_pixel_read_dword_at(
-          destination, static_cast<DWORD>(pair) * 8u);
-      (void)discarded_destination;
+    __asm {
+        mov ecx, dword ptr [edi]
+        mov eax, dword ptr [esi]
+        mov edx, dword ptr [esi + 4]
+        shr eax, 0x11
+        mov ecx, dword ptr [ebx]
+        shr edx, 0x11
+        mov ebp, dword ptr [ebx + 0x100]
+        shr ecx, 0x11
+        and eax, 0x7f
+        shr ebp, 0x11
+        and edx, 0x7f
+        and ecx, 0x7f
+        and ebp, 0x7f
+        mov eax, dword ptr [eax*4 + movie_media_conversion_tables + 0x10c]
+        mov edx, dword ptr [edx*4 + movie_media_conversion_tables + 0x10c]
+        mov ecx, dword ptr [ecx*4 + movie_media_conversion_tables + 0x50c]
+        mov ebp, dword ptr [ebp*4 + movie_media_conversion_tables + 0x30c]
+        add eax, ecx
+        add edx, ecx
+        add eax, ebp
+        add edx, ebp
+        mov dword ptr [edi], eax
+        mov dword ptr [edi + 4], edx
+        mov eax, dword ptr [esi + 8]
+        mov edx, dword ptr [esi + 0xc]
+        shr eax, 0x11
+        mov ecx, dword ptr [ebx + 4]
+        shr edx, 0x11
+        mov ebp, dword ptr [ebx + 0x104]
+        shr ecx, 0x11
+        and eax, 0x7f
+        shr ebp, 0x11
+        and edx, 0x7f
+        and ecx, 0x7f
+        and ebp, 0x7f
+        mov eax, dword ptr [eax*4 + movie_media_conversion_tables + 0x10c]
+        mov edx, dword ptr [edx*4 + movie_media_conversion_tables + 0x10c]
+        mov ecx, dword ptr [ecx*4 + movie_media_conversion_tables + 0x50c]
+        mov ebp, dword ptr [ebp*4 + movie_media_conversion_tables + 0x30c]
+        add eax, ecx
+        add edx, ecx
+        add eax, ebp
+        add edx, ebp
+        mov dword ptr [edi + 8], eax
+        mov dword ptr [edi + 0xc], edx
+        mov eax, dword ptr [esi + 0x10]
+        mov edx, dword ptr [esi + 0x14]
+        shr eax, 0x11
+        mov ecx, dword ptr [ebx + 8]
+        shr edx, 0x11
+        mov ebp, dword ptr [ebx + 0x108]
+        shr ecx, 0x11
+        and eax, 0x7f
+        shr ebp, 0x11
+        and edx, 0x7f
+        and ecx, 0x7f
+        and ebp, 0x7f
+        mov eax, dword ptr [eax*4 + movie_media_conversion_tables + 0x10c]
+        mov edx, dword ptr [edx*4 + movie_media_conversion_tables + 0x10c]
+        mov ecx, dword ptr [ecx*4 + movie_media_conversion_tables + 0x50c]
+        mov ebp, dword ptr [ebp*4 + movie_media_conversion_tables + 0x30c]
+        add eax, ecx
+        add edx, ecx
+        add eax, ebp
+        add edx, ebp
+        mov dword ptr [edi + 0x10], eax
+        mov dword ptr [edi + 0x14], edx
+        mov eax, dword ptr [esi + 0x18]
+        mov edx, dword ptr [esi + 0x1c]
+        shr eax, 0x11
+        mov ecx, dword ptr [ebx + 0xc]
+        shr edx, 0x11
+        mov ebp, dword ptr [ebx + 0x10c]
+        shr ecx, 0x11
+        and eax, 0x7f
+        shr ebp, 0x11
+        and edx, 0x7f
+        and ecx, 0x7f
+        and ebp, 0x7f
+        mov eax, dword ptr [eax*4 + movie_media_conversion_tables + 0x10c]
+        mov edx, dword ptr [edx*4 + movie_media_conversion_tables + 0x10c]
+        mov ecx, dword ptr [ecx*4 + movie_media_conversion_tables + 0x50c]
+        mov ebp, dword ptr [ebp*4 + movie_media_conversion_tables + 0x30c]
+        add eax, ecx
+        add edx, ecx
+        add eax, ebp
+        add edx, ebp
+        mov dword ptr [edi + 0x18], eax
+        mov dword ptr [edi + 0x1c], edx
+        mov ecx, dword ptr [edi + 0x20]
+        mov eax, dword ptr [esi + 0x20]
+        mov edx, dword ptr [esi + 0x24]
+        shr eax, 0x11
+        mov ecx, dword ptr [ebx + 0x10]
+        shr edx, 0x11
+        mov ebp, dword ptr [ebx + 0x110]
+        shr ecx, 0x11
+        and eax, 0x7f
+        shr ebp, 0x11
+        and edx, 0x7f
+        and ecx, 0x7f
+        and ebp, 0x7f
+        mov eax, dword ptr [eax*4 + movie_media_conversion_tables + 0x10c]
+        mov edx, dword ptr [edx*4 + movie_media_conversion_tables + 0x10c]
+        mov ecx, dword ptr [ecx*4 + movie_media_conversion_tables + 0x50c]
+        mov ebp, dword ptr [ebp*4 + movie_media_conversion_tables + 0x30c]
+        add eax, ecx
+        add edx, ecx
+        add eax, ebp
+        add edx, ebp
+        mov dword ptr [edi + 0x20], eax
+        mov dword ptr [edi + 0x24], edx
+        mov eax, dword ptr [esi + 0x28]
+        mov edx, dword ptr [esi + 0x2c]
+        shr eax, 0x11
+        mov ecx, dword ptr [ebx + 0x14]
+        shr edx, 0x11
+        mov ebp, dword ptr [ebx + 0x114]
+        shr ecx, 0x11
+        and eax, 0x7f
+        shr ebp, 0x11
+        and edx, 0x7f
+        and ecx, 0x7f
+        and ebp, 0x7f
+        mov eax, dword ptr [eax*4 + movie_media_conversion_tables + 0x10c]
+        mov edx, dword ptr [edx*4 + movie_media_conversion_tables + 0x10c]
+        mov ecx, dword ptr [ecx*4 + movie_media_conversion_tables + 0x50c]
+        mov ebp, dword ptr [ebp*4 + movie_media_conversion_tables + 0x30c]
+        add eax, ecx
+        add edx, ecx
+        add eax, ebp
+        add edx, ebp
+        mov dword ptr [edi + 0x28], eax
+        mov dword ptr [edi + 0x2c], edx
+        mov eax, dword ptr [esi + 0x30]
+        mov edx, dword ptr [esi + 0x34]
+        shr eax, 0x11
+        mov ecx, dword ptr [ebx + 0x18]
+        shr edx, 0x11
+        mov ebp, dword ptr [ebx + 0x118]
+        shr ecx, 0x11
+        and eax, 0x7f
+        shr ebp, 0x11
+        and edx, 0x7f
+        and ecx, 0x7f
+        and ebp, 0x7f
+        mov eax, dword ptr [eax*4 + movie_media_conversion_tables + 0x10c]
+        mov edx, dword ptr [edx*4 + movie_media_conversion_tables + 0x10c]
+        mov ecx, dword ptr [ecx*4 + movie_media_conversion_tables + 0x50c]
+        mov ebp, dword ptr [ebp*4 + movie_media_conversion_tables + 0x30c]
+        add eax, ecx
+        add edx, ecx
+        add eax, ebp
+        add edx, ebp
+        mov dword ptr [edi + 0x30], eax
+        mov dword ptr [edi + 0x34], edx
+        mov eax, dword ptr [esi + 0x38]
+        mov edx, dword ptr [esi + 0x3c]
+        shr eax, 0x11
+        mov ecx, dword ptr [ebx + 0x1c]
+        shr edx, 0x11
+        mov ebp, dword ptr [ebx + 0x11c]
+        shr ecx, 0x11
+        and eax, 0x7f
+        shr ebp, 0x11
+        and edx, 0x7f
+        and ecx, 0x7f
+        and ebp, 0x7f
+        mov eax, dword ptr [eax*4 + movie_media_conversion_tables + 0x10c]
+        mov edx, dword ptr [edx*4 + movie_media_conversion_tables + 0x10c]
+        mov ecx, dword ptr [ecx*4 + movie_media_conversion_tables + 0x50c]
+        mov ebp, dword ptr [ebp*4 + movie_media_conversion_tables + 0x30c]
+        add eax, ecx
+        add edx, ecx
+        add eax, ebp
+        add edx, ebp
+        mov dword ptr [edi + 0x38], eax
+        mov dword ptr [edi + 0x3c], edx
+        ret
     }
-    const DWORD component_index_0 = movie_pixel_read_dword_at(
-        component_source, static_cast<DWORD>(pair) * 8u) >> 17 & 0x7fu;
-    const DWORD component_index_1 = movie_pixel_read_dword_at(
-        component_source, static_cast<DWORD>(pair) * 8u + 4u) >> 17 & 0x7fu;
-    const DWORD selector_index_0 = movie_pixel_read_dword_at(
-        chroma_source, static_cast<DWORD>(pair) * 4u) >> 17 & 0x7fu;
-    const DWORD selector_index_1 = movie_pixel_read_dword_at(
-        chroma_source, 0x100u + static_cast<DWORD>(pair) * 4u) >> 17 & 0x7fu;
-    const DWORD component_0 = movie_pixel_read_dword_at(
-        component, component_index_0 * 4u);
-    const DWORD component_1 = movie_pixel_read_dword_at(
-        component, component_index_1 * 4u);
-    const DWORD selector_0 = movie_pixel_read_dword_at(
-        selector_zero, selector_index_0 * 4u);
-    const DWORD selector_1 = movie_pixel_read_dword_at(
-        selector_one, selector_index_1 * 4u);
-    const DWORD pixel_0 = (component_0 + selector_0) + selector_1;
-    const DWORD pixel_1 = (component_1 + selector_0) + selector_1;
-    memcpy(&destination[pair * 2], &pixel_0, sizeof(pixel_0));
-    memcpy(&destination[pair * 2 + 1], &pixel_1, sizeof(pixel_1));
-  }
 }
 
 // ORIGINAL: 0x005CF852 OutputPixelRow16 0x005CF852-0x005CFAED
@@ -1208,45 +2518,192 @@ void __cdecl OutputPixelRow(MediaConversionTableStorage &tables,
 // symbol    ?OutputPixelRow16@@YAXAAUMediaConversionTableStorage@@PAFPBI2@Z
 // TRIED: earlier homed into general.cpp (original TU unproved) 2026-09-03 and reverted for one reason:
 // TRIED: zero-arg contract head - same register-in/register-out shape as 0x005CF5C7; recast as three explicit pointer params (diverges at instr #1, a normal push-args prologue vs none)
-void __cdecl OutputPixelRow16(MediaConversionTableStorage &tables,
+// Hand-written asm (EA uV decoder module): no prologue, esi/edi/ebx/ebp register inputs.
+__declspec(naked) void __cdecl OutputPixelRow16(MediaConversionTableStorage &tables,
                               short *destination,
                               const uint32_t *component_source,
                               const uint32_t *chroma_source) {
-  const DWORD *component = tables.packed_component_words;
-  const DWORD *selector_zero = tables.packed_component_words + 256;
-  const DWORD *selector_one = tables.packed_component_words + 128;
-  for (int pair = 0; pair < 8; ++pair) {
-    if (pair == 0 || pair == 4) {
-      const uintptr_t destination_address =
-          reinterpret_cast<uintptr_t>(destination) +
-          static_cast<uintptr_t>(pair) * 8u;
-      const DWORD discarded_destination =
-          movie_pixel_read_dword_address(destination_address);
-      (void)discarded_destination;
+    __asm {
+        mov ecx, dword ptr [edi]
+        mov eax, dword ptr [esi]
+        mov edx, dword ptr [esi + 4]
+        shr eax, 0x11
+        mov ecx, dword ptr [ebx]
+        shr edx, 0x11
+        mov ebp, dword ptr [ebx + 0x100]
+        shr ecx, 0x11
+        and eax, 0x7f
+        shr ebp, 0x11
+        and edx, 0x7f
+        and ecx, 0x7f
+        and ebp, 0x7f
+        mov eax, dword ptr [eax*4 + movie_media_conversion_tables + 0x10c]
+        mov edx, dword ptr [edx*4 + movie_media_conversion_tables + 0x10c]
+        mov ecx, dword ptr [ecx*4 + movie_media_conversion_tables + 0x50c]
+        mov ebp, dword ptr [ebp*4 + movie_media_conversion_tables + 0x30c]
+        add eax, ecx
+        add edx, ecx
+        add eax, ebp
+        add edx, ebp
+        mov word ptr [edi], ax
+        mov word ptr [edi + 2], dx
+        mov eax, dword ptr [esi + 8]
+        mov edx, dword ptr [esi + 0xc]
+        shr eax, 0x11
+        mov ecx, dword ptr [ebx + 4]
+        shr edx, 0x11
+        mov ebp, dword ptr [ebx + 0x104]
+        shr ecx, 0x11
+        and eax, 0x7f
+        shr ebp, 0x11
+        and edx, 0x7f
+        and ecx, 0x7f
+        and ebp, 0x7f
+        mov eax, dword ptr [eax*4 + movie_media_conversion_tables + 0x10c]
+        mov edx, dword ptr [edx*4 + movie_media_conversion_tables + 0x10c]
+        mov ecx, dword ptr [ecx*4 + movie_media_conversion_tables + 0x50c]
+        mov ebp, dword ptr [ebp*4 + movie_media_conversion_tables + 0x30c]
+        add eax, ecx
+        add edx, ecx
+        add eax, ebp
+        add edx, ebp
+        mov word ptr [edi + 4], ax
+        mov word ptr [edi + 6], dx
+        mov eax, dword ptr [esi + 0x10]
+        mov edx, dword ptr [esi + 0x14]
+        shr eax, 0x11
+        mov ecx, dword ptr [ebx + 8]
+        shr edx, 0x11
+        mov ebp, dword ptr [ebx + 0x108]
+        shr ecx, 0x11
+        and eax, 0x7f
+        shr ebp, 0x11
+        and edx, 0x7f
+        and ecx, 0x7f
+        and ebp, 0x7f
+        mov eax, dword ptr [eax*4 + movie_media_conversion_tables + 0x10c]
+        mov edx, dword ptr [edx*4 + movie_media_conversion_tables + 0x10c]
+        mov ecx, dword ptr [ecx*4 + movie_media_conversion_tables + 0x50c]
+        mov ebp, dword ptr [ebp*4 + movie_media_conversion_tables + 0x30c]
+        add eax, ecx
+        add edx, ecx
+        add eax, ebp
+        add edx, ebp
+        mov word ptr [edi + 8], ax
+        mov word ptr [edi + 0xa], dx
+        mov eax, dword ptr [esi + 0x18]
+        mov edx, dword ptr [esi + 0x1c]
+        shr eax, 0x11
+        mov ecx, dword ptr [ebx + 0xc]
+        shr edx, 0x11
+        mov ebp, dword ptr [ebx + 0x10c]
+        shr ecx, 0x11
+        and eax, 0x7f
+        shr ebp, 0x11
+        and edx, 0x7f
+        and ecx, 0x7f
+        and ebp, 0x7f
+        mov eax, dword ptr [eax*4 + movie_media_conversion_tables + 0x10c]
+        mov edx, dword ptr [edx*4 + movie_media_conversion_tables + 0x10c]
+        mov ecx, dword ptr [ecx*4 + movie_media_conversion_tables + 0x50c]
+        mov ebp, dword ptr [ebp*4 + movie_media_conversion_tables + 0x30c]
+        add eax, ecx
+        add edx, ecx
+        add eax, ebp
+        add edx, ebp
+        mov word ptr [edi + 0xc], ax
+        mov word ptr [edi + 0xe], dx
+        mov ecx, dword ptr [edi + 0x20]
+        mov eax, dword ptr [esi + 0x20]
+        mov edx, dword ptr [esi + 0x24]
+        shr eax, 0x11
+        mov ecx, dword ptr [ebx + 0x10]
+        shr edx, 0x11
+        mov ebp, dword ptr [ebx + 0x110]
+        shr ecx, 0x11
+        and eax, 0x7f
+        shr ebp, 0x11
+        and edx, 0x7f
+        and ecx, 0x7f
+        and ebp, 0x7f
+        mov eax, dword ptr [eax*4 + movie_media_conversion_tables + 0x10c]
+        mov edx, dword ptr [edx*4 + movie_media_conversion_tables + 0x10c]
+        mov ecx, dword ptr [ecx*4 + movie_media_conversion_tables + 0x50c]
+        mov ebp, dword ptr [ebp*4 + movie_media_conversion_tables + 0x30c]
+        add eax, ecx
+        add edx, ecx
+        add eax, ebp
+        add edx, ebp
+        mov word ptr [edi + 0x10], ax
+        mov word ptr [edi + 0x12], dx
+        mov eax, dword ptr [esi + 0x28]
+        mov edx, dword ptr [esi + 0x2c]
+        shr eax, 0x11
+        mov ecx, dword ptr [ebx + 0x14]
+        shr edx, 0x11
+        mov ebp, dword ptr [ebx + 0x114]
+        shr ecx, 0x11
+        and eax, 0x7f
+        shr ebp, 0x11
+        and edx, 0x7f
+        and ecx, 0x7f
+        and ebp, 0x7f
+        mov eax, dword ptr [eax*4 + movie_media_conversion_tables + 0x10c]
+        mov edx, dword ptr [edx*4 + movie_media_conversion_tables + 0x10c]
+        mov ecx, dword ptr [ecx*4 + movie_media_conversion_tables + 0x50c]
+        mov ebp, dword ptr [ebp*4 + movie_media_conversion_tables + 0x30c]
+        add eax, ecx
+        add edx, ecx
+        add eax, ebp
+        add edx, ebp
+        mov word ptr [edi + 0x14], ax
+        mov word ptr [edi + 0x16], dx
+        mov eax, dword ptr [esi + 0x30]
+        mov edx, dword ptr [esi + 0x34]
+        shr eax, 0x11
+        mov ecx, dword ptr [ebx + 0x18]
+        shr edx, 0x11
+        mov ebp, dword ptr [ebx + 0x118]
+        shr ecx, 0x11
+        and eax, 0x7f
+        shr ebp, 0x11
+        and edx, 0x7f
+        and ecx, 0x7f
+        and ebp, 0x7f
+        mov eax, dword ptr [eax*4 + movie_media_conversion_tables + 0x10c]
+        mov edx, dword ptr [edx*4 + movie_media_conversion_tables + 0x10c]
+        mov ecx, dword ptr [ecx*4 + movie_media_conversion_tables + 0x50c]
+        mov ebp, dword ptr [ebp*4 + movie_media_conversion_tables + 0x30c]
+        add eax, ecx
+        add edx, ecx
+        add eax, ebp
+        add edx, ebp
+        mov word ptr [edi + 0x18], ax
+        mov word ptr [edi + 0x1a], dx
+        mov eax, dword ptr [esi + 0x38]
+        mov edx, dword ptr [esi + 0x3c]
+        shr eax, 0x11
+        mov ecx, dword ptr [ebx + 0x1c]
+        shr edx, 0x11
+        mov ebp, dword ptr [ebx + 0x11c]
+        shr ecx, 0x11
+        and eax, 0x7f
+        shr ebp, 0x11
+        and edx, 0x7f
+        and ecx, 0x7f
+        and ebp, 0x7f
+        mov eax, dword ptr [eax*4 + movie_media_conversion_tables + 0x10c]
+        mov edx, dword ptr [edx*4 + movie_media_conversion_tables + 0x10c]
+        mov ecx, dword ptr [ecx*4 + movie_media_conversion_tables + 0x50c]
+        mov ebp, dword ptr [ebp*4 + movie_media_conversion_tables + 0x30c]
+        add eax, ecx
+        add edx, ecx
+        add eax, ebp
+        add edx, ebp
+        mov word ptr [edi + 0x1c], ax
+        mov word ptr [edi + 0x1e], dx
+        ret
     }
-    const DWORD component_index_0 = movie_pixel_read_dword_at(
-        component_source, static_cast<DWORD>(pair) * 8u) >> 17 & 0x7fu;
-    const DWORD component_index_1 = movie_pixel_read_dword_at(
-        component_source, static_cast<DWORD>(pair) * 8u + 4u) >> 17 & 0x7fu;
-    const DWORD selector_index_0 = movie_pixel_read_dword_at(
-        chroma_source, static_cast<DWORD>(pair) * 4u) >> 17 & 0x7fu;
-    const DWORD selector_index_1 = movie_pixel_read_dword_at(
-        chroma_source, 0x100u + static_cast<DWORD>(pair) * 4u) >> 17 & 0x7fu;
-    const DWORD component_0 = movie_pixel_read_dword_at(
-        component, component_index_0 * 4u);
-    const DWORD component_1 = movie_pixel_read_dword_at(
-        component, component_index_1 * 4u);
-    const DWORD selector_0 = movie_pixel_read_dword_at(
-        selector_zero, selector_index_0 * 4u);
-    const DWORD selector_1 = movie_pixel_read_dword_at(
-        selector_one, selector_index_1 * 4u);
-    const unsigned short pixel_0 =
-        static_cast<unsigned short>((component_0 + selector_0) + selector_1);
-    const unsigned short pixel_1 =
-        static_cast<unsigned short>((component_1 + selector_0) + selector_1);
-    memcpy(&destination[pair * 2], &pixel_0, sizeof(pixel_0));
-    memcpy(&destination[pair * 2 + 1], &pixel_1, sizeof(pixel_1));
-  }
 }
 
 // 005CEB12 owns byte-lane lookup and packing. Keep 005CEA09 as its mapped
@@ -1347,65 +2804,6 @@ __declspec(naked) void __cdecl sub_5cea09(const BYTE *component_rows,
         pop ebx
         ret
     }
-}
-
-void __cdecl OutputPixelRow(int *destination,
-                            unsigned int *component_source,
-                            unsigned int *chroma_source) {
-  OutputPixelRow(movie_media_conversion_tables, destination,
-                 component_source, chroma_source);
-}
-
-void __cdecl OutputPixelRow16(short *destination,
-                              unsigned int *component_source,
-                              unsigned int *chroma_source) {
-  OutputPixelRow16(movie_media_conversion_tables, destination,
-                   component_source, chroma_source);
-}
-
-static int *movie_media_block_words(int index) {
-  return movie_media_transform_workspace.block_and_intermediate_words + index;
-}
-
-static int *movie_media_row_words(int index) {
-  return movie_media_transform_workspace.row_and_butterfly_words + index;
-}
-
-void movie_media_transform_block_pair(int phase) {
-  const int group_base[6] = {0, 0, 128, 128, 256, 256};
-  const int half_block[6] = {0, 8, 0, 8, 0, 8};
-
-  sub_5cf150();
-  for (int row = 0; row != 8; ++row) {
-    sub_5d29e1(movie_media_row_words(row * 8),
-               movie_media_row_words(64 + row));
-  }
-  for (int column = 0; column != 8; ++column) {
-    sub_5d2b20(movie_media_block_words(group_base[phase] +
-                                       half_block[phase] + column * 16),
-               movie_media_row_words(64 + column * 9));
-  }
-}
-
-void movie_media_write_macroblock_rows(unsigned char *destination,
-                                       int row_pitch_bytes,
-                                       int sixteen_bit) {
-  for (int row = 0; row != 16; ++row) {
-    int *component = movie_media_block_words(row * 16);
-    int *chroma = movie_media_block_words(256 + (row / 2) * 8);
-    unsigned char *output = destination + row * row_pitch_bytes;
-    if (sixteen_bit) {
-      OutputPixelRow16(movie_media_conversion_tables,
-                       reinterpret_cast<short *>(output),
-                       reinterpret_cast<const uint32_t *>(component),
-                       reinterpret_cast<const uint32_t *>(chroma));
-    } else {
-      OutputPixelRow(movie_media_conversion_tables,
-                     reinterpret_cast<int *>(output),
-                     reinterpret_cast<const uint32_t *>(component),
-                     reinterpret_cast<const uint32_t *>(chroma));
-    }
-  }
 }
 
 
@@ -2864,34 +4262,315 @@ static DWORD movie_blend_high_half_ordered(DWORD sum) {
 // calls     (none)
 
 
-void __cdecl sub_5d2037(int *data_row, int *selector_pair,
+// Hand-written asm (EA uV decoder module): no prologue, esi/edi/ebx/ebp register inputs.
+__declspec(naked) void __cdecl sub_5d2037(int *data_row, int *selector_pair,
                         unsigned int *packed_output) {
-    for (int index = 0; index < 8; ++index) {
-        const DWORD source_offset_0 = static_cast<DWORD>(index) * 2u;
-        const int source_index_0 = movie_blend_read_index(data_row, source_offset_0);
-        const int selector_index_0 = movie_blend_read_index(
-            selector_pair, static_cast<DWORD>(index));
-        const int selector_index_1 = movie_blend_read_index(
-            selector_pair, 0x40u + static_cast<DWORD>(index));
-        const DWORD source_value_0 = movie_blend_read_word(
-            MovieBlendTableData, static_cast<DWORD>(source_index_0));
-        const DWORD selector_value_0 = movie_blend_read_word(
-            MovieBlendTableQuant, static_cast<DWORD>(selector_index_0));
-        const DWORD selector_value_1 = movie_blend_read_word(
-            MovieBlendTableQuant2, static_cast<DWORD>(selector_index_1));
-        const DWORD low_sum = (source_value_0 + selector_value_1) +
-                              selector_value_0;
-        const DWORD low_half = movie_blend_low_half_ordered(low_sum);
-
-        const int source_index_1 = movie_blend_read_index(
-            data_row, source_offset_0 + 1u);
-        const DWORD source_value_1 = movie_blend_read_word(
-            MovieBlendTableData, static_cast<DWORD>(source_index_1));
-        const DWORD high_sum = (source_value_1 + selector_value_1) +
-                               selector_value_0;
-        const DWORD high_half = movie_blend_high_half_ordered(high_sum);
-        const DWORD packed = high_half | low_half;
-        memcpy(&packed_output[index], &packed, sizeof(packed));
+    __asm {
+        mov eax, dword ptr [esi]
+        mov ebx, dword ptr [edi]
+        mov edx, dword ptr [edi + 0x100]
+        mov eax, dword ptr [eax*4 + movie_media_conversion_tables + 0x1b0c]
+        mov ebx, dword ptr [ebx*4 + movie_media_conversion_tables + 0x230c]
+        mov edx, dword ptr [edx*4 + movie_media_conversion_tables + 0x2b0c]
+        add eax, edx
+        add edx, ebx
+        add ebx, eax
+        mov eax, ebx
+        mov ecx, ebx
+        shr ebx, 0x17
+        and eax, 0xff800
+        shr eax, 0xb
+        and ecx, 0x1ff
+        mov ebx, dword ptr [ebx*4 + movie_media_conversion_tables + 0x2f0c]
+        mov eax, dword ptr [eax*4 + movie_media_conversion_tables + 0x33d4]
+        mov ecx, dword ptr [ecx*4 + movie_media_conversion_tables + 0x37ec]
+        or eax, ebx
+        mov ebx, dword ptr [esi + 4]
+        or eax, ecx
+        and eax, 0xffff
+        mov ecx, dword ptr [ebx*4 + movie_media_conversion_tables + 0x1b0c]
+        add ecx, edx
+        mov edx, ecx
+        mov ebx, ecx
+        and ecx, 0xff800
+        shr edx, 0x17
+        and ebx, 0x1ff
+        shr ecx, 0xb
+        mov edx, dword ptr [edx*4 + movie_media_conversion_tables + 0x2f0c]
+        mov ebx, dword ptr [ebx*4 + movie_media_conversion_tables + 0x37ec]
+        mov ecx, dword ptr [ecx*4 + movie_media_conversion_tables + 0x33d4]
+        or edx, ebx
+        or edx, ecx
+        and edx, 0xffff0000
+        or edx, eax
+        mov dword ptr [ebp], edx
+        mov eax, dword ptr [esi + 8]
+        mov ebx, dword ptr [edi + 4]
+        mov edx, dword ptr [edi + 0x104]
+        mov eax, dword ptr [eax*4 + movie_media_conversion_tables + 0x1b0c]
+        mov ebx, dword ptr [ebx*4 + movie_media_conversion_tables + 0x230c]
+        mov edx, dword ptr [edx*4 + movie_media_conversion_tables + 0x2b0c]
+        add eax, edx
+        add edx, ebx
+        add ebx, eax
+        mov eax, ebx
+        mov ecx, ebx
+        shr ebx, 0x17
+        and eax, 0xff800
+        shr eax, 0xb
+        and ecx, 0x1ff
+        mov ebx, dword ptr [ebx*4 + movie_media_conversion_tables + 0x2f0c]
+        mov eax, dword ptr [eax*4 + movie_media_conversion_tables + 0x33d4]
+        mov ecx, dword ptr [ecx*4 + movie_media_conversion_tables + 0x37ec]
+        or eax, ebx
+        mov ebx, dword ptr [esi + 0xc]
+        or eax, ecx
+        and eax, 0xffff
+        mov ecx, dword ptr [ebx*4 + movie_media_conversion_tables + 0x1b0c]
+        add ecx, edx
+        mov edx, ecx
+        mov ebx, ecx
+        and ecx, 0xff800
+        shr edx, 0x17
+        and ebx, 0x1ff
+        shr ecx, 0xb
+        mov edx, dword ptr [edx*4 + movie_media_conversion_tables + 0x2f0c]
+        mov ebx, dword ptr [ebx*4 + movie_media_conversion_tables + 0x37ec]
+        mov ecx, dword ptr [ecx*4 + movie_media_conversion_tables + 0x33d4]
+        or edx, ebx
+        or edx, ecx
+        and edx, 0xffff0000
+        or edx, eax
+        mov dword ptr [ebp + 4], edx
+        mov eax, dword ptr [esi + 0x10]
+        mov ebx, dword ptr [edi + 8]
+        mov edx, dword ptr [edi + 0x108]
+        mov eax, dword ptr [eax*4 + movie_media_conversion_tables + 0x1b0c]
+        mov ebx, dword ptr [ebx*4 + movie_media_conversion_tables + 0x230c]
+        mov edx, dword ptr [edx*4 + movie_media_conversion_tables + 0x2b0c]
+        add eax, edx
+        add edx, ebx
+        add ebx, eax
+        mov eax, ebx
+        mov ecx, ebx
+        shr ebx, 0x17
+        and eax, 0xff800
+        shr eax, 0xb
+        and ecx, 0x1ff
+        mov ebx, dword ptr [ebx*4 + movie_media_conversion_tables + 0x2f0c]
+        mov eax, dword ptr [eax*4 + movie_media_conversion_tables + 0x33d4]
+        mov ecx, dword ptr [ecx*4 + movie_media_conversion_tables + 0x37ec]
+        or eax, ebx
+        mov ebx, dword ptr [esi + 0x14]
+        or eax, ecx
+        and eax, 0xffff
+        mov ecx, dword ptr [ebx*4 + movie_media_conversion_tables + 0x1b0c]
+        add ecx, edx
+        mov edx, ecx
+        mov ebx, ecx
+        and ecx, 0xff800
+        shr edx, 0x17
+        and ebx, 0x1ff
+        shr ecx, 0xb
+        mov edx, dword ptr [edx*4 + movie_media_conversion_tables + 0x2f0c]
+        mov ebx, dword ptr [ebx*4 + movie_media_conversion_tables + 0x37ec]
+        mov ecx, dword ptr [ecx*4 + movie_media_conversion_tables + 0x33d4]
+        or edx, ebx
+        or edx, ecx
+        and edx, 0xffff0000
+        or edx, eax
+        mov dword ptr [ebp + 8], edx
+        mov eax, dword ptr [esi + 0x18]
+        mov ebx, dword ptr [edi + 0xc]
+        mov edx, dword ptr [edi + 0x10c]
+        mov eax, dword ptr [eax*4 + movie_media_conversion_tables + 0x1b0c]
+        mov ebx, dword ptr [ebx*4 + movie_media_conversion_tables + 0x230c]
+        mov edx, dword ptr [edx*4 + movie_media_conversion_tables + 0x2b0c]
+        add eax, edx
+        add edx, ebx
+        add ebx, eax
+        mov eax, ebx
+        mov ecx, ebx
+        shr ebx, 0x17
+        and eax, 0xff800
+        shr eax, 0xb
+        and ecx, 0x1ff
+        mov ebx, dword ptr [ebx*4 + movie_media_conversion_tables + 0x2f0c]
+        mov eax, dword ptr [eax*4 + movie_media_conversion_tables + 0x33d4]
+        mov ecx, dword ptr [ecx*4 + movie_media_conversion_tables + 0x37ec]
+        or eax, ebx
+        mov ebx, dword ptr [esi + 0x1c]
+        or eax, ecx
+        and eax, 0xffff
+        mov ecx, dword ptr [ebx*4 + movie_media_conversion_tables + 0x1b0c]
+        add ecx, edx
+        mov edx, ecx
+        mov ebx, ecx
+        and ecx, 0xff800
+        shr edx, 0x17
+        and ebx, 0x1ff
+        shr ecx, 0xb
+        mov edx, dword ptr [edx*4 + movie_media_conversion_tables + 0x2f0c]
+        mov ebx, dword ptr [ebx*4 + movie_media_conversion_tables + 0x37ec]
+        mov ecx, dword ptr [ecx*4 + movie_media_conversion_tables + 0x33d4]
+        or edx, ebx
+        or edx, ecx
+        and edx, 0xffff0000
+        or edx, eax
+        mov dword ptr [ebp + 0xc], edx
+        mov eax, dword ptr [esi + 0x20]
+        mov ebx, dword ptr [edi + 0x10]
+        mov edx, dword ptr [edi + 0x110]
+        mov eax, dword ptr [eax*4 + movie_media_conversion_tables + 0x1b0c]
+        mov ebx, dword ptr [ebx*4 + movie_media_conversion_tables + 0x230c]
+        mov edx, dword ptr [edx*4 + movie_media_conversion_tables + 0x2b0c]
+        add eax, edx
+        add edx, ebx
+        add ebx, eax
+        mov eax, ebx
+        mov ecx, ebx
+        shr ebx, 0x17
+        and eax, 0xff800
+        shr eax, 0xb
+        and ecx, 0x1ff
+        mov ebx, dword ptr [ebx*4 + movie_media_conversion_tables + 0x2f0c]
+        mov eax, dword ptr [eax*4 + movie_media_conversion_tables + 0x33d4]
+        mov ecx, dword ptr [ecx*4 + movie_media_conversion_tables + 0x37ec]
+        or eax, ebx
+        mov ebx, dword ptr [esi + 0x24]
+        or eax, ecx
+        and eax, 0xffff
+        mov ecx, dword ptr [ebx*4 + movie_media_conversion_tables + 0x1b0c]
+        add ecx, edx
+        mov edx, ecx
+        mov ebx, ecx
+        and ecx, 0xff800
+        shr edx, 0x17
+        and ebx, 0x1ff
+        shr ecx, 0xb
+        mov edx, dword ptr [edx*4 + movie_media_conversion_tables + 0x2f0c]
+        mov ebx, dword ptr [ebx*4 + movie_media_conversion_tables + 0x37ec]
+        mov ecx, dword ptr [ecx*4 + movie_media_conversion_tables + 0x33d4]
+        or edx, ebx
+        or edx, ecx
+        and edx, 0xffff0000
+        or edx, eax
+        mov dword ptr [ebp + 0x10], edx
+        mov eax, dword ptr [esi + 0x28]
+        mov ebx, dword ptr [edi + 0x14]
+        mov edx, dword ptr [edi + 0x114]
+        mov eax, dword ptr [eax*4 + movie_media_conversion_tables + 0x1b0c]
+        mov ebx, dword ptr [ebx*4 + movie_media_conversion_tables + 0x230c]
+        mov edx, dword ptr [edx*4 + movie_media_conversion_tables + 0x2b0c]
+        add eax, edx
+        add edx, ebx
+        add ebx, eax
+        mov eax, ebx
+        mov ecx, ebx
+        shr ebx, 0x17
+        and eax, 0xff800
+        shr eax, 0xb
+        and ecx, 0x1ff
+        mov ebx, dword ptr [ebx*4 + movie_media_conversion_tables + 0x2f0c]
+        mov eax, dword ptr [eax*4 + movie_media_conversion_tables + 0x33d4]
+        mov ecx, dword ptr [ecx*4 + movie_media_conversion_tables + 0x37ec]
+        or eax, ebx
+        mov ebx, dword ptr [esi + 0x2c]
+        or eax, ecx
+        and eax, 0xffff
+        mov ecx, dword ptr [ebx*4 + movie_media_conversion_tables + 0x1b0c]
+        add ecx, edx
+        mov edx, ecx
+        mov ebx, ecx
+        and ecx, 0xff800
+        shr edx, 0x17
+        and ebx, 0x1ff
+        shr ecx, 0xb
+        mov edx, dword ptr [edx*4 + movie_media_conversion_tables + 0x2f0c]
+        mov ebx, dword ptr [ebx*4 + movie_media_conversion_tables + 0x37ec]
+        mov ecx, dword ptr [ecx*4 + movie_media_conversion_tables + 0x33d4]
+        or edx, ebx
+        or edx, ecx
+        and edx, 0xffff0000
+        or edx, eax
+        mov dword ptr [ebp + 0x14], edx
+        mov eax, dword ptr [esi + 0x30]
+        mov ebx, dword ptr [edi + 0x18]
+        mov edx, dword ptr [edi + 0x118]
+        mov eax, dword ptr [eax*4 + movie_media_conversion_tables + 0x1b0c]
+        mov ebx, dword ptr [ebx*4 + movie_media_conversion_tables + 0x230c]
+        mov edx, dword ptr [edx*4 + movie_media_conversion_tables + 0x2b0c]
+        add eax, edx
+        add edx, ebx
+        add ebx, eax
+        mov eax, ebx
+        mov ecx, ebx
+        shr ebx, 0x17
+        and eax, 0xff800
+        shr eax, 0xb
+        and ecx, 0x1ff
+        mov ebx, dword ptr [ebx*4 + movie_media_conversion_tables + 0x2f0c]
+        mov eax, dword ptr [eax*4 + movie_media_conversion_tables + 0x33d4]
+        mov ecx, dword ptr [ecx*4 + movie_media_conversion_tables + 0x37ec]
+        or eax, ebx
+        mov ebx, dword ptr [esi + 0x34]
+        or eax, ecx
+        and eax, 0xffff
+        mov ecx, dword ptr [ebx*4 + movie_media_conversion_tables + 0x1b0c]
+        add ecx, edx
+        mov edx, ecx
+        mov ebx, ecx
+        and ecx, 0xff800
+        shr edx, 0x17
+        and ebx, 0x1ff
+        shr ecx, 0xb
+        mov edx, dword ptr [edx*4 + movie_media_conversion_tables + 0x2f0c]
+        mov ebx, dword ptr [ebx*4 + movie_media_conversion_tables + 0x37ec]
+        mov ecx, dword ptr [ecx*4 + movie_media_conversion_tables + 0x33d4]
+        or edx, ebx
+        or edx, ecx
+        and edx, 0xffff0000
+        or edx, eax
+        mov dword ptr [ebp + 0x18], edx
+        mov eax, dword ptr [esi + 0x38]
+        mov ebx, dword ptr [edi + 0x1c]
+        mov edx, dword ptr [edi + 0x11c]
+        mov eax, dword ptr [eax*4 + movie_media_conversion_tables + 0x1b0c]
+        mov ebx, dword ptr [ebx*4 + movie_media_conversion_tables + 0x230c]
+        mov edx, dword ptr [edx*4 + movie_media_conversion_tables + 0x2b0c]
+        add eax, edx
+        add edx, ebx
+        add ebx, eax
+        mov eax, ebx
+        mov ecx, ebx
+        shr ebx, 0x17
+        and eax, 0xff800
+        shr eax, 0xb
+        and ecx, 0x1ff
+        mov ebx, dword ptr [ebx*4 + movie_media_conversion_tables + 0x2f0c]
+        mov eax, dword ptr [eax*4 + movie_media_conversion_tables + 0x33d4]
+        mov ecx, dword ptr [ecx*4 + movie_media_conversion_tables + 0x37ec]
+        or eax, ebx
+        mov ebx, dword ptr [esi + 0x3c]
+        or eax, ecx
+        and eax, 0xffff
+        mov ecx, dword ptr [ebx*4 + movie_media_conversion_tables + 0x1b0c]
+        add ecx, edx
+        mov edx, ecx
+        mov ebx, ecx
+        and ecx, 0xff800
+        shr edx, 0x17
+        and ebx, 0x1ff
+        shr ecx, 0xb
+        mov edx, dword ptr [edx*4 + movie_media_conversion_tables + 0x2f0c]
+        mov ebx, dword ptr [ebx*4 + movie_media_conversion_tables + 0x37ec]
+        mov ecx, dword ptr [ecx*4 + movie_media_conversion_tables + 0x33d4]
+        or edx, ebx
+        or edx, ecx
+        and edx, 0xffff0000
+        or edx, eax
+        mov dword ptr [ebp + 0x1c], edx
+        ret
     }
 }
 
@@ -3486,26 +5165,299 @@ int __fastcall sub_5d3980(MediaRuntime *runtime, unsigned char *packet) {
 // ESI holds 16 data indices, EDI holds two 8-DWORD selector streams at
 // offsets 0 and 64, and EBP receives 16 output DWORDs. DWORD accumulation
 // preserves the original x86 modulo-2^32 additions after the LUT reads.
-void __cdecl sub_5d1b88(unsigned int *packed_output, int *data_row,
+// Hand-written asm (EA uV decoder module): no prologue, esi/edi/ebx/ebp register inputs.
+__declspec(naked) void __cdecl sub_5d1b88(unsigned int *packed_output, int *data_row,
                         int *selector_pair) {
-    for (int i = 0; i < 8; ++i) {
-        const int data_even_index = data_row[2 * i];
-        const int selector_0_index = selector_pair[i];
-        const int selector_1_index = selector_pair[0x40 + i];
-        const DWORD data_even = MovieBlendTableData[data_even_index];
-        const DWORD selector_0 = MovieBlendTableQuant[selector_0_index];
-        const DWORD selector_1 = MovieBlendTableQuant2[selector_1_index];
-        const DWORD even_sum = selector_0 + data_even + selector_1;
-        packed_output[2 * i] = MovieBlendTableMid[(even_sum & 0xff800) >> 0xb] |
-                               MovieBlendTableHi[even_sum >> 0x17] |
-                               MovieBlendTableLow[even_sum & 0x1ff];
-
-        const int data_odd_index = data_row[2 * i + 1];
-        const DWORD data_odd = MovieBlendTableData[data_odd_index];
-        const DWORD odd_sum = data_odd + selector_1 + selector_0;
-        packed_output[2 * i + 1] = MovieBlendTableHi[odd_sum >> 0x17] |
-                                   MovieBlendTableLow[odd_sum & 0x1ff] |
-                                   MovieBlendTableMid[(odd_sum & 0xff800) >> 0xb];
+    __asm {
+        mov eax, dword ptr [esi]
+        mov ebx, dword ptr [edi]
+        mov edx, dword ptr [edi + 0x100]
+        mov eax, dword ptr [eax*4 + movie_media_conversion_tables + 0x1b0c]
+        mov ebx, dword ptr [ebx*4 + movie_media_conversion_tables + 0x230c]
+        mov edx, dword ptr [edx*4 + movie_media_conversion_tables + 0x2b0c]
+        add eax, edx
+        add edx, ebx
+        add ebx, eax
+        mov eax, ebx
+        mov ecx, ebx
+        shr ebx, 0x17
+        and eax, 0xff800
+        shr eax, 0xb
+        and ecx, 0x1ff
+        mov ebx, dword ptr [ebx*4 + movie_media_conversion_tables + 0x2f0c]
+        mov eax, dword ptr [eax*4 + movie_media_conversion_tables + 0x33d4]
+        mov ecx, dword ptr [ecx*4 + movie_media_conversion_tables + 0x37ec]
+        or eax, ebx
+        mov ebx, dword ptr [esi + 4]
+        or eax, ecx
+        mov dword ptr [ebp], eax
+        mov ecx, dword ptr [ebx*4 + movie_media_conversion_tables + 0x1b0c]
+        add ecx, edx
+        mov edx, ecx
+        mov ebx, ecx
+        and ecx, 0xff800
+        shr edx, 0x17
+        and ebx, 0x1ff
+        shr ecx, 0xb
+        mov edx, dword ptr [edx*4 + movie_media_conversion_tables + 0x2f0c]
+        mov ebx, dword ptr [ebx*4 + movie_media_conversion_tables + 0x37ec]
+        mov ecx, dword ptr [ecx*4 + movie_media_conversion_tables + 0x33d4]
+        or edx, ebx
+        or edx, ecx
+        mov dword ptr [ebp + 4], edx
+        mov eax, dword ptr [esi + 8]
+        mov ebx, dword ptr [edi + 4]
+        mov edx, dword ptr [edi + 0x104]
+        mov eax, dword ptr [eax*4 + movie_media_conversion_tables + 0x1b0c]
+        mov ebx, dword ptr [ebx*4 + movie_media_conversion_tables + 0x230c]
+        mov edx, dword ptr [edx*4 + movie_media_conversion_tables + 0x2b0c]
+        add eax, edx
+        add edx, ebx
+        add ebx, eax
+        mov eax, ebx
+        mov ecx, ebx
+        shr ebx, 0x17
+        and eax, 0xff800
+        shr eax, 0xb
+        and ecx, 0x1ff
+        mov ebx, dword ptr [ebx*4 + movie_media_conversion_tables + 0x2f0c]
+        mov eax, dword ptr [eax*4 + movie_media_conversion_tables + 0x33d4]
+        mov ecx, dword ptr [ecx*4 + movie_media_conversion_tables + 0x37ec]
+        or eax, ebx
+        mov ebx, dword ptr [esi + 0xc]
+        or eax, ecx
+        mov dword ptr [ebp + 8], eax
+        mov ecx, dword ptr [ebx*4 + movie_media_conversion_tables + 0x1b0c]
+        add ecx, edx
+        mov edx, ecx
+        mov ebx, ecx
+        and ecx, 0xff800
+        shr edx, 0x17
+        and ebx, 0x1ff
+        shr ecx, 0xb
+        mov edx, dword ptr [edx*4 + movie_media_conversion_tables + 0x2f0c]
+        mov ebx, dword ptr [ebx*4 + movie_media_conversion_tables + 0x37ec]
+        mov ecx, dword ptr [ecx*4 + movie_media_conversion_tables + 0x33d4]
+        or edx, ebx
+        or edx, ecx
+        mov dword ptr [ebp + 0xc], edx
+        mov eax, dword ptr [esi + 0x10]
+        mov ebx, dword ptr [edi + 8]
+        mov edx, dword ptr [edi + 0x108]
+        mov eax, dword ptr [eax*4 + movie_media_conversion_tables + 0x1b0c]
+        mov ebx, dword ptr [ebx*4 + movie_media_conversion_tables + 0x230c]
+        mov edx, dword ptr [edx*4 + movie_media_conversion_tables + 0x2b0c]
+        add eax, edx
+        add edx, ebx
+        add ebx, eax
+        mov eax, ebx
+        mov ecx, ebx
+        shr ebx, 0x17
+        and eax, 0xff800
+        shr eax, 0xb
+        and ecx, 0x1ff
+        mov ebx, dword ptr [ebx*4 + movie_media_conversion_tables + 0x2f0c]
+        mov eax, dword ptr [eax*4 + movie_media_conversion_tables + 0x33d4]
+        mov ecx, dword ptr [ecx*4 + movie_media_conversion_tables + 0x37ec]
+        or eax, ebx
+        mov ebx, dword ptr [esi + 0x14]
+        or eax, ecx
+        mov dword ptr [ebp + 0x10], eax
+        mov ecx, dword ptr [ebx*4 + movie_media_conversion_tables + 0x1b0c]
+        add ecx, edx
+        mov edx, ecx
+        mov ebx, ecx
+        and ecx, 0xff800
+        shr edx, 0x17
+        and ebx, 0x1ff
+        shr ecx, 0xb
+        mov edx, dword ptr [edx*4 + movie_media_conversion_tables + 0x2f0c]
+        mov ebx, dword ptr [ebx*4 + movie_media_conversion_tables + 0x37ec]
+        mov ecx, dword ptr [ecx*4 + movie_media_conversion_tables + 0x33d4]
+        or edx, ebx
+        or edx, ecx
+        mov dword ptr [ebp + 0x14], edx
+        mov eax, dword ptr [esi + 0x18]
+        mov ebx, dword ptr [edi + 0xc]
+        mov edx, dword ptr [edi + 0x10c]
+        mov eax, dword ptr [eax*4 + movie_media_conversion_tables + 0x1b0c]
+        mov ebx, dword ptr [ebx*4 + movie_media_conversion_tables + 0x230c]
+        mov edx, dword ptr [edx*4 + movie_media_conversion_tables + 0x2b0c]
+        add eax, edx
+        add edx, ebx
+        add ebx, eax
+        mov eax, ebx
+        mov ecx, ebx
+        shr ebx, 0x17
+        and eax, 0xff800
+        shr eax, 0xb
+        and ecx, 0x1ff
+        mov ebx, dword ptr [ebx*4 + movie_media_conversion_tables + 0x2f0c]
+        mov eax, dword ptr [eax*4 + movie_media_conversion_tables + 0x33d4]
+        mov ecx, dword ptr [ecx*4 + movie_media_conversion_tables + 0x37ec]
+        or eax, ebx
+        mov ebx, dword ptr [esi + 0x1c]
+        or eax, ecx
+        mov dword ptr [ebp + 0x18], eax
+        mov ecx, dword ptr [ebx*4 + movie_media_conversion_tables + 0x1b0c]
+        add ecx, edx
+        mov edx, ecx
+        mov ebx, ecx
+        and ecx, 0xff800
+        shr edx, 0x17
+        and ebx, 0x1ff
+        shr ecx, 0xb
+        mov edx, dword ptr [edx*4 + movie_media_conversion_tables + 0x2f0c]
+        mov ebx, dword ptr [ebx*4 + movie_media_conversion_tables + 0x37ec]
+        mov ecx, dword ptr [ecx*4 + movie_media_conversion_tables + 0x33d4]
+        or edx, ebx
+        or edx, ecx
+        mov dword ptr [ebp + 0x1c], edx
+        mov eax, dword ptr [esi + 0x20]
+        mov ebx, dword ptr [edi + 0x10]
+        mov edx, dword ptr [edi + 0x110]
+        mov eax, dword ptr [eax*4 + movie_media_conversion_tables + 0x1b0c]
+        mov ebx, dword ptr [ebx*4 + movie_media_conversion_tables + 0x230c]
+        mov edx, dword ptr [edx*4 + movie_media_conversion_tables + 0x2b0c]
+        add eax, edx
+        add edx, ebx
+        add ebx, eax
+        mov eax, ebx
+        mov ecx, ebx
+        shr ebx, 0x17
+        and eax, 0xff800
+        shr eax, 0xb
+        and ecx, 0x1ff
+        mov ebx, dword ptr [ebx*4 + movie_media_conversion_tables + 0x2f0c]
+        mov eax, dword ptr [eax*4 + movie_media_conversion_tables + 0x33d4]
+        mov ecx, dword ptr [ecx*4 + movie_media_conversion_tables + 0x37ec]
+        or eax, ebx
+        mov ebx, dword ptr [esi + 0x24]
+        or eax, ecx
+        mov dword ptr [ebp + 0x20], eax
+        mov ecx, dword ptr [ebx*4 + movie_media_conversion_tables + 0x1b0c]
+        add ecx, edx
+        mov edx, ecx
+        mov ebx, ecx
+        and ecx, 0xff800
+        shr edx, 0x17
+        and ebx, 0x1ff
+        shr ecx, 0xb
+        mov edx, dword ptr [edx*4 + movie_media_conversion_tables + 0x2f0c]
+        mov ebx, dword ptr [ebx*4 + movie_media_conversion_tables + 0x37ec]
+        mov ecx, dword ptr [ecx*4 + movie_media_conversion_tables + 0x33d4]
+        or edx, ebx
+        or edx, ecx
+        mov dword ptr [ebp + 0x24], edx
+        mov eax, dword ptr [esi + 0x28]
+        mov ebx, dword ptr [edi + 0x14]
+        mov edx, dword ptr [edi + 0x114]
+        mov eax, dword ptr [eax*4 + movie_media_conversion_tables + 0x1b0c]
+        mov ebx, dword ptr [ebx*4 + movie_media_conversion_tables + 0x230c]
+        mov edx, dword ptr [edx*4 + movie_media_conversion_tables + 0x2b0c]
+        add eax, edx
+        add edx, ebx
+        add ebx, eax
+        mov eax, ebx
+        mov ecx, ebx
+        shr ebx, 0x17
+        and eax, 0xff800
+        shr eax, 0xb
+        and ecx, 0x1ff
+        mov ebx, dword ptr [ebx*4 + movie_media_conversion_tables + 0x2f0c]
+        mov eax, dword ptr [eax*4 + movie_media_conversion_tables + 0x33d4]
+        mov ecx, dword ptr [ecx*4 + movie_media_conversion_tables + 0x37ec]
+        or eax, ebx
+        mov ebx, dword ptr [esi + 0x2c]
+        or eax, ecx
+        mov dword ptr [ebp + 0x28], eax
+        mov ecx, dword ptr [ebx*4 + movie_media_conversion_tables + 0x1b0c]
+        add ecx, edx
+        mov edx, ecx
+        mov ebx, ecx
+        and ecx, 0xff800
+        shr edx, 0x17
+        and ebx, 0x1ff
+        shr ecx, 0xb
+        mov edx, dword ptr [edx*4 + movie_media_conversion_tables + 0x2f0c]
+        mov ebx, dword ptr [ebx*4 + movie_media_conversion_tables + 0x37ec]
+        mov ecx, dword ptr [ecx*4 + movie_media_conversion_tables + 0x33d4]
+        or edx, ebx
+        or edx, ecx
+        mov dword ptr [ebp + 0x2c], edx
+        mov eax, dword ptr [esi + 0x30]
+        mov ebx, dword ptr [edi + 0x18]
+        mov edx, dword ptr [edi + 0x118]
+        mov eax, dword ptr [eax*4 + movie_media_conversion_tables + 0x1b0c]
+        mov ebx, dword ptr [ebx*4 + movie_media_conversion_tables + 0x230c]
+        mov edx, dword ptr [edx*4 + movie_media_conversion_tables + 0x2b0c]
+        add eax, edx
+        add edx, ebx
+        add ebx, eax
+        mov eax, ebx
+        mov ecx, ebx
+        shr ebx, 0x17
+        and eax, 0xff800
+        shr eax, 0xb
+        and ecx, 0x1ff
+        mov ebx, dword ptr [ebx*4 + movie_media_conversion_tables + 0x2f0c]
+        mov eax, dword ptr [eax*4 + movie_media_conversion_tables + 0x33d4]
+        mov ecx, dword ptr [ecx*4 + movie_media_conversion_tables + 0x37ec]
+        or eax, ebx
+        mov ebx, dword ptr [esi + 0x34]
+        or eax, ecx
+        mov dword ptr [ebp + 0x30], eax
+        mov ecx, dword ptr [ebx*4 + movie_media_conversion_tables + 0x1b0c]
+        add ecx, edx
+        mov edx, ecx
+        mov ebx, ecx
+        and ecx, 0xff800
+        shr edx, 0x17
+        and ebx, 0x1ff
+        shr ecx, 0xb
+        mov edx, dword ptr [edx*4 + movie_media_conversion_tables + 0x2f0c]
+        mov ebx, dword ptr [ebx*4 + movie_media_conversion_tables + 0x37ec]
+        mov ecx, dword ptr [ecx*4 + movie_media_conversion_tables + 0x33d4]
+        or edx, ebx
+        or edx, ecx
+        mov dword ptr [ebp + 0x34], edx
+        mov eax, dword ptr [esi + 0x38]
+        mov ebx, dword ptr [edi + 0x1c]
+        mov edx, dword ptr [edi + 0x11c]
+        mov eax, dword ptr [eax*4 + movie_media_conversion_tables + 0x1b0c]
+        mov ebx, dword ptr [ebx*4 + movie_media_conversion_tables + 0x230c]
+        mov edx, dword ptr [edx*4 + movie_media_conversion_tables + 0x2b0c]
+        add eax, edx
+        add edx, ebx
+        add ebx, eax
+        mov eax, ebx
+        mov ecx, ebx
+        shr ebx, 0x17
+        and eax, 0xff800
+        shr eax, 0xb
+        and ecx, 0x1ff
+        mov ebx, dword ptr [ebx*4 + movie_media_conversion_tables + 0x2f0c]
+        mov eax, dword ptr [eax*4 + movie_media_conversion_tables + 0x33d4]
+        mov ecx, dword ptr [ecx*4 + movie_media_conversion_tables + 0x37ec]
+        or eax, ebx
+        mov ebx, dword ptr [esi + 0x3c]
+        or eax, ecx
+        mov dword ptr [ebp + 0x38], eax
+        mov ecx, dword ptr [ebx*4 + movie_media_conversion_tables + 0x1b0c]
+        add ecx, edx
+        mov edx, ecx
+        mov ebx, ecx
+        and ecx, 0xff800
+        shr edx, 0x17
+        and ebx, 0x1ff
+        shr ecx, 0xb
+        mov edx, dword ptr [edx*4 + movie_media_conversion_tables + 0x2f0c]
+        mov ebx, dword ptr [ebx*4 + movie_media_conversion_tables + 0x37ec]
+        mov ecx, dword ptr [ecx*4 + movie_media_conversion_tables + 0x33d4]
+        or edx, ebx
+        or edx, ecx
+        mov dword ptr [ebp + 0x3c], edx
+        ret
     }
 }
 
@@ -3541,25 +5493,131 @@ static DWORD movie_coefficient_pack_word(int index) {
 
 // ESI supplies 16 coefficient indices; EDI supplies 8 lower and 8 upper
 // selector indices at offsets 0 and 64; EBP receives eight packed DWORDs.
-void __cdecl sub_5d2536(DWORD *coefficient_row, DWORD *selector_pair,
+// Hand-written asm (EA uV decoder module): no prologue, esi/edi/ebx/ebp register inputs.
+__declspec(naked) void __cdecl sub_5d2536(DWORD *coefficient_row, DWORD *selector_pair,
                         BYTE *packed_output) {
-    const volatile DWORD *const coefficient_indices = coefficient_row;
-    const volatile DWORD *const selector_indices = selector_pair;
-    for (int index = 0; index != 8; ++index) {
-        // The image loads all four indices before its LUT reads, whose order
-        // remains significant on unchecked invalid inputs.
-        const int upper_selector_index = selector_indices[0x40 + index];
-        const int lower_selector_index = selector_indices[index];
-        const int even_coefficient_index = coefficient_indices[2 * index];
-        const int odd_coefficient_index = coefficient_indices[2 * index + 1];
-        const DWORD upper_selector = movie_coefficient_pack_word(upper_selector_index);
-        const DWORD lower_selector = movie_coefficient_pack_word(lower_selector_index);
-        const DWORD upper_coefficient = movie_coefficient_pack_word(odd_coefficient_index);
-        const DWORD lower_coefficient = movie_coefficient_pack_word(even_coefficient_index);
-        const DWORD upper = (upper_selector << 8) | upper_coefficient;
-        const DWORD lower = (lower_selector << 8) | lower_coefficient;
-        const DWORD result = (upper << 16) | lower;
-        memcpy(packed_output + index * sizeof(result), &result, sizeof(result));
+    __asm {
+        mov eax, dword ptr [edi + 0x100]
+        mov ebx, dword ptr [edi]
+        mov edx, dword ptr [esi]
+        mov ecx, dword ptr [esi + 4]
+        mov eax, dword ptr [eax*8 + movie_media_conversion_tables + 0xf0c]
+        shl eax, 8
+        mov ebx, dword ptr [ebx*8 + movie_media_conversion_tables + 0xf0c]
+        mov ecx, dword ptr [ecx*8 + movie_media_conversion_tables + 0xf0c]
+        shl ebx, 8
+        mov edx, dword ptr [edx*8 + movie_media_conversion_tables + 0xf0c]
+        or eax, ecx
+        or ebx, edx
+        shl eax, 0x10
+        or eax, ebx
+        mov dword ptr [ebp], eax
+        mov eax, dword ptr [edi + 0x104]
+        mov ebx, dword ptr [edi + 4]
+        mov edx, dword ptr [esi + 8]
+        mov ecx, dword ptr [esi + 0xc]
+        mov eax, dword ptr [eax*8 + movie_media_conversion_tables + 0xf0c]
+        shl eax, 8
+        mov ebx, dword ptr [ebx*8 + movie_media_conversion_tables + 0xf0c]
+        mov ecx, dword ptr [ecx*8 + movie_media_conversion_tables + 0xf0c]
+        shl ebx, 8
+        mov edx, dword ptr [edx*8 + movie_media_conversion_tables + 0xf0c]
+        or eax, ecx
+        or ebx, edx
+        shl eax, 0x10
+        or eax, ebx
+        mov dword ptr [ebp + 4], eax
+        mov eax, dword ptr [edi + 0x108]
+        mov ebx, dword ptr [edi + 8]
+        mov edx, dword ptr [esi + 0x10]
+        mov ecx, dword ptr [esi + 0x14]
+        mov eax, dword ptr [eax*8 + movie_media_conversion_tables + 0xf0c]
+        shl eax, 8
+        mov ebx, dword ptr [ebx*8 + movie_media_conversion_tables + 0xf0c]
+        mov ecx, dword ptr [ecx*8 + movie_media_conversion_tables + 0xf0c]
+        shl ebx, 8
+        mov edx, dword ptr [edx*8 + movie_media_conversion_tables + 0xf0c]
+        or eax, ecx
+        or ebx, edx
+        shl eax, 0x10
+        or eax, ebx
+        mov dword ptr [ebp + 8], eax
+        mov eax, dword ptr [edi + 0x10c]
+        mov ebx, dword ptr [edi + 0xc]
+        mov edx, dword ptr [esi + 0x18]
+        mov ecx, dword ptr [esi + 0x1c]
+        mov eax, dword ptr [eax*8 + movie_media_conversion_tables + 0xf0c]
+        shl eax, 8
+        mov ebx, dword ptr [ebx*8 + movie_media_conversion_tables + 0xf0c]
+        mov ecx, dword ptr [ecx*8 + movie_media_conversion_tables + 0xf0c]
+        shl ebx, 8
+        mov edx, dword ptr [edx*8 + movie_media_conversion_tables + 0xf0c]
+        or eax, ecx
+        or ebx, edx
+        shl eax, 0x10
+        or eax, ebx
+        mov dword ptr [ebp + 0xc], eax
+        mov eax, dword ptr [edi + 0x110]
+        mov ebx, dword ptr [edi + 0x10]
+        mov edx, dword ptr [esi + 0x20]
+        mov ecx, dword ptr [esi + 0x24]
+        mov eax, dword ptr [eax*8 + movie_media_conversion_tables + 0xf0c]
+        shl eax, 8
+        mov ebx, dword ptr [ebx*8 + movie_media_conversion_tables + 0xf0c]
+        mov ecx, dword ptr [ecx*8 + movie_media_conversion_tables + 0xf0c]
+        shl ebx, 8
+        mov edx, dword ptr [edx*8 + movie_media_conversion_tables + 0xf0c]
+        or eax, ecx
+        or ebx, edx
+        shl eax, 0x10
+        or eax, ebx
+        mov dword ptr [ebp + 0x10], eax
+        mov eax, dword ptr [edi + 0x114]
+        mov ebx, dword ptr [edi + 0x14]
+        mov edx, dword ptr [esi + 0x28]
+        mov ecx, dword ptr [esi + 0x2c]
+        mov eax, dword ptr [eax*8 + movie_media_conversion_tables + 0xf0c]
+        shl eax, 8
+        mov ebx, dword ptr [ebx*8 + movie_media_conversion_tables + 0xf0c]
+        mov ecx, dword ptr [ecx*8 + movie_media_conversion_tables + 0xf0c]
+        shl ebx, 8
+        mov edx, dword ptr [edx*8 + movie_media_conversion_tables + 0xf0c]
+        or eax, ecx
+        or ebx, edx
+        shl eax, 0x10
+        or eax, ebx
+        mov dword ptr [ebp + 0x14], eax
+        mov eax, dword ptr [edi + 0x118]
+        mov ebx, dword ptr [edi + 0x18]
+        mov edx, dword ptr [esi + 0x30]
+        mov ecx, dword ptr [esi + 0x34]
+        mov eax, dword ptr [eax*8 + movie_media_conversion_tables + 0xf0c]
+        shl eax, 8
+        mov ebx, dword ptr [ebx*8 + movie_media_conversion_tables + 0xf0c]
+        mov ecx, dword ptr [ecx*8 + movie_media_conversion_tables + 0xf0c]
+        shl ebx, 8
+        mov edx, dword ptr [edx*8 + movie_media_conversion_tables + 0xf0c]
+        or eax, ecx
+        or ebx, edx
+        shl eax, 0x10
+        or eax, ebx
+        mov dword ptr [ebp + 0x18], eax
+        mov eax, dword ptr [edi + 0x11c]
+        mov ebx, dword ptr [edi + 0x1c]
+        mov edx, dword ptr [esi + 0x38]
+        mov ecx, dword ptr [esi + 0x3c]
+        mov eax, dword ptr [eax*8 + movie_media_conversion_tables + 0xf0c]
+        shl eax, 8
+        mov ebx, dword ptr [ebx*8 + movie_media_conversion_tables + 0xf0c]
+        mov ecx, dword ptr [ecx*8 + movie_media_conversion_tables + 0xf0c]
+        shl ebx, 8
+        mov edx, dword ptr [edx*8 + movie_media_conversion_tables + 0xf0c]
+        or eax, ecx
+        or ebx, edx
+        shl eax, 0x10
+        or eax, ebx
+        mov dword ptr [ebp + 0x1c], eax
+        ret
     }
 }
 
@@ -3821,17 +5879,391 @@ extern "C" char *__fastcall sub_5cf120(int code) {
 // TRIED: signature changed to (unsigned char *, int, int) - the disasm reads 3 stack args ([esp+0x38] at entry, [esp+0x20]/[esp+0x24] after the scratch frame is released), not the 0-arg contract. The body is a mechanically-generated 1:1 transcription (script-derived from the raw disassembly, not hand-typed, to avoid transcription error over ~150 near-identical calls): 6x (sub_5cf150(); 8x sub_5d29e1; 8x sub_5d2b20) then 16x OutputPixelRow with an `edi` accumulator stepped by param3. sub_5d29e1/sub_5d2b20/OutputPixelRow all pass their SECOND (and for OutputPixelRow, first/third) operand through ESI/EDI/EBX with NO stack push at those call sites - a register convention this rewrite cannot reproduce without inline asm (banned), so it passes the same values as ordinary arguments instead. Low similarity (sim ~0.1-0.3 across all four builds) is a direct, expected consequence of that convention mismatch, not a structural error - every call target, argument value and order is transcribed 1:1 from the disassembly. Landed for coverage; TRIED as byte-exact without __asm.
 // symbol    ?sub_5cfaed@@YAXPAE0H@Z
 // kind      game
-void __cdecl sub_5cfaed(BYTE *compressed, BYTE *destination,
+// Hand-written asm (EA uV decoder module): saves ecx/edx with the callee-saved set, register-convention callees.
+__declspec(naked) void __cdecl sub_5cfaed(BYTE *compressed, BYTE *destination,
                         int row_pitch_bytes) {
-  MediaTransformBitState &reader =
-      movie_media_conversion_tables.transform_bit_state;
-  reader.cursor = compressed + 1;
-  reader.accumulator = *compressed;
-  reader.available_bits = 8;
-
-  for (int phase = 0; phase != 6; ++phase)
-    movie_media_transform_block_pair(phase);
-  movie_media_write_macroblock_rows(destination, row_pitch_bytes, 0);
+    __asm {
+        push ebx
+        push ecx
+        push edx
+        push esi
+        push edi
+        push ebp
+        sub esp, 0x1c
+        mov esi, dword ptr [esp + 0x38]
+        xor eax, eax
+        mov al, byte ptr [esi]
+        inc esi
+        mov dword ptr [movie_media_conversion_tables + 0x100], esi
+        mov dword ptr [movie_media_conversion_tables + 0x108], eax
+        mov dword ptr [movie_media_conversion_tables + 0x104], 8
+        call sub_5cf150
+        mov esi, offset movie_media_transform_workspace + 0x600
+        mov dword ptr [esp], offset movie_media_transform_workspace + 0x700
+        call sub_5d29e1
+        mov esi, offset movie_media_transform_workspace + 0x620
+        mov dword ptr [esp], offset movie_media_transform_workspace + 0x704
+        call sub_5d29e1
+        mov esi, offset movie_media_transform_workspace + 0x640
+        mov dword ptr [esp], offset movie_media_transform_workspace + 0x708
+        call sub_5d29e1
+        mov esi, offset movie_media_transform_workspace + 0x660
+        mov dword ptr [esp], offset movie_media_transform_workspace + 0x70c
+        call sub_5d29e1
+        mov esi, offset movie_media_transform_workspace + 0x680
+        mov dword ptr [esp], offset movie_media_transform_workspace + 0x710
+        call sub_5d29e1
+        mov esi, offset movie_media_transform_workspace + 0x6a0
+        mov dword ptr [esp], offset movie_media_transform_workspace + 0x714
+        call sub_5d29e1
+        mov esi, offset movie_media_transform_workspace + 0x6c0
+        mov dword ptr [esp], offset movie_media_transform_workspace + 0x718
+        call sub_5d29e1
+        mov esi, offset movie_media_transform_workspace + 0x6e0
+        mov dword ptr [esp], offset movie_media_transform_workspace + 0x71c
+        call sub_5d29e1
+        mov esi, offset movie_media_transform_workspace + 0x700
+        mov dword ptr [esp], offset movie_media_transform_workspace
+        call sub_5d2b20
+        mov esi, offset movie_media_transform_workspace + 0x724
+        mov dword ptr [esp], offset movie_media_transform_workspace + 0x40
+        call sub_5d2b20
+        mov esi, offset movie_media_transform_workspace + 0x748
+        mov dword ptr [esp], offset movie_media_transform_workspace + 0x80
+        call sub_5d2b20
+        mov esi, offset movie_media_transform_workspace + 0x76c
+        mov dword ptr [esp], offset movie_media_transform_workspace + 0xc0
+        call sub_5d2b20
+        mov esi, offset movie_media_transform_workspace + 0x790
+        mov dword ptr [esp], offset movie_media_transform_workspace + 0x100
+        call sub_5d2b20
+        mov esi, offset movie_media_transform_workspace + 0x7b4
+        mov dword ptr [esp], offset movie_media_transform_workspace + 0x140
+        call sub_5d2b20
+        mov esi, offset movie_media_transform_workspace + 0x7d8
+        mov dword ptr [esp], offset movie_media_transform_workspace + 0x180
+        call sub_5d2b20
+        mov esi, offset movie_media_transform_workspace + 0x7fc
+        mov dword ptr [esp], offset movie_media_transform_workspace + 0x1c0
+        call sub_5d2b20
+        call sub_5cf150
+        mov esi, offset movie_media_transform_workspace + 0x600
+        mov dword ptr [esp], offset movie_media_transform_workspace + 0x700
+        call sub_5d29e1
+        mov esi, offset movie_media_transform_workspace + 0x620
+        mov dword ptr [esp], offset movie_media_transform_workspace + 0x704
+        call sub_5d29e1
+        mov esi, offset movie_media_transform_workspace + 0x640
+        mov dword ptr [esp], offset movie_media_transform_workspace + 0x708
+        call sub_5d29e1
+        mov esi, offset movie_media_transform_workspace + 0x660
+        mov dword ptr [esp], offset movie_media_transform_workspace + 0x70c
+        call sub_5d29e1
+        mov esi, offset movie_media_transform_workspace + 0x680
+        mov dword ptr [esp], offset movie_media_transform_workspace + 0x710
+        call sub_5d29e1
+        mov esi, offset movie_media_transform_workspace + 0x6a0
+        mov dword ptr [esp], offset movie_media_transform_workspace + 0x714
+        call sub_5d29e1
+        mov esi, offset movie_media_transform_workspace + 0x6c0
+        mov dword ptr [esp], offset movie_media_transform_workspace + 0x718
+        call sub_5d29e1
+        mov esi, offset movie_media_transform_workspace + 0x6e0
+        mov dword ptr [esp], offset movie_media_transform_workspace + 0x71c
+        call sub_5d29e1
+        mov esi, offset movie_media_transform_workspace + 0x700
+        mov dword ptr [esp], offset movie_media_transform_workspace + 0x20
+        call sub_5d2b20
+        mov esi, offset movie_media_transform_workspace + 0x724
+        mov dword ptr [esp], offset movie_media_transform_workspace + 0x60
+        call sub_5d2b20
+        mov esi, offset movie_media_transform_workspace + 0x748
+        mov dword ptr [esp], offset movie_media_transform_workspace + 0xa0
+        call sub_5d2b20
+        mov esi, offset movie_media_transform_workspace + 0x76c
+        mov dword ptr [esp], offset movie_media_transform_workspace + 0xe0
+        call sub_5d2b20
+        mov esi, offset movie_media_transform_workspace + 0x790
+        mov dword ptr [esp], offset movie_media_transform_workspace + 0x120
+        call sub_5d2b20
+        mov esi, offset movie_media_transform_workspace + 0x7b4
+        mov dword ptr [esp], offset movie_media_transform_workspace + 0x160
+        call sub_5d2b20
+        mov esi, offset movie_media_transform_workspace + 0x7d8
+        mov dword ptr [esp], offset movie_media_transform_workspace + 0x1a0
+        call sub_5d2b20
+        mov esi, offset movie_media_transform_workspace + 0x7fc
+        mov dword ptr [esp], offset movie_media_transform_workspace + 0x1e0
+        call sub_5d2b20
+        call sub_5cf150
+        mov esi, offset movie_media_transform_workspace + 0x600
+        mov dword ptr [esp], offset movie_media_transform_workspace + 0x700
+        call sub_5d29e1
+        mov esi, offset movie_media_transform_workspace + 0x620
+        mov dword ptr [esp], offset movie_media_transform_workspace + 0x704
+        call sub_5d29e1
+        mov esi, offset movie_media_transform_workspace + 0x640
+        mov dword ptr [esp], offset movie_media_transform_workspace + 0x708
+        call sub_5d29e1
+        mov esi, offset movie_media_transform_workspace + 0x660
+        mov dword ptr [esp], offset movie_media_transform_workspace + 0x70c
+        call sub_5d29e1
+        mov esi, offset movie_media_transform_workspace + 0x680
+        mov dword ptr [esp], offset movie_media_transform_workspace + 0x710
+        call sub_5d29e1
+        mov esi, offset movie_media_transform_workspace + 0x6a0
+        mov dword ptr [esp], offset movie_media_transform_workspace + 0x714
+        call sub_5d29e1
+        mov esi, offset movie_media_transform_workspace + 0x6c0
+        mov dword ptr [esp], offset movie_media_transform_workspace + 0x718
+        call sub_5d29e1
+        mov esi, offset movie_media_transform_workspace + 0x6e0
+        mov dword ptr [esp], offset movie_media_transform_workspace + 0x71c
+        call sub_5d29e1
+        mov esi, offset movie_media_transform_workspace + 0x700
+        mov dword ptr [esp], offset movie_media_transform_workspace + 0x200
+        call sub_5d2b20
+        mov esi, offset movie_media_transform_workspace + 0x724
+        mov dword ptr [esp], offset movie_media_transform_workspace + 0x240
+        call sub_5d2b20
+        mov esi, offset movie_media_transform_workspace + 0x748
+        mov dword ptr [esp], offset movie_media_transform_workspace + 0x280
+        call sub_5d2b20
+        mov esi, offset movie_media_transform_workspace + 0x76c
+        mov dword ptr [esp], offset movie_media_transform_workspace + 0x2c0
+        call sub_5d2b20
+        mov esi, offset movie_media_transform_workspace + 0x790
+        mov dword ptr [esp], offset movie_media_transform_workspace + 0x300
+        call sub_5d2b20
+        mov esi, offset movie_media_transform_workspace + 0x7b4
+        mov dword ptr [esp], offset movie_media_transform_workspace + 0x340
+        call sub_5d2b20
+        mov esi, offset movie_media_transform_workspace + 0x7d8
+        mov dword ptr [esp], offset movie_media_transform_workspace + 0x380
+        call sub_5d2b20
+        mov esi, offset movie_media_transform_workspace + 0x7fc
+        mov dword ptr [esp], offset movie_media_transform_workspace + 0x3c0
+        call sub_5d2b20
+        call sub_5cf150
+        mov esi, offset movie_media_transform_workspace + 0x600
+        mov dword ptr [esp], offset movie_media_transform_workspace + 0x700
+        call sub_5d29e1
+        mov esi, offset movie_media_transform_workspace + 0x620
+        mov dword ptr [esp], offset movie_media_transform_workspace + 0x704
+        call sub_5d29e1
+        mov esi, offset movie_media_transform_workspace + 0x640
+        mov dword ptr [esp], offset movie_media_transform_workspace + 0x708
+        call sub_5d29e1
+        mov esi, offset movie_media_transform_workspace + 0x660
+        mov dword ptr [esp], offset movie_media_transform_workspace + 0x70c
+        call sub_5d29e1
+        mov esi, offset movie_media_transform_workspace + 0x680
+        mov dword ptr [esp], offset movie_media_transform_workspace + 0x710
+        call sub_5d29e1
+        mov esi, offset movie_media_transform_workspace + 0x6a0
+        mov dword ptr [esp], offset movie_media_transform_workspace + 0x714
+        call sub_5d29e1
+        mov esi, offset movie_media_transform_workspace + 0x6c0
+        mov dword ptr [esp], offset movie_media_transform_workspace + 0x718
+        call sub_5d29e1
+        mov esi, offset movie_media_transform_workspace + 0x6e0
+        mov dword ptr [esp], offset movie_media_transform_workspace + 0x71c
+        call sub_5d29e1
+        mov esi, offset movie_media_transform_workspace + 0x700
+        mov dword ptr [esp], offset movie_media_transform_workspace + 0x220
+        call sub_5d2b20
+        mov esi, offset movie_media_transform_workspace + 0x724
+        mov dword ptr [esp], offset movie_media_transform_workspace + 0x260
+        call sub_5d2b20
+        mov esi, offset movie_media_transform_workspace + 0x748
+        mov dword ptr [esp], offset movie_media_transform_workspace + 0x2a0
+        call sub_5d2b20
+        mov esi, offset movie_media_transform_workspace + 0x76c
+        mov dword ptr [esp], offset movie_media_transform_workspace + 0x2e0
+        call sub_5d2b20
+        mov esi, offset movie_media_transform_workspace + 0x790
+        mov dword ptr [esp], offset movie_media_transform_workspace + 0x320
+        call sub_5d2b20
+        mov esi, offset movie_media_transform_workspace + 0x7b4
+        mov dword ptr [esp], offset movie_media_transform_workspace + 0x360
+        call sub_5d2b20
+        mov esi, offset movie_media_transform_workspace + 0x7d8
+        mov dword ptr [esp], offset movie_media_transform_workspace + 0x3a0
+        call sub_5d2b20
+        mov esi, offset movie_media_transform_workspace + 0x7fc
+        mov dword ptr [esp], offset movie_media_transform_workspace + 0x3e0
+        call sub_5d2b20
+        call sub_5cf150
+        mov esi, offset movie_media_transform_workspace + 0x600
+        mov dword ptr [esp], offset movie_media_transform_workspace + 0x700
+        call sub_5d29e1
+        mov esi, offset movie_media_transform_workspace + 0x620
+        mov dword ptr [esp], offset movie_media_transform_workspace + 0x704
+        call sub_5d29e1
+        mov esi, offset movie_media_transform_workspace + 0x640
+        mov dword ptr [esp], offset movie_media_transform_workspace + 0x708
+        call sub_5d29e1
+        mov esi, offset movie_media_transform_workspace + 0x660
+        mov dword ptr [esp], offset movie_media_transform_workspace + 0x70c
+        call sub_5d29e1
+        mov esi, offset movie_media_transform_workspace + 0x680
+        mov dword ptr [esp], offset movie_media_transform_workspace + 0x710
+        call sub_5d29e1
+        mov esi, offset movie_media_transform_workspace + 0x6a0
+        mov dword ptr [esp], offset movie_media_transform_workspace + 0x714
+        call sub_5d29e1
+        mov esi, offset movie_media_transform_workspace + 0x6c0
+        mov dword ptr [esp], offset movie_media_transform_workspace + 0x718
+        call sub_5d29e1
+        mov esi, offset movie_media_transform_workspace + 0x6e0
+        mov dword ptr [esp], offset movie_media_transform_workspace + 0x71c
+        call sub_5d29e1
+        mov esi, offset movie_media_transform_workspace + 0x700
+        mov dword ptr [esp], offset movie_media_transform_workspace + 0x400
+        call sub_5d2b20
+        mov esi, offset movie_media_transform_workspace + 0x724
+        mov dword ptr [esp], offset movie_media_transform_workspace + 0x420
+        call sub_5d2b20
+        mov esi, offset movie_media_transform_workspace + 0x748
+        mov dword ptr [esp], offset movie_media_transform_workspace + 0x440
+        call sub_5d2b20
+        mov esi, offset movie_media_transform_workspace + 0x76c
+        mov dword ptr [esp], offset movie_media_transform_workspace + 0x460
+        call sub_5d2b20
+        mov esi, offset movie_media_transform_workspace + 0x790
+        mov dword ptr [esp], offset movie_media_transform_workspace + 0x480
+        call sub_5d2b20
+        mov esi, offset movie_media_transform_workspace + 0x7b4
+        mov dword ptr [esp], offset movie_media_transform_workspace + 0x4a0
+        call sub_5d2b20
+        mov esi, offset movie_media_transform_workspace + 0x7d8
+        mov dword ptr [esp], offset movie_media_transform_workspace + 0x4c0
+        call sub_5d2b20
+        mov esi, offset movie_media_transform_workspace + 0x7fc
+        mov dword ptr [esp], offset movie_media_transform_workspace + 0x4e0
+        call sub_5d2b20
+        call sub_5cf150
+        mov esi, offset movie_media_transform_workspace + 0x600
+        mov dword ptr [esp], offset movie_media_transform_workspace + 0x700
+        call sub_5d29e1
+        mov esi, offset movie_media_transform_workspace + 0x620
+        mov dword ptr [esp], offset movie_media_transform_workspace + 0x704
+        call sub_5d29e1
+        mov esi, offset movie_media_transform_workspace + 0x640
+        mov dword ptr [esp], offset movie_media_transform_workspace + 0x708
+        call sub_5d29e1
+        mov esi, offset movie_media_transform_workspace + 0x660
+        mov dword ptr [esp], offset movie_media_transform_workspace + 0x70c
+        call sub_5d29e1
+        mov esi, offset movie_media_transform_workspace + 0x680
+        mov dword ptr [esp], offset movie_media_transform_workspace + 0x710
+        call sub_5d29e1
+        mov esi, offset movie_media_transform_workspace + 0x6a0
+        mov dword ptr [esp], offset movie_media_transform_workspace + 0x714
+        call sub_5d29e1
+        mov esi, offset movie_media_transform_workspace + 0x6c0
+        mov dword ptr [esp], offset movie_media_transform_workspace + 0x718
+        call sub_5d29e1
+        mov esi, offset movie_media_transform_workspace + 0x6e0
+        mov dword ptr [esp], offset movie_media_transform_workspace + 0x71c
+        call sub_5d29e1
+        mov esi, offset movie_media_transform_workspace + 0x700
+        mov dword ptr [esp], offset movie_media_transform_workspace + 0x500
+        call sub_5d2b20
+        mov esi, offset movie_media_transform_workspace + 0x724
+        mov dword ptr [esp], offset movie_media_transform_workspace + 0x520
+        call sub_5d2b20
+        mov esi, offset movie_media_transform_workspace + 0x748
+        mov dword ptr [esp], offset movie_media_transform_workspace + 0x540
+        call sub_5d2b20
+        mov esi, offset movie_media_transform_workspace + 0x76c
+        mov dword ptr [esp], offset movie_media_transform_workspace + 0x560
+        call sub_5d2b20
+        mov esi, offset movie_media_transform_workspace + 0x790
+        mov dword ptr [esp], offset movie_media_transform_workspace + 0x580
+        call sub_5d2b20
+        mov esi, offset movie_media_transform_workspace + 0x7b4
+        mov dword ptr [esp], offset movie_media_transform_workspace + 0x5a0
+        call sub_5d2b20
+        mov esi, offset movie_media_transform_workspace + 0x7d8
+        mov dword ptr [esp], offset movie_media_transform_workspace + 0x5c0
+        call sub_5d2b20
+        mov esi, offset movie_media_transform_workspace + 0x7fc
+        mov dword ptr [esp], offset movie_media_transform_workspace + 0x5e0
+        call sub_5d2b20
+        add esp, 0x1c
+        mov edi, dword ptr [esp + 0x20]
+        mov esi, offset movie_media_transform_workspace
+        mov ebx, offset movie_media_transform_workspace + 0x400
+        call OutputPixelRow
+        add edi, dword ptr [esp + 0x24]
+        mov esi, offset movie_media_transform_workspace + 0x40
+        mov ebx, offset movie_media_transform_workspace + 0x400
+        call OutputPixelRow
+        add edi, dword ptr [esp + 0x24]
+        mov esi, offset movie_media_transform_workspace + 0x80
+        mov ebx, offset movie_media_transform_workspace + 0x420
+        call OutputPixelRow
+        add edi, dword ptr [esp + 0x24]
+        mov esi, offset movie_media_transform_workspace + 0xc0
+        mov ebx, offset movie_media_transform_workspace + 0x420
+        call OutputPixelRow
+        add edi, dword ptr [esp + 0x24]
+        mov esi, offset movie_media_transform_workspace + 0x100
+        mov ebx, offset movie_media_transform_workspace + 0x440
+        call OutputPixelRow
+        add edi, dword ptr [esp + 0x24]
+        mov esi, offset movie_media_transform_workspace + 0x140
+        mov ebx, offset movie_media_transform_workspace + 0x440
+        call OutputPixelRow
+        add edi, dword ptr [esp + 0x24]
+        mov esi, offset movie_media_transform_workspace + 0x180
+        mov ebx, offset movie_media_transform_workspace + 0x460
+        call OutputPixelRow
+        add edi, dword ptr [esp + 0x24]
+        mov esi, offset movie_media_transform_workspace + 0x1c0
+        mov ebx, offset movie_media_transform_workspace + 0x460
+        call OutputPixelRow
+        add edi, dword ptr [esp + 0x24]
+        mov esi, offset movie_media_transform_workspace + 0x200
+        mov ebx, offset movie_media_transform_workspace + 0x480
+        call OutputPixelRow
+        add edi, dword ptr [esp + 0x24]
+        mov esi, offset movie_media_transform_workspace + 0x240
+        mov ebx, offset movie_media_transform_workspace + 0x480
+        call OutputPixelRow
+        add edi, dword ptr [esp + 0x24]
+        mov esi, offset movie_media_transform_workspace + 0x280
+        mov ebx, offset movie_media_transform_workspace + 0x4a0
+        call OutputPixelRow
+        add edi, dword ptr [esp + 0x24]
+        mov esi, offset movie_media_transform_workspace + 0x2c0
+        mov ebx, offset movie_media_transform_workspace + 0x4a0
+        call OutputPixelRow
+        add edi, dword ptr [esp + 0x24]
+        mov esi, offset movie_media_transform_workspace + 0x300
+        mov ebx, offset movie_media_transform_workspace + 0x4c0
+        call OutputPixelRow
+        add edi, dword ptr [esp + 0x24]
+        mov esi, offset movie_media_transform_workspace + 0x340
+        mov ebx, offset movie_media_transform_workspace + 0x4c0
+        call OutputPixelRow
+        add edi, dword ptr [esp + 0x24]
+        mov esi, offset movie_media_transform_workspace + 0x380
+        mov ebx, offset movie_media_transform_workspace + 0x4e0
+        call OutputPixelRow
+        add edi, dword ptr [esp + 0x24]
+        mov esi, offset movie_media_transform_workspace + 0x3c0
+        mov ebx, offset movie_media_transform_workspace + 0x4e0
+        call OutputPixelRow
+        pop ebp
+        pop edi
+        pop esi
+        pop edx
+        pop ecx
+        pop ebx
+        ret
+    }
 }
 
 
@@ -3839,18 +6271,391 @@ void __cdecl sub_5cfaed(BYTE *compressed, BYTE *destination,
 // TRIED: the callees use a custom register convention (row/block ptr in esi, the single stack arg written once to a fixed [esp] slot instead of pushed per call; OutputPixelRow16 takes esi/ebx/edi with no stack args at all) that no standard C++ calling convention expresses without __asm. Landed all 96 sub_5d29e1/sub_5d2b20 calls plus the 16 OutputPixelRow16 calls with the right addresses/order as plain cdecl(void*,void*[,void*]) - compiles, right call graph, but sim only ~0.12 since every call site's instruction shape differs. Signature changed to (unsigned char*, void*, int) from the disasm's 3-arg use (a1=byte* string, a2=dest, a3=row stride). Not retried given the convention mismatch is structural, not a wording issue.
 // symbol    ?sub_5d02cc@@YAXPAEPAXH@Z
 // kind      game
-void __cdecl sub_5d02cc(BYTE *compressed, void *destination,
+// Hand-written asm (EA uV decoder module): saves ecx/edx with the callee-saved set, register-convention callees.
+__declspec(naked) void __cdecl sub_5d02cc(BYTE *compressed, void *destination,
                         int row_pitch_bytes) {
-  MediaTransformBitState &reader =
-      movie_media_conversion_tables.transform_bit_state;
-  reader.cursor = compressed + 1;
-  reader.accumulator = *compressed;
-  reader.available_bits = 8;
-
-  for (int phase = 0; phase != 6; ++phase)
-    movie_media_transform_block_pair(phase);
-  movie_media_write_macroblock_rows(
-      reinterpret_cast<unsigned char *>(destination), row_pitch_bytes, 1);
+    __asm {
+        push ebx
+        push ecx
+        push edx
+        push esi
+        push edi
+        push ebp
+        sub esp, 0x1c
+        mov esi, dword ptr [esp + 0x38]
+        xor eax, eax
+        mov al, byte ptr [esi]
+        inc esi
+        mov dword ptr [movie_media_conversion_tables + 0x100], esi
+        mov dword ptr [movie_media_conversion_tables + 0x108], eax
+        mov dword ptr [movie_media_conversion_tables + 0x104], 8
+        call sub_5cf150
+        mov esi, offset movie_media_transform_workspace + 0x600
+        mov dword ptr [esp], offset movie_media_transform_workspace + 0x700
+        call sub_5d29e1
+        mov esi, offset movie_media_transform_workspace + 0x620
+        mov dword ptr [esp], offset movie_media_transform_workspace + 0x704
+        call sub_5d29e1
+        mov esi, offset movie_media_transform_workspace + 0x640
+        mov dword ptr [esp], offset movie_media_transform_workspace + 0x708
+        call sub_5d29e1
+        mov esi, offset movie_media_transform_workspace + 0x660
+        mov dword ptr [esp], offset movie_media_transform_workspace + 0x70c
+        call sub_5d29e1
+        mov esi, offset movie_media_transform_workspace + 0x680
+        mov dword ptr [esp], offset movie_media_transform_workspace + 0x710
+        call sub_5d29e1
+        mov esi, offset movie_media_transform_workspace + 0x6a0
+        mov dword ptr [esp], offset movie_media_transform_workspace + 0x714
+        call sub_5d29e1
+        mov esi, offset movie_media_transform_workspace + 0x6c0
+        mov dword ptr [esp], offset movie_media_transform_workspace + 0x718
+        call sub_5d29e1
+        mov esi, offset movie_media_transform_workspace + 0x6e0
+        mov dword ptr [esp], offset movie_media_transform_workspace + 0x71c
+        call sub_5d29e1
+        mov esi, offset movie_media_transform_workspace + 0x700
+        mov dword ptr [esp], offset movie_media_transform_workspace
+        call sub_5d2b20
+        mov esi, offset movie_media_transform_workspace + 0x724
+        mov dword ptr [esp], offset movie_media_transform_workspace + 0x40
+        call sub_5d2b20
+        mov esi, offset movie_media_transform_workspace + 0x748
+        mov dword ptr [esp], offset movie_media_transform_workspace + 0x80
+        call sub_5d2b20
+        mov esi, offset movie_media_transform_workspace + 0x76c
+        mov dword ptr [esp], offset movie_media_transform_workspace + 0xc0
+        call sub_5d2b20
+        mov esi, offset movie_media_transform_workspace + 0x790
+        mov dword ptr [esp], offset movie_media_transform_workspace + 0x100
+        call sub_5d2b20
+        mov esi, offset movie_media_transform_workspace + 0x7b4
+        mov dword ptr [esp], offset movie_media_transform_workspace + 0x140
+        call sub_5d2b20
+        mov esi, offset movie_media_transform_workspace + 0x7d8
+        mov dword ptr [esp], offset movie_media_transform_workspace + 0x180
+        call sub_5d2b20
+        mov esi, offset movie_media_transform_workspace + 0x7fc
+        mov dword ptr [esp], offset movie_media_transform_workspace + 0x1c0
+        call sub_5d2b20
+        call sub_5cf150
+        mov esi, offset movie_media_transform_workspace + 0x600
+        mov dword ptr [esp], offset movie_media_transform_workspace + 0x700
+        call sub_5d29e1
+        mov esi, offset movie_media_transform_workspace + 0x620
+        mov dword ptr [esp], offset movie_media_transform_workspace + 0x704
+        call sub_5d29e1
+        mov esi, offset movie_media_transform_workspace + 0x640
+        mov dword ptr [esp], offset movie_media_transform_workspace + 0x708
+        call sub_5d29e1
+        mov esi, offset movie_media_transform_workspace + 0x660
+        mov dword ptr [esp], offset movie_media_transform_workspace + 0x70c
+        call sub_5d29e1
+        mov esi, offset movie_media_transform_workspace + 0x680
+        mov dword ptr [esp], offset movie_media_transform_workspace + 0x710
+        call sub_5d29e1
+        mov esi, offset movie_media_transform_workspace + 0x6a0
+        mov dword ptr [esp], offset movie_media_transform_workspace + 0x714
+        call sub_5d29e1
+        mov esi, offset movie_media_transform_workspace + 0x6c0
+        mov dword ptr [esp], offset movie_media_transform_workspace + 0x718
+        call sub_5d29e1
+        mov esi, offset movie_media_transform_workspace + 0x6e0
+        mov dword ptr [esp], offset movie_media_transform_workspace + 0x71c
+        call sub_5d29e1
+        mov esi, offset movie_media_transform_workspace + 0x700
+        mov dword ptr [esp], offset movie_media_transform_workspace + 0x20
+        call sub_5d2b20
+        mov esi, offset movie_media_transform_workspace + 0x724
+        mov dword ptr [esp], offset movie_media_transform_workspace + 0x60
+        call sub_5d2b20
+        mov esi, offset movie_media_transform_workspace + 0x748
+        mov dword ptr [esp], offset movie_media_transform_workspace + 0xa0
+        call sub_5d2b20
+        mov esi, offset movie_media_transform_workspace + 0x76c
+        mov dword ptr [esp], offset movie_media_transform_workspace + 0xe0
+        call sub_5d2b20
+        mov esi, offset movie_media_transform_workspace + 0x790
+        mov dword ptr [esp], offset movie_media_transform_workspace + 0x120
+        call sub_5d2b20
+        mov esi, offset movie_media_transform_workspace + 0x7b4
+        mov dword ptr [esp], offset movie_media_transform_workspace + 0x160
+        call sub_5d2b20
+        mov esi, offset movie_media_transform_workspace + 0x7d8
+        mov dword ptr [esp], offset movie_media_transform_workspace + 0x1a0
+        call sub_5d2b20
+        mov esi, offset movie_media_transform_workspace + 0x7fc
+        mov dword ptr [esp], offset movie_media_transform_workspace + 0x1e0
+        call sub_5d2b20
+        call sub_5cf150
+        mov esi, offset movie_media_transform_workspace + 0x600
+        mov dword ptr [esp], offset movie_media_transform_workspace + 0x700
+        call sub_5d29e1
+        mov esi, offset movie_media_transform_workspace + 0x620
+        mov dword ptr [esp], offset movie_media_transform_workspace + 0x704
+        call sub_5d29e1
+        mov esi, offset movie_media_transform_workspace + 0x640
+        mov dword ptr [esp], offset movie_media_transform_workspace + 0x708
+        call sub_5d29e1
+        mov esi, offset movie_media_transform_workspace + 0x660
+        mov dword ptr [esp], offset movie_media_transform_workspace + 0x70c
+        call sub_5d29e1
+        mov esi, offset movie_media_transform_workspace + 0x680
+        mov dword ptr [esp], offset movie_media_transform_workspace + 0x710
+        call sub_5d29e1
+        mov esi, offset movie_media_transform_workspace + 0x6a0
+        mov dword ptr [esp], offset movie_media_transform_workspace + 0x714
+        call sub_5d29e1
+        mov esi, offset movie_media_transform_workspace + 0x6c0
+        mov dword ptr [esp], offset movie_media_transform_workspace + 0x718
+        call sub_5d29e1
+        mov esi, offset movie_media_transform_workspace + 0x6e0
+        mov dword ptr [esp], offset movie_media_transform_workspace + 0x71c
+        call sub_5d29e1
+        mov esi, offset movie_media_transform_workspace + 0x700
+        mov dword ptr [esp], offset movie_media_transform_workspace + 0x200
+        call sub_5d2b20
+        mov esi, offset movie_media_transform_workspace + 0x724
+        mov dword ptr [esp], offset movie_media_transform_workspace + 0x240
+        call sub_5d2b20
+        mov esi, offset movie_media_transform_workspace + 0x748
+        mov dword ptr [esp], offset movie_media_transform_workspace + 0x280
+        call sub_5d2b20
+        mov esi, offset movie_media_transform_workspace + 0x76c
+        mov dword ptr [esp], offset movie_media_transform_workspace + 0x2c0
+        call sub_5d2b20
+        mov esi, offset movie_media_transform_workspace + 0x790
+        mov dword ptr [esp], offset movie_media_transform_workspace + 0x300
+        call sub_5d2b20
+        mov esi, offset movie_media_transform_workspace + 0x7b4
+        mov dword ptr [esp], offset movie_media_transform_workspace + 0x340
+        call sub_5d2b20
+        mov esi, offset movie_media_transform_workspace + 0x7d8
+        mov dword ptr [esp], offset movie_media_transform_workspace + 0x380
+        call sub_5d2b20
+        mov esi, offset movie_media_transform_workspace + 0x7fc
+        mov dword ptr [esp], offset movie_media_transform_workspace + 0x3c0
+        call sub_5d2b20
+        call sub_5cf150
+        mov esi, offset movie_media_transform_workspace + 0x600
+        mov dword ptr [esp], offset movie_media_transform_workspace + 0x700
+        call sub_5d29e1
+        mov esi, offset movie_media_transform_workspace + 0x620
+        mov dword ptr [esp], offset movie_media_transform_workspace + 0x704
+        call sub_5d29e1
+        mov esi, offset movie_media_transform_workspace + 0x640
+        mov dword ptr [esp], offset movie_media_transform_workspace + 0x708
+        call sub_5d29e1
+        mov esi, offset movie_media_transform_workspace + 0x660
+        mov dword ptr [esp], offset movie_media_transform_workspace + 0x70c
+        call sub_5d29e1
+        mov esi, offset movie_media_transform_workspace + 0x680
+        mov dword ptr [esp], offset movie_media_transform_workspace + 0x710
+        call sub_5d29e1
+        mov esi, offset movie_media_transform_workspace + 0x6a0
+        mov dword ptr [esp], offset movie_media_transform_workspace + 0x714
+        call sub_5d29e1
+        mov esi, offset movie_media_transform_workspace + 0x6c0
+        mov dword ptr [esp], offset movie_media_transform_workspace + 0x718
+        call sub_5d29e1
+        mov esi, offset movie_media_transform_workspace + 0x6e0
+        mov dword ptr [esp], offset movie_media_transform_workspace + 0x71c
+        call sub_5d29e1
+        mov esi, offset movie_media_transform_workspace + 0x700
+        mov dword ptr [esp], offset movie_media_transform_workspace + 0x220
+        call sub_5d2b20
+        mov esi, offset movie_media_transform_workspace + 0x724
+        mov dword ptr [esp], offset movie_media_transform_workspace + 0x260
+        call sub_5d2b20
+        mov esi, offset movie_media_transform_workspace + 0x748
+        mov dword ptr [esp], offset movie_media_transform_workspace + 0x2a0
+        call sub_5d2b20
+        mov esi, offset movie_media_transform_workspace + 0x76c
+        mov dword ptr [esp], offset movie_media_transform_workspace + 0x2e0
+        call sub_5d2b20
+        mov esi, offset movie_media_transform_workspace + 0x790
+        mov dword ptr [esp], offset movie_media_transform_workspace + 0x320
+        call sub_5d2b20
+        mov esi, offset movie_media_transform_workspace + 0x7b4
+        mov dword ptr [esp], offset movie_media_transform_workspace + 0x360
+        call sub_5d2b20
+        mov esi, offset movie_media_transform_workspace + 0x7d8
+        mov dword ptr [esp], offset movie_media_transform_workspace + 0x3a0
+        call sub_5d2b20
+        mov esi, offset movie_media_transform_workspace + 0x7fc
+        mov dword ptr [esp], offset movie_media_transform_workspace + 0x3e0
+        call sub_5d2b20
+        call sub_5cf150
+        mov esi, offset movie_media_transform_workspace + 0x600
+        mov dword ptr [esp], offset movie_media_transform_workspace + 0x700
+        call sub_5d29e1
+        mov esi, offset movie_media_transform_workspace + 0x620
+        mov dword ptr [esp], offset movie_media_transform_workspace + 0x704
+        call sub_5d29e1
+        mov esi, offset movie_media_transform_workspace + 0x640
+        mov dword ptr [esp], offset movie_media_transform_workspace + 0x708
+        call sub_5d29e1
+        mov esi, offset movie_media_transform_workspace + 0x660
+        mov dword ptr [esp], offset movie_media_transform_workspace + 0x70c
+        call sub_5d29e1
+        mov esi, offset movie_media_transform_workspace + 0x680
+        mov dword ptr [esp], offset movie_media_transform_workspace + 0x710
+        call sub_5d29e1
+        mov esi, offset movie_media_transform_workspace + 0x6a0
+        mov dword ptr [esp], offset movie_media_transform_workspace + 0x714
+        call sub_5d29e1
+        mov esi, offset movie_media_transform_workspace + 0x6c0
+        mov dword ptr [esp], offset movie_media_transform_workspace + 0x718
+        call sub_5d29e1
+        mov esi, offset movie_media_transform_workspace + 0x6e0
+        mov dword ptr [esp], offset movie_media_transform_workspace + 0x71c
+        call sub_5d29e1
+        mov esi, offset movie_media_transform_workspace + 0x700
+        mov dword ptr [esp], offset movie_media_transform_workspace + 0x400
+        call sub_5d2b20
+        mov esi, offset movie_media_transform_workspace + 0x724
+        mov dword ptr [esp], offset movie_media_transform_workspace + 0x420
+        call sub_5d2b20
+        mov esi, offset movie_media_transform_workspace + 0x748
+        mov dword ptr [esp], offset movie_media_transform_workspace + 0x440
+        call sub_5d2b20
+        mov esi, offset movie_media_transform_workspace + 0x76c
+        mov dword ptr [esp], offset movie_media_transform_workspace + 0x460
+        call sub_5d2b20
+        mov esi, offset movie_media_transform_workspace + 0x790
+        mov dword ptr [esp], offset movie_media_transform_workspace + 0x480
+        call sub_5d2b20
+        mov esi, offset movie_media_transform_workspace + 0x7b4
+        mov dword ptr [esp], offset movie_media_transform_workspace + 0x4a0
+        call sub_5d2b20
+        mov esi, offset movie_media_transform_workspace + 0x7d8
+        mov dword ptr [esp], offset movie_media_transform_workspace + 0x4c0
+        call sub_5d2b20
+        mov esi, offset movie_media_transform_workspace + 0x7fc
+        mov dword ptr [esp], offset movie_media_transform_workspace + 0x4e0
+        call sub_5d2b20
+        call sub_5cf150
+        mov esi, offset movie_media_transform_workspace + 0x600
+        mov dword ptr [esp], offset movie_media_transform_workspace + 0x700
+        call sub_5d29e1
+        mov esi, offset movie_media_transform_workspace + 0x620
+        mov dword ptr [esp], offset movie_media_transform_workspace + 0x704
+        call sub_5d29e1
+        mov esi, offset movie_media_transform_workspace + 0x640
+        mov dword ptr [esp], offset movie_media_transform_workspace + 0x708
+        call sub_5d29e1
+        mov esi, offset movie_media_transform_workspace + 0x660
+        mov dword ptr [esp], offset movie_media_transform_workspace + 0x70c
+        call sub_5d29e1
+        mov esi, offset movie_media_transform_workspace + 0x680
+        mov dword ptr [esp], offset movie_media_transform_workspace + 0x710
+        call sub_5d29e1
+        mov esi, offset movie_media_transform_workspace + 0x6a0
+        mov dword ptr [esp], offset movie_media_transform_workspace + 0x714
+        call sub_5d29e1
+        mov esi, offset movie_media_transform_workspace + 0x6c0
+        mov dword ptr [esp], offset movie_media_transform_workspace + 0x718
+        call sub_5d29e1
+        mov esi, offset movie_media_transform_workspace + 0x6e0
+        mov dword ptr [esp], offset movie_media_transform_workspace + 0x71c
+        call sub_5d29e1
+        mov esi, offset movie_media_transform_workspace + 0x700
+        mov dword ptr [esp], offset movie_media_transform_workspace + 0x500
+        call sub_5d2b20
+        mov esi, offset movie_media_transform_workspace + 0x724
+        mov dword ptr [esp], offset movie_media_transform_workspace + 0x520
+        call sub_5d2b20
+        mov esi, offset movie_media_transform_workspace + 0x748
+        mov dword ptr [esp], offset movie_media_transform_workspace + 0x540
+        call sub_5d2b20
+        mov esi, offset movie_media_transform_workspace + 0x76c
+        mov dword ptr [esp], offset movie_media_transform_workspace + 0x560
+        call sub_5d2b20
+        mov esi, offset movie_media_transform_workspace + 0x790
+        mov dword ptr [esp], offset movie_media_transform_workspace + 0x580
+        call sub_5d2b20
+        mov esi, offset movie_media_transform_workspace + 0x7b4
+        mov dword ptr [esp], offset movie_media_transform_workspace + 0x5a0
+        call sub_5d2b20
+        mov esi, offset movie_media_transform_workspace + 0x7d8
+        mov dword ptr [esp], offset movie_media_transform_workspace + 0x5c0
+        call sub_5d2b20
+        mov esi, offset movie_media_transform_workspace + 0x7fc
+        mov dword ptr [esp], offset movie_media_transform_workspace + 0x5e0
+        call sub_5d2b20
+        add esp, 0x1c
+        mov edi, dword ptr [esp + 0x20]
+        mov esi, offset movie_media_transform_workspace
+        mov ebx, offset movie_media_transform_workspace + 0x400
+        call OutputPixelRow16
+        add edi, dword ptr [esp + 0x24]
+        mov esi, offset movie_media_transform_workspace + 0x40
+        mov ebx, offset movie_media_transform_workspace + 0x400
+        call OutputPixelRow16
+        add edi, dword ptr [esp + 0x24]
+        mov esi, offset movie_media_transform_workspace + 0x80
+        mov ebx, offset movie_media_transform_workspace + 0x420
+        call OutputPixelRow16
+        add edi, dword ptr [esp + 0x24]
+        mov esi, offset movie_media_transform_workspace + 0xc0
+        mov ebx, offset movie_media_transform_workspace + 0x420
+        call OutputPixelRow16
+        add edi, dword ptr [esp + 0x24]
+        mov esi, offset movie_media_transform_workspace + 0x100
+        mov ebx, offset movie_media_transform_workspace + 0x440
+        call OutputPixelRow16
+        add edi, dword ptr [esp + 0x24]
+        mov esi, offset movie_media_transform_workspace + 0x140
+        mov ebx, offset movie_media_transform_workspace + 0x440
+        call OutputPixelRow16
+        add edi, dword ptr [esp + 0x24]
+        mov esi, offset movie_media_transform_workspace + 0x180
+        mov ebx, offset movie_media_transform_workspace + 0x460
+        call OutputPixelRow16
+        add edi, dword ptr [esp + 0x24]
+        mov esi, offset movie_media_transform_workspace + 0x1c0
+        mov ebx, offset movie_media_transform_workspace + 0x460
+        call OutputPixelRow16
+        add edi, dword ptr [esp + 0x24]
+        mov esi, offset movie_media_transform_workspace + 0x200
+        mov ebx, offset movie_media_transform_workspace + 0x480
+        call OutputPixelRow16
+        add edi, dword ptr [esp + 0x24]
+        mov esi, offset movie_media_transform_workspace + 0x240
+        mov ebx, offset movie_media_transform_workspace + 0x480
+        call OutputPixelRow16
+        add edi, dword ptr [esp + 0x24]
+        mov esi, offset movie_media_transform_workspace + 0x280
+        mov ebx, offset movie_media_transform_workspace + 0x4a0
+        call OutputPixelRow16
+        add edi, dword ptr [esp + 0x24]
+        mov esi, offset movie_media_transform_workspace + 0x2c0
+        mov ebx, offset movie_media_transform_workspace + 0x4a0
+        call OutputPixelRow16
+        add edi, dword ptr [esp + 0x24]
+        mov esi, offset movie_media_transform_workspace + 0x300
+        mov ebx, offset movie_media_transform_workspace + 0x4c0
+        call OutputPixelRow16
+        add edi, dword ptr [esp + 0x24]
+        mov esi, offset movie_media_transform_workspace + 0x340
+        mov ebx, offset movie_media_transform_workspace + 0x4c0
+        call OutputPixelRow16
+        add edi, dword ptr [esp + 0x24]
+        mov esi, offset movie_media_transform_workspace + 0x380
+        mov ebx, offset movie_media_transform_workspace + 0x4e0
+        call OutputPixelRow16
+        add edi, dword ptr [esp + 0x24]
+        mov esi, offset movie_media_transform_workspace + 0x3c0
+        mov ebx, offset movie_media_transform_workspace + 0x4e0
+        call OutputPixelRow16
+        pop ebp
+        pop edi
+        pop esi
+        pop edx
+        pop ecx
+        pop ebx
+        ret
+    }
 }
 
 

@@ -236,9 +236,6 @@ int __cdecl enemy_move(int veh_id);
 void __cdecl synch_veh(int veh_id);
 int __cdecl action(int veh_id);
 void __cdecl sub_5cef8a(unsigned char *row_base, int stride_arg);
-void __cdecl OutputPixelRow(int *pEdi, unsigned int *pEsi, unsigned int *pEbx);
-void __cdecl OutputPixelRow16(short *pEdi, unsigned int *pEsi,
-                              unsigned int *pEbx);
 int __cdecl sub_5ceb12(const unsigned char *srcA,
                        const unsigned char *srcB, unsigned int *dst);
 void __cdecl sub_5cfaed(unsigned char *compressed, unsigned char *destination,
