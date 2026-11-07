@@ -225,40 +225,55 @@ void MapWin::UNK5(int panel) {
 // ORIGINAL: 0x00470A90 ?init@MapWin@@QAEXHH@Z 0x00470A90-0x00470EC2
 // RECOVERY_BINDING: v1 {"evidence": ["git:9f6ee90ae7baa6354fcca006def5561fb956792b:src/recovered/units/00470a90.cpp retains the complete 1074-byte seed; mode zero uses MapWin_UNK5 panels and Players records, mode two uses BaseWin::rect1_, and mode three selects label 0x204.", "git:9f6ee90ae7baa6354fcca006def5561fb956792b:src/recovered/units/00588aa0.cpp stores find_font(10, 1) at the original display-font slot.", "Pinned 0x00470DC2 reads pointer storage 0x00945778; config_popups at 0x00588F61 writes the selector result to that same slot. src/popup.cpp owns Font *PopupMapLabelFont and src/popup_fonts.h declares it; the pinned pre-CRT value is zero."], "reason": "Initialize the secondary MapWin view from the source-owned borrowed PopupMapLabelFont cache, preserving the original direct data reference and pre-write null state without another lookup or fallback."}
 void MapWin::init(int mode, int update) {
+    RECT bounds;
     buffer_a_.init(100, 50, 0, 0);
     view_active_ = 1;
-    RECT bounds;
     if (this == MapWinTable[1]) {
         bounds = WorldMapBounds;
         zoom_offset_ = -8;
-    } else if (mode == 0) {
-        unsigned int index = map_view_index_;
-        const int panel_count = IsMultiplayerNet ? 2 : 1;
-        if (index < static_cast<unsigned int>(panel_count)) {
-            if ((MapPanelDirtyMask & (1U << index)) == 0) {
+    } else if (mode != 0) {
+        if (mode == 3) {
+            bounds = WorldMapBounds;
+        } else if (mode == 2) {
+            bounds = TutWinBaseWindow.rect1_;
+        } else {
+            bounds = WorldMapBounds;
+        }
+    } else {
+        const int index = map_view_index_;
+        if (index < (IsMultiplayerNet != 0) + 1) {
+            if ((MapPanelDirtyMask & (1 << index)) == 0) {
                 UNK5(index);
             }
-            bounds.left = MapPanelRects[index].left;
-            bounds.top = MapPanelRects[index].top;
-            bounds.right = MapPanelRects[index].right;
-            bounds.bottom = MapPanelRects[index].bottom;
-            if (index != 0) zoom_offset_ = -8;
+            const MapPanelRect &panel = MapPanelRects[map_view_index_];
+            bounds.left = panel.left;
+            bounds.top = panel.top;
+            bounds.right = panel.right;
+            bounds.bottom = panel.bottom;
+            if (map_view_index_ != 0) {
+                zoom_offset_ = -8;
+            }
         } else {
-            bounds.left = static_cast<int>(index * 0x28);
+            bounds.left = index * 0x28;
             bounds.top = bounds.left;
             bounds.right = bounds.left + 0x190;
             bounds.bottom = bounds.top + 0x190;
         }
-    } else if (mode == 2) {
-        bounds = TutWinBaseWindow.rect1_;
-    } else {
-        bounds = WorldMapBounds;
     }
 
     StringTemp[0] = '\0';
-    if (mode == 0) {
+    if (mode != 0) {
+        strcat(StringTemp, StringTable.get(mode != 3 ? Labels.strings_ptr[0x1E]
+                                                     : Labels.strings_ptr[0x204]));
+    } else {
         strcat(StringTemp, label_get(0x1D));
-        if (map_view_index_ == 0) {
+        if (map_view_index_ != 0) {
+            strcat(StringTemp, " ");
+            strcat(StringTemp, "#");
+            char number[80];
+            _itoa(map_view_index_ + 1, number, 10);
+            strcat(StringTemp, number);
+        } else {
             StringTemp[0] = '\0';
             const Player &player = Players[ConsoleGlobal.faction_id_];
             GenderDefault = player.noun_gender;
@@ -268,29 +283,25 @@ void MapWin::init(int mode, int update) {
             strcat(StringTemp, label_get(0));
             strcat(StringTemp, " ");
             say_year(StringTemp);
-        } else {
-            strcat(StringTemp, " ");
-            strcat(StringTemp, "#");
-            char number[80];
-            _itoa(static_cast<int>(map_view_index_) + 1, number, 10);
-            strcat(StringTemp, number);
         }
-    } else {
-        strcat(StringTemp, label_get(mode == 3 ? 0x204 : 0x1E));
     }
 
-    int flags = mode == 3 ? 0x400020 : 0x20000430;
-    if (mode == 0 && map_view_index_ != 0) flags = 0x20010430;
+    int flags = 0x20000430;
+    if (mode == 3) {
+        flags = 0x400020;
+    } else if (mode == 0 && map_view_index_ != 0) {
+        flags = 0x20010430;
+    }
     if (this == &WorldClimateWorldWin.mapWin_) {
         flags = (flags & ~0x10) | 0x40400001;
     }
     init(&bounds, StringTemp, flags);
-    if (mode == 0) {
-        field_1DD70_ = 0x10EE3;
-        zoom_offset_ = map_view_index_ != 0 ? -8 : 0;
-    } else {
+    if (mode != 0) {
         field_1DD70_ = 0x80000082;
         zoom_offset_ = -7;
+    } else {
+        field_1DD70_ = 0x10EE3;
+        zoom_offset_ = map_view_index_ != 0 ? -8 : 0;
     }
     if (map_view_index_ != 0) {
         // config_popups publishes this borrowed font. The original reads
@@ -301,9 +312,15 @@ void MapWin::init(int mode, int update) {
         do_image_buttons();
         field_1DD70_ &= 0x9FFFFFFF;
         if (map_view_index_ == 0) {
-            field_1DD70_ |= IsMultiplayerNet ? 0x20000000 : 0x60000000;
+            if (IsMultiplayerNet) {
+                field_1DD70_ |= 0x20000000;
+            } else {
+                field_1DD70_ |= 0x60000000;
+            }
         } else {
-            if (map_view_index_ == 1) field_1DD70_ |= 0x40000000;
+            if (map_view_index_ == 1) {
+                field_1DD70_ |= 0x40000000;
+            }
             standard_caption();
         }
         if (update == 0) {
@@ -760,8 +777,11 @@ Purpose: Refresh the map's image buttons; the legacy implementation is a bare
 Return Value: n/a
 Status: Complete
 */
+// Both callers (init, on_resize) call this empty body out of line.
+#pragma auto_inline(off)
 void MapWin::do_image_buttons() {
 }
+#pragma auto_inline(on)
 
 
 /*
@@ -1227,100 +1247,65 @@ int MapWin::UNK1() {
 // ORIGINAL: 0x0046B310 ?focus@MapWin@@QAEHHH@Z 0x0046B310-0x0046B50C FILE
 // RECOVERY_BINDING: v1 {"evidence": ["git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/0046b310.cpp", "Pinned original image review controls route precedence, cursor sprite dispatch, signed zoom, actual API imports and original member/data dependencies. Bounded compile and host controls do not establish game acceptance."], "reason": "Recover the genuine MapWin/Console owner operation using typed members, actual shared storage, virtual base APIs and full original branch evidence; keep seed and historical obligations."}
 // TRIED: literal register-mirroring transcription (eax/ecx/edx/ebx/edi as plain int locals) of the singleton-fast-path vs. wrap/clamp slow-path split on `this == 0x9156b0`; the sign-extraction idiom `and 0x80000000; neg; sbb; and 2; add 2` reduced to `(field < 0) ? 4 : 2`. MISMATCH #4 push/xor in the prologue - compiles and the branch/merge structure follows the disasm.
-int MapWin::focus(int x_coord, int y_coord) {
+int MapWin::focus(int x, int y) {
     int moved = 0;
     if (this == static_cast<MapWin *>(&ConsoleGlobal)) {
-        if (in_box(x_coord, y_coord, &MapWinPrimaryCorner) != 0) {
-            return 0;
+        if (in_box(x, y, &MapWinPrimaryCorner) == 0) {
+            if (map_view_index_ == 0) {
+                ConsoleGlobal.field_23BFC_ = 1;
+                ConsoleGlobal.field_23BF8_ = ConsoleGlobal.cursor_active_ == 0;
+            }
+            field_21A44_ = 1;
+            set_center(x, y, 1);
+            field_21A44_ = 0;
+            return 1;
         }
+        return 0;
+    }
+    const int left = field_1DDA4_;
+    const int top = field_1DDA8_;
+    const int right = wrap_map_x(left + field_1DDD4_ * 2 - 2);
+    const int bottom = top + field_1DDD8_ * 2 - 2;
+    if (!(MapIsFlat & 1)) {
+        if (x <= static_cast<int>(field_1DDCC_ * 2) &&
+            left >= MapLongitudeBounds - static_cast<int>(field_1DDCC_ * 2)) {
+            x += MapLongitudeBounds;
+        }
+    }
+    const int margin = (field_1DD70_ & 0x80000000) ? 4 : 2;
+    if (field_1DDAC_ == 0) {
+        if (MapIsFlat & 1) {
+            x = range(x, margin, MapLongitudeBounds - margin - 1);
+            if (x & 1) {
+                x--;
+            }
+            if (y & 1) {
+                x++;
+            }
+        }
+        if (x <= left + margin || x >= right - margin) {
+            moved = 1;
+        }
+    }
+    if (field_1DDB0_ == 0) {
+        y = range(y, margin, MapLatitudeBounds - margin - 1);
+        if (x & 1) {
+            x--;
+        }
+        if (y & 1) {
+            x++;
+        }
+        if (y <= top + margin || y >= bottom - margin) {
+            moved = 1;
+        }
+    }
+    if (moved) {
         if (map_view_index_ == 0) {
             ConsoleGlobal.field_23BFC_ = 1;
             ConsoleGlobal.field_23BF8_ = ConsoleGlobal.cursor_active_ == 0;
         }
-        field_21A44_ = 1;
-        set_center(x_coord, y_coord, 1);
-        field_21A44_ = 0;
-        return 1;
+        set_center(x, y, 1);
     }
-
-    const bool flat = (MapIsFlat & 1) != 0;
-    const int left = field_1DDA4_;
-    int right = mapwin_dest_sub(mapwin_dest_add(left,
-        mapwin_dest_mul(field_1DDD4_, 2)), 2);
-    if (!flat) {
-        if (right >= 0) {
-            if (right >= static_cast<int>(MapLongitudeBounds)) {
-                right = mapwin_dest_sub(right, MapLongitudeBounds);
-            }
-        } else {
-            right = mapwin_dest_add(right, MapLongitudeBounds);
-        }
-    }
-    const int top = field_1DDA8_;
-    const int bottom = mapwin_dest_sub(mapwin_dest_add(top,
-        mapwin_dest_mul(field_1DDD8_, 2)), 2);
-    int x = x_coord;
-    int y = y_coord;
-    if (!flat) {
-        const int wrap_threshold = mapwin_dest_mul(field_1DDCC_, 2);
-        if (x <= wrap_threshold &&
-            left >= mapwin_dest_sub(MapLongitudeBounds, wrap_threshold)) {
-            x = mapwin_dest_add(x, MapLongitudeBounds);
-        }
-    }
-
-    const int step = static_cast<int32_t>(field_1DD70_) < 0 ? 4 : 2;
-    if (field_1DDAC_ == 0) {
-        if (flat) {
-            const int maximum = mapwin_dest_sub(
-                mapwin_dest_sub(MapLongitudeBounds, step), 1);
-            if (x < step || maximum < step) {
-                x = step;
-            } else if (x > maximum) {
-                x = maximum;
-            }
-        } else {
-            const int maximum = mapwin_dest_sub(right, step);
-            if (x < step || maximum < step) {
-                x = step;
-            } else if (x > maximum) {
-                x = maximum;
-            }
-        }
-        if (x & 1) --x;
-        if (y_coord & 1) ++x;
-        if (!flat) {
-            if (x <= mapwin_dest_add(left, step) ||
-                x >= mapwin_dest_sub(right, step)) {
-                moved = 1;
-            }
-        }
-    }
-
-    if (field_1DDB0_ == 0) {
-        const int maximum = mapwin_dest_sub(
-            mapwin_dest_sub(MapLatitudeBounds, step), 1);
-        if (y < step || maximum < step) {
-            y = step;
-        } else if (y > maximum) {
-            y = maximum;
-        }
-        if (x & 1) --x;
-        if (y & 1) ++x;
-        if (y <= mapwin_dest_add(top, step) ||
-            y >= mapwin_dest_sub(bottom, step)) {
-            moved = 1;
-        }
-    }
-
-    if (moved == 0) {
-        return 0;
-    }
-    if (map_view_index_ == 0) {
-        ConsoleGlobal.field_23BFC_ = 1;
-        ConsoleGlobal.field_23BF8_ = ConsoleGlobal.cursor_active_ == 0;
-    }
-    set_center(x, y, 1);
     return moved;
 }
 
@@ -1802,6 +1787,43 @@ void MapWin::direct_dest_line(int x1, int y1, int x2, int y2, int triad,
     }
 }
 
+// Whether a tile lies inside the visible map window, across the seam.
+static inline int mapwin_tile_visible(MapWin *w, int x, int y) {
+    if (y < w->field_1DDA8_) {
+        return 0;
+    }
+    if (y >= w->field_1DDD8_ + w->field_1DDD0_ + w->field_1DDA8_) {
+        return 0;
+    }
+    if ((MapIsFlat & 1) == 0) {
+        if (x < w->field_1DDA4_) {
+            x += MapLongitudeBounds;
+        }
+        if (x >= w->field_1DDD4_ + w->field_1DDCC_ + w->field_1DDA4_) {
+            x -= MapLongitudeBounds;
+        }
+    }
+    if (x < w->field_1DDA4_) {
+        return 0;
+    }
+    if (x >= w->field_1DDD4_ + w->field_1DDCC_ + w->field_1DDA4_) {
+        return 0;
+    }
+    return 1;
+}
+
+// Route-preview tile distance: wrapped |dx| plus |dy|.
+static inline int mapwin_route_distance(int x1, int y1, int x2, int y2) {
+    const int dx = abs(x1 - x2);
+    int wrapped;
+    if ((MapIsFlat & 1) == 0 && dx > MapLongitude) {
+        wrapped = MapLongitudeBounds - dx;
+    } else {
+        wrapped = dx;
+    }
+    return wrapped + abs(y1 - y2);
+}
+
 // ORIGINAL: 0x00467430 ?dest_line@MapWin@@QAEXHHHHHHHHHHH@Z 0x00467430-0x00467958
 // RECOVERY_BINDING: v1 {"evidence": ["Original467430..467958; retired seed git:b55fcf8b:src/recovered/units/00467430.cpp records this identity and exact span.", "Original467481/467483 establish connected-region admission;4676DD tests the pass index, not the per-pass step count. Cost writes46759x/467718/46792x own the separate7D3B70 scalar."], "reason": "MapWin owns route-preview traversal and cost publication. Original pass0 validates the whole route; pass1 charges and draws each edge. Connected land/sea uses path traversal and air/disconnected routes use the direct fallback."}
 void MapWin::dest_line(int x1, int y1, int x2, int y2, int proto_id,
@@ -1816,206 +1838,94 @@ void MapWin::dest_line(int x1, int y1, int x2, int y2, int proto_id,
     } else if (triad == 1) {
         const int base1 = base_at(x1, y1);
         const int base2 = base_at(x2, y2);
-        // The map pointer/stride are loaded after the base_at callbacks.
         if (base1 >= 0) {
             if (base2 >= 0) {
-                if (port_to_port(base1, base2) == 0) {
+                if (!port_to_port(base1, base2)) {
                     fallback = 1;
                 }
-            } else {
-                if (base_on_sea(base1, map_loc(x2, y2)->region) == 0) {
-                    fallback = 1;
-                }
+            } else if (!base_on_sea(base1, map_loc(x2, y2)->region)) {
+                fallback = 1;
             }
         } else if (base2 >= 0) {
-            if (base_on_sea(base2, map_loc(x1, y1)->region) == 0) {
+            if (!base_on_sea(base2, map_loc(x1, y1)->region)) {
                 fallback = 1;
             }
-        } else {
-            if (map_loc(x1, y1)->region != map_loc(x2, y2)->region) {
-                fallback = 1;
-            }
+        } else if (map_loc(x1, y1)->region != map_loc(x2, y2)->region) {
+            fallback = 1;
         }
     } else if (triad == 2) {
         fallback = 1;
     }
 
-    // Pass0 validates the WHOLE route. Pass1 charges and draws EVERY edge,
-    // including its first edge. The seed confused this pass index with the
-    // distinct per-pass step counter at original ebp-18.
-    for (int pass = 0; pass < 2 && !fallback; ++pass) {
+    // Pass0 validates the whole route; pass1 charges and draws every edge.
+    for (int pass = 0; !fallback && pass < 2; ++pass) {
         Win::update_cursor(0, 1);
-        int current_x = x1;
-        int current_y = y1;
+        int x = x1;
+        int y = y1;
         int steps = 0;
         int last_direction = -1;
         MapDestinationCost = 0;
-
         for (;;) {
             Win::update_cursor(0, 1);
-            int flags = repeat != 0 ? 0x80 : 0xc0;
-            if (Weapon[VehPrototypes[proto_id].weapon_id].offense_rating == 0) {
-                const int project_base = GameDataStateStorage.fields_.secret_project_.xenoempathy_dome();
-                if (project_base < 0 || Bases[project_base].faction_id_current != faction) {
-                    flags |= 0x10;
-                }
+            int flags = 0x80;
+            if (!repeat) {
+                flags = 0xC0;
             }
-
+            if (Weapon[VehPrototypes[proto_id].weapon_id].offense_rating == 0 &&
+                !has_project(SP_XENOEMPATYH_DOME, faction)) {
+                flags |= 0x10;
+            }
             int direction;
-            const int distance = map_dest_signed(
-                static_cast<uint32_t>(map_dest_distance(current_x, current_y, x2, y2)) &
-                0xfffffffeU);
-            if (distance > 2) {
-                direction = Paths.find(current_x, current_y, x2, y2,
-                                       proto_id, faction, flags, last_direction);
+            if ((mapwin_route_distance(x, y, x2, y2) & ~1) <= 2) {
+                direction = compass_move(x, y, x2, y2);
+            } else {
+                direction = Paths.find(x, y, x2, y2, proto_id, faction, flags,
+                                       last_direction);
                 if (direction < 0) {
                     fallback = 1;
                     break;
                 }
-            } else {
-                direction = compass_move(current_x, current_y, x2, y2);
             }
             last_direction = direction;
-            int next_x = mapwin_dest_add(current_x, VehMoveDeltaX[direction]);
-            if ((MapIsFlat & 1) == 0) {
-                if (next_x < 0) {
-                    next_x = mapwin_dest_add(next_x, MapLongitudeBounds);
-                } else if (next_x >= MapLongitudeBounds) {
-                    next_x = mapwin_dest_sub(next_x, MapLongitudeBounds);
-                }
-            }
-            const int next_y = mapwin_dest_add(current_y, VehMoveDeltaY[direction]);
-
+            const int prev_x = x;
+            const int prev_y = y;
+            x = wrap_map_x(x + VehMoveDeltaX[direction]);
+            y += VehMoveDeltaY[direction];
             if (pass != 0) {
                 if (proto_id >= 0) {
-                    const int speed = speed_proto(proto_id);
-                    const int cost = hex_cost(proto_id, faction,
-                                              current_x, current_y, next_x, next_y,
-                                              speed == map_dest_signed(Rules.move_rate_roads));
-                    // hex_cost can update shared state: load the cost AFTER it.
-                    MapDestinationCost = mapwin_dest_add(MapDestinationCost, cost);
+                    MapDestinationCost += hex_cost(
+                        proto_id, faction, prev_x, prev_y, x, y,
+                        speed_proto(proto_id) == static_cast<int>(Rules.move_rate_roads));
                 }
-                bool segment_visible = false;
-                {
-                    const int viewport_top = field_1DDA8_;
-                    if (current_y >= viewport_top) {
-                        const int viewport_bottom = mapwin_dest_add(
-                            mapwin_dest_add(field_1DDD8_, field_1DDD0_),
-                            viewport_top);
-                        if (current_y < viewport_bottom) {
-                            if ((MapIsFlat & 1) != 0) {
-                                const int viewport_left = field_1DDA4_;
-                                if (current_x >= viewport_left) {
-                                    const int viewport_right = mapwin_dest_add(
-                                        mapwin_dest_add(field_1DDD4_, field_1DDCC_),
-                                        viewport_left);
-                                    if (current_x < viewport_right) {
-                                        segment_visible = true;
-                                    }
-                                }
-                            } else {
-                                const int viewport_left = field_1DDA4_;
-                                int viewport_x = current_x;
-                                if (viewport_x < viewport_left) {
-                                    viewport_x = mapwin_dest_add(
-                                        viewport_x, MapLongitudeBounds);
-                                }
-                                const int viewport_right = mapwin_dest_add(
-                                    mapwin_dest_add(field_1DDD4_, field_1DDCC_),
-                                    viewport_left);
-                                if (viewport_x >= viewport_right) {
-                                    viewport_x = mapwin_dest_sub(
-                                        viewport_x, MapLongitudeBounds);
-                                }
-                                const int final_viewport_left = field_1DDA4_;
-                                if (viewport_x >= final_viewport_left) {
-                                    const int final_viewport_right = mapwin_dest_add(
-                                        mapwin_dest_add(field_1DDD4_, field_1DDCC_),
-                                        final_viewport_left);
-                                    if (viewport_x < final_viewport_right) {
-                                        segment_visible = true;
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-                if (!segment_visible) {
-                    const int viewport_top = field_1DDA8_;
-                    if (next_y >= viewport_top) {
-                        const int viewport_bottom = mapwin_dest_add(
-                            mapwin_dest_add(field_1DDD8_, field_1DDD0_),
-                            viewport_top);
-                        if (next_y < viewport_bottom) {
-                            if ((MapIsFlat & 1) != 0) {
-                                const int viewport_left = field_1DDA4_;
-                                if (next_x >= viewport_left) {
-                                    const int viewport_right = mapwin_dest_add(
-                                        mapwin_dest_add(field_1DDD4_, field_1DDCC_),
-                                        viewport_left);
-                                    if (next_x < viewport_right) {
-                                        segment_visible = true;
-                                    }
-                                }
-                            } else {
-                                const int viewport_left = field_1DDA4_;
-                                int viewport_x = next_x;
-                                if (viewport_x < viewport_left) {
-                                    viewport_x = mapwin_dest_add(
-                                        viewport_x, MapLongitudeBounds);
-                                }
-                                const int viewport_right = mapwin_dest_add(
-                                    mapwin_dest_add(field_1DDD4_, field_1DDCC_),
-                                    viewport_left);
-                                if (viewport_x >= viewport_right) {
-                                    viewport_x = mapwin_dest_sub(
-                                        viewport_x, MapLongitudeBounds);
-                                }
-                                const int final_viewport_left = field_1DDA4_;
-                                if (viewport_x >= final_viewport_left) {
-                                    const int final_viewport_right = mapwin_dest_add(
-                                        mapwin_dest_add(field_1DDD4_, field_1DDCC_),
-                                        final_viewport_left);
-                                    if (viewport_x < final_viewport_right) {
-                                        segment_visible = true;
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-                if (segment_visible) {
-                    direct_dest_line(current_x, current_y, next_x, next_y,
-                                     triad, pattern_on, pattern_off, cover);
+                if (mapwin_tile_visible(this, prev_x, prev_y) ||
+                    mapwin_tile_visible(this, x, y)) {
+                    direct_dest_line(prev_x, prev_y, x, y, triad, pattern_on,
+                                     pattern_off, cover);
                 }
             }
-
             // Arrival bypasses fog rejection and the safety step increment.
-            if (next_x == x2 && next_y == y2) {
+            if (x == x2 && y == y2) {
                 break;
             }
             if ((PlayersData[faction].flags & 0x200) == 0 &&
-                (map_loc(next_x, next_y)->visibility &
-                 static_cast<uint8_t>(1U << (static_cast<uint32_t>(faction) & 31))) == 0 &&
-                (GameDataStateStorage.fields_.game_state_ & 0x80) == 0 && (GameDataStateStorage.fields_.game_rules_ & 0x100) == 0) {
+                (map_loc(x, y)->visibility & (1 << faction)) == 0 &&
+                (GameDataStateStorage.fields_.game_state_ & 0x80) == 0 &&
+                (GameDataStateStorage.fields_.game_rules_ & 0x100) == 0) {
                 fallback = 1;
             }
-            steps = mapwin_dest_add(steps, 1);
-            if (steps > mapwin_dest_mul(MapLongitudeBounds, 2)) {
+            if (++steps > MapLongitudeBounds * 2) {
                 fallback = 1;
+                break;
             }
             if (fallback) {
                 break;
             }
-            current_x = next_x;
-            current_y = next_y;
         }
     }
 
     if (fallback) {
-        MapDestinationCost = mapwin_dest_mul(
-            map_dest_half(map_dest_distance(x1, y1, x2, y2)),
-            map_dest_signed(Rules.move_rate_roads));
+        MapDestinationCost = (mapwin_route_distance(x1, y1, x2, y2) >> 1) *
+                             static_cast<int>(Rules.move_rate_roads);
         direct_dest_line(x1, y1, x2, y2, triad, pattern_on, pattern_off, cover);
     }
 }
@@ -6450,129 +6360,80 @@ void MapWin::click(int pixel_x, int pixel_y, int button) {
 // ORIGINAL: 0x00467970 ?draw_base_dest@MapWin@@QAEXH@Z 0x00467970-0x00467DD9 FILE
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00467970.cpp", "Pinned original image review controls route precedence, cursor sprite dispatch, signed zoom, actual API imports and original member/data dependencies. Bounded compile and host controls do not establish game acceptance."], "reason": "Recover the genuine MapWin/Console owner operation using typed members, actual shared storage, virtual base APIs and full original branch evidence; keep seed and historical obligations."}
 void MapWin::draw_base_dest(int draw_type) {
-    bool any = false;
-    bool drew_base_line = false;
-    const int local_faction = ConsoleGlobal.faction_id_;
-    const int visible_bottom = mapwin_dest_add(
-        field_1DDA8_, mapwin_dest_add(field_1DDD8_, field_1DDD0_));
-    const int visible_right = mapwin_dest_add(
-        field_1DDA4_, mapwin_dest_add(field_1DDD4_, field_1DDCC_));
-
-    if ((field_1DD70_ & 0x40000U) != 0) {
-        for (int base_id = 0; base_id < GameDataStateStorage.fields_.base_current_count_; ++base_id) {
-            const Base &base = Bases[base_id];
-            if (base.faction_id_current != local_faction) {
+    int drew = 0;
+    if (field_1DD70_ & 0x40000U) {
+        for (int base_id = 0; base_id < GameDataStateStorage.fields_.base_current_count_;
+             ++base_id) {
+            if (Bases[base_id].faction_id_current != ConsoleGlobal.faction_id_) {
                 continue;
             }
-            const int destinations[3] = {
-                base.auto_forward_slots[Base::AutoForwardLand],
-                base.auto_forward_slots[Base::AutoForwardSea],
-                base.auto_forward_slots[Base::AutoForwardAir]
-            };
             for (int direction = 0; direction < 3; ++direction) {
-                const int destination_id = destinations[direction];
-                if (destination_id < 0) {
+                const int16_t destination = Bases[base_id].auto_forward_slots[direction];
+                if (destination < 0) {
                     continue;
                 }
-                const Base &destination = Bases[destination_id];
-                const bool source_row_visible =
-                    base.y >= field_1DDA8_ && base.y < visible_bottom;
-                bool line_visible = false;
-                if (source_row_visible) {
-                    if (destination.y >= field_1DDA8_ &&
-                        destination.y < visible_bottom) {
-                        int destination_x = destination.x;
-                        if ((MapIsFlat & 1) == 0) {
-                            if (destination_x < field_1DDA4_) {
-                                destination_x = mapwin_dest_add(
-                                    destination_x, MapLongitudeBounds);
-                            }
-                            if (destination_x >= visible_right) {
-                                destination_x = mapwin_dest_sub(
-                                    destination_x, MapLongitudeBounds);
-                            }
-                        }
-                        line_visible = destination_x >= field_1DDA4_ &&
-                                       destination_x < visible_right;
+                const int x = Bases[base_id].x;
+                const int y = Bases[base_id].y;
+                const int dest_x = Bases[destination].x;
+                const int dest_y = Bases[destination].y;
+                if (mapwin_tile_visible(this, x, y) ||
+                    mapwin_tile_visible(this, dest_x, dest_y)) {
+                    int line_type;
+                    switch (direction) {
+                    case 0:
+                    case 1:
+                    case 2:
+                        line_type = 10;
+                        break;
                     }
-                } else {
-                    int source_x = base.x;
-                    if ((MapIsFlat & 1) == 0) {
-                        if (source_x < field_1DDA4_) {
-                            source_x = mapwin_dest_add(source_x,
-                                                    MapLongitudeBounds);
-                        }
-                        if (source_x >= visible_right) {
-                            source_x = mapwin_dest_sub(source_x,
-                                                    MapLongitudeBounds);
-                        }
-                    }
-                    line_visible = source_x >= field_1DDA4_ &&
-                                   source_x < visible_right;
+                    dest_line(x, Bases[base_id].y, dest_x, dest_y, line_type,
+                              ConsoleGlobal.faction_id_, direction, 0, 3, 5, 0);
+                    drew = 1;
                 }
-                if (!line_visible) {
-                    continue;
-                }
-                const int line_type = direction == 0 || direction == 1 ||
-                                      direction == 2 ? 10 : 0;
-                dest_line(base.x, base.y, destination.x, destination.y,
-                          line_type, local_faction, direction, 0, 3, 5, 0);
-                drew_base_line = true;
             }
         }
     }
-
-    if ((field_1DD70_ & 0xC00000U) != 0) {
-        for (int vehicle_id = 0; vehicle_id < GameDataStateStorage.fields_.vehicle_current_count_; ++vehicle_id) {
-            const Veh &vehicle = Vehs[vehicle_id];
-            if (vehicle.faction_id != local_faction) {
+    if (field_1DD70_ & 0xC00000U) {
+        for (int veh_id = 0; veh_id < GameDataStateStorage.fields_.vehicle_current_count_;
+             ++veh_id) {
+            const int faction = Vehs[veh_id].faction_id;
+            if (faction != ConsoleGlobal.faction_id_) {
                 continue;
             }
-            const uint32_t relevant_state = vehicle.state & 0x01000200U;
-            const bool repeated_route = relevant_state == 0x01000200U &&
-                                        (field_1DD70_ & 0x400000U) != 0;
-            const bool ordered_route = vehicle.order == ORDER_MOVE_TO &&
-                                       (field_1DD70_ & 0x800000U) != 0;
-            if (!repeated_route && !ordered_route) {
+            const uint32_t state = Vehs[veh_id].state & 0x01000200U;
+            if (!((state == 0x01000200U && (field_1DD70_ & 0x400000U)) ||
+                  (Vehs[veh_id].order == ORDER_MOVE_TO && (field_1DD70_ & 0x800000U)))) {
                 continue;
             }
-
-            const int prototype = vehicle.proto_id;
-            const int triad = get_proto_triad(prototype);
-            const int cover = relevant_state == 0x01000200U ? 1 : 0;
-            if (repeated_route) {
-                const int count = vehicle.waypoint_count;
-                const int segment_count = count + (count > 1 ? 1 : 0);
-                for (int segment = 0; segment < segment_count; ++segment) {
-                    const int start = segment % (count + 1);
-                    const int finish = (segment + 1) % (count + 1);
-                    dest_line(vehicle.waypoint_x[start],
-                              vehicle.waypoint_y[start],
-                              vehicle.waypoint_x[finish],
-                              vehicle.waypoint_y[finish], prototype,
-                              vehicle.faction_id, triad, cover, 3, 5, 0);
+            const int proto_id = Vehs[veh_id].proto_id;
+            const int triad = get_proto_triad(proto_id);
+            if (state == 0x01000200U && (field_1DD70_ & 0x400000U)) {
+                for (int i = 0; i < Vehs[veh_id].waypoint_count + (Vehs[veh_id].waypoint_count > 1); ++i) {
+                    const int start = i % (Vehs[veh_id].waypoint_count + 1);
+                    const int finish = (i + 1) % (Vehs[veh_id].waypoint_count + 1);
+                    dest_line(Vehs[veh_id].waypoint_x[start], Vehs[veh_id].waypoint_y[start],
+                              Vehs[veh_id].waypoint_x[finish], Vehs[veh_id].waypoint_y[finish],
+                              Vehs[veh_id].proto_id, Vehs[veh_id].faction_id, triad,
+                              (Vehs[veh_id].state & 0x01000200U) == 0x01000200U, 3, 5, 0);
                 }
             } else {
-                dest_line(vehicle.x, vehicle.y, vehicle.waypoint_x[0],
-                          vehicle.waypoint_y[0], prototype,
-                          vehicle.faction_id, triad, cover, 2, 2, 0);
-                if ((vehicle.state & VSTATE_UNK_2000000) != 0 &&
-                    vehicle.waypoint_count != 0) {
-                    for (int point = 0; point < vehicle.waypoint_count;
-                         ++point) {
-                        dest_line(vehicle.waypoint_x[point],
-                                  vehicle.waypoint_y[point],
-                                  vehicle.waypoint_x[point + 1],
-                                  vehicle.waypoint_y[point + 1], prototype,
-                                  vehicle.faction_id, triad, cover, 2, 2, 0);
+                dest_line(Vehs[veh_id].x, Vehs[veh_id].y, Vehs[veh_id].waypoint_x[0], Vehs[veh_id].waypoint_y[0],
+                          proto_id, faction, triad, state == 0x01000200U, 2, 2, 0);
+                if (Vehs[veh_id].state & VSTATE_UNK_2000000) {
+                    for (int point = 0; point < Vehs[veh_id].waypoint_count; ++point) {
+                        dest_line(Vehs[veh_id].waypoint_x[point], Vehs[veh_id].waypoint_y[point],
+                                  Vehs[veh_id].waypoint_x[point + 1],
+                                  Vehs[veh_id].waypoint_y[point + 1], Vehs[veh_id].proto_id,
+                                  Vehs[veh_id].faction_id, triad,
+                                  (Vehs[veh_id].state & 0x01000200U) == 0x01000200U,
+                                  2, 2, 0);
                     }
                 }
             }
-            any = true;
+            drew = 1;
         }
     }
-
-    if (draw_type != 0 && (drew_base_line || any)) {
+    if (draw_type != 0 && drew) {
         on_update();
     }
 }
@@ -6592,114 +6453,68 @@ void MapWin::draw_base_dest(int draw_type) {
 // indirect  0x00468EF0 0x00468F58
 
 
-int MapWin::compute_clip(int a1, int a2, int a3, RECT * a4) {
+int MapWin::compute_clip(int x, int y, int radius, RECT *clip) {
     RECT rect;
-    int px, py;
-    int count;
-    int row;
-
-    // LEFT edge
-    int leftCol = a1 - a3 * 2;
+    int pixel_x;
+    int pixel_y;
+    int i;
     rect.left = 100000;
-    if ((MapIsFlat & 1) == 0) {
-        if (leftCol < 0) {
-            leftCol = MapLongitudeBounds + leftCol;
-        } else if (MapLongitudeBounds <= leftCol) {
-            leftCol = leftCol - MapLongitudeBounds;
+    int column = wrap_map_x(x - radius * 2);
+    for (i = -radius; i <= radius; ++i) {
+        if (on_map(column, y + i * 2)) {
+            tile_to_pixel(column, y + i * 2, &pixel_x, &pixel_y);
+            if (pixel_x < rect.left) {
+                rect.left = pixel_x;
+            }
         }
     }
-    if (a3 >= 0) {
-        row = a2 - a3 * 2;
-        count = a3 * 2 + 1;
-        do {
-            if (row >= 0 && row < MapLatitudeBounds && leftCol >= 0 && leftCol < MapLongitudeBounds) {
-                tile_to_pixel(leftCol, row, &px, &py);
-                if (px < rect.left) {
-                    rect.left = px;
-                }
-            }
-            row += 2;
-            count--;
-        } while (count != 0);
-    }
-
-    // RIGHT edge
     rect.right = 0;
-    int rightCol = a1 + 2 + a3 * 2;
-    if ((MapIsFlat & 1) == 0) {
-        if (rightCol < 0) {
-            rightCol = MapLongitudeBounds + rightCol;
-        } else if (MapLongitudeBounds <= rightCol) {
-            rightCol = rightCol - MapLongitudeBounds;
+    column = wrap_map_x(x + radius * 2 + 2);
+    for (i = -radius; i <= radius; ++i) {
+        if (on_map(column, y + i * 2)) {
+            tile_to_pixel(column, y + i * 2, &pixel_x, &pixel_y);
+            if (pixel_x > rect.right) {
+                rect.right = pixel_x;
+            }
         }
     }
-    if (a3 >= 0) {
-        row = a2 - a3 * 2;
-        count = a3 * 2 + 1;
-        do {
-            if (row >= 0 && row < MapLatitudeBounds && rightCol >= 0 && rightCol < MapLongitudeBounds) {
-                tile_to_pixel(rightCol, row, &px, &py);
-                if (rect.right < px) {
-                    rect.right = px;
-                }
-            }
-            row += 2;
-            count--;
-        } while (count != 0);
-    }
-
-    // TOP edge
-    int topRow = a2 - a3 * 2;
+    int row = y - radius * 2;
     rect.top = 100000;
-    if (topRow < 0 || MapLatitudeBounds <= topRow || a1 < 0 || MapLongitudeBounds <= a1) {
+    if (!on_map(x, row)) {
         rect.top = 0;
-    } else if (a3 >= 0) {
-        int col = a1 - a3 * 2;
-        count = a3 * 2 + 1;
-        do {
-            tile_to_pixel(col, topRow, &px, &py);
-            if (py < rect.top) {
-                rect.top = py;
+    } else {
+        for (i = -radius; i <= radius; ++i) {
+            tile_to_pixel(x + i * 2, row, &pixel_x, &pixel_y);
+            if (pixel_y < rect.top) {
+                rect.top = pixel_y;
             }
-            col += 2;
-            count--;
-        } while (count != 0);
-    }
-
-    // BOTTOM edge
-    rect.bottom = 0;
-    int bottomRow = a2 + 2 + a3 * 2;
-    if (bottomRow < 0 || MapLatitudeBounds <= bottomRow || a1 < 0 || MapLongitudeBounds <= a1) {
-        rect.bottom = mapwin_dest_sub(0, dib_.bmiHeader.biHeight);
-    } else if (a3 >= 0) {
-        int col = a1 - a3 * 2;
-        count = a3 * 2 + 1;
-        do {
-            tile_to_pixel(col, bottomRow, &px, &py);
-            if (rect.bottom < py) {
-                rect.bottom = py;
-            }
-            col += 2;
-            count--;
-        } while (count != 0);
-    }
-
-    rect.top = mapwin_dest_sub(rect.top, map_dest_signed(field_1DDC0_));
-
-    int hit = IntersectRect(a4, &rect, &rect2_);
-    if (hit != 0) {
-        if (a3 == 0) {
-            int vgrow = (rect.bottom - rect.top) / 4;
-            int hgrow = (rect.right - rect.left) / 4;
-            rect.left = rect.left - hgrow;
-            rect.right = rect.right + hgrow;
-            rect.top = rect.top - vgrow;
-            rect.bottom = rect.bottom + vgrow;
         }
-        IntersectRect(a4, &rect, &rect2_);
     }
-
-    if (a4->right != a4->left && a4->right - a4->left >= 0 && a4->bottom - a4->top > 0) {
+    rect.bottom = 0;
+    row = y + radius * 2 + 2;
+    if (!on_map(x, row)) {
+        rect.bottom = pixel_height();
+    } else {
+        for (i = -radius; i <= radius; ++i) {
+            tile_to_pixel(x + i * 2, row, &pixel_x, &pixel_y);
+            if (pixel_y > rect.bottom) {
+                rect.bottom = pixel_y;
+            }
+        }
+    }
+    rect.top -= field_1DDC0_;
+    if (IntersectRect(clip, &rect, &rect2_)) {
+        if (radius == 0) {
+            const int grow_y = (rect.bottom - rect.top) / 4;
+            const int grow_x = (rect.right - rect.left) / 4;
+            rect.left -= grow_x;
+            rect.right += grow_x;
+            rect.top -= grow_y;
+            rect.bottom += grow_y;
+        }
+        IntersectRect(clip, &rect, &rect2_);
+    }
+    if (clip->right - clip->left > 0 && clip->bottom - clip->top > 0) {
         return 1;
     }
     return 0;
@@ -6974,12 +6789,33 @@ void MapWin::init_dummy() {
     }
 }
 
-static int get_alt_ratio(MapWin * w, int count) {
-    if (MapWinCaptionScale < 1) {
-        int v = (w->zoom_offset_ + 0x10) * count;
-        return (v + ((v >> 0x1f) & 0xf)) >> 4;
+// The zoom-dependent altitude scale every get_alt adjustment multiplies by.
+static inline int get_alt_scale(MapWin *w, int count) {
+    if (MapWinCaptionScale > 0) {
+        return MapWinCaptionScale * count / MapWinCaptionDivisor;
     }
-    return (MapWinCaptionScale * count) / MapWinCaptionDivisor;
+    return (w->zoom_offset_ + 0x10) * count / 16;
+}
+
+// Cache writes for one corner altitude and its detail nibble.
+static inline void set_alt_cache(MapWin *w, int x, int y, int corner, int value) {
+    if (w->owned_ != 0) {
+        if (value >= 0x7F) {
+            value = 0x7F;
+        }
+        w->owned_[(MapLongitudeBounds >> 1) * y + (x >> 1)].altitude[corner] =
+            static_cast<signed char>(value);
+    }
+}
+
+static inline void set_alt_detail(MapWin *w, int x, int y, int corner, int value) {
+    if (w->owned_ != 0 && corner != 0) {
+        const int shift = corner * 4 - 4;
+        TerrainCacheEntry &entry =
+            w->owned_[(MapLongitudeBounds >> 1) * y + (x >> 1)];
+        entry.altitude_detail = static_cast<unsigned short>(
+            (~(0xF << shift) & entry.altitude_detail) | ((value & 0xF) << shift));
+    }
 }
 
 // ORIGINAL: 0x0046FE70 ?get_alt@MapWin@@QAEHHHH@Z 0x0046FE70-0x00470414 FILE
@@ -6993,177 +6829,104 @@ static int get_alt_ratio(MapWin * w, int count) {
 // calls     0x0046FE70
 
 
-int MapWin::get_alt(int a1, int a2, int a3) {
-    int dirIndex = a3;
-
-    if (a2 < 0 || MapLatitudeBounds <= a2 || a1 < 0 || MapLongitudeBounds <= a1) {
+int MapWin::get_alt(int x, int y, int corner) {
+    if (!on_map(x, y)) {
         return 0;
     }
-    Map *tile = &map_tiles()[static_cast<int>(MapLongitude) * a2 + (a1 >> 1)];
-    unsigned char terrain = tile->climate;
-    if ((terrain & 0xe0) < 0x60) {
+    Map *tile = map_loc(x, y);
+    if ((tile->climate & ~0x1F) < 0x60) {
         return 0;
     }
-    if (this->owned_ == 0) {
-        return 0;
+    int alt = tile->climate >> 5;
+    TerrainCacheEntry *entry;
+    int cached;
+    if (owned_ == 0) {
+        cached = 0;
+    } else {
+        entry = owned_ + ((MapLongitudeBounds >> 1) * y + (x >> 1));
+        cached = static_cast<unsigned char>(entry->altitude[corner]);
     }
-    TerrainCacheEntry *rec = this->owned_ + ((MapLongitudeBounds >> 1) * a2 + (a1 >> 1));
-    signed char cached = rec->altitude[a3];
-    if (cached != -1) {
-        return (int)cached;
+    if (cached != 0xFF) {
+        return static_cast<signed char>(cached);
     }
-
-    unsigned int flags = tile->bit2;
     int bonus = 0;
-    int dirVal = (int)flags >> 0x18;
-    unsigned char byteVal = AltDirectionTable[dirIndex + dirVal * 5];
+    const int direction = static_cast<int>(tile->bit2) >> 24;
     // Original 0x0046FF47 zero-extends Arid; the other four table loads
-    // sign-extend their bytes. Preserve that distinction in the shared storage.
-    if ((flags & 2) != 0) {
-        bonus = (int)AltBonusArid[byteVal];
-    } else if ((flags & 1) != 0) {
-        bonus = static_cast<signed char>(AltBonusMoist[byteVal]);
-    } else if ((flags & 0x200) != 0) {
-        bonus = static_cast<signed char>(AltBonusRainy[byteVal]);
-    } else if ((flags & 0x100) != 0) {
-        bonus = static_cast<signed char>(AltBonusFlat[byteVal]);
-    } else if ((flags & 0x800) != 0) {
-        bonus = static_cast<signed char>(AltBonusOcean[byteVal]);
+    // sign-extend their bytes.
+    if (tile->bit2 & 2) {
+        bonus = AltBonusArid[AltDirectionTable[corner + direction * 5]];
+    } else if (tile->bit2 & 1) {
+        bonus = static_cast<signed char>(AltBonusMoist[AltDirectionTable[corner + direction * 5]]);
+    } else if (tile->bit2 & 0x200) {
+        bonus = static_cast<signed char>(AltBonusRainy[AltDirectionTable[corner + direction * 5]]);
+    } else if (tile->bit2 & 0x100) {
+        bonus = static_cast<signed char>(AltBonusFlat[AltDirectionTable[corner + direction * 5]]);
+    } else if (tile->bit2 & 0x800) {
+        bonus = static_cast<signed char>(AltBonusOcean[AltDirectionTable[corner + direction * 5]]);
     }
-
-    if (dirIndex == 0) {
-        int count = this->field_1DD6C_;
-        int ratio = get_alt_ratio(this, count);
-        int val = (((int)(terrain >> 5)) - 3) * ratio;
-        if (bonus < 1) {
-            if (bonus < 0) {
-                int r = get_alt_ratio(this, count);
-                val = val + (r * bonus) / 100;
-                if (val < -0x7e) {
-                    val = -0x7f;
-                }
+    if (corner == 0) {
+        int value = (alt - 3) * get_alt_scale(this, field_1DD6C_);
+        if (bonus > 0) {
+            value += get_alt_scale(this, field_1DD6C_) * bonus / 100;
+            if (value >= 0x7F) {
+                value = 0x7F;
             }
-        } else {
-            int r = get_alt_ratio(this, count);
-            val = val + (r * bonus) / 100;
-            if (val > 0x7e) {
-                val = 0x7f;
+        } else if (bonus < 0) {
+            value += get_alt_scale(this, field_1DD6C_) * bonus / 100;
+            if (value <= -0x7F) {
+                value = -0x7F;
             }
         }
-        int clamped = val;
-        if (clamped > 0x7e) {
-            clamped = 0x7f;
-        }
-        rec->altitude[0] = static_cast<signed char>(clamped);
-        return val;
+        set_alt_cache(this, x, y, 0, value);
+        return value;
     }
-
-    // The original byte offset (a3 - 1) * 16 selects a four-dword row.
-    // Keep its unchecked corner domain: the earlier cache read is unchecked too.
-    const int cornerRow = dirIndex - 1;
-    int iVar9 = 0;
-    bool useAltMode = false;
-    int local_c = 0;
-    int local_10 = 0;
-    int local_14 = 0;
-    int iVar6 = iVar9;
+    // The (corner - 1) row of the corner tables: four neighbours.
+    int edge = 0;
+    int sum = 0;
+    int alt_sum = 0;
+    int count = 0;
     for (;;) {
-        int nx = CornerOffsetX[cornerRow][iVar6] + a1;
-        if ((MapIsFlat & 1) == 0) {
-            if (nx < 0) {
-                nx = MapLongitudeBounds + nx;
-            } else if (MapLongitudeBounds <= nx) {
-                nx = nx - MapLongitudeBounds;
-            }
-        }
-        int ny = CornerOffsetY[cornerRow][iVar6] + a2;
-        if (ny < 0 || MapLatitudeBounds <= ny || nx < 0 || MapLongitudeBounds <= nx ||
-            (map_tiles()[static_cast<int>(MapLongitude) * ny + (nx >> 1)].climate & 0xe0) < 0x60) {
+        int nx = wrap_map_x(CornerOffsetX[corner - 1][count] + x);
+        int ny = CornerOffsetY[corner - 1][count] + y;
+        if (!on_map(nx, ny) || (map_loc(nx, ny)->climate & ~0x1F) < 0x60) {
+            sum = 0;
+            alt_sum = 0xC;
+            edge = 1;
             break;
         }
-        int sub = this->get_alt(nx, ny, 0);
-        local_c = local_c + sub;
-        local_10 = local_10 + (map_tiles()[static_cast<int>(MapLongitude) * ny + (nx >> 1)].climate >> 5);
-        local_14 = local_14 + 1;
-        iVar6 = iVar6 + 1;
-        if (local_14 > 3) {
-            goto merge;
+        sum += get_alt(nx, ny, 0);
+        alt_sum += map_loc(nx, ny)->climate >> 5;
+        if (++count >= 4) {
+            break;
         }
     }
-    local_c = 0;
-    local_10 = 0xc;
-    useAltMode = true;
-
-merge:
-    local_c = local_c >> 2;
-    {
-        int count = this->field_1DD6C_;
-        if (bonus < 1) {
-            if (bonus < 0) {
-                int r = get_alt_ratio(this, count);
-                local_c = local_c + (r * bonus) / 100;
-                if (local_c < -0x7e) {
-                    local_c = -0x7f;
-                }
-            }
-        } else {
-            int r = get_alt_ratio(this, count);
-            local_c = local_c + (r * bonus) / 100;
-            if (local_c > 0x7e) {
-                local_c = 0x7f;
+    int value = sum >> 2;
+    if (bonus > 0) {
+        value += get_alt_scale(this, field_1DD6C_) * bonus / 100;
+        if (value >= 0x7F) {
+            value = 0x7F;
+        }
+    } else if (bonus < 0) {
+        value += get_alt_scale(this, field_1DD6C_) * bonus / 100;
+        if (value <= -0x7F) {
+            value = -0x7F;
+        }
+    }
+    // Each neighbour stores the value under its opposite corner.
+    for (int opposite = -2; opposite + 2 < 4; ++opposite) {
+        int nx = wrap_map_x(CornerOffsetX[corner - 1][opposite + 2] + x);
+        int ny = CornerOffsetY[corner - 1][opposite + 2] + y;
+        if (on_map(nx, ny)) {
+            set_alt_cache(this, nx, ny, (opposite & 3) + 1, value);
+            if (!edge) {
+                set_alt_detail(this, nx, ny, (opposite & 3) + 1,
+                               alt_sum - (alt_at(nx, ny) << 2) + 4);
+            } else {
+                set_alt_detail(this, nx, ny, (opposite & 3) + 1, 4);
             }
         }
     }
-    dirIndex = -2;
-    {
-        int width = MapLongitudeBounds;
-        int loopCheck;
-        do {
-            int nx = CornerOffsetX[cornerRow][iVar9] + a1;
-            if ((MapIsFlat & 1) == 0) {
-                if (nx < 0) {
-                    nx = nx + width;
-                } else if (width <= nx) {
-                    nx = nx - width;
-                }
-            }
-            int ny = CornerOffsetY[cornerRow][iVar9] + a2;
-            if (ny >= 0 && ny < MapLatitudeBounds && nx >= 0 && nx < width) {
-                nx = nx >> 1;
-                if (this->owned_ != 0) {
-                    int stored = local_c;
-                    if (local_c > 0x7e) {
-                        stored = 0x7f;
-                    }
-                    this->owned_[(width >> 1) * ny + nx].altitude[(dirIndex & 3) + 1] = static_cast<signed char>(stored);
-                }
-                width = MapLongitudeBounds;
-                if (useAltMode) {
-                    int slot = (dirIndex & 3) + 1;
-                    if (this->owned_ != 0 && slot != 0) {
-                        int shift = slot * 4 - 4;
-                        unsigned short &dst = this->owned_[(MapLongitudeBounds >> 1) * ny + nx].altitude_detail;
-                        dst = static_cast<unsigned short>((~(0xf << (shift & 0x1f)) & dst) | (4 << (shift & 0x1f)));
-                        width = MapLongitudeBounds;
-                    }
-                } else {
-                    int slot = (dirIndex & 3) + 1;
-                    if (this->owned_ != 0 && slot != 0) {
-                        int shift = slot * 4 - 4;
-                        TerrainCacheEntry &cell = this->owned_[(MapLongitudeBounds >> 1) * ny + nx];
-                        unsigned char t = map_tiles()[static_cast<int>(MapLongitude) * ny + nx].climate;
-                        int v = ((local_10 - ((t >> 3) & 0xfffffffc)) + 4) & 0xf;
-                        cell.altitude_detail = static_cast<unsigned short>((~(0xf << (shift & 0x1f)) & cell.altitude_detail) | (v << (shift & 0x1f)));
-                        width = MapLongitudeBounds;
-                    }
-                }
-            }
-            iVar9 = iVar9 + 1;
-            loopCheck = dirIndex + 3;
-            dirIndex = dirIndex + 1;
-        } while (loopCheck < 4);
-    }
-    return local_c;
+    return value;
 }
 
 // ORIGINAL: 0x00462F00 ?tile_to_pixel@MapWin@@QAEXHHPAHPAH@Z 0x00462F00-0x0046303C FILE BYTE_EXACT
@@ -7731,221 +7494,116 @@ int MapWin::get_point_light(int x, int y, int corner) {
 void MapWin::calculate_dimensions() {
     field_1DDAC_ = 0;
     field_1DDB0_ = 0;
-
-    int32_t v;
-    if (MapWinCaptionScale > 0) {
-        v = (MapWinCaptionScale * 50) / MapWinCaptionDivisor;
-    } else {
-        v = ((zoom_offset_ + 0x10) * 50) / 16;
-    }
-    v = (v + 1) / 4;
-    field_1DDC8_ = v;
-    if (v < 1) {
+    const int zoom_scale = (get_alt_scale(this, 50) + 1) / 4;
+    field_1DDC8_ = zoom_scale;
+    if (zoom_scale < 1) {
         field_1DDC8_ = 1;
     }
-    int32_t T = field_1DDC8_;
-    int32_t c2 = T * 2;
-    field_1DDC4_ = c2;
-    int32_t c4a = c2 * 2;
-    int32_t c8 = c2 * 4;
-    field_1DDBC_ = c4a;
-    field_1DDC0_ = c2;
-    tile_pixel_width_ = c8;
-    tile_pixel_height_ = T * 4;
-
-    field_1DDCC_ = (pixel_width() + c8 - 1) / c8;
-    field_1DDD0_ = ((T * 4 - dib_.bmiHeader.biHeight) + c2 - 1) / (T * 4);
-    field_1DDD4_ = (pixel_width() + T * 4 + c8 - 1) / c8;
-    field_1DDD8_ = ((T * 4 - dib_.bmiHeader.biHeight) + c2 - 1) / (T * 4);
-
+    const int unit = field_1DDC8_;
+    const int half_height = unit * 2;
+    const int tile_height = unit * 4;
+    field_1DDC4_ = half_height;
+    const int tile_width = half_height * 4;
+    field_1DDBC_ = half_height * 2;
+    field_1DDC0_ = half_height;
+    tile_pixel_width_ = tile_width;
+    tile_pixel_height_ = tile_height;
+    field_1DDCC_ = (pixel_width() + tile_width - 1) / tile_width;
+    field_1DDD0_ = (tile_height - dib_.bmiHeader.biHeight + half_height - 1) / tile_height;
+    field_1DDD4_ = (pixel_width() + half_height * 2 + tile_width - 1) / tile_width;
+    field_1DDD8_ = (tile_height - dib_.bmiHeader.biHeight + half_height - 1) / tile_height;
     if (this == static_cast<MapWin *>(&ConsoleGlobal)) {
-        int32_t a = center_y_;
-        int32_t b = center_x_;
-        MapWinPrimaryCorner.left = b;
-        MapWinPrimaryCorner.top = a;
-        MapWinPrimaryCorner.right = b;
-        MapWinPrimaryCorner.bottom = a;
-        int32_t f73 = field_1DDCC_;
-        int32_t f74 = field_1DDD0_;
-        int32_t e1 = (b - f73) + 4;
-        int32_t e2 = (f73 + b) - 4;
-        int32_t e3 = (a - f74) + 4;
-        int32_t e4 = (a + f74) - 6;
-        MapWinPrimaryCorner.left = e1;
-        MapWinPrimaryCorner.right = e2;
-        MapWinPrimaryCorner.top = e3;
-        MapWinPrimaryCorner.bottom = e4;
+        const int y = center_y_;
+        const int x = center_x_;
+        MapWinPrimaryCorner.left = x;
+        MapWinPrimaryCorner.top = y;
+        MapWinPrimaryCorner.right = x;
+        MapWinPrimaryCorner.bottom = y;
+        const int columns = field_1DDCC_;
+        const int rows = field_1DDD0_;
+        MapWinPrimaryCorner.left = x - columns + 4;
+        MapWinPrimaryCorner.right = columns + x - 4;
+        MapWinPrimaryCorner.top = y - rows + 4;
+        MapWinPrimaryCorner.bottom = y + rows - 6;
     }
-
-    int32_t halfW = MapLongitudeBounds / 2;
-    if (field_1DDCC_ > halfW) {
-        field_1DDCC_ = halfW;
-        int32_t tileProduct = field_1DDCC_ * tile_pixel_width_;
-        field_1DDD4_ = halfW + 1;
-        field_1DDAC_ = (pixel_width() - tileProduct) / 2;
+    const int half_x = MapLongitudeBounds / 2;
+    if (field_1DDCC_ > half_x) {
+        field_1DDCC_ = half_x;
+        const int used_width = field_1DDCC_ * tile_pixel_width_;
+        field_1DDD4_ = half_x + 1;
+        field_1DDAC_ = (pixel_width() - used_width) / 2;
     }
-    int32_t halfH = MapLatitudeBounds / 2;
-    if (field_1DDD0_ > halfH) {
-        field_1DDD0_ = halfH;
-        int32_t tileProduct2 = field_1DDD0_ * tile_pixel_height_;
-        field_1DDD8_ = halfH + 1;
-        field_1DDB0_ = -((dib_.bmiHeader.biHeight + tileProduct2) / 2);
+    const int half_y = MapLatitudeBounds / 2;
+    if (field_1DDD0_ > half_y) {
+        field_1DDD0_ = half_y;
+        const int used_height = field_1DDD0_ * tile_pixel_height_;
+        field_1DDD8_ = half_y + 1;
+        field_1DDB0_ = -((dib_.bmiHeader.biHeight + used_height) / 2);
     }
-
-    int32_t halfW2 = MapLongitudeBounds / 2;
-    field_1DDCC_ = (field_1DDCC_ < halfW2) ? field_1DDCC_ : halfW2;
-    int32_t halfW3 = MapLongitudeBounds / 2;
-    field_1DDD4_ = (field_1DDD4_ < halfW3) ? field_1DDD4_ : halfW3;
-
-    int32_t f74_ = field_1DDD0_;
-    int32_t aVal = center_y_;
-    int32_t panYinit = aVal - f74_;
-    field_1DDA8_ = panYinit;
-    int32_t altY = MapLatitudeBounds + (2 - f74_) * 2;
-    int32_t panY;
-    if (panYinit < -2 || altY < -2) {
-        panY = -2;
-    } else if (altY < panYinit) {
-        panY = altY;
-    } else {
-        panY = panYinit;
+    field_1DDCC_ = field_1DDCC_ < MapLongitudeBounds / 2 ? field_1DDCC_
+                                                         : MapLongitudeBounds / 2;
+    field_1DDD4_ = field_1DDD4_ < MapLongitudeBounds / 2 ? field_1DDD4_
+                                                         : MapLongitudeBounds / 2;
+    field_1DDA8_ = center_y_ - field_1DDD0_;
+    field_1DDA8_ = range(field_1DDA8_, -2, MapLatitudeBounds + (2 - field_1DDD0_) * 2);
+    field_1DDA4_ = wrap_map_x(center_x_ - field_1DDCC_);
+    if (MapIsFlat & 1) {
+        field_1DDA4_ = range(field_1DDA4_, -4, MapLongitudeBounds + (2 - field_1DDCC_) * 2);
     }
-    field_1DDA8_ = panY;
-
-    int32_t f73_ = field_1DDCC_;
-    int32_t bVal = center_x_;
-    int32_t panXinit = bVal - f73_;
-    // Preserve this source snapshot; the pinned later reload at 0x462C32 is
-    // an unresolved read-order obligation for this function.
-    uint8_t wrapFlag = static_cast<uint8_t>(MapIsFlat);
-    int32_t panX;
-    if ((wrapFlag & 1) == 0) {
-        int32_t screenW = MapLongitudeBounds;
-        if (panXinit < 0) {
-            panX = panXinit + screenW;
-        } else if (panXinit >= screenW) {
-            panX = panXinit - screenW;
-        } else {
-            panX = panXinit;
-        }
-    } else {
-        panX = panXinit;
-    }
-    field_1DDA4_ = panX;
-
-    if ((wrapFlag & 1) != 0) {
-        int32_t altX = MapLongitudeBounds + (2 - f73_) * 2;
-        if (panX < -4 || altX < -4) {
-            panX = -4;
-        } else if (altX < panX) {
-            panX = altX;
-        }
-        field_1DDA4_ = panX;
-    }
-
     field_1DDA4_ = ((field_1DDA4_ ^ field_1DDA8_) & 1) ^ field_1DDA4_;
-
-    int32_t fogW;
-    if ((field_1DD70_ & 2) == 0 || zoom_offset_ < -10) {
-        fogW = 0;
-    } else if (MapWinCaptionScale < 1) {
-        fogW = ((zoom_offset_ * 3 + 0x30) * 4) / 16;
+    int fog_width;
+    if ((field_1DD70_ & 2) && zoom_offset_ > -11) {
+        fog_width = get_alt_scale(this, 12);
     } else {
-        fogW = (MapWinCaptionScale * 12) / MapWinCaptionDivisor;
+        fog_width = 0;
     }
-    field_1DDDC_ = fogW;
-
-    int32_t fogH;
-    if ((field_1DD70_ & 2) == 0 || zoom_offset_ < -10) {
-        fogH = 0;
-    } else if (MapWinCaptionScale < 1) {
-        fogH = (zoom_offset_ * 4 + 0x40) / 16;
+    field_1DDDC_ = fog_width;
+    int fog_height;
+    if ((field_1DD70_ & 2) && zoom_offset_ > -11) {
+        fog_height = get_alt_scale(this, 4);
     } else {
-        fogH = (MapWinCaptionScale * 4) / MapWinCaptionDivisor;
+        fog_height = 0;
     }
-    field_1DDE0_ = fogH;
-
+    field_1DDE0_ = fog_height;
     field_1DD6C_ = 0x19;
-    if ((GameDataStateStorage.fields_.game_more_preferences_ & 0x10000) != 0) {
+    if (GameDataStateStorage.fields_.game_more_preferences_ & 0x10000) {
         field_1DD6C_ = 8;
-        field_1DDDC_ = fogW / 3;
-        field_1DDE0_ = fogH / 3;
+        field_1DDDC_ = fog_width / 3;
+        field_1DDE0_ = fog_height / 3;
     }
-
-    int32_t cache_area = 0;
     if (field_1DD6C_ != field_1EEC4_) {
         field_1EEC4_ = field_1DD6C_;
-        if (owned_ != 0) {
-            cache_area = MapArea;
-            if (cache_area > 0) {
-                int32_t ia = 0;
-                do {
-                    for (int32_t ja = 0; ja < 5; ++ja) {
-                        owned_[ia].altitude[ja] = static_cast<signed char>(0xff);
-                    }
-                    ++ia;
-                    cache_area = MapArea;
-                } while (ia < cache_area);
-            }
-        } else {
-            cache_area = MapArea;
-        }
-    } else {
-        cache_area = MapArea;
+        clear_all_altitude();
     }
-
-    if (zoom_offset_ != field_1EEC0_) {
-        if (owned_ != 0) {
-            if (cache_area > 0) {
-                int32_t ib = 0;
-                do {
-                    for (int32_t jb = 0; jb < 4; ++jb) {
-                        owned_[ib].brightness[jb] = static_cast<unsigned char>(0xff);
-                    }
-                    ++ib;
-                    cache_area = MapArea;
-                } while (ib < cache_area);
-            }
-            if (owned_ != 0 && cache_area > 0) {
-                int32_t ic = 0;
-                do {
-                    for (int32_t jc = 0; jc < 5; ++jc) {
-                        owned_[ic].altitude[jc] = static_cast<signed char>(0xff);
-                    }
-                    ++ic;
-                    cache_area = MapArea;
-                } while (ic < cache_area);
-            }
-        }
+    if (zoom_offset_ != static_cast<int>(field_1EEC0_)) {
+        UNK7();
+        clear_all_altitude();
         field_1EEC0_ = zoom_offset_;
-
-        int32_t fs1 = (tile_pixel_height_ * 5) / 16;
-        if (fs1 > 0xc) {
-            fs1 = 0xc;
+        int size = tile_pixel_height_ * 5 / 16;
+        if (size > 12) {
+            size = 12;
         }
-        if (field_1EEF0_ != fs1) {
-            field_1EEF0_ = fs1;
-            font_a_.init(DefaultFontFace, fs1, 0);
+        if (field_1EEF0_ != size) {
+            field_1EEF0_ = size;
+            font_a_.init(DefaultFontFace, size, 0);
         }
-        int32_t fs2 = (tile_pixel_height_ * 5) / 16;
-        if (fs2 > 0xc) {
-            fs2 = 0xc;
+        size = tile_pixel_height_ * 5 / 16;
+        if (size > 12) {
+            size = 12;
         }
-        if (field_1EF48_ != fs2) {
-            field_1EF48_ = fs2;
-            font_c_.init(DefaultFontFace, fs2, 2);
+        if (field_1EF48_ != size) {
+            field_1EF48_ = size;
+            font_c_.init(DefaultFontFace, size, 2);
         }
-        int32_t fs3 = (tile_pixel_height_ * 2) / 5;
-        if (fs3 > 0xc) {
-            fs3 = 0xc;
+        size = tile_pixel_height_ * 2 / 5;
+        if (size > 12) {
+            size = 12;
         }
-        if (field_1EF1C_ != fs3) {
-            field_1EF1C_ = fs3;
-            font_b_.init(DefaultFontFace, fs3, 1);
+        if (field_1EF1C_ != size) {
+            field_1EF1C_ = size;
+            font_b_.init(DefaultFontFace, size, 1);
         }
     }
-
-#undef I32
 }
 
 // ORIGINAL: 0x00463040 ?pixel_to_tile@MapWin@@QAEHHHPAHPAH@Z 0x00463040-0x004632CC FILE
@@ -7965,99 +7623,62 @@ void MapWin::calculate_dimensions() {
 
 int MapWin::pixel_to_tile(int x_pixel, int y_pixel, int *out_tile_x,
                           int *out_tile_y) {
-    if ((x_pixel < pixel_width()) && (y_pixel < pixel_height())) {
-        x_pixel = x_pixel - field_1DDAC_;
-        y_pixel = y_pixel - field_1DDB0_;
-        if ((-1 < x_pixel) && (-1 < y_pixel)) {
-            int iVar1;
-            int iVar2;
-            int iVar3;
-            int iVar4;
-            int iVar5;
-            unsigned int uVar6;
-            int iVar7;
-            int iVar8;
-            bool bVar9;
-            int local_8;
-
-            iVar5 = field_1DDA4_;
-            iVar3 = iVar5 + 1 + (x_pixel / tile_pixel_width_) * 2;
-            uVar6 = MapIsFlat & 1;
-            if (uVar6 == 0) {
-                if (iVar3 < 0) {
-                    iVar3 = MapLongitudeBounds + iVar3;
-                } else if (MapLongitudeBounds <= iVar3) {
-                    iVar3 = iVar3 - MapLongitudeBounds;
-                }
-            }
-            iVar1 = field_1DDBC_;
-            iVar2 = iVar5 + 1 + ((x_pixel - iVar1) / tile_pixel_width_) * 2;
-            if (uVar6 == 0) {
-                if (iVar2 < 0) {
-                    iVar2 = iVar2 + MapLongitudeBounds;
-                } else if (MapLongitudeBounds <= iVar2) {
-                    iVar2 = iVar2 - MapLongitudeBounds;
-                }
-            }
-            bVar9 = iVar2 != iVar3;
-            if (bVar9) {
-                local_8 = iVar3 - 1;
-            } else {
-                iVar3 = iVar3 + 1;
-                local_8 = iVar3;
-            }
-            bVar9 = !bVar9;
-            iVar3 = iVar3 - iVar5;
-            iVar5 = iVar3 - 1;
-            if (uVar6 == 0) {
-                if (iVar5 < 0) {
-                    iVar5 = iVar5 + MapLongitudeBounds;
-                } else if (MapLongitudeBounds <= iVar5) {
-                    iVar5 = iVar5 - MapLongitudeBounds;
-                }
-            }
-            if (uVar6 == 0) {
-                if (iVar3 < 0) {
-                    iVar3 = iVar3 + MapLongitudeBounds;
-                } else if (MapLongitudeBounds <= iVar3) {
-                    iVar3 = iVar3 - MapLongitudeBounds;
-                }
-            }
-            iVar2 = field_1DDA8_ + (y_pixel / tile_pixel_height_) * 2;
-            do {
-                iVar8 = iVar2;
-                bVar9 = (bVar9 == false);
-                if (bVar9) {
-                    iVar2 = this->get_alt(local_8, iVar8, 2);
-                    iVar2 = ((iVar8 - field_1DDA8_) - 1) * field_1DDC0_ - iVar2;
-                    iVar4 = this->get_alt(local_8, iVar8, 3);
-                    iVar4 = (iVar8 - field_1DDA8_) * field_1DDC0_ - iVar4;
-                    local_8 = local_8 + 1;
-                } else {
-                    iVar2 = this->get_alt(local_8, iVar8, 1);
-                    iVar2 = (iVar8 - field_1DDA8_) * field_1DDC0_ - iVar2;
-                    iVar4 = this->get_alt(local_8, iVar8, 2);
-                    iVar4 = ((iVar8 - field_1DDA8_) - 1) * field_1DDC0_ - iVar4;
-                    local_8 = local_8 - 1;
-                }
-                iVar4 = (iVar4 - iVar2) * (x_pixel - iVar1 * iVar5);
-                iVar7 = (y_pixel - iVar2) * (iVar1 * iVar3 - iVar1 * iVar5);
-                iVar2 = iVar8 + 1;
-            } while (iVar4 - iVar7 == 0 || iVar4 < iVar7);
-            iVar8 = iVar8 - 1;
-            if ((MapIsFlat & 1) == 0) {
-                if (local_8 < 0) {
-                    local_8 = local_8 + MapLongitudeBounds;
-                } else if (MapLongitudeBounds <= local_8) {
-                    local_8 = local_8 - MapLongitudeBounds;
-                }
-            }
-            *out_tile_x = local_8;
-            *out_tile_y = iVar8;
-            if ((-1 < iVar8) && (iVar8 < MapLatitudeBounds) && (-1 < *out_tile_x) && (*out_tile_x < MapLongitudeBounds)) {
-                return 0;
-            }
+    if (x_pixel >= pixel_width() || y_pixel >= pixel_height()) {
+        return 1;
+    }
+    x_pixel -= field_1DDAC_;
+    y_pixel -= field_1DDB0_;
+    if (x_pixel < 0 || y_pixel < 0) {
+        return 1;
+    }
+    const int column =
+        wrap_map_x(field_1DDA4_ + (x_pixel / tile_pixel_width_) * 2 + 1);
+    int row = field_1DDA8_ + (y_pixel / tile_pixel_height_) * 2 + 1;
+    const int half_width = field_1DDBC_;
+    int tile_x;
+    int upper;
+    if (wrap_map_x(field_1DDA4_ +
+                   ((x_pixel - half_width) / tile_pixel_width_) * 2 + 1) ==
+        column) {
+        tile_x = column + 1;
+        row--;
+        upper = 1;
+    } else {
+        tile_x = column - 1;
+        row--;
+        upper = 0;
+    }
+    // Pixel offsets of the diamond's left and right corners.
+    const int offset = column - field_1DDA4_;
+    const int left = half_width * wrap_map_x(offset - 1);
+    const int right = half_width * wrap_map_x(offset);
+    x_pixel -= left;
+    const int span = right - left;
+    int top;
+    int bottom;
+    do {
+        if (upper) {
+            upper = 0;
+            top = (row - field_1DDA8_) * static_cast<int>(field_1DDC0_) -
+                  get_alt(tile_x, row, 1);
+            bottom = (row - field_1DDA8_ - 1) * static_cast<int>(field_1DDC0_) -
+                     get_alt(tile_x, row, 2);
+            tile_x--;
+        } else {
+            upper = 1;
+            top = (row - field_1DDA8_ - 1) * static_cast<int>(field_1DDC0_) -
+                  get_alt(tile_x, row, 2);
+            bottom = (row - field_1DDA8_) * static_cast<int>(field_1DDC0_) -
+                     get_alt(tile_x, row, 3);
+            tile_x++;
         }
+        row++;
+    } while ((bottom - top) * x_pixel <= (y_pixel - top) * span);
+    row -= 2;
+    *out_tile_x = wrap_map_x(tile_x);
+    *out_tile_y = row;
+    if (on_map(*out_tile_x, *out_tile_y)) {
+        return 0;
     }
     return 1;
 }
@@ -8352,8 +7973,9 @@ abort:
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/0046ed30.cpp", "Pinned original image review controls route precedence, cursor sprite dispatch, signed zoom, actual API imports and original member/data dependencies. Bounded compile and host controls do not establish game acceptance."], "reason": "Recover the genuine MapWin/Console owner operation using typed members, actual shared storage, virtual base APIs and full original branch evidence; keep seed and historical obligations."}
 // symbol    ?on_left_down@MapWin@@UAEXHH@Z
 void MapWin::on_left_down(int x_coord, int y_coord) {
-    if (MapInputEnabled == 0) return;
-
+    if (MapInputEnabled == 0) {
+        return;
+    }
     go_reset();
     field_1DD7C_ = 0;
     field_1DD80_ = 0;
@@ -8361,93 +7983,66 @@ void MapWin::on_left_down(int x_coord, int y_coord) {
     field_1DE0C_ = -1;
     field_1DD88_ = 0;
     field_1DD84_ = 0;
-
-    if (ConsoleControlTurnActive != 0 || map_view_index_ != 0) return;
+    if (ConsoleControlTurnActive != 0 || map_view_index_ != 0) {
+        return;
+    }
     if (ConsoleGlobal.field_23D10_ != 0) {
-        if (ConsoleGlobal.field_23D10_ != 8) return;
+        if (ConsoleGlobal.field_23D10_ != 8) {
+            return;
+        }
         field_1DD80_ = 1;
         if (WinPointerOwner3 == nullptr) {
             WinPointerOwner4 = nullptr;
-            WinPointerOwner3 = this;
+            WinPointerOwner3 = &static_cast<Win &>(*this);
         }
         ConsoleGlobal.cover_window_.fill(9);
         ConsoleGlobal.cover_window_.show(0);
         on_mouse_move(x_coord, y_coord);
         return;
     }
-
-    {
-        KeyStateFn get_key_state = &::GetAsyncKeyState;
-
-        uint8_t shift_down = 0;
-        shift_down = static_cast<uint8_t>(static_cast<uint16_t>(get_key_state(0x10)) >> 8);
-        if (shift_down) {
-            uint8_t ctrl_down = 0;
-            ctrl_down = static_cast<uint8_t>(static_cast<uint16_t>(get_key_state(0x11)) >> 8);
-            if (ctrl_down) {
-                goto check_undo;
-            }
-        }
-
-        if (!(::GetKeyState(0x91) & 1)) {
-            goto after_undo;
-        }
-
-        {
-            uint8_t ctrl_down2 = 0;
-            ctrl_down2 = static_cast<uint8_t>(static_cast<uint16_t>(get_key_state(0x11)) >> 8);
-            if (ctrl_down2) {
-                goto after_undo;
-            }
-        }
-
-check_undo:
-        if ((GameDataStateStorage.fields_.game_state_ & 0x40) != 0) {
+    // Shift+Ctrl, or Scroll Lock without Ctrl, is the undo click.
+    if ((HIBYTE(GetAsyncKeyState(VK_SHIFT)) && HIBYTE(GetAsyncKeyState(VK_CONTROL))) ||
+        ((GetKeyState(VK_SCROLL) & 1) && !HIBYTE(GetAsyncKeyState(VK_CONTROL)))) {
+        if (GameDataStateStorage.fields_.game_state_ & 0x40) {
             auto_undo();
             field_1DD8C_ = 1;
             field_1DD94_ = -1;
             field_1DD90_ = -1;
             if (WinPointerOwner3 == nullptr) {
                 WinPointerOwner4 = nullptr;
-                WinPointerOwner3 = this;
+                WinPointerOwner3 = &static_cast<Win &>(*this);
             }
             on_mouse_move(x_coord, y_coord);
             return;
         }
-
-after_undo:
-        uint8_t ctrl_down3 = 0;
-        ctrl_down3 = static_cast<uint8_t>(static_cast<uint16_t>(get_key_state(0x11)) >> 8);
-        if (ctrl_down3) return;
     }
-    if (ConsoleGlobal.edit_lock() != 0) return;
-
+    if (HIBYTE(GetAsyncKeyState(VK_CONTROL))) {
+        return;
+    }
+    if (ConsoleGlobal.edit_lock() != 0) {
+        return;
+    }
     int tile_x;
     int tile_y;
     if (ConsoleGlobal.cursor_active_ == 0 || (field_1DD70_ & 0x40000U) != 0) {
         if (pixel_to_tile(x_coord, y_coord, &tile_x, &tile_y) != 0 ||
-            tile_y < 0 || tile_y >= static_cast<int>(MapLatitudeBounds) ||
-            tile_x < 0 || tile_x >= static_cast<int>(MapLongitudeBounds)) {
+            !on_map(tile_x, tile_y)) {
             return;
         }
     }
-    if ((field_1DD70_ & 0x40000U) != 0) {
+    if (field_1DD70_ & 0x40000U) {
         field_1DE24_ = base_find(tile_x, tile_y, ConsoleGlobal.faction_id_);
-        if (field_1DE24_ < 0) return;
-    }
-
-    MapWinSelectedSlot = static_cast<int>(map_view_index_);
-    {
-        uint8_t shift_down2 = 0;
-        shift_down2 = static_cast<uint8_t>(static_cast<uint16_t>(GetAsyncKeyState(VK_SHIFT)) >> 8);
-        if (shift_down2 && (GameDataStateStorage.fields_.game_state_ & 0x40) == 0) {
-            go_timer(3);
+        if (field_1DE24_ < 0) {
             return;
         }
     }
-
-    GoTimer.start(go_timer, 3,
-                  ((ConsoleGlobal.cursor_active_ != 0 ? -1 : 0) & 0xFFFFFD65) + 0x3E8, 5);
+    MapWinSelectedSlot = static_cast<int>(map_view_index_);
+    if (HIBYTE(GetAsyncKeyState(VK_SHIFT)) &&
+        (GameDataStateStorage.fields_.game_state_ & 0x40) == 0) {
+        go_timer(3);
+        return;
+    }
+    GoTimer.start(go_timer, 3, ConsoleGlobal.cursor_active_ != 0 ? 0x14D : 0x3E8, 5);
 }
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
