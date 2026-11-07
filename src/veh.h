@@ -62,10 +62,7 @@ struct VOX_Matrix;
 class Caviar;
 class Buffer;
 
-extern VOX_Vect VehDrawFacetNormals0[2401];
-extern VOX_Vect VehDrawFacetNormals1[2401];
-extern VOX_Vect VehDrawFacetNormals2[2401];
-extern VOX_Vect VehDrawFacetNormals3[2401];
+extern VOX_Vect VehDrawFacetNormals[4][2401];
 extern VOX_Vect VehDrawCameraAngles;
 extern VOX_Vect VehLightDirMap;
 extern VOX_Vect VehGunMountOffset;
