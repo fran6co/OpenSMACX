@@ -285,7 +285,7 @@ uint32_t SpriteBox::id_to_pos(int id) {
 /*
 Purpose: Restore the list entry at an explicit position and return its item
          ID.
-// ORIGINAL: 0x00611640 ?pos_to_id@SpriteBox@@QAEXH@Z 0x00611640-0x006116B6
+// ORIGINAL: 0x00611640 ?pos_to_id@SpriteBox@@QAEXH@Z 0x00611640-0x006116B6 BYTE_EXACT
 // symbol    ?pos_to_id@SpriteBox@@QAEHH@Z
 // size      118 bytes
 // prototype int (__thiscall ?pos_to_id@SpriteBox@@QAEXH@Z)(SpriteBox* this, int)
