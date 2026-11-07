@@ -3817,222 +3817,171 @@ void DesignWin::suggest_abil(int ability) {
 // Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x00434BC0 ?draw_chassis@DesignWin@@QAEXH@Z 0x00434BC0-0x00434F36
 // RECOVERY_BINDING: v1 {"evidence": ["pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf:434BC0..434F36", "historical seed git:20b88b523:src/recovered/units/00434bc0.cpp preserves the full renderer, palette sequence, imported uppercase call, title/name wrap branch, unchecked triad lookup and exact 0x90 chassis stride", "src/designwin.h:component_panel_rects_[component_panel_chassis], component fields, font1_/font2_, caviar_; src/veh.h:RulesChassis/Chassis/Triad; src/interface_palette.cpp:TextColourTable; src/strings.h:StringTemp/StringTable"], "reason": "Restore the complete chassis editor panel through the real DesignWin, Caviar, RulesChassis, string and palette owners. Preserve native callback order, line geometry, width-dependent wrapping and unchecked localized triad indexing; retain the original identity and span without a new byte claim."}
-static int designwin_panel_signed(uint32_t bits);
-static int designwin_panel_add(int left, int right);
-static int designwin_panel_subtract(int left, int right);
-static int designwin_panel_font_height(int extra, int line_height, int height);
-static void designwin_panel_append_label(char *output, int label_id);
 extern int TextColourTable[195];
 
 void DesignWin::draw_chassis(int redraw) {
     (void)redraw;
-    Buffer *const canvas = static_cast<Buffer *>(this);
-    RECT rect = component_panel_rects_[component_panel_chassis];
-    canvas->set_clip(&rect);
-    buffer_.copy(canvas, &rect);
+    int width;
+    RECT area = component_panel_rects_[component_panel_chassis];
+    Buffer::set_clip(&area);
+    buffer_.copy(this, &area);
 
-    RECT rect2;
-    rect2.left = rect.left;
-    rect2.right = rect.right;
-
-    const int title_height = designwin_panel_font_height(
-        font2_.unk_1_, font2_.line_height(), font2_.pixel_height());
-    rect.top = designwin_panel_add(rect.top, title_height);
-    // Native initializes only left/right/top here; rect2.bottom remains the
-    // original stack value passed through the Buffer call.
-    rect2.top = designwin_panel_subtract(rect.top, title_height);
-
-    StringTemp[0] = '\0';
-    designwin_panel_append_label(StringTemp, 0x140);
+    RECT title = area;
+    title.bottom = area.top + font_line_advance(font2_);
+    area.top = title.bottom;
+    StringTemp[0] = 0;
+    strcat(StringTemp, label_get(0x140 / 4));
     CharUpperA(StringTemp);
-    canvas->set_text_color(TextColourTable[156], TextColourTable[157], 1, 1);
-    canvas->write_cent_l(&font2_, StringTemp, &rect2,
-                         static_cast<int>(strlen(StringTemp)));
+    Buffer::set_text_color(TextColourTable[156], TextColourTable[157], 1, 1);
+    if (StringTemp != 0) {
+        Buffer::write_cent_l(&font2_, StringTemp, &title,
+                             static_cast<int>(strlen(StringTemp)));
+    }
 
+    area.bottom = area.bottom - 5 - font1_.pixel_height() * 2;
     caviar_.reset_objects();
-    const int chassis = static_cast<int>(protoChassisType_);
-    const int model_bottom = designwin_panel_subtract(
-        rect.bottom,
-        designwin_panel_add(
-            designwin_panel_signed(static_cast<uint32_t>(font1_.pixel_height()) * 2u),
-            5));
-    rect.bottom = model_bottom;
-    vehdraw_construct_chassis(static_cast<int>(factionID_), chassis,
+    vehdraw_construct_chassis(static_cast<int>(factionID_),
+                              static_cast<int>(protoChassisType_),
                               static_cast<int>(protoWeaponType_), 0,
                               static_cast<int>(protoReactorType_), &caviar_);
     caviar_.set_scaling(0.05f);
     caviar_.set_scene_rotation(0.5233333706855774f, 0.0f, 0.0f);
-    caviar_.render(canvas,
-        designwin_panel_add(rect.right, rect.left) / 2,
-        designwin_panel_add(rect.bottom, rect.top) / 2, 2);
+    caviar_.render(this, (area.left + area.right) / 2,
+                   (area.bottom + area.top) / 2, 2);
 
-    canvas->set_font(&font1_, 0, 0, 0);
-    rect2.top = rect.bottom;
-    rect.bottom = designwin_panel_add(rect.bottom, font1_.pixel_height());
-    canvas->set_text_color(TextColourTable[158], TextColourTable[159], 1, 1);
-
-    StringTemp[0] = '\0';
-    strcat(StringTemp, StringTable.get(Chassis[chassis].offsv_1_name));
+    Buffer::set_font(&font1_, 0, 0, 0);
+    area.top = area.bottom;
+    area.bottom = area.top + font1_.pixel_height();
+    Buffer::set_text_color(TextColourTable[158], TextColourTable[159], 1, 1);
+    StringTemp[0] = 0;
+    strcat(StringTemp, StringTable.get(Chassis[protoChassisType_].offsv_1_name));
     CharUpperA(StringTemp);
-
-    const int available_width = designwin_panel_subtract(rect.right, rect.left);
-    const int required_width = font1_.width(StringTemp);
-    if (available_width < required_width) {
-        const int line_height = designwin_panel_font_height(
-            font2_.unk_1_, font2_.line_height(), font2_.pixel_height());
-        rect.bottom = designwin_panel_subtract(rect.bottom, line_height);
-        rect2.top = designwin_panel_subtract(rect2.top, line_height);
-        canvas->wrap_cent(StringTemp, &rect);
-        rect2.top = designwin_panel_add(rect2.top, line_height);
-        rect.bottom = designwin_panel_add(rect.bottom, line_height);
+    width = area.right - area.left;
+    if (font1_.width(StringTemp) > width) {
+        int advance = -font_line_advance(font1_);
+        area.top += advance;
+        area.bottom += advance;
+        Buffer::wrap_cent(StringTemp, &area);
+        advance = font_line_advance(font1_);
+        area.top += advance;
+        area.bottom += advance;
     } else {
-        canvas->write_cent_l(StringTemp, &rect,
-                             static_cast<int>(strlen(StringTemp)));
+        Buffer::write_cent_l(StringTemp, &area);
     }
 
-    const int detail_advance = designwin_panel_add(font1_.pixel_height(), 3);
-    rect2.top = designwin_panel_add(rect2.top, detail_advance);
-    rect.bottom = designwin_panel_add(rect.bottom, detail_advance);
-    canvas->set_text_color(TextColourTable[160], TextColourTable[161], 1, 1);
-
-    StringTemp[0] = '\0';
-    const unsigned char triad = Chassis[chassis].triad;
-    strcat(StringTemp, StringTable.get(Triad[triad]));
+    const int advance = font1_.pixel_height() + 3;
+    area.top += advance;
+    area.bottom += advance;
+    Buffer::set_text_color(TextColourTable[160], TextColourTable[161], 1, 1);
+    StringTemp[0] = 0;
+    strcat(StringTemp, StringTable.get(Triad[Chassis[protoChassisType_].triad]));
     strcat(StringTemp, BufferJoinSpace);
-    char speed[80];
-    _itoa(static_cast<int>(Chassis[chassis].speed), speed, 10);
-    strcat(StringTemp, speed);
-    canvas->write_cent_l(StringTemp, &rect,
-                         static_cast<int>(strlen(StringTemp)));
+    char number[80];
+    _itoa(Chassis[protoChassisType_].speed, number, 10);
+    strcat(StringTemp, number);
+    Buffer::write_cent_l(StringTemp, &area);
 }
 
 // Palette storage is owned by palette.cpp; VW00 is owned by caviar.cpp.
 extern int TextColourTable[195];
-
-// Preserve the original 32-bit coordinate arithmetic without signed overflow.
-static int designwin_panel_signed(uint32_t bits) {
-    return bits <= 0x7FFFFFFFu ? static_cast<int>(bits)
-        : -1 - static_cast<int>(~bits);
-}
-
-static int designwin_panel_add(int left, int right) {
-    return designwin_panel_signed(static_cast<uint32_t>(left) +
-                                  static_cast<uint32_t>(right));
-}
-
-static int designwin_panel_subtract(int left, int right) {
-    return designwin_panel_signed(static_cast<uint32_t>(left) -
-                                  static_cast<uint32_t>(right));
-}
-
-static int designwin_panel_font_height(int extra, int line_height, int height) {
-    return extra < 0 ? line_height : designwin_panel_add(height, extra);
-}
-
-static void designwin_panel_append_number(char *output, int value) {
-    char digits[32];
-    _itoa(value, digits, 10);
-    strcat(output, digits);
-}
-
-static void designwin_panel_append_label(char *output, int label_id) {
-    char *text = label_get(label_id / 4);
-    strcat(output, text);
-}
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x00434F40 ?draw_weapon@DesignWin@@QAEXH@Z 0x00434F40-0x004353FF
 // RECOVERY_BINDING: v1 {"evidence": ["git:09f23e99:src/designwin.cpp preserves the original identity and historical seed provenance", "Pinned434F40..4353FF reads real DesignWin panel/font/selection members, VW00 at7871C0 and TextColourTable swatches156..161", "src/caviar.cpp:g_VW00_CAVIARDATA and src/interface_palette.cpp:textcolor_init own model and palette storage"], "reason": "Render the weapon heading, model, localized name and offense/cost detail through genuine source-owned objects; preserve live callback reads and original 32-bit coordinate arithmetic."}
 void DesignWin::draw_weapon(int redraw) {
     (void)redraw;
-    Buffer *const canvas = static_cast<Buffer *>(this);
+    int width;
     RECT area = component_panel_rects_[component_panel_weapon];
-    canvas->set_clip(&area);
-    buffer_.copy(canvas, &area);
+    Buffer::set_clip(&area);
+    buffer_.copy(this, &area);
 
-    const int title_height = designwin_panel_font_height(
-        font2_.unk_1_, font2_.line_height(), font2_.pixel_height());
     RECT title = area;
-    title.bottom = designwin_panel_add(title.top, title_height);
-    StringTemp[0] = '\0';
-    designwin_panel_append_label(StringTemp,
-        Weapon[protoWeaponType_].offense_rating == 0 ? 0x200 : 0x204);
+    title.bottom = area.top + font_line_advance(font2_);
+    area.top = title.bottom;
+    StringTemp[0] = 0;
+    strcat(StringTemp, StringTable.get(Weapon[protoWeaponType_].offense_rating
+        ? Labels.strings_ptr[0x204 / 4] : Labels.strings_ptr[0x200 / 4]));
     CharUpperA(StringTemp);
-    canvas->set_text_color(TextColourTable[156], TextColourTable[157], 1, 1);
-    canvas->write_cent_l(&font2_, StringTemp, &title,
-                         static_cast<int>(strlen(StringTemp)));
-
-    const int name_top = designwin_panel_subtract(
-        designwin_panel_subtract(area.bottom,
-            designwin_panel_add(font1_.pixel_height(), font1_.pixel_height())), 5);
-    caviar_.reset_objects();
-    const int weapon_id = static_cast<int>(protoWeaponType_);
-    if (weapon_id == 0) {
-        caviar_.add_object(&g_VW00_CAVIARDATA, 0);
-        caviar_.set_scaling(0.15f);
-    } else {
-        const int chassis_id = weapon_id == 0x15 &&
-                               DesignAutoBuildActive == 0
-            ? -1 : static_cast<int>(protoChassisType_);
-        vehdraw_construct_weapon(static_cast<int>(factionID_), chassis_id,
-                                 weapon_id,
-                                 &caviar_);
-        const int mode = Weapon[protoWeaponType_].mode;
-        caviar_.set_scaling(mode < 3 ? 0.15f
-            : (mode == 9 ? 0.06f : 0.08f));
-    }
-    const RECT &weapon_panel = component_panel_rects_[component_panel_weapon];
-    const int center_x = designwin_panel_add(weapon_panel.left, weapon_panel.right) / 2;
-    const int center_y = designwin_panel_add(weapon_panel.top, weapon_panel.bottom) / 2;
-    caviar_.set_scene_rotation(0.5233333706855774f, 0.0f, 0.0f);
-    caviar_.render(canvas, center_x, center_y, 6);
-
-    canvas->set_font(&font1_, 0, 0, 0);
-    RECT name_line = area;
-    name_line.top = name_top;
-    name_line.bottom = designwin_panel_add(name_line.top, font1_.pixel_height());
-    canvas->set_text_color(TextColourTable[158], TextColourTable[159], 1, 1);
-    StringTemp[0] = '\0';
-    strcat(StringTemp, StringTable.get(Weapon[protoWeaponType_].name));
-    CharUpperA(StringTemp);
-    if (font1_.width(StringTemp) > designwin_panel_subtract(area.right, area.left)) {
-        const int wrap_height = designwin_panel_font_height(
-            font1_.unk_1_, font1_.line_height(), font1_.pixel_height());
-        name_line.top = designwin_panel_subtract(name_line.top, wrap_height);
-        name_line.bottom = designwin_panel_subtract(name_line.bottom, wrap_height);
-        canvas->wrap_cent(StringTemp, &name_line);
-        const int restored_height = designwin_panel_font_height(
-            font1_.unk_1_, font1_.line_height(), font1_.pixel_height());
-        name_line.top = designwin_panel_add(name_line.top, restored_height);
-        name_line.bottom = designwin_panel_add(name_line.bottom, restored_height);
-    } else {
-        canvas->write_cent_l(StringTemp, &name_line,
+    Buffer::set_text_color(TextColourTable[156], TextColourTable[157], 1, 1);
+    if (StringTemp != 0) {
+        Buffer::write_cent_l(&font2_, StringTemp, &title,
                              static_cast<int>(strlen(StringTemp)));
     }
 
-    RECT detail = name_line;
-    const int advance = designwin_panel_add(font1_.pixel_height(), 3);
-    detail.top = designwin_panel_add(detail.top, advance);
-    detail.bottom = designwin_panel_add(detail.bottom, advance);
-    canvas->set_text_color(TextColourTable[160], TextColourTable[161], 1, 1);
-    StringTemp[0] = '\0';
-    if (Weapon[protoWeaponType_].mode < 3) {
-        designwin_panel_append_label(StringTemp, 0x204);
-        strcat(StringTemp, " ");
-        const int offense = Weapon[protoWeaponType_].offense_rating;
-        if (offense < 0)
-            designwin_panel_append_label(StringTemp, 0x310);
-        else if (offense < 0x63)
-            designwin_panel_append_number(StringTemp, offense);
-        else
-            strcat(StringTemp, "*");
+    area.bottom = area.bottom - 5 - font1_.pixel_height() * 2;
+    caviar_.reset_objects();
+    if (protoWeaponType_ == 0) {
+        caviar_.add_object(&g_VW00_CAVIARDATA, 0);
+        caviar_.set_scaling(0.15f);
     } else {
-        designwin_panel_append_label(StringTemp, 0x200);
-        strcat(StringTemp, " ");
-        designwin_panel_append_number(StringTemp, Weapon[protoWeaponType_].cost);
+        if (protoWeaponType_ == 0x15 && DesignAutoBuildActive == 0) {
+            vehdraw_construct_weapon(static_cast<int>(factionID_), -1, 0x15,
+                                     &caviar_);
+        } else {
+            vehdraw_construct_weapon(static_cast<int>(factionID_),
+                                     static_cast<int>(protoChassisType_),
+                                     static_cast<int>(protoWeaponType_),
+                                     &caviar_);
+        }
+        if (Weapon[protoWeaponType_].mode < 3) {
+            caviar_.set_scaling(0.15f);
+        } else if (Weapon[protoWeaponType_].mode == 9) {
+            caviar_.set_scaling(0.06f);
+        } else {
+            caviar_.set_scaling(0.08f);
+        }
     }
-    canvas->write_cent_l(StringTemp, &detail,
-                         static_cast<int>(strlen(StringTemp)));
+    const int center_x = (component_panel_rects_[component_panel_weapon].right
+        + component_panel_rects_[component_panel_weapon].left) / 2;
+    const int center_y = (component_panel_rects_[component_panel_weapon].bottom
+        + component_panel_rects_[component_panel_weapon].top) / 2;
+    caviar_.set_scene_rotation(0.5233333706855774f, 0.0f, 0.0f);
+    caviar_.render(this, center_x, center_y, 6);
+
+    Buffer::set_font(&font1_, 0, 0, 0);
+    area.top = area.bottom;
+    area.bottom = area.top + font1_.pixel_height();
+    Buffer::set_text_color(TextColourTable[158], TextColourTable[159], 1, 1);
+    StringTemp[0] = 0;
+    strcat(StringTemp, StringTable.get(Weapon[protoWeaponType_].name));
+    CharUpperA(StringTemp);
+    width = area.right - area.left;
+    if (font1_.width(StringTemp) > width) {
+        int advance = -font_line_advance(font1_);
+        area.top += advance;
+        area.bottom += advance;
+        Buffer::wrap_cent(StringTemp, &area);
+        advance = font_line_advance(font1_);
+        area.top += advance;
+        area.bottom += advance;
+    } else {
+        Buffer::write_cent_l(StringTemp, &area);
+    }
+
+    const int advance = font1_.pixel_height() + 3;
+    area.top += advance;
+    area.bottom += advance;
+    Buffer::set_text_color(TextColourTable[160], TextColourTable[161], 1, 1);
+    StringTemp[0] = 0;
+    char number[80];
+    if (Weapon[protoWeaponType_].mode >= 3) {
+        strcat(StringTemp, label_get(0x200 / 4));
+        strcat(StringTemp, BufferJoinSpace);
+        _itoa(Weapon[protoWeaponType_].cost, number, 10);
+        strcat(StringTemp, number);
+    } else {
+        strcat(StringTemp, label_get(0x204 / 4));
+        strcat(StringTemp, BufferJoinSpace);
+        if (Weapon[protoWeaponType_].offense_rating < 0) {
+            strcat(StringTemp, label_get(0x310 / 4));
+        } else if (Weapon[protoWeaponType_].offense_rating >= 0x63) {
+            strcat(StringTemp, "*");
+        } else {
+            _itoa(Weapon[protoWeaponType_].offense_rating, number, 10);
+            strcat(StringTemp, number);
+        }
+    }
+    Buffer::write_cent_l(StringTemp, &area);
 }
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
@@ -4040,24 +3989,24 @@ void DesignWin::draw_weapon(int redraw) {
 // RECOVERY_BINDING: v1 {"evidence": ["git:fd72c001:src/designwin.cpp preserves original identity and historical seed provenance", "Pinned435400..435800 reads live armor selection, signed defense at rule+8 and unsigned mode at+9", "src/caviar.h:Caviar::render_multi_table_dest and src/game.h:ArmorTransparentColorTables"], "reason": "Render the armor heading, transparent or ordinary preview, localized name and conditional defense detail through genuine source objects; preserve callback reads and native text geometry."}
 void DesignWin::draw_armor(int redraw) {
     (void)redraw;
-    Buffer *const canvas = static_cast<Buffer *>(this);
+    int width;
     RECT area = component_panel_rects_[component_panel_armor];
-    canvas->set_clip(&area);
-    buffer_.copy(canvas, &area);
+    Buffer::set_clip(&area);
+    buffer_.copy(this, &area);
 
     RECT title = area;
-    title.bottom = designwin_panel_add(title.top, designwin_panel_font_height(
-        font2_.unk_1_, font2_.line_height(), font2_.pixel_height()));
+    title.bottom = area.top + font_line_advance(font2_);
     area.top = title.bottom;
-    StringTemp[0] = '\0';
-    designwin_panel_append_label(StringTemp, 0x1F8);
+    StringTemp[0] = 0;
+    strcat(StringTemp, label_get(0x1F8 / 4));
     CharUpperA(StringTemp);
-    canvas->set_text_color(TextColourTable[156], TextColourTable[157], 1, 1);
-    canvas->write_cent_l(&font2_, StringTemp, &title,
-                         static_cast<int>(strlen(StringTemp)));
+    Buffer::set_text_color(TextColourTable[156], TextColourTable[157], 1, 1);
+    if (StringTemp != 0) {
+        Buffer::write_cent_l(&font2_, StringTemp, &title,
+                             static_cast<int>(strlen(StringTemp)));
+    }
 
-    area.bottom = designwin_panel_subtract(designwin_panel_subtract(
-        area.bottom, designwin_panel_add(font1_.pixel_height(), font1_.pixel_height())), 5);
+    area.bottom = area.bottom - 5 - font1_.pixel_height() * 2;
     if (protoArmorType_ != 0) {
         caviar_.reset_objects();
         vehdraw_construct_armor(ConsoleGlobal.faction_id_,
@@ -4066,56 +4015,53 @@ void DesignWin::draw_armor(int redraw) {
             static_cast<int>(protoArmorType_), 1, &caviar_);
         caviar_.set_scaling(0.07f);
         caviar_.set_scene_rotation(0.5233333706855774f, 0.0f, 0.0f);
-        const int center_x = designwin_panel_add(area.left, area.right) / 2;
-        const int center_y = designwin_panel_add(area.top, area.bottom) / 2;
         if (protoArmorType_ == 5) {
-            caviar_.render_multi_table_dest(canvas, center_x, center_y, 24,
+            caviar_.render_multi_table_dest(this, (area.left + area.right) / 2,
+                (area.top + area.bottom) / 2, 24,
                 ArmorTransparentColorTables, 6);
         } else {
-            caviar_.render(canvas, center_x, center_y, 6);
+            caviar_.render(this, (area.left + area.right) / 2,
+                           (area.bottom + area.top) / 2, 6);
         }
     }
 
-    canvas->set_font(&font1_, 0, 0, 0);
+    Buffer::set_font(&font1_, 0, 0, 0);
     area.top = area.bottom;
-    area.bottom = designwin_panel_add(area.top, font1_.pixel_height());
-    canvas->set_text_color(TextColourTable[158], TextColourTable[159], 1, 1);
-    StringTemp[0] = '\0';
-    if (protoArmorType_ == 0)
-        designwin_panel_append_label(StringTemp, 0x64);
-    else
-        strcat(StringTemp, StringTable.get(Armor[protoArmorType_].name));
+    area.bottom = area.top + font1_.pixel_height();
+    Buffer::set_text_color(TextColourTable[158], TextColourTable[159], 1, 1);
+    StringTemp[0] = 0;
+    strcat(StringTemp, StringTable.get(protoArmorType_
+        ? Armor[protoArmorType_].name : Labels.strings_ptr[0x64 / 4]));
     CharUpperA(StringTemp);
-    if (font1_.width(StringTemp) > designwin_panel_subtract(area.right, area.left)) {
-        const int advance = designwin_panel_font_height(
-        font1_.unk_1_, font1_.line_height(), font1_.pixel_height());
-        area.top = designwin_panel_subtract(area.top, advance);
-        area.bottom = designwin_panel_subtract(area.bottom, advance);
-        canvas->wrap_cent(StringTemp, &area);
-        const int restored_advance = designwin_panel_font_height(
-        font1_.unk_1_, font1_.line_height(), font1_.pixel_height());
-        area.top = designwin_panel_add(area.top, restored_advance);
-        area.bottom = designwin_panel_add(area.bottom, restored_advance);
+    width = area.right - area.left;
+    if (font1_.width(StringTemp) > width) {
+        int advance = -font_line_advance(font1_);
+        area.top += advance;
+        area.bottom += advance;
+        Buffer::wrap_cent(StringTemp, &area);
+        advance = font_line_advance(font1_);
+        area.top += advance;
+        area.bottom += advance;
     } else {
-        canvas->write_cent_l(StringTemp, &area,
-                             static_cast<int>(strlen(StringTemp)));
+        Buffer::write_cent_l(StringTemp, &area);
     }
 
-    const int advance = designwin_panel_add(font1_.pixel_height(), 3);
-    area.top = designwin_panel_add(area.top, advance);
-    area.bottom = designwin_panel_add(area.bottom, advance);
-    canvas->set_text_color(TextColourTable[160], TextColourTable[161], 1, 1);
+    const int advance = font1_.pixel_height() + 3;
+    area.top += advance;
+    area.bottom += advance;
+    Buffer::set_text_color(TextColourTable[160], TextColourTable[161], 1, 1);
     if (Armor[protoArmorType_].mode < 3) {
-        StringTemp[0] = '\0';
-        designwin_panel_append_label(StringTemp, 0xA6C);
+        StringTemp[0] = 0;
+        strcat(StringTemp, label_get(0xA6C / 4));
         strcat(StringTemp, " ");
-        const int defense = Armor[protoArmorType_].defense_rating;
-        if (defense < 0)
-            designwin_panel_append_label(StringTemp, 0x310);
-        else
-            designwin_panel_append_number(StringTemp, defense);
-        canvas->write_cent_l(StringTemp, &area,
-                             static_cast<int>(strlen(StringTemp)));
+        if (Armor[protoArmorType_].defense_rating < 0) {
+            strcat(StringTemp, label_get(0x310 / 4));
+        } else {
+            char number[80];
+            _itoa(Armor[protoArmorType_].defense_rating, number, 10);
+            strcat(StringTemp, number);
+        }
+        Buffer::write_cent_l(StringTemp, &area);
     }
 }
 
@@ -4124,34 +4070,32 @@ void DesignWin::draw_armor(int redraw) {
 // RECOVERY_BINDING: v1 {"evidence": ["git:fd72c001:src/designwin.cpp preserves original identity and historical seed provenance", "Pinned435800..435B29 uses1-based reactor selection, ability bit8000 and wrap_cent return as numeric-row top", "src/alpha.cpp reactor loader and src/veh.h:RulesReactor establish interned name pointers and12-byte records"], "reason": "Render the reactor heading, ability-prefixed description, model and live numeric selection through genuine source objects; retain native font reads and wrap-return geometry."}
 void DesignWin::draw_reactor(int redraw) {
     (void)redraw;
-    Buffer *const canvas = static_cast<Buffer *>(this);
     RECT area = component_panel_rects_[component_panel_reactor];
-    canvas->set_clip(&area);
-    buffer_.copy(canvas, &area);
+    Buffer::set_clip(&area);
+    buffer_.copy(this, &area);
 
     RECT title = area;
-    title.bottom = designwin_panel_add(title.top, designwin_panel_font_height(
-        font2_.unk_1_, font2_.line_height(), font2_.pixel_height()));
+    title.bottom = area.top + font_line_advance(font2_);
     area.top = title.bottom;
-    StringTemp[0] = '\0';
-    designwin_panel_append_label(StringTemp, 0x13C);
+    StringTemp[0] = 0;
+    strcat(StringTemp, label_get(0x13C / 4));
     CharUpperA(StringTemp);
-    canvas->set_text_color(TextColourTable[156], TextColourTable[157], 1, 1);
-    canvas->write_cent_l(&font2_, StringTemp, &title,
-                         static_cast<int>(strlen(StringTemp)));
+    Buffer::set_text_color(TextColourTable[156], TextColourTable[157], 1, 1);
+    if (StringTemp != 0) {
+        Buffer::write_cent_l(&font2_, StringTemp, &title,
+                             static_cast<int>(strlen(StringTemp)));
+    }
 
-    canvas->set_font(&font1_, 0, 0, 0);
-    StringTemp[0] = '\0';
-    if ((protoAbilityFlags_ & 0x8000u) != 0) {
-        designwin_panel_append_label(StringTemp, 0x584);
+    Buffer::set_font(&font1_, 0, 0, 0);
+    StringTemp[0] = 0;
+    if (protoAbilityFlags_ & 0x8000) {
+        strcat(StringTemp, label_get(0x584 / 4));
         strcat(StringTemp, " ");
     }
     strcat(StringTemp, StringTable.get(Reactor[protoReactorType_ - 1].name));
     CharUpperA(StringTemp);
-    const int description_height = canvas->wrap_height(
-        StringTemp, designwin_panel_subtract(area.right, area.left));
-    area.bottom = designwin_panel_subtract(designwin_panel_subtract(
-        designwin_panel_subtract(area.bottom, 5), description_height), font1_.pixel_height());
+    int height = Buffer::wrap_height(StringTemp, area.right - area.left);
+    area.bottom = area.bottom - 5 - height - font1_.pixel_height();
 
     caviar_.reset_objects();
     vehdraw_construct_reactor(ConsoleGlobal.faction_id_,
@@ -4160,21 +4104,22 @@ void DesignWin::draw_reactor(int redraw) {
         static_cast<int>(protoReactorType_), protoAbilityFlags_, &caviar_);
     caviar_.set_scaling(0.2f);
     caviar_.set_scene_rotation(0.5233333706855774f, 0.0f, 0.0f);
-    caviar_.render(canvas, designwin_panel_add(area.left, area.right) / 2,
-                   designwin_panel_add(area.top, area.bottom) / 2, 6);
+    caviar_.render(this, (area.left + area.right) / 2,
+                   (area.bottom + area.top) / 2, 6);
 
     area.top = area.bottom;
-    area.bottom = designwin_panel_add(area.top, font1_.pixel_height());
-    canvas->set_text_color(TextColourTable[158], TextColourTable[159], 1, 1);
-    area.top = canvas->wrap_cent(StringTemp, &area);
-    area.bottom = designwin_panel_add(area.top, font1_.pixel_height());
-    canvas->set_text_color(TextColourTable[160], TextColourTable[161], 1, 1);
-    StringTemp[0] = '\0';
-    designwin_panel_append_label(StringTemp, 0x1E4);
+    area.bottom = area.top + font1_.pixel_height();
+    Buffer::set_text_color(TextColourTable[158], TextColourTable[159], 1, 1);
+    area.top = Buffer::wrap_cent(StringTemp, &area);
+    area.bottom = area.top + font1_.pixel_height();
+    Buffer::set_text_color(TextColourTable[160], TextColourTable[161], 1, 1);
+    StringTemp[0] = 0;
+    strcat(StringTemp, label_get(0x1E4 / 4));
     strcat(StringTemp, " ");
-    designwin_panel_append_number(StringTemp, static_cast<int>(protoReactorType_));
-    canvas->write_cent_l(StringTemp, &area,
-                         static_cast<int>(strlen(StringTemp)));
+    char number[80];
+    _itoa(protoReactorType_, number, 10);
+    strcat(StringTemp, number);
+    Buffer::write_cent_l(StringTemp, &area);
 }
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
@@ -4774,154 +4719,96 @@ void DesignWin::draw_vehicle(int redraw) {
 // RECOVERY_BINDING: v1 {"evidence": ["task:design-info-owner", "pinned:4346A0..434BB4 primary body and653FFE..654010 Font cleanup/EH span; real stack Font owns normal and exceptional cleanup.", "pinned:MainInterfaceGlobal Buffer receiver7AEC64; actual inheritance selects +444; InterfaceBoxStyles[3]/[0] at78D5A0/78D528.", "pinned:replacement loop348C1..34A2C retains later-wins selected-ID stores and current-category rereads; typed PlayerData active/queue arrays.", "pinned:fallback literals682820/682E9C/68354C/682E98 and USER32 CharUpperA; historical seed git:bb602081^:src/recovered/units/004346a0.cpp."], "reason": "Recover the information-panel renderer and selection scan through genuine DesignWin members, MainInterface Buffer inheritance, typed prototype/faction arrays and automatic Font lifetime; preserve original primary and compiler cleanup spans."}
 void DesignWin::draw_info() {
     Font font;
-    Buffer &canvas = static_cast<Buffer &>(MainInterfaceGlobal);
-
-    RECT source = info_panel_rect_;
-    RECT panel = source;
-    canvas.set_clip(&panel);
+    RECT panel = info_panel_rect_;
+    MainInterfaceGlobal.Buffer::set_clip(&panel);
     font.init(DefaultFontFace, 0x12, 1);
 
-    canvas.box_sprite(&panel, &InterfaceBoxStyles[3]);
+    MainInterfaceGlobal.Buffer::box_sprite(&panel, &InterfaceBoxStyles[3]);
     panel.left += 3;
     panel.top += 3;
     panel.right -= 3;
     panel.bottom -= 3;
-    canvas.box_sprite(&panel, &InterfaceBoxStyles[0]);
+    MainInterfaceGlobal.Buffer::box_sprite(&panel, &InterfaceBoxStyles[0]);
     panel.left += 3;
     panel.top += 3;
     panel.right -= 3;
     panel.bottom -= 3;
 
-    canvas.set_text_color(0xE0, -1, 1, 1);
-    canvas.set_font(&font, 0, 0, 0);
+    MainInterfaceGlobal.Buffer::set_text_color(0xE0, -1, 1, 1);
+    MainInterfaceGlobal.Buffer::set_font(&font, 0, 0, 0);
 
     RECT text = panel;
-    text.bottom = text.top + font.line_advance();
-
+    text.bottom = text.top + font_line_advance(font);
     StringTemp[0] = 0;
     strcat(StringTemp, label_get(0xE4C / 4));
-    const int length = static_cast<int>(strlen(StringTemp));
-    canvas.write_cent_l(StringTemp, &text, length);
+    MainInterfaceGlobal.Buffer::write_cent_l(StringTemp, &text);
 
     StringTemp[0] = 0;
-    const int faction = static_cast<int>(factionID_);
-    const int selected = protoID_ <= 0x7FFFFFFFu
-        ? static_cast<int>(protoID_)
-        : -1 - static_cast<int>(~protoID_);
-    const uint32_t faction_bit = 1u << (faction & 0x1F);
-    int selected_label_offset = 0xE54 / 4;
-    bool use_fallback = false;
-
-    // Native uses a signed <64 gate, so a negative selection also reaches
-    // this lookup. Its preceding storage has no proven source object model;
-    // preserve the branch, not a silent clamp, and leave that invalid-input
-    // behavior unverified rather than claiming the lookup is source-safe.
-    if (selected < 0x40) {
-        const VehPrototype &selected_prototype = VehPrototypes[selected];
-        const bool selected_matches =
-            protoChassisType_ == selected_prototype.chassis_id
-            && protoWeaponType_ == selected_prototype.weapon_id
-            && protoArmorType_ == selected_prototype.armor_id
-            && protoReactorType_ == selected_prototype.reactor_id
-            && protoAbilityFlags_ == selected_prototype.ability_flags;
-        selected_label_offset = selected_matches
-            ? 0xE44 / 4 : 0xE54 / 4;
-    } else {
-        const VehPrototype &selected_prototype = VehPrototypes[selected];
-        if ((selected_prototype.flags & PROTO_ACTIVE) == 0) {
-            use_fallback = true;
-        } else if ((selected_prototype.obsolete_factions & faction_bit) != 0) {
-            use_fallback = true;
+    if ((int)protoID_ < 0x40) {
+        if (UNK2(protoID_)) {
+            strcat(StringTemp, label_get(0xE44 / 4));
         } else {
-            const bool selected_matches =
-                protoChassisType_ == selected_prototype.chassis_id
-                && protoWeaponType_ == selected_prototype.weapon_id
-                && protoArmorType_ == selected_prototype.armor_id
-                && protoReactorType_ == selected_prototype.reactor_id
-                && protoAbilityFlags_ == selected_prototype.ability_flags;
-            if (selected_matches) {
-                selected_label_offset = 0xE50 / 4;
-            } else {
-                bool found_replacement = false;
-                bool inactive_slot_redirect = false;
-                const int first = faction * 0x40;
-                for (int index = 0; index < 0x40; ++index) {
-                    const int candidate_id = first + index;
-                    const VehPrototype &candidate = VehPrototypes[candidate_id];
-                    if ((candidate.flags & PROTO_ACTIVE) == 0) {
-                        protoID_ = static_cast<uint32_t>(candidate_id);
-                        inactive_slot_redirect = true;
-                        break;
-                    }
-                    if ((candidate.obsolete_factions & faction_bit) == 0)
-                        continue;
-
-                    const int current_selected = protoID_ <= 0x7FFFFFFFu
-                        ? static_cast<int>(protoID_)
-                        : -1 - static_cast<int>(~protoID_);
-                    const int current_category =
-                        VehPrototypes[current_selected].unk_1;
-                    uint8_t active_count =
-                        PlayersData[faction].proto_id_active[candidate_id];
-                    if (candidate.unk_1 != current_category && active_count != 0)
-                        continue;
-
-                    active_count =
-                        PlayersData[faction].proto_id_active[candidate_id];
-                    if (active_count != 0) continue;
-                    const uint8_t queued_count =
-                        PlayersData[faction].proto_id_queue[candidate_id];
-                    if (queued_count == active_count) {
-                        // The original continues scanning after this store; a
-                        // later eligible zero/zero slot may overwrite protoID_.
-                        protoID_ = static_cast<uint32_t>(candidate_id);
-                        found_replacement = true;
-                        continue;
-                    }
-                    if (active_count != 0 || found_replacement) continue;
-                    if (candidate.unk_1 != current_category) continue;
-                    protoID_ = static_cast<uint32_t>(candidate_id);
-                    found_replacement = true;
+            strcat(StringTemp, label_get(0xE54 / 4));
+        }
+    } else if ((VehPrototypes[protoID_].flags & PROTO_ACTIVE)
+               && !(VehPrototypes[protoID_].obsolete_factions
+                    & (1 << factionID_))) {
+        if (UNK2(protoID_)) {
+            strcat(StringTemp, label_get(0xE50 / 4));
+        } else {
+            // Look for a replacement prototype in the faction's own block.
+            int found = 0;
+            int proto_id = factionID_ * 64;
+            for (int i = 0; i < 64; ++i, ++proto_id) {
+                if (!(VehPrototypes[proto_id].flags & PROTO_ACTIVE)) {
+                    protoID_ = proto_id;
+                    found = 1;
+                    break;
                 }
-                if (found_replacement || inactive_slot_redirect)
-                    selected_label_offset = 0xE54 / 4;
-                else
-                    selected_label_offset = 0xC38 / 4;
+                if (!(VehPrototypes[proto_id].obsolete_factions
+                      & (1 << factionID_))) {
+                    continue;
+                }
+                int8_t category = VehPrototypes[protoID_].unk_1;
+                if (VehPrototypes[proto_id].unk_1 == category
+                    || !PlayersData[factionID_].proto_id_active[proto_id]) {
+                    uint8_t active = PlayersData[factionID_].proto_id_active[proto_id];
+                    if (!active) {
+                        if (PlayersData[factionID_].proto_id_queue[proto_id] == active
+                            || (!active && !found
+                                && VehPrototypes[proto_id].unk_1 == category)) {
+                            protoID_ = proto_id;
+                            found = 1;
+                        }
+                    }
+                }
+            }
+            if (found) {
+                strcat(StringTemp, label_get(0xE54 / 4));
+            } else {
+                strcat(StringTemp, label_get(0xC38 / 4));
             }
         }
-    }
-
-    if (use_fallback) {
+    } else {
         strcat(StringTemp, label_get(0xC34 / 4));
-        strcat(StringTemp, " ");
+        strcat(StringTemp, BufferJoinSpace);
         strcat(StringTemp, "(");
         strcat(StringTemp, label_get(0xE48 / 4));
         strcat(StringTemp, " #");
-
-        uint32_t masked_id = protoID_ & 0x8000003Fu;
-        if (masked_id & 0x80000000u)
-            masked_id = ((masked_id - 1u) | 0xFFFFFFC0u) + 1u;
-        const int display_id = masked_id <= 0x7FFFFFFFu
-            ? static_cast<int>(masked_id)
-            : -1 - static_cast<int>(~masked_id);
         char number[80];
-        _itoa(display_id + 1, number, 10);
+        _itoa((int)protoID_ % 64 + 1, number, 10);
         strcat(StringTemp, number);
         strcat(StringTemp, ")");
         CharUpperA(StringTemp);
-    } else {
-        strcat(StringTemp, label_get(selected_label_offset));
     }
 
-    const int wrapped_height =
-        canvas.wrap_height(StringTemp, text.right - text.left);
-    const int vertical_shift = (panel.bottom - panel.top) - wrapped_height;
-    text.top += vertical_shift;
-    text.bottom += vertical_shift;
-    canvas.wrap_cent(StringTemp, &text);
-
-    MainInterfaceGlobal.soft_update(&source);
-    canvas.set_clip(const_cast<RECT *>(&canvas.current_clip()));
+    int shift = panel.bottom - panel.top
+        - MainInterfaceGlobal.Buffer::wrap_height(StringTemp, text.right - text.left);
+    text.top += shift;
+    text.bottom += shift;
+    MainInterfaceGlobal.Buffer::wrap_cent(StringTemp, &text);
+    MainInterfaceGlobal.soft_update(&info_panel_rect_);
+    MainInterfaceGlobal.Buffer::restore_clip();
 }
 
 
