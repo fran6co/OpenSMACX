@@ -3068,7 +3068,7 @@ Status: Complete
 
 /*
 Purpose: Calculate how defensive the specified tile is to the defending unit based on the terrain.
-// ORIGINAL: 0x005010C0 ?defense_value@@YAHHHHHH@Z 0x005010C0-0x0050134F
+// ORIGINAL: 0x005010C0 ?defense_value@@YAHHHHHH@Z 0x005010C0-0x0050134F BYTE_EXACT
 // LEVER: MORE (3 calls vs image's 0) - `label_get()` folds its array read
 //        into a REAL `StringTable.get()` call, but the image never calls
 //        anything here: `VehBattleDisplayTerrain` is read back at
@@ -4087,7 +4087,7 @@ int __cdecl best_defender(int veh_id_def, int veh_id_atk, BOOL check_artillery) 
 /*
 Purpose: Determine whether any enemy naval transports are carrying land units within range to
          attack the specified base. If so, set the units to move towards the base.
-// ORIGINAL: 0x00506490 ?invasions@@YAXH@Z 0x00506490-0x00506646
+// ORIGINAL: 0x00506490 ?invasions@@YAXH@Z 0x00506490-0x00506646 BYTE_EXACT
 // TRIED: call structure already matches exactly - `osmx calls --all`
 //            lists veh_cargo, stack_check, four abs() (vector_dist/x_dist
 //            inlined) and speed, in the image's own order, so vector_dist's
@@ -6556,7 +6556,7 @@ int __cdecl speed_proto(int proto_id) {
 Purpose: Calculate the speed of a unit on roads taking into consideration prototype speed,
          elite morale, if the unit is damaged and other factors. The skip_morale parameter seems to
          only be set to true for certain combat calculations in battle_fight().
-// ORIGINAL: 0x005C1540 ?speed@@YAHHH@Z 0x005C1540-0x005C1752
+// ORIGINAL: 0x005C1540 ?speed@@YAHHH@Z 0x005C1540-0x005C1752 BYTE_EXACT
 // TRIED: is called UNCONDITIONALLY in the image - `!skip_morale` is tested only AFTER the call and its MORALE_ELITE comparison, not before it (short-circuit order swapped: `morale_veh(...) == MORALE_ELITE && !skip_morale && (...)` instead of `!skip_morale && morale_veh(...) == MORALE_ELITE && (...)`). Confirmed against the disassembly: `call 0x5c0e40` at 0x5C15CB has no guard before it, and the skip_morale parameter isn't read until 0x5C15D8, after the MORALE_ELITE compare at 0x5C15D3.
 // size      530 bytes
 // prototype int (__cdecl ?speed@@YAHHH@Z)(int vehID, int toggle)
