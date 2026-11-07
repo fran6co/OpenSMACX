@@ -38,7 +38,6 @@ static_assert(offsetof(DeletionRecord, count_) == 8,
 class DeletionList {
  public:
   DeletionList();
-  ~DeletionList() { ; }
 
   void clear(int index);
   int find_free_slot();

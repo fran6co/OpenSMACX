@@ -1132,10 +1132,9 @@ void NetDaemon::send_rules() {
 // TRIED: full instruction-order transcription of all ~150 checksum() calls (verified offsets/strides/seed-chaining against raw disasm, not Ghidra scaling); diverges at insn #53, likely register-alloc (lea vs mov) in the bit_count loop or header prologue, not logic.
 // LEVER: one walking output cursor, indexed Vehs/Bases loops, counters
 //        zeroed before their count tests and one shared map/faction counter
-//        reach 882/886. Left: the image ends with `xor eax, eax`, so the
-//        original returns int (0); the header declares void.
+//        reach 882/886; returning int 0 (the image's `xor eax, eax`) closes it.
 // working copy - scaffold materialised by --work
-// symbol    ?game_checksum@NetDaemon@@QAEXPAUNetChecksumReport@@@Z
+// symbol    ?game_checksum@NetDaemon@@QAEHPAUNetChecksumReport@@@Z
 // size      2622 bytes
 // prototype void (__thiscall ?game_checksum@NetDaemon@@QAEXPAH@Z)(NetDaemon* this, int*)
 // callers   1   call targets   2
@@ -1143,7 +1142,7 @@ void NetDaemon::send_rules() {
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     0x0050BA30 0x00539090
 
-void NetDaemon::game_checksum(NetChecksumReport *results) {
+int NetDaemon::game_checksum(NetChecksumReport *results) {
     // The image walks one output cursor through the report's dwords.
     int *out = reinterpret_cast<int *>(results);
     unsigned char cs;
@@ -1465,6 +1464,7 @@ void NetDaemon::game_checksum(NetChecksumReport *results) {
         }
         *out++ = cs;
     }
+    return 0;
 }
 
 
