@@ -13427,7 +13427,7 @@ Purpose: Should faction a1 refuse to honour faction a2's withdrawal
          third faction that both holds the captured base chain and keeps
          the treaties that make the hand-back profitable.
 
-// ORIGINAL: 0x00548DD0 ?dont_withdrawal@@YAHHH@Z 0x00548DD0-0x00548F7D
+// ORIGINAL: 0x00548DD0 ?dont_withdrawal@@YAHHH@Z 0x00548DD0-0x00548F7D BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["pinned 0x548DD0 full body: faction treaty/prototype/vehicle and base state walk", "source:src/faction.h existing dont_withdrawal declaration and faction diplomacy callers", "source:src/faction.cpp owns the adjacent do_withdrawal and faction diplomacy logic"], "reason": "SRC faction diplomacy"}
 // TRIED: the per-base coordinate walk was spelled with a 0x9A stride; the image scales Bases by 0x134 (0x00548E94..0x548EA0), so the typed Bases[] walk replaces it.
 // size      429 bytes
