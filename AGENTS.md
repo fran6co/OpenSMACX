@@ -37,10 +37,21 @@ guidance below and in `recovery/WORKFLOW.md`:
 7. Parallel workers each own one source file (conflict domain); the coordinator
    commits and integrates. Workers may still use isolated worktrees.
 
-Unchanged: faithful bug-for-bug recovery; no `__asm`, `_emit`, copied machine
-code, or fixed-address calls; never hand-edit `ORIGINAL:`/`BYTE_EXACT` markers;
+Unchanged: faithful bug-for-bug recovery; no `_emit`, copied machine code, or
+fixed-address calls; never hand-edit `ORIGINAL:`/`BYTE_EXACT` markers;
 preserve every historical claim and identity; proprietary bytes stay in ignored
 `.opensmacx/` and `build/`.
+
+Inline assembly (user decision, 2026-11-07): `__asm` is allowed only for
+functions that were clearly written in assembly in the original, meaning they
+use instructions or shapes that VC6's code generator never emits (`pushf`/`cld`,
+`loop`, `lodsb`, `pushad`, arithmetic `adc`/`shrd`, `and reg,reg` tests, `esp` as
+a general register, self-patching immediates, private register conventions).
+A C++ function with an inline block keeps its C++ around a minimal `__asm`
+block. A whole-assembly routine becomes a `__declspec(naked)` function whose
+body is the `__asm` routine. Write real mnemonics and labels, never `_emit`
+bytes, and give each one a short comment naming the evidence. Everything else,
+including compiler idioms that only look unusual, stays plain C++.
 
 Common regression cause to check first is a hand-copied callee body. Older
 recoveries often wrote a callee's first level out by hand, typically a
@@ -298,7 +309,8 @@ central seed binding but stopped with preserved, unaccepted discoveries.
 
 - Prefer real bases, members, globals, virtual methods and lifecycle code over
   vtable arrays, fixed executable addresses, raw self-offset access or stand-ins.
-  No `__asm`, `_emit` or copied machine code. Names/types require evidence.
+  No `_emit` or copied machine code; `__asm` only for original assembly, as
+  described in "Current mode". Names/types require evidence.
 - Preserve cross-function/class discoveries and request scope expansion before
   editing outside the authorized task. Do not discard a discovery as unrelated.
 - Do not automatically revert a justified structural migration on a byte
