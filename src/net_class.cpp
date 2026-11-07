@@ -424,7 +424,7 @@ Purpose: Run one lobby enumeration for the setup dialog's player-added path:
          the buffer first (0x0063132B, 0x006313A5) and the callee's tail walks
          the first argument as the StringStruct whose fields sit at
          +0x08/+0x0C/+0x10/+0x14.
-// ORIGINAL: 0x0062E420 ?on_player_added@Net@@QAEHPADI@Z 0x0062E420-0x0062E536 FILE
+// ORIGINAL: 0x0062E420 ?on_player_added@Net@@QAEHPADI@Z 0x0062E420-0x0062E536 FILE BYTE_EXACT
 // symbol    ?enumerate_sessions@Net@@QAEHPAVAlphaNetLedger@@PBD@Z
 // size      278 bytes
 // prototype int (__thiscall ?on_player_added@Net@@QAEHPADI@Z)(Net* this, char*, unsigned int)

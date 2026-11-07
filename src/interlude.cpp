@@ -67,7 +67,7 @@ static inline int interlude_rect_width(const RECT *rect) {
     return rect->right - rect->left;
 }
 
-// ORIGINAL: 0x0045F5C0 ?on_redraw@Interlude@@QAEHXZ 0x0045F5C0-0x0045F63E FILE
+// ORIGINAL: 0x0045F5C0 ?on_redraw@Interlude@@QAEHXZ 0x0045F5C0-0x0045F63E FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Original instruction/call evidence retained from src/stringstruct.cpp", "source:src/interlude.h: real GraphicWin base, embedded StringList and Buffer, compiler-generated deleting/adjustor lifecycle", "Original45F5C0..45F63E; retired seed git:117282ee:src/unrecovered/0045f5c0.cpp records the same identity and spans.", "The receivers are the +0xA54 dialogue Buffer whose seven-int copy overload is buffer.h's own 0x005DFF00 blitter and the +0xA24 StringList write_strings draw; the frame numbers are read at +0x4C4/+0x4C8 and +0xAD4/+0xAD8 exactly as the seed measured them.", "Prior interpretation: Coverage transcription of the intermission repaint with the receiver spelled explicitly because Interlude has no header declaration yet."], "reason": "Original member/callback/lifetime identity is owned by genuine Interlude C++ hierarchy; actual emitted symbol replaces the retired raw receiver shim, preserving historical spans and claims."}
 // symbol    ?on_redraw@Interlude@@UAEXXZ
 void Interlude::on_redraw() {

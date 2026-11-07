@@ -293,7 +293,7 @@ void __cdecl replay_base(int type, int x, int y, int faction_id) {
 #pragma intrinsic(memcpy)
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x005AD560 ?make_bases@ReplayWin@@QAEXXZ 0x005AD560-0x005AD607
+// ORIGINAL: 0x005AD560 ?make_bases@ReplayWin@@QAEXXZ 0x005AD560-0x005AD607 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned original 0x005AD560-0x005AD607 clears Map::bit bit zero over MapArea, then walks 512 twelve-byte records at ReplayWin+0xA20", "The original writes Bases with 0x134 stride, storing x/y/faction/population before bit_set, owner_set and reset_territory; src/unrecovered/005ad560.cpp preserves the seed"], "reason": "Rebuild bases from typed replay-owned records into the real Base array and map, without self-offset arithmetic or fixed executable addresses."}
 void ReplayWin::make_bases() {
     GameDataStateStorage.fields_.base_current_count_ = 0;
