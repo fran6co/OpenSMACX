@@ -665,6 +665,13 @@ void Console::oblit(int vehicle_id) { // 0x004D5D30
     }
 }
 
+// The cursor-radius test evaluates all four coordinates before either
+// distance term, as an inlined four-argument helper does.
+static inline int cursor_step_dist(int x_point_a, int y_point_a,
+                                   int x_point_b, int y_point_b) {
+    return x_dist(x_point_a, x_point_b) + abs(y_point_a - y_point_b);
+}
+
 // Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x004D95F0 ?assemble@Console@@QAEXXZ 0x004D95F0-0x004D9970
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned original entry 004D95F0; retained seed src/recovered/units/004d95f0.cpp", "Native4D9775..4D97D0 filters Chassis[prototype.chassis_id].triad, not chassis ID. Existing PopupWriteCheckState owns9BC06C; receiver faction filters vehicles while global cursor history supplies destinations.", "recovery/tasks/console-scenario-owner-wave.json; native scope expansions retain the original task baseline"], "reason": "Recover the complete Console command into its genuine owner using typed state and existing lifecycle/network APIs. Preserve original spans and retained seed evidence; this binding is not a byte, reference or runtime acceptance claim."}
@@ -687,7 +694,7 @@ void Console::assemble() { // 0x004D95F0
     uint32_t active_filters = 0;
     for (int selected_filter = 0; selected_filter < 12; ++selected_filter) {
         const uint32_t bit = 1u << selected_filter;
-        if ((static_cast<uint32_t>(PopupWriteCheckState) & bit) != 0) {
+        if (PopupWriteCheckState & (1 << selected_filter)) {
             active_filters |= bit;
         }
     }
@@ -695,77 +702,85 @@ void Console::assemble() { // 0x004D95F0
     field_23D1C_ = 1;
     int best_vehicle = -1;
     for (int vehicle_id = 0; vehicle_id < GameDataStateStorage.fields_.vehicle_current_count_; ++vehicle_id) {
-        Veh &vehicle = Vehs[vehicle_id];
-        if (vehicle.faction_id != faction_id_) {
+        if (Vehs[vehicle_id].faction_id != faction_id_) {
             continue;
         }
 
         if ((active_filters & 1) != 0) {
-            int delta_x = std::abs(static_cast<int>(vehicle.x) -
-                                   ConsoleGlobal.cursor_history_x_[ConsoleGlobal.cursor_history_index_]);
-            if ((MapIsFlat & 1) == 0 && delta_x > static_cast<int>(MapLongitude)) {
-                delta_x = static_cast<int>(MapLongitudeBounds) - delta_x;
-            }
-            const int delta_y = std::abs(static_cast<int>(vehicle.y) -
-                                         ConsoleGlobal.cursor_history_y_[ConsoleGlobal.cursor_history_index_]);
-            if (((delta_x + delta_y) & ~1) > 4) {
+            if ((cursor_step_dist(Vehs[vehicle_id].x, Vehs[vehicle_id].y,
+                                  ConsoleGlobal.cursor_history_x_[ConsoleGlobal.cursor_history_index_],
+                                  ConsoleGlobal.cursor_history_y_[ConsoleGlobal.cursor_history_index_]) & ~1) > 4) {
                 continue;
             }
         }
 
-        const VehPrototype &prototype = VehPrototypes[vehicle.proto_id];
-        const int triad = Chassis[prototype.chassis_id].triad;
-        const int plan = prototype.plan;
         if ((active_filters & 2) != 0 &&
-            (vehicle.order == 1 || vehicle.order == 2)) {
+            (Vehs[vehicle_id].order == 1 || Vehs[vehicle_id].order == 2)) {
             continue;
         }
         if ((active_filters & 4) != 0 &&
-            (((vehicle.state & 0x01000200u) == 0x01000200u) ||
-             (vehicle.state & 0x4200u) != 0)) {
+            (((Vehs[vehicle_id].state & 0x01000200u) == 0x01000200u) ||
+             (Vehs[vehicle_id].state & 0x4200u) != 0)) {
             continue;
         }
-        if (((active_filters & 8) != 0 && triad == TRIAD_LAND) ||
-            ((active_filters & 0x10) != 0 && triad == TRIAD_SEA) ||
-            ((active_filters & 0x20) != 0 && triad == TRIAD_AIR)) {
+        if ((active_filters & 8) != 0 &&
+            Chassis[VehPrototypes[Vehs[vehicle_id].proto_id].chassis_id].triad == TRIAD_LAND) {
+            continue;
+        }
+        if ((active_filters & 0x10) != 0 &&
+            Chassis[VehPrototypes[Vehs[vehicle_id].proto_id].chassis_id].triad == TRIAD_SEA) {
+            continue;
+        }
+        if ((active_filters & 0x20) != 0 &&
+            Chassis[VehPrototypes[Vehs[vehicle_id].proto_id].chassis_id].triad == TRIAD_AIR) {
             continue;
         }
         if ((active_filters & 0x40) != 0 &&
-            (plan == 0 || plan == 1 || plan == 5 || plan == 6)) {
+            (VehPrototypes[Vehs[vehicle_id].proto_id].plan == 0 ||
+             VehPrototypes[Vehs[vehicle_id].proto_id].plan == 1 ||
+             VehPrototypes[Vehs[vehicle_id].proto_id].plan == 5 ||
+             VehPrototypes[Vehs[vehicle_id].proto_id].plan == 6)) {
             continue;
         }
-        if ((active_filters & 0x80) != 0 && (plan == 2 || plan == 4)) {
+        if ((active_filters & 0x80) != 0 &&
+            (VehPrototypes[Vehs[vehicle_id].proto_id].plan == 2 ||
+             VehPrototypes[Vehs[vehicle_id].proto_id].plan == 4)) {
             continue;
         }
-        if (((active_filters & 0x100) != 0 && plan == 9) ||
-            ((active_filters & 0x200) != 0 && plan == 0xB) ||
-            ((active_filters & 0x400) != 0 &&
-             (plan == 8 || plan == 0xA || plan == 7 || plan == 0xC))) {
+        if ((active_filters & 0x100) != 0 && VehPrototypes[Vehs[vehicle_id].proto_id].plan == 9) {
+            continue;
+        }
+        if ((active_filters & 0x200) != 0 && VehPrototypes[Vehs[vehicle_id].proto_id].plan == 0xB) {
+            continue;
+        }
+        if ((active_filters & 0x400) != 0 &&
+            (VehPrototypes[Vehs[vehicle_id].proto_id].plan == 8 ||
+             VehPrototypes[Vehs[vehicle_id].proto_id].plan == 0xA ||
+             VehPrototypes[Vehs[vehicle_id].proto_id].plan == 7 ||
+             VehPrototypes[Vehs[vehicle_id].proto_id].plan == 0xC)) {
             continue;
         }
 
-        vehicle.state |= 0x08000000u;
+        Vehs[vehicle_id].state |= 0x08000000u;
         best_vehicle = vehicle_id;
     }
 
     if (ConsoleGroupAction == 1 && best_vehicle >= 0) {
-        Veh &vehicle = Vehs[best_vehicle];
-        vehicle.order = 0x18;
-        vehicle.waypoint_x[0] = static_cast<int16_t>(
+        Vehs[best_vehicle].order = 0x18;
+        Vehs[best_vehicle].waypoint_x[0] = static_cast<int16_t>(
             ConsoleGlobal.cursor_history_x_[ConsoleGlobal.cursor_history_index_]);
-        vehicle.waypoint_y[0] = static_cast<int16_t>(
+        Vehs[best_vehicle].waypoint_y[0] = static_cast<int16_t>(
             ConsoleGlobal.cursor_history_y_[ConsoleGlobal.cursor_history_index_]);
-        vehicle.state &= 0xFCFFBDFFu;
+        Vehs[best_vehicle].state &= 0xFCFFBDFFu;
         group(best_vehicle);
     }
 
     if (ConsoleGroupAction == 2) {
         for (int vehicle_id = 0; vehicle_id < GameDataStateStorage.fields_.vehicle_current_count_; ++vehicle_id) {
-            Veh &vehicle = Vehs[vehicle_id];
-            if (vehicle.faction_id == faction_id_ &&
-                (vehicle.state & 0x08000000u) != 0) {
-                vehicle.order = 0;
-                vehicle.state &= 0xFCFFBDFFu;
+            if (Vehs[vehicle_id].faction_id == faction_id_ &&
+                (Vehs[vehicle_id].state & 0x08000000u) != 0) {
+                Vehs[vehicle_id].order = 0;
+                Vehs[vehicle_id].state &= 0xFCFFBDFFu;
             }
         }
     }
@@ -1091,7 +1106,7 @@ void Console::automate(int veh_id, int order) {
     if (VehPrototypes[Vehs[veh_id].proto_id].plan == 9) {
         if ((order == 2 || order == 1) &&
             (Chassis[VehPrototypes[Vehs[veh_id].proto_id].chassis_id].triad != TRIAD_LAND ||
-             is_ocean(Vehs[veh_id].x, Vehs[veh_id].y))) {
+             (MapTiles[(Vehs[veh_id].x >> 1) + Vehs[veh_id].y * MapLongitude].climate & ~0x1F) < 0x60)) {
             return;
         }
         if (order == 2) {
@@ -1220,27 +1235,31 @@ void Console::disband(int veh_id) {
         return;
     }
 
+    const int veh_x = Vehs[veh_id].x;
+    const int veh_y = Vehs[veh_id].y;
     field_23BE4_ = 0;
-    const int base_id = base_at(Vehs[veh_id].x, Vehs[veh_id].y);
+    const int base_id = base_at(veh_x, veh_y);
     parse_says(0, VehPrototypes[Vehs[veh_id].proto_id].veh_name, -1, -1);
     StringTemp[0] = 0;
     strcat(StringTemp, "DISBAND");
     if (base_id < 0) strcat(StringTemp, "2");
 
-    const char *picture;
-    if (Players[faction_id_].rule_flags & 0x80) {
-        picture = Chassis[VehPrototypes[Vehs[veh_id].proto_id].chassis_id].triad == 2
-            ? "alair_sm.pcx"
-            : Chassis[VehPrototypes[Vehs[veh_id].proto_id].chassis_id].triad == 1
-                ? "navun_sm.pcx" : "alunit_sm.pcx";
+    int answer;
+    if (Players[faction_id_].rule_flags & 0x80u) {
+        answer = popp(ScriptPopupFile, StringTemp, 0,
+            Chassis[VehPrototypes[Vehs[veh_id].proto_id].chassis_id].triad == 2
+                ? "alair_sm.pcx"
+                : Chassis[VehPrototypes[Vehs[veh_id].proto_id].chassis_id].triad == 1
+                    ? "navun_sm.pcx" : "alunit_sm.pcx",
+            nullptr);
     } else {
-        picture = Chassis[VehPrototypes[Vehs[veh_id].proto_id].chassis_id].triad == 2
-            ? "air_sm.pcx"
-            : Chassis[VehPrototypes[Vehs[veh_id].proto_id].chassis_id].triad == 1
-                ? "navun_sm.pcx" : "unit_sm.pcx";
+        answer = popp(ScriptPopupFile, StringTemp, 0,
+            Chassis[VehPrototypes[Vehs[veh_id].proto_id].chassis_id].triad == 2
+                ? "air_sm.pcx"
+                : Chassis[VehPrototypes[Vehs[veh_id].proto_id].chassis_id].triad == 1
+                    ? "navun_sm.pcx" : "unit_sm.pcx",
+            nullptr);
     }
-
-    const int answer = popp(ScriptPopupFile, StringTemp, 0, picture, nullptr);
     if (!answer) {
         NetDaemonNet.unlock_veh();
         return;
@@ -1480,8 +1499,8 @@ void Console::editor_reset_faction() {
 
 void Console::editor_clear_vehicles() {
     auto_undo();
-    GameDataStateStorage.fields_.game_state_ |= 4;
     GameDataStateStorage.fields_.vehicle_current_count_ = 0;
+    GameDataStateStorage.fields_.game_state_ |= 4;
     GameDataStateStorage.fields_.base_current_count_ = 0;
     ConsoleGlobal.cursor_active_ = 0;
     ConsoleGlobal.selected_vehicle_ = -1;
@@ -2652,68 +2671,131 @@ void Console::editor_strategy() {
 void Console::editor_rules() {
     auto_undo();
     for (;;) {
-        uint32_t rules = GameDataStateStorage.fields_.game_rules_;
-        uint32_t state = GameDataStateStorage.fields_.game_state_ & ~0x01800000u;
-        GameDataStateStorage.fields_.game_state_ = state;
-        unsigned int checks = (rules >> 11) & 1u;
-        checks |= (rules & 2u) ? 2u : 0u;
-        checks |= (rules & 8u) ? 4u : 0u;
-        checks |= (rules & 4u) ? 8u : 0u;
-        checks |= (rules & 0x1000u) ? 0x10u : 0u;
-        checks |= (rules & 1u) ? 0x20u : 0u;
-        checks |= (rules & 0x10u) ? 0x40u : 0u;
-        checks |= (rules & 0x20u) ? 0x80u : 0u;
-        checks |= (rules & 0x4000u) ? 0x100u : 0u;
-        checks |= (rules & 0x200u) ? 0x200u : 0u;
-        checks |= (rules & 0x40u) ? 0x400u : 0u;
-        checks |= (rules & 0x100u) ? 0u : 0x800u;
-        checks |= (rules & 0x2000u) ? 0x1000u : 0u;
-        checks |= (rules & 0x8000u) ? 0x2000u : 0u;
-        checks |= (rules & 0x80u) ? 0x4000u : 0u;
-        checks |= (rules & 0x400u) ? 0x8000u : 0u;
-        checks |= (state & 0x00800000u) ? 0x10000u : 0u;
-        checks |= (state & 0x01000000u) ? 0x20000u : 0u;
+        GameDataStateStorage.fields_.game_state_ &= ~0x01800000u;
+        unsigned int checks = (GameDataStateStorage.fields_.game_rules_ >> 11) & 1u;
+        if (GameDataStateStorage.fields_.game_rules_ & 0x2u) {
+            checks |= 0x2u;
+        } else {
+            checks &= ~0x2u;
+        }
+        if (GameDataStateStorage.fields_.game_rules_ & 0x8u) {
+            checks |= 0x4u;
+        } else {
+            checks &= ~0x4u;
+        }
+        if (GameDataStateStorage.fields_.game_rules_ & 0x4u) {
+            checks |= 0x8u;
+        } else {
+            checks &= ~0x8u;
+        }
+        if (GameDataStateStorage.fields_.game_rules_ & 0x1000u) {
+            checks |= 0x10u;
+        } else {
+            checks &= ~0x10u;
+        }
+        if (GameDataStateStorage.fields_.game_rules_ & 0x1u) {
+            checks |= 0x20u;
+        } else {
+            checks &= ~0x20u;
+        }
+        if (GameDataStateStorage.fields_.game_rules_ & 0x10u) {
+            checks |= 0x40u;
+        } else {
+            checks &= ~0x40u;
+        }
+        if (GameDataStateStorage.fields_.game_rules_ & 0x20u) {
+            checks |= 0x80u;
+        } else {
+            checks &= ~0x80u;
+        }
+        if (GameDataStateStorage.fields_.game_rules_ & 0x4000u) {
+            checks |= 0x100u;
+        } else {
+            checks &= ~0x100u;
+        }
+        if (GameDataStateStorage.fields_.game_rules_ & 0x200u) {
+            checks |= 0x200u;
+        } else {
+            checks &= ~0x200u;
+        }
+        if (GameDataStateStorage.fields_.game_rules_ & 0x40u) {
+            checks |= 0x400u;
+        } else {
+            checks &= ~0x400u;
+        }
+        if (~GameDataStateStorage.fields_.game_rules_ & 0x100u) {
+            checks |= 0x800u;
+        } else {
+            checks &= ~0x800u;
+        }
+        if (GameDataStateStorage.fields_.game_rules_ & 0x2000u) {
+            checks |= 0x1000u;
+        } else {
+            checks &= ~0x1000u;
+        }
+        if (GameDataStateStorage.fields_.game_rules_ & 0x8000u) {
+            checks |= 0x2000u;
+        } else {
+            checks &= ~0x2000u;
+        }
+        if (GameDataStateStorage.fields_.game_rules_ & 0x80u) {
+            checks |= 0x4000u;
+        } else {
+            checks &= ~0x4000u;
+        }
+        if (GameDataStateStorage.fields_.game_rules_ & 0x400u) {
+            checks |= 0x8000u;
+        } else {
+            checks &= ~0x8000u;
+        }
+        if (GameDataStateStorage.fields_.game_state_ & 0x00800000u) {
+            checks |= 0x10000u;
+        } else {
+            checks &= ~0x10000u;
+        }
+        if (GameDataStateStorage.fields_.game_state_ & 0x01000000u) {
+            checks |= 0x20000u;
+        } else {
+            checks &= ~0x20000u;
+        }
         PopupWriteCheckState = checks;
         PopupModalState = 6;
         const int result = x_pop_short("RULES", 0x41, nullptr);
         PopupModalState = 0;
         if (result < 0) {
-            break;
-        }
-
-        rules = GameDataStateStorage.fields_.game_rules_ & 0xFFFF0000u;
-        state = GameDataStateStorage.fields_.game_state_ & ~0x01800000u;
-        checks = PopupWriteCheckState;
-        if (ConsoleGroupAction == 0) {
-            if (checks & 1u) rules |= 0x800u;
-            if (checks & 2u) rules |= 2u;
-            if (checks & 4u) rules |= 8u;
-            if (checks & 8u) rules |= 4u;
-            if (checks & 0x10u) rules |= 0x1000u;
-            if (checks & 0x20u) rules |= 1u;
-            if (checks & 0x40u) rules |= 0x10u;
-            if (checks & 0x80u) rules |= 0x20u;
-            if (checks & 0x100u) rules |= 0x4000u;
-            if (checks & 0x200u) rules |= 0x200u;
-            if (checks & 0x400u) rules |= 0x40u;
-            if (!(checks & 0x800u)) rules |= 0x100u;
-            if (checks & 0x1000u) rules |= 0x2000u;
-            if (checks & 0x2000u) rules |= 0x8000u;
-            if (checks & 0x4000u) rules |= 0x80u;
-            if (checks & 0x8000u) rules |= 0x400u;
-            if (checks & 0x10000u) state |= 0x00800000u;
-            if (checks & 0x20000u) state |= 0x01000000u;
-            GameDataStateStorage.fields_.game_rules_ = rules;
-            GameDataStateStorage.fields_.game_state_ = state;
-            AlphaIniPrefs.rules = rules;
-            AlphaIniPrefs.semaphore = state & 0x01800000u;
-            prefs_save(0);
             return;
+        }
+        GameDataStateStorage.fields_.game_rules_ &= 0xFFFF0000u;
+        GameDataStateStorage.fields_.game_state_ &= ~0x01800000u;
+        if (ConsoleGroupAction == 0) {
+            break;
         }
         GameDataStateStorage.fields_.game_rules_ |= default_rules();
         AlphaIniPrefs.rules = GameDataStateStorage.fields_.game_rules_;
         AlphaIniPrefs.semaphore = GameDataStateStorage.fields_.game_state_ & 0x01800000u;
     }
+    const unsigned int accepted = PopupWriteCheckState;
+    if (accepted & 0x1u) GameDataStateStorage.fields_.game_rules_ |= 0x800u;
+    if (accepted & 0x2u) GameDataStateStorage.fields_.game_rules_ |= 0x2u;
+    if (accepted & 0x4u) GameDataStateStorage.fields_.game_rules_ |= 0x8u;
+    if (accepted & 0x8u) GameDataStateStorage.fields_.game_rules_ |= 0x4u;
+    if (accepted & 0x10u) GameDataStateStorage.fields_.game_rules_ |= 0x1000u;
+    if (accepted & 0x20u) GameDataStateStorage.fields_.game_rules_ |= 0x1u;
+    if (accepted & 0x40u) GameDataStateStorage.fields_.game_rules_ |= 0x10u;
+    if (accepted & 0x80u) GameDataStateStorage.fields_.game_rules_ |= 0x20u;
+    if (accepted & 0x100u) GameDataStateStorage.fields_.game_rules_ |= 0x4000u;
+    if (accepted & 0x200u) GameDataStateStorage.fields_.game_rules_ |= 0x200u;
+    if (accepted & 0x400u) GameDataStateStorage.fields_.game_rules_ |= 0x40u;
+    if (!(accepted & 0x800u)) GameDataStateStorage.fields_.game_rules_ |= 0x100u;
+    if (accepted & 0x1000u) GameDataStateStorage.fields_.game_rules_ |= 0x2000u;
+    if (accepted & 0x2000u) GameDataStateStorage.fields_.game_rules_ |= 0x8000u;
+    if (accepted & 0x4000u) GameDataStateStorage.fields_.game_rules_ |= 0x80u;
+    if (accepted & 0x8000u) GameDataStateStorage.fields_.game_rules_ |= 0x400u;
+    if (accepted & 0x10000u) GameDataStateStorage.fields_.game_state_ |= 0x00800000u;
+    if (accepted & 0x20000u) GameDataStateStorage.fields_.game_state_ |= 0x01000000u;
+    AlphaIniPrefs.rules = GameDataStateStorage.fields_.game_rules_;
+    AlphaIniPrefs.semaphore = GameDataStateStorage.fields_.game_state_ & 0x01800000u;
+    prefs_save(0);
 }
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
@@ -4142,37 +4224,41 @@ finish:
 // ORIGINAL: 0x004D92D0 ?group@Console@@QAEXH@Z 0x004D92D0-0x004D95E7
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/004d92d0.cpp: original identity and complete spans", "source:src/console.h: Console owner declarations and layout", "source:src/console.cpp: coupled navigation, selection and lifecycle caller relationships"], "reason": "The original Console operation is expressed by the corresponding real Console owner definition, using its recovered members and source-owned callees rather than the retained seed scaffold."}
 void Console::group(int vehicle_id) {
-    Veh &leader = Vehs[vehicle_id];
-    const int source_x = leader.x, source_y = leader.y;
-    const int faction = leader.faction_id;
-    const int destination_region = map_loc(leader.waypoint_x[0], leader.waypoint_y[0])->region;
-    leader.state |= 0x08000000;
+    const int faction = Vehs[vehicle_id].faction_id;
+    const int source_x = Vehs[vehicle_id].x;
+    const int source_y = Vehs[vehicle_id].y;
+    const int destination_region = MapTiles[(Vehs[vehicle_id].waypoint_x[0] >> 1) +
+                                            Vehs[vehicle_id].waypoint_y[0] * MapLongitude].region;
+    Vehs[vehicle_id].state |= 0x08000000;
     for (int i = 0; i < GameDataStateStorage.fields_.vehicle_current_count_; ++i) {
-        Veh &vehicle = Vehs[i];
-        if (i == vehicle_id || vehicle.faction_id != faction) continue;
-        if (field_23D1C_ ? !(vehicle.state & 0x08000000)
-                         : vehicle.x != source_x || vehicle.y != source_y) continue;
-        const int region = map_loc(vehicle.x, vehicle.y)->region;
+        if (i == vehicle_id || Vehs[i].faction_id != faction) continue;
+        if (field_23D1C_) {
+            if (!(Vehs[i].state & 0x08000000)) continue;
+        } else if (Vehs[i].x != source_x || Vehs[i].y != source_y) {
+            continue;
+        }
+        const int region = MapTiles[(Vehs[i].x >> 1) + Vehs[i].y * MapLongitude].region;
         if (region != destination_region) {
-            const int triad = Chassis[VehPrototypes[vehicle.proto_id].chassis_id].triad;
-            if (triad != 2) {
-                if ((region < 0x40) == (destination_region < 0x40) || triad == 0) continue;
-                if (triad == 1) {
-                    const int destination = base_at(leader.waypoint_x[0], leader.waypoint_y[0]);
-                    const int source = base_at(vehicle.x, vehicle.y);
+            if (Chassis[VehPrototypes[Vehs[i].proto_id].chassis_id].triad != 2) {
+                if ((region < 0x40) == (destination_region < 0x40) ||
+                    Chassis[VehPrototypes[Vehs[i].proto_id].chassis_id].triad == 0) continue;
+                if (Chassis[VehPrototypes[Vehs[i].proto_id].chassis_id].triad == 1) {
+                    const int destination = base_at(Vehs[vehicle_id].waypoint_x[0],
+                                                    Vehs[vehicle_id].waypoint_y[0]);
+                    const int source = base_at(Vehs[i].x, Vehs[i].y);
                     if (destination >= 0 && source >= 0 && !port_to_port(destination, source)) continue;
                 }
             }
         }
-        vehicle.state &= 0xfcffbdff;
-        vehicle.order = leader.order;
-        vehicle.waypoint_count = leader.waypoint_count;
-        vehicle.patrol_current_point = leader.patrol_current_point;
+        Vehs[i].state &= 0xfcffbdff;
+        Vehs[i].order = Vehs[vehicle_id].order;
+        Vehs[i].waypoint_count = Vehs[vehicle_id].waypoint_count;
+        Vehs[i].patrol_current_point = Vehs[vehicle_id].patrol_current_point;
         for (int waypoint = 0; waypoint < 4; ++waypoint) {
-            vehicle.waypoint_x[waypoint] = leader.waypoint_x[waypoint];
-            vehicle.waypoint_y[waypoint] = leader.waypoint_y[waypoint];
+            Vehs[i].waypoint_x[waypoint] = Vehs[vehicle_id].waypoint_x[waypoint];
+            Vehs[i].waypoint_y[waypoint] = Vehs[vehicle_id].waypoint_y[waypoint];
         }
-        vehicle.state |= (leader.state & 0x02000200) | 0x08000000;
+        Vehs[i].state |= (Vehs[vehicle_id].state & 0x02000200) | 0x08000000;
     }
     for (int slot = 0; slot < 8; ++slot) {
         MapWin *window = MapWinTable[slot];
@@ -4298,6 +4384,13 @@ void Console::activate(int x, int y, int current_selection) {
     field_23BEC_ = 1;
 }
 
+// The image keeps separate cells for repeated literals in give_veh
+// (native_sm.pcx 0x006887F8/0x00688814, CANGIVE 0x00688860/0x00688890,
+// navun_sm.pcx 0x00688840/0x00688874). Pooled literals let VC6 merge arms.
+static const char GiveVehNativePicture1[] = "native_sm.pcx";
+static const char GiveVehAlienLabel[] = "CANGIVE";
+static const char GiveVehAlienNavalPicture[] = "navun_sm.pcx";
+
 // Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x004D26A0 ?give_veh@Console@@QAEXH@Z 0x004D26A0-0x004D2ABC
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned original 004D26A0; retained seed src/recovered/units/004d26a0.cpp", "Native4D270F observes receiver faction after whose_territory;4D2889/296C reload vehicle prototype after the first parser;4D298F..4D2A28 reload receiver flags and current chassis after the second parser. Retain local action_give versus message2416 and original unlock/cancel paths.", "recovery/tasks/console-scenario-owner-wave.json; native scope decisions preserve the original baseline"], "reason": "Recover the complete Console command in its genuine owner, retaining original spans and seed evidence. Typed state and lifecycle/network APIs replace seed address arithmetic; this source binding is not byte, reference, structure or runtime acceptance."}
@@ -4305,29 +4398,23 @@ void Console::give_veh(int vehicle_id) { // 0x004D26A0
     if (NetDaemonNet.lock_veh(&vehicle_id, 4, -1, -1, 0) != 0) {
         return;
     }
-
-    const Veh &vehicle = Vehs[vehicle_id];
-    if (vehicle.faction_id != ConsoleGlobal.faction_id_) {
+    if (Vehs[vehicle_id].faction_id != ConsoleGlobal.faction_id_) {
         NetDaemonNet.unlock_veh();
         return;
     }
 
-    const int x = vehicle.x;
-    const int y = vehicle.y;
+    const int y = Vehs[vehicle_id].y;
+    const int x = Vehs[vehicle_id].x;
     int recipient_faction = whose_territory(ConsoleGlobal.faction_id_, x, y,
                                              nullptr, nullptr);
-    const int receiver_faction = faction_id_;
-    const int prototype_id = vehicle.proto_id;
-    const VehPrototype &prototype = VehPrototypes[prototype_id];
-    const RulesChassis &chassis = Chassis[prototype.chassis_id];
-    const int8_t weapon_rating = Weapon[prototype.weapon_id].offense_rating;
-
-    if (recipient_faction == receiver_faction || recipient_faction < 0 ||
-        (PlayersData[receiver_faction].diplo_treaties[recipient_faction] &
+    if (recipient_faction == faction_id_ || recipient_faction < 0 ||
+        (PlayersData[faction_id_].diplo_treaties[recipient_faction] &
          DTREATY_COMMLINK) == 0 ||
-        (PlayersData[receiver_faction].diplo_treaties[recipient_faction] &
+        (PlayersData[faction_id_].diplo_treaties[recipient_faction] &
          DTREATY_VENDETTA) != 0) {
-        if (prototype_id > 0x3F || (weapon_rating >= 0 && prototype_id != 0xF)) {
+        if (Vehs[vehicle_id].proto_id >= 0x40 ||
+            (Weapon[VehPrototypes[Vehs[vehicle_id].proto_id].weapon_id].offense_rating >= 0 &&
+             Vehs[vehicle_id].proto_id != 0xF)) {
             NetDaemonNet.unlock_veh();
             NetMsgPrimary.pop("CANTGIVE", 5000, 0, nullptr);
             return;
@@ -4335,69 +4422,67 @@ void Console::give_veh(int vehicle_id) { // 0x004D26A0
         recipient_faction = 0;
     }
 
-    const uint8_t unit_class = chassis.triad;
-    if (unit_class == TRIAD_AIR) {
-        const Map *const tile = map_loc(x, y);
-        const bool blocked = (tile->bit & BIT_BASE_IN_TILE) == 0 ||
-                             (tile->val2 & 0x0F) > 7;
-        if (blocked && (tile->bit & BIT_AIRBASE) == 0) {
-            NetDaemonNet.unlock_veh();
-            NetMsgPrimary.pop("CANTGIVEAIR", 5000, 0, nullptr);
-            return;
-        }
+    if (Chassis[VehPrototypes[Vehs[vehicle_id].proto_id].chassis_id].triad == TRIAD_AIR &&
+        base_who(x, y) < 0 && (map_loc(x, y)->bit & BIT_AIRBASE) == 0) {
+        NetDaemonNet.unlock_veh();
+        NetMsgPrimary.pop("CANTGIVEAIR", 5000, 0, nullptr);
+        return;
     }
 
-    const bool prototype_unit =
-        prototype_id < 0x40 && (weapon_rating < 0 || prototype_id == 0xF);
-    GenderDefault = Players[recipient_faction].noun_gender;
-    PluralityDefault = Players[recipient_faction].is_noun_plural;
-    parse_says(0, Players[recipient_faction].noun_faction, -1, -1);
-    parse_says(1, VehPrototypes[vehicle.proto_id].veh_name, -1, -1);
-
-    if (prototype_unit && recipient_faction != 0) {
-        const int answer = popp(ScriptPopupFile, "CANGIVE2", 0,
-                                "native_sm.pcx", nullptr);
+    if (Vehs[vehicle_id].proto_id < 0x40 &&
+        (Weapon[VehPrototypes[Vehs[vehicle_id].proto_id].weapon_id].offense_rating < 0 ||
+         Vehs[vehicle_id].proto_id == 0xF)) {
+        GenderDefault = Players[recipient_faction].noun_gender;
+        PluralityDefault = Players[recipient_faction].is_noun_plural;
+        parse_says(0, Players[recipient_faction].noun_faction, -1, -1);
+        parse_says(1, VehPrototypes[Vehs[vehicle_id].proto_id].veh_name, -1, -1);
+        if (recipient_faction != 0) {
+            const int answer = popp(ScriptPopupFile, "CANGIVE2", 0,
+                                    "native_sm.pcx", nullptr);
+            if (answer == 0) {
+                NetDaemonNet.unlock_veh();
+                return;
+            }
+            if (answer == 2) {
+                recipient_faction = 0;
+            }
+        } else if (popp(ScriptPopupFile, "CANGIVE1", 0, GiveVehNativePicture1, nullptr) == 0) {
+            NetDaemonNet.unlock_veh();
+            return;
+        }
+    } else {
+        GenderDefault = Players[recipient_faction].noun_gender;
+        PluralityDefault = Players[recipient_faction].is_noun_plural;
+        parse_says(0, Players[recipient_faction].noun_faction, -1, -1);
+        parse_says(1, VehPrototypes[Vehs[vehicle_id].proto_id].veh_name, -1, -1);
+        int answer;
+        if (Players[faction_id_].rule_flags & RFLAG_ALIEN) {
+            answer = popp(ScriptPopupFile, GiveVehAlienLabel, 0,
+                Chassis[VehPrototypes[Vehs[vehicle_id].proto_id].chassis_id].triad == TRIAD_AIR
+                    ? "alair_sm.pcx"
+                    : Chassis[VehPrototypes[Vehs[vehicle_id].proto_id].chassis_id].triad == TRIAD_SEA
+                        ? GiveVehAlienNavalPicture : "alunit_sm.pcx",
+                nullptr);
+        } else {
+            answer = popp(ScriptPopupFile, "CANGIVE", 0,
+                Chassis[VehPrototypes[Vehs[vehicle_id].proto_id].chassis_id].triad == TRIAD_AIR
+                    ? "air_sm.pcx"
+                    : Chassis[VehPrototypes[Vehs[vehicle_id].proto_id].chassis_id].triad == TRIAD_SEA
+                        ? "navun_sm.pcx" : "unit_sm.pcx",
+                nullptr);
+        }
         if (answer == 0) {
             NetDaemonNet.unlock_veh();
             return;
         }
-        if (answer == 2) {
-            recipient_faction = 0;
-        }
-    } else {
-        const char *label;
-        const char *picture;
-        if (prototype_unit) {
-            label = "CANGIVE1";
-            picture = "native_sm.pcx";
-        } else {
-            label = "CANGIVE";
-            const int current_receiver_faction = faction_id_;
-            const bool alien =
-                (Players[current_receiver_faction].rule_flags & RFLAG_ALIEN) != 0;
-            const int current_prototype_id = vehicle.proto_id;
-            const uint8_t current_unit_class = Chassis[
-                VehPrototypes[current_prototype_id].chassis_id].triad;
-            if (alien) {
-                picture = current_unit_class == TRIAD_AIR ? "alair_sm.pcx" :
-                          current_unit_class == TRIAD_SEA ? "navun_sm.pcx" : "alunit_sm.pcx";
-            } else {
-                picture = current_unit_class == TRIAD_AIR ? "air_sm.pcx" :
-                          current_unit_class == TRIAD_SEA ? "navun_sm.pcx" : "unit_sm.pcx";
-            }
-        }
-        if (popp(ScriptPopupFile, label, 0, picture, nullptr) == 0) {
-            NetDaemonNet.unlock_veh();
-            return;
-        }
     }
 
-    if (!IsMultiplayerNet) {
-        action_give(vehicle_id, recipient_faction);
+    if (IsMultiplayerNet) {
+        message_veh(0x2416, vehicle_id, recipient_faction, 0);
+        NetDaemonNet.await_exec(1);
         return;
     }
-    message_veh(0x2416, vehicle_id, recipient_faction, 0);
-    NetDaemonNet.await_exec(1);
+    action_give(vehicle_id, recipient_faction);
 }
 
 // ORIGINAL: 0x004D06C0 ?upgrade@Console@@QAEHH@Z 0x004D06C0-0x004D2218;0x0065A090-0x0065A559
