@@ -1094,7 +1094,7 @@ void Datalink::draw_effect() {
                   rect.right - rect.left, 0);
 }
 
-// ORIGINAL: 0x00430B30 ?draw_tech@Datalink@@QAEXXZ 0x00430B30-0x00430C76
+// ORIGINAL: 0x00430B30 ?draw_tech@Datalink@@QAEXXZ 0x00430B30-0x00430C76 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["image:0x430B30", "git:8e3029104ab590bec35cc6932e637765b2ea4074:src/recovered/units/00430b30.cpp"], "reason": "Recover the preserved topic drawer with source-owned state and real popup/window lifetimes."}
 // Inline boundary the image's register choice for the title test shows.
 static inline void append_upper_name(LPSTR name) {
@@ -3233,7 +3233,7 @@ Purpose: List the terraforming options, ids 90000 upward.
 
          The goto shape is the image's: the suffix append and the `item` call
          share one exit, so the "no ids" case still files the name.
-// ORIGINAL: 0x0042BAB0 ?set_cat_terraform@Datalink@@QAEXXZ 0x0042BAB0-0x0042BCB1 FILE
+// ORIGINAL: 0x0042BAB0 ?set_cat_terraform@Datalink@@QAEXXZ 0x0042BAB0-0x0042BCB1 FILE BYTE_EXACT
 // MISMATCH 14/150 against our 159, first divergence at 8. TRIED: the second entry's skip spelled as the image's own pair of compares on ids 90036/90037 and as a `continue` - the two produce the same 159.
 // size      513 bytes
 // prototype void (__thiscall ?set_cat_terraform@Datalink@@QAEXXZ)(Datalink* this)
