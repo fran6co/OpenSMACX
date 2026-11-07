@@ -1023,7 +1023,7 @@ void BaseWin::base_killed(int base_id) {
     }
 }
 
-// ORIGINAL: 0x00419A90 ?governor@BaseWin@@QAEHH@Z 0x00419A90-0x0041A010
+// ORIGINAL: 0x00419A90 ?governor@BaseWin@@QAEHH@Z 0x00419A90-0x0041A010 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:a538e0a3:src/unrecovered/00419a90.cpp", "source:src/basewin.h", "image:original instruction and dispatch evidence for the BaseWin owner"], "reason": "Recover this original base-window operation through the real BaseWin owner, existing typed members and source-owned shared dependencies; catalogue naming and original intervals remain distinct from current compiler symbols."}
 int BaseWin::governor(int settings_only) {
     compute_selected_base();
