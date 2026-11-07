@@ -3066,7 +3066,7 @@ int __cdecl defense_value(int faction_id, int x, int y, int veh_id_def,
 
 /*
 Purpose: Calculate the lifecycle (morale) of the specified native life unit.
-// ORIGINAL: 0x00501350 ?morale_alien@@YAHHH@Z 0x00501350-0x005014F1
+// ORIGINAL: 0x00501350 ?morale_alien@@YAHHH@Z 0x00501350-0x005014F1 BYTE_EXACT
 // TRIED: still MISMATCH (~0.72 similar, up from ~0.46) - most of the remaining divergence is register allocation the compiler picked differently around the atrocities/veh-flags block and the two `range()` call sites, which every flag set tried left in place.
 // TRIED: source had the Fungal Tower special case as the OUTER `if`, guarded by `veh_id >= 0`, with the turn-ladder as its `else` - the image runs the turn-ladder/atrocities/veh-flags computation FIRST, UNCONDITIONALLY, then reads `Vehs[veh_id].x/.y/.proto_id` with NO veh_id guard (an out-of-bounds `Vehs[-1]` read - reproduced deliberately, see the BUG comment at the site) and only THEN branches on proto_id, overwriting `morale` if it is the Fungal Tower. Each branch ends in its OWN `return range(morale, 0, 6);` (not a shared tail after the `if`) - `int x`/`int y` locals (not `int16_t`) match the image's `movsx` at the point of assignment.
 // LEVER: (0.79 -> 0.863) the tower scan walks the eight adjacent offsets
@@ -10894,7 +10894,7 @@ void __cdecl action_give(int vehicle_id, int faction_id) {
 }
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x004CE210 ?action_tectonic@@YAXHHH@Z 0x004CE210-0x004CE6A1
+// ORIGINAL: 0x004CE210 ?action_tectonic@@YAXHHH@Z 0x004CE210-0x004CE6A1 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned entry 004CE210; retained seed src/recovered/units/004ce210.cpp", "recovery/tasks/vehicle-special-actions-coverage.json; native scope expansion preserves task baseline", "Native4CE326/4CE7F0 kill precedes announcement; fungal EBX retains initial combat faction while later slot reads observe compacted storage;580B51/580BF7 are mask immediates, not globals."], "reason": "Typed transfer or terrain action preserves native parser, kill, interception and post-call vehicle-slot read order; retained seed remains evidence, not executable backing."}
 void __cdecl action_tectonic(int vehicle_id, int x, int y) {
     BOOL focused_on_event = false;
@@ -11009,7 +11009,7 @@ extern "C" void __cdecl sub_4ce6b0(int x_coord, int y_coord) {
     }
 }
 
-// ORIGINAL: 0x004CE790 ?action_fungal@@YAXHHH@Z 0x004CE790-0x004CEDDB
+// ORIGINAL: 0x004CE790 ?action_fungal@@YAXHHH@Z 0x004CE790-0x004CEDDB BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned entry 004CE790; retained seed git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/004ce790.cpp", "recovery/tasks/vehicle-special-actions-coverage.json; native scope expansion preserves task baseline", "Native4CE326/4CE7F0 kill precedes announcement; fungal EBX retains initial combat faction while later slot reads observe compacted storage;580B51/580BF7 are mask immediates, not globals."], "reason": "Typed transfer or terrain action preserves native parser, kill, interception and post-call vehicle-slot read order; retained seed remains evidence, not executable backing."}
 // TRIED: literal parameter-slot layout (a1/a2/a3 kept live as named locals rather than reused stack slots the original repurposes after FX::play/kill); diverges at instruction #5, before the base_find call, so it's a prologue register-allocation gap. Full logic (opportunistic-attack radius scan, territory check, and the fungus-spread loop with veh_init/bit_set/ world_alt_set/synch_bit/draw_tile) is landed and faithful to the byte-offset table math (record stride 0x34, faction matrix stride 0x20cc), cross-checked instruction-by-instruction against the disassembly rather than trusted from Ghidra alone.
 // The image inlines map.cpp's anything_at here (its dead `== -1` test
@@ -11645,7 +11645,7 @@ int __cdecl propose_proto(int faction_id, int chassis_id, int weapon_id,
 
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x0057F1D0 ?retire_proto@@YAXHH@Z 0x0057F1D0-0x0057F4B0
+// ORIGINAL: 0x0057F1D0 ?retire_proto@@YAXHH@Z 0x0057F1D0-0x0057F4B0 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned57F1D0..57F4B0: category snapshot after proto_bung_put;57F28D current-count guard;57F2B3/2C7 live full mask;57F3BA post-stack prototype reload;57F410 predefined branch bypasses active-bit clearing.", "Native57F434..47F inclusive queue walk, first-slot -69 and nonfirst shift/decrement; descending kill path preserves compacted storage. Existing typed owners in veh/base/faction/net headers.", "recovery/tasks/vehicle-special-actions-coverage.json central reviewed recovery; retained src/recovered/units/0057f1d0.cpp and immutable baseline."], "reason": "Recover complete prototype retirement with native descending-compaction traversal, live visibility mask, base/stack fallback, current prototype mineral refund and inclusive queue cleanup. Preserve source identity, full seed and original spans; this is not matching or runtime acceptance."}
 void __cdecl retire_proto(int prototype_id, int faction_id) {
     proto_bung_put(faction_id, prototype_id);
