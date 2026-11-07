@@ -1154,17 +1154,12 @@ void SocialWin::draw_faction_basal() {
     Buffer::box_sprite(&title, &InterfaceBoxStyles[6]);
 
     StringTemp[0] = '\0';
-    const Player &player = Players[factionID_];
-    GenderDefault = player.noun_gender;
-    PluralityDefault = player.is_noun_plural;
-    strcat(StringTemp, player.noun_faction);
+    parse_set(Players[factionID_].noun_gender, Players[factionID_].is_noun_plural);
+    strcat(StringTemp, Players[factionID_].noun_faction);
     CharUpperA(StringTemp);
     Buffer::set_font(&font1_, 0, 0, 0);
     Buffer::set_text_color(0x9f, -1, 1, 1);
-    char *const text = StringTemp;
-    if (text != 0) {
-        Buffer::write_cent_l(text, &title, strlen(text));
-    }
+    Buffer::write_cent_l(StringTemp, &title);
 
     title = panel;
     title.top = title.bottom - 0x14;

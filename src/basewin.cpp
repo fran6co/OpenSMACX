@@ -913,8 +913,8 @@ void BaseWin::draw_support() {
     const RECT area = rect1_;
     mapWin_.init(2, 0);
     mapWin_.field_1DD6C_ = static_cast<int>(mapWin_.field_1DD6C_) >> 1;
-    const int width = mapWin_.pixel_width();
     const int height = mapWin_.pixel_height();
+    const int width = mapWin_.pixel_width();
     mapWin_.field_1DD70_ = 0x200402;
     int zoom;
     for (zoom = 2; zoom > -15; --zoom) {
@@ -1155,11 +1155,8 @@ void BaseWin::on_mouse_move(int x, int y) {
     if (field_40B4C_ == 1) {
         const int specialist = field_40B50_;
         if (specialist >= 0) {
-            if (specialist >= 16) {
-                cursor = best_specialist() + 4;
-            } else {
-                cursor = ((static_cast<int>(BaseCurrent->spec[specialist >> 3]) >> ((specialist & 7) * 4)) & 15) + 4;
-            }
+            cursor = (specialist >= 16 ? best_specialist()
+                : (static_cast<int>(BaseCurrent->spec[specialist >> 3]) >> ((specialist & 7) * 4)) & 15) + 4;
         } else {
             cursor = 1;
         }
@@ -1306,51 +1303,65 @@ void BaseWin::click(int x, int y, int right, int is_double) {
 void BaseWin::psych_row(int x, int y, int width, int sprite_width,
                        int talents, int drones, int super_drones) {
     Random random;
-    const int population = BaseCurrent->population_size;
     int spacing = sprite_width;
+    const int population = BaseCurrent->population_size;
     if (population > 1) {
-        const int available = psych_display_sub(width, sprite_width) / (population - 1);
-        spacing = available < 1 || sprite_width < 1 ? 1
-            : (available > sprite_width ? sprite_width : available);
+        const int available = (width - sprite_width) / (population - 1);
+        if (available < 1 || sprite_width < 1) {
+            spacing = 1;
+        } else if (available <= sprite_width) {
+            spacing = available;
+        }
     }
     random.reseed(timeGetTime());
-    const bool alien = ExpansionEnabled != 0
-        && (Players[BaseCurrent->faction_id_current].rule_flags & 0x80) != 0;
-    Buffer *const canvas = this;
-    Sprite *const citizens = alien ? g_AL_CITIZEN_SM_CURSOR_SPRITES : g_CITIZEN_SM_CURSOR_SPRITES;
-    Sprite *const specialists = alien ? g_AL_SPECIALIST_SM_CURSOR_SPRITES : g_SPECIALIST_SM_CURSOR_SPRITES;
-
-    for (int talent = 0; talent < talents; ++talent) {
-        const int variant = alien ? 0 : static_cast<int>(random.get(0, 2));
-        Sprite &sprite = citizens[variant * 4];
-        sprite.draw(canvas, sprite.transparent_index(), x, y);
-        x = psych_display_add(x, spacing);
-    }
-    for (int content = 0; content < psych_display_sub(psych_display_sub(
-             psych_display_sub(BaseCurrent->population_size, BaseCurrent->specialist_total), talents), drones);
-         ++content) {
-        const int variant = alien ? 0 : static_cast<int>(random.get(0, 2));
-        Sprite &sprite = citizens[variant * 4 + 1];
-        sprite.draw(canvas, sprite.transparent_index(), x, y);
-        x = psych_display_add(x, spacing);
-    }
-    const int ordinary_drones = psych_display_sub(drones, super_drones);
-    for (int drone = 0; drone < drones; ++drone) {
-        const int variant = alien ? 0 : static_cast<int>(random.get(0, 2));
-        Sprite &sprite = citizens[variant * 4 + 2 + (drone >= ordinary_drones ? 1 : 0)];
-        sprite.draw(canvas, sprite.transparent_index(), x, y);
-        x = psych_display_add(x, spacing);
-    }
-    for (int specialist = 0; specialist < BaseCurrent->specialist_total; ++specialist) {
-        int type;
-        if (specialist < 16) {
-            type = (BaseCurrent->spec[specialist >> 3] >> ((specialist & 7) * 4)) & 15;
-        } else {
-            type = best_specialist();
+    int i;
+    if (ExpansionEnabled && (Players[BaseCurrent->faction_id_current].rule_flags & 0x80)) {
+        for (i = 0; i < talents; i++) {
+            g_AL_CITIZEN_SM_CURSOR_SPRITES[0].draw(this,
+                g_AL_CITIZEN_SM_CURSOR_SPRITES[0].transparent_index(), x, y);
+            x += spacing;
         }
-        Sprite &sprite = specialists[type];
-        sprite.draw(canvas, sprite.transparent_index(), x, y);
-        x = psych_display_add(x, spacing);
+        for (i = 0; i < BaseCurrent->population_size - BaseCurrent->specialist_total
+                 - talents - drones; i++) {
+            g_AL_CITIZEN_SM_CURSOR_SPRITES[1].draw(this,
+                g_AL_CITIZEN_SM_CURSOR_SPRITES[1].transparent_index(), x, y);
+            x += spacing;
+        }
+        for (i = 0; i < drones; i++) {
+            Sprite &sprite = g_AL_CITIZEN_SM_CURSOR_SPRITES[2 + (i >= drones - super_drones)];
+            sprite.draw(this, sprite.transparent_index(), x, y);
+            x += spacing;
+        }
+        for (i = 0; i < BaseCurrent->specialist_total; i++) {
+            Sprite &sprite = g_AL_SPECIALIST_SM_CURSOR_SPRITES[i < 16
+                ? (static_cast<int>(BaseCurrent->spec[i >> 3]) >> ((i & 7) * 4)) & 15 : best_specialist()];
+            sprite.draw(this, sprite.transparent_index(), x, y);
+            x += spacing;
+        }
+    } else {
+        for (i = 0; i < talents; i++) {
+            Sprite &sprite = g_CITIZEN_SM_CURSOR_SPRITES[random.get(0, 2) * 4];
+            sprite.draw(this, sprite.transparent_index(), x, y);
+            x += spacing;
+        }
+        for (i = 0; i < BaseCurrent->population_size - BaseCurrent->specialist_total
+                 - talents - drones; i++) {
+            Sprite &sprite = g_CITIZEN_SM_CURSOR_SPRITES[random.get(0, 2) * 4 + 1];
+            sprite.draw(this, sprite.transparent_index(), x, y);
+            x += spacing;
+        }
+        for (i = 0; i < drones; i++) {
+            Sprite &sprite = g_CITIZEN_SM_CURSOR_SPRITES[random.get(0, 2) * 4 + 2
+                + (i >= drones - super_drones)];
+            sprite.draw(this, sprite.transparent_index(), x, y);
+            x += spacing;
+        }
+        for (i = 0; i < BaseCurrent->specialist_total; i++) {
+            Sprite &sprite = g_SPECIALIST_SM_CURSOR_SPRITES[i < 16
+                ? (static_cast<int>(BaseCurrent->spec[i >> 3]) >> ((i & 7) * 4)) & 15 : best_specialist()];
+            sprite.draw(this, sprite.transparent_index(), x, y);
+            x += spacing;
+        }
     }
 }
 
@@ -5955,97 +5966,93 @@ LAB_00414178:
 // ORIGINAL: 0x00415B20 ?draw_info@BaseWin@@QAEXH@Z 0x00415B20-0x00415DCE
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00415b20.cpp", "src/basewin.h", "src/base.h", "src/faction.h", "src/maininterface.h", "src/buffer.h"], "reason": "Recover the base title panel through owned BaseWin rectangles and Sprite dimensions, MainInterface's Buffer and shared frame styles, and typed Base/Player name and grammar fields. The seed retains compiler/reference evidence."}
 void BaseWin::draw_info(int update_mode) {
-    Buffer *screen = static_cast<Buffer *>(&MainInterfaceGlobal);
+    RECT panel = rect12_;
+    panel.left -= 3;
+    panel.top -= 3;
+    panel.right += 3;
+    panel.bottom += 3;
+    MainInterfaceGlobal.Buffer::restore_clip();
+    MainInterfaceGlobal.Buffer::box_sprite(&panel, &InterfaceBoxStyles[3]);
 
-    RECT outer = rect12_;
-    outer.left -= 3;
-    outer.top -= 3;
-    outer.right += 3;
-    outer.bottom += 3;
-    screen->restore_clip();
-    screen->box_sprite(&outer, &InterfaceBoxStyles[3]);
-
-    RECT panel = info_title_rect_;
-    RECT previous_clip = screen->current_clip();
-    screen->set_clip(&panel);
-    screen->box_sprite(&panel, &InterfaceBoxStyles[3]);
+    RECT clip = info_title_rect_;
+    RECT previous_clip = MainInterfaceGlobal.Buffer::current_clip();
+    MainInterfaceGlobal.Buffer::set_clip(&clip);
+    panel = info_title_rect_;
+    MainInterfaceGlobal.Buffer::box_sprite(&panel, &InterfaceBoxStyles[3]);
 
     const int trim = -6 - sprites8_[6].width();
     panel.left -= trim;
     panel.right += trim;
     panel.top += 3;
     panel.bottom -= 3;
-    screen->box_sprite(&panel, &InterfaceBoxStyles[0]);
-    panel.bottom -= 3;
+    MainInterfaceGlobal.Buffer::box_sprite(&panel, &InterfaceBoxStyles[0]);
     panel.left += 3;
     panel.right -= 3;
     panel.top += 3;
+    panel.bottom -= 3;
 
     StringTemp[0] = 0;
     strcat(StringTemp, BaseCurrent->name_string);
-    const int faction = BaseCurrent->faction_id_current;
-    if (faction != ConsoleGlobal.faction_id_) {
+    if (BaseCurrent->faction_id_current != ConsoleGlobal.faction_id_) {
         strcat(StringTemp, " ");
         strcat(StringTemp, "(");
-        GenderDefault = Players[faction].noun_gender;
-        PluralityDefault = Players[faction].is_noun_plural;
+        const int faction = BaseCurrent->faction_id_current;
+        parse_set(Players[faction].noun_gender, Players[faction].is_noun_plural);
         strcat(StringTemp, Players[faction].noun_faction);
         strcat(StringTemp, ")");
     }
     CharUpperA(StringTemp);
 
     int font_size = 32;
-    do {
-        Font *candidate = find_font(font_size, 1);
-        if (candidate->width(StringTemp) <= panel.right - panel.left) break;
+    while (font_size > 0) {
+        const int avail = panel.right - panel.left;
+        if (find_font(font_size, 1)->width(StringTemp) <= avail) break;
         font_size -= 2;
-    } while (font_size > 0);
-
-    screen->set_text_color(ChatItemIdTable[faction], -1, 1, 1);
-    screen->set_font(find_font(font_size, 1), 0, 0, 0);
-    screen->write_cent_l(StringTemp, &panel, strlen(StringTemp));
-    if (update_mode == 0) {
-        MainInterfaceGlobal.soft_update(&info_title_rect_);
-    } else {
-        MainInterfaceGlobal.update(&info_title_rect_, nullptr);
     }
-    screen->set_clip(&previous_clip);
+
+    MainInterfaceGlobal.Buffer::set_text_color(
+        ChatItemIdTable[BaseCurrent->faction_id_current], -1, 1, 1);
+    MainInterfaceGlobal.Buffer::set_font(find_font(font_size, 1), 0, 0, 0);
+    MainInterfaceGlobal.Buffer::write_cent_l(StringTemp, &panel);
+    if (update_mode) {
+        MainInterfaceGlobal.update(&info_title_rect_, nullptr);
+    } else {
+        MainInterfaceGlobal.soft_update(&info_title_rect_);
+    }
+    MainInterfaceGlobal.Buffer::set_clip(&previous_clip);
 }
 // Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x00415730 ?draw_misc@BaseWin@@QAEXH@Z 0x00415730-0x00415B15
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00415730.cpp", "src/basewin.h", "src/alpha.h", "src/faction.h", "src/base.h", "src/interface_palette.cpp", "src/jackal/font.h"], "reason": "Recover the miscellaneous base panel through its owned rectangle, label and string table, live Base and PlayerData fields, font line advance, and shared palette rather than executable addresses and raw self-offsets. The retained seed remains for byte restoration."}
 void BaseWin::draw_misc(int update_mode) {
-    Buffer *canvas = this;
     RECT panel = rect5_;
-    canvas->set_clip(&panel);
-    canvas->box_sprite(&panel, &InterfaceBoxStyles[3]);
+    Buffer::set_clip(&panel);
+    Buffer::box_sprite(&panel, &InterfaceBoxStyles[3]);
     panel.left += 3;
-    panel.top += 3;
     panel.right -= 3;
+    panel.top += 3;
     panel.bottom -= 3;
-    canvas->box_sprite(&panel, &InterfaceBoxStyles[0]);
+    Buffer::box_sprite(&panel, &InterfaceBoxStyles[0]);
     panel.left += 3;
-    panel.top += 3;
     panel.right -= 3;
+    panel.top += 3;
     panel.bottom -= 3;
 
     Font *font = find_font(12, 0);
-    canvas->set_font(font, nullptr, nullptr, nullptr);
-    const int advance = font_line_advance(*font);
-    const int row_height = panel.bottom - advance * 3 - panel.top;
-    int y = panel.top + row_height / 2;
+    Buffer::set_font(font, nullptr, nullptr, nullptr);
+    int y = (panel.bottom - font_line_advance(*font) * 3 - panel.top) / 2 + panel.top;
     int x = panel.left;
 
-    canvas->set_text_color(TextColourTable[104], TextColourTable[105], 1, 1);
+    Buffer::set_text_color(TextColourTable[104], TextColourTable[105], 1, 1);
     StringTemp[0] = 0;
     strcat(StringTemp, label_get(730));
-    x = canvas->write_l(StringTemp, x, y, strlen(StringTemp));
+    x = Buffer::write_l(StringTemp, x, y);
 
-    canvas->set_text_color(TextColourTable[106], TextColourTable[107], 1, 1);
     StringTemp[0] = 0;
+    Buffer::set_text_color(TextColourTable[106], TextColourTable[107], 1, 1);
     strcat(StringTemp, " ");
     say_year(StringTemp);
-    canvas->write_l(StringTemp, x, y, strlen(StringTemp));
+    Buffer::write_l(StringTemp, x, y);
 
     y += font_line_advance(*font);
     x = panel.left;
@@ -6053,17 +6060,16 @@ void BaseWin::draw_misc(int update_mode) {
     StringTemp[0] = 0;
     strcat(StringTemp, label_get(36));
     strcat(StringTemp, ": ");
-    canvas->set_text_color(TextColourTable[104], TextColourTable[105], 1, 1);
-    x = canvas->write_l(StringTemp, x, y, strlen(StringTemp));
+    Buffer::set_text_color(TextColourTable[104], TextColourTable[105], 1, 1);
+    x = Buffer::write_l(StringTemp, x, y);
 
-    const int reserves = PlayersData[faction].energy_reserves;
-    const int hurry_cost = PlayersData[faction].hurry_cost_total;
     StringTemp[0] = 0;
     char number[80];
-    _itoa(reserves - hurry_cost, number, 10);
+    _itoa(PlayersData[faction].energy_reserves - PlayersData[faction].hurry_cost_total,
+        number, 10);
     strcat(StringTemp, number);
-    canvas->set_text_color(TextColourTable[106], TextColourTable[107], 1, 1);
-    canvas->write_l(StringTemp, x, y, strlen(StringTemp));
+    Buffer::set_text_color(TextColourTable[106], TextColourTable[107], 1, 1);
+    Buffer::write_l(StringTemp, x, y);
 
     y += font_line_advance(*font);
     x = panel.left;
@@ -6071,15 +6077,14 @@ void BaseWin::draw_misc(int update_mode) {
     strcat(StringTemp, label_get(958));
     strcat(StringTemp, ": ");
     strcat(StringTemp, " ");
-    const int eco_damage = BaseCurrent->eco_damage;
-    _itoa(eco_damage, number, 10);
+    _itoa(BaseCurrent->eco_damage, number, 10);
     strcat(StringTemp, number);
-    if (eco_damage != 0) {
-        canvas->set_text_color(TextColourTable[100], TextColourTable[101], 1, 1);
+    if (BaseCurrent->eco_damage == 0) {
+        Buffer::set_text_color(TextColourTable[98], TextColourTable[99], 1, 1);
     } else {
-        canvas->set_text_color(TextColourTable[98], TextColourTable[99], 1, 1);
+        Buffer::set_text_color(TextColourTable[100], TextColourTable[101], 1, 1);
     }
-    canvas->write_l(StringTemp, x, y, strlen(StringTemp));
+    Buffer::write_l(StringTemp, x, y);
 
     if (update_mode != 0) {
         update(&rect5_, nullptr);

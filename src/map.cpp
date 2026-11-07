@@ -1092,6 +1092,7 @@ Status: Complete
 /*
 Purpose: If a base or unit exists, get the owner of the specified tile.
 // ORIGINAL: 0x005798E0 ?anything_at@@YAHHH@Z 0x005798E0-0x00579918 BYTE_EXACT
+// body      src/map.h
 // size      56 bytes
 // prototype int (__cdecl ?anything_at@@YAHHH@Z)(int xCoord, int yCoord)
 // callers   1   call targets   0
@@ -1101,17 +1102,8 @@ Purpose: If a base or unit exists, get the owner of the specified tile.
 Return Value: Owner (faction id) or -1
 Status: Complete
 */
-int __cdecl anything_at(int x, int y) {
-    Map *tile = map_loc(x, y);
-    if (tile->bit & (BIT_VEH_IN_TILE | BIT_BASE_IN_TILE)) {
-        // `int`, as in veh_who: the image's test is `jl`.
-        int owner = tile->val2 & 0xF;
-        if (owner < MaxPlayerNum) {
-            return owner;
-        }
-    }
-    return -1;
-}
+// BODY IN map.h, as `MEASURED inline`: world_alt_set and action_fungal inline
+// it, and 0x005798E0 is a real body.
 
 
 /*
@@ -1494,13 +1486,8 @@ uint32_t WorldClimateRedrawRequest;  // 0x009B22E8
 /*
 Purpose: Check for any type of zone of control conflicts (base and/or unit).
 // ORIGINAL: 0x005C89F0 ?zoc_any@@YAHHHH@Z 0x005C89F0-0x005C8AC0 BYTE_EXACT
-// LEVER (2026-09-03): anything_at (0x005798E0) written out inline - the image
-//            makes ZERO calls here and `call_diff` flagged the real call as
-//            MORE-by-one; 3/82 -> 12/82 and call_diff is now clean. The
-//            occupant test, the owner<MaxPlayerNum bound and the owner>=0
-//            test are the three the image emits in that order, so the
-//            `owner >= 0` that looks redundant after `val2 & 0xF` is
-//            zoc_any's own test on anything_at's return, kept deliberately.
+// The image inlines anything_at (MEASURED inline in map.h); the `owner >= 0`
+// is zoc_any's own test on its return.
 // TRIED: same xrange/on_map-loop family ceiling as zoc_veh (0x005C8AC0,
 //            right below) and base_on_sea. Remaining gap is one register
 //            choice, twice: the image holds the hoisted `MapIsFlat & 1` in
@@ -1522,16 +1509,10 @@ int __cdecl zoc_any(int x, int y, int faction_id) {
         int x_radius = wrap_map_x(x + VehMoveDeltaX[i]);
         int y_radius = y + VehMoveDeltaY[i];
         if (on_map(x_radius, y_radius)) {
-            // Inlined anything_at(x_radius, y_radius): the image writes its
-            // body out at this call site rather than calling 0x005798E0.
-            Map *tile = map_loc(x_radius, y_radius);
-            if (tile->bit & (BIT_VEH_IN_TILE | BIT_BASE_IN_TILE)) {
-                int owner = tile->val2 & 0xF;
-                if (owner < MaxPlayerNum
-                    && owner >= 0 && (uint32_t)owner != faction_id
-                    && !(PlayersData[faction_id].diplo_treaties[owner] & DTREATY_PACT)) {
-                    return owner + 1;
-                }
+            int owner = anything_at(x_radius, y_radius);
+            if (owner >= 0 && (uint32_t)owner != faction_id
+                && !(PlayersData[faction_id].diplo_treaties[owner] & DTREATY_PACT)) {
+                return owner + 1;
             }
         }
     }

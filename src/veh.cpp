@@ -11013,18 +11013,7 @@ extern "C" void __cdecl sub_4ce6b0(int x_coord, int y_coord) {
 // ORIGINAL: 0x004CE790 ?action_fungal@@YAXHHH@Z 0x004CE790-0x004CEDDB BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned entry 004CE790; retained seed git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/004ce790.cpp", "recovery/tasks/vehicle-special-actions-coverage.json; native scope expansion preserves task baseline", "Native4CE326/4CE7F0 kill precedes announcement; fungal EBX retains initial combat faction while later slot reads observe compacted storage;580B51/580BF7 are mask immediates, not globals."], "reason": "Typed transfer or terrain action preserves native parser, kill, interception and post-call vehicle-slot read order; retained seed remains evidence, not executable backing."}
 // TRIED: literal parameter-slot layout (a1/a2/a3 kept live as named locals rather than reused stack slots the original repurposes after FX::play/kill); diverges at instruction #5, before the base_find call, so it's a prologue register-allocation gap. Full logic (opportunistic-attack radius scan, territory check, and the fungus-spread loop with veh_init/bit_set/ world_alt_set/synch_bit/draw_tile) is landed and faithful to the byte-offset table math (record stride 0x34, faction matrix stride 0x20cc), cross-checked instruction-by-instruction against the disassembly rather than trusted from Ghidra alone.
-// The image inlines map.cpp's anything_at here (its dead `== -1` test
-// survives); map.h only declares it, so this TU carries the inline copy.
-static inline int fungal_anything_at(int x, int y) {
-    Map *tile = map_loc(x, y);
-    if (tile->bit & (BIT_VEH_IN_TILE | BIT_BASE_IN_TILE)) {
-        int owner = tile->val2 & 0xF;
-        if (owner < MaxPlayerNum) {
-            return owner;
-        }
-    }
-    return -1;
-}
+// The image inlines map.h's anything_at here (its dead `== -1` test survives).
 
 void __cdecl action_fungal(int vehicle_id, int x, int y) {
     int i;
@@ -11084,7 +11073,7 @@ void __cdecl action_fungal(int vehicle_id, int x, int y) {
         if (!on_map(x_spread, y_spread)) {
             continue;
         }
-        if (rand() % 2 && fungal_anything_at(x_spread, y_spread) == -1) {
+        if (rand() % 2 && anything_at(x_spread, y_spread) == -1) {
             veh_init(BSC_MIND_WORMS, 0, x_spread, y_spread);
         }
         if (bit_at(x_spread, y_spread) & BIT_FUNGUS

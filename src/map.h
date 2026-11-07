@@ -484,7 +484,6 @@ int __cdecl is_coast(int x, int y, BOOL is_base_radius);
 void __cdecl rebuild_vehicle_bits();
 void __cdecl rebuild_base_bits();
 BOOL __cdecl is_known(int x, int y, int faction_id);
-int __cdecl anything_at(int x, int y);
 BOOL __cdecl map_init();
 void __cdecl map_wipe();
 BOOL __cdecl map_write(FILE *map_file);
@@ -751,6 +750,19 @@ int __cdecl bonus_at(int x, int y, int unk_val);
 MEASURED inline int __cdecl base_who(int x, int y) {
     Map *tile = map_loc(x, y);
     if (tile->bit & BIT_BASE_IN_TILE) {
+        // `int`, as in veh_who: the image's test is `jl`.
+        int owner = tile->val2 & 0xF;
+        if (owner < MaxPlayerNum) {
+            return owner;
+        }
+    }
+    return -1;
+}
+
+// MEASURED inline, as base_who: world_alt_set and action_fungal inline it.
+MEASURED inline int __cdecl anything_at(int x, int y) {
+    Map *tile = map_loc(x, y);
+    if (tile->bit & (BIT_VEH_IN_TILE | BIT_BASE_IN_TILE)) {
         // `int`, as in veh_who: the image's test is `jl`.
         int owner = tile->val2 & 0xF;
         if (owner < MaxPlayerNum) {

@@ -1372,29 +1372,17 @@ void DiploWin::kill_offer(int a1, int a2) {
     if (a1 == 0) {
         message_data(0x1507, faction_id_with_, a2, 0, 0, 0);
     }
-    int count = offer_count_[a1];
-    if (a2 < count) {
-        int idx = a2;
-        if (a2 < count - 1) {
-            int *type = &offer_type_[a1][a2];
-            int *value = &offer_value_[a1][a2];
-            do {
-                idx = idx + 1;
-                *type = type[1];
-                *value = value[1];
-                ++type;
-                ++value;
-                count = offer_count_[a1];
-            } while (idx < count - 1);
+    if (a2 < offer_count_[a1]) {
+        for (int i = a2; i < offer_count_[a1] - 1; i++) {
+            offer_type_[a1][i] = offer_type_[a1][i + 1];
+            offer_value_[a1][i] = offer_value_[a1][i + 1];
         }
-        count = offer_count_[a1] - 1;
-        offer_count_[a1] = count;
+        offer_count_[a1]--;
         DiploOffersDirty = 1;
         offer_state_[0] = 0;
         offer_state_[1] = 0;
         redraw();
     }
-
 }
 
 void DiploWin::receive_clear_offer() {
