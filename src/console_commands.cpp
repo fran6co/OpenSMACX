@@ -864,20 +864,23 @@ void Console::editor_kill_veh(int veh_id) {
 
     int vehicle = veh_id;
     if (vehicle < 0) {
-        if (ConsoleGlobal.cursor_active_ == 0) {
+        if (ConsoleGlobal.cursor_active_ != 0) {
+            vehicle = ConsoleGlobal.selected_vehicle_;
+        } else {
             const int cursor = ConsoleGlobal.cursor_history_index_;
             vehicle = veh_at(ConsoleGlobal.cursor_history_x_[cursor],
                              ConsoleGlobal.cursor_history_y_[cursor]);
             if (vehicle < 0) return;
             vehicle = veh_pick(vehicle, "PICKKILL", 1);
             if (vehicle < 0) return;
-        } else {
-            vehicle = ConsoleGlobal.selected_vehicle_;
         }
     }
 
     parse_says(0, VehPrototypes[Vehs[vehicle].proto_id].veh_name, -1, -1);
-    if (X_pop("DELETEME", nullptr) != 0) kill(vehicle);
+    if (X_pop("DELETEME", nullptr) == 0) {
+        return;
+    }
+    kill(vehicle);
 }
 
 /*
@@ -2916,29 +2919,81 @@ void Console::editor_terrain() {
 void Console::editor_scen_rules() {
     Popup popup;
     auto_undo();
-    const uint32_t original_rules = GameDataStateStorage.fields_.game_rules_;
-    const uint32_t original_turn_flags = GameDataStateStorage.fields_.net_turn_flags_;
-    unsigned int checks = PopupWriteCheckState;
-    const unsigned int low = checks & 0xFFu;
-    const unsigned int high = (checks >> 8) & 0xFFu;
-    unsigned int packed = low;
-    packed = (original_rules & 0x00200000u) ? packed | 0x01u : packed & ~0x01u;
-    packed = (original_rules & 0x00400000u) ? packed | 0x02u : packed & ~0x02u;
-    packed = (original_rules & 0x00800000u) ? packed | 0x04u : packed & ~0x04u;
-    packed = (original_rules & 0x04000000u) ? packed | 0x08u : packed & ~0x08u;
-    packed = (original_rules & 0x02000000u) ? packed | 0x10u : packed & ~0x10u;
-    packed = (original_rules & 0x80000000u) ? packed | 0x20u : packed & ~0x20u;
-    packed = (original_rules & 0x00040000u) ? packed | 0x40u : packed & ~0x40u;
-    packed = (original_rules & 0x00020000u) ? packed | 0x80u : packed & ~0x80u;
-    unsigned int packed_high = high;
-    packed_high = (original_rules & 0x00010000u) ? packed_high | 1u : packed_high & ~1u;
-    packed_high = (original_turn_flags & 1u) ? packed_high | 2u : packed_high & ~2u;
-    packed_high = (original_turn_flags & 2u) ? packed_high | 4u : packed_high & ~4u;
-    packed_high = (original_rules & 0x01000000u) ? packed_high | 8u : packed_high & ~8u;
-    packed_high = (original_rules & 0x00100000u) ? packed_high | 0x10u : packed_high & ~0x10u;
-    packed_high = (original_turn_flags & 4u) ? packed_high | 0x20u : packed_high & ~0x20u;
-    packed_high = (original_turn_flags & 8u) ? packed_high | 0x40u : packed_high & ~0x40u;
-    PopupWriteCheckState = packed | (packed_high << 8);
+    if (GameDataStateStorage.fields_.game_rules_ & 0x200000u) {
+        PopupWriteCheckState |= 0x1;
+    } else {
+        PopupWriteCheckState &= ~0x1;
+    }
+    if (GameDataStateStorage.fields_.game_rules_ & 0x400000u) {
+        PopupWriteCheckState |= 0x2;
+    } else {
+        PopupWriteCheckState &= ~0x2;
+    }
+    if (GameDataStateStorage.fields_.game_rules_ & 0x800000u) {
+        PopupWriteCheckState |= 0x4;
+    } else {
+        PopupWriteCheckState &= ~0x4;
+    }
+    if (GameDataStateStorage.fields_.game_rules_ & 0x4000000u) {
+        PopupWriteCheckState |= 0x8;
+    } else {
+        PopupWriteCheckState &= ~0x8;
+    }
+    if (GameDataStateStorage.fields_.game_rules_ & 0x2000000u) {
+        PopupWriteCheckState |= 0x10;
+    } else {
+        PopupWriteCheckState &= ~0x10;
+    }
+    if (GameDataStateStorage.fields_.game_rules_ & 0x80000000u) {
+        PopupWriteCheckState |= 0x20;
+    } else {
+        PopupWriteCheckState &= ~0x20;
+    }
+    if (GameDataStateStorage.fields_.game_rules_ & 0x40000u) {
+        PopupWriteCheckState |= 0x40;
+    } else {
+        PopupWriteCheckState &= ~0x40;
+    }
+    if (GameDataStateStorage.fields_.game_rules_ & 0x20000u) {
+        PopupWriteCheckState |= 0x80;
+    } else {
+        PopupWriteCheckState &= ~0x80;
+    }
+    if (GameDataStateStorage.fields_.game_rules_ & 0x10000u) {
+        PopupWriteCheckState |= 0x100;
+    } else {
+        PopupWriteCheckState &= ~0x100;
+    }
+    if (GameDataStateStorage.fields_.net_turn_flags_ & 0x1u) {
+        PopupWriteCheckState |= 0x200;
+    } else {
+        PopupWriteCheckState &= ~0x200;
+    }
+    if (GameDataStateStorage.fields_.net_turn_flags_ & 0x2u) {
+        PopupWriteCheckState |= 0x400;
+    } else {
+        PopupWriteCheckState &= ~0x400;
+    }
+    if (GameDataStateStorage.fields_.game_rules_ & 0x1000000u) {
+        PopupWriteCheckState |= 0x800;
+    } else {
+        PopupWriteCheckState &= ~0x800;
+    }
+    if (GameDataStateStorage.fields_.game_rules_ & 0x100000u) {
+        PopupWriteCheckState |= 0x1000;
+    } else {
+        PopupWriteCheckState &= ~0x1000;
+    }
+    if (GameDataStateStorage.fields_.net_turn_flags_ & 0x4u) {
+        PopupWriteCheckState |= 0x2000;
+    } else {
+        PopupWriteCheckState &= ~0x2000;
+    }
+    if (GameDataStateStorage.fields_.net_turn_flags_ & 0x8u) {
+        PopupWriteCheckState |= 0x4000;
+    } else {
+        PopupWriteCheckState &= ~0x4000;
+    }
 
     if (x_pop_short("SCENRULES", 0x41, nullptr) < 0) {
         return;
@@ -2969,22 +3024,72 @@ void Console::editor_scen_rules() {
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/004dc860.cpp records the original entry and full body/unwind spans; retained seed is not accepted source structure.", "Task console-scenario-owner-wave and its native grants authorize the thirteen owner methods, typed persistent editor state, existing Popup item sorting, and genuine technology-bit storage. Original instructions resolve callee argument roles and field ownership; dual configured compiler trials and host controls are diagnostics, not acceptance."], "reason": "Recover the selected scenario-editor operation in its existing typed Console owner, retaining its original spans, seed provenance and historical obligations."}
 void Console::editor_scen_victory() {
     Popup popup;
-    unsigned int checks = PopupWriteCheckState;
-    const uint32_t rules = GameDataStateStorage.fields_.game_rules_;
-    const uint32_t state = GameDataStateStorage.fields_.game_state_;
-    checks = (rules & 0x08000000u) ? checks | 0x001u : checks & ~0x001u;
-    checks = (rules & 0x10000000u) ? checks | 0x002u : checks & ~0x002u;
-    checks = (state & 0x00040000u) ? checks | 0x004u : checks & ~0x004u;
-    checks = (rules & 0x40000000u) ? checks | 0x008u : checks & ~0x008u;
-    checks = (rules & 0x20000000u) ? checks | 0x010u : checks & ~0x010u;
-    checks = (state & 0x02000000u) ? checks | 0x020u : checks & ~0x020u;
-    checks = (state & 0x04000000u) ? checks | 0x040u : checks & ~0x040u;
-    checks = (state & 0x00008000u) ? checks | 0x080u : checks & ~0x080u;
-    checks = (state & 0x80000000u) ? checks | 0x100u : checks & ~0x100u;
-    checks = (state & 0x20000000u) ? checks | 0x200u : checks & ~0x200u;
-    checks = (state & 0x40000000u) ? checks | 0x400u : checks & ~0x400u;
-    checks = (rules & 0x00080000u) ? checks | 0x800u : checks & ~0x800u;
-    PopupWriteCheckState = (state & 0x00080000u) ? checks | 0x1000u : checks & ~0x1000u;
+    auto_undo();
+    if (GameDataStateStorage.fields_.game_rules_ & 0x08000000u) {
+        PopupWriteCheckState |= 0x1;
+    } else {
+        PopupWriteCheckState &= ~0x1;
+    }
+    if (GameDataStateStorage.fields_.game_rules_ & 0x10000000u) {
+        PopupWriteCheckState |= 0x2;
+    } else {
+        PopupWriteCheckState &= ~0x2;
+    }
+    if (GameDataStateStorage.fields_.game_state_ & 0x00040000u) {
+        PopupWriteCheckState |= 0x4;
+    } else {
+        PopupWriteCheckState &= ~0x4;
+    }
+    if (GameDataStateStorage.fields_.game_rules_ & 0x40000000u) {
+        PopupWriteCheckState |= 0x8;
+    } else {
+        PopupWriteCheckState &= ~0x8;
+    }
+    if (GameDataStateStorage.fields_.game_rules_ & 0x20000000u) {
+        PopupWriteCheckState |= 0x10;
+    } else {
+        PopupWriteCheckState &= ~0x10;
+    }
+    if (GameDataStateStorage.fields_.game_state_ & 0x02000000u) {
+        PopupWriteCheckState |= 0x20;
+    } else {
+        PopupWriteCheckState &= ~0x20;
+    }
+    if (GameDataStateStorage.fields_.game_state_ & 0x04000000u) {
+        PopupWriteCheckState |= 0x40;
+    } else {
+        PopupWriteCheckState &= ~0x40;
+    }
+    if (GameDataStateStorage.fields_.game_state_ & 0x00008000u) {
+        PopupWriteCheckState |= 0x80;
+    } else {
+        PopupWriteCheckState &= ~0x80;
+    }
+    if (GameDataStateStorage.fields_.game_state_ & 0x80000000u) {
+        PopupWriteCheckState |= 0x100;
+    } else {
+        PopupWriteCheckState &= ~0x100;
+    }
+    if (GameDataStateStorage.fields_.game_state_ & 0x20000000u) {
+        PopupWriteCheckState |= 0x200;
+    } else {
+        PopupWriteCheckState &= ~0x200;
+    }
+    if (GameDataStateStorage.fields_.game_state_ & 0x40000000u) {
+        PopupWriteCheckState |= 0x400;
+    } else {
+        PopupWriteCheckState &= ~0x400;
+    }
+    if (GameDataStateStorage.fields_.game_rules_ & 0x00080000u) {
+        PopupWriteCheckState |= 0x800;
+    } else {
+        PopupWriteCheckState &= ~0x800;
+    }
+    if (GameDataStateStorage.fields_.game_state_ & 0x00080000u) {
+        PopupWriteCheckState |= 0x1000;
+    } else {
+        PopupWriteCheckState &= ~0x1000;
+    }
 
     if (x_pop_short("SCENVICTORY", 0x41, nullptr) < 0) {
         return;
@@ -3775,12 +3880,11 @@ Purpose: Customise one faction's leader and faction names: pick the faction on
 */
 void Console::custom_my_faction() {
     Popup popup;
-    char name_buf[0xC8];
+    char name_buf[0x104];
     int faction_idx;
 
     const unsigned char state = static_cast<unsigned char>(GameDataStateStorage.fields_.game_state_);
     if ((state & 0x40) != 0 && (state & 0x80) != 0) {
-        int chosen;
         const int saved_faction = ConsoleGlobal.faction_id_;
         {
             Popup popup2;
@@ -3801,14 +3905,12 @@ void Console::custom_my_faction() {
             if (saved_faction >= 0) {
                 popup2.set_value(saved_faction);
             }
-            chosen = popup2.exec(0, 0);
+            faction_idx = popup2.exec(0, 0);
             PopupModalState = 0;
         }
-        if (chosen < 0) {
-            popup.close();
+        if (faction_idx < 0) {
             return;
         }
-        faction_idx = chosen;
     } else {
         faction_idx = ConsoleGlobal.faction_id_;
     }
@@ -3817,8 +3919,8 @@ void Console::custom_my_faction() {
     // The label pool's key table: slots 0x2E2/0x2E3 pick the custom-name
     // question's wording, the edit fields' captions sit around 0xAE and 0x1E3.
     LPSTR *const label_keys = Labels.strings_ptr;
-    const LPSTR key = (player.is_leader_female == 0)
-        ? label_keys[0x2E2] : label_keys[0x2E3];
+    const LPSTR key = player.is_leader_female
+        ? label_keys[0x2E3] : label_keys[0x2E2];
     strcpy(name_buf, StringTable.get(key));
 
     popup.start(PopupStartCaption, ConsoleStrCustomNames, -1, nullptr, 0x44, nullptr);
@@ -3840,7 +3942,6 @@ void Console::custom_my_faction() {
 
     const int result = popup.exec(0, 0);
     if (result < 0) {
-        popup.close();
         return;
     }
 
@@ -3854,12 +3955,10 @@ void Console::custom_my_faction() {
     // The entered leader name counts as female when its first letter matches
     // the female wording of the question.
     const char *const match_name = StringTable.get(label_keys[0x2E3]);
-    const int cmp = _strnicmp(match_name, name_buf, 1);
+    const int cmp = _strnicmp(name_buf, match_name, 1);
     player.is_leader_female = (cmp == 0) ? 1 : 0;
 
     NetDaemonNet.synch(7, faction_idx, 0, 0, nullptr, 1, 0x2101);
-
-    popup.close();
 }
 
 // Superseded seed deleted; seed paths below are historical Git provenance.

@@ -34,9 +34,7 @@ typedef int (__cdecl *NullCallback)(void);
 // Local source utility, not a separately mapped original entry: both
 // original UI/editor callers repeat the formatting operation.
 static void parse_field_number(int index, int value) {
-    char num_buf[0x40];
-    StringTemp[0] = '\0';
-    _itoa(value, num_buf, 10);
-    strcat(StringTemp, num_buf);
+    StringTemp[0] = 0;
+    say_num(value);
     parse_says(index, StringTemp, -1, -1);
 }
