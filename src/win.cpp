@@ -8730,8 +8730,7 @@ void Win::paint_tiled(Buffer *tile, int x_origin, int y_origin, int clip_left,
         ++rows;
     }
 
-    const int start_x = clip_left - x_origin;
-    int cur_x = start_x;
+    int cur_x = clip_left - x_origin;
     int cur_y = clip_top - y_origin;
     for (int r = 0; r < rows; ++r) {
         for (int c = 0; c < cols; ++c) {
@@ -8740,7 +8739,7 @@ void Win::paint_tiled(Buffer *tile, int x_origin, int y_origin, int clip_left,
                                  -static_cast<int>(tile->dib_.bmiHeader.biHeight));
             cur_x += tile_width;
         }
-        cur_x = start_x;
+        cur_x = clip_left - x_origin;
         cur_y += neg_tile_height;
     }
 

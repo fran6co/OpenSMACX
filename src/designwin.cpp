@@ -496,25 +496,30 @@ void SelectPartWin::on_redraw() {
 // RECOVERY_BINDING: v1 {"evidence": ["Original seed at git:08336bcc:src/recovered/units/00433820.cpp; its original spans and historical obligations are retained.", "SelectPartWin constructor 0x004328B0 establishes GraphicWin, Scroll+0xA14, Caviar+0x2B9C, Buffer+0x406C and Font members+0x45F4/+0x461C."], "reason": "The SelectPartWin primary vtable at 0x0066B2B8 selects this original body in slot 17; the real GraphicWin-derived override retains its provisional inherited name."}
 // symbol    ?on_mouse_move@SelectPartWin@@UAEXHH@Z
 void SelectPartWin::on_mouse_move(int x, int y) {
-    if (x >= 4 && y >= 4 &&
-        x < field_2B6C_ * 108 + 4 && y < field_2B70_ * 94 + 4) {
-        int next = (y - 4) / 94 * field_2B6C_ + (x - 4) / 108 + field_2B60_;
-        const int previous = field_2B80_;
-        if (next == previous) return;
-        if (next >= field_2B74_) {
-            if (previous >= 0) draw_part(previous, 0);
-        } else {
-            field_4648_ = draw_part(next, 1);
-            if (field_2B80_ >= 0) {
-                draw_part(field_2B80_, 0);
+    // Nested range tests (not one &&-chain) give the image's register choice.
+    if (x >= 4 && y >= 4) {
+        if (x < field_2B6C_ * 108 + 4) {
+            if (y < field_2B70_ * 94 + 4) {
+                int next = (y - 4) / 94 * field_2B6C_ + (x - 4) / 108 + field_2B60_;
+                if (next == field_2B80_) return;
+                if (next >= field_2B74_) {
+                    if (field_2B80_ >= 0) draw_part(field_2B80_, 0);
+                } else {
+                    field_4648_ = draw_part(next, 1);
+                    if (field_2B80_ >= 0) {
+                        draw_part(field_2B80_, 0);
+                    }
+                    field_2B80_ = next;
+                    on_update();
+                    return;
+                }
+                field_4648_ = 0;
+                field_2B80_ = -1;
+                return;
             }
-            field_2B80_ = next;
-            on_update();
-            return;
         }
-    } else {
-        if (field_2B80_ >= 0) draw_part(field_2B80_, 0);
     }
+    if (field_2B80_ >= 0) draw_part(field_2B80_, 0);
     field_4648_ = 0;
     field_2B80_ = -1;
 }
@@ -2563,11 +2568,11 @@ void DesignWin::on_iface_right_click(int xCoord, int yCoord) {
     int position;
     int type;
     if (spot1_.check(xCoord, yCoord, &position, &type) != -1 && position >= 0) {
-        int x = xCoord;
-        int y = yCoord;
         // The label pointer sits at byte offset 0xCE8 of the game block - slot
         // 0x33A of the LPSTR array, the same walk datalink.cpp's
         // CATEGORY_LABEL makes over Labels.strings_ptr.
+        int y = yCoord;
+        int x = xCoord;
         LPSTR resolved_label = StringTable.get(Labels.strings_ptr[0x33A]);
         MainInterfaceGlobal.client_to_screen(&x, &y);
         RECT rect;
