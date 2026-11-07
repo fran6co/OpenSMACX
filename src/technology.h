@@ -197,39 +197,14 @@ int __cdecl tech_tech(int tech_id);
 int __cdecl tech_infra(int tech_id);
 int __cdecl tech_colonize(int tech_id);
 
-MEASURED inline int __cdecl tech_recurse(int tech_id, int base_lvl) {
-    if (tech_id < 0 || tech_id >= MaxTechnologyNum) {
-        return base_lvl;
-    }
-    const int next_lvl = base_lvl + 1;
-    int val1 = tech_recurse(Technology[tech_id].preq_tech_1, next_lvl);
-    int val2 = tech_recurse(Technology[tech_id].preq_tech_2, next_lvl);
-    return (val1 > val2) ? val1 : val2;
-}
-
-MEASURED inline BOOL __cdecl tech_is_preq(int preq_tech_id, int parent_tech_id, int range) {
-    // EACH of these four guards is its OWN early return with its own epilogue -
-    // the image never shares the `return false` block between two tests, so the
-    // first two must not be chained with `||` (see technology.cpp's LEVER list).
-    if (preq_tech_id < 0) {
-        return false;
-    }
-    if (parent_tech_id < 0) {
-        return false;
-    }
-    if (preq_tech_id == parent_tech_id) {
-        return true;
-    }
-    if (!range) {
-        return false;
-    }
-    return tech_is_preq(preq_tech_id, Technology[parent_tech_id].preq_tech_1, range - 1)
-        || tech_is_preq(preq_tech_id, Technology[parent_tech_id].preq_tech_2, range - 1);
-}
+// Recursive prerequisite walks, defined in technology.cpp. Same-TU callers
+// expand them one level; every other unit calls the out-of-line bodies.
+int __cdecl tech_recurse(int tech_id, int base_lvl);
+BOOL __cdecl tech_is_preq(int preq_tech_id, int parent_tech_id, int range);
 
 // Historical placement: this body was `MEASURED inline` in technology.h.
-// It now has one ordinary definition in technology_queries.cpp, alongside
-// the six prerequisite-query consumers that the image expands inline.
+// It now has one ordinary definition in technology.cpp, the technology TU
+// whose consumers the image expands it into.
 //
 // LEVER (2026-09-03, 32/46 -> BYTE_EXACT 46/46): the preq reads are SUBSCRIPTS
 //   off the array and not a `RulesTechnology *tech = &Technology[tech_id]`
@@ -242,7 +217,7 @@ MEASURED inline BOOL __cdecl tech_is_preq(int preq_tech_id, int parent_tech_id, 
 //   once and kept in esi across the third test, and preq_tech_2 is read from
 //   memory a second time. The same lever took tech_avail (which inlines this
 //   body three times) to BYTE_EXACT 130/130.
-// Canonical out-of-line prerequisite query, owned by technology_queries.cpp.
+// Canonical out-of-line prerequisite query, owned by technology.cpp.
 BOOL __cdecl has_tech(int tech_id, int faction_id);
 
 // Owns an automatic PickTech window; historical signature is mutable char*.
