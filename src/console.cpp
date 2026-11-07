@@ -577,7 +577,7 @@ int TimerHoldFlag;      // 0x00915620
 // historical object identity is retained beside ConsoleGlobal in console.cpp.
 // RECOVERY_OBJECT: v1 0x00939FD4 ?PlanLineCounter@@3HA
 int PlanLineCounter;    // 0x00939FD4
-// RECOVERY_OBJECT: v1 0x00703DE0 ?TurnRedrawPending@@3HA
+// RECOVERY_OBJECT: v2 0x00703DE0 0x00703DE4 ?TurnRedrawPending@@3HA 0x00404C3B
 int TurnRedrawPending;  // 0x00703DE0
 
 // ORIGINAL: 0x0050EA40 ?blink_timer@@YAXH@Z 0x0050EA40-0x0050EE25 FILE

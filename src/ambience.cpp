@@ -40,9 +40,9 @@ int LastAmbienceVehicle = -1;
 
 // These exact cells are source-owned here; the transition marker's wider
 // external lifetime census remains open for 0x0074C5E4.
-// RECOVERY_OBJECT: v1 0x00683BF0 ?AmbienceCurrentEffect@@3HA
+// RECOVERY_OBJECT: v2 0x00683BF0 0x00683BF4 ?AmbienceCurrentEffect@@3HA 0x00446B54
 int AmbienceCurrentEffect = -1;
-// RECOVERY_OBJECT: v1 0x0074C5E4 ?AmbienceTransitionMarker@@3HA
+// RECOVERY_OBJECT: v2 0x0074C5E4 0x0074C5E8 ?AmbienceTransitionMarker@@3HA 0x00446C59
 int AmbienceTransitionMarker = 0;
 
 

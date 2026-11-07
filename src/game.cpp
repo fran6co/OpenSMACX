@@ -40,7 +40,8 @@ static char PaletteCompareCreatePath[] = "palcheck.tmp";
 // operations. Preserve the existing spelling and zero initialization: the
 // full original meaning, extent and persistence contract remain unresolved.
 // Original dword bit word: climate_set and set_dirty set distinct bits.
-// RECOVERY_OBJECT: v1 0x0090D91C ?UnkBitfield1@@3IA
+// Bound: scalar; every original access is a dword at the start, never indexed, and the following bytes are never referenced.
+// RECOVERY_OBJECT: v2 0x0090D91C 0x0090D920 ?UnkBitfield1@@3IA 0x0048FEEC
 uint32_t UnkBitfield1;  // 0x0090D91C
 #include <shellapi.h>
 #include <ctype.h> // yearmotize preserves the original signed-byte CRT arguments.
@@ -184,7 +185,8 @@ void __cdecl system_close() {
 char PronounBuffer[256];  // 0x00945838 - see game.h for the naming evidence
 
 
-// RECOVERY_OBJECT: v1 0x009A6488 ?ExpansionEnabled@@3HA
+// Bound: scalar; every original access is a dword at the start, never indexed, and the following bytes are never referenced.
+// RECOVERY_OBJECT: v2 0x009A6488 0x009A648C ?ExpansionEnabled@@3HA 0x004063FB
 BOOL ExpansionEnabled;  // 0x009A6488
 // RECOVERY_OBJECT: v3 0x009A64EC 0x009A650C ?FactionRankings@@3PAIA 0x005AC690 member ?GameDataStateStorage@@3UGameDataStateWindow@@A fields_.faction_rankings_
 // RECOVERY_OBJECT: v3 0x009A6514 0x009A6614 ?SecretProject@@3UBaseSecretProject@@A 0x005002E0 member ?GameDataStateStorage@@3UGameDataStateWindow@@A fields_.secret_project_
@@ -810,8 +812,8 @@ int PopupThemeBevelLower = 0x56; // 0x0068A5C0
 // Original4838E3 reads this DWORD network-game flag; initial image storage is0.
 // RECOVERY_OBJECT: v2 0x0093F660 0x0093F664 ?IsMultiplayerNet@@3HA 0x004838E0
 BOOL IsMultiplayerNet;  // DirectPlay - Serial, Modem, Internet (TCP/IP)
-// Original 0x00442721/0x004713B3 test the shared PBEM mode value, not a pointer; start only.
-// RECOVERY_OBJECT: v1 0x0093A95C ?IsMultiplayerPBEM@@3HA
+// Original 0x00442721/0x004713B3 test the shared PBEM mode value, not a pointer.
+// RECOVERY_OBJECT: v2 0x0093A95C 0x0093A960 ?IsMultiplayerPBEM@@3HA 0x00405276
 BOOL IsMultiplayerPBEM;  // 0x0093A95C // HotSeat / PBEM
 // 0x009A681C
 // 0x009A6820
@@ -1554,14 +1556,14 @@ MEASURED int __cdecl energy_limit(int) {
 // RECOVERY_OBJECT: v1 0x0093A948 ?GameRestartQueued@@3HA
 int GameRestartQueued;  // 0x0093A948
 // Original dword stop-loop flag, set by system-close and read by wait paths.
-// RECOVERY_OBJECT: v1 0x009B2068 ?ExitTurnLoop@@3HA
+// RECOVERY_OBJECT: v2 0x009B2068 0x009B206C ?ExitTurnLoop@@3HA 0x004050C7
 int ExitTurnLoop;       // 0x009B2068
 // Earlier recovery interpreted 0x009A6504/0x009A6508 as independent
 // EndgameFactionSelectorA/B scalars. They are FactionRankings[6]/[7],
 // owned in alpha.cpp: rankings writes all eight slots, and setup_player
 // reads these slots at 0x005B231F/0x005B2300. Keep the historical
 // interpretation here; separate globals would sever producer/consumer state.
-// RECOVERY_OBJECT: v1 0x009B206C ?EndgameExitReason@@3HA
+// RECOVERY_OBJECT: v2 0x009B206C 0x009B2070 ?EndgameExitReason@@3HA 0x004F2FFE
 int EndgameExitReason;
 // Original interlude reads/writes this complete story-mask word.
 // Historical object identity moved to GameDataStateStorage; see the transport manifest.
@@ -1585,11 +1587,12 @@ int EndgameExitReason;
 // RECOVERY_OBJECT: v1 0x00946138 ?TectonicDetonationCount@@3PAIA
 uint32_t TectonicDetonationCount[8];
 // Original691B0C contains pointer691B7C, whose file-backed text is SCRIPT.
-// This owns the observed text and shared pointer cell; original allocation
-// bounds remain unresolved rather than inferred from the current array.
-// RECOVERY_OBJECT: v1 0x00691B7C ?ScriptPopupFileText@@3PADA
+// This owns the observed text and shared pointer cell.
+// Bound: the original bytes are "SCRIPT" and its NUL; one zero pad byte precedes the next string, "EDITOR", at 0x00691B84.
+// RECOVERY_OBJECT: v2 0x00691B7C 0x00691B83 ?ScriptPopupFileText@@3PADA 0x00406384
 char ScriptPopupFileText[] = "SCRIPT";
-// RECOVERY_OBJECT: v1 0x00691B0C ?ScriptPopupFile@@3PADA
+// Bound: pointer cell; the next dword 0x00691B10 is a separate pointer (to "EDITOR" at 0x00691B84).
+// RECOVERY_OBJECT: v2 0x00691B0C 0x00691B10 ?ScriptPopupFile@@3PADA 0x00406384
 char *ScriptPopupFile = ScriptPopupFileText;
 // human_turn514263 writes this independent dword; draw_bases4671B5 reads it.
 // Loader-zero storage ends before the separately owned GameSessionActive.

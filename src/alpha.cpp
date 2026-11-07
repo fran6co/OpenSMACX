@@ -110,7 +110,7 @@ const char *PrefsSection = "Alpha Centauri";       // 0x006900D0
 // read_tech's prologue loads the pointer variable (`mov eax, dword ptr
 // [0x691AFC]` at 0x00585E34) ahead of text_open; the DWORD there points at
 // the "ALPHAX" literal at 0x00691B58.
-// RECOVERY_OBJECT: v1 0x00691AFC ?AlphaxFileID@@3PBDB
+// RECOVERY_OBJECT: v2 0x00691AFC 0x00691B00 ?AlphaxFileID@@3PBDB 0x0048207D
 LPCSTR AlphaxFileID = "ALPHAX";
 LPCSTR ScriptTxtID = "SCRIPT";
 // Alpha owns the parsed #COMPASS pointer IDs populated by read_rules.
@@ -130,18 +130,22 @@ RulesResourceinfo ResourceInfo[MaxResourceInfoNum]; // 0x00945F50
 // RECOVERY_OBJECT: v1 0x0094F1B8 ?TimeControl@@3PAURulesTimeControl@@A
 RulesTimeControl TimeControl[MaxTimeControlNum];    // 0x0094F1B8
 // Convoy 004D907E/004D90EF and the rules parser independently identify this
-// existing resource-table start; original allocation extent and lifetime remain open.
-// RECOVERY_OBJECT: v1 0x00946158 ?Resource@@3PAURulesResource@@A
+// existing resource-table start; lifetime remains open.
+// Bound: the loader fills 4 x 8-byte records from +4 to `cmp esi, 0x94617c` (0x00587D75).
+// RECOVERY_OBJECT: v2 0x00946158 0x00946178 ?Resource@@3PAURulesResource@@A 0x00587D75
 RulesResource Resource[MaxResourceNum];             // 0x00946158
 RulesEnergy Energy[MaxEnergyNum];                   // 0x0094A318
+// NetDaemon::synch sizes opcode 0x81, this whole window, as 0x13C bytes
+// (`mov esi, 0x13c` at 0x00533226; `mov esi, 0x949730` at 0x00533A5C).
+// RECOVERY_OBJECT: v2 0x00949730 0x0094986C ?RulesStorage@@3URulesStorageWindow@@A 0x00533226
 // RECOVERY_OBJECT: v3 0x00949738 ?Rules@@3URulesBasic@@A member ?RulesStorage@@3URulesStorageWindow@@A rules_
 // RECOVERY_OBJECT: v3 0x00949730 ?TechValidCount@@3HA member ?RulesStorage@@3URulesStorageWindow@@A tech_valid_count_
 // RECOVERY_OBJECT: v3 0x00949734 ?TechCommerceCount@@3HA member ?RulesStorage@@3URulesStorageWindow@@A tech_commerce_count_
 RulesStorageWindow RulesStorage;
 // The parser walks the five ratio words at +0x64..+0x74. NetDaemon::synch
 // opcode 0x82 transfers 0x7C bytes from this start (0x00533230/0x00533A63).
-// This binds the start; the accessed domain does not prove a larger allocation.
-// RECOVERY_OBJECT: v1 0x009502A8 ?WorldBuilder@@3URulesWorldbuilder@@A
+// That transfer size bounds the object; ReplayEvents starts at its end.
+// RECOVERY_OBJECT: v2 0x009502A8 0x00950324 ?WorldBuilder@@3URulesWorldbuilder@@A 0x00533230
 RulesWorldbuilder WorldBuilder;
 // prefs_load (0x0059DCF0) stores every field in place - `mov dword ptr
 // [0x94B464], eax` for preferences through custom_world at 0x0094B480
@@ -164,19 +168,21 @@ RulesBonusName BonusName[MaxBonusNameNum];                  // 0x009461A8
 // read_faction(int) (0x00586050) computes its Player* argument as
 // `lea ecx, [eax*4 + 0x946A50]` (stride 1436); faction.h repeats the base
 // beside its extern declaration.
-// RECOVERY_OBJECT: v1 0x00946A50 ?Players@@3PAUPlayer@@A
+// Bound: 8 x 0x59C records; loops end at `cmp esi, 0x949730` (0x00424A96), RulesStorage's start.
+// RECOVERY_OBJECT: v2 0x00946A50 0x00949730 ?Players@@3PAUPlayer@@A 0x00424A96
 Player Players[MaxPlayerNum];                               // 0x00946A50
 // Eight 0x20CC-byte records end where Bases begins at 0x0097D040.
 // RECOVERY_OBJECT: v2 0x0096C9E0 0x0097D040 ?PlayersData@@3PAUPlayerData@@A 0x00458DC0
 PlayerData PlayersData[MaxPlayerNum];                       // 0x0096C9E0
 // The original loader at 0x5881AB starts at 0x94ADE4 and fills name/name_short
 // at offsets -4/0 with stride8. Terrain consumers read those same pointer slots.
-// This binding establishes the start only; the source array does not prove the
-// complete original allocation extent or lifetime.
-// RECOVERY_OBJECT: v1 0x0094ADE0 ?Natural@@3PAURulesNatural@@A
+// Lifetime remains open.
+// Bound: 16 x 8-byte records; loop ends at `cmp esi, 0x94ae60` (0x004E155B), Weapon's start.
+// RECOVERY_OBJECT: v2 0x0094ADE0 0x0094AE60 ?Natural@@3PAURulesNatural@@A 0x004E155B
 RulesNatural Natural[MaxNaturalNum];                        // 0x0094ADE0
 // MapLandmark at 0x00949894 is MapStorage.metadata_.landmarks_ (map.cpp).
-// RECOVERY_OBJECT: v1 0x009AA730 ?Continents@@3PAUContinent@@A
+// Bound: 128 x 0x1C records; reset loop walks +4 to `cmp eax, 0x9ab534` (0x005C55D4).
+// RECOVERY_OBJECT: v2 0x009AA730 0x009AB530 ?Continents@@3PAUContinent@@A 0x005C55D4
 Continent Continents[MaxContinentNum];                      // 0x009AA730
 // rankings (0x005AC690) writes the eight native dwords at
 // [0x009A64EC,0x009A650C). setup_player's apparent endgame selector
@@ -195,7 +201,8 @@ int HallOfFameIOMode;  // 0x00759194
 // MapFilePath at 0x0094A2BC is MapStorage.metadata_.file_path_ (map.cpp).
 // read_tech walks the array from `mov esi, 0x94F360` (&Technology[0].id,
 // base+8 over flags/name) with the 0x2C stride declared in technology.h.
-// RECOVERY_OBJECT: v1 0x0094F358 ?Technology@@3PAURulesTechnology@@A
+// Bound: 89 x 0x2C records; loops end at `cmp esi, 0x9502a4` (0x0059F7C0).
+// RECOVERY_OBJECT: v2 0x0094F358 0x009502A4 ?Technology@@3PAURulesTechnology@@A 0x0059F7C0
 RulesTechnology Technology[MaxTechnologyNum];       // 0x0094F358
 // RECOVERY_OBJECT: v2 0x0094B4A0 0x0094B4C0 ?Mandate@@3PAURulesMandate@@A 0x005873C0
 RulesMandate Mandate[MaxMandateNum];                // 0x0094B4A0
@@ -245,7 +252,8 @@ RulesTerraforming Terraforming[MaxTerrainNum] = {
 // Secret projects are the final 64 records, beginning at Facility[70]
 // (original 0x009A5888). The parser and consumers share this real array;
 // there is no separately allocated secret-project table.
-// RECOVERY_OBJECT: v1 0x009A4B68 ?Facility@@3PAURulesFacility@@A
+// Bound: 134 x 0x30 records; loops end at `cmp edi, 0x9a6488` (0x0048553E).
+// RECOVERY_OBJECT: v2 0x009A4B68 0x009A6488 ?Facility@@3PAURulesFacility@@A 0x0048553E
 RulesFacility Facility[MaxFacilityNum];             // 0x009A4B68
 // RECOVERY_OBJECT: v2 0x00946020 0x00946138 ?Citizen@@3PAURulesCitizen@@A 0x005873C0
 RulesCitizen Citizen[MaxCitizenNum];                // 0x00946020

@@ -95,7 +95,7 @@ void __cdecl slide_show(GraphicWin *window, int mode);
 void __cdecl slide_hide(GraphicWin *window, int mode);
 // on_status reads the distinct reentry cell and writes complete 0/1 dwords.
 // Its initial zero comes from the PE loader's virtual tail, not stored bytes.
-// RECOVERY_OBJECT: v1 0x008A6240 ?ReportInterfaceStatusReentry@@3HA
+// RECOVERY_OBJECT: v2 0x008A6240 0x008A6244 ?ReportInterfaceStatusReentry@@3HA 0x004A41E8
 int ReportInterfaceStatusReentry = 0;
 
 static void report_iface_button(FlatButton &button, RECT &rect, int id,
@@ -759,9 +759,9 @@ static BoxSpriteParams *reportwin_lab_category_style(int category,
 // The process-wide report window, 0x00876478 - see reportwin.h. The image's
 // dynamic initializer at 0x00496930 constructs it through the real recovered
 // constructor below. The fixed list/timer receivers used by ReportIf are
-// members of this object, not separate global storage. Complete original
-// allocation bounds remain unproved by this start-only binding.
-// RECOVERY_OBJECT: v1 0x00876478 ?ReportWinGlobal@@3VReportWin@@A
+// members of this object, not separate global storage.
+// Bound: last dword member +0xFAB8 is stored at 0x00496EDC and read as 0x00885F30; ReportIfGlobal follows.
+// RECOVERY_OBJECT: v2 0x00876478 0x00885F34 ?ReportWinGlobal@@3VReportWin@@A 0x00496EDC
 ReportWin ReportWinGlobal;  // 0x00876478
 
 // MainInterface owns the interface-slot array and active interface ID.

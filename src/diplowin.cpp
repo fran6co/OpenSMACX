@@ -88,7 +88,7 @@ StringList DiplomacyTranscriptLists[8][8];
 
 // 0x00443F10 latches this scalar from zero to one; 0x005290C4 clears it.
 // Its semantic name and broader containing storage remain unresolved.
-// RECOVERY_OBJECT: v1 0x0093A968 ?DiploDefaultFlag93A968@@3HA
+// RECOVERY_OBJECT: v2 0x0093A968 0x0093A96C ?DiploDefaultFlag93A968@@3HA 0x004449AF
 int DiploDefaultFlag93A968;
 
 static RECT inset_rect(RECT value, int left, int top, int right, int bottom) {

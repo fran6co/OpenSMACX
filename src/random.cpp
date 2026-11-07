@@ -25,8 +25,9 @@
 
 
 // Binary64 one emitted by the double-valued expressions below; the original
-// Random::get at 0x006257D2 reads this qword. This binds its start only.
-// RECOVERY_OBJECT: v1 0x0066D8D8 __real@8@3fff8000000000000000
+// Random::get at 0x006257D2 reads this qword. The linker folded it with
+// general.cpp's HSV_to_RGB copy, so both units declare the same merged literal.
+// RECOVERY_LITERAL: v2 merged 0x0066D8D8 0x0066D8E0 __real@8@3fff8000000000000000 0x006257B0
 
 
 /*

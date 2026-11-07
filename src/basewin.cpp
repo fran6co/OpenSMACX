@@ -3764,7 +3764,8 @@ Status: Complete
 // real BaseWin constructor against it and registers the destructor
 // with atexit; here the same recovered constructor runs through this
 // build's own startup and the destructor closes it at exit.
-// RECOVERY_OBJECT: v1 0x006A7628 ?TutWinBaseWindow@@3VBaseWin@@A
+// Bound: the next mapped object, InvertEntryCount, starts exactly sizeof(BaseWin) later.
+// RECOVERY_OBJECT: v2 0x006A7628 0x006EEE60 ?TutWinBaseWindow@@3VBaseWin@@A 0x004083B0
 BaseWin TutWinBaseWindow;  // 0x006A7628
 // Original CRT slots 0x00682060/0x00682064 construct BaseWin before Wave;
 // their registered destructors run in reverse order. Keep the real definitions

@@ -352,7 +352,7 @@ int CurrentFactionEnergyReserves;
 int BaseComputedID = -1;
 // Historical object identity moved to GameDataStateStorage; see the transport manifest.
 // 0x009A64CC
-// RECOVERY_OBJECT: v1 0x0090EA04 ?BaseFindDist@@3HA
+// RECOVERY_OBJECT: v2 0x0090EA04 0x0090EA08 ?BaseFindDist@@3HA 0x004CA1CD
 int BaseFindDist;  // 0x0090EA04
 // 0x009A6814
 // RECOVERY_OBJECT: v2 0x0090EA34 0x0090EA38 ?BaseUpkeepStage@@3IA 0x004E68B0
@@ -5296,15 +5296,15 @@ void __cdecl base_reset(int base_id, int force) {
  * "yes to all" (popup result > 1); 0x00583E30, 0x005BB000, 0x005290A0 and
  * 0x00438460 clear it at the top of their own upgrade passes.
  */
-// RECOVERY_OBJECT: v1 0x0090EA3C ?UpgradePromptAnswered@@3IA
+// RECOVERY_OBJECT: v2 0x0090EA3C 0x0090EA40 ?UpgradePromptAnswered@@3IA 0x00438B19
 uint32_t UpgradePromptAnswered;  // 0x0090EA3C
 
 int BaseCurrentGrowthRate;  // 0x0090E918
 // RECOVERY_OBJECT: v2 0x0090E980 0x0090E984 ?BaseCurrentVehPacifismCount@@3IA 0x004E9550
 uint32_t BaseCurrentVehPacifismCount;  // 0x0090E980
-// RECOVERY_OBJECT: v1 0x0090E8FC ?BaseCurrentForcesSupported@@3IA
+// RECOVERY_OBJECT: v2 0x0090E8FC 0x0090E900 ?BaseCurrentForcesSupported@@3IA 0x004E95AB
 uint32_t BaseCurrentForcesSupported;  // 0x0090E8FC
-// RECOVERY_OBJECT: v1 0x0090E91C ?BaseCurrentForcesMaintCost@@3IA
+// RECOVERY_OBJECT: v2 0x0090E91C 0x0090E920 ?BaseCurrentForcesMaintCost@@3IA 0x0040A6A5
 uint32_t BaseCurrentForcesMaintCost;  // 0x0090E91C
 
 /*
@@ -5314,7 +5314,8 @@ uint32_t BaseCurrentForcesMaintCost;  // 0x0090E91C
  * reads it back and stores the increment, and nothing ever reads the total - so
  * the count is written and then dropped. Kept because it is observable state.
  */
-// RECOVERY_OBJECT: v1 0x0090EA08 ?BaseCurrentForcesMaintCount@@3IA
+// Bound: scalar; every original access is a dword at the start, never indexed, and the following bytes are never referenced.
+// RECOVERY_OBJECT: v2 0x0090EA08 0x0090EA0C ?BaseCurrentForcesMaintCount@@3IA 0x004E95A5
 uint32_t BaseCurrentForcesMaintCount;  // 0x0090EA08
 
 // Tile base owner, as the yield functions inline it (yield_tile_owner).
@@ -5492,7 +5493,8 @@ void __cdecl farm_compute() {
  * energy_yield publishes the clamped energy of a square that contains a base
  * here. Its only other reader in the image is base_terraform (0x004ECCBD).
  */
-// RECOVERY_OBJECT: v1 0x0090E914 ?BaseSquareEnergy@@3HA
+// Bound: dword-only accesses; 0x0090E918 is an independently accessed dword.
+// RECOVERY_OBJECT: v2 0x0090E914 0x0090E918 ?BaseSquareEnergy@@3HA 0x004E7D08
 int BaseSquareEnergy;  // 0x0090E914
 
 /*
@@ -5643,7 +5645,7 @@ executable does not name either.
 // while it is busy skips straight to returning -1.
 // RECOVERY_OBJECT: v1 0x0090EA38 ?BaseAtErrorGuard@@3HA
 int BaseAtErrorGuard;  // 0x0090EA38
-// RECOVERY_OBJECT: v1 0x0093A94C ?BaseAtDebugPopupFlag@@3HA
+// RECOVERY_OBJECT: v2 0x0093A94C 0x0093A950 ?BaseAtDebugPopupFlag@@3HA 0x004E3B12
 int BaseAtDebugPopupFlag;  // 0x0093A94C
 // Shared popup/action result lives in console.cpp as ConsoleGroupAction.
 
@@ -6055,7 +6057,8 @@ Return Value: Cost factor
 Status: Complete
 */
 int __cdecl cost_factor(int faction_id, int rsc_type, int base_id) {
-// RECOVERY_OBJECT: v1 0x00689378 _?diff_cost_base@?1??cost_factor@@YAHHHH@Z@4QBHB
+// Bound: six difficulty dwords; the next mapped string starts at 0x00689390.
+// RECOVERY_OBJECT: v2 0x00689378 0x00689390 _?diff_cost_base@?1??cost_factor@@YAHHHH@Z@4QBHB 0x004E448E
     static const int diff_cost_base[] = { 13, 12, 11, 10, 8, 7 };
     int factor = is_human(faction_id) ? 10 : diff_cost_base[GameDataStateStorage.fields_.diff_level_current_]
         - great_satan(GameDataStateStorage.fields_.faction_rankings_[7], false)

@@ -2355,7 +2355,7 @@ Purpose: Rebuild the topic list for one category and redraw it.
          falls straight into the update. The image's `cmp ebx, 0xc / je` after
          the jump table is that same skip reached from the switch's default
          arm, which no category above 0xF can satisfy.
-// ORIGINAL: 0x0042A2C0 ?set_cat@Datalink@@QAEXIH@Z 0x0042A2C0-0x0042A4AC FILE
+// ORIGINAL: 0x0042A2C0 ?set_cat@Datalink@@QAEXIH@Z 0x0042A2C0-0x0042A4AC FILE BYTE_EXACT
 // MISMATCH 34/152, first divergence at 3. TRIED: transcribing StringStruct::remove_all's walk inline the way the image does - it is a real body here (stringstruct.cpp), so a call is what ours emits, 139 instructions against the image's 152.
 // size      492 bytes
 // prototype void (__thiscall ?set_cat@Datalink@@QAEXIH@Z)(Datalink* this, DatalinkID, int)
@@ -3478,10 +3478,10 @@ void __cdecl help_tech_info(void (__cdecl *emit)(char *), int technology,
 // RECOVERY_OBJECT: v1 0x007591BC ?TechnologyHelpPrefixEmitted@@3HA
 int TechnologyHelpPrefixEmitted;
 // Cross-reference values shared with technology help and acquisition.
-// Only the separate observed dword accesses are established; allocation extent is unknown.
-// RECOVERY_OBJECT: v4 0x007591A4 ?TechnologyHelpEntryName@@3HA target ?TechnologyHelpEntryName@@3PADA
+// Each is a separately accessed dword with a mapped neighbour 4 bytes later.
+// RECOVERY_OBJECT: v4 0x007591A4 0x007591A8 ?TechnologyHelpEntryName@@3HA 0x0044BBBE target ?TechnologyHelpEntryName@@3PADA
 LPSTR TechnologyHelpEntryName;
-// RECOVERY_OBJECT: v1 0x007591A8 ?TechnologyHelpEntryKind@@3HA
+// RECOVERY_OBJECT: v2 0x007591A8 0x007591AC ?TechnologyHelpEntryKind@@3HA 0x0044BBB4
 int TechnologyHelpEntryKind;
 // RECOVERY_OBJECT: v1 0x00684634 ?TechnologyHelpSectionSelector@@3HA
 int TechnologyHelpSectionSelector = -1;

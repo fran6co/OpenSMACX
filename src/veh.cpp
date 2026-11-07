@@ -538,13 +538,16 @@ VehPrototype VehPrototypes[MaxVehProtoNum];  // 0x009AB868
 // The full table ends at Natural's independent start0x0094ADE0.
 // RECOVERY_OBJECT: v2 0x0094A330 0x0094ADE0 ?Chassis@@3PAURulesChassis@@A 0x00454270
 RulesChassis Chassis[ChassisStorageCount];  // 0x0094A330
-// RECOVERY_OBJECT: v1 0x0094AE60 ?Weapon@@3PAURulesWeapon@@A
+// Bound: 26 x 0x10 records; loop ends at `cmp esi, 0x94b000` (0x0044BE13), SocialCategories' start.
+// RECOVERY_OBJECT: v2 0x0094AE60 0x0094B000 ?Weapon@@3PAURulesWeapon@@A 0x0044BE13
 RulesWeapon Weapon[MaxWeaponNum];  // 0x0094AE60
-// RECOVERY_OBJECT: v1 0x0094F278 ?Armor@@3PAURulesArmor@@A
+// Bound: 14 x 0x10 records; loop ends at `cmp esi, 0x94f358` (0x0044BFE0), Technology's start.
+// RECOVERY_OBJECT: v2 0x0094F278 0x0094F358 ?Armor@@3PAURulesArmor@@A 0x0044BFE0
 RulesArmor Armor[MaxArmorNum];  // 0x0094F278
 // Ability-model assembly reads the signed prerequisite at record +0x18;
 // the original indexes these existing rules with a 0x1C-byte stride.
-// RECOVERY_OBJECT: v1 0x009AB538 ?Ability@@3PAURulesAbility@@A
+// Bound: 29 x 0x1C records; loops end at `cmp edi, 0x9ab864` (0x00485641).
+// RECOVERY_OBJECT: v2 0x009AB538 0x009AB864 ?Ability@@3PAURulesAbility@@A 0x00485641
 RulesAbility Ability[MaxAbilityNum];  // 0x009AB538
 // RECOVERY_OBJECT: v1 0x00952328 ?Morale@@3PAURulesMorale@@A
 RulesMorale Morale[MaxMoraleNum];  // 0x00952328

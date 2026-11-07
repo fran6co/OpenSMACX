@@ -24,7 +24,7 @@
 // before "Arial" in this unit's data.
 // RECOVERY_OBJECT: v1 0x00691B28 ?CreditsFontFace@@3PBDB
 LPCSTR CreditsFontFace = "Alpha Centauri";  // 0x00691B28 -> 0x00691BC4
-// RECOVERY_OBJECT: v1 0x00691B2C ?DefaultFontFace@@3PBDB
+// RECOVERY_OBJECT: v2 0x00691B2C 0x00691B30 ?DefaultFontFace@@3PBDB 0x00408B8D
 LPCSTR DefaultFontFace = "Arial";  // 0x00691B2C -> 0x00691BD4
 // RECOVERY_OBJECT: v1 0x00691B30 ?DefaultLargeFontFace@@3PBDB
 LPCSTR DefaultLargeFontFace = "Arial Narrow"; // 0x00691B30 -> 0x00691BDC

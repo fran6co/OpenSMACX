@@ -149,7 +149,8 @@ int MapBaseSubmergedCount[8];
 // world_alt_set (0x005C2042/0x005C2049) fills eight DWORDs with -1.
 // alt_set writes at 0x00591632; action_terraform reads at 0x004CA46C and
 // 0x004CA47E with distinct Console-faction and vehicle-faction indices.
-// RECOVERY_OBJECT: v1 0x009B22BC ?MapBaseIdClosestSubmergedVeh@@3PAHA
+// Bound: `mov ecx, 8; rep stosd` resets the eight faction slots (0x005C2049); 0x009B22DC is a separate dword.
+// RECOVERY_OBJECT: v2 0x009B22BC 0x009B22DC ?MapBaseIdClosestSubmergedVeh@@3PAHA 0x005C2049
 int MapBaseIdClosestSubmergedVeh[8];
 int BrushVal1;  // 0x009B22B0
 // RECOVERY_OBJECT: v4 0x009B22B8 ?BrushVal2@@3IA target ?BrushVal2@@3HA

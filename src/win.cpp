@@ -87,7 +87,7 @@ int MenuPullDownInputOrigin;
 
 // The Win message-status word shares the owner of its message-pump consumers.
 // Original dword: task setup clears it and flush_timer ORs in message flags.
-// RECOVERY_OBJECT: v1 0x009B7B9C ?MsgStatus@@3IA
+// RECOVERY_OBJECT: v2 0x009B7B9C 0x009B7BA0 ?MsgStatus@@3IA 0x005F0CC0
 uint32_t MsgStatus;  // 0x009B7B9C
 // The process window handle is produced by Win::open's CreateWindowExA
 // and consumed by the window/message-pump and DirectDraw owners.
@@ -550,9 +550,10 @@ int Win::is_dialog_focus() {
 }
 
 
-// RECOVERY_OBJECT: v1 0x009B3AB0 ?WinHdcRefCount@@3HA
+// Bound: scalar; every original access is a dword at the start, never indexed, and the following bytes are never referenced.
+// RECOVERY_OBJECT: v2 0x009B3AB0 0x009B3AB4 ?WinHdcRefCount@@3HA 0x005EC690
 int WinHdcRefCount;        // 0x009B3AB0
-// RECOVERY_OBJECT: v1 0x009B7B2C ?WinSharedHdc@@3PAUHDC__@@A
+// RECOVERY_OBJECT: v2 0x009B7B2C 0x009B7B30 ?WinSharedHdc@@3PAUHDC__@@A 0x005EB9A0
 HDC WinSharedHdc;          // 0x009B7B2C
 // RECOVERY_OBJECT: v2 0x009BC498 0x009BC49C ?DirectDrawSurface@@3PAUIDirectDrawSurface2@@A 0x0062CD50
 IDirectDrawSurface2 *DirectDrawSurface;  // 0x009BC498
@@ -565,19 +566,21 @@ HINSTANCE WinInstance;     // 0x009B7B14
 // RECOVERY_OBJECT: v2 0x009B7B1C 0x009B7B20 ?WinScreenWidth@@3HA 0x004E0EA0
 int WinScreenWidth;        // 0x009B7B1C
 // Original 0x005EFD14 stores SM_CYSCREEN's result, read at 0x005D559B/0x0050E925; start only.
-// RECOVERY_OBJECT: v1 0x009B7B20 ?WinScreenHeight@@3HA
+// Bound: scalar; every original access is a dword at the start, never indexed, and the following bytes are never referenced.
+// RECOVERY_OBJECT: v2 0x009B7B20 0x009B7B24 ?WinScreenHeight@@3HA 0x004032E6
 int WinScreenHeight;       // 0x009B7B20
 // Original 0x005F2502 publishes a receiver; 0x005F2290 loads it and 0x005F257A clears the cell.
-// RECOVERY_OBJECT: v1 0x009B7AAC ?WinTrackingWindow@@3PAVWin@@A
+// RECOVERY_OBJECT: v2 0x009B7AAC 0x009B7AB0 ?WinTrackingWindow@@3PAVWin@@A 0x005F0959
 Win *WinTrackingWindow;    // 0x009B7AAC
 // Original: OnMouseMove reads/publishes the hover pointer at 5F22D6/5F231C. This binds pointer storage, not its pointee.
-// RECOVERY_OBJECT: v1 0x009B7A7C ?WinHoverWindow@@3PAVWin@@A
+// Bound: scalar; every original access is a dword at the start, never indexed, and the following bytes are never referenced.
+// RECOVERY_OBJECT: v2 0x009B7A7C 0x009B7A80 ?WinHoverWindow@@3PAVWin@@A 0x005EB713
 Win *WinHoverWindow;      // 0x009B7A7C
 // flush_input clears these Win pointer cells at 5FD15D/5FD163 and again
 // at 5FD19E/5FD1A4. These bind starts only, not allocation or lifetime bounds.
-// RECOVERY_OBJECT: v1 0x009B7ACC ?WinPointerOwner1@@3PAVWin@@A
+// RECOVERY_OBJECT: v2 0x009B7ACC 0x009B7AD0 ?WinPointerOwner1@@3PAVWin@@A 0x005EB641
 Win *WinPointerOwner1;
-// RECOVERY_OBJECT: v1 0x009B7AD0 ?WinPointerOwner2@@3PAVWin@@A
+// RECOVERY_OBJECT: v2 0x009B7AD0 0x009B7AD4 ?WinPointerOwner2@@3PAVWin@@A 0x005EB646
 Win *WinPointerOwner2;
 // Independent DWORD loads/stores at 615E60/615E6C and 615E72/615EDB;
 // 5F60DD/5F60E5 compare and clear the second pointer, not its pointee.
@@ -586,10 +589,10 @@ Win *WinPointerOwner3;
 // RECOVERY_OBJECT: v2 0x009B7AC0 0x009B7AC4 ?WinPointerOwner4@@3PAVWin@@A 0x00615E60
 Win *WinPointerOwner4;
 // Original 0x005EE314 restores the pointer compared with receivers at 0x0063C390/0x0063C4E8; cell only.
-// RECOVERY_OBJECT: v1 0x009B7AE0 ?WinFocusWindow@@3PAVWin@@A
+// RECOVERY_OBJECT: v2 0x009B7AE0 0x009B7AE4 ?WinFocusWindow@@3PAVWin@@A 0x004A5D33
 Win *WinFocusWindow;       // 0x009B7AE0
 // Original: set_modal publishes owner at 5EE1F5; release_modal restores it at 5EE30E; get_mouse_window reloads it at 5F71FE.
-// RECOVERY_OBJECT: v1 0x009B7ADC ?WinModalWindow@@3PAVWin@@A
+// RECOVERY_OBJECT: v2 0x009B7ADC 0x009B7AE0 ?WinModalWindow@@3PAVWin@@A 0x005EE1F5
 Win *WinModalWindow;       // 0x009B7ADC
 // init stores Win pointers at 5EC067/5EC08C; add_parent repeats those
 // array accesses at 5F509C/5F50C7. init admits 40 roots (5EC030);
@@ -602,7 +605,7 @@ Win *WinRootWindows[40];
 // RECOVERY_OBJECT: v1 0x009B7B34 ?WinRootCount@@3HA
 int WinRootCount;
 // Original 0x005F2309/0x005F251E pass this shared scalar through mouse dispatch; start only.
-// RECOVERY_OBJECT: v1 0x009B7AA4 ?WinMouseDirect@@3HA
+// RECOVERY_OBJECT: v2 0x009B7AA4 0x009B7AA8 ?WinMouseDirect@@3HA 0x005F09E8
 int WinMouseDirect;        // 0x009B7AA4
 int WinMouseScreenX;       // 0x009B6628
 int WinMouseScreenY;       // 0x009B662C
@@ -645,7 +648,7 @@ int WinTrackingX;          // 0x009B7AB0
 int WinTrackingY;          // 0x009B7AB4
 // RECOVERY_OBJECT: v1 0x009B7A68 ?WinBackBuffer@@3PAVBuffer@@A
 Buffer *WinBackBuffer;         // 0x009B7A68
-// RECOVERY_OBJECT: v1 0x009B8D7C ?WinModalFocus@@3PAVWin@@A
+// RECOVERY_OBJECT: v2 0x009B8D7C 0x009B8D80 ?WinModalFocus@@3PAVWin@@A 0x0043F293
 Win *WinModalFocus;         // 0x009B8D7C
 // Native pass_dialog_focus publishes this focus pointer at 0x005ECD51.
 // RECOVERY_OBJECT: v1 0x009B7B38 ?WinPendingFocus@@3PAVWin@@A
@@ -654,9 +657,9 @@ Win *WinPendingFocus;       // 0x009B7B38
 // through which to overwrite the previous receiver's object storage.
 // RECOVERY_OBJECT: v2 0x009B7AB8 0x009B7ABC ?WinCallbackWindow@@3PAVWin@@A 0x0060F8B0
 Win *WinCallbackWindow;
-// RECOVERY_OBJECT: v1 0x009B7AC4 ?WinInputFocus@@3PAVWin@@A
+// RECOVERY_OBJECT: v2 0x009B7AC4 0x009B7AC8 ?WinInputFocus@@3PAVWin@@A 0x005EE1ED
 Win *WinInputFocus;       // 0x009B7AC4
-// RECOVERY_OBJECT: v1 0x009B7AC8 ?WinActiveWindow@@3PAVWin@@A
+// RECOVERY_OBJECT: v2 0x009B7AC8 0x009B7ACC ?WinActiveWindow@@3PAVWin@@A 0x005F15F0
 Win *WinActiveWindow;     // 0x009B7AC8
 // Original: set_bubble_text clears/publishes this pointer at 5F83FC/5F841B; clear_bubble_text clears it at 5F8512.
 // RECOVERY_OBJECT: v1 0x009B7A4C ?WinBubbleCompanion@@3PAVWin@@A
@@ -671,7 +674,7 @@ RECT WinBubbleRect;        // 0x009B6E38
 // and flip at 5F17DC. Its right member at 9B6EF0 is not a modal result.
 // RECOVERY_OBJECT: v2 0x009B6EE8 0x009B6EF8 ?WinDirtyRect@@3UtagRECT@@A 0x005F1750
 RECT WinDirtyRect;
-// RECOVERY_OBJECT: v1 0x009B7AEC ?WinDefaultFocus@@3PAVWin@@A
+// RECOVERY_OBJECT: v2 0x009B7AEC 0x009B7AF0 ?WinDefaultFocus@@3PAVWin@@A 0x005F15E0
 Win *WinDefaultFocus;      // 0x009B7AEC
 // Original: set_modal writes indexed owners at 5EE1B9; release_modal compacts/clears and restores them. Start only, not capacity.
 // RECOVERY_OBJECT: v1 0x009B7A1C ?WinFocusStack@@3PAPAVWin@@A
@@ -705,10 +708,10 @@ int WinZOrderFlag;
 // RECOVERY_OBJECT: v1 0x009B7A90 ?WinLeftDownHook@@3P6AXHH@ZA
 void(__cdecl *WinLeftDownHook)(int x, int y);  // 0x009B7A90
 // Original: OnMouseMove clears/tests this cell at 5F2299/5F22E0; update_cursor sets it in hit-region branches.
-// RECOVERY_OBJECT: v1 0x009B7B3C ?WinCursorMoved@@3HA
+// RECOVERY_OBJECT: v2 0x009B7B3C 0x009B7B40 ?WinCursorMoved@@3HA 0x005F0961
 int WinCursorMoved;        // 0x009B7B3C
 // Original 0x00445BC1 installs the callback; 0x005F255B reloads this cell, not a callback target binding.
-// RECOVERY_OBJECT: v1 0x009B7A88 ?WinMessageHook@@3P6AXXZA
+// RECOVERY_OBJECT: v2 0x009B7A88 0x009B7A8C ?WinMessageHook@@3P6AXXZA 0x00445BC1
 void(__cdecl *WinMessageHook)();                            // 0x009B7A88
 // BaseButton::on_left_click (607A20) loads these independent nullary
 // callbacks for button IDs -1/-2. Effect::init (445BB0) installs the OK
@@ -726,9 +729,9 @@ void(__cdecl *WinButtonHoverHook)();
 // The original slot receives (HWND, LPARAM) in window_proc and translated
 // coordinates in OnRButtonDown. Only a two-word cdecl call shape is proved;
 // the semantic parameter contract remains unresolved.
-// RECOVERY_OBJECT: v1 0x009B7A94 ?WinMouseHook@@3P6AXPAUHWND__@@J@ZA
+// RECOVERY_OBJECT: v2 0x009B7A94 0x009B7A98 ?WinMouseHook@@3P6AXPAUHWND__@@J@ZA 0x005F0B4E
 void(__cdecl *WinMouseHook)(HWND window, LPARAM position);  // 0x009B7A94
-// RECOVERY_OBJECT: v1 0x009B7A8C ?WinKeyHook@@3P6AXI@ZA
+// RECOVERY_OBJECT: v2 0x009B7A8C 0x009B7A90 ?WinKeyHook@@3P6AXI@ZA 0x005F07D8
 void(__cdecl *WinKeyHook)(WPARAM key);                      // 0x009B7A8C
 
 /*
@@ -992,7 +995,7 @@ int WinFlipSpriteX;                    // 0x009B7A34
 // Pinned40375C/4037E1/4037FF write the full DWORD at9B7AD8;
 // Win::flip5EFF20 reads that same clipping selector. This binds only
 // its source-owned start, not original allocation bounds or lifetime.
-// RECOVERY_OBJECT: v1 0x009B7AD8 ?WinFlipClipped@@3HA
+// RECOVERY_OBJECT: v2 0x009B7AD8 0x009B7ADC ?WinFlipClipped@@3HA 0x0040375C
 int WinFlipClipped;
 // 0x009BC49C. The surface `DirectDrawSurface` is blitted FROM - the back
 // buffer to its front.
@@ -9334,12 +9337,14 @@ void __cdecl add_parent(Win * window) {
 
 // ====================
 // RECOVERY_OBJECT: v6 0x009B6E30 ?WinDrawingBufferCleanupGuard@@3EA target local _$S15
-// RECOVERY_OBJECT: v4 0x009B6F08 ?g_WIN_BUFFER@@3VBuffer@@A target ?drawing_buffer_@Win@@2VBuffer@@A
+// Bound: the original vector constructor iterates Buffer with a 0x588-byte element (0x0044CF7C); ScreenBuffer starts exactly there.
+// RECOVERY_OBJECT: v4 0x009B6F08 0x009B7490 ?g_WIN_BUFFER@@3VBuffer@@A 0x0044CF7C target ?drawing_buffer_@Win@@2VBuffer@@A
 Buffer Win::drawing_buffer_;
 // Original CRT slots 0x682678/0x68267C construct drawing then screen;
 // registration in this definition order gives reverse atexit cleanup.
-// The screen Buffer starts at 0x009B7490; its allocation bound is unknown.
-// RECOVERY_OBJECT: v4 0x009B7490 ?ScreenBuffer@@3VBuffer@@A target ?screen_buffer_@Win@@2VBuffer@@A
+// The screen Buffer starts at 0x009B7490.
+// Bound: one 0x588-byte Buffer (element size at 0x0044CF7C); the following dword is unreferenced.
+// RECOVERY_OBJECT: v4 0x009B7490 0x009B7A18 ?ScreenBuffer@@3VBuffer@@A 0x0044CF7C target ?screen_buffer_@Win@@2VBuffer@@A
 Buffer Win::screen_buffer_;
 
 // ===== homed from src/unrecovered/005ed360.cpp =====

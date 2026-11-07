@@ -92,10 +92,11 @@ MainInterface MainInterfaceGlobal;  // 0x007AE820
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned CRT dispatcher 0x00644DEC-0x00644DFB supplies [0x00682000,0x006826CC) to 0x00644ED8, which calls each non-null dword. Slot 0x00682538 selects init 0x00459590, which registers exit callback 0x004595B0.", "Original init span 0x00459590-0x004595A6 and exit span 0x004595B0-0x004595BA are independently disassembled; both identify receiver 0x007D38B8 and Wave constructor/destructor 0x004C66E0/0x004C67C0.", "Historical earlier wave.cpp physical COFF selected local STATIC init _$E46 via .CRT$XCU, relocating to g_MAININTERFACE_WAVE, Wave construction, paired local fini _$E44 and atexit; fini relocates to the same object and Wave destruction. Native comparator can select these physical local function symbols.", "Independent pin/COFF/source review supports individual lifetime ownership. These mappings do not establish complete global initialization order, linked retained selection, full data layout, original debug names or runtime acceptance.", "Source-owned MainInterfaceGlobal and its dedicated Wave share src/maininterface.cpp in pinned local startup order. Fresh physical linked evidence qualifies only their order before FarmMapWindow, not complete CRT/runtime or historical TU proof."], "reason": "Bind the original exit operation to the genuine compiler-emitted lifetime of source-owned g_MAININTERFACE_WAVE. The local symbol identifies current emitted code, not an original debug name; no callback body is authored."}
 // symbol    _$E20
 
-// These start-only identities are witnessed by each pinned init and its
-// registered exit callback loading the same receiver for Wave construction
-// and destruction. They do not establish full bounds or startup ordering.
-// RECOVERY_OBJECT: v1 0x007D38B8 ?g_MAININTERFACE_WAVE@@3VWave@@A
+// These identities are witnessed by each pinned init and its registered exit
+// callback loading the same receiver for Wave construction and destruction.
+// They do not establish startup ordering.
+// Bound: PopupScrollVerticalFrameCount starts exactly sizeof(Wave) later.
+// RECOVERY_OBJECT: v2 0x007D38B8 0x007D3924 ?g_MAININTERFACE_WAVE@@3VWave@@A 0x00459590
 Wave g_MAININTERFACE_WAVE;  // 0x007D38B8
 
 // Scroll animation state: distinct original DWORD starts, not interface/Wave members.
@@ -1359,10 +1360,10 @@ void MainInterface::timer_callback_daemon(int a1) {
 // the registry entry the receiver map in maininterface.h names, so the
 // dispatch is a call by name instead of a shim.
 // The original id-to-slot run ends where the separate registry begins.
-// Bind its start; the exact historical allocation remains to be checked.
-// RECOVERY_OBJECT: v1 0x007AE778 ?IfaceIdToSlotStorage@@3PAHA
+// Bound: `mov ecx, 0x1e; rep stosd` clears 30 dwords from the start (0x004596D7).
+// RECOVERY_OBJECT: v2 0x007AE778 0x007AE7F0 ?IfaceIdToSlotStorage@@3PAHA 0x004596D7
 int IfaceIdToSlotStorage[30];
-// RECOVERY_OBJECT: v1 0x007D392C ?ActiveIfaceIdStorage@@3HA
+// RECOVERY_OBJECT: v2 0x007D392C 0x007D3930 ?ActiveIfaceIdStorage@@3HA 0x00404BE8
 int ActiveIfaceIdStorage;
 
 bool __cdecl active_interface_slot_occupied() {

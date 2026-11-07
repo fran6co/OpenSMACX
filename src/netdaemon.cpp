@@ -75,19 +75,19 @@
 static char NetDaemonLockMovePendingText[] = "MOVEPENDING";
 
 // do_checksums(4), original 51E760, copies 0x54 bytes from its calculated
-// vector; net_upkeep 5296E6..5296F4 sends the same 21 dwords. The complete
-// original allocation extent is unknown; this is the observed storage window.
+// vector; net_upkeep 5296E6..5296F4 sends the same 21 dwords.
 // Initial image storage is zero. The producer remains unfinished.
-// RECOVERY_OBJECT: v1 0x0093A008 ?NetTurnChecksums@@3PAHA
+// Bound: every use is the 21-dword vector (`mov ecx, 0x15; rep movsd` at 0x0051E830, `push 0x15` at 0x005296E6); the following dword is unreferenced.
+// RECOVERY_OBJECT: v2 0x0093A008 0x0093A05C ?NetTurnChecksums@@3PAHA 0x0051E830
 int NetTurnChecksums[NetTurnChecksumWords];
 
 // Original process_message 53675D..53677C copies 21 payload dwords to the
 // message's faction row. net_upkeep compares rows 1..7 with stride 0x54.
 // Its 93A56C logging cursor is row 1, word 2, not a separate allocation.
-// These zero-initialized rows cover the observed faction domain only; the
-// complete original extent and incoming faction validation remain unproven.
+// Incoming faction validation remains unproven.
 // The corresponding dispatcher branch remains an unfinished dependency.
-// RECOVERY_OBJECT: v1 0x0093A510 ?NetPeerTurnChecksums@@3PAY0BF@HA
+// Bound: eight 0x54-byte rows (stride at 0x0052978D); MessageWinDeferredBaseMessages starts at the end.
+// RECOVERY_OBJECT: v2 0x0093A510 0x0093A7B0 ?NetPeerTurnChecksums@@3PAY0BF@HA 0x0052978D
 int NetPeerTurnChecksums[NetTurnChecksumPeerSlots][NetTurnChecksumWords];
 
 // The next dword after IsMultiplayerNet. Every sender in this file
@@ -135,9 +135,9 @@ int CommlinkFaction;   // 0x0073B790
 // The spock pair: synch (0x00532E00) raises 0x93F670 when it has something to
 // notify, check_spock sees it, arms 0x93F674 and calls help_spock
 // (0x0051F0C0), which clears both after re-synching the session.
-// RECOVERY_OBJECT: v1 0x0093F670 ?SpockNotifyPending@@3HA
+// RECOVERY_OBJECT: v2 0x0093F670 0x0093F674 ?SpockNotifyPending@@3HA 0x0051F19C
 int SpockNotifyPending;  // 0x0093F670
-// RECOVERY_OBJECT: v1 0x0093F674 ?SpockHelpActive@@3HA
+// RECOVERY_OBJECT: v2 0x0093F674 0x0093F678 ?SpockHelpActive@@3HA 0x0051F1A2
 int SpockHelpActive;     // 0x0093F674
 
 extern int BaseAtDebugPopupFlag;  // 0x0093A94C, defined in base.cpp
@@ -894,7 +894,8 @@ uint32_t NetDaemon::unlock_veh() {
 // RECOVERY_OBJECT: v3 0x0093E964 0x0093E968 ?MessageWinNetworkMessageCount@@3HA 0x004713B0 member ?NetDaemonNet@@3VNetDaemon@@A channels_[1].trailing_words_[7]
 // RECOVERY_OBJECT: v3 0x0093D4F0 ?NetWinPlayerId@@3HA member ?NetDaemonNet@@3VNetDaemon@@A local_player_id_
 // RECOVERY_OBJECT: v3 0x0093D4F4 ?NetWinOtherPlayerId@@3HA member ?NetDaemonNet@@3VNetDaemon@@A host_player_id_
-// RECOVERY_OBJECT: v1 0x0093CD90 ?NetDaemonNet@@3VNetDaemon@@A
+// Bound: the trailing save table (+0x1BE8) is saved/loaded as 0xCE0 bytes from 0x0093E978 (0x005A6CCB), ending at 0x0093F658; the next dword is unreferenced and NetPlayerDropped (0x0093F65C) is separate.
+// RECOVERY_OBJECT: v2 0x0093CD90 0x0093F658 ?NetDaemonNet@@3VNetDaemon@@A 0x005A6CCB
 NetDaemon NetDaemonNet;  // 0x0093CD90
 
 
