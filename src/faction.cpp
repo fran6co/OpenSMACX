@@ -2445,6 +2445,15 @@ void __cdecl see_map_check() {
     }
 }
 
+// has_project() over the plain project_base array: the image walks a pointer.
+static inline BOOL rankings_has_project(int project_id, int faction_id) {
+    int base_id = GameDataStateStorage.fields_.secret_project_.project_base[project_id];
+    if (base_id < 0) {
+        return false;
+    }
+    return Bases[base_id].faction_id_current == faction_id;
+}
+
 /*
 Purpose: Rescore every faction's power, and optionally publish the ranking order that scoring
          implies plus the betrayals the new order provokes.
@@ -2579,7 +2588,7 @@ void __cdecl rankings(int apply_ranks) {
                 }
             }
             for (int i = 0; i < MaxSecretProjectNum; i++) {
-                if (has_project(i, faction_id)) {
+                if (rankings_has_project(i, faction_id)) {
                     FactionRankingsUnk[faction_id] += 10;
                 }
             }
@@ -6427,54 +6436,42 @@ void __cdecl pact_ends(int faction_id, int partner_id) {
     const int withdraw_partner = pact_withdraw(partner_id, faction_id);
     draw_map(1);
 
-    const int human = ConsoleGlobal.faction_id_;
-    int use_withdraw = 0;
-    if (faction_id == human) {
-        const Player &other = Players[partner_id];
-        GenderDefault = other.noun_gender;
-        PluralityDefault = other.is_noun_plural;
-        parse_says(0, other.noun_faction, -1, -1);
-        parse_says(1, other.adj_name_faction, -1, -1);
-        use_withdraw = withdraw_actor;
-    } else if (partner_id == human) {
-        const Player &other = Players[faction_id];
-        GenderDefault = other.noun_gender;
-        PluralityDefault = other.is_noun_plural;
-        parse_says(0, other.noun_faction, -1, -1);
-        parse_says(1, other.adj_name_faction, -1, -1);
-        use_withdraw = withdraw_partner;
-    } else {
-        if (spying(faction_id) == 0 && spying(partner_id) == 0 &&
-            (static_cast<uint8_t>(GameDataStateStorage.fields_.game_state_) & 0x80) == 0 &&
-            (PlayersData[human].diplo_treaties[faction_id] & 1) == 0 &&
-            (PlayersData[human].diplo_treaties[partner_id] & 1) == 0) {
-            return;
+    if (faction_id != ConsoleGlobal.faction_id_ && partner_id != ConsoleGlobal.faction_id_) {
+        // Neither side is the local player: announce only to an observer.
+        if (spying(faction_id) || spying(partner_id)
+            || (static_cast<uint8_t>(GameDataStateStorage.fields_.game_state_) & 0x80)
+            || (PlayersData[ConsoleGlobal.faction_id_].diplo_treaties[faction_id] & 1)
+            || (PlayersData[ConsoleGlobal.faction_id_].diplo_treaties[partner_id] & 1)) {
+            parse_set(Players[faction_id].noun_gender, Players[faction_id].is_noun_plural);
+            parse_says(0, Players[faction_id].noun_faction, -1, -1);
+            parse_set(Players[partner_id].noun_gender, Players[partner_id].is_noun_plural);
+            parse_says(1, Players[partner_id].noun_faction, -1, -1);
+            parse_says(2, get_pact_hood(faction_id, partner_id), -1, -1);
+            X_pop("ENDPACT3", 0);
         }
-        const Player &first = Players[faction_id];
-        GenderDefault = first.noun_gender;
-        PluralityDefault = first.is_noun_plural;
-        parse_says(0, first.noun_faction, -1, -1);
-        const Player &second = Players[partner_id];
-        GenderDefault = second.noun_gender;
-        PluralityDefault = second.is_noun_plural;
-        parse_says(1, second.noun_faction, -1, -1);
+    } else {
+        int use_withdraw;
+        if (faction_id == ConsoleGlobal.faction_id_) {
+            parse_set(Players[partner_id].noun_gender, Players[partner_id].is_noun_plural);
+            parse_says(0, Players[partner_id].noun_faction, -1, -1);
+            parse_says(1, Players[partner_id].adj_name_faction, -1, -1);
+            use_withdraw = withdraw_actor;
+        } else {
+            parse_set(Players[faction_id].noun_gender, Players[faction_id].is_noun_plural);
+            parse_says(0, Players[faction_id].noun_faction, -1, -1);
+            parse_says(1, Players[faction_id].adj_name_faction, -1, -1);
+            use_withdraw = withdraw_partner;
+        }
+        parse_num(0, use_withdraw);
         parse_says(2, get_pact_hood(faction_id, partner_id), -1, -1);
-        X_pop("ENDPACT3", 0);
-        return;
+        popup.start(PopupStartCaption, "ENDPACT1", -1, nullptr,
+                    (IsMultiplayerNet ? 0 : 0x100000), nullptr);
+        if (use_withdraw) {
+            popup.start(PopupStartCaption, "ENDPACT2", -1, nullptr,
+                        (IsMultiplayerNet ? 0 : 0x100000) | 0x80, nullptr);
+        }
+        popup.exec(0, nullptr);
     }
-
-    parse_num(0, use_withdraw);
-    parse_says(2, get_pact_hood(faction_id, partner_id), -1, -1);
-    const uint32_t net_mask = IsMultiplayerNet ? 0xFFFFFFFFu : 0;
-    const uint32_t first_flag = (net_mask & 0xFFF00000u) + 0x00100000u;
-    popup.start(PopupStartCaption, "ENDPACT1", -1, nullptr,
-                static_cast<int>(first_flag), nullptr);
-    if (use_withdraw != 0) {
-        const uint32_t second_flag = (IsMultiplayerNet ? 0u : 0x100000u) | 0x80u;
-        popup.start(PopupStartCaption, "ENDPACT2", -1, nullptr,
-                    static_cast<int>(second_flag), nullptr);
-    }
-    popup.exec(0, nullptr);
 }
 
 
@@ -6544,6 +6541,21 @@ int __cdecl pact_withdraw(int faction_id, int faction_id_with) {
     return lifted_count;
 }
 
+// A base of the faction still riots after recomputation (inlined).
+static inline BOOL allocate_energy_riot_found(int faction_id) {
+    for (int base_id = 0; base_id < GameDataStateStorage.fields_.base_current_count_; base_id++) {
+        if (Bases[base_id].faction_id_current == faction_id) {
+            set_base(base_id);
+            base_compute(1);
+            if (BaseCurrent->talent_total < BaseCurrent->drone_total
+                && (BaseCurrent->state & BSTATE_DRONE_RIOTS_ACTIVE)) {
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
 // ORIGINAL: 0x005267B0 ?allocate_energy@@YAXH@Z 0x005267B0-0x00526E63
 // RECOVERY_BINDING: v1 {"evidence": ["original:0x005267B0-0x00526E63", "git:38853a3f:src/unrecovered/005267b0.cpp", "source:src/faction.h", "source:src/base.h", "source:src/veh.h"], "reason": "Recover the complete faction energy allocation operation through real PlayerData, Base, Console and VehPrototype owners. Preserve the original first scan of global BaseCurrent without selecting each base, the later severe-police selection/recompute sequence, signed allocation arithmetic and callback order; historical spelling notes are not fresh measurements."}
 // TRIED: direct register-mirroring transcription (eax/ebx/.../var_4/var_c/var_10 locals) compiles and matches control flow/offsets faithfully but the extra scratch locals (vs the original's 6-int 0x18 frame) shift register allocation from instr #4; sim 0.68 framed. Not retried with fewer locals given size (1715 bytes).
@@ -6601,21 +6613,8 @@ increase_psych:
     if (PlayersData[faction_id].se_alloc_psych < max_psych) {
         PlayersData[faction_id].se_alloc_psych++;
         while (PlayersData[faction_id].se_alloc_psych < max_psych
-            && PlayersData[faction_id].soc_effect_pending.values_[SocialEffect::POLICE] < -2) {
-            int base_id;
-            for (base_id = 0; base_id < GameDataStateStorage.fields_.base_current_count_; base_id++) {
-                if (Bases[base_id].faction_id_current == faction_id) {
-                    set_base(base_id);
-                    base_compute(1);
-                    if (BaseCurrent->talent_total < BaseCurrent->drone_total
-                        && (BaseCurrent->state & BSTATE_DRONE_RIOTS_ACTIVE)) {
-                        break;
-                    }
-                }
-            }
-            if (base_id >= GameDataStateStorage.fields_.base_current_count_) {
-                break;
-            }
+            && PlayersData[faction_id].soc_effect_pending.values_[SocialEffect::POLICE] < -2
+            && allocate_energy_riot_found(faction_id)) {
             PlayersData[faction_id].se_alloc_psych++;
         }
     }
@@ -6682,10 +6681,9 @@ psych_done:
     }
     PlayersData[faction_id].se_alloc_labs = range(PlayersData[faction_id].se_alloc_labs, 0,
         min(10 - PlayersData[faction_id].se_alloc_psych, energy_limit(faction_id)));
-    int labs = PlayersData[faction_id].se_alloc_labs;
-    while (10 - labs - PlayersData[faction_id].se_alloc_psych > energy_limit(faction_id)) {
-        labs++;
-        PlayersData[faction_id].se_alloc_labs = labs;
+    while (10 - PlayersData[faction_id].se_alloc_labs - PlayersData[faction_id].se_alloc_psych
+           > energy_limit(faction_id)) {
+        PlayersData[faction_id].se_alloc_labs++;
     }
     int threshold = range(PlayersData[faction_id].soc_effect_temp.values_[SocialEffect::EFFICIENCY], 0, 99)
         + range(3 - PlayersData[faction_id].current_num_bases, 0, 3) + 1;

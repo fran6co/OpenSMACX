@@ -1471,141 +1471,94 @@ int __cdecl base_init(int faction_id, int x, int y) {
     return base_id;
 }
 
-static void base_remap_projects(int removed) {
-    int *projects[] = {
-        &GameDataStateStorage.fields_.secret_project_.human_genome_project(),
-        &GameDataStateStorage.fields_.secret_project_.command_nexus(),
-        &GameDataStateStorage.fields_.secret_project_.weather_paradigm(),
-        &GameDataStateStorage.fields_.secret_project_.merchant_exchange(),
-        &GameDataStateStorage.fields_.secret_project_.empath_guild(),
-        &GameDataStateStorage.fields_.secret_project_.citizens_defense_force(),
-        &GameDataStateStorage.fields_.secret_project_.virtual_world(),
-        &GameDataStateStorage.fields_.secret_project_.planetary_transit_system(),
-        &GameDataStateStorage.fields_.secret_project_.xenoempathy_dome(),
-        &GameDataStateStorage.fields_.secret_project_.neural_amplifier(),
-        &GameDataStateStorage.fields_.secret_project_.maritime_control_center(),
-        &GameDataStateStorage.fields_.secret_project_.planetary_datalinks(),
-        &GameDataStateStorage.fields_.secret_project_.supercollider(),
-        &GameDataStateStorage.fields_.secret_project_.ascetic_virtues(),
-        &GameDataStateStorage.fields_.secret_project_.longevity_vaccine(),
-        &GameDataStateStorage.fields_.secret_project_.hunter_seeker_algorithm(),
-        &GameDataStateStorage.fields_.secret_project_.pholus_mutagen(),
-        &GameDataStateStorage.fields_.secret_project_.cyborg_factory(),
-        &GameDataStateStorage.fields_.secret_project_.theory_of_everything(),
-        &GameDataStateStorage.fields_.secret_project_.dream_twister(),
-        &GameDataStateStorage.fields_.secret_project_.universal_translator(),
-        &GameDataStateStorage.fields_.secret_project_.network_backbone(),
-        &GameDataStateStorage.fields_.secret_project_.nano_factory(),
-        &GameDataStateStorage.fields_.secret_project_.living_refinery(),
-        &GameDataStateStorage.fields_.secret_project_.cloning_vats(),
-        &GameDataStateStorage.fields_.secret_project_.self_aware_colony(),
-        &GameDataStateStorage.fields_.secret_project_.clinical_immortality(),
-        &GameDataStateStorage.fields_.secret_project_.space_elevator(),
-        &GameDataStateStorage.fields_.secret_project_.singularity_inductor(),
-        &GameDataStateStorage.fields_.secret_project_.bulk_matter_transmitter(),
-        &GameDataStateStorage.fields_.secret_project_.telepathic_matrix(),
-        &GameDataStateStorage.fields_.secret_project_.voice_of_planet(),
-        &GameDataStateStorage.fields_.secret_project_.ascent_to_transcendence(),
-        &GameDataStateStorage.fields_.secret_project_.manifold_harmonics(),
-        &GameDataStateStorage.fields_.secret_project_.nethack_terminus(),
-        &GameDataStateStorage.fields_.secret_project_.cloudbase_academy(),
-        &GameDataStateStorage.fields_.secret_project_.planetary_energy_grid(),
-        &GameDataStateStorage.fields_.secret_project_.user_defined_38(),
-        &GameDataStateStorage.fields_.secret_project_.user_defined_39(),
-        &GameDataStateStorage.fields_.secret_project_.user_defined_40(),
-        &GameDataStateStorage.fields_.secret_project_.user_defined_41(),
-        &GameDataStateStorage.fields_.secret_project_.user_defined_42(),
-        &GameDataStateStorage.fields_.secret_project_.user_defined_43(),
-        &GameDataStateStorage.fields_.secret_project_.user_defined_44(),
-        &GameDataStateStorage.fields_.secret_project_.user_defined_45(),
-        &GameDataStateStorage.fields_.secret_project_.user_defined_46(),
-        &GameDataStateStorage.fields_.secret_project_.user_defined_47(),
-        &GameDataStateStorage.fields_.secret_project_.user_defined_48(),
-        &GameDataStateStorage.fields_.secret_project_.user_defined_49(),
-        &GameDataStateStorage.fields_.secret_project_.user_defined_50(),
-        &GameDataStateStorage.fields_.secret_project_.user_defined_51(),
-        &GameDataStateStorage.fields_.secret_project_.user_defined_52(),
-        &GameDataStateStorage.fields_.secret_project_.user_defined_53(),
-        &GameDataStateStorage.fields_.secret_project_.user_defined_54(),
-        &GameDataStateStorage.fields_.secret_project_.user_defined_55(),
-        &GameDataStateStorage.fields_.secret_project_.user_defined_56(),
-        &GameDataStateStorage.fields_.secret_project_.user_defined_57(),
-        &GameDataStateStorage.fields_.secret_project_.user_defined_58(),
-        &GameDataStateStorage.fields_.secret_project_.user_defined_59(),
-        &GameDataStateStorage.fields_.secret_project_.user_defined_60(),
-        &GameDataStateStorage.fields_.secret_project_.user_defined_61(),
-        &GameDataStateStorage.fields_.secret_project_.user_defined_62(),
-        &GameDataStateStorage.fields_.secret_project_.user_defined_63(),
-        &GameDataStateStorage.fields_.secret_project_.user_defined_64(),
-    };
-    for (int project = 0; project < 64; ++project) {
-        if (*projects[project] == removed) *projects[project] = -2;
-        else if (*projects[project] > removed) --*projects[project];
+// base_find(x, y, faction_id) as base_kill inlines it; the out-of-line body
+// (below) is kept auto_inline(off) for its other callers.
+static inline int base_kill_find(int x, int y, int faction_id) {
+    int proximity = 9999;
+    int base_id = -1;
+    for (int i = 0; i < GameDataStateStorage.fields_.base_current_count_; i++) {
+        if (Bases[i].faction_id_current == faction_id) {
+            int dist = vector_dist(x, y, Bases[i].x, Bases[i].y);
+            if (dist <= proximity) {
+                proximity = dist;
+                base_id = i;
+            }
+        }
     }
-}
-
-static void base_remap_reference(int16_t &reference, int removed) {
-    if (reference == removed) reference = -1;
-    else if (reference > removed) --reference;
+    if (base_id >= 0) {
+        BaseFindDist = proximity;
+    }
+    return base_id;
 }
 
 // ORIGINAL: 0x004E5250 ?base_kill@@YAXH@Z 0x004E5250-0x004E5A58
 // RECOVERY_BINDING: v1 {"evidence": ["git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/004e5250.cpp: canonical identity, original spans and retained seed history", "source:src/base.h: real Base storage and lifecycle contracts", "source:recovery/tasks/base-lifecycle-owner-closure.json: bounded coordinator authorization"], "reason": "The original base destruction operation belongs to the Base owner and repairs real faction/project/base/vehicle references and count/selection state rather than forwarding into the original executable."}
 // TRIED: full line-by-line transcription landed (MISMATCH #3, prologue push/mov divergence); stack-slot reuse across phases not replicated (used per-phase named locals instead), and the two adjustor-thunk virtual calls (vtable[1] read as delta, then slot0 on the adjusted `this`) route through VCall with a manually computed adjusted receiver rather than the shim alone.
 void __cdecl base_kill(int base_id) {
-    Base &base = Bases[base_id];
-    const int x = base.x, y = base.y;
-    const int faction_id = base.faction_id_current;
-    PlayerData &faction = PlayersData[faction_id];
-    if (has_fac(1, base_id, 0) && GameDataStateStorage.fields_.turn_current_num_ < faction.corner_market_turn
-        && faction.corner_market_active) {
-        faction.corner_market_turn = faction.corner_market_active = 0;
-        if (faction_id == ConsoleGlobal.faction_id_)
+    int veh_id;
+    int x = Bases[base_id].x;
+    int y = Bases[base_id].y;
+    int faction_id = Bases[base_id].faction_id_current;
+    if (has_fac(FAC_HEADQUARTERS, base_id, 0)
+        && GameDataStateStorage.fields_.turn_current_num_ < PlayersData[faction_id].corner_market_turn
+        && PlayersData[faction_id].corner_market_active) {
+        PlayersData[faction_id].corner_market_turn = 0;
+        PlayersData[faction_id].corner_market_active = 0;
+        if (faction_id == ConsoleGlobal.faction_id_) {
             popp(ScriptPopupFile, "CORNERFOILED", 0, "econwin_sm.pcx", 0);
-        else {
+        } else {
             parse_says(0, Players[faction_id].adj_name_faction, -1, -1);
             popp(ScriptPopupFile, "CORNERTHEMFOILED", 0, "econwin_sm.pcx", 0);
         }
     }
-    if (base.population_size < 0) base.population_size = 0;
-    replay_base(2, x, y, faction_id);
-    --faction.current_num_bases;
-    --faction.region_total_bases[map_loc(x, y)->region];
-    int vehicle;
-    for (vehicle = GameDataStateStorage.fields_.vehicle_current_count_ - 1; vehicle >= 0; --vehicle) {
-        if (vehicle >= GameDataStateStorage.fields_.vehicle_current_count_ || Vehs[vehicle].home_base_id != base_id) continue;
-        if (Vehs[vehicle].faction_id != faction_id) {
-            Vehs[vehicle].home_base_id = -1;
-            continue;
-        }
-        base.faction_id_current = 255;
-        int nearest = -1, distance = 9999;
-        for (int candidate = 0; candidate < GameDataStateStorage.fields_.base_current_count_; ++candidate) {
-            if (Bases[candidate].faction_id_current != faction_id) continue;
-            const int dx = abs(x_dist(x, Bases[candidate].x));
-            const int dy = abs(y - Bases[candidate].y);
-            const int range = max(dx, dy) - ((((dx + dy) >> 1) - min(dx, dy) + 1) >> 1);
-            if (range <= distance) { nearest = candidate; distance = range; }
-        }
-        if (nearest >= 0) BaseFindDist = distance;
-        base.faction_id_current = static_cast<uint8_t>(faction_id);
-        if (nearest < 0) kill(vehicle);
-        else Vehs[vehicle].home_base_id = static_cast<int16_t>(nearest);
+    if (Bases[base_id].population_size < 0) {
+        Bases[base_id].population_size = 0;
     }
-    bit_set(x, y, 1, 0);
+    replay_base(2, x, y, faction_id);
+    PlayersData[faction_id].current_num_bases--;
+    PlayersData[faction_id].region_total_bases[region_at(x, y)]--;
+    for (veh_id = GameDataStateStorage.fields_.vehicle_current_count_ - 1; veh_id >= 0; veh_id--) {
+        if (veh_id < GameDataStateStorage.fields_.vehicle_current_count_
+            && Vehs[veh_id].home_base_id == base_id) {
+            if (Vehs[veh_id].faction_id != faction_id) {
+                Vehs[veh_id].home_base_id = -1;
+            } else {
+                // Hide the dying base from the search for a new home.
+                Bases[base_id].faction_id_current = 0xFF;
+                int home_id = base_kill_find(x, y, faction_id);
+                Bases[base_id].faction_id_current = static_cast<uint8_t>(faction_id);
+                if (home_id >= 0) {
+                    Vehs[veh_id].home_base_id = static_cast<int16_t>(home_id);
+                } else {
+                    kill(veh_id);
+                }
+            }
+        }
+    }
+    bit_set(x, y, BIT_BASE_IN_TILE, 0);
     // This overlapping copy is memcpy in the original, not memmove.
-    if (base_id < GameDataStateStorage.fields_.base_current_count_ - 1)
+    if (base_id < GameDataStateStorage.fields_.base_current_count_ - 1) {
         memcpy(&Bases[base_id], &Bases[base_id + 1],
             (GameDataStateStorage.fields_.base_current_count_ - base_id - 1) * sizeof(Base));
-    --GameDataStateStorage.fields_.base_current_count_;
-    if (BaseComputedID == base_id) BaseComputedID = -1;
-    for (vehicle = 0; vehicle < GameDataStateStorage.fields_.vehicle_current_count_; ++vehicle)
-        if (Vehs[vehicle].home_base_id > base_id) --Vehs[vehicle].home_base_id;
-    int remaining;
-    for (remaining = 0; remaining < GameDataStateStorage.fields_.base_current_count_; ++remaining) {
-        base_remap_reference(Bases[remaining].auto_forward_slots[Base::AutoForwardLand], base_id);
-        base_remap_reference(Bases[remaining].auto_forward_slots[Base::AutoForwardSea], base_id);
-        base_remap_reference(Bases[remaining].auto_forward_slots[Base::AutoForwardAir], base_id);
+    }
+    GameDataStateStorage.fields_.base_current_count_--;
+    if (BaseComputedID == base_id) {
+        BaseComputedID = -1;
+    }
+    for (veh_id = 0; veh_id < GameDataStateStorage.fields_.vehicle_current_count_; veh_id++) {
+        if (Vehs[veh_id].home_base_id > base_id) {
+            Vehs[veh_id].home_base_id--;
+        }
+    }
+    int i;
+    for (i = 0; i < GameDataStateStorage.fields_.base_current_count_; i++) {
+        for (int j = 0; j < 3; j++) {
+            if (Bases[i].auto_forward_slots[j] == base_id) {
+                Bases[i].auto_forward_slots[j] = -1;
+            } else if (Bases[i].auto_forward_slots[j] > base_id) {
+                Bases[i].auto_forward_slots[j]--;
+            }
+        }
     }
     StringList &messages = InterfaceMessageWin.listBox_.item_list_;
     const int message_id = base_id | 0x40000000;
@@ -1632,43 +1585,69 @@ void __cdecl base_kill(int base_id) {
         messages.current_position_ = messages.entry_count_ - 1;
     }
     InterfaceMessageWin.listBox_.update_changes();
-    base_remap_projects(base_id);
-    for (int owner = 1; owner < 8; ++owner) {
-        int &target = PlayersData[owner].base_id_atk_target;
-        if (target == base_id) target = -1;
-        else if (target > base_id) --target;
+    for (i = 0; i < MaxSecretProjectNum; i++) {
+        if (GameDataStateStorage.fields_.secret_project_.project_base[i] == base_id) {
+            GameDataStateStorage.fields_.secret_project_.project_base[i] = -2;
+        } else if (GameDataStateStorage.fields_.secret_project_.project_base[i] > base_id) {
+            GameDataStateStorage.fields_.secret_project_.project_base[i]--;
+        }
     }
-    for (int radius = 0; radius < 49; ++radius) {
-        int wx = x + RadiusOffsetX[radius];
+    for (i = 1; i < MaxPlayerNum; i++) {
+        if (PlayersData[i].base_id_atk_target == base_id) {
+            PlayersData[i].base_id_atk_target = -1;
+        } else if (PlayersData[i].base_id_atk_target > base_id) {
+            PlayersData[i].base_id_atk_target--;
+        }
+    }
+    for (i = 0; i < 49; i++) {
+        int x_radius = x + RadiusOffsetX[i];
         if (!(MapIsFlat & 1)) {
-            if (wx < 0) wx += MapLongitudeBounds;
-            else if (wx >= MapLongitudeBounds) wx -= MapLongitudeBounds;
+            if (x_radius < 0) {
+                x_radius += MapLongitudeBounds;
+            } else if (x_radius >= MapLongitudeBounds) {
+                x_radius -= MapLongitudeBounds;
+            }
         }
-        const int wy = y + RadiusOffsetY[radius];
-        if (wy < 0 || wy >= MapLatitudeBounds || wx < 0 || wx >= MapLongitudeBounds) continue;
-        site_set(wx, wy, 0);
-        if (radius < 21) {
-            bit_set(wx, wy, 0x1000, 0);
-            if ((map_loc(wx, wy)->val3 & 7) == faction_id) using_set(wx, wy, 0);
+        int y_radius = y + RadiusOffsetY[i];
+        if (y_radius >= 0 && y_radius < MapLatitudeBounds
+            && x_radius >= 0 && x_radius < MapLongitudeBounds) {
+            site_set(x_radius, y_radius, 0);
+            if (i < 21) {
+                bit_set(x_radius, y_radius, BIT_BASE_RADIUS, 0);
+                if ((map_loc(x_radius, y_radius)->val3 & 7) == faction_id) {
+                    using_set(x_radius, y_radius, 0);
+                }
+            }
         }
     }
-    const bool ocean = (map_loc(x, y)->climate & 0xE0) < 0x60;
-    if (ocean) {
-        for (vehicle = 0; vehicle < GameDataStateStorage.fields_.vehicle_current_count_; ++vehicle)
-            if (VehPrototypes[Vehs[vehicle].proto_id].plan == 7
-                && ((x_dist(Vehs[vehicle].x, x) + abs(Vehs[vehicle].y - y)) & ~1) == 0)
-                stack_veh(vehicle, 0);
-    }
-    // Original terrain cleanup begins at the one-past active vehicle slot.
-    // Do not silently repair that stale-slot/error-path read with a new guard.
-    for (vehicle = GameDataStateStorage.fields_.vehicle_current_count_; vehicle >= 0; --vehicle) {
-        if (get_triad(vehicle) == (ocean ? 0 : 1)
-            && ((x_dist(Vehs[vehicle].x, x) + abs(Vehs[vehicle].y - y)) & ~1) == 0
-            && (!ocean || Vehs[vehicle].order != 1 || Vehs[vehicle].waypoint_x[0] < 0))
-            kill(vehicle);
+    if (is_ocean(x, y)) {
+        for (veh_id = 0; veh_id < GameDataStateStorage.fields_.vehicle_current_count_; veh_id++) {
+            if (VehPrototypes[Vehs[veh_id].proto_id].plan == PLAN_NAVAL_TRANSPORT
+                && !((x_dist(Vehs[veh_id].x, x) + abs(Vehs[veh_id].y - y)) & ~1)) {
+                stack_veh(veh_id, 0);
+            }
+        }
+        // Original terrain cleanup begins at the one-past active vehicle slot.
+        // Do not silently repair that stale-slot/error-path read with a new guard.
+        for (veh_id = GameDataStateStorage.fields_.vehicle_current_count_; veh_id >= 0; veh_id--) {
+            if (get_triad(veh_id) == TRIAD_LAND
+                && !((x_dist(Vehs[veh_id].x, x) + abs(Vehs[veh_id].y - y)) & ~1)
+                && (Vehs[veh_id].order != ORDER_SENTRY_BOARD || Vehs[veh_id].waypoint_x[0] < 0)) {
+                kill(veh_id);
+            }
+        }
+    } else {
+        for (veh_id = GameDataStateStorage.fields_.vehicle_current_count_; veh_id >= 0; veh_id--) {
+            if (get_triad(veh_id) == TRIAD_SEA
+                && !((x_dist(Vehs[veh_id].x, x) + abs(Vehs[veh_id].y - y)) & ~1)) {
+                kill(veh_id);
+            }
+        }
     }
     TutWinBaseWindow.base_killed(base_id);
-    for (remaining = 0; remaining < GameDataStateStorage.fields_.base_current_count_; ++remaining) base_mark(remaining);
+    for (i = 0; i < GameDataStateStorage.fields_.base_current_count_; i++) {
+        base_mark(i);
+    }
     reset_territory();
     UnkBitfield1 |= 2;
 }
@@ -5209,7 +5188,11 @@ void __cdecl base_change(int base_id, int production_id) {
         parse_set(Players[faction].noun_gender, Players[faction].is_noun_plural);
         parse_says(2, Players[faction].noun_faction, -1, -1);
         parse_say(3, Facility[facility].name, -1, -1);
-        wave_it((PlayersData[ConsoleGlobal.faction_id_].diplo_treaties[faction] & 1) ? 36 : 38);
+        if (PlayersData[ConsoleGlobal.faction_id_].diplo_treaties[faction] & 1) {
+            wave_it(36);
+        } else {
+            wave_it(38);
+        }
         popp(ScriptPopupFile, "BEGINPROJECT", 0, "secproj_sm.pcx", 0);
         PlayersData[faction].secret_project_intel[word] |= mask;
     }
@@ -6935,10 +6918,13 @@ void __cdecl base_hurry() {
 // symbol    ?base_check_support@@YAXXZ
 void __cdecl base_check_support() {
     int faction = BaseCurrent->faction_id_current;
+    int best_score;
+    int veh_id;
+    int best_veh;
     while ((int)BaseCurrentForcesMaintCost > BaseCurrent->intake_2[RSC_MINERALS]) {
-        int best_score = -1;
-        int best_veh = -1;
-        for (int veh_id = 0; veh_id < GameDataStateStorage.fields_.vehicle_current_count_; veh_id++) {
+        best_score = -1;
+        best_veh = -1;
+        for (veh_id = 0; veh_id < GameDataStateStorage.fields_.vehicle_current_count_; veh_id++) {
             if (Vehs[veh_id].faction_id != BaseCurrent->faction_id_current
                 || Vehs[veh_id].home_base_id != BaseIDCurrentSelected) {
                 continue;
@@ -7010,21 +6996,20 @@ void __cdecl base_check_support() {
         && BaseCurrent->nutrient_surplus >= 0) {
         return;
     }
-    int best_score = -1;
-    int best_veh = -1;
-    for (int veh_id = 0; veh_id < GameDataStateStorage.fields_.vehicle_current_count_; veh_id++) {
+    best_score = -1;
+    best_veh = -1;
+    for (veh_id = 0; veh_id < GameDataStateStorage.fields_.vehicle_current_count_; veh_id++) {
         if (Vehs[veh_id].faction_id != faction
             || Vehs[veh_id].home_base_id != BaseIDCurrentSelected) {
             continue;
         }
-        uint32_t state = Vehs[veh_id].state;
-        if (!(state & VSTATE_PACIFISM_DRONE)) {
+        if (!(Vehs[veh_id].state & VSTATE_PACIFISM_DRONE)) {
             continue;
         }
         if (faction_bit & GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_) {
-            if (!(state & VSTATE_UNK_200)
-                || (state & 0x1000200) == 0x1000200
-                || ((state & 0x2000200) == 0x2000200
+            if (!(Vehs[veh_id].state & VSTATE_UNK_200)
+                || (Vehs[veh_id].state & 0x1000200) == 0x1000200
+                || ((Vehs[veh_id].state & 0x2000200) == 0x2000200
                     && Vehs[veh_id].patrol_current_point < Vehs[veh_id].waypoint_count)
                 || Vehs[veh_id].order_auto_type == ORDERA_ON_ALERT
                 || Vehs[veh_id].order_auto_type == ORDERA_BOMBING_RUN
@@ -7036,10 +7021,10 @@ void __cdecl base_check_support() {
         if (divisor - 1 > 0 && rand() % divisor) {
             continue;
         }
-        int vx = Vehs[veh_id].x;
         int vy = Vehs[veh_id].y;
-        int bx = BaseCurrent->x;
         int by = BaseCurrent->y;
+        int bx = BaseCurrent->x;
+        int vx = Vehs[veh_id].x;
         int dx = x_dist(vx, bx);
         int cost = range(VehPrototypes[Vehs[veh_id].proto_id].cost, 1, 99);
         int score = ((dx + abs(vy - by)) >> 1) * 100 / cost;
@@ -9693,24 +9678,9 @@ static inline BOOL num_objectives_is_objective(int base_id) {
             }
         }
     }
-    if (GameDataStateStorage.fields_.game_state_ & STATE_SCN_VICT_BASE_FACIL_COUNT_OBJ) {
-        // Open-coded has_fac(ScnVictFacilityObj, base_id, 0): with
-        // queue_count == 0 it reduces to has_fac's own early-out guard
-        // followed by has_fac_built(), and the image inlines exactly that
-        // (its `cmp eax, 0x41 / jge` IS has_fac's `facility_id >=
-        // FacilityRepStart` guard) rather than calling has_fac out of line.
-        if ((int)GameDataStateStorage.fields_.scenario_victory_facility_ < FacilityRepStart) {
-            // Retain the Base before the helper replaces the consumed base_id
-            // argument with its byte offset, then its normalized result.
-            Base *base = &Bases[base_id];
-            int mask;
-            bitmask(GameDataStateStorage.fields_.scenario_victory_facility_,
-                    &base_id, &mask);
-            base_id = (base->facilities_built[base_id] & mask) != 0;
-            if (base_id) {
-                return true;
-            }
-        }
+    if ((GameDataStateStorage.fields_.game_state_ & STATE_SCN_VICT_BASE_FACIL_COUNT_OBJ)
+        && has_fac(GameDataStateStorage.fields_.scenario_victory_facility_, base_id, 0)) {
+        return true;
     }
     return false;
 }
@@ -9818,7 +9788,6 @@ int __cdecl num_objectives(int faction_id, BOOL count_pact_factions) {
     if (GameDataStateStorage.fields_.game_state_ & STATE_SCN_VICT_BASE_FACIL_COUNT_OBJ) {
         for (int base_id = 0; base_id < GameDataStateStorage.fields_.base_current_count_; base_id++) {
             if (Bases[base_id].faction_id_current == faction_id
-                && (int)GameDataStateStorage.fields_.scenario_victory_facility_ < FacilityRepStart
                 && has_fac(GameDataStateStorage.fields_.scenario_victory_facility_, base_id, 0)) {
                 total++;
             }
@@ -9853,7 +9822,7 @@ int __cdecl num_objectives(int faction_id, BOOL count_pact_factions) {
     }
     if (GameDataStateStorage.fields_.game_rules_ & RULES_SCN_VICT_SP_COUNT_OBJ) {
         for (int i = 0; i < MaxSecretProjectNum; i++) {
-            int base_id = base_project(i);
+            int base_id = GameDataStateStorage.fields_.secret_project_.project_base[i];
             if (base_id >= 0 && Bases[base_id].faction_id_current == faction_id) {
                 total++;
             }
@@ -9862,7 +9831,7 @@ int __cdecl num_objectives(int faction_id, BOOL count_pact_factions) {
     // One recursion deep only: the pact partners are asked with the flag off.
     if (count_pact_factions && (GameDataStateStorage.fields_.game_rules_ & RULES_VICTORY_COOPERATIVE)) {
         for (int other_id = 1; other_id < MaxPlayerNum; other_id++) {
-            if (other_id != faction_id
+            if (faction_id != other_id
                 && (PlayersData[faction_id].diplo_treaties[other_id] & DTREATY_PACT)) {
                 total += num_objectives(other_id, false);
             }
