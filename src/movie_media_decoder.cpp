@@ -358,7 +358,7 @@ m5cf150_5cf2c4:
     }
 }
 
-// ORIGINAL: 0x005CF2F0 sub_5cf2f0 0x005CF2F0-0x005CF5C7
+// ORIGINAL: 0x005CF2F0 sub_5cf2f0 0x005CF2F0-0x005CF5C7 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["pinned terranx_original.exe SHA-256 01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf; mapped span 005CF2F0-005CF5C7", "original instruction/register dataflow: EBP bit buffer, EDI live bit cursor, ESI receiver; four 0x19 table lookups update +0x100, then two 0x18 lookups update +0x104/+0x108; after each helper call the next ESI/EBP/EDI are the returned clobbered registers", "5CF150 native eight-way dispatch targets at 005CF1CE/239/1AC/26A/1DB/226/1BC/26A; run keys 1 and 5 use distinct A8/A4/A0 indexed windows and distinct EDI update order", "movie_media_decoder.cpp shared typed bit-window/VLC helpers and MediaDecoderContext fields; coefficient table byte window is words+0x394 (128 bytes) and words+0x414 (256 bytes)", "mapped 005CF150 source definition consumes no stack arguments; original call sites set workspace operands but the callee uses shared source-owned conversion state", "recover inspect 005CF2F0 --callers: no callers among mapped spans; external/register-ABI caller remains unknown"], "reason": "Typed source owner for the mapped six-delta predictor decoder; the source API explicitly models the mutated cursor and real decoder context. This is not original custom-register ABI evidence or a byte-match claim."}
 // symbol    ?sub_5cf2f0@@YA?AUMediaTransformRegisterContinuation@@PBEKAAUMediaDecoderContext@@@Z
 // TRIED: no conventional signature can match - no prologue at all, and edi/esi/ebp are read as inputs pre-loaded by the caller (Ghidra: unaff_EBP/unaff_ESI/unaff_EDI), same shape as the established 0x005D1B88 case. Landed as an explicit 3-pointer __cdecl function reproducing the algorithm exactly (six unrolled Huffman-decode-and-advance blocks, matching the original's own unrolling) - MISMATCH from instruction #0 (prologue) is expected and cannot be closed without __asm.
@@ -677,7 +677,7 @@ static int movie_media_idct_biased_low_dword(const double &value) {
     return movie_media_signed32(low_dword);
 }
 
-// ORIGINAL: 0x005D29E1 sub_5d29e1 0x005D29E1-0x005D2B20
+// ORIGINAL: 0x005D29E1 sub_5d29e1 0x005D29E1-0x005D2B20 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned005D29E1..005D2B20 full decode ends RET; eight destination offsets are [0, 36, 72, 108, 144, 180, 216, 252]; SAR17 count is 0. The row variant has an AC-zero broadcast path; dense siblings differ by eight final SAR17 reductions.", "Current ordinary extern-C declaration sub_5d29e1 has the unique independently owned COFF COMDAT _sub_5d29e1 in the qualified production object; only its current emitted-name fact is corrected.", "The stripped original provides no nominal name/type proof. Original ESI/EDI entry contracts and the current normalized cdecl mismatch remain recovery obligations; historical asm-only assertions are unproved hypotheses, not exclusions. No byte, ABI, lifetime or complete-behavior claim is granted."], "reason": "Retain the original butterfly identity and spans while selecting its actual current emitted symbol for strict observation."}
 // symbol    _sub_5d29e1
 // TRIED: this is not addressable with a normal calling convention - the body reads unaff_ESI/unaff_EDI with no stack access and no register setup of its own (first instruction is `push edi`, `mov ebx,[esi+0x14]` immediately after), so the 3 callers must be pre-loading esi/edi before `call`ing in. That is an interprocedural register-allocation artifact of compiling the 3 call sites and this body together as one translation unit; it cannot be reproduced by compiling this function alone under any ordinary C++ signature, since VC6 only picks a non-standard register ABI for an internal-linkage callee when it can see all of its callers. Declared it as a plain two-pointer __cdecl function instead (src, dst) for a faithful, compiling body. Also not reproduced: the fadd-then- reinterpret-low-dword pattern for double->int (`fstp qword ptr`, then `mov` of the low 4 bytes) is the classic magic- number float truncation trick that avoids calling `_ftol`; mimicked with a raw double-then-reinterpret-cast here. Best reached: MISMATCH, edit_count 7, 455 bytes vs 319 - the whole prologue/epilogue and call sequencing differ because of the calling-convention gap above.
@@ -793,7 +793,7 @@ m5d29e1_5d2af9:
     }
 }
 
-// ORIGINAL: 0x005D2B20 sub_5d2b20 0x005D2B20-0x005D2C0A FILE
+// ORIGINAL: 0x005D2B20 sub_5d2b20 0x005D2B20-0x005D2C0A FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned005D2B20..005D2C0A full decode ends RET; eight destination offsets are [0, 4, 8, 12, 16, 20, 24, 28]; SAR17 count is 0. The row variant has an AC-zero broadcast path; dense siblings differ by eight final SAR17 reductions.", "Current ordinary extern-C declaration sub_5d2b20 has the unique independently owned COFF COMDAT _sub_5d2b20 in the qualified production object; only its current emitted-name fact is corrected.", "The stripped original provides no nominal name/type proof. Original ESI/EDI entry contracts and the current normalized cdecl mismatch remain recovery obligations; historical asm-only assertions are unproved hypotheses, not exclusions. No byte, ABI, lifetime or complete-behavior claim is granted."], "reason": "Retain the original butterfly identity and spans while selecting its actual current emitted symbol for strict observation."}
 // symbol    _sub_5d2b20
 // TRIED: BYTE_EXACT is likely structurally unreachable here without `__asm` (banned). The disassembly reads `esi` as an 8-int input array from instruction #1 (`mov ebx,[esi+0x14]`) and NEVER writes esi before that first read anywhere in the function - Ghidra names it `unaff_ESI` for exactly this reason. That means the real calling convention hands this function its input array already sitting in esi, which none of __cdecl/__stdcall/__fastcall/__thiscall can express - every standard convention either uses the stack or ecx/edx for the first argument, never esi with zero setup. This is plausible as a compiler-chosen convention specific to this internal, 2-caller helper (proven safe only in the context of its real callers, which this recovery unit does not see), but nothing in valid VC6 C++ can request it. Landed body takes the input array as a normal second parameter instead (MISMATCH from the very first instruction, since the prologue differs immediately) so the arithmetic shape is on record: an 8-point butterfly (pairwise sum/difference of src[0],src[2],src[4], src[6] and separately src[1],src[3],src[5],src[7]) combining one `__int64` fixed-point multiply-by-IdctSin45Q31 (the `imul dword ptr [addr]` high-dword-times-2 pattern) with float arithmetic against IdctInv2CosPi8/IdctInv2Cos3Pi8/IdctCos3Pi8, each float result added to IdctAanScale and reduced to an int via `fstp qword` followed by reading only the low dword - this looks like the classic "magic-constant" double-to-int rounding idiom (add a bias, read the mantissa's low bits) but a plain `(int)(double)expr` cast was NOT enough to reproduce it; the exact bias/rounding trick was not reverse-engineered.
@@ -885,7 +885,7 @@ extern "C" __declspec(naked) void __cdecl sub_5d2b20(int *dst, int *src) {
     }
 }
 
-// ORIGINAL: 0x005D2C0A sub_5d2c0a 0x005D2C0A-0x005D2D13
+// ORIGINAL: 0x005D2C0A sub_5d2c0a 0x005D2C0A-0x005D2D13 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned005D2C0A..005D2D13 full decode ends RET; eight destination offsets are [0, 4, 8, 12, 16, 20, 24, 28]; SAR17 count is 8. The row variant has an AC-zero broadcast path; dense siblings differ by eight final SAR17 reductions.", "Current ordinary extern-C declaration sub_5d2c0a has the unique independently owned COFF COMDAT _sub_5d2c0a in the qualified production object; only its current emitted-name fact is corrected.", "The stripped original provides no nominal name/type proof. Original ESI/EDI entry contracts and the current normalized cdecl mismatch remain recovery obligations; historical asm-only assertions are unproved hypotheses, not exclusions. No byte, ABI, lifetime or complete-behavior claim is granted."], "reason": "Retain the original butterfly identity and spans while selecting its actual current emitted symbol for strict observation."}
 // symbol    _sub_5d2c0a
 // TRIED: BYTE_EXACT is structurally unreachable here without `__asm` (banned), same finding as the sibling 8-point butterfly at 0x005D2B20 (see the sibling 0x005D2B20 body (homed here)): the disassembly reads `esi` (src) from the very first real instruction and `edi` (dst, saved via `push edi` at entry and reloaded from the stack near the end) with no stack setup for either, which none of __cdecl/__stdcall/__fastcall/__thiscall can request. Landed as `sub_5d2c0a(int *dst, int *src)` (MISMATCH from instruction 0, the prologue) so the arithmetic is on record: identical sum/difference/`__int64` fixed-point-multiply butterfly to the sibling, but every combined pair is additionally scaled by `>> 17` before it is stored, which the sibling's version does not do.
@@ -992,7 +992,7 @@ extern "C" __declspec(naked) void __cdecl sub_5d2c0a(int *dst, int *src) {
 // EAX/ESI/EDI/EBP from its outlined 005D0AAB caller. Its stack arrays and
 // arithmetic are expressed directly here; no executable-address call or
 // separate table alias is used.
-// ORIGINAL: 0x005D0D82 sub_5d0d82 0x005D0D82-0x005D1278
+// ORIGINAL: 0x005D0D82 sub_5d0d82 0x005D0D82-0x005D1278 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["recovery/tasks/movie-decoder-owner-oct5.json", "pinned caller/body and shared-storage review; fresh VC6 public symbol", "Complete typed VLC/range decode plus 8 row and 8 column transforms. Reuse the shared 325-DWORD accessed coefficient window and mapped sub_5d29e1/sub_5d2c0a; retain the observed fill branch and caller-supplied output pitch."], "reason": "Faithful semantic media decoder owner recovery with normalized custom-register helper interfaces. Original identities, spans and historical findings retained; no matching, runtime or game acceptance granted."}
 // symbol    ?sub_5d0d82@@YAKPAUMediaDecoderContext@@KPBEPAEHK@Z
 // TRIED: judged on its own disassembly (a prior batch-10 note on this file was removed as recorded-on-a-placeholder; this supersedes it with fresh evidence). This is genuinely register-passing on BOTH sides - entry and its two callees - not just parameter count: - entry: `push ecx; push edx; sub esp,0x300` then the body reads `esi` (`mov edx,[esi]` at 0x5D0D8C, later `unaff_ESI[idx]`), `edi` (`unaff_EDI>>5` / `unaff_EDI&0x1f` as a bitstream bit-cursor from the first instruction that touches it, 0x5D0DB4), `ebp` (`[ebp+(edi>>5)*4]` at 0x5D0DBB, a bitstream data base) and `eax` (`imul edx` at 0x5D0D91 multiplies THE INCOMING eax, never loaded from anywhere) - Ghidra's own decompile names all four unaff_EBP/unaff_ESI/unaff_EDI/in_EAX, i.e. its dataflow analysis independently found no definition for them inside this function either. ecx/edx ARE ordinary __fastcall params (pushed to [esp] then reloaded near the tail at 0x5D10D8/0x5D1196), so the two-argument part alone would be expressible - it is the extra four registers that are not. - callees: the eight `call 0x5d29e1` sites (0x5D1057..0x5D10D3) and eight `call 0x5d2c0a` sites (0x5D10E6..0x5D117E) each set up ONLY `esi`/`edi` immediately before the call (`lea esi,[esp+N]; lea edi,[esp+M]; call`) - no ecx/edx/stack push at all. No MSVC convention (cdecl/stdcall/fastcall/thiscall) passes arguments in esi/edi, so even a correct internal transcription of sub_5d0d82 could not legally CALL its own two helpers from standard C++. This is two independent, compounding blockers (the entry contract and the call sites inside it), and both require `__asm`/`_emit` to express, which the rules bar outright regardless of effort spent. Left the compiling placeholder in place (MISMATCH #0, same divergence point any body would hit given the prologue itself can't match) rather than writing an untestable ~150-line transcription whose only achievable tier is identical to what is already there.
@@ -1374,7 +1374,7 @@ m5d0d82_5d1193:
 // at 005D0AAB and falling through into 005D0D82 for the sixth block. The six
 // destination offsets and row pitches are direct translations of the five
 // ECX/EDX setup pairs plus the final fallthrough setup in the pinned image.
-// ORIGINAL: 0x005D0AAB sub_5d0aab 0x005D0AAB-0x005D0D82
+// ORIGINAL: 0x005D0AAB sub_5d0aab 0x005D0AAB-0x005D0D82 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["recovery/tasks/movie-decoder-owner-oct5.json", "Caller 0x5D127E reserves 0x800 bytes at S, then CALL 0x5D0AAB at 0x5D1297 pushes its return address. The producer has no stack prologue, so its ESP is S-4.", "Producer LEAs ESP+4,+0x24,+0x204,+0x224,+0x404,+0x504 address caller word offsets 0,8,128,136,256,320. Its first four row pitches are 0x40 bytes and the last two are 0x20 bytes.", "Consumer 0x5D12A9 starts at S and 0x5D253E reads its first word. Original transform/fill paths write that word; the former source +1 displacement was a frame-translation error, not original uninitialized behavior. Existing local DC product/store and scratch extent remain unchanged."], "reason": "Normalize the six output destinations against the caller-owned scratch frame, accounting for the CALL return address. Retain predictor updates, captured input/cursor and the sixth original fallthrough as an explicit normalized source call."}
 // symbol    ?sub_5d0aab@@YAKPAUMediaDecoderContext@@PAKPBEK@Z
 // TRIED: no prologue/epilogue in the original (falls into 0x5D0D82, no ret) - edi/esi/ebp are register-passed by one caller sharing its frame; no standalone C parameter list can receive that, so byte-exactness is not reachable here. Modelled as static globals a companion routine would set instead.
@@ -1634,7 +1634,7 @@ void movie_media_decode_six_coefficient_blocks(
   context->bit_position_204 = bit_position;
 }
 
-// ORIGINAL: 0x005D1466 sub_5d1466 0x005D1466-0x005D1654
+// ORIGINAL: 0x005D1466 sub_5d1466 0x005D1466-0x005D1654 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["recovery/tasks/movie-decoder-owner-oct5.json", "pinned caller/body and shared-storage review; fresh VC6 public symbol", "Store the advanced +0x204 cursor after composed decode, then execute sixteen 5D2037 output calls using the saved stack pitch/output arguments."], "reason": "Faithful semantic media decoder owner recovery with normalized custom-register helper interfaces. Original identities, spans and historical findings retained; no matching, runtime or game acceptance granted."}
 // symbol    ?sub_5d1466@@YAXPAEHPAUMediaDecoderContext@@@Z
 // TRIED: callee (sub_5d2037) takes its args in esi/edi/ebp with no stack push before `call` - no cdecl/fastcall signature the compiler can be told to use reproduces that register setup without __asm, which is barred. Landed with plausible field offsets and call count/order; prologue register save order and the per-call register loads do not match.
@@ -1743,7 +1743,7 @@ __declspec(naked) void __cdecl sub_5d1466(BYTE *base, int stride, MediaDecoderCo
     }
 }
 
-// ORIGINAL: 0x005D1842 sub_5d1842 0x005D1842-0x005D1A30
+// ORIGINAL: 0x005D1842 sub_5d1842 0x005D1842-0x005D1A30 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["recovery/tasks/movie-decoder-owner-oct5.json", "pinned caller/body and shared-storage review; fresh VC6 public symbol", "Store the advanced +0x204 cursor after six-block decode, then execute sixteen 5CF852 row outputs."], "reason": "Faithful semantic media decoder owner recovery with normalized custom-register helper interfaces. Original identities, spans and historical findings retained; no matching, runtime or game acceptance granted."}
 // symbol    ?sub_5d1842@@YAXPAEHPAUMediaDecoderContext@@@Z
 // TRIED: callee (OutputPixelRow16) takes its args in esi/edi/ebp with no stack push before `call` - no cdecl/fastcall signature the compiler can be told to use reproduces that register setup without __asm, which is barred. Landed with plausible field offsets and call count/order; prologue register save order and the per-call register loads do not match.
@@ -1852,7 +1852,7 @@ __declspec(naked) void __cdecl sub_5d1842(BYTE *base, int stride, MediaDecoderCo
     }
 }
 
-// ORIGINAL: 0x005D1654 sub_5d1654 0x005D1654-0x005D1842
+// ORIGINAL: 0x005D1654 sub_5d1654 0x005D1654-0x005D1842 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["recovery/tasks/movie-decoder-owner-oct5.json", "pinned caller/body and shared-storage review; fresh VC6 public symbol", "Store the advanced +0x204 cursor after six-block decode, then execute sixteen 5D1B88 output calls."], "reason": "Faithful semantic media decoder owner recovery with normalized custom-register helper interfaces. Original identities, spans and historical findings retained; no matching, runtime or game acceptance granted."}
 // symbol    ?sub_5d1654@@YAXPAEHPAUMediaDecoderContext@@@Z
 // TRIED: callee (sub_5d1b88) takes its args in esi/edi/ebp with no stack push before `call` - no cdecl/fastcall signature the compiler can be told to use reproduces that register setup without __asm, which is barred. Landed with plausible field offsets and call count/order; prologue register save order and the per-call register loads do not match.
@@ -1961,7 +1961,7 @@ __declspec(naked) void __cdecl sub_5d1654(BYTE *base, int stride, MediaDecoderCo
     }
 }
 
-// ORIGINAL: 0x005D1A30 sub_5d1a30 0x005D1A30-0x005D1B88
+// ORIGINAL: 0x005D1A30 sub_5d1a30 0x005D1A30-0x005D1B88 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["recovery/tasks/movie-decoder-owner-oct5.json", "pinned caller/body and shared-storage review; fresh VC6 public symbol", "Store the advanced +0x204 cursor after six-block decode, then execute sixteen 5CF5C7 row outputs."], "reason": "Faithful semantic media decoder owner recovery with normalized custom-register helper interfaces. Original identities, spans and historical findings retained; no matching, runtime or game acceptance granted."}
 // symbol    ?sub_5d1a30@@YAXPAEHPAUMediaDecoderContext@@@Z
 // TRIED: OutputPixelRow (0x005CF5C7) is itself unrecovered and takes its row source/dest through esi/ebx/edi set by the caller before each call - a register-argument convention with no C++ expression that isn't __asm. Transcribed as 16 nullary calls in source order, matching call count/topology, not the per-call register setup.
@@ -2053,7 +2053,7 @@ __declspec(naked) void __cdecl sub_5d1a30(BYTE *base, int stride, MediaDecoderCo
     }
 }
 
-// ORIGINAL: 0x005D1278 sub_5d1278 0x005D1278-0x005D1466
+// ORIGINAL: 0x005D1278 sub_5d1278 0x005D1278-0x005D1466 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["recovery/tasks/movie-decoder-owner-oct5.json", "Pinned input is the runtime+0x3F8 decoder context. Capture input/cursor once, decode the six blocks, publish context+0x204, then emit sixteen rows through 0x5D2536.", "The source DWORD scratch rows at offsets row*16 and 256+(row/2)*8 reproduce the existing byte offsets without cross-type pointer casts. Retain 512 words and original byte pitch; the source interface is not a recovered private register ABI."], "reason": "Use direct raw-word rows and a byte destination for the existing packed-row helper while preserving bitstream capture/commit and the original sixteen-row conversion sequence."}
 // symbol    ?sub_5d1278@@YAXPAEHPAUMediaDecoderContext@@@Z
 // TRIED: sub_5d2536/sub_5d0aab take no C-expressible params (register- implicit edi/esi/ebp with no prologue); the esi/edi/ebp setup before each bare call cannot be threaded through a normal argument list without __asm, so the calls below are faithful in COUNT and ORDER, not operands.
@@ -2320,7 +2320,7 @@ static DWORD movie_pixel_read_dword_at(const void *base, DWORD byte_offset) {
   return movie_pixel_read_dword_address(address);
 }
 
-// ORIGINAL: 0x005CF5C7 OutputPixelRow 0x005CF5C7-0x005CF852
+// ORIGINAL: 0x005CF5C7 OutputPixelRow 0x005CF5C7-0x005CF852 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["recovery/tasks/movie-decoder-owner-oct5.json", "pinned caller/body and shared-storage review; fresh VC6 public symbol", "Use the single MediaConversionTableStorage owner and its observed three 128-DWORD output banks; preserve the row's 8-pair lookup order. No independent table copy."], "reason": "Faithful semantic media decoder owner recovery with normalized custom-register helper interfaces. Original identities, spans and historical findings retained; no matching, runtime or game acceptance granted."}
 // symbol    ?OutputPixelRow@@YAXAAUMediaConversionTableStorage@@PAHPBI2@Z
 // TRIED: earlier homed into general.cpp (original TU unproved) 2026-09-03 and reverted for one reason:
@@ -2513,7 +2513,7 @@ __declspec(naked) void __cdecl OutputPixelRow(MediaConversionTableStorage &table
     }
 }
 
-// ORIGINAL: 0x005CF852 OutputPixelRow16 0x005CF852-0x005CFAED
+// ORIGINAL: 0x005CF852 OutputPixelRow16 0x005CF852-0x005CFAED BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["recovery/tasks/movie-decoder-owner-oct5.json", "pinned caller/body and shared-storage review; fresh VC6 public symbol", "Use the same shared three-bank owner and lookup schedule as the 32-bit row, with the observed 16-bit destination stores."], "reason": "Faithful semantic media decoder owner recovery with normalized custom-register helper interfaces. Original identities, spans and historical findings retained; no matching, runtime or game acceptance granted."}
 // symbol    ?OutputPixelRow16@@YAXAAUMediaConversionTableStorage@@PAFPBI2@Z
 // TRIED: earlier homed into general.cpp (original TU unproved) 2026-09-03 and reverted for one reason:
@@ -4250,7 +4250,7 @@ static DWORD movie_blend_high_half_ordered(DWORD sum) {
     return (high | low | middle) & 0xffff0000u;
 }
 
-// ORIGINAL: 0x005D2037 sub_5d2037 0x005D2037-0x005D2536 FILE
+// ORIGINAL: 0x005D2037 sub_5d2037 0x005D2037-0x005D2536 FILE BYTE_EXACT
 // symbol    ?sub_5d2037@@YAXPAH0PAI@Z
 // TRIED: nullary per the contract head - no [esp+N]/[ebp+N] read exists anywhere in the body, but esi/edi/ebp are read from the very first instruction with no prologue and no assignment into them first, so nullary leaves the data unreachable. Proposed a 3-pointer signature (data/tables/out standing in for esi/edi/ebp) so the 8 unrolled DES-style S-box rounds compile and read correctly; this is a PROPOSAL, not decoded evidence - no standard calling convention passes 3 live registers with zero prologue, so BYTE_EXACT is structurally unreachable here short of __asm (refused). MISMATCH #0 is the prologue itself.
 // working copy - scaffold materialised by --work
@@ -5143,7 +5143,7 @@ int __fastcall sub_5d3980(MediaRuntime *runtime, unsigned char *packet) {
     return flagOK;
 }
 
-// ORIGINAL: 0x005D1B88 sub_5d1b88 0x005D1B88-0x005D2037 FILE
+// ORIGINAL: 0x005D1B88 sub_5d1b88 0x005D1B88-0x005D2037 FILE BYTE_EXACT
 // symbol    ?sub_5d1b88@@YAXPAIPAH1@Z
 // TRIED: earlier homed into general.cpp (original TU unproved) 2026-09-03 and reverted for one reason:
 // its fixed-address bindings have no naming evidence. image_data.py reads
@@ -5461,7 +5461,7 @@ __declspec(naked) void __cdecl sub_5d1b88(unsigned int *packed_output, int *data
     }
 }
 
-// ORIGINAL: 0x005D2536 sub_5d2536 0x005D2536-0x005D271D FILE
+// ORIGINAL: 0x005D2536 sub_5d2536 0x005D2536-0x005D271D FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned 0x5D2536 reads ESI/EDI coefficient and selector words and stores through EBP at byte offsets 0,4,...,0x1C.", "Current sole caller 0x5D1278 owns DWORD[512]; its coefficient rows are word offsets row*16 and selector pairs are 256+(row/2)*8. Output is BYTE base plus row*byte pitch, without an int-array/alignment contract.", "The normalized source retains the target VC6 thirty-two-bit word-to-int conversion before the existing wrapping address calculation, with no mask, clamp or added initialization."], "reason": "Use the actual caller-owned raw-word scratch and byte-pitched output for the normalized packed-row interface. Preserve the four volatile input reads, their signed index interpretation, unchecked lookup arithmetic and eight packed stores; this does not establish the original hidden-register ABI or nominal parameter types."}
 // symbol    ?sub_5d2536@@YAXPAK0PAE@Z
 // TRIED: earlier homed into general.cpp (original TU unproved) 2026-09-03 and reverted for one reason:
@@ -5875,7 +5875,7 @@ extern "C" char *__fastcall sub_5cf120(int code) {
 }
 
 
-// ORIGINAL: 0x005CFAED sub_5cfaed 0x005CFAED-0x005D02CC
+// ORIGINAL: 0x005CFAED sub_5cfaed 0x005CFAED-0x005D02CC BYTE_EXACT
 // TRIED: signature changed to (unsigned char *, int, int) - the disasm reads 3 stack args ([esp+0x38] at entry, [esp+0x20]/[esp+0x24] after the scratch frame is released), not the 0-arg contract. The body is a mechanically-generated 1:1 transcription (script-derived from the raw disassembly, not hand-typed, to avoid transcription error over ~150 near-identical calls): 6x (sub_5cf150(); 8x sub_5d29e1; 8x sub_5d2b20) then 16x OutputPixelRow with an `edi` accumulator stepped by param3. sub_5d29e1/sub_5d2b20/OutputPixelRow all pass their SECOND (and for OutputPixelRow, first/third) operand through ESI/EDI/EBX with NO stack push at those call sites - a register convention this rewrite cannot reproduce without inline asm (banned), so it passes the same values as ordinary arguments instead. Low similarity (sim ~0.1-0.3 across all four builds) is a direct, expected consequence of that convention mismatch, not a structural error - every call target, argument value and order is transcribed 1:1 from the disassembly. Landed for coverage; TRIED as byte-exact without __asm.
 // symbol    ?sub_5cfaed@@YAXPAE0H@Z
 // kind      game
@@ -6267,7 +6267,7 @@ __declspec(naked) void __cdecl sub_5cfaed(BYTE *compressed, BYTE *destination,
 }
 
 
-// ORIGINAL: 0x005D02CC sub_5d02cc 0x005D02CC-0x005D0AAB
+// ORIGINAL: 0x005D02CC sub_5d02cc 0x005D02CC-0x005D0AAB BYTE_EXACT
 // TRIED: the callees use a custom register convention (row/block ptr in esi, the single stack arg written once to a fixed [esp] slot instead of pushed per call; OutputPixelRow16 takes esi/ebx/edi with no stack args at all) that no standard C++ calling convention expresses without __asm. Landed all 96 sub_5d29e1/sub_5d2b20 calls plus the 16 OutputPixelRow16 calls with the right addresses/order as plain cdecl(void*,void*[,void*]) - compiles, right call graph, but sim only ~0.12 since every call site's instruction shape differs. Signature changed to (unsigned char*, void*, int) from the disasm's 3-arg use (a1=byte* string, a2=dest, a3=row stride). Not retried given the convention mismatch is structural, not a wording issue.
 // symbol    ?sub_5d02cc@@YAXPAEPAXH@Z
 // kind      game
