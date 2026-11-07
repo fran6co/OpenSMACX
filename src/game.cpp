@@ -1557,7 +1557,7 @@ void __cdecl repair_phase(int faction_id) {
             && Vehs[veh_id].order == ORDER_SENTRY_BOARD
             && Vehs[veh_id].dmg_incurred != damage_before) {
             if (Chassis[VehPrototypes[Vehs[veh_id].proto_id].chassis_id].triad != TRIAD_LAND
-                || (uint8_t)(map_loc(x, y)->climate & 0xE0) >= ALT_BIT_SHORE_LINE) {
+                || (map_loc(x, y)->climate & ~0x1F) >= ALT_BIT_SHORE_LINE) {
                 Vehs[veh_id].order = ORDER_NONE;
             }
         }
@@ -2440,57 +2440,47 @@ void __cdecl Demo::timer_callback(int self) {
     demo->redraw();
 }
 
+// Sprite::extract's RECT form, expanded at both Demo::init call sites.
+static inline int demo_extract(Sprite *sprite, Buffer *buffer, int transparent,
+                               RECT *region) {
+    return sprite->extract(buffer, transparent, region->left, region->top,
+                           region->right - region->left,
+                           region->bottom - region->top, 0);
+}
+
 // ORIGINAL: 0x00524460 Demo__init 0x00524460-0x005247A6;0x0065D6C8-0x0065D6DD
 // symbol    ?init@Demo@@QAEHXZ
 // kind      game
 int Demo::init() {
     Buffer local_buffer;
 
-    const int width = WinScreenWidth;
-    const int height = WinScreenHeight;
-    const bool compact_layout = width == 0x320;
+    const int large_layout = WinScreenWidth != 0x320;
+    GraphicWin::init(0, 0, WinScreenWidth, WinScreenHeight, 0, 0, 0, 0, 0);
+    load_pcx(const_cast<char *>(
+        large_layout ? "demosplash1024.pcx" : "demosplash800.pcx"), 0, 10, 0xEC);
 
-    GraphicWin::init(0, 0, width, height, 0, 0, 0, 0, 0);
-
-    char *background = const_cast<char *>(
-        compact_layout ? "demosplash800.pcx" : "demosplash1024.pcx");
-    load_pcx(background, 0, 10, 0xEC);
-
-    const char *foreground;
-    if (compact_layout) {
-        set_demo_rect(splash_rects_[0], 0x21, 0x1E1, 0x135, 0x210);
-        set_demo_rect(splash_rects_[1], 0x23A, 0x1FF, 0x2AE, 0x228);
-        set_demo_rect(splash_rects_[2], 0x14A, 0x182, 0x1D6, 0x22A);
-        // The original global RECT transposes its first two coordinates.
-        set_demo_rect(DemoFourthHotspot, 0x1C5, 0x23A, 0x262, 0x24E);
-        foreground = "demosplash800_2.pcx";
-    } else {
+    char *foreground;
+    if (large_layout) {
         set_demo_rect(splash_rects_[0], 0x2B, 0x268, 0x18B, 0x2A3);
         set_demo_rect(splash_rects_[1], 0x2DA, 0x28E, 0x36E, 0x2C2);
         set_demo_rect(splash_rects_[2], 0x1A7, 0x1EF, 0x259, 0x2C5);
+        // The original global RECT transposes its first two coordinates.
         set_demo_rect(DemoFourthHotspot, 0x243, 0x2DA, 0x30C, 0x2F1);
         foreground = "demosplash1024_2.pcx";
+    } else {
+        set_demo_rect(splash_rects_[0], 0x21, 0x1E1, 0x135, 0x210);
+        set_demo_rect(splash_rects_[1], 0x23A, 0x1FF, 0x2AE, 0x228);
+        set_demo_rect(splash_rects_[2], 0x14A, 0x182, 0x1D6, 0x22A);
+        set_demo_rect(DemoFourthHotspot, 0x1C5, 0x23A, 0x262, 0x24E);
+        foreground = "demosplash800_2.pcx";
     }
+    local_buffer.load_pcx(foreground, 0, 10, 0xEC);
 
-    local_buffer.load_pcx(const_cast<char *>(foreground), 0, 10, 0xEC);
-    const RECT &first_source = splash_rects_[0];
-    const int first_source_width = first_source.right - first_source.left;
-    const int first_source_height = first_source.bottom - first_source.top;
-    const unsigned char first_transparent = WinFillColour;
-    splash_sprites_[0].extract(static_cast<Buffer *>(this), first_transparent,
-                               first_source.left, first_source.top,
-                               first_source_width, first_source_height, 0);
-
-    // Native reloads this RECT and WinFillColour after Sprite::extract returns;
-    // preserve those live reads rather than carrying values over the call.
-    const RECT &second_source = splash_rects_[0];
-    const int second_source_width = second_source.right - second_source.left;
-    const int second_source_height = second_source.bottom - second_source.top;
-    const unsigned char second_transparent = WinFillColour;
-    splash_sprites_[1].extract(&local_buffer, second_transparent,
-                               second_source.left, second_source.top,
-                               second_source_width, second_source_height, 0);
-
+    // Both sprites are cut from the first RECT, reloaded after each call.
+    demo_extract(&splash_sprites_[0], static_cast<Buffer *>(this),
+                 WinFillColour, &splash_rects_[0]);
+    demo_extract(&splash_sprites_[1], &local_buffer, WinFillColour,
+                 &splash_rects_[0]);
     local_buffer.close();
     timer_.start(&Demo::timer_callback, reinterpret_cast<int>(this), 600, 5);
 
@@ -2498,20 +2488,24 @@ int Demo::init() {
     timer_phase_ = 0;
     set_modal(0, 0, 0);
 
-    if (selected_link_ == 1) {
+    switch (selected_link_) {
+    case 1:
         ShowWindow(HandleMain, SW_HIDE);
         ShellExecuteA(0, "open",
             "http:\\\\www.eastore.ea.com\\cgi-bin\\eastore.storefront\\EN\\addtobasket\\10509",
             0, 0, SW_SHOWNORMAL);
-    } else if (selected_link_ == 2) {
+        break;
+    case 2:
         ShowWindow(HandleMain, SW_HIDE);
         ShellExecuteA(0, "open",
             "http:\\\\www.amazon.com\\exec\\obidos\\ASIN\\B00000DMA7\\ref=ad_cgm1",
             0, 0, SW_SHOWNORMAL);
-    } else if (selected_link_ == 3) {
+        break;
+    case 3:
         ShowWindow(HandleMain, SW_HIDE);
         ShellExecuteA(0, "open", "http:\\\\www.alphacentauri.com",
                       0, 0, SW_SHOWNORMAL);
+        break;
     }
     return selected_link_ != 0;
 }
@@ -4617,6 +4611,24 @@ int __cdecl game_data_plain_transfer(FILE *file, void *buffer, unsigned int byte
     return static_cast<int>(fread(buffer, byte_count, 1, file));
 }
 
+// Each block re-reads both mode globals: the image tests them per transfer.
+static inline int map_data_rw(FILE *file, void *buffer, unsigned int size) {
+    return GameDataWriteMode != 0
+        ? static_cast<int>(fwrite(buffer, size, 1, file))
+        : static_cast<int>(fread(buffer, size, 1, file));
+}
+
+static inline int map_data_xfer(FILE *file, void *buffer, unsigned int size) {
+    if (GameDataEncryptedMode != 0) {
+        return GameDataWriteMode != 0
+            ? encrypt_write(buffer, size, 1, file)
+            : encrypt_read(buffer, size, 1, file);
+    }
+    return map_data_rw(file, buffer, size);
+}
+
+// Both map daemons call map_data out of line.
+#pragma auto_inline(off)
 // ORIGINAL: 0x005A9280 ?map_data@@YAHPAUFILE@@HH@Z 0x005A9280-0x005A94ED
 // RECOVERY_BINDING: v1 {"evidence": ["git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/005a9280.cpp", "recovery/tasks/game-save-load-owner-coverage.json"], "reason": "Recover complete map-data transfer including archive-header blocks, legacy version-dependent block length, failure ordering and real map_read/map_write owners."}
 // symbol    ?map_data@@YAHPAU_iobuf@@HH@Z
@@ -4629,20 +4641,21 @@ int __cdecl map_data(FILE *file, int write_mode, int transfer_map_header) {
 
     GameDataWriteMode = write_mode;
     GameDataEncryptedMode = 0;
-    if (transfer_map_header != 0) {
-        if (map_data_plain_block(file, &header, sizeof(header)) == 0) return 1;
-        if (map_data_block(file, &write_mode, sizeof(write_mode)) == 0) return 1;
-
-        const unsigned int large_size = header.format_version_ < 3
-            ? 0xE5E0 : 0x10660;
-        if (map_data_block(file, large_block, large_size) == 0) return 1;
-        if (map_data_block(file, medium_block, sizeof(medium_block)) == 0) return 1;
-        if (map_data_block(file, small_block, sizeof(small_block)) == 0) return 1;
+    if (transfer_map_header == 0
+        || (map_data_rw(file, &header, sizeof(header)) != 0
+            && map_data_xfer(file, &write_mode, sizeof(write_mode)) != 0
+            && (header.format_version_ >= 3
+                ? map_data_xfer(file, large_block, 0x10660)
+                : map_data_xfer(file, large_block, 0xE5E0)) != 0
+            && map_data_xfer(file, medium_block, sizeof(medium_block)) != 0
+            && map_data_xfer(file, small_block, sizeof(small_block)) != 0)) {
+        if ((GameDataWriteMode != 0 ? map_write(file) : map_read(file)) == 0) {
+            return 0;
+        }
     }
-
-    const int result = GameDataWriteMode == 0 ? map_read(file) : map_write(file);
-    return result != 0;
+    return 1;
 }
+#pragma auto_inline(on)
 
 // ORIGINAL: 0x005A9C10 ?load_map_daemon@@YAHPAD@Z 0x005A9C10-0x005A9DAD BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/005a9c10.cpp", "recovery/tasks/game-save-load-owner-coverage.json"], "reason": "Recover extension/header/version validation, map windows and map tiles, contour copy direction and Paths lifecycle through existing genuine owners."}
@@ -4815,129 +4828,130 @@ int __cdecl save_map_daemon(char *path) {
 // TRIED: no Ghidra decompilation was provided for this address; transcribed straight from the disassembly. The two `// indirect` sites are vtable slots 1 (takes an int) and 2 (nullary) on the static object at g_007b0cb8, dispatched through VCall as the brief's shim pattern.
 // TRIED: nothing further tried; MISMATCH #0 (push vs sub - a prologue/ stack-layout difference from the local array sizing), similarity 0.73 over 953 bytes. The "copy loop" at 0x5A9A02 is a broadcast of the value at a fixed index into all 0x20 slots of two parallel int arrays (g_009392c0, g_00939340), not a running index as first guessed.
 int __cdecl load_daemon(LPCSTR path, int linearize_contours) {
+    // Function-scope reads keep their own frame slots, as in the image.
+    int version;
+    int seed;
     FILE *file = env_open(path, GameSaveReadMode);
     if (file == 0) return 1;
-
-    char header[0x110];
+    int result = 2;
+    char header[256];
     header_check(header, file);
-    if (strcmp(header, GameSaveHeaderText) != 0) {
-        fclose(file);
-        return 2;
-    }
-
-    int version = 0;
-    if (fread(&version, sizeof(version), 1, file) == 0 || version < 0x56) {
-        fclose(file);
-        return 3;
-    }
-
-    for (size_t close_slot = 2; close_slot < MapWinTableSlots; ++close_slot) {
-        MapWin *const window = MapWinTable[close_slot];
-        if (window != 0 && window->view_active_ != 0) {
-            window->view_active_ = 0;
-            window->close();
-        }
-    }
-    ConsoleGlobal.field_23BE4_ = 0;
-    ConsoleGlobal.field_23BE8_ = 0;
-
-    if (game_data(file, 0) != 0) {
-        const int result = GameDataLoadStatusWord == 0 ? 4 : 5;
-        fclose(file);
-        return result;
-    }
-
-    if ((GameDataStateStorage.fields_.game_rules_ & RULES_IRONMAN) != 0) {
-        int seed = 0;
-        if (fread(&seed, sizeof(seed), 1, file) != 0) my_srand(seed);
-    }
-
-    if (IsMultiplayerNet == 0) {
-        for (size_t offline_slot = 2; offline_slot < MapWinTableSlots; ++offline_slot) {
-            MapWin *const window = MapWinTable[offline_slot];
-            if (window != 0) window->view_active_ = 0;
-        }
-    }
-
-    Paths.init();
-    if (linearize_contours != 0) world_linearize_contours();
-    for (int contour_slot = 0; contour_slot < 11; ++contour_slot) AltNatural[contour_slot] = AltContour[contour_slot];
-
-    for (int tech_faction = 1; tech_faction < MaxPlayerNum; ++tech_faction) {
-        PlayerData &data = PlayersData[tech_faction];
-        data.flags &= ~static_cast<uint32_t>(PFLAG_UNK_20000);
-        for (int satellite_index = 0; satellite_index < 4; ++satellite_index) {
-            if (data.satellites_[satellite_index] != 0) data.flags |= PFLAG_UNK_20000;
-        }
-        for (int technology_id = 0; technology_id < MaxTechnologyNum; ++technology_id) {
-            if ((Technology[technology_id].flags & 8U) != 0 &&
-                has_tech(technology_id, tech_faction) != 0) {
-                data.flags |= PFLAG_UNK_20000;
-            }
-        }
-    }
-
-    for (int alive_faction = 1; alive_faction < MaxPlayerNum; ++alive_faction) {
-        bool has_presence = false;
-        for (int base_id = 0; base_id < GameDataStateStorage.fields_.base_current_count_; ++base_id) {
-            if (Bases[base_id].faction_id_current == alive_faction) {
-                has_presence = true;
-                break;
-            }
-        }
-        if (!has_presence) {
-            for (int vehicle_id = 0; vehicle_id < GameDataStateStorage.fields_.vehicle_current_count_; ++vehicle_id) {
-                const Veh &vehicle = Vehs[vehicle_id];
-                if (vehicle.faction_id == alive_faction &&
-                    VehPrototypes[vehicle.proto_id].plan == PLAN_COLONIZATION) {
-                    has_presence = true;
-                    break;
+    if (strcmp(header, GameSaveHeaderText) == 0) {
+        result = 3;
+        if (fread(&version, sizeof(version), 1, file) != 0 && version >= 0x56) {
+            for (size_t close_slot = 2; close_slot < MapWinTableSlots; ++close_slot) {
+                if (MapWinTable[close_slot] != 0
+                    && MapWinTable[close_slot]->view_active_ != 0) {
+                    MapWinTable[close_slot]->view_active_ = 0;
+                    MapWinTable[close_slot]->close();
                 }
             }
+            ConsoleGlobal.field_23BE4_ = 0;
+            ConsoleGlobal.field_23BE8_ = 0;
+            result = 4;
+            if (game_data(file, 0) != 0) {
+                if (GameDataLoadStatusWord != 0) {
+                    result = 5;
+                }
+            } else {
+                if ((GameDataStateStorage.fields_.game_rules_ & RULES_IRONMAN) != 0) {
+                    if (fread(&seed, sizeof(seed), 1, file) != 0) my_srand(seed);
+                }
+                if (IsMultiplayerNet == 0) {
+                    for (size_t offline_slot = 2; offline_slot < MapWinTableSlots; ++offline_slot) {
+                        if (MapWinTable[offline_slot] != 0) {
+                            MapWinTable[offline_slot]->view_active_ = 0;
+                        }
+                    }
+                }
+                BaseComputedID = -1;
+                result = 0;
+                Paths.init();
+                if (linearize_contours != 0) world_linearize_contours();
+                for (int contour_slot = 0; contour_slot < 11; ++contour_slot) {
+                    AltNatural[contour_slot] = AltContour[contour_slot];
+                }
+
+                // Bit 0x200 marks a faction with a satellite or a
+                // map-revealing technology.
+                for (int tech_faction = 1; tech_faction < MaxPlayerNum; ++tech_faction) {
+                    PlayersData[tech_faction].flags &= ~PFLAG_MAP_REVEALED;
+                    for (int satellite_index = 0; satellite_index < 4; ++satellite_index) {
+                        if (PlayersData[tech_faction].satellites_[satellite_index] != 0) {
+                            PlayersData[tech_faction].flags |= PFLAG_MAP_REVEALED;
+                        }
+                    }
+                    for (int technology_id = 0; technology_id < MaxTechnologyNum; ++technology_id) {
+                        if ((Technology[technology_id].flags & 8U) != 0
+                            && has_tech(technology_id, tech_faction) != 0) {
+                            PlayersData[tech_faction].flags |= PFLAG_MAP_REVEALED;
+                        }
+                    }
+                }
+
+                for (int alive_faction = 1; alive_faction < MaxPlayerNum; ++alive_faction) {
+                    int has_presence = 0;
+                    for (int base_id = 0; base_id < GameDataStateStorage.fields_.base_current_count_; ++base_id) {
+                        if (Bases[base_id].faction_id_current == alive_faction) {
+                            has_presence = 1;
+                            break;
+                        }
+                    }
+                    if (!has_presence) {
+                        for (int vehicle_id = 0; vehicle_id < GameDataStateStorage.fields_.vehicle_current_count_; ++vehicle_id) {
+                            if (Vehs[vehicle_id].faction_id == alive_faction
+                                && VehPrototypes[Vehs[vehicle_id].proto_id].plan == PLAN_COLONIZATION) {
+                                has_presence = 1;
+                            }
+                        }
+                    }
+                    if (!has_presence) {
+                        GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_ &= ~(1 << alive_faction);
+                    } else {
+                        GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_ |= 1 << alive_faction;
+                    }
+                }
+
+                if ((GameDataStateStorage.fields_.game_rules_ & RULES_IRONMAN) != 0) remove(path);
+
+                // The current history index is re-read for every slot.
+                for (int history_slot = 0; history_slot < 32; ++history_slot) {
+                    ConsoleGlobal.cursor_history_x_[history_slot] =
+                        ConsoleGlobal.cursor_history_x_[ConsoleGlobal.cursor_history_index_];
+                    ConsoleGlobal.cursor_history_y_[history_slot] =
+                        ConsoleGlobal.cursor_history_y_[ConsoleGlobal.cursor_history_index_];
+                }
+
+                rebuild_vehicle_bits();
+                rebuild_base_bits();
+
+                if (strstr(path, GameSaveMultiplayerMarker) != 0 && IsMultiplayerNet == 0) {
+                    ConsoleGlobal.cursor_active_ = 0;
+                    GameDataStateStorage.fields_.game_state_ |= 0x10C0;
+                    const unsigned char state_low_byte = static_cast<unsigned char>(GameDataStateStorage.fields_.game_state_);
+                    if ((state_low_byte & 0x80) != 0 && (state_low_byte & 0x40) != 0) {
+                        MainInterfaceGlobal.flat_button_[2].show(0);
+                    } else {
+                        MainInterfaceGlobal.flat_button_[2].hide();
+                    }
+                }
+
+                ControlTurnPhase = ConsoleGlobal.faction_id_;
+                if (IsMultiplayerNet != 0) {
+                    IsMultiplayerPBEM = 0;
+                } else if ((GameDataStateStorage.fields_.net_turn_flags_ & 0x20) == 0
+                    && bit_count(GameDataStateStorage.fields_.lock_masks_.enable_mask_ & 0xFFu) <= 1) {
+                    IsMultiplayerPBEM = 0;
+                } else {
+                    IsMultiplayerPBEM = 1;
+                    check_tamper();
+                }
+                UnkBitfield1 |= 4;
+            }
         }
-        const uint32_t faction_bit = 1U << (8 + alive_faction);
-        if (has_presence) GameDataStateStorage.fields_.lock_masks_.enable_mask_ |= faction_bit;
-        else GameDataStateStorage.fields_.lock_masks_.enable_mask_ &= ~faction_bit;
     }
-
-    if ((GameDataStateStorage.fields_.game_rules_ & RULES_IRONMAN) != 0) remove(path);
-
-    const int cursor_history = ConsoleGlobal.cursor_history_index_;
-    const int cursor_x = ConsoleGlobal.cursor_history_x_[cursor_history];
-    const int cursor_y = ConsoleGlobal.cursor_history_y_[cursor_history];
-    for (int history_slot = 0; history_slot < 32; ++history_slot) {
-        ConsoleGlobal.cursor_history_x_[history_slot] = cursor_x;
-        ConsoleGlobal.cursor_history_y_[history_slot] = cursor_y;
-    }
-
-    rebuild_vehicle_bits();
-    rebuild_base_bits();
-
-    if (strstr(path, GameSaveMultiplayerMarker) != 0 && IsMultiplayerNet == 0) {
-        ConsoleGlobal.cursor_active_ = 0;
-        GameDataStateStorage.fields_.game_state_ |= 0x10C0;
-        const unsigned char state_low_byte = static_cast<unsigned char>(GameDataStateStorage.fields_.game_state_);
-        if ((state_low_byte & 0x80) != 0 && (state_low_byte & 0x40) != 0) {
-            MainInterfaceGlobal.flat_button_[2].show(0);
-        } else {
-            MainInterfaceGlobal.flat_button_[2].hide();
-        }
-    }
-
-    ControlTurnPhase = ConsoleGlobal.faction_id_;
-    if (IsMultiplayerNet == 0) {
-        if ((GameDataStateStorage.fields_.net_turn_flags_ & 0x20) == 0 && bit_count(GameDataStateStorage.fields_.lock_masks_.enable_mask_ & 0xFFu) <= 1) {
-            IsMultiplayerPBEM = 0;
-        } else {
-            IsMultiplayerPBEM = 1;
-            check_tamper();
-        }
-    } else {
-        IsMultiplayerPBEM = 0;
-    }
-    UnkBitfield1 |= 4;
     fclose(file);
-    return 0;
+    return result;
 }
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
@@ -6177,7 +6191,7 @@ void __cdecl scenario_setup() {
                 x++;
             }
             if (get_proto_triad(Vehs[vehicle_id].proto_id) != TRIAD_AIR
-                && ((map_loc(x, y)->climate & 0xE0) < ALT_BIT_SHORE_LINE)
+                && ((map_loc(x, y)->climate & ~0x1F) < ALT_BIT_SHORE_LINE)
                     != (get_proto_triad(Vehs[vehicle_id].proto_id) == TRIAD_SEA)
                 && counter < 0x26DE) {
                 continue;
