@@ -199,7 +199,7 @@ static void vehdraw_finish_frame(Buffer *buffer, int veh_id, int x, int y, int f
 
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x004BF740 ?compute_camera@@YAXPAUVOX_Vect@@PAUVOX_Matrix@@@Z 0x004BF740-0x004BF8C1
+// ORIGINAL: 0x004BF740 ?compute_camera@@YAXPAUVOX_Vect@@PAUVOX_Matrix@@@Z 0x004BF740-0x004BF8C1 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned original control flow and original seed extent; observed VC6 external symbol. Tests exercise actual bodies, call/publication order, unordered/zero camera branches and complete facet tables at both established baselines.", "Camera publishes its first Euler triple before the second rotation; original CRT atan calls round their quotient to double. Facet initialization snapshots ConsoleGlobal inherited MapWin field at1DD6C, established by receiver-relative MapWin initialization; four independent 2401-element tables replace cross-object pointer arithmetic."], "reason": "Vehicle rendering setup with real VOX types, source-owned tables and actual Console terrain-height state."}
 // The image calls the CRT atan rather than expanding fpatan.
 #pragma function(atan)
@@ -582,7 +582,7 @@ void __cdecl vehdraw_draw(Buffer *buffer, int veh_id, int x, int y, int flags,
 }
 
 
-// ORIGINAL: 0x004C1740 vehdraw_unk1 0x004C1740-0x004C1B05
+// ORIGINAL: 0x004C1740 vehdraw_unk1 0x004C1740-0x004C1B05 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/004c1740.cpp: preserved original identity/span and retained 18 call targets", "seed history preserved in the parsed source record and this binding: FILE mode, IMPLEMENTED state, kind=game, empty prototype, 0 callers, flags=frame;hidden;sp_ready;purged_ok, VERBATIM recipe; formal LEVER/TRIED/UNRECOVERABLE/DEFERRED lessons remain empty", "original call-target set:0x0046FE00,0x004BF740,0x004C1D20,0x004C3090,0x005593E0,0x005D7670,0x005DE8F0,0x006171A0,0x00617230,0x006182A0,0x00618370,0x006183B0,0x00618430,0x00618470,0x00627F50,0x006280E0,0x00628150,0x00628220", "source:src/veh.h: Veh 0x34 layout, Vehs, four 2401-record facet tables and renderer declarations", "source:src/veh.cpp: pick_top_veh, compute_camera, current vehicle construction/armor owners and render helpers", "source:src/console.h: ConsoleGlobal is a real MapWin subtype with get_relative_alt", "source:src/map.h: MapTiles/MapLongitude and Map::climate typed ownership", "source:src/buffer.cpp: g_VEHDRAW_BUFFER at 0x008CC298; Buffer+0x50 is typed locked_bits_", "source:src/caviar.cpp: g_VEHDRAW_CAVIAR and camera/render/reset APIs", "source:src/game.cpp and src/interface_palette.cpp: ShadowColorTable, ArmorTransparentColorTables and g_PALETTE1 owners", "docs/recovery/agent-structure-observations.csv: 0x004C1740 four-table vector-chain observation remains open"], "reason": "Recover the retained vehicle-renderer identity through the genuine Veh, MapWin/Console, Buffer, Palette and Caviar owners. Preserve the seed's terrain table asymmetry, render flag derivation, post-render prototype reread, transparent-armor path and unchecked failure/invalid-index behavior. Original decorated symbol and exact caller boundary remain unverified; this proposal is semantic source ownership, not native acceptance."}
 // symbol    ?vehdraw_unk1@@YAXPAVBuffer@@HHHIHHH@Z
 void __cdecl vehdraw_unk1(Buffer *buffer, int vehicle_id, int x, int y,

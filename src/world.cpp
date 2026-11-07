@@ -3352,7 +3352,7 @@ Purpose: Build the whole planet: reset the altitude table and the Map* rules
          shorelines and every landmark/terrain pass, and refresh the map
          windows. Repeats up to four times until world_validate accepts the
          planet or the omniscient-view bit aborts the retry.
-// ORIGINAL: 0x005C86E0 ?world_build@@YAXXZ 0x005C86E0-0x005C899D FILE
+// ORIGINAL: 0x005C86E0 ?world_build@@YAXXZ 0x005C86E0-0x005C899D FILE BYTE_EXACT
 // size      701 bytes
 // prototype void (__cdecl ?world_build@@YAXXZ)()
 // callers   2   call targets   30
