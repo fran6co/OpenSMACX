@@ -90,6 +90,13 @@ def invocation(entry: CompilationEntry) -> list[str]:
                 raise ValueError("matching recipe requires a canonical reproducible compiler root")
             kept.append(word)
             continue
+        if word.startswith("--compiler="):
+            # The unit's compiler is part of its recipe (VC5 for Caviar's
+            # library objects); the wrapper validates the choice.
+            if word != "--compiler=vc5":
+                raise ValueError("unsupported explicit compiler selection")
+            kept.append(word)
+            continue
         if word.startswith("@"):
             raise ValueError("matching recipe requires explicit options, not response files")
         if word.startswith(("/", "-")) and word[1:] in {"MD", "MDd", "MT", "MTd", "ML", "MLd"}:

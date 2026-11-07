@@ -10,7 +10,7 @@ Purpose: Release a render record and the four tables it owns, then drop the
          count of records in existence. The colour and shadow tables and the
          two ramp pointer arrays are each freed only when non-null; the record
          itself is freed whatever it holds.
-// ORIGINAL: 0x00639630 sub_639630 0x00639630-0x00639694
+// ORIGINAL: 0x00639630 sub_639630 0x00639630-0x00639694 BYTE_EXACT
 // symbol    ?vox_release_record@@YAXPAUVoxRenderRecord@@@Z
 // size      100 bytes
 // prototype void (__cdecl sub_639630)(int param_1)

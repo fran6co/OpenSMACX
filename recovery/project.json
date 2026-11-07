@@ -121,7 +121,8 @@
       "VC6_ROOT",
       "VC6_INCLUDE",
       "VC6_LIB",
-      "ML_ROOT"
+      "ML_ROOT",
+      "VC5_ROOT"
     ]
   },
   "compiler": {
@@ -159,7 +160,9 @@
       "CPATH",
       "C_INCLUDE_PATH",
       "CPLUS_INCLUDE_PATH",
-      "ML_ROOT"
+      "ML_ROOT",
+      "VC5_ROOT",
+      "VC5_PREFIX"
     ]
   },
   "measurement": {
@@ -273,7 +276,49 @@
           "-c"
         ]
       },
-      "src/caviar_chain.cpp": {
+      "src/caviar/caviar_loader.cpp": {
+        "flags": [
+          "/nologo",
+          "/TP",
+          "/Zm200",
+          "/GX",
+          "/O2",
+          "/Ob2",
+          "-MT",
+          "/W4",
+          "/Z7",
+          "-c"
+        ]
+      },
+      "src/caviar/caviar_scene.cpp": {
+        "flags": [
+          "/nologo",
+          "/TP",
+          "/Zm200",
+          "/GX",
+          "/O2",
+          "/Ob2",
+          "-MT",
+          "/W4",
+          "/Z7",
+          "-c"
+        ]
+      },
+      "src/caviar/caviar_raster.cpp": {
+        "flags": [
+          "/nologo",
+          "/TP",
+          "/Zm200",
+          "/GX",
+          "/O2",
+          "/Ob2",
+          "-MT",
+          "/W4",
+          "/Z7",
+          "-c"
+        ]
+      },
+      "src/caviar/caviar_chain.cpp": {
         "flags": [
           "/nologo",
           "/TP",
@@ -1615,7 +1660,7 @@
           "-c"
         ]
       },
-      "src/caviar_io.cpp": {
+      "src/caviar/caviar_io.cpp": {
         "flags": [
           "/nologo",
           "/TP",
@@ -2078,70 +2123,70 @@
           "-c"
         ]
       },
-      "src/caviar_part_s1a_clipped.asm": {
+      "src/caviar/caviar_part_s1a_clipped.asm": {
         "flags": [
           "-nologo",
           "-coff",
           "-c"
         ]
       },
-      "src/caviar_part_s1a_contained.asm": {
+      "src/caviar/caviar_part_s1a_contained.asm": {
         "flags": [
           "-nologo",
           "-coff",
           "-c"
         ]
       },
-      "src/caviar_part_s1o_clipped.asm": {
+      "src/caviar/caviar_part_s1o_clipped.asm": {
         "flags": [
           "-nologo",
           "-coff",
           "-c"
         ]
       },
-      "src/caviar_part_s1o_contained.asm": {
+      "src/caviar/caviar_part_s1o_contained.asm": {
         "flags": [
           "-nologo",
           "-coff",
           "-c"
         ]
       },
-      "src/caviar_part_s2a_clipped.asm": {
+      "src/caviar/caviar_part_s2a_clipped.asm": {
         "flags": [
           "-nologo",
           "-coff",
           "-c"
         ]
       },
-      "src/caviar_part_s2a_contained.asm": {
+      "src/caviar/caviar_part_s2a_contained.asm": {
         "flags": [
           "-nologo",
           "-coff",
           "-c"
         ]
       },
-      "src/caviar_shadow_clipped.asm": {
+      "src/caviar/caviar_shadow_clipped.asm": {
         "flags": [
           "-nologo",
           "-coff",
           "-c"
         ]
       },
-      "src/caviar_shadow_contained.asm": {
+      "src/caviar/caviar_shadow_contained.asm": {
         "flags": [
           "-nologo",
           "-coff",
           "-c"
         ]
       },
-      "src/caviar_part_s2o_clipped.asm": {
+      "src/caviar/caviar_part_s2o_clipped.asm": {
         "flags": [
           "-nologo",
           "-coff",
           "-c"
         ]
       },
-      "src/caviar_part_s2o_contained.asm": {
+      "src/caviar/caviar_part_s2o_contained.asm": {
         "flags": [
           "-nologo",
           "-coff",

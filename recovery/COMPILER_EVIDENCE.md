@@ -351,6 +351,57 @@ sources spell `[ecx + ebx]` where the original encodes ecx as the index. ML
 copy with long full-line comments reduced to `;`. The binary is pinned by
 `~/opt/masm/6.11d/PROVENANCE.md`.
 
+## Caviar library compiler
+
+The AnimaTek Caviar/VOX library (0x627D00-0x628377, 0x6381F0-0x63B2CB,
+0x63E860-0x640A42) was compiled by Microsoft Visual C++ 5.0 (CL 11.00.7022)
+at /O2, not VC6. VC5 reproduces caviar_free_record 0x638430, vox_read_exact
+0x638650, vox_alloc 0x638620, vox_read_int 0x6386B0 and the plain-C
+vox_matrix_vector_mul 0x6280E0 byte for byte, and VC6 cannot. VC5 objects
+carry no @comp.id, which fits the image Rich header's unmarked objects. The
+compiler binaries are installed at `~/opt/vc5` (pinned by its PROVENANCE.md),
+with a separate Wine prefix. RTM and SP3 give the same bytes on every sample
+tried; the wrapper uses RTM `BIN`. /G6 breaks the matches.
+
+Build domain (2026-11-07): `src/caviar/` is its own static library. A unit
+selects VC5 with the explicit `--compiler=vc5` recipe option. The wrapper
+removes the option and runs `$VC5_ROOT/BIN/CL.EXE` under `$VC5_PREFIX`. The SDK
+headers stay VC6's, and LINK 6.00 and ML 6.11d are unchanged. The library gets
+no forced `/FI vc6_compat.h`, because VC5 keys `#pragma once` on the include
+spelling. The forced include would therefore expand twice in the
+reproducibility check's relative-source pass, and stdafx.h already includes
+it. VC5 has no `/GZ`.
+
+The choice is measured per unit:
+- VC5: geometry, loader, chain, io, record, error, scene and raster.
+- The scene range ends in 0xCC fill, not nops. Even so, VC5 beat VC6 on all
+  five non-exact scene bodies: matched instructions went 3->7, 8->51, 1->9,
+  17->51 and 106->182, and nothing regressed.
+- caviar_cpu.cpp stays VC6, because VC5's inline assembler does not know
+  `cpuid` (C2400).
+- /Ob2 beats /Ob1 on the loader: vox_read_part is exact only at /Ob2.
+
+On the 145 annotated addresses in the moved and affected files, the move took
+the count from 98 pass / 42 fail / 5 unknown to 105 / 34 / 6. Every earlier
+pass still passes.
+- Newly exact: 0x638430, 0x638650, 0x638AD0, 0x638CC0, 0x6392E0, 0x639630 and
+  0x63F9B0.
+- The new unknown is the game-side Caviar::init_class 0x6185A0. VC6 had been
+  inlining vox_init_callbacks into it, whereas the image calls 0x6392E0. With
+  the call now out of line, the EH measurement refuses with an "unsupported
+  cleanup action".
+
+Open questions:
+- C vs C++. Compiled as C, the plain left-to-right vox_matrix_vector_mul
+  matches. The same text as /TP C++ does not, and neither does this tree's
+  VC6-era regrouped spelling. This is evidence that the library was plain C.
+  Converting it needs a C-compatible VOX header split out of caviar.h. It also
+  conflicts with the C++-mangled names that the existing `ORIGINAL:` markers
+  carry, which is a coordinator decision.
+- Operand order. A one-SIB-byte wall remains, e.g. `[ecx+esi]` vs the image's
+  `[esi+ecx]` at 0x638717. It persists under VC5 RTM and SP3, as C and as C++,
+  across the spellings tried.
+
 ## Shared frames and private helper boundaries
 
 Normalize addresses against the owning caller's frame before translating a

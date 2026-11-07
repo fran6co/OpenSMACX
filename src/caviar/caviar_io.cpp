@@ -64,7 +64,7 @@ extern "C" int __cdecl vox_alloc_block(int size, void *out_storage) {
 Purpose: Read EXACTLY count bytes through the engine's read slot: loop until
          the accumulated total reaches the request, and stage "Reading file"
          the moment the slot answers negative.
-// ORIGINAL: 0x00638650 sub_638650 0x00638650-0x006386A8 FILE
+// ORIGINAL: 0x00638650 sub_638650 0x00638650-0x006386A8 FILE BYTE_EXACT
 // symbol    _vox_read_exact
 // size      88 bytes
 // callers   15   call targets   0

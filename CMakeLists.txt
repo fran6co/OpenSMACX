@@ -158,22 +158,6 @@ set(OPENSMACX_SOURCES
     src/polygon.cpp
     src/buttongroup.cpp
     src/caviar.cpp
-    src/caviar_chain.cpp
-    src/caviar_record.cpp
-    src/caviar_io.cpp
-    src/caviar_error.cpp
-    src/caviar_geometry.cpp
-    src/caviar_cpu.cpp
-    src/caviar_part_s1a_clipped.asm
-    src/caviar_part_s1a_contained.asm
-    src/caviar_part_s1o_clipped.asm
-    src/caviar_part_s1o_contained.asm
-    src/caviar_part_s2a_clipped.asm
-    src/caviar_part_s2a_contained.asm
-    src/caviar_shadow_clipped.asm
-    src/caviar_shadow_contained.asm
-    src/caviar_part_s2o_clipped.asm
-    src/caviar_part_s2o_contained.asm
     src/council.cpp
     src/dialog.cpp
     src/dialogs.cpp
@@ -393,6 +377,9 @@ endif()
 # subsystems remain direct application inputs until their membership is
 # established. This is not a claim of complete JACKAL.LIB recovery.
 add_subdirectory(src/jackal)
+# The AnimaTek Caviar/VOX library is its own archive with its own (VC5)
+# compiler recipe; the game-side Caviar class stays in src/caviar.cpp.
+add_subdirectory(src/caviar)
 # These owners retain frame-based parameter accesses. Match their
 # existing explicit recovery measurement profiles without changing the
 # application's default compiler flags.
@@ -627,7 +614,6 @@ set_property(SOURCE
     src/vehicle_storage.cpp
     src/buffer.cpp
     src/caviar.cpp
-    src/caviar_chain.cpp
     src/credits.cpp
     src/game.cpp
     src/game_desktop.cpp
@@ -740,7 +726,7 @@ target_compile_options(OpenSMACX PRIVATE "$<$<COMPILE_LANGUAGE:ASM_MASM>:-nologo
 # the build.
 
 # FileBox owns the open/save dialog imports from comdlg32.
-target_link_libraries(OpenSMACX PRIVATE jackal zlib user32 gdi32 winmm dxguid ddraw vfw32 dsound comdlg32)
+target_link_libraries(OpenSMACX PRIVATE jackal caviar zlib user32 gdi32 winmm dxguid ddraw vfw32 dsound comdlg32)
 
 # `/MAP /MAPINFO:LINES` is the only debug format in this toolchain that gdb can
 # be taught to read. VC6's own three cannot be: the PDB is 2.0 (`JG`, which
@@ -755,8 +741,8 @@ target_link_options(OpenSMACX PRIVATE
     # The original retains absolute-pointer fixups. VC6's nonincremental
     # Release link otherwise drops them even when instruction operands agree.
     "/FIXED:NO"
-    # The Caviar renderers patch their own immediates (src/caviar_part_*.asm,
-    # src/caviar_shadow_*.asm): the original's _SELFMOD section is execute,
+    # The Caviar renderers patch their own immediates (src/caviar/caviar_part_*.asm,
+    # src/caviar/caviar_shadow_*.asm): the original's _SELFMOD section is execute,
     # read and write (0xE0000020).
     "/SECTION:_SELFMOD,ERW"
     # Capture final-pass input labels separately from the debugger map. The
@@ -849,6 +835,7 @@ function(opensmacx_apply_optimization target)
 endfunction()
 opensmacx_apply_optimization(OpenSMACX)
 opensmacx_apply_optimization(jackal)
+opensmacx_apply_optimization(caviar)
 
 
 

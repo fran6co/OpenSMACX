@@ -39,10 +39,36 @@ TOOLS = {"cl": "CL.EXE", "link": "LINK.EXE", "lib": "LIB.EXE", "ml": "ML.EXE"}
 # included; 6.12 and 6.13 fill ALIGN differently. It is a separate install
 # beside VC6; ~/opt/masm/<version>/PROVENANCE.md pins it.
 ML_ROOT = Path(os.environ.get("ML_ROOT", Path.home() / "opt" / "masm" / "6.11d"))
+# The AnimaTek Caviar/VOX library was compiled by Visual C++ 5.0 (CL 11.00.7022),
+# not VC6; see recovery/COMPILER_EVIDENCE.md, "Caviar library compiler". Its
+# recipes carry the explicit `--compiler=vc5` option, which selects the "cl5"
+# tool: VC5's CL.EXE under its own Wine prefix. Only the compiler binaries are
+# installed; the SDK/CRT headers stay VC6's. ~/opt/vc5/PROVENANCE.md pins it.
+VC5_ROOT = Path(os.environ.get("VC5_ROOT", Path.home() / "opt" / "vc5"))
+VC5_PREFIX = Path(os.environ.get("VC5_PREFIX", VC5_ROOT / "wineprefix"))
+TOOLS["cl5"] = "CL.EXE"
+COMPILER_OPTIONS = {"--compiler=vc5": "cl5"}
+ROOT_VARIABLES = {"ml": "ML_ROOT", "cl5": "VC5_ROOT"}
 
 
 def tool_executable(tool: str) -> Path:
-    return (ML_ROOT / "bin" if tool == "ml" else VC6_ROOT / "BIN") / TOOLS[tool]
+    if tool == "ml":
+        return ML_ROOT / "bin" / TOOLS[tool]
+    return (VC5_ROOT if tool == "cl5" else VC6_ROOT) / "BIN" / TOOLS[tool]
+
+
+def take_compiler(tool: str, arguments: list) -> tuple:
+    """Remove an explicit `--compiler=` choice and return the selected tool.
+
+    The choice is a recipe option, not an inference: an absent option keeps
+    VC6, and it is valid only on a compiler invocation.
+    """
+    chosen = [word for word in arguments if word.startswith("--compiler=")]
+    if not chosen:
+        return tool, arguments
+    if tool != "cl" or len(chosen) != 1 or chosen[0] not in COMPILER_OPTIONS:
+        raise ValueError("unsupported or repeated explicit compiler selection")
+    return COMPILER_OPTIONS[chosen[0]], [word for word in arguments if word != chosen[0]]
 
 
 def preprocessing_diagnostics(stdout: bytes, stderr: bytes) -> str:
@@ -251,6 +277,10 @@ def sdk_search_paths(variable: str, default: Path) -> tuple[Path, ...]:
     return tuple(path.resolve() for path in paths)
 
 
+# The tool this process runs; the VC5 compiler keeps its own Wine prefix.
+ACTIVE_TOOL = "cl"
+
+
 def environment() -> dict:
     # LINK can prepend options independently of argv. The captured effective
     # link policy must not omit aliases, forced links or extra input files.
@@ -265,7 +295,7 @@ def environment() -> dict:
     return dict(
         {key: value for key, value in os.environ.items() if key.upper() not in {"LINK", "_LINK_"}},
         LINK="", _LINK_="",
-        WINEPREFIX=str(VC6_PREFIX),
+        WINEPREFIX=str(VC5_PREFIX if ACTIVE_TOOL == "cl5" else VC6_PREFIX),
         WINEDEBUG=os.environ.get("WINEDEBUG", "-all"),
         INCLUDE=";".join("Z:" + str(part).replace("/", "\\") for part in include),
         LIB=";".join("Z:" + str(part).replace("/", "\\") for part in library),
@@ -467,17 +497,30 @@ def main(argv: list) -> int:
                 tool = name
                 break
 
-    executable = tool_executable(tool)
-    if not executable.is_file():
-        print(f"{executable} not found; set {'ML_ROOT' if tool == 'ml' else 'VC6_ROOT'}",
-              file=sys.stderr)
-        return 127
     if tool == "ml":
+        executable = tool_executable(tool)
+        if not executable.is_file():
+            print(f"{executable} not found; set ML_ROOT", file=sys.stderr)
+            return 127
         return assemble(executable, expand_responses(arguments))
 
     # BEFORE ANYTHING READS THE ARGUMENTS. Both the depfile extraction below
     # and the path translation are blind to whatever sits inside a `@file`.
     arguments = expand_responses(arguments)
+    # `tool` stays the command family (cl, link, lib) for the option grammar
+    # below; the selected compiler only changes the executable and prefix.
+    try:
+        selected, arguments = take_compiler(tool, arguments)
+    except ValueError as error:
+        print(str(error), file=sys.stderr)
+        return 3
+    global ACTIVE_TOOL
+    ACTIVE_TOOL = selected
+    executable = tool_executable(selected)
+    if not executable.is_file():
+        print(f"{executable} not found; set {ROOT_VARIABLES.get(selected, 'VC6_ROOT')}",
+              file=sys.stderr)
+        return 127
     compile_diagnostics = [word.split("=", 1)[1] for word in arguments
                            if word.startswith("--compile-diagnostics=")]
     if compile_diagnostics and (tool != "cl" or len(compile_diagnostics) != 1 or not compile_diagnostics[0]):
@@ -494,7 +537,7 @@ def main(argv: list) -> int:
     if frontends:
         sys.path.insert(0, str(Path(__file__).resolve().parent))
         from intrinsics import OPTION, compile as intrinsic_compile
-        if tool != "cl" or frontends != [OPTION] or link_diagnostics is not None:
+        if tool != "cl" or selected != "cl" or frontends != [OPTION] or link_diagnostics is not None:
             print("unsupported or repeated explicit compiler frontend", file=sys.stderr)
             return 3
         ordinary = [word for word in arguments if word != OPTION]

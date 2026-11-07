@@ -14,13 +14,15 @@ from match_recovery.records import parse_json
 def toolchain_inputs():
     # Locations and environment defaults are compiler interaction, not package
     # policy. Keep these consistent with the actual compile/link wrapper.
-    from recovery.environment.wine import ML_ROOT, VC6_ROOT, sdk_search_paths
+    from recovery.environment.wine import ML_ROOT, VC5_ROOT, VC6_ROOT, sdk_search_paths
     from recovery.environment.intrinsics import toolchain_inputs as intrinsic_inputs
     intrinsic = intrinsic_inputs()
     files = {**intrinsic["files"], "assembler": str((ML_ROOT / "bin" / "ML.EXE").resolve())}
     return {"schema_version": 1, "files": files, "directories": {
         **intrinsic["directories"],
         "compiler": str((VC6_ROOT / "BIN").resolve()),
+        # Caviar's library objects compile with VC5 (`--compiler=vc5`).
+        "compiler-vc5": str((VC5_ROOT / "BIN").resolve()),
         **{f"include-{index}": str(path) for index, path in enumerate(
             sdk_search_paths("VC6_INCLUDE", VC6_ROOT / "INCLUDE"))},
         **{f"library-{index}": str(path) for index, path in enumerate(

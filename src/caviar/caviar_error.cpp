@@ -27,7 +27,7 @@ Purpose: Stage the engine's ERROR MESSAGE: copy the caller's string into
          reads a real stack argument, and `return 0;` would insert an
          `xor eax,eax` ahead of the expansion's `and ecx,3`.
 // ORIGINAL: 0x00639390 sub_639390 0x00639390-0x006393B9 FILE BYTE_EXACT
-// compile_context src/caviar_error.cpp
+// compile_context src/caviar/caviar_error.cpp
 // symbol    _vox_stage_error
 // size      41 bytes
 // callers   12   call targets   0

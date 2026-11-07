@@ -14,6 +14,12 @@ def ordinary_frontend(monkeypatch, tmp_path):
                         lambda: {"enabled": False, "compiler": "unregistered-tool"})
     # The assembler is always a declared input, wherever ML_ROOT points.
     monkeypatch.setattr(wine, "ML_ROOT", tmp_path / "masm")
+    # So is the VC5 compiler that builds the Caviar library objects.
+    monkeypatch.setattr(wine, "VC5_ROOT", tmp_path / "vc5")
+
+
+def vc5(tmp_path):
+    return {"compiler-vc5": str(tmp_path / "vc5" / "BIN")}
 
 
 def assembler(tmp_path):
@@ -34,7 +40,7 @@ def test_registered_frontend_inputs_are_merged_not_substituted(monkeypatch, tmp_
                 "directories": {"intrinsic-headers": str(tmp_path / "clang-headers")}}
     monkeypatch.setattr(intrinsics, "toolchain_inputs", lambda: declared)
     assert toolchain_inputs() == {"schema_version": 1, "files": {**declared["files"], **assembler(tmp_path)},
-        "directories": {**declared["directories"], "compiler": str(tmp_path / "BIN"),
+        "directories": {**declared["directories"], "compiler": str(tmp_path / "BIN"), **vc5(tmp_path),
                         "include-0": str(tmp_path / "INCLUDE"), "library-0": str(tmp_path / "LIB")}}
 
 
@@ -51,10 +57,10 @@ def test_default_and_overridden_sdk_search_paths(monkeypatch, tmp_path):
     monkeypatch.delenv("VC6_INCLUDE", raising=False)
     monkeypatch.delenv("VC6_LIB", raising=False)
     assert toolchain_inputs() == {"schema_version": 1, "files": assembler(tmp_path), "directories": {
-        "compiler": str(tmp_path / "BIN"), "include-0": str(tmp_path / "INCLUDE"), "library-0": str(tmp_path / "LIB")}}
+        "compiler": str(tmp_path / "BIN"), **vc5(tmp_path), "include-0": str(tmp_path / "INCLUDE"), "library-0": str(tmp_path / "LIB")}}
     monkeypatch.setenv("VC6_INCLUDE", str(tmp_path / "headers") + ":" + str(tmp_path / "sdk"))
     monkeypatch.setenv("VC6_LIB", str(tmp_path / "libraries"))
-    assert toolchain_inputs()["directories"] == {"compiler": str(tmp_path / "BIN"),
+    assert toolchain_inputs()["directories"] == {"compiler": str(tmp_path / "BIN"), **vc5(tmp_path),
         "include-0": str(tmp_path / "headers"), "include-1": str(tmp_path / "sdk"), "library-0": str(tmp_path / "libraries")}
 
 
