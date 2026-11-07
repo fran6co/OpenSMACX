@@ -4283,48 +4283,48 @@ void Console::group(int vehicle_id) {
 // ORIGINAL: 0x004D2F00 ?activate@Console@@QAEXHHH@Z 0x004D2F00-0x004D3467
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/004d2f00.cpp: original identity and complete spans", "source:src/console.h: Console owner declarations and layout", "source:src/console.cpp: coupled navigation, selection and lifecycle caller relationships"], "reason": "The original Console operation is expressed by the corresponding real Console owner definition, using its recovered members and source-owned callees rather than the retained seed scaffold."}
 void Console::activate(int x, int y, int current_selection) {
+    int vehicle;
     log_say("Console ACTIVATE", x, y, 0);
     if (IsMultiplayerNet) {
         if (NetDaemonNet.channels_[1].leading_words_[2] ||
             NetDaemonNet.channels_[1].payload_.flags) return;
-        const unsigned int faction_bit = 1u << ConsoleGlobal.faction_id_;
-        if (((NetDaemonNet.primary_state_.trailing_words_[6] & faction_bit) &&
+        if (((NetDaemonNet.primary_state_.trailing_words_[6] & (1u << ConsoleGlobal.faction_id_)) &&
              !(GameDataStateStorage.fields_.net_turn_flags_ & 0x10)) || ConsoleControlTurnActive) {
-            int vehicle = veh_at(x, y);
-            if (stack_check(vehicle, 1, -1, -1, -1) != 1)
-                vehicle = veh_pick(vehicle, "PICKUNIT", 1);
-            if (vehicle >= 0) {
+            vehicle = veh_at(x, y);
+            if (stack_check(vehicle, 1, -1, -1, -1) == 1
+                || (vehicle = veh_pick(vehicle, "PICKUNIT", 1)) >= 0) {
                 selected_vehicle_ = vehicle;
-                focus_vehicle_ = vehicle;
+                if (vehicle >= 0) focus_vehicle_ = vehicle;
             }
-            const bool ready_now = (NetDaemonNet.primary_state_.trailing_words_[6] &
-                (1u << ConsoleGlobal.faction_id_)) && veh_ready(vehicle);
-            NetMsgPrimary.pop(ready_now ? "ALREADYDONE" : "FIRSTMOVE", 2000, 0, nullptr);
+            if ((NetDaemonNet.primary_state_.trailing_words_[6] & (1u << ConsoleGlobal.faction_id_))
+                && veh_ready(vehicle)) {
+                NetMsgPrimary.pop("ALREADYDONE", 2000, 0, nullptr);
+            } else {
+                NetMsgPrimary.pop("FIRSTMOVE", 2000, 0, nullptr);
+            }
             return;
         }
     }
-    int vehicle;
     if (ConsoleGlobal.cursor_active_ && current_selection) {
-        field_23BE4_ = 0;
         vehicle = selected_vehicle_;
+        field_23BE4_ = 0;
         if (stack_check(vehicle, 1, ConsoleGlobal.faction_id_, -1, -1) == 1 &&
             veh_selectable(vehicle)) {
             field_23BEC_ = 1;
             return;
         }
-        vehicle = veh_pick(vehicle, "PICKUNIT", 1);
-        if (vehicle < 0) return;
     } else {
         vehicle = veh_at(x, y);
-        if (vehicle < 0 || !stack_check(vehicle, 1, ConsoleGlobal.faction_id_, -1, -1)) {
+        if (vehicle < 0) {
             field_23BE4_ = 0;
             return;
         }
-        if (stack_check(vehicle, 1, -1, -1, -1) != 1 ||
-            (!veh_selectable(vehicle) && !Vehs[vehicle].order && !(Vehs[vehicle].state & 0x4200))) {
-            vehicle = veh_pick(vehicle, "PICKUNIT", 1);
-            if (vehicle < 0) return;
-        } else {
+        if (!stack_check(vehicle, 1, ConsoleGlobal.faction_id_, -1, -1)) {
+            field_23BE4_ = 0;
+            return;
+        }
+        if (stack_check(vehicle, 1, -1, -1, -1) == 1 &&
+            (veh_selectable(vehicle) || Vehs[vehicle].order || (Vehs[vehicle].state & 0x4200))) {
             log_say("VEH ORDERS", vehicle, 0, 0);
             if (Vehs[vehicle].order > 2 && !(GameDataStateStorage.fields_.game_more_preferences_ & 0x40000)) {
                 parse_says(0, VehPrototypes[Vehs[vehicle].proto_id].veh_name, -1, -1);
@@ -4333,9 +4333,8 @@ void Console::activate(int x, int y, int current_selection) {
                 parse_says(1, StringTemp, -1, -1);
                 StringTemp[0] = 0;
                 strcat(StringTemp, "VEHORDERS");
-                const int order = Vehs[vehicle].order;
-                if (order >= 4 && order < 24) {
-                    parse_num(0, action_terraform(vehicle, order - 4, 0) + 1);
+                if (Vehs[vehicle].order >= 4 && Vehs[vehicle].order < 24) {
+                    parse_num(0, action_terraform(vehicle, Vehs[vehicle].order - 4, 0) + 1);
                     strcat(StringTemp, "1");
                 }
                 const int answer = X_pop(StringTemp, nullptr);
@@ -4345,8 +4344,12 @@ void Console::activate(int x, int y, int current_selection) {
                     prefs_save(0);
                 }
             }
+            goto activate;
         }
     }
+    vehicle = veh_pick(vehicle, "PICKUNIT", 1);
+    if (vehicle < 0) return;
+activate:
     if (Vehs[vehicle].faction_id != faction_id_) return;
     log_say("Activate AWAKEN", vehicle, Vehs[vehicle].x, Vehs[vehicle].y);
     if (veh_jail(vehicle)) {
@@ -4356,30 +4359,28 @@ void Console::activate(int x, int y, int current_selection) {
     if (IsMultiplayerNet && veh_selectable(vehicle) && !Vehs[vehicle].order &&
         !(Vehs[vehicle].state & 0x8004200)) {
         selected_vehicle_ = vehicle;
-        set_move(1);
-        field_23BEC_ = 1;
-        return;
+    } else {
+        if (NetDaemonNet.lock_veh(&vehicle, 0, -1, -1, 0)) return;
+        log_say("Activate AWAKENING", vehicle, Vehs[vehicle].x, Vehs[vehicle].y);
+        veh_wake(vehicle);
+        if (!veh_selectable(vehicle)) {
+            ::draw_tile(Vehs[vehicle].x, Vehs[vehicle].y, 1);
+            if (!ConsoleGlobal.cursor_active_ && !(GameDataStateStorage.fields_.game_state_ & 2) &&
+                (!IsMultiplayerNet || (!ConsoleControlTurnActive &&
+                 !NetDaemonNet.channels_[1].payload_.flags))) {
+                if (popv(ScriptPopupFile, "ALREADYMOVED2", vehicle, 0))
+                    set_move(0);
+            } else if (IsMultiplayerNet) {
+                NetMsgPrimary.pop("ALREADYMOVED", 5000, 0, nullptr);
+            } else {
+                popv(ScriptPopupFile, "ALREADYMOVED", vehicle, 0);
+            }
+        } else field_23BE4_ = 0;
+        selected_vehicle_ = vehicle;
+        synch_veh(vehicle);
+        NetDaemonNet.await_synch();
+        NetDaemonNet.unlock_veh();
     }
-    if (NetDaemonNet.lock_veh(&vehicle, 0, -1, -1, 0)) return;
-    log_say("Activate AWAKENING", vehicle, Vehs[vehicle].x, Vehs[vehicle].y);
-    veh_wake(vehicle);
-    if (!veh_selectable(vehicle)) {
-        ::draw_tile(Vehs[vehicle].x, Vehs[vehicle].y, 1);
-        if (!ConsoleGlobal.cursor_active_ && !(GameDataStateStorage.fields_.game_state_ & 2) &&
-            (!IsMultiplayerNet || (!ConsoleControlTurnActive &&
-             !NetDaemonNet.channels_[1].payload_.flags))) {
-            if (popv(ScriptPopupFile, "ALREADYMOVED2", vehicle, 0))
-                set_move(0);
-        } else if (IsMultiplayerNet) {
-            NetMsgPrimary.pop("ALREADYMOVED", 5000, 0, nullptr);
-        } else {
-            popv(ScriptPopupFile, "ALREADYMOVED", vehicle, 0);
-        }
-    } else field_23BE4_ = 0;
-    selected_vehicle_ = vehicle;
-    synch_veh(vehicle);
-    NetDaemonNet.await_synch();
-    NetDaemonNet.unlock_veh();
     set_move(1);
     field_23BEC_ = 1;
 }

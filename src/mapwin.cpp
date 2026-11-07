@@ -2198,6 +2198,12 @@ int MapWin::tile_in_view(int x, int y, int margin) {
 }
 
 
+// Next vehicle in a stack, -1 past the end (the image re-tests the id).
+static inline int mapwin_next_in_stack(int vehicle) {
+    if (vehicle < 0) return -1;
+    return Vehs[vehicle].next_veh_id_stack;
+}
+
 // Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x00466CA0 ?draw_vehicles@MapWin@@QAEXHHHHH@Z 0x00466CA0-0x0046718F FILE
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00466ca0.cpp", "Pinned original image review controls route precedence, cursor sprite dispatch, signed zoom, actual API imports and original member/data dependencies. Bounded compile and host controls do not establish game acceptance."], "reason": "Recover the genuine MapWin/Console owner operation using typed members, actual shared storage, virtual base APIs and full original branch evidence; keep seed and historical obligations."}
@@ -2215,18 +2221,13 @@ void MapWin::draw_vehicles(int tile_x, int tile_y, int pixel_x, int pixel_y,
         return;
     }
 
-    const int half_x = tile_x >> 1;
-    bool draw_base = false;
     if ((window_flags & 0x80000000U) == 0 ||
         (window_flags & 0x80U) != 0) {
         if ((GameDataStateStorage.fields_.game_state_ & STATE_OMNISCIENT_VIEW) != 0 ||
             (PlayersData[faction_id].flags & 0x200U) != 0 ||
             (map_loc(tile_x, tile_y)->visibility & (1U << faction_id)) != 0) {
-            draw_base = true;
+            draw_bases(tile_x, tile_y, pixel_x, pixel_y, faction_id);
         }
-    }
-    if (draw_base) {
-        draw_bases(tile_x, tile_y, pixel_x, pixel_y, faction_id);
     }
     if ((field_1DD70_ & 0x80000000U) != 0) return;
 
@@ -2239,18 +2240,18 @@ void MapWin::draw_vehicles(int tile_x, int tile_y, int pixel_x, int pixel_y,
         goto draw_target;
     }
     if (VehDrawSelection689F28 >= 0 &&
-        Vehs[VehDrawSelection689F28].x == tile_x &&
-        Vehs[VehDrawSelection689F28].y == tile_y) {
+        tile_x == Vehs[VehDrawSelection689F28].x &&
+        tile_y == Vehs[VehDrawSelection689F28].y) {
         target = VehDrawSelection689F28;
         if (VehPrototypes[Vehs[target].proto_id].chassis_id == 8) {
-            target = Vehs[target].next_veh_id_stack;
+            target = mapwin_next_in_stack(target);
             if (target < 0) return;
         }
         goto draw_target;
     }
     if (VehDrawSelection689F2C >= 0 &&
-        Vehs[VehDrawSelection689F2C].x == tile_x &&
-        Vehs[VehDrawSelection689F2C].y == tile_y) {
+        tile_x == Vehs[VehDrawSelection689F2C].x &&
+        tile_y == Vehs[VehDrawSelection689F2C].y) {
         target = VehDrawSelection689F2C;
         goto draw_target;
     }
@@ -2261,8 +2262,8 @@ void MapWin::draw_vehicles(int tile_x, int tile_y, int pixel_x, int pixel_y,
         return;
     }
     draw_state = 3;
-    if (Vehs[ConsoleGlobal.selected_vehicle_].x == tile_x &&
-        Vehs[ConsoleGlobal.selected_vehicle_].y == tile_y &&
+    if (tile_x == Vehs[ConsoleGlobal.selected_vehicle_].x &&
+        tile_y == Vehs[ConsoleGlobal.selected_vehicle_].y &&
         (GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & (1U << Vehs[ConsoleGlobal.selected_vehicle_].faction_id)) != 0 &&
         veh_selectable(ConsoleGlobal.selected_vehicle_) != 0 &&
         (Vehs[ConsoleGlobal.selected_vehicle_].state & 0x4200U) == 0) {
@@ -2275,16 +2276,16 @@ void MapWin::draw_vehicles(int tile_x, int tile_y, int pixel_x, int pixel_y,
             if ((GameDataStateStorage.fields_.game_more_preferences_ & 0x200U) != 0) return;
             int mouse_x;
             int mouse_y;
-            static_cast<Win *>(this)->get_mouse_pos(&mouse_x, &mouse_y);
+            get_mouse_pos(&mouse_x, &mouse_y);
             int cursor_tile_x;
             int cursor_tile_y;
             pixel_to_tile(mouse_x, mouse_y, &cursor_tile_x, &cursor_tile_y);
-            const int delta_x = abs(cursor_tile_x - Vehs[target].x);
-            const int delta_y = abs(cursor_tile_y - Vehs[target].y);
+            const int delta_x = abs(cursor_tile_x - Vehs[ConsoleGlobal.selected_vehicle_].x);
             const int adjusted_x =
                 (MapIsFlat & 1) == 0 && static_cast<int>(MapLongitude) < delta_x
                     ? static_cast<int>(MapLongitudeBounds) - delta_x : delta_x;
-            if (((delta_y + adjusted_x) & ~1) < 3) return;
+            const int delta_y = abs(cursor_tile_y - Vehs[ConsoleGlobal.selected_vehicle_].y);
+            if (((delta_y + adjusted_x) & ~1) <= 2) return;
             draw_state = 0x403;
         }
     } else {
@@ -2314,8 +2315,7 @@ void MapWin::draw_vehicles(int tile_x, int tile_y, int pixel_x, int pixel_y,
     }
 
     {
-        const Map &tile = *map_loc(tile_x, tile_y);
-        if ((tile.bit & 1U) != 0 && (tile.val2 & 0x0FU) < 8) {
+        if (base_who(tile_x, tile_y) >= 0) {
             if (ConsoleGlobal.cursor_active_ == 0 ||
                 target != ConsoleGlobal.selected_vehicle_ ||
                 veh_ready(target) == 0 || (Vehs[target].state & 0x4200U) != 0 ||
@@ -6002,7 +6002,7 @@ void MapWin::draw_legend() {
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/004698d0.cpp", "Pinned original image review controls route precedence, cursor sprite dispatch, signed zoom, actual API imports and original member/data dependencies. Bounded compile and host controls do not establish game acceptance."], "reason": "Recover the genuine MapWin/Console owner operation using typed members, actual shared storage, virtual base APIs and full original branch evidence; keep seed and historical obligations."}
 void MapWin::draw_wars() {
     Font *const font = &font_b_;
-    const int character_width = font->width("FUNGUS");
+    const int character_width = font->width("W");
     int y = font_line_advance(*font);
     int max_width = character_width;
     Buffer::set_font(font, 0, 0, 0);
@@ -6045,8 +6045,8 @@ void MapWin::draw_wars() {
             } else if ((flags & 4U) != 0) {
                 letter = 't';
             }
-            StringTemp[0] = letter;
             StringTemp[1] = '\0';
+            StringTemp[0] = letter;
             Buffer::write_l(StringTemp, x, y);
             x += character_width;
         }
