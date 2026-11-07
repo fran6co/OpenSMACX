@@ -3743,7 +3743,7 @@ void Win::remove_parent_dialog() {
 
 // Fixed-slot bindings carried from 005ecec0.cpp
 
-// ORIGINAL: 0x005ECEC0 ?UNK4@Win@@QAEHXZ 0x005ECEC0-0x005ECF1C FILE
+// ORIGINAL: 0x005ECEC0 ?UNK4@Win@@QAEHXZ 0x005ECEC0-0x005ECF1C FILE BYTE_EXACT
 // symbol    ?is_in_focus_chain@Win@@QAEHXZ
 // TRIED: guard-clause form (`if (w!=0 || w==this) return 1; if (w!=0) {loop} return 0;`), matching Ghidra's redundant double null-check; compiles and matches the loop body, diverges at #0 in prologue register-save order (mov vs push)
 // working copy - scaffold materialised by --work

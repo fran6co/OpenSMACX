@@ -3655,7 +3655,7 @@ int DesignWin::on_key_click(int a1, int a2) {
     return 1;
 }
 
-// ORIGINAL: 0x0043D490 ?center_stack@DesignWin@@QAEXHH@Z 0x0043D490-0x0043D50B FILE
+// ORIGINAL: 0x0043D490 ?center_stack@DesignWin@@QAEXHH@Z 0x0043D490-0x0043D50B FILE BYTE_EXACT
 // size      123 bytes
 // prototype void (__thiscall ?center_stack@DesignWin@@QAEXHH@Z)(DesignWin* this, int, int)
 // callers   0   call targets   2
