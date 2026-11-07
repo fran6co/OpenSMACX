@@ -502,7 +502,9 @@ void draw_dest_unk1(Buffer *, int, int, int, int, unsigned char *);
   int put_pixel(int x, int y, int color);
   int change_color(int a1, int a2);
   int change_color(RECT *area, int a2, int a3);
-  int change_color(int a1, int a2, int a3, int a4, int a5, int a6);
+  // 0x005E2070. Defined `inline` in buffer.cpp: the two overloads above
+  // expand it, while other TUs call it. MEASURED keeps the emitted copy.
+  MEASURED int change_color(int a1, int a2, int a3, int a4, int a5, int a6);
   static int get_pcx_dimensions(const char *filename, int *width, int *height);
   int write_pcx(char *filename);
   int write_bmp(char *filename);

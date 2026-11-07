@@ -7059,59 +7059,7 @@ tail_exit:
 
 
 int Buffer::change_color(int a1, int a2) {
-    const int width = dib_.bmiHeader.biWidth;
-    const int height = -dib_.bmiHeader.biHeight;
-    if (dib_bits_ == nullptr && surface_ == nullptr) {
-        return 7;
-    }
-    RECT rect;
-    rect.bottom = height;
-    rect.right = width;
-    rect.left = 0;
-    rect.top = 0;
-    if (!IntersectRect(&rect, &rect1_, &rect)) {
-        return 0;
-    }
-    if (rect.left >= dib_.bmiHeader.biWidth || rect.top >= -dib_.bmiHeader.biHeight) {
-        return 7;
-    }
-
-    char *dest = acquire_pixels() != 0
-        ? static_cast<int32_t>(stride_) * rect.top + static_cast<char *>(locked_bits_) + rect.left : 0;
-    if (dest == 0) {
-        return 7;
-    }
-    int32_t row_width = rect.right - rect.left;
-    int32_t row_count = rect.bottom - rect.top;
-    int32_t stride_remainder = static_cast<int32_t>(stride_) - row_width;
-    // Hand-written assembly: explicit edi/esi saves, mov ah/al color pair, nested dec/jne loops.
-    __asm {
-        push edi
-        push esi
-        mov ah, byte ptr a1
-        mov al, byte ptr a2
-        mov edi, dest
-        mov ebx, row_width
-        mov ecx, row_count
-        mov edx, stride_remainder
-    next_row:
-        mov esi, ebx
-    next_pixel:
-        cmp [edi], ah
-        jne keep_pixel
-        mov [edi], al
-    keep_pixel:
-        inc edi
-        dec esi
-        jne next_pixel
-        add edi, edx
-        dec ecx
-        jne next_row
-        pop esi
-        pop edi
-    }
-    free_data(1);
-    return 0;
+    return change_color(0, 0, dib_.bmiHeader.biWidth, -dib_.bmiHeader.biHeight, a1, a2);
 }
 
 // ORIGINAL: 0x005E2070 ?change_color@Buffer@@QAEHHHHHHH@Z 0x005E2070-0x005E220D
@@ -7126,7 +7074,8 @@ int Buffer::change_color(int a1, int a2) {
 // indirect  0x005E20C5 0x005E212E 0x005E21F6
 
 
-int Buffer::change_color(int a1, int a2, int a3, int a4, int a5, int a6) {
+// `inline` lets the 2-argument and RECT overloads expand this body.
+inline int Buffer::change_color(int a1, int a2, int a3, int a4, int a5, int a6) {
     if (dib_bits_ == 0 && surface_ == 0) {
         return 7;
     }
@@ -7938,66 +7887,8 @@ int Buffer::change_color(RECT *area, int find_color, int replace_color) {
     if (area == 0) {
         return 3;
     }
-    const int area_top = area->top;
-    const int area_height = area->bottom - area_top;
-    const int area_left = area->left;
-    const int area_width = area->right - area_left;
-    if (dib_bits_ == 0 && surface_ == 0) {
-        return 7;
-    }
-
-    RECT clipped;
-    clipped.left = area_left;
-    clipped.top = area_top;
-    clipped.right = area_left + area_width;
-    clipped.bottom = area_top + area_height;
-    if (IntersectRect(&clipped, &rect1_, &clipped)) {
-        const int left = clipped.left;
-        const int top = clipped.top;
-        if (left < dib_.bmiHeader.biWidth && top < -dib_.bmiHeader.biHeight) {
-            uint8_t *pixel = acquire_pixels() != 0
-                ? stride_ * top + static_cast<uint8_t *>(locked_bits_) + left : 0;
-            if (pixel == 0) {
-                return 7;
-            }
-            {
-                const int width = clipped.right - clipped.left;
-                const int height = clipped.bottom - clipped.top;
-                const int remainder = static_cast<int>(stride_) - width;
-                // Hand-written assembly: explicit edi/esi saves, mov ah/al color pair, nested dec/jne loops.
-            __asm {
-                push edi
-                push esi
-                mov ah, byte ptr find_color
-                mov al, byte ptr replace_color
-                mov edi, pixel
-                mov ebx, width
-                mov ecx, height
-                mov edx, remainder
-            next_row:
-                mov esi, ebx
-            next_pixel:
-                cmp [edi], ah
-                jne keep_pixel
-                mov [edi], al
-            keep_pixel:
-                inc edi
-                dec esi
-                jne next_pixel
-                add edi, edx
-                dec ecx
-                jne next_row
-                pop esi
-                pop edi
-            }
-
-                free_data(1);
-                return 0;
-            }
-        }
-        return 7;
-    }
-    return 0;
+    return change_color(area->left, area->top, area->right - area->left,
+                        area->bottom - area->top, find_color, replace_color);
 }
 
 // ORIGINAL: 0x005DF590 ?write_pcx@Buffer@@QAEHPAD@Z 0x005DF590-0x005DF907;0x00662BFC-0x00662C11

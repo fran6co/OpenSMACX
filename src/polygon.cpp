@@ -148,7 +148,7 @@ int __cdecl advance_flat_polygon_edge(FlatPolygonEdge *edge) {
 // RECOVERY_BINDING: v1 {"evidence": ["6265A0..626613 loads9BC008 and uses the shared row, pitch and clip scalars. The original entry produces no consistent return value; the C++ writer is void."], "reason": "The standalone solid span writer clips two x endpoints against the shared polygon state and writes the low color byte through the acquired pixels."}
 // symbol    ?draw_solid_polygon_span@@YAXHH@Z
 // Hand-written assembly: explicit push edi/pop edi pair, one-operand imul, mov ah/[edi],ah fill.
-void __cdecl draw_solid_polygon_span(int left, int right) {
+MEASURED inline void __cdecl draw_solid_polygon_span(int left, int right) {
     __asm {
         push edi
         mov ebx, right
@@ -288,7 +288,7 @@ int __cdecl polygon(Buffer *buffer, Vert *vertices, int count, int color) {
 // RECOVERY_BINDING: v1 {"evidence": ["626D90..626E0B reads9BC030 and indexes it sequentially with each destination byte. There is no meaningful return value or copied lookup table."], "reason": "The standalone destination span writer clips endpoints against the same polygon state and performs live unsigned-byte lookup-table writes."}
 // symbol    ?draw_remapped_polygon_span@@YAXHH@Z
 // Hand-written assembly: explicit push edi/pop edi pair, one-operand imul, byte remap loop.
-void __cdecl draw_remapped_polygon_span(int left, int right) {
+MEASURED inline void __cdecl draw_remapped_polygon_span(int left, int right) {
     __asm {
         push edi
         mov ebx, right
