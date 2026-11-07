@@ -599,17 +599,6 @@
           "-c"
         ]
       },
-      "src/spying.cpp": {
-        "flags": [
-          "/c",
-          "/O2",
-          "/Gy",
-          "/GR-",
-          "/GX",
-          "/Oy-",
-          "/Ob2"
-        ]
-      },
       "src/squarelock.cpp": {
         "flags": [
           "/c",
@@ -1950,7 +1939,11 @@
           "/TP",
           "/Zm200",
           "/GX",
-          "/O2",
+          "/Og",
+          "/Oi",
+          "/Ot",
+          "/Gs",
+          "/Gy",
           "/Ob2",
           "-MT",
           "/W4",

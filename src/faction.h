@@ -915,7 +915,7 @@ int __cdecl act_of_aggression(int faction_id, int target_faction_id);
 void __cdecl treaty_off(int faction_id, int faction_id_with, int treaty);
 void __cdecl agenda_on(int faction_id, int faction_id_with, int agenda);
 void __cdecl agenda_off(int faction_id, int faction_id_with, int agenda);
-int __cdecl has_agenda(int faction_id, int faction_id_with, int agenda);
+MEASURED int __cdecl has_agenda(int faction_id, int faction_id_with, int agenda);
 // `int`, NOT `uint32_t`. The image's symbol is `?wants_to_attack@@YAHHHH@Z` -
 // three H, three ints - and `faction.cpp` defines it that way. This declared a
 // `uint32_t` overload nothing defined, which stayed latent only because

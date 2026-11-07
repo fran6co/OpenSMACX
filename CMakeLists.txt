@@ -285,7 +285,6 @@ set(OPENSMACX_SOURCES
     src/scenario.cpp
     src/sounddevice.cpp
     src/spot.cpp
-    src/spying.cpp
     src/sprite.cpp
     src/texheap.cpp
     src/sprite_objects.cpp
@@ -554,8 +553,6 @@ set_source_files_properties(src/alpha.cpp PROPERTIES COMPILE_OPTIONS "/Oy-")
 # The original diagnostic wrapper retains EBP-based parameter accesses.
 # Keep its calls out of line through a separate owner, with the existing frame profile.
 set_source_files_properties(src/danger.cpp PROPERTIES COMPILE_OPTIONS "/Oy-")
-# Preserve spying's original frame-based argument accesses.
-set_source_files_properties(src/spying.cpp PROPERTIES COMPILE_OPTIONS "/Oy-")
 # Preserve the measured frame-based AlphaNet controller context. Its record
 # and lifecycle owner remains on the default application profile.
 set_source_files_properties(src/alphanet.cpp PROPERTIES COMPILE_OPTIONS "/Oy-")
@@ -820,6 +817,7 @@ target_compile_options(OpenSMACX PRIVATE $<$<COMPILE_LANGUAGE:CXX>:/W4>)
 # still follow it; /Ob2 follows the profile because /O2 alone means /Ob1.
 set(OPENSMACX_UNPOOLED_SOURCES
     src/faction.cpp
+    src/faction_treaty.cpp
     src/console_commands.cpp)
 function(opensmacx_apply_optimization target)
     get_target_property(target_sources ${target} SOURCES)
