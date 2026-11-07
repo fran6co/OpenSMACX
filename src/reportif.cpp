@@ -1115,7 +1115,7 @@ static void report_sat_number(int value) {
 
 
 
-// ORIGINAL: 0x00496960 ?init@ReportWin@@QAEXXZ 0x00496960-0x00496BA5
+// ORIGINAL: 0x00496960 ?init@ReportWin@@QAEXXZ 0x00496960-0x00496BA5 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Retired recovered seed provenance: git:a538e0a3:src/recovered/units/00496960.cpp", "source:src/reportwin.h", "source:src/reportif.h", "image:original ReportWin instructions, callbacks and lifecycle evidence"], "reason": "Recover this report-window operation in its genuine owner using typed members, natural subobject lifetimes and shared source-owned state; retained catalogue identity and spans remain distinct from current emitted symbols."}
 void ReportWin::init() {
     for (int i = 0; i < 16; ++i) selected_bases_[i] = 0;
@@ -2410,7 +2410,7 @@ void ReportWin::draw_labs() {
     // category-bar boxes retain their native style dispatch and clip sequence.
 }
 
-// ORIGINAL: 0x0049B220 ?on_button_passover@ReportWin@@QAEXHH@Z 0x0049B220-0x0049B446
+// ORIGINAL: 0x0049B220 ?on_button_passover@ReportWin@@QAEXHH@Z 0x0049B220-0x0049B446 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["image:0x0049B220-0x0049B446 and 0x0065C0C2-0x0065C20E", "Retired recovered seed provenance: git:a538e0a3:src/recovered/units/0049b220.cpp retains the recovered seed and original claim", "source:src/reportwin.h", "source:src/reportif.h:ReportIfGlobal.field_8_"], "reason": "Recover the category-button passover drawing through the seven owned FlatButtons, shared work RECT, real host window and existing labs_line. The original seed and historical claim remain restoration obligations; current byte correspondence is measured separately."}
 // symbol    ?on_button_passover@ReportWin@@UAEXHH@Z
 void ReportWin::on_button_passover(int button_id, int state) {
@@ -4722,7 +4722,7 @@ void ReportIf::report(int report_id, int faction_id, int selection) {
     }
 }
 
-// ORIGINAL: 0x004A3D20 ?reset@ReportIf@@QAEXXZ 0x004A3D20-0x004A3FBF
+// ORIGINAL: 0x004A3D20 ?reset@ReportIf@@QAEXXZ 0x004A3D20-0x004A3FBF BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/maininterface.h:MainInterfaceGlobal", "source:src/graphicwin.h:GraphicWin::buffer_working_rect", "source:src/datalink.cpp:1933", "docs/recovery/member-accesses.csv:ReportIf offsets 0x20, 0x30, 0x40, 0x50"], "reason": "Draw through the MainInterfaceGlobal Buffer base and its owned working clip rectangle, with typed ReportIf panel rectangles."}
 // size      671 bytes
 // prototype void (__thiscall ?reset@ReportIf@@QAEXXZ)(ReportIf* this)
