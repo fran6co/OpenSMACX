@@ -4455,47 +4455,51 @@ int Buffer::copy_mask(Buffer *dest, int src_x, int src_y, int x, int y, int w,
         h = pixel_height() - src_y;
     }
 
-    RECT clipped;
-    clipped.left = x;
-    clipped.top = y;
-    clipped.right = x + w;
-    clipped.bottom = y + h;
-    if (!IntersectRect(&clipped, &clipped, &dest->rect1_)) {
+    // The label-address assembly below keeps VC6 from optimizing this body;
+    // its frame order follows these local names, as in the image.
+    RECT dest_rect;
+    int blit_lines;
+    int source_stride;
+    dest_rect.left = x;
+    dest_rect.top = y;
+    dest_rect.right = x + w;
+    dest_rect.bottom = y + h;
+    if (!IntersectRect(&dest_rect, &dest_rect, &dest->rect1_)) {
         return 0;
     }
     // Whatever the intersection took off the left and top edges is taken off
     // the source origin too, so the two reads stay in step.
-    src_x += clipped.left - x;
-    src_y += clipped.top - y;
-    w = clipped.right - clipped.left;
-    h = clipped.bottom - clipped.top;
+    src_x += dest_rect.left - x;
+    src_y += dest_rect.top - y;
+    w = dest_rect.right - dest_rect.left;
+    h = dest_rect.bottom - dest_rect.top;
 
-    unsigned char *write_ptr = dest->get_data(clipped.left, clipped.top);
-    if (write_ptr == 0) {
+    unsigned char *dest_pixels = dest->get_data(dest_rect.left, dest_rect.top);
+    if (dest_pixels == 0) {
         return 3;
     }
-    unsigned char *read_ptr = get_data(src_x, src_y);
-    if (read_ptr == 0) {
+    unsigned char *src_ptr = get_data(src_x, src_y);
+    if (src_ptr == 0) {
         return 3;
     }
     const int write_stride = dest->stride_;
-    const int read_stride = stride_;
-    const int rows = clipped.bottom - clipped.top;
-    const int columns = clipped.right - clipped.left;
-    BufferMaskGroupCount = columns >> 2;
-    BufferMaskSourceRowGap = read_stride - columns;
-    BufferMaskDestinationRowGap = write_stride - columns;
+    source_stride = stride_;
+    blit_lines = dest_rect.bottom - dest_rect.top;
+    const int cols = dest_rect.right - dest_rect.left;
+    BufferMaskGroupCount = cols >> 2;
+    BufferMaskSourceRowGap = source_stride - cols;
+    BufferMaskDestinationRowGap = write_stride - cols;
     // Hand-written assembly: computed `jmp edx` into an unrolled masked copy, `lea edx` of
     // code labels, mov ah,[esi]. The remainder picks each row's entry point.
     __asm {
         push esi
         push edi
-        mov esi, read_ptr
-        mov edi, write_ptr
+        mov esi, src_ptr
+        mov edi, dest_pixels
         mov ecx, BufferMaskGroupCount
-        mov ebx, rows
+        mov ebx, blit_lines
         mov al, byte ptr color
-        mov edx, columns
+        mov edx, cols
         and edx, 3
         je entry_0
         dec edx
