@@ -1136,6 +1136,8 @@ Purpose: Add friction between the two specified factions.
 Return Value: n/a
 Status: Complete
 */
+// The image calls it out of line from every caller.
+#pragma auto_inline(off)
 void __cdecl cause_friction(int faction_id, int faction_id_with, int friction) {
     // diplo_friction is the same 2099-stride view sixteen dwords past the
     // treaty word - SpyingStatusTable[index + 16], exactly the +8 spelling
@@ -1147,6 +1149,7 @@ void __cdecl cause_friction(int faction_id, int faction_id_with, int friction) {
         DiploFriction += friction; // not bounded?
     }
 }
+#pragma auto_inline(on)
 
 /*
 Purpose: Normalize the diplomatic friction value into a mood offset.
@@ -1198,10 +1201,13 @@ Purpose: Calculate the negative reputation the specified faction has with anothe
 Return Value: Bad reputation
 Status: Complete
 */
+// Every in-TU caller (rankings, enemy_diplomacy) calls it out of line.
+#pragma auto_inline(off)
 int __cdecl reputation(int faction_id, int faction_id_with) {
     return range(PlayersData[faction_id].integrity_blemishes
         - PlayersData[faction_id].diplo_unk1[faction_id_with], 0, 99);
 }
+#pragma auto_inline(on)
 
 /*
 Purpose: Calculate the amount of patience the specified faction has with another.
@@ -1830,6 +1836,13 @@ BOOL __cdecl wants_to_attack(int faction_id, int faction_id_tgt, int faction_id_
     return true;
 }
 
+// vector_dist's doubled numerator: x_dist plus the y delta, floor kept.
+static inline int territory_dist(int x_point_a, int y_point_a, int x_point_b, int y_point_b) {
+    int x_distance = x_dist(x_point_a, x_point_b);
+    int y_distance = abs(y_point_a - y_point_b);
+    return (y_distance + x_distance) & ~1;
+}
+
 /*
 Purpose: Weigh how badly the specified faction's territory is being trespassed on by another
          faction's units, and mark those units so the rest of diplomacy can find them again.
@@ -1953,17 +1966,18 @@ int __cdecl territory(int faction_id, int faction_id_with, int flags, int *base_
         }
     }
     for (int veh_id = 0; veh_id < GameDataStateStorage.fields_.vehicle_current_count_; veh_id++) {
-        Veh &veh = Vehs[veh_id];
-        veh.state &= ~VSTATE_UNK_400;
-        if (veh.faction_id != faction_id_with) {
+        Vehs[veh_id].state &= ~VSTATE_UNK_400;
+        if (Vehs[veh_id].faction_id != faction_id_with) {
             continue;
         }
-        uint32_t plan = VehPrototypes[veh.proto_id].plan;
+        uint8_t plan = VehPrototypes[Vehs[veh_id].proto_id].plan;
         if (plan > PLAN_COLONIZATION
-            && (plan != PLAN_SUPPLY_CONVOY || veh.order != ORDER_CONVOY)) {
+            && (plan != PLAN_SUPPLY_CONVOY || Vehs[veh_id].order != ORDER_CONVOY)) {
             continue;
         }
-        Map *tile = map_loc(veh.x, veh.y);
+        int x = Vehs[veh_id].x;
+        int y = Vehs[veh_id].y;
+        Map *tile = map_loc(x, y);
         if ((tile->climate & ~0x1F) < (ALT_SHORE_LINE << 5)) {
             continue;
         }
@@ -1971,7 +1985,7 @@ int __cdecl territory(int faction_id, int faction_id_with, int flags, int *base_
             continue;
         }
         int base_id;
-        if (whose_territory(faction_id_with, veh.x, veh.y, &base_id, true) != faction_id) {
+        if (whose_territory(faction_id_with, x, y, &base_id, true) != faction_id) {
             continue;
         }
         if (base_id < 0) {
@@ -1980,31 +1994,27 @@ int __cdecl territory(int faction_id, int faction_id_with, int flags, int *base_
         if (base_id_out) {
             *base_id_out = base_id;
         }
-        veh.state |= VSTATE_UNK_400;
+        Vehs[veh_id].state |= VSTATE_UNK_400;
         weight++;
-        if (map_loc(veh.x, veh.y)->bit & (BIT_MINE | BIT_SOLAR_TIDAL | BIT_BUNKER | BIT_FARM
+        if (map_loc(x, y)->bit & (BIT_MINE | BIT_SOLAR_TIDAL | BIT_BUNKER | BIT_FARM
             | BIT_FOREST | BIT_CONDENSER | BIT_THERMAL_BORE | BIT_SENSOR_ARRAY)) {
             weight++;
         }
         if (!(flags & 1)) {
             continue;
         }
-        int x_delta = abs(Bases[base_id].x - veh.x);
-        if (!(MapIsFlat & 1) && x_delta > (int)MapLongitude) {
-            x_delta = MapLongitudeBounds - x_delta;
-        }
-        if (((abs(Bases[base_id].y - veh.y) + x_delta) & ~1) > 4
+        if (territory_dist(Bases[base_id].x, Bases[base_id].y, Vehs[veh_id].x, Vehs[veh_id].y) > 4
             && !(PlayersData[faction_id].diplo_treaties[faction_id_with]
                 & (DTREATY_WANT_REVENGE | DTREATY_SHALL_BETRAY | DTREATY_UNK_800))
             && DiploFriction <= 12) {
             continue;
         }
-        if (count_out && veh.flags & 1) {
+        if (count_out && Vehs[veh_id].flags & 1) {
             (*count_out)++;
         }
-        veh.flags |= 3;
-        if (!(veh.state & VSTATE_UNK_800) && GameDataStateStorage.fields_.sunspot_duration_ <= 0) {
-            veh.state |= VSTATE_UNK_800;
+        Vehs[veh_id].flags |= 3;
+        if (!(Vehs[veh_id].state & VSTATE_UNK_800) && GameDataStateStorage.fields_.sunspot_duration_ <= 0) {
+            Vehs[veh_id].state |= VSTATE_UNK_800;
         } else {
             weight += (PlayersData[faction_id].diplo_treaties[faction_id_with] & DTREATY_TREATY)
                 ? 5 : 1;
@@ -2531,11 +2541,10 @@ void __cdecl rankings(int apply_ranks) {
     int best_offense = 1;
     for (int proto_id = MaxVehProtoFactionNum; proto_id < MaxVehProtoNum; proto_id++) {
         if (VehPrototypes[proto_id].flags & PROTO_ACTIVE
-            && VehPrototypes[proto_id].flags & PROTO_TYPED_COMPLETE) {
-            int offense = Weapon[VehPrototypes[proto_id].weapon_id].offense_rating;
-            if (offense >= best_offense && offense < 99) {
-                best_offense = offense;
-            }
+            && VehPrototypes[proto_id].flags & PROTO_TYPED_COMPLETE
+            && get_proto_offense_rating(proto_id) >= best_offense
+            && get_proto_offense_rating(proto_id) < 99) {
+            best_offense = get_proto_offense_rating(proto_id);
         }
     }
     for (int faction_id = 0; faction_id < MaxPlayerNum; faction_id++) {
@@ -2545,69 +2554,66 @@ void __cdecl rankings(int apply_ranks) {
         if (!faction_id) {
             continue;
         }
-        int score;
         if (!is_alive(faction_id)) {
-            score = 0;
+            FactionRankingsUnk[faction_id] = 0;
         } else if ((ScenarioSave.objective_req_victory < 9000 || ScenarioSave.objectives_sudden_death_victory < 9000)
             && !ScenarioSave.objective_achieve_points) {
-            score = num_objectives(faction_id, false) * 10;
+            FactionRankingsUnk[faction_id] = num_objectives(faction_id, false) * 10;
         } else {
-            score = (PlayersData[faction_id].pop_total
+            FactionRankingsUnk[faction_id] = (PlayersData[faction_id].pop_total
                 + PlayersData[faction_id].theory_of_everything) * 4;
             for (int tech_id = 0; tech_id < MaxTechnologyNum; tech_id++) {
-                // has_tech_call: the image CALLS 0x005B9F20 twice from here
-                // (0x005AC779 / 0x005AC823) rather than open-coding the walk.
+                // has_tech_call: the image CALLS 0x005B9F20 twice from here.
                 if (has_tech(tech_id, faction_id)) {
-                    score += (tech_id < MaxTechnologyNum)
-                        ? Technology[tech_id].growth_value + Technology[tech_id].tech_value
+                    FactionRankingsUnk[faction_id] = (tech_id >= MaxTechnologyNum)
+                        ? FactionRankingsUnk[faction_id] + 4
+                        : Technology[tech_id].growth_value + Technology[tech_id].tech_value
                             + Technology[tech_id].wealth_value + Technology[tech_id].power_value
-                        : 4;
+                            + FactionRankingsUnk[faction_id];
                 }
             }
-            const int *projects = GameDataStateStorage.fields_.secret_project_.project_base;
             for (int i = 0; i < MaxSecretProjectNum; i++) {
-                if (projects[i] >= 0
-                    && Bases[projects[i]].faction_id_current == faction_id) {
-                    score += 10;
+                if (has_project(i, faction_id)) {
+                    FactionRankingsUnk[faction_id] += 10;
                 }
             }
-            score += num_objectives(faction_id, false) * (int)ScenarioSave.objective_achieve_points;
+            FactionRankingsUnk[faction_id] += num_objectives(faction_id, false) * (int)ScenarioSave.objective_achieve_points;
             for (int proto_id = 0; proto_id < MaxVehProtoNum; proto_id++) {
                 if (proto_id < MaxVehProtoFactionNum
                     && !has_tech(VehPrototypes[proto_id].preq_tech, faction_id)) {
                     continue;
                 }
-                uint32_t active = PlayersData[faction_id].proto_id_active[proto_id];
-                if (active > 250) {
+                if (PlayersData[faction_id].proto_id_active[proto_id] > 250) {
                     continue;
                 }
-                int value = VehPrototypes[proto_id].cost * (int)active;
+                int value = VehPrototypes[proto_id].cost * PlayersData[faction_id].proto_id_active[proto_id];
                 if (!value) {
                     continue;
                 }
                 int offense = Weapon[VehPrototypes[proto_id].weapon_id].offense_rating;
                 if (!offense) {
-                    score += value / 4;
+                    FactionRankingsUnk[faction_id] += value / 4;
                 } else if (offense < 0) {
-                    score += value / 2;
+                    FactionRankingsUnk[faction_id] += value / 2;
                 } else if (offense >= 99) {
-                    score += value;
+                    FactionRankingsUnk[faction_id] += value;
                 } else {
-                    score += (offense / best_offense) * value;
+                    FactionRankingsUnk[faction_id] += (offense / best_offense) * value;
                 }
             }
         }
-        FactionRankingsUnk[faction_id] = score;
         if (GameDataStateStorage.fields_.turn_current_num_ < MaxRankingHistoryTurns) {
-            FactionRankingHistory[faction_id + GameDataStateStorage.fields_.turn_current_num_ * MaxPlayerNum] = (uint16_t)score;
+            FactionRankingHistory[faction_id + GameDataStateStorage.fields_.turn_current_num_ * MaxPlayerNum]
+                = (uint16_t)FactionRankingsUnk[faction_id];
         }
     }
     if (!apply_ranks) {
         return;
     }
-    for (int rank = MaxPlayerNum - 1; rank > 0; rank--) {
-        int best_faction = 0;
+    int rank;
+    for (rank = MaxPlayerNum - 1; rank > 0; rank--) {
         int best_score = -1;
+        int best_faction = 0;
         for (int faction_id = 1; faction_id < MaxPlayerNum; faction_id++) {
             if (FactionRankingsUnk[faction_id] > best_score) {
                 best_faction = faction_id;
@@ -2617,17 +2623,15 @@ void __cdecl rankings(int apply_ranks) {
         FactionRankingsUnk[best_faction] = -1;
         PlayersData[best_faction].ranking = (uint32_t)rank;
     }
-    for (rank = 0; rank < MaxPlayerNum; rank++) {
-        GameDataStateStorage.fields_.faction_rankings_[rank] = 0;
-    }
+    memset(GameDataStateStorage.fields_.faction_rankings_, 0, sizeof(GameDataStateStorage.fields_.faction_rankings_));
     for (faction_id = 1; faction_id < MaxPlayerNum; faction_id++) {
-        if (is_alive(faction_id)) {
+        if ((1 << faction_id) & GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_) {
             GameDataStateStorage.fields_.faction_rankings_[PlayersData[faction_id].ranking] = (uint32_t)faction_id;
         }
     }
-    uint32_t humans = (GameDataStateStorage.fields_.lock_masks_.enable_mask_ & 0xFF);
     GameDataStateStorage.fields_.ranking_faction_id_unk1_ = 0;
     GameDataStateStorage.fields_.ranking_faction_id_unk2_ = 0;
+    int humans = GameDataStateStorage.fields_.lock_masks_.enable_mask_ & 0xFF;
     for (rank = MaxPlayerNum - 1; rank >= 0; rank--) {
         if (humans & (1 << GameDataStateStorage.fields_.faction_rankings_[rank])) {
             GameDataStateStorage.fields_.ranking_faction_id_unk1_ = GameDataStateStorage.fields_.faction_rankings_[rank];
@@ -2643,56 +2647,55 @@ void __cdecl rankings(int apply_ranks) {
     int target_id = great_satan(GameDataStateStorage.fields_.faction_rankings_[MaxPlayerNum - 1], false)
         ? (int)GameDataStateStorage.fields_.faction_rankings_[MaxPlayerNum - 1] : 0;
     if (climactic_battle()) {
-        for (int faction_id = 1; faction_id < MaxPlayerNum; faction_id++) {
-            if (is_human(faction_id)
+        humans = GameDataStateStorage.fields_.lock_masks_.enable_mask_ & 0xFF;
+        for (faction_id = 1; faction_id < MaxPlayerNum; faction_id++) {
+            if (humans & (1 << faction_id)
                 && (PlayersData[faction_id].diff_level >= 4
                     || GameDataStateStorage.fields_.game_rules_ & RULES_INTENSE_RIVALRY)) {
                 target_id = faction_id;
             }
         }
     }
-    if (!target_id) {
+    if (target_id) {
+        GameDataStateStorage.fields_.game_state_ |= STATE_UNK_200;
+        int vendetta_count = 0;
+        for (faction_id = 1; faction_id < MaxPlayerNum; faction_id++) {
+            if (PlayersData[faction_id].diplo_treaties[target_id] & DTREATY_VENDETTA) {
+                vendetta_count++;
+            }
+        }
+        for (faction_id = 1; faction_id < MaxPlayerNum; faction_id++) {
+            if (is_human(faction_id)) {
+                continue;
+            }
+            uint32_t treaty = PlayersData[faction_id].diplo_treaties[target_id];
+            if (!(treaty & (DTREATY_PACT | DTREATY_TREATY | DTREATY_TRUCE))) {
+                continue;
+            }
+            if (treaty & (DTREATY_PACT | DTREATY_SHALL_BETRAY | DTREATY_UNK_800)) {
+                continue;
+            }
+            if (treaty & DTREATY_UNK_4000000 && !(treaty & DTREATY_UNK_800)) {
+                continue;
+            }
+            int weight;
+            if (GameDataStateStorage.fields_.game_rules_ & RULES_INTENSE_RIVALRY) {
+                weight = 5;
+            } else {
+                weight = PlayersData[target_id].diff_level;
+            }
+            int revenge = PlayersData[target_id].diplo_treaties[faction_id] & DTREATY_WANT_REVENGE;
+            int urge = (reputation(target_id, faction_id)
+                + (climactic_battle() ? 4 : 0)
+                + ((PlayersData[faction_id].flags_ext & PFLAGEXT_SHAMELESS_BETRAY_HUMANS) ? 4 : 0)
+                + (revenge ? 4 : 0))
+                * weight;
+            if ((int)bounded_crt_random((vendetta_count - PlayersData[faction_id].ai_fight + 2) * 256) < urge) {
+                set_treaty(faction_id, target_id, DTREATY_SHALL_BETRAY, true);
+            }
+        }
+    } else {
         GameDataStateStorage.fields_.game_state_ &= ~STATE_UNK_200;
-        return;
-    }
-    GameDataStateStorage.fields_.game_state_ |= STATE_UNK_200;
-    int vendetta_count = 0;
-    for (faction_id = 1; faction_id < MaxPlayerNum; faction_id++) {
-        if (PlayersData[faction_id].diplo_treaties[target_id] & DTREATY_VENDETTA) {
-            vendetta_count++;
-        }
-    }
-    for (faction_id = 1; faction_id < MaxPlayerNum; faction_id++) {
-        if (is_human(faction_id)) {
-            continue;
-        }
-        uint32_t treaty = PlayersData[faction_id].diplo_treaties[target_id];
-        if (!(treaty & (DTREATY_PACT | DTREATY_TREATY | DTREATY_TRUCE))) {
-            continue;
-        }
-        if (treaty & (DTREATY_PACT | DTREATY_SHALL_BETRAY | DTREATY_UNK_800)) {
-            continue;
-        }
-        if (treaty & DTREATY_UNK_4000000 && !(treaty & DTREATY_UNK_800)) {
-            continue;
-        }
-        int weight = (GameDataStateStorage.fields_.game_rules_ & RULES_INTENSE_RIVALRY)
-            ? 5 : PlayersData[target_id].diff_level;
-        int urge = (int)reputation(target_id, faction_id);
-        if (climactic_battle()) {
-            urge += 4;
-        }
-        if (PlayersData[faction_id].flags_ext & PFLAGEXT_SHAMELESS_BETRAY_HUMANS) {
-            urge += 4;
-        }
-        if (PlayersData[target_id].diplo_treaties[faction_id] & DTREATY_WANT_REVENGE) {
-            urge += 4;
-        }
-        urge *= weight;
-        int bound = (vendetta_count - PlayersData[faction_id].ai_fight + 2) * 256;
-        if ((int)bounded_crt_random(bound) < urge) {
-            set_treaty(faction_id, target_id, DTREATY_SHALL_BETRAY, true);
-        }
     }
 }
 
@@ -2762,71 +2765,67 @@ Status: Complete
 void __cdecl social_calc(SocialCategory *category, SocialEffect *effect, int faction_id,
     BOOL UNUSED(toggle), BOOL is_quick_calc) {
     ZeroMemory(effect, sizeof(SocialEffect));
-    for (int cat = 0; cat < MaxSocialCatNum; cat++) {
-        uint32_t model = category->models_[cat];
+    // One counter serves the category walk and the final bonus walk (shared frame slot).
+    int cat;
+    for (cat = 0; cat < MaxSocialCatNum; cat++) {
+        int model = category->models_[cat];
         for (int eff = 0; eff < MaxSocialEffectNum; eff++) {
-            int effect_val = *(&SocialCategories[cat].model_effect[model].values_[SocialEffect::ECONOMY] + eff);
-            if (effect_val < 0) {
-                if (cat == SOCIAL_CAT_FUTURE) {
-                    if (model == SE_CYBERNETIC) {
-                        if (has_project(SP_NETWORK_BACKBONE, faction_id)) {
-                            effect_val = 0;
-                        }
-                    } else if (model == SE_THOUGHT_CONTROL) {
-                        if (has_project(SP_CLONING_VATS, faction_id)) {
-                            effect_val = 0;
-                        }
+            if (SocialCategories[cat].model_effect[model].values_[eff] < 0) {
+                if (cat == SOCIAL_CAT_FUTURE && model == SE_CYBERNETIC) {
+                    if (has_project(SP_NETWORK_BACKBONE, faction_id)) {
+                        continue;
                     }
-                } else if (cat == SOCIAL_CAT_VALUES && model == SE_POWER
-                    && has_project(SP_CLONING_VATS, faction_id)) {
-                    effect_val = 0;
+                } else if ((cat == SOCIAL_CAT_VALUES && model == SE_POWER)
+                    || (cat == SOCIAL_CAT_FUTURE && model == SE_THOUGHT_CONTROL)) {
+                    if (has_project(SP_CLONING_VATS, faction_id)) {
+                        continue;
+                    }
                 }
-                if (effect_val < 0) {
-                    for (int i = 0; i < Players[faction_id].faction_bonus_count; i++) {
-                        if (Players[faction_id].faction_bonus_val1[i] == cat
-                            && Players[faction_id].faction_bonus_val2[i] == (int)model) {
-                            if (Players[faction_id].faction_bonus_id[i] == RULE_IMPUNITY) {
-                                *(&effect->values_[SocialEffect::ECONOMY] + eff) -= effect_val; // negates neg effects
-                            } else if (Players[faction_id].faction_bonus_id[i] == RULE_PENALTY) {
-                                *(&effect->values_[SocialEffect::ECONOMY] + eff) += effect_val; // doubles neg effects
-                            }
+                for (int i = 0; i < Players[faction_id].faction_bonus_count; i++) {
+                    if (Players[faction_id].faction_bonus_val1[i] == cat
+                        && Players[faction_id].faction_bonus_val2[i] == model) {
+                        if (Players[faction_id].faction_bonus_id[i] == RULE_IMPUNITY) {
+                            // negates neg effects
+                            effect->values_[eff] -= SocialCategories[cat].model_effect[model].values_[eff];
+                        } else if (Players[faction_id].faction_bonus_id[i] == RULE_PENALTY) {
+                            // doubles neg effects
+                            effect->values_[eff] += SocialCategories[cat].model_effect[model].values_[eff];
                         }
                     }
                 }
             }
-            *(&effect->values_[SocialEffect::ECONOMY] + eff) += effect_val;
+            effect->values_[eff] += SocialCategories[cat].model_effect[model].values_[eff];
         }
     }
-    if (!is_quick_calc) {
-        if (has_project(SP_ASCETIC_VIRTUES, faction_id)) {
-            effect->values_[SocialEffect::POLICE]++;
+    if (is_quick_calc) {
+        return;
+    }
+    if (has_project(SP_ASCETIC_VIRTUES, faction_id)) {
+        effect->values_[SocialEffect::POLICE]++;
+    }
+    if (has_project(SP_LIVING_REFINERY, faction_id)) {
+        effect->values_[SocialEffect::SUPPORT] += 2;
+    }
+    if (has_temple(faction_id)) {
+        effect->values_[SocialEffect::PLANET]++;
+        if (Players[faction_id].rule_flags & RFLAG_ALIEN) {
+            effect->values_[SocialEffect::RESEARCH]++; // bonus documented in conceptsx.txt but not manual
         }
-        if (has_project(SP_LIVING_REFINERY, faction_id)) {
-            effect->values_[SocialEffect::SUPPORT] += 2;
-        }
-        if (has_temple(faction_id)) {
-            effect->values_[SocialEffect::PLANET]++;
-            if (Players[faction_id].rule_flags & RFLAG_ALIEN) {
-                effect->values_[SocialEffect::RESEARCH]++; // bonus documented in conceptsx.txt but not manual
+    }
+    for (int eff = 0; eff < MaxSocialEffectNum; eff++) {
+        effect->values_[eff] += PlayersData[faction_id].soc_effect_base.values_[eff];
+    }
+    for (cat = 0; cat < Players[faction_id].faction_bonus_count; cat++) {
+        switch (Players[faction_id].faction_bonus_id[cat]) {
+        case RULE_IMMUNITY: // cancels neg effects
+            effect->values_[Players[faction_id].faction_bonus_val1[cat]]
+                = range(effect->values_[Players[faction_id].faction_bonus_val1[cat]], 0, 999);
+            break;
+        case RULE_ROBUST: // halves neg effects
+            if (effect->values_[Players[faction_id].faction_bonus_val1[cat]] < 0) {
+                effect->values_[Players[faction_id].faction_bonus_val1[cat]] /= 2;
             }
-        }
-        SocialEffect *effect_calc = effect;
-        SocialEffect *effect_base = &PlayersData[faction_id].soc_effect_base;
-        for (int eff = 0; eff < MaxSocialEffectNum; eff++) {
-            *(&effect_calc->values_[SocialEffect::ECONOMY] + eff) += *(&effect_base->values_[SocialEffect::ECONOMY] + eff);
-        }
-        for (int i = 0; i < Players[faction_id].faction_bonus_count; i++) {
-            if (Players[faction_id].faction_bonus_id[i] == RULE_IMMUNITY) { // cancels neg effects
-                int *eff_faction_mod
-                    = (&effect->values_[SocialEffect::ECONOMY] + Players[faction_id].faction_bonus_val1[i]);
-                *eff_faction_mod = range(*eff_faction_mod, 0, 999);
-            } else if (Players[faction_id].faction_bonus_id[i] == RULE_ROBUST) {
-                int *eff_faction_mod
-                    = (&effect->values_[SocialEffect::ECONOMY] + Players[faction_id].faction_bonus_val1[i]);
-                if (*eff_faction_mod < 0) {
-                    *eff_faction_mod /= 2; // halves neg effects
-                }
-            }
+            break;
         }
     }
 }
@@ -4465,94 +4464,85 @@ void __cdecl tech_analysis(int faction_id, int faction_id_with) {
     DiploScratchFA84 = -1;
     DiploScratchFA6C = -1;
 
-    if ((GameDataStateStorage.fields_.game_rules_ & 0x2000000) == 0) {
-        for (int i = 0; i < 0x59; i++) {
-            if (!has_tech(i, faction_id_with)) {
-                if (has_tech(i, faction_id)) {
-                    int v = tech_val(i, faction_id_with, 0);
-                    int oldA20 = DiploScratchFA20;
-                    int oldA814 = DiploScratchF814;
-                    if (v < DiploScratchF814) {
-                        if (v < DiploScratchFA44) {
-                            if (v < DiploScratchFA20) {
-                                if (DiploScratchF7C0 <= v) {
-                                    DiploScratchF7C0 = v;
-                                    DiploScratchFA28 = i;
-                                }
-                            } else {
-                                DiploScratchF7C0 = DiploScratchFA20;
-                                DiploScratchFA28 = DiploScratchFA1C;
-                                DiploScratchFA1C = i;
-                                DiploScratchFA20 = v;
-                            }
-                        } else {
-                            DiploScratchFA20 = DiploScratchFA44;
-                            DiploScratchF7C0 = oldA20;
-                            DiploScratchFA28 = DiploScratchFA1C;
-                            DiploScratchFA1C = DiploScratchFA18;
-                            DiploScratchFA18 = i;
-                            DiploScratchFA44 = v;
-                        }
-                    } else {
-                        DiploScratchFA28 = DiploScratchFA1C;
-                        DiploScratchFA1C = DiploScratchFA18;
-                        DiploScratchFA18 = DiploScratchFAA8;
-                        DiploScratchF7C0 = DiploScratchFA20;
-                        DiploScratchF814 = v;
-                        DiploScratchFA20 = DiploScratchFA44;
-                        DiploScratchFA44 = oldA814;
-                        DiploScratchFAA8 = i;
+    if (GameDataStateStorage.fields_.game_rules_ & 0x2000000) {
+        return;
+    }
+    for (int i = 0; i < 0x59; i++) {
+        if (has_tech(i, faction_id_with)) {
+            if (has_tech(i, faction_id)) {
+                continue;
+            }
+            int matched = -1;
+            if (PlayersData[faction_id].diff_level >= 3 ||
+                !strcmp(Players[faction_id_with].filename, "HIVE")) {
+                for (int project = 0; project < MaxSecretProjectNum; ++project) {
+                    if (base_project(project) != SP_Unbuilt ||
+                        Facility[70 + project].preq_tech != i) {
+                        continue;
                     }
-                }
-            } else if (!has_tech(i, faction_id)) {
-                int matched = -1;
-                if (PlayersData[faction_id].diff_level > 2 ||
-                    strcmp(Players[faction_id_with].search_key, "UNIV") == 0) {
-                    for (int project = 0; project < MaxSecretProjectNum; ++project) {
-                        if (base_project(project) != SP_Unbuilt ||
-                            Facility[70 + project].preq_tech != i) continue;
-                        const int rank = -2 - project;
-                        const int base_count = GameDataStateStorage.fields_.base_current_count_;
-                        for (int base = 0; base < base_count; ++base) {
-                            if (Bases[base].faction_id_current == faction_id_with &&
-                                Bases[base].queue_production_id[0] == rank - 0x44) {
-                                DiploScratchF7F4 = project;
-                                matched = project;
-                            }
-                        }
-                        if (((PlayersData[faction_id].diff_level > 4 &&
-                              (!IsMultiplayerNet || faction_id != static_cast<int>(GameDataStateStorage.fields_.ranking_faction_id_unk2_))) ||
-                             (IsMultiplayerNet && faction_id == static_cast<int>(GameDataStateStorage.fields_.ranking_faction_id_unk1_))) &&
-                            DiploScratchF7F4 == -1) {
-                            DiploScratchF7F4 = rank;
-                            matched = rank;
+                    for (int base = 0; base < GameDataStateStorage.fields_.base_current_count_; ++base) {
+                        if (Bases[base].faction_id_current == faction_id_with &&
+                            Bases[base].queue_production_id[0] == -project - 0x46) {
+                            DiploScratchF7F4 = project;
+                            matched = project;
                         }
                     }
-                }
-                int v = tech_val(i, faction_id, 0);
-                if (matched != -1) {
-                    // Native INC wraps before the signed, toward-zero divide.
-                    v = static_cast<int>(static_cast<uint32_t>(v) + 1u) / 2;
-                }
-                if (v < DiploScratchFAA4) {
-                    if (DiploScratchF7EC <= v) {
-                        DiploScratchF7EC = v;
-                        DiploScratchF80C = i;
-                        DiploScratchFA84 = matched;
+                    if (((PlayersData[faction_id].diff_level >= 5 &&
+                          (!IsMultiplayerNet || faction_id != static_cast<int>(GameDataStateStorage.fields_.ranking_faction_id_unk2_))) ||
+                         (IsMultiplayerNet && faction_id == static_cast<int>(GameDataStateStorage.fields_.ranking_faction_id_unk1_))) &&
+                        DiploScratchF7F4 == -1) {
+                        DiploScratchF7F4 = -2 - project;
+                        matched = -2 - project;
                     }
-                } else {
-                    DiploScratchF7EC = DiploScratchFAA4;
-                    DiploScratchFA84 = DiploScratchFA6C;
-                    DiploScratchF80C = DiploScratchF800;
-                    DiploScratchF800 = i;
-                    DiploScratchFA6C = matched;
-                    DiploScratchFAA4 = v;
                 }
             }
+            int v = tech_val(i, faction_id, 0);
+            if (matched != -1) {
+                v = (v + 1) / 2;
+            }
+            if (v >= DiploScratchFAA4) {
+                DiploScratchF7EC = DiploScratchFAA4;
+                DiploScratchFA84 = DiploScratchFA6C;
+                DiploScratchF80C = DiploScratchF800;
+                DiploScratchFAA4 = v;
+                DiploScratchF800 = i;
+                DiploScratchFA6C = matched;
+            } else if (v >= DiploScratchF7EC) {
+                DiploScratchF7EC = v;
+                DiploScratchF80C = i;
+                DiploScratchFA84 = matched;
+            }
+        } else if (has_tech(i, faction_id)) {
+            int v = tech_val(i, faction_id_with, 0);
+            if (v >= DiploScratchF814) {
+                DiploScratchF7C0 = DiploScratchFA20;
+                DiploScratchFA20 = DiploScratchFA44;
+                DiploScratchFA44 = DiploScratchF814;
+                DiploScratchF814 = v;
+                DiploScratchFA28 = DiploScratchFA1C;
+                DiploScratchFA1C = DiploScratchFA18;
+                DiploScratchFA18 = DiploScratchFAA8;
+                DiploScratchFAA8 = i;
+            } else if (v >= DiploScratchFA44) {
+                DiploScratchF7C0 = DiploScratchFA20;
+                DiploScratchFA20 = DiploScratchFA44;
+                DiploScratchFA44 = v;
+                DiploScratchFA28 = DiploScratchFA1C;
+                DiploScratchFA1C = DiploScratchFA18;
+                DiploScratchFA18 = i;
+            } else if (v >= DiploScratchFA20) {
+                DiploScratchF7C0 = DiploScratchFA20;
+                DiploScratchFA20 = v;
+                DiploScratchFA28 = DiploScratchFA1C;
+                DiploScratchFA1C = i;
+            } else if (v >= DiploScratchF7C0) {
+                DiploScratchF7C0 = v;
+                DiploScratchFA28 = i;
+            }
         }
-        if (DiploScratchFA84 != -1) {
-            DiploScratchF80C = -1;
-        }
+    }
+    if (DiploScratchFA84 != -1) {
+        DiploScratchF80C = -1;
     }
 }
 
@@ -6192,134 +6182,84 @@ int __cdecl diplomacy_menu(int faction_id, int faction_id_with) {
 // ORIGINAL: 0x0054CF40 ?give_a_base@@YAXHH@Z 0x0054CF40-0x0054D410
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/0054cf40.cpp retains original identity/spans and contradictory scaffold history.", "Pinned full-span review and genuine Player/PlayerData/Base/Veh/Map declarations own the field interpretation; Popup uses the real C++ lifecycle.", "Related intervention50BA50/pact_withdraw53C370 bodies own the coupled helper behavior. Shared proposal cell93FAB0 and map outcome93FAD8 have native producer/consumer evidence; seed-only workflow producers remain explicit obligations."], "reason": "Recover this original diplomacy identity in its genuine faction owner, preserving typed game records, shared-state lifetimes and every seed obligation. This binding is not a byte or runtime claim."}
 void __cdecl give_a_base(int base_id, int new_owner) {
-    Base &base = Bases[base_id];
-    const int x = base.x;
-    const int y = base.y;
-    const unsigned old_owner = base.faction_id_current;
-
-    for (int offset = 0; offset < 0x54; offset += 4) {
-        int dest_x = x + RadiusOffsetX[offset / 4];
-        if ((MapIsFlat & 1) == 0) {
-            if (dest_x < 0) dest_x += MapLongitudeBounds;
-            else if (dest_x >= MapLongitudeBounds)
-                dest_x -= MapLongitudeBounds;
-        }
-        const int dest_y = y + RadiusOffsetY[offset / 4];
-        if (dest_y >= 0 && dest_y < MapLatitudeBounds && dest_x >= 0 &&
-            dest_x < MapLongitudeBounds) {
-            Map &tile = MapTiles[MapLongitude * dest_y + (dest_x >> 1)];
-            tile.visibility |= static_cast<uint8_t>(1u << new_owner);
-            synch_bit(dest_x, dest_y, new_owner);
+    int x = Bases[base_id].x;
+    int y = Bases[base_id].y;
+    int old_owner = Bases[base_id].faction_id_current;
+    for (int i = 0; i < 21; i++) {
+        int x_radius = wrap_map_x(x + RadiusOffsetX[i]);
+        int y_radius = y + RadiusOffsetY[i];
+        if (on_map(x_radius, y_radius)) {
+            map_loc(x_radius, y_radius)->visibility |= 1 << new_owner;
+            synch_bit(x_radius, y_radius, new_owner);
         }
     }
-
-    for (int veh_id = GameDataStateStorage.fields_.vehicle_current_count_ - 1; veh_id >= 0; --veh_id) {
-        Veh &veh = Vehs[veh_id];
-        if (veh.faction_id != old_owner) continue;
-        const int veh_x = veh.x;
-        const int veh_y = veh.y;
-        int dx = abs(veh_x - x);
-        if ((MapIsFlat & 1) == 0 && static_cast<int>(MapLongitude) < dx)
-            dx = MapLongitudeBounds - dx;
-        const int dy = abs(veh_y - y);
-        const int adx = abs(dx);
-        const int ady = abs(dy);
-        const int hi = adx > ady ? adx : ady;
-        const int lo = adx < ady ? adx : ady;
-        const int cheby = (((adx + ady) >> 1) - lo + 1) >> 1;
-        const int remaining = hi - cheby;
-        const uint8_t terrain = MapTiles[MapLongitude * veh_y + (veh_x >> 1)].climate;
-        const unsigned near_base = ((terrain & 0xE0) >= ALT_BIT_SHORE_LINE) ? 1u : 0u;
-        if (remaining > static_cast<int>(near_base)) continue;
-
-        const int prototype_id = veh.proto_id;
-        const int armor = VehPrototypes[prototype_id].armor_id;
-        bool find_other_base = true;
-        if ((armor == 2 || armor == 3) && remaining == 0) {
-            find_other_base = false;
-        } else {
-            const int chassis = VehPrototypes[prototype_id].chassis_id;
-            if (Chassis[chassis].triad == 1 &&
-                (remaining == 0 || (terrain & 0xE0) >= ALT_BIT_SHORE_LINE)) {
-                find_other_base = false;
-            }
+    for (int veh_id = GameDataStateStorage.fields_.vehicle_current_count_ - 1; veh_id >= 0; veh_id--) {
+        if (Vehs[veh_id].faction_id != old_owner) {
+            continue;
         }
-
-        bool transferred = false;
-        if (find_other_base) {
-            base.faction_id_current = static_cast<uint8_t>(new_owner);
-            const int found_base = base_find(x, y, static_cast<int>(old_owner));
-            base.faction_id_current = static_cast<uint8_t>(old_owner);
-            if (found_base >= 0) {
-                const int found_x = Bases[found_base].x;
-                const int found_y = Bases[found_base].y;
-                int dx2 = abs(found_x - x);
-                if ((MapIsFlat & 1) == 0 &&
-                    static_cast<int>(MapLongitude) < dx2) {
-                    dx2 = MapLongitudeBounds - dx2;
+        int dist = del_site_dist(Vehs[veh_id].x, Vehs[veh_id].y, x, y);
+        if (dist > ((map_loc(Vehs[veh_id].x, Vehs[veh_id].y)->climate & ~0x1F) >= ALT_BIT_SHORE_LINE)) {
+            continue;
+        }
+        uint8_t plan = VehPrototypes[Vehs[veh_id].proto_id].plan;
+        if (!(((plan == 2 || plan == 3) && !dist)
+            || (Chassis[VehPrototypes[Vehs[veh_id].proto_id].chassis_id].triad == TRIAD_SEA
+                && (!dist || (map_loc(Vehs[veh_id].x, Vehs[veh_id].y)->climate & ~0x1F) >= ALT_BIT_SHORE_LINE)))) {
+            Bases[base_id].faction_id_current = (uint8_t)new_owner;
+            int found = base_find(x, y, old_owner);
+            Bases[base_id].faction_id_current = (uint8_t)old_owner;
+            if (found >= 0 && territory_dist(Bases[found].x, Bases[found].y, x, y)) {
+                stack_put(stack_veh(veh_id, 1), Bases[found].x, Bases[found].y);
+                Vehs[veh_id].order = ORDER_NONE;
+                if (Vehs[veh_id].home_base_id == base_id) {
+                    Vehs[veh_id].home_base_id = (int16_t)found;
                 }
-                const int dy2 = abs(found_y - y);
-                if (dx2 + dy2 >= 2) {
-                    stack_put(stack_veh(veh_id, 1), found_x, found_y);
-                    veh.order = ORDER_NONE;
-                    if (veh.home_base_id == base_id)
-                        veh.home_base_id = static_cast<int16_t>(found_base);
-                    transferred = true;
-                }
+                continue;
             }
         }
-
-        if (!transferred) {
-            --PlayersData[old_owner].proto_id_active[prototype_id];
-            veh.faction_id = static_cast<uint8_t>(new_owner);
-            ++PlayersData[new_owner].proto_id_active[prototype_id];
-            veh.home_base_id = static_cast<int16_t>(base_id);
-            if (veh.order != ORDER_HOLD) veh.order = ORDER_NONE;
-            veh.waypoint_y[1] = static_cast<int16_t>(veh.waypoint_y[1] & ~0xFF);
-            owner_set(veh_x, veh_y, new_owner);
+        PlayersData[old_owner].proto_id_active[Vehs[veh_id].proto_id]--;
+        Vehs[veh_id].faction_id = (uint8_t)new_owner;
+        PlayersData[new_owner].proto_id_active[Vehs[veh_id].proto_id]++;
+        Vehs[veh_id].home_base_id = (int16_t)base_id;
+        Vehs[veh_id].moves_expended = 0;
+        if (Vehs[veh_id].order != ORDER_HOLD) {
+            Vehs[veh_id].order = ORDER_NONE;
+        }
+        owner_set(Vehs[veh_id].x, Vehs[veh_id].y, new_owner);
+    }
+    Bases[base_id].faction_id_current = (uint8_t)new_owner;
+    Bases[base_id].minerals_accumulated_2 = 0;
+    Bases[base_id].minerals_accumulated = 0;
+    for (int j = 0; j <= Bases[base_id].queue_size; j++) {
+        if (Bases[base_id].queue_production_id[j] >= 0) {
+            PlayersData[old_owner].proto_id_queue[Bases[base_id].queue_production_id[j]]--;
         }
     }
-
-    base.faction_id_current = static_cast<uint8_t>(new_owner);
-    base.minerals_accumulated_2 = 0;
-    base.minerals_accumulated = 0;
-    const int queue_size = static_cast<int32_t>(base.queue_size);
-    if (queue_size >= 0) {
-        for (int index = 0; index <= queue_size; ++index) {
-            if (base.queue_production_id[index] >= 0) {
-                --PlayersData[old_owner].proto_id_queue[
-                    base.queue_production_id[index]];
-            }
-        }
-    }
-    base.queue_size = 0;
-    base.production_id_last = -69;
-    base.queue_production_id[0] = -69;
-
+    Bases[base_id].queue_size = 0;
+    Bases[base_id].production_id_last = -69;
+    Bases[base_id].queue_production_id[0] = -69;
     replay_base(1, x, y, new_owner);
-    const int proposal_mode = DiplomacyProposalMode;
-    base.state &= 0xFFDEF7B1;
-    base.nerve_staple_turns_left = 0;
-    if (proposal_mode == 3) {
-        if (base.faction_id_former == new_owner) {
-            base.assimilation_turns_left = 0;
+    Bases[base_id].state &= 0xFFDEF7B1;
+    Bases[base_id].nerve_staple_turns_left = 0;
+    if (DiplomacyProposalMode == 3) {
+        if (Bases[base_id].faction_id_former != new_owner) {
+            Bases[base_id].faction_id_former = (uint8_t)old_owner;
+            Bases[base_id].assimilation_turns_left = 50;
         } else {
-            base.faction_id_former = static_cast<uint8_t>(old_owner);
-            base.assimilation_turns_left = 0x32;
+            Bases[base_id].assimilation_turns_left = 0;
         }
     } else {
-        if (base.faction_id_former == new_owner)
-            base.assimilation_turns_left = 0;
-        base.faction_id_former = static_cast<uint8_t>(new_owner);
+        if (Bases[base_id].faction_id_former == new_owner) {
+            Bases[base_id].assimilation_turns_left = 0;
+        }
+        Bases[base_id].faction_id_former = (uint8_t)new_owner;
     }
-
-    spot_base(base_id, static_cast<int>(old_owner));
+    spot_base(base_id, old_owner);
     reset_territory();
-    for (int cleanup_vehicle = GameDataStateStorage.fields_.vehicle_current_count_ - 1; cleanup_vehicle >= 0; --cleanup_vehicle) {
-        if (cleanup_vehicle < GameDataStateStorage.fields_.vehicle_current_count_ &&
-            Vehs[cleanup_vehicle].faction_id == old_owner &&
-            Vehs[cleanup_vehicle].home_base_id == base_id) {
-            kill(cleanup_vehicle);
+    for (veh_id = GameDataStateStorage.fields_.vehicle_current_count_ - 1; veh_id >= 0; veh_id--) {
+        if (veh_id < GameDataStateStorage.fields_.vehicle_current_count_
+            && Vehs[veh_id].faction_id == old_owner && Vehs[veh_id].home_base_id == base_id) {
+            kill(veh_id);
         }
     }
     owner_set(x, y, new_owner);
@@ -6593,18 +6533,18 @@ int __cdecl pact_withdraw(int faction_id, int faction_id_with) {
 
         if (best_base < 0) continue;
 
-        veh_drop(veh_lift(vehicle_id), Bases[best_base].x, Bases[best_base].y);
+        veh_put(vehicle_id, Bases[best_base].x, Bases[best_base].y);
         Vehs[vehicle_id].order = 0;
         Vehs[vehicle_id].state &= 0xFCFFBDFFu;
 
         // Native receiver points at Veh.y (+2); its byte +0x23 is the
         // terraforming counter (+0x25), not the adjacent morale byte.
-        if (get_proto_triad(Vehs[vehicle_id].proto_id) == TRIAD_AIR)
+        if (get_triad(vehicle_id) == TRIAD_AIR)
             Vehs[vehicle_id].terraforming_turns = 0;
 
         ++lifted_count;
         if (ConsoleGlobal.cursor_active_ != 0 &&
-            ConsoleGlobal.selected_vehicle_ == vehicle_id) {
+            vehicle_id == ConsoleGlobal.selected_vehicle_) {
             ConsoleGlobal.set_move(1);
         }
     }
@@ -6799,45 +6739,33 @@ psych_rebalance_done:
 // ORIGINAL: 0x0055C430 ?comm_check@@YAXHH@Z 0x0055C430-0x0055C726
 // RECOVERY_BINDING: v1 {"evidence": ["original:0x0055C430:complete-mapped-spans", "git:13693539:src/recovered/units/0055c430.cpp", "source:src/faction.h:PlayersData-and-diplomacy-interfaces"], "reason": "Retain the original multiplayer and PBEM paths, asymmetric pending row and treaty writers. Recheck the local console and treaty state after modal notifications; forward the original actor, peer and zero mode to the separately unfinished communicate owner."}
 void __cdecl comm_check(int faction_id, int faction_id_with) {
-    const uint32_t human_mask = GameDataStateStorage.fields_.lock_masks_.enable_mask_ & 0xFFu;
-    if ((human_mask & diplo_bit(faction_id)) == 0) {
+    int human_mask = GameDataStateStorage.fields_.lock_masks_.enable_mask_ & 0xFF;
+    if (!(human_mask & (1 << faction_id))) {
         return;
     }
-
-    const uint32_t treaty =
-        PlayersData[faction_id].diplo_treaties[faction_id_with];
-    const bool has_comm_link = (treaty & DTREATY_COMMLINK) != 0;
-    if (has_comm_link && (treaty & DTREATY_WANT_TO_TALK) == 0) {
-        const int last_contact =
-            PlayersData[faction_id].diplo_spoke[faction_id_with];
-        if (last_contact >= 0 &&
-            diplo_sub(GameDataStateStorage.fields_.turn_current_num_, last_contact) < 16) {
-            return;
-        }
+    int has_comm_link = PlayersData[faction_id].diplo_treaties[faction_id_with] & DTREATY_COMMLINK;
+    if (has_comm_link
+        && !(PlayersData[faction_id].diplo_treaties[faction_id_with] & DTREATY_WANT_TO_TALK)
+        && PlayersData[faction_id].diplo_spoke[faction_id_with] >= 0
+        && GameDataStateStorage.fields_.turn_current_num_
+            - PlayersData[faction_id].diplo_spoke[faction_id_with] < 16) {
+        return;
     }
-
-    if (IsMultiplayerNet != 0) {
-        if (faction_id == ConsoleGlobal.faction_id_) {
-            if ((human_mask & diplo_bit(faction_id_with)) != 0) {
-                if (!has_comm_link) {
-                    treaty_on(faction_id, faction_id_with, 0x10004);
-                }
-            } else {
-                uint32_t &diplomacy_flags =
-                    FactionDiplomacyFlags[faction_id_with];
-                diplomacy_flags |= 1u;
-                if (has_comm_link) {
-                    return;
-                }
-                diplomacy_flags |= 2u;
-                net_treaty_on(faction_id, faction_id_with, 0x10004, 0);
+    if (IsMultiplayerNet) {
+        if (faction_id == ConsoleGlobal.faction_id_ && !(human_mask & (1 << faction_id_with))) {
+            FactionDiplomacyFlags[faction_id_with] |= 1;
+            if (has_comm_link) {
                 return;
             }
+            FactionDiplomacyFlags[faction_id_with] |= 2;
+            net_treaty_on(faction_id, faction_id_with, 0x10004, 0);
+            return;
         }
-
-        if (faction_id == ConsoleGlobal.faction_id_ &&
-            (PlayersData[faction_id].diplo_treaties[faction_id_with] &
-             0x08000000u) == 0) {
+        if ((human_mask & (1 << faction_id_with)) && !has_comm_link) {
+            treaty_on(faction_id, faction_id_with, 0x10004);
+        }
+        if (faction_id == ConsoleGlobal.faction_id_
+            && !(PlayersData[faction_id].diplo_treaties[faction_id_with] & 0x08000000)) {
             GenderDefault = Players[faction_id_with].is_leader_female;
             PluralityDefault = FALSE;
             parse_says(0, Players[faction_id_with].title_leader, -1, -1);
@@ -6849,12 +6777,8 @@ void __cdecl comm_check(int faction_id, int faction_id_with) {
             parse_says(2, Players[faction_id_with].noun_faction, -1, -1);
             NetMsgPrimary.pop("NETMET", 5000, 0, nullptr);
         }
-
-        // Native code rechecks the console faction and treaty after the modal
-        // notification; either may have changed during NetMsg::pop.
-        if (faction_id_with == ConsoleGlobal.faction_id_ &&
-            (PlayersData[faction_id].diplo_treaties[faction_id_with] &
-             0x08000000u) == 0) {
+        if (faction_id_with == ConsoleGlobal.faction_id_
+            && !(PlayersData[faction_id].diplo_treaties[faction_id_with] & 0x08000000)) {
             GenderDefault = Players[faction_id].is_leader_female;
             PluralityDefault = FALSE;
             parse_says(0, Players[faction_id].title_leader, -1, -1);
@@ -6865,47 +6789,38 @@ void __cdecl comm_check(int faction_id, int faction_id_with) {
             PluralityDefault = Players[faction_id].is_noun_plural;
             parse_says(2, Players[faction_id].noun_faction, -1, -1);
             NetMsgPrimary.pop("NETMET", 5000, 0, nullptr);
-            return;
         }
-
         return;
     }
-
-    if (IsMultiplayerPBEM != 0) {
-        if ((human_mask & diplo_bit(faction_id_with)) != 0) {
+    if (IsMultiplayerPBEM) {
+        if (human_mask & (1 << faction_id_with)) {
             if (!has_comm_link) {
                 treaty_on(faction_id, faction_id_with, 0x10004);
             }
             return;
         }
-
         if (faction_id != ConsoleGlobal.faction_id_) {
-            uint32_t &pending =
-                PendingDiplomacyFlags[faction_id][faction_id_with];
-            pending |= 1u;
+            PendingDiplomacyFlags[faction_id][faction_id_with] |= 1;
             if (has_comm_link) {
                 return;
             }
-            pending |= 2u;
+            PendingDiplomacyFlags[faction_id][faction_id_with] |= 2;
             treaty_on(faction_id, faction_id_with, 0x10004);
             return;
         }
     }
-
     communicate(faction_id, faction_id_with, 0);
 }
 
+// The image calls has_project (0x004F80D0) out of line here; every other callee is a call.
+#pragma inline_depth(0)
 // ORIGINAL: 0x0055C840 ?enemies_war@@YAXHH@Z 0x0055C840-0x0055CC9A
 // RECOVERY_BINDING: v1 {"evidence": ["original:0x0055C840:complete-mapped-spans", "git:13693539:src/recovered/units/0055c840.cpp", "source:src/faction.h:PlayersData-and-diplomacy-interfaces"], "reason": "Use genuine player treaty rows, local console, owned NetMsg and parser state for war declarations. The observed protected-notice bit is 0x1000, not 0x100000; preserve the original treaty and agenda calls and notice ordering."}
 void __cdecl enemies_war(int faction_id, int faction_id_with) {
-    if ((PlayersData[faction_id].diplo_treaties[faction_id_with]
-         & DTREATY_VENDETTA) != 0) {
+    if (PlayersData[faction_id].diplo_treaties[faction_id_with] & DTREATY_VENDETTA) {
         return;
     }
-
-    const int local_faction_id = ConsoleGlobal.faction_id_;
-    if ((PlayersData[local_faction_id].diplo_treaties[faction_id]
-         & DTREATY_PACT) != 0) {
+    if (PlayersData[ConsoleGlobal.faction_id_].diplo_treaties[faction_id] & DTREATY_PACT) {
         GenderDefault = Players[faction_id].is_leader_female;
         PluralityDefault = FALSE;
         parse_says(0, Players[faction_id].title_leader, -1, -1);
@@ -6914,10 +6829,9 @@ void __cdecl enemies_war(int faction_id, int faction_id_with) {
         parse_says(1, Players[faction_id].name_leader, -1, -1);
         parse_says(2, get_noun(faction_id), -1, -1);
         parse_says(3, get_he_she(faction_id, 0), -1, -1);
-        parse_says(4, get_noun(faction_id), -1, -1);
+        parse_says(4, get_noun(faction_id_with), -1, -1);
         NetMsgPrimary.pop(DiploLabelPACTATTACKS, 5000, 0, nullptr);
-    } else if ((PlayersData[local_faction_id].diplo_treaties[faction_id_with]
-                & DTREATY_PACT) != 0) {
+    } else if (PlayersData[ConsoleGlobal.faction_id_].diplo_treaties[faction_id_with] & DTREATY_PACT) {
         GenderDefault = Players[faction_id_with].is_leader_female;
         PluralityDefault = FALSE;
         parse_says(0, Players[faction_id_with].title_leader, -1, -1);
@@ -6928,68 +6842,54 @@ void __cdecl enemies_war(int faction_id, int faction_id_with) {
         parse_says(3, get_he_she(faction_id_with, 0), -1, -1);
         parse_says(4, get_noun(faction_id), -1, -1);
         NetMsgPrimary.pop(DiploLabelPACTATTACKS, 5000, 0, nullptr);
-    } else {
-        if (has_treaty(local_faction_id, faction_id, DTREATY_HAVE_INFILTRATOR) ||
-            has_project(SP_EMPATH_GUILD, local_faction_id) ||
-            (local_faction_id == GameDataStateStorage.fields_.governor_faction_ &&
-             !(Players[faction_id].rule_flags & RFLAG_ALIEN)) ||
-            has_treaty(local_faction_id, faction_id_with, DTREATY_HAVE_INFILTRATOR) ||
-            has_project(SP_EMPATH_GUILD, local_faction_id) ||
-            (local_faction_id == GameDataStateStorage.fields_.governor_faction_ &&
-             !(Players[faction_id_with].rule_flags & RFLAG_ALIEN)) ||
-            (GameDataStateStorage.fields_.game_state_ & 0x80)) {
-            GenderDefault = Players[faction_id].noun_gender;
-            PluralityDefault = Players[faction_id].is_noun_plural;
-            parse_says(0, Players[faction_id].noun_faction, -1, -1);
-            GenderDefault = Players[faction_id_with].noun_gender;
-            PluralityDefault = Players[faction_id_with].is_noun_plural;
-            parse_says(1, Players[faction_id_with].noun_faction, -1, -1);
-            NetMsgPrimary.pop("ENEMYWAR", 5000, 0, nullptr);
-        }
+    } else if (PlayersData[ConsoleGlobal.faction_id_].diplo_treaties[faction_id] & DTREATY_HAVE_INFILTRATOR
+        || has_project(SP_EMPATH_GUILD, ConsoleGlobal.faction_id_)
+        || (ConsoleGlobal.faction_id_ == GameDataStateStorage.fields_.governor_faction_
+            && !(Players[faction_id].rule_flags & RFLAG_ALIEN))
+        || PlayersData[ConsoleGlobal.faction_id_].diplo_treaties[faction_id_with] & DTREATY_HAVE_INFILTRATOR
+        || has_project(SP_EMPATH_GUILD, ConsoleGlobal.faction_id_)
+        || (ConsoleGlobal.faction_id_ == GameDataStateStorage.fields_.governor_faction_
+            && !(Players[faction_id_with].rule_flags & RFLAG_ALIEN))
+        || GameDataStateStorage.fields_.game_state_ & 0x80) {
+        GenderDefault = Players[faction_id].noun_gender;
+        PluralityDefault = Players[faction_id].is_noun_plural;
+        parse_says(0, Players[faction_id].noun_faction, -1, -1);
+        GenderDefault = Players[faction_id_with].noun_gender;
+        PluralityDefault = Players[faction_id_with].is_noun_plural;
+        parse_says(1, Players[faction_id_with].noun_faction, -1, -1);
+        NetMsgPrimary.pop("ENEMYWAR", 5000, 0, nullptr);
     }
-
     treaty_on(faction_id, faction_id_with, DTREATY_VENDETTA);
-    if ((PlayersData[faction_id].diplo_treaties[faction_id_with]
-         & 0x40000000u) == 0) {
+    if (!(PlayersData[faction_id].diplo_treaties[faction_id_with] & 0x40000000)) {
         trade_maps(faction_id, faction_id_with);
     }
-
-    if ((PlayersData[faction_id].diplo_treaties[faction_id_with]
-         & DTREATY_WANT_REVENGE) != 0 &&
-        (PlayersData[faction_id].diplo_treaties[faction_id_with]
-         & DTREATY_ATROCITY_VICTIM) == 0 && GameDataStateStorage.fields_.diff_level_current_ > 1 &&
-        rand() % GameDataStateStorage.fields_.diff_level_current_ != 0) {
-        PlayersData[faction_id].diplo_agenda[faction_id_with] &=
-            ~(DAGENDA_UNK_400 | DAGENDA_UNK_800);
-        PlayersData[faction_id_with].diplo_agenda[faction_id] &=
-            ~(DAGENDA_UNK_400 | DAGENDA_UNK_800);
-        PlayersData[faction_id].diplo_treaties[faction_id_with] &=
-            ~DTREATY_WANT_REVENGE;
-        PlayersData[faction_id_with].diplo_treaties[faction_id] &=
-            ~DTREATY_WANT_REVENGE;
-        PlayersData[faction_id].diplo_treaties[faction_id_with] |=
-            DTREATY_UNK_40;
-        PlayersData[faction_id].diplo_merc[faction_id_with] = 50;
+    if (PlayersData[faction_id].diplo_treaties[faction_id_with] & DTREATY_WANT_REVENGE
+        && !(PlayersData[faction_id].diplo_treaties[faction_id_with] & DTREATY_ATROCITY_VICTIM)) {
+        // bounded_crt_random, open-coded under inline_depth(0).
+        int bounds = GameDataStateStorage.fields_.diff_level_current_;
+        if (bounds - 1 > 0 && rand() % bounds) {
+            PlayersData[faction_id].diplo_agenda[faction_id_with] &= ~(DAGENDA_UNK_400 | DAGENDA_UNK_800);
+            PlayersData[faction_id_with].diplo_agenda[faction_id] &= ~(DAGENDA_UNK_400 | DAGENDA_UNK_800);
+            PlayersData[faction_id].diplo_treaties[faction_id_with] &= ~DTREATY_WANT_REVENGE;
+            PlayersData[faction_id_with].diplo_treaties[faction_id] &= ~DTREATY_WANT_REVENGE;
+            PlayersData[faction_id].diplo_treaties[faction_id_with] |= DTREATY_UNK_40;
+            PlayersData[faction_id].diplo_merc[faction_id_with] = 50;
+        }
     }
-
-    if ((PlayersData[faction_id_with].diplo_treaties[faction_id]
-         & DTREATY_WANT_REVENGE) != 0 &&
-        (PlayersData[faction_id_with].diplo_treaties[faction_id]
-         & DTREATY_ATROCITY_VICTIM) == 0 && GameDataStateStorage.fields_.diff_level_current_ > 1 &&
-        rand() % GameDataStateStorage.fields_.diff_level_current_ != 0) {
-        PlayersData[faction_id_with].diplo_agenda[faction_id] &=
-            ~(DAGENDA_UNK_400 | DAGENDA_UNK_800);
-        PlayersData[faction_id].diplo_agenda[faction_id_with] &=
-            ~(DAGENDA_UNK_400 | DAGENDA_UNK_800);
-        PlayersData[faction_id_with].diplo_treaties[faction_id] &=
-            ~DTREATY_WANT_REVENGE;
-        PlayersData[faction_id].diplo_treaties[faction_id_with] &=
-            ~DTREATY_WANT_REVENGE;
-        PlayersData[faction_id_with].diplo_treaties[faction_id] |=
-            DTREATY_UNK_40;
-        set_treaty(faction_id_with, faction_id, DTREATY_UNK_40, 1);
+    if (PlayersData[faction_id_with].diplo_treaties[faction_id] & DTREATY_WANT_REVENGE
+        && !(PlayersData[faction_id_with].diplo_treaties[faction_id] & DTREATY_ATROCITY_VICTIM)) {
+        // bounded_crt_random, open-coded under inline_depth(0).
+        int bounds = GameDataStateStorage.fields_.diff_level_current_;
+        if (bounds - 1 > 0 && rand() % bounds) {
+            PlayersData[faction_id_with].diplo_agenda[faction_id] &= ~(DAGENDA_UNK_400 | DAGENDA_UNK_800);
+            PlayersData[faction_id].diplo_agenda[faction_id_with] &= ~(DAGENDA_UNK_400 | DAGENDA_UNK_800);
+            PlayersData[faction_id_with].diplo_treaties[faction_id] &= ~DTREATY_WANT_REVENGE;
+            PlayersData[faction_id].diplo_treaties[faction_id_with] &= ~DTREATY_WANT_REVENGE;
+            set_treaty(faction_id_with, faction_id, DTREATY_UNK_40, 1);
+        }
     }
 }
+#pragma inline_depth()
 
 // ORIGINAL: 0x0055CE20 ?enemies_unpact@@YAXHH@Z 0x0055CE20-0x0055D031 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["original:0x0055CE20:complete-mapped-spans", "git:13693539:src/recovered/units/0055ce20.cpp", "source:src/faction.h:PlayersData-and-diplomacy-interfaces"], "reason": "Recover pact withdrawal through genuine player rows, pact_unpact calls and the existing Empath Guild project/base ownership. Preserve directional calls, protected-notice bit 0x1000, and both-direction treaty clearing mask 0x01100001."}
@@ -9565,55 +9465,45 @@ consider_gift:
 // ORIGINAL: 0x00558C60 ?commlink_attempt@@YAXH@Z 0x00558C60-0x00558FB4
 // RECOVERY_BINDING: v1 {"evidence": ["task:multiwin-contact-owner", "historical seed:src/recovered/units/00558c60.cpp", "pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf:complete original mapped span and native call/branch order", "native:478500 subtracts item ID1; jump-table indices7..10 select items8renounce,9withdrawal,10contact,11chat; withdrawal arguments local then clicked", "source:existing typed subobjects, faction/player/parser/network and separate bounded contact-state storage; automatic PullDown/Buffer lifetime"], "reason": "Recover the complete original in its genuine MultiWin or diplomacy C++ owner, retaining identity, auxiliary spans and historical seed findings; no current match or runtime claim."}
 void __cdecl commlink_attempt(int target_faction) {
-    const int local_faction = ConsoleGlobal.faction_id_;
-    if (local_faction == target_faction) return;
-
-    const uint32_t alive_mask = GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_;
-    const uint32_t target_bit =
-        1u << (static_cast<uint32_t>(target_faction) & 31u);
-    if ((alive_mask & target_bit) == 0) return;
-
+    int local_faction = ConsoleGlobal.faction_id_;
+    if (local_faction == target_faction) {
+        return;
+    }
+    int target_bit = 1 << target_faction;
+    if (!(GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_ & target_bit)) {
+        return;
+    }
     if (GameDataStateStorage.fields_.sunspot_duration_ > 0) {
         NetMsgPrimary.pop("SUNSPOTSNO", 5000, 0, NULL);
         return;
     }
-
-    const int local_alien =
-        (Players[local_faction].rule_flags & RFLAG_ALIEN) != 0;
-    const int target_alien =
-        (Players[target_faction].rule_flags & RFLAG_ALIEN) != 0;
-    if (local_alien && target_alien) {
+    if (Players[local_faction].rule_flags & RFLAG_ALIEN && Players[target_faction].rule_flags & RFLAG_ALIEN) {
         GenderDefault = Players[local_faction].is_leader_female;
         PluralityDefault = 0;
         parse_says(1, Players[local_faction].title_leader, -1, -1);
         GenderDefault = Players[local_faction].is_leader_female;
         PluralityDefault = 0;
         parse_says(3, Players[local_faction].name_leader, -1, -1);
-        X_pops("ALIENHATRED2", 0x100000,
-               FactionDiplomacyPortraits[target_faction], pop_wait);
+        X_pops("ALIENHATRED2", 0x100000, FactionDiplomacyPortraits[target_faction], pop_wait);
         return;
     }
-
-    if (local_alien &&
-        !has_tech(0x4E, target_faction) && !has_tech(4, local_faction)) {
+    if (Players[local_faction].rule_flags & RFLAG_ALIEN && !has_tech(0x4E, target_faction) && !has_tech(4, local_faction)) {
         NetMsgPrimary.pop("WENEEDHUMANPSYCH", -5000, 0, "Alopdir.pcx");
         return;
     }
-
-    if (target_alien &&
-        !has_tech(0x4E, local_faction) && !has_tech(4, target_faction)) {
+    if (Players[target_faction].rule_flags & RFLAG_ALIEN
+        && !has_tech(0x4E, local_faction) && !has_tech(4, target_faction)) {
         NetMsgPrimary.pop("WENEEDALIENPSYCH", -5000, 0, "talent_sm.pcx");
         return;
     }
-
-    if (commlink_attempter(local_faction, target_faction) != 0) return;
-
-    if (IsMultiplayerNet != 0) {
-        if ((GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & target_bit) != 0) {
+    if (commlink_attempter(local_faction, target_faction)) {
+        return;
+    }
+    if (IsMultiplayerNet) {
+        if ((uint8_t)target_bit & GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_) {
             CommlinkPending = 1;
             CommlinkFaction = target_faction;
-            message_data(0x1501, target_faction, local_faction, target_faction,
-                         0, 0);
+            message_data(0x1501, target_faction, local_faction, target_faction, 0, 0);
             GenderDefault = Players[target_faction].is_leader_female;
             PluralityDefault = 0;
             parse_says(0, Players[target_faction].title_leader, -1, -1);
@@ -9624,10 +9514,8 @@ void __cdecl commlink_attempt(int target_faction) {
             NetMsgPrimary.pop("DIPLOCOMM", 5000, 0, NULL);
             return;
         }
-
-        log_say(const_cast<char *>("Commlink open channel"),
-                local_faction, target_faction, 0);
-        if (NetDaemonNet.open_channel(local_faction, target_faction) != 0) {
+        log_say(const_cast<char *>("Commlink open channel"), local_faction, target_faction, 0);
+        if (NetDaemonNet.open_channel(local_faction, target_faction)) {
             GenderDefault = Players[target_faction].is_leader_female;
             PluralityDefault = 0;
             parse_says(0, Players[target_faction].title_leader, -1, -1);
@@ -9638,22 +9526,18 @@ void __cdecl commlink_attempt(int target_faction) {
             return;
         }
     }
-
-    if (IsMultiplayerPBEM != 0 && (GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & target_bit) != 0) {
+    if (IsMultiplayerPBEM && (uint8_t)target_bit & GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_) {
         diplo(local_faction, target_faction);
         return;
     }
-
     communicate(local_faction, target_faction, 1);
-    if (IsMultiplayerNet == 0) {
+    if (IsMultiplayerNet) {
+        log_say(DiploLabelSendingTREATYON, local_faction, target_faction, 0x88000008);
+        message_data(0x2441, 0, local_faction, target_faction, 0x88000008, 0);
+        NetDaemonNet.await_diplo(0x441);
+    } else {
         treaty_on(local_faction, target_faction, 0x88000008);
-        return;
     }
-
-    log_say(DiploLabelSendingTREATYON, local_faction, target_faction,
-            0x88000008);
-    message_data(0x2441, 0, local_faction, target_faction, 0x88000008, 0);
-    NetDaemonNet.await_diplo(0x441);
 }
 
 /*
@@ -9775,14 +9659,6 @@ void __cdecl pact_treaty(int faction_id, int faction_id_with) {
     NetMsgPrimary.pop("PACTTREATY", 5000, 0, 0);
 }
 
-static inline int major_atrocity_add_wrapped32(int value, int amount) {
-    uint32_t bits;
-    memcpy(&bits, &value, sizeof bits);
-    bits += static_cast<uint32_t>(amount);
-    memcpy(&value, &bits, sizeof value);
-    return value;
-}
-
 // ORIGINAL: 0x00428350 ?council@@YAXHHH@Z 0x00428350-0x0042854E BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["historical retired seed src/recovered/units/00428350.cpp", "recovery/tasks/council-atrocity-owner-oct5.json", "complete pinned native instruction/argument review and current compiler-observed function symbol", "actual-product-source host parser/directed-row/wrap controls; prior fixed-address scaffold mismatches retained as Git provenance"], "reason": "Complete semantic policy recovery through genuine source-owned window/player/global APIs, directed field relations, fresh callback reads and native parser/default ordering. Historical byte restoration and runtime acceptance remain unfinished."}
 // symbol    ?council@@YAXHHH@Z
@@ -9842,77 +9718,51 @@ void __cdecl council(int faction_id, int proposal, int target_faction) {
     }
 }
 
-static int atrocity_signed_from_bits(uint32_t bits) {
-    int value;
-    memcpy(&value, &bits, sizeof value);
-    return value;
-}
-
 // ORIGINAL: 0x0055EEE0 ?atrocity@@YAXHHHH@Z 0x0055EEE0-0x0055F44F
 // RECOVERY_BINDING: v1 {"evidence": ["historical retired seed src/recovered/units/0055eee0.cpp", "recovery/tasks/council-atrocity-owner-oct5.json", "complete pinned native instruction/argument review and current compiler-observed function symbol", "actual-product-source host parser/directed-row/wrap controls; prior fixed-address scaffold mismatches retained as Git provenance"], "reason": "Complete semantic policy recovery through genuine source-owned window/player/global APIs, directed field relations, fresh callback reads and native parser/default ordering. Historical byte restoration and runtime acceptance remain unfinished."}
 // symbol    ?atrocity@@YAXHHHH@Z
 void __cdecl atrocity(int actor_id, int victim_id, int kind, int unknown) {
-    uint32_t &victim_treaty =
-        PlayersData[victim_id].diplo_treaties[actor_id];
-    const bool was_allied = (victim_treaty & DTREATY_ATROCITY_VICTIM) != 0;
-    victim_treaty |= DTREATY_ATROCITY_VICTIM | DTREATY_WANT_REVENGE;
+    int was_victim = PlayersData[victim_id].diplo_treaties[actor_id] & DTREATY_ATROCITY_VICTIM;
+    PlayersData[victim_id].diplo_treaties[actor_id] |= DTREATY_ATROCITY_VICTIM | DTREATY_WANT_REVENGE;
     PlayersData[victim_id].diplo_agenda[actor_id] |= DAGENDA_UNK_4;
-
-    if (GameDataStateStorage.fields_.council_resolution_count_[8] > GameDataStateStorage.fields_.council_resolution_count_[9]) return;
-
-    if (GameDataStateStorage.fields_.sunspot_duration_ > 0) {
-        if (actor_id != ConsoleGlobal.faction_id_) return;
-        NetMsgPrimary.pop("ATROCITYSPOTS", 5000, 0, 0);
+    if (GameDataStateStorage.fields_.council_resolution_count_[PROP_REPEAL_UN_CHARTER] >
+        GameDataStateStorage.fields_.council_resolution_count_[PROP_REINSTATE_UN_CHARTER]) {
         return;
     }
-
-    if (ExpansionEnabled && unknown == 0 &&
-        (is_alien_faction(actor_id) || is_alien_faction(victim_id))) return;
-
-    const uint32_t actor_bit = 1u << (actor_id & 0x1f);
-    for (int other_id = 1; other_id < MaxPlayerNum; ++other_id) {
-        if (other_id == actor_id || other_id == victim_id) continue;
-        const uint32_t other_treaty_flags =
-            PlayersData[other_id].diplo_treaties[actor_id];
-        if ((other_treaty_flags & DTREATY_COMMLINK) == 0) continue;
-
-        if (ExpansionEnabled && unknown != 0 &&
-            (Players[actor_id].rule_flags & RFLAG_ALIEN) == 0 &&
-            (Players[other_id].rule_flags & RFLAG_ALIEN) != 0) continue;
-
-        if ((other_treaty_flags & DTREATY_UNK_200000) != 0) {
+    if (GameDataStateStorage.fields_.sunspot_duration_ > 0) {
+        if (actor_id == ConsoleGlobal.faction_id_) {
+            NetMsgPrimary.pop("ATROCITYSPOTS", 5000, 0, 0);
+        }
+        return;
+    }
+    if (ExpansionEnabled && !unknown
+        && (Players[actor_id].rule_flags & RFLAG_ALIEN || Players[victim_id].rule_flags & RFLAG_ALIEN)) {
+        return;
+    }
+    for (int other_id = 1; other_id < MaxPlayerNum; other_id++) {
+        if (other_id == actor_id || other_id == victim_id) {
+            continue;
+        }
+        uint32_t treaty = PlayersData[other_id].diplo_treaties[actor_id];
+        if (!(treaty & DTREATY_COMMLINK)) {
+            continue;
+        }
+        if (ExpansionEnabled && unknown && !(Players[actor_id].rule_flags & RFLAG_ALIEN)
+            && Players[other_id].rule_flags & RFLAG_ALIEN) {
+            continue;
+        }
+        if (treaty & DTREATY_UNK_200000) {
             cause_friction(other_id, actor_id, 5);
-            const uint32_t other_bit = 1u << (other_id & 0x1f);
-            const uint32_t local_humans = GameDataStateStorage.fields_.lock_masks_.enable_mask_ & 0xffu;
-            const bool can_attack =
-                (local_humans & other_bit) == 0 &&
-                (local_humans & actor_bit) != 0 &&
-                (PlayersData[other_id].diplo_treaties[actor_id] &
-                 DTREATY_COMMLINK) != 0 &&
-                (PlayersData[other_id].diplo_treaties[actor_id] &
-                 (DTREATY_TREATY | DTREATY_VENDETTA)) == 0 && !was_allied;
-
-            if (can_attack) {
-                bool commit_atrocity = false;
-                if ((PlayersData[other_id].diplo_treaties[actor_id] & 0x20u) != 0) {
-                    commit_atrocity = true;
-                } else if (great_satan(actor_id, 0) != 0) {
-                    int roll = rand() & 0x8000000f;
-                    if (roll < 0) roll = ((roll - 1) | 0xfffffff0) + 1;
-                    const uint32_t difference_bits =
-                        static_cast<uint32_t>(roll) -
-                        static_cast<uint32_t>(PlayersData[actor_id].atrocities);
-                    commit_atrocity = atrocity_signed_from_bits(difference_bits) < 9;
-                } else {
-                    int denominator = 5;
-                    if ((GameDataStateStorage.fields_.game_rules_ & 0x40u) == 0) denominator = GameDataStateStorage.fields_.diff_level_current_;
-                    denominator = (8 - denominator) * 2;
-                    const int roll = denominator - 1 < 1
-                        ? 0 : rand() % denominator;
-                    commit_atrocity = roll == 0;
-                }
-
-                if (commit_atrocity) {
+            int humans = GameDataStateStorage.fields_.lock_masks_.enable_mask_ & 0xFF;
+            if (!(humans & (1 << other_id)) && humans & (1 << actor_id)
+                && PlayersData[actor_id].diplo_treaties[other_id] & DTREATY_COMMLINK
+                && !(PlayersData[actor_id].diplo_treaties[other_id] & (DTREATY_PACT | DTREATY_VENDETTA))
+                && !was_victim) {
+                if (PlayersData[other_id].diplo_treaties[actor_id] & DTREATY_WANT_REVENGE
+                    || (great_satan(actor_id, false)
+                        ? rand() % 16 - PlayersData[actor_id].atrocities <= 8
+                        : !bounded_crt_random((8 - ((GameDataStateStorage.fields_.game_rules_ & RULES_INTENSE_RIVALRY)
+                            ? 5 : GameDataStateStorage.fields_.diff_level_current_)) * 2))) {
                     if (actor_id == ConsoleGlobal.faction_id_) {
                         GenderDefault = Players[actor_id].is_leader_female;
                         PluralityDefault = FALSE;
@@ -9921,44 +9771,35 @@ void __cdecl atrocity(int actor_id, int victim_id, int kind, int unknown) {
                         PluralityDefault = FALSE;
                         parse_says(1, Players[actor_id].name_leader, -1, -1);
                         diplomacy_caption(actor_id, other_id);
-                        x_pops_minimal("ATROCIOUSITY",
-                                       FactionDiplomacyPortraits[other_id], 0);
+                        x_pops_minimal("ATROCIOUSITY", FactionDiplomacyPortraits[other_id], 0);
                     }
                     treaty_on(actor_id, other_id, DTREATY_VENDETTA);
-                    PlayersData[other_id].diplo_treaties[actor_id] |=
-                        DTREATY_UNK_40;
-                    PlayersData[other_id].diplo_merc[actor_id] = 0x32;
+                    PlayersData[other_id].diplo_treaties[actor_id] |= DTREATY_UNK_40;
+                    PlayersData[other_id].diplo_merc[actor_id] = 50;
                 }
             }
-            if ((PlayersData[other_id].diplo_treaties[actor_id] &
-                 DTREATY_VENDETTA) == 0)
-                treaty_on(other_id, actor_id, 0x400000u);
+        }
+        if (!(PlayersData[other_id].diplo_treaties[actor_id] & DTREATY_VENDETTA)) {
+            treaty_on(other_id, actor_id, 0x400000);
         }
     }
-
-    if (kind != 0 || PlayersData[actor_id].atrocities == 0) {
-        PlayersData[actor_id].atrocities = major_atrocity_add_wrapped32(
-            PlayersData[actor_id].atrocities, 1);
-        if ((PlayersData[victim_id].diplo_treaties[actor_id] &
-             DTREATY_ATROCITY_VICTIM) == 0)
-            PlayersData[actor_id].integrity_blemishes =
-                major_atrocity_add_wrapped32(
-                    PlayersData[actor_id].integrity_blemishes, 1);
+    if (kind || !PlayersData[actor_id].atrocities) {
+        PlayersData[actor_id].atrocities++;
+        if (!(PlayersData[actor_id].diplo_treaties[victim_id] & DTREATY_ATROCITY_VICTIM)) {
+            PlayersData[actor_id].integrity_blemishes++;
+        }
     }
-    const int atrocities = PlayersData[actor_id].atrocities;
-    const int atrocity_threshold =
-        (8 - PlayersData[actor_id].diff_level) * 4;
-    if (atrocities > atrocity_threshold) {
+    if (PlayersData[actor_id].atrocities > (8 - PlayersData[actor_id].diff_level) * 4) {
         major_atrocity(actor_id, victim_id);
         return;
     }
-
-    const uint32_t final_human_mask = GameDataStateStorage.fields_.lock_masks_.enable_mask_ & 0xffu;
-    if ((final_human_mask & actor_bit) != 0 &&
-        (final_human_mask & (1u << (MaxPlayerNum & 0x1f))) == 0 &&
-        !was_allied && atrocities > 4)
+    int atrocities = PlayersData[actor_id].atrocities;
+    int sanction_turns = atrocities * 10;
+    // other_id is the VC6-scoped loop counter, MaxPlayerNum after the loop.
+    int humans = GameDataStateStorage.fields_.lock_masks_.enable_mask_ & 0xFF;
+    if (humans & (1 << actor_id) && !(humans & (1 << other_id)) && !was_victim && atrocities >= 5) {
         PlayersData[victim_id].flags |= PFLAG_COMMIT_ATROCIT_WANTONLY;
-
+    }
     GenderDefault = Players[actor_id].is_leader_female;
     PluralityDefault = FALSE;
     parse_says(0, Players[actor_id].title_leader, -1, -1);
@@ -9971,18 +9812,18 @@ void __cdecl atrocity(int actor_id, int victim_id, int kind, int unknown) {
     GenderDefault = Players[victim_id].is_leader_female;
     PluralityDefault = FALSE;
     parse_says(3, Players[victim_id].name_leader, -1, -1);
-    const int atrocity_count_times_ten =
-        atrocity_signed_from_bits(static_cast<uint32_t>(atrocities) * 10u);
-    parse_num(0, atrocity_count_times_ten);
-
+    parse_num(0, PlayersData[actor_id].atrocities * 10);
     StringTemp[0] = '\0';
     strcat(StringTemp, "ATROCITY");
-    if (actor_id == ConsoleGlobal.faction_id_) strcat(StringTemp, "2");
-    else if (victim_id == actor_id) strcat(StringTemp, "1");
-    if ((Players[actor_id].rule_flags & RFLAG_ALIEN) == 0)
+    if (actor_id == ConsoleGlobal.faction_id_) {
+        strcat(StringTemp, "2");
+    } else if (victim_id == actor_id) {
+        strcat(StringTemp, "1");
+    }
+    if (!(Players[actor_id].rule_flags & RFLAG_ALIEN)) {
         NetMsgPrimary.pop(StringTemp, 5000, 0, 0);
-    PlayersData[actor_id].sanction_turns = major_atrocity_add_wrapped32(
-        PlayersData[actor_id].sanction_turns, atrocity_count_times_ten);
+    }
+    PlayersData[actor_id].sanction_turns += sanction_turns;
 }
 
 // ORIGINAL: 0x0055F450 ?major_atrocity@@YAXHH@Z 0x0055F450-0x0055F76A
@@ -9993,91 +9834,57 @@ void __cdecl major_atrocity(int faction_id, int victim_id) {
         PlayersData[victim_id].diplo_treaties[faction_id] |= 0xC0020;
         PlayersData[victim_id].diplo_agenda[faction_id] |= 4;
     }
-
     if (GameDataStateStorage.fields_.council_resolution_count_[PROP_REPEAL_UN_CHARTER] >
         GameDataStateStorage.fields_.council_resolution_count_[PROP_REINSTATE_UN_CHARTER]) {
         return;
     }
-
-    if (victim_id < 0) {
-        PlayersData[faction_id].integrity_blemishes =
-            major_atrocity_add_wrapped32(
-                PlayersData[faction_id].integrity_blemishes, 2);
-    } else if ((PlayersData[faction_id].diplo_treaties[victim_id] &
-                0x80000u) == 0) {
-        int blemishes = major_atrocity_add_wrapped32(
-            PlayersData[faction_id].integrity_blemishes, 2);
-        if (blemishes < 6) {
-            PlayersData[faction_id].integrity_blemishes = 6;
-        } else if (blemishes > 0x63) {
-            PlayersData[faction_id].integrity_blemishes = 0x63;
-        } else {
-            PlayersData[faction_id].integrity_blemishes = blemishes;
+    if (victim_id >= 0) {
+        if (!(PlayersData[faction_id].diplo_treaties[victim_id] & 0x80000)) {
+            PlayersData[faction_id].integrity_blemishes
+                = range(PlayersData[faction_id].integrity_blemishes + 2, 6, 99);
         }
+    } else {
+        PlayersData[faction_id].integrity_blemishes += 2;
     }
-
-    PlayersData[faction_id].major_atrocities =
-        major_atrocity_add_wrapped32(
-            PlayersData[faction_id].major_atrocities, 1);
-
-    for (int other_id = 1; other_id < MaxPlayerNum; ++other_id) {
+    PlayersData[faction_id].major_atrocities++;
+    for (int other_id = 1; other_id < MaxPlayerNum; other_id++) {
         if (other_id == faction_id || other_id == victim_id) {
             continue;
         }
-
-        const uint8_t faction_bit =
-            static_cast<uint8_t>(1u << (other_id & 0x1f));
-        const uint8_t human_mask = static_cast<uint8_t>(GameDataStateStorage.fields_.lock_masks_.enable_mask_);
-        const uint8_t alive_mask =
-            static_cast<uint8_t>(GameDataStateStorage.fields_.lock_masks_.enable_mask_ >> 8);
-        if ((faction_bit & human_mask) != 0 ||
-            (faction_bit & alive_mask) == 0) {
+        if (is_human(other_id) || !is_alive(other_id)) {
             continue;
         }
-
-        // 55F58E..55F5A7 tests the actor row; 55F5CF..55F5DC updates
-        // the reverse row. 55F5E1 sets reverse mercy, while 55F5ED writes
-        // the actor's contact turn after treaty callbacks, not the reverse.
-        const uint32_t actor_relation =
-            PlayersData[faction_id].diplo_treaties[other_id];
-        if ((actor_relation & 0x10u) != 0) {
+        if (PlayersData[faction_id].diplo_treaties[other_id] & DTREATY_VENDETTA) {
             continue;
         }
-        if ((actor_relation & 1u) != 0) {
+        if (PlayersData[faction_id].diplo_treaties[other_id] & DTREATY_PACT) {
             pact_ends(faction_id, other_id);
         }
         treaty_on(other_id, faction_id, 0x18);
-        PlayersData[other_id].diplo_treaties[faction_id] |= 0x40u;
+        PlayersData[other_id].diplo_treaties[faction_id] |= 0x40;
         PlayersData[other_id].diplo_merc[faction_id] = 50;
         PlayersData[faction_id].diplo_spoke[other_id] = GameDataStateStorage.fields_.turn_current_num_;
-
         GenderDefault = Players[other_id].is_leader_female;
         PluralityDefault = 0;
         parse_says(0, Players[other_id].title_leader, -1, -1);
-
         GenderDefault = Players[other_id].is_leader_female;
         PluralityDefault = 0;
         parse_says(1, Players[other_id].name_leader, -1, -1);
-
         GenderDefault = Players[other_id].noun_gender;
         PluralityDefault = Players[other_id].is_noun_plural;
         parse_says(2, Players[other_id].noun_faction, -1, -1);
-
         GenderDefault = Players[faction_id].is_leader_female;
         PluralityDefault = 0;
         parse_says(3, Players[faction_id].title_leader, -1, -1);
-
         GenderDefault = Players[faction_id].is_leader_female;
         PluralityDefault = 0;
         parse_says(4, Players[faction_id].name_leader, -1, -1);
-
         GenderDefault = Players[faction_id].noun_gender;
         PluralityDefault = Players[faction_id].is_noun_plural;
         parse_says(5, Players[faction_id].noun_faction, -1, -1);
-
+        char faction_text[80];
         StringTemp[0] = '\0';
         strcat(StringTemp, DiploLabelMAJORATROCITY);
-        char faction_text[80];
         _itoa(faction_id != ConsoleGlobal.faction_id_, faction_text, 10);
         strcat(StringTemp, faction_text);
         popp(ScriptPopupFile, StringTemp, 0, DiploLabelCouncilSmPcx, 0);
