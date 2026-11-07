@@ -370,7 +370,7 @@ extern int CommlinkFaction;     // 0x0073B790
 // Win owns the application event pump; the network notification gate and its
 // paired session refresh live with the NetDaemon resynchronization operation.
 void __cdecl wait_task();     // 0x005FC700, Win's application event pump
-void __cdecl check_spock();   // 0x0051F1B0, defined in netdaemon_spock.cpp
+void __cdecl check_spock();   // 0x0051F1B0, defined in turn.cpp
 void __cdecl do_all_draws();  // Win's application-wide draw dispatch
 // Vehicle action entry points are owned in veh.cpp.
 int __cdecl action_airdrop(int veh_id, int x, int y, int mode);

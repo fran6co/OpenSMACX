@@ -1898,20 +1898,6 @@
           "-c"
         ]
       },
-      "src/faction_turn.cpp": {
-        "flags": [
-          "/nologo",
-          "/TP",
-          "/Zm200",
-          "/GX",
-          "/O2",
-          "/Ob2",
-          "-MT",
-          "/W4",
-          "/Oy-",
-          "-c"
-        ]
-      },
       "src/base_compute.cpp": {
         "flags": [
           "/nologo",
@@ -2143,6 +2129,63 @@
         "flags": [
           "-nologo",
           "-coff",
+          "-c"
+        ]
+      },
+      "src/turn.cpp": {
+        "flags": [
+          "/nologo",
+          "/TP",
+          "/Zm200",
+          "/GX",
+          "/Og",
+          "/Oi",
+          "/Ot",
+          "/Gs",
+          "/Gy",
+          "/Ob2",
+          "-MT",
+          "/W4",
+          "/Oy-",
+          "/Z7",
+          "-c"
+        ]
+      },
+      "src/setup.cpp": {
+        "flags": [
+          "/nologo",
+          "/TP",
+          "/Zm200",
+          "/GX",
+          "/Og",
+          "/Oi",
+          "/Ot",
+          "/Gs",
+          "/Gy",
+          "/Ob2",
+          "-MT",
+          "/W4",
+          "/Oy-",
+          "/Z7",
+          "-c"
+        ]
+      },
+      "src/colortables.cpp": {
+        "flags": [
+          "/nologo",
+          "/TP",
+          "/Zm200",
+          "/GX",
+          "/Og",
+          "/Oi",
+          "/Ot",
+          "/Gs",
+          "/Gy",
+          "/Ob2",
+          "-MT",
+          "/W4",
+          "/Oy-",
+          "/Z7",
           "-c"
         ]
       }

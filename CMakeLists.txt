@@ -161,7 +161,6 @@ set(OPENSMACX_SOURCES
     src/dialog.cpp
     src/dialogs.cpp
     src/faction.cpp
-    src/faction_turn.cpp
     src/faction_treaty.cpp
     src/faction_diplomacy.cpp
     src/faction_dialogue.cpp
@@ -174,6 +173,9 @@ set(OPENSMACX_SOURCES
     src/interface_fonts.cpp
     src/interface_assets.cpp
     src/game.cpp
+    src/turn.cpp
+    src/setup.cpp
+    src/colortables.cpp
     src/game_desktop.cpp
     src/game_calendar.cpp
     src/newgame.cpp
@@ -193,7 +195,6 @@ set(OPENSMACX_SOURCES
     src/worldwin.cpp
     src/map.cpp
     src/map_grid.cpp
-    src/territory.cpp
     src/world.cpp
     src/mapwin.cpp
     src/mapwin_terrain.cpp
@@ -204,7 +205,6 @@ set(OPENSMACX_SOURCES
     src/datalink_entries.cpp
     src/netwin.cpp
     src/socialwin.cpp
-    src/social.cpp
     src/designwin.cpp
     src/diplowin.cpp
     src/alphamovie.cpp
@@ -247,9 +247,7 @@ set(OPENSMACX_SOURCES
     src/planwin.cpp
     src/playerlock.cpp
     src/netdaemon.cpp
-    src/netdaemon_interface.cpp
     src/netdaemon_message_data.cpp
-    src/netdaemon_spock.cpp
     src/prefwin.cpp
     src/prefwin_geometry.cpp
     src/quaylewin.cpp
@@ -406,9 +404,7 @@ set_source_files_properties(
 # frame-preserving source profiles; application defaults and link settings stay fixed.
 set_source_files_properties(
     src/netdaemon.cpp
-    src/netdaemon_interface.cpp
     src/netdaemon_message_data.cpp
-    src/netdaemon_spock.cpp
     src/diplowin.cpp
     src/diplopop.cpp
     src/worldwin.cpp
@@ -434,10 +430,8 @@ set_source_files_properties(src/sound.cpp src/sound_type.cpp PROPERTIES COMPILE_
 set_source_files_properties(
     src/map.cpp
     src/map_grid.cpp
-    src/territory.cpp
     src/world.cpp
     src/faction.cpp
-    src/faction_turn.cpp
     src/faction_treaty.cpp
     src/faction_diplomacy.cpp
     src/faction_dialogue.cpp
@@ -464,6 +458,9 @@ set_source_files_properties(
 # source profile; this does not assert the original translation-unit boundary.
 set_source_files_properties(
     src/game.cpp
+    src/turn.cpp
+    src/setup.cpp
+    src/colortables.cpp
     src/interface_assets.cpp
     src/game_desktop.cpp
     src/game_calendar.cpp
@@ -555,7 +552,6 @@ set_source_files_properties(
     src/base_compute.cpp
     src/multiwin.cpp
     src/socialwin.cpp
-    src/social.cpp
     src/technology.cpp
     src/technology_queries.cpp
     src/uv2player.cpp
@@ -606,6 +602,9 @@ set_property(SOURCE
     src/caviar.cpp
     src/credits.cpp
     src/game.cpp
+    src/turn.cpp
+    src/setup.cpp
+    src/colortables.cpp
     src/game_desktop.cpp
     src/game_calendar.cpp
     src/interface_palette.cpp
@@ -809,6 +808,9 @@ set(OPENSMACX_UNPOOLED_SOURCES
     src/faction.cpp
     src/faction_treaty.cpp
     src/enemy.cpp
+    src/turn.cpp
+    src/setup.cpp
+    src/colortables.cpp
     src/console_commands.cpp)
 function(opensmacx_apply_optimization target)
     get_target_property(target_sources ${target} SOURCES)

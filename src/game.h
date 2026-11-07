@@ -484,6 +484,7 @@ void __cdecl random_events(int mode);
 void __cdecl mash_planes();
 
 void __cdecl set_tamper();
+void __cdecl check_tamper();
 
 // Source-owned original helper; identity and behavior evidence are in its TU.
 void __cdecl diplo(int faction_id, int faction_id_with);

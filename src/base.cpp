@@ -5836,6 +5836,50 @@ int __cdecl base_find(int x, int y, int faction_id, int region, int faction_id_2
 }
 
 /*
+Purpose: Check who owns a tile. Optional parameter to get closest base.
+// ORIGINAL: 0x004E3EF0 ?whose_territory@@YAHHHHPAHH@Z 0x004E3EF0-0x004E3F9D
+// TRIED: hoisting `Map *tile = map_loc(x, y)` before the territory read
+//            (compiler already CSEs it, identical bytes); flattening the
+//            nested owner==faction_id check into an early-return guard
+//            clause. Both plateau at 0.944 sim / 34 of 74 instructions;
+//            divergence starts in the prologue (image keeps x in edi, this
+//            tree picks ebx) - a pure register-allocation difference.
+// size      173 bytes
+// prototype int (__cdecl ?whose_territory@@YAHHHHPAHH@Z)(int factionID, int xCoord, int yCoord, int* baseID, int ignoreComm)
+// callers   40   call targets   1
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x004E3D50
+Return Value: Faction id of the territory's owner or -1 if no owner or unknown faction
+Status: Complete
+*/
+#pragma optimize("y", off)
+int __cdecl whose_territory(int faction_id, int x, int y, int *base_id, 
+                            BOOL ignore_comm) {
+    int owner = (int)map_loc(x, y)->territory;
+    if (owner <= 0) {
+        return -1; // no owner
+    }
+    if (owner == faction_id) {
+        return faction_id;
+    }
+    if (!ignore_comm && !(GameDataStateStorage.fields_.game_state_ & STATE_OMNISCIENT_VIEW)) {
+        if ((PlayersData[faction_id].diplo_treaties[owner]
+             & (DTREATY_COMMLINK | DTREATY_UNK_8000000))
+            != (DTREATY_COMMLINK | DTREATY_UNK_8000000)) {
+            return -1; // owner unknown to faction
+        }
+        if (base_id) {
+            *base_id = base_find(x, y, -1, region_at(x, y), -1, -1);
+        }
+    } else if (base_id) {
+        *base_id = base_find(x, y, -1, region_at(x, y), -1, -1);
+    }
+    return owner;
+}
+#pragma optimize("", on)
+
+/*
 Purpose: Find the best specialist available to the current base with more weight placed on psych.
 // ORIGINAL: 0x004E4020 ?best_specialist@@YAHXZ 0x004E4020-0x004E4090 BYTE_EXACT
 // LEVER: two fixes. (1) has_tech(...) was inlining its whole preq_tech walk
@@ -8533,6 +8577,53 @@ int __cdecl black_market(int energy) {
         return energy;
     }
     return range(energy * dist_hq / ((8 - ineffciency) * 8), 0, energy);
+}
+
+/*
+Purpose: Calculate the base amount of talents and drones for the specified faction.
+// ORIGINAL: 0x004EA4A0 ?psych_check@@YAXHPAHPAH@Z 0x004EA4A0-0x004EA533
+// LEVER: the image clamps efficiency to zero with a BRANCHLESS
+//        `setl dl; dec edx; and edx, ecx` before adding 4 - splitting the
+//        combined ternary `efficiency < 0 ? 4 : efficiency + 4` into
+//        `(efficiency < 0 ? 0 : efficiency) + 4` isolates the classic
+//        clamp-to-zero idiom and reaches it. Moved 21/52 (0.796) -> 25/52
+//        (0.871).
+// TRIED: the `test al,dl` vs `test dl,al` register-order-only divergence
+//            on is_human()'s bit test is the same one already documented at
+//            this file's `TRIED` notes near line 179/223 (register
+//            allocation, not a source shape this tree controls).
+// LEVER (2026-09-03): `static_cast<int>(MapAreaSqRoot)`. map.h declares it
+//            `uint32_t`, so this tree's product was UNSIGNED and the whole
+//            /56 //2 tail compiled to `mul`/`shr` against the image's
+//            `imul`/`sar` - 13 divergent instructions, not a scheduling
+//            difference. The cast (which technology.cpp's cost model already
+//            makes) moved 33/52 -> 36/52. Naming the clamp `weight` before
+//            the multiply tied at 36/52; the last two instructions are the
+//            image forming `drones + 2` with `lea ecx,[eax+2]` where this
+//            tree adds in place (`add eax,2`) - register selection only.
+//            --all-flags: the default /O2 /Gy /GR- /Oy- /GX at 36/52 (0.914)
+//            beats every other set tried (best rival 9/52).
+// symbol    ?psych_check@@YAXHPAH0@Z
+// size      147 bytes
+// prototype void (__cdecl ?psych_check@@YAXHPAHPAH@Z)(int factionID, int* drones, int* talents)
+// callers   1   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl psych_check(int faction_id, int *drones, int *talents) {
+    int drones_val = 6 - (is_human(faction_id) ? PlayersData[faction_id].diff_level : DLVL_LIBRARIAN);
+    *drones = drones_val;
+    int efficiency = PlayersData[faction_id].soc_effect_pending.values_[SocialEffect::EFFICIENCY];
+    // Naming the clamp ties the inlined spelling at 36/52 - the image's
+    // `lea ecx,[eax+2]` for drones + 2 is not source-reachable either way -
+    // kept because it reads better than the nested ternary inline did.
+    int weight = (efficiency < 0 ? 0 : efficiency) + 4;
+    // The former signed cast is now supplied by the shared signed root owner;
+    // the historical LEVER above records the earlier owner state.
+    *talents = ((drones_val + 2) * weight * MapAreaSqRoot) / 56 / 2;
 }
 
 // Five ordered stages: base/social, psych spending, facilities, police,

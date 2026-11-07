@@ -283,8 +283,6 @@ int StringStruct::seek_id(int id) {
 }
 
 
-
-
 extern "C" int __cdecl string_struct_seek_id_source(StringStruct *self, int id) {
     return self->seek_id(id);
 }
@@ -404,7 +402,6 @@ Status: Genuine destructor; original inlining and strict matching remain unprove
 // Bound: scalar; every original access is a dword at the start, never indexed, and the following bytes are never referenced.
 // RECOVERY_OBJECT: v2 0x009B3374 0x009B3378 ?StringAllocationHeap@@3PAVHeap@@A 0x00401020
 Heap *StringAllocationHeap;  // 0x009B3374
-
 
 
 /*
@@ -539,7 +536,6 @@ namespace {
 // Media overlay update is owned by MediaRuntime in movie_media.cpp.
 
 
-
 // Original pointer cell 0x00691B18 selects the WIZARD text at 0x00691B94.
 // Keep that pointer/text relationship in source-owned storage. Names are
 // descriptive; bindings establish starts, not enclosing allocation bounds.
@@ -592,58 +588,9 @@ char *TechWizardPopupFile = TechWizardPopupFileText;
 
 
 // ---------------------------------------------------------------------------
-// net_not_my_turn, 0x00529E70. The end-of-turn wait for the local player in
-// a network game: mark the turn as handed over, redraw the multiplayer
-// window, latch this faction into the waiting set, then pump the network
-// daemon and skip forward through absent factions until the active turn
-// comes back around.
-/*
-Purpose: Wait out the other factions' turns in a network game, skipping
-         forward through absent players.
-// ORIGINAL: 0x00529E70 ?net_not_my_turn@@YAXXZ 0x00529E70-0x00529F2C FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["Original529E70..529F2C; retired seed git:117282ee:src/unrecovered/00529e70.cpp records the same identity and spans with its scheduling TRIED note kept below.", "The turn block is console.h's own ConsoleGlobal (0x009156B0, set_view), game.h's MultiWindow (0x007FD648, the hypothesis layout's draw), netdaemon.h's NetDaemonNet (0x0093CD90, net_tasks) and game.h's ExitTurnLoop (0x009B2068); the waiting latch at 0x0093E8EC takes this faction's bit and 0x00939294/0x00939298 are the two turn-handover flags.", "game.cpp binds 0x0093A950 as NextTurnReady and 0x0093E8C0 as TurnsAssigned; 0x009A6820 is game.cpp's NetTurnFaction and the skip tests are lock.h's LockEnableMask bytes at 0x009A64E8/0x009A64E9.", "next_player_turn (game.cpp's 0x0052DBF0) has no header declaration yet, so the declaration travels with this body.", "Pinned 0x00529EA4 and 0x00529EFF use direct 32-bit SHL by CL. The first shifts the local faction into the waiting set; the guarded active-turn test retains a full-width bit while testing the human/alive bytes. Do not add source count masks or narrow the second shift temporary."], "reason": "Coverage transcription of the network turn wait on the tree's own named objects."}
-// TRIED (seed): byte-exact to 94.5% mnemonic similarity; the remaining
-//         divergence is the arg-0 push order for set_view against the two
-//         independent global stores.
-Status: Coverage transcription - unclaimed body
-*/
-void __cdecl net_not_my_turn() {
-    ConsoleGlobal.field_23BE4_ = 0;
-    ConsoleGlobal.field_23BE8_ = 1;
-    ConsoleGlobal.set_view(0);
-    MultiWindow.draw(0);
-    NetDaemonNet.factions_waiting_mask() |=
-        (1u << ConsoleGlobal.faction_id_);
-    while (ExitTurnLoop == 0 && NextTurnReady == 0
-           && GameDataStateStorage.fields_.net_turn_faction_ != ConsoleGlobal.faction_id_) {
-        ConsoleGlobal.field_23BE4_ = 1;
-        NetDaemonNet.net_tasks();
-        if (NetDaemonNet.primary_state_.leading_words_[0] != 0) {
-            const int level = GameDataStateStorage.fields_.net_turn_faction_;
-            if (level <= 0) {
-                next_player_turn();
-            } else {
-                const uint32_t bit = 1u << level;
-                const GameDataLockMaskBytes *const lock_bytes =
-                    &GameDataStateStorage.fields_.lock_masks_.bytes_;
-                if ((lock_bytes->human_mask_ & bit) == 0) {
-                    next_player_turn();
-                } else if ((lock_bytes->alive_mask_ & bit) == 0) {
-                    next_player_turn();
-                }
-            }
-        }
-    }
-    ConsoleGlobal.field_23BE4_ = 0;
-    ConsoleGlobal.field_23BE8_ = 0;
-}
-
-
-// ---------------------------------------------------------------------------
 namespace {
 class Int2SlotObj { public: void slot(int, int); };
 }
-
 
 
 // ---------------------------------------------------------------------------
@@ -654,13 +601,6 @@ class Int2SlotObj { public: void slot(int, int); };
 
 // These original initializers call CRT functions rather than intrinsic copies.
 #pragma function(memset, strlen, strcpy)
-
-
-
-
-
-
-
 
 
 // ORIGINAL: 0x004C8150 sub_4c8150 0x004C8150-0x004C8188 BYTE_EXACT

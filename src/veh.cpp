@@ -2727,8 +2727,6 @@ void __cdecl monolith(int veh_id) {
 }
 
 
-
-
 // ORIGINAL: 0x00505D80 ?battle_kill@@YAHHPAHPAHPAHHH@Z 0x00505D80-0x0050612A
 // RECOVERY_BINDING: v1 {"evidence": ["git:99d6e72bcd5ae3be3566222736528cb0dc57935c:src/unrecovered/00505d80.cpp", "pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "recovery/tasks/game-logic-seed-owner-coverage.json; preserve original extents and historical seed lessons. Ordinary owned literals have pinned content provenance, not exact original data-allocation claims."], "reason": "Recover complete destruction/artifact-capture lifetime behavior through real vehicles, prototypes, player counters and UI. Preserve native captured-vehicle state clear between active-count updates and live reads after callbacks."}
 // symbol    ?battle_kill@@YAHHPAH00HH@Z
@@ -2878,54 +2876,6 @@ int __cdecl interceptor(int faction_id, int opposing_faction,
     return 1;
 }
 
-// ORIGINAL: 0x00522F00 ?do_fungal_towers@@YAXXZ 0x00522F00-0x005230DD
-// RECOVERY_BINDING: v1 {"evidence":["Pinned native instructions at 0x00522F00..0x005230DD: descending vehicle traversal, random spread checks, radius offsets, per-faction synchronization and 0x0028805C clear mask.","source:src/veh.h Veh/Vehs and source:src/map.h map, bit, synchronization and radius owners."],"reason":"Recover fungal tower spread and local clearing in the vehicle owner through real vehicle/map state and synchronization calls; preserve original random order and seed identity, without claiming matching or runtime acceptance."}
-void __cdecl do_fungal_towers() {
-    for (int vehicle_id = GameDataStateStorage.fields_.vehicle_current_count_ - 1;
-         vehicle_id >= 0; --vehicle_id) {
-        if (Vehs[vehicle_id].proto_id != BSC_FUNGAL_TOWER) {
-            continue;
-        }
-
-        Vehs[vehicle_id].state |= VSTATE_UNK_4;
-        const int x = Vehs[vehicle_id].x;
-        const int y = Vehs[vehicle_id].y;
-
-        if (rand() % 5 == 0) {
-            const int direction = rand() % 8 + 1;
-            const int spread_x = wrap_map_x(x + RadiusOffsetX[direction]);
-            const int spread_y = y + RadiusOffsetY[direction];
-            if (on_map(spread_x, spread_y)) {
-                bit_set(spread_x, spread_y, BIT_FUNGUS, 1);
-                // This native mask is 0x0028805C, distinct from the nearby
-                // MapTileFlagClearMask data value (0x00288050).
-                bit_set(spread_x, spread_y, 0x0028805C, 0);
-                synch_bit(spread_x, spread_y, 1);
-                synch_bit(spread_x, spread_y, 2);
-                synch_bit(spread_x, spread_y, 3);
-                synch_bit(spread_x, spread_y, 4);
-                synch_bit(spread_x, spread_y, 5);
-                synch_bit(spread_x, spread_y, 6);
-                synch_bit(spread_x, spread_y, 7);
-                draw_tile(spread_x, spread_y, 2);
-            }
-        }
-
-        bit_set(x, y, BIT_FUNGUS, 1);
-        bit_set(x, y, 0x0028805C, 0);
-        synch_bit(x, y, 1);
-        synch_bit(x, y, 2);
-        synch_bit(x, y, 3);
-        synch_bit(x, y, 4);
-        synch_bit(x, y, 5);
-        synch_bit(x, y, 6);
-        synch_bit(x, y, 7);
-        draw_tile(x, y, 2);
-
-        Vehs[vehicle_id].morale = static_cast<uint8_t>(morale_alien(vehicle_id, 0));
-        spot_all(vehicle_id, 1);
-    }
-}
 
 /*
 Purpose: Check whether the specified prototype is a planet buster.
@@ -2945,7 +2895,6 @@ Status: Complete
 // some call sites and calls it at others, and a .cpp definition is only ever
 // one of those. The marker stays here because that is where the catalogue
 // reads it.
-
 
 
 /*
@@ -4009,10 +3958,6 @@ void __cdecl invasions(int base_id) {
 }
 
 
-
-
-
-
 /*
 Purpose: Determine whether the specified unit is eligible for a monolith morale upgrade.
 // ORIGINAL: 0x00579F80 ?want_monolith@@YAHH@Z 0x00579F80-0x00579FE6 BYTE_EXACT
@@ -4062,8 +4007,6 @@ int __cdecl transport_val(int chassis_id, int ability, int reactor_id) {
 }
 
 
-
-
 /*
 Purpose: Generate prototype stats using stringTemp buffer.
 // ORIGINAL: 0x0050B9A0 ?say_stats_3@@YAXH@Z 0x0050B9A0-0x0050B9B6 BYTE_EXACT
@@ -4079,7 +4022,6 @@ Status: Complete
 void __cdecl say_stats_3(int proto_id) {
     say_stats_3(StringTemp, proto_id);
 }
-
 
 
 /*
@@ -4282,7 +4224,6 @@ int __cdecl armor_budget(int faction_id, int max_cost) {
     }
     return armor_id;
 }
-
 
 
 /*
@@ -4701,43 +4642,6 @@ void __cdecl make_proto(int proto_id, int chassis_id, int weapon_id, int armor_i
 }
 
 /*
-Purpose: Search for the 1st prototype (basic + faction specific) that matches the specified plan.
-// ORIGINAL: 0x005AED50 ?get_plan@@YAHHH@Z 0x005AED50-0x005AEDE0 BYTE_EXACT
-// LEVER: has_tech_call, not has_tech - the image CALLS 0x5B9F20 at 0x5AEDA1,
-//        so the `MEASURED inline` in technology.h must be reached through the
-//        non-inline forwarder or /Ob1 open-codes it (3/54 at /O2 /Oy- before the switch).
-// LEVER: proto_id is a signed `int`, not `uint32_t` - the image's
-//        `cmp edi, 0x40 / jge` in front of the has_tech() guard is a SIGNED
-//        test, and `uint32_t` gave `jae`. The parenthesisation
-//        `faction_id * N + (i - N)` matters too: it keeps the shift on
-//        faction_id alone and folds the -N into the following `lea`, where
-//        the unparenthesised form hoists -N into the shift's operand
-//        ((faction + 0x3ffffff) << 6) and pays an extra `add`.
-// size      144 bytes
-// prototype int (__cdecl ?get_plan@@YAHHH@Z)(int factionID, int plan)
-// callers   0   call targets   1
-// kind      game
-// flags     frame;hidden;sp_ready;purged_ok
-// calls     0x005B9F20
-Return Value: Prototype id or -1 if not found
-Status: Complete
-*/
-int __cdecl get_plan(int faction_id, int plan) {
-    for (int i = 0; i < 128; i++) {
-        int proto_id = (i < MaxVehProtoFactionNum) ? i
-            : faction_id * MaxVehProtoFactionNum + (i - MaxVehProtoFactionNum);
-        if (VehPrototypes[proto_id].flags & PROTO_ACTIVE
-            && !(VehPrototypes[proto_id].obsolete_factions & (1 << faction_id))
-            && (proto_id >= MaxVehProtoFactionNum
-                || has_tech(VehPrototypes[proto_id].preq_tech, faction_id))
-            && VehPrototypes[proto_id].plan == plan) {
-            return proto_id;
-        }
-    }
-    return -1;
-}
-
-/*
 Purpose: Check whether the prototype has a specific ability.
 // ORIGINAL: 0x005BF1F0 ?has_abil@@YAHHH@Z 0x005BF1F0-0x005BF310 BYTE_EXACT
 // TRIED: a negative-proto_id guard clause (with its log_say call) that call_diff flagged as an extra call the image does not make; now 13/109 instructions agree, 0.825 similar (best flags), up from a structurally-unrelated function body before
@@ -4782,13 +4686,6 @@ BOOL __cdecl has_abil(int proto_id, int ability_id) {
     }
     return false;
 }
-
-
-
-
-
-
-
 
 
 // action_home's distance: arguments evaluate before the body, as the image's
@@ -5021,9 +4918,6 @@ found:
 }
 
 
-
-
-
 // ORIGINAL: 0x004CD2F0 ?action_destruct@@YAXH@Z 0x004CD2F0-0x004CD4D1 FILE
 // RECOVERY_BINDING: v1 {"evidence": ["git:65b567af55eb22d163bbd28afcc335c340847278:src/recovered/units/004cd2f0.cpp", "recovery/tasks/mapwin-owner-coverage-wave.json", "Pinned instructions 4CD365 and 4CD44E identify reactor_id and PLAN_ALIEN_ARTIFACT, correcting seed cost/class labels."], "reason": "Recover vehicle self-destruction through typed reactor and plan fields, nine radius offsets and real stack lifecycle; original rereads the vehicle prototype after weap_val. Preserve seed identity and original extent without granting a byte claim."}
 // LEVER: (0.84 -> 0.994) range()/wrap_map_x()/on_map() inlines, stack_kill
@@ -5248,11 +5142,6 @@ void __cdecl battle_kill_chaff(int veh_id, int *attacker_out,
 }
 
 
-
-
-
-
-
 // ===== veh.cpp, P2 wave 2: the order verbs =====
 
 // 0x00687FDC, the NetMsg label action_feature pops: the image's .data holds
@@ -5467,8 +5356,6 @@ void __cdecl action_gate(int veh_id, int base_id) {
 }
 
 
-
-
 // Inline bit scan: its by-value copy frees add_abil's dead ability slot for `bit`.
 static inline int abil_bit(int ability) {
     int bit = 0;
@@ -5533,7 +5420,6 @@ void __cdecl add_abil(int *ability_flags, int ability, int faction_id) {
 
     *ability_flags |= 1 << bit;
 }
-
 
 
 // ===== veh.cpp, P2 wave 3: the action family =====
@@ -6064,7 +5950,6 @@ void __cdecl action_sat_attack(int attacker, int target, int type, int base_id) 
     if (ReportIfGlobal.field_8_ == 6 && IfaceIdToSlotStorage[ActiveIfaceIdStorage] == 5)
         ReportIfGlobal.on_redraw();
 }
-
 
 
 namespace goody_box_detail {
@@ -7123,7 +7008,6 @@ dispatch_event:
 }
 
 
-
 // Coupled transfer/terrain actions and their still-unfinished prototype dependencies.
 // Partial dependencies retain explicit BODY GOES HERE sentinels and seed obligations.
 // Superseded seed deleted; seed paths below are historical Git provenance.
@@ -7987,7 +7871,6 @@ int __cdecl propose_proto(int faction_id, int chassis_id, int weapon_id,
 }
 
 
-
 // Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x0057F1D0 ?retire_proto@@YAXHH@Z 0x0057F1D0-0x0057F4B0 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned57F1D0..57F4B0: category snapshot after proto_bung_put;57F28D current-count guard;57F2B3/2C7 live full mask;57F3BA post-stack prototype reload;57F410 predefined branch bypasses active-bit clearing.", "Native57F434..47F inclusive queue walk, first-slot -69 and nonfirst shift/decrement; descending kill path preserves compacted storage. Existing typed owners in veh/base/faction/net headers.", "recovery/tasks/vehicle-special-actions-coverage.json central reviewed recovery; retained src/recovered/units/0057f1d0.cpp and immutable baseline."], "reason": "Recover complete prototype retirement with native descending-compaction traversal, live visibility mask, base/stack fallback, current prototype mineral refund and inclusive queue cleanup. Preserve source identity, full seed and original spans; this is not matching or runtime acceptance."}
@@ -8612,7 +8495,6 @@ int __cdecl study_artifact(int veh_id) {
     }
     return 1;
 }
-
 
 
 // ORIGINAL: 0x0050B8F0 sub_50b8f0 0x0050B8F0-0x0050B90A BYTE_EXACT
@@ -14691,8 +14573,6 @@ static BattleFightPreRoundStateV7 battle_fight_prepare_pre_round_v7(
     (void)combat_type;
     return state;
 }
-
-
 
 
 // Retained fragment: battle-rounds-subagent/battle-fight-followthrough-v2.cpp

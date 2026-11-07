@@ -177,11 +177,6 @@ Status: Complete
 // reads it.
 
 
-
-
-
-
-
 /*
 Purpose: Find closest base to territory owned by another faction not at war with specified faction.
 // ORIGINAL: 0x004E3FA0 ?base_territory@@YAHHHH@Z 0x004E3FA0-0x004E4017 BYTE_EXACT
@@ -718,7 +713,6 @@ Status: Complete
 //            further; register-allocation-only, not a source-shape fix.
 
 
-
 /*
 Purpose: Get the altitude details of the specified tile.
 // ORIGINAL: 0x00500180 ?alt_detail_at@@YAHHH@Z 0x00500180-0x005001A9 BYTE_EXACT
@@ -847,11 +841,6 @@ Status: Complete
 // some call sites and calls it at others, and a .cpp definition is only ever
 // one of those. The marker stays here because that is where the catalogue
 // reads it.
-
-
-
-
-
 
 
 
@@ -1671,7 +1660,6 @@ int __cdecl encrypt_read(void *data, unsigned int size, unsigned int count,
 }
 
 
-
 /*
 Purpose: Rank the prototypes a faction can build, best first, into ProtoSortIds.
 // ORIGINAL: 0x005A6270 ?proto_sort@@YAXH@Z 0x005A6270-0x005A63C9 FILE BYTE_EXACT
@@ -1775,150 +1763,6 @@ void __cdecl proto_sort_2(int faction_id) {
 
 extern int BaseAtDebugPopupFlag;
 
-// RECOVERY_ASSOCIATED: v1 switch_targets 0x0051E760 0x0051F0A8 0x0051F0BC 0x0051E7AD
-// ORIGINAL: 0x0051E760 ?do_checksums@@YAXH@Z 0x0051E760-0x0051F0A7
-// RECOVERY_BINDING: v1 {"reason":"Recover checksum diagnostics through the real network producer, source-owned 21-word turn checksum storage, typed faction names and original local/shared text buffers. Preserve the original unwritten diagnostic tail; no byte or runtime acceptance claim.","evidence":["original:0x51E760-0x51F0A7; image:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf","git:b4e2d110:src/unrecovered/0051e760.cpp","Native51E830..51E840 copies21 words; producer appends26 diagnostic words only when BaseAtDebugPopupFlag is nonzero.","Original section and faction header loops mutate StringTemp; the remaining formatted reports use local buffers and _itoa radix10.","recovery/tasks/base-colony-economy-coverage-wave.json; recovery/tests/test_turn_checksums_behavior.py"]}
-// TRIED: literal transcription of the ~25 itoa+strcat+log_say_hex report blocks and 3 walk loops (verified every log_say/log_say_hex call is (msg,value,0,0) with the message text pushed last=1st-param, confirmed against raw disasm push order, not assumed); the switch's dead "cmp esi,4;jne" fallthrough at 0x51E82B is provably unreachable (case4's own short jmp skips over it) and is omitted. Used a file-scope #define REPORT(...)/#undef macro instead of a helper function to stay inside "no helper" while avoiding 25x hand-duplicated blocks. Compiles; first divergence at instr #13 (deeper than most landings this batch), not chased to byte-exact given size (2375 bytes).
-// kind      game
-void __cdecl do_checksums(int type) {
-    if (BaseAtDebugPopupFlag == 0 && type != 4) {
-        return;
-    }
-
-    // NetDaemon::game_checksum writes 21 common values and, when the debug
-    // popup flag is set, appends the diagnostic values through slot 46.
-    // Keep the tail uninitialized when the producer does not write it: the
-    // original type-4 consumer still reads it; no deterministic value is established.
-    NetChecksumReport checksums;
-    char text[256];
-    char number[50];
-    NetDaemonNet.game_checksum(&checksums);
-
-    log_say(" ", 0, 0, 0);
-    if (type <= 4) {
-        switch (type) {
-        case 0:
-            log_say("Checksums at end of turn", GameDataStateStorage.fields_.turn_current_num_, 0, 0);
-            break;
-        case 1:
-            log_say("Checksums at game start", GameDataStateStorage.fields_.turn_current_num_, 0, 0);
-            break;
-        case 2:
-            log_say("Checksums before world regen", GameDataStateStorage.fields_.turn_current_num_, 0, 0);
-            break;
-        case 3:
-            log_say("Checksums after world regen", GameDataStateStorage.fields_.turn_current_num_, 0, 0);
-            break;
-        case 4:
-            log_say("Checksums at beginning of turn", GameDataStateStorage.fields_.turn_current_num_, 0, 0);
-            memcpy(NetTurnChecksums, &checksums, 0x54);
-            break;
-        }
-    }
-
-    int common_index;
-    for (common_index = 0; common_index < 5; ++common_index) {
-        const char *label;
-        switch (common_index) {
-        case 0: label = "GAME checksum = "; break;
-        case 1: label = "LEADERS checksum = "; break;
-        case 2: label = "MAP checksum = "; break;
-        case 3: label = "VEHICLES checksum = "; break;
-        default: label = "BASES checksum = "; break;
-        }
-        text[0] = '\0';
-        _itoa(checksums.common[common_index], number, 10);
-        strcat(text, number);
-        strcat(text, " ");
-        strcat(text, label);
-        log_say_hex(text, checksums.common[common_index], 0, 0);
-    }
-
-    log_say(" ", 0, 0, 0);
-    int section_index;
-    for (section_index = 0; section_index < 16; ++section_index) {
-        StringTemp[0] = '\0';
-        strcat(StringTemp, "Map SECTION ");
-        _itoa(section_index, number, 10);
-        strcat(StringTemp, number);
-        strcat(StringTemp, " = ");
-
-        text[0] = '\0';
-        _itoa(checksums.map_sections[section_index], number, 10);
-        strcat(text, number);
-        strcat(text, " ");
-        strcat(text, StringTemp);
-        log_say_hex(text, checksums.map_sections[section_index], 0, 0);
-    }
-
-    int aggregate_index;
-    for (aggregate_index = 0; aggregate_index < 3; ++aggregate_index) {
-        const char *label;
-        switch (aggregate_index) {
-        case 0: label = "Rules checksum = "; break;
-        case 1: label = "Projects checksum = "; break;
-        default: label = "Tech checksum = "; break;
-        }
-        text[0] = '\0';
-        _itoa(checksums.diagnostic_aggregates[aggregate_index], number, 10);
-        strcat(text, number);
-        strcat(text, " ");
-        strcat(text, label);
-        log_say_hex(text, checksums.diagnostic_aggregates[aggregate_index], 0, 0);
-    }
-
-    int player_index;
-    for (player_index = 1; player_index < MaxPlayerNum; ++player_index) {
-        StringTemp[0] = '\0';
-        strcat(StringTemp, Players[player_index].adj_name_faction);
-        strcat(StringTemp, " checksum = ");
-        text[0] = '\0';
-        _itoa(checksums.faction_values[player_index - 1], number, 10);
-        strcat(text, number);
-        strcat(text, " ");
-        strcat(text, StringTemp);
-        log_say_hex(text, checksums.faction_values[player_index - 1], 0, 0);
-    }
-
-    int map_report_index;
-    for (map_report_index = 0; map_report_index < 7; ++map_report_index) {
-        const char *label;
-        switch (map_report_index) {
-        case 0: label = "Map climate checksum = "; break;
-        case 1: label = "Map region checksum = "; break;
-        case 2: label = "Map bit checksum = "; break;
-        case 3: label = "Map contour checksum = "; break;
-        case 4: label = "Map terr checksum = "; break;
-        case 5: label = "Map bitwho[0] checksum = "; break;
-        default: label = "Params checksum = "; break;
-        }
-        text[0] = '\0';
-        _itoa(checksums.map_values[map_report_index], number, 10);
-        strcat(text, number);
-        strcat(text, " ");
-        strcat(text, label);
-        log_say_hex(text, checksums.map_values[map_report_index], 0, 0);
-    }
-
-    int vehicle_faction;
-    for (vehicle_faction = 0; vehicle_faction < MaxPlayerNum; ++vehicle_faction) {
-        StringTemp[0] = '\0';
-        strcat(StringTemp, Players[vehicle_faction].adj_name_faction);
-        strcat(StringTemp, " Vehicles checksum = ");
-        text[0] = '\0';
-        _itoa(checksums.vehicles_by_faction[vehicle_faction], number, 10);
-        strcat(text, number);
-        strcat(text, " ");
-        strcat(text, StringTemp);
-        log_say_hex(text, checksums.vehicles_by_faction[vehicle_faction], 0, 0);
-    }
-
-    text[0] = '\0';
-    _itoa(checksums.base_value, number, 10);
-    strcat(text, number);
-    strcat(text, " Bases checksum = ");
-    log_say_hex(text, checksums.base_value, 0, 0);
-}
 
 // Neutral source captions for the initial bytes at 0x687B60 and 0x687B6C: original `push` references at 0x4C9713/0x4C972B and terminating NULs bound 12/17 bytes. The original .data section is writable; original symbols and wider allocation extents are unproved.
 // RECOVERY_OBJECT: v2 0x00687B60 0x00687B6C ?ActionBuildLogCaption@@3PADA 0x004C9713
