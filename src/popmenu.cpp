@@ -65,7 +65,7 @@ int PopMenu::init() {
 
 // The original frame embeds PullDown at Popup+0x537C and unwinds the same
 // PopMenu at 0x006612F3: construction and teardown belong to one local object.
-// ORIGINAL: 0x0059D690 ?popm@@YAHPADHHP6AHXZ@Z 0x0059D690-0x0059D971;0x006612E8-0x006613D0
+// ORIGINAL: 0x0059D690 ?popm@@YAHPADHHP6AHXZ@Z 0x0059D690-0x0059D971;0x006612E8-0x006613D0 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:a538e0a3:src/unrecovered/0059d690.cpp", "source:src/popmenu.h", "image:0x59d690"], "reason": "Recover the complete original operation through genuine owning C++ classes, members and natural lifetimes; preserve retained seed evidence and historical restoration obligations separately from fresh matching."}
 int __cdecl popm(char *section, int x, int y, int (__cdecl *poll)()) {
     PopMenu menu;
@@ -74,7 +74,7 @@ int __cdecl popm(char *section, int x, int y, int (__cdecl *poll)()) {
 }
 
 // Superseded seed removed; retained findings below are historical evidence.
-// ORIGINAL: 0x0059D3B0 ?popm@@YAHPADPADHHP6AHXZ@Z 0x0059D3B0-0x0059D690;0x00661200-0x006612E8 FILE
+// ORIGINAL: 0x0059D3B0 ?popm@@YAHPADPADHHP6AHXZ@Z 0x0059D3B0-0x0059D690;0x00661200-0x006612E8 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:67e9243d4c82aaa8b046653cd25ad7281d0e1bef:src/unrecovered/0059d3b0.cpp", "pinned:terranx_original:0x59d3b0", "source:src/popmenu.cpp"], "reason": "Recover distinct file-and-section PopMenu overload through one actual PopMenu local and member-before-base cleanup. Preserve complete spans, original identity and historical obligations; scoped compiler/host observations are not game acceptance."}
 // symbol    ?popm@@YAHPAD0HHP6AHXZ@Z
 // TRIED: PopMenu as a bare (non-Popup-derived) class per the scaffold - the disasm constructs a `Popup` at the exact address later used for `PopMenu::exec`, so PopMenu : public Popup; exec() returns int (eax is captured into esi and returned), not the scaffold's void. Landed as plain RAII locals (PopMenu menu; PullDown pulldown;) with declared-only ~PopMenu/~BasePop/~FlatButton so the TU doesn't synthesize+define them itself (which trips the "one external .text symbol" gate). This gets the SEH frame, the state-index cleanup counter and the visible per-member close()/dtor chain (~968 bytes) nowhere near matched: the original inlines BasePop's/Popup's own dtor bodies directly into popm(), which needs those functions' real source (not just their addresses) to reproduce - out of reach here.

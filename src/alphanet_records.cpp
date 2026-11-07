@@ -18,7 +18,7 @@
 
 // Source-owned records and lifecycle mappings; this TU retains default /O2.
 // Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x00402B40 SessionStruct::dt 0x00402B40-0x00402BA6 FILE
+// ORIGINAL: 0x00402B40 SessionStruct::dt 0x00402B40-0x00402BA6 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00402b40.cpp: retained original spans and historical seed interpretation", "Pinned original receiver/table/call sequence reviewed in the Alpha ownership binding decision.", "Current C++ class/lifetime source owns the separately observed emitted symbol; this binding is unclaimed and preserves the independent historical exact seed."], "reason": "Receiver-1C, stages session-base669408/669404, clear402970, owner publication then bit1/free."}
 // compile_context src/alphanet.cpp
 // symbol    ??_GAlphaNetStringStruct@@UAEPAXI@Z

@@ -1680,7 +1680,7 @@ TutWin::TutWin() {
 // the declared C++ hierarchy run its normal reverse-lifetime chain preserves
 // that ordering without replaying subobject offsets or vptr stores.
 // Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x004BE7D0 ??1TutWin@@QAE@XZ 0x004BE7D0-0x004BE9EE;0x00659BF0-0x00659CD7 FILE
+// ORIGINAL: 0x004BE7D0 ??1TutWin@@QAE@XZ 0x004BE7D0-0x004BE9EE;0x00659BF0-0x00659CD7 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["seed:src/recovered/units/004be7d0.cpp", "image:0x004be7d0; original call/rectangle/lifetime review"], "reason": "Restore the original ownership-group implementation through real tutorial/editor windows, declared members and normal C++ lifecycle; retained seed extents include the associated exception cleanup where present."}
 // symbol    ??1TutWin@@UAE@XZ
 TutWin::~TutWin() {}
