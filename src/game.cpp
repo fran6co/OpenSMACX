@@ -251,184 +251,147 @@ unsigned char BodyTintColorTables[8][24][256];
 // ORIGINAL: 0x00423000 ?colortables_init_faction@@YAXH@Z 0x00423000-0x00423566;0x00652BE2-0x00652C0A
 // RECOVERY_BINDING: v1 {"evidence": ["historical retired seed src/recovered/units/00423000.cpp", "recovery/tasks/ambience-faction-art-owner-oct5.json", "pinned complete original spans; fresh native owner compilation and actual-source behavior controls"], "reason": "Complete semantic recovery through genuine source-owned members, globals and lifetime operations; retain original defects and historical obligations. Current byte restoration remains unfinished."}
 // symbol    ?colortables_init_faction@@YAXH@Z
+// The original calls the CRT memcpy here.
+#pragma function(memcpy)
 void __cdecl colortables_init_faction(int faction_id) {
     Palette local_palette;
     Filemap cache_file;
 
-    int weight_by_faction[8] = {80, 80, 80, 80, 80, 80, 80, 80};
-    int territory_index_by_faction[8] = {96, 105, 156, 0, 85, 47, 89, 227};
     int body_tint_index_by_faction[8] = {96, 105, 156, 0, 85, 47, 89, 227};
+    int territory_index_by_faction[8] = {96, 105, 156, 0, 85, 47, 89, 227};
+    int weight_by_faction[8] = {80, 80, 80, 80, 80, 80, 80, 80};
 
     Buffer source_buffer;
-    const int palettes_match = compare_palettes();
+    const int palettes_differ = compare_palettes();
+    char *filename = Players[faction_id].filename;
+    unsigned char *view;
+    int refresh_tables;
+    DWORD start_time;
+    PALETTEENTRY tint;
+    HSV hsv;
+    unsigned char *body_table;
 
     StringTemp[0] = '\0';
-    strcat(StringTemp, Players[faction_id].filename);
+    strcat(StringTemp, filename);
     strcat(StringTemp, ".pcx");
-    if (source_buffer.load_pcx(StringTemp, &local_palette, 10, 0xEC) != 0) {
+    if (source_buffer.load_pcx(StringTemp, 0, 10, 0xEC) != 0) {
         return;
     }
-
-    const int territory_sample = source_buffer.get_pixel(0xA1, 0x2EB);
-    territory_index_by_faction[faction_id] = territory_sample;
-
-    const int weight_sample = source_buffer.get_pixel(0xA1, 0x2F5);
-    if (weight_sample == WinFillColour) {
-        return;
+    territory_index_by_faction[faction_id] = source_buffer.get_pixel(0xA1, 0x2EB);
+    {
+        const unsigned char weight_sample =
+            static_cast<unsigned char>(source_buffer.get_pixel(0xA1, 0x2F5));
+        if (weight_sample == WinFillColour) {
+            return;
+        }
+        weight_by_faction[faction_id] =
+            static_cast<unsigned char>(weight_sample - 10) * 100 / 255;
     }
-    const unsigned char wrapped_territory_delta =
-        static_cast<unsigned char>(weight_sample - 10);
-    weight_by_faction[faction_id] =
-        (static_cast<unsigned int>(wrapped_territory_delta) * 100) / 255;
-
-    const int body_tint_sample = source_buffer.get_pixel(0x1B3, 0x2E9);
-    if (body_tint_sample == WinFillColour) {
-        return;
+    {
+        const unsigned char body_sample =
+            static_cast<unsigned char>(source_buffer.get_pixel(0x1B3, 0x2E9));
+        if (body_sample == WinFillColour) {
+            return;
+        }
+        body_tint_index_by_faction[faction_id] = body_sample;
     }
-    body_tint_index_by_faction[faction_id] = body_tint_sample;
-
-    const uint32_t cache_key[3] = {
-        static_cast<uint32_t>(weight_by_faction[faction_id]),
-        static_cast<uint32_t>(territory_index_by_faction[faction_id]),
-        static_cast<uint32_t>(body_tint_index_by_faction[faction_id]),
-    };
 
     StringTemp[0] = '\0';
-    strcat(StringTemp, Players[faction_id].filename);
+    strcat(StringTemp, filename);
     strcat(StringTemp, "vals.tmp");
-
-    bool refresh_tables = false;
-    bool values_match = false;
-    void *values_view = cache_file.open(StringTemp, 1);
-    const DWORD values_start_time = timeGetTime();
-    if (values_view != nullptr && palettes_match == 0) {
-        unsigned char *saved = static_cast<unsigned char *>(values_view);
-        values_match =
-            memcmp(saved, &cache_key[0], sizeof(cache_key[0])) == 0 &&
-            memcmp(saved + 4, &cache_key[1], sizeof(cache_key[1])) == 0 &&
-            memcmp(saved + 8, &cache_key[2], sizeof(cache_key[2])) == 0;
-        if (values_match) {
-            cache_file.close(saved + 12);
+    refresh_tables = 0;
+    view = static_cast<unsigned char *>(cache_file.open(StringTemp, 1));
+    start_time = timeGetTime();
+check_values:
+    if (view != nullptr && !palettes_differ) {
+        if (memcmp(&weight_by_faction[faction_id], view, 4) != 0) {
+            view = nullptr;
+            goto check_values;
         }
+        view += 4;
+        if (memcmp(&territory_index_by_faction[faction_id], view, 4) != 0) {
+            view = nullptr;
+            goto check_values;
+        }
+        view += 4;
+        if (memcmp(&body_tint_index_by_faction[faction_id], view, 4) == 0) {
+            goto open_tables;
+        }
+        view = nullptr;
+        goto check_values;
     }
-
-    if (!values_match) {
-        void *values_view = nullptr;
-        do {
-            values_view = cache_file.create(StringTemp, 0x80, 1);
-            if (values_view != nullptr) {
-                unsigned char *saved =
-                    static_cast<unsigned char *>(values_view);
-                memcpy(saved, &cache_key[0], sizeof(cache_key[0]));
-                memcpy(saved + 4, &cache_key[1], sizeof(cache_key[1]));
-                memcpy(saved + 8, &cache_key[2], sizeof(cache_key[2]));
-                cache_file.close(saved + 12);
-                break;
-            }
-        } while (timeGetTime() - values_start_time < 0xBB8);
-        refresh_tables = true;
+    // The native retry edge from the table-create loop below returns here
+    // with StringTemp still naming the output .tmp file.
+    view = static_cast<unsigned char *>(cache_file.create(StringTemp, 0x80, 1));
+    if (view == nullptr) {
+        if (timeGetTime() - start_time < 0xBB8) {
+            goto check_values;
+        }
+    } else {
+        memcpy(view, &weight_by_faction[faction_id], 4);
+        view += 4;
+        memcpy(view, &territory_index_by_faction[faction_id], 4);
+        view += 4;
+        memcpy(view, &body_tint_index_by_faction[faction_id], 4);
+        view += 4;
+        cache_file.close(view);
     }
-
+    refresh_tables = 1;
+open_tables:
     StringTemp[0] = '\0';
-    strcat(StringTemp, Players[faction_id].filename);
+    strcat(StringTemp, filename);
     strcat(StringTemp, ".tmp");
-
-    void *table_view = nullptr;
-    bool tables_loaded = false;
-    if (!refresh_tables) {
-        table_view = cache_file.open(StringTemp, 1);
-        if (table_view != nullptr &&
-            GetFileSize(cache_file.get_handle(), 0) >= 0xC100) {
-            memcpy(TerritoryColorTables[faction_id], table_view, 0x100);
-            memcpy(BodyTintColorTables[faction_id],
-                   static_cast<unsigned char *>(table_view) + 0x100,
-                   0x100);
-            tables_loaded = true;
+    if (refresh_tables) {
+        start_time = timeGetTime();
+    } else {
+        view = static_cast<unsigned char *>(cache_file.open(StringTemp, 1));
+        if (view != nullptr && GetFileSize(cache_file.get_handle(), 0) >= 0xC100) {
+            memcpy(TerritoryColorTables[faction_id], view, 0x100);
+            view += 0x100;
+            memcpy(BodyTintColorTables[faction_id], view, 0x100);
+            goto done;
         }
     }
-
-    if (!tables_loaded) {
-        for (;;) {
-            const DWORD start_time = refresh_tables
-                ? timeGetTime() : values_start_time;
-            DWORD now = start_time;
-            for (;;) {
-                table_view = cache_file.create(StringTemp, 0xC100, 1);
-                if (table_view != nullptr) {
-                    break;
-                }
-                now = timeGetTime();
-                break;
-            }
-            if (table_view != nullptr) {
-                break;
-            }
-
-            if (now - start_time >= 0xBB8) {
-                break;
-            }
-
-            // The native retry edge returns to its values-cache decision
-            // block with StringTemp still naming the output .tmp file. It
-            // creates/truncates that same path through the 0x80-byte path
-            // before beginning a fresh 0xC100-byte output retry window.
-            values_view = nullptr;
-            do {
-                values_view = cache_file.create(StringTemp, 0x80, 1);
-                if (values_view != nullptr) {
-                    unsigned char *saved =
-                        static_cast<unsigned char *>(values_view);
-                    memcpy(saved, &cache_key[0], sizeof(cache_key[0]));
-                    memcpy(saved + 4, &cache_key[1], sizeof(cache_key[1]));
-                    memcpy(saved + 8, &cache_key[2], sizeof(cache_key[2]));
-                    cache_file.close(saved + 12);
-                    break;
-                }
-            } while (timeGetTime() - values_start_time < 0xBB8);
-            refresh_tables = true;
+    view = static_cast<unsigned char *>(cache_file.create(StringTemp, 0xC100, 1));
+    if (view == nullptr) {
+        if (timeGetTime() - start_time < 0xBB8) {
+            goto check_values;
+        }
+        if (view == nullptr) {
+            goto done;
         }
     }
-
-    if (table_view != nullptr && !tables_loaded) {
-        unsigned char *territory_table = TerritoryColorTables[faction_id];
-        const int territory_weight = weight_by_faction[faction_id];
-        g_PALETTE1.create_table_from_color(
-            territory_index_by_faction[faction_id], territory_table,
-            10, 0xEC, 100 - territory_weight, territory_weight);
-        memcpy(table_view, territory_table, 0x100);
-
-        const PALETTEENTRY tint =
-            g_PALETTE1.entries()[body_tint_index_by_faction[faction_id]];
-        HSV hsv;
-        RGB_to_HSV(&tint, &hsv);
-
-        const unsigned char *source_palette =
-            g_VBP_CAVIARDATA.record()->palette_ + 0x302;
-        for (int row = 0; row < 24; ++row) {
+    g_PALETTE1.create_table_from_color(
+        territory_index_by_faction[faction_id], TerritoryColorTables[faction_id],
+        10, 0xEC, 100 - weight_by_faction[faction_id], weight_by_faction[faction_id]);
+    memcpy(view, TerritoryColorTables[faction_id], 0x100);
+    view += 0x100;
+    tint = g_PALETTE1.entries()[body_tint_index_by_faction[faction_id]];
+    RGB_to_HSV(&tint, &hsv);
+    body_table = &BodyTintColorTables[faction_id][0][0];
+    {
+        for (int row = 0; row < 0x1800; row += 0x100) {
+            const unsigned char *source_palette =
+                g_VBP_CAVIARDATA.record()->palette_ + row + 0x302;
             for (int color = 0; color < 256; ++color) {
-                const PALETTEENTRY source =
-                    g_PALETTE1.entries()[source_palette[row * 256 + color]];
-                const unsigned char red = static_cast<unsigned char>(
-                    static_cast<int>(static_cast<double>(tint.peRed) *
-                                     source.peRed * (1.0f / 255.0f)));
-                const unsigned char green = static_cast<unsigned char>(
-                    static_cast<int>(static_cast<double>(tint.peGreen) *
-                                     source.peGreen * (1.0f / 255.0f)));
-                const unsigned char blue = static_cast<unsigned char>(
-                    static_cast<int>(static_cast<double>(tint.peBlue) *
-                                     source.peBlue * (1.0f / 255.0f)));
-                BodyTintColorTables[faction_id][row][color] =
-                    static_cast<unsigned char>(
-                        g_PALETTE1.get_nearest_palette_index(
-                            red, green, blue, 0));
+                PALETTEENTRY shade = g_PALETTE1.entries()[source_palette[color]];
+                shade.peRed = static_cast<unsigned char>(static_cast<int>(
+                    shade.peRed * static_cast<float>(tint.peRed) * (1.0f / 255.0f)));
+                shade.peGreen = static_cast<unsigned char>(static_cast<int>(
+                    shade.peGreen * static_cast<float>(tint.peGreen) * (1.0f / 255.0f)));
+                shade.peBlue = static_cast<unsigned char>(static_cast<int>(
+                    shade.peBlue * static_cast<float>(tint.peBlue) * (1.0f / 255.0f)));
+                body_table[row + color] = static_cast<unsigned char>(
+                    g_PALETTE1.get_nearest_palette_index(
+                        shade.peRed, shade.peGreen, shade.peBlue, 0));
             }
         }
-        memcpy(static_cast<unsigned char *>(table_view) + 0x100,
-               BodyTintColorTables[faction_id], 0xC000);
     }
-
+    memcpy(view, body_table, 0xC000);
+done:
     cache_file.close();
 }
+#pragma intrinsic(memcpy)
 
 // The original compares exactly 256 PALETTEENTRYs. Existing mappings are
 // writable: a changed palette overwrites the mapped cache before closing it.
@@ -4588,18 +4551,18 @@ int __cdecl game_io(MapWin *record, FILE *file) {
 }
 
 static int map_data_plain_block(FILE *file, void *buffer, unsigned int size) {
-    if (GameDataWriteMode == 0) return fread(buffer, size, 1, file);
-    return fwrite(buffer, size, 1, file);
+    if (GameDataWriteMode) return fwrite(buffer, size, 1, file);
+    return fread(buffer, size, 1, file);
 }
 
 static int map_data_block(FILE *file, void *buffer, unsigned int size) {
-    if (GameDataEncryptedMode == 0) {
-        return map_data_plain_block(file, buffer, size);
-    }
-    if (GameDataWriteMode == 0) {
+    if (GameDataEncryptedMode) {
+        if (GameDataWriteMode) {
+            return encrypt_write(buffer, size, 1, file);
+        }
         return encrypt_read(buffer, size, 1, file);
     }
-    return encrypt_write(buffer, size, 1, file);
+    return map_data_plain_block(file, buffer, size);
 }
 
 int __cdecl game_data_transfer_block(FILE *file, void *buffer, unsigned int size) {
@@ -4609,22 +4572,6 @@ int __cdecl game_data_transfer_block(FILE *file, void *buffer, unsigned int size
 int __cdecl game_data_plain_transfer(FILE *file, void *buffer, unsigned int byte_count, int write_mode) {
     if (write_mode != 0) return static_cast<int>(fwrite(buffer, byte_count, 1, file));
     return static_cast<int>(fread(buffer, byte_count, 1, file));
-}
-
-// Each block re-reads both mode globals: the image tests them per transfer.
-static inline int map_data_rw(FILE *file, void *buffer, unsigned int size) {
-    return GameDataWriteMode != 0
-        ? static_cast<int>(fwrite(buffer, size, 1, file))
-        : static_cast<int>(fread(buffer, size, 1, file));
-}
-
-static inline int map_data_xfer(FILE *file, void *buffer, unsigned int size) {
-    if (GameDataEncryptedMode != 0) {
-        return GameDataWriteMode != 0
-            ? encrypt_write(buffer, size, 1, file)
-            : encrypt_read(buffer, size, 1, file);
-    }
-    return map_data_rw(file, buffer, size);
 }
 
 // Both map daemons call map_data out of line.
@@ -4641,18 +4588,20 @@ int __cdecl map_data(FILE *file, int write_mode, int transfer_map_header) {
 
     GameDataWriteMode = write_mode;
     GameDataEncryptedMode = 0;
-    if (transfer_map_header == 0
-        || (map_data_rw(file, &header, sizeof(header)) != 0
-            && map_data_xfer(file, &write_mode, sizeof(write_mode)) != 0
-            && (header.format_version_ >= 3
-                ? map_data_xfer(file, large_block, 0x10660)
-                : map_data_xfer(file, large_block, 0xE5E0)) != 0
-            && map_data_xfer(file, medium_block, sizeof(medium_block)) != 0
-            && map_data_xfer(file, small_block, sizeof(small_block)) != 0)) {
-        if ((GameDataWriteMode != 0 ? map_write(file) : map_read(file)) == 0) {
-            return 0;
+    if (transfer_map_header != 0) {
+        if (map_data_plain_block(file, &header, sizeof(header)) == 0) goto fail;
+        if (map_data_block(file, &write_mode, sizeof(write_mode)) == 0) goto fail;
+        if (header.format_version_ >= 3) {
+            if (map_data_block(file, large_block, 0x10660) == 0) return 1;
+        } else {
+            if (map_data_block(file, large_block, 0xE5E0) == 0) goto fail;
         }
+        if (map_data_block(file, medium_block, sizeof(medium_block)) == 0) goto fail;
+        if (map_data_block(file, small_block, sizeof(small_block)) == 0) goto fail;
     }
+    if (GameDataWriteMode ? map_write(file) : map_read(file)) goto fail;
+    return 0;
+fail:
     return 1;
 }
 #pragma auto_inline(on)

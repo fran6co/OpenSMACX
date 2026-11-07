@@ -8668,17 +8668,6 @@ void __cdecl make_gift(int giver, int receiver) {
 
 }
 
-// Shared base-transfer step: network relay or direct give_a_base.
-static inline void base_swap_cede(int base_id, int faction_id) {
-    if (IsMultiplayerNet != 0) {
-        log_say(DiploLabelSendingCEDEBASE, base_id, faction_id, 0);
-        message_data(0x2449, 0, base_id, faction_id, 0, 0);
-        NetDaemonNet.await_diplo(0x449);
-    } else {
-        give_a_base(base_id, faction_id);
-    }
-}
-
 // ORIGINAL: 0x0054D410 ?base_swap@@YAXHH@Z 0x0054D410-0x0054DC8C
 // RECOVERY_BINDING: v1 {"evidence": ["task:diplomacy-actions-owner-coverage", "Pinned original54D410-54DC8C; caller54F77E", "historical seed:src/unrecovered/0054d410.cpp", "Independent native review:54D483/54D4FF name pointers;54D4AC/54D52E former owner;54D5C2-54D5E4 facilities; original dialogue keys and energy/tech/base transfer tuples."], "reason": "Recover complete base exchange, energy purchase and all-technology settlement with real Base/PlayerData fields, original lock/transfer order and source-owned selectors. Native Base+5 is former owner, Base+13h is the name start. Preserve catalogue void ABI: its sole caller does not consume a result."}
 // symbol    ?base_swap@@YAHHH@Z
@@ -8697,19 +8686,17 @@ int __cdecl base_swap(int faction_id_res, int faction_id_req) {
 
     if (DiploScratchFA7C >= 0) {
         parse_says(0, Bases[DiploScratchFA7C].name_string, -1, -1);
-        if (Bases[DiploScratchFA7C].faction_id_former == faction_id_res) {
+        if (Bases[DiploScratchFA7C].faction_id_former == faction_id_res)
             requested_value /= 2;
-        }
-        if ((PlayersData[faction_id_req].diplo_treaties[faction_id_res] & 1u) != 0
-            && (PlayersData[faction_id_req].diplo_treaties[faction_id_res] & 0x02000000u) != 0) {
+        const uint32_t treaty = PlayersData[faction_id_req].diplo_treaties[faction_id_res];
+        if ((treaty & 1u) != 0 && (treaty & 0x02000000u) != 0)
             requested_value /= 2;
-        }
     }
+
     if (DiploScratchFA30 >= 0) {
         parse_says(1, Bases[DiploScratchFA30].name_string, -1, -1);
-        if (Bases[DiploScratchFA30].faction_id_former == faction_id_req) {
-            offered_value *= 2;
-        }
+        if (Bases[DiploScratchFA30].faction_id_former == faction_id_req)
+            offered_value = diplo_mul(offered_value, 2);
         if (DiploScratchFA30 >= 0
             && (offered_value < 0 || PlayersData[faction_id_res].current_num_bases == 1)) {
             X_pops("NOHQ", 0x100000,
@@ -8717,144 +8704,113 @@ int __cdecl base_swap(int faction_id_res, int faction_id_req) {
             return 1;
         }
     }
+
     if (DiploScratchFA7C >= 0
-        && (requested_value < 0 || PlayersData[faction_id_req].current_num_bases == 1
+        && (requested_value < 0
+            || PlayersData[faction_id_req].current_num_bases == 1
             || has_fac(FAC_HEADQUARTERS, DiploScratchFA7C, 0))) {
         X_pops("NOMYHQ", 0x100000,
                FactionDiplomacyPortraits[faction_id_req], pop_wait);
         return 1;
     }
-    if ((PlayersData[faction_id_req].diplo_treaties[faction_id_res] & 0x20u) != 0
-        && DiplomacyProposalMode != 3) {
+
+    if ((PlayersData[faction_id_req].diplo_treaties[faction_id_res] & 0x20u) != 0 &&
+        DiplomacyProposalMode != 3) {
         X_pops("NEVERBASESWAP", 0x100000,
                FactionDiplomacyPortraits[faction_id_req], pop_wait);
         return 1;
     }
 
     if (DiploScratchFA30 >= 0) {
-        if (DiploScratchFA7C < 0) {
-            return 1;
-        }
-        const int offered_roll = random(0, 100) + offered_value;
-        if (random(0, 100) + requested_value > offered_roll) {
-            log_say(DiploLabelGettingDIPLOMATICLOCK, 0, 0, 0);
-            timeGetTime();
-            while (ExitTurnLoop == 0 && NetDaemonNet.add_global() != 0) {
-                check_spock();
-                timeGetTime();
+        if (DiploScratchFA7C >= 0) {
+            const int offered_roll = random(0, 100) + offered_value;
+            if (static_cast<int>(random(0, 100) + requested_value) > offered_roll) {
+                diplo_lock(0);
+                net_cede_base(DiploScratchFA7C, faction_id_res, 1);
+                net_cede_base(DiploScratchFA30, faction_id_req, 1);
+                diplo_unlock();
+                X_pops("YESBASESWAP", 0x100000,
+                       FactionDiplomacyPortraits[faction_id_req], pop_wait);
+                return 0;
             }
-            base_swap_cede(DiploScratchFA7C, faction_id_res);
-            base_swap_cede(DiploScratchFA30, faction_id_req);
-            log_say(DiploLabelReleasingDIPLOMATICLOCK, 0, 0, 0);
-            NetDaemonNet.unlock();
-            X_pops("YESBASESWAP", 0x100000,
+            X_pops("NOBASESWAP3", 0x100000,
                    FactionDiplomacyPortraits[faction_id_req], pop_wait);
-            return 0;
         }
-        X_pops("NOBASESWAP3", 0x100000,
-               FactionDiplomacyPortraits[faction_id_req], pop_wait);
-        return 1;
-    }
-    if (DiploScratchFA7C < 0) {
-        return 1;
-    }
+    } else {
+        if (DiploScratchFA7C >= 0) {
+            const int numerator =
+                diplo_mul(diplo_add(static_cast<int>(PlayersData[faction_id_res].ranking),
+                                   static_cast<int>(PlayersData[faction_id_req].ranking)),
+                          requested_value);
+            int amount = numerator /
+                diplo_mul(static_cast<int>(PlayersData[faction_id_req].ranking), 2);
+            if (GameDataStateStorage.fields_.faction_rankings_[7] == static_cast<uint32_t>(faction_id_res)) amount = diplo_mul(amount, 2);
 
-    int amount = (static_cast<int>(PlayersData[faction_id_res].ranking)
-                  + static_cast<int>(PlayersData[faction_id_req].ranking))
-        * requested_value / (static_cast<int>(PlayersData[faction_id_req].ranking) * 2);
-    if (GameDataStateStorage.fields_.faction_rankings_[7] == static_cast<uint32_t>(faction_id_res)) {
-        amount *= 2;
-    }
-    if (DiplomacyProposalMode == 5 || DiplomacyProposalMode == 2) {
-        if (PlayersData[faction_id_res].energy_reserves < amount) {
-            if (DiplomacyProposalMode == 5) {
-                parse_num(0, amount);
-                X_pops("NOBASESWAP", 0x100000,
+            if ((DiplomacyProposalMode != 5 && DiplomacyProposalMode != 2)
+                || static_cast<int>(PlayersData[faction_id_res].energy_reserves) < amount) {
+                if (DiplomacyProposalMode == 5) {
+                    parse_num(0, amount);
+                    X_pops("NOBASESWAP", 0x100000,
+                           FactionDiplomacyPortraits[faction_id_req], pop_wait);
+                    return 1;
+                }
+                if (DiplomacyProposalMode != 4 && DiplomacyProposalMode != 2) {
+                    parse_num(0, amount);
+                    X_pops("NOBASESWAP", 0x100000,
+                           FactionDiplomacyPortraits[faction_id_req], pop_wait);
+                    return 1;
+                }
+
+                int transferable_tech_value = 0;
+                int tech_id;
+                for (tech_id = 0; tech_id < MaxTechnologyNum; ++tech_id) {
+                    if (!has_tech(tech_id, faction_id_req) &&
+                        has_tech(tech_id, faction_id_res)) {
+                        transferable_tech_value = diplo_add(transferable_tech_value,
+                                                          tech_val(tech_id, faction_id_req, 1));
+                    }
+                }
+                if (!((PlayersData[faction_id_req].tech_ranking / 2 >
+                 PlayersData[faction_id_res].tech_ranking / 2 + 2) ||
+                (diplo_mul(diplo_add(GameDataStateStorage.fields_.turn_current_num_, 7) / 8, transferable_tech_value) < amount))) {
+                    PluralityDefault = 0;
+                    GenderDefault = Players[faction_id_req].is_leader_female;
+                    parse_says(2, Players[faction_id_req].name_leader, -1, -1);
+                    if (X_pops("TECHBASESWAP", 0x100000,
+                               FactionDiplomacyPortraits[faction_id_req], pop_wait) == 0)
+                        return 1;
+
+                    diplo_lock(0);
+                    for (tech_id = 0; tech_id < MaxTechnologyNum; ++tech_id) {
+                        if (!has_tech(tech_id, faction_id_req) &&
+                            has_tech(tech_id, faction_id_res)) {
+                            net_tech(faction_id_req, tech_id, faction_id_res, 0);
+                        }
+                    }
+                    net_cede_base(DiploScratchFA7C, faction_id_res, 1);
+                    diplo_unlock();
+                    X_pops("BASEOK", 0x100000,
+                           FactionDiplomacyPortraits[faction_id_req], pop_wait);
+                    return 0;
+                }
+                X_pops("NOBASESWAP2", 0x100000,
                        FactionDiplomacyPortraits[faction_id_req], pop_wait);
                 return 1;
             }
-        } else {
-        parse_num(0, amount);
-        if (X_pops("PAYBASESWAP", 0x100000,
-                   FactionDiplomacyPortraits[faction_id_req], pop_wait) == 0) {
-            return 1;
-        }
-        log_say(DiploLabelGettingDIPLOMATICLOCK, 0, 0, 0);
-        timeGetTime();
-        while (ExitTurnLoop == 0 && NetDaemonNet.add_global() != 0) {
-            check_spock();
-            timeGetTime();
-        }
-        const int payment = -amount;
-        if (IsMultiplayerNet != 0) {
-            log_say(DiploLabelSendingENERGY, faction_id_res, faction_id_req, payment);
-            message_data(0x2447, 0, faction_id_res, payment, faction_id_req, amount);
-        } else {
-            if (faction_id_res != 0) {
-                PlayersData[faction_id_res].energy_reserves += payment;
-            }
-            if (faction_id_req != 0) {
-                PlayersData[faction_id_req].energy_reserves += amount;
-            }
-            ConsoleGlobal.update_data(1);
-        }
-        base_swap_cede(DiploScratchFA7C, faction_id_res);
-        log_say(DiploLabelReleasingDIPLOMATICLOCK, 0, 0, 0);
-        NetDaemonNet.unlock();
-        X_pops("BASEOK", 0x100000,
-               FactionDiplomacyPortraits[faction_id_req], pop_wait);
-        return 0;
-        }
-    }
-    if (DiplomacyProposalMode == 4 || DiplomacyProposalMode == 2) {
-        int transferable_tech_value = 0;
-        int tech_id;
-        for (tech_id = 0; tech_id < MaxTechnologyNum; ++tech_id) {
-            if (!has_tech(tech_id, faction_id_req) && has_tech(tech_id, faction_id_res)) {
-                transferable_tech_value += tech_val(tech_id, faction_id_req, 1);
-            }
-        }
-        if (PlayersData[faction_id_req].tech_ranking / 2
-                > PlayersData[faction_id_res].tech_ranking / 2 + 2
-            || (GameDataStateStorage.fields_.turn_current_num_ + 7) / 8 * transferable_tech_value
-                < amount) {
-            X_pops("NOBASESWAP2", 0x100000,
+            parse_num(0, amount);
+            if (X_pops("PAYBASESWAP", 0x100000,
+                       FactionDiplomacyPortraits[faction_id_req], pop_wait) == 0)
+                return 1;
+
+            diplo_lock(0);
+            net_energy(faction_id_res, -amount, faction_id_req, amount, 0);
+            net_cede_base(DiploScratchFA7C, faction_id_res, 1);
+            diplo_unlock();
+            X_pops("BASEOK", 0x100000,
                    FactionDiplomacyPortraits[faction_id_req], pop_wait);
-            return 1;
+            return 0;
         }
-        PluralityDefault = 0;
-        GenderDefault = Players[faction_id_req].is_leader_female;
-        parse_says(2, Players[faction_id_req].name_leader, -1, -1);
-        if (X_pops("TECHBASESWAP", 0x100000,
-                   FactionDiplomacyPortraits[faction_id_req], pop_wait) == 0) {
-            return 1;
-        }
-        log_say(DiploLabelGettingDIPLOMATICLOCK, 0, 0, 0);
-        timeGetTime();
-        while (ExitTurnLoop == 0 && NetDaemonNet.add_global() != 0) {
-            check_spock();
-            timeGetTime();
-        }
-        for (tech_id = 0; tech_id < MaxTechnologyNum; ++tech_id) {
-            if (!has_tech(tech_id, faction_id_req) && has_tech(tech_id, faction_id_res)) {
-                if (IsMultiplayerNet != 0) {
-                    log_say(DiploLabelSendingTECH, faction_id_req, tech_id, faction_id_res);
-                    message_data(0x244b, 0, faction_id_req, tech_id, faction_id_res, 0);
-                } else {
-                    tech_achieved(faction_id_req, tech_id, faction_id_res, 0);
-                }
-            }
-        }
-        base_swap_cede(DiploScratchFA7C, faction_id_res);
-        log_say(DiploLabelReleasingDIPLOMATICLOCK, 0, 0, 0);
-        NetDaemonNet.unlock();
-        X_pops("BASEOK", 0x100000,
-               FactionDiplomacyPortraits[faction_id_req], pop_wait);
-        return 0;
     }
-    parse_num(0, amount);
-    X_pops("NOBASESWAP", 0x100000,
-           FactionDiplomacyPortraits[faction_id_req], pop_wait);
     return 1;
 }
 
