@@ -84,7 +84,16 @@ int SelectPartWin::exec(int x, int y, int faction, int kind, int selected,
     (void)x;
     (void)y;
     (void)palette;
+    // The box style's centre is a 10x10 buffer tiled with the base sprite.
+    Buffer backdrop;
+    backdrop.init(10, 10, 0, 0);
+    TutWinBaseWindow.sprite6_.draw(
+        &backdrop, TutWinBaseWindow.sprite6_.transparent_index(),
+        0, 0, 1, 1);
+    BoxSpriteParams box = InterfaceBoxStyles[0];
+    box.mask_ = &backdrop;
     const int saved_selection = selected;
+
     faction_id_ = faction;
     chassis_id_ = chassis;
     weapon_id_ = weapon;
@@ -101,24 +110,26 @@ int SelectPartWin::exec(int x, int y, int faction, int kind, int selected,
     caviar_.set_field_A4(0);
     font1_.init(DefaultFontFace, 10, 0);
     font2_.init(DefaultFontFace, 12, 1);
-    static_cast<Buffer *>(this)->set_font(&font1_, 0, 0, 0);
+    Buffer::set_font(&font1_, 0, 0, 0);
 
-    union { uint32_t bits; float value; } view_angle;
-    view_angle.bits = 0x3f48f5c3;
-    float angles[3] = {0.0f, 0.0f, view_angle.value};
+    float angles[3] = {0.0f, 0.0f, 0.785f};
     VOX_Matrix rotation;
     caviar_apply_rotation(angles, &rotation);
-    VOX_Vect camera;
-    for (int axis = 0; axis < 3; ++axis) {
-        camera.values[axis] = -rotation.values[2][axis] *
-                              CaviarCameraDistance;
-    }
-    caviar_.set_camera_direct(&camera, &rotation);
+    // The view row is negated in place; the camera sits along it.
+    rotation.values[2][0] = -rotation.values[2][0];
+    rotation.values[2][1] = -rotation.values[2][1];
+    rotation.values[2][2] = -rotation.values[2][2];
+    VOX_Vect vector;
+    vector.values[0] = rotation.values[2][0] * CaviarCameraDistance;
+    vector.values[1] = rotation.values[2][1] * CaviarCameraDistance;
+    vector.values[2] = rotation.values[2][2] * CaviarCameraDistance;
+    caviar_.set_camera_direct(&vector, &rotation);
     union { uint32_t bits; float value; } scene_angle;
     scene_angle.bits = 0x3f05f92d;
     caviar_.set_scene_rotation(scene_angle.value, 0.0f, 0.0f);
-    caviar_.light_vector() = VehLightDirMap;
-    caviar_.shadow_vector() = VehLightDirMap;
+    vector = VehLightDirMap;
+    caviar_.shadow_vector() = vector;
+    caviar_.light_vector() = vector;
 
     field_2B74_ = 0;
     switch (kind) {
@@ -135,12 +146,12 @@ int SelectPartWin::exec(int x, int y, int faction, int kind, int selected,
             break;
         }
         case 2: {
-            if (Chassis[chassis].missile == 0) {
+            if (Chassis[chassis].missile) {
+                field_2B74_ = 1;
+            } else {
                 for (int i = 0; i < MaxArmorNum; ++i) {
                     if (Armor[i].preq_tech >= -1) ++field_2B74_;
                 }
-            } else {
-                field_2B74_ = 1;
             }
             break;
         }
@@ -150,52 +161,43 @@ int SelectPartWin::exec(int x, int y, int faction, int kind, int selected,
             }
             break;
         }
-        default:
-            return saved_selection;
     }
 
     field_2B6C_ = 5;
     field_2B70_ = 4;
     field_2B64_ = 0x14;
 
-    Buffer backdrop;
-    backdrop.init(10, 10, 0, 0);
-    TutWinBaseWindow.sprite6_.draw(
-        &backdrop, TutWinBaseWindow.sprite6_.transparent_index(),
-        0, 0, 1, 1);
-
     const int width = TutWinDesWindow.pixel_width();
     const int height = TutWinDesWindow.pixel_height();
     GraphicWin::init(0, 0, width, height, 0, 0x1000020,
                      static_cast<Win *>(&TutWinDesWindow), 0, 0);
     GraphicWin::fill(9);
-    RECT frame = {0x17, 0, width - 0x37, height};
-    static_cast<Buffer *>(this)->box_sprite(&frame, &InterfaceBoxStyles[0]);
+    RECT frame;
+    frame.left = 0x17;
+    frame.top = 0;
+    frame.right = width - 0x37;
+    frame.bottom = height;
+    Buffer::box_sprite(&frame, &box);
 
     if (field_2B74_ > 0x12) {
-        scroll_.init(static_cast<Buffer *>(this)->pixel_width() - 0x2b,
+        scroll_.init(Buffer::pixel_width() - 0x2b,
                      0x15, 0x18, 0xf6,
                      static_cast<Win *>(this), 0, 1);
         scroll_.hide();
-        field_2B60_ = 0;
         scroll_.set_range(0, field_2B74_ / field_2B6C_ - field_2B70_ + 2);
-        scroll_.paging_ = field_2B70_ - 1;
         scroll_.field_A30_ = 0;
+        scroll_.paging_ = field_2B70_ - 1;
         scroll_.redraw();
     }
 
     field_2B60_ = 0;
-    if (selected >= field_2B64_) {
-        int first_visible = 0;
-        do {
-            first_visible += field_2B6C_;
-            field_2B60_ = first_visible;
-            scroll_.set_pos(first_visible / field_2B6C_);
-        } while (selected >= first_visible + field_2B64_);
+    while (selected >= field_2B60_ + field_2B64_) {
+        field_2B60_ += field_2B6C_;
+        scroll_.set_pos(field_2B60_ / field_2B6C_);
     }
     for (int index = field_2B60_;
          index < field_2B60_ + field_2B64_; ++index) {
-        draw_part(index, selected == index ? 1 : 0);
+        draw_part(index, selected == index);
     }
 
     field_2B80_ = selected;
@@ -207,11 +209,14 @@ int SelectPartWin::exec(int x, int y, int faction, int kind, int selected,
         scroll_hide(this, &scroll_);
     }
     scroll_.show(0);
-    GraphicWin::hide();
+    hide();
     do_all_draws();
 
     if (field_2B80_ >= 0 && field_4648_ != 0) {
-        return field_2B80_ + (kind == 3 ? 1 : 0);
+        if (kind == 3) {
+            ++field_2B80_;
+        }
+        return field_2B80_;
     }
     return saved_selection;
 }
@@ -593,10 +598,9 @@ Status: Coverage transcription - unclaimed body; historical seed at
 #pragma optimize("y", off)
 int SelectPartWin::draw_part(int a1, int a2) {
     if (a1 >= field_2B60_ && a1 < field_2B60_ + field_2B64_) {
-        int row = (a1 - field_2B60_) / field_2B6C_;
-        int column = (a1 - field_2B60_) % field_2B6C_;
-        int top = row * 94 + 4;
-        int x = column * 108 + 4;
+        int index = a1 - field_2B60_;
+        int top = index / field_2B6C_ * 94 + 4;
+        int x = index % field_2B6C_ * 108 + 4;
         RECT rect;
         rect.top = top;
         rect.bottom = top + 91;
@@ -693,7 +697,8 @@ int SelectPartWin::draw_chassis(int a1, RECT *a2, int a3) {
         RECT rect = *a2;
         rect.bottom = rect.top + font_line_advance(font1_);
         StringTemp[0] = 0;
-        strcat(StringTemp, StringTable.get(Chassis[slot].offsv_1_name));
+        char *name = Chassis[slot].offsv_1_name;
+        strcat(StringTemp, StringTable.get(name));
         CharUpperA(StringTemp);
         Buffer::wrap_cent(&font1_, StringTemp, &rect);
 
@@ -701,7 +706,8 @@ int SelectPartWin::draw_chassis(int a1, RECT *a2, int a3) {
         rect = *a2;
         rect.top = rect.bottom - font_line_advance(font1_);
         StringTemp[0] = 0;
-        strcat(StringTemp, StringTable.get(Triad[Chassis[slot].triad]));
+        char *triad = Triad[Chassis[slot].triad];
+        strcat(StringTemp, StringTable.get(triad));
         Buffer::set_font(&font1_, 0, 0, 0);
         Buffer::write_l(StringTemp, &rect);
 
@@ -780,7 +786,8 @@ int SelectPartWin::draw_reactor(int a1, RECT *a2, int a3) {
         rect.bottom = rect.top + font_line_advance(font1_);
         Buffer::set_font(&font1_, 0, 0, 0);
         StringTemp[0] = 0;
-        strcat(StringTemp, StringTable.get(Reactor[slot - 1].name));
+        char *name = Reactor[slot - 1].name;
+        strcat(StringTemp, StringTable.get(name));
         CharUpperA(StringTemp);
         Buffer::wrap_cent(StringTemp, &rect);
 
@@ -880,7 +887,8 @@ int SelectPartWin::draw_armor(int a1, RECT *a2, int a3) {
         rect.bottom = rect.top + font_line_advance(font1_);
         Buffer::set_font(&font1_, 0, 0, 0);
         StringTemp[0] = 0;
-        strcat(StringTemp, StringTable.get(Armor[slot].name));
+        char *name = Armor[slot].name;
+        strcat(StringTemp, StringTable.get(name));
         CharUpperA(StringTemp);
         Buffer::wrap_cent(StringTemp, &rect);
 
@@ -1024,7 +1032,8 @@ int SelectPartWin::draw_weapon(int a1, RECT *a2, int a3) {
         RECT rect = *a2;
         rect.bottom = rect.top + font_line_advance(font1_);
         StringTemp[0] = 0;
-        strcat(StringTemp, StringTable.get(Weapon[slot].name));
+        char *name = Weapon[slot].name;
+        strcat(StringTemp, StringTable.get(name));
         Buffer::set_font(&font1_, 0, 0, 0);
         CharUpperA(StringTemp);
         Buffer::wrap_cent(StringTemp, &rect);
@@ -1042,7 +1051,7 @@ int SelectPartWin::draw_weapon(int a1, RECT *a2, int a3) {
         Buffer::set_font(&font2_, 0, 0, 0);
         StringTemp[0] = 0;
         if (Weapon[slot].offense_rating == -1) {
-            strcat(StringTemp, StringTable.get(Labels.strings_ptr[0x310 / 4]));
+            strcat(StringTemp, label_get(0x310 / 4));
         } else {
             char num_buf[80];
             _itoa(mode < 3 ? (unsigned char)Weapon[slot].offense_rating
@@ -3859,7 +3868,8 @@ void DesignWin::draw_chassis(int redraw) {
     area.bottom = area.top + font1_.pixel_height();
     Buffer::set_text_color(TextColourTable[158], TextColourTable[159], 1, 1);
     StringTemp[0] = 0;
-    strcat(StringTemp, StringTable.get(Chassis[protoChassisType_].offsv_1_name));
+    char *name = Chassis[protoChassisType_].offsv_1_name;
+    strcat(StringTemp, StringTable.get(name));
     CharUpperA(StringTemp);
     width = area.right - area.left;
     if (font1_.width(StringTemp) > width) {
@@ -3879,7 +3889,8 @@ void DesignWin::draw_chassis(int redraw) {
     area.bottom += advance;
     Buffer::set_text_color(TextColourTable[160], TextColourTable[161], 1, 1);
     StringTemp[0] = 0;
-    strcat(StringTemp, StringTable.get(Triad[Chassis[protoChassisType_].triad]));
+    name = Triad[Chassis[protoChassisType_].triad];
+    strcat(StringTemp, StringTable.get(name));
     strcat(StringTemp, BufferJoinSpace);
     char number[80];
     _itoa(Chassis[protoChassisType_].speed, number, 10);
@@ -3948,7 +3959,8 @@ void DesignWin::draw_weapon(int redraw) {
     area.bottom = area.top + font1_.pixel_height();
     Buffer::set_text_color(TextColourTable[158], TextColourTable[159], 1, 1);
     StringTemp[0] = 0;
-    strcat(StringTemp, StringTable.get(Weapon[protoWeaponType_].name));
+    char *name = Weapon[protoWeaponType_].name;
+    strcat(StringTemp, StringTable.get(name));
     CharUpperA(StringTemp);
     width = area.right - area.left;
     if (font1_.width(StringTemp) > width) {
@@ -3967,9 +3979,10 @@ void DesignWin::draw_weapon(int redraw) {
     area.top += advance;
     area.bottom += advance;
     Buffer::set_text_color(TextColourTable[160], TextColourTable[161], 1, 1);
+    int mode = Weapon[protoWeaponType_].mode;
     StringTemp[0] = 0;
     char number[80];
-    if (Weapon[protoWeaponType_].mode >= 3) {
+    if (mode >= 3) {
         strcat(StringTemp, label_get(0x200 / 4));
         strcat(StringTemp, BufferJoinSpace);
         _itoa(Weapon[protoWeaponType_].cost, number, 10);
@@ -4097,7 +4110,8 @@ void DesignWin::draw_reactor(int redraw) {
         strcat(StringTemp, label_get(0x584 / 4));
         strcat(StringTemp, " ");
     }
-    strcat(StringTemp, StringTable.get(Reactor[protoReactorType_ - 1].name));
+    char *name = Reactor[protoReactorType_ - 1].name;
+    strcat(StringTemp, StringTable.get(name));
     CharUpperA(StringTemp);
     int height = Buffer::wrap_height(StringTemp, area.right - area.left);
     area.bottom = area.bottom - 5 - height - font1_.pixel_height();
@@ -4166,9 +4180,10 @@ void DesignWin::draw_special_1(int redraw) {
     strcat(StringTemp, ": ");
     strcat(StringTemp, " ");
     strcat(StringTemp, "}");
-    strcat(StringTemp, StringTable.get(Ability[protoAbilityIDs_[0]].description));
-    const int height = Buffer::wrap_height(
-        StringTemp, area.right - area.left);
+    char *description = Ability[protoAbilityIDs_[0]].description;
+    strcat(StringTemp, StringTable.get(description));
+    int width = area.right - area.left;
+    int height = Buffer::wrap_height(StringTemp, width);
     area.top = area.bottom - height;
     Buffer::wrap_cent(StringTemp, &area);
 }
@@ -4212,9 +4227,10 @@ void DesignWin::draw_special_2(int redraw) {
     strcat(StringTemp, ": ");
     strcat(StringTemp, " ");
     strcat(StringTemp, "}");
-    strcat(StringTemp, StringTable.get(Ability[protoAbilityIDs_[1]].description));
-    const int height = Buffer::wrap_height(
-        StringTemp, area.right - area.left);
+    char *description = Ability[protoAbilityIDs_[1]].description;
+    strcat(StringTemp, StringTable.get(description));
+    int width = area.right - area.left;
+    int height = Buffer::wrap_height(StringTemp, width);
     area.top = area.bottom - height;
     Buffer::wrap_cent(StringTemp, &area);
 }
@@ -4730,13 +4746,13 @@ void DesignWin::draw_info() {
 
     MainInterfaceGlobal.Buffer::box_sprite(&panel, &InterfaceBoxStyles[3]);
     panel.left += 3;
-    panel.top += 3;
     panel.right -= 3;
+    panel.top += 3;
     panel.bottom -= 3;
     MainInterfaceGlobal.Buffer::box_sprite(&panel, &InterfaceBoxStyles[0]);
     panel.left += 3;
-    panel.top += 3;
     panel.right -= 3;
+    panel.top += 3;
     panel.bottom -= 3;
 
     MainInterfaceGlobal.Buffer::set_text_color(0xE0, -1, 1, 1);
@@ -4763,8 +4779,8 @@ void DesignWin::draw_info() {
         } else {
             // Look for a replacement prototype in the faction's own block.
             int found = 0;
-            int proto_id = factionID_ * 64;
-            for (int i = 0; i < 64; ++i, ++proto_id) {
+            for (int i = 0; i < 64; ++i) {
+                int proto_id = factionID_ * 64 + i;
                 if (!(VehPrototypes[proto_id].flags & PROTO_ACTIVE)) {
                     protoID_ = proto_id;
                     found = 1;
@@ -4774,14 +4790,15 @@ void DesignWin::draw_info() {
                       & (1 << factionID_))) {
                     continue;
                 }
-                int8_t category = VehPrototypes[protoID_].unk_1;
-                if (VehPrototypes[proto_id].unk_1 == category
+                if (VehPrototypes[proto_id].unk_1 == VehPrototypes[protoID_].unk_1
                     || !PlayersData[factionID_].proto_id_active[proto_id]) {
-                    uint8_t active = PlayersData[factionID_].proto_id_active[proto_id];
-                    if (!active) {
-                        if (PlayersData[factionID_].proto_id_queue[proto_id] == active
-                            || (!active && !found
-                                && VehPrototypes[proto_id].unk_1 == category)) {
+                    if (!PlayersData[factionID_].proto_id_active[proto_id]) {
+                        if (PlayersData[factionID_].proto_id_queue[proto_id]
+                                == PlayersData[factionID_].proto_id_active[proto_id]
+                            || (!PlayersData[factionID_].proto_id_active[proto_id]
+                                && !found
+                                && VehPrototypes[proto_id].unk_1
+                                    == VehPrototypes[protoID_].unk_1)) {
                             protoID_ = proto_id;
                             found = 1;
                         }
@@ -4801,7 +4818,8 @@ void DesignWin::draw_info() {
         strcat(StringTemp, label_get(0xE48 / 4));
         strcat(StringTemp, " #");
         char number[80];
-        _itoa((int)protoID_ % 64 + 1, number, 10);
+        int slot = (int)protoID_ % 64 + 1;
+        _itoa(slot, number, 10);
         strcat(StringTemp, number);
         strcat(StringTemp, ")");
         CharUpperA(StringTemp);
@@ -5016,27 +5034,24 @@ void DesignWin::select_reactor() {
 // for each of the two preview reads.
 void DesignWin::draw_stack() {
     Font font;
-    RECT area = field_B0C_rect_;
-    Buffer *canvas = static_cast<Buffer *>(&MainInterfaceGlobal);
-    canvas->restore_clip();
-    canvas->tile(InterfaceBoxStyles[9].mask_, area.left, area.top,
-                 area.left, area.top,
-                 area.right - area.left, area.bottom - area.top);
-    canvas->box_sprite(&area, &InterfaceBoxStyles[3]);
+    RECT rc = field_B0C_rect_;
+    MainInterfaceGlobal.Buffer::restore_clip();
+    MainInterfaceGlobal.Buffer::tile(InterfaceBoxStyles[9].mask_, rc.left, rc.top,
+                                     rc.left, rc.top,
+                                     rc.right - rc.left, rc.bottom - rc.top);
+    MainInterfaceGlobal.Buffer::box_sprite(&rc, &InterfaceBoxStyles[3]);
 
-    RECT rc = area;
     rc.bottom -= 3;
+    rc.left = field_CBC_rect_.right + 3;
     rc.right = static_cast<int>(field_CCC_) - 3;
-    int span = rc.right - (static_cast<int>(field_CBC_rect_.right) + 3) + 2;
-    int spacer = span / 10 - 2;
-    int x_base = static_cast<int>(field_CBC_rect_.right) + 3;
-    rc.left = x_base;
-    int y_base = rc.top + 3;
-    rc.top = y_base;
+    const int spacer = (rc.right - rc.left + 2) / 10 - 2;
+    rc.top += 3;
+    int x_base = rc.left;
+    const int y_base = rc.top;
 
     font.init(DefaultFontFace, 10, 0);
-    canvas->set_text_color(0x9F, -1, 1, 1);
-    canvas->set_font(&font, 0, 0, 0);
+    MainInterfaceGlobal.Buffer::set_text_color(0x9F, -1, 1, 1);
+    MainInterfaceGlobal.Buffer::set_font(&font, 0, 0, 0);
     spot1_.kill_type(0);
 
     rc.bottom = rc.bottom - rc.top + y_base;
@@ -5047,16 +5062,18 @@ void DesignWin::draw_stack() {
     // Re-rank through the source-owned map helper and its shared sort state.
     proto_sort_2(factionID_);
 
-    int divisor = ProtoSortCount;
-    int entry = prototype_stack_start_;
-    int loop_end = entry + divisor;
+    const int count = ProtoSortCount;
     int drawn = 0;
-    while (drawn < 10 && entry < loop_end) {
-        int proto_id = ProtoSortIds[entry % divisor];
-        ++entry;
-        // Validity: own faction prototypes need their tech and an offerable
-        // weapon class (and never slot 0xF); borrowed ones only their faction.
-        if (proto_id / 64 == 0) {
+    for (int entry = prototype_stack_start_;
+         entry < prototype_stack_start_ + count && drawn < 10; ++entry) {
+        const int proto_id = ProtoSortIds[entry % count];
+        // Own-faction prototypes need their tech and an offerable weapon
+        // (never slot 0xF); borrowed ones only their faction.
+        if (proto_id / 64 != 0) {
+            if (proto_id / 64 != factionID_) {
+                continue;
+            }
+        } else {
             if (!has_tech(VehPrototypes[proto_id].preq_tech, factionID_)) {
                 continue;
             }
@@ -5068,138 +5085,128 @@ void DesignWin::draw_stack() {
                     continue;
                 }
             }
-        } else if (proto_id / 64 != factionID_) {
-            continue;
         }
 
-        int selector = 0;
+        ++drawn;
+        const int inset = 2;
+        int selector;
         if (proto_id == static_cast<int>(protoID_)) {
             selector = 2;
-        } else if (proto_id == static_cast<int>(field_CE0_)) {
-            selector = 1;
+        } else {
+            selector = proto_id == static_cast<int>(field_CE0_);
         }
-        ++drawn;
-        canvas->box_sprite(&rc, &InterfaceBoxStyles[selector]);
+        MainInterfaceGlobal.Buffer::box_sprite(&rc, &InterfaceBoxStyles[selector]);
         spot1_.add(proto_id, 0, rc.left, rc.top, rc.right - rc.left,
                    rc.bottom - rc.top);
-        rc.left += 2;
-        rc.top += 2;
-        rc.right -= 2;
-        rc.bottom -= 2;
-        canvas->set_clip(&rc);
+        rc.left += inset;
+        rc.right -= inset;
+        rc.top += inset;
+        rc.bottom -= inset;
+        MainInterfaceGlobal.Buffer::set_clip(&rc);
 
-        if (VehPrototypes[proto_id].flags & PROTO_ACTIVE) {
-            int unit_id = veh_fake(proto_id, factionID_);
+        if (!(VehPrototypes[proto_id].flags & PROTO_ACTIVE)) {
             StringTemp[0] = '\0';
-            veh_draw(canvas, unit_id, x_base + 0xF, y_base + 0xC, -10, 0x1048, 0);
+            // The "undesigned" caption and the slot number.
+            strcat(StringTemp, label_get(0x1B8 / 4));
+            strcat(StringTemp, BufferJoinSpace);
+            strcat(StringTemp, "#");
+            char digits[80];
+            _itoa(proto_id % 64 + 1, digits, 10);
+            strcat(StringTemp, digits);
+            MainInterfaceGlobal.Buffer::set_text_color(0x9F, -1, 1, 1);
+            MainInterfaceGlobal.Buffer::set_font(&font, 0, 0, 0);
+            MainInterfaceGlobal.Buffer::wrap_cent(StringTemp, &rc);
 
-            RECT label_rect = rc;
-            canvas->set_text_color(0x9F, -1, 1, 1);
+            x_base += spacer + 2;
+            rc.top -= 2;
+            rc.left += spacer;
+            rc.bottom += 2;
+            rc.right += spacer + 4;
+            MainInterfaceGlobal.Buffer::restore_clip();
+        } else {
+            const int unit_id = veh_fake(proto_id, factionID_);
+            veh_draw(&MainInterfaceGlobal, unit_id, x_base + 0xF, y_base + 0xC,
+                     -10, 0x1048, 0);
+
+            RECT label = rc;
+            MainInterfaceGlobal.Buffer::set_text_color(0x9F, -1, 1, 1);
             StringTemp[0] = '\0';
             if (proto_id < 0x40) {
-                if (VehPrototypes[proto_id].obsolete_factions
-                    & (1 << (factionID_ & 0x1F))) {
-                    canvas->set_text_color(0xF8, -1, 1, 1);
-                    // The label id the interface keeps in the game block at
-                    // Labels.strings_ptr+0xE40 (slot 0x390) - same walk as
-                    // on_iface_right_click's 0xCE8.
-                    strcat(StringTemp, StringTable.get(
-                        Labels.strings_ptr[0x390]));
+                strcat(StringTemp, "* ");
+                if (VehPrototypes[proto_id].obsolete_factions & (1 << factionID_)) {
+                    MainInterfaceGlobal.Buffer::set_text_color(0xF8, -1, 1, 1);
+                    strcat(StringTemp, label_get(0xE40 / 4));
                 } else {
                     strcat(StringTemp, VehPrototypes[proto_id].veh_name);
                 }
-            } else if (VehPrototypes[proto_id].obsolete_factions
-                & (1 << (factionID_ & 0x1F))) {
-                unsigned char seen =
-                    PlayersData[factionID_].proto_id_active[proto_id];
-                canvas->set_text_color(0xF8 + ((-(seen != 0)) & 7), -1, 1, 1);
-                strcat(StringTemp, StringTable.get(
-                    Labels.strings_ptr[0x390]));
+            } else if (VehPrototypes[proto_id].obsolete_factions & (1 << factionID_)) {
+                MainInterfaceGlobal.Buffer::set_text_color(
+                    0xF8 + (PlayersData[factionID_].proto_id_active[proto_id] ? 7 : 0),
+                    -1, 1, 1);
+                strcat(StringTemp, label_get(0xE40 / 4));
                 strcat(StringTemp, BufferJoinSpace);
                 strcat(StringTemp, "(");
-                char digits[0x20];
+                char digits[80];
                 _itoa(proto_id % 64 + 1, digits, 10);
                 strcat(StringTemp, digits);
                 strcat(StringTemp, ")");
             } else {
-                char digits[0x20];
+                char digits[80];
                 _itoa(proto_id % 64 + 1, digits, 10);
                 strcat(StringTemp, digits);
                 strcat(StringTemp, ". ");
                 strcat(StringTemp, VehPrototypes[proto_id].veh_name);
             }
 
-            label_rect.left += 3;
-            label_rect.right -= 3;
+            label.left += 3;
+            label.right -= 3;
             if (StringTemp[0] != '\0') {
-                while (font.width(StringTemp)
-                       > label_rect.right - label_rect.left) {
+                while (font.width(StringTemp) > label.right - label.left) {
                     StringTemp[strlen(StringTemp) - 1] = '\0';
                     if (StringTemp[0] == '\0') {
                         break;
                     }
                 }
             }
-            char *first_space = strchr(StringTemp, ' ');
-            if (first_space != 0) {
-                char *second_space = strchr(first_space + 1, ' ');
-                if (second_space != 0) {
-                    *second_space = '\0';
+            char *space = strchr(StringTemp, ' ');
+            if (space != 0) {
+                space = strchr(space + 1, ' ');
+                if (space != 0) {
+                    *space = '\0';
                 }
             }
-            label_rect.bottom = label_rect.top + font.line_advance();
-            canvas->set_clip(&label_rect);
-            canvas->write_l(StringTemp, &label_rect, strlen(StringTemp));
-            canvas->restore_clip();
+            label.bottom = label.top + font_line_advance(font);
+            MainInterfaceGlobal.Buffer::set_clip(&label);
+            MainInterfaceGlobal.Buffer::write_l(StringTemp, &label);
+            MainInterfaceGlobal.Buffer::restore_clip();
 
-            RECT stats_rect = rc;
-            stats_rect.top = rc.bottom - font.line_advance();
+            label = rc;
+            label.top = label.bottom - font_line_advance(font);
             StringTemp[0] = '\0';
             say_stats_3(StringTemp, Vehs[unit_id].proto_id);
-            const uint32_t game_state =
-                GameDataStateStorage.fields_.game_state_;
-            if ((game_state & 0x40) != 0 && (game_state & 0x1000) != 0) {
+            if ((GameDataStateStorage.fields_.game_state_ & 0x40)
+                && (GameDataStateStorage.fields_.game_state_ & 0x1000)) {
                 strcat(StringTemp, BufferJoinSpace);
                 strcat(StringTemp, "(");
-                char digits[0x20];
+                char digits[80];
                 _itoa(proto_id, digits, 10);
                 strcat(StringTemp, digits);
                 strcat(StringTemp, ")");
             }
-            canvas->write_cent_l(StringTemp, &stats_rect, strlen(StringTemp));
+            MainInterfaceGlobal.Buffer::write_cent_l(StringTemp, &label);
             spot1_.add(proto_id, 0, rc.left, rc.top, rc.right - rc.left,
                        rc.bottom - rc.top);
 
             x_base += spacer + 2;
             rc.top -= 2;
-            rc.bottom += 2;
             rc.left += spacer;
-            rc.right += spacer + 4;
-        } else {
-            StringTemp[0] = '\0';
-            // Slot 0x6E of the same label block: the "undesigned" caption.
-            strcat(StringTemp, StringTable.get(
-                    Labels.strings_ptr[0x6E]));
-            strcat(StringTemp, BufferJoinSpace);
-            strcat(StringTemp, "#");
-            char digits[0x20];
-            _itoa(proto_id % 64 + 1, digits, 10);
-            strcat(StringTemp, digits);
-            canvas->set_text_color(0x9F, -1, 1, 1);
-            canvas->set_font(&font, 0, 0, 0);
-            canvas->wrap_cent(StringTemp, &rc);
-
-            x_base += spacer + 2;
-            rc.top -= 2;
             rc.bottom += 2;
-            rc.left += spacer;
             rc.right += spacer + 4;
-            canvas->restore_clip();
         }
     }
 
-    MainInterfaceGlobal.soft_update(&area);
-    canvas->restore_clip();
+    MainInterfaceGlobal.soft_update(&field_B0C_rect_);
+    MainInterfaceGlobal.Buffer::restore_clip();
 }
 
 
@@ -5442,7 +5449,8 @@ settled:
 // spinning unit, its generated or typed name, and its stat line. Ends by
 // driving draw_stack, whose panel sits under this one.
 void DesignWin::draw_flash() {
-    char *name = prototype_name_;
+    Font stat_font;
+    Font title_font;
 
     VehPrototypes[0x3f].chassis_id = static_cast<uint8_t>(protoChassisType_);
     VehPrototypes[0x3f].weapon_id = static_cast<uint8_t>(protoWeaponType_);
@@ -5451,7 +5459,7 @@ void DesignWin::draw_flash() {
     VehPrototypes[0x3f].ability_flags = static_cast<uint32_t>(protoAbilityFlags_);
     VehPrototypes[0x3f].icon_offset = static_cast<int8_t>(0xFF);
 
-    Buffer *canvas = static_cast<Buffer *>(&MainInterfaceGlobal);
+    // The scratch row stands for the selected prototype while it is unchanged.
     int shown = static_cast<int>(field_CE0_);
     if (shown == 0x3F
         && protoChassisType_ == VehPrototypes[protoID_].chassis_id
@@ -5461,149 +5469,137 @@ void DesignWin::draw_flash() {
         && protoAbilityFlags_ == VehPrototypes[protoID_].ability_flags) {
         shown = static_cast<int>(protoID_);
     }
+    const int owner = shown / 64;
 
-    canvas->set_clip(&preview_panel_rect_);
+    MainInterfaceGlobal.Buffer::set_clip(&preview_panel_rect_);
     RECT rc = preview_panel_rect_;
-    canvas->box_sprite(&rc, &InterfaceBoxStyles[3]);
-
+    MainInterfaceGlobal.Buffer::box_sprite(&rc, &InterfaceBoxStyles[3]);
     rc.left += 3;
     rc.right -= 3;
     rc.top += 3;
     rc.bottom -= 3;
-    canvas->box_sprite(&rc, &InterfaceBoxStyles[0]);
-
+    MainInterfaceGlobal.Buffer::box_sprite(&rc, &InterfaceBoxStyles[0]);
     rc.left += 3;
     rc.right -= 3;
     rc.top += 3;
     rc.bottom -= 3;
 
-    // The entry under the cursor resolves to a drawable unit only while its
-    // prototype is active, with its tech owned for own-faction entries.
-    bool drawable = true;
+    // Only an active prototype (with its tech owned, for own-faction rows)
+    // is drawn.
     if (shown != 0x3F) {
-        if ((VehPrototypes[shown].flags & PROTO_ACTIVE) == 0) {
-            drawable = false;
-        } else if (shown >> 6 == 0
-            && !has_tech(VehPrototypes[shown].preq_tech, factionID_)) {
-            drawable = false;
+        if (!(VehPrototypes[shown].flags & PROTO_ACTIVE)) {
+            goto done;
+        }
+        if (owner == 0 && !has_tech(VehPrototypes[shown].preq_tech, factionID_)) {
+            goto done;
         }
     }
     if (shown < 0) {
-        drawable = false;
+        goto done;
     }
 
-    if (drawable) {
-        Font title_font;
-        Font stat_font;
-        int face_size = (WinScreenWidth == 0x320) ? 10 : 12;
-        stat_font.init(DefaultFontFace, face_size, 0);
-        title_font.init(DefaultFontFace, 12, 1);
+    if (WinScreenWidth == 0x320) {
+        stat_font.init(DefaultFontFace, 10, 0);
+    } else {
+        stat_font.init(DefaultFontFace, 12, 0);
+    }
+    title_font.init(DefaultFontFace, 12, 1);
 
-        int top = rc.top;
-        int left = rc.left;
-        int right = (rc.right - left + 3) / 2 + left - 3;
-        int centre_x = (right + left) / 2;
-        int bottom = rc.bottom;
-        int centre_y = (top + bottom) / 2;
-
+    {
+        RECT box = rc;
+        box.right = (box.right - box.left + 3) / 2 + box.left - 3;
+        const int centre_x = (box.right + box.left) / 2;
+        const int centre_y = (box.top + box.bottom) / 2;
         int unit_id = veh_fake(shown, factionID_);
-        veh_draw(canvas, unit_id, centre_x - 0x32, centre_y - 0x25, 0, 0x48, 0);
+        veh_draw(&MainInterfaceGlobal, unit_id, centre_x - 0x32,
+                 centre_y - 0x25, 0, 0x48, 0);
 
-        rc.right = right + (right - left + 3);
-        rc.top = top;
-        rc.left = left + (right - left + 3);
-        rc.bottom = bottom;
-        rc.top = top + 3;
-
+        const int step = box.right - box.left + 3;
+        rc.left = box.left + step;
+        rc.top = box.top;
+        rc.right = box.right + step;
+        rc.bottom = box.bottom;
         StringTemp[0] = '\0';
+        rc.top += 3;
         if (shown == 0x3F) {
-            if (strlen(name) == 0) {
-                name_proto(StringTemp, 0x3F, static_cast<int>(factionID_),
+            if (strlen(prototype_name_) != 0) {
+                strcat(StringTemp, prototype_name_);
+            } else {
+                char proto_name[256];
+                name_proto(proto_name, 0x3F, static_cast<int>(factionID_),
                            static_cast<int>(protoChassisType_),
                            static_cast<int>(protoWeaponType_),
                            static_cast<int>(protoArmorType_),
                            static_cast<int>(protoAbilityFlags_),
                            static_cast<int>(protoReactorType_));
-            } else {
-                strcat(StringTemp, name);
+                strcat(StringTemp, proto_name);
             }
         } else {
-            int prototype_id = Vehs[shown].proto_id;
-            strcat(StringTemp, VehPrototypes[prototype_id].veh_name);
+            strcat(StringTemp, VehPrototypes[Vehs[unit_id].proto_id].veh_name);
         }
         CharUpperA(StringTemp);
 
-        canvas->set_text_color(TextColourTable[82], TextColourTable[83],
-                               1, 1);
-        canvas->set_font(&title_font, 0, 0, 0);
-
-        int wrap_height = canvas->wrap_cent(StringTemp, &rc);
+        MainInterfaceGlobal.Buffer::set_text_color(TextColourTable[82],
+                                                   TextColourTable[83], 1, 1);
+        MainInterfaceGlobal.Buffer::set_font(&title_font, 0, 0, 0);
+        const int title_bottom = MainInterfaceGlobal.Buffer::wrap_cent(StringTemp, &rc);
         rc.right -= 2;
-        rc.top = wrap_height + 2;
+        rc.top = title_bottom + 2;
         rc.left += 2;
         rc.bottom -= 2;
-        rc.bottom -= stat_font.line_advance();
-        canvas->set_font(&stat_font, 0, 0, 0);
-
-        canvas->set_text_color(TextColourTable[14], TextColourTable[15], 1, 1);
+        rc.bottom -= font_line_advance(stat_font);
+        MainInterfaceGlobal.Buffer::set_font(&stat_font, 0, 0, 0);
+        MainInterfaceGlobal.Buffer::set_text_color(TextColourTable[14],
+                                                   TextColourTable[15], 1, 1);
 
         int line_top = rc.top;
-        int line_left = rc.left;
-
+        const int line_left = rc.left;
         StringTemp[0] = '\0';
         strcat(StringTemp, "(");
-        int prototype_id = Vehs[shown].proto_id;
-        say_stats_3(StringTemp, prototype_id);
-        int ability_bit = 0;
-        for (; ability_bit < MaxAbilityNum; ++ability_bit) {
-            if (VehPrototypes[prototype_id].ability_flags & (1 << ability_bit)) {
-                if (strlen(StringTable.get(Ability[ability_bit].abbreviation)) != 0) {
-                    strcat(StringTemp, ", ");
-                    strcat(StringTemp,
-                           StringTable.get(Ability[ability_bit].abbreviation));
-                }
+        say_stats_3(StringTemp, Vehs[unit_id].proto_id);
+        for (int i = 0; i < MaxAbilityNum; ++i) {
+            if ((VehPrototypes[Vehs[unit_id].proto_id].ability_flags & (1 << i))
+                && strlen(StringTable.get(Ability[i].abbreviation)) != 0) {
+                strcat(StringTemp, ", ");
+                char *abbreviation = Ability[i].abbreviation;
+                strcat(StringTemp, StringTable.get(abbreviation));
             }
         }
         strcat(StringTemp, ")");
-        line_top = canvas->wrap_cent(StringTemp, line_left, line_top,
-                                     rc.right - rc.left);
+        line_top = MainInterfaceGlobal.Buffer::wrap_cent(
+            StringTemp, line_left, line_top, rc.right - rc.left) + 3;
 
         if (shown != 0x3F) {
-            char digits[0x20];
+            char digits[80];
             StringTemp[0] = '\0';
             _itoa(PlayersData[factionID_].proto_id_active[shown], digits, 10);
             strcat(StringTemp, digits);
             strcat(StringTemp, BufferJoinSpace);
-            strcat(StringTemp,
-                   StringTable.get(
-                       Labels.strings_ptr[0x3A0]));
-            line_top = canvas->wrap_cent(StringTemp, line_left, line_top,
-                                         rc.right - rc.left);
+            strcat(StringTemp, label_get(0xE80 / 4));
+            line_top = MainInterfaceGlobal.Buffer::wrap_cent(
+                StringTemp, line_left, line_top, rc.right - rc.left);
 
             StringTemp[0] = '\0';
             _itoa(PlayersData[factionID_].proto_id_queue[shown], digits, 10);
             strcat(StringTemp, digits);
             strcat(StringTemp, BufferJoinSpace);
-            strcat(StringTemp,
-                   StringTable.get(
-                       Labels.strings_ptr[0x3A1]));
-            line_top = canvas->wrap_cent(StringTemp, line_left, line_top,
-                                         rc.right - rc.left);
+            strcat(StringTemp, label_get(0xE84 / 4));
+            line_top = MainInterfaceGlobal.Buffer::wrap_cent(
+                StringTemp, line_left, line_top, rc.right - rc.left);
 
-            if (VehPrototypes[shown].obsolete_factions
-                & (1 << (factionID_ & 0x1F))) {
+            if (VehPrototypes[shown].obsolete_factions & (1 << factionID_)) {
                 StringTemp[0] = '\0';
-                strcat(StringTemp, StringTable.get(
-                    Labels.strings_ptr[0x390]));
+                strcat(StringTemp, label_get(0xE40 / 4));
                 CharUpperA(StringTemp);
-                canvas->wrap_cent(StringTemp, line_left, line_top,
-                                  rc.right - rc.left);
+                MainInterfaceGlobal.Buffer::wrap_cent(
+                    StringTemp, line_left, line_top, rc.right - rc.left);
             }
         }
     }
 
+done:
     MainInterfaceGlobal.soft_update(&preview_panel_rect_);
-    canvas->restore_clip();
+    MainInterfaceGlobal.Buffer::restore_clip();
     draw_stack();
 }
 

@@ -3921,100 +3921,101 @@ void Win::release_modal() {
 //            keeps `hdc`/`brush`/`width`/`neg_height` in esi/ebp/edi/ebx
 //            across the whole body and this tree spends two of them on the
 //            frame.
-void Win::on_paint(RECT *area) {
-    // Win::get_hdc(), inlined - see the TRIED note above.
-    HDC hdc;
+// The image inlines the shared-DC protocol of Win::get_hdc (0x005EC690) and
+// Win::release_hdc (0x005EC6F0) here only; every other caller in this file
+// calls them. These copies keep the out-of-line bodies callable elsewhere.
+static __forceinline HDC on_paint_get_hdc() {
     if (WinHdcRefCount != 0) {
         ++WinHdcRefCount;
-        hdc = WinSharedHdc;
+        return WinSharedHdc;
+    }
+    if (DirectDrawSurface != nullptr) {
+        DirectDrawSurface->GetDC(&WinSharedHdc);
     } else {
-        if (DirectDrawSurface != nullptr) {
-            DirectDrawSurface->GetDC(&WinSharedHdc);
-        } else {
-            WinSharedHdc = GetDC(HandleMain);
-        }
-        hdc = WinSharedHdc;
-        if (hdc != nullptr) {
-            WinHdcRefCount = 1;
-        }
+        WinSharedHdc = GetDC(HandleMain);
     }
-
-    // A solid brush in the palette colour `field_F4_` names: the image reads
-    // bytes +2/+1/+0 of that entry and folds them red<<16 | green<<8 | blue.
-    const int index = static_cast<int>(field_F4_);
-    const COLORREF colour =
-        RGB(PaletteActive->entries_[index].peBlue,
-            PaletteActive->entries_[index].peGreen,
-            PaletteActive->entries_[index].peRed);
-    const HBRUSH brush = CreateSolidBrush(colour);
-    if (brush == nullptr) {
-        // 0x005F5572 jumps the whole rest, brush and context unreleased.
-        return;
+    if (WinSharedHdc != nullptr) {
+        WinHdcRefCount = 1;
     }
+    return WinSharedHdc;
+}
 
-    if (buffer5_ == nullptr) {
-        FillRect(hdc, area, brush);
-    } else {
-        Buffer *const source = buffer5_;
-        const int width = source->dib_.bmiHeader.biWidth;
-        // `biHeight` is stored negative for a top-down DIB, so the row step
-        // the loop adds is its negation, not the height.
-        const int neg_height = -source->dib_.bmiHeader.biHeight;
-        // Centre of the drawing area in tile steps; `sar 1` on both, so the
-        // division is signed round-toward-zero and keeps its fixup.
-        int x = (outer_rect_.right - outer_rect_.left - width) / 2;
-        int y = (outer_rect_.bottom - outer_rect_.top + neg_height) / 2;
-
-        if (field_130_ == 0) {
-            // Tile the whole area, wrapping the origin into the first tile.
-            // Both axes compute `size - abs(offset) % size` when the offset
-            // is positive and negate it again afterwards - `abs` really is
-            // called (0x00644F3A) at 0x005F55EE and 0x005F560C.
-            x = x > 0 ? width - abs(x) % width : -x;
-            y = y > 0 ? neg_height - abs(y) % neg_height : -y;
-            x = -x;
-            y = -y;
-            for (; y < area->bottom; y += neg_height) {
-                for (int px = x; px < area->right; px += width) {
-                    source->copy_to_window(this, 0, 0, px, y, width,
-                                           neg_height);
-                }
-            }
-        } else {
-            // One tile in the centre, the four strips around it filled.
-            RECT edge;
-            edge.left = 0;
-            edge.top = 0;
-            edge.right = outer_rect_.right - outer_rect_.left;
-            edge.bottom = y;
-            FillRect(hdc, &edge, brush);
-            source->copy_to_window(this, 0, 0, x, y, width, neg_height);
-            edge.top = y;
-            edge.right = x;
-            edge.bottom = y + neg_height;
-            FillRect(hdc, &edge, brush);
-            edge.left = x + width;
-            edge.right = outer_rect_.right - outer_rect_.left;
-            FillRect(hdc, &edge, brush);
-            edge.left = 0;
-            edge.top = y + neg_height;
-            edge.bottom = outer_rect_.bottom - outer_rect_.top;
-            FillRect(hdc, &edge, brush);
-        }
-    }
-
-    DeleteObject(brush);
-
-    // Win::release_hdc(), inlined - see the TRIED note above.
-    if (--WinHdcRefCount != 0) {
+static __forceinline void on_paint_release_hdc() {
+    --WinHdcRefCount;
+    if (WinHdcRefCount != 0) {
         return;
     }
     if (DirectDrawSurface != nullptr) {
         DirectDrawSurface->ReleaseDC(WinSharedHdc);
-    } else {
-        ReleaseDC(HandleMain, WinSharedHdc);
+        WinSharedHdc = nullptr;
+        return;
     }
+    ReleaseDC(HandleMain, WinSharedHdc);
     WinSharedHdc = nullptr;
+}
+
+void Win::on_paint(RECT *area) {
+    int height;
+    HDC hdc;
+    HBRUSH brush;
+    int width;
+    RECT edge;
+    RECT frame;
+    hdc = on_paint_get_hdc();
+    const int index = static_cast<int>(field_F4_);
+    Buffer *const source = buffer5_;
+    brush = CreateSolidBrush(
+        RGB(PaletteActive->entries_[index].peRed,
+            PaletteActive->entries_[index].peGreen,
+            PaletteActive->entries_[index].peBlue));
+    // A failed brush skips the rest, the context unreleased.
+    if (brush != nullptr) {
+        if (source == nullptr) {
+            FillRect(hdc, area, brush);
+        } else {
+            width = source->dib_.bmiHeader.biWidth;
+            frame = outer_rect_;
+            int x = (frame.right - frame.left - width) / 2;
+            // `biHeight` is stored negative for a top-down DIB.
+            height = -source->dib_.bmiHeader.biHeight;
+            int y = (frame.bottom - frame.top - height) / 2;
+
+            if (field_130_ == 0) {
+                // Tile the whole area, wrapping the origin into the first
+                // tile; `abs` really is called (0x00644F3A).
+                x = x > 0 ? width - abs(x) % width : -x;
+                y = y > 0 ? height - abs(y) % height : -y;
+                x = -x;
+                y = -y;
+                for (; y < area->bottom; y += height) {
+                    for (int px = x; px < area->right; px += width) {
+                        source->copy_to_window(this, 0, 0, px, y,
+                            source->dib_.bmiHeader.biWidth,
+                            -source->dib_.bmiHeader.biHeight);
+                    }
+                }
+            } else {
+                // One tile in the centre, the four strips around it filled.
+                set_rectangle_dimensions(&edge, 0, 0,
+                    outer_rect_.right - outer_rect_.left, y);
+                FillRect(hdc, &edge, brush);
+                source->copy_to_window(this, 0, 0, x, y,
+                    source->dib_.bmiHeader.biWidth,
+                    -source->dib_.bmiHeader.biHeight);
+                set_rectangle_dimensions(&edge, 0, y, x, height);
+                FillRect(hdc, &edge, brush);
+                set_rectangle_dimensions(&edge, x + width, y,
+                    outer_rect_.right - outer_rect_.left - x - width, height);
+                FillRect(hdc, &edge, brush);
+                set_rectangle_dimensions(&edge, 0, y + height,
+                    outer_rect_.right - outer_rect_.left,
+                    outer_rect_.bottom - outer_rect_.top - y - height);
+                FillRect(hdc, &edge, brush);
+            }
+        }
+        DeleteObject(brush);
+        on_paint_release_hdc();
+    }
 }
 
 // ORIGINAL: 0x005F5AD0 ?on_nc_hittest@Win@@QAEHHH@Z 0x005F5AD0-0x005F5BF6 BYTE_EXACT
@@ -6278,64 +6279,28 @@ void Win::update_back_to_window(Buffer * buffer) {
 
     uint32_t savedFlags = iSomeFlag_;
     iSomeFlag_ = savedFlags & 0xfffffffe;
+    update_zorder();
 
-    WinZOrderCount = 0;
-    for (int i = 0; i < WinRootCount; i++) {
-        Win *w = WinRootWindows[i];
-        if (WinZOrderWindow != 0 && WinZOrderWindow == w) {
-            WinZOrderCount = 0;
-            WinZOrderFlag = 0;
-        }
-        if ((w->iSomeFlag_ & 1) != 0) {
-            recurse_zorder(w);
-        }
-    }
-
-    int tail;
-    if (!(iSomeFlag_ & 2)) {
-        WinViewOriginX += client_rect_.left + outer_rect_.left;
-        WinViewOriginY += client_rect_.top + outer_rect_.top;
-
-        if (!(iFlags_ & 0x20) ||
-            win_parent_ == 0) {
-            goto after_offset_fixup;
-        }
-        win_parent_->client_to_screen(&WinViewOriginX, &WinViewOriginY);
-        if (!(iFlags_ & 0x8000)) {
-            goto after_offset_fixup;
-        }
-        {
-            WinViewOriginX -= win_parent_->outer_rect_.left;
-            tail = win_parent_->outer_rect_.top;
-        }
+    if (iSomeFlag_ & 2) {
+        nonclient_to_screen(&WinViewOriginX, &WinViewOriginY);
     } else {
-        this->client_to_screen(&WinViewOriginX, &WinViewOriginY);
-        WinViewOriginX -= outer_rect_.left;
-        tail = outer_rect_.top;
+        client_to_screen(&WinViewOriginX, &WinViewOriginY);
     }
-    WinViewOriginY -= tail;
-after_offset_fixup:;
 
     RECT rect;
-    if (!(iSomeFlag_ & 2)) {
-        rect.left = outer_rect_.left;
-        rect.top = outer_rect_.top;
-        rect.right = outer_rect_.right;
-        rect.bottom = outer_rect_.bottom;
+    if (iSomeFlag_ & 2) {
+        rect = client_rect();
     } else {
-        rect.left = client_rect_.left;
-        rect.top = client_rect_.top;
-        rect.right = client_rect_.right;
-        rect.bottom = client_rect_.bottom;
+        rect = outer_rect();
     }
 
     buffer->init(rect.right - rect.left, rect.bottom - rect.top, 0, 0);
 
-    int dx = WinViewOriginX - rect.left;
     int dy = WinViewOriginY - rect.top;
-    rect.left = WinViewOriginX;
-    rect.top = WinViewOriginY;
+    int dx = WinViewOriginX - rect.left;
+    rect.left += dx;
     rect.right += dx;
+    rect.top += dy;
     rect.bottom += dy;
 
     this->update_screen(&rect, 0);
@@ -6343,18 +6308,7 @@ after_offset_fixup:;
     WinBackBuffer = 0;
     WinZOrderWindow = 0;
     iSomeFlag_ = savedFlags;
-
-    WinZOrderCount = 0;
-    for (int j = 0; j < WinRootCount; j++) {
-        Win *w = WinRootWindows[j];
-        if (WinZOrderWindow != 0 && WinZOrderWindow == w) {
-            WinZOrderCount = 0;
-            WinZOrderFlag = 0;
-        }
-        if ((w->iSomeFlag_ & 1) != 0) {
-            recurse_zorder(w);
-        }
-    }
+    update_zorder();
 }
 
 // ORIGINAL: 0x005EE190 ?set_modal@Win@@QAEHHP6AHXZPAVWin@@@Z 0x005EE190-0x005EE27B FILE BYTE_EXACT
@@ -6417,61 +6371,36 @@ int Win::set_modal(int flags, int (__cdecl *callback)(), Win * owner) {
 // ===== homed from src/unrecovered/005ef310.cpp =====
 
 void Win::draw_rect_border(int x1, int y1, int x2, int y2, HGDIOBJ pen1, HGDIOBJ pen2, int unused7) {
-    bool haveHdc;
-
-    ACQUIRE_HDC(haveHdc);
-    if (haveHdc) {
-        Palette *pal = PaletteActive;
-        if (this->palette_seed_cache_ != pal->seed_) {
-            pal->set_active_window(this);
-            this->palette_seed_cache_ = pal->seed_;
-        }
-        HDC hdc = WinSharedHdc;
-        HGDIOBJ prev = SelectObject(hdc, pen1);
-        MoveToEx(hdc, x1 + 1, y1, 0);
-        LineTo(hdc, x2 + 1, y1);
-        SelectObject(hdc, prev);
-        release_hdc();
-    }
-
-    ACQUIRE_HDC(haveHdc);
-    if (haveHdc) {
-        Palette *pal = PaletteActive;
-        if (this->palette_seed_cache_ != pal->seed_) {
-            pal->set_active_window(this);
-            this->palette_seed_cache_ = pal->seed_;
-        }
-        HDC hdc = WinSharedHdc;
-        void *prev = reinterpret_cast<void *>(SelectObject(hdc, pen2));
-        MoveToEx(hdc, x1, y2, 0);
-        LineTo(hdc, x2, y2);
-        SelectObject(hdc, prev);
-        release_hdc();
-    }
-
-    ACQUIRE_HDC(haveHdc);
-    if (haveHdc) {
-        Palette *pal = PaletteActive;
-        if (this->palette_seed_cache_ != pal->seed_) {
-            pal->set_active_window(this);
-            this->palette_seed_cache_ = pal->seed_;
-        }
-        HDC hdc = WinSharedHdc;
-        HGDIOBJ prev = SelectObject(hdc, pen1);
-        MoveToEx(hdc, x1, y1, 0);
-        LineTo(hdc, x1, y2);
-        SelectObject(hdc, prev);
-        release_hdc();
-    }
-
-    ACQUIRE_HDC(haveHdc);
-    if (haveHdc) {
+    if (get_hdc()) {
         sync_palette();
-        HDC hdc = WinSharedHdc;
-        void *prev = reinterpret_cast<void *>(SelectObject(hdc, pen2));
-        MoveToEx(hdc, x2, y1 + 1, 0);
-        LineTo(hdc, x2, y2 + 1);
-        SelectObject(hdc, prev);
+        HGDIOBJ prev = SelectObject(WinSharedHdc, pen1);
+        MoveToEx(WinSharedHdc, x1 + 1, y1, 0);
+        LineTo(WinSharedHdc, x2 + 1, y1);
+        SelectObject(WinSharedHdc, prev);
+        release_hdc();
+    }
+    if (get_hdc()) {
+        sync_palette();
+        HGDIOBJ prev = SelectObject(WinSharedHdc, pen2);
+        MoveToEx(WinSharedHdc, x1, y2, 0);
+        LineTo(WinSharedHdc, x2, y2);
+        SelectObject(WinSharedHdc, prev);
+        release_hdc();
+    }
+    if (get_hdc()) {
+        sync_palette();
+        HGDIOBJ prev = SelectObject(WinSharedHdc, pen1);
+        MoveToEx(WinSharedHdc, x1, y1, 0);
+        LineTo(WinSharedHdc, x1, y2);
+        SelectObject(WinSharedHdc, prev);
+        release_hdc();
+    }
+    if (get_hdc()) {
+        sync_palette();
+        HGDIOBJ prev = SelectObject(WinSharedHdc, pen2);
+        MoveToEx(WinSharedHdc, x2, y1 + 1, 0);
+        LineTo(WinSharedHdc, x2, y2 + 1);
+        SelectObject(WinSharedHdc, prev);
         release_hdc();
     }
 }
@@ -8430,59 +8359,19 @@ void Win::nonclient_to_client(int * x, int * y) {
 // kind game
 void Win::update_window_to_buffer(Buffer * buffer) {
     if (buffer != 0) {
-
         WinBackBuffer = buffer;
         WinZOrderWindow = this;
-        (WinViewOriginX) = 0;
-        (WinViewOriginY) = 0;
+        WinViewOriginX = 0;
+        WinViewOriginY = 0;
 
         uint32_t flags9c = iSomeFlag_;
-        int iVar3 = 0;
         iSomeFlag_ = flags9c | 1;
-        WinZOrderCount = 0;
-        if (0 < WinRootCount) {
-            Win **piVar4 = WinRootWindows;
-            Win *iVar2 = WinZOrderWindow;
-            do {
-                if (iVar2 != 0 && iVar2 == *piVar4) {
-                    WinZOrderCount = 0;
-                    WinZOrderFlag = 0;
-                }
-                if (((*piVar4)->iSomeFlag_ & 1) != 0) {
-                    recurse_zorder(*piVar4);
-                    iVar2 = WinZOrderWindow;
-                }
-                iVar3++;
-                piVar4++;
-            } while (iVar3 < WinRootCount);
-        }
+        update_zorder();
 
-        if ((iSomeFlag_ & 2) == 0) {
-            (WinViewOriginX) += client_rect_.left + outer_rect_.left;
-            (WinViewOriginY) += client_rect_.top + outer_rect_.top;
-            if ((iFlags_ & 0x20) != 0 &&
-                win_parent_ != 0) {
-                Win *parent = win_parent_;
-                parent->client_to_screen(&(WinViewOriginX), &(WinViewOriginY));
-                if ((iFlags_ & 0x8000) != 0) {
-                    (WinViewOriginX) -= win_parent_->outer_rect_.left;
-                    (WinViewOriginY) -= win_parent_->outer_rect_.top;
-                }
-            }
+        if (iSomeFlag_ & 2) {
+            nonclient_to_screen(&WinViewOriginX, &WinViewOriginY);
         } else {
-            (WinViewOriginX) += client_rect_.left + outer_rect_.left;
-            (WinViewOriginY) += client_rect_.top + outer_rect_.top;
-            if ((iFlags_ & 0x20) != 0 &&
-                win_parent_ != 0) {
-                Win *parent = win_parent_;
-                parent->client_to_screen(&(WinViewOriginX), &(WinViewOriginY));
-                if ((iFlags_ & 0x8000) != 0) {
-                    (WinViewOriginX) -= win_parent_->outer_rect_.left;
-                    (WinViewOriginY) -= win_parent_->outer_rect_.top;
-                }
-            }
-            (WinViewOriginX) -= outer_rect_.left;
-            (WinViewOriginY) -= outer_rect_.top;
+            client_to_screen(&WinViewOriginX, &WinViewOriginY);
         }
 
         update_screen(0, this);
@@ -8490,25 +8379,7 @@ void Win::update_window_to_buffer(Buffer * buffer) {
         WinBackBuffer = 0;
         WinZOrderWindow = 0;
         iSomeFlag_ = flags9c;
-
-        iVar3 = 0;
-        WinZOrderCount = 0;
-        if (0 < WinRootCount) {
-            Win **piVar4 = WinRootWindows;
-            Win *iVar2 = WinZOrderWindow;
-            do {
-                if (iVar2 != 0 && iVar2 == *piVar4) {
-                    WinZOrderCount = 0;
-                    WinZOrderFlag = 0;
-                }
-                if (((*piVar4)->iSomeFlag_ & 1) != 0) {
-                    recurse_zorder(*piVar4);
-                    iVar2 = WinZOrderWindow;
-                }
-                iVar3++;
-                piVar4++;
-            } while (iVar3 < WinRootCount);
-        }
+        update_zorder();
     }
 }
 
