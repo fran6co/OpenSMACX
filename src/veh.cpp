@@ -8287,7 +8287,7 @@ static inline int abil_bit(int ability) {
 
 /*
 Purpose: Grant a prototype an ability, if the faction has researched it.
-// ORIGINAL: 0x00581190 ?add_abil@@YAXPAHHH@Z 0x00581190-0x00581259
+// ORIGINAL: 0x00581190 ?add_abil@@YAXPAHHH@Z 0x00581190-0x00581259 BYTE_EXACT
 // size      201 bytes
 // prototype void (__cdecl ?add_abil@@YAXPAHHH@Z)(int *ability_flags, int ability, int faction_id)
 // callers   1   call targets   1

@@ -452,7 +452,7 @@ void __cdecl build_hills(int altitude) {
 
 /*
 Purpose: Build out the world river beds.
-// ORIGINAL: 0x005C3680 ?world_riverbeds@@YAXXZ 0x005C3680-0x005C38AF
+// ORIGINAL: 0x005C3680 ?world_riverbeds@@YAXXZ 0x005C3680-0x005C38AF BYTE_EXACT
 // LEVER: `osmx calls` shows only ONE game call (bit_set) plus rand() itself
 //        - both `rnd(bounds, NULL)` sites are cross-TU and were rewritten
 //        as rnd's own body (same idiom as build_continent/build_hills), and
