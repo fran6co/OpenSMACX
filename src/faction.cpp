@@ -1599,6 +1599,8 @@ Purpose: Set or unset the diplomatic agenda for the specified faction with anoth
 Return Value: n/a
 Status: Complete
 */
+// double_cross calls it out of line.
+#pragma auto_inline(off)
 void __cdecl set_agenda(int faction_id, int faction_id_with, int agenda, BOOL set) {
     if (set) {
         PlayersData[faction_id].diplo_agenda[faction_id_with] |= agenda;
@@ -1606,6 +1608,7 @@ void __cdecl set_agenda(int faction_id, int faction_id_with, int agenda, BOOL se
         PlayersData[faction_id].diplo_agenda[faction_id_with] &= ~agenda;
     }
 }
+#pragma auto_inline(on)
 
 /*
 Purpose: Check whether the primary faction has at least one of the specified agendas (bitfield)
@@ -2556,7 +2559,7 @@ void __cdecl rankings(int apply_ranks) {
         }
         if (!is_alive(faction_id)) {
             FactionRankingsUnk[faction_id] = 0;
-        } else if ((ScenarioSave.objective_req_victory < 9000 || ScenarioSave.objectives_sudden_death_victory < 9000)
+        } else if ((ScenarioSave.objective_req_victory < 9000 || (int)ScenarioSave.objectives_sudden_death_victory < 9000)
             && !ScenarioSave.objective_achieve_points) {
             FactionRankingsUnk[faction_id] = num_objectives(faction_id, false) * 10;
         } else {
@@ -2565,11 +2568,14 @@ void __cdecl rankings(int apply_ranks) {
             for (int tech_id = 0; tech_id < MaxTechnologyNum; tech_id++) {
                 // has_tech_call: the image CALLS 0x005B9F20 twice from here.
                 if (has_tech(tech_id, faction_id)) {
-                    FactionRankingsUnk[faction_id] = (tech_id >= MaxTechnologyNum)
-                        ? FactionRankingsUnk[faction_id] + 4
-                        : FactionRankingsUnk[faction_id] + (Technology[tech_id].growth_value
+                    if (tech_id >= MaxTechnologyNum) {
+                        FactionRankingsUnk[faction_id] = FactionRankingsUnk[faction_id] + 4;
+                    } else {
+                        FactionRankingsUnk[faction_id] = FactionRankingsUnk[faction_id]
+                            + (Technology[tech_id].growth_value
                             + Technology[tech_id].tech_value + Technology[tech_id].wealth_value
                             + Technology[tech_id].power_value);
+                    }
                 }
             }
             for (int i = 0; i < MaxSecretProjectNum; i++) {
@@ -5535,87 +5541,89 @@ int __cdecl eliminate_player(int faction, int conqueror) {
             veh_kill(vehicle);
     }
     PlayersData[faction].current_num_bases = 0;
-    const int restored = setup_player(faction, conqueror, 0);
+    int restored = setup_player(faction, conqueror, 0);
     if (!restored) {
         if (conqueror > 0 && !(GameDataStateStorage.fields_.game_state_ & 9))
             ++PlayersData[conqueror].unk_108;
         if (faction == ConsoleGlobal.faction_id_) return 1;
     }
-    int successor = conqueror < 0 ? 0 : conqueror;
-    if (successor > 0) set_treaty(faction, successor, 0x2030, 1);
+    int successor = conqueror;
+    if (successor < 0) {
+        successor = 0;
+    } else if (successor > 0) {
+        set_treaty(faction, successor, 0x2030, 1);
+    }
     draw_map(1);
-    GenderDefault = Players[faction].noun_gender;
-    PluralityDefault = Players[faction].is_noun_plural;
+    parse_set(Players[faction].noun_gender, Players[faction].is_noun_plural);
     parse_says(0, Players[faction].noun_faction, -1, -1);
-    GenderDefault = Players[successor].noun_gender;
-    PluralityDefault = Players[successor].is_noun_plural;
+    parse_set(Players[successor].noun_gender, Players[successor].is_noun_plural);
     parse_says(1, Players[successor].noun_faction, -1, -1);
-    GenderDefault = Players[faction].is_leader_female;
-    PluralityDefault = 0;
+    parse_set(Players[faction].is_leader_female, 0);
     parse_says(2, Players[faction].title_leader, -1, -1);
-    GenderDefault = Players[faction].is_leader_female;
-    PluralityDefault = 0;
+    parse_set(Players[faction].is_leader_female, 0);
     parse_says(3, Players[faction].name_leader, -1, -1);
     parse_says(4, get_his_her(faction, 0), -1, -1);
-    strcpy(StringTemp, "WIPEOUT");
+    StringTemp[0] = '\0';
+    strcat(StringTemp, "WIPEOUT");
     char number[80];
-    if (!successor) _itoa(2, number, 10);
-    else {
+    if (!successor) {
+        _itoa(2, number, 10);
+        strcat(StringTemp, number);
+    } else {
         if (successor == ConsoleGlobal.faction_id_) strcat(StringTemp, "YOU");
         _itoa(restored != 0, number, 10);
+        strcat(StringTemp, number);
     }
-    strcat(StringTemp, number);
     char portrait[80];
-    strcpy(portrait, Players[faction].filename);
+    portrait[0] = '\0';
+    strcat(portrait, Players[faction].filename);
     strcat(portrait, "2.PCX");
-    const bool alien = (Players[faction].rule_flags & 0x80) != 0;
-    popp(ScriptPopupFile, StringTemp, 0,
-         !restored ? portrait : alien ? "al_pod_sm.pcx" : "escpod_sm.pcx", 0);
+    if (Players[faction].rule_flags & 0x80) {
+        popp(ScriptPopupFile, StringTemp, 0, restored ? "al_pod_sm.pcx" : portrait, 0);
+    } else {
+        popp(ScriptPopupFile, StringTemp, 0, restored ? "escpod_sm.pcx" : portrait, 0);
+    }
     if (!restored) mon_killed_faction(successor, faction);
     if (!IsMultiplayerNet && (GameDataStateStorage.fields_.game_preferences_ & 0x10000000)
-        && successor == ConsoleGlobal.faction_id_) {
-        if (!restored) {
-            amovie_project(Players[faction].filename);
-            goto eliminated;
-        }
-    } else if (!restored || IsMultiplayerNet) goto eliminated;
-    if (successor == ConsoleGlobal.faction_id_) {
-        const int chance = (PlayersData[successor].diplo_treaties[faction] & 0x1000) ? 2 : 4;
-        if (rand() % chance == 0) {
-            const int first = veh_find(0, 0, faction, -1);
+        && successor == ConsoleGlobal.faction_id_ && !restored) {
+        amovie_project(Players[faction].filename);
+    } else if (restored && !IsMultiplayerNet && successor == ConsoleGlobal.faction_id_) {
+        int chance = (PlayersData[successor].diplo_treaties[faction] & 0x1000) ? 2 : 4;
+        if (!bounded_crt_random(chance)) {
+            int first = veh_find(0, 0, faction, -1);
             if (first >= 0) {
-                int x = 0, y = 0;
+                int x;
+                int y;
                 for (int offset = 0; offset < 9; ++offset) {
-                    x = RadiusOffsetX[offset] + Vehs[first].x;
-                    if (!(MapIsFlat & 1)) {
-                        if (x < 0) x += MapLongitudeBounds;
-                        else if (x >= MapLongitudeBounds) x -= MapLongitudeBounds;
-                    }
-                    y = RadiusOffsetY[offset] + Vehs[first].y;
-                    if (y >= 0 && y < MapLatitudeBounds && x >= 0 && x < MapLongitudeBounds)
+                    x = wrap_map_x(Vehs[first].x + RadiusOffsetX[offset]);
+                    y = Vehs[first].y + RadiusOffsetY[offset];
+                    if (on_map(x, y)) {
                         spot_loc(x, y, successor);
+                    }
                 }
                 int vehicle = first;
+                int marked = 0;
                 while (Vehs[vehicle].prev_veh_id_stack >= 0)
                     vehicle = Vehs[vehicle].prev_veh_id_stack;
-                bool marked = false;
                 for (; vehicle >= 0; vehicle = Vehs[vehicle].next_veh_id_stack) {
                     Vehs[vehicle].visibility = 0;
                     if (VehPrototypes[Vehs[vehicle].proto_id].plan == 8 && !marked) {
-                        marked = true;
-                        Vehs[vehicle].visibility = lifecycle_faction_mask(successor);
+                        marked = 1;
+                        Vehs[vehicle].visibility = (uint8_t)(1 << successor);
                     }
                 }
                 // The original deliberately retains the last radius coordinates.
                 draw_tiles(x, y, 2);
                 MapWinTable[0]->set_center(x, y, 1);
                 parse_says(6, Players[faction].adj_name_faction, -1, -1);
-                popp(ScriptPopupFile, "TRACKED", 0,
-                     (Players[faction].rule_flags & 0x80) ? "al_pod_sm.pcx" : "escpod_sm.pcx", 0);
+                if (Players[faction].rule_flags & 0x80) {
+                    popp(ScriptPopupFile, "TRACKED", 0, "al_pod_sm.pcx", 0);
+                } else {
+                    popp(ScriptPopupFile, "TRACKED", 0, "escpod_sm.pcx", 0);
+                }
             }
         }
     }
-eliminated:
     if ((Players[faction].rule_flags & 0x80) && (Players[ConsoleGlobal.faction_id_].rule_flags & 0x80)
         && faction != ConsoleGlobal.faction_id_) interlude(0x2a, 0, 1, 0);
     return 1;
@@ -6271,148 +6279,136 @@ void __cdecl give_a_base(int base_id, int new_owner) {
 void __cdecl double_cross(int faction_id, int partner_id, int victim_id) {
     if (IsMultiplayerNet) {
         if (partner_id == ConsoleGlobal.faction_id_ && victim_id > 0) {
-            PluralityDefault = 0;
-            GenderDefault = Players[victim_id].is_leader_female;
+            parse_set(Players[victim_id].is_leader_female, 0);
             parse_says(0, Players[victim_id].title_leader, -1, -1);
-            GenderDefault = Players[victim_id].is_leader_female;
-            PluralityDefault = 0;
+            parse_set(Players[victim_id].is_leader_female, 0);
             parse_says(1, Players[victim_id].name_leader, -1, -1);
-            GenderDefault = Players[victim_id].noun_gender;
-            PluralityDefault = Players[victim_id].is_noun_plural;
+            parse_set(Players[victim_id].noun_gender, Players[victim_id].is_noun_plural);
             parse_says(2, Players[victim_id].noun_faction, -1, -1);
-
-            PluralityDefault = 0;
-            GenderDefault = Players[faction_id].is_leader_female;
+            parse_set(Players[faction_id].is_leader_female, 0);
             parse_says(3, Players[faction_id].title_leader, -1, -1);
-            GenderDefault = Players[faction_id].is_leader_female;
-            PluralityDefault = 0;
+            parse_set(Players[faction_id].is_leader_female, 0);
             parse_says(4, Players[faction_id].name_leader, -1, -1);
-            GenderDefault = Players[faction_id].noun_gender;
-            PluralityDefault = Players[faction_id].is_noun_plural;
+            parse_set(Players[faction_id].noun_gender, Players[faction_id].is_noun_plural);
             parse_says(5, Players[faction_id].noun_faction, -1, -1);
             NetMsgPrimary.pop("INCITED", 0x1388, 0, nullptr);
-        } else if (partner_id == ConsoleGlobal.faction_id_ &&
-                   (GameDataStateStorage.fields_.lock_masks_.enable_mask_ & (1u << (faction_id & 31))) != 0) {
-            GenderDefault = Players[faction_id].is_leader_female;
+        } else if (partner_id == ConsoleGlobal.faction_id_ && is_human(faction_id)) {
+            parse_set(Players[faction_id].is_leader_female, 0);
             parse_says(0, Players[faction_id].title_leader, -1, -1);
-            GenderDefault = Players[faction_id].is_leader_female;
-            PluralityDefault = 0;
+            parse_set(Players[faction_id].is_leader_female, 0);
             parse_says(1, Players[faction_id].name_leader, -1, -1);
-            GenderDefault = Players[faction_id].noun_gender;
-            PluralityDefault = Players[faction_id].is_noun_plural;
+            parse_set(Players[faction_id].noun_gender, Players[faction_id].is_noun_plural);
             parse_says(2, Players[faction_id].noun_faction, -1, -1);
             NetMsgPrimary.pop("VENDETTAWARNING", 0x1388, 0, nullptr);
         }
     }
-
-    // Index A is row=partner, column=actor; B is row=actor, column=partner.
     PlayersData[partner_id].loan_balance[faction_id] = 0;
-    const uint32_t treaty_flags =
-        PlayersData[faction_id].diplo_treaties[partner_id];
-    int treaty_active = 0;
-    if ((treaty_flags & 0x40000) != 0) {
+    uint32_t treaty_flags = PlayersData[faction_id].diplo_treaties[partner_id];
+    int treaty_active;
+    if ((treaty_flags & 0x40000) || PlayersData[partner_id].major_atrocities) {
         treaty_active = 1;
-    } else if (PlayersData[partner_id].major_atrocities != 0) {
-        treaty_active = 1;
+    } else {
+        treaty_active = 0;
     }
-
     int friction_flag = 0;
     if (victim_id >= 0) {
-        const uint32_t victim_treaty =
-            PlayersData[faction_id].diplo_treaties[victim_id];
-        if ((victim_treaty & 1) != 0) {
-            if ((treaty_flags & 1) == 0) friction_flag = 1;
-        } else if ((victim_treaty & 2) != 0) {
-            if ((treaty_flags & 2) == 0) friction_flag = 1;
-        } else if ((victim_treaty & 4) != 0) {
-            if ((treaty_flags & 4) == 0) friction_flag = 1;
-        }
-        ++PlayersData[faction_id].diplo_unk1[victim_id];
-    }
-
-    if ((treaty_flags & 1) != 0) {
-        if ((PlayersData[faction_id].diplo_agenda[partner_id] & 0x20) == 0) {
-            int &reputation = PlayersData[faction_id].global_reputation;
-            reputation = reputation > 0 ? reputation - 1 : 0;
-            if (PlayersData[faction_id].diff_level != 0 &&
-                treaty_active == 0 && friction_flag == 0) {
-                ++PlayersData[faction_id].integrity_blemishes;
-                ++PlayersData[partner_id].diplo_betrayed[faction_id];
+        uint32_t victim_treaty = PlayersData[faction_id].diplo_treaties[victim_id];
+        if (victim_treaty & 1) {
+            if (!(treaty_flags & 1)) {
+                friction_flag = 1;
             }
-            if (victim_id >= 0) {
-                if (treaty_active == 0)
-                    ++PlayersData[faction_id].integrity_blemishes;
-                ++PlayersData[faction_id].diplo_wrongs[partner_id];
-                ++PlayersData[partner_id].diplo_betrayed[faction_id];
+        } else if (victim_treaty & 2) {
+            if (!(treaty_flags & 2)) {
+                friction_flag = 1;
+            }
+        } else if (victim_treaty & 4) {
+            if (!(treaty_flags & 4)) {
+                friction_flag = 1;
+            }
+        }
+        PlayersData[faction_id].diplo_unk1[victim_id]++;
+    }
+    if (PlayersData[faction_id].diplo_treaties[partner_id] & 1) {
+        if (!(PlayersData[faction_id].diplo_agenda[partner_id] & 0x20)) {
+            int reputation = PlayersData[faction_id].global_reputation - 1;
+            PlayersData[faction_id].global_reputation = reputation < 0 ? 0 : reputation;
+            if (PlayersData[faction_id].diff_level && !treaty_active && !friction_flag) {
+                PlayersData[faction_id].integrity_blemishes++;
+                PlayersData[partner_id].diplo_betrayed[faction_id]++;
+            }
+            if (victim_id < 0) {
+                if (!treaty_active) {
+                    PlayersData[faction_id].integrity_blemishes++;
+                }
+                PlayersData[faction_id].diplo_wrongs[partner_id]++;
+                PlayersData[partner_id].diplo_betrayed[faction_id]++;
             } else {
                 cause_friction(victim_id, faction_id, -4);
             }
-            if ((GameDataStateStorage.fields_.lock_masks_.enable_mask_ & (1u << (faction_id & 31))) != 0) {
-                const uint32_t actor_partner_agenda =
-                    PlayersData[partner_id].diplo_agenda[faction_id];
-                if ((actor_partner_agenda & 0x400) != 0)
+            if (is_human(faction_id)) {
+                if (PlayersData[partner_id].diplo_agenda[faction_id] & 0x400) {
                     set_agenda(partner_id, faction_id, 0x800, 1);
-                if ((PlayersData[partner_id].diplo_treaties[faction_id] & 0x20) != 0)
+                }
+                if (PlayersData[partner_id].diplo_treaties[faction_id] & 0x20) {
                     set_agenda(partner_id, faction_id, 0x400, 1);
+                }
+                set_treaty(partner_id, faction_id, 0x20, 1);
             }
         }
         pact_ends(faction_id, partner_id);
         treaty_on(faction_id, partner_id, 0x10);
         return;
     }
-
-    if ((PlayersData[faction_id].diplo_agenda[partner_id] & 0x20) == 0) {
-        if ((treaty_flags & 6) != 0) {
-            if ((treaty_flags & 0x10000) == 0) {
-                int &reputation = PlayersData[faction_id].global_reputation;
-                reputation = reputation > 0 ? reputation - 1 : 0;
-                if (great_satan(faction_id, 0) == 0 &&
-                    PlayersData[faction_id].ranking >= 6 &&
-                    PlayersData[partner_id].ranking <= 4 && victim_id < 0 &&
-                    treaty_active == 0) {
-                    ++PlayersData[faction_id].integrity_blemishes;
-                    ++PlayersData[partner_id].diplo_betrayed[faction_id];
+    if (!(PlayersData[faction_id].diplo_agenda[partner_id] & 0x20)) {
+        if (PlayersData[faction_id].diplo_treaties[partner_id] & 6) {
+            if (!(PlayersData[faction_id].diplo_treaties[partner_id] & 0x10000)) {
+                int reputation = PlayersData[faction_id].global_reputation - 1;
+                PlayersData[faction_id].global_reputation = reputation < 0 ? 0 : reputation;
+                if ((great_satan(faction_id, 0)
+                        || ((int)PlayersData[faction_id].ranking >= 6
+                            && (int)PlayersData[partner_id].ranking <= 4))
+                    && victim_id < 0 && !treaty_active) {
+                    PlayersData[faction_id].integrity_blemishes++;
+                    PlayersData[partner_id].diplo_betrayed[faction_id]++;
                 }
             }
-            if (PlayersData[faction_id].diff_level != 0 &&
-                treaty_active == 0 && friction_flag == 0) {
-                ++PlayersData[faction_id].integrity_blemishes;
-                ++PlayersData[partner_id].diplo_betrayed[faction_id];
+            if (PlayersData[faction_id].diff_level && !treaty_active && !friction_flag) {
+                PlayersData[faction_id].integrity_blemishes++;
+                PlayersData[partner_id].diplo_betrayed[faction_id]++;
             }
-            if (victim_id < 0)
-                ++PlayersData[faction_id].diplo_wrongs[partner_id];
-
-            if ((GameDataStateStorage.fields_.lock_masks_.enable_mask_ & (1u << (faction_id & 31))) != 0) {
-                const uint32_t actor_partner_agenda =
-                    PlayersData[partner_id].diplo_agenda[faction_id];
-                if ((actor_partner_agenda & 0x400) != 0)
+            if (victim_id < 0) {
+                PlayersData[faction_id].diplo_wrongs[partner_id]++;
+            }
+            if (is_human(faction_id)) {
+                if (PlayersData[partner_id].diplo_agenda[faction_id] & 0x400) {
                     set_agenda(partner_id, faction_id, 0x800, 1);
-                if ((PlayersData[partner_id].diplo_treaties[faction_id] & 0x20) != 0)
+                }
+                if (PlayersData[partner_id].diplo_treaties[faction_id] & 0x20) {
                     set_agenda(partner_id, faction_id, 0x400, 1);
+                }
                 set_treaty(partner_id, faction_id, 0x20, 1);
             }
-            if (victim_id >= 0) cause_friction(victim_id, faction_id, -2);
+            if (victim_id >= 0) {
+                cause_friction(victim_id, faction_id, -2);
+            }
         } else if (victim_id >= 0) {
-            if ((GameDataStateStorage.fields_.lock_masks_.enable_mask_ & (1u << (faction_id & 31))) != 0) {
-                const uint32_t actor_partner_agenda =
-                    PlayersData[partner_id].diplo_agenda[faction_id];
-                if ((actor_partner_agenda & 0x400) != 0)
+            if (is_human(faction_id)) {
+                if (PlayersData[partner_id].diplo_agenda[faction_id] & 0x400) {
                     set_agenda(partner_id, faction_id, 0x800, 1);
-                if ((PlayersData[partner_id].diplo_treaties[faction_id] & 0x20) != 0)
+                }
+                if (PlayersData[partner_id].diplo_treaties[faction_id] & 0x20) {
                     set_agenda(partner_id, faction_id, 0x400, 1);
+                }
                 set_treaty(partner_id, faction_id, 0x20, 1);
             }
-            cause_friction(victim_id, faction_id, -2);
+            if (victim_id >= 0) {
+                cause_friction(victim_id, faction_id, -2);
+            }
         }
     }
-
     treaty_on(faction_id, partner_id, 0x10);
-    if ((PlayersData[faction_id].diplo_agenda[partner_id] & 0x20) == 0) {
-        const bool actor_human =
-            (GameDataStateStorage.fields_.lock_masks_.enable_mask_ & (1u << (faction_id & 31))) != 0;
-        const bool partner_human =
-            (GameDataStateStorage.fields_.lock_masks_.enable_mask_ & (1u << (partner_id & 31))) != 0;
-        if (actor_human != partner_human) {
+    if (!(PlayersData[faction_id].diplo_agenda[partner_id] & 0x20)) {
+        if (is_human(faction_id) != is_human(partner_id)) {
             set_treaty(faction_id, partner_id, 0x40, 1);
             PlayersData[faction_id].diplo_spoke[partner_id] = GameDataStateStorage.fields_.turn_current_num_;
         }
@@ -6552,183 +6548,155 @@ int __cdecl pact_withdraw(int faction_id, int faction_id_with) {
 // RECOVERY_BINDING: v1 {"evidence": ["original:0x005267B0-0x00526E63", "git:38853a3f:src/unrecovered/005267b0.cpp", "source:src/faction.h", "source:src/base.h", "source:src/veh.h"], "reason": "Recover the complete faction energy allocation operation through real PlayerData, Base, Console and VehPrototype owners. Preserve the original first scan of global BaseCurrent without selecting each base, the later severe-police selection/recompute sequence, signed allocation arithmetic and callback order; historical spelling notes are not fresh measurements."}
 // TRIED: direct register-mirroring transcription (eax/ebx/.../var_4/var_c/var_10 locals) compiles and matches control flow/offsets faithfully but the extra scratch locals (vs the original's 6-int 0x18 frame) shift register allocation from instr #4; sim 0.68 framed. Not retried with fewer locals given size (1715 bytes).
 void __cdecl allocate_energy(int faction_id) {
-    PlayerData &faction = PlayersData[faction_id];
-    const unsigned int faction_bit = 1u << (faction_id & 31);
-
-    // Human-only emergency notification path, intentionally distinct from
-    // the social-allocation rebalance below.
-    if ((GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & faction_bit) != 0) {
-        if (faction.diff_level <= 1 || faction_id != ConsoleGlobal.faction_id_
-            || faction.pop_total <= 1 || faction.energy_reserves >= 100)
+    if (is_human(faction_id)) {
+        // Human-only infrastructure warnings.
+        if (PlayersData[faction_id].diff_level <= 1 || faction_id != ConsoleGlobal.faction_id_
+            || PlayersData[faction_id].current_num_bases <= 1
+            || PlayersData[faction_id].energy_reserves >= 100)
             return;
-        if (diplo_mul(faction.energy_reserves, 10)
-            >= diplo_mul(CurrentFactionEnergyReserves, 10))
+        if (PlayersData[faction_id].energy_reserves * 11 - CurrentFactionEnergyReserves * 10 >= 0)
             return;
-        const int unassigned = 10 - faction.se_alloc_psych - faction.se_alloc_labs;
-        if (unassigned < 5) {
-            if (popp(ScriptPopupFile, "INFRASTRUCTURE", 0, "genwarning_sm.pcx", nullptr) == 0)
+        if (10 - PlayersData[faction_id].se_alloc_psych - PlayersData[faction_id].se_alloc_labs < 5) {
+            if (!popp(ScriptPopupFile, "INFRASTRUCTURE", 0, "genwarning_sm.pcx", 0))
                 return;
             social_select(faction_id);
             return;
         }
         if (!has_tech(VehPrototypes[1].preq_tech, faction_id)) return;
-        if (GameDataStateStorage.fields_.turn_current_num_ % 5 != 0) return;
-        popp(ScriptPopupFile, "INFRASTRUCTURE2", 0, "genwarning_sm.pcx", nullptr);
+        if (GameDataStateStorage.fields_.turn_current_num_ % 5) return;
+        popp(ScriptPopupFile, "INFRASTRUCTURE2", 0, "genwarning_sm.pcx", 0);
         return;
     }
 
-    const int desired_total = 10 - faction.se_alloc_psych - faction.se_alloc_labs;
-    const int police = faction.soc_effect_pending.values_[SocialEffect::POLICE];
+    int unassigned = 10 - PlayersData[faction_id].se_alloc_psych - PlayersData[faction_id].se_alloc_labs;
+    int police = PlayersData[faction_id].soc_effect_pending.values_[SocialEffect::POLICE];
     int max_psych;
-    if (police < -2) max_psych = 4;
-    else if (police == -2) max_psych = 2;
-    else if (police <= 1) max_psych = 1;
-    else max_psych = 0;
-
-    int &psych = faction.se_alloc_psych;
-    int skip_increase = 1;
-    const int first_pass_base_count = GameDataStateStorage.fields_.base_current_count_;
-    for (int base_id = 0; base_id < first_pass_base_count; ++base_id) {
+    if (police < -2) {
+        max_psych = 4;
+    } else if (police == -2) {
+        max_psych = 2;
+    } else {
+        max_psych = police <= 1;
+    }
+    int idle = 1;
+    for (int base_id = 0; base_id < GameDataStateStorage.fields_.base_current_count_; base_id++) {
         if (Bases[base_id].faction_id_current == faction_id) {
-            if ((BaseCurrent->state & 2u) != 0) goto increase_psych;
-            if (BaseCurrent->specialist_total > BaseCurrent->specialist_unk_1)
-                skip_increase = 0;
+            // The image tests BaseCurrent here, not the scanned base.
+            if (BaseCurrent->state & BSTATE_DRONE_RIOTS_ACTIVE) {
+                goto increase_psych;
+            }
+            if (BaseCurrent->specialist_total > BaseCurrent->specialist_unk_1) {
+                idle = 0;
+            }
         }
     }
-    if (skip_increase == 0) {
-        const int min_psych = max_psych / 2;
-        if (psych > min_psych) --psych;
-        goto psych_rebalance_done;
+    if (idle) {
+        if (PlayersData[faction_id].se_alloc_psych > max_psych / 2) {
+            PlayersData[faction_id].se_alloc_psych--;
+        }
     }
+    goto psych_done;
 
 increase_psych:
-    if (psych >= max_psych) goto psych_rebalance_done;
-    ++psych;
-    if (psych >= max_psych) goto psych_rebalance_done;
-    if (police >= -2) goto psych_rebalance_done;
-
-    // Under severe police effects the native path recomputes each owned base
-    // before checking its current talent/drone totals and its riot bit.
-    {
-        for (int base_id2 = 0; base_id2 < GameDataStateStorage.fields_.base_current_count_; ++base_id2) {
-            if (Bases[base_id2].faction_id_current == faction_id) {
-                set_base(base_id2);
-                base_compute(1);
-                if (BaseCurrent->talent_total < BaseCurrent->drone_total
-                    && (BaseCurrent->state & 2u) != 0) {
-                    ++psych;
-                    if (psych >= max_psych) break;
-                }
-            }
-        }
-    }
-
-psych_rebalance_done:
-    const int min_psych = police >= -1 ? 0 : 2;
-    if (psych < min_psych) psych = min_psych;
-    else if (psych > 4) psych = 4;
-    if (has_project(SP_TELEPATHIC_MATRIX, faction_id)) psych = 0;
-    faction.se_alloc_psych = psych;
-
-    int initial_labs = diplo_sub(
-        diplo_sub(faction.ai_tech, faction.ai_power), faction.se_alloc_psych);
-    initial_labs = diplo_add(initial_labs, 11) / 2;
-    initial_labs = diplo_sub(initial_labs, faction.ai_wealth);
-    faction.se_alloc_labs = initial_labs;
-    int &labs = faction.se_alloc_labs;
-    if (diplo_mul(
-            diplo_add(
-                diplo_sub(diplo_sub(faction.ai_tech, faction.ai_power),
-                               faction.ai_wealth), 3), 25) > GameDataStateStorage.fields_.turn_current_num_)
-        ++labs;
-
-    const int research_denominator = diplo_add(
-        diplo_add(faction.ai_power, faction.ai_wealth), 1);
-    const int tech_cost = diplo_add(
-        diplo_mul(Players[faction_id].rule_techcost, research_denominator),
-        GameDataStateStorage.fields_.turn_current_num_);
-    labs = diplo_add(labs, faction.energy_reserves / diplo_mul(tech_cost, 2));
-
-    int region_id = 1;
-    while (region_id < 0x80) {
-        if (faction.region_total_bases[region_id] != 0) {
-            if (faction.region_base_plan[region_id] == 2) {
-                --labs;
-                break;
-            }
-            if (faction.region_base_plan[region_id] == 0
-                && (faction.ai_power != 0 || faction.ai_wealth != 0))
-                --labs;
-        }
-        ++region_id;
-    }
-    if (faction.ai_tech != 0 && faction.ai_power == 0 && faction.ai_wealth == 0
-        && region_id >= 0x80)
-        ++labs;
-
-    if (desired_total != 0) {
-        const int free_slots = 10 - labs - psych;
-        if (free_slots >= desired_total) {
-            int base_value = 0;
-            for (int base_id3 = 0; base_id3 < GameDataStateStorage.fields_.base_current_count_; ++base_id3) {
-                if (Bases[base_id3].faction_id_current == faction_id) {
-                    base_value = diplo_add(base_value, Bases[base_id3].unk_10);
-                    for (int facility_id = 0; facility_id < 0x46; ++facility_id) {
-                        if (facility_id < 0x41
-                            && has_fac(facility_id, base_id3, 0))
-                            base_value = diplo_sub(
-                                base_value, fac_maint(facility_id, faction_id));
+    if (PlayersData[faction_id].se_alloc_psych < max_psych) {
+        PlayersData[faction_id].se_alloc_psych++;
+        while (PlayersData[faction_id].se_alloc_psych < max_psych
+            && PlayersData[faction_id].soc_effect_pending.values_[SocialEffect::POLICE] < -2) {
+            int base_id;
+            for (base_id = 0; base_id < GameDataStateStorage.fields_.base_current_count_; base_id++) {
+                if (Bases[base_id].faction_id_current == faction_id) {
+                    set_base(base_id);
+                    base_compute(1);
+                    if (BaseCurrent->talent_total < BaseCurrent->drone_total
+                        && (BaseCurrent->state & BSTATE_DRONE_RIOTS_ACTIVE)) {
+                        break;
                     }
                 }
             }
-            const int expected_value = diplo_mul(
-                diplo_mul(
-                    diplo_sub(diplo_add(
-                        diplo_mul(faction.ai_wealth, 2), 4), faction.ai_tech),
-                    faction.pop_total), 1) / 4;
-            if (base_value > expected_value) {
-                while (10 - labs - psych >= desired_total) ++labs;
-            } else if (base_value < expected_value / 2) {
-                --labs;
+            if (base_id >= GameDataStateStorage.fields_.base_current_count_) {
+                break;
             }
+            PlayersData[faction_id].se_alloc_psych++;
         }
     }
 
-    if (faction.tech_id_researching == 0x58) --labs;
-    const int max_by_psych = 10 - psych;
-    const int energy_cap = energy_limit(faction_id);
-    if (labs < 0 || energy_cap < 0) labs = 0;
-    else if (labs > energy_cap) labs = energy_cap;
-    if (labs > max_by_psych) labs = max_by_psych;
-    faction.se_alloc_labs = labs;
-
-    int remaining = 10 - psych - labs;
-    const int second_cap = energy_limit(faction_id);
-    if (remaining > second_cap) {
-        do {
-            ++labs;
-            faction.se_alloc_labs = labs;
-            remaining = 10 - psych - labs;
-        } while (remaining > energy_limit(faction_id));
+psych_done:
+    PlayersData[faction_id].se_alloc_psych = range(PlayersData[faction_id].se_alloc_psych,
+        PlayersData[faction_id].soc_effect_pending.values_[SocialEffect::POLICE] < -1 ? 2 : 0, 4);
+    if (has_project(SP_TELEPATHIC_MATRIX, faction_id)) {
+        PlayersData[faction_id].se_alloc_psych = 0;
     }
-
-    int efficiency = faction.soc_effect_temp.values_[SocialEffect::EFFICIENCY];
-    if (efficiency < 0) efficiency = 0;
-    else if (efficiency > 0x63) efficiency = 0x63;
-    int population_adjustment = 3 - faction.pop_total;
-    if (population_adjustment < 0) population_adjustment = 0;
-    else if (population_adjustment > 3) population_adjustment = 3;
-    const int threshold = population_adjustment + efficiency + 1;
-    if (labs < 0) labs = 0;
-    else if (labs > 10) labs = 10;
-    faction.se_alloc_labs = labs;
-    while (labs > threshold - psych - labs + 10) {
-        --labs;
-        faction.se_alloc_labs = labs;
+    PlayersData[faction_id].se_alloc_labs = (PlayersData[faction_id].ai_tech - PlayersData[faction_id].ai_power
+        - PlayersData[faction_id].se_alloc_psych + 11) / 2 - PlayersData[faction_id].ai_wealth;
+    if (GameDataStateStorage.fields_.turn_current_num_ < (PlayersData[faction_id].ai_tech
+            - PlayersData[faction_id].ai_power - PlayersData[faction_id].ai_wealth + 3) * 25) {
+        PlayersData[faction_id].se_alloc_labs++;
     }
-    while (10 - labs - psych > labs + threshold) {
-        ++labs;
-        faction.se_alloc_labs = labs;
+    PlayersData[faction_id].se_alloc_labs += PlayersData[faction_id].energy_reserves
+        / ((Players[faction_id].rule_techcost * (PlayersData[faction_id].ai_power
+            + PlayersData[faction_id].ai_wealth + 1) + GameDataStateStorage.fields_.turn_current_num_) * 2);
+    int region_id;
+    for (region_id = 1; region_id < 0x80; region_id++) {
+        if (PlayersData[faction_id].region_total_bases[region_id]) {
+            if (PlayersData[faction_id].region_base_plan[region_id] == 2) {
+                PlayersData[faction_id].se_alloc_labs--;
+                break;
+            }
+            if (!PlayersData[faction_id].region_base_plan[region_id]
+                && (PlayersData[faction_id].ai_wealth || PlayersData[faction_id].ai_power)) {
+                PlayersData[faction_id].se_alloc_labs--;
+            }
+        }
+    }
+    if (PlayersData[faction_id].ai_tech && !PlayersData[faction_id].ai_wealth
+        && !PlayersData[faction_id].ai_power && region_id >= 0x80) {
+        PlayersData[faction_id].se_alloc_labs++;
+    }
+    if (unassigned) {
+        if (10 - PlayersData[faction_id].se_alloc_psych - PlayersData[faction_id].se_alloc_labs >= unassigned) {
+            int value = 0;
+            for (int base_id = 0; base_id < GameDataStateStorage.fields_.base_current_count_; base_id++) {
+                if (Bases[base_id].faction_id_current == faction_id) {
+                    value += Bases[base_id].unk_10;
+                    for (int facility_id = 0; facility_id < 0x46; facility_id++) {
+                        if (has_fac(facility_id, base_id, 0)) {
+                            value -= fac_maint(facility_id, faction_id);
+                        }
+                    }
+                }
+            }
+            int expected = (PlayersData[faction_id].ai_wealth * 2 + 4 - PlayersData[faction_id].ai_tech)
+                * PlayersData[faction_id].current_num_bases / 4;
+            if (value > expected) {
+                while (10 - PlayersData[faction_id].se_alloc_psych
+                    - PlayersData[faction_id].se_alloc_labs >= unassigned) {
+                    PlayersData[faction_id].se_alloc_labs++;
+                }
+            } else if (value < expected / 2) {
+                PlayersData[faction_id].se_alloc_labs--;
+            }
+        }
+    }
+    if (PlayersData[faction_id].tech_id_researching == 0x58) {
+        PlayersData[faction_id].se_alloc_labs--;
+    }
+    PlayersData[faction_id].se_alloc_labs = range(PlayersData[faction_id].se_alloc_labs, 0,
+        min(10 - PlayersData[faction_id].se_alloc_psych, energy_limit(faction_id)));
+    int labs = PlayersData[faction_id].se_alloc_labs;
+    while (10 - labs - PlayersData[faction_id].se_alloc_psych > energy_limit(faction_id)) {
+        labs++;
+        PlayersData[faction_id].se_alloc_labs = labs;
+    }
+    int threshold = range(PlayersData[faction_id].soc_effect_temp.values_[SocialEffect::EFFICIENCY], 0, 99)
+        + range(3 - PlayersData[faction_id].current_num_bases, 0, 3) + 1;
+    PlayersData[faction_id].se_alloc_labs = range(PlayersData[faction_id].se_alloc_labs, 0, 10);
+    while (PlayersData[faction_id].se_alloc_labs > threshold - PlayersData[faction_id].se_alloc_psych
+        - PlayersData[faction_id].se_alloc_labs + 10) {
+        PlayersData[faction_id].se_alloc_labs--;
+    }
+    while (10 - PlayersData[faction_id].se_alloc_psych - PlayersData[faction_id].se_alloc_labs
+        > PlayersData[faction_id].se_alloc_labs + threshold) {
+        PlayersData[faction_id].se_alloc_labs++;
     }
 }
 
@@ -9994,7 +9962,9 @@ void __cdecl production_phase(int faction_id) {
     }
     PlayersData[faction_id].flags &= ~PFLAG_SELF_AWARE_COLONY_LOST_MAINT;
     CurrentFactionEnergyReserves = PlayersData[faction_id].energy_reserves;
-    memset(PlayersData[faction_id].unk_46, 0, sizeof(PlayersData[faction_id].unk_46));
+    for (int slot = 0; slot < 9; slot++) {
+        PlayersData[faction_id].unk_46[slot] = 0;
+    }
     for (int row = 0; row < 8; row++) {
         PlayersData[faction_id].unk_38[row] = 0;
         memset(PlayersData[faction_id].unk_39[row], 0, sizeof(PlayersData[faction_id].unk_39[row]));
