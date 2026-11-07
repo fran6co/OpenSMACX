@@ -106,7 +106,8 @@ def parser() -> argparse.ArgumentParser:
     start.add_argument("--iterations", type=int, default=3)
     from .project_commands import register
     register(commands)
-    for command in (run, start, publish, worker_tree, commands.choices["prepare"], commands.choices["diff"]):
+    for command in (run, start, publish, worker_tree, commands.choices["prepare"], commands.choices["diff"],
+                    commands.choices["permute"]):
         command.add_argument("--resources", type=Path, help="Project-defined compiler resource pool, relative to --root")
         command.add_argument("--resource-timeout", type=float, default=0,
                              help="Wait at most this many seconds for a slot (default: refuse immediately)")

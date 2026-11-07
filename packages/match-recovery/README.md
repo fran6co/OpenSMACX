@@ -4996,3 +4996,29 @@ whole-COFF equivalence. Listing bytes must cover the selected root completely
 and agree with the object before source anchors are used. Currently supported:
 i386 PE/COFF, independent function COMDATs, single spans or supported primary/EH
 span pairs, and MSVC listings. No original-source line attribution is inferred.
+
+# Source-spelling search
+
+`recover permute <address-or-emitted-symbol> --image <pinned-image> [--in <host>]
+[--iterations N] [--seed S] [--time-limit SEC] [--keep-best <path>] [--operator NAME]`
+searches body spellings of one near-miss function. Each trial applies one to three
+token-level transforms inside the target body only (adjacent independent statement
+swaps, declaration reordering, commutative operand swaps, comparison flips,
+compound-assignment toggles, if/else inversion, for/while forms, `int` casts,
+`?:`/if-else, `*2^n`/`<<n`, hoisting or inlining temporaries), recompiles only the
+target's configured TU through a compiler overlay of the host text, and scores it
+with the same per-TU comparer as `measure`. A run first checks that the unchanged
+overlay reproduces the direct compile.
+
+`exact` is the comparer's unchanged BYTE_EXACT verdict. A finer distance orders
+misses: instructions aligned by mnemonic plus register/addressing shape, counting
+unmatched instructions, then differing bytes with relocations masked as in the
+comparer. Search is seeded hill climbing with annealing; equal scores are sometimes
+accepted and stalls restart from the best. Variants that fail to compile are
+discarded. The real source is never written. The best full host source, its
+unified diff and a JSON summary go to `--keep-best` (default
+`build/recovery/permute/<address>/<file>`, never inside a source root) after every
+improvement, so Ctrl-C keeps the best so far. Exit 0 means an exact variant was
+found, 1 not, 3 refused. Apply a variant by hand, then `measure` and `record`.
+Transforms are spellings, not equivalence proofs; bodies with source markers,
+raw strings or preprocessor splicing refuse.

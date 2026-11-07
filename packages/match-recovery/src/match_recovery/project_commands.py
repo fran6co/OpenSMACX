@@ -152,6 +152,19 @@ def register(commands):
     diff.add_argument("--in", dest="in_file", help="Exact annotation host")
     diff.add_argument("--output", type=Path, help="Ignored HTML destination; default build/recovery/diffs/<address>/diff.html")
     diff.add_argument("--flag-set", type=int, default=0, help="Configured TU trial index, default 0")
+    permute = commands.add_parser("permute", help="Search body spellings of one near-miss for a BYTE_EXACT variant; never edits source or banks claims")
+    permute.add_argument("target")
+    permute.add_argument("--root", type=Path, default=Path.cwd())
+    permute.add_argument("--image", type=Path, required=True)
+    permute.add_argument("--in", dest="in_file", help="Exact annotation host")
+    permute.add_argument("--iterations", type=int, default=200, help="Mutation trials (cached repeats count)")
+    permute.add_argument("--seed", type=int, default=0, help="Random seed; equal inputs reproduce the search")
+    permute.add_argument("--time-limit", type=float, help="Stop after this many seconds")
+    permute.add_argument("--keep-best", type=Path,
+                         help="Best full-source variant path outside source roots; default build/recovery/permute/<address>/<file>")
+    permute.add_argument("--operator", dest="operators", action="append",
+                         help="Restrict to named mutation operators; repeat for several")
+    permute.add_argument("--quiet", action="store_true", help="No per-trial progress on stderr")
     grouping = commands.add_parser("partition", help="Derive provisional ownership units, not historical TU claims")
     grouping.add_argument("--root", type=Path, default=Path.cwd())
     grouping.add_argument("--group", help="A source-derived class or component group identity")
@@ -359,6 +372,24 @@ def invoke_project(root: Path, arguments: dict) -> tuple[int, object]:
                                in_file=arguments.get("in_file"), output=arguments.get("output"),
                                flag_set=arguments.get("flag_set", 0))
         return 0, output
+    if arguments.get("command") == "permute":
+        import sys
+        from .permute import OPERATORS
+        from .source_permute import permute_source
+        operators = arguments.get("operators")
+        if operators and set(operators) - OPERATORS.keys():
+            raise ValueError("unknown mutation operator; choose from " + ", ".join(sorted(OPERATORS)))
+
+        def report(event):
+            distance = "no-compile" if event["distance"] is None else event["distance"]
+            print(f"permute: trial {event['iteration']} distance {distance}: "
+                  + "; ".join(event["mutations"])[:160], file=sys.stderr, flush=True)
+        output = permute_source(root, arguments["target"], image=arguments["image"],
+                                in_file=arguments.get("in_file"), iterations=arguments.get("iterations", 200),
+                                seed=arguments.get("seed", 0), time_limit=arguments.get("time_limit"),
+                                keep_best=arguments.get("keep_best"), operators=operators,
+                                progress=None if arguments.get("quiet") else report)
+        return {"pass": 0, "fail": 1, "unknown": 3}[output["result"]], output
     if arguments.get("command") == "measure":
         from .source_measure import measure_source
         output = measure_source(root, arguments["targets"], image=arguments["image"],
