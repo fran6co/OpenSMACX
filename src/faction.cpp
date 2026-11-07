@@ -1542,6 +1542,8 @@ Purpose: Set `agenda` in the diplomatic agenda word between two factions, both
 Return Value: n/a
 Status: Complete
 */
+// The image calls it out of line from every caller.
+#pragma auto_inline(off)
 void __cdecl agenda_on(int faction_id, int faction_id_with, int agenda) {
     // The agenda view is the same table eight dwords in - 0x96CA18, which is
     // PlayerData::diplo_agenda[0].
@@ -1556,6 +1558,7 @@ void __cdecl agenda_on(int faction_id, int faction_id_with, int agenda) {
     index = faction_id;
     PlayersData[faction_id_with].diplo_agenda[index] |= agenda;
 }
+#pragma auto_inline(on)
 
 /*
 Purpose: Clear `agenda` in the diplomatic agenda word between two factions,
@@ -1721,73 +1724,70 @@ BOOL __cdecl wants_to_attack(int faction_id, int faction_id_tgt, int faction_id_
     if (PlayersData[faction_id].ai_fight < 0 && !unk_tgl && GameDataStateStorage.fields_.faction_rankings_[7] != faction_id_tgt) {
         return false;
     }
-    // BUG IN THE ORIGINAL: this array is sized by MaxRegionLandNum (matching the stack frame's
-    // 0x134-byte allocation) even though only indices 1..MaxPlayerNum-1 are ever written by the
-    // loop below, and it is never zero-initialized - reproduced here rather than fixed, since the
-    // shipped code reads whatever was on the stack for region_top_base_count[0] and any faction_id
-    // that is compared before this array is populated for that index.
-    uint32_t region_top_base_count[MaxRegionLandNum];
+    int factor_count = 0;
+    int factor_force_rating = 0;
+    int factor_unk = 1;
+    // BUG IN THE ORIGINAL: sized by MaxRegionLandNum (the 0x134-byte frame) although only
+    // indices 1..7 are used, and never zero-initialized; the image reads the stale stack.
+    int region_top_base_count[MaxRegionLandNum];
     for (int region = 1; region < MaxRegionLandNum; region++) {
-        for (uint32_t f = 1; f < MaxPlayerNum; f++) {
-            uint32_t total_bases = PlayersData[f].region_total_bases[region];
-            if (total_bases > region_top_base_count[f]) {
-                region_top_base_count[f] = total_bases;
-            }
+        for (int f = 1; f < MaxPlayerNum; f++) {
+            int total_bases = PlayersData[f].region_total_bases[region];
+            region_top_base_count[f] = region_top_base_count[f] > total_bases
+                ? region_top_base_count[f] : total_bases;
         }
     }
-    for (uint32_t f = 1; f < MaxPlayerNum; f++) {
-        region_top_base_count[f] -= (region_top_base_count[f] / 4);
+    for (int f = 1; f < MaxPlayerNum; f++) {
+        region_top_base_count[f] -= region_top_base_count[f] / 4;
     }
     int region_target_hq = -1;
     int region_hq = -1;
-    for (int player = 0; player < GameDataStateStorage.fields_.base_current_count_; player++) {
-        if (has_fac(FAC_HEADQUARTERS, player, 0)) {
-            uint32_t base_faction = Bases[player].faction_id_current;
+    for (int base_id = 0; base_id < GameDataStateStorage.fields_.base_current_count_; base_id++) {
+        if (has_fac(FAC_HEADQUARTERS, base_id, 0)) {
+            uint32_t base_faction = Bases[base_id].faction_id_current;
             if (base_faction == faction_id) {
-                region_hq = region_at(Bases[player].x, Bases[player].y);
+                region_hq = region_at(Bases[base_id].x, Bases[base_id].y);
             } else if (base_faction == faction_id_tgt) {
-                region_target_hq = region_at(Bases[player].x, Bases[player].y);
+                region_target_hq = region_at(Bases[base_id].x, Bases[base_id].y);
             }
         }
     }
-    int factor_force_rating = 0;
-    uint32_t factor_count = 0;
-    int factor_unk = 1;
     for (region = 1; region < MaxRegionLandNum; region++) {
-        if (!bad_reg(region)) {
-            uint32_t force_rating = PlayersData[faction_id].region_force_rating[region];
-            if (force_rating) {
-                uint32_t total_cmbt_vehs
-                    = PlayersData[faction_id_tgt].region_total_combat_vehs[region];
-                uint32_t total_bases_tgt = PlayersData[faction_id_tgt].region_total_bases[region];
-                if (total_cmbt_vehs || total_bases_tgt) {
-                    if (PlayersData[faction_id].region_total_bases[region]
-                        >= ((region_top_base_count[faction_id] / 4) * 3) || region == region_hq) {
-                        uint32_t compare = force_rating +
-                            PlayersData[faction_id].region_total_combat_vehs[region] +
-                            (faction_id_unk > 0
-                                ? PlayersData[faction_id_unk].region_force_rating[region] / 4 : 0);
-                        if (PlayersData[faction_id_tgt].region_force_rating[region] > compare) {
-                            return false;
-                        }
-                    }
-                    if (total_bases_tgt) {
-                        factor_force_rating += force_rating + (faction_id_unk > 0
-                            ? PlayersData[faction_id_unk].region_force_rating[region] / 2 : 0);
-                    }
-                    if ((total_bases_tgt >= ((region_top_base_count[faction_id_tgt] / 4) * 3)
-                        || region == region_target_hq) && force_rating > total_cmbt_vehs) {
-                        factor_force_rating += force_rating + (faction_id_unk > 0
-                            ? PlayersData[faction_id_unk].region_force_rating[region] / 2 : 0);
-                    }
-                    factor_unk += total_cmbt_vehs
-                        + PlayersData[faction_id].region_total_bases[region]
-                        ? PlayersData[faction_id_tgt].region_force_rating[region] / 2 : 0;
-                    if (PlayersData[faction_id].region_total_bases[region]) {
-                        factor_count++;
-                    }
-                }
+        if (bad_reg(region)) {
+            continue;
+        }
+        uint16_t force_rating = PlayersData[faction_id].region_force_rating[region];
+        if (!force_rating) {
+            continue;
+        }
+        uint16_t total_cmbt_vehs = PlayersData[faction_id_tgt].region_total_combat_vehs[region];
+        if (!total_cmbt_vehs && !PlayersData[faction_id_tgt].region_total_bases[region]) {
+            continue;
+        }
+        if (PlayersData[faction_id].region_total_bases[region]
+                >= region_top_base_count[faction_id] * 3 / 4
+            || region == region_hq) {
+            if (PlayersData[faction_id_tgt].region_force_rating[region]
+                > force_rating + (PlayersData[faction_id].region_total_combat_vehs[region]
+                    + (faction_id_unk > 0
+                        ? PlayersData[faction_id_unk].region_force_rating[region] / 4 : 0))) {
+                return false;
             }
+        }
+        if (PlayersData[faction_id_tgt].region_total_bases[region]) {
+            factor_force_rating += force_rating + (faction_id_unk > 0
+                ? PlayersData[faction_id_unk].region_force_rating[region] / 2 : 0);
+        }
+        if ((PlayersData[faction_id_tgt].region_total_bases[region]
+                >= region_top_base_count[faction_id_tgt] * 3 / 4
+            || region == region_target_hq) && force_rating > total_cmbt_vehs) {
+            factor_force_rating += force_rating + (faction_id_unk > 0
+                ? PlayersData[faction_id_unk].region_force_rating[region] / 2 : 0);
+        }
+        factor_unk += total_cmbt_vehs + (PlayersData[faction_id].region_total_bases[region]
+            ? PlayersData[faction_id_tgt].region_force_rating[region] / 2 : 0);
+        if (PlayersData[faction_id].region_total_bases[region]) {
+            factor_count++;
         }
     }
     want_to_attack -= PlayersData[faction_id].ai_fight * 2;
@@ -1800,7 +1800,7 @@ BOOL __cdecl wants_to_attack(int faction_id, int faction_id_tgt, int faction_id_
         want_to_attack--;
     }
     int best_armor_target = PlayersData[faction_id_tgt].best_armor_value;
-    int best_weapon = PlayersData[faction_id_tgt].best_weapon_value;
+    int best_weapon = PlayersData[faction_id].best_weapon_value;
     if (best_weapon > (best_armor_target * 2)) {
         want_to_attack--;
     }
@@ -1810,14 +1810,14 @@ BOOL __cdecl wants_to_attack(int faction_id, int faction_id_tgt, int faction_id_
     if (!has_treaty(faction_id, faction_id_tgt, DTREATY_VENDETTA)) {
         want_to_attack++;
     }
-    if (!has_treaty(faction_id, faction_id_tgt, DTREATY_PACT)) {
+    if (has_treaty(faction_id, faction_id_tgt, DTREATY_PACT)) {
         want_to_attack++;
     }
     if (faction_id_unk > 0 && !great_satan(faction_id_unk, false)) {
         want_to_attack--;
     }
     if (has_agenda(faction_id, faction_id_tgt, DAGENDA_UNK_200)
-        && GameDataStateStorage.fields_.game_rules_ & RULES_INTENSE_RIVALRY) {
+        && !(GameDataStateStorage.fields_.game_rules_ & RULES_INTENSE_RIVALRY)) {
         want_to_attack--;
     }
     want_to_attack -= range((PlayersData[faction_id_tgt].integrity_blemishes
@@ -2560,16 +2560,16 @@ void __cdecl rankings(int apply_ranks) {
             && !ScenarioSave.objective_achieve_points) {
             FactionRankingsUnk[faction_id] = num_objectives(faction_id, false) * 10;
         } else {
-            FactionRankingsUnk[faction_id] = (PlayersData[faction_id].pop_total
-                + PlayersData[faction_id].theory_of_everything) * 4;
+            FactionRankingsUnk[faction_id] = (PlayersData[faction_id].theory_of_everything
+                + PlayersData[faction_id].pop_total) * 4;
             for (int tech_id = 0; tech_id < MaxTechnologyNum; tech_id++) {
                 // has_tech_call: the image CALLS 0x005B9F20 twice from here.
                 if (has_tech(tech_id, faction_id)) {
                     FactionRankingsUnk[faction_id] = (tech_id >= MaxTechnologyNum)
                         ? FactionRankingsUnk[faction_id] + 4
-                        : Technology[tech_id].growth_value + Technology[tech_id].tech_value
-                            + Technology[tech_id].wealth_value + Technology[tech_id].power_value
-                            + FactionRankingsUnk[faction_id];
+                        : FactionRankingsUnk[faction_id] + (Technology[tech_id].growth_value
+                            + Technology[tech_id].tech_value + Technology[tech_id].wealth_value
+                            + Technology[tech_id].power_value);
                 }
             }
             for (int i = 0; i < MaxSecretProjectNum; i++) {
@@ -2587,18 +2587,17 @@ void __cdecl rankings(int apply_ranks) {
                     continue;
                 }
                 int value = VehPrototypes[proto_id].cost * PlayersData[faction_id].proto_id_active[proto_id];
-                if (!value) {
-                    continue;
-                }
-                int offense = Weapon[VehPrototypes[proto_id].weapon_id].offense_rating;
-                if (!offense) {
-                    FactionRankingsUnk[faction_id] += value / 4;
-                } else if (offense < 0) {
-                    FactionRankingsUnk[faction_id] += value / 2;
-                } else if (offense >= 99) {
-                    FactionRankingsUnk[faction_id] += value;
-                } else {
-                    FactionRankingsUnk[faction_id] += (offense / best_offense) * value;
+                if (value) {
+                    int offense = Weapon[VehPrototypes[proto_id].weapon_id].offense_rating;
+                    if (!offense) {
+                        FactionRankingsUnk[faction_id] += value / 4;
+                    } else if (offense < 0) {
+                        FactionRankingsUnk[faction_id] += value / 2;
+                    } else if (offense >= 99) {
+                        FactionRankingsUnk[faction_id] += value;
+                    } else {
+                        FactionRankingsUnk[faction_id] += (offense / best_offense) * value;
+                    }
                 }
             }
         }
@@ -4483,16 +4482,14 @@ void __cdecl tech_analysis(int faction_id, int faction_id_with) {
                     for (int base = 0; base < GameDataStateStorage.fields_.base_current_count_; ++base) {
                         if (Bases[base].faction_id_current == faction_id_with &&
                             Bases[base].queue_production_id[0] == -project - 0x46) {
-                            DiploScratchF7F4 = project;
-                            matched = project;
+                            DiploScratchF7F4 = matched = project;
                         }
                     }
                     if (((PlayersData[faction_id].diff_level >= 5 &&
                           (!IsMultiplayerNet || faction_id != static_cast<int>(GameDataStateStorage.fields_.ranking_faction_id_unk2_))) ||
                          (IsMultiplayerNet && faction_id == static_cast<int>(GameDataStateStorage.fields_.ranking_faction_id_unk1_))) &&
                         DiploScratchF7F4 == -1) {
-                        DiploScratchF7F4 = -2 - project;
-                        matched = -2 - project;
+                        DiploScratchF7F4 = matched = -2 - project;
                     }
                 }
             }
@@ -4502,8 +4499,8 @@ void __cdecl tech_analysis(int faction_id, int faction_id_with) {
             }
             if (v >= DiploScratchFAA4) {
                 DiploScratchF7EC = DiploScratchFAA4;
-                DiploScratchFA84 = DiploScratchFA6C;
                 DiploScratchF80C = DiploScratchF800;
+                DiploScratchFA84 = DiploScratchFA6C;
                 DiploScratchFAA4 = v;
                 DiploScratchF800 = i;
                 DiploScratchFA6C = matched;
@@ -4569,10 +4566,10 @@ void __cdecl diplomacy_check(int faction, int other, int update) {
     DiploFrictionFactionIDWith = faction;
     DiploFrictionFactionID = other;
     PopupDialogFactionID = other;
-    DiploScratchFA60 = DiploScratchFAA0 = DiploScratchFA88 = DiploScratchFA98 = 0;
-    DiploScratchFA80 = DiploScratchFA50 = DiploScratchFA58 = DiploScratchFA2C = 0;
+    DiploScratchFA2C = DiploScratchFA58 = DiploScratchFA50 = DiploScratchFA80
+        = DiploScratchFA98 = DiploScratchFA88 = DiploScratchFAA0 = DiploScratchFA60 = 0;
     DiploScratchFA64 = at_climax(faction);
-    DiploScratchFA90 = static_cast<int>(PlayersData[faction].ranking) < static_cast<int>(PlayersData[other].ranking);
+    DiploScratchFA90 = (int)PlayersData[other].ranking > (int)PlayersData[faction].ranking;
     const int satan = great_satan(faction, 0);
     if (!satan || PlayersData[other].current_num_bases < 2
         || ((PlayersData[faction].diplo_treaties[other] & 1)
@@ -8935,531 +8932,405 @@ home_swap:
 // RECOVERY_OBJECT: v1 0x0093F7D0 ?DiplomacyProposalGateCount@@3HA
 int DiplomacyProposalGateCount = 0;
 
-static int propose_pact_signed_bits(uint32_t bits) {
-    return bits <= 0x7fffffffU ? static_cast<int>(bits) : -1 - static_cast<int>(~bits);
-}
-static int propose_pact_rank(int faction) {
-    return propose_pact_signed_bits(PlayersData[faction].ranking);
-}
-static bool propose_pact_ahead_refusal(int mode, int offer_tech, int energy,
-                                       int &cap, int turn) {
-    int doubled_cap = diplo_mul(cap, 2);
-    int five_turns = diplo_mul(turn, 5);
-    int comparison = doubled_cap > five_turns ? doubled_cap : five_turns;
-    int reserve_threshold = diplo_mul(comparison / 50, 50);
-    cap = reserve_threshold;
-    if (energy < reserve_threshold) {
-        return mode == 5 || offer_tech < 0;
-    }
-    return offer_tech < 0 && mode == 4;
-}
-
 // ORIGINAL: 0x00543BC0 ?propose_pact@@YAHHH@Z 0x00543BC0-0x00544E36
 // RECOVERY_BINDING: v1 {"evidence": ["task:propose-pact-owner", "Pinned543BC0..544E36: initial eligibility normalization, signed ranking/current base counts, ordinary array columns, cap staging and repeated adjustment, live callbacks, native popup labels and ordered network/help paths.", "Native93F7D0 is a signed four-byte workflow gate; source uses a provisional role name and pinned initial zero, with no claim of semantic completeness for its other producers."], "reason": "Recover the complete faction-owned pact proposal using genuine faction records, parser state, typed services and source-owned gate storage. Retained TRIED text describes the superseded seed approximation, not this implementation. No byte or game acceptance claim."}
 // TRIED: no Popup/SEH here (free AI-heuristic function, not a UI handler) - the difficulty is a long chain of inc/dec on a score accumulator plus several reciprocal-multiplication constant-divide idioms, transcribed with plain `/` and `%` (semantically equivalent, not byte-identical). Two known simplifications, both commented in place: (1) the original unconditionally zeroes its score accumulator midway through (0x544408 `mov [ebp+0xc],ecx`) before re-deriving a fresh propose/decline decision from separate flags - this body keeps accumulating instead of discarding, to keep the later score-gated branches meaningful; (2) the "generosity cap" energy-gift arithmetic in the L54436D block approximates the original's fixed-point chain rather than reproducing it exactly. sim 0.28-0.58 across flag sets.
 int __cdecl propose_pact(int myFac, int otherFac) {
-
-    int score;
-    {
-        int t = DiploScratchFA54;
-        int base = diplo_add(DiploScratchF7E0, t);
-        PopupDialogFactionID = otherFac;
-        score = t != 0 ? diplo_add(base, 1) : base;
+    PopupDialogFactionID = otherFac;
+    int strength_gap = 0;
+    int score = DiploScratchF7E0 + DiploScratchFA54;
+    if (DiploScratchFA54) {
+        score++;
     }
-    int threshold = DiploScratchF7E8 != 0 ? DiploScratchF7E8 : DiploScratchFA8C;
-    bool techGapFlag = false; // [ebp-0x14]
-
+    int partner_id;
+    if (DiploScratchF7E8) {
+        partner_id = DiploScratchF7E8;
+    } else {
+        partner_id = DiploScratchFA8C;
+    }
     int designated = GameDataStateStorage.fields_.ranking_faction_id_unk1_;
-    if (IsMultiplayerNet != 0) {
-        int desigTarget = GameDataStateStorage.fields_.ranking_faction_id_unk2_;
-        if (myFac == designated) {
-            if (propose_pact_rank(desigTarget) < 6 ||
-                diplo_mul(2, FactionRankingsUnk[myFac]) >
-                    diplo_mul(3, FactionRankingsUnk[desigTarget])) {
-                score = diplo_add(score, 1);
-            }
+    if (IsMultiplayerNet) {
+        int designated_target = GameDataStateStorage.fields_.ranking_faction_id_unk2_;
+        if (myFac == designated
+            && ((int)PlayersData[designated_target].ranking < 6
+                || FactionRankingsUnk[myFac] * 2 > FactionRankingsUnk[designated_target] * 3)) {
+            score++;
         }
-        if (myFac == desigTarget) {
-            if (propose_pact_rank(myFac) < 6 ||
-                diplo_mul(2, FactionRankingsUnk[GameDataStateStorage.fields_.faction_rankings_[7]]) >
-                    diplo_mul(3, FactionRankingsUnk[myFac])) {
-                score = diplo_sub(score, 1);
-            }
+        if (myFac == designated_target
+            && ((int)PlayersData[myFac].ranking < 6
+                || FactionRankingsUnk[GameDataStateStorage.fields_.faction_rankings_[7]] * 2
+                    > FactionRankingsUnk[myFac] * 3)) {
+            score--;
         }
     }
-
-    {
-        unsigned int flags = GameDataStateStorage.fields_.game_rules_;
-        if ((flags & 0x40) != 0 && myFac == designated) score = diplo_add(score, 1);
-        // Native tests CH bit 0x10 while EAX still contains flags & 0x40.
-        if ((flags & 0x1000) != 0 && (flags & 0x40) == 0) score = diplo_sub(score, 1);
+    if (GameDataStateStorage.fields_.game_rules_ & RULES_INTENSE_RIVALRY && myFac == designated) {
+        score++;
     }
-
-    // Native 0x543CCD tests the source faction's PlayerData.flags field.
-    if ((PlayersData[otherFac].flags & 0x400000u) != 0) {
-        score = diplo_sub(score, 1);
+    if (GameDataStateStorage.fields_.game_rules_ & 0x1000
+        && !(GameDataStateStorage.fields_.game_rules_ & RULES_INTENSE_RIVALRY)) {
+        score--;
     }
-
-    if (propose_pact_rank(myFac) >= 6 && DiploScratchF7F0 == 0 &&
-        propose_pact_rank(otherFac) >= (propose_pact_rank(myFac) == 7 ? 5 : 6)) {
-        score = diplo_add(score, 1);
-        {
-            int thresh = (IsMultiplayerNet != 0) ? 50 : 100;
-            if (GameDataStateStorage.fields_.turn_current_num_ >= thresh) score = diplo_add(score, 1);
+    if (PlayersData[otherFac].flags & 0x400000) {
+        score--;
+    }
+    if ((int)PlayersData[myFac].ranking >= 6 && !DiploScratchF7F0
+        && (int)PlayersData[otherFac].ranking >= ((int)PlayersData[myFac].ranking == 7 ? 5 : 6)) {
+        score++;
+        if (GameDataStateStorage.fields_.turn_current_num_ >= (IsMultiplayerNet ? 50 : 100)) {
+            score++;
         }
-        if (DiploScratchF7FC != 0) score = diplo_add(score, 1);
-    } else if (propose_pact_rank(myFac) >= 6 && propose_pact_rank(otherFac) >= 4 && GameDataStateStorage.fields_.turn_current_num_ >= 0x32 &&
-        DiploScratchF7F0 == 0) {
-        if (DiploScratchF7FC != 0) {
-            score = diplo_add(score, 2);
-        } else if (DiploScratchFA54 == 0) {
-            score = diplo_sub(score, 1);
-        }
-    } else if (DiploScratchF7FC != 0) {
-        score = diplo_add(score, 1);
-    }
-    if (threshold != 0) {
-        score = diplo_sub(score, 1);
-        if (great_satan(threshold, 0) != 0) score = diplo_sub(score, 1);
-        if (propose_pact_rank(threshold) > propose_pact_rank(otherFac)) score = diplo_sub(score, 1);
-    if ((PlayersData[otherFac].diplo_treaties[threshold] & 0x8000) != 0) {
-        int techGapOther = PlayersData[otherFac].mil_strength_1;
-        int techGapThreshold = PlayersData[threshold].mil_strength_1;
-        if (techGapOther < techGapThreshold) {
-            techGapFlag = true;
-            int mid = diplo_add(techGapOther / 2, techGapThreshold);
-            score = diplo_sub(score, mid / diplo_add(techGapOther, 1));
+    } else if ((int)PlayersData[myFac].ranking >= 6 && (int)PlayersData[otherFac].ranking >= 4
+        && GameDataStateStorage.fields_.turn_current_num_ >= 50 && !DiploScratchF7F0) {
+        if (DiploScratchF7FC) {
+            score++;
+        } else if (!DiploScratchFA54) {
+            score--;
         }
     }
+    if (DiploScratchF7FC) {
+        score++;
     }
-
+    if (partner_id) {
+        score--;
+        if (great_satan(partner_id, 0)) {
+            score--;
+        }
+        if ((int)PlayersData[partner_id].ranking > (int)PlayersData[otherFac].ranking) {
+            score--;
+        }
+        if (PlayersData[otherFac].diplo_treaties[partner_id] & 0x8000
+            && PlayersData[otherFac].mil_strength_1 < PlayersData[partner_id].mil_strength_1) {
+            strength_gap = 1;
+            score -= (PlayersData[otherFac].mil_strength_1 / 2 + PlayersData[partner_id].mil_strength_1)
+                / (PlayersData[otherFac].mil_strength_1 + 1);
+        }
+    }
     if (DiploFriction >= 10 && DiplomacyProposalMode != 3) {
-        score = diplo_add(score, diplo_sub(DiploFriction, 10));
+        score += DiploFriction - 10;
     }
-
-    if (PlayersData[myFac].global_reputation >= 2) {
-        if (DiploScratchFA78 == 0) score = diplo_sub(score, 1);
+    if (PlayersData[myFac].global_reputation >= 2 && !DiploScratchFA78) {
+        score--;
+    }
+    if (PlayersData[myFac].global_reputation < 2) {
+        score++;
+    }
+    if (PlayersData[otherFac].tech_commerce_bonus < PlayersData[myFac].tech_commerce_bonus + 1) {
+        score++;
+    }
+    if (PlayersData[otherFac].tech_commerce_bonus > PlayersData[myFac].tech_commerce_bonus) {
+        score--;
+    }
+    if (!IsMultiplayerNet && !strcmp(Players[otherFac].filename, "HIVE")) {
+        score--;
+    }
+    if (DiploScratchFA98) {
+        score--;
+    }
+    if (DiploScratchFA68) {
+        score++;
+    }
+    if (DiploScratchFA3C) {
+        score++;
+    }
+    if ((int)PlayersData[otherFac].ranking > (int)PlayersData[myFac].ranking) {
+        if ((int)PlayersData[otherFac].ranking == 7) {
+            score += 2;
+        }
+        if ((int)PlayersData[otherFac].ranking == 6) {
+            score++;
+        }
+        if ((int)PlayersData[myFac].ranking <= 4) {
+            score--;
+        }
     } else {
-        score = diplo_add(score, 1);
+        if ((int)PlayersData[myFac].ranking == 7) {
+            score += DiploScratchFA54;
+        }
+        if ((int)PlayersData[myFac].ranking - (int)PlayersData[otherFac].ranking >= 3) {
+            score--;
+        }
+        if (great_satan(myFac, 0)) {
+            score++;
+        }
     }
-
-    {
-        int myBases = propose_pact_signed_bits(PlayersData[myFac].current_num_bases);
-        int otherBases = propose_pact_signed_bits(PlayersData[otherFac].current_num_bases);
-        if (otherBases < diplo_add(myBases, 1)) score = diplo_add(score, 1);
-        if (otherBases > myBases) score = diplo_sub(score, 1);
+    if ((int)PlayersData[myFac].ranking <= 5 && (int)PlayersData[otherFac].ranking <= 5) {
+        score--;
     }
-
-    if (IsMultiplayerNet == 0 &&
-        strcmp("HIVE", Players[otherFac].name_leader) == 0) {
-        score = diplo_sub(score, 1);
-    }
-
-    if (DiploScratchFA98 != 0) score = diplo_sub(score, 1);
-    if (DiploScratchFA68 != 0) score = diplo_add(score, 1);
-    if (DiploScratchFA3C != 0) score = diplo_add(score, 1);
-
-    if (propose_pact_rank(otherFac) > propose_pact_rank(myFac)) {
-        if (propose_pact_rank(otherFac) == 7) score = diplo_add(score, 2);
-        if (propose_pact_rank(otherFac) == 6) score = diplo_add(score, 1);
-        if (propose_pact_rank(myFac) <= 4) score = diplo_sub(score, 1);
-    } else {
-        if (propose_pact_rank(myFac) == 7) score = diplo_add(score, DiploScratchFA54);
-        if (diplo_sub(propose_pact_rank(myFac), propose_pact_rank(otherFac)) >= 3) score = diplo_sub(score, 1);
-        if (great_satan(myFac, 0) != 0) score = diplo_add(score, 1);
-    }
-
-    bool wantHelp = false; // [ebp-0x18]-style flag, set by several checks below
-    if (propose_pact_rank(myFac) <= 5 && propose_pact_rank(otherFac) <= 5) {
-        score = diplo_sub(score, 1);
-    }
-    {
-        const int difficulty = PlayersData[myFac].diff_level;
-        const int limit = (difficulty != 0 ? 0 : 2) + ((GameDataStateStorage.fields_.game_rules_ >> 12) & 1) +
-                          (techGapFlag ? 2 : 0) + 2;
-        const bool eligible = !(DiploScratchFA9C <= score && difficulty != 0) &&
-            (static_cast<uint32_t>(PlayersData[myFac].diplo_agenda[otherFac]) & 0x2000) == 0 &&
-            DiploScratchFA78 <= limit &&
-            (PlayersData[otherFac].diplo_treaties[myFac] & 0x20) == 0 &&
-            DiploScratchFA70 == 0;
-        score = eligible ? 1 : 0;
-    }
-    bool immediateAccept = false; // native local [ebp-0x10]
-    bool acceptedOffer = false;   // native local [ebp-0x1c]
+    score = (DiploScratchFA9C > score || !PlayersData[myFac].diff_level)
+        && !(PlayersData[myFac].diplo_agenda[otherFac] & 0x2000)
+        && DiploScratchFA78 <= (PlayersData[myFac].diff_level ? 0 : 2)
+            + ((GameDataStateStorage.fields_.game_rules_ >> 12) & 1) + (strength_gap ? 2 : 0) + 2
+        && !(PlayersData[otherFac].diplo_treaties[myFac] & 0x20)
+        && !DiploScratchFA70;
     diplomacy_caption(myFac, otherFac);
     parse_says(0, get_pact(myFac), -1, -1);
-    {
-        PluralityDefault = 0;
-        GenderDefault = Players[myFac].is_leader_female;
-        parse_says(1, Players[myFac].title_leader, -1, -1);
-        GenderDefault = Players[myFac].is_leader_female;
-        PluralityDefault = 0;
-        parse_says(2, Players[myFac].name_leader, -1, -1);
-    }
-
-    if (DiplomacyProposalMode == 3) {
-        if (DiploScratchFA24 != 0) {
-            if (IsMultiplayerNet != 0) {
-                log_say(DiploLabelSendingSETTREATY, otherFac, myFac, 0x2000000);
-                message_data(0x2443, 0, otherFac, myFac, 0x2000000, 1);
-            } else {
-                set_treaty(otherFac, myFac, 0x2000000, 1);
-            }
-            pact_of_brotherhood(myFac, otherFac);
-            return 1;
+    parse_set(Players[myFac].is_leader_female, 0);
+    parse_says(1, Players[myFac].title_leader, -1, -1);
+    parse_set(Players[myFac].is_leader_female, 0);
+    parse_says(2, Players[myFac].name_leader, -1, -1);
+    char number[80];
+    if (DiplomacyProposalMode == 3 && DiploScratchFA24) {
+        if (IsMultiplayerNet) {
+            log_say(DiploLabelSendingSETTREATY, otherFac, myFac, 0x2000000);
+            message_data(0x2443, 0, otherFac, myFac, 0x2000000, 1);
+        } else {
+            set_treaty(otherFac, myFac, 0x2000000, 1);
         }
-    }
-    if (DiplomacyProposalMode != 3 && score != 0) {
-        goto consider_gift;
-    }
-
-    {
-    const int refusalFA78 = DiploScratchFA78;
-    const int refusalFA2C = DiploScratchFA2C;
-    if ((refusalFA78 > 2 || refusalFA2C != 0) &&
-        (DiploScratchFA98 != 0 || DiploFriction <= 2) &&
-        (static_cast<unsigned int>(static_cast<int>(PlayersData[otherFac].diplo_treaties[myFac])) &
-         0x20) == 0) {
-        X_pops("REJPACTMEEK", 0x100000, FactionDiplomacyPortraits[otherFac],
-               pop_wait);
+        pact_of_brotherhood(myFac, otherFac);
         return 1;
     }
-
-    if (DiplomacyProposalMode == 3) return 0;
-
-    if ((PlayersData[otherFac].diplo_treaties[myFac] & 0x20) != 0 ||
-        refusalFA78 > 2 || refusalFA2C != 0) {
+    if (DiplomacyProposalMode == 3 || !score) {
+        if ((DiploScratchFA78 > 2 || DiploScratchFA2C) && (DiploScratchFA98 || DiploFriction <= 2)
+            && !(PlayersData[otherFac].diplo_treaties[myFac] & 0x20)) {
+            X_pops("REJPACTMEEK", 0x100000, FactionDiplomacyPortraits[otherFac], pop_wait);
+            return 1;
+        }
+        if (DiplomacyProposalMode == 3) {
+            return 0;
+        }
+        if (!(PlayersData[otherFac].diplo_treaties[myFac] & 0x20) && DiploScratchFA78 <= 2
+            && !DiploScratchFA2C) {
+            if (!great_satan(myFac, 0) && !DiploScratchFA3C) {
+                if ((int)PlayersData[otherFac].ranking <= (int)PlayersData[myFac].ranking
+                    && DiploFriction <= 10) {
+                    parse_says(3, get_noun_phrase(otherFac, 9), -1, -1);
+                    X_pops("REJPACT", 0x100000, FactionDiplomacyPortraits[otherFac], pop_wait);
+                    return 1;
+                }
+                parse_says(3, get_noun_phrase(otherFac, 9), -1, -1);
+                X_pops("REJPACTPOWER", 0x100000, FactionDiplomacyPortraits[otherFac], pop_wait);
+                return 1;
+            }
+            parse_says(3, get_phrase(myFac, 3), -1, -1);
+            StringTemp[0] = '\0';
+            strcat(StringTemp, "REJPACTAHEAD");
+            _itoa(random(0, 2), number, 10);
+            strcat(StringTemp, number);
+            X_pops(StringTemp, 0x100000, FactionDiplomacyPortraits[otherFac], pop_wait);
+            return 1;
+        }
         parse_says(3, get_phrase(myFac, 5), -1, -1);
         X_pops("REJPACTHATE", 0x100000, FactionDiplomacyPortraits[otherFac], pop_wait);
-        PlayersData[otherFac].diplo_patience[myFac] =
-            static_cast<char>(static_cast<unsigned char>(PlayersData[otherFac].diplo_patience[myFac]) + 1);
+        PlayersData[otherFac].diplo_patience[myFac]++;
         return 1;
     }
-
-    if (great_satan(myFac, 0) == 0 && DiploScratchFA3C == 0) {
-        if (propose_pact_rank(otherFac) <= propose_pact_rank(myFac) && DiploFriction <= 10) {
+    int other_commerce = PlayersData[otherFac].tech_commerce_bonus;
+    int energy = PlayersData[myFac].energy_reserves;
+    int cap = (energy + (PlayersData[myFac].tech_commerce_bonus - other_commerce + DiploScratchFA78) * 50)
+        * PlayersData[otherFac].mil_strength_1
+        / (PlayersData[myFac].mil_strength_1 + PlayersData[otherFac].mil_strength_1 + 1) / 50 * 50;
+    if (DiplomacyProposalMode != 5) {
+        while (cap && cap > energy) {
+            cap = range(cap - 50, 0, 99999);
+        }
+    }
+    int want_help = 0;
+    score = 0;
+    int accepted_offer = 0;
+    int offer_made = 0;
+    if (!strength_gap
+        && ((DiploFriction > 4 && PlayersData[myFac].tech_commerce_bonus >= other_commerce)
+            || DiploFriction > 10
+            || (DiploScratchFA78 && DiploScratchFA78 > other_commerce - PlayersData[myFac].tech_commerce_bonus))) {
+        score = 1;
+    }
+    if (DiplomacyProposalMode == 4 || DiplomacyProposalMode == 5) {
+        want_help = 1;
+    }
+    if (DiplomacyProposalMode == 2) {
+        if (!strength_gap && !DiploScratchF7E8 && (DiploScratchFAA8 >= 0 || cap)) {
+            want_help = 1;
+        }
+        if (DiploScratchFAA8 < 0 && !cap) {
+            score = 0;
+        }
+    }
+    if (great_satan(myFac, 0) || DiploScratchFA54 > 1
+        || (IsMultiplayerNet && myFac == (int)GameDataStateStorage.fields_.ranking_faction_id_unk1_
+            && (DiploScratchFA54 || (int)PlayersData[otherFac].ranking
+                > (int)PlayersData[GameDataStateStorage.fields_.ranking_faction_id_unk2_].ranking))) {
+        cap = (cap * 2 > GameDataStateStorage.fields_.turn_current_num_ * 5
+            ? cap * 2 : GameDataStateStorage.fields_.turn_current_num_ * 5) / 50 * 50;
+        if ((PlayersData[myFac].energy_reserves < cap && (DiplomacyProposalMode == 5 || DiploScratchFA18 < 0))
+            || (PlayersData[myFac].energy_reserves >= cap && DiploScratchFA18 < 0 && DiplomacyProposalMode == 4)) {
             parse_says(3, get_noun_phrase(otherFac, 9), -1, -1);
-            X_pops("REJPACT", 0x100000, FactionDiplomacyPortraits[otherFac],
-                   pop_wait);
+            X_pops("REJPACT", 0x100000, FactionDiplomacyPortraits[otherFac], pop_wait);
             return 1;
         }
-        parse_says(3, get_noun_phrase(otherFac, 9), -1, -1);
-        X_pops("REJPACTPOWER", 0x100000, FactionDiplomacyPortraits[otherFac],
-               pop_wait);
-        return 1;
-    }
-    {
-        parse_says(3, get_phrase(myFac, 3), -1, -1);
-        StringTemp[0] = 0;
-        strcat(StringTemp, "REJPACTAHEAD");
-        unsigned int r = random(0, 2);
-        char buf[0x20];
-        _itoa(r, buf, 10);
-        strcat(StringTemp, buf);
-        X_pops(StringTemp, 0x100000, FactionDiplomacyPortraits[otherFac],
-               pop_wait);
-        return 1;
-    }
-
-    }
-consider_gift:
-    // "great pact" path (score confirmed nonzero above): offer either a tech
-    // trade or an energy gift depending on the computed generosity `cap`,
-    // then settle the pact. Keep native signed-DWORD wrapping before each
-    // divide and preserve its staged truncation order.
-    {
-        int energySnapshot = PlayersData[myFac].energy_reserves;
-        const int savedOtherBases = propose_pact_signed_bits(PlayersData[otherFac].current_num_bases);
-        int cap_numerator_delta = diplo_add(
-            diplo_sub(propose_pact_signed_bits(PlayersData[myFac].current_num_bases),
-                      savedOtherBases),
-            DiploScratchFA78);
-        int cap_numerator = diplo_add(energySnapshot,
-                                     diplo_mul(50, cap_numerator_delta));
-        cap_numerator = diplo_mul(cap_numerator, PlayersData[otherFac].mil_strength_1);
-        int cap_denominator = diplo_add(
-            diplo_add(PlayersData[otherFac].mil_strength_1,
-                      PlayersData[myFac].mil_strength_1), 1);
-        int cap = diplo_mul(cap_numerator / cap_denominator / 50, 50);
-        if (DiplomacyProposalMode != 5 && cap != 0) {
-            while (cap > energySnapshot) {
-                cap = diplo_sub(cap, 50);
-                if (cap < 0) { cap = 0; break; }
-                if (cap > 0x1869f) cap = 0x1869f;
-                if (cap == 0) break;
-            }
-        }
-
-        // Native 0x544408 clears the caller-slot score only after computing
-        // and adjusting the cap, then derives the fresh 0/1 decision.
-        score = 0;
-        wantHelp = false;
-        if (!techGapFlag &&
-            (DiploFriction > 10 ||
-             (DiploFriction > 4 &&
-              propose_pact_signed_bits(PlayersData[myFac].current_num_bases) >= savedOtherBases) ||
-             (DiploScratchFA78 != 0 &&
-              DiploScratchFA78 >
-                  diplo_sub(savedOtherBases,
-                            propose_pact_signed_bits(PlayersData[myFac].current_num_bases))))) {
-            score = 1;
-        }
-        if (DiplomacyProposalMode == 4 || DiplomacyProposalMode == 5) wantHelp = true;
-        if (DiplomacyProposalMode == 2) {
-            if (!techGapFlag && DiploScratchF7E8 == 0 &&
-                (DiploScratchFAA8 >= 0 || cap != 0)) {
-                wantHelp = true;
-            }
-            if (DiploScratchFAA8 < 0 && cap == 0) score = 0;
-        }
-
-        if (great_satan(myFac, 0) != 0) goto consider_ahead_refusal;
-        if (DiploScratchFA54 > 1) goto consider_ahead_refusal;
-        if (IsMultiplayerNet != 0 && static_cast<uint32_t>(myFac) == GameDataStateStorage.fields_.ranking_faction_id_unk1_ &&
-            (DiploScratchFA54 != 0 ||
-             propose_pact_rank(otherFac) > propose_pact_rank(GameDataStateStorage.fields_.ranking_faction_id_unk2_))) {
-            goto consider_ahead_refusal;
-        }
-
+    } else {
         DiploScratchFA18 = -1;
-
-        // Native 0x544521..0x544668 gates the technology proposal against
-        // the greater of twice the adjusted gift and five current turns.
-        // Its reciprocal multiply is signed division by 100, then a wrapped
-        // multiply by 50. Preserve its no-dialog early exit before either
-        // the tech or energy offer can invoke a callback.
-    consider_technology:
-        // Exceptional route rejoins at 544521, AFTER ordinary FA18 clearing.
-        if (score == 0 && !wantHelp) goto request_help;
-        if (DiploScratchFAA8 >= 0 &&
-            strcmp("BELIEVE", Players[otherFac].name_leader) != 0 &&
-            (strcmp("MORGAN", Players[otherFac].name_leader) != 0 || cap == 0 ||
-             PlayersData[myFac].energy_reserves < cap) &&
-            (DiplomacyProposalMode == 4 || (DiplomacyProposalMode == 1 && DiploFriction < 4) || DiplomacyProposalMode == 2)) {
-        if (DiplomacyProposalMode == 4 || DiplomacyProposalMode == 2 ||
-            (DiplomacyProposalMode == 1 && DiploFriction < 4)) {
-            immediateAccept = true;
-        }
-        request_technology:
-            {
-                GenderDefault = Players[otherFac].is_leader_female;
-                PluralityDefault = 0;
-                parse_says(1, Players[otherFac].title_leader, -1, -1);
-                StringTemp[0] = 0;
-                say_tech(StringTemp, DiploScratchFAA8, 1);
-                parse_says(2, StringTemp, -1, -1);
-                parse_says(3, get_noun_phrase(otherFac, 9), -1, -1);
-
-                if (DiploScratchFA18 >= 0) {
-                    StringTemp[0] = 0;
-                    say_tech(StringTemp, DiploScratchFA18, 1);
-                }
-                StringTemp[0] = 0;
-                strcat(StringTemp, "GIMMETECH");
-                int pick = (DiploScratchFA18 >= 0) ? 2 : (int)random(0, 2);
-                char buf[0x20];
-                _itoa(pick, buf, 10);
-                strcat(StringTemp, buf);
-
-                int result = X_pops(StringTemp, 0x100000,
-                                     FactionDiplomacyPortraits[otherFac],
-                                     pop_wait);
-                if (result > 1) {
-                    help_topic(0xe, DiploScratchFAA8);
-                    goto request_technology;
-                }
-                if (result != 0) {
-                    acceptedOffer = true;
-                    // Native snapshots FAA8 before logging or applying it.
-                    const int acceptedTech = DiploScratchFAA8;
-                    if (IsMultiplayerNet != 0) {
-                        log_say(DiploLabelSendingTECH, otherFac, acceptedTech, myFac);
-                        message_data(0x244b, 0, otherFac, acceptedTech, myFac, 0);
-                        NetDaemonNet.await_diplo(0x44b);
-                    } else {
-                        tech_achieved(otherFac, acceptedTech, myFac, 0);
-                    }
-                    if (DiploScratchFA18 >= 0) {
-                        int t2 = DiploScratchFA18;
-                        if (IsMultiplayerNet != 0) {
-                            log_say(DiploLabelSendingTECH, otherFac, t2, myFac);
-                            message_data(0x244b, 0, otherFac, t2, myFac, 0);
-                            NetDaemonNet.await_diplo(0x44b);
-                        } else {
-                            tech_achieved(otherFac, t2, myFac, 0);
-                        }
-                    }
-                    int value = tech_val(DiploScratchFAA8, otherFac, 1);
-                    int delta = diplo_sub(0, value / 2);
-                    int newVal = diplo_add(
-                        propose_pact_signed_bits(PlayersData[otherFac].diplo_friction[myFac]), delta);
-                    if (newVal < 0) newVal = 0;
-                    if (newVal > 0x14) newVal = 0x14;
-                    PlayersData[otherFac].diplo_friction[myFac] = static_cast<uint32_t>(newVal);
-                    if (DiploFrictionFactionID == static_cast<uint32_t>(otherFac) &&
-                        DiploFrictionFactionIDWith == static_cast<uint32_t>(myFac)) {
-                        DiploFriction = diplo_add(DiploFriction, delta);
-                    }
-                    diplomacy_caption(myFac, otherFac);
-                    DiploScratchFA18 = -1;
-                    DiploScratchFAA8 = -1;
-                }
-            }
-        }
-
-        goto consider_energy;
-
-    consider_ahead_refusal:
-        if (propose_pact_ahead_refusal(
-                DiplomacyProposalMode, DiploScratchFA18,
-                PlayersData[myFac].energy_reserves, cap, GameDataStateStorage.fields_.turn_current_num_)) {
+    }
+    if ((score || want_help) && DiploScratchFAA8 >= 0 && strcmp(Players[otherFac].filename, "BELIEVE")
+        && (strcmp(Players[otherFac].filename, "MORGAN") || !cap || PlayersData[myFac].energy_reserves < cap)
+        && (DiplomacyProposalMode == 4 || (DiplomacyProposalMode == 1 && DiploFriction < 4)
+            || DiplomacyProposalMode == 2)) {
+        offer_made = 1;
+        int response;
+        for (;;) {
+            parse_set(Players[otherFac].is_leader_female, 0);
+            parse_says(1, Players[otherFac].title_leader, -1, -1);
+            StringTemp[0] = '\0';
+            say_tech(StringTemp, DiploScratchFAA8, 1);
+            parse_says(2, StringTemp, -1, -1);
             parse_says(3, get_noun_phrase(otherFac, 9), -1, -1);
-            X_pops("REJPACT", 0x100000,
-                         FactionDiplomacyPortraits[otherFac], pop_wait);
-            return 1;
+            if (DiploScratchFA18 >= 0) {
+                StringTemp[0] = '\0';
+                say_tech(StringTemp, DiploScratchFA18, 1);
+            }
+            StringTemp[0] = '\0';
+            strcat(StringTemp, "GIMMETECH");
+            _itoa(DiploScratchFA18 >= 0 ? 2 : random(0, 2), number, 10);
+            strcat(StringTemp, number);
+            response = X_pops(StringTemp, 0x100000, FactionDiplomacyPortraits[otherFac], pop_wait);
+            if (response <= 1) {
+                break;
+            }
+            help_topic(14, DiploScratchFAA8);
         }
-        goto consider_technology;
-
-    consider_energy:
-        if ((score != 0 || wantHelp) && cap != 0 && PlayersData[myFac].energy_reserves >= cap &&
-            !immediateAccept &&
-            strcmp("PEACE", Players[otherFac].name_leader) != 0 &&
-            (DiplomacyProposalMode == 5 || (DiplomacyProposalMode == 1 && DiploFriction < 4) || DiplomacyProposalMode == 2)) {
-            immediateAccept = true;
-            parse_num(cap, 0);
-            {
-                GenderDefault = Players[otherFac].is_leader_female;
-                PluralityDefault = 0;
-                parse_says(1, Players[otherFac].title_leader, -1, -1);
-            }
-            StringTemp[0] = 0;
-            strcat(StringTemp, "GIMMEENERGY");
-            {
-                unsigned int r = random(0, 2);
-                char buf[0x20];
-                _itoa(r, buf, 10);
-                strcat(StringTemp, buf);
-            }
-            int result = X_pops(StringTemp, 0x100000,
-                                 FactionDiplomacyPortraits[otherFac],
-                                 pop_wait);
-            if (result != 0) {
-                acceptedOffer = true;
-                if (IsMultiplayerNet != 0) {
-                    log_say(DiploLabelSendingENERGY, myFac, otherFac, -cap);
-                    message_data(0x2447, 0, myFac, diplo_sub(0, cap), otherFac, cap);
-                    NetDaemonNet.await_diplo(0x447);
-                } else {
-                    if (myFac != 0) PlayersData[myFac].energy_reserves = diplo_sub(PlayersData[myFac].energy_reserves, cap);
-                    if (otherFac != 0) PlayersData[otherFac].energy_reserves = diplo_add(PlayersData[otherFac].energy_reserves, cap);
-                    ConsoleGlobal.update_data(1);
-                }
-                int remaining = cap / 5;
-                int sum = 0;
-                int chunk = 10;
-                int divisor = 2;
-                while (remaining > 0) {
-                    sum = diplo_add(sum, (remaining < chunk ? remaining : chunk) / divisor);
-                    remaining = diplo_sub(remaining, chunk);
-                    chunk = 20;
-                    divisor = diplo_add(divisor, 1);
-                }
-                int delta2 = diplo_sub(0, diplo_add(sum, 4) / 5);
-                wantHelp = false;
-                int adj = diplo_add(propose_pact_signed_bits(PlayersData[otherFac].diplo_friction[myFac]), delta2);
-                if (adj < 0) adj = 0;
-                if (adj > 0x14) adj = 0x14;
-                PlayersData[otherFac].diplo_friction[myFac] = static_cast<uint32_t>(adj);
-                if (DiploFrictionFactionID == static_cast<uint32_t>(otherFac) &&
-                    DiploFrictionFactionIDWith == static_cast<uint32_t>(myFac)) {
-                    DiploFriction = diplo_add(DiploFriction, delta2);
-                }
-                ConsoleInfoWin.set_redraw_phase(0);
-                ConsoleGlobal.update_data(0);
-                diplomacy_caption(myFac, otherFac);
-            }
-        }
-
-        if (score != 0 || immediateAccept) {
-            if (acceptedOffer) goto request_help;
-            if (immediateAccept) {
-                X_pops("REJPACTNOBRIBE", 0x100000,
-                             FactionDiplomacyPortraits[otherFac], pop_wait);
-                return 1;
-            }
-            if (DiplomacyProposalMode == 3) return 0;
-            X_pops("REJPACTBADBRIBE", 0x100000,
-                         FactionDiplomacyPortraits[otherFac], pop_wait);
-            return 1;
-        }
-
-    request_help:
-        if (threshold != 0 && DiploScratchFA8C == 0) {
-            GenderDefault = Players[myFac].is_leader_female;
-            PluralityDefault = 0;
-            parse_says(5, Players[myFac].title_leader, -1, -1);
-            {
-                GenderDefault = Players[threshold].noun_gender;
-                PluralityDefault = Players[threshold].is_noun_plural;
-                parse_says(6, Players[threshold].noun_faction, -1, -1);
-            }
-            int result = X_pops("GIMMEHELP", 0x100000,
-                                 FactionDiplomacyPortraits[otherFac],
-                                 pop_wait);
-            if (result == 0) {
-                if (!techGapFlag &&
-                    (GameDataStateStorage.fields_.faction_rankings_[7] != static_cast<uint32_t>(myFac) || DiplomacyProposalGateCount < 0) &&
-                    DiploScratchFA78 <= 2 && DiplomacyProposalGateCount <= 0) goto complete_pact;
-                PlayersData[otherFac].diplo_patience[myFac] =
-                    static_cast<char>(static_cast<unsigned char>(PlayersData[otherFac].diplo_patience[myFac]) + 1);
-                if (acceptedOffer) goto complete_pact;
-
-                parse_says(2, get_pacts(myFac, otherFac), -1, -1);
-                X_pops("REJPACTNOHELP", 0x100000,
-                       FactionDiplomacyPortraits[otherFac],
-                       pop_wait);
-                return 1;
-            }
-
-            log_say(DiploLabelGettingDIPLOMATICLOCK, 0, 0, 0);
-            {
-                DWORD (WINAPI *const read_clock)() = timeGetTime;
-                read_clock();
-                while (ExitTurnLoop == 0 && NetDaemonNet.add_global() != 0) {
-                    check_spock();
-                    read_clock();
-                }
-            }
-
-            if (IsMultiplayerNet != 0) {
-                log_say(DiploLabelSendingDOUBLECROSS, myFac, threshold, otherFac);
-                message_data(0x2440, 0, myFac, threshold, otherFac, 0);
+        if (response) {
+            accepted_offer = 1;
+            int tech_id = DiploScratchFAA8;
+            if (IsMultiplayerNet) {
+                log_say(DiploLabelSendingTECH, otherFac, tech_id, myFac);
+                message_data(0x244b, 0, otherFac, tech_id, myFac, 0);
+                NetDaemonNet.await_diplo(0x44b);
             } else {
-                double_cross(myFac, threshold, otherFac);
+                tech_achieved(otherFac, tech_id, myFac, 0);
             }
-            if (IsMultiplayerNet != 0) {
+            if (DiploScratchFA18 >= 0) {
+                tech_id = DiploScratchFA18;
+                if (IsMultiplayerNet) {
+                    log_say(DiploLabelSendingTECH, otherFac, tech_id, myFac);
+                    message_data(0x244b, 0, otherFac, tech_id, myFac, 0);
+                    NetDaemonNet.await_diplo(0x44b);
+                } else {
+                    tech_achieved(otherFac, tech_id, myFac, 0);
+                }
+            }
+            int friction_delta = -(tech_val(DiploScratchFAA8, otherFac, 1) / 2);
+            PlayersData[otherFac].diplo_friction[myFac]
+                = range(friction_delta + PlayersData[otherFac].diplo_friction[myFac], 0, 20);
+            if (DiploFrictionFactionID == (uint32_t)otherFac
+                && DiploFrictionFactionIDWith == (uint32_t)myFac) {
+                DiploFriction += friction_delta;
+            }
+            diplomacy_caption(myFac, otherFac);
+            DiploScratchFAA8 = DiploScratchFA18 = -1;
+        }
+    }
+    if ((score || want_help) && cap && PlayersData[myFac].energy_reserves >= cap && !offer_made
+        && strcmp(Players[otherFac].filename, "PEACE")
+        && (DiplomacyProposalMode == 5 || (DiplomacyProposalMode == 1 && DiploFriction < 4)
+            || DiplomacyProposalMode == 2)) {
+        offer_made = 1;
+        parse_num(0, cap);
+        parse_set(Players[otherFac].is_leader_female, 0);
+        parse_says(1, Players[otherFac].title_leader, -1, -1);
+        StringTemp[0] = '\0';
+        strcat(StringTemp, "GIMMEENERGY");
+        _itoa(random(0, 2), number, 10);
+        strcat(StringTemp, number);
+        if (X_pops(StringTemp, 0x100000, FactionDiplomacyPortraits[otherFac], pop_wait)) {
+            int energy_debit = -cap;
+            if (IsMultiplayerNet) {
+                log_say(DiploLabelSendingENERGY, myFac, otherFac, energy_debit);
+                message_data(0x2447, 0, myFac, energy_debit, otherFac, cap);
+                NetDaemonNet.await_diplo(0x447);
+            } else {
+                if (myFac) {
+                    PlayersData[myFac].energy_reserves += energy_debit;
+                }
+                if (otherFac) {
+                    PlayersData[otherFac].energy_reserves += cap;
+                }
+                ConsoleGlobal.update_data(1);
+            }
+            want_help = 0;
+            int friction_units = 0;
+            accepted_offer = 1;
+            int divisor = 2;
+            int remaining = cap / 5;
+            int chunk = 10;
+            while (remaining > 0) {
+                friction_units += range(remaining, 0, chunk) / divisor;
+                remaining -= chunk;
+                chunk = 20;
+                divisor++;
+            }
+            int friction_delta = (friction_units + 4) / -5;
+            PlayersData[otherFac].diplo_friction[myFac]
+                = range(friction_delta + PlayersData[otherFac].diplo_friction[myFac], 0, 20);
+            if (DiploFrictionFactionID == (uint32_t)otherFac
+                && DiploFrictionFactionIDWith == (uint32_t)myFac) {
+                DiploFriction += friction_delta;
+            }
+            ConsoleInfoWin.set_redraw_phase(0);
+            ConsoleGlobal.update_data(0);
+            diplomacy_caption(myFac, otherFac);
+        }
+    }
+    if ((score || offer_made) && !accepted_offer) {
+        if (!offer_made) {
+            if (DiplomacyProposalMode == 3) {
+                return 0;
+            }
+            X_pops("REJPACTBADBRIBE", 0x100000, FactionDiplomacyPortraits[otherFac], pop_wait);
+            return 1;
+        }
+        X_pops("REJPACTNOBRIBE", 0x100000, FactionDiplomacyPortraits[otherFac], pop_wait);
+        return 1;
+    }
+    if (partner_id && !DiploScratchFA8C) {
+        parse_set(Players[myFac].is_leader_female, 0);
+        parse_says(5, Players[myFac].title_leader, -1, -1);
+        parse_set(Players[partner_id].noun_gender, Players[partner_id].is_noun_plural);
+        parse_says(6, Players[partner_id].noun_faction, -1, -1);
+        if (!X_pops("GIMMEHELP", 0x100000, FactionDiplomacyPortraits[otherFac], pop_wait)) {
+            if (strength_gap
+                || ((int)GameDataStateStorage.fields_.faction_rankings_[7] == myFac
+                    && DiplomacyProposalGateCount >= 0)
+                || DiploScratchFA78 > 2 || DiplomacyProposalGateCount > 0) {
+                PlayersData[otherFac].diplo_patience[myFac]++;
+                if (!accepted_offer) {
+                    parse_says(2, get_pacts(myFac, otherFac), -1, -1);
+                    X_pops("REJPACTNOHELP", 0x100000, FactionDiplomacyPortraits[otherFac], pop_wait);
+                    return 1;
+                }
+            }
+        } else {
+            log_say(DiploLabelGettingDIPLOMATICLOCK, 0, 0, 0);
+            timeGetTime();
+            while (!ExitTurnLoop && NetDaemonNet.add_global()) {
+                check_spock();
+                timeGetTime();
+            }
+            if (IsMultiplayerNet) {
+                log_say(DiploLabelSendingDOUBLECROSS, myFac, partner_id, otherFac);
+                message_data(0x2440, 0, myFac, partner_id, otherFac, 0);
+            } else {
+                double_cross(myFac, partner_id, otherFac);
+            }
+            if (IsMultiplayerNet) {
                 log_say(DiploLabelSendingTREATYOFF, myFac, otherFac, 0x800000);
                 message_data(0x2442, 0, myFac, otherFac, 0x800000, 0);
             } else {
                 treaty_off(myFac, otherFac, 0x800000);
             }
-            if (IsMultiplayerNet != 0) {
-                log_say(DiploLabelSendingSETTREATY, otherFac, threshold, 0x40);
-                message_data(0x2443, 0, otherFac, threshold, 0x40, 1);
+            if (IsMultiplayerNet) {
+                log_say(DiploLabelSendingSETTREATY, otherFac, partner_id, 0x40);
+                message_data(0x2443, 0, otherFac, partner_id, 0x40, 1);
                 NetDaemonNet.await_diplo(0x443);
             } else {
-                set_treaty(otherFac, threshold, 0x40, 1);
+                set_treaty(otherFac, partner_id, 0x40, 1);
             }
             log_say(DiploLabelReleasingDIPLOMATICLOCK, 0, 0, 0);
             NetDaemonNet.unlock();
             DiploScratchF7E8 = 0;
             DiploScratchFA4C = 0;
         }
-
-    complete_pact:
-        pact_of_brotherhood(myFac, otherFac);
-        return 1;
     }
+    pact_of_brotherhood(myFac, otherFac);
+    return 1;
 }
 
 // ORIGINAL: 0x00558C60 ?commlink_attempt@@YAXH@Z 0x00558C60-0x00558FB4 BYTE_EXACT
@@ -10094,191 +9965,95 @@ void __cdecl battle_plans(int faction_a, int faction_b) {
     PlanWindow.close();
 }
 
-static int production_wrap_add(int left, int right) {
-    return (int32_t)((uint32_t)left + (uint32_t)right);
-}
-
-static int production_wrap_subtract(int left, int right) {
-    return (int32_t)((uint32_t)left - (uint32_t)right);
-}
-
-static int production_wrap_double(int value) {
-    return (int32_t)((uint32_t)value * 2u);
-}
-
 // ORIGINAL: 0x00526E70 ?production_phase@@YAXH@Z 0x00526E70-0x00527285
 // RECOVERY_BINDING: v1 {"evidence":["original:0x00526E70-0x00527285:the full pinned function span is the production-phase body","original:0x00526F0E:the first indexed rule-flags access uses the actor faction id","original:0x00526F43:loan credit is written to the partner PlayerData energy_reserves field","source:src/faction.h:Players, PlayersData, Player.rule_flags, PlayerData.loan_balance, loan_payment, sanction_turns, energy_reserves","source:src/base.h:Base ownership and the declared base-upkeep interface","source:src/technology.h:technology effects and technology progression owners"],"reason":"Recover the production-phase identity in faction.cpp using the existing Player/PlayerData, Base and technology owners while retaining the pinned actor/partner commerce roles and native callback order."}
 void __cdecl production_phase(int faction_id) {
-    // Native literal identities remain ordinary C++ literals: "Freebie Advance" is 0x68B9D8..0x68B9E8; the paired faction sanction popup keys/assets are documented at their native call sites below.
-
-    PlayerData &faction_data = PlayersData[faction_id];
-
-    faction_data.unk_28 = 0;
-    faction_data.unk_13 = 0;
-    faction_data.maint_cost_total = 0;
-    faction_data.turn_commerce_income = 0;
-
+    PlayersData[faction_id].unk_28 = 0;
+    PlayersData[faction_id].unk_13 = 0;
+    PlayersData[faction_id].maint_cost_total = 0;
+    PlayersData[faction_id].turn_commerce_income = 0;
     tech_effects(faction_id);
-
-    int other_faction = 1;
-    while (other_faction < MaxPlayerNum) {
-        if (other_faction != faction_id &&
-            is_alive((uint32_t)other_faction) && is_alive((uint32_t)faction_id)) {
-            PlayerData &other_data = PlayersData[other_faction];
-            const int pair_payment = faction_data.loan_payment[other_faction];
-            // Native slot starts at PlayersData[1].energy_reserves; slot[-0x58]
-            // is that partner's sanction_turns, not Goals[57].
-            if (faction_data.loan_balance[other_faction] != 0 &&
-                other_data.sanction_turns == 0) {
-                if ((faction_data.diplo_treaties[other_faction] & DTREATY_VENDETTA) == 0) {
-                    int give = pair_payment;
-                    if (faction_data.energy_reserves <= pair_payment) {
-                        give = faction_data.energy_reserves;
-                    }
-
-                    // Native EDI points to partner PlayerData.energy_reserves.
-                    other_data.energy_reserves = production_wrap_add(
-                        other_data.energy_reserves, give);
-                    faction_data.loan_balance[other_faction] =
-                        production_wrap_subtract(
-                            faction_data.loan_balance[other_faction], give);
-                    faction_data.energy_reserves = production_wrap_subtract(
-                        faction_data.energy_reserves, give);
-                    if (give < pair_payment) {
-                        faction_data.loan_balance[other_faction] =
-                            production_wrap_add(
-                                faction_data.loan_balance[other_faction],
-                                production_wrap_subtract(pair_payment, give));
-                    }
-                } else {
-                    faction_data.loan_balance[other_faction] =
-                        production_wrap_add(
-                            pair_payment, faction_data.loan_balance[other_faction]);
-                }
-            }
-        }
-        ++other_faction;
-    }
-
-    faction_data.flags &= ~PFLAG_SELF_AWARE_COLONY_LOST_MAINT;
-    CurrentFactionEnergyReserves = faction_data.energy_reserves;
-
-    int *clear_word = faction_data.unk_46;
-    int clear_count = 9;
-    do {
-        *clear_word = 0;
-        ++clear_word;
-        --clear_count;
-    } while (clear_count != 0);
-
-    int row = 0;
-    do {
-        faction_data.unk_38[row] = 0;
-        int column = 0;
-        do {
-            faction_data.unk_39[row][column] = 0;
-            ++column;
-        } while (column < 9);
-        ++row;
-    } while (row < 8);
-
-    faction_data.unk_47 = 0;
-    faction_data.unk_48 = 0;
-    faction_data.unk_49 = 0;
-    faction_data.nutrient_surplus_total = 0;
-    faction_data.labs_total = 0;
-
-    int base_id = 0;
-    if (GameDataStateStorage.fields_.base_current_count_ > 0) {
-        do {
-            if (Bases[base_id].faction_id_current == faction_id) {
-                if (base_upkeep(base_id) != 0) {
-                    --base_id;
-                }
-                do_all_non_input();
-            }
-            ++base_id;
-        } while (base_id < GameDataStateStorage.fields_.base_current_count_);
-    }
-
-    if (!is_human((uint32_t)faction_id) && GameDataStateStorage.fields_.diff_level_current_ > 3) {
-        int trade = faction_data.maint_cost_total;
-        if (trade != 0) {
-            int credit;
-            int adjusted_trade;
-            if (GameDataStateStorage.fields_.diff_level_current_ == 4) {
-                credit = trade / 3;
-                faction_data.energy_reserves = production_wrap_add(
-                    faction_data.energy_reserves, credit);
-                trade = faction_data.maint_cost_total;
-                adjusted_trade = trade / 3 + (trade >> 31);
+    for (int i = 1; i < MaxPlayerNum; i++) {
+        if (i != faction_id && is_alive(i) && is_alive(faction_id)
+            && PlayersData[faction_id].loan_balance[i] && !PlayersData[i].sanction_turns) {
+            if (PlayersData[faction_id].diplo_treaties[i] & DTREATY_VENDETTA) {
+                PlayersData[faction_id].loan_balance[i] += PlayersData[faction_id].loan_payment[i];
             } else {
-                const int doubled_trade = production_wrap_double(trade);
-                credit = doubled_trade / 3;
-                faction_data.energy_reserves = production_wrap_add(
-                    faction_data.energy_reserves, credit);
-                trade = faction_data.maint_cost_total;
-                const int adjusted_double = production_wrap_double(trade);
-                adjusted_trade = adjusted_double / 3 + (adjusted_double >> 31);
+                int payment = PlayersData[faction_id].loan_payment[i];
+                if (payment >= PlayersData[faction_id].energy_reserves) {
+                    payment = PlayersData[faction_id].energy_reserves;
+                }
+                PlayersData[i].energy_reserves += payment;
+                PlayersData[faction_id].loan_balance[i] -= payment;
+                PlayersData[faction_id].energy_reserves -= payment;
+                if (payment < PlayersData[faction_id].loan_payment[i]) {
+                    PlayersData[faction_id].loan_balance[i] += PlayersData[faction_id].loan_payment[i] - payment;
+                }
             }
-            faction_data.maint_cost_total = production_wrap_subtract(
-                trade, production_wrap_subtract(adjusted_trade, adjusted_trade >> 31));
         }
     }
-
-    Player &faction = Players[faction_id];
-    if ((faction.rule_flags & RFLAG_INTEREST) != 0) {
-        if (faction.rule_interest == 0) {
-            int current_base = 0;
-            if (GameDataStateStorage.fields_.base_current_count_ > 0) {
-                do {
-                    if (Bases[current_base].faction_id_current == faction_id) {
-                        faction_data.energy_reserves = production_wrap_add(
-                            faction_data.energy_reserves, 1);
-                        faction_data.unk_13 = production_wrap_add(
-                            faction_data.unk_13, 1);
-                    }
-                    ++current_base;
-                } while (current_base < GameDataStateStorage.fields_.base_current_count_);
+    PlayersData[faction_id].flags &= ~PFLAG_SELF_AWARE_COLONY_LOST_MAINT;
+    CurrentFactionEnergyReserves = PlayersData[faction_id].energy_reserves;
+    memset(PlayersData[faction_id].unk_46, 0, sizeof(PlayersData[faction_id].unk_46));
+    for (int row = 0; row < 8; row++) {
+        PlayersData[faction_id].unk_38[row] = 0;
+        memset(PlayersData[faction_id].unk_39[row], 0, sizeof(PlayersData[faction_id].unk_39[row]));
+    }
+    PlayersData[faction_id].unk_47 = 0;
+    PlayersData[faction_id].unk_48 = 0;
+    PlayersData[faction_id].unk_49 = 0;
+    PlayersData[faction_id].nutrient_surplus_total = 0;
+    PlayersData[faction_id].labs_total = 0;
+    for (int base_id = 0; base_id < GameDataStateStorage.fields_.base_current_count_; base_id++) {
+        if (Bases[base_id].faction_id_current == faction_id) {
+            if (base_upkeep(base_id)) {
+                base_id--;
             }
+            do_all_non_input();
+        }
+    }
+    if (!is_human(faction_id) && GameDataStateStorage.fields_.diff_level_current_ > 3
+        && PlayersData[faction_id].maint_cost_total) {
+        if (GameDataStateStorage.fields_.diff_level_current_ == 4) {
+            PlayersData[faction_id].energy_reserves += (int)PlayersData[faction_id].maint_cost_total / 3;
+            PlayersData[faction_id].maint_cost_total -= (int)PlayersData[faction_id].maint_cost_total / 3;
         } else {
-            const int interest_product = (int32_t)(
-                (uint32_t)faction.rule_interest *
-                (uint32_t)faction_data.energy_reserves);
-            faction_data.energy_reserves = production_wrap_add(
-                interest_product / 100, faction_data.energy_reserves);
+            PlayersData[faction_id].energy_reserves += (int)PlayersData[faction_id].maint_cost_total * 2 / 3;
+            PlayersData[faction_id].maint_cost_total -= (int)PlayersData[faction_id].maint_cost_total * 2 / 3;
         }
     }
-
-    faction_data.unk_18 = faction_data.unk_13;
-    faction_data.unk_17 = production_wrap_add(
-        production_wrap_subtract(faction_data.turn_commerce_income,
-                                    faction_data.maint_cost_total),
-        faction_data.unk_13);
-
+    if (Players[faction_id].rule_flags & RFLAG_INTEREST) {
+        if (Players[faction_id].rule_interest) {
+            PlayersData[faction_id].energy_reserves = Players[faction_id].rule_interest
+                * PlayersData[faction_id].energy_reserves / 100 + PlayersData[faction_id].energy_reserves;
+        } else {
+            for (int base_id = 0; base_id < GameDataStateStorage.fields_.base_current_count_; base_id++) {
+                if (Bases[base_id].faction_id_current == faction_id) {
+                    PlayersData[faction_id].energy_reserves++;
+                    PlayersData[faction_id].unk_13++;
+                }
+            }
+        }
+    }
+    PlayersData[faction_id].unk_18 = PlayersData[faction_id].unk_13;
+    PlayersData[faction_id].unk_17 = PlayersData[faction_id].turn_commerce_income
+        - PlayersData[faction_id].maint_cost_total + PlayersData[faction_id].unk_13;
     if (GameDataStateStorage.fields_.turn_current_num_ == 1) {
         TechAchievedGate = 1;
-        int advance = 0;
-        if (faction.rule_tech_selected > 0) {
-            do {
-                log_say("Freebie Advance", faction.name_leader, faction_id, 0, 0);
-                tech_advance(faction_id);
-                ++advance;
-            } while (advance < faction.rule_tech_selected);
+        for (int i = 0; i < Players[faction_id].rule_tech_selected; i++) {
+            log_say("Freebie Advance", Players[faction_id].name_leader, faction_id, 0, 0);
+            tech_advance(faction_id);
         }
         TechAchievedGate = 0;
     }
-
-    if (((GameDataStateStorage.fields_.game_state_ & 1) == 0 || (GameDataStateStorage.fields_.game_state_ & 8) != 0) &&
-        faction_data.sanction_turns != 0) {
-        const int remaining = faction_data.sanction_turns - 1;
-        faction_data.sanction_turns = remaining;
-        if (remaining == 0 && faction_id == ConsoleGlobal.faction_id_) {
-            if ((faction.rule_flags & RFLAG_ALIEN) != 0) {
-                popp("SCRIPT", "SANCTIONSENDALIEN", 0, "Alopdir.pcx", 0);
+    if ((!(GameDataStateStorage.fields_.game_state_ & 1) || GameDataStateStorage.fields_.game_state_ & 8)
+        && PlayersData[faction_id].sanction_turns) {
+        if (!--PlayersData[faction_id].sanction_turns && faction_id == ConsoleGlobal.faction_id_) {
+            if (Players[faction_id].rule_flags & RFLAG_ALIEN) {
+                popp(ScriptPopupFile, "SANCTIONSENDALIEN", 0, "Alopdir.pcx", 0);
                 return;
             }
-            popp("SCRIPT", "SANCTIONSEND", 0, "council_sm.pcx", 0);
+            popp(ScriptPopupFile, "SANCTIONSEND", 0, "council_sm.pcx", 0);
         }
     }
 }
@@ -10522,113 +10297,90 @@ int __cdecl commlink_attempter(int faction_id, int contact_flags) {
 // RECOVERY_BINDING: v1 {"evidence":["Pinned native instructions at 0x00549270..0x00549923: both directional treaty-table walks, diplo_spoke writes, friction gates, popup returns, territory and withdrawal calls.","source:src/faction.h PlayerData/diplomacy scratch storage and typed diplomacy APIs; source:src/game.h GameRules/SunspotDuration.","Pinned native 0x0054935B/0x00549363 and 0x0054958C/0x0054959B load 0x9A64D4 (TurnCurrentNum) before both diplo_spoke timestamp stores.","Pinned native 0x005495F1 increments DiploFriction; use the existing faction.cpp diplo_add helper for native signed 32-bit wrap without C++ signed-overflow UB.","Pinned native 0x005496C6..0x00549709 confirms accepted territory routes perform the reversed callback then converge through the ordinary withdrawal path; declined popup uses only the ordinary path."],"reason":"Recover the complete withdrawal response in the faction owner with direction-correct typed status storage, original callback ordering, and native signed wrap/clamp behavior; preserve seed history without asserting byte or game acceptance. Both diplo_spoke timestamps use live TurnCurrentNum, and friction increments use diplo_add for native wrap. Accepted territory response intentionally performs reversed then ordinary withdrawals; rejection performs only the ordinary withdrawal."}
 // TRIED: MISMATCH #4 'push' vs 'mov' (framed build). Full 1715-byte transcription of the treaty-offer/double-cross/territory-demand/ withdrawal state machine faithfully following the disassembly's argument orders (several calls swap (a1,a2) vs (a2,a1) between branches - transcribed as observed, not assumed symmetric). Register-scheduling divergence only; did not chase further.
 int __cdecl demand_withdrawal(int faction_id, int against_id) {
+    int territory_notice = 0;
     PopupDialogFactionID = against_id;
     diplomacy_caption(faction_id, against_id);
-
-    uint32_t &offer_flags = PlayersData[against_id].diplo_treaties[faction_id];
-    if ((offer_flags & 0x200u) == 0 && (offer_flags & 1u) == 0 &&
-        (DiploScratchFA70 != 0 || DiploScratchFAA0 != 0 ||
-         (DiploFriction > (DiploScratchFA68 != 0 ? 5 : 15) &&
-          DiploScratchFA98 == 0))) {
-        if (IsMultiplayerNet != 0) {
+    if (!(PlayersData[against_id].diplo_treaties[faction_id] & 0x200)
+        && !(PlayersData[against_id].diplo_treaties[faction_id] & DTREATY_PACT)
+        && (DiploScratchFA70 || DiploScratchFAA0
+            || (DiploFriction > (DiploScratchFA68 ? 5 : 15) && !DiploScratchFA98))) {
+        if (IsMultiplayerNet) {
             log_say(DiploLabelSendingTREATYON, against_id, faction_id, 0x10);
             message_data(0x2441, 0, against_id, faction_id, 0x10, 0);
             NetDaemonNet.await_diplo(0x441);
         } else {
             treaty_on(against_id, faction_id, DTREATY_VENDETTA);
         }
-
         PlayersData[faction_id].diplo_spoke[against_id] = GameDataStateStorage.fields_.turn_current_num_;
-        if (GameDataStateStorage.fields_.sunspot_duration_ > 0) return 2;
-
+        if (GameDataStateStorage.fields_.sunspot_duration_ > 0) {
+            return 2;
+        }
         diplomacy_caption(faction_id, against_id);
-        GenderDefault = Players[faction_id].is_leader_female;
-        PluralityDefault = 0;
+        parse_set(Players[faction_id].is_leader_female, 0);
         parse_says(0, Players[faction_id].title_leader, -1, -1);
-        GenderDefault = Players[faction_id].is_leader_female;
-        PluralityDefault = 0;
+        parse_set(Players[faction_id].is_leader_female, 0);
         parse_says(1, Players[faction_id].name_leader, -1, -1);
         StringTemp[0] = '\0';
         strcat(StringTemp, "NEVER");
-        X_pops(StringTemp, 0x100000,
-                     FactionDiplomacyPortraits[against_id], pop_wait);
+        X_pops(StringTemp, 0x100000, FactionDiplomacyPortraits[against_id], pop_wait);
         return 2;
     }
-
-    uint32_t &response_flags = PlayersData[faction_id].diplo_treaties[against_id];
-    if ((response_flags & 1u) == 0) {
-        const int withdrawal_target = dont_withdrawal(faction_id, against_id);
-        if (withdrawal_target != 0 && (response_flags & 2u) != 0) {
-            if (IsMultiplayerNet != 0) {
+    if (!(PlayersData[faction_id].diplo_treaties[against_id] & DTREATY_PACT)) {
+        int withdrawal_target = dont_withdrawal(faction_id, against_id);
+        if (withdrawal_target && PlayersData[faction_id].diplo_treaties[against_id] & DTREATY_TREATY) {
+            if (IsMultiplayerNet) {
                 log_say(DiploLabelSendingDOUBLECROSS, against_id, faction_id, -1);
                 message_data(0x2440, 0, against_id, faction_id, -1, 0);
                 NetDaemonNet.await_diplo(0x440);
             } else {
                 double_cross(against_id, faction_id, -1);
             }
-            if (GameDataStateStorage.fields_.sunspot_duration_ > 0) return 2;
-
-            GenderDefault = Players[faction_id].is_leader_female;
-            PluralityDefault = 0;
+            if (GameDataStateStorage.fields_.sunspot_duration_ > 0) {
+                return 2;
+            }
+            parse_set(Players[faction_id].is_leader_female, 0);
             parse_says(0, Players[faction_id].title_leader, -1, -1);
-            GenderDefault = Players[faction_id].is_leader_female;
-            PluralityDefault = 0;
+            parse_set(Players[faction_id].is_leader_female, 0);
             parse_says(1, Players[faction_id].name_leader, -1, -1);
-            GenderDefault = Players[withdrawal_target].is_leader_female;
-            PluralityDefault = 0;
+            parse_set(Players[withdrawal_target].is_leader_female, 0);
             parse_says(2, Players[withdrawal_target].title_leader, -1, -1);
-            GenderDefault = Players[withdrawal_target].is_leader_female;
-            PluralityDefault = 0;
+            parse_set(Players[withdrawal_target].is_leader_female, 0);
             parse_says(3, Players[withdrawal_target].name_leader, -1, -1);
-            X_pops("RUNNINGDOG", 0x100000,
-                         FactionDiplomacyPortraits[against_id], pop_wait);
+            X_pops("RUNNINGDOG", 0x100000, FactionDiplomacyPortraits[against_id], pop_wait);
             DiploScratchFA70 = 0;
             PlayersData[faction_id].diplo_spoke[against_id] = GameDataStateStorage.fields_.turn_current_num_;
             return 2;
         }
     }
-
-    const int friction_snapshot = DiploScratchFA98;
-    int territory_notice = 0;
-    if ((response_flags & 2u) == 0) {
-        int &rejection_count = PlayersData[against_id].diplo_spoke[faction_id];
-        int next_rejection = diplo_add(rejection_count, 1);
-        if (next_rejection < 0) next_rejection = 0;
-        else if (next_rejection > 0x14) next_rejection = 0x14;
-        rejection_count = next_rejection;
-
-        if (DiploFrictionFactionID == static_cast<uint32_t>(against_id) &&
-            DiploFrictionFactionIDWith == static_cast<uint32_t>(faction_id))
-            DiploFriction = diplo_add(DiploFriction, 1);
-
-        if ((offer_flags & 0x20u) != 0 || DiploScratchFA70 != 0 ||
-            DiploScratchFAA0 != 0 ||
-            diplo_add(friction_snapshot, 3) < DiploScratchFA78 ||
-            (DiploScratchFA68 != 0 && friction_snapshot == 0)) {
-            if (GameDataStateStorage.fields_.sunspot_duration_ <= 0) {
-                GenderDefault = Players[faction_id].is_leader_female;
-                PluralityDefault = 0;
-                parse_says(0, Players[faction_id].title_leader, -1, -1);
-                GenderDefault = Players[faction_id].is_leader_female;
-                PluralityDefault = 0;
-                parse_says(1, Players[faction_id].name_leader, -1, -1);
-                X_pops("NOWAYJOSE", 0x100000,
-                             FactionDiplomacyPortraits[against_id], pop_wait);
+    if (!(PlayersData[faction_id].diplo_treaties[against_id] & DTREATY_TREATY)) {
+        PlayersData[against_id].diplo_friction[faction_id]
+            = range(PlayersData[against_id].diplo_friction[faction_id] + 1, 0, 20);
+        if (DiploFrictionFactionID == (uint32_t)against_id
+            && DiploFrictionFactionIDWith == (uint32_t)faction_id) {
+            DiploFriction++;
+        }
+        if (PlayersData[against_id].diplo_treaties[faction_id] & 0x20 || DiploScratchFA70
+            || DiploScratchFAA0 || DiploScratchFA78 > DiploScratchFA98 + 3
+            || (DiploScratchFA68 && !DiploScratchFA98)) {
+            if (GameDataStateStorage.fields_.sunspot_duration_ > 0) {
+                return 1;
             }
+            parse_set(Players[faction_id].is_leader_female, 0);
+            parse_says(0, Players[faction_id].title_leader, -1, -1);
+            parse_set(Players[faction_id].is_leader_female, 0);
+            parse_says(1, Players[faction_id].name_leader, -1, -1);
+            X_pops("NOWAYJOSE", 0x100000, FactionDiplomacyPortraits[against_id], pop_wait);
             return 1;
         }
-
-        if (territory(against_id, faction_id, 0, NULL, NULL) != 0) {
-            if (GameDataStateStorage.fields_.sunspot_duration_ > 0) return 1;
+        if (territory(against_id, faction_id, 0, NULL, NULL)) {
+            if (GameDataStateStorage.fields_.sunspot_duration_ > 0) {
+                return 1;
+            }
             territory_notice = 1;
-            GenderDefault = Players[faction_id].is_leader_female;
-            PluralityDefault = 0;
+            parse_set(Players[faction_id].is_leader_female, 0);
             parse_says(0, Players[faction_id].title_leader, -1, -1);
-            const int accepted = X_pops("TURNABOUT", 0x100000,
-                                              FactionDiplomacyPortraits[against_id],
-                                              pop_wait);
-            if (accepted != 0) {
-                if (IsMultiplayerNet != 0) {
+            if (X_pops("TURNABOUT", 0x100000, FactionDiplomacyPortraits[against_id], pop_wait)) {
+                if (IsMultiplayerNet) {
                     log_say(DiploLabelSendingWITHDRAWAL, against_id, faction_id, 0);
                     message_data(0x244a, 0, against_id, faction_id, 0, 0);
                 } else {
@@ -10637,9 +10389,8 @@ int __cdecl demand_withdrawal(int faction_id, int against_id) {
             }
         }
     }
-
     int result;
-    if (IsMultiplayerNet != 0) {
+    if (IsMultiplayerNet) {
         log_say(DiploLabelSendingWITHDRAWAL, faction_id, against_id, 0);
         message_data(0x244a, 0, faction_id, against_id, 0, 0);
         NetDaemonNet.await_diplo(0x44a);
@@ -10647,32 +10398,26 @@ int __cdecl demand_withdrawal(int faction_id, int against_id) {
     } else {
         result = do_withdrawal(faction_id, against_id);
     }
-
-    if (territory_notice == 0 && GameDataStateStorage.fields_.sunspot_duration_ <= 0) {
-        GenderDefault = Players[faction_id].is_leader_female;
-        PluralityDefault = 0;
+    if (!territory_notice && GameDataStateStorage.fields_.sunspot_duration_ <= 0) {
+        parse_set(Players[faction_id].is_leader_female, 0);
         parse_says(0, Players[faction_id].name_leader, -1, -1);
         parse_says(1, Players[faction_id].adj_leader, -1, -1);
-        if (result != 0) {
-            const uint32_t final_flags =
-                PlayersData[faction_id].diplo_treaties[against_id];
-            if ((final_flags & 1u) != 0) {
+        if (result) {
+            uint32_t treaties = PlayersData[faction_id].diplo_treaties[against_id];
+            if (treaties & DTREATY_PACT) {
                 parse_says(2, get_pact(faction_id), -1, -1);
-                X_pops("WITHDRAWPACT", 0x100000,
-                             FactionDiplomacyPortraits[against_id], pop_wait);
+                X_pops("WITHDRAWPACT", 0x100000, FactionDiplomacyPortraits[against_id], pop_wait);
                 return 0;
             }
-            if ((final_flags & 2u) != 0) {
-                X_pops("WITHDRAWTRUCE", 0x100000,
-                             FactionDiplomacyPortraits[against_id], pop_wait);
+            // The image pairs a treaty with WITHDRAW and anything else with WITHDRAWTRUCE.
+            if (!(treaties & DTREATY_TREATY)) {
+                X_pops("WITHDRAWTRUCE", 0x100000, FactionDiplomacyPortraits[against_id], pop_wait);
                 return 0;
             }
-            X_pops("WITHDRAW", 0x100000,
-                         FactionDiplomacyPortraits[against_id], pop_wait);
+            X_pops("WITHDRAW", 0x100000, FactionDiplomacyPortraits[against_id], pop_wait);
             return 0;
         }
-        X_pops("NOWITHDRAW", 0x100000,
-                     FactionDiplomacyPortraits[against_id], pop_wait);
+        X_pops("NOWITHDRAW", 0x100000, FactionDiplomacyPortraits[against_id], pop_wait);
     }
     return 0;
 }
@@ -11022,390 +10767,278 @@ int __cdecl energy_trade(int faction, int other) {
 int __cdecl propose_treaty(int actor, int other)
 {
     PopupDialogFactionID = other;
-    const int target_is_gaians =
-        strcmp(Players[other].filename, "GAIANS") == 0;
-    const int gate_count = DiplomacyProposalGateCount;
-    int bias = gate_count < 0 ? 1 : 0;
-    if (target_is_gaians && gate_count < 0) ++bias;
-    const int partner_id = DiploScratchF7E8 != 0 ? DiploScratchF7E8 : DiploScratchFA8C;
-    const int partner_threat = partner_id != 0 &&
-        (PlayersData[other].diplo_treaties[partner_id] & 0x8000u) != 0 &&
-        PlayersData[partner_id].mil_strength_1 > PlayersData[other].mil_strength_1 &&
-        (PlayersData[other].diplo_agenda[actor] & 0x800u) == 0;
-    const int eligible = DiplomacyProposalMode == 2 || DiplomacyProposalMode == 4 ||
-        DiplomacyProposalMode == 5 || DiplomacyProposalMode == 8;
-    if (DiploScratchFA3C == 0 && DiploScratchF7FC == 0 &&
-        static_cast<int>(PlayersData[other].ranking) <= 4 &&
-        static_cast<int>(PlayersData[actor].ranking) >= 5 && DiploScratchFA54 == 0)
-        ++bias;
+    int bias = (DiplomacyProposalGateCount < 0)
+        + ((!strcmp(Players[other].filename, "GAIANS") && DiplomacyProposalGateCount < 0) ? 1 : 0);
+    int partner_id = DiploScratchF7E8 ? DiploScratchF7E8 : DiploScratchFA8C;
+    int partner_threat = partner_id
+        && PlayersData[other].diplo_treaties[partner_id] & 0x8000
+        && PlayersData[partner_id].mil_strength_1 > PlayersData[other].mil_strength_1
+        && !(PlayersData[other].diplo_agenda[actor] & 0x800);
+    int eligible = DiplomacyProposalMode == 2 || DiplomacyProposalMode == 4
+        || DiplomacyProposalMode == 5 || DiplomacyProposalMode == 8;
     int accepted = 0;
-    if (DiploFriction <= diplo_add(15, eligible ? diplo_add(bias, 2) : 0) &&
-        (PlayersData[other].diplo_agenda[actor] & 0x400u) == 0) {
-        const bool treaty_clear =
-            (PlayersData[other].diplo_treaties[actor] & 0x20u) == 0;
-        const int score_for_treaty_gate = DiploScratchFA78;
-        bool treaty_commerce_gate = treaty_clear;
-        if (!treaty_clear && score_for_treaty_gate <= 6) {
-            const int other_commerce = PlayersData[other].tech_commerce_bonus;
-            const int actor_commerce = PlayersData[actor].tech_commerce_bonus;
-            const int commerce_gap = diplo_sub(other_commerce, actor_commerce);
-            treaty_commerce_gate = score_for_treaty_gate <=
-                diplo_add(diplo_sub(diplo_add(commerce_gap, eligible ? 2 : 0),
-                                    DiplomacyProposalGateCount), 2);
-        }
-        if (treaty_commerce_gate) {
-            if (partner_threat) {
-                accepted = 1;
-            } else if (DiploScratchFA3C == 0 &&
-                DiploScratchFA78 <= diplo_sub(
-                    diplo_add(diplo_add(bias, 5), eligible ? 2 : 0),
-                    diplo_clamp(PlayersData[actor].diff_level, 0, 2)) &&
-                DiploScratchFA2C <= diplo_add(
-                    diplo_add(diplo_add(bias, 4), eligible ? 1 : 0),
-                    DiplomacyProposalMode == 3 ? 2 : 0) &&
-                (DiploFriction <= diplo_add(10 + 5 * eligible,
-                                            diplo_mul(bias, 3)) ||
-                 DiplomacyProposalMode == 3)) {
-                accepted = 1;
-            }
+    if (!DiploScratchFA3C && !DiploScratchF7FC && (int)PlayersData[other].ranking <= 4
+        && (int)PlayersData[actor].ranking >= 5 && !DiploScratchFA54) {
+        bias++;
+    }
+    if (DiploFriction <= (eligible ? bias + 2 : 0) + 15
+        && !(PlayersData[other].diplo_agenda[actor] & 0x400)
+        && (!(PlayersData[other].diplo_treaties[actor] & 0x20)
+            || (DiploScratchFA78 <= 6
+                && DiploScratchFA78 <= PlayersData[other].tech_commerce_bonus
+                    - PlayersData[actor].tech_commerce_bonus + (eligible ? 2 : 0)
+                    - DiplomacyProposalGateCount + 2))) {
+        if (partner_threat) {
+            accepted = 1;
+        } else if (!DiploScratchFA3C
+            && DiploScratchFA78 <= (eligible ? 2 : 0) - range(PlayersData[actor].diff_level, 0, 2) + bias + 5
+            && DiploScratchFA2C <= bias + (DiplomacyProposalMode == 3 ? 2 : 0) + (eligible ? 1 : 0) + 4
+            && (DiploFriction <= 10 + 5 * eligible + bias * 3 || DiplomacyProposalMode == 3)) {
+            accepted = 1;
         }
     }
-    if ((PlayersData[other].flags & 0x400000u) != 0 &&
-        (PlayersData[other].diplo_treaties[actor] & 0x20u) == 0) accepted = 1;
-    if ((PlayersData[actor].diplo_agenda[other] & 0x2000u) != 0) accepted = 0;
-
-    PluralityDefault = 0;
-    GenderDefault = Players[actor].is_leader_female;
+    if (PlayersData[other].flags & 0x400000 && !(PlayersData[other].diplo_treaties[actor] & 0x20)) {
+        accepted = 1;
+    }
+    if (PlayersData[actor].diplo_agenda[other] & 0x2000) {
+        accepted = 0;
+    }
+    parse_set(Players[actor].is_leader_female, 0);
     parse_says(0, Players[actor].name_leader, -1, -1);
-    PluralityDefault = 0;
-    GenderDefault = Players[actor].is_leader_female;
+    parse_set(Players[actor].is_leader_female, 0);
     parse_says(1, Players[actor].title_leader, -1, -1);
-    GenderDefault = Players[actor].noun_gender;
-    PluralityDefault = Players[actor].is_noun_plural;
+    parse_set(Players[actor].noun_gender, Players[actor].is_noun_plural);
     parse_says(2, Players[actor].noun_faction, -1, -1);
     parse_says(3, Players[actor].adj_name_faction, -1, -1);
     if (!accepted) {
-        const int rejection_score = DiploScratchFA78;
-        if (rejection_score > 4 && (DiploScratchFA98 != 0 || DiploFriction <= 2) &&
-            (PlayersData[other].diplo_treaties[actor] & 0x20u) == 0) {
+        if (DiploScratchFA78 > 4 && (DiploScratchFA98 || DiploFriction <= 2)
+            && !(PlayersData[other].diplo_treaties[actor] & 0x20)) {
             X_pops("REJTREATYMEEK", 0x100000, FactionDiplomacyPortraits[other], pop_wait);
             return 1;
         }
-        if (DiplomacyProposalMode == 3) return 0;
-        if ((PlayersData[other].diplo_treaties[actor] & 0x20u) != 0 || rejection_score > 4) {
-            PluralityDefault = 0;
-            GenderDefault = Players[actor].is_leader_female;
-            parse_says(4, Players[actor].insult_leader, -1, -1);
-            X_pops("REJTREATYHATE", 0x100000, FactionDiplomacyPortraits[other], pop_wait);
-        } else if (DiploScratchFA3C != 0) {
-            parse_says(4, get_noun_phrase(other, 9), -1, -1);
-            parse_says(5, get_phrase(actor, 3), -1, -1);
-            X_pops("REJTREATYAHEAD", 0x100000, FactionDiplomacyPortraits[other], pop_wait);
-        } else {
-            X_pops("REJTREATY", 0x100000, FactionDiplomacyPortraits[other], pop_wait);
+        if (DiplomacyProposalMode == 3) {
+            return 0;
         }
+        if (!(PlayersData[other].diplo_treaties[actor] & 0x20) && DiploScratchFA78 <= 4) {
+            if (DiploScratchFA3C) {
+                parse_says(4, get_noun_phrase(other, 9), -1, -1);
+                parse_says(5, get_phrase(actor, 3), -1, -1);
+                X_pops("REJTREATYAHEAD", 0x100000, FactionDiplomacyPortraits[other], pop_wait);
+                return 1;
+            }
+            X_pops("REJTREATY", 0x100000, FactionDiplomacyPortraits[other], pop_wait);
+            return 1;
+        }
+        parse_set(Players[actor].is_leader_female, 0);
+        parse_says(4, Players[actor].insult_leader, -1, -1);
+        X_pops("REJTREATYHATE", 0x100000, FactionDiplomacyPortraits[other], pop_wait);
         return 1;
     }
-
-
-    const int actor_energy = PlayersData[actor].energy_reserves;
-    const int actor_strength = PlayersData[actor].mil_strength_1;
-    const int other_strength = PlayersData[other].mil_strength_1;
-    const int weighted_energy = diplo_mul(
-        diplo_add(actor_energy, DiploScratchFA78), other_strength)
-        / diplo_add(diplo_add(actor_strength, other_strength), 1);
-    int treaty_score = diplo_mul(weighted_energy / 50, 50);
-
-    if ((PlayersData[other].diplo_treaties[actor] & 0x20u) == 0) {
-        const int commerce_gap = diplo_clamp(diplo_sub(
-            PlayersData[other].tech_commerce_bonus,
-            PlayersData[actor].tech_commerce_bonus), 0, 99);
-        treaty_score = diplo_sub(treaty_score, diplo_mul(commerce_gap, 50));
+    int treaty_score = (PlayersData[actor].energy_reserves + DiploScratchFA78)
+        * PlayersData[other].mil_strength_1
+        / (PlayersData[actor].mil_strength_1 + PlayersData[other].mil_strength_1 + 1) / 50 * 50;
+    if (!(PlayersData[other].diplo_treaties[actor] & 0x20)) {
+        treaty_score -= range(PlayersData[other].tech_commerce_bonus
+            - PlayersData[actor].tech_commerce_bonus, 0, 99) * 50;
     }
-
-    if (strcmp(Players[other].filename, "MORGAN") == 0 &&
-        treaty_score > PlayersData[actor].energy_reserves) {
+    if (!strcmp(Players[other].filename, "MORGAN")
+        && treaty_score > PlayersData[actor].energy_reserves) {
         if (DiploScratchFAA8 < 0) {
             treaty_score = PlayersData[actor].energy_reserves;
         } else {
-            const int reserve_before_valuation = PlayersData[actor].energy_reserves;
-            const int tech_value = tech_val(DiploScratchFAA8, actor, 1);
-            const int selected_tech_value = diplo_mul(tech_value, diplo_add(GameDataStateStorage.fields_.turn_current_num_, 7) / 8);
-            if (reserve_before_valuation >= selected_tech_value) treaty_score = reserve_before_valuation;
+            if (PlayersData[actor].energy_reserves >= tech_val(DiploScratchFAA8, actor, 1)
+                    * ((GameDataStateStorage.fields_.turn_current_num_ + 7) / 8)) {
+                treaty_score = PlayersData[actor].energy_reserves;
+            }
         }
     }
-
     if (DiplomacyProposalMode != 5 && treaty_score > PlayersData[actor].energy_reserves) {
-        const int excess = diplo_sub(treaty_score, PlayersData[actor].energy_reserves);
-        const uint32_t excess_plus_49 = static_cast<uint32_t>(excess) + 49u;
-        const int rounded_fifties = static_cast<int>(excess_plus_49 / 50u);
-        treaty_score = diplo_sub(treaty_score, diplo_mul(rounded_fifties, 50));
+        treaty_score -= (uint32_t)(treaty_score - PlayersData[actor].energy_reserves + 49) / 50 * 50;
     }
-    if (treaty_score < 50) treaty_score = 0;
-
+    if (treaty_score < 50) {
+        treaty_score = 0;
+    }
     int should_offer_technology = 0;
-    int mode_allows_technology_offer = 0;
-    int technology_offer_made = 0;
-    int offer_energy_temporary = 0;
-
-    if (partner_threat == 0 &&
-        DiploFriction > diplo_add(diplo_mul(bias, 2), 10) &&
-        PlayersData[actor].tech_commerce_bonus >=
-            PlayersData[other].tech_commerce_bonus) {
+    int mode_allows_offer = 0;
+    int offer_made = 0;
+    int offer_taken = 0;
+    char number[80];
+    if ((!partner_threat && DiploFriction > bias * 2 + 10
+            && PlayersData[actor].tech_commerce_bonus >= PlayersData[other].tech_commerce_bonus)
+        || DiploFriction > 15 || PlayersData[other].diplo_treaties[actor] & 0x20
+        || DiploScratchFA78 > range(PlayersData[other].tech_commerce_bonus
+            - PlayersData[actor].tech_commerce_bonus, 0, 99) + 2) {
         should_offer_technology = 1;
     }
-    if (DiploFriction > 15 ||
-        (PlayersData[other].diplo_treaties[actor] & 0x20u) != 0) {
-        should_offer_technology = 1;
-    } else {
-        const int commerce_gap = diplo_clamp(diplo_sub(
-            PlayersData[other].tech_commerce_bonus,
-            PlayersData[actor].tech_commerce_bonus), 0, 99);
-        if (DiploScratchFA78 > diplo_add(commerce_gap, 2))
-            should_offer_technology = 1;
+    if (DiplomacyProposalMode == 5 || DiplomacyProposalMode == 4) {
+        mode_allows_offer = 1;
     }
-
-    switch (DiplomacyProposalMode) {
-    case 5:
-    case 4:
-        mode_allows_technology_offer = 1;
-        break;
-    case 2:
-    case 3:
+    if (DiplomacyProposalMode == 2) {
+        mode_allows_offer = 1;
         should_offer_technology = 0;
-        if (DiplomacyProposalMode == 2)
-            mode_allows_technology_offer = 1;
-        break;
-    default:
-        break;
+    } else if (DiplomacyProposalMode == 3) {
+        should_offer_technology = 0;
     }
-
-    if ((should_offer_technology || mode_allows_technology_offer) &&
-        DiploScratchFAA8 >= 0 &&
-        strcmp(Players[other].filename, "BELIEVE") != 0) {
-        bool skip_for_morgan_value = false;
-        if (strcmp(Players[other].filename, "MORGAN") == 0 && treaty_score != 0 &&
-            PlayersData[actor].energy_reserves >= treaty_score) {
-            const int offer_value = diplo_mul(
-                tech_val(DiploScratchFAA8, actor, 1), 100);
-            if (treaty_score >= offer_value) skip_for_morgan_value = true;
-        }
-
-        const bool standard_offer_mode =
-            DiplomacyProposalMode == 4 || DiplomacyProposalMode == 2 ||
-            (DiplomacyProposalMode == 1 && DiploFriction < 10);
-        if (standard_offer_mode && !skip_for_morgan_value) {
-            int response;
-            char prompt_suffix[16];
-            for (;;) {
-                GenderDefault = Players[actor].is_leader_female;
-                PluralityDefault = 0;
-                parse_says(1, Players[actor].title_leader, -1, -1);
-                StringTemp[0] = '\0';
-                say_tech(StringTemp, DiploScratchFAA8, 1);
-                parse_says(2, StringTemp, -1, -1);
-                parse_says(3, get_noun_phrase(other, 9), -1, -1);
-                strcpy(StringTemp, "GIMMETECH");
-                _itoa(random(0, 2), prompt_suffix, 10);
-                strcat(StringTemp, prompt_suffix);
-
-                technology_offer_made = 1;
-                response = X_pops(
-                    StringTemp, 0x100000, FactionDiplomacyPortraits[other], pop_wait);
-                if (response <= 1) break;
-                help_topic(14, DiploScratchFAA8);
+    if ((should_offer_technology || mode_allows_offer) && DiploScratchFAA8 >= 0
+        && strcmp(Players[other].filename, "BELIEVE")
+        && (strcmp(Players[other].filename, "MORGAN") || !treaty_score
+            || PlayersData[actor].energy_reserves < treaty_score
+            || treaty_score < tech_val(DiploScratchFAA8, actor, 1) * 100)
+        && (DiplomacyProposalMode == 4 || DiplomacyProposalMode == 2
+            || (DiplomacyProposalMode == 1 && DiploFriction < 10))) {
+        offer_made = 1;
+        int response;
+        for (;;) {
+            parse_set(Players[other].is_leader_female, 0);
+            parse_says(1, Players[other].title_leader, -1, -1);
+            StringTemp[0] = '\0';
+            say_tech(StringTemp, DiploScratchFAA8, 1);
+            parse_says(2, StringTemp, -1, -1);
+            parse_says(3, get_noun_phrase(other, 9), -1, -1);
+            StringTemp[0] = '\0';
+            strcat(StringTemp, "GIMMETECH");
+            int pick = random(0, 2);
+            _itoa(pick, number, 10);
+            strcat(StringTemp, number);
+            response = X_pops(StringTemp, 0x100000, FactionDiplomacyPortraits[other], pop_wait);
+            if (response <= 1) {
+                break;
             }
-
-            if (response == 0) {
-                accepted = 0;
+            help_topic(14, DiploScratchFAA8);
+        }
+        if (!response) {
+            accepted = 0;
+        } else {
+            int tech_id = DiploScratchFAA8;
+            offer_taken = 1;
+            if (IsMultiplayerNet) {
+                log_say(DiploLabelSendingTECH, other, tech_id, actor);
+                message_data(0x244b, 0, other, tech_id, actor, 0);
+                NetDaemonNet.await_diplo(0x44b);
             } else {
-                offer_energy_temporary = 1;
-                if (IsMultiplayerNet != 0) {
-                    log_say(DiploLabelSendingTECH, other, DiploScratchFAA8, actor);
-                    message_data(0x244b, 0, other, DiploScratchFAA8, actor, 0);
-                    NetDaemonNet.await_diplo(0x44b);
-                } else {
-                    tech_achieved(other, DiploScratchFAA8, actor, 0);
-                }
-
-                int half_tech_value = tech_val(DiploScratchFAA8, actor, 1);
-                half_tech_value /= 2;
-                PlayersData[other].diplo_friction[actor] = diplo_clamp(
-                    diplo_sub(PlayersData[other].diplo_friction[actor],
-                              half_tech_value), 0, 20);
-                if (DiploFrictionFactionID == static_cast<uint32_t>(other) &&
-                    DiploFrictionFactionIDWith == static_cast<uint32_t>(actor)) {
-                    DiploFriction = diplo_sub(DiploFriction, half_tech_value);
-                }
-                diplomacy_caption(actor, other);
-                DiploScratchFAA8 = DiploScratchFA18;
-                DiploScratchFA18 = -1;
+                tech_achieved(other, tech_id, actor, 0);
             }
+            int friction_delta = -(tech_val(DiploScratchFAA8, actor, 1) / 2);
+            PlayersData[other].diplo_friction[actor]
+                = range(friction_delta + PlayersData[other].diplo_friction[actor], 0, 20);
+            if (DiploFrictionFactionID == (uint32_t)other
+                && DiploFrictionFactionIDWith == (uint32_t)actor) {
+                DiploFriction += friction_delta;
+            }
+            diplomacy_caption(actor, other);
+            DiploScratchFAA8 = DiploScratchFA18;
+            DiploScratchFA18 = -1;
         }
     }
-
-
-
-    if ((should_offer_technology != 0 || mode_allows_technology_offer != 0) &&
-        treaty_score != 0 &&
-        PlayersData[actor].energy_reserves >= treaty_score &&
-        technology_offer_made == 0 &&
-        strcmp(Players[other].filename, "PEACE") != 0 &&
-        (DiplomacyProposalMode == 5 || DiplomacyProposalMode == 2 ||
-         (DiplomacyProposalMode == 1 && DiploFriction < 10))) {
-        technology_offer_made = 1;
+    if ((should_offer_technology || mode_allows_offer) && treaty_score
+        && PlayersData[actor].energy_reserves >= treaty_score && !offer_made
+        && strcmp(Players[other].filename, "PEACE")
+        && (DiplomacyProposalMode == 5 || DiplomacyProposalMode == 2
+            || (DiplomacyProposalMode == 1 && DiploFriction < 10))) {
+        offer_made = 1;
         parse_num(0, treaty_score);
-        PluralityDefault = 0;
-        GenderDefault = Players[other].is_leader_female;
+        parse_set(Players[other].is_leader_female, 0);
         parse_says(1, Players[other].title_leader, -1, -1);
-
-        StringTemp[0] = 0;
+        StringTemp[0] = '\0';
         strcat(StringTemp, "GIMMEENERGY");
-        char energy_offer_suffix[16];
-        _itoa(static_cast<int>(random(0, 2)), energy_offer_suffix, 10);
-        strcat(StringTemp, energy_offer_suffix);
-
-        const int energy_popup_result = X_pops(
-            StringTemp, 0x100000, FactionDiplomacyPortraits[other], pop_wait);
-        if (energy_popup_result == 0) {
-            if (DiplomacyProposalMode == 1) return 0;
-            X_pops("REJTREATYBADBRIBE", 0x100000, FactionDiplomacyPortraits[other], pop_wait);
-            return 1;
-        }
-        if (energy_popup_result != 0) {
-            offer_energy_temporary = 1;
-            const int energy_debit = diplo_sub(0, treaty_score);
-            if (IsMultiplayerNet != 0) {
+        int pick = random(0, 2);
+        _itoa(pick, number, 10);
+        strcat(StringTemp, number);
+        if (!X_pops(StringTemp, 0x100000, FactionDiplomacyPortraits[other], pop_wait)) {
+            accepted = 0;
+        } else {
+            int energy_debit = -treaty_score;
+            if (IsMultiplayerNet) {
                 log_say(DiploLabelSendingENERGY, actor, other, energy_debit);
                 message_data(0x2447, 0, actor, energy_debit, other, treaty_score);
                 NetDaemonNet.await_diplo(0x447);
             } else {
-                if (actor != 0) {
-                    PlayersData[actor].energy_reserves = diplo_add(
-                        PlayersData[actor].energy_reserves, energy_debit);
+                if (actor) {
+                    PlayersData[actor].energy_reserves += energy_debit;
                 }
-                if (other != 0) {
-                    PlayersData[other].energy_reserves = diplo_add(
-                        PlayersData[other].energy_reserves, treaty_score);
+                if (other) {
+                    PlayersData[other].energy_reserves += treaty_score;
                 }
                 ConsoleGlobal.update_data(1);
             }
-
-            int remaining = treaty_score / 10;
-            int divisor = 2;
-            int chunk_limit = 10;
+            offer_taken = 1;
             int friction_units = 0;
+            int divisor = 2;
+            int remaining = treaty_score / 10;
+            int chunk = 10;
             while (remaining > 0) {
-                const int chunk = remaining < chunk_limit ? remaining : chunk_limit;
-                friction_units = diplo_add(friction_units, chunk / divisor);
-                remaining = diplo_sub(remaining, chunk_limit);
-                chunk_limit = 20;
-                divisor = diplo_add(divisor, 1);
+                friction_units += range(remaining, 0, chunk) / divisor;
+                remaining -= chunk;
+                chunk = 20;
+                divisor++;
             }
-            const int friction_delta = diplo_sub(
-                0, diplo_add(friction_units, 4) / 5);
-            const int other_friction = static_cast<int>(
-                PlayersData[other].diplo_friction[actor]);
-            PlayersData[other].diplo_friction[actor] = static_cast<uint32_t>(
-                diplo_clamp(diplo_add(other_friction, friction_delta), 0, 20));
-
-            if (DiploFrictionFactionID == static_cast<uint32_t>(other) &&
-                DiploFrictionFactionIDWith == static_cast<uint32_t>(actor)) {
-                DiploFriction = diplo_add(DiploFriction, friction_delta);
+            int friction_delta = (friction_units + 4) / -5;
+            PlayersData[other].diplo_friction[actor]
+                = range(friction_delta + PlayersData[other].diplo_friction[actor], 0, 20);
+            if (DiploFrictionFactionID == (uint32_t)other
+                && DiploFrictionFactionIDWith == (uint32_t)actor) {
+                DiploFriction += friction_delta;
             }
             diplomacy_caption(actor, other);
             ConsoleInfoWin.set_redraw_phase(0);
             ConsoleGlobal.update_data(0);
         }
     }
-
-
-
-    if (accepted != 0) {
-        if (should_offer_technology != 0 && technology_offer_made == 0) {
-            if (DiplomacyProposalMode == 1) {
-                return 0;
-            }
-            X_pops("REJTREATYBADBRIBE", 0x100000,
-                         FactionDiplomacyPortraits[other], pop_wait);
-            return 1;
-        }
-
-        if ((DiplomacyProposalMode == 4 || DiplomacyProposalMode == 5) &&
-            offer_energy_temporary != 0) {
+    if (accepted && (!should_offer_technology || offer_made)) {
+        if ((DiplomacyProposalMode == 4 || DiplomacyProposalMode == 5) && offer_taken) {
             DiploScratchF7E8 = 0;
         }
-
-        if (partner_id != 0 && DiploScratchFA8C == 0) {
-            GenderDefault = Players[actor].is_leader_female;
-            PluralityDefault = 0;
+        if (partner_id && !DiploScratchFA8C) {
+            parse_set(Players[actor].is_leader_female, 0);
             parse_says(5, Players[actor].title_leader, -1, -1);
-
-            GenderDefault = Players[partner_id].noun_gender;
-            PluralityDefault = Players[partner_id].is_noun_plural;
+            parse_set(Players[partner_id].noun_gender, Players[partner_id].is_noun_plural);
             parse_says(6, Players[partner_id].noun_faction, -1, -1);
-
-            const int help_response = X_pops(
-                "GIMMEHELP", 0x100000, FactionDiplomacyPortraits[other], pop_wait);
-            const bool force_no_help_refusal = partner_threat != 0 ||
-                actor == static_cast<int>(GameDataStateStorage.fields_.faction_rankings_[7]) ||
-                DiploScratchFA78 > 3 || DiplomacyProposalMode == 1;
-            if (help_response == 0 && force_no_help_refusal &&
-                offer_energy_temporary == 0 &&
-                strcmp(Players[other].filename, "GAIANS") != 0) {
-                X_pops("REJTREATYNOHELP", 0x100000,
-                             FactionDiplomacyPortraits[other], pop_wait);
-
-                char &patience = PlayersData[other].diplo_patience[actor];
-                patience = static_cast<char>(static_cast<unsigned char>(patience) + 1u);
-                return 1;
-            }
-            if (help_response != 0) {
+            if (!X_pops("GIMMEHELP", 0x100000, FactionDiplomacyPortraits[other], pop_wait)) {
+                if ((partner_threat
+                        || (int)GameDataStateStorage.fields_.faction_rankings_[7] == actor
+                        || DiploScratchFA78 > 3 || DiplomacyProposalMode == 1)
+                    && !offer_taken && strcmp(Players[other].filename, "GAIANS")) {
+                    X_pops("REJTREATYNOHELP", 0x100000, FactionDiplomacyPortraits[other], pop_wait);
+                    PlayersData[other].diplo_patience[actor]++;
+                    return 1;
+                }
+            } else {
                 log_say(DiploLabelGettingDIPLOMATICLOCK, 0, 0, 0);
                 timeGetTime();
-                while (ExitTurnLoop == 0 && NetDaemonNet.add_global() != 0) {
+                while (!ExitTurnLoop && NetDaemonNet.add_global()) {
                     check_spock();
                     timeGetTime();
                 }
-
-                if (IsMultiplayerNet == 0) {
-                    treaty_off(actor, other, 0x800000);
-                } else {
+                if (IsMultiplayerNet) {
                     log_say(DiploLabelSendingTREATYOFF, actor, other, 0x800000);
                     message_data(0x2442, 0, actor, other, 0x800000, 0);
+                } else {
+                    treaty_off(actor, other, 0x800000);
                 }
-
-                if (IsMultiplayerNet != 0) {
+                if (IsMultiplayerNet) {
                     log_say(DiploLabelSendingDOUBLECROSS, actor, partner_id, other);
                     message_data(0x2440, 0, actor, partner_id, other, 0);
                     NetDaemonNet.await_diplo(0x440);
                 } else {
                     double_cross(actor, partner_id, other);
                 }
-
                 log_say(DiploLabelReleasingDIPLOMATICLOCK, 0, 0, 0);
                 NetDaemonNet.unlock();
                 DiploScratchF7E8 = 0;
                 DiploScratchFA4C = 0;
             }
         }
-
         make_treaty(actor, other);
         return 1;
     }
-
-    if (technology_offer_made != 0) {
-        X_pops("REJTREATYNOBRIBE", 0x100000,
-                     FactionDiplomacyPortraits[other], pop_wait);
+    if (!offer_made) {
+        if (DiplomacyProposalMode == 1) {
+            return 0;
+        }
+        X_pops("REJTREATYBADBRIBE", 0x100000, FactionDiplomacyPortraits[other], pop_wait);
         return 1;
     }
-
-    if (DiplomacyProposalMode == 1) {
-        return 0;
-    }
-
-    X_pops("REJTREATYBADBRIBE", 0x100000,
-                 FactionDiplomacyPortraits[other], pop_wait);
+    X_pops("REJTREATYNOBRIBE", 0x100000, FactionDiplomacyPortraits[other], pop_wait);
     return 1;
 }
 
@@ -11419,483 +11052,324 @@ int DiploScratchFA34;
 // TRIED: full-function transcription (~370 instructions, sim 0.69 vs original at /O2 /Oy-); diverges at instr #4 in the prologue frame shape. Approximated: log_say's 2nd-4th args where the decompiler elided them (derived from the paired message_data call's matching args, confirmed against raw disasm on 2/2 spot checks); the fa98 mood-recompute arithmetic order taken from Ghidra rather than re-derived by hand.
 void __cdecl threaten(int faction_id, int other_faction_id) {
     PopupDialogFactionID = other_faction_id;
-
-    const uint32_t initial_mood_flags =
-        PlayersData[other_faction_id].diplo_treaties[faction_id];
-    char mood;
-    if ((initial_mood_flags & 0x10u) != 0) {
+    int mood;
+    if (PlayersData[other_faction_id].diplo_treaties[faction_id] & DTREATY_VENDETTA) {
         mood = 1;
-    } else if ((initial_mood_flags & 1u) == 0) {
-        const int friction_round = diplo_add(DiploFriction, 3);
-        const int friction_bucket = diplo_add(
-            friction_round, (friction_round >> 31) & 7) >> 3;
-        mood = static_cast<char>(
-            static_cast<int>((initial_mood_flags >> 1) & 1u) -
-            friction_bucket + 3);
+    } else if (PlayersData[other_faction_id].diplo_treaties[faction_id] & DTREATY_PACT) {
+        mood = (PlayersData[other_faction_id].diplo_treaties[faction_id] & 0x2000000) ? 500 : 6;
     } else {
-        mood = static_cast<char>(
-            (-(int)((initial_mood_flags & 0x2000000u) != 0) & 0xee) + 6);
+        mood = ((PlayersData[other_faction_id].diplo_treaties[faction_id] >> 1) & 1)
+            - (DiploFriction + 3) / 8 + 3;
     }
-    PlayersData[other_faction_id].diplo_patience[faction_id] = mood;
-
+    PlayersData[other_faction_id].diplo_patience[faction_id] = (char)mood;
     tech_analysis(faction_id, other_faction_id);
-
-    if (DiploScratchFA70 != 0) {
-        const int single_player = (IsMultiplayerNet == 0);
-        PlayersData[faction_id].diplo_spoke[other_faction_id] =
-            static_cast<int>(GameDataStateStorage.fields_.turn_current_num_);
-        if (single_player) {
-            treaty_on(other_faction_id, faction_id, 0x10);
-        } else {
+    char number[80];
+    if (DiploScratchFA70) {
+        PlayersData[faction_id].diplo_spoke[other_faction_id] = GameDataStateStorage.fields_.turn_current_num_;
+        if (IsMultiplayerNet) {
             log_say(DiploLabelSendingTREATYON, other_faction_id, faction_id, 0x10);
             message_data(0x2441, 0, other_faction_id, faction_id, 0x10, 0);
             NetDaemonNet.await_diplo(0x441);
+        } else {
+            treaty_on(other_faction_id, faction_id, 0x10);
         }
         diplomacy_caption(faction_id, other_faction_id);
-        PluralityDefault = 0;
-        GenderDefault = Players[faction_id].is_leader_female;
+        parse_set(Players[faction_id].is_leader_female, 0);
         parse_says(0, Players[faction_id].title_leader, -1, -1);
-        PluralityDefault = 0;
-        GenderDefault = Players[faction_id].is_leader_female;
+        parse_set(Players[faction_id].is_leader_female, 0);
         parse_says(1, Players[faction_id].name_leader, -1, -1);
         parse_says(2, get_noun_phrase(faction_id, 8), -1, -1);
-        StringTemp[0] = 0;
+        StringTemp[0] = '\0';
         strcat(StringTemp, "PROVOKED");
-        const unsigned int pick = random(0, 2);
-        char number[80];
-        _itoa(static_cast<int>(pick), number, 10);
+        int pick = random(0, 2);
+        _itoa(pick, number, 10);
         strcat(StringTemp, number);
-        X_pops(StringTemp, 0x100000,
-                     FactionDiplomacyPortraits[other_faction_id], pop_wait);
+        X_pops(StringTemp, 0x100000, FactionDiplomacyPortraits[other_faction_id], pop_wait);
         return;
     }
-
-    if ((PlayersData[faction_id].diplo_treaties[other_faction_id] & 1u) != 0 &&
-        DiploScratchFA98 == 0) {
-        const int actor_rank = static_cast<int>(PlayersData[faction_id].ranking);
-        if (actor_rank <= 5 &&
-            static_cast<int>(PlayersData[other_faction_id].ranking) > 5 &&
-            DiploScratchFA34 != 8) {
-            int new_mood = diplo_sub(
-                PlayersData[other_faction_id].tech_ranking / 2,
-                PlayersData[faction_id].tech_ranking / 2);
-            new_mood = diplo_sub(new_mood,
-                PlayersData[faction_id].tech_commerce_bonus);
-            new_mood = diplo_sub(new_mood,
-                PlayersData[other_faction_id].ai_fight);
-            new_mood = diplo_add(new_mood,
-                PlayersData[other_faction_id].tech_commerce_bonus);
-            new_mood = diplo_sub(new_mood, actor_rank);
-            new_mood = diplo_add(new_mood,
-                static_cast<int>(PlayersData[other_faction_id].ranking));
+    if (PlayersData[faction_id].diplo_treaties[other_faction_id] & DTREATY_PACT && !DiploScratchFA98) {
+        int rank = PlayersData[faction_id].ranking;
+        if (rank <= 5 && (int)PlayersData[other_faction_id].ranking >= 6 && DiploScratchFA34 != 8) {
+            int value = PlayersData[other_faction_id].tech_ranking / 2 - PlayersData[faction_id].tech_ranking / 2
+                - PlayersData[faction_id].tech_commerce_bonus - PlayersData[other_faction_id].ai_fight
+                + PlayersData[other_faction_id].tech_commerce_bonus - rank
+                + PlayersData[other_faction_id].ranking;
             if (DiploScratchFA34 == 4) {
-                new_mood = diplo_add(new_mood, diplo_sub(
-                    PlayersData[other_faction_id].ai_tech,
-                    PlayersData[other_faction_id].ai_power));
+                value += PlayersData[other_faction_id].ai_tech - PlayersData[other_faction_id].ai_power;
             } else if (DiploScratchFA34 == 6) {
-                new_mood = diplo_add(new_mood, diplo_sub(
-                    PlayersData[other_faction_id].ai_wealth,
-                    PlayersData[other_faction_id].ai_power));
+                value += PlayersData[other_faction_id].ai_wealth - PlayersData[other_faction_id].ai_power;
             }
-            if ((PlayersData[other_faction_id].diplo_treaties[faction_id] &
-                 0x2000000u) == 0 || new_mood > 3) {
-                if (new_mood < 0) new_mood = 0;
-                else if (new_mood > 999) new_mood = 999;
+            if (PlayersData[other_faction_id].diplo_treaties[faction_id] & 0x2000000 && value < 4) {
+                value = 4;
             } else {
-                new_mood = 4;
+                value = range(value, 0, 999);
             }
-            DiploScratchFA98 = new_mood;
+            DiploScratchFA98 = value;
         }
     }
-    if ((PlayersData[other_faction_id].diplo_treaties[faction_id] & 1u) != 0 &&
-        (PlayersData[other_faction_id].diplo_treaties[faction_id] & 0x2000000u) != 0 &&
-        DiploScratchFA98 < 2) {
+    if (PlayersData[other_faction_id].diplo_treaties[faction_id] & DTREATY_PACT
+        && PlayersData[other_faction_id].diplo_treaties[faction_id] & 0x2000000 && DiploScratchFA98 < 2) {
         DiploScratchFA98 = 2;
     }
-
-    const int energy_delta = diplo_mul(
-        diplo_mul(diplo_sub(GameDataStateStorage.fields_.turn_current_num_, DiploScratchF7E4),
-                  DiploScratchFA98), 0x19);
-    int demand = energy_delta / 16;
-    if (PlayersData[other_faction_id].energy_reserves < demand) {
-        demand = diplo_mul(PlayersData[other_faction_id].energy_reserves / 25, 25);
+    int demand = (GameDataStateStorage.fields_.turn_current_num_ - DiploScratchF7E4) * DiploScratchFA98 * 25 / 16;
+    if (demand > PlayersData[other_faction_id].energy_reserves) {
+        demand = PlayersData[other_faction_id].energy_reserves / 25 * 25;
     }
-    if (demand < 0) demand = 0;
-
-    if (DiploScratchFA98 == 0) {
-        int new_counter = diplo_add(
-            static_cast<int>(PlayersData[other_faction_id].diplo_friction[faction_id]), 2);
-        if (new_counter < 0) new_counter = 0;
-        else if (new_counter > 0x14) new_counter = 0x14;
-        PlayersData[other_faction_id].diplo_friction[faction_id] =
-            static_cast<uint32_t>(new_counter);
-        if (DiploFrictionFactionID == static_cast<uint32_t>(other_faction_id) &&
-            DiploFrictionFactionIDWith == static_cast<uint32_t>(faction_id)) {
-            DiploFriction = diplo_add(DiploFriction, 2);
+    if (demand < 0) {
+        demand = 0;
+    }
+    if (!DiploScratchFA98) {
+        PlayersData[other_faction_id].diplo_friction[faction_id]
+            = range(PlayersData[other_faction_id].diplo_friction[faction_id] + 2, 0, 20);
+        if (DiploFrictionFactionID == (uint32_t)other_faction_id
+            && DiploFrictionFactionIDWith == (uint32_t)faction_id) {
+            DiploFriction += 2;
         }
     }
-
     diplomacy_caption(faction_id, other_faction_id);
     int did_action = 0;
-
     if (DiploScratchFA34 == 8) {
-        const int allied_faction = DiploScratchFA5C;
-        const uint32_t allied_to_other =
-            PlayersData[other_faction_id].diplo_treaties[allied_faction];
-        if ((allied_to_other & 0x10u) != 0) {
-            PluralityDefault = 0;
-            GenderDefault = Players[allied_faction].is_leader_female;
-            parse_says(0, Players[allied_faction].title_leader, -1, -1);
-            PluralityDefault = 0;
-            GenderDefault = Players[allied_faction].is_leader_female;
-            parse_says(1, Players[allied_faction].name_leader, -1, -1);
-            X_pops("REJWARALREADY", 0x100000,
-                         FactionDiplomacyPortraits[other_faction_id], pop_wait);
+        if (PlayersData[other_faction_id].diplo_treaties[DiploScratchFA5C] & DTREATY_VENDETTA) {
+            parse_set(Players[DiploScratchFA5C].is_leader_female, 0);
+            parse_says(0, Players[DiploScratchFA5C].title_leader, -1, -1);
+            parse_set(Players[DiploScratchFA5C].is_leader_female, 0);
+            parse_says(1, Players[DiploScratchFA5C].name_leader, -1, -1);
+            X_pops("REJWARALREADY", 0x100000, FactionDiplomacyPortraits[other_faction_id], pop_wait);
             return;
         }
-
-        if ((PlayersData[faction_id].diplo_treaties[other_faction_id] & 1u) != 0 &&
-            (((PlayersData[faction_id].diplo_treaties[allied_faction] & 0x10u) != 0 &&
-              (PlayersData[other_faction_id].diplo_treaties[allied_faction] & 1u) == 0) ||
-             (PlayersData[other_faction_id].diplo_treaties[faction_id] &
-              0x2000000u) != 0)) {
-            const int wants_a = wants_to_attack(other_faction_id, allied_faction, 0);
-            if (wants_a != 0 ||
-                wants_to_attack(allied_faction, other_faction_id, 0) != 0 ||
-                (PlayersData[other_faction_id].diplo_treaties[faction_id] &
-                 0x2000000u) != 0 ||
-                (static_cast<int>(PlayersData[other_faction_id].ranking) < 5 &&
-                 static_cast<int>(PlayersData[faction_id].ranking) > 5) ||
-                ((PlayersData[faction_id].diplo_treaties[allied_faction] &
-                    0x20u) != 0 &&
-                 static_cast<int>(PlayersData[faction_id].ranking) <
-                    static_cast<int>(PlayersData[allied_faction].ranking)) ||
-                (static_cast<int>(PlayersData[faction_id].ranking) <
-                    static_cast<int>(PlayersData[allied_faction].ranking) &&
-                 static_cast<int>(PlayersData[other_faction_id].ranking) <
-                    static_cast<int>(PlayersData[allied_faction].ranking))) {
-                PluralityDefault = 0;
-                GenderDefault = Players[allied_faction].is_leader_female;
-                parse_says(0, Players[allied_faction].title_leader, -1, -1);
-                PluralityDefault = 0;
-                GenderDefault = Players[allied_faction].is_leader_female;
-                parse_says(1, Players[allied_faction].name_leader, -1, -1);
-                GenderDefault = Players[allied_faction].noun_gender;
-                PluralityDefault = Players[allied_faction].is_noun_plural;
-                parse_says(2, Players[allied_faction].noun_faction, -1, -1);
+        if (PlayersData[faction_id].diplo_treaties[other_faction_id] & DTREATY_PACT
+            && ((PlayersData[faction_id].diplo_treaties[DiploScratchFA5C] & DTREATY_VENDETTA
+                    && !(PlayersData[other_faction_id].diplo_treaties[DiploScratchFA5C] & DTREATY_PACT))
+                || PlayersData[other_faction_id].diplo_treaties[faction_id] & 0x2000000)) {
+            if (wants_to_attack(other_faction_id, DiploScratchFA5C, 0)
+                || wants_to_attack(DiploScratchFA5C, other_faction_id, 0)
+                || PlayersData[other_faction_id].diplo_treaties[faction_id] & 0x2000000
+                || ((int)PlayersData[other_faction_id].ranking <= 4 && (int)PlayersData[faction_id].ranking >= 6)
+                || (PlayersData[faction_id].diplo_treaties[DiploScratchFA5C] & 0x20
+                    && (int)PlayersData[DiploScratchFA5C].ranking > (int)PlayersData[faction_id].ranking)
+                || ((int)PlayersData[DiploScratchFA5C].ranking > (int)PlayersData[faction_id].ranking
+                    && (int)PlayersData[DiploScratchFA5C].ranking > (int)PlayersData[other_faction_id].ranking)) {
+                parse_set(Players[DiploScratchFA5C].is_leader_female, 0);
+                parse_says(0, Players[DiploScratchFA5C].title_leader, -1, -1);
+                parse_set(Players[DiploScratchFA5C].is_leader_female, 0);
+                parse_says(1, Players[DiploScratchFA5C].name_leader, -1, -1);
+                parse_set(Players[DiploScratchFA5C].noun_gender, Players[DiploScratchFA5C].is_noun_plural);
+                parse_says(2, Players[DiploScratchFA5C].noun_faction, -1, -1);
                 parse_says(3, get_pact(faction_id), -1, -1);
-                X_pops("WARPACT", 0x100000,
-                             FactionDiplomacyPortraits[other_faction_id], pop_wait);
-                if (IsMultiplayerNet == 0) {
-                    double_cross(other_faction_id, allied_faction, faction_id);
-                } else {
-                    log_say(DiploLabelSendingDOUBLECROSS, other_faction_id,
-                            allied_faction, faction_id);
-                    message_data(0x2440, 0, other_faction_id, allied_faction,
-                                 faction_id, 0);
-                    NetDaemonNet.await_diplo(0x440);
-                }
+                X_pops("WARPACT", 0x100000, FactionDiplomacyPortraits[other_faction_id], pop_wait);
+                net_double_cross(other_faction_id, DiploScratchFA5C, faction_id, 1);
                 did_action = 1;
             }
-            if (DiploScratchFA34 != 8) goto after_action;
+            if (DiploScratchFA34 != 8) {
+                goto offers;
+            }
         }
-
-        if (DiploScratchFA98 != 0 &&
-            (PlayersData[other_faction_id].diplo_treaties[allied_faction] & 1u) == 0 &&
-            ((PlayersData[faction_id].diplo_treaties[other_faction_id] & 2u) != 0 ||
-             (PlayersData[other_faction_id].diplo_treaties[allied_faction] & 2u) == 0)) {
-            const int allied_power = PlayersData[allied_faction].mil_strength_1;
-            const int other_power = PlayersData[other_faction_id].mil_strength_1;
-            const int our_power = PlayersData[faction_id].mil_strength_1;
-            const int allied_threat = diplo_mul(allied_power, allied_power) /
-                                      diplo_add(other_power, 1);
-            const int our_threat = diplo_mul(our_power, DiploScratchFA98);
-            if (diplo_sub(our_threat, allied_threat) != 0 &&
-                allied_threat <= our_threat) {
-                PluralityDefault = 0;
-                GenderDefault = Players[allied_faction].is_leader_female;
-                parse_says(0, Players[allied_faction].title_leader, -1, -1);
-                PluralityDefault = 0;
-                GenderDefault = Players[allied_faction].is_leader_female;
-                parse_says(1, Players[allied_faction].name_leader, -1, -1);
-                GenderDefault = Players[allied_faction].noun_gender;
-                PluralityDefault = Players[allied_faction].is_noun_plural;
-                parse_says(2, Players[allied_faction].noun_faction, -1, -1);
-                X_pops("WARTHREAT", 0x100000,
-                             FactionDiplomacyPortraits[other_faction_id], pop_wait);
-                if (IsMultiplayerNet == 0) {
-                    double_cross(other_faction_id, allied_faction, faction_id);
-                } else {
-                    log_say(DiploLabelSendingDOUBLECROSS, other_faction_id,
-                            allied_faction, faction_id);
-                    message_data(0x2440, 0, other_faction_id, allied_faction,
-                                 faction_id, 0);
-                    NetDaemonNet.await_diplo(0x440);
-                }
-                did_action = 1;
-            }
+        if (DiploScratchFA98 && !(PlayersData[other_faction_id].diplo_treaties[DiploScratchFA5C] & DTREATY_PACT)
+            && (PlayersData[faction_id].diplo_treaties[other_faction_id] & DTREATY_TREATY
+                || !(PlayersData[other_faction_id].diplo_treaties[DiploScratchFA5C] & DTREATY_TREATY))
+            && PlayersData[faction_id].mil_strength_1 * DiploScratchFA98
+                > PlayersData[DiploScratchFA5C].mil_strength_1 * PlayersData[DiploScratchFA5C].mil_strength_1
+                    / (PlayersData[other_faction_id].mil_strength_1 + 1)) {
+            parse_set(Players[DiploScratchFA5C].is_leader_female, 0);
+            parse_says(0, Players[DiploScratchFA5C].title_leader, -1, -1);
+            parse_set(Players[DiploScratchFA5C].is_leader_female, 0);
+            parse_says(1, Players[DiploScratchFA5C].name_leader, -1, -1);
+            parse_set(Players[DiploScratchFA5C].noun_gender, Players[DiploScratchFA5C].is_noun_plural);
+            parse_says(2, Players[DiploScratchFA5C].noun_faction, -1, -1);
+            X_pops("WARTHREAT", 0x100000, FactionDiplomacyPortraits[other_faction_id], pop_wait);
+            net_double_cross(other_faction_id, DiploScratchFA5C, faction_id, 1);
+            did_action = 1;
         }
     }
-
-after_action:
-    if (demand != 0 && DiploScratchFA34 == 6) {
-        PluralityDefault = 0;
-        GenderDefault = Players[faction_id].is_leader_female;
+offers:
+    if (demand && DiploScratchFA34 == 6) {
+        parse_set(Players[faction_id].is_leader_female, 0);
         parse_says(0, Players[faction_id].title_leader, -1, -1);
-        PluralityDefault = 0;
-        GenderDefault = Players[faction_id].is_leader_female;
+        parse_set(Players[faction_id].is_leader_female, 0);
         parse_says(1, Players[faction_id].name_leader, -1, -1);
         parse_num(0, demand);
-        X_pops("EXTORTENERGY", 0x100000,
-                     FactionDiplomacyPortraits[other_faction_id], pop_wait);
-        if (IsMultiplayerNet == 0) {
-            if (faction_id != 0)
-                PlayersData[faction_id].energy_reserves = diplo_add(
-                    PlayersData[faction_id].energy_reserves, demand);
-            if (other_faction_id != 0)
-                PlayersData[other_faction_id].energy_reserves = diplo_sub(
-                    PlayersData[other_faction_id].energy_reserves, demand);
-            ConsoleGlobal.update_data(1);
-        } else {
+        X_pops("EXTORTENERGY", 0x100000, FactionDiplomacyPortraits[other_faction_id], pop_wait);
+        int energy_debit = -demand;
+        if (IsMultiplayerNet) {
             log_say(DiploLabelSendingENERGY, faction_id, other_faction_id, demand);
-            message_data(0x2447, 0, faction_id, demand, other_faction_id, diplo_sub(0, demand));
+            message_data(0x2447, 0, faction_id, demand, other_faction_id, energy_debit);
             NetDaemonNet.await_diplo(0x447);
+        } else {
+            if (faction_id) {
+                PlayersData[faction_id].energy_reserves += demand;
+            }
+            if (other_faction_id) {
+                PlayersData[other_faction_id].energy_reserves += energy_debit;
+            }
+            ConsoleGlobal.update_data(1);
         }
         ConsoleInfoWin.set_redraw_phase(0);
         ConsoleGlobal.update_data(0);
         did_action = 1;
     }
-
-    if (DiploScratchFA98 != 0 && DiploScratchFA34 == 0xd) {
+    if (DiploScratchFA98 && DiploScratchFA34 == 13) {
         parse_says(0, Players[DiploScratchFA5C].adj_name_faction, -1, -1);
-        X_pops("EXTORTCOMMLINK", 0x100000,
-                     FactionDiplomacyPortraits[other_faction_id], pop_wait);
-        const int technology = diplo_add(DiploScratchFA5C, 0x59);
-        if (IsMultiplayerNet == 0) {
-            tech_achieved(faction_id, technology, other_faction_id, 0);
-        } else {
-            log_say(DiploLabelSendingTECH, faction_id, technology, other_faction_id);
-            message_data(0x244b, 0, faction_id, technology, other_faction_id, 0);
+        X_pops("EXTORTCOMMLINK", 0x100000, FactionDiplomacyPortraits[other_faction_id], pop_wait);
+        int tech_id = DiploScratchFA5C + 0x59;
+        if (IsMultiplayerNet) {
+            log_say(DiploLabelSendingTECH, faction_id, tech_id, other_faction_id);
+            message_data(0x244b, 0, faction_id, tech_id, other_faction_id, 0);
             NetDaemonNet.await_diplo(0x44b);
+        } else {
+            tech_achieved(faction_id, tech_id, other_faction_id, 0);
         }
         did_action = 1;
     }
-    if (DiploScratchF800 > -1 && DiploScratchFA98 != 0 &&
-        DiploScratchFA34 == 4) {
-        PluralityDefault = 0;
-        GenderDefault = Players[faction_id].is_leader_female;
+    if (DiploScratchF800 >= 0 && DiploScratchFA98 && DiploScratchFA34 == 4) {
+        parse_set(Players[faction_id].is_leader_female, 0);
         parse_says(0, Players[faction_id].title_leader, -1, -1);
-        StringTemp[0] = 0;
+        StringTemp[0] = '\0';
         say_tech(StringTemp, DiploScratchF800, 1);
         parse_says(1, StringTemp, -1, -1);
-        X_pops("EXTORTTECH", 0x100000,
-                     FactionDiplomacyPortraits[other_faction_id], pop_wait);
-        const int technology = DiploScratchF800;
-        if (IsMultiplayerNet == 0) {
-            tech_achieved(faction_id, technology, other_faction_id, 0);
-        } else {
-            log_say(DiploLabelSendingTECH, faction_id, technology, other_faction_id);
-            message_data(0x244b, 0, faction_id, technology, other_faction_id, 0);
+        X_pops("EXTORTTECH", 0x100000, FactionDiplomacyPortraits[other_faction_id], pop_wait);
+        int tech_id = DiploScratchF800;
+        if (IsMultiplayerNet) {
+            log_say(DiploLabelSendingTECH, faction_id, tech_id, other_faction_id);
+            message_data(0x244b, 0, faction_id, tech_id, other_faction_id, 0);
             NetDaemonNet.await_diplo(0x44b);
+        } else {
+            tech_achieved(faction_id, tech_id, other_faction_id, 0);
         }
         DiploScratchF800 = -1;
         did_action = 1;
     }
-
     if (DiploScratchFA34 == 9) {
-        const uint32_t other_to_us_now =
-            PlayersData[other_faction_id].diplo_treaties[faction_id];
-        if ((other_to_us_now & 1u) != 0) {
-            const int base_id = DiploScratchFA7C;
-            const Base &base = Bases[base_id];
-            const int map_index = static_cast<int>(MapLongitude) * base.y +
-                                  (base.x >> 1);
-            const unsigned int region = MapTiles[map_index].region;
-            const int military = static_cast<int>(
-                PlayersData[other_faction_id].current_num_bases);
-            int skip = (other_to_us_now & 0x2000000u) == 0 || military < 2;
-            if (!skip) {
-                const bool cede =
-                    (static_cast<uint8_t>(PlayersData[faction_id].diplo_agenda[
-                        other_faction_id] >> 8) & 0x10u) != 0 &&
-                    base.faction_id_former != faction_id;
-                // Native 96DB5C is PlayerData+117C: regional base counts,
-                // not the force-rating word array at127C.
-                const unsigned int our_region_byte =
-                    PlayersData[faction_id].region_total_bases[region];
-                const unsigned int other_region_byte =
-                    PlayersData[other_faction_id].region_total_bases[region];
-                skip = cede && (our_region_byte < other_region_byte ||
-                                military / 2 < static_cast<int>(other_region_byte));
-            }
-            if (skip) {
-                PluralityDefault = 0;
-                GenderDefault = Players[faction_id].is_leader_female;
+        if (PlayersData[other_faction_id].diplo_treaties[faction_id] & DTREATY_PACT) {
+            int region = region_at(Bases[DiploScratchFA7C].x, Bases[DiploScratchFA7C].y);
+            int base_count;
+            if (!(PlayersData[other_faction_id].diplo_treaties[faction_id] & 0x2000000)
+                || (base_count = PlayersData[other_faction_id].current_num_bases) <= 1
+                || (PlayersData[faction_id].diplo_agenda[other_faction_id] & 0x1000
+                    && Bases[DiploScratchFA7C].faction_id_former != faction_id
+                    && (PlayersData[faction_id].region_total_bases[region]
+                            < PlayersData[other_faction_id].region_total_bases[region]
+                        || PlayersData[other_faction_id].region_total_bases[region] > base_count / 2))) {
+                parse_set(Players[faction_id].is_leader_female, 0);
                 parse_says(0, Players[faction_id].title_leader, -1, -1);
-                PluralityDefault = 0;
-                GenderDefault = Players[faction_id].is_leader_female;
+                parse_set(Players[faction_id].is_leader_female, 0);
                 parse_says(1, Players[faction_id].name_leader, -1, -1);
-                X_pops("BASENOCEDE", 0x100000,
-                             FactionDiplomacyPortraits[other_faction_id], pop_wait);
+                X_pops("BASENOCEDE", 0x100000, FactionDiplomacyPortraits[other_faction_id], pop_wait);
                 return;
             }
-            if (IsMultiplayerNet == 0) {
-                agenda_on(faction_id, other_faction_id, 0x1000);
-            } else {
+            if (IsMultiplayerNet) {
                 log_say(DiploLabelSendingAGENDAON, faction_id, other_faction_id, 0x1000);
                 message_data(0x2444, 0, faction_id, other_faction_id, 0x1000, 0);
                 NetDaemonNet.await_diplo(0x444);
+            } else {
+                agenda_on(faction_id, other_faction_id, 0x1000);
             }
         }
-
-        const int has_contact =
-            (DiploScratchFA68 == 0 && DiploScratchFAA0 == 0) ? 0 : 1;
-        const int base_value = value_of_base(DiploScratchFA7C, other_faction_id,
-            faction_id, DiploScratchFA98, has_contact);
-        if (base_value > 0 && base_value < diplo_mul(DiploScratchFA98, 0x19)) {
+        int value = value_of_base(DiploScratchFA7C, other_faction_id, faction_id, DiploScratchFA98,
+            (DiploScratchFA68 || DiploScratchFAA0) ? 1 : 0);
+        if (value > 0 && value < DiploScratchFA98 * 25) {
             log_say(DiploLabelGettingDIPLOMATICLOCK, 0, 0, 0);
             timeGetTime();
-            while (ExitTurnLoop == 0 && NetDaemonNet.add_global() != 0) {
+            while (!ExitTurnLoop && NetDaemonNet.add_global()) {
                 check_spock();
                 timeGetTime();
             }
             parse_says(0, Bases[DiploScratchFA7C].name_string, -1, -1);
-            if (IsMultiplayerNet == 0) {
-                give_a_base(DiploScratchFA7C, faction_id);
-            } else {
-                log_say(DiploLabelSendingCEDEBASE, DiploScratchFA7C, faction_id, 0);
-                message_data(0x2449, 0, DiploScratchFA7C, faction_id, 0, 0);
-                NetDaemonNet.await_diplo(0x449);
-            }
-            X_pops("BASEOK", 0x100000,
-                         FactionDiplomacyPortraits[other_faction_id], pop_wait);
-            if ((PlayersData[other_faction_id].diplo_treaties[faction_id] &
-                 0x2000000u) == 0) {
-                if (IsMultiplayerNet == 0) {
-                    set_treaty(other_faction_id, faction_id, 0x20, 1);
-                } else {
-                    log_say(DiploLabelSendingSETTREATY, other_faction_id,
-                            faction_id, 0x20);
+            net_cede_base(DiploScratchFA7C, faction_id, 1);
+            X_pops("BASEOK", 0x100000, FactionDiplomacyPortraits[other_faction_id], pop_wait);
+            if (!(PlayersData[other_faction_id].diplo_treaties[faction_id] & 0x2000000)) {
+                if (IsMultiplayerNet) {
+                    log_say(DiploLabelSendingSETTREATY, other_faction_id, faction_id, 0x20);
                     message_data(0x2443, 0, other_faction_id, faction_id, 0x20, 1);
                     NetDaemonNet.await_diplo(0x443);
+                } else {
+                    set_treaty(other_faction_id, faction_id, 0x20, 1);
                 }
             }
             log_say(DiploLabelReleasingDIPLOMATICLOCK, 0, 0, 0);
             NetDaemonNet.unlock();
-            goto tail;
+            goto truce;
         }
     }
-
-    if (!did_action) {
-        if ((PlayersData[other_faction_id].diplo_treaties[faction_id] & 1u) != 0) {
-            if (DiploScratchFA68 != 0 || DiploScratchFA3C != 0 ||
-                DiploFriction > 10) {
-                if ((static_cast<int>(PlayersData[other_faction_id].ranking) <
-                        static_cast<int>(PlayersData[faction_id].ranking) ||
-                     PlayersData[other_faction_id].tech_ranking <
-                        PlayersData[faction_id].tech_ranking) &&
-                    (PlayersData[other_faction_id].diplo_treaties[faction_id] &
-                        0x2000000u) == 0 &&
-                    static_cast<int>(PlayersData[faction_id].ranking) > 4) {
-                    PluralityDefault = 0;
-                    GenderDefault = Players[faction_id].is_leader_female;
-                    parse_says(0, Players[faction_id].title_leader, -1, -1);
-                    PluralityDefault = 0;
-                    GenderDefault = Players[faction_id].is_leader_female;
-                    parse_says(1, Players[faction_id].name_leader, -1, -1);
-                    parse_says(2, get_pact(faction_id), -1, -1);
-                    X_pops("ENDPACT", 0x100000,
-                                 FactionDiplomacyPortraits[other_faction_id], pop_wait);
-                    log_say(DiploLabelGettingDIPLOMATICLOCK, 0, 0, 0);
-                    timeGetTime();
-                    while (ExitTurnLoop == 0 && NetDaemonNet.add_global() != 0) {
-                        check_spock();
-                        timeGetTime();
-                    }
-                    if (IsMultiplayerNet == 0) {
-                        pact_ends(faction_id, other_faction_id);
-                    } else {
-                        log_say(DiploLabelSendingPACTENDS, faction_id,
-                                other_faction_id, 0);
-                        message_data(0x244d, 0, faction_id, other_faction_id,
-                                     0, 0);
-                        NetDaemonNet.await_diplo(0x44d);
-                    }
-                    log_say(DiploLabelReleasingDIPLOMATICLOCK, 0, 0, 0);
-                    NetDaemonNet.unlock();
-                }
-            }
-            PluralityDefault = 0;
-            GenderDefault = Players[faction_id].is_leader_female;
-            parse_says(0, Players[faction_id].name_leader, -1, -1);
-            X_pops("FEND", 0x100000,
-                         FactionDiplomacyPortraits[other_faction_id], pop_wait);
+    if (did_action) {
+truce:
+        if (PlayersData[faction_id].diplo_treaties[other_faction_id] & DTREATY_TREATY) {
             return;
         }
-
-        const int human_bias = DiploScratchFA68 != 0 ? 5 : 15;
-        if (human_bias < DiploFriction && DiploScratchFA98 == 0 &&
-            (PlayersData[faction_id].best_weapon_value <=
-                 PlayersData[other_faction_id].best_weapon_value ||
-             DiploScratchFAA0 != 0 || DiploScratchFA50 != 0)) {
-            const int strength = diplo_mul(
-                diplo_add(diplo_add(static_cast<int>(PlayersData[faction_id].ranking) / 2, 4),
-                          PlayersData[faction_id].integrity_blemishes),
-                PlayersData[faction_id].mil_strength_1);
-            const int need = strength / 4;
-            if (need < PlayersData[other_faction_id].mil_strength_1) {
-                if (IsMultiplayerNet == 0) {
-                    treaty_on(faction_id, other_faction_id, 0x10);
-                } else {
-                    log_say(DiploLabelSendingTREATYON, faction_id, other_faction_id, 0x10);
-                    message_data(0x2441, 0, faction_id, other_faction_id,
-                                 0x10, 0);
-                    NetDaemonNet.await_diplo(0x441);
-                }
-                PlayersData[faction_id].diplo_spoke[other_faction_id] =
-                    static_cast<int>(GameDataStateStorage.fields_.turn_current_num_);
-                diplomacy_caption(faction_id, other_faction_id);
-                StringTemp[0] = 0;
-                strcat(StringTemp, "PROVOKED");
-                const unsigned int pick = random(0, 2);
-                char number[80];
-                _itoa(static_cast<int>(pick), number, 10);
-                strcat(StringTemp, number);
-                PluralityDefault = 0;
-                GenderDefault = Players[faction_id].is_leader_female;
-                parse_says(0, Players[faction_id].title_leader, -1, -1);
-                PluralityDefault = 0;
-                GenderDefault = Players[faction_id].is_leader_female;
-                parse_says(1, Players[faction_id].name_leader, -1, -1);
-                parse_says(2, get_noun_phrase(faction_id, 8), -1, -1);
-                X_pops(StringTemp, 0x100000,
-                             FactionDiplomacyPortraits[other_faction_id], pop_wait);
-                return;
-            }
+        if (IsMultiplayerNet) {
+            log_say(DiploLabelSendingTREATYON, other_faction_id, faction_id, 4);
+            message_data(0x2441, 0, other_faction_id, faction_id, 4, 0);
+            NetDaemonNet.await_diplo(0x441);
+            return;
         }
-
-        PluralityDefault = 0;
-        GenderDefault = Players[faction_id].is_leader_female;
-        parse_says(0, Players[faction_id].title_leader, -1, -1);
-        PluralityDefault = 0;
-        GenderDefault = Players[faction_id].is_leader_female;
-        parse_says(1, Players[faction_id].name_leader, -1, -1);
-        X_pops("IGNORE", 0x100000,
-                     FactionDiplomacyPortraits[other_faction_id], pop_wait);
-        return;
-    }
-
-tail:
-    if ((PlayersData[faction_id].diplo_treaties[other_faction_id] & 2u) != 0) {
-        return;
-    }
-    if (IsMultiplayerNet == 0) {
         treaty_on(other_faction_id, faction_id, 4);
         return;
     }
-    log_say(DiploLabelSendingTREATYON, other_faction_id, faction_id, 4);
-    message_data(0x2441, 0, other_faction_id, faction_id, 4, 0);
-    NetDaemonNet.await_diplo(0x441);
+    if (PlayersData[other_faction_id].diplo_treaties[faction_id] & DTREATY_PACT) {
+        if ((DiploScratchFA68 || DiploScratchFA3C || DiploFriction > 10)
+            && ((int)PlayersData[faction_id].ranking > (int)PlayersData[other_faction_id].ranking
+                || PlayersData[faction_id].tech_ranking > PlayersData[other_faction_id].tech_ranking)
+            && !(PlayersData[other_faction_id].diplo_treaties[faction_id] & 0x2000000)
+            && (int)PlayersData[faction_id].ranking >= 5) {
+            parse_set(Players[faction_id].is_leader_female, 0);
+            parse_says(0, Players[faction_id].title_leader, -1, -1);
+            parse_set(Players[faction_id].is_leader_female, 0);
+            parse_says(1, Players[faction_id].name_leader, -1, -1);
+            parse_says(2, get_pact(faction_id), -1, -1);
+            X_pops("ENDPACT", 0x100000, FactionDiplomacyPortraits[other_faction_id], pop_wait);
+            log_say(DiploLabelGettingDIPLOMATICLOCK, 0, 0, 0);
+            timeGetTime();
+            while (!ExitTurnLoop && NetDaemonNet.add_global()) {
+                check_spock();
+                timeGetTime();
+            }
+            if (IsMultiplayerNet) {
+                log_say(DiploLabelSendingPACTENDS, 0, 0, 0);
+                message_data(0x244d, 0, faction_id, other_faction_id, 0, 0);
+                NetDaemonNet.await_diplo(0x44d);
+            } else {
+                pact_ends(faction_id, other_faction_id);
+            }
+            log_say(DiploLabelReleasingDIPLOMATICLOCK, 0, 0, 0);
+            NetDaemonNet.unlock();
+        }
+        parse_set(Players[faction_id].is_leader_female, 0);
+        parse_says(0, Players[faction_id].name_leader, -1, -1);
+        X_pops("FEND", 0x100000, FactionDiplomacyPortraits[other_faction_id], pop_wait);
+        return;
+    }
+    if (DiploFriction > (DiploScratchFA68 ? 5 : 15) && !DiploScratchFA98
+        && (PlayersData[other_faction_id].best_weapon_value >= PlayersData[faction_id].best_weapon_value
+            || DiploScratchFAA0 || DiploScratchFA50)
+        && PlayersData[other_faction_id].mil_strength_1
+            > (PlayersData[faction_id].diff_level / 2 + PlayersData[faction_id].integrity_blemishes + 4)
+                * PlayersData[faction_id].mil_strength_1 / 4) {
+        if (IsMultiplayerNet) {
+            log_say(DiploLabelSendingTREATYON, faction_id, other_faction_id, 0x10);
+            message_data(0x2441, 0, faction_id, other_faction_id, 0x10, 0);
+            NetDaemonNet.await_diplo(0x441);
+        } else {
+            treaty_on(faction_id, other_faction_id, 0x10);
+        }
+        PlayersData[faction_id].diplo_spoke[other_faction_id] = GameDataStateStorage.fields_.turn_current_num_;
+        diplomacy_caption(faction_id, other_faction_id);
+        StringTemp[0] = '\0';
+        strcat(StringTemp, "PROVOKED");
+        int pick = random(0, 2);
+        _itoa(pick, number, 10);
+        strcat(StringTemp, number);
+        parse_set(Players[faction_id].is_leader_female, 0);
+        parse_says(0, Players[faction_id].title_leader, -1, -1);
+        parse_set(Players[faction_id].is_leader_female, 0);
+        parse_says(1, Players[faction_id].name_leader, -1, -1);
+        parse_says(2, get_noun_phrase(faction_id, 8), -1, -1);
+        X_pops(StringTemp, 0x100000, FactionDiplomacyPortraits[other_faction_id], pop_wait);
+        return;
+    }
+    parse_set(Players[faction_id].is_leader_female, 0);
+    parse_says(0, Players[faction_id].title_leader, -1, -1);
+    parse_set(Players[faction_id].is_leader_female, 0);
+    parse_says(1, Players[faction_id].name_leader, -1, -1);
+    X_pops("IGNORE", 0x100000, FactionDiplomacyPortraits[other_faction_id], pop_wait);
 }
 
 // ORIGINAL: 0x0054DCF0 ?proposal_menu@@YAHHH@Z 0x0054DCF0-0x0054F412;0x0065FAE9-0x0065FD5F
@@ -13401,10 +12875,10 @@ Status: Coverage transcription - unclaimed body, seed
 int __cdecl contiguous(int faction_id1, int faction_id2, int region,
                        int flag) {
     if (region != 0) {
-        if (PlayersData[faction_id1].region_total_offensive_vehs[region] == 0) {
+        if (PlayersData[faction_id1].region_total_bases[region] == 0) {
             return 0;
         }
-        if (PlayersData[faction_id2].region_total_offensive_vehs[region] == 0) {
+        if (PlayersData[faction_id2].region_total_bases[region] == 0) {
             return 0;
         }
     }
