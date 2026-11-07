@@ -1358,7 +1358,7 @@ void DiploWin::hide() {
 // kill_offer, new_chat and on_button_clicked all set it to 1 as they change the
 // offer lists; exec (0x00443F10) tests it and clears it. It is now owned storage.
 
-// ORIGINAL: 0x004413F0 ?kill_offer@DiploWin@@QAEXHH@Z 0x004413F0-0x0044148C FILE
+// ORIGINAL: 0x004413F0 ?kill_offer@DiploWin@@QAEXHH@Z 0x004413F0-0x0044148C FILE BYTE_EXACT
 // TRIED: `int idx = a2;` declared inside the inner `if (a2 < count - 1)` (mismatch, idx assign shifted 5 instructions late) and hoisted above it with a separate `countMinus1` temp (MNEMONIC_ONLY, worse). Landed the inner-if placement: MISMATCH #23, mnemonic similarity 0.98, same byte count (156/156).
 // size      156 bytes
 // prototype void (__thiscall ?kill_offer@DiploWin@@QAEXHH@Z)(DiploWin* this, int, int)
@@ -1405,7 +1405,7 @@ void DiploWin::receive_maybe_deal(int sender) {
   }
 }
 
-// ORIGINAL: 0x00441490 ?add_offer@DiploWin@@QAEXHHH@Z 0x00441490-0x004415B9 FILE
+// ORIGINAL: 0x00441490 ?add_offer@DiploWin@@QAEXHHH@Z 0x00441490-0x004415B9 FILE BYTE_EXACT
 // size      297 bytes
 // prototype void (__thiscall ?add_offer@DiploWin@@QAEXHHH@Z)(DiploWin* this, int, int, int)
 // callers   3   call targets   2

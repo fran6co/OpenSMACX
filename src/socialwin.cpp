@@ -1146,7 +1146,7 @@ static inline void social_draw_icon(Sprite *sprite, Buffer *dest, int x, int y) 
 }
 
 // Paint the faction power strip from its owning Player name and base effects.
-// ORIGINAL: 0x004AF8C0 ?draw_faction_basal@SocialWin@@QAEXXZ 0x004AF8C0-0x004AFB5D
+// ORIGINAL: 0x004AF8C0 ?draw_faction_basal@SocialWin@@QAEXXZ 0x004AF8C0-0x004AFB5D BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:seed:src/recovered/units/004af8c0.cpp; source:src/socialwin.h:tooltipFactionPower_,effectIcons_,font1_; source:src/faction.h:Player.noun_faction,noun_gender,is_noun_plural,PlayerData.soc_effect_base; image:0x004AF8C0-0x004AFB5D"], "reason": "Recover the faction-power panel on SocialWin typed rectangle, inherited Buffer, effect sprites, and Player records, including the noun-format defaults consumed by faction text rendering."}
 void SocialWin::draw_faction_basal() {
     RECT panel = tooltipFactionPower_;
@@ -1935,7 +1935,7 @@ void SocialWin::on_mouse_move(int a1, int a2) {
  *          the count on the right - signed "+" and recoloured when it differs
  *          from the faction's stored value. Invoked for the effect column's
  *          buttons only (0x11..0x1a), with the separator slot skipped.
-// ORIGINAL: 0x004B17A0 ?on_button_text_draw@SocialWin@@QAEHPAUGraphicWin@@PADH@Z 0x004B17A0-0x004B1991 FILE
+// ORIGINAL: 0x004B17A0 ?on_button_text_draw@SocialWin@@QAEHPAUGraphicWin@@PADH@Z 0x004B17A0-0x004B1991 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"reason":"Compare the displayed effect against the selected faction's pending SocialEffect member rather than an original-address word view. Keep the existing selector and unchecked index behavior.","evidence":["pinned:0x004B18DA reads [edx*4+0x0096CC2C] with the selected faction's 2099-dword PlayerData stride and effect index","source:PlayersData base 0x0096C9E0,PlayerData stride 0x20CC,soc_effect_pending+0x24C,SocialEffect::values_+0x0"]}
 // symbol    ?on_button_text_draw@SocialWin@@UAEHPAVGraphicWin@@PADH@Z
 // TRIED: strlen/strcat named plainly get inlined by /O2 (fixed via the nullary
