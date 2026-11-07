@@ -572,8 +572,8 @@ void RadioButton::on_mouse_move(int x, int y) {
     int first = 1;
     Dialog::item_list_.seek_pos(-1);
     while (y > 0) {
-        if (!first && Dialog::item_list_.current_position_ ==
-                          Dialog::item_list_.entry_count_ - 1) {
+        if (!first && Dialog::item_list_.entry_count_ - 1 ==
+                          Dialog::item_list_.current_position_) {
             return;
         }
         first = 0;
@@ -587,14 +587,14 @@ void RadioButton::on_mouse_move(int x, int y) {
         }
         int lines;
         if (items.current_ != 0) {
-            StringStructPayload *const payload = items.head_ == 0
-                ? 0 : items.current_->string_payload();
+            StringStructPayload *const payload = items.head_ != 0
+                ? items.current_->string_payload() : 0;
             lines = static_cast<int>(payload->field_8_);
         } else {
             lines = 0;
         }
         int item_height = Buffer::text_line_height() * lines;
-        const int minimum = static_cast<int>(Dialog::field_68_ + Dialog::field_44_);
+        const int minimum = static_cast<int>(Dialog::field_44_ + Dialog::field_68_);
         if (minimum > item_height) item_height = minimum;
         y -= item_height;
     }

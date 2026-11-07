@@ -1760,12 +1760,18 @@ static int __cdecl pick_daemon_callback() {
 // The shared tail of the eight scalar pickers runs even on cancellation:
 // only the option-byte write is conditional. Native 47E137/47E426 and their
 // sibling joins resolve the local slot before copying the live options.
+// A separate inline level: it spends the inline budget the image's PopMenu
+// teardown shows as spent (the trailing FlatButton destructors stay calls).
+static void pick_send_packet(NetWinSessionOptionsPacket *packet) {
+    NetDaemonNet.send(packet, sizeof(*packet), NetDaemonNet.host_player_id(), 1);
+}
+
 static void pick_send_state() {
     NetDaemonNet.pid_2_idx(NetDaemonNet.local_player_id());
     NetWinSessionOptionsPacket packet;
     packet.options_ = NetWinSessionOptions.fields_;
     packet.opcode_ = 0x2F02;
-    NetDaemonNet.send(&packet, sizeof(packet), NetDaemonNet.host_player_id(), 1);
+    pick_send_packet(&packet);
 }
 
 // Number/planet pickers and rule clicks load the destination before copying
@@ -1782,6 +1788,14 @@ static void pick_send_state_with_captured_target() {
 // The option pick itself: mouse position to screen coordinates, then the
 // popup run modally with the daemon callback; the answer is the chosen item
 // index, negative when the pick was dismissed.
+// Scalar pickers keep x/y in their own frame: the image never reuses those
+// slots for the teardown temporaries.
+static int pick_answer_at(NetWin &self, PopMenu &pop_menu, int *x, int *y) {
+    self.get_mouse_pos(x, y);
+    self.client_to_screen(x, y);
+    return pop_menu.exec(*x, *y, pick_daemon_callback);
+}
+
 static int pick_answer(NetWin &self, PopMenu &pop_menu) {
     int x;
     int y;
@@ -2314,7 +2328,9 @@ void NetWin::pick_clouds() {
     for (int slot = 0xF84 / 4; slot < 0xF90 / 4; ++slot) {
         dialogs.item(label_get(slot), index++);
     }
-    int answer = pick_answer(*this, pop_menu);
+    int x;
+    int y;
+    int answer = pick_answer_at(*this, pop_menu, &x, &y);
     if (answer >= 0) {
         NetWinSessionOptions.fields_.cloud_cover_ =
             static_cast<unsigned char>(answer - 1);
@@ -2346,7 +2362,9 @@ void NetWin::pick_ocean() {
     for (int slot = 0xF60 / 4; slot < 0xF6C / 4; ++slot) {
         dialogs.item(label_get(slot), index++);
     }
-    int answer = pick_answer(*this, pop_menu);
+    int x;
+    int y;
+    int answer = pick_answer_at(*this, pop_menu, &x, &y);
     if (answer >= 0) {
         NetWinSessionOptions.fields_.ocean_coverage_ =
             static_cast<unsigned char>(answer - 1);
@@ -2378,7 +2396,9 @@ void NetWin::pick_erosion() {
     for (int slot = 0xF6C / 4; slot < 0xF78 / 4; ++slot) {
         dialogs.item(label_get(slot), index++);
     }
-    int answer = pick_answer(*this, pop_menu);
+    int x;
+    int y;
+    int answer = pick_answer_at(*this, pop_menu, &x, &y);
     if (answer >= 0) {
         NetWinSessionOptions.fields_.erosion_ =
             static_cast<unsigned char>(answer - 1);
@@ -2410,7 +2430,9 @@ void NetWin::pick_native() {
     for (int slot = 0xF90 / 4; slot < 0xF9C / 4; ++slot) {
         dialogs.item(label_get(slot), index++);
     }
-    int answer = pick_answer(*this, pop_menu);
+    int x;
+    int y;
+    int answer = pick_answer_at(*this, pop_menu, &x, &y);
     if (answer >= 0) {
         NetWinSessionOptions.fields_.native_life_ =
             static_cast<unsigned char>(answer - 1);
@@ -2443,7 +2465,9 @@ void NetWin::pick_planet_size() {
     for (int index = 0; index < NetWinPlanetSizeLabelCount; ++index) {
         dialogs.item(world_size_labels_[index], index + 1);
     }
-    int answer = pick_answer(*this, pop_menu);
+    int x;
+    int y;
+    int answer = pick_answer_at(*this, pop_menu, &x, &y);
     if (answer >= 0) {
         NetWinSessionOptions.fields_.planet_size_ =
             static_cast<unsigned char>(answer - 1);
@@ -2711,7 +2735,9 @@ void NetWin::pick_num_players() {
         strcat(StringTemp, number);
         dialogs.item(StringTemp, count);
     }
-    int answer = pick_answer(*this, pop_menu);
+    int x;
+    int y;
+    int answer = pick_answer_at(*this, pop_menu, &x, &y);
     if (answer >= 0) {
         // Native 47E11A..47E132 retains the pre-modal lower bound.
         int count = static_cast<int>(static_cast<uint32_t>(answer) +
@@ -2746,7 +2772,9 @@ void NetWin::pick_global_diff() {
     for (int index = 0; index < 6; ++index) {
         dialogs.item(StringTable.get(Difficulty[index]), index);
     }
-    int answer = pick_answer(*this, pop_menu);
+    int x;
+    int y;
+    int answer = pick_answer_at(*this, pop_menu, &x, &y);
     if (answer >= 0) {
         NetWinSessionOptions.fields_.difficulty_ =
             static_cast<unsigned char>(answer);
@@ -2774,7 +2802,9 @@ void NetWin::pick_time() {
     PopMenu pop_menu;
     pop_menu.init();
     time_controls_dialog(&pop_menu);
-    int answer = pick_answer(*this, pop_menu);
+    int x;
+    int y;
+    int answer = pick_answer_at(*this, pop_menu, &x, &y);
     if (answer >= 0) {
         NetWinSessionOptions.fields_.time_control_ =
             static_cast<unsigned char>(answer);

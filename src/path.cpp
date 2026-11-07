@@ -1240,8 +1240,27 @@ void Path::merge(int region_old, int region_new) {
  Return Value: n/a
  Status: Complete
 */
+// LEVER (exact): continent()'s shape - ebp frame, a named is_ocean_tile
+//   compared against each neighbour's is_ocean() (VC6 folds it to the land
+//   test after the early return but keeps the setl), the cursors in the
+//   parameters, and a flat-first wrap.
+static inline int territory_wrap_x(int x) {
+    if (MapIsFlat & 1) {
+        return x;
+    }
+    if (x < 0) {
+        return x + MapLongitudeBounds;
+    }
+    if (x >= (int)MapLongitudeBounds) {
+        return x - MapLongitudeBounds;
+    }
+    return x;
+}
+
+#pragma optimize("y", off)
 void Path::territory(int x, int y, int UNUSED(region), int faction_id) {
-    if (is_ocean(x, y)) {
+    BOOL is_ocean_tile = is_ocean(x, y);
+    if (is_ocean_tile) {
         return; // skip ocean terrain
     }
     index2_ = 0;
@@ -1249,15 +1268,15 @@ void Path::territory(int x, int y, int UNUSED(region), int faction_id) {
     x_table_[index1_] = (int16_t)x;
     y_table_[index1_++] = (int16_t)y;
     do {
-        int x_it = x_table_[index2_];
-        int y_it = y_table_[index2_++];
+        x = x_table_[index2_];
+        y = y_table_[index2_++];
         for (uint32_t i = 0; i < 8; i++) {
-            int x_radius = wrap_map_x(x_it + VehMoveDeltaX[i]);
-            int y_radius = y_it + VehMoveDeltaY[i];
+            int x_radius = territory_wrap_x(x + VehMoveDeltaX[i]);
+            int y_radius = y + VehMoveDeltaY[i];
             Map *tile;
-            if (on_map(x_radius, y_radius) && y_it && y_it != ((int)MapLatitudeBounds - 1)
+            if (on_map(x_radius, y_radius) && y && y != ((int)MapLatitudeBounds - 1)
                 && (tile = map_loc(x_radius, y_radius),
-                    (tile->climate & ~0x1F) >= ALT_BIT_SHORE_LINE
+                    is_ocean(x_radius, y_radius) == is_ocean_tile
                     && !tile->unk_1 && tile->territory == faction_id)) {
                 tile->unk_1 = 1;
                 x_table_[index1_] = (int16_t)x_radius;
@@ -1267,6 +1286,7 @@ void Path::territory(int x, int y, int UNUSED(region), int faction_id) {
     } while (index2_ && index1_ != index2_);
     do_all_non_input();
 }
+#pragma optimize("", on)
 
 /*
  Purpose: Populate the continent and path table for the specified tile and region.
@@ -1304,27 +1324,32 @@ void Path::territory(int x, int y, int UNUSED(region), int faction_id) {
  Return Value: n/a
  Status: Complete
 */
+// LEVER: ebp frame; the cursor reuses parameter y; the fresh-water test
+//   re-reads is_ocean() rather than the cached comparison.
+#pragma optimize("y", off)
 void Path::continent(int x, int y, int region) {
     Continents[region].tile_count = 0;
-    index1_ = 0; 
-    index2_ = 0;
     int fresh_water_count = 0;
+    index2_ = 0;
+    index1_ = 0;
     x_table_[index1_] = (int16_t)x;
     y_table_[index1_++] = (int16_t)y;
     region_set(x, y, region);
     BOOL is_ocean_tile = is_ocean(x, y);
     do {
-        int16_t x_it = x_table_[index2_];
-        int16_t y_it = y_table_[index2_++];
+        int x_it = x_table_[index2_];
+        y = y_table_[index2_++];
         Continents[region].tile_count++;
         for (uint32_t i = 0; i < 8; i++) {
             int x_radius = wrap_map_x(x_it + VehMoveDeltaX[i]);
-            int y_radius = y_it + VehMoveDeltaY[i];
-            BOOL is_ocean_rad;
-            if (on_map(x_radius, y_radius) && y_it && y_it != ((int)MapLatitudeBounds - 1)
-                && (is_ocean_rad = is_ocean(x_radius, y_radius), is_ocean_rad == is_ocean_tile 
-                    && !region_at(x_radius, y_radius))) {
-                if (is_ocean_tile && bit2_at(x_radius, y_radius) & BIT2_FRESH && is_ocean_rad) {
+            int y_radius = y + VehMoveDeltaY[i];
+            Map *tile;
+            if (on_map(x_radius, y_radius) && y && y != ((int)MapLatitudeBounds - 1)
+                && (tile = map_loc(x_radius, y_radius),
+                    is_ocean(x_radius, y_radius) == is_ocean_tile
+                    && !tile->region)) {
+                if (is_ocean_tile && tile->bit2 & BIT2_FRESH
+                    && is_ocean(x_radius, y_radius)) {
                     fresh_water_count++;
                 }
                 region_set(x_radius, y_radius, region);
@@ -1346,6 +1371,7 @@ void Path::continent(int x, int y, int region) {
     }
     do_all_non_input();
 }
+#pragma optimize("", on)
 
 /*
  Purpose: Populate and set up all the continents and path tables.
@@ -1399,16 +1425,22 @@ void Path::continent(int x, int y, int region) {
 #pragma intrinsic(memset)
 #endif
 
+// LEVER: ebp frame; function-scope cursors and bitmask outputs fix the
+//   stack slots; the pole/row bounds are re-read, not cached.
+#pragma optimize("y", off)
 void Path::continents() {
+    int offset;
+    int mask;
+    int x;
+    int y;
     int land_region = 0;
     int ocean_region = 64;
     Map *tiles = map_tiles();
     for (int i = 0; i < MapArea; tiles++, i++) {
         tiles->region = 0;
     }
-    int y_south_pole = MapLatitudeBounds - 1;
-    for (int y = 1; y < y_south_pole; y++) {
-        for (int x = y & 1; x < MapLongitudeBounds; x += 2) {
+    for (y = 1; y < (int)MapLatitudeBounds - 1; y++) {
+        for (x = y & 1; x < MapLongitudeBounds; x += 2) {
             if (!region_at(x, y)) {
                 int region_current;
                 int region_min;
@@ -1444,13 +1476,14 @@ void Path::continents() {
             }
         }
     }
-    for (int x = 0; x < MapLongitudeBounds; x += 2) { // north pole
-        uint8_t pole_region = is_ocean(x, 0) ? 127 : 63;
+    for (x = 0; x < MapLongitudeBounds; x += 2) { // north pole
+        int pole_region = is_ocean(x, 0) ? 127 : 63;
         region_set(x, 0, pole_region);
         Continents[pole_region].tile_count++;
     }
+    int y_south_pole = MapLatitudeBounds - 1;
     for (x = y_south_pole & 1; x < MapLongitudeBounds; x += 2) { // south pole
-        uint8_t pole_region = is_ocean(x, y_south_pole) ? 127 : 63;
+        int pole_region = is_ocean(x, y_south_pole) ? 127 : 63;
         region_set(x, y_south_pole, pole_region);
         Continents[pole_region].tile_count++;
     }
@@ -1469,17 +1502,15 @@ void Path::continents() {
         ZeroMemory(Continents[i_414].sea_coasts, 8);
     }
     for (y = 0; y < MapLatitudeBounds; y++) {
-        for (int x = y & 1; x < MapLongitudeBounds; x += 2) {
-            uint32_t region = region_at(x, y);
+        for (x = y & 1; x < MapLongitudeBounds; x += 2) {
+            int region = region_at(x, y);
             if (region < MaxRegionLandNum) {
                 for (int i = 0; i < 8; i++) {
                     int x_radius = wrap_map_x(x + VehMoveDeltaX[i]);
                     int y_radius = y + VehMoveDeltaY[i];
                     if (on_map(x_radius, y_radius)) {
-                        uint32_t region_rad = region_at(x_radius, y_radius);
+                        int region_rad = region_at(x_radius, y_radius);
                         if (region_rad >= MaxRegionLandNum) {
-                            int offset;
-                            int mask;
                             bitmask(region_rad - MaxRegionLandNum, &offset, &mask);
                             Continents[region].sea_coasts[offset] |= mask;
                             i += 2 - (i & 1);
@@ -1492,6 +1523,7 @@ void Path::continents() {
     make_abstract();
     do_all_non_input();
 }
+#pragma optimize("", on)
 
 /*
  Purpose: TBD

@@ -503,9 +503,8 @@ void PrefWin::display(int page) {
   Buffer::box_sprite(&inner, &InterfaceBoxStyles[9]);
   Buffer::box_sprite(&buttons, &InterfaceBoxStyles[18]);
   get_preferences();
-  const int music_selected = volumeMusicToggle_.selected_state();
   volumeMainToggle_.set_selected_state(0);
-  if (music_selected) volumeMainToggle_.set_selected_state(1);
+  if (volumeMusicToggle_.selected_state()) volumeMainToggle_.set_selected_state(1);
   if (volumeVoiceToggle_.selected_state()) volumeMainToggle_.set_selected_state(1);
   if (volumeSFXToggle_.selected_state()) volumeMainToggle_.set_selected_state(1);
   change_volume_button_text(0x55);
@@ -524,7 +523,7 @@ void PrefWin::display(int page) {
   show(3);
   Win::set_def_focus(preference_window());
   set_modal(0, pop_wait, nullptr);
-  if (!(GameDataStateStorage.fields_.game_preferences_ & 0x20000000))
+  if (~GameDataStateStorage.fields_.game_preferences_ & 0x20000000)
     dialog_default_style() |= 4u;
   else
     dialog_default_style() &= ~4u;
@@ -863,8 +862,7 @@ void PrefWin::redraw_option() {
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00491860.cpp", "recovery/tasks/prefwin-owner-coverage-wave.json", "Original control parent 8578D8; ctor/destructor member order, 800-pixel branch, checkbox text-context and callback order independently reviewed."], "reason": "Recover the complete PrefWin ownership group through a genuine GraphicWin base and compiler-owned embedded control lifetimes; preserve seed identity, original spans and unresolved discoveries without granting byte claims."}
 void PrefWin::redraw_volume() {
   const int top = PrefWinGeometryValue_8577DC - PrefWinNarrowDisplayVerticalOffset;
-  const int left = PrefWinGeometryValue_8577D8;
-  RECT rect = {left, top, PrefWinGeometryValue_8577E4 + left, PrefWinGeometryValue_8577E0 + top};
+  RECT rect = {PrefWinGeometryValue_8577D8, top, PrefWinGeometryValue_8577E4 + PrefWinGeometryValue_8577D8, PrefWinGeometryValue_8577E0 + top};
   if (field_A14_ == 4)
     Buffer::box_sprite(&rect, &InterfaceBoxStyles[9]);
 }
