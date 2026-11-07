@@ -5267,28 +5267,28 @@ void __cdecl base_reset(int base_id, int force) {
     int loop_count = 0;
     int faction = Bases[base_id].faction_id_current;
     if (((1 << faction) & GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_)
-        && (Bases[base_id].state & BSTATE_UNK_8000000000) && force) {
-        uint32_t state = Bases[base_id].state;
+        && (Bases[base_id].governor & GOV_ACTIVE) && force) {
+        uint32_t governor = Bases[base_id].governor;
         for (int site = 0; site < 4; ++site) {
             BaseSiteClaimY[site] = 999999;
             BaseSiteClaimX[site] = 0;
         }
-        if (state & 0x0F000000u) {
+        if (governor & 0x0F000000u) {
             for (;;) {
-                Bases[base_id].state = (Bases[base_id].state & 0xF1FFFFFFu) | BSTATE_UNK_1000000;
+                Bases[base_id].governor = (Bases[base_id].governor & 0xF1FFFFFFu) | GOV_PRIORITY_EXPLORE;
                 BaseSiteClaimX[0] = base_build(base_id, 0, 0, &BaseSiteClaimY[0]);
-                Bases[base_id].state = (Bases[base_id].state & 0xF2FFFFFFu) | BSTATE_UNK_2000000;
+                Bases[base_id].governor = (Bases[base_id].governor & 0xF2FFFFFFu) | GOV_PRIORITY_DISCOVER;
                 BaseSiteClaimX[1] = base_build(base_id, 0, 0, &BaseSiteClaimY[1]);
                 if (BaseSiteClaimX[0] == BaseSiteClaimX[1] && ++loop_count < 8) {
                     continue;
                 }
-                Bases[base_id].state = (Bases[base_id].state & 0xF4FFFFFFu) | BSTATE_UNK_4000000;
+                Bases[base_id].governor = (Bases[base_id].governor & 0xF4FFFFFFu) | GOV_PRIORITY_BUILD;
                 BaseSiteClaimX[2] = base_build(base_id, 0, 0, &BaseSiteClaimY[2]);
                 if ((BaseSiteClaimX[0] == BaseSiteClaimX[2] || BaseSiteClaimX[1] == BaseSiteClaimX[2])
                     && ++loop_count < 8) {
                     continue;
                 }
-                Bases[base_id].state = (Bases[base_id].state & 0xF8FFFFFFu) | BSTATE_UNK_8000000;
+                Bases[base_id].governor = (Bases[base_id].governor & 0xF8FFFFFFu) | GOV_PRIORITY_CONQUER;
                 BaseSiteClaimX[3] = base_build(base_id, 0, 0, &BaseSiteClaimY[3]);
                 if ((BaseSiteClaimX[0] == BaseSiteClaimX[3] || BaseSiteClaimX[1] == BaseSiteClaimX[3]
                      || BaseSiteClaimX[2] == BaseSiteClaimX[3])
@@ -5297,23 +5297,23 @@ void __cdecl base_reset(int base_id, int force) {
                 }
                 break;
             }
-            Bases[base_id].state = state;
+            Bases[base_id].governor = governor;
         }
         base_change(base_id, base_build(base_id, 0, 0, &loop_count));
         return;
     }
-    int location = Bases[base_id].location;
+    int location = Bases[base_id].queue_production_id[0];
     base_change(base_id, base_build(base_id, 0, 0, 0));
     if (!((1 << faction) & GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_)) return;
-    if (!(Bases[base_id].state & BSTATE_UNK_8000000000)) return;
+    if (!(Bases[base_id].governor & GOV_ACTIVE)) return;
     if (location <= -70) return;
-    if (Bases[base_id].location > -70) return;
+    if (Bases[base_id].queue_production_id[0] > -70) return;
     if (IsMultiplayerNet) return;
     if (GameDataStateStorage.fields_.game_state_ & STATE_UNK_1) return;
-    if (Bases[base_id].location >= 0) {
-        location = Bases[base_id].location;
+    if (Bases[base_id].queue_production_id[0] >= 0) {
+        location = Bases[base_id].queue_production_id[0];
     } else {
-        location = -Bases[base_id].location;
+        location = -Bases[base_id].queue_production_id[0];
     }
     int choice = 3;
     while (choice == 3) {
@@ -5328,7 +5328,7 @@ void __cdecl base_reset(int base_id, int force) {
     base_change(base_id, base_build(-1 - base_id, 0, 0, 0));
     if (choice <= 1) return;
     BaseCurrent->governor &= ~0x00040000u;
-    PlayersData[faction].flags &= ~0x00040000u;
+    PlayersData[faction].base_governor_adv &= ~0x00040000u;
 }
 
 /*
@@ -14079,11 +14079,11 @@ int __cdecl base_upkeep(int base_id) {
 
     int tile_weight;
     int region = region_at(BaseCurrent->x, BaseCurrent->y);
-    if (PlayersData[faction_id].unk_83[region] == 7
-        && PlayersData[faction_id].soc_effect_base.values_[SocialEffect::TALENT] <= 0) {
+    if (PlayersData[faction_id].region_base_plan[region] == 7
+        && PlayersData[faction_id].ai_fight <= 0) {
         tile_weight = 4;
     } else {
-        tile_weight = (PlayersData[faction_id].unk_83[region] != 2) + 1;
+        tile_weight = (PlayersData[faction_id].region_base_plan[region] != 2) + 1;
     }
     PlayersData[faction_id].unk_47 += bit_count(BaseCurrent->resource_sqr_radius) * tile_weight;
 
