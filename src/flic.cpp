@@ -625,7 +625,7 @@ Purpose: Decode a type-0xF (FLI BYTE RUN) chunk: per row, a packet count
          the file. When a colour offset is set the literal path is
          staged through a scratch row so the offset can be added per
          byte.
-// ORIGINAL: 0x0062A500 ?decode_byte_run@Flic@@QAEXXZ 0x0062A500-0x0062A70F
+// ORIGINAL: 0x0062A500 ?decode_byte_run@Flic@@QAEXXZ 0x0062A500-0x0062A70F BYTE_EXACT
 // size      527 bytes
 // prototype void (__thiscall ?decode_byte_run@Flic@@QAEXXZ)(Flic* this)
 // callers   1   call targets   6
@@ -887,7 +887,7 @@ void Flic::fill() {
 Purpose: Decode a type-0x10 (FLI COPY) chunk: the rows follow verbatim in
          the file. When a colour offset is set each row is staged through
          a scratch row so the offset can be added per byte.
-// ORIGINAL: 0x0062AB80 ?decode_fli_copy@Flic@@QAEXXZ 0x0062AB80-0x0062ACB6
+// ORIGINAL: 0x0062AB80 ?decode_fli_copy@Flic@@QAEXXZ 0x0062AB80-0x0062ACB6 BYTE_EXACT
 // size      310 bytes
 // prototype void (__thiscall ?decode_fli_copy@Flic@@QAEXXZ)(Flic* this)
 // callers   1   call targets   4
@@ -1081,7 +1081,7 @@ Purpose: Decode a type-0xF (FLI BYTE RUN) chunk in transparent mode: as
          decode_byte_run, but every pixel whose offset-adjusted value
          equals the transparent color is taken from the embedded scratch
          buffer instead of the file.
-// ORIGINAL: 0x0062AF40 ?decode_byte_run_trans@Flic@@QAEXXZ 0x0062AF40-0x0062B186
+// ORIGINAL: 0x0062AF40 ?decode_byte_run_trans@Flic@@QAEXXZ 0x0062AF40-0x0062B186 BYTE_EXACT
 // size      582 bytes
 // prototype void (__thiscall ?decode_byte_run_trans@Flic@@QAEXXZ)(Flic* this)
 // callers   1   call targets   8
@@ -1185,7 +1185,7 @@ Purpose: Decode a type-7 (FLC DELTA) chunk in transparent mode: as
          decode_delta_flc, but every pixel whose offset-adjusted value
          equals the transparent color is taken from the embedded scratch
          buffer instead of the file, per pixel or per RLE-word half.
-// ORIGINAL: 0x0062B190 ?decode_delta_flc_trans@Flic@@QAEXXZ 0x0062B190-0x0062B5ED
+// ORIGINAL: 0x0062B190 ?decode_delta_flc_trans@Flic@@QAEXXZ 0x0062B190-0x0062B5ED BYTE_EXACT
 // size      1117 bytes
 // prototype void (__thiscall ?decode_delta_flc_trans@Flic@@QAEXXZ)(Flic* this)
 // callers   1   call targets   4

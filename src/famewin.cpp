@@ -778,7 +778,7 @@ void FameWin::on_left_click(int x, int y) {
 }
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x0044AC10 ?demote@FameWin@@QAEXH@Z 0x0044AC10-0x0044AE42;0x00654EBA-0x00654ECF FILE
+// ORIGINAL: 0x0044AC10 ?demote@FameWin@@QAEXH@Z 0x0044AC10-0x0044AE42;0x00654EBA-0x00654ECF FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/0044ac10.cpp", "Pinned original owner review: original clip resets and absent-record branches, CharUpperA import, difficulty-label capitalization and exact demote tail copying."], "reason": "Recover FameWin owner behavior through existing GraphicWin/Buffer bases, owned buttons and sprites, and typed HallOfFame/Player records; retain historical seed identity and extents without a measurement claim."}
 #pragma optimize("y", off)
 void FameWin::demote(int rank) {

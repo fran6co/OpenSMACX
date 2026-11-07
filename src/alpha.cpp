@@ -1085,7 +1085,7 @@ void __cdecl read_faction(Player *player, int toggle) {
 
 /*
 Purpose: Parse the #BONUSNAMES, #FACTIONS, and #NEWFACTIONS sections inside the alpha(x).txt.
-// ORIGINAL: 0x00586F30 ?read_factions@@YAHXZ 0x00586F30-0x005871C9
+// ORIGINAL: 0x00586F30 ?read_factions@@YAHXZ 0x00586F30-0x005871C9 BYTE_EXACT
 // TRIED: fixes, call count 23 -> 28-29 (image 31): 1. `rand() % faction_count`, not `random(0, faction_count)` - the image calls the C library `rand` (0x0064601D) directly, never the game's seeded PRNG. BUG IN THE ORIGINAL, preserved. 2. `load_faction_art` was a temp.h function POINTER, compiling an indirect call where the image has `call rel32` twice; promoted to a src/pending_bodies.cpp forwarder (see there and temp.h). 3. `strcpy_s(dest, src)`, not `strncpy_s(dest, src, 24)`, for BonusName[i].key and both Players[player] fields in the first two loops - the image pushes only 2 args (`call 0x00645460`), an unbounded copy, not a 3-arg bounded one. BUG IN THE ORIGINAL, preserved. Remaining gap: `text_open`/`text_get` each short by 1 (a ternary argument the image tail-merges two of its three arms for, not chased), and `load_faction_art` merges its two call sites into one physical `call` at the object level where the image keeps two.
 // LEVER: signedness at the JENN282 reroll - `uint32_t faction_count = 14;` and `uint32_t
 //        faction_set = rand_val / 7;` made `rand() % faction_count` compile as an unsigned

@@ -88,7 +88,7 @@ Purpose: Report whether any lock is engaged. The trailing dword at 0xE0 forces
          those whose slot bit is set in both the low and second bytes of the
          enable mask, and a record counts when either of its two entries has
          its flag's low bit set. Record 0 is never scanned.
-// ORIGINAL: 0x005904A0 ?any_locks@Lock@@QAEHXZ 0x005904A0-0x005904FE SEMANTIC
+// ORIGINAL: 0x005904A0 ?any_locks@Lock@@QAEHXZ 0x005904A0-0x005904FE BYTE_EXACT
 // LEVER: `second_byte` read via a byte pointer into `mask` (not `(mask >> 8) & 0xFF`) is what lets VC6 test it as `bh` with no shift, matching the image's `test al, bh` exactly.
 // TRIED: the one remaining byte - image's inner-loop test is `test eax, edi` (85 F8), this tree compiles the same bits as `test edi, eax` (85 C7), same flags, different ModRM. Tried swapping `&` operand order both ways (`bit & low_byte` and `low_byte & bit`) and naming the AND result in its own local first - all three collapse to the same encoding, so it is not a source-order question; MNEMONIC_ONLY at 39/40 (only that one byte) is the plateau reached here.
 // size      94 bytes
@@ -283,7 +283,7 @@ Purpose: Lock both of a slot's square entries in one call. Refuses when another
          the 0x2 bit was set and this is the server, the same release check
          check_global runs (but skipping this slot's own record) fires the
          release broadcast if no other slot still holds an active square.
-// ORIGINAL: 0x00590300 ?lock@Lock@@QAEHHHHHHHH@Z 0x00590300-0x00590469
+// ORIGINAL: 0x00590300 ?lock@Lock@@QAEHHHHHHHH@Z 0x00590300-0x00590469 BYTE_EXACT
 // size      361 bytes
 // prototype int (__thiscall ?lock@Lock@@QAEHHHHHHHH@Z)(Lock* this, int, int, int, int, int, int, int)
 // callers   1   call targets   4
