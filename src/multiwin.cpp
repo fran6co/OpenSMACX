@@ -746,7 +746,7 @@ void MultiWin::show() {
 // 0x00479C00. The Win slot-2 override hides the multi-player panel, restores
 // its background and runs the original optional slide-out animation.
 // Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x00479C00 ?hide@MultiWin@@QAEXXZ 0x00479C00-0x00479F8E;0x0065640A-0x0065641F
+// ORIGINAL: 0x00479C00 ?hide@MultiWin@@QAEXXZ 0x00479C00-0x00479F8E;0x0065640A-0x0065641F BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00479c00.cpp; src/win.h; src/buffer.h; src/wave.cpp"], "reason": "The original panel teardown uses its real GraphicWin Buffer extent, owned animation buffer and sprites, typed console/screen globals, and Win/GraphicWin callbacks. The retained seed preserves the historical byte obligation until remeasurement."}
 // symbol    ?hide@MultiWin@@UAEXXZ
 #pragma optimize("y", off)

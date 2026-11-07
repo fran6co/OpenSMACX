@@ -380,7 +380,7 @@ void WorldWin::follow_center(int xCoord, int yCoord) {
     GraphicWin::soft_update();
 }
 
-// ORIGINAL: 0x004C43F0 ?pixel_to_tile@WorldWin@@QAEHHHPAH0@Z 0x004C43F0-0x004C44D3
+// ORIGINAL: 0x004C43F0 ?pixel_to_tile@WorldWin@@QAEHHHPAH0@Z 0x004C43F0-0x004C44D3 BYTE_EXACT
 // frame retention and the right clip-test polarity were sensitive. Its last
 // mismatch was spill/register scheduling. This typed owner body is a fresh
 // structural expression, not a claim that the old attempt's bytes match.
