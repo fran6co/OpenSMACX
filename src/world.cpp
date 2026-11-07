@@ -603,7 +603,7 @@ BOOL __cdecl world_validate() {
 
 /*
 Purpose: Set up the world temperature.
-// ORIGINAL: 0x005C4170 ?world_temperature@@YAXXZ 0x005C4170-0x005C4401
+// ORIGINAL: 0x005C4170 ?world_temperature@@YAXXZ 0x005C4170-0x005C4401 BYTE_EXACT
 // LEVER: rewritten from the image: abs-macro distance, signed code byte, nine
 //   radius tiles (the old body checked eight), and a dead tile-pointer walk.
 // size      657 bytes
@@ -867,7 +867,7 @@ int __cdecl world_site(int x, int y, BOOL is_ocean_site) {
 
 /*
 Purpose: Analysis of the world map.
-// ORIGINAL: 0x005C55C0 ?world_analysis@@YAXXZ 0x005C55C0-0x005C58B8
+// ORIGINAL: 0x005C55C0 ?world_analysis@@YAXXZ 0x005C55C0-0x005C58B8 BYTE_EXACT
 // LEVER: rewritten from the image. Shift-form altitude/rocky tests; the
 //   fungus test is `!fungus || alt < shelf` (the old body negated the whole
 //   `||`), and both continents need tile_count >= 40, not > 40. The inner
