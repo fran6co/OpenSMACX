@@ -66,16 +66,11 @@ Buffer g_VEHDRAW_BUFFER;  // 0x008CC298
 
 
 // Four normal tables, each indexed by the four terrain-height levels in
-// vehdraw_compute_facet_normals. The original initializer writes 7^4 vectors
-// per table, not one flat array accessed through pointers to its neighbours.
-// RECOVERY_OBJECT: v2 0x008CDD10 0x008D4D9C ?VehDrawFacetNormals0@@3PAUVOX_Vect@@A 0x004C1B10
-VOX_Vect VehDrawFacetNormals0[2401];
-// RECOVERY_OBJECT: v2 0x008D4D9C 0x008DBE28 ?VehDrawFacetNormals1@@3PAUVOX_Vect@@A 0x004C1B10
-VOX_Vect VehDrawFacetNormals1[2401];
-// RECOVERY_OBJECT: v2 0x008DBE28 0x008E2EB4 ?VehDrawFacetNormals2@@3PAUVOX_Vect@@A 0x004C1B10
-VOX_Vect VehDrawFacetNormals2[2401];
-// RECOVERY_OBJECT: v2 0x008E2EB4 0x008E9F40 ?VehDrawFacetNormals3@@3PAUVOX_Vect@@A 0x004C1B10
-VOX_Vect VehDrawFacetNormals3[2401];
+// vehdraw_compute_facet_normals. One object: the initializer walks all four
+// rows from one pointer (-0x708C, +0x708C, +0xE118), and readers fold row
+// offsets into displacements (row 1 at [index - 400] is 0x008D3ADC).
+// RECOVERY_OBJECT: v2 0x008CDD10 0x008E9F40 ?VehDrawFacetNormals@@3PAY0JGB@UVOX_Vect@@A 0x004C1B10
+VOX_Vect VehDrawFacetNormals[4][2401];
 
 // compute_camera publishes the first rotation here; vehicle rendering reads
 // its first component when converting facing angles into camera coordinates.
@@ -176,10 +171,10 @@ static int vehdraw_facet_index(const int *h1, const int *h2,
 
 static void vehdraw_average_facets(int index, VOX_Vect *normal) {
     // Copy every input before the first call, as the original does.
-    const VOX_Vect n0 = VehDrawFacetNormals0[index];
-    const VOX_Vect n1 = VehDrawFacetNormals1[index];
-    const VOX_Vect n2 = VehDrawFacetNormals2[index];
-    const VOX_Vect n3 = VehDrawFacetNormals3[index];
+    const VOX_Vect n0 = VehDrawFacetNormals[0][index];
+    const VOX_Vect n1 = VehDrawFacetNormals[1][index];
+    const VOX_Vect n2 = VehDrawFacetNormals[2][index];
+    const VOX_Vect n3 = VehDrawFacetNormals[3][index];
     vector_add(n0.values, n1.values, normal->values);
     vector_add(normal->values, n2.values, normal->values);
     vector_add(normal->values, n3.values, normal->values);
@@ -206,6 +201,8 @@ static void vehdraw_finish_frame(Buffer *buffer, int veh_id, int x, int y, int f
 // Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x004BF740 ?compute_camera@@YAXPAUVOX_Vect@@PAUVOX_Matrix@@@Z 0x004BF740-0x004BF8C1
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned original control flow and original seed extent; observed VC6 external symbol. Tests exercise actual bodies, call/publication order, unordered/zero camera branches and complete facet tables at both established baselines.", "Camera publishes its first Euler triple before the second rotation; original CRT atan calls round their quotient to double. Facet initialization snapshots ConsoleGlobal inherited MapWin field at1DD6C, established by receiver-relative MapWin initialization; four independent 2401-element tables replace cross-object pointer arithmetic."], "reason": "Vehicle rendering setup with real VOX types, source-owned tables and actual Console terrain-height state."}
+// The image calls the CRT atan rather than expanding fpatan.
+#pragma function(atan)
 void __cdecl compute_camera(VOX_Vect *normal, VOX_Matrix *matrix) {
     VOX_Vect angles = {{0.0f, 0.0f, -1.0466667f}};
     VOX_Matrix first_rotation;
@@ -213,11 +210,13 @@ void __cdecl compute_camera(VOX_Vect *normal, VOX_Matrix *matrix) {
     VOX_Vect rotated;
     caviar_apply_rotation(angles.values, &first_rotation);
     vox_matrix_vector_mul(first_rotation.values, normal->values, rotated.values);
+    // The image copies the whole result here and rebuilds it below.
+    VOX_Vect projected = rotated;
 
-    // The original x87 tests take the zero arm for unordered values too.
-    if (rotated.values[0] == 0.0f || rotated.values[0] != rotated.values[0]) {
+    // VC6's x87 equality test also takes the zero arm for unordered values.
+    if (rotated.values[0] == 0.0f) {
         angles.values[0] = 0.0f;
-    } else if (rotated.values[1] == 0.0f || rotated.values[1] != rotated.values[1]) {
+    } else if (rotated.values[1] == 0.0f) {
         angles.values[0] = 1.57f;
     } else {
         angles.values[0] = (float)atan((double)rotated.values[0] / rotated.values[1]);
@@ -227,11 +226,13 @@ void __cdecl compute_camera(VOX_Vect *normal, VOX_Matrix *matrix) {
     VehDrawCameraAngles = angles;
     caviar_apply_rotation(angles.values, &first_rotation);
 
-    VOX_Vect projected = {{rotated.values[0], rotated.values[1], 0.0f}};
+    projected.values[0] = rotated.values[0];
+    projected.values[1] = rotated.values[1];
+    projected.values[2] = 0.0f;
     float length = vec3_length(projected.values);
-    if (length == 0.0f || length != length) {
+    if (length == 0.0f) {
         angles.values[2] = 0.0f;
-    } else if (rotated.values[2] == 0.0f || rotated.values[2] != rotated.values[2]) {
+    } else if (rotated.values[2] == 0.0f) {
         angles.values[2] = 1.57f;
     } else {
         angles.values[2] = (float)atan((double)length / rotated.values[2]);
@@ -245,11 +246,13 @@ void __cdecl compute_camera(VOX_Vect *normal, VOX_Matrix *matrix) {
     matrix->values[2][2] = -matrix->values[2][2];
 }
 
+#pragma intrinsic(atan)
+
 // ORIGINAL: 0x004BF8D0 ?vehdraw_turn_start@@YAHHHHH@Z 0x004BF8D0-0x004BFC67
 // RECOVERY_BINDING: v1 {"evidence": ["Original4BF8D0..4BFC67 returns the integer animation step count, snapshots light before selection, publishes selection before facing access, loads the map pointer slot, and uses unsigned Weapon.mode at+0A.", "All four facet vectors are copied before calls; camera/light/shadow publication follows original call order. Original stores only negative arc to float before comparison; preserving positive precision determines half-turn direction. Zero angle preserves zero steps and NaN increment. Observed VC6 emitted symbol and layouts."], "reason": "Recover vehicle turn setup using actual map, vehicle, renderer and vector ownership instead of fixed executable storage."}
 int __cdecl vehdraw_turn_start(int veh_id, int direction, int speed, int flags) {
-    const VOX_Vect light = VehLightDirMap;
     const VOX_Vect shadow_direction = {{-0.57735f, 0.57735f, 0.57735f}};
+    const VOX_Vect light = VehLightDirMap;
     if (flags & 1) {
         veh_id = pick_top_veh(veh_id);
     }
@@ -262,26 +265,22 @@ int __cdecl vehdraw_turn_start(int veh_id, int direction, int speed, int flags) 
     }
     Vehs[veh_id].facing = (int8_t)direction;
 
-    const Map *tiles = map_tiles();
+    // One scratch vector serves as facet 0, the shadow and the camera origin.
+    VOX_Vect vector;
     VOX_Vect normal;
-    bool sloped = (tiles[y * MapLongitude + (x >> 1)].climate & 0xE0) >= 0x60;
-    if (sloped) {
-        const VehPrototype &prototype = VehPrototypes[Vehs[veh_id].proto_id];
-        if (prototype.chassis_id == 0 && Weapon[prototype.weapon_id].mode < 3) {
-            sloped = false;
-        }
-    }
-    if (sloped) {
+    if ((map_tiles()[y * MapLongitude + (x >> 1)].climate & ~0x1F) >= 0x60
+        && (VehPrototypes[Vehs[veh_id].proto_id].chassis_id != 0
+            || Weapon[VehPrototypes[Vehs[veh_id].proto_id].weapon_id].mode >= 3)) {
         const int h1 = ConsoleGlobal.get_relative_alt(x, y, 1);
         const int h2 = ConsoleGlobal.get_relative_alt(x, y, 2);
         const int h3 = ConsoleGlobal.get_relative_alt(x, y, 3);
         const int h4 = ConsoleGlobal.get_relative_alt(x, y, 4);
-        const int index = ((h1 * 7 + h2) * 7 + h3) * 7 + h4 - 400;
-        const VOX_Vect n0 = VehDrawFacetNormals0[index];
-        const VOX_Vect n1 = VehDrawFacetNormals1[index];
-        const VOX_Vect n2 = VehDrawFacetNormals2[index];
-        const VOX_Vect n3 = VehDrawFacetNormals3[index];
-        vector_add(n0.values, n1.values, normal.values);
+        const int index = h4 + ((h1 * 7 + h2) * 7 + h3) * 7;
+        vector = VehDrawFacetNormals[0][index - 400];
+        const VOX_Vect n1 = VehDrawFacetNormals[1][index - 400];
+        const VOX_Vect n2 = VehDrawFacetNormals[2][index - 400];
+        const VOX_Vect n3 = VehDrawFacetNormals[3][index - 400];
+        vector_add(vector.values, n1.values, normal.values);
         vector_add(normal.values, n2.values, normal.values);
         vector_add(normal.values, n3.values, normal.values);
         vox_normalise_vector(normal.values, normal.values);
@@ -296,28 +295,26 @@ int __cdecl vehdraw_turn_start(int veh_id, int direction, int speed, int flags) 
     g_VEHDRAW_CAVIAR.light_vector() = light;
     VOX_Matrix inverse;
     vox_matrix_inverse(camera.values, inverse.values);
-    VOX_Vect shadow;
-    vox_matrix_vector_mul(inverse.values, shadow_direction.values, shadow.values);
-    g_VEHDRAW_CAVIAR.shadow_vector() = shadow;
+    vox_matrix_vector_mul(inverse.values, shadow_direction.values, vector.values);
+    g_VEHDRAW_CAVIAR.shadow_vector() = vector;
     g_VEHDRAW_CAVIAR.set_shadow_table(ShadowColorTable);
-    VOX_Vect position;
-    position.values[0] = camera.values[2][0] * -10000.0f;
-    position.values[1] = camera.values[2][1] * -10000.0f;
-    position.values[2] = camera.values[2][2] * -10000.0f;
-    g_VEHDRAW_CAVIAR.set_camera_direct(&position, &camera);
+    vector.values[0] = camera.values[2][0] * -10000.0f;
+    vector.values[1] = camera.values[2][1] * -10000.0f;
+    vector.values[2] = camera.values[2][2] * -10000.0f;
+    g_VEHDRAW_CAVIAR.set_camera_direct(&vector, &camera);
 
     VehDrawTurnAngle = ((old_facing - 3) & 7) * 0.785375f;
     const float target = ((direction - 3) & 7) * 0.785375f;
     float negative_distance;
-    // The negative arc is rounded to float; the positive arc remains in the
-    // x87 register through comparison. Rounding both can reverse half-turns.
-    double positive_distance;
+    // VC6 rounds the negative arc to memory but keeps the positive arc in
+    // an x87 register (extended precision) through the comparison.
+    float positive_distance;
     if (VehDrawTurnAngle > target) {
         negative_distance = VehDrawTurnAngle - target;
-        positive_distance = ((double)target + 6.283f) - VehDrawTurnAngle;
+        positive_distance = target + 6.283f - VehDrawTurnAngle;
     } else {
-        positive_distance = (double)target - VehDrawTurnAngle;
-        negative_distance = (float)(((double)VehDrawTurnAngle + 6.283f) - target);
+        positive_distance = target - VehDrawTurnAngle;
+        negative_distance = VehDrawTurnAngle + 6.283f - target;
     }
     if (negative_distance < positive_distance) {
         const int steps = (int)(speed * negative_distance * 0.15915963f);
@@ -325,7 +322,7 @@ int __cdecl vehdraw_turn_start(int veh_id, int direction, int speed, int flags) 
         return steps;
     }
     const int steps = (int)(speed * positive_distance * 0.15915963f);
-    VehDrawTurnIncrement = (float)(positive_distance / steps);
+    VehDrawTurnIncrement = positive_distance / steps;
     return steps;
 }
 
@@ -401,18 +398,18 @@ void __cdecl vehdraw_scoot_start(int veh_id, int direction, int steps, int flags
         int count = 0;
         switch (direction) {
         case 0: case 2: case 4: case 6:
-            n[0] = VehDrawFacetNormals3[vehdraw_facet_index(h1, h2, h3, h4, direction)];
-            n[1] = VehDrawFacetNormals1[centre];
+            n[0] = VehDrawFacetNormals[3][vehdraw_facet_index(h1, h2, h3, h4, direction)];
+            n[1] = VehDrawFacetNormals[1][centre];
             count = 2;
             break;
         case 1: {
             const int a = vehdraw_facet_index(h1, h2, h3, h4, 0);
             const int b = vehdraw_facet_index(h1, h2, h3, h4, 1);
             const int c = vehdraw_facet_index(h1, h2, h3, h4, 2);
-            n[0] = VehDrawFacetNormals1[centre]; n[1] = VehDrawFacetNormals2[centre];
-            n[2] = VehDrawFacetNormals2[a]; n[3] = VehDrawFacetNormals3[a];
-            n[4] = VehDrawFacetNormals3[b]; n[5] = VehDrawFacetNormals0[b];
-            n[6] = VehDrawFacetNormals0[c]; n[7] = VehDrawFacetNormals1[c];
+            n[0] = VehDrawFacetNormals[1][centre]; n[1] = VehDrawFacetNormals[2][centre];
+            n[2] = VehDrawFacetNormals[2][a]; n[3] = VehDrawFacetNormals[3][a];
+            n[4] = VehDrawFacetNormals[3][b]; n[5] = VehDrawFacetNormals[0][b];
+            n[6] = VehDrawFacetNormals[0][c]; n[7] = VehDrawFacetNormals[1][c];
             count = 8;
             break;
         }
@@ -420,10 +417,10 @@ void __cdecl vehdraw_scoot_start(int veh_id, int direction, int steps, int flags
             const int a = vehdraw_facet_index(h1, h2, h3, h4, 2);
             const int b = vehdraw_facet_index(h1, h2, h3, h4, 3);
             const int c = vehdraw_facet_index(h1, h2, h3, h4, 4);
-            n[0] = VehDrawFacetNormals2[centre]; n[1] = VehDrawFacetNormals3[centre];
-            n[2] = VehDrawFacetNormals3[a]; n[3] = VehDrawFacetNormals0[a];
-            n[4] = VehDrawFacetNormals0[b]; n[5] = VehDrawFacetNormals1[b];
-            n[6] = VehDrawFacetNormals1[c]; n[7] = VehDrawFacetNormals2[c];
+            n[0] = VehDrawFacetNormals[2][centre]; n[1] = VehDrawFacetNormals[3][centre];
+            n[2] = VehDrawFacetNormals[3][a]; n[3] = VehDrawFacetNormals[0][a];
+            n[4] = VehDrawFacetNormals[0][b]; n[5] = VehDrawFacetNormals[1][b];
+            n[6] = VehDrawFacetNormals[1][c]; n[7] = VehDrawFacetNormals[2][c];
             count = 8;
             break;
         }
@@ -431,10 +428,10 @@ void __cdecl vehdraw_scoot_start(int veh_id, int direction, int steps, int flags
             const int a = vehdraw_facet_index(h1, h2, h3, h4, 4);
             const int b = vehdraw_facet_index(h1, h2, h3, h4, 5);
             const int c = vehdraw_facet_index(h1, h2, h3, h4, 6);
-            n[0] = VehDrawFacetNormals3[centre]; n[1] = VehDrawFacetNormals0[centre];
-            n[2] = VehDrawFacetNormals0[a]; n[3] = VehDrawFacetNormals1[a];
-            n[4] = VehDrawFacetNormals1[b]; n[5] = VehDrawFacetNormals2[b];
-            n[6] = VehDrawFacetNormals2[c]; n[7] = VehDrawFacetNormals3[c];
+            n[0] = VehDrawFacetNormals[3][centre]; n[1] = VehDrawFacetNormals[0][centre];
+            n[2] = VehDrawFacetNormals[0][a]; n[3] = VehDrawFacetNormals[1][a];
+            n[4] = VehDrawFacetNormals[1][b]; n[5] = VehDrawFacetNormals[2][b];
+            n[6] = VehDrawFacetNormals[2][c]; n[7] = VehDrawFacetNormals[3][c];
             count = 8;
             break;
         }
@@ -442,10 +439,10 @@ void __cdecl vehdraw_scoot_start(int veh_id, int direction, int steps, int flags
             const int a = vehdraw_facet_index(h1, h2, h3, h4, 6);
             const int b = vehdraw_facet_index(h1, h2, h3, h4, 7);
             const int c = vehdraw_facet_index(h1, h2, h3, h4, 0);
-            n[0] = VehDrawFacetNormals0[centre]; n[1] = VehDrawFacetNormals1[centre];
-            n[2] = VehDrawFacetNormals1[a]; n[3] = VehDrawFacetNormals2[a];
-            n[4] = VehDrawFacetNormals2[b]; n[5] = VehDrawFacetNormals3[b];
-            n[6] = VehDrawFacetNormals3[c]; n[7] = VehDrawFacetNormals0[c];
+            n[0] = VehDrawFacetNormals[0][centre]; n[1] = VehDrawFacetNormals[1][centre];
+            n[2] = VehDrawFacetNormals[1][a]; n[3] = VehDrawFacetNormals[2][a];
+            n[4] = VehDrawFacetNormals[2][b]; n[5] = VehDrawFacetNormals[3][b];
+            n[6] = VehDrawFacetNormals[3][c]; n[7] = VehDrawFacetNormals[0][c];
             count = 8;
             break;
         }
@@ -538,30 +535,40 @@ void __cdecl vehdraw_draw(Buffer *buffer, int veh_id, int x, int y, int flags,
     }
     int facing = Vehs[veh_id].facing;
     if (facing == -1) facing = 0;
+    // One scratch vector serves as facet 0, the shadow and the camera origin.
+    VOX_Vect vector;
     VOX_Vect normal;
     if (terrain && vehdraw_uses_terrain(veh_id, tile_x, tile_y)) {
         const int h1 = ConsoleGlobal.get_relative_alt(tile_x, tile_y, 1);
         const int h2 = ConsoleGlobal.get_relative_alt(tile_x, tile_y, 2);
         const int h3 = ConsoleGlobal.get_relative_alt(tile_x, tile_y, 3);
         const int h4 = ConsoleGlobal.get_relative_alt(tile_x, tile_y, 4);
-        vehdraw_average_facets(((h1 * 7 + h2) * 7 + h3) * 7 + h4 - 400, &normal);
+        const int index = h4 + ((h1 * 7 + h2) * 7 + h3) * 7;
+        vector = VehDrawFacetNormals[0][index - 400];
+        const VOX_Vect n1 = VehDrawFacetNormals[1][index - 400];
+        const VOX_Vect n2 = VehDrawFacetNormals[2][index - 400];
+        const VOX_Vect n3 = VehDrawFacetNormals[3][index - 400];
+        vector_add(vector.values, n1.values, normal.values);
+        vector_add(normal.values, n2.values, normal.values);
+        vector_add(normal.values, n3.values, normal.values);
+        vox_normalise_vector(normal.values, normal.values);
     } else {
-        normal.values[0] = normal.values[1] = 0.0f;
+        normal.values[0] = 0.0f;
+        normal.values[1] = 0.0f;
         normal.values[2] = 1.0f;
     }
     VOX_Matrix camera, inverse;
     compute_camera(&normal, &camera);
     g_VEHDRAW_CAVIAR.light_vector() = light;
     vox_matrix_inverse(camera.values, inverse.values);
-    // The normal's storage is reused for the shadow and then the position.
-    vox_matrix_vector_mul(inverse.values, shadow_direction.values, normal.values);
-    g_VEHDRAW_CAVIAR.shadow_vector() = normal;
+    vox_matrix_vector_mul(inverse.values, shadow_direction.values, vector.values);
+    g_VEHDRAW_CAVIAR.shadow_vector() = vector;
     g_VEHDRAW_CAVIAR.set_shadow_table(ShadowColorTable);
-    normal.values[0] = camera.values[2][0] * -10000.0f;
-    normal.values[1] = camera.values[2][1] * -10000.0f;
-    normal.values[2] = camera.values[2][2] * -10000.0f;
+    vector.values[0] = camera.values[2][0] * -10000.0f;
+    vector.values[1] = camera.values[2][1] * -10000.0f;
+    vector.values[2] = camera.values[2][2] * -10000.0f;
     g_VEHDRAW_CAVIAR.set_scaling(vehdraw_scale(zoom));
-    g_VEHDRAW_CAVIAR.set_camera_direct(&normal, &camera);
+    g_VEHDRAW_CAVIAR.set_camera_direct(&vector, &camera);
     vehdraw_construct_vehicle(veh_id, &g_VEHDRAW_CAVIAR);
     g_VEHDRAW_CAVIAR.set_scene_rotation(
         ((facing - 3) & 7) * 0.785375f - VehDrawCameraAngles.values[0], 0.0f, 0.0f);
@@ -600,34 +607,30 @@ void __cdecl vehdraw_unk1(Buffer *buffer, int vehicle_id, int x, int y,
         frame = 0;
     }
 
+    // One scratch vector serves as facet 0, the shadow and the camera origin.
+    VOX_Vect vector;
     VOX_Vect light;
-    if (terrain == 0) {
+    if (terrain != 0
+        && (map_tiles()[facing_y * MapLongitude + (facing_x >> 1)].climate
+            & ~0x1F) >= 0x60) {
+        const int r1 = ConsoleGlobal.get_relative_alt(facing_x, facing_y, 1);
+        const int r2 = ConsoleGlobal.get_relative_alt(facing_x, facing_y, 2);
+        const int r3 = ConsoleGlobal.get_relative_alt(facing_x, facing_y, 3);
+        const int r4 = ConsoleGlobal.get_relative_alt(facing_x, facing_y, 4);
+        const int index = r4 + ((r1 * 7 + r2) * 7 + r3) * 7;
+        // All four tables take the -400 bias (table 1 at 0x8D3ADC, etc.).
+        vector = VehDrawFacetNormals[0][index - 400];
+        const VOX_Vect n1 = VehDrawFacetNormals[1][index - 400];
+        const VOX_Vect n2 = VehDrawFacetNormals[2][index - 400];
+        const VOX_Vect n3 = VehDrawFacetNormals[3][index - 400];
+        vector_add(vector.values, n1.values, light.values);
+        vector_add(light.values, n2.values, light.values);
+        vector_add(light.values, n3.values, light.values);
+        vox_normalise_vector(light.values, light.values);
+    } else {
         light.values[0] = 0.0f;
         light.values[1] = 0.0f;
         light.values[2] = 1.0f;
-    } else {
-        const Map &tile = map_tiles()[facing_y * MapLongitude + (facing_x >> 1)];
-        if ((tile.climate & 0xE0) < 0x60) {
-            light.values[0] = 0.0f;
-            light.values[1] = 0.0f;
-            light.values[2] = 1.0f;
-        } else {
-            const int r1 = ConsoleGlobal.get_relative_alt(facing_x, facing_y, 1);
-            const int r2 = ConsoleGlobal.get_relative_alt(facing_x, facing_y, 2);
-            const int r3 = ConsoleGlobal.get_relative_alt(facing_x, facing_y, 3);
-            const int r4 = ConsoleGlobal.get_relative_alt(facing_x, facing_y, 4);
-            const int index = r4 + ((r1 * 7 + r2) * 7 + r3) * 7;
-            // The image uses table zero at the -400 bias and the other three at
-            // the unshifted four-height index; retain that asymmetric read.
-            const VOX_Vect n0 = VehDrawFacetNormals0[index - 400];
-            const VOX_Vect n1 = VehDrawFacetNormals1[index];
-            const VOX_Vect n2 = VehDrawFacetNormals2[index];
-            const VOX_Vect n3 = VehDrawFacetNormals3[index];
-            vector_add(n0.values, n1.values, light.values);
-            vector_add(light.values, n2.values, light.values);
-            vector_add(light.values, n3.values, light.values);
-            vox_normalise_vector(light.values, light.values);
-        }
     }
 
     VOX_Matrix camera;
@@ -636,20 +639,16 @@ void __cdecl vehdraw_unk1(Buffer *buffer, int vehicle_id, int x, int y,
 
     VOX_Matrix inverse_camera;
     vox_matrix_inverse(camera.values, inverse_camera.values);
-    VOX_Vect shadow;
     vox_matrix_vector_mul(inverse_camera.values, camera_position.values,
-                          shadow.values);
-    g_VEHDRAW_CAVIAR.shadow_vector() = shadow;
+                          vector.values);
+    g_VEHDRAW_CAVIAR.shadow_vector() = vector;
     g_VEHDRAW_CAVIAR.set_shadow_table(ShadowColorTable);
 
-    VOX_Vect camera_origin;
-    camera_origin.values[0] = camera.values[2][0] * CaviarCameraDistance;
-    camera_origin.values[1] = camera.values[2][1] * CaviarCameraDistance;
-    camera_origin.values[2] = camera.values[2][2] * CaviarCameraDistance;
-    g_VEHDRAW_CAVIAR.set_scaling(
-        static_cast<float>((static_cast<double>(scale_numerator) * 0.07f)
-                           / static_cast<double>(scale_denominator)));
-    g_VEHDRAW_CAVIAR.set_camera_direct(&camera_origin, &camera);
+    vector.values[0] = camera.values[2][0] * -10000.0f;
+    vector.values[1] = camera.values[2][1] * -10000.0f;
+    vector.values[2] = camera.values[2][2] * -10000.0f;
+    g_VEHDRAW_CAVIAR.set_scaling(scale_numerator * 0.07f / scale_denominator);
+    g_VEHDRAW_CAVIAR.set_camera_direct(&vector, &camera);
 
     vehdraw_construct_vehicle(vehicle_id, &g_VEHDRAW_CAVIAR);
     const int rotation = (frame - 3) & 7;
@@ -671,11 +670,12 @@ void __cdecl vehdraw_unk1(Buffer *buffer, int vehicle_id, int x, int y,
 
     // Rendering may mutate the selected vehicle's prototype; reload it after
     // the render, matching the original order.
-    const VehPrototype &prototype = VehPrototypes[Vehs[vehicle_id].proto_id];
-    if (prototype.armor_id == 5) {
+    const int proto_id = Vehs[vehicle_id].proto_id;
+    if (VehPrototypes[proto_id].armor_id == 5) {
         g_VEHDRAW_CAVIAR.reset_objects();
         vehdraw_construct_armor(Vehs[vehicle_id].faction_id,
-                                prototype.chassis_id, prototype.weapon_id,
+                                VehPrototypes[proto_id].chassis_id,
+                                VehPrototypes[proto_id].weapon_id,
                                 5, 1, &g_VEHDRAW_CAVIAR);
         const unsigned int destination_flags = (original_flags >> 12) & 2;
         g_VEHDRAW_CAVIAR.render_multi_table_dest(
@@ -717,10 +717,10 @@ void __cdecl vehdraw_compute_facet_normals() {
                     vox_normalise_vector(n1.values, n1.values);
                     vox_normalise_vector(n2.values, n2.values);
                     vox_normalise_vector(n3.values, n3.values);
-                    VehDrawFacetNormals0[index] = n0;
-                    VehDrawFacetNormals1[index] = n1;
-                    VehDrawFacetNormals2[index] = n2;
-                    VehDrawFacetNormals3[index] = n3;
+                    VehDrawFacetNormals[0][index] = n0;
+                    VehDrawFacetNormals[1][index] = n1;
+                    VehDrawFacetNormals[2][index] = n2;
+                    VehDrawFacetNormals[3][index] = n3;
                     ++index;
                 }
             }

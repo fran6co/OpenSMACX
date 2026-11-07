@@ -3388,12 +3388,6 @@ void __cdecl world_build() {
 
     int attempt = 0;
     do {
-        // TRIED: the pointer-bump do/while spelling of this copy, hoping for
-        // the image's single `rep movsd`; VC6 kept a one-pointer loop with a
-        // +0x58 displacement and the whole body came out frameless (/GX
-        // selected) at 15 of 215 against 22 of 215 for the plain for-loop
-        // below. The `rep movsd` is a counted-copy idiom this tree has not
-        // reached from source yet.
         for (int i = 0; i < 11; ++i) {
             AltNatural[i] = AltNaturalDefault[i];
         }
@@ -3411,11 +3405,13 @@ void __cdecl world_build() {
 
         int builds = 0;
         MapIsFlat = 0;
+        // Clearing BrushVal1 first makes the loop test load WorldBuildVal1
+        // first, as the image does.
+        BrushVal1 = 0;
         // Unsigned builder rules wrap; the quotients are signed.
         WorldBuildVal1 = static_cast<int>(((2 - MapOceanCoverage) * WorldBuilder.land_mod
             + WorldBuilder.land_base) * MapArea) / 3200;
         int island_target = WorldBuilder.islands * MapArea / 3200;
-        BrushVal1 = 0;
 
         if ((GameDataStateStorage.fields_.game_state_ & 0x80) != 0) {
             MapWinTable[0]->clear_terrain();

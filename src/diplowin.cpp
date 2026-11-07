@@ -1441,7 +1441,8 @@ void DiploWin::add_offer(int a1, int a2, int a3) {
             if (existing == 4 || existing == 2 || existing == 3) {
                 goto found;
             }
-        } else if (a2 == 1) {
+        }
+        if (a2 == 1) {
             if (offer_type_[a1][i] == 1) {
                 if (a3 <= 0) {
                     kill_offer(a1, i);
@@ -1460,14 +1461,10 @@ void DiploWin::add_offer(int a1, int a2, int a3) {
         }
     }
 
-    {
-        int count = offer_count_[a1];
-        if (count >= 8) {
-            return;
-        }
-        offer_count_[a1] = count + 1;
-        i = count;
+    if (offer_count_[a1] >= 8) {
+        return;
     }
+    i = offer_count_[a1]++;
 
 found:
     {
