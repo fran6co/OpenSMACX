@@ -1134,8 +1134,9 @@ Return Value: Was there an error? true/false
 Status: Complete
 */
 BOOL __cdecl read_factions() {
+    // Both open failures share one `return true` block in the image.
     if (text_open(AlphaxFileID, "BONUSNAMES")) {
-        return true;
+        goto failed;
     }
     // NOT `if (!(i % 8)) text_get();` at the top of the body: the image
     // hoists ONE text_get ahead of the loop and walks a separate counter
@@ -1144,26 +1145,29 @@ BOOL __cdecl read_factions() {
     // strength-reduced away). 0x00586F50 / 0x00586F73 are the two call
     // sites that gives; the counter form below now matches that loop.
     text_get();
-    int per_line = 0;
-    for (int i = 0; i < MaxBonusNameNum; i++) {
-        // BUG IN THE ORIGINAL (preserved): `call 0x00645460` at 0x00586F63
-        // pushes only the two arguments - plain unbounded `strcpy`, not a
-        // 24-byte-bounded copy. Same for both `Players[player]` fields just
-        // below (0x00586FD2, 0x00586FDE) and both copies in the JENN282 arm
-        // (0x005870FC, 0x00587106). Spelled as DIRECT `strcpy` calls, not
-        // `strcpy_s`: both shims live in vc6_compat.h, which /FI includes
-        // BEFORE stdafx.h's `#pragma function(strcpy, ...)` takes effect, so
-        // any `strcpy_s` inline-expands the intrinsic `repne scasb` walk
-        // where the image makes a real call (same lever as prefs_put's
-        // strcat, 0x0059E530).
-        strcpy(BonusName[i].key, text_item());
-        if (++per_line >= 8) { // 8 entries per line
-            per_line = 0;
-            text_get();
+    {
+        int per_line = 0;
+        for (int i = 0; i < MaxBonusNameNum; i++) {
+            // BUG IN THE ORIGINAL (preserved): `call 0x00645460` at 0x00586F63
+            // pushes only the two arguments - plain unbounded `strcpy`, not a
+            // 24-byte-bounded copy. Same for both `Players[player]` fields just
+            // below (0x00586FD2, 0x00586FDE) and both copies in the JENN282 arm
+            // (0x005870FC, 0x00587106). Spelled as DIRECT `strcpy` calls, not
+            // `strcpy_s`: both shims live in vc6_compat.h, which /FI includes
+            // BEFORE stdafx.h's `#pragma function(strcpy, ...)` takes effect, so
+            // any `strcpy_s` inline-expands the intrinsic `repne scasb` walk
+            // where the image makes a real call (same lever as prefs_put's
+            // strcat, 0x0059E530).
+            strcpy(BonusName[i].key, text_item());
+            if (++per_line >= 8) { // 8 entries per line
+                per_line = 0;
+                text_get();
+            }
         }
     }
     if (ExpansionEnabled ? text_open(AlphaxFileID, "NEWFACTIONS")
                          : text_open(AlphaxFileID, "FACTIONS")) {
+failed:
         return true;
     }
     int player;
@@ -1271,10 +1275,9 @@ BOOL __cdecl read_factions() {
                 }
                 // TWO tests in the image: `lea edx,[edi+1]; test edx,edx;
                 // je` for faction_id == -1, then `cmp ebx,0x946a54; je` -
-                // &Players[0].filename against this player's filename
-                // pointer (0x00587146-0x00587153).
-                if (faction_id != -1
-                    && &Players[player].filename != &Players[0].filename) {
+                // `player != 0` strength-reduced onto the filename walk
+                // (0x00587146-0x00587153).
+                if (faction_id + 1 != 0 && player != 0) {
                     read_faction(&Players[player], 0);
                     load_faction_art(player);
                 }

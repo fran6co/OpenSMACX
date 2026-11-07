@@ -20,6 +20,10 @@
 // FontTable stays with find_font; the entrypoint's singleton is in main.cpp.
 // Original CRT order is singleton, FontQueue VAL2/VAL1, then FontTable.
 
+// Face pointer read only by Credits::exec (0x00428AE4); its literal sits
+// before "Arial" in this unit's data.
+// RECOVERY_OBJECT: v1 0x00691B28 ?CreditsFontFace@@3PBDB
+LPCSTR CreditsFontFace = "Alpha Centauri";  // 0x00691B28 -> 0x00691BC4
 // RECOVERY_OBJECT: v1 0x00691B2C ?DefaultFontFace@@3PBDB
 LPCSTR DefaultFontFace = "Arial";  // 0x00691B2C -> 0x00691BD4
 // RECOVERY_OBJECT: v1 0x00691B30 ?DefaultLargeFontFace@@3PBDB

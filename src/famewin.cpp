@@ -785,24 +785,19 @@ void FameWin::demote(int rank) {
   Buffer buffer;
   if (rank >= 4) return;
 
-  char number[80]; // Bounded original local at EBP-0x5C..-0x0C, above Buffer.
   StringTemp[0] = '\0';
   strcat(StringTemp, "hof_");
-  _itoa(factionID_, number, 10);
-  strcat(StringTemp, number);
+  say_num(factionID_);
   strcat(StringTemp, "_");
-  _itoa(rank + 1, number, 10);
-  strcat(StringTemp, number);
+  say_num(rank + 1);
   strcat(StringTemp, ".pcx");
   buffer.load_pcx(StringTemp, 0, 0, 0xEC);
 
   StringTemp[0] = '\0';
   strcat(StringTemp, "hof_");
-  _itoa(factionID_, number, 10);
-  strcat(StringTemp, number);
+  say_num(factionID_);
   strcat(StringTemp, "_");
-  _itoa(rank + 2, number, 10);
-  strcat(StringTemp, number);
+  say_num(rank + 2);
   strcat(StringTemp, ".pcx");
   buffer.write_pcx(StringTemp);
 
@@ -836,20 +831,21 @@ void FameWin::demote(int rank) {
 
 // ORIGINAL: 0x0044A660 ?try_to_add_me@FameWin@@QAEXXZ 0x0044A660-0x0044AC05 FILE
 // RECOVERY_BINDING: v1 {"evidence": ["git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/0044a660.cpp", "Pinned original owner review: original clip resets and absent-record branches, CharUpperA import, difficulty-label capitalization and exact demote tail copying."], "reason": "Recover FameWin owner behavior through existing GraphicWin/Buffer bases, owned buttons and sprites, and typed HallOfFame/Player records; retain historical seed identity and extents without a measurement claim."}
-// TRIED: MISMATCH #14, register-allocation-level divergence in the compute_score call setup; full body (score/rank tables, demote chain, 3 tie-break loops, name copies, pcx message) transcribed from the disassembly with byte-offset field access.
+// The image re-reads factionID_ for every lookup and runs the award scans as
+// three separate passes sharing one counter. Residual: parse_set store order.
+#pragma optimize("y", off)
 void FameWin::try_to_add_me() {
   if ((GameDataStateStorage.fields_.game_preferences_ & 0x20) != 0) return;
 
-  const int player_id = ConsoleGlobal.faction_id_;
-  factionID_ = static_cast<uint32_t>(player_id);
-  compute_score(player_id, nullptr, nullptr, 0);
+  factionID_ = ConsoleGlobal.faction_id_;
+  compute_score(ConsoleGlobal.faction_id_, nullptr, nullptr, 0);
 
-  const int leader_score = PlayersData[player_id].unk_107;
-  const int rating = get_rating(player_id, leader_score);
+  const int leader_score = PlayersData[factionID_].unk_107;
+  const int rating = get_rating(factionID_, leader_score);
   int rank = 0x11A;
   for (int candidate = 4; candidate >= 0; --candidate) {
     const HallOfFameRecord &entry =
-        HallOfFameRecords[player_id * 5 - 5 + candidate];
+        HallOfFameRecords[factionID_ * 5 - 5 + candidate];
     if (rating >= entry.rating || (entry.present & 1) == 0) rank = candidate;
   }
   if (rank > 4) return;
@@ -860,33 +856,47 @@ void FameWin::try_to_add_me() {
   if (rank < 1) demote(0);
 
   selectedRecord_ = static_cast<uint32_t>(rank);
-  HallOfFameRecord &record = HallOfFameRecords[player_id * 5 - 5 + rank];
-  PlayerData &player_data = PlayersData[player_id];
-  const Player &player = Players[player_id];
+  HallOfFameRecord &record = HallOfFameRecords[factionID_ * 5 + rank - 5];
   record.rating = rating;
   record.leader_one = leader_score;
-  record.leader_two = player_data.energy_reserves;
+  record.leader_two = PlayersData[factionID_].energy_reserves;
   record.award_flags = 0;
   record.present = 1;
   record.year = game_year(GameDataStateStorage.fields_.turn_current_num_);
-  record.field_1C = player_data.score_items_[3] + player_data.score_items_[2];
-  record.field_14 = player_data.score_items_[4];
-  record.field_18 = player_data.score_items_[0];
-  record.field_21 = player_data.score_items_[5] == 0
-                        ? 0
-                        : (MapNativeLifeForms == 0 ? 1 : 2);
+  record.field_1C = PlayersData[factionID_].score_items_[2] +
+                    PlayersData[factionID_].score_items_[3];
+  record.field_14 = PlayersData[factionID_].score_items_[4];
+  record.field_18 = PlayersData[factionID_].score_items_[0];
+  if (PlayersData[factionID_].score_items_[5] != 0) {
+    if (MapNativeLifeForms == 0) {
+      record.field_21 = 1;
+    } else {
+      record.field_21 = 2;
+    }
+  } else {
+    record.field_21 = 0;
+  }
 
-  parse_set(player.is_leader_female, FALSE);
-  strncpy(record.leader_title, player.title_leader,
-          sizeof(record.leader_title));
-  parse_set(player.is_leader_female, FALSE);
-  strncpy(record.leader_name, player.name_leader,
-          sizeof(record.leader_name));
-  parse_set(player.noun_gender, player.is_noun_plural);
-  strncpy(record.faction_noun, player.noun_faction,
-          sizeof(record.faction_noun));
+  {
+    const Player &player = Players[factionID_];
+    parse_set(player.is_leader_female, FALSE);
+    strncpy(record.leader_title, player.title_leader,
+            sizeof(record.leader_title));
+  }
+  {
+    const Player &player = Players[factionID_];
+    parse_set(player.is_leader_female, FALSE);
+    strncpy(record.leader_name, player.name_leader,
+            sizeof(record.leader_name));
+  }
+  {
+    const Player &player = Players[factionID_];
+    parse_set(player.noun_gender, player.is_noun_plural);
+    strncpy(record.faction_noun, player.noun_faction,
+            sizeof(record.faction_noun));
+  }
 
-  record.field_20 = static_cast<uint8_t>(player_data.diff_level);
+  record.field_20 = static_cast<uint8_t>(PlayersData[factionID_].diff_level);
   if ((GameDataStateStorage.fields_.game_rules_ & 0x400) != 0) record.present |= 2;
   if ((GameDataStateStorage.fields_.game_preferences_ & 0x2000) != 0) {
     record.present |= 8;
@@ -894,84 +904,83 @@ void FameWin::try_to_add_me() {
     record.present |= 0x10;
   } else if ((GameDataStateStorage.fields_.game_preferences_ & 0x200000) != 0) {
     record.present |= 0x20;
-  } else if (player_data.unk_109 != 0) {
+  } else if (PlayersData[factionID_].unk_109 != 0) {
     record.present |= 4;
   } else if ((GameDataStateStorage.fields_.game_preferences_ & 0x10) != 0) {
     record.present |= 0x40;
   }
 
-  int valid_count = 0;
-  for (int orbital_faction_index = 0; orbital_faction_index < 7;
-       ++orbital_faction_index) {
-    for (int orbital_rank_index = 0; orbital_rank_index < 5;
-         ++orbital_rank_index) {
-      if (orbital_faction_index == player_id - 1 && orbital_rank_index == rank) continue;
-      HallOfFameRecord &other = HallOfFameRecords[orbital_faction_index * 5 + orbital_rank_index];
+  // One counter and one faction index serve all three record scans.
+  int count = 0;
+  int faction_index;
+  int rank_index;
+  for (faction_index = 0; faction_index < 7; ++faction_index) {
+    for (rank_index = 0; rank_index < 5; ++rank_index) {
+      if (faction_index == static_cast<int>(factionID_) - 1 && rank_index == rank) continue;
+      HallOfFameRecord &other = HallOfFameRecords[faction_index * 5 + rank_index];
       if ((other.present & 1) == 0) continue;
-      ++valid_count;
+      ++count;
       if ((other.award_flags & 1) && record.rating >= other.rating) {
         record.award_flags |= 1;
-        other.award_flags &= static_cast<uint8_t>(~1u);
+        other.award_flags &= ~1;
       }
       if ((other.award_flags & 2) && record.field_1C >= other.field_1C) {
         record.award_flags |= 2;
-        other.award_flags &= static_cast<uint8_t>(~2u);
+        other.award_flags &= ~2;
       }
       if ((other.award_flags & 4) && record.leader_two >= other.leader_two) {
         record.award_flags |= 4;
-        other.award_flags &= static_cast<uint8_t>(~4u);
+        other.award_flags &= ~4;
       }
       if ((other.award_flags & 8) && record.field_18 >= other.field_18) {
         record.award_flags |= 8;
-        other.award_flags &= static_cast<uint8_t>(~8u);
+        other.award_flags &= ~8;
       }
     }
   }
-  if (valid_count == 0) record.award_flags = 0x0F;
+  if (count == 0) record.award_flags = 0x0F;
 
-  int orbital_records = 0;
-  int artifact_records = 0;
-  for (int award_faction_index = 0; award_faction_index < 7;
-       ++award_faction_index) {
-    for (int award_rank_index = 0; award_rank_index < 5;
-         ++award_rank_index) {
-      if (award_faction_index == player_id - 1 && award_rank_index == rank) continue;
-      HallOfFameRecord &other = HallOfFameRecords[award_faction_index * 5 + award_rank_index];
-      if ((other.present & 1) == 0) continue;
-      if ((other.present & 8) != 0) {
-        ++orbital_records;
-        if ((other.award_flags & 0x10) && (record.present & 8) &&
-            record.year <= other.year) {
-          record.award_flags |= 0x10;
-          other.award_flags &= static_cast<uint8_t>(~0x10u);
-        }
-      }
-      if ((other.present & 4) != 0) {
-        ++artifact_records;
-        if ((other.award_flags & 0x20) && (record.present & 4) &&
-            record.year <= other.year) {
-          record.award_flags |= 0x20;
-          other.award_flags &= static_cast<uint8_t>(~0x20u);
-        }
+  count = 0;
+  for (faction_index = 0; faction_index < 7; ++faction_index) {
+    for (rank_index = 0; rank_index < 5; ++rank_index) {
+      if (faction_index == static_cast<int>(factionID_) - 1 && rank_index == rank) continue;
+      HallOfFameRecord &other = HallOfFameRecords[faction_index * 5 + rank_index];
+      if ((other.present & 1) == 0 || (other.present & 8) == 0) continue;
+      ++count;
+      if ((other.award_flags & 0x10) && (record.present & 8) &&
+          record.year <= other.year) {
+        record.award_flags |= 0x10;
+        other.award_flags &= ~0x10;
       }
     }
   }
-  if (orbital_records == 0 && (record.present & 8) != 0)
-    record.award_flags |= 0x10;
-  if (artifact_records == 0 && (record.present & 4) != 0)
-    record.award_flags |= 0x20;
+  if (count == 0 && (record.present & 8) != 0) record.award_flags |= 0x10;
 
-  char number[32];
+  count = 0;
+  for (faction_index = 0; faction_index < 7; ++faction_index) {
+    for (rank_index = 0; rank_index < 5; ++rank_index) {
+      if (faction_index == static_cast<int>(factionID_) - 1 && rank_index == rank) continue;
+      HallOfFameRecord &other = HallOfFameRecords[faction_index * 5 + rank_index];
+      if ((other.present & 1) == 0 || (other.present & 4) == 0) continue;
+      ++count;
+      if ((other.award_flags & 0x20) && (record.present & 4) &&
+          record.year <= other.year) {
+        record.award_flags |= 0x20;
+        other.award_flags &= ~0x20;
+      }
+    }
+  }
+  if (count == 0 && (record.present & 4) != 0) record.award_flags |= 0x20;
+
   StringTemp[0] = '\0';
   strcat(StringTemp, "hof_");
-  _itoa(player_id, number, 10);
-  strcat(StringTemp, number);
+  say_num(factionID_);
   strcat(StringTemp, "_");
-  _itoa(rank + 1, number, 10);
-  strcat(StringTemp, number);
+  say_num(rank + 1);
   strcat(StringTemp, ".pcx");
-  static_cast<Buffer *>(&WorldClimateWorldWin)->write_pcx(StringTemp);
+  WorldClimateWorldWin.write_pcx(StringTemp);
 }
+#pragma optimize("", on)
 
 // Native constructor 0x0044B200 installs the Win and Buffer views at
 // complete-object +0 and +0x444. Table slots select the mapped FameWin

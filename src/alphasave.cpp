@@ -355,10 +355,11 @@ void AlphaSave::hide() {
 // esi=list-base, edi=count register trio. The typed body is not yet exact;
 // restore its historical extent through the source identity above.
 void AlphaSave::on_selected(int) {
-    Dialog &dialog = file_win_.list_box();
-    dialog.item_list_.seek_pos(dialog.selected_position_);
-    file_win_.edit_box().set_text(dialog.item_list_.head_ != 0
-        ? dialog.item_list_.current_->string_payload()->text : 0);
+    ListBox &list = file_win_.list_box();
+    StringList &items = list.item_list_;
+    items.seek_pos(list.selected_position_);
+    file_win_.edit_box().set_text(items.head_ != 0
+        ? items.current_->string_payload()->text : 0);
     file_win_.edit_box().select_all_text();
     file_win_.edit_box().redraw();
     file_win_.edit_box().redraw();

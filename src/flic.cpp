@@ -667,7 +667,8 @@ void Flic::decode_byte_run() {
     void *scratch = nullptr;
     uint8_t *dst = destination_buffer_->get_data(origin_x_, origin_y_);
     if (palette_offset_ != 0) {
-        scratch = mem_get(destination_buffer_->stride_);
+        int stride = destination_buffer_->stride_;
+        scratch = mem_get(stride);
         if (scratch == nullptr) {
             return;
         }
@@ -731,34 +732,23 @@ Purpose: Decode a type-7 (FLC DELTA) chunk: word-run deltas. Per line a
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 // calls     0x005D4510 0x005E33F3 0x00644EF2 0x00644F3A 0x00646178
-// TRIED: the +41 extent gap is exactly one duplicated fread call site.
-//        The image reads the line header at ONE site (0x0062A7C7) with
-//        BOTH loop back edges entering it - the skip path's unconditional
-//        `jmp 0x0062A7B7` (0x0062A804) and the line tail's
-//        `jl 0x0062A7B7` (0x0062AA8C) - eight fread sites in the whole
-//        function (+109 +167 +396 +443 +502 +553 +599 +702), row and
-//        line_index memory-homed at the tail (`mov [esp+0x2c],ebp`,
-//        `mov [esp+0x1c],eax`). This tree spells the read twice (line
-//        head + skip re-read) and VC6 emits both - nine sites, 1008
-//        bytes under /O2, 960 under /Oy-. Measured 2026-09-17 across
-//        seven spellings and both campaign flag sets (decks
-//        flic-delta-loopmerge and flic-delta-continue, plus local
-//        compiles): the nested-cycle family - current while form,
-//        for(;;)+break, goto-to-head, comma-condition while - all
-//        compile BYTE-IDENTICAL at 1008/960 (VC6 canonicalizes every
-//        spelling of the cycle into the rotated two-site loop, the
-//        cloned read taking a second stack home); a Buffer local for
-//        buffer2_ reaches 992/944; the continue-merge family (skip as
-//        `continue` in the line loop, plain and with the Buffer local)
-//        does collapse to a single read site but at 928/912-944 with a
-//        divergent register allocation (kdb 1633 against the baseline's
-//        864). No spelling reaches the unrotated single-site loop; the
-//        residual is VC6-side loop rotation, the same compiler-side
-//        class fill() and decode_byte_run_trans document. The current
-//        while spelling stays as the closest measured form.
+// TRIED: single header-read site is a for(;;) with `continue` on the
+//        skip path; scratch/divisor strides are block locals; the dirty
+//        rect is four computed corners stored in order. Residual (0.94):
+//        VC6 hoists the shared `run_count`/file_ loads of the two
+//        positive-run fread calls above the palette test; the image
+//        keeps them in each arm.
 Return Value: n/a
 Status: Complete
 */
+static inline void flic_set_rect(RECT *rect, int left, int top, int right,
+                                 int bottom) {
+    rect->left = left;
+    rect->top = top;
+    rect->right = right;
+    rect->bottom = bottom;
+}
+
 void Flic::decode_delta_flc() {
     uint8_t run_count;
     uint16_t line_hdr;
@@ -770,12 +760,13 @@ void Flic::decode_delta_flc() {
     uint8_t *row;
     uint16_t num_lines;
     uint32_t min_touched;
-    int last_row;
     int first_row;
+    int last_row;
     uint8_t skip_count;
 
     if (palette_offset_ != 0) {
-        work_buf = mem_get(destination_buffer_->stride_);
+        int stride = destination_buffer_->stride_;
+        work_buf = mem_get(stride);
         if (work_buf == nullptr) {
             return;
         }
@@ -788,22 +779,22 @@ void Flic::decode_delta_flc() {
     last_row = 0;
     line_index = 0;
     if (num_lines > 0) {
-        do {
+        for (;;) {
             fread(&line_hdr, 2, 1, file_);
-            while ((line_hdr & 0xc000) == 0xc000) {
-                int skip_lines = abs(static_cast<int16_t>(line_hdr));
-                row += destination_buffer_->stride_ * skip_lines;
-                fread(&line_hdr, 2, 1, file_);
+            if ((line_hdr & 0xc000) == 0xc000) {
+                int stride = destination_buffer_->stride_;
+                row += stride * abs(static_cast<int16_t>(line_hdr));
+                continue;
             }
             if (line_index == 0) {
-                uint8_t *base = destination_buffer_->get_data(origin_x_, origin_y_);
-                first_row = static_cast<int>(row - base) /
-                            static_cast<int>(destination_buffer_->stride_);
+                int stride = destination_buffer_->stride_;
+                first_row = static_cast<int>(
+                    row - destination_buffer_->get_data(origin_x_, origin_y_)) / stride;
             }
             if (line_index == static_cast<int>(num_lines) - 1) {
-                uint8_t *base = destination_buffer_->get_data(origin_x_, origin_y_);
-                last_row = static_cast<int>(row - base) /
-                           static_cast<int>(destination_buffer_->stride_);
+                int stride = destination_buffer_->stride_;
+                last_row = static_cast<int>(
+                    row - destination_buffer_->get_data(origin_x_, origin_y_)) / stride;
             }
             if (line_hdr & 0x8000) {
                 max_touched = decoded_width_;
@@ -812,8 +803,8 @@ void Flic::decode_delta_flc() {
                                          static_cast<int8_t>(palette_offset_));
                 fread(&line_hdr, 2, 1, file_);
             }
-            packet_index = 0;
             uint8_t *dst = row;
+            packet_index = 0;
             if (line_hdr > 0) {
                 do {
                     fread(&skip_count, 1, 1, file_);
@@ -847,27 +838,28 @@ void Flic::decode_delta_flc() {
                              << 8) +
                             static_cast<uint8_t>(word + palette_offset_));
                         for (int i = 0; i < run_count; i++) {
-                            std::memcpy(dst, &word, sizeof(word));
+                            *reinterpret_cast<uint16_t *>(dst) = word;
                             dst += 2;
                         }
                     }
                     packet_index++;
                 } while (packet_index < line_hdr);
             }
-            if (max_touched < static_cast<uint32_t>(dst - row)) {
+            if (static_cast<uint32_t>(dst - row) > max_touched) {
                 max_touched = dst - row;
             }
             row += destination_buffer_->stride_;
             line_index++;
-        } while (line_index < static_cast<int>(num_lines));
+            if (line_index >= static_cast<int>(num_lines)) {
+                break;
+            }
+        }
     }
     if (work_buf != nullptr) {
         free(work_buf);
     }
-    update_rect_.left = origin_x_ + min_touched;
-    update_rect_.top = origin_y_ + first_row;
-    update_rect_.right = origin_x_ + 1 + max_touched;
-    update_rect_.bottom = origin_y_ + 1 + last_row;
+    flic_set_rect(&update_rect_, origin_x_ + min_touched, origin_y_ + first_row,
+                  origin_x_ + max_touched + 1, origin_y_ + last_row + 1);
 }
 
 /*
@@ -916,7 +908,8 @@ Status: Complete
 void Flic::decode_fli_copy() {
     void *scratch = nullptr;
     if (palette_offset_ != 0) {
-        scratch = mem_get(destination_buffer_->stride_);
+        Buffer *buffer = destination_buffer_;
+        scratch = mem_get(buffer->stride_);
         if (scratch == nullptr) {
             return;
         }
@@ -1130,7 +1123,8 @@ Status: Complete
 void Flic::decode_byte_run_trans() {
     void *scratch = nullptr;
     if (palette_offset_ != 0) {
-        scratch = mem_get(destination_buffer_->stride_);
+        int stride = destination_buffer_->stride_;
+        scratch = mem_get(stride);
         if (scratch == nullptr) {
             return;
         }
@@ -1142,54 +1136,43 @@ void Flic::decode_byte_run_trans() {
     uint8_t *row_dst = destination_buffer_->get_data(origin_x_, origin_y_);
     uint8_t *row_src = static_cast<uint8_t *>(background_buffer_.get_data());
 
-    uint8_t value;
-    int row = 0;
-    if (static_cast<int>(decoded_height_) > 0) {
-        do {
-            int remaining = decoded_width_;
-            unsigned count;
+    for (int row = 0; row < static_cast<int>(decoded_height_); row++) {
+        uint8_t *dst = row_dst;
+        uint8_t *src = row_src;
+        int remaining = decoded_width_;
+        uint8_t count;
+        uint8_t value;
+        fread(&count, 1, 1, file_);
+        while (remaining > 0) {
             fread(&count, 1, 1, file_);
-            uint8_t *dst = row_dst;
-            uint8_t *src = row_src;
-            for (; remaining > 0; remaining -= count & 0xff) {
-                fread(&count, 1, 1, file_);
-                if (static_cast<int8_t>(count) > 0) {
-                    fread(&value, 1, 1, file_);
-                    value = static_cast<uint8_t>(
-                        value + static_cast<uint8_t>(palette_offset_));
-                    if (value != transparent_index_) {
-                        memset(dst, value, count & 0xff);
-                    } else {
-                        memcpy(dst, src, count & 0xff);
-                    }
-                    dst += count & 0xff;
-                    src += count & 0xff;
+            if (static_cast<int8_t>(count) > 0) {
+                fread(&value, 1, 1, file_);
+                value += palette_offset_;
+                if (value != transparent_index_) {
+                    memset(dst, value, static_cast<uint8_t>(count));
                 } else {
-                    count = static_cast<uint8_t>(
-                        abs(static_cast<int8_t>(count)));
-                    int i = 0;
-                    if (count > 0) {
-                        do {
-                            fread(&value, 1, 1, file_);
-                            value = static_cast<uint8_t>(
-                                value +
-                                static_cast<uint8_t>(palette_offset_));
-                            if (value != transparent_index_) {
-                                *dst = value;
-                            } else {
-                                *dst = *src;
-                            }
-                            dst++;
-                            src++;
-                            i++;
-                        } while (i < static_cast<int>(count & 0xff));
+                    memcpy(dst, src, static_cast<uint8_t>(count));
+                }
+                dst += static_cast<uint8_t>(count);
+                src += static_cast<uint8_t>(count);
+            } else {
+                count = static_cast<uint8_t>(abs(static_cast<int8_t>(count)));
+                for (int i = 0; i < static_cast<uint8_t>(count); i++) {
+                    fread(&value, 1, 1, file_);
+                    value += palette_offset_;
+                    if (value != transparent_index_) {
+                        *dst = value;
+                    } else {
+                        *dst = *src;
                     }
+                    dst++;
+                    src++;
                 }
             }
-            row_dst += destination_buffer_->stride_;
-            row_src += background_buffer_.stride_;
-            row++;
-        } while (row < static_cast<int>(decoded_height_));
+            remaining -= static_cast<uint8_t>(count);
+        }
+        row_dst += destination_buffer_->stride_;
+        row_src += background_buffer_.stride_;
     }
 
     if (scratch != nullptr) {
@@ -1209,29 +1192,8 @@ Purpose: Decode a type-7 (FLC DELTA) chunk in transparent mode: as
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 // calls     0x005E3373 0x005E33F3 0x00644F3A 0x00646178
-// TRIED: the opcode fread is single-site in the image (+136, the line
-//        loop head; the line tail's `jl 0x62b204` at 0x0062B46B enters
-//        the read's setup) - seven fread sites, thirteen calls total.
-//        This tree spells one textual site through `do { fread; if
-//        (...) break; ... } while (true)` and VC6 ROTATES that loop,
-//        emitting two copies (entry +0x84, back edge +0xDE) - eight
-//        sites, 1104 bytes under /O2, 1072 under /Oy-. Yet the image is
-//        LARGER, not smaller: it carries ~168 more bytes between the
-//        per-byte value read (+576) and the word read (+831) than any
-//        measured spelling, offset by ~100 fewer after the word abs
-//        (+842 to end) - the transparent byte loop and the mixed-word
-//        loops trade extent between regions the way register allocation
-//        schedules them, not the way any statement spelling moves.
-//        Measured 2026-09-17 (decks flic-delta-loopmerge and
-//        flic-trans-continue, both flag sets): the rotation duplicate is
-//        spelling-invariant (every nested-cycle spelling is
-//        byte-identical to the baseline), the continue-merge family
-//        (skip as `continue` in the line loop, plain and with a dest
-//        Buffer local) collapses the site but lands farther under
-//        extent (1072/1056/1040 against 1117) with the same differing
-//        byte count. No spelling reaches 1117; the residual is
-//        VC6-side, the same class decode_delta_flc documents for this
-//        loop pair.
+// Each line walks working copies of the destination and scratch row
+// pointers; the row pointers advance by stride from the line start.
 Return Value: n/a
 Status: Complete
 */
@@ -1239,60 +1201,62 @@ void Flic::decode_delta_flc_trans() {
     uint8_t value;
     uint8_t run;
     uint16_t opcode;
-    uint8_t *dst = destination_buffer_->get_data(origin_x_, origin_y_);
-    uint8_t *src = static_cast<uint8_t *>(background_buffer_.get_data());
+    uint8_t *dst;
+    uint8_t *src;
     int row;
     uint16_t word;
     int packet;
     uint16_t line_count;
-    uint32_t max_x = 0;
-    uint32_t min_x = 0xffffffff;
-    int max_y = 0;
-    int min_y = -1;
+    uint32_t max_x;
+    uint32_t min_x;
+    int max_y;
+    int min_y;
     uint8_t skip_count;
 
+    max_x = 0;
+    min_x = 0xffffffff;
+    max_y = 0;
+    min_y = -1;
+    dst = destination_buffer_->get_data(origin_x_, origin_y_);
+    src = static_cast<uint8_t *>(background_buffer_.get_data());
     fread(&line_count, 2, 1, file_);
     row = 0;
     if (line_count > 0) {
-        do {
-            do {
-                fread(&opcode, 2, 1, file_);
-                if ((opcode & 0xc000) != 0xc000) {
-                    break;
-                }
-                int skip = abs(static_cast<int16_t>(opcode));
-                opcode = static_cast<uint16_t>(skip);
-                dst += destination_buffer_->stride_ * (skip & 0xffff);
-                src += background_buffer_.stride_ * (skip & 0xffff);
-            } while (true);
+        for (;;) {
+            fread(&opcode, 2, 1, file_);
+            if ((opcode & 0xc000) == 0xc000) {
+                opcode = static_cast<uint16_t>(abs(static_cast<int16_t>(opcode)));
+                dst += destination_buffer_->stride_ * opcode;
+                src += background_buffer_.stride_ * opcode;
+                continue;
+            }
             if (row == 0) {
-                uint8_t *base = destination_buffer_->get_data(origin_x_, origin_y_);
-                min_y = static_cast<int>(dst - base) /
-                        static_cast<int>(destination_buffer_->stride_);
+                int stride = destination_buffer_->stride_;
+                min_y = static_cast<int>(
+                    dst - destination_buffer_->get_data(origin_x_, origin_y_)) / stride;
             }
             if (row == static_cast<int>(line_count) - 1) {
-                uint8_t *base = destination_buffer_->get_data(origin_x_, origin_y_);
-                max_y = static_cast<int>(dst - base) /
-                        static_cast<int>(destination_buffer_->stride_);
+                int stride = destination_buffer_->stride_;
+                max_y = static_cast<int>(
+                    dst - destination_buffer_->get_data(origin_x_, origin_y_)) / stride;
             }
             if (opcode & 0x8000) {
-                uint16_t last = static_cast<uint16_t>(
-                    static_cast<uint8_t>(palette_offset_ +
-                                         static_cast<int8_t>(opcode)));
-                if (last != static_cast<uint16_t>(transparent_index_)) {
-                    dst[decoded_width_ - 1] = static_cast<uint8_t>(last);
+                opcode = static_cast<uint8_t>(palette_offset_ + opcode);
+                if (opcode != transparent_index_) {
+                    dst[decoded_width_ - 1] = static_cast<uint8_t>(opcode);
                 } else {
                     dst[decoded_width_ - 1] = src[decoded_width_ - 1];
                 }
                 fread(&opcode, 2, 1, file_);
             }
-            packet = 0;
             uint8_t *out = dst;
+            uint8_t *in = src;
+            packet = 0;
             if (opcode > 0) {
                 do {
                     fread(&skip_count, 1, 1, file_);
                     out += skip_count;
-                    src += skip_count;
+                    in += skip_count;
                     if (packet == 0 &&
                         static_cast<uint32_t>(out - dst) < min_x) {
                         min_x = out - dst;
@@ -1309,10 +1273,10 @@ void Flic::decode_delta_flc_trans() {
                                 if (transparent_index_ != value) {
                                     *out = value;
                                 } else {
-                                    *out = *src;
+                                    *out = *in;
                                 }
                                 out++;
-                                src++;
+                                in++;
                                 i++;
                             } while (i < run);
                         }
@@ -1326,56 +1290,60 @@ void Flic::decode_delta_flc_trans() {
                                  palette_offset_)
                              << 8) +
                             static_cast<uint8_t>(word + palette_offset_));
-                        if (static_cast<uint8_t>(word) == transparent_index_) {
-                            if (static_cast<uint8_t>(word >> 8) ==
-                                transparent_index_) {
-                                for (int i = 0; i < run; i++) {
-                                    uint16_t pixel;
-                                    std::memcpy(&pixel, src, sizeof(pixel));
-                                    std::memcpy(out, &pixel, sizeof(pixel));
-                                    src += 2;
-                                    out += 2;
-                                }
-                            } else {
-                                for (int i = 0; i < run; i++) {
-                                    out[0] =
-                                        static_cast<uint8_t>(word >> 8);
-                                    out[1] = src[1];
-                                    out += 2;
-                                    src += 2;
-                                }
-                            }
-                        } else if (static_cast<uint8_t>(word >> 8) ==
-                                   transparent_index_) {
+                        // BUG IN THE ORIGINAL (preserved): the half-
+                        // transparent cases store the opaque byte into the
+                        // wrong half of the pixel pair.
+                        if (static_cast<uint8_t>(word) != transparent_index_ &&
+                            static_cast<uint8_t>(word >> 8) != transparent_index_) {
                             for (int i = 0; i < run; i++) {
-                                out[0] = src[0];
-                                out[1] = static_cast<uint8_t>(word);
+                                *reinterpret_cast<uint16_t *>(out) = word;
                                 out += 2;
-                                src += 2;
+                                in += 2;
+                            }
+                        } else if (static_cast<uint8_t>(word) != transparent_index_) {
+                            value = static_cast<uint8_t>(word);
+                            for (int i = 0; i < run; i++) {
+                                *out = *in;
+                                in += 2;
+                                out++;
+                                *out = value;
+                                out++;
+                            }
+                        } else if (static_cast<uint8_t>(word >> 8) != transparent_index_) {
+                            value = static_cast<uint8_t>(word >> 8);
+                            for (int i = 0; i < run; i++) {
+                                *out = value;
+                                out++;
+                                in++;
+                                *out = *in;
+                                out++;
+                                in++;
                             }
                         } else {
                             for (int i = 0; i < run; i++) {
-                                std::memcpy(out, &word, sizeof(word));
+                                *reinterpret_cast<uint16_t *>(out) =
+                                    *reinterpret_cast<uint16_t *>(in);
+                                in += 2;
                                 out += 2;
-                                src += 2;
                             }
                         }
                     }
                     packet++;
                 } while (packet < opcode);
             }
-            if (max_x < static_cast<uint32_t>(out - dst)) {
+            if (static_cast<uint32_t>(out - dst) > max_x) {
                 max_x = out - dst;
             }
             dst += destination_buffer_->stride_;
             src += background_buffer_.stride_;
             row++;
-        } while (row < static_cast<int>(line_count));
+            if (row >= static_cast<int>(line_count)) {
+                break;
+            }
+        }
     }
-    update_rect_.left = origin_x_ + min_x;
-    update_rect_.top = origin_y_ + min_y;
-    update_rect_.right = origin_x_ + 1 + max_x;
-    update_rect_.bottom = origin_y_ + 1 + max_y;
+    flic_set_rect(&update_rect_, origin_x_ + min_x, origin_y_ + min_y,
+                  origin_x_ + max_x + 1, origin_y_ + max_y + 1);
 }
 
 /*

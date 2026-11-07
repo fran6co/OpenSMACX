@@ -33,6 +33,9 @@
 #include "strings.h"
 #include "game.h"
 
+// Face name pointer owned by interface_fonts.cpp (0x00691B28).
+extern LPCSTR CreditsFontFace;
+
 int __cdecl pop_wait();
 
 extern Wave g_CREDITS_WAVE;
@@ -128,6 +131,7 @@ void Credits::close() {
 // Win::set_modal and FlatButton::close on these real subobjects.
 // ORIGINAL: 0x004289F0 ?exec@Credits@@QAEXXZ 0x004289F0-0x00428BF2 FILE
 // RECOVERY_BINDING: v1 {"evidence": ["retired seed git:024b38ed:src/recovered/units/004289f0.cpp records the 514-byte call order", "Win virtual slots 1 and 57 are show and set_modal; Credits::close owns the same Time/GraphicWin/FlatButton teardown"], "reason": "Run the credits lifecycle through real C++ owners instead of an empty link placeholder and hand-built vtable calls."}
+#pragma optimize("y", off)
 void Credits::exec() {
   close();
   GraphicWin::init(0, 0, WinScreenWidth, WinScreenHeight, 0, 0, 0, 0, 0);
@@ -143,11 +147,11 @@ void Credits::exec() {
   graphicWin2_.show(0);
 
   frame_count_ = 0;
-  font_.init("Alpha Centauri", 14, 1);
+  font_.init(CreditsFontFace, 14, 1);
   line_height_ = font_line_advance(font_);
   load();
-  static_cast<Buffer *>(&graphicWin2_)->set_font(&font_, 0, 0, 0);
-  static_cast<Buffer *>(this)->set_font(&font_, 0, 0, 0);
+  graphicWin2_.Buffer::set_font(&font_, 0, 0, 0);
+  Buffer::set_font(&font_, 0, 0, 0);
 
   time_.set_modal();
   time_.start(Credits::timer_callback_daemon, reinterpret_cast<int>(this), 30, 5);
@@ -160,6 +164,7 @@ void Credits::exec() {
   unload();
   close();
 }
+#pragma optimize("", on)
 
 // The timer entry points and renderer are expressed through the Credits
 // members and embedded GraphicWin/Buffer rather than seed pointer arithmetic.

@@ -107,16 +107,15 @@ int Lock::any_locks() {
     const GameDataLockMaskView mask = {
         GameDataStateStorage.fields_.lock_masks_.enable_mask_
     };
-    const uint32_t low_byte = mask.enable_mask_ & 0xFF;
     const uint8_t second_byte = mask.bytes_.alive_mask_;
     for (int index = 1; index < 8; ++index) {
-        const uint32_t bit = 1u << index;
-        if (!(bit & low_byte) || !(second_byte & bit)) {
-            continue;
-        }
-        for (int entry = 0; entry < 2; ++entry) {
-            if (records_[index].entries_[entry].flag & 1) {
-                return 1;
+        // Byte-cast mask on the right: the image tests `test eax, edi`.
+        if (((1 << index) & static_cast<uint8_t>(mask.enable_mask_)) &&
+            (second_byte & (1 << index))) {
+            for (int entry = 0; entry < 2; ++entry) {
+                if (records_[index].entries_[entry].flag & 1) {
+                    return 1;
+                }
             }
         }
     }
@@ -291,74 +290,63 @@ Purpose: Lock both of a slot's square entries in one call. Refuses when another
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     0x0052DBA0 0x0058FD90 0x0058FE80 0x00592EE0
-// TRIED: the whole-function shape - this catalogue's `frame` flag is
-//        real (image opens `push ebp; mov ebp, esp` and addresses every
-//        one of its 7 stack parameters `[ebp+N]`, reusing the dead `flags`
-//        parameter slot at `[ebp+8]` for TWO further unrelated locals -
-//        `take_global` then the unlock loop's counter). This tree's body,
-//        logically equivalent (skip-owner loop and current_server() fix
-//        both already applied, matching check_global/check_global_2's
-//        siblings), compiles frame-omitted at every flag set in FLAG_SETS
-//        including /Oy-, best 4/132 instructions, 0.749 similar. Not
-//        chased past that in this pass - a bigger source restructuring
-//        (matching the parameter-slot reuse explicitly) is the likely
-//        lever, left for a pass that can afford the search.
+// The second owner check is the inlined global_lock(); the first square's
+// failure jumps into the second's failure block.
 Return Value: 1 on refusal or lock failure, 0 on success
 Status: Complete
 */
+#pragma optimize("y", off)
 int Lock::lock(int slot, int flags, int a3, int a4, int a5, int a6, int a7) {
     // Refuse when another owner already holds the global lock.
     if (field_E0_ != 0 && field_E0_ != static_cast<uint32_t>(slot)) {
         return 1;
     }
     const int take_global = flags & 2;
-    if (take_global) {
-        // The entry guard above already narrowed field_E0_ to 0 or slot, so
-        // this mirrors the binary's second, redundant owner check.
-        if (field_E0_ != 0 && field_E0_ != static_cast<uint32_t>(slot)) {
-            return 1;
-        }
-        field_E0_ = static_cast<uint32_t>(slot);
-        field_E4_ = 1;
+    if (take_global && global_lock(slot) != 0) {
+        return 1;
     }
 
     PlayerLock &record = records_[slot];
     for (int entry = 0; entry < 2; ++entry) {
-        record.entries_[entry].first = -1;
-        record.entries_[entry].second = -1;
         record.entries_[entry].flag = 0;
+        record.entries_[entry].second = -1;
+        record.entries_[entry].first = -1;
     }
     record.active_ = 0;
 
-    if (record.entries_[0].lock(slot, flags, a3, a4) == 0 &&
-        record.entries_[1].lock(slot, a5, a6, a7) == 0) {
-        if (take_global && current_server() != 0 && field_E4_ != 0) {
-            const uint32_t owner = field_E0_;
-            for (int index = 1; index < 8; ++index) {
-                if (static_cast<uint32_t>(index) == owner) {
-                    continue;
-                }
-                for (int entry = 0; entry < 2; ++entry) {
-                    if (records_[index].entries_[entry].flag & 1) {
-                        return 0;
-                    }
+    if (record.entries_[0].lock(slot, flags, a3, a4) != 0) {
+        goto failed;
+    }
+    if (record.entries_[1].lock(slot, a5, a6, a7) != 0) {
+failed:
+        // A square failed: unlock both entries, clear the record, and drop
+        // the global lock if this slot holds it.
+        for (entry = 0; entry < 2; ++entry) {
+            record.entries_[entry].unlock(slot);
+        }
+        record.active_ = 0;
+        if (field_E0_ == static_cast<uint32_t>(slot)) {
+            field_E4_ = 0;
+            field_E0_ = 0;
+        }
+        return 1;
+    }
+
+    if (take_global && current_server() != 0 && field_E4_ != 0) {
+        const uint32_t owner = field_E0_;
+        for (int index = 1; index < 8; ++index) {
+            if (static_cast<uint32_t>(index) == owner) {
+                continue;
+            }
+            for (int entry = 0; entry < 2; ++entry) {
+                if (records_[index].entries_[entry].flag & 1) {
+                    return 0;
                 }
             }
-            field_E4_ = 0;
-            message_data(0x1205, static_cast<int>(owner), 0, 0, 0, 0);
         }
-        return 0;
-    }
-
-    // A square failed: unlock both entries, clear the record, and drop the
-    // global lock if this slot holds it.
-    for (entry = 0; entry < 2; ++entry) {
-        record.entries_[entry].unlock(slot);
-    }
-    record.active_ = 0;
-    if (field_E0_ == static_cast<uint32_t>(slot)) {
         field_E4_ = 0;
-        field_E0_ = 0;
+        message_data(0x1205, static_cast<int>(owner), 0, 0, 0, 0);
     }
-    return 1;
+    return 0;
 }
+#pragma optimize("", on)
