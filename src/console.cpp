@@ -355,7 +355,7 @@ void Console::turn_hints() { // 0x00511800
 }
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x00516DA0 ?governor_directives@Console@@QAEXXZ 0x00516DA0-0x00517033
+// ORIGINAL: 0x00516DA0 ?governor_directives@Console@@QAEXXZ 0x00516DA0-0x00517033 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned original entry 00516DA0; retained seed src/recovered/units/00516da0.cpp", "Native516DC7/516E0E/516E97 uses ConsoleGlobal faction for eligibility/base scanning. Native516EBB..516FC9 repeatedly writes BaseCurrent->governor, not each visited base. Advanced settings use receiver faction at+23BD4; preserve this original behavior rather than silently fixing it.", "recovery/tasks/console-scenario-owner-wave.json; native scope expansions retain the original task baseline"], "reason": "Recover the complete Console command into its genuine owner using typed state and existing lifecycle/network APIs. Preserve original spans and retained seed evidence; this binding is not a byte, reference or runtime acceptance claim."}
 void Console::governor_directives() { // 0x00516DA0
     if (ConsoleControlTurnActive != 0 || field_23BE8_ == 0 ||
@@ -1574,7 +1574,7 @@ int CursorHotspotX[12] = {0};  // 0x0093AA10, defined here
 int CursorHotspotY[12] = {0};  // 0x0093AA40, defined here
 
 
-// ORIGINAL: 0x005105C0 ?selecting@Console@@QAEHHH@Z 0x005105C0-0x005107D5
+// ORIGINAL: 0x005105C0 ?selecting@Console@@QAEHHH@Z 0x005105C0-0x005107D5 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Original 0x005105C0..0x005107D5 and its retired transcription preserved in Git history.", "Original early mode1/mode0 returns skip pumping. Ordinary cursor mode is captured after valid_patrol; each called receiver is retained for cache writeback while subsequent table slots and hotspots are read live.", "Original68FAF0 is MapLongitude, the half-width used by the wrap test; valid initialized vehicle/window state and representable coordinate arithmetic are required by the original."], "reason": "Console owns selection-mode admission and the shared map-window cursor update. Recover genuine receivers and cursor globals; the range and patrol refusals both select loaded sprite5."}
 // The image repeats this map-window cursor walk at each of selecting's
 // three exits, each followed by do_non_input.
@@ -3546,7 +3546,7 @@ void Console::new_game() {
 }
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x005162A0 ?name_landmark@Console@@QAEXHH@Z 0x005162A0-0x0051648F
+// ORIGINAL: 0x005162A0 ?name_landmark@Console@@QAEXHH@Z 0x005162A0-0x0051648F BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/005162a0.cpp: original identity and complete spans", "source:src/console.h: Console owner declarations and layout", "source:src/console.cpp: coupled navigation, selection and lifecycle caller relationships"], "reason": "The original Console operation is expressed by the corresponding real Console owner definition, using its recovered members and source-owned callees rather than the retained seed scaffold."}
 void Console::name_landmark(int x, int y) {
     if (!on_map(x, y)) {
@@ -3767,7 +3767,7 @@ void Console::show_movies() { // 0x00515F70
 }
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x00513B90 ?veh_turn@Console@@QAEHXZ 0x00513B90-0x00513FB9
+// ORIGINAL: 0x00513B90 ?veh_turn@Console@@QAEHXZ 0x00513B90-0x00513FB9 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/00513b90.cpp; image:0x00513B90-0x00513FB9", "Native513EA3 identifies pointer-preserving NetDaemon::automated_lock; native513F85 clears selected ID only before turn-loop entry."], "reason": "Recover selected-vehicle turn scheduling through real Console state, NetDaemon locking and UI owners. Native branches distinguish cursor activity, readiness and ordered actions, retaining selection after an entered turn loop and clearing it on early refusal; no raw receiver accesses or executable callbacks."}
 int Console::veh_turn() { // 0x00513B90
     int result = 0;
@@ -4668,7 +4668,7 @@ for (int offset = 0; offset < 0x20; offset += 4) {
 
 }
 
-// ORIGINAL: 0x00514050 ?human_turn@Console@@QAEXXZ 0x00514050-0x005147DA FILE
+// ORIGINAL: 0x00514050 ?human_turn@Console@@QAEXXZ 0x00514050-0x005147DA FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["image:terranx_original.exe:0x00514050-0x005147DA", "git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/00514050.cpp", "FX bank749CF8 plus57 times6C identifies74B504 as existing Effect57; original dispatch uses Wave virtual operations.", "Native5140DC/5143B4/51467E/514694 establish cursor polarity, selection reload and branch-specific flag/audio order."], "reason": "Recover player-turn orchestration in its genuine Console owner, preserving callback-driven selection/faction reloads, cursor guards, turn flags and real UI/audio lifetimes."}
 // TRIED: direct transcription using Console's already-declared field_23BDC_ etc members (no raw casts needed, no embedded objects here - simple frameless prologue); cross-checked against raw asm for the neg/sbb/inc bool-negate idiom, the xor-swapped focus() arg orders, and the veh_ready/veh_selectable branch. Compiles, sim 0.55 frameless; not retried given size (1930 bytes).
 void Console::human_turn() {
@@ -5585,7 +5585,7 @@ void __cdecl Console::menu_daemon(int selection) {
 
 // Initialize the Console windows/menu and publish the fallback popup parent.
 // Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x0051D890 ?init@Console@@QAEXH@Z 0x0051D890-0x0051D9CF
+// ORIGINAL: 0x0051D890 ?init@Console@@QAEXH@Z 0x0051D890-0x0051D9CF BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/0051d890.cpp"], "reason": "Complete genuine Console initialization/shared geometry from original receiver/member/global dataflow; native seed establishes catalogue identity and span. Source uses actual GraphicWin virtual base, AlphaMenu, shared RECT and typed fallback Win pointer. Original seed/claims retained; binding grants no matching or acceptance."}
 // symbol    ?init@Console@@QAEXH@Z
 void Console::init(int) {
