@@ -1297,12 +1297,6 @@ void GraphicWin::load_all_nc_sprites_from_defs() {
     }
 }
 
-// x86 geometry adds wrap at 32 bits before signed comparison. Unsigned
-// addition avoids introducing signed-overflow UB for damaged sprite sizes.
-static int frame_dimension_sum(int first, int second) {
-    return static_cast<int>(static_cast<unsigned int>(first)
-                          + static_cast<unsigned int>(second));
-}
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x005D7030 ?compute_min_size@GraphicWin@@QAEXXZ 0x005D7030-0x005D7140
@@ -1310,41 +1304,19 @@ static int frame_dimension_sum(int first, int second) {
 // symbol    ?compute_min_size@GraphicWin@@QAEXXZ
 void GraphicWin::compute_min_size() {
     if ((iFlags_ & 0x10) != 0) {
-        if (!frame_top_left_) return;
-        Sprite *const top_right = frame_top_right_;
-        if (!top_right) return;
-        Sprite *const bottom_left = frame_bottom_left_;
-        if (!bottom_left) return;
-        Sprite *const bottom_right = frame_bottom_right_;
-        if (!bottom_right) return;
-        int width = frame_dimension_sum(frame_top_left_->width(), top_right->width());
-        field_134_ = width;
-        const int bottom_width = frame_dimension_sum(bottom_right->width(), bottom_left->width());
-        if (width <= bottom_width) width = bottom_width;
-        field_134_ = width;
-        int height = frame_dimension_sum(frame_top_left_->height(), bottom_left->height());
-        field_138_ = height;
-        const int right_height = frame_dimension_sum(bottom_right->height(), top_right->height());
-        if (height <= right_height) height = right_height;
-        field_138_ = height;
+        if (!frame_top_left_ || !frame_top_right_ || !frame_bottom_left_
+            || !frame_bottom_right_) return;
+        field_134_ = frame_top_left_->width() + frame_top_right_->width();
+        field_134_ = max((int)field_134_, frame_bottom_right_->width() + frame_bottom_left_->width());
+        field_138_ = frame_top_left_->height() + frame_bottom_left_->height();
+        field_138_ = max((int)field_138_, frame_bottom_right_->height() + frame_top_right_->height());
     } else {
-        if (!frame_noncaption_left_) return;
-        Sprite *const top_right = frame_noncaption_right_;
-        if (!top_right) return;
-        Sprite *const bottom_left = frame_bottom_left_;
-        if (!bottom_left) return;
-        Sprite *const bottom_right = frame_bottom_right_;
-        if (!bottom_right) return;
-        int width = frame_dimension_sum(frame_noncaption_left_->width(), top_right->width());
-        field_134_ = width;
-        const int bottom_width = frame_dimension_sum(bottom_right->width(), bottom_left->width());
-        if (width <= bottom_width) width = bottom_width;
-        field_134_ = width;
-        int height = frame_dimension_sum(frame_noncaption_left_->height(), bottom_left->height());
-        field_138_ = height;
-        const int right_height = frame_dimension_sum(bottom_right->height(), top_right->height());
-        if (height <= right_height) height = right_height;
-        field_138_ = height;
+        if (!frame_noncaption_left_ || !frame_noncaption_right_ || !frame_bottom_left_
+            || !frame_bottom_right_) return;
+        field_134_ = frame_noncaption_left_->width() + frame_noncaption_right_->width();
+        field_134_ = max((int)field_134_, frame_bottom_right_->width() + frame_bottom_left_->width());
+        field_138_ = frame_noncaption_left_->height() + frame_bottom_left_->height();
+        field_138_ = max((int)field_138_, frame_bottom_right_->height() + frame_noncaption_right_->height());
     }
 }
 
@@ -1525,42 +1497,22 @@ void GraphicWin::apply_frame_sprites(const NCSprites *sprites) {
     frame_noncaption_right_ = sprites->noncaption_right;
     frame_noncaption_middle_ = sprites->noncaption_middle;
 
+    // The image expands compute_min_size's body here; the other callers
+    // call it out of line, so its text is repeated rather than marked inline.
     if ((iFlags_ & 0x10) != 0) {
-        if (!frame_top_left_) return;
-        Sprite *const top_right = frame_top_right_;
-        if (!top_right) return;
-        Sprite *const bottom_left = frame_bottom_left_;
-        if (!bottom_left) return;
-        Sprite *const bottom_right = frame_bottom_right_;
-        if (!bottom_right) return;
-        int width = frame_dimension_sum(frame_top_left_->width(), top_right->width());
-        field_134_ = width;
-        const int bottom_width = frame_dimension_sum(bottom_right->width(), bottom_left->width());
-        if (width <= bottom_width) width = bottom_width;
-        field_134_ = width;
-        int height = frame_dimension_sum(frame_top_left_->height(), bottom_left->height());
-        field_138_ = height;
-        const int right_height = frame_dimension_sum(bottom_right->height(), top_right->height());
-        if (height <= right_height) height = right_height;
-        field_138_ = height;
+        if (!frame_top_left_ || !frame_top_right_ || !frame_bottom_left_
+            || !frame_bottom_right_) return;
+        field_134_ = frame_top_left_->width() + frame_top_right_->width();
+        field_134_ = max((int)field_134_, frame_bottom_right_->width() + frame_bottom_left_->width());
+        field_138_ = frame_top_left_->height() + frame_bottom_left_->height();
+        field_138_ = max((int)field_138_, frame_bottom_right_->height() + frame_top_right_->height());
     } else {
-        if (!frame_noncaption_left_) return;
-        Sprite *const top_right = frame_noncaption_right_;
-        if (!top_right) return;
-        Sprite *const bottom_left = frame_bottom_left_;
-        if (!bottom_left) return;
-        Sprite *const bottom_right = frame_bottom_right_;
-        if (!bottom_right) return;
-        int width = frame_dimension_sum(frame_noncaption_left_->width(), top_right->width());
-        field_134_ = width;
-        const int bottom_width = frame_dimension_sum(bottom_right->width(), bottom_left->width());
-        if (width <= bottom_width) width = bottom_width;
-        field_134_ = width;
-        int height = frame_dimension_sum(frame_noncaption_left_->height(), bottom_left->height());
-        field_138_ = height;
-        const int right_height = frame_dimension_sum(bottom_right->height(), top_right->height());
-        if (height <= right_height) height = right_height;
-        field_138_ = height;
+        if (!frame_noncaption_left_ || !frame_noncaption_right_ || !frame_bottom_left_
+            || !frame_bottom_right_) return;
+        field_134_ = frame_noncaption_left_->width() + frame_noncaption_right_->width();
+        field_134_ = max((int)field_134_, frame_bottom_right_->width() + frame_bottom_left_->width());
+        field_138_ = frame_noncaption_left_->height() + frame_bottom_left_->height();
+        field_138_ = max((int)field_138_, frame_bottom_right_->height() + frame_noncaption_right_->height());
     }
 }
 

@@ -862,10 +862,9 @@ int Palette::get_nearest_palette_index(unsigned char red, unsigned char green,
     if (skip_animated == 0) {
         const PALETTEENTRY *p = entries_;
         for (int i = 0; i < 0x100; ++i, ++p) {
-            int dr = (int)p->peRed - (int)red;
-            int dg = (int)p->peGreen - (int)green;
-            int db = (int)p->peBlue - (int)blue;
-            int dist = dg * dg + dr * dr + db * db;
+            int dist = (p->peGreen - green) * (p->peGreen - green)
+                     + (p->peRed - red) * (p->peRed - red)
+                     + (p->peBlue - blue) * (p->peBlue - blue);
             if (dist < best_dist) {
                 best_dist = dist;
                 best_index = i;
@@ -898,10 +897,9 @@ int Palette::get_nearest_palette_index(unsigned char red, unsigned char green,
         if (reserved[i] != 0) {
             continue;
         }
-        int dr = (int)p2->peRed - (int)red;
-        int dg = (int)p2->peGreen - (int)green;
-        int db = (int)p2->peBlue - (int)blue;
-        int dist = dg * dg + dr * dr + db * db;
+        int dist = (p2->peGreen - green) * (p2->peGreen - green)
+                 + (p2->peRed - red) * (p2->peRed - red)
+                 + (p2->peBlue - blue) * (p2->peBlue - blue);
         if (dist < best_dist) {
             best_dist = dist;
             best_index = i;

@@ -78,11 +78,11 @@ int Menu::init(Win *owner) {
         if (MenuDefaultFont == 0) return 7;
     }
 
-    Font *const font = MenuDefaultFont;
-    const RECT &bounds = owner->outer_rect();
-    const int height = font->height_ * 2;
+    const int height = MenuDefaultFont->height_ * 2;
+    const int width = owner->outer_rect().right - owner->outer_rect().left;
+    const int top = owner->outer_rect().top - height;
     const int result = GraphicWin::init(
-        bounds.left, bounds.top - height, bounds.right - bounds.left,
+        owner->outer_rect().left, top, width,
         height, 0, 0x8020, owner, 0, 0);
     if (result != 0) return result;
 
@@ -157,36 +157,50 @@ int Menu::add_menu(int menu_id, char *text, int left_justified) {
 int Menu::UNK10(int menu_id, char *text) {
     if (!text) return 3;
 
-    int index = 0;
-    while (index < 15 && entries_[index].id != -1 &&
-           entries_[index].id != menu_id)
-        ++index;
-    if (index == 15 || entries_[index].id != menu_id) return 11;
+    int index;
+    for (index = 0;; index++) {
+        if (index >= 15) {
+            return 11;
+        }
+        const int id = entries_[index].id;
+        if (id == -1) {
+            return 11;
+        }
+        if (id == menu_id) {
+            break;
+        }
+    }
+    // Dead re-test kept from the image, as in rename_menu_item.
+    if (index == -1) {
+        return 11;
+    }
 
-    MenuEntry &entry = entries_[index];
-    if (entry.text) free(entry.text);
-    entry.text = static_cast<char *>(mem_get(strlen(text) + 3));
-    if (!entry.text) {
+    if (entries_[index].text) free(entries_[index].text);
+    entries_[index].text = static_cast<char *>(mem_get(strlen(text) + 3));
+    if (!entries_[index].text) {
         --count_;
         return 4;
     }
-    entry.text[0] = '\0';
-    entry.mnemonic = 0;
+    entries_[index].text[0] = '\0';
+    entries_[index].mnemonic = 0;
 
     char *ampersand = strchr(text, '&');
     if (!ampersand || ampersand[1] == ' ') {
-        strcat(entry.text, text);
+        strcat(entries_[index].text, text);
     } else {
         char *after_ampersand = ampersand + 1;
+        entries_[index].text[0] = '\0';
         *ampersand = '\0';
-        strcat(entry.text, text);
+        strcat(entries_[index].text, text);
 
+        const char mnemonic = after_ampersand[0];
         *ampersand = '&';
-        if (after_ampersand[0] != '&')
-            entry.mnemonic = entry.text + strlen(entry.text);
-        strcat(entry.text, after_ampersand);
+        if (mnemonic != '&')
+            entries_[index].mnemonic =
+                entries_[index].text + strlen(entries_[index].text);
+        strcat(entries_[index].text, after_ampersand);
     }
-    strcat(entry.text, MenuEntryPadding);
+    strcat(entries_[index].text, MenuEntryPadding);
     compute();
     return 0;
 }

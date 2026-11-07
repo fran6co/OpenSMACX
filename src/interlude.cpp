@@ -44,9 +44,7 @@ Interlude::~Interlude() { close(); }
 // symbol    ?close@Interlude@@QAEXXZ
 void Interlude::close() {
     GraphicWin::close();
-    StringList &captions = captions_;
-    captions.remove_all();
-    captions.current_position_ = 0;
+    captions_.close();
     art_.close();
 }
 

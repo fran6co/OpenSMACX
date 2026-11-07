@@ -1238,8 +1238,8 @@ Status: Complete
 //            there regardless of the forwarder. Not added.
 
 int __cdecl bonus_at(int x, int y, int UNUSED(unk_val)) {
-    int alt = alt_at(x, y);
     uint32_t bit = bit_at(x, y);
+    int alt = alt_at(x, y);
     BOOL has_rsc_bonus = bit & BIT_RSC_BONUS;
     if (!has_rsc_bonus) {
         if (!MapRandSeed) {

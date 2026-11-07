@@ -164,21 +164,25 @@ void PlanWin::init(char *) {
 // original uses the same three-stage calculation for two input pairs and
 // then for their midpoints; on a flat map it does not wrap the result.
 static inline int plan_horizontal_midpoint(int left, int right) {
-    const int distance = abs(right - left);
-    const int width = MapLongitudeBounds;
-    const bool flat = (MapIsFlat & 1) != 0;
-    int center;
-    if (!flat && distance > width / 2) {
-        center = (distance - width / 2) / 2
-                 + (left > right ? left : right);
-    } else {
-        center = distance / 2 + (left < right ? left : right);
-    }
-    if (!flat) {
+    int distance = abs(right - left);
+    if (!(MapIsFlat & 1) && distance > MapLongitudeBounds / 2) {
+        distance -= MapLongitudeBounds / 2;
+        const int center = distance / 2 + max(left, right);
         if (center < 0) {
-            center += width;
-        } else if (center >= width) {
-            center -= width;
+            return center + MapLongitudeBounds;
+        }
+        if (center >= MapLongitudeBounds) {
+            return center - MapLongitudeBounds;
+        }
+        return center;
+    }
+    const int center = distance / 2 + min(left, right);
+    if (!(MapIsFlat & 1)) {
+        if (center < 0) {
+            return center + MapLongitudeBounds;
+        }
+        if (center >= MapLongitudeBounds) {
+            return center - MapLongitudeBounds;
         }
     }
     return center;
@@ -189,10 +193,13 @@ static inline int plan_horizontal_midpoint(int left, int right) {
 // RECOVERY_BINDING: v1 {"evidence": ["image:0x0048B450-0x0048B629;git:a899c9ea:src/recovered/units/0048b450.cpp", "source:src/map.h:MapLongitudeBounds,MapIsFlat;source:src/mapwin.h:center_x_,center_y_"], "reason": "The eight-argument PlanWin member selects the horizontal center of two map-view pairs and their vertical midpoint using inherited MapWin view fields."}
 void PlanWin::find_view(int x1, int y1, int x2, int y2,
                         int x3, int y3, int x4, int y4) {
+    const int first_y = (y1 + y2) / 2;
     const int first_x = plan_horizontal_midpoint(x1, x2);
+    const int second_y = (y3 + y4) / 2;
     const int second_x = plan_horizontal_midpoint(x3, x4);
+    const int y = (first_y + second_y) / 2;
     center_x_ = plan_horizontal_midpoint(first_x, second_x);
-    center_y_ = ((y1 + y2) / 2 + (y3 + y4) / 2) / 2;
+    center_y_ = y;
 }
 
 // Zoom until both selected points and their neighboring tiles fit the view.
@@ -219,93 +226,74 @@ void PlanWin::opticenter(int x1, int y1, int x2, int y2, int force_redraw) {
         calculate_dimensions();
 
         const int flat = MapIsFlat & 1;
-        const int width = MapLongitudeBounds;
-        bool first_point_fits = true;
-        {
-            const int height = MapLatitudeBounds;
-            const int left = field_1DDA4_;
-            const int top = field_1DDA8_;
-            const int right = left + field_1DDCC_ + field_1DDD4_;
-            const int bottom = top + field_1DDD0_ + field_1DDD8_;
-            for (int index = 0; index < 25; ++index) {
-                int x = x1 + RadiusOffsetX[index];
-                if (!flat) {
-                    if (x < 0) {
-                        x += width;
-                    } else if (x >= width) {
-                        x -= width;
-                    }
-                }
-                const int y = y1 + RadiusOffsetY[index];
-                if (x < 0 || x >= width || y < 0 || y >= height) {
-                    continue;
-                }
-                if (y < top || y >= bottom) {
-                    first_point_fits = false;
-                    break;
-                }
-                if (!flat) {
-                    if (x < left) {
-                        x += width;
-                    }
-                    if (x >= right) {
-                        x -= width;
-                    }
-                }
-                if (x < left || x >= right) {
-                    first_point_fits = false;
-                    break;
+        int index;
+        for (index = 0; index < 25; ++index) {
+            int x = RadiusOffsetX[index] + x1;
+            if (!flat) {
+                if (x < 0) {
+                    x += MapLongitudeBounds;
+                } else if (x >= MapLongitudeBounds) {
+                    x -= MapLongitudeBounds;
                 }
             }
-        }
-        if (!first_point_fits) {
-            --zoom_offset_;
-            break;
-        }
-
-        bool second_point_fits = true;
-        {
-            const int height = MapLatitudeBounds;
-            const int left = field_1DDA4_;
-            const int top = field_1DDA8_;
-            const int right = left + field_1DDCC_ + field_1DDD4_;
-            const int bottom = top + field_1DDD0_ + field_1DDD8_;
-            for (int index = 0; index < 25; ++index) {
-                int x = x2 + RadiusOffsetX[index];
-                if (!flat) {
-                    if (x < 0) {
-                        x += width;
-                    } else if (x >= width) {
-                        x -= width;
-                    }
+            const int y = RadiusOffsetY[index] + y1;
+            if (y < 0 || y >= MapLatitudeBounds ||
+                x < 0 || x >= MapLongitudeBounds) {
+                continue;
+            }
+            if (y < field_1DDA8_ ||
+                y >= field_1DDA8_ + field_1DDD0_ + field_1DDD8_) {
+                goto too_far;
+            }
+            if (!flat) {
+                if (x < field_1DDA4_) {
+                    x += MapLongitudeBounds;
                 }
-                const int y = y2 + RadiusOffsetY[index];
-                if (x < 0 || x >= width || y < 0 || y >= height) {
-                    continue;
-                }
-                if (y < top || y >= bottom) {
-                    second_point_fits = false;
-                    break;
-                }
-                if (!flat) {
-                    if (x < left) {
-                        x += width;
-                    }
-                    if (x >= right) {
-                        x -= width;
-                    }
-                }
-                if (x < left || x >= right) {
-                    second_point_fits = false;
-                    break;
+                if (x >= field_1DDA4_ + field_1DDCC_ + field_1DDD4_) {
+                    x -= MapLongitudeBounds;
                 }
             }
+            if (x < field_1DDA4_ ||
+                x >= field_1DDA4_ + field_1DDCC_ + field_1DDD4_) {
+                goto too_far;
+            }
         }
-        if (!second_point_fits) {
-            --zoom_offset_;
-            break;
+        for (index = 0; index < 25; ++index) {
+            int x = RadiusOffsetX[index] + x2;
+            if (!flat) {
+                if (x < 0) {
+                    x += MapLongitudeBounds;
+                } else if (x >= MapLongitudeBounds) {
+                    x -= MapLongitudeBounds;
+                }
+            }
+            const int y = RadiusOffsetY[index] + y2;
+            if (y < 0 || y >= MapLatitudeBounds ||
+                x < 0 || x >= MapLongitudeBounds) {
+                continue;
+            }
+            if (y < field_1DDA8_ ||
+                y >= field_1DDA8_ + field_1DDD0_ + field_1DDD8_) {
+                goto too_far;
+            }
+            if (!flat) {
+                if (x < field_1DDA4_) {
+                    x += MapLongitudeBounds;
+                }
+                if (x >= field_1DDA4_ + field_1DDCC_ + field_1DDD4_) {
+                    x -= MapLongitudeBounds;
+                }
+            }
+            if (x < field_1DDA4_ ||
+                x >= field_1DDA4_ + field_1DDCC_ + field_1DDD4_) {
+                goto too_far;
+            }
         }
     } while (zoom_offset_ < -10);
+    goto done;
+too_far:
+    --zoom_offset_;
+done:
 
     calculate_dimensions();
     if (force_redraw || old_x != center_x_ ||
@@ -329,40 +317,36 @@ void PlanWin::monocenter(int x, int y, int force_redraw) {
         calculate_dimensions();
 
         const int flat = MapIsFlat & 1;
-        const int width = MapLongitudeBounds;
-        const int height = MapLatitudeBounds;
-        const int left = field_1DDA4_;
-        const int top = field_1DDA8_;
-        const int right = left + field_1DDCC_ + field_1DDD4_;
-        const int bottom = top + field_1DDD0_ + field_1DDD8_;
         bool tiles_fit = true;
         for (int index = 0; index < 81; ++index) {
-            int sample_x = x + RadiusOffsetX[index];
+            int sample_x = RadiusOffsetX[index] + x;
             if (!flat) {
                 if (sample_x < 0) {
-                    sample_x += width;
-                } else if (sample_x >= width) {
-                    sample_x -= width;
+                    sample_x += MapLongitudeBounds;
+                } else if (sample_x >= MapLongitudeBounds) {
+                    sample_x -= MapLongitudeBounds;
                 }
             }
-            const int sample_y = y + RadiusOffsetY[index];
-            if (sample_x < 0 || sample_x >= width ||
-                sample_y < 0 || sample_y >= height) {
+            const int sample_y = RadiusOffsetY[index] + y;
+            if (sample_y < 0 || sample_y >= MapLatitudeBounds ||
+                sample_x < 0 || sample_x >= MapLongitudeBounds) {
                 continue;
             }
-            if (sample_y < top || sample_y >= bottom) {
+            if (sample_y < field_1DDA8_ ||
+                sample_y >= field_1DDA8_ + field_1DDD0_ + field_1DDD8_) {
                 tiles_fit = false;
                 break;
             }
             if (!flat) {
-                if (sample_x < left) {
-                    sample_x += width;
+                if (sample_x < field_1DDA4_) {
+                    sample_x += MapLongitudeBounds;
                 }
-                if (sample_x >= right) {
-                    sample_x -= width;
+                if (sample_x >= field_1DDA4_ + field_1DDCC_ + field_1DDD4_) {
+                    sample_x -= MapLongitudeBounds;
                 }
             }
-            if (sample_x < left || sample_x >= right) {
+            if (sample_x < field_1DDA4_ ||
+                sample_x >= field_1DDA4_ + field_1DDCC_ + field_1DDD4_) {
                 tiles_fit = false;
                 break;
             }
@@ -371,7 +355,7 @@ void PlanWin::monocenter(int x, int y, int force_redraw) {
             --zoom_offset_;
             break;
         }
-    } while (zoom_offset_ <= -11);
+    } while (zoom_offset_ < -10);
 
     calculate_dimensions();
     if (force_redraw || old_x != center_x_ ||
@@ -764,6 +748,8 @@ Status: Complete
 
 // ORIGINAL: 0x0048B3F0 ?back_redraw@PlanWin@@QAEXXZ 0x0048B3F0-0x0048B445 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["The body sets MapWin +0x1DD70, fills the GraphicWin virtual base, redraws the MapWin, then copies that base's Buffer into PlanWin's own Buffer using DIB width and top-down height.", "MapWin virtually inherits GraphicWin and PlanWin declares its own Buffer at +0x21A70. Typed base conversions follow the vbtable; Buffer::dib_ supplies the observed +0x4C4/+0x4C8 dimensions.", "Pinned48B432 forms ECX=virtual GraphicWin base+0x444 (Buffer source);48B43D pushes PlanWin+0x21A70 as destination before Buffer::copy5D95B0. Its five-argument wrapper and full blitter preserve receiver-as-source and pointer-argument-as-destination."], "reason": "Recover PlanWin's backing-image refresh through its real MapWin/GraphicWin hierarchy and typed buffers."}
+// opticenter calls this out of line.
+#pragma auto_inline(off)
 void PlanWin::back_redraw() {
     field_1DD70_ = 0x84010002;
     GraphicWin::fill(0);
@@ -771,6 +757,7 @@ void PlanWin::back_redraw() {
     Buffer::copy(&buffer_, 0, 0, dib_.bmiHeader.biWidth,
                  -dib_.bmiHeader.biHeight);
 }
+#pragma auto_inline(on)
 
 // The pinned opticenter call at 0x0048B692 reaches this external helper.
 // Its selected body lies in the inferred PlanWin contribution core.
@@ -798,6 +785,9 @@ Status: Complete
 // The canonical `xrange` symbol is emitted out of line here. Its single
 // wrap implementation is the shared inline `wrap_map_x` in map.h; measured
 // inline callers use that helper directly.
+// opticenter calls this out of line and discards the result.
+#pragma auto_inline(off)
 int __cdecl xrange(int x) {
     return wrap_map_x(x);
 }
+#pragma auto_inline(on)

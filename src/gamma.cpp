@@ -253,15 +253,13 @@ void Gamma::close() {
 void Gamma::adjust_pal(double gamma) {
     if (target_palette_ == 0) return;
 
-    const double inverse_gamma = 1.0 / gamma;
     for (int index = 0; index < 236; ++index) {
-        const PALETTEENTRY &entry = target_palette_->entries_[index + 10];
-        double red = entry.peRed * GammaComponentScale;
-        double green = entry.peGreen * GammaComponentScale;
-        double blue = entry.peBlue * GammaComponentScale;
-        red = pow(red, inverse_gamma);
-        green = pow(green, inverse_gamma);
-        blue = pow(blue, inverse_gamma);
+        double red = target_palette_->entries_[index + 10].peRed * GammaComponentScale;
+        double green = target_palette_->entries_[index + 10].peGreen * GammaComponentScale;
+        double blue = target_palette_->entries_[index + 10].peBlue * GammaComponentScale;
+        red = pow(red, 1.0 / gamma);
+        green = pow(green, 1.0 / gamma);
+        blue = pow(blue, 1.0 / gamma);
 
         if (red < 0.0) red = 0.0;
         else if (red > 1.0) red = 1.0;
@@ -270,15 +268,12 @@ void Gamma::adjust_pal(double gamma) {
         if (blue < 0.0) blue = 0.0;
         else if (blue > 1.0) blue = 1.0;
 
-        const unsigned char red_byte = static_cast<unsigned char>(
-            static_cast<int>(red * 235.99));
-        const unsigned char green_byte = static_cast<unsigned char>(
-            static_cast<int>(green * 235.99));
-        const unsigned char blue_byte = static_cast<unsigned char>(
-            static_cast<int>(blue * 235.99));
-        target_palette_->entries_[index + 10].peRed = red_byte;
-        target_palette_->entries_[index + 10].peGreen = green_byte;
-        target_palette_->entries_[index + 10].peBlue = blue_byte;
+        const int red_byte = static_cast<int>(red * 235.99);
+        const int green_byte = static_cast<int>(green * 235.99);
+        const int blue_byte = static_cast<int>(blue * 235.99);
+        target_palette_->entries_[index + 10].peRed = static_cast<BYTE>(red_byte);
+        target_palette_->entries_[index + 10].peGreen = static_cast<BYTE>(green_byte);
+        target_palette_->entries_[index + 10].peBlue = static_cast<BYTE>(blue_byte);
     }
     target_palette_->reseed();
     target_palette_->set();

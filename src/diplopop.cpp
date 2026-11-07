@@ -686,11 +686,13 @@ void DiploPop::draw_hq() {
     for (base_id = 0; base_id < GameDataStateStorage.fields_.base_current_count_;
          ++base_id) {
         if (Bases[base_id].faction_id_current == counterpart_faction_
-            && has_fac_built(FAC_HEADQUARTERS, base_id)) break;
+            && has_fac(FAC_HEADQUARTERS, base_id, 0)) break;
     }
-    strcat(StringTemp,
-           base_id == GameDataStateStorage.fields_.base_current_count_
-               ? label_get(0x3A9) : Bases[base_id].name_string);
+    if (base_id == GameDataStateStorage.fields_.base_current_count_) {
+        strcat(StringTemp, label_get(0x3A9));
+    } else {
+        strcat(StringTemp, Bases[base_id].name_string);
+    }
     CharUpperA(StringTemp);
 
     MainInterfaceGlobal.set_font(&font3_, 0, 0, 0);

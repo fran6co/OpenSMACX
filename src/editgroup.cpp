@@ -603,6 +603,31 @@ int EditGroup::attach(GraphicWin *parent, int x, int y, int flags) {
 // ORIGINAL: 0x00612450 ?on_redraw@EditGroup@@QAEXXZ 0x00612450-0x00612669 FILE
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00612450.cpp retained original identity, full spans and prior recovery evidence", "recovery/tasks/dialog-control-coverage-wave.json authorized coupled control ownership", "original:0x612450 complete control/data-access review and src/editgroup.h genuine declaration; cross-owner discoveries preserved in task history"], "reason": "Complete Dialog-control behavior belongs to this genuine control owner, with real inherited members, embedded controls, Win receivers and callback dispatch rather than fixed executable calls. Compatible seed identity and historical evidence remain retained; catalogue decorations and emitted ABI are separate facts."}
 // symbol    ?on_redraw@EditGroup@@UAEXXZ
+// Guarded label write, inlined: the image converts the receiver first.
+static inline void edit_group_write_l(EditGroup *group, char *text, RECT *rect) {
+    if (text != 0) {
+        group->Buffer::write_l(text, rect, strlen(text));
+    }
+}
+
+// Advance the label cursor and read the new entry's text. The original reads
+// payload->text even when head is null; that unsafe path is kept.
+static inline char *edit_group_next_label(StringStruct *list) {
+    char *label = 0;
+    StringStructEntry *const head = list->head_;
+    if (head != 0) {
+        const int count = list->entry_count_;
+        list->current_ = list->current_->next;
+        if (++list->current_position_ == count) {
+            list->current_position_ = 0;
+        }
+    }
+    if (list->current_ != 0) {
+        label = (head != 0 ? list->current_->string_payload() : 0)->text;
+    }
+    return label;
+}
+
 void EditGroup::on_redraw() {
     Win *const parent = win_parent_;
     if (parent == 0) return;
@@ -614,8 +639,8 @@ void EditGroup::on_redraw() {
 
     const int base_left = static_cast<int>(Dialog::field_34_) +
                           static_cast<int>(Dialog::field_40_);
-    const int base_top = static_cast<int>(Dialog::field_44_) >> 1;
     const int base_right = base_left + static_cast<int>(Dialog::field_64_);
+    const int base_top = static_cast<int>(Dialog::field_44_) >> 1;
     const int base_bottom = static_cast<int>(Dialog::field_68_) -
                             static_cast<int>(Dialog::field_44_) + base_top;
 
@@ -635,27 +660,8 @@ void EditGroup::on_redraw() {
 
         int row = 0;
         while (row < Dialog::row_count_) {
-            StringStructEntry *const head = item_list_.head_;
-            if (head != 0) {
-                const int count = item_list_.entry_count_;
-                item_list_.current_ = item_list_.current_->next;
-                ++item_list_.current_position_;
-                if (item_list_.current_position_ == count) {
-                    item_list_.current_position_ = 0;
-                }
-            }
-
-            if (item_list_.current_ != 0) {
-                StringStructPayload *const payload =
-                    head != 0 ? item_list_.current_->string_payload() : 0;
-                // The original reads payload->text even when head is null.
-                // Keep that unsafe path rather than normalizing the list state.
-                char *const label = payload->text;
-                if (label != 0) {
-                    static_cast<Buffer *>(static_cast<GraphicWin *>(this))->write_l(
-                        label, &label_area, strlen(label));
-                }
-            }
+            char *const label = edit_group_next_label(&item_list_);
+            edit_group_write_l(this, label, &label_area);
 
             const int row_step = static_cast<int>(Dialog::field_68_);
             label_area.top += row_step;

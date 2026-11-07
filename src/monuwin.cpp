@@ -126,6 +126,7 @@ void MonuWin::on_left_click(int x, int y) {
 // ORIGINAL: 0x00476850 ?on_mouse_move@MonuWin@@QAEXHH@Z 0x00476850-0x004769A9
 // RECOVERY_BINDING: v1 {"evidence": ["image:0x00476850; retired seed provenance git:670a036f:src/recovered/units/00476850.cpp; original spans and historical lessons retained.", "image:477C80/477B10 member order and36DC extent; primary66C880 slots12/17/19/25/44.", "image:476A50 binds singleton7F9F58 and independent count7FD634; Player59C and MonumentFaction4F4 strides.", "image:4737EE..475E58 localized owner/grammar cases; 472230/4736E0 resource, clipping, sprite and Spot accesses."], "reason": "Genuine GraphicWin-derived MonuWin owner with actual FlatButton/Spot/Buffer/Sprite members, real callback slots and automatic lifetimes; localized parser owner and grammar inputs follow the original branches rather than current-faction stand-ins."}
 // symbol    ?on_mouse_move@MonuWin@@UAEXHH@Z
+#pragma optimize("y", off)
 void MonuWin::on_mouse_move(int x, int y) {
   if (selection_pending_ != 0) {
     return;
@@ -152,17 +153,16 @@ void MonuWin::on_mouse_move(int x, int y) {
   } else {
     const int index = FactionMonuments[preview_faction_or_page_]
                           .records_[y].word_8_;
-    // These victory/defeat records store the counterpart faction (0..7).
-    // Native +0x34B4 is the last Sprite in the preceding 7-element array;
-    // indices 1..7 are the following seven-element array.
-    Sprite *const sprite =
-        index == 0 ? &sprites_33AC_[6] : &sprites_34E0_[index - 1];
-    sprite->draw(static_cast<Buffer *>(this), sprite->transparent_index(),
-                 rects_3134_[0].left, rects_3134_[0].top);
+    // These victory/defeat records store the counterpart faction (0..7) and
+    // index one run that starts at the last sprite of the preceding array.
+    sprites_33AC_[6 + index].draw(static_cast<Buffer *>(this),
+                                  sprites_33AC_[6 + index].transparent_index(),
+                                  rects_3134_[0].left, rects_3134_[0].top);
   }
   selected_monument_type_ = y;
   soft_update();
 }
+#pragma optimize("", on)
 
 // Main initialization pass.  The coordinate tables and sprite source
 // rectangles below are the observed constructor-owned UI data; all storage

@@ -103,16 +103,13 @@ NetSessionPickerWin::~NetSessionPickerWin() {
 // TRIED: MISMATCH #0 push/sub - unknown containing class, receiver expressed as an opaque thiscall shim (no field names); stack frame shape differs from the original's spill choices.
 void NetSessionPickerWin::close() {
   refresh_timer_.close();
-  sessions_.remove_all();
-  sessions_.current_position_ = 0;
+  sessions_.close();
   sessions_view_.close();
   create_button_.close();
   action_button_.close();
   cancel_button_.close();
   GraphicWin::close();
 
-  tail_.field_3718_ = 7;
-  tail_.selected_row_color_ = 7;
   net_ = 0;
   tail_.action_result_ = 0;
   tail_.client_width_ = 0;
@@ -121,6 +118,7 @@ void NetSessionPickerWin::close() {
   tail_.field_370c_ = 0;
   tail_.field_3710_ = 2;
   tail_.field_3714_ = 0;
+  tail_.field_3718_ = 7;
   tail_.frame_color_ = 0xff;
   tail_.box_color_a_ = 0;
   tail_.box_color_b_ = 0;
@@ -129,6 +127,7 @@ void NetSessionPickerWin::close() {
   tail_.field_3740_ = -1;
   tail_.field_3744_ = 1;
   tail_.field_3748_ = 1;
+  tail_.selected_row_color_ = 7;
   tail_.row_box_color_a_ = 0;
   tail_.row_box_color_b_ = 0;
   tail_.boxes_per_row_ = 2;
