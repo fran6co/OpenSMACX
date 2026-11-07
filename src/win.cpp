@@ -6369,39 +6369,14 @@ int Win::set_modal(int flags, int (__cdecl *callback)(), Win * owner) {
 // TRIED: signature is __thiscall Win::draw_rect_border(int,int, int,int,HGDIOBJ,HGDIOBJ,int) - `this` receiver is edi (from ecx), field_184_ is a Win member, and the 7th stack slot (esp+0x30) is read by nothing, matching `ret 0x1c`=7 dwords but only 6 used fields, not IDA's flat 7-int __stdcall guess or Ghidra's own param_1..7 listing. Divergence is #2, a `sub esp,N` frame the original never builds (no `mov ebp,esp` at all, pure register+esp addressing); ruled out trimming the local `pal`/`hdc`/`prev` temporaries without moving it, so left for the next pass. The 4x repeated HDC-acquire/refcount block and the rectangle math (4 MoveToEx/LineTo edges, two alternating pens) were hand-traced from the raw disasm stack offsets, not Ghidra's decompile.
 // ===== homed from src/unrecovered/005ef310.cpp =====
 
+// The image is four inlined copies of sub_5ef1e0 (the line helper). It still
+// calls release_hdc out of line in all four and sync_palette in the last;
+// this build inlines the first release_hdc (inline budget, unresolved).
 void Win::draw_rect_border(int x1, int y1, int x2, int y2, HGDIOBJ pen1, HGDIOBJ pen2, int unused7) {
-    if (get_hdc()) {
-        sync_palette();
-        HGDIOBJ prev = SelectObject(WinSharedHdc, pen1);
-        MoveToEx(WinSharedHdc, x1 + 1, y1, 0);
-        LineTo(WinSharedHdc, x2 + 1, y1);
-        SelectObject(WinSharedHdc, prev);
-        release_hdc();
-    }
-    if (get_hdc()) {
-        sync_palette();
-        HGDIOBJ prev = SelectObject(WinSharedHdc, pen2);
-        MoveToEx(WinSharedHdc, x1, y2, 0);
-        LineTo(WinSharedHdc, x2, y2);
-        SelectObject(WinSharedHdc, prev);
-        release_hdc();
-    }
-    if (get_hdc()) {
-        sync_palette();
-        HGDIOBJ prev = SelectObject(WinSharedHdc, pen1);
-        MoveToEx(WinSharedHdc, x1, y1, 0);
-        LineTo(WinSharedHdc, x1, y2);
-        SelectObject(WinSharedHdc, prev);
-        release_hdc();
-    }
-    if (get_hdc()) {
-        sync_palette();
-        HGDIOBJ prev = SelectObject(WinSharedHdc, pen2);
-        MoveToEx(WinSharedHdc, x2, y1 + 1, 0);
-        LineTo(WinSharedHdc, x2, y2 + 1);
-        SelectObject(WinSharedHdc, prev);
-        release_hdc();
-    }
+    sub_5ef1e0(x1 + 1, y1, x2 + 1, y1, pen1, unused7);
+    sub_5ef1e0(x1, y2, x2, y2, pen2, unused7);
+    sub_5ef1e0(x1, y1, x1, y2, pen1, unused7);
+    sub_5ef1e0(x2, y1 + 1, x2, y2 + 1, pen2, unused7);
 }
 
 // ORIGINAL: 0x005EEDC0 ?key_up_event@Win@@QAEHH@Z 0x005EEDC0-0x005EEE67 FILE BYTE_EXACT
@@ -8025,51 +8000,14 @@ void Win::do_tracking(int x, int y) {
 // TRIED: the scaffold's own Win/Palette classes cannot be reused (they are fully defined already, and body-mode's brace-counted extractor would stop at the first balanced `{}` - our own helper class - before reaching the function), so this stays FILE mode with its own minimal Win/Palette. A plain `*(FuncPtr*)addr` call for GetDC/SelectObject/etc. always loaded the pointer into a register first (mov+call reg); declaring them `__declspec(dllimport)` gets the single `call dword ptr [addr]` form the original uses. Landed at MISMATCH #29 (a `push edi` the original hoists earlier, before the palette-sync compare, that this body only emits once `oldPen` is first needed).
 // ===== homed from src/unrecovered/005ef1e0.cpp =====
 
-void Win::sub_5ef1e0(int x1, int y1, int x2, int y2, void *pen, int unused6) {
-    (void)unused6;
-    HDC hdc;
-    if (WinHdcRefCount != 0) {
-        WinHdcRefCount = WinHdcRefCount + 1;
-        hdc = WinSharedHdc;
-    } else {
-        IDirectDrawSurface2 *iface = DirectDrawSurface;
-        if (iface != 0) {
-            iface->GetDC(&WinSharedHdc);
-            hdc = WinSharedHdc;
-        } else {
-            WinSharedHdc = GetDC(HandleMain);
-            hdc = WinSharedHdc;
-        }
-        if (hdc == 0) {
-            return;
-        }
-        WinHdcRefCount = 1;
-    }
-    if (hdc != 0) {
-        if ((int)palette_seed_cache_ != PaletteActive->seed_) {
-            PaletteActive->set_active_window(this);
-            palette_seed_cache_ = PaletteActive->seed_;
-        }
-
-        void *oldPen = SelectObject(WinSharedHdc, pen);
-
+void Win::sub_5ef1e0(int x1, int y1, int x2, int y2, void *pen, int) {
+    if (get_hdc()) {
+        sync_palette();
+        HGDIOBJ prev = SelectObject(WinSharedHdc, pen);
         MoveToEx(WinSharedHdc, x1, y1, 0);
-
         LineTo(WinSharedHdc, x2, y2);
-
-        SelectObject(WinSharedHdc, oldPen);
-
-        WinHdcRefCount = WinHdcRefCount - 1;
-        if (WinHdcRefCount == 0) {
-            IDirectDrawSurface2 *iface2 = DirectDrawSurface;
-            if (iface2 != 0) {
-                iface2->ReleaseDC(WinSharedHdc);
-                WinSharedHdc = 0;
-                return;
-            }
-            ReleaseDC(HandleMain, WinSharedHdc);
-            WinSharedHdc = 0;
-        }
+        SelectObject(WinSharedHdc, prev);
+        release_hdc();
     }
 }
 
