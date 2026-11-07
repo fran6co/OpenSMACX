@@ -473,16 +473,14 @@ Status: Complete - testing
 */
 void __cdecl world_riverbeds() {
     Map *tile = map_tiles();
-    // The clearing loop reloads the area after each write; its last value
-    // feeds the target product. A high-bit initial area skips clearing.
-    int area = MapArea;
+    // The clearing loop rereads MapArea after each write; VC6 reuses that
+    // last load in the target product below.
+    int riverbed_count = 0;
     int i;
-    for (i = 0; i < area; i++) {
+    for (i = 0; i < (int)MapArea; i++) {
         tile->bit &= ~(BIT_RIVERBED);
         tile++;
-        area = MapArea;
     }
-    int riverbed_count = 0;
     // Pinned5C36C4..36FF: low-dword multiply/add/subtract, signed /3,
     // another low-dword multiply by the retained area, then signed /3200.
     // Unsigned builder storage must not turn these two quotients unsigned.
@@ -491,32 +489,22 @@ void __cdecl world_riverbeds() {
     uint32_t target_bits = (4u - static_cast<uint32_t>(MapOceanCoverage)) * rain_bits;
     int target;
     memcpy(&target, &target_bits, sizeof(target));
-    uint32_t scaled_bits = static_cast<uint32_t>(area) * static_cast<uint32_t>(target / 3);
+    uint32_t scaled_bits = static_cast<uint32_t>(MapArea) * static_cast<uint32_t>(target / 3);
     int scaled;
     memcpy(&scaled, &scaled_bits, sizeof(scaled));
     int max_riverbeds = scaled / 3200;
     for (i = 0; i < 4000 && riverbed_count < max_riverbeds; i++) {
-        int x_bound = MapLongitudeBounds;
-        int x;
-        if (x_bound - 1 <= 0) {
-            x = 0;
-        } else {
-            x = rand() % x_bound;
-        }
-        int y_bound = MapLatitudeBounds;
-        int y;
-        if (y_bound - 1 <= 0) {
-            y = 0;
-        } else {
-            y = rand() % y_bound;
-        }
+        int x = bounded_crt_random(MapLongitudeBounds);
+        int y = bounded_crt_random(MapLatitudeBounds);
         if (x & 1) {
             x--;
         }
         if (y & 1) {
             x++;
         }
-        if (!is_ocean(x, y) && !(bit_at(x, y) & BIT_RIVERBED)) {
+        Map *tile_trial = map_loc(x, y);
+        if ((tile_trial->climate & 0xE0) >= ALT_BIT_SHORE_LINE
+            && !(tile_trial->bit & BIT_RIVERBED)) {
             int search_alt = 0;
             int selected_index = -1;
             for (int j = 0; j < 81; j++) {
@@ -2049,6 +2037,13 @@ void __cdecl world_volcano(int x, int y, BOOL is_not_landmark) {
     }
 }
 
+// Inner wrap of the borehole ring loops: the image tests the flat bit first.
+static inline int borehole_wrap_x(int x) {
+    return (MapIsFlat & 1) ? x
+        : (x < 0 ? x + (int)MapLongitudeBounds
+                 : (x >= (int)MapLongitudeBounds ? x - (int)MapLongitudeBounds : x));
+}
+
 /*
 Purpose: Setup the 'Borehole Cluster' landmark. Added to SMAC in 3.0 patch.
 // ORIGINAL: 0x005C7020 ?world_borehole@@YAXHH@Z 0x005C7020-0x005C753B
@@ -2093,8 +2088,8 @@ void __cdecl world_borehole(int x, int y) {
     const int phase = seed & 7;
     int val1 = 8;
     int val2 = (phase / 3) + 5;
-    int val3 = 3 - (phase % 3);
     int val4 = (seed >> 3) & 3;
+    int val3 = 3 - (phase % 3);
     if (val4 & 2) {
         val2--;
         val3--;
@@ -2125,7 +2120,7 @@ void __cdecl world_borehole(int x, int y) {
         }
     }
     for (i = 0; i < 8; i++) {
-        int x_radius = wrap_map_x(wrap_map_x(x + RadiusOffsetX[val1]) + RadiusOffsetX[i + 1]);
+        int x_radius = wrap_map_x(borehole_wrap_x(x + RadiusOffsetX[val1]) + RadiusOffsetX[i + 1]);
         int y_radius = y + RadiusOffsetY[val1] + RadiusOffsetY[i + 1];
         if (on_map(x_radius, y_radius) && is_ocean(x_radius, y_radius)) {
             world_alt_set(x_radius, y_radius, ALT_SHORE_LINE, true);

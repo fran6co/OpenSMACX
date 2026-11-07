@@ -5879,43 +5879,43 @@ BOOL __cdecl wants_prototype(int proto_id, int faction_id) {
     if (!(VehPrototypes[proto_id].flags & PROTO_TYPED_COMPLETE)) {
         return false;
     }
-    int proto_id_cmp = faction_id * MaxVehProtoFactionNum;
-    for (int i = 0; i < MaxVehProtoFactionNum; i++, proto_id_cmp++) {
-        if (!(VehPrototypes[faction_id * MaxVehProtoFactionNum + i].flags & PROTO_ACTIVE)) {
+    for (int i = 0; i < MaxVehProtoFactionNum; i++) {
+        int proto_id_cmp = faction_id * MaxVehProtoFactionNum + i;
+        if (!(VehPrototypes[proto_id_cmp].flags & PROTO_ACTIVE)) {
             continue;
         }
-        if (!(VehPrototypes[faction_id * MaxVehProtoFactionNum + i].flags & PROTO_TYPED_COMPLETE)) {
+        if (!(VehPrototypes[proto_id_cmp].flags & PROTO_TYPED_COMPLETE)) {
             continue;
         }
-        if (VehPrototypes[proto_id].plan != VehPrototypes[faction_id * MaxVehProtoFactionNum + i].plan) {
+        if (VehPrototypes[proto_id].plan != VehPrototypes[proto_id_cmp].plan) {
             continue;
         }
         if (Chassis[VehPrototypes[proto_id].chassis_id].triad
-            != Chassis[VehPrototypes[faction_id * MaxVehProtoFactionNum + i].chassis_id].triad) {
+            != Chassis[VehPrototypes[proto_id_cmp].chassis_id].triad) {
             continue;
         }
-        if (Weapon[VehPrototypes[faction_id * MaxVehProtoFactionNum + i].weapon_id].mode > WPN_MODE_MISSILE) {
-            if (Weapon[VehPrototypes[faction_id * MaxVehProtoFactionNum + i].weapon_id].mode
+        if (Weapon[VehPrototypes[proto_id_cmp].weapon_id].mode > WPN_MODE_MISSILE) {
+            if (Weapon[VehPrototypes[proto_id_cmp].weapon_id].mode
                 != Weapon[VehPrototypes[proto_id].weapon_id].mode) {
                 continue;
             }
-        } else if (Weapon[VehPrototypes[faction_id * MaxVehProtoFactionNum + i].weapon_id].offense_rating < 0) {
-            if (Weapon[VehPrototypes[faction_id * MaxVehProtoFactionNum + i].weapon_id].offense_rating
+        } else if (Weapon[VehPrototypes[proto_id_cmp].weapon_id].offense_rating < 0) {
+            if (Weapon[VehPrototypes[proto_id_cmp].weapon_id].offense_rating
                 != get_proto_offense_rating(proto_id)) {
                 continue;
             }
-        } else if (Weapon[VehPrototypes[faction_id * MaxVehProtoFactionNum + i].weapon_id].offense_rating
+        } else if (Weapon[VehPrototypes[proto_id_cmp].weapon_id].offense_rating
                    < get_proto_offense_rating(proto_id)) {
             continue;
         }
-        if (Armor[VehPrototypes[faction_id * MaxVehProtoFactionNum + i].armor_id].defense_rating <= 0) {
-            if (VehPrototypes[faction_id * MaxVehProtoFactionNum + i].armor_id != VehPrototypes[proto_id].armor_id) {
+        if (Armor[VehPrototypes[proto_id_cmp].armor_id].defense_rating <= 0) {
+            if (VehPrototypes[proto_id_cmp].armor_id != VehPrototypes[proto_id].armor_id) {
                 continue;
             }
         } else if (armor_val(proto_id_cmp, faction_id) < armor_val(proto_id, faction_id)) {
             continue;
         }
-        if (Chassis[VehPrototypes[faction_id * MaxVehProtoFactionNum + i].chassis_id].speed >= Chassis[VehPrototypes[proto_id].chassis_id].speed) {
+        if (Chassis[VehPrototypes[proto_id_cmp].chassis_id].speed >= Chassis[VehPrototypes[proto_id].chassis_id].speed) {
             return false;
         }
     }
@@ -6724,6 +6724,19 @@ int __cdecl veh_wake(int veh_id) {
 
 
 
+// action_home's distance: arguments evaluate before the body, as the image's
+// early second-coordinate load shows.
+static inline int home_dist(int x_a, int y_a, int x_b, int y_b) {
+    return (x_dist(x_a, x_b) + abs(y_a - y_b)) >> 1;
+}
+
+// action_home's airbase-ring wrap: the image tests the flat bit first.
+static inline int home_wrap_x(int x) {
+    return (MapIsFlat & 1) ? x
+        : (x < 0 ? x + (int)MapLongitudeBounds
+                 : (x >= (int)MapLongitudeBounds ? x - (int)MapLongitudeBounds : x));
+}
+
 /*
 Purpose: Send a unit home. Search the friendly and pacted bases, then - for an air unit - the
          friendly carriers and air supply convoys, then the airbases inside the search radius, for
@@ -6749,108 +6762,106 @@ Status: Complete
 int __cdecl action_home(int veh_id, int flags) {
     Veh &veh = Vehs[veh_id];
     const int faction_id = veh.faction_id;
+    int best_dist = 9999;
     const int veh_x = veh.x;
     const int veh_y = veh.y;
     const int veh_region = (int)region_at(veh_x, veh_y);
-    const uint32_t proto_id = (uint32_t)veh.proto_id;
-    const uint8_t chassis_id = VehPrototypes[proto_id].chassis_id;
-    const int chassis_range = Chassis[chassis_id].range;
-    const uint8_t triad = Chassis[chassis_id].triad;
-    int best_dist = 9999;
     int best_x = -1;
     int best_y = -1;
     // How far the unit could still travel: what is left of this turn, plus - for a chassis with
     // endurance - the sorties it has not spent yet. A range 1 chassis additionally trades its
-    // remaining hitpoints for distance. speed() is re-asked at each of the original's call sites
-    // rather than hoisted, so the call count is unchanged.
+    // remaining hitpoints for distance.
     int moves_left = range((int)speed(veh_id, false) - veh.moves_expended, 0, 999);
+    const int proto_id = veh.proto_id;
+    const uint8_t chassis_range = Chassis[VehPrototypes[proto_id].chassis_id].range;
     int reach = (int)speed(veh_id, false)
         * (chassis_range - veh.terraforming_turns - 1) + moves_left;
     if (chassis_range == 1) {
-        int hp_left = range((int)proto_power(veh_id) - veh.dmg_incurred, 0, 9999);
+        const int power = (VehPrototypes[proto_id].plan == PLAN_ALIEN_ARTIFACT)
+            ? 1 : range(VehPrototypes[proto_id].reactor_id, 1, 100) * 10;
+        int hp_left = range(power - veh.dmg_incurred, 0, 9999);
         reach += (int)speed(veh_id, false)
-            * ((hp_left - 1) / VehPrototypes[proto_id].reactor_id);
+            * ((hp_left - 1) / VehPrototypes[veh.proto_id].reactor_id);
     }
     const int max_dist = reach / (int)Rules.move_rate_roads;
-    // Set by either of the two "the unit is already on alert for this exact waypoint" shortcuts.
-    // Both of them skip the remaining searches AND the endurance gate below, so this cannot be
-    // collapsed into an ordinary break.
-    bool alert_target = false;
 
     for (int base_id = 0; base_id < GameDataStateStorage.fields_.base_current_count_; base_id++) {
-        Base &base = Bases[base_id];
-        const int base_faction = base.faction_id_current;
+        const int base_faction = Bases[base_id].faction_id_current;
         if (base_faction != faction_id
             && !(PlayersData[faction_id].diplo_treaties[base_faction] & DTREATY_PACT)) {
             continue; // not ours and not a pact partner's
         }
-        if (triad == TRIAD_LAND) {
-            if ((int)region_at(base.x, base.y) != veh_region) {
+        switch (get_triad(veh_id)) {
+        case TRIAD_LAND:
+            if ((int)region_at(Bases[base_id].x, Bases[base_id].y) != veh_region) {
                 continue; // no land route
             }
-        } else if (triad == TRIAD_SEA) {
-            if ((base.x != veh_x || base.y != veh_y) && !base_on_sea(base_id, veh_region)) {
+            break;
+        case TRIAD_SEA:
+            if ((Bases[base_id].x != veh_x || Bases[base_id].y != veh_y)
+                && !base_on_sea(base_id, veh_region)) {
                 continue; // not on this body of water
             }
+            break;
         }
-        if (flags == 2 && (base.state & BSTATE_UNK_200000)) {
+        if (flags == 2 && (Bases[base_id].state & BSTATE_UNK_200000)) {
             continue;
         }
-        const int dist = (x_dist(veh_x, base.x) + abs(veh_y - base.y)) >> 1;
-        if ((veh.state & VSTATE_UNK_200) && veh.order_auto_type == ORDERA_ON_ALERT
-            && base.x == veh.waypoint_x[1] && base.y == veh.waypoint_y[1] && dist <= max_dist) {
+        const int dist = home_dist(veh_x, veh_y, Bases[base_id].x, Bases[base_id].y);
+        if ((veh.state & VSTATE_UNK_200)
+            && veh.order_auto_type == ORDERA_ON_ALERT
+            && Bases[base_id].x == veh.waypoint_x[1]
+            && Bases[base_id].y == veh.waypoint_y[1] && dist <= max_dist) {
+            // Already on alert for this exact base: take it and skip the remaining searches.
             best_dist = dist;
-            best_x = base.x;
-            best_y = base.y;
-            alert_target = true;
-            break;
+            best_x = Bases[base_id].x;
+            best_y = Bases[base_id].y;
+            goto found;
         }
         if (dist < best_dist) {
             best_dist = dist;
-            best_y = base.y;
-            best_x = base.x;
+            best_y = Bases[base_id].y;
+            best_x = Bases[base_id].x;
         }
     }
 
-    if (!alert_target) {
-        if (triad == TRIAD_AIR) {
-            // An air unit can also come down on a friendly carrier or air supply convoy.
-            for (int other_id = 0; other_id < GameDataStateStorage.fields_.vehicle_current_count_; other_id++) {
-                Veh &other = Vehs[other_id];
-                if (other.faction_id != faction_id) {
+    if (get_triad(veh_id) == TRIAD_AIR) {
+        // An air unit can also come down on a friendly carrier or air supply convoy.
+        for (int other_id = 0; other_id < GameDataStateStorage.fields_.vehicle_current_count_; other_id++) {
+            if (Vehs[other_id].faction_id != faction_id) {
+                continue;
+            }
+            if (other_id == veh_id) {
+                continue;
+            }
+            if (!has_abil(Vehs[other_id].proto_id, ABL_CARRIER)) {
+                if (VehPrototypes[Vehs[other_id].proto_id].plan != PLAN_SUPPLY_CONVOY) {
                     continue;
                 }
-                if (other_id == veh_id) {
+                if (get_triad(other_id) != TRIAD_AIR) {
                     continue;
                 }
-                if (!has_abil(other.proto_id, ABL_CARRIER)) {
-                    const uint8_t other_chassis = VehPrototypes[other.proto_id].chassis_id;
-                    if (VehPrototypes[other.proto_id].plan != PLAN_SUPPLY_CONVOY
-                        || Chassis[other_chassis].triad != TRIAD_AIR) {
-                        continue;
+            }
+            int dist = home_dist(veh_x, veh_y, Vehs[other_id].x, Vehs[other_id].y);
+            if ((flags & 1) || flags == 4) {
+                if (!is_human(faction_id)) {
+                    dist += (int)speed(other_id, false) / (int)Rules.move_rate_roads;
+                }
+                if (VehPrototypes[Vehs[other_id].proto_id].plan == PLAN_SUPPLY_CONVOY) {
+                    // Recomputed raw, without the bias just added above.
+                    const int other_y = Vehs[other_id].y;
+                    const int x_part = x_dist(veh_x, Vehs[other_id].x);
+                    const int moves = range((int)speed(veh_id, false)
+                                            - veh.moves_expended, 0, 999);
+                    if ((x_part + abs(veh_y - other_y)) >> 1 > moves / (int)Rules.move_rate_roads) {
+                        continue; // the convoy is not reachable this turn
                     }
                 }
-                int dist = (x_dist(veh_x, other.x) + abs(veh_y - other.y)) >> 1;
-                if ((flags & 1) || flags == 4) {
-                    if (!is_human(faction_id)) {
-                        dist += (int)speed(other_id, false) / (int)Rules.move_rate_roads;
-                    }
-                    if (VehPrototypes[other.proto_id].plan == PLAN_SUPPLY_CONVOY) {
-                        // Recomputed raw, without the bias just added above.
-                        const int moves = range((int)speed(veh_id, false)
-                                                - veh.moves_expended, 0, 999);
-                        const int raw_dist =
-                            (x_dist(veh_x, other.x) + abs(veh_y - other.y)) >> 1;
-                        if (raw_dist > moves / (int)Rules.move_rate_roads) {
-                            continue; // the convoy is not reachable this turn
-                        }
-                    }
-                }
-                if (dist < best_dist) {
-                    best_dist = dist;
-                    best_x = other.x;
-                    best_y = other.y;
-                }
+            }
+            if (dist < best_dist) {
+                best_dist = dist;
+                best_x = Vehs[other_id].x;
+                best_y = Vehs[other_id].y;
             }
         }
 
@@ -6858,8 +6869,8 @@ int __cdecl action_home(int veh_id, int flags) {
         // saturates at the largest ring when nothing has been found at all.
         const int radius_count = RadiusRange[best_dist < 8 ? best_dist : 8];
         for (int i = 0; i < radius_count; i++) {
-            const int x_radius = wrap_map_x(veh_x + RadiusOffsetX[i]);
-            const int y_radius = veh_y + RadiusOffsetY[i];
+            const int x_radius = home_wrap_x(RadiusOffsetX[i] + veh_x);
+            const int y_radius = RadiusOffsetY[i] + veh_y;
             if (!on_map(x_radius, y_radius)) {
                 continue;
             }
@@ -6867,12 +6878,10 @@ int __cdecl action_home(int veh_id, int flags) {
             if (!(tile->bit & BIT_AIRBASE)) {
                 continue;
             }
-            if (tile->bit & BIT_VEH_IN_TILE) {
-                const int occupier = tile->val2 & 0xF;
-                if (occupier < MaxPlayerNum && occupier != faction_id
-                    && !(PlayersData[faction_id].diplo_treaties[occupier] & DTREATY_PACT)) {
-                    continue; // someone else is sitting on it
-                }
+            const int occupier = veh_who(x_radius, y_radius);
+            if (occupier >= 0 && occupier != faction_id
+                && !(PlayersData[faction_id].diplo_treaties[occupier] & DTREATY_PACT)) {
+                continue; // someone else is sitting on it
             }
             if (!is_human(faction_id)) {
                 // The AI additionally insists the airbase is inside its own territory.
@@ -6887,15 +6896,14 @@ int __cdecl action_home(int veh_id, int flags) {
                     continue;
                 }
             }
-            const int dist = (x_dist(veh_x, x_radius) + abs(veh_y - y_radius)) >> 1;
+            const int dist = home_dist(veh_x, veh_y, x_radius, y_radius);
             if ((veh.state & VSTATE_UNK_200) && veh.order_auto_type == ORDERA_ON_ALERT
                 && !veh.dmg_incurred && x_radius == veh.waypoint_x[1]
                 && y_radius == veh.waypoint_y[1] && dist <= max_dist) {
                 // best_dist is deliberately left alone here, unlike the base loop's shortcut.
                 best_x = x_radius;
                 best_y = y_radius;
-                alert_target = true;
-                break;
+                goto found;
             }
             if (dist < best_dist) {
                 best_dist = dist;
@@ -6903,12 +6911,13 @@ int __cdecl action_home(int veh_id, int flags) {
                 best_y = y_radius;
             }
         }
-
-        if (!alert_target && ((flags & 1) || flags == 4) && !Chassis[chassis_id].range) {
-            return false; // only an endurance chassis answers these queries
-        }
+    }
+    if (((flags & 1) || flags == 4)
+        && !Chassis[VehPrototypes[veh.proto_id].chassis_id].range) {
+        return false; // only an endurance chassis answers these queries
     }
 
+found:
     if (!on_map(best_x, best_y)) {
         return false; // nothing found
     }
@@ -7265,29 +7274,28 @@ int __cdecl alien_base(int veh_id, int x, int y) {
     int base_id_best = -1;
     const int region = region_at(x, y);
     for (int base_id = 0; base_id < GameDataStateStorage.fields_.base_current_count_; base_id++) {
-        Base &base = Bases[base_id];
         if (Vehs[veh_id].proto_id == BSC_SEALURK) {
-            if (region < MaxRegionLandNum && region != (int)region_at(base.x, base.y)
+            if (region < MaxRegionLandNum && region != (int)region_at(Bases[base_id].x, Bases[base_id].y)
                 && !base_on_sea(base_id, region)) {
                 continue;
             }
-        } else if (region < MaxRegionLandNum && region != (int)region_at(base.x, base.y)) {
+        } else if (region < MaxRegionLandNum && region != (int)region_at(Bases[base_id].x, Bases[base_id].y)) {
             continue;
         }
-        const int base_y = base.y;
-        int value = vector_dist(x_dist(x, base.x), abs(y - base_y)) * 32
-            / (base.intake_2[RSC_MINERALS] + base.intake_2[RSC_ENERGY] + 32);
-        const int veh_id_at = veh_at(base.x, base.y);
+        const int base_y = Bases[base_id].y;
+        int value = vector_dist(x_dist(x, Bases[base_id].x), abs(y - base_y)) * 32
+            / (Bases[base_id].intake_2[RSC_MINERALS] + Bases[base_id].intake_2[RSC_ENERGY] + 32);
+        const int veh_id_at = veh_at(Bases[base_id].x, Bases[base_id].y);
         if (stack_check(veh_id_at, 2, PLAN_ALIEN_ARTIFACT, -1, -1)) {
             value /= 2;
         }
         if (base_id == Vehs[veh_id].home_base_id) {
             value /= 2;
         }
-        int owner = base.faction_id_current;
+        int owner = Bases[base_id].faction_id_current;
         if (Vehs[veh_id].order_auto_type != owner
             && PlayersData[owner].soc_effect_active.values_[SocialEffect::PLANET] > 0
-            && !base.eco_damage) {
+            && !Bases[base_id].eco_damage) {
             value *= 2;
         }
         if (value <= best_value) {
@@ -8267,6 +8275,16 @@ void __cdecl action_gate(int veh_id, int base_id) {
 
 
 
+// Inline bit scan: its by-value copy frees add_abil's dead ability slot for `bit`.
+static inline int abil_bit(int ability) {
+    int bit = 0;
+    while ((ability & 1) == 0) {
+        ability >>= 1;
+        ++bit;
+    }
+    return bit;
+}
+
 /*
 Purpose: Grant a prototype an ability, if the faction has researched it.
 // ORIGINAL: 0x00581190 ?add_abil@@YAXPAHHH@Z 0x00581190-0x00581259
@@ -8303,11 +8321,7 @@ void __cdecl add_abil(int *ability_flags, int ability, int faction_id) {
         return;
     }
 
-    int bit = 0;
-    while ((ability & 1) == 0) {
-        ability >>= 1;
-        ++bit;
-    }
+    const int bit = abil_bit(ability);
 
     if (has_tech(Ability[bit].preq_tech, faction_id) == 0) {
         return;
