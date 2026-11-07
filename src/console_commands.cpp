@@ -70,6 +70,7 @@
 #include <cstring>
 #include "buttongroup.h"
 #include "console_commands.h"
+#include "win_pointer.h"  // corner_the_market (0x4E2000) needs Win::grab_pointer's inline body visible in this TU
 
 void __cdecl base_kill(int base_id);
 int __cdecl wants_to_speak(int faction_id, int other_faction_id);
