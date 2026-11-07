@@ -16,7 +16,7 @@ from .mapping_check import build_units
 from .measurement import Measurement
 from .model import digest
 from .records import read_json
-from .source_selection import (snapshot_mappings, selected_source_records,
+from .source_selection import (measurement_reference_targets, snapshot_mappings, selected_source_records,
                                compilation_context)
 from .source.asm import (AsmComparison, compare_unit, resolve_fragment_pairs,
                          shared_spans)
@@ -33,11 +33,11 @@ from .model import Origin
 
 
 def _unit(job):
-    root, profile, path, records, image, flags, shared, fragment_pairs = job
+    root, profile, path, records, image, flags, shared, fragment_pairs, targets = job
     return compare_unit(records, image, path, (), flags, shared,
                         compiler=Compiler(root, profile=profile),
                         fragment_pairs=fragment_pairs, root=root,
-                        strict_command_for=lambda _path: ())
+                        strict_command_for=lambda _path: (), targets=targets)
 
 
 def _key(record):
@@ -208,9 +208,10 @@ def check_matches(root: Path, image: Path, *, jobs: int = 1) -> dict:
             pair = pair_by_record.get(record_key)
             if pair is not None and pair not in pairs_by_path[group_key]:
                 pairs_by_path[group_key].append(pair)
+    references = measurement_reference_targets(root, settings, source_index)
     work = [(root, settings.compiler_profile, unit_path, group, image,
              settings.flags_for(unit_path.relative_to(root).as_posix()), shared,
-             tuple(pairs_by_path[group_key]))
+             tuple(pairs_by_path[group_key]), references)
             for group_key, group in sorted(groups.items())
             for unit_path, _marker_path in (group_key,)]
     if inputs() != before:

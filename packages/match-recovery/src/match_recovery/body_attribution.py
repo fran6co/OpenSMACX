@@ -24,7 +24,7 @@ from .source_inventory import assert_snapshot_current
 
 
 def compare_unit_with_attribution(records, image, path, arguments, flags, shared, *,
-                                  root, compiler, fragment_pairs=()):
+                                  root, compiler, fragment_pairs=(), targets=None):
     """Qualify byte-exact recording candidates without probing measured misses."""
     from .source.asm import compare_unit
     from .source.model import Tier
@@ -39,7 +39,7 @@ def compare_unit_with_attribution(records, image, path, arguments, flags, shared
 
     result = compare_unit(records, image, path, arguments, flags, shared,
                           compiler=compile_capture, root=root, fragment_pairs=fragment_pairs,
-                          strict_command_for=lambda _path: arguments)
+                          strict_command_for=lambda _path: arguments, targets=targets)
     if not any(record.body for record in records):
         return result
     attribution = BodyAttribution(root, source_snapshot(root))

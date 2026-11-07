@@ -22,7 +22,7 @@ from .source.asm import AsmComparison, compare_unit, shared_spans
 from .source.mangled import qualified_name
 from .source.model import Mode
 from .source.reader import function_line, read_text
-from .source_selection import snapshot_mappings, selected_source_records
+from .source_selection import measurement_reference_targets, snapshot_mappings, selected_source_records
 from .source_inventory import image_pin
 from .measurement import Measurement
 from .tasks import TaskStore
@@ -418,6 +418,7 @@ def measure_local_variants(root: Path, task_name: str, image_path: Path, deck: d
     flag_rows = []
     flags_grid = settings.flags_for(source_name)
     shared = shared_spans(mapped)
+    references = measurement_reference_targets(root, settings)
     for flags in flags_grid:
         flags = tuple(flags)
         row = {"flags": list(flags), "controls": {}, "baseline": [], "candidates": {}}
@@ -495,7 +496,8 @@ def measure_local_variants(root: Path, task_name: str, image_path: Path, deck: d
                 measured = compare_unit(records, image_path, source, (), (flags,), shared,
                                         compiler=lambda *_args: raw,
                                         root=root,
-                                        associated_bindings=associated_bindings)
+                                        associated_bindings=associated_bindings,
+                                        targets=references)
                 return {"results": _comparison_rows(measured),
                         "compile_attempts": 0, "reused_compiled_object": True}
             except (OSError, ValueError) as failure:

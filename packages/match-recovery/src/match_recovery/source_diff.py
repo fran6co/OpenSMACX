@@ -17,7 +17,7 @@ from .source import Mode, State
 from .source.asm import compare_unit, shared_spans
 from .source.eh_regions import bind_eh_regions
 from .source_inventory import image_pin, source_snapshot
-from .source_selection import (compilation_context, select_records,
+from .source_selection import (compilation_context, measurement_reference_targets, select_records,
                                selected_source_records, snapshot_mappings)
 from .source_listing import listing_lines
 
@@ -136,7 +136,8 @@ def _generate(root, target, *, image, in_file, output, flag_set):
                 raise ValueError("unobserved comparison recipe")
             return raw
         measured = compare_unit([record], image, unit, (), (flags,), shared_spans(mappings),
-                                compiler=observed, root=root, strict_command_for=lambda _: ())
+                                compiler=observed, root=root, strict_command_for=lambda _: (),
+                                targets=measurement_reference_targets(root, settings))
         comparison = measured.results[0][1]
         if isinstance(comparison, str):
             raise ValueError(comparison)

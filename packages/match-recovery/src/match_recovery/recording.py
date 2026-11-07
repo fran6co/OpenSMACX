@@ -23,14 +23,14 @@ from .body_attribution import compare_unit_with_attribution
 from .source.recording import record_claims
 from .source_history import git
 from .source_inventory import image_pin
-from .source_selection import select_records, compilation_context
+from .source_selection import measurement_reference_targets, select_records, compilation_context
 
 
 def _unit(job):
-    root, profile, path, records, image, arguments, flags, shared = job
+    root, profile, path, records, image, arguments, flags, shared, targets = job
     compiler = Compiler(root, profile=profile)
     return compare_unit_with_attribution(records, image, path, arguments, flags, shared,
-                                         root=root, compiler=compiler)
+                                         root=root, compiler=compiler, targets=targets)
 
 
 def record(root: Path, targets, *, image: Path, in_file: str | None = None,
@@ -123,6 +123,7 @@ def record(root: Path, targets, *, image: Path, in_file: str | None = None,
                 raise ValueError("compiler arguments cannot contain NUL")
         arguments = tuple(values)
     shared = shared_spans(records)
+    references = measurement_reference_targets(root, settings)
     groups = {}
     for row in selected:
         unit_path = compilation_context(root, row, settings)
@@ -130,7 +131,7 @@ def record(root: Path, targets, *, image: Path, in_file: str | None = None,
             raise ValueError("selected mapping context is not a configured translation unit")
         groups.setdefault((unit_path, row.path), []).append(row)
     work = [(root, settings.compiler_profile, unit_path, group, image, arguments,
-             settings.flags_for(unit_path.relative_to(root).as_posix()), shared)
+             settings.flags_for(unit_path.relative_to(root).as_posix()), shared, references)
             for (unit_path, _marker_path), group in groups.items()]
     measurements = []
 

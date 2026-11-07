@@ -159,3 +159,42 @@ def select_records(records, targets, host, symbol_format):
     if len({(row.path, row.line) for row in selected}) != len(selected):
         raise ValueError("the same source mapping was selected more than once")
     return selected
+
+
+def measurement_reference_targets(root, settings, snapshot=None):
+    """Source-bound original addresses for relocated fields in measurements.
+
+    Function mappings and direct object bindings only, seeds and fragments
+    excluded; names bound to more than one address are dropped. Everything
+    else stays masked. See `source.asm.reference_mismatches`.
+    """
+    from .object_source import parse_objects
+    from .source.asm import build_reference_targets
+    from .source_inventory import image_pin, source_snapshot
+    root = Path(root).resolve()
+    if snapshot is None:
+        snapshot = source_snapshot(root, allow_empty=True)
+    functions = []
+    for row in snapshot_mappings(root, snapshot):
+        if (row.function_fragment is not None
+                or settings.source.is_seed(row.path.relative_to(root).as_posix())):
+            continue
+        names = (row.symbol,) if row.symbol else tuple(n for n in (row.name, "_" + row.name) if row.name)
+        if not names:
+            continue
+        functions.append((row.path, row.address, names, False))
+        functions.append((row.path, row.address, names, True))
+    # The snapshot's captured bytes, decoded as every other source reader
+    # does; an object binding that does not parse leaves its symbol masked.
+    pin, objects = image_pin(root, settings.source), []
+    for name, info in snapshot["files"].items():
+        if settings.source.is_seed(name):
+            continue
+        text = base64.b64decode(info["content_base64"]).decode("utf-8", errors="replace")
+        try:
+            bindings = parse_objects(text, name, pin, address_space=settings.source.address_space)
+        except ValueError:
+            continue
+        objects.extend((item.emitted_symbol, item.origin.address) for item in bindings
+                       if item.parent_symbol is None and not item.target_local)
+    return build_reference_targets(functions, objects)

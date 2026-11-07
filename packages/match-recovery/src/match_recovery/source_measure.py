@@ -22,7 +22,7 @@ from .source.asm import (AsmComparison, compare_unit, resolve_fragment_pairs,
 from .source.model import Tier
 from .source_history import git
 from .source_inventory import image_pin, source_snapshot
-from .source_selection import (select_records, snapshot_mappings,
+from .source_selection import (measurement_reference_targets, select_records, snapshot_mappings,
                                selected_source_records, compilation_context)
 from .component_original_routing import (component_claim_result, component_function_observations,
                                          component_record_identity_candidates,
@@ -32,11 +32,11 @@ from .model import Origin
 
 
 def _unit(job):
-    root, profile, path, records, image, flags, shared, fragment_pairs = job
+    root, profile, path, records, image, flags, shared, fragment_pairs, targets = job
     return compare_unit(records, image, path, (), flags, shared,
                         compiler=Compiler(root, profile=profile),
                         fragment_pairs=fragment_pairs, root=root,
-                        strict_command_for=lambda _path: ())
+                        strict_command_for=lambda _path: (), targets=targets)
 
 
 def measure_source(root: Path, targets, *, image: Path, in_file=None, jobs=1, linked_current=False):
@@ -138,9 +138,10 @@ def measure_source(root: Path, targets, *, image: Path, in_file=None, jobs=1, li
             if pair is not None and pair not in pairs_by_path[group_key]:
                 pairs_by_path[group_key].append(pair)
     shared = shared_spans(mappings)
+    references = measurement_reference_targets(root, settings, snapshot)
     work = [(root, settings.compiler_profile, context_path, rows, image,
              settings.flags_for(context_path.relative_to(root).as_posix()), shared,
-             tuple(pairs_by_path[group_key]))
+             tuple(pairs_by_path[group_key]), references)
             for group_key, rows in sorted(groups.items())
             for context_path, _marker_path in (group_key,)]
     if inputs() != before:

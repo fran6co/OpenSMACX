@@ -24,10 +24,11 @@ from pathlib import Path
 from capstone import CS_ARCH_X86, CS_MODE_32, CS_GRP_CALL, CS_GRP_JUMP, Cs, x86
 
 from ..application_binary import verify_records
+from ..binary import RelocationKind
 from ..associated_source import parse_associated
 from ..measurement import Measurement
 from ..model import Result
-from ..pe_coff import Coff, PeImage
+from ..pe_coff import Coff, CoffRecords, PeImage
 from ..source_inventory import image_pin
 from .eh_regions import bind_eh_regions, eh_action_semantic_difference
 from .model import DecompilationState, Mode, Tier
@@ -68,6 +69,10 @@ class Listing:
                                      # the image, which was not invoked
     code_bytes: int | None = None    # how much of `code` decodes as
                                      # instructions; None means all of it
+    references: tuple = ()           # compiled side only: one
+                                     # `CodeReference` per DIR32/REL32 field,
+                                     # so a masked field can still be asked
+                                     # where it points - see `reference_mismatches`
 
     @property
     def instruction_bytes(self) -> int:
@@ -722,6 +727,129 @@ def _coff_function_masked(obj: bytes, symbol: str, emitted: str = "",
 
 
 @dataclass(frozen=True)
+class CodeReference:
+    """One relocated field of a compiled body: where, how, and to what.
+
+    `offset` is into the listing's `code`; `addend` is the object's own field,
+    which is what the linker adds to the target's address.
+    """
+    offset: int
+    relative: bool                   # REL32 rather than DIR32
+    symbol: str
+    storage: int                     # COFF storage class: 2 external, 3 static
+    addend: int
+
+
+@dataclass(frozen=True)
+class ReferenceTargets:
+    """Original addresses for emitted symbols, from source bindings only.
+
+    `external` names globally scoped symbols; `local` is keyed by the resolved
+    marker host and names TU-local (storage class 3) definitions. Anything not
+    named here - section symbols, labels, literals, imports, ambiguous names -
+    stays a masked field, exactly as before. A target must never come from the
+    operand under test, so every address here is a source mapping's own.
+    """
+    external: dict = field(default_factory=dict)
+    local: dict = field(default_factory=dict)
+
+    def address(self, reference: CodeReference, host: Path) -> int | None:
+        if reference.storage == 2:
+            return self.external.get(reference.symbol)
+        if reference.storage == 3:
+            return self.local.get((Path(host).resolve(), reference.symbol))
+        return None
+
+
+def build_reference_targets(functions, objects=()) -> ReferenceTargets:
+    """Unambiguous emitted-symbol addresses from function and object bindings.
+
+    `functions` yields (host, address, emitted names, local); `objects` yields
+    (emitted symbol, address) for direct object bindings. A name bound to more
+    than one address is dropped rather than guessed, so it stays masked.
+    """
+    external, local = {}, {}
+    for host, address, names, is_local in functions:
+        for name in names:
+            if is_local:
+                local.setdefault((Path(host).resolve(), name), set()).add(address)
+            else:
+                external.setdefault(name, set()).add(address)
+    for name, address in objects:
+        external.setdefault(name, set()).add(address)
+    return ReferenceTargets(
+        external={name: next(iter(values)) for name, values in external.items() if len(values) == 1},
+        local={key: next(iter(values)) for key, values in local.items() if len(values) == 1})
+
+
+def _subject_references(obj: bytes, record: DecompilationState,
+                        code_size: int) -> tuple[CodeReference, ...]:
+    """The relocated fields of the record's selected body, or () if unclear.
+
+    Mirrors the selection in `_coff_function_masked`; when that cannot be
+    reproduced unambiguously, no reference is reported and the comparison is
+    the masked one it always was.
+    """
+    try:
+        parsed = CoffRecords(obj)
+    except ValueError:
+        return ()
+    wanted = record.symbol or record.name
+    found = [item for item in parsed.symbols.values()
+             if item.section > 0 and item.storage in (2, 3)
+             and (item.name == wanted
+                  or (not record.symbol and item.storage == 2 and item.name == "_" + record.name))]
+    if len({(item.value, item.section) for item in found}) != 1:
+        return ()
+    subject = found[0]
+    section = parsed.sections[subject.section - 1]
+    rows = []
+    for va, index, kind in section.relocations:
+        if kind not in (0x0006, 0x0014):
+            continue
+        offset = va - subject.value
+        target = parsed.symbols.get(index)
+        if target is None or not 0 <= offset <= code_size - 4:
+            continue
+        addend = int.from_bytes(section.data[va:va + 4], "little", signed=True)
+        rows.append(CodeReference(offset, kind == 0x0014, target.name, target.storage, addend))
+    return tuple(rows)
+
+
+def reference_mismatches(original: Listing, compiled: Listing,
+                         targets: ReferenceTargets | None, host: Path) -> list[str]:
+    """Relocated fields whose bound target plus addend is not the image's.
+
+    THE MASK HIDES TWO FACTS, not one: which symbol a field names, and how far
+    into it. Masking is right for the unknown linked address; it is wrong for
+    the addend, which the object does carry. `VehDrawFacetNormals1[index]`
+    and `VehDrawFacetNormals1[index - 400]` differ only in that addend, and
+    both measured BYTE_EXACT against an image that reads the latter. Only
+    fields whose symbol has an independent source binding are asked; the rest
+    remain masked. Offsets are positional, so this is meaningful only once
+    the masked comparison already agrees over the whole extent.
+    """
+    if targets is None:
+        return []
+    out = []
+    for reference in compiled.references:
+        address = targets.address(reference, host)
+        if address is None or reference.offset + 4 > len(original.code):
+            continue
+        value = address + reference.addend
+        if reference.relative:
+            value -= original.base + reference.offset + 4
+        observed = int.from_bytes(original.code[reference.offset:reference.offset + 4], "little")
+        if value & 0xFFFFFFFF != observed:
+            actual = (observed + original.base + reference.offset + 4) & 0xFFFFFFFF \
+                if reference.relative else observed
+            expected = (address + reference.addend) & 0xFFFFFFFF
+            out.append(f"+0x{reference.offset:X} {reference.symbol}"
+                       f"{reference.addend:+#x}: source 0x{expected:08X}, image 0x{actual:08X}")
+    return out
+
+
+@dataclass(frozen=True)
 class RegionCandidate:
     """Unmeasured emitted regions; ownership still needs original-image proof."""
     object_bytes: bytes = field(repr=False)
@@ -810,7 +938,8 @@ def subject_asm(obj: bytes, record: DecompilationState,
                 "or a supported independently rooted EH region pair: " + str(error)) from error
         return RegionCandidate(obj, wanted, flags, _mapping_identity(record))
     code, mask = _coff_function_masked(obj, record.name, record.symbol, spans=record.image_spans)
-    return Listing(code=code, base=record.address, mask=mask, flags=flags)
+    return Listing(code=code, base=record.address, mask=mask, flags=flags,
+                   references=_subject_references(obj, record, len(code)))
 
 
 # ------------------------------------------------------------------ disasm
@@ -1185,7 +1314,8 @@ def compare_regions(pairs: tuple[tuple[Listing, Listing], ...], *,
 
 
 def compare_subject(record: DecompilationState, exe: Path | str,
-                    compiled: Listing | RegionCandidate) -> AsmComparison:
+                    compiled: Listing | RegionCandidate, *,
+                    targets: ReferenceTargets | None = None) -> AsmComparison:
     """`compare_asm` with the image side aligned to the object's extent.
 
     THE OBJECT DECIDES HOW MUCH IMAGE TO READ, because only it knows how
@@ -1239,19 +1369,33 @@ def compare_subject(record: DecompilationState, exe: Path | str,
                         diagnostic=diagnostic,
                     )
             pairs = []
+            symbols = Coff(compiled.object_bytes).symbols
             for region in bound:
                 low = region.original.start
                 original = Listing(image.read(region.original), low,
                                    mask=frozenset(offset + byte
                                        for offset in image.absolute_sites(region.original)
                                        for byte in range(4)))
+                references = tuple(
+                    CodeReference(item.offset, item.kind == RelocationKind.RELATIVE32,
+                                  symbols[int(item.target)].name, symbols[int(item.target)].storage,
+                                  int.from_bytes(region.code[item.offset:item.offset + 4],
+                                                 "little", signed=True))
+                    for item in region.relocations)
                 candidate = Listing(region.code, low,
                                     mask=frozenset(item.offset + byte
                                         for item in region.relocations for byte in range(4)),
-                                    flags=compiled.flags)
+                                    flags=compiled.flags, references=references)
                 pairs.append((original, candidate))
             comparison = compare_regions(
                 tuple(pairs), alignments=tuple(region.alignment for region in bound))
+            if comparison.verdict is Tier.BYTE_EXACT:
+                wrong = [item for original, candidate in pairs
+                         for item in reference_mismatches(original, candidate, targets, record.path)]
+                if wrong:
+                    reason = "relocated field differs from its bound target: " + "; ".join(wrong)
+                    comparison = replace(comparison, verdict=Tier.SHAPE_EXACT,
+                                         allocation_only=reason, diagnostic=reason)
             if frame_semantic_diagnostic is not None:
                 return replace(
                     comparison,
@@ -1274,7 +1418,16 @@ def compare_subject(record: DecompilationState, exe: Path | str,
             # copy of it to compare against. The comparison stays what it
             # was, and the extra instructions read as the mismatch they are.
             pass
-    return compare_asm(original, compiled)
+    result = compare_asm(original, compiled)
+    if result.verdict is Tier.BYTE_EXACT:
+        wrong = reference_mismatches(original, compiled, targets, record.path)
+        if wrong:
+            # The instructions and every unrelocated byte agree; a bound
+            # target or its offset does not. That is a wrong constant.
+            reason = "relocated field differs from its bound target: " + "; ".join(wrong)
+            result = replace(result, verdict=Tier.SHAPE_EXACT, allocation_only=reason,
+                             diagnostic=reason)
+    return result
 
 
 def span_refusal(record: DecompilationState, exe: Path | str,
@@ -1447,14 +1600,14 @@ def _better(candidate: AsmComparison, incumbent: AsmComparison) -> bool:
 def compare_record(record: DecompilationState, exe: Path | str,
                    command: list[str], flags: tuple | str,
                    shared: frozenset = frozenset(), *, compiler,
-                   retry_compile=None) -> AsmComparison:
+                   retry_compile=None, targets: ReferenceTargets | None = None) -> AsmComparison:
     """How far VC6 reproduces the shipped bytes for the body IN THE TREE.
 
     `compare_source` with the record's own file - which is the question
     `check` and `record` ask, and the only one that can be written down.
     """
     return compare_source(record, exe, record.path, command, flags, shared,
-                          compiler=compiler, retry_compile=retry_compile)
+                          compiler=compiler, retry_compile=retry_compile, targets=targets)
 
 
 @dataclass(frozen=True)
@@ -1473,7 +1626,8 @@ def compare_unit(records, exe: Path | str, source: Path | str,
                  command: list[str], flags: tuple | str,
                  shared: frozenset = frozenset(), *, compiler,
                  retry_compile=None, fragment_pairs=(), root: Path | None = None,
-                 strict_command_for=None, associated_bindings=None) -> UnitComparison:
+                 strict_command_for=None, associated_bindings=None,
+                 targets: ReferenceTargets | None = None) -> UnitComparison:
     """Measure one TU's selected mappings with one compile per flag trial.
 
     Use the same per-function selection, span refusals, missing-symbol retries
@@ -1752,14 +1906,27 @@ def compare_unit(records, exe: Path | str, source: Path | str,
                     relocation.offset + byte
                     for relocation in relocations for byte in range(4)
                     if relocation.offset + byte < parent_size)
+                references = tuple(
+                    CodeReference(relocation.offset, relocation.kind == RelocationKind.RELATIVE32,
+                                  obj.symbols[int(relocation.target)].name,
+                                  obj.symbols[int(relocation.target)].storage,
+                                  int.from_bytes(code[relocation.offset:relocation.offset + 4],
+                                                 "little", signed=True))
+                    for relocation in relocations)
                 compiled = Listing(code=code[:parent_size], base=parent.address,
-                                   mask=compiled_mask, flags=label)
+                                   mask=compiled_mask, flags=label, references=references)
                 image_code = _pe_bytes(Path(exe), parent.address, parent_size)
                 original_parent = Listing(
                     code=image_code, base=parent.address,
                     mask=_image_mask(Path(exe), parent.address,
                                      parent.address + parent_size))
                 parent_result = compare_asm(original_parent, compiled)
+                wrong = (reference_mismatches(original_parent, compiled, targets, parent.path)
+                         if parent_result.verdict is Tier.BYTE_EXACT else [])
+                if wrong:
+                    reason = "relocated field differs from its bound target: " + "; ".join(wrong)
+                    parent_result = replace(parent_result, verdict=Tier.SHAPE_EXACT,
+                                            allocation_only=reason, diagnostic=reason)
                 child_listing = Listing(
                     code=compiled.code[child_offset:child_end], base=child.address,
                     mask=frozenset(offset - child_offset for offset in compiled.mask
@@ -1810,7 +1977,8 @@ def compare_unit(records, exe: Path | str, source: Path | str,
         else:
             try:
                 result = compare_source(record, exe, source, command, attempts, shared,
-                                        compiler=shared_compile, retry_compile=retry_compile)
+                                        compiler=shared_compile, retry_compile=retry_compile,
+                                        targets=targets)
             except (OSError, ValueError) as error:
                 result = str(error)
         results.append((record, result))
@@ -1822,7 +1990,7 @@ def compare_source(record: DecompilationState, exe: Path | str,
                    source: Path | str, command: list[str],
                    flags: tuple | str,
                    shared: frozenset = frozenset(), *, compiler,
-                   retry_compile=None) -> AsmComparison:
+                   retry_compile=None, targets: ReferenceTargets | None = None) -> AsmComparison:
     """How far VC6 reproduces the shipped bytes for `record` when the piece
     is spelled the way `source` spells it, best of `flags`.
 
@@ -1918,7 +2086,7 @@ def compare_source(record: DecompilationState, exe: Path | str,
             missing = missing or absent
             continue
         try:
-            result = compare_subject(record, exe, compiled)
+            result = compare_subject(record, exe, compiled, targets=targets)
         except SpanComparisonRefused as refused:
             # Another trial may emit a supported EH layout. Never use a
             # primary-only comparison as fallback when a region is unknown.

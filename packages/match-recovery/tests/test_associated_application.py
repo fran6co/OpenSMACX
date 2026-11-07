@@ -502,7 +502,7 @@ def test_recording_unit_reuses_its_invocation_compiler_for_strict_associated_own
 
     monkeypatch.setattr(recording, "Compiler", lambda *_args, **_kwargs: compile)
     unit = recording._unit((root, "synthetic", root / "code/unit.cc", records,
-                            root / "image.exe", (), (("first",),), frozenset()))
+                            root / "image.exe", (), (("first",),), frozenset(), None))
     assert unit.results[0][1].verdict is Tier.BYTE_EXACT
     assert calls == [("unit.cc", (), ("first",))]
 
