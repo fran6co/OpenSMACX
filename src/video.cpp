@@ -198,6 +198,8 @@ void Video::process() {
 // ORIGINAL: 0x006370E0 ?play@Video@@QAEHXZ 0x006370E0-0x0063718F FILE
 // symbol    ?play@Video@@QAEHXZ
 // TRIED: own VCall2 shim (35 slots) for slot34(int) since the scaffold's VCall types it nullary; cached TimeGetTimeFn across both timeGetTime() calls. MISMATCH #2 mov/push, early prologue register-save ordering only.
+// LEVER: one shared `flags_ |= 0x8000; return 0;` tail after the if/else. VC6
+//        duplicates it per arm, and that is what defers the edi save.
 int Video::play() {
   if (media_file_ == 0) return 7;
   if ((static_cast<unsigned char>(flags_) & 0x10) != 0) {
@@ -209,10 +211,9 @@ int Video::play() {
   log_say("play()", "Starting", static_cast<int>(timeGetTime()), 0, 0);
   if ((static_cast<unsigned char>(flags_) & 1) == 0) {
     sound_state_.set_target_frame(target_frame_);
-    flags_ |= 0x8000;
-    return 0;
+  } else {
+    last_tick_ = timeGetTime();
   }
-  last_tick_ = timeGetTime();
   flags_ |= 0x8000;
   return 0;
 }
@@ -271,8 +272,9 @@ int Video::advance_frame() {
       return 0;
     }
     if (child_chunk_.ckid == audio_chunk_id_) {
-      log_say("advance_frame()", "Advancing audio.",
-              static_cast<int>(timeGetTime()), child_chunk_.cksize, 0);
+      const int now = static_cast<int>(timeGetTime());
+      log_say("advance_frame()", "Advancing audio.", now,
+              child_chunk_.cksize, 0);
       VideoAudioBufferRecord *const record = static_cast<VideoAudioBufferRecord *>(
           sound_state_.acquire_audio_buffer(static_cast<int>(child_chunk_.cksize)));
       if (record != 0) {
@@ -336,6 +338,11 @@ int Video::read_frame() {
 
 // ORIGINAL: 0x00637910 ?decode_frame@Video@@QAEHH@Z 0x00637910-0x00637C26 FILE
 // symbol    ?decode_frame@Video@@QAEHH@Z
+// REWRITTEN 2026-11-07 from the image (0.22 -> 0.92): peek writes straight
+//        into target_frame_/decode_output_flags_, the decode call is vfw.h's
+//        inline ICDecompressEx (no memset), and the new rect goes through
+//        set_rectangle_dimensions. Residual: ebx/ebp swapped between the
+//        rect address and the HURRYUP flag.
 // TRIED: MISMATCH #42 'mov' vs 'and' - transcribed the Ghidra decompile directly, sub_63e7f0/sub_63e820 redeclared to take the receiver (self+0xA5C) as an explicit int since a free-function thiscall can't be spelled without a helper class; matches structurally through the first ~40 instructions before diverging, not chased further.
 int Video::decode_frame(int destination_index) {
   if (codec_ == 0) return 0;
@@ -345,24 +352,27 @@ int Video::decode_frame(int destination_index) {
   if (viewport_y_ < 0) {
     viewport_y_ = 0;
   } else {
+    const int doubled = flags_ & 4;
     int height = main_header_.dwHeight;
-    int compared_height = height;
+    const int compared_height = doubled ? height * 2 : height;
     const int output_height = output_buffer_.dib_.bmiHeader.biHeight;
-    if ((flags_ & 4) != 0) compared_height *= 2;
-    if (-(compared_height + output_height) < viewport_y_) {
-      if ((flags_ & 4) != 0) height *= 2;
+    if (viewport_y_ > -(compared_height + output_height)) {
+      if (doubled) height *= 2;
       viewport_y_ = -(output_height + height);
     }
   }
 
-  unsigned int queue_flags = 0;
-  const unsigned char *const frame_data = frame_queue_.peek(&target_frame_, &queue_flags);
-  decode_output_flags_ = queue_flags;
+  // The queue writes the frame number and its flags straight into the
+  // members the image passes (&target_frame_, &decode_output_flags_).
+  const unsigned char *const frame_data =
+      frame_queue_.peek(&target_frame_, &decode_output_flags_);
   if (target_frame_ == frame_count_ - 1) {
     flags_ &= 0xFFFF7FFFU;
   } else {
-    log_say("decode_frame()", static_cast<int>(timeGetTime()),
-            target_frame_, 0);
+    {
+      const int now = static_cast<int>(timeGetTime());
+      log_say("decode_frame()", now, target_frame_, 0);
+    }
     if ((decode_output_flags_ & 1) == 0) {
       if (frame_data == 0) {
         log_say("decode_frame()", "NULL data", 0, 0, 0);
@@ -376,6 +386,7 @@ int Video::decode_frame(int destination_index) {
                             source_rect_.bottom - top);
       }
 
+      const DWORD decompress_flags = destination_index ? ICDECOMPRESS_HURRYUP : 0;
       const RECT previous = source_rect_;
       int x_offset = source_dib_.bmiHeader.biWidth;
       int y_offset = source_dib_.bmiHeader.biHeight;
@@ -386,44 +397,35 @@ int Video::decode_frame(int destination_index) {
       int height = main_header_.dwHeight;
       if ((flags_ & 4) != 0) height <<= 1;
 
-      ICDECOMPRESSEX decompress;
-      memset(&decompress, 0, sizeof decompress);
-      decompress.dwFlags = destination_index ? 0x80000000UL : 0;
-      decompress.lpbiSrc = &source_dib_.bmiHeader;
-      decompress.lpSrc = const_cast<unsigned char *>(frame_data);
-      decompress.lpbiDst = &output_buffer_.dib_.bmiHeader;
-      decompress.lpDst = output_buffer_.get_data();
-      decompress.xDst = viewport_x_;
-      decompress.yDst = -(output_buffer_.dib_.bmiHeader.biHeight +
-                          viewport_y_ + height);
-      decompress.dxDst = x_offset;
-      decompress.dyDst = y_offset;
-      decompress.xSrc = 0;
-      decompress.ySrc = 0;
-      decompress.dxSrc = source_dib_.bmiHeader.biWidth;
-      decompress.dySrc = source_dib_.bmiHeader.biHeight;
-
-      if (ICSendMessage(codec_, ICM_DECOMPRESSEX,
-              reinterpret_cast<DWORD>(&decompress), sizeof decompress) != 0) {
+      // vfw.h's inline ICDecompressEx fills the ICDECOMPRESSEX block.
+      if (ICDecompressEx(codec_, decompress_flags,
+                         &source_dib_.bmiHeader,
+                         const_cast<unsigned char *>(frame_data), 0, 0,
+                         source_dib_.bmiHeader.biWidth,
+                         source_dib_.bmiHeader.biHeight,
+                         &output_buffer_.dib_.bmiHeader,
+                         output_buffer_.get_data(), viewport_x_,
+                         -(output_buffer_.dib_.bmiHeader.biHeight +
+                           viewport_y_ + height),
+                         x_offset, y_offset) != 0) {
         log_say("decode_frame()", "Decode failed!",
                 static_cast<int>(timeGetTime()), 0, 0);
         return 0;
       }
 
-      const int viewport_width = VideoViewportCodec.width;
-      const int viewport_height = VideoViewportCodec.height;
-      int new_left = viewport_x_ + VideoViewportCodec.origin_x;
-      int new_top = viewport_y_ + VideoViewportCodec.origin_y;
-      int width = viewport_width;
-      int height_out = viewport_height;
+      int width;
+      int height_out;
       if ((flags_ & 4) != 0) {
-        width *= 2;
-        height_out *= 2;
+        height_out = VideoViewportCodec.height * 2;
+        width = VideoViewportCodec.width * 2;
+      } else {
+        height_out = VideoViewportCodec.height;
+        width = VideoViewportCodec.width;
       }
-      source_rect_.left = new_left;
-      source_rect_.top = new_top;
-      source_rect_.right = new_left + width;
-      source_rect_.bottom = new_top + height_out;
+      set_rectangle_dimensions(&source_rect_,
+                               viewport_x_ + VideoViewportCodec.origin_x,
+                               VideoViewportCodec.origin_y + viewport_y_,
+                               width, height_out);
       UnionRect(&VideoDirtyRect, &previous, &source_rect_);
     }
     frame_queue_.discard_head();
@@ -436,6 +438,8 @@ int Video::decode_frame(int destination_index) {
 // ORIGINAL: 0x00637D70 ?play_frame@Video@@QAEHXZ 0x00637D70-0x0063808D FILE
 // symbol    ?play_frame@Video@@QAEHXZ
 // TRIED: prologue register order (large 797-byte function, many branches); landed as a structural transcription rather than chasing every register-allocation choice. Div-by-1000 modelled as plain unsigned int/1000 (VC6's own reciprocal-multiply idiom), not the 64-bit division Ghidra's decompile implied.
+// REWRITTEN 2026-11-07 from the image block order (0.992): the remaining
+//        diff is ecx vs eax for the merged `flags_ &= ~0x1000` temporaries.
 int Video::play_frame() {
   int current_frame;
   if ((flags_ & 0x10) != 0) goto finish;
@@ -450,40 +454,44 @@ int Video::play_frame() {
   }
   if (current_frame < target_frame_) return 0;
   if (current_frame == target_frame_ && (flags_ & 0x1000) == 0) return 0;
-  log_say("play_frame()", "Entering", static_cast<int>(timeGetTime()),
-          current_frame - target_frame_, 0);
+  {
+    const int now = static_cast<int>(timeGetTime());
+    log_say("play_frame()", "Entering", now, current_frame - target_frame_, 0);
+  }
   if (current_frame > target_frame_) {
     if (current_frame == target_frame_ + 1) {
-      if (frame_queue_.count() == 0) {
+      if (frame_queue_.count() != 0) {
+        flags_ &= 0xFFFFEFFFU;
+      } else {
         read_frame();
         flags_ &= 0xFFFFEFFFU;
         goto finish;
       }
-      flags_ &= 0xFFFFEFFFU;
     } else {
       const int nearest = next_key_frame(current_frame);
       if (nearest == -1) {
-        int frame = target_frame_;
-        while (frame < current_frame) {
+        while (target_frame_ < current_frame) {
           flags_ &= 0xFFFFEFFFU;
           if (decode_frame(0) == 0) {
             read_frame();
             decode_frame(0);
           }
-          frame = target_frame_;
         }
       }
       log_say("play_frame()", "BEHIND AUDIO", current_frame,
               target_frame_, nearest);
-      int frame = target_frame_;
-      if (nearest - current_frame <= current_frame - frame) {
-        if (buffered_frame_ - 1 < nearest) {
+      if (current_frame - target_frame_ < nearest - current_frame) {
+        while (target_frame_ < current_frame - 1) {
+          flags_ &= 0xFFFFEFFFU;
+          if (decode_frame(1) == 0) read_frame();
+        }
+        flags_ &= 0xFFFFEFFFU;
+        if (decode_frame(0) != 0) goto finish;
+        read_frame();
+      } else {
+        if (nearest > buffered_frame_ - 1) {
           frame_queue_.set_limit(0x28);
-          int buffered = buffered_frame_;
-          while (buffered < nearest) {
-            advance_frame();
-            buffered = buffered_frame_;
-          }
+          while (buffered_frame_ < nearest) advance_frame();
           read_frame();
         } else {
           int queued_frame = 0;
@@ -494,31 +502,20 @@ int Video::play_frame() {
           }
         }
         flags_ &= 0xFFFFEFFFU;
-        decode_frame(0);
-        goto finish;
       }
-      while (frame < current_frame - 1) {
-        flags_ &= 0xFFFFEFFFU;
-        if (decode_frame(1) == 0) read_frame();
-        frame = target_frame_;
-      }
-      flags_ &= 0xFFFFEFFFU;
-      if (decode_frame(0) != 0) goto finish;
-      read_frame();
     }
     decode_frame(0);
   }
 
 finish:
   if ((decode_output_flags_ & 1) == 0) {
-    const int height = (flags_ & 4) ? main_header_.dwHeight * 2
-                                     : main_header_.dwHeight;
-    const int width = (flags_ & 4) ? main_header_.dwWidth * 2
-                                    : main_header_.dwWidth;
-    HDC const source = output_buffer_.get_hdc();
-    HDC const destination = Win::get_hdc();
-    BitBlt(destination, viewport_x_, viewport_y_, width, height, source,
-           viewport_x_, viewport_y_, SRCCOPY);
+    const int doubled = flags_ & 4;
+    int height = main_header_.dwHeight;
+    if (doubled) height <<= 1;
+    int width = main_header_.dwWidth;
+    if (doubled) width <<= 1;
+    BitBlt(Win::get_hdc(), viewport_x_, viewport_y_, width, height,
+           output_buffer_.get_hdc(), viewport_x_, viewport_y_, SRCCOPY);
     Win::release_hdc();
     output_buffer_.release_hdc(1);
   }
@@ -901,6 +898,9 @@ fail:
 // ORIGINAL: 0x00637530 Video_unk13 0x00637530-0x00637865 FILE
 // symbol    ?configure_codec@Video@@QAEHXZ
 // TRIED: __thiscall Video member with plain if/else transcription of the Ghidra decomp; matches through instr #31, diverges at the byte-shuffle loop / trailing 0x34-byte ICSendMessage struct, whose exact field layout is not recovered
+// LEVER: the trailing block is vfw.h's inline ICDecompressExBegin; the colour
+//        loop copies rgbRed, rgbGreen, rgbBlue in that order; the 0xC test is
+//        two flag tests VC6 merges; mode is stored before selector.
 #if defined(_MSC_VER) && _MSC_VER == 1200
 #pragma function(memcpy)
 #endif
@@ -917,18 +917,16 @@ int Video::configure_codec() {
   if (ICSendMessage(codec_, ICM_DECOMPRESS_GET_PALETTE,
       reinterpret_cast<DWORD>(&source_dib_),
       reinterpret_cast<DWORD>(&destination)) != 0) return 1;
-  if ((flags_ & 0xC) == 0) {
+  if ((flags_ & 4) == 0 && (flags_ & 8) == 0) {
     // Native uses the output DIB's original BGR colours, not the codec's
     // palette-query result. The query result's fourth byte is preserved.
-    const unsigned char *original = reinterpret_cast<const unsigned char *>(
-        &output_buffer_.dib_) + sizeof(BITMAPINFOHEADER);
-    unsigned char *shuffled = reinterpret_cast<unsigned char *>(&destination)
-        + sizeof(BITMAPINFOHEADER);
-    int palette_index;
-    for (palette_index = 0; palette_index < 256; ++palette_index) {
-      shuffled[palette_index * 4] = original[palette_index * 4];
-      shuffled[palette_index * 4 + 1] = original[palette_index * 4 + 1];
-      shuffled[palette_index * 4 + 2] = original[palette_index * 4 + 2];
+    for (int palette_index = 0; palette_index < 256; ++palette_index) {
+      destination.bmiColors[palette_index].rgbRed =
+          output_buffer_.dib_.bmiColors[palette_index].rgbRed;
+      destination.bmiColors[palette_index].rgbGreen =
+          output_buffer_.dib_.bmiColors[palette_index].rgbGreen;
+      destination.bmiColors[palette_index].rgbBlue =
+          output_buffer_.dib_.bmiColors[palette_index].rgbBlue;
     }
     memcpy(&destination.bmiHeader, &output_buffer_.dib_.bmiHeader,
            sizeof(BITMAPINFOHEADER));
@@ -947,8 +945,8 @@ int Video::configure_codec() {
     codec_state_tail_.byte_size = 0x2C;
     codec_state_tail_.handler = video_stream_header_.fccHandler;
     codec_state_tail_.version = 0x10001;
-    codec_state_tail_.selector = 4;
     codec_state_tail_.mode = 2;
+    codec_state_tail_.selector = 4;
     codec_state_tail_.flags = 0x80000004UL;
     codec_state_tail_.option_24 = 0;
     if (ICSendMessage(codec_, 0x5001, reinterpret_cast<DWORD>(&codec_state_tail_), 0x2C)
@@ -966,25 +964,24 @@ int Video::configure_codec() {
     codec_state_tail_.byte_size = 0x2C;
     codec_state_tail_.handler = video_stream_header_.fccHandler;
     codec_state_tail_.version = 0x10001;
-    codec_state_tail_.selector = 4;
     codec_state_tail_.mode = 2;
+    codec_state_tail_.selector = 4;
     codec_state_tail_.flags = 0x80000008UL;
     codec_state_tail_.option_28 = 1;
     ICSendMessage(codec_, 0x5001, reinterpret_cast<DWORD>(&codec_state_tail_), 0x2C);
   }
-  ICDECOMPRESSEX begin;
-  memset(&begin, 0, sizeof begin);
-  begin.lpbiSrc = &source_dib_.bmiHeader;
-  begin.lpbiDst = &destination.bmiHeader;
-  begin.xDst = VideoDirtyRect.left;
-  begin.yDst = VideoDirtyRect.top;
-  begin.dxDst = source_dib_.bmiHeader.biWidth;
-  begin.dyDst = source_dib_.bmiHeader.biHeight;
-  if ((flags_ & 4) != 0) { begin.dxDst *= 2; begin.dyDst *= 2; }
-  begin.dxSrc = source_dib_.bmiHeader.biWidth;
-  begin.dySrc = source_dib_.bmiHeader.biHeight;
-  return ICSendMessage(codec_, ICM_DECOMPRESSEX_BEGIN,
-           reinterpret_cast<DWORD>(&begin), sizeof begin) != 0;
+  int width = source_dib_.bmiHeader.biWidth;
+  int height = source_dib_.bmiHeader.biHeight;
+  if ((flags_ & 4) != 0) {
+    width *= 2;
+    height *= 2;
+  }
+  // vfw.h's inline ICDecompressExBegin fills the ICDECOMPRESSEX block.
+  return ICDecompressExBegin(codec_, 0, &source_dib_.bmiHeader, 0, 0, 0,
+                             source_dib_.bmiHeader.biWidth,
+                             source_dib_.bmiHeader.biHeight,
+                             &destination.bmiHeader, 0, VideoDirtyRect.left,
+                             VideoDirtyRect.top, width, height) != 0;
 }
 #if defined(_MSC_VER) && _MSC_VER == 1200
 #pragma intrinsic(memcpy)

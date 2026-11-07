@@ -3154,9 +3154,10 @@ extern "C" void __fastcall sub_5d2d20(char *src, int mode, int stride,
     char *q;
     int i;
     if (mode != 0) {
-        p = src + 7;
+        // q, i, p: this initialisation order sets the image's registers.
         q = dst + 6;
         i = 8;
+        p = src + 7;
         do {
             q[-4] = p[-5] + adjust;
             q[0] = p[0] + adjust;
@@ -3172,8 +3173,8 @@ extern "C" void __fastcall sub_5d2d20(char *src, int mode, int stride,
         } while (i != 0);
         return;
     }
-    p = src + 2;
     q = dst + 6;
+    p = src + 2;
     i = 8;
     do {
         q[-4] = p[1] + adjust;
@@ -3857,17 +3858,15 @@ static DWORD *const MovieBlendTableQuant2 =
 // flags     hidden;sp_ready;purged_ok
 // calls     0x005D427C 0x006470A6 0x00644EF2
 // TRIED: __fastcall(this,a2) signature chosen from the ecx=this / edx=a2 register reads at entry; PROPOSAL below. Landed at 0.88 mnemonic similarity - remaining divergence is prologue register-save scheduling, not logic.
+// REWRITTEN 2026-11-07 as plain field arithmetic (0.905). Residual: the image
+//        homes frame_base on the stack and returns 0 as `mov eax, ebx`; here
+//        frame_base takes ebp. `||` early return and a result local: same.
 int __fastcall sub_5d3df0(MediaRuntime *runtime, unsigned char *frame_base) {
-  int saved_index;
-  memcpy(&saved_index, &runtime->unresolved_word_61c, sizeof(saved_index));
-  MediaDescriptor *const descriptor = runtime->descriptor;
-  int height;
-  int width;
-  memcpy(&height, &descriptor->output_height_60, sizeof(height));
-  memcpy(&width, &descriptor->output_width_64, sizeof(width));
-  const DWORD pixel_count_bits = static_cast<DWORD>(height) *
-                                 static_cast<DWORD>(width);
-  const DWORD allocation_size = (pixel_count_bits + 0x0fu) & 0xfffffff0u;
+  const DWORD saved_index = runtime->unresolved_word_61c;
+  // The image divides the aligned area as signed (cdq) below.
+  const int allocation_size =
+      (runtime->descriptor->output_width_64 *
+           runtime->descriptor->output_height_60 + 0x0f) & 0xfffffff0;
 
   if (runtime->owned_heap_638 != 0) {
     free(runtime->owned_heap_638);
@@ -3889,32 +3888,22 @@ int __fastcall sub_5d3df0(MediaRuntime *runtime, unsigned char *frame_base) {
   runtime->owned_heap_638 = static_cast<unsigned char *>(malloc(allocation_size));
   runtime->owned_heap_63c = static_cast<unsigned char *>(malloc(allocation_size));
   runtime->motion_row_offsets = static_cast<int *>(
-      malloc(static_cast<DWORD>(height) << 3));
-  // Native 5D3EA7..5D3EB2 divides the aligned area as signed, then wraps
-  // the index-word byte count at 32 bits, including high-bit dimensions.
-  int signed_allocation_size;
-  memcpy(&signed_allocation_size, &allocation_size, sizeof(signed_allocation_size));
+      malloc(runtime->descriptor->output_height_60 << 3));
   runtime->motion_block_indices = static_cast<unsigned int *>(
-      malloc(static_cast<DWORD>(signed_allocation_size / 16) << 2));
+      malloc(allocation_size / 16 << 2));
 
   if (runtime->owned_heap_638 != 0 && runtime->owned_heap_63c != 0 &&
       runtime->motion_row_offsets != 0 && runtime->motion_block_indices != 0) {
-    const int stride = height;
-    DWORD value_bits = 0u - pixel_count_bits;
-    DWORD index = 0;
-    if ((stride & 0x7fffffff) != 0) {
-      do {
-        int value;
-        memcpy(&value, &value_bits, sizeof(value));
-        runtime->motion_row_offsets[index] = value;
-        value_bits += static_cast<DWORD>(width);
-        index++;
-      } while (index < (static_cast<DWORD>(height) << 1));
+    int value = -static_cast<int>(runtime->descriptor->output_width_64 *
+                                  runtime->descriptor->output_height_60);
+    for (DWORD index = 0;
+         index < runtime->descriptor->output_height_60 * 2; ++index) {
+      runtime->motion_row_offsets[index] = value;
+      value += runtime->descriptor->output_width_64;
     }
-    const DWORD sample_offset = (static_cast<DWORD>(saved_index) + 4u) * 3u;
-    unsigned short *const samples = reinterpret_cast<unsigned short *>(
-        reinterpret_cast<uintptr_t>(frame_base) + sample_offset);
-    sub_5d427c(samples, runtime->owned_heap_638, 1);
+    sub_5d427c(reinterpret_cast<unsigned short *>(
+                   frame_base + (saved_index + 4) * 3),
+               runtime->owned_heap_638, 1);
     return 1;
   }
   return 0;
@@ -4550,6 +4539,9 @@ m5d2901_5d2913:
 
 // ORIGINAL: 0x005D4020 sub_5d4020 0x005D4020-0x005D4231 FILE
 // symbol    ?sub_5d4020@@YIXPAUMediaRuntime@@PAE1H@Z
+// REWRITTEN 2026-11-07 from the image (0.93): for-loops, intrinsic memcpy
+//        rows, flags&0x40 picks the dword path first. Residual: the image
+//        homes dest on the stack in the 8-bit path; here it stays in edx.
 // TRIED: not chased past the first instruction (MISMATCH #0 'push' vs 'sub', 62% mnemonic similarity) - __fastcall(this, dest, int, int) reproduces the `ret 8` pop count and the edx-as-second- register-arg evidence (no `mov ebp,esp` frame, `[esp+0x10]` live from entry with no stack spill) but the prologue's register-save order still differs. Structurally follows the raw disassembly's three shapes (mode==8 raw copy via sub_5d271d, else 2-byte-per-pixel CLUT unrolled x8, else 4-byte-per-pixel CLUT unrolled x8).
 // working copy - scaffold materialised by --work
 // size      529 bytes
@@ -4564,111 +4556,67 @@ void __fastcall sub_5d4020(MediaRuntime *runtime, unsigned char *dest,
                            unsigned char *unusedStackArg, int destStride) {
     unsigned char *src = runtime->owned_heap_638;
     MediaDescriptor *descriptor = runtime->descriptor;
-    int signed_width;
-    int signed_height;
-    memcpy(&signed_width, &descriptor->output_width_64, sizeof(signed_width));
-    memcpy(&signed_height, &descriptor->output_height_60, sizeof(signed_height));
+    DWORD row;
+    (void)unusedStackArg;
     if (descriptor->pixel_format.total_component_bits == 8) {
         if ((descriptor->flags & 0x40) != 0) {
-            const DWORD pixel_count = descriptor->output_width_64 *
-                                      descriptor->output_height_60;
-            int signed_pixel_count;
-            memcpy(&signed_pixel_count, &pixel_count, sizeof(signed_pixel_count));
             sub_5d271d(reinterpret_cast<unsigned int *>(src), dest,
-                       signed_pixel_count);
+                       static_cast<int>(descriptor->output_width_64 *
+                                        descriptor->output_height_60));
             return;
         }
-        if (signed_height == 0) {
-            return;
-        }
-        {
-            unsigned int rowCount = descriptor->output_height_60;
-            unsigned int rowBytes = descriptor->output_width_64;
-            unsigned int row = 0;
-            unsigned char *s = src;
-            unsigned char *d = dest;
-            do {
-                unsigned char *sp = s;
-                unsigned char *dp = d;
-                unsigned int n4 = rowBytes >> 2;
-                for (; n4 != 0; --n4) {
-                    *(unsigned int *)dp = *(unsigned int *)sp;
-                    sp += 4;
-                    dp += 4;
-                }
-                unsigned int n1 = rowBytes & 3;
-                for (; n1 != 0; --n1) {
-                    *dp = *sp;
-                    ++sp;
-                    ++dp;
-                }
-                descriptor = runtime->descriptor;
-                rowBytes = descriptor->output_width_64;
-                d += (destStride >> 2) * 4;
-                s += rowBytes;
-                ++row;
-            } while (row < descriptor->output_height_60);
+        DWORD width = descriptor->output_width_64;
+        for (row = 0; row < descriptor->output_height_60; ++row) {
+            memcpy(dest, src, width);
+            descriptor = runtime->descriptor;
+            dest += (destStride >> 2) * 4;
+            width = descriptor->output_width_64;
+            src += width;
         }
         return;
     }
 
-    unsigned char *clut = reinterpret_cast<unsigned char *>(
-        descriptor->palette_lookup_3b0.entries);
-    int row = 0;
-    if ((descriptor->flags & 0x40) == 0) {
-        if (signed_height == 0) {
-            return;
-        }
-        do {
-            unsigned int col = 0;
-            unsigned char *sp = src;
-            unsigned char *dp = dest;
-            if (signed_width != 0) {
-                do {
-                    col += 8;
-                    src = sp + 8;
-                    dest = dp + 0x10;
-                    for (int k = 0; k < 8; ++k) {
-                        *(unsigned short *)(dp + k * 2) =
-                            *(unsigned short *)(clut + sp[k] * 4);
-                    }
-                    sp = src;
-                    dp = dest;
-                } while (col < runtime->descriptor->output_width_64);
+    const DWORD *const clut = descriptor->palette_lookup_3b0.entries;
+    if ((descriptor->flags & 0x40) != 0) {
+        DWORD *out = reinterpret_cast<DWORD *>(dest);
+        for (row = 0; row < descriptor->output_height_60; ++row) {
+            for (DWORD column = 0;
+                 column < runtime->descriptor->output_width_64; column += 8) {
+                out[0] = clut[src[0]];
+                out[1] = clut[src[1]];
+                out[2] = clut[src[2]];
+                out[3] = clut[src[3]];
+                out[4] = clut[src[4]];
+                out[5] = clut[src[5]];
+                out[6] = clut[src[6]];
+                out[7] = clut[src[7]];
+                src += 8;
+                out += 8;
             }
             descriptor = runtime->descriptor;
-            memcpy(&signed_width, &descriptor->output_width_64, sizeof(signed_width));
-            dest = dest + ((destStride - signed_width * 2) & ~1);
-            ++row;
-        } while (static_cast<unsigned int>(row) < descriptor->output_height_60);
+            out += (destStride - descriptor->output_width_64 * 4) >> 2;
+        }
         return;
     }
 
-    if (signed_height == 0) {
-        return;
-    }
-    do {
-        unsigned int col = 0;
-        unsigned char *sp = src;
-        unsigned char *dp = dest;
-        if (signed_width != 0) {
-            do {
-                col += 8;
-                src = sp + 8;
-                dest = dp + 0x20;
-                for (int k = 0; k < 8; ++k) {
-                    *(unsigned int *)(dp + k * 4) =
-                        *(unsigned int *)(clut + sp[k] * 4);
-                }
-                sp = src;
-                dp = dest;
-            } while (col < runtime->descriptor->output_width_64);
+    unsigned short *out = reinterpret_cast<unsigned short *>(dest);
+    for (row = 0; row < descriptor->output_height_60; ++row) {
+        for (DWORD column = 0;
+             column < runtime->descriptor->output_width_64; column += 8) {
+            out[0] = static_cast<unsigned short>(clut[src[0]]);
+            out[1] = static_cast<unsigned short>(clut[src[1]]);
+            out[2] = static_cast<unsigned short>(clut[src[2]]);
+            out[3] = static_cast<unsigned short>(clut[src[3]]);
+            out[4] = static_cast<unsigned short>(clut[src[4]]);
+            out[5] = static_cast<unsigned short>(clut[src[5]]);
+            out[6] = static_cast<unsigned short>(clut[src[6]]);
+            out[7] = static_cast<unsigned short>(clut[src[7]]);
+            src += 8;
+            out += 8;
         }
         descriptor = runtime->descriptor;
-        memcpy(&signed_width, &descriptor->output_width_64, sizeof(signed_width));
-        dest = dest + ((destStride - signed_width * 4) & ~3);
-        ++row;
-    } while (static_cast<unsigned int>(row) < descriptor->output_height_60);
+        out += (destStride - descriptor->output_width_64 * 2) >> 1;
+    }
 }
 
 // ORIGINAL: 0x005D3980 sub_5d3980 0x005D3980-0x005D3DF0 FILE

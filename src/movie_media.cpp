@@ -1860,7 +1860,8 @@ int MediaRuntime::release_playback_buffer() {
 // ORIGINAL: 0x005CAE00 sub_5cae00 0x005CAE00-0x005CAE79 BYTE_EXACT
 // symbol    ?sub_5cae00@MediaRuntime@@QAEHXZ
 // kind      game
-int MediaRuntime::sub_5cae00() {
+// `inline`: sub_5cae80 inlines this body; sub_5caab0 calls it.
+inline int MediaRuntime::sub_5cae00() {
   MediaDescriptor *stream_owner = descriptor;
   if ((stream_owner->flags & 0x00080000) == 0 && stream_owner->stream != 0)
     mmioClose(stream_owner->stream, 0);
@@ -2236,6 +2237,9 @@ finish_worker:
 // symbol    _sub_5cae80
 // kind      game
 // TRIED: 0x005CB050's scaffolded prototype takes only one fastcall param, but the real callee reads its object from EDX (`mov esi, edx` at its own entry) with ECX dead - called here through an explicit fastcall(LPSTR, int*) function-pointer cast rather than by name, since a second extern "C" declaration for the same symbol conflicts. The four thiscall callees (sub_5ce340/sub_5cbe30/sub_5cb220/sub_5ce450/ sub_5cc710) are similarly unreachable by name (VC6 C4234 on a free __thiscall) and go through the Dummy member-function- pointer trick. Landing the closest control-flow-faithful form (divergence starts at instruction #12, inside the calloc/zero preamble).
+// TRIED: 0.994 left: the image's free path falls into the shared `return 0`
+//        exit block; VC6 here duplicates it (xor before the pops). Nested
+//        if/else, goto-done and an inverted init test measured no better.
 extern "C" MediaDescriptor *__cdecl sub_5cae80(
     LPSTR filename, HWND window, MediaDescriptor *descriptor) {
   MediaRuntime *runtime = (MediaRuntime *)calloc(1, 0x660);
@@ -2250,39 +2254,41 @@ extern "C" MediaDescriptor *__cdecl sub_5cae80(
   descriptor->runtime = runtime;
   runtime->setup_sound_device();
   runtime->sub_5cbe30();
-  InterlockedExchange(&descriptor->state, 0);
+  InterlockedExchange(&runtime->descriptor->state, 0);
   if (descriptor == 0) return 0; // native check follows earlier dereferences
 
-  runtime->protocol_gate = 1; // before either sync or async branch
+  descriptor->runtime->protocol_gate = 1; // before either sync or async branch
   if ((descriptor->flags & 0x00010000) != 0) {
     uintptr_t thread = _beginthread(sub_5caab0, 0, descriptor);
     descriptor->beginthread_result = (DWORD)thread;
     if (thread == (uintptr_t)-1) return 0; // native path does not free runtime
-    if (InterlockedExchange(&descriptor->state, 1) != 2) {
+    LONG *state = &descriptor->state;
+    if (InterlockedExchange(state, 1) != 2) {
       do {
         Sleep(20);
-      } while (InterlockedExchange(&descriptor->state, 1) != 2);
+      } while (InterlockedExchange(state, 1) != 2);
     }
-    InterlockedExchange(&descriptor->state, 2);
+    InterlockedExchange(state, 2);
     return descriptor;
   }
 
+  // Synchronous playback. The image reads the background flag through the
+  // runtime's descriptor before the play loop (0x005CAF5B), inlines
+  // sub_5cae00, and ends a background caller's thread like sub_5caab0.
+  runtime = descriptor->runtime;
+  DWORD background_flag = runtime->descriptor->flags & 0x00010000;
   descriptor->sub_5cb220();
   if (runtime->protocol_gate != 0) {
-    descriptor->elapsed_ticks = runtime->end_ticks - runtime->start_ticks;
-    if ((descriptor->flags & 0x00080000) == 0 && descriptor->stream != 0)
-      mmioClose(descriptor->stream, 0);
-    if (runtime->input_ring_base != 0) free(runtime->input_ring_base);
-    if (runtime->decoded_ring_base != 0) free(runtime->decoded_ring_base);
-    for (int i = 0; i != 24; ++i) runtime->read_records[i].payload = 0;
-    if (descriptor->stream_gate_7c != 0)
-      for (int j = 0; j != 24; ++j) runtime->output_records[j].payload = 0;
-    runtime->release_session_interfaces();
-    runtime->sub_5cc710();
-    InterlockedExchange(&descriptor->state, 6);
-    InterlockedExchange((LONG *)&descriptor->runtime, 0);
-    free(runtime);
+    MediaRuntime *r = descriptor->runtime;
+    r->descriptor->elapsed_ticks = r->end_ticks - r->start_ticks;
+    r->sub_5cae00();
+    r->release_session_interfaces();
+    r->sub_5cc710();
+    InterlockedExchange(&r->descriptor->state, 6);
+    InterlockedExchange((LONG *)&r->descriptor->runtime, 0);
+    free(r);
   }
+  if (background_flag != 0) _endthread();
   return 0;
 }
 
@@ -2319,6 +2325,8 @@ extern "C" int __cdecl sub_5cb660(MediaDescriptor *d) {
 // symbol    _sub_5caab0
 // kind      game
 // TRIED: nullary extern "C" __cdecl per the contract head - IDA's own guess (void*) matches the disassembly's [esp+0x14] read, so landed as sub_5caab0(void *param); this is a _beginthread worker (GetCurrentThread/SetThreadPriority/InterlockedXxx/ Sleep/GetTickCount/_endthread). sub_5cXXXXX helpers retyped __fastcall(void*[, void*]) to match their ecx/edx-only call sites (no stack pushes); slots 9/12 are COM-style (explicit self push). Reaches #10 (mismatch inside the flag mask/store sequence); not pursued further given the size.
+// Every callee is a real call in the image, sub_5cae00 included.
+#pragma inline_depth(0)
 extern "C" void __cdecl sub_5caab0(void *argument) {
   MediaDescriptor *d = (MediaDescriptor *)argument;
   MediaRuntime *r = d->runtime;
@@ -2419,6 +2427,7 @@ release_playback:
   }
   if (background_flag != 0) _endthread();
 }
+#pragma inline_depth(8)
 
 // ORIGINAL: 0x005CD750 sub_5cd750 0x005CD750-0x005CD8C5
 // TRIED: `extern "C" int __cdecl sub_5cd750()` fallback head; the entry `mov esi,ecx / mov [ebp-4],edx` with no stack reads is __fastcall(int*, uint*), so the signature was changed.
