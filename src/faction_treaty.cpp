@@ -392,7 +392,7 @@ int __cdecl spying(int subject) {
 
 /*
 Purpose: Determine if the specified faction want to attack the target faction.
-// ORIGINAL: 0x0055BC80 ?wants_to_attack@@YAHHHH@Z 0x0055BC80-0x0055C42B
+// ORIGINAL: 0x0055BC80 ?wants_to_attack@@YAHHHH@Z 0x0055BC80-0x0055C42B BYTE_EXACT
 // LEVER: the image's `sub esp, 0x134` (308 bytes) did not fit the committed
 //        `region_top_base_count[8]` (32 bytes) plus the ~52 bytes of scalar
 //        locals seen elsewhere in the frame - 256 + 52 = 308 only if the
