@@ -691,7 +691,7 @@ void NetDaemon::on_player_deleted(char *, unsigned long id) {
 /*
 Purpose: Build a network daemon - its AlphaNet base, then its own eight
          PlayerLocks and 0x18-entry lock table.
-// ORIGINAL: 0x005389F0 ??0NetDaemon@@QAE@XZ 0x005389F0-0x00538B58;0x0065DF50-0x0065DF62
+// ORIGINAL: 0x005389F0 ??0NetDaemon@@QAE@XZ 0x005389F0-0x00538B58;0x0065DF50-0x0065DF62 BYTE_EXACT
 // size      360 bytes
 // prototype void (__thiscall ??0NetDaemon@@QAE@XZ)(NetDaemon* this)
 // callers   1   call targets   4
