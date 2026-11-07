@@ -1244,7 +1244,7 @@ int MapWin::UNK1() {
 // Original0x0046B310 tests the requested tile against the visible scroll
 // window, clamps it to the map, and recentres only when it reaches an edge.
 // The primary Console-derived map has an additional base-window hit region.
-// ORIGINAL: 0x0046B310 ?focus@MapWin@@QAEHHH@Z 0x0046B310-0x0046B50C FILE
+// ORIGINAL: 0x0046B310 ?focus@MapWin@@QAEHHH@Z 0x0046B310-0x0046B50C FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/0046b310.cpp", "Pinned original image review controls route precedence, cursor sprite dispatch, signed zoom, actual API imports and original member/data dependencies. Bounded compile and host controls do not establish game acceptance."], "reason": "Recover the genuine MapWin/Console owner operation using typed members, actual shared storage, virtual base APIs and full original branch evidence; keep seed and historical obligations."}
 // TRIED: literal register-mirroring transcription (eax/ecx/edx/ebx/edi as plain int locals) of the singleton-fast-path vs. wrap/clamp slow-path split on `this == 0x9156b0`; the sign-extraction idiom `and 0x80000000; neg; sbb; and 2; add 2` reduced to `(field < 0) ? 4 : 2`. MISMATCH #4 push/xor in the prologue - compiles and the branch/merge structure follows the disasm.
 int MapWin::focus(int x, int y) {
@@ -1824,7 +1824,7 @@ static inline int mapwin_route_distance(int x1, int y1, int x2, int y2) {
     return wrapped + abs(y1 - y2);
 }
 
-// ORIGINAL: 0x00467430 ?dest_line@MapWin@@QAEXHHHHHHHHHHH@Z 0x00467430-0x00467958
+// ORIGINAL: 0x00467430 ?dest_line@MapWin@@QAEXHHHHHHHHHHH@Z 0x00467430-0x00467958 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Original467430..467958; retired seed git:b55fcf8b:src/recovered/units/00467430.cpp records this identity and exact span.", "Original467481/467483 establish connected-region admission;4676DD tests the pass index, not the per-pass step count. Cost writes46759x/467718/46792x own the separate7D3B70 scalar."], "reason": "MapWin owns route-preview traversal and cost publication. Original pass0 validates the whole route; pass1 charges and draws each edge. Connected land/sea uses path traversal and air/disconnected routes use the direct fallback."}
 void MapWin::dest_line(int x1, int y1, int x2, int y2, int proto_id,
                       int faction, int triad, int repeat,
