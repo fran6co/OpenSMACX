@@ -1728,6 +1728,28 @@ MultiWin MultiWindow;  // 0x007FD648
 const GUID LobbyAppGuid = {0x02D1B480, 0xD680, 0x11D0,
                                   {0x82, 0x1E, 0x44, 0x45, 0x53, 0x54, 0x00, 0x00}};
 
+// Whether the DirectPlay lobby registration records the intro as complete.
+static inline int control_game_intro_complete() {
+    HKEY hkey;
+    unsigned long value_length;
+    unsigned long value_type;
+    unsigned char value_data[12];
+    int is_complete = 0;
+    if (RegOpenKeyExA(HKEY_LOCAL_MACHINE,
+                      "SOFTWARE\\Microsoft\\DirectPlay\\Applications\\"
+                      "Sid Meier's Alpha Centauri",
+                      0, 0, &hkey) == 0) {
+        value_length = 10;
+        if (RegQueryValueExA(hkey, "Complete", 0, &value_type, value_data,
+                             &value_length) == 0
+            && _strcmpi((const char *)value_data, "Yes") == 0) {
+            is_complete = 1;
+        }
+        RegCloseKey(hkey);
+    }
+    return is_complete;
+}
+
 /*
 Purpose: Run the game. Brings the system and game up, decides the intro
          movie, then turns the wheel: menu or multiplayer handshake, desktop,
@@ -1737,9 +1759,9 @@ Purpose: Run the game. Brings the system and game up, decides the intro
 // LEVER: /Oy- flag set, not /O2 alone - the image keeps the ebp frame, and
 // under /Oy- this body's prologue, spills ([ebp-8] for lobby_status) and
 // tail all line up (2026-08-29: 19/215, best-similar set).
-// LEVER: a `short (__stdcall *)(int)` local seeded once from GetAsyncKeyState
-// is what holds the import across both Shift tests; a straight
-// GetAsyncKeyState(x) at each site costs the load twice.
+// LEVER (2026-11-07): VC6 itself hoists the GetAsyncKeyState import into ebx
+// for the two direct calls; game_reload is out of line (auto_inline off);
+// the intro-complete registry probe is the `shift || probe()` argument.
 // LEVER: the loop clears lobby_status after the menu/multiplayer branch
 // (`mov [ebp-8], esi` at 0x0052AC7D) - only the first pass runs the lobby
 // handshake. The first transcription dropped that store; without it the
@@ -1762,151 +1784,120 @@ Status: homed from src/unrecovered/0052aa30.cpp on 2026-08-29. MISMATCH
         pending_bodies.cpp.
 */
 void __cdecl control_game() {
-    // The image loads the import once into a callee-saved register and calls
-    // it twice (Shift before filefind, Shift before FX::init).
-    typedef short(__stdcall *get_key_state_fn)(int);
-    get_key_state_fn get_key_state;
-
     int lobby_status;
-    HKEY hkey;
-    unsigned long value_type;
-    unsigned char value_data[12];
-    int is_complete;
     int movie_disabled;
-    unsigned long value_length;
 
-    if (system_init() != 0) {
-        return;
-    }
-    if (game_init(0, 1) != 0) {
-        return;
-    }
+    if (system_init() == 0 && game_init(0, 1) == 0) {
 
-    GameRestartQueued = 0;
-    WorldClimateSkipTerrainClear = 1;
-    ExitTurnLoop = 0;
-    IsMultiplayerNet = 0;
-    lobby_status = NetDaemonNet.Net::check_for_lobby(CommandLineText,
-                                                      const_cast<_GUID *>(&LobbyAppGuid), 3, 9);
-    get_key_state = GetAsyncKeyState;
+            GameRestartQueued = 0;
+            WorldClimateSkipTerrainClear = 1;
+            ExitTurnLoop = 0;
+            IsMultiplayerNet = 0;
+            lobby_status = NetDaemonNet.Net::check_for_lobby(CommandLineText,
+                                                              const_cast<_GUID *>(&LobbyAppGuid), 3, 9);
+            
+            if (lobby_status == 0) {
+                // Holding Shift skips the lobby's "is the intro complete" registry
+                // look-up and takes the movie path directly.
+                filefind_init("movies\\virtualWorld.wve",
+                              HIBYTE(GetAsyncKeyState(VK_SHIFT)) || control_game_intro_complete());
 
-    if (lobby_status == 0) {
-        // Holding Shift skips the lobby's "is the intro complete" registry
-        // look-up and takes the movie path directly.
-        if (HIBYTE(get_key_state(VK_SHIFT)) == 0) {
-            is_complete = 0;
-            if (RegOpenKeyExA(HKEY_LOCAL_MACHINE,
-                              "SOFTWARE\\Microsoft\\DirectPlay\\Applications\\"
-                              "Sid Meier's Alpha Centauri",
-                              0, 0, &hkey) == 0) {
-                value_length = 10;
-                if (RegQueryValueExA(hkey, "Complete", 0, &value_type, value_data,
-                                     &value_length) == 0
-                    && _strcmpi((const char *)value_data, "Yes") == 0) {
-                    is_complete = 1;
+                prefs_load(0);
+                GameDataStateStorage.fields_.game_preferences_ = AlphaIniPrefs.preferences;
+                movie_disabled = prefs_get("DisableOpeningMovie", 0, 0);
+                prefs_put("DisableOpeningMovie", movie_disabled, 0);
+                if (movie_disabled == 0 && (GameDataStateStorage.fields_.game_preferences_ & 0x10000000) != 0) {
+                    amovie_project("openingx");
                 }
-                RegCloseKey(hkey);
             }
-        } else {
-            is_complete = 1;
-        }
-        filefind_init("movies\\virtualWorld.wve", is_complete);
 
-        prefs_load(0);
-        GameDataStateStorage.fields_.game_preferences_ = AlphaIniPrefs.preferences;
-        movie_disabled = prefs_get("DisableOpeningMovie", 0, 0);
-        prefs_put("DisableOpeningMovie", movie_disabled, 0);
-        if (movie_disabled == 0 && (GameDataStateStorage.fields_.game_preferences_ & 0x10000000) != 0) {
-            amovie_project("openingx");
-        }
+            if ((GetAsyncKeyState(VK_SHIFT) & 0x8000) == 0) {
+                g_FX.init();
+            }
+            for (;;) {
+                if (GameRestartQueued != 0) {
+                    if (g_WAVE_GENERAL.Wave::is_playing() != 0) {
+                        g_WAVE_GENERAL.Sound::fade(2000);
+                    }
+                    ConsoleGlobal.Win::hide();
+                    do_all_draws();
+                    strcpy(SaveNameBuffer, SaveGameFileName);
+                    filefind_set_alternative(SaveNameBuffer);
+                    if (game_reload(0, 1) != 0) {
+                        goto close_game;
+                    }
+                    GameDataStateStorage.fields_.vehicle_current_count_ = 0;
+                    setup_game(1);
+                    GameDataStateStorage.fields_.game_rules_ = AlphaIniPrefs.rules;
+                    GameDataStateStorage.fields_.net_turn_flags_ = 0;
+                }
+
+                GameRestartQueued = 0;
+                WorldClimateSkipTerrainClear = 1;
+                ExitTurnLoop = 0;
+                IsMultiplayerNet = 0;
+                flush_input();
+                if (lobby_status == 0) {
+                    if (top_menu(0) != 0) {
+                        goto close_opening;
+                    }
+                } else {
+                    prefs_load(0);
+                    prefs_use();
+                    if (multiplayer_init(1) != 0) {
+                        goto close_opening;
+                    }
+                }
+
+                // Only the first pass runs the lobby handshake; after the menu or the
+                // multiplayer branch the loop clears it and every later pass comes
+                // through top_menu.
+                lobby_status = 0;
+
+                if (IsMultiplayerPBEM != 0) {
+                    ConsoleGlobal.cover_window_.fill(0);
+                    ConsoleGlobal.cover_window_.Win::show(0);
+                } else {
+                    ConsoleGlobal.cover_window_.fill(9);
+                    ConsoleGlobal.cover_window_.Win::hide();
+                }
+                if (desktop_init(ControlTurnPhase == 0) != 0) {
+                    goto close_opening;
+                }
+                {
+                    // The image loads the primary map-window slot before it stores
+                    // the skip flag, then ors the live-flag dword through a register.
+                    // Keep the original live volatile dword accesses on the mapped
+                    // MapWin field, with the table load before the climate-flag store.
+                    MapWin *const primary_window = MapWinTable[0];
+                    volatile MapWin *const live_window = primary_window;
+                    WorldClimateSkipTerrainClear = 0;
+                    uint32_t flags = live_window->field_1DD70_;
+                    // The image materializes 0x8C0 into a dead callee-saved
+                    // register before the loop and ors through it; every spelling of
+                    // that constant this tree has tried folds to the immediate
+                    // instead (TRIED: note under the marker).
+                    flags |= 0x8C0;
+                    live_window->field_1DD70_ = flags;
+                }
+                ConsoleGlobal.focus_vehicle_ = -1;
+                if (IsMultiplayerNet != 0) {
+                    net_control_turn();
+                } else {
+                    control_turn();
+                }
+                desktop_close();
+                if (GameRestartQueued == 0) {
+                    goto close_game;
+                }
+            }
+
+    close_opening:
+            close_opening();
+    close_game:
+            game_close(0);
+            system_close();
     }
-
-    if ((get_key_state(VK_SHIFT) & 0x8000) == 0) {
-        g_FX.init();
-    }
-    for (;;) {
-        if (GameRestartQueued != 0) {
-            if (g_WAVE_GENERAL.Wave::is_playing() != 0) {
-                g_WAVE_GENERAL.Sound::fade(2000);
-            }
-            ConsoleGlobal.Win::hide();
-            do_all_draws();
-            strcpy(SaveNameBuffer, SaveGameFileName);
-            filefind_set_alternative(SaveNameBuffer);
-            if (game_reload(0, 1) != 0) {
-                goto close_game;
-            }
-            GameDataStateStorage.fields_.vehicle_current_count_ = 0;
-            setup_game(1);
-            GameDataStateStorage.fields_.game_rules_ = AlphaIniPrefs.rules;
-            GameDataStateStorage.fields_.net_turn_flags_ = 0;
-        }
-
-        GameRestartQueued = 0;
-        WorldClimateSkipTerrainClear = 1;
-        ExitTurnLoop = 0;
-        IsMultiplayerNet = 0;
-        flush_input();
-        if (lobby_status == 0) {
-            if (top_menu(0) != 0) {
-                goto close_opening;
-            }
-        } else {
-            prefs_load(0);
-            prefs_use();
-            if (multiplayer_init(1) != 0) {
-                goto close_opening;
-            }
-        }
-
-        // Only the first pass runs the lobby handshake; after the menu or the
-        // multiplayer branch the loop clears it and every later pass comes
-        // through top_menu.
-        lobby_status = 0;
-
-        if (IsMultiplayerPBEM != 0) {
-            ConsoleGlobal.cover_window_.fill(0);
-            ConsoleGlobal.cover_window_.Win::show(0);
-        } else {
-            ConsoleGlobal.cover_window_.fill(9);
-            ConsoleGlobal.cover_window_.Win::hide();
-        }
-        if (desktop_init(ControlTurnPhase == 0) != 0) {
-            goto close_opening;
-        }
-        {
-            // The image loads the primary map-window slot before it stores
-            // the skip flag, then ors the live-flag dword through a register.
-            // Keep the original live volatile dword accesses on the mapped
-            // MapWin field, with the table load before the climate-flag store.
-            MapWin *const primary_window = MapWinTable[0];
-            volatile MapWin *const live_window = primary_window;
-            WorldClimateSkipTerrainClear = 0;
-            uint32_t flags = live_window->field_1DD70_;
-            // The image materializes 0x8C0 into a dead callee-saved
-            // register before the loop and ors through it; every spelling of
-            // that constant this tree has tried folds to the immediate
-            // instead (TRIED: note under the marker).
-            flags |= 0x8C0;
-            live_window->field_1DD70_ = flags;
-        }
-        ConsoleGlobal.focus_vehicle_ = -1;
-        if (IsMultiplayerNet != 0) {
-            net_control_turn();
-        } else {
-            control_turn();
-        }
-        desktop_close();
-        if (GameRestartQueued == 0) {
-            goto close_game;
-        }
-    }
-
-close_opening:
-    close_opening();
-close_game:
-    game_close(0);
-    system_close();
 }
 
 // ---------------------------------------------------------------------------
@@ -2201,6 +2192,8 @@ Purpose: Restart the game state: tear the desktop down (mode-gated, the same
 Return Value: 1 when game_init fails, else 0.
 Status: Complete
 */
+// control_game calls this out of line.
+#pragma auto_inline(off)
 int __cdecl game_reload(int mode, int reload) {
     if (mode != 0) {
         TutWinDesWindow.close();
@@ -2224,6 +2217,7 @@ int __cdecl game_reload(int mode, int reload) {
     WorldClimateSkipTerrainClear = 0;
     return 0;
 }
+#pragma auto_inline(on)
 
 // ORIGINAL: 0x00524210 ?climactic_changes@@YAXXZ 0x00524210-0x005242C0 FILE BYTE_EXACT
 // working copy - scaffold materialised by --work
@@ -2367,6 +2361,8 @@ static int turns_assigned() {
     return static_cast<int>(NetDaemonNet.primary_state_.leading_words_[0]);
 }
 
+// net_control_turn calls this out of line.
+#pragma auto_inline(off)
 int __cdecl next_player_turn() {
     if ((GameDataStateStorage.fields_.net_turn_flags_ & 0x10) == 0) {
         return 0;
@@ -2383,6 +2379,7 @@ int __cdecl next_player_turn() {
     NextTurnReady = 1;
     return 1;
 }
+#pragma auto_inline(on)
 
 // The original class spelling, complete object extent and allocation/lifetime
 // owner are not established. This private role name groups the receiver
@@ -3116,168 +3113,142 @@ char *__cdecl get_pacts(int faction_id, int other_id) {
 // RECOVERY_BINDING: v1 {"evidence": ["Retained game-setup-owner-wave full body and seed005B0420; independent pinned-span review by report_draw_labs_review; actual-source test_setup_balance_behavior controls. Native faction rule bit0x100 is aquatic; no historical match claim copied."], "reason": "Recover the complete starting-position balance operation with genuine vehicle, faction, continent and map owners, retaining native neighbor scoring, defender gating and the mutable resource-placement bound."}
 // TRIED: array-index form for vehDir/dirScore instead of the original's pointer-walk locals (lea + running ptr in [ebp-0x14]/[ebp-8]); diverges by instruction #3, before the veh_find loop even starts, so this is a stack-layout/register-allocation gap, not a logic one - full instruction-level transcription of both passes (7-direction scoring, deficit-driven placement) landed and is structurally faithful, just not byte-identical.
 void __cdecl balance() {
-    int vehicles_by_direction[7];
-    for (int direction = 1; direction <= 7; ++direction) {
-        const int index = direction - 1;
-        int vehicle_id = veh_find(0, 0, direction, -1);
-        vehicles_by_direction[index] = vehicle_id;
+    int vehicles_by_faction[8];
+    int faction_scores[8];
+    for (int faction_id = 1; faction_id < MaxPlayerNum; ++faction_id) {
+        int vehicle_id = veh_find(0, 0, faction_id, -1);
+        vehicles_by_faction[faction_id] = vehicle_id;
         if (vehicle_id >= 0) {
-            const int x = Vehs[vehicle_id].x;
             const int y = Vehs[vehicle_id].y;
-            const Map *tile = map_loc(x, y);
-            if (tile->region >= 0x40) {
-                vehicles_by_direction[index] = veh_find(x, y, direction, vehicle_id);
+            const int x = Vehs[vehicle_id].x;
+            if (map_loc(x, y)->region >= 0x40) {
+                vehicles_by_faction[faction_id] = veh_find(x, y, faction_id, vehicle_id);
             }
         }
     }
 
-    int direction_scores[7];
     int best_score = 0;
-    for (int direction_index = 0; direction_index < 7; ++direction_index) {
-        const int direction = direction_index + 1;
-        const int vehicle_id = vehicles_by_direction[direction_index];
-        if (vehicle_id < 0) continue;
-
+    for (faction_id = 1; faction_id < MaxPlayerNum; ++faction_id) {
+        const int vehicle_id = vehicles_by_faction[faction_id];
+        if (vehicle_id < 0) {
+            continue;
+        }
         const int x = Vehs[vehicle_id].x;
         const int y = Vehs[vehicle_id].y;
         const int region = map_loc(x, y)->region;
-        int nearest_score = 9999;
-        for (int other_direction = 1; other_direction <= 7; ++other_direction) {
-            if (other_direction == direction) continue;
-            const int other_id = vehicles_by_direction[other_direction - 1];
-            if (other_id < 0) continue;
-            const int other_x = Vehs[other_id].x;
-            const int other_y = Vehs[other_id].y;
-            if (region != map_loc(other_x, other_y)->region) continue;
-
-            int dx = abs(x - other_x);
-            if (!(MapIsFlat & 1) && dx > static_cast<int>(MapLongitude)) {
-                dx = MapLongitudeBounds - dx;
+        int nearest = 9999;
+        for (int other_id = 1; other_id < MaxPlayerNum; ++other_id) {
+            if (faction_id == other_id) {
+                continue;
             }
-            const int dy = abs(y - other_y);
-            dx = abs(dx);
-            const int high = dx > dy ? dx : dy;
-            const int low = dx > dy ? dy : dx;
-            const int diagonal = (((dx + dy) >> 1) - low + 1) >> 1;
-            const int score = ((high - diagonal) * 25 * 128) /
-                              MapArea;
-            if (score < nearest_score) nearest_score = score;
-        }
-
-        if (nearest_score < 1000) {
-            nearest_score = nearest_score / 5 - 3;
-        } else {
-            int terrain_score = (Continents[region].tile_count + 31) / 32;
-            if (terrain_score < 1) terrain_score = 1;
-            else if (terrain_score > 8) terrain_score = 8;
-            nearest_score = terrain_score;
-        }
-
-        int adjacent_bonus = 0;
-        for (int offset = 0; offset < 0x54; offset += 4) {
-            int neighbor_x = x + RadiusOffsetX[offset / 4];
-            const int width = MapLongitudeBounds;
-            if (!(MapIsFlat & 1)) {
-                if (neighbor_x < 0) neighbor_x += width;
-                else if (neighbor_x >= width) neighbor_x -= width;
+            const int other_vehicle = vehicles_by_faction[other_id];
+            if (other_vehicle < 0) {
+                continue;
             }
-            const int neighbor_y = y + RadiusOffsetY[offset / 4];
-            if (neighbor_y < 0 || neighbor_y >= MapLatitudeBounds ||
-                neighbor_x < 0 || neighbor_x >= width) continue;
-
-            const Map *neighbor = map_loc(neighbor_x, neighbor_y);
-            const int rainfall_code = (neighbor->climate >> 3) & 3;
-            int altitude = neighbor->climate >> 5;
-            const int owner = neighbor->val3 >> 6;
-            if (rainfall_code < 1) continue;
-            altitude -= 2;
-            const bool elevated_or_river = altitude > 0 || (neighbor->bit & BIT_RIVER) != 0;
-            if (elevated_or_river && owner < 2) {
-                if (owner == 1) {
-                    ++adjacent_bonus;
-                } else if ((altitude >= 0 && altitude > 1) || rainfall_code > 1) {
-                    ++adjacent_bonus;
+            const int other_x = Vehs[other_vehicle].x;
+            const int other_y = Vehs[other_vehicle].y;
+            if (region != map_loc(other_x, other_y)->region) {
+                continue;
+            }
+            const int dist = vector_dist(x, y, other_x, other_y) * 25 * 128 / MapArea;
+            if (dist < nearest) {
+                nearest = dist;
+            }
+        }
+        if (nearest >= 1000) {
+            int size_score = (Continents[region].tile_count + 31) / 32;
+            if (size_score >= 1) {
+                if (size_score > 8) {
+                    size_score = 8;
                 }
+            } else {
+                size_score = 1;
             }
-            if (owner == 1 && altitude >= 0 && altitude > owner) {
-                ++adjacent_bonus;
+            nearest = size_score;
+        } else {
+            nearest = nearest / 5 - 3;
+        }
+
+        int land_count = 0;
+        for (int i = 0; i < 21; ++i) {
+            const int tile_x = wrap_map_x(RadiusOffsetX[i] + x);
+            const int tile_y = RadiusOffsetY[i] + y;
+            if (!on_map(tile_x, tile_y)) {
+                continue;
+            }
+            const Map *tile = map_loc(tile_x, tile_y);
+            const int rainfall = (tile->climate >> 3) & 3;
+            const int altitude = (tile->climate >> 5) - 2;
+            const int rockiness = tile->val3 >> 6;
+            if (rainfall < 1) {
+                continue;
+            }
+            if (((altitude >= 0 && altitude > 0) || (tile->bit & BIT_RIVER)) && rockiness < 2 &&
+                (rockiness == 1 || (altitude >= 0 && altitude > 1) || rainfall > 1)) {
+                ++land_count;
+            }
+            if (rockiness == 1 && altitude >= 0 && altitude > rockiness) {
+                ++land_count;
             }
         }
 
-        int terrain_component = (Continents[region].tile_count + 63) / 64;
-        if (terrain_component < 0) terrain_component = 0;
-        else if (terrain_component > 3) terrain_component = 3;
-        const int total = nearest_score + adjacent_bonus + terrain_component;
-        direction_scores[direction_index] = total;
-        if (total > best_score) best_score = total;
+        // Image 0x005B0748..0x005B0790: half the land count clamped to 0..8,
+        // plus tile_count / 64 (no rounding) clamped to 0..3.
+        const int total = range(land_count / 2, 0, 8) +
+                          range(Continents[region].tile_count / 64, 0, 3) + nearest;
+        if (total > best_score) {
+            best_score = total;
+        }
+        faction_scores[faction_id] = total;
     }
 
-    for (int faction_index = 0; faction_index < 7; ++faction_index) {
-        const int faction_id = faction_index + 1;
-        const int vehicle_id = vehicles_by_direction[faction_index];
-        if (vehicle_id < 0) continue;
-
+    for (faction_id = 1; faction_id < MaxPlayerNum; ++faction_id) {
+        int vehicle_id = vehicles_by_faction[faction_id];
+        if (vehicle_id < 0) {
+            continue;
+        }
         const int x = Vehs[vehicle_id].x;
         const int y = Vehs[vehicle_id].y;
         const int seed = rand() % 16;
-        int deficit = best_score - direction_scores[faction_index];
-        int placed_count = 0;
-        const Player &player = Players[faction_id];
-        for (int bonus_index = 0; bonus_index < player.faction_bonus_count; ++bonus_index) {
-            if (player.faction_bonus_id[bonus_index] == 1) {
-                const int prototype_id = player.faction_bonus_val1[bonus_index];
-                deficit -= VehPrototypes[prototype_id].plan == 8 ? 3 : 1;
+        int placed = 0;
+        int deficit = best_score - faction_scores[faction_id];
+        for (int bonus = 0; bonus < Players[faction_id].faction_bonus_count; ++bonus) {
+            if (Players[faction_id].faction_bonus_id[bonus] == 1) {
+                deficit -= VehPrototypes[Players[faction_id].faction_bonus_val1[bonus]].plan == 8 ? 3 : 1;
             }
         }
-
-        int difficulty = GameDataStateStorage.fields_.diff_level_current_;
-        if (difficulty > 1) {
-            bool defend = deficit >= 3;
-            if (!defend) {
-                const int human_bit = (1 << faction_id) & (GameDataStateStorage.fields_.lock_masks_.enable_mask_ & 0xFFu);
-                defend = difficulty >= (human_bit ? 4 : 5);
+        if (GameDataStateStorage.fields_.diff_level_current_ > 1 &&
+            (deficit >= 3 ||
+             GameDataStateStorage.fields_.diff_level_current_ >=
+                 ((1 << faction_id) & GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ ? 4 : 5))) {
+            deficit -= 3;
+            if (!(Players[faction_id].rule_flags & RFLAG_AQUATIC)) {
+                vehicle_id = veh_init(0, faction_id, x, y);
             }
-            if (defend) {
-                deficit -= 3;
-                if ((player.rule_flags & RFLAG_AQUATIC) == 0) {
-                    const int defender_id = veh_init(0, faction_id, x, y);
-                    difficulty = GameDataStateStorage.fields_.diff_level_current_;
-                    Vehs[defender_id].next_veh_id_stack = -1;
-                }
-            }
+            // The aquatic branch clears the stack link of the original unit.
+            Vehs[vehicle_id].next_veh_id_stack = -1;
         }
-        if (difficulty < 2) deficit = (deficit + 1) / 2;
-
-        if (deficit > 0) {
-            int angle = seed * 7;
-            for (int place_index = 0; place_index < deficit; ++place_index) {
-                angle += 7;
-                const int offset_index = angle % 16;
-                const int width = MapLongitudeBounds;
-                int candidate_x = x + RadiusOffsetX[9 + offset_index];
-                if (!(MapIsFlat & 1)) {
-                    if (candidate_x < 0) candidate_x += width;
-                    else if (candidate_x >= width) candidate_x -= width;
-                }
-                const int candidate_y = y + RadiusOffsetY[9 + offset_index];
-                if (candidate_y < 0 || candidate_y >= MapLatitudeBounds ||
-                    candidate_x < 0 || candidate_x >= width) continue;
-
-                if (goody_at(candidate_x, candidate_y) != 0) {
-                    const Map *candidate = map_loc(candidate_x, candidate_y);
-                    if ((candidate->bit & 0x0C000000u) == 0) {
-                        --direction_scores[faction_index];
-                    }
-                }
-
-                if (placed_count < 2 && deficit - place_index > 2 &&
-                    ((place_index ^ placed_count) & 1) == 0) {
-                    bit_set(candidate_x, candidate_y, 0x04000000, 1);
-                    --deficit;
-                    ++placed_count;
-                } else {
-                    bit_set(candidate_x, candidate_y, 0x08000000, 1);
-                }
+        if (GameDataStateStorage.fields_.diff_level_current_ < 2) {
+            deficit = (deficit + 1) / 2;
+        }
+        int angle = seed * 7;
+        for (int count = 0; count < deficit; ++count) {
+            angle += 7;
+            const int index = angle % 16 + 9;
+            const int tile_x = wrap_map_x(RadiusOffsetX[index] + x);
+            const int tile_y = RadiusOffsetY[index] + y;
+            if (!on_map(tile_x, tile_y)) {
+                continue;
+            }
+            if (goody_at(tile_x, tile_y) && !(map_loc(tile_x, tile_y)->bit & 0x0C000000u)) {
+                --faction_scores[faction_id];
+            }
+            if (placed < 2 && deficit - count >= 3 && !((count ^ placed) & 1)) {
+                bit_set(tile_x, tile_y, 0x04000000, 1);
+                --deficit;
+                ++placed;
+            } else {
+                bit_set(tile_x, tile_y, 0x08000000, 1);
             }
         }
     }
@@ -8115,16 +8086,15 @@ void __cdecl mash_planes() {
 
         // Native 0x529D43 begins a fresh prototype lookup after both possible
         // callbacks. They may replace the selected vehicle's design.
-        const int growth_proto_id = Vehs[veh_id].proto_id;
-        if (Chassis[VehPrototypes[growth_proto_id].chassis_id].range == 1
-            && VehPrototypes[growth_proto_id].chassis_id == 6) {
+        if (Chassis[VehPrototypes[Vehs[veh_id].proto_id].chassis_id].range == 1
+            && VehPrototypes[Vehs[veh_id].proto_id].chassis_id == 6) {
             Vehs[veh_id].dmg_incurred = static_cast<uint8_t>(Vehs[veh_id].dmg_incurred
-                + VehPrototypes[growth_proto_id].reactor_id * 3);
+                + VehPrototypes[Vehs[veh_id].proto_id].reactor_id * 3);
         } else {
             // proto_power's body, on the prototype already selected above.
             Vehs[veh_id].dmg_incurred = static_cast<uint8_t>(Vehs[veh_id].dmg_incurred + range(
-                (VehPrototypes[growth_proto_id].plan == PLAN_ALIEN_ARTIFACT
-                    ? 1 : range(VehPrototypes[growth_proto_id].reactor_id, 1, 100) * 10)
+                (VehPrototypes[Vehs[veh_id].proto_id].plan == PLAN_ALIEN_ARTIFACT
+                    ? 1 : range(VehPrototypes[Vehs[veh_id].proto_id].reactor_id, 1, 100) * 10)
                 - Vehs[veh_id].dmg_incurred, 0, 9999));
         }
 
@@ -8372,6 +8342,49 @@ static const char NetUpkeepSkippingUpkeepPhase[] = "Skipping upkeep phase";
 // Native daemon words: 0x0093E8F0 receives peer acknowledgements and
 // 0x0093E8FC marks this faction at entry. The literals below replace their
 // seed aliases at 0x0068BB88..0x0068BBC0; timeGetTime uses its SDK import.
+namespace {
+inline void clear_multiplayer_endgame_state() {
+    NetDaemonNet.hang_up();
+    NetDaemonNet.primary_state_.leading_words_[0] = 0;
+    NetDaemonNet.primary_state_.leading_words_[1] = 0;
+    NetDaemonNet.primary_state_.leading_words_[2] = 0;
+    NetDaemonNet.primary_state_.flags_ = 0;
+    NetDaemonNet.primary_state_.trailing_words_[7] = 0;
+    NetDaemonNet.primary_state_.trailing_words_[6] = 0;
+    NetDaemonNet.channels_[0].leading_words_[1] = 0;
+    NetDaemonNet.channels_[0].leading_words_[0] = 0;
+    NetDaemonNet.channels_[0].trailing_words_[0] = 0;
+    NetDaemonNet.channels_[1].leading_words_[1] = 0;
+    NetDaemonNet.channels_[0].trailing_words_[9] = 0;
+    NetDaemonNet.channels_[1].leading_words_[0] = 0;
+    NetDaemonNet.channels_[1].trailing_words_[5] = 0;
+    NetDaemonNet.channels_[1].trailing_words_[4] = 0;
+    NetDaemonNet.primary_state_.trailing_words_[3] = 0;
+    NetDaemonNet.primary_state_.trailing_words_[4] = 0;
+    NetDaemonNet.primary_state_.trailing_words_[5] = 0;
+    NetDaemonNet.channels_[1].trailing_words_[3] = 0;
+    NetDaemonNet.channels_[1].trailing_words_[2] = 0;
+    NetDaemonNet.channels_[1].leading_words_[3] = 0;
+    NetDaemonNet.channels_[1].leading_words_[2] = 0;
+    NetDaemonNet.channels_[1].payload_.flags = 0;
+    NetDaemonNet.primary_state_.session_phase_ = 0;
+    NetDaemonNet.primary_state_.trailing_words_[0] = 0;
+    NetDaemonNet.network_message_count() = 0;
+    NetDaemonNet.channels_[1].trailing_words_[8] = 0;
+    NetDaemonNet.channels_[1].trailing_words_[7] = 0;
+    NetDaemonNet.primary_state_.trailing_words_[1] = 0;
+    NetDaemonNet.primary_state_.trailing_words_[2] = 0;
+    NetDaemonNet.channels_[1].trailing_words_[6] = 0xFF;
+    NetDaemonNet.channels_[0].payload_.flags = 0;
+    for (int index = 0; index < 8; ++index) {
+        NetDaemonNet.channels_[0].trailing_words_[index + 1] = 0;
+    }
+    NetDaemonNet.locks_.clear();
+    NetDaemonNet.AlphaNet::close();
+    IsMultiplayerNet = 0;
+}
+}  // namespace
+
 /*
 Purpose: Run the multiplayer turn's upkeep rendezvous: mark the local
          faction in the sent mask, redraw the multiplayer window, log and
@@ -8967,7 +8980,6 @@ void __cdecl net_control_turn() {
     ConsoleControlTurnActive = 1;
     MapBaseDisplayOverride = 1;
 
-    int logged = 0;
     if (prefs_get(NetControlTurnMultiDebugPreference, 0, 0) != 0 &&
         X_pop(NetControlTurnMultiDebugPopup, 0) != 0) {
         StringTemp[0] = 0;
@@ -8988,11 +9000,11 @@ void __cdecl net_control_turn() {
         Logging.init(StringTemp);
         Logging.reset();
         BaseAtDebugPopupFlag = 1;
-        logged = 1;
+        log_set_state(1);
     } else {
         BaseAtDebugPopupFlag = 0;
+        log_set_state(0);
     }
-    log_set_state(logged);
     do_checksums(1);
     if ((GameDataStateStorage.fields_.net_turn_flags_ & 0x10u) != 0) {
         TurnControlWord93A954 = 1;
@@ -9012,209 +9024,132 @@ void __cdecl net_control_turn() {
         InterfaceMessageWin.clear();
 
         if (ControlTurnPhase == 0) {
-            const unsigned char alive =
-                GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_;
-            const unsigned char human =
-                GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_;
-            int faction = 1;
-            GameDataStateStorage.fields_.net_turn_faction_ = 1;
-            for (;;) {
-                const unsigned int bit = 1u << (faction & 0x1F);
-                if ((bit & alive) != 0 && (bit & human) != 0) {
-                    break;
-                }
-                ++faction;
+            for (GameDataStateStorage.fields_.net_turn_faction_ = 1; !((1 << GameDataStateStorage.fields_.net_turn_faction_) & GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_) || !((1 << GameDataStateStorage.fields_.net_turn_faction_) & GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_); ++GameDataStateStorage.fields_.net_turn_faction_) {
             }
-            GameDataStateStorage.fields_.net_turn_faction_ = faction;
             turn_upkeep();
             net_upkeep();
             GameDataStateStorage.fields_.net_turn_faction_ = 0;
             if (end_of_game(1) != 0) {
-                NetDaemonNet.hang_up();
-                NetDaemonNet.primary_state_.leading_words_[0] = 0;
-                NetDaemonNet.primary_state_.leading_words_[1] = 0;
-                NetDaemonNet.primary_state_.leading_words_[2] = 0;
-                NetDaemonNet.primary_state_.flags_ = 0;
-                NetDaemonNet.primary_state_.session_phase_ = 0;
-                NetDaemonNet.primary_state_.trailing_words_[0] = 0;
-                NetDaemonNet.primary_state_.trailing_words_[1] = 0;
-                NetDaemonNet.primary_state_.trailing_words_[2] = 0;
-                NetDaemonNet.primary_state_.trailing_words_[3] = 0;
-                NetDaemonNet.primary_state_.trailing_words_[4] = 0;
-                NetDaemonNet.primary_state_.trailing_words_[5] = 0;
-                NetDaemonNet.factions_waiting_mask() = 0;
-                NetDaemonNet.primary_state_.trailing_words_[7] = 0;
-                NetDaemonNet.primary_state_.trailing_words_[8] = 0;
-                NetDaemonNet.channels_[0].leading_words_[0] = 0;
-                NetDaemonNet.channels_[0].leading_words_[1] = 0;
-                NetDaemonNet.channels_[0].leading_words_[2] = 0;
-                NetDaemonNet.channels_[0].leading_words_[3] = 0;
-                NetDaemonNet.channels_[0].payload_.flags = 0;
-                NetDaemonNet.channels_[0].trailing_words_[0] = 0;
-                for (int i = 1; i <= 8; ++i) {
-                    NetDaemonNet.channels_[0].trailing_words_[i] = 0;
-                }
-                NetDaemonNet.channels_[0].trailing_words_[9] = 0;
-                NetDaemonNet.channels_[1].leading_words_[0] = 0;
-                NetDaemonNet.channels_[1].leading_words_[1] = 0;
-                NetDaemonNet.channels_[1].leading_words_[2] = 0;
-                NetDaemonNet.channels_[1].leading_words_[3] = 0;
-                NetDaemonNet.channels_[1].payload_.flags = 0;
-                NetDaemonNet.channels_[1].trailing_words_[2] = 0;
-                NetDaemonNet.channels_[1].trailing_words_[3] = 0;
-                NetDaemonNet.channels_[1].trailing_words_[4] = 0;
-                NetDaemonNet.channels_[1].trailing_words_[5] = 0;
-                NetDaemonNet.channels_[1].trailing_words_[6] = 0xFF;
-                NetDaemonNet.network_message_count() = 0;
-                NetDaemonNet.channels_[1].trailing_words_[8] = 0;
-                NetDaemonNet.channels_[1].trailing_words_[9] = 0;
-                NetDaemonNet.locks_.clear();
-                NetDaemonNet.AlphaNet::close();
-                IsMultiplayerNet = 0;
+                clear_multiplayer_endgame_state();
                 return;
             }
         }
 
         set_time_controls();
         NetDaemonWaitTicks = static_cast<int>(GameDataStateStorage.fields_.turn_control_duration_milliseconds_);
-        GameDataStateStorage.fields_.game_state_ &= 0xFFFFF7FFu;
         ConsoleControlTurnActive = 0;
         NetDaemonNet.primary_state_.trailing_words_[4] = 0;
+        GameDataStateStorage.fields_.game_state_ &= 0xFFFFF7FFu;
 
-        if ((GameDataStateStorage.fields_.net_turn_flags_ & 0x10u) != 0 &&
-            (GameDataStateStorage.fields_.turn_current_num_ == 1 || ControlTurnPhase != 0)) {
-            int x = -1;
-            int y = -1;
-            bool found_base = false;
-            for (int id = 0; id < GameDataStateStorage.fields_.base_current_count_; ++id) {
-                if (Bases[id].faction_id_current == ConsoleGlobal.faction_id_) {
-                    x = Bases[id].x;
-                    y = Bases[id].y;
-                    if (x >= 0) found_base = true;
-                    break;
-                }
-            }
-            if (!found_base) {
-                for (int id = 0; id < GameDataStateStorage.fields_.vehicle_current_count_; ++id) {
-                    if (Vehs[id].faction_id == ConsoleGlobal.faction_id_) {
-                        x = Vehs[id].x;
-                        y = Vehs[id].y;
+        if ((GameDataStateStorage.fields_.net_turn_flags_ & 0x10u) != 0) {
+            if (GameDataStateStorage.fields_.turn_current_num_ == 1 || ControlTurnPhase != 0) {
+                int y = -1;
+                int x = -1;
+                for (int id = 0; id < GameDataStateStorage.fields_.base_current_count_; ++id) {
+                    if (Bases[id].faction_id_current == ConsoleGlobal.faction_id_) {
+                        x = Bases[id].x;
+                        y = Bases[id].y;
                         break;
                     }
                 }
+                if (x < 0) {
+                    for (int id = 0; id < GameDataStateStorage.fields_.vehicle_current_count_; ++id) {
+                        if (Vehs[id].faction_id == ConsoleGlobal.faction_id_) {
+                            x = Vehs[id].x;
+                            y = Vehs[id].y;
+                            break;
+                        }
+                    }
+                }
+                if (y >= 0 && y < MapLatitudeBounds &&
+                    x >= 0 && x < MapLongitudeBounds) {
+                    ConsoleGlobal.set_view(0);
+                    ConsoleGlobal.set_center(x, y, 1);
+                    ConsoleGlobal.set_cursor(x, y);
+                }
             }
-            if (y >= 0 && y < MapLatitudeBounds &&
-                x >= 0 && x < MapLongitudeBounds) {
-                ConsoleGlobal.set_view(0);
-                ConsoleGlobal.set_center(x, y, 1);
-                ConsoleGlobal.set_cursor(x, y);
-            }
-        }
-
-        if ((GameDataStateStorage.fields_.net_turn_flags_ & 0x10u) != 0 &&
-            NetDaemonNet.primary_state_.leading_words_[0] != 0) {
-            if (ControlTurnPhase == 0) {
-                next_player_turn();
-            } else {
-                message_data(0x4309, 0, GameDataStateStorage.fields_.net_turn_faction_, 0, 0, 0);
+            if (NetDaemonNet.primary_state_.leading_words_[0] != 0) {
+                if (ControlTurnPhase == 0) {
+                    next_player_turn();
+                } else {
+                    message_data(0x4309, 0, GameDataStateStorage.fields_.net_turn_faction_, 0, 0, 0);
+                }
             }
         }
         ControlTurnPhase = 0;
 
-        int state;
         for (;;) {
-            state = ExitTurnLoop;
-            if (state == 0) {
-                if ((GameDataStateStorage.fields_.net_turn_flags_ & 0x10u) == 0 ||
-                    GameDataStateStorage.fields_.net_turn_faction_ == ConsoleGlobal.faction_id_) {
-                    bool skip_human = false;
-                    if ((GameDataStateStorage.fields_.net_turn_flags_ & 0x10u) == 0) {
-                        if ((GameDataStateStorage.fields_.game_state_ & 0x800u) != 0) {
-                            GameDataStateStorage.fields_.game_state_ |= 2u;
-                            skip_human = true;
-                        }
-                    } else {
-                        NetDaemonWaitTicks = static_cast<int>(GameDataStateStorage.fields_.turn_control_duration_milliseconds_);
-                        GameDataStateStorage.fields_.game_state_ &= 0xFFFFF7FFu;
-                        TurnControlWord93A954 = 0;
-                        NetDaemonNet.factions_waiting_mask() &=
-                            ~(1u << (ConsoleGlobal.faction_id_ & 0x1F));
-                    }
-                    if (!skip_human) {
-                        ConsoleGlobal.human_turn();
-                        state = ExitTurnLoop;
-                        if ((GameDataStateStorage.fields_.net_turn_flags_ & 0x10u) != 0) {
-                            TurnControlWord93A954 = 1;
-                            while (ExitTurnLoop == 0 &&
-                                   NetDaemonNet.locks_.any_locks() != 0) {
-                                NetDaemonNet.net_tasks();
-                            }
-                            message_data(0x8301, 0, 0, 0, 0, 0);
-                            for (;;) {
-                                state = ExitTurnLoop;
-                                if (ExitTurnLoop != 0 ||
-                                    GameDataStateStorage.fields_.net_turn_faction_ != ConsoleGlobal.faction_id_) {
-                                    break;
-                                }
-                                if (NextTurnReady != 0) goto after_state_switch;
-                                NetDaemonNet.net_tasks();
-                            }
-                            if (NextTurnReady == 0) {
-                                GameDataStateStorage.fields_.game_state_ &= 0xFFFFF7FFu;
-                            }
-                        }
-                    }
-                } else {
+            if (ExitTurnLoop == 0) {
+                if ((GameDataStateStorage.fields_.net_turn_flags_ & 0x10u) != 0 &&
+                    GameDataStateStorage.fields_.net_turn_faction_ != ConsoleGlobal.faction_id_) {
                     ConsoleGlobal.set_view(0);
                     ConsoleGlobal.field_23BE4_ = 0;
                     ConsoleGlobal.field_23BE8_ = 1;
                     ConsoleGlobal.set_view(0);
                     MultiWindow.draw(0);
-                    NetDaemonNet.factions_waiting_mask() |=
-                        1u << (ConsoleGlobal.faction_id_ & 0x1F);
+                    NetDaemonNet.factions_waiting_mask() |= 1u << ConsoleGlobal.faction_id_;
                     while (ExitTurnLoop == 0 && NextTurnReady == 0 &&
                            GameDataStateStorage.fields_.net_turn_faction_ != ConsoleGlobal.faction_id_) {
                         ConsoleGlobal.field_23BE4_ = 1;
                         NetDaemonNet.net_tasks();
-                        if (NetDaemonNet.primary_state_.leading_words_[0] != 0) {
-                            if (GameDataStateStorage.fields_.net_turn_faction_ < 1 ||
-                                ((static_cast<unsigned char>(GameDataStateStorage.fields_.lock_masks_.enable_mask_) &
-                                  static_cast<unsigned char>(1u << (GameDataStateStorage.fields_.net_turn_faction_ & 0x1F))) == 0) ||
-                                ((static_cast<unsigned char>(GameDataStateStorage.fields_.lock_masks_.enable_mask_ >> 8) &
-                                  static_cast<unsigned char>(1u << (GameDataStateStorage.fields_.net_turn_faction_ & 0x1F))) == 0)) {
-                                next_player_turn();
-                            }
+                        if (NetDaemonNet.primary_state_.leading_words_[0] != 0 &&
+                            (GameDataStateStorage.fields_.net_turn_faction_ <= 0 ||
+                             !(GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ &
+                               (1 << GameDataStateStorage.fields_.net_turn_faction_)) ||
+                             !(GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_ &
+                               (1 << GameDataStateStorage.fields_.net_turn_faction_)))) {
+                            next_player_turn();
                         }
                     }
                     ConsoleGlobal.field_23BE4_ = 0;
                     ConsoleGlobal.field_23BE8_ = 0;
-                    state = ExitTurnLoop;
+                } else {
+                    if ((GameDataStateStorage.fields_.net_turn_flags_ & 0x10u) == 0 &&
+                        (GameDataStateStorage.fields_.game_state_ & 0x800u) != 0) {
+                        goto turn_skipped;
+                    }
+                    if ((GameDataStateStorage.fields_.net_turn_flags_ & 0x10u) != 0) {
+                        NetDaemonWaitTicks = static_cast<int>(GameDataStateStorage.fields_.turn_control_duration_milliseconds_);
+                        GameDataStateStorage.fields_.game_state_ &= 0xFFFFF7FFu;
+                        TurnControlWord93A954 = 0;
+                        NetDaemonNet.factions_waiting_mask() &= ~(1u << ConsoleGlobal.faction_id_);
+                    }
+                    ConsoleGlobal.human_turn();
+                    if ((GameDataStateStorage.fields_.net_turn_flags_ & 0x10u) != 0) {
+                        TurnControlWord93A954 = 1;
+                        while (ExitTurnLoop == 0 && NetDaemonNet.locks_.any_locks() != 0) {
+                            NetDaemonNet.net_tasks();
+                        }
+                        message_data(0x8301, 0, 0, 0, 0, 0);
+                        while (ExitTurnLoop == 0 &&
+                               GameDataStateStorage.fields_.net_turn_faction_ == ConsoleGlobal.faction_id_ &&
+                               NextTurnReady == 0) {
+                            NetDaemonNet.net_tasks();
+                        }
+                        if (NextTurnReady == 0) {
+                            GameDataStateStorage.fields_.game_state_ &= 0xFFFFF7FFu;
+                        }
+                    }
                 }
             } else {
+turn_skipped:
                 GameDataStateStorage.fields_.game_state_ |= 2u;
             }
-after_state_switch:
-            if (state != 0) break;
-            unsigned int cont;
+            if (ExitTurnLoop != 0) break;
             if ((GameDataStateStorage.fields_.net_turn_flags_ & 0x10u) == 0) {
                 net_end_of_turn();
-                state = ExitTurnLoop;
                 if (ExitTurnLoop != 0) break;
-                if ((GameDataStateStorage.fields_.net_turn_flags_ & 0x10u) != 0) {
-                    cont = NextTurnReady == 0 ? 1u : 0u;
-                } else {
-                    cont = (~GameDataStateStorage.fields_.game_state_ >> 1) & 1u;
-                }
-            } else {
-                cont = NextTurnReady == 0 ? 1u : 0u;
             }
-            if (cont == 0) break;
+            if (!((GameDataStateStorage.fields_.net_turn_flags_ & 0x10u) != 0
+                      ? NextTurnReady == 0
+                      : (~GameDataStateStorage.fields_.game_state_ >> 1) & 1u)) {
+                break;
+            }
         }
         if ((GameDataStateStorage.fields_.net_turn_flags_ & 0x10u) != 0) {
             net_end_of_turn();
-            state = ExitTurnLoop;
         }
-        if (state != 0) return;
+        if (ExitTurnLoop != 0) return;
     }
 }
 
@@ -9255,46 +9190,6 @@ void parse_player_identity(int faction_id) {
     parse_says(2, player.noun_faction, -1, -1);
 }
 
-void clear_multiplayer_endgame_state() {
-    NetDaemonNet.hang_up();
-    NetDaemonNet.primary_state_.leading_words_[0] = 0;
-    NetDaemonNet.primary_state_.leading_words_[1] = 0;
-    NetDaemonNet.primary_state_.leading_words_[2] = 0;
-    NetDaemonNet.primary_state_.flags_ = 0;
-    NetDaemonNet.primary_state_.trailing_words_[7] = 0;
-    NetDaemonNet.primary_state_.trailing_words_[6] = 0;
-    NetDaemonNet.channels_[0].leading_words_[1] = 0;
-    NetDaemonNet.channels_[0].leading_words_[0] = 0;
-    NetDaemonNet.channels_[0].trailing_words_[0] = 0;
-    NetDaemonNet.channels_[1].leading_words_[1] = 0;
-    NetDaemonNet.channels_[0].trailing_words_[9] = 0;
-    NetDaemonNet.channels_[1].leading_words_[0] = 0;
-    NetDaemonNet.channels_[1].trailing_words_[5] = 0;
-    NetDaemonNet.channels_[1].trailing_words_[4] = 0;
-    NetDaemonNet.primary_state_.trailing_words_[3] = 0;
-    NetDaemonNet.primary_state_.trailing_words_[4] = 0;
-    NetDaemonNet.primary_state_.trailing_words_[5] = 0;
-    NetDaemonNet.channels_[1].trailing_words_[3] = 0;
-    NetDaemonNet.channels_[1].trailing_words_[2] = 0;
-    NetDaemonNet.channels_[1].leading_words_[3] = 0;
-    NetDaemonNet.channels_[1].leading_words_[2] = 0;
-    NetDaemonNet.channels_[1].payload_.flags = 0;
-    NetDaemonNet.primary_state_.session_phase_ = 0;
-    NetDaemonNet.primary_state_.trailing_words_[0] = 0;
-    NetDaemonNet.network_message_count() = 0;
-    NetDaemonNet.channels_[1].trailing_words_[8] = 0;
-    NetDaemonNet.channels_[1].trailing_words_[7] = 0;
-    NetDaemonNet.primary_state_.trailing_words_[1] = 0;
-    NetDaemonNet.primary_state_.trailing_words_[2] = 0;
-    NetDaemonNet.channels_[1].trailing_words_[6] = 0xFF;
-    NetDaemonNet.channels_[0].payload_.flags = 0;
-    for (int index = 0; index < 8; ++index) {
-        NetDaemonNet.channels_[0].trailing_words_[index + 1] = 0;
-    }
-    NetDaemonNet.locks_.clear();
-    NetDaemonNet.AlphaNet::close();
-    IsMultiplayerNet = 0;
-}
 }
 
 // ORIGINAL: 0x00524870 ?end_of_game@@YAHH@Z 0x00524870-0x0052581F

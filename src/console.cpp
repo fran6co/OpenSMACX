@@ -258,99 +258,78 @@ void Console::turn_hints() { // 0x00511800
     }
 
     const int faction_id = ConsoleGlobal.faction_id_;
-    int turn = GameDataStateStorage.fields_.turn_current_num_;
-
-    if (turn == 1) {
-        if (tut_check(1) != 0) {
-            const int history = ConsoleGlobal.cursor_history_index_;
-            const int base_id = base_find(ConsoleGlobal.cursor_history_x_[history],
-                                         ConsoleGlobal.cursor_history_y_[history], faction_id);
-            if (base_id >= 0) {
-                parse_says(0, Bases[base_id].name_string, -1, -1);
-                if (selected_vehicle_ >= 0) {
-                    parse_says(1,
-                               VehPrototypes[Vehs[selected_vehicle_].proto_id].veh_name,
-                               -1, -1);
-                    TutorialWindow.set_tour_stage(0);
-                    const int tutorial_history = ConsoleGlobal.cursor_history_index_;
-                    TutorialWindow.tut_map("LANDFALL",
-                                          ConsoleGlobal.cursor_history_x_[tutorial_history],
-                                          ConsoleGlobal.cursor_history_y_[tutorial_history], -1,
-                                          nullptr, 0x100, -1, -1);
-                }
+    if (GameDataStateStorage.fields_.turn_current_num_ == 1 &&
+        tut_check(GameDataStateStorage.fields_.turn_current_num_) != 0) {
+        const int base_id = base_find(
+            ConsoleGlobal.cursor_history_x_[ConsoleGlobal.cursor_history_index_],
+            ConsoleGlobal.cursor_history_y_[ConsoleGlobal.cursor_history_index_], faction_id);
+        if (base_id >= 0) {
+            parse_says(0, Bases[base_id].name_string, -1, -1);
+            if (selected_vehicle_ >= 0) {
+                parse_says(1, VehPrototypes[Vehs[selected_vehicle_].proto_id].veh_name, -1, -1);
+                TutorialWindow.set_tour_stage(0);
+                TutorialWindow.tut_map("LANDFALL",
+                    ConsoleGlobal.cursor_history_x_[ConsoleGlobal.cursor_history_index_],
+                    ConsoleGlobal.cursor_history_y_[ConsoleGlobal.cursor_history_index_], -1,
+                    nullptr, 0x100, -1, -1);
             }
         }
-        turn = GameDataStateStorage.fields_.turn_current_num_;
     }
 
     bool second_base_tutorial_shown = false;
-    PlayerData &faction = PlayersData[faction_id];
-    if (turn >= 0x14 && faction.current_num_bases == 1 &&
-        faction.pop_total >= 2 && faction.proto_id_active[0] == 0 &&
-        faction.proto_id_queue[0] == 0) {
-        if (tut_check(0x100000) != 0) {
-            second_base_tutorial_shown = true;
-            const int history = ConsoleGlobal.cursor_history_index_;
-            const int base_id = base_find(ConsoleGlobal.cursor_history_x_[history],
-                                         ConsoleGlobal.cursor_history_y_[history], faction_id);
-            if (base_id >= 0) {
-                const int x = Bases[base_id].x;
-                const int y = Bases[base_id].y;
-                focus(x, y, faction_id);
-                parse_says(0, Bases[base_id].name_string, -1, -1);
-                TutorialWindow.tut_map("SECONDBASE", Bases[base_id].x, Bases[base_id].y, -2 - base_id,
-                                      nullptr, 0, -1, -1);
-                faction.last_turn_new_base = GameDataStateStorage.fields_.turn_current_num_;
-            }
-        } else {
-            turn = GameDataStateStorage.fields_.turn_current_num_;
+    if (GameDataStateStorage.fields_.turn_current_num_ >= 0x14 &&
+        PlayersData[faction_id].current_num_bases == 1 &&
+        PlayersData[faction_id].pop_total >= 2 &&
+        PlayersData[faction_id].proto_id_active[0] == 0 &&
+        PlayersData[faction_id].proto_id_queue[0] == 0 &&
+        tut_check(0x100000) != 0) {
+        second_base_tutorial_shown = true;
+        const int base_id = base_find(
+            ConsoleGlobal.cursor_history_x_[ConsoleGlobal.cursor_history_index_],
+            ConsoleGlobal.cursor_history_y_[ConsoleGlobal.cursor_history_index_], faction_id);
+        if (base_id >= 0) {
+            focus(Bases[base_id].x, Bases[base_id].y, faction_id);
+            parse_says(0, Bases[base_id].name_string, -1, -1);
+            TutorialWindow.tut_map("SECONDBASE", Bases[base_id].x, Bases[base_id].y, -2 - base_id,
+                                  nullptr, 0, -1, -1);
+            PlayersData[faction_id].last_turn_new_base = GameDataStateStorage.fields_.turn_current_num_;
         }
     }
 
-    if (!second_base_tutorial_shown) {
-        const int turns_since_new_base = turn - faction.last_turn_new_base;
-        if (turns_since_new_base >= 0x18 && faction.proto_id_active[0] == 0) {
-            const int base_count = faction.current_num_bases;
-            if (base_count > 1 && base_count <= 5) {
-                const int history = ConsoleGlobal.cursor_history_index_;
-                const int base_id = base_find(ConsoleGlobal.cursor_history_x_[history],
-                                     ConsoleGlobal.cursor_history_y_[history], faction_id);
-                if (base_id >= 0) {
-                    const int x = Bases[base_id].x;
-                    const int y = Bases[base_id].y;
-                    TutorialWindow.tut_map("BUILDMORE", x, y, -2 - base_id,
-                                          nullptr, 0, -1, -1);
-                    faction.last_turn_new_base = GameDataStateStorage.fields_.turn_current_num_;
-                }
-            }
+    if (!second_base_tutorial_shown &&
+        GameDataStateStorage.fields_.turn_current_num_ - PlayersData[faction_id].last_turn_new_base >= 0x18 &&
+        PlayersData[faction_id].proto_id_active[0] == 0 &&
+        PlayersData[faction_id].current_num_bases <= 5 &&
+        PlayersData[faction_id].current_num_bases > 1) {
+        const int base_id = base_find(
+            ConsoleGlobal.cursor_history_x_[ConsoleGlobal.cursor_history_index_],
+            ConsoleGlobal.cursor_history_y_[ConsoleGlobal.cursor_history_index_], faction_id);
+        if (base_id >= 0) {
+            TutorialWindow.tut_map("BUILDMORE", Bases[base_id].x, Bases[base_id].y, -2 - base_id,
+                                  nullptr, 0, -1, -1);
+            PlayersData[faction_id].last_turn_new_base = GameDataStateStorage.fields_.turn_current_num_;
         }
     }
 
-    for (int other_faction = 1; other_faction < MaxPlayerNum;
-         ++other_faction) {
-        if (other_faction == faction_id) {
-            continue;
-        }
-        const uint32_t treaties = faction.diplo_treaties[other_faction];
-        if ((treaties & DTREATY_COMMLINK) == 0 ||
-            (treaties & DTREATY_VENDETTA) == 0) {
-            continue;
-        }
-        if (tut_check(0x80) == 0) {
+    for (int other_faction = 1; other_faction < MaxPlayerNum; ++other_faction) {
+        if (faction_id != other_faction &&
+            (PlayersData[faction_id].diplo_treaties[other_faction] & DTREATY_COMMLINK) &&
+            (PlayersData[faction_id].diplo_treaties[other_faction] & DTREATY_VENDETTA)) {
+            if (tut_check(0x80) == 0) {
+                return;
+            }
+            GenderDefault = Players[other_faction].is_leader_female;
+            PluralityDefault = 0;
+            parse_says(0, Players[other_faction].title_leader, -1, -1);
+            GenderDefault = Players[other_faction].is_leader_female;
+            PluralityDefault = 0;
+            parse_says(1, Players[other_faction].name_leader, -1, -1);
+            GenderDefault = Players[other_faction].noun_gender;
+            PluralityDefault = Players[other_faction].is_noun_plural;
+            parse_says(2, Players[other_faction].noun_faction, -1, -1);
+            X_pop(TutorialPopupCaption, "VENDETTA", nullptr);
             return;
         }
-
-        GenderDefault = Players[other_faction].is_leader_female;
-        PluralityDefault = 0;
-        parse_says(0, Players[other_faction].title_leader, -1, -1);
-        GenderDefault = Players[other_faction].is_leader_female;
-        PluralityDefault = 0;
-        parse_says(1, Players[other_faction].name_leader, -1, -1);
-        GenderDefault = Players[other_faction].noun_gender;
-        PluralityDefault = Players[other_faction].is_noun_plural;
-        parse_says(2, Players[other_faction].noun_faction, -1, -1);
-        X_pop(TutorialPopupCaption, "VENDETTA", nullptr);
-        return;
     }
 }
 
@@ -3084,29 +3063,35 @@ void Console::on_post_redraw_nc_buffer(Buffer *buffer, int which) {
     if (buffer == nullptr) {
         return;
     }
-
+    // The image recomputes the border and track geometry for every handle.
     if (which == 1) {
-        const int border = bottom_border_thickness_ >= 0
-            ? bottom_border_thickness_ : border_thickness_;
-        const int track_top = client_rect_.bottom - client_rect_.top -
-                              outer_rect_.bottom - caption_height_ +
-                              outer_rect_.top;
-        const int x = buffer->dib_.bmiHeader.biWidth - sprite_b_.width();
-        const int first_y = track_top - sprite_b_.height() / 2 +
-                            static_cast<int>(field_23D88_) - border;
-        const int second_y = track_top - sprite_b_.height() / 2 +
-                             static_cast<int>(field_23D8C_) - border;
-        sprite_b_.draw(buffer, sprite_b_.transparent_index(), x, first_y, 1, 1);
-        sprite_b_.draw(buffer, sprite_b_.transparent_index(), x, second_y, 1, 1);
+        {
+            const int border = bottom_border_thickness_ >= 0
+                ? bottom_border_thickness_ : border_thickness_;
+            sprite_b_.draw(buffer, sprite_b_.transparent_index(),
+                           buffer->dib_.bmiHeader.biWidth - sprite_b_.width(),
+                           client_rect_.bottom - client_rect_.top - outer_rect_.bottom -
+                               caption_height_ + outer_rect_.top - sprite_b_.height() / 2 +
+                               static_cast<int>(field_23D88_) - border,
+                           1, 1);
+        }
+        {
+            const int border = bottom_border_thickness_ >= 0
+                ? bottom_border_thickness_ : border_thickness_;
+            sprite_b_.draw(buffer, sprite_b_.transparent_index(),
+                           buffer->dib_.bmiHeader.biWidth - sprite_b_.width(),
+                           client_rect_.bottom - client_rect_.top - outer_rect_.bottom -
+                               caption_height_ + outer_rect_.top - sprite_b_.height() / 2 +
+                               static_cast<int>(field_23D8C_) - border,
+                           1, 1);
+        }
     } else if (which == 2) {
-        const int image_bottom = -buffer->dib_.bmiHeader.biHeight;
-        const int y = image_bottom - sprite_a_.height();
-        const int first_x = static_cast<int>(field_23D80_) -
-                            sprite_a_.width() / 2 + border_thickness_;
-        const int second_x = static_cast<int>(field_23D84_) -
-                             sprite_a_.width() / 2 + border_thickness_;
-        sprite_a_.draw(buffer, sprite_a_.transparent_index(), first_x, y, 1, 1);
-        sprite_a_.draw(buffer, sprite_a_.transparent_index(), second_x, y, 1, 1);
+        sprite_a_.draw(buffer, sprite_a_.transparent_index(),
+                       static_cast<int>(field_23D80_) - sprite_a_.width() / 2 + border_thickness_,
+                       -(buffer->dib_.bmiHeader.biHeight + sprite_a_.height()), 1, 1);
+        sprite_a_.draw(buffer, sprite_a_.transparent_index(),
+                       static_cast<int>(field_23D84_) - sprite_a_.width() / 2 + border_thickness_,
+                       -(buffer->dib_.bmiHeader.biHeight + sprite_a_.height()), 1, 1);
     }
 }
 
@@ -3594,6 +3579,38 @@ void Console::name_landmark(int x, int y) {
 extern int IfaceIdToSlotStorage[30];
 extern int ActiveIfaceIdStorage;
 
+// Inlined copy of MapWin::tile_in_view (0x004216F0), which lives in another TU.
+static inline int ready_tile_in_view(MapWin &win, int x, int y, int margin) {
+    if (margin != 0 && y >= 0 && y < MapLatitudeBounds && x >= 0 &&
+        x < MapLongitudeBounds) {
+        if (alt_at(x, y) > 3 &&
+            y - alt_at(x, y) + 3 < win.field_1DDA8_ + margin) {
+            return 0;
+        }
+    }
+    if (y < win.field_1DDA8_ + margin) {
+        return 0;
+    }
+    if (y >= win.field_1DDD8_ + win.field_1DDD0_ - margin + win.field_1DDA8_) {
+        return 0;
+    }
+    if ((MapIsFlat & 1) == 0) {
+        if (x < win.field_1DDA4_ + margin) {
+            x += MapLongitudeBounds;
+        }
+        if (x >= win.field_1DDD4_ + win.field_1DDCC_ - margin + win.field_1DDA4_) {
+            x -= MapLongitudeBounds;
+        }
+    }
+    if (x < win.field_1DDA4_ + margin) {
+        return 0;
+    }
+    if (x >= win.field_1DDD4_ + win.field_1DDCC_ - margin + win.field_1DDA4_) {
+        return 0;
+    }
+    return 1;
+}
+
 // Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x00510F50 ?ready@Console@@QAEXXZ 0x00510F50-0x00511471
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/00510f50.cpp: original identity and complete spans", "source:src/console.h: Console owner declarations and layout", "source:src/console.cpp: coupled navigation, selection and lifecycle caller relationships"], "reason": "The original Console operation is expressed by the corresponding real Console owner definition, using its recovered members and source-owned callees rather than the retained seed scaffold."}
@@ -3603,9 +3620,9 @@ void Console::ready() {
     selected_vehicle_ = ready_search(field_23D18_ ? -1 : selected_vehicle_);
     field_23D18_ = 0;
     if (selected_vehicle_ < 0 || !ConsoleGlobal.cursor_active_) return;
-    if (!Vehs[selected_vehicle_].order || Vehs[selected_vehicle_].order > 23) {
-        const int x = Vehs[selected_vehicle_].x;
+    if (!Vehs[selected_vehicle_].order || Vehs[selected_vehicle_].order >= 24) {
         const int y = Vehs[selected_vehicle_].y;
+        const int x = Vehs[selected_vehicle_].x;
         field_23BF8_ = 0;
         if (survey_mode_) {
             survey_mode_ = 0;
@@ -3616,47 +3633,27 @@ void Console::ready() {
         ConsoleInfoWin.change(0);
         ConsoleStatusWin.redraw();
         MapWinTable[0]->main_caption();
-        const unsigned int state = Vehs[selected_vehicle_].state;
         if (!(GameDataStateStorage.fields_.game_preferences_ & 0x80000) ||
-            (!Vehs[selected_vehicle_].order && !(state & 0x200) &&
-             (state & 0x1000200) != 0x1000200)) {
-            focus(Vehs[selected_vehicle_].x, Vehs[selected_vehicle_].y,
-                  Vehs[selected_vehicle_].faction_id);
-            const int vx = Vehs[selected_vehicle_].x;
-            const int vy = Vehs[selected_vehicle_].y;
-            bool altitude_clipped = false;
-            if (vx >= 0 && vx < MapLongitudeBounds && vy >= 0 && vy < MapLatitudeBounds) {
-                const unsigned int climate = map_loc(vx, vy)->climate;
-                altitude_clipped = (climate & 0xe0) >= 0x61 &&
-                    field_1DDA8_ + 3 > vy - static_cast<int>(climate >> 5) + 3;
-            }
-            bool in_view = false;
-            if (!altitude_clipped && field_1DDA8_ + 3 <= vy &&
-                vy < field_1DDD8_ + field_1DDD0_ - 3 + field_1DDA8_) {
-                int adjusted_x = vx;
-                if (!(MapIsFlat & 1)) {
-                    if (vx < field_1DDA4_ + 3) adjusted_x += MapLongitudeBounds;
-                    if (field_1DDD4_ + field_1DDCC_ - 3 + field_1DDA4_ <= adjusted_x)
-                        adjusted_x -= MapLongitudeBounds;
+            (!Vehs[selected_vehicle_].order && !(Vehs[selected_vehicle_].state & 0x200) &&
+             (Vehs[selected_vehicle_].state & 0x1000200) != 0x1000200)) {
+            if (!focus(Vehs[selected_vehicle_].x, Vehs[selected_vehicle_].y,
+                       Vehs[selected_vehicle_].faction_id)) {
+                if (!ready_tile_in_view(*this, Vehs[selected_vehicle_].x,
+                                        Vehs[selected_vehicle_].y, 3)) {
+                    set_center(Vehs[selected_vehicle_].x, Vehs[selected_vehicle_].y, 1);
                 }
-                in_view = field_1DDA4_ + 3 <= adjusted_x &&
-                    adjusted_x < field_1DDD4_ + field_1DDCC_ - 3 + field_1DDA4_;
             }
-            if (!in_view) MapWinTable[0]->set_center(vx, vy, 1);
         }
         alpha_menu_.check(selected_vehicle_);
         flush_input();
         Vehs[selected_vehicle_].unk_6 = 0;
     }
     const int base = base_at(Vehs[selected_vehicle_].x, Vehs[selected_vehicle_].y);
-    const unsigned int state = Vehs[selected_vehicle_].state;
-    if (!Vehs[selected_vehicle_].order && !(state & 0x200) &&
-        (state & 0x1000200) != 0x1000200 && !(state & 0x4000) && base >= 0) {
-        const int triad = Chassis[VehPrototypes[Vehs[selected_vehicle_].proto_id].chassis_id].triad;
-        const int destination = triad == 0
-            ? Bases[base].auto_forward_slots[Base::AutoForwardLand]
-            : triad == 1 ? Bases[base].auto_forward_slots[Base::AutoForwardSea]
-                         : Bases[base].auto_forward_slots[Base::AutoForwardAir];
+    if (!Vehs[selected_vehicle_].order && !(Vehs[selected_vehicle_].state & 0x200) &&
+        (Vehs[selected_vehicle_].state & 0x1000200) != 0x1000200 &&
+        !(Vehs[selected_vehicle_].state & 0x4000) && base >= 0) {
+        const int16_t destination = Bases[base].auto_forward_slots[
+            Chassis[VehPrototypes[Vehs[selected_vehicle_].proto_id].chassis_id].triad];
         if (destination >= 0 && destination != base) {
             Vehs[selected_vehicle_].order = 24;
             Vehs[selected_vehicle_].waypoint_x[0] = Bases[destination].x;
@@ -3668,17 +3665,33 @@ void Console::ready() {
         !(Vehs[selected_vehicle_].state & 0x200)) {
         Vehs[selected_vehicle_].flags &= ~0x1000;
         const int prototype = Vehs[selected_vehicle_].proto_id;
-        const int chassis = VehPrototypes[prototype].chassis_id;
-        const int weapon = VehPrototypes[prototype].weapon_id;
-        const int triad = Chassis[chassis].triad;
-        int sound = -1;
-        if (triad == 0) {
-            sound = chassis == 0 && Weapon[weapon].offense_rating != 0 ? 0x40
-                : Weapon[weapon].offense_rating == 0 ? 0x42 : 0x41;
-        } else if (triad == 1) sound = Weapon[weapon].offense_rating == 0 ? 0x46 : 0x45;
-        else if (triad == 2) sound = !Chassis[chassis].range ? 0x43
-            : Chassis[chassis].range == 1 ? 0x44 : 0x47;
-        if (sound >= 0) g_FX.play(sound, Vehs[selected_vehicle_].x, Vehs[selected_vehicle_].y);
+        switch (Chassis[VehPrototypes[prototype].chassis_id].triad) {
+        case 0:
+            if (VehPrototypes[prototype].chassis_id == 0 && Weapon[VehPrototypes[prototype].weapon_id].offense_rating != 0) {
+                g_FX.play(0x40, Vehs[selected_vehicle_].x, Vehs[selected_vehicle_].y);
+            } else if (Weapon[VehPrototypes[prototype].weapon_id].offense_rating != 0) {
+                g_FX.play(0x41, Vehs[selected_vehicle_].x, Vehs[selected_vehicle_].y);
+            } else {
+                g_FX.play(0x42, Vehs[selected_vehicle_].x, Vehs[selected_vehicle_].y);
+            }
+            break;
+        case 1:
+            if (Weapon[VehPrototypes[prototype].weapon_id].offense_rating != 0) {
+                g_FX.play(0x45, Vehs[selected_vehicle_].x, Vehs[selected_vehicle_].y);
+            } else {
+                g_FX.play(0x46, Vehs[selected_vehicle_].x, Vehs[selected_vehicle_].y);
+            }
+            break;
+        case 2:
+            if (!Chassis[VehPrototypes[prototype].chassis_id].range) {
+                g_FX.play(0x43, Vehs[selected_vehicle_].x, Vehs[selected_vehicle_].y);
+            } else if (Chassis[VehPrototypes[prototype].chassis_id].range == 1) {
+                g_FX.play(0x44, Vehs[selected_vehicle_].x, Vehs[selected_vehicle_].y);
+            } else {
+                g_FX.play(0x47, Vehs[selected_vehicle_].x, Vehs[selected_vehicle_].y);
+            }
+            break;
+        }
     }
     ambience_veh(selected_vehicle_);
     flush_input();
@@ -4902,127 +4915,124 @@ finish_turn:
 // RECOVERY_BINDING: v1 {"evidence": ["git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/005171d0.cpp", "image:terranx_original.exe:0x005171D0", "Pinned key selector tables5177E4/517844 and accelerator targets517898; native selection reloads between dispatch stages preserve callback effects."], "reason": "Recover the original in its genuine UI owner using typed members, real globals and declared operations. Retain seed spans and evidence; no current matching or runtime claim."}
 // TRIED: MISMATCH #3 push-vs-mov in the prologue; hoisting the two guard reads into locals before the branch did not change register allocation order. Full switch/goto structure otherwise matches.
 void Console::veh_key(int key, int character, int command) {
+    const int lock_flags = NetDaemonNet.channels_[1].payload_.flags;
     if (IsMultiplayerNet != 0 && character != 'a') {
         if (ConsoleControlTurnActive != 0) return;
-        if (NetDaemonNet.channels_[1].payload_.flags != 0) return;
+        if (lock_flags != 0) return;
         if ((NetDaemonNet.primary_state_.trailing_words_[6] &
              (1 << ConsoleGlobal.faction_id_)) != 0) return;
     }
 
-    int vehicle_id = selected_vehicle_;
+    // Every case reads the selected-vehicle member afresh.
     switch (key) {
-    case 'B': terraform(vehicle_id, 14); break;
-    case 'E': terraform(vehicle_id, 13); break;
-    case 'F': terraform(vehicle_id, 4); break;
-    case 'G': go_home(vehicle_id); break;
-    case 'H': hold(vehicle_id, 10); break;
-    case 'I': go_to(vehicle_id, -3, 0); break;
-    case 'L': automate(vehicle_id, 11); break;
+    case 'a':
+        if (lock_flags == 0) {
+            activate(Vehs[selected_vehicle_].x, Vehs[selected_vehicle_].y, 1);
+        }
+        break;
+    case 'b': {
+        const int vehicle_id = selected_vehicle_;
+        const uint8_t triad = Chassis[VehPrototypes[Vehs[vehicle_id].proto_id].chassis_id].triad;
+        if (triad == TRIAD_AIR && VehPrototypes[Vehs[vehicle_id].proto_id].plan != 8 &&
+            Weapon[VehPrototypes[Vehs[vehicle_id].proto_id].weapon_id].offense_rating != 0) {
+            automate(vehicle_id, 10);
+        } else if (Weapon[VehPrototypes[Vehs[vehicle_id].proto_id].weapon_id].offense_rating != 0 &&
+                   triad != TRIAD_AIR) {
+            oblit(vehicle_id);
+        } else if (VehPrototypes[Vehs[vehicle_id].proto_id].plan == 9) {
+            terraform(vehicle_id, 14);
+        } else if (VehPrototypes[Vehs[vehicle_id].proto_id].plan == 8) {
+            // Both arms found a base; the image keeps the dead plan compare.
+            new_base(vehicle_id);
+        } else {
+            new_base(vehicle_id);
+        }
+        break;
+    }
+    case 'q': terraform(selected_vehicle_, 15); break;
+    case 'B': terraform(selected_vehicle_, 14); break;
+    case 'E': terraform(selected_vehicle_, 13); break;
+    case 'f':
+        if (can_arty(Vehs[selected_vehicle_].proto_id, 1) != 0) {
+            arty(selected_vehicle_);
+        } else {
+            terraform(selected_vehicle_, 0);
+        }
+        break;
+    case 'F': terraform(selected_vehicle_, 4); break;
+    case 'g': go_to(selected_vehicle_, 0x18, 0); break;
+    case 'G': go_home(selected_vehicle_); break;
+    case 'h': hold(selected_vehicle_, 0); break;
+    case 'H': hold(selected_vehicle_, 10); break;
+    case 'i': use_ability(selected_vehicle_); break;
+    case 'I': go_to(selected_vehicle_, -3, 0); break;
+    case 'n': terraform(selected_vehicle_, 12); break;
+    case 'o':
+        if (VehPrototypes[Vehs[selected_vehicle_].proto_id].plan == 10) {
+            convoy(selected_vehicle_);
+        } else {
+            terraform(selected_vehicle_, 9);
+        }
+        break;
+    case 'L': automate(selected_vehicle_, 11); break;
+    case 'l': sentry(selected_vehicle_, 0); break;
+    case 'p': set_patrol(selected_vehicle_); break;
     case 'P': {
         const uint32_t destination_flag = MapWinTable[0]->field_1DD70_ & 0x400000u;
         for (int slot = 0; slot < static_cast<int>(MapWinTableSlots); ++slot) {
-            MapWin *const window = MapWinTable[slot];
-            if (window != 0 && (slot == 0 || window->view_active_ != 0)) {
+            if (MapWinTable[slot] != 0 && (slot == 0 || MapWinTable[slot]->view_active_ != 0)) {
                 if (destination_flag == 0) {
-                    window->field_1DD70_ |= 0x400000u;
-                    window->draw_base_dest(1);
+                    MapWinTable[slot]->field_1DD70_ |= 0x400000u;
+                    MapWinTable[slot]->draw_base_dest(1);
                 } else {
-                    window->field_1DD70_ &= 0xffbfffffu;
-                    window->draw_map(1);
+                    MapWinTable[slot]->field_1DD70_ &= 0xffbfffffu;
+                    MapWinTable[slot]->draw_map(1);
                 }
             }
         }
         break;
     }
-    case 'U': unload(vehicle_id); break;
-    case 'a':
-        if (NetDaemonNet.channels_[1].payload_.flags == 0) {
-            activate(Vehs[vehicle_id].x, Vehs[vehicle_id].y, 1);
-        }
-        break;
-    case 'f':
-        if (can_arty(Vehs[vehicle_id].proto_id, 1) == 0) {
-            terraform(vehicle_id, 0);
-        } else {
-            arty(vehicle_id);
-        }
-        break;
-    case 'g': go_to(vehicle_id, 0x18, 0); break;
-    case 'h': hold(vehicle_id, 0); break;
-    case 'i': use_ability(vehicle_id); break;
-    case 'l': sentry(vehicle_id, 0); break;
-    case 'n': terraform(vehicle_id, 12); break;
-    case 'o':
-        if (VehPrototypes[Vehs[vehicle_id].proto_id].plan != 10) {
-            terraform(vehicle_id, 9);
-        } else {
-            convoy(vehicle_id);
-        }
-        break;
-    case 'p': set_patrol(vehicle_id); break;
-    case 'q': terraform(vehicle_id, 15); break;
-    case 'r': terraform(vehicle_id, 5); break;
-    case 'b': {
-        const VehPrototype &prototype = VehPrototypes[Vehs[vehicle_id].proto_id];
-        const RulesChassis &chassis = Chassis[prototype.chassis_id];
-        const RulesWeapon &weapon = Weapon[prototype.weapon_id];
-        if (chassis.triad == TRIAD_AIR && prototype.plan != 8 &&
-            weapon.offense_rating != 0) {
-            automate(vehicle_id, 10);
-        } else if (weapon.offense_rating == 0 || chassis.triad == TRIAD_AIR) {
-            if (prototype.plan == 9) terraform(vehicle_id, 14);
-            else new_base(vehicle_id);
-        } else {
-            oblit(vehicle_id);
-        }
-        break;
-    }
+    case 'U': unload(selected_vehicle_); break;
+    case 'r': terraform(selected_vehicle_, 5); break;
     }
 
-    // The image reloads the selected-id member after this first key switch;
-    // several called Console operations can change it.
-    vehicle_id = selected_vehicle_;
     switch (character) {
-    case 0x20: skip(vehicle_id); break;
-    case 0x2e: terraform(vehicle_id, 8); break;
-    case 0x2f: explore(vehicle_id); break;
-    case '[': terraform(vehicle_id, 17); break;
-    case ']': terraform(vehicle_id, 16); break;
-    case '_': terraform(vehicle_id, 18); break;
-    case 'd': destroy(vehicle_id); break;
-    case 'k': terraform(vehicle_id, 7); break;
-    case 'm': terraform(vehicle_id, 2); break;
-    case 's': terraform(vehicle_id, 3); break;
+    case 'm': terraform(selected_vehicle_, 2); break;
+    case 's': terraform(selected_vehicle_, 3); break;
+    case 0x2f: explore(selected_vehicle_); break;
+    case 0x20: skip(selected_vehicle_); break;
+    case ']': terraform(selected_vehicle_, 16); break;
+    case '[': terraform(selected_vehicle_, 17); break;
+    case '_': terraform(selected_vehicle_, 18); break;
+    case 'd': destroy(selected_vehicle_); break;
+    case 'k': terraform(selected_vehicle_, 7); break;
+    case 0x2e: terraform(selected_vehicle_, 8); break;
     }
 
-    // The accelerator tree also reloads the member rather than preserving
-    // the earlier switch's value.
-    vehicle_id = selected_vehicle_;
-    if (command == 0x30046) { automate(vehicle_id, 6); return; }
-    if (command < 0x30047) {
-        if (command == 0x20052) { road_to(vehicle_id, 0x1b); return; }
-        if (command == 0x20044) { designate(vehicle_id); return; }
-        if (command == 0x20046) { terraform(vehicle_id, 11); return; }
-        if (command == 0x20048) { go_home(vehicle_id); return; }
-        if (command == 0x20054) { road_to(vehicle_id, 0x1c); return; }
-        if (command == 0x20055) { upgrade(vehicle_id); return; }
-        if (command == 0x30041) {
-            const VehPrototype &prototype = VehPrototypes[Vehs[vehicle_id].proto_id];
-            const RulesChassis &chassis = Chassis[prototype.chassis_id];
-            const RulesWeapon &weapon = Weapon[prototype.weapon_id];
-            automate(vehicle_id, chassis.triad == TRIAD_AIR &&
-                     weapon.offense_rating != 0 ? 12 : 3);
-            return;
+    switch (command) {
+    case 0x30046: automate(selected_vehicle_, 6); break;
+    case 0x20052: road_to(selected_vehicle_, 0x1b); break;
+    case 0x20044: designate(selected_vehicle_); break;
+    case 0x20046: terraform(selected_vehicle_, 11); break;
+    case 0x20048: go_home(selected_vehicle_); break;
+    case 0x20054: road_to(selected_vehicle_, 0x1c); break;
+    case 0x20055: upgrade(selected_vehicle_); break;
+    case 0x30041: {
+        const int vehicle_id = selected_vehicle_;
+        if (Chassis[VehPrototypes[Vehs[vehicle_id].proto_id].chassis_id].triad == TRIAD_AIR &&
+            Weapon[VehPrototypes[Vehs[vehicle_id].proto_id].weapon_id].offense_rating != 0) {
+            automate(vehicle_id, 12);
+        } else {
+            automate(vehicle_id, 3);
         }
-    } else {
-        switch (command) {
-        case 0x3004d: automate(vehicle_id, 5); return;
-        case 0x3004f: automate(vehicle_id, 7); return;
-        case 0x30052: automate(vehicle_id, 1); return;
-        case 0x30053: automate(vehicle_id, 4); return;
-        case 0x30054: automate(vehicle_id, 2); return;
-        case 0x30055: give_veh(vehicle_id); return;
-        }
+        break;
+    }
+    case 0x3004d: automate(selected_vehicle_, 5); break;
+    case 0x30053: automate(selected_vehicle_, 4); break;
+    case 0x30052: automate(selected_vehicle_, 1); break;
+    case 0x30054: automate(selected_vehicle_, 2); break;
+    case 0x3004f: automate(selected_vehicle_, 7); break;
+    case 0x30055: give_veh(selected_vehicle_); break;
     }
 }
 
@@ -5031,46 +5041,41 @@ void Console::veh_key(int key, int character, int command) {
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/0050fe70.cpp: retained complete original identity/spans and seed evidence", "recovery/tasks/console-scenario-owner-wave.json; native scope expansions through sequence27", "Source owner interpretation preserves mapped original accesses, lifetime calls and branch roles; source-bound members and globals replace the seed offsets/address aliases. Historical seeds and claims remain independent restoration obligations."], "reason": "Recover splitter release into the genuine Console owner using source Win capture owners, real Win inheritance, embedded Sprite geometry and named splitter members. Preserve signed sentinel ordering and the original update operations; no fixed executable calls or self-offset access."}
 // symbol    ?on_nc_left_up@Console@@UAEXHH@Z
 void Console::on_nc_left_up(int x, int y) {
-    Win *const window = static_cast<Win *>(this);
-    if (WinPointerOwner3 == window) {
-        WinPointerOwner3 = nullptr;
-        window->on_lose_mouse_capture();
-    }
-    if (WinPointerOwner4 == window) {
-        WinPointerOwner4 = nullptr;
-    }
+    release_pointer();
 
-    const int dragging = -1;
-    if (field_23D80_ == dragging || field_23D84_ == dragging) {
-        int *const target = field_23D80_ == dragging
-            ? &field_23D80_ : &field_23D84_;
-        const int half = sprite_a_.width() / 2;
-        int position = x - border_thickness_;
-        if (position < half) position = half;
-        const int limit = client_rect_.right - client_rect_.left -
-                          border_thickness_ * 2 - half;
-        if (position > limit) position = limit;
-        *target = position;
+    // Each clamp re-reads the geometry: the stores go through `target`.
+    if (field_23D80_ == -1 || field_23D84_ == -1) {
+        int *const target = field_23D80_ == -1 ? &field_23D80_ : &field_23D84_;
+        *target = x - border_thickness_;
+        if (*target < sprite_a_.width() / 2) {
+            *target = sprite_a_.width() / 2;
+        }
+        if (*target > client_width() - border_thickness_ * 2 -
+                          sprite_a_.width() / 2) {
+            *target = client_width() - border_thickness_ * 2 -
+                      sprite_a_.width() / 2;
+        }
         update(0, ConsoleDragLineY, dib_.bmiHeader.biWidth, 1, nullptr);
-        update(ConsoleDragLineX, 0, 1,
-               -static_cast<int>(dib_.bmiHeader.biHeight), nullptr);
-    } else if (field_23D88_ == dragging || field_23D8C_ == dragging) {
-        int *const target = field_23D88_ == dragging
-            ? &field_23D88_ : &field_23D8C_;
-        const int bottom_border = bottom_border_thickness_ >= 0
-            ? bottom_border_thickness_ : border_thickness_;
-        const int track_offset = client_rect_.top - client_rect_.bottom -
-            outer_rect_.top + outer_rect_.bottom + bottom_border;
-        const int half = sprite_b_.height() / 2;
-        int position = track_offset + y;
-        if (position < half) position = half;
-        const int limit = client_rect_.bottom - client_rect_.top -
-                          caption_height_ - bottom_border - half;
-        if (position > limit) position = limit;
-        *target = position;
+        update(ConsoleDragLineX, 0, 1, -static_cast<int>(dib_.bmiHeader.biHeight), nullptr);
+    } else if (field_23D88_ == -1 || field_23D8C_ == -1) {
+        int *const target = field_23D88_ == -1 ? &field_23D88_ : &field_23D8C_;
+        *target = client_rect_.top - client_rect_.bottom - outer_rect_.top - caption_height_ +
+                  outer_rect_.bottom + caption_height_ +
+                  (bottom_border_thickness_ >= 0 ? bottom_border_thickness_ : border_thickness_) + y;
+        if (*target < sprite_b_.height() / 2) {
+            *target = sprite_b_.height() / 2;
+        }
+        if (*target > client_rect_.bottom - client_rect_.top - caption_height_ -
+                          (bottom_border_thickness_ >= 0 ? bottom_border_thickness_
+                                                         : border_thickness_) -
+                          sprite_b_.height() / 2) {
+            *target = client_rect_.bottom - client_rect_.top - caption_height_ -
+                      (bottom_border_thickness_ >= 0 ? bottom_border_thickness_
+                                                     : border_thickness_) -
+                      sprite_b_.height() / 2;
+        }
         update(0, ConsoleDragLineY, dib_.bmiHeader.biWidth, 1, nullptr);
-        update(ConsoleDragLineX, 0, 1,
-               -static_cast<int>(dib_.bmiHeader.biHeight), nullptr);
+        update(ConsoleDragLineX, 0, 1, -static_cast<int>(dib_.bmiHeader.biHeight), nullptr);
     }
 
     if (field_23D88_ > field_23D8C_) {
