@@ -2142,7 +2142,7 @@ void __cdecl say_morale(int veh_id, int faction_id_vs_native) {
 
 /*
 Purpose: Check whether the specified unit could ever reach the given tile as a patrol waypoint.
-// ORIGINAL: 0x004CD6A0 ?valid_patrol@@YAHHHH@Z 0x004CD6A0-0x004CDA23
+// ORIGINAL: 0x004CD6A0 ?valid_patrol@@YAHHHH@Z 0x004CD6A0-0x004CDA23 BYTE_EXACT
 // size      899 bytes
 // prototype int (__cdecl ?valid_patrol@@YAHHHH@Z)(int vehID, int xCoord, int yCoord)
 // callers   2   call targets   5
@@ -10773,7 +10773,7 @@ dispatch_event:
 // Coupled transfer/terrain actions and their still-unfinished prototype dependencies.
 // Partial dependencies retain explicit BODY GOES HERE sentinels and seed obligations.
 // Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x004CEDE0 ?action_give@@YAXHH@Z 0x004CEDE0-0x004CF379
+// ORIGINAL: 0x004CEDE0 ?action_give@@YAXHH@Z 0x004CEDE0-0x004CF379 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned entry 004CEDE0; retained seed src/recovered/units/004cede0.cpp", "recovery/tasks/vehicle-special-actions-coverage.json; native scope expansion preserves task baseline", "Native4CE326/4CE7F0 kill precedes announcement; fungal EBX retains initial combat faction while later slot reads observe compacted storage;580B51/580BF7 are mask immediates, not globals."], "reason": "Typed transfer or terrain action preserves native parser, kill, interception and post-call vehicle-slot read order; retained seed remains evidence, not executable backing."}
 void __cdecl action_give(int vehicle_id, int faction_id) {
     const int original_owner = Vehs[vehicle_id].faction_id;
