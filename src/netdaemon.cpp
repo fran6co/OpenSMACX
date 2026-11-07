@@ -7240,15 +7240,11 @@ int NetDaemon::veh_drop(int veh_id, int x, int y) {
 
     int base_id = base_at(x, y);
     if (base_id >= 0
-        && Vehs[veh_id].faction_id != Bases[base_id].faction_id_current
+        && Bases[base_id].faction_id_current != Vehs[veh_id].faction_id
         && (PlayersData[Vehs[veh_id].faction_id]
                 .diplo_treaties[Bases[base_id].faction_id_current] & 1U) == 0) {
-        Map *tile = map_loc(x, y);
-        if ((tile->bit & 2U) != 0) {
-            int owner = tile->val2 & 0xF;
-            if (owner < 8 && owner >= 0) {
-                goto airdrop;
-            }
+        if (veh_who(x, y) >= 0) {
+            goto airdrop;
         }
         if (add_global() != 0) {
             if (channels_[1].trailing_words_[3] != 0) {
@@ -7299,32 +7295,14 @@ airdrop:
             --NetBusyCount;
             log_say("Client received acknowledgement",
                     ConsoleGlobal.faction_id_, 0, 0);
-            if (IsMultiplayerNet != 0) {
-                log_say("Client releasing lock", ConsoleGlobal.faction_id_, 0, 0);
-                message_data(0x2212, 0, 0, 0, 0, 0);
-                channels_[1].leading_words_[3] = 0;
-                channels_[1].leading_words_[2] = 0;
-                channels_[1].trailing_words_[5] = 0;
-                channels_[1].trailing_words_[4] = 0;
-            }
-            channels_[0].payload_.vehicle_selection_follow = 0;
-            channels_[1].trailing_words_[3] = 0;
+            unlock_veh();
             channels_[1].leading_words_[3] = 0;
         }
         return 1;
     }
 
 release_vehicle:
-    if (IsMultiplayerNet != 0) {
-        log_say("Client releasing lock", ConsoleGlobal.faction_id_, 0, 0);
-        message_data(0x2212, 0, 0, 0, 0, 0);
-        channels_[1].leading_words_[3] = 0;
-        channels_[1].leading_words_[2] = 0;
-        channels_[1].trailing_words_[5] = 0;
-        channels_[1].trailing_words_[4] = 0;
-    }
-    channels_[0].payload_.vehicle_selection_follow = 0;
-    channels_[1].trailing_words_[3] = 0;
+    unlock_veh();
     return 0;
 }
 

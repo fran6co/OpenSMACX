@@ -1511,27 +1511,26 @@ void __cdecl sprite_draw_func(Sprite *sprite, GraphicWin *owner,
 // TRIED: Ghidra's decompile reads `*(int*)(self+0x21d0)+8` / `+4` as plain pointer ARITHMETIC on the vbtable slot; the raw disasm (`mov edx,[eax+8]` after `mov eax,[esi+ 0x21d0]`) shows it is a SECOND dereference - vb8/vb4 are themselves loaded from that address, not offset by it. Fixed three sites (0x222c/0x21fc, the 0x2284/0x2210/ 0x2218/0x2214/0x2204 cluster, and 0x2268) that were silently wrong single-indirection before this. Compiles and diverges at #8 (an early `mov`-vs-`cmp` reorder in the `field_0xa14==&DAT_00733990 && DAT_009b7b1c==0x320` guard); not chased further given the function's size.
 int Popup::calculate_dimensions() {
     if (caller_sprite_ != nullptr) {
-        const Win *owner = external_window_;
-        const int screen_width = WinScreenWidth;
-        if (owner == static_cast<Win *>(&DiplomacyPopup)
-            && screen_width == 800 && dialogs_.kind_ != 8) {
-            if (dialogs_.get_num_items() > 5) caller_sprite_ = nullptr;
+        if (external_window_ == static_cast<Win *>(&DiplomacyPopup)
+            && WinScreenWidth == 800) {
+            if (dialogs_.kind_ != 8 && dialogs_.get_num_items() > 5) {
+                caller_sprite_ = nullptr;
+            }
         } else {
-            const int sprite_width = caller_sprite_->width();
-            const int border = static_cast<int>(field_30E0_);
-            int width = sprite_width * static_cast<int>(field_3104_)
-                / static_cast<int>(field_3108_) + border;
+            const int width = caller_sprite_->width()
+                * static_cast<int>(field_3104_) / static_cast<int>(field_3108_)
+                + static_cast<int>(field_30E0_);
             int extra_width = dialogs_.Dialog::field_5C_;
             if (extra_width == 0) extra_width = dialogs_.Dialog::field_2C_;
-            width += extra_width;
+            extra_width += width;
             if (PopupModalActive != 0) {
-                width = 700;
-            } else if (screen_width == 800) {
-                if (width > 0x1ED) width = 0x1EE;
-            } else if (screen_width - 0x16E <= width) {
-                width = screen_width - 0x16E;
+                extra_width = 700;
+            } else if (WinScreenWidth == 800) {
+                if (extra_width >= 0x1EE) extra_width = 0x1EE;
+            } else if (extra_width >= WinScreenWidth - 0x16E) {
+                extra_width = WinScreenWidth - 0x16E;
             }
-            dialogs_.Dialog::field_2C_ = width;
+            dialogs_.Dialog::field_2C_ = extra_width;
         }
     }
 
@@ -1548,20 +1547,17 @@ int Popup::calculate_dimensions() {
     field_30AC_ += mode * 10000;
     if (TurnRedrawPending != 0 || mode == 6) field_30A8_ |= 0x200000;
 
+    // Tier i of the a/b colour slots takes the table's pair 2i, 2i+1.
     if (external_window_ == static_cast<Win *>(&DiplomacyPopup)) {
-        string_color_a_ = TextColourTable[182];
-        string_color_b_ = TextColourTable[183];
-        string_color_2a_ = TextColourTable[184];
-        string_color_2b_ = TextColourTable[185];
-        string_color_3a_ = TextColourTable[186];
-        string_color_3b_ = TextColourTable[187];
+        for (int i = 0; i < 3; ++i) {
+            (&string_color_a_)[i] = TextColourTable[182 + i * 2];
+            (&string_color_b_)[i] = TextColourTable[183 + i * 2];
+        }
     } else {
-        string_color_a_ = TextColourTable[70];
-        string_color_b_ = TextColourTable[71];
-        string_color_2a_ = TextColourTable[72];
-        string_color_2b_ = TextColourTable[73];
-        string_color_3a_ = TextColourTable[74];
-        string_color_3b_ = TextColourTable[75];
+        for (int i = 0; i < 3; ++i) {
+            (&string_color_a_)[i] = TextColourTable[70 + i * 2];
+            (&string_color_b_)[i] = TextColourTable[71 + i * 2];
+        }
     }
 
     if (mode == 1000) return BasePop::calculate_dimensions();
@@ -1572,10 +1568,18 @@ int Popup::calculate_dimensions() {
     dialogs_.Dialog::field_44_ = 3;
     field_30D0_ = 0x14;
     if (mode != 5) {
-        dialogs_.Dialog::field_34_ = dialogs_.kind_ == 1 ? 0x1B : 3;
+        if (dialogs_.kind_ == 1) {
+            dialogs_.Dialog::field_34_ = 0x1B;
+        } else {
+            dialogs_.Dialog::field_34_ = 3;
+        }
     }
 
-    field_21B8_ = owned_text_ != nullptr ? 0x26 : 0x12;
+    if (owned_text_ != nullptr) {
+        field_21B8_ = 0x26;
+    } else {
+        field_21B8_ = 0x12;
+    }
     const bool interface_visible = MainInterfaceGlobal.Win::is_visible() != 0;
     if (!interface_visible || (mode != 0 && mode != 5)) {
         field_21B0_ = 10;
@@ -1596,10 +1600,10 @@ int Popup::calculate_dimensions() {
 
     field_21C4_ = 9;
     field_30A4_ = 0x10000C0;
-    static_cast<GraphicWin &>(dialogs_).iFlags_ = 0x40;
+    dialogs_.iFlags_ = 0x40;
     if (mode == 6) {
         field_30A4_ &= 0xFFFFFFBF;
-        static_cast<GraphicWin &>(dialogs_).iFlags_ &= 0xFFFFFFBF;
+        dialogs_.iFlags_ &= 0xFFFFFFBF;
     }
     field_21C0_ = 0;
     field_21C4_ = 4;
@@ -1624,6 +1628,13 @@ int Popup::calculate_dimensions() {
 // RECOVERY_BINDING: v1 {"evidence": ["task:popup-dimensions-background-owner", "Native primary tables6695C8/6698D4 slots90..96 and pinned original body", "historical seed:src/unrecovered/00405c80.cpp"], "reason": "Recover a complete typed Popup override of the native BasePop callback hierarchy, using actual shared Dialog/GraphicWin bases and source-owned global objects. Preserve original identity, spans and seed discoveries; no new matching or acceptance claim."}
 // symbol    ?on_draw_background@Popup@@UAEHXZ
 // TRIED: structural transcription (branch-local Buffer* target, register-vs-global box_sprite receiver per branch) compiles and matches to instr #6 (prologue push/mov order for callee-saved regs); moving the `self` cast local closer to first use did not change it.
+static inline void popup_inset_rect(RECT *r, int d) {
+    r->left += d;
+    r->right -= d;
+    r->top += d;
+    r->bottom -= d;
+}
+
 int Popup::on_draw_background() {
   const int type = static_cast<int>(field_30AC_) / 10000;
   if (type == 1000) {
@@ -1634,201 +1645,167 @@ int Popup::on_draw_background() {
   RECT title;
   RECT anchor;
   RECT description;
-  Buffer *drawing_buffer;
-  int final_left;
-  int final_top;
-  int final_right;
-  int final_bottom;
 
   if (external_window_ == &DiplomacyPopup) {
-    GraphicWin &diplomacy_window = DiplomacyPopup;
-    RECT *diplomacy_rect = diplomacy_window.buffer_working_rect();
+    GraphicWin *const window = external_window_;
+    Buffer::restore_clip();
+    RECT *const diplomacy_rect = window->buffer_working_rect();
+    outer = *diplomacy_rect;
+    outer.left += 0x17;
+    outer.right -= 0x37;
+    outer.bottom += 5;
+    window->fill(&outer, 9);
 
-    Buffer::set_clip(buffer_working_rect());
-    outer.left = diplomacy_rect->left + 0x17;
-    outer.top = diplomacy_rect->top;
-    outer.right = diplomacy_rect->right - 0x37;
-    outer.bottom = diplomacy_rect->bottom + 5;
-    diplomacy_window.fill(&outer, 9);
-
-    drawing_buffer = &static_cast<Buffer &>(diplomacy_window);
     title = outer;
-    drawing_buffer->box_sprite(&title, &InterfaceBoxStyles[9]);
+    window->box_sprite(&title, &InterfaceBoxStyles[9]);
 
     if (owned_text_ != 0) {
       CharUpperA(owned_text_);
 
-      title.left = diplomacy_rect->left + 0x1b;
-      title.right = diplomacy_rect->right - 0x3b;
-      title.top = diplomacy_rect->top + 4;
-      title.bottom = diplomacy_rect->top + 0x1c;
-      drawing_buffer->box_sprite(&title, &InterfaceBoxStyles[3]);
-
-      title.left += 3;
-      title.right -= 3;
-      title.bottom -= 3;
+      title = *diplomacy_rect;
+      title.left += 0x1a;
+      title.right -= 0x3a;
       title.top += 3;
-      drawing_buffer->box_sprite(&title, &InterfaceBoxStyles[6]);
+      title.bottom = title.top + 0x1a;
+      popup_inset_rect(&title, 1);
+      window->box_sprite(&title, &InterfaceBoxStyles[3]);
 
-      title.left += 3;
-      title.bottom -= 3;
-      title.right -= 3;
-      title.top += 3;
-      drawing_buffer->set_font(MainInterfaceGlobal.primary_font(), 0, 0, 0);
-      drawing_buffer->set_text_color(TextColourTable[180],
-                                     TextColourTable[181], 1, 1);
-      drawing_buffer->write_cent_l(owned_text_, &title,
-                                   static_cast<int>(strlen(owned_text_)));
+      popup_inset_rect(&title, 3);
+      window->box_sprite(&title, &InterfaceBoxStyles[6]);
+
+      popup_inset_rect(&title, 3);
+      window->set_font(MainInterfaceGlobal.primary_font(), 0, 0, 0);
+      window->set_text_color(TextColourTable[180], TextColourTable[181], 1, 1);
+      window->write_cent_l(owned_text_, &title);
     }
 
-    anchor.top = field_30E8_ + field_30E0_;
-    anchor.left = field_30F0_ + field_30D8_ + field_21C8_
-                  + field_30E0_ - 3;
-    anchor.bottom = field_30D4_ + anchor.top;
-    anchor.top -= 3;
-    anchor.right = outer.right - 7;
-
-    final_left = anchor.left;
-    final_top = anchor.top;
-    final_right = anchor.right;
-    final_bottom = anchor.bottom;
+    const int x = field_30F0_ + field_30D8_ + field_21C8_ + field_30E0_;
+    const int y = field_30E8_ + field_30E0_;
+    anchor.right = outer.right - 10;
+    anchor.left = x - 3;
+    anchor.bottom = field_30D4_ + y;
+    anchor.top = y - 3;
+    anchor.right += 3;
     if (field_30D4_ != 0) {
-      drawing_buffer->box_sprite(&anchor, &InterfaceBoxStyles[0]);
+      window->box_sprite(&anchor, &InterfaceBoxStyles[0]);
+    }
+    outer = anchor;
+    outer.left -= 3;
+    outer.top -= 3;
+    outer.right += 3;
+    outer.bottom += 3;
+    window->box_sprite(&outer, &InterfaceBoxStyles[3]);
+  } else {
+  Buffer::restore_clip();
+  GraphicWin::fill(9);
+  const RECT &working_rect = Buffer::clip_rect();
+  outer = working_rect;
+  if (MainInterfaceGlobal.Win::is_visible() && (type == 0 || type == 5)) {
+    outer.left += 0x17;
+    outer.right -= 0x37;
+    outer.bottom += 5;
+  }
+
+  title = outer;
+  if (type == 6 || type == 2) {
+    box_sprite(&title, &InterfaceStandardPopupBoxStyle);
+  } else {
+    box_sprite(&title, &InterfaceBoxStyles[9]);
+  }
+
+  if (owned_text_ != 0) {
+    CharUpperA(owned_text_);
+
+    title = working_rect;
+    if (type == 6 || type == 2) {
+      popup_inset_rect(&title, 9);
+    }
+    if (MainInterfaceGlobal.Win::is_visible() && (type == 0 || type == 5)) {
+      title.left += 0x1a;
+      title.right -= 0x3a;
+    } else {
+      title.left += 3;
+      title.right -= 3;
+    }
+    title.top += 3;
+    title.bottom = title.top + 0x1a;
+    popup_inset_rect(&title, 1);
+    box_sprite(&title, &InterfaceBoxStyles[3]);
+
+    popup_inset_rect(&title, 3);
+    box_sprite(&title, &InterfaceBoxStyles[6]);
+
+    popup_inset_rect(&title, 3);
+    set_font(MainInterfaceGlobal.primary_font(), 0, 0, 0);
+    set_text_color(TextColourTable[68], TextColourTable[69], 1, 1);
+    write_cent_l(owned_text_, &title);
+  }
+
+  int x = field_30F0_ + field_30D8_ + field_21C8_ + field_30E0_;
+  int y = field_30E8_ + field_30E0_;
+  anchor.right = outer.right - 10;
+  anchor.bottom = field_30D4_ + y;
+  if (type == 6 || type == 2) {
+    anchor.right -= 9;
+  }
+  anchor.left = x - 3;
+  anchor.right += 3;
+  anchor.top = y - 3;
+  if (field_30D4_ != 0) {
+    box_sprite(&anchor, &InterfaceBoxStyles[0]);
+    y += field_30E4_ + field_30D4_;
+  }
+
+  if (field_21CC_ >= 0) {
+    x = field_21CC_;
+  }
+
+  // Preserve the original branch's conditional writes. With kind_ == -1,
+  // 0x406181 skips the stores at 0x40619D..0x4061AD; with no anchor,
+  // 0x406205 reads the unwritten rectangle. Preserve that original error path.
+  if (dialogs_.kind_ != -1) {
+    description.left = x;
+    description.top = y;
+    description.right = dialogs_.Dialog::field_5C_ + x;
+    description.bottom = dialogs_.Dialog::field_60_ + y;
+    if (field_30D4_ != 0) {
+      description.left = anchor.left;
+      description.right = anchor.right;
+    }
+  }
+
+  int final_left;
+  int final_top;
+  int final_right;
+  int final_bottom;
+  if (field_30D4_ != 0) {
+    if (dialogs_.kind_ != -1 && caller_sprite_ == 0) {
+      UnionRect(&outer, &description, &anchor);
+      final_left = outer.left;
+      final_top = outer.top;
+      final_right = outer.right;
+      final_bottom = outer.bottom;
+    } else {
       final_left = anchor.left;
       final_top = anchor.top;
       final_right = anchor.right;
       final_bottom = anchor.bottom;
     }
   } else {
-    drawing_buffer = static_cast<Buffer *>(this);
-    Buffer::set_clip(buffer_working_rect());
-    GraphicWin::fill(9);
-
-    const RECT &working_rect = Buffer::clip_rect();
-    outer.left = working_rect.left;
-    outer.top = working_rect.top;
-    outer.right = working_rect.right;
-    outer.bottom = working_rect.bottom;
-
-    int interface_visible = MainInterfaceGlobal.Win::is_visible();
-    if (interface_visible && (type == 0 || type == 5)) {
-      outer.left += 0x17;
-      outer.right -= 0x37;
-      outer.bottom += 5;
-    }
-
-    title = outer;
-    if (type == 6 || type == 2) {
-      drawing_buffer->box_sprite(&title, &InterfaceStandardPopupBoxStyle);
-    } else {
-      drawing_buffer->box_sprite(&title, &InterfaceBoxStyles[9]);
-    }
-
-    if (owned_text_ != 0) {
-      CharUpperA(owned_text_);
-
-      title = working_rect;
-      if (type == 6 || type == 2) {
-        title.left += 9;
-        title.right -= 9;
-        title.top += 9;
-        title.bottom -= 9;
-      }
-
-      interface_visible = MainInterfaceGlobal.Win::is_visible();
-      if (!interface_visible || (type != 0 && type != 5)) {
-        title.left += 3;
-        title.right -= 3;
-      } else {
-        title.left += 0x1a;
-        title.right -= 0x3a;
-      }
-      title.left += 1;
-      title.right -= 1;
-      title.bottom = title.top + 0x1c;
-      title.top += 4;
-
-      drawing_buffer->box_sprite(&title, &InterfaceBoxStyles[3]);
-      title.left += 3;
-      title.right -= 3;
-      title.top += 3;
-      title.bottom -= 3;
-      drawing_buffer->box_sprite(&title, &InterfaceBoxStyles[6]);
-      title.left += 3;
-      title.right -= 3;
-      title.top += 3;
-      title.bottom -= 3;
-
-      drawing_buffer->set_font(MainInterfaceGlobal.primary_font(), 0, 0, 0);
-      drawing_buffer->set_text_color(TextColourTable[68],
-                                     TextColourTable[69], 1, 1);
-      drawing_buffer->write_cent_l(owned_text_, &title,
-                                   static_cast<int>(strlen(owned_text_)));
-    }
-
-    int x = field_30F0_ + field_30D8_ + field_21C8_ + field_30E0_;
-    int y = field_30E8_ + field_30E0_;
-    anchor.right = outer.right - 10;
-    anchor.bottom = field_30D4_ + y;
-    if (type == 6 || type == 2) {
-      anchor.right = outer.right - 0x13;
-    }
-    anchor.left = x - 3;
-    anchor.right += 3;
-    anchor.top = y - 3;
-
-    int has_anchor = 0;
-    if (field_30D4_ != 0) {
-      drawing_buffer->box_sprite(&anchor, &InterfaceBoxStyles[0]);
-      has_anchor = field_30D4_;
-      y = y + field_30E4_ + has_anchor;
-    }
-
-    if (field_21CC_ >= 0) {
-      x = field_21CC_;
-    }
-
-    // Preserve the original branch's conditional writes. With kind_ == -1,
-    // 0x406181 skips the stores at 0x40619D..0x4061AD; with no anchor,
-    // 0x406205 reads the unwritten rectangle. Preserve that original error path.
-    if (dialogs_.kind_ != -1) {
-      description.bottom = dialogs_.Dialog::field_60_ + y;
-      description.right = dialogs_.Dialog::field_5C_ + x;
-      description.left = x;
-      description.top = y;
-      if (has_anchor != 0) {
-        description.left = anchor.left;
-        description.right = anchor.right;
-      }
-    }
-
-    if (has_anchor != 0) {
-      final_left = anchor.left;
-      final_top = anchor.top;
-      final_right = anchor.right;
-      final_bottom = anchor.bottom;
-      if (dialogs_.kind_ != -1 && caller_sprite_ == 0) {
-        UnionRect(&outer, &description, &anchor);
-        final_left = outer.left;
-        final_top = outer.top;
-        final_right = outer.right;
-        final_bottom = outer.bottom;
-      }
-    } else {
-      // Native reads these locals here even when kind_ == -1 skipped their
-      // writes; preserve only that original no-anchor path.
-      final_left = description.left;
-      final_top = description.top;
-      final_right = description.right;
-      final_bottom = description.bottom;
-    }
+    // Native reads these locals here even when kind_ == -1 skipped their
+    // writes; preserve only that original no-anchor path.
+    final_left = description.left;
+    final_top = description.top;
+    final_right = description.right;
+    final_bottom = description.bottom;
   }
 
-  outer.bottom = final_bottom + 3;
+  outer.left = final_left - 3;
   outer.right = final_right + 3;
   outer.top = final_top - 3;
-  outer.left = final_left - 3;
-  drawing_buffer->box_sprite(&outer, &InterfaceBoxStyles[3]);
+  outer.bottom = final_bottom + 3;
+  box_sprite(&outer, &InterfaceBoxStyles[3]);
+  }
   return external_window_ == 0;
 }
 
