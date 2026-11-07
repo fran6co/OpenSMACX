@@ -1063,7 +1063,7 @@ void Datalink::draw_adv_concept() {
     soft_update(&description_rect_);
 }
 
-// ORIGINAL: 0x00430770 ?draw_effect@Datalink@@QAEXXZ 0x00430770-0x00430B30;0x00653AD6-0x00653BA8
+// ORIGINAL: 0x00430770 ?draw_effect@Datalink@@QAEXXZ 0x00430770-0x00430B30;0x00653AD6-0x00653BA8 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["image:0x430770", "git:8e3029104ab590bec35cc6932e637765b2ea4074:src/recovered/units/00430770.cpp"], "reason": "Recover the preserved topic drawer with source-owned state and real popup/window lifetimes."}
 void Datalink::draw_effect() {
     Popup popup;

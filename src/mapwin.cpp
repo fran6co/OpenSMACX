@@ -7092,7 +7092,7 @@ void MapWin::UNK6(int UNUSED(x) x, int UNUSED(y) y, int radius) {
     }
 }
 
-// ORIGINAL: 0x0046FB90 ?clear_alt@MapWin@@QAEXHHH@Z 0x0046FB90-0x0046FC29 FILE
+// ORIGINAL: 0x0046FB90 ?clear_alt@MapWin@@QAEXHHH@Z 0x0046FB90-0x0046FC29 FILE BYTE_EXACT
 // TRIED: 153/153 bytes (edit distance 1 pair, same total size).
 // Original writes the -1 fill via `or edx,0xffffffff` into a register
 // it already holds, then stores that register (2 ops); every source
