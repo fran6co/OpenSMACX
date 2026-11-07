@@ -48,6 +48,13 @@
 #include "interlude.h"
 #include "worldwin.h"
 
+// Recovery spelling (name unknown): has_fac() on the selected base, one
+// inline level deep. The image keeps that nested has_fac() as a real call
+// where VC6's inline budget runs out (base_minerals, base_doctors).
+static inline BOOL selected_base_has_fac(int facility_id) {
+    return has_fac(facility_id, BaseIDCurrentSelected, 0);
+}
+
 namespace {
 // Separate writable objects preserve the original popup operands at each use.
 // RECOVERY_OBJECT: v1 0x00687C84 ?staple_fail_alien_picture@?%src/base.cpp@@3PADA
@@ -1075,22 +1082,11 @@ void __cdecl base_doctors() {
     int riot_doctor_adjustment = 0;
 
     if ((base->state & BSTATE_DRONE_RIOTS_ACTIVE) != 0) {
-        const int brood_pit = has_fac(FAC_BROOD_PIT, BaseIDCurrentSelected, 0) ? 1 : 0;
+        const int brood_pit = selected_base_has_fac(FAC_BROOD_PIT) ? 1 : 0;
         const int police = PlayersData[faction].soc_effect_pending.values_[SocialEffect::POLICE]
                          + brood_pit * 2;
         if (police < -1) {
-            const int selected_base_id = BaseIDCurrentSelected;
-            Base *selected_base = &Bases[selected_base_id];
-            const int selected_faction = selected_base->faction_id_current;
-            const int ascetic_owner = base_project(SP_ASCETIC_VIRTUES);
-            const int ascetic_reduction = ascetic_owner >= 0
-                && Bases[ascetic_owner].faction_id_current == selected_faction ? 2 : 0;
-            const int population_pressure = static_cast<int>(selected_base->population_size)
-                - ascetic_reduction + Players[selected_faction].rule_population;
-            if ((population_pressure < static_cast<int>(Rules.pop_limit_sans_hab_complex)
-                 || has_fac(FAC_HAB_COMPLEX, selected_base_id, 0))
-                && (population_pressure < static_cast<int>(Rules.pop_limit_sans_hab_dome)
-                    || has_fac(FAC_HABITATION_DOME, selected_base_id, 0))) {
+            if (!pop_goal_fac(BaseIDCurrentSelected)) {
                 const int cloning_vats_owner = base_project(SP_CLONING_VATS);
                 const bool cloning_vats_for_faction = cloning_vats_owner >= 0
                     && Bases[cloning_vats_owner].faction_id_current == faction;
@@ -8463,23 +8459,11 @@ BOOL __cdecl ascending(int UNUSED(faction_id) faction_id) {
 /*
 Purpose: Calculate minerals and ecological damage for the current base.
 // ORIGINAL: 0x004E9CB0 ?base_minerals@@YAXXZ 0x004E9CB0-0x004EA1EF
-// LEVER: the image calls has_fac(facility,base,0) - not has_fac_built - for
-//   5 of 7 facility checks (QUANTUM_CONVERTER, ROBOTIC_ASSEMBLY_PLANT,
-//   GENEJACK_FACTORY, both NANOREPLICATOR checks); switching those 5 from
-//   has_fac_built(...) to has_fac(...,0) took the call count from 1 to 6 of 7.
-// LEVER: CENTAURI_PRESERVE/TEMPLE_OF_PLANET were short one real bitmask()
-//   call each (6 vs 7) because has_fac_built(literal,...) fully constant-folds
-//   under this tree's VC6 (offset/mask collapse to a direct bit test, no
-//   call at all) instead of leaving bitmask() out-of-line as the image does;
-//   an explicit local `int offset,mask; bitmask(...)` folds identically, and
-//   routing them through has_fac(literal,base,0) instead (matching the other
-//   5) makes it WORSE: all 7 become real has_fac calls and a downstream
-//   ascending() call that was inlined stops being inlined (8 total, MORE).
-//   has_fac_built_call (base.h, forces bitmask_call's real E8 the same way
-//   breed_mod's four checks do) is the shape that matches: switching just
-//   these two took call_diff to 0 disagreeing (was FEWER by 2), for a
-//   negligible similarity cost (0.239 -> 0.232 best-across-flags) - the
-//   correct call graph, not the highest score, so kept.
+// LEVER: the five out-of-line has_fac() calls sit one inline level deep
+//   (selected_base_has_fac) and exceed VC6's inline budget, which expands
+//   shallower levels first, then in source order; the two later direct
+//   has_fac() sites still inline. Plain int arithmetic, no wrappers.
+//   Remaining gap: the image multiplies eco_damage before diff_factor.
 // size      1343 bytes
 // prototype
 // callers   7   call targets   2
@@ -8491,48 +8475,44 @@ Status: Complete
 */
 void __cdecl base_minerals() {
     uint32_t faction_id = BaseCurrent->faction_id_current;
-    BaseCurrent->intake_2[RSC_MINERALS] = base_yield_add(BaseCurrent->intake_2[RSC_MINERALS],
-        base_yield_signed_bits(BaseCurrentConvoyTo[RSC_MINERALS]));
-    int mineral_bonus = (has_fac(FAC_QUANTUM_CONVERTER, BaseIDCurrentSelected, 0)
-        || has_project(SP_SINGULARITY_INDUCTOR, faction_id)) ? 1 : 0;
-    if (has_fac(FAC_ROBOTIC_ASSEMBLY_PLANT, BaseIDCurrentSelected, 0)) {
+    BaseCurrent->intake_2[RSC_MINERALS] = (BaseCurrent->intake_2[RSC_MINERALS] + (int)BaseCurrentConvoyTo[RSC_MINERALS]);
+    int mineral_bonus = 0;
+    if (selected_base_has_fac(FAC_QUANTUM_CONVERTER) || has_project(SP_SINGULARITY_INDUCTOR, faction_id)) {
+        mineral_bonus = 1;
+    }
+    if (selected_base_has_fac(FAC_ROBOTIC_ASSEMBLY_PLANT)) {
         mineral_bonus++;
     }
-    if (has_fac(FAC_GENEJACK_FACTORY, BaseIDCurrentSelected, 0)) {
+    if (selected_base_has_fac(FAC_GENEJACK_FACTORY)) {
         mineral_bonus++;
     }
-    if (has_fac(FAC_NANOREPLICATOR, BaseIDCurrentSelected, 0)) {
+    if (selected_base_has_fac(FAC_NANOREPLICATOR)) {
         mineral_bonus++;
     }
     if (has_project(SP_BULK_MATTER_TRANSMITTER, faction_id)) {
         mineral_bonus++;
     }
-    BaseCurrent->intake_2[RSC_MINERALS] = base_yield_mul(
-        BaseCurrent->intake_2[RSC_MINERALS], mineral_bonus + 2) / 2;
-    BaseCurrent->mineral_consumption = base_yield_add(
-        base_yield_signed_bits(BaseCurrentForcesMaintCost),
-        base_yield_signed_bits(BaseCurrentConvoyFrom[RSC_MINERALS]));
-    BaseCurrent->mineral_surplus = base_yield_sub(BaseCurrent->intake_2[RSC_MINERALS],
-        BaseCurrent->mineral_consumption);
+    BaseCurrent->intake_2[RSC_MINERALS] = (BaseCurrent->intake_2[RSC_MINERALS] * (mineral_bonus + 2)) / 2;
+    BaseCurrent->mineral_consumption = ((int)BaseCurrentForcesMaintCost + (int)BaseCurrentConvoyFrom[RSC_MINERALS]);
+    BaseCurrent->mineral_surplus = (BaseCurrent->intake_2[RSC_MINERALS] - BaseCurrent->mineral_consumption);
     BaseCurrent->mineral_inefficiency = 0; // ?
-    BaseCurrent->mineral_surplus = base_yield_sub(BaseCurrent->mineral_surplus,
-        BaseCurrent->mineral_inefficiency); // ?
+    BaseCurrent->mineral_surplus = (BaseCurrent->mineral_surplus - BaseCurrent->mineral_inefficiency); // ?
     BaseCurrent->mineral_surplus_final = BaseCurrent->mineral_surplus;
     // Native SAR rounds negative values down, not toward zero like /8.
-    const int raw_eco_damage = BaseCurrent->eco_damage;
-    BaseCurrent->eco_damage = raw_eco_damage >= 0 ? raw_eco_damage / 8
-        : -1 - (-1 - raw_eco_damage) / 8;
-    int planet_eco_factor = base_yield_add(PlayersData[faction_id].planet_ecology, 16);
+    BaseCurrent->eco_damage = BaseCurrent->eco_damage >> 3;
+    int planet_eco_factor = (PlayersData[faction_id].planet_ecology + 16);
     if (BaseCurrent->eco_damage > 0) {
         int planet_modifier = BaseCurrent->eco_damage;
         if (BaseCurrent->eco_damage >= planet_eco_factor) {
             planet_modifier = planet_eco_factor;
         }
-        planet_eco_factor = base_yield_sub(planet_eco_factor, planet_modifier);
-        BaseCurrent->eco_damage = base_yield_sub(BaseCurrent->eco_damage, planet_modifier);
+        planet_eco_factor = (planet_eco_factor - planet_modifier);
+        BaseCurrent->eco_damage = (BaseCurrent->eco_damage - planet_modifier);
     }
-    int eco_dmg_reduction = (has_fac(FAC_NANOREPLICATOR, BaseIDCurrentSelected, 0)
-        || has_project(SP_SINGULARITY_INDUCTOR, faction_id)) ? 2 : 1;
+    int eco_dmg_reduction = 1;
+    if (selected_base_has_fac(FAC_NANOREPLICATOR) || has_project(SP_SINGULARITY_INDUCTOR, faction_id)) {
+        eco_dmg_reduction = 2;
+    }
     if (has_fac(FAC_CENTAURI_PRESERVE, BaseIDCurrentSelected, 0)) {
         eco_dmg_reduction++;
     }
@@ -8542,65 +8522,53 @@ void __cdecl base_minerals() {
     if (has_project(SP_PHOLUS_MUTAGEN, faction_id)) {
         eco_dmg_reduction++;
     }
-    BaseCurrent->eco_damage = base_yield_add(BaseCurrent->eco_damage,
-        base_yield_sub(base_yield_sub(BaseCurrent->intake_2[RSC_MINERALS], planet_eco_factor),
-            range(base_yield_signed_bits(PlayersData[faction_id].satellites_[1]),
-                0, BaseCurrent->population_size)) / eco_dmg_reduction);
+    BaseCurrent->eco_damage = (BaseCurrent->eco_damage + ((((BaseCurrent->intake_2[RSC_MINERALS] - planet_eco_factor)) - (range((int)PlayersData[faction_id].satellites_[1],
+                0, BaseCurrent->population_size))) / eco_dmg_reduction));
     if (is_human(faction_id)) {
-        BaseCurrent->eco_damage = base_yield_add(BaseCurrent->eco_damage,
-            base_yield_mul(PlayersData[faction_id].major_atrocities, 5)
-                / base_yield_add(range(MapSeaLevel, 0, 100)
-                    / range(base_yield_signed_bits(WorldBuilder.sea_level_rises), 1, 100),
-                    eco_dmg_reduction));
+        BaseCurrent->eco_damage = (BaseCurrent->eco_damage + ((PlayersData[faction_id].major_atrocities * 5)
+                / ((range(MapSeaLevel, 0, 100)
+                    / range((int)WorldBuilder.sea_level_rises, 1, 100)) + eco_dmg_reduction)));
     }
     // The native pass tests the human mask and computes the divisor again;
     // combining these two numerators changes even ordinary rounding.
     if (is_human(faction_id)) {
-        BaseCurrent->eco_damage = base_yield_add(BaseCurrent->eco_damage,
-            base_yield_mul(base_yield_signed_bits(TectonicDetonationCount[faction_id]), 5)
-                / base_yield_add(range(MapSeaLevel, 0, 100)
-                    / range(base_yield_signed_bits(WorldBuilder.sea_level_rises), 1, 100),
-                    eco_dmg_reduction));
+        BaseCurrent->eco_damage = (BaseCurrent->eco_damage + (((int)TectonicDetonationCount[faction_id] * 5)
+                / ((range(MapSeaLevel, 0, 100)
+                    / range((int)WorldBuilder.sea_level_rises, 1, 100)) + eco_dmg_reduction)));
     }
     if (BaseCurrent->eco_damage < 0) {
         BaseCurrent->eco_damage = 0;
     }
     if (ascending(faction_id) && GameDataStateStorage.fields_.game_rules_ & RULES_VICTORY_TRANSCENDENCE) {
-        BaseCurrent->eco_damage = base_yield_shift(BaseCurrent->eco_damage, 1);
+        BaseCurrent->eco_damage *= 2;
     }
     if (GameDataStateStorage.fields_.game_state_ & STATE_PERIHELION_ACTIVE) {
-        BaseCurrent->eco_damage = base_yield_shift(BaseCurrent->eco_damage, 1);
+        BaseCurrent->eco_damage *= 2;
     }
     int diff_factor;
     if (is_human(faction_id)) {
         int diff_lvl = PlayersData[faction_id].diff_level;
         diff_factor = !diff_lvl ? DLVL_TALENT
-            : ((diff_lvl <= DLVL_LIBRARIAN) ? DLVL_LIBRARIAN : DLVL_TRANSCEND);
+            : ((diff_lvl > DLVL_LIBRARIAN) ? DLVL_TRANSCEND : DLVL_LIBRARIAN);
     } else {
-        diff_factor = range(base_yield_sub(6, GameDataStateStorage.fields_.diff_level_current_),
+        diff_factor = range((6 - GameDataStateStorage.fields_.diff_level_current_),
             DLVL_SPECIALIST, DLVL_LIBRARIAN);
     }
     // Each native IMUL retains its low dword; the following /6 is signed.
     // There is no second zero clamp after this possibly-negative scaling.
-    int scaled_damage = base_yield_mul(
-        base_yield_sub(PlayersData[faction_id].tech_ranking,
-            PlayersData[faction_id].theory_of_everything),
-        base_yield_sub(3, range(PlayersData[faction_id].soc_effect_pending.values_[SocialEffect::PLANET], -3, 2)));
-    // Native4EA140 INC keeps the low dword for the following IMUL;
-    // the signed Map rule may contain INT_MAX after metadata transport.
-    scaled_damage = base_yield_mul(scaled_damage, base_yield_add(MapNativeLifeForms, 1));
-    scaled_damage = base_yield_mul(scaled_damage, BaseCurrent->eco_damage);
-    scaled_damage = base_yield_mul(scaled_damage, diff_factor);
-    BaseCurrent->eco_damage = scaled_damage / 6;
-    BaseCurrent->eco_damage = base_yield_add(BaseCurrent->eco_damage, 50) / 100;
+    BaseCurrent->eco_damage = (PlayersData[faction_id].tech_ranking
+        - PlayersData[faction_id].theory_of_everything)
+        * (3 - range(PlayersData[faction_id].soc_effect_pending.values_[SocialEffect::PLANET], -3, 2))
+        * (MapNativeLifeForms + 1) * BaseCurrent->eco_damage * diff_factor / 6;
+    BaseCurrent->eco_damage = (BaseCurrent->eco_damage + 50) / 100;
     int queue_id;
     if (has_project(SP_SPACE_ELEVATOR, faction_id) // orbital facilities double mineral prod rate
         && (queue_id = BaseCurrent->queue_production_id[0], queue_id == -FAC_SKY_HYDRO_LAB
             || queue_id == -FAC_NESSUS_MINING_STATION || queue_id == -FAC_ORBITAL_POWER_TRANS
             || queue_id == -FAC_ORBITAL_DEFENSE_POD)) {
-        BaseCurrent->intake_2[RSC_MINERALS] = base_yield_shift(BaseCurrent->intake_2[RSC_MINERALS], 1);
+        BaseCurrent->intake_2[RSC_MINERALS] *= 2;
         BaseCurrent->mineral_surplus = // doesn't update mineral_surplus_final?
-            base_yield_sub(BaseCurrent->intake_2[RSC_MINERALS], BaseCurrent->mineral_consumption);
+            BaseCurrent->intake_2[RSC_MINERALS] - BaseCurrent->mineral_consumption;
     }
 }
 
@@ -9494,8 +9462,9 @@ Status: Complete
 int __cdecl attack_from(int base_id_to_atk, int faction_id) {
     int search = 9999;        // value to prevent the edge case of base id 0 being incorrect target
     int base_id_atk_from = 0; // TODO: eventually change this to -1 and add handling to the return
+    int i = 0; // initialized before region_src: keeps i out of base_id_to_atk's slot
     uint32_t region_src = region_at(Bases[base_id_to_atk].x, Bases[base_id_to_atk].y);
-    for (int i = 0; i < GameDataStateStorage.fields_.base_current_count_; i++) {
+    for (; i < GameDataStateStorage.fields_.base_current_count_; i++) {
         if (Bases[i].faction_id_current == faction_id) {
             // Inlined vector_dist: the image calls abs() four times.
             int compare = vector_dist(Bases[i].x, Bases[i].y, Bases[base_id_to_atk].x,
@@ -12534,27 +12503,13 @@ int __cdecl base_growth() {
     }
 
     int growth = cost_factor(owner, 0, BaseIDCurrentSelected);
-    growth = base_yield_mul(growth,
-        base_yield_add(static_cast<int>(BaseCurrent->population_size), 1));
+    growth = (growth * (((static_cast<int>(BaseCurrent->population_size)) + 1)));
     if (((GameDataStateStorage.fields_.secret_project_.cloning_vats() >= 0
           && Bases[GameDataStateStorage.fields_.secret_project_.cloning_vats()].faction_id_current == owner)
          || BaseCurrentGrowthRate > 5)
         && Rules.nutrient_req_citizen != 0
         && static_cast<int>(Rules.nutrient_req_citizen) <= BaseCurrent->nutrient_surplus) {
-        const int faction = BaseIDCurrentSelected;
-        const bool same = GameDataStateStorage.fields_.secret_project_.ascetic_virtues() >= 0
-            && Bases[GameDataStateStorage.fields_.secret_project_.ascetic_virtues()].faction_id_current
-                == Bases[faction].faction_id_current;
-        const int margin = same ? 2 : 0;
-        const Player &population_rules = Players[Bases[faction].faction_id_current];
-        if ((base_yield_add(base_yield_sub(Bases[faction].population_size, margin),
-                 population_rules.rule_population)
-                 < static_cast<int>(Rules.pop_limit_sans_hab_complex)
-             || has_fac(0x18, faction, 0) != 0)
-            && (base_yield_add(base_yield_sub(Bases[faction].population_size, margin),
-                    population_rules.rule_population)
-                 < static_cast<int>(Rules.pop_limit_sans_hab_dome)
-                || has_fac(0x19, faction, 0) != 0)) {
+        if (!pop_goal_fac(BaseIDCurrentSelected)) {
             if (BaseCurrent->population_size < 0x7F) {
                 BaseCurrent->population_size = static_cast<int8_t>(
                     static_cast<uint8_t>(static_cast<int>(BaseCurrent->population_size) + 1));
@@ -12577,41 +12532,23 @@ int __cdecl base_growth() {
             BaseCurrent->nutrients_accumulated = growth;
             return 0;
         }
-        const int faction = BaseIDCurrentSelected;
-        const bool same = GameDataStateStorage.fields_.secret_project_.ascetic_virtues() >= 0
-            && Bases[GameDataStateStorage.fields_.secret_project_.ascetic_virtues()].faction_id_current
-                == Bases[faction].faction_id_current;
-        const int margin = same ? 2 : 0;
-        const Player &population_rules = Players[Bases[faction].faction_id_current];
-        int limit_reason;
-        if (base_yield_add(base_yield_sub(Bases[faction].population_size, margin),
-                population_rules.rule_population)
-                < static_cast<int>(Rules.pop_limit_sans_hab_complex)
-            || has_fac(0x18, faction, 0) != 0) {
-            if (base_yield_add(base_yield_sub(Bases[faction].population_size, margin),
-                    population_rules.rule_population)
-                    < static_cast<int>(Rules.pop_limit_sans_hab_dome)
-                || has_fac(0x19, faction, 0) != 0) {
-                BaseCurrent->nutrients_accumulated = 0;
-                BaseCurrent->population_size = static_cast<int8_t>(
-                    static_cast<uint8_t>(static_cast<int>(BaseCurrent->population_size) + 1));
-                BaseComputedID = BaseIDCurrentSelected;
-                base_support();
-                base_yield();
-                base_nutrient();
-                base_minerals();
-                base_energy();
-                draw_tile(x, y, 2);
-                goto after_growth;
-            }
-            limit_reason = 0x19;
-        } else {
-            limit_reason = 0x18;
+        const int limit_reason = pop_goal_fac(BaseIDCurrentSelected);
+        if (!limit_reason) {
+            BaseCurrent->nutrients_accumulated = 0;
+            BaseCurrent->population_size = static_cast<int8_t>(
+                static_cast<uint8_t>(static_cast<int>(BaseCurrent->population_size) + 1));
+            BaseComputedID = BaseIDCurrentSelected;
+            base_support();
+            base_yield();
+            base_nutrient();
+            base_minerals();
+            base_energy();
+            draw_tile(x, y, 2);
+            goto after_growth;
         }
         growth = cost_factor(BaseCurrent->faction_id_current, 0,
                              BaseIDCurrentSelected);
-        BaseCurrent->nutrients_accumulated = base_yield_mul(growth,
-            base_yield_add(static_cast<int>(BaseCurrent->population_size), 1)) / 2;
+        BaseCurrent->nutrients_accumulated = (growth * (((static_cast<int>(BaseCurrent->population_size)) + 1))) / 2;
         parse_say(1, Facility[limit_reason].name, -1, -1);
         if ((Players[owner].rule_flags & RFLAG_ALIEN) == 0) {
             popb("POPULATIONLIMIT", 0x800, 0x10, "pop_sm.pcx", 0);
@@ -12621,14 +12558,12 @@ int __cdecl base_growth() {
     }
 
 after_growth:
-    BaseCurrent->nutrients_accumulated = base_yield_add(
-        BaseCurrent->nutrients_accumulated, BaseCurrent->nutrient_surplus);
+    BaseCurrent->nutrients_accumulated = (BaseCurrent->nutrients_accumulated + BaseCurrent->nutrient_surplus);
     {
         const int threshold = BaseCurrent->nutrient_surplus;
         if (threshold < 0
-            && base_yield_sub(BaseCurrent->nutrients_accumulated, threshold) >= 0
-            && base_yield_add(base_yield_add(threshold,
-                BaseCurrent->nutrients_accumulated), base_yield_mul(threshold, 4)) < 0
+            && (BaseCurrent->nutrients_accumulated - threshold) >= 0
+            && (((threshold + BaseCurrent->nutrients_accumulated)) + ((threshold * 4))) < 0
             && (BaseCurrent->governor & 0x80000040u) != 0x80000040u) {
             int adjacent = 0;
             int bad_farms = 0;
@@ -14145,7 +14080,7 @@ int __cdecl base_upkeep(int base_id) {
     int tile_weight;
     int region = region_at(BaseCurrent->x, BaseCurrent->y);
     if (PlayersData[faction_id].unk_83[region] == 7
-        && PlayersData[faction_id].soc_effect_base.values_[SocialEffect::TALENT] < 1) {
+        && PlayersData[faction_id].soc_effect_base.values_[SocialEffect::TALENT] <= 0) {
         tile_weight = 4;
     } else {
         tile_weight = (PlayersData[faction_id].unk_83[region] != 2) + 1;
@@ -14178,13 +14113,15 @@ int __cdecl base_upkeep(int base_id) {
     PlayersData[faction_id].energy_reserves += BaseCurrent->economy_total;
 
     // Actor and partner rule flags use distinct faction indexes.
-    for (int other_faction = 1; other_faction < MaxPlayerNum; ++other_faction) {
+    // A walked receipts pointer orders the loop's three pointer inductions.
+    int *receipts = BaseCommerceReceipts;
+    for (int other_faction = 1; other_faction < MaxPlayerNum; ++other_faction, ++receipts) {
         if (other_faction != faction_id && !(Players[faction_id].rule_flags & 0x80)
             && !(Players[other_faction].rule_flags & 0x80)) {
             PlayersData[faction_id].turn_commerce_income +=
                 (PlayersData[faction_id].sanction_turns == 0
                  && PlayersData[other_faction].sanction_turns == 0)
-                ? BaseCommerceReceipts[other_faction - 1] : 0;
+                ? *receipts : 0;
         }
     }
 
