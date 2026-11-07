@@ -19,6 +19,7 @@
 #include "editbox.h"
 #include "graphicwin.h"
 #include "time.h"
+#include "win_pointer.h"
 
 // The original SDK import directory identifies this key-state dependency.
 // RECOVERY_IMPORT: v1 __imp__GetAsyncKeyState@4 USER32.dll name:GetAsyncKeyState

@@ -1038,15 +1038,6 @@ inline void Win::release_pointer() {
   }
 }
 
-// Claim the pointer when nobody holds it. Inlined as a Win member, so a
-// virtual-base caller converts `this` without a null check.
-inline void Win::grab_pointer() {
-  if (WinPointerOwner3 == 0) {
-    WinPointerOwner3 = this;
-    WinPointerOwner4 = 0;
-  }
-}
-
 inline void Win::take_pointer() {
   WinPointerOwner3 = 0;
   WinPointerOwner4 = this;

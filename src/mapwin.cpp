@@ -105,6 +105,7 @@
 #include "netmsg.h"    // NetMsgPrimary reports invalid inter-base routes.
 #include "netdaemon.h" // click owns the vehicle/base lock interval.
 #include "time.h"      // go_reset clears the prior capture/cursor state.
+#include "win_pointer.h"
 #include <cstring>
 #include <stdlib.h>
 

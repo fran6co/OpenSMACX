@@ -33,6 +33,7 @@
 #include "palette.h"
 #include "pulldown.h"
 #include "wave.h"
+#include "win_pointer.h"
 
 // AlphaMenu's four foreground/shadow pairs are the words at indices 30-37
 // in the shared text-colour run built by textcolor_init (palette.cpp).

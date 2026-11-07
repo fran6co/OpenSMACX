@@ -74,6 +74,7 @@
 #include "statuswin.h"
 #include "worldwin.h"
 #include <mmsystem.h>
+#include "win_pointer.h"
 #include <cstdint>
 #include <cstring>
 

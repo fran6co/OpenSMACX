@@ -32,6 +32,7 @@
 #include <ctype.h>
 #include <stdlib.h>
 #include <string.h>
+#include "win_pointer.h"
 void __cdecl help_any();
 int __cdecl tut_check2(int);
 extern char *TutorialPopupCaption;

@@ -27,6 +27,7 @@
 #include "basepop.h"
 #include "general.h"
 #include "listbox.h"
+#include "win_pointer.h"
 
 // AN OBJECT, NOT A POINTER TO A FIXED ADDRESS: the pointer form costs a
 // load at every use where the image addresses the storage directly, and
