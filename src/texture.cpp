@@ -90,6 +90,20 @@ static void texture_draw_gouraud_edge_step(EdgeScan &edge) {
         static_cast<unsigned int>(edge.deltaD));
 }
 
+// The lit spans' row blocks (0x0061AEBD, 0x0061AF1F) step D before the
+// fractional X accumulator.
+static void texture_lit_edge_step(EdgeScan &edge) {
+    edge.accumA += edge.deltaA;
+    edge.accumB += edge.deltaB;
+    edge.accumC += edge.deltaC;
+    edge.accumD += edge.deltaD;
+    edge.fracAccum += edge.fracDelta;
+    if (edge.fracAccum > 0) {
+        edge.accumC += edge.extraDeltaC;
+        edge.fracAccum -= edge.fracSub;
+    }
+}
+
 static unsigned int concat22(unsigned short hi, unsigned short lo) {
     return ((unsigned int)hi << 16) | lo;
 }
@@ -610,8 +624,8 @@ int Texture::extract(Buffer *buffer, int x, int y, int width, int height,
 
     if (x + width <= static_cast<int>(buffer->dib_.bmiHeader.biWidth) &&
         y + height <= -static_cast<int>(buffer->dib_.bmiHeader.biHeight)) {
-        iHeight_ = height;
         iWidth_ = width;
+        iHeight_ = height;
 
         unsigned char *srcData = buffer->get_data(x, y);
         if (srcData == 0) {
@@ -642,20 +656,22 @@ int Texture::extract(Buffer *buffer, int x, int y, int width, int height,
         const unsigned char *src = srcData;
         while (height--) {
             memcpy(dest, src, iWidth_);
-            if (borrowed_ == 0) {
-                dest += iWidth_;
-            } else {
+            if (borrowed_ != 0) {
                 dest += 0x100;
+            } else {
+                dest += iWidth_;
             }
             src += stride;
         }
 
         buffer->free_data(1);
 
-        int widthMinus1 = iWidth_ - 1;
-        int heightMinus1 = iHeight_ - 1;
-        int widthHalfMinus1 = static_cast<int>(iWidth_) / 2 - 1;
-        int heightHalfMinus1 = static_cast<int>(iHeight_) / 2 - 1;
+        int w = static_cast<int>(iWidth_);
+        int h = static_cast<int>(iHeight_);
+        int widthMinus1 = w - 1;
+        int heightMinus1 = h - 1;
+        int widthHalfMinus1 = w / 2 - 1;
+        int heightHalfMinus1 = h / 2 - 1;
         corners_[0].x = 0;
         corners_[0].y = 0;
         corners_[1].x = widthMinus1;
@@ -998,174 +1014,290 @@ static int texture_coast_advance_edge(EdgeScan &edge) {
 // flags     frame;sp_ready;purged_ok
 // calls     0x005E3373 0x005E34A3 0x0061FC90
 
-void Texture::draw_coast(Buffer * a1, Vert * a2, int * a3, Texture * a4, unsigned char * a5, int a6, Vert * a7) {
-    // 0x61EAD0..0x61F0C6 takes every guard through the common epilogue.
-    do {
-    if (a2 == 0 || a1 == 0 || pixels_ == 0 || a3 == 0 || a5 == 0 || a4 == 0)
-        break;
-
-    TextureRasterPixelBase = a1->get_data();
-    texture_reset_fpu();
-    TextureRasterEdgeVerticesB = a2;
-    TextureRasterZValues = reinterpret_cast<int *>(a3);
-    TextureRasterScratch550 = a5;
+void Texture::draw_coast(Buffer *buffer, Vert *vertices, int *zvals, Texture *coast,
+                         unsigned char *remap, int count, Vert *uv) {
+    if (vertices != 0 && buffer != 0 && pixels_ != 0 && zvals != 0 && remap != 0 &&
+        coast != 0) {
+    TextureRasterPixelBase = buffer->get_data();
+    // Hand-written assembly: the blitters reset the FPU with FINIT.
+    __asm finit
+    TextureRasterEdgeVerticesB = vertices;
+    TextureRasterZValues = zvals;
+    TextureRasterScratch550 = remap;
     TextureRasterScratch544 = pixels_;
     TextureRowPitchScratch = static_cast<int>(iWidth_);
     TextureRasterTextureHeight = static_cast<int>(iHeight_);
-    TextureRasterVertexCount = a6;
-    TextureRasterEdgeVerticesA = a7;
-    TextureRasterBufferStride = static_cast<int>(a1->stride_);
+    TextureRasterVertexCount = count;
+    TextureRasterEdgeVerticesA = uv;
+    TextureRasterBufferStride = static_cast<int>(buffer->stride_);
     TextureRasterTextureWidth = static_cast<int>(iWidth_);
-    TextureRasterScratch554 = a4->pixels_;
-    if (texture_pointer_address(TextureRasterScratch554) == 0) break;
-
-    RECT *clip = &a1->rect1_;
-    TextureRasterClipRight = clip->right;
-    TextureRasterClipLeft = clip->left;
-    TextureRasterClipBottom = clip->bottom;
-    TextureRasterClipTop = clip->top;
-
-    int min_y = 0x7fff, max_y = static_cast<int>(0xffff8003u);
-    int min_x = 0x7fff, max_x = static_cast<int>(0xffff8003u);
-    int min_y_index = a6;
-    for (int i = 0; i < a6; ++i) {
-        const int y = a2[i].y;
-        if (y < min_y) { min_y = y; min_y_index = i; }
-        if (y > max_y) { max_y = y; TextureRasterMaxYIndex = i; }
-        const int x = a2[i].x;
-        if (x < min_x) min_x = x;
-        if (x > max_x) max_x = x;
-    }
-    (void)min_x;
-    (void)max_x;
-    if (min_y >= max_y) break;
-
-    const int stride = TextureRasterBufferStride;
-    const uintptr_t destination_base = texture_pointer_address(TextureRasterPixelBase);
-    TextureRasterRowOffset = static_cast<int>(static_cast<unsigned int>(stride) *
-                                           static_cast<unsigned int>(min_y) +
-                                           static_cast<unsigned int>(destination_base));
-    TextureRasterClipBottom = static_cast<int>(static_cast<unsigned int>(stride) *
-                                            static_cast<unsigned int>(clip->bottom) +
-                                            static_cast<unsigned int>(destination_base));
-    TextureRasterClipTop = static_cast<int>(static_cast<unsigned int>(stride) *
-                                         static_cast<unsigned int>(clip->top) +
-                                         static_cast<unsigned int>(destination_base));
-
-    EdgeScan edge_left;
-    edge_left.f0 = -1;
-    if (setup_edge_gouraud(&edge_left, min_y_index) == 0) break;
-    EdgeScan edge_right;
-    edge_right.f0 = 1;
-    if (setup_edge_gouraud(&edge_right, min_y_index) == 0) break;
-
-    _control87(_PC_24 | _RC_CHOP, _MCW_PC | _MCW_RC);
-    int gradient_span = static_cast<int>(static_cast<unsigned int>(
-        texture_difference(edge_right.accumC, edge_left.accumC)) << 16);
-    // The native path rejects an initially clipped-away first row after
-    // setting up both edges but before its first row snapshot/advance.
-    if (TextureRasterRowOffset >= TextureRasterClipBottom) break;
-
-    int du = TextureRasterScratch4E4.dword;
-    int dv = TextureRasterScratch4C8.dword;
-    unsigned short light_step = static_cast<unsigned short>(TextureRasterLightPackA.low_word);
-    for (;;) {
-        TextureRasterScratch4C4 = edge_right.accumA;
-        TextureRasterUAccumulator.dword = edge_left.accumA;
-        TextureRasterScratch530 = edge_right.accumB;
-        TextureRasterVAccumulator.dword = edge_left.accumB;
-        TextureRasterSpanRight = edge_left.accumC;
-        TextureRasterScratch498 = edge_left.accumD;
-        TextureRasterSpanLeft = edge_right.accumC;
-        const int left_x = edge_left.accumC;
-        const int right_x = edge_right.accumC;
-        int u = TextureRasterUAccumulator.dword;
-        int v = TextureRasterVAccumulator.dword;
-        int light = edge_left.accumD;
-        const bool update_steps = gradient_span > 0;
-        int row_du = du, row_dv = dv;
-        unsigned short row_light_step = light_step;
-        if (update_steps) {
-            row_du = texture_span_step(
-                texture_difference(edge_right.accumA, edge_left.accumA), gradient_span >> 16);
-            row_dv = texture_span_step(
-                texture_difference(edge_right.accumB, edge_left.accumB), gradient_span >> 16);
-            row_light_step = texture_light_step(
-                texture_difference(edge_right.accumD, edge_left.accumD), gradient_span >> 16);
-        }
-        bool done_edges = false;
-        if (texture_coast_advance_edge(edge_left) != 0) {
-            if (texture_coast_advance_edge(edge_right) == 0) done_edges = true;
-        } else {
-            done_edges = true;
-        }
-
-        // The assembly snapshots this row's endpoints and derives its channel
-        // gradients from those values, then advances edges before publishing
-        // the gradients. The updated horizontal span feeds the next row.
-        if (update_steps) {
-            du = row_du;
-            dv = row_dv;
-            light_step = row_light_step;
-            TextureRasterScratch4E4.dword = du;
-            TextureRasterScratch4C8.dword = dv;
-            TextureRasterLightPackA.low_word = static_cast<int>(light_step);
-        }
-        gradient_span = static_cast<int>(static_cast<unsigned int>(
-            texture_difference(edge_right.accumC, edge_left.accumC)) << 16);
-
-        const int row = TextureRasterRowOffset;
-        if (row >= TextureRasterClipBottom) break;
-        if (row >= TextureRasterClipTop && right_x > TextureRasterClipLeft &&
-            left_x < TextureRasterClipRight && right_x > left_x) {
-            int clipped_right = right_x;
-            if (clipped_right > TextureRasterClipRight) clipped_right = TextureRasterClipRight;
-            int clipped_left = left_x;
-            if (clipped_left < TextureRasterClipLeft) {
-                const int skip = static_cast<int>(static_cast<unsigned int>(
-                    texture_difference(TextureRasterClipLeft, clipped_left)) << 16);
-                u = static_cast<int>(static_cast<unsigned int>(u) +
-                    static_cast<unsigned int>((static_cast<int64_t>(du) * skip) >> 16));
-                v = static_cast<int>(static_cast<unsigned int>(v) +
-                    static_cast<unsigned int>((static_cast<int64_t>(dv) * skip) >> 16));
-                light = static_cast<int>(static_cast<unsigned int>(light) +
-                    static_cast<unsigned int>((static_cast<int64_t>(light_step) * skip) >> 8));
-                TextureRasterUAccumulator.dword = u;
-                TextureRasterVAccumulator.dword = v;
-                TextureRasterScratch498 = light;
-                clipped_left = TextureRasterClipLeft;
+    TextureRasterScratch554 = coast->pixels_;
+    if (TextureRasterScratch554 != 0) {
+    RECT *clip = &buffer->rect1_;
+    if (clip != 0) {
+        TextureRasterClipRight = clip->right;
+        TextureRasterClipLeft = clip->left;
+        TextureRasterClipBottom = clip->bottom;
+        TextureRasterClipTop = clip->top;
+        int max_y = -0x7ffd;
+        int min_y = 0x7fff;
+        int max_x = -0x7ffd;
+        int min_x = 0x7fff;
+        int top;
+        EdgeScan left;
+        EdgeScan right;
+        for (int i = 0; i < count; ++i) {
+            if (vertices[i].y < min_y) {
+                min_y = vertices[i].y;
+                top = i;
             }
-            TextureRasterScratch498 = light >> 8;
-            unsigned char *out = reinterpret_cast<unsigned char *>(
-                static_cast<intptr_t>(row)) + clipped_left;
-            const unsigned int pixel_count = texture_span_pixels(
-                texture_difference(clipped_right, clipped_left));
-            const unsigned int row_source_offset = texture_draw_source_index(
-                TextureRasterTextureWidth, u, v);
-            TextureRasterScratch504 = static_cast<unsigned char *>(texture_pointer_from_address(
-                static_cast<uint32_t>(static_cast<uint32_t>(texture_pointer_address(TextureRasterScratch544)) +
-                    row_source_offset)));
-            TextureRasterShadeCursor = texture_pointer_offset(TextureRasterScratch554, row_source_offset);
-            TextureDrawSpanResult span_result;
-            span_result.packed_uv_sink = &(TextureRasterScratch4A4);
-            span_result.preload_pixels = reinterpret_cast<volatile const unsigned char *>(
-                static_cast<intptr_t>(texture_pointer_address(TextureRasterScratch544)));
-            span_result.prefetched_source =
-                span_result.preload_pixels[row_source_offset];
-            texture_draw_coast_span(out, reinterpret_cast<const unsigned char *>(
-                static_cast<intptr_t>(texture_pointer_address(TextureRasterScratch544))),
-                reinterpret_cast<const unsigned char *>(static_cast<intptr_t>(texture_pointer_address(TextureRasterScratch554))),
-                static_cast<const unsigned char *>(TextureRasterScratch550),
-                TextureRasterTextureWidth, u, v, du, dv, light, light_step,
-                static_cast<int>(pixel_count), &span_result);
+            if (vertices[i].y > max_y) {
+                max_y = vertices[i].y;
+                TextureRasterMaxYIndex = i;
+            }
+            if (vertices[i].x < min_x) {
+                min_x = vertices[i].x;
+            }
+            if (vertices[i].x > max_x) {
+                max_x = vertices[i].x;
+            }
         }
-        if (done_edges) break;
-        TextureRasterRowOffset = static_cast<int>(static_cast<unsigned int>(row) +
-                                               static_cast<unsigned int>(stride));
+        if (min_y < max_y) {
+            const int stride = TextureRasterBufferStride;
+            const int base = static_cast<int>(texture_pointer_address(TextureRasterPixelBase));
+            TextureRasterRowOffset = stride * min_y + base;
+            TextureRasterClipBottom = TextureRasterClipBottom * stride + base;
+            TextureRasterClipTop = TextureRasterClipTop * stride + base;
+            left.f0 = -1;
+            if (Texture::setup_edge_gouraud(&left, top)) {
+                right.f0 = 1;
+                if (Texture::setup_edge_gouraud(&right, top)) {
+                    unsigned short control;
+                    // Hand-written assembly: truncating 24-bit FPU control
+                    // word, then 1.0 kept on the FPU stack for the rows.
+                    __asm {
+                        fstcw control
+                        mov ax, control
+                        and ax, 0xfcff
+                        or ax, 0xc00
+                        mov control, ax
+                        fldcw control
+                        fld1
+                    }
+                    int span = (right.accumC - left.accumC) << 16;
+                    int dd;
+                    int dv;
+                    int du;
+                    if (span > 0) {
+                        dd = right.accumD - left.accumD;
+                        __asm fild dd
+                        dv = right.accumB - left.accumB;
+                        __asm fild dv
+                        du = right.accumA - left.accumA;
+                        __asm {
+                            fild du
+                            fild span
+                            fdivr st, st(4)
+                        }
+                    }
+                    if (TextureRasterRowOffset < TextureRasterClipBottom) {
+                        int done = 0;
+                        for (;;) {
+                            TextureRasterUAccumulator.dword = left.accumA;
+                            TextureRasterVAccumulator.dword = left.accumB;
+                            TextureRasterSpanRight = left.accumC;
+                            TextureRasterScratch498 = left.accumD;
+                            TextureRasterScratch4C4 = right.accumA;
+                            TextureRasterScratch530 = right.accumB;
+                            TextureRasterSpanLeft = right.accumC;
+                            if (--left.counter == 0) {
+                                if (!Texture::setup_edge_gouraud(&left, left.id)) {
+                                    done = 1;
+                                    goto edges_done;
+                                }
+                            } else {
+                                texture_lit_edge_step(left);
+                            }
+                            if (--right.counter == 0) {
+                                if (!Texture::setup_edge_gouraud(&right, right.id)) {
+                                    done = 1;
+                                }
+                            } else {
+                                texture_lit_edge_step(right);
+                            }
+                        edges_done:
+                            if (span > 0) {
+                                // Hand-written assembly: scale the row slopes
+                                // and store them with FISTP.
+                                __asm {
+                                    fmul st(1), st
+                                    fmul st(2), st
+                                    fmulp st(3), st
+                                    fmul TextureRasterScale65536
+                                    fistp TextureRasterScratch4E4.dword
+                                    fmul TextureRasterScale65536
+                                    fistp TextureRasterScratch4C8.dword
+                                    fmul TextureRasterScale256
+                                    fistp TextureRasterLightPackA.low_word
+                                }
+                            }
+                            span = (right.accumC - left.accumC) << 16;
+                            if (span > 0) {
+                                dd = right.accumD - left.accumD;
+                                __asm fild dd
+                                dv = right.accumB - left.accumB;
+                                __asm fild dv
+                                du = right.accumA - left.accumA;
+                                __asm {
+                                    fild du
+                                    fild span
+                                    fdivr st, st(4)
+                                }
+                            }
+                            if (TextureRasterRowOffset >= TextureRasterClipBottom) {
+                                break;
+                            }
+                            if (TextureRasterRowOffset >= TextureRasterClipTop) {
+                                // Hand-written assembly: ESP-counter span that
+                                // remaps the coast texel and adds the light.
+                                __asm {
+                                mov ebx, dword ptr [TextureRasterSpanLeft]
+                                mov ecx, dword ptr [TextureRasterSpanRight]
+                                cmp ebx, dword ptr [TextureRasterClipLeft]
+                                jle span_done
+                                cmp ecx, dword ptr [TextureRasterClipRight]
+                                jge span_done
+                                sub ebx, ecx
+                                jle span_done
+                                shl ebx, 0x10
+                                mov ebx, dword ptr [TextureRasterSpanLeft]
+                                cmp ebx, dword ptr [TextureRasterClipRight]
+                                jl K_eef1
+                                mov ebx, dword ptr [TextureRasterClipRight]
+                            K_eef1:
+                                mov edi, dword ptr [TextureRasterSpanRight]
+                                cmp edi, dword ptr [TextureRasterClipLeft]
+                                jge K_ef56
+                                sub edi, dword ptr [TextureRasterClipLeft]
+                                neg edi
+                                mov eax, dword ptr [TextureRasterScratch4E4]
+                                shl edi, 0x10
+                                imul edi
+                                shrd eax, edx, 0x10
+                                add eax, dword ptr [TextureRasterUAccumulator]
+                                mov dword ptr [TextureRasterUAccumulator], eax
+                                mov eax, dword ptr [TextureRasterScratch4C8]
+                                imul edi
+                                shrd eax, edx, 0x10
+                                add dword ptr [TextureRasterVAccumulator], eax
+                                xor eax, eax
+                                mov ax, word ptr [TextureRasterLightPackA]
+                                imul edi
+                                shrd eax, edx, 0x8
+                                add eax, dword ptr [TextureRasterScratch498]
+                                mov dword ptr [TextureRasterScratch498], eax
+                                mov edi, dword ptr [TextureRasterClipLeft]
+                                mov dword ptr [TextureRasterSpanRight], edi
+                            K_ef56:
+                                sub ebx, edi
+                                mov ecx, ebx
+                                mov esi, dword ptr [TextureRasterScratch544]
+                                xor edx, edx
+                                mov dx, word ptr [TextureRasterVAccumulator+2]
+                                mov eax, dword ptr [TextureRasterTextureWidth]
+                                imul edx
+                                add esi, eax
+                                xor edx, edx
+                                add dx, word ptr [TextureRasterUAccumulator+2]
+                                add esi, edx
+                                mov dword ptr [TextureRasterScratch504], esi
+                                sub esi, dword ptr [TextureRasterScratch544]
+                                mov edi, dword ptr [TextureRasterScratch554]
+                                add edi, esi
+                                mov dword ptr [TextureRasterShadeCursor], edi
+                                xor esi, esi
+                                mov edi, dword ptr [TextureRasterSpanRight]
+                                add edi, dword ptr [TextureRasterRowOffset]
+                                mov eax, dword ptr [TextureRasterScratch498]
+                                sar eax, 0x8
+                                mov dword ptr [TextureRasterScratch498], eax
+                                mov eax, dword ptr [TextureRasterScratch4C8]
+                                sar eax, 0x10
+                                mov edx, dword ptr [TextureRasterTextureWidth]
+                                imul edx
+                                mov edx, dword ptr [TextureRasterScratch4E4]
+                                sar edx, 0x10
+                                add eax, edx
+                                mov dword ptr [TextureRasterAlternateRowNext], eax
+                                mov edx, dword ptr [TextureRasterTextureWidth]
+                                add eax, edx
+                                mov dword ptr [TextureRasterAlternateRowBase], eax
+                                xor edx, edx
+                                mov dx, word ptr [TextureRasterScratch4C8]
+                                shl edx, 0x10
+                                mov dword ptr [TextureRasterScratch528], edx
+                                xor edx, edx
+                                mov dx, word ptr [TextureRasterVAccumulator]
+                                shl edx, 0x10
+                                mov dx, word ptr [TextureRasterScratch4E4]
+                                dec ecx
+                                shl ecx, 0x10
+                                mov cx, word ptr [TextureRasterUAccumulator]
+                                mov ebx, dword ptr [TextureRasterScratch504]
+                                push ebp
+                                mov dword ptr [TextureRasterSavedStack], esp
+                                mov esp, ecx
+                                mov al, byte ptr [ebx + esi]
+                                mov cx, word ptr [TextureRasterScratch498]
+                            K_f028:
+                                mov dword ptr [TextureRasterScratch4A4], edx
+                                mov edx, dword ptr [TextureRasterShadeCursor]
+                                add edx, esi
+                                mov dl, byte ptr [edx]
+                                and edx, 0xff
+                                add edx, dword ptr [TextureRasterScratch550]
+                                mov dl, byte ptr [edx]
+                                cmp dl, 0x0
+                                je K_f058
+                                cmp dl, 0x1
+                                je K_f054
+                                mov al, dl
+                                sub al, ch
+                            K_f054:
+                                add al, ch
+                                mov byte ptr [edi], al
+                            K_f058:
+                                mov edx, dword ptr [TextureRasterScratch4A4]
+                                add cx, word ptr [TextureRasterLightPackA]
+                                add edx, dword ptr [TextureRasterScratch528]
+                                sbb ebp, ebp
+                                add sp, dx
+                                adc esi, dword ptr [4*ebp + TextureRasterAlternateRowNext]
+                                inc edi
+                                mov al, byte ptr [ebx + esi]
+                                sub esp, 0x10000
+                                jns K_f028
+                                mov esp, dword ptr [TextureRasterSavedStack]
+                                pop ebp
+                            span_done:
+                                }
+                            }
+                            if (done) {
+                                break;
+                            }
+                            TextureRasterRowOffset += TextureRasterBufferStride;
+                        }
+                    }
+                }
+            }
+        }
     }
-    } while (false);
-    if (a1 != 0) a1->free_data(1);
-    texture_reset_fpu();
+    }
+    }
+    if (buffer != 0) {
+        buffer->free_data(1);
+    }
+    __asm finit
 }
 
 // Historical register-allocation evidence from the superseded translation:
@@ -1867,153 +1999,250 @@ void Texture::draw_trans(Buffer *buffer, Vert *vertices, int use_eight_vertices)
 // the body, and the behaviour, not a recovered name, is what the spelling
 // claims. The one product caller is 0x006239E0's -1 forward; the other two
 // mapped callers are unrecovered gen_terrain_poly seeds.
-// LEVER: the span kernel at 0x0061ABBA packs its countdown into ESP and is
-// reproduced with texture_span_pixels (see 0x0061A240's note); the original
-// preloads the next texel at 0x0061ABF6 before testing the counter and this
-// C++ loop omits that unused final read.
-
-// Superseding recovery evidence: source_reads below now performs the original
-// post-advance load on every pixel, including the final/key-suppressed path.
-// The edge setup and row loop also publish/consume the mapped shared raster
-// cells in the original order; the older local-edge reconstruction is superseded.
+// The body is 0x0061A240's with count and UV base from the caller: the same
+// hand-written FPU blocks and ESP-counter span loop, kept as __asm, and the
+// same remaining vertex-scan register gap.
 void Texture::draw_color_key(Buffer *buffer, Vert *vertices, int count, Vert *uv) {
     TextureRasterPixelBase = buffer->get_data();
-    texture_reset_fpu();
+    // Hand-written assembly: the blitters reset the FPU with FINIT.
+    __asm finit
     TextureRasterEdgeVerticesB = vertices;
     TextureRasterScratch544 = pixels_;
     TextureRowPitchScratch = static_cast<int>(iWidth_);
-    TextureRasterTextureHeight = static_cast<int>(iHeight_);
     TextureRasterEdgeVerticesA = uv;
+    TextureRasterTextureHeight = static_cast<int>(iHeight_);
     TextureRasterVertexCount = count;
     TextureRasterLightThreshold = static_cast<int>(TextureRasterKey);
     TextureRasterBufferStride = static_cast<int>(buffer->stride_);
     TextureRasterTextureWidth = static_cast<int>(iWidth_);
-    TextureRasterClipRight = buffer->rect1_.right;
-    TextureRasterClipLeft = buffer->rect1_.left;
-    TextureRasterClipBottom = buffer->rect1_.bottom;
-    TextureRasterClipTop = buffer->rect1_.top;
-    const int width = TextureRasterTextureWidth;
-
-    int min_y = 0x7fff, max_y = -0x7ffd;
-    int top = 0;
-    for (int i = 0; i < TextureRasterVertexCount; ++i) {
-        if (TextureRasterEdgeVerticesB[i].y < min_y) {
-            min_y = TextureRasterEdgeVerticesB[i].y;
-            top = i;
-        }
-        if (TextureRasterEdgeVerticesB[i].y > max_y) {
-            max_y = TextureRasterEdgeVerticesB[i].y;
-            TextureRasterMaxYIndex = i;
-        }
-    }
-    if (min_y < max_y) {
-        const uint32_t pixel_base = static_cast<uint32_t>(
-            texture_pointer_address(TextureRasterPixelBase));
-        const uint32_t stride = static_cast<uint32_t>(TextureRasterBufferStride);
-        TextureRasterRowOffset = static_cast<int>(
-            pixel_base + static_cast<uint32_t>(min_y) * stride);
-        TextureRasterClipBottom = static_cast<int>(pixel_base + stride *
-            static_cast<uint32_t>(TextureRasterClipBottom));
-        TextureRasterClipTop = static_cast<int>(pixel_base + stride *
-            static_cast<uint32_t>(TextureRasterClipTop));
-    }
-    EdgeScan left, right;
-    left.f0 = -1;
-    right.f0 = 1;
-    if (min_y < max_y && Texture::setup_edge(&left, top) &&
-        Texture::setup_edge(&right, top)) {
-        _control87(_PC_24 | _RC_CHOP, _MCW_PC | _MCW_RC);
-        if (TextureRasterRowOffset >= TextureRasterClipBottom) {
-            buffer->free_data(1);
-            texture_reset_fpu();
-            return;
-        }
-        for (;;) {
-            TextureRasterScratch4C4 = right.accumA;
-            TextureRasterScratch530 = right.accumB;
-            TextureRasterSpanLeft = right.accumC;
-            TextureRasterUAccumulator.dword = left.accumA;
-            TextureRasterVAccumulator.dword = left.accumB;
-            TextureRasterSpanRight = left.accumC;
-            const int right_u = TextureRasterScratch4C4;
-            const int right_v = TextureRasterScratch530;
-            int x = TextureRasterSpanRight;
-            int end = TextureRasterSpanLeft;
-            int u = TextureRasterUAccumulator.dword;
-            int v = TextureRasterVAccumulator.dword;
-            const int span = texture_fixed(texture_difference(end, x));
-            int du = TextureRasterScratch4E4.dword;
-            int dv = TextureRasterScratch4C8.dword;
-            int done = 0;
-            if (--left.counter == 0) {
-                if (!Texture::setup_edge(&left, left.id)) done = 1;
-            } else {
-                texture_uv_edge_step(left);
+    RECT *clip = &buffer->rect1_;
+    if (clip != 0) {
+        TextureRasterClipRight = clip->right;
+        TextureRasterClipLeft = clip->left;
+        TextureRasterClipBottom = clip->bottom;
+        TextureRasterClipTop = clip->top;
+        int min_y = 0x7fff;
+        int max_y = -0x7ffd;
+        int min_x = 0x7fff;
+        int max_x = -0x7ffd;
+        int top;
+        EdgeScan left;
+        EdgeScan right;
+        Vert *v = vertices;
+        for (int i = 0; i < count; ++i, ++v) {
+            if (v->y < min_y) {
+                min_y = v->y;
+                top = i;
             }
-            if (!done) {
-                if (--right.counter == 0) {
-                    if (!Texture::setup_edge(&right, right.id)) done = 1;
-                } else {
-                    texture_uv_edge_step(right);
+            if (v->y > max_y) {
+                max_y = v->y;
+                TextureRasterMaxYIndex = i;
+            }
+            if (v->x < min_x) {
+                min_x = v->x;
+            }
+            if (v->x > max_x) {
+                max_x = v->x;
+            }
+        }
+        if (min_y < max_y) {
+            const int stride = TextureRasterBufferStride;
+            const int base = static_cast<int>(texture_pointer_address(TextureRasterPixelBase));
+            TextureRasterRowOffset = stride * min_y + base;
+            TextureRasterClipBottom = TextureRasterClipBottom * stride + base;
+            TextureRasterClipTop = TextureRasterClipTop * stride + base;
+            left.f0 = -1;
+            if (Texture::setup_edge(&left, top)) {
+                right.f0 = 1;
+                if (Texture::setup_edge(&right, top)) {
+                    unsigned short control;
+                    // Hand-written assembly: truncating 24-bit FPU control
+                    // word, then 1.0 kept on the FPU stack for the rows.
+                    __asm {
+                        fstcw control
+                        mov ax, control
+                        and ax, 0xfcff
+                        or ax, 0xc00
+                        mov control, ax
+                        fldcw control
+                        fld1
+                    }
+                    int span = (right.accumC - left.accumC) << 16;
+                    int dv;
+                    int du;
+                    if (span > 0) {
+                        dv = right.accumB - left.accumB;
+                        __asm fild dv
+                        du = right.accumA - left.accumA;
+                        __asm {
+                            fild du
+                            fild span
+                            fdivr st, st(3)
+                        }
+                    }
+                    if (TextureRasterRowOffset < TextureRasterClipBottom) {
+                        int done = 0;
+                        for (;;) {
+                            TextureRasterUAccumulator.dword = left.accumA;
+                            TextureRasterVAccumulator.dword = left.accumB;
+                            TextureRasterSpanRight = left.accumC;
+                            TextureRasterScratch4C4 = right.accumA;
+                            TextureRasterScratch530 = right.accumB;
+                            TextureRasterSpanLeft = right.accumC;
+                            if (--left.counter == 0) {
+                                if (!Texture::setup_edge(&left, left.id)) {
+                                    done = 1;
+                                    goto edges_done;
+                                }
+                            } else {
+                                texture_uv_edge_step(left);
+                            }
+                            if (--right.counter == 0) {
+                                if (!Texture::setup_edge(&right, right.id)) {
+                                    done = 1;
+                                }
+                            } else {
+                                texture_uv_edge_step(right);
+                            }
+                        edges_done:
+                            if (span > 0) {
+                                // Hand-written assembly: scale the row slopes
+                                // and store them with FISTP.
+                                __asm {
+                                    fmul st(1), st
+                                    fmulp st(2), st
+                                    fmul TextureRasterScale65536
+                                    fistp TextureRasterScratch4E4.dword
+                                    fmul TextureRasterScale65536
+                                    fistp TextureRasterScratch4C8.dword
+                                }
+                            }
+                            span = (right.accumC - left.accumC) << 16;
+                            if (span > 0) {
+                                dv = right.accumB - left.accumB;
+                                __asm fild dv
+                                du = right.accumA - left.accumA;
+                                __asm {
+                                    fild du
+                                    fild span
+                                    fdivr st, st(3)
+                                }
+                            }
+                            if (TextureRasterRowOffset >= TextureRasterClipBottom) {
+                                break;
+                            }
+                            if (TextureRasterRowOffset >= TextureRasterClipTop) {
+                                // Hand-written assembly: color-keyed span with
+                                // ESP as the packed pixel counter/U fraction,
+                                // sbb/adc carry stepping, and EBP as the carry.
+                                __asm {
+                                mov ebx, dword ptr [TextureRasterSpanLeft]
+                                mov ecx, dword ptr [TextureRasterSpanRight]
+                                cmp ebx, dword ptr [TextureRasterClipLeft]
+                                jle span_done
+                                cmp ecx, dword ptr [TextureRasterClipRight]
+                                jge span_done
+                                sub ebx, ecx
+                                jle span_done
+                                shl ebx, 0x10
+                                mov ebx, dword ptr [TextureRasterSpanLeft]
+                                cmp ebx, dword ptr [TextureRasterClipRight]
+                                jl K_right
+                                mov ebx, dword ptr [TextureRasterClipRight]
+                            K_right:
+                                mov edi, dword ptr [TextureRasterSpanRight]
+                                cmp edi, dword ptr [TextureRasterClipLeft]
+                                jge K_left
+                                sub edi, dword ptr [TextureRasterClipLeft]
+                                neg edi
+                                mov eax, dword ptr [TextureRasterScratch4E4]
+                                shl edi, 0x10
+                                imul edi
+                                shrd eax, edx, 0x10
+                                add eax, dword ptr [TextureRasterUAccumulator]
+                                mov dword ptr [TextureRasterUAccumulator], eax
+                                mov eax, dword ptr [TextureRasterScratch4C8]
+                                imul edi
+                                shrd eax, edx, 0x10
+                                add dword ptr [TextureRasterVAccumulator], eax
+                                mov edi, dword ptr [TextureRasterClipLeft]
+                                mov dword ptr [TextureRasterSpanRight], edi
+                            K_left:
+                                sub ebx, edi
+                                mov ecx, ebx
+                                mov esi, dword ptr [TextureRasterScratch544]
+                                xor edx, edx
+                                mov dx, word ptr [TextureRasterVAccumulator+2]
+                                mov eax, dword ptr [TextureRasterTextureWidth]
+                                imul edx
+                                add esi, eax
+                                xor edx, edx
+                                add dx, word ptr [TextureRasterUAccumulator+2]
+                                add esi, edx
+                                mov dword ptr [TextureRasterScratch504], esi
+                                xor esi, esi
+                                mov edi, dword ptr [TextureRasterSpanRight]
+                                add edi, dword ptr [TextureRasterRowOffset]
+                                mov eax, dword ptr [TextureRasterScratch4C8]
+                                sar eax, 0x10
+                                mov edx, dword ptr [TextureRasterTextureWidth]
+                                imul edx
+                                mov edx, dword ptr [TextureRasterScratch4E4]
+                                sar edx, 0x10
+                                add eax, edx
+                                mov dword ptr [TextureRasterAlternateRowNext], eax
+                                mov edx, dword ptr [TextureRasterTextureWidth]
+                                add eax, edx
+                                mov dword ptr [TextureRasterAlternateRowBase], eax
+                                xor edx, edx
+                                mov dx, word ptr [TextureRasterScratch4C8]
+                                shl edx, 0x10
+                                mov dword ptr [TextureRasterScratch528], edx
+                                xor edx, edx
+                                mov dx, word ptr [TextureRasterVAccumulator]
+                                shl edx, 0x10
+                                mov dx, word ptr [TextureRasterScratch4E4]
+                                dec ecx
+                                shl ecx, 0x10
+                                mov cx, word ptr [TextureRasterUAccumulator]
+                                mov ebx, dword ptr [TextureRasterScratch504]
+                                mov ah, byte ptr [TextureRasterLightThreshold]
+                                push ebp
+                                mov dword ptr [TextureRasterSavedStack], esp
+                                mov esp, ecx
+                                mov al, byte ptr [ebx+esi]
+                            K_pixel:
+                                add edx, dword ptr [TextureRasterScratch528]
+                                sbb ebp, ebp
+                                cmp al, ah
+                                je K_keyed
+                                mov byte ptr [edi], al
+                            K_keyed:
+                                add sp, dx
+                                adc esi, dword ptr [TextureRasterAlternateRowNext+ebp*4]
+                                inc edi
+                                mov al, byte ptr [ebx+esi]
+                                sub esp, 0x10000
+                                jns K_pixel
+                                mov esp, dword ptr [TextureRasterSavedStack]
+                                pop ebp
+                            span_done:
+                                }
+                            }
+                            if (done) {
+                                break;
+                            }
+                            TextureRasterRowOffset += TextureRasterBufferStride;
+                        }
+                    }
                 }
             }
-            if (span > 0) {
-                du = texture_span_step(texture_difference(right_u, u), span >> 16);
-                dv = texture_span_step(texture_difference(right_v, v), span >> 16);
-                TextureRasterScratch4E4.dword = du;
-                TextureRasterScratch4C8.dword = dv;
-            }
-            if (TextureRasterRowOffset >= TextureRasterClipBottom) break;
-            if (TextureRasterRowOffset >= TextureRasterClipTop && end > TextureRasterClipLeft &&
-                x < TextureRasterClipRight && end > x) {
-                if (end > TextureRasterClipRight) end = TextureRasterClipRight;
-                if (x < TextureRasterClipLeft) {
-                    const int skip = texture_fixed(texture_difference(TextureRasterClipLeft, x));
-                    u = static_cast<int>(static_cast<unsigned int>(u) +
-                        static_cast<unsigned int>((static_cast<int64_t>(du) * skip) >> 16));
-                    v = static_cast<int>(static_cast<unsigned int>(v) +
-                        static_cast<unsigned int>((static_cast<int64_t>(dv) * skip) >> 16));
-                    TextureRasterUAccumulator.dword = u;
-                    TextureRasterVAccumulator.dword = v;
-                    TextureRasterSpanRight = TextureRasterClipLeft;
-                    x = TextureRasterSpanRight;
-                }
-                const uint32_t destination_address =
-                    static_cast<uint32_t>(TextureRasterRowOffset) +
-                    static_cast<uint32_t>(TextureRasterSpanRight);
-                const uint32_t destination_offset = destination_address -
-                    static_cast<uint32_t>(texture_pointer_address(TextureRasterPixelBase));
-                unsigned char *out = reinterpret_cast<unsigned char *>(
-                    texture_pointer_offset(TextureRasterPixelBase, destination_offset));
-                int64_t source = static_cast<unsigned short>(static_cast<unsigned int>(v) >> 16)
-                    * static_cast<int64_t>(width)
-                    + static_cast<unsigned short>(static_cast<unsigned int>(u) >> 16);
-                unsigned int uf = static_cast<unsigned short>(u);
-                unsigned int vf = static_cast<unsigned short>(v);
-                const int64_t step = static_cast<int64_t>(dv >> 16) * width + (du >> 16);
-                const unsigned int remaining = texture_span_pixels(texture_difference(end, x));
-                const volatile unsigned char *source_reads =
-                    static_cast<const unsigned char *>(TextureRasterScratch544);
-                unsigned char texel = source_reads[source];
-                for (unsigned int written = 0; written < remaining; ++written) {
-                    if (texel != static_cast<unsigned char>(TextureRasterLightThreshold)) *out = texel;
-                    uf += static_cast<unsigned short>(du);
-                    vf += static_cast<unsigned short>(dv);
-                    source += step + (uf >> 16) + static_cast<int64_t>(vf >> 16) * width;
-                    uf &= 0xffff;
-                    vf &= 0xffff;
-                    ++out;
-                    texel = source_reads[source];
-                }
-            }
-            if (done) break;
-            TextureRasterRowOffset = static_cast<int>(
-                static_cast<uint32_t>(TextureRasterRowOffset) +
-                static_cast<uint32_t>(TextureRasterBufferStride));
         }
     }
-    buffer->free_data(1);
-    texture_reset_fpu();
+    if (buffer != 0) {
+        buffer->free_data(1);
+    }
+    __asm finit
 }
 
 // Fixed-slot bindings carried from 0061b1f0.cpp
@@ -2039,218 +2268,265 @@ int TextureLightCeiling = 256;
 // calls     0x005E3373 0x005E34A3 0x0061FC90
 
 
-void Texture::draw(Buffer *a1, Vert *a2, int *a3, int a4, Vert *a5) {
-    unsigned char *destination = static_cast<unsigned char *>(a1->get_data());
-    TextureRasterPixelBase = destination;
-    TextureRasterLightThreshold = texture_raster_key_signed_bits();
-    texture_reset_fpu();
-
-    TextureRasterEdgeVerticesA = a5;
-    TextureRasterEdgeVerticesB = a2;
-    TextureRasterVertexCount = a4;
-    TextureRasterZValues = reinterpret_cast<int *>(a3);
+void Texture::draw(Buffer *buffer, Vert *vertices, int *zvals, int count, Vert *uv) {
+    TextureRasterPixelBase = buffer->get_data();
+    TextureRasterLightThreshold = static_cast<int>(TextureRasterKey);
+    // Hand-written assembly: the blitters reset the FPU with FINIT.
+    __asm finit
+    TextureRasterEdgeVerticesB = vertices;
+    TextureRasterEdgeVerticesA = uv;
+    TextureRasterVertexCount = count;
+    TextureRasterZValues = zvals;
     TextureRasterScratch544 = pixels_;
-    TextureRasterBufferStride = a1->stride_;
+    TextureRasterBufferStride = static_cast<int>(buffer->stride_);
     TextureRasterTextureWidth = static_cast<int>(iWidth_);
-
-    // Preserve the native address-of-clip-member check after get_data and the
-    // fixed argument slots have been published; it is not a null-buffer guard.
-    if (&a1->rect1_ != nullptr) {
-        for (int light_index = 0; light_index < a4; ++light_index) {
-            int value = a3[light_index];
-            if (TextureLightCeiling <= value) value = TextureLightCeiling;
-            a3[light_index] = value;
-            if (value <= TextureLightFloor) value = TextureLightFloor;
-            a3[light_index] = value;
+    RECT *clip = &buffer->rect1_;
+    if (clip != 0) {
+        for (int i = 0; i < count; ++i) {
+            zvals[i] = min(zvals[i], TextureLightCeiling);
+            zvals[i] = max(zvals[i], TextureLightFloor);
         }
-
-        const RECT clip = a1->rect1_;
-        TextureRasterClipRight = clip.right;
-        TextureRasterClipLeft = clip.left;
-        TextureRasterClipBottom = clip.bottom;
-        TextureRasterClipTop = clip.top;
-
-        int minY = 0x7fff;
-        int maxY = -0x7ffd;
-        int maxX = static_cast<int>(0xffff8003u);
-        int minX = 0x7fff;
-        int topVert = 0;
-        int count = TextureRasterVertexCount;
-        if (count > 0) {
-            Vert *v = a2;
-            for (int i = 0; i < count; ++i) {
-                int y = v->y;
-                if (y < minY) {
-                    topVert = i;
-                    minY = y;
-                }
-                if (maxY < y) {
-                    TextureRasterMaxYIndex = i;
-                    maxY = y;
-                }
-                int x = v->x;
-                if (x < minX) minX = x;
-                if (maxX < x) maxX = x;
-                ++v;
+        TextureRasterClipRight = clip->right;
+        TextureRasterClipLeft = clip->left;
+        TextureRasterClipBottom = clip->bottom;
+        TextureRasterClipTop = clip->top;
+        int min_y = 0x7fff;
+        int max_y = -0x7ffd;
+        int min_x = 0x7fff;
+        int max_x = -0x7ffd;
+        int top;
+        EdgeScan left;
+        EdgeScan right;
+        for (i = 0; i < TextureRasterVertexCount; ++i) {
+            if (vertices[i].y < min_y) {
+                min_y = vertices[i].y;
+                top = i;
             }
-            (void)minX;
-            (void)maxX;
-
-            if (minY < maxY) {
-                TextureRasterRowOffset = static_cast<int>(
-                    static_cast<unsigned int>(TextureRasterBufferStride) *
-                        static_cast<unsigned int>(minY) +
-                    static_cast<unsigned int>(texture_pointer_address(TextureRasterPixelBase)));
-                TextureRasterClipBottom = static_cast<int>(
-                    static_cast<unsigned int>(TextureRasterClipBottom) *
-                        static_cast<unsigned int>(TextureRasterBufferStride) +
-                    static_cast<unsigned int>(texture_pointer_address(TextureRasterPixelBase)));
-                TextureRasterClipTop = static_cast<int>(
-                    static_cast<unsigned int>(TextureRasterClipTop) *
-                        static_cast<unsigned int>(TextureRasterBufferStride) +
-                    static_cast<unsigned int>(texture_pointer_address(TextureRasterPixelBase)));
-
-                EdgeScan left_edge;
-                EdgeScan right_edge;
-                left_edge.f0 = -1;
-                if (setup_edge_gouraud(&left_edge, topVert) != 0) {
-                    right_edge.f0 = 1;
-                    if (setup_edge_gouraud(&right_edge, topVert) != 0) {
-                        _control87(_PC_24 | _RC_CHOP, _MCW_PC | _MCW_RC);
-                        int left_rows = left_edge.counter;
-                        int right_rows = right_edge.counter;
-                        bool edges_done = false;
-
-                        const int initial_span = texture_difference(
-                            right_edge.accumC, left_edge.accumC);
-                        if (initial_span > 0) {
-                            TextureRasterScratch4E4.dword = texture_span_step(
-                                texture_difference(right_edge.accumA,
-                                                   left_edge.accumA),
-                                initial_span);
-                            TextureRasterScratch4C8.dword = texture_span_step(
-                                texture_difference(right_edge.accumB,
-                                                   left_edge.accumB),
-                                initial_span);
-                            TextureRasterLightPackA.low_word = texture_light_step(
-                                texture_difference(right_edge.accumD,
-                                                   left_edge.accumD),
-                                initial_span);
+            if (vertices[i].y > max_y) {
+                max_y = vertices[i].y;
+                TextureRasterMaxYIndex = i;
+            }
+            if (vertices[i].x < min_x) {
+                min_x = vertices[i].x;
+            }
+            if (vertices[i].x > max_x) {
+                max_x = vertices[i].x;
+            }
+        }
+        if (min_y < max_y) {
+            const int stride = TextureRasterBufferStride;
+            const int base = static_cast<int>(texture_pointer_address(TextureRasterPixelBase));
+            TextureRasterRowOffset = stride * min_y + base;
+            TextureRasterClipBottom = TextureRasterClipBottom * stride + base;
+            TextureRasterClipTop = TextureRasterClipTop * stride + base;
+            left.f0 = -1;
+            if (Texture::setup_edge_gouraud(&left, top)) {
+                right.f0 = 1;
+                if (Texture::setup_edge_gouraud(&right, top)) {
+                    unsigned short control;
+                    // Hand-written assembly: truncating 24-bit FPU control
+                    // word, then 1.0 kept on the FPU stack for the rows.
+                    __asm {
+                        fstcw control
+                        mov ax, control
+                        and ax, 0xfcff
+                        or ax, 0xc00
+                        mov control, ax
+                        fldcw control
+                        fld1
+                    }
+                    int span = (right.accumC - left.accumC) << 16;
+                    int dd;
+                    int dv;
+                    int du;
+                    if (span > 0) {
+                        dd = right.accumD - left.accumD;
+                        __asm fild dd
+                        dv = right.accumB - left.accumB;
+                        __asm fild dv
+                        du = right.accumA - left.accumA;
+                        __asm {
+                            fild du
+                            fild span
+                            fdivr st, st(4)
                         }
-
-                        while (TextureRasterRowOffset < TextureRasterClipBottom) {
-                            const int leftX = left_edge.accumC;
-                            const int rightX = right_edge.accumC;
-                            const int u = left_edge.accumA;
-                            const int v = left_edge.accumB;
-                            const int light = left_edge.accumD;
-                            const int du = TextureRasterScratch4E4.dword;
-                            const int dv = TextureRasterScratch4C8.dword;
-                            const unsigned short light_step = TextureRasterLightPackA.low_word;
-
-                            bool left_failed = false;
-                            if (--left_rows == 0) {
-                                if (setup_edge_gouraud(&left_edge,
-                                                       left_edge.id) == 0) {
-                                    edges_done = true;
-                                    left_failed = true;
-                                } else {
-                                    left_rows = left_edge.counter;
+                    }
+                    if (TextureRasterRowOffset < TextureRasterClipBottom) {
+                        int done = 0;
+                        for (;;) {
+                            TextureRasterUAccumulator.dword = left.accumA;
+                            TextureRasterVAccumulator.dword = left.accumB;
+                            TextureRasterSpanRight = left.accumC;
+                            TextureRasterScratch498 = left.accumD;
+                            TextureRasterScratch4C4 = right.accumA;
+                            TextureRasterScratch530 = right.accumB;
+                            TextureRasterSpanLeft = right.accumC;
+                            if (--left.counter == 0) {
+                                if (!Texture::setup_edge_gouraud(&left, left.id)) {
+                                    done = 1;
+                                    goto edges_done;
                                 }
                             } else {
-                                texture_draw_gouraud_edge_step(left_edge);
+                                texture_lit_edge_step(left);
                             }
-                            if (!left_failed) {
-                                if (--right_rows == 0) {
-                                    if (setup_edge_gouraud(&right_edge,
-                                                           right_edge.id) == 0) {
-                                        edges_done = true;
-                                    } else {
-                                        right_rows = right_edge.counter;
-                                    }
-                                } else {
-                                    texture_draw_gouraud_edge_step(right_edge);
+                            if (--right.counter == 0) {
+                                if (!Texture::setup_edge_gouraud(&right, right.id)) {
+                                    done = 1;
+                                }
+                            } else {
+                                texture_lit_edge_step(right);
+                            }
+                        edges_done:
+                            if (span > 0) {
+                                // Hand-written assembly: scale the row slopes
+                                // and store them with FISTP.
+                                __asm {
+                                    fmul st(1), st
+                                    fmul st(2), st
+                                    fmulp st(3), st
+                                    fmul TextureRasterScale65536
+                                    fistp TextureRasterScratch4E4.dword
+                                    fmul TextureRasterScale65536
+                                    fistp TextureRasterScratch4C8.dword
+                                    fmul TextureRasterScale256
+                                    fistp TextureRasterLightPackA.low_word
                                 }
                             }
-
-                            const int next_span = texture_difference(
-                                right_edge.accumC, left_edge.accumC);
-                            if (next_span > 0) {
-                                TextureRasterScratch4E4.dword = texture_span_step(
-                                    texture_difference(right_edge.accumA,
-                                                       left_edge.accumA),
-                                    next_span);
-                                TextureRasterScratch4C8.dword = texture_span_step(
-                                    texture_difference(right_edge.accumB,
-                                                       left_edge.accumB),
-                                    next_span);
-                                TextureRasterLightPackA.low_word = texture_light_step(
-                                    texture_difference(right_edge.accumD,
-                                                       left_edge.accumD),
-                                    next_span);
-                            }
-
-                            if (TextureRasterClipBottom <= TextureRasterRowOffset) break;
-                            if (TextureRasterClipTop <= TextureRasterRowOffset &&
-                                TextureRasterClipLeft < rightX &&
-                                leftX < TextureRasterClipRight && leftX < rightX) {
-                                int clipped_right = rightX;
-                                if (TextureRasterClipRight <= rightX)
-                                    clipped_right = TextureRasterClipRight;
-                                int clipped_left = leftX;
-                                int span_u = u;
-                                int span_v = v;
-                                int span_light = light;
-                                if (leftX < TextureRasterClipLeft) {
-                                    const int skipped = texture_difference(
-                                        TextureRasterClipLeft, leftX);
-                                    const int fixed_skip = static_cast<int>(
-                                        static_cast<unsigned int>(skipped) << 16);
-                                    span_u = static_cast<int>(
-                                        static_cast<unsigned int>(span_u) +
-                                        static_cast<unsigned int>(
-                                            (static_cast<__int64>(du) * fixed_skip) >> 16));
-                                    span_v = static_cast<int>(
-                                        static_cast<unsigned int>(span_v) +
-                                        static_cast<unsigned int>(
-                                            (static_cast<__int64>(dv) * fixed_skip) >> 16));
-                                    span_light = static_cast<int>(
-                                        static_cast<unsigned int>(span_light) +
-                                        static_cast<unsigned int>(
-                                            (static_cast<__int64>(
-                                                 static_cast<unsigned short>(light_step)) *
-                                             fixed_skip) >> 8));
-                                    clipped_left = TextureRasterClipLeft;
+                            span = (right.accumC - left.accumC) << 16;
+                            if (span > 0) {
+                                dd = right.accumD - left.accumD;
+                                __asm fild dd
+                                dv = right.accumB - left.accumB;
+                                __asm fild dv
+                                du = right.accumA - left.accumA;
+                                __asm {
+                                    fild du
+                                    fild span
+                                    fdivr st, st(4)
                                 }
-
-                                const int pixel_count = texture_span_pixels(
-                                    texture_difference(clipped_right, clipped_left));
-                                unsigned char *row_destination =
-                                    reinterpret_cast<unsigned char *>(
-                                        static_cast<uintptr_t>(
-                                            static_cast<unsigned int>(TextureRasterRowOffset) +
-                                            static_cast<unsigned int>(clipped_left)));
-                                texture_draw_opaque_lit_span(
-                                    row_destination,
-                                    pixels_,
-                                    static_cast<int>(iWidth_), span_u, span_v, du, dv,
-                                    span_light, light_step, pixel_count);
                             }
-                            if (edges_done) break;
-                            TextureRasterRowOffset = static_cast<int>(
-                                static_cast<unsigned int>(TextureRasterRowOffset) +
-                                static_cast<unsigned int>(TextureRasterBufferStride));
+                            if (TextureRasterRowOffset >= TextureRasterClipBottom) {
+                                break;
+                            }
+                            if (TextureRasterRowOffset >= TextureRasterClipTop) {
+                                // Hand-written assembly: lit span with ESP as
+                                // the packed pixel counter and sbb/adc stepping.
+                                __asm {
+                                mov ebx, dword ptr [TextureRasterSpanLeft]
+                                mov ecx, dword ptr [TextureRasterSpanRight]
+                                cmp ebx, dword ptr [TextureRasterClipLeft]
+                                jle span_done
+                                cmp ecx, dword ptr [TextureRasterClipRight]
+                                jge span_done
+                                sub ebx, ecx
+                                jle span_done
+                                shl ebx, 0x10
+                                mov ebx, dword ptr [TextureRasterSpanLeft]
+                                cmp ebx, dword ptr [TextureRasterClipRight]
+                                jl K_b5e0
+                                mov ebx, dword ptr [TextureRasterClipRight]
+                            K_b5e0:
+                                mov edi, dword ptr [TextureRasterSpanRight]
+                                cmp edi, dword ptr [TextureRasterClipLeft]
+                                jge K_b645
+                                sub edi, dword ptr [TextureRasterClipLeft]
+                                neg edi
+                                mov eax, dword ptr [TextureRasterScratch4E4]
+                                shl edi, 0x10
+                                imul edi
+                                shrd eax, edx, 0x10
+                                add eax, dword ptr [TextureRasterUAccumulator]
+                                mov dword ptr [TextureRasterUAccumulator], eax
+                                mov eax, dword ptr [TextureRasterScratch4C8]
+                                imul edi
+                                shrd eax, edx, 0x10
+                                add dword ptr [TextureRasterVAccumulator], eax
+                                xor eax, eax
+                                mov ax, word ptr [TextureRasterLightPackA]
+                                imul edi
+                                shrd eax, edx, 0x8
+                                add eax, dword ptr [TextureRasterScratch498]
+                                mov dword ptr [TextureRasterScratch498], eax
+                                mov edi, dword ptr [TextureRasterClipLeft]
+                                mov dword ptr [TextureRasterSpanRight], edi
+                            K_b645:
+                                sub ebx, edi
+                                mov ecx, ebx
+                                mov esi, dword ptr [TextureRasterScratch544]
+                                xor edx, edx
+                                mov dx, word ptr [TextureRasterVAccumulator+2]
+                                mov eax, dword ptr [TextureRasterTextureWidth]
+                                imul edx
+                                add esi, eax
+                                xor edx, edx
+                                add dx, word ptr [TextureRasterUAccumulator+2]
+                                add esi, edx
+                                mov dword ptr [TextureRasterScratch504], esi
+                                xor esi, esi
+                                mov edi, dword ptr [TextureRasterSpanRight]
+                                add edi, dword ptr [TextureRasterRowOffset]
+                                mov eax, dword ptr [TextureRasterScratch498]
+                                sar eax, 0x8
+                                mov dword ptr [TextureRasterScratch498], eax
+                                mov eax, dword ptr [TextureRasterScratch4C8]
+                                sar eax, 0x10
+                                mov edx, dword ptr [TextureRasterTextureWidth]
+                                imul edx
+                                mov edx, dword ptr [TextureRasterScratch4E4]
+                                sar edx, 0x10
+                                add eax, edx
+                                mov dword ptr [TextureRasterAlternateRowNext], eax
+                                mov edx, dword ptr [TextureRasterTextureWidth]
+                                add eax, edx
+                                mov dword ptr [TextureRasterAlternateRowBase], eax
+                                xor edx, edx
+                                mov dx, word ptr [TextureRasterScratch4C8]
+                                shl edx, 0x10
+                                mov dword ptr [TextureRasterScratch528], edx
+                                xor edx, edx
+                                mov dx, word ptr [TextureRasterVAccumulator]
+                                shl edx, 0x10
+                                mov dx, word ptr [TextureRasterScratch4E4]
+                                dec ecx
+                                shl ecx, 0x10
+                                mov cx, word ptr [TextureRasterUAccumulator]
+                                mov ebx, dword ptr [TextureRasterScratch504]
+                                push ebp
+                                mov dword ptr [TextureRasterSavedStack], esp
+                                mov esp, ecx
+                                mov al, byte ptr [ebx + esi]
+                                mov cx, word ptr [TextureRasterScratch498]
+                            K_b703:
+                                add al, ch
+                                add edx, dword ptr [TextureRasterScratch528]
+                                sbb ebp, ebp
+                                mov byte ptr [edi], al
+                                add cx, word ptr [TextureRasterLightPackA]
+                                add sp, dx
+                                adc esi, dword ptr [4*ebp + TextureRasterAlternateRowNext]
+                                inc edi
+                                mov al, byte ptr [ebx + esi]
+                                sub esp, 0x10000
+                                jns K_b703
+                                mov esp, dword ptr [TextureRasterSavedStack]
+                                pop ebp
+                            span_done:
+                                }
+                            }
+                            if (done) {
+                                break;
+                            }
+                            TextureRasterRowOffset += TextureRasterBufferStride;
                         }
                     }
                 }
             }
         }
     }
-
-    if (a1 != 0) {
-        a1->free_data(1);
+    if (buffer != 0) {
+        buffer->free_data(1);
     }
-    texture_reset_fpu();
+    __asm finit
 }
 
 // ORIGINAL: 0x0061C090 ?draw_trans@Texture@@QAEXPAUBuffer@@PAUVert@@PAHHPAUVert@@@Z 0x0061C090-0x0061C622 FILE
@@ -2301,216 +2577,268 @@ void Texture::draw(Buffer *a1, Vert *a2, int *a3, int a4, Vert *a5) {
 
 void Texture::draw_trans(Buffer *buffer, Vert *vertices, int *zvals,
                          int count, Vert *uv) {
-    unsigned char *destination = static_cast<unsigned char *>(buffer->get_data());
-    texture_reset_fpu();
-
-    TextureRasterPixelBase = destination;
-    TextureRasterLightThreshold = texture_raster_key_signed_bits();
-    TextureRasterEdgeVerticesA = uv;
+    TextureRasterPixelBase = buffer->get_data();
+    TextureRasterLightThreshold = static_cast<int>(TextureRasterKey);
+    // Hand-written assembly: the blitters reset the FPU with FINIT.
+    __asm finit
     TextureRasterEdgeVerticesB = vertices;
     TextureRasterVertexCount = count;
-    TextureRasterZValues = reinterpret_cast<int *>(zvals);
+    TextureRasterEdgeVerticesA = uv;
+    TextureRasterZValues = zvals;
     TextureRasterScratch544 = pixels_;
     TextureRasterBufferStride = static_cast<int>(buffer->stride_);
     TextureRasterTextureWidth = static_cast<int>(iWidth_);
-
-    // Preserve the native address-of-clip-member check: it follows get_data
-    // and is therefore not a null-buffer guard.
-    if (&buffer->rect1_ != nullptr) {
-        for (int light_index = 0; light_index < count; ++light_index) {
-            int value = zvals[light_index];
-            if (TextureLightCeiling <= value) value = TextureLightCeiling;
-            zvals[light_index] = value;
-            if (value <= TextureLightFloor) value = TextureLightFloor;
-            zvals[light_index] = value;
+    RECT *clip = &buffer->rect1_;
+    if (clip != 0) {
+        for (int i = 0; i < count; ++i) {
+            zvals[i] = min(zvals[i], TextureLightCeiling);
+            zvals[i] = max(zvals[i], TextureLightFloor);
         }
-
-        const RECT clip = buffer->rect1_;
-        TextureRasterClipRight = clip.right;
-        TextureRasterClipLeft = clip.left;
-        TextureRasterClipBottom = clip.bottom;
-        TextureRasterClipTop = clip.top;
-
+        TextureRasterClipRight = clip->right;
+        TextureRasterClipLeft = clip->left;
+        TextureRasterClipBottom = clip->bottom;
+        TextureRasterClipTop = clip->top;
         int min_y = 0x7fff;
         int max_y = -0x7ffd;
-        int max_x = static_cast<int>(0xffff8003u);
         int min_x = 0x7fff;
-        int top_index = 0;
-        for (int i = 0; i < count; ++i) {
+        int max_x = -0x7ffd;
+        int top;
+        EdgeScan left;
+        EdgeScan right;
+        for (i = 0; i < TextureRasterVertexCount; ++i) {
             if (vertices[i].y < min_y) {
                 min_y = vertices[i].y;
-                top_index = i;
+                top = i;
             }
-            if (max_y < vertices[i].y) {
+            if (vertices[i].y > max_y) {
                 max_y = vertices[i].y;
                 TextureRasterMaxYIndex = i;
             }
-            if (vertices[i].x < min_x) min_x = vertices[i].x;
-            if (max_x < vertices[i].x) max_x = vertices[i].x;
+            if (vertices[i].x < min_x) {
+                min_x = vertices[i].x;
+            }
+            if (vertices[i].x > max_x) {
+                max_x = vertices[i].x;
+            }
         }
-        (void)min_x;
-        (void)max_x;
-
-        if (count > 0 && min_y < max_y) {
-            TextureRasterRowOffset = static_cast<int>(
-                static_cast<unsigned int>(TextureRasterBufferStride) *
-                    static_cast<unsigned int>(min_y) +
-                static_cast<unsigned int>(texture_pointer_address(TextureRasterPixelBase)));
-            TextureRasterClipBottom = static_cast<int>(
-                static_cast<unsigned int>(TextureRasterClipBottom) *
-                    static_cast<unsigned int>(TextureRasterBufferStride) +
-                static_cast<unsigned int>(texture_pointer_address(TextureRasterPixelBase)));
-            TextureRasterClipTop = static_cast<int>(
-                static_cast<unsigned int>(TextureRasterClipTop) *
-                    static_cast<unsigned int>(TextureRasterBufferStride) +
-                static_cast<unsigned int>(texture_pointer_address(TextureRasterPixelBase)));
-
-            EdgeScan left_edge;
-            EdgeScan right_edge;
-            left_edge.f0 = -1;
-            if (setup_edge_gouraud(&left_edge, top_index) != 0) {
-                right_edge.f0 = 1;
-                if (setup_edge_gouraud(&right_edge, top_index) != 0) {
-                    // Both edges are advanced before the saved row is drawn;
-                    // left-refresh failure skips the right-edge transition.
-                    _control87(_PC_24 | _RC_CHOP, _MCW_PC | _MCW_RC);
-                    int left_rows = left_edge.counter;
-                    int right_rows = right_edge.counter;
-                    bool edges_done = false;
-
-                    int initial_span = texture_difference(right_edge.accumC,
-                                                          left_edge.accumC);
-                    if (initial_span > 0) {
-                        TextureRasterScratch4E4.dword = texture_span_step(
-                            texture_difference(right_edge.accumA,
-                                               left_edge.accumA),
-                            initial_span);
-                        TextureRasterScratch4C8.dword = texture_span_step(
-                            texture_difference(right_edge.accumB,
-                                               left_edge.accumB),
-                            initial_span);
-                        TextureRasterLightPackA.low_word =
-                            texture_light_step(
-                                texture_difference(right_edge.accumD,
-                                                   left_edge.accumD),
-                                initial_span);
+        if (min_y < max_y) {
+            const int stride = TextureRasterBufferStride;
+            const int base = static_cast<int>(texture_pointer_address(TextureRasterPixelBase));
+            TextureRasterRowOffset = stride * min_y + base;
+            TextureRasterClipBottom = TextureRasterClipBottom * stride + base;
+            TextureRasterClipTop = TextureRasterClipTop * stride + base;
+            left.f0 = -1;
+            if (Texture::setup_edge_gouraud(&left, top)) {
+                right.f0 = 1;
+                if (Texture::setup_edge_gouraud(&right, top)) {
+                    unsigned short control;
+                    // Hand-written assembly: truncating 24-bit FPU control
+                    // word, then 1.0 kept on the FPU stack for the rows.
+                    __asm {
+                        fstcw control
+                        mov ax, control
+                        and ax, 0xfcff
+                        or ax, 0xc00
+                        mov control, ax
+                        fldcw control
+                        fld1
                     }
-
-                    while (TextureRasterRowOffset < TextureRasterClipBottom) {
-                        const int left_x = left_edge.accumC;
-                        const int right_x = right_edge.accumC;
-                        const int u = left_edge.accumA;
-                        const int v = left_edge.accumB;
-                        const int light = left_edge.accumD;
-                        const int du = TextureRasterScratch4E4.dword;
-                        const int dv = TextureRasterScratch4C8.dword;
-                        const unsigned short light_step =
-                            TextureRasterLightPackA.low_word;
-
-                        bool left_failed = false;
-                        if (--left_rows == 0) {
-                            if (setup_edge_gouraud(&left_edge, left_edge.id) == 0) {
-                                edges_done = true;
-                                left_failed = true;
-                            } else {
-                                left_rows = left_edge.counter;
-                            }
-                        } else {
-                            texture_draw_gouraud_edge_step(left_edge);
+                    int span = (right.accumC - left.accumC) << 16;
+                    int dd;
+                    int dv;
+                    int du;
+                    if (span > 0) {
+                        dd = right.accumD - left.accumD;
+                        __asm fild dd
+                        dv = right.accumB - left.accumB;
+                        __asm fild dv
+                        du = right.accumA - left.accumA;
+                        __asm {
+                            fild du
+                            fild span
+                            fdivr st, st(4)
                         }
-                        if (!left_failed) {
-                            if (--right_rows == 0) {
-                                if (setup_edge_gouraud(&right_edge,
-                                                      right_edge.id) == 0) {
-                                    edges_done = true;
-                                } else {
-                                    right_rows = right_edge.counter;
+                    }
+                    if (TextureRasterRowOffset < TextureRasterClipBottom) {
+                        int done = 0;
+                        for (;;) {
+                            TextureRasterUAccumulator.dword = left.accumA;
+                            TextureRasterVAccumulator.dword = left.accumB;
+                            TextureRasterSpanRight = left.accumC;
+                            TextureRasterScratch498 = left.accumD;
+                            TextureRasterScratch4C4 = right.accumA;
+                            TextureRasterScratch530 = right.accumB;
+                            TextureRasterSpanLeft = right.accumC;
+                            if (--left.counter == 0) {
+                                if (!Texture::setup_edge_gouraud(&left, left.id)) {
+                                    done = 1;
+                                    goto edges_done;
                                 }
                             } else {
-                                texture_draw_gouraud_edge_step(right_edge);
+                                texture_lit_edge_step(left);
                             }
-                        }
-
-                        const int next_span = texture_difference(
-                            right_edge.accumC, left_edge.accumC);
-                        if (next_span > 0) {
-                            TextureRasterScratch4E4.dword = texture_span_step(
-                                texture_difference(right_edge.accumA,
-                                                   left_edge.accumA),
-                                next_span);
-                            TextureRasterScratch4C8.dword = texture_span_step(
-                                texture_difference(right_edge.accumB,
-                                                   left_edge.accumB),
-                                next_span);
-                            TextureRasterLightPackA.low_word =
-                                texture_light_step(
-                                    texture_difference(right_edge.accumD,
-                                                       left_edge.accumD),
-                                    next_span);
-                        }
-
-                        if (TextureRasterClipBottom <= TextureRasterRowOffset) break;
-                        if (TextureRasterClipTop <= TextureRasterRowOffset &&
-                            TextureRasterClipLeft < right_x &&
-                            left_x < TextureRasterClipRight && left_x < right_x) {
-                            int clipped_right = right_x;
-                            if (TextureRasterClipRight <= right_x)
-                                clipped_right = TextureRasterClipRight;
-                            int clipped_left = left_x;
-                            int span_u = u;
-                            int span_v = v;
-                            int span_light = light;
-                            if (left_x < TextureRasterClipLeft) {
-                                const int skipped = texture_difference(
-                                    TextureRasterClipLeft, left_x);
-                                const int fixed_skip = static_cast<int>(
-                                    static_cast<unsigned int>(skipped) << 16);
-                                span_u = static_cast<int>(
-                                    static_cast<unsigned int>(span_u) +
-                                    static_cast<unsigned int>(
-                                        (static_cast<__int64>(du) * fixed_skip) >> 16));
-                                span_v = static_cast<int>(
-                                    static_cast<unsigned int>(span_v) +
-                                    static_cast<unsigned int>(
-                                        (static_cast<__int64>(dv) * fixed_skip) >> 16));
-                                span_light = static_cast<int>(
-                                    static_cast<unsigned int>(span_light) +
-                                    static_cast<unsigned int>(
-                                        (static_cast<__int64>(
-                                             static_cast<unsigned short>(light_step)) *
-                                         fixed_skip) >> 8));
-                                clipped_left = TextureRasterClipLeft;
+                            if (--right.counter == 0) {
+                                if (!Texture::setup_edge_gouraud(&right, right.id)) {
+                                    done = 1;
+                                }
+                            } else {
+                                texture_lit_edge_step(right);
                             }
-
-                            const int pixel_count = texture_span_pixels(
-                                texture_difference(clipped_right, clipped_left));
-                            unsigned char *row_destination =
-                                reinterpret_cast<unsigned char *>(
-                                    static_cast<uintptr_t>(
-                                        static_cast<unsigned int>(TextureRasterRowOffset) +
-                                        static_cast<unsigned int>(clipped_left)));
-                            const unsigned char key = static_cast<unsigned char>(
-                                TextureRasterLightThreshold);
-                            texture_draw_keyed_lit_span(
-                                row_destination,
-                                pixels_,
-                                static_cast<int>(iWidth_), span_u, span_v, du, dv,
-                                span_light, light_step, pixel_count, key);
+                        edges_done:
+                            if (span > 0) {
+                                // Hand-written assembly: scale the row slopes
+                                // and store them with FISTP.
+                                __asm {
+                                    fmul st(1), st
+                                    fmul st(2), st
+                                    fmulp st(3), st
+                                    fmul TextureRasterScale65536
+                                    fistp TextureRasterScratch4E4.dword
+                                    fmul TextureRasterScale65536
+                                    fistp TextureRasterScratch4C8.dword
+                                    fmul TextureRasterScale256
+                                    fistp TextureRasterLightPackA.low_word
+                                }
+                            }
+                            span = (right.accumC - left.accumC) << 16;
+                            if (span > 0) {
+                                dd = right.accumD - left.accumD;
+                                __asm fild dd
+                                dv = right.accumB - left.accumB;
+                                __asm fild dv
+                                du = right.accumA - left.accumA;
+                                __asm {
+                                    fild du
+                                    fild span
+                                    fdivr st, st(4)
+                                }
+                            }
+                            if (TextureRasterRowOffset >= TextureRasterClipBottom) {
+                                break;
+                            }
+                            if (TextureRasterRowOffset >= TextureRasterClipTop) {
+                                // Hand-written assembly: color-keyed lit span
+                                // with ESP as the packed pixel counter.
+                                __asm {
+                                mov ebx, dword ptr [TextureRasterSpanLeft]
+                                mov ecx, dword ptr [TextureRasterSpanRight]
+                                cmp ebx, dword ptr [TextureRasterClipLeft]
+                                jle span_done
+                                cmp ecx, dword ptr [TextureRasterClipRight]
+                                jge span_done
+                                sub ebx, ecx
+                                jle span_done
+                                shl ebx, 0x10
+                                mov ebx, dword ptr [TextureRasterSpanLeft]
+                                cmp ebx, dword ptr [TextureRasterClipRight]
+                                jl K_c480
+                                mov ebx, dword ptr [TextureRasterClipRight]
+                            K_c480:
+                                mov edi, dword ptr [TextureRasterSpanRight]
+                                cmp edi, dword ptr [TextureRasterClipLeft]
+                                jge K_c4e5
+                                sub edi, dword ptr [TextureRasterClipLeft]
+                                neg edi
+                                mov eax, dword ptr [TextureRasterScratch4E4]
+                                shl edi, 0x10
+                                imul edi
+                                shrd eax, edx, 0x10
+                                add eax, dword ptr [TextureRasterUAccumulator]
+                                mov dword ptr [TextureRasterUAccumulator], eax
+                                mov eax, dword ptr [TextureRasterScratch4C8]
+                                imul edi
+                                shrd eax, edx, 0x10
+                                add dword ptr [TextureRasterVAccumulator], eax
+                                xor eax, eax
+                                mov ax, word ptr [TextureRasterLightPackA]
+                                imul edi
+                                shrd eax, edx, 0x8
+                                add eax, dword ptr [TextureRasterScratch498]
+                                mov dword ptr [TextureRasterScratch498], eax
+                                mov edi, dword ptr [TextureRasterClipLeft]
+                                mov dword ptr [TextureRasterSpanRight], edi
+                            K_c4e5:
+                                sub ebx, edi
+                                mov ecx, ebx
+                                mov esi, dword ptr [TextureRasterScratch544]
+                                xor edx, edx
+                                mov dx, word ptr [TextureRasterVAccumulator+2]
+                                mov eax, dword ptr [TextureRasterTextureWidth]
+                                imul edx
+                                add esi, eax
+                                xor edx, edx
+                                add dx, word ptr [TextureRasterUAccumulator+2]
+                                add esi, edx
+                                mov dword ptr [TextureRasterScratch504], esi
+                                xor esi, esi
+                                mov edi, dword ptr [TextureRasterSpanRight]
+                                add edi, dword ptr [TextureRasterRowOffset]
+                                mov eax, dword ptr [TextureRasterScratch498]
+                                sar eax, 0x8
+                                mov dword ptr [TextureRasterScratch498], eax
+                                mov eax, dword ptr [TextureRasterScratch4C8]
+                                sar eax, 0x10
+                                mov edx, dword ptr [TextureRasterTextureWidth]
+                                imul edx
+                                mov edx, dword ptr [TextureRasterScratch4E4]
+                                sar edx, 0x10
+                                add eax, edx
+                                mov dword ptr [TextureRasterAlternateRowNext], eax
+                                mov edx, dword ptr [TextureRasterTextureWidth]
+                                add eax, edx
+                                mov dword ptr [TextureRasterAlternateRowBase], eax
+                                xor edx, edx
+                                mov dx, word ptr [TextureRasterScratch4C8]
+                                shl edx, 0x10
+                                mov dword ptr [TextureRasterScratch528], edx
+                                xor edx, edx
+                                mov dx, word ptr [TextureRasterVAccumulator]
+                                shl edx, 0x10
+                                mov dx, word ptr [TextureRasterScratch4E4]
+                                dec ecx
+                                shl ecx, 0x10
+                                mov cx, word ptr [TextureRasterUAccumulator]
+                                mov ebx, dword ptr [TextureRasterScratch504]
+                                mov ah, byte ptr [TextureRasterLightThreshold]
+                                push ebp
+                                mov dword ptr [TextureRasterSavedStack], esp
+                                mov esp, ecx
+                                mov al, byte ptr [ebx + esi]
+                                mov cx, word ptr [TextureRasterScratch498]
+                            K_c5a9:
+                                add edx, dword ptr [TextureRasterScratch528]
+                                sbb ebp, ebp
+                                cmp al, ah
+                                je K_c5b9
+                                add al, ch
+                                mov byte ptr [edi], al
+                            K_c5b9:
+                                add cx, word ptr [TextureRasterLightPackA]
+                                add sp, dx
+                                adc esi, dword ptr [4*ebp + TextureRasterAlternateRowNext]
+                                inc edi
+                                mov al, byte ptr [ebx + esi]
+                                sub esp, 0x10000
+                                jns K_c5a9
+                                mov esp, dword ptr [TextureRasterSavedStack]
+                                pop ebp
+                            span_done:
+                                }
+                            }
+                            if (done) {
+                                break;
+                            }
+                            TextureRasterRowOffset += TextureRasterBufferStride;
                         }
-                        if (edges_done) break;
-                        TextureRasterRowOffset = static_cast<int>(
-                            static_cast<unsigned int>(TextureRasterRowOffset) +
-                            static_cast<unsigned int>(TextureRasterBufferStride));
                     }
                 }
             }
         }
     }
-
     if (buffer != 0) {
         buffer->free_data(1);
     }
-    texture_reset_fpu();
+    __asm finit
 }
 
 // Fixed-slot bindings carried from 0061e540.cpp
@@ -2568,301 +2896,270 @@ struct EdgeScanBuf {
 void Texture::draw_mask_dest(Buffer *buffer, Vert *vertices,
                              unsigned char *remap, unsigned char *palette,
                              int count, Vert *uv) {
-    // HISTORICAL SCAFFOLD NOTE (retained verbatim; the completed body below
-    // supersedes its conclusion): From here the original drives a per-scanline
-    // callback (setup_edge_gouraud) whose control flow resumes by restoring
-    // esp from a value saved at a fixed address (0x009bb4ac) - a hand-written
-    // continuation/coroutine jump with no standard C++ form, and inline
-    // machine code is off the table per policy. Ruled out under budget rather
-    // than guessed at: the setup above and the two setup_edge_gouraud calls
-    // are faithful in shape and argument order; the fixed-point Gouraud/
-    // palette span-fill inner loop between them is not attempted.
-    if (vertices != 0 && buffer != 0 && pixels_ != 0 &&
-        remap != 0) {
-        TextureRasterPixelBase = buffer->get_data();
-        texture_reset_fpu();
-        TextureRasterEdgeVerticesB = vertices;
-        TextureRasterScratch550 = remap;
-        TextureRasterScratch544 = pixels_;
-        TextureRowPitchScratch = static_cast<int>(iWidth_);
-        TextureRasterTextureHeight = static_cast<int>(iHeight_);
-        TextureRasterEdgeVerticesA = uv;
-        TextureRasterVertexCount = count;
-        TextureRasterBufferStride = static_cast<int>(buffer->stride_);
-        TextureRasterTextureWidth = static_cast<int>(iWidth_);
-        TextureRasterPalette = palette;
-
-        RECT *buffer_rect = &buffer->rect1_;
-        if (buffer_rect != 0) {
-            TextureRasterClipRight = buffer_rect->right;
-            int min_y = 0x7fff;
-            TextureRasterClipLeft = buffer_rect->left;
-            TextureRasterClipBottom = buffer_rect->bottom;
-            TextureRasterClipTop = buffer_rect->top;
-
-            if (count > 0) {
-                int max_y = -0x7ffd;
-                int min_x = -0x7ffd;
-                int max_x = 0x7fff;
-                int min_y_index = 0;
-                int max_y_index = 0;
-                Vert *vertex = vertices;
-                for (int i = 0; i < count; ++i) {
-                    const int y = vertex->y;
-                    if (y < min_y) {
-                        min_y_index = i;
-                        min_y = y;
+    if (vertices != 0 && buffer != 0 && pixels_ != 0 && remap != 0) {
+    TextureRasterPixelBase = buffer->get_data();
+    // Hand-written assembly: the blitters reset the FPU with FINIT.
+    __asm finit
+    TextureRasterEdgeVerticesB = vertices;
+    TextureRasterScratch550 = remap;
+    TextureRasterScratch544 = pixels_;
+    TextureRowPitchScratch = static_cast<int>(iWidth_);
+    TextureRasterTextureHeight = static_cast<int>(iHeight_);
+    TextureRasterEdgeVerticesA = uv;
+    TextureRasterVertexCount = count;
+    TextureRasterBufferStride = static_cast<int>(buffer->stride_);
+    TextureRasterTextureWidth = static_cast<int>(iWidth_);
+    TextureRasterPalette = palette;
+    RECT *clip = &buffer->rect1_;
+    if (clip != 0) {
+        TextureRasterClipRight = clip->right;
+        TextureRasterClipLeft = clip->left;
+        TextureRasterClipBottom = clip->bottom;
+        TextureRasterClipTop = clip->top;
+        int min_y = 0x7fff;
+        int max_y = -0x7ffd;
+        int max_x = -0x7ffd;
+        int min_x = 0x7fff;
+        int top;
+        EdgeScan left;
+        EdgeScan right;
+        for (int i = 0; i < count; ++i) {
+            if (vertices[i].y < min_y) {
+                min_y = vertices[i].y;
+                top = i;
+            }
+            if (vertices[i].y > max_y) {
+                max_y = vertices[i].y;
+                TextureRasterMaxYIndex = i;
+            }
+            if (vertices[i].x < min_x) {
+                min_x = vertices[i].x;
+            }
+            if (vertices[i].x > max_x) {
+                max_x = vertices[i].x;
+            }
+        }
+        if (min_y < max_y) {
+            const int stride = TextureRasterBufferStride;
+            const int base = static_cast<int>(texture_pointer_address(TextureRasterPixelBase));
+            TextureRasterRowOffset = stride * min_y + base;
+            TextureRasterClipBottom = TextureRasterClipBottom * stride + base;
+            TextureRasterClipTop = TextureRasterClipTop * stride + base;
+            left.f0 = -1;
+            if (Texture::setup_edge_gouraud(&left, top)) {
+                right.f0 = 1;
+                if (Texture::setup_edge_gouraud(&right, top)) {
+                    unsigned short control;
+                    // Hand-written assembly: truncating 24-bit FPU control
+                    // word, then 1.0 kept on the FPU stack for the rows.
+                    __asm {
+                        fstcw control
+                        mov ax, control
+                        and ax, 0xfcff
+                        or ax, 0xc00
+                        mov control, ax
+                        fldcw control
+                        fld1
                     }
-                    if (max_y < y) {
-                        max_y_index = i;
-                        max_y = y;
-                        TextureRasterMaxYIndex = i;
+                    int span = (right.accumC - left.accumC) << 16;
+                    int dd;
+                    int dv;
+                    int du;
+                    if (span > 0) {
+                        dd = right.accumD - left.accumD;
+                        __asm fild dd
+                        dv = right.accumB - left.accumB;
+                        __asm fild dv
+                        du = right.accumA - left.accumA;
+                        __asm {
+                            fild du
+                            fild span
+                            fdivr st, st(4)
+                        }
                     }
-                    const int x = vertex->x;
-                    if (x < max_x) max_x = x;
-                    if (min_x < x) min_x = x;
-                    ++vertex;
-                }
-                (void)max_x;
-                (void)min_x;
-
-                if (min_y < max_y) {
-                    TextureRasterRowOffset = static_cast<int>(
-                        static_cast<unsigned int>(TextureRasterBufferStride) *
-                            static_cast<unsigned int>(min_y) +
-                        static_cast<unsigned int>(texture_pointer_address(TextureRasterPixelBase)));
-                    TextureRasterClipBottom = static_cast<int>(
-                        static_cast<unsigned int>(TextureRasterClipBottom) *
-                            static_cast<unsigned int>(TextureRasterBufferStride) +
-                        static_cast<unsigned int>(texture_pointer_address(TextureRasterPixelBase)));
-                    TextureRasterClipTop = static_cast<int>(
-                        static_cast<unsigned int>(TextureRasterClipTop) *
-                            static_cast<unsigned int>(TextureRasterBufferStride) +
-                        static_cast<unsigned int>(texture_pointer_address(TextureRasterPixelBase)));
-
-                    EdgeScan left_edge;
-                    EdgeScan right_edge;
-                    left_edge.f0 = -1;
-                    if (setup_edge_gouraud(&left_edge, min_y_index) != 0) {
-                        right_edge.f0 = 1;
-                        if (setup_edge_gouraud(&right_edge, min_y_index) != 0) {
-                            // Native FCW: 24-bit significand and truncating
-                            // conversion for the three span deltas below.
-                            _control87(_PC_24 | _RC_CHOP, _MCW_PC | _MCW_RC);
-                            int active_du = 0;
-                            int active_dv = 0;
-                            short active_dz = 0;
-                            const int initial_span = texture_difference(
-                                right_edge.accumC, left_edge.accumC);
-                            int prior_span_fixed = static_cast<int>(
-                                static_cast<unsigned int>(initial_span) << 16);
-                            if (prior_span_fixed > 0) {
-                                active_du = texture_span_step(
-                                    texture_difference(right_edge.accumA,
-                                                       left_edge.accumA),
-                                    initial_span);
-                                active_dv = texture_span_step(
-                                    texture_difference(right_edge.accumB,
-                                                       left_edge.accumB),
-                                    initial_span);
-                                active_dz = static_cast<short>(texture_span_step(
-                                    texture_difference(right_edge.accumD,
-                                                       left_edge.accumD),
-                                    initial_span) / 256);
+                    if (TextureRasterRowOffset < TextureRasterClipBottom) {
+                        int done = 0;
+                        for (;;) {
+                            TextureRasterUAccumulator.dword = left.accumA;
+                            TextureRasterVAccumulator.dword = left.accumB;
+                            TextureRasterSpanRight = left.accumC;
+                            TextureRasterScratch498 = left.accumD;
+                            TextureRasterScratch4C4 = right.accumA;
+                            TextureRasterScratch530 = right.accumB;
+                            TextureRasterSpanLeft = right.accumC;
+                            if (--left.counter == 0) {
+                                if (!Texture::setup_edge_gouraud(&left, left.id)) {
+                                    done = 1;
+                                    goto edges_done;
+                                }
+                            } else {
+                                texture_lit_edge_step(left);
                             }
-                            bool done_edges = false;
-                            while (TextureRasterRowOffset < TextureRasterClipBottom) {
-                                // The image publishes this row's edge values
-                                // before advancing either edge. Keep those
-                                // values while the next row is prepared.
-                                TextureRasterScratch4C4 = right_edge.accumA;
-                                TextureRasterUAccumulator.dword = left_edge.accumA;
-                                TextureRasterScratch530 = right_edge.accumB;
-                                TextureRasterVAccumulator.dword = left_edge.accumB;
-                                TextureRasterSpanRight = left_edge.accumC;
-                                TextureRasterScratch498 = left_edge.accumD;
-                                TextureRasterSpanLeft = right_edge.accumC;
-
-                                bool left_refresh_failed = false;
-                                if (--left_edge.counter == 0) {
-                                    if (setup_edge_gouraud(&left_edge,
-                                                           left_edge.id) == 0)
-                                        done_edges = left_refresh_failed = true;
-                                } else {
-                                    edge_step(left_edge);
+                            if (--right.counter == 0) {
+                                if (!Texture::setup_edge_gouraud(&right, right.id)) {
+                                    done = 1;
                                 }
-                                // The left-refresh failure branches directly
-                                // to the gradient-conversion label in the
-                                // pinned body. In particular it does not
-                                // decrement, refresh, or step the right edge.
-                                if (!left_refresh_failed) {
-                                    if (--right_edge.counter == 0) {
-                                        if (setup_edge_gouraud(&right_edge,
-                                                               right_edge.id) == 0)
-                                            done_edges = true;
-                                    } else {
-                                        edge_step(right_edge);
-                                    }
-                                }
-
-                                // The native TEST/JLE gates the complete
-                                // FMUL/FISTP conversion on the preceding
-                                // shifted span in ESI. When that span is
-                                // nonpositive, leave the globals untouched;
-                                // the x87 stack and prior global values are
-                                // both intentionally retained.
-                                if (prior_span_fixed > 0) {
-                                    TextureRasterScratch4E4.dword = active_du;
-                                    TextureRasterScratch4C8.dword = active_dv;
-                                    TextureRasterLightPackA.low_word = static_cast<unsigned short>(active_dz);
-                                }
-
-                                // The original changes x87 precision to 24
-                                // bits and truncates each FISTP result. The
-                                // integer helper preserves those independently
-                                // quantized 16.16 span steps; the z channel is
-                                // stored as a signed 8.8 word.
-                                const int horizontal_difference = texture_difference(
-                                    right_edge.accumC, left_edge.accumC);
-                                const int edge_span = static_cast<int>(
-                                    static_cast<unsigned int>(horizontal_difference)
-                                    << 16);
-                                int next_du = active_du;
-                                int next_dv = active_dv;
-                                short next_dz = active_dz;
-                                if (edge_span > 0) {
-                                    const int span_width = edge_span >> 16;
-                                    next_du = texture_span_step(
-                                        texture_difference(right_edge.accumA,
-                                                           left_edge.accumA),
-                                        span_width);
-                                    next_dv = texture_span_step(
-                                        texture_difference(right_edge.accumB,
-                                                           left_edge.accumB),
-                                        span_width);
-                                    next_dz = static_cast<short>(texture_span_step(
-                                            texture_difference(right_edge.accumD,
-                                                               left_edge.accumD),
-                                            span_width) / 256);
-                                }
-
-                                if (TextureRasterClipBottom <= TextureRasterRowOffset) break;
-                                if (TextureRasterClipTop <= TextureRasterRowOffset &&
-                                    TextureRasterClipLeft < TextureRasterSpanLeft &&
-                                    TextureRasterSpanRight < TextureRasterClipRight &&
-                                    TextureRasterSpanRight < TextureRasterSpanLeft) {
-                                    int right_x = TextureRasterSpanLeft;
-                                    if (TextureRasterClipRight <= TextureRasterSpanLeft)
-                                        right_x = TextureRasterClipRight;
-                                    if (TextureRasterSpanRight < TextureRasterClipLeft) {
-                                        const int skip = static_cast<int>(
-                                            (static_cast<unsigned int>(
-                                                 texture_difference(TextureRasterSpanRight,
-                                                                    TextureRasterClipLeft)) *
-                                             0xffff0000u));
-                                        TextureRasterUAccumulator.dword = static_cast<int>(
-                                            static_cast<unsigned int>(TextureRasterUAccumulator.dword) +
-                                            static_cast<unsigned int>(
-                                                (static_cast<__int64>(TextureRasterScratch4E4.dword) *
-                                                 skip) >> 16));
-                                        TextureRasterVAccumulator.dword = static_cast<int>(
-                                            static_cast<unsigned int>(TextureRasterVAccumulator.dword) +
-                                            static_cast<unsigned int>(
-                                                (static_cast<__int64>(TextureRasterScratch4C8.dword) *
-                                                 skip) >> 16));
-                                        TextureRasterScratch498 = static_cast<int>(
-                                            static_cast<unsigned int>(TextureRasterScratch498) +
-                                            static_cast<unsigned int>(
-                                                (static_cast<__int64>(static_cast<short>(
-                                                    TextureRasterLightPackA.low_word)) * skip) >> 8));
-                                        TextureRasterSpanRight = TextureRasterClipLeft;
-                                    }
-
-                                    const unsigned int source_offset =
-                                        static_cast<unsigned int>(TextureRasterTextureWidth) *
-                                            static_cast<unsigned int>(TextureRasterVAccumulator.dword >> 16) +
-                                        static_cast<unsigned int>(TextureRasterUAccumulator.dword >> 16);
-                                    unsigned char *source = reinterpret_cast<unsigned char *>(
-                                            texture_pointer_offset(TextureRasterScratch544,
-                                                source_offset));
-                                    unsigned char *destination = reinterpret_cast<unsigned char *>(
-                                        static_cast<uintptr_t>(
-                                            static_cast<unsigned int>(TextureRasterSpanRight) +
-                                            static_cast<unsigned int>(TextureRasterRowOffset)));
-                                    TextureRasterAlternateRowNext.value =
-                                        static_cast<int>(
-                                            static_cast<unsigned int>(TextureRasterScratch4C8.dword >> 16) *
-                                                static_cast<unsigned int>(TextureRasterTextureWidth) +
-                                            static_cast<unsigned int>(TextureRasterScratch4E4.dword >> 16));
-                                    TextureRasterAlternateRowBase.value = static_cast<int>(
-                                        static_cast<unsigned int>(TextureRasterAlternateRowNext.value) +
-                                        static_cast<unsigned int>(TextureRasterTextureWidth));
-                                    TextureRasterScratch528 = static_cast<int>(
-                                        static_cast<unsigned int>(TextureRasterScratch4C8.dword) << 16);
-
-                                    unsigned int v_accumulator = concat22(
-                                        static_cast<unsigned short>(TextureRasterVAccumulator.dword),
-                                        static_cast<unsigned short>(TextureRasterScratch4E4.dword));
-                                    unsigned int span = concat22(
-                                        static_cast<unsigned short>(
-                                            (static_cast<short>(right_x) -
-                                             static_cast<short>(TextureRasterSpanRight)) - 1),
-                                        static_cast<unsigned short>(TextureRasterUAccumulator.dword));
-                                    unsigned int texture_offset = 0;
-                                    const unsigned int pixels = texture_span_pixels(
-                                        texture_difference(right_x,
-                                                           TextureRasterSpanRight));
-                                    for (unsigned int x = 0; x < pixels; ++x) {
-                                        TextureRasterScratch4A4 = static_cast<int>(v_accumulator);
-                                        const unsigned char texel = source[texture_offset];
-                                        const unsigned char mapped = remap[texel];
-                                        if (mapped != 0) {
-                                            unsigned char *lookup = palette +
-                                                (static_cast<unsigned int>(mapped - 1) << 8) +
-                                                destination[0];
-                                            destination[0] = *lookup;
-                                        }
-                                        const bool v_carry = carry4(
-                                            v_accumulator,
-                                            static_cast<unsigned int>(TextureRasterScratch528));
-                                        const unsigned int next_v = v_accumulator +
-                                            static_cast<unsigned int>(TextureRasterScratch528);
-                                        const unsigned int selected_row = v_carry
-                                            ? static_cast<unsigned int>(TextureRasterAlternateRowBase.value)
-                                            : static_cast<unsigned int>(TextureRasterAlternateRowNext.value);
-                                        texture_offset += selected_row +
-                                            static_cast<unsigned int>(
-                                                carry2(static_cast<unsigned short>(span),
-                                                       static_cast<unsigned short>(next_v))
-                                                    ? 1 : 0);
-                                        const unsigned int next_span = concat22(
-                                            static_cast<unsigned short>(span >> 16),
-                                            static_cast<unsigned short>(
-                                                static_cast<unsigned short>(span) +
-                                                static_cast<unsigned short>(next_v)));
-                                        v_accumulator = next_v;
-                                        span = next_span;
-                                        ++destination;
-                                    }
-                                }
-                                active_du = next_du;
-                                active_dv = next_dv;
-                                active_dz = next_dz;
-                                prior_span_fixed = edge_span;
-                                if (done_edges) break;
-                                TextureRasterRowOffset = static_cast<int>(
-                                    static_cast<unsigned int>(TextureRasterRowOffset) +
-                                    static_cast<unsigned int>(TextureRasterBufferStride));
+                            } else {
+                                texture_lit_edge_step(right);
                             }
+                        edges_done:
+                            if (span > 0) {
+                                // Hand-written assembly: scale the row slopes
+                                // and store them with FISTP.
+                                __asm {
+                                    fmul st(1), st
+                                    fmul st(2), st
+                                    fmulp st(3), st
+                                    fmul TextureRasterScale65536
+                                    fistp TextureRasterScratch4E4.dword
+                                    fmul TextureRasterScale65536
+                                    fistp TextureRasterScratch4C8.dword
+                                    fmul TextureRasterScale256
+                                    fistp TextureRasterLightPackA.low_word
+                                }
+                            }
+                            span = (right.accumC - left.accumC) << 16;
+                            if (span > 0) {
+                                dd = right.accumD - left.accumD;
+                                __asm fild dd
+                                dv = right.accumB - left.accumB;
+                                __asm fild dv
+                                du = right.accumA - left.accumA;
+                                __asm {
+                                    fild du
+                                    fild span
+                                    fdivr st, st(4)
+                                }
+                            }
+                            if (TextureRasterRowOffset >= TextureRasterClipBottom) {
+                                break;
+                            }
+                            if (TextureRasterRowOffset >= TextureRasterClipTop) {
+                                // Hand-written assembly: ESP-counter span that
+                                // maps each texel through the remap table and
+                                // blends it with the destination via the palette.
+                                __asm {
+                                mov ebx, dword ptr [TextureRasterSpanLeft]
+                                mov ecx, dword ptr [TextureRasterSpanRight]
+                                cmp ebx, dword ptr [TextureRasterClipLeft]
+                                jle span_done
+                                cmp ecx, dword ptr [TextureRasterClipRight]
+                                jge span_done
+                                sub ebx, ecx
+                                jle span_done
+                                shl ebx, 0x10
+                                mov ebx, dword ptr [TextureRasterSpanLeft]
+                                cmp ebx, dword ptr [TextureRasterClipRight]
+                                jl K_e938
+                                mov ebx, dword ptr [TextureRasterClipRight]
+                            K_e938:
+                                mov edi, dword ptr [TextureRasterSpanRight]
+                                cmp edi, dword ptr [TextureRasterClipLeft]
+                                jge K_e984
+                                sub edi, dword ptr [TextureRasterClipLeft]
+                                neg edi
+                                mov eax, dword ptr [TextureRasterScratch4E4]
+                                shl edi, 0x10
+                                imul edi
+                                shrd eax, edx, 0x10
+                                add eax, dword ptr [TextureRasterUAccumulator]
+                                mov dword ptr [TextureRasterUAccumulator], eax
+                                mov eax, dword ptr [TextureRasterScratch4C8]
+                                imul edi
+                                shrd eax, edx, 0x10
+                                add dword ptr [TextureRasterVAccumulator], eax
+                                mov edi, dword ptr [TextureRasterClipLeft]
+                                mov dword ptr [TextureRasterSpanRight], edi
+                            K_e984:
+                                sub ebx, edi
+                                mov ecx, ebx
+                                mov esi, dword ptr [TextureRasterScratch544]
+                                xor edx, edx
+                                mov dx, word ptr [TextureRasterVAccumulator+2]
+                                mov eax, dword ptr [TextureRasterTextureWidth]
+                                imul edx
+                                add esi, eax
+                                xor edx, edx
+                                add dx, word ptr [TextureRasterUAccumulator+2]
+                                add esi, edx
+                                mov dword ptr [TextureRasterScratch504], esi
+                                xor esi, esi
+                                mov edi, dword ptr [TextureRasterSpanRight]
+                                add edi, dword ptr [TextureRasterRowOffset]
+                                mov eax, dword ptr [TextureRasterScratch4C8]
+                                sar eax, 0x10
+                                mov edx, dword ptr [TextureRasterTextureWidth]
+                                imul edx
+                                mov edx, dword ptr [TextureRasterScratch4E4]
+                                sar edx, 0x10
+                                add eax, edx
+                                mov dword ptr [TextureRasterAlternateRowNext], eax
+                                mov edx, dword ptr [TextureRasterTextureWidth]
+                                add eax, edx
+                                mov dword ptr [TextureRasterAlternateRowBase], eax
+                                xor edx, edx
+                                mov dx, word ptr [TextureRasterScratch4C8]
+                                shl edx, 0x10
+                                mov dword ptr [TextureRasterScratch528], edx
+                                xor edx, edx
+                                mov dx, word ptr [TextureRasterVAccumulator]
+                                shl edx, 0x10
+                                mov dx, word ptr [TextureRasterScratch4E4]
+                                dec ecx
+                                shl ecx, 0x10
+                                mov cx, word ptr [TextureRasterUAccumulator]
+                                mov ebx, dword ptr [TextureRasterScratch504]
+                                push ebp
+                                mov dword ptr [TextureRasterSavedStack], esp
+                                mov esp, ecx
+                                mov al, byte ptr [ebx + esi]
+                            K_ea2e:
+                                mov dword ptr [TextureRasterScratch4A4], edx
+                                mov dl, al
+                                and edx, 0xff
+                                add edx, dword ptr [TextureRasterScratch550]
+                                mov dl, byte ptr [edx]
+                                cmp dl, 0x0
+                                je K_ea67
+                                dec dl
+                                and edx, 0xff
+                                shl edx, 0x8
+                                add edx, dword ptr [TextureRasterPalette]
+                                mov al, byte ptr [edi]
+                                and eax, 0xff
+                                add edx, eax
+                                mov dl, byte ptr [edx]
+                                mov byte ptr [edi], dl
+                            K_ea67:
+                                mov edx, dword ptr [TextureRasterScratch4A4]
+                                add edx, dword ptr [TextureRasterScratch528]
+                                sbb ebp, ebp
+                                add sp, dx
+                                adc esi, dword ptr [4*ebp + TextureRasterAlternateRowNext]
+                                inc edi
+                                mov al, byte ptr [ebx + esi]
+                                sub esp, 0x10000
+                                jns K_ea2e
+                                mov esp, dword ptr [TextureRasterSavedStack]
+                                pop ebp
+                            span_done:
+                                }
+                            }
+                            if (done) {
+                                break;
+                            }
+                            TextureRasterRowOffset += TextureRasterBufferStride;
                         }
                     }
                 }
             }
         }
     }
-
-    if (buffer != 0) buffer->free_data(1);
-    texture_reset_fpu();
+    }
+    if (buffer != 0) {
+        buffer->free_data(1);
+    }
+    __asm finit
 }
 
 // Fixed-slot bindings carried from 006233c0.cpp
@@ -2883,175 +3180,283 @@ void Texture::draw_mask_dest(Buffer *buffer, Vert *vertices,
 // calls     0x005E3373 0x005E34A3 0x0061B1F0 0x0061FC90
 
 void Texture::draw(Buffer *buffer, Vert *vertices, int *zvals, int count,
-                   Vert *edge_vertices, int fill_color) {
+                   Vert *uv, int fill_color) {
     if (fill_color == -1) {
-        draw(buffer, vertices, zvals, count, edge_vertices);
+        draw(buffer, vertices, zvals, count, uv);
         return;
     }
-
-    unsigned char *destination = static_cast<unsigned char *>(buffer->get_data());
-    TextureRasterPixelBase = destination;
-    TextureRasterLightThreshold = texture_raster_key_signed_bits();
+    TextureRasterPixelBase = buffer->get_data();
+    TextureRasterLightThreshold = static_cast<int>(TextureRasterKey);
     TextureRasterScratch494 = static_cast<unsigned char>(fill_color);
-    texture_reset_fpu();
+    // Hand-written assembly: the blitters reset the FPU with FINIT.
+    __asm finit
     TextureRasterEdgeVerticesB = vertices;
-    TextureRasterEdgeVerticesA = edge_vertices;
+    TextureRasterEdgeVerticesA = uv;
     TextureRasterVertexCount = count;
-    TextureRasterZValues = reinterpret_cast<int *>(zvals);
+    TextureRasterZValues = zvals;
     TextureRasterScratch544 = pixels_;
     TextureRasterBufferStride = static_cast<int>(buffer->stride_);
     TextureRasterTextureWidth = static_cast<int>(iWidth_);
-
-    for (int light_index = 0; light_index < count; ++light_index) {
-        int value = zvals[light_index];
-        if (value >= TextureLightCeiling) value = TextureLightCeiling;
-        zvals[light_index] = value;
-        if (value <= TextureLightFloor) value = TextureLightFloor;
-        zvals[light_index] = value;
-    }
-
-    const RECT clip = buffer->rect1_;
-    TextureRasterClipRight = clip.right;
-    TextureRasterClipLeft = clip.left;
-    TextureRasterClipBottom = clip.bottom;
-    TextureRasterClipTop = clip.top;
-    int min_y = 0x7fff, max_y = -0x7ffd;
-    int min_x = 0x7fff, max_x = -0x7ffd;
-    int top = 0;
-    for (int i = 0; i < count; ++i) {
-        if (vertices[i].y < min_y) { min_y = vertices[i].y; top = i; }
-        if (max_y < vertices[i].y) {
-            max_y = vertices[i].y;
-            TextureRasterMaxYIndex = i;
+    RECT *clip = &buffer->rect1_;
+    if (clip != 0) {
+        for (int i = 0; i < count; ++i) {
+            zvals[i] = min(zvals[i], TextureLightCeiling);
+            zvals[i] = max(zvals[i], TextureLightFloor);
         }
-        if (vertices[i].x < min_x) min_x = vertices[i].x;
-        if (max_x < vertices[i].x) max_x = vertices[i].x;
-    }
-    (void)min_x;
-    (void)max_x;
-
-    if (min_y < max_y) {
-        const int stride = static_cast<int>(buffer->stride_);
-        int y = min_y;
-        TextureRasterRowOffset = static_cast<int>(
-            static_cast<unsigned int>(stride) * static_cast<unsigned int>(min_y) +
-            static_cast<unsigned int>(texture_pointer_address(TextureRasterPixelBase)));
-        TextureRasterClipTop = static_cast<int>(
-            static_cast<unsigned int>(stride) * static_cast<unsigned int>(clip.top) +
-            static_cast<unsigned int>(texture_pointer_address(TextureRasterPixelBase)));
-        TextureRasterClipBottom = static_cast<int>(
-            static_cast<unsigned int>(stride) * static_cast<unsigned int>(clip.bottom) +
-            static_cast<unsigned int>(texture_pointer_address(TextureRasterPixelBase)));
-
-        EdgeScan left = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
-        EdgeScan right = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
-        left.f0 = -1;
-        right.f0 = 1;
-        if (Texture::setup_edge_gouraud(&left, top) &&
-            Texture::setup_edge_gouraud(&right, top)) {
-            _control87(_PC_24 | _RC_CHOP, _MCW_PC | _MCW_RC);
-            int du = TextureRasterScratch4E4.dword;
-            int dv = TextureRasterScratch4C8.dword;
-            unsigned short light_step = static_cast<unsigned short>(TextureRasterLightPackA.low_word);
-            int parity = y & 1;
-            TextureRasterDither = parity;
-            while (TextureRasterRowOffset < TextureRasterClipBottom) {
-                int x = left.accumC;
-                int end = right.accumC;
-                int u = left.accumA;
-                int v = left.accumB;
-                int light = left.accumD;
-                TextureRasterScratch498 = light;
-                TextureRasterUAccumulator.dword = u;
-                TextureRasterVAccumulator.dword = v;
-                TextureRasterScratch4C4 = right.accumA;
-                TextureRasterScratch530 = right.accumB;
-                TextureRasterSpanRight = x;
-                TextureRasterSpanLeft = end;
-
-                const int span = texture_fixed(texture_difference(end, x));
-                if (span > 0) {
-                    du = texture_span_step(texture_difference(right.accumA, u), span >> 16);
-                    dv = texture_span_step(texture_difference(right.accumB, v), span >> 16);
-                    light_step = texture_light_step(
-                        texture_difference(right.accumD, light), span >> 16);
-                    TextureRasterScratch4E4.dword = du;
-                    TextureRasterScratch4C8.dword = dv;
-                    TextureRasterLightPackA.low_word = light_step;
-                }
-                int done = 0;
-                if (--left.counter == 0) {
-                    if (Texture::setup_edge_gouraud(&left, left.id) == 0)
-                        done = 1;
-                } else {
-                    left.accumA = static_cast<int>(static_cast<unsigned int>(left.accumA) + left.deltaA);
-                    left.accumB = static_cast<int>(static_cast<unsigned int>(left.accumB) + left.deltaB);
-                    left.accumC = static_cast<int>(static_cast<unsigned int>(left.accumC) + left.deltaC);
-                    left.accumD = static_cast<int>(static_cast<unsigned int>(left.accumD) + left.deltaD);
-                    left.fracAccum = static_cast<int>(static_cast<unsigned int>(left.fracAccum) + left.fracDelta);
-                    if (left.fracAccum > 0) {
-                        left.accumC = static_cast<int>(static_cast<unsigned int>(left.accumC) + left.extraDeltaC);
-                        left.fracAccum = texture_difference(left.fracAccum, left.fracSub);
+        TextureRasterClipRight = clip->right;
+        TextureRasterClipLeft = clip->left;
+        TextureRasterClipBottom = clip->bottom;
+        TextureRasterClipTop = clip->top;
+        int min_y = 0x7fff;
+        int max_y = -0x7ffd;
+        int min_x = 0x7fff;
+        int max_x = -0x7ffd;
+        int top;
+        EdgeScan left;
+        EdgeScan right;
+        for (i = 0; i < TextureRasterVertexCount; ++i) {
+            if (vertices[i].y < min_y) {
+                min_y = vertices[i].y;
+                top = i;
+            }
+            if (vertices[i].y > max_y) {
+                max_y = vertices[i].y;
+                TextureRasterMaxYIndex = i;
+            }
+            if (vertices[i].x < min_x) {
+                min_x = vertices[i].x;
+            }
+            if (vertices[i].x > max_x) {
+                max_x = vertices[i].x;
+            }
+        }
+        if (min_y < max_y) {
+            const int stride = TextureRasterBufferStride;
+            const int base = static_cast<int>(texture_pointer_address(TextureRasterPixelBase));
+            TextureRasterRowOffset = stride * min_y + base;
+            TextureRasterDither = min_y & 1;
+            TextureRasterClipBottom = TextureRasterClipBottom * stride + base;
+            TextureRasterClipTop = TextureRasterClipTop * stride + base;
+            left.f0 = -1;
+            if (Texture::setup_edge_gouraud(&left, top)) {
+                right.f0 = 1;
+                if (Texture::setup_edge_gouraud(&right, top)) {
+                    unsigned short control;
+                    // Hand-written assembly: truncating 24-bit FPU control
+                    // word, then 1.0 kept on the FPU stack for the rows.
+                    __asm {
+                        fstcw control
+                        mov ax, control
+                        and ax, 0xfcff
+                        or ax, 0xc00
+                        mov control, ax
+                        fldcw control
+                        fld1
                     }
-                }
-                if (!done) {
-                    if (--right.counter == 0) {
-                        if (Texture::setup_edge_gouraud(&right, right.id) == 0)
-                            done = 1;
-                    } else {
-                        right.accumA = static_cast<int>(static_cast<unsigned int>(right.accumA) + right.deltaA);
-                        right.accumB = static_cast<int>(static_cast<unsigned int>(right.accumB) + right.deltaB);
-                        right.accumC = static_cast<int>(static_cast<unsigned int>(right.accumC) + right.deltaC);
-                        right.accumD = static_cast<int>(static_cast<unsigned int>(right.accumD) + right.deltaD);
-                        right.fracAccum = static_cast<int>(static_cast<unsigned int>(right.fracAccum) + right.fracDelta);
-                        if (right.fracAccum > 0) {
-                            right.accumC = static_cast<int>(static_cast<unsigned int>(right.accumC) + right.extraDeltaC);
-                            right.fracAccum = texture_difference(right.fracAccum, right.fracSub);
+                    int span = (right.accumC - left.accumC) << 16;
+                    int dd;
+                    int dv;
+                    int du;
+                    if (span > 0) {
+                        dd = right.accumD - left.accumD;
+                        __asm fild dd
+                        dv = right.accumB - left.accumB;
+                        __asm fild dv
+                        du = right.accumA - left.accumA;
+                        __asm {
+                            fild du
+                            fild span
+                            fdivr st, st(4)
+                        }
+                    }
+                    if (TextureRasterRowOffset < TextureRasterClipBottom) {
+                        int done = 0;
+                        for (;;) {
+                            TextureRasterUAccumulator.dword = left.accumA;
+                            TextureRasterVAccumulator.dword = left.accumB;
+                            TextureRasterSpanRight = left.accumC;
+                            TextureRasterScratch498 = left.accumD;
+                            TextureRasterScratch4C4 = right.accumA;
+                            TextureRasterScratch530 = right.accumB;
+                            TextureRasterSpanLeft = right.accumC;
+                            if (--left.counter == 0) {
+                                if (!Texture::setup_edge_gouraud(&left, left.id)) {
+                                    done = 1;
+                                    goto edges_done;
+                                }
+                            } else {
+                                texture_lit_edge_step(left);
+                            }
+                            if (--right.counter == 0) {
+                                if (!Texture::setup_edge_gouraud(&right, right.id)) {
+                                    done = 1;
+                                }
+                            } else {
+                                texture_lit_edge_step(right);
+                            }
+                        edges_done:
+                            if (span > 0) {
+                                // Hand-written assembly: scale the row slopes
+                                // and store them with FISTP.
+                                __asm {
+                                    fmul st(1), st
+                                    fmul st(2), st
+                                    fmulp st(3), st
+                                    fmul TextureRasterScale65536
+                                    fistp TextureRasterScratch4E4.dword
+                                    fmul TextureRasterScale65536
+                                    fistp TextureRasterScratch4C8.dword
+                                    fmul TextureRasterScale256
+                                    fistp TextureRasterLightPackA.low_word
+                                }
+                            }
+                            span = (right.accumC - left.accumC) << 16;
+                            if (span > 0) {
+                                dd = right.accumD - left.accumD;
+                                __asm fild dd
+                                dv = right.accumB - left.accumB;
+                                __asm fild dv
+                                du = right.accumA - left.accumA;
+                                __asm {
+                                    fild du
+                                    fild span
+                                    fdivr st, st(4)
+                                }
+                            }
+                            if (TextureRasterRowOffset >= TextureRasterClipBottom) {
+                                break;
+                            }
+                            if (TextureRasterRowOffset >= TextureRasterClipTop) {
+                                // Hand-written assembly: ESP-counter span; odd
+                                // Dither rows draw lit texels, even rows write
+                                // the fill color.
+                                __asm {
+                                mov ebx, dword ptr [TextureRasterSpanLeft]
+                                mov ecx, dword ptr [TextureRasterSpanRight]
+                                cmp ebx, dword ptr [TextureRasterClipLeft]
+                                jle span_done
+                                cmp ecx, dword ptr [TextureRasterClipRight]
+                                jge span_done
+                                sub ebx, ecx
+                                jle span_done
+                                shl ebx, 0x10
+                                mov ebx, dword ptr [TextureRasterSpanLeft]
+                                cmp ebx, dword ptr [TextureRasterClipRight]
+                                jl K_37eb
+                                mov ebx, dword ptr [TextureRasterClipRight]
+                            K_37eb:
+                                mov edi, dword ptr [TextureRasterSpanRight]
+                                cmp edi, dword ptr [TextureRasterClipLeft]
+                                jge K_3850
+                                sub edi, dword ptr [TextureRasterClipLeft]
+                                neg edi
+                                mov eax, dword ptr [TextureRasterScratch4E4]
+                                shl edi, 0x10
+                                imul edi
+                                shrd eax, edx, 0x10
+                                add eax, dword ptr [TextureRasterUAccumulator]
+                                mov dword ptr [TextureRasterUAccumulator], eax
+                                mov eax, dword ptr [TextureRasterScratch4C8]
+                                imul edi
+                                shrd eax, edx, 0x10
+                                add dword ptr [TextureRasterVAccumulator], eax
+                                xor eax, eax
+                                mov ax, word ptr [TextureRasterLightPackA]
+                                imul edi
+                                shrd eax, edx, 0x8
+                                add eax, dword ptr [TextureRasterScratch498]
+                                mov dword ptr [TextureRasterScratch498], eax
+                                mov edi, dword ptr [TextureRasterClipLeft]
+                                mov dword ptr [TextureRasterSpanRight], edi
+                            K_3850:
+                                sub ebx, edi
+                                mov ecx, ebx
+                                mov edi, dword ptr [TextureRasterSpanRight]
+                                add edi, dword ptr [TextureRasterRowOffset]
+                                test dword ptr [TextureRasterDither], 0x1
+                                jne K_387d
+                                mov ah, byte ptr [TextureRasterScratch494]
+                            K_3872:
+                                mov byte ptr [edi], ah
+                                inc edi
+                                dec ecx
+                                jne K_3872
+                                jmp span_done
+                            K_387d:
+                                mov esi, dword ptr [TextureRasterScratch544]
+                                xor edx, edx
+                                mov dx, word ptr [TextureRasterVAccumulator+2]
+                                mov eax, dword ptr [TextureRasterTextureWidth]
+                                imul edx
+                                add esi, eax
+                                xor edx, edx
+                                add dx, word ptr [TextureRasterUAccumulator+2]
+                                add esi, edx
+                                mov dword ptr [TextureRasterScratch504], esi
+                                xor esi, esi
+                                mov eax, dword ptr [TextureRasterScratch498]
+                                sar eax, 0x8
+                                mov dword ptr [TextureRasterScratch498], eax
+                                mov eax, dword ptr [TextureRasterScratch4C8]
+                                sar eax, 0x10
+                                mov edx, dword ptr [TextureRasterTextureWidth]
+                                imul edx
+                                mov edx, dword ptr [TextureRasterScratch4E4]
+                                sar edx, 0x10
+                                add eax, edx
+                                mov dword ptr [TextureRasterAlternateRowNext], eax
+                                mov edx, dword ptr [TextureRasterTextureWidth]
+                                add eax, edx
+                                mov dword ptr [TextureRasterAlternateRowBase], eax
+                                xor edx, edx
+                                mov dx, word ptr [TextureRasterScratch4C8]
+                                shl edx, 0x10
+                                mov dword ptr [TextureRasterScratch528], edx
+                                xor edx, edx
+                                mov dx, word ptr [TextureRasterVAccumulator]
+                                shl edx, 0x10
+                                mov dx, word ptr [TextureRasterScratch4E4]
+                                dec ecx
+                                shl ecx, 0x10
+                                mov cx, word ptr [TextureRasterUAccumulator]
+                                mov ebx, dword ptr [TextureRasterScratch504]
+                                push ebp
+                                mov dword ptr [TextureRasterSavedStack], esp
+                                mov esp, ecx
+                                mov al, byte ptr [ebx + esi]
+                                mov cx, word ptr [TextureRasterScratch498]
+                            K_392b:
+                                add al, ch
+                                add edx, dword ptr [TextureRasterScratch528]
+                                sbb ebp, ebp
+                                mov byte ptr [edi], al
+                                add cx, word ptr [TextureRasterLightPackA]
+                                mov al, byte ptr [ebx + esi]
+                                add sp, dx
+                                adc esi, dword ptr [4*ebp + TextureRasterAlternateRowNext]
+                                inc edi
+                                sub esp, 0x10000
+                                jns K_392b
+                                mov esp, dword ptr [TextureRasterSavedStack]
+                                pop ebp
+                            span_done:
+                                }
+                            }
+                            if (done) {
+                                break;
+                            }
+                            TextureRasterRowOffset += TextureRasterBufferStride;
+                            ++TextureRasterDither;
                         }
                     }
                 }
-                if (TextureRasterClipTop <= TextureRasterRowOffset &&
-                    end > clip.left && x < clip.right && end > x) {
-                    if (end > clip.right) end = clip.right;
-                    if (x < clip.left) {
-                        const int skip = texture_fixed(texture_difference(clip.left, x));
-                        u = static_cast<int>(static_cast<unsigned int>(u) +
-                            static_cast<unsigned int>((static_cast<int64_t>(du) * skip) >> 16));
-                        v = static_cast<int>(static_cast<unsigned int>(v) +
-                            static_cast<unsigned int>((static_cast<int64_t>(dv) * skip) >> 16));
-                        light = static_cast<int>(static_cast<unsigned int>(light) +
-                            static_cast<unsigned int>((static_cast<int64_t>(light_step) * skip) >> 8));
-                        x = clip.left;
-                    }
-                    TextureRasterUAccumulator.dword = u;
-                    TextureRasterVAccumulator.dword = v;
-                    TextureRasterScratch498 = light;
-                    unsigned char *out = destination + static_cast<int64_t>(y) * stride + x;
-                    const unsigned int pixel_count =
-                        texture_span_pixels(texture_difference(end, x));
-                    if ((parity & 1) == 0) {
-                        const unsigned char color = TextureRasterScratch494;
-                        for (unsigned int pixel = 0; pixel < pixel_count; ++pixel)
-                            out[pixel] = color;
-                    } else {
-                        texture_draw_lit_span(
-                            out, pixels_,
-                            static_cast<int>(iWidth_), u, v, du, dv, light,
-                            light_step, static_cast<int>(pixel_count));
-                    }
-                }
-                if (done) break;
-                ++y;
-                ++parity;
-                TextureRasterDither = parity;
-                TextureRasterRowOffset = static_cast<int>(
-                    static_cast<unsigned int>(TextureRasterRowOffset) +
-                    static_cast<unsigned int>(stride));
             }
         }
     }
-    if (buffer != 0) buffer->free_data(1);
-    texture_reset_fpu();
+    if (buffer != 0) {
+        buffer->free_data(1);
+    }
+    __asm finit
 }
 
 // Helpers mirroring the CONCAT/CARRY-style byte packing the widest blitter
@@ -3075,240 +3480,325 @@ void Texture::draw(Buffer *buffer, Vert *vertices, int *zvals, int count,
 // calls     0x005E3373 0x005E34A3 0x0061EAD0 0x0061FC90
 
 
-void Texture::draw_coast(Buffer * a1, Vert * a2, int * a3, Texture * a4, unsigned char * a5, int a6, Vert * a7, int a8) {
-    if (a8 == -1) {
-        this->draw_coast(a1, a2, a3, a4, a5, a6, a7);
+void Texture::draw_coast(Buffer *buffer, Vert *vertices, int *zvals, Texture *coast,
+                         unsigned char *remap, int count, Vert *uv, int fill_color) {
+    if (fill_color == -1) {
+        draw_coast(buffer, vertices, zvals, coast, remap, count, uv);
         return;
     }
-    if (a2 == 0)
-        goto cleanup;
-    if (a1 == 0)
-        goto epilogue_only;
-    if (pixels_ != 0 && a3 != 0 && a5 != 0) {
-        TextureRasterPixelBase = a1->get_data();
-        texture_reset_fpu();
-        TextureRasterScratch494 = static_cast<unsigned char>(a8);
-        TextureRasterEdgeVerticesB = a2;
-        TextureRasterZValues = reinterpret_cast<int *>(a3);
-        TextureRasterScratch550 = a5;
-        TextureRasterScratch544 = pixels_;
-        TextureRowPitchScratch = static_cast<int>(iWidth_);
-        TextureRasterTextureHeight = static_cast<int>(iHeight_);
-        TextureRasterVertexCount = a6;
-        TextureRasterEdgeVerticesA = a7;
-        TextureRasterBufferStride = a1->stride_;
-        TextureRasterTextureWidth = static_cast<int>(iWidth_);
-        TextureRasterScratch554 = a4->pixels_;
-
-        if (texture_pointer_address(TextureRasterScratch554) != 0) {
-            TextureRasterClipRight = a1->rect1_.right;
-            TextureRasterClipLeft = a1->rect1_.left;
-            TextureRasterClipBottom = a1->rect1_.bottom;
-            TextureRasterClipTop = a1->rect1_.top;
-
-            int maxY = 0xffff8003;
-            int maxX = 0xffff8003;
-            int minY = 0x7fff;
-            int minX = 0x7fff;
-            int idx = 0;
-            int minYIdx = a8;
-            Vert *verts = a2;
-
-            if (0 < a6) {
-                do {
-                    int y = verts[idx].y;
-                    if (y < minY) {
-                        minY = y;
-                        minYIdx = idx;
+    if (vertices != 0 && buffer != 0 && pixels_ != 0 && zvals != 0 && remap != 0 &&
+        coast != 0) {
+    TextureRasterPixelBase = buffer->get_data();
+    // Hand-written assembly: the blitters reset the FPU with FINIT.
+    __asm finit
+    TextureRasterScratch494 = static_cast<unsigned char>(fill_color);
+    TextureRasterEdgeVerticesB = vertices;
+    TextureRasterZValues = zvals;
+    TextureRasterScratch550 = remap;
+    TextureRasterScratch544 = pixels_;
+    TextureRowPitchScratch = static_cast<int>(iWidth_);
+    TextureRasterTextureHeight = static_cast<int>(iHeight_);
+    TextureRasterVertexCount = count;
+    TextureRasterEdgeVerticesA = uv;
+    TextureRasterBufferStride = static_cast<int>(buffer->stride_);
+    TextureRasterTextureWidth = static_cast<int>(iWidth_);
+    TextureRasterScratch554 = coast->pixels_;
+    if (TextureRasterScratch554 != 0) {
+    RECT *clip = &buffer->rect1_;
+    if (clip != 0) {
+        TextureRasterClipRight = clip->right;
+        TextureRasterClipLeft = clip->left;
+        TextureRasterClipBottom = clip->bottom;
+        TextureRasterClipTop = clip->top;
+        int max_y = -0x7ffd;
+        int min_y = 0x7fff;
+        int max_x = -0x7ffd;
+        int min_x = 0x7fff;
+        int top;
+        EdgeScan left;
+        EdgeScan right;
+        for (int i = 0; i < count; ++i) {
+            if (vertices[i].y < min_y) {
+                min_y = vertices[i].y;
+                top = i;
+            }
+            if (vertices[i].y > max_y) {
+                max_y = vertices[i].y;
+                TextureRasterMaxYIndex = i;
+            }
+            if (vertices[i].x < min_x) {
+                min_x = vertices[i].x;
+            }
+            if (vertices[i].x > max_x) {
+                max_x = vertices[i].x;
+            }
+        }
+        if (min_y < max_y) {
+            const int stride = TextureRasterBufferStride;
+            const int base = static_cast<int>(texture_pointer_address(TextureRasterPixelBase));
+            TextureRasterRowOffset = stride * min_y + base;
+            TextureRasterDither = min_y & 1;
+            TextureRasterClipBottom = TextureRasterClipBottom * stride + base;
+            TextureRasterClipTop = TextureRasterClipTop * stride + base;
+            left.f0 = -1;
+            if (Texture::setup_edge_gouraud(&left, top)) {
+                right.f0 = 1;
+                if (Texture::setup_edge_gouraud(&right, top)) {
+                    unsigned short control;
+                    // Hand-written assembly: truncating 24-bit FPU control
+                    // word, then 1.0 kept on the FPU stack for the rows.
+                    __asm {
+                        fstcw control
+                        mov ax, control
+                        and ax, 0xfcff
+                        or ax, 0xc00
+                        mov control, ax
+                        fldcw control
+                        fld1
                     }
-                    if (maxY < y) {
-                        TextureRasterMaxYIndex = idx;
-                        maxY = y;
+                    int span = (right.accumC - left.accumC) << 16;
+                    int dd;
+                    int dv;
+                    int du;
+                    if (span > 0) {
+                        dd = right.accumD - left.accumD;
+                        __asm fild dd
+                        dv = right.accumB - left.accumB;
+                        __asm fild dv
+                        du = right.accumA - left.accumA;
+                        __asm {
+                            fild du
+                            fild span
+                            fdivr st, st(4)
+                        }
                     }
-                    int x = verts[idx].x;
-                    if (x < minX)
-                        minX = x;
-                    if (maxX < x)
-                        maxX = x;
-                    ++idx;
-                } while (idx < a6);
-
-                if (minY < maxY) {
-                    TextureRasterClipTop = TextureRasterClipTop * TextureRasterBufferStride + texture_pointer_address(TextureRasterPixelBase);
-                    TextureRasterRowOffset = TextureRasterBufferStride * minY + texture_pointer_address(TextureRasterPixelBase);
-                    TextureRasterDither = minY & 1;
-                    TextureRasterClipBottom = TextureRasterClipBottom * TextureRasterBufferStride + texture_pointer_address(TextureRasterPixelBase);
-
-                    // Two complete EdgeScan records: f0 is traversal direction, followed by
-                    // counter/id and the stepped A/B/C/D channels.
-                    EdgeScan edge1;
-                    EdgeScan edge2;
-                    edge1.f0 = -1;
-                    if (this->setup_edge_gouraud(&edge1, minYIdx) != 0) {
-                        edge2.f0 = 1;
-                        if (this->setup_edge_gouraud(&edge2, minYIdx) != 0) {
-                            // The native path selects round-toward-zero after both edge setups.
-                            _control87(_PC_24 | _RC_CHOP, _MCW_PC | _MCW_RC);
-                            long double invDx = 1.0;
-                            long double dA = 1.0, dB = 1.0, dC = 1.0;
-                            long edgeSpan = (edge2.accumC - edge1.accumC) * 0x10000;
-                            if (0 < edgeSpan) {
-                                dA = static_cast<long double>(edge2.accumA - edge1.accumA);
-                                dB = static_cast<long double>(edge2.accumB - edge1.accumB);
-                                dC = static_cast<long double>(edge2.accumD - edge1.accumD);
-                                invDx = 1.0 / static_cast<long double>(edgeSpan);
+                    if (TextureRasterRowOffset < TextureRasterClipBottom) {
+                        int done = 0;
+                        for (;;) {
+                            TextureRasterUAccumulator.dword = left.accumA;
+                            TextureRasterVAccumulator.dword = left.accumB;
+                            TextureRasterSpanRight = left.accumC;
+                            TextureRasterScratch498 = left.accumD;
+                            TextureRasterScratch4C4 = right.accumA;
+                            TextureRasterScratch530 = right.accumB;
+                            TextureRasterSpanLeft = right.accumC;
+                            if (--left.counter == 0) {
+                                if (!Texture::setup_edge_gouraud(&left, left.id)) {
+                                    done = 1;
+                                    goto edges_done;
+                                }
+                            } else {
+                                texture_lit_edge_step(left);
                             }
-
-                            if (TextureRasterRowOffset < TextureRasterClipBottom) {
-                                bool doneEdges = false;
-                                do {
-                                    TextureRasterScratch4C4 = edge2.accumA;
-                                    TextureRasterUAccumulator.dword = edge1.accumA;
-                                    TextureRasterScratch530 = edge2.accumB;
-                                    TextureRasterVAccumulator.dword = edge1.accumB;
-                                    TextureRasterSpanRight = edge1.accumC;
-                                    TextureRasterScratch498 = edge1.accumD;
-                                    TextureRasterSpanLeft = edge2.accumC;
-
-                                    --edge1.counter;
-                                    if (edge1.counter == 0) {
-                                        if (this->setup_edge_gouraud(&edge1, edge1.id) != 0) {
-                                            goto edge2_step;
-                                        }
-                                        doneEdges = true;
-                                    } else {
-                                        edge1.accumA += edge1.deltaA;
-                                        edge1.accumB += edge1.deltaB;
-                                        edge1.accumD += edge1.deltaD;
-                                        edge1.accumC += edge1.deltaC;
-                                        edge1.fracAccum += edge1.fracDelta;
-                                        if (0 < edge1.fracAccum) {
-                                            edge1.accumC += edge1.extraDeltaC;
-                                            edge1.fracAccum -= edge1.fracSub;
-                                        }
-                                    edge2_step:
-                                        --edge2.counter;
-                                        if (edge2.counter == 0) {
-                                            if (this->setup_edge_gouraud(&edge2, edge2.id) == 0) {
-                                                doneEdges = true;
-                                            }
-                                        } else {
-                                            edge2.accumA += edge2.deltaA;
-                                            edge2.accumB += edge2.deltaB;
-                                            edge2.accumC += edge2.deltaC;
-                                            edge2.accumD += edge2.deltaD;
-                                            edge2.fracAccum += edge2.fracDelta;
-                                            if (0 < edge2.fracAccum) {
-                                                edge2.accumC += edge2.extraDeltaC;
-                                                edge2.fracAccum -= edge2.fracSub;
-                                            }
-                                        }
-                                    }
-
-                                    if (0 < edgeSpan) {
-                                        TextureRasterScratch4E4.dword = static_cast<int>(
-                                            dA * invDx * static_cast<long double>(TextureRasterScale65536));
-                                        TextureRasterScratch4C8.dword = static_cast<int>(
-                                            dB * invDx * static_cast<long double>(TextureRasterScale65536));
-                                        TextureRasterLightPackA.low_word = static_cast<unsigned short>(
-                                            invDx * dC * static_cast<long double>(TextureRasterScale256));
-                                    }
-
-                                    edgeSpan = (edge2.accumC - edge1.accumC) * 0x10000;
-                                    if (0 < edgeSpan) {
-                                        dA = static_cast<long double>(edge2.accumA - edge1.accumA);
-                                        dB = static_cast<long double>(edge2.accumB - edge1.accumB);
-                                        dC = static_cast<long double>(edge2.accumD - edge1.accumD);
-                                        invDx = 1.0 / static_cast<long double>(edgeSpan);
-                                    }
-
-                                    if (TextureRasterClipBottom <= TextureRasterRowOffset)
-                                        break;
-                                    if (TextureRasterClipTop <= TextureRasterRowOffset && TextureRasterClipLeft < TextureRasterSpanLeft &&
-                                        TextureRasterSpanRight < TextureRasterClipRight && TextureRasterSpanRight < TextureRasterSpanLeft) {
-                                        int rightX =
-                                            (TextureRasterClipRight <= TextureRasterSpanLeft) ? TextureRasterClipRight : TextureRasterSpanLeft;
-                                        if (TextureRasterSpanRight < TextureRasterClipLeft) {
-                                            long skip = (TextureRasterSpanRight - TextureRasterClipLeft) * -0x10000;
-                                            TextureRasterUAccumulator.dword += static_cast<int>(
-                                                (static_cast<__int64>(TextureRasterScratch4E4.dword) * skip) >> 16);
-                                            TextureRasterVAccumulator.dword += static_cast<int>(
-                                                (static_cast<__int64>(TextureRasterScratch4C8.dword) * skip) >> 16);
-                                            TextureRasterScratch498 += static_cast<int>(
-                                                (static_cast<__int64>(static_cast<short>(TextureRasterLightPackA.low_word)) *
-                                                 skip) >>
-                                                8);
-                                            TextureRasterSpanRight = TextureRasterClipLeft;
-                                        }
-
-                                        const unsigned int base_source_offset = texture_draw_source_index(
-                                            TextureRasterTextureWidth, TextureRasterUAccumulator.dword,
-                                            TextureRasterVAccumulator.dword);
-                                        char *src = reinterpret_cast<char *>(
-                                            texture_pointer_offset(TextureRasterScratch544,
-                                                base_source_offset));
-                                        TextureRasterScratch504 = reinterpret_cast<unsigned char *>(src);
-                                        TextureRasterShadeCursor = texture_pointer_address(src) + (texture_pointer_address(TextureRasterScratch554) - texture_pointer_address(TextureRasterScratch544));
-                                        char *dst = reinterpret_cast<char *>(TextureRasterSpanRight + TextureRasterRowOffset);
-                                        const int row_light = TextureRasterScratch498;
-                                        TextureRasterScratch498 = row_light >> 8;
-                                        TextureRasterAlternateRowNext.value =
-                                            (TextureRasterScratch4C8.dword >> 16) * TextureRasterTextureWidth + (TextureRasterScratch4E4.dword >> 16);
-                                        TextureRasterAlternateRowBase.value = TextureRasterAlternateRowNext.value + TextureRasterTextureWidth;
-                                        TextureRasterScratch528 = TextureRasterScratch4C8.dword << 16;
-
-                                        const int pixel_count = static_cast<int>(
-                                            texture_span_pixels(static_cast<short>(rightX) -
-                                                                static_cast<short>(TextureRasterSpanRight)));
-                                        TextureDrawSpanResult span_result;
-                                        span_result.packed_uv_sink = &(TextureRasterScratch4A4);
-                                        span_result.preload_pixels =
-                                            reinterpret_cast<volatile const unsigned char *>(
-                                                static_cast<uintptr_t>(
-                                                    static_cast<unsigned int>(texture_pointer_address(TextureRasterScratch544))));
-                                        span_result.prefetched_source =
-                                            span_result.preload_pixels[base_source_offset];
-                                        if ((TextureRasterDither & 1) == 0) {
-                                            texture_draw_keyed_coast_fill_span(
-                                                reinterpret_cast<unsigned char *>(dst),
-                                                reinterpret_cast<const unsigned char *>(texture_pointer_address(TextureRasterScratch554)),
-                                                static_cast<const unsigned char *>(TextureRasterScratch550),
-                                                TextureRasterTextureWidth, TextureRasterUAccumulator.dword, TextureRasterVAccumulator.dword,
-                                                TextureRasterScratch4E4.dword, TextureRasterScratch4C8.dword,
-                                                TextureRasterScratch494, pixel_count,
-                                                &span_result);
-                                        } else {
-                                            texture_draw_coast_span(
-                                                reinterpret_cast<unsigned char *>(dst),
-                                                reinterpret_cast<const unsigned char *>(texture_pointer_address(TextureRasterScratch544)),
-                                                reinterpret_cast<const unsigned char *>(texture_pointer_address(TextureRasterScratch554)),
-                                                static_cast<const unsigned char *>(TextureRasterScratch550),
-                                                TextureRasterTextureWidth, TextureRasterUAccumulator.dword, TextureRasterVAccumulator.dword,
-                                                TextureRasterScratch4E4.dword, TextureRasterScratch4C8.dword, row_light,
-                                                static_cast<unsigned short>(TextureRasterLightPackA.low_word),
-                                                pixel_count, &span_result);
-                                        }
-                                    }
-                                    if (doneEdges)
-                                        break;
-                                    TextureRasterRowOffset += TextureRasterBufferStride;
-                                    ++TextureRasterDither;
-                                } while (true);
+                            if (--right.counter == 0) {
+                                if (!Texture::setup_edge_gouraud(&right, right.id)) {
+                                    done = 1;
+                                }
+                            } else {
+                                texture_lit_edge_step(right);
                             }
+                        edges_done:
+                            if (span > 0) {
+                                // Hand-written assembly: scale the row slopes
+                                // and store them with FISTP.
+                                __asm {
+                                    fmul st(1), st
+                                    fmul st(2), st
+                                    fmulp st(3), st
+                                    fmul TextureRasterScale65536
+                                    fistp TextureRasterScratch4E4.dword
+                                    fmul TextureRasterScale65536
+                                    fistp TextureRasterScratch4C8.dword
+                                    fmul TextureRasterScale256
+                                    fistp TextureRasterLightPackA.low_word
+                                }
+                            }
+                            span = (right.accumC - left.accumC) << 16;
+                            if (span > 0) {
+                                dd = right.accumD - left.accumD;
+                                __asm fild dd
+                                dv = right.accumB - left.accumB;
+                                __asm fild dv
+                                du = right.accumA - left.accumA;
+                                __asm {
+                                    fild du
+                                    fild span
+                                    fdivr st, st(4)
+                                }
+                            }
+                            if (TextureRasterRowOffset >= TextureRasterClipBottom) {
+                                break;
+                            }
+                            if (TextureRasterRowOffset >= TextureRasterClipTop) {
+                                // Hand-written assembly: ESP-counter span; odd
+                                // Dither rows remap and light the coast texel,
+                                // even rows write the fill color.
+                                __asm {
+                                mov ebx, dword ptr [TextureRasterSpanLeft]
+                                mov ecx, dword ptr [TextureRasterSpanRight]
+                                cmp ebx, dword ptr [TextureRasterClipLeft]
+                                jle span_done
+                                cmp ecx, dword ptr [TextureRasterClipRight]
+                                jge span_done
+                                sub ebx, ecx
+                                jle span_done
+                                shl ebx, 0x10
+                                mov ebx, dword ptr [TextureRasterSpanLeft]
+                                cmp ebx, dword ptr [TextureRasterClipRight]
+                                jl K_43e8
+                                mov ebx, dword ptr [TextureRasterClipRight]
+                            K_43e8:
+                                mov edi, dword ptr [TextureRasterSpanRight]
+                                cmp edi, dword ptr [TextureRasterClipLeft]
+                                jge K_444d
+                                sub edi, dword ptr [TextureRasterClipLeft]
+                                neg edi
+                                mov eax, dword ptr [TextureRasterScratch4E4]
+                                shl edi, 0x10
+                                imul edi
+                                shrd eax, edx, 0x10
+                                add eax, dword ptr [TextureRasterUAccumulator]
+                                mov dword ptr [TextureRasterUAccumulator], eax
+                                mov eax, dword ptr [TextureRasterScratch4C8]
+                                imul edi
+                                shrd eax, edx, 0x10
+                                add dword ptr [TextureRasterVAccumulator], eax
+                                xor eax, eax
+                                mov ax, word ptr [TextureRasterLightPackA]
+                                imul edi
+                                shrd eax, edx, 0x8
+                                add eax, dword ptr [TextureRasterScratch498]
+                                mov dword ptr [TextureRasterScratch498], eax
+                                mov edi, dword ptr [TextureRasterClipLeft]
+                                mov dword ptr [TextureRasterSpanRight], edi
+                            K_444d:
+                                sub ebx, edi
+                                mov ecx, ebx
+                                mov esi, dword ptr [TextureRasterScratch544]
+                                xor edx, edx
+                                mov dx, word ptr [TextureRasterVAccumulator+2]
+                                mov eax, dword ptr [TextureRasterTextureWidth]
+                                imul edx
+                                add esi, eax
+                                xor edx, edx
+                                add dx, word ptr [TextureRasterUAccumulator+2]
+                                add esi, edx
+                                mov dword ptr [TextureRasterScratch504], esi
+                                sub esi, dword ptr [TextureRasterScratch544]
+                                mov edi, dword ptr [TextureRasterScratch554]
+                                add edi, esi
+                                mov dword ptr [TextureRasterShadeCursor], edi
+                                xor esi, esi
+                                mov edi, dword ptr [TextureRasterSpanRight]
+                                add edi, dword ptr [TextureRasterRowOffset]
+                                mov eax, dword ptr [TextureRasterScratch498]
+                                sar eax, 0x8
+                                mov dword ptr [TextureRasterScratch498], eax
+                                mov eax, dword ptr [TextureRasterScratch4C8]
+                                sar eax, 0x10
+                                mov edx, dword ptr [TextureRasterTextureWidth]
+                                imul edx
+                                mov edx, dword ptr [TextureRasterScratch4E4]
+                                sar edx, 0x10
+                                add eax, edx
+                                mov dword ptr [TextureRasterAlternateRowNext], eax
+                                mov edx, dword ptr [TextureRasterTextureWidth]
+                                add eax, edx
+                                mov dword ptr [TextureRasterAlternateRowBase], eax
+                                xor edx, edx
+                                mov dx, word ptr [TextureRasterScratch4C8]
+                                shl edx, 0x10
+                                mov dword ptr [TextureRasterScratch528], edx
+                                xor edx, edx
+                                mov dx, word ptr [TextureRasterVAccumulator]
+                                shl edx, 0x10
+                                mov dx, word ptr [TextureRasterScratch4E4]
+                                dec ecx
+                                shl ecx, 0x10
+                                mov cx, word ptr [TextureRasterUAccumulator]
+                                mov ebx, dword ptr [TextureRasterScratch504]
+                                push ebp
+                                mov dword ptr [TextureRasterSavedStack], esp
+                                mov esp, ecx
+                                mov al, byte ptr [ebx + esi]
+                                test dword ptr [TextureRasterDither], 0x1
+                                je K_4588
+                                mov cx, word ptr [TextureRasterScratch498]
+                            K_452b:
+                                mov dword ptr [TextureRasterScratch4A4], edx
+                                mov edx, dword ptr [TextureRasterShadeCursor]
+                                add edx, esi
+                                mov dl, byte ptr [edx]
+                                and edx, 0xff
+                                add edx, dword ptr [TextureRasterScratch550]
+                                mov dl, byte ptr [edx]
+                                cmp dl, 0x0
+                                je K_455b
+                                cmp dl, 0x1
+                                je K_4557
+                                mov al, dl
+                                sub al, ch
+                            K_4557:
+                                add al, ch
+                                mov byte ptr [edi], al
+                            K_455b:
+                                mov edx, dword ptr [TextureRasterScratch4A4]
+                                add cx, word ptr [TextureRasterLightPackA]
+                                add edx, dword ptr [TextureRasterScratch528]
+                                sbb ebp, ebp
+                                add sp, dx
+                                adc esi, dword ptr [4*ebp + TextureRasterAlternateRowNext]
+                                inc edi
+                                mov al, byte ptr [ebx + esi]
+                                sub esp, 0x10000
+                                jns K_452b
+                                jmp K_45d7
+                            K_4588:
+                                mov cl, byte ptr [TextureRasterScratch494]
+                            K_458e:
+                                mov dword ptr [TextureRasterScratch4A4], edx
+                                mov edx, dword ptr [TextureRasterShadeCursor]
+                                add edx, esi
+                                mov dl, byte ptr [edx]
+                                and edx, 0xff
+                                add edx, dword ptr [TextureRasterScratch550]
+                                mov dl, byte ptr [edx]
+                                cmp dl, 0x0
+                                je K_45b3
+                                mov byte ptr [edi], cl
+                            K_45b3:
+                                mov edx, dword ptr [TextureRasterScratch4A4]
+                                add edx, dword ptr [TextureRasterScratch528]
+                                sbb ebp, ebp
+                                add sp, dx
+                                adc esi, dword ptr [4*ebp + TextureRasterAlternateRowNext]
+                                inc edi
+                                mov al, byte ptr [ebx + esi]
+                                sub esp, 0x10000
+                                jns K_458e
+                            K_45d7:
+                                mov esp, dword ptr [TextureRasterSavedStack]
+                                pop ebp
+                            span_done:
+                                }
+                            }
+                            if (done) {
+                                break;
+                            }
+                            TextureRasterRowOffset += TextureRasterBufferStride;
+                            ++TextureRasterDither;
                         }
                     }
                 }
             }
         }
     }
-
-cleanup:
-    if (a1 != 0) {
-        a1->free_data(1);
     }
-epilogue_only:
-    texture_reset_fpu();
-    return;
+    }
+    if (buffer != 0) {
+        buffer->free_data(1);
+    }
+    __asm finit
 }
 
 // ORIGINAL: 0x00619D80 Texture::draw_trans2 0x00619D80-0x0061A23F FILE
@@ -3328,200 +3818,232 @@ epilogue_only:
 // 0x619FE2-0x61A000 and 0x61A039-0x61A074 confirm the matching DDA updates.
 // This supersedes the former local-overlay interpretation above.
 
-int Texture::draw_trans2(Buffer *a1, Vert *a2, int a3) {
-    TextureRasterPixelBase = a1->get_data();
-    texture_reset_fpu();
-    TextureRasterEdgeVerticesB = a2;
+// 0x0061A240's body with the borrowed_ guard and an unkeyed copy span. The
+// image never sets EAX before ret, so the original was likely void; the
+// declared int return is kept and returns 0.
+int Texture::draw_trans2(Buffer *buffer, Vert *vertices, int use_eight_vertices) {
+    TextureRasterPixelBase = buffer->get_data();
+    // Hand-written assembly: the blitters reset the FPU with FINIT.
+    __asm finit
+    TextureRasterEdgeVerticesB = vertices;
     TextureRasterScratch544 = pixels_;
     TextureRowPitchScratch = static_cast<int>(iWidth_);
     TextureRasterTextureHeight = static_cast<int>(iHeight_);
-
-    if (a3 == 0) {
-        TextureRasterEdgeVerticesA = corners_;
-        TextureRasterVertexCount = 4;
-    } else {
-        TextureRasterEdgeVerticesA = cornersAndMids_;
+    if (use_eight_vertices) {
         TextureRasterVertexCount = 8;
+        TextureRasterEdgeVerticesA = cornersAndMids_;
+    } else {
+        TextureRasterVertexCount = 4;
+        TextureRasterEdgeVerticesA = corners_;
     }
-    TextureRasterBufferStride = a1->stride_;
+    TextureRasterBufferStride = static_cast<int>(buffer->stride_);
     TextureRasterTextureWidth = static_cast<int>(iWidth_);
-
-    RECT *clip = &a1->rect1_;
+    RECT *clip = &buffer->rect1_;
     if (clip != 0) {
         TextureRasterClipRight = clip->right;
         TextureRasterClipLeft = clip->left;
         TextureRasterClipBottom = clip->bottom;
         TextureRasterClipTop = clip->top;
-
-        int minY = 0x7fff;
-        int maxY = -0x7ffd;
-        int minX = 0x7fff;
-        int maxX = -0x7ffd;
-        int minYIdx = 0;
-        int idx = 0;
-        Vert *vp = a2;
-
-        if (TextureRasterVertexCount != 0) {
-            do {
-                int y = vp->y;
-                if (y < minY) {
-                    minY = y;
-                    minYIdx = idx;
-                }
-                if (maxY < y) {
-                    maxY = y;
-                    TextureRasterMaxYIndex = idx;
-                }
-                int x = vp->x;
-                if (x < minX) {
-                    minX = x;
-                }
-                if (maxX < x) {
-                    maxX = x;
-                }
-                idx++;
-                ++vp;
-            } while (idx < TextureRasterVertexCount);
-
-            if (minY < maxY) {
-                TextureRasterRowOffset = (TextureRasterBufferStride) * minY + (texture_pointer_address(TextureRasterPixelBase));
-                TextureRasterClipBottom = (TextureRasterClipBottom) * (TextureRasterBufferStride) + (texture_pointer_address(TextureRasterPixelBase));
-                TextureRasterClipTop = (TextureRasterClipTop) * (TextureRasterBufferStride) + (texture_pointer_address(TextureRasterPixelBase));
-
-                EdgeScan leftEdge;
-                leftEdge.f0 = -1;
-                int setupResult = this->setup_edge(&leftEdge, minYIdx);
-                if (setupResult != 0) {
-                    EdgeScan rightEdge;
-                    rightEdge.f0 = 1;
-                    setupResult = this->setup_edge(&rightEdge, minYIdx);
-                    if (setupResult != 0 && this->borrowed_ != 0) {
-                        _control87(_PC_24 | _RC_CHOP, _MCW_PC | _MCW_RC);
-                        int stagedSpan = texture_fixed(texture_difference(
-                            rightEdge.accumC, leftEdge.accumC));
-                        int stagedU = 0;
-                        int stagedV = 0;
-                        if (stagedSpan > 0) {
-                            stagedU = texture_difference(rightEdge.accumA, leftEdge.accumA);
-                            stagedV = texture_difference(rightEdge.accumB, leftEdge.accumB);
+        int min_y = 0x7fff;
+        int max_y = -0x7ffd;
+        int min_x = 0x7fff;
+        int max_x = -0x7ffd;
+        int top;
+        EdgeScan left;
+        EdgeScan right;
+        Vert *v = vertices;
+        for (int i = 0; i < TextureRasterVertexCount; ++i, ++v) {
+            if (v->y < min_y) {
+                min_y = v->y;
+                top = i;
+            }
+            if (v->y > max_y) {
+                max_y = v->y;
+                TextureRasterMaxYIndex = i;
+            }
+            if (v->x < min_x) {
+                min_x = v->x;
+            }
+            if (v->x > max_x) {
+                max_x = v->x;
+            }
+        }
+        if (min_y < max_y) {
+            const int stride = TextureRasterBufferStride;
+            const int base = static_cast<int>(texture_pointer_address(TextureRasterPixelBase));
+            TextureRasterRowOffset = stride * min_y + base;
+            TextureRasterClipBottom = TextureRasterClipBottom * stride + base;
+            TextureRasterClipTop = TextureRasterClipTop * stride + base;
+            left.f0 = -1;
+            if (Texture::setup_edge(&left, top)) {
+                right.f0 = 1;
+                if (Texture::setup_edge(&right, top)) {
+                if (borrowed_ != 0) {
+                    unsigned short control;
+                    // Hand-written assembly: truncating 24-bit FPU control
+                    // word, then 1.0 kept on the FPU stack for the rows.
+                    __asm {
+                        fstcw control
+                        mov ax, control
+                        and ax, 0xfcff
+                        or ax, 0xc00
+                        mov control, ax
+                        fldcw control
+                        fld1
+                    }
+                    int span = (right.accumC - left.accumC) << 16;
+                    int dv;
+                    int du;
+                    if (span > 0) {
+                        dv = right.accumB - left.accumB;
+                        __asm fild dv
+                        du = right.accumA - left.accumA;
+                        __asm {
+                            fild du
+                            fild span
+                            fdivr st, st(3)
                         }
-
-                        if (TextureRasterRowOffset < TextureRasterClipBottom) {
-                            bool done = false;
-                            do {
-                                TextureRasterScratch4C4 = rightEdge.accumA;
-                                TextureRasterUAccumulator.dword = leftEdge.accumA;
-                                TextureRasterScratch530 = rightEdge.accumB;
-                                TextureRasterVAccumulator.dword = leftEdge.accumB;
-                                TextureRasterSpanRight = leftEdge.accumC;
-                                TextureRasterSpanLeft = rightEdge.accumC;
-
-                                leftEdge.counter--;
-                                if (leftEdge.counter == 0) {
-                                    int r = this->setup_edge(&leftEdge, leftEdge.id);
-                                    if (r != 0) {
-                                        goto rightEdgeStep;
-                                    }
-                                    done = true;
-                                } else {
-                                    leftEdge.accumA += leftEdge.deltaA;
-                                    leftEdge.accumB += leftEdge.deltaB;
-                                    leftEdge.accumC += leftEdge.deltaC;
-                                    leftEdge.fracAccum += leftEdge.fracDelta;
-                                    if (leftEdge.fracAccum > 0) {
-                                        leftEdge.accumC += leftEdge.extraDeltaC;
-                                        leftEdge.fracAccum -= leftEdge.fracSub;
-                                    }
-                                rightEdgeStep:
-                                    rightEdge.counter--;
-                                    if (rightEdge.counter == 0) {
-                                        int r = this->setup_edge(&rightEdge, rightEdge.id);
-                                        if (r == 0) {
-                                            done = true;
-                                        }
-                                    } else {
-                                        rightEdge.accumA += rightEdge.deltaA;
-                                        rightEdge.accumB += rightEdge.deltaB;
-                                        rightEdge.accumC += rightEdge.deltaC;
-                                        rightEdge.fracAccum += rightEdge.fracDelta;
-                                        if (rightEdge.fracAccum > 0) {
-                                            rightEdge.accumC += rightEdge.extraDeltaC;
-                                            rightEdge.fracAccum -= rightEdge.fracSub;
-                                        }
-                                    }
+                    }
+                    if (TextureRasterRowOffset < TextureRasterClipBottom) {
+                        int done = 0;
+                        for (;;) {
+                            TextureRasterUAccumulator.dword = left.accumA;
+                            TextureRasterVAccumulator.dword = left.accumB;
+                            TextureRasterSpanRight = left.accumC;
+                            TextureRasterScratch4C4 = right.accumA;
+                            TextureRasterScratch530 = right.accumB;
+                            TextureRasterSpanLeft = right.accumC;
+                            if (--left.counter == 0) {
+                                if (!Texture::setup_edge(&left, left.id)) {
+                                    done = 1;
+                                    goto edges_done;
                                 }
-
-                                // Consume the snapshot staged before advancing the edges.
-                                // The original publishes U first, then V, using 24-bit RZ.
-                                if (stagedSpan > 0) {
-                                    TextureRasterScratch4E4.dword = texture_span_step(stagedU, stagedSpan >> 16);
-                                    TextureRasterScratch4C8.dword = texture_span_step(stagedV, stagedSpan >> 16);
+                            } else {
+                                texture_uv_edge_step(left);
+                            }
+                            if (--right.counter == 0) {
+                                if (!Texture::setup_edge(&right, right.id)) {
+                                    done = 1;
                                 }
-                                stagedSpan = texture_fixed(texture_difference(
-                                    rightEdge.accumC, leftEdge.accumC));
-                                if (stagedSpan > 0) {
-                                    stagedU = texture_difference(rightEdge.accumA, leftEdge.accumA);
-                                    stagedV = texture_difference(rightEdge.accumB, leftEdge.accumB);
+                            } else {
+                                texture_uv_edge_step(right);
+                            }
+                        edges_done:
+                            if (span > 0) {
+                                // Hand-written assembly: scale the row slopes
+                                // and store them with FISTP.
+                                __asm {
+                                    fmul st(1), st
+                                    fmulp st(2), st
+                                    fmul TextureRasterScale65536
+                                    fistp TextureRasterScratch4E4.dword
+                                    fmul TextureRasterScale65536
+                                    fistp TextureRasterScratch4C8.dword
                                 }
-
-                                if (TextureRasterClipBottom <= TextureRasterRowOffset) {
-                                    break;
+                            }
+                            span = (right.accumC - left.accumC) << 16;
+                            if (span > 0) {
+                                dv = right.accumB - left.accumB;
+                                __asm fild dv
+                                du = right.accumA - left.accumA;
+                                __asm {
+                                    fild du
+                                    fild span
+                                    fdivr st, st(3)
                                 }
-
-                                if (TextureRasterClipTop <= TextureRasterRowOffset && TextureRasterClipLeft < TextureRasterSpanLeft &&
-                                    TextureRasterSpanRight < TextureRasterClipRight && TextureRasterSpanRight < TextureRasterSpanLeft) {
-                                    int rowRight = TextureRasterSpanLeft;
-                                    if (TextureRasterClipRight <= rowRight) {
-                                        rowRight = TextureRasterClipRight;
-                                    }
-                                    if (TextureRasterSpanRight < TextureRasterClipLeft) {
-                                        int preStepX = texture_fixed(texture_difference(
-                                            TextureRasterClipLeft, TextureRasterSpanRight));
-                                        TextureRasterUAccumulator.dword = static_cast<int>(
-                                            static_cast<unsigned int>((static_cast<__int64>(TextureRasterScratch4E4.dword) * preStepX) >> 16) +
-                                            static_cast<unsigned int>(TextureRasterUAccumulator.dword));
-                                        TextureRasterVAccumulator.dword = static_cast<int>(
-                                            static_cast<unsigned int>(TextureRasterVAccumulator.dword) +
-                                            static_cast<unsigned int>((static_cast<__int64>(TextureRasterScratch4C8.dword) * preStepX) >> 16));
-                                        TextureRasterSpanRight = TextureRasterClipLeft;
-                                    }
-
-                                    int spanCount = rowRight - TextureRasterSpanRight;
-
-                                    // Borrowed TexHeap payloads are 64-KiB aligned with 256-byte rows.
-                                    const unsigned char *sourcePixels =
-                                        static_cast<const unsigned char *>(TextureRasterScratch544);
-                                    unsigned char *destPtr = reinterpret_cast<unsigned char *>(TextureRasterRowOffset + TextureRasterSpanRight);
-                                    unsigned int u = static_cast<unsigned int>(TextureRasterUAccumulator.dword);
-                                    unsigned int v = static_cast<unsigned int>(TextureRasterVAccumulator.dword);
-                                    const unsigned int du = static_cast<unsigned int>(TextureRasterScratch4E4.dword);
-                                    const unsigned int dv = static_cast<unsigned int>(TextureRasterScratch4C8.dword);
-                                    unsigned int remaining = static_cast<unsigned short>(spanCount) + 1u;
-                                    while (remaining != 0) {
-                                        *destPtr = sourcePixels[((v >> 16) & 0xffu) * 256u + ((u >> 16) & 0xffu)];
-                                        u += du;
-                                        v += dv;
-                                        ++destPtr;
-                                        --remaining;
-                                    }
+                            }
+                            if (TextureRasterRowOffset >= TextureRasterClipBottom) {
+                                break;
+                            }
+                            if (TextureRasterRowOffset >= TextureRasterClipTop) {
+                                // Hand-written assembly: unkeyed copy span with adc carry stepping, EBP as the V step and a lea filler.
+                                __asm {
+                                mov ebx, dword ptr [TextureRasterSpanLeft]
+                                cmp ebx, dword ptr [TextureRasterClipLeft]
+                                jle span_done
+                                mov ecx, dword ptr [TextureRasterSpanRight]
+                                cmp ecx, dword ptr [TextureRasterClipRight]
+                                jge span_done
+                                sub ebx, ecx
+                                jle span_done
+                                shl ebx, 0x10
+                                mov ebx, dword ptr [TextureRasterSpanLeft]
+                                cmp ebx, dword ptr [TextureRasterClipRight]
+                                jl K_a12c
+                                mov ebx, dword ptr [TextureRasterClipRight]
+                            K_a12c:
+                                mov edi, dword ptr [TextureRasterSpanRight]
+                                cmp edi, dword ptr [TextureRasterClipLeft]
+                                jge K_a178
+                                sub edi, dword ptr [TextureRasterClipLeft]
+                                neg edi
+                                mov eax, dword ptr [TextureRasterScratch4E4]
+                                shl edi, 0x10
+                                imul edi
+                                shrd eax, edx, 0x10
+                                add eax, dword ptr [TextureRasterUAccumulator]
+                                mov dword ptr [TextureRasterUAccumulator], eax
+                                mov eax, dword ptr [TextureRasterScratch4C8]
+                                imul edi
+                                shrd eax, edx, 0x10
+                                add dword ptr [TextureRasterVAccumulator], eax
+                                mov edi, dword ptr [TextureRasterClipLeft]
+                                mov dword ptr [TextureRasterSpanRight], edi
+                            K_a178:
+                                sub ebx, edi
+                                mov ecx, ebx
+                                mov ebx, dword ptr [TextureRasterScratch544]
+                                mov bh, byte ptr [TextureRasterVAccumulator+2]
+                                add bl, byte ptr [TextureRasterUAccumulator+2]
+                                mov edi, dword ptr [TextureRasterRowOffset]
+                                add edi, dword ptr [TextureRasterSpanRight]
+                                mov edx, dword ptr [TextureRasterUAccumulator]
+                                shl edx, 0x10
+                                mov dh, byte ptr [TextureRasterScratch4C8+2]
+                                mov dl, byte ptr [TextureRasterScratch4E4+2]
+                                mov esi, dword ptr [TextureRasterScratch4E4]
+                                shl esi, 0x10
+                                mov eax, ecx
+                                mov ecx, dword ptr [TextureRasterScratch4C8]
+                                shl ecx, 0x10
+                                mov cx, ax
+                                mov eax, dword ptr [TextureRasterVAccumulator]
+                                shl eax, 0x10
+                                mov ah, byte ptr [TextureRasterLightThreshold]
+                                push ebp
+                                mov ebp, ecx
+                                xor bp, bp
+                                and ecx, 0xffff
+                            K_a1e0:
+                                mov al, byte ptr [ebx]
+                                add edx, esi
+                                mov byte ptr [edi], al
+                                lea ecx, [ecx]
+                                adc bl, dl
+                                add eax, ebp
+                                adc bh, dh
+                                inc edi
+                                dec ecx
+                                jns K_a1e0
+                                pop ebp
+                            span_done:
                                 }
-
-                                if (done) {
-                                    break;
-                                }
-                                TextureRasterRowOffset = TextureRasterRowOffset + TextureRasterBufferStride;
-                            } while (true);
+                            }
+                            if (done) {
+                                break;
+                            }
+                            TextureRasterRowOffset += TextureRasterBufferStride;
                         }
                     }
                 }
             }
         }
     }
-
-    if (a1 != 0) {
-        a1->free_data(1);
+                }
+    if (buffer != 0) {
+        buffer->free_data(1);
     }
-    texture_reset_fpu();
+    __asm finit
     return 0;
 }
 
@@ -3537,196 +4059,297 @@ int Texture::draw_trans2(Buffer *a1, Vert *a2, int a3) {
 // calls     0x005E3373 0x005E34A3 0x0061C090 0x0061FC90
 
 
-int Texture::draw_trans_3(Buffer *a1, Vert *a2, int *a3, int a4, Vert *a5, int a6) {
-    if (a6 == -1) {
-        draw_trans(a1, a2, a3, a4, a5);
+int Texture::draw_trans_3(Buffer *buffer, Vert *vertices, int *zvals, int count,
+                          Vert *uv, int fill_color) {
+    if (fill_color == -1) {
+        draw_trans(buffer, vertices, zvals, count, uv);
         return 0;
     }
-
-    TextureRasterPixelBase = a1->get_data();
-    TextureRasterLightThreshold = texture_raster_key_signed_bits();
-    texture_reset_fpu();
-    TextureRasterScratch494 = static_cast<unsigned char>(a6);
-    TextureRasterVertexCount = a4;
-    TextureRasterEdgeVerticesB = a2;
-    TextureRasterEdgeVerticesA = a5;
-    TextureRasterZValues = a3;
+    TextureRasterPixelBase = buffer->get_data();
+    TextureRasterLightThreshold = static_cast<int>(TextureRasterKey);
+    // Hand-written assembly: the blitters reset the FPU with FINIT.
+    __asm finit
+    TextureRasterScratch494 = static_cast<unsigned char>(fill_color);
+    TextureRasterEdgeVerticesB = vertices;
+    TextureRasterVertexCount = count;
+    TextureRasterEdgeVerticesA = uv;
+    TextureRasterZValues = zvals;
     TextureRasterScratch544 = pixels_;
-    TextureRasterBufferStride = a1->stride_;
-    TextureRasterTextureWidth = iWidth_;
-
-    RECT *clip = &a1->rect1_;
+    TextureRasterBufferStride = static_cast<int>(buffer->stride_);
+    TextureRasterTextureWidth = static_cast<int>(iWidth_);
+    RECT *clip = &buffer->rect1_;
     if (clip != 0) {
-        for (int i = 0; i < a4; ++i) {
-            int v = a3[i];
-            if (v >= TextureLightCeiling) v = TextureLightCeiling;
-            a3[i] = v;
-            if (v <= TextureLightFloor) v = TextureLightFloor;
-            a3[i] = v;
+        for (int i = 0; i < count; ++i) {
+            zvals[i] = min(zvals[i], TextureLightCeiling);
+            zvals[i] = max(zvals[i], TextureLightFloor);
         }
-
         TextureRasterClipRight = clip->right;
-        int minY = 0x7fff;
         TextureRasterClipLeft = clip->left;
         TextureRasterClipBottom = clip->bottom;
         TextureRasterClipTop = clip->top;
-        int maxY = -0x7ffd;
-        int maxX = -0x7ffd;
-        int minX = 0x7fff;
-        int topVert = 0;
-        if (TextureRasterVertexCount > 0) {
-            Vert *vp = a2;
-            for (int i = 0; i < TextureRasterVertexCount; ++i, ++vp) {
-                const int y = vp->y;
-                if (y < minY) { minY = y; topVert = i; }
-                if (maxY < y) { maxY = y; TextureRasterMaxYIndex = i; }
-                const int x = vp->x;
-                if (x < minX) minX = x;
-                if (maxX < x) maxX = x;
+        int min_y = 0x7fff;
+        int max_y = -0x7ffd;
+        int min_x = 0x7fff;
+        int max_x = -0x7ffd;
+        int top;
+        EdgeScan left;
+        EdgeScan right;
+        for (i = 0; i < TextureRasterVertexCount; ++i) {
+            if (vertices[i].y < min_y) {
+                min_y = vertices[i].y;
+                top = i;
             }
-            if (minY < maxY) {
-                const unsigned int pitch = static_cast<unsigned int>(TextureRasterBufferStride);
-                const unsigned int base = static_cast<unsigned int>(
-                    texture_pointer_address(TextureRasterPixelBase));
-                TextureRasterRowOffset = static_cast<int>(pitch * static_cast<unsigned int>(minY) + base);
-                TextureRasterClipTop = static_cast<int>(pitch * static_cast<unsigned int>(TextureRasterClipTop) + base);
-                TextureRasterDither = minY & 1;
-                TextureRasterClipBottom = static_cast<int>(pitch * static_cast<unsigned int>(TextureRasterClipBottom) + base);
-
-                EdgeScan left;
-                EdgeScan right;
-                left.f0 = -1;
-                if (setup_edge_gouraud(&left, topVert) != 0) {
-                    right.f0 = 1;
-                    if (setup_edge_gouraud(&right, topVert) != 0) {
-                        _control87(_PC_24 | _RC_CHOP, _MCW_PC | _MCW_RC);
-                        // The x87 loop retains current-row slope operands while
-                        // advancing both edges and preparing the next row.
-                        // A nonpositive wrapped 16.16 width leaves shared
-                        // slopes untouched; it is not a safe-span fallback.
-                        int pending_width = texture_fixed(texture_difference(right.accumC, left.accumC));
-                        int pending_u = 0, pending_v = 0, pending_light = 0;
-                        if (pending_width > 0) {
-                            pending_light = texture_difference(right.accumD, left.accumD);
-                            pending_v = texture_difference(right.accumB, left.accumB);
-                            pending_u = texture_difference(right.accumA, left.accumA);
+            if (vertices[i].y > max_y) {
+                max_y = vertices[i].y;
+                TextureRasterMaxYIndex = i;
+            }
+            if (vertices[i].x < min_x) {
+                min_x = vertices[i].x;
+            }
+            if (vertices[i].x > max_x) {
+                max_x = vertices[i].x;
+            }
+        }
+        if (min_y < max_y) {
+            const int stride = TextureRasterBufferStride;
+            const int base = static_cast<int>(texture_pointer_address(TextureRasterPixelBase));
+            TextureRasterRowOffset = stride * min_y + base;
+            TextureRasterDither = min_y & 1;
+            TextureRasterClipBottom = TextureRasterClipBottom * stride + base;
+            TextureRasterClipTop = TextureRasterClipTop * stride + base;
+            left.f0 = -1;
+            if (Texture::setup_edge_gouraud(&left, top)) {
+                right.f0 = 1;
+                if (Texture::setup_edge_gouraud(&right, top)) {
+                    unsigned short control;
+                    // Hand-written assembly: truncating 24-bit FPU control
+                    // word, then 1.0 kept on the FPU stack for the rows.
+                    __asm {
+                        fstcw control
+                        mov ax, control
+                        and ax, 0xfcff
+                        or ax, 0xc00
+                        mov control, ax
+                        fldcw control
+                        fld1
+                    }
+                    int span = (right.accumC - left.accumC) << 16;
+                    int dd;
+                    int dv;
+                    int du;
+                    if (span > 0) {
+                        dd = right.accumD - left.accumD;
+                        __asm fild dd
+                        dv = right.accumB - left.accumB;
+                        __asm fild dv
+                        du = right.accumA - left.accumA;
+                        __asm {
+                            fild du
+                            fild span
+                            fdivr st, st(4)
                         }
-                        if (TextureRasterRowOffset < TextureRasterClipBottom) {
-                            for (;;) {
-                                TextureRasterScratch498 = left.accumD;
-                                TextureRasterScratch4C4 = right.accumA;
-                                TextureRasterScratch530 = right.accumB;
-                                TextureRasterSpanLeft = right.accumC;
-                                TextureRasterUAccumulator.dword = left.accumA;
-                                TextureRasterVAccumulator.dword = left.accumB;
-                                TextureRasterSpanRight = left.accumC;
-
-                                bool done = false;
-                                left.counter = texture_difference(left.counter, 1);
-                                if (left.counter == 0) {
-                                    if (setup_edge_gouraud(&left, left.id) == 0) done = true;
-                                } else {
-                                    texture_draw_gouraud_edge_step(left);
+                    }
+                    if (TextureRasterRowOffset < TextureRasterClipBottom) {
+                        int done = 0;
+                        for (;;) {
+                            TextureRasterUAccumulator.dword = left.accumA;
+                            TextureRasterVAccumulator.dword = left.accumB;
+                            TextureRasterSpanRight = left.accumC;
+                            TextureRasterScratch498 = left.accumD;
+                            TextureRasterScratch4C4 = right.accumA;
+                            TextureRasterScratch530 = right.accumB;
+                            TextureRasterSpanLeft = right.accumC;
+                            if (--left.counter == 0) {
+                                if (!Texture::setup_edge_gouraud(&left, left.id)) {
+                                    done = 1;
+                                    goto edges_done;
                                 }
-                                // The original skips the right refresh/advance
-                                // when the left edge has just exhausted itself.
-                                if (!done) {
-                                    right.counter = texture_difference(right.counter, 1);
-                                    if (right.counter == 0) {
-                                        if (setup_edge_gouraud(&right, right.id) == 0) done = true;
-                                    } else {
-                                        texture_draw_gouraud_edge_step(right);
-                                    }
-                                }
-                                if (pending_width > 0) {
-                                    const int width = pending_width >> 16;
-                                    TextureRasterScratch4E4.dword = texture_span_step(pending_u, width);
-                                    TextureRasterScratch4C8.dword = texture_span_step(pending_v, width);
-                                    TextureRasterLightPackA.low_word = texture_light_step(pending_light, width);
-                                }
-                                pending_width = texture_fixed(texture_difference(right.accumC, left.accumC));
-                                if (pending_width > 0) {
-                                    pending_light = texture_difference(right.accumD, left.accumD);
-                                    pending_v = texture_difference(right.accumB, left.accumB);
-                                    pending_u = texture_difference(right.accumA, left.accumA);
-                                }
-
-                                if (TextureRasterClipBottom <= TextureRasterRowOffset) break;
-                                if (TextureRasterClipTop <= TextureRasterRowOffset &&
-                                    TextureRasterClipLeft < TextureRasterSpanLeft &&
-                                    TextureRasterSpanRight < TextureRasterClipRight &&
-                                    texture_difference(TextureRasterSpanLeft, TextureRasterSpanRight) > 0) {
-                                    int end = TextureRasterSpanLeft;
-                                    if (end >= TextureRasterClipRight) end = TextureRasterClipRight;
-                                    if (TextureRasterSpanRight < TextureRasterClipLeft) {
-                                        const int skip = texture_fixed(texture_difference(
-                                            TextureRasterClipLeft, TextureRasterSpanRight));
-                                        TextureRasterUAccumulator.dword = static_cast<int>(
-                                            static_cast<unsigned int>(TextureRasterUAccumulator.dword) +
-                                            static_cast<unsigned int>((static_cast<int64_t>(TextureRasterScratch4E4.dword) * skip) >> 16));
-                                        TextureRasterVAccumulator.dword = static_cast<int>(
-                                            static_cast<unsigned int>(TextureRasterVAccumulator.dword) +
-                                            static_cast<unsigned int>((static_cast<int64_t>(TextureRasterScratch4C8.dword) * skip) >> 16));
-                                        TextureRasterScratch498 = static_cast<int>(
-                                            static_cast<unsigned int>(TextureRasterScratch498) +
-                                            static_cast<unsigned int>((static_cast<int64_t>(
-                                                static_cast<unsigned short>(TextureRasterLightPackA.low_word)) * skip) >> 8));
-                                        TextureRasterSpanRight = TextureRasterClipLeft;
-                                    }
-                                    const int u = TextureRasterUAccumulator.dword;
-                                    const int v = TextureRasterVAccumulator.dword;
-                                    const int light = TextureRasterScratch498;
-                                    const int du = TextureRasterScratch4E4.dword;
-                                    const int dv = TextureRasterScratch4C8.dword;
-                                    const int width = TextureRasterTextureWidth;
-                                    const unsigned int source_offset = texture_draw_source_index(width, u, v);
-                                    TextureRasterScratch504 = static_cast<unsigned char *>(texture_pointer_from_address(
-                                        static_cast<uint32_t>(static_cast<uint32_t>(
-                                            texture_pointer_address(TextureRasterScratch544)) + source_offset)));
-                                    TextureRasterScratch498 = light >> 8;
-                                    const unsigned int source_step = texture_draw_source_step(du, dv, width);
-                                    TextureRasterAlternateRowNext.value = static_cast<int>(source_step);
-                                    TextureRasterAlternateRowBase.value = static_cast<int>(
-                                        source_step + static_cast<unsigned int>(width));
-                                    TextureRasterScratch528 = static_cast<int>(static_cast<unsigned int>(
-                                        static_cast<unsigned short>(dv)) << 16);
-                                    unsigned char *destination = reinterpret_cast<unsigned char *>(
-                                        static_cast<uintptr_t>(static_cast<unsigned int>(TextureRasterRowOffset) +
-                                            static_cast<unsigned int>(TextureRasterSpanRight)));
-                                    const int pixels = static_cast<int>(texture_span_pixels(
-                                        texture_difference(end, TextureRasterSpanRight)));
-                                    const unsigned char key = static_cast<unsigned char>(TextureRasterLightThreshold);
-                                    if ((TextureRasterDither & 1) != 0) {
-                                        texture_draw_keyed_lit_span(destination,
-                                            static_cast<const unsigned char *>(TextureRasterScratch544), width,
-                                            u, v, du, dv, light, static_cast<unsigned short>(TextureRasterLightPackA.low_word),
-                                            pixels, key);
-                                    } else {
-                                        texture_draw_keyed_fill_span(destination,
-                                            static_cast<const unsigned char *>(TextureRasterScratch544), width,
-                                            u, v, du, dv, pixels, key,
-                                            TextureRasterScratch494);
-                                    }
-                                }
-                                if (done) break;
-                                TextureRasterRowOffset = static_cast<int>(
-                                    static_cast<unsigned int>(TextureRasterRowOffset) +
-                                    static_cast<unsigned int>(TextureRasterBufferStride));
-                                TextureRasterDither = static_cast<int>(
-                                    static_cast<unsigned int>(TextureRasterDither) + 1u);
+                            } else {
+                                texture_lit_edge_step(left);
                             }
+                            if (--right.counter == 0) {
+                                if (!Texture::setup_edge_gouraud(&right, right.id)) {
+                                    done = 1;
+                                }
+                            } else {
+                                texture_lit_edge_step(right);
+                            }
+                        edges_done:
+                            if (span > 0) {
+                                // Hand-written assembly: scale the row slopes
+                                // and store them with FISTP.
+                                __asm {
+                                    fmul st(1), st
+                                    fmul st(2), st
+                                    fmulp st(3), st
+                                    fmul TextureRasterScale65536
+                                    fistp TextureRasterScratch4E4.dword
+                                    fmul TextureRasterScale65536
+                                    fistp TextureRasterScratch4C8.dword
+                                    fmul TextureRasterScale256
+                                    fistp TextureRasterLightPackA.low_word
+                                }
+                            }
+                            span = (right.accumC - left.accumC) << 16;
+                            if (span > 0) {
+                                dd = right.accumD - left.accumD;
+                                __asm fild dd
+                                dv = right.accumB - left.accumB;
+                                __asm fild dv
+                                du = right.accumA - left.accumA;
+                                __asm {
+                                    fild du
+                                    fild span
+                                    fdivr st, st(4)
+                                }
+                            }
+                            if (TextureRasterRowOffset >= TextureRasterClipBottom) {
+                                break;
+                            }
+                            if (TextureRasterRowOffset >= TextureRasterClipTop) {
+                                // Hand-written assembly: color-keyed ESP-counter
+                                // span; odd Dither rows draw lit texels, even
+                                // rows write the fill color.
+                                __asm {
+                                mov ebx, dword ptr [TextureRasterSpanLeft]
+                                mov ecx, dword ptr [TextureRasterSpanRight]
+                                cmp ebx, dword ptr [TextureRasterClipLeft]
+                                jle span_done
+                                cmp ecx, dword ptr [TextureRasterClipRight]
+                                jge span_done
+                                sub ebx, ecx
+                                jle span_done
+                                shl ebx, 0x10
+                                mov ebx, dword ptr [TextureRasterSpanLeft]
+                                cmp ebx, dword ptr [TextureRasterClipRight]
+                                jl K_31db
+                                mov ebx, dword ptr [TextureRasterClipRight]
+                            K_31db:
+                                mov edi, dword ptr [TextureRasterSpanRight]
+                                cmp edi, dword ptr [TextureRasterClipLeft]
+                                jge K_3240
+                                sub edi, dword ptr [TextureRasterClipLeft]
+                                neg edi
+                                mov eax, dword ptr [TextureRasterScratch4E4]
+                                shl edi, 0x10
+                                imul edi
+                                shrd eax, edx, 0x10
+                                add eax, dword ptr [TextureRasterUAccumulator]
+                                mov dword ptr [TextureRasterUAccumulator], eax
+                                mov eax, dword ptr [TextureRasterScratch4C8]
+                                imul edi
+                                shrd eax, edx, 0x10
+                                add dword ptr [TextureRasterVAccumulator], eax
+                                xor eax, eax
+                                mov ax, word ptr [TextureRasterLightPackA]
+                                imul edi
+                                shrd eax, edx, 0x8
+                                add eax, dword ptr [TextureRasterScratch498]
+                                mov dword ptr [TextureRasterScratch498], eax
+                                mov edi, dword ptr [TextureRasterClipLeft]
+                                mov dword ptr [TextureRasterSpanRight], edi
+                            K_3240:
+                                sub ebx, edi
+                                mov ecx, ebx
+                                mov esi, dword ptr [TextureRasterScratch544]
+                                xor edx, edx
+                                mov dx, word ptr [TextureRasterVAccumulator+2]
+                                mov eax, dword ptr [TextureRasterTextureWidth]
+                                imul edx
+                                add esi, eax
+                                xor edx, edx
+                                add dx, word ptr [TextureRasterUAccumulator+2]
+                                add esi, edx
+                                mov dword ptr [TextureRasterScratch504], esi
+                                xor esi, esi
+                                mov edi, dword ptr [TextureRasterSpanRight]
+                                add edi, dword ptr [TextureRasterRowOffset]
+                                mov eax, dword ptr [TextureRasterScratch498]
+                                sar eax, 0x8
+                                mov dword ptr [TextureRasterScratch498], eax
+                                mov eax, dword ptr [TextureRasterScratch4C8]
+                                sar eax, 0x10
+                                mov edx, dword ptr [TextureRasterTextureWidth]
+                                imul edx
+                                mov edx, dword ptr [TextureRasterScratch4E4]
+                                sar edx, 0x10
+                                add eax, edx
+                                mov dword ptr [TextureRasterAlternateRowNext], eax
+                                mov edx, dword ptr [TextureRasterTextureWidth]
+                                add eax, edx
+                                mov dword ptr [TextureRasterAlternateRowBase], eax
+                                xor edx, edx
+                                mov dx, word ptr [TextureRasterScratch4C8]
+                                shl edx, 0x10
+                                mov dword ptr [TextureRasterScratch528], edx
+                                xor edx, edx
+                                mov dx, word ptr [TextureRasterVAccumulator]
+                                shl edx, 0x10
+                                mov dx, word ptr [TextureRasterScratch4E4]
+                                dec ecx
+                                shl ecx, 0x10
+                                mov cx, word ptr [TextureRasterUAccumulator]
+                                mov ebx, dword ptr [TextureRasterScratch504]
+                                mov ah, byte ptr [TextureRasterLightThreshold]
+                                push ebp
+                                mov dword ptr [TextureRasterSavedStack], esp
+                                mov esp, ecx
+                                mov al, byte ptr [ebx + esi]
+                                test dword ptr [TextureRasterDither], 0x1
+                                je K_333f
+                                mov cx, word ptr [TextureRasterScratch498]
+                            K_3310:
+                                add edx, dword ptr [TextureRasterScratch528]
+                                sbb ebp, ebp
+                                cmp al, ah
+                                je K_3320
+                                add al, ch
+                                mov byte ptr [edi], al
+                            K_3320:
+                                add cx, word ptr [TextureRasterLightPackA]
+                                add sp, dx
+                                adc esi, dword ptr [4*ebp + TextureRasterAlternateRowNext]
+                                inc edi
+                                mov al, byte ptr [ebx + esi]
+                                sub esp, 0x10000
+                                jns K_3310
+                                jmp K_3369
+                            K_333f:
+                                mov cl, byte ptr [TextureRasterScratch494]
+                            K_3345:
+                                add edx, dword ptr [TextureRasterScratch528]
+                                sbb ebp, ebp
+                                cmp al, ah
+                                je K_3353
+                                mov byte ptr [edi], cl
+                            K_3353:
+                                add sp, dx
+                                adc esi, dword ptr [4*ebp + TextureRasterAlternateRowNext]
+                                inc edi
+                                mov al, byte ptr [ebx + esi]
+                                sub esp, 0x10000
+                                jns K_3345
+                            K_3369:
+                                mov esp, dword ptr [TextureRasterSavedStack]
+                                pop ebp
+                            span_done:
+                                }
+                            }
+                            if (done) {
+                                break;
+                            }
+                            TextureRasterRowOffset += TextureRasterBufferStride;
+                            ++TextureRasterDither;
                         }
                     }
                 }
             }
         }
     }
-    if (a1 != 0) {
-        a1->free_data(1);
+    if (buffer != 0) {
+        buffer->free_data(1);
     }
-    texture_reset_fpu();
-    // The retained public return contract is unresolved; no original return
-    // value is asserted by this provisional zero.
+    __asm finit
     return 0;
 }
 
@@ -4185,296 +4808,284 @@ static unsigned char *texture_sub61df60_page_address(void *base,
 // calls     0x005E3373 0x005E34A3 0x0061FC90
 
 void Texture::sub_61df60(Buffer *buffer, Vert *vertices, int *zvals,
-                         Texture *mask_texture, unsigned char *remap,
-                         int count, Vert *uv, int threshold,
-                         unsigned char *palette) {
-    if (vertices == 0) goto cleanup;
-    if (buffer == 0) goto epilogue_only;
-    if (pixels_ == 0) goto cleanup;
-    if (zvals == 0) goto cleanup;
-    if (remap == 0) goto cleanup;
-    if (mask_texture == 0) goto cleanup;
-    if (palette == 0) goto cleanup;
-
-    {
-        unsigned char *destination = static_cast<unsigned char *>(buffer->get_data());
-        TextureRasterPixelBase = destination;
-        texture_reset_fpu();
-        TextureRasterScratch560 = static_cast<unsigned char>(threshold);
-        TextureRasterPalette = palette;
-        TextureRasterEdgeVerticesB = vertices;
-        TextureRasterZValues = reinterpret_cast<int *>(zvals);
-        TextureRasterScratch550 = remap;
-        TextureRasterScratch544 = pixels_;
-        TextureRowPitchScratch = static_cast<int>(iWidth_);
-        TextureRasterTextureHeight = static_cast<int>(iHeight_);
-        TextureRasterEdgeVerticesA = uv;
-        TextureRasterVertexCount = count;
-        TextureRasterBufferStride = static_cast<int>(buffer->stride_);
-        TextureRasterTextureWidth = static_cast<int>(iWidth_);
-        TextureRasterScratch554 = mask_texture->pixels_;
-
-        if (texture_pointer_address(TextureRasterScratch554) == 0) goto cleanup;
-        TextureRasterClipRight = buffer->rect1_.right;
-        TextureRasterClipLeft = buffer->rect1_.left;
-        TextureRasterClipBottom = buffer->rect1_.bottom;
-        TextureRasterClipTop = buffer->rect1_.top;
-        if (count <= 0) goto cleanup;
-
+                         Texture *mask_texture, unsigned char *remap, int count,
+                         Vert *uv, int threshold, unsigned char *palette) {
+    if (vertices != 0 && buffer != 0 && pixels_ != 0 && zvals != 0 && remap != 0 &&
+        mask_texture != 0 && palette != 0) {
+    TextureRasterPixelBase = buffer->get_data();
+    // Hand-written assembly: the blitters reset the FPU with FINIT.
+    __asm finit
+    TextureRasterScratch560 = static_cast<unsigned char>(threshold);
+    TextureRasterPalette = palette;
+    TextureRasterEdgeVerticesB = vertices;
+    TextureRasterZValues = zvals;
+    TextureRasterScratch550 = remap;
+    TextureRasterScratch544 = pixels_;
+    TextureRowPitchScratch = static_cast<int>(iWidth_);
+    TextureRasterTextureHeight = static_cast<int>(iHeight_);
+    TextureRasterEdgeVerticesA = uv;
+    TextureRasterVertexCount = count;
+    TextureRasterBufferStride = static_cast<int>(buffer->stride_);
+    TextureRasterTextureWidth = static_cast<int>(iWidth_);
+    TextureRasterScratch554 = mask_texture->pixels_;
+    if (TextureRasterScratch554 != 0) {
+    RECT *clip = &buffer->rect1_;
+    if (clip != 0) {
+        TextureRasterClipRight = clip->right;
+        TextureRasterClipLeft = clip->left;
+        TextureRasterClipBottom = clip->bottom;
+        TextureRasterClipTop = clip->top;
+        int max_y = -0x7ffd;
         int min_y = 0x7fff;
+        int max_x = -0x7ffd;
         int min_x = 0x7fff;
-        int max_x = static_cast<int>(0xffff8003u);
-        int max_y = static_cast<int>(0xffff8003u);
-        int top_index = 0;
-        int index = 0;
-        do {
-            const int y = vertices[index].y;
-            if (y < min_y) {
-                min_y = y;
-                top_index = index;
-            }
-            if (max_y < y) {
-                max_y = y;
-                TextureRasterMaxYIndex = index;
-            }
-            const int x = vertices[index].x;
-            if (x < min_x) min_x = x;
-            if (max_x < x) max_x = x;
-            ++index;
-        } while (index < count);
-        (void)min_x;
-        (void)max_x;
-        if (min_y >= max_y) goto cleanup;
-
-        const int stride = TextureRasterBufferStride;
-        const uintptr_t base = texture_pointer_address(TextureRasterPixelBase);
-        TextureRasterRowOffset = static_cast<int>(
-            static_cast<unsigned int>(stride) * static_cast<unsigned int>(min_y) +
-            base);
-        TextureRasterClipBottom = static_cast<int>(
-            static_cast<unsigned int>(TextureRasterClipBottom) *
-                static_cast<unsigned int>(stride) + base);
-        TextureRasterClipTop = static_cast<int>(
-            static_cast<unsigned int>(TextureRasterClipTop) *
-                static_cast<unsigned int>(stride) + base);
-
+        int top;
         EdgeScan left;
         EdgeScan right;
-        left.f0 = -1;
-        if (Texture::setup_edge_gouraud(&left, top_index) == 0) goto cleanup;
-        right.f0 = 1;
-        if (Texture::setup_edge_gouraud(&right, top_index) == 0) goto cleanup;
-        if (borrowed_ == 0) goto cleanup;
-        if (mask_texture->borrowed_ == 0) goto cleanup;
-
-        _control87(_PC_24 | _RC_CHOP, _MCW_PC | _MCW_RC);
-        int du = TextureRasterScratch4E4.dword;
-        int dv = TextureRasterScratch4C8.dword;
-        unsigned short light_step = static_cast<unsigned short>(
-            TextureRasterLightPackA.low_word);
-        int pending_du = du;
-        int pending_dv = dv;
-        unsigned short pending_light_step = light_step;
-
-        int initial_span = texture_difference(right.accumC, left.accumC);
-        bool pending_gradient =
-            texture_raster_gradient_span_admitted(initial_span) != 0;
-        if (pending_gradient) {
-            pending_du = texture_span_step(
-                texture_difference(right.accumA, left.accumA), initial_span);
-            pending_dv = texture_span_step(
-                texture_difference(right.accumB, left.accumB), initial_span);
-            pending_light_step = texture_light_step(
-                texture_difference(right.accumD, left.accumD), initial_span);
+        for (int i = 0; i < count; ++i) {
+            if (vertices[i].y < min_y) {
+                min_y = vertices[i].y;
+                top = i;
+            }
+            if (vertices[i].y > max_y) {
+                max_y = vertices[i].y;
+                TextureRasterMaxYIndex = i;
+            }
+            if (vertices[i].x < min_x) {
+                min_x = vertices[i].x;
+            }
+            if (vertices[i].x > max_x) {
+                max_x = vertices[i].x;
+            }
         }
-
-        if (TextureRasterRowOffset >= TextureRasterClipBottom) goto cleanup;
-        for (;;) {
-            const int left_x = left.accumC;
-            const int right_x = right.accumC;
-            int u = left.accumA;
-            int v = left.accumB;
-            int light = left.accumD;
-            TextureRasterScratch4C4 = right.accumA;
-            TextureRasterUAccumulator.dword = u;
-            TextureRasterScratch530 = right.accumB;
-            TextureRasterVAccumulator.dword = v;
-            TextureRasterSpanRight = left_x;   // Native slot 9BB4CC is the LEFT x.
-            TextureRasterScratch498 = light;
-            TextureRasterSpanLeft = right_x;  // Native slot 9BB4F0 is the RIGHT x.
-
-            bool done = false;
-            if (--left.counter == 0) {
-                if (Texture::setup_edge_gouraud(&left, left.id) == 0)
-                    done = true;
-            } else {
-                left.accumA = static_cast<int>(
-                    static_cast<unsigned int>(left.accumA) +
-                    static_cast<unsigned int>(left.deltaA));
-                left.accumB = static_cast<int>(
-                    static_cast<unsigned int>(left.accumB) +
-                    static_cast<unsigned int>(left.deltaB));
-                left.accumC = static_cast<int>(
-                    static_cast<unsigned int>(left.accumC) +
-                    static_cast<unsigned int>(left.deltaC));
-                left.accumD = static_cast<int>(
-                    static_cast<unsigned int>(left.accumD) +
-                    static_cast<unsigned int>(left.deltaD));
-                left.fracAccum = static_cast<int>(
-                    static_cast<unsigned int>(left.fracAccum) +
-                    static_cast<unsigned int>(left.fracDelta));
-                if (left.fracAccum > 0) {
-                    left.accumC = static_cast<int>(
-                        static_cast<unsigned int>(left.accumC) +
-                        static_cast<unsigned int>(left.extraDeltaC));
-                    left.fracAccum = texture_difference(left.fracAccum,
-                                                        left.fracSub);
-                }
-            }
-            if (!done) {
-                if (--right.counter == 0) {
-                    if (Texture::setup_edge_gouraud(&right, right.id) == 0)
-                        done = true;
-                } else {
-                    right.accumA = static_cast<int>(
-                        static_cast<unsigned int>(right.accumA) +
-                        static_cast<unsigned int>(right.deltaA));
-                    right.accumB = static_cast<int>(
-                        static_cast<unsigned int>(right.accumB) +
-                        static_cast<unsigned int>(right.deltaB));
-                    right.accumC = static_cast<int>(
-                        static_cast<unsigned int>(right.accumC) +
-                        static_cast<unsigned int>(right.deltaC));
-                    right.accumD = static_cast<int>(
-                        static_cast<unsigned int>(right.accumD) +
-                        static_cast<unsigned int>(right.deltaD));
-                    right.fracAccum = static_cast<int>(
-                        static_cast<unsigned int>(right.fracAccum) +
-                        static_cast<unsigned int>(right.fracDelta));
-                    if (right.fracAccum > 0) {
-                        right.accumC = static_cast<int>(
-                            static_cast<unsigned int>(right.accumC) +
-                            static_cast<unsigned int>(right.extraDeltaC));
-                        right.fracAccum = texture_difference(right.fracAccum,
-                                                            right.fracSub);
+        if (min_y < max_y) {
+            const int stride = TextureRasterBufferStride;
+            const int base = static_cast<int>(texture_pointer_address(TextureRasterPixelBase));
+            TextureRasterRowOffset = stride * min_y + base;
+            TextureRasterClipBottom = TextureRasterClipBottom * stride + base;
+            TextureRasterClipTop = TextureRasterClipTop * stride + base;
+            left.f0 = -1;
+            if (Texture::setup_edge_gouraud(&left, top)) {
+                right.f0 = 1;
+                if (Texture::setup_edge_gouraud(&right, top) && borrowed_ != 0 &&
+                    mask_texture->borrowed_ != 0) {
+                    unsigned short control;
+                    // Hand-written assembly: truncating 24-bit FPU control
+                    // word, then 1.0 kept on the FPU stack for the rows.
+                    __asm {
+                        fstcw control
+                        mov ax, control
+                        and ax, 0xfcff
+                        or ax, 0xc00
+                        mov control, ax
+                        fldcw control
+                        fld1
                     }
-                }
-            }
-
-            if (pending_gradient) {
-                du = pending_du;
-                dv = pending_dv;
-                light_step = pending_light_step;
-                TextureRasterScratch4E4.dword = du;
-                TextureRasterScratch4C8.dword = dv;
-                TextureRasterLightPackA.low_word =
-                    light_step;
-            }
-
-            const int next_span = texture_difference(right.accumC, left.accumC);
-            pending_gradient =
-                texture_raster_gradient_span_admitted(next_span) != 0;
-            if (pending_gradient) {
-                pending_du = texture_span_step(
-                    texture_difference(right.accumA, left.accumA), next_span);
-                pending_dv = texture_span_step(
-                    texture_difference(right.accumB, left.accumB), next_span);
-                pending_light_step = texture_light_step(
-                    texture_difference(right.accumD, left.accumD), next_span);
-            }
-
-            if (TextureRasterRowOffset >= TextureRasterClipBottom) break;
-            if (TextureRasterRowOffset >= TextureRasterClipTop &&
-                right_x > TextureRasterClipLeft && left_x < TextureRasterClipRight &&
-                right_x > left_x) {
-                int clipped_right = right_x;
-                if (TextureRasterClipRight <= clipped_right)
-                    clipped_right = TextureRasterClipRight;
-                int clipped_left = left_x;
-                if (clipped_left < TextureRasterClipLeft) {
-                    const int skip = static_cast<int>(
-                        static_cast<unsigned int>(texture_difference(
-                            TextureRasterClipLeft, clipped_left)) << 16);
-                    u = static_cast<int>(static_cast<unsigned int>(u) +
-                        static_cast<unsigned int>((static_cast<int64_t>(du) * skip) >> 16));
-                    v = static_cast<int>(static_cast<unsigned int>(v) +
-                        static_cast<unsigned int>((static_cast<int64_t>(dv) * skip) >> 16));
-                    light = static_cast<int>(static_cast<unsigned int>(light) +
-                        static_cast<unsigned int>((static_cast<int64_t>(
-                            static_cast<unsigned short>(light_step)) * skip) >> 8));
-                    TextureRasterUAccumulator.dword = u;
-                    TextureRasterVAccumulator.dword = v;
-                    TextureRasterScratch498 = light;
-                    clipped_left = TextureRasterClipLeft;
-                }
-                TextureRasterSpanRight = clipped_left;
-
-                const unsigned int out_address =
-                    static_cast<unsigned int>(TextureRasterRowOffset) +
-                    static_cast<unsigned int>(clipped_left);
-                unsigned char *out = reinterpret_cast<unsigned char *>(
-                    static_cast<intptr_t>(out_address));
-                const unsigned int pixel_count = texture_span_pixels(
-                    texture_difference(clipped_right, clipped_left));
-                // The original shifts the published light scratch in place
-                // before loading the per-pixel WORD accumulator.
-                TextureRasterScratch498 = light >> 8;
-                unsigned short light_accumulator = static_cast<unsigned short>(
-                    static_cast<unsigned int>(light) >> 8);
-                int pixel;
-                for (pixel = 0; pixel < static_cast<int>(pixel_count); ++pixel) {
-                    unsigned char *source = texture_sub61df60_page_address(
-                        pixels_, u, v);
-                    // Raw E49E loads [EBX] before touching the mask/remap
-                    // path, even when that path will preserve destination.
-                    const unsigned char base_texel =
-                        *reinterpret_cast<volatile const unsigned char *>(source);
-                    const uintptr_t mask_base = reinterpret_cast<uintptr_t>(
-                        mask_texture->pixels_);
-                    const uintptr_t source_offset =
-                        reinterpret_cast<uintptr_t>(source) & 0xffffu;
-                    const unsigned char mask = *reinterpret_cast<const unsigned char *>(
-                        (mask_base & ~static_cast<uintptr_t>(0xffffu)) |
-                        source_offset);
-                    const unsigned char mapped = remap[mask];
-                    if (mapped != 0) {
-                        if (mapped == 1) {
-                            const unsigned char shade = static_cast<unsigned char>(
-                                light_accumulator >> 8);
-                            unsigned char value = static_cast<unsigned char>(
-                                static_cast<unsigned int>(base_texel) + shade);
-                            if (static_cast<signed char>(shade) <
-                                static_cast<signed char>(
-                                    TextureRasterScratch560)) {
-                                const unsigned int table_index =
-                                    (static_cast<unsigned int>(shade) << 8) | out[0];
-                                value = palette[table_index];
-                            }
-                            out[0] = value;
-                        } else {
-                            out[0] = mapped;
+                    int span = (right.accumC - left.accumC) << 16;
+                    int dd;
+                    int dv;
+                    int du;
+                    if (span > 0) {
+                        dd = right.accumD - left.accumD;
+                        __asm fild dd
+                        dv = right.accumB - left.accumB;
+                        __asm fild dv
+                        du = right.accumA - left.accumA;
+                        __asm {
+                            fild du
+                            fild span
+                            fdivr st, st(4)
                         }
                     }
-                    u = static_cast<int>(static_cast<unsigned int>(u) +
-                                         static_cast<unsigned int>(du));
-                    v = static_cast<int>(static_cast<unsigned int>(v) +
-                                         static_cast<unsigned int>(dv));
-                    light_accumulator = static_cast<unsigned short>(
-                        light_accumulator + light_step);
-                    ++out;
+                    if (TextureRasterRowOffset < TextureRasterClipBottom) {
+                        int done = 0;
+                        for (;;) {
+                            TextureRasterUAccumulator.dword = left.accumA;
+                            TextureRasterVAccumulator.dword = left.accumB;
+                            TextureRasterSpanRight = left.accumC;
+                            TextureRasterScratch498 = left.accumD;
+                            TextureRasterScratch4C4 = right.accumA;
+                            TextureRasterScratch530 = right.accumB;
+                            TextureRasterSpanLeft = right.accumC;
+                            if (--left.counter == 0) {
+                                if (!Texture::setup_edge_gouraud(&left, left.id)) {
+                                    done = 1;
+                                    goto edges_done;
+                                }
+                            } else {
+                                texture_lit_edge_step(left);
+                            }
+                            if (--right.counter == 0) {
+                                if (!Texture::setup_edge_gouraud(&right, right.id)) {
+                                    done = 1;
+                                }
+                            } else {
+                                texture_lit_edge_step(right);
+                            }
+                        edges_done:
+                            if (span > 0) {
+                                // Hand-written assembly: scale the row slopes
+                                // and store them with FISTP.
+                                __asm {
+                                    fmul st(1), st
+                                    fmul st(2), st
+                                    fmulp st(3), st
+                                    fmul TextureRasterScale65536
+                                    fistp TextureRasterScratch4E4.dword
+                                    fmul TextureRasterScale65536
+                                    fistp TextureRasterScratch4C8.dword
+                                    fmul TextureRasterScale256
+                                    fistp TextureRasterLightPackA.low_word
+                                }
+                            }
+                            span = (right.accumC - left.accumC) << 16;
+                            if (span > 0) {
+                                dd = right.accumD - left.accumD;
+                                __asm fild dd
+                                dv = right.accumB - left.accumB;
+                                __asm fild dv
+                                du = right.accumA - left.accumA;
+                                __asm {
+                                    fild du
+                                    fild span
+                                    fdivr st, st(4)
+                                }
+                            }
+                            if (TextureRasterRowOffset >= TextureRasterClipBottom) {
+                                break;
+                            }
+                            if (TextureRasterRowOffset >= TextureRasterClipTop) {
+                                // Hand-written assembly: masked span with adc
+                                // carry stepping; mask byte 1 lights the texel and
+                                // blends it via the palette below the threshold,
+                                // other nonzero bytes are written as is.
+                                __asm {
+                                mov ebx, dword ptr [TextureRasterSpanLeft]
+                                mov ecx, dword ptr [TextureRasterSpanRight]
+                                cmp ebx, dword ptr [TextureRasterClipLeft]
+                                jle span_done
+                                cmp ecx, dword ptr [TextureRasterClipRight]
+                                jge span_done
+                                sub ebx, ecx
+                                jle span_done
+                                shl ebx, 0x10
+                                mov ebx, dword ptr [TextureRasterSpanLeft]
+                                cmp ebx, dword ptr [TextureRasterClipRight]
+                                jl K_e3c0
+                                mov ebx, dword ptr [TextureRasterClipRight]
+                            K_e3c0:
+                                mov edi, dword ptr [TextureRasterSpanRight]
+                                cmp edi, dword ptr [TextureRasterClipLeft]
+                                jge K_e425
+                                sub edi, dword ptr [TextureRasterClipLeft]
+                                neg edi
+                                mov eax, dword ptr [TextureRasterScratch4E4]
+                                shl edi, 0x10
+                                imul edi
+                                shrd eax, edx, 0x10
+                                add eax, dword ptr [TextureRasterUAccumulator]
+                                mov dword ptr [TextureRasterUAccumulator], eax
+                                mov eax, dword ptr [TextureRasterScratch4C8]
+                                imul edi
+                                shrd eax, edx, 0x10
+                                add dword ptr [TextureRasterVAccumulator], eax
+                                xor eax, eax
+                                mov ax, word ptr [TextureRasterLightPackA]
+                                imul edi
+                                shrd eax, edx, 0x8
+                                add eax, dword ptr [TextureRasterScratch498]
+                                mov dword ptr [TextureRasterScratch498], eax
+                                mov edi, dword ptr [TextureRasterClipLeft]
+                                mov dword ptr [TextureRasterSpanRight], edi
+                            K_e425:
+                                sub ebx, edi
+                                mov ecx, ebx
+                                mov ebx, dword ptr [TextureRasterScratch544]
+                                mov bh, byte ptr [TextureRasterVAccumulator+2]
+                                add bl, byte ptr [TextureRasterUAccumulator+2]
+                                mov edi, dword ptr [TextureRasterRowOffset]
+                                add edi, dword ptr [TextureRasterSpanRight]
+                                mov eax, dword ptr [TextureRasterScratch498]
+                                sar eax, 0x8
+                                mov dword ptr [TextureRasterScratch498], eax
+                                mov edx, dword ptr [TextureRasterUAccumulator]
+                                shl edx, 0x10
+                                mov dh, byte ptr [TextureRasterScratch4C8+2]
+                                mov dl, byte ptr [TextureRasterScratch4E4+2]
+                                mov esi, dword ptr [TextureRasterScratch4E4]
+                                shl esi, 0x10
+                                mov eax, ecx
+                                mov ecx, dword ptr [TextureRasterScratch4C8]
+                                shl ecx, 0x10
+                                mov cx, ax
+                                mov eax, dword ptr [TextureRasterVAccumulator]
+                                shl eax, 0x10
+                                push ebp
+                                mov ebp, ecx
+                                xor bp, bp
+                                shl ecx, 0x10
+                                sub ecx, 0x10000
+                                mov cx, word ptr [TextureRasterScratch498]
+                            K_e49e:
+                                mov ah, byte ptr [ebx]
+                                push edx
+                                push ecx
+                                mov ecx, dword ptr [TextureRasterScratch554]
+                                mov cx, bx
+                                xor edx, edx
+                                mov dl, byte ptr [ecx]
+                                pop ecx
+                                add edx, dword ptr [TextureRasterScratch550]
+                                mov dl, byte ptr [edx]
+                                cmp dl, 0x0
+                                je K_e4e2
+                                cmp dl, 0x1
+                                jne K_e4de
+                                add ah, ch
+                                cmp ch, byte ptr [TextureRasterScratch560]
+                                jge K_e4e0
+                                push edx
+                                xor edx, edx
+                                mov dh, ch
+                                mov dl, byte ptr [edi]
+                                add edx, dword ptr [TextureRasterPalette]
+                                mov ah, byte ptr [edx]
+                                pop edx
+                                jmp K_e4e0
+                            K_e4de:
+                                mov ah, dl
+                            K_e4e0:
+                                mov byte ptr [edi], ah
+                            K_e4e2:
+                                pop edx
+                                add cx, word ptr [TextureRasterLightPackA]
+                                add edx, esi
+                                adc bl, dl
+                                add eax, ebp
+                                adc bh, dh
+                                inc edi
+                                sub ecx, 0x10000
+                                jns K_e49e
+                                pop ebp
+                            span_done:
+                                }
+                            }
+                            if (done) {
+                                break;
+                            }
+                            TextureRasterRowOffset += TextureRasterBufferStride;
+                        }
+                    }
                 }
             }
-            if (done) goto cleanup;
-            TextureRasterRowOffset = static_cast<int>(
-                static_cast<unsigned int>(TextureRasterRowOffset) +
-                static_cast<unsigned int>(TextureRasterBufferStride));
         }
     }
-
-cleanup:
-    if (buffer != 0) buffer->free_data(1);
-epilogue_only:
-    texture_reset_fpu();
+    }
+    }
+    if (buffer != 0) {
+        buffer->free_data(1);
+    }
+    __asm finit
 }
 
 // Local Gouraud helpers shared with draw2; their definitions follow the
@@ -4509,157 +5120,277 @@ static unsigned short texture_light_step(int delta, int width);
 
 void Texture::draw_below_cutoff(Buffer *buffer, Vert *vertices, int *zvals, int count,
                                 Vert *uv, int cutoff) {
-    unsigned char *destination = static_cast<unsigned char *>(buffer->get_data());
-    TextureRasterPixelBase = destination;
+    TextureRasterPixelBase = buffer->get_data();
     TextureRasterLightThreshold = cutoff;
-    texture_reset_fpu();
-    TextureRasterEdgeVerticesA = uv;
+    // Hand-written assembly: the blitters reset the FPU with FINIT.
+    __asm finit
     TextureRasterEdgeVerticesB = vertices;
+    TextureRasterEdgeVerticesA = uv;
     TextureRasterVertexCount = count;
     TextureRasterZValues = zvals;
     TextureRasterScratch544 = pixels_;
     TextureRasterBufferStride = static_cast<int>(buffer->stride_);
-    TextureRasterTextureWidth = iWidth_;
-    const unsigned char *pixels = pixels_;
-    const int stride = TextureRasterBufferStride;
-    const int width = TextureRasterTextureWidth;
-    int in_front = 0;
-    for (; in_front < count; ++in_front) {
-        if (zvals[in_front] < cutoff) break;
+    TextureRasterTextureWidth = static_cast<int>(iWidth_);
+    int i;
+    for (i = 0; i < count; ++i) {
+        if (zvals[i] < cutoff) {
+            break;
+        }
     }
-    if (in_front != count) {
-        const RECT clip = buffer->rect1_;
-        TextureRasterClipRight = clip.right;
-        TextureRasterClipLeft = clip.left;
-        TextureRasterClipBottom = clip.bottom;
-        TextureRasterClipTop = clip.top;
-        int min_y = 0x7fff, max_y = -0x7ffd;
-        int top = 0;
-        for (int i = 0; i < count; ++i) {
-            if (vertices[i].y < min_y) { min_y = vertices[i].y; top = i; }
+    if (i == count) {
+        goto finish;
+    }
+    {
+    RECT *clip = &buffer->rect1_;
+    if (clip != 0) {
+        TextureRasterClipRight = clip->right;
+        TextureRasterClipLeft = clip->left;
+        TextureRasterClipBottom = clip->bottom;
+        TextureRasterClipTop = clip->top;
+        int min_y = 0x7fff;
+        int max_y = -0x7ffd;
+        int max_x = -0x7ffd;
+        int min_x = 0x7fff;
+        int top;
+        EdgeScan left;
+        EdgeScan right;
+        for (i = 0; i < count; ++i) {
+            if (vertices[i].y < min_y) {
+                min_y = vertices[i].y;
+                top = i;
+            }
             if (vertices[i].y > max_y) {
                 max_y = vertices[i].y;
                 TextureRasterMaxYIndex = i;
             }
-        }
-        EdgeScan left, right;
-        left.f0 = -1;
-        right.f0 = 1;
-        if (min_y < max_y) {
-            TextureRasterRowOffset = static_cast<int>(
-                static_cast<unsigned int>(stride) * static_cast<unsigned int>(min_y) +
-                static_cast<unsigned int>(texture_pointer_address(TextureRasterPixelBase)));
-            TextureRasterClipBottom = static_cast<int>(
-                static_cast<unsigned int>(stride) * static_cast<unsigned int>(clip.bottom) +
-                static_cast<unsigned int>(texture_pointer_address(TextureRasterPixelBase)));
-            TextureRasterClipTop = static_cast<int>(
-                static_cast<unsigned int>(stride) * static_cast<unsigned int>(clip.top) +
-                static_cast<unsigned int>(texture_pointer_address(TextureRasterPixelBase)));
-        }
-        if (min_y < max_y &&
-            Texture::setup_edge_gouraud(&left, top) &&
-            Texture::setup_edge_gouraud(&right, top)) {
-            _control87(_PC_24 | _RC_CHOP, _MCW_PC | _MCW_RC);
-            int du = 0, dv = 0;
-            unsigned short dz = 0;
-            int y = min_y;
-            if (y >= clip.bottom) {
-                buffer->free_data(1);
-                texture_reset_fpu();
-                return;
+            if (vertices[i].x < min_x) {
+                min_x = vertices[i].x;
             }
-            for (;;) {
-                int x = left.accumC;
-                int end = right.accumC;
-                int u = left.accumA, v = left.accumB, z = left.accumD;
-                const int span = texture_fixed(texture_difference(end, x));
-                if (span > 0) {
-                    du = texture_span_step(texture_difference(right.accumA, u), span >> 16);
-                    dv = texture_span_step(texture_difference(right.accumB, v), span >> 16);
-                    dz = texture_light_step(texture_difference(right.accumD, z), span >> 16);
-                }
-                int done = 0;
-                if (--left.counter == 0) {
-                    if (Texture::setup_edge_gouraud(&left, left.id) == 0)
-                        done = 1;
-                } else {
-                    left.accumA = static_cast<int>(static_cast<unsigned int>(left.accumA) + left.deltaA);
-                    left.accumB = static_cast<int>(static_cast<unsigned int>(left.accumB) + left.deltaB);
-                    left.accumC = static_cast<int>(static_cast<unsigned int>(left.accumC) + left.deltaC);
-                    left.accumD = static_cast<int>(static_cast<unsigned int>(left.accumD) + left.deltaD);
-                    left.fracAccum = static_cast<int>(static_cast<unsigned int>(left.fracAccum) + left.fracDelta);
-                    if (left.fracAccum > 0) {
-                        left.accumC = static_cast<int>(static_cast<unsigned int>(left.accumC) + left.extraDeltaC);
-                        left.fracAccum = texture_difference(left.fracAccum, left.fracSub);
+            if (vertices[i].x > max_x) {
+                max_x = vertices[i].x;
+            }
+        }
+        if (min_y < max_y) {
+            const int stride = TextureRasterBufferStride;
+            const int base = static_cast<int>(texture_pointer_address(TextureRasterPixelBase));
+            TextureRasterRowOffset = stride * min_y + base;
+            TextureRasterClipBottom = TextureRasterClipBottom * stride + base;
+            TextureRasterClipTop = TextureRasterClipTop * stride + base;
+            left.f0 = -1;
+            if (Texture::setup_edge_gouraud(&left, top)) {
+                right.f0 = 1;
+                if (Texture::setup_edge_gouraud(&right, top)) {
+                    unsigned short control;
+                    // Hand-written assembly: truncating 24-bit FPU control
+                    // word, then 1.0 kept on the FPU stack for the rows.
+                    __asm {
+                        fstcw control
+                        mov ax, control
+                        and ax, 0xfcff
+                        or ax, 0xc00
+                        mov control, ax
+                        fldcw control
+                        fld1
                     }
-                }
-                if (!done) {
-                    if (--right.counter == 0) {
-                        if (Texture::setup_edge_gouraud(&right, right.id) == 0)
-                            done = 1;
-                    } else {
-                        right.accumA = static_cast<int>(static_cast<unsigned int>(right.accumA) + right.deltaA);
-                        right.accumB = static_cast<int>(static_cast<unsigned int>(right.accumB) + right.deltaB);
-                        right.accumC = static_cast<int>(static_cast<unsigned int>(right.accumC) + right.deltaC);
-                        right.accumD = static_cast<int>(static_cast<unsigned int>(right.accumD) + right.deltaD);
-                        right.fracAccum = static_cast<int>(static_cast<unsigned int>(right.fracAccum) + right.fracDelta);
-                        if (right.fracAccum > 0) {
-                            right.accumC = static_cast<int>(static_cast<unsigned int>(right.accumC) + right.extraDeltaC);
-                            right.fracAccum = texture_difference(right.fracAccum, right.fracSub);
+                    int span = (right.accumC - left.accumC) << 16;
+                    int dd;
+                    int dv;
+                    int du;
+                    if (span > 0) {
+                        dd = right.accumD - left.accumD;
+                        __asm fild dd
+                        dv = right.accumB - left.accumB;
+                        __asm fild dv
+                        du = right.accumA - left.accumA;
+                        __asm {
+                            fild du
+                            fild span
+                            fdivr st, st(4)
+                        }
+                    }
+                    if (TextureRasterRowOffset < TextureRasterClipBottom) {
+                        int done = 0;
+                        for (;;) {
+                            TextureRasterUAccumulator.dword = left.accumA;
+                            TextureRasterVAccumulator.dword = left.accumB;
+                            TextureRasterSpanRight = left.accumC;
+                            TextureRasterScratch498 = left.accumD;
+                            TextureRasterScratch4C4 = right.accumA;
+                            TextureRasterScratch530 = right.accumB;
+                            TextureRasterSpanLeft = right.accumC;
+                            if (--left.counter == 0) {
+                                if (!Texture::setup_edge_gouraud(&left, left.id)) {
+                                    done = 1;
+                                    goto edges_done;
+                                }
+                            } else {
+                                texture_lit_edge_step(left);
+                            }
+                            if (--right.counter == 0) {
+                                if (!Texture::setup_edge_gouraud(&right, right.id)) {
+                                    done = 1;
+                                }
+                            } else {
+                                texture_lit_edge_step(right);
+                            }
+                        edges_done:
+                            if (span > 0) {
+                                // Hand-written assembly: scale the row slopes
+                                // and store them with FISTP.
+                                __asm {
+                                    fmul st(1), st
+                                    fmul st(2), st
+                                    fmulp st(3), st
+                                    fmul TextureRasterScale65536
+                                    fistp TextureRasterScratch4E4.dword
+                                    fmul TextureRasterScale65536
+                                    fistp TextureRasterScratch4C8.dword
+                                    fmul TextureRasterScale256
+                                    fistp TextureRasterLightPackA.low_word
+                                }
+                            }
+                            span = (right.accumC - left.accumC) << 16;
+                            if (span > 0) {
+                                dd = right.accumD - left.accumD;
+                                __asm fild dd
+                                dv = right.accumB - left.accumB;
+                                __asm fild dv
+                                du = right.accumA - left.accumA;
+                                __asm {
+                                    fild du
+                                    fild span
+                                    fdivr st, st(4)
+                                }
+                            }
+                            if (TextureRasterRowOffset >= TextureRasterClipBottom) {
+                                break;
+                            }
+                            if (TextureRasterRowOffset >= TextureRasterClipTop) {
+                                // Hand-written assembly: lit span with ESP as
+                                // the packed pixel counter, sbb/adc stepping
+                                // and a cutoff test on the light byte.
+                                __asm {
+                                mov ebx, dword ptr [TextureRasterSpanLeft]
+                                mov ecx, dword ptr [TextureRasterSpanRight]
+                                cmp ebx, dword ptr [TextureRasterClipLeft]
+                                jle span_done
+                                cmp ecx, dword ptr [TextureRasterClipRight]
+                                jge span_done
+                                sub ebx, ecx
+                                jle span_done
+                                shl ebx, 0x10
+                                mov ebx, dword ptr [TextureRasterSpanLeft]
+                                cmp ebx, dword ptr [TextureRasterClipRight]
+                                jl K_b039
+                                mov ebx, dword ptr [TextureRasterClipRight]
+                            K_b039:
+                                mov edi, dword ptr [TextureRasterSpanRight]
+                                cmp edi, dword ptr [TextureRasterClipLeft]
+                                jge K_b09e
+                                sub edi, dword ptr [TextureRasterClipLeft]
+                                neg edi
+                                mov eax, dword ptr [TextureRasterScratch4E4]
+                                shl edi, 0x10
+                                imul edi
+                                shrd eax, edx, 0x10
+                                add eax, dword ptr [TextureRasterUAccumulator]
+                                mov dword ptr [TextureRasterUAccumulator], eax
+                                mov eax, dword ptr [TextureRasterScratch4C8]
+                                imul edi
+                                shrd eax, edx, 0x10
+                                add dword ptr [TextureRasterVAccumulator], eax
+                                xor eax, eax
+                                mov ax, word ptr [TextureRasterLightPackA]
+                                imul edi
+                                shrd eax, edx, 0x8
+                                add eax, dword ptr [TextureRasterScratch498]
+                                mov dword ptr [TextureRasterScratch498], eax
+                                mov edi, dword ptr [TextureRasterClipLeft]
+                                mov dword ptr [TextureRasterSpanRight], edi
+                            K_b09e:
+                                sub ebx, edi
+                                mov ecx, ebx
+                                mov esi, dword ptr [TextureRasterScratch544]
+                                xor edx, edx
+                                mov dx, word ptr [TextureRasterVAccumulator+2]
+                                mov eax, dword ptr [TextureRasterTextureWidth]
+                                imul edx
+                                add esi, eax
+                                xor edx, edx
+                                add dx, word ptr [TextureRasterUAccumulator+2]
+                                add esi, edx
+                                mov dword ptr [TextureRasterScratch504], esi
+                                xor esi, esi
+                                mov edi, dword ptr [TextureRasterSpanRight]
+                                add edi, dword ptr [TextureRasterRowOffset]
+                                mov eax, dword ptr [TextureRasterScratch498]
+                                sar eax, 0x8
+                                mov dword ptr [TextureRasterScratch498], eax
+                                mov eax, dword ptr [TextureRasterScratch4C8]
+                                sar eax, 0x10
+                                mov edx, dword ptr [TextureRasterTextureWidth]
+                                imul edx
+                                mov edx, dword ptr [TextureRasterScratch4E4]
+                                sar edx, 0x10
+                                add eax, edx
+                                mov dword ptr [TextureRasterAlternateRowNext], eax
+                                mov edx, dword ptr [TextureRasterTextureWidth]
+                                add eax, edx
+                                mov dword ptr [TextureRasterAlternateRowBase], eax
+                                xor edx, edx
+                                mov dx, word ptr [TextureRasterScratch4C8]
+                                shl edx, 0x10
+                                mov dword ptr [TextureRasterScratch528], edx
+                                xor edx, edx
+                                mov dx, word ptr [TextureRasterVAccumulator]
+                                shl edx, 0x10
+                                mov dx, word ptr [TextureRasterScratch4E4]
+                                dec ecx
+                                shl ecx, 0x10
+                                mov cx, word ptr [TextureRasterUAccumulator]
+                                mov ebx, dword ptr [TextureRasterScratch504]
+                                mov ah, byte ptr [TextureRasterLightThreshold]
+                                push ebp
+                                mov dword ptr [TextureRasterSavedStack], esp
+                                mov esp, ecx
+                                mov al, byte ptr [ebx + esi]
+                                mov cx, word ptr [TextureRasterScratch498]
+                            K_b162:
+                                add al, ch
+                                add edx, dword ptr [TextureRasterScratch528]
+                                sbb ebp, ebp
+                                cmp ch, ah
+                                jge K_b172
+                                mov byte ptr [edi], al
+                            K_b172:
+                                add sp, dx
+                                adc esi, dword ptr [4*ebp + TextureRasterAlternateRowNext]
+                                add cx, word ptr [TextureRasterLightPackA]
+                                inc edi
+                                mov al, byte ptr [ebx + esi]
+                                sub esp, 0x10000
+                                jns K_b162
+                                mov esp, dword ptr [TextureRasterSavedStack]
+                                pop ebp
+                            span_done:
+                                }
+                            }
+                            if (done) {
+                                break;
+                            }
+                            TextureRasterRowOffset += TextureRasterBufferStride;
                         }
                     }
                 }
-                if (y >= clip.bottom) break;
-                if (y >= clip.top && end > clip.left && x < clip.right && end > x) {
-                    if (end > clip.right) end = clip.right;
-                    if (x < clip.left) {
-                        const int skip = texture_fixed(texture_difference(clip.left, x));
-                        u = static_cast<int>(static_cast<unsigned int>(u) +
-                            static_cast<unsigned int>((static_cast<int64_t>(du) * skip) >> 16));
-                        v = static_cast<int>(static_cast<unsigned int>(v) +
-                            static_cast<unsigned int>((static_cast<int64_t>(dv) * skip) >> 16));
-                        // 61B079..61B081 zero-extends the WORD slope before IMUL;
-                        // SHRD by eight brings the result back to 16.16.
-                        z = static_cast<int>(static_cast<unsigned int>(z) +
-                            static_cast<unsigned int>((static_cast<int64_t>(dz) * skip) >> 8));
-                        x = clip.left;
-                    }
-                    unsigned char *out = destination + static_cast<int64_t>(y) * stride + x;
-                    const unsigned int remaining = texture_span_pixels(texture_difference(end, x));
-                    int64_t source =
-                        static_cast<unsigned short>(static_cast<unsigned int>(v) >> 16)
-                            * static_cast<int64_t>(width)
-                        + static_cast<unsigned short>(static_cast<unsigned int>(u) >> 16);
-                    unsigned int uf = static_cast<unsigned short>(u);
-                    unsigned int vf = static_cast<unsigned short>(v);
-                    unsigned short light = static_cast<unsigned short>(z >> 8);
-                    const int64_t step = static_cast<int64_t>(dv >> 16) * width + (du >> 16);
-                    const volatile unsigned char *source_reads = pixels;
-                    unsigned char texel = source_reads[source];
-                    for (unsigned int written = 0; written < remaining; ++written) {
-                        const signed char shade = static_cast<signed char>(light >> 8);
-                        if (shade < static_cast<signed char>(cutoff))
-                            *out = static_cast<unsigned char>(texel + shade);
-                        uf += static_cast<unsigned short>(du);
-                        vf += static_cast<unsigned short>(dv);
-                        source += step + (uf >> 16) + static_cast<int64_t>(vf >> 16) * width;
-                        uf &= 0xffff;
-                        vf &= 0xffff;
-                        light = static_cast<unsigned short>(light + dz);
-                        ++out;
-                        texel = source_reads[source];
-                    }
-                }
-                if (done) break;
-                ++y;
-                TextureRasterRowOffset = static_cast<int>(
-                    static_cast<unsigned int>(TextureRasterRowOffset) +
-                    static_cast<unsigned int>(stride));
             }
         }
     }
-    buffer->free_data(1);
-    texture_reset_fpu();
+    }
+finish:
+    if (buffer != 0) {
+        buffer->free_data(1);
+    }
+    __asm finit
 }
 
 // ORIGINAL: 0x006212B0 sub_6212b0 0x006212B0-0x00621868 FILE
@@ -4687,183 +5418,263 @@ void Texture::draw_below_cutoff(Buffer *buffer, Vert *vertices, int *zvals, int 
 // context from the first token rather than behind a file read. This
 // emitter computes declarations; it does not carry lessons.
 
-void Texture::sub_6212b0(Buffer *buf, Vert *verts, int *zvals, int count,
-                         Vert *edgeVerts, TextureStore *cache) {
-    // The last slot is the edge cache: 0x625080 consumes TextureStore*, +4
-    // is its ring cursor, and +0 is the channel-validity mask. The old int*
-    // spelling hid that shared cache object from this owner.
+void Texture::sub_6212b0(Buffer *buffer, Vert *vertices, int *zvals, int count,
+                         Vert *uv, TextureStore *cache) {
+    int needs_clip = 1;
     cache->next_record_ = 0;
-
-    TextureRasterPixelBase = buf->get_data();
-    TextureRasterLightThreshold = texture_raster_key_signed_bits();
-    TextureRasterEdgeVerticesA = edgeVerts;
-    TextureRasterEdgeVerticesB = verts;
+    TextureRasterPixelBase = buffer->get_data();
+    TextureRasterLightThreshold = static_cast<int>(TextureRasterKey);
+    // Hand-written assembly: the blitters reset the FPU with FINIT.
+    __asm finit
+    TextureRasterEdgeVerticesB = vertices;
+    TextureRasterEdgeVerticesA = uv;
     TextureRasterVertexCount = count;
-    TextureRasterZValues = reinterpret_cast<int *>(zvals);
+    TextureRasterZValues = zvals;
     TextureRasterScratch544 = pixels_;
-    TextureRasterBufferStride = (int)buf->stride_;
-    TextureRasterTextureWidth = (int)iWidth_;
-
-    if (buf != 0) {
+    TextureRasterBufferStride = static_cast<int>(buffer->stride_);
+    TextureRasterTextureWidth = static_cast<int>(iWidth_);
+    RECT *clip = &buffer->rect1_;
+    if (clip != 0) {
         for (int i = 0; i < count; ++i) {
-            int v = zvals[i];
-            if (TextureLightCeiling <= v) v = TextureLightCeiling;
-            zvals[i] = v;
-            if (v <= TextureLightFloor) v = TextureLightFloor;
-            zvals[i] = v;
+            zvals[i] = min(zvals[i], TextureLightCeiling);
+            zvals[i] = max(zvals[i], TextureLightFloor);
         }
-
-        TextureRasterClipRight = buf->rect1_.right;
-        TextureRasterClipLeft = buf->rect1_.left;
-        TextureRasterClipBottom = buf->rect1_.bottom;
-        TextureRasterClipTop = buf->rect1_.top;
-
-        int min_y = 0x7fff, min_y_idx = 0;
-        int max_y = (int)0xffff8003, max_y_idx = 0;
+        TextureRasterClipRight = clip->right;
+        TextureRasterClipLeft = clip->left;
+        TextureRasterClipBottom = clip->bottom;
+        TextureRasterClipTop = clip->top;
+        int min_y = 0x7fff;
+        int max_y = -0x7ffd;
+        int max_x = -0x7ffd;
         int min_x = 0x7fff;
-        int max_x = (int)0xffff8003;
-        int clip_flag = 1;
-        if (count > 0) {
-            for (int i = 0; i < count; ++i) {
-                int y = verts[i].y;
-                if (y < min_y) { min_y_idx = i; min_y = y; }
-                if (max_y < y) { max_y_idx = i; max_y = y; TextureRasterMaxYIndex = i; }
-                int x = verts[i].x;
-                if (x < min_x) min_x = x;
-                if (max_x < x) max_x = x;
+        int top;
+        EdgeScan left;
+        EdgeScan right;
+        for (i = 0; i < TextureRasterVertexCount; ++i) {
+            if (vertices[i].y < min_y) {
+                min_y = vertices[i].y;
+                top = i;
             }
-            if (min_y < max_y) {
-                TextureRasterRowOffset = TextureRasterBufferStride * min_y + texture_pointer_address(TextureRasterPixelBase);
-                if (min_x < TextureRasterClipLeft || min_y < TextureRasterClipTop || TextureRasterClipRight < max_x ||
-                    TextureRasterClipBottom < max_y) {
-                    clip_flag = 1;
-                } else {
-                    clip_flag = 0;
-                }
-                TextureRasterClipBottom = TextureRasterClipBottom * TextureRasterBufferStride + texture_pointer_address(TextureRasterPixelBase);
-                TextureRasterClipTop = TextureRasterClipTop * TextureRasterBufferStride + texture_pointer_address(TextureRasterPixelBase);
-
-                EdgeScan e1, e2;
-                e1.f0 = -1;
-                if (sub_625080(&e1, min_y_idx, cache) != 0) {
-                    e2.counter = 1;
-                    if (sub_625080(&e2, min_y_idx, cache) != 0 && borrowed_ != 0) {
-                        double dy = (double)((e2.accumC - e1.accumC) << 16);
-                        double du = 0, dv = 0, dw = 0, inv_dy = 1;
-                        if (dy > 0) {
-                            du = (double)(e2.accumB - e1.accumB);
-                            dv = (double)(e2.accumA - e1.accumA);
-                            dw = (double)(e2.accumD - e1.accumD);
-                            inv_dy = 1.0 / dy;
+            if (vertices[i].y > max_y) {
+                max_y = vertices[i].y;
+                TextureRasterMaxYIndex = i;
+            }
+            if (vertices[i].x < min_x) {
+                min_x = vertices[i].x;
+            }
+            if (vertices[i].x > max_x) {
+                max_x = vertices[i].x;
+            }
+        }
+        if (min_y < max_y) {
+            const int stride = TextureRasterBufferStride;
+            const int base = static_cast<int>(texture_pointer_address(TextureRasterPixelBase));
+            TextureRasterRowOffset = stride * min_y + base;
+            if (min_x < TextureRasterClipLeft || min_y < TextureRasterClipTop ||
+                max_x > TextureRasterClipRight || max_y > TextureRasterClipBottom) {
+                needs_clip = 1;
+            } else {
+                needs_clip = 0;
+            }
+            TextureRasterClipBottom = TextureRasterClipBottom * stride + base;
+            TextureRasterClipTop = TextureRasterClipTop * stride + base;
+            left.f0 = -1;
+            if (sub_625080(&left, top, cache)) {
+                right.f0 = 1;
+                if (sub_625080(&right, top, cache) && borrowed_ != 0) {
+                    unsigned short control;
+                    // Hand-written assembly: truncating 24-bit FPU control
+                    // word, then 1.0 kept on the FPU stack for the rows.
+                    __asm {
+                        fstcw control
+                        mov ax, control
+                        and ax, 0xfcff
+                        or ax, 0xc00
+                        mov control, ax
+                        fldcw control
+                        fld1
+                    }
+                    int span = (right.accumC - left.accumC) << 16;
+                    int dd;
+                    int dv;
+                    int du;
+                    if (span > 0) {
+                        dd = right.accumD - left.accumD;
+                        __asm fild dd
+                        dv = right.accumB - left.accumB;
+                        __asm fild dv
+                        du = right.accumA - left.accumA;
+                        __asm {
+                            fild du
+                            fild span
+                            fdivr st, st(4)
                         }
-
-                        bool done = false;
-                        while (TextureRasterRowOffset < TextureRasterClipBottom) {
-                            TextureRasterScratch4C4 = e2.accumA;
-                            TextureRasterUAccumulator.dword = e1.accumA;
-                            TextureRasterScratch530 = e2.accumB;
-                            TextureRasterVAccumulator.dword = e1.accumB;
-                            TextureRasterSpanRight = e1.accumC;
-                            TextureRasterScratch498 = e1.accumD;
-                            TextureRasterSpanLeft = e2.accumC;
-
-                            e1.counter -= 1;
-                            if (e1.counter == 0) {
-                                if (sub_625080(&e1, e1.id, cache) == 0) {
-                                    done = true;
-                                    goto per_scanline_tail;
+                    }
+                    if (TextureRasterRowOffset < TextureRasterClipBottom) {
+                        int done = 0;
+                        for (;;) {
+                            TextureRasterUAccumulator.dword = left.accumA;
+                            TextureRasterVAccumulator.dword = left.accumB;
+                            TextureRasterSpanRight = left.accumC;
+                            TextureRasterScratch498 = left.accumD;
+                            TextureRasterScratch4C4 = right.accumA;
+                            TextureRasterScratch530 = right.accumB;
+                            TextureRasterSpanLeft = right.accumC;
+                            if (--left.counter == 0) {
+                                if (!sub_625080(&left, left.id, cache)) {
+                                    done = 1;
+                                    goto edges_done;
                                 }
                             } else {
-                                edge_step(e1);
+                                texture_lit_edge_step(left);
                             }
-                            e2.counter -= 1;
-                            if (e2.counter == 0) {
-                                if (sub_625080(&e2, e2.id, cache) == 0) {
-                                    done = true;
+                            if (--right.counter == 0) {
+                                if (!sub_625080(&right, right.id, cache)) {
+                                    done = 1;
                                 }
                             } else {
-                                edge_step(e2);
+                                texture_lit_edge_step(right);
                             }
-
-                        per_scanline_tail:
-                            if (dy > 0) {
-                                TextureRasterScratch4E4.dword = (int)(dv * du * inv_dy * (double)TextureRasterScale65536);
-                                TextureRasterScratch4C8.dword = (int)(du * dv * inv_dy * (double)TextureRasterScale65536);
-                                TextureRasterLightPackA.low_word = static_cast<unsigned short>((short)(int)(du * inv_dy * dw * (double)TextureRasterScale256));
-                            }
-                            dy = (double)((e2.accumC - e1.accumC) << 16);
-                            if (dy > 0) {
-                                du = (double)(e2.accumB - e1.accumB);
-                                dv = (double)(e2.accumA - e1.accumA);
-                                dw = (double)(e2.accumD - e1.accumD);
-                                inv_dy = 1.0 / dy;
-                            }
-
-                            if (TextureRasterClipBottom <= TextureRasterRowOffset) break;
-                            if (TextureRasterClipTop <= TextureRasterRowOffset && TextureRasterClipLeft < TextureRasterSpanLeft &&
-                                TextureRasterSpanRight < TextureRasterClipRight && TextureRasterSpanRight < TextureRasterSpanLeft) {
-                                int right_x = TextureRasterSpanLeft;
-                                if (TextureRasterClipRight <= TextureRasterSpanLeft) right_x = TextureRasterClipRight;
-                                if (TextureRasterSpanRight < TextureRasterClipLeft) {
-                                    int step = (TextureRasterSpanRight - TextureRasterClipLeft) * -0x10000;
-                                    __int64 p1 = (__int64)TextureRasterScratch4E4.dword * (__int64)step;
-                                    TextureRasterUAccumulator.dword = (int)(((unsigned int)p1 >> 16) | ((int)((unsigned __int64)p1 >> 32) << 16)) + TextureRasterUAccumulator.dword;
-                                    __int64 p2 = (__int64)TextureRasterScratch4C8.dword * (__int64)step;
-                                    TextureRasterVAccumulator.dword = TextureRasterVAccumulator.dword + (int)(((unsigned int)p2 >> 16) | ((int)((unsigned __int64)p2 >> 32) << 16));
-                                    __int64 p3 = (__int64)static_cast<short>(TextureRasterLightPackA.low_word) * (__int64)step;
-                                    TextureRasterScratch498 = TextureRasterScratch498 + (int)(((unsigned int)p3 >> 8) | ((int)((unsigned __int64)p3 >> 32) << 24));
-                                    TextureRasterSpanRight = TextureRasterClipLeft;
-                                }
-
-                                unsigned char *tex_row = reinterpret_cast<unsigned char *>(
-                                    texture_pointer_offset(TextureRasterScratch544,
-                                        static_cast<uint32_t>(TextureRasterTextureWidth * (TextureRasterVAccumulator.dword >> 16) + (TextureRasterUAccumulator.dword >> 16))));
-                                char *dest = (char *)(long)(TextureRasterSpanRight + TextureRasterRowOffset - 1);
-                                TextureRasterAlternateRowNext.value = ((TextureRasterScratch4C8.dword >> 16) * TextureRasterTextureWidth + (TextureRasterScratch4E4.dword >> 16));
-                                TextureRasterAlternateRowBase.value = TextureRasterAlternateRowNext.value + TextureRasterTextureWidth;
-                                TextureRasterScratch528 = TextureRasterScratch4C8.dword << 16;
-
-                                unsigned int u_acc = concat22((unsigned short)TextureRasterVAccumulator.dword, (unsigned short)TextureRasterScratch4E4.dword);
-                                unsigned int span = concat22((unsigned short)(((short)right_x - (short)TextureRasterSpanRight) - 1), (unsigned short)TextureRasterUAccumulator.dword);
-                                TextureRasterScratch498 = TextureRasterScratch498 >> 8;
-                                unsigned short light = (unsigned short)TextureRasterScratch498;
-                                unsigned short light_step = TextureRasterLightPackA.low_word;
-                                unsigned char threshold = static_cast<unsigned char>(TextureRasterLightThreshold);
-
-                                unsigned int off = 0;
-                                for (;;) {
-                                    unsigned short light_next = (unsigned short)(light + light_step);
-                                    unsigned char light_hi = (unsigned char)(light_next >> 8);
-                                    int carry = carry4(u_acc, static_cast<unsigned int>(TextureRasterScratch528));
-                                    u_acc = u_acc + static_cast<unsigned int>(TextureRasterScratch528);
-                                    ++dest;
-                                    unsigned int selected_row = carry ? (unsigned int)TextureRasterAlternateRowBase.value : (unsigned int)TextureRasterAlternateRowNext.value;
-                                    off = selected_row + off + (unsigned int)(carry2((unsigned short)span, (unsigned short)u_acc) ? 1 : 0);
-                                    unsigned int next_span = concat22((unsigned short)((unsigned int)span >> 16),
-                                                                       (unsigned short)((unsigned short)span + (unsigned short)u_acc));
-                                    unsigned char texel = tex_row[(int)off];
-                                    if (light_hi < threshold) {
-                                        *dest = (char)(texel + light_hi);
-                                    }
-                                    light = light_next;
-                                    span = (unsigned int)((int)next_span - 0x10000);
-                                    if ((int)span < 0) break;
+                        edges_done:
+                            if (span > 0) {
+                                // Hand-written assembly: scale the row slopes
+                                // and store them with FISTP.
+                                __asm {
+                                    fmul st(1), st
+                                    fmul st(2), st
+                                    fmulp st(3), st
+                                    fmul TextureRasterScale65536
+                                    fistp TextureRasterScratch4E4.dword
+                                    fmul TextureRasterScale65536
+                                    fistp TextureRasterScratch4C8.dword
+                                    fmul TextureRasterScale256
+                                    fistp TextureRasterLightPackA.low_word
                                 }
                             }
-                            if (done) break;
-                            TextureRasterRowOffset = TextureRasterRowOffset + TextureRasterBufferStride;
+                            span = (right.accumC - left.accumC) << 16;
+                            if (span > 0) {
+                                dd = right.accumD - left.accumD;
+                                __asm fild dd
+                                dv = right.accumB - left.accumB;
+                                __asm fild dv
+                                du = right.accumA - left.accumA;
+                                __asm {
+                                    fild du
+                                    fild span
+                                    fdivr st, st(4)
+                                }
+                            }
+                            if (TextureRasterRowOffset >= TextureRasterClipBottom) {
+                                break;
+                            }
+                            if (TextureRasterRowOffset >= TextureRasterClipTop) {
+                                // Hand-written assembly: color-keyed lit span
+                                // with adc carry stepping.
+                                __asm {
+                                mov ebx, dword ptr [TextureRasterSpanLeft]
+                                mov ecx, dword ptr [TextureRasterSpanRight]
+                                cmp ebx, dword ptr [TextureRasterClipLeft]
+                                jle span_done
+                                cmp ecx, dword ptr [TextureRasterClipRight]
+                                jge span_done
+                                sub ebx, ecx
+                                jle span_done
+                                shl ebx, 0x10
+                                mov ebx, dword ptr [TextureRasterSpanLeft]
+                                cmp ebx, dword ptr [TextureRasterClipRight]
+                                jl K_170a
+                                mov ebx, dword ptr [TextureRasterClipRight]
+                            K_170a:
+                                mov edi, dword ptr [TextureRasterSpanRight]
+                                cmp edi, dword ptr [TextureRasterClipLeft]
+                                jge K_176f
+                                sub edi, dword ptr [TextureRasterClipLeft]
+                                neg edi
+                                mov eax, dword ptr [TextureRasterScratch4E4]
+                                shl edi, 0x10
+                                imul edi
+                                shrd eax, edx, 0x10
+                                add eax, dword ptr [TextureRasterUAccumulator]
+                                mov dword ptr [TextureRasterUAccumulator], eax
+                                mov eax, dword ptr [TextureRasterScratch4C8]
+                                imul edi
+                                shrd eax, edx, 0x10
+                                add dword ptr [TextureRasterVAccumulator], eax
+                                xor eax, eax
+                                mov ax, word ptr [TextureRasterLightPackA]
+                                imul edi
+                                shrd eax, edx, 0x8
+                                add eax, dword ptr [TextureRasterScratch498]
+                                mov dword ptr [TextureRasterScratch498], eax
+                                mov edi, dword ptr [TextureRasterClipLeft]
+                                mov dword ptr [TextureRasterSpanRight], edi
+                            K_176f:
+                                sub ebx, edi
+                                mov ecx, ebx
+                                mov ebx, dword ptr [TextureRasterScratch544]
+                                mov bh, byte ptr [TextureRasterVAccumulator+2]
+                                add bl, byte ptr [TextureRasterUAccumulator+2]
+                                mov edi, dword ptr [TextureRasterRowOffset]
+                                add edi, dword ptr [TextureRasterSpanRight]
+                                mov eax, dword ptr [TextureRasterScratch498]
+                                sar eax, 0x8
+                                mov dword ptr [TextureRasterScratch498], eax
+                                mov edx, dword ptr [TextureRasterUAccumulator]
+                                shl edx, 0x10
+                                mov dh, byte ptr [TextureRasterScratch4C8+2]
+                                mov dl, byte ptr [TextureRasterScratch4E4+2]
+                                mov esi, dword ptr [TextureRasterScratch4E4]
+                                shl esi, 0x10
+                                mov eax, ecx
+                                mov ecx, dword ptr [TextureRasterScratch4C8]
+                                shl ecx, 0x10
+                                mov cx, ax
+                                mov eax, dword ptr [TextureRasterVAccumulator]
+                                shl eax, 0x10
+                                mov ah, byte ptr [TextureRasterLightThreshold]
+                                push ebp
+                                mov ebp, ecx
+                                xor bp, bp
+                                shl ecx, 0x10
+                                sub ecx, 0x10000
+                                mov cx, word ptr [TextureRasterScratch498]
+                                sub cx, word ptr [TextureRasterLightPackA]
+                                dec edi
+                            K_17f6:
+                                add cx, word ptr [TextureRasterLightPackA]
+                                mov al, byte ptr [ebx]
+                                inc edi
+                                add edx, esi
+                                adc bl, dl
+                                add eax, ebp
+                                adc bh, dh
+                                cmp al, ah
+                                je K_1810
+                                add al, ch
+                                mov byte ptr [edi], al
+                            K_1810:
+                                sub ecx, 0x10000
+                                jns K_17f6
+                                pop ebp
+                            span_done:
+                                }
+                            }
+                            if (done) {
+                                break;
+                            }
+                            TextureRasterRowOffset += TextureRasterBufferStride;
                         }
                     }
                 }
             }
         }
-        if (clip_flag == 0) {
-            cache->flags_ = 0;
-        }
     }
-
-    if (buf != 0) {
-        buf->free_data(1);
+    if (buffer != 0) {
+        buffer->free_data(1);
+    }
+    __asm finit
+    if (needs_clip == 0) {
+        cache->flags_ = 0;
     }
 }
 
@@ -4892,180 +5703,270 @@ void Texture::sub_6212b0(Buffer *buf, Vert *verts, int *zvals, int count,
 // context from the first token rather than behind a file read. This
 // emitter computes declarations; it does not carry lessons.
 
-void Texture::sub_622810(Buffer *buf, Vert *verts, int *zvals, int count,
-                         Vert *edgeVerts, int light_thresh,
-                         TextureStore *cache) {
-    // The sentinel wrapper supplies the same TextureStore used by 0x625080;
-    // preserve the original cursor and validity-flag writes as member stores.
+void Texture::sub_622810(Buffer *buffer, Vert *vertices, int *zvals, int count,
+                         Vert *uv, int threshold, TextureStore *cache) {
+    int needs_clip = 1;
     cache->next_record_ = 0;
-
-    TextureRasterPixelBase = buf->get_data();
-    TextureRasterLightThreshold = light_thresh;
-    TextureRasterEdgeVerticesA = edgeVerts;
-    TextureRasterEdgeVerticesB = verts;
+    TextureRasterPixelBase = buffer->get_data();
+    TextureRasterLightThreshold = threshold;
+    // Hand-written assembly: the blitters reset the FPU with FINIT.
+    __asm finit
+    TextureRasterEdgeVerticesB = vertices;
+    TextureRasterEdgeVerticesA = uv;
     TextureRasterVertexCount = count;
-    TextureRasterZValues = reinterpret_cast<int *>(zvals);
+    TextureRasterZValues = zvals;
     TextureRasterScratch544 = pixels_;
-    TextureRasterBufferStride = (int)buf->stride_;
-    TextureRasterTextureWidth = (int)iWidth_;
-
-    int guard_i = 0;
-    for (int i = 0; i < count; ++i) {
-        if (zvals[i] < light_thresh) break;
-        ++guard_i;
+    TextureRasterBufferStride = static_cast<int>(buffer->stride_);
+    TextureRasterTextureWidth = static_cast<int>(iWidth_);
+    int i;
+    for (i = 0; i < count; ++i) {
+        if (zvals[i] < threshold) {
+            break;
+        }
     }
-
-    int clip_flag = 1;
-    if (guard_i != count && buf != 0) {
-        TextureRasterClipRight = buf->rect1_.right;
-        TextureRasterClipLeft = buf->rect1_.left;
-        TextureRasterClipBottom = buf->rect1_.bottom;
-        TextureRasterClipTop = buf->rect1_.top;
-
-        int min_y = 0x7fff, min_y_idx = 0;
-        int max_y = (int)0xffff8003, max_y_idx = 0;
+    if (i == count) {
+        goto finish;
+    }
+    {
+    RECT *clip = &buffer->rect1_;
+    if (clip != 0) {
+        TextureRasterClipRight = clip->right;
+        TextureRasterClipLeft = clip->left;
+        TextureRasterClipBottom = clip->bottom;
+        TextureRasterClipTop = clip->top;
+        int min_y = 0x7fff;
+        int max_y = -0x7ffd;
+        int max_x = -0x7ffd;
         int min_x = 0x7fff;
-        int max_x = (int)0xffff8003;
-        if (count > 0) {
-            for (int i = 0; i < count; ++i) {
-                int y = verts[i].y;
-                if (y < min_y) { min_y_idx = i; min_y = y; }
-                if (max_y < y) { max_y_idx = i; max_y = y; TextureRasterMaxYIndex = i; }
-                int x = verts[i].x;
-                if (x < min_x) min_x = x;
-                if (max_x < x) max_x = x;
+        int top;
+        EdgeScan left;
+        EdgeScan right;
+        for (i = 0; i < count; ++i) {
+            if (vertices[i].y < min_y) {
+                min_y = vertices[i].y;
+                top = i;
             }
-            if (min_y < max_y) {
-                TextureRasterRowOffset = TextureRasterBufferStride * min_y + texture_pointer_address(TextureRasterPixelBase);
-                if (min_x < TextureRasterClipLeft || min_y < TextureRasterClipTop || TextureRasterClipRight < max_x ||
-                    TextureRasterClipBottom < max_y) {
-                    clip_flag = 1;
-                } else {
-                    clip_flag = 0;
-                }
-                TextureRasterClipBottom = TextureRasterClipBottom * TextureRasterBufferStride + texture_pointer_address(TextureRasterPixelBase);
-                TextureRasterClipTop = TextureRasterClipTop * TextureRasterBufferStride + texture_pointer_address(TextureRasterPixelBase);
-
-                EdgeScan e1, e2;
-                e1.f0 = -1;
-                if (sub_625080(&e1, min_y_idx, cache) != 0) {
-                    e2.counter = 1;
-                    if (sub_625080(&e2, min_y_idx, cache) != 0 && borrowed_ != 0) {
-                        double dy = (double)((e2.accumC - e1.accumC) << 16);
-                        double du = 0, dv = 0, dw = 0, inv_dy = 1;
-                        if (dy > 0) {
-                            du = (double)(e2.accumB - e1.accumB);
-                            dv = (double)(e2.accumA - e1.accumA);
-                            dw = (double)(e2.accumD - e1.accumD);
-                            inv_dy = 1.0 / dy;
+            if (vertices[i].y > max_y) {
+                max_y = vertices[i].y;
+                TextureRasterMaxYIndex = i;
+            }
+            if (vertices[i].x < min_x) {
+                min_x = vertices[i].x;
+            }
+            if (vertices[i].x > max_x) {
+                max_x = vertices[i].x;
+            }
+        }
+        if (min_y < max_y) {
+            const int stride = TextureRasterBufferStride;
+            const int base = static_cast<int>(texture_pointer_address(TextureRasterPixelBase));
+            TextureRasterRowOffset = stride * min_y + base;
+            if (min_x < TextureRasterClipLeft || min_y < TextureRasterClipTop ||
+                max_x > TextureRasterClipRight || max_y > TextureRasterClipBottom) {
+                needs_clip = 1;
+            } else {
+                needs_clip = 0;
+            }
+            TextureRasterClipBottom = TextureRasterClipBottom * stride + base;
+            TextureRasterClipTop = TextureRasterClipTop * stride + base;
+            left.f0 = -1;
+            if (sub_625080(&left, top, cache)) {
+                right.f0 = 1;
+                if (sub_625080(&right, top, cache) && borrowed_ != 0) {
+                    unsigned short control;
+                    // Hand-written assembly: truncating 24-bit FPU control
+                    // word, then 1.0 kept on the FPU stack for the rows.
+                    __asm {
+                        fstcw control
+                        mov ax, control
+                        and ax, 0xfcff
+                        or ax, 0xc00
+                        mov control, ax
+                        fldcw control
+                        fld1
+                    }
+                    int span = (right.accumC - left.accumC) << 16;
+                    int dd;
+                    int dv;
+                    int du;
+                    if (span > 0) {
+                        dd = right.accumD - left.accumD;
+                        __asm fild dd
+                        dv = right.accumB - left.accumB;
+                        __asm fild dv
+                        du = right.accumA - left.accumA;
+                        __asm {
+                            fild du
+                            fild span
+                            fdivr st, st(4)
                         }
-
-                        bool done = false;
-                        while (TextureRasterRowOffset < TextureRasterClipBottom) {
-                            TextureRasterScratch4C4 = e2.accumA;
-                            TextureRasterUAccumulator.dword = e1.accumA;
-                            TextureRasterScratch530 = e2.accumB;
-                            TextureRasterVAccumulator.dword = e1.accumB;
-                            TextureRasterSpanRight = e1.accumC;
-                            TextureRasterScratch498 = e1.accumD;
-                            TextureRasterSpanLeft = e2.accumC;
-
-                            e1.counter -= 1;
-                            if (e1.counter == 0) {
-                                if (sub_625080(&e1, e1.id, cache) == 0) {
-                                    done = true;
-                                    goto per_scanline_tail;
+                    }
+                    if (TextureRasterRowOffset < TextureRasterClipBottom) {
+                        int done = 0;
+                        for (;;) {
+                            TextureRasterUAccumulator.dword = left.accumA;
+                            TextureRasterVAccumulator.dword = left.accumB;
+                            TextureRasterSpanRight = left.accumC;
+                            TextureRasterScratch498 = left.accumD;
+                            TextureRasterScratch4C4 = right.accumA;
+                            TextureRasterScratch530 = right.accumB;
+                            TextureRasterSpanLeft = right.accumC;
+                            if (--left.counter == 0) {
+                                if (!sub_625080(&left, left.id, cache)) {
+                                    done = 1;
+                                    goto edges_done;
                                 }
                             } else {
-                                edge_step(e1);
+                                texture_lit_edge_step(left);
                             }
-                            e2.counter -= 1;
-                            if (e2.counter == 0) {
-                                if (sub_625080(&e2, e2.id, cache) == 0) {
-                                    done = true;
+                            if (--right.counter == 0) {
+                                if (!sub_625080(&right, right.id, cache)) {
+                                    done = 1;
                                 }
                             } else {
-                                edge_step(e2);
+                                texture_lit_edge_step(right);
                             }
-
-                        per_scanline_tail:
-                            if (dy > 0) {
-                                TextureRasterScratch4E4.dword = (int)(dv * du * inv_dy * (double)TextureRasterScale65536);
-                                TextureRasterScratch4C8.dword = (int)(du * dv * inv_dy * (double)TextureRasterScale65536);
-                                TextureRasterLightPackA.low_word = static_cast<unsigned short>((short)(int)(du * inv_dy * dw * (double)TextureRasterScale256));
-                            }
-                            dy = (double)((e2.accumC - e1.accumC) << 16);
-                            if (dy > 0) {
-                                du = (double)(e2.accumB - e1.accumB);
-                                dv = (double)(e2.accumA - e1.accumA);
-                                dw = (double)(e2.accumD - e1.accumD);
-                                inv_dy = 1.0 / dy;
-                            }
-
-                            if (TextureRasterClipBottom <= TextureRasterRowOffset) break;
-                            if (TextureRasterClipTop <= TextureRasterRowOffset && TextureRasterClipLeft < TextureRasterSpanLeft &&
-                                TextureRasterSpanRight < TextureRasterClipRight && TextureRasterSpanRight < TextureRasterSpanLeft) {
-                                int right_x = TextureRasterSpanLeft;
-                                if (TextureRasterClipRight <= TextureRasterSpanLeft) right_x = TextureRasterClipRight;
-                                if (TextureRasterSpanRight < TextureRasterClipLeft) {
-                                    int step = (TextureRasterSpanRight - TextureRasterClipLeft) * -0x10000;
-                                    __int64 p1 = (__int64)TextureRasterScratch4E4.dword * (__int64)step;
-                                    TextureRasterUAccumulator.dword = (int)(((unsigned int)p1 >> 16) | ((int)((unsigned __int64)p1 >> 32) << 16)) + TextureRasterUAccumulator.dword;
-                                    __int64 p2 = (__int64)TextureRasterScratch4C8.dword * (__int64)step;
-                                    TextureRasterVAccumulator.dword = TextureRasterVAccumulator.dword + (int)(((unsigned int)p2 >> 16) | ((int)((unsigned __int64)p2 >> 32) << 16));
-                                    __int64 p3 = (__int64)static_cast<short>(TextureRasterLightPackA.low_word) * (__int64)step;
-                                    TextureRasterScratch498 = TextureRasterScratch498 + (int)(((unsigned int)p3 >> 8) | ((int)((unsigned __int64)p3 >> 32) << 24));
-                                    TextureRasterSpanRight = TextureRasterClipLeft;
-                                }
-
-                                unsigned char *tex_row = reinterpret_cast<unsigned char *>(
-                                    texture_pointer_offset(TextureRasterScratch544,
-                                        static_cast<uint32_t>(TextureRasterTextureWidth * (TextureRasterVAccumulator.dword >> 16) + (TextureRasterUAccumulator.dword >> 16))));
-                                char *dest = (char *)(long)(TextureRasterSpanRight + TextureRasterRowOffset - 1);
-                                TextureRasterAlternateRowNext.value = ((TextureRasterScratch4C8.dword >> 16) * TextureRasterTextureWidth + (TextureRasterScratch4E4.dword >> 16));
-                                TextureRasterAlternateRowBase.value = TextureRasterAlternateRowNext.value + TextureRasterTextureWidth;
-                                TextureRasterScratch528 = TextureRasterScratch4C8.dword << 16;
-
-                                unsigned int u_acc = concat22((unsigned short)TextureRasterVAccumulator.dword, (unsigned short)TextureRasterScratch4E4.dword);
-                                unsigned int span = concat22((unsigned short)(((short)right_x - (short)TextureRasterSpanRight) - 1), (unsigned short)TextureRasterUAccumulator.dword);
-                                TextureRasterScratch498 = TextureRasterScratch498 >> 8;
-                                unsigned short light = (unsigned short)TextureRasterScratch498;
-                                unsigned short light_step = TextureRasterLightPackA.low_word;
-                                unsigned char threshold = static_cast<unsigned char>(TextureRasterLightThreshold);
-
-                                unsigned int off = 0;
-                                for (;;) {
-                                    unsigned short light_next = (unsigned short)(light + light_step);
-                                    unsigned char light_hi = (unsigned char)(light_next >> 8);
-                                    int carry = carry4(u_acc, static_cast<unsigned int>(TextureRasterScratch528));
-                                    u_acc = u_acc + static_cast<unsigned int>(TextureRasterScratch528);
-                                    ++dest;
-                                    unsigned int selected_row = carry ? (unsigned int)TextureRasterAlternateRowBase.value : (unsigned int)TextureRasterAlternateRowNext.value;
-                                    off = selected_row + off + (unsigned int)(carry2((unsigned short)span, (unsigned short)u_acc) ? 1 : 0);
-                                    unsigned int next_span = concat22((unsigned short)((unsigned int)span >> 16),
-                                                                       (unsigned short)((unsigned short)span + (unsigned short)u_acc));
-                                    unsigned char texel = tex_row[(int)off];
-                                    if (light_hi < threshold) {
-                                        *dest = (char)(texel + light_hi);
-                                    }
-                                    light = light_next;
-                                    span = (unsigned int)((int)next_span - 0x10000);
-                                    if ((int)span < 0) break;
+                        edges_done:
+                            if (span > 0) {
+                                // Hand-written assembly: scale the row slopes
+                                // and store them with FISTP.
+                                __asm {
+                                    fmul st(1), st
+                                    fmul st(2), st
+                                    fmulp st(3), st
+                                    fmul TextureRasterScale65536
+                                    fistp TextureRasterScratch4E4.dword
+                                    fmul TextureRasterScale65536
+                                    fistp TextureRasterScratch4C8.dword
+                                    fmul TextureRasterScale256
+                                    fistp TextureRasterLightPackA.low_word
                                 }
                             }
-                            if (done) break;
-                            TextureRasterRowOffset = TextureRasterRowOffset + TextureRasterBufferStride;
+                            span = (right.accumC - left.accumC) << 16;
+                            if (span > 0) {
+                                dd = right.accumD - left.accumD;
+                                __asm fild dd
+                                dv = right.accumB - left.accumB;
+                                __asm fild dv
+                                du = right.accumA - left.accumA;
+                                __asm {
+                                    fild du
+                                    fild span
+                                    fdivr st, st(4)
+                                }
+                            }
+                            if (TextureRasterRowOffset >= TextureRasterClipBottom) {
+                                break;
+                            }
+                            if (TextureRasterRowOffset >= TextureRasterClipTop) {
+                                // Hand-written assembly: lit span with adc carry
+                                // stepping that draws only below the threshold.
+                                __asm {
+                                mov ebx, dword ptr [TextureRasterSpanLeft]
+                                mov ecx, dword ptr [TextureRasterSpanRight]
+                                cmp ebx, dword ptr [TextureRasterClipLeft]
+                                jle span_done
+                                cmp ecx, dword ptr [TextureRasterClipRight]
+                                jge span_done
+                                sub ebx, ecx
+                                jle span_done
+                                shl ebx, 0x10
+                                mov ebx, dword ptr [TextureRasterSpanLeft]
+                                cmp ebx, dword ptr [TextureRasterClipRight]
+                                jl K_2c53
+                                mov ebx, dword ptr [TextureRasterClipRight]
+                            K_2c53:
+                                mov edi, dword ptr [TextureRasterSpanRight]
+                                cmp edi, dword ptr [TextureRasterClipLeft]
+                                jge K_2cb8
+                                sub edi, dword ptr [TextureRasterClipLeft]
+                                neg edi
+                                mov eax, dword ptr [TextureRasterScratch4E4]
+                                shl edi, 0x10
+                                imul edi
+                                shrd eax, edx, 0x10
+                                add eax, dword ptr [TextureRasterUAccumulator]
+                                mov dword ptr [TextureRasterUAccumulator], eax
+                                mov eax, dword ptr [TextureRasterScratch4C8]
+                                imul edi
+                                shrd eax, edx, 0x10
+                                add dword ptr [TextureRasterVAccumulator], eax
+                                xor eax, eax
+                                mov ax, word ptr [TextureRasterLightPackA]
+                                imul edi
+                                shrd eax, edx, 0x8
+                                add eax, dword ptr [TextureRasterScratch498]
+                                mov dword ptr [TextureRasterScratch498], eax
+                                mov edi, dword ptr [TextureRasterClipLeft]
+                                mov dword ptr [TextureRasterSpanRight], edi
+                            K_2cb8:
+                                sub ebx, edi
+                                mov ecx, ebx
+                                mov ebx, dword ptr [TextureRasterScratch544]
+                                mov bh, byte ptr [TextureRasterVAccumulator+2]
+                                add bl, byte ptr [TextureRasterUAccumulator+2]
+                                mov edi, dword ptr [TextureRasterRowOffset]
+                                add edi, dword ptr [TextureRasterSpanRight]
+                                mov eax, dword ptr [TextureRasterScratch498]
+                                sar eax, 0x8
+                                mov dword ptr [TextureRasterScratch498], eax
+                                mov edx, dword ptr [TextureRasterUAccumulator]
+                                shl edx, 0x10
+                                mov dh, byte ptr [TextureRasterScratch4C8+2]
+                                mov dl, byte ptr [TextureRasterScratch4E4+2]
+                                mov esi, dword ptr [TextureRasterScratch4E4]
+                                shl esi, 0x10
+                                mov eax, ecx
+                                mov ecx, dword ptr [TextureRasterScratch4C8]
+                                shl ecx, 0x10
+                                mov cx, ax
+                                mov eax, dword ptr [TextureRasterVAccumulator]
+                                shl eax, 0x10
+                                mov ah, byte ptr [TextureRasterLightThreshold]
+                                push ebp
+                                mov ebp, ecx
+                                xor bp, bp
+                                shl ecx, 0x10
+                                sub ecx, 0x10000
+                                mov cx, word ptr [TextureRasterScratch498]
+                                sub cx, word ptr [TextureRasterLightPackA]
+                                dec edi
+                            K_2d3f:
+                                add cx, word ptr [TextureRasterLightPackA]
+                                mov al, byte ptr [ebx]
+                                inc edi
+                                add edx, esi
+                                adc bl, dl
+                                add eax, ebp
+                                adc bh, dh
+                                cmp ch, ah
+                                jge K_2d59
+                                add al, ch
+                                mov byte ptr [edi], al
+                            K_2d59:
+                                sub ecx, 0x10000
+                                jns K_2d3f
+                                pop ebp
+                            span_done:
+                                }
+                            }
+                            if (done) {
+                                break;
+                            }
+                            TextureRasterRowOffset += TextureRasterBufferStride;
                         }
                     }
                 }
             }
         }
     }
-
-    if (buf != 0) {
-        buf->free_data(1);
     }
-    if (clip_flag == 0) {
+finish:
+    if (buffer != 0) {
+        buffer->free_data(1);
+    }
+    __asm finit
+    if (needs_clip == 0) {
         cache->flags_ = 0;
     }
 }
@@ -5082,286 +5983,283 @@ void Texture::sub_622810(Buffer *buf, Vert *verts, int *zvals, int count,
 // calls     0x005E3373 0x005E34A3 0x00625080
 
 
-void Texture::sub_622200(Buffer *a2, Vert *a3, int *a4, Texture *a5,
-                         unsigned char *a6, int a7, Vert *a8,
-                         TextureStore *a9) {
-    int local_8 = 1;
-
-    if (a3 != 0) {
-        if (a2 == 0)
-            goto free_and_finish;
-        if (pixels_ != 0 && a4 != 0 && a6 != 0 && a5 != 0 && a9 != 0) {
-            a9->next_record_ = 0;
-            TextureRasterPixelBase = a2->get_data();
-            texture_reset_fpu();
-            TextureRasterZValues = a4;
-            TextureRasterEdgeVerticesB = a3;
-            TextureRasterScratch550 = a6;
-            TextureRasterScratch544 = pixels_;
-            TextureRowPitchScratch = static_cast<int>(iWidth_);
-            TextureRasterTextureHeight = static_cast<int>(iHeight_);
-            TextureRasterVertexCount = a7;
-            TextureRasterEdgeVerticesA = a8;
-            Buffer *buffer = a2;
-            TextureRasterBufferStride = buffer->stride_;
-            TextureRasterTextureWidth = static_cast<int>(iWidth_);
-            Texture *shade_texture = a5;
-            TextureRasterScratch554 = shade_texture->pixels_;
-            RECT *clip = &buffer->rect1_;
-            if (texture_pointer_address(TextureRasterScratch554) != 0 && clip != 0) {
-                TextureRasterClipRight = clip->right;
-                int minY = 0x7fff;
-                TextureRasterClipLeft = clip->left;
-                TextureRasterClipBottom = clip->bottom;
-                TextureRasterClipTop = clip->top;
-                int idx = 0;
-                int maxY = 0xffff8003;
-                int maxX = -0x7ffd;
-                int minX = 0x7fff;
-                int minYIdx = a7;
-
-                if (0 < a7) {
-                    do {
-                        int y = a3[idx].y;
-                        if (y < minY) {
-                            minY = y;
-                            minYIdx = idx;
+void Texture::sub_622200(Buffer *buffer, Vert *vertices, int *zvals,
+                         Texture *shade_texture, unsigned char *remap, int count,
+                         Vert *uv, TextureStore *cache) {
+    int needs_clip = 1;
+    if (vertices != 0 && buffer != 0 && pixels_ != 0 && zvals != 0 && remap != 0 &&
+        shade_texture != 0 && cache != 0) {
+    cache->next_record_ = 0;
+    TextureRasterPixelBase = buffer->get_data();
+    // Hand-written assembly: the blitters reset the FPU with FINIT.
+    __asm finit
+    TextureRasterZValues = zvals;
+    TextureRasterEdgeVerticesB = vertices;
+    TextureRasterScratch550 = remap;
+    TextureRasterScratch544 = pixels_;
+    TextureRowPitchScratch = static_cast<int>(iWidth_);
+    TextureRasterTextureHeight = static_cast<int>(iHeight_);
+    TextureRasterVertexCount = count;
+    TextureRasterEdgeVerticesA = uv;
+    TextureRasterBufferStride = static_cast<int>(buffer->stride_);
+    TextureRasterTextureWidth = static_cast<int>(iWidth_);
+    TextureRasterScratch554 = shade_texture->pixels_;
+    if (TextureRasterScratch554 != 0) {
+    RECT *clip = &buffer->rect1_;
+    if (clip != 0) {
+        TextureRasterClipRight = clip->right;
+        TextureRasterClipLeft = clip->left;
+        TextureRasterClipBottom = clip->bottom;
+        TextureRasterClipTop = clip->top;
+        int max_y = -0x7ffd;
+        int min_y = 0x7fff;
+        int max_x = -0x7ffd;
+        int min_x = 0x7fff;
+        int top;
+        EdgeScan left;
+        EdgeScan right;
+        for (int i = 0; i < count; ++i) {
+            if (vertices[i].y < min_y) {
+                min_y = vertices[i].y;
+                top = i;
+            }
+            if (vertices[i].y > max_y) {
+                max_y = vertices[i].y;
+                TextureRasterMaxYIndex = i;
+            }
+            if (vertices[i].x < min_x) {
+                min_x = vertices[i].x;
+            }
+            if (vertices[i].x > max_x) {
+                max_x = vertices[i].x;
+            }
+        }
+        if (min_y < max_y) {
+            const int stride = TextureRasterBufferStride;
+            const int base = static_cast<int>(texture_pointer_address(TextureRasterPixelBase));
+            TextureRasterRowOffset = stride * min_y + base;
+            if (min_x < TextureRasterClipLeft || min_y < TextureRasterClipTop ||
+                max_x > TextureRasterClipRight || max_y > TextureRasterClipBottom) {
+                needs_clip = 1;
+            } else {
+                needs_clip = 0;
+            }
+            TextureRasterClipBottom = TextureRasterClipBottom * stride + base;
+            TextureRasterClipTop = TextureRasterClipTop * stride + base;
+            left.f0 = -1;
+            if (sub_625080(&left, top, cache)) {
+                right.f0 = 1;
+                if (sub_625080(&right, top, cache) && borrowed_ != 0 &&
+                    shade_texture->borrowed_ != 0) {
+                    unsigned short control;
+                    // Hand-written assembly: truncating 24-bit FPU control
+                    // word, then 1.0 kept on the FPU stack for the rows.
+                    __asm {
+                        fstcw control
+                        mov ax, control
+                        and ax, 0xfcff
+                        or ax, 0xc00
+                        mov control, ax
+                        fldcw control
+                        fld1
+                    }
+                    int span = (right.accumC - left.accumC) << 16;
+                    int dd;
+                    int dv;
+                    int du;
+                    if (span > 0) {
+                        dd = right.accumD - left.accumD;
+                        __asm fild dd
+                        dv = right.accumB - left.accumB;
+                        __asm fild dv
+                        du = right.accumA - left.accumA;
+                        __asm {
+                            fild du
+                            fild span
+                            fdivr st, st(4)
                         }
-                        if (maxY < y) {
-                            TextureRasterMaxYIndex = idx;
-                            maxY = y;
-                        }
-                        int x = a3[idx].x;
-                        if (x < minX)
-                            minX = x;
-                        if (maxX < x)
-                            maxX = x;
-                        ++idx;
-                    } while (idx < a7);
-
-                    if (minY < maxY) {
-                        TextureRasterRowOffset = TextureRasterBufferStride * minY + texture_pointer_address(TextureRasterPixelBase);
-                        local_8 = (minX < TextureRasterClipLeft || minY < TextureRasterClipTop ||
-                                   TextureRasterClipRight < maxX || TextureRasterClipBottom < maxY)
-                                      ? 1
-                                      : 0;
-                        TextureRasterClipBottom = TextureRasterClipBottom * TextureRasterBufferStride + texture_pointer_address(TextureRasterPixelBase);
-                        TextureRasterClipTop = TextureRasterClipTop * TextureRasterBufferStride + texture_pointer_address(TextureRasterPixelBase);
-
-                        EdgeScan left;
-                        left.f0 = -1;
-                        if (sub_625080(&left, minYIdx, a9) != 0) {
-                            EdgeScan right;
-                            right.f0 = 1;
-                            if (sub_625080(&right, minYIdx, a9) != 0 && borrowed_ != 0 &&
-                                a5->borrowed_ != 0) {
-                                // 0x622443 selects 24-bit precision and chop for
-                                // the x87 gradient conversion; FNINIT is at exit.
-                                _control87(_PC_24 | _RC_CHOP, _MCW_PC | _MCW_RC);
-                                long double invDx = 1.0;
-                                long double dU = 1.0, dV = 1.0, dZ = 1.0;
-                                int edgeSpan = static_cast<int>(
-                                    static_cast<unsigned int>(texture_difference(
-                                        right.accumC, left.accumC)) << 16);
-                                if (0 < edgeSpan) {
-                                    dU = static_cast<long double>(texture_difference(right.accumD, left.accumD));
-                                    dV = static_cast<long double>(texture_difference(right.accumB, left.accumB));
-                                    dZ = static_cast<long double>(texture_difference(right.accumA, left.accumA));
-                                    invDx = 1.0 / static_cast<long double>(edgeSpan);
+                    }
+                    if (TextureRasterRowOffset < TextureRasterClipBottom) {
+                        int done = 0;
+                        for (;;) {
+                            TextureRasterUAccumulator.dword = left.accumA;
+                            TextureRasterVAccumulator.dword = left.accumB;
+                            TextureRasterSpanRight = left.accumC;
+                            TextureRasterScratch498 = left.accumD;
+                            TextureRasterScratch4C4 = right.accumA;
+                            TextureRasterScratch530 = right.accumB;
+                            TextureRasterSpanLeft = right.accumC;
+                            if (--left.counter == 0) {
+                                if (!sub_625080(&left, left.id, cache)) {
+                                    done = 1;
+                                    goto edges_done;
                                 }
-
-                                if (TextureRasterRowOffset < TextureRasterClipBottom) {
-                                    bool doneEdges = false;
-                                    do {
-                                        TextureRasterScratch498 = left.accumD;
-                                        TextureRasterVAccumulator.dword = left.accumB;
-                                        TextureRasterScratch4C4 = right.accumA;
-                                        TextureRasterScratch530 = right.accumB;
-                                        TextureRasterUAccumulator.dword = left.accumA;
-                                        TextureRasterSpanLeft = right.accumC;
-                                        TextureRasterSpanRight = left.accumC;
-                                        --left.counter;
-                                        if (left.counter == 0) {
-                                            if (sub_625080(&left, left.id, a9) != 0) {
-                                                goto scan_edge_b;
-                                            }
-                                            doneEdges = true;
-                                        } else {
-                                            left.accumA += left.deltaA;
-                                            left.accumB += left.deltaB;
-                                            left.accumC += left.deltaC;
-                                            left.accumD += left.deltaD;
-                                            left.fracAccum += left.fracDelta;
-                                            if (0 < left.fracAccum) {
-                                                left.accumC += left.extraDeltaC;
-                                                left.fracAccum -= left.fracSub;
-                                            }
-                                        scan_edge_b:
-                                            --right.counter;
-                                            if (right.counter == 0) {
-                                                if (sub_625080(&right, right.id, a9) == 0) {
-                                                    doneEdges = true;
-                                                }
-                                            } else {
-                                                right.accumA += right.deltaA;
-                                                right.accumB += right.deltaB;
-                                                right.accumC += right.deltaC;
-                                                right.accumD += right.deltaD;
-                                                right.fracAccum += right.fracDelta;
-                                                if (0 < right.fracAccum) {
-                                                    right.accumC += right.extraDeltaC;
-                                                    right.fracAccum -= right.fracSub;
-                                                }
-                                            }
-                                        }
-
-                                        // 0x6225C3 publishes the gradient captured
-                                        // before this row's edge advance. Keep the
-                                        // old span/operands until those stores finish.
-                                        if (0 < edgeSpan) {
-                                            TextureRasterScratch4E4.dword = static_cast<int>(
-                                                dZ * invDx * static_cast<long double>(TextureRasterScale65536));
-                                            TextureRasterScratch4C8.dword = static_cast<int>(
-                                                dV * invDx * static_cast<long double>(TextureRasterScale65536));
-                                            TextureRasterLightPackA.low_word = static_cast<unsigned short>(static_cast<short>(
-                                                dU * invDx * static_cast<long double>(TextureRasterScale256)));
-                                        }
-                                        edgeSpan = static_cast<int>(
-                                            static_cast<unsigned int>(texture_difference(
-                                                right.accumC, left.accumC)) << 16);
-                                        if (0 < edgeSpan) {
-                                            dU = static_cast<long double>(texture_difference(right.accumD, left.accumD));
-                                            dV = static_cast<long double>(texture_difference(right.accumB, left.accumB));
-                                            dZ = static_cast<long double>(texture_difference(right.accumA, left.accumA));
-                                            invDx = 1.0 / static_cast<long double>(edgeSpan);
-                                        }
-
-                                        if (TextureRasterClipBottom <= TextureRasterRowOffset)
-                                            break;
-                                        if (TextureRasterClipTop <= TextureRasterRowOffset && TextureRasterClipLeft < TextureRasterSpanLeft &&
-                                            TextureRasterSpanRight < TextureRasterClipRight && TextureRasterSpanRight < TextureRasterSpanLeft) {
-                                            int rightX = (TextureRasterClipRight <= TextureRasterSpanLeft) ? TextureRasterClipRight
-                                                                                       : TextureRasterSpanLeft;
-                                            if (TextureRasterSpanRight < TextureRasterClipLeft) {
-                                                long skip = (TextureRasterSpanRight - TextureRasterClipLeft) * -0x10000;
-                                                TextureRasterUAccumulator.dword += static_cast<int>(
-                                                    (static_cast<__int64>(TextureRasterScratch4E4.dword) * skip) >> 16);
-                                                TextureRasterVAccumulator.dword += static_cast<int>(
-                                                    (static_cast<__int64>(TextureRasterScratch4C8.dword) * skip) >> 16);
-                                                TextureRasterScratch498 += static_cast<int>(
-                                                    (static_cast<__int64>(static_cast<short>(TextureRasterLightPackA.low_word)) *
-                                                     skip) >>
-                                                    8);
-                                                TextureRasterSpanRight = TextureRasterClipLeft;
-                                            }
-
-                                            unsigned char *puVar11 = reinterpret_cast<unsigned char *>(
-                                                static_cast<unsigned int>(concat31(
-                                                    static_cast<unsigned int>(concat22(
-                                                        static_cast<unsigned short>(
-                                                            static_cast<unsigned int>(texture_pointer_address(TextureRasterScratch544)) >> 16),
-                                                        concat11(byte_at(TextureRasterVAccumulator.dword, 2),
-                                                                 static_cast<unsigned char>(texture_pointer_address(TextureRasterScratch544))))) >>
-                                                        8,
-                                                    static_cast<unsigned char>(
-                                                        static_cast<unsigned char>(texture_pointer_address(TextureRasterScratch544)) +
-                                                        byte_at(TextureRasterUAccumulator.dword, 2)))));
-                                            char *pcVar15 = reinterpret_cast<char *>(TextureRasterRowOffset + TextureRasterSpanRight);
-                                            int shade = TextureRasterScratch498 >> 8;
-                                            unsigned int uAccum =
-                                                concat31(concat21(static_cast<unsigned short>(TextureRasterUAccumulator.dword),
-                                                                   byte_at(TextureRasterScratch4C8.dword, 2)),
-                                                         byte_at(TextureRasterScratch4E4.dword, 2));
-                                            unsigned int uStep = TextureRasterScratch4E4.dword * 0x10000;
-                                            int vAccum = TextureRasterVAccumulator.dword << 16;
-                                            unsigned int vStep = TextureRasterScratch4C8.dword * 0x10000;
-                                            TextureRasterScratch498 = static_cast<short>(
-                                                static_cast<unsigned int>(TextureRasterScratch498) >> 8);
-                                            int count = concat22(
-                                                static_cast<unsigned short>(
-                                                    (static_cast<unsigned short>(
-                                                         static_cast<short>(rightX - TextureRasterSpanRight)) *
-                                                         0x10000 -
-                                                     0x10000) >>
-                                                    16),
-                                                static_cast<unsigned short>(TextureRasterScratch498));
-                                            TextureRasterScratch498 = shade;
-
-                                            do {
-                                                unsigned short vHigh =
-                                                    static_cast<unsigned short>(
-                                                        static_cast<unsigned int>(vAccum) >> 16);
-                                                unsigned int lightAccum =
-                                                    static_cast<unsigned int>(concat21(vHigh, *puVar11)) << 8;
-                                                unsigned char texel = *reinterpret_cast<const unsigned char *>(
-                                                    texture_pointer_offset(TextureRasterScratch550, static_cast<uint32_t>(concat22(
-                                                        static_cast<unsigned short>(
-                                                            static_cast<unsigned int>(texture_pointer_address(TextureRasterScratch554)) >> 16),
-                                                        static_cast<unsigned short>(
-                                                            reinterpret_cast<unsigned int>(puVar11))))));
-                                                if (texel != 0) {
-                                                    unsigned char base =
-                                                        static_cast<unsigned char>(
-                                                            static_cast<unsigned int>(count) >> 8);
-                                                    if (texel != 1) {
-                                                        lightAccum = static_cast<unsigned int>(concat21(
-                                                                         vHigh,
-                                                                         static_cast<unsigned char>(
-                                                                             texel - base)))
-                                                                     << 8;
-                                                    }
-                                                    unsigned char shaded = static_cast<unsigned char>(
-                                                        (lightAccum >> 8) + base);
-                                                    lightAccum = static_cast<unsigned int>(concat21(
-                                                                     static_cast<unsigned short>(
-                                                                         lightAccum >> 16),
-                                                                     shaded))
-                                                                 << 8;
-                                                    *pcVar15 = static_cast<char>(shaded);
-                                                }
-                                                bool carry = carry4(uAccum, uStep);
-                                                uAccum += uStep;
-                                                vAccum = static_cast<int>(lightAccum + vStep);
-                                                puVar11 = reinterpret_cast<unsigned char *>(
-                                                    static_cast<unsigned int>(concat22(
-                                                        static_cast<unsigned short>(
-                                                            reinterpret_cast<unsigned int>(puVar11) >> 16),
-                                                        concat11(
-                                                            static_cast<unsigned char>(
-                                                                (reinterpret_cast<unsigned int>(puVar11) >> 8) +
-                                                                (uAccum >> 8) + carry4(lightAccum, vStep)),
-                                                            static_cast<unsigned char>(
-                                                                reinterpret_cast<unsigned int>(puVar11) +
-                                                                (uAccum >> 8) + carry)))));
-                                                ++pcVar15;
-                                                count = concat22(
-                                                    static_cast<unsigned short>(
-                                                        static_cast<unsigned int>(count) >> 16),
-                                                    static_cast<unsigned short>(count + TextureRasterLightPackA.low_word)) -
-                                                        0x10000;
-                                            } while (-1 < count);
-                                        }
-                                        if (doneEdges)
-                                            break;
-                                        TextureRasterRowOffset += TextureRasterBufferStride;
-                                    } while (true);
+                            } else {
+                                texture_lit_edge_step(left);
+                            }
+                            if (--right.counter == 0) {
+                                if (!sub_625080(&right, right.id, cache)) {
+                                    done = 1;
+                                }
+                            } else {
+                                texture_lit_edge_step(right);
+                            }
+                        edges_done:
+                            if (span > 0) {
+                                // Hand-written assembly: scale the row slopes
+                                // and store them with FISTP.
+                                __asm {
+                                    fmul st(1), st
+                                    fmul st(2), st
+                                    fmulp st(3), st
+                                    fmul TextureRasterScale65536
+                                    fistp TextureRasterScratch4E4.dword
+                                    fmul TextureRasterScale65536
+                                    fistp TextureRasterScratch4C8.dword
+                                    fmul TextureRasterScale256
+                                    fistp TextureRasterLightPackA.low_word
                                 }
                             }
+                            span = (right.accumC - left.accumC) << 16;
+                            if (span > 0) {
+                                dd = right.accumD - left.accumD;
+                                __asm fild dd
+                                dv = right.accumB - left.accumB;
+                                __asm fild dv
+                                du = right.accumA - left.accumA;
+                                __asm {
+                                    fild du
+                                    fild span
+                                    fdivr st, st(4)
+                                }
+                            }
+                            if (TextureRasterRowOffset >= TextureRasterClipBottom) {
+                                break;
+                            }
+                            if (TextureRasterRowOffset >= TextureRasterClipTop) {
+                                // Hand-written assembly: span with adc carry
+                                // stepping that remaps the shade texel and adds
+                                // the light.
+                                __asm {
+                                mov ebx, dword ptr [TextureRasterSpanLeft]
+                                mov ecx, dword ptr [TextureRasterSpanRight]
+                                cmp ebx, dword ptr [TextureRasterClipLeft]
+                                jle span_done
+                                cmp ecx, dword ptr [TextureRasterClipRight]
+                                jge span_done
+                                sub ebx, ecx
+                                jle span_done
+                                shl ebx, 0x10
+                                mov ebx, dword ptr [TextureRasterSpanLeft]
+                                cmp ebx, dword ptr [TextureRasterClipRight]
+                                jl K_2694
+                                mov ebx, dword ptr [TextureRasterClipRight]
+                            K_2694:
+                                mov edi, dword ptr [TextureRasterSpanRight]
+                                cmp edi, dword ptr [TextureRasterClipLeft]
+                                jge K_26f9
+                                sub edi, dword ptr [TextureRasterClipLeft]
+                                neg edi
+                                mov eax, dword ptr [TextureRasterScratch4E4]
+                                shl edi, 0x10
+                                imul edi
+                                shrd eax, edx, 0x10
+                                add eax, dword ptr [TextureRasterUAccumulator]
+                                mov dword ptr [TextureRasterUAccumulator], eax
+                                mov eax, dword ptr [TextureRasterScratch4C8]
+                                imul edi
+                                shrd eax, edx, 0x10
+                                add dword ptr [TextureRasterVAccumulator], eax
+                                xor eax, eax
+                                mov ax, word ptr [TextureRasterLightPackA]
+                                imul edi
+                                shrd eax, edx, 0x8
+                                add eax, dword ptr [TextureRasterScratch498]
+                                mov dword ptr [TextureRasterScratch498], eax
+                                mov edi, dword ptr [TextureRasterClipLeft]
+                                mov dword ptr [TextureRasterSpanRight], edi
+                            K_26f9:
+                                sub ebx, edi
+                                mov ecx, ebx
+                                mov ebx, dword ptr [TextureRasterScratch544]
+                                mov bh, byte ptr [TextureRasterVAccumulator+2]
+                                add bl, byte ptr [TextureRasterUAccumulator+2]
+                                mov edi, dword ptr [TextureRasterRowOffset]
+                                add edi, dword ptr [TextureRasterSpanRight]
+                                mov eax, dword ptr [TextureRasterScratch498]
+                                sar eax, 0x8
+                                mov dword ptr [TextureRasterScratch498], eax
+                                mov edx, dword ptr [TextureRasterUAccumulator]
+                                shl edx, 0x10
+                                mov dh, byte ptr [TextureRasterScratch4C8+2]
+                                mov dl, byte ptr [TextureRasterScratch4E4+2]
+                                mov esi, dword ptr [TextureRasterScratch4E4]
+                                shl esi, 0x10
+                                mov eax, ecx
+                                mov ecx, dword ptr [TextureRasterScratch4C8]
+                                shl ecx, 0x10
+                                mov cx, ax
+                                mov eax, dword ptr [TextureRasterVAccumulator]
+                                shl eax, 0x10
+                                push ebp
+                                mov ebp, ecx
+                                xor bp, bp
+                                shl ecx, 0x10
+                                sub ecx, 0x10000
+                                mov cx, word ptr [TextureRasterScratch498]
+                            K_2772:
+                                mov ah, byte ptr [ebx]
+                                push edx
+                                push ecx
+                                mov ecx, dword ptr [TextureRasterScratch554]
+                                mov cx, bx
+                                xor edx, edx
+                                mov dl, byte ptr [ecx]
+                                pop ecx
+                                add edx, dword ptr [TextureRasterScratch550]
+                                mov dl, byte ptr [edx]
+                                cmp dl, 0x0
+                                je K_279e
+                                cmp dl, 0x1
+                                je K_279a
+                                mov ah, dl
+                                sub ah, ch
+                            K_279a:
+                                add ah, ch
+                                mov byte ptr [edi], ah
+                            K_279e:
+                                pop edx
+                                add cx, word ptr [TextureRasterLightPackA]
+                                add edx, esi
+                                adc bl, dl
+                                add eax, ebp
+                                adc bh, dh
+                                inc edi
+                                sub ecx, 0x10000
+                                jns K_2772
+                                pop ebp
+                            span_done:
+                                }
+                            }
+                            if (done) {
+                                break;
+                            }
+                            TextureRasterRowOffset += TextureRasterBufferStride;
                         }
                     }
                 }
             }
         }
     }
-
-free_and_finish:
-    if (a2 != 0) {
-        a2->free_data(1);
     }
-    if (local_8 == 0) {
-        a9->flags_ = 0;
     }
-    texture_reset_fpu();
+    if (buffer != 0) {
+        buffer->free_data(1);
+    }
+    __asm finit
+    if (needs_clip == 0) {
+        cache->flags_ = 0;
+    }
 }
 
 // ORIGINAL: 0x0061C630 sub_61c630 0x0061C630-0x0061CB4E FILE
@@ -5393,187 +6291,248 @@ free_and_finish:
 // context from the first token rather than behind a file read. This
 // emitter computes declarations; it does not carry lessons.
 
-void Texture::sub_61c630(Buffer * bufIn, Vert * verts, Texture * texB, unsigned char * shadeTable, int vertCount, Vert *edge_vertices) {
-    if (verts == 0) return;
-    if (bufIn == 0) return;
-
-    if (pixels_ != 0 && shadeTable != 0 && texB != 0) {
-        TextureRasterPixelBase = bufIn->get_data();
-        TextureRasterScratch550 = shadeTable;
-        TextureRasterEdgeVerticesB = verts;
-        TextureRasterScratch544 = pixels_;
-        TextureRowPitchScratch = static_cast<int>(iWidth_);
-        TextureRasterTextureHeight = static_cast<int>(iHeight_);
-        TextureRasterVertexCount = vertCount;
-        TextureRasterEdgeVerticesA = edge_vertices;
-        TextureRasterBufferStride = static_cast<int>(bufIn->stride_);
-        TextureRasterTextureWidth = static_cast<int>(iWidth_);
-        TextureRasterScratch554 = texB->pixels_;
-
-        if (texture_pointer_address(TextureRasterScratch554) != 0) {
-            TextureRasterClipRight = bufIn->rect1_.right;
-            TextureRasterClipLeft = bufIn->rect1_.left;
-            TextureRasterClipBottom = bufIn->rect1_.bottom;
-            TextureRasterClipTop = bufIn->rect1_.top;
-
-            int minY = 0x7fff, maxY = -0x7ffd, minX = 0x7fff, maxX = -0x7ffd;
-            int minYIdx = 0, maxYIdx = 0;
-
-            if (vertCount > 0) {
-                Vert *v = verts;
-                for (int i = 0; i < vertCount; i++) {
-                    int y = v->y;
-                    if (y < minY) { minY = y; minYIdx = i; }
-                    if (y > maxY) { maxYIdx = i; maxY = y; }
-                    int x = v->x;
-                    if (x < minX) minX = x;
-                    if (x > maxX) maxX = x;
-                    ++v;
-                }
-
-                if (minY < maxY) {
-                    int stride = TextureRasterBufferStride;
-                    uintptr_t destBase = texture_pointer_address(TextureRasterPixelBase);
-                    TextureRasterRowOffset = destBase + stride * minY;
-                    TextureRasterClipBottom = destBase + stride * (TextureRasterClipBottom);
-                    TextureRasterClipTop = destBase + stride * (TextureRasterClipTop);
-
-                    EdgeScan e1;
-                    EdgeScan e2;
-
-                    e1.f0 = -1;
-                    if (setup_edge(&e1, minYIdx) != 0) {
-                        e2.f0 = 1;
-                        if (setup_edge(&e2, minYIdx) != 0 &&
-                            borrowed_ != 0 && texB->borrowed_ != 0) {
-
-                            double du0 = 0.0, dv0 = 0.0, invWidth = 1.0;
-                            int stepCheck = (e2.accumC - e1.accumC) * 0x10000;
-                            if (stepCheck > 0) {
-                                dv0 = static_cast<double>(e2.accumB - e1.accumB);
-                                du0 = static_cast<double>(e2.accumA - e1.accumA);
-                                invWidth = 1.0 / static_cast<double>(stepCheck);
+void Texture::sub_61c630(Buffer *buffer, Vert *vertices, Texture *shade,
+                         unsigned char *remap, int count, Vert *uv) {
+    EdgeScan left;
+    EdgeScan right;
+    if (vertices != 0 && buffer != 0 && pixels_ != 0 && remap != 0 && shade != 0) {
+    TextureRasterPixelBase = buffer->get_data();
+    // Hand-written assembly: the blitters reset the FPU with FINIT.
+    __asm finit
+    TextureRasterScratch550 = remap;
+    TextureRasterEdgeVerticesB = vertices;
+    TextureRasterScratch544 = pixels_;
+    TextureRowPitchScratch = static_cast<int>(iWidth_);
+    TextureRasterTextureHeight = static_cast<int>(iHeight_);
+    TextureRasterVertexCount = count;
+    TextureRasterEdgeVerticesA = uv;
+    TextureRasterBufferStride = static_cast<int>(buffer->stride_);
+    TextureRasterTextureWidth = static_cast<int>(iWidth_);
+    TextureRasterScratch554 = shade->pixels_;
+    if (TextureRasterScratch554 != 0) {
+    RECT *clip = &buffer->rect1_;
+    if (clip != 0) {
+        TextureRasterClipRight = clip->right;
+        TextureRasterClipLeft = clip->left;
+        TextureRasterClipBottom = clip->bottom;
+        TextureRasterClipTop = clip->top;
+        int max_y = -0x7ffd;
+        int min_y = 0x7fff;
+        int max_x = -0x7ffd;
+        int min_x = 0x7fff;
+        int top;
+        for (int i = 0; i < count; ++i) {
+            if (vertices[i].y < min_y) {
+                min_y = vertices[i].y;
+                top = i;
+            }
+            if (vertices[i].y > max_y) {
+                max_y = vertices[i].y;
+                TextureRasterMaxYIndex = i;
+            }
+            if (vertices[i].x < min_x) {
+                min_x = vertices[i].x;
+            }
+            if (vertices[i].x > max_x) {
+                max_x = vertices[i].x;
+            }
+        }
+        if (min_y < max_y) {
+            const int stride = TextureRasterBufferStride;
+            const int base = static_cast<int>(texture_pointer_address(TextureRasterPixelBase));
+            TextureRasterRowOffset = stride * min_y + base;
+            TextureRasterClipBottom = TextureRasterClipBottom * stride + base;
+            TextureRasterClipTop = TextureRasterClipTop * stride + base;
+            left.f0 = -1;
+            if (Texture::setup_edge(&left, top)) {
+                right.f0 = 1;
+                if (Texture::setup_edge(&right, top) && borrowed_ != 0 &&
+                    shade->borrowed_ != 0) {
+                    unsigned short control;
+                    // Hand-written assembly: truncating 24-bit FPU control
+                    // word, then 1.0 kept on the FPU stack for the rows.
+                    __asm {
+                        fstcw control
+                        mov ax, control
+                        and ax, 0xfcff
+                        or ax, 0xc00
+                        mov control, ax
+                        fldcw control
+                        fld1
+                    }
+                    int span = (right.accumC - left.accumC) << 16;
+                    int dv;
+                    int du;
+                    if (span > 0) {
+                        dv = right.accumB - left.accumB;
+                        __asm fild dv
+                        du = right.accumA - left.accumA;
+                        __asm {
+                            fild du
+                            fild span
+                            fdivr st, st(3)
+                        }
+                    }
+                    if (TextureRasterRowOffset < TextureRasterClipBottom) {
+                        int done = 0;
+                        for (;;) {
+                            TextureRasterUAccumulator.dword = left.accumA;
+                            TextureRasterVAccumulator.dword = left.accumB;
+                            TextureRasterSpanRight = left.accumC;
+                            TextureRasterScratch498 = left.accumD;
+                            TextureRasterScratch4C4 = right.accumA;
+                            TextureRasterScratch530 = right.accumB;
+                            TextureRasterSpanLeft = right.accumC;
+                            if (--left.counter == 0) {
+                                if (!Texture::setup_edge(&left, left.id)) {
+                                    done = 1;
+                                    goto edges_done;
+                                }
+                            } else {
+                                texture_uv_edge_step(left);
                             }
-
-                            if (TextureRasterRowOffset < TextureRasterClipBottom) {
-                                bool done = false;
-                                for (;;) {
-                                    TextureRasterScratch498 = e1.accumD;
-                                    TextureRasterUAccumulator.dword = e1.accumA;
-                                    TextureRasterScratch4C4 = e2.accumA;
-                                    TextureRasterScratch530 = e2.accumB;
-                                    TextureRasterVAccumulator.dword = e1.accumB;
-                                    TextureRasterSpanRight = e1.accumC;
-                                    TextureRasterSpanLeft = e2.accumC;
-
-                                    e1.counter -= 1;
-                                    if (e1.counter == 0) {
-                                        if (setup_edge(&e1, e1.id) != 0) {
-                                            goto edge2_step;
-                                        }
-                                        done = true;
-                                    } else {
-                                        e1.accumA += e1.deltaA;
-                                        e1.accumB += e1.deltaB;
-                                        e1.accumC += e1.deltaC;
-                                        e1.fracAccum += e1.fracDelta;
-                                        if (e1.fracAccum > 0) {
-                                            e1.accumC += e1.extraDeltaC;
-                                            e1.fracAccum -= e1.fracSub;
-                                        }
-                                    edge2_step:
-                                        e2.counter -= 1;
-                                        if (e2.counter == 0) {
-                                            if (setup_edge(&e2, e2.id) == 0) {
-                                                done = true;
-                                            }
-                                        } else {
-                                            e2.accumA += e2.deltaA;
-                                            e2.accumC += e2.deltaC;
-                                            e2.accumB += e2.deltaB;
-                                            e2.fracAccum += e2.fracDelta;
-                                            if (e2.fracAccum > 0) {
-                                                e2.accumC += e2.extraDeltaC;
-                                                e2.fracAccum -= e2.fracSub;
-                                            }
-                                        }
-                                    }
-
-                                    if (stepCheck > 0) {
-                                        float scale = TextureRasterScale65536;
-                                        TextureRasterScratch4E4.dword = static_cast<int>(du0 * invWidth * scale);
-                                        TextureRasterScratch4C8.dword = static_cast<int>(dv0 * invWidth * scale);
-                                    }
-
-                                    stepCheck = (e2.accumC - e1.accumC) * 0x10000;
-                                    if (stepCheck > 0) {
-                                        dv0 = static_cast<double>(e2.accumB - e1.accumB);
-                                        du0 = static_cast<double>(e2.accumA - e1.accumA);
-                                        invWidth = 1.0 / static_cast<double>(stepCheck);
-                                    }
-
-                                    if (TextureRasterClipBottom <= TextureRasterRowOffset) break;
-
-                                    if (TextureRasterClipTop <= TextureRasterRowOffset && TextureRasterClipLeft < TextureRasterSpanLeft &&
-                                        TextureRasterSpanRight < TextureRasterClipRight && TextureRasterSpanRight < TextureRasterSpanLeft) {
-
-                                        int rightX = TextureRasterSpanLeft;
-                                        if (TextureRasterClipRight <= TextureRasterSpanLeft) rightX = TextureRasterClipRight;
-
-                                        if (TextureRasterSpanRight < TextureRasterClipLeft) {
-                                            int skip = TextureRasterClipLeft - TextureRasterSpanRight;
-                                            TextureRasterUAccumulator.dword += static_cast<int>(
-                                                static_cast<__int64>(TextureRasterScratch4E4.dword) * skip);
-                                            TextureRasterVAccumulator.dword += static_cast<int>(
-                                                static_cast<__int64>(TextureRasterScratch4C8.dword) * skip);
-                                            TextureRasterSpanRight = TextureRasterClipLeft;
-                                        }
-
-                                        int width = rightX - TextureRasterSpanRight;
-                                        if (width > 0) {
-                                            unsigned char *dest = reinterpret_cast<unsigned char *>(TextureRasterRowOffset) +
-                                                                   TextureRasterSpanRight;
-                                            unsigned int uAccum = static_cast<unsigned int>(TextureRasterUAccumulator.dword);
-                                            unsigned int vAccum = static_cast<unsigned int>(TextureRasterVAccumulator.dword);
-                                            unsigned int duStep = static_cast<unsigned int>(TextureRasterScratch4E4.dword);
-                                            unsigned int dvStep = static_cast<unsigned int>(TextureRasterScratch4C8.dword);
-                                            unsigned char *texBase =
-                                                reinterpret_cast<unsigned char *>(texture_pointer_address(TextureRasterScratch544));
-                                            unsigned char *tex2Base =
-                                                reinterpret_cast<unsigned char *>(texture_pointer_address(TextureRasterScratch554));
-                                            const unsigned char *table =
-                                                static_cast<const unsigned char *>(TextureRasterScratch550);
-
-                                            for (int px = 0; px < width; px++) {
-                                                unsigned char uc = static_cast<unsigned char>(uAccum >> 16);
-                                                unsigned char vc = static_cast<unsigned char>(vAccum >> 16);
-                                                unsigned int off = (static_cast<unsigned int>(vc) << 8) + uc;
-                                                unsigned char texel = texBase[off];
-                                                unsigned char sel = tex2Base[off];
-                                                unsigned char shade = table[sel];
-                                                if (shade != 0) {
-                                                    dest[px] = (shade == 1) ? texel : shade;
-                                                }
-                                                uAccum += duStep;
-                                                vAccum += dvStep;
-                                            }
-                                        }
-                                    }
-
-                                    if (done) break;
-                                    TextureRasterRowOffset += TextureRasterBufferStride;
+                            if (--right.counter == 0) {
+                                if (!Texture::setup_edge(&right, right.id)) {
+                                    done = 1;
+                                }
+                            } else {
+                                texture_uv_edge_step(right);
+                            }
+                        edges_done:
+                            if (span > 0) {
+                                // Hand-written assembly: scale the row slopes
+                                // and store them with FISTP.
+                                __asm {
+                                    fmul st(1), st
+                                    fmulp st(2), st
+                                    fmul TextureRasterScale65536
+                                    fistp TextureRasterScratch4E4.dword
+                                    fmul TextureRasterScale65536
+                                    fistp TextureRasterScratch4C8.dword
                                 }
                             }
+                            span = (right.accumC - left.accumC) << 16;
+                            if (span > 0) {
+                                dv = right.accumB - left.accumB;
+                                __asm fild dv
+                                du = right.accumA - left.accumA;
+                                __asm {
+                                    fild du
+                                    fild span
+                                    fdivr st, st(3)
+                                }
+                            }
+                            if (TextureRasterRowOffset >= TextureRasterClipBottom) {
+                                break;
+                            }
+                            if (TextureRasterRowOffset >= TextureRasterClipTop) {
+                                // Hand-written assembly: span with adc carry
+                                // stepping that writes texels or table bytes
+                                // as the second texture's shade byte selects.
+                                __asm {
+                                mov ebx, dword ptr [TextureRasterSpanLeft]
+                                mov ecx, dword ptr [TextureRasterSpanRight]
+                                cmp ebx, dword ptr [TextureRasterClipLeft]
+                                jle span_done
+                                cmp ecx, dword ptr [TextureRasterClipRight]
+                                jge span_done
+                                sub ebx, ecx
+                                jle span_done
+                                shl ebx, 0x10
+                                mov ebx, dword ptr [TextureRasterSpanLeft]
+                                cmp ebx, dword ptr [TextureRasterClipRight]
+                                jl K_ca22
+                                mov ebx, dword ptr [TextureRasterClipRight]
+                            K_ca22:
+                                mov edi, dword ptr [TextureRasterSpanRight]
+                                cmp edi, dword ptr [TextureRasterClipLeft]
+                                jge K_ca6e
+                                sub edi, dword ptr [TextureRasterClipLeft]
+                                neg edi
+                                mov eax, dword ptr [TextureRasterScratch4E4]
+                                shl edi, 0x10
+                                imul edi
+                                shrd eax, edx, 0x10
+                                add eax, dword ptr [TextureRasterUAccumulator]
+                                mov dword ptr [TextureRasterUAccumulator], eax
+                                mov eax, dword ptr [TextureRasterScratch4C8]
+                                imul edi
+                                shrd eax, edx, 0x10
+                                add dword ptr [TextureRasterVAccumulator], eax
+                                mov edi, dword ptr [TextureRasterClipLeft]
+                                mov dword ptr [TextureRasterSpanRight], edi
+                            K_ca6e:
+                                sub ebx, edi
+                                mov ecx, ebx
+                                mov ebx, dword ptr [TextureRasterScratch544]
+                                mov bh, byte ptr [TextureRasterVAccumulator+2]
+                                add bl, byte ptr [TextureRasterUAccumulator+2]
+                                mov edi, dword ptr [TextureRasterRowOffset]
+                                add edi, dword ptr [TextureRasterSpanRight]
+                                mov edx, dword ptr [TextureRasterUAccumulator]
+                                shl edx, 0x10
+                                mov dh, byte ptr [TextureRasterScratch4C8+2]
+                                mov dl, byte ptr [TextureRasterScratch4E4+2]
+                                mov esi, dword ptr [TextureRasterScratch4E4]
+                                shl esi, 0x10
+                                mov eax, ecx
+                                mov ecx, dword ptr [TextureRasterScratch4C8]
+                                shl ecx, 0x10
+                                mov cx, ax
+                                mov eax, dword ptr [TextureRasterVAccumulator]
+                                shl eax, 0x10
+                                push ebp
+                                mov ebp, ecx
+                                xor bp, bp
+                                shl ecx, 0x10
+                                sub ecx, 0x10000
+                            K_cad3:
+                                mov ah, byte ptr [ebx]
+                                push edx
+                                push ecx
+                                mov ecx, dword ptr [TextureRasterScratch554]
+                                mov cx, bx
+                                xor edx, edx
+                                mov dl, byte ptr [ecx]
+                                add edx, dword ptr [TextureRasterScratch550]
+                                mov dl, byte ptr [edx]
+                                cmp dl, 0x0
+                                je K_cafa
+                                cmp dl, 0x1
+                                je K_caf8
+                                mov ah, dl
+                            K_caf8:
+                                mov byte ptr [edi], ah
+                            K_cafa:
+                                pop ecx
+                                pop edx
+                                add edx, esi
+                                adc bl, dl
+                                add eax, ebp
+                                adc bh, dh
+                                inc edi
+                                sub ecx, 0x10000
+                                jns K_cad3
+                                pop ebp
+                            span_done:
+                                }
+                            }
+                            if (done) {
+                                break;
+                            }
+                            TextureRasterRowOffset += TextureRasterBufferStride;
                         }
                     }
                 }
             }
         }
     }
-
-    if (bufIn != 0) {
-        bufIn->free_data(1);
     }
+    }
+    if (buffer != 0) {
+        buffer->free_data(1);
+    }
+    __asm finit
 }
 
 // Original 0x61DE5A..0x61DF1D pixel path: the base texel is read from the
@@ -5666,171 +6625,276 @@ static void texture_draw_shade_span(unsigned char *destination,
 void Texture::sub_61d990(Buffer *buffer, Vert *vertices, int *zvals,
                          Texture *shade_texture, unsigned char *remap,
                          int wide_flag) {
-    if (vertices == 0) {
-        if (buffer != 0) buffer->free_data(1);
-        texture_reset_fpu();
-        return;
-    }
-    if (buffer == 0) {
-        texture_reset_fpu();
-        return;
-    }
-    if (pixels_ == 0 || zvals == 0 || remap == 0 || shade_texture == 0) {
-        buffer->free_data(1);
-        texture_reset_fpu();
-        return;
-    }
-
+    if (vertices != 0 && buffer != 0 && pixels_ != 0 && zvals != 0 && remap != 0 &&
+        shade_texture != 0) {
     TextureRasterPixelBase = buffer->get_data();
-    texture_reset_fpu();
-    TextureRasterZValues = zvals;
+    // Hand-written assembly: the blitters reset the FPU with FINIT.
+    __asm finit
     TextureRasterEdgeVerticesB = vertices;
+    TextureRasterZValues = zvals;
     TextureRasterScratch550 = remap;
     TextureRasterScratch544 = pixels_;
     TextureRowPitchScratch = static_cast<int>(iWidth_);
     TextureRasterTextureHeight = static_cast<int>(iHeight_);
-    TextureRasterTextureWidth = static_cast<int>(iWidth_);
-    TextureRasterEdgeVerticesA = wide_flag != 0 ? cornersAndMids_ : corners_;
-    TextureRasterVertexCount = wide_flag != 0 ? 8 : 4;
+    if (wide_flag) {
+        TextureRasterVertexCount = 8;
+        TextureRasterEdgeVerticesA = cornersAndMids_;
+    } else {
+        TextureRasterVertexCount = 4;
+        TextureRasterEdgeVerticesA = corners_;
+    }
     TextureRasterBufferStride = static_cast<int>(buffer->stride_);
+    TextureRasterTextureWidth = static_cast<int>(iWidth_);
     TextureRasterScratch554 = shade_texture->pixels_;
-
-    if (shade_texture->pixels_ != 0) {
-        const RECT &clip = buffer->rect1_;
-        TextureRasterClipRight = clip.right;
-        TextureRasterClipLeft = clip.left;
-        TextureRasterClipBottom = clip.bottom;
-        TextureRasterClipTop = clip.top;
-
-        const int count = TextureRasterVertexCount;
+    if (TextureRasterScratch554 != 0) {
+    RECT *clip = &buffer->rect1_;
+    if (clip != 0) {
+        TextureRasterClipRight = clip->right;
+        TextureRasterClipLeft = clip->left;
+        TextureRasterClipBottom = clip->bottom;
+        TextureRasterClipTop = clip->top;
+        int max_y = -0x7ffd;
         int min_y = 0x7fff;
-        int max_y = static_cast<int>(0xffff8003u);
+        int max_x = -0x7ffd;
         int min_x = 0x7fff;
-        int max_x = static_cast<int>(0xffff8003u);
-        int top_index = 0;
-        const Vert *vertex_pairs = vertices;
-        for (int index = 0; index < count; ++index) {
-            const int y = vertex_pairs[index].y;
-            if (y < min_y) {
-                min_y = y;
-                top_index = index;
+        int top;
+        EdgeScan left;
+        EdgeScan right;
+        for (int i = 0; i < TextureRasterVertexCount; ++i) {
+            if (vertices[i].y < min_y) {
+                min_y = vertices[i].y;
+                top = i;
             }
-            if (max_y < y) {
-                max_y = y;
-                TextureRasterMaxYIndex = index;
+            if (vertices[i].y > max_y) {
+                max_y = vertices[i].y;
+                TextureRasterMaxYIndex = i;
             }
-            const int x = vertex_pairs[index].x;
-            if (x < min_x) min_x = x;
-            if (max_x < x) max_x = x;
+            if (vertices[i].x < min_x) {
+                min_x = vertices[i].x;
+            }
+            if (vertices[i].x > max_x) {
+                max_x = vertices[i].x;
+            }
         }
-        (void)min_x;
-        (void)max_x;
-
         if (min_y < max_y) {
-            const int stride = buffer->stride_;
-            const uintptr_t base = texture_pointer_address(TextureRasterPixelBase);
+            const int stride = TextureRasterBufferStride;
+            const int base = static_cast<int>(texture_pointer_address(TextureRasterPixelBase));
             TextureRasterRowOffset = stride * min_y + base;
-            TextureRasterClipBottom = stride * TextureRasterClipBottom + base;
-            TextureRasterClipTop = stride * TextureRasterClipTop + base;
-
-            EdgeScan left;
-            EdgeScan right;
+            TextureRasterClipBottom = TextureRasterClipBottom * stride + base;
+            TextureRasterClipTop = TextureRasterClipTop * stride + base;
             left.f0 = -1;
-            right.f0 = 1;
-            if (setup_edge_gouraud(&left, top_index) != 0 &&
-                setup_edge_gouraud(&right, top_index) != 0 &&
-                borrowed_ != 0 && shade_texture->borrowed_ != 0) {
-                _control87(_PC_24 | _RC_CHOP, _MCW_PC | _MCW_RC);
-                bool done = false;
-
-                while (TextureRasterRowOffset < TextureRasterClipBottom) {
-                    TextureRasterScratch4C4 = right.accumA;
-                    TextureRasterScratch530 = right.accumB;
-                    TextureRasterSpanLeft = right.accumC;
-                    TextureRasterUAccumulator.dword = left.accumA;
-                    TextureRasterVAccumulator.dword = left.accumB;
-                    TextureRasterSpanRight = left.accumC;
-                    TextureRasterScratch498 = left.accumD;
-                    const EdgeScan row_left = left;
-                    const EdgeScan row_right = right;
-                    if (!texture_raster_step_gouraud(left, this)) {
-                        done = true;
-                    } else if (!texture_raster_step_gouraud(right, this)) {
-                        done = true;
+            if (Texture::setup_edge_gouraud(&left, top)) {
+                right.f0 = 1;
+                if (Texture::setup_edge_gouraud(&right, top) && borrowed_ != 0 &&
+                    shade_texture->borrowed_ != 0) {
+                    unsigned short control;
+                    // Hand-written assembly: truncating 24-bit FPU control
+                    // word, then 1.0 kept on the FPU stack for the rows.
+                    __asm {
+                        fstcw control
+                        mov ax, control
+                        and ax, 0xfcff
+                        or ax, 0xc00
+                        mov control, ax
+                        fldcw control
+                        fld1
                     }
-                    if (TextureRasterClipBottom <= TextureRasterRowOffset) break;
-                    const int span = texture_difference(
-                        row_right.accumC, row_left.accumC);
-                    if (texture_raster_gradient_span_admitted(span)) {
-                        TextureRasterScratch4E4.dword = texture_span_step(
-                            texture_difference(row_right.accumA,
-                                               row_left.accumA), span);
-                        TextureRasterScratch4C8.dword = texture_span_step(
-                            texture_difference(row_right.accumB,
-                                               row_left.accumB), span);
-                        TextureRasterLightPackA.low_word =
-                            texture_light_step(
-                                texture_difference(row_right.accumD,
-                                                   row_left.accumD), span);
-                    }
-                    const int du = TextureRasterScratch4E4.dword;
-                    const int dv = TextureRasterScratch4C8.dword;
-                    const unsigned short light_step =
-                        TextureRasterLightPackA.low_word;
-                    if (TextureRasterClipTop <= TextureRasterRowOffset &&
-                        row_right.accumC > TextureRasterClipLeft &&
-                        row_left.accumC < TextureRasterClipRight &&
-                        span > 0) {
-                        int left_x = row_left.accumC;
-                        int right_x = row_right.accumC;
-                        if (right_x > TextureRasterClipRight)
-                            right_x = TextureRasterClipRight;
-                        if (left_x < TextureRasterClipLeft)
-                            left_x = TextureRasterClipLeft;
-
-                        const int clipped_pixels = texture_difference(
-                            left_x, row_left.accumC);
-                        int u = static_cast<int>(
-                            static_cast<unsigned int>(row_left.accumA) +
-                            static_cast<unsigned int>(
-                                static_cast<int64_t>(du) * clipped_pixels));
-                        int v = static_cast<int>(
-                            static_cast<unsigned int>(row_left.accumB) +
-                            static_cast<unsigned int>(
-                                static_cast<int64_t>(dv) * clipped_pixels));
-                        int light = static_cast<int>(
-                            static_cast<unsigned int>(row_left.accumD) +
-                            (static_cast<unsigned int>(light_step) *
-                             static_cast<unsigned int>(clipped_pixels) << 8));
-                        if (clipped_pixels != 0) {
-                            TextureRasterUAccumulator.dword = u;
-                            TextureRasterVAccumulator.dword = v;
-                            TextureRasterScratch498 = light;
-                            TextureRasterSpanRight = left_x;
+                    int span = (right.accumC - left.accumC) << 16;
+                    int dd;
+                    int dv;
+                    int du;
+                    if (span > 0) {
+                        dd = right.accumD - left.accumD;
+                        __asm fild dd
+                        dv = right.accumB - left.accumB;
+                        __asm fild dv
+                        du = right.accumA - left.accumA;
+                        __asm {
+                            fild du
+                            fild span
+                            fdivr st, st(4)
                         }
-                        TextureRasterScratch498 = light >> 8;
-                        const int clipped_span = texture_difference(
-                            right_x, left_x);
-                        texture_draw_shade_span(
-                            reinterpret_cast<unsigned char *>(
-                                TextureRasterRowOffset + left_x),
-                            pixels_,
-                            shade_texture->pixels_,
-                            remap, static_cast<int>(iWidth_), u, v, du, dv,
-                            light, light_step,
-                            clipped_span);
                     }
-
-                    if (done) break;
-                    TextureRasterRowOffset = texture_difference(
-                        TextureRasterRowOffset, -stride);
+                    if (TextureRasterRowOffset < TextureRasterClipBottom) {
+                        int done = 0;
+                        for (;;) {
+                            TextureRasterUAccumulator.dword = left.accumA;
+                            TextureRasterVAccumulator.dword = left.accumB;
+                            TextureRasterSpanRight = left.accumC;
+                            TextureRasterScratch498 = left.accumD;
+                            TextureRasterScratch4C4 = right.accumA;
+                            TextureRasterScratch530 = right.accumB;
+                            TextureRasterSpanLeft = right.accumC;
+                            if (--left.counter == 0) {
+                                if (!Texture::setup_edge_gouraud(&left, left.id)) {
+                                    done = 1;
+                                    goto edges_done;
+                                }
+                            } else {
+                                texture_lit_edge_step(left);
+                            }
+                            if (--right.counter == 0) {
+                                if (!Texture::setup_edge_gouraud(&right, right.id)) {
+                                    done = 1;
+                                }
+                            } else {
+                                texture_lit_edge_step(right);
+                            }
+                        edges_done:
+                            if (span > 0) {
+                                // Hand-written assembly: scale the row slopes
+                                // and store them with FISTP.
+                                __asm {
+                                    fmul st(1), st
+                                    fmul st(2), st
+                                    fmulp st(3), st
+                                    fmul TextureRasterScale65536
+                                    fistp TextureRasterScratch4E4.dword
+                                    fmul TextureRasterScale65536
+                                    fistp TextureRasterScratch4C8.dword
+                                    fmul TextureRasterScale256
+                                    fistp TextureRasterLightPackA.low_word
+                                }
+                            }
+                            span = (right.accumC - left.accumC) << 16;
+                            if (span > 0) {
+                                dd = right.accumD - left.accumD;
+                                __asm fild dd
+                                dv = right.accumB - left.accumB;
+                                __asm fild dv
+                                du = right.accumA - left.accumA;
+                                __asm {
+                                    fild du
+                                    fild span
+                                    fdivr st, st(4)
+                                }
+                            }
+                            if (TextureRasterRowOffset >= TextureRasterClipBottom) {
+                                break;
+                            }
+                            if (TextureRasterRowOffset >= TextureRasterClipTop) {
+                                // Hand-written assembly: shaded span with adc
+                                // carry stepping; shade bytes below 5 add the
+                                // light to the remapped texel, others replace it.
+                                __asm {
+                                mov ebx, dword ptr [TextureRasterSpanLeft]
+                                mov ecx, dword ptr [TextureRasterSpanRight]
+                                cmp ebx, dword ptr [TextureRasterClipLeft]
+                                jle span_done
+                                cmp ecx, dword ptr [TextureRasterClipRight]
+                                jge span_done
+                                sub ebx, ecx
+                                jle span_done
+                                shl ebx, 0x10
+                                mov ebx, dword ptr [TextureRasterSpanLeft]
+                                cmp ebx, dword ptr [TextureRasterClipRight]
+                                jl K_ddf5
+                                mov ebx, dword ptr [TextureRasterClipRight]
+                            K_ddf5:
+                                mov edi, dword ptr [TextureRasterSpanRight]
+                                cmp edi, dword ptr [TextureRasterClipLeft]
+                                jge K_de5a
+                                sub edi, dword ptr [TextureRasterClipLeft]
+                                neg edi
+                                mov eax, dword ptr [TextureRasterScratch4E4]
+                                shl edi, 0x10
+                                imul edi
+                                shrd eax, edx, 0x10
+                                add eax, dword ptr [TextureRasterUAccumulator]
+                                mov dword ptr [TextureRasterUAccumulator], eax
+                                mov eax, dword ptr [TextureRasterScratch4C8]
+                                imul edi
+                                shrd eax, edx, 0x10
+                                add dword ptr [TextureRasterVAccumulator], eax
+                                xor eax, eax
+                                mov ax, word ptr [TextureRasterLightPackA]
+                                imul edi
+                                shrd eax, edx, 0x8
+                                add eax, dword ptr [TextureRasterScratch498]
+                                mov dword ptr [TextureRasterScratch498], eax
+                                mov edi, dword ptr [TextureRasterClipLeft]
+                                mov dword ptr [TextureRasterSpanRight], edi
+                            K_de5a:
+                                sub ebx, edi
+                                mov ecx, ebx
+                                mov ebx, dword ptr [TextureRasterScratch544]
+                                mov bh, byte ptr [TextureRasterVAccumulator+2]
+                                add bl, byte ptr [TextureRasterUAccumulator+2]
+                                mov edi, dword ptr [TextureRasterRowOffset]
+                                add edi, dword ptr [TextureRasterSpanRight]
+                                mov eax, dword ptr [TextureRasterScratch498]
+                                sar eax, 0x8
+                                mov dword ptr [TextureRasterScratch498], eax
+                                mov edx, dword ptr [TextureRasterUAccumulator]
+                                shl edx, 0x10
+                                mov dh, byte ptr [TextureRasterScratch4C8+2]
+                                mov dl, byte ptr [TextureRasterScratch4E4+2]
+                                mov esi, dword ptr [TextureRasterScratch4E4]
+                                shl esi, 0x10
+                                mov eax, ecx
+                                mov ecx, dword ptr [TextureRasterScratch4C8]
+                                shl ecx, 0x10
+                                mov cx, ax
+                                mov eax, dword ptr [TextureRasterVAccumulator]
+                                shl eax, 0x10
+                                push ebp
+                                mov ebp, ecx
+                                xor bp, bp
+                                shl ecx, 0x10
+                                sub ecx, 0x10000
+                                mov cx, word ptr [TextureRasterScratch498]
+                            K_ded3:
+                                mov ah, byte ptr [ebx]
+                                push edx
+                                push ecx
+                                mov ecx, dword ptr [TextureRasterScratch554]
+                                mov cx, bx
+                                xor edx, edx
+                                mov dl, byte ptr [ecx]
+                                pop ecx
+                                cmp dl, 0x5
+                                jb K_def5
+                                add edx, dword ptr [TextureRasterScratch550]
+                                mov ah, byte ptr [edx]
+                                pop edx
+                                jmp K_df05
+                            K_def5:
+                                add ah, ch
+                                add edx, dword ptr [TextureRasterScratch550]
+                                mov al, byte ptr [edx]
+                                cmp dl, 0x5
+                                pop edx
+                                add ah, al
+                            K_df05:
+                                mov byte ptr [edi], ah
+                                add cx, word ptr [TextureRasterLightPackA]
+                                add edx, esi
+                                adc bl, dl
+                                add eax, ebp
+                                adc bh, dh
+                                inc edi
+                                sub ecx, 0x10000
+                                jns K_ded3
+                                pop ebp
+                            span_done:
+                                }
+                            }
+                            if (done) {
+                                break;
+                            }
+                            TextureRasterRowOffset += TextureRasterBufferStride;
+                        }
+                    }
                 }
             }
         }
     }
-
-    buffer->free_data(1);
-    texture_reset_fpu();
+    }
+    }
+    if (buffer != 0) {
+        buffer->free_data(1);
+    }
+    __asm finit
 }
 
 
@@ -5878,344 +6942,480 @@ static int texture_raster_step_gouraud(EdgeScan &edge, Texture *texture) {
 
 
 void Texture::sub_61b780(Buffer *buffer, Vert *vertices, int *zvals, int mode) {
-    const int count = mode == 0 ? 4 : 8;
-    int min_y = 0x7fff, max_y = -0x7ffd;
-    int min_x = 0x7fff, max_x = -0x7ffd;
-    int top = 0;
-    unsigned char *destination = static_cast<unsigned char *>(buffer->get_data());
-    texture_reset_fpu();
-    TextureRasterPixelBase = destination;
-    TextureRasterLightThreshold = texture_raster_key_signed_bits();
+    TextureRasterPixelBase = buffer->get_data();
+    TextureRasterLightThreshold = static_cast<int>(TextureRasterKey);
+    // Hand-written assembly: the blitters reset the FPU with FINIT.
+    __asm finit
     TextureRasterEdgeVerticesB = vertices;
-    TextureRasterEdgeVerticesA = mode == 0 ? corners_ : cornersAndMids_;
-    TextureRasterVertexCount = count;
+    if (mode) {
+        TextureRasterVertexCount = 8;
+        TextureRasterEdgeVerticesA = cornersAndMids_;
+    } else {
+        TextureRasterVertexCount = 4;
+        TextureRasterEdgeVerticesA = corners_;
+    }
     TextureRasterZValues = zvals;
     TextureRasterScratch544 = pixels_;
-    TextureRasterBufferStride = buffer->stride_;
-    TextureRasterTextureWidth = iWidth_;
-    TextureRasterClipRight = buffer->rect1_.right;
-    TextureRasterClipLeft = buffer->rect1_.left;
-    TextureRasterClipBottom = buffer->rect1_.bottom;
-    TextureRasterClipTop = buffer->rect1_.top;
-    const Vert *vertex_pairs = vertices;
-    for (int i = 0; i < count; ++i) {
-        const int x = vertex_pairs[i].x;
-        const int y = vertex_pairs[i].y;
-        if (y < min_y) { min_y = y; top = i; }
-        if (y > max_y) { max_y = y; TextureRasterMaxYIndex = i; }
-        if (x < min_x) min_x = x;
-        if (x > max_x) max_x = x;
-    }
-    if (min_y < max_y) {
-        const unsigned char *pixels = pixels_;
-        const uint32_t pixel_base = static_cast<uint32_t>(
-            texture_pointer_address(TextureRasterPixelBase));
-        const uint32_t stride_word = static_cast<uint32_t>(
-            TextureRasterBufferStride);
-        TextureRasterRowOffset = static_cast<int>(pixel_base +
-            stride_word * static_cast<uint32_t>(min_y));
-        TextureRasterClipBottom = static_cast<int>(pixel_base +
-            stride_word * static_cast<uint32_t>(TextureRasterClipBottom));
-        TextureRasterClipTop = static_cast<int>(pixel_base +
-            stride_word * static_cast<uint32_t>(TextureRasterClipTop));
-        EdgeScan left, right;
-        left.f0 = -1;
-        right.f0 = 1;
-        if (setup_edge_gouraud(&left, top) &&
-            setup_edge_gouraud(&right, top)) {
-            const int borrowed = borrowed_ != 0;
-            const RECT clip = buffer->current_clip();
-            const int stride = buffer->stride_;
-            unsigned char *row_base =
-                static_cast<unsigned char *>(TextureRasterPixelBase);
-
-            if (borrowed) {
-                _control87(_PC_24 | _RC_CHOP, _MCW_PC | _MCW_RC);
-                int row_offset = TextureRasterRowOffset;
-                const int pitch = 256;
-                while (row_offset < TextureRasterClipBottom) {
-                    const EdgeScan row_left = left;
-                    const EdgeScan row_right = right;
-                    int done = 0;
-                    if (--left.counter == 0) {
-                        if (!setup_edge_gouraud(&left, left.id)) done = 1;
-                    } else {
-                        left.accumA = static_cast<int>(
-                            static_cast<uint32_t>(left.accumA) +
-                            static_cast<uint32_t>(left.deltaA));
-                        left.accumB = static_cast<int>(
-                            static_cast<uint32_t>(left.accumB) +
-                            static_cast<uint32_t>(left.deltaB));
-                        left.accumC = static_cast<int>(
-                            static_cast<uint32_t>(left.accumC) +
-                            static_cast<uint32_t>(left.deltaC));
-                        left.accumD = static_cast<int>(
-                            static_cast<uint32_t>(left.accumD) +
-                            static_cast<uint32_t>(left.deltaD));
-                        left.fracAccum = static_cast<int>(
-                            static_cast<uint32_t>(left.fracAccum) +
-                            static_cast<uint32_t>(left.fracDelta));
-                        if (left.fracAccum > 0) {
-                            left.accumC = static_cast<int>(
-                                static_cast<uint32_t>(left.accumC) +
-                                static_cast<uint32_t>(left.extraDeltaC));
-                            left.fracAccum = texture_difference(
-                                left.fracAccum, left.fracSub);
+    TextureRasterBufferStride = static_cast<int>(buffer->stride_);
+    TextureRasterTextureWidth = static_cast<int>(iWidth_);
+    RECT *clip = &buffer->rect1_;
+    if (clip != 0) {
+        TextureRasterClipRight = clip->right;
+        TextureRasterClipLeft = clip->left;
+        TextureRasterClipBottom = clip->bottom;
+        TextureRasterClipTop = clip->top;
+        int max_y = -0x7ffd;
+        int min_y = 0x7fff;
+        int max_x = -0x7ffd;
+        int min_x = 0x7fff;
+        int top;
+        EdgeScan left;
+        EdgeScan right;
+        for (int i = 0; i < TextureRasterVertexCount; ++i) {
+            if (vertices[i].y < min_y) {
+                min_y = vertices[i].y;
+                top = i;
+            }
+            if (vertices[i].y > max_y) {
+                max_y = vertices[i].y;
+                TextureRasterMaxYIndex = i;
+            }
+            if (vertices[i].x < min_x) {
+                min_x = vertices[i].x;
+            }
+            if (vertices[i].x > max_x) {
+                max_x = vertices[i].x;
+            }
+        }
+        if (min_y < max_y) {
+            const int stride = TextureRasterBufferStride;
+            const int base = static_cast<int>(texture_pointer_address(TextureRasterPixelBase));
+            TextureRasterRowOffset = stride * min_y + base;
+            TextureRasterClipBottom = TextureRasterClipBottom * stride + base;
+            TextureRasterClipTop = TextureRasterClipTop * stride + base;
+            left.f0 = -1;
+            if (Texture::setup_edge_gouraud(&left, top)) {
+                right.f0 = 1;
+                if (Texture::setup_edge_gouraud(&right, top)) {
+                if (borrowed_ != 0) {
+                    unsigned short control;
+                    // Hand-written assembly: truncating 24-bit FPU control
+                    // word, then 1.0 kept on the FPU stack for the rows.
+                    __asm {
+                        fstcw control
+                        mov ax, control
+                        and ax, 0xfcff
+                        or ax, 0xc00
+                        mov control, ax
+                        fldcw control
+                        fld1
+                    }
+                    int span = (right.accumC - left.accumC) << 16;
+                    int dd;
+                    int dv;
+                    int du;
+                    if (span > 0) {
+                        dd = right.accumD - left.accumD;
+                        __asm fild dd
+                        dv = right.accumB - left.accumB;
+                        __asm fild dv
+                        du = right.accumA - left.accumA;
+                        __asm {
+                            fild du
+                            fild span
+                            fdivr st, st(4)
                         }
                     }
-                    if (!done) {
-                        if (--right.counter == 0) {
-                            if (!setup_edge_gouraud(&right, right.id)) done = 1;
-                        } else {
-                            right.accumA = static_cast<int>(
-                                static_cast<uint32_t>(right.accumA) +
-                                static_cast<uint32_t>(right.deltaA));
-                            right.accumB = static_cast<int>(
-                                static_cast<uint32_t>(right.accumB) +
-                                static_cast<uint32_t>(right.deltaB));
-                            right.accumC = static_cast<int>(
-                                static_cast<uint32_t>(right.accumC) +
-                                static_cast<uint32_t>(right.deltaC));
-                            right.accumD = static_cast<int>(
-                                static_cast<uint32_t>(right.accumD) +
-                                static_cast<uint32_t>(right.deltaD));
-                            right.fracAccum = static_cast<int>(
-                                static_cast<uint32_t>(right.fracAccum) +
-                                static_cast<uint32_t>(right.fracDelta));
-                            if (right.fracAccum > 0) {
-                                right.accumC = static_cast<int>(
-                                    static_cast<uint32_t>(right.accumC) +
-                                    static_cast<uint32_t>(right.extraDeltaC));
-                                right.fracAccum = texture_difference(
-                                    right.fracAccum, right.fracSub);
-                            }
-                        }
-                    }
-                    const int x = row_left.accumC;
-                    const int end = row_right.accumC;
-                    if (row_offset < TextureRasterClipBottom &&
-                        row_offset >= TextureRasterClipTop &&
-                        end > clip.left &&
-                        x < clip.right && end > x) {
-                        const int span = end - x;
-                        const int du = texture_span_step(
-                            texture_difference(row_right.accumA, row_left.accumA),
-                            span);
-                        const int dv = texture_span_step(
-                            texture_difference(row_right.accumB, row_left.accumB),
-                            span);
-                        const unsigned short dl = texture_light_step(
-                            texture_difference(row_right.accumD, row_left.accumD),
-                            span);
-                        int u = row_left.accumA;
-                        int v = row_left.accumB;
-                        uint32_t light = static_cast<uint32_t>(row_left.accumD);
-                        int left_x = x;
-                        int right_x = end;
-                        if (left_x < clip.left) {
-                            const int skip = clip.left - left_x;
-                            u = static_cast<int>(
-                                static_cast<uint32_t>(u) +
-                                static_cast<uint32_t>(
-                                    static_cast<int64_t>(du) * skip));
-                            v = static_cast<int>(
-                                static_cast<uint32_t>(v) +
-                                static_cast<uint32_t>(
-                                    static_cast<int64_t>(dv) * skip));
-                            int signed_skip = static_cast<int>(
-                                static_cast<uint32_t>(skip) & 0xffffu);
-                            if (signed_skip >= 0x8000)
-                                signed_skip -= 0x10000;
-                            const int product =
-                                signed_skip * static_cast<int>(dl);
-                            light += static_cast<uint32_t>(product);
-                            left_x = clip.left;
-                        }
-                        if (right_x > clip.right) right_x = clip.right;
-                        if (right_x > left_x) {
-                            const uint32_t destination_address =
-                                static_cast<uint32_t>(row_offset) +
-                                static_cast<uint32_t>(left_x);
-                            const uint32_t destination_offset =
-                                destination_address - pixel_base;
-                            unsigned char *out = row_base +
-                                static_cast<int32_t>(destination_offset);
-                            const int width = right_x - left_x;
-                            const unsigned char key = static_cast<unsigned char>(
-                                TextureRasterLightThreshold);
-                            for (int column = 0; column < width; ++column) {
-                                unsigned int source_x =
-                                    static_cast<uint32_t>(u) >> 16;
-                                unsigned int source_y =
-                                    static_cast<uint32_t>(v) >> 16;
-                                source_x &= 0xffu;
-                                source_y &= 0xffu;
-                                const unsigned char texel = pixels[
-                                    static_cast<int64_t>(source_y) * pitch +
-                                    source_x];
-                                if (texel != key) {
-                                    out[column] = static_cast<unsigned char>(
-                                        texel + ((light >> 8) & 0xffu));
+                    if (TextureRasterRowOffset < TextureRasterClipBottom) {
+                        int done = 0;
+                        for (;;) {
+                            TextureRasterUAccumulator.dword = left.accumA;
+                            TextureRasterVAccumulator.dword = left.accumB;
+                            TextureRasterSpanRight = left.accumC;
+                            TextureRasterScratch498 = left.accumD;
+                            TextureRasterScratch4C4 = right.accumA;
+                            TextureRasterScratch530 = right.accumB;
+                            TextureRasterSpanLeft = right.accumC;
+                            if (--left.counter == 0) {
+                                if (!Texture::setup_edge_gouraud(&left, left.id)) {
+                                    done = 1;
+                                    goto edges_done;
                                 }
-                                u = static_cast<int>(
-                                    static_cast<uint32_t>(u) +
-                                    static_cast<uint32_t>(du));
-                                v = static_cast<int>(
-                                    static_cast<uint32_t>(v) +
-                                    static_cast<uint32_t>(dv));
-                                light = (light & 0xffff0000u) |
-                                    ((light + static_cast<uint32_t>(dl)) &
-                                     0xffffu);
+                            } else {
+                                texture_lit_edge_step(left);
                             }
-                        }
-                    }
-                    if (done) break;
-                    row_offset = static_cast<int>(
-                        static_cast<uint32_t>(row_offset) +
-                        static_cast<uint32_t>(stride));
-                    TextureRasterRowOffset = row_offset;
-                }
-            } else {
-                int row_offset = TextureRasterRowOffset;
-                const int pitch = TextureRowPitchScratch;
-                while (row_offset < TextureRasterClipBottom) {
-                    const int x = left.accumC;
-                    const int end = right.accumC;
-                    if (row_offset < TextureRasterClipBottom &&
-                        row_offset >= TextureRasterClipTop && end > clip.left &&
-                        x < clip.right && end > x) {
-                        const int span = end - x;
-                        const int du = texture_span_step(
-                            texture_difference(right.accumA, left.accumA),
-                            span);
-                        const int dv = texture_span_step(
-                            texture_difference(right.accumB, left.accumB),
-                            span);
-                        const unsigned short dl = texture_light_step(
-                            texture_difference(right.accumD, left.accumD),
-                            span);
-                        int u = left.accumA;
-                        int v = left.accumB;
-                        uint32_t light = static_cast<uint32_t>(left.accumD);
-                        int left_x = x;
-                        int right_x = end;
-                        if (left_x < clip.left) {
-                            const int skip = clip.left - left_x;
-                            u = static_cast<int>(
-                                static_cast<uint32_t>(u) +
-                                static_cast<uint32_t>(
-                                    static_cast<int64_t>(du) * skip));
-                            v = static_cast<int>(
-                                static_cast<uint32_t>(v) +
-                                static_cast<uint32_t>(
-                                    static_cast<int64_t>(dv) * skip));
-                            int signed_skip = static_cast<int>(
-                                static_cast<uint32_t>(skip) & 0xffffu);
-                            if (signed_skip >= 0x8000)
-                                signed_skip -= 0x10000;
-                            const int product =
-                                signed_skip * static_cast<int>(dl);
-                            light += static_cast<uint32_t>(product);
-                            left_x = clip.left;
-                        }
-                        u = static_cast<int>(static_cast<uint32_t>(u) +
-                            static_cast<uint32_t>(du >> 1));
-                        v = static_cast<int>(static_cast<uint32_t>(v) +
-                            static_cast<uint32_t>(dv >> 1));
-                        if (right_x > clip.right) right_x = clip.right;
-                        if (right_x > left_x) {
-                            const uint32_t destination_address =
-                                static_cast<uint32_t>(row_offset) +
-                                static_cast<uint32_t>(left_x);
-                            const uint32_t destination_offset =
-                                destination_address - pixel_base;
-                            unsigned char *out = row_base +
-                                static_cast<int32_t>(destination_offset);
-                            const int width = right_x - left_x;
-                            for (int column = 0; column < width; ++column) {
-                                const unsigned int source_x =
-                                    static_cast<uint32_t>(u) >> 16;
-                                const unsigned int source_y =
-                                    static_cast<uint32_t>(v) >> 16;
-                                const unsigned char texel = pixels[
-                                    static_cast<int64_t>(source_y) * pitch +
-                                    source_x];
-                                out[column] = static_cast<unsigned char>(
-                                    texel + ((light >> 8) & 0xffu));
-                                u = static_cast<int>(
-                                    static_cast<uint32_t>(u) +
-                                    static_cast<uint32_t>(du));
-                                v = static_cast<int>(
-                                    static_cast<uint32_t>(v) +
-                                    static_cast<uint32_t>(dv));
-                                light = (light & 0xffff0000u) |
-                                    ((light + static_cast<uint32_t>(dl)) &
-                                     0xffffu);
+                            if (--right.counter == 0) {
+                                if (!Texture::setup_edge_gouraud(&right, right.id)) {
+                                    done = 1;
+                                }
+                            } else {
+                                texture_lit_edge_step(right);
                             }
+                        edges_done:
+                            if (span > 0) {
+                                // Hand-written assembly: scale the row slopes
+                                // and store them with FISTP.
+                                __asm {
+                                    fmul st(1), st
+                                    fmul st(2), st
+                                    fmulp st(3), st
+                                    fmul TextureRasterScale65536
+                                    fistp TextureRasterScratch4E4.dword
+                                    fmul TextureRasterScale65536
+                                    fistp TextureRasterScratch4C8.dword
+                                    fmul TextureRasterScale256
+                                    fistp TextureRasterLightPackA.low_word
+                                }
+                            }
+                            span = (right.accumC - left.accumC) << 16;
+                            if (span > 0) {
+                                dd = right.accumD - left.accumD;
+                                __asm fild dd
+                                dv = right.accumB - left.accumB;
+                                __asm fild dv
+                                du = right.accumA - left.accumA;
+                                __asm {
+                                    fild du
+                                    fild span
+                                    fdivr st, st(4)
+                                }
+                            }
+                            if (TextureRasterRowOffset >= TextureRasterClipBottom) {
+                                break;
+                            }
+                            if (TextureRasterRowOffset >= TextureRasterClipTop) {
+                                // Hand-written assembly: color-keyed lit span
+                                // with adc carry stepping.
+                                __asm {
+                                mov ebx, dword ptr [TextureRasterSpanLeft]
+                                mov ecx, dword ptr [TextureRasterSpanRight]
+                                cmp ebx, dword ptr [TextureRasterClipLeft]
+                                jle span_done
+                                cmp ecx, dword ptr [TextureRasterClipRight]
+                                jge span_done
+                                sub ebx, ecx
+                                jle span_done
+                                shl ebx, 0x10
+                                mov ebx, dword ptr [TextureRasterSpanLeft]
+                                cmp ebx, dword ptr [TextureRasterClipRight]
+                                jl K_bb7d
+                                mov ebx, dword ptr [TextureRasterClipRight]
+                            K_bb7d:
+                                mov edi, dword ptr [TextureRasterSpanRight]
+                                cmp edi, dword ptr [TextureRasterClipLeft]
+                                jge K_bbe2
+                                sub edi, dword ptr [TextureRasterClipLeft]
+                                neg edi
+                                mov eax, dword ptr [TextureRasterScratch4E4]
+                                shl edi, 0x10
+                                imul edi
+                                shrd eax, edx, 0x10
+                                add eax, dword ptr [TextureRasterUAccumulator]
+                                mov dword ptr [TextureRasterUAccumulator], eax
+                                mov eax, dword ptr [TextureRasterScratch4C8]
+                                imul edi
+                                shrd eax, edx, 0x10
+                                add dword ptr [TextureRasterVAccumulator], eax
+                                xor eax, eax
+                                mov ax, word ptr [TextureRasterLightPackA]
+                                imul edi
+                                shrd eax, edx, 0x8
+                                add eax, dword ptr [TextureRasterScratch498]
+                                mov dword ptr [TextureRasterScratch498], eax
+                                mov edi, dword ptr [TextureRasterClipLeft]
+                                mov dword ptr [TextureRasterSpanRight], edi
+                            K_bbe2:
+                                sub ebx, edi
+                                mov ecx, ebx
+                                mov ebx, dword ptr [TextureRasterScratch544]
+                                mov bh, byte ptr [TextureRasterVAccumulator+2]
+                                add bl, byte ptr [TextureRasterUAccumulator+2]
+                                mov edi, dword ptr [TextureRasterRowOffset]
+                                add edi, dword ptr [TextureRasterSpanRight]
+                                mov eax, dword ptr [TextureRasterScratch498]
+                                sar eax, 0x8
+                                mov dword ptr [TextureRasterScratch498], eax
+                                mov edx, dword ptr [TextureRasterUAccumulator]
+                                shl edx, 0x10
+                                mov dh, byte ptr [TextureRasterScratch4C8+2]
+                                mov dl, byte ptr [TextureRasterScratch4E4+2]
+                                mov esi, dword ptr [TextureRasterScratch4E4]
+                                shl esi, 0x10
+                                mov eax, ecx
+                                mov ecx, dword ptr [TextureRasterScratch4C8]
+                                shl ecx, 0x10
+                                mov cx, ax
+                                mov eax, dword ptr [TextureRasterVAccumulator]
+                                shl eax, 0x10
+                                mov ah, byte ptr [TextureRasterLightThreshold]
+                                push ebp
+                                mov ebp, ecx
+                                xor bp, bp
+                                shl ecx, 0x10
+                                sub ecx, 0x10000
+                                mov cx, word ptr [TextureRasterScratch498]
+                                sub cx, word ptr [TextureRasterLightPackA]
+                                dec edi
+                            K_bc69:
+                                add cx, word ptr [TextureRasterLightPackA]
+                                mov al, byte ptr [ebx]
+                                inc edi
+                                add edx, esi
+                                adc bl, dl
+                                add eax, ebp
+                                adc bh, dh
+                                cmp al, ah
+                                je K_bc83
+                                add al, ch
+                                mov byte ptr [edi], al
+                            K_bc83:
+                                sub ecx, 0x10000
+                                jns K_bc69
+                                pop ebp
+                            span_done:
+                                }
+                            }
+                            if (done) {
+                                break;
+                            }
+                            TextureRasterRowOffset += TextureRasterBufferStride;
                         }
                     }
-                    if (--left.counter == 0) {
-                        if (!setup_edge_gouraud(&left, left.id)) break;
-                    } else {
-                        left.accumA = static_cast<int>(
-                            static_cast<uint32_t>(left.accumA) +
-                            static_cast<uint32_t>(left.deltaA));
-                        left.accumB = static_cast<int>(
-                            static_cast<uint32_t>(left.accumB) +
-                            static_cast<uint32_t>(left.deltaB));
-                        left.accumC = static_cast<int>(
-                            static_cast<uint32_t>(left.accumC) +
-                            static_cast<uint32_t>(left.deltaC));
-                        left.accumD = static_cast<int>(
-                            static_cast<uint32_t>(left.accumD) +
-                            static_cast<uint32_t>(left.deltaD));
-                        left.fracAccum = static_cast<int>(
-                            static_cast<uint32_t>(left.fracAccum) +
-                            static_cast<uint32_t>(left.fracDelta));
-                        if (left.fracAccum > 0) {
-                            left.accumC = static_cast<int>(
-                                static_cast<uint32_t>(left.accumC) +
-                                static_cast<uint32_t>(left.extraDeltaC));
-                            left.fracAccum = texture_difference(
-                                left.fracAccum, left.fracSub);
-                        }
+                } else {
+                    // Without a borrowed 256-pitch texture the rows step U/V
+                    // in integer fixed point.
+                    if (TextureRasterRowOffset < TextureRasterClipBottom) {
+                        do {
+                            if (TextureRasterRowOffset >= TextureRasterClipTop) {
+                                int u = left.accumA;
+                                int v = left.accumB;
+                                int x = left.accumC;
+                                TextureRasterLightAccumB.dword = left.accumD;
+                                int ru = right.accumA;
+                                int rv = right.accumB;
+                                int rx = right.accumC;
+                                TextureRasterLightStepB = right.accumD;
+                                int du;
+                                int dv;
+                                int dv_step;
+                                int u_dir;
+                                int du_whole;
+                                // Hand-written assembly: idiv slopes, signed
+                                // texture pitch stepping and adc/sbb row carry
+                                // in two mirrored span loops.
+                                __asm {
+                        mov ebx, dword ptr [rx]
+                        cmp ebx, dword ptr [TextureRasterClipLeft]
+                        jle row_done
+                        mov ecx, dword ptr [x]
+                        cmp ecx, dword ptr [TextureRasterClipRight]
+                        jge row_done
+                        sub ebx, ecx
+                        jle row_done
+                        shl ebx, 0x10
+                        mov eax, dword ptr [TextureRasterLightStepB]
+                        sub eax, dword ptr [TextureRasterLightAccumB]
+                        shl eax, 0x8
+                        idiv ebx
+                        mov word ptr [TextureRasterLightPackA], ax
+                        mov eax, dword ptr [ru]
+                        sub eax, dword ptr [u]
+                        mov edx, eax
+                        sar edx, 0x10
+                        shl eax, 0x10
+                        idiv ebx
+                        mov dword ptr [du], eax
+                        mov ecx, 0x1
+                        and eax, eax
+                        jns K_bd77
+                        neg ecx
+                        test eax, 0xffff
+                        je K_bd77
+                        add eax, 0x10000
+                    K_bd77:
+                        mov dword ptr [u_dir], ecx
+                        mov ecx, eax
+                        sar ecx, 0x10
+                        mov dword ptr [du_whole], ecx
+                        sar eax, 1
+                        add eax, dword ptr [u]
+                        mov dword ptr [u], eax
+                        mov eax, dword ptr [rv]
+                        sub eax, dword ptr [v]
+                        mov edx, eax
+                        sar edx, 0x10
+                        shl eax, 0x10
+                        idiv ebx
+                        mov dword ptr [dv], eax
+                        mov ecx, dword ptr [TextureRowPitchScratch]
+                        and eax, eax
+                        jns K_bdbe
+                        neg ecx
+                        test eax, 0xffff
+                        je K_bdbe
+                        add eax, 0x10000
+                    K_bdbe:
+                        mov dword ptr [TextureRasterSignedPitch], ecx
+                        mov ecx, eax
+                        sar eax, 0x10
+                        imul dword ptr [TextureRowPitchScratch]
+                        mov dword ptr [dv_step], eax
+                        sar ecx, 1
+                        add ecx, dword ptr [v]
+                        mov dword ptr [v], ecx
+                        mov ebx, dword ptr [rx]
+                        cmp ebx, dword ptr [TextureRasterClipRight]
+                        jl K_bdee
+                        mov ebx, dword ptr [TextureRasterClipRight]
+                    K_bdee:
+                        mov edi, dword ptr [x]
+                        cmp edi, dword ptr [TextureRasterClipLeft]
+                        jge K_be4a
+                        sub edi, dword ptr [TextureRasterClipLeft]
+                        neg edi
+                        mov eax, dword ptr [du]
+                        shl edi, 0x10
+                        imul edi
+                        shrd eax, edx, 0x10
+                        add eax, dword ptr [u]
+                        mov dword ptr [u], eax
+                        mov eax, dword ptr [dv]
+                        imul edi
+                        shrd eax, edx, 0x10
+                        add eax, dword ptr [v]
+                        mov dword ptr [v], eax
+                        xor eax, eax
+                        mov ax, word ptr [TextureRasterLightPackA]
+                        imul edi
+                        shrd eax, edx, 0x10
+                        add eax, dword ptr [TextureRasterLightAccumB]
+                        mov dword ptr [TextureRasterLightAccumB], eax
+                        mov edi, dword ptr [TextureRasterClipLeft]
+                        mov dword ptr [x], edi
+                    K_be4a:
+                        sub ebx, edi
+                        mov ecx, ebx
+                        xor eax, eax
+                        mov ax, word ptr [v+2]
+                        mov dx, word ptr [TextureRowPitchScratch]
+                        imul dx
+                        xor esi, esi
+                        mov si, word ptr [u+2]
+                        add esi, eax
+                        add esi, dword ptr [TextureRasterScratch544]
+                        mov edi, dword ptr [TextureRasterRowOffset]
+                        add edi, dword ptr [x]
+                        cmp dword ptr [TextureRasterSignedPitch], 0x0
+                        jge K_be87
+                        neg dword ptr [dv]
+                        not dword ptr [v]
+                    K_be87:
+                        cmp dword ptr [u_dir], 0x0
+                        jl K_bf04
+                        mov ebx, dword ptr [u]
+                        shl ebx, 0x10
+                        mov bx, word ptr [v]
+                        shr bx, 1
+                        mov edx, dword ptr [du]
+                        shl edx, 0x10
+                        mov dx, word ptr [dv]
+                        shr dx, 1
+                        mov eax, dword ptr [du_whole]
+                        add eax, dword ptr [dv_step]
+                        mov dword ptr [TextureRasterScratch4B8], eax
+                        push ebp
+                        mov ebp, dword ptr [TextureRasterScratch4B8]
+                        dec edi
+                        mov eax, dword ptr [TextureRasterLightAccumB]
+                        shr eax, 0x8
+                    K_bed1:
+                        mov ah, byte ptr [esi]
+                        inc edi
+                        add ah, al
+                        add ebx, edx
+                        adc esi, ebp
+                        mov byte ptr [edi], ah
+                        test bh, 0x80
+                        je K_beea
+                        and bh, 0x7f
+                        add esi, dword ptr [TextureRasterSignedPitch]
+                    K_beea:
+                        mov eax, dword ptr [TextureRasterLightAccumB]
+                        add ax, word ptr [TextureRasterLightPackA]
+                        mov dword ptr [TextureRasterLightAccumB], eax
+                        shr eax, 0x8
+                        dec ecx
+                        jne K_bed1
+                        pop ebp
+                        jmp row_done
+                    K_bf04:
+                        mov edx, dword ptr [du]
+                        neg edx
+                        shl edx, 0x10
+                        mov dx, word ptr [dv]
+                        shr dx, 1
+                        mov ebx, dword ptr [u]
+                        not ebx
+                        shl ebx, 0x10
+                        mov bx, word ptr [v]
+                        shr dword ptr [v], 1
+                        mov eax, dword ptr [du_whole]
+                        add eax, dword ptr [dv_step]
+                        mov dword ptr [TextureRasterScratch4B8], eax
+                        neg dword ptr [TextureRasterScratch4B8]
+                        push ebp
+                        mov ebp, dword ptr [TextureRasterScratch4B8]
+                        dec edi
+                        mov eax, dword ptr [TextureRasterLightAccumB]
+                        shr eax, 0x8
+                    K_bf4f:
+                        mov ah, byte ptr [esi]
+                        inc edi
+                        add ah, al
+                        add ebx, edx
+                        sbb esi, ebp
+                        mov byte ptr [edi], ah
+                        test bh, 0x80
+                        je K_bf68
+                        and bh, 0x7f
+                        add esi, dword ptr [TextureRasterSignedPitch]
+                    K_bf68:
+                        mov eax, dword ptr [TextureRasterLightAccumB]
+                        add ax, word ptr [TextureRasterLightPackA]
+                        mov dword ptr [TextureRasterLightAccumB], eax
+                        shr eax, 0x8
+                        dec ecx
+                        jne K_bf4f
+                        pop ebp
+                                row_done:
+                                }
+                            }
+                            if (--left.counter == 0) {
+                                if (!Texture::setup_edge_gouraud(&left, left.id)) {
+                                    break;
+                                }
+                            } else {
+                                texture_lit_edge_step(left);
+                            }
+                            if (--right.counter == 0) {
+                                if (!Texture::setup_edge_gouraud(&right, right.id)) {
+                                    break;
+                                }
+                            } else {
+                                texture_lit_edge_step(right);
+                            }
+                            TextureRasterRowOffset += TextureRasterBufferStride;
+                        } while (TextureRasterRowOffset < TextureRasterClipBottom);
                     }
-                    if (--right.counter == 0) {
-                        if (!setup_edge_gouraud(&right, right.id)) break;
-                    } else {
-                        right.accumA = static_cast<int>(
-                            static_cast<uint32_t>(right.accumA) +
-                            static_cast<uint32_t>(right.deltaA));
-                        right.accumB = static_cast<int>(
-                            static_cast<uint32_t>(right.accumB) +
-                            static_cast<uint32_t>(right.deltaB));
-                        right.accumC = static_cast<int>(
-                            static_cast<uint32_t>(right.accumC) +
-                            static_cast<uint32_t>(right.deltaC));
-                        right.accumD = static_cast<int>(
-                            static_cast<uint32_t>(right.accumD) +
-                            static_cast<uint32_t>(right.deltaD));
-                        right.fracAccum = static_cast<int>(
-                            static_cast<uint32_t>(right.fracAccum) +
-                            static_cast<uint32_t>(right.fracDelta));
-                        if (right.fracAccum > 0) {
-                            right.accumC = static_cast<int>(
-                                static_cast<uint32_t>(right.accumC) +
-                                static_cast<uint32_t>(right.extraDeltaC));
-                            right.fracAccum = texture_difference(
-                                right.fracAccum, right.fracSub);
-                        }
-                    }
-                    row_offset = static_cast<int>(
-                        static_cast<uint32_t>(row_offset) +
-                        static_cast<uint32_t>(stride));
-                    TextureRasterRowOffset = row_offset;
                 }
             }
         }
     }
-    if (buffer != 0) buffer->free_data(1);
-    texture_reset_fpu();
+    }
+    if (buffer != 0) {
+        buffer->free_data(1);
+    }
+    __asm finit
 }
 
 // Fixed-slot bindings carried from 00620a10.cpp
@@ -6263,458 +7463,462 @@ void Texture::sub_61b780(Buffer *buffer, Vert *vertices, int *zvals, int mode) {
 // context from the first token rather than behind a file read. This
 // emitter computes declarations; it does not carry lessons.
 
-void Texture::sub_620a10(Buffer *buffer, Vert *vertices_arg, int count,
-                         Vert *edge_vertices_arg, TextureStore *cache) {
-    int v80 = 1;
+void Texture::sub_620a10(Buffer *buffer, Vert *vertices, int count, Vert *uv,
+                         TextureStore *cache) {
+    int needs_clip = 1;
     cache->next_record_ = 0;
-    Vert *vertices = vertices_arg;
-    void *data = buffer->get_data();
-    texture_reset_fpu();
-    TextureRasterPixelBase = data;
-    TextureRasterEdgeVerticesB = vertices_arg;
+    TextureRasterPixelBase = buffer->get_data();
+    // Hand-written assembly: the blitters reset the FPU with FINIT.
+    __asm finit
+    TextureRasterEdgeVerticesB = vertices;
     TextureRasterScratch544 = pixels_;
-    TextureRowPitchScratch = iWidth_;
-    TextureRasterTextureHeight = iHeight_;
-    TextureRasterEdgeVerticesA = edge_vertices_arg;
+    TextureRowPitchScratch = static_cast<int>(iWidth_);
+    TextureRasterTextureHeight = static_cast<int>(iHeight_);
+    TextureRasterEdgeVerticesA = uv;
     TextureRasterVertexCount = count;
-    TextureRasterLightThreshold = texture_raster_key_signed_bits();
-    TextureRasterBufferStride = buffer->stride_;
-    TextureRasterTextureWidth = iWidth_;
-    TextureRasterClipRight = buffer->rect1_.right;
-    TextureRasterClipLeft = buffer->rect1_.left;
-    TextureRasterClipBottom = buffer->rect1_.bottom;
-    TextureRasterClipTop = buffer->rect1_.top;
-    int min_y = 0x7fff, max_y = -0x7ffd;
-    int min_x = 0x7fff, max_x = -0x7ffd;
-    int top = 0;
-    for (int i = 0; i < count; ++i) {
-        const int x = vertices[i].x;
-        const int y = vertices[i].y;
-        if (y < min_y) { min_y = y; top = i; }
-        if (y > max_y) { max_y = y; TextureRasterMaxYIndex = i; }
-        if (x < min_x) min_x = x;
-        if (x > max_x) max_x = x;
-    }
-    if (min_y < max_y) {
-        if (min_x >= TextureRasterClipLeft && min_y >= buffer->rect1_.top &&
-            max_x <= TextureRasterClipRight &&
-            max_y <= buffer->rect1_.bottom) {
-            v80 = 0;
+    TextureRasterLightThreshold = static_cast<int>(TextureRasterKey);
+    TextureRasterBufferStride = static_cast<int>(buffer->stride_);
+    TextureRasterTextureWidth = static_cast<int>(iWidth_);
+    RECT *clip = &buffer->rect1_;
+    if (clip != 0) {
+        TextureRasterClipRight = clip->right;
+        TextureRasterClipLeft = clip->left;
+        TextureRasterClipBottom = clip->bottom;
+        TextureRasterClipTop = clip->top;
+        int min_y = 0x7fff;
+        int max_y = -0x7ffd;
+        int min_x = 0x7fff;
+        int max_x = -0x7ffd;
+        int top;
+        EdgeScan left;
+        EdgeScan right;
+        Vert *v = vertices;
+        for (int i = 0; i < count; ++i, ++v) {
+            if (v->y < min_y) {
+                min_y = v->y;
+                top = i;
+            }
+            if (v->y > max_y) {
+                max_y = v->y;
+                TextureRasterMaxYIndex = i;
+            }
+            if (v->x < min_x) {
+                min_x = v->x;
+            }
+            if (v->x > max_x) {
+                max_x = v->x;
+            }
         }
-        const uint32_t pixel_base = static_cast<uint32_t>(
-            texture_pointer_address(data));
-        const uint32_t stride = static_cast<uint32_t>(TextureRasterBufferStride);
-        TextureRasterRowOffset = static_cast<int>(pixel_base +
-            stride * static_cast<uint32_t>(min_y));
-        TextureRasterClipBottom = static_cast<int>(pixel_base + stride *
-            static_cast<uint32_t>(TextureRasterClipBottom));
-        TextureRasterClipTop = static_cast<int>(pixel_base + stride *
-            static_cast<uint32_t>(TextureRasterClipTop));
-
-        EdgeScan left, right;
-        left.f0 = -1;
-        right.f0 = 1;
-        if (sub_624eb0(&left, top, cache) &&
-            sub_624eb0(&right, top, cache)) {
-            // The original reads +0x6c only after both initial cache-backed
-            // edge setups succeeded. The two modes have different row
-            // arithmetic and different refill owners.
-            const int borrowed = borrowed_ != 0;
-            if (TextureRasterRowOffset < TextureRasterClipBottom) {
-                if (borrowed) {
-                    _control87(_PC_24 | _RC_CHOP, _MCW_PC | _MCW_RC);
-                    for (;;) {
-                        const int row = TextureRasterRowOffset;
-                        if (row >= TextureRasterClipBottom) break;
-                        // 0x620C50..0x620C7D publishes the current row's
-                        // edge snapshot before either cached rollover call.
-                        TextureRasterScratch4C4 = right.accumA;
-                        TextureRasterScratch530 = right.accumB;
-                        TextureRasterSpanLeft = right.accumC;
-                        TextureRasterUAccumulator.dword = left.accumA;
-                        TextureRasterVAccumulator.dword = left.accumB;
-                        TextureRasterSpanRight = left.accumC;
-                        const int x = TextureRasterSpanRight;
-                        const int end = TextureRasterSpanLeft;
-                        int u = TextureRasterUAccumulator.dword;
-                        int v = TextureRasterVAccumulator.dword;
-                        const int pixel_span = texture_difference(end, x);
-                        const int delta_u_snapshot = texture_difference(
-                            TextureRasterScratch4C4, u);
-                        const int delta_v_snapshot = texture_difference(
-                            TextureRasterScratch530, v);
-                        // Capture the x87-derived numeric results before the
-                        // edge callbacks. The original publishes their FISTP
-                        // destinations only after the callbacks return.
-                        const int captured_du = pixel_span > 0
-                            ? texture_span_step(delta_u_snapshot, pixel_span) : 0;
-                        const int captured_dv = pixel_span > 0
-                            ? texture_span_step(delta_v_snapshot, pixel_span) : 0;
-
+        if (min_y < max_y) {
+            const int stride = TextureRasterBufferStride;
+            const int base = static_cast<int>(texture_pointer_address(TextureRasterPixelBase));
+            TextureRasterRowOffset = stride * min_y + base;
+            if (min_x < TextureRasterClipLeft || min_y < TextureRasterClipTop ||
+                max_x > TextureRasterClipRight || max_y > TextureRasterClipBottom) {
+                needs_clip = 1;
+            } else {
+                needs_clip = 0;
+            }
+            TextureRasterClipBottom = TextureRasterClipBottom * stride + base;
+            TextureRasterClipTop = TextureRasterClipTop * stride + base;
+            left.f0 = -1;
+            if (sub_624eb0(&left, top, cache)) {
+                right.f0 = 1;
+                if (sub_624eb0(&right, top, cache)) {
+                if (borrowed_ != 0) {
+                    unsigned short control;
+                    // Hand-written assembly: truncating 24-bit FPU control
+                    // word, then 1.0 kept on the FPU stack for the rows.
+                    __asm {
+                        fstcw control
+                        mov ax, control
+                        and ax, 0xfcff
+                        or ax, 0xc00
+                        mov control, ax
+                        fldcw control
+                        fld1
+                    }
+                    int span = (right.accumC - left.accumC) << 16;
+                    int dv;
+                    int du;
+                    if (span > 0) {
+                        dv = right.accumB - left.accumB;
+                        __asm fild dv
+                        du = right.accumA - left.accumA;
+                        __asm {
+                            fild du
+                            fild span
+                            fdivr st, st(3)
+                        }
+                    }
+                    if (TextureRasterRowOffset < TextureRasterClipBottom) {
                         int done = 0;
-                        if (--left.counter == 0) {
-                            if (!sub_624eb0(&left, left.id, cache)) done = 1;
-                        } else {
-                            left.accumA = static_cast<int>(
-                                static_cast<unsigned int>(left.accumA) +
-                                static_cast<unsigned int>(left.deltaA));
-                            left.accumB = static_cast<int>(
-                                static_cast<unsigned int>(left.accumB) +
-                                static_cast<unsigned int>(left.deltaB));
-                            left.accumC = static_cast<int>(
-                                static_cast<unsigned int>(left.accumC) +
-                                static_cast<unsigned int>(left.deltaC));
-                            left.fracAccum = static_cast<int>(
-                                static_cast<unsigned int>(left.fracAccum) +
-                                static_cast<unsigned int>(left.fracDelta));
-                            if (left.fracAccum > 0) {
-                                left.accumC = static_cast<int>(
-                                    static_cast<unsigned int>(left.accumC) +
-                                    static_cast<unsigned int>(left.extraDeltaC));
-                                left.fracAccum = texture_difference(
-                                    left.fracAccum, left.fracSub);
-                            }
-                        }
-                        if (!done) {
-                            if (--right.counter == 0) {
-                                if (!sub_624eb0(&right, right.id, cache)) done = 1;
+                        for (;;) {
+                            TextureRasterUAccumulator.dword = left.accumA;
+                            TextureRasterVAccumulator.dword = left.accumB;
+                            TextureRasterSpanRight = left.accumC;
+                            TextureRasterScratch4C4 = right.accumA;
+                            TextureRasterScratch530 = right.accumB;
+                            TextureRasterSpanLeft = right.accumC;
+                            if (--left.counter == 0) {
+                                if (!sub_624eb0(&left, left.id, cache)) {
+                                    done = 1;
+                                    goto edges_done;
+                                }
                             } else {
-                                right.accumA = static_cast<int>(
-                                    static_cast<unsigned int>(right.accumA) +
-                                    static_cast<unsigned int>(right.deltaA));
-                                right.accumB = static_cast<int>(
-                                    static_cast<unsigned int>(right.accumB) +
-                                    static_cast<unsigned int>(right.deltaB));
-                                right.accumC = static_cast<int>(
-                                    static_cast<unsigned int>(right.accumC) +
-                                    static_cast<unsigned int>(right.deltaC));
-                                right.fracAccum = static_cast<int>(
-                                    static_cast<unsigned int>(right.fracAccum) +
-                                    static_cast<unsigned int>(right.fracDelta));
-                                if (right.fracAccum > 0) {
-                                    right.accumC = static_cast<int>(
-                                        static_cast<unsigned int>(right.accumC) +
-                                        static_cast<unsigned int>(right.extraDeltaC));
-                                    right.fracAccum = texture_difference(
-                                        right.fracAccum, right.fracSub);
+                                texture_uv_edge_step(left);
+                            }
+                            if (--right.counter == 0) {
+                                if (!sub_624eb0(&right, right.id, cache)) {
+                                    done = 1;
+                                }
+                            } else {
+                                texture_uv_edge_step(right);
+                            }
+                        edges_done:
+                            if (span > 0) {
+                                // Hand-written assembly: scale the row slopes
+                                // and store them with FISTP.
+                                __asm {
+                                    fmul st(1), st
+                                    fmulp st(2), st
+                                    fmul TextureRasterScale65536
+                                    fistp TextureRasterScratch4E4.dword
+                                    fmul TextureRasterScale65536
+                                    fistp TextureRasterScratch4C8.dword
                                 }
                             }
-                        }
-
-                        if (pixel_span > 0) {
-                            const int du = captured_du;
-                            const int dv = captured_dv;
-                            TextureRasterScratch4E4.dword = du;
-                            TextureRasterScratch4C8.dword = dv;
-
-                            if (row >= TextureRasterClipTop &&
-                                end > TextureRasterClipLeft &&
-                                x < TextureRasterClipRight) {
-                                int clipped_left = x;
-                                int clipped_right = end;
-                                if (clipped_right >= TextureRasterClipRight) {
-                                    clipped_right = TextureRasterClipRight;
-                                    TextureRasterSpanLeft = clipped_right;
-                                }
-                                if (clipped_left < TextureRasterClipLeft) {
-                                    const int skip = texture_difference(
-                                        TextureRasterClipLeft, clipped_left);
-                                    const int scaled_skip = static_cast<int>(
-                                        static_cast<uint32_t>(skip) << 16);
-                                    const uint32_t u_advance = static_cast<uint32_t>(
-                                        static_cast<uint64_t>(static_cast<int64_t>(du) *
-                                            static_cast<int64_t>(scaled_skip)) >> 16);
-                                    const uint32_t v_advance = static_cast<uint32_t>(
-                                        static_cast<uint64_t>(static_cast<int64_t>(dv) *
-                                            static_cast<int64_t>(scaled_skip)) >> 16);
-                                    u = static_cast<int>(
-                                        static_cast<unsigned int>(u) +
-                                        u_advance);
-                                    v = static_cast<int>(
-                                        static_cast<unsigned int>(v) +
-                                        v_advance);
-                                    TextureRasterUAccumulator.dword = u;
-                                    TextureRasterVAccumulator.dword = v;
-                                    TextureRasterSpanRight = TextureRasterClipLeft;
-                                    clipped_left = TextureRasterSpanRight;
-                                }
-                                if (clipped_right > clipped_left) {
-                                    const uint32_t destination_offset =
-                                        static_cast<uint32_t>(row) - pixel_base +
-                                        static_cast<uint32_t>(clipped_left);
-                                    unsigned char *out = reinterpret_cast<unsigned char *>(
-                                        texture_pointer_offset(data, destination_offset));
-                                    const uintptr_t source_base =
-                                        texture_pointer_address(TextureRasterScratch544);
-                                    unsigned int source_x = static_cast<unsigned int>(
-                                        (source_base +
-                                         ((static_cast<unsigned int>(u) >> 16) & 0xffu)) &
-                                        0xffu);
-                                    unsigned int source_y =
-                                        (static_cast<unsigned int>(v) >> 16) & 0xffu;
-                                    unsigned int frac_u =
-                                        static_cast<unsigned short>(u);
-                                    unsigned int frac_v =
-                                        static_cast<unsigned short>(v);
-                                    const unsigned int step_x =
-                                        static_cast<unsigned char>(du >> 16);
-                                    const unsigned int step_y =
-                                        static_cast<unsigned char>(dv >> 16);
-                                    unsigned int remaining = static_cast<unsigned int>(
-                                        texture_difference(clipped_right, clipped_left));
-                                    while (remaining != 0) {
-                                        const uintptr_t source_address =
-                                            (source_base & ~static_cast<uintptr_t>(0xffffu)) |
-                                            (static_cast<uintptr_t>(source_y) << 8) |
-                                            static_cast<uintptr_t>(source_x);
-                                        const unsigned char *source_pixel =
-                                            reinterpret_cast<const unsigned char *>(
-                                                source_address);
-                                        const unsigned char texel = *source_pixel;
-                                        if (texel != static_cast<unsigned char>(
-                                                TextureRasterLightThreshold)) {
-                                            *out = texel;
-                                        }
-                                        frac_u += static_cast<unsigned short>(du);
-                                        frac_v += static_cast<unsigned short>(dv);
-                                        source_x = (source_x + step_x + (frac_u >> 16)) & 0xffu;
-                                        source_y = (source_y + step_y + (frac_v >> 16)) & 0xffu;
-                                        frac_u &= 0xffffu;
-                                        frac_v &= 0xffffu;
-                                        ++out;
-                                        --remaining;
-                                    }
+                            span = (right.accumC - left.accumC) << 16;
+                            if (span > 0) {
+                                dv = right.accumB - left.accumB;
+                                __asm fild dv
+                                du = right.accumA - left.accumA;
+                                __asm {
+                                    fild du
+                                    fild span
+                                    fdivr st, st(3)
                                 }
                             }
+                            if (TextureRasterRowOffset >= TextureRasterClipBottom) {
+                                break;
+                            }
+                            if (TextureRasterRowOffset >= TextureRasterClipTop) {
+                                // Hand-written assembly: color-keyed span with
+                                // adc carry stepping.
+                                __asm {
+                                mov ebx, dword ptr [TextureRasterSpanLeft]
+                                cmp ebx, dword ptr [TextureRasterClipLeft]
+                                jle span_done
+                                mov ecx, dword ptr [TextureRasterSpanRight]
+                                cmp ecx, dword ptr [TextureRasterClipRight]
+                                jge span_done
+                                sub ebx, ecx
+                                jle span_done
+                                shl ebx, 0x10
+                                mov ebx, dword ptr [TextureRasterSpanLeft]
+                                cmp ebx, dword ptr [TextureRasterClipRight]
+                                jl K_df9
+                                mov ebx, dword ptr [TextureRasterClipRight]
+                            K_df9:
+                                mov edi, dword ptr [TextureRasterSpanRight]
+                                cmp edi, dword ptr [TextureRasterClipLeft]
+                                jge K_e45
+                                sub edi, dword ptr [TextureRasterClipLeft]
+                                neg edi
+                                mov eax, dword ptr [TextureRasterScratch4E4]
+                                shl edi, 0x10
+                                imul edi
+                                shrd eax, edx, 0x10
+                                add eax, dword ptr [TextureRasterUAccumulator]
+                                mov dword ptr [TextureRasterUAccumulator], eax
+                                mov eax, dword ptr [TextureRasterScratch4C8]
+                                imul edi
+                                shrd eax, edx, 0x10
+                                add dword ptr [TextureRasterVAccumulator], eax
+                                mov edi, dword ptr [TextureRasterClipLeft]
+                                mov dword ptr [TextureRasterSpanRight], edi
+                            K_e45:
+                                sub ebx, edi
+                                mov ecx, ebx
+                                mov ebx, dword ptr [TextureRasterScratch544]
+                                mov bh, byte ptr [TextureRasterVAccumulator+2]
+                                add bl, byte ptr [TextureRasterUAccumulator+2]
+                                mov edi, dword ptr [TextureRasterRowOffset]
+                                add edi, dword ptr [TextureRasterSpanRight]
+                                mov edx, dword ptr [TextureRasterUAccumulator]
+                                shl edx, 0x10
+                                mov dh, byte ptr [TextureRasterScratch4C8+2]
+                                mov dl, byte ptr [TextureRasterScratch4E4+2]
+                                mov esi, dword ptr [TextureRasterScratch4E4]
+                                shl esi, 0x10
+                                mov eax, ecx
+                                mov ecx, dword ptr [TextureRasterScratch4C8]
+                                shl ecx, 0x10
+                                mov cx, ax
+                                mov eax, dword ptr [TextureRasterVAccumulator]
+                                shl eax, 0x10
+                                mov ah, byte ptr [TextureRasterLightThreshold]
+                                push ebp
+                                mov ebp, ecx
+                                xor bp, bp
+                                shl ecx, 0x10
+                                sub ecx, 0x10000
+                                dec edi
+                            K_eb1:
+                                mov al, byte ptr [ebx]
+                                inc edi
+                                cmp al, ah
+                                je K_eba
+                                mov byte ptr [edi], al
+                            K_eba:
+                                add edx, esi
+                                adc bl, dl
+                                add eax, ebp
+                                adc bh, dh
+                                sub ecx, 0x10000
+                                jns K_eb1
+                                pop ebp
+                            span_done:
+                                }
+                            }
+                            if (done) {
+                                break;
+                            }
+                            TextureRasterRowOffset += TextureRasterBufferStride;
                         }
-
-                        // The borrowed path snapshots, then advances/refills
-                        // both edges before emitting that snapshot. A failed
-                        // left refill suppresses the right refill but still
-                        // emits this row.
-                        if (done) break;
-                        TextureRasterRowOffset = static_cast<int>(
-                            static_cast<uint32_t>(row) +
-                            static_cast<uint32_t>(TextureRasterBufferStride));
                     }
                 } else {
-                    for (;;) {
-                        const int row = TextureRasterRowOffset;
-                        if (row >= TextureRasterClipBottom) break;
-
-                        TextureRasterScratch4C4 = right.accumA;
-                        TextureRasterScratch530 = right.accumB;
-                        TextureRasterSpanLeft = right.accumC;
-                        TextureRasterUAccumulator.dword = left.accumA;
-                        TextureRasterVAccumulator.dword = left.accumB;
-                        TextureRasterSpanRight = left.accumC;
-                        const int x = TextureRasterSpanRight;
-                        const int end = TextureRasterSpanLeft;
-                        const int start_u = TextureRasterUAccumulator.dword;
-                        const int start_v = TextureRasterVAccumulator.dword;
-                        const int pixel_span = texture_difference(end, x);
-
-                        if (row >= TextureRasterClipTop &&
-                            end > TextureRasterClipLeft &&
-                            x < TextureRasterClipRight && pixel_span > 0) {
-                            int du = 0;
-                            int dv = 0;
-                            if (pixel_span > 0) {
-                                const uint32_t divisor_bits =
-                                    static_cast<uint32_t>(pixel_span) << 16;
-                                const int divisor = static_cast<int>(divisor_bits);
-                                const int64_t numerator_u = static_cast<int64_t>(
-                                    texture_difference(right.accumA, start_u)) * 0x10000;
-                                const int64_t numerator_v = static_cast<int64_t>(
-                                    texture_difference(right.accumB, start_v)) * 0x10000;
-                                du = static_cast<int>(numerator_u / divisor);
-                                dv = static_cast<int>(numerator_v / divisor);
-                            }
-                            int adjusted_u = du;
-                            if (du < 0 &&
-                                (static_cast<unsigned int>(du) & 0xffffu) != 0)
-                                adjusted_u = static_cast<int>(
-                                    static_cast<unsigned int>(du) + 0x10000u);
-                            const int whole_u = adjusted_u >> 16;
-                            int u = static_cast<int>(
-                                static_cast<unsigned int>(start_u) +
-                                static_cast<unsigned int>(adjusted_u >> 1));
-                            int adjusted_v = dv;
-                            int signed_pitch = TextureRowPitchScratch;
-                            if (dv < 0) {
-                                signed_pitch = texture_difference(0, signed_pitch);
-                                if (static_cast<unsigned int>(dv) & 0xffffu)
-                                    adjusted_v = static_cast<int>(
-                                        static_cast<unsigned int>(dv) + 0x10000u);
-                            }
-                            const int whole_v = static_cast<int>(
-                                static_cast<unsigned int>(adjusted_v >> 16) *
-                                static_cast<unsigned int>(TextureRowPitchScratch));
-                            int v = static_cast<int>(
-                                static_cast<unsigned int>(start_v) +
-                                static_cast<unsigned int>(adjusted_v >> 1));
-                            if (end >= TextureRasterClipRight)
-                                TextureRasterSpanLeft = TextureRasterClipRight;
-                            int clipped_left = x;
-                            int clipped_right = TextureRasterSpanLeft;
-                            if (clipped_left < TextureRasterClipLeft) {
-                                const int skip = texture_difference(
-                                    TextureRasterClipLeft, clipped_left);
-                                u = static_cast<int>(
-                                    static_cast<unsigned int>(u) +
-                                    static_cast<uint32_t>(static_cast<uint64_t>(
-                                        static_cast<int64_t>(du) *
-                                        static_cast<int64_t>(static_cast<int>(
-                                            static_cast<uint32_t>(skip) << 16))) >> 16));
-                                v = static_cast<int>(
-                                    static_cast<unsigned int>(v) +
-                                    static_cast<uint32_t>(static_cast<uint64_t>(
-                                        static_cast<int64_t>(dv) *
-                                        static_cast<int64_t>(static_cast<int>(
-                                            static_cast<uint32_t>(skip) << 16))) >> 16));
-                                TextureRasterUAccumulator.dword = u;
-                                TextureRasterVAccumulator.dword = v;
-                                TextureRasterSpanRight = TextureRasterClipLeft;
-                                clipped_left = TextureRasterSpanRight;
-                            }
-                            u = static_cast<int>(static_cast<uint32_t>(u) + 0x8000u);
-                            v = static_cast<int>(static_cast<uint32_t>(v) + 0x8000u);
-
-                            // The original 16-bit IMUL keeps only AX in its
-                            // first source-row product. Preserve that modulo
-                            // behavior and the direction-specific packed
-                            // carry walk; the source byte is not normalized.
-                            const unsigned short v_integer =
-                                static_cast<unsigned short>(
-                                    static_cast<unsigned int>(v) >> 16);
-                            const unsigned short u_integer =
-                                static_cast<unsigned short>(
-                                    static_cast<unsigned int>(u) >> 16);
-                            int64_t source = static_cast<unsigned short>(
-                                static_cast<unsigned int>(v_integer) *
-                                static_cast<unsigned int>(TextureRowPitchScratch));
-                            source += u_integer;
-                            if (signed_pitch < 0) {
-                                dv = texture_difference(0, dv);
-                                v = ~v;
-                            }
-                            const bool reverse_u = du < 0;
-                            unsigned int fractions = reverse_u
-                                ? (static_cast<unsigned int>(~u) << 16) |
-                                    static_cast<unsigned short>(v)
-                                : (static_cast<unsigned int>(u) << 16) |
-                                    (static_cast<unsigned short>(v) >> 1);
-                            const unsigned int step =
-                                ((reverse_u ? static_cast<unsigned int>(
-                                    texture_difference(0, du)) :
-                                    static_cast<unsigned int>(du)) << 16) |
-                                (static_cast<unsigned short>(dv) >> 1);
-                            const int whole_step = static_cast<int>(
-                                static_cast<unsigned int>(whole_u) +
-                                static_cast<unsigned int>(whole_v));
-                            TextureRasterSignedPitch = signed_pitch;
-                            TextureRasterPackedStep = static_cast<int>(step);
-                            TextureRasterScratch4B8 = reverse_u
-                                ? texture_difference(0, whole_step) : whole_step;
-                            unsigned int remaining = static_cast<unsigned int>(
-                                texture_difference(clipped_right, clipped_left));
-                            // 62108D..6210A1 multiplies the already-rebased row
-                            // again and re-adds the pixel base. Preserve this
-                            // original owned-path quirk, even for invalid addresses.
-                            const uint32_t target_address = pixel_base +
-                                static_cast<uint32_t>(row) *
-                                    static_cast<uint32_t>(TextureRasterBufferStride) +
-                                static_cast<uint32_t>(clipped_left);
-                            const uint32_t target_offset = target_address - pixel_base;
-                            unsigned char *out = reinterpret_cast<unsigned char *>(
-                                texture_pointer_offset(data, target_offset));
-                            do {
-                                const uintptr_t source_address = texture_pointer_offset(
-                                    TextureRasterScratch544,
-                                    static_cast<uint32_t>(source));
-                                const unsigned char texel =
-                                    *reinterpret_cast<const unsigned char *>(
-                                        source_address);
-                                if (texel != static_cast<unsigned char>(
-                                        TextureRasterLightThreshold)) {
-                                    *out = texel;
+                    // Without a borrowed 256-pitch texture the rows step U/V
+                    // in integer fixed point.
+                    if (TextureRasterRowOffset < TextureRasterClipBottom) {
+                        do {
+                            if (TextureRasterRowOffset >= TextureRasterClipTop) {
+                                int u = left.accumA;
+                                int v = left.accumB;
+                                int ru = right.accumA;
+                                int rv = right.accumB;
+                                int x = left.accumC;
+                                int rx = right.accumC;
+                                int du;
+                                int dv;
+                                int dv_step;
+                                int u_dir;
+                                int du_whole;
+                                // Hand-written assembly: idiv slopes, signed
+                                // pitch stepping, adc/sbb row carry and its
+                                // own ESI/EDI saves; the destination scales the
+                                // row address by the stride again, as shipped.
+                                __asm {
+                                    push esi
+                                    push edi
+                                    mov ebx, dword ptr [rx]
+                                    cmp ebx, dword ptr [TextureRasterClipLeft]
+                                    jle K_1198
+                                    mov ecx, dword ptr [x]
+                                    cmp ecx, dword ptr [TextureRasterClipRight]
+                                    jge K_1198
+                                    sub ebx, ecx
+                                    jle K_1198
+                                    shl ebx, 0x10
+                                    mov eax, dword ptr [ru]
+                                    sub eax, dword ptr [u]
+                                    mov edx, eax
+                                    sar edx, 0x10
+                                    shl eax, 0x10
+                                    idiv ebx
+                                    mov dword ptr [du], eax
+                                    mov ecx, 0x1
+                                    and eax, eax
+                                    jns K_fa0
+                                    neg ecx
+                                    test eax, 0xffff
+                                    je K_fa0
+                                    add eax, 0x10000
+                                K_fa0:
+                                    mov dword ptr [u_dir], ecx
+                                    mov ecx, eax
+                                    sar ecx, 0x10
+                                    mov dword ptr [du_whole], ecx
+                                    sar eax, 1
+                                    add eax, dword ptr [u]
+                                    mov dword ptr [u], eax
+                                    mov eax, dword ptr [rv]
+                                    sub eax, dword ptr [v]
+                                    mov edx, eax
+                                    sar edx, 0x10
+                                    shl eax, 0x10
+                                    idiv ebx
+                                    mov dword ptr [dv], eax
+                                    mov ecx, dword ptr [TextureRowPitchScratch]
+                                    and eax, eax
+                                    jns K_fe7
+                                    neg ecx
+                                    test eax, 0xffff
+                                    je K_fe7
+                                    add eax, 0x10000
+                                K_fe7:
+                                    mov dword ptr [TextureRasterSignedPitch], ecx
+                                    mov ecx, eax
+                                    sar eax, 0x10
+                                    imul dword ptr [TextureRowPitchScratch]
+                                    mov dword ptr [dv_step], eax
+                                    sar ecx, 1
+                                    add ecx, dword ptr [v]
+                                    mov dword ptr [v], ecx
+                                    mov ebx, dword ptr [rx]
+                                    cmp ebx, dword ptr [TextureRasterClipRight]
+                                    jl K_101a
+                                    mov ebx, dword ptr [TextureRasterClipRight]
+                                K_101a:
+                                    mov edi, dword ptr [x]
+                                    cmp edi, dword ptr [TextureRasterClipLeft]
+                                    jge K_105d
+                                    sub edi, dword ptr [TextureRasterClipLeft]
+                                    neg edi
+                                    mov eax, dword ptr [du]
+                                    shl edi, 0x10
+                                    imul edi
+                                    shrd eax, edx, 0x10
+                                    add eax, dword ptr [u]
+                                    mov dword ptr [u], eax
+                                    mov eax, dword ptr [dv]
+                                    imul edi
+                                    shrd eax, edx, 0x10
+                                    add eax, dword ptr [v]
+                                    mov dword ptr [v], eax
+                                    mov edi, dword ptr [TextureRasterClipLeft]
+                                    mov dword ptr [x], edi
+                                K_105d:
+                                    sub ebx, edi
+                                    mov ecx, ebx
+                                    add dword ptr [v], 0x8000
+                                    xor eax, eax
+                                    mov ax, word ptr [v+2]
+                                    mov dx, word ptr [TextureRowPitchScratch]
+                                    imul dx
+                                    add dword ptr [u], 0x8000
+                                    xor esi, esi
+                                    mov si, word ptr [u+2]
+                                    add esi, eax
+                                    add esi, dword ptr [TextureRasterScratch544]
+                                    mov eax, dword ptr [TextureRasterRowOffset]
+                                    imul dword ptr [TextureRasterBufferStride]
+                                    add eax, dword ptr [x]
+                                    add eax, dword ptr [TextureRasterPixelBase]
+                                    mov edi, eax
+                                    cmp dword ptr [TextureRasterSignedPitch], 0x0
+                                    jge K_10b5
+                                    neg dword ptr [dv]
+                                    not dword ptr [v]
+                                K_10b5:
+                                    cmp dword ptr [u_dir], 0x0
+                                    jl K_1127
+                                    mov ebx, dword ptr [u]
+                                    shl ebx, 0x10
+                                    mov bx, word ptr [v]
+                                    shr bx, 1
+                                    mov edx, dword ptr [du]
+                                    shl edx, 0x10
+                                    mov dx, word ptr [dv]
+                                    shr dx, 1
+                                    mov dword ptr [TextureRasterPackedStep], edx
+                                    mov eax, dword ptr [du_whole]
+                                    add eax, dword ptr [dv_step]
+                                    mov dword ptr [TextureRasterScratch4B8], eax
+                                    mov ah, byte ptr [TextureRasterLightThreshold]
+                                    push ebp
+                                    mov ebp, dword ptr [TextureRasterScratch4B8]
+                                K_1102:
+                                    mov al, byte ptr [esi]
+                                    cmp al, ah
+                                    je K_110a
+                                    mov byte ptr [edi], al
+                                K_110a:
+                                    add ebx, dword ptr [TextureRasterPackedStep]
+                                    adc esi, ebp
+                                    test bh, 0x80
+                                    je K_1120
+                                    add esi, dword ptr [TextureRasterSignedPitch]
+                                    and bh, 0x7f
+                                K_1120:
+                                    inc edi
+                                    dec ecx
+                                    jne K_1102
+                                    pop ebp
+                                    jmp K_1198
+                                K_1127:
+                                    mov edx, dword ptr [du]
+                                    neg edx
+                                    shl edx, 0x10
+                                    mov dx, word ptr [dv]
+                                    shr dx, 1
+                                    mov dword ptr [TextureRasterPackedStep], edx
+                                    mov ebx, dword ptr [u]
+                                    not ebx
+                                    shl ebx, 0x10
+                                    mov bx, word ptr [v]
+                                    shr dword ptr [v], 1
+                                    mov eax, dword ptr [du_whole]
+                                    add eax, dword ptr [dv_step]
+                                    mov dword ptr [TextureRasterScratch4B8], eax
+                                    neg dword ptr [TextureRasterScratch4B8]
+                                    mov ah, byte ptr [TextureRasterLightThreshold]
+                                    push ebp
+                                    mov ebp, dword ptr [TextureRasterScratch4B8]
+                                K_1175:
+                                    mov al, byte ptr [esi]
+                                    cmp al, ah
+                                    je K_117d
+                                    mov byte ptr [edi], al
+                                K_117d:
+                                    add ebx, dword ptr [TextureRasterPackedStep]
+                                    sbb esi, ebp
+                                    test bh, 0x80
+                                    je K_1193
+                                    add esi, dword ptr [TextureRasterSignedPitch]
+                                    and bh, 0x7f
+                                K_1193:
+                                    inc edi
+                                    dec ecx
+                                    jne K_1175
+                                    pop ebp
+                                K_1198:
+                                    pop edi
+                                    pop esi
+                                row_done:
                                 }
-                                const unsigned int next = fractions + step;
-                                const bool carry = next < fractions;
-                                fractions = next;
-                                source += static_cast<int64_t>(whole_step) +
-                                    (reverse_u ? -static_cast<int>(carry) :
-                                                  static_cast<int>(carry));
-                                if (fractions & 0x8000u) {
-                                    fractions &= ~0x8000u;
-                                    source += signed_pitch;
+                            }
+                            if (--left.counter == 0) {
+                                if (!Texture::setup_edge(&left, left.id)) {
+                                    break;
                                 }
-                                ++out;
-                                --remaining;
-                            } while (remaining != 0);
-                        }
-
-                        // The owned path emits first and rolls each edge with
-                        // the uncached member setup. Failure returns through
-                        // the shared cleanup and prevents the other rollover.
-                        if (--left.counter == 0) {
-                            if (!setup_edge(&left, left.id)) break;
-                        } else {
-                            left.accumA = static_cast<int>(
-                                static_cast<unsigned int>(left.accumA) +
-                                static_cast<unsigned int>(left.deltaA));
-                            left.accumB = static_cast<int>(
-                                static_cast<unsigned int>(left.accumB) +
-                                static_cast<unsigned int>(left.deltaB));
-                            left.accumC = static_cast<int>(
-                                static_cast<unsigned int>(left.accumC) +
-                                static_cast<unsigned int>(left.deltaC));
-                            left.fracAccum = static_cast<int>(
-                                static_cast<unsigned int>(left.fracAccum) +
-                                static_cast<unsigned int>(left.fracDelta));
-                            if (left.fracAccum > 0) {
-                                left.accumC = static_cast<int>(
-                                    static_cast<unsigned int>(left.accumC) +
-                                    static_cast<unsigned int>(left.extraDeltaC));
-                                left.fracAccum = texture_difference(
-                                    left.fracAccum, left.fracSub);
+                            } else {
+                                texture_uv_edge_step(left);
                             }
-                        }
-                        if (--right.counter == 0) {
-                            if (!setup_edge(&right, right.id)) break;
-                        } else {
-                            right.accumA = static_cast<int>(
-                                static_cast<unsigned int>(right.accumA) +
-                                static_cast<unsigned int>(right.deltaA));
-                            right.accumB = static_cast<int>(
-                                static_cast<unsigned int>(right.accumB) +
-                                static_cast<unsigned int>(right.deltaB));
-                            right.accumC = static_cast<int>(
-                                static_cast<unsigned int>(right.accumC) +
-                                static_cast<unsigned int>(right.deltaC));
-                            right.fracAccum = static_cast<int>(
-                                static_cast<unsigned int>(right.fracAccum) +
-                                static_cast<unsigned int>(right.fracDelta));
-                            if (right.fracAccum > 0) {
-                                right.accumC = static_cast<int>(
-                                    static_cast<unsigned int>(right.accumC) +
-                                    static_cast<unsigned int>(right.extraDeltaC));
-                                right.fracAccum = texture_difference(
-                                    right.fracAccum, right.fracSub);
+                            if (--right.counter == 0) {
+                                if (!Texture::setup_edge(&right, right.id)) {
+                                    break;
+                                }
+                            } else {
+                                texture_uv_edge_step(right);
                             }
-                        }
-                        TextureRasterRowOffset = static_cast<int>(
-                            static_cast<uint32_t>(row) +
-                            static_cast<uint32_t>(TextureRasterBufferStride));
+                            TextureRasterRowOffset += TextureRasterBufferStride;
+                        } while (TextureRasterRowOffset < TextureRasterClipBottom);
                     }
+                }
                 }
             }
         }
     }
-    if (buffer != 0) buffer->free_data(1);
-    if (v80 == 0) cache->flags_ = 1;
-    texture_reset_fpu();
+    if (buffer != 0) {
+        buffer->free_data(1);
+    }
+    if (needs_clip == 0) {
+        cache->flags_ = 1;
+    }
+    __asm finit
 }
+
 
 // MEMBER RECOVERY: ECX receiver + four explicit arguments; full row/pixel
 // traversal uses no-key Gouraud byte addition. x87 and packed-carry
@@ -6736,374 +7940,476 @@ void Texture::sub_620a10(Buffer *buffer, Vert *vertices_arg, int count,
 // calls     0x005E3373 0x005E34A3 0x0061FC90
 
 
-void Texture::sub_61d090(Buffer *buffer, Vert *vertices, int *zvals,
-                         unsigned int flag) {
-    const int count = flag == 0 ? 4 : 8;
-    int min_y = 0x7fff, max_y = -0x7ffd;
-    int min_x = 0x7fff, max_x = -0x7ffd;
-    int top = 0;
-    unsigned char *destination =
-        static_cast<unsigned char *>(buffer->get_data());
-    TextureRasterPixelBase = destination;
-    texture_reset_fpu();
+void Texture::sub_61d090(Buffer *buffer, Vert *vertices, int *zvals, unsigned int mode) {
+    TextureRasterPixelBase = buffer->get_data();
+    // Hand-written assembly: the blitters reset the FPU with FINIT.
+    __asm finit
     TextureRasterEdgeVerticesB = vertices;
-    TextureRasterEdgeVerticesA = flag == 0 ? corners_ : cornersAndMids_;
-    TextureRasterVertexCount = count;
+    if (mode) {
+        TextureRasterVertexCount = 8;
+        TextureRasterEdgeVerticesA = cornersAndMids_;
+    } else {
+        TextureRasterVertexCount = 4;
+        TextureRasterEdgeVerticesA = corners_;
+    }
     TextureRasterZValues = zvals;
     TextureRasterScratch544 = pixels_;
-    TextureRasterBufferStride = buffer->stride_;
-    TextureRasterTextureWidth = iWidth_;
-    TextureRasterClipRight = buffer->rect1_.right;
-    TextureRasterClipLeft = buffer->rect1_.left;
-    TextureRasterClipBottom = buffer->rect1_.bottom;
-    TextureRasterClipTop = buffer->rect1_.top;
-    if (&buffer->rect1_ != 0) {
-        const RECT clip = buffer->rect1_;
-        for (int i = 0; i < count; ++i) {
-            const int x = vertices[i].x;
-            const int y = vertices[i].y;
-            if (y < min_y) {
-                min_y = y;
+    TextureRasterBufferStride = static_cast<int>(buffer->stride_);
+    TextureRasterTextureWidth = static_cast<int>(iWidth_);
+    RECT *clip = &buffer->rect1_;
+    if (clip != 0) {
+        TextureRasterClipRight = clip->right;
+        TextureRasterClipLeft = clip->left;
+        TextureRasterClipBottom = clip->bottom;
+        TextureRasterClipTop = clip->top;
+        int max_y = -0x7ffd;
+        int min_y = 0x7fff;
+        int max_x = -0x7ffd;
+        int min_x = 0x7fff;
+        int top;
+        EdgeScan left;
+        EdgeScan right;
+        for (int i = 0; i < TextureRasterVertexCount; ++i) {
+            if (vertices[i].y < min_y) {
+                min_y = vertices[i].y;
                 top = i;
             }
-            if (y > max_y) {
-                max_y = y;
+            if (vertices[i].y > max_y) {
+                max_y = vertices[i].y;
                 TextureRasterMaxYIndex = i;
             }
-            if (x < min_x) min_x = x;
-            if (x > max_x) max_x = x;
+            if (vertices[i].x < min_x) {
+                min_x = vertices[i].x;
+            }
+            if (vertices[i].x > max_x) {
+                max_x = vertices[i].x;
+            }
         }
-        (void)min_x;
-        (void)max_x;
-
         if (min_y < max_y) {
-            const int stride = static_cast<int>(buffer->stride_);
-            const uintptr_t pixel_base = texture_pointer_address(destination);
-            TextureRasterRowOffset = static_cast<int>(
-                static_cast<uint32_t>(stride) * static_cast<uint32_t>(min_y) +
-                static_cast<uint32_t>(pixel_base));
-            TextureRasterClipBottom = static_cast<int>(
-                static_cast<uint32_t>(stride) *
-                    static_cast<uint32_t>(clip.bottom) +
-                static_cast<uint32_t>(pixel_base));
-            TextureRasterClipTop = static_cast<int>(
-                static_cast<uint32_t>(stride) *
-                    static_cast<uint32_t>(clip.top) +
-                static_cast<uint32_t>(pixel_base));
-
-            EdgeScan left;
-            EdgeScan right;
+            const int stride = TextureRasterBufferStride;
+            const int base = static_cast<int>(texture_pointer_address(TextureRasterPixelBase));
+            TextureRasterRowOffset = stride * min_y + base;
+            TextureRasterClipBottom = TextureRasterClipBottom * stride + base;
+            TextureRasterClipTop = TextureRasterClipTop * stride + base;
             left.f0 = -1;
-            right.f0 = 1;
-            if (setup_edge_gouraud(&left, top) != 0 &&
-                setup_edge_gouraud(&right, top) != 0) {
-                unsigned char *destination_row = destination +
-                    static_cast<int64_t>(stride) * min_y;
-
+            if (Texture::setup_edge_gouraud(&left, top)) {
+                right.f0 = 1;
+                if (Texture::setup_edge_gouraud(&right, top)) {
                 if (borrowed_ != 0) {
-                    _control87(_PC_24 | _RC_CHOP, _MCW_PC | _MCW_RC);
-                    int left_rows = left.counter;
-                    int right_rows = right.counter;
-                    bool done = false;
-
-                    while (TextureRasterRowOffset < TextureRasterClipBottom) {
-                        const EdgeScan row_left = left;
-                        const EdgeScan row_right = right;
-                        bool left_failed = false;
-                        if (--left_rows == 0) {
-                            if (setup_edge_gouraud(&left, left.id) == 0) {
-                                done = true;
-                                left_failed = true;
-                            } else {
-                                left_rows = left.counter;
-                            }
-                        } else {
-                            left.accumA = static_cast<int>(
-                                static_cast<uint32_t>(left.accumA) +
-                                static_cast<uint32_t>(left.deltaA));
-                            left.accumB = static_cast<int>(
-                                static_cast<uint32_t>(left.accumB) +
-                                static_cast<uint32_t>(left.deltaB));
-                            left.accumC = static_cast<int>(
-                                static_cast<uint32_t>(left.accumC) +
-                                static_cast<uint32_t>(left.deltaC));
-                            left.accumD = static_cast<int>(
-                                static_cast<uint32_t>(left.accumD) +
-                                static_cast<uint32_t>(left.deltaD));
-                            left.fracAccum = static_cast<int>(
-                                static_cast<uint32_t>(left.fracAccum) +
-                                static_cast<uint32_t>(left.fracDelta));
-                            if (left.fracAccum > 0) {
-                                left.accumC = static_cast<int>(
-                                    static_cast<uint32_t>(left.accumC) +
-                                    static_cast<uint32_t>(left.extraDeltaC));
-                                left.fracAccum = texture_difference(
-                                    left.fracAccum, left.fracSub);
-                            }
+                    unsigned short control;
+                    // Hand-written assembly: truncating 24-bit FPU control
+                    // word, then 1.0 kept on the FPU stack for the rows.
+                    __asm {
+                        fstcw control
+                        mov ax, control
+                        and ax, 0xfcff
+                        or ax, 0xc00
+                        mov control, ax
+                        fldcw control
+                        fld1
+                    }
+                    int span = (right.accumC - left.accumC) << 16;
+                    int dd;
+                    int dv;
+                    int du;
+                    if (span > 0) {
+                        dd = right.accumD - left.accumD;
+                        __asm fild dd
+                        dv = right.accumB - left.accumB;
+                        __asm fild dv
+                        du = right.accumA - left.accumA;
+                        __asm {
+                            fild du
+                            fild span
+                            fdivr st, st(4)
                         }
-                        if (!left_failed) {
-                            if (--right_rows == 0) {
-                                if (setup_edge_gouraud(&right, right.id) == 0) {
-                                    done = true;
-                                } else {
-                                    right_rows = right.counter;
+                    }
+                    if (TextureRasterRowOffset < TextureRasterClipBottom) {
+                        int done = 0;
+                        for (;;) {
+                            TextureRasterUAccumulator.dword = left.accumA;
+                            TextureRasterVAccumulator.dword = left.accumB;
+                            TextureRasterSpanRight = left.accumC;
+                            TextureRasterScratch498 = left.accumD;
+                            TextureRasterScratch4C4 = right.accumA;
+                            TextureRasterScratch530 = right.accumB;
+                            TextureRasterSpanLeft = right.accumC;
+                            if (--left.counter == 0) {
+                                if (!Texture::setup_edge_gouraud(&left, left.id)) {
+                                    done = 1;
+                                    goto edges_done;
                                 }
                             } else {
-                                right.accumA = static_cast<int>(
-                                    static_cast<uint32_t>(right.accumA) +
-                                    static_cast<uint32_t>(right.deltaA));
-                                right.accumB = static_cast<int>(
-                                    static_cast<uint32_t>(right.accumB) +
-                                    static_cast<uint32_t>(right.deltaB));
-                                right.accumC = static_cast<int>(
-                                    static_cast<uint32_t>(right.accumC) +
-                                    static_cast<uint32_t>(right.deltaC));
-                                right.accumD = static_cast<int>(
-                                    static_cast<uint32_t>(right.accumD) +
-                                    static_cast<uint32_t>(right.deltaD));
-                                right.fracAccum = static_cast<int>(
-                                    static_cast<uint32_t>(right.fracAccum) +
-                                    static_cast<uint32_t>(right.fracDelta));
-                                if (right.fracAccum > 0) {
-                                    right.accumC = static_cast<int>(
-                                        static_cast<uint32_t>(right.accumC) +
-                                        static_cast<uint32_t>(right.extraDeltaC));
-                                    right.fracAccum = texture_difference(
-                                        right.fracAccum, right.fracSub);
+                                texture_lit_edge_step(left);
+                            }
+                            if (--right.counter == 0) {
+                                if (!Texture::setup_edge_gouraud(&right, right.id)) {
+                                    done = 1;
+                                }
+                            } else {
+                                texture_lit_edge_step(right);
+                            }
+                        edges_done:
+                            if (span > 0) {
+                                // Hand-written assembly: scale the row slopes
+                                // and store them with FISTP.
+                                __asm {
+                                    fmul st(1), st
+                                    fmul st(2), st
+                                    fmulp st(3), st
+                                    fmul TextureRasterScale65536
+                                    fistp TextureRasterScratch4E4.dword
+                                    fmul TextureRasterScale65536
+                                    fistp TextureRasterScratch4C8.dword
+                                    fmul TextureRasterScale256
+                                    fistp TextureRasterLightPackA.low_word
                                 }
                             }
-                        }
-
-                        const int span = texture_difference(
-                            row_right.accumC, row_left.accumC);
-                        if (span > 0) {
-                            const int du = texture_span_step(
-                                texture_difference(row_right.accumA,
-                                                   row_left.accumA), span);
-                            const int dv = texture_span_step(
-                                texture_difference(row_right.accumB,
-                                                   row_left.accumB), span);
-                            const unsigned short light_step = texture_light_step(
-                                texture_difference(row_right.accumD,
-                                                   row_left.accumD), span);
-                            int x = row_left.accumC;
-                            int end = row_right.accumC;
-                            const unsigned char *row_pixels =
-                                static_cast<const unsigned char *>(
-                                    TextureRasterScratch544);
-                            if (TextureRasterRowOffset >= TextureRasterClipTop &&
-                                end > clip.left &&
-                                x < clip.right && end > x &&
-                                TextureRasterRowOffset < TextureRasterClipBottom) {
-                                if (end > clip.right) end = clip.right;
-                                int u = row_left.accumA;
-                                int v = row_left.accumB;
-                                uint32_t light = static_cast<uint32_t>(
-                                    row_left.accumD);
-                                if (x < clip.left) {
-                                    const int skip = texture_difference(
-                                        clip.left, x);
-                                    u = static_cast<int>(
-                                        static_cast<uint32_t>(u) +
-                                        static_cast<uint32_t>(
-                                            static_cast<int64_t>(du) * skip));
-                                    v = static_cast<int>(
-                                        static_cast<uint32_t>(v) +
-                                        static_cast<uint32_t>(
-                                            static_cast<int64_t>(dv) * skip));
-                                    int signed_skip = skip & 0xffff;
-                                    if (signed_skip >= 0x8000)
-                                        signed_skip -= 0x10000;
-                                    light += static_cast<uint32_t>(
-                                        signed_skip * static_cast<int>(light_step));
-                                    x = clip.left;
-                                }
-                                uint32_t light_accumulator = light;
-                                unsigned char *out = destination_row + x;
-                                for (int column = 0; column < end - x; ++column) {
-                                    const unsigned int source_x =
-                                        (static_cast<uint32_t>(u) >> 16) & 0xffu;
-                                    const unsigned int source_y =
-                                        (static_cast<uint32_t>(v) >> 16) & 0xffu;
-                                    const unsigned char texel = row_pixels[
-                                        source_y * 256u + source_x];
-                                    out[column] = static_cast<unsigned char>(
-                                        texel + ((light_accumulator >> 8) & 0xffu));
-                                    u = static_cast<int>(
-                                        static_cast<uint32_t>(u) +
-                                        static_cast<uint32_t>(du));
-                                    v = static_cast<int>(
-                                        static_cast<uint32_t>(v) +
-                                        static_cast<uint32_t>(dv));
-                                    light_accumulator = (light_accumulator &
-                                        0xffff0000u) |
-                                        ((light_accumulator + light_step) & 0xffffu);
+                            span = (right.accumC - left.accumC) << 16;
+                            if (span > 0) {
+                                dd = right.accumD - left.accumD;
+                                __asm fild dd
+                                dv = right.accumB - left.accumB;
+                                __asm fild dv
+                                du = right.accumA - left.accumA;
+                                __asm {
+                                    fild du
+                                    fild span
+                                    fdivr st, st(4)
                                 }
                             }
+                            if (TextureRasterRowOffset >= TextureRasterClipBottom) {
+                                break;
+                            }
+                            if (TextureRasterRowOffset >= TextureRasterClipTop) {
+                                // Hand-written assembly: lit span with adc
+                                // carry stepping.
+                                __asm {
+                                mov ebx, dword ptr [TextureRasterSpanLeft]
+                                mov ecx, dword ptr [TextureRasterSpanRight]
+                                cmp ebx, dword ptr [TextureRasterClipLeft]
+                                jle span_done
+                                cmp ecx, dword ptr [TextureRasterClipRight]
+                                jge span_done
+                                sub ebx, ecx
+                                jle span_done
+                                shl ebx, 0x10
+                                mov ebx, dword ptr [TextureRasterSpanLeft]
+                                cmp ebx, dword ptr [TextureRasterClipRight]
+                                jl K_d483
+                                mov ebx, dword ptr [TextureRasterClipRight]
+                            K_d483:
+                                mov edi, dword ptr [TextureRasterSpanRight]
+                                cmp edi, dword ptr [TextureRasterClipLeft]
+                                jge K_d4e8
+                                sub edi, dword ptr [TextureRasterClipLeft]
+                                neg edi
+                                mov eax, dword ptr [TextureRasterScratch4E4]
+                                shl edi, 0x10
+                                imul edi
+                                shrd eax, edx, 0x10
+                                add eax, dword ptr [TextureRasterUAccumulator]
+                                mov dword ptr [TextureRasterUAccumulator], eax
+                                mov eax, dword ptr [TextureRasterScratch4C8]
+                                imul edi
+                                shrd eax, edx, 0x10
+                                add dword ptr [TextureRasterVAccumulator], eax
+                                xor eax, eax
+                                mov ax, word ptr [TextureRasterLightPackA]
+                                imul edi
+                                shrd eax, edx, 0x8
+                                add eax, dword ptr [TextureRasterScratch498]
+                                mov dword ptr [TextureRasterScratch498], eax
+                                mov edi, dword ptr [TextureRasterClipLeft]
+                                mov dword ptr [TextureRasterSpanRight], edi
+                            K_d4e8:
+                                sub ebx, edi
+                                mov ecx, ebx
+                                mov ebx, dword ptr [TextureRasterScratch544]
+                                mov bh, byte ptr [TextureRasterVAccumulator+2]
+                                add bl, byte ptr [TextureRasterUAccumulator+2]
+                                mov edi, dword ptr [TextureRasterRowOffset]
+                                add edi, dword ptr [TextureRasterSpanRight]
+                                mov eax, dword ptr [TextureRasterScratch498]
+                                sar eax, 0x8
+                                mov dword ptr [TextureRasterScratch498], eax
+                                mov edx, dword ptr [TextureRasterUAccumulator]
+                                shl edx, 0x10
+                                mov dh, byte ptr [TextureRasterScratch4C8+2]
+                                mov dl, byte ptr [TextureRasterScratch4E4+2]
+                                mov esi, dword ptr [TextureRasterScratch4E4]
+                                shl esi, 0x10
+                                mov eax, ecx
+                                mov ecx, dword ptr [TextureRasterScratch4C8]
+                                shl ecx, 0x10
+                                mov cx, ax
+                                mov eax, dword ptr [TextureRasterVAccumulator]
+                                shl eax, 0x10
+                                push ebp
+                                mov ebp, ecx
+                                xor bp, bp
+                                shl ecx, 0x10
+                                sub ecx, 0x10000
+                                mov cx, word ptr [TextureRasterScratch498]
+                                sub cx, word ptr [TextureRasterLightPackA]
+                                dec edi
+                            K_d569:
+                                add cx, word ptr [TextureRasterLightPackA]
+                                mov al, byte ptr [ebx]
+                                inc edi
+                                add al, ch
+                                add edx, esi
+                                adc bl, dl
+                                add eax, ebp
+                                adc bh, dh
+                                sub ecx, 0x10000
+                                mov byte ptr [edi], al
+                                jns K_d569
+                                pop ebp
+                            span_done:
+                                }
+                            }
+                            if (done) {
+                                break;
+                            }
+                            TextureRasterRowOffset += TextureRasterBufferStride;
                         }
-                        if (done) break;
-                        TextureRasterRowOffset = static_cast<int>(
-                            static_cast<uint32_t>(TextureRasterRowOffset) +
-                            static_cast<uint32_t>(stride));
-                        destination_row += stride;
                     }
                 } else {
-                    int left_rows = left.counter;
-                    int right_rows = right.counter;
-                    bool done = false;
-
-                    while (TextureRasterRowOffset < TextureRasterClipBottom) {
-                        const EdgeScan row_left = left;
-                        const EdgeScan row_right = right;
-                        const int span = texture_difference(
-                            row_right.accumC, row_left.accumC);
-                        if (span > 0 &&
-                            TextureRasterRowOffset >= TextureRasterClipTop &&
-                            row_right.accumC > clip.left &&
-                            row_left.accumC < clip.right) {
-                            const int du = texture_span_step(
-                                texture_difference(row_right.accumA,
-                                                   row_left.accumA), span);
-                            const int dv = texture_span_step(
-                                texture_difference(row_right.accumB,
-                                                   row_left.accumB), span);
-                            const unsigned short light_step = texture_light_step(
-                                texture_difference(row_right.accumD,
-                                                   row_left.accumD), span);
-                            const unsigned char *row_pixels =
-                                static_cast<const unsigned char *>(
-                                    TextureRasterScratch544);
-                            int x = row_left.accumC;
-                            int end = row_right.accumC;
-                            if (end > clip.right) end = clip.right;
-                            int u = row_left.accumA;
-                            int v = row_left.accumB;
-                            uint32_t light = static_cast<uint32_t>(
-                                row_left.accumD);
-                            if (x < clip.left) {
-                                const int skip = texture_difference(
-                                    clip.left, x);
-                                u = static_cast<int>(
-                                    static_cast<uint32_t>(u) +
-                                    static_cast<uint32_t>(
-                                        static_cast<int64_t>(du) * skip));
-                                v = static_cast<int>(
-                                    static_cast<uint32_t>(v) +
-                                    static_cast<uint32_t>(
-                                        static_cast<int64_t>(dv) * skip));
-                                int signed_skip = skip & 0xffff;
-                                if (signed_skip >= 0x8000)
-                                    signed_skip -= 0x10000;
-                                light += static_cast<uint32_t>(
-                                    signed_skip * static_cast<int>(light_step));
-                                x = clip.left;
+                    // Without a borrowed 256-pitch texture the rows step U/V
+                    // in integer fixed point.
+                    if (TextureRasterRowOffset < TextureRasterClipBottom) {
+                        do {
+                            if (TextureRasterRowOffset >= TextureRasterClipTop) {
+                                int u = left.accumA;
+                                int v = left.accumB;
+                                int x = left.accumC;
+                                TextureRasterLightAccumB.dword = left.accumD;
+                                int ru = right.accumA;
+                                int rv = right.accumB;
+                                int rx = right.accumC;
+                                TextureRasterLightStepB = right.accumD;
+                                int du;
+                                int dv;
+                                int dv_step;
+                                int u_dir;
+                                int du_whole;
+                                // Hand-written assembly: idiv slopes, signed
+                                // texture pitch stepping and adc/sbb row carry
+                                // in two mirrored span loops.
+                                __asm {
+                        mov ebx, dword ptr [rx]
+                        cmp ebx, dword ptr [TextureRasterClipLeft]
+                        jle row_done
+                        mov ecx, dword ptr [x]
+                        cmp ecx, dword ptr [TextureRasterClipRight]
+                        jge row_done
+                        sub ebx, ecx
+                        jle row_done
+                        shl ebx, 0x10
+                        mov eax, dword ptr [TextureRasterLightStepB]
+                        sub eax, dword ptr [TextureRasterLightAccumB]
+                        shl eax, 0x8
+                        idiv ebx
+                        mov word ptr [TextureRasterLightPackA], ax
+                        mov eax, dword ptr [ru]
+                        sub eax, dword ptr [u]
+                        mov edx, eax
+                        sar edx, 0x10
+                        shl eax, 0x10
+                        idiv ebx
+                        mov dword ptr [du], eax
+                        mov ecx, 0x1
+                        and eax, eax
+                        jns K_bd77
+                        neg ecx
+                        test eax, 0xffff
+                        je K_bd77
+                        add eax, 0x10000
+                    K_bd77:
+                        mov dword ptr [u_dir], ecx
+                        mov ecx, eax
+                        sar ecx, 0x10
+                        mov dword ptr [du_whole], ecx
+                        sar eax, 1
+                        add eax, dword ptr [u]
+                        mov dword ptr [u], eax
+                        mov eax, dword ptr [rv]
+                        sub eax, dword ptr [v]
+                        mov edx, eax
+                        sar edx, 0x10
+                        shl eax, 0x10
+                        idiv ebx
+                        mov dword ptr [dv], eax
+                        mov ecx, dword ptr [TextureRowPitchScratch]
+                        and eax, eax
+                        jns K_bdbe
+                        neg ecx
+                        test eax, 0xffff
+                        je K_bdbe
+                        add eax, 0x10000
+                    K_bdbe:
+                        mov dword ptr [TextureRasterSignedPitch], ecx
+                        mov ecx, eax
+                        sar eax, 0x10
+                        imul dword ptr [TextureRowPitchScratch]
+                        mov dword ptr [dv_step], eax
+                        sar ecx, 1
+                        add ecx, dword ptr [v]
+                        mov dword ptr [v], ecx
+                        mov ebx, dword ptr [rx]
+                        cmp ebx, dword ptr [TextureRasterClipRight]
+                        jl K_bdee
+                        mov ebx, dword ptr [TextureRasterClipRight]
+                    K_bdee:
+                        mov edi, dword ptr [x]
+                        cmp edi, dword ptr [TextureRasterClipLeft]
+                        jge K_be4a
+                        sub edi, dword ptr [TextureRasterClipLeft]
+                        neg edi
+                        mov eax, dword ptr [du]
+                        shl edi, 0x10
+                        imul edi
+                        shrd eax, edx, 0x10
+                        add eax, dword ptr [u]
+                        mov dword ptr [u], eax
+                        mov eax, dword ptr [dv]
+                        imul edi
+                        shrd eax, edx, 0x10
+                        add eax, dword ptr [v]
+                        mov dword ptr [v], eax
+                        xor eax, eax
+                        mov ax, word ptr [TextureRasterLightPackA]
+                        imul edi
+                        shrd eax, edx, 0x10
+                        add eax, dword ptr [TextureRasterLightAccumB]
+                        mov dword ptr [TextureRasterLightAccumB], eax
+                        mov edi, dword ptr [TextureRasterClipLeft]
+                        mov dword ptr [x], edi
+                    K_be4a:
+                        sub ebx, edi
+                        mov ecx, ebx
+                        xor eax, eax
+                        mov ax, word ptr [v+2]
+                        mov dx, word ptr [TextureRowPitchScratch]
+                        imul dx
+                        xor esi, esi
+                        mov si, word ptr [u+2]
+                        add esi, eax
+                        add esi, dword ptr [TextureRasterScratch544]
+                        mov edi, dword ptr [TextureRasterRowOffset]
+                        add edi, dword ptr [x]
+                        cmp dword ptr [TextureRasterSignedPitch], 0x0
+                        jge K_be87
+                        neg dword ptr [dv]
+                        not dword ptr [v]
+                    K_be87:
+                        cmp dword ptr [u_dir], 0x0
+                        jl K_bf04
+                        mov ebx, dword ptr [u]
+                        shl ebx, 0x10
+                        mov bx, word ptr [v]
+                        shr bx, 1
+                        mov edx, dword ptr [du]
+                        shl edx, 0x10
+                        mov dx, word ptr [dv]
+                        shr dx, 1
+                        mov eax, dword ptr [du_whole]
+                        add eax, dword ptr [dv_step]
+                        mov dword ptr [TextureRasterScratch4B8], eax
+                        push ebp
+                        mov ebp, dword ptr [TextureRasterScratch4B8]
+                        dec edi
+                        mov eax, dword ptr [TextureRasterLightAccumB]
+                        shr eax, 0x8
+                    K_bed1:
+                        mov ah, byte ptr [esi]
+                        inc edi
+                        add ah, al
+                        add ebx, edx
+                        adc esi, ebp
+                        mov byte ptr [edi], ah
+                        test bh, 0x80
+                        je K_beea
+                        and bh, 0x7f
+                        add esi, dword ptr [TextureRasterSignedPitch]
+                    K_beea:
+                        mov eax, dword ptr [TextureRasterLightAccumB]
+                        add ax, word ptr [TextureRasterLightPackA]
+                        mov dword ptr [TextureRasterLightAccumB], eax
+                        shr eax, 0x8
+                        dec ecx
+                        jne K_bed1
+                        pop ebp
+                        jmp row_done
+                    K_bf04:
+                        mov edx, dword ptr [du]
+                        neg edx
+                        shl edx, 0x10
+                        mov dx, word ptr [dv]
+                        shr dx, 1
+                        mov ebx, dword ptr [u]
+                        not ebx
+                        shl ebx, 0x10
+                        mov bx, word ptr [v]
+                        shr dword ptr [v], 1
+                        mov eax, dword ptr [du_whole]
+                        add eax, dword ptr [dv_step]
+                        mov dword ptr [TextureRasterScratch4B8], eax
+                        neg dword ptr [TextureRasterScratch4B8]
+                        push ebp
+                        mov ebp, dword ptr [TextureRasterScratch4B8]
+                        dec edi
+                        mov eax, dword ptr [TextureRasterLightAccumB]
+                        shr eax, 0x8
+                    K_bf4f:
+                        mov ah, byte ptr [esi]
+                        inc edi
+                        add ah, al
+                        add ebx, edx
+                        sbb esi, ebp
+                        mov byte ptr [edi], ah
+                        test bh, 0x80
+                        je K_bf68
+                        and bh, 0x7f
+                        add esi, dword ptr [TextureRasterSignedPitch]
+                    K_bf68:
+                        mov eax, dword ptr [TextureRasterLightAccumB]
+                        add ax, word ptr [TextureRasterLightPackA]
+                        mov dword ptr [TextureRasterLightAccumB], eax
+                        shr eax, 0x8
+                        dec ecx
+                        jne K_bf4f
+                        pop ebp
+                                row_done:
+                                }
                             }
-                            const int phase_u = du >> 1;
-                            const int phase_v = dv >> 1;
-                            u = static_cast<int>(static_cast<uint32_t>(u) +
-                                                 static_cast<uint32_t>(phase_u));
-                            v = static_cast<int>(static_cast<uint32_t>(v) +
-                                                 static_cast<uint32_t>(phase_v));
-                            unsigned char *out = destination_row + x;
-                            uint32_t light_accumulator = light;
-                            for (int column = 0; column < end - x; ++column) {
-                                const unsigned int source_x =
-                                    static_cast<unsigned int>(u) >> 16;
-                                const unsigned int source_y =
-                                    static_cast<unsigned int>(v) >> 16;
-                                const unsigned char texel = row_pixels[
-                                    static_cast<int64_t>(source_y) *
-                                        TextureRowPitchScratch + source_x];
-                                out[column] = static_cast<unsigned char>(
-                                    texel + ((light_accumulator >> 8) & 0xffu));
-                                u = static_cast<int>(
-                                    static_cast<uint32_t>(u) +
-                                    static_cast<uint32_t>(du));
-                                v = static_cast<int>(
-                                    static_cast<uint32_t>(v) +
-                                    static_cast<uint32_t>(dv));
-                                light_accumulator = (light_accumulator &
-                                    0xffff0000u) |
-                                    ((light_accumulator + light_step) & 0xffffu);
-                            }
-                        }
-
-                        bool left_failed = false;
-                        if (--left_rows == 0) {
-                            if (setup_edge_gouraud(&left, left.id) == 0) {
-                                done = true;
-                                left_failed = true;
-                            } else {
-                                left_rows = left.counter;
-                            }
-                        } else {
-                            left.accumA = static_cast<int>(
-                                static_cast<uint32_t>(left.accumA) +
-                                static_cast<uint32_t>(left.deltaA));
-                            left.accumB = static_cast<int>(
-                                static_cast<uint32_t>(left.accumB) +
-                                static_cast<uint32_t>(left.deltaB));
-                            left.accumC = static_cast<int>(
-                                static_cast<uint32_t>(left.accumC) +
-                                static_cast<uint32_t>(left.deltaC));
-                            left.accumD = static_cast<int>(
-                                static_cast<uint32_t>(left.accumD) +
-                                static_cast<uint32_t>(left.deltaD));
-                            left.fracAccum = static_cast<int>(
-                                static_cast<uint32_t>(left.fracAccum) +
-                                static_cast<uint32_t>(left.fracDelta));
-                            if (left.fracAccum > 0) {
-                                left.accumC = static_cast<int>(
-                                    static_cast<uint32_t>(left.accumC) +
-                                    static_cast<uint32_t>(left.extraDeltaC));
-                                left.fracAccum = texture_difference(
-                                    left.fracAccum, left.fracSub);
-                            }
-                        }
-                        if (!left_failed) {
-                            if (--right_rows == 0) {
-                                if (setup_edge_gouraud(&right, right.id) == 0) {
-                                    done = true;
-                                } else {
-                                    right_rows = right.counter;
+                            if (--left.counter == 0) {
+                                if (!Texture::setup_edge_gouraud(&left, left.id)) {
+                                    break;
                                 }
                             } else {
-                                right.accumA = static_cast<int>(
-                                    static_cast<uint32_t>(right.accumA) +
-                                    static_cast<uint32_t>(right.deltaA));
-                                right.accumB = static_cast<int>(
-                                    static_cast<uint32_t>(right.accumB) +
-                                    static_cast<uint32_t>(right.deltaB));
-                                right.accumC = static_cast<int>(
-                                    static_cast<uint32_t>(right.accumC) +
-                                    static_cast<uint32_t>(right.deltaC));
-                                right.accumD = static_cast<int>(
-                                    static_cast<uint32_t>(right.accumD) +
-                                    static_cast<uint32_t>(right.deltaD));
-                                right.fracAccum = static_cast<int>(
-                                    static_cast<uint32_t>(right.fracAccum) +
-                                    static_cast<uint32_t>(right.fracDelta));
-                                if (right.fracAccum > 0) {
-                                    right.accumC = static_cast<int>(
-                                        static_cast<uint32_t>(right.accumC) +
-                                        static_cast<uint32_t>(right.extraDeltaC));
-                                    right.fracAccum = texture_difference(
-                                        right.fracAccum, right.fracSub);
-                                }
+                                texture_lit_edge_step(left);
                             }
-                        }
-                        if (done) break;
-                        TextureRasterRowOffset = static_cast<int>(
-                            static_cast<uint32_t>(TextureRasterRowOffset) +
-                            static_cast<uint32_t>(stride));
-                        destination_row += stride;
+                            if (--right.counter == 0) {
+                                if (!Texture::setup_edge_gouraud(&right, right.id)) {
+                                    break;
+                                }
+                            } else {
+                                texture_lit_edge_step(right);
+                            }
+                            TextureRasterRowOffset += TextureRasterBufferStride;
+                        } while (TextureRasterRowOffset < TextureRasterClipBottom);
                     }
                 }
             }
         }
     }
-    if (buffer != 0) buffer->free_data(1);
-    texture_reset_fpu();
+    }
+    if (buffer != 0) {
+        buffer->free_data(1);
+    }
+    __asm finit
 }
 
 // ORIGINAL: 0x0061F790 sub_61f790 0x0061F790-0x0061F7FD FILE BYTE_EXACT
@@ -7763,159 +9069,252 @@ static int texture_sub61cb50_advance_edge(EdgeScan &edge) {
 }
 
 void Texture::sub_61cb50(Buffer *buffer, Vert *vertices, Texture *shade,
-                        unsigned char *remap, int use_eight_vertices) {
-    // The image tests vertices before Buffer, then skips release only when
-    // Buffer itself is null. Keep the shared cleanup edge and its FINIT.
-    if (vertices == 0) goto cleanup;
-    if (buffer == 0) goto finish;
-    if (pixels_ == 0) goto cleanup;
-    if (remap == 0) goto cleanup;
-    if (shade == 0) goto cleanup;
-
-    {
-        TextureRasterPixelBase = buffer->get_data();
-        texture_reset_fpu();
-
-        TextureRasterScratch550 = remap;
-        TextureRasterEdgeVerticesB = vertices;
-        TextureRasterScratch544 = pixels_;
-        TextureRowPitchScratch = static_cast<int>(iWidth_);
-        TextureRasterTextureHeight = static_cast<int>(iHeight_);
-        if (use_eight_vertices != 0) {
-            TextureRasterVertexCount = 8;
-            TextureRasterEdgeVerticesA = cornersAndMids_;
-        } else {
-            TextureRasterVertexCount = 4;
-            TextureRasterEdgeVerticesA = corners_;
-        }
-        TextureRasterBufferStride = static_cast<int>(buffer->stride_);
-        TextureRasterTextureWidth = static_cast<int>(iWidth_);
-        const unsigned char *shade_pixels =
-            shade->pixels_;
-        TextureRasterScratch554 = shade->pixels_;
-        if (shade_pixels == 0) goto cleanup;
-
-        TextureRasterClipRight = buffer->rect1_.right;
-        TextureRasterClipLeft = buffer->rect1_.left;
-        TextureRasterClipBottom = buffer->rect1_.bottom;
-        TextureRasterClipTop = buffer->rect1_.top;
-
+                         unsigned char *remap, int use_eight_vertices) {
+    EdgeScan left;
+    EdgeScan right;
+    if (vertices != 0 && buffer != 0 && pixels_ != 0 && remap != 0 && shade != 0) {
+    TextureRasterPixelBase = buffer->get_data();
+    // Hand-written assembly: the blitters reset the FPU with FINIT.
+    __asm finit
+    TextureRasterScratch550 = remap;
+    TextureRasterEdgeVerticesB = vertices;
+    TextureRasterScratch544 = pixels_;
+    TextureRowPitchScratch = static_cast<int>(iWidth_);
+    TextureRasterTextureHeight = static_cast<int>(iHeight_);
+    if (use_eight_vertices) {
+        TextureRasterVertexCount = 8;
+        TextureRasterEdgeVerticesA = cornersAndMids_;
+    } else {
+        TextureRasterVertexCount = 4;
+        TextureRasterEdgeVerticesA = corners_;
+    }
+    TextureRasterBufferStride = static_cast<int>(buffer->stride_);
+    TextureRasterTextureWidth = static_cast<int>(iWidth_);
+    TextureRasterScratch554 = shade->pixels_;
+    if (TextureRasterScratch554 != 0) {
+    RECT *clip = &buffer->rect1_;
+    if (clip != 0) {
+        TextureRasterClipRight = clip->right;
+        TextureRasterClipLeft = clip->left;
+        TextureRasterClipBottom = clip->bottom;
+        TextureRasterClipTop = clip->top;
+        int max_y = -0x7ffd;
         int min_y = 0x7fff;
-        int max_y = -32765;
+        int max_x = -0x7ffd;
         int min_x = 0x7fff;
-        int max_x = -32765;
-        int min_y_index = 0;
-        int max_y_index = 0;
-        const int count = TextureRasterVertexCount;
-        for (int i = 0; i < count; ++i) {
-            const int y = vertices[i].y;
-            if (y < min_y) { min_y = y; min_y_index = i; }
-            if (y > max_y) { max_y = y; max_y_index = i; }
-            const int x = vertices[i].x;
-            if (x < min_x) min_x = x;
-            if (x > max_x) max_x = x;
+        int top;
+        for (int i = 0; i < TextureRasterVertexCount; ++i) {
+            if (vertices[i].y < min_y) {
+                min_y = vertices[i].y;
+                top = i;
+            }
+            if (vertices[i].y > max_y) {
+                max_y = vertices[i].y;
+                TextureRasterMaxYIndex = i;
+            }
+            if (vertices[i].x < min_x) {
+                min_x = vertices[i].x;
+            }
+            if (vertices[i].x > max_x) {
+                max_x = vertices[i].x;
+            }
         }
-        (void)min_x;
-        (void)max_x;
-        TextureRasterMaxYIndex = max_y_index;
-        if (min_y >= max_y) goto cleanup;
-
-        const uintptr_t base = texture_pointer_address(TextureRasterPixelBase);
-        const int stride = TextureRasterBufferStride;
-        TextureRasterRowOffset = static_cast<int>(static_cast<unsigned int>(base) +
-            static_cast<unsigned int>(stride) * static_cast<unsigned int>(min_y));
-        TextureRasterClipTop = static_cast<int>(static_cast<unsigned int>(base) +
-            static_cast<unsigned int>(stride) * static_cast<unsigned int>(buffer->rect1_.top));
-        TextureRasterClipBottom = static_cast<int>(static_cast<unsigned int>(base) +
-            static_cast<unsigned int>(stride) * static_cast<unsigned int>(buffer->rect1_.bottom));
-
-        EdgeScan left;
-        left.f0 = -1;
-        if (setup_edge(&left, min_y_index) == 0) goto cleanup;
-        EdgeScan right;
-        right.f0 = 1;
-        if (setup_edge(&right, min_y_index) == 0) goto cleanup;
-        if (borrowed_ == 0 || shade->borrowed_ == 0) goto cleanup;
-
-        // The original selects 24-bit precision and chop before its x87
-        // reciprocal/multiply sequence; exact x87 spill/rounding is retained
-        // as a restoration obligation, while this body preserves its row and
-        // pixel decisions.
-        _control87(_PC_24 | _RC_CHOP, _MCW_PC | _MCW_RC);
-        int du = TextureRasterScratch4E4.dword;
-        int dv = TextureRasterScratch4C8.dword;
-        int row = TextureRasterRowOffset;
-        while (row < TextureRasterClipBottom) {
-            const EdgeScan row_left = left;
-            const EdgeScan row_right = right;
-            const int span_left = row_left.accumC;
-            const int span_right = row_right.accumC;
-            const int span = texture_difference(span_right, span_left);
-            // These are the raw 0x9BB4F0/4CC span endpoints, the paired edge
-            // UVs, and the third (uninitialized by setup_edge) edge word.
-            // memcpy preserves the original stack object's representation
-            // rather than imposing an invented zero initializer.
-            memcpy(&(TextureRasterScratch498), &left.accumD, sizeof(TextureRasterScratch498));
-            TextureRasterScratch4C4 = row_right.accumA;
-            TextureRasterScratch530 = row_right.accumB;
-            TextureRasterSpanLeft = span_right;  // native 0x9BB4F0
-            TextureRasterUAccumulator.dword = row_left.accumA;
-            TextureRasterVAccumulator.dword = row_left.accumB;
-            TextureRasterSpanRight = span_left;  // native 0x9BB4CC
-            if (span > 0) {
-                du = texture_span_step(texture_difference(row_right.accumA, row_left.accumA), span);
-                dv = texture_span_step(texture_difference(row_right.accumB, row_left.accumB), span);
-                TextureRasterScratch4E4.dword = du;
-                TextureRasterScratch4C8.dword = dv;
-            }
-
-            const int left_done = !texture_sub61cb50_advance_edge(left);
-            const int right_done = left_done ? 1 :
-                !texture_sub61cb50_advance_edge(right);
-
-            if (row >= TextureRasterClipTop && span_right > TextureRasterClipLeft &&
-                span_left < TextureRasterClipRight && span_right > span_left) {
-                int x = span_left;
-                int end = span_right;
-                if (end > TextureRasterClipRight) end = TextureRasterClipRight;
-                int u = row_left.accumA;
-                int v = row_left.accumB;
-                if (x < TextureRasterClipLeft) {
-                    const int skip = texture_difference(TextureRasterClipLeft, x);
-                    u = static_cast<int>(static_cast<unsigned int>(u) +
-                        static_cast<unsigned int>(static_cast<int64_t>(du) * skip));
-                    v = static_cast<int>(static_cast<unsigned int>(v) +
-                        static_cast<unsigned int>(static_cast<int64_t>(dv) * skip));
-                    x = TextureRasterClipLeft;
+        if (min_y < max_y) {
+            const int stride = TextureRasterBufferStride;
+            const int base = static_cast<int>(texture_pointer_address(TextureRasterPixelBase));
+            TextureRasterRowOffset = stride * min_y + base;
+            TextureRasterClipBottom = TextureRasterClipBottom * stride + base;
+            TextureRasterClipTop = TextureRasterClipTop * stride + base;
+            left.f0 = -1;
+            if (Texture::setup_edge(&left, top)) {
+                right.f0 = 1;
+                if (Texture::setup_edge(&right, top) && borrowed_ != 0 &&
+                    shade->borrowed_ != 0) {
+                    unsigned short control;
+                    // Hand-written assembly: truncating 24-bit FPU control
+                    // word, then 1.0 kept on the FPU stack for the rows.
+                    __asm {
+                        fstcw control
+                        mov ax, control
+                        and ax, 0xfcff
+                        or ax, 0xc00
+                        mov control, ax
+                        fldcw control
+                        fld1
+                    }
+                    int span = (right.accumC - left.accumC) << 16;
+                    int dv;
+                    int du;
+                    if (span > 0) {
+                        dv = right.accumB - left.accumB;
+                        __asm fild dv
+                        du = right.accumA - left.accumA;
+                        __asm {
+                            fild du
+                            fild span
+                            fdivr st, st(3)
+                        }
+                    }
+                    if (TextureRasterRowOffset < TextureRasterClipBottom) {
+                        int done = 0;
+                        for (;;) {
+                            TextureRasterUAccumulator.dword = left.accumA;
+                            TextureRasterVAccumulator.dword = left.accumB;
+                            TextureRasterSpanRight = left.accumC;
+                            TextureRasterScratch498 = left.accumD;
+                            TextureRasterScratch4C4 = right.accumA;
+                            TextureRasterScratch530 = right.accumB;
+                            TextureRasterSpanLeft = right.accumC;
+                            if (--left.counter == 0) {
+                                if (!Texture::setup_edge(&left, left.id)) {
+                                    done = 1;
+                                    goto edges_done;
+                                }
+                            } else {
+                                texture_uv_edge_step(left);
+                            }
+                            if (--right.counter == 0) {
+                                if (!Texture::setup_edge(&right, right.id)) {
+                                    done = 1;
+                                }
+                            } else {
+                                texture_uv_edge_step(right);
+                            }
+                        edges_done:
+                            if (span > 0) {
+                                // Hand-written assembly: scale the row slopes
+                                // and store them with FISTP.
+                                __asm {
+                                    fmul st(1), st
+                                    fmulp st(2), st
+                                    fmul TextureRasterScale65536
+                                    fistp TextureRasterScratch4E4.dword
+                                    fmul TextureRasterScale65536
+                                    fistp TextureRasterScratch4C8.dword
+                                }
+                            }
+                            span = (right.accumC - left.accumC) << 16;
+                            if (span > 0) {
+                                dv = right.accumB - left.accumB;
+                                __asm fild dv
+                                du = right.accumA - left.accumA;
+                                __asm {
+                                    fild du
+                                    fild span
+                                    fdivr st, st(3)
+                                }
+                            }
+                            if (TextureRasterRowOffset >= TextureRasterClipBottom) {
+                                break;
+                            }
+                            if (TextureRasterRowOffset >= TextureRasterClipTop) {
+                                // Hand-written assembly: span with adc carry
+                                // stepping; shade byte 0 skips, 1 copies the
+                                // texel, others write the remap byte.
+                                __asm {
+                                mov ebx, dword ptr [TextureRasterSpanLeft]
+                                mov ecx, dword ptr [TextureRasterSpanRight]
+                                cmp ebx, dword ptr [TextureRasterClipLeft]
+                                jle span_done
+                                cmp ecx, dword ptr [TextureRasterClipRight]
+                                jge span_done
+                                sub ebx, ecx
+                                jle span_done
+                                shl ebx, 0x10
+                                mov ebx, dword ptr [TextureRasterSpanLeft]
+                                cmp ebx, dword ptr [TextureRasterClipRight]
+                                jl K_cf63
+                                mov ebx, dword ptr [TextureRasterClipRight]
+                            K_cf63:
+                                mov edi, dword ptr [TextureRasterSpanRight]
+                                cmp edi, dword ptr [TextureRasterClipLeft]
+                                jge K_cfaf
+                                sub edi, dword ptr [TextureRasterClipLeft]
+                                neg edi
+                                mov eax, dword ptr [TextureRasterScratch4E4]
+                                shl edi, 0x10
+                                imul edi
+                                shrd eax, edx, 0x10
+                                add eax, dword ptr [TextureRasterUAccumulator]
+                                mov dword ptr [TextureRasterUAccumulator], eax
+                                mov eax, dword ptr [TextureRasterScratch4C8]
+                                imul edi
+                                shrd eax, edx, 0x10
+                                add dword ptr [TextureRasterVAccumulator], eax
+                                mov edi, dword ptr [TextureRasterClipLeft]
+                                mov dword ptr [TextureRasterSpanRight], edi
+                            K_cfaf:
+                                sub ebx, edi
+                                mov ecx, ebx
+                                mov ebx, dword ptr [TextureRasterScratch544]
+                                mov bh, byte ptr [TextureRasterVAccumulator+2]
+                                add bl, byte ptr [TextureRasterUAccumulator+2]
+                                mov edi, dword ptr [TextureRasterRowOffset]
+                                add edi, dword ptr [TextureRasterSpanRight]
+                                mov edx, dword ptr [TextureRasterUAccumulator]
+                                shl edx, 0x10
+                                mov dh, byte ptr [TextureRasterScratch4C8+2]
+                                mov dl, byte ptr [TextureRasterScratch4E4+2]
+                                mov esi, dword ptr [TextureRasterScratch4E4]
+                                shl esi, 0x10
+                                mov eax, ecx
+                                mov ecx, dword ptr [TextureRasterScratch4C8]
+                                shl ecx, 0x10
+                                mov cx, ax
+                                mov eax, dword ptr [TextureRasterVAccumulator]
+                                shl eax, 0x10
+                                push ebp
+                                mov ebp, ecx
+                                xor bp, bp
+                                shl ecx, 0x10
+                                sub ecx, 0x10000
+                            K_d014:
+                                mov ah, byte ptr [ebx]
+                                push edx
+                                push ecx
+                                mov ecx, dword ptr [TextureRasterScratch554]
+                                mov cx, bx
+                                xor edx, edx
+                                mov dl, byte ptr [ecx]
+                                add edx, dword ptr [TextureRasterScratch550]
+                                mov dl, byte ptr [edx]
+                                cmp dl, 0x0
+                                je K_d03b
+                                cmp dl, 0x1
+                                je K_d039
+                                mov ah, dl
+                            K_d039:
+                                mov byte ptr [edi], ah
+                            K_d03b:
+                                pop ecx
+                                pop edx
+                                add edx, esi
+                                adc bl, dl
+                                add eax, ebp
+                                adc bh, dh
+                                inc edi
+                                sub ecx, 0x10000
+                                jns K_d014
+                                pop ebp
+                            span_done:
+                                }
+                            }
+                            if (done) {
+                                break;
+                            }
+                            TextureRasterRowOffset += TextureRasterBufferStride;
+                        }
+                    }
                 }
-                unsigned char *destination = reinterpret_cast<unsigned char *>(
-                    static_cast<intptr_t>(TextureRasterRowOffset)) + x;
-                const unsigned char *base_pixels =
-                    pixels_;
-                const unsigned char *lookup_pixels = shade_pixels;
-                for (int px = x; px < end; ++px, ++destination) {
-                    const unsigned int tx = (static_cast<unsigned int>(u) >> 16) & 0xffu;
-                    const unsigned int ty = (static_cast<unsigned int>(v) >> 16) & 0xffu;
-                    const unsigned int index = (ty << 8) | tx;
-                    const unsigned char original = base_pixels[index];
-                    const unsigned char mapped = remap[lookup_pixels[index]];
-                    *destination = (mapped == 0 || mapped == 1) ? original : mapped;
-                    u = static_cast<int>(static_cast<unsigned int>(u) + static_cast<unsigned int>(du));
-                    v = static_cast<int>(static_cast<unsigned int>(v) + static_cast<unsigned int>(dv));
-                }
             }
-
-            if (left_done || right_done) break;
-            row = static_cast<int>(static_cast<unsigned int>(row) +
-                                  static_cast<unsigned int>(stride));
-            TextureRasterRowOffset = row;
         }
     }
-
-cleanup:
-    if (buffer != 0) buffer->free_data(1);
-finish:
-    texture_reset_fpu();
+    }
+    }
+    if (buffer != 0) {
+        buffer->free_data(1);
+    }
+    __asm finit
 }
 
 // ORIGINAL: 0x0061FDF0 sub_61fdf0 0x0061FDF0-0x0061FE68 FILE BYTE_EXACT
@@ -9247,166 +10646,274 @@ void Texture::sub_61f0d0(Buffer *param_2, Vert *param_3, int *param_4,
 // 0x00623A28 (0x00623ED0..D4), and both paths leave color-key holes intact.
 // draw_color_key is this tree's provisional name for the overloading pair;
 // the shipped image names the body only by its seed label.
-// LEVER: the span kernel at 0x00623E6A/0x00623EE1 packs its countdown into
-// ESP and is reproduced with texture_span_pixels (see 0x0061A240's note);
-// the original preloads the next texel before testing the counter and this
-// C++ loop omits that unused final read.
-
-// Superseding recovery evidence: each row kernel below now performs the
-// original post-advance load, including the final/key-suppressed path.
-// This body likewise uses the shared EdgeScan publication/rollover protocol;
-// dither parity is the original shared TextureRasterDither cell.
+// Otherwise 0x0061A760's body; the span loop is the original hand-written
+// assembly (ESP as the packed pixel counter), kept as __asm.
 void Texture::draw_color_key(Buffer *buffer, Vert *vertices, int count, Vert *uv, int color) {
     if (color == -1) {
         draw_color_key(buffer, vertices, count, uv);
         return;
     }
     TextureRasterPixelBase = buffer->get_data();
-    texture_reset_fpu();
+    // Hand-written assembly: the blitters reset the FPU with FINIT.
+    __asm finit
     TextureRasterScratch494 = static_cast<unsigned char>(color);
     TextureRasterEdgeVerticesB = vertices;
     TextureRasterScratch544 = pixels_;
     TextureRowPitchScratch = static_cast<int>(iWidth_);
-    TextureRasterTextureHeight = static_cast<int>(iHeight_);
     TextureRasterEdgeVerticesA = uv;
+    TextureRasterTextureHeight = static_cast<int>(iHeight_);
     TextureRasterVertexCount = count;
     TextureRasterLightThreshold = static_cast<int>(TextureRasterKey);
     TextureRasterBufferStride = static_cast<int>(buffer->stride_);
     TextureRasterTextureWidth = static_cast<int>(iWidth_);
-    TextureRasterClipRight = buffer->rect1_.right;
-    TextureRasterClipLeft = buffer->rect1_.left;
-    TextureRasterClipBottom = buffer->rect1_.bottom;
-    TextureRasterClipTop = buffer->rect1_.top;
-    const int width = TextureRasterTextureWidth;
-
-    int min_y = 0x7fff, max_y = -0x7ffd;
-    int top = 0;
-    for (int i = 0; i < TextureRasterVertexCount; ++i) {
-        if (TextureRasterEdgeVerticesB[i].y < min_y) {
-            min_y = TextureRasterEdgeVerticesB[i].y;
-            top = i;
+    RECT *clip = &buffer->rect1_;
+    if (clip != 0) {
+        TextureRasterClipRight = clip->right;
+        TextureRasterClipLeft = clip->left;
+        TextureRasterClipBottom = clip->bottom;
+        TextureRasterClipTop = clip->top;
+        int min_y = 0x7fff;
+        int max_y = -0x7ffd;
+        int min_x = 0x7fff;
+        int max_x = -0x7ffd;
+        int top;
+        EdgeScan left;
+        EdgeScan right;
+        Vert *v = vertices;
+        for (int i = 0; i < count; ++i, ++v) {
+            if (v->y < min_y) {
+                min_y = v->y;
+                top = i;
+            }
+            if (v->y > max_y) {
+                max_y = v->y;
+                TextureRasterMaxYIndex = i;
+            }
+            if (v->x < min_x) {
+                min_x = v->x;
+            }
+            if (v->x > max_x) {
+                max_x = v->x;
+            }
         }
-        if (TextureRasterEdgeVerticesB[i].y > max_y) {
-            max_y = TextureRasterEdgeVerticesB[i].y;
-            TextureRasterMaxYIndex = i;
+        if (min_y < max_y) {
+            const int stride = TextureRasterBufferStride;
+            const int base = static_cast<int>(texture_pointer_address(TextureRasterPixelBase));
+            TextureRasterRowOffset = stride * min_y + base;
+            TextureRasterDither = min_y & 1;
+            TextureRasterClipBottom = TextureRasterClipBottom * stride + base;
+            TextureRasterClipTop = TextureRasterClipTop * stride + base;
+            left.f0 = -1;
+            if (Texture::setup_edge(&left, top)) {
+                right.f0 = 1;
+                if (Texture::setup_edge(&right, top)) {
+                    unsigned short control;
+                    // Hand-written assembly: truncating 24-bit FPU control
+                    // word, then 1.0 kept on the FPU stack for the rows.
+                    __asm {
+                        fstcw control
+                        mov ax, control
+                        and ax, 0xfcff
+                        or ax, 0xc00
+                        mov control, ax
+                        fldcw control
+                        fld1
+                    }
+                    int span = (right.accumC - left.accumC) << 16;
+                    int dv;
+                    int du;
+                    if (span > 0) {
+                        dv = right.accumB - left.accumB;
+                        __asm fild dv
+                        du = right.accumA - left.accumA;
+                        __asm {
+                            fild du
+                            fild span
+                            fdivr st, st(3)
+                        }
+                    }
+                    if (TextureRasterRowOffset < TextureRasterClipBottom) {
+                        int done = 0;
+                        for (;;) {
+                            TextureRasterUAccumulator.dword = left.accumA;
+                            TextureRasterVAccumulator.dword = left.accumB;
+                            TextureRasterSpanRight = left.accumC;
+                            TextureRasterScratch4C4 = right.accumA;
+                            TextureRasterScratch530 = right.accumB;
+                            TextureRasterSpanLeft = right.accumC;
+                            if (--left.counter == 0) {
+                                if (!Texture::setup_edge(&left, left.id)) {
+                                    done = 1;
+                                    goto edges_done;
+                                }
+                            } else {
+                                texture_uv_edge_step(left);
+                            }
+                            if (--right.counter == 0) {
+                                if (!Texture::setup_edge(&right, right.id)) {
+                                    done = 1;
+                                }
+                            } else {
+                                texture_uv_edge_step(right);
+                            }
+                        edges_done:
+                            if (span > 0) {
+                                // Hand-written assembly: scale the row slopes
+                                // and store them with FISTP.
+                                __asm {
+                                    fmul st(1), st
+                                    fmulp st(2), st
+                                    fmul TextureRasterScale65536
+                                    fistp TextureRasterScratch4E4.dword
+                                    fmul TextureRasterScale65536
+                                    fistp TextureRasterScratch4C8.dword
+                                }
+                            }
+                            span = (right.accumC - left.accumC) << 16;
+                            if (span > 0) {
+                                dv = right.accumB - left.accumB;
+                                __asm fild dv
+                                du = right.accumA - left.accumA;
+                                __asm {
+                                    fild du
+                                    fild span
+                                    fdivr st, st(3)
+                                }
+                            }
+                            if (TextureRasterRowOffset >= TextureRasterClipBottom) {
+                                break;
+                            }
+                            if (TextureRasterRowOffset >= TextureRasterClipTop) {
+                                // Hand-written assembly: color-keyed span with ESP as the packed counter; Dither parity picks texel copy or the fill color.
+                                __asm {
+                                mov ebx, dword ptr [TextureRasterSpanLeft]
+                                mov ecx, dword ptr [TextureRasterSpanRight]
+                                cmp ebx, dword ptr [TextureRasterClipLeft]
+                                jle span_done
+                                cmp ecx, dword ptr [TextureRasterClipRight]
+                                jge span_done
+                                sub ebx, ecx
+                                jle span_done
+                                shl ebx, 0x10
+                                mov ebx, dword ptr [TextureRasterSpanLeft]
+                                cmp ebx, dword ptr [TextureRasterClipRight]
+                                jl K_right
+                                mov ebx, dword ptr [TextureRasterClipRight]
+                            K_right:
+                                mov edi, dword ptr [TextureRasterSpanRight]
+                                cmp edi, dword ptr [TextureRasterClipLeft]
+                                jge K_left
+                                sub edi, dword ptr [TextureRasterClipLeft]
+                                neg edi
+                                mov eax, dword ptr [TextureRasterScratch4E4]
+                                shl edi, 0x10
+                                imul edi
+                                shrd eax, edx, 0x10
+                                add eax, dword ptr [TextureRasterUAccumulator]
+                                mov dword ptr [TextureRasterUAccumulator], eax
+                                mov eax, dword ptr [TextureRasterScratch4C8]
+                                imul edi
+                                shrd eax, edx, 0x10
+                                add dword ptr [TextureRasterVAccumulator], eax
+                                mov edi, dword ptr [TextureRasterClipLeft]
+                                mov dword ptr [TextureRasterSpanRight], edi
+                            K_left:
+                                sub ebx, edi
+                                mov ecx, ebx
+                                mov esi, dword ptr [TextureRasterScratch544]
+                                xor edx, edx
+                                mov dx, word ptr [TextureRasterVAccumulator+2]
+                                mov eax, dword ptr [TextureRasterTextureWidth]
+                                imul edx
+                                add esi, eax
+                                xor edx, edx
+                                add dx, word ptr [TextureRasterUAccumulator+2]
+                                add esi, edx
+                                mov dword ptr [TextureRasterScratch504], esi
+                                xor esi, esi
+                                mov edi, dword ptr [TextureRasterSpanRight]
+                                add edi, dword ptr [TextureRasterRowOffset]
+                                mov eax, dword ptr [TextureRasterScratch4C8]
+                                sar eax, 0x10
+                                mov edx, dword ptr [TextureRasterTextureWidth]
+                                imul edx
+                                mov edx, dword ptr [TextureRasterScratch4E4]
+                                sar edx, 0x10
+                                add eax, edx
+                                mov dword ptr [TextureRasterAlternateRowNext], eax
+                                mov edx, dword ptr [TextureRasterTextureWidth]
+                                add eax, edx
+                                mov dword ptr [TextureRasterAlternateRowBase], eax
+                                xor edx, edx
+                                mov dx, word ptr [TextureRasterScratch4C8]
+                                shl edx, 0x10
+                                mov dword ptr [TextureRasterScratch528], edx
+                                xor edx, edx
+                                mov dx, word ptr [TextureRasterVAccumulator]
+                                shl edx, 0x10
+                                mov dx, word ptr [TextureRasterScratch4E4]
+                                dec ecx
+                                shl ecx, 0x10
+                                mov cx, word ptr [TextureRasterUAccumulator]
+                                mov ebx, dword ptr [TextureRasterScratch504]
+                                mov ah, byte ptr [TextureRasterLightThreshold]
+                                push ebp
+                                mov dword ptr [TextureRasterSavedStack], esp
+                                mov esp, ecx
+                                test dword ptr [TextureRasterDither], 0x1
+                                je K_3ebf
+                                mov al, byte ptr [ebx + esi]
+                            K_3e99:
+                                add edx, dword ptr [TextureRasterScratch528]
+                                sbb ebp, ebp
+                                cmp al, ah
+                                je K_3ea7
+                                mov byte ptr [edi], al
+                            K_3ea7:
+                                add sp, dx
+                                adc esi, dword ptr [4*ebp + TextureRasterAlternateRowNext]
+                                inc edi
+                                mov al, byte ptr [ebx + esi]
+                                sub esp, 0x10000
+                                jns K_3e99
+                                jmp K_3eec
+                            K_3ebf:
+                                mov cl, byte ptr [TextureRasterScratch494]
+                                mov al, byte ptr [ebx + esi]
+                            K_3ec8:
+                                add edx, dword ptr [TextureRasterScratch528]
+                                sbb ebp, ebp
+                                cmp al, ah
+                                je K_3ed6
+                                mov byte ptr [edi], cl
+                            K_3ed6:
+                                add sp, dx
+                                adc esi, dword ptr [4*ebp + TextureRasterAlternateRowNext]
+                                inc edi
+                                mov al, byte ptr [ebx + esi]
+                                sub esp, 0x10000
+                                jns K_3ec8
+                            K_3eec:
+                                mov esp, dword ptr [TextureRasterSavedStack]
+                                pop ebp
+                            span_done:
+                                }
+                            }
+                            if (done) {
+                                break;
+                            }
+                            TextureRasterRowOffset += TextureRasterBufferStride;
+                            ++TextureRasterDither;
+                        }
+                    }
+                }
+            }
         }
     }
-    if (min_y < max_y) {
-        const uint32_t pixel_base = static_cast<uint32_t>(
-            texture_pointer_address(TextureRasterPixelBase));
-        const uint32_t stride = static_cast<uint32_t>(TextureRasterBufferStride);
-        TextureRasterRowOffset = static_cast<int>(
-            pixel_base + static_cast<uint32_t>(min_y) * stride);
-        TextureRasterDither = min_y & 1;
-        TextureRasterClipBottom = static_cast<int>(pixel_base + stride *
-            static_cast<uint32_t>(TextureRasterClipBottom));
-        TextureRasterClipTop = static_cast<int>(pixel_base + stride *
-            static_cast<uint32_t>(TextureRasterClipTop));
+    if (buffer != 0) {
+        buffer->free_data(1);
     }
-    EdgeScan left, right;
-    left.f0 = -1;
-    right.f0 = 1;
-    if (min_y < max_y && Texture::setup_edge(&left, top) &&
-        Texture::setup_edge(&right, top)) {
-        _control87(_PC_24 | _RC_CHOP, _MCW_PC | _MCW_RC);
-        if (TextureRasterRowOffset >= TextureRasterClipBottom) {
-            buffer->free_data(1);
-            texture_reset_fpu();
-            return;
-        }
-        for (;;) {
-            TextureRasterScratch4C4 = right.accumA;
-            TextureRasterScratch530 = right.accumB;
-            TextureRasterSpanLeft = right.accumC;
-            TextureRasterUAccumulator.dword = left.accumA;
-            TextureRasterVAccumulator.dword = left.accumB;
-            TextureRasterSpanRight = left.accumC;
-            const int right_u = TextureRasterScratch4C4;
-            const int right_v = TextureRasterScratch530;
-            int x = TextureRasterSpanRight;
-            int end = TextureRasterSpanLeft;
-            int u = TextureRasterUAccumulator.dword;
-            int v = TextureRasterVAccumulator.dword;
-            const int span = texture_fixed(texture_difference(end, x));
-            int du = TextureRasterScratch4E4.dword;
-            int dv = TextureRasterScratch4C8.dword;
-            int done = 0;
-            if (--left.counter == 0) {
-                if (!Texture::setup_edge(&left, left.id)) done = 1;
-            } else {
-                texture_uv_edge_step(left);
-            }
-            if (!done) {
-                if (--right.counter == 0) {
-                    if (!Texture::setup_edge(&right, right.id)) done = 1;
-                } else {
-                    texture_uv_edge_step(right);
-                }
-            }
-            if (span > 0) {
-                du = texture_span_step(texture_difference(right_u, u), span >> 16);
-                dv = texture_span_step(texture_difference(right_v, v), span >> 16);
-                TextureRasterScratch4E4.dword = du;
-                TextureRasterScratch4C8.dword = dv;
-            }
-            if (TextureRasterRowOffset >= TextureRasterClipBottom) break;
-            if (TextureRasterRowOffset >= TextureRasterClipTop && end > TextureRasterClipLeft &&
-                x < TextureRasterClipRight && end > x) {
-                if (end > TextureRasterClipRight) end = TextureRasterClipRight;
-                if (x < TextureRasterClipLeft) {
-                    const int skip = texture_fixed(texture_difference(TextureRasterClipLeft, x));
-                    u = static_cast<int>(static_cast<unsigned int>(u) +
-                        static_cast<unsigned int>((static_cast<int64_t>(du) * skip) >> 16));
-                    v = static_cast<int>(static_cast<unsigned int>(v) +
-                        static_cast<unsigned int>((static_cast<int64_t>(dv) * skip) >> 16));
-                    TextureRasterUAccumulator.dword = u;
-                    TextureRasterVAccumulator.dword = v;
-                    TextureRasterSpanRight = TextureRasterClipLeft;
-                    x = TextureRasterSpanRight;
-                }
-                const uint32_t destination_address =
-                    static_cast<uint32_t>(TextureRasterRowOffset) +
-                    static_cast<uint32_t>(TextureRasterSpanRight);
-                const uint32_t destination_offset = destination_address -
-                    static_cast<uint32_t>(texture_pointer_address(TextureRasterPixelBase));
-                unsigned char *out = reinterpret_cast<unsigned char *>(
-                    texture_pointer_offset(TextureRasterPixelBase, destination_offset));
-                int64_t source = static_cast<unsigned short>(static_cast<unsigned int>(v) >> 16)
-                    * static_cast<int64_t>(width)
-                    + static_cast<unsigned short>(static_cast<unsigned int>(u) >> 16);
-                unsigned int uf = static_cast<unsigned short>(u);
-                unsigned int vf = static_cast<unsigned short>(v);
-                const int64_t step = static_cast<int64_t>(dv >> 16) * width + (du >> 16);
-                const unsigned int remaining = texture_span_pixels(texture_difference(end, x));
-                const volatile unsigned char *source_reads =
-                    static_cast<const unsigned char *>(TextureRasterScratch544);
-                unsigned char alternate = 0;
-                if ((TextureRasterDither & 1) == 0) {
-                    alternate =
-                        TextureRasterScratch494;
-                }
-                unsigned char texel = source_reads[source];
-                for (unsigned int written = 0; written < remaining; ++written) {
-                    if (texel != static_cast<unsigned char>(TextureRasterLightThreshold))
-                        *out = (TextureRasterDither & 1) != 0 ? texel : alternate;
-                    uf += static_cast<unsigned short>(du);
-                    vf += static_cast<unsigned short>(dv);
-                    source += step + (uf >> 16) + static_cast<int64_t>(vf >> 16) * width;
-                    uf &= 0xffff;
-                    vf &= 0xffff;
-                    ++out;
-                    texel = source_reads[source];
-                }
-            }
-            if (done) break;
-            ++TextureRasterDither;
-            TextureRasterRowOffset = static_cast<int>(
-                static_cast<uint32_t>(TextureRasterRowOffset) +
-                static_cast<uint32_t>(TextureRasterBufferStride));
-        }
-    }
-    buffer->free_data(1);
-    texture_reset_fpu();
+    __asm finit
 }
 
 // ORIGINAL: 0x006239B0 ?draw_trans@Texture@@QAEXPAUBuffer@@PAUVert@@HPAUVert@@H@Z 0x006239B0-0x006239D3 BYTE_EXACT
@@ -9723,11 +11230,10 @@ void Texture::draw2(Buffer *buffer, Vert *vertices, int *zvals, int count,
         draw_below_cutoff(buffer, vertices, zvals, count, uv, cutoff);
         return;
     }
-
-    unsigned char *destination = static_cast<unsigned char *>(buffer->get_data());
-    TextureRasterPixelBase = destination;
+    TextureRasterPixelBase = buffer->get_data();
     TextureRasterLightThreshold = cutoff;
-    texture_reset_fpu();
+    // Hand-written assembly: the blitters reset the FPU with FINIT.
+    __asm finit
     TextureRasterScratch494 = static_cast<unsigned char>(fillColor);
     TextureRasterEdgeVerticesB = vertices;
     TextureRasterEdgeVerticesA = uv;
@@ -9735,154 +11241,284 @@ void Texture::draw2(Buffer *buffer, Vert *vertices, int *zvals, int count,
     TextureRasterZValues = zvals;
     TextureRasterScratch544 = pixels_;
     TextureRasterBufferStride = static_cast<int>(buffer->stride_);
-    TextureRasterTextureWidth = iWidth_;
-    const unsigned char *pixels = pixels_;
-    const int stride = TextureRasterBufferStride;
-    const int width = TextureRasterTextureWidth;
-    int in_front = 0;
-    for (; in_front < count; ++in_front) {
-        if (zvals[in_front] < cutoff) break;
+    TextureRasterTextureWidth = static_cast<int>(iWidth_);
+    int i;
+    for (i = 0; i < count; ++i) {
+        if (zvals[i] < cutoff) {
+            break;
+        }
     }
-    if (in_front != count) {
-        const RECT clip = buffer->rect1_;
-        TextureRasterClipRight = clip.right;
-        TextureRasterClipLeft = clip.left;
-        TextureRasterClipBottom = clip.bottom;
-        TextureRasterClipTop = clip.top;
-        int min_y = 0x7fff, max_y = -0x7ffd;
-        int top = 0;
-        for (int i = 0; i < count; ++i) {
-            if (vertices[i].y < min_y) { min_y = vertices[i].y; top = i; }
+    if (i == count) {
+        goto finish;
+    }
+    {
+    RECT *clip = &buffer->rect1_;
+    if (clip != 0) {
+        TextureRasterClipRight = clip->right;
+        TextureRasterClipLeft = clip->left;
+        TextureRasterClipBottom = clip->bottom;
+        TextureRasterClipTop = clip->top;
+        int max_y = -0x7ffd;
+        int min_y = 0x7fff;
+        int max_x = -0x7ffd;
+        int min_x = 0x7fff;
+        int top;
+        EdgeScan left;
+        EdgeScan right;
+        for (i = 0; i < count; ++i) {
+            if (vertices[i].y < min_y) {
+                min_y = vertices[i].y;
+                top = i;
+            }
             if (vertices[i].y > max_y) {
                 max_y = vertices[i].y;
                 TextureRasterMaxYIndex = i;
             }
-        }
-        EdgeScan left, right;
-        left.f0 = -1;
-        right.f0 = 1;
-        if (min_y < max_y) {
-            TextureRasterRowOffset = static_cast<int>(
-                static_cast<unsigned int>(stride) * static_cast<unsigned int>(min_y) +
-                static_cast<unsigned int>(texture_pointer_address(TextureRasterPixelBase)));
-            TextureRasterClipBottom = static_cast<int>(
-                static_cast<unsigned int>(stride) * static_cast<unsigned int>(clip.bottom) +
-                static_cast<unsigned int>(texture_pointer_address(TextureRasterPixelBase)));
-            TextureRasterClipTop = static_cast<int>(
-                static_cast<unsigned int>(stride) * static_cast<unsigned int>(clip.top) +
-                static_cast<unsigned int>(texture_pointer_address(TextureRasterPixelBase)));
-        }
-        if (min_y < max_y &&
-            Texture::setup_edge_gouraud(&left, top) &&
-            Texture::setup_edge_gouraud(&right, top)) {
-            _control87(_PC_24 | _RC_CHOP, _MCW_PC | _MCW_RC);
-            int du = 0, dv = 0;
-            unsigned short dz = 0;
-            int y = min_y;
-            if (y >= clip.bottom) {
-                buffer->free_data(1);
-                texture_reset_fpu();
-                return;
+            if (vertices[i].x < min_x) {
+                min_x = vertices[i].x;
             }
-            for (;;) {
-                int x = left.accumC;
-                int end = right.accumC;
-                int u = left.accumA, v = left.accumB, z = left.accumD;
-                const int span = texture_fixed(texture_difference(end, x));
-                if (span > 0) {
-                    du = texture_span_step(texture_difference(right.accumA, u), span >> 16);
-                    dv = texture_span_step(texture_difference(right.accumB, v), span >> 16);
-                    dz = texture_light_step(texture_difference(right.accumD, z), span >> 16);
-                }
-                int done = 0;
-                if (--left.counter == 0) {
-                    if (Texture::setup_edge_gouraud(&left, left.id) == 0)
-                        done = 1;
-                } else {
-                    left.accumA = static_cast<int>(static_cast<unsigned int>(left.accumA) + left.deltaA);
-                    left.accumB = static_cast<int>(static_cast<unsigned int>(left.accumB) + left.deltaB);
-                    left.accumC = static_cast<int>(static_cast<unsigned int>(left.accumC) + left.deltaC);
-                    left.accumD = static_cast<int>(static_cast<unsigned int>(left.accumD) + left.deltaD);
-                    left.fracAccum = static_cast<int>(static_cast<unsigned int>(left.fracAccum) + left.fracDelta);
-                    if (left.fracAccum > 0) {
-                        left.accumC = static_cast<int>(static_cast<unsigned int>(left.accumC) + left.extraDeltaC);
-                        left.fracAccum = texture_difference(left.fracAccum, left.fracSub);
+            if (vertices[i].x > max_x) {
+                max_x = vertices[i].x;
+            }
+        }
+        if (min_y < max_y) {
+            const int stride = TextureRasterBufferStride;
+            const int base = static_cast<int>(texture_pointer_address(TextureRasterPixelBase));
+            TextureRasterRowOffset = stride * min_y + base;
+            TextureRasterDither = min_y & 1;
+            TextureRasterClipBottom = TextureRasterClipBottom * stride + base;
+            TextureRasterClipTop = TextureRasterClipTop * stride + base;
+            left.f0 = -1;
+            if (Texture::setup_edge_gouraud(&left, top)) {
+                right.f0 = 1;
+                if (Texture::setup_edge_gouraud(&right, top)) {
+                    unsigned short control;
+                    // Hand-written assembly: truncating 24-bit FPU control
+                    // word, then 1.0 kept on the FPU stack for the rows.
+                    __asm {
+                        fstcw control
+                        mov ax, control
+                        and ax, 0xfcff
+                        or ax, 0xc00
+                        mov control, ax
+                        fldcw control
+                        fld1
                     }
-                }
-                if (!done) {
-                    if (--right.counter == 0) {
-                        if (Texture::setup_edge_gouraud(&right, right.id) == 0)
-                            done = 1;
-                    } else {
-                        right.accumA = static_cast<int>(static_cast<unsigned int>(right.accumA) + right.deltaA);
-                        right.accumB = static_cast<int>(static_cast<unsigned int>(right.accumB) + right.deltaB);
-                        right.accumC = static_cast<int>(static_cast<unsigned int>(right.accumC) + right.deltaC);
-                        right.accumD = static_cast<int>(static_cast<unsigned int>(right.accumD) + right.deltaD);
-                        right.fracAccum = static_cast<int>(static_cast<unsigned int>(right.fracAccum) + right.fracDelta);
-                        if (right.fracAccum > 0) {
-                            right.accumC = static_cast<int>(static_cast<unsigned int>(right.accumC) + right.extraDeltaC);
-                            right.fracAccum = texture_difference(right.fracAccum, right.fracSub);
+                    int span = (right.accumC - left.accumC) << 16;
+                    int dd;
+                    int dv;
+                    int du;
+                    if (span > 0) {
+                        dd = right.accumD - left.accumD;
+                        __asm fild dd
+                        dv = right.accumB - left.accumB;
+                        __asm fild dv
+                        du = right.accumA - left.accumA;
+                        __asm {
+                            fild du
+                            fild span
+                            fdivr st, st(4)
+                        }
+                    }
+                    if (TextureRasterRowOffset < TextureRasterClipBottom) {
+                        int done = 0;
+                        for (;;) {
+                            TextureRasterUAccumulator.dword = left.accumA;
+                            TextureRasterVAccumulator.dword = left.accumB;
+                            TextureRasterSpanRight = left.accumC;
+                            TextureRasterScratch498 = left.accumD;
+                            TextureRasterScratch4C4 = right.accumA;
+                            TextureRasterScratch530 = right.accumB;
+                            TextureRasterSpanLeft = right.accumC;
+                            if (--left.counter == 0) {
+                                if (!Texture::setup_edge_gouraud(&left, left.id)) {
+                                    done = 1;
+                                    goto edges_done;
+                                }
+                            } else {
+                                texture_lit_edge_step(left);
+                            }
+                            if (--right.counter == 0) {
+                                if (!Texture::setup_edge_gouraud(&right, right.id)) {
+                                    done = 1;
+                                }
+                            } else {
+                                texture_lit_edge_step(right);
+                            }
+                        edges_done:
+                            if (span > 0) {
+                                // Hand-written assembly: scale the row slopes
+                                // and store them with FISTP.
+                                __asm {
+                                    fmul st(1), st
+                                    fmul st(2), st
+                                    fmulp st(3), st
+                                    fmul TextureRasterScale65536
+                                    fistp TextureRasterScratch4E4.dword
+                                    fmul TextureRasterScale65536
+                                    fistp TextureRasterScratch4C8.dword
+                                    fmul TextureRasterScale256
+                                    fistp TextureRasterLightPackA.low_word
+                                }
+                            }
+                            span = (right.accumC - left.accumC) << 16;
+                            if (span > 0) {
+                                dd = right.accumD - left.accumD;
+                                __asm fild dd
+                                dv = right.accumB - left.accumB;
+                                __asm fild dv
+                                du = right.accumA - left.accumA;
+                                __asm {
+                                    fild du
+                                    fild span
+                                    fdivr st, st(4)
+                                }
+                            }
+                            if (TextureRasterRowOffset >= TextureRasterClipBottom) {
+                                break;
+                            }
+                            if (TextureRasterRowOffset >= TextureRasterClipTop) {
+                                // Hand-written assembly: ESP-counter span; odd
+                                // Dither rows draw lit texels below the cutoff,
+                                // even rows write the fill color.
+                                __asm {
+                                mov ebx, dword ptr [TextureRasterSpanLeft]
+                                mov ecx, dword ptr [TextureRasterSpanRight]
+                                cmp ebx, dword ptr [TextureRasterClipLeft]
+                                jle span_done
+                                cmp ecx, dword ptr [TextureRasterClipRight]
+                                jge span_done
+                                sub ebx, ecx
+                                jle span_done
+                                shl ebx, 0x10
+                                mov ebx, dword ptr [TextureRasterSpanLeft]
+                                cmp ebx, dword ptr [TextureRasterClipRight]
+                                jl K_4a89
+                                mov ebx, dword ptr [TextureRasterClipRight]
+                            K_4a89:
+                                mov edi, dword ptr [TextureRasterSpanRight]
+                                cmp edi, dword ptr [TextureRasterClipLeft]
+                                jge K_4aee
+                                sub edi, dword ptr [TextureRasterClipLeft]
+                                neg edi
+                                mov eax, dword ptr [TextureRasterScratch4E4]
+                                shl edi, 0x10
+                                imul edi
+                                shrd eax, edx, 0x10
+                                add eax, dword ptr [TextureRasterUAccumulator]
+                                mov dword ptr [TextureRasterUAccumulator], eax
+                                mov eax, dword ptr [TextureRasterScratch4C8]
+                                imul edi
+                                shrd eax, edx, 0x10
+                                add dword ptr [TextureRasterVAccumulator], eax
+                                xor eax, eax
+                                mov ax, word ptr [TextureRasterLightPackA]
+                                imul edi
+                                shrd eax, edx, 0x8
+                                add eax, dword ptr [TextureRasterScratch498]
+                                mov dword ptr [TextureRasterScratch498], eax
+                                mov edi, dword ptr [TextureRasterClipLeft]
+                                mov dword ptr [TextureRasterSpanRight], edi
+                            K_4aee:
+                                sub ebx, edi
+                                mov ecx, ebx
+                                mov esi, dword ptr [TextureRasterScratch544]
+                                xor edx, edx
+                                mov dx, word ptr [TextureRasterVAccumulator+2]
+                                mov eax, dword ptr [TextureRasterTextureWidth]
+                                imul edx
+                                add esi, eax
+                                xor edx, edx
+                                add dx, word ptr [TextureRasterUAccumulator+2]
+                                add esi, edx
+                                mov dword ptr [TextureRasterScratch504], esi
+                                xor esi, esi
+                                mov edi, dword ptr [TextureRasterSpanRight]
+                                add edi, dword ptr [TextureRasterRowOffset]
+                                mov eax, dword ptr [TextureRasterScratch498]
+                                sar eax, 0x8
+                                mov dword ptr [TextureRasterScratch498], eax
+                                mov eax, dword ptr [TextureRasterScratch4C8]
+                                sar eax, 0x10
+                                mov edx, dword ptr [TextureRasterTextureWidth]
+                                imul edx
+                                mov edx, dword ptr [TextureRasterScratch4E4]
+                                sar edx, 0x10
+                                add eax, edx
+                                mov dword ptr [TextureRasterAlternateRowNext], eax
+                                mov edx, dword ptr [TextureRasterTextureWidth]
+                                add eax, edx
+                                mov dword ptr [TextureRasterAlternateRowBase], eax
+                                xor edx, edx
+                                mov dx, word ptr [TextureRasterScratch4C8]
+                                shl edx, 0x10
+                                mov dword ptr [TextureRasterScratch528], edx
+                                xor edx, edx
+                                mov dx, word ptr [TextureRasterVAccumulator]
+                                shl edx, 0x10
+                                mov dx, word ptr [TextureRasterScratch4E4]
+                                dec ecx
+                                shl ecx, 0x10
+                                mov cx, word ptr [TextureRasterUAccumulator]
+                                mov ebx, dword ptr [TextureRasterScratch504]
+                                mov ah, byte ptr [TextureRasterLightThreshold]
+                                push ebp
+                                mov dword ptr [TextureRasterSavedStack], esp
+                                mov esp, ecx
+                                mov al, byte ptr [ebx + esi]
+                                test dword ptr [TextureRasterDither], 0x1
+                                je K_4bed
+                                mov cx, word ptr [TextureRasterScratch498]
+                            K_4bbe:
+                                add al, ch
+                                add edx, dword ptr [TextureRasterScratch528]
+                                sbb ebp, ebp
+                                cmp ch, ah
+                                jge K_4bce
+                                mov byte ptr [edi], al
+                            K_4bce:
+                                add sp, dx
+                                adc esi, dword ptr [4*ebp + TextureRasterAlternateRowNext]
+                                add cx, word ptr [TextureRasterLightPackA]
+                                inc edi
+                                mov al, byte ptr [ebx + esi]
+                                sub esp, 0x10000
+                                jns K_4bbe
+                                jmp K_4c0f
+                            K_4bed:
+                                mov al, byte ptr [TextureRasterScratch494]
+                            K_4bf2:
+                                add edx, dword ptr [TextureRasterScratch528]
+                                sbb ebp, ebp
+                                mov byte ptr [edi], al
+                                add sp, dx
+                                adc esi, dword ptr [4*ebp + TextureRasterAlternateRowNext]
+                                inc edi
+                                sub esp, 0x10000
+                                jns K_4bf2
+                            K_4c0f:
+                                mov esp, dword ptr [TextureRasterSavedStack]
+                                pop ebp
+                            span_done:
+                                }
+                            }
+                            if (done) {
+                                break;
+                            }
+                            TextureRasterRowOffset += TextureRasterBufferStride;
+                            ++TextureRasterDither;
                         }
                     }
                 }
-                if (y >= clip.bottom) break;
-                if (y >= clip.top && end > clip.left && x < clip.right && end > x) {
-                    if (end > clip.right) end = clip.right;
-                    if (x < clip.left) {
-                        const int skip = texture_fixed(texture_difference(clip.left, x));
-                        u = static_cast<int>(static_cast<unsigned int>(u) +
-                            static_cast<unsigned int>((static_cast<int64_t>(du) * skip) >> 16));
-                        v = static_cast<int>(static_cast<unsigned int>(v) +
-                            static_cast<unsigned int>((static_cast<int64_t>(dv) * skip) >> 16));
-                        // 624AC9 zero-extends the WORD slope before IMUL;
-                        // SHRD by eight brings the result back to 16.16.
-                        z = static_cast<int>(static_cast<unsigned int>(z) +
-                            static_cast<unsigned int>((static_cast<int64_t>(dz) * skip) >> 8));
-                        x = clip.left;
-                    }
-                    unsigned char *out = destination + static_cast<int64_t>(y) * stride + x;
-                    const unsigned int remaining = texture_span_pixels(texture_difference(end, x));
-                    int64_t source =
-                        static_cast<unsigned short>(static_cast<unsigned int>(v) >> 16)
-                            * static_cast<int64_t>(width)
-                        + static_cast<unsigned short>(static_cast<unsigned int>(u) >> 16);
-                    const volatile unsigned char *source_reads = pixels;
-                    unsigned char texel = source_reads[source];
-                    if ((y & 1) == 0) {
-                        const unsigned char fill =
-                            TextureRasterScratch494;
-                        for (unsigned int written = 0; written < remaining; ++written)
-                            out[written] = fill;
-                    } else {
-                        unsigned int uf = static_cast<unsigned short>(u);
-                        unsigned int vf = static_cast<unsigned short>(v);
-                        unsigned short light = static_cast<unsigned short>(z >> 8);
-                        const int64_t step = static_cast<int64_t>(dv >> 16) * width + (du >> 16);
-                        for (unsigned int written = 0; written < remaining; ++written) {
-                            const signed char shade = static_cast<signed char>(light >> 8);
-                            if (shade < static_cast<signed char>(cutoff))
-                                *out = static_cast<unsigned char>(texel + shade);
-                            uf += static_cast<unsigned short>(du);
-                            vf += static_cast<unsigned short>(dv);
-                            source += step + (uf >> 16) + static_cast<int64_t>(vf >> 16) * width;
-                            uf &= 0xffff;
-                            vf &= 0xffff;
-                            light = static_cast<unsigned short>(light + dz);
-                            ++out;
-                            texel = source_reads[source];
-                        }
-                    }
-                }
-                if (done) break;
-                ++y;
-                TextureRasterRowOffset = static_cast<int>(
-                    static_cast<unsigned int>(TextureRasterRowOffset) +
-                    static_cast<unsigned int>(stride));
             }
         }
     }
-    buffer->free_data(1);
-    texture_reset_fpu();
+    }
+finish:
+    if (buffer != 0) {
+        buffer->free_data(1);
+    }
+    __asm finit
 }
 
 // ORIGINAL: 0x00621870 ?sub_621870@Texture@@QAEHPAVBuffer@@PAUVert@@PAHHH2@Z 0x00621870-0x006221F1
@@ -9912,195 +11548,490 @@ void Texture::draw2(Buffer *buffer, Vert *vertices, int *zvals, int count,
 // not pending x87 registers/status observed inside release callbacks. The
 // original computes the next reciprocal before drawing this row; no ordinary
 // callback intervenes. Entry/exit FPU resets remain in their original order.
-void Texture::draw_cached_lit(Buffer *buffer, Vert *vertices, int *light,
+void Texture::draw_cached_lit(Buffer *buffer, Vert *vertices, int *zvals,
                               int count, Vert *uv, TextureStore *cache) {
+    int needs_clip = 1;
     cache->next_record_ = 0;
-    unsigned char *destination = static_cast<unsigned char *>(buffer->get_data());
-    const unsigned char key = static_cast<unsigned char>(TextureRasterKey);
-    texture_reset_fpu();
-    const unsigned char *pixels = pixels_;
-    const int stride = static_cast<int>(buffer->stride_);
-    for (int vertex = 0; vertex < count; ++vertex) {
-        int value = light[vertex];
-        if (value >= TextureLightCeiling) value = TextureLightCeiling;
-        light[vertex] = value;
-        if (value <= TextureLightFloor) value = TextureLightFloor;
-        light[vertex] = value;
-    }
-    const RECT clip = buffer->rect1_;
-    int min_y = 0x7fff, max_y = -0x7ffd;
-    int min_x = 0x7fff, max_x = -0x7ffd;
-    int top, bottom;
-    bool clipped = true;
-    for (int index = 0; index < count; ++index) {
-        if (vertices[index].y < min_y) { min_y = vertices[index].y; top = index; }
-        if (vertices[index].y > max_y) { max_y = vertices[index].y; bottom = index; }
-        if (vertices[index].x < min_x) min_x = vertices[index].x;
-        if (vertices[index].x > max_x) max_x = vertices[index].x;
-    }
-    if (min_y < max_y) {
-        const uintptr_t base = reinterpret_cast<uintptr_t>(destination);
-        uintptr_t row = base + static_cast<int64_t>(min_y) * stride;
-        const uintptr_t first_row = base + static_cast<int64_t>(clip.top) * stride;
-        const uintptr_t last_row = base + static_cast<int64_t>(clip.bottom) * stride;
-        if (min_x >= clip.left && min_y >= clip.top &&
-            max_x <= clip.right && max_y <= clip.bottom) clipped = false;
-        EdgeScan left, right;
-        left.f0 = -1;
-        right.f0 = 1;
-        if (texture_cached_edge(left, top, vertices, uv, light, count, bottom, *cache) &&
-            texture_cached_edge(right, top, vertices, uv, light, count, bottom, *cache)) {
-            if (borrowed_ != 0) {
-                _control87(_PC_24 | _RC_CHOP, _MCW_PC | _MCW_RC);
-                int du, dv;
-                unsigned short shade_step;
-                while (static_cast<intptr_t>(row) < static_cast<intptr_t>(last_row)) {
-                    int x = left.accumC;
-                    int end = right.accumC;
-                    int u = left.accumA, v = left.accumB, shade = left.accumD;
-                    const int span = texture_fixed(texture_difference(end, x));
-                    const int delta_u = texture_difference(right.accumA, u);
-                    const int delta_v = texture_difference(right.accumB, v);
-                    const int delta_shade = texture_difference(right.accumD, shade);
-                    // Preserve the cached-edge transition before the saved
-                    // terminal span is drawn; failure of the left skips right.
-                    const bool done =
-                        !texture_advance_cached_edge(left, vertices, uv, light, count, bottom, *cache) ||
-                        !texture_advance_cached_edge(right, vertices, uv, light, count, bottom, *cache);
-                    if (span > 0) {
-                        du = texture_span_step(delta_u, span >> 16);
-                        dv = texture_span_step(delta_v, span >> 16);
-                        shade_step = texture_light_step(delta_shade, span >> 16);
-                    }
-                    if (static_cast<intptr_t>(row) >= static_cast<intptr_t>(first_row) &&
-                        end > clip.left && x < clip.right && end > x) {
-                        if (end > clip.right) end = clip.right;
-                        if (x < clip.left) {
-                            const int skip = texture_fixed(texture_difference(clip.left, x));
-                            u = static_cast<int>(static_cast<unsigned int>(u) +
-                                static_cast<unsigned int>((static_cast<int64_t>(du) * skip) >> 16));
-                            v = static_cast<int>(static_cast<unsigned int>(v) +
-                                static_cast<unsigned int>((static_cast<int64_t>(dv) * skip) >> 16));
-                            shade = static_cast<int>(static_cast<unsigned int>(shade) +
-                                static_cast<unsigned int>((static_cast<int64_t>(shade_step) * skip) >> 8));
-                            x = clip.left;
-                        }
-                        unsigned char *out = reinterpret_cast<unsigned char *>(row + x);
-                        unsigned int source_x = (static_cast<unsigned int>(u) >> 16) & 0xff;
-                        unsigned int source_y = (static_cast<unsigned int>(v) >> 16) & 0xff;
-                        unsigned int uf = static_cast<unsigned short>(u);
-                        unsigned int vf = static_cast<unsigned short>(v);
-                        unsigned short brightness = static_cast<unsigned short>(shade >> 8);
-                        const unsigned int length = texture_span_pixels(texture_difference(end, x));
-                        for (unsigned int column = 0; column < length; ++column) {
-                            const unsigned char texel = pixels[source_y * 256u + source_x];
-                            uf += static_cast<unsigned short>(du);
-                            vf += static_cast<unsigned short>(dv);
-                            source_x = (source_x + (static_cast<unsigned int>(du) >> 16) + (uf >> 16)) & 0xff;
-                            source_y = (source_y + (static_cast<unsigned int>(dv) >> 16) + (vf >> 16)) & 0xff;
-                            uf &= 0xffff;
-                            vf &= 0xffff;
-                            if (texel != key)
-                                out[column] = static_cast<unsigned char>(texel + (brightness >> 8));
-                            brightness = static_cast<unsigned short>(brightness + shade_step);
-                        }
-                    }
-                    if (done) break;
-                    row += stride;
-                }
+    TextureRasterPixelBase = buffer->get_data();
+    TextureRasterLightThreshold = static_cast<int>(TextureRasterKey);
+    // Hand-written assembly: the blitters reset the FPU with FINIT.
+    __asm finit
+    TextureRasterEdgeVerticesB = vertices;
+    TextureRasterVertexCount = count;
+    TextureRasterEdgeVerticesA = uv;
+    TextureRasterZValues = zvals;
+    TextureRasterScratch544 = pixels_;
+    TextureRasterBufferStride = static_cast<int>(buffer->stride_);
+    TextureRasterTextureWidth = static_cast<int>(iWidth_);
+    RECT *clip = &buffer->rect1_;
+    if (clip != 0) {
+        for (int i = 0; i < count; ++i) {
+            zvals[i] = min(zvals[i], TextureLightCeiling);
+            zvals[i] = max(zvals[i], TextureLightFloor);
+        }
+        TextureRasterClipRight = clip->right;
+        TextureRasterClipLeft = clip->left;
+        TextureRasterClipBottom = clip->bottom;
+        TextureRasterClipTop = clip->top;
+        int min_y = 0x7fff;
+        int max_y = -0x7ffd;
+        int max_x = -0x7ffd;
+        int min_x = 0x7fff;
+        int top;
+        EdgeScan left;
+        EdgeScan right;
+        for (i = 0; i < TextureRasterVertexCount; ++i) {
+            if (vertices[i].y < min_y) {
+                min_y = vertices[i].y;
+                top = i;
+            }
+            if (vertices[i].y > max_y) {
+                max_y = vertices[i].y;
+                TextureRasterMaxYIndex = i;
+            }
+            if (vertices[i].x < min_x) {
+                min_x = vertices[i].x;
+            }
+            if (vertices[i].x > max_x) {
+                max_x = vertices[i].x;
+            }
+        }
+        if (min_y < max_y) {
+            const int stride = TextureRasterBufferStride;
+            const int base = static_cast<int>(texture_pointer_address(TextureRasterPixelBase));
+            TextureRasterRowOffset = stride * min_y + base;
+            if (min_x < TextureRasterClipLeft || min_y < TextureRasterClipTop ||
+                max_x > TextureRasterClipRight || max_y > TextureRasterClipBottom) {
+                needs_clip = 1;
             } else {
-                while (static_cast<intptr_t>(row) < static_cast<intptr_t>(last_row)) {
-                    int x = left.accumC;
-                    int end = right.accumC;
-                    if (static_cast<intptr_t>(row) >= static_cast<intptr_t>(first_row) &&
-                        end > clip.left && x < clip.right && end > x) {
-                        int u = left.accumA, v = left.accumB;
-                        unsigned int shade = static_cast<unsigned int>(left.accumD);
-                        const int span = texture_fixed(texture_difference(end, x));
-                        // 621E92 has no CDQ: the high dividend is right X,
-                        // not the sign of the low, shifted light delta.
-                        const unsigned int low = static_cast<unsigned int>(
-                            texture_difference(right.accumD, left.accumD)) << 8;
-                        const int64_t numerator = static_cast<int64_t>(end) * 65536 * 65536 + low;
-                        const unsigned short shade_step = static_cast<unsigned short>(numerator / span);
-                        const int du = static_cast<int>(static_cast<int64_t>(
-                            texture_difference(right.accumA, u)) * 65536 / span);
-                        int dv = static_cast<int>(static_cast<int64_t>(
-                            texture_difference(right.accumB, v)) * 65536 / span);
-                        int adjusted_u = du;
-                        if (du < 0 && (static_cast<unsigned int>(du) & 0xffff))
-                            adjusted_u = static_cast<int>(static_cast<unsigned int>(du) + 0x10000u);
-                        const int whole_u = adjusted_u >> 16;
-                        u = static_cast<int>(static_cast<unsigned int>(u) + (adjusted_u >> 1));
-                        int adjusted_v = dv;
-                        int signed_pitch = TextureRowPitchScratch;
-                        if (dv < 0) {
-                            signed_pitch = texture_difference(0, signed_pitch);
-                            if (static_cast<unsigned int>(dv) & 0xffff)
-                                adjusted_v = static_cast<int>(static_cast<unsigned int>(dv) + 0x10000u);
-                        }
-                        const int whole_v = static_cast<int>(static_cast<unsigned int>(adjusted_v >> 16) *
-                                                             static_cast<unsigned int>(TextureRowPitchScratch));
-                        v = static_cast<int>(static_cast<unsigned int>(v) + (adjusted_v >> 1));
-                        if (end >= clip.right) end = clip.right;
-                        if (x < clip.left) {
-                            const int skip = texture_fixed(texture_difference(clip.left, x));
-                            u = static_cast<int>(static_cast<unsigned int>(u) +
-                                static_cast<unsigned int>((static_cast<int64_t>(du) * skip) >> 16));
-                            v = static_cast<int>(static_cast<unsigned int>(v) +
-                                static_cast<unsigned int>((static_cast<int64_t>(dv) * skip) >> 16));
-                            shade += static_cast<unsigned int>((static_cast<int64_t>(shade_step) * skip) >> 16);
-                            x = clip.left;
-                        }
-                        // The original 16-bit IMUL retains only AX; its row
-                        // offset is modulo 65536, not a full-width product.
-                        int64_t source = static_cast<unsigned short>(
-                            (static_cast<unsigned int>(v) >> 16) *
-                            static_cast<unsigned int>(TextureRowPitchScratch));
-                        source += static_cast<unsigned short>(static_cast<unsigned int>(u) >> 16);
-                        if (signed_pitch < 0) {
-                            dv = texture_difference(0, dv);
-                            v = ~v;
-                        }
-                        const bool reverse_u = du < 0;
-                        // 622078 shifts the now-unused V local, NOT the
-                        // copied packed low WORD. Negative U consequently
-                        // keeps all sixteen V fraction bits here.
-                        unsigned int fractions = reverse_u
-                            ? (static_cast<unsigned int>(~u) << 16) | static_cast<unsigned short>(v)
-                            : (static_cast<unsigned int>(u) << 16) | (static_cast<unsigned short>(v) >> 1);
-                        const unsigned int step =
-                            ((reverse_u ? 0u - static_cast<unsigned int>(du) : static_cast<unsigned int>(du)) << 16) |
-                            (static_cast<unsigned short>(dv) >> 1);
-                        const int whole_step = static_cast<int>(static_cast<unsigned int>(whole_u) + whole_v);
-                        unsigned char *out = reinterpret_cast<unsigned char *>(row + x);
-                        const int length = texture_difference(end, x);
-                        for (int column = 0; column < length; ++column) {
-                            const unsigned char texel = pixels[source];
-                            const unsigned int next = fractions + step;
-                            const bool carry = next < fractions;
-                            fractions = next;
-                            // Original SBB subtracts -whole_step and carry;
-                            // ADC adds whole_step and carry in the other arm.
-                            source += static_cast<int64_t>(whole_step) + (reverse_u ? -int(carry) : int(carry));
-                            out[column] = static_cast<unsigned char>(texel + ((shade >> 8) & 0xff));
-                            if (fractions & 0x8000u) {
-                                fractions &= ~0x8000u;
-                                source += signed_pitch;
-                            }
-                            shade = (shade & 0xffff0000u) | static_cast<unsigned short>(shade + shade_step);
+                needs_clip = 0;
+            }
+            TextureRasterClipBottom = TextureRasterClipBottom * stride + base;
+            TextureRasterClipTop = TextureRasterClipTop * stride + base;
+            left.f0 = -1;
+            if (sub_625080(&left, top, cache)) {
+                right.f0 = 1;
+                if (sub_625080(&right, top, cache)) {
+                if (borrowed_ != 0) {
+                    unsigned short control;
+                    // Hand-written assembly: truncating 24-bit FPU control
+                    // word, then 1.0 kept on the FPU stack for the rows.
+                    __asm {
+                        fstcw control
+                        mov ax, control
+                        and ax, 0xfcff
+                        or ax, 0xc00
+                        mov control, ax
+                        fldcw control
+                        fld1
+                    }
+                    int span = (right.accumC - left.accumC) << 16;
+                    int dd;
+                    int dv;
+                    int du;
+                    if (span > 0) {
+                        dd = right.accumD - left.accumD;
+                        __asm fild dd
+                        dv = right.accumB - left.accumB;
+                        __asm fild dv
+                        du = right.accumA - left.accumA;
+                        __asm {
+                            fild du
+                            fild span
+                            fdivr st, st(4)
                         }
                     }
-                    // Owned storage uses uncached Gouraud setup for later
-                    // edges; it does not consume further TextureStore rows.
-                    if (!texture_advance_gouraud_edge(left, vertices, uv, light, count, bottom) ||
-                        !texture_advance_gouraud_edge(right, vertices, uv, light, count, bottom)) break;
-                    row += stride;
+                    if (TextureRasterRowOffset < TextureRasterClipBottom) {
+                        int done = 0;
+                        for (;;) {
+                            TextureRasterUAccumulator.dword = left.accumA;
+                            TextureRasterVAccumulator.dword = left.accumB;
+                            TextureRasterSpanRight = left.accumC;
+                            TextureRasterScratch498 = left.accumD;
+                            TextureRasterScratch4C4 = right.accumA;
+                            TextureRasterScratch530 = right.accumB;
+                            TextureRasterSpanLeft = right.accumC;
+                            if (--left.counter == 0) {
+                                if (!sub_625080(&left, left.id, cache)) {
+                                    done = 1;
+                                    goto edges_done;
+                                }
+                            } else {
+                                texture_lit_edge_step(left);
+                            }
+                            if (--right.counter == 0) {
+                                if (!sub_625080(&right, right.id, cache)) {
+                                    done = 1;
+                                }
+                            } else {
+                                texture_lit_edge_step(right);
+                            }
+                        edges_done:
+                            if (span > 0) {
+                                // Hand-written assembly: scale the row slopes
+                                // and store them with FISTP.
+                                __asm {
+                                    fmul st(1), st
+                                    fmul st(2), st
+                                    fmulp st(3), st
+                                    fmul TextureRasterScale65536
+                                    fistp TextureRasterScratch4E4.dword
+                                    fmul TextureRasterScale65536
+                                    fistp TextureRasterScratch4C8.dword
+                                    fmul TextureRasterScale256
+                                    fistp TextureRasterLightPackA.low_word
+                                }
+                            }
+                            span = (right.accumC - left.accumC) << 16;
+                            if (span > 0) {
+                                dd = right.accumD - left.accumD;
+                                __asm fild dd
+                                dv = right.accumB - left.accumB;
+                                __asm fild dv
+                                du = right.accumA - left.accumA;
+                                __asm {
+                                    fild du
+                                    fild span
+                                    fdivr st, st(4)
+                                }
+                            }
+                            if (TextureRasterRowOffset >= TextureRasterClipBottom) {
+                                break;
+                            }
+                            if (TextureRasterRowOffset >= TextureRasterClipTop) {
+                                // Hand-written assembly: color-keyed lit span
+                                // with adc carry stepping.
+                                __asm {
+                                mov ebx, dword ptr [TextureRasterSpanLeft]
+                                mov ecx, dword ptr [TextureRasterSpanRight]
+                                cmp ebx, dword ptr [TextureRasterClipLeft]
+                                jle span_done
+                                cmp ecx, dword ptr [TextureRasterClipRight]
+                                jge span_done
+                                sub ebx, ecx
+                                jle span_done
+                                shl ebx, 0x10
+                                mov ebx, dword ptr [TextureRasterSpanLeft]
+                                cmp ebx, dword ptr [TextureRasterClipRight]
+                                jl K_170a
+                                mov ebx, dword ptr [TextureRasterClipRight]
+                            K_170a:
+                                mov edi, dword ptr [TextureRasterSpanRight]
+                                cmp edi, dword ptr [TextureRasterClipLeft]
+                                jge K_176f
+                                sub edi, dword ptr [TextureRasterClipLeft]
+                                neg edi
+                                mov eax, dword ptr [TextureRasterScratch4E4]
+                                shl edi, 0x10
+                                imul edi
+                                shrd eax, edx, 0x10
+                                add eax, dword ptr [TextureRasterUAccumulator]
+                                mov dword ptr [TextureRasterUAccumulator], eax
+                                mov eax, dword ptr [TextureRasterScratch4C8]
+                                imul edi
+                                shrd eax, edx, 0x10
+                                add dword ptr [TextureRasterVAccumulator], eax
+                                xor eax, eax
+                                mov ax, word ptr [TextureRasterLightPackA]
+                                imul edi
+                                shrd eax, edx, 0x8
+                                add eax, dword ptr [TextureRasterScratch498]
+                                mov dword ptr [TextureRasterScratch498], eax
+                                mov edi, dword ptr [TextureRasterClipLeft]
+                                mov dword ptr [TextureRasterSpanRight], edi
+                            K_176f:
+                                sub ebx, edi
+                                mov ecx, ebx
+                                mov ebx, dword ptr [TextureRasterScratch544]
+                                mov bh, byte ptr [TextureRasterVAccumulator+2]
+                                add bl, byte ptr [TextureRasterUAccumulator+2]
+                                mov edi, dword ptr [TextureRasterRowOffset]
+                                add edi, dword ptr [TextureRasterSpanRight]
+                                mov eax, dword ptr [TextureRasterScratch498]
+                                sar eax, 0x8
+                                mov dword ptr [TextureRasterScratch498], eax
+                                mov edx, dword ptr [TextureRasterUAccumulator]
+                                shl edx, 0x10
+                                mov dh, byte ptr [TextureRasterScratch4C8+2]
+                                mov dl, byte ptr [TextureRasterScratch4E4+2]
+                                mov esi, dword ptr [TextureRasterScratch4E4]
+                                shl esi, 0x10
+                                mov eax, ecx
+                                mov ecx, dword ptr [TextureRasterScratch4C8]
+                                shl ecx, 0x10
+                                mov cx, ax
+                                mov eax, dword ptr [TextureRasterVAccumulator]
+                                shl eax, 0x10
+                                mov ah, byte ptr [TextureRasterLightThreshold]
+                                push ebp
+                                mov ebp, ecx
+                                xor bp, bp
+                                shl ecx, 0x10
+                                sub ecx, 0x10000
+                                mov cx, word ptr [TextureRasterScratch498]
+                                sub cx, word ptr [TextureRasterLightPackA]
+                                dec edi
+                            K_17f6:
+                                add cx, word ptr [TextureRasterLightPackA]
+                                mov al, byte ptr [ebx]
+                                inc edi
+                                add edx, esi
+                                adc bl, dl
+                                add eax, ebp
+                                adc bh, dh
+                                cmp al, ah
+                                je K_1810
+                                add al, ch
+                                mov byte ptr [edi], al
+                            K_1810:
+                                sub ecx, 0x10000
+                                jns K_17f6
+                                pop ebp
+                            span_done:
+                                }
+                            }
+                            if (done) {
+                                break;
+                            }
+                            TextureRasterRowOffset += TextureRasterBufferStride;
+                        }
+                    }
+                } else {
+                    // Without a borrowed 256-pitch texture the rows step U/V
+                    // in integer fixed point.
+                    if (TextureRasterRowOffset < TextureRasterClipBottom) {
+                        do {
+                            if (TextureRasterRowOffset >= TextureRasterClipTop) {
+                                int u = left.accumA;
+                                int v = left.accumB;
+                                int x = left.accumC;
+                                TextureRasterLightAccumB.dword = left.accumD;
+                                int ru = right.accumA;
+                                int rv = right.accumB;
+                                int rx = right.accumC;
+                                TextureRasterLightStepB = right.accumD;
+                                int du;
+                                int dv;
+                                int dv_step;
+                                int u_dir;
+                                int du_whole;
+                                // Hand-written assembly: idiv slopes, signed
+                                // texture pitch stepping and adc/sbb row carry
+                                // in two mirrored span loops.
+                                __asm {
+                        mov ebx, dword ptr [rx]
+                        cmp ebx, dword ptr [TextureRasterClipLeft]
+                        jle row_done
+                        mov ecx, dword ptr [x]
+                        cmp ecx, dword ptr [TextureRasterClipRight]
+                        jge row_done
+                        sub ebx, ecx
+                        jle row_done
+                        shl ebx, 0x10
+                        mov eax, dword ptr [TextureRasterLightStepB]
+                        sub eax, dword ptr [TextureRasterLightAccumB]
+                        shl eax, 0x8
+                        idiv ebx
+                        mov word ptr [TextureRasterLightPackA], ax
+                        mov eax, dword ptr [ru]
+                        sub eax, dword ptr [u]
+                        mov edx, eax
+                        sar edx, 0x10
+                        shl eax, 0x10
+                        idiv ebx
+                        mov dword ptr [du], eax
+                        mov ecx, 0x1
+                        and eax, eax
+                        jns K_bd77
+                        neg ecx
+                        test eax, 0xffff
+                        je K_bd77
+                        add eax, 0x10000
+                    K_bd77:
+                        mov dword ptr [u_dir], ecx
+                        mov ecx, eax
+                        sar ecx, 0x10
+                        mov dword ptr [du_whole], ecx
+                        sar eax, 1
+                        add eax, dword ptr [u]
+                        mov dword ptr [u], eax
+                        mov eax, dword ptr [rv]
+                        sub eax, dword ptr [v]
+                        mov edx, eax
+                        sar edx, 0x10
+                        shl eax, 0x10
+                        idiv ebx
+                        mov dword ptr [dv], eax
+                        mov ecx, dword ptr [TextureRowPitchScratch]
+                        and eax, eax
+                        jns K_bdbe
+                        neg ecx
+                        test eax, 0xffff
+                        je K_bdbe
+                        add eax, 0x10000
+                    K_bdbe:
+                        mov dword ptr [TextureRasterSignedPitch], ecx
+                        mov ecx, eax
+                        sar eax, 0x10
+                        imul dword ptr [TextureRowPitchScratch]
+                        mov dword ptr [dv_step], eax
+                        sar ecx, 1
+                        add ecx, dword ptr [v]
+                        mov dword ptr [v], ecx
+                        mov ebx, dword ptr [rx]
+                        cmp ebx, dword ptr [TextureRasterClipRight]
+                        jl K_bdee
+                        mov ebx, dword ptr [TextureRasterClipRight]
+                    K_bdee:
+                        mov edi, dword ptr [x]
+                        cmp edi, dword ptr [TextureRasterClipLeft]
+                        jge K_be4a
+                        sub edi, dword ptr [TextureRasterClipLeft]
+                        neg edi
+                        mov eax, dword ptr [du]
+                        shl edi, 0x10
+                        imul edi
+                        shrd eax, edx, 0x10
+                        add eax, dword ptr [u]
+                        mov dword ptr [u], eax
+                        mov eax, dword ptr [dv]
+                        imul edi
+                        shrd eax, edx, 0x10
+                        add eax, dword ptr [v]
+                        mov dword ptr [v], eax
+                        xor eax, eax
+                        mov ax, word ptr [TextureRasterLightPackA]
+                        imul edi
+                        shrd eax, edx, 0x10
+                        add eax, dword ptr [TextureRasterLightAccumB]
+                        mov dword ptr [TextureRasterLightAccumB], eax
+                        mov edi, dword ptr [TextureRasterClipLeft]
+                        mov dword ptr [x], edi
+                    K_be4a:
+                        sub ebx, edi
+                        mov ecx, ebx
+                        xor eax, eax
+                        mov ax, word ptr [v+2]
+                        mov dx, word ptr [TextureRowPitchScratch]
+                        imul dx
+                        xor esi, esi
+                        mov si, word ptr [u+2]
+                        add esi, eax
+                        add esi, dword ptr [TextureRasterScratch544]
+                        mov edi, dword ptr [TextureRasterRowOffset]
+                        add edi, dword ptr [x]
+                        cmp dword ptr [TextureRasterSignedPitch], 0x0
+                        jge K_be87
+                        neg dword ptr [dv]
+                        not dword ptr [v]
+                    K_be87:
+                        cmp dword ptr [u_dir], 0x0
+                        jl K_bf04
+                        mov ebx, dword ptr [u]
+                        shl ebx, 0x10
+                        mov bx, word ptr [v]
+                        shr bx, 1
+                        mov edx, dword ptr [du]
+                        shl edx, 0x10
+                        mov dx, word ptr [dv]
+                        shr dx, 1
+                        mov eax, dword ptr [du_whole]
+                        add eax, dword ptr [dv_step]
+                        mov dword ptr [TextureRasterScratch4B8], eax
+                        push ebp
+                        mov ebp, dword ptr [TextureRasterScratch4B8]
+                        dec edi
+                        mov eax, dword ptr [TextureRasterLightAccumB]
+                        shr eax, 0x8
+                    K_bed1:
+                        mov ah, byte ptr [esi]
+                        inc edi
+                        add ah, al
+                        add ebx, edx
+                        adc esi, ebp
+                        mov byte ptr [edi], ah
+                        test bh, 0x80
+                        je K_beea
+                        and bh, 0x7f
+                        add esi, dword ptr [TextureRasterSignedPitch]
+                    K_beea:
+                        mov eax, dword ptr [TextureRasterLightAccumB]
+                        add ax, word ptr [TextureRasterLightPackA]
+                        mov dword ptr [TextureRasterLightAccumB], eax
+                        shr eax, 0x8
+                        dec ecx
+                        jne K_bed1
+                        pop ebp
+                        jmp row_done
+                    K_bf04:
+                        mov edx, dword ptr [du]
+                        neg edx
+                        shl edx, 0x10
+                        mov dx, word ptr [dv]
+                        shr dx, 1
+                        mov ebx, dword ptr [u]
+                        not ebx
+                        shl ebx, 0x10
+                        mov bx, word ptr [v]
+                        shr dword ptr [v], 1
+                        mov eax, dword ptr [du_whole]
+                        add eax, dword ptr [dv_step]
+                        mov dword ptr [TextureRasterScratch4B8], eax
+                        neg dword ptr [TextureRasterScratch4B8]
+                        push ebp
+                        mov ebp, dword ptr [TextureRasterScratch4B8]
+                        dec edi
+                        mov eax, dword ptr [TextureRasterLightAccumB]
+                        shr eax, 0x8
+                    K_bf4f:
+                        mov ah, byte ptr [esi]
+                        inc edi
+                        add ah, al
+                        add ebx, edx
+                        sbb esi, ebp
+                        mov byte ptr [edi], ah
+                        test bh, 0x80
+                        je K_bf68
+                        and bh, 0x7f
+                        add esi, dword ptr [TextureRasterSignedPitch]
+                    K_bf68:
+                        mov eax, dword ptr [TextureRasterLightAccumB]
+                        add ax, word ptr [TextureRasterLightPackA]
+                        mov dword ptr [TextureRasterLightAccumB], eax
+                        shr eax, 0x8
+                        dec ecx
+                        jne K_bf4f
+                        pop ebp
+                                row_done:
+                                }
+                            }
+                            if (--left.counter == 0) {
+                                if (!Texture::setup_edge_gouraud(&left, left.id)) {
+                                    break;
+                                }
+                            } else {
+                                texture_lit_edge_step(left);
+                            }
+                            if (--right.counter == 0) {
+                                if (!Texture::setup_edge_gouraud(&right, right.id)) {
+                                    break;
+                                }
+                            } else {
+                                texture_lit_edge_step(right);
+                            }
+                            TextureRasterRowOffset += TextureRasterBufferStride;
+                        } while (TextureRasterRowOffset < TextureRasterClipBottom);
+                    }
+                }
                 }
             }
         }
     }
-    buffer->free_data(1);
-    texture_reset_fpu();
-    if (!clipped) cache->flags_ = 0;
+    if (buffer != 0) {
+        buffer->free_data(1);
+    }
+    __asm finit
+    if (needs_clip == 0) {
+        cache->flags_ = 0;
+    }
 }
