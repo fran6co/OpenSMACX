@@ -4047,7 +4047,7 @@ int Texture::draw_trans2(Buffer *buffer, Vert *vertices, int use_eight_vertices)
     return 0;
 }
 
-// ORIGINAL: 0x00622DB0 Texture::draw_trans_3 0x00622DB0-0x006233C0 FILE
+// ORIGINAL: 0x00622DB0 Texture::draw_trans_3 0x00622DB0-0x006233C0 FILE BYTE_EXACT
 // symbol    ?draw_trans_3@Texture@@QAEXPAVBuffer@@PAUVert@@PAHH1H@Z
 // TRIED: __stdcall free function (receiver is really `this` via ECX, recast as Texture::draw_trans_3); exact EdgeScan field indices; the textured fill sub-branch borrows the real ESP as a second fixed-point counter (push ebp; mov [0x9bb4ac],esp; mov esp,ecx; ...; add sp,dx; sub esp,0x10000; jns ...; mov esp,[0x9bb4ac]) - no C construct can spell operating on the live stack pointer as data.
 // working copy - scaffold materialised by --work

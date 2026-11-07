@@ -85,7 +85,7 @@ static int *PolygonLights;
 // RECOVERY_OBJECT: v2 0x009BC034 0x009BC036 _PolygonLightStep 0x00626A00
 static unsigned short PolygonLightStep;
 
-// ORIGINAL: 0x00626470 sub_626470 0x00626470-0x00626540 FILE
+// ORIGINAL: 0x00626470 sub_626470 0x00626470-0x00626540 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["626470..62653F reads two stack arguments, wraps by9BC038, skips horizontal edges and initializes direction-dependent quotient/remainder stepping."], "reason": "The original cdecl edge initializer takes a pointer to nine signed DWORDs and a vertex index, traversing the shared vertex array toward the maximum-y vertex."}
 // symbol    ?setup_flat_polygon_edge@@YAHPAUFlatPolygonEdge@@H@Z
 int __cdecl setup_flat_polygon_edge(FlatPolygonEdge *edge, int vertex) {
@@ -458,7 +458,7 @@ static unsigned short polygon_light_step(int delta, int width_fixed) {
 // occupy +1C/+20/+24/+28/+2C/+30, and light/step occupy +34/+38. The
 // caller's two stack records are 0x3C bytes apart. Texture's declarations
 // name those same fields without fabricating values for the unused UVs.
-// ORIGINAL: 0x00626900 sub_626900 0x00626900-0x006269F3 FILE
+// ORIGINAL: 0x00626900 sub_626900 0x00626900-0x006269F3 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["626900..6269F3 uses stack edge/index arguments, wraps indices0..3 and initializes x at+1C, light at+34 and fixed_div628AD0 light step at+38. The shared type spelling is a representation choice, not proof of an original type name."], "reason": "This cdecl initializer consumes the shared four-vertex polygon and light arrays using the existing fifteen-word EdgeScan representation; it leaves the four unused interpolant words untouched."}
 // symbol    ?setup_gouraud_polygon_edge@@YAHPAUEdgeScan@@H@Z
 int __cdecl setup_gouraud_polygon_edge(EdgeScan *edge, int vertex) {
