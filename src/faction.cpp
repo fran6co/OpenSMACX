@@ -13410,6 +13410,15 @@ static void tech_trade_handle_pre_offer_rejection(
     }
 }
 
+// vector_dist without x_dist's wrap; only its two abs calls survive.
+static inline int flat_vector_dist(int x_point_a, int y_point_a, int x_point_b, int y_point_b) {
+    int x_distance = abs(x_point_a - x_point_b);
+    int y_distance = abs(y_point_a - y_point_b);
+    int largest = (x_distance > y_distance) ? x_distance : y_distance;
+    int smallest = (x_distance < y_distance) ? x_distance : y_distance;
+    return largest - ((((y_distance + x_distance) >> 1) - smallest + 1) >> 1);
+}
+
 /*
 Purpose: Should faction a1 refuse to honour faction a2's withdrawal
          demand: gate on the pair's 0x800000 treaty word, then scan the
@@ -13451,11 +13460,10 @@ int __cdecl dont_withdrawal(int faction_id, int against_id) {
         if (base_idx < 0) {
             continue;
         }
-        const int target_x = Bases[base_idx].x;
         const int target_y = Bases[base_idx].y;
-        // The image computes both distances and reads nothing back.
-        abs(target_x - x);
-        abs(target_y - y);
+        const int target_x = Bases[base_idx].x;
+        // Unwrapped vector_dist, inlined; its result is never read.
+        flat_vector_dist(target_x, target_y, x, y);
         if (whose_territory(faction_id, x, y, 0, 0) != against_id) {
             continue;
         }
