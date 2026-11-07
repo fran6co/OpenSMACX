@@ -819,8 +819,8 @@ void Console::corner_the_market() { // 0x004E2000
 
     const int amount = corner_market(faction_id);
     parse_num(0, amount);
-    parse_num(1, static_cast<int>(game_year(
-        static_cast<int>(Rules.turns_corner_gbl_energy_mrkt) + GameDataStateStorage.fields_.turn_current_num_)));
+    // Unsigned sum straight into the call: the image adds into ECX.
+    parse_num(1, game_year(Rules.turns_corner_gbl_energy_mrkt + GameDataStateStorage.fields_.turn_current_num_));
 
     if (PlayersData[faction_id].corner_market_turn > GameDataStateStorage.fields_.turn_current_num_) {
         parse_num(0, static_cast<int>(game_year(PlayersData[faction_id].corner_market_turn)));
@@ -842,7 +842,7 @@ void Console::corner_the_market() { // 0x004E2000
     }
 
     PlayersData[faction_id].corner_market_turn =
-        static_cast<int>(Rules.turns_corner_gbl_energy_mrkt) + GameDataStateStorage.fields_.turn_current_num_;
+        GameDataStateStorage.fields_.turn_current_num_ + static_cast<int>(Rules.turns_corner_gbl_energy_mrkt);
     PlayersData[faction_id].corner_market_active = amount;
     PlayersData[faction_id].energy_reserves -= amount;
     synch_leader(faction_id);

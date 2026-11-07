@@ -442,6 +442,9 @@ MEASURED inline int StringStruct::seek_pos(int a1) {
 
 // 0x00402970 is both called and expanded inline (StringList's destructor
 // walks the list twice); MEASURED keeps the out-of-line copy emitted.
+// A TU that defines STRINGSTRUCT_REMOVE_ALL_OUT_OF_LINE sees only the
+// declaration and calls 0x00402970 (NetSessionPickerWin 0x0063C7C0).
+#ifndef STRINGSTRUCT_REMOVE_ALL_OUT_OF_LINE
 MEASURED inline void StringStruct::remove_all() {
     if (!head_) {
       return;
@@ -467,6 +470,7 @@ MEASURED inline void StringStruct::remove_all() {
     current_position_ = 0;
     entry_count_ = 0;
 }
+#endif
 
 MEASURED inline StringStructPayload *StringStruct::next_entry() {
     if (!head_) {

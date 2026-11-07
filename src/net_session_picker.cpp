@@ -1,3 +1,5 @@
+// The original TU calls StringStruct::remove_all out of line (0x0063C7C0).
+#define STRINGSTRUCT_REMOVE_ALL_OUT_OF_LINE
 #include "stdafx.h"
 #include "net_session_picker.h"
 // ORIGINAL: 0x00401C80 SessionStruct::SessionStruct 0x00401C80-0x00401CD8 FILE BYTE_EXACT
