@@ -4429,34 +4429,32 @@ void Win::set_bubble_text(char * text, RECT * rect) {
 // Original callers5D62E8/5ED9A2/5EDAC6 ignore the result; the body ends after
 // redo_caption_buttons without producing one. Model this notification as void.
 // Both move calls target the scrollbar, and may replace either borrowed pointer.
+// LEVER: read scroll_vert_/scroll_horz_ at each use; pointer locals moved
+// the register allocation (exact 2026-11-07).
 void Win::resize_event(int width, int height) {
     WinCallbackWindow = this;
     if ((iFlags_ & 0x40) == 0) {
         if (scroll_vert_ != 0) {
             scroll_vert_->move(outer_rect_.right - outer_rect_.left, 0);
-            Scroll *horizontal = scroll_horz_;
-            Scroll *vertical = scroll_vert_;
-            if (horizontal != 0) {
-                vertical->resize(vertical->dib_.bmiHeader.biWidth,
-                                 horizontal->dib_.bmiHeader.biHeight -
+            if (scroll_horz_ != 0) {
+                scroll_vert_->resize(scroll_vert_->dib_.bmiHeader.biWidth,
+                                 scroll_horz_->dib_.bmiHeader.biHeight -
                                      outer_rect_.top + outer_rect_.bottom,
                                  0);
             } else {
-                vertical->resize(vertical->dib_.bmiHeader.biWidth,
+                scroll_vert_->resize(scroll_vert_->dib_.bmiHeader.biWidth,
                                  outer_rect_.bottom - outer_rect_.top, 0);
             }
         }
         if (scroll_horz_ != 0) {
             scroll_horz_->move(0, outer_rect_.bottom - outer_rect_.top);
-            Scroll *vertical = scroll_vert_;
-            Scroll *horizontal = scroll_horz_;
-            if (vertical != 0) {
-                horizontal->resize((outer_rect_.right - vertical->dib_.bmiHeader.biWidth) -
+            if (scroll_vert_ != 0) {
+                scroll_horz_->resize((outer_rect_.right - scroll_vert_->dib_.bmiHeader.biWidth) -
                                    outer_rect_.left,
-                                   -horizontal->dib_.bmiHeader.biHeight, 0);
+                                   -scroll_horz_->dib_.bmiHeader.biHeight, 0);
             } else {
-                horizontal->resize(outer_rect_.right - outer_rect_.left,
-                                   -horizontal->dib_.bmiHeader.biHeight, 0);
+                scroll_horz_->resize(outer_rect_.right - outer_rect_.left,
+                                   -scroll_horz_->dib_.bmiHeader.biHeight, 0);
             }
         }
     }
@@ -8201,79 +8199,59 @@ void Win::sub_5ef1e0(int x1, int y1, int x2, int y2, void *pen, int unused6) {
 // ===== homed from src/unrecovered/005f7320.cpp =====
 
 int __cdecl Win::update_screen(RECT *area, Win *window) {
-    int windowCount = WinZOrderCount;
-    if (windowCount == 0) {
-        return 0;
-    }
-
-    if (WinZOrderWindow == 0) {
-        window = 0;
-    }
-
-    int i = windowCount - 1;
-    if (window != 0) {
-        for (i = 0; i < windowCount; ++i) {
-            if (WinZOrderArray[i] == window) {
-                break;
+    if (WinZOrderCount != 0) {
+        if (WinZOrderWindow == 0) {
+            window = 0;
+        }
+        int i = WinZOrderCount - 1;
+        if (window != 0) {
+            for (i = 0; i < WinZOrderCount; ++i) {
+                if (window == WinZOrderArray[i]) {
+                    break;
+                }
             }
-        }
-        if (i == windowCount) {
-            return windowCount;
-        }
-    } else {
-        if (WinBackBuffer == 0) {
+            if (i == WinZOrderCount) {
+                goto done;
+            }
+        } else if (WinBackBuffer == 0) {
             if (area != 0) {
-                (&Win::screen_buffer_)->fill(area, 0);
+                Win::screen_buffer_.fill(area, 0);
             } else {
-                (&Win::screen_buffer_)->fill(0);
+                Win::screen_buffer_.fill(0);
+            }
+        }
+        for (; i >= 0; --i) {
+            if (WinZOrderArray[i]->is_visible()) {
+                // The parent visibility call can change the table: 5F73C8
+                // reloads this slot before painting.
+                Win *w = WinZOrderArray[i];
+                if ((w->iSomeFlag_ & 2) != 0) {
+                    w->on_nc_paint(area, -1);
+                }
+                if (window == 0 || window == window->poWinBase_) {
+                    w->poWinBase_->on_paint(area);
+                }
+            }
+        }
+        if (WinFlipSprite != 0) {
+            // original 9B7A30 is RECT.left, 9B7A34 is RECT.top
+            RECT rectangle;
+            rectangle.top = WinFlipSpriteX;
+            rectangle.left = WinFlipSpriteY;
+            rectangle.right = WinFlipSpriteY + WinClipWidth;
+            rectangle.bottom = WinFlipSpriteX + WinClipHeight;
+            // IAT 669338 is USER32!IntersectRect.
+            if (area == 0 || IntersectRect(&rectangle, &rectangle, area) != 0) {
+                return Win::screen_buffer_.copy(
+                    &Win::drawing_buffer_, rectangle.left, rectangle.top,
+                    rectangle.left - WinFlipSpriteY,
+                    rectangle.top - WinFlipSpriteX,
+                    rectangle.right - rectangle.left,
+                    rectangle.bottom - rectangle.top);
             }
         }
     }
-
-    for (; i >= 0; --i) {
-        if (WinZOrderArray[i]->is_visible()) {
-            // The parent visibility call can change the table: 5F73C8
-            // reloads this slot before painting.
-            Win *w = WinZOrderArray[i];
-            if ((w->iSomeFlag_ & 2) != 0) {
-                w->on_nc_paint(area, -1);
-            }
-            if (window == 0 || window == window->poWinBase_) {
-                w->poWinBase_->on_paint(area);
-            }
-        }
-    }
-
-    if (WinFlipSprite == 0) {
-        return 0;
-    }
-
-    int origin_x = WinFlipSpriteY; // original 9B7A30 is RECT.left
-    int origin_y = WinFlipSpriteX; // original 9B7A34 is RECT.top
-    RECT rectangle;
-    rectangle.left = origin_x;
-    rectangle.top = origin_y;
-    rectangle.right = static_cast<int>(static_cast<unsigned int>(origin_x) +
-                                       static_cast<unsigned int>(WinClipWidth));
-    rectangle.bottom = static_cast<int>(static_cast<unsigned int>(origin_y) +
-                                        static_cast<unsigned int>(WinClipHeight));
-    // IAT 669338 is USER32!IntersectRect. The two LEAs at 5F7445/5F744A
-    // denote the same complete stack RECT after the intervening PUSH.
-    if (area != 0) {
-        if (IntersectRect(&rectangle, &rectangle, area) == 0) return 0;
-        origin_y = WinFlipSpriteX;
-        origin_x = WinFlipSpriteY;
-    }
-    return Win::screen_buffer_.copy(
-        &Win::drawing_buffer_, rectangle.left, rectangle.top,
-        static_cast<int>(static_cast<unsigned int>(rectangle.left) -
-                         static_cast<unsigned int>(origin_x)),
-        static_cast<int>(static_cast<unsigned int>(rectangle.top) -
-                         static_cast<unsigned int>(origin_y)),
-        static_cast<int>(static_cast<unsigned int>(rectangle.right) -
-                         static_cast<unsigned int>(rectangle.left)),
-        static_cast<int>(static_cast<unsigned int>(rectangle.bottom) -
-                         static_cast<unsigned int>(rectangle.top)));
+done:;
 }
 
 // ===== homed from src/recovered/units/005f5d10.cpp =====
@@ -8770,30 +8748,28 @@ void Win::paint_tiled(Buffer *tile, int x_origin, int y_origin, int clip_left,
     int neg_tile_height = -static_cast<int>(tile->dib_.bmiHeader.biHeight);
 
     RECT clip_rect;
-    clip_rect.left = clip_left;
-    clip_rect.right = clip_left + clip_width;
-    clip_rect.top = clip_top;
-    clip_rect.bottom = clip_top + clip_height;
+    set_rectangle_dimensions(&clip_rect, clip_left, clip_top, clip_width,
+                             clip_height);
     HRGN clip_region = CreateRectRgnIndirect(&clip_rect);
     if (clip_region == 0) {
         return;
     }
     SelectClipRgn(WinSharedHdc, clip_region);
 
-    int mod_x = x_origin % tile_width;
-    int mod_y = y_origin % neg_tile_height;
+    x_origin %= tile_width;
+    y_origin %= neg_tile_height;
 
     int cols = 0;
     int rows = 0;
-    if (mod_x != 0) {
+    if (x_origin != 0) {
         cols = 1;
     }
-    if (mod_y != 0) {
+    if (y_origin != 0) {
         rows = 1;
     }
-    int span_x = clip_width - mod_x;
+    int span_x = clip_width - x_origin;
     cols += span_x / tile_width;
-    int span_y = clip_height - mod_y;
+    int span_y = clip_height - y_origin;
     rows += span_y / neg_tile_height;
     if (span_x % tile_width != 0) {
         ++cols;
@@ -8802,9 +8778,9 @@ void Win::paint_tiled(Buffer *tile, int x_origin, int y_origin, int clip_left,
         ++rows;
     }
 
-    const int start_x = clip_left - mod_x;
+    const int start_x = clip_left - x_origin;
     int cur_x = start_x;
-    int cur_y = clip_top - mod_y;
+    int cur_y = clip_top - y_origin;
     for (int r = 0; r < rows; ++r) {
         for (int c = 0; c < cols; ++c) {
             tile->copy_to_window(this, 0, 0, cur_x, cur_y,
@@ -11430,10 +11406,7 @@ void Win::client_to_screen(RECT * rect) {
     int xAdj = 0;
     int yAdj = 0;
     client_to_screen(&xAdj, &yAdj);
-    rect->left += xAdj;
-    rect->right += xAdj;
-    rect->top += yAdj;
-    rect->bottom += yAdj;
+    offset_rect(rect, xAdj, yAdj);
 }
 
 // ORIGINAL: 0x005ED0A0 ?nonscreen_to_client@Win@@QAEXPAURECT@@@Z 0x005ED0A0-0x005ED16A FILE BYTE_EXACT

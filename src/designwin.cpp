@@ -2708,24 +2708,21 @@ void DesignWin::on_iface_left_click(int a1, int a2) {
 // through the main interface's client_to_screen.
 void DesignWin::on_iface_right_click(int xCoord, int yCoord) {
     TutorialWindow.reset();
-    const int click_y = yCoord;
-    const int click_x = xCoord;
     int position;
     int type;
-    if (spot1_.check(click_x, click_y, &position, &type) != -1 && position >= 0) {
+    if (spot1_.check(xCoord, yCoord, &position, &type) != -1 && position >= 0) {
+        int x = xCoord;
+        int y = yCoord;
         // The label pointer sits at byte offset 0xCE8 of the game block - slot
         // 0x33A of the LPSTR array, the same walk datalink.cpp's
         // CATEGORY_LABEL makes over Labels.strings_ptr.
-        xCoord = click_y;
-        yCoord = click_x;
         LPSTR resolved_label = StringTable.get(Labels.strings_ptr[0x33A]);
-        // Preserve the swapped argument slots and reversed pointer order.
-        MainInterfaceGlobal.client_to_screen(&yCoord, &xCoord);
+        MainInterfaceGlobal.client_to_screen(&x, &y);
         RECT rect;
-        rect.left = yCoord;
-        rect.top = xCoord;
-        rect.right = yCoord;
-        rect.bottom = xCoord;
+        rect.left = x;
+        rect.top = y;
+        rect.right = x;
+        rect.bottom = y;
         // MainInterface declares its own (button_id, text) set_bubble_text,
         // which would hide the Win member the image calls directly.
         MainInterfaceGlobal.Win::set_bubble_text(resolved_label, &rect);
@@ -3925,23 +3922,21 @@ void DesignWin::check_abil() {
 void DesignWin::suggest_abil(int ability) {
     check_abil();
     if ((GameDataStateStorage.fields_.game_preferences_ & 0x4000) == 0) return;
-
     if (!has_tech(Ability[abil_index(ability)].preq_tech,
                   static_cast<int>(factionID_))) {
         return;
     }
-
-    const int armor_id = static_cast<int>(protoArmorType_);
-    const int weapon_id = static_cast<int>(protoWeaponType_);
-    const int chassis_id = static_cast<int>(protoChassisType_);
-    if (!abil_cond(abil_index(ability), chassis_id, weapon_id, armor_id)
-        || bit_count(static_cast<int>(protoAbilityFlags_)) > 1
-        || (bit_count(static_cast<int>(protoAbilityFlags_)) != 0
-            && !has_tech(Rules.tech_two_spec_abilities,
-                         static_cast<int>(factionID_)))) {
+    if (!abil_cond(abil_index(ability), static_cast<int>(protoChassisType_),
+                   static_cast<int>(protoWeaponType_),
+                   static_cast<int>(protoArmorType_))) {
         return;
     }
-
+    if (bit_count(static_cast<int>(protoAbilityFlags_)) > 1) return;
+    if (bit_count(static_cast<int>(protoAbilityFlags_)) != 0
+        && !has_tech(Rules.tech_two_spec_abilities,
+                     static_cast<int>(factionID_))) {
+        return;
+    }
     // The original walks 0x29 dwords from both member-array starts instead
     // of honoring faction_bonus_count or the declared eight-entry extents.
     // Keep its stale/overrun reads; this is an original access quirk.
@@ -3951,7 +3946,6 @@ void DesignWin::suggest_abil(int ability) {
             return;
         }
     }
-
     protoAbilityFlags_ |= static_cast<uint32_t>(ability);
     for (int slot = 0; slot < 2; ++slot) {
         protoAbilityIDs_[slot] = -1;
