@@ -48,14 +48,8 @@
 /*
 Purpose: Handle setting the world altitude.
 // ORIGINAL: 0x005C2020 ?world_alt_set@@YAXHHHH@Z 0x005C2020-0x005C2374
-// TRIED: MISMATCH plateau, not chased to BYTE_EXACT (852-byte function,
-//   282 image instructions, best 48/282 similar 0.298 at /c /O2 /Gy /GR-
-//   /Oy- /GX). call_diff agrees on call count. The compiled body runs 396
-//   instructions against the image's 282 from early on (RadiusRange/
-//   RadiusOffsetX array reads land in a different register, and the loop
-//   guard around `alt_at` pulls in two extra real calls the image's copy
-//   doesn't show at that point) - a deep restructuring, not a 2-3 candidate
-//   fix, so left at the pre-existing body.
+// LEVER: the image inlines anything_at here (no call; bit&3 then val2&0xF<8).
+//   With anything_at as a `MEASURED inline` in map.h this body is BYTE_EXACT.
 // size      852 bytes
 // prototype void (__cdecl ?world_alt_set@@YAXHHHH@Z)(int xCoord, int yCoord, int altitude, int isSetBoth)
 // callers   23   call targets   4
@@ -71,13 +65,15 @@ void __cdecl world_alt_set(int x, int y, int altitude, BOOL is_set_both) {
     if (on_map(x, y)) {
         is_set_both ? alt_set_both(x, y, altitude) : alt_set(x, y, altitude);
     }
+    int j;
     BOOL has_set_alt;
     int i, alt;
     // RadiusRange[0..1] is [1,9): the eight nearest neighbors, not
     // [9,25). Original 5C20A9/5C2221 reads one entry before its bound.
-    for (i = 1, alt = altitude - 1; i < altitude; i++, alt--) {
+    for (i = 1; i < altitude; i++) {
+        alt = altitude - i;
         has_set_alt = false;
-        for (int j = RadiusRange[i - 1]; j < RadiusRange[i]; j++) {
+        for (j = RadiusRange[i - 1]; j < RadiusRange[i]; j++) {
             int x_radius = wrap_map_x(x + RadiusOffsetX[j]);
             int y_radius = y + RadiusOffsetY[j];
             if (on_map(x_radius, y_radius) && alt_at(x_radius, y_radius) < alt) {
@@ -97,9 +93,10 @@ void __cdecl world_alt_set(int x, int y, int altitude, BOOL is_set_both) {
         }
     }
     int max_alt = 8 - altitude;
-    for (i = 1, alt = i + altitude; i < max_alt; i++, alt++) {
+    for (i = 1; i < max_alt; i++) {
+        alt = i + altitude;
         has_set_alt = false;
-        for (int j = RadiusRange[i - 1]; j < RadiusRange[i]; j++) {
+        for (j = RadiusRange[i - 1]; j < RadiusRange[i]; j++) {
             int x_radius = wrap_map_x(x + RadiusOffsetX[j]);
             int y_radius = y + RadiusOffsetY[j];
             // Original 5C22AE/5C22B0 skips existing heights <= this cap.
@@ -175,14 +172,9 @@ void __cdecl world_lower_alt(int x, int y) {
 /*
 Purpose: Set up the brush for creating world terrain.
 // ORIGINAL: 0x005C2440 ?brush@@YAXHHH@Z 0x005C2440-0x005C27E1
-// TRIED: MISMATCH plateau, not chased to BYTE_EXACT (929-byte function,
-//   304 image instructions, best 8/304 similar 0.370 at /c /O1 /Ob0 /Gy
-//   /GR- /Oy- /GX). call_diff agrees on call count. Diverges from the first
-//   loop iteration on: which register RadiusOffsetX[i]/y_radius land in
-//   (matches the file's known ebx/edi plateau), and the `on_map()` +
-//   `alt_at()` guard is ordered/interleaved differently than this tree's
-//   compile produces - a deep restructuring, not a 2-3 candidate fix, so
-//   left at the pre-existing body.
+// TRIED: the diagonal scan runs k = 1, 3, 5, 7 with (k+1)&7 and (k-1)&7, as
+//   the image's induction shows. Remaining gap: i/x in esi/edi swapped and the
+//   first wrap's MapLongitudeBounds loads; explicit wrap chains are worse.
 // size      929 bytes
 // prototype void (__cdecl ?brush@@YAXHHH@Z)(int xCoord, int yCoord, int altitude)
 // callers   1   call targets   3
@@ -208,7 +200,7 @@ void __cdecl brush(int x, int y, int altitude) {
             continue;
         }
         BOOL skip = false;
-        for (uint32_t j = 0; j < 8; j++) {
+        for (int j = 0; j < 8; j++) {
             int x_rad_base = wrap_map_x(x_radius + VehMoveDeltaX[j]);
             int y_rad_base = y_radius + VehMoveDeltaY[j];
             if (on_map(x_rad_base, y_rad_base) && !is_ocean(x_rad_base, y_rad_base)
@@ -221,15 +213,15 @@ void __cdecl brush(int x, int y, int altitude) {
         }
         // Only a shoreline brush checks for a land bridge across a diagonal.
         if (altitude == ALT_SHORE_LINE) {
-            for (int k = 0; k + 1 <= 7; k += 2) {
-                int x_rad_base = wrap_map_x(x_radius + VehMoveDeltaX[k + 1]);
-                int y_rad_base = y_radius + VehMoveDeltaY[k + 1];
+            for (int k = 1; k <= 7; k += 2) {
+                int x_rad_base = wrap_map_x(x_radius + VehMoveDeltaX[k]);
+                int y_rad_base = y_radius + VehMoveDeltaY[k];
                 if (on_map(x_rad_base, y_rad_base)
                     && altitude_at(x_rad_base, y_rad_base) == ALT_BIT_SHORE_LINE) {
-                    int x_rad_base2 = wrap_map_x(x_radius + VehMoveDeltaX[(k + 2) & 7]);
-                    int y_rad_base2 = y_radius + VehMoveDeltaY[(k + 2) & 7];
-                    int x_rad_base3 = wrap_map_x(x_radius + VehMoveDeltaX[k & 7]);
-                    int y_rad_base3 = y_radius + VehMoveDeltaY[k & 7];
+                    int x_rad_base2 = wrap_map_x(x_radius + VehMoveDeltaX[(k + 1) & 7]);
+                    int y_rad_base2 = y_radius + VehMoveDeltaY[(k + 1) & 7];
+                    int x_rad_base3 = wrap_map_x(x_radius + VehMoveDeltaX[(k - 1) & 7]);
+                    int y_rad_base3 = y_radius + VehMoveDeltaY[(k - 1) & 7];
                     if (on_map(x_rad_base2, y_rad_base2)
                         && on_map(x_rad_base3, y_rad_base3)
                         && is_ocean(x_rad_base2, y_rad_base2)
@@ -612,15 +604,8 @@ BOOL __cdecl world_validate() {
 /*
 Purpose: Set up the world temperature.
 // ORIGINAL: 0x005C4170 ?world_temperature@@YAXXZ 0x005C4170-0x005C4401
-// TRIED: MISMATCH plateau, not chased to BYTE_EXACT (657-byte function,
-//   226 image instructions). LEVER that DID help: `MapLatitudeBounds /
-//   WorldBuilder.solar_energy` (and the three siblings) is `int / uint32_t`,
-//   which promotes to an UNSIGNED `div`; the image uses signed `idiv` at all
-//   four, so each RHS is cast `(int)`. Raised best similarity 0.611 -> 0.654
-//   (best flags /c /O2 /Ob0 /Gy /GR- /GX). Remaining gap starts at the
-//   `bit2_at`/`code_at` pair in the loop guard: the image inlines both, this
-//   tree's compile keeps them as real calls at this nesting depth - an
-//   inlining-heuristic difference, not chased further.
+// LEVER: rewritten from the image: abs-macro distance, signed code byte, nine
+//   radius tiles (the old body checked eight), and a dead tile-pointer walk.
 // size      657 bytes
 // prototype 
 // callers   2   call targets   4
@@ -632,42 +617,27 @@ Status: Complete - testing
 */
 void __cdecl world_temperature() {
     random_reseed(MapRandSeed + 17);
-    // SIGNED DIVISION: `WorldBuilder`'s fields are `uint32_t`, and dividing
-    // `int / uint32_t` promotes to an UNSIGNED `div`; the image uses `idiv`
-    // at all four, so the RHS is cast back to `int` to match.
+    // `int / uint32_t` would be an unsigned div; the image uses idiv.
     int temp_heat = MapLatitudeBounds / (int)WorldBuilder.solar_energy;
     int thermal_banding = MapLatitudeBounds / (int)WorldBuilder.thermal_band;
     int thermal_deviance = MapLatitudeBounds / (int)WorldBuilder.thermal_deviance;
     int global_warming = MapLatitudeBounds / (int)WorldBuilder.global_warming;
+    // Dead walk: the image advances this tile pointer but never reads it.
+    Map *tile = MapTiles;
     for (int y = 0; y < MapLatitudeBounds; y++) {
-        for (int x = y & 1; x < MapLongitudeBounds; x += 2) {
+        for (int x = y & 1; x < MapLongitudeBounds; x += 2, tile++) {
             if ((bit2_at(x, y) & (BIT2_UNK_80000000 | BIT2_CRATER)) != BIT2_CRATER
-                || code_at(x, y) >= 21) {
+                || ((int)bit2_at(x, y) >> 24) >= 21) {
                 int rand_seed = random(0, thermal_deviance * 2);
-                // The native load follows the first random call; INC423C
-                // wraps even when a file-loaded orbit is INT_MAX.
-                uint32_t orbit_bound_bits = static_cast<uint32_t>(MapPlanetaryOrbit) + 1u;
-                int orbit_bound;
-                memcpy(&orbit_bound, &orbit_bound_bits, sizeof(orbit_bound));
-                int rand_orbit = random(0, orbit_bound);
-                int val1 = (MapLatitudeBounds / 2) - rand_seed - y + thermal_deviance;
-                if (val1 < 0) { // abs?
-                    val1 = rand_seed - (MapLatitudeBounds / 2) - thermal_deviance + y;
-                }
-                // Reload the orbit after random as at426E. The products and
-                // SUB/LEA4279..4290 keep low dwords; IDIV4294 is signed.
-                uint32_t orbit_heat_bits = static_cast<uint32_t>(temp_heat)
-                    * (static_cast<uint32_t>(MapPlanetaryOrbit) - 1u);
-                uint32_t council_heat_bits = static_cast<uint32_t>(MapSeaLevelCouncil)
-                    * static_cast<uint32_t>(global_warming);
-                uint32_t band_bits = static_cast<uint32_t>(thermal_banding / 2)
-                    + (static_cast<uint32_t>(val1) - orbit_heat_bits - council_heat_bits) * 2u;
-                int band;
-                memcpy(&band, &band_bits, sizeof(band));
-                int val2 = band / thermal_banding;
-                int temperature = (val2 > 2) ? ((val2 <= 9) + 1) : 3;
+                int rand_orbit = random(0, MapPlanetaryOrbit + 1);
+                int val1 = ((MapLatitudeBounds / 2) - rand_seed - y + thermal_deviance >= 0)
+                    ? (MapLatitudeBounds / 2) - rand_seed - y + thermal_deviance
+                    : -((MapLatitudeBounds / 2) - rand_seed - y + thermal_deviance);
+                int val2 = (thermal_banding / 2 + (val1 - temp_heat * (MapPlanetaryOrbit - 1)
+                    - MapSeaLevelCouncil * global_warming) * 2) / thermal_banding;
+                int temperature = (val2 <= 2) ? 3 : (val2 <= 9) + 1;
                 int alt = alt_at(x, y);
-                for (int i = 0; i < 8; i++) {
+                for (int i = 0; i < 9; i++) {
                     int x_radius = wrap_map_x(x + RadiusOffsetX[i]);
                     int y_radius = y + RadiusOffsetY[i];
                     if (on_map(x_radius, y_radius) && bit_at(x_radius, y_radius) & BIT_THERMAL_BORE
@@ -677,16 +647,15 @@ void __cdecl world_temperature() {
                     }
                 }
                 if (temperature > 1) {
-                    if (alt <= ALT_2_LEVELS_ABOVE_SEA) {
-                        // == ALT_2_LEVELS_ABOVE_SEA, simplify?
-                        if (alt > ALT_1_LEVEL_ABOVE_SEA && !rand_orbit) {
+                    if (alt > ALT_2_LEVELS_ABOVE_SEA) {
+                        if (MapPlanetaryOrbit < 2 || !random(0, 2)) {
                             temperature--;
                         }
-                    } else if (MapPlanetaryOrbit < 2 || !random(0, 2)) {
+                    } else if (alt > ALT_1_LEVEL_ABOVE_SEA && !rand_orbit) {
                         temperature--;
                     }
                 }
-                temp_set(x, y, (uint8_t)range(temperature - 1, 0, 2));
+                temp_set(x, y, range(temperature - 1, 0, 2));
             }
         }
         do_all_non_input();
@@ -725,7 +694,7 @@ outside the frame, and it is not transcribed.
 int __cdecl world_site(int x, int y, BOOL is_ocean_site) {
     int crowding = 0;
     for (int i = 21; i < 49; i++) {
-        int x_radius = site_xrange(x + RadiusOffsetX[i]);
+        int x_radius = wrap_map_x(x + RadiusOffsetX[i]);
         int y_radius = y + RadiusOffsetY[i];
         if (y_radius < 0 || y_radius >= MapLatitudeBounds || x_radius < 0
             || x_radius >= MapLongitudeBounds) {
@@ -764,7 +733,7 @@ int __cdecl world_site(int x, int y, BOOL is_ocean_site) {
     Map *radius_tile = reinterpret_cast<Map *>(
         static_cast<uintptr_t>(MapIsFlat & 1));
     for (i = 0; i < 21; i++) {
-        int x_radius = site_xrange(x + RadiusOffsetX[i]);
+        int x_radius = wrap_map_x(x + RadiusOffsetX[i]);
         int y_radius = y + RadiusOffsetY[i];
         if (y_radius < 0 || y_radius >= MapLatitudeBounds || x_radius < 0
             || x_radius >= MapLongitudeBounds) {
@@ -899,23 +868,10 @@ int __cdecl world_site(int x, int y, BOOL is_ocean_site) {
 /*
 Purpose: Analysis of the world map.
 // ORIGINAL: 0x005C55C0 ?world_analysis@@YAXXZ 0x005C55C0-0x005C58B8
-// LEVER: call_diff had this MORE by 3 calls: the inner loop's three `bit_set(x, y, ...)`
-//            calls were real calls where the image writes bit_set's body out inline and
-//            reuses ONE tile pointer for all three (the image keeps a running `Map*` in
-//            ebx, bumped by sizeof(Map) once per x-loop iteration, instead of recomputing
-//            map_loc(x, y) at each site) - replaced with `uint32_t *const tile_bit =
-//            &map_loc(x, y)->bit;` hoisted once, then `*tile_bit`. Also fixed `i >= 32` /
-//            `i == 32` to `i >= 8` / `i == 8`: the image's `cmp esi, 0x20` is the SAME
-//            loop counter strength-reduced to a byte offset for RadiusOffsetX/Y addressing
-//            (esi = 4*i), so the comparison the source made was against `i`, not against
-//            that scaled induction variable - at `i < 20` the old `>= 32` could never be
-//            true, so the region_radius/BIT_UNK_4000 branch was dead code. 0.454 -> 0.484
-//            best-across-flags similarity; call_diff now agrees (0 vs 1 became 1 vs 1).
-// TRIED (not attempted further): the remaining gap is the `imul 0x2c` vs
-//            `lea`+SIB-scale-4 Map-stride plateau this file's other bodies already hit,
-//            compounded by a prologue register-scheduling difference (ebx/edi assignment
-//            order) at the very first divergence - both are the documented
-//            register-allocation plateau for this family, not a source-shape defect.
+// LEVER: rewritten from the image. Shift-form altitude/rocky tests; the
+//   fungus test is `!fungus || alt < shelf` (the old body negated the whole
+//   `||`), and both continents need tile_count >= 40, not > 40. The inner
+//   ring tests alt_at, the outer is_ocean, as the two arms of the image do.
 // size      760 bytes
 // prototype 
 // callers   1   call targets   1
@@ -932,43 +888,44 @@ void __cdecl world_analysis() {
     Map *flag_tile = map_tiles();
     for (int y = 0; y < MapLatitudeBounds; y++) {
         for (int x = y & 1; x < MapLongitudeBounds; x += 2, ++flag_tile) {
-            uint32_t region = region_at(x, y);
-            if (!is_ocean(x, y) && climate_at(x, y) != RAINFALL_ARID
-                && rocky_at(x, y) < TERRAIN_BIT_ROCKY
-                && (!(bit_at(x, y) & BIT_FUNGUS || altitude_at(x, y) < ALT_BIT_OCEAN_SHELF))) {
+            int region = region_at(x, y);
+            if (alt_at(x, y) >= ALT_SHORE_LINE && climate_at(x, y) != RAINFALL_ARID
+                && (map_loc(x, y)->val3 >> 6) < 2
+                && (!(bit_at(x, y) & BIT_FUNGUS) || alt_at(x, y) < ALT_OCEAN_SHELF)) {
                 Continents[region].open_terrain++;
             }
             uint32_t *const tile_bit = &flag_tile->bit; // bit_set, inlined: the image writes
             *tile_bit &= ~(BIT_UNK_40000000 | BIT_UNK_4000); // it out here, not a call
             if (!is_ocean(x, y)) {                                 // correctly for all bit_*
                 int search_val = -1;
-                uint32_t count_val1 = 0;
-                uint32_t count_val2 = 0;
-                for (uint32_t i = 0; i < 20; i++) {
+                int count_val2 = 0;
+                int count_val1 = 0;
+                for (int i = 0; i < 20; i++) {
                     int x_radius = wrap_map_x(x + RadiusOffsetX[i + 1]);
                     int y_radius = y + RadiusOffsetY[i + 1];
                     if (on_map(x_radius, y_radius)) {
-                        BOOL is_ocean_radius = is_ocean(x_radius, y_radius);
-                        if (i >= 8) {
-                            if (is_ocean_radius != search_val || i == 8) {
-                                search_val = is_ocean_radius;
-                                count_val1++;
-                            }
-                            uint32_t region_radius;
-                            if (y_radius > 4 && y_radius < ((int)MapLatitudeBounds - 4)
-                                && (region_radius = region_at(x_radius, y_radius),
-                                    region_radius < MaxRegionLandNum && region != region_radius
-                                    && Continents[region].tile_count > 40
-                                    && Continents[region_radius].tile_count > 40)) {
-                                *tile_bit |= BIT_UNK_4000; // bit_set, inlined
-                            }
-                        } else {
+                        if (i < 8) {
+                            int is_ocean_radius = alt_at(x_radius, y_radius) < ALT_SHORE_LINE;
                             if (is_ocean_radius != search_val) {
                                 search_val = is_ocean_radius;
                                 count_val2++;
                                 if (count_val2 >= 4 && Continents[region].tile_count >= 80) {
                                     *tile_bit |= BIT_UNK_40000000; // bit_set, inlined
                                 }
+                            }
+                        } else {
+                            int is_ocean_radius = is_ocean(x_radius, y_radius);
+                            if (is_ocean_radius != search_val || i == 8) {
+                                search_val = is_ocean_radius;
+                                count_val1++;
+                            }
+                            int region_radius;
+                            if (y_radius > 4 && y_radius < MapLatitudeBounds - 4
+                                && (region_radius = region_at(x_radius, y_radius),
+                                    region_radius < MaxRegionLandNum && region_radius != region
+                                    && Continents[region_radius].tile_count >= 40
+                                    && Continents[region].tile_count >= 40)) {
+                                *tile_bit |= BIT_UNK_4000; // bit_set, inlined
                             }
                         }
                     }
@@ -980,9 +937,9 @@ void __cdecl world_analysis() {
         }
         do_all_non_input();
     }
-    int area_index;
-    for (area_index = 0; area_index < MapArea; area_index++) {
-        map_tiles()[area_index].val2 &= 0xF; // clear map sites
+    Map *site_tile = MapTiles;
+    for (int area_index = 0; area_index < MapArea; area_index++, site_tile++) {
+        site_tile->val2 &= 0xF; // clear map sites
     }
 }
 

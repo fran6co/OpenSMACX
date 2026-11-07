@@ -1310,16 +1310,9 @@ Purpose: Check whether a sensor array is worth building on the specified tile.
 Return Value: Is the tile a good sensor site? true/false
 Status: Complete
 
-TRIED: best 14/242, 0.419 similar (best flag set /O2 /Gy /GR- /Oy- /GX).
-`has_tech` (0x005B9F20, technology.h) is `MEASURED inline` and gets inlined
-whole at this call site, where the image keeps a real call - dumping this
-tree's own compiled listing shows 7 call opcodes against the image's 9, the
-two missing being has_tech's. Same cross-file per-call-site conflict as
-get_there/port_to_port (0x0056B320, this file) - technology.h's `inline` is
-what fixes has_tech's OTHER callers, and reverting it here is out of this
-batch's reach (map.cpp/map.h only) without regressing those. The remaining
-gap otherwise is the usual xrange/on_map/is_ocean-loop register-scheduling
-plateau documented across this file. Not chased further.
+TRIED: wrap_map_x in both loops, base_who, and the shift forms of the rocky and
+altitude tests make the shape exact apart from the first loop's x_radius register
+(edi in the image) and its flat-map block order. has_tech stays a real call.
 
 Three questions in order, and every one of them can answer no on its own.
 
@@ -1383,7 +1376,7 @@ int __cdecl good_sensor(int faction_id, int x, int y) {
     }
     int reasons = 0;
     for (int i = 0; i < 25; i++) {
-        int x_radius = site_xrange(x + RadiusOffsetX[i]);
+        int x_radius = wrap_map_x(x + RadiusOffsetX[i]);
         int y_radius = y + RadiusOffsetY[i];
         if (!on_map(x_radius, y_radius)) {
             continue;
@@ -1400,7 +1393,7 @@ int __cdecl good_sensor(int faction_id, int x, int y) {
             reasons |= 2;
             BOOL base_covered = false;
             for (int j = 0; j < 25; j++) {
-                int x_base = site_xrange(x_radius + RadiusOffsetX[j]);
+                int x_base = wrap_map_x(x_radius + RadiusOffsetX[j]);
                 int y_base = y_radius + RadiusOffsetY[j];
                 if (!on_map(x_base, y_base)) {
                     continue;
@@ -1419,37 +1412,19 @@ int __cdecl good_sensor(int faction_id, int x, int y) {
             reasons |= 1;
         }
     }
-    if (!reasons) {
+    if (!reasons || bonus_at(x, y, 0) || base_who(x, y) >= 0) {
         return false;
     }
-    if (bonus_at(x, y, 0)) {
-        return false;
-    }
-    // base_who(x, y) inlined by hand: `site` is already map_loc(x, y), and the
-    // image makes no call here at all (9 calls total, call_diff confirms) even
-    // though base_who is `MEASURED inline` and does inline at its OTHER call
-    // sites - this one specific site is where this tree's compiler keeps it real.
     Map *site = map_loc(x, y);
-    if (site->bit & BIT_BASE_IN_TILE && (site->val2 & 0xF) < MaxPlayerNum) {
-        return false;
-    }
     uint32_t bit = site->bit;
-    if (bit & (BIT_MONOLITH | BIT_CONDENSER | BIT_THERMAL_BORE)) {
+    if (bit & (BIT_MONOLITH | BIT_CONDENSER | BIT_THERMAL_BORE)
+        || bit & (BIT_MINE | BIT_SOLAR_TIDAL)) {
         return false;
     }
-    if (bit & (BIT_MINE | BIT_SOLAR_TIDAL)) {
-        return false;
+    if ((site->val3 >> 6) > 1 || !(site->climate & (RAINFALL_RAINY | RAINFALL_MOIST))) {
+        return true;   // rocky or arid
     }
-    if ((site->val3 & 0xC0) > TERRAIN_BIT_ROLLING) {
-        return true;   // rocky
-    }
-    if (!(site->climate & (RAINFALL_RAINY | RAINFALL_MOIST))) {
-        return true;   // arid
-    }
-    if (!(bit & BIT_FUNGUS)) {
-        return false;
-    }
-    return (site->climate & ~0x1F) >= ALT_BIT_OCEAN_SHELF;
+    return (bit & BIT_FUNGUS) && (site->climate >> 5) >= ALT_OCEAN_SHELF;
 }
 
 /*
@@ -2449,7 +2424,8 @@ Purpose: Found a base from the built colony pod: log it, clear rock under
 // ORIGINAL: 0x004C96E0 ?action_build@@YAHHPAD@Z 0x004C96E0-0x004C99C5 FILE
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/map.cpp typed Vehs/Bases/PlayersData and base/map service declarations", "source callers:Console::new_base, enemy_move, NetDaemon::process_message; each owner includes map.h", "pinned original data at 0x687B60/0x687B6C has bounded NUL-terminated initial spans; former capacity unproved"], "reason": "Own base construction in the map/game-data API because its typed reads and writes use Vehs, Bases, PlayersData and existing map/base services. Keep the two caption arrays bounded to independently evidenced initial bytes."}
 // symbol    ?action_build@@YAHHPAD@Z
-// TRIED: byte-offset record indexing (a1*0x34) for the 0x952828/2a/2c/30/ 36/4f/56 base-record tables and the 0x20cc-stride diplomacy tables at 0x96c9f4/f8/0x96da3c and 0x134-stride base tables at 0x97d044/4a/53/78, matching Ghidra's decompile; diverges at instr #0 (prologue shape) given the function's size (741 bytes).
+// Rewritten from the image: base_init failure path first, double_cross on the
+// treaty-2 arm, shift-form rocky test.
 // size      741 bytes
 Status: Coverage transcription of the retained seed
         (git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/004c96e0.cpp, plain FILE). The veh record reads
@@ -2468,76 +2444,62 @@ Status: Coverage transcription of the retained seed
 */
 
 int __cdecl action_build(int veh_id, char *base_name) {
-    const int x = Vehs[veh_id].x;
-    const int y = Vehs[veh_id].y;
-    const unsigned char owner = Vehs[veh_id].faction_id;
-
-    log_say(ActionBuildLogCaption, x, y, owner);
-    log_say(ActionBuildTurnLogCaption, GameDataStateStorage.fields_.turn_current_num_, 0,
-            0);
-
-    if (rocky_at(x, y) > 0x40) {
+    int x = Vehs[veh_id].x;
+    int y = Vehs[veh_id].y;
+    int faction_id = Vehs[veh_id].faction_id;
+    log_say(ActionBuildLogCaption, x, y, faction_id);
+    log_say(ActionBuildTurnLogCaption, GameDataStateStorage.fields_.turn_current_num_, 0, 0);
+    if ((map_loc(x, y)->val3 >> 6) > 1) {
         rocky_set(x, y, 1);
     }
-
-    if (owner == ConsoleGlobal.faction_id_ ||
-        (Vehs[veh_id].faction_id == ConsoleGlobal.faction_id_ &&
-         (Vehs[veh_id].flags & 0x440) != 0x440) ||
-        ((1 << (ConsoleGlobal.faction_id_ & 0x1f)) &
-         Vehs[veh_id].visibility) != 0 ||
-        (GameDataStateStorage.fields_.game_state_ & STATE_OMNISCIENT_VIEW) != 0) {
-        ConsoleGlobal.focus(x, y, owner);
+    if (faction_id == ConsoleGlobal.faction_id_
+        || (Vehs[veh_id].faction_id == ConsoleGlobal.faction_id_
+            && (Vehs[veh_id].flags & 0x440) != 0x440)
+        || Vehs[veh_id].visibility & (1 << ConsoleGlobal.faction_id_)
+        || GameDataStateStorage.fields_.game_state_ & STATE_OMNISCIENT_VIEW) {
+        ConsoleGlobal.focus(x, y, faction_id);
     }
-
-    int target = whose_territory(owner, x, y, 0, 0);
-
-    if (PlayersData[owner].current_num_bases != 0 && target >= 0 &&
-        static_cast<unsigned int>(target) != owner &&
-        (PlayersData[owner].diplo_treaties[target] & 0x11) == 0 &&
-        (is_human(owner) || is_human(target))) {
-        if ((PlayersData[owner].diplo_treaties[target] & 2) == 0) {
-            treaty_on(owner, target, 0x10);
-        } else {
-            double_cross(owner, target, -1);
-        }
-    }
-
-    int base_id = base_init(owner, x, y);
-    if (base_id >= 0) {
-        if (is_human(owner)) {
-            const short other_base = Vehs[veh_id].home_base_id;
-            if (other_base >= 0) {
-                Bases[base_id].governor = Bases[other_base].governor;
-            }
-            if ((Vehs[veh_id].state & 0x200) != 0) {
-                Bases[base_id].governor |= 0x80000000;
+    int faction_id_target = whose_territory(faction_id, x, y, NULL, false);
+    if (PlayersData[faction_id].current_num_bases && faction_id_target >= 0
+        && faction_id_target != faction_id) {
+        uint32_t treaties = PlayersData[faction_id].diplo_treaties[faction_id_target];
+        if (!(treaties & 0x11) && (is_human(faction_id) || is_human(faction_id_target))) {
+            if (treaties & 2) {
+                double_cross(faction_id, faction_id_target, -1);
+            } else {
+                treaty_on(faction_id, faction_id_target, 0x10);
             }
         }
-        PlayersData[owner].last_turn_new_base = GameDataStateStorage.fields_.turn_current_num_;
-
-        if (base_name != 0 && strlen(base_name) != 0) {
-            strcpy(Bases[base_id].name_string, base_name);
-            make_base_unique(base_id);
-        }
-
-        veh_kill(veh_id);
-
-        if (owner == ConsoleGlobal.faction_id_ ||
-            Bases[base_id].faction_id_current == ConsoleGlobal.faction_id_ ||
-            (Bases[base_id].visibility &
-             (1 << (ConsoleGlobal.faction_id_ & 0x1f))) != 0 ||
-            (GameDataStateStorage.fields_.game_state_ & STATE_OMNISCIENT_VIEW) != 0) {
-            draw_map(1);
-        }
-
-        for (int i = 1; i < 8; i++) {
-            del_site(i, 8, x, y, 2);
-        }
-
-        mon_colony_founded(owner, Bases[base_id].name_string);
+    }
+    int base_id = base_init(faction_id, x, y);
+    if (base_id < 0) {
+        veh_skip(veh_id);
         return base_id;
     }
-
-    veh_skip(veh_id);
+    if (is_human(faction_id)) {
+        int home_base_id = Vehs[veh_id].home_base_id;
+        if (home_base_id >= 0) {
+            Bases[base_id].governor = Bases[home_base_id].governor;
+        }
+        if (Vehs[veh_id].state & 0x200) {
+            Bases[base_id].governor |= 0x80000000;
+        }
+    }
+    PlayersData[faction_id].last_turn_new_base = GameDataStateStorage.fields_.turn_current_num_;
+    if (base_name && strlen(base_name)) {
+        strcpy(Bases[base_id].name_string, base_name);
+        make_base_unique(base_id);
+    }
+    veh_kill(veh_id);
+    if (faction_id == ConsoleGlobal.faction_id_
+        || Bases[base_id].faction_id_current == ConsoleGlobal.faction_id_
+        || Bases[base_id].visibility & (1 << ConsoleGlobal.faction_id_)
+        || GameDataStateStorage.fields_.game_state_ & STATE_OMNISCIENT_VIEW) {
+        draw_map(1);
+    }
+    for (int i = 1; i < 8; i++) {
+        del_site(i, 8, x, y, 2);
+    }
+    mon_colony_founded(faction_id, Bases[base_id].name_string);
     return base_id;
 }

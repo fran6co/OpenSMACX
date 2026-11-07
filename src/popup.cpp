@@ -160,7 +160,7 @@ void __cdecl popups_normal() {
     BasePopButtonDefaults.bevel_upper = bevel_upper;
     BasePopButtonDefaults.bevel_lower = bevel_lower;
     BasePopDefaultField31B0[0] = 0;
-    MenuDefaultColor1 = MenuDefaultColor2 = 0;
+    MenuDefaultColor2 = MenuDefaultColor1 = 0;
     WinStaticDefaults[5] = InterfaceBorderThickness;
     DialogDefaults[3] = 2;
     DialogDefaults[1] = bevel_upper;
@@ -170,11 +170,11 @@ void __cdecl popups_normal() {
     BaseButtonA94Default = 0;
     BaseButton::set_def_font(0, 0, 0);
     BaseButtonA98Default = PopupThemeButtonColor;
-    PullDownDefaultBackground = TextColourTable[40];
     PullDownDefaultTextColor = TextColourTable[38];
+    PullDownDefaultBackground = TextColourTable[40];
     PullDownDefaultDisabledTextShadow = TextColourTable[42];
-    PullDownDefaultSelectedTextColor = TextColourTable[46];
     PullDownDefaultTextShadow = TextColourTable[44];
+    PullDownDefaultSelectedTextColor = TextColourTable[46];
     PullDownDefaultSelectedTextShadow = TextColourTable[48];
     PullDownDefaultDisabledTextColor = TextColourTable[48];
     PullDownBorderPadding = 1;
