@@ -95,6 +95,14 @@ class Win : public AutoSound {
 
   const RECT &client_rect() const { return client_rect_; }
   int client_width() const { return client_rect_.right - client_rect_.left; }
+  int client_height() const { return client_rect_.bottom - client_rect_.top; }
+  // Client height left below the caption and outside the outer frame.
+  int track_height() const {
+    return client_height() - outer_rect_.bottom - caption_height_ + outer_rect_.top;
+  }
+  int bottom_border() const {
+    return bottom_border_thickness_ < 0 ? border_thickness_ : bottom_border_thickness_;
+  }
   const RECT &cached_outer_rect() const { return cached_outer_rect_; }
 
  public:
@@ -402,6 +410,8 @@ class Win : public AutoSound {
   Win *parent_window() const { return win_parent_; }
   // Drops pointer ownership held by this window.
   void release_pointer();
+  // Takes pointer ownership; callers test that no window holds it.
+  void take_pointer();
   int has_dialog_focus_flag() const { return iFlags_ & 0x1000; }
   // ListBox row painting tests this existing Win flag to select parent-surface copying.
   bool has_listbox_backfill_flag() const { return (iFlags_ & 0x80000u) != 0; }
@@ -1025,6 +1035,11 @@ inline void Win::release_pointer() {
   if (WinPointerOwner4 == this) {
     WinPointerOwner4 = 0;
   }
+}
+
+inline void Win::take_pointer() {
+  WinPointerOwner3 = 0;
+  WinPointerOwner4 = this;
 }
 
 int __cdecl do_char();

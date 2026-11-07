@@ -2936,13 +2936,11 @@ void Console::time_controls() {
     Popup popup;
 
     if (IsMultiplayerNet == 0) {
-        popup.close();
         return;
     }
 
     if (console_turns_assigned() == 0) {
         NetMsgPrimary.pop(ConsoleStrHostTime, 5000, 0, 0);
-        popup.close();
         return;
     }
 
@@ -2950,7 +2948,6 @@ void Console::time_controls() {
     popup.set_value(GameDataStateStorage.fields_.time_controls_selection_);
     const int result = popup.exec(0, 0);
     if (result < 0) {
-        popup.close();
         return;
     }
 
@@ -2981,79 +2978,59 @@ void Console::time_controls() {
     }
 
     message_data(0x4C02, 0, result, 0, 0, 0);
-    popup.close();
+}
+
+// The splitter distances use a textual abs: its operand is expanded twice.
+#define SPLIT_ABS(v) ((v) >= 0 ? (v) : -(v))
+
+// True while any of the four splitter slots is armed (-1) for a drag. The
+// image keeps each caller's `return 1` epilogue separate, which only an
+// inline boundary around this test reproduces.
+static inline int splitter_armed(int a, int b, int c, int d) {
+    return a == -1 || b == -1 || c == -1 || d == -1;
 }
 
 // ORIGINAL: 0x0050F680 ?on_nc_hittest@Console@@QAEXHH@Z 0x0050F680-0x0050F951
 // RECOVERY_BINDING: v1 {"evidence": ["The original 0x0050F680..0x0050F951 disassembly exits return EAX values 1 or 0; its retired transcription is preserved in Git history."], "reason": "Translate the Console non-client hit-test into its existing virtual method; the disassembly exits return EAX values 1 or 0, correcting the seed-only void prototype."}
 // symbol    ?on_nc_hittest@Console@@UAEHHH@Z
 int Console::on_nc_hittest(int x_coord, int y_coord) {
-    // The original exits with EAX=1 while any split line is armed, and
-    // otherwise returns 1 only over a caption box or a splitter handle.
-    if (field_23D80_ == -1 || field_23D84_ == -1 ||
-        field_23D88_ == -1 || field_23D8C_ == -1) {
+    // EAX=1 while a split line is armed, else 1 only over a caption box or a
+    // splitter handle.
+    if (splitter_armed(field_23D80_, field_23D84_, field_23D88_, field_23D8C_)) {
         return 1;
     }
 
     RECT caption_box = {0, 0xE, 0x26, 0x1F};
-    caption_box.left = client_rect_.right - client_rect_.left - 0x5b;
+    caption_box.left = client_width() - 0x5b;
     caption_box.right = caption_box.left + 0x26;
     if (in_box(x_coord, y_coord, &caption_box)) {
         return 1;
     }
-
-    // track_top: the client height above the bottom outer frame.
-    if (x_coord > client_rect_.right - client_rect_.left - border_thickness_) {
-        const int track_top = client_rect_.bottom - client_rect_.top -
-                              outer_rect_.bottom - caption_height_ + outer_rect_.top;
-        if (y_coord < track_top - (bottom_border_thickness_ >= 0
-                ? bottom_border_thickness_ : border_thickness_) + caption_height_) {
-            return 0;
-        }
-        if (y_coord > client_rect_.bottom - client_rect_.top -
-                (bottom_border_thickness_ >= 0 ? bottom_border_thickness_
-                                               : border_thickness_)) {
-            return 0;
-        }
-        if (y_coord < track_top - (bottom_border_thickness_ >= 0
-                ? bottom_border_thickness_ : border_thickness_) -
-                sprite_b_.height() + static_cast<int>(field_23D88_) + caption_height_ ||
-            y_coord > track_top - (bottom_border_thickness_ >= 0
-                ? bottom_border_thickness_ : border_thickness_) +
-                static_cast<int>(field_23D88_) + caption_height_ + sprite_b_.height()) {
-            if (y_coord < track_top - (bottom_border_thickness_ >= 0
-                    ? bottom_border_thickness_ : border_thickness_) -
-                    sprite_b_.height() + static_cast<int>(field_23D8C_) + caption_height_) {
-                return 0;
-            }
-            if (y_coord > track_top - (bottom_border_thickness_ >= 0
-                    ? bottom_border_thickness_ : border_thickness_) +
-                    static_cast<int>(field_23D8C_) + caption_height_ + sprite_b_.height()) {
-                return 0;
+    if (x_coord > client_width() - border_thickness_) {
+        if (y_coord >= track_height() - bottom_border() + caption_height_ &&
+            y_coord <= client_height() - bottom_border()) {
+            if ((y_coord >= track_height() - bottom_border() - sprite_b_.height() +
+                     field_23D88_ + caption_height_ &&
+                 y_coord <= track_height() - bottom_border() + field_23D88_ +
+                     caption_height_ + sprite_b_.height()) ||
+                (y_coord >= track_height() - bottom_border() - sprite_b_.height() +
+                     field_23D8C_ + caption_height_ &&
+                 y_coord <= track_height() - bottom_border() + field_23D8C_ +
+                     caption_height_ + sprite_b_.height())) {
+                return 1;
             }
         }
-        return 1;
-    }
-
-    if (y_coord <= client_rect_.bottom - client_rect_.top -
-            (bottom_border_thickness_ >= 0 ? bottom_border_thickness_
-                                           : border_thickness_)) {
-        return 0;
-    }
-    if (x_coord < border_thickness_ ||
-        x_coord > client_rect_.right - client_rect_.left - border_thickness_) {
-        return 0;
-    }
-    if (x_coord < static_cast<int>(field_23D80_) - sprite_a_.width() + border_thickness_ ||
-        x_coord > static_cast<int>(field_23D80_) + border_thickness_ + sprite_a_.width()) {
-        if (x_coord < static_cast<int>(field_23D84_) - sprite_a_.width() + border_thickness_) {
-            return 0;
-        }
-        if (x_coord > static_cast<int>(field_23D84_) + border_thickness_ + sprite_a_.width()) {
-            return 0;
+    } else if (y_coord > client_height() - bottom_border() &&
+               x_coord >= border_thickness_ &&
+               x_coord <= client_width() - border_thickness_) {
+        if ((x_coord >= field_23D80_ - sprite_a_.width() + border_thickness_ &&
+             x_coord <= field_23D80_ + border_thickness_ + sprite_a_.width()) ||
+            (x_coord >= field_23D84_ - sprite_a_.width() + border_thickness_ &&
+             x_coord <= field_23D84_ + border_thickness_ + sprite_a_.width())) {
+            return 1;
         }
     }
-    return 1;
+    return 0;
 }
 
 // ORIGINAL: 0x0050F960 ?on_post_redraw_nc_buffer@Console@@QAEXPAUBuffer@@H@Z 0x0050F960-0x0050FB08
@@ -3065,33 +3042,25 @@ void Console::on_post_redraw_nc_buffer(Buffer *buffer, int which) {
     }
     // The image recomputes the border and track geometry for every handle.
     if (which == 1) {
-        {
-            const int border = bottom_border_thickness_ >= 0
-                ? bottom_border_thickness_ : border_thickness_;
-            sprite_b_.draw(buffer, sprite_b_.transparent_index(),
-                           buffer->dib_.bmiHeader.biWidth - sprite_b_.width(),
-                           client_rect_.bottom - client_rect_.top - outer_rect_.bottom -
-                               caption_height_ + outer_rect_.top - sprite_b_.height() / 2 +
-                               static_cast<int>(field_23D88_) - border,
-                           1, 1);
-        }
-        {
-            const int border = bottom_border_thickness_ >= 0
-                ? bottom_border_thickness_ : border_thickness_;
-            sprite_b_.draw(buffer, sprite_b_.transparent_index(),
-                           buffer->dib_.bmiHeader.biWidth - sprite_b_.width(),
-                           client_rect_.bottom - client_rect_.top - outer_rect_.bottom -
-                               caption_height_ + outer_rect_.top - sprite_b_.height() / 2 +
-                               static_cast<int>(field_23D8C_) - border,
-                           1, 1);
-        }
+        Sprite *const handle = &sprite_b_;
+        handle->draw(buffer, handle->transparent_index(),
+                     buffer->dib_.bmiHeader.biWidth - handle->width(),
+                     track_height() - handle->height() / 2 + field_23D88_ -
+                         bottom_border(),
+                     1, 1);
+        handle->draw(buffer, handle->transparent_index(),
+                     buffer->dib_.bmiHeader.biWidth - handle->width(),
+                     track_height() - handle->height() / 2 + field_23D8C_ -
+                         bottom_border(),
+                     1, 1);
     } else if (which == 2) {
-        sprite_a_.draw(buffer, sprite_a_.transparent_index(),
-                       static_cast<int>(field_23D80_) - sprite_a_.width() / 2 + border_thickness_,
-                       -(buffer->dib_.bmiHeader.biHeight + sprite_a_.height()), 1, 1);
-        sprite_a_.draw(buffer, sprite_a_.transparent_index(),
-                       static_cast<int>(field_23D84_) - sprite_a_.width() / 2 + border_thickness_,
-                       -(buffer->dib_.bmiHeader.biHeight + sprite_a_.height()), 1, 1);
+        Sprite *const handle = &sprite_a_;
+        handle->draw(buffer, handle->transparent_index(),
+                     field_23D80_ - handle->width() / 2 + border_thickness_,
+                     -(buffer->dib_.bmiHeader.biHeight + handle->height()), 1, 1);
+        handle->draw(buffer, handle->transparent_index(),
+                     field_23D84_ - handle->width() / 2 + border_thickness_,
+                     -(buffer->dib_.bmiHeader.biHeight + handle->height()), 1, 1);
     }
 }
 
@@ -3127,7 +3096,7 @@ void Console::on_nc_left_down(int x_coord, int y_coord) {
     box.right = 0x11;
     box.bottom = 0x1F;
 
-    box.left = client_rect_.right - client_rect_.left - 0x5b;
+    box.left = client_width() - 0x5b;
     box.right = box.left + 0x11;
     if (in_box(x_coord, y_coord, &box)) {
         minimize();
@@ -3141,66 +3110,30 @@ void Console::on_nc_left_down(int x_coord, int y_coord) {
         return;
     }
 
-    const int border = (bottom_border_thickness_ >= 0)
-        ? bottom_border_thickness_ : border_thickness_;
-    if (x_coord > client_rect_.right - border_thickness_ - client_rect_.left) {
-        const int extent = client_rect_.top - client_rect_.bottom -
-                           outer_rect_.top + outer_rect_.bottom -
-                           static_cast<int>(field_23D88_) + border;
-        int left_reach;
-        if (extent + y_coord >= 0) {
-            left_reach = extent + y_coord;
-        } else {
-            left_reach = client_rect_.bottom - client_rect_.top -
-                         outer_rect_.bottom + outer_rect_.top - border -
-                         y_coord + static_cast<int>(field_23D88_);
-        }
-
-        int right_reach;
-        if (extent + y_coord >= 0) {
-            right_reach = extent - static_cast<int>(field_23D8C_) + y_coord;
-        } else {
-            right_reach = client_rect_.bottom - client_rect_.top -
-                          outer_rect_.bottom - caption_height_ +
-                          outer_rect_.top - border - y_coord +
-                          static_cast<int>(field_23D8C_) + caption_height_;
-        }
-
-        if (left_reach < right_reach) {
+    // The nearer slot wins; each distance expands its operand twice.
+    if (x_coord > client_width() - border_thickness_) {
+        if (SPLIT_ABS(y_coord - (track_height() - bottom_border() + caption_height_ +
+                                 field_23D88_)) <
+            SPLIT_ABS(y_coord - (track_height() - bottom_border() + caption_height_ +
+                                 field_23D8C_))) {
             field_23D88_ = -1;
         } else {
             field_23D8C_ = -1;
         }
-
         if (WinPointerOwner4 == 0) {
-            WinPointerOwner3 = 0;
-            WinPointerOwner4 = this;
+            take_pointer();
         }
     }
 
-    const int bottom_border = (bottom_border_thickness_ >= 0)
-        ? bottom_border_thickness_ : border_thickness_;
-    if (y_coord > client_rect_.bottom - client_rect_.top - bottom_border) {
-        const int edge = border_thickness_;
-
-        const int to_top_slot = x_coord - edge -
-                                static_cast<int>(field_23D80_);
-        const int dist_top = (to_top_slot >= 0) ? to_top_slot : -to_top_slot;
-
-        const int to_bottom_slot = x_coord - edge -
-                                   static_cast<int>(field_23D84_);
-        const int dist_bottom = (to_bottom_slot >= 0) ? to_bottom_slot
-                                                      : -to_bottom_slot;
-
-        if (dist_top < dist_bottom) {
+    if (y_coord > client_height() - bottom_border()) {
+        if (SPLIT_ABS(x_coord - border_thickness_ - field_23D80_) <
+            SPLIT_ABS(x_coord - border_thickness_ - field_23D84_)) {
             field_23D80_ = -1;
         } else {
             field_23D84_ = -1;
         }
-
         if (WinPointerOwner4 == 0) {
-            WinPointerOwner3 = 0;
-            WinPointerOwner4 = this;
+            take_pointer();
         }
     }
 }
@@ -3231,115 +3164,62 @@ Status: Coverage transcription - unclaimed body
 void Console::on_nc_mouse_move(int x_coord, int y_coord) {
     int line_x;
     int line_y;
+    int *target;
 
-    // The original vertical track uses Sprite +0x18 (display width),
-    // and the horizontal track uses +0x1C (display height). Do not swap
-    // these axes to agree with the local track-height/width names.
-    const int track_height = sprite_a_.width();
-    const int track_width = sprite_b_.height();
-
-    if (field_23D80_ == -1) {
-        const int half = track_height / 2;
-        field_23D80_ = static_cast<int>(static_cast<uint32_t>(x_coord) -
-                                        static_cast<uint32_t>(border_thickness_));
-        if (field_23D80_ < half) {
-            field_23D80_ = half;
+    // The clamps match on_nc_left_up; the dragged slot is redrawn without
+    // its line, then the crossing drag line moves to the new position.
+    if (field_23D80_ == -1 || field_23D84_ == -1) {
+        target = field_23D80_ == -1 ? &field_23D80_ : &field_23D84_;
+        *target = x_coord - border_thickness_;
+        if (*target < sprite_a_.width() / 2) {
+            *target = sprite_a_.width() / 2;
         }
-        const int limit = client_rect_.right - client_rect_.left -
-                          border_thickness_ * 2 - half;
-        if (field_23D80_ > limit) {
-            field_23D80_ = limit;
+        if (*target > client_width() - border_thickness_ * 2 -
+                          sprite_a_.width() / 2) {
+            *target = client_width() - border_thickness_ * 2 -
+                      sprite_a_.width() / 2;
         }
-        line_x = field_23D80_;
+        line_x = *target;
         line_y = field_23D88_;
         redraw_nc_buffer(2);
-        field_23D80_ = -1;
-        update_nc_buffer(2);
-    } else if (field_23D84_ == -1) {
-        const int half = track_height / 2;
-        field_23D84_ = static_cast<int>(static_cast<uint32_t>(x_coord) -
-                                        static_cast<uint32_t>(border_thickness_));
-        if (field_23D84_ < half) {
-            field_23D84_ = half;
-        }
-        const int limit = client_rect_.right - client_rect_.left -
-                          border_thickness_ * 2 - half;
-        if (field_23D84_ > limit) {
-            field_23D84_ = limit;
-        }
-        line_x = field_23D84_;
-        line_y = field_23D88_;
-        redraw_nc_buffer(2);
-        field_23D84_ = -1;
+        *target = -1;
         update_nc_buffer(2);
     } else {
+        // Both coordinates take x here, as in the image.
         line_x = x_coord;
         line_y = x_coord;
     }
 
-    if (field_23D88_ == -1) {
-        const int bottom_border = (bottom_border_thickness_ >= 0)
-            ? bottom_border_thickness_ : border_thickness_;
-        const int extent = client_rect_.top - caption_height_ -
-                           client_rect_.bottom - outer_rect_.top +
-                           outer_rect_.bottom + caption_height_ +
-                           bottom_border;
-        const int half = track_width / 2;
-        field_23D88_ = static_cast<int>(static_cast<uint32_t>(extent) +
-                                        static_cast<uint32_t>(y_coord));
-        if (field_23D88_ < half) {
-            field_23D88_ = half;
+    if (field_23D88_ == -1 || field_23D8C_ == -1) {
+        target = field_23D88_ == -1 ? &field_23D88_ : &field_23D8C_;
+        *target = y_coord - (track_height() - bottom_border() + caption_height_);
+        if (*target < sprite_b_.height() / 2) {
+            *target = sprite_b_.height() / 2;
         }
-        const int limit = client_rect_.bottom - client_rect_.top -
-                          caption_height_ - bottom_border - half;
-        if (field_23D88_ > limit) {
-            field_23D88_ = limit;
+        if (*target > client_height() - caption_height_ - bottom_border() -
+                          sprite_b_.height() / 2) {
+            *target = client_height() - caption_height_ - bottom_border() -
+                      sprite_b_.height() / 2;
         }
         line_x = field_23D80_;
-        line_y = field_23D88_;
+        line_y = *target;
         redraw_nc_buffer(1);
-        field_23D88_ = -1;
-        update_nc_buffer(1);
-    } else if (field_23D8C_ == -1) {
-        const int bottom_border = (bottom_border_thickness_ >= 0)
-            ? bottom_border_thickness_ : border_thickness_;
-        const int extent = client_rect_.top - caption_height_ -
-                           client_rect_.bottom - outer_rect_.top +
-                           outer_rect_.bottom + caption_height_ +
-                           bottom_border;
-        const int half = track_width / 2;
-        field_23D8C_ = static_cast<int>(static_cast<uint32_t>(extent) +
-                                        static_cast<uint32_t>(y_coord));
-        if (field_23D8C_ < half) {
-            field_23D8C_ = half;
-        }
-        const int limit = client_rect_.bottom - client_rect_.top -
-                          caption_height_ - bottom_border - half;
-        if (field_23D8C_ > limit) {
-            field_23D8C_ = limit;
-        }
-        line_x = field_23D84_;
-        line_y = field_23D8C_;
-        redraw_nc_buffer(1);
-        field_23D8C_ = -1;
+        *target = -1;
         update_nc_buffer(1);
     }
 
-    if (field_23D80_ != -1 && field_23D84_ != -1 &&
-        field_23D88_ != -1 && field_23D8C_ != -1) {
-        return;
+    if (splitter_armed(field_23D80_, field_23D84_, field_23D88_, field_23D8C_)) {
+        GraphicWin::update(0, ConsoleDragLineY,
+                           static_cast<int>(dib_.bmiHeader.biWidth), 1, nullptr);
+        GraphicWin::update(ConsoleDragLineX, 0, 1,
+                           -static_cast<int>(dib_.bmiHeader.biHeight), nullptr);
+        window_line_raw(static_cast<int>(dib_.bmiHeader.biWidth), line_y,
+                        0, line_y, 0, 1, 0);
+        window_line_raw(line_x, -static_cast<int>(dib_.bmiHeader.biHeight),
+                        line_x, 0, 0, 1, 0);
+        ConsoleDragLineX = line_x;
+        ConsoleDragLineY = line_y;
     }
-
-    GraphicWin::update(0, ConsoleDragLineY,
-                       static_cast<int>(dib_.bmiHeader.biWidth), 1, nullptr);
-    GraphicWin::update(ConsoleDragLineX, 0, 1,
-                       -static_cast<int>(dib_.bmiHeader.biHeight), nullptr);
-    window_line_raw(static_cast<int>(dib_.bmiHeader.biWidth), line_y,
-                    static_cast<int>(dib_.bmiHeader.biWidth), 0, 0, 1, 0);
-    window_line_raw(line_x, -static_cast<int>(dib_.bmiHeader.biHeight),
-                    line_x, 0, 0, 1, 0);
-    ConsoleDragLineX = line_x;
-    ConsoleDragLineY = line_y;
 }
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
@@ -5044,7 +4924,22 @@ void Console::on_nc_left_up(int x, int y) {
     release_pointer();
 
     // Each clamp re-reads the geometry: the stores go through `target`.
-    if (field_23D80_ == -1 || field_23D84_ == -1) {
+    if (field_23D80_ != -1 && field_23D84_ != -1) {
+        if (field_23D88_ == -1 || field_23D8C_ == -1) {
+            int *const target = field_23D88_ == -1 ? &field_23D88_ : &field_23D8C_;
+            *target = y - (track_height() - bottom_border() + caption_height_);
+            if (*target < sprite_b_.height() / 2) {
+                *target = sprite_b_.height() / 2;
+            }
+            if (*target > client_height() - caption_height_ - bottom_border() -
+                              sprite_b_.height() / 2) {
+                *target = client_height() - caption_height_ - bottom_border() -
+                          sprite_b_.height() / 2;
+            }
+            update(0, ConsoleDragLineY, dib_.bmiHeader.biWidth, 1, nullptr);
+            update(ConsoleDragLineX, 0, 1, -static_cast<int>(dib_.bmiHeader.biHeight), nullptr);
+        }
+    } else {
         int *const target = field_23D80_ == -1 ? &field_23D80_ : &field_23D84_;
         *target = x - border_thickness_;
         if (*target < sprite_a_.width() / 2) {
@@ -5054,25 +4949,6 @@ void Console::on_nc_left_up(int x, int y) {
                           sprite_a_.width() / 2) {
             *target = client_width() - border_thickness_ * 2 -
                       sprite_a_.width() / 2;
-        }
-        update(0, ConsoleDragLineY, dib_.bmiHeader.biWidth, 1, nullptr);
-        update(ConsoleDragLineX, 0, 1, -static_cast<int>(dib_.bmiHeader.biHeight), nullptr);
-    } else if (field_23D88_ == -1 || field_23D8C_ == -1) {
-        int *const target = field_23D88_ == -1 ? &field_23D88_ : &field_23D8C_;
-        *target = client_rect_.top - client_rect_.bottom - outer_rect_.top - caption_height_ +
-                  outer_rect_.bottom + caption_height_ +
-                  (bottom_border_thickness_ >= 0 ? bottom_border_thickness_ : border_thickness_) + y;
-        if (*target < sprite_b_.height() / 2) {
-            *target = sprite_b_.height() / 2;
-        }
-        if (*target > client_rect_.bottom - client_rect_.top - caption_height_ -
-                          (bottom_border_thickness_ >= 0 ? bottom_border_thickness_
-                                                         : border_thickness_) -
-                          sprite_b_.height() / 2) {
-            *target = client_rect_.bottom - client_rect_.top - caption_height_ -
-                      (bottom_border_thickness_ >= 0 ? bottom_border_thickness_
-                                                     : border_thickness_) -
-                      sprite_b_.height() / 2;
         }
         update(0, ConsoleDragLineY, dib_.bmiHeader.biWidth, 1, nullptr);
         update(ConsoleDragLineX, 0, 1, -static_cast<int>(dib_.bmiHeader.biHeight), nullptr);

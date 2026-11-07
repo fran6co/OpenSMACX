@@ -8814,7 +8814,7 @@ static const char NetEndTurnSaveFileLog[] = "Writing save file";
 // RECOVERY_BINDING: v1 {"evidence": ["historical seed:src/recovered/units/00529f30.cpp", "task:net-turn-coordinator-owner", "ConsoleGlobal9156B0+23BE4/+23BE8 owns939294/939298; UpgradePromptAnswered90EA3C, TurnRedrawPending703DE0 and CouncilPendingMessageArgs68BF38 already own their storage. Do not create competing aliases.", "Native prototypes64..511 use34-byte records and flags+30/obsolete_factions+2C, not seed1A stride; peer checksums use8x21-word existing storage. Preserve wait/abort ordering and masked PlayerLock active-bit test; extent/lifetime/runtime and retained-link evidence remain bounded."], "reason": "Recover the complete multiplayer turn operation through actual source-owned objects, arrays, members and SDK calls; preserve historical identity, spans and seed discoveries without implying game acceptance."}
 void __cdecl net_end_of_turn() {
     if ((GameDataStateStorage.fields_.net_turn_flags_ & 0x10u) != 0) {
-        if (IsMultiplayerNet != 0) {
+        if (NetDaemonNet.primary_state_.leading_words_[0] != 0) {
             message_data(0x4301, 0, 0, 0, 0, 0);
         } else {
             while (ExitTurnLoop == 0 && NextTurnReady == 0) {
@@ -8836,7 +8836,7 @@ void __cdecl net_end_of_turn() {
     if (NetDaemonNet.primary_state_.leading_words_[0] == 0) {
         NetDaemonNet.factions_waiting_mask() |= 1u << local_faction;
     }
-    NetDaemonNet.primary_state_.leading_words_[2] |= 1u << local_faction;
+    NetDaemonNet.channels_[0].leading_words_[0] |= 1u << local_faction;
     MultiWindow.draw(0);
 
     if ((GameDataStateStorage.fields_.net_turn_flags_ & 0x10u) != 0) {
@@ -9017,9 +9017,10 @@ void __cdecl net_control_turn() {
         NetDaemonNet.primary_state_.trailing_words_[6] = 0;
         NetDaemonNet.channels_[0].leading_words_[0] = 0;
         NetDaemonNet.primary_state_.trailing_words_[0] = 1;
-        NetDaemonNet.network_message_count() = 0;
-        // The adjacent 0x93E968 store is distinct from the message count.
+        // The adjacent 0x93E968 store is distinct from the message count and
+        // precedes it in the image.
         NetDaemonNet.channels_[1].trailing_words_[8] = 0;
+        NetDaemonNet.network_message_count() = 0;
         NextTurnReady = 0;
         InterfaceMessageWin.clear();
 
