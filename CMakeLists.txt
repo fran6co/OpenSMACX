@@ -113,8 +113,10 @@ add_library(zlib STATIC
 target_include_directories(zlib PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/src/vendor/zlib-1.0.2")
 # `/W0` and no forced include: PROVENANCE.md's whole point is that these
 # files are the release and not a copy somebody tidied, so the build adapts
-# to them rather than the other way round.
-target_compile_options(zlib PRIVATE /W0)
+# to them rather than the other way round. The original was compiled without
+# /Ob2: its static helpers (putShortMSB, flush_pending, bi_*, ...) stay out of
+# line, so /Ob1 overrides CMake's default C release flags.
+target_compile_options(zlib PRIVATE /W0 $<$<NOT:$<CONFIG:Debug>>:/Ob1>)
 
 set(OPENSMACX_SOURCES
     src/alphamenu.cpp
