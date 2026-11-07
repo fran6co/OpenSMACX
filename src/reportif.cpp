@@ -1141,6 +1141,14 @@ void ReportWin::init() {
     field_E268_ = font_line_advance(*ReportIfGlobal.field_1E184_);
 }
 
+// Local rectangle inflation; inlined by both of reset's frame adjustments.
+static inline void inflate_frame(RECT *rect, int dx, int dy) {
+    rect->left -= dx;
+    rect->right += dx;
+    rect->top -= dy;
+    rect->bottom += dy;
+}
+
 /*
 Purpose: Reset the seven report buttons, initialize the report text buffer,
          copy the current report bounds, draw both panel frames, and restore
@@ -1173,15 +1181,9 @@ void ReportWin::reset() {
 
     Buffer::box_sprite(&report_panel_rect_, &InterfaceBoxStyles[9]);
 
-    report_frame_rect_.left -= 3;
-    report_frame_rect_.top -= 3;
-    report_frame_rect_.right += 3;
-    report_frame_rect_.bottom += 3;
+    inflate_frame(&report_frame_rect_, 3, 3);
     Buffer::box_sprite(&report_frame_rect_, &InterfaceBoxStyles[3]);
-    report_frame_rect_.left += 3;
-    report_frame_rect_.top += 3;
-    report_frame_rect_.right -= 3;
-    report_frame_rect_.bottom -= 3;
+    inflate_frame(&report_frame_rect_, -3, -3);
 }
 
 // RECOVERY_ASSOCIATED: v1 switch_targets 0x00496D00 0x00496DE4 0x00496E08 0x00496D35
@@ -3832,15 +3834,13 @@ void ReportWin::exp_anim() {
                           explosion_rect_.left, explosion_rect_.top);
             update(&explosion_rect_, 0);
             action_sat_attack(field_F924_, field_F928_, field_F92C_, field_F930_);
-            Buffer::restore_clip();
-            return;
         }
     } else {
         buffer1_.draw(static_cast<Buffer *>(this), 9,
                       explosion_rect_.left, explosion_rect_.top);
-        Sprite &frame = g_XI_BOOM_VEH_SPRITES[48 + field_F934_];
-        frame.draw_multi_table_dest(static_cast<Buffer *>(this),
-            frame.transparent_index(),
+        Sprite *const bank = &g_XI_BOOM_VEH_SPRITES[48];  // fourth 16-frame bank
+        bank[field_F934_].draw_multi_table_dest(static_cast<Buffer *>(this),
+            bank[field_F934_].transparent_index(),
             explosion_rect_.left, explosion_rect_.top, ExplosionColorTables[1]);
         if (++field_F934_ >= 16) field_F91C_ = 1;
         update(&explosion_rect_, 0);
@@ -7045,54 +7045,59 @@ void __cdecl report_intel(int selection) {
 // RECOVERY_BINDING: v1 {"evidence": ["Retired recovered seed provenance: git:4097a7c0:src/recovered/units/004acc30.cpp;source:src/reportif.h;source:src/base.h:BaseCurrentCount;source:src/general.h:swap"], "reason": "Recover the ReportIf base-ranking merge sort over its measured 0x200-entry, 16-byte scratch workspace, using the source-owned BaseCurrentCount bound and preserving original range normalization and key-prefetch order."}
 void ReportIf::merge_sort(int first, int last) {
     const int maximum = GameDataStateStorage.fields_.base_current_count_ - 1;
+    int low;
     if (first < 0 || maximum < 0) {
-        first = 0;
+        low = 0;
     } else if (first > maximum) {
-        first = maximum;
+        low = maximum;
+    } else {
+        low = first;
     }
-
+    first = low;
     int high = maximum;
     if (last < 0 || maximum < 0) {
         high = 0;
     } else if (last <= high) {
         high = last;
     }
+    last = high;
 
-    if (first == high) return;
+    if (first == last) return;
+    if (first > last) swap(&first, &last);
 
-    int end = high;
-    if (high < first) swap(&first, &end);
-
-    const int middle = (end + first) / 2;
+    const int middle = (last + first) / 2;
     merge_sort(first, middle);
-    int right = middle + 1;
-    merge_sort(right, end);
+    merge_sort(middle + 1, last);
 
     int left = first;
-    int output = first;
+    int right = middle + 1;
     // Preserve the original unchecked key prefetch: it reads both cursors'
     // values before testing which half is exhausted, including an endpoint
     // read adjacent to the active range. Do not turn this into a guarded,
     // conventional merge without a separate behavior decision.
-    while (output <= end) {
-        int selected;
-        if (sort_entries_[left].value < sort_entries_[right].value) {
-            if (right <= end) {
-                selected = right++;
+    for (int output = first; output <= last; ++output) {
+        if (sort_entries_[right].value > sort_entries_[left].value) {
+            if (right <= last) {
+                sort_entries_[output].sorted_base_id = sort_entries_[right].base_id;
+                sort_entries_[output].sorted_value = sort_entries_[right].value;
+                ++right;
             } else {
-                selected = left++;
+                sort_entries_[output].sorted_base_id = sort_entries_[left].base_id;
+                sort_entries_[output].sorted_value = sort_entries_[left].value;
+                ++left;
             }
         } else if (left <= middle) {
-            selected = left++;
+            sort_entries_[output].sorted_base_id = sort_entries_[left].base_id;
+            sort_entries_[output].sorted_value = sort_entries_[left].value;
+            ++left;
         } else {
-            selected = right++;
+            sort_entries_[output].sorted_base_id = sort_entries_[right].base_id;
+            sort_entries_[output].sorted_value = sort_entries_[right].value;
+            ++right;
         }
-        sort_entries_[output].sorted_base_id = sort_entries_[selected].base_id;
-        sort_entries_[output].sorted_value = sort_entries_[selected].value;
-        ++output;
     }
 
-    for (int i = first; i <= end; ++i) {
+    for (int i = first; i <= last; ++i) {
         sort_entries_[i].base_id = sort_entries_[i].sorted_base_id;
         sort_entries_[i].value = sort_entries_[i].sorted_value;
     }

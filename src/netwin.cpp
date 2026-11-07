@@ -501,32 +501,32 @@ int NetWin::get_player_color(int faction) {
             ++row;
         }
     }
-    // The native unique-colour path retains this signed record index.
-    int index = color;
-    if (taken != faction) {
-        index = 0;
-        int record_count = records[0].record_count_;
-        if (record_count > 0) {
-            int bound = NetDaemonNet.player_count_ + 1;
-            for (;;) {
-                int found = 1;
-                {
-                    const NetWinLobbyRow *row = &NetWinLobbyRows.rows_[1];
-                    while (found < bound) {
-                        if (row->faction_or_color_ == index) {
-                            break;
-                        }
-                        found++;
-                        ++row;
+    // A unique colour returns its own record directly (native 0x0047B3E5).
+    if (taken == faction) {
+        return records[color].color_;
+    }
+    int index = 0;
+    int record_count = records[0].record_count_;
+    if (record_count > 0) {
+        int bound = NetDaemonNet.player_count_ + 1;
+        for (;;) {
+            int found = 1;
+            {
+                const NetWinLobbyRow *row = &NetWinLobbyRows.rows_[1];
+                while (found < bound) {
+                    if (row->faction_or_color_ == index) {
+                        break;
                     }
+                    found++;
+                    ++row;
                 }
-                if (found == bound) {
-                    break;
-                }
-                index++;
-                if (index >= record_count) {
-                    break;
-                }
+            }
+            if (found == bound) {
+                break;
+            }
+            index++;
+            if (index >= record_count) {
+                break;
             }
         }
     }
