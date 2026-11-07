@@ -544,108 +544,331 @@ int Buffer::draw_pie(RECT *area, int first_color, int second_color,
 }
 
 
-// Patterned line rendering is still unfinished. This owning-TU body keeps
-// the non-cover route-preview branch linkable without an executable-address
-// call. The existing five-argument solid-line renderer remains unchanged.
-static void buffer_pattern_pixel(unsigned char *pixel, int first, int second,
-                                  int on, int off, int &phase) {
-    if (phase < 0) {
-        if (first != -1) *pixel = static_cast<unsigned char>(first);
-        if (++phase == 0) phase = off;
-    } else {
-        if (second != -1) *pixel = static_cast<unsigned char>(second);
-        if (--phase == 0) phase = -on;
-    }
-}
-
+// The patterned line plots each point inline: negative phases count the
+// first colour's run up to zero, positive ones the second colour's run down,
+// and -1 skips the write.
 // ORIGINAL: 0x005E09D0 ?line@Buffer@@QAEXHHHHHHHHH@Z 0x005E09D0-0x005E10BA
 // RECOVERY_BINDING: v1 {"evidence": ["Original4672C0 calls5E09D0 with nine stack arguments; the original ends with ret24 and belongs to Buffer.", "Original5E09D0 uses half-open clipping, inclusive endpoints and strict-positive DDA steps, preserving clipped-entry pattern phase and original failed-acquisition/modulo error paths."], "reason": "Recover the nine-argument patterned Buffer line as a genuine member, distinct from the five-argument solid overload."}
 // Deleted seed provenance: git:25c0645e742c23f149e0895c391a9ba79ad744cb:src/unrecovered/005e09d0.cpp
 // SUPERSEDED_BINDING_HISTORY: v1 {"evidence": ["Original4672C0 calls5E09D0; src/unrecovered/005e09d0.cpp retains its original span and seed.", "The original void catalogue and ignored-result call sites support the declaration; BODY GOES HERE does not implement pattern rendering."], "reason": "The non-cover direct route renderer references this nine-argument patterned Buffer line, distinct from the recovered five-argument solid overload. Its owning-TU placeholder is explicitly unfinished and only preserves linking."}
 void Buffer::line(int x1, int y1, int x2, int y2, int first_color,
                   int second_color, int pattern_on, int pattern_off, int phase) {
-    if (dib_bits_ == 0 && surface_ == 0) return;
+    if (dib_bits_ == nullptr && surface_ == nullptr) {
+        return;
+    }
     if (x1 == x2) {
-        vline(x1, y1, y2, first_color, second_color,
-              pattern_on, pattern_off, phase);
+        vline(x1, y1, y2, first_color, second_color, pattern_on, pattern_off, phase);
         return;
     }
     if (y1 == y2) {
-        hline(x1, x2, y1, first_color, second_color,
-              pattern_on, pattern_off, phase);
+        hline(x1, x2, y1, first_color, second_color, pattern_on, pattern_off, phase);
         return;
     }
     if (x2 < x1) {
-        int saved = x1; x1 = x2; x2 = saved;
-        saved = y1; y1 = y2; y2 = saved;
-        saved = first_color; first_color = second_color; second_color = saved;
-        saved = pattern_on; pattern_on = pattern_off; pattern_off = saved;
+        // Hand-written assembly: xchg with a memory operand swaps the
+        // endpoints in their parameter slots.
+        __asm {
+            mov eax, x1
+            xchg x2, eax
+            mov x1, eax
+            mov eax, y1
+            xchg y2, eax
+            mov y1, eax
+        }
+        first_color ^= second_color;
+        second_color ^= first_color;
+        first_color ^= second_color;
+        pattern_on ^= pattern_off;
+        pattern_off ^= pattern_on;
+        pattern_on ^= pattern_off;
         phase = pattern_on - phase + pattern_off;
     }
-    if (acquire_pixels() == 0) return; // Native does not release failed acquisition.
-    const RECT clip = rect1_;
-    // Original performs modulo before trivial reject, even for both -1
-    // colors. Sum zero and overflowing arithmetic retain their native invalid
-    // input obligations; do not add an early color guard or modulo clamp.
+    if (acquire_pixels() == 0) {
+        return;
+    }
+    RECT clip = rect1_;
     phase %= pattern_on + pattern_off;
-    if (phase < pattern_on) phase -= pattern_on;
-    else phase = pattern_on - phase + pattern_off;
+    if (phase >= pattern_on) {
+        phase = pattern_on - phase + pattern_off;
+    } else {
+        phase -= pattern_on;
+    }
+    pattern_on = -pattern_on;
     int dx = x2 - x1;
     int dy = y2 - y1;
-    bool ascending = y1 < y2;
-    bool rejected = x1 > clip.right || x2 < clip.left;
-    if (ascending) rejected = rejected || y1 > clip.bottom || y2 < clip.top;
-    else rejected = rejected || y1 < clip.top || y2 > clip.bottom;
-    if (!rejected) {
-        if (dy < 0) dy = -dy;
-        bool x_major = dx >= dy;
-        int straight = x_major ? 2 * dy : 2 * dx;
-        int diagonal = x_major ? 2 * (dy - dx) : 2 * (dx - dy);
-        int error = x_major ? 2 * dy - dx : 2 * dx - dy;
-        int y_step = ascending ? 1 : -1;
-        // Skip the leading clipped points without advancing the pattern.
-        while (x1 < clip.left || (ascending ? y1 < clip.top : y1 >= clip.bottom)) {
-            if (error > 0) {
-                error += diagonal;
-                ++x1;
-                y1 += y_step;
-            } else {
-                error += straight;
-                if (x_major) ++x1;
-                else y1 += y_step;
-            }
+    int error;
+    int along;
+    int diagonal;
+    unsigned char *pixel;
+    if (y1 < y2) {
+        if (x1 > clip.right || y1 > clip.bottom || x2 < clip.left || y2 < clip.top) {
+            goto done;
         }
-        if (x1 < clip.right && (ascending ? y1 < clip.bottom : y1 >= clip.top)) {
-            unsigned char *pixel = static_cast<unsigned char *>(locked_bits_)
-                + static_cast<int>(stride_) * y1 + x1;
-            buffer_pattern_pixel(pixel, first_color, second_color,
-                                  pattern_on, pattern_off, phase);
-            if (x_major) {
-                if (x2 >= clip.right) x2 = clip.right - 1;
-            } else if (ascending) {
-                if (y2 >= clip.bottom) y2 = clip.bottom - 1;
-            } else if (y2 < clip.top) {
-                y2 = clip.top;
+        if (dx >= dy) {
+            error = 2 * dy - dx;
+            along = dy << 1;
+            diagonal = (dy - dx) << 1;
+            while (x1 < clip.left || y1 < clip.top) {
+                if (error <= 0) {
+                    error += along;
+                } else {
+                    error += diagonal;
+                    ++y1;
+                }
+                ++x1;
             }
-            while (x_major ? x1 < x2 : (ascending ? y1 < y2 : y1 > y2)) {
-                if (error > 0) {
+            if (x1 >= clip.right || y1 >= clip.bottom) {
+                goto done;
+            }
+            pixel = static_cast<unsigned char *>(locked_bits_) + stride_ * y1 + x1;
+            if (phase < 0) {
+                if (first_color != -1) {
+                    *pixel = static_cast<unsigned char>(first_color);
+                }
+                if (++phase == 0) {
+                    phase = pattern_off;
+                }
+            } else {
+                if (second_color != -1) {
+                    *pixel = static_cast<unsigned char>(second_color);
+                }
+                if (--phase == 0) {
+                    phase = pattern_on;
+                }
+            }
+            if (x2 >= clip.right) {
+                x2 = clip.right - 1;
+            }
+            while (x1 < x2) {
+                if (error <= 0) {
+                    error += along;
+                    ++x1;
+                    ++pixel;
+                } else {
+                    if (++y1 >= clip.bottom) {
+                        goto done;
+                    }
                     error += diagonal;
                     ++x1;
-                    y1 += y_step;
-                    if (x_major) {
-                        if (ascending ? y1 >= clip.bottom : y1 < clip.top) break;
-                    } else if (x1 >= clip.right) break;
-                    pixel += 1 + y_step * static_cast<int>(stride_);
-                } else {
-                    error += straight;
-                    if (x_major) { ++x1; ++pixel; }
-                    else { y1 += y_step; pixel += y_step * static_cast<int>(stride_); }
+                    pixel += stride_ + 1;
                 }
-                buffer_pattern_pixel(pixel, first_color, second_color,
-                                      pattern_on, pattern_off, phase);
+                if (phase < 0) {
+                    if (first_color != -1) {
+                        *pixel = static_cast<unsigned char>(first_color);
+                    }
+                    if (++phase == 0) {
+                        phase = pattern_off;
+                    }
+                } else {
+                    if (second_color != -1) {
+                        *pixel = static_cast<unsigned char>(second_color);
+                    }
+                    if (--phase == 0) {
+                        phase = pattern_on;
+                    }
+                }
+            }
+        } else {
+            error = 2 * dx - dy;
+            along = dx << 1;
+            diagonal = (dx - dy) << 1;
+            while (x1 < clip.left || y1 < clip.top) {
+                if (error <= 0) {
+                    error += along;
+                } else {
+                    error += diagonal;
+                    ++x1;
+                }
+                ++y1;
+            }
+            if (x1 >= clip.right || y1 >= clip.bottom) {
+                goto done;
+            }
+            pixel = static_cast<unsigned char *>(locked_bits_) + stride_ * y1 + x1;
+            if (phase < 0) {
+                if (first_color != -1) {
+                    *pixel = static_cast<unsigned char>(first_color);
+                }
+                if (++phase == 0) {
+                    phase = pattern_off;
+                }
+            } else {
+                if (second_color != -1) {
+                    *pixel = static_cast<unsigned char>(second_color);
+                }
+                if (--phase == 0) {
+                    phase = pattern_on;
+                }
+            }
+            if (y2 >= clip.bottom) {
+                y2 = clip.bottom - 1;
+            }
+            while (y1 < y2) {
+                if (error <= 0) {
+                    error += along;
+                    ++y1;
+                    pixel += stride_;
+                } else {
+                    if (++x1 >= clip.right) {
+                        goto done;
+                    }
+                    error += diagonal;
+                    ++y1;
+                    pixel += stride_ + 1;
+                }
+                if (phase < 0) {
+                    if (first_color != -1) {
+                        *pixel = static_cast<unsigned char>(first_color);
+                    }
+                    if (++phase == 0) {
+                        phase = pattern_off;
+                    }
+                } else {
+                    if (second_color != -1) {
+                        *pixel = static_cast<unsigned char>(second_color);
+                    }
+                    if (--phase == 0) {
+                        phase = pattern_on;
+                    }
+                }
+            }
+        }
+    } else {
+        if (x1 > clip.right || y1 < clip.top || x2 < clip.left || y2 > clip.bottom) {
+            goto done;
+        }
+        dy = abs(dy);
+        if (dx >= dy) {
+            error = 2 * dy - dx;
+            along = dy << 1;
+            diagonal = (dy - dx) << 1;
+            while (x1 < clip.left || y1 >= clip.bottom) {
+                if (error <= 0) {
+                    error += along;
+                } else {
+                    error += diagonal;
+                    --y1;
+                }
+                ++x1;
+            }
+            if (x1 >= clip.right || y1 < clip.top) {
+                goto done;
+            }
+            pixel = static_cast<unsigned char *>(locked_bits_) + stride_ * y1 + x1;
+            if (phase < 0) {
+                if (first_color != -1) {
+                    *pixel = static_cast<unsigned char>(first_color);
+                }
+                if (++phase == 0) {
+                    phase = pattern_off;
+                }
+            } else {
+                if (second_color != -1) {
+                    *pixel = static_cast<unsigned char>(second_color);
+                }
+                if (--phase == 0) {
+                    phase = pattern_on;
+                }
+            }
+            if (x2 >= clip.right) {
+                x2 = clip.right - 1;
+            }
+            while (x1 < x2) {
+                if (error <= 0) {
+                    error += along;
+                    ++x1;
+                    ++pixel;
+                } else {
+                    if (--y1 < clip.top) {
+                        goto done;
+                    }
+                    error += diagonal;
+                    ++x1;
+                    pixel += 1 - stride_;
+                }
+                if (phase < 0) {
+                    if (first_color != -1) {
+                        *pixel = static_cast<unsigned char>(first_color);
+                    }
+                    if (++phase == 0) {
+                        phase = pattern_off;
+                    }
+                } else {
+                    if (second_color != -1) {
+                        *pixel = static_cast<unsigned char>(second_color);
+                    }
+                    if (--phase == 0) {
+                        phase = pattern_on;
+                    }
+                }
+            }
+        } else {
+            error = 2 * dx - dy;
+            along = dx << 1;
+            diagonal = (dx - dy) << 1;
+            while (x1 < clip.left || y1 >= clip.bottom) {
+                if (error <= 0) {
+                    error += along;
+                } else {
+                    error += diagonal;
+                    ++x1;
+                }
+                --y1;
+            }
+            if (x1 >= clip.right || y1 < clip.top) {
+                goto done;
+            }
+            pixel = static_cast<unsigned char *>(locked_bits_) + stride_ * y1 + x1;
+            if (phase < 0) {
+                if (first_color != -1) {
+                    *pixel = static_cast<unsigned char>(first_color);
+                }
+                if (++phase == 0) {
+                    phase = pattern_off;
+                }
+            } else {
+                if (second_color != -1) {
+                    *pixel = static_cast<unsigned char>(second_color);
+                }
+                if (--phase == 0) {
+                    phase = pattern_on;
+                }
+            }
+            if (y2 < clip.top) {
+                y2 = clip.top;
+            }
+            while (y1 > y2) {
+                if (error <= 0) {
+                    error += along;
+                    --y1;
+                    pixel -= stride_;
+                } else {
+                    if (++x1 >= clip.right) {
+                        goto done;
+                    }
+                    error += diagonal;
+                    --y1;
+                    pixel += 1 - stride_;
+                }
+                if (phase < 0) {
+                    if (first_color != -1) {
+                        *pixel = static_cast<unsigned char>(first_color);
+                    }
+                    if (++phase == 0) {
+                        phase = pattern_off;
+                    }
+                } else {
+                    if (second_color != -1) {
+                        *pixel = static_cast<unsigned char>(second_color);
+                    }
+                    if (--phase == 0) {
+                        phase = pattern_on;
+                    }
+                }
             }
         }
     }
+done:
     free_data(1);
 }
 
@@ -2917,14 +3140,13 @@ int Buffer::fill_line(int x1, int y1, int x2, int y2, char fill_colour) {
 }
 
 
-// Bresenham error; starting a new line at the clipped coordinates changes
-// the pixels at ties. The four octants share these two major-axis walks,
-// with descending lines starting at their left (higher-Y) endpoint.
-// The initial pixel precedes the endpoint check: a descending endpoint at
-// the excluded bottom edge can advance beyond the segment before that one
-// write (5E18B9, 5E18E4, 5E193C). Preserve this original boundary quirk.
-// As with the buffer's other pixel operations, the recovered geometry
-// contract requires representable coordinate/error arithmetic and addresses.
+// Bresenham line with the original's four explicit octant walks, in the
+// image's block order. Each walk first skips the clipped leading points
+// without plotting, then writes the first pixel before its endpoint check:
+// a descending endpoint at the excluded bottom edge can advance beyond the
+// segment before that one write (5E18B9, 5E18E4, 5E193C). Preserve this
+// original boundary quirk. The geometry contract requires representable
+// coordinate/error arithmetic and addresses.
 // Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x005E15F0 ?line@Buffer@@QAEXHHHHH@Z 0x005E15F0-0x005E1A7F FILE
 // RECOVERY_BINDING: v1 {"evidence": ["5E15FE..5E160A inspect Buffer storage; 5E1629/5E164A call its axis primitives; 5E1A7C returns0x14. The scoped source preserves the original error accumulator, lock lifetime and descending-bottom clipping quirk."], "reason": "The five-integer void drawing member uses Buffer storage and clip fields; its original thiscall entry and vertical/horizontal callees establish the owning class and signature."}
@@ -2941,114 +3163,183 @@ void Buffer::line(int x1, int y1, int x2, int y2, int color) {
         return;
     }
     if (x2 < x1) {
-        int swap = x1;
-        x1 = x2;
-        x2 = swap;
-        swap = y1;
-        y1 = y2;
-        y2 = swap;
+        // Hand-written assembly: xchg with a memory operand swaps the
+        // endpoints in their parameter slots.
+        __asm {
+            mov eax, x1
+            xchg x2, eax
+            mov x1, eax
+            mov eax, y1
+            xchg y2, eax
+            mov y1, eax
+        }
     }
     if (acquire_pixels() == 0) {
         return;
     }
-
-    // Lock may publish a new pitch or alter the clip. Read both afterwards.
-    const RECT clip = rect1_;
-    const int pitch = static_cast<int>(stride_);
-    unsigned char *const pixels = static_cast<unsigned char *>(locked_bits_);
-    const unsigned char ink = static_cast<unsigned char>(color);
-    const int dx = x2 - x1;
-    const int dy = y2 > y1 ? y2 - y1 : y1 - y2;
-    const int y_step = y2 > y1 ? 1 : -1;
-    int x = x1;
-    int y = y1;
-
-    do {
-        // These coarse tests retain the original strict comparisons; the
-        // entry checks below enforce the exclusive right and bottom edges.
-        if (x1 > clip.right || x2 < clip.left ||
-            (y_step > 0 ? (y1 > clip.bottom || y2 < clip.top)
-                        : (y1 < clip.top || y2 > clip.bottom))) {
-            break;
+    RECT clip = rect1_;
+    int dx = x2 - x1;
+    int dy = y2 - y1;
+    int error;
+    int along;
+    int diagonal;
+    unsigned char *pixel;
+    if (y1 < y2) {
+        if (x1 > clip.right || y1 > clip.bottom || x2 < clip.left || y2 < clip.top) {
+            goto done;
         }
         if (dx >= dy) {
-            int error = 2 * dy - dx;
-            const int along = 2 * dy;
-            const int diagonal = 2 * (dy - dx);
-            while (x < clip.left ||
-                   (y_step > 0 ? y < clip.top : y >= clip.bottom)) {
-                if (error > 0) {
-                    error += diagonal;
-                    y += y_step;
-                } else {
+            error = 2 * dy - dx;
+            along = dy << 1;
+            diagonal = (dy - dx) << 1;
+            while (x1 < clip.left || y1 < clip.top) {
+                if (error <= 0) {
                     error += along;
+                } else {
+                    error += diagonal;
+                    ++y1;
                 }
-                ++x;
+                ++x1;
             }
-            if (x >= clip.right ||
-                (y_step > 0 ? y >= clip.bottom : y < clip.top)) {
-                break;
+            if (x1 >= clip.right || y1 >= clip.bottom) {
+                goto done;
             }
-            unsigned char *pixel = pixels + y * pitch + x;
-            *pixel = ink;
-            const int last_x = x2 < clip.right ? x2 : clip.right - 1;
-            while (x < last_x) {
-                if (error > 0) {
-                    y += y_step;
-                    if (y_step > 0 ? y >= clip.bottom : y < clip.top) {
-                        break;
+            pixel = static_cast<unsigned char *>(locked_bits_) + stride_ * y1 + x1;
+            *pixel = static_cast<unsigned char>(color);
+            if (x2 >= clip.right) {
+                x2 = clip.right - 1;
+            }
+            while (x1 < x2) {
+                if (error <= 0) {
+                    error += along;
+                } else {
+                    if (++y1 >= clip.bottom) {
+                        goto done;
                     }
                     error += diagonal;
-                    pixel += y_step * pitch;
-                } else {
-                    error += along;
+                    pixel += stride_;
                 }
-                ++x;
                 ++pixel;
-                *pixel = ink;
+                ++x1;
+                *pixel = static_cast<unsigned char>(color);
             }
         } else {
-            int error = 2 * dx - dy;
-            const int along = 2 * dx;
-            const int diagonal = 2 * (dx - dy);
-            while (x < clip.left ||
-                   (y_step > 0 ? y < clip.top : y >= clip.bottom)) {
-                if (error > 0) {
-                    error += diagonal;
-                    ++x;
-                } else {
+            error = 2 * dx - dy;
+            along = dx << 1;
+            diagonal = (dx - dy) << 1;
+            while (x1 < clip.left || y1 < clip.top) {
+                if (error <= 0) {
                     error += along;
+                } else {
+                    error += diagonal;
+                    ++x1;
                 }
-                y += y_step;
+                ++y1;
             }
-            if (x >= clip.right ||
-                (y_step > 0 ? y >= clip.bottom : y < clip.top)) {
-                break;
+            if (x1 >= clip.right || y1 >= clip.bottom) {
+                goto done;
             }
-            unsigned char *pixel = pixels + y * pitch + x;
-            *pixel = ink;
-            const int last_y = y_step > 0
-                ? (y2 < clip.bottom ? y2 : clip.bottom - 1)
-                : (y2 >= clip.top ? y2 : clip.top);
-            while (y_step > 0 ? y < last_y : y > last_y) {
-                if (error > 0) {
-                    ++x;
-                    if (x >= clip.right) {
-                        break;
+            pixel = static_cast<unsigned char *>(locked_bits_) + stride_ * y1 + x1;
+            *pixel = static_cast<unsigned char>(color);
+            if (y2 >= clip.bottom) {
+                y2 = clip.bottom - 1;
+            }
+            while (y1 < y2) {
+                if (error <= 0) {
+                    error += along;
+                } else {
+                    if (++x1 >= clip.right) {
+                        goto done;
                     }
                     error += diagonal;
                     ++pixel;
-                } else {
-                    error += along;
                 }
-                y += y_step;
-                pixel += y_step * pitch;
-                *pixel = ink;
+                pixel += stride_;
+                ++y1;
+                *pixel = static_cast<unsigned char>(color);
             }
         }
-    } while (false);
+    } else {
+        if (x1 > clip.right || y1 < clip.top || x2 < clip.left || y2 > clip.bottom) {
+            goto done;
+        }
+        dy = abs(dy);
+        if (dx >= dy) {
+            error = 2 * dy - dx;
+            along = dy << 1;
+            diagonal = (dy - dx) << 1;
+            while (x1 < clip.left || y1 >= clip.bottom) {
+                if (error <= 0) {
+                    error += along;
+                } else {
+                    error += diagonal;
+                    --y1;
+                }
+                ++x1;
+            }
+            if (x1 >= clip.right || y1 < clip.top) {
+                goto done;
+            }
+            pixel = static_cast<unsigned char *>(locked_bits_) + stride_ * y1 + x1;
+            *pixel = static_cast<unsigned char>(color);
+            if (x2 >= clip.right) {
+                x2 = clip.right - 1;
+            }
+            while (x1 < x2) {
+                if (error <= 0) {
+                    error += along;
+                } else {
+                    if (--y1 < clip.top) {
+                        goto done;
+                    }
+                    error += diagonal;
+                    pixel -= stride_;
+                }
+                ++x1;
+                ++pixel;
+                *pixel = static_cast<unsigned char>(color);
+            }
+        } else {
+            error = 2 * dx - dy;
+            along = dx << 1;
+            diagonal = (dx - dy) << 1;
+            while (x1 < clip.left || y1 >= clip.bottom) {
+                if (error <= 0) {
+                    error += along;
+                } else {
+                    error += diagonal;
+                    ++x1;
+                }
+                --y1;
+            }
+            if (x1 >= clip.right || y1 < clip.top) {
+                goto done;
+            }
+            pixel = static_cast<unsigned char *>(locked_bits_) + stride_ * y1 + x1;
+            *pixel = static_cast<unsigned char>(color);
+            if (y2 < clip.top) {
+                y2 = clip.top;
+            }
+            while (y1 > y2) {
+                if (error <= 0) {
+                    error += along;
+                } else {
+                    if (++x1 >= clip.right) {
+                        goto done;
+                    }
+                    error += diagonal;
+                    ++pixel;
+                }
+                --y1;
+                pixel -= stride_;
+                *pixel = static_cast<unsigned char>(color);
+            }
+        }
+    }
+done:
     free_data(1);
 }
+
 
 namespace {
 
