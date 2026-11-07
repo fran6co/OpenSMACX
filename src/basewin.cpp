@@ -444,122 +444,141 @@ void BaseWin::queue_click(int row, int x, int y, int right) {
 // ORIGINAL: 0x0040C070 ?facilities_click@BaseWin@@QAEHHHHH@Z 0x0040C070-0x0040C842
 // RECOVERY_BINDING: v1 {"evidence": ["git:a538e0a3:src/unrecovered/0040c070.cpp", "source:src/basewin.h", "image:0x40c070"], "reason": "Recover the complete original operation through genuine owning C++ classes, members and natural lifetimes; preserve retained seed evidence and historical restoration obligations separately from fresh matching."}
 int BaseWin::facilities_click(int facility, int, int, int) {
+    // The original returns no value: each exit leaves EAX as the last call's
+    // result and the only caller ignores it (a void signature would match).
     const int faction = BaseCurrent->faction_id_current;
-    if (faction != ConsoleGlobal.faction_id_ && !(GameDataStateStorage.fields_.game_state_ & STATE_OMNISCIENT_VIEW))
-        return 0;
-    parse_says(0, BaseCurrent->name_string, -1, -1);
-    parse_say(1, Facility[facility].name, -1, -1);
-    const int selection = popp(ScriptPopupFile, "FACMENU", 0,
-        (Players[faction].rule_flags & 0x80) ? "alfacblt_sm.pcx" : "facblt_sm.pcx", 0);
-    if (!selection) return 0;
-    if (selection == 1) {
-        help_topic(facility >= 70 ? 11 : 10, facility);
-        return 0;
-    }
-    if (facility >= 70) {
-        popp(ScriptPopupFile, "NOTPROJECT", 0, "secproj_sm.pcx", 0);
-        return 0;
-    }
-    int offset, mask;
-    if (facility < 65) bitmask(facility, &offset, &mask);
-    if (facility >= 65 || !(Bases[BaseIDCurrentSelected].facilities_built[offset] & (uint8_t)mask)) {
-        popp(ScriptPopupFile, "DONTHAVEFAC", 0,
-            (Players[faction].rule_flags & 0x80) ? "alfacblt_sm.pcx" : "facblt_sm.pcx", 0);
-        return 0;
-    }
-    if (ConsoleControlTurnActive && IsMultiplayerNet) {
-        X_pop("DURINGUPKEEP", 0);
-        return 0;
-    }
-    if ((BaseCurrent->state & BSTATE_FACILITY_SCRAPPED) && !(GameDataStateStorage.fields_.game_state_ & STATE_OMNISCIENT_VIEW)) {
+    if (faction == ConsoleGlobal.faction_id_ || (GameDataStateStorage.fields_.game_state_ & STATE_OMNISCIENT_VIEW)) {
         parse_says(0, BaseCurrent->name_string, -1, -1);
-        popp(ScriptPopupFile, "ONERECYCLE", 0,
-            (Players[faction].rule_flags & 0x80) ? "alfacblt_sm.pcx" : "facblt_sm.pcx", 0);
-        return 0;
-    }
-    if (facility == 1) {
-        popp(ScriptPopupFile, "HQRECYCLE", 0,
-            (Players[faction].rule_flags & 0x80) ? "alfacblt_sm.pcx" : "facblt_sm.pcx", 0);
-        return 0;
-    }
-    if (facility == 26 && (map_tiles()[BaseCurrent->y * MapLongitude + (BaseCurrent->x >> 1)].climate & 0xE0) < 0x60) {
-        popp(ScriptPopupFile, "PRESSURERECYCLE", 0,
-            (Players[faction].rule_flags & 0x80) ? "alfacblt_sm.pcx" : "facblt_sm.pcx", 0);
-        return 0;
-    }
-    for (int bonus = 0; bonus < Players[faction].faction_bonus_count; ++bonus) {
-        const int kind = Players[faction].faction_bonus_id[bonus];
-        const int granted = Players[faction].faction_bonus_val1[bonus];
-        if ((kind == 2 || (kind == 12 && has_tech(Facility[granted].preq_tech, faction)))
-            && facility == granted) {
-            parse_say(1, Facility[facility].name, -1, -1);
-            popp(ScriptPopupFile, "FREERECYCLE", 0,
-                (Players[faction].rule_flags & 0x80) ? "alfacblt_sm.pcx" : "facblt_sm.pcx", 0);
-            return 0;
+        parse_say(1, Facility[facility].name, -1, -1);
+        int selection;
+        if (Players[faction].rule_flags & 0x80) {
+            selection = popp(ScriptPopupFile, "FACMENU", 0, "alfacblt_sm.pcx", 0);
+        } else {
+            selection = popp(ScriptPopupFile, "FACMENU", 0, "facblt_sm.pcx", 0);
         }
-    }
-    if (NetDaemonNet.lock_base(BaseIDCurrentSelected, selection == 3 ? 2 : 0, -1, -1)) return 0;
-    int proceeds;
-    if (selection == 3) {
-        int payable = 0;
-        int possessed = 0;
-        for (int base = 0; base < GameDataStateStorage.fields_.base_current_count_; ++base) {
-            if (Bases[base].faction_id_current != faction) continue;
-            if (facility == 26 && (map_tiles()[Bases[base].y * MapLongitude + (Bases[base].x >> 1)].climate & 0xE0) < 0x60) continue;
-            bitmask(facility, &offset, &mask);
-            if (Bases[base].facilities_built[offset] & (uint8_t)mask) {
-                ++possessed;
-                if (!(BaseCurrent->state & BSTATE_FACILITY_SCRAPPED) || (GameDataStateStorage.fields_.game_state_ & STATE_OMNISCIENT_VIEW)) ++payable;
+        if (selection) {
+            if (selection == 1) {
+                if (facility >= 70) {
+                    help_topic(11, facility);
+                    return selection;
+                }
+                help_topic(10, facility);
+                return selection;
+            }
+            if (facility >= 70) {
+                return popp(ScriptPopupFile, "NOTPROJECT", 0, "secproj_sm.pcx", 0);
+            }
+            if (!has_fac(facility, BaseIDCurrentSelected, 0)) {
+                if (Players[faction].rule_flags & 0x80) {
+                    return popp(ScriptPopupFile, "DONTHAVEFAC", 0, "alfacblt_sm.pcx", 0);
+                }
+                return popp(ScriptPopupFile, "DONTHAVEFAC", 0, "facblt_sm.pcx", 0);
+            }
+            if (ConsoleControlTurnActive && IsMultiplayerNet) {
+                return X_pop("DURINGUPKEEP", 0);
+            }
+            if ((BaseCurrent->state & BSTATE_FACILITY_SCRAPPED) && !(GameDataStateStorage.fields_.game_state_ & STATE_OMNISCIENT_VIEW)) {
+                parse_says(0, BaseCurrent->name_string, -1, -1);
+                if (Players[faction].rule_flags & 0x80) {
+                    return popp(ScriptPopupFile, "ONERECYCLE", 0, "alfacblt_sm.pcx", 0);
+                }
+                return popp(ScriptPopupFile, "ONERECYCLE", 0, "facblt_sm.pcx", 0);
+            }
+            if (facility == 1) {
+                if (Players[faction].rule_flags & 0x80) {
+                    return popp(ScriptPopupFile, "HQRECYCLE", 0, "alfacblt_sm.pcx", 0);
+                }
+                return popp(ScriptPopupFile, "HQRECYCLE", 0, "facblt_sm.pcx", 0);
+            }
+            if (facility == 26 && (map_tiles()[BaseCurrent->y * MapLongitude + (BaseCurrent->x >> 1)].climate & ~0x1F) < 0x60) {
+                if (Players[faction].rule_flags & 0x80) {
+                    return popp(ScriptPopupFile, "PRESSURERECYCLE", 0, "alfacblt_sm.pcx", 0);
+                }
+                return popp(ScriptPopupFile, "PRESSURERECYCLE", 0, "facblt_sm.pcx", 0);
+            }
+            for (int bonus = 0; bonus < Players[faction].faction_bonus_count; ++bonus) {
+                if ((Players[faction].faction_bonus_id[bonus] == 2
+                        || (Players[faction].faction_bonus_id[bonus] == 12
+                            && has_tech(Facility[Players[faction].faction_bonus_val1[bonus]].preq_tech, faction)))
+                    && facility == Players[faction].faction_bonus_val1[bonus]) {
+                    parse_say(1, Facility[facility].name, -1, -1);
+                    if (Players[faction].rule_flags & 0x80) {
+                        return popp(ScriptPopupFile, "FREERECYCLE", 0, "alfacblt_sm.pcx", 0);
+                    }
+                    return popp(ScriptPopupFile, "FREERECYCLE", 0, "facblt_sm.pcx", 0);
+                }
+            }
+            if (!NetDaemonNet.lock_base(BaseIDCurrentSelected, selection == 3 ? 2 : 0, -1, -1)) {
+                int proceeds;
+                if (selection == 3) {
+                    proceeds = 0;
+                    int possessed = 0;
+                    for (int base = 0; base < GameDataStateStorage.fields_.base_current_count_; ++base) {
+                        if (Bases[base].faction_id_current != faction) continue;
+                        if (facility == 26 && (map_tiles()[Bases[base].y * MapLongitude + (Bases[base].x >> 1)].climate & ~0x1F) < 0x60) continue;
+                        if (has_fac_built(facility, base)) {
+                            ++possessed;
+                            if (!(BaseCurrent->state & BSTATE_FACILITY_SCRAPPED) || (GameDataStateStorage.fields_.game_state_ & STATE_OMNISCIENT_VIEW)) ++proceeds;
+                        }
+                    }
+                    proceeds = Facility[facility].cost * proceeds * 5;
+                    parse_num(0, proceeds);
+                    parse_num(1, possessed);
+                    parse_say(0, Facility[facility].name, -1, -1);
+                } else {
+                    proceeds = Facility[facility].cost * 5;
+                    parse_say(0, Facility[facility].name, -1, -1);
+                    parse_num(0, proceeds);
+                }
+                StringTemp[0] = 0;
+                strcat(StringTemp, "RECYCLEME");
+                if (selection == 3) strcat(StringTemp, "ALL");
+                else if (facility == 8 && (BaseCurrent->state & BSTATE_ARTIFACT_LINKED)) {
+                    proceeds = 0;
+                    strcat(StringTemp, "0");
+                }
+                if (Players[faction].rule_flags & 0x80) {
+                    if (!popp(ScriptPopupFile, StringTemp, 0, "alfacblt_sm.pcx", 0)) {
+                        BaseComputedID = -1;
+                        base_compute(0);
+                        NetDaemonNet.unlock_base(BaseIDCurrentSelected);
+                        return 0;
+                    }
+                } else if (!popp(ScriptPopupFile, StringTemp, 0, "facblt_sm.pcx", 0)) {
+                    BaseComputedID = -1;
+                    base_compute(0);
+                    NetDaemonNet.unlock_base(BaseIDCurrentSelected);
+                    return 0;
+                }
+                if (selection == 3) {
+                    for (int base = 0; base < GameDataStateStorage.fields_.base_current_count_; ++base) {
+                        if (Bases[base].faction_id_current != faction) continue;
+                        if (facility == 26 && (map_tiles()[Bases[base].y * MapLongitude + (Bases[base].x >> 1)].climate & ~0x1F) < 0x60) continue;
+                        Bases[base].state |= BSTATE_FACILITY_SCRAPPED;
+                        set_fac(facility, base, 0);
+                        if (base != BaseIDCurrentSelected) synch_base(base);
+                    }
+                    PlayersData[faction].energy_reserves += proceeds;
+                    log_say("BASE: global scrapped facility", BaseIDCurrentSelected, 0, 0);
+                } else {
+                    BaseCurrent->state |= BSTATE_FACILITY_SCRAPPED;
+                    set_fac(facility, BaseIDCurrentSelected, 0);
+                    PlayersData[faction].energy_reserves += proceeds;
+                    log_say("BASE: scrapped facility", BaseIDCurrentSelected, 0, 0);
+                }
+                BaseComputedID = -1;
+                base_compute(0);
+                NetDaemonNet.unlock_base(BaseIDCurrentSelected);
+                ConsoleInfoWin.set_redraw_phase(0);
+                ConsoleInfoWin.on_redraw();
+                redraw();
+                MainInterfaceGlobal.GraphicWin::redraw();
             }
         }
-        proceeds = static_cast<int>(static_cast<uint32_t>(Facility[facility].cost) * payable * 5u);
-        parse_num(0, proceeds);
-        parse_num(1, possessed);
-        parse_say(0, Facility[facility].name, -1, -1);
-    } else {
-        proceeds = static_cast<int>(static_cast<uint32_t>(Facility[facility].cost) * 5u);
-        parse_say(0, Facility[facility].name, -1, -1);
-        parse_num(0, proceeds);
     }
-    StringTemp[0] = 0;
-    strcat(StringTemp, "RECYCLEME");
-    if (selection == 3) strcat(StringTemp, "ALL");
-    else if (facility == 8 && (BaseCurrent->state & BSTATE_ARTIFACT_LINKED)) {
-        proceeds = 0;
-        strcat(StringTemp, "0");
-    }
-    if (!popp(ScriptPopupFile, StringTemp, 0,
-        (Players[faction].rule_flags & 0x80) ? "alfacblt_sm.pcx" : "facblt_sm.pcx", 0)) {
-        BaseComputedID = -1;
-        base_compute(0);
-        NetDaemonNet.unlock_base(BaseIDCurrentSelected);
-        return 0;
-    }
-    if (selection == 3) {
-        for (int base = 0; base < GameDataStateStorage.fields_.base_current_count_; ++base) {
-            if (Bases[base].faction_id_current != faction) continue;
-            if (facility == 26 && (map_tiles()[Bases[base].y * MapLongitude + (Bases[base].x >> 1)].climate & 0xE0) < 0x60) continue;
-            Bases[base].state |= BSTATE_FACILITY_SCRAPPED;
-            set_fac(facility, base, 0);
-            if (base != BaseIDCurrentSelected) synch_base(base);
-        }
-        PlayersData[faction].energy_reserves = static_cast<int>(static_cast<uint32_t>(PlayersData[faction].energy_reserves) + static_cast<uint32_t>(proceeds));
-        log_say("BASE: global scrapped facility", BaseIDCurrentSelected, 0, 0);
-    } else {
-        BaseCurrent->state |= BSTATE_FACILITY_SCRAPPED;
-        set_fac(facility, BaseIDCurrentSelected, 0);
-        PlayersData[faction].energy_reserves = static_cast<int>(static_cast<uint32_t>(PlayersData[faction].energy_reserves) + static_cast<uint32_t>(proceeds));
-        log_say("BASE: scrapped facility", BaseIDCurrentSelected, 0, 0);
-    }
-    BaseComputedID = -1;
-    base_compute(0);
-    NetDaemonNet.unlock_base(BaseIDCurrentSelected);
-    ConsoleInfoWin.set_redraw_phase(0);
-    ConsoleInfoWin.on_redraw();
-    redraw();
-    MainInterfaceGlobal.GraphicWin::redraw();
     return 0;
 }
+
 
 // Original 40D250..40E35B, automatic cleanup of Sprite and two Fonts.
 // Integration dependencies: genuine RECTs flash_rect_a_/flash_rect_b_ at
@@ -1010,51 +1029,155 @@ int BaseWin::governor(int settings_only) {
     compute_selected_base();
     if (Bases[focusedBaseID_].faction_id_current != ConsoleGlobal.faction_id_
         && !(GameDataStateStorage.fields_.game_state_ & STATE_OMNISCIENT_VIEW)) return 1;
-    Base *base = BaseCurrent;
-    const int faction = base->faction_id_current;
-    const uint32_t source_bits[19] = {0x80000000u,0x200000,0x80,0x40,1,
-        0x400000,0x200,0x400,0x800,0x1000,0x2000,0x80000,0x800000,
-        0x100000,0x8000,0x20000,0x10000,0x40000,0x20};
+    const int faction = BaseCurrent->faction_id_current;
     PopupWriteCheckState = 0;
-    for (int i = 0; i < 19; ++i)
-        if (base->governor & source_bits[i]) PopupWriteCheckState |= 1 << i;
-    parse_says(0, base->name_string, -1, -1);
+    // A signed sign-bit test: the image normalizes it with neg/sbb, not shr.
+    if (static_cast<int>(BaseCurrent->governor) & static_cast<int>(0x80000000u)) {
+        PopupWriteCheckState |= 0x1;
+    } else {
+        PopupWriteCheckState &= ~0x1;
+    }
+    if (BaseCurrent->governor & 0x200000u) {
+        PopupWriteCheckState |= 0x2;
+    } else {
+        PopupWriteCheckState &= ~0x2;
+    }
+    if (BaseCurrent->governor & 0x80u) {
+        PopupWriteCheckState |= 0x4;
+    } else {
+        PopupWriteCheckState &= ~0x4;
+    }
+    if (BaseCurrent->governor & 0x40u) {
+        PopupWriteCheckState |= 0x8;
+    } else {
+        PopupWriteCheckState &= ~0x8;
+    }
+    if (BaseCurrent->governor & 0x1u) {
+        PopupWriteCheckState |= 0x10;
+    } else {
+        PopupWriteCheckState &= ~0x10;
+    }
+    if (BaseCurrent->governor & 0x400000u) {
+        PopupWriteCheckState |= 0x20;
+    } else {
+        PopupWriteCheckState &= ~0x20;
+    }
+    if (BaseCurrent->governor & 0x200u) {
+        PopupWriteCheckState |= 0x40;
+    } else {
+        PopupWriteCheckState &= ~0x40;
+    }
+    if (BaseCurrent->governor & 0x400u) {
+        PopupWriteCheckState |= 0x80;
+    } else {
+        PopupWriteCheckState &= ~0x80;
+    }
+    if (BaseCurrent->governor & 0x800u) {
+        PopupWriteCheckState |= 0x100;
+    } else {
+        PopupWriteCheckState &= ~0x100;
+    }
+    if (BaseCurrent->governor & 0x1000u) {
+        PopupWriteCheckState |= 0x200;
+    } else {
+        PopupWriteCheckState &= ~0x200;
+    }
+    if (BaseCurrent->governor & 0x2000u) {
+        PopupWriteCheckState |= 0x400;
+    } else {
+        PopupWriteCheckState &= ~0x400;
+    }
+    if (BaseCurrent->governor & 0x80000u) {
+        PopupWriteCheckState |= 0x800;
+    } else {
+        PopupWriteCheckState &= ~0x800;
+    }
+    if (BaseCurrent->governor & 0x800000u) {
+        PopupWriteCheckState |= 0x1000;
+    } else {
+        PopupWriteCheckState &= ~0x1000;
+    }
+    if (BaseCurrent->governor & 0x100000u) {
+        PopupWriteCheckState |= 0x2000;
+    } else {
+        PopupWriteCheckState &= ~0x2000;
+    }
+    if (BaseCurrent->governor & 0x8000u) {
+        PopupWriteCheckState |= 0x4000;
+    } else {
+        PopupWriteCheckState &= ~0x4000;
+    }
+    if (BaseCurrent->governor & 0x20000u) {
+        PopupWriteCheckState |= 0x8000;
+    } else {
+        PopupWriteCheckState &= ~0x8000;
+    }
+    if (BaseCurrent->governor & 0x10000u) {
+        PopupWriteCheckState |= 0x10000;
+    } else {
+        PopupWriteCheckState &= ~0x10000;
+    }
+    if (BaseCurrent->governor & 0x40000u) {
+        PopupWriteCheckState |= 0x20000;
+    } else {
+        PopupWriteCheckState &= ~0x20000;
+    }
+    if (BaseCurrent->governor & 0x20u) {
+        PopupWriteCheckState |= 0x40000;
+    } else {
+        PopupWriteCheckState &= ~0x40000;
+    }
+    parse_says(0, BaseCurrent->name_string, -1, -1);
     if (NetDaemonNet.lock_base(BaseIDCurrentSelected, 0, -1, -1)) return 1;
     if (x_pop_short("GOVOPTIONS", 0x41, nullptr) < 0) {
         NetDaemonNet.unlock_base(BaseIDCurrentSelected);
         return 1;
     }
-    base = BaseCurrent;
-    uint32_t flags = base->governor & 0x0F000000;
-    for (int j = 0; j < 19; ++j)
-        if (PopupWriteCheckState & (1 << j)) flags |= source_bits[j];
-    base->governor = flags;
-    PlayersData[faction].base_governor_adv = flags;
+    BaseCurrent->governor &= 0x0F000000u;
+    if (PopupWriteCheckState & 0x1) BaseCurrent->governor |= 0x80000000u;
+    if (PopupWriteCheckState & 0x2) BaseCurrent->governor |= 0x200000u;
+    if (PopupWriteCheckState & 0x4) BaseCurrent->governor |= 0x80u;
+    if (PopupWriteCheckState & 0x8) BaseCurrent->governor |= 0x40u;
+    if (PopupWriteCheckState & 0x10) BaseCurrent->governor |= 0x1u;
+    if (PopupWriteCheckState & 0x20) BaseCurrent->governor |= 0x400000u;
+    if (PopupWriteCheckState & 0x40) BaseCurrent->governor |= 0x200u;
+    if (PopupWriteCheckState & 0x80) BaseCurrent->governor |= 0x400u;
+    if (PopupWriteCheckState & 0x100) BaseCurrent->governor |= 0x800u;
+    if (PopupWriteCheckState & 0x200) BaseCurrent->governor |= 0x1000u;
+    if (PopupWriteCheckState & 0x400) BaseCurrent->governor |= 0x2000u;
+    if (PopupWriteCheckState & 0x800) BaseCurrent->governor |= 0x80000u;
+    if (PopupWriteCheckState & 0x1000) BaseCurrent->governor |= 0x800000u;
+    if (PopupWriteCheckState & 0x2000) BaseCurrent->governor |= 0x100000u;
+    if (PopupWriteCheckState & 0x4000) BaseCurrent->governor |= 0x8000u;
+    if (PopupWriteCheckState & 0x8000) BaseCurrent->governor |= 0x20000u;
+    if (PopupWriteCheckState & 0x10000) BaseCurrent->governor |= 0x10000u;
+    if (PopupWriteCheckState & 0x20000) BaseCurrent->governor |= 0x40000u;
+    if (PopupWriteCheckState & 0x40000) BaseCurrent->governor |= 0x20u;
+    PlayersData[faction].base_governor_adv = BaseCurrent->governor;
     if (!settings_only) {
-        if (base->governor & 0x80000000u) {
-            if (base->governor & 1) {
-                base->state &= 0x7FFFFFFFu;
-                base->queue_size = 0;
+        if (BaseCurrent->governor & 0x80000000u) {
+            if (BaseCurrent->governor & 1) {
+                BaseCurrent->state &= 0x7FFFFFFFu;
+                BaseCurrent->queue_size = 0;
                 base_reset(BaseIDCurrentSelected, 1);
-                base = BaseCurrent;
             }
-            if (base->governor & 0x40) {
-                base->resource_sqr_radius = 0;
-                base->specialist_total = 0;
-                base->specialist_unk_1 = 0;
+            if (BaseCurrent->governor & 0x40) {
+                BaseCurrent->resource_sqr_radius = 0;
+                BaseCurrent->specialist_total = 0;
+                BaseCurrent->specialist_unk_1 = 0;
                 base_compute(1);
                 base_doctors();
-                base = BaseCurrent;
             }
         }
-        if (!(base->governor & 0x80000000u) || !(base->governor & 1))
-            draw_radius(base->x, base->y, 2, 2);
+        if (!(BaseCurrent->governor & 0x80000000u) || !(BaseCurrent->governor & 1))
+            draw_radius(BaseCurrent->x, BaseCurrent->y, 2, 2);
     }
     NetDaemonNet.unlock_base(BaseIDCurrentSelected);
     redraw();
     MainInterfaceGlobal.redraw();
     return 0;
 }
+
 
 // ORIGINAL: 0x0041A2B0 ?rename@BaseWin@@QAEXXZ 0x0041A2B0-0x0041A4B6 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:a538e0a3:src/recovered/units/0041a2b0.cpp", "source:src/basewin.h", "image:original instruction and dispatch evidence for the BaseWin owner"], "reason": "Recover this original base-window operation through the real BaseWin owner, existing typed members and source-owned shared dependencies; catalogue naming and original intervals remain distinct from current compiler symbols."}
@@ -1265,17 +1388,25 @@ void BaseWin::click(int x, int y, int right, int is_double) {
     if (!is_visible() || (IsMultiplayerNet && NetDaemonNet.primary_state_.leading_words_[2])) return;
     if (right) {
         if (in_box(x, y, &rect1_)) {
-            int label;
-            if (field_40AFC_ == 0) label = 0xC98;
-            else if (field_40AFC_ == 2) label = 0xC20;
-            else if (field_40AFC_ == 1) label = 0xC24;
-            else return;
-            show_panel_help(x, y, label, this);
+            if (field_40AFC_ == 0) {
+                show_panel_help(x, y, 0xC98, this);
+                return;
+            }
+            if (field_40AFC_ == 2) {
+                show_panel_help(x, y, 0xC20, this);
+                return;
+            }
+            if (field_40AFC_ == 1) {
+                show_panel_help(x, y, 0xC24, this);
+            }
             return;
         }
         if (in_box(x, y, &commerce_outer_rect_)) {
-            const bool alien = (Players[Bases[focusedBaseID_].faction_id_current].rule_flags & 0x80) != 0;
-            show_panel_help(x, y, alien ? 0x1190 : 0xC74, this);
+            if (Players[Bases[focusedBaseID_].faction_id_current].rule_flags & 0x80) {
+                show_panel_help(x, y, 0x1190, this);
+                return;
+            }
+            show_panel_help(x, y, 0xC74, this);
             return;
         }
         if (in_box(x, y, &facilities_help_rect_)) {
@@ -1286,14 +1417,35 @@ void BaseWin::click(int x, int y, int right, int is_double) {
             show_panel_help(x, y, 0xC7C, this);
             return;
         }
-        const int order[6] = {0, 2, 1, 3, 4, 5};
-        for (int panel = 0; panel < 6; ++panel) {
-            if (in_box(x, y, &expenses_help_rects_[order[panel]])
-                && (WinScreenWidth == 0x400 || (panel < 3
-                    ? !flatButtons_[17].selected_state() : flatButtons_[17].selected_state()))) {
-                show_panel_help(x, y, 0xC80 + panel * 4, this);
-                return;
-            }
+        if (in_box(x, y, &expenses_help_rects_[0])
+            && (WinScreenWidth == 0x400 || !flatButtons_[17].selected_state())) {
+            show_panel_help(x, y, 0xC80, this);
+            return;
+        }
+        if (in_box(x, y, &expenses_help_rects_[2])
+            && (WinScreenWidth == 0x400 || !flatButtons_[17].selected_state())) {
+            show_panel_help(x, y, 0xC84, this);
+            return;
+        }
+        if (in_box(x, y, &expenses_help_rects_[1])
+            && (WinScreenWidth == 0x400 || !flatButtons_[17].selected_state())) {
+            show_panel_help(x, y, 0xC88, this);
+            return;
+        }
+        if (in_box(x, y, &expenses_help_rects_[3])
+            && (WinScreenWidth == 0x400 || flatButtons_[17].selected_state())) {
+            show_panel_help(x, y, 0xC8C, this);
+            return;
+        }
+        if (in_box(x, y, &expenses_help_rects_[4])
+            && (WinScreenWidth == 0x400 || flatButtons_[17].selected_state())) {
+            show_panel_help(x, y, 0xC90, this);
+            return;
+        }
+        if (in_box(x, y, &expenses_help_rects_[5])
+            && (WinScreenWidth == 0x400 || flatButtons_[17].selected_state())) {
+            show_panel_help(x, y, 0xC94, this);
+            return;
         }
     }
     int position, type;
@@ -1304,8 +1456,14 @@ void BaseWin::click(int x, int y, int right, int is_double) {
         && !(PlayersData[ConsoleGlobal.faction_id_].diplo_treaties[faction] & 1)
         && type != 6) return;
     if (is_double) return;
-    if (type == 0) farm_click(x, y, right);
-    else if (type == 2) facilities_click(position, x, y, right);
+    switch (type) {
+    case 0:
+        farm_click(x, y, right);
+        break;
+    case 2:
+        facilities_click(position, x, y, right);
+        break;
+    }
 }
 
 // Draw one row using the original population-sized spacing. The stage counts
