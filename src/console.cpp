@@ -4917,7 +4917,7 @@ void Console::veh_key(int key, int character, int command) {
 }
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x0050FE70 ?on_nc_left_up@Console@@QAEXHH@Z 0x0050FE70-0x0051010A
+// ORIGINAL: 0x0050FE70 ?on_nc_left_up@Console@@QAEXHH@Z 0x0050FE70-0x0051010A BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/0050fe70.cpp: retained complete original identity/spans and seed evidence", "recovery/tasks/console-scenario-owner-wave.json; native scope expansions through sequence27", "Source owner interpretation preserves mapped original accesses, lifetime calls and branch roles; source-bound members and globals replace the seed offsets/address aliases. Historical seeds and claims remain independent restoration obligations."], "reason": "Recover splitter release into the genuine Console owner using source Win capture owners, real Win inheritance, embedded Sprite geometry and named splitter members. Preserve signed sentinel ordering and the original update operations; no fixed executable calls or self-offset access."}
 // symbol    ?on_nc_left_up@Console@@UAEXHH@Z
 void Console::on_nc_left_up(int x, int y) {
