@@ -95,6 +95,9 @@ def invocation(entry: CompilationEntry) -> list[str]:
         if word.startswith(("/", "-")) and word[1:] in {"MD", "MDd", "MT", "MTd", "ML", "MLd"}:
             kept.append("/" + word[1:])
             continue
+        if word == "-Fo":
+            # CMake's MASM rule spells the object `-Fo <OBJECT>`.
+            word = "/Fo"
         if word.startswith(("/Fo", "/Fd", "/Fp", "/Yu", "/Yc")):
             if word in ("/Fo", "/Fd", "/Fp", "/Yu", "/Yc"):
                 if not next(iterator, ""):

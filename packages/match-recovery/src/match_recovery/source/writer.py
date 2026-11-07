@@ -70,7 +70,8 @@ from ..components import relative_path
 from .grammar import (FACT_LINE, LESSON_CONTINUED, LESSON_DEFERRED,
                       LESSON_LEVER, LESSON_RULED_OUT, LESSON_UNRECOVERABLE,
                       MARKER, NEXT_MARKER, SOURCE_ROLE_DIRECTIVE,
-                      FUNCTION_FRAGMENT_DIRECTIVE)
+                      FUNCTION_FRAGMENT_DIRECTIVE, assembler_annotation_line,
+                      assembler_comment_line, is_assembler_source)
 from .model import (DecompilationState, Mode, SourceRole, State,
                     validate_source_role, validate_unbound_mapping)
 from .reader import _fact_lines, _lesson_run, read_text
@@ -570,6 +571,14 @@ def write_bytes(raw: bytes, records: list[DecompilationState]) -> bytes:
     if any(ending not in ("", "\n", "\r", "\r\n") or "\n" in content or "\r" in content
            for content, ending in zip(contents, endings)):
         raise ValueError("unsupported source line separator")
+    # One grammar for assembler sources too: write in the `//` spelling and
+    # respell only the lines the writer changed or added back to `;`.
+    assembler = {is_assembler_source(record.path) for record in records}
+    if len(assembler) > 1:
+        raise ValueError("one annotation rewrite cannot mix assembler and C++ sources")
+    assembler = assembler == {True}
+    if assembler:
+        contents = [assembler_annotation_line(content) for content in contents]
     normalized = "\n".join(contents) + ("\n" if endings and endings[-1] else "")
     rendered = write(normalized, records)
     wanted = rendered.splitlines()
@@ -582,6 +591,8 @@ def write_bytes(raw: bytes, records: list[DecompilationState]) -> bytes:
             newline = next((item for item in endings[low:high] if item),
                            next((item for item in endings[max(0, low - 1):] if item), "\n"))
             for index, content in enumerate(wanted[start:end]):
+                if assembler:
+                    content = assembler_comment_line(content)
                 ending = endings[low + index] if low + index < high else newline
                 # A replaced unterminated line may no longer be the final line.
                 if start + index < len(wanted) - 1 and not ending:

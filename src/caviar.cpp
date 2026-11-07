@@ -736,6 +736,13 @@ uint8_t CaviarColourSource[0x1800];
 // draw is entered while it is set the image spins on `jmp $+0` forever.
 uint8_t vox_scene_busy = 0;
 
+} // namespace
+
+// THE SELF-MODIFYING RENDERERS' SHARED STATE. The `_SELFMOD` MASM modules
+// (src/caviar_part_*.asm, src/caviar_shadow_*.asm) read and patch through
+// these, so they have external linkage: an assembler cannot name a symbol in
+// an anonymous namespace.
+
 // The draw currently accesses this 24-byte x86 window at 0x009BE6A4. The
 // complete original allocation/aggregate ownership is not established here.
 struct CaviarDrawSetupPointerStorageCandidate {
@@ -749,11 +756,13 @@ struct CaviarDrawSetupPointerStorageCandidate {
 typedef char CaviarDrawSetupPointerStorageCandidate_x86_size[
     sizeof(void *) != 4 || sizeof(CaviarDrawSetupPointerStorageCandidate) == 0x18
         ? 1 : -1];
-// RECOVERY_OBJECT: v1 0x009BE6A4 ?vox_setup_copy_@?%src/caviar.cpp@@3UCaviarDrawSetupPointerStorageCandidate@1@A
+// RECOVERY_OBJECT: v1 0x009BE6A4 ?vox_setup_copy_@@3UCaviarDrawSetupPointerStorageCandidate@@A
 CaviarDrawSetupPointerStorageCandidate vox_setup_copy_;
 
 // 0x009BE6BC. The render record's colour table, copied to where the helpers
-// read it.
+// read it. 0x639EB2 stores it; every _SELFMOD patcher entry (0x6646FC,
+// 0x664D52, ...) loads it first.
+// RECOVERY_OBJECT: v1 0x009BE6BC ?vox_active_colour_table_@@3PAXA
 void *vox_active_colour_table_ = 0;  // 0x009BE6BC
 
 // 0x009C09F8. setup_block[0] minus setup_block[4] - the same two dwords the
@@ -762,8 +771,28 @@ void *vox_active_colour_table_ = 0;  // 0x009BE6BC
 // 0x009C0A18, 0x009C082C, 0x009C0A1C. The record's two ramp tables and its
 // pixel-size code, copied to where the per-part walkers read them.
 uint16_t **vox_active_ramp_a_ = 0; // 0x009C0A18
+// 0x639EC3 stores ramp B; the shadow patchers (0x666F69, 0x66731D) and the
+// part patchers (0x664715, ...) read it.
+// RECOVERY_OBJECT: v1 0x009C082C ?vox_active_ramp_b_@@3PBHB
 const int32_t *vox_active_ramp_b_ = 0; // 0x009C082C
 uint8_t vox_active_size_code_ = 0;  // 0x009C0A1C
+
+// The clipped renderers' bounds, written at each clipped entry from its
+// rect argument [left, top, right, bottom] and read only inside _SELFMOD.
+// 0x009C0828: rect.right * 2, the right bound of the two-pixel renderers
+// (0x665CD2 and 0x6673B2 `shl eax,1; mov [0x9C0828],eax`; compared at
+// 0x665E8B). The one-pixel renderers keep rect.right at 0x009C0A10.
+// RECOVERY_OBJECT: v1 0x009C0828 ?vox_clip_right_doubled_@@3HA
+int32_t vox_clip_right_doubled_ = 0;
+// 0x009C0E60: rect.bottom (0x664031 `mov eax,[edi+0Ch]; mov [0x9C0E60],eax`).
+// RECOVERY_OBJECT: v1 0x009C0E60 ?vox_clip_bottom_@@3HA
+int32_t vox_clip_bottom_ = 0;
+// 0x009C0E64: rect.left - 1 (0x66400E..0x664016 `mov eax,[edi]; ...;
+// dec eax; mov [0x9C0E64],eax`).
+// RECOVERY_OBJECT: v1 0x009C0E64 ?vox_clip_left_minus_one_@@3HA
+int32_t vox_clip_left_minus_one_ = 0;
+
+namespace {
 
 
 // 0x00671010: original float bits 0x3F000000. The visibility cut the part's
@@ -3969,20 +3998,14 @@ void __cdecl caviar_original_667a6f();
 void __cdecl caviar_original_665ba1();
 void __cdecl caviar_original_66554b();
 void __cdecl caviar_original_666f68();
+// 0x0066731C: the contained-shadow patcher in src/caviar_shadow_contained.asm,
+// the shared tail the four setup stubs below jump into. Its bytes are the
+// stubs' second span; it has no mapping of its own.
+void __cdecl caviar_shadow_contained_patch();
 #include "caviar_raster_kernels.inc"
 
-// Contained-shadow callback: the pinned CFG reaches its common return at
-// 0x0066714D; the terminal jump ends at exclusive 0x0066731C, where the
-// separately catalogued shared self-modifying setup helper begins.
-OPENSMACX_NOINLINE
-// ORIGINAL: 0x00666FD0 sub_666fd0 0x00666FD0-0x0066731C
-// RECOVERY_BINDING: v1 {"evidence": ["pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "build/recovery/caviar-owner-refresh-oct6/shadow-666fd0-boundary-evidence.md:217-reachable-instructions-831-bytes-13-padding-bytes", "source:src/caviar_raster_kernels.inc:caviar_shadow_kernel_candidate", "docs/recovery/ida9-functions.csv:neighbor-shared-helper-0x0066731C-0x00667375"], "reason": "Recover the contained-shadow callback on the genuine Caviar render record; local wrapper name is descriptive, not an original decorated symbol. Pinned reachable CFG and eight relocated dispatch pointers establish the entry; terminal branch ends exactly where the independently catalogued setup helper begins. Shared source kernel implements the callback, with x87 exceptional and allocation/lifetime fidelity still unresolved."}
-// symbol    ?caviar_original_666fd0@@YAXHHIPBEH@Z
-void __cdecl caviar_original_666fd0(
-    int32_t x, int32_t y, uint32_t count, const uint8_t *stream,
-    int32_t flags) {
-    caviar_shadow_kernel_candidate(0, x, y, 0, count, stream, flags);
-}
+// 0x00666FD0: assembled from src/caviar_shadow_contained.asm.
+void __cdecl caviar_original_666fd0( int32_t x, int32_t y, uint32_t count, const uint8_t *stream, int32_t flags);
 
 // SEED HISTORY: 0x0063AEE0 previously used FILE mode with spans 0063AEE0-0063AEF4;0066731C-00667375; no BYTE_EXACT, SEMANTIC, or EXCLUDED claim; flags=hidden;sp_ready;purged_ok; seed artifact size=109 bytes, kind=game, direct callers=0, catalogued call targets=0x0066638F 0x00666989 0x00666F68.
 // SEED HISTORY: former direct-call order 0x00666989 -> 0x0066638F -> 0x00666F68. The shared 0x66731C-0x667375 secondary body is retained on this identity; its self-modifying immediate stores are replaced by typed prepared state.
@@ -3992,8 +4015,15 @@ OPENSMACX_NOINLINE
 // symbol    ?caviar_original_63aee0@@YAXXZ
 // TRIED: `int` return (no eax set before final ret, changed to `void`); address range carries a _SELFMOD (copy-protection) span, so the harness's authoritative check REFUSES any body here regardless of content - MISMATCH is the best obtainable signal via --dir.
 // kind      game
-void __cdecl caviar_original_63aee0() {
-    caviar_setup_size2_aligned_candidate();
+__declspec(naked) void __cdecl caviar_original_63aee0() {
+    // Hand-written asm (Caviar _SELFMOD setup): three patcher calls, then a
+    // tail jump into the contained-shadow patcher at 0x0066731C.
+    __asm {
+        call caviar_original_666989
+        call caviar_original_66638f
+        call caviar_original_666f68
+        jmp caviar_shadow_contained_patch
+    }
 }
 
 // SEED HISTORY: 0x0063AF00 previously used FILE mode with spans 0063AF00-0063AF14;0066731C-00667375; no BYTE_EXACT, SEMANTIC, or EXCLUDED claim; flags=hidden; seed artifact size=109 bytes, kind=game, direct callers=0, catalogued call targets=0x006646FB 0x00664D51 0x00666F68.
@@ -4004,8 +4034,15 @@ OPENSMACX_NOINLINE
 // symbol    ?caviar_original_63af00@@YAXXZ
 // TRIED: nothing to rule out on tier - REFUSED here is unconditional (SELFMOD span), verified with a `return 0;` stub scoring MISMATCH while the correct tail-call form scores REFUSED.
 // kind      game
-void __cdecl caviar_original_63af00() {
-    caviar_setup_size1_aligned_candidate();
+__declspec(naked) void __cdecl caviar_original_63af00() {
+    // Hand-written asm (Caviar _SELFMOD setup): three patcher calls, then a
+    // tail jump into the contained-shadow patcher at 0x0066731C.
+    __asm {
+        call caviar_original_664d51
+        call caviar_original_6646fb
+        call caviar_original_666f68
+        jmp caviar_shadow_contained_patch
+    }
 }
 
 // SEED HISTORY: 0x0063AF20 previously used FILE mode with spans 0063AF20-0063AF34;0066731C-00667375; no BYTE_EXACT, SEMANTIC, or EXCLUDED claim; flags=hidden; seed artifact size=109 bytes, kind=game, direct callers=0, catalogued call targets=0x00666F68 0x00667A6F 0x00668069.
@@ -4015,8 +4052,15 @@ OPENSMACX_NOINLINE
 // RECOVERY_BINDING: v1 {"evidence": ["pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "source:src/caviar.cpp:vox_create_record selects this record dispatcher by CPU rank", "source:src/caviar.cpp:sub_63ad60/sub_63ae20 directly install the mode-specific callback slots", "source:src/caviar_raster_kernels.inc:caviar_prepare_kernel_bindings_candidate publishes typed current inputs and lane bases", "source:src/caviar_raster_kernels.inc:caviar_part_output_bases_candidate and caviar_shadow_output_bases_candidate compute destinations without executable-page writes", "docs/recovery/ida9-functions.csv:shared secondary range 0x0066731C-0x00667375 is retained by the four historical setup records"], "reason": "Own the renderer's zero-argument setup callback in the configured Caviar TU. The pinned record dispatchers select the typed callback, which binds prepared state before the instance walk; the shared original secondary span remains on this mapping."}
 // symbol    ?caviar_original_63af20@@YAXXZ
 // kind      game
-void __cdecl caviar_original_63af20() {
-    caviar_setup_size2_odd_candidate();
+__declspec(naked) void __cdecl caviar_original_63af20() {
+    // Hand-written asm (Caviar _SELFMOD setup): three patcher calls, then a
+    // tail jump into the contained-shadow patcher at 0x0066731C.
+    __asm {
+        call caviar_original_668069
+        call caviar_original_667a6f
+        call caviar_original_666f68
+        jmp caviar_shadow_contained_patch
+    }
 }
 
 // SEED HISTORY: 0x0063AF40 previously used FILE mode with spans 0063AF40-0063AF54;0066731C-00667375; no BYTE_EXACT, SEMANTIC, or EXCLUDED claim; flags=hidden; seed artifact size=109 bytes, kind=game, direct callers=0, catalogued call targets=0x0066554B 0x00665BA1 0x00666F68.
@@ -4027,190 +4071,62 @@ OPENSMACX_NOINLINE
 // symbol    ?caviar_original_63af40@@YAXXZ
 // TRIED: straight-line body after the 3 calls. The original's own tail is a `jmp` into a block shared with another caller (spans two disjoint ranges); inlining it here compiles to `mov` straight-through instead of the shared-tail `jmp`.
 // kind      game
-void __cdecl caviar_original_63af40() {
-    caviar_setup_size1_odd_candidate();
+__declspec(naked) void __cdecl caviar_original_63af40() {
+    // Hand-written asm (Caviar _SELFMOD setup): three patcher calls, then a
+    // tail jump into the contained-shadow patcher at 0x0066731C.
+    __asm {
+        call caviar_original_665ba1
+        call caviar_original_66554b
+        call caviar_original_666f68
+        jmp caviar_shadow_contained_patch
+    }
 }
 
-// SEED HISTORY: former 0x00666989 record sub_666989 was BODY/EXCLUDED S2d; flags=hidden;sp_ready;purged_ok; kind=game; span=0x00666989..0x00666A7D; 244-byte seed; catalogued direct callers=1, call targets=none; no BYTE_EXACT or SEMANTIC claim. The old exclusion note called these EH funclets; the pinned bodies return normally. Measurement still refuses for undocumented _SELFMOD range 0x00664000..0x00669000. The setup writes executable-page immediates; the replacement publishes typed state instead.
-OPENSMACX_NOINLINE
-// kind      game
-// ORIGINAL: 0x00666989 sub_666989 0x00666989-0x00666A7D
-// RECOVERY_BINDING: v1 {"evidence": ["pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "source:src/caviar.cpp:vox_draw_scene copies descriptor slots 0/1/2, 3/4/5 and active ramp/palette before setup callback", "source:src/caviar.h:VoxRenderRecord::ramp_a_ptr_ is the per-record depth-row pointer table", "source:src/caviar_raster_kernels.inc:typed setup stages bind record depth rows, part inputs/output lanes, and shadow destination", "build/recovery/next-game-coverage-oct5/caviar-kernel-closure-oct6.md:original four setup call orders", "docs/recovery/ida9-functions.csv:shared helper 0x0066731C-0x00667375 remains a separate retained span on setup callback records"], "reason": "Replace this EXCLUDED S2d immediate-patch helper with a mapped typed setup operation. The four public setup callbacks preserve the pinned helper order; no executable-page writes are retained."}
-// symbol    ?caviar_original_666989@@YAXXZ
-// TRIED: was `EXCLUDED S2a`; disassembly is a normal `ret`, no tail-jmp, self-contained store sequence - not an EH funclet by docs/EXCLUSIONS.md 2a's own test (see 0x00664D51's note in full). Un-excluded.
-void __cdecl caviar_original_666989() {
-    caviar_prepare_part_destination_bindings_candidate(2);
-}
+// 0x00666989: assembled from src/caviar_part_s2a_contained.asm.
+void __cdecl caviar_original_666989();
 
-// SEED HISTORY: former 0x0066638F record sub_66638f was BODY/EXCLUDED S2d; flags=hidden;sp_ready;purged_ok; kind=game; span=0x0066638F..0x00666437; 168-byte seed; catalogued direct callers=1, call targets=none; no BYTE_EXACT or SEMANTIC claim. The old exclusion note called these EH funclets; the pinned bodies return normally. Measurement still refuses for undocumented _SELFMOD range 0x00664000..0x00669000. The setup writes executable-page immediates; the replacement publishes typed state instead.
-OPENSMACX_NOINLINE
-// kind      game
-// ORIGINAL: 0x0066638F sub_66638f 0x0066638F-0x00666437
-// RECOVERY_BINDING: v1 {"evidence": ["pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "source:src/caviar.cpp:vox_draw_scene copies descriptor slots 0/1/2, 3/4/5 and active ramp/palette before setup callback", "source:src/caviar.h:VoxRenderRecord::ramp_a_ptr_ is the per-record depth-row pointer table", "source:src/caviar_raster_kernels.inc:typed setup stages bind record depth rows, part inputs/output lanes, and shadow destination", "build/recovery/next-game-coverage-oct5/caviar-kernel-closure-oct6.md:original four setup call orders", "docs/recovery/ida9-functions.csv:shared helper 0x0066731C-0x00667375 remains a separate retained span on setup callback records"], "reason": "Replace this EXCLUDED S2d immediate-patch helper with a mapped typed setup operation. The four public setup callbacks preserve the pinned helper order; no executable-page writes are retained."}
-// symbol    ?caviar_original_66638f@@YAXXZ
-void __cdecl caviar_original_66638f() {
-    caviar_prepare_part_source_bindings_candidate();
-}
+// 0x0066638F: assembled from src/caviar_part_s2a_clipped.asm.
+void __cdecl caviar_original_66638f();
 
-// SEED HISTORY: former 0x006646FB record sub_6646fb was BODY/EXCLUDED S2d; flags=hidden;sp_ready;purged_ok; kind=game; span=0x006646FB..0x006647E3; 232-byte seed; catalogued direct callers=1, call targets=none; no BYTE_EXACT or SEMANTIC claim. The old exclusion note called these EH funclets; the pinned bodies return normally. Measurement still refuses for undocumented _SELFMOD range 0x00664000..0x00669000. The setup writes executable-page immediates; the replacement publishes typed state instead.
-OPENSMACX_NOINLINE
-// kind      game
-// ORIGINAL: 0x006646FB sub_6646fb 0x006646FB-0x006647E3
-// RECOVERY_BINDING: v1 {"evidence": ["pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "source:src/caviar.cpp:vox_draw_scene copies descriptor slots 0/1/2, 3/4/5 and active ramp/palette before setup callback", "source:src/caviar.h:VoxRenderRecord::ramp_a_ptr_ is the per-record depth-row pointer table", "source:src/caviar_raster_kernels.inc:typed setup stages bind record depth rows, part inputs/output lanes, and shadow destination", "build/recovery/next-game-coverage-oct5/caviar-kernel-closure-oct6.md:original four setup call orders", "docs/recovery/ida9-functions.csv:shared helper 0x0066731C-0x00667375 remains a separate retained span on setup callback records"], "reason": "Replace this EXCLUDED S2d immediate-patch helper with a mapped typed setup operation. The four public setup callbacks preserve the pinned helper order; no executable-page writes are retained."}
-// symbol    ?caviar_original_6646fb@@YAXXZ
-void __cdecl caviar_original_6646fb() {
-    caviar_prepare_part_source_bindings_candidate();
-}
+// 0x006646FB: assembled from src/caviar_part_s1a_clipped.asm.
+void __cdecl caviar_original_6646fb();
 
-// SEED HISTORY: former 0x00664D51 record sub_664d51 was BODY/EXCLUDED S2d; flags=hidden;sp_ready;purged_ok; kind=game; span=0x00664D51..0x00664E43; 242-byte seed; catalogued direct callers=1, call targets=none; no BYTE_EXACT or SEMANTIC claim. The old exclusion note called these EH funclets; the pinned bodies return normally. Measurement still refuses for undocumented _SELFMOD range 0x00664000..0x00669000. The setup writes executable-page immediates; the replacement publishes typed state instead.
-OPENSMACX_NOINLINE
-// kind      game
-// ORIGINAL: 0x00664D51 sub_664d51 0x00664D51-0x00664E43
-// RECOVERY_BINDING: v1 {"evidence": ["pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "source:src/caviar.cpp:vox_draw_scene copies descriptor slots 0/1/2, 3/4/5 and active ramp/palette before setup callback", "source:src/caviar.h:VoxRenderRecord::ramp_a_ptr_ is the per-record depth-row pointer table", "source:src/caviar_raster_kernels.inc:typed setup stages bind record depth rows, part inputs/output lanes, and shadow destination", "build/recovery/next-game-coverage-oct5/caviar-kernel-closure-oct6.md:original four setup call orders", "docs/recovery/ida9-functions.csv:shared helper 0x0066731C-0x00667375 remains a separate retained span on setup callback records"], "reason": "Replace this EXCLUDED S2d immediate-patch helper with a mapped typed setup operation. The four public setup callbacks preserve the pinned helper order; no executable-page writes are retained."}
-// symbol    ?caviar_original_664d51@@YAXXZ
-// TRIED: this was carried as `EXCLUDED S2a` (C++ EH unwind funclet) by a prior bulk pass, but the disassembly contradicts that ground: docs/EXCLUSIONS.md 2a's own definition is "no frame of its own ... no prologue, no epilogue, no ret - a tail jmp into another symbol's entry", and this function has a normal `ret`, no tail-jmp into anyone else's entry point, and is fully self-contained (reads six globals, republishes them across table records, returns). It was swept into the funclet population by proximity - it sits in the byte gap between two much larger EH-funclet-bearing functions (0x006647F0 and 0x00664E50) - not by matching the population's own test. Un-excluded here so the body below can be measured.
-// TRIED: combining the two `+= g_9be6b4` adds into one expression (`value + g_9be6b4 + g_9be6b4`) vs. splitting them into two statements - VC6 lowers both to the same `lea`/`mov` pair either way (original is two separate `add`); tried both, identical rebuilt bytes. Kept split as the more faithful source form. First divergence #18 add/mov (mnemonic similarity 0.92, 4 edit blocks, none of them affecting this expression's semantics).
-void __cdecl caviar_original_664d51() {
-    caviar_prepare_part_destination_bindings_candidate(1);
-}
+// 0x00664D51: assembled from src/caviar_part_s1a_contained.asm.
+void __cdecl caviar_original_664d51();
 
-// SEED HISTORY: former 0x00668069 record sub_668069 was BODY/EXCLUDED S2d; flags=hidden;sp_ready;purged_ok; kind=game; span=0x00668069..0x0066815D; 244-byte seed; catalogued direct callers=1, call targets=none; no BYTE_EXACT or SEMANTIC claim. The old exclusion note called these EH funclets; the pinned bodies return normally. Measurement still refuses for undocumented _SELFMOD range 0x00664000..0x00669000. The setup writes executable-page immediates; the replacement publishes typed state instead.
-OPENSMACX_NOINLINE
-// kind      game
-// ORIGINAL: 0x00668069 sub_668069 0x00668069-0x0066815D
-// RECOVERY_BINDING: v1 {"evidence": ["pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "source:src/caviar.cpp:vox_draw_scene copies descriptor slots 0/1/2, 3/4/5 and active ramp/palette before setup callback", "source:src/caviar.h:VoxRenderRecord::ramp_a_ptr_ is the per-record depth-row pointer table", "source:src/caviar_raster_kernels.inc:typed setup stages bind record depth rows, part inputs/output lanes, and shadow destination", "build/recovery/next-game-coverage-oct5/caviar-kernel-closure-oct6.md:original four setup call orders", "docs/recovery/ida9-functions.csv:shared helper 0x0066731C-0x00667375 remains a separate retained span on setup callback records"], "reason": "Replace this EXCLUDED S2d immediate-patch helper with a mapped typed setup operation. The four public setup callbacks preserve the pinned helper order; no executable-page writes are retained."}
-// symbol    ?caviar_original_668069@@YAXXZ
-// TRIED: was `EXCLUDED S2a`; disassembly is a normal `ret`, no tail-jmp, self-contained store sequence - not an EH funclet by docs/EXCLUSIONS.md 2a's own test (see 0x00664D51's note in full). Un-excluded.
-void __cdecl caviar_original_668069() {
-    caviar_prepare_part_destination_bindings_candidate(2);
-}
+// 0x00668069: assembled from src/caviar_part_s2o_contained.asm.
+void __cdecl caviar_original_668069();
 
-// SEED HISTORY: former 0x00667A6F record sub_667a6f was BODY/EXCLUDED S2d; flags=hidden;sp_ready;purged_ok; kind=game; span=0x00667A6F..0x00667B17; 168-byte seed; catalogued direct callers=1, call targets=none; no BYTE_EXACT or SEMANTIC claim. The old exclusion note called these EH funclets; the pinned bodies return normally. Measurement still refuses for undocumented _SELFMOD range 0x00664000..0x00669000. The setup writes executable-page immediates; the replacement publishes typed state instead.
-OPENSMACX_NOINLINE
-// kind      game
-// ORIGINAL: 0x00667A6F sub_667a6f 0x00667A6F-0x00667B17
-// RECOVERY_BINDING: v1 {"evidence": ["pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "source:src/caviar.cpp:vox_draw_scene copies descriptor slots 0/1/2, 3/4/5 and active ramp/palette before setup callback", "source:src/caviar.h:VoxRenderRecord::ramp_a_ptr_ is the per-record depth-row pointer table", "source:src/caviar_raster_kernels.inc:typed setup stages bind record depth rows, part inputs/output lanes, and shadow destination", "build/recovery/next-game-coverage-oct5/caviar-kernel-closure-oct6.md:original four setup call orders", "docs/recovery/ida9-functions.csv:shared helper 0x0066731C-0x00667375 remains a separate retained span on setup callback records"], "reason": "Replace this EXCLUDED S2d immediate-patch helper with a mapped typed setup operation. The four public setup callbacks preserve the pinned helper order; no executable-page writes are retained."}
-// symbol    ?caviar_original_667a6f@@YAXXZ
-void __cdecl caviar_original_667a6f() {
-    caviar_prepare_part_source_bindings_candidate();
-}
+// 0x00667A6F: assembled from src/caviar_part_s2o_clipped.asm.
+void __cdecl caviar_original_667a6f();
 
-// SEED HISTORY: former 0x00665BA1 record sub_665ba1 was BODY/EXCLUDED S2d; flags=hidden;sp_ready;purged_ok; kind=game; span=0x00665BA1..0x00665C93; 242-byte seed; catalogued direct callers=1, call targets=none; no BYTE_EXACT or SEMANTIC claim. The old exclusion note called these EH funclets; the pinned bodies return normally. Measurement still refuses for undocumented _SELFMOD range 0x00664000..0x00669000. The setup writes executable-page immediates; the replacement publishes typed state instead.
-OPENSMACX_NOINLINE
-// kind      game
-// ORIGINAL: 0x00665BA1 sub_665ba1 0x00665BA1-0x00665C93
-// RECOVERY_BINDING: v1 {"evidence": ["pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "source:src/caviar.cpp:vox_draw_scene copies descriptor slots 0/1/2, 3/4/5 and active ramp/palette before setup callback", "source:src/caviar.h:VoxRenderRecord::ramp_a_ptr_ is the per-record depth-row pointer table", "source:src/caviar_raster_kernels.inc:typed setup stages bind record depth rows, part inputs/output lanes, and shadow destination", "build/recovery/next-game-coverage-oct5/caviar-kernel-closure-oct6.md:original four setup call orders", "docs/recovery/ida9-functions.csv:shared helper 0x0066731C-0x00667375 remains a separate retained span on setup callback records"], "reason": "Replace this EXCLUDED S2d immediate-patch helper with a mapped typed setup operation. The four public setup callbacks preserve the pinned helper order; no executable-page writes are retained."}
-// symbol    ?caviar_original_665ba1@@YAXXZ
-// TRIED: was `EXCLUDED S2a`; same shape as 0x00664D51's sibling (see that file's note in full) - the disassembly is a normal `ret`, no tail-jmp, self-contained store sequence, not an EH funclet by docs/EXCLUSIONS.md 2a's own test. Un-excluded.
-// TRIED: combining `value + g_9be6b4 + g_9be6b4` into one expression vs. splitting into two statements - identical rebuilt bytes either way (VC6 folds both into one `lea`/`mov` pair; original is two separate `add`). Kept split as the more faithful source form. First divergence #18 add/mov, mnemonic similarity 0.92, 4 edit blocks, unrelated to this expression's semantics.
-void __cdecl caviar_original_665ba1() {
-    caviar_prepare_part_destination_bindings_candidate(1);
-}
+// 0x00665BA1: assembled from src/caviar_part_s1o_contained.asm.
+void __cdecl caviar_original_665ba1();
 
-// SEED HISTORY: former 0x0066554B record sub_66554b was BODY/EXCLUDED S2d; flags=hidden;sp_ready;purged_ok; kind=game; span=0x0066554B..0x00665633; 232-byte seed; catalogued direct callers=1, call targets=none; no BYTE_EXACT or SEMANTIC claim. The old exclusion note called these EH funclets; the pinned bodies return normally. Measurement still refuses for undocumented _SELFMOD range 0x00664000..0x00669000. The setup writes executable-page immediates; the replacement publishes typed state instead.
-OPENSMACX_NOINLINE
-// kind      game
-// ORIGINAL: 0x0066554B sub_66554b 0x0066554B-0x00665633
-// RECOVERY_BINDING: v1 {"evidence": ["pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "source:src/caviar.cpp:vox_draw_scene copies descriptor slots 0/1/2, 3/4/5 and active ramp/palette before setup callback", "source:src/caviar.h:VoxRenderRecord::ramp_a_ptr_ is the per-record depth-row pointer table", "source:src/caviar_raster_kernels.inc:typed setup stages bind record depth rows, part inputs/output lanes, and shadow destination", "build/recovery/next-game-coverage-oct5/caviar-kernel-closure-oct6.md:original four setup call orders", "docs/recovery/ida9-functions.csv:shared helper 0x0066731C-0x00667375 remains a separate retained span on setup callback records"], "reason": "Replace this EXCLUDED S2d immediate-patch helper with a mapped typed setup operation. The four public setup callbacks preserve the pinned helper order; no executable-page writes are retained."}
-// symbol    ?caviar_original_66554b@@YAXXZ
-void __cdecl caviar_original_66554b() {
-    caviar_prepare_part_source_bindings_candidate();
-}
+// 0x0066554B: assembled from src/caviar_part_s1o_clipped.asm.
+void __cdecl caviar_original_66554b();
 
-// SEED HISTORY: former 0x00666F68 record sub_666f68 was BODY/EXCLUDED S2d; flags=hidden;sp_ready;purged_ok; kind=game; span=0x00666F68..0x00666FC1; 89-byte seed; catalogued direct callers=4, call targets=none; no BYTE_EXACT or SEMANTIC claim. The old exclusion note called these EH funclets; the pinned bodies return normally. Measurement still refuses for undocumented _SELFMOD range 0x00664000..0x00669000. The setup writes executable-page immediates; the replacement publishes typed state instead.
-OPENSMACX_NOINLINE
-// kind      game
-// ORIGINAL: 0x00666F68 sub_666f68 0x00666F68-0x00666FC1
-// RECOVERY_BINDING: v1 {"evidence": ["pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "source:src/caviar.cpp:vox_draw_scene copies descriptor slots 0/1/2, 3/4/5 and active ramp/palette before setup callback", "source:src/caviar.h:VoxRenderRecord::ramp_a_ptr_ is the per-record depth-row pointer table", "source:src/caviar_raster_kernels.inc:typed setup stages bind record depth rows, part inputs/output lanes, and shadow destination", "build/recovery/next-game-coverage-oct5/caviar-kernel-closure-oct6.md:original four setup call orders", "docs/recovery/ida9-functions.csv:shared helper 0x0066731C-0x00667375 remains a separate retained span on setup callback records"], "reason": "Replace this EXCLUDED S2d immediate-patch helper with a mapped typed setup operation. The four public setup callbacks preserve the pinned helper order; no executable-page writes are retained."}
-// symbol    ?caviar_original_666f68@@YAXXZ
-void __cdecl caviar_original_666f68() {
-    caviar_prepare_shadow_bindings_candidate();
-}
+// 0x00666F68: assembled from src/caviar_shadow_clipped.asm.
+void __cdecl caviar_original_666f68();
 
-// The prior seed classifications were EXCLUDED S2d. These now have typed,
-// compiled callback implementations, but no BYTE_EXACT claim is made. Each
-// following SEED HISTORY line retains that former classification and flags.
-// SEED HISTORY (prior excluded record): 0x006647F0 sub_6647f0 0x006647F0-0x00664D51 EXCLUDED S2d; hidden;sp_ready;purged_ok
-// ORIGINAL: 0x006647F0 sub_6647f0 0x006647F0-0x00664D51
-// symbol    ?caviar_original_6647f0@@YAXHHHIPBEH@Z
-// kind      game
-void __cdecl caviar_original_6647f0(
-    int32_t x, int32_t y, int32_t z, uint32_t count,
-    const uint8_t *stream, int32_t flags) {
-    caviar_part_s1a_contained_candidate(x, y, z, count, stream, flags);
-}
-// SEED HISTORY (prior excluded record): 0x00664000 sub_664000 0x00664000-0x006646FB EXCLUDED S2d; hidden;sp_ready;purged_ok
-// ORIGINAL: 0x00664000 sub_664000 0x00664000-0x006646FB
-// symbol    ?caviar_original_664000@@YAXHHHPBHIPBEH@Z
-// kind      game
-void __cdecl caviar_original_664000(
-    int32_t x, int32_t y, int32_t z, const int32_t *rect, uint32_t count,
-    const uint8_t *stream, int32_t flags) {
-    caviar_part_s1a_clipped_candidate(x, y, z, rect, count, stream, flags);
-}
-// SEED HISTORY (prior excluded record): 0x00665640 sub_665640 0x00665640-0x00665BA1 EXCLUDED S2d; hidden;sp_ready;purged_ok
-// ORIGINAL: 0x00665640 sub_665640 0x00665640-0x00665BA1
-// symbol    ?caviar_original_665640@@YAXHHHIPBEH@Z
-// kind      game
-void __cdecl caviar_original_665640(
-    int32_t x, int32_t y, int32_t z, uint32_t count,
-    const uint8_t *stream, int32_t flags) {
-    caviar_part_s1o_contained_candidate(x, y, z, count, stream, flags);
-}
-// SEED HISTORY (prior excluded record): 0x00664E50 sub_664e50 0x00664E50-0x0066554B EXCLUDED S2d; hidden;sp_ready;purged_ok
-// ORIGINAL: 0x00664E50 sub_664e50 0x00664E50-0x0066554B
-// symbol    ?caviar_original_664e50@@YAXHHHPBHIPBEH@Z
-// kind      game
-void __cdecl caviar_original_664e50(
-    int32_t x, int32_t y, int32_t z, const int32_t *rect, uint32_t count,
-    const uint8_t *stream, int32_t flags) {
-    caviar_part_s1o_clipped_candidate(x, y, z, rect, count, stream, flags);
-}
-// SEED HISTORY (prior excluded record): 0x00666440 sub_666440 0x00666440-0x00666989 EXCLUDED S2d; hidden;sp_ready;purged_ok
-// ORIGINAL: 0x00666440 sub_666440 0x00666440-0x00666989
-// symbol    ?caviar_original_666440@@YAXHHHIPBEH@Z
-// kind      game
-void __cdecl caviar_original_666440(
-    int32_t x, int32_t y, int32_t z, uint32_t count,
-    const uint8_t *stream, int32_t flags) {
-    caviar_part_s2a_contained_candidate(x, y, z, count, stream, flags);
-}
-// SEED HISTORY (prior excluded record): 0x00665CA0 sub_665ca0 0x00665CA0-0x0066638F EXCLUDED S2d; hidden;sp_ready;purged_ok
-// ORIGINAL: 0x00665CA0 sub_665ca0 0x00665CA0-0x0066638F
-// symbol    ?caviar_original_665ca0@@YAXHHHPBHIPBEH@Z
-// kind      game
-void __cdecl caviar_original_665ca0(
-    int32_t x, int32_t y, int32_t z, const int32_t *rect, uint32_t count,
-    const uint8_t *stream, int32_t flags) {
-    caviar_part_s2a_clipped_candidate(x, y, z, rect, count, stream, flags);
-}
-// SEED HISTORY (prior excluded record): 0x00667B20 sub_667b20 0x00667B20-0x00668069 EXCLUDED S2d; hidden;sp_ready;purged_ok
-// ORIGINAL: 0x00667B20 sub_667b20 0x00667B20-0x00668069
-// symbol    ?caviar_original_667b20@@YAXHHHIPBEH@Z
-// kind      game
-void __cdecl caviar_original_667b20(
-    int32_t x, int32_t y, int32_t z, uint32_t count,
-    const uint8_t *stream, int32_t flags) {
-    caviar_part_s2o_contained_candidate(x, y, z, count, stream, flags);
-}
-// SEED HISTORY (prior excluded record): 0x00667380 sub_667380 0x00667380-0x00667A6F EXCLUDED S2d; hidden;sp_ready;purged_ok
-// ORIGINAL: 0x00667380 sub_667380 0x00667380-0x00667A6F
-// symbol    ?caviar_original_667380@@YAXHHHPBHIPBEH@Z
-// kind      game
-void __cdecl caviar_original_667380(
-    int32_t x, int32_t y, int32_t z, const int32_t *rect, uint32_t count,
-    const uint8_t *stream, int32_t flags) {
-    caviar_part_s2o_clipped_candidate(x, y, z, rect, count, stream, flags);
-}
-// SEED HISTORY (prior excluded record): 0x00666A80 sub_666a80 0x00666A80-0x00666F68 EXCLUDED S2d; hidden;sp_ready;purged_ok
-// ORIGINAL: 0x00666A80 sub_666a80 0x00666A80-0x00666F68
-// symbol    ?caviar_original_666a80@@YAXHHPBHIPBEH@Z
-// kind      game
-void __cdecl caviar_original_666a80(
-    int32_t x, int32_t y, const int32_t *rect, uint32_t count,
-    const uint8_t *stream, int32_t flags) {
-    caviar_shadow_clipped_callback_candidate(x, y, rect, count, stream, flags);
-}
+// 0x006647F0: assembled from src/caviar_part_s1a_contained.asm.
+void __cdecl caviar_original_6647f0( int32_t x, int32_t y, int32_t z, uint32_t count, const uint8_t *stream, int32_t flags);
+// 0x00664000: assembled from src/caviar_part_s1a_clipped.asm.
+void __cdecl caviar_original_664000( int32_t x, int32_t y, int32_t z, const int32_t *rect, uint32_t count, const uint8_t *stream, int32_t flags);
+// 0x00665640: assembled from src/caviar_part_s1o_contained.asm.
+void __cdecl caviar_original_665640( int32_t x, int32_t y, int32_t z, uint32_t count, const uint8_t *stream, int32_t flags);
+// 0x00664E50: assembled from src/caviar_part_s1o_clipped.asm.
+void __cdecl caviar_original_664e50( int32_t x, int32_t y, int32_t z, const int32_t *rect, uint32_t count, const uint8_t *stream, int32_t flags);
+// 0x00666440: assembled from src/caviar_part_s2a_contained.asm.
+void __cdecl caviar_original_666440( int32_t x, int32_t y, int32_t z, uint32_t count, const uint8_t *stream, int32_t flags);
+// 0x00665CA0: assembled from src/caviar_part_s2a_clipped.asm.
+void __cdecl caviar_original_665ca0( int32_t x, int32_t y, int32_t z, const int32_t *rect, uint32_t count, const uint8_t *stream, int32_t flags);
+// 0x00667B20: assembled from src/caviar_part_s2o_contained.asm.
+void __cdecl caviar_original_667b20( int32_t x, int32_t y, int32_t z, uint32_t count, const uint8_t *stream, int32_t flags);
+// 0x00667380: assembled from src/caviar_part_s2o_clipped.asm.
+void __cdecl caviar_original_667380( int32_t x, int32_t y, int32_t z, const int32_t *rect, uint32_t count, const uint8_t *stream, int32_t flags);
+// 0x00666A80: assembled from src/caviar_shadow_clipped.asm.
+void __cdecl caviar_original_666a80( int32_t x, int32_t y, const int32_t *rect, uint32_t count, const uint8_t *stream, int32_t flags);
 
 // 0x0063E950. Eight arguments: the record, the walked node, the part's
 // position and its scaled matrix, camera rotation, state direction, shape scale

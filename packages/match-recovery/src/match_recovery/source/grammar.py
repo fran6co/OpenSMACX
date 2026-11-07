@@ -16,6 +16,53 @@ stayed on the old spelling by decision; the package proves itself against
 from __future__ import annotations
 
 import re
+from pathlib import PurePath
+
+# ------------------------------------------------- assembler comment dialect
+
+# MASM-DIALECT SOURCES CARRY THE SAME GRAMMAR, spelled with `;` comments.
+# There is one grammar, not a second one for assembly: an assembler source is
+# read through `assembler_annotation_text`, which respells each `;` comment as
+# `//` without moving a line, and anything the writer adds is spelled back
+# with `assembler_comment_line`. So `; ORIGINAL: 0x...`, `; symbol    ...` and
+# `; TRIED: ...` in a `.asm` file mean exactly what their `//` spellings mean.
+ASSEMBLER_SUFFIXES = (".asm",)
+_ASSEMBLER_COMMENT = re.compile(r"""^((?:[^;'"]|'[^']*'|"[^"]*")*);""")
+
+
+def is_assembler_source(path) -> bool:
+    return PurePath(path).suffix.lower() in ASSEMBLER_SUFFIXES
+
+
+def assembler_annotation_line(line: str) -> str:
+    """One assembler line with its comment opener spelled `//`.
+
+    Quoted operands are skipped, so `';'` is data, not a comment. A line
+    with no comment comes back unchanged.
+    """
+    match = _ASSEMBLER_COMMENT.match(line)
+    return line if match is None else match.group(1) + "//" + line[match.end():]
+
+
+def assembler_annotation_text(text: str) -> str:
+    """`assembler_annotation_line` over a whole text, line endings kept."""
+    out = []
+    for line in text.splitlines(keepends=True):
+        content = line.rstrip("\r\n")
+        out.append(assembler_annotation_line(content) + line[len(content):])
+    return "".join(out)
+
+
+def assembler_comment_line(line: str) -> str:
+    """The inverse for a line the annotation writer produced: `//` -> `;`.
+
+    The writer only produces whole comment lines, so only a leading `//` is
+    respelled; the `;` inside a multi-span marker tail is span syntax.
+    """
+    stripped = line.lstrip()
+    if not stripped.startswith("//"):
+        return line
+    return line[:len(line) - len(stripped)] + ";" + stripped[2:]
 
 # ------------------------------------------------------------- the one marker
 

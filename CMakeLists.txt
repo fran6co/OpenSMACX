@@ -47,6 +47,12 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON CACHE BOOL
 # keeping the language out.
 project(OpenSMACX VERSION 0.2.3 LANGUAGES CXX C)
 
+# ASM_MASM for the routines the original wrote as MASM modules and VC6 inline
+# asm cannot express (AGENTS.md, "Inline assembly"; user decision 2026-11-07).
+# The toolchain points it at UASM under the same wine wrapper as cl. C/C++-only
+# options below are scoped with COMPILE_LANGUAGE so they never reach it.
+enable_language(ASM_MASM)
+
 # The original allocator includes the static multithreaded CRT's lock and
 # small-block-heap code (src/vendor/vc6-runtime.recovery.h). CMake's default
 # DLL runtime instead links import thunks, even when application bodies match.
@@ -157,6 +163,16 @@ set(OPENSMACX_SOURCES
     src/caviar_error.cpp
     src/caviar_geometry.cpp
     src/caviar_cpu.cpp
+    src/caviar_part_s1a_clipped.asm
+    src/caviar_part_s1a_contained.asm
+    src/caviar_part_s1o_clipped.asm
+    src/caviar_part_s1o_contained.asm
+    src/caviar_part_s2a_clipped.asm
+    src/caviar_part_s2a_contained.asm
+    src/caviar_shadow_clipped.asm
+    src/caviar_shadow_contained.asm
+    src/caviar_part_s2o_clipped.asm
+    src/caviar_part_s2o_contained.asm
     src/council.cpp
     src/dialog.cpp
     src/dialogs.cpp
@@ -215,6 +231,7 @@ set(OPENSMACX_SOURCES
     src/movie_media.cpp
     src/movie_media_surface.cpp
     src/movie_media_decoder.cpp
+    src/movie_media_decoder_uv.asm
     src/movie_decoder_frame.cpp
     src/movie_decoder_idct.cpp
     src/cursor.cpp
@@ -349,7 +366,7 @@ if(CMAKE_CXX_COMPILER_VERSION VERSION_LESS 13)
     # which is the rule this directory already follows for the include path.
     # `#pragma once` in the header makes the double delivery to `stdafx.h`
     # sources a no-op, and `recovery/environment/wine.py` already translates `/FI`.
-    add_compile_options("/FI${CMAKE_CURRENT_SOURCE_DIR}/src/vc6_compat.h")
+    add_compile_options("$<$<COMPILE_LANGUAGE:C,CXX>:/FI${CMAKE_CURRENT_SOURCE_DIR}/src/vc6_compat.h>")
 endif()
 
 # AN EXECUTABLE, NOT A DLL, SINCE 2026-08-12. The shared library existed to be
@@ -701,7 +718,10 @@ target_compile_definitions(OpenSMACX PRIVATE
 # recipes. VC6 otherwise time-seeds anonymous names and can reorder global
 # storage between identical compilations. The wrapper refuses macro changes.
 # PCH reuse cannot establish the fresh preprocessing evidence this requires.
-target_compile_options(OpenSMACX PRIVATE "--repro-root=${CMAKE_CURRENT_SOURCE_DIR}")
+target_compile_options(OpenSMACX PRIVATE "$<$<COMPILE_LANGUAGE:CXX>:--repro-root=${CMAKE_CURRENT_SOURCE_DIR}>")
+# The assembler recipe: COFF objects, MASM 6 syntax. `recovery/project.json`
+# pins the same switches for measurement of each assembler source.
+target_compile_options(OpenSMACX PRIVATE "$<$<COMPILE_LANGUAGE:ASM_MASM>:-nologo;-coff>")
 # `dxguid` carries the IIDs `Buffer::init` names - without it the link fails
 # with `unresolved external symbol _IID_IDirectDrawSurface`, measured. It used
 # to be a `#pragma comment(lib, "dxguid.lib")` in buffer.cpp, "so the
@@ -731,6 +751,10 @@ target_link_options(OpenSMACX PRIVATE
     # The original retains absolute-pointer fixups. VC6's nonincremental
     # Release link otherwise drops them even when instruction operands agree.
     "/FIXED:NO"
+    # The Caviar renderers patch their own immediates (src/caviar_part_*.asm,
+    # src/caviar_shadow_*.asm): the original's _SELFMOD section is execute,
+    # read and write (0xE0000020).
+    "/SECTION:_SELFMOD,ERW"
     # Capture final-pass input labels separately from the debugger map. The
     # compiler wrapper owns this output; the recovery package parses it.
     "/VERBOSE" "--link-diagnostics=${CMAKE_CURRENT_BINARY_DIR}/OpenSMACX.link.log")
@@ -782,7 +806,7 @@ set_target_properties(OpenSMACX PROPERTIES
 # It went with the DLL it served on 2026-08-13 (docs/RETIRED_ROUTES.md). Exports
 # rest on __declspec(dllexport) alone and the export SET is not pinned; nothing
 # in this build needs it pinned, because nothing imports by name.
-target_compile_options(OpenSMACX PRIVATE /W4)
+target_compile_options(OpenSMACX PRIVATE $<$<COMPILE_LANGUAGE:CXX>:/W4>)
 
 
 

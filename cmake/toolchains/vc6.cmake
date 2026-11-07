@@ -56,6 +56,23 @@ set(CMAKE_C_COMPILER   "${_vc6_tools}/vc6-cl" CACHE FILEPATH "VC6 C compiler und
 set(CMAKE_LINKER       "${_vc6_tools}/vc6-link" CACHE FILEPATH "VC6 linker under wine")
 set(CMAKE_AR           "${_vc6_tools}/vc6-lib" CACHE FILEPATH "VC6 librarian under wine")
 
+# MASM-dialect sources: UASM under the same wine wrapper (user decision,
+# 2026-11-07). The assembler is a separate install, pinned by
+# $UASM_ROOT/PROVENANCE.md; the wrapper defaults UASM_ROOT to ~/opt/uasm/2.57r.
+# Only sources the original wrote in assembly that VC6 inline asm cannot
+# express belong here (AGENTS.md, "Inline assembly").
+set(CMAKE_ASM_MASM_COMPILER "${_vc6_tools}/uasm" CACHE FILEPATH "UASM (MASM-compatible) under wine")
+set(CMAKE_ASM_MASM_COMPILER_ID MSVC)
+set(CMAKE_ASM_MASM_COMPILER_VERSION 6.15)
+set(CMAKE_ASM_MASM_COMPILER_FORCED TRUE)
+# `-coff -c -nologo` are added by the project; CMake's MASM defaults would
+# otherwise inject `/safeseh` and debug switches the original module lacked.
+set(CMAKE_ASM_MASM_FLAGS_INIT "")
+set(CMAKE_ASM_MASM_FLAGS_DEBUG_INIT "")
+set(CMAKE_ASM_MASM_FLAGS_RELEASE_INIT "")
+set(CMAKE_ASM_MASM_FLAGS_RELWITHDEBINFO_INIT "")
+set(CMAKE_ASM_MASM_FLAGS_MINSIZEREL_INIT "")
+
 set(CMAKE_CXX_COMPILER_ID MSVC)
 set(CMAKE_C_COMPILER_ID MSVC)
 set(CMAKE_CXX_COMPILER_VERSION 12.00.8168)

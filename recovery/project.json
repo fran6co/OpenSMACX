@@ -65,6 +65,16 @@
   "source": {
     "image_pin": "src/IMAGE_PIN",
     "address_space": "pe:va",
+    "extensions": [
+      ".cpp",
+      ".c",
+      ".h",
+      ".cc",
+      ".cxx",
+      ".hpp",
+      ".hh",
+      ".asm"
+    ],
     "seed_roots": [
       "src/recovered",
       "src/unrecovered"
@@ -110,7 +120,8 @@
     "environment": [
       "VC6_ROOT",
       "VC6_INCLUDE",
-      "VC6_LIB"
+      "VC6_LIB",
+      "UASM_ROOT"
     ]
   },
   "compiler": {
@@ -133,7 +144,8 @@
       "recovery/environment/wine_compile.py",
       "recovery/environment/intrinsics.py",
       "recovery/environment/frontends.json",
-      "recovery/environment/command_paths.py"
+      "recovery/environment/command_paths.py",
+      "recovery/environment/uasm"
     ],
     "environment": [
       "VC6_PREFIX",
@@ -146,7 +158,8 @@
       "INCLUDE",
       "CPATH",
       "C_INCLUDE_PATH",
-      "CPLUS_INCLUDE_PATH"
+      "CPLUS_INCLUDE_PATH",
+      "UASM_ROOT"
     ]
   },
   "measurement": {
@@ -2034,6 +2047,83 @@
           "/Z7",
           "-c"
         ]
+      },
+      "src/movie_media_decoder_uv.asm": {
+        "flags": [
+          "-nologo",
+          "-coff",
+          "-c"
+        ]
+      },
+      "src/caviar_part_s1a_clipped.asm": {
+        "flags": [
+          "-nologo",
+          "-coff",
+          "-c"
+        ]
+      },
+      "src/caviar_part_s1a_contained.asm": {
+        "flags": [
+          "-nologo",
+          "-coff",
+          "-c"
+        ]
+      },
+      "src/caviar_part_s1o_clipped.asm": {
+        "flags": [
+          "-nologo",
+          "-coff",
+          "-c"
+        ]
+      },
+      "src/caviar_part_s1o_contained.asm": {
+        "flags": [
+          "-nologo",
+          "-coff",
+          "-c"
+        ]
+      },
+      "src/caviar_part_s2a_clipped.asm": {
+        "flags": [
+          "-nologo",
+          "-coff",
+          "-c"
+        ]
+      },
+      "src/caviar_part_s2a_contained.asm": {
+        "flags": [
+          "-nologo",
+          "-coff",
+          "-c"
+        ]
+      },
+      "src/caviar_shadow_clipped.asm": {
+        "flags": [
+          "-nologo",
+          "-coff",
+          "-c"
+        ]
+      },
+      "src/caviar_shadow_contained.asm": {
+        "flags": [
+          "-nologo",
+          "-coff",
+          "-c"
+        ]
+      },
+      "src/caviar_part_s2o_clipped.asm": {
+        "flags": [
+          "-nologo",
+          "-coff",
+          "-c"
+        ]
+      },
+      "src/caviar_part_s2o_contained.asm": {
+        "flags": [
+          "-nologo",
+          "-coff",
+          "-c"
+        ]
       }
     },
     "flag_sets": [
@@ -2060,7 +2150,8 @@
     ],
     "unit_extensions": [
       ".cpp",
-      ".c"
+      ".c",
+      ".asm"
     ],
     "input_roots": [
       "cmake"

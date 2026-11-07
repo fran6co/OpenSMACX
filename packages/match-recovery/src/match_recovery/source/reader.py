@@ -27,7 +27,8 @@ from .grammar import (DEFINITION_HEAD, DEFINITION_KEYWORDS,
                       MARKER_SEMANTIC, MARKER_TAIL,
                       NEXT_MARKER, SENTINEL, SOURCE_ROLE,
                       SOURCE_ROLE_DIRECTIVE, FUNCTION_FRAGMENT_DIRECTIVE,
-                      _MANGLED_BASE)
+                      _MANGLED_BASE, assembler_annotation_text,
+                      is_assembler_source)
 from .model import (DecompilationState, FunctionFragmentRelation, Lesson, Mode, Recipe, SourceRole,
                     State, validate_source_role)
 from ..records import parse_json_value
@@ -765,8 +766,12 @@ def _read_text(text: str, path: Path | str,
     """Scan TEXT attributed to `path`.
 
     Only EXPLICIT markers are read - the tree's single annotation grammar.
+    An assembler source is read in the same grammar after its `;` comments
+    are respelled `//` line for line (`grammar.assembler_annotation_text`).
     """
     path = Path(path)
+    if is_assembler_source(path):
+        text = assembler_annotation_text(text)
     pre_block, pre_raw = False, None
     for raw_line in text.splitlines(keepends=True):
         content = raw_line.rstrip("\r\n")
@@ -927,6 +932,13 @@ def _read_text(text: str, path: Path | str,
                 # This reader only saw the marker file. A header body is
                 # pending snapshot resolution, not a failed local extraction.
                 error = ""
+            elif is_assembler_source(path):
+                # An assembler procedure has no braces: the marker owns its
+                # text up to the next marker, as the grammar's region rule
+                # says, and the `symbol` fact names the procedure.
+                following = next((offset for offset in range(index + 1, len(lines))
+                                  if NEXT_MARKER.match(lines[offset])), len(lines))
+                region, error = "\n".join(lines[index:following]) + "\n", ""
             elif proved:
                 # Proved bodies keep the writeback semantics even once an
                 # explicit marker lands in the header: the body is the

@@ -7,17 +7,23 @@ from recovery.environment import intrinsics, wine
 
 
 @pytest.fixture(autouse=True)
-def ordinary_frontend(monkeypatch):
+def ordinary_frontend(monkeypatch, tmp_path):
     # SDK controls exercise the explicitly ordinary-only configuration and
     # must not discover a compiler that their project has not registered.
     monkeypatch.setattr(intrinsics, "registration",
                         lambda: {"enabled": False, "compiler": "unregistered-tool"})
+    # The assembler is always a declared input, wherever UASM_ROOT points.
+    monkeypatch.setattr(wine, "UASM_ROOT", tmp_path / "uasm")
 
 
-def test_disabled_frontend_never_discovers_intrinsic_tools(monkeypatch):
+def assembler(tmp_path):
+    return {"assembler": str(tmp_path / "uasm" / "uasm32.exe")}
+
+
+def test_disabled_frontend_never_discovers_intrinsic_tools(monkeypatch, tmp_path):
     monkeypatch.setattr(intrinsics.shutil, "which",
                         lambda _: pytest.fail("ordinary-only project discovered an intrinsic compiler"))
-    assert toolchain_inputs()["files"] == {}
+    assert toolchain_inputs()["files"] == assembler(tmp_path)
 
 
 def test_registered_frontend_inputs_are_merged_not_substituted(monkeypatch, tmp_path):
@@ -27,7 +33,7 @@ def test_registered_frontend_inputs_are_merged_not_substituted(monkeypatch, tmp_
     declared = {"files": {"intrinsic-compiler": str(tmp_path / "clang-cl")},
                 "directories": {"intrinsic-headers": str(tmp_path / "clang-headers")}}
     monkeypatch.setattr(intrinsics, "toolchain_inputs", lambda: declared)
-    assert toolchain_inputs() == {"schema_version": 1, "files": declared["files"],
+    assert toolchain_inputs() == {"schema_version": 1, "files": {**declared["files"], **assembler(tmp_path)},
         "directories": {**declared["directories"], "compiler": str(tmp_path / "BIN"),
                         "include-0": str(tmp_path / "INCLUDE"), "library-0": str(tmp_path / "LIB")}}
 
@@ -44,7 +50,7 @@ def test_default_and_overridden_sdk_search_paths(monkeypatch, tmp_path):
     monkeypatch.setattr(wine, "VC6_ROOT", tmp_path)
     monkeypatch.delenv("VC6_INCLUDE", raising=False)
     monkeypatch.delenv("VC6_LIB", raising=False)
-    assert toolchain_inputs() == {"schema_version": 1, "files": {}, "directories": {
+    assert toolchain_inputs() == {"schema_version": 1, "files": assembler(tmp_path), "directories": {
         "compiler": str(tmp_path / "BIN"), "include-0": str(tmp_path / "INCLUDE"), "library-0": str(tmp_path / "LIB")}}
     monkeypatch.setenv("VC6_INCLUDE", str(tmp_path / "headers") + ":" + str(tmp_path / "sdk"))
     monkeypatch.setenv("VC6_LIB", str(tmp_path / "libraries"))

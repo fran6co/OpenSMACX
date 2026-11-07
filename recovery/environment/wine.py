@@ -32,7 +32,15 @@ from pathlib import Path
 
 VC6_ROOT = Path(os.environ.get("VC6_ROOT", Path.home() / "opt" / "vc6"))
 VC6_PREFIX = Path(os.environ.get("VC6_PREFIX", VC6_ROOT / ".wineprefix"))
-TOOLS = {"cl": "CL.EXE", "link": "LINK.EXE", "lib": "LIB.EXE"}
+TOOLS = {"cl": "CL.EXE", "link": "LINK.EXE", "lib": "LIB.EXE", "uasm": "uasm32.exe"}
+# MASM-dialect sources (user decision, 2026-11-07) go through UASM, an
+# open-source MASM-compatible assembler, run under the same Wine prefix as CL.
+# It is a separate install beside VC6; ~/opt/uasm/<version>/PROVENANCE.md pins it.
+UASM_ROOT = Path(os.environ.get("UASM_ROOT", Path.home() / "opt" / "uasm" / "2.57r"))
+
+
+def tool_executable(tool: str) -> Path:
+    return (UASM_ROOT if tool == "uasm" else VC6_ROOT / "BIN") / TOOLS[tool]
 
 
 def preprocessing_diagnostics(stdout: bytes, stderr: bytes) -> str:
@@ -369,6 +377,31 @@ def write_depfile(executable, arguments: list, path: str, target: str) -> None:
     Path(path).write_text(f"{target}:{body}\n")
 
 
+# UASM echoes one summary line per source; diagnostics follow on their own lines.
+ASSEMBLER_SUMMARY = re.compile(r"^.*: \d+ lines, \d+ passes, \d+ ms, \d+ warnings, \d+ errors$")
+
+
+def assemble(executable: Path, arguments: list) -> int:
+    """Run UASM with the CL wrapper's path translation and environment.
+
+    No depfile, compiler frontend, reproducibility root or diagnostics capture:
+    those are CL protocols. An assembler source that names one is a build
+    configuration error, not something to drop silently.
+    """
+    unsupported = [word for word in arguments if word.startswith("--")]
+    if unsupported:
+        print("unsupported assembler wrapper option: " + " ".join(unsupported), file=sys.stderr)
+        return 3
+    translated = [translate(a) for a in arguments]
+    finished = run_tool(["wine32", str(executable), *translated])
+    for line in finished.stdout.splitlines():
+        if line.strip() and not ASSEMBLER_SUMMARY.match(line.strip()):
+            print(line)
+    if finished.stderr.strip():
+        print(finished.stderr, file=sys.stderr, end="")
+    return finished.returncode
+
+
 def main(argv: list) -> int:
     tool = "cl"
     arguments = argv[1:]
@@ -382,10 +415,13 @@ def main(argv: list) -> int:
                 tool = name
                 break
 
-    executable = VC6_ROOT / "BIN" / TOOLS[tool]
+    executable = tool_executable(tool)
     if not executable.is_file():
-        print(f"{executable} not found; set VC6_ROOT", file=sys.stderr)
+        print(f"{executable} not found; set {'UASM_ROOT' if tool == 'uasm' else 'VC6_ROOT'}",
+              file=sys.stderr)
         return 127
+    if tool == "uasm":
+        return assemble(executable, expand_responses(arguments))
 
     # BEFORE ANYTHING READS THE ARGUMENTS. Both the depfile extraction below
     # and the path translation are blind to whatever sits inside a `@file`.

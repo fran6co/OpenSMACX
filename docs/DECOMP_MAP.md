@@ -669,6 +669,22 @@ structural work temporarily stops reproducing them.
 The lookbehind matters: `PROVEN-AGAINST-ORIGINAL: 0x...` provenance
 comments end in this spelling and are not map entries.
 
+## Assembler sources
+
+A MASM-dialect `.asm` source (assembled by UASM; see README "Building") carries
+the same grammar with `;` comments: `; ORIGINAL: ...`, `; symbol    ...`,
+`; TRIED: ...` mean exactly their `//` spellings. The reader respells each `;`
+comment as `//` line for line before parsing, and the claim writer respells
+only the lines it changes or adds back to `;`. There is no second grammar.
+
+Give each marker an explicit `symbol` fact naming the procedure's emitted
+(mangled) spelling. A body marker owns its text up to the next marker; FILE
+mode works as in C++. Procedures sharing one assembler segment are measured from
+their symbol to the next procedure symbol in that segment. Only an assembler
+host may be compared inside a writable code section such as `_SELFMOD`; a
+compiler-hosted mapping there is still refused. Each assembler source needs an
+explicit `unit_flag_sets` recipe in `recovery/project.json`.
+
 ## Original layout interpretations
 
 Place evidence-backed layout expectations beside their owning C++ declarations:

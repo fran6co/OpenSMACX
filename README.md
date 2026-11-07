@@ -51,6 +51,11 @@ find . -type d -exec sh -c 'for f in "$1"/*; do b=$(basename "$f"); \
     && ln -s "$b" "$1/$l"; done' _ {} \;
 ```
 
+The few routines the original wrote as MASM modules that VC6 inline asm
+cannot express live in `src/*.asm` and are assembled by UASM (2.57r, Win32
+build) under the same Wine prefix, from `$UASM_ROOT` (default
+`~/opt/uasm/2.57r`; its `PROVENANCE.md` records the release URL and hashes).
+
 The product is `OpenSMACX.exe`: it exists so the recovered bodies
 must compile and LINK, which is what catches a body that type-checks in
 isolation and cannot resolve its callees. It is not the game.

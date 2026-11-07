@@ -63,7 +63,9 @@ def test_prepared_project_and_matching_compiler_use_static_multithreaded_runtime
     database = root / "build/compile_commands.json"
     if not database.is_file() or not (VC6_ROOT / "BIN/CL.EXE").is_file() or shutil.which("wine") is None:
         pytest.skip("prepared project and VC6/Wine are required")
-    commands = [invocation(entry) for entry in read_database(database)]
+    # Assembler sources link no C runtime and carry no runtime switch.
+    commands = [invocation(entry) for entry in read_database(database)
+                if entry.file.suffix.lower() != ".asm"]
     assert commands
     for command in commands:
         assert [word for word in command if word in ("/MD", "/MDd", "/MT", "/MTd", "/ML", "/MLd")] == ["/MT"]

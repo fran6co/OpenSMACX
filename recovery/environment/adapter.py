@@ -14,10 +14,11 @@ from match_recovery.records import parse_json
 def toolchain_inputs():
     # Locations and environment defaults are compiler interaction, not package
     # policy. Keep these consistent with the actual compile/link wrapper.
-    from recovery.environment.wine import VC6_ROOT, sdk_search_paths
+    from recovery.environment.wine import UASM_ROOT, VC6_ROOT, sdk_search_paths
     from recovery.environment.intrinsics import toolchain_inputs as intrinsic_inputs
     intrinsic = intrinsic_inputs()
-    return {"schema_version": 1, "files": intrinsic["files"], "directories": {
+    files = {**intrinsic["files"], "assembler": str((UASM_ROOT / "uasm32.exe").resolve())}
+    return {"schema_version": 1, "files": files, "directories": {
         **intrinsic["directories"],
         "compiler": str((VC6_ROOT / "BIN").resolve()),
         **{f"include-{index}": str(path) for index, path in enumerate(

@@ -31,6 +31,7 @@ from ..model import Result
 from ..pe_coff import Coff, CoffRecords, PeImage
 from ..source_inventory import image_pin
 from .eh_regions import bind_eh_regions, eh_action_semantic_difference
+from .grammar import is_assembler_source
 from .model import DecompilationState, Mode, Tier
 
 @dataclass(frozen=True)
@@ -581,6 +582,7 @@ def _subject_candidates(obj: bytes) -> list[tuple[str, int, int, int]]:
             return obj[str_ptr + off:end].decode()
         return field.rstrip(b"\x00").decode()
 
+    code = [_is_code_section(obj, index, names[index]) for index in range(n_sections)]
     out, i = [], 0
     while i < n_syms:
         off = sym_ptr + i * 18
@@ -588,10 +590,50 @@ def _subject_candidates(obj: bytes) -> list[tuple[str, int, int, int]]:
         value, section_no, _type, storage, n_aux = \
             struct.unpack_from("<IhHBB", obj, off + 8)
         if 0 < section_no <= len(names) and (
-                storage == 3 or storage == 2 and names[section_no - 1] == ".text"):
+                storage == 3 or storage == 2 and code[section_no - 1]):
             out.append((name, value, section_no - 1, storage))
         i += 1 + n_aux
     return out
+
+
+IMAGE_SCN_CNT_CODE = 0x00000020
+
+
+def _is_code_section(obj: bytes, index: int, name: str) -> bool:
+    """A compiler's `.text`, or an assembler segment declared as code.
+
+    VC6 names every code section `.text`. A MASM module can name its own
+    code segment - the original's `_SELFMOD` is one - and its external
+    procedures are functions exactly as a `.text` one is. Executable code
+    contents, not the spelling, decide it; a data section never qualifies.
+    """
+    if name == ".text":
+        return True
+    (characteristics,) = struct.unpack_from("<I", obj, 20 + index * 40 + 36)
+    wanted = IMAGE_SCN_CNT_CODE | IMAGE_SCN_MEM_EXECUTE
+    return characteristics & wanted == wanted
+
+
+def _next_function_offset(obj: bytes, section: int, value: int) -> int | None:
+    """The next function symbol after `value` in the same object section.
+
+    `/Gy` puts each compiled function in its own COMDAT, so the section end
+    is the function end. An assembler module puts several procedures in one
+    segment; each one ends where the next declared procedure (COFF function
+    type 0x20) begins. Labels and jump-table symbols are not functions and
+    never cut a body short.
+    """
+    _machine, _n_sections, _ts, sym_ptr, n_syms, _opt, _ch = \
+        struct.unpack_from("<HHIIIHH", obj, 0)
+    following, i = [], 0
+    while i < n_syms:
+        off = sym_ptr + i * 18
+        other, section_no, kind, _storage, n_aux = \
+            struct.unpack_from("<IhHBB", obj, off + 8)
+        if section_no - 1 == section and kind == 0x20 and other > value:
+            following.append(other)
+        i += 1 + n_aux
+    return min(following, default=None)
 
 
 def _local_function_masked(raw: bytes, name: str, *,
@@ -703,7 +745,8 @@ def _coff_function_masked(obj: bytes, symbol: str, emitted: str = "",
             "complete function measurement requires one original image span")
     _name, value, sec, _storage = matches[0]
     _sec_name, raw_size, raw_ptr, reloc_ptr, n_relocs = sections[sec]
-    code = obj[raw_ptr + value:raw_ptr + raw_size]
+    end_offset = _next_function_offset(obj, sec, value)
+    code = obj[raw_ptr + value:raw_ptr + (raw_size if end_offset is None else min(raw_size, end_offset))]
     end = len(code)
     while end > 0 and code[end - 1] in (0x90, 0xCC):
         end -= 1
@@ -1457,7 +1500,14 @@ def span_refusal(record: DecompilationState, exe: Path | str,
     # takes precedence over a shared-tail diagnostic in another span.
     writable_code = IMAGE_SCN_MEM_EXECUTE | IMAGE_SCN_MEM_WRITE
     sections = _sections(Path(exe))
-    if any(low < section_high and section_low < high
+    # AN ASSEMBLER CAN. The refusal is about compilers: no C++ spelling
+    # reproduces code that patches its own immediates. A MASM module states
+    # those initial bytes and the labels its patchers store through, so a
+    # mapping hosted (and assembled) in an assembler source is compared like
+    # any other body; the image's file bytes are the pre-patch state.
+    assembled = is_assembler_source(record.path) and (
+        not record.context or is_assembler_source(record.context))
+    if not assembled and any(low < section_high and section_low < high
            and characteristics & writable_code == writable_code
            for low, high in spans
            for _name, section_low, section_high, characteristics in sections):
