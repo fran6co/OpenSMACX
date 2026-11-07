@@ -4822,6 +4822,16 @@ Return Value: 0, 7 when the renderer is off or the Buffer is null, and 0 when
 Status: Complete
 */
 int Caviar::render(Buffer *buffer, int centre_x, int centre_y, int flags) {
+    int top;
+    int left;
+    VOX_Vect extent;
+    VOX_Vect position;
+    RECT area;
+    RECT clip;
+    RECT scene;
+    VOX_Matrix saved;
+    VoxRenderRecord *record;
+
     if ((field_4_ & 1) == 0) {
         return 7;
     }
@@ -4835,50 +4845,48 @@ int Caviar::render(Buffer *buffer, int centre_x, int centre_y, int flags) {
         camera_view_.camera_.scaling = camera_view_.camera_.scaling + camera_view_.camera_.scaling;
     }
 
-    // DEFECT FIXED 2026-09-06: this body stored the BUFFER here, where the
-    // image stores the instance count it has just tested - image 0x617266
-    // `mov eax, [ebp + 0x13cc]` and 0x617292 `mov [ebp + 0x1c], eax`. The
-    // count is what the engine's camera transform reads back out of the same
-    // dword (+0x04 of the block it is handed), so the old store handed the
-    // transform a pointer to walk as a loop bound. render_scene (0x00617080)
-    // already spelled it correctly.
-    scene_context_.state_.instance_count_ = field_13CC_;
     camera_view_.bounds_.values_[0] = 0;
     camera_view_.bounds_.values_[1] = 0;
     camera_view_.bounds_.values_[2] = 0xff;
     camera_view_.bounds_.values_[3] = 0xff;
     camera_view_.bounds_.values_[4] = 0x100;
     camera_view_.bounds_.values_[5] = 0x100;
+    // DEFECT FIXED 2026-09-06: the image stores the instance count here
+    // (0x617292), not the Buffer.
+    scene_context_.state_.instance_count_ = field_13CC_;
     buffer_ = buffer;
     scene_context_.state_.draw_flags_ = 1;
-    scene_context_.shadow_enabled_ = (flags & 2) != 0 ? 0 : 1;
+    if (flags & 2) {
+        scene_context_.shadow_enabled_ = 0;
+    } else {
+        scene_context_.shadow_enabled_ = 1;
+    }
 
-    int left = centre_x - 0x80;
-    int top = centre_y - 0x80;
-    RECT area;
+    clip = buffer->rect1_;
+    top = centre_y - 0x80;
+    left = centre_x - 0x80;
     area.left = left;
     area.top = top;
-    area.right = centre_x + 0x80;
-    area.bottom = centre_y + 0x80;
-    IntersectRect(&area, &area, &buffer->rect1_);
-    area.left += 0x80 - centre_x;
-    area.right += 0x80 - centre_x;
-    area.top += 0x80 - centre_y;
-    area.bottom += 0x80 - centre_y;
+    area.right = left + 0x100;
+    area.bottom = top + 0x100;
+    IntersectRect(&area, &area, &clip);
+    int dy = 0x80 - centre_y;
+    int dx = 0x80 - centre_x;
+    area.left += dx;
+    area.right += dx;
+    area.top += dy;
+    area.bottom += dy;
 
-    // The engine draws in scene coordinates and reports back what it covered,
-    // so the rectangle goes across in the scene's own frame and the extent
-    // follows from it.
-    VoxRenderRecord *record = CaviarScene.created_;
-    record->draw_left_ = area.left;
-    record->draw_top_ = area.top;
-    record->draw_right_ = area.right;
-    record->draw_bottom_ = area.bottom;
-    record->draw_width_ = area.right - area.left;
-    record->draw_height_ = area.bottom - area.top;
+    // The record's fields are re-read through the global at every store.
+    CaviarScene.created_->draw_left_ = area.left;
+    CaviarScene.created_->draw_top_ = area.top;
+    CaviarScene.created_->draw_right_ = area.right;
+    CaviarScene.created_->draw_bottom_ = area.bottom;
+    CaviarScene.created_->draw_width_ = area.right - area.left;
+    CaviarScene.created_->draw_height_ = area.bottom - area.top;
 
     if (flags & 4) {
-        VOX_Matrix saved = scene_context_.state_.scene_rotation_;
+        saved = scene_context_.state_.scene_rotation_;
         // Unrotated centering is temporary: the transform always samples step
         // zero, then the saved scene rotation is restored before scene drawing.
         if (flags & 0x10) {
@@ -4892,14 +4900,12 @@ int Caviar::render(Buffer *buffer, int centre_x, int centre_y, int flags) {
             scene_context_.state_.scene_rotation_.values[2][1] = 0.0f;
             scene_context_.state_.scene_rotation_.values[2][2] = 1.0f;
         }
-        VOX_Vect position;
-        VOX_Vect extent;
         vox_transform_camera(&scene_context_.state_, 0,
                              &position, &extent);
-        position.values[0] = (extent.values[0] + position.values[0]) * 0.5f;
         scene_context_.state_.scene_rotation_ = saved;
-        position.values[1] = (extent.values[1] + position.values[1]) * 0.5f;
-        position.values[2] = (extent.values[2] + position.values[2]) * 0.5f;
+        position.values[0] = (position.values[0] + extent.values[0]) * 0.5f;
+        position.values[1] = (position.values[1] + extent.values[1]) * 0.5f;
+        position.values[2] = (position.values[2] + extent.values[2]) * 0.5f;
         scene_context_.state_.scene_offset_.values[0] -= position.values[0];
         scene_context_.state_.scene_offset_.values[1] -= position.values[1];
         scene_context_.state_.scene_offset_.values[2] -= position.values[2];
@@ -4910,16 +4916,14 @@ int Caviar::render(Buffer *buffer, int centre_x, int centre_y, int flags) {
     record = CaviarScene.created_;
     CaviarScene.renderer_ = 0;
 
-    RECT covered;
-    covered.left = record->primary_clip_.left_;
-    covered.top = record->primary_clip_.top_;
-    covered.right = record->primary_clip_.right_ + 1;
-    covered.bottom = record->primary_clip_.bottom_ + 1;
-    UnionRect(&CaviarViewportState, &covered, &CaviarViewportState);
+    area.left = record->primary_clip_.left_;
+    area.top = record->primary_clip_.top_;
+    area.right = record->primary_clip_.right_ + 1;
+    area.bottom = record->primary_clip_.bottom_ + 1;
+    UnionRect(&CaviarViewportState, &area, &CaviarViewportState);
 
     if (scene_context_.shadow_enabled_ != 0) {
         record = CaviarScene.created_;
-        RECT scene;
         scene.left = record->secondary_clip_.left_;
         scene.top = record->secondary_clip_.top_;
         scene.right = record->secondary_clip_.right_ + 1;
@@ -4927,40 +4931,26 @@ int Caviar::render(Buffer *buffer, int centre_x, int centre_y, int flags) {
         UnionRect(&CaviarScene.scene_rect_, &scene,
                   &CaviarScene.scene_rect_);
         if (scene_context_.shadow_enabled_ != 0) {
-            unsigned char *shadow_table = static_cast<unsigned char *>(CaviarScene.created_->shadow_table_);
-            int mode;
-            int origin_x;
-            int origin_y;
             if (field_4_ & 0x20) {
-                mode = 2;
-                origin_x = centre_x - 0x40;
-                origin_y = centre_y - 0x40;
+                CaviarSceneBufferB.buffer().draw_dest_source(
+                    buffer, 0, centre_x - 0x40, centre_y - 0x40, 1, 2,
+                    static_cast<unsigned char *>(CaviarScene.created_->shadow_table_));
             } else {
-                mode = 1;
-                origin_x = left;
-                origin_y = top;
+                CaviarSceneBufferB.buffer().draw_dest_source(
+                    buffer, 0, left, top, 1, 1,
+                    static_cast<unsigned char *>(CaviarScene.created_->shadow_table_));
             }
-            CaviarSceneBufferB.buffer().draw_dest_source(buffer, 0, origin_x, origin_y,
-                                                1, mode, shadow_table);
         }
     }
 
     buffer->free_data(1);
 
     if ((flags & 8) == 0) {
-        int mode;
-        int origin_x;
-        int origin_y;
         if (field_4_ & 0x20) {
-            mode = 2;
-            origin_x = centre_x - 0x40;
-            origin_y = centre_y - 0x40;
+            CaviarSceneBufferA.buffer().draw(buffer, 9, centre_x - 0x40, centre_y - 0x40, 1, 2);
         } else {
-            mode = 1;
-            origin_x = left;
-            origin_y = top;
+            CaviarSceneBufferA.buffer().draw(buffer, 9, left, top, 1, 1);
         }
-        CaviarSceneBufferA.buffer().draw(buffer, 9, origin_x, origin_y, 1, mode);
         buffer->free_data(1);
         clear_buffers(flags & 1);
     }
