@@ -177,7 +177,6 @@ set(OPENSMACX_SOURCES
     src/game.cpp
     src/game_desktop.cpp
     src/game_calendar.cpp
-    src/faction_monuments.cpp
     src/newgame.cpp
     src/application_math.cpp
     src/application_text.cpp
@@ -473,7 +472,6 @@ set_source_files_properties(
     src/interface_assets.cpp
     src/game_desktop.cpp
     src/game_calendar.cpp
-    src/faction_monuments.cpp
     src/newgame.cpp
     src/netwin.cpp
     PROPERTIES COMPILE_OPTIONS "/Oy-")
@@ -615,7 +613,6 @@ set_property(SOURCE
     src/game.cpp
     src/game_desktop.cpp
     src/game_calendar.cpp
-    src/faction_monuments.cpp
     src/interface_palette.cpp
     src/interface_assets.cpp
     src/maininterface.cpp

@@ -90,7 +90,7 @@
       "name": "FactionMonuments",
       "start": "0x00476B30",
       "end_exclusive": "0x00477B0F",
-      "recovered_tu": "src/faction_monuments.cpp",
+      "recovered_tu": "src/monuwin.cpp",
       "reason": "Inferred complete faction-monument event-handler core. Seventeen mapped functions form a tight uninterrupted ownership neighborhood with padding-only gaps and no other mapped contribution inside the band; historical object boundaries remain unproven.",
       "evidence": [
         "The candidate report lists all 17 mapped clear_monuments/mon_* handlers in the proposed interval; it reports no foreign mapped interleavers, same-family outliers, or cold spans.",
