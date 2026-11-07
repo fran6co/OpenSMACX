@@ -85,7 +85,7 @@ static_assert(sizeof(EdgeScan) == 0x3C, "cached edge record stride");
 class Texture {
  public:
   // homed from 00622db0.cpp
-  int draw_trans_3(Buffer *buffer, Vert *verts, int *zvals, int a4,
+  void draw_trans_3(Buffer *buffer, Vert *verts, int *zvals, int a4,
                    Vert *edgeVerts, int a6);
 
  public:

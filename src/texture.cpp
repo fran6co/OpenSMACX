@@ -4048,7 +4048,7 @@ int Texture::draw_trans2(Buffer *buffer, Vert *vertices, int use_eight_vertices)
 }
 
 // ORIGINAL: 0x00622DB0 Texture::draw_trans_3 0x00622DB0-0x006233C0 FILE
-// symbol    ?draw_trans_3@Texture@@QAEHPAVBuffer@@PAUVert@@PAHH1H@Z
+// symbol    ?draw_trans_3@Texture@@QAEXPAVBuffer@@PAUVert@@PAHH1H@Z
 // TRIED: __stdcall free function (receiver is really `this` via ECX, recast as Texture::draw_trans_3); exact EdgeScan field indices; the textured fill sub-branch borrows the real ESP as a second fixed-point counter (push ebp; mov [0x9bb4ac],esp; mov esp,ecx; ...; add sp,dx; sub esp,0x10000; jns ...; mov esp,[0x9bb4ac]) - no C construct can spell operating on the live stack pointer as data.
 // working copy - scaffold materialised by --work
 // size      1552 bytes
@@ -4059,11 +4059,11 @@ int Texture::draw_trans2(Buffer *buffer, Vert *vertices, int use_eight_vertices)
 // calls     0x005E3373 0x005E34A3 0x0061C090 0x0061FC90
 
 
-int Texture::draw_trans_3(Buffer *buffer, Vert *vertices, int *zvals, int count,
+void Texture::draw_trans_3(Buffer *buffer, Vert *vertices, int *zvals, int count,
                           Vert *uv, int fill_color) {
     if (fill_color == -1) {
         draw_trans(buffer, vertices, zvals, count, uv);
-        return 0;
+        return;
     }
     TextureRasterPixelBase = buffer->get_data();
     TextureRasterLightThreshold = static_cast<int>(TextureRasterKey);
@@ -4350,7 +4350,7 @@ int Texture::draw_trans_3(Buffer *buffer, Vert *vertices, int *zvals, int count,
         buffer->free_data(1);
     }
     __asm finit
-    return 0;
+    return;
 }
 
 // Cached counterpart of the Gouraud edge setup. Only six channels in a

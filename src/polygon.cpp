@@ -89,13 +89,12 @@ static unsigned short PolygonLightStep;
 // RECOVERY_BINDING: v1 {"evidence": ["626470..62653F reads two stack arguments, wraps by9BC038, skips horizontal edges and initializes direction-dependent quotient/remainder stepping."], "reason": "The original cdecl edge initializer takes a pointer to nine signed DWORDs and a vertex index, traversing the shared vertex array toward the maximum-y vertex."}
 // symbol    ?setup_flat_polygon_edge@@YAHPAUFlatPolygonEdge@@H@Z
 int __cdecl setup_flat_polygon_edge(FlatPolygonEdge *edge, int vertex) {
-    if (vertex == PolygonBottomVertex) {
-        return 0;
-    }
-    const int direction = edge->direction;
     int next;
-    do {
-        next = vertex + direction;
+    for (;;) {
+        if (vertex == PolygonBottomVertex) {
+            return 0;
+        }
+        next = vertex + edge->direction;
         if (next > PolygonVertexCount - 1) {
             next = 0;
         } else if (next < 0) {
@@ -103,29 +102,29 @@ int __cdecl setup_flat_polygon_edge(FlatPolygonEdge *edge, int vertex) {
         }
         edge->remaining_rows = PolygonVertices[next].y - PolygonVertices[vertex].y;
         if (edge->remaining_rows != 0) {
-            if (edge->remaining_rows < 0) {
-                return 0;
-            }
-            edge->next_vertex = next;
-            edge->x = PolygonVertices[vertex].x;
-            int delta = PolygonVertices[next].x - PolygonVertices[vertex].x;
-            if (delta < 0) {
-                edge->x_direction = -1;
-                delta = -delta;
-                edge->error = 1 - edge->remaining_rows;
-                edge->x_step = -(delta / edge->remaining_rows);
-            } else {
-                edge->x_direction = 1;
-                edge->x_step = delta / edge->remaining_rows;
-                edge->error = 0;
-            }
-            edge->remainder = delta % edge->remaining_rows;
-            edge->height = edge->remaining_rows;
-            return 1;
+            break;
         }
         vertex = next;
-    } while (vertex != PolygonBottomVertex);
-    return 0;
+    }
+    if (edge->remaining_rows < 0) {
+        return 0;
+    }
+    edge->next_vertex = next;
+    edge->x = PolygonVertices[vertex].x;
+    int delta = PolygonVertices[next].x - PolygonVertices[vertex].x;
+    if (delta < 0) {
+        edge->x_direction = -1;
+        delta = -delta;
+        edge->error = 1 - edge->remaining_rows;
+        edge->x_step = -(delta / edge->remaining_rows);
+    } else {
+        edge->x_direction = 1;
+        edge->error = 0;
+        edge->x_step = delta / edge->remaining_rows;
+    }
+    edge->remainder = delta % edge->remaining_rows;
+    edge->height = edge->remaining_rows;
+    return 1;
 }
 
 // ORIGINAL: 0x00626540 sub_626540 0x00626540-0x00626597 FILE BYTE_EXACT
@@ -463,13 +462,12 @@ static unsigned short polygon_light_step(int delta, int width_fixed) {
 // RECOVERY_BINDING: v1 {"evidence": ["626900..6269F3 uses stack edge/index arguments, wraps indices0..3 and initializes x at+1C, light at+34 and fixed_div628AD0 light step at+38. The shared type spelling is a representation choice, not proof of an original type name."], "reason": "This cdecl initializer consumes the shared four-vertex polygon and light arrays using the existing fifteen-word EdgeScan representation; it leaves the four unused interpolant words untouched."}
 // symbol    ?setup_gouraud_polygon_edge@@YAHPAUEdgeScan@@H@Z
 int __cdecl setup_gouraud_polygon_edge(EdgeScan *edge, int vertex) {
-    if (vertex == PolygonBottomVertex) {
-        return 0;
-    }
-    const int direction = edge->f0;
     int next;
-    do {
-        next = vertex + direction;
+    for (;;) {
+        if (vertex == PolygonBottomVertex) {
+            return 0;
+        }
+        next = vertex + edge->f0;
         if (next > 3) {
             next = 0;
         } else if (next < 0) {
@@ -477,33 +475,33 @@ int __cdecl setup_gouraud_polygon_edge(EdgeScan *edge, int vertex) {
         }
         edge->counter = PolygonVertices[next].y - PolygonVertices[vertex].y;
         if (edge->counter != 0) {
-            if (edge->counter < 0) {
-                return 0;
-            }
-            const int height = polygon_fixed(edge->counter);
-            edge->id = next;
-            edge->accumC = PolygonVertices[vertex].x;
-            int delta = PolygonVertices[next].x - PolygonVertices[vertex].x;
-            edge->deltaC = delta / edge->counter;
-            if (delta < 0) {
-                edge->extraDeltaC = -1;
-                delta = -delta;
-                edge->fracAccum = 1 - edge->counter;
-            } else {
-                edge->extraDeltaC = 1;
-                edge->fracAccum = 0;
-            }
-            edge->fracDelta = delta % edge->counter;
-            edge->fracSub = edge->counter;
-            edge->accumD = polygon_fixed(PolygonLights[vertex]);
-            edge->deltaD = fixed_div(
-                polygon_difference(polygon_fixed(PolygonLights[next]), edge->accumD),
-                height);
-            return 1;
+            break;
         }
         vertex = next;
-    } while (vertex != PolygonBottomVertex);
-    return 0;
+    }
+    if (edge->counter <= 0) {
+        return 0;
+    }
+    const int height = polygon_fixed(edge->counter);
+    edge->id = next;
+    edge->accumC = PolygonVertices[vertex].x;
+    int delta = PolygonVertices[next].x - PolygonVertices[vertex].x;
+    edge->deltaC = delta / edge->counter;
+    if (delta < 0) {
+        edge->extraDeltaC = -1;
+        delta = -delta;
+        edge->fracAccum = 1 - edge->counter;
+    } else {
+        edge->extraDeltaC = 1;
+        edge->fracAccum = 0;
+    }
+    edge->fracDelta = delta % edge->counter;
+    edge->fracSub = edge->counter;
+    edge->accumD = polygon_fixed(PolygonLights[vertex]);
+    edge->deltaD = fixed_div(
+        polygon_difference(polygon_fixed(PolygonLights[next]), edge->accumD),
+        height);
+    return 1;
 }
 
 // Four vertices, traversed in their supplied order: unlike the flat entries,
