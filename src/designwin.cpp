@@ -648,7 +648,7 @@ Purpose: Draw one chassis entry's label and render: find the a1'th enabled
          incomplete), then write the record's upper-cased name centred above
          the cell and its count/order byte values in the two label corners.
 
-// ORIGINAL: 0x004329B0 ?draw_chassis@SelectPartWin@@QAEHHPAURECT@@H@Z 0x004329B0-0x00432CB1 FILE
+// ORIGINAL: 0x004329B0 ?draw_chassis@SelectPartWin@@QAEHHPAURECT@@H@Z 0x004329B0-0x00432CB1 FILE BYTE_EXACT
 // symbol   ?draw_chassis@SelectPartWin@@QAEHHPAUtagRECT@@H@Z
 // size      769 bytes
 // prototype int (__thiscall ?draw_chassis@SelectPartWin@@QAEHHPAURECT@@H@Z)(SelectPartWin* this, int, int, RECT*, int)
@@ -734,7 +734,7 @@ Purpose: Draw one reactor entry of the design parts list: find the a1'th
          centred above the cell, the fixed "Reactors" label below-left, and
          the reactor's own number below-right.
 
-// ORIGINAL: 0x00433520 ?draw_reactor@SelectPartWin@@QAEHHPAURECT@@H@Z 0x00433520-0x00433811 FILE
+// ORIGINAL: 0x00433520 ?draw_reactor@SelectPartWin@@QAEHHPAURECT@@H@Z 0x00433520-0x00433811 FILE BYTE_EXACT
 // symbol   ?draw_reactor@SelectPartWin@@QAEHHPAUtagRECT@@H@Z
 // size      753 bytes
 // prototype int (__thiscall ?draw_reactor@SelectPartWin@@QAEHHPAURECT@@H@Z)(SelectPartWin* this, int, int, RECT*, int)
@@ -820,7 +820,7 @@ Purpose: Draw one armor entry of the design parts list: missile chassis select
          faction lacks the tech), then write the record's upper-cased name
          centred above the cell and the label/level pair below it.
 
-// ORIGINAL: 0x00433170 ?draw_armor@SelectPartWin@@QAEHHPAURECT@@H@Z 0x00433170-0x0043351C FILE
+// ORIGINAL: 0x00433170 ?draw_armor@SelectPartWin@@QAEHHPAURECT@@H@Z 0x00433170-0x0043351C FILE BYTE_EXACT
 // symbol   ?draw_armor@SelectPartWin@@QAEHHPAUtagRECT@@H@Z
 // size      940 bytes
 // prototype int (__thiscall ?draw_armor@SelectPartWin@@QAEHHPAURECT@@H@Z)(SelectPartWin* this, int, int, RECT*, int)
@@ -931,7 +931,7 @@ Purpose: Draw one weapon entry of the design parts list: find the a1'th
          grey the render when the tech is missing, and write the weapon's
          upper-cased name, its attack/defense label and its count.
 
-// ORIGINAL: 0x00432CC0 ?draw_weapon@SelectPartWin@@QAEHHPAURECT@@H@Z 0x00432CC0-0x00433167 FILE
+// ORIGINAL: 0x00432CC0 ?draw_weapon@SelectPartWin@@QAEHHPAURECT@@H@Z 0x00432CC0-0x00433167 FILE BYTE_EXACT
 // symbol   ?draw_weapon@SelectPartWin@@QAEHHPAUtagRECT@@H@Z
 // size      1191 bytes
 // prototype int (__thiscall ?draw_weapon@SelectPartWin@@QAEHHPAURECT@@H@Z)(SelectPartWin* this, int, int, RECT*, int)
@@ -3829,7 +3829,7 @@ void DesignWin::suggest_abil(int ability) {
 }
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x00434BC0 ?draw_chassis@DesignWin@@QAEXH@Z 0x00434BC0-0x00434F36
+// ORIGINAL: 0x00434BC0 ?draw_chassis@DesignWin@@QAEXH@Z 0x00434BC0-0x00434F36 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf:434BC0..434F36", "historical seed git:20b88b523:src/recovered/units/00434bc0.cpp preserves the full renderer, palette sequence, imported uppercase call, title/name wrap branch, unchecked triad lookup and exact 0x90 chassis stride", "src/designwin.h:component_panel_rects_[component_panel_chassis], component fields, font1_/font2_, caviar_; src/veh.h:RulesChassis/Chassis/Triad; src/interface_palette.cpp:TextColourTable; src/strings.h:StringTemp/StringTable"], "reason": "Restore the complete chassis editor panel through the real DesignWin, Caviar, RulesChassis, string and palette owners. Preserve native callback order, line geometry, width-dependent wrapping and unchecked localized triad indexing; retain the original identity and span without a new byte claim."}
 extern int TextColourTable[195];
 
@@ -3902,7 +3902,7 @@ void DesignWin::draw_chassis(int redraw) {
 extern int TextColourTable[195];
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x00434F40 ?draw_weapon@DesignWin@@QAEXH@Z 0x00434F40-0x004353FF
+// ORIGINAL: 0x00434F40 ?draw_weapon@DesignWin@@QAEXH@Z 0x00434F40-0x004353FF BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:09f23e99:src/designwin.cpp preserves the original identity and historical seed provenance", "Pinned434F40..4353FF reads real DesignWin panel/font/selection members, VW00 at7871C0 and TextColourTable swatches156..161", "src/caviar.cpp:g_VW00_CAVIARDATA and src/interface_palette.cpp:textcolor_init own model and palette storage"], "reason": "Render the weapon heading, model, localized name and offense/cost detail through genuine source-owned objects; preserve live callback reads and original 32-bit coordinate arithmetic."}
 void DesignWin::draw_weapon(int redraw) {
     (void)redraw;

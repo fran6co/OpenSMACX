@@ -6264,7 +6264,7 @@ void Win::show(int visible) {
 // ===== homed from src/recovered/units/005f7ec0.cpp =====
 typedef unsigned short uint16_t;
 
-// ORIGINAL: 0x005F7EC0 ?update_back_to_window@Win@@QAEXPAUBuffer@@@Z 0x005F7EC0-0x005F813F FILE
+// ORIGINAL: 0x005F7EC0 ?update_back_to_window@Win@@QAEXPAUBuffer@@@Z 0x005F7EC0-0x005F813F FILE BYTE_EXACT
 // symbol    ?update_back_to_window@Win@@QAEXPAVBuffer@@@Z
 // kind game
 void Win::update_back_to_window(Buffer * buffer) {
@@ -8354,7 +8354,7 @@ void Win::nonclient_to_client(int * x, int * y) {
 
 // ===== homed from src/recovered/units/005f8140.cpp =====
 
-// ORIGINAL: 0x005F8140 ?update_window_to_buffer@Win@@QAEXPAUBuffer@@@Z 0x005F8140-0x005F83B0 FILE
+// ORIGINAL: 0x005F8140 ?update_window_to_buffer@Win@@QAEXPAUBuffer@@@Z 0x005F8140-0x005F83B0 FILE BYTE_EXACT
 // symbol    ?update_window_to_buffer@Win@@QAEXPAVBuffer@@@Z
 // kind game
 void Win::update_window_to_buffer(Buffer * buffer) {
