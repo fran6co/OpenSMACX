@@ -2558,16 +2558,17 @@ void Console::editor_personality() {
         return;
     }
 
-    const unsigned int accepted = PopupWriteCheckState;
     data.flags &= ~0x03C00000u;
     data.flags_ext &= ~0x20u;
-    data.ai_growth = (accepted & 1u) != 0;
-    data.ai_tech = (accepted & 2u) != 0;
-    data.ai_wealth = (accepted & 4u) != 0;
-    data.ai_power = (accepted & 8u) != 0;
-    if ((accepted & 0x10u) != 0 && (accepted & 0x20u) == 0) {
+    const char low = static_cast<char>(PopupWriteCheckState);
+    data.ai_growth = (low & 1) != 0;
+    data.ai_tech = ((low & 2) >> 1) != 0;
+    data.ai_wealth = ((low & 4) >> 2) != 0;
+    data.ai_power = ((low & 8) >> 3) != 0;
+    const unsigned int accepted = PopupWriteCheckState;
+    if ((accepted & 0x10u) && !(accepted & 0x20u)) {
         data.ai_fight = 1;
-    } else if ((accepted & 0x10u) == 0 && (accepted & 0x20u) != 0) {
+    } else if ((accepted & 0x20u) && !(accepted & 0x10u)) {
         data.ai_fight = -1;
     } else {
         data.ai_fight = 0;
@@ -3029,7 +3030,7 @@ void Console::editor_view() {
     PopupModalState = 6;
     popup.start(PopupStartCaption, "EDITORWHO", -1, nullptr, 0x40, nullptr);
     for (int faction = 1; faction < MaxPlayerNum; ++faction) {
-        if ((GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_ & (1u << faction)) == 0) {
+        if (!is_alive(faction)) {
             continue;
         }
         parse_set(Players[faction].noun_gender, Players[faction].is_noun_plural);
@@ -3077,27 +3078,31 @@ void Console::editor_view() {
     GameDataStateStorage.fields_.game_state_ &= ~0x80u;
     desktop_update();
     const unsigned char view_state = static_cast<unsigned char>(GameDataStateStorage.fields_.game_state_);
-    if ((view_state & 0xC0u) == 0xC0u) {
+    if ((view_state & 0x80u) && (view_state & 0x40u)) {
         MainInterfaceGlobal.flat_button_[2].show(0);
     } else {
         MainInterfaceGlobal.flat_button_[2].hide();
     }
-    if ((GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & (1u << selected)) == 0) {
+    if (!is_human(selected)) {
         parse_set(Players[selected].noun_gender, Players[selected].is_noun_plural);
         parse_says(0, Players[selected].noun_faction, -1, -1);
         PopupModalState = 6;
-        const int answer = X_pop("EDITORCONTROL", nullptr);
-        GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ =
-            answer != 0 ? static_cast<uint8_t>(1u << selected) : 0;
+        if (X_pop("EDITORCONTROL", nullptr) == 0) {
+            GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ =
+                static_cast<uint8_t>(1u << selected);
+        } else {
+            GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ = 0;
+        }
         PopupModalState = 0;
     }
 
     ConsoleGlobal.faction_id_ = selected;
-    const int slot = ConsoleGlobal.cursor_history_index_;
-    const int x = ConsoleGlobal.cursor_history_x_[slot];
-    const int y = ConsoleGlobal.cursor_history_y_[slot];
-    if (base_find(x, y, selected) >= 0) {
-        ConsoleGlobal.focus(x, y, selected);
+    if (base_find(ConsoleGlobal.cursor_history_x_[ConsoleGlobal.cursor_history_index_],
+                  ConsoleGlobal.cursor_history_y_[ConsoleGlobal.cursor_history_index_],
+                  selected) >= 0) {
+        ConsoleGlobal.focus(ConsoleGlobal.cursor_history_x_[ConsoleGlobal.cursor_history_index_],
+                            ConsoleGlobal.cursor_history_y_[ConsoleGlobal.cursor_history_index_],
+                            ConsoleGlobal.faction_id_);
     }
     ConsoleGlobal.set_view(1);
     ::draw_map(1);
