@@ -83,8 +83,8 @@ void FactionProfileWin::show_profile() {
   }
   popup->dialogs().sprite(popup_portrait, 0, 0);
   set_caption(Players[faction_id_].formal_name_faction);
-  popup_.set_string_font(PopupMenuItalicFont, PopupMenuBoldFont,
-                         PopupMenuFont, 0);
+  popup_.set_string_font(PopupMenuFont, PopupMenuBoldFont,
+                         PopupMenuItalicFont, 0);
   popup_.set_loc(0xA2, 2);
   popup_.set_width(popup_width);
   popup_.exec(0, 0);

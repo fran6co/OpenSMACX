@@ -518,17 +518,17 @@ int NetSessionPickerWin::connect_session() {
   parse_says(1, "My Name", -1, -1);
   parse_says(2, &SessionPickerPasswordPrompt, -1, -1);
 
-  int status = x_pop_caption_value_flags("jackal", "NETCONNECT_CREATE",
-                                         0x3c, 0x44, 0);
+  int status = pop_caption_value_title("jackal", "NETCONNECT_CREATE",
+                                       0x3c, 0x44, 0);
   for (;;) {
     if (status == -1) return 1;
     if (ParseStrBuffer[0].str[0] == 0) {
-      X_pop("jackal", "NETCONNECT_NEED_SESSION", 0);
+      pop_caption("jackal", "NETCONNECT_NEED_SESSION", 0);
     } else if (ParseStrBuffer[1].str[0] == 0) {
-      X_pop("jackal", "NETCONNECT_NEED_PLAYER", 0);
+      pop_caption("jackal", "NETCONNECT_NEED_PLAYER", 0);
     } else {
       if (ParseStrBuffer[2].str[0] != 0) {
-        X_pop("jackal", "NETCONNECT_PASSWORD_SET", 0);
+        pop_caption("jackal", "NETCONNECT_PASSWORD_SET", 0);
       }
 
       BasePop *popup = PopupAllocHook();
@@ -558,8 +558,8 @@ int NetSessionPickerWin::connect_session() {
         return net_->join_session(session, ParseStrBuffer[1].str, 0) == 0;
       }
     }
-    status = x_pop_caption_value_flags("jackal", "NETCONNECT_CREATE",
-                                       0x3c, 0x44, 0);
+    status = pop_caption_value_title("jackal", "NETCONNECT_CREATE",
+                                     0x3c, 0x44, 0);
   }
 }
 
@@ -607,7 +607,7 @@ void NetSessionPickerWin::on_button_clicked(int action) {
     release_modal();
     return;
   case -1: {
-    const int selection = x_pop_caption_value_flags(
+    const int selection = pop_caption_value_title(
         "jackal", "NETCONNECT_JOIN", 0x3c, 0x44, 0);
     if (selection == -1) return;
 

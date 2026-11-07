@@ -520,19 +520,18 @@ void WorldWin::draw_viewport_outline() {
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/004c4630.cpp; original 0x0093347C is ConsoleGlobal / MapWinTable[0] plus member offset 0x1DDCC."], "reason": "Home the selection outline over the primary MapWin member state and Buffer drawing."}
 #pragma optimize("y", off)
 void WorldWin::draw_box() {
-    MapWin *primary_map = &ConsoleGlobal;
-    if (primary_map->field_1DDCC_ == 0 ||
-        primary_map->field_1DDAC_ != 0 ||
-        primary_map->field_1DDB0_ != 0) {
+    if (ConsoleGlobal.field_1DDCC_ == 0 ||
+        ConsoleGlobal.field_1DDAC_ != 0 ||
+        ConsoleGlobal.field_1DDB0_ != 0) {
         return;
     }
     RECT rect;
-    if (tile_to_pixel(primary_map->field_1DDA4_, primary_map->field_1DDA8_,
+    if (tile_to_pixel(ConsoleGlobal.field_1DDA4_, ConsoleGlobal.field_1DDA8_,
                       reinterpret_cast<int *>(&rect.left), reinterpret_cast<int *>(&rect.top)) != 0 ||
-        tile_to_pixel(primary_map->field_1DDD4_ + primary_map->field_1DDA4_ +
-                          primary_map->field_1DDCC_,
-                      primary_map->field_1DDD8_ + primary_map->field_1DDD0_ +
-                          primary_map->field_1DDA8_,
+        tile_to_pixel(ConsoleGlobal.field_1DDD4_ + ConsoleGlobal.field_1DDA4_ +
+                          ConsoleGlobal.field_1DDCC_,
+                      ConsoleGlobal.field_1DDA8_ + ConsoleGlobal.field_1DDD0_ +
+                          ConsoleGlobal.field_1DDD8_,
                       reinterpret_cast<int *>(&rect.right), reinterpret_cast<int *>(&rect.bottom)) != 0) {
         return;
     }
