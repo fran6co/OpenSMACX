@@ -3196,10 +3196,11 @@ Status: Complete
 */
 int __cdecl get_basic_offense(int veh_id_atk, int veh_id_def, int psi_combat_type,
                               BOOL is_bombard, BOOL unk_tgl) { // art/duel related? Is off of def?
-    int faction_id_atk = Vehs[veh_id_atk].faction_id;
+    Veh *veh_atk = &Vehs[veh_id_atk];
+    int faction_id_atk = veh_atk->faction_id;
     int morale = faction_id_atk ? morale_veh(veh_id_atk, true, 0)
         : morale_alien(veh_id_atk, veh_id_def >= 0 ? Vehs[veh_id_def].faction_id : -1);
-    int base_id_atk = base_at(Vehs[veh_id_atk].x, Vehs[veh_id_atk].y);
+    int base_id_atk = base_at(veh_atk->x, veh_atk->y);
     if (base_id_atk >= 0) {
         // The brood pit test after a creche only adds one; the morale
         // adjustment below it belongs to the creche-false arm.
@@ -3210,14 +3211,14 @@ int __cdecl get_basic_offense(int veh_id_atk, int veh_id_def, int psi_combat_typ
                 morale_active++;
             }
             morale -= morale_active;
-            if (has_fac(FAC_BROOD_PIT, base_id_atk, 0) && Vehs[veh_id_atk].proto_id < MaxVehProtoFactionNum
-                && (get_proto_offense_rating(Vehs[veh_id_atk].proto_id) < 0
-                    || Vehs[veh_id_atk].proto_id == BSC_SPORE_LAUNCHER)) {
+            if (has_fac(FAC_BROOD_PIT, base_id_atk, 0) && veh_atk->proto_id < MaxVehProtoFactionNum
+                && (get_proto_offense_rating(veh_atk->proto_id) < 0
+                    || veh_atk->proto_id == BSC_SPORE_LAUNCHER)) {
                 morale++;
             }
-        } else if (has_fac(FAC_BROOD_PIT, base_id_atk, 0) && Vehs[veh_id_atk].proto_id < MaxVehProtoFactionNum
-            && (get_proto_offense_rating(Vehs[veh_id_atk].proto_id) < 0
-                || Vehs[veh_id_atk].proto_id == BSC_SPORE_LAUNCHER)) {
+        } else if (has_fac(FAC_BROOD_PIT, base_id_atk, 0) && veh_atk->proto_id < MaxVehProtoFactionNum
+            && (get_proto_offense_rating(veh_atk->proto_id) < 0
+                || veh_atk->proto_id == BSC_SPORE_LAUNCHER)) {
             morale++;
             int morale_active = range(PlayersData[faction_id_atk].soc_effect_active.values_[SocialEffect::MORALE], -4, 4);
             if (morale_active <= -2) {
@@ -3233,10 +3234,10 @@ int __cdecl get_basic_offense(int veh_id_atk, int veh_id_def, int psi_combat_typ
             if (veh_id_def >= 0) {
                 if (!Vehs[veh_id_def].faction_id) {
                     morale++;
-                } else if ((Vehs[veh_id_atk].proto_id >= MaxVehProtoFactionNum
-                        || (get_proto_offense_rating(Vehs[veh_id_atk].proto_id) >= 0
-                            && Vehs[veh_id_atk].proto_id != BSC_SPORE_LAUNCHER))
-                    && !has_abil(Vehs[veh_id_atk].proto_id, ABL_DISSOCIATIVE_WAVE)
+                } else if ((veh_atk->proto_id >= MaxVehProtoFactionNum
+                        || (get_proto_offense_rating(veh_atk->proto_id) >= 0
+                            && veh_atk->proto_id != BSC_SPORE_LAUNCHER))
+                    && !has_abil(veh_atk->proto_id, ABL_DISSOCIATIVE_WAVE)
                     && has_abil(Vehs[veh_id_def].proto_id, ABL_SOPORIFIC_GAS)) {
                     morale -= 2;
                 }
@@ -3246,7 +3247,7 @@ int __cdecl get_basic_offense(int veh_id_atk, int veh_id_def, int psi_combat_typ
     if (unk_tgl) {
         morale = range(morale, 1, 6);
     }
-    int offense = offense_proto(Vehs[veh_id_atk].proto_id, veh_id_def, is_bombard);
+    int offense = offense_proto(veh_atk->proto_id, veh_id_def, is_bombard);
     if (psi_combat_type) {
         offense = psi_factor(offense, faction_id_atk, true, false);
     }
@@ -5911,7 +5912,7 @@ BOOL __cdecl wants_prototype(int proto_id, int faction_id) {
             if (VehPrototypes[proto_id_cmp].armor_id != VehPrototypes[proto_id].armor_id) {
                 continue;
             }
-        } else if (armor_val(proto_id_cmp, faction_id) < armor_val(proto_id, faction_id)) {
+        } else if (armor_val(proto_id, faction_id) > armor_val(proto_id_cmp, faction_id)) {
             continue;
         }
         if (Chassis[VehPrototypes[proto_id_cmp].chassis_id].speed >= Chassis[VehPrototypes[proto_id].chassis_id].speed) {

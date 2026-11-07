@@ -3222,32 +3222,18 @@ typedef unsigned short uint16;
 typedef char int8;
 typedef unsigned char uint8;
 extern "C" void __fastcall sub_5d3f50(MediaRuntime *runtime) {
-    const MediaPixelFormat &initial_format = runtime->descriptor->pixel_format;
-    const unsigned int shift_green =
-        8u - initial_format.green_bits;
-    const unsigned int shift_red =
-        8u - initial_format.red_bits;
-    const unsigned int shift_blue =
-        8u - initial_format.blue_bits;
+    const unsigned int shift_red = 8 - runtime->descriptor->pixel_format.red_bits;
+    const unsigned int shift_green = 8 - runtime->descriptor->pixel_format.green_bits;
+    const unsigned int shift_blue = 8 - runtime->descriptor->pixel_format.blue_bits;
 
     for (int index = 0; index < 256; ++index) {
-        MediaDescriptor *const descriptor = runtime->descriptor;
-        const MediaPixelFormat &format = descriptor->pixel_format;
-        const int palette_index = index * 3;
-        unsigned int green =
-            (descriptor->palette_rgb_triplets_b0[palette_index + 1] >>
-             shift_green) << format.green_shift;
-        unsigned int red =
-            (descriptor->palette_rgb_triplets_b0[palette_index] >>
-             shift_red) << format.red_shift;
-        unsigned int result = green | red;
-        unsigned int blue =
-            (descriptor->palette_rgb_triplets_b0[palette_index + 2] >>
-             shift_blue) << format.blue_shift;
-        result |= blue;
-        if ((descriptor->flags & 0x40) != 0)
+        MediaDescriptor *const d = runtime->descriptor;
+        unsigned int result = (d->palette_rgb_triplets_b0[index * 3 + 1] >> shift_green) << d->pixel_format.green_shift;
+        result |= (d->palette_rgb_triplets_b0[index * 3] >> shift_red) << d->pixel_format.red_shift;
+        result |= (d->palette_rgb_triplets_b0[index * 3 + 2] >> shift_blue) << d->pixel_format.blue_shift;
+        if (d->flags & 0x40)
             result |= result << 0x10;
-        descriptor->palette_lookup_3b0.entries[index] = result;
+        d->palette_lookup_3b0.entries[index] = result;
     }
 }
 
@@ -3858,10 +3844,11 @@ static DWORD *const MovieBlendTableQuant2 =
 // flags     hidden;sp_ready;purged_ok
 // calls     0x005D427C 0x006470A6 0x00644EF2
 // TRIED: __fastcall(this,a2) signature chosen from the ecx=this / edx=a2 register reads at entry; PROPOSAL below. Landed at 0.88 mnemonic similarity - remaining divergence is prologue register-save scheduling, not logic.
-// REWRITTEN 2026-11-07 as plain field arithmetic (0.905). Residual: the image
-//        homes frame_base on the stack and returns 0 as `mov eax, ebx`; here
-//        frame_base takes ebp. `||` early return and a result local: same.
+// REWRITTEN 2026-11-07 as plain field arithmetic (0.905). The `result` local
+//        gives the image's `mov eax, ebx` return and stack-homed frame_base;
+//        the residual is scheduling (xor ebx and mov eax,1 placement).
 int __fastcall sub_5d3df0(MediaRuntime *runtime, unsigned char *frame_base) {
+  int result = 0;
   const DWORD saved_index = runtime->unresolved_word_61c;
   // The image divides the aligned area as signed (cdq) below.
   const int allocation_size =
@@ -3904,9 +3891,9 @@ int __fastcall sub_5d3df0(MediaRuntime *runtime, unsigned char *frame_base) {
     sub_5d427c(reinterpret_cast<unsigned short *>(
                    frame_base + (saved_index + 4) * 3),
                runtime->owned_heap_638, 1);
-    return 1;
+    result = 1;
   }
-  return 0;
+  return result;
 }
 
 // 0x005CEB12 is assembled from src/movie_media_decoder_uv.asm: its eight
