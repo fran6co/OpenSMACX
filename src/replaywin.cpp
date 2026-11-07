@@ -67,13 +67,13 @@ void ReplayWin::init() {
 
     year_label_[0] = 0;
     // The initial title is "Replay"; the timer later prefixes the year with "Replay: ".
-    strcat(year_label_, Language != 0 ? ReplayLocalizedTitle : "Replay");
+    strcat(year_label_, Language == 0 ? "Replay" : ReplayLocalizedTitle);
 
     rect.top += 0x17;
     rect.bottom -= 0x17;
     rect.left += 3;
-    rect.top += 3;
     rect.right -= 3;
+    rect.top += 3;
     rect.bottom -= 3;
     map_win_.init(&rect, 0, 0x20);
     map_win_.GraphicWin::init(&rect, 0, 0x200020, this, 0, 0);

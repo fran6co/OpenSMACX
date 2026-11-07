@@ -36,22 +36,27 @@ Purpose: Check who owns a tile. Optional parameter to get closest base.
 Return Value: Faction id of the territory's owner or -1 if no owner or unknown faction
 Status: Complete
 */
+#pragma optimize("y", off)
 int __cdecl whose_territory(int faction_id, int x, int y, int *base_id, 
                             BOOL ignore_comm) {
     int owner = (int)map_loc(x, y)->territory;
     if (owner <= 0) {
         return -1; // no owner
     }
-    if ((uint32_t)owner != faction_id) {
-        if (!ignore_comm && !(GameDataStateStorage.fields_.game_state_ & STATE_OMNISCIENT_VIEW)
-            && (PlayersData[faction_id].diplo_treaties[owner]
-                & (DTREATY_COMMLINK | DTREATY_UNK_8000000))
+    if (owner != faction_id) {
+        if (!ignore_comm && !(GameDataStateStorage.fields_.game_state_ & STATE_OMNISCIENT_VIEW)) {
+            if ((PlayersData[faction_id].diplo_treaties[owner]
+                 & (DTREATY_COMMLINK | DTREATY_UNK_8000000))
                 != (DTREATY_COMMLINK | DTREATY_UNK_8000000)) {
-            return -1; // owner unknown to faction
-        }
-        if (base_id) {
+                return -1; // owner unknown to faction
+            }
+            if (base_id) {
+                *base_id = base_find(x, y, -1, region_at(x, y), -1, -1);
+            }
+        } else if (base_id) {
             *base_id = base_find(x, y, -1, region_at(x, y), -1, -1);
         }
     }
     return owner;
 }
+#pragma optimize("", on)

@@ -749,74 +749,76 @@ void MultiWin::show() {
 // ORIGINAL: 0x00479C00 ?hide@MultiWin@@QAEXXZ 0x00479C00-0x00479F8E;0x0065640A-0x0065641F
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00479c00.cpp; src/win.h; src/buffer.h; src/wave.cpp"], "reason": "The original panel teardown uses its real GraphicWin Buffer extent, owned animation buffer and sprites, typed console/screen globals, and Win/GraphicWin callbacks. The retained seed preserves the historical byte obligation until remeasurement."}
 // symbol    ?hide@MultiWin@@UAEXXZ
+#pragma optimize("y", off)
 void MultiWin::hide() {
   Buffer background;
-  if (IsMultiplayerNet == 0 && panel_open_ == 0) return;
+  if (IsMultiplayerNet != 0 || panel_open_ != 0) {
+    if (GameDataStateStorage.fields_.game_preferences_ & 0x400) g_MULTIWIN_WAVE.play();
+    hovered_spot_ = -1;
+    MainInterfaceGlobal.multiwin_visibility_state_ = 0;
 
-  if (GameDataStateStorage.fields_.game_preferences_ & 0x400) g_MULTIWIN_WAVE.play();
-  hovered_spot_ = -1;
-  MainInterfaceGlobal.multiwin_visibility_state_ = 0;
-
-  const int width = dib_.bmiHeader.biWidth;
-  const int height = -dib_.bmiHeader.biHeight;
-  background.resize(width, height);
-  background.fill(WinFillColour);
-  update_window_to_buffer(&background);
-  on_redraw();
-
-  RECT screen_rect = rect2_;
-  client_to_screen(&screen_rect);
-  RECT console_rect = screen_rect;
-  ConsoleGlobal.screen_to_client(&console_rect);
-
-  buffer_.init(width, height, 0, 0);
-  static_cast<Buffer *>(&ConsoleGlobal)->copy(
-      &buffer_, console_rect.left, console_rect.top, 0, 0, width, height);
-
-  int limit = screen_rect.bottom - sprite3_.height();
-  if (IsMultiplayerNet != 0) limit -= 14 + sprite4_.height();
-  const int slide = (limit - screen_rect.top) / 5;
-  Win::screen_buffer_.set_clip(&screen_rect);
-
-  if ((GameDataStateStorage.fields_.game_preferences_ & 0x8000000) != 0 && IsMultiplayerNet == 0) {
-    WinFlipClipped = 1;
-    int position = screen_rect.top;
-    for (int frame = 0; frame < 6; ++frame) {
-      const DWORD start = timeGetTime();
-      buffer_.copy(&Win::screen_buffer_, 0, 0, screen_rect.left, screen_rect.top,
-                   width, height);
-      background.draw(&Win::screen_buffer_, 9, screen_rect.left, position, 1, 1);
-      Win::flip(&screen_rect);
-      position += slide;
-      if (position >= limit) position = limit;
-      do_sound();
-      while (timeGetTime() - start < static_cast<DWORD>(WindowAnimationFrameDelay)) {
-        do_sound();
-      }
-    }
-    if (position < limit) {
-      buffer_.copy(&Win::screen_buffer_, 0, 0, screen_rect.left, screen_rect.top,
-                   width, height);
-      static_cast<Buffer *>(this)->draw(
-          &Win::screen_buffer_, 9, screen_rect.left, limit, 1, 1);
-      Win::flip(&screen_rect);
-    }
-    Win::screen_buffer_.restore_clip();
-    WinFlipClipped = 0;
-  }
-
-  if (GameDataStateStorage.fields_.game_preferences_ & 0x400) g_MULTIWIN_WAVE.fade(50);
-  panel_open_ = 0;
-  if (IsMultiplayerNet == 0) {
-    Win::hide();
-  } else {
-    flat_button2_.hide();
-    flat_button1_.hide();
+    background.resize(pixel_width(), pixel_height());
+    background.fill(WinFillColour);
+    update_window_to_buffer(&background);
     on_redraw();
-    on_update();
+
+    RECT screen_rect = rect2_;
+    client_to_screen(&screen_rect);
+    RECT console_rect = screen_rect;
+    ConsoleGlobal.screen_to_client(&console_rect);
+
+    buffer_.init(pixel_width(), pixel_height(), 0, 0);
+    ConsoleGlobal.Buffer::copy(
+        &buffer_, console_rect.left, console_rect.top, 0, 0,
+        pixel_width(), pixel_height());
+
+    int position = screen_rect.top;
+    int distance = screen_rect.bottom - sprite3_.height() - position;
+    if (IsMultiplayerNet != 0) distance -= 14 + sprite4_.height();
+    const int slide = distance / 5;
+    Win::screen_buffer_.set_clip(&screen_rect);
+    int limit = screen_rect.bottom - sprite3_.height();
+    if (IsMultiplayerNet != 0) limit -= 14 + sprite4_.height();
+
+    if ((GameDataStateStorage.fields_.game_preferences_ & 0x8000000) != 0 && IsMultiplayerNet == 0) {
+      WinFlipClipped = 1;
+      for (int frame = 0; frame < 6; ++frame) {
+        const DWORD start = timeGetTime();
+        buffer_.copy(&Win::screen_buffer_, 0, 0, screen_rect.left, screen_rect.top,
+                     pixel_width(), pixel_height());
+        background.draw(&Win::screen_buffer_, 9, screen_rect.left, position, 1, 1);
+        Win::flip(&screen_rect);
+        position += slide;
+        if (position >= limit) position = limit;
+        do_sound();
+        while (timeGetTime() - start < static_cast<DWORD>(WindowAnimationFrameDelay)) {
+          do_sound();
+        }
+      }
+      if (position < limit) {
+        buffer_.copy(&Win::screen_buffer_, 0, 0, screen_rect.left, screen_rect.top,
+                     pixel_width(), pixel_height());
+        Buffer::draw(&Win::screen_buffer_, 9, screen_rect.left, limit, 1, 1);
+        Win::flip(&screen_rect);
+      }
+      Win::screen_buffer_.restore_clip();
+      WinFlipClipped = 0;
+    }
+
+    if (GameDataStateStorage.fields_.game_preferences_ & 0x400) g_MULTIWIN_WAVE.fade(50);
+    panel_open_ = 0;
+    if (IsMultiplayerNet == 0) {
+      Win::hide();
+    } else {
+      flat_button2_.hide();
+      flat_button1_.hide();
+      on_redraw();
+      on_update();
+    }
+    buffer_.close();
   }
-  buffer_.close();
 }
+#pragma optimize("", on)
 
 // Separate contact/display faction bits; provisional descriptive name.
 // Native click writers and535xxx/537xxx readers prove a DWORD, not its full lifecycle.
@@ -885,6 +887,7 @@ void MultiWin::on_left_click(int x, int y) {
 // ORIGINAL: 0x00478150 ?on_right_click@MultiWin@@QAEXHH@Z 0x00478150-0x004785FA;0x006563E0-0x006563F5
 // RECOVERY_BINDING: v1 {"evidence": ["task:multiwin-contact-owner", "historical seed:src/recovered/units/00478150.cpp", "pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf:complete original mapped span and native call/branch order", "native:478500 subtracts item ID1; jump-table indices7..10 select items8renounce,9withdrawal,10contact,11chat; withdrawal arguments local then clicked", "source:existing typed subobjects, faction/player/parser/network and separate bounded contact-state storage; automatic PullDown/Buffer lifetime"], "reason": "Recover the complete original in its genuine MultiWin or diplomacy C++ owner, retaining identity, auxiliary spans and historical seed findings; no current match or runtime claim."}
 // symbol    ?on_right_click@MultiWin@@UAEXHH@Z
+#pragma optimize("y", off)
 void MultiWin::on_right_click(int x, int y) {
     PullDown menu;
     int faction;
@@ -908,22 +911,20 @@ void MultiWin::on_right_click(int x, int y) {
     menu.add_item(1, StringTemp);
     menu.add_item(2, label_get(0x9F4 / 4));
 
-    const unsigned int treaties =
-        PlayersData[ConsoleGlobal.faction_id_].diplo_treaties[faction];
-    if (treaties & 7) {
+    if (PlayersData[ConsoleGlobal.faction_id_].diplo_treaties[faction] & 7) {
         menu.add_separator(0x63);
-        if (treaties & 1)
-            menu.add_item(8, label_get(0xE20 / 4));
+        if (PlayersData[ConsoleGlobal.faction_id_].diplo_treaties[faction] & 1)
+            menu.add_item(8, StringTable.get(Labels.strings_ptr[0xE20 / 4]));
         else
-            menu.add_item(9, label_get(0xE24 / 4));
+            menu.add_item(9, StringTable.get(Labels.strings_ptr[0xE24 / 4]));
     }
 
     menu.add_separator(0x63);
-    menu.add_item(3, label_get(0x9F8 / 4));
+    menu.add_item(3, StringTable.get(Labels.strings_ptr[0x9F8 / 4]));
     if (IsMultiplayerNet) {
         menu.add_separator(0x63);
-        menu.add_item(0xA, label_get(0x9FC / 4));
-        menu.add_item(0xB, label_get(0xA00 / 4));
+        menu.add_item(0xA, StringTable.get(Labels.strings_ptr[0x9FC / 4]));
+        menu.add_item(0xB, StringTable.get(Labels.strings_ptr[0xA00 / 4]));
     }
 
     menu.show(x, y, pop_expire);
@@ -941,8 +942,8 @@ void MultiWin::on_right_click(int x, int y) {
         GenderDefault = Players[faction].is_leader_female;
         PluralityDefault = 0;
         parse_says(1, Players[faction].name_leader, -1, -1);
-        GenderDefault = Players[faction].noun_gender;
         PluralityDefault = Players[faction].is_noun_plural;
+        GenderDefault = Players[faction].noun_gender;
         parse_says(2, Players[faction].noun_faction, -1, -1);
         NetMsgPrimary.pop("ELIMINATED", 5000, 0, 0);
         return;
@@ -986,6 +987,7 @@ void MultiWin::on_right_click(int x, int y) {
         break;
     }
 }
+#pragma optimize("", on)
 
 // ORIGINAL: 0x00479F90 ?init@MultiWin@@QAEXXZ 0x00479F90-0x0047A429;0x0065641F-0x00656434
 // RECOVERY_BINDING: v1 {"evidence": ["task:multiwin-contact-owner", "historical seed:src/recovered/units/00479f90.cpp", "pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf:complete original mapped span and native call/branch order", "native:478500 subtracts item ID1; jump-table indices7..10 select items8renounce,9withdrawal,10contact,11chat; withdrawal arguments local then clicked", "source:existing typed subobjects, faction/player/parser/network and separate bounded contact-state storage; automatic PullDown/Buffer lifetime"], "reason": "Recover the complete original in its genuine MultiWin or diplomacy C++ owner, retaining identity, auxiliary spans and historical seed findings; no current match or runtime claim."}

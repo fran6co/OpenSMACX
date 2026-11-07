@@ -143,21 +143,23 @@ void MonuWin::on_mouse_move(int x, int y) {
   }
 
   if (y == 0xD) {
-    sprite_first_.draw(static_cast<Buffer *>(this),
-                       sprite_first_.transparent_index(), rects_3134_[0].left,
-                       rects_3134_[0].top);
+    Buffer *canvas = static_cast<Buffer *>(this);
+    Sprite &sprite = sprite_first_;
+    sprite.draw(canvas, sprite.transparent_index(), rects_3134_[0].left,
+                rects_3134_[0].top);
   } else if (y < 0xF) {
-    sprites_2EA0_[y].draw(static_cast<Buffer *>(this),
-                          sprites_2EA0_[y].transparent_index(),
-                          rects_3134_[0].left, rects_3134_[0].top);
+    Buffer *canvas = static_cast<Buffer *>(this);
+    Sprite &sprite = sprites_2EA0_[y];
+    sprite.draw(canvas, sprite.transparent_index(), rects_3134_[0].left,
+                rects_3134_[0].top);
   } else {
-    const int index = FactionMonuments[preview_faction_or_page_]
-                          .records_[y].word_8_;
     // These victory/defeat records store the counterpart faction (0..7) and
     // index one run that starts at the last sprite of the preceding array.
-    sprites_33AC_[6 + index].draw(static_cast<Buffer *>(this),
-                                  sprites_33AC_[6 + index].transparent_index(),
-                                  rects_3134_[0].left, rects_3134_[0].top);
+    Buffer *canvas = static_cast<Buffer *>(this);
+    Sprite &sprite = sprites_33AC_[6 + FactionMonuments[preview_faction_or_page_]
+                                           .records_[y].word_8_];
+    sprite.draw(canvas, sprite.transparent_index(), rects_3134_[0].left,
+                rects_3134_[0].top);
   }
   selected_monument_type_ = y;
   soft_update();

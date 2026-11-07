@@ -384,16 +384,13 @@ void WorldWin::follow_center(int xCoord, int yCoord) {
 // frame retention and the right clip-test polarity were sensitive. Its last
 // mismatch was spill/register scheduling. This typed owner body is a fresh
 // structural expression, not a claim that the old attempt's bytes match.
+#pragma optimize("y", off)
 int WorldWin::pixel_to_tile(int pixel_x, int pixel_y, int *tile_x, int *tile_y) {
     const int origin_x = field_239C4_;
     int width;
     int negative_height;
-    int relative_x;
-    int relative_y;
 
     if (origin_x == 0 && field_239C8_ == 0) {
-        relative_x = pixel_x;
-        relative_y = pixel_y;
         width = Buffer::dib_.bmiHeader.biWidth;
         negative_height = -Buffer::dib_.bmiHeader.biHeight;
     } else {
@@ -413,28 +410,26 @@ int WorldWin::pixel_to_tile(int pixel_x, int pixel_y, int *tile_x, int *tile_y) 
         if (pixel_y >= origin_y - view_height) {
             return 1;
         }
+        pixel_x -= origin_x;
+        pixel_y -= origin_y;
         width = view_width;
         negative_height = -view_height;
-        relative_x = pixel_x - origin_x;
-        relative_y = pixel_y - origin_y;
     }
 
-    *tile_x = (MapLongitudeBounds * relative_x) / width;
-    int row = (MapLatitudeBounds * relative_y) / negative_height;
-    *tile_y = row;
-    if ((*tile_x & 1) == 0) {
-        row &= 0xFFFFFFFE;
+    *tile_x = (MapLongitudeBounds * pixel_x) / width;
+    *tile_y = (MapLatitudeBounds * pixel_y) / negative_height;
+    if (*tile_x & 1) {
+        *tile_y |= 1;
     } else {
-        row |= 1;
+        *tile_y &= ~1;
     }
-    *tile_y = row;
 
-    if (row >= 0 && row < MapLatitudeBounds &&
-        *tile_x >= 0 && *tile_x < MapLongitudeBounds) {
+    if (on_map(*tile_x, *tile_y)) {
         return 0;
     }
     return 1;
 }
+#pragma optimize("", on)
 
 // ORIGINAL: 0x004C44E0 ?tile_to_pixel@WorldWin@@QAEHHHPAH0@Z 0x004C44E0-0x004C45D2 BYTE_EXACT
 // TRIED: nested `if`/`else if` clamp plus a single `||`-chained bounds check (`if (row<0 || row>=numRows || a1<0 || a1>=numCols) return 1;`) matches the prologue's push/pop set exactly (fixed by caching `numCols` in a local reused for BOTH final `idiv`s, matching `ebx` being loaded once and never reloaded) but stalls at 258B vs 242B: the last bounds check (`a1 < numCols`) always compiles to the INVERSE polarity (`jge`) of the original's `jl`, regardless of whether it is spelled as part of one big `||`, as a chain of nested positive `if`s, or with explicit `goto fail;` for the first three conditions - all three spellings produced byte-identical output, so the compiler's block layout here does not appear to be steerable from this function's own source text. Adding a `goto check_upper;` that skips the (proveably redundant) `row < 0` re-check on the zero-clamp path - mirroring the original's own `jmp` that skips exactly that check - got closest (240B vs 242B, divergence moves later) but the compiler then proves the SAME check dead on the OTHER path too (max-clamp / unclamped), deleting it where the original keeps it; splitting `row<0 || maxRow<0` into two independent `if`s so each one only proves ITS OWN half made this worse, not better. Best landed: the `goto check_upper` version. numCols is cached (`ebx`-shaped); numRows is cached for the bounds check (`edi`-shaped) but read fresh from `*g_00949874` for the final divisions, matching `idiv dword ptr [0x949874]` reloading rather than reusing a register.
