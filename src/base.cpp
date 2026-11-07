@@ -1233,7 +1233,7 @@ void __cdecl bases_reset(int region_id, int faction_id, int skip_occupied) {
     }
     for (int i = 0; i < GameDataStateStorage.fields_.base_current_count_; i++) {
         if (Bases[i].faction_id_current == faction_id
-            && (region_id < 0 || region_at(Bases[i].x, Bases[i].y) == region_id)
+            && (region_id < 0 || MapTiles[(Bases[i].x >> 1) + Bases[i].y * MapLongitude].region == region_id)
             && (!skip_occupied || veh_who(Bases[i].x, Bases[i].y) < 0)
             && (!is_human(faction_id) || !(BaseCurrent->state & 0x80000000))) {
             base_reset(i, 0);
@@ -9529,6 +9529,14 @@ static inline int value_of_base_veh_top(int veh_id) {
     return top_veh_id;
 }
 
+// The image also inlines veh_next_stack_id (0x0050B8F0) for the walk.
+static inline int value_of_base_veh_next(int veh_id) {
+    if (veh_id < 0) {
+        return veh_id;
+    }
+    return Vehs[veh_id].next_veh_id_stack;
+}
+
 int __cdecl value_of_base(int base_id, int faction_id_req, int faction_id_res,
                           int overmatch_deg, BOOL tgl) {
     if (base_id < 0) {
@@ -9611,11 +9619,11 @@ int __cdecl value_of_base(int base_id, int faction_id_req, int faction_id_res,
         }
     }
     for (int proj = 0; proj < MaxSecretProjectNum; proj++) {
-        if (base_project(proj) == base_id) {
+        if (GameDataStateStorage.fields_.secret_project_.project_base[proj] == base_id) {
             value += Facility[FacilitySPStart + proj].cost * 25;
         }
     }
-    for (int veh = value_of_base_veh_top(veh_id); veh >= 0; veh = Vehs[veh].next_veh_id_stack) {
+    for (int veh = value_of_base_veh_top(veh_id); veh >= 0; veh = value_of_base_veh_next(veh)) {
         if (Vehs[veh].faction_id == faction_id_req) {
             value += VehPrototypes[Vehs[veh].proto_id].cost * 2;
         }
@@ -10565,6 +10573,16 @@ void __cdecl do_upgrade(int faction_id, int proto_id_new, int proto_id_old) {
 //        commerce `+= cond ? receipt : 0`; *total read once at the end.
 //        Remaining gap: pointer-induction register choice in the commerce
 //        and transcendence loops, index (not pointer) project walk.
+// has_project with the project table indexed as a plain array: the image
+// walks it with an absolute pointer, which the operator[] spelling loses.
+static inline BOOL compute_score_has_project(int project_id, int faction_id) {
+    int base_id = GameDataStateStorage.fields_.secret_project_.project_base[project_id];
+    if (base_id < 0) {
+        return false;
+    }
+    return Bases[base_id].faction_id_current == faction_id;
+}
+
 void __cdecl compute_score(int faction, int *total, int *items, int recursive) {
     int other_items[9];
     int other_total;
@@ -10610,9 +10628,9 @@ void __cdecl compute_score(int faction, int *total, int *items, int recursive) {
     items[3] = PlayersData[faction].theory_of_everything * 10;
     int objective_points = static_cast<int>(ScenarioSave.objective_achieve_points);
     if (objective_points < 1) objective_points = 1;
-    items[6] = num_objectives(faction, GameDataStateStorage.fields_.game_rules_ & 0x1000) * objective_points;
+    items[6] = objective_points * num_objectives(faction, GameDataStateStorage.fields_.game_rules_ & 0x1000);
     for (int project = 0; project < 64; ++project) {
-        if (has_project(project, faction)) items[4] += 25;
+        if (compute_score_has_project(project, faction)) items[4] += 25;
     }
 
     GameDataStateStorage.fields_.transcendence_score_bonus_ = 0;
@@ -10640,10 +10658,9 @@ void __cdecl compute_score(int faction, int *total, int *items, int recursive) {
             // Invalid/no leader leaves index -1, as in the original. Do not
             // hide that malformed-state access or the possible zero divisor.
             if (leader != other && (PlayersData[other].diplo_treaties[leader] & 1)) {
-                const int weight = PlayersData[other].pop_total;
-                aggregate += weight;
-                GameDataStateStorage.fields_.transcendence_score_weights_[other] = weight;
-                if (other == faction) own_weight += weight;
+                aggregate += PlayersData[other].pop_total;
+                GameDataStateStorage.fields_.transcendence_score_weights_[other] = PlayersData[other].pop_total;
+                if (other == faction) own_weight += PlayersData[other].pop_total;
             }
         }
         items[6] = (GameDataStateStorage.fields_.transcendence_score_bonus_ * own_weight) / aggregate;
@@ -14212,89 +14229,68 @@ int __cdecl base_upkeep(int base_id) {
 // Native 0x009A658C is SecretProject.telepathic_matrix (SP_TELEPATHIC_MATRIX).
 // The native call enters the mapped drone_riot body below.
 
+// The image keeps a separate label cell per popb site (alien GOLDENAGE
+// 0x00689C84, GOLDENAGEOVER 0x00689CB8, DRONERIOTSOVER 0x00689D10 beside
+// the human arms' own copies). Pooled literals let VC6 cross-jump the arms.
+static const char BaseDronesAlienGoldenAgeLabel[] = "GOLDENAGE";
+static const char BaseDronesAlienGoldenAgeOverLabel[] = "GOLDENAGEOVER";
+static const char BaseDronesAlienRiotsOverLabel[] = "DRONERIOTSOVER";
+
 // ORIGINAL: 0x004F5CE0 ?base_drones@@YAXXZ 0x004F5CE0-0x004F5F25
 // RECOVERY_BINDING: v1 {"evidence":["original:0x004F5CE0-0x004F5F25:pinned base drone/riot lifecycle body","original:0x009A658C:SecretProject index 30 owns the telepathic-matrix faction id","source:src/alpha.h:SecretProject and SP_TELEPATHIC_MATRIX provide the typed project owner","source:src/base.h:BaseCurrent and Base-owned drone, talent, governor and state members","source:src/faction.h:Players owns faction rule_flags; LockEnableMask owns human-faction bits"],"reason":"Recover base drone state transitions using the existing Base, SecretProject, Player, and lock owners; retain native callback reloads and the separate drone-riot call."}
 void __cdecl base_drones() {
     // Native popup literals remain ordinary C++ literals: "Alopdir.pcx" occurs at 0x689C78..0x689C84, 0x689CAC..0x689CB8, 0x689CE8..0x689CF4 and 0x689D04..0x689D10; the "GOLDENAGE", "GOLDENAGEOVER", "DRONERIOTSOVER" and "DRONERIOTSOVER2" keys and "talent_sm.pcx" have separate pinned call-site extents.
-
-    Base *base = BaseCurrent;
-    int faction_id = base->faction_id_current;
-    const int drones = base->drone_total;
-
-    if (drones == 0 && base->population_size > 2 &&
-        base->talent_total >= (base->population_size + 1) / 2) {
-        if ((base->state & BSTATE_GOLDEN_AGE_ACTIVE) == 0) {
-            if ((Players[faction_id].rule_flags & RFLAG_ALIEN) == 0) {
-                popb("GOLDENAGE", 0x20, -1,
-                     "talent_sm.pcx", 0);
+    if (!BaseCurrent->drone_total && BaseCurrent->population_size > 2
+        && BaseCurrent->talent_total >= (BaseCurrent->population_size + 1) / 2) {
+        if (!(BaseCurrent->state & BSTATE_GOLDEN_AGE_ACTIVE)) {
+            if (Players[BaseCurrent->faction_id_current].rule_flags & RFLAG_ALIEN) {
+                popb(BaseDronesAlienGoldenAgeLabel, 0x20, -1, "Alopdir.pcx", 0);
             } else {
-                popb("GOLDENAGE", 0x20, -1,
-                     "Alopdir.pcx", 0);
+                popb("GOLDENAGE", 0x20, -1, "talent_sm.pcx", 0);
             }
-            base = BaseCurrent;
         }
-        base->state |= BSTATE_GOLDEN_AGE_ACTIVE;
-    } else if ((base->state & BSTATE_GOLDEN_AGE_ACTIVE) != 0) {
-        base->state &= ~BSTATE_GOLDEN_AGE_ACTIVE;
-        base = BaseCurrent;
-        if (base->drone_total <= base->talent_total) {
-            faction_id = base->faction_id_current;
-            if ((Players[faction_id].rule_flags & RFLAG_ALIEN) == 0) {
-                popb("GOLDENAGEOVER", 0x40, -1,
-                     "talent_sm.pcx", 0);
+        BaseCurrent->state |= BSTATE_GOLDEN_AGE_ACTIVE;
+    } else if (BaseCurrent->state & BSTATE_GOLDEN_AGE_ACTIVE) {
+        BaseCurrent->state &= ~BSTATE_GOLDEN_AGE_ACTIVE;
+        if (BaseCurrent->drone_total <= BaseCurrent->talent_total) {
+            if (Players[BaseCurrent->faction_id_current].rule_flags & RFLAG_ALIEN) {
+                popb(BaseDronesAlienGoldenAgeOverLabel, 0x40, -1, "Alopdir.pcx", 0);
             } else {
-                popb("GOLDENAGEOVER", 0x40, -1,
-                     "Alopdir.pcx", 0);
+                popb("GOLDENAGEOVER", 0x40, -1, "talent_sm.pcx", 0);
             }
-            base = BaseCurrent;
         }
     }
-
-    if (base->drone_total > base->talent_total) {
-        int exempt = 0;
-        const int exemption_faction = GameDataStateStorage.fields_.secret_project_.telepathic_matrix();
-        if (exemption_faction >= 0 &&
-            Bases[exemption_faction].faction_id_current == base->faction_id_current) {
-            exempt = 1;
-        }
-        if (!exempt && base->nerve_staple_turns_left == 0) {
-            drone_riot();
-            return;
-        }
+    if (BaseCurrent->drone_total > BaseCurrent->talent_total
+        && !has_project(SP_TELEPATHIC_MATRIX, BaseCurrent->faction_id_current)
+        && !BaseCurrent->nerve_staple_turns_left) {
+        drone_riot();
+        return;
     }
-
-    if ((base->state & BSTATE_DRONE_RIOTS_ACTIVE) != 0) {
-        base->state &= ~BSTATE_DRONE_RIOTS_ACTIVE;
-        base = BaseCurrent;
-        if ((base->state & BSTATE_GOLDEN_AGE_ACTIVE) == 0) {
-            faction_id = base->faction_id_current;
-            const uint32_t governor = base->governor;
-            const bool manages_citizens =
-                (governor & GOV_MANAGES_CITIZENS_SPECS) != 0;
-            const bool governor_active = (governor & GOV_ACTIVE) != 0;
-            const bool alien =
-                (Players[faction_id].rule_flags & RFLAG_ALIEN) != 0;
-
-            if (alien) {
-                if (!manages_citizens || !governor_active) {
-                    popb("DRONERIOTSOVER", 0x33, 0x10,
-                         "Alopdir.pcx", 0);
+    if (BaseCurrent->state & BSTATE_DRONE_RIOTS_ACTIVE) {
+        BaseCurrent->state &= ~BSTATE_DRONE_RIOTS_ACTIVE;
+        Base *base = BaseCurrent;
+        if (!(base->state & BSTATE_GOLDEN_AGE_ACTIVE)) {
+            int faction_id = base->faction_id_current;
+            if (Players[faction_id].rule_flags & RFLAG_ALIEN) {
+                if (base->governor & GOV_MANAGES_CITIZENS_SPECS && base->governor & GOV_ACTIVE) {
+                    popb("DRONERIOTSOVER2", 0, 0x33, "Alopdir.pcx", 0);
                 } else {
-                    popb("DRONERIOTSOVER2", 0x33, 0,
-                         "Alopdir.pcx", 0);
+                    popb(BaseDronesAlienRiotsOverLabel,
+                        (base->governor & GOV_MANAGES_CITIZENS_SPECS && base->governor & GOV_ACTIVE) ? 0 : 0x10, 0x33,
+                        "Alopdir.pcx", 0);
                 }
-            } else if (!manages_citizens || !governor_active) {
-                popb("DRONERIOTSOVER", 0x33, 0x10,
-                     "talent_sm.pcx", 0);
             } else {
-                popb("DRONERIOTSOVER2", 0x33, 0,
-                     "talent_sm.pcx", 0);
+                if (base->governor & GOV_MANAGES_CITIZENS_SPECS && base->governor & GOV_ACTIVE) {
+                    popb("DRONERIOTSOVER2", 0, 0x33, "talent_sm.pcx", 0);
+                } else {
+                    popb("DRONERIOTSOVER",
+                        (base->governor & GOV_MANAGES_CITIZENS_SPECS && base->governor & GOV_ACTIVE) ? 0 : 0x10, 0x33,
+                        "talent_sm.pcx", 0);
+                }
             }
             base = BaseCurrent;
         }
-
-        faction_id = base->faction_id_current;
-        if ((GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & (1u << faction_id)) == 0) {
+        if (!is_human(base->faction_id_current)) {
             base_reset(BaseIDCurrentSelected, 0);
             base = BaseCurrent;
         }
