@@ -209,7 +209,7 @@ int __cdecl base_territory(int faction_id, int x, int y) {
 
 /*
 Purpose: For the specified tile, calculate the quality of the terrain.
-// ORIGINAL: 0x004ECB90 ?crappy@@YAHHH@Z 0x004ECB90-0x004ECBE1
+// ORIGINAL: 0x004ECB90 ?crappy@@YAHHH@Z 0x004ECB90-0x004ECBE1 BYTE_EXACT
 // LEVER: every test re-reads map_loc() (VC6 CSEs the pointer), rocky as
 //         `& ~0x3F` (byte and, dword cmp), rainfall cast to uint8_t.
 // size      81 bytes

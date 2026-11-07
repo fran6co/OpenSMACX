@@ -7303,7 +7303,7 @@ release_vehicle:
     return 0;
 }
 
-// ORIGINAL: 0x00532570 ?action@NetDaemon@@QAEHHH@Z 0x00532570-0x005328BA
+// ORIGINAL: 0x00532570 ?action@NetDaemon@@QAEHHH@Z 0x00532570-0x005328BA BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned532570..5328BA; retained git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/00532570.cpp is a conflicting historical hint, not the product ABI.", "Entry signed order classification is distinct from the post-automated_lock vehicle/order reload. Absolute93E904 timing storage belongs to NetDaemonNet.lock_state_[1].dword_[3], while wait flags and Lock remain receiver-relative.", "Pinned NUL log/popup literals68C2DC,68C390,68C3B4,68C3C0,68C4AC,68C4C8,68C4F4,68C510,68C530,68C544,68C554; ExitTurnLoop is game owner9B2068."], "reason": "Recover the full multiplayer vehicle-order action through the real NetDaemon, vehicle and transport owners; retain its original seed identity and complete span without a matching or runtime claim."}
 // TRIED: g_00669368 is a cached stdcall function pointer (timeGetTime), called twice through the same loaded pointer - matches the two `// indirect` sites.
 // LEVER: the tail is a switch on the branch with the road case first and

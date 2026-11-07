@@ -414,7 +414,7 @@ extern "C" int __cdecl sub_5cd2d0(DWORD *destination, int quality) {
 // stack arguments are width, height and FourCC. Native creates a FourCC
 // surface, queries Surface2, applies source-blit color key {1,1}, then
 // publishes the queried surface only on success.
-// ORIGINAL: 0x005CC860 sub_5cc860 0x005CC860-0x005CC935
+// ORIGINAL: 0x005CC860 sub_5cc860 0x005CC860-0x005CC935 BYTE_EXACT
 // symbol    @sub_5cc860@20
 // kind      game
 // TRIED: __stdcall(int,int,int) per IDA's guess - entry reads ecx/edx directly with no matching stack slot, so this is __fastcall with param_1/param_2 in ecx/edx. The three vtable-style calls push their receiver as an explicit stack arg rather than loading it into ecx, so they are plain function-pointer calls through *(vtable+off), not C++ virtual dispatch; exact stack slot reuse for the WSA-shaped struct (0x6c/0x1007/0x80/0x20/4) not nailed down byte-for-byte.
