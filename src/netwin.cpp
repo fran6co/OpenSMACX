@@ -468,7 +468,7 @@ Purpose: Resolve the colour byte a faction list draws its player rows with:
          allocated record block's own copy claims a different index - the
          first index no earlier faction's name record and no other player's
          colour repeats wins.
-// ORIGINAL: 0x0047B380 ?get_player_color@NetWin@@QAEHH@Z 0x0047B380-0x0047B442 FILE
+// ORIGINAL: 0x0047B380 ?get_player_color@NetWin@@QAEHH@Z 0x0047B380-0x0047B442 FILE BYTE_EXACT
 // size      194 bytes
 // prototype int (__thiscall ?get_player_color@NetWin@@QAEHH@Z)(NetWin* this, int)
 // callers   4   call targets   0
@@ -602,7 +602,7 @@ void NetWin::close() {
 // Native 0x004834E0: explicit resource and control shutdown precedes normal
 // compiler-owned teardown of the typed members and GraphicWin base.
 // Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x004834E0 ??1NetWin@@QAE@XZ 0x004834E0-0x004837B4;0x00656650-0x0065673F
+// ORIGINAL: 0x004834E0 ??1NetWin@@QAE@XZ 0x004834E0-0x004837B4;0x00656650-0x0065673F BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/004834e0.cpp", "recovery/tasks/netwin-owner-coverage.json"], "reason": "Recover true destructor with typed automatic member and base teardown, retaining observed explicit frees, state resets and close calls. Native baseline/candidate controls and complete isolated application compile/link passed; no matching or game acceptance claim."}
 // symbol    ??1NetWin@@UAE@XZ
 NetWin::~NetWin() {

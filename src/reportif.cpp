@@ -1153,7 +1153,7 @@ static inline void inflate_frame(RECT *rect, int dx, int dy) {
 Purpose: Reset the seven report buttons, initialize the report text buffer,
          copy the current report bounds, draw both panel frames, and restore
          the inset frame rectangle after its temporary expansion.
-// ORIGINAL: 0x00496BB0 ?reset@ReportWin@@QAEXXZ 0x00496BB0-0x00496CFC
+// ORIGINAL: 0x00496BB0 ?reset@ReportWin@@QAEXXZ 0x00496BB0-0x00496CFC BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Independent IDA/Ghidra function records agree on the original extent 0x00496BB0-0x00496CFC and classify it as game code.", "Retired recovered seed provenance: git:caf4963a:src/recovered/units/00496bb0.cpp records the button-close loop, Buffer font/color setup, rectangle copies and box_sprite calls in this order.", "docs/recovery/member-accesses.csv records reset's writes through the report geometry and embedded button/panel members; reportwin.h provides the corresponding source-owned member layout."], "reason": "Recover the report reset in its existing ReportWin owner using the declared button array, buffer storage, rectangles and shared interface box styles."}
 // prototype void (__thiscall ?reset@ReportWin@@QAEXXZ)(ReportWin* this)
 // kind      game
@@ -3822,7 +3822,7 @@ void ReportWin::start_attack(int attacker, int target, int type, int base_id) {
     }
 }
 
-// ORIGINAL: 0x004A0100 ?exp_anim@ReportWin@@QAEXXZ 0x004A0100-0x004A0248
+// ORIGINAL: 0x004A0100 ?exp_anim@ReportWin@@QAEXXZ 0x004A0100-0x004A0248 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Retired recovered seed provenance: git:a538e0a3:src/recovered/units/004a0100.cpp", "source:src/reportwin.h", "source:src/reportif.h", "image:original ReportWin instructions, callbacks and lifecycle evidence"], "reason": "Recover this report-window operation in its genuine owner using typed members, natural subobject lifetimes and shared source-owned state; retained catalogue identity and spans remain distinct from current emitted symbols."}
 void ReportWin::exp_anim() {
     Buffer::set_clip(&satellite_rect_);
@@ -7041,7 +7041,7 @@ void __cdecl report_intel(int selection) {
     }
 }
 
-// ORIGINAL: 0x004ACC30 ?merge_sort@ReportIf@@QAEXHH@Z 0x004ACC30-0x004ACD98
+// ORIGINAL: 0x004ACC30 ?merge_sort@ReportIf@@QAEXHH@Z 0x004ACC30-0x004ACD98 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Retired recovered seed provenance: git:4097a7c0:src/recovered/units/004acc30.cpp;source:src/reportif.h;source:src/base.h:BaseCurrentCount;source:src/general.h:swap"], "reason": "Recover the ReportIf base-ranking merge sort over its measured 0x200-entry, 16-byte scratch workspace, using the source-owned BaseCurrentCount bound and preserving original range normalization and key-prefetch order."}
 void ReportIf::merge_sort(int first, int last) {
     const int maximum = GameDataStateStorage.fields_.base_current_count_ - 1;
