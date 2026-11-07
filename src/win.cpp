@@ -10329,7 +10329,7 @@ void Win::fill_palette_color_rect(int x, int y, int width, int height,
 }
 
 // Superseded seed removed; complete operation now belongs to Win.
-// ORIGINAL: 0x005F37C0 sub_5f37c0 0x005F37C0-0x005F3B73 FILE
+// ORIGINAL: 0x005F37C0 sub_5f37c0 0x005F37C0-0x005F3B73 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:f2a0fa1952cef53f4a2c6a5e60a8bea9bff9c3aa:src/unrecovered/005f37c0.cpp", "pinned:terranx_original:0x5f37c0", "source:src/win.h", "source:src/graphicwin.h"], "reason": "Native Win receiver and Buffer/x/y inputs, top-down DIB damage and source-relative to destination-relative copy geometry. Source names are descriptive, not recovered historical spellings. Preserve all original spans and historical findings; no new matching or full acceptance claim."}
 // symbol    ?copy_edges_to_buffer@Win@@QAEXPAVBuffer@@HH@Z
 // Damage rect via set_rectangle_dimensions; edges via offset_rect on a
@@ -10416,7 +10416,7 @@ void Win::copy_edges_to_buffer(Buffer *target, int x, int y) {
 }
 
 // Superseded seed removed; complete operation now belongs to Win.
-// ORIGINAL: 0x005F3B80 sub_5f3b80 0x005F3B80-0x005F4AA7 FILE
+// ORIGINAL: 0x005F3B80 sub_5f3b80 0x005F3B80-0x005F4AA7 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:f2a0fa1952cef53f4a2c6a5e60a8bea9bff9c3aa:src/unrecovered/005f3b80.cpp", "pinned:terranx_original:0x5f3b80", "source:src/win.h", "source:src/graphicwin.h"], "reason": "Native current Win source and target Win receiver distinction, chained edge rectangles, clip/mode gates and distinct inherited versus allocated GraphicWin buffers. Source names are descriptive, not recovered historical spellings. Preserve all original spans and historical findings; no new matching or full acceptance claim."}
 // symbol    ?copy_border_buffers_to_window@Win@@QAEXPAV1@PAUtagRECT@@H@Z
 // Copy offsets are relative to the unclipped edge rect; the screen pass
