@@ -1993,14 +1993,16 @@ void Console::cursor_on(int cursor_shape, int veh_id) {
 // divergence, which is which register holds ConsoleGlobal.cursor_history_index_ (image: edx,
 // this tree: eax) and follows from the image deferring its `this` spill
 // (0x005148CD `mov edi, ecx`) until after both loads.
+// Operands now follow VC6's load-b-first order (x: delta + coord, y: coord +
+// delta), which fixes the loads; residual is esi/edi swapped (this vs new_x).
 
 
 void Console::move_cursor(int direction) {
     int new_x = wrap_map_x(
-        ConsoleGlobal.cursor_history_x_[ConsoleGlobal.cursor_history_index_] +
-        VehMoveDeltaX[direction]);
-    int new_y = VehMoveDeltaY[direction] +
-                ConsoleGlobal.cursor_history_y_[ConsoleGlobal.cursor_history_index_];
+        VehMoveDeltaX[direction] +
+        ConsoleGlobal.cursor_history_x_[ConsoleGlobal.cursor_history_index_]);
+    int new_y = ConsoleGlobal.cursor_history_y_[ConsoleGlobal.cursor_history_index_] +
+                VehMoveDeltaY[direction];
     if (!set_cursor(new_x, new_y)) {
         console_map_win()->focus(new_x, new_y);
     }
@@ -3045,7 +3047,7 @@ void Console::on_post_redraw_nc_buffer(Buffer *buffer, int which) {
         Sprite *const handle = &sprite_b_;
         handle->draw(buffer, handle->transparent_index(),
                      buffer->dib_.bmiHeader.biWidth - handle->width(),
-                     track_height() - handle->height() / 2 + field_23D88_ -
+                     track_height() - sprite_b_.height() / 2 + field_23D88_ -
                          bottom_border(),
                      1, 1);
         handle->draw(buffer, handle->transparent_index(),
@@ -3056,11 +3058,11 @@ void Console::on_post_redraw_nc_buffer(Buffer *buffer, int which) {
     } else if (which == 2) {
         Sprite *const handle = &sprite_a_;
         handle->draw(buffer, handle->transparent_index(),
-                     field_23D80_ - handle->width() / 2 + border_thickness_,
-                     -(handle->height() + buffer->dib_.bmiHeader.biHeight), 1, 1);
+                     field_23D80_ - sprite_a_.width() / 2 + border_thickness_,
+                     -(buffer->dib_.bmiHeader.biHeight + handle->height()), 1, 1);
         handle->draw(buffer, handle->transparent_index(),
                      field_23D84_ - handle->width() / 2 + border_thickness_,
-                     -(handle->height() + buffer->dib_.bmiHeader.biHeight), 1, 1);
+                     -(buffer->dib_.bmiHeader.biHeight + handle->height()), 1, 1);
     }
 }
 

@@ -64,6 +64,7 @@
 #include "stdafx.h"
 #include "font_metrics.h"
 #include "interface_fonts.h"
+#include "rectangle_operations.h"
 #include "popup_fonts.h"
 #include "terraforming.h"
 
@@ -193,18 +194,16 @@ Return Value: n/a
 Status: Coverage transcription - unclaimed body, seed
         git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/0046fa20.cpp retained.
 */
+// MapPanelRect is RECT-shaped; the image inlines set_rectangle_dimensions
+// for both panels (the right edge is x + width).
 void MapWin::UNK5(int panel) {
     if (panel != 0) {
-        const int bottom = (MapPanelGeometryWord008EA0B0 -
-                            ConsoleGlobal.dib_.bmiHeader.biHeight -
-                            MapPanelGeometryWord008EA0B8) / 2;
         const int width = ConsoleGlobal.dib_.bmiHeader.biWidth;
-        MapPanelRect *rect = &MapPanelRects[panel];
-        rect->top = 0;
-        const int three_quarters = (width * 3) / 4;
-        rect->left = three_quarters;
-        rect->right = width / 4 + three_quarters;
-        rect->bottom = bottom;
+        set_rectangle_dimensions(reinterpret_cast<RECT *>(&MapPanelRects[panel]),
+                                 (width * 3) / 4, 0, width / 4,
+                                 (MapPanelGeometryWord008EA0B0 -
+                                  ConsoleGlobal.dib_.bmiHeader.biHeight -
+                                  MapPanelGeometryWord008EA0B8) / 2);
     } else {
         int right;
         if (IsMultiplayerNet != 0) {
@@ -212,13 +211,10 @@ void MapWin::UNK5(int panel) {
         } else {
             right = ConsoleGlobal.dib_.bmiHeader.biWidth;
         }
-        const int bottom = MapPanelGeometryWord008EA0B0 -
-                           ConsoleGlobal.dib_.bmiHeader.biHeight -
-                           MapPanelGeometryWord008EA0B8;
-        MapPanelRects[0].left = 0;
-        MapPanelRects[0].top = 0;
-        MapPanelRects[0].right = right;
-        MapPanelRects[0].bottom = bottom;
+        set_rectangle_dimensions(reinterpret_cast<RECT *>(&MapPanelRects[0]), 0, 0, right,
+                                 MapPanelGeometryWord008EA0B0 -
+                                 ConsoleGlobal.dib_.bmiHeader.biHeight -
+                                 MapPanelGeometryWord008EA0B8);
     }
     MapPanelDirtyMask |= 1 << panel;
 }
@@ -1362,12 +1358,12 @@ void MapWin::set_center(int x, int y, int draw_type) {
 void MapWin::gen_bases_only() {
     for (int row = 0; row < field_1DDD0_ + field_1DDD8_ + 1; ++row) {
         const int tile_y = field_1DDA8_ + row;
-        int tile_x = field_1DDA4_ + (row & 1);
+        const int start_x = field_1DDA4_ + (row & 1);
         const int count = (row & 1) ? field_1DDCC_ : field_1DDD4_;
+        int tile_x = start_x;
         for (int i = 0; i < count; ++i) {
             const int wrapped_x = wrap_map_x(tile_x);
-            if (tile_y >= 0 && tile_y < MapLatitudeBounds &&
-                wrapped_x >= 0 && wrapped_x < MapLongitudeBounds) {
+            if (on_map(wrapped_x, tile_y)) {
                 Map *tile = map_loc(wrapped_x, tile_y);
                 if ((tile->bit & 1) != 0) {
                     const int owner = tile->val2 & 0xF;
@@ -6009,8 +6005,8 @@ void MapWin::draw_wars() {
     Font *const font = &font_b_;
     const int character_width = font->width("FUNGUS");
     int y = font_line_advance(*font);
-    Buffer::set_font(font, 0, 0, 0);
     int max_width = character_width;
+    Buffer::set_font(font, 0, 0, 0);
 
     for (int faction = 1; faction < MaxPlayerNum; ++faction) {
         parse_set(Players[faction].noun_gender, Players[faction].is_noun_plural);
@@ -8075,7 +8071,7 @@ void __cdecl go_timer(int selection_mode) {
             ConsoleGlobal.field_23D1C_ == 0) {
             int vehicle = ConsoleGlobal.selected_vehicle_;
             if (vehicle < 0 ||
-                Vehs[vehicle].x != ConsoleGlobal.cursor_history_x_[ConsoleGlobal.cursor_history_index_] ||
+                ConsoleGlobal.cursor_history_x_[ConsoleGlobal.cursor_history_index_] != Vehs[vehicle].x ||
                 Vehs[vehicle].y != ConsoleGlobal.cursor_history_y_[ConsoleGlobal.cursor_history_index_] ||
                 veh_selectable(vehicle) == 0 || Vehs[vehicle].order != 0 ||
                 (Vehs[vehicle].state & 0x4200U) != 0) {
@@ -8083,14 +8079,15 @@ void __cdecl go_timer(int selection_mode) {
                     ConsoleGlobal.cursor_history_x_[ConsoleGlobal.cursor_history_index_],
                     ConsoleGlobal.cursor_history_y_[ConsoleGlobal.cursor_history_index_],
                     ConsoleGlobal.faction_id_, -1);
-                if (vehicle < 0 || veh_selectable(vehicle) == 0 ||
-                    Vehs[vehicle].order != 0 ||
-                    (Vehs[vehicle].state & 0x200U) != 0 ||
-                    (Vehs[vehicle].state & 0x4000U) == 0) {
+                if (vehicle >= 0 && veh_selectable(vehicle) != 0 &&
+                    Vehs[vehicle].order == 0 &&
+                    (Vehs[vehicle].state & 0x200U) == 0 &&
+                    (Vehs[vehicle].state & 0x4000U) != 0) {
+                    ConsoleGlobal.selected_vehicle_ = vehicle;
+                } else {
                     go_reset();
                     return;
                 }
-                ConsoleGlobal.selected_vehicle_ = vehicle;
             }
         }
     } else {

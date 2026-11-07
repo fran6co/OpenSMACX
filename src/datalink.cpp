@@ -1096,12 +1096,17 @@ void Datalink::draw_effect() {
 
 // ORIGINAL: 0x00430B30 ?draw_tech@Datalink@@QAEXXZ 0x00430B30-0x00430C76
 // RECOVERY_BINDING: v1 {"evidence": ["image:0x430B30", "git:8e3029104ab590bec35cc6932e637765b2ea4074:src/recovered/units/00430b30.cpp"], "reason": "Recover the preserved topic drawer with source-owned state and real popup/window lifetimes."}
+// Inline boundary the image's register choice for the title test shows.
+static inline void append_upper_name(LPSTR name) {
+    strcat(StringTemp, StringTable.get(name));
+    CharUpperA(StringTemp);
+}
+
 void Datalink::draw_tech() {
     set_font(&font1_, 0, 0, 0);
     set_text_color(0xE0, -1, 1, 1);
     StringTemp[0] = 0;
-    strcat(StringTemp, StringTable.get(Technology[history_[0]].name));
-    CharUpperA(StringTemp);
+    append_upper_name(Technology[history_[0]].name);
     // Both the standalone original (0x430BA5..0x430BAC) and draw_entry's
     // inline technology case (0x42C1A7..0x42C1AE) test the buffer ADDRESS,
     // not its first byte. StringTemp has real storage, so even an empty
@@ -2876,6 +2881,20 @@ void Datalink::set_cat_project() {
     soft_update(&category_rect_);
 }
 
+// One list row: name, optional id suffix (game_state_ 0x1000), item. Each
+// inlined copy owns its digits buffer, as the image's frames show.
+static inline void category_entry(ListBox *list, LPSTR name, LPSTR separator, int id) {
+    StringTemp[0] = '\0';
+    strcat(StringTemp, StringTable.get(name));
+    if ((GameDataStateStorage.fields_.game_state_ & 0x1000) != 0) {
+        strcat(StringTemp, separator);
+        char digits[80];
+        _itoa(id, digits, 10);
+        strcat(StringTemp, digits);
+    }
+    list->item(StringTemp, id);
+}
+
 /*
 Purpose: List the technologies, ids 140000 upward.
 
@@ -2894,22 +2913,10 @@ Return Value: n/a
 Status: Complete
 */
 void Datalink::set_cat_tech() {
-    // The native cursor is Technology[0].preq_tech_2, and each step is one
-    // complete RulesTechnology. Keep the encoded LPSTR name as an integer
-    // handle for StringTable, just as the original pointer-sized word does.
     int id = 140000;
-    const RulesTechnology *record = Technology;
-    for (; id - 140000 < 0x59; ++record, ++id) {
-        if (record->preq_tech_1 >= -1 && record->preq_tech_2 >= -1) {
-            StringTemp[0] = '\0';
-            strcat(StringTemp, StringTable.get(record->name));
-            if ((GameDataStateStorage.fields_.game_state_ & 0x1000) != 0) {
-                strcat(StringTemp, DatalinkTechIdSeparator);
-                char digits[0x54];
-                _itoa(id, digits, 10);
-                strcat(StringTemp, digits);
-            }
-            listBox_.item(StringTemp, id);
+    for (int i = 0; i < 0x59; ++i, ++id) {
+        if (Technology[i].preq_tech_1 >= -1 && Technology[i].preq_tech_2 >= -1) {
+            category_entry(&listBox_, Technology[i].name, DatalinkTechIdSeparator, id);
         }
     }
 
@@ -3241,33 +3248,11 @@ void Datalink::set_cat_terraform() {
     int id = 90020;
     for (int i = 0; i < 0x14; ++i, ++id) {
         if (Terraforming[i].prerequisite_tech[0] >= -1) {
-            StringTemp[0] = '\0';
-            strcat(StringTemp, StringTable.get(Order[i + 4].order));
-            if ((GameDataStateStorage.fields_.game_state_ & 0x1000) != 0) {
-                strcat(StringTemp, DatalinkTerraformIdSeparator);
-                char digits[80];
-                _itoa(id - 20, digits, 10);
-                strcat(StringTemp, digits);
-            }
-            listBox_.item(StringTemp, id - 20);
+            category_entry(&listBox_, Order[i + 4].order, DatalinkTerraformIdSeparator, id - 20);
         }
-
-        if (i == 16 || i == 17) {
-            continue;
+        if (i != 16 && i != 17 && Terraforming[i].prerequisite_tech[1] >= -1) {
+            category_entry(&listBox_, Order[i + 4].order_sea, DatalinkTerraformSecondSeparator, id);
         }
-        if (Terraforming[i].prerequisite_tech[1] < -1) {
-            continue;
-        }
-
-        StringTemp[0] = '\0';
-        strcat(StringTemp, StringTable.get(Order[i + 4].order_sea));
-        if ((GameDataStateStorage.fields_.game_state_ & 0x1000) != 0) {
-            strcat(StringTemp, DatalinkTerraformSecondSeparator);
-            char digits[80];
-            _itoa(id, digits, 10);
-            strcat(StringTemp, digits);
-        }
-        listBox_.item(StringTemp, id);
     }
 
     RECT rect = category_rect_;
