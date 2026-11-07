@@ -2718,8 +2718,7 @@ void DesignWin::on_iface_right_click(int xCoord, int yCoord) {
         // CATEGORY_LABEL makes over Labels.strings_ptr.
         xCoord = click_y;
         yCoord = click_x;
-        LPSTR label = Labels.strings_ptr[0x33A];
-        LPSTR resolved_label = StringTable.get(label);
+        LPSTR resolved_label = StringTable.get(Labels.strings_ptr[0x33A]);
         // Preserve the swapped argument slots and reversed pointer order.
         MainInterfaceGlobal.client_to_screen(&yCoord, &xCoord);
         RECT rect;
@@ -3819,15 +3818,13 @@ int DesignWin::on_key_click(int a1, int a2) {
 // (prototype_stack_start_) so that entry sits five rows from the top.
 void DesignWin::center_stack(int proto_id, int redraw) {
     proto_sort_2(factionID_);
-    const int count = ProtoSortCount;
     for (int scan = prototype_stack_start_;
-         scan < prototype_stack_start_ + count; ++scan) {
-        const int rem = scan % count;
+         scan < prototype_stack_start_ + ProtoSortCount; ++scan) {
+        const int rem = scan % ProtoSortCount;
         if (proto_id == ProtoSortIds[rem]) {
             const int old = prototype_stack_start_;
-            const int centred = (rem + count - 5) % count;
-            prototype_stack_start_ = centred;
-            if (redraw != 0 && centred != old) {
+            prototype_stack_start_ = (rem + ProtoSortCount - 5) % ProtoSortCount;
+            if (redraw != 0 && prototype_stack_start_ != old) {
                 draw_stack();
             }
             return;
@@ -4343,13 +4340,7 @@ void DesignWin::draw_special_1(int redraw) {
     buffer_.copy(this, &area);
 
     RECT title = area;
-    int title_height;
-    if (font2_.unk_1_ >= 0) {
-        title_height = font2_.pixel_height() + font2_.unk_1_;
-    } else {
-        title_height = font2_.line_height();
-    }
-    title.bottom = area.top + title_height;
+    title.bottom = area.top + font_line_advance(font2_);
     title.top += 2;
     title.left += 5;
     title.right -= 5;
@@ -4395,13 +4386,7 @@ void DesignWin::draw_special_2(int redraw) {
     buffer_.copy(this, &area);
 
     RECT title = area;
-    int title_height;
-    if (font2_.unk_1_ >= 0) {
-        title_height = font2_.pixel_height() + font2_.unk_1_;
-    } else {
-        title_height = font2_.line_height();
-    }
-    title.bottom = area.top + title_height;
+    title.bottom = area.top + font_line_advance(font2_);
     title.top += 2;
     title.left += 5;
     title.right -= 5;

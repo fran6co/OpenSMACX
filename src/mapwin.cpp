@@ -1374,32 +1374,26 @@ void MapWin::set_center(int x, int y, int draw_type) {
 // ORIGINAL: 0x00469B40 ?gen_bases_only@MapWin@@QAEXXZ 0x00469B40-0x00469C9F
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00469b40.cpp retains the complete tile-walk seed; MapWin fields at 0x1DDA4..0x1DDD8 and map_loc determine the source-owned traversal."], "reason": "Home the base-only tile traversal reached by WorldWin redraw; base_draw remains an explicitly unfinished rendering dependency."}
 void MapWin::gen_bases_only() {
-    for (int row = 0;
-         row < mapwin_dest_add(mapwin_dest_add(field_1DDD0_, field_1DDD8_), 1);
-         ++row) {
+    for (int row = 0; row < field_1DDD0_ + field_1DDD8_ + 1; ++row) {
         const int tile_y = field_1DDA8_ + row;
         int tile_x = field_1DDA4_ + (row & 1);
-        int count = (row & 1) == 0 ? field_1DDD4_ : field_1DDCC_;
-        while (count-- > 0) {
-            int wrapped_x = tile_x;
-            if ((MapIsFlat & 1) == 0) {
-                if (wrapped_x < 0) {
-                    wrapped_x += MapLongitudeBounds;
-                } else if (wrapped_x >= MapLongitudeBounds) {
-                    wrapped_x -= MapLongitudeBounds;
-                }
-            }
+        const int count = (row & 1) ? field_1DDCC_ : field_1DDD4_;
+        for (int i = 0; i < count; ++i) {
+            const int wrapped_x = wrap_map_x(tile_x);
             if (tile_y >= 0 && tile_y < MapLatitudeBounds &&
                 wrapped_x >= 0 && wrapped_x < MapLongitudeBounds) {
                 Map *tile = map_loc(wrapped_x, tile_y);
-                if ((tile->bit & 1) != 0 && (tile->val2 & 0xF) < 8) {
-                    int pixel_x;
-                    int pixel_y;
-                    tile_to_pixel(wrapped_x, tile_y, &pixel_x, &pixel_y);
-                    const int faction = (GameDataStateStorage.fields_.game_state_ & STATE_OMNISCIENT_VIEW)
-                                            ? -1 : ConsoleGlobal.faction_id_;
-                    draw_bases(wrapped_x, tile_y, pixel_x,
-                               pixel_y - field_1DDC0_, faction);
+                if ((tile->bit & 1) != 0) {
+                    const int owner = tile->val2 & 0xF;
+                    if (owner >= 0 && owner < 8) {
+                        int pixel_x;
+                        int pixel_y;
+                        tile_to_pixel(wrapped_x, tile_y, &pixel_x, &pixel_y);
+                        const int faction = (GameDataStateStorage.fields_.game_state_ & STATE_OMNISCIENT_VIEW)
+                                                ? -1 : ConsoleGlobal.faction_id_;
+                        draw_bases(wrapped_x, tile_y, pixel_x,
+                                   pixel_y - field_1DDC0_, faction);
+                    }
                 }
             }
             tile_x += 2;
@@ -5271,33 +5265,21 @@ Purpose: Render one map tile - terrain first, then vehicles and overlays.
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     0x00462F00 0x004632D0 0x00466CA0 0x004688E0
-// TRIED: 53/71 instructions match under /c /O2 /Gy /GR- /Oy- /GX; the whole
-//            body agrees - prologue, in-place transform, the ten-argument
-//            forward, bounds gate and both tail calls - except ONE schedule
-//            slot: the image preloads field_1DD70_ into ECX at 0x00468C3F,
-//            BEFORE the Buffer conversion's null select, and pushes py/px as
-//            load-push/load-push pairs through EDX; this spelling computes
-//            the select first (EAX, the image's own destination and walk
-//            registers) and sinks the field_1DD70_ load to between the two
-//            pushes. Measured alternatives: a const or assigned flags local
-//            declared before the conversion materializes the load early but
-//            swaps the pair (flags EAX / select ECX, 51/71); a window local
-//            chain, an inline conversion, and a forced-inline shared helper
-//            all reproduce the select-first form. No spelling found that
-//            loads field_1DD70_ into ECX ahead of an EAX select; recorded as
-//            a scheduling plateau, not chased further at this budget.
+// Pixel outputs are separate locals and the flags word a local read
+// after tile_to_pixel; that spelling gives the image schedule.
 */
 void MapWin::gen_tile(int x, int y, int a3, int a4) {
-    const int tile_x = x;
-    const int tile_y = y;
-    tile_to_pixel(x, y, &x, &y);
+    int pixel_x;
+    int pixel_y;
+    tile_to_pixel(x, y, &pixel_x, &pixel_y);
     const int flags = field_1DD70_;
-    gen_terrain_poly(this, this, zoom_offset_, a3, -1, flags,
-                     tile_x, tile_y, x, y);
-    if (tile_y >= 0 && tile_y < MapLatitudeBounds &&
-        tile_x >= 0 && tile_x < MapLongitudeBounds && a4 != 0) {
-        draw_vehicles(tile_x, tile_y, x, y - field_1DDC0_, a3);
-        gen_overlays(tile_x, tile_y);
+    const int zoom = zoom_offset_;
+    gen_terrain_poly(this, this, zoom, a3, -1, flags,
+                     x, y, pixel_x, pixel_y);
+    if (y >= 0 && y < MapLatitudeBounds &&
+        x >= 0 && x < MapLongitudeBounds && a4 != 0) {
+        draw_vehicles(x, y, pixel_x, pixel_y - field_1DDC0_, a3);
+        gen_overlays(x, y);
     }
 }
 
@@ -6078,8 +6060,6 @@ void MapWin::draw_legend() {
         const int cursor = ConsoleGlobal.cursor_history_index_;
         int tile_x = ConsoleGlobal.cursor_history_x_[cursor] +
                      VehMoveDeltaX[direction];
-        const int tile_y = ConsoleGlobal.cursor_history_y_[cursor] +
-                           VehMoveDeltaY[direction];
         if ((MapIsFlat & 1) == 0) {
             if (tile_x < 0) {
                 tile_x += MapLongitudeBounds;
@@ -6087,6 +6067,8 @@ void MapWin::draw_legend() {
                 tile_x -= MapLongitudeBounds;
             }
         }
+        const int tile_y = ConsoleGlobal.cursor_history_y_[cursor] +
+                           VehMoveDeltaY[direction];
         if (tile_y < 0 || tile_y >= MapLatitudeBounds || tile_x < 0 ||
             tile_x >= MapLongitudeBounds) {
             continue;
@@ -6095,13 +6077,12 @@ void MapWin::draw_legend() {
         int pixel_y;
         tile_to_pixel(tile_x, tile_y, &pixel_x, &pixel_y);
         StringTemp[0] = '\0';
-        _itoa(MapDirectionPermutation[direction], direction_text, 10);
+        const int label = MapDirectionPermutation[direction];
+        _itoa(label, direction_text, 10);
         strcat(StringTemp, direction_text);
         Buffer::set_text_color(0xFF, 0, 1, 1);
-        Buffer::write_cent_l(&legend_font, StringTemp, pixel_x, pixel_y,
-                             tile_pixel_width_,
-                             tile_pixel_height_,
-                             static_cast<int>(strlen(StringTemp)));
+        Buffer::write_cent(&legend_font, StringTemp, pixel_x, pixel_y,
+                           tile_pixel_width_, tile_pixel_height_);
     }
 }
 
@@ -6126,7 +6107,7 @@ void MapWin::draw_wars() {
         strcat(StringTemp, ": ");
         Buffer::set_text_color(InfoFactionTextColors[faction], 0, 1, 1);
         const int width = Buffer::write_l(
-            StringTemp, character_width, y, strlen(StringTemp));
+            StringTemp, character_width, y);
         if (max_width <= width) {
             max_width = width;
         }
@@ -6153,7 +6134,7 @@ void MapWin::draw_wars() {
             }
             StringTemp[0] = letter;
             StringTemp[1] = '\0';
-            Buffer::write_l(StringTemp, x, y, strlen(StringTemp));
+            Buffer::write_l(StringTemp, x, y);
             x += character_width;
         }
         y += font_line_advance(*font);
