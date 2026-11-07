@@ -156,22 +156,32 @@ Status: Complete
 // the same `byte ptr [disp32]` form, the displacement relocated.
 char findnum_digits[] = "09";  // 0x00670C1C
 
+// Hand-written assembly: `and reg,reg` tests, dl/dh digit bounds, result via local.
 char *__cdecl findnum(char *str) {
-    if (!str) {
-        return 0;
+    char *result;
+    __asm {
+        mov eax, str
+        and eax, eax
+        je not_found
+        mov dl, byte ptr [findnum_digits]
+        mov dh, byte ptr [findnum_digits + 1]
+        xor ebx, ebx
+        dec eax
+    next_char:
+        inc eax
+        mov bl, [eax]
+        and bl, bl
+        je not_found
+        cmp bl, dl
+        jl next_char
+        cmp bl, dh
+        jg next_char
+        jmp done
+    not_found:
+        xor eax, eax
+    done:
+        mov result, eax
     }
-    char *const digits = findnum_digits;
-    char lo = digits[0];
-    char hi = digits[1];
-    char c;
-    str--;
-    do {
-        str++;
-        c = *str;
-        if (c == 0) {
-            return 0;
-        }
-    } while (c < lo || c > hi);
-    return str;
+    return result;
 }
 

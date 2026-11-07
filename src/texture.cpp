@@ -7033,132 +7033,187 @@ static int texture_keyed_wrap_add(int value, unsigned int delta) {
 // original nominal parameter type remain unknown; this is not recovered
 // original-prototype evidence.
 void __cdecl sub_61f800(EdgeScan *left, EdgeScan *right) {
-
-    int p1_1c = left->accumC;
-    int p2_1c = right->accumC;
-
-    if (TextureRasterClipLeft >= p2_1c) {
-        return;
-    }
-    if (p1_1c >= TextureRasterClipRight) {
-        return;
-    }
-    int dy = p2_1c - p1_1c;
-    if (dy <= 0) {
-        return;
-    }
-
-    int divisor = dy << 16;
-    __int64 divisor64 = (__int64)divisor;
-
-    int d_c = right->accumA - left->accumA;
-    __int64 q_c = (((__int64)d_c) << 16) / divisor64;
-    int dc_step_raw = (int)q_c;
-    int sign_c = 1;
-    int dc_step_adj = dc_step_raw;
-    if (dc_step_raw < 0) {
-        sign_c = -1;
-        if ((q_c & 0xffff) != 0) {
-            dc_step_adj = dc_step_raw + 0x10000;
-        }
-    }
-    int acc_y = (dc_step_adj >> 1) + left->accumA;
-
-    int d_10 = right->accumB - left->accumB;
-    __int64 q_10 = (((__int64)d_10) << 16) / divisor64;
-    int d10_step_raw = (int)q_10;
-    TextureRasterSignedPitch = TextureRowPitchScratch;
-    int d10_step_adj = d10_step_raw;
-    if (d10_step_raw < 0) {
-        TextureRasterSignedPitch = -TextureRowPitchScratch;
-        if ((q_10 & 0xffff) != 0) {
-            d10_step_adj = d10_step_raw + 0x10000;
-        }
-    }
-    int cross_term = (d10_step_adj >> 16) * (TextureRowPitchScratch);
-    int acc_x = (d10_step_adj >> 1) + left->accumB;
-
-    int p2_1c_clamped = p2_1c;
-    if (TextureRasterClipRight <= p2_1c_clamped) {
-        p2_1c_clamped = TextureRasterClipRight;
-    }
-
-    int start_row = p1_1c;
-    if (p1_1c < TextureRasterClipLeft) {
-        int pre = texture_difference(TextureRasterClipLeft, p1_1c);
-        acc_y = texture_keyed_wrap_add(acc_y, texture_keyed_shift_product(dc_step_raw, pre));
-        acc_x = texture_keyed_wrap_add(acc_x, texture_keyed_shift_product(d10_step_raw, pre));
-        start_row = TextureRasterClipLeft;
-    }
-
-    int row_count = p2_1c_clamped - start_row;
-
-    int acc_y_hi16 = acc_y >> 16;
-    int acc_x_hi16 = acc_x >> 16;
-    int src_row_index = acc_y_hi16 + (unsigned short)(short)((short)acc_x_hi16 * (short)TextureRowPitchScratch);
-
-    unsigned char *src = reinterpret_cast<unsigned char *>(
-        texture_pointer_offset(TextureRasterScratch544, static_cast<uint32_t>(src_row_index)));
-    uintptr_t out_seed = (TextureRasterRowOffset) * (TextureRasterBufferStride) + start_row + texture_pointer_address(TextureRasterPixelBase);
-
-    int row_stride = (dc_step_adj >> 16) + cross_term;
-
-    if (TextureRasterSignedPitch < 0) {
-        d10_step_raw = -d10_step_raw;
-        acc_x = ~acc_x;
-    }
-
-    unsigned char *out = reinterpret_cast<unsigned char *>(out_seed - 1);
-    int count = row_count;
-
-    if (sign_c < 0) {
-        unsigned int u_pos = ((unsigned int)(~acc_y) << 16) | (unsigned short)acc_x;
-        unsigned int u_step = ((unsigned int)(-dc_step_raw) << 16) | (unsigned int)((unsigned short)d10_step_raw >> 1);
-        TextureRasterScratch4B8 = -row_stride;
-        int stride = TextureRasterScratch4B8;
-
-        do {
-            unsigned char pixel = *src;
-            ++out;
-
-            unsigned int new_pos = u_pos + u_step;
-            bool carry = new_pos < u_pos;
-            u_pos = new_pos;
-            src += stride + (carry ? 1 : 0);
-
-            *out = pixel;
-
-            if (u_pos & 0x8000) {
-                u_pos &= ~0x8000u;
-                src += TextureRasterSignedPitch;
-            }
-
-            --count;
-        } while (count != 0);
-    } else {
-        unsigned int u_pos = ((unsigned int)acc_y << 16) | (unsigned int)((unsigned short)acc_x >> 1);
-        unsigned int u_step = ((unsigned int)dc_step_raw << 16) | (unsigned int)((unsigned short)d10_step_raw >> 1);
-        TextureRasterScratch4B8 = row_stride;
-        int stride = TextureRasterScratch4B8;
-
-        do {
-            unsigned char pixel = *src;
-            ++out;
-
-            unsigned int new_pos = u_pos + u_step;
-            bool carry = new_pos < u_pos;
-            u_pos = new_pos;
-            src += stride + (carry ? 1 : 0);
-
-            *out = pixel;
-
-            if (u_pos & 0x8000) {
-                u_pos &= ~0x8000u;
-                src += TextureRasterSignedPitch;
-            }
-
-            --count;
-        } while (count != 0);
+    int acc_y = left->accumA;
+    int acc_x = left->accumB;
+    int start_row = left->accumC;
+    int end_y = right->accumA;
+    int end_x = right->accumB;
+    int end_row = right->accumC;
+    int y_step;
+    int y_sign;
+    int y_whole;
+    int x_step;
+    int x_whole;
+    // Hand-written assembly: and/jns sign tests, shrd fixed-point products, adc/sbb
+    // carry stepping and EBP borrowed as the row-step register.
+    __asm {
+        push esi
+        push edi
+        mov ebx, end_row
+        cmp ebx, TextureRasterClipLeft
+        jle span_done
+        mov ecx, start_row
+        cmp ecx, TextureRasterClipRight
+        jge span_done
+        sub ebx, ecx
+        jle span_done
+        shl ebx, 0x10
+        mov eax, end_y
+        sub eax, acc_y
+        mov edx, eax
+        sar edx, 0x10
+        shl eax, 0x10
+        idiv ebx
+        mov y_step, eax
+        mov ecx, 1
+        and eax, eax
+        jns y_rounded
+        neg ecx
+        test eax, 0xffff
+        je y_rounded
+        add eax, 0x10000
+    y_rounded:
+        mov y_sign, ecx
+        mov ecx, eax
+        sar ecx, 0x10
+        mov y_whole, ecx
+        sar eax, 1
+        add eax, acc_y
+        mov acc_y, eax
+        mov eax, end_x
+        sub eax, acc_x
+        mov edx, eax
+        sar edx, 0x10
+        shl eax, 0x10
+        idiv ebx
+        mov x_step, eax
+        mov ecx, TextureRowPitchScratch
+        and eax, eax
+        jns x_rounded
+        neg ecx
+        test eax, 0xffff
+        je x_rounded
+        add eax, 0x10000
+    x_rounded:
+        mov TextureRasterSignedPitch, ecx
+        mov ecx, eax
+        sar eax, 0x10
+        imul TextureRowPitchScratch
+        mov x_whole, eax
+        sar ecx, 1
+        add ecx, acc_x
+        mov acc_x, ecx
+        mov ebx, end_row
+        cmp ebx, TextureRasterClipRight
+        jl right_clipped
+        mov ebx, TextureRasterClipRight
+    right_clipped:
+        mov edi, start_row
+        cmp edi, TextureRasterClipLeft
+        jge left_clipped
+        sub edi, TextureRasterClipLeft
+        neg edi
+        mov eax, y_step
+        shl edi, 0x10
+        imul edi
+        shrd eax, edx, 0x10
+        add eax, acc_y
+        mov acc_y, eax
+        mov eax, x_step
+        imul edi
+        shrd eax, edx, 0x10
+        add eax, acc_x
+        mov acc_x, eax
+        mov edi, TextureRasterClipLeft
+        mov start_row, edi
+    left_clipped:
+        sub ebx, edi
+        mov ecx, ebx
+        xor eax, eax
+        mov ax, word ptr acc_x + 2
+        mov dx, word ptr TextureRowPitchScratch
+        imul dx
+        xor esi, esi
+        mov si, word ptr acc_y + 2
+        add esi, eax
+        add esi, TextureRasterScratch544
+        mov eax, TextureRasterRowOffset
+        imul TextureRasterBufferStride
+        add eax, start_row
+        add eax, TextureRasterPixelBase
+        mov edi, eax
+        cmp TextureRasterSignedPitch, 0
+        jge pitch_ready
+        neg x_step
+        not acc_x
+    pitch_ready:
+        cmp y_sign, 0
+        jl reverse_span
+        mov ebx, acc_y
+        shl ebx, 0x10
+        mov bx, word ptr acc_x
+        shr bx, 1
+        mov edx, y_step
+        shl edx, 0x10
+        mov dx, word ptr x_step
+        shr dx, 1
+        mov eax, y_whole
+        add eax, x_whole
+        mov TextureRasterScratch4B8, eax
+        push ebp
+        mov ebp, TextureRasterScratch4B8
+        dec edi
+    forward_pixel:
+        mov al, [esi]
+        inc edi
+        add ebx, edx
+        adc esi, ebp
+        mov [edi], al
+        test bh, 0x80
+        je forward_next
+        and bh, 0x7f
+        add esi, TextureRasterSignedPitch
+    forward_next:
+        dec ecx
+        jne forward_pixel
+        pop ebp
+        jmp span_done
+    reverse_span:
+        mov edx, y_step
+        neg edx
+        shl edx, 0x10
+        mov dx, word ptr x_step
+        shr dx, 1
+        mov ebx, acc_y
+        not ebx
+        shl ebx, 0x10
+        mov bx, word ptr acc_x
+        shr acc_x, 1
+        mov eax, y_whole
+        add eax, x_whole
+        mov TextureRasterScratch4B8, eax
+        neg TextureRasterScratch4B8
+        push ebp
+        mov ebp, TextureRasterScratch4B8
+        dec edi
+    reverse_pixel:
+        mov al, [esi]
+        inc edi
+        add al, ah
+        add ebx, edx
+        sbb esi, ebp
+        mov [edi], al
+        test bh, 0x80
+        je reverse_next
+        and bh, 0x7f
+        add esi, TextureRasterSignedPitch
+    reverse_next:
+        dec ecx
+        jne reverse_pixel
+        pop ebp
+    span_done:
+        pop edi
+        pop esi
     }
 }
 
@@ -7300,20 +7355,197 @@ static void texture_draw_keyed_edge_span(EdgeScan *left, EdgeScan *right,
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned image SHA-256 01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf; raw 61FA30 prologue, 61FC85 RET and alignment through 61FC8F, next mapped entry 61FC90.", "Raw entry loads two stack EdgeScan records at offsets 0C/10/1C and uses shared clip, source, destination, key and packed-step storage; original source ownership and reachability remain unknown.", "Full raw dataflow preserves wrapped shifted divisor, clipped multiply, low-word source-row product, initial lookup before signed-pitch NEG/NOT transformation, both packed U-direction loops and scratch publications. Exceptional IDIV and native fault timing remain restoration work."], "reason": "Distinct two-stack-edge keyed raster entry has an independent prologue and RET between the preceding completed span and the next Gouraud edge setup entry. Its offset-derived name and source home expose shared raster dependencies without claiming a Texture receiver, historical TU or original caller."}
 // symbol    ?sub_61fa30@@YAXPAUEdgeScan@@0@Z
 void __cdecl sub_61fa30(EdgeScan *left, EdgeScan *right) {
-    TextureKeyedEdgeSpanState state;
-    const uintptr_t destination = texture_pointer_address(TextureRasterPixelBase) +
-        static_cast<unsigned int>(TextureRasterRowOffset) *
-        static_cast<unsigned int>(TextureRasterBufferStride);
-    state.destination_row = reinterpret_cast<unsigned char *>(destination);
-    state.pixels = reinterpret_cast<const unsigned char *>(texture_pointer_address(TextureRasterScratch544));
-    state.pitch = TextureRowPitchScratch;
-    state.clip_left = TextureRasterClipLeft;
-    state.clip_right = TextureRasterClipRight;
-    state.key = static_cast<unsigned char>(TextureRasterLightThreshold);
-    state.signed_pitch_slot = &(TextureRasterSignedPitch);
-    state.packed_step_slot = &(TextureRasterPackedStep);
-    state.colour_step_slot = &(TextureRasterScratch4B8);
-    texture_draw_keyed_edge_span(left, right, state);
+    int acc_y = left->accumA;
+    int acc_x = left->accumB;
+    int start_row = left->accumC;
+    int end_y = right->accumA;
+    int end_x = right->accumB;
+    int end_row = right->accumC;
+    int y_step;
+    int y_sign;
+    int y_whole;
+    int x_step;
+    int x_whole;
+    // Hand-written assembly: and/jns sign tests, shrd fixed-point products, adc/sbb
+    // carry stepping and EBP borrowed as the row-step register; skips the threshold colour.
+    __asm {
+        push esi
+        push edi
+        mov ebx, end_row
+        cmp ebx, TextureRasterClipLeft
+        jle span_done
+        mov ecx, start_row
+        cmp ecx, TextureRasterClipRight
+        jge span_done
+        sub ebx, ecx
+        jle span_done
+        shl ebx, 0x10
+        mov eax, end_y
+        sub eax, acc_y
+        mov edx, eax
+        sar edx, 0x10
+        shl eax, 0x10
+        idiv ebx
+        mov y_step, eax
+        mov ecx, 1
+        and eax, eax
+        jns y_rounded
+        neg ecx
+        test eax, 0xffff
+        je y_rounded
+        add eax, 0x10000
+    y_rounded:
+        mov y_sign, ecx
+        mov ecx, eax
+        sar ecx, 0x10
+        mov y_whole, ecx
+        sar eax, 1
+        add eax, acc_y
+        mov acc_y, eax
+        mov eax, end_x
+        sub eax, acc_x
+        mov edx, eax
+        sar edx, 0x10
+        shl eax, 0x10
+        idiv ebx
+        mov x_step, eax
+        mov ecx, TextureRowPitchScratch
+        and eax, eax
+        jns x_rounded
+        neg ecx
+        test eax, 0xffff
+        je x_rounded
+        add eax, 0x10000
+    x_rounded:
+        mov TextureRasterSignedPitch, ecx
+        mov ecx, eax
+        sar eax, 0x10
+        imul TextureRowPitchScratch
+        mov x_whole, eax
+        sar ecx, 1
+        add ecx, acc_x
+        mov acc_x, ecx
+        mov ebx, end_row
+        cmp ebx, TextureRasterClipRight
+        jl right_clipped
+        mov ebx, TextureRasterClipRight
+    right_clipped:
+        mov edi, start_row
+        cmp edi, TextureRasterClipLeft
+        jge left_clipped
+        sub edi, TextureRasterClipLeft
+        neg edi
+        mov eax, y_step
+        shl edi, 0x10
+        imul edi
+        shrd eax, edx, 0x10
+        add eax, acc_y
+        mov acc_y, eax
+        mov eax, x_step
+        imul edi
+        shrd eax, edx, 0x10
+        add eax, acc_x
+        mov acc_x, eax
+        mov edi, TextureRasterClipLeft
+        mov start_row, edi
+    left_clipped:
+        sub ebx, edi
+        mov ecx, ebx
+        add acc_x, 0x8000
+        xor eax, eax
+        mov ax, word ptr acc_x + 2
+        mov dx, word ptr TextureRowPitchScratch
+        imul dx
+        add acc_y, 0x8000
+        xor esi, esi
+        mov si, word ptr acc_y + 2
+        add esi, eax
+        add esi, TextureRasterScratch544
+        mov eax, TextureRasterRowOffset
+        imul TextureRasterBufferStride
+        add eax, start_row
+        add eax, TextureRasterPixelBase
+        mov edi, eax
+        cmp TextureRasterSignedPitch, 0
+        jge pitch_ready
+        neg x_step
+        not acc_x
+    pitch_ready:
+        cmp y_sign, 0
+        jl reverse_span
+        mov ebx, acc_y
+        shl ebx, 0x10
+        mov bx, word ptr acc_x
+        shr bx, 1
+        mov edx, y_step
+        shl edx, 0x10
+        mov dx, word ptr x_step
+        shr dx, 1
+        mov TextureRasterPackedStep, edx
+        mov eax, y_whole
+        add eax, x_whole
+        mov TextureRasterScratch4B8, eax
+        mov ah, byte ptr TextureRasterLightThreshold
+        push ebp
+        mov ebp, TextureRasterScratch4B8
+    forward_pixel:
+        mov al, [esi]
+        cmp al, ah
+        je forward_skip
+        mov [edi], al
+    forward_skip:
+        add ebx, TextureRasterPackedStep
+        adc esi, ebp
+        test bh, 0x80
+        je forward_next
+        add esi, TextureRasterSignedPitch
+        and bh, 0x7f
+    forward_next:
+        inc edi
+        dec ecx
+        jne forward_pixel
+        pop ebp
+        jmp span_done
+    reverse_span:
+        mov edx, y_step
+        neg edx
+        shl edx, 0x10
+        mov dx, word ptr x_step
+        shr dx, 1
+        mov TextureRasterPackedStep, edx
+        mov ebx, acc_y
+        not ebx
+        shl ebx, 0x10
+        mov bx, word ptr acc_x
+        shr acc_x, 1
+        mov eax, y_whole
+        add eax, x_whole
+        mov TextureRasterScratch4B8, eax
+        neg TextureRasterScratch4B8
+        mov ah, byte ptr TextureRasterLightThreshold
+        push ebp
+        mov ebp, TextureRasterScratch4B8
+    reverse_pixel:
+        mov al, [esi]
+        cmp al, ah
+        je reverse_skip
+        mov [edi], al
+    reverse_skip:
+        add ebx, TextureRasterPackedStep
+        sbb esi, ebp
+        test bh, 0x80
+        je reverse_next
+        add esi, TextureRasterSignedPitch
+        and bh, 0x7f
+    reverse_next:
+        inc edi
+        dec ecx
+        jne reverse_pixel
+        pop ebp
+    span_done:
+        pop edi
+        pop esi
+    }
 }
 
 // ORIGINAL: 0x0061CB50 sub_61cb50 0x0061CB50-0x0061D08F FILE

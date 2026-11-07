@@ -1705,52 +1705,52 @@ int Buffer::fill(int color) {
         return surface_->Blt(nullptr, nullptr, nullptr,
                              DDBLT_COLORFILL | DDBLT_WAIT, &effects);
     }
-    if (dib_bits_ == nullptr) {
-        return 0;
-    }
-    // A buffer whose clip rectangle is not the whole buffer fills the
-    // rectangle instead, through the overload that takes one.
-    if (!EqualRect(&rect1_, &rect2_)) {
-        return fill(&rect1_, color);
-    }
-
-    // The shared acquisition operation is visible through buffer.h.
-    // The protocol was written out here, which is the same instructions in a
-    // different order and its own DDSURFACEDESC in a different slot.
-    void *const pixels = acquire_pixels();
-
-    // The colour in all four bytes, one dword per pixel-quad, rows of
-    // `(width + 3) / 4` dwords.
-    // UNSIGNED throughout: the image divides with `shr eax, 2` and
-    // multiplies with `mul`. Written `int`, the same expression compiles to
-    // `cdq; sbb; and; add; sar` - six instructions of sign correction for a
-    // count that cannot be negative.
-    const uint32_t height = static_cast<uint32_t>(rect2_.bottom);
-    const uint32_t width = static_cast<uint32_t>(rect2_.right);
-    const uint8_t value = static_cast<uint8_t>(color);
-    const uint32_t quad = (static_cast<uint32_t>(value) << 24)
-        | (static_cast<uint32_t>(value) << 16)
-        | (static_cast<uint32_t>(value) << 8) | value;
-    uint32_t *out = static_cast<uint32_t *>(pixels);
-    const uint32_t count =
-        ((width >> 2) + ((width & 3) != 0 ? 1u : 0u)) * height;
-    for (uint32_t index = 0; index < count; ++index) {
-        out[index] = quad;
-    }
-
-    if (surface_ == nullptr) {
-        if (--surface_lock_count_ <= 0) {
-            locked_bits_ = nullptr;
-            surface_lock_count_ = 0;
+    // With no DIB the image returns the zero EAX it just tested.
+    if (dib_bits_ != nullptr) {
+        // A buffer whose clip rectangle is not the whole buffer fills the
+        // rectangle instead, through the overload that takes one.
+        if (!EqualRect(&rect1_, &rect2_)) {
+            return fill(&rect1_, color);
         }
-        return 0;
+
+        // The shared acquisition operation is visible through buffer.h.
+        // The protocol was written out here, which is the same instructions in a
+        // different order and its own DDSURFACEDESC in a different slot.
+        void *const pixels = acquire_pixels();
+
+        const int height = rect2_.bottom;
+        const int width = rect2_.right;
+        // Hand-written assembly: 16-bit pushf/popf around cld, setne/mul dword count, rep stosd.
+        // The image does not test the acquired pointer, and leaves EAX as the result.
+        __asm {
+            pushf
+            push edi
+            push esi
+            cld
+            mov edi, pixels
+            mov eax, width
+            mov ebx, eax
+            xor ecx, ecx
+            and ebx, 3
+            setne cl
+            shr eax, 2
+            add eax, ecx
+            mov ecx, height
+            mul ecx
+            mov ecx, eax
+            mov dl, byte ptr color
+            mov al, dl
+            mov ah, dl
+            shl eax, 0x10
+            mov al, dl
+            mov ah, dl
+            rep stosd
+            pop esi
+            pop edi
+            popf
+        }
+        free_data(1);
     }
-    if (--surface_lock_count_ <= 0 && locked_bits_ != nullptr) {
-        surface_->Unlock(locked_bits_);
-        locked_bits_ = nullptr;
-        surface_lock_count_ = 0;
-    }
-    return 0;
 }
 
 /*
@@ -1879,6 +1879,8 @@ int Buffer::fill(RECT *area, int color) {
     if (!IntersectRect(&clipped, &clipped, &rect1_)) {
         return 0;
     }
+    const int top = clipped.top;
+    const int left = clipped.left;
     if (clipped.left >= dib_.bmiHeader.biWidth) {
         return 0;
     }
@@ -1886,71 +1888,48 @@ int Buffer::fill(RECT *area, int color) {
     if (clipped.top >= -dib_.bmiHeader.biHeight) {
         return 0;
     }
-
-    void *pixels;
-    if (surface_ == nullptr) {
-        locked_bits_ = dib_bits_;
-        pixels = dib_bits_;
-        if (dib_bits_ == nullptr) {
-            return 0;
-        }
-        ++surface_lock_count_;
-    } else if (locked_bits_ != nullptr) {
-        ++surface_lock_count_;
-        pixels = locked_bits_;
-    } else {
-        description.dwSize = sizeof(DDSURFACEDESC);
-        if (surface_->Lock(nullptr, &description, DDLOCK_WAIT, nullptr) != 0) {
-            return 0;
-        }
-        ++surface_lock_count_;
-        stride_ = description.lPitch;
-        locked_bits_ = description.lpSurface;
-        pixels = description.lpSurface;
-    }
-    if (pixels == nullptr) {
-        return 0;
-    }
-
-    uintptr_t destination = reinterpret_cast<uintptr_t>(pixels)
-        + static_cast<uintptr_t>(stride_) * static_cast<uintptr_t>(clipped.top)
-        + static_cast<uintptr_t>(clipped.left);
+    char *destination = acquire_pixels() != 0
+        ? stride_ * top + static_cast<char *>(locked_bits_) + left : 0;
     if (destination == 0) {
         return 0;
     }
-
     int rows = clipped.bottom - clipped.top;
-    // UNSIGNED, so the split into whole dwords is `shr edx, 2` as the image
-    // has it rather than the `sar` a signed width earns.
-    const uint32_t width = static_cast<uint32_t>(clipped.right - clipped.left);
+    const int width = clipped.right - clipped.left;
     BufferFillRowGap = stride_ - width;
-
-    const uint8_t value = static_cast<uint8_t>(color);
-    do {
-        uint8_t *tail = reinterpret_cast<uint8_t *>(destination);
-        for (uint32_t count = width; count > 0; --count) {
-            *tail++ = value;
-        }
-        // REP STOSD/STOSB advance through the row before the original
-        // adds its stride-minus-width gap at 0x005DFE98.
-        // Keep the unused final-row advance numeric: with a nonzero left
-        // edge it can lie past the backing allocation's one-past pointer.
-        destination = reinterpret_cast<uintptr_t>(tail) + BufferFillRowGap;
-    } while (--rows != 0);
-
-    if (surface_ == nullptr) {
-        if (--surface_lock_count_ <= 0) {
-            locked_bits_ = nullptr;
-            surface_lock_count_ = 0;
-        }
-        return 0;
+    // Hand-written assembly: 16-bit pushf/popf around cld, rep stosd/stosb rows, EBP as the row counter.
+    __asm {
+        pushf
+        push edi
+        push esi
+        cld
+        mov edi, destination
+        mov edx, width
+        mov ebx, edx
+        and ebx, 3
+        shr edx, 2
+        mov cl, byte ptr color
+        mov al, cl
+        mov ah, cl
+        shl eax, 0x10
+        mov al, cl
+        mov ah, cl
+        mov ecx, rows
+        push ebp
+        mov ebp, ecx
+    fill_row:
+        mov ecx, edx
+        rep stosd
+        mov ecx, ebx
+        rep stosb
+        add edi, BufferFillRowGap
+        dec ebp
+        jne fill_row
+        pop ebp
+        pop esi
+        pop edi
+        popf
     }
-    --surface_lock_count_;
-    if (locked_bits_ != nullptr && surface_lock_count_ <= 0) {
-        surface_->Unlock(locked_bits_);
-        locked_bits_ = nullptr;
-        surface_lock_count_ = 0;
-    }
+    free_data(1);
     return 0;
 }
 
@@ -3227,20 +3206,28 @@ void Buffer::vline(int x, int y1, int y2, int color) {
     if (y1 >= -dib_.bmiHeader.biHeight) {
         return;
     }
-    if (acquire_pixels() == 0) {
-        return;
-    }
-    const int pitch = static_cast<int>(stride_);
-    char *pixel = static_cast<char *>(locked_bits_) + y1 * pitch + x;
+    char *pixel = acquire_pixels() != 0
+        ? stride_ * y1 + x + static_cast<char *>(locked_bits_) : 0;
     // The same unreachable check `hline` carries, at 0x005E1CF7.
     if (pixel == nullptr) {
         return;
     }
-    int rows = y2 - y1 + 1;
-    do {
-        *pixel = static_cast<char>(color);
-        pixel += pitch;
-    } while (--rows);
+    const int pitch = static_cast<int>(stride_);
+    // Hand-written assembly: explicit edi save, mov ah/[edi],ah and `loop` column fill.
+    __asm {
+        push edi
+        mov ecx, y2
+        sub ecx, y1
+        inc ecx
+        mov ah, byte ptr color
+        mov ebx, pitch
+        mov edi, pixel
+    column_fill:
+        mov [edi], ah
+        add edi, ebx
+        loop column_fill
+        pop edi
+    }
     free_data(1);
 }
 
@@ -4442,7 +4429,6 @@ int Buffer::copy_mask(Buffer *dest, int src_x, int src_y, int x, int y, int w,
     if (dest == 0) {
         return 3;
     }
-
     // Fold negative source coordinates into the extent: the part of the
     // rectangle that falls above/left of the source is not drawn, and the
     // destination origin moves with it.
@@ -4456,22 +4442,17 @@ int Buffer::copy_mask(Buffer *dest, int src_x, int src_y, int x, int y, int w,
         y -= src_y;
         src_y = 0;
     }
-
-    const int source_width = dib_.bmiHeader.biWidth;
-    const int source_height = -dib_.bmiHeader.biHeight;
-
-    if (source_width < src_x) {
+    if (src_x > pixel_width()) {
         return 0;
     }
-    if (source_height < src_y) {
+    if (src_y > pixel_height()) {
         return 0;
     }
-
-    if (source_width < src_x + w) {
-        w = source_width - src_x;
+    if (src_x + w > pixel_width()) {
+        w = pixel_width() - src_x;
     }
-    if (source_height < src_y + h) {
-        h = source_height - src_y;
+    if (src_y + h > pixel_height()) {
+        h = pixel_height() - src_y;
     }
 
     RECT clipped;
@@ -4479,25 +4460,24 @@ int Buffer::copy_mask(Buffer *dest, int src_x, int src_y, int x, int y, int w,
     clipped.top = y;
     clipped.right = x + w;
     clipped.bottom = y + h;
-
     if (!IntersectRect(&clipped, &clipped, &dest->rect1_)) {
         return 0;
     }
-
     // Whatever the intersection took off the left and top edges is taken off
     // the source origin too, so the two reads stay in step.
-    const int inset_x = clipped.left - x;
-    const int inset_y = clipped.top - y;
+    src_x += clipped.left - x;
+    src_y += clipped.top - y;
+    w = clipped.right - clipped.left;
+    h = clipped.bottom - clipped.top;
 
     unsigned char *write_ptr = dest->get_data(clipped.left, clipped.top);
     if (write_ptr == 0) {
         return 3;
     }
-    unsigned char *read_ptr = get_data(src_x + inset_x, src_y + inset_y);
+    unsigned char *read_ptr = get_data(src_x, src_y);
     if (read_ptr == 0) {
         return 3;
     }
-
     const int write_stride = dest->stride_;
     const int read_stride = stride_;
     const int rows = clipped.bottom - clipped.top;
@@ -4505,53 +4485,113 @@ int Buffer::copy_mask(Buffer *dest, int src_x, int src_y, int x, int y, int w,
     BufferMaskGroupCount = columns >> 2;
     BufferMaskSourceRowGap = read_stride - columns;
     BufferMaskDestinationRowGap = write_stride - columns;
-
-    int groups = BufferMaskGroupCount;
-    int rows_left = rows;
-    const unsigned char mask = static_cast<unsigned char>(color);
-    const int remainder = columns & 3;
-    if (remainder != 0) {
-        ++groups;
-        BufferMaskGroupCount = groups;
+    // Hand-written assembly: computed `jmp edx` into an unrolled masked copy, `lea edx` of
+    // code labels, mov ah,[esi]. The remainder picks each row's entry point.
+    __asm {
+        push esi
+        push edi
+        mov esi, read_ptr
+        mov edi, write_ptr
+        mov ecx, BufferMaskGroupCount
+        mov ebx, rows
+        mov al, byte ptr color
+        mov edx, columns
+        and edx, 3
+        je entry_0
+        dec edx
+        je entry_1
+        dec edx
+        je entry_2
+        dec edx
+        je entry_3
+    entry_0:
+        lea edx, skip_0
+        jmp skip_0
+    entry_1:
+        lea edx, skip_3
+        inc ecx
+        mov BufferMaskGroupCount, ecx
+        jmp skip_3
+    entry_2:
+        lea edx, skip_2
+        inc ecx
+        mov BufferMaskGroupCount, ecx
+        jmp skip_2
+    entry_3:
+        lea edx, skip_1
+        inc ecx
+        mov BufferMaskGroupCount, ecx
+        jmp skip_1
+    row_start:
+        jmp edx
+    copy_0:
+        cmp [edi], al
+        jne next_0
+    store_0:
+        mov ah, [esi]
+        mov [edi], ah
+        inc esi
+        inc edi
+    copy_1:
+        cmp [edi], al
+        jne next_1
+    store_1:
+        mov ah, [esi]
+        mov [edi], ah
+        inc esi
+        inc edi
+        cmp [edi], al
+        jne next_2
+    store_2:
+        mov ah, [esi]
+        mov [edi], ah
+        inc esi
+        inc edi
+        cmp [edi], al
+        jne next_3
+    store_3:
+        mov ah, [esi]
+        mov [edi], ah
+        inc esi
+        inc edi
+        dec ecx
+        jne copy_0
+        jmp row_end
+    skip_0:
+        cmp [edi], al
+        je store_0
+    next_0:
+        inc esi
+        inc edi
+    skip_1:
+        cmp [edi], al
+        je store_1
+    next_1:
+        inc esi
+        inc edi
+    skip_2:
+        cmp [edi], al
+        je store_2
+    next_2:
+        inc esi
+        inc edi
+    skip_3:
+        cmp [edi], al
+        je store_3
+    next_3:
+        inc esi
+        inc edi
+        dec ecx
+        jne skip_0
+    row_end:
+        mov ecx, BufferMaskGroupCount
+        add esi, BufferMaskSourceRowGap
+        add edi, BufferMaskDestinationRowGap
+        dec ebx
+        jne row_start
+        pop edi
+        pop esi
     }
-
-    // IntersectRect admitted positive extents. The remainder selects the
-    // first pixel of each four-pixel group, including every later row.
-    do {
-        int groups_left = groups;
-        switch (remainder) {
-        case 0:
-            do {
-                if (*write_ptr == mask) {
-                    *write_ptr = *read_ptr;
-                }
-                ++read_ptr;
-                ++write_ptr;
-        case 3:
-                if (*write_ptr == mask) {
-                    *write_ptr = *read_ptr;
-                }
-                ++read_ptr;
-                ++write_ptr;
-        case 2:
-                if (*write_ptr == mask) {
-                    *write_ptr = *read_ptr;
-                }
-                ++read_ptr;
-                ++write_ptr;
-        case 1:
-                if (*write_ptr == mask) {
-                    *write_ptr = *read_ptr;
-                }
-                ++read_ptr;
-                ++write_ptr;
-            } while (--groups_left != 0);
-        }
-        groups = BufferMaskGroupCount;
-        read_ptr += BufferMaskSourceRowGap;
-        write_ptr += BufferMaskDestinationRowGap;
-    } while (--rows_left != 0);
-
     free_data(1);
     dest->free_data(1);
     return 0;
@@ -5119,21 +5159,29 @@ void Buffer::dotted_hline(int x1, int x2, int y, int color) {
     if (y >= -dib_.bmiHeader.biHeight) {
         return;
     }
-    if (acquire_pixels() == 0) {
-        return;
-    }
     // EVERY OTHER BYTE, left to right: the run length is halved and the
     // destination pointer steps by two. This is what makes it dotted rather
     // than solid - `hline` memsets the whole run.
-    char *dest = stride_ * y + x1 + static_cast<char *>(locked_bits_);
+    char *dest = acquire_pixels() != 0
+        ? stride_ * y + x1 + static_cast<char *>(locked_bits_) : 0;
     if (dest == nullptr) {
         return;
     }
-    unsigned int count = (static_cast<unsigned int>(x2 - x1) + 1) >> 1;
-    do {
-        *dest = static_cast<char>(color);
-        dest += 2;
-    } while (--count != 0);
+    // Hand-written assembly: explicit edi save, mov ah/[edi],ah and `loop` over every other byte.
+    __asm {
+        push edi
+        mov ecx, x2
+        sub ecx, x1
+        inc ecx
+        mov ah, byte ptr color
+        mov edi, dest
+        shr ecx, 1
+    dot_fill:
+        mov [edi], ah
+        add edi, 2
+        loop dot_fill
+        pop edi
+    }
     free_data(1);
 }
 
@@ -5183,18 +5231,29 @@ void Buffer::dotted_vline(int x, int y1, int y2, int color) {
     if (y1 >= -dib_.bmiHeader.biHeight) {
         return;
     }
-    if (acquire_pixels() == 0) {
-        return;
-    }
-    char *dest = stride_ * y1 + x + static_cast<char *>(locked_bits_);
+    char *dest = acquire_pixels() != 0
+        ? stride_ * y1 + x + static_cast<char *>(locked_bits_) : 0;
     if (dest == nullptr) {
         return;
     }
-    unsigned int count = (static_cast<unsigned int>(y2 - y1) + 1) >> 1;
-    do {
-        *dest = static_cast<char>(color);
-        dest += stride_ * 2;
-    } while (--count != 0);
+    const int pitch = static_cast<int>(stride_);
+    // Hand-written assembly: explicit edi save, mov ah/[edi],ah and `loop` over every other row.
+    __asm {
+        push edi
+        mov ecx, y2
+        sub ecx, y1
+        inc ecx
+        mov ah, byte ptr color
+        mov ebx, pitch
+        mov edi, dest
+        shr ecx, 1
+        shl ebx, 1
+    dot_fill:
+        mov [edi], ah
+        add edi, ebx
+        loop dot_fill
+        pop edi
+    }
     free_data(1);
 }
 
@@ -7000,12 +7059,14 @@ tail_exit:
 
 
 int Buffer::change_color(int a1, int a2) {
-    RECT rect;
-    rect.right = dib_.bmiHeader.biWidth;
-    rect.bottom = -dib_.bmiHeader.biHeight;
+    const int width = dib_.bmiHeader.biWidth;
+    const int height = -dib_.bmiHeader.biHeight;
     if (dib_bits_ == nullptr && surface_ == nullptr) {
         return 7;
     }
+    RECT rect;
+    rect.bottom = height;
+    rect.right = width;
     rect.left = 0;
     rect.top = 0;
     if (!IntersectRect(&rect, &rect1_, &rect)) {
@@ -7015,76 +7076,42 @@ int Buffer::change_color(int a1, int a2) {
         return 7;
     }
 
-    char *pixel_base;
-    IDirectDrawSurface2 *const surface = surface_;
-    if (!surface) {
-        char *const storage = static_cast<char *>(dib_bits_);
-        locked_bits_ = storage;
-        if (!storage) {
-            return 7;
-        }
-        surface_lock_count_ = static_cast<int32_t>(static_cast<uint32_t>(surface_lock_count_) + 1u);
-        pixel_base = storage;
-    } else {
-        LPVOID const existing = locked_bits_;
-        if (existing != nullptr) {
-            surface_lock_count_ = static_cast<int32_t>(static_cast<uint32_t>(surface_lock_count_) + 1u);
-            pixel_base = static_cast<char *>(existing);
-        } else {
-            DDSURFACEDESC descriptor;
-            descriptor.dwSize = 0x6C;
-            if (surface->Lock(nullptr, &descriptor, 1, nullptr) != 0) {
-                return 7;
-            }
-            surface_lock_count_ = static_cast<int32_t>(static_cast<uint32_t>(surface_lock_count_) + 1u);
-            uint32_t pitch = static_cast<uint32_t>(descriptor.lPitch);
-            char *const data = static_cast<char *>(descriptor.lpSurface);
-            stride_ = pitch;
-            locked_bits_ = data;
-            pixel_base = data;
-        }
+    char *dest = acquire_pixels() != 0
+        ? static_cast<int32_t>(stride_) * rect.top + static_cast<char *>(locked_bits_) + rect.left : 0;
+    if (dest == 0) {
+        return 7;
     }
-
-    if (pixel_base != nullptr) {
-        char *dest = pixel_base + static_cast<int32_t>(stride_) * rect.top + rect.left;
-        if (dest != 0) {
-            int32_t row_width = rect.right - rect.left;
-            int32_t row_count = rect.bottom - rect.top;
-            int32_t stride_remainder = static_cast<int32_t>(stride_) - row_width;
-            char *p = dest;
-            int32_t y = row_count;
-            do {
-                int32_t x = row_width;
-                do {
-                    if (*p == static_cast<char>(a1)) {
-                        *p = static_cast<char>(a2);
-                    }
-                    ++p;
-                } while (--x != 0);
-                p += stride_remainder;
-            } while (--y != 0);
-
-            IDirectDrawSurface2 *const surface2 = surface_;
-            const int32_t remaining = static_cast<int32_t>(
-                static_cast<uint32_t>(surface_lock_count_) - 1u);
-            surface_lock_count_ = remaining;
-            if (!surface2) {
-                if (remaining <= 0) {
-                    locked_bits_ = nullptr;
-                    surface_lock_count_ = 0;
-                }
-                return 0;
-            }
-            LPVOID const data2 = locked_bits_;
-            if (data2 != nullptr && remaining <= 0) {
-                surface2->Unlock(data2);
-                locked_bits_ = nullptr;
-                surface_lock_count_ = 0;
-            }
-            return 0;
-        }
+    int32_t row_width = rect.right - rect.left;
+    int32_t row_count = rect.bottom - rect.top;
+    int32_t stride_remainder = static_cast<int32_t>(stride_) - row_width;
+    // Hand-written assembly: explicit edi/esi saves, mov ah/al color pair, nested dec/jne loops.
+    __asm {
+        push edi
+        push esi
+        mov ah, byte ptr a1
+        mov al, byte ptr a2
+        mov edi, dest
+        mov ebx, row_width
+        mov ecx, row_count
+        mov edx, stride_remainder
+    next_row:
+        mov esi, ebx
+    next_pixel:
+        cmp [edi], ah
+        jne keep_pixel
+        mov [edi], al
+    keep_pixel:
+        inc edi
+        dec esi
+        jne next_pixel
+        add edi, edx
+        dec ecx
+        jne next_row
+        pop esi
+        pop edi
     }
-    return 7;
+    free_data(1);
+    return 0;
 }
 
 // ORIGINAL: 0x005E2070 ?change_color@Buffer@@QAEHHHHHHH@Z 0x005E2070-0x005E220D
@@ -7109,99 +7136,52 @@ int Buffer::change_color(int a1, int a2, int a3, int a4, int a5, int a6) {
     rect.top = a2;
     rect.right = a1 + a3;
     rect.bottom = a2 + a4;
-
-    RECT clip = rect1_;
-    if (!(IntersectRect)(&rect, &clip, &rect)) {
-        return 0;
-    }
-
-    if (rect.left >= dib_.bmiHeader.biWidth || rect.top >= -dib_.bmiHeader.biHeight) {
-        return 7;
-    }
-
-    DDSURFACEDESC descBuf;
-
-    if (surface_ != 0) {
-        if (locked_bits_ != 0) {
-            surface_lock_count_++;
-        } else {
-            descBuf.dwSize = 0x6c;
-
-            long hr = surface_->Lock(nullptr, &descBuf, 1, nullptr);
-            if (hr != 0) {
+    if (IntersectRect(&rect, &rect1_, &rect)) {
+        const int top = rect.top;
+        const int left = rect.left;
+        if (rect.left < dib_.bmiHeader.biWidth && rect.top < -dib_.bmiHeader.biHeight) {
+            char *pixel = acquire_pixels() != 0
+                ? stride_ * top + static_cast<char *>(locked_bits_) + left : 0;
+            if (pixel == 0) {
                 return 7;
             }
-
-            stride_ = static_cast<uint32_t>(descBuf.lPitch);
-            surface_lock_count_++;
-            locked_bits_ = descBuf.lpSurface;
-        }
-    } else {
-        LPVOID const bits = dib_bits_;
-        locked_bits_ = bits;
-        if (bits == nullptr) {
-            return 7;
-        }
-        surface_lock_count_++;
-    }
-
-    if (locked_bits_ == nullptr) {
-        return 7;
-    }
-
-    int clippedTop = rect.top;
-    char *pixelPtr = stride_ * clippedTop + rect.left + static_cast<char *>(locked_bits_);
-
-    if (pixelPtr != 0) {
-        int width = rect.right - rect.left;
-        int height = rect.bottom - clippedTop;
-        int rowSkip = static_cast<int>(stride_) - width;
-
-        char searchColor = static_cast<char>(a5);
-        char replaceColor = static_cast<char>(a6);
-
-        char *p = pixelPtr;
-        int rowsLeft = height;
-        do {
-            int colsLeft = width;
-            do {
-                if (*p == searchColor) {
-                    *p = replaceColor;
+            {
+                const int width = rect.right - rect.left;
+                const int height = rect.bottom - rect.top;
+                const int remainder = static_cast<int>(stride_) - width;
+                // Hand-written assembly: explicit edi/esi saves, mov ah/al color pair, nested dec/jne loops.
+                __asm {
+                    push edi
+                    push esi
+                    mov ah, byte ptr a5
+                    mov al, byte ptr a6
+                    mov edi, pixel
+                    mov ebx, width
+                    mov ecx, height
+                    mov edx, remainder
+                next_row:
+                    mov esi, ebx
+                next_pixel:
+                    cmp [edi], ah
+                    jne keep_pixel
+                    mov [edi], al
+                keep_pixel:
+                    inc edi
+                    dec esi
+                    jne next_pixel
+                    add edi, edx
+                    dec ecx
+                    jne next_row
+                    pop esi
+                    pop edi
                 }
-                p++;
-                colsLeft--;
-            } while (colsLeft != 0);
-            p += rowSkip;
-            rowsLeft--;
-        } while (rowsLeft != 0);
-
-        if (surface_ == 0) {
-            int count = surface_lock_count_ - 1;
-            surface_lock_count_ = count;
-            if (count > 0) {
+                free_data(1);
                 return 0;
             }
-            locked_bits_ = nullptr;
-            surface_lock_count_ = 0;
-            return 0;
         }
-
-        int count = surface_lock_count_ - 1;
-        surface_lock_count_ = count;
-        if (locked_bits_ == nullptr) {
-            return 0;
-        }
-        if (count > 0) {
-            return 0;
-        }
-
-        surface_->Unlock(locked_bits_);
-        locked_bits_ = nullptr;
-        surface_lock_count_ = 0;
-        return 0;
+        return 7;
     }
-
-    return 7;
+    return 0;
 }
 
 // Remapping snapshots its row gap before acquisition, but computes the
@@ -7958,49 +7938,65 @@ int Buffer::change_color(RECT *area, int find_color, int replace_color) {
     if (area == 0) {
         return 3;
     }
+    const int area_top = area->top;
+    const int area_height = area->bottom - area_top;
+    const int area_left = area->left;
+    const int area_width = area->right - area_left;
     if (dib_bits_ == 0 && surface_ == 0) {
         return 7;
     }
 
     RECT clipped;
-    clipped.left = area->left;
-    clipped.top = area->top;
-    clipped.right = clipped.left + (area->right - area->left);
-    clipped.bottom = clipped.top + (area->bottom - area->top);
-    if (!IntersectRect(&clipped, &rect1_, &clipped)) {
-        return 0;
-    }
-    if (!(clipped.left < dib_.bmiHeader.biWidth
-          && clipped.top < -dib_.bmiHeader.biHeight)) {
-        return 7;
-    }
-    if (acquire_pixels() == 0) {
-        return 7;
-    }
-
-    uint8_t *pixel = static_cast<uint8_t *>(locked_bits_)
-        + stride_ * clipped.top + clipped.left;
-    if (pixel == 0) {
-        return 7;
-    }
-    const int width = clipped.right - clipped.left;
-    const int height = clipped.bottom - clipped.top;
-    const int remainder = static_cast<int>(stride_) - width;
-    const uint8_t find = static_cast<uint8_t>(find_color);
-    const uint8_t replace = static_cast<uint8_t>(replace_color);
-    int rows = height;
-    do {
-        int columns = width;
-        do {
-            if (*pixel == find) {
-                *pixel = replace;
+    clipped.left = area_left;
+    clipped.top = area_top;
+    clipped.right = area_left + area_width;
+    clipped.bottom = area_top + area_height;
+    if (IntersectRect(&clipped, &rect1_, &clipped)) {
+        const int left = clipped.left;
+        const int top = clipped.top;
+        if (left < dib_.bmiHeader.biWidth && top < -dib_.bmiHeader.biHeight) {
+            uint8_t *pixel = acquire_pixels() != 0
+                ? stride_ * top + static_cast<uint8_t *>(locked_bits_) + left : 0;
+            if (pixel == 0) {
+                return 7;
             }
-            ++pixel;
-        } while (--columns != 0);
-        pixel += remainder;
-    } while (--rows != 0);
+            {
+                const int width = clipped.right - clipped.left;
+                const int height = clipped.bottom - clipped.top;
+                const int remainder = static_cast<int>(stride_) - width;
+                // Hand-written assembly: explicit edi/esi saves, mov ah/al color pair, nested dec/jne loops.
+            __asm {
+                push edi
+                push esi
+                mov ah, byte ptr find_color
+                mov al, byte ptr replace_color
+                mov edi, pixel
+                mov ebx, width
+                mov ecx, height
+                mov edx, remainder
+            next_row:
+                mov esi, ebx
+            next_pixel:
+                cmp [edi], ah
+                jne keep_pixel
+                mov [edi], al
+            keep_pixel:
+                inc edi
+                dec esi
+                jne next_pixel
+                add edi, edx
+                dec ecx
+                jne next_row
+                pop esi
+                pop edi
+            }
 
-    free_data(1);
+                free_data(1);
+                return 0;
+            }
+        }
+        return 7;
+    }
     return 0;
 }
 
@@ -8245,17 +8241,17 @@ void Buffer::hline(int x1, int x2, int y, int first_color, int second_color,
     if (first_color == -1 && second_color == -1) {
         return;
     }
-    if (x2 < x1) {
-        int swap = x1;
-        x1 = x2;
-        x2 = swap;
-        swap = first_color;
-        first_color = second_color;
-        second_color = swap;
-        phase = (pattern_off - phase) + pattern_on;
-        swap = pattern_on;
-        pattern_on = pattern_off;
-        pattern_off = swap;
+    if (x1 > x2) {
+        x1 ^= x2;
+        x2 ^= x1;
+        x1 ^= x2;
+        pattern_on ^= pattern_off;
+        pattern_off ^= pattern_on;
+        pattern_on ^= pattern_off;
+        first_color ^= second_color;
+        second_color ^= first_color;
+        first_color ^= second_color;
+        phase = pattern_on - phase + pattern_off;
     }
     if (x1 >= rect1_.right) {
         return;
@@ -8275,76 +8271,118 @@ void Buffer::hline(int x1, int x2, int y, int first_color, int second_color,
     if (y >= -dib_.bmiHeader.biHeight) {
         return;
     }
-    if (acquire_pixels() == 0) {
-        return;
-    }
-
-    uint8_t *bits = static_cast<uint8_t *>(locked_bits_) + stride_ * y + x1;
+    uint8_t *bits = acquire_pixels() != 0
+        ? stride_ * y + static_cast<uint8_t *>(locked_bits_) + x1 : 0;
     if (bits == nullptr) {
         return;
     }
-
-    int phase_value = phase % (pattern_on + pattern_off);
-    if (phase_value < pattern_on) {
-        phase_value = phase_value - pattern_on;
+    const int remainder = phase % (pattern_on + pattern_off);
+    if (remainder >= pattern_on) {
+        phase = pattern_on - remainder + pattern_off;
     } else {
-        phase_value = (pattern_on - phase_value) + pattern_off;
+        phase = remainder - pattern_on;
     }
-    const int negated_on = -pattern_on;
-    int count = (x2 - x1) + 1;
-
+    pattern_on = -pattern_on;
+    // Hand-written assembly: `and edx,edx`/js phase test, mov ah/al colour pair; each
+    // colour case is its own block with its own register-save order.
     if (first_color == -1) {
-        // Only the second colour paints; the pattern marks the gaps.
-        do {
-            if (phase_value < 0) {
-                ++phase_value;
-                if (phase_value == 0) {
-                    phase_value = pattern_off;
-                }
-            } else {
-                *bits = static_cast<uint8_t>(second_color);
-                --phase_value;
-                if (phase_value == 0) {
-                    phase_value = negated_on;
-                }
-            }
-            ++bits;
-        } while (--count != 0);
+        __asm {
+            push edi
+            push esi
+            mov ecx, x2
+            sub ecx, x1
+            inc ecx
+            mov ah, byte ptr first_color
+            mov al, byte ptr second_color
+            mov ebx, pattern_on
+            mov esi, pattern_off
+            mov edi, bits
+            mov edx, phase
+        second_only_next:
+            and edx, edx
+            js second_only_gap
+            mov [edi], al
+            dec edx
+            jne second_only_step
+            mov edx, ebx
+            jmp second_only_step
+        second_only_gap:
+            inc edx
+            jne second_only_step
+            mov edx, esi
+        second_only_step:
+            inc edi
+            dec ecx
+            jne second_only_next
+            pop esi
+            pop edi
+        }
     } else if (second_color == -1) {
-        do {
-            if (phase_value < 0) {
-                *bits = static_cast<uint8_t>(first_color);
-                ++phase_value;
-                if (phase_value == 0) {
-                    phase_value = pattern_off;
-                }
-            } else {
-                --phase_value;
-                if (phase_value == 0) {
-                    phase_value = negated_on;
-                }
-            }
-            ++bits;
-        } while (--count != 0);
+        __asm {
+            push esi
+            push edi
+            mov ecx, x2
+            sub ecx, x1
+            inc ecx
+            mov ah, byte ptr first_color
+            mov al, byte ptr second_color
+            mov ebx, pattern_on
+            mov esi, pattern_off
+            mov edi, bits
+            mov edx, phase
+        first_only_next:
+            and edx, edx
+            js first_only_first
+            dec edx
+            jne first_only_step
+            mov edx, ebx
+            jmp first_only_step
+        first_only_first:
+            mov [edi], ah
+            inc edx
+            jne first_only_step
+            mov edx, esi
+        first_only_step:
+            inc edi
+            dec ecx
+            jne first_only_next
+            pop edi
+            pop esi
+        }
     } else {
-        do {
-            if (phase_value < 0) {
-                *bits = static_cast<uint8_t>(first_color);
-                ++phase_value;
-                if (phase_value == 0) {
-                    phase_value = pattern_off;
-                }
-            } else {
-                *bits = static_cast<uint8_t>(second_color);
-                --phase_value;
-                if (phase_value == 0) {
-                    phase_value = negated_on;
-                }
-            }
-            ++bits;
-        } while (--count != 0);
+        __asm {
+            push esi
+            push edi
+            mov ecx, x2
+            sub ecx, x1
+            inc ecx
+            mov ah, byte ptr first_color
+            mov al, byte ptr second_color
+            mov ebx, pattern_on
+            mov esi, pattern_off
+            mov edi, bits
+            mov edx, phase
+        both_next:
+            and edx, edx
+            js both_first
+            mov [edi], al
+            dec edx
+            jne both_step
+            mov edx, ebx
+            jmp both_step
+        both_first:
+            mov [edi], ah
+            inc edx
+            jne both_step
+            mov edx, esi
+        both_step:
+            inc edi
+            dec ecx
+            jne both_next
+            pop edi
+            pop esi
+        }
     }
-
     free_data(1);
 }
 
@@ -8528,22 +8566,22 @@ void Buffer::vline(int x, int y1, int y2, int first_color, int second_color,
     if (first_color == -1 && second_color == -1) {
         return;
     }
-    if (y2 < y1) {
-        int swap = y1;
-        y1 = y2;
-        y2 = swap;
-        swap = first_color;
-        first_color = second_color;
-        second_color = swap;
-        phase = (pattern_off - phase) + pattern_on;
-        swap = pattern_on;
-        pattern_on = pattern_off;
-        pattern_off = swap;
+    if (y1 > y2) {
+        y1 ^= y2;
+        y2 ^= y1;
+        y1 ^= y2;
+        pattern_on ^= pattern_off;
+        pattern_off ^= pattern_on;
+        pattern_on ^= pattern_off;
+        first_color ^= second_color;
+        second_color ^= first_color;
+        first_color ^= second_color;
+        phase = pattern_on - phase + pattern_off;
     }
     if (y1 >= rect1_.bottom) {
         return;
     }
-    if (rect1_.top > y2) {
+    if (y2 < rect1_.top) {
         return;
     }
     if (y1 < rect1_.top) {
@@ -8558,75 +8596,116 @@ void Buffer::vline(int x, int y1, int y2, int first_color, int second_color,
     if (y1 >= -dib_.bmiHeader.biHeight) {
         return;
     }
-    if (acquire_pixels() == 0) {
-        return;
-    }
-
-    uint8_t *bits = static_cast<uint8_t *>(locked_bits_) + stride_ * y1 + x;
+    uint8_t *bits = acquire_pixels() != 0
+        ? stride_ * y1 + static_cast<uint8_t *>(locked_bits_) + x : 0;
     if (bits == nullptr) {
         return;
     }
-
-    int phase_value = phase % (pattern_on + pattern_off);
-    if (phase_value < pattern_on) {
-        phase_value = phase_value - pattern_on;
+    const int pitch = static_cast<int>(stride_);
+    const int remainder = phase % (pattern_on + pattern_off);
+    if (remainder >= pattern_on) {
+        phase = pattern_on - remainder + pattern_off;
     } else {
-        phase_value = (pattern_on - phase_value) + pattern_off;
+        phase = remainder - pattern_on;
     }
-    const int negated_on = -pattern_on;
-    int count = (y2 - y1) + 1;
-
+    pattern_on = -pattern_on;
+    // Hand-written assembly: `and edx,edx`/js phase test, mov ah/al colour pair; each
+    // colour case is its own block with its own register-save order.
     if (first_color == -1) {
-        do {
-            if (phase_value < 0) {
-                ++phase_value;
-                if (phase_value == 0) {
-                    phase_value = pattern_off;
-                }
-            } else {
-                *bits = static_cast<uint8_t>(second_color);
-                --phase_value;
-                if (phase_value == 0) {
-                    phase_value = negated_on;
-                }
-            }
-            bits += stride_;
-        } while (--count != 0);
+        __asm {
+            push esi
+            push edi
+            mov ecx, y2
+            sub ecx, y1
+            inc ecx
+            mov ah, byte ptr first_color
+            mov al, byte ptr second_color
+            mov ebx, pitch
+            mov edi, bits
+            mov edx, phase
+        second_only_next:
+            and edx, edx
+            js second_only_gap
+            mov [edi], al
+            dec edx
+            jne second_only_step
+            mov edx, pattern_on
+            jmp second_only_step
+        second_only_gap:
+            inc edx
+            jne second_only_step
+            mov edx, pattern_off
+        second_only_step:
+            add edi, ebx
+            dec ecx
+            jne second_only_next
+            pop edi
+            pop esi
+        }
     } else if (second_color == -1) {
-        do {
-            if (phase_value < 0) {
-                *bits = static_cast<uint8_t>(first_color);
-                ++phase_value;
-                if (phase_value == 0) {
-                    phase_value = pattern_off;
-                }
-            } else {
-                --phase_value;
-                if (phase_value == 0) {
-                    phase_value = negated_on;
-                }
-            }
-            bits += stride_;
-        } while (--count != 0);
+        __asm {
+            push edi
+            push esi
+            mov ecx, y2
+            sub ecx, y1
+            inc ecx
+            mov ah, byte ptr first_color
+            mov al, byte ptr second_color
+            mov ebx, pitch
+            mov edi, bits
+            mov edx, phase
+        first_only_next:
+            and edx, edx
+            js first_only_first
+            dec edx
+            jne first_only_step
+            mov edx, pattern_on
+            jmp first_only_step
+        first_only_first:
+            mov [edi], ah
+            inc edx
+            jne first_only_step
+            mov edx, pattern_off
+        first_only_step:
+            add edi, ebx
+            dec ecx
+            jne first_only_next
+            pop esi
+            pop edi
+        }
     } else {
-        do {
-            if (phase_value < 0) {
-                *bits = static_cast<uint8_t>(first_color);
-                ++phase_value;
-                if (phase_value == 0) {
-                    phase_value = pattern_off;
-                }
-            } else {
-                *bits = static_cast<uint8_t>(second_color);
-                --phase_value;
-                if (phase_value == 0) {
-                    phase_value = negated_on;
-                }
-            }
-            bits += stride_;
-        } while (--count != 0);
+        __asm {
+            push edi
+            push esi
+            mov ecx, y2
+            sub ecx, y1
+            inc ecx
+            mov ah, byte ptr first_color
+            mov al, byte ptr second_color
+            mov ebx, pitch
+            mov edi, bits
+            mov edx, phase
+        both_next:
+            and edx, edx
+            js both_first
+            mov [edi], al
+            dec edx
+            jne both_step
+            mov edx, pattern_on
+            jmp both_step
+        both_first:
+            mov [edi], ah
+            inc edx
+            jne both_step
+            mov edx, pattern_off
+        both_step:
+            add edi, ebx
+            dec ecx
+            jne both_next
+            pop esi
+            pop edi
+        }
     }
-
     free_data(1);
 }
 
@@ -9103,19 +9182,34 @@ int Buffer::write_vertical(Font *font, char *text, RECT *area) {
 // Best reached: MISMATCH, 59/60 bytes, one edit (an inserted `jmp` from
 // the rotation), mnemonic similarity 0.833.
 
+// Hand-written assembly: `and edx,edx` test, dec edx/jne scan, result stored back to the parameter.
 char *__cdecl get_special(char *text, int *remaining) {
-    int count = *remaining;
-    if (count != 0) {
-        char *cursor = text;
-        do {
-            char c = *cursor;
-            if (c == '{' || c == '}' || c == '[' || c == ']' || c == '$') {
-                break;
-            }
-            ++cursor;
-        } while (--count);
-        *remaining = count;
-        text = cursor;
+    __asm {
+        mov eax, text
+        mov ebx, remaining
+        mov edx, [ebx]
+        and edx, edx
+        je scan_done
+    scan_next:
+        mov cl, [eax]
+        cmp cl, 0x7b
+        je scan_found
+        cmp cl, 0x7d
+        je scan_found
+        cmp cl, 0x5b
+        je scan_found
+        cmp cl, 0x5d
+        je scan_found
+        cmp cl, 0x24
+        je scan_found
+        inc eax
+        dec edx
+        jne scan_next
+    scan_found:
+        mov [ebx], edx
+        mov text, eax
+        jmp scan_done
+    scan_done:
     }
     return text;
 }
@@ -9202,18 +9296,36 @@ char *__cdecl get_special(char *text, int *remaining) {
 // (mnemonic_similarity 0.8438 vs 0.8814 below). This is the better of
 // the two: same loop shape as the original, just without the spill.
 
+// Hand-written assembly: `and edx,edx` test, dec edx/jne scan, result stored back to the parameter.
 char *__cdecl get_special_link(char *text, int *remaining) {
-    int count = *remaining;
-    if (count != 0) {
-        do {
-            char c = *text;
-            if (c == '{' || c == '}' || c == '[' || c == ']' ||
-                c == '$' || c == '=') {
-                break;
-            }
-            ++text;
-        } while (--count);
-        *remaining = count;
+    __asm {
+        mov eax, text
+        mov ebx, remaining
+        mov edx, [ebx]
+        and edx, edx
+        je scan_done
+    scan_next:
+        mov cl, [eax]
+        cmp cl, 0x7b
+        je scan_found
+        cmp cl, 0x7d
+        je scan_found
+        cmp cl, 0x5b
+        je scan_found
+        cmp cl, 0x5d
+        je scan_found
+        cmp cl, 0x24
+        je scan_found
+        cmp cl, 0x3d
+        je scan_found
+        inc eax
+        dec edx
+        jne scan_next
+    scan_found:
+        mov [ebx], edx
+        mov text, eax
+        jmp scan_done
+    scan_done:
     }
     return text;
 }

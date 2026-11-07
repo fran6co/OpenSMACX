@@ -1097,14 +1097,21 @@ Purpose: Count the number of unsigned bits set. Replaced the original code with 
 Return Value: the number of set bits
 Status: Complete
 */
+// Hand-written assembly: shr/adc carry-count loop, result stored back to the parameter.
 int __cdecl bit_count(int bitfield) {
-    unsigned int bits = bitfield;
-    int count = 0;
-    do {
-        count += bits & 1;
-        bits >>= 1;
-    } while (bits);
-    return count;
+    __asm {
+        xor eax, eax
+        mov ebx, bitfield
+    count_loop:
+        shr ebx, 1
+        je count_done
+        adc eax, 0
+        jmp count_loop
+    count_done:
+        adc eax, 0
+        mov bitfield, eax
+    }
+    return bitfield;
 }
 
 /*
@@ -1215,12 +1222,18 @@ Status: Complete
 // followed by an int conversion does not express that quotient-overflow trap;
 // the out-of-range quotient domain remains an unresolved original-fidelity
 // obligation. Do not synthesize a fault path here.
+// Hand-written assembly: EDX:EAX built by sar/shl without cdq, then idiv; result via local.
 int __cdecl fixed_div(int numerator, int denominator) {
-    // EDX:EAX contains the signed numerator scaled by 65536. Multiplication
-    // preserves that dividend for negative gradients without C++'s undefined
-    // left shift of a negative value. As in the original IDIV, the divisor
-    // must be nonzero and the quotient must fit the signed 32-bit result.
-    return (int)(((int64_t)numerator * 65536) / denominator);
+    int result;
+    __asm {
+        mov edx, numerator
+        mov eax, edx
+        sar edx, 0x10
+        shl eax, 0x10
+        idiv denominator
+        mov result, eax
+    }
+    return result;
 }
 
 /*
@@ -1281,23 +1294,33 @@ Purpose: Reverse string search for the last occurrence of the specified characte
 Return Value: Position of character or NULL if not found.
 Status: Complete
 */
+// Hand-written assembly: `and reg,reg` null tests, dec/jne scan, result via local.
 const char *__cdecl memrchr(LPCSTR start, LPCSTR end, char value) {
-    if (!start || !end) {
-        return 0;
+    const char *result;
+    __asm {
+        mov ebx, start
+        and ebx, ebx
+        je not_found
+        mov ecx, end
+        and ecx, ecx
+        je not_found
+        mov eax, ecx
+        sub ecx, ebx
+        and ecx, ecx
+        je not_found
+        mov bl, value
+    scan:
+        cmp byte ptr [eax], bl
+        je found
+        dec eax
+        dec ecx
+        jne scan
+    not_found:
+        xor eax, eax
+    found:
+        mov result, eax
     }
-    const char *p = end;
-    int count = (int)(end - start);
-    if (count == 0) {
-        return 0;
-    }
-    do {
-        if (*p == value) {
-            return p;
-        }
-        p--;
-        count--;
-    } while (count != 0);
-    return 0;
+    return result;
 }
 
 /*
@@ -1345,12 +1368,22 @@ Purpose: Calculate a basic XOR checksum for the data buffer.
 Return Value: the XOR checksum of the buffer, seeded
 Status: Complete
 */
-uint8_t __cdecl checksum(char *buffer, int size, uint8_t seed) {
-    uint32_t remaining = static_cast<uint32_t>(size);
-    while (remaining != 0) {
-        seed ^= *buffer;
-        ++buffer;
-        --remaining;
+// Hand-written assembly: lodsb/xor ah,al/loop XOR scan with explicit esi save.
+uint8_t __cdecl checksum(char *buffer, int buffer_size, uint8_t seed) {
+    if (!buffer_size) {
+        return seed;
+    }
+    __asm {
+        push esi
+        mov esi, buffer
+        mov ecx, buffer_size
+        mov ah, seed
+    sum_loop:
+        lodsb
+        xor ah, al
+        loop sum_loop
+        mov seed, ah
+        pop esi
     }
     return seed;
 }
@@ -1376,20 +1409,19 @@ Purpose: Calculate a basic XOR checksum for a password string.
 Return Value: Checksum
 Status: Complete
 */
+// The image calls strcpy out of line here.
+#pragma function(strcpy)
 uint32_t __cdecl checksum_password(LPCSTR password) {
     if (!strlen(password)) {
         return 0;
     }
     char buffer[256];
-    strcpy_s(buffer, 256, password);
+    strcpy(buffer, password);
     CharUpper(buffer); // incorrect results for Turkish/Azerbaijani 'i'
-    uint8_t chksum = 0;
-    size_t len = strlen(buffer);
-    if (len) {
-        chksum = checksum((LPSTR)&buffer, len, 0);
-    }
+    uint8_t chksum = checksum(buffer, strlen(buffer), 0);
     return chksum + 1;
 }
+#pragma intrinsic(strcpy)
 
 
 /*
@@ -1687,18 +1719,41 @@ int __cdecl trig_init() {
 // ORIGINAL: 0x005D4240 sub_5d4240 0x005D4240-0x005D427C
 // RECOVERY_BINDING: v1 {"evidence": ["pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf:0x005D4240-0x005D427C: complete60-byte listing performs cli, selects DAC index0, writes256 RGB triplets from four-byte-spaced input, then sti", "build/recovery/palette-intrinsic-control-oct6.cpp: VC6 pragma intrinsic control has no unresolved helpers and emits physical cli/out/sti; it does not execute privileged I/O", "src/general.h: existing free __cdecl sub_5d4240(unsigned char*) declaration; source preserves that ABI rather than fabricating a Palette receiver or caller", "src/general.cpp: existing DOS/conio includes were specifically retained for this hardware routine"], "reason": "Own the original VGA DAC operation in the existing general hardware-helper TU. Preserve index selection, 256 four-byte-stride RGB conversions, output order and interrupt enable; retain the original full span/history while explicitly leaving pushad/popad volatile-register restoration as a native exactness obligation. No hardware port access is run by the host control."}
 // symbol    ?sub_5d4240@@YAXPAE@Z
-void __cdecl sub_5d4240(unsigned char *palette_rgb) {
-    _disable();
-    _outp(0x3c8, 0);
-    int n = 0x100;
-    do {
-        _outp(0x3c9, palette_rgb[0] >> 2);
-        _outp(0x3c9, palette_rgb[1] >> 2);
-        _outp(0x3c9, palette_rgb[2] >> 2);
-        palette_rgb += 4;
-        n--;
-    } while (n != 0);
-    _enable();
+// Hand-written assembly routine: pushad/cli/out to the VGA DAC/sti/popad/leave.
+__declspec(naked) void __cdecl sub_5d4240(unsigned char *palette_rgb) {
+    __asm {
+        push ebp
+        mov ebp, esp
+        push esi
+        push edi
+        pushad
+        cli
+        mov ebx, [ebp + 8]
+        xor eax, eax
+        mov edx, 0x3c8
+        out dx, al
+        mov edx, 0x3c9
+        mov ecx, 0x100
+    dac_loop:
+        mov al, [ebx]
+        shr al, 2
+        out dx, al
+        mov al, [ebx + 1]
+        shr al, 2
+        out dx, al
+        mov al, [ebx + 2]
+        shr al, 2
+        out dx, al
+        add ebx, 4
+        dec ecx
+        jne dac_loop
+        sti
+        popad
+        pop edi
+        pop esi
+        leave
+        ret
+    }
 }
 
 // ORIGINAL: 0x00589550 j_GraphicWin::close 0x00589550-0x00589555 FILE BYTE_EXACT
@@ -1838,17 +1893,25 @@ void __cdecl HSV_to_RGB(HSV *hsv_in, PALETTEENTRY *entry_out) {
 
 unsigned char __cdecl checksum_file(char *file_path) {
     Filemap fm;
+    unsigned char sum = 0;
     char *data = (char *)fm.open_read(file_path, 1);
     if (data == 0) {
         return 0;
     }
-    unsigned int size = GetFileSize(fm.get_handle(), 0);
-    unsigned char sum = 0;
-    do {
-        sum ^= *data;
-        --size;
-        ++data;
-    } while (size != 0);
+    unsigned int file_size = GetFileSize(fm.get_handle(), 0);
+    // Hand-written assembly: lodsb/xor ah,al/loop XOR scan with explicit esi save.
+    __asm {
+        push esi
+        mov esi, data
+        mov ecx, file_size
+        mov ah, sum
+    sum_loop:
+        lodsb
+        xor ah, al
+        loop sum_loop
+        mov sum, ah
+        pop esi
+    }
     fm.close();
     return sum;
 }

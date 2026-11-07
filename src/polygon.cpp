@@ -147,24 +147,45 @@ int __cdecl advance_flat_polygon_edge(FlatPolygonEdge *edge) {
 // ORIGINAL: 0x006265A0 ?scan_out_line_poly@@YAIHH@Z 0x006265A0-0x00626613 FILE
 // RECOVERY_BINDING: v1 {"evidence": ["6265A0..626613 loads9BC008 and uses the shared row, pitch and clip scalars. The original entry produces no consistent return value; the C++ writer is void."], "reason": "The standalone solid span writer clips two x endpoints against the shared polygon state and writes the low color byte through the acquired pixels."}
 // symbol    ?draw_solid_polygon_span@@YAXHH@Z
+// Hand-written assembly: explicit push edi/pop edi pair, one-operand imul, mov ah/[edi],ah fill.
 void __cdecl draw_solid_polygon_span(int left, int right) {
-    if (right <= PolygonClipLeft || left >= PolygonClipRight || right <= left) {
-        return;
-    }
-    if (right >= PolygonClipRight) {
-        right = PolygonClipRight;
-    }
-    if (left < PolygonClipLeft) {
-        left = PolygonClipLeft;
-    }
-    if (right > left) {
-        unsigned int count = static_cast<unsigned int>(right)
-            - static_cast<unsigned int>(left);
-        unsigned char *pixel = PolygonPixels + PolygonY.coordinate * PolygonPitch + left;
-        const unsigned char color = static_cast<unsigned char>(PolygonColor);
-        do {
-            *pixel++ = color;
-        } while (--count != 0);
+    __asm {
+        push edi
+        mov ebx, right
+        cmp ebx, PolygonClipLeft
+        jle span_done
+        mov ecx, left
+        cmp ecx, PolygonClipRight
+        jge span_done
+        sub ebx, ecx
+        jle span_done
+        mov ecx, right
+        cmp ecx, PolygonClipRight
+        jl right_clipped
+        mov ecx, PolygonClipRight
+        mov right, ecx
+    right_clipped:
+        mov edi, left
+        cmp edi, PolygonClipLeft
+        jge left_clipped
+        mov edi, PolygonClipLeft
+        mov left, edi
+    left_clipped:
+        sub ecx, edi
+        jle span_done
+        mov eax, PolygonY.coordinate
+        imul PolygonPitch
+        add eax, left
+        add eax, PolygonPixels
+        mov edi, eax
+        mov ah, byte ptr PolygonColor
+    span_fill:
+        mov [edi], ah
+        inc edi
+        dec ecx
+        jne span_fill
+    span_done:
+        pop edi
     }
 }
 
@@ -187,49 +208,73 @@ int __cdecl polygon(Buffer *buffer, Vert *vertices, int count, int color) {
         PolygonColor = color;
         PolygonVertexCount = count;
         PolygonPitch = static_cast<int>(buffer->stride_);
-        PolygonClipRight = buffer->rect1_.right - 1;
-        PolygonClipLeft = buffer->rect1_.left;
-        PolygonClipBottom.coordinate = buffer->rect1_.bottom - 1;
-        PolygonClipTop.coordinate = buffer->rect1_.top;
-        int minimum_y = 32767;
-        int maximum_y = -32765;
-        int minimum_vertex;
-        if (count > 0) {
-            for (int vertex = 0; vertex < count; ++vertex) {
-                if (vertices[vertex].y < minimum_y) {
-                    minimum_y = vertices[vertex].y;
-                    minimum_vertex = vertex;
+        // The image tests the clip rectangle's address before reading it.
+        RECT *clip = &buffer->rect1_;
+        if (clip != 0) {
+            int maximum_y = -32765;
+            int minimum_vertex;
+            PolygonClipRight = clip->right - 1;
+            PolygonClipLeft = clip->left;
+            PolygonClipBottom.coordinate = clip->bottom - 1;
+            PolygonClipTop.coordinate = clip->top;
+            int minimum_y = 32767;
+            {
+                for (int vertex = 0; vertex < count; ++vertex) {
+                    if (vertices[vertex].y < minimum_y) {
+                        minimum_y = vertices[vertex].y;
+                        minimum_vertex = vertex;
+                    }
+                    if (vertices[vertex].y > maximum_y) {
+                        maximum_y = vertices[vertex].y;
+                        PolygonBottomVertex = vertex;
+                    }
                 }
-                if (vertices[vertex].y > maximum_y) {
-                    maximum_y = vertices[vertex].y;
-                    PolygonBottomVertex = vertex;
-                }
-            }
-            if (minimum_y < maximum_y) {
-                FlatPolygonEdge backward;
-                FlatPolygonEdge forward;
-                PolygonY.coordinate = minimum_y;
-                backward.direction = -1;
-                if (setup_flat_polygon_edge(&backward, minimum_vertex)) {
-                    forward.direction = 1;
-                    if (setup_flat_polygon_edge(&forward, minimum_vertex)
-                        && PolygonY.coordinate < PolygonClipBottom.coordinate) {
-                        do {
-                            if (PolygonY.coordinate >= PolygonClipTop.coordinate) {
-                                if (backward.x < forward.x) {
-                                    draw_solid_polygon_span(backward.x, forward.x);
-                                } else {
-                                    draw_solid_polygon_span(forward.x, backward.x);
+                if (minimum_y < maximum_y) {
+                    FlatPolygonEdge backward;
+                    FlatPolygonEdge forward;
+                    PolygonY.coordinate = minimum_y;
+                    backward.direction = -1;
+                    if (setup_flat_polygon_edge(&backward, minimum_vertex)) {
+                        forward.direction = 1;
+                        if (setup_flat_polygon_edge(&forward, minimum_vertex)
+                            && PolygonY.coordinate < PolygonClipBottom.coordinate) {
+                            do {
+                                if (PolygonY.coordinate >= PolygonClipTop.coordinate) {
+                                    if (backward.x < forward.x) {
+                                        draw_solid_polygon_span(backward.x, forward.x);
+                                    } else {
+                                        draw_solid_polygon_span(forward.x, backward.x);
+                                    }
                                 }
-                            }
-                            if (!advance_flat_polygon_edge(&backward)) {
-                                break;
-                            }
-                            if (!advance_flat_polygon_edge(&forward)) {
-                                break;
-                            }
-                            ++PolygonY.coordinate;
-                        } while (PolygonY.coordinate < PolygonClipBottom.coordinate);
+                                // Edge advance is open-coded: the image tests the
+                                // raw setup result, without advance's normalization.
+                                if (--backward.remaining_rows == 0) {
+                                    if (!setup_flat_polygon_edge(&backward, backward.next_vertex)) {
+                                        break;
+                                    }
+                                } else {
+                                    backward.x += backward.x_step;
+                                    backward.error += backward.remainder;
+                                    if (backward.error > 0) {
+                                        backward.x += backward.x_direction;
+                                        backward.error -= backward.height;
+                                    }
+                                }
+                                if (--forward.remaining_rows == 0) {
+                                    if (!setup_flat_polygon_edge(&forward, forward.next_vertex)) {
+                                        break;
+                                    }
+                                } else {
+                                    forward.x += forward.x_step;
+                                    forward.error += forward.remainder;
+                                    if (forward.error > 0) {
+                                        forward.x += forward.x_direction;
+                                        forward.error -= forward.height;
+                                    }
+                                }
+                                ++PolygonY.coordinate;
+                            } while (PolygonY.coordinate < PolygonClipBottom.coordinate);
+                        }
                     }
                 }
             }
@@ -242,26 +287,49 @@ int __cdecl polygon(Buffer *buffer, Vert *vertices, int count, int color) {
 // ORIGINAL: 0x00626D90 ?scan_out_line_poly_dest@@YAIHH@Z 0x00626D90-0x00626E0B FILE
 // RECOVERY_BINDING: v1 {"evidence": ["626D90..626E0B reads9BC030 and indexes it sequentially with each destination byte. There is no meaningful return value or copied lookup table."], "reason": "The standalone destination span writer clips endpoints against the same polygon state and performs live unsigned-byte lookup-table writes."}
 // symbol    ?draw_remapped_polygon_span@@YAXHH@Z
+// Hand-written assembly: explicit push edi/pop edi pair, one-operand imul, byte remap loop.
 void __cdecl draw_remapped_polygon_span(int left, int right) {
-    if (right <= PolygonClipLeft || left >= PolygonClipRight || right <= left) {
-        return;
-    }
-    if (right >= PolygonClipRight) {
-        right = PolygonClipRight;
-    }
-    if (left < PolygonClipLeft) {
-        left = PolygonClipLeft;
-    }
-    if (right > left) {
-        unsigned int count = static_cast<unsigned int>(right)
-            - static_cast<unsigned int>(left);
-        unsigned char *pixel = PolygonPixels + PolygonY.coordinate * PolygonPitch + left;
-        unsigned char *remap = PolygonRemap;
-        do {
-            // Read the table live, including when it aliases the destination.
-            *pixel = remap[*pixel];
-            ++pixel;
-        } while (--count != 0);
+    __asm {
+        push edi
+        mov ebx, right
+        cmp ebx, PolygonClipLeft
+        jle span_done
+        mov ecx, left
+        cmp ecx, PolygonClipRight
+        jge span_done
+        sub ebx, ecx
+        jle span_done
+        mov ecx, right
+        cmp ecx, PolygonClipRight
+        jl right_clipped
+        mov ecx, PolygonClipRight
+        mov right, ecx
+    right_clipped:
+        mov edi, left
+        cmp edi, PolygonClipLeft
+        jge left_clipped
+        mov edi, PolygonClipLeft
+        mov left, edi
+    left_clipped:
+        sub ecx, edi
+        jle span_done
+        mov eax, PolygonY.coordinate
+        imul PolygonPitch
+        add eax, left
+        add eax, PolygonPixels
+        mov edi, eax
+        mov ebx, PolygonRemap
+    span_remap:
+        xor edx, edx
+        mov dl, [edi]
+        add edx, ebx
+        mov al, [edx]
+        mov [edi], al
+        inc edi
+        dec ecx
+        jne span_remap
+    span_done:
+        pop edi
     }
 }
 
@@ -278,49 +346,73 @@ int __cdecl polygon_dest(Buffer *buffer, Vert *vertices, int count, unsigned cha
         PolygonRemap = remap;
         PolygonVertexCount = count;
         PolygonPitch = static_cast<int>(buffer->stride_);
-        PolygonClipRight = buffer->rect1_.right - 1;
-        PolygonClipLeft = buffer->rect1_.left;
-        PolygonClipBottom.coordinate = buffer->rect1_.bottom - 1;
-        PolygonClipTop.coordinate = buffer->rect1_.top;
-        int minimum_y = 32767;
-        int maximum_y = -32765;
-        int minimum_vertex;
-        if (count > 0) {
-            for (int vertex = 0; vertex < count; ++vertex) {
-                if (vertices[vertex].y < minimum_y) {
-                    minimum_y = vertices[vertex].y;
-                    minimum_vertex = vertex;
+        // The image tests the clip rectangle's address before reading it.
+        RECT *clip = &buffer->rect1_;
+        if (clip != 0) {
+            int maximum_y = -32765;
+            int minimum_vertex;
+            PolygonClipRight = clip->right - 1;
+            PolygonClipLeft = clip->left;
+            PolygonClipBottom.coordinate = clip->bottom - 1;
+            PolygonClipTop.coordinate = clip->top;
+            int minimum_y = 32767;
+            {
+                for (int vertex = 0; vertex < count; ++vertex) {
+                    if (vertices[vertex].y < minimum_y) {
+                        minimum_y = vertices[vertex].y;
+                        minimum_vertex = vertex;
+                    }
+                    if (vertices[vertex].y > maximum_y) {
+                        maximum_y = vertices[vertex].y;
+                        PolygonBottomVertex = vertex;
+                    }
                 }
-                if (vertices[vertex].y > maximum_y) {
-                    maximum_y = vertices[vertex].y;
-                    PolygonBottomVertex = vertex;
-                }
-            }
-            if (minimum_y < maximum_y) {
-                FlatPolygonEdge backward;
-                FlatPolygonEdge forward;
-                PolygonY.coordinate = minimum_y;
-                backward.direction = -1;
-                if (setup_flat_polygon_edge(&backward, minimum_vertex)) {
-                    forward.direction = 1;
-                    if (setup_flat_polygon_edge(&forward, minimum_vertex)
-                        && PolygonY.coordinate < PolygonClipBottom.coordinate) {
-                        do {
-                            if (PolygonY.coordinate >= PolygonClipTop.coordinate) {
-                                if (backward.x < forward.x) {
-                                    draw_remapped_polygon_span(backward.x, forward.x);
-                                } else {
-                                    draw_remapped_polygon_span(forward.x, backward.x);
+                if (minimum_y < maximum_y) {
+                    FlatPolygonEdge backward;
+                    FlatPolygonEdge forward;
+                    PolygonY.coordinate = minimum_y;
+                    backward.direction = -1;
+                    if (setup_flat_polygon_edge(&backward, minimum_vertex)) {
+                        forward.direction = 1;
+                        if (setup_flat_polygon_edge(&forward, minimum_vertex)
+                            && PolygonY.coordinate < PolygonClipBottom.coordinate) {
+                            do {
+                                if (PolygonY.coordinate >= PolygonClipTop.coordinate) {
+                                    if (backward.x < forward.x) {
+                                        draw_remapped_polygon_span(backward.x, forward.x);
+                                    } else {
+                                        draw_remapped_polygon_span(forward.x, backward.x);
+                                    }
                                 }
-                            }
-                            if (!advance_flat_polygon_edge(&backward)) {
-                                break;
-                            }
-                            if (!advance_flat_polygon_edge(&forward)) {
-                                break;
-                            }
-                            ++PolygonY.coordinate;
-                        } while (PolygonY.coordinate < PolygonClipBottom.coordinate);
+                                // Edge advance is open-coded: the image tests the
+                                // raw setup result, without advance's normalization.
+                                if (--backward.remaining_rows == 0) {
+                                    if (!setup_flat_polygon_edge(&backward, backward.next_vertex)) {
+                                        break;
+                                    }
+                                } else {
+                                    backward.x += backward.x_step;
+                                    backward.error += backward.remainder;
+                                    if (backward.error > 0) {
+                                        backward.x += backward.x_direction;
+                                        backward.error -= backward.height;
+                                    }
+                                }
+                                if (--forward.remaining_rows == 0) {
+                                    if (!setup_flat_polygon_edge(&forward, forward.next_vertex)) {
+                                        break;
+                                    }
+                                } else {
+                                    forward.x += forward.x_step;
+                                    forward.error += forward.remainder;
+                                    if (forward.error > 0) {
+                                        forward.x += forward.x_direction;
+                                        forward.error -= forward.height;
+                                    }
+                                }
+                                ++PolygonY.coordinate;
+                            } while (PolygonY.coordinate < PolygonClipBottom.coordinate);
+                        }
                     }
                 }
             }

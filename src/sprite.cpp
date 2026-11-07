@@ -158,38 +158,77 @@ int Sprite::change_color(int old_color, int new_color) {
         return 7;
     }
     unsigned char *pixels = pcBits_;
-    const uint32_t height_bits = static_cast<uint32_t>(iSpriteHeight_);
-    const uint32_t stride_bits = static_cast<uint32_t>(iSpriteWidth2_);
-    const uint32_t pixel_count_bits = height_bits * stride_bits;
-    // The image arithmetic-shifts the signed product by two, then LOOP
-    // decrements that 32-bit count modulo 2^32. Reproduce SAR's sign fill
-    // without signed-overflow or implementation-defined right-shift rules.
-    const uint32_t group_count = (pixel_count_bits >> 2) |
-        ((pixel_count_bits & 0x80000000u) ? 0xC0000000u : 0u);
-    const uint32_t tail_count = pixel_count_bits - (group_count << 2);
-    const unsigned char from = static_cast<unsigned char>(old_color);
-    const unsigned char to = static_cast<unsigned char>(new_color);
-    // At 5EADFA the original skips both loops only when the four-byte count
-    // is zero, including the one-to-three-byte tail. For a negative product,
-    // retaining the nonzero wrapped LOOP count is intentionally unsafe.
-    if (group_count == 0) {
-        return 0;
-    }
-
-    uint32_t groups_remaining = group_count;
-    do {
-        if (pixels[0] == from) pixels[0] = to;
-        if (pixels[1] == from) pixels[1] = to;
-        if (pixels[2] == from) pixels[2] = to;
-        if (pixels[3] == from) pixels[3] = to;
-        pixels += 4;
-        --groups_remaining;
-    } while (groups_remaining != 0);
-
-    for (uint32_t index = 0; index < tail_count; ++index) {
-        if (pixels[index] == from) {
-            pixels[index] = to;
-        }
+    const int pixel_count = iSpriteHeight_ * iSpriteWidth2_;
+    const int group_count = pixel_count >> 2;
+    old_color = static_cast<unsigned char>(old_color);
+    const int tail_count = pixel_count - (group_count << 2);
+    new_color = static_cast<unsigned char>(new_color);
+    // Hand-written assembly: unrolled compare chains with `loop`, `and ecx,ecx` tests, mov ah writes.
+    // A zero group count skips the tail too; a negative product wraps the LOOP count.
+    __asm {
+        push esi
+        mov esi, pixels
+        mov ecx, group_count
+        mov al, byte ptr old_color
+        mov ah, byte ptr new_color
+        and ecx, ecx
+        je recolor_done
+    scan_0:
+        cmp [esi], al
+        je hit_0
+    scan_1:
+        inc esi
+        cmp [esi], al
+        je hit_1
+    scan_2:
+        inc esi
+        cmp [esi], al
+        je hit_2
+    scan_3:
+        inc esi
+        cmp [esi], al
+        je hit_3
+    scan_next:
+        inc esi
+        loop scan_0
+        dec esi
+        jmp tail_start
+    hit_loop:
+        cmp [esi], al
+        jne scan_1
+    hit_0:
+        mov [esi], ah
+        inc esi
+        cmp [esi], al
+        jne scan_2
+    hit_1:
+        mov [esi], ah
+        inc esi
+        cmp [esi], al
+        jne scan_3
+    hit_2:
+        mov [esi], ah
+        inc esi
+        cmp [esi], al
+        jne scan_next
+    hit_3:
+        mov [esi], ah
+        inc esi
+        loop hit_loop
+        dec esi
+    tail_start:
+        mov ecx, tail_count
+        and ecx, ecx
+        je recolor_done
+    tail_loop:
+        inc esi
+        cmp [esi], al
+        jne tail_next
+        mov [esi], ah
+    tail_next:
+        loop tail_loop
+    recolor_done:
+        pop esi
     }
     return 0;
 }
