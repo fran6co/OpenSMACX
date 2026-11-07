@@ -574,7 +574,7 @@ int Sprite::draw_mono(Buffer *destination, int transparent, int x, int y,
     return result;
 }
 
-// ORIGINAL: 0x005E3E50 ?draw_mono@Sprite@@QAEHPAUBuffer@@HHHH@Z 0x005E3E50-0x005E4ADA
+// ORIGINAL: 0x005E3E50 ?draw_mono@Sprite@@QAEHPAUBuffer@@HHHH@Z 0x005E3E50-0x005E4ADA BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned3210-byte worker loads file-backed sprites through9B6080; software paths cover1:1, shrinking and expansion. Initial unscaled top skip uses logical width while subsequent rows use pitch. Scaled origins truncate coordinate+offset*ratio, not scaled coordinates. Preserve final free_data and source-byte/run ordering; shared clip counts, table cursors and pitches retain their original storage while transient pixel cursors remain local.", "Existing seed identity and extent retained against the pinned original; catalogue class/return spellings are provenance, not a substitute for emitted symbol facts or fresh measurements."], "reason": "Recover the monochrome sprite blitter through actual Sprite storage, Buffer locking and scale tables."}
 // symbol    ?draw_mono@Sprite@@QAEHPAVBuffer@@HHHH@Z
 // The eight workers take code-label addresses in inline assembly, so VC6
@@ -1633,7 +1633,7 @@ int Sprite::draw_mono(Buffer *destination, int transparent, int x, int y,
     return 0;
 }
 
-// ORIGINAL: 0x005E4B9A ?draw@Sprite@@QAEHPAUBuffer@@HHH@Z 0x005E4B9A-0x005E5833
+// ORIGINAL: 0x005E4B9A ?draw@Sprite@@QAEHPAUBuffer@@HHH@Z 0x005E4B9A-0x005E5833 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned worker loads file-backed sprites through Buffer9B6080, otherwise uses real destination lock/clip/pitch and the scale-table helpers. Initial top clipping uses pitch. Each expanded source byte is sampled once and replicated in the original per-source-pixel row order.", "Existing seed identity and extent retained against the pinned original; catalogue class/return spellings are provenance, not a substitute for emitted symbol facts or fresh measurements."], "reason": "Replace the original-address Sprite draw forwarder with genuine clipped transparent pixel copying."}
 // symbol    ?draw@Sprite@@QAEHPAVBuffer@@HHH@Z
 int Sprite::draw(Buffer *destination, int transparent, int x, int y) {
@@ -2703,7 +2703,7 @@ int Sprite::draw(Buffer *destination, int transparent, int x, int y) {
     return 0;
 }
 
-// ORIGINAL: 0x005E9D44 ?draw@Sprite@@QAEHPAUBuffer@@HHHPAE@Z 0x005E9D44-0x005EAAFF
+// ORIGINAL: 0x005E9D44 ?draw@Sprite@@QAEHPAUBuffer@@HHHPAE@Z 0x005E9D44-0x005EAAFF BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Terrain loader calls4522AF/45238B select this five-argument worker. Unlike plain Sprite draw it has no filename-load branch. Unit/shrink compare the low-byte key then map every other source value, including zero; expansion also skips zero.", "Expansion consumes the low byte of each Y selector:1/2/3 repeats that many rows, all other values repeat4. Four-row lookups5EA54D/5EA5A0/5EA5F3/5EA646 alone read table[first destination pixel], while other modes read table[source]. Map once per source pixel before row-major replication, preserving live source/destination/table overlap.", "Unit clipping reloads pcBits afterward with the earlier pitch. Scaled clipping retains preclip source bits and post-first-clip destination bits; original-position base uses the old pitch, traversal the reloaded pitch. Retain shared float32 ratio/cache and genuine helper owners.", "This structured kernel assumes valid buffers/tables, positive bounded scaling and ordinary fitting geometry. Zero low-byte shrink steps have a pathological original wrap loop. Extreme x87 cancellation, altered FP environment and asynchronous aliases of historical assembly scratch are not established by the portable spelling. No original bug fix is authorized. Preserve the full seed in src/unrecovered/005e9d44.cpp."], "reason": "Recover the complete source-remap Sprite worker used by terrain-sheet conversion, using genuine members, clipped-table helpers and typed Buffer access."}
 // symbol    ?draw@Sprite@@QAEHPAVBuffer@@HHHPAE@Z
 int Sprite::draw(Buffer *destination, int transparent, int x, int y,
@@ -3910,7 +3910,7 @@ int Sprite::draw(Buffer *destination, int transparent, int x, int y,
     return 0;
 }
 
-// ORIGINAL: 0x005E5833 ?draw_dest@Sprite@@QAEHPAUBuffer@@HHHPAE@Z 0x005E5833-0x005E6652
+// ORIGINAL: 0x005E5833 ?draw_dest@Sprite@@QAEHPAUBuffer@@HHHPAE@Z 0x005E5833-0x005E6652 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned worker tests transparency before source zero. Unit and shrink paths remap individual destination pixels for zero sources. Expansion5E6097/6268/63F3/6546 samples table[first destination] once per source pixel and replicates that cached color over its block. No file-backed load path exists in this worker.", "Existing seed identity and extent retained against the pinned original; catalogue class/return spellings are provenance, not a substitute for emitted symbol facts or fresh measurements."], "reason": "Replace the destination-remap Sprite forwarder with actual clipped pixel operations."}
 // symbol    ?draw_dest@Sprite@@QAEHPAVBuffer@@HHHPAE@Z
 int Sprite::draw_dest(Buffer *destination, int transparent, int x, int y,
@@ -5171,7 +5171,7 @@ int Sprite::draw_dest(Buffer *destination, int transparent, int x, int y,
     return 0;
 }
 
-// ORIGINAL: 0x005E66A2 ?draw_dest_unk1@Sprite@@QAEHPAUBuffer@@HHPAE@Z 0x005E66A2-0x005E73CC
+// ORIGINAL: 0x005E66A2 ?draw_dest_unk1@Sprite@@QAEHPAUBuffer@@HHPAE@Z 0x005E66A2-0x005E73CC BYTE_EXACT
 // draw_dest's sibling with no transparency key of its own: the stencil is
 // `source byte == 0 -> destination = table[destination]` (cmp byte ptr [esi],0
 // at 0x005E68F1/0x005E6C29), so borrowed, keyed and zero destinations all
@@ -6302,7 +6302,7 @@ int Sprite::draw_dest_unk1(Buffer *destination, int x, int y, int numerator,
     return result;
 }
 
-// ORIGINAL: 0x005E741C ?draw_dest_source@Sprite@@QAEHPAUBuffer@@HHHPAE@Z 0x005E741C-0x005E811C
+// ORIGINAL: 0x005E741C ?draw_dest_source@Sprite@@QAEHPAUBuffer@@HHHPAE@Z 0x005E741C-0x005E811C BYTE_EXACT
 // The name is the archive's, not the image's: the worker REMAPS DESTINATIONS.
 // Where a source byte is not the transparency key the destination pixel goes
 // through the table (`mov bl,[edi]; mov bl,[ebp+ebx]` at 0x005E7672/0x005E79A2
@@ -8231,7 +8231,7 @@ int Sprite::draw_multi_table_dest(Buffer *buffer, int a, int b, int c, int x,
 }
 
 
-// ORIGINAL: 0x005E8FF5 ?draw_multi_table_dest@Sprite@@QAEHPAUBuffer@@HHHPAE@Z 0x005E8FF5-0x005E9D44 FILE
+// ORIGINAL: 0x005E8FF5 ?draw_multi_table_dest@Sprite@@QAEHPAUBuffer@@HHHPAE@Z 0x005E8FF5-0x005E9D44 FILE BYTE_EXACT
 // symbol    ?draw_multi_table_dest@Sprite@@QAEHPAVBuffer@@HHHPAY0BAA@E@Z
 // draw_dest's 16-bit-table sibling: every drawn destination pixel samples the
 // 256-byte row selected by the source pixel at the destination pixel column,
@@ -9378,7 +9378,7 @@ int Sprite::draw_multi_table_dest(Buffer *destination, int transparent, int x,
     return 0;
 }
 
-// ORIGINAL: 0x005E81BC ?draw_dest_unk2@Sprite@@QAEHPAUBuffer@@HHHPAE@Z 0x005E81BC-0x005E8FA5 FILE
+// ORIGINAL: 0x005E81BC ?draw_dest_unk2@Sprite@@QAEHPAUBuffer@@HHHPAE@Z 0x005E81BC-0x005E8FA5 FILE BYTE_EXACT
 // symbol    ?draw_dest_unk2@Sprite@@QAEHPAVBuffer@@HHHPAE@Z
 // Stencil remap: at unit scale, non-key/nonzero source pixels select table[dst].
 // The shrink Duff walk instead selects table[src], with the original asymmetric

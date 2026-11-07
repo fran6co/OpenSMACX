@@ -4394,7 +4394,7 @@ Purpose: Blit one rectangle from this buffer into `dest`, replacing every
          transcription. The direction is the non-obvious part and the
          archive's own note records it: `dest` (the argument) is the buffer
          WRITTEN and mask-tested, `this` is the one READ.
-// ORIGINAL: 0x005E2B00 ?copy_mask@Buffer@@QAEHPAVBuffer@@HHHHHHH@Z 0x005E2B00-0x005E2DD3
+// ORIGINAL: 0x005E2B00 ?copy_mask@Buffer@@QAEHPAVBuffer@@HHHHHHH@Z 0x005E2B00-0x005E2DD3 BYTE_EXACT
 // symbol    ?copy_mask@Buffer@@QAEHPAV1@HHHHHHH@Z
 // size      723 bytes
 // prototype int (__thiscall ?copy_mask@Buffer@@QAEHPAVBuffer@@HHHHHHH@Z)(Buffer* this, Buffer*, int, int, int, int, int, int, int)
