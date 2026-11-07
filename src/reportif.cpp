@@ -4530,14 +4530,14 @@ void ReportIf::init() {
     }
     for (int k = 0; k < 7; ++k)
         for (int state = 0; state < 3; ++state)
-            faction_button_sprites_[k][state] =
-                k + 1 == ConsoleGlobal.faction_id_ && field_1E230_
-                    ? &FactionsArt[k + 1].report_logo[state == 0]
-                    : &FactionsArt[k + 1].report_logo_small[state];
-    int position = field_40_.left + 16 + (field_1E230_ != 0);
+            if (k + 1 == ConsoleGlobal.faction_id_ && field_1E230_)
+                faction_button_sprites_[k][state] = &FactionsArt[k + 1].report_logo[state == 0];
+            else
+                faction_button_sprites_[k][state] = &FactionsArt[k + 1].report_logo_small[state];
+    int position = field_40_.left + (field_1E230_ ? 17 : 16);
     report_category_center_ =
         (field_40_.bottom + field_40_.top - spritesA_[0].height()) / 2;
-    int step = spritesA_[0].width() + 9 + (field_1E230_ ? 3 : 0);
+    int step = spritesA_[0].width() + (field_1E230_ ? 12 : 9);
     for (int category = 0; category < 7; ++category) {
         report_category_positions_[category] = position;
         position += step;
@@ -4545,7 +4545,7 @@ void ReportIf::init() {
     // Original includes the eighth, previously unwritten slot in this walk
     // before replacing it below; preserve that store sequence.
     for (int slot = 0; slot < 8; ++slot)
-        report_button_positions_[slot] += field_50_.left + 46 + (field_1E230_ ? 43 : 0);
+        report_button_positions_[slot] += field_50_.left + (field_1E230_ ? 89 : 46);
     report_button_positions_[7] = field_50_.bottom - 40;
     field_1E180_ = find_font(10, 0);
     field_1E184_ = find_font(12, 0);
@@ -6772,8 +6772,8 @@ void ReportIf::draw_score() {
 
     MainInterfaceGlobal.Buffer::set_clip(&field_50_);
     int left_inset = field_1E230_ != 0 ? 0x4C : 0;
-    field_10_ = field_50_.top;
     field_C_ = field_50_.left + left_inset;
+    field_10_ = field_50_.top;
     field_14_ = report_rect_width(&field_50_) - left_inset;
     field_18_ = report_rect_height(&field_50_);
 

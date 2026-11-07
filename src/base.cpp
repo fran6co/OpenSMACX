@@ -5374,6 +5374,46 @@ uint32_t BaseCurrentForcesMaintCost;  // 0x0090E91C
 // RECOVERY_OBJECT: v1 0x0090EA08 ?BaseCurrentForcesMaintCount@@3IA
 uint32_t BaseCurrentForcesMaintCount;  // 0x0090EA08
 
+// Tile base owner, as the yield functions inline it (yield_tile_owner).
+static __forceinline int tile_base_owner(const Map *tile) {
+    if (!(tile->bit & BIT_BASE_IN_TILE)) {
+        return -1;
+    }
+    int owner = tile->val2 & 0xF;
+    return (owner < MaxPlayerNum) ? owner : -1;
+}
+
+// x wrap with the flat test first; the image keeps this arm order here.
+static inline int farm_wrap_x(int x) {
+    if (MapIsFlat & 1) {
+        return x;
+    }
+    if (x < 0) {
+        return x + MapLongitudeBounds;
+    }
+    if (x >= (int)MapLongitudeBounds) {
+        return x - MapLongitudeBounds;
+    }
+    return x;
+}
+
+static inline int farm_stack_top(int veh_id) {
+    while (Vehs[veh_id].prev_veh_id_stack >= 0) {
+        veh_id = Vehs[veh_id].prev_veh_id_stack;
+    }
+    return veh_id;
+}
+
+static inline BOOL farm_veh_visible(int veh_id, int faction) {
+    if (Vehs[veh_id].faction_id == faction && (Vehs[veh_id].flags & 0x440) != 0x440) {
+        return true;
+    }
+    if (Vehs[veh_id].visibility & (1 << faction)) {
+        return true;
+    }
+    return false;
+}
+
 /*
  * Out-parameter of the three terrain yield functions: how much of a resource
  * the square lost to the "three per square needs a technology" restriction, and
@@ -5407,137 +5447,97 @@ uint32_t FarmUnavailableMask;
 // ORIGINAL: 0x004E68B0 ?farm_compute@@YAXXZ 0x004E68B0-0x004E6E4E
 // RECOVERY_BINDING: v1 {"evidence": ["4E68B6 loads BaseCurrent pointer before signedshort x/y and unsignedbyte faction.4E68E3/4E6BA5 establish25 DWORD outputs, with final4 set1;4E6E23..43 reduce onlyfirst21 into90EA00.4E6C7A tests Base+78 worked mask, not seed+3C.", "4E6966/4E69C4/4E6B99 reload row stride after calls; map-pointer loads4E697C/4E6A0A/4E6A46 must remain live.4E6B38 exhausts vehicle iterator before territory check4E6B7C.4E6BE7 reloads BaseCurrent for neighbor admission, while inner radius matching retains entry coordinates."], "reason": "This no-argument resource pass computes shared per-radius availability from the selected Base, typed map/vehicle/diplomacy state and neighboring worked squares; it owns25 status words and a separate21-position mask."}
 void __cdecl farm_compute() {
-    Base *const base = BaseCurrent;
-    const int center_x = base->x;
-    const int center_y = base->y;
-    const int faction = base->faction_id_current;
-    int row_stride = static_cast<int>(MapLongitude);
+    int base_x = BaseCurrent->x;
+    int base_y = BaseCurrent->y;
+    int faction = BaseCurrent->faction_id_current;
     int position;
-
-    for (position = 0; position < 25; ++position) {
+    for (position = 0; position < 25; position++) {
         if (position >= 21) {
             FarmStatus[position] = 1;
             continue;
         }
-        const int x = wrap_map_x(center_x + RadiusOffsetX[position]);
-        const int y = center_y + RadiusOffsetY[position];
+        int x = farm_wrap_x(base_x + RadiusOffsetX[position]);
+        int y = base_y + RadiusOffsetY[position];
         if (!on_map(x, y)) {
             FarmStatus[position] = 2;
             continue;
         }
-
-        if (BaseUpkeepStage == 1) {
-            const int goody = goody_at(x, y);
-            row_stride = static_cast<int>(MapLongitude);
-            if (goody != 0
-                && (map_tiles()[row_stride * y + (x >> 1)].climate & 0xE0) >= 0x60) {
-                add_goal(faction, 3, 1, x, y, -1);
-                add_goal(faction, 2, 1, x, y, -1);
-                add_goal(faction, 0, 1, x, y, -1);
-                row_stride = static_cast<int>(MapLongitude);
-            }
+        if (position < 21 && BaseUpkeepStage == 1 && goody_at(x, y)
+            && (map_tiles()[y * (int)MapLongitude + (x >> 1)].climate & ~0x1F) >= 0x60) {
+            add_goal(faction, 3, 1, x, y, -1);
+            add_goal(faction, 2, 1, x, y, -1);
+            add_goal(faction, 0, 1, x, y, -1);
         }
-        if ((PlayersData[faction].flags & 0x200) == 0
-            && (map_tiles()[row_stride * y + (x >> 1)].visibility
-                & (1u << faction)) == 0) {
+        if (!(PlayersData[faction].flags & 0x200)
+            && !(map_tiles()[y * (int)MapLongitude + (x >> 1)].visibility & (1 << faction))) {
             FarmStatus[position] = 2;
             continue;
         }
-
         FarmStatus[position] = 0;
-        Map *const tile = &map_tiles()[row_stride * y + (x >> 1)];
-        if ((tile->bit & 1) != 0 && (tile->val2 & 0xF) < 8) {
+        if (tile_base_owner(&map_tiles()[y * (int)MapLongitude + (x >> 1)]) >= 0) {
             FarmStatus[position] = 4;
         }
-        int vehicle = stack_fix(veh_at(x, y));
-        if (vehicle >= 0) {
-            if (stack_check(vehicle, 9, 3, -1, -1) != 0) {
+        int veh_id = stack_fix(veh_at(x, y));
+        if (veh_id >= 0) {
+            if (stack_check(veh_id, 9, 3, -1, -1)) {
                 FarmStatus[position] |= 8;
             }
-            while (Vehs[vehicle].prev_veh_id_stack >= 0) {
-                vehicle = Vehs[vehicle].prev_veh_id_stack;
-            }
-            for (; vehicle >= 0; vehicle = Vehs[vehicle].next_veh_id_stack) {
-                const int other_faction = Vehs[vehicle].faction_id;
-                if (other_faction != faction
-                    && (Vehs[vehicle].visibility & (1u << faction)) != 0
-                    && (PlayersData[faction].diplo_treaties[other_faction] & 3) == 0) {
+            veh_id = farm_stack_top(veh_id);
+            for (; veh_id >= 0; veh_id = Vehs[veh_id].next_veh_id_stack) {
+                int owner = Vehs[veh_id].faction_id;
+                if (owner >= 0 && owner != faction && farm_veh_visible(veh_id, faction)
+                    && !(PlayersData[faction].diplo_treaties[owner] & 3)) {
                     FarmStatus[position] |= 8;
                 }
             }
         }
-        const int territory = whose_territory(faction, x, y, nullptr, 0);
         // The original uses the exhausted iterator here, not the saved stack
         // head. Do not turn this into a new friendly-occupant exemption.
+        int territory = whose_territory(faction, x, y, 0, 0);
         if (territory >= 0 && territory != faction
-            && ((PlayersData[faction].diplo_treaties[territory] & 3) != 0
-                || vehicle < 0 || Vehs[vehicle].faction_id != faction)) {
+            && ((PlayersData[faction].diplo_treaties[territory] & 3)
+                || veh_id < 0 || Vehs[veh_id].faction_id != faction)) {
             FarmStatus[position] |= 0x20;
         }
-        row_stride = static_cast<int>(MapLongitude);
     }
-
-    for (int other_id = 0; other_id < GameDataStateStorage.fields_.base_current_count_; ++other_id) {
-        if (other_id == BaseIDCurrentSelected) {
+    for (int base_id = 0; base_id < GameDataStateStorage.fields_.base_current_count_; base_id++) {
+        if (base_id == BaseIDCurrentSelected) {
             continue;
         }
-        Base *const other = &Bases[other_id];
-        Base *const current = BaseCurrent;
-        if (vector_dist(x_dist(current->x, other->x),
-                        abs(current->y - other->y)) > 5) {
+        Base *other = &Bases[base_id];
+        if (vector_dist(BaseCurrent->x, BaseCurrent->y, other->x, other->y) > 5) {
             continue;
         }
-        int map_width = MapLongitudeBounds;
-        for (int worked = 0; worked < 21; ++worked) {
-            if (worked != 0 && (other->resource_sqr_radius & (1u << worked)) == 0) {
+        for (int worked = 0; worked < 21; worked++) {
+            if (worked && !(other->resource_sqr_radius & (1 << worked))) {
                 continue;
             }
-            int x = other->x + RadiusOffsetX[worked];
-            if ((MapIsFlat & 1) == 0) {
-                if (x < 0) {
-                    x += map_width;
-                } else if (x >= map_width) {
-                    x -= map_width;
-                }
-            }
-            const int y = other->y + RadiusOffsetY[worked];
-            if (y < 0 || y >= MapLatitudeBounds || x < 0 || x >= map_width) {
+            int x = wrap_map_x(other->x + RadiusOffsetX[worked]);
+            int y = other->y + RadiusOffsetY[worked];
+            if (!on_map(x, y)) {
                 continue;
             }
             if (other->faction_id_current != faction
-                && (map_tiles()[MapLongitude * y + (x >> 1)].climate & 0xE0) >= 0x60) {
+                && (map_tiles()[y * (int)MapLongitude + (x >> 1)].climate & ~0x1F) >= 0x60) {
                 continue;
             }
-            const int distance = vector_dist(x_dist(center_x, x), abs(center_y - y));
-            map_width = MapLongitudeBounds;
-            if (distance > 2) {
+            if (vector_dist(base_x, base_y, x, y) > 2) {
                 continue;
             }
-            const int flat = MapIsFlat & 1;
-            for (position = 0; position < 21; ++position) {
-                int candidate_x = center_x + RadiusOffsetX[position];
-                if (!flat) {
-                    if (candidate_x < 0) {
-                        candidate_x += map_width;
-                    } else if (candidate_x >= map_width) {
-                        candidate_x -= map_width;
-                    }
-                }
-                if (candidate_x == x && center_y + RadiusOffsetY[position] == y) {
-                    FarmStatus[position] |= 0x10;
+            for (int square = 0; square < 21; square++) {
+                if (wrap_map_x(base_x + RadiusOffsetX[square]) == x
+                    && base_y + RadiusOffsetY[square] == y) {
+                    FarmStatus[square] |= 0x10;
                 }
             }
         }
     }
-
     FarmUnavailableMask = 0;
-    uint32_t unavailable = 0;
-    for (position = 0; position < 21; ++position) {
-        if (FarmStatus[position] != 0) {
-            unavailable |= 1u << position;
+    for (position = 0; position < 21; position++) {
+        if (FarmStatus[position]) {
+            FarmUnavailableMask |= 1 << position;
         }
     }
-    FarmUnavailableMask = unavailable;
 }
 
 /*
@@ -5948,124 +5948,92 @@ Purpose: Generate a base name. Added some minor randomization for sea bases and 
 // kind      game
 // flags     frame;sp_ready;purged_ok
 // calls     0x005FD530 0x005FD550 0x005FD570 0x005FD670 0x006453E0 0x00645470 0x00645E90 0x0064FC88 0x0064FDF0
-// LEVER: replaced sprintf_s(name_out, 25, "%s %d", get_noun(faction_id), offset)
-//        with the image's strcat/_itoa idiom - name_out[0]=0, strcat the
-//        noun, strcat " ", _itoa the offset into a stack buffer, strcat that
-//        - and swapped both strncpy_s(name_out, 25, text_item(), 24) calls
-//        (water-base and land-base copy paths) for plain 3-argument
-//        strncpy(0x00645E90) + name_out[23]=0, and made get_noun
-//        `MEASURED inline` at the end of faction.h (it has its own ORIGINAL
-//        marker at faction.cpp:120) so it folds to parse_set()+field read in
-//        place. Best similarity moved 0.110 -> 0.183 - still far from a
-//        match; this function's #END-scan/PRNG-reseed loops account for
-//        most of the remaining 236 instructions and were not touched.
+// The sea path has no reseed walk and closes the file only on success; the
+// land offset is committed only after a name is copied from the file.
 Return Value: n/a
 Status: Complete
 */
 void __cdecl name_base(int faction_id, LPSTR name_out, BOOL is_final, BOOL is_sea_base) {
     if (is_sea_base && !text_open(Players[faction_id].filename, "WATERBASES")) {
-        uint32_t offset_sea = PlayersData[faction_id].base_sea_name_offset + 1;
-        if (offset_sea > 1) {
-            uint32_t total;
-            for (total = 0; ; total++) {
-                text_get();
-                if (!strlen(TextBufferGetPtr) || !_strnicmp(TextBufferGetPtr, "#END", 4)) {
-                    break;
-                }
-            }
-            if (offset_sea <= total) {
-                int seed = ((MapRandSeed + faction_id) & 0xFE) | 1;
-                uint32_t loop = 1;
-                do {
-                    if (seed & 1) {
-                        seed ^= 0x170;
-                    }
-                    seed >>= 1;
-                } while (seed >= (int)total || ++loop != offset_sea);
-                offset_sea = seed + 1;
+        int offset_sea = PlayersData[faction_id].base_sea_name_offset + 1;
+        int count;
+        for (count = 0; count < offset_sea; count++) {
+            text_get();
+            if (!strlen(TextBufferGetPtr) || !_strnicmp(TextBufferGetPtr, "#END", 4)) {
+                break;
             }
         }
-        if (!text_open(Players[faction_id].filename, "WATERBASES")) {
-            uint32_t count;
-            for (count = 0; count < offset_sea; count++) {
-                text_get();
-                if (!strlen(TextBufferGetPtr) || !_strnicmp(TextBufferGetPtr, "#END", 4)) {
-                    break;
-                }
+        if (count == offset_sea) {
+            // water base name available
+            strncpy(name_out, text_item(), 24);
+            name_out[23] = 0;
+            if (is_final) {
+                PlayersData[faction_id].base_sea_name_offset = offset_sea;
             }
-            if (count == offset_sea) {
-                // water base name available
-                strncpy(name_out, text_item(), 24);
-                name_out[23] = 0;
-                if (is_final) {
-                    PlayersData[faction_id].base_sea_name_offset++;
-                }
-                text_close();
-                return;
-            }
+            text_close();
+            return;
         }
-        text_close();
     }
-    // Land base names or generic
-    uint32_t offset = PlayersData[faction_id].base_name_offset + 1;
-    // default if names exhausted
+    // Land base names or generic; the default stays if names are exhausted.
+    int offset = PlayersData[faction_id].base_name_offset;
     name_out[0] = 0;
     GenderDefault = Players[faction_id].noun_gender;
     PluralityDefault = Players[faction_id].is_noun_plural;
     strcat(name_out, Players[faction_id].noun_faction);
     strcat(name_out, " ");
-    char digits[0x54];
-    _itoa(offset, digits, 10);
+    char digits[80];
+    _itoa(++offset, digits, 10);
     strcat(name_out, digits);
+    if (text_open(Players[faction_id].filename, "BASES")) {
+        return;
+    }
+    int total = 0;
+    while (true) {
+        text_get();
+        if (!strlen(TextBufferGetPtr) || !_strnicmp(TextBufferGetPtr, "#END", 4)) {
+            break;
+        }
+        total++;
+    }
+    int line = offset;
+    if (offset > 1 && offset <= total) {
+        int seed = ((faction_id + MapRandSeed) & 0xFE) | 1;
+        int loop = 1;
+        do {
+            if (seed & 1) {
+                seed ^= 0x170;
+            }
+            seed >>= 1;
+        } while (seed >= total || ++loop != offset);
+        line = seed + 1;
+    }
+    if (text_open(Players[faction_id].filename, "BASES")) {
+        return;
+    }
+    int count;
+    for (count = 0; count < line; count++) {
+        text_get();
+        if (!strlen(TextBufferGetPtr) || !_strnicmp(TextBufferGetPtr, "#END", 4)) {
+            break;
+        }
+    }
+    if (count != line) {
+        if (text_open("BASENAME", "GENERIC")) {
+            return;
+        }
+        for (; count < line; count++) {
+            text_get();
+            if (!strlen(TextBufferGetPtr) || !_strnicmp(TextBufferGetPtr, "#END", 4)) {
+                return;
+            }
+        }
+    }
+    strncpy(name_out, text_item(), 24);
+    name_out[23] = 0;
     if (is_final) {
-        PlayersData[faction_id].base_name_offset++;
+        PlayersData[faction_id].base_name_offset = offset;
     }
-    if (!text_open(Players[faction_id].filename, "BASES")) {
-        if (offset > 1) {
-            uint32_t total;
-            for (total = 0; ; total++) {
-                text_get();
-                if (!strlen(TextBufferGetPtr) || !_strnicmp(TextBufferGetPtr, "#END", 4)) {
-                    break;
-                }
-            }
-            if (offset <= total) {
-                int seed = ((MapRandSeed + faction_id) & 0xFE) | 1;
-                uint32_t loop = 1;
-                do {
-                    if (seed & 1) {
-                        seed ^= 0x170;
-                    }
-                    seed >>= 1;
-                } while (seed >= (int)total || ++loop != offset);
-                offset = seed + 1;
-            }
-        }
-        if (!text_open(Players[faction_id].filename, "BASES")) {
-            uint32_t count;
-            for (count = 0; count < offset; count++) {
-                text_get();
-                if (!strlen(TextBufferGetPtr) || !_strnicmp(TextBufferGetPtr, "#END", 4)) {
-                    break;
-                }
-            }
-            if (count != offset) {
-                if (text_open("BASENAME", "GENERIC")) {
-                    return;
-                }
-                while (count < offset) {
-                    text_get();
-                    if (!strlen(TextBufferGetPtr) || !_strnicmp(TextBufferGetPtr, "#END", 4)) {
-                        return;
-                    }
-                    count++;
-                }
-            }
-            strncpy(name_out, text_item(), 24);
-            name_out[23] = 0;
-        }
-        text_close();
-    }
+    text_close();
 }
 
 /*
@@ -7006,163 +6974,125 @@ void __cdecl base_hurry() {
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/004f4830.cpp", "recovery/tasks/base-colony-economy-coverage-wave.json", "recovery/tests/test_base_colony_economy.py", "Pinned original 01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf; complete original extent reviewed against native instructions and measured VC6 owner layouts.", "Native facility35 uses selected-base record; riot score reads prototype.cost(+29), not carry_capacity(+28); first distance scan reapplies abs after wrap, second does not."], "reason": "Recover the complete support deficit and pacifism selection through typed Base/Vehicle/faction owners, preserving original AI double-decrement and selected-base facility semantics. Seed retained; no new byte or runtime claim."}
 // symbol    ?base_check_support@@YAXXZ
 void __cdecl base_check_support() {
-    const unsigned faction_bit = 1u << BaseCurrent->faction_id_current;
-    const unsigned faction = BaseCurrent->faction_id_current;
-
-    while (BaseCurrent->intake_2[RSC_MINERALS] < (int)BaseCurrentForcesMaintCost) {
-        int selected_vehicle = -1;
-        int selected_score = -1;
-
-        for (int vehicle_id = 0; vehicle_id < GameDataStateStorage.fields_.vehicle_current_count_; ++vehicle_id) {
-            const Veh &vehicle = Vehs[vehicle_id];
-            if (vehicle.faction_id != faction
-                || vehicle.home_base_id != BaseIDCurrentSelected) {
+    int faction = BaseCurrent->faction_id_current;
+    while ((int)BaseCurrentForcesMaintCost > BaseCurrent->intake_2[RSC_MINERALS]) {
+        int best_score = -1;
+        int best_veh = -1;
+        for (int veh_id = 0; veh_id < GameDataStateStorage.fields_.vehicle_current_count_; veh_id++) {
+            if (Vehs[veh_id].faction_id != BaseCurrent->faction_id_current
+                || Vehs[veh_id].home_base_id != BaseIDCurrentSelected) {
                 continue;
             }
-
-            const VehPrototype &prototype = VehPrototypes[vehicle.proto_id];
-            if (prototype.plan == PLAN_SUPPLY_CONVOY) {
-                if (vehicle.order == ORDER_CONVOY
-                    && vehicle.order_auto_type == ORDERA_TERRA_AUTO_ROAD) {
-                    const Map *tile = map_loc(vehicle.x, vehicle.y);
-                    if (selected_score < 99999
-                        && (tile->bit & BIT_BASE_IN_TILE) != 0
-                        && (tile->val2 & 0x0Fu) < MaxPlayerNum) {
-                        selected_vehicle = vehicle_id;
-                        selected_score = 99999;
-                    }
+            int score;
+            uint8_t plan = VehPrototypes[Vehs[veh_id].proto_id].plan;
+            if (plan == PLAN_SUPPLY_CONVOY) {
+                if (Vehs[veh_id].order != ORDER_CONVOY
+                    || Vehs[veh_id].order_auto_type != ORDERA_TERRA_AUTO_ROAD
+                    || tile_base_owner(&map_tiles()[Vehs[veh_id].y * (int)MapLongitude
+                                                      + (Vehs[veh_id].x >> 1)]) < 0) {
+                    continue;
                 }
-            } else if ((vehicle.state & VSTATE_REQUIRES_SUPPORT) != 0
-                       && prototype.plan < 10) {
-                int dx = abs((int)vehicle.x - (int)BaseCurrent->x);
-                if ((MapIsFlat & 1) == 0 && (int)MapLongitude < dx) {
-                    dx = base_yield_sub(MapLongitudeBounds, dx);
+                score = 99999;
+            } else {
+                if (!(Vehs[veh_id].state & VSTATE_REQUIRES_SUPPORT) || plan > 9) {
+                    continue;
                 }
-                dx = abs(dx);
-                const int dy = abs((int)vehicle.y - (int)BaseCurrent->y);
-                const int greater = dx > dy ? dx : dy;
-                const int lesser = dx > dy ? dy : dx;
-                const int distance = greater
-                    - (((dx + dy) / 2 - lesser + 1) / 2);
-                if (selected_score < distance) {
-                    selected_vehicle = vehicle_id;
-                    selected_score = distance;
-                }
+                score = vector_dist(Vehs[veh_id].x, Vehs[veh_id].y,
+                                    BaseCurrent->x, BaseCurrent->y);
+            }
+            if (score > best_score) {
+                best_score = score;
+                best_veh = veh_id;
             }
         }
-
-        if (selected_vehicle < 0) {
+        if (best_score < 0) {
             break;
         }
-
-        Veh &vehicle = Vehs[selected_vehicle];
-        const int prototype_id = vehicle.proto_id;
-        const int plan = VehPrototypes[prototype_id].plan;
+        uint8_t plan = VehPrototypes[Vehs[best_veh].proto_id].plan;
         if (plan == PLAN_SUPPLY_CONVOY) {
-            vehicle.order = ORDER_NONE;
-            --BaseCurrentForcesMaintCost;
+            Vehs[best_veh].order = ORDER_NONE;
+            BaseCurrentForcesMaintCost--;
             continue;
         }
-
-        if ((GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & faction_bit) == 0) {
-            if (plan == PLAN_COLONIZATION) {
-                vehicle.state &= ~VSTATE_REQUIRES_SUPPORT;
-                if (!has_abil(prototype_id, ABL_CLEAN_REACTOR)) {
-                    const int support = PlayersData[faction].soc_effect_pending.values_[SocialEffect::SUPPORT];
-                    BaseCurrentForcesMaintCost -= support < -3 ? 2 : 1;
-                }
-            }
-        } else {
-            parse_says(1, VehPrototypes[prototype_id].veh_name, -1, -1);
-            popb("NOSUPPORT", 0x8000, 0xD, "genwarning_sm.pcx", nullptr);
+        if (GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & (1 << faction)) {
+            parse_says(1, VehPrototypes[Vehs[best_veh].proto_id].veh_name, -1, -1);
+            popb("NOSUPPORT", 0x8000, 0xD, "genwarning_sm.pcx", 0);
+        } else if (plan == PLAN_COLONIZATION) {
+            Vehs[best_veh].state &= ~VSTATE_REQUIRES_SUPPORT;
+            int support = PlayersData[faction].soc_effect_pending.values_[SocialEffect::SUPPORT];
+            BaseCurrentForcesMaintCost -= has_abil(Vehs[best_veh].proto_id, ABL_CLEAN_REACTOR)
+                ? 0 : (support <= -4 ? 2 : 1);
         }
-
-        if (has_abil(prototype_id, ABL_CLEAN_REACTOR)) {
+        int support = PlayersData[faction].soc_effect_pending.values_[SocialEffect::SUPPORT];
+        if (has_abil(Vehs[best_veh].proto_id, ABL_CLEAN_REACTOR)) {
             break;
         }
-
-        const int support = PlayersData[faction].soc_effect_pending.values_[SocialEffect::SUPPORT];
-        BaseCurrentForcesMaintCost -= support < -3 ? 2 : 1;
-        kill(selected_vehicle);
+        BaseCurrentForcesMaintCost -= support <= -4 ? 2 : 1;
+        kill(best_veh);
     }
-
-    const bool is_human = (GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & faction_bit) != 0;
-    const uint32_t governor = BaseCurrent->governor;
-    const bool state_allows_riot_check = !is_human
-        || ((governor & GOV_MANAGES_CITIZENS_SPECS) != 0
-            && (governor & GOV_ACTIVE) != 0);
-
-    if (!state_allows_riot_check
-        || (BaseCurrent->state & BSTATE_DRONE_RIOTS_ACTIVE) == 0) {
+    int faction_bit = 1 << faction;
+    if (GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & faction_bit) {
+        if (!(BaseCurrent->governor & GOV_MANAGES_CITIZENS_SPECS)) {
+            return;
+        }
+        if (!(BaseCurrent->governor & GOV_ACTIVE)) {
+            return;
+        }
+    }
+    if (!(BaseCurrent->state & BSTATE_DRONE_RIOTS_ACTIVE)) {
         return;
     }
-
-    int morale_bonus_offset;
-    int morale_bonus_mask;
-    bitmask(0x23, &morale_bonus_offset, &morale_bonus_mask);
-    const int morale_bonus =
-        (Bases[BaseIDCurrentSelected].facilities_built[morale_bonus_offset]
-         & morale_bonus_mask) != 0 ? 2 : 0;
-    const int morale = PlayersData[faction].soc_effect_pending.values_[SocialEffect::MORALE];
-    if (base_yield_add(morale, morale_bonus) >= -2
-        || (BaseCurrent->drone_total <= BaseCurrent->talent_total
-            && BaseCurrent->nutrient_surplus >= 0)) {
+    if (PlayersData[faction].soc_effect_pending.values_[SocialEffect::MORALE]
+            + 2 * has_fac(0x23, BaseIDCurrentSelected, 0) > -3) {
         return;
     }
-
-    int selected_score = -1;
-    int selected_vehicle = -1;
-    const int riot_probability = PlayersData[faction].ai_fight;
-    for (int vehicle_id = 0; vehicle_id < GameDataStateStorage.fields_.vehicle_current_count_; ++vehicle_id) {
-        const Veh &vehicle = Vehs[vehicle_id];
-        if (vehicle.faction_id != faction
-            || vehicle.home_base_id != BaseIDCurrentSelected
-            || (vehicle.state & VSTATE_PACIFISM_DRONE) == 0) {
+    if (BaseCurrent->drone_total <= BaseCurrent->talent_total
+        && BaseCurrent->nutrient_surplus >= 0) {
+        return;
+    }
+    int best_score = -1;
+    int best_veh = -1;
+    for (int veh_id = 0; veh_id < GameDataStateStorage.fields_.vehicle_current_count_; veh_id++) {
+        if (Vehs[veh_id].faction_id != faction
+            || Vehs[veh_id].home_base_id != BaseIDCurrentSelected) {
             continue;
         }
-
-        if ((GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & faction_bit) != 0
-            && ((vehicle.state & VSTATE_UNK_200) == 0
-                || (vehicle.state & 0x01000200u) == 0x01000200u
-                || ((vehicle.state & 0x02000200u) == 0x02000200u
-                    && vehicle.waypoint_count > vehicle.patrol_current_point)
-                || vehicle.order_auto_type == ORDERA_BOMBING_RUN
-                || vehicle.order_auto_type == ORDERA_ON_ALERT
-                || vehicle.order_auto_type != 0)) {
+        uint32_t state = Vehs[veh_id].state;
+        if (!(state & VSTATE_PACIFISM_DRONE)) {
             continue;
         }
-
-        const int random_divisor = base_yield_add(riot_probability, 2);
-        if (base_yield_sub(random_divisor, 1) > 0
-            && rand() % random_divisor != 0) {
+        if (faction_bit & GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_) {
+            if (!(state & VSTATE_UNK_200)
+                || (state & 0x1000200) == 0x1000200
+                || ((state & 0x2000200) == 0x2000200
+                    && Vehs[veh_id].patrol_current_point < Vehs[veh_id].waypoint_count)
+                || Vehs[veh_id].order_auto_type == ORDERA_BOMBING_RUN
+                || Vehs[veh_id].order_auto_type == ORDERA_ON_ALERT
+                || Vehs[veh_id].order_auto_type) {
+                continue;
+            }
+        }
+        int divisor = PlayersData[faction].ai_fight + 2;
+        if (divisor - 1 > 0 && rand() % divisor) {
             continue;
         }
-
-        int dx = abs((int)vehicle.x - (int)BaseCurrent->x);
-        if ((MapIsFlat & 1) == 0 && (int)MapLongitude < dx) {
-            dx = base_yield_sub(MapLongitudeBounds, dx);
-        }
-        const int dy = abs((int)vehicle.y - (int)BaseCurrent->y);
-        int range = VehPrototypes[vehicle.proto_id].cost;
-        if (range < 1) range = 1;
-        else if (range > 99) range = 99;
-
-        int score = base_yield_mul(base_yield_add(dx, dy) / 2, 100) / range;
-        const int plan = VehPrototypes[vehicle.proto_id].plan;
+        int dx = x_dist(Vehs[veh_id].x, BaseCurrent->x);
+        int cost = range(VehPrototypes[Vehs[veh_id].proto_id].cost, 1, 99);
+        int score = ((dx + abs(Vehs[veh_id].y - BaseCurrent->y)) >> 1) * 100 / cost;
+        uint8_t plan = VehPrototypes[Vehs[veh_id].proto_id].plan;
         if (plan == PLAN_DEFENSIVE) {
-            score = base_yield_add(score, score);
-        } else if (plan == PLAN_COMBAT) {
+            score += score;
+        }
+        if (plan == PLAN_COMBAT) {
             score /= 2;
         }
-
-        if (selected_score < score) {
-            selected_score = score;
-            selected_vehicle = vehicle_id;
+        if (score > best_score) {
+            best_score = score;
+            best_veh = veh_id;
         }
     }
-
-    if (selected_vehicle >= 0) {
-        kill(selected_vehicle);
+    if (best_veh >= 0) {
+        kill(best_veh);
         BaseCurrent->state &= ~BSTATE_DRONE_RIOTS_ACTIVE;
     }
 }
@@ -9022,24 +8952,13 @@ Status: Complete
 */
 int __cdecl pop_goal(int base_id) {
     uint32_t faction_id = Bases[base_id].faction_id_current;
-    uint32_t limit_mod = has_project(SP_ASCETIC_VIRTUES, faction_id) ? 2 : 0;
-    int goal = (36 - Bases[base_id].population_size) / 6 + Bases[base_id].population_size;
-    if (goal <= 6) {
-        goal = 6;
-    }
+    int limit_mod = has_project(SP_ASCETIC_VIRTUES, faction_id) ? 2 : 0;
+    int goal = max((36 - Bases[base_id].population_size) / 6 + Bases[base_id].population_size, 6);
     if (!has_fac(FAC_HAB_COMPLEX, base_id, 0)) {
-        int compare = Rules.pop_limit_sans_hab_complex - Players[faction_id].rule_population
-            + limit_mod;
-        if (goal >= compare) {
-            goal = compare;
-        }
+        goal = min(goal, (int)(Rules.pop_limit_sans_hab_complex - Players[faction_id].rule_population + limit_mod));
     }
     if (!has_fac(FAC_HABITATION_DOME, base_id, 0)) {
-        int compare = Rules.pop_limit_sans_hab_dome - Players[faction_id].rule_population
-            + limit_mod;
-        if (goal >= compare) {
-            goal = compare;
-        }
+        goal = min(goal, (int)(Rules.pop_limit_sans_hab_dome - Players[faction_id].rule_population + limit_mod));
     }
     return goal;
 }
@@ -9795,6 +9714,45 @@ BOOL __cdecl is_objective(int base_id) {
     return false;
 }
 
+// is_objective() as the image inlines it here (value_of_base and
+// garrison_check keep the out-of-line call).
+static inline BOOL num_objectives_is_objective(int base_id) {
+    if (GameDataStateStorage.fields_.game_rules_ & RULES_SCN_VICT_ALL_BASE_COUNT_OBJ) {
+        return true;
+    }
+    if (Bases[base_id].event & BEVENT_OBJECTIVE) {
+        return true;
+    }
+    if (GameDataStateStorage.fields_.game_rules_ & RULES_SCN_VICT_SP_COUNT_OBJ) {
+        const int *projects = GameDataStateStorage.fields_.secret_project_.project_base;
+        for (int i = 0; i < MaxSecretProjectNum; i++) {
+            if (projects[i] == base_id) {
+                return true;
+            }
+        }
+    }
+    if (GameDataStateStorage.fields_.game_state_ & STATE_SCN_VICT_BASE_FACIL_COUNT_OBJ) {
+        // Open-coded has_fac(ScnVictFacilityObj, base_id, 0): with
+        // queue_count == 0 it reduces to has_fac's own early-out guard
+        // followed by has_fac_built(), and the image inlines exactly that
+        // (its `cmp eax, 0x41 / jge` IS has_fac's `facility_id >=
+        // FacilityRepStart` guard) rather than calling has_fac out of line.
+        if ((int)GameDataStateStorage.fields_.scenario_victory_facility_ < FacilityRepStart) {
+            // Retain the Base before the helper replaces the consumed base_id
+            // argument with its byte offset, then its normalized result.
+            Base *base = &Bases[base_id];
+            int mask;
+            bitmask(GameDataStateStorage.fields_.scenario_victory_facility_,
+                    &base_id, &mask);
+            base_id = (base->facilities_built[base_id] & mask) != 0;
+            if (base_id) {
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
 /*
 Purpose: Count how far the specified faction has got towards the scenario's
          objectives.
@@ -9846,28 +9804,28 @@ int __cdecl num_objectives(int faction_id, BOOL count_pact_factions) {
         if (veh->faction_id != faction_id || !(veh->flags & VFLAG_IS_OBJECTIVE)) {
             continue;
         }
-        int base_id;
         if (GameDataStateStorage.fields_.game_rules_ & RULES_SCN_VICT_OBJ_UNITS_REACH_FRIEND_OBJ_BASE) {
-            base_id = base_at(veh->x, veh->y);
-            if (base_id < 0 || !is_objective(base_id)) {
-                continue;
+            int base_id = base_at(veh->x, veh->y);
+            if (base_id >= 0 && num_objectives_is_objective(base_id)) {
+                int owner = Bases[base_id].faction_id_current;
+                if (owner == faction_id
+                    || ((PlayersData[faction_id].diplo_treaties[owner] & DTREATY_PACT)
+                        && (GameDataStateStorage.fields_.game_rules_ & RULES_VICTORY_COOPERATIVE))) {
+                    total++; // a pact partner's base counts under 'One For All'
+                }
+            }
+        } else if (GameDataStateStorage.fields_.game_rules_ & RULES_SCN_VICT_OBJ_UNITS_REACH_FRIEND_HQ_BASE) {
+            int base_id = base_at(veh->x, veh->y);
+            if (base_id >= 0 && has_fac(FAC_HEADQUARTERS, base_id, 0)) {
+                int owner = Bases[base_id].faction_id_current;
+                if (owner == faction_id
+                    || ((PlayersData[faction_id].diplo_treaties[owner] & DTREATY_PACT)
+                        && (GameDataStateStorage.fields_.game_rules_ & RULES_VICTORY_COOPERATIVE))) {
+                    total++;
+                }
             }
         } else {
-            if (!(GameDataStateStorage.fields_.game_rules_ & RULES_SCN_VICT_OBJ_UNITS_REACH_FRIEND_HQ_BASE)) {
-                total++; // neither condition is set: the unit itself counts
-                continue;
-            }
-            base_id = base_at(veh->x, veh->y);
-            if (base_id < 0 || !has_fac(FAC_HEADQUARTERS, base_id, 0)) {
-                continue;
-            }
-        }
-        int owner = Bases[base_id].faction_id_current;
-        if (owner == faction_id) {
-            total++;
-        } else if ((PlayersData[faction_id].diplo_treaties[owner] & DTREATY_PACT)
-            && (GameDataStateStorage.fields_.game_rules_ & RULES_VICTORY_COOPERATIVE)) {
-            total++; // a pact partner's base counts under 'One For All'
+            total++; // neither condition is set: the unit itself counts
         }
     }
     // Population, and bases that are objectives in their own right.
@@ -10613,12 +10571,12 @@ void __cdecl compute_score(int faction, int *total, int *items, int recursive) {
             items[0] += Bases[base].population_size;
             set_base(base);
             base_compute(0);
-            for (int other = 1; other < 8; ++other) {
+            for (int other = 0; other < 7; ++other) {
                 // Original tests raw rule flags, not ExpansionEnabled.
-                if (!(Players[faction].rule_flags & 0x80) && !(Players[other].rule_flags & 0x80)) {
+                if (!(Players[faction].rule_flags & 0x80) && !(Players[other + 1].rule_flags & 0x80)) {
                     items[1] += (!PlayersData[faction].sanction_turns
-                                 && !PlayersData[other].sanction_turns)
-                        ? BaseCommerceReceipts[other - 1] : 0;
+                                 && !PlayersData[other + 1].sanction_turns)
+                        ? BaseCommerceReceipts[other] : 0;
                 }
             }
         }
