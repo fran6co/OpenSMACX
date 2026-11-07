@@ -8468,7 +8468,7 @@ void __cdecl base_minerals() {
 
 /*
 Purpose: Calculate the current base's energy loss/inefficiency for an amount of energy.
-// ORIGINAL: 0x004EA1F0 ?black_market@@YAHH@Z 0x004EA1F0-0x004EA495
+// ORIGINAL: 0x004EA1F0 ?black_market@@YAHH@Z 0x004EA1F0-0x004EA495 BYTE_EXACT
 // LEVER: the HQ-distance check called vector_dist(4 args) as a real
 //   function; the image never calls it - it open-codes x_dist()+abs()x3,
 //   same shape as base_find (0x004E3D50), AND re-reads
