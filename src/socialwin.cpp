@@ -1692,7 +1692,7 @@ static inline void social_write_right(char *text, int x, int y) {
     }
 }
 
-// ORIGINAL: 0x004B0410 ?draw_overview@SocialWin@@QAEXXZ 0x004B0410-0x004B089A
+// ORIGINAL: 0x004B0410 ?draw_overview@SocialWin@@QAEXXZ 0x004B0410-0x004B089A BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["image:0x004B0410-0x004B089A draws the effects overview, skips the reserved fourth row, loads each SocialEffects section and repaints the selected/comparison rows", "source:src/socialwin.h: tooltipEffects_, effectMaximize_, socEffect_, font1_ and font7_ are the corresponding declared members", "source:src/faction.h: SocialEffect and RulesSocialEffect define the eleven live rows and their section names"], "reason": "Home the overview painter on the SocialWin-owned rectangles, effects, fonts and rules records; preserve its original identity while replacing the seed's opaque object accesses with the product model."}
 void SocialWin::draw_overview() {
     int selected_effect;

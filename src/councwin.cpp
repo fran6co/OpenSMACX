@@ -334,7 +334,7 @@ static inline void council_write_right(char *text, RECT *rect) {
     }
 }
 
-// ORIGINAL: 0x00426470 ?draw_info@CouncWin@@QAEXXZ 0x00426470-0x00426A95 FILE
+// ORIGINAL: 0x00426470 ?draw_info@CouncWin@@QAEXXZ 0x00426470-0x00426A95 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/00426470.cpp", "image:terranx_original.exe:0x00426470", "Council interface/window declarations identify embedded fonts/buttons, voting arrays and existing MainInterface/Console owners; original instructions determine call and state order."], "reason": "Recover the original in its genuine UI owner using typed members, real globals and declared operations. Retain seed spans and evidence; no current matching or runtime claim."}
 // TRIED: field-offset `__thiscall` rewrite (two RECT locals reused positionally across the function, verified push/pop order and branch polarity against the raw disassembly rather than trusting Ghidra's dropped thiscall receivers) compiles and follows the retry-loop/goto-restart structure faithfully, but diverges at instruction #3 (stack-frame shape: an 80-byte itoa scratch buffer vs the original's exact 0x7c-byte frame).
 void CouncWin::draw_info() {
