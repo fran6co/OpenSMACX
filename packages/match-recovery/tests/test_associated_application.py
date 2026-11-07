@@ -430,6 +430,29 @@ def test_associated_refusal_keeps_selected_dependency_reason(tmp_path, monkeypat
     assert observed.diagnostic == "transitive object _g has no bound extent"
 
 
+def test_associated_refusal_reports_the_failing_variant_reason(tmp_path, monkeypatch):
+    from match_recovery.source import asm
+
+    root, _task, raw = project(tmp_path)
+    records = read_file(root / "code/unit.cc")
+
+    def unknown_variant(*_args, **_kwargs):
+        return {"result": Result.UNKNOWN,
+                "functions": [{"address": f"{records[0].address:08X}",
+                               "result": Result.UNKNOWN,
+                               "variants": [{"result": Result.PASS, "reason": "unrelated"},
+                                            {"result": Result.UNKNOWN,
+                                             "reason": "FPO metadata extent differs"}]}]}
+
+    monkeypatch.setattr(asm, "verify_records", unknown_variant)
+    compare = compare_unit(records, root / "image.exe", root / "code/unit.cc", (),
+                           (("first",),), compiler=lambda *_: raw,
+                           root=root, strict_command_for=lambda _path: ())
+    observed = compare.results[0][1]
+    assert observed.verdict is Tier.REFUSED
+    assert observed.diagnostic == "FPO metadata extent differs"
+
+
 def test_associated_owner_verdict_does_not_depend_on_selected_file_mates(tmp_path, monkeypatch):
     from match_recovery.source import asm
 

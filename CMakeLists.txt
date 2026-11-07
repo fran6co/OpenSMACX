@@ -641,6 +641,18 @@ set_property(SOURCE
     src/world.cpp
     src/win.cpp
     src/ddinit.cpp
+    src/datalink.cpp
+    src/designwin.cpp
+    src/diplowin.cpp
+    src/general.cpp
+    src/infowin.cpp
+    src/menu.cpp
+    src/messagewin.cpp
+    src/movie_media.cpp
+    src/netwin.cpp
+    src/newgame.cpp
+    src/socialwin.cpp
+    src/vehicle_render.cpp
     APPEND PROPERTY COMPILE_OPTIONS "/Z7")
 # Keep these measured frame-based helper owners on their explicit source profile.
 set_source_files_properties(

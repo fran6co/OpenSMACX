@@ -172,7 +172,9 @@ def test_overlapping_same_definition_owners_refuse_without_compiling(tmp_path):
 
 
 def test_renamed_definition_must_be_present_in_overlay(tmp_path):
-    snapshot = _snapshot(tmp_path, "inline int sample() { return 1; }\n")
+    # Only an inline definition may lack its emitted probe; see the removal
+    # control below. An ordinary definition must emit the renamed body.
+    snapshot = _snapshot(tmp_path, "int sample() { return 1; }\n")
     compiler = FakeOverlay(tmp_path, snapshot, mode="no-renamed-definition")
     with pytest.raises(ValueError, match="expected one defined COFF function"):
         _qualify(tmp_path, snapshot, compiler)
@@ -332,3 +334,80 @@ def test_typo_owner_or_member_never_borrows_another_body(tmp_path):
         with pytest.raises(ValueError, match="declared source body unresolved"):
             attribution.qualify(record, Coff(object_bytes([(symbol, b"\xc3", ())])),
                                 unit=UNIT, arguments=(), flags=(), compiler=MemberOverlay(MEMBER_HEADER))
+
+
+class InlineExportOverlay:
+    """VC6 emits a dllexport-declared inline body, never its renamed probe."""
+
+    def __init__(self, header, *, retain_on_removal=False):
+        self.header, self.retain, self.calls = header.encode(), retain_on_removal, []
+
+    def overlay(self, source, replacements, arguments, flags):
+        self.calls.append(dict(replacements))
+        text = replacements[HEADER]
+        if text == self.header:
+            return BASE
+        if b"match_recovery_body_probe_" in text:
+            # The probe definition is inline and unreferenced: not emitted.
+            return object_bytes([("_other", b"\xc3", ())], undefined=(TARGET,))
+        functions = [("_other", b"\xc3", ())]
+        if self.retain:
+            functions.append((TARGET, b"\xc3", ()))
+        return object_bytes(functions, undefined=() if self.retain else (TARGET,))
+
+
+INLINE_EXPORT = ("__declspec(dllexport) int sample(int value);\n"
+                 "inline int sample(int value) {\n"
+                 "    return value;\n"
+                 "}\n")
+
+
+def test_inline_definition_without_emitted_probe_qualifies_by_removal(tmp_path):
+    snapshot = _snapshot(tmp_path, INLINE_EXPORT)
+    compiler = InlineExportOverlay(INLINE_EXPORT)
+    attribution, result = _qualify(tmp_path, snapshot, compiler)
+    assert result["result"] == "pass"
+    assert result["evidence"].endswith("inline definition removal/disappearance")
+    removed = compiler.calls[-1][HEADER].decode()
+    assert removed == ("__declspec(dllexport) int sample(int value);\n"
+                       "inline int sample(int value);\n")
+    assert attribution.compile_attempts == 3
+
+
+def test_inline_definition_removal_that_keeps_the_definition_refuses(tmp_path):
+    snapshot = _snapshot(tmp_path, INLINE_EXPORT)
+    compiler = InlineExportOverlay(INLINE_EXPORT, retain_on_removal=True)
+    with pytest.raises(ValueError, match="inline definition removal did not remove"):
+        _qualify(tmp_path, snapshot, compiler)
+
+
+def test_out_of_class_constructor_qualifies_by_definition_removal(tmp_path):
+    symbol = "??0Widget@@QAE@XZ"
+    header = ("class Widget {\n public:\n  Widget();\n  void close();\n};\n"
+              "Widget::Widget() {\n  close();\n}\n")
+    snapshot = _member_snapshot(tmp_path, header)
+    attribution = BodyAttribution(tmp_path, snapshot)
+    record = replace(attribution.record("entity-0"), symbol=symbol)
+    base = object_bytes([(symbol, b"\xc3", ()), ("_other", b"\xc3", ())])
+
+    class CtorOverlay:
+        def __init__(self, retain):
+            self.retain, self.calls = retain, []
+
+        def overlay(self, source, replacements, arguments, flags):
+            self.calls.append(dict(replacements))
+            if replacements[HEADER] == header.encode():
+                return base
+            functions = [("_other", b"\xc3", ())]
+            if self.retain:
+                functions.append((symbol, b"\xc3", ()))
+            return object_bytes(functions, undefined=() if self.retain else (symbol,))
+
+    compiler = CtorOverlay(False)
+    result = attribution.qualify(record, Coff(base), unit=UNIT, arguments=(), flags=(),
+                                 compiler=compiler)
+    assert result["form"] == "qualified" and (result["line"], result["end_line"]) == (6, 8)
+    assert compiler.calls[1][HEADER].decode() == header.split("Widget::Widget")[0]
+    with pytest.raises(ValueError, match="did not remove the selected function definition"):
+        BodyAttribution(tmp_path, snapshot).qualify(record, Coff(base), unit=UNIT, arguments=(),
+                                                    flags=(), compiler=CtorOverlay(True))

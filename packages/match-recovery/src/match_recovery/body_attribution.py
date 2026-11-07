@@ -74,6 +74,11 @@ def _renamed_symbol(symbol, name, probe):
 
 def _definition_edit(text, candidate, name, probe):
     """Retain the declaration and rename only the actual definition head."""
+    first, end, declaration, replacement = _definition_parts(text, candidate, name, probe)
+    return first, end, declaration + replacement
+
+
+def _definition_parts(text, candidate, name, probe):
     from .source_quality import _mask_non_code
     lines = text.splitlines(keepends=True)
     first = sum(map(len, lines[:candidate.line - 1]))
@@ -101,7 +106,7 @@ def _definition_edit(text, candidate, name, probe):
     declaration = text[first:first + opening].rstrip() + ';\n'
     replacement = (text[first:first + match.start()] + probe
                    + text[first + match.start() + len(name):end])
-    return first, end, declaration + replacement
+    return first, end, declaration, replacement
 
 
 
@@ -166,10 +171,38 @@ def _member_control_edit(text, candidate, name):
         if _mask_non_code(text)[closing:end].strip() != '};':
             raise ValueError('implicit member class does not close on its own line')
         return text[:closing] + ' public:\n  ' + member + '();\n' + text[closing:]
-    if candidate.form == 'qualified' and member.startswith('~'):
+    if candidate.form == 'qualified' and _special_member(name):
         return text[:first] + text[end:]
     raise ValueError('compiler body attribution supports ordinary free functions, '
-                     'in-class members, destructors and implicit destructors only')
+                     'in-class members, constructors, destructors and implicit destructors only')
+
+
+def _special_member(name):
+    """A constructor or destructor: it cannot be renamed, only removed."""
+    owner, _, member = name.rpartition('::')
+    owner = owner.rpartition('::')[2]
+    return bool(owner) and member in (owner, '~' + owner)
+
+
+def _inline_definition(text, candidate):
+    """Whether the resolved definition head is declared ``inline``.
+
+    VC6 emits an inline definition only on demand or through its retained
+    declaration's attributes (for example ``__declspec(dllexport)``). Its
+    renamed probe carries neither, so absence of the probe is expected.
+    """
+    from .source_quality import _mask_non_code
+    lines = text.splitlines(keepends=True)
+    first = sum(map(len, lines[:candidate.line - 1]))
+    end = sum(map(len, lines[:candidate.end_line]))
+    head = _mask_non_code(text)[first:end].partition('{')[0]
+    return re.search(r'(?<![\w])(?:__forceinline|__inline|inline)(?![\w])', head) is not None
+
+
+def _free_removal_edit(text, candidate, name):
+    """Replace one free-function definition with its own declaration."""
+    first, end, declaration, _ = _definition_parts(text, candidate, name, name)
+    return text[:first] + declaration + text[end:]
 
 
 class BodyAttribution:
@@ -220,8 +253,7 @@ class BodyAttribution:
             raise ValueError('declared source body is an unfinished placeholder')
         symbol = record.symbol or record.name
         name = qualified_name(symbol) if self.symbol_format == 'msvc' else identifier(symbol)
-        if name and '::' in name and (candidate.form == 'in_class'
-                                      or name.partition('::')[2].startswith('~')):
+        if name and '::' in name and (candidate.form == 'in_class' or _special_member(name)):
             return candidate, name
         if not name or not name.isidentifier():
             raise ValueError('compiler body attribution currently supports ordinary free functions '
@@ -303,6 +335,19 @@ class BodyAttribution:
         self.compile_attempts += 1
         return Coff(overlay(self.root / unit, {candidate.path: removed}, tuple(arguments), tuple(flags)))
 
+    def _free_removal_trial(self, candidate, name, unit, arguments, flags, compiler):
+        overlay = getattr(compiler, 'overlay', None)
+        if not callable(overlay):
+            raise ValueError('configured compiler client has no source-overlay capability')
+        original = self.bytes[candidate.path]
+        try:
+            text = original.decode('utf-8')
+        except UnicodeError as error:
+            raise ValueError('declared body is not UTF-8 source') from error
+        removed = _free_removal_edit(text, candidate, name).encode('utf-8')
+        self.compile_attempts += 1
+        return Coff(overlay(self.root / unit, {candidate.path: removed}, tuple(arguments), tuple(flags)))
+
     def qualify(self, record, obj, *, unit, arguments, flags, compiler):
         if self.is_placeholder(record):
             raise ValueError('declared body or marker-owned definition is an unfinished placeholder')
@@ -338,9 +383,22 @@ class BodyAttribution:
             raise ValueError('requested body differs from its captured source mapping')
         if any(item.name == original and item.section > 0 for item in changed.symbols.values()):
             raise ValueError('declared-body rename did not remove the selected function definition')
-        changed.function(renamed)
+        evidence = 'unchanged-overlay equivalence and exact definition rename/disappearance'
+        if not any(item.name == renamed and item.section > 0 for item in changed.symbols.values()):
+            text = self.bytes[candidate.path].decode('utf-8')
+            if not _inline_definition(text, candidate):
+                changed.function(renamed)  # Refuses: the ordinary probe must be emitted.
+            # The renamed inline probe lost the retained declaration's emission
+            # attributes. Use the member-style control, alone: replacing the
+            # definition by its declaration must drop the selected definition.
+            removed = self._free_removal_trial(candidate, name, unit, arguments, flags, compiler)
+            if any(item.name == original and item.section > 0 for item in removed.symbols.values()):
+                raise ValueError('inline definition removal did not remove the selected function definition')
+            evidence = 'unchanged-overlay equivalence and inline definition removal/disappearance'
+        else:
+            changed.function(renamed)
         return {'result': 'pass', 'path': candidate.path, 'line': candidate.line,
                 'end_line': candidate.end_line, 'symbol': symbol, 'unit': unit,
-                'evidence': 'unchanged-overlay equivalence and exact definition rename/disappearance',
+                'evidence': evidence,
                 'ordinary_object_sha256': key[-1],
                 'limitations': ['current configured compilation only; no original-TU, linked-selection or runtime proof']}

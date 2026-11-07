@@ -32,7 +32,7 @@
 HPALETTE PaletteInitialized;  // 0x009B8178
 // RECOVERY_OBJECT: v1 0x009B8188 ?PaletteUsesSystemColours@@3HA
 int PaletteUsesSystemColours;  // 0x009B8188
-// RECOVERY_OBJECT: v1 0x009B8180 ?PaletteActive@@3PAVPalette@@A
+// RECOVERY_OBJECT: v2 0x009B8180 0x009B8184 ?PaletteActive@@3PAVPalette@@A 0x00636960
 Palette *PaletteActive;                 // 0x009B8180
 // RECOVERY_OBJECT: v1 0x009B8184 ?PaletteSeedCache@@3HA
 int PaletteSeedCache;                   // 0x009B8184

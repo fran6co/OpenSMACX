@@ -150,7 +150,7 @@ int MapResamplePreviousHeight;
 // RECOVERY_OBJECT: v3 0x00949884 ?MapArea@@3IA member ?MapStorage@@3UMapStorageWindow@@A metadata_.area_
 // RECOVERY_OBJECT: v3 0x0094988C ?MapIsFlat@@3HA member ?MapStorage@@3UMapStorageWindow@@A metadata_.is_flat_
 MapStorageWindow MapStorage;
-// RECOVERY_OBJECT: v4 0x0068FAF0 ?MapLongitude@@3IA target ?MapLongitude@@3HA
+// RECOVERY_OBJECT: v4 0x0068FAF0 0x0068FAF4 ?MapLongitude@@3IA 0x004E7E50 target ?MapLongitude@@3HA
 int MapLongitude = 1;  // half-width tile-row stride; original default is 1
 LPCSTR MapExtension = "MP";
 

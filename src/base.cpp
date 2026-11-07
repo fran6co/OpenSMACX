@@ -7280,7 +7280,7 @@ int __cdecl morale_mod(int base_id, int faction_id, int triad) {
 
 /*
 Purpose: Calculate the new native unit lifecycle bonus modifier provided by a base and faction.
-// ORIGINAL: 0x004E65C0 ?breed_mod@@YAHHH@Z 0x004E65C0-0x004E673D
+// ORIGINAL: 0x004E65C0 ?breed_mod@@YAHHH@Z 0x004E65C0-0x004E673D BYTE_EXACT
 // body      src/base.cpp
 // LEVER: body lives in base.h (MEASURED inline) as four has_fac_built_call()
 //        checks instead of has_fac_built() - fixes breed_mod's OWN call

@@ -1813,6 +1813,13 @@ def compare_unit(records, exe: Path | str, source: Path | str,
                             if int(candidate.get("address", "0"), 16) == record.address), None)
                 result = row.get("result") if row else None
                 diagnostic = row.get("reason") if row else None
+                if not diagnostic and row:
+                    # A per-flag variant carries the strict refusal reason
+                    # when the aggregated function row does not.
+                    diagnostic = next((variant.get("reason") for variant in row.get("variants", ())
+                                       if isinstance(variant, dict)
+                                       and variant.get("result") != Result.PASS
+                                       and variant.get("reason")), None)
                 if not diagnostic:
                     checks = strict.get("selected_evidence", {}).get("checks", [])
                     diagnostic = next((item.get("reason") for item in checks

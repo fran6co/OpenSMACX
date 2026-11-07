@@ -81,7 +81,7 @@ typedef signed char int8;  // a scaffold spelling the artifacts use
 #include "basepop.h"  // Win::set_bubble_text's popup interfaces
 #include <ddraw.h>  // IDirectDrawSurface::GetDC / ReleaseDC in the hdc pair
 
-// RECOVERY_OBJECT: v1 0x009B7B6C ?MenuPullDownInputOrigin@@3HA
+// RECOVERY_OBJECT: v2 0x009B7B6C 0x009B7B70 ?MenuPullDownInputOrigin@@3HA 0x005F9640
 // Shared state written by Menu and PullDown keyboard navigation paths.
 int MenuPullDownInputOrigin;
 
@@ -91,7 +91,7 @@ int MenuPullDownInputOrigin;
 uint32_t MsgStatus;  // 0x009B7B9C
 // The process window handle is produced by Win::open's CreateWindowExA
 // and consumed by the window/message-pump and DirectDraw owners.
-// RECOVERY_OBJECT: v1 0x009B7B28 ?HandleMain@@3PAUHWND__@@A
+// RECOVERY_OBJECT: v2 0x009B7B28 0x009B7B2C ?HandleMain@@3PAUHWND__@@A 0x005FBF00
 HWND HandleMain;  // 0x009B7B28
 // `DirectDrawCreate` (DDInit::init) is the one symbol this tree needs out of
 // ddraw.lib; it is on the CMake link line now, where dxguid already was.
@@ -637,11 +637,11 @@ const char WinMsgIncreaseMaxChildren[] = "Increase #define MAX_CHILDREN";  // 0x
 const char WinMsgTooManyParents[] = "Too many parents";              // 0x00696DB4
 const char WinMsgIncreaseMaxParents[] = "Increase #define MAX_PARENTS";    // 0x00696D94
 const char WinMdebugCode[] = "mdebug";                               // 0x00696DF8
-// RECOVERY_OBJECT: v1 0x009B7AA8 ?WinTrackingMode@@3HA
+// RECOVERY_OBJECT: v2 0x009B7AA8 0x009B7AAC ?WinTrackingMode@@3HA 0x005F7580
 int WinTrackingMode;       // 0x009B7AA8
-// RECOVERY_OBJECT: v1 0x009B7AB0 ?WinTrackingX@@3HA
+// RECOVERY_OBJECT: v2 0x009B7AB0 0x009B7AB4 ?WinTrackingX@@3HA 0x005F7580
 int WinTrackingX;          // 0x009B7AB0
-// RECOVERY_OBJECT: v1 0x009B7AB4 ?WinTrackingY@@3HA
+// RECOVERY_OBJECT: v2 0x009B7AB4 0x009B7AB8 ?WinTrackingY@@3HA 0x005F7580
 int WinTrackingY;          // 0x009B7AB4
 // RECOVERY_OBJECT: v1 0x009B7A68 ?WinBackBuffer@@3PAVBuffer@@A
 Buffer *WinBackBuffer;         // 0x009B7A68
@@ -652,7 +652,7 @@ Win *WinModalFocus;         // 0x009B8D7C
 Win *WinPendingFocus;       // 0x009B7B38
 // Shared current receiver for window callbacks and redraw, not a pointer
 // through which to overwrite the previous receiver's object storage.
-// RECOVERY_OBJECT: v1 0x009B7AB8 ?WinCallbackWindow@@3PAVWin@@A
+// RECOVERY_OBJECT: v2 0x009B7AB8 0x009B7ABC ?WinCallbackWindow@@3PAVWin@@A 0x0060F8B0
 Win *WinCallbackWindow;
 // RECOVERY_OBJECT: v1 0x009B7AC4 ?WinInputFocus@@3PAVWin@@A
 Win *WinInputFocus;       // 0x009B7AC4
