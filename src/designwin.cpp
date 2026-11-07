@@ -492,7 +492,7 @@ void SelectPartWin::on_redraw() {
 // SelectPartWin vtable selects this body at slot 17. Grid cells are 108x94
 // with a 4px inset.
 // Historical seed: git:08336bcc:src/recovered/units/00433820.cpp (measured MISMATCH).
-// ORIGINAL: 0x00433820 ?on_mouse_feedback@SelectPartWin@@UAEXHH@Z 0x00433820-0x00433934
+// ORIGINAL: 0x00433820 ?on_mouse_feedback@SelectPartWin@@UAEXHH@Z 0x00433820-0x00433934 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Original seed at git:08336bcc:src/recovered/units/00433820.cpp; its original spans and historical obligations are retained.", "SelectPartWin constructor 0x004328B0 establishes GraphicWin, Scroll+0xA14, Caviar+0x2B9C, Buffer+0x406C and Font members+0x45F4/+0x461C."], "reason": "The SelectPartWin primary vtable at 0x0066B2B8 selects this original body in slot 17; the real GraphicWin-derived override retains its provisional inherited name."}
 // symbol    ?on_mouse_move@SelectPartWin@@UAEXHH@Z
 void SelectPartWin::on_mouse_move(int x, int y) {
