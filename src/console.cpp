@@ -249,7 +249,7 @@ void Console::set_move(int force_update) {
 
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x00511800 ?turn_hints@Console@@QAEXXZ 0x00511800-0x00511BA8
+// ORIGINAL: 0x00511800 ?turn_hints@Console@@QAEXXZ 0x00511800-0x00511BA8 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned original entry 00511800; retained seed src/recovered/units/00511800.cpp", "Existing TutWin guard at8CC210 is member+53A8; stage8CC228 is+53C0. Typed global Console history, PlayerData prototype/base/population fields and diplomacy arrays replace seed address arithmetic. Caption pointer691B14 targets TUTOR691B8C.", "recovery/tasks/console-scenario-owner-wave.json; native scope expansions retain the original task baseline"], "reason": "Recover the complete Console command into its genuine owner using typed state and existing lifecycle/network APIs. Preserve original spans and retained seed evidence; this binding is not a byte, reference or runtime acceptance claim."}
 void Console::turn_hints() { // 0x00511800
     if ((GameDataStateStorage.fields_.game_preferences_ & PREF_BSC_TUTORIAL_MSGS) == 0 ||
@@ -3612,7 +3612,7 @@ static inline int ready_tile_in_view(MapWin &win, int x, int y, int margin) {
 }
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x00510F50 ?ready@Console@@QAEXXZ 0x00510F50-0x00511471
+// ORIGINAL: 0x00510F50 ?ready@Console@@QAEXXZ 0x00510F50-0x00511471 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/00510f50.cpp: original identity and complete spans", "source:src/console.h: Console owner declarations and layout", "source:src/console.cpp: coupled navigation, selection and lifecycle caller relationships"], "reason": "The original Console operation is expressed by the corresponding real Console owner definition, using its recovered members and source-owned callees rather than the retained seed scaffold."}
 void Console::ready() {
     field_23BF8_ = 0;
@@ -4911,7 +4911,7 @@ finish_turn:
     go_reset();
 }
 
-// ORIGINAL: 0x005171D0 ?veh_key@Console@@QAEXHHH@Z 0x005171D0-0x0051778A FILE
+// ORIGINAL: 0x005171D0 ?veh_key@Console@@QAEXHHH@Z 0x005171D0-0x0051778A FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/005171d0.cpp", "image:terranx_original.exe:0x005171D0", "Pinned key selector tables5177E4/517844 and accelerator targets517898; native selection reloads between dispatch stages preserve callback effects."], "reason": "Recover the original in its genuine UI owner using typed members, real globals and declared operations. Retain seed spans and evidence; no current matching or runtime claim."}
 // TRIED: MISMATCH #3 push-vs-mov in the prologue; hoisting the two guard reads into locals before the branch did not change register allocation order. Full switch/goto structure otherwise matches.
 void Console::veh_key(int key, int character, int command) {

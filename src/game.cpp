@@ -8053,7 +8053,7 @@ void __cdecl random_events(int mode) {
 
 }
 
-// ORIGINAL: 0x00529C00 ?mash_planes@@YAXXZ 0x00529C00-0x00529E67
+// ORIGINAL: 0x00529C00 ?mash_planes@@YAXXZ 0x00529C00-0x00529E67 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:8b0da75894c71ec098213e7e12cc29fb1dfc01f3:src/recovered/units/00529c00.cpp", "pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "recovery/tasks/game-logic-seed-owner-coverage.json; complete typed owner migration, preserve original spans and seed lessons. Literal content provenance does not assert original allocation or game acceptance."], "reason": "Native aircraft attrition: vehicle movement spent at+0x28 controls eligibility; damage at+0x10 accumulates reactor-derived attrition; terraforming turns at+0x25 clears on survival. Prototype+0x2A is plan, chassis+0x4A is range; preserve post-focus/boom prototype reads."}
 void __cdecl mash_planes() {
     for (int veh_id = GameDataStateStorage.fields_.vehicle_current_count_ - 1; veh_id >= 0; --veh_id) {
@@ -8969,7 +8969,7 @@ static const char NetControlTurnFallbackLogPrefix[] = "log";
 // RECOVERY_OBJECT: v2 0x0068BE68 0x0068BE6B _NetControlTurnTextFileMode 0x0052A2E0
 static const char NetControlTurnTextFileMode[] = "wt";
 
-// ORIGINAL: 0x0052A2E0 ?net_control_turn@@YAXXZ 0x0052A2E0-0x0052A971
+// ORIGINAL: 0x0052A2E0 ?net_control_turn@@YAXXZ 0x0052A2E0-0x0052A971 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["historical seed:src/unrecovered/0052a2e0.cpp", "task:net-turn-coordinator-owner", "ConsoleGlobal9156B0+23BE4/+23BE8 owns939294/939298; UpgradePromptAnswered90EA3C, TurnRedrawPending703DE0 and CouncilPendingMessageArgs68BF38 already own their storage. Do not create competing aliases.", "Native prototypes64..511 use34-byte records and flags+30/obsolete_factions+2C, not seed1A stride; peer checksums use8x21-word existing storage. Preserve wait/abort ordering and masked PlayerLock active-bit test; extent/lifetime/runtime and retained-link evidence remain bounded."], "reason": "Recover the complete multiplayer turn operation through actual source-owned objects, arrays, members and SDK calls; preserve historical identity, spans and seed discoveries without implying game acceptance."}
 // TRIED: faithful port of the turn-control loop (checksum/log setup, the active-faction bitmask scan requiring both 0x9a64e8 and 0x9a64e9 bits set, the base-then-veh center-view fallback search, the human/AI turn dispatch with the net_tasks polling loops, and the two net_end_of_turn continuation checks incl. the dead defensive branch Ghidra also shows). Compiles; diverges at instr #0 on stack-frame size (local declarations spread across nested blocks change the `sub esp` prologue vs the original's single big frame). Not chased further.
 void __cdecl net_control_turn() {
