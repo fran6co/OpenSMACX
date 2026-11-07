@@ -4809,7 +4809,7 @@ Purpose: The renderer's own draw. Rejects a draw with the renderer switched
          record, transforms the camera position by the scene rotation, draws
          through the engine, unions what was covered into the viewport and the
          scene rectangle, blits the colour table the draw filled, and clears.
-// ORIGINAL: 0x00617230 ?render@Caviar@@QAEHPAUBuffer@@HHH@Z 0x00617230-0x00617620
+// ORIGINAL: 0x00617230 ?render@Caviar@@QAEHPAUBuffer@@HHH@Z 0x00617230-0x00617620 BYTE_EXACT
 // symbol    ?render@Caviar@@QAEHPAVBuffer@@HHH@Z
 // size      1008 bytes
 // prototype int (__thiscall ?render@Caviar@@QAEHPAUBuffer@@HHH@Z)(Caviar* this, Buffer*, int, int, int)
