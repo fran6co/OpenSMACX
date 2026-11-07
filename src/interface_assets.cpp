@@ -4484,56 +4484,50 @@ void __cdecl load_vehicles() {
 // RECOVERY_BINDING: v1 {"evidence": ["Earlier observation in the retired donor/seed: Full original4547E0..454D0C and retained seed src/recovered/units/004547e0.cpp establish the single no-argument loader, three sheet loads, recolor pairs before every extraction, all receivers/rectangles and unconditional terminal close.", "All service results are ignored. Original454B04 resets the arrow-column coordinate to104 before filler extraction. Menu and checkbox receivers belong to existing arrays, including checkbox element1 rather than separate75AF94 storage.", "Original per-asset CRT constructors/teardowns independently establish element counts and44-byte stride. Existing load_sprites startup and raw caption-icon publisher are separate unfinished ownership dependencies, not proof supplied by this binding."], "reason": "Complete original icon-sheet loader uses the existing shared PCX Buffer and thirteen existing Sprite groups. Recover ordinary C++ object/array accesses without original-address aliases or replacement assets."}
 void __cdecl load_icons() {
     Buffer &buffer = g_PCX_PARSE_TEMP_BUFFER1;
-    Sprite *icon;
     int source_x;
     int source_y;
-    int columns_left;
+    int row;
+    int column;
 
     // Pinned sheet literals 685064 and 685084 accompany the separately
     // source-owned wreck-sheet array. All loads use palette 0, base 10, count 236.
     // There is no DirectDraw guard here, unlike load_cursors.
     buffer.load_pcx(InterfaceIconSheetName, 0, 10, 236);
-    icon = g_ICONS_GENERAL_SPRITES;
     source_y = 13;
-    do {
+    for (row = 0; row < 4; ++row) {
         source_x = 1;
-        columns_left = 4;
-        do {
+        for (column = 0; column < 4; ++column) {
             buffer.change_color(263, 265);
             buffer.change_color(262, 265);
-            icon->extract(&buffer, 265, source_x, source_y, 22, 22, 0);
+            g_ICONS_GENERAL_SPRITES[row * 4 + column].extract(&buffer, 265, source_x, source_y, 22, 22, 0);
             source_x += 23;
-            ++icon;
-        } while (--columns_left);
+        }
         source_y += 23;
-    } while (icon < g_ICONS_GENERAL_SPRITES + 16);
+    }
 
     buffer.change_color(263, 265);
     buffer.change_color(262, 265);
     g_NULL_RESOURCE_ICON_SPRITE.extract(&buffer, 265, 1, 174, 22, 22, 0);
 
-    icon = g_PEACE_SIGN_SPRITES;
-    for (source_y = 220; icon < g_PEACE_SIGN_SPRITES + 2; source_y += 23) {
+    source_y = 220;
+    for (row = 0; row < 2; ++row) {
         buffer.change_color(263, 265);
         buffer.change_color(262, 265);
-        icon->extract(&buffer, 265, 1, source_y, 22, 22, 0);
-        ++icon;
+        g_PEACE_SIGN_SPRITES[row].extract(&buffer, 265, 1, source_y, 22, 22, 0);
+        source_y += 23;
     }
 
-    icon = g_RESOURCE_ICON_SPRITES;
     source_y = 304;
-    do {
+    for (row = 0; row < 4; ++row) {
         source_x = 174;
-        columns_left = 8;
-        do {
+        for (column = 0; column < 8; ++column) {
             buffer.change_color(263, 265);
             buffer.change_color(262, 265);
-            icon->extract(&buffer, 265, source_x, source_y, 40, 40, 0);
+            g_RESOURCE_ICON_SPRITES[row * 8 + column].extract(&buffer, 265, source_x, source_y, 40, 40, 0);
             source_x += 41;
-            ++icon;
-        } while (--columns_left);
+        }
         source_y += 41;
-    } while (icon < g_RESOURCE_ICON_SPRITES + 32);
+    }
     buffer.load_pcx(IconWreckSheetName, 0, 10, 236);
     buffer.change_color(263, 265);
     buffer.change_color(262, 265);
@@ -4549,52 +4543,48 @@ void __cdecl load_icons() {
     buffer.change_color(262, 265);
     g_RED_MALE_HEAD_ICON_SPRITE.extract(&buffer, 265, 46, 303, 33, 30, 0);
 
-    icon = g_SCROLL_BAR_ARROW_ICON_SPRITES;
+    source_x = 104;
     source_y = 1;
-    do {
-        source_x = 104;
-        columns_left = 3;
-        do {
+    for (row = 0; row < 4; ++row) {
+        for (column = 0; column < 3; ++column) {
             buffer.change_color(263, 265);
             buffer.change_color(262, 265);
-            icon->extract(&buffer, 265, source_x, source_y, 24, 24, 0);
+            g_SCROLL_BAR_ARROW_ICON_SPRITES[row * 3 + column].extract(&buffer, 265, source_x, source_y, 24, 24, 0);
             source_x += 25;
-            ++icon;
-        } while (--columns_left);
+        }
         source_y += 25;
-    } while (icon < g_SCROLL_BAR_ARROW_ICON_SPRITES + 12);
+        source_x = 104;
+    }
 
     // Original EDI is reset to 104 after the final arrow row; the filler
     // source X is not the previous row's final icon or its one-past position.
     buffer.change_color(263, 265);
     buffer.change_color(262, 265);
-    g_SCROLL_BAR_FILLER_ICON_SPRITES.extract(&buffer, 265, 104, 101, 18, 18, 0);
+    g_SCROLL_BAR_FILLER_ICON_SPRITES.extract(&buffer, 265, source_x, 101, 18, 18, 0);
 
-    icon = g_SCROLL_BAR_SMALL_ARROW_ICON_SPRITES;
+    source_x = 192;
     source_y = 1;
-    do {
-        source_x = 192;
-        columns_left = 3;
-        do {
+    for (row = 0; row < 4; ++row) {
+        for (column = 0; column < 3; ++column) {
             buffer.change_color(263, 265);
             buffer.change_color(262, 265);
-            icon->extract(&buffer, 265, source_x, source_y, 10, 10, 0);
+            g_SCROLL_BAR_SMALL_ARROW_ICON_SPRITES[row * 3 + column].extract(&buffer, 265, source_x, source_y, 10, 10, 0);
             source_x += 11;
-            ++icon;
-        } while (--columns_left);
+        }
         source_y += 11;
-    } while (icon < g_SCROLL_BAR_SMALL_ARROW_ICON_SPRITES + 12);
+        source_x = 192;
+    }
 
     buffer.change_color(263, 265);
     buffer.change_color(262, 265);
     g_SCROLL_BAR_SMALL_FILLER_ICON_SPRITE.extract(&buffer, 265, 225, 1, 10, 10, 0);
 
-    icon = g_SILVER_MENU_ICON_SPRITES;
-    for (source_x = 320; icon < g_SILVER_MENU_ICON_SPRITES + 4; source_x += 16) {
+    source_x = 320;
+    for (column = 0; column < 4; ++column) {
         buffer.change_color(263, 265);
         buffer.change_color(262, 265);
-        icon->extract(&buffer, 265, source_x, 1, 15, 15, 0);
-        ++icon;
+        g_SILVER_MENU_ICON_SPRITES[column].extract(&buffer, 265, source_x, 1, 15, 15, 0);
+        source_x += 16;
     }
 
     buffer.change_color(263, 265);

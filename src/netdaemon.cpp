@@ -7226,33 +7226,31 @@ int NetDaemon::veh_drop(int veh_id, int x, int y) {
     }
 
     if (channels_[1].leading_words_[2] != 0) {
-        if (channels_[1].trailing_words_[3] != 0) return 0;
-        ++channels_[1].trailing_words_[5];
-        if (static_cast<int>(channels_[1].trailing_words_[5]) < 2) return 0;
-        NetMsgPrimary.pop("MOVEPENDING", 0, 2, nullptr);
+        if (channels_[1].trailing_words_[3] == 0
+            && static_cast<int>(++channels_[1].trailing_words_[5]) > 1) {
+            NetMsgPrimary.pop("MOVEPENDING", 0, 2, nullptr);
+        }
         return 0;
     }
 
     channels_[1].trailing_words_[5] = 0;
-    if (lock_veh(&veh_id, 4, x, y, 4) != 0) return 0;
+    if (lock_veh(&veh_id, 4, x, y, 4) != 0) {
+        return 0;
+    }
 
-    const int base_id = base_at(x, y);
-    bool rejected = false;
-    if (base_id >= 0) {
-        const uint8_t vehicle_faction = Vehs[veh_id].faction_id;
-        const uint8_t base_faction = Bases[base_id].faction_id_current;
-        rejected = vehicle_faction == base_faction ||
-            (PlayersData[vehicle_faction].diplo_treaties[base_faction] & 1U) != 0;
-        if (!rejected) {
-            const Map &tile = *map_loc(x, y);
-            if ((tile.bit & 2U) != 0) {
-                const int owner = owner_at(x, y);
-                rejected = owner < 8 && owner >= 0;
+    int base_id = base_at(x, y);
+    if (base_id >= 0
+        && Vehs[veh_id].faction_id != Bases[base_id].faction_id_current
+        && (PlayersData[Vehs[veh_id].faction_id]
+                .diplo_treaties[Bases[base_id].faction_id_current] & 1U) == 0) {
+        Map *tile = map_loc(x, y);
+        if ((tile->bit & 2U) != 0) {
+            int owner = tile->val2 & 0xF;
+            if (owner < 8 && owner >= 0) {
+                goto airdrop;
             }
         }
-        if (!rejected) rejected = add_global() == 0;
-
-        if (!rejected) {
+        if (add_global() != 0) {
             if (channels_[1].trailing_words_[3] != 0) {
                 Vehs[veh_id].order = 0;
                 Vehs[veh_id].state &= 0xFCFFBDFFU;
@@ -7262,9 +7260,7 @@ int NetDaemon::veh_drop(int veh_id, int x, int y) {
                     *acknowledged = 1;
                     log_say("Awaiting acknowledgement of SYNCH",
                             ConsoleGlobal.faction_id_, 0, 0);
-                    const int waited = wait("AWAITEXEC", acknowledged, 1,
-                                            2000);
-                    NetDaemonWaitTicks += waited;
+                    NetDaemonWaitTicks += wait("AWAITEXEC", acknowledged, 1, 2000);
                     if (*acknowledged == 0) {
                         log_say("Received SYNCH acknowledgement",
                                 ConsoleGlobal.faction_id_, 0, 0);
@@ -7276,53 +7272,46 @@ int NetDaemon::veh_drop(int veh_id, int x, int y) {
         }
     }
 
-    if (action_airdrop(veh_id, x, y, 1) != 0) {
-        const int current_speed = speed(veh_id, 0);
-        const int previous_speed = Vehs[veh_id].moves_expended;
-        const int difference = current_speed - previous_speed;
-        if (difference >= 0 &&
-            (difference > 999 || current_speed != previous_speed)) {
-            message_data(0x2403, 0, veh_id, x, y, 0);
-            if (IsMultiplayerNet != 0) {
-                log_say("Client waiting for acknowledgement",
-                        ConsoleGlobal.faction_id_, 0, 0);
-                const int saved_action_mode = NetDaemonNet.channels_[0].leading_words_[3];
-                ++NetBusyCount;
-                const DWORD start_time = timeGetTime();
-                int showed_wait_popup = 0;
-                while (channels_[1].leading_words_[3] == 1) {
-                    if (ExitTurnLoop != 0) break;
-                    if (!showed_wait_popup &&
-                        timeGetTime() - start_time > 2000) {
-                        showed_wait_popup = 1;
-                        NetMsgPrimary.pop("AWAITEXEC", 0, 2, nullptr);
-                    }
-                    wait_task();
-                    receive();
-                    locks_.check_global();
-                    check_spock();
+airdrop:
+    if (action_airdrop(veh_id, x, y, 1) != 0
+        && range(speed(veh_id, 0) - Vehs[veh_id].moves_expended, 0, 999) != 0) {
+        message_data(0x2403, 0, veh_id, x, y, 0);
+        if (IsMultiplayerNet != 0) {
+            log_say("Client waiting for acknowledgement",
+                    ConsoleGlobal.faction_id_, 0, 0);
+            const int saved_action_mode = NetDaemonNet.channels_[0].leading_words_[3];
+            ++NetBusyCount;
+            const DWORD start_time = timeGetTime();
+            int showed_wait_popup = 0;
+            while (channels_[1].leading_words_[3] == 1) {
+                if (ExitTurnLoop != 0) break;
+                if (!showed_wait_popup && timeGetTime() - start_time > 2000) {
+                    showed_wait_popup = 1;
+                    NetMsgPrimary.pop("AWAITEXEC", 0, 2, nullptr);
                 }
-                if (showed_wait_popup) NetMsgPrimary.close();
-                NetDaemonNet.channels_[0].leading_words_[3] = saved_action_mode;
-                --NetBusyCount;
-                log_say("Client received acknowledgement",
-                        ConsoleGlobal.faction_id_, 0, 0);
-                if (IsMultiplayerNet != 0) {
-                    log_say("Client releasing lock",
-                            ConsoleGlobal.faction_id_, 0, 0);
-                    message_data(0x2212, 0, 0, 0, 0, 0);
-                    channels_[1].leading_words_[3] = 0;
-                    channels_[1].leading_words_[2] = 0;
-                    channels_[1].trailing_words_[5] = 0;
-                    channels_[1].trailing_words_[4] = 0;
-                }
-                channels_[1].leading_words_[2] = 0;
-                channels_[1].trailing_words_[3] = 0;
-                channels_[1].leading_words_[3] = 0;
-                return 1;
+                wait_task();
+                receive();
+                locks_.check_global();
+                check_spock();
             }
-            return 1;
+            if (showed_wait_popup) NetMsgPrimary.close();
+            NetDaemonNet.channels_[0].leading_words_[3] = saved_action_mode;
+            --NetBusyCount;
+            log_say("Client received acknowledgement",
+                    ConsoleGlobal.faction_id_, 0, 0);
+            if (IsMultiplayerNet != 0) {
+                log_say("Client releasing lock", ConsoleGlobal.faction_id_, 0, 0);
+                message_data(0x2212, 0, 0, 0, 0, 0);
+                channels_[1].leading_words_[3] = 0;
+                channels_[1].leading_words_[2] = 0;
+                channels_[1].trailing_words_[5] = 0;
+                channels_[1].trailing_words_[4] = 0;
+            }
+            channels_[0].payload_.vehicle_selection_follow = 0;
+            channels_[1].trailing_words_[3] = 0;
+            channels_[1].leading_words_[3] = 0;
         }
+        return 1;
     }
 
 release_vehicle:
@@ -7447,10 +7436,11 @@ int NetDaemon::order_veh(int veh_id, int direction, int mode) {
 
     if (mode == 0) {
         if (channels_[1].leading_words_[2] != 0) {
-            if (channels_[1].trailing_words_[3] != 0) return 0;
-            ++channels_[1].trailing_words_[5];
-            if (static_cast<int>(channels_[1].trailing_words_[5]) < 2) return 0;
-            NetMsgPrimary.pop("MOVEPENDING", 0, 2, nullptr);
+            if (channels_[1].trailing_words_[3] == 0
+                && static_cast<int>(++channels_[1].trailing_words_[5]) > 1) {
+                NetMsgPrimary.pop("MOVEPENDING", 0, 2, nullptr);
+                return 0;
+            }
             return 0;
         }
         channels_[1].trailing_words_[5] = 0;
@@ -7473,9 +7463,13 @@ int NetDaemon::order_veh(int veh_id, int direction, int mode) {
         if (base_faction != faction &&
             (PlayersData[faction].diplo_treaties[base_faction] & 1U) == 0) {
             const Map &tile = MapTiles[MapLongitude * y + (x >> 1)];
-            if ((tile.bit & 2U) == 0 || (tile.val2 & 0x0F) > 7 ||
-                Bases[base_id].population_size < 2) {
+            if ((tile.bit & 2U) == 0) {
                 good_base = 1;
+            } else {
+                int owner = tile.val2 & 0x0F;
+                if (owner >= 8 || owner < 0 || Bases[base_id].population_size <= 1) {
+                    good_base = 1;
+                }
             }
         }
     }
@@ -7520,11 +7514,8 @@ int NetDaemon::order_veh(int veh_id, int direction, int mode) {
 
     if (::order_veh(veh_id, direction, 1) == 0) goto release_lock_only;
 
-    {
-        const int difference = speed(veh_id, 0) - Vehs[veh_id].moves_expended;
-        if (difference < 0 ||
-            (difference < 1000 && difference == 0))
-            goto release_lock_only;
+    if (range(speed(veh_id, 0) - Vehs[veh_id].moves_expended, 0, 999) == 0) {
+        goto release_lock_only;
     }
 
     if (VehPrototypes[Vehs[veh_id].proto_id].plan == PLAN_INFO_WARFARE &&

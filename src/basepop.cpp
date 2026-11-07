@@ -3157,13 +3157,23 @@ int BasePop::UNK2() {
     // seek_pos body for the original -1 selection and its two abs calls.
     item_ids_.seek_pos(-1);
 
+    StringList *list = &item_ids_;
     for (int i = 0; i < item_ids_.entry_count_; ++i) {
-        item_ids_.next_entry();
+        if (list->head_ != 0) {
+            StringStructEntry *next = list->current_->next;
+            int count = list->entry_count_;
+            list->current_ = next;
+            if (++list->current_position_ == count) {
+                list->current_position_ = 0;
+            }
+        }
 
         // Preserve the pin's null-payload dereference when current_ exists but
-        // the list head is absent; current_entry owns the observed head check.
-        char *text = item_ids_.current_ != 0
-                   ? item_ids_.current_entry()->text
+        // the list head is absent (current_entry, open-coded).
+        char *text = list->current_ != 0
+                   ? (list->head_ != 0 ? list->current_->string_payload()
+                                       : static_cast<StringStructPayload *>(0))
+                         ->text
                    : static_cast<char *>(0);
         int width = button_font1_->width(text);
         if (width > max_width) {
