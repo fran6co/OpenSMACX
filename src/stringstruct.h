@@ -240,8 +240,11 @@ class StringStruct : public virtual StringAllocationBase {
   // destructor owns the earlier derived stage, where its text-removal hook
   // must still be active. These are real C++ destructor transitions, not
   // hand-written table installs.
-  ~StringStruct() {
-    destroy_owned_entries(this);
+  ~StringStruct() { close(); }
+  // Drain the list and reset the cursor; the destructor runs exactly this.
+  void close() {
+    remove_all();
+    current_position_ = 0;
   }
   MEASURED int seek_pos(int a1);
   int current_id();
@@ -253,39 +256,7 @@ class StringStruct : public virtual StringAllocationBase {
   StringStructPayload *current_entry();
   MEASURED StringStructPayload *next_entry();
   int seek_id(int id);
-  void remove_all();
-
- protected:
-  // Base cleanup resets position even when the list is empty.
-  static void destroy_owned_entries(StringStruct *list) {
-    if (list->head_ != nullptr) {
-
-      // The original initializes its index before testing the entry count.
-      int index = 0;
-      if (list->entry_count_ > 0) {
-        do {
-          StringStructEntry *const entry = list->head_;
-          list->current_ = entry->next;
-          ListPayloadBase *const payload = entry->payload;
-          list->on_remove(payload);
-          delete payload;
-          list->head_->payload = nullptr;
-          delete list->head_;
-          ++index;
-          list->head_ = list->current_;
-          // The loop bound is re-read every iteration, so a visitor that
-          // changes the count changes how far the walk goes.
-        } while (index < list->entry_count_);
-      }
-      list->head_ = nullptr;
-      list->current_position_ = 0;
-      list->entry_count_ = 0;
-    
-    }
-    list->current_position_ = 0;
-  }
-
- public:
+  MEASURED void remove_all();
 
   // 0x00401100 appends an entry and payload, then invokes the insertion hook.
   // Allocation failures retain the original partially updated list state.
@@ -332,12 +303,12 @@ class StringList : public StringStruct {
   // 0x004066C0 removes entries while StringList's text hook is still active,
   // before the compiler enters StringStruct's base cleanup stage.
   ~StringList() {
-    StringStruct::remove_all();
-    current_position_ = 0;
+    close();
   }
-  // Callers clear StringList entries through an inline-visible operation;
-  // destructor phases retain the separate public StringStruct entry.
-  // This source distinction is inferred from the original call boundaries.
+  // Callers clear StringList entries through this inline-visible walk; it
+  // has the same body as StringStruct::remove_all. Folding the two into one
+  // declaration perturbs unrelated register allocation in other TUs
+  // (Datalink::set_cat_social 0x0042B630), so both stay declared.
   void remove_all() {
     if (!head_) {
       return;
@@ -353,8 +324,8 @@ class StringList : public StringStruct {
         delete payload;
         head_->payload = nullptr;
         delete head_;
-        ++index;
         head_ = current_;
+        ++index;
         // The loop bound is re-read every iteration, so a visitor that
         // changes the count changes how far the walk goes.
       } while (index < entry_count_);
@@ -467,6 +438,34 @@ MEASURED inline int StringStruct::seek_pos(int a1) {
         current_position_ = a1;
         return 1;
     }
+}
+
+// 0x00402970 is both called and expanded inline (StringList's destructor
+// walks the list twice); MEASURED keeps the out-of-line copy emitted.
+MEASURED inline void StringStruct::remove_all() {
+    if (!head_) {
+      return;
+    }
+    // The original initializes its index before testing the entry count.
+    int index = 0;
+    if (entry_count_ > 0) {
+      do {
+        StringStructEntry *const entry = head_;
+        current_ = entry->next;
+        ListPayloadBase *const payload = entry->payload;
+        on_remove(payload);
+        delete payload;
+        head_->payload = nullptr;
+        delete head_;
+        head_ = current_;
+        ++index;
+        // The loop bound is re-read every iteration, so a visitor that
+        // changes the count changes how far the walk goes.
+      } while (index < entry_count_);
+    }
+    head_ = nullptr;
+    current_position_ = 0;
+    entry_count_ = 0;
 }
 
 MEASURED inline StringStructPayload *StringStruct::next_entry() {

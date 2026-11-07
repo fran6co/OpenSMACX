@@ -89,8 +89,9 @@
 class PopMenu : public Popup, public PullDown {
  public:
   PopMenu() { ; }
-  // Original 0x00421400: destroy PullDown then Popup in reverse base order.
-  ~PopMenu() {}
+  // Original 0x00421400 is compiler-generated: PullDown then Popup in
+  // reverse base order. A user-declared destructor, even an empty one,
+  // restages PopMenu's own tables first, which the image does not do.
   int init();
   // The caller at 0x004B9178 switches on the selected index returned in EAX;
   // the catalogue's void return omitted that observed result.

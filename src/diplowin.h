@@ -84,7 +84,6 @@ class DiploWin : public GraphicWin, public SubInterface {
   void on_iface_group_clicked(int, int, int) override;
   int on_iface_dialog_back_draw(GraphicWin *) override;
   int on_iface_dialog_item_back_draw(GraphicWin *, int, int, RECT *) override;
-  ~DiploWin();
   void UNK3(int a1);
   void UNK5();
   void UNK2();

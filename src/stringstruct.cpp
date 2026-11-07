@@ -296,7 +296,7 @@ Purpose: Release every entry in the list, notifying the owner about each
 // ORIGINAL: 0x00402970 StringStruct::remove_all 0x00402970-0x004029E3 FILE BYTE_EXACT
 // compile_context src/stringstruct.cpp
 // symbol    ?remove_all@StringStruct@@QAEXXZ
-// body      src/stringstruct.cpp
+// body      src/stringstruct.h
 // size      115 bytes
 // prototype 
 // callers   79   call targets   0
@@ -326,31 +326,8 @@ Purpose: Release every entry in the list, notifying the owner about each
 //            rebuilding reports the identical 2 against 0.
 Status: Complete
 */
-void StringStruct::remove_all() {
-    if (!head_) {
-      return;
-    }
-    // The original initializes its index before testing the entry count.
-    int index = 0;
-    if (entry_count_ > 0) {
-      do {
-        StringStructEntry *const entry = head_;
-        current_ = entry->next;
-        ListPayloadBase *const payload = entry->payload;
-        on_remove(payload);
-        delete payload;
-        head_->payload = nullptr;
-        delete head_;
-        ++index;
-        head_ = current_;
-        // The loop bound is re-read every iteration, so a visitor that
-        // changes the count changes how far the walk goes.
-      } while (index < entry_count_);
-    }
-    head_ = nullptr;
-    current_position_ = 0;
-    entry_count_ = 0;
-  }
+// MEASURED inline, defined in stringstruct.h: the image both calls this
+// out of line and expands it inside StringList's destructor.
 
 // StringStructVtable / StringStructVirtualBaseVtable (0x006693A4/0x006693A0)
 // are gone with the hand close chain - the compiler emits both tables from
