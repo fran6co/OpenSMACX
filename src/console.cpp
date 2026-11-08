@@ -3610,7 +3610,7 @@ int Console::on_nc_hittest(int x_coord, int y_coord) {
     return 0;
 }
 
-// ORIGINAL: 0x0050F960 ?on_post_redraw_nc_buffer@Console@@QAEXPAUBuffer@@H@Z 0x0050F960-0x0050FB08
+// ORIGINAL: 0x0050F960 ?on_post_redraw_nc_buffer@Console@@QAEXPAUBuffer@@H@Z 0x0050F960-0x0050FB08 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["The original 0x0050F960..0x0050FB08 draws two splitter handles per orientation; its retired transcription remains in Git history."], "reason": "Render the two Console non-client splitter handles with their owned Sprite members and the Window client/outer geometry; the archived scaffold confirms two handles per orientation and the image buffer dimensions."}
 // symbol    ?on_post_redraw_nc_buffer@Console@@UAEXPAVBuffer@@H@Z
 void Console::on_post_redraw_nc_buffer(Buffer *buffer, int which) {
