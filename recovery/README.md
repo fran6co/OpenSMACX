@@ -76,8 +76,13 @@ or former owner. Generation requires the pinned, backed, relocation-free data;
 there is no literal proprietary table in tracked source or zero fallback.
 
 Recovery preparation generates Release recipes, matching the production
-application used for binary verification. Configure CMake Debug separately for
-IDE or runtime debugging; its `/Od /Ob0 /GZ` recipes are not matching baselines.
+application used for binary verification. A plain `cmake -B build` now defaults
+to Release too, so `cmake --build build` objects equal the measured recipe.
+Configure CMake Debug explicitly in a separate directory for IDE or runtime
+debugging; its `/Od /Ob0 /GZ` recipes are not matching baselines and Debug no
+longer exports `compile_commands.json` over the prepared database. An existing
+`build/` cache configured before this default keeps Debug: reconfigure it with
+`-DCMAKE_BUILD_TYPE=Release`, then rerun `recover prepare`.
 Release and RelWithDebInfo C++ configurations explicitly select `/Ob2`;
 VC6's `/O2` alone does not select that inlining policy.
 Pulldown and DipEdit retain their measured per-owner `/Ob1` overrides.

@@ -40,12 +40,35 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON CACHE BOOL
     "write compiler recipes for the configured match-recovery environment"
     FORCE)
 
+# RELEASE BY DEFAULT. The matching milestone is the linked executable, and
+# `recover measure`/`record` and `recover prepare` all use the Release recipe
+# (recovery/prepare.json, recovery/build.json). Left unset, CMake's
+# Windows-MSVC platform module initializes CMAKE_BUILD_TYPE to Debug during
+# project(), so a plain `cmake -B build` produced `/Od /Ob0 /GZ` objects
+# whose claimed functions did not match (2026-11-08: 4,561 of 4,824
+# measured-exact claims differed; the Release tree differed in none). A
+# Debug tree also rewrote build/compile_commands.json with Debug recipes
+# (-DBUILD_DEBUG, no /DNDEBUG) that measurement then read. Debug stays
+# available for winedbg/gdb with an explicit -DCMAKE_BUILD_TYPE=Debug in a
+# separate directory; it no longer exports a recipe database (after
+# project(), where the toolchain turns the export on).
+if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
+    set(CMAKE_BUILD_TYPE Release CACHE STRING
+        "Release reproduces the measured matching recipe; Debug is for debugging only")
+endif()
+
 # `C` AS WELL AS `CXX`, for zlib. zlib 1.0.2 uses K&R parameter definitions,
 # which no C++ compiler will parse - `byte_match.compile_unit` already writes
 # each vendored unit under its own `.c` suffix for exactly this reason. The
 # toolchain has defined `CMAKE_C_COMPILER` all along; only this line was
 # keeping the language out.
 project(OpenSMACX VERSION 0.2.3 LANGUAGES CXX C)
+if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+    # Debug recipes are not matching recipes; never replace the measured database.
+    set(CMAKE_EXPORT_COMPILE_COMMANDS OFF)
+    set(CMAKE_EXPORT_COMPILE_COMMANDS OFF CACHE BOOL
+        "Debug recipes are not matching recipes" FORCE)
+endif()
 
 # ASM_MASM for the routines the original wrote as MASM modules and VC6 inline
 # asm cannot express (AGENTS.md, "Inline assembly"; user decision 2026-11-07).
@@ -549,9 +572,11 @@ set_source_files_properties(
 set_property(SOURCE src/buffer.cpp APPEND PROPERTY COMPILE_OPTIONS "/Oi-")
 # Preserve original out-of-line close/bit-helper calls in this owner.
 # Video and MCI use separate implementation units under default app inlining.
+# Danger's measurement recipe is plain /O2 (VC6: /Ob1); keep the build equal.
 # This optimized matching exception must not override Debug's /Ob0.
 set_property(SOURCE
     src/pulldown.cpp
+    src/danger.cpp
     APPEND PROPERTY COMPILE_OPTIONS "$<$<NOT:$<CONFIG:Debug>>:/Ob1>")
 # Preserve the original frame-based AlphaMovie owner context without changing
 # its independently measured /Ob2 inlining policy.
