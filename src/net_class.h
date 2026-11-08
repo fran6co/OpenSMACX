@@ -707,7 +707,10 @@ class Net {
   // words. CreatePlayer supplies the local DPID at +0x760; the flagged player
   // callback supplies the session host DPID at +0x764. close() clears both.
   // AlphaNet owns the following player count and record array.
- private:
+  // Public: NetWin reads both words directly (the image never goes through
+  // an inlined accessor there; an accessor's eax-preferred temporary shifts
+  // the register choice of every following send).
+ public:
   // RECOVERY_MEMBER: v1 Net local_player_id_ 0x760 0x0062E540
   DPID local_player_id_;     // 0x760
   // RECOVERY_MEMBER: v1 Net host_player_id_ 0x764 0x00630C80
