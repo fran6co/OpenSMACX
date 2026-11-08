@@ -376,7 +376,7 @@ static const DWORD media_block_quant_order[64] = {
 
 // 64-word output table consumed by 5CC940 case 3. The three scalar literals
 // below are read from the pinned initial image with their float/double widths.
-// ORIGINAL: 0x005CD2D0 sub_5cd2d0 0x005CD2D0-0x005CD3A2
+// ORIGINAL: 0x005CD2D0 sub_5cd2d0 0x005CD2D0-0x005CD3A2 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"reason":"Preserve the original eight-by-eight coefficient walk and signed fixed-point rounding; retain the observed first-coefficient result under the existing integer ABI without asserting an original nominal return type.","evidence":["Pinned 5CD306/5CD367/5CD38E use signed IMUL into EDX:EAX; SHL EDX,16 and SHR EAX,16 combine product bits 16..47, and ADC EAX,EDX adds the carry from original product bit 15 before the DWORD store.","Pinned 5CD2E2 homes the quality-100 path's eight-row latch in the dead quality argument; the non-100 arm advances its coefficient cursor by 0x20 after eight elements until 0x100 bytes are consumed.","Pinned 5CD39A stores the final fixed-point result into destination[0], and the epilogue retains that value in EAX through RET; the mapped caller at 5CC940 does not consume it. The old fabricated zero return is not the observed register result."]}
 // symbol    _sub_5cd2d0
 // kind      game
