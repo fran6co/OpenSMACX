@@ -4262,7 +4262,9 @@ int Buffer::draw(Buffer *destination, int index, int x, int y,
         destination->surface_->Blt(&rectangle, surface_, 0,
                                   DDBLT_WAIT | DDBLT_KEYSRC, 0);
         // The original returns the scale denominator, not either COM result.
-        return denominator;
+        // volatile: stand-in for the image's reload of denominator at
+        // 0x005D854F; no plain spelling found
+        return *(volatile int *)&denominator;
     }
     prepare_shared_sprite(index);
     int result = shared_sprite_.draw(destination, index, x, y, numerator, denominator);
@@ -4337,7 +4339,8 @@ int Buffer::draw(Buffer *destination, int index, int x, int y) {
         key.dwColorSpaceHighValue = index;
         surface_->SetColorKey(DDCKEY_SRCBLT, &key);
         destination->surface_->Blt(0, surface_, 0, DDBLT_WAIT | DDBLT_KEYSRC, 0);
-        return index;
+        // volatile: stand-in for the image's reload of index at 0x005D83CA; no plain spelling found
+        return *(volatile int *)&index;
     }
     prepare_shared_sprite(index);
     int result = shared_sprite_.draw(destination, index, x, y);
@@ -10420,7 +10423,11 @@ Return Value: mutable text, or null when head_ is null
 Status: Complete
 */
 char *StringList::current_text() {
-    return head_ != 0 ? current_->string_payload()->text : 0;
+    // stand-in: volatile read of current_ forces the image's eax-only chase
+    // at 0x005E3637; no plain spelling found (8+ shapes keep ecx in the middle).
+    return head_ != 0
+               ? (*(StringStructEntry *volatile *)&current_)->string_payload()->text
+               : 0;
 }
 
 // current_text is a provisional descriptive name, not a recovered original

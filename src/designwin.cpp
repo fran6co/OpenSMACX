@@ -34,6 +34,13 @@
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned CRT slot0x682078 selects initializer0x432850..0x432866, registering exit0x432870..0x43287a. Root independent complete decode confirms exclusive RET/JMP bounds; original/source-owned storage is0x71f2b0 bound to?TutWinDesWindow@@3VDesignWin@@A.", "Original startup instruction evidence: [[\"0x432850\", \"mov\", \"ecx, 0x71f2b0\"], [\"0x432855\", \"call\", \"0x434480\"], [\"0x43285a\", \"push\", \"0x432870\"], [\"0x43285f\", \"call\", \"0x645398\"], [\"0x432864\", \"pop\", \"ecx\"], [\"0x432865\", \"ret\", \"\"]]. Original exit instruction evidence: [[\"0x432870\", \"mov\", \"ecx, 0x71f2b0\"], [\"0x432875\", \"jmp\", \"0x43ecb0\"]]. Preserve constructor arguments, array counts/strides, registration and reverse destruction without authored callback stand-ins.", "Fresh complete build-iveupb5l physical src/designwin.cpp COFF selects _$E21 via .CRT$XCU, registering _$E19. Startup relocation targets: [\"?TutWinDesWindow@@3VDesignWin@@A\", \"??0DesignWin@@QAE@XZ\", \"_$E19\", \"_atexit\"]; exit targets: [\"?TutWinDesWindow@@3VDesignWin@@A\", \"??1DesignWin@@UAE@XZ\"]. Actual linked helper occurs once at CRT slot0x63f2dc; selected same-owner order agrees with the pinned order.", "BaseWin/DesignWin definitions now precede their Wave globals as pinned. Existing DesignWin Wave mappings retain original names/spans and current helper overrides after fresh emission proof. Scalar constructor effects and array construction/cleanup belong to genuine source globals, classes and compiler-generated lifetime machinery.", "Current local labels are emission interpretations, not original debug names or recovered historical TU boundaries. Start bindings grant no allocation extent. Selected same-owner linked order is not full CRT/global-order, retained-selection, reference-target, dependency-provider, runtime or full-game acceptance. Guarded callbacks excluded; no claim grant or bug fix."], "reason": "Bind original exit operation to the genuine compiler-emitted lifetime of source-owned ?TutWinDesWindow@@3VDesignWin@@A; preserve complete original identity and remaining restoration/structure obligations."}
 // symbol    _$E14
 #include "stdafx.h"
+// stand-in: file-state lever (pattern 142). One member declaration here flips
+// the VC6 operand-order tie in draw_armor (0x00435580, top/bottom loads) that
+// the 2026-11-07 map.h/veh.h/win.h header changes flipped; no source spelling
+// found. Not referenced anywhere.
+struct DesignWinFileStateStandIn {
+    void unused();
+};
 #include "font_metrics.h"
 #include "interface_fonts.h"
 #include "map.h"
@@ -4176,15 +4183,14 @@ void DesignWin::draw_special_1(int redraw) {
     Buffer::set_text_color(TextColourTable[158], TextColourTable[159], 1, 1);
     StringTemp[0] = 0;
     strcat(StringTemp, "{");
-    strcat(StringTemp, StringTable.get(Ability[protoAbilityIDs_[0]].name));
+    char *name = Ability[protoAbilityIDs_[0]].name;
+    strcat(StringTemp, StringTable.get(name));
     strcat(StringTemp, ": ");
     strcat(StringTemp, " ");
     strcat(StringTemp, "}");
     char *description = Ability[protoAbilityIDs_[0]].description;
     strcat(StringTemp, StringTable.get(description));
-    int width = area.right - area.left;
-    int height = Buffer::wrap_height(StringTemp, width);
-    area.top = area.bottom - height;
+    area.top = area.bottom - Buffer::wrap_height(StringTemp, area.right - area.left);
     Buffer::wrap_cent(StringTemp, &area);
 }
 
@@ -4223,15 +4229,14 @@ void DesignWin::draw_special_2(int redraw) {
     Buffer::set_text_color(TextColourTable[158], TextColourTable[159], 1, 1);
     StringTemp[0] = 0;
     strcat(StringTemp, "{");
-    strcat(StringTemp, StringTable.get(Ability[protoAbilityIDs_[1]].name));
+    char *name = Ability[protoAbilityIDs_[1]].name;
+    strcat(StringTemp, StringTable.get(name));
     strcat(StringTemp, ": ");
     strcat(StringTemp, " ");
     strcat(StringTemp, "}");
     char *description = Ability[protoAbilityIDs_[1]].description;
     strcat(StringTemp, StringTable.get(description));
-    int width = area.right - area.left;
-    int height = Buffer::wrap_height(StringTemp, width);
-    area.top = area.bottom - height;
+    area.top = area.bottom - Buffer::wrap_height(StringTemp, area.right - area.left);
     Buffer::wrap_cent(StringTemp, &area);
 }
 
