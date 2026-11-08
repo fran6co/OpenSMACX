@@ -4795,16 +4795,17 @@ void DesignWin::draw_info() {
                 }
                 if (VehPrototypes[proto_id].unk_1 == VehPrototypes[protoID_].unk_1
                     || !PlayersData[factionID_].proto_id_active[proto_id]) {
-                    if (!PlayersData[factionID_].proto_id_active[proto_id]) {
-                        if (PlayersData[factionID_].proto_id_queue[proto_id]
-                                == PlayersData[factionID_].proto_id_active[proto_id]
-                            || (!PlayersData[factionID_].proto_id_active[proto_id]
-                                && !found
-                                && VehPrototypes[proto_id].unk_1
-                                    == VehPrototypes[protoID_].unk_1)) {
-                            protoID_ = proto_id;
-                            found = 1;
-                        }
+                    if (!PlayersData[factionID_].proto_id_active[proto_id]
+                        && PlayersData[factionID_].proto_id_active[proto_id]
+                               == PlayersData[factionID_].proto_id_queue[proto_id]) {
+                        protoID_ = proto_id;
+                        found = 1;
+                    } else if (!PlayersData[factionID_].proto_id_active[proto_id]
+                               && !found
+                               && VehPrototypes[proto_id].unk_1
+                                      == VehPrototypes[protoID_].unk_1) {
+                        protoID_ = proto_id;
+                        found = 1;
                     }
                 }
             }

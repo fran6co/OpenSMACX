@@ -1529,7 +1529,10 @@ int Net::send_group(void *data, int size, long group_id, int flags) {
         for (index = 0; index < 16; ++index) {
             if (players_[index].field_0_ != 0) break;
         }
-        if (index == 16) goto done;
+        if (index == 16) {
+            free(packet);
+            return static_cast<int>(field_E4_);
+        }
 
         // Original 0x62F06E..0x62F080 initializes only the selected row,
         // although the retry loop later reads every pending/retry slot.
@@ -3725,6 +3728,12 @@ int NetUnk72C::on_insert(Payload *payload) {
 // kind      game
 // symbol    ?join_session@Net@@QAEHPAVNetAllocationNode@@PAD1@Z
 // TRIED: real Font locals (SEH-frame lever) + COM-style dispatch through the provided ComSlot004/006/014/022/024 shims, retyped to their real arities, plus an added ComSlot031; diverges at insn #8 of this SEH-wrapped, DirectPlay-COM-heavy ~1400-byte body
+// The image keeps the name test inside the outer guard (0x0062E5C3): an
+// inline helper boundary.
+static inline void free_if_set(void *memory) {
+    if (memory != 0) free(memory);
+}
+
 int Net::join_session(NetAllocationNode *session, char *player_name,
                       char *password) {
     // Both Font subobjects are constructed in the native prologue and remain
@@ -3732,163 +3741,165 @@ int Net::join_session(NetAllocationNode *session, char *player_name,
     Font older_version_font;
     Font older_version_shadow;
 
-    if (NetDirectPlay == 0 || player_name == 0) {
-        return 0;
-    }
-
-    if (session != 0) {
-        if (allocation_node_.session_name_ != 0
-            && session != &allocation_node_) {
-            free(allocation_node_.session_name_);
-            allocation_node_.session_name_ = 0;
-        }
-        if (allocation_node_.password_ != 0) {
-            free(allocation_node_.password_);
-            allocation_node_.password_ = 0;
+    {
+        if (NetDirectPlay == 0 || player_name == 0) {
+            goto fail;
         }
 
-        DPSESSIONDESC2 requested;
-        memset(&requested, 0, sizeof(requested));
-        requested.dwSize = sizeof(requested);
-        requested.guidInstance = session->instance_guid_;
-        requested.guidApplication = *guid_6E8_;
-        requested.lpszPasswordA =
-            password != 0 && password[0] != 0 ? password : 0;
-
-        const HRESULT opened = NetDirectPlay->Open(&requested, DPOPEN_JOIN);
-        if (opened == DP_OK) {
-            memset(&NetServiceCaps, 0, sizeof(NetServiceCaps));
-            NetServiceCaps.dwSize = sizeof(NetServiceCaps);
-            if (NetDirectPlay->GetCaps(&NetServiceCaps, 1) != DP_OK) {
-                return 0;
+        if (session != 0) {
+            if (allocation_node_.session_name_ != 0
+                && &allocation_node_ != session) {
+                free_if_set(allocation_node_.session_name_);
+                allocation_node_.session_name_ = 0;
             }
-        } else if (opened != DPERR_ALREADYINITIALIZED) {
-            return 0;
+            free_if_set(allocation_node_.password_);
+            allocation_node_.password_ = 0;
+
+            DPSESSIONDESC2 requested;
+            memset(&requested, 0, sizeof(requested));
+            requested.dwSize = sizeof(requested);
+            requested.guidInstance = session->instance_guid_;
+            requested.guidApplication = *guid_6E8_;
+            requested.lpszPasswordA =
+                password != 0 && password[0] != 0 ? password : 0;
+
+            const HRESULT opened = NetDirectPlay->Open(&requested, DPOPEN_JOIN);
+            if (opened == DP_OK) {
+                memset(&NetServiceCaps, 0, sizeof(NetServiceCaps));
+                NetServiceCaps.dwSize = sizeof(NetServiceCaps);
+                if (NetDirectPlay->GetCaps(&NetServiceCaps, 1) != DP_OK) {
+                    goto fail;
+                }
+            } else if (opened != DPERR_ALREADYINITIALIZED) {
+                goto fail;
+            }
         }
-    }
 
-    DWORD descriptor_size = 0;
-    NetDirectPlay->GetSessionDesc(0, &descriptor_size);
-    DPSESSIONDESC2 *descriptor = static_cast<DPSESSIONDESC2 *>(
-        mem_get(static_cast<int>(descriptor_size)));
-    // Native control reaches the common return without freeing this block on
-    // either allocation/read failure or a version mismatch. Keep that
-    // lifetime defect visible; successful version comparison frees it below.
-    if (descriptor == 0
-        || NetDirectPlay->GetSessionDesc(descriptor, &descriptor_size) != DP_OK) {
-        return 0;
-    }
-
-    const int local_version = static_cast<int>(field_44_);
-    const int remote_version = static_cast<int>(descriptor->dwUser1);
-    if (local_version != remote_version) {
-        parse_num(0, local_version);
-        parse_num(1, remote_version);
-        if (local_version < remote_version) {
-            older_version_font.init("Times New Roman", 0xE, 0);
-            older_version_shadow.init("Times New Roman", 0xE, 2);
-            pop_caption("jackal.txt", "CLIENTOLDERVERSION", 0);
-        } else {
-            older_version_font.init("Times New Roman", 0xE, 0);
-            older_version_shadow.init("Times New Roman", 0xE, 2);
-            pop_caption("jackal.txt", "CLIENTNEWERVERSION", 0);
+        DWORD descriptor_size = 0;
+        NetDirectPlay->GetSessionDesc(0, &descriptor_size);
+        DPSESSIONDESC2 *descriptor = static_cast<DPSESSIONDESC2 *>(
+            mem_get(static_cast<int>(descriptor_size)));
+        // Native control reaches the common return without freeing this block on
+        // either allocation/read failure or a version mismatch. Keep that
+        // lifetime defect visible; successful version comparison frees it below.
+        if (descriptor == 0
+            || NetDirectPlay->GetSessionDesc(descriptor, &descriptor_size) != DP_OK) {
+            goto fail;
         }
-        NetDirectPlay->Close();
-        return 0;
-    }
-    free(descriptor);
 
-    DPNAME player_descriptor;
-    memset(&player_descriptor, 0, sizeof(player_descriptor));
-    player_descriptor.dwSize = sizeof(player_descriptor);
-    player_descriptor.lpszLongNameA = player_name;
+        const int local_version = static_cast<int>(field_44_);
+        const int remote_version = static_cast<int>(descriptor->dwUser1);
+        if (local_version != remote_version) {
+            parse_num(0, local_version);
+            parse_num(1, remote_version);
+            if (local_version < remote_version) {
+                older_version_font.init("Times New Roman", 0xE, 0);
+                older_version_shadow.init("Times New Roman", 0xE, 2);
+                pop_caption("jackal.txt", "CLIENTOLDERVERSION", 0);
+            } else {
+                older_version_font.init("Times New Roman", 0xE, 0);
+                older_version_shadow.init("Times New Roman", 0xE, 2);
+                pop_caption("jackal.txt", "CLIENTNEWERVERSION", 0);
+            }
+            NetDirectPlay->Close();
+            goto fail;
+        }
+        free(descriptor);
 
-    DWORD player_data = (voice_flags_D8_ >> 0x10) & 1;
-    if ((voice_flags_D8_ & 2) != 0) {
-        player_data |= 2;
-    }
+        DPNAME player_descriptor;
+        memset(&player_descriptor, 0, sizeof(player_descriptor));
+        player_descriptor.dwSize = sizeof(player_descriptor);
+        player_descriptor.lpszLongNameA = player_name;
 
-    // process.h declares exactly void (__cdecl *)(void *); NetThreadInfo is
-    // the evidenced Net+4 record passed to the worker.
-    _beginthread(&net_receive_thread, 0, &thread_info_);
+        DWORD player_data = (voice_flags_D8_ >> 0x10) & 1;
+        if ((voice_flags_D8_ & 2) != 0) {
+            player_data |= 2;
+        }
 
-    if (NetDirectPlay->CreatePlayer(
-            &local_player_id_, &player_descriptor, thread_info_.events_[2],
-            &player_data, 1, 0)
-        != DP_OK) {
-        return 0;
-    }
+        // process.h declares exactly void (__cdecl *)(void *); NetThreadInfo is
+        // the evidenced Net+4 record passed to the worker.
+        _beginthread(&net_receive_thread, 0, &thread_info_);
 
-    const DWORD host_flag = voice_flags_D8_ & 0x10000;
-    if (host_flag != 0) {
-        host_player_id_ = local_player_id_;
-    }
-    // The SDK callback can change the process-wide interface. The native
-    // host descriptor update tests the live pointer after CreatePlayer.
-    if (NetDirectPlay != 0 && host_flag != 0) {
+        if (NetDirectPlay->CreatePlayer(
+                &local_player_id_, &player_descriptor, thread_info_.events_[2],
+                &player_data, 1, 0)
+            != DP_OK) {
+            goto fail;
+        }
+
+        const DWORD host_flag = voice_flags_D8_ & 0x10000;
+        if (host_flag != 0) {
+            host_player_id_ = local_player_id_;
+        }
+        // The SDK callback can change the process-wide interface. The native
+        // host descriptor update tests the live pointer after CreatePlayer.
+        if (NetDirectPlay != 0 && host_flag != 0) {
+            DWORD live_size = 0;
+            NetDirectPlay->GetSessionDesc(0, &live_size);
+            DPSESSIONDESC2 *live = static_cast<DPSESSIONDESC2 *>(
+                mem_get(static_cast<int>(live_size)));
+            NetDirectPlay->GetSessionDesc(live, &live_size);
+            live->dwFlags |= DPSESSION_JOINDISABLED;
+            NetDirectPlay->SetSessionDesc(live, 0);
+            if (live != 0) {
+                free(live);
+            }
+        }
+
+        if (local_player_id_ == host_player_id_) {
+            sub_632cc0(player_name, static_cast<int>(local_player_id_),
+                       static_cast<unsigned char>(player_data & 0xFF));
+        }
+
         DWORD live_size = 0;
         NetDirectPlay->GetSessionDesc(0, &live_size);
         DPSESSIONDESC2 *live = static_cast<DPSESSIONDESC2 *>(
             mem_get(static_cast<int>(live_size)));
-        NetDirectPlay->GetSessionDesc(live, &live_size);
-        live->dwFlags |= DPSESSION_JOINDISABLED;
-        NetDirectPlay->SetSessionDesc(live, 0);
-        if (live != 0) {
+        if (live == 0) {
+            goto fail;
+        }
+        if (NetDirectPlay->GetSessionDesc(live, &live_size) != DP_OK) {
             free(live);
+            goto fail;
         }
-    }
 
-    if (local_player_id_ == host_player_id_) {
-        sub_632cc0(player_name, static_cast<int>(local_player_id_),
-                   static_cast<unsigned char>(player_data & 0xFF));
-    }
-
-    DWORD live_size = 0;
-    NetDirectPlay->GetSessionDesc(0, &live_size);
-    DPSESSIONDESC2 *live = static_cast<DPSESSIONDESC2 *>(
-        mem_get(static_cast<int>(live_size)));
-    if (live == 0) {
-        return 0;
-    }
-    if (NetDirectPlay->GetSessionDesc(live, &live_size) != DP_OK) {
+        if (live->lpszSessionNameA == 0) {
+            // The image calls mem_get(1) and discards its result on this branch.
+            mem_get(1);
+            allocation_node_.session_name_ = 0;
+        } else {
+            const size_t length = strlen(live->lpszSessionNameA) + 1;
+            allocation_node_.session_name_ =
+                static_cast<char *>(mem_get(static_cast<int>(length)));
+            *allocation_node_.session_name_ = 0;
+            strcat(allocation_node_.session_name_, live->lpszSessionNameA);
+        }
+        if (password != 0 && password[0] != 0) {
+            const size_t length = strlen(password) + 1;
+            allocation_node_.password_ =
+                static_cast<char *>(mem_get(static_cast<int>(length)));
+            *allocation_node_.password_ = 0;
+            strcat(allocation_node_.password_, password);
+        }
+        allocation_node_.instance_guid_ = live->guidInstance;
+        allocation_node_.session_flags_ = live->dwFlags;
+        allocation_node_.max_players_ = live->dwMaxPlayers;
         free(live);
-        return 0;
-    }
 
-    if (live->lpszSessionNameA == 0) {
-        // The image calls mem_get(1) and discards its result on this branch.
-        mem_get(1);
-        allocation_node_.session_name_ = 0;
-    } else {
-        const size_t length = strlen(live->lpszSessionNameA) + 1;
-        allocation_node_.session_name_ =
-            static_cast<char *>(mem_get(static_cast<int>(length)));
-        *allocation_node_.session_name_ = 0;
-        strcat(allocation_node_.session_name_, live->lpszSessionNameA);
-    }
-    if (password != 0 && password[0] != 0) {
-        const size_t length = strlen(password) + 1;
-        allocation_node_.password_ =
-            static_cast<char *>(mem_get(static_cast<int>(length)));
-        *allocation_node_.password_ = 0;
-        strcat(allocation_node_.password_, password);
-    }
-    allocation_node_.instance_guid_ = live->guidInstance;
-    allocation_node_.session_flags_ = live->dwFlags;
-    allocation_node_.max_players_ = live->dwMaxPlayers;
-    free(live);
-
-    const DWORD start_time = timeGetTime();
-    if (field_6DC_ == 0) {
-        while (timeGetTime() - start_time < 10000 && field_6DC_ == 0) {
-            do_task();
-        }
+        const DWORD start_time = timeGetTime();
         if (field_6DC_ == 0) {
-            close();
-            return 0;
+            while (timeGetTime() - start_time < 10000 && field_6DC_ == 0) {
+                do_task();
+            }
+            if (field_6DC_ == 0) {
+                close();
+                goto fail;
+            }
         }
+        return static_cast<int>(local_player_id_);
     }
-    return static_cast<int>(local_player_id_);
+fail:
+    return 0;
 }
 
 
@@ -3906,10 +3917,35 @@ void NetAllocationNode::operator delete(void *memory) {
 void *ServiceStruct::operator new(size_t size, Heap *owner) throw() {
     return allocate_net_node(size, owner);
 }
-void *ServiceStruct::operator new(size_t size, ServiceProviderList *list) throw() {
-    // Caller has already selected this FALLBACK context when explicit
-    // allocator is null. Native reloads only the inherited allocation owner.
-    return allocate_net_node(size, list->allocation_owner_);
+inline void *ServiceStruct::operator new(size_t size, ServiceProviderList *list) throw() {
+    // Three tiers in the image (0x401780..0x4017F6): the list's explicit
+    // allocator, then its inherited allocation owner, then mem_get. exit is
+    // not noreturn here, so a failed tier falls into the next one.
+    void *memory;
+    Heap *allocator = list->allocator_;
+    if (allocator != 0) {
+        memory = allocator->get(size);
+        if (memory != 0) {
+            StringAllocationHeap = allocator;
+            return memory;
+        }
+        MessageBoxA(0, "out of heap space in new function", "Aborting", MB_OK);
+        exit(3);
+    }
+    Heap *owner = list->allocation_owner_;
+    if (owner != 0) {
+        memory = owner->get(size);
+        if (memory != 0) {
+            StringAllocationHeap = owner;
+            return memory;
+        }
+        MessageBoxA(0, "out of heap space in new function", "Aborting", MB_OK);
+        exit(3);
+    }
+    memory = mem_get(size);
+    if (memory == 0) return 0;
+    StringAllocationHeap = owner;
+    return memory;
 }
 void ServiceStruct::operator delete(void *memory, Heap *) { cleanup_failed_net_construction(memory); }
 void ServiceStruct::operator delete(void *memory, ServiceProviderList *) { cleanup_failed_net_construction(memory); }
@@ -3918,10 +3954,35 @@ void ServiceStruct::operator delete(void *memory) { cleanup_failed_net_construct
 void *ServiceListEntry::operator new(size_t size, Heap *owner) throw() {
     return allocate_net_node(size, owner);
 }
-void *ServiceListEntry::operator new(size_t size, ServiceProviderList *list) throw() {
-    // Caller has already selected this FALLBACK context when explicit
-    // allocator is null. Native reloads only the inherited allocation owner.
-    return allocate_net_node(size, list->allocation_owner_);
+inline void *ServiceListEntry::operator new(size_t size, ServiceProviderList *list) throw() {
+    // Three tiers in the image (0x401780..0x4017F6): the list's explicit
+    // allocator, then its inherited allocation owner, then mem_get. exit is
+    // not noreturn here, so a failed tier falls into the next one.
+    void *memory;
+    Heap *allocator = list->allocator_;
+    if (allocator != 0) {
+        memory = allocator->get(size);
+        if (memory != 0) {
+            StringAllocationHeap = allocator;
+            return memory;
+        }
+        MessageBoxA(0, "out of heap space in new function", "Aborting", MB_OK);
+        exit(3);
+    }
+    Heap *owner = list->allocation_owner_;
+    if (owner != 0) {
+        memory = owner->get(size);
+        if (memory != 0) {
+            StringAllocationHeap = owner;
+            return memory;
+        }
+        MessageBoxA(0, "out of heap space in new function", "Aborting", MB_OK);
+        exit(3);
+    }
+    memory = mem_get(size);
+    if (memory == 0) return 0;
+    StringAllocationHeap = owner;
+    return memory;
 }
 void ServiceListEntry::operator delete(void *memory, Heap *) { cleanup_failed_net_construction(memory); }
 void ServiceListEntry::operator delete(void *memory, ServiceProviderList *) { cleanup_failed_net_construction(memory); }
@@ -3952,34 +4013,25 @@ void ServiceProviderList::on_remove(ServiceStruct *) { }
 // RECOVERY_SHARED: v1 0x00402C20 0x00402C62 ??_GServiceListEntry@@UAEPAXI@Z 0x00401760
 #pragma optimize("y", off)
 int ServiceProviderList::add(int id) {
-    // The original captures the explicit allocator before testing the count;
-    // payload allocation reloads it after entry construction and ring updates.
-    Heap *const entry_allocator = allocator_;
     if (entry_count_ == 0) {
-        head_ = entry_allocator != 0
-            ? new(entry_allocator) ServiceListEntry : new(this) ServiceListEntry;
+        head_ = new(this) ServiceListEntry;
         if (head_ == 0) return 4;
         head_->id_ = id;
         head_->next_ = head_;
         head_->previous_ = head_;
-        Heap *const payload_allocator = allocator_;
-        head_->payload_ = payload_allocator != 0
-            ? new(payload_allocator) ServiceStruct : new(this) ServiceStruct;
+        head_->payload_ = new(this) ServiceStruct;
         if (head_->payload_ == 0) return 4;
         on_insert(head_->payload_);
         current_ = head_;
     } else {
-        head_->previous_->next_ = entry_allocator != 0
-            ? new(entry_allocator) ServiceListEntry : new(this) ServiceListEntry;
+        head_->previous_->next_ = new(this) ServiceListEntry;
         if (head_->previous_->next_ == 0) return 4;
         head_->previous_->next_->previous_ = head_->previous_;
         head_->previous_->next_->next_ = head_;
         head_->previous_ = head_->previous_->next_;
         current_ = head_->previous_;
         current_->id_ = id;
-        Heap *const payload_allocator = allocator_;
-        current_->payload_ = payload_allocator != 0
-            ? new(payload_allocator) ServiceStruct : new(this) ServiceStruct;
+        current_->payload_ = new(this) ServiceStruct;
         if (current_->payload_ == 0) return 4;
         on_insert(current_->payload_);
     }
