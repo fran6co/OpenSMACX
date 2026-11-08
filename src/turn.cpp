@@ -4232,7 +4232,7 @@ void __cdecl production_phase(int faction_id) {
 
 // Original: 0x00527290..0x005275AC, ?faction_upkeep@@YAXH@Z.
 
-// ORIGINAL: 0x00527290 ?faction_upkeep@@YAXH@Z 0x00527290-0x005275AC
+// ORIGINAL: 0x00527290 ?faction_upkeep@@YAXH@Z 0x00527290-0x005275AC BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence":["original:0x00527290-0x005275AC:the full pinned function span is faction upkeep","original:0x0052756D-0x00527581:the final call_council gate tests the HUMAN mask and calls for nonhuman factions","original:0x00527506-0x0052750B:the two Path destination words are reset independently at function exit","source:src/faction.h:Players and PlayersData own faction state and turn bookkeeping","source:src/path.h:Path owns x_dst_ and y_dst_ and the candidate uses its reset operation","source:src/council.h:can_call_council and call_council are the canonical council interfaces"],"reason":"Recover faction upkeep in its faction owner with the native nonhuman council gate, fresh callback state, and Path-owned destination reset."}
 // TRIED: literal asm-mirrored translation compiles and matches through instr #41 (of ~230); diverges at #42 (shl vs and, likely the corner_market/has_tech gated block's field-offset codegen) - not chased further, landed at MISMATCH.
 void __cdecl faction_upkeep(int faction_id) {

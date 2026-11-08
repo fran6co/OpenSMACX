@@ -1947,7 +1947,7 @@ static inline int course_xrange(int x) {
 /*
 Purpose: Send the unit toward the given tile the long way round - by water - choosing the anchorage
          next to it that fronts the most of the destination's own landmass.
-// ORIGINAL: 0x00564890 ?set_course@@YAXHDHH@Z 0x00564890-0x00564B82
+// ORIGINAL: 0x00564890 ?set_course@@YAXHDHH@Z 0x00564890-0x00564B82 BYTE_EXACT
 // TRIED: call structure already matches (`osmx calls --all` lists only
 //            base_at and base_on_sea, same as the image's own `calls` list),
 //            so the gap is register/control-flow noise across a 754-byte,
@@ -3116,7 +3116,7 @@ int __cdecl compute_odds(int odds, int faction_id, int veh_id_atk, int veh_id_de
 
 /*
 Purpose: Choose which base a native life form standing on the specified tile should head for.
-// ORIGINAL: 0x005665D0 ?alien_base@@YAHHHH@Z 0x005665D0-0x00566802
+// ORIGINAL: 0x005665D0 ?alien_base@@YAHHHH@Z 0x005665D0-0x00566802 BYTE_EXACT
 // size      562 bytes
 // prototype int (__cdecl ?alien_base@@YAHHHH@Z)(int vehID, int xCoord, int yCoord)
 // callers   1   call targets   4
