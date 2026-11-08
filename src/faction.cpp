@@ -1025,8 +1025,8 @@ Purpose: Add friction between the two specified factions.
 Return Value: n/a
 Status: Complete
 */
-// The image calls it out of line from every caller.
-#pragma auto_inline(off)
+// Only communicate (which expands nothing) calls it out of line; the other
+// diplomacy functions expand it.
 void __cdecl cause_friction(int faction_id, int faction_id_with, int friction) {
     // diplo_friction is the same 2099-stride view sixteen dwords past the
     // treaty word - SpyingStatusTable[index + 16], exactly the +8 spelling
@@ -1038,7 +1038,6 @@ void __cdecl cause_friction(int faction_id, int faction_id_with, int friction) {
         DiploFriction += friction; // not bounded?
     }
 }
-#pragma auto_inline(on)
 
 /*
 Purpose: Normalize the diplomatic friction value into a mood offset.
@@ -9064,59 +9063,12 @@ void __cdecl make_a_proposal(int faction_id, int other_faction_id,
     }
 }
 
-// Private support for the original signed IMUL/SAR quotient sequences used
-// by the secondary technology offer path. This mirrors x86 high-word
-// multiplication and arithmetic shifts without signed-overflow UB.
-static int communicate_i32_from_bits(uint32_t bits) {
-    if (bits <= 0x7FFFFFFFu) return static_cast<int>(bits);
-    return -1 - static_cast<int>(~bits);
-}
-
-
-// These are genuine local arithmetic operations, not host-only doubles.
-static int communicate_wrapped_add(int left, int right) {
-    return communicate_i32_from_bits(static_cast<uint32_t>(left) +
-                                     static_cast<uint32_t>(right));
-}
-static int communicate_wrapped_sub(int left, int right) {
-    return communicate_i32_from_bits(static_cast<uint32_t>(left) -
-                                     static_cast<uint32_t>(right));
-}
-static int communicate_wrapped_mul(int left, int right) {
-    return communicate_i32_from_bits(static_cast<uint32_t>(left) *
-                                     static_cast<uint32_t>(right));
-}
-static int communicate_pending_social_model(const SocialCategory &selection,
-                                            int category) {
-    // No new bound: the native pending-category read is unchecked.
-    return static_cast<int>(selection.models_[category]);
-}
-
-static int communicate_sar_i32(int value, unsigned shift) {
-    const uint32_t bits = static_cast<uint32_t>(value);
-    if (shift == 0) return value;
-    uint32_t shifted = bits >> shift;
-    if ((bits & 0x80000000u) != 0) shifted |= ~(0xFFFFFFFFu >> shift);
-    return communicate_i32_from_bits(shifted);
-}
-
-static int communicate_imul_high_sar(int value, uint32_t multiplier,
-                                     unsigned shift, int adjustment) {
-    const int64_t product = static_cast<int64_t>(value) * multiplier;
-    const int64_t word_scale = static_cast<int64_t>(65536) * 65536;
-    int64_t high = product / word_scale;
-    if (product < 0 && product % word_scale != 0) --high;
-    int quotient = communicate_sar_i32(
-        communicate_i32_from_bits(static_cast<uint32_t>(high)), shift);
-    quotient = communicate_wrapped_add(quotient,
-        (static_cast<uint32_t>(quotient) >> 31));
-    return communicate_wrapped_add(quotient, adjustment);
-}
-
 // Complete retained communicate continuation; the prior unfinished
 // binding/history below remains a historical restoration obligation.
 int communicate_round_down_multiple(int value, int step);
 
+// The image expands no inline helper anywhere in communicate.
+#pragma inline_depth(0)
 // ORIGINAL: 0x0054FFD0 ?communicate@@YAXHHH@Z 0x0054FFD0-0x00558980;0x0065FF4F-0x0065FF64
 // RECOVERY_BINDING: v1 {"evidence": ["original:0x0054FFD0-0x00558980;0x0065FF4F-0x0065FF64", "source:src/unrecovered/0054ffd0.cpp:retained-seed", "task:base-colony-economy-coverage-wave:diplomacy-communicate-link-continuity-20261003", "Retired seed src/unrecovered/0054ffd0.cpp retains its complete original identity, hot/cold spans and historical findings in this owner", "SocialEffect.values_ is the genuine eleven-word indexed owner; original out-of-domain selector effects remain unresolved", "recovery/tests/test_communicate_owner.py: actual-source bounded behavior and mutation controls", "recovery/tasks/owner-coverage-wave-oct6.json"], "reason": "Recover the complete diplomacy conversation, topic and action paths through real faction, Base, social-effect array and UI owners, preserving original unchecked selectors, arithmetic, error and uninitialized-state behavior. Prior unfinished decision retained as history: Explicitly unfinished owner body for link continuity while complete communicate hot/cold behavior remains under recovery. The seed and original mapping are retained; this empty body does not implement diplomacy, reproduce its bytes or satisfy the pending dependency."}
 // TRIED: the seven-way relationship-topic greeting text build (war/ vendetta/truce/treaty/pact, chosen via has_treaty bits and distance, each with its own get_adjective_leader/ get_noun_phrase string chain and jump-table case 0-6) was collapsed to one generic diplomacy_caption() + say_num(0) call. The diplomacy_menu() result loop and its 8-way action dispatch (cases 0/1-2/3/4/5/6/7) were read from the raw disassembly (no Ghidra hypothesis was reliable there either) and reproduced with real callee names/order; the patience/ loop-exit condition nesting is approximated, not exact.
@@ -9435,8 +9387,7 @@ if (communicate_getout_result == 1) {
     if ((communicate_peer_to_actor_treaty & 0x20u) != 0) {
         goto communicate_getout_result_one_lock_path;
     }
-    communicate_actor_commerce_threshold = communicate_wrapped_mul(
-        communicate_wrapped_sub(5, PlayersData[faction_id].ai_fight), 3);
+    communicate_actor_commerce_threshold = ((5 - PlayersData[faction_id].ai_fight) * 3);
     if (DiploFriction < communicate_actor_commerce_threshold) {
         goto communicate_getout_result_one_lock_path;
     }
@@ -9497,11 +9448,11 @@ goto communicate_main_dialogue_path; // native 0x00550A8B
 // friction update at 0x0055067E..0x005506B8.
 {
     const int communicate_getout_friction = range(
-        communicate_wrapped_add(PlayersData[peer_id].diplo_friction[faction_id], 10), 0, 20);
+        (PlayersData[peer_id].diplo_friction[faction_id] + 10), 0, 20);
     PlayersData[peer_id].diplo_friction[faction_id] =
         static_cast<uint32_t>(communicate_getout_friction);
     if (DiploFrictionFactionID == static_cast<uint32_t>(peer_id) && DiploFrictionFactionIDWith == static_cast<uint32_t>(faction_id)) {
-        DiploFriction = communicate_wrapped_add(DiploFriction, 10);
+        DiploFriction = (DiploFriction + 10);
     }
 }
 // Continue to the separate diplomatic-lock/double-cross branch at 0x5506B8.
@@ -9796,7 +9747,7 @@ int communicate_plea_result;
 int communicate_plea_tech;
 int communicate_plea_payment;
 if (PlayersData[DiploScratchF7E8].mil_strength_1 <
-    communicate_wrapped_mul(PlayersData[peer_id].mil_strength_1, 2)) {
+    (PlayersData[peer_id].mil_strength_1 * 2)) {
     goto communicate_treaty_topic_phrases; // native 0x00550EEE -> 0x005513CA
 }
 communicate_peer_reserves = PlayersData[peer_id].energy_reserves;
@@ -9901,14 +9852,10 @@ if (IsMultiplayerNet != 0) {
     NetDaemonNet.await_diplo(0x447);
 } else {
     if (peer_id != 0) {
-        PlayersData[peer_id].energy_reserves = communicate_wrapped_add(
-            PlayersData[peer_id].energy_reserves,
-            -communicate_plea_payment);
+        PlayersData[peer_id].energy_reserves = (PlayersData[peer_id].energy_reserves + -communicate_plea_payment);
     }
     if (faction_id != 0) {
-        PlayersData[faction_id].energy_reserves = communicate_wrapped_add(
-            PlayersData[faction_id].energy_reserves,
-            communicate_plea_payment);
+        PlayersData[faction_id].energy_reserves = (PlayersData[faction_id].energy_reserves + communicate_plea_payment);
     }
     ConsoleGlobal.update_data(1);
 }
@@ -10172,10 +10119,10 @@ if ((PlayersData[peer_id].diplo_treaties[faction_id] & 1u) != 0) {
         DiploScratchFA60 = 1;
     }
     PlayersData[peer_id].diplo_friction[faction_id] = range(
-        communicate_wrapped_add(PlayersData[peer_id].diplo_friction[faction_id], 4), 0, 20);
+        (PlayersData[peer_id].diplo_friction[faction_id] + 4), 0, 20);
     if (DiploFrictionFactionID == static_cast<uint32_t>(peer_id) &&
         DiploFrictionFactionIDWith == static_cast<uint32_t>(faction_id)) {
-        DiploFriction = communicate_wrapped_add(DiploFriction, 4);
+        DiploFriction = (DiploFriction + 4);
     }
 } else if (DiploScratchFA4C != 0 && DiploFriction >= 10 &&
            DiploScratchFA98 == 0 &&
@@ -10649,7 +10596,7 @@ if (DiploScratchFA38 == 0 ||
     has_treaty(faction_id, DiploScratchFA38, 8) != 0) {
     goto communicate_secondary_third_party_exit; // native 0x0055304A
 }
-if (is_human(DiploScratchFA38) && auto_contact() != 0) {
+if ((GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & (1u << (DiploScratchFA38))) && auto_contact() != 0) {
     goto communicate_secondary_third_party_exit; // native 0x0055304A
 }
 if (wants_to_speak(faction_id, peer_id) == 0) {
@@ -10687,15 +10634,12 @@ for (communicate_secondary_tech_scan = 0;
 // the native low-difficulty/lowest-difficulty order, builds the resulting
 // popup text, then applies the original local/network treaty updates.
 communicate_secondary_offer_price: // native 0x00552E0A
-communicate_secondary_offer_amount = communicate_wrapped_mul(
-    communicate_imul_high_sar(GameDataStateStorage.fields_.turn_current_num_, 0x51EB851Fu, 3, 1), 10);
+communicate_secondary_offer_amount = ((GameDataStateStorage.fields_.turn_current_num_ / 25 + 1) * 10);
 if (PlayersData[faction_id].ranking < 5) {
     communicate_secondary_offer_amount /= 2;
 }
 if (PlayersData[faction_id].ranking == 7) {
-    communicate_secondary_offer_amount = communicate_wrapped_add(
-        communicate_secondary_offer_amount,
-        communicate_secondary_offer_amount / 2);
+    communicate_secondary_offer_amount = (communicate_secondary_offer_amount + communicate_secondary_offer_amount / 2);
 }
 if (PlayersData[faction_id].energy_reserves <
     communicate_secondary_offer_amount) {
@@ -10703,18 +10647,14 @@ if (PlayersData[faction_id].energy_reserves <
 }
 communicate_secondary_action = 2; // native [EBP-0x18]
 {
-    const int random_ceiling = communicate_wrapped_add(
-        communicate_imul_high_sar(GameDataStateStorage.fields_.turn_current_num_, 0x66666667u, 2, 2), 0);
-    int amount = communicate_wrapped_add(communicate_secondary_offer_amount,
-                           communicate_wrapped_mul(random(0, random_ceiling), 5));
+    const int random_ceiling = ((GameDataStateStorage.fields_.turn_current_num_ / 10 + 2) + 0);
+    int amount = (communicate_secondary_offer_amount + (random(0, random_ceiling) * 5));
     if (amount > PlayersData[faction_id].energy_reserves) {
-        const int difference = communicate_wrapped_add(
-            communicate_wrapped_sub(amount, PlayersData[faction_id].energy_reserves), 4);
+        const int difference = ((amount - PlayersData[faction_id].energy_reserves) + 4);
         const uint32_t rounded_groups = static_cast<uint32_t>(
             (static_cast<uint64_t>(static_cast<uint32_t>(difference)) *
              0xCCCCCCCDu) >> 34);
-        amount = communicate_wrapped_add(amount, communicate_wrapped_mul(
-            -static_cast<int>(rounded_groups), 5));
+        amount = (amount + (-static_cast<int>(rounded_groups) * 5));
     }
     parse_num(0, amount); // native ignores EAX
     communicate_secondary_offer_amount = amount;
@@ -10823,9 +10763,7 @@ if (has_treaty(faction_id, peer_id, 0x30) != 0 ||
     has_project(4, peer_id) != 0) {
     goto communicate_menu_continuation; // native 0x00553464
 }
-communicate_intro_amount = communicate_wrapped_mul(
-    communicate_wrapped_add(communicate_imul_high_sar(
-        GameDataStateStorage.fields_.turn_current_num_, 0x51EB851Fu, 3, 1), 0), 10);
+communicate_intro_amount = (((GameDataStateStorage.fields_.turn_current_num_ / 25 + 1) + 0) * 10);
 if (PlayersData[peer_id].energy_reserves < communicate_intro_amount) {
     goto communicate_menu_continuation; // native 0x005532CA
 }
@@ -10856,9 +10794,7 @@ if (communicate_intro_candidate >= 8 ||
 parse_says(0, get_title(communicate_intro_candidate), -1, -1);
 parse_says(1, get_name(communicate_intro_candidate), -1, -1);
 parse_says(2, get_adjective(communicate_intro_candidate), -1, -1);
-communicate_intro_amount = communicate_wrapped_mul(
-    communicate_wrapped_add(communicate_imul_high_sar(
-        GameDataStateStorage.fields_.turn_current_num_, 0x51EB851Fu, 3, 1), 0), 10);
+communicate_intro_amount = (((GameDataStateStorage.fields_.turn_current_num_ / 25 + 1) + 0) * 10);
 communicate_stack_c = communicate_intro_amount; // native [EBP+0x0C] store at 0x5533C3
 parse_num(0, communicate_intro_amount); // native result ignored
 if ((Players[peer_id].rule_flags & RFLAG_ALIEN) != 0) {
@@ -11051,7 +10987,7 @@ if (has_treaty(peer_id, faction_id, 0x00000020) != 0 &&
 }
 if (great_satan(faction_id, 0) != 0) {
     communicate_peer_strength_third =
-        communicate_wrapped_mul(PlayersData[peer_id].mil_strength_1, 4) / 3;
+        (PlayersData[peer_id].mil_strength_1 * 4) / 3;
     if (PlayersData[faction_id].mil_strength_1 >
             communicate_peer_strength_third &&
         DiploScratchFA68 == 2) {
@@ -11227,7 +11163,7 @@ if (communicate_stack_c == 10 &&
     PlayersData[faction_id].diplo_unk1[peer_id] != 0) {
     --PlayersData[faction_id].diplo_unk1[peer_id];
 }
-net_energy(faction_id, communicate_wrapped_sub(0, communicate_relation_selected_amount), peer_id,
+net_energy(faction_id, (0 - communicate_relation_selected_amount), peer_id,
            communicate_relation_selected_amount, 1);
 ConsoleInfoWin.set_redraw_phase(0);
 ConsoleGlobal.update_data(0);
@@ -11245,12 +11181,10 @@ goto communicate_post_contact_preparation; // native 0x00553D24
 communicate_relation_priority_553f6d:
 {
     const int priority_rank = PlayersData[faction_id].diff_level;
-    const int rank_delta = communicate_wrapped_sub(5, priority_rank);
+    const int rank_delta = (5 - priority_rank);
     const int rounded_rank_delta = rank_delta / 2;
-    const int relation_reserve_score = communicate_wrapped_add(
-        DiploFriction,
-        communicate_wrapped_mul(PlayersData[peer_id].energy_reserves, 2));
-    const int relation_reserve_limit = communicate_wrapped_add(10, rounded_rank_delta);
+    const int relation_reserve_score = (DiploFriction + (PlayersData[peer_id].energy_reserves * 2));
+    const int relation_reserve_limit = (10 + rounded_rank_delta);
     if (relation_reserve_score > relation_reserve_limit) {
         DiploScratchFA60 = 1;
         goto communicate_post_priority_553fdd;
@@ -11261,9 +11195,7 @@ communicate_relation_priority_553f84:
 // Native 0x00553DD1 injects ECX=5 and enters the shared computation at
 // 0x00553F84. The regular entry at 0x00553F6D supplies actor ranking instead.
 {
-    const int relation_reserve_score = communicate_wrapped_add(
-        DiploFriction,
-        communicate_wrapped_mul(PlayersData[peer_id].energy_reserves, 2));
+    const int relation_reserve_score = (DiploFriction + (PlayersData[peer_id].energy_reserves * 2));
     if (relation_reserve_score > 10) {
         DiploScratchFA60 = 1;
         goto communicate_post_priority_553fdd;
@@ -11299,11 +11231,8 @@ if (great_satan(faction_id, 0) == 0) {
 communicate_relation_offer_tech_value =
     tech_val(DiploScratchFAA8, peer_id, 1);
 communicate_relation_offer_turn_scale =
-    communicate_wrapped_add(GameDataStateStorage.fields_.turn_current_num_, 7) / 8;
-communicate_relation_offer_value = communicate_wrapped_mul(
-    communicate_wrapped_mul(communicate_relation_offer_tech_value,
-              communicate_relation_offer_turn_scale),
-    communicate_relation_offer_multiplier) / 2;
+    (GameDataStateStorage.fields_.turn_current_num_ + 7) / 8;
+communicate_relation_offer_value = ((communicate_relation_offer_tech_value * communicate_relation_offer_turn_scale) * communicate_relation_offer_multiplier) / 2;
 if (DiploScratchFA88 > communicate_relation_offer_value) {
     DiploScratchFAA8 = -1;
     goto communicate_relation_later_action_dispatch; // native 0x00554A4C
@@ -11483,10 +11412,9 @@ communicate_custom_tech_count =
     bit_count(static_cast<int>(GameDataStateStorage.fields_.game_tech_achieved_[DiploScratchFAA8]));
 communicate_custom_tech_value = tech_val(DiploScratchFAA8, faction_id, 1);
 communicate_custom_amount =
-    communicate_wrapped_mul(communicate_custom_tech_value,
-              communicate_wrapped_add(GameDataStateStorage.fields_.turn_current_num_, 7) / 8) /
-        communicate_wrapped_add(communicate_custom_tech_count, 1);
-communicate_custom_amount = communicate_wrapped_add(communicate_custom_amount, 24);
+    (communicate_custom_tech_value * (GameDataStateStorage.fields_.turn_current_num_ + 7) / 8) /
+        (communicate_custom_tech_count + 1);
+communicate_custom_amount = (communicate_custom_amount + 24);
 communicate_custom_amount =
     communicate_round_down_multiple(communicate_custom_amount, 25);
 parse_num(0, communicate_custom_amount);
@@ -11560,13 +11488,12 @@ communicate_relation_menu_custom_response_dispatch: // native 0x00554899
 if (communicate_relation_popup_result == 2) {
     const int actor_half_reserves = PlayersData[faction_id].energy_reserves / 2;
     const int peer_tech_value = tech_val(DiploScratchFAA8, peer_id, 1);
-    const int peer_turn_value = communicate_wrapped_mul(
-        peer_tech_value, communicate_wrapped_add(GameDataStateStorage.fields_.turn_current_num_, 7) / 8);
+    const int peer_turn_value = (peer_tech_value * (GameDataStateStorage.fields_.turn_current_num_ + 7) / 8);
     if (actor_half_reserves >= communicate_custom_amount &&
         peer_turn_value > communicate_custom_amount) {
         X_pops("AGREEDENERGY", 0x00100000,
                      FactionDiplomacyPortraits[peer_id], pop_wait);
-        net_energy(peer_id, communicate_wrapped_sub(0, communicate_custom_amount),
+        net_energy(peer_id, (0 - communicate_custom_amount),
                    faction_id, communicate_custom_amount, 0);
         goto communicate_later_function_return; // native 0x00554E74
     }
@@ -11589,7 +11516,7 @@ goto communicate_custom_tech_response_three; // native 0x00554934
 communicate_custom_tech_response_three: // native 0x00554934
 if (DiploScratchFA68 == 0) {
     const int offered_tech_value = tech_val(DiploScratchF800, peer_id, 1);
-    const int scaled_offered_value = communicate_wrapped_mul(offered_tech_value, 2) / 3;
+    const int scaled_offered_value = (offered_tech_value * 2) / 3;
     const int requested_tech_value = tech_val(DiploScratchFAA8, peer_id, 1);
     if (scaled_offered_value <= requested_tech_value) {
         X_pops("AGREEDTECH", 0x00100000,
@@ -11638,7 +11565,7 @@ if (communicate_actor_reserves <= communicate_peer_reserves ||
     communicate_actor_reserves < 200 || DiploScratchFA78 >= 4) {
     goto communicate_large_offer_rejected; // native 0x5551F7
 }
-if (communicate_actor_reserves < communicate_wrapped_mul(communicate_peer_reserves, 2) &&
+if (communicate_actor_reserves < (communicate_peer_reserves * 2) &&
     (has_treaty(faction_id, peer_id, 0x00000001) == 0 ||
      PlayersData[faction_id].ranking <= PlayersData[peer_id].ranking)) {
     goto communicate_large_offer_rejected; // native 0x5551F7
@@ -11660,12 +11587,12 @@ if (has_treaty(faction_id, peer_id, 0x00000010) != 0 ||
     goto communicate_large_offer_rejected; // native 0x5551F7
 }
 if (communicate_peer_reserves <
-        communicate_wrapped_mul(communicate_wrapped_add(DiploScratchF808, 1), 100)) {
+        ((DiploScratchF808 + 1) * 100)) {
     goto communicate_large_offer_rejected; // native 0x5551F7
 }
 if (DiploScratchF7E8 > 0 &&
     communicate_peer_reserves >=
-        communicate_wrapped_mul(PlayersData[DiploScratchF7E8].energy_reserves, 3) / 4) {
+        (PlayersData[DiploScratchF7E8].energy_reserves * 3) / 4) {
     goto communicate_large_offer_rejected; // native 0x5551F7
 }
 if (wants_to_speak(faction_id, peer_id) == 0) {
@@ -11680,33 +11607,25 @@ goto communicate_large_offer_payment_calculation; // native 0x554C2C
 // remain the same C++ locals used by their later native consumers.
 communicate_large_offer_payment_calculation:
 communicate_stack_1c = PlayersData[faction_id].energy_reserves / 2;
-communicate_large_offer_capacity_limit = communicate_wrapped_mul(
-    communicate_wrapped_sub(PlayersData[peer_id].unk_13,
-              static_cast<int>(PlayersData[peer_id].maint_cost_total)), 100);
+communicate_large_offer_capacity_limit = ((PlayersData[peer_id].unk_13 - static_cast<int>(PlayersData[peer_id].maint_cost_total)) * 100);
 if (communicate_stack_1c >= communicate_large_offer_capacity_limit)
     communicate_stack_1c = communicate_large_offer_capacity_limit;
 if (communicate_stack_1c < 50) goto communicate_large_offer_rejected;
-communicate_large_offer_target = communicate_wrapped_mul(communicate_wrapped_add(
-    PlayersData[peer_id].integrity_blemishes,
-    communicate_wrapped_add(communicate_wrapped_mul(communicate_wrapped_sub(PlayersData[faction_id].tech_commerce_bonus,
-                               PlayersData[peer_id].tech_commerce_bonus), 2), 10)), 5);
+communicate_large_offer_target = ((PlayersData[peer_id].integrity_blemishes + (((PlayersData[faction_id].tech_commerce_bonus - PlayersData[peer_id].tech_commerce_bonus) * 2) + 10)) * 5);
 if (has_treaty(faction_id, peer_id, 1) != 0)
-    communicate_large_offer_target = communicate_wrapped_sub(communicate_large_offer_target, 10);
+    communicate_large_offer_target = (communicate_large_offer_target - 10);
 if (communicate_large_offer_target < 10) communicate_large_offer_target = 10;
-communicate_large_offer_limit = communicate_wrapped_mul(
-    communicate_wrapped_sub(10, PlayersData[peer_id].integrity_blemishes), 10);
+communicate_large_offer_limit = ((10 - PlayersData[peer_id].integrity_blemishes) * 10);
 if (communicate_large_offer_limit < 20) communicate_large_offer_limit = 20;
-communicate_stack_14 = communicate_wrapped_add(communicate_large_offer_target, 100);
-communicate_large_offer_scaled = communicate_wrapped_mul(communicate_stack_14,
-                                           communicate_stack_1c) / 100;
+communicate_stack_14 = (communicate_large_offer_target + 100);
+communicate_large_offer_scaled = (communicate_stack_14 * communicate_stack_1c) / 100;
 if (communicate_large_offer_scaled < communicate_large_offer_limit)
     communicate_large_offer_limit = communicate_large_offer_scaled;
 // The divisor, not the live EBX payment limit, is clamped. Preserve this
 // distinction even on overflow/negative economic inputs.
-communicate_stack_c = communicate_wrapped_add(communicate_large_offer_scaled,
-    communicate_wrapped_sub(communicate_large_offer_limit, 1)) /
+communicate_stack_c = (communicate_large_offer_scaled + (communicate_large_offer_limit - 1)) /
     (communicate_large_offer_limit < 1 ? 1 : communicate_large_offer_limit);
-communicate_stack_2c = communicate_wrapped_mul(communicate_large_offer_limit, communicate_stack_c);
+communicate_stack_2c = (communicate_large_offer_limit * communicate_stack_c);
 parse_says(0, get_title(faction_id), -1, -1);
 communicate_large_offer_text:
 parse_says(1, get_name(faction_id), -1, -1);
@@ -11724,22 +11643,20 @@ if (communicate_large_offer_popup_result == 0)
     goto communicate_large_offer_zero_popup_return;
 if (communicate_large_offer_popup_result == 2) {
     communicate_stack_1c /= 2;
-    communicate_large_offer_scaled = communicate_wrapped_mul(communicate_stack_14,
-                                               communicate_stack_1c) / 100;
+    communicate_large_offer_scaled = (communicate_stack_14 * communicate_stack_1c) / 100;
     if (communicate_large_offer_scaled < communicate_large_offer_limit)
         communicate_large_offer_limit = communicate_large_offer_scaled;
-    communicate_stack_c = communicate_wrapped_add(communicate_large_offer_scaled,
-        communicate_wrapped_sub(communicate_large_offer_limit, 1)) /
+    communicate_stack_c = (communicate_large_offer_scaled + (communicate_large_offer_limit - 1)) /
         (communicate_large_offer_limit < 1 ? 1 : communicate_large_offer_limit);
-    communicate_stack_2c = communicate_wrapped_mul(communicate_large_offer_limit, communicate_stack_c);
+    communicate_stack_2c = (communicate_large_offer_limit * communicate_stack_c);
 }
 // Every nonzero popup result accepts: only result two halves the capacity.
 net_treaty_on(peer_id, faction_id, 0x05000000, 0);
-net_energy(faction_id, communicate_wrapped_sub(0, communicate_stack_1c),
+net_energy(faction_id, (0 - communicate_stack_1c),
            peer_id, communicate_stack_1c, 1);
 net_loan(peer_id, faction_id, communicate_stack_2c, communicate_stack_c);
 cause_friction(peer_id, faction_id,
-               communicate_wrapped_sub(0, energy_value(communicate_stack_1c)));
+               (0 - energy_value(communicate_stack_1c)));
 communicate_stack_20 = 1;
 goto communicate_large_offer_rejected;
 
@@ -11823,7 +11740,7 @@ if (communicate_relation_auxiliary_result == 1) {
             tech_val(DiploScratchFAA8, peer_id, 1);
         const int reduced_value = diplomacy_tech_value / 2;
         cause_friction(peer_id, faction_id,
-                       communicate_wrapped_sub(0, reduced_value));
+                       (0 - reduced_value));
         if (PlayersData[faction_id].diplo_unk1[peer_id] == 0 ||
             PlayersData[faction_id].diplo_unk1[peer_id] <
                 PlayersData[faction_id].integrity_blemishes) {
@@ -11868,10 +11785,8 @@ if (has_agenda(peer_id, faction_id, 0x00000001) == 0 ||
 communicate_stack_c = 0; // original 55526B
 if (Players[peer_id].soc_ideology_category >= 0 &&
     Players[peer_id].soc_ideology_model != 0 &&
-    communicate_pending_social_model(PlayersData[faction_id].soc_category_pending,
-                         Players[peer_id].soc_ideology_category) != 0 &&
-    communicate_pending_social_model(PlayersData[faction_id].soc_category_pending,
-                         Players[peer_id].soc_ideology_category) !=
+    static_cast<int>((PlayersData[faction_id].soc_category_pending).models_[Players[peer_id].soc_ideology_category]) != 0 &&
+    static_cast<int>((PlayersData[faction_id].soc_category_pending).models_[Players[peer_id].soc_ideology_category]) !=
         Players[peer_id].soc_ideology_model) {
     goto communicate_social_break_pact;
 }
@@ -11906,11 +11821,9 @@ if (DiploScratchFA60 != 0) {
 }
 if (!(PlayersData[faction_id].ranking >= 6 &&
       PlayersData[peer_id].ranking >= 6)) {
-    const int commerce_difference = communicate_wrapped_sub(
-        PlayersData[peer_id].tech_commerce_bonus,
-        PlayersData[faction_id].tech_commerce_bonus);
+    const int commerce_difference = (PlayersData[peer_id].tech_commerce_bonus - PlayersData[faction_id].tech_commerce_bonus);
     const int commerce_threshold =
-        communicate_wrapped_add(communicate_wrapped_mul(commerce_difference, 2), 10);
+        ((commerce_difference * 2) + 10);
     if (DiploFriction < commerce_threshold) {
         goto communicate_late_contact_rank_route; // native 0x005553B4
     }
@@ -11949,9 +11862,7 @@ communicate_social_model = communicate_stack_c == 0
     : Players[peer_id].soc_anti_ideology_model;
 say_num(communicate_social_category);
 says("CAT");
-say_num(communicate_pending_social_model(
-    PlayersData[faction_id].soc_category_pending,
-    communicate_social_category));
+say_num(static_cast<int>((PlayersData[faction_id].soc_category_pending).models_[communicate_social_category]));
 says(has_treaty(faction_id, peer_id, 0x00000001) != 0 ? "PACT" : "WAR");
 say_num(communicate_social_model);
 X_pops(StringTemp, 0x00100000,
@@ -11976,8 +11887,7 @@ communicate_late_contact_priority:
 communicate_late_contact_rank_fallback:
 if (communicate_stack_c != 0) {
     DiploScratchFA60 = 0;
-    PlayersData[faction_id].diplo_unk1[peer_id] = communicate_wrapped_sub(
-        PlayersData[faction_id].diplo_unk1[peer_id], 1);
+    PlayersData[faction_id].diplo_unk1[peer_id] = (PlayersData[faction_id].diplo_unk1[peer_id] - 1);
     goto communicate_late_contact_rank_route_alt;
 }
 wants_to_speak(faction_id, peer_id);
@@ -12003,14 +11913,12 @@ if (has_treaty(faction_id, peer_id, 1) != 0) {
 if (DiploScratchFA60 == 0) goto communicate_late_contact_after_war_checks;
 if (communicate_stack_c != 0) {
     DiploScratchFA60 = 0;
-    PlayersData[faction_id].diplo_unk1[peer_id] = communicate_wrapped_sub(
-        PlayersData[faction_id].diplo_unk1[peer_id], 1);
+    PlayersData[faction_id].diplo_unk1[peer_id] = (PlayersData[faction_id].diplo_unk1[peer_id] - 1);
     goto communicate_late_contact_after_war_checks;
 }
 if (PlayersData[faction_id].ranking <=
         PlayersData[peer_id].ranking ||
-    DiploScratchFA2C <= communicate_wrapped_add(PlayersData[faction_id].integrity_blemishes,
-                                DiploScratchF7FC) ||
+    DiploScratchFA2C <= (PlayersData[faction_id].integrity_blemishes + DiploScratchF7FC) ||
     DiploScratchFAA0 != 0 || DiploScratchFA50 != 0 ||
     has_treaty(peer_id, faction_id, 0x10) == 0 ||
     has_agenda(peer_id, faction_id, 8) != 0) {
@@ -12177,7 +12085,7 @@ communicate_stack_1c = 0;
 communicate_stack_14 = 0;
 communicate_rival_faction = 1;
 do {
-    if (is_alive(communicate_rival_faction) &&
+    if ((GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_ & (1u << (communicate_rival_faction))) &&
         has_treaty(peer_id, communicate_rival_faction,
                    0x00000010) != 0) {
         if (has_treaty(faction_id, communicate_rival_faction,
@@ -12213,14 +12121,11 @@ if (communicate_stack_14 < 0 ||
 // The rival scan retains one hit per faction and the original zero/one flags.
 communicate_pact_offer_fallthrough:
 {
-    int pact_threshold = range(communicate_wrapped_sub(
-        PlayersData[peer_id].tech_commerce_bonus,
-        PlayersData[faction_id].tech_commerce_bonus), 0, 99);
-    pact_threshold = communicate_wrapped_add(pact_threshold,
-        strcmp(Players[peer_id].filename, "HIVE") == 0);
-    pact_threshold = communicate_wrapped_add(pact_threshold, (GameDataStateStorage.fields_.game_rules_ >> 12) & 1);
-    pact_threshold = communicate_wrapped_add(pact_threshold, DiploScratchFA8C != 0);
-    pact_threshold = communicate_wrapped_add(pact_threshold, 3);
+    int pact_threshold = range((PlayersData[peer_id].tech_commerce_bonus - PlayersData[faction_id].tech_commerce_bonus), 0, 99);
+    pact_threshold = (pact_threshold + strcmp(Players[peer_id].filename, "HIVE") == 0);
+    pact_threshold = (pact_threshold + (GameDataStateStorage.fields_.game_rules_ >> 12) & 1);
+    pact_threshold = (pact_threshold + DiploScratchFA8C != 0);
+    pact_threshold = (pact_threshold + 3);
     if (DiploScratchFA78 >= pact_threshold) {
         goto communicate_special_war_rival_gates;
     }
@@ -12231,17 +12136,12 @@ communicate_pact_offer_fallthrough:
     }
     const int shared_victory =
         (GameDataStateStorage.fields_.game_rules_ & 0x1000) != 0 && (GameDataStateStorage.fields_.game_rules_ & 0x40) == 0;
-    int commerce = range(communicate_wrapped_add(communicate_wrapped_sub(
-        PlayersData[peer_id].tech_commerce_bonus,
-        PlayersData[faction_id].tech_commerce_bonus), 1), 0, 99);
-    commerce = communicate_wrapped_add(commerce,
-        strcmp(Players[peer_id].filename, "HIVE") == 0);
-    int threshold = communicate_wrapped_add(communicate_stack_14 != 0 ? 11 : 6,
-                            shared_victory);
-    threshold = communicate_wrapped_add(threshold, commerce);
-    threshold = communicate_wrapped_add(threshold, DiploScratchFA8C != 0);
-    if (communicate_wrapped_add(communicate_wrapped_sub(DiploScratchFA78, communicate_stack_3c),
-                  DiploFriction) >= threshold) {
+    int commerce = range(((PlayersData[peer_id].tech_commerce_bonus - PlayersData[faction_id].tech_commerce_bonus) + 1), 0, 99);
+    commerce = (commerce + strcmp(Players[peer_id].filename, "HIVE") == 0);
+    int threshold = (communicate_stack_14 != 0 ? 11 : 6 + shared_victory);
+    threshold = (threshold + commerce);
+    threshold = (threshold + DiploScratchFA8C != 0);
+    if (((DiploScratchFA78 - communicate_stack_3c) + DiploFriction) >= threshold) {
         goto communicate_special_war_rival_gates;
     }
     if (communicate_stack_1c != 0 && DiploScratchFA54 == 0 &&
@@ -12302,7 +12202,7 @@ if (has_treaty(peer_id, faction_id, 0x00000010) == 0 ||
     has_treaty(peer_id, faction_id, 0x00040000) != 0 ||
     has_treaty(peer_id, faction_id, 0x02000000) != 0 ||
     has_agenda(peer_id, faction_id, 0x00002000) != 0 ||
-    DiploScratchFA98 <= communicate_wrapped_add(DiplomacyProposalGateCount, 2) || IsMultiplayerNet != 0 ||
+    DiploScratchFA98 <= (DiplomacyProposalGateCount + 2) || IsMultiplayerNet != 0 ||
     wants_to_speak(faction_id, peer_id) == 0) {
     goto communicate_special_war_ransom_finish; // native 0x005562D9
 }
@@ -12409,15 +12309,13 @@ communicate_truce_response_result =
                          0x00100000, FactionDiplomacyPortraits[peer_id],
                          pop_wait);
 communicate_after_truce_prompt: // native 0x005564D7
-communicate_truce_followup_limit = communicate_wrapped_add(DiploScratchFA78, 2);
+communicate_truce_followup_limit = (DiploScratchFA78 + 2);
 if (has_treaty(faction_id, peer_id, 0x00000020) != 0) {
-    communicate_truce_followup_limit = communicate_wrapped_add(
-        communicate_truce_followup_limit,
-        communicate_truce_followup_limit);
+    communicate_truce_followup_limit = (communicate_truce_followup_limit + communicate_truce_followup_limit);
 }
 communicate_truce_followup_limit = range(
     communicate_truce_followup_limit, 0,
-    communicate_wrapped_add(PlayersData[peer_id].current_num_bases, 1));
+    (PlayersData[peer_id].current_num_bases + 1));
 if (communicate_truce_response_result == 0) {
     goto communicate_late_truce_result_zero; // native 0x00556B38
 }
@@ -12469,7 +12367,7 @@ if (DiploScratchF800 >= 0 && DiploScratchFA98 >= 4) {
 if (DiploScratchFA24 != 0 || DiploScratchFA70 != 0) {
     goto communicate_late_truce_tech_complete; // native 0x00556723
 }
-communicate_late_truce_tech_amount = communicate_wrapped_mul(DiploScratchFA98, 100);
+communicate_late_truce_tech_amount = (DiploScratchFA98 * 100);
 if (communicate_late_truce_tech_amount >
     PlayersData[peer_id].energy_reserves) {
     communicate_late_truce_tech_amount =
@@ -12485,7 +12383,7 @@ if (X_pops("ENERGYTRUCE", 0x00100000,
                  FactionDiplomacyPortraits[peer_id], pop_wait) != 0) {
     goto communicate_late_truce_tech_complete; // native 0x00556723
 }
-net_energy(peer_id, communicate_wrapped_sub(0, communicate_late_truce_tech_amount),
+net_energy(peer_id, (0 - communicate_late_truce_tech_amount),
            faction_id, communicate_late_truce_tech_amount, 1);
 communicate_stack_1c = 0;
 communicate_stack_54 = 1;
@@ -12503,37 +12401,21 @@ ConsoleGlobal.update_data(0);
 // before its superseded nonzero gate/offer implementation.
 communicate_late_truce_tech_complete: // native continuation 0x00556723
 communicate_late_score_region = 0;
-communicate_late_score = communicate_wrapped_add(
-    communicate_wrapped_mul(communicate_wrapped_add(PlayersData[faction_id].mil_strength_2,
-                        PlayersData[peer_id].total_mil_veh),
-              communicate_wrapped_add(PlayersData[faction_id].diplo_unk3[peer_id],
-                        PlayersData[faction_id].diplo_unk4[peer_id])) / 4,
-    1);
-communicate_stack_34 = communicate_wrapped_add(
-    communicate_wrapped_add(PlayersData[peer_id].diplo_unk3[faction_id],
-              PlayersData[peer_id].diplo_unk4[faction_id]),
-    1);
+communicate_late_score = (((PlayersData[faction_id].mil_strength_2 + PlayersData[peer_id].total_mil_veh) * (PlayersData[faction_id].diplo_unk3[peer_id] + PlayersData[faction_id].diplo_unk4[peer_id])) / 4 + 1);
+communicate_stack_34 = ((PlayersData[peer_id].diplo_unk3[faction_id] + PlayersData[peer_id].diplo_unk4[faction_id]) + 1);
 for (communicate_late_score_region = 0;
      communicate_late_score_region < 128;
      ++communicate_late_score_region) {
     if (PlayersData[peer_id].region_total_bases[
             communicate_late_score_region] == 0) {
-        communicate_late_score = communicate_wrapped_add(
-            communicate_late_score,
-            PlayersData[faction_id].region_force_rating[
+        communicate_late_score = (communicate_late_score + PlayersData[faction_id].region_force_rating[
                 communicate_late_score_region] / 2);
     } else {
-        communicate_stack_34 = communicate_wrapped_add(
-            communicate_stack_34,
-            PlayersData[peer_id].region_total_combat_vehs[
+        communicate_stack_34 = (communicate_stack_34 + PlayersData[peer_id].region_total_combat_vehs[
                 communicate_late_score_region]);
-        communicate_stack_34 = communicate_wrapped_add(
-            communicate_stack_34,
-            PlayersData[peer_id].region_force_rating[
+        communicate_stack_34 = (communicate_stack_34 + PlayersData[peer_id].region_force_rating[
                 communicate_late_score_region]);
-        communicate_late_score = communicate_wrapped_add(
-            communicate_late_score,
-            PlayersData[faction_id].region_force_rating[
+        communicate_late_score = (communicate_late_score + PlayersData[faction_id].region_force_rating[
                 communicate_late_score_region]);
         for (communicate_late_score_other = 1;
              communicate_late_score_other < MaxPlayerNum;
@@ -12541,9 +12423,7 @@ for (communicate_late_score_region = 0;
             if (has_treaty(communicate_late_score_other, peer_id, 1) != 0 ||
                 has_treaty(communicate_late_score_other, faction_id,
                            0x10) == 0) {
-                communicate_stack_34 = communicate_wrapped_add(
-                    communicate_stack_34,
-                    PlayersData[1].unk_77[communicate_late_score_region]);
+                communicate_stack_34 = (communicate_stack_34 + PlayersData[1].unk_77[communicate_late_score_region]);
             }
         }
     }
@@ -12629,7 +12509,7 @@ if ((GameDataStateStorage.fields_.game_rules_ & 0x02000000) == 0) {
 }
 communicate_zero_peer_energy = PlayersData[peer_id].energy_reserves;
 net_energy(faction_id, communicate_zero_peer_energy, peer_id,
-           communicate_wrapped_sub(0, communicate_zero_peer_energy), 1);
+           (0 - communicate_zero_peer_energy), 1);
 ConsoleInfoWin.set_redraw_phase(0);
 ConsoleGlobal.update_data(0);
 PlayersData[faction_id].diplo_friction[peer_id] = 0;
@@ -12748,43 +12628,32 @@ if (has_treaty(faction_id, peer_id, 2) == 0 &&
         communicate_late_offer_special =
             has_treaty(faction_id, peer_id, 4) == 0;
     }
-    communicate_late_offer_amount = communicate_wrapped_mul(
-        communicate_wrapped_mul(communicate_wrapped_add(PlayersData[faction_id].mil_strength_1, 1),
-                  communicate_wrapped_sub(4, PlayersData[peer_id].ai_fight)),
-        2) / communicate_wrapped_add(PlayersData[peer_id].mil_strength_1, 1);
+    communicate_late_offer_amount = (((PlayersData[faction_id].mil_strength_1 + 1) * (4 - PlayersData[peer_id].ai_fight)) * 2) / (PlayersData[peer_id].mil_strength_1 + 1);
     // The pinned literal at 0x0068E2B0 is "GAIANS".
     if (strcmp(Players[peer_id].filename, "GAIANS") != 0) {
-        communicate_late_offer_amount = communicate_wrapped_add(
-            communicate_late_offer_amount, 2);
+        communicate_late_offer_amount = (communicate_late_offer_amount + 2);
     }
     if (communicate_late_offer_special != 0) {
-        communicate_late_offer_amount = communicate_wrapped_add(
-            communicate_late_offer_amount,
-            communicate_wrapped_sub(3, PlayersData[peer_id].ai_fight));
+        communicate_late_offer_amount = (communicate_late_offer_amount + (3 - PlayersData[peer_id].ai_fight));
     }
     const int actor_base_count =
         PlayersData[faction_id].current_num_bases;
     if (actor_base_count != 0 &&
         PlayersData[peer_id].tech_commerce_bonus >=
             PlayersData[faction_id].tech_commerce_bonus) {
-        communicate_late_offer_amount = communicate_wrapped_add(
-            communicate_late_offer_amount,
-            PlayersData[faction_id].unk_13 / actor_base_count);
+        communicate_late_offer_amount = (communicate_late_offer_amount + PlayersData[faction_id].unk_13 / actor_base_count);
         if (PlayersData[peer_id].tech_commerce_bonus >
             PlayersData[faction_id].tech_commerce_bonus) {
-            communicate_late_offer_amount = communicate_wrapped_add(
-                communicate_late_offer_amount, 1);
+            communicate_late_offer_amount = (communicate_late_offer_amount + 1);
         }
     }
     if (great_satan(faction_id, 0) == 0) {
         const int actor_rank = PlayersData[faction_id].ranking;
         const int peer_rank = PlayersData[peer_id].ranking;
         if (actor_rank <= 4 || peer_rank <= 4) {
-            communicate_late_offer_amount = communicate_wrapped_add(
-                communicate_late_offer_amount, 1);
+            communicate_late_offer_amount = (communicate_late_offer_amount + 1);
             if (DiploScratchF7FC == 0) {
-                communicate_late_offer_amount = communicate_wrapped_add(
-                    communicate_late_offer_amount, 1);
+                communicate_late_offer_amount = (communicate_late_offer_amount + 1);
             }
         }
     }
@@ -12807,16 +12676,10 @@ if (communicate_late_offer_eligible != 0) {
     communicate_late_offer_amount =
         communicate_late_offer_special != 0 ||
         strcmp(Players[peer_id].filename, "GAIANS") == 0 ? 1 : 0;
-    const int commerce_difference = communicate_wrapped_sub(
-        PlayersData[peer_id].tech_commerce_bonus,
-        PlayersData[faction_id].tech_commerce_bonus);
+    const int commerce_difference = (PlayersData[peer_id].tech_commerce_bonus - PlayersData[faction_id].tech_commerce_bonus);
     communicate_late_offer_range = range(commerce_difference, 0, 99);
-    const int total_score = communicate_wrapped_add(
-        communicate_wrapped_add(communicate_wrapped_add(communicate_late_offer_amount,
-                            communicate_late_offer_range),
-                  DiploScratchFA98 != 0 ? 1 : 0),
-        5);
-    if (communicate_wrapped_add(DiploScratchFA78, DiploScratchFA2C) >= total_score) {
+    const int total_score = (((communicate_late_offer_amount + communicate_late_offer_range) + DiploScratchFA98 != 0 ? 1 : 0) + 5);
+    if ((DiploScratchFA78 + DiploScratchFA2C) >= total_score) {
         communicate_late_offer_eligible = 0;
     }
 }
@@ -12864,7 +12727,7 @@ if (communicate_late_offer_eligible != 0) {
     communicate_stack_1c = communicate_late_offer_result; // 0x5570D8
     if (communicate_late_offer_result != 0 &&
         has_treaty(peer_id, faction_id, 0x20) == 0) {
-        const int energy_limit = communicate_wrapped_mul(DiploScratchFA98, 50);
+        const int energy_limit = (DiploScratchFA98 * 50);
         const int peer_energy = PlayersData[peer_id].energy_reserves;
         int communicate_late_energy_offer =
             peer_energy >= energy_limit ? energy_limit : peer_energy;
@@ -12881,7 +12744,7 @@ if (communicate_late_offer_eligible != 0) {
             if (communicate_late_offer_result == 0) {
                 communicate_stack_54 = 1;
                 communicate_stack_1c = 0;
-                net_energy(peer_id, communicate_wrapped_sub(0, communicate_late_energy_offer),
+                net_energy(peer_id, (0 - communicate_late_energy_offer),
                            faction_id, communicate_late_energy_offer, 1);
                 ConsoleInfoWin.set_redraw_phase(0);
                 ConsoleGlobal.update_data(0);
@@ -13101,7 +12964,7 @@ if (PlayersData[faction_id].atrocities != 0) {
         }
         // 0x96CDBC is PlayerData.ai_fight, not ai_growth.
         if (PlayersData[faction_id].atrocities <=
-            communicate_wrapped_add(PlayersData[peer_id].ai_fight, 1) ||
+            (PlayersData[peer_id].ai_fight + 1) ||
             (Players[faction_id].rule_flags & 0x80) != 0 ||
             (has_treaty(peer_id, faction_id, 1) != 0 &&
              has_treaty(peer_id, faction_id, 0x02000000) != 0)) {
@@ -13126,12 +12989,10 @@ if (PlayersData[faction_id].atrocities != 0) {
                  FactionDiplomacyPortraits[peer_id], pop_wait);
     if (has_treaty(peer_id, faction_id, 0x00200000) == 0) {
         if (PlayersData[faction_id].atrocities > 1) {
-            PlayersData[faction_id].atrocities = communicate_wrapped_sub(
-                PlayersData[faction_id].atrocities, 1);
+            PlayersData[faction_id].atrocities = (PlayersData[faction_id].atrocities - 1);
         }
         if (PlayersData[faction_id].integrity_blemishes > 1) {
-            PlayersData[faction_id].integrity_blemishes = communicate_wrapped_sub(
-                PlayersData[faction_id].integrity_blemishes, 1);
+            PlayersData[faction_id].integrity_blemishes = (PlayersData[faction_id].integrity_blemishes - 1);
         }
     }
     net_set_treaty(peer_id, faction_id, 0x00200000, 1, 0);
@@ -13149,12 +13010,10 @@ X_pops("COMMITTEDATROCITY", 0x00100000,
              FactionDiplomacyPortraits[peer_id], pop_wait);
 if (has_treaty(peer_id, faction_id, 0x00200000) == 0) {
     if (PlayersData[faction_id].atrocities > 1) {
-        PlayersData[faction_id].atrocities = communicate_wrapped_sub(
-            PlayersData[faction_id].atrocities, 1);
+        PlayersData[faction_id].atrocities = (PlayersData[faction_id].atrocities - 1);
     }
     if (PlayersData[faction_id].integrity_blemishes > 1) {
-        PlayersData[faction_id].integrity_blemishes = communicate_wrapped_sub(
-            PlayersData[faction_id].integrity_blemishes, 1);
+        PlayersData[faction_id].integrity_blemishes = (PlayersData[faction_id].integrity_blemishes - 1);
     }
 }
 net_set_treaty(peer_id, faction_id, 0x00200000, 1, 0);
@@ -13183,7 +13042,7 @@ communicate_late_contact_rank = 1;
 for (; communicate_late_contact_rank < MaxPlayerNum;
      ++communicate_late_contact_rank) {
     const int rival = communicate_late_contact_rank;
-    if (is_alive(rival) == 0 || rival == faction_id || rival == peer_id ||
+    if ((GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_ & (1u << (rival))) == 0 || rival == faction_id || rival == peer_id ||
         has_treaty(peer_id, rival, 0x10) == 0 ||
         has_treaty(peer_id, rival, 8) == 0 ||
         has_treaty(peer_id, rival, 0x8000) == 0 ||
@@ -13211,9 +13070,7 @@ for (; communicate_late_contact_rank < MaxPlayerNum;
             PlayersData[rival].region_total_bases[region] == 0) {
             continue;
         }
-        const int peer_region_total = communicate_wrapped_add(
-            static_cast<int>(PlayersData[peer_id].region_total_combat_vehs[region]),
-            static_cast<int>(PlayersData[peer_id].region_force_rating[region]));
+        const int peer_region_total = (static_cast<int>(PlayersData[peer_id].region_total_combat_vehs[region]) + static_cast<int>(PlayersData[peer_id].region_force_rating[region]));
         if (PlayersData[rival].region_force_rating[region] <= peer_region_total ||
             contiguous(peer_id, rival, region, 0) == 0) {
             continue;
@@ -13356,10 +13213,7 @@ if (has_treaty(peer_id, faction_id, 1) != 0 &&
             // 0x55825D..0x55827F is signed IDIV by 3. For IDs below 87,
             // the image rejects remainder zero; for IDs 87 and 88 it rejects
             // nonzero remainder. Keep the native 32-bit wrapped numerator.
-            const int alignment = communicate_wrapped_add(
-                communicate_wrapped_add(communicate_wrapped_sub(tech_id,
-                                    PlayersData[faction_id].tech_ranking),
-                          faction_id), 2);
+            const int alignment = (((tech_id - PlayersData[faction_id].tech_ranking) + faction_id) + 2);
             const int alignment_remainder = alignment % 3;
             if ((tech_id < 87 && alignment_remainder == 0) ||
                 (tech_id >= 87 && alignment_remainder != 0)) {
@@ -13406,7 +13260,7 @@ if (has_treaty(peer_id, faction_id, 3) == 0) { // 0x558392
     if (territory(peer_id, faction_id, 0,
                   &communicate_late_contact_base_id, 0) != 0) {
         spot_base(communicate_late_contact_base_id, faction_id);
-        console_map_win()->focus(
+        MapWinTable[0]->focus(
             Bases[communicate_late_contact_base_id].x,
             Bases[communicate_late_contact_base_id].y);
         parse_says(1, get_adjective(peer_id), -1, -1);
@@ -13440,7 +13294,7 @@ DiploScratchF7DC = -1;
 for (communicate_late_contact_rank = 1;
      communicate_late_contact_rank < MaxPlayerNum;
      ++communicate_late_contact_rank) {
-    if (is_alive(communicate_late_contact_rank) == 0 ||
+    if ((GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_ & (1u << (communicate_late_contact_rank))) == 0 ||
         communicate_late_contact_rank == faction_id ||
         communicate_late_contact_rank == peer_id) {
         continue;
@@ -13487,8 +13341,7 @@ if (IsMultiplayerNet != 0 && (GameDataStateStorage.fields_.game_state_ & 0x800) 
                 goto communicate_late_contact_menu_loop; // native 0x55870B
             }
             diplo_lock(0);
-            PlayersData[faction_id].integrity_blemishes = communicate_wrapped_add(
-                PlayersData[faction_id].integrity_blemishes, 1);
+            PlayersData[faction_id].integrity_blemishes = (PlayersData[faction_id].integrity_blemishes + 1);
             net_treaty_off(peer_id, faction_id, 1, 1);
             diplomacy_check(faction_id, peer_id, 0);
             diplomacy_caption(faction_id, peer_id);
@@ -13589,6 +13442,7 @@ communicate_popup_destructor: // cold span 0x65FF4F..0x65FF64
 ; // The automatic Popup generates both normal and exceptional destruction.
 
 }
+#pragma inline_depth(8)
 
 
 /*
