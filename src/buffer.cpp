@@ -10407,7 +10407,7 @@ Purpose: Return the current StringList text, or null when the list is empty.
          DIFFERENT fields, which is easy to lose when transcribing and produces
          a body that works whenever the two happen to agree.
 
-// ORIGINAL: 0x005E3630 sub_5e3630 0x005E3630-0x005E3644 SEMANTIC
+// ORIGINAL: 0x005E3630 sub_5e3630 0x005E3630-0x005E3644 BYTE_EXACT
 // TRIED: 8 source shapes measured, plateaus at MNEMONIC_ONLY 7/9; the image reuses eax across the
 //            whole chase and every guard-clause / named-link / walking-
 //            pointer spelling still routes the middle link through ecx.

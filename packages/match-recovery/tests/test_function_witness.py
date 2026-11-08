@@ -12,7 +12,7 @@ from match_recovery.model import Origin, Span
 from match_recovery.pe_coff import Coff
 
 
-def object_bytes(functions, undefined=()):
+def object_bytes(functions, undefined=(), selection=2):
     """Each (name, bytes, relocations) owns one exclusive external COMDAT."""
     indices = {name: index * 3 + 2 for index, (name, _, _) in enumerate(functions)}
     indices.update({name: len(functions) * 3 + index for index, name in enumerate(undefined)})
@@ -36,7 +36,7 @@ def object_bytes(functions, undefined=()):
         headers.append(b".text\0\0\0" + struct.pack("<IIIIIIHHI", 0, 0, len(code), raw_at,
                        reloc_at, 0, len(relocations), 0, 0x60501020))
         symbols.extend(b".text\0\0\0" + struct.pack("<IhHBB", 0, number, 0, 3, 1))
-        symbols.extend(struct.pack("<IHHIHB3x", len(code), len(relocations), 0, 0, 0, 2))
+        symbols.extend(struct.pack("<IHHIHB3x", len(code), len(relocations), 0, 0, 0, selection))
         symbols.extend(name_bytes(name) + struct.pack("<IhHBB", 0, number, 0x20, 2, 0))
     for name in undefined:
         symbols.extend(name_bytes(name) + struct.pack("<IhHBB", 0, 0, 0x20, 2, 0))

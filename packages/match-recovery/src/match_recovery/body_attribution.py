@@ -154,7 +154,8 @@ def _member_control_edit(text, candidate, name):
     """The source edit whose compilation must drop the selected member.
 
     In-class definitions become their own declaration; an out-of-class
-    destructor definition is deleted (its in-class declaration remains); an
+    member definition (special or ordinary) is deleted, its in-class
+    declaration remaining; an
     implicit destructor gains a user declaration before its class closes, so
     the compiler stops generating it. Returns the complete edited text.
     """
@@ -171,10 +172,30 @@ def _member_control_edit(text, candidate, name):
         if _mask_non_code(text)[closing:end].strip() != '};':
             raise ValueError('implicit member class does not close on its own line')
         return text[:closing] + ' public:\n  ' + member + '();\n' + text[closing:]
-    if candidate.form == 'qualified' and _special_member(name):
+    if candidate.form == 'qualified':
+        if _mask_non_code(text)[first:end].lstrip().startswith('#'):
+            raise ValueError('macro-contained definition heads are unsupported for attribution')
+        # Special members and ordinary out-of-class members alike: the class
+        # keeps its declaration, so deleting the definition must compile.
         return text[:first] + text[end:]
     raise ValueError('compiler body attribution supports ordinary free functions, '
-                     'in-class members, constructors, destructors and implicit destructors only')
+                     'members, constructors, destructors and implicit destructors only')
+
+
+def _strong_definition(obj, symbol):
+    """Whether ``symbol`` is a non-inline, single-owner external definition.
+
+    VC6 places an ordinary function in a plain code section, or under ``/Gy``
+    in a NODUPLICATES COMDAT (selection 1). Inline and template functions are
+    emitted on demand in SELECT_ANY COMDATs, so another definition's removal
+    could drop them. A strong definition can only vanish with its own text.
+    """
+    matches = [item for item in obj.symbols.values()
+               if item.name == symbol and item.section > 0]
+    if len(matches) != 1:
+        return False
+    selection = obj.section_definitions.get(matches[0].section, (0, 0))[0]
+    return selection in (0, 1)
 
 
 def _special_member(name):
@@ -255,9 +276,12 @@ class BodyAttribution:
         name = qualified_name(symbol) if self.symbol_format == 'msvc' else identifier(symbol)
         if name and '::' in name and (candidate.form == 'in_class' or _special_member(name)):
             return candidate, name
+        if (name and '::' in name and candidate.form == 'qualified'
+                and all(part.isidentifier() for part in name.split('::'))):
+            return candidate, name
         if not name or not name.isidentifier():
             raise ValueError('compiler body attribution currently supports ordinary free functions '
-                             'and in-class member definitions only')
+                             'and member definitions only')
         return candidate, name
 
     def is_placeholder(self, record):
@@ -356,6 +380,13 @@ class BodyAttribution:
         obj.function(symbol)
         key = (unit, tuple(arguments), tuple(flags), hashlib.sha256(obj.raw_data).hexdigest())
         if '::' in name:
+            ordinary = candidate.form == 'qualified' and not _special_member(name)
+            if ordinary and not _strong_definition(obj, symbol):
+                # An on-demand (inline/template) symbol could vanish because
+                # the removed text merely called it, e.g. a same-named
+                # in-class overload. Only a strong definition is causal.
+                raise ValueError('out-of-class member removal requires a non-inline, '
+                                 'NODUPLICATES or plain-section definition')
             changed = self._removal_trial(record, candidate, name, unit, obj, arguments, flags, compiler)
             control = {'in_class': 'in-class body removal', 'implicit': 'user destructor declaration',
                        'qualified': 'out-of-class definition removal'}[candidate.form]

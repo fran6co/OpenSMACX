@@ -316,14 +316,87 @@ def test_out_of_class_destructor_qualifies_by_definition_removal(tmp_path):
     assert compiler.calls[1][HEADER].decode() == header.split("inline Widget")[0]
 
 
-def test_out_of_class_ordinary_member_still_refuses(tmp_path):
+ORDINARY = "?get@Widget@@QAEHXZ"
+ORDINARY_UNIT = ("class Widget {\n public:\n  int get();\n  int peek() { return 2; }\n};\n"
+                 "int Widget::get() {\n  return peek();\n}\n")
+
+
+class OrdinaryOverlay:
+    """VC6 /Gy: an out-of-class member owns a NODUPLICATES COMDAT."""
+
+    def __init__(self, header, *, retain=False, selection=1):
+        self.header, self.retain, self.selection, self.calls = header.encode(), retain, selection, []
+
+    def base(self):
+        return object_bytes([(ORDINARY, b"\xc3", ()), ("_other", b"\xc3", ())],
+                            selection=self.selection)
+
+    def overlay(self, source, replacements, arguments, flags):
+        self.calls.append(dict(replacements))
+        if replacements[HEADER] == self.header:
+            return self.base()
+        functions = [("_other", b"\xc3", ())]
+        if self.retain:
+            functions.append((ORDINARY, b"\xc3", ()))
+        return object_bytes(functions, undefined=() if self.retain else (ORDINARY,),
+                            selection=self.selection)
+
+
+def _qualify_ordinary(root, header, compiler):
+    snapshot = _member_snapshot(root, header)
+    attribution = BodyAttribution(root, snapshot)
+    record = replace(attribution.record("entity-0"), symbol=ORDINARY)
+    return attribution, attribution.qualify(record, Coff(compiler.base()), unit=UNIT, arguments=(),
+                                            flags=(), compiler=compiler)
+
+
+def test_out_of_class_ordinary_member_qualifies_by_definition_removal(tmp_path):
+    compiler = OrdinaryOverlay(ORDINARY_UNIT)
+    attribution, result = _qualify_ordinary(tmp_path, ORDINARY_UNIT, compiler)
+    assert result["result"] == "pass" and result["form"] == "qualified"
+    assert (result["line"], result["end_line"]) == (6, 8)
+    assert result["evidence"].endswith("out-of-class definition removal/disappearance")
+    assert attribution.compile_attempts == 2
+    assert compiler.calls[1][HEADER].decode() == ORDINARY_UNIT.split("int Widget::get")[0]
+
+
+def test_strong_definition_accepts_plain_and_noduplicates_sections_only():
+    # Without /Gy VC6 emits ordinary functions in plain .text (selection 0).
+    from match_recovery.body_attribution import _strong_definition
+    assert _strong_definition(Coff(OrdinaryOverlay(ORDINARY_UNIT, selection=1).base()), ORDINARY)
+    plain = Coff(OrdinaryOverlay(ORDINARY_UNIT, selection=1).base())
+    plain.section_definitions = {key: (0, 0) for key in plain.section_definitions}
+    assert _strong_definition(plain, ORDINARY)
+    assert not _strong_definition(Coff(OrdinaryOverlay(ORDINARY_UNIT, selection=2).base()), ORDINARY)
+
+
+def test_out_of_class_ordinary_member_removal_that_keeps_the_definition_refuses(tmp_path):
+    with pytest.raises(ValueError, match="removal did not remove the selected function definition"):
+        _qualify_ordinary(tmp_path, ORDINARY_UNIT, OrdinaryOverlay(ORDINARY_UNIT, retain=True))
+
+
+def test_out_of_class_inline_or_on_demand_member_refuses_without_compiling(tmp_path):
+    # A SELECT_ANY symbol may be an in-class overload emitted only because the
+    # removed out-of-class text called it; its disappearance proves nothing.
     header = "class Widget {\n  int get();\n};\ninline int Widget::get() { return 1; }\n"
-    snapshot = _member_snapshot(tmp_path, header)
-    attribution = BodyAttribution(tmp_path, snapshot)
-    record = replace(attribution.record("entity-0"), symbol="?get@Widget@@QAEHXZ")
-    with pytest.raises(ValueError, match="supports ordinary free functions"):
-        attribution.qualify(record, Coff(object_bytes([("?get@Widget@@QAEHXZ", b"\xc3", ())])),
-                            unit=UNIT, arguments=(), flags=(), compiler=MemberOverlay(header))
+    compiler = OrdinaryOverlay(header, selection=2)
+    with pytest.raises(ValueError, match="requires a non-inline"):
+        _qualify_ordinary(tmp_path, header, compiler)
+    assert compiler.calls == []
+
+
+@pytest.mark.parametrize("header, reason", [
+    # Two lexical overload definitions are ambiguous without a signature fact.
+    (ORDINARY_UNIT + "int Widget::get(int index) {\n  return index;\n}\n", "2 definitions found"),
+    # A definition head produced by a preprocessor line is not attributable.
+    ("class Widget {\n  int get();\n};\n#define BODY int Widget::get() { return 1; }\n",
+     "unresolved|macro-contained"),
+])
+def test_out_of_class_ordinary_member_resolution_refusals(tmp_path, header, reason):
+    compiler = OrdinaryOverlay(header)
+    with pytest.raises(ValueError, match=reason):
+        _qualify_ordinary(tmp_path, header, compiler)
+    assert compiler.calls == []
 
 
 def test_typo_owner_or_member_never_borrows_another_body(tmp_path):
