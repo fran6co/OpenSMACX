@@ -7295,7 +7295,7 @@ void NetDaemon::reset() {
 // Original0x00532140 performs the network half of a vehicle drop. The
 // lock-state words are the existing typed entries documented above; the
 // non-network action is a separate real owner in veh.cpp.
-// ORIGINAL: 0x00532140 ?veh_drop@NetDaemon@@QAEHHHH@Z 0x00532140-0x00532563 FILE
+// ORIGINAL: 0x00532140 ?veh_drop@NetDaemon@@QAEHHHH@Z 0x00532140-0x00532563 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/00532140.cpp retained signature/extents and complete seed; no historical claim copied", "Coordinator full pinned original instruction decode 00532140..00532563, typed source owner fields and corrected original call/branch evidence", "recovery/tests/test_airdrop_network.py actual-body directional treaty and network reentrancy controls; not linked/runtime/game acceptance"], "reason": "Recover the true network receiver, lock/ack state, global action-mode reentrancy and local execution result; preserve early return versus release paths and leave ExitTurnLoop read-only."}
 // TRIED: flat byte-offset fields on `this` (class deliberately opaque); goto-based control flow matching the two shared cleanup labels (LAB_00532357 reject path, LAB_0053254e release path); fixed two Ghidra-vs-raw-asm discrepancies (speed()/array index use a1 not a2 after the reassignment at 0x53236F; message_data arg order is a1,a2,a3). Diverges at #0 (thiscall prologue).
 int NetDaemon::veh_drop(int veh_id, int x, int y) {
