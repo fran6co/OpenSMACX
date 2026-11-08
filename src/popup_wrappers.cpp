@@ -89,10 +89,10 @@ int __cdecl popp(LPCSTR caption, LPCSTR label, int flags, LPCSTR picture,
                     flags, nullptr);
     }
     if (picture) {
-        int width, height;
-        if (Buffer::get_pcx_dimensions(picture, &width, &height) == 0
-            && popup.owned_picture().init(const_cast<char *>(picture), width,
-                                          height) == 0) {
+        int size[2];
+        if (Buffer::get_pcx_dimensions(picture, &size[0], &size[1]) == 0
+            && popup.owned_picture().init(const_cast<char *>(picture), size[0],
+                                          size[1]) == 0) {
             popup.select_owned_picture();
         }
     }
@@ -137,16 +137,15 @@ int __cdecl popb(LPCSTR text_label, int warning_mask, int sound_id,
                  LPCSTR picture_file, Sprite *caller_picture) {
     Popup popup;
     const int faction = BaseCurrent->faction_id_current;
-    const uint8_t faction_bit = static_cast<uint8_t>(1u << faction);
 
-    if ((GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & faction_bit) == 0) {
+    if ((GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & (1 << faction)) == 0) {
         return 0;
     }
-    if ((GameDataStateStorage.fields_.game_state_ & STATE_UNK_1) != 0 && (GameDataStateStorage.fields_.game_state_ & STATE_UNK_8) == 0) {
+    if ((GameDataStateStorage.fields_.game_state_ & STATE_UNK_1) != 0
+        && (GameDataStateStorage.fields_.game_state_ & STATE_UNK_8) == 0) {
         return 0;
     }
-    if (faction != ConsoleGlobal.faction_id_
-        && CurrentFactionEnergyReserves == 0) {
+    if (faction != ConsoleGlobal.faction_id_ && IsMultiplayerPBEM) {
         return 0;
     }
 
@@ -162,89 +161,90 @@ int __cdecl popb(LPCSTR text_label, int warning_mask, int sound_id,
 
     popup.start(PopupStartCaption, popup_text, -1, 0, 0, 0);
 
-    popup.set_auto_hide_value(0x3EA);
-    const bool warning_enabled = warning_mask != 0
-        && (GameDataStateStorage.fields_.game_warnings_ & static_cast<uint32_t>(warning_mask)) != 0
-        && CurrentFactionEnergyReserves == 0;
-    if (!warning_enabled) {
-        popup.set_auto_hide_value(2);
+    // A watched warning auto-hides late, may focus the base and shows the
+    // picture; any other popb hides at once.
+    if (warning_mask != 0
+        && (GameDataStateStorage.fields_.game_warnings_ & warning_mask) != 0
+        && !IsMultiplayerPBEM) {
+        popup.set_auto_hide_value(0x3EA);
+        const int viewer = ConsoleGlobal.faction_id_;
+        if (faction == viewer
+            || (GameDataStateStorage.fields_.game_state_ & STATE_OMNISCIENT_VIEW) != 0
+            || Bases[BaseIDCurrentSelected].faction_id_current == viewer
+            || (Bases[BaseIDCurrentSelected].visibility & (1 << viewer)) != 0) {
+            if ((GameDataStateStorage.fields_.game_more_preferences_ & MPREF_ADV_ZOOM_BASE_NO_RECENTER_MAP) == 0) {
+                ConsoleGlobal.focus(BaseCurrent->x, BaseCurrent->y, faction);
+            }
+        }
+        int size[2];
+        if (picture_file != 0
+            && Buffer::get_pcx_dimensions(picture_file, &size[0], &size[1]) == 0
+            && popup.owned_picture().init(const_cast<char *>(picture_file),
+                                          size[0], size[1]) == 0) {
+            popup.select_owned_picture();
+        }
     } else {
-        bool focus_allowed = faction == ConsoleGlobal.faction_id_
-            || (GameDataStateStorage.fields_.game_state_ & STATE_OMNISCIENT_VIEW) != 0;
-        if (!focus_allowed) {
-            const Base &selected = Bases[BaseIDCurrentSelected];
-            const uint8_t selected_owner = selected.faction_id_current;
-            const uint8_t viewer_bit = static_cast<uint8_t>(
-                1u << ConsoleGlobal.faction_id_);
-            focus_allowed = selected_owner == ConsoleGlobal.faction_id_
-                || (selected.visibility & viewer_bit) != 0;
-        }
-        if (focus_allowed
-            && (GameDataStateStorage.fields_.game_more_preferences_ & MPREF_ADV_ZOOM_BASE_NO_RECENTER_MAP) == 0) {
-            ConsoleGlobal.focus(BaseCurrent->x, BaseCurrent->y, faction);
-        }
+        popup.set_auto_hide_value(2);
     }
 
-    int picture_width;
-    int picture_height;
-    if (picture_file != 0
-        && Buffer::get_pcx_dimensions(picture_file, &picture_width,
-                                      &picture_height) == 0
-        && popup.owned_picture().init(const_cast<char *>(picture_file),
-                                      picture_width, picture_height) == 0) {
-        popup.set_caller_picture(&popup.owned_picture());
-    }
     if (BaseProductionZoomRequested == 0
         && faction == ConsoleGlobal.faction_id_
         && IsMultiplayerNet == 0
-        && CurrentFactionEnergyReserves == 0) {
+        && !IsMultiplayerPBEM) {
         popup.dialogs().item(label_get(0xB0 / 4), 0);
         popup.dialogs().item(label_get(0xB4 / 4), 1);
-
-        if ((GameDataStateStorage.fields_.game_state_ & STATE_UNK_8) != 0 && BaseCurrent->population_size > 1) {
+        if ((warning_mask & 8) != 0 && BaseCurrent->population_size > 1
+            && IsMultiplayerNet == 0) {
             int facility_offset;
             int facility_mask;
             bitmask(0x23, &facility_offset, &facility_mask);
-            const bool has_psi_facility =
+            const int has_facility =
                 (Bases[BaseIDCurrentSelected].facilities_built[facility_offset]
                  & static_cast<uint8_t>(facility_mask)) != 0;
-            const int specialist_flag = static_cast<int>(
-                PlayersData[faction].flags) + (has_psi_facility ? 2 : 0);
-            if (specialist_flag >= 0) {
+            // Nerve stapling needs POLICE >= 0, a punishment sphere adding 2.
+            if (PlayersData[faction].soc_effect_pending.values_[SocialEffect::POLICE]
+                    + has_facility * 2 >= 0) {
                 popup.dialogs().item(label_get(0x7AC / 4), 3);
             }
         }
+        if (warning_mask != 0) {
+            popup.button(label_get(0x6EC / 4));
+        }
+        popup.set_value(0);
     }
 
-    if (warning_mask != 0) {
-        popup.button(label_get(0x6EC / 4));
-    }
-    popup.set_value(0);
     if (caller_picture != 0) {
+        popup.set_caller_picture(popup.picture_enabled() ? nullptr : caller_picture);
         popup.configure_sprite_dialog(caller_picture);
     }
 
-    const int popup_result = popup.exec(0, 0);
-    int result = popup_result;
-    if (IsMultiplayerNet != 0 || CurrentFactionEnergyReserves != 0) {
+    int result = popup.exec(0, 0);
+    if (IsMultiplayerNet != 0 || IsMultiplayerPBEM) {
         result = 1;
+        if (IsMultiplayerNet != 0) {
+            const int owner = BaseCurrent->faction_id_current;
+            if (owner == ConsoleGlobal.faction_id_
+                && (GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & (1 << owner)) != 0) {
+                BaseCurrent->state |= BSTATE_UNK_10;
+            }
+        }
     }
-
-    // Native tests BasePop::field_3100_, independently of exec's return.
-    if (popup.input_poll_state() != 0) {
-        GameDataStateStorage.fields_.game_warnings_ &= ~static_cast<uint32_t>(warning_mask);
-        AlphaIniPrefs.announce = GameDataStateStorage.fields_.game_warnings_;
-        prefs_save(0);
-    }
-
     if (sound_id >= 0) {
         g_FX.fade(sound_id);
     }
 
-    if (result == 0 && CurrentFactionEnergyReserves == 0) {
+    // Native tests BasePop::field_3100_, independently of exec's return.
+    if (popup.input_poll_state() != 0) {
+        GameDataStateStorage.fields_.game_warnings_ &= ~warning_mask;
+        AlphaIniPrefs.announce = GameDataStateStorage.fields_.game_warnings_;
+        prefs_save(0);
+        return 0;
+    }
+
+    if (result == 0) {
         BaseProductionZoomRequested = 1;
     } else if (result == 2) {
-        BaseCurrent->state |= BSTATE_UNK_8000000000 | BSTATE_RESEARCH_DATA_STOLEN;
+        BaseCurrent->governor |= GOV_ACTIVE | GOV_MANAGES_CITIZENS_SPECS;
     } else if (result == 3) {
         action_staple(BaseIDCurrentSelected);
     }
@@ -366,37 +366,32 @@ int __cdecl veh_pick(int veh_id, const char *label, int flags) {
     const int popup_flags = (flags != 0 ? 0x40 : 0) | 0x800;
     popup.start(PopupStartCaption, label, -1, 0, popup_flags, 0);
 
+    // The image also stores 1 and 2 into BasePop+0x3104/0x3108 here, which
+    // needs header access this TU lacks; the SpriteBox pair follows.
+    popup.dialogs().SpriteBox::field_1C_ = 1;
+    popup.dialogs().SpriteBox::field_20_ = 2;
+
     int listed_count = 0;
     int listed_vehicle = veh_id;
     if (listed_vehicle >= 0) {
-        int previous_vehicle = Vehs[listed_vehicle].prev_veh_id_stack;
-        while (previous_vehicle >= 0) {
-            listed_vehicle = previous_vehicle;
-            previous_vehicle = Vehs[listed_vehicle].prev_veh_id_stack;
+        while (Vehs[listed_vehicle].prev_veh_id_stack >= 0) {
+            listed_vehicle = Vehs[listed_vehicle].prev_veh_id_stack;
         }
-
         if (listed_vehicle >= 0) {
             do {
-                say_morale(listed_vehicle, 0);
                 StringTemp[0] = '\0';
+                say_morale(listed_vehicle, 0);
                 ::strcat(StringTemp, " ");
-                const int prototype = Vehs[listed_vehicle].proto_id;
-                ::strcat(StringTemp, VehPrototypes[prototype].veh_name);
-                popup.dialogs().SpriteBox::sprite(
-                    &sprite, StringTemp, listed_vehicle);
-
-                // Native fetches the next stack link after the sprite call.
-                const int next_vehicle = Vehs[listed_vehicle].next_veh_id_stack;
+                ::strcat(StringTemp, VehPrototypes[Vehs[listed_vehicle].proto_id].veh_name);
+                popup.set_caller_picture(popup.picture_enabled() ? nullptr : &sprite);
+                popup.dialogs().SpriteBox::sprite(&sprite, StringTemp, listed_vehicle);
+                listed_vehicle = Vehs[listed_vehicle].next_veh_id_stack;
                 ++listed_count;
-                listed_vehicle = next_vehicle;
             } while (listed_vehicle >= 0);
         }
     }
 
     if (listed_count == 0) {
-        // Native empty path closes the independent Sprite before Popup.
-        sprite.close();
-        popup.close();
         return -1;
     }
 
@@ -408,9 +403,5 @@ int __cdecl veh_pick(int veh_id, const char *label, int flags) {
     PopupModalState = 6;
     const int result = popup.exec(0, 0);
     PopupModalState = 0;
-
-    // Native successful path closes Popup before the local Sprite.
-    popup.close();
-    sprite.close();
     return result;
 }
