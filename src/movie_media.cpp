@@ -387,13 +387,12 @@ static const DWORD media_block_quant_order[64] = {
 #pragma warning(disable : 4716)
 extern "C" int __cdecl sub_5cd2d0(DWORD *destination, int quality) {
   if (quality == 100) {
-    quality = 8;
-    DWORD *output = destination;
-    const DWORD *weights = media_block_transform_weights;
-    do {
-      for (int column = 0; column != 8; ++column)
-        *output++ = (DWORD)media_fixed_mul(0x80000, (int)*weights++);
-    } while (--quality);
+    for (int row = 0; row < 8; ++row) {
+      for (int column = 0; column != 8; ++column) {
+        const int index = row * 8 + column;
+        destination[index] = (DWORD)media_fixed_mul(0x80000, (int)media_block_transform_weights[index]);
+      }
+    }
   } else {
     const float scale = (float)(107.0 - quality) * 0.0625f;
     for (int row = 0; row < 8; ++row) {
@@ -1925,106 +1924,24 @@ void MediaRuntime::sub_5cc710() {
 // kind      game
 // TRIED: the generated VCall shim (thiscall dispatch) - every indirect call here pushes the receiver explicitly before `call [reg+off]` (confirmed on all 16 call sites), so COM-style raw vtable-slot casts were used instead; case1/case2/case4 bodies transcribed from the disassembly (Ghidra under-reports some arg counts, e.g. slot 0x14/0x58/0x80 calls, corrected from raw asm). Diverges at instruction #0 (prologue register allocation).
 void MediaRuntime::sub_5cb6c0() {
-  MediaDescriptor &d = *descriptor;
-  DWORD flags = d.flags;
-  DWORD saved_output = output_handle_candidate;
-  BYTE *saved_palette_entries = d.palette_entries_28;
+  DWORD flags = descriptor->flags;
+  BYTE *palette_entries = descriptor->palette_entries_28;
   if ((flags & 0x00000800) != 0) return;
 
-  if (queue_record_kind == 1) {
-    if ((flags & 0x00000400) == 0) {
-      IDirectDrawSurface2 *target =
-          (flags & 0x08000000) != 0 ? d.surface_18 : d.surface_14;
-      if (d.pixel_format.total_component_bits == 8) {
-        BYTE *out = saved_palette_entries;
-        for (int i = 0; i < 0x300; i += 3) {
-          *out++ = descriptor->palette_rgb_triplets_b0[i];
-          *out++ = descriptor->palette_rgb_triplets_b0[i + 1];
-          *out++ = descriptor->palette_rgb_triplets_b0[i + 2];
-          *out++ = 0;
-        }
-      }
-
-      RECT source;
-      source.left = 0;
-      source.top = 0;
-      source.right = (LONG)(descriptor->output_width_64 - 1);
-      source.bottom = (LONG)(descriptor->output_height_60 - 1);
-      RECT destination;
-      destination.left = (LONG)output_rect_left_14;
-      destination.top = (LONG)output_rect_top_18;
-      destination.right = (LONG)(output_rect_left_14 + output_rect_extent_0c);
-      destination.bottom = (LONG)(output_rect_top_18 + output_rect_height_10);
-
-      HRESULT status = target->IsLost();
-      if (status == DDERR_SURFACELOST && target->Restore() != DD_OK)
-        return;
-
-      DWORD presentation_flags = descriptor->flags;
-      if ((presentation_flags & 0x00000020) != 0) {
-        for (DWORD row = 0; row < descriptor->output_height_60; row += 2) {
-          destination.top = (LONG)(output_rect_top_18 + row);
-          destination.bottom = (LONG)(output_rect_top_18 + row + 1);
-          source.top = (LONG)(row >> 1);
-          source.bottom = (LONG)((row >> 1) + 1);
-          target->Blt(&destination, descriptor->surface_1c, &source,
-                      DDBLT_ASYNC, 0);
-        }
-      } else if ((presentation_flags & 0x00000010) != 0) {
-        for (DWORD row = 0; row < descriptor->output_height_60; row += 2) {
-          destination.top = (LONG)(output_rect_top_18 + row);
-          destination.bottom = (LONG)(output_rect_top_18 + row + 1);
-          source.top = (LONG)(row >> 1);
-          source.bottom = (LONG)((row >> 1) + 1);
-          target->Blt(&destination, descriptor->surface_1c, &source,
-                      DDBLT_ASYNC, 0);
-
-          destination.top = (LONG)(output_rect_top_18 + row + 1);
-          destination.bottom = (LONG)(output_rect_top_18 + row + 2);
-          target->Blt(&destination, descriptor->surface_1c, &source,
-                      DDBLT_ASYNC, 0);
-        }
-      } else {
-        target->Blt(&destination, descriptor->surface_1c, &source,
-                    DDBLT_ASYNC, 0);
+  switch (queue_record_kind) {
+  case 1: {
+    if ((flags & 0x00000400) != 0) break;
+    IDirectDrawSurface2 *target =
+        (flags & 0x08000000) != 0 ? descriptor->surface_18 : descriptor->surface_14;
+    if (descriptor->pixel_format.total_component_bits == 8) {
+      BYTE *out = palette_entries;
+      for (int i = 0; i < 0x300; i += 3, out += 4) {
+        out[0] = descriptor->palette_rgb_triplets_b0[i];
+        out[1] = descriptor->palette_rgb_triplets_b0[i + 1];
+        out[2] = descriptor->palette_rgb_triplets_b0[i + 2];
+        out[3] = 0;
       }
     }
-  } else if (queue_record_kind == 2) {
-    if (d.surface_1c != 0) {
-      if (saved_output != 0)
-        output_handle_candidate = (DWORD)update_overlay(1);
-
-      DDSURFACEDESC locked;
-      memset(&locked, 0, 0x6c);
-      locked.dwSize = 0x6c;
-      if (descriptor->surface_1c->Lock(0, &locked, DDLOCK_WAIT, 0) == DD_OK) {
-        DWORD group_count = (descriptor->output_width_64 & 0x7fffffff) >> 1;
-        LONG destination_stride = (locked.lPitch / 4) * 4;
-        BYTE *source_row = owned_heap_638;
-        BYTE *destination_row = (BYTE *)locked.lpSurface;
-        DWORD groups = (group_count + 7) >> 3;
-        for (DWORD row = 0; row < descriptor->output_height_60; ++row) {
-          BYTE *source = source_row;
-          BYTE *destination = destination_row;
-          for (DWORD group = 0; group < groups; ++group) {
-            DWORD *src = (DWORD *)source;
-            DWORD *dst = (DWORD *)destination;
-            dst[0] = src[0]; dst[1] = src[1];
-            dst[2] = src[2]; dst[3] = src[3];
-            dst[4] = src[4]; dst[5] = src[5];
-            dst[6] = src[6]; dst[7] = src[7];
-            source += 0x20;
-            destination += 0x20;
-          }
-          source_row += group_count * 4;
-          destination_row += destination_stride;
-        }
-        descriptor->surface_1c->Unlock(0);
-      }
-    }
-  } else if (queue_record_kind == 4) {
-    if ((flags & 0x00001000) != 0)
-      descriptor->draw_device_10->WaitForVerticalBlank(DDWAITVB_BLOCKBEGIN, 0);
 
     RECT source;
     source.left = 0;
@@ -2036,22 +1953,91 @@ void MediaRuntime::sub_5cb6c0() {
     destination.top = (LONG)output_rect_top_18;
     destination.right = (LONG)(output_rect_left_14 + output_rect_extent_0c);
     destination.bottom = (LONG)(output_rect_top_18 + output_rect_height_10);
-
-    HRESULT status = descriptor->surface_1c->IsLost();
-    if (status == DDERR_SURFACELOST &&
-        descriptor->surface_1c->Restore() != DD_OK)
+    if (target->IsLost() == DDERR_SURFACELOST && target->Restore() != DD_OK)
       return;
 
+    DWORD row;
+    if ((descriptor->flags & 0x00000020) != 0) {
+      for (row = 0; row < descriptor->output_height_60; row += 2) {
+        destination.top = (LONG)(output_rect_top_18 + row);
+        destination.bottom = (LONG)(output_rect_top_18 + row + 1);
+        source.top = (LONG)(row >> 1);
+        source.bottom = (LONG)((row >> 1) + 1);
+        target->Blt(&destination, descriptor->surface_1c, &source, DDBLT_WAIT, 0);
+      }
+    } else if ((descriptor->flags & 0x00000010) != 0) {
+      for (row = 0; row < descriptor->output_height_60; row += 2) {
+        destination.top = (LONG)(output_rect_top_18 + row);
+        destination.bottom = (LONG)(output_rect_top_18 + row + 1);
+        source.top = (LONG)(row >> 1);
+        source.bottom = (LONG)((row >> 1) + 1);
+        target->Blt(&destination, descriptor->surface_1c, &source, DDBLT_WAIT, 0);
+        destination.top = (LONG)(row + output_rect_top_18 + 1);
+        destination.bottom = (LONG)(row + output_rect_top_18 + 2);
+        target->Blt(&destination, descriptor->surface_1c, &source, DDBLT_WAIT, 0);
+      }
+    } else {
+      target->Blt(&destination, descriptor->surface_1c, &source, DDBLT_WAIT, 0);
+    }
+    break;
+  }
+  case 2:
+    if (descriptor->surface_1c != 0) {
+      if (output_handle_candidate != 0)
+        output_handle_candidate = (DWORD)update_overlay(1);
+      DDSURFACEDESC locked;
+      memset(&locked, 0, sizeof(locked));
+      locked.dwSize = sizeof(locked);
+      if (descriptor->surface_1c->Lock(0, &locked, DDLOCK_WAIT, 0) == DD_OK) {
+        DWORD *destination_row = (DWORD *)locked.lpSurface;
+        DWORD row_dwords = descriptor->output_width_64 * 2 / 4;
+        DWORD *source_row = (DWORD *)owned_heap_638;
+        int destination_pitch = locked.lPitch / 4;
+        for (DWORD row = 0; row < descriptor->output_height_60;
+             ++row, destination_row += destination_pitch, source_row += row_dwords) {
+          for (DWORD i = 0; i < row_dwords; i += 8) {
+            destination_row[i] = source_row[i];
+            destination_row[i + 1] = source_row[i + 1];
+            destination_row[i + 2] = source_row[i + 2];
+            destination_row[i + 3] = source_row[i + 3];
+            destination_row[i + 4] = source_row[i + 4];
+            destination_row[i + 5] = source_row[i + 5];
+            destination_row[i + 6] = source_row[i + 6];
+            destination_row[i + 7] = source_row[i + 7];
+          }
+        }
+        descriptor->surface_1c->Unlock(0);
+      }
+    }
+    break;
+  case 4: {
+    if ((flags & 0x00001000) != 0)
+      descriptor->draw_device_10->WaitForVerticalBlank(DDWAITVB_BLOCKBEGIN, 0);
+    RECT source;
+    source.left = 0;
+    source.top = 0;
+    source.right = (LONG)(descriptor->output_width_64 - 1);
+    source.bottom = (LONG)(descriptor->output_height_60 - 1);
+    RECT destination;
+    destination.left = (LONG)output_rect_left_14;
+    destination.top = (LONG)output_rect_top_18;
+    destination.right = (LONG)(output_rect_left_14 + output_rect_extent_0c);
+    destination.bottom = (LONG)(output_rect_top_18 + output_rect_height_10);
+    if (descriptor->surface_1c->IsLost() == DDERR_SURFACELOST &&
+        descriptor->surface_1c->Restore() != DD_OK)
+      return;
     if (descriptor->surface_14->Blt(&destination, descriptor->surface_1c,
-                                  &source, DDBLT_ASYNC, 0) != DD_OK)
+                                    &source, DDBLT_WAIT, 0) != DD_OK)
       queue_record_kind = 1;
+    break;
+  }
   }
 
   if ((descriptor->flags & 0x08000000) != 0 && queue_record_kind == 1) {
     if (descriptor->pixel_format.total_component_bits == 8) {
       descriptor->surface_14->Flip(0, DDFLIP_WAIT);
       descriptor->palette_24->SetEntries(0, 0, 0x100,
-                                       (LPPALETTEENTRY)saved_palette_entries);
+                                         (LPPALETTEENTRY)palette_entries);
       return;
     }
     HRESULT result = descriptor->surface_14->Flip(0, DDFLIP_WAIT);
@@ -2120,125 +2106,133 @@ void MediaRuntime::sub_5cbbc0() {
 // symbol    ?sub_5cb220@MediaDescriptor@@QAEXXZ
 // kind      game
 // TRIED: __thiscall member (class Sub5cb220Obj) with `this` reassigned to *(int**)this, matching Ghidra's structure closely; BOTH indirect calls (slots 9 and 12) are COM-style (interface pushed as an explicit stack arg, not passed in ecx) despite the brief's emitter flagging only slot 9 - confirmed by the raw asm's "push eax; call [ecx+0x30]" shape for slot 12 too, per LEVER 3. MISMATCH #0 (frame layout), not chased further.
+#pragma inline_depth(0)
 void MediaDescriptor::sub_5cb220() {
+  // Every field goes through r->descriptor, reloaded at each use.
+  // stand-in: the volatile reads of the shared pending/progress counters
+  // give the image's load-then-compare; those fields are likely volatile.
   MediaRuntime *r = runtime;
-  // Keep construction before either native cleanup jump target can be
-  // reached; the slot is assigned immediately before its first read.
-  MediaQueueRecord *record = 0;
-  if ((flags & 0x00030000) == 0x00030000)
-    SetThreadPriority(GetCurrentThread(), (int)priority);
+  if ((r->descriptor->flags & 0x00030000) == 0x00030000)
+    SetThreadPriority(GetCurrentThread(), (int)r->descriptor->priority);
   if (r->sub_5ce2b0() != 0) goto finish_worker;
 
-  progress_value = 0;
-  InterlockedExchange(&state, 1);
+  r->descriptor->progress_value = 0;
+  InterlockedExchange(&r->descriptor->state, 1);
   r->start_ticks = GetTickCount();
-worker_loop:
   for (;;) {
-    LONG observed = InterlockedExchange(&state, 2);
+    LONG observed = InterlockedExchange(&r->descriptor->state, 2);
+    MediaQueueRecord *record = &r->read_records[r->read_consumer_cursor % 24];
     if (observed == 3) {
-      InterlockedExchange(&state, 3);
+      InterlockedExchange(&r->descriptor->state, observed);
       do {
         Sleep(20);
-        observed = InterlockedExchange(&state, 3);
+        observed = InterlockedExchange(&r->descriptor->state, 3);
       } while (observed == 3);
-      InterlockedExchange(&state, observed);
+      InterlockedExchange(&r->descriptor->state, observed);
     }
-    if (observed == 4) goto stop_worker;
-    if (observed == 2) break;
-  }
+    if (observed == 4) break;
+    if (observed != 2) continue;
 
-  Sleep(0);
-  if (r->channel_state == -1) {
-    if ((flags & 0x00008000) == 0) {
-      r->channel_state = -1;
-    } else {
-      Sleep(0);
-      mmioSeek(stream, r->channel_seek_position, SEEK_SET);
-      r->channel_state = sub_5c9ec0(r);
+    Sleep(0);
+    if (r->channel_state == -1) {
+      if ((r->descriptor->flags & 0x00008000) != 0) {
+        Sleep(0);
+        mmioSeek(r->descriptor->stream, r->channel_seek_position, SEEK_SET);
+        r->channel_state = sub_5c9ec0(r);
+      } else {
+        r->channel_state = -1;
+      }
+      if (r->channel_state == -1) goto stream_done;
     }
-    if (r->channel_state != -1) goto process_stream;
-  } else {
-process_stream:
-    if (r->pending_output_records < 0x16 && r->pending_read_records < 0x16) {
+    if (*(volatile LONG *)&r->pending_output_records < 0x16 &&
+        *(volatile LONG *)&r->pending_read_records < 0x16) {
       int result = sub_5c9ec0(r);
       r->channel_poll_result = result;
-      if (result == -1) {
-        if ((flags & 0x00008000) == 0) {
-          r->channel_state = -1;
-        } else {
+      switch (result) {
+      case -1:
+        if ((r->descriptor->flags & 0x00008000) != 0) {
           Sleep(0);
-          mmioSeek(stream, r->channel_seek_position, SEEK_SET);
+          mmioSeek(r->descriptor->stream, r->channel_seek_position, SEEK_SET);
           r->channel_state = sub_5c9ec0(r);
+        } else {
+          r->channel_state = -1;
         }
-      } else if (result == 1) {
-        if (stream_gate_7c != 0) {
+        break;
+      case 1:
+        if (r->descriptor->stream_gate_7c != 0) {
           r->channel_state = sub_5c9ec0(r);
-          if (r->channel_state == 1) stream_gate_7c = 0;
+          if (r->channel_state == 1) r->descriptor->stream_gate_7c = 0;
         }
-      } else if (result == 2 &&
-                 (stream_gate_80 == 0 || r->pending_output_records < 0x16)) {
-        r->channel_state = sub_5c9ec0(r);
+        break;
+      case 2:
+        if (r->descriptor->stream_gate_80 == 0 ||
+            *(volatile LONG *)&r->pending_output_records < 0x16)
+          r->channel_state = sub_5c9ec0(r);
+        break;
       }
     }
-  }
-
-  if (r->buffer_setup_finished == 0 && stream_gate_7c != 0) {
-    r->create_playback_buffer();
-    r->output_lock_word = 0;
-  }
-  record = &r->read_records[r->read_consumer_cursor % 24];
-  if (record->payload != 0) {
-    if (progress_value < 3) {
-      sub_5cc940(r, record);
-      r->sub_5cb6c0();
-    } else {
-      DWORD kind = record->field_0c;
-      if (kind == 2 || kind == 1 || kind == 6 || kind == 5)
+  stream_done:
+    if (*(volatile LONG *)&r->buffer_setup_finished == 0 &&
+        r->descriptor->stream_gate_7c != 0) {
+      r->create_playback_buffer();
+      r->output_lock_word = 0;
+    }
+    if (record->payload != 0) {
+      if (*(volatile LONG *)&r->descriptor->progress_value <= 2) {
         sub_5cc940(r, record);
+        r->sub_5cb6c0();
+      } else {
+        DWORD kind = record->field_0c;
+        if (kind == 2 || kind == 1 || kind == 6 || kind == 5)
+          sub_5cc940(r, record);
+      }
+      if ((r->descriptor->flags & 0x00040000) != 0 && r->descriptor->callback != 0 &&
+          r->descriptor->callback() != 0)
+        break;
+      record->payload = 0;
+      record->field_04 = 0;
+      InterlockedIncrement(&r->read_consumer_cursor);
+      InterlockedDecrement(&r->pending_read_records);
+      r->sub_5cbbc0();
     }
-    if ((flags & 0x00040000) != 0 && callback != 0 && callback() != 0)
-      goto stop_worker;
-    record->payload = 0;
-    record->field_04 = 0;
-    InterlockedIncrement(&r->read_consumer_cursor);
-    InterlockedDecrement(&r->pending_read_records);
-    r->sub_5cbbc0();
+
+    InterlockedIncrement(&r->descriptor->progress_counter);
+    if (*(volatile LONG *)&r->pending_read_records == 0) {
+      if (r->descriptor->stream_gate_7c == 0 ||
+          (r->descriptor->flags & 0x00800000) == 0)
+        break;
+      if (*(volatile LONG *)&r->pending_output_records == 0) {
+        IDirectSoundBuffer *buffer = r->descriptor->play_buffer;
+        if (buffer == 0) break;
+        DWORD status;
+        buffer->GetStatus(&status);
+        if ((status & 0x4) != 0) r->descriptor->play_buffer->Play(0, 0, 0);
+        if ((status & 0x1) == 0) break;
+      }
+    }
+    if (r->descriptor->stream_gate_7c != 0) {
+      // The image keeps both values in stack slots and reloads them.
+      int attempts = 0;
+      volatile int lag = (int)r->output_lock_word - 5;
+      volatile LONG base = r->descriptor->progress_counter;
+      while (base - lag >= 1) {
+        Sleep(0);
+        Sleep(3);
+        lag = (int)r->output_lock_word - 5;
+        if (attempts++ > 0x96) break;
+      }
+      r->descriptor->progress_value = lag - base;
+      if (r->descriptor->progress_value < 0) r->descriptor->progress_value = 0;
+    }
   }
 
-  InterlockedIncrement(&progress_counter);
-  if (r->pending_read_records == 0) {
-    if (stream_gate_7c == 0 || (flags & 0x00800000) == 0)
-      goto stop_worker;
-    if (r->pending_output_records == 0) {
-      if (play_buffer == 0) goto stop_worker;
-      DWORD status = 0;
-      play_buffer->GetStatus(&status);
-      if ((status & 0x4) != 0) play_buffer->Play(0, 0, 0);
-      if ((status & 0x1) == 0) goto stop_worker;
-    }
-  }
-  if (stream_gate_7c != 0) {
-    int lag = (int)r->output_lock_word - 5;
-    LONG base = progress_counter;
-    int attempts = 0;
-    while (base - lag >= 1 && attempts <= 0x96) {
-      Sleep(0);
-      Sleep(3);
-      lag = (int)r->output_lock_word - 5;
-      ++attempts;
-    }
-    progress_value = lag - base;
-    if (progress_value < 0) progress_value = 0;
-  }
-  goto worker_loop;
-
-stop_worker:
   r->end_ticks = GetTickCount();
   r->sub_5ce2f0();
 finish_worker:
   r->release_playback_buffer();
-  InterlockedExchange(&state, 5);
+  InterlockedExchange(&r->descriptor->state, 5);
 }
+#pragma inline_depth(8)
 
 // ORIGINAL: 0x005CAE80 sub_5cae80 0x005CAE80-0x005CB046
 // symbol    _sub_5cae80
@@ -2328,109 +2322,120 @@ extern "C" int __cdecl sub_5cb660(MediaDescriptor *d) {
   return 0;
 }
 
+static __forceinline void media_worker_loop(MediaDescriptor *self) {
+  MediaRuntime *r = self->runtime;
+  int (MediaRuntime::*const start_output)() = &MediaRuntime::sub_5ce2b0;
+  int (MediaRuntime::*const stop_output)() = &MediaRuntime::sub_5ce2f0;
+  int (MediaRuntime::*const release_buffer)() = &MediaRuntime::release_playback_buffer;
+  void (MediaRuntime::*const swap_buffers)() = &MediaRuntime::sub_5cbbc0;
+  if ((r->descriptor->flags & 0x00030000) == 0x00030000)
+    SetThreadPriority(GetCurrentThread(), (int)r->descriptor->priority);
+
+  if ((r->*start_output)() == 0) {
+    r->descriptor->progress_value = 0;
+    InterlockedExchange(&r->descriptor->state, 1);
+    r->start_ticks = GetTickCount();
+    for (;;) {
+      LONG observed = InterlockedExchange(&r->descriptor->state, 2);
+      MediaQueueRecord *record = &r->read_records[r->read_consumer_cursor % 24];
+      if (observed == 3) {
+        InterlockedExchange(&r->descriptor->state, observed);
+        do {
+          Sleep(20);
+          observed = InterlockedExchange(&r->descriptor->state, 3);
+        } while (observed == 3);
+        InterlockedExchange(&r->descriptor->state, observed);
+      }
+      if (observed == 4) break;
+      if (observed != 2) continue;
+
+      Sleep(0);
+      sub_5ca970(r);
+      if (*(volatile LONG *)&r->buffer_setup_finished == 0 &&
+          r->descriptor->stream_gate_7c != 0) {
+        r->create_playback_buffer();
+        r->output_lock_word = 0;
+      }
+      if (record->payload != 0) {
+        if (*(volatile LONG *)&r->descriptor->progress_value <= 2) {
+          sub_5cc940(r, record);
+          r->sub_5cb6c0();
+        } else {
+          DWORD kind = record->field_0c;
+          if (kind == 2 || kind == 1 || kind == 6 || kind == 5)
+            sub_5cc940(r, record);
+        }
+        if ((r->descriptor->flags & 0x00040000) != 0 && r->descriptor->callback != 0 &&
+            r->descriptor->callback() != 0)
+          break;
+        record->payload = 0;
+        record->field_04 = 0;
+        InterlockedIncrement(&r->read_consumer_cursor);
+        InterlockedDecrement(&r->pending_read_records);
+        (r->*swap_buffers)();
+      }
+
+      InterlockedIncrement(&r->descriptor->progress_counter);
+      if (*(volatile LONG *)&r->pending_read_records == 0) {
+        if (r->descriptor->stream_gate_7c == 0 ||
+            (r->descriptor->flags & 0x00800000) == 0)
+          break;
+        if (*(volatile LONG *)&r->pending_output_records == 0) {
+          IDirectSoundBuffer *buffer = r->descriptor->play_buffer;
+          if (buffer == 0) break;
+          DWORD status;
+          buffer->GetStatus(&status);
+          if ((status & 0x4) != 0) r->descriptor->play_buffer->Play(0, 0, 0);
+          if ((status & 0x1) == 0) break;
+        }
+      }
+      if (r->descriptor->stream_gate_7c != 0) {
+        // The image keeps both values in stack slots and reloads them.
+        int attempts = 0;
+        volatile int lag = (int)r->output_lock_word - 5;
+        volatile LONG base = r->descriptor->progress_counter;
+        while (base - lag >= 1) {
+          Sleep(0);
+          Sleep(3);
+          lag = (int)r->output_lock_word - 5;
+          if (attempts++ > 0x96) break;
+        }
+        r->descriptor->progress_value = lag - base;
+        if (r->descriptor->progress_value < 0) r->descriptor->progress_value = 0;
+      }
+    }
+    r->end_ticks = GetTickCount();
+    (r->*stop_output)();
+  }
+
+  (r->*release_buffer)();
+  InterlockedExchange(&r->descriptor->state, 5);
+}
+
 // ORIGINAL: 0x005CAAB0 sub_5caab0 0x005CAAB0-0x005CADF9
 // symbol    _sub_5caab0
 // kind      game
 // TRIED: nullary extern "C" __cdecl per the contract head - IDA's own guess (void*) matches the disassembly's [esp+0x14] read, so landed as sub_5caab0(void *param); this is a _beginthread worker (GetCurrentThread/SetThreadPriority/InterlockedXxx/ Sleep/GetTickCount/_endthread). sub_5cXXXXX helpers retyped __fastcall(void*[, void*]) to match their ecx/edx-only call sites (no stack pushes); slots 9/12 are COM-style (explicit self push). Reaches #10 (mismatch inside the flag mask/store sequence); not pursued further given the size.
 // Every callee is a real call in the image, sub_5cae00 included.
-#pragma inline_depth(0)
+#pragma inline_depth(1)
 extern "C" void __cdecl sub_5caab0(void *argument) {
-  MediaDescriptor *d = (MediaDescriptor *)argument;
-  MediaRuntime *r = d->runtime;
-  DWORD background_flag = d->flags & 0x00010000;
-  if ((d->flags & 0x00030000) == 0x00030000)
-    SetThreadPriority(GetCurrentThread(), (int)d->priority);
-
-  if (r->sub_5ce2b0() == 0) {
-    d->progress_value = 0;
-    InterlockedExchange(&d->state, 1);
-    r->start_ticks = GetTickCount();
-thread_loop:
-    ;
-    MediaQueueRecord *record = 0;
-    for (;;) {
-      LONG observed = InterlockedExchange(&d->state, 2);
-      record = &r->read_records[r->read_consumer_cursor % 24];
-      if (observed == 3) {
-        InterlockedExchange(&d->state, 3);
-        do {
-          Sleep(20);
-          observed = InterlockedExchange(&d->state, 3);
-        } while (observed == 3);
-        InterlockedExchange(&d->state, observed);
-      }
-      if (observed == 4) goto stop_thread;
-      if (observed == 2) break;
-    }
-
-    Sleep(0);
-    sub_5ca970(r);
-    if (r->buffer_setup_finished == 0 && d->stream_gate_7c != 0) {
-      r->create_playback_buffer();
-      r->output_lock_word = 0;
-    }
-    if (record->payload != 0) {
-      if (d->progress_value < 3) {
-        sub_5cc940(r, record);
-        r->sub_5cb6c0();
-      } else {
-        DWORD kind = record->field_0c;
-        if (kind == 2 || kind == 1 || kind == 6 || kind == 5)
-          sub_5cc940(r, record);
-      }
-      if ((d->flags & 0x00040000) != 0 && d->callback != 0 &&
-          d->callback() != 0)
-        goto stop_thread;
-      record->payload = 0;
-      record->field_04 = 0;
-      InterlockedIncrement(&r->read_consumer_cursor);
-      InterlockedDecrement(&r->pending_read_records);
-      r->sub_5cbbc0();
-    }
-
-    InterlockedIncrement(&d->progress_counter);
-    if (r->pending_read_records == 0) {
-      if (d->stream_gate_7c == 0 || (d->flags & 0x00800000) == 0)
-        goto stop_thread;
-      if (r->pending_output_records == 0) {
-        if (d->play_buffer == 0) goto stop_thread;
-        DWORD status = 0;
-        d->play_buffer->GetStatus(&status);
-        if ((status & 0x4) != 0) d->play_buffer->Play(0, 0, 0);
-        if ((status & 0x1) == 0) goto stop_thread;
-      }
-    }
-    if (d->stream_gate_7c != 0) {
-      int lag = (int)r->output_lock_word - 5;
-      LONG base = d->progress_counter;
-      int attempts = 0;
-      while (base - lag >= 1 && attempts <= 0x96) {
-        Sleep(0);
-        Sleep(3);
-        lag = (int)r->output_lock_word - 5;
-        ++attempts;
-      }
-      d->progress_value = lag - base;
-      if (d->progress_value < 0) d->progress_value = 0;
-    }
-    goto thread_loop;
-  }
-
-  goto release_playback;
-stop_thread:
-  r->end_ticks = GetTickCount();
-  r->sub_5ce2f0();
-release_playback:
-  r->release_playback_buffer();
-  InterlockedExchange(&d->state, 5);
+  // Same shape as MediaDescriptor::sub_5cb220: fields go through
+  // r->descriptor, reloaded at each use.
+  // stand-in: volatile reads of the shared pending/progress counters give the
+  // image's load-then-compare; those fields are likely volatile.
+  MediaRuntime *r = ((MediaDescriptor *)argument)->runtime;
+  DWORD background_flag = r->descriptor->flags & 0x00010000;
+  media_worker_loop((MediaDescriptor *)argument);
   if (r->protocol_gate != 0) {
-    d->elapsed_ticks = r->end_ticks - r->start_ticks;
-    r->sub_5cae00();
-    r->release_session_interfaces();
-    r->sub_5cc710();
-    InterlockedExchange(&d->state, 6);
-    InterlockedExchange((LONG *)&d->runtime, 0);
-    free(r);
+    MediaRuntime *owner = ((MediaDescriptor *)argument)->runtime;
+    owner->descriptor->elapsed_ticks = owner->end_ticks - owner->start_ticks;
+    int (MediaRuntime::*const finish_session)() = &MediaRuntime::sub_5cae00;
+    (owner->*finish_session)();
+    owner->release_session_interfaces();
+    owner->sub_5cc710();
+    InterlockedExchange(&owner->descriptor->state, 6);
+    InterlockedExchange((LONG *)&owner->descriptor->runtime, 0);
+    free(owner);
   }
   if (background_flag != 0) _endthread();
 }
